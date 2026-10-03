@@ -15,6 +15,7 @@
  * 固定済みの狙いは作らない。クラフト非推奨 (start-kind の unsafe) の時は組まない。
  */
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
+import { bossOmenAllowed, desecrationOmenForMod, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { catalystsFor } from "../../services/htc/quality";
 import type { SimNode } from "../../services/htc/sim-route";
@@ -328,6 +329,21 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
   const boneFor = (t: TierTarget): "desecrate" | "desecrate_ancient" | "desecrate_altered" =>
     mod(t.modId).tags.includes("breach_desecration") ? "desecrate_altered" : inp.bone !== "preserved" && reach([t]) >= 40 ? "desecrate_ancient" : "desecrate";
   /**
+   * 勢力のお告げ (2026-10-03、SaVeQ 0.5.5 の動画): 冒涜の MOD (勢力のタグ付き) を武器・装飾品で狙う時は、その勢力のお告げで候補を
+   * その勢力の MOD だけにする (不在のアミュの「全スキルの品質」= 黒血、槍の攻撃速度 = リージュ)。防具には効かない。inp.faction === false で使わない
+   */
+  const factionFor = (t: TierTarget): DesecrationBossOmen | undefined => {
+    if (inp.faction === false) return undefined;
+    const m = mod(t.modId);
+    const b = d.bases.get(t.modId.split("/")[0]!);
+    return b && bossOmenAllowed(b.category) && m.source === "desecrated" ? desecrationOmenForMod(m) : undefined;
+  };
+  /** 冒涜の手 (反響は既定で付ける。inp.echoes === false で付けない = SaVeQ「高い時は使わない」) */
+  const desecAction = (t: TierTarget, side: Side): SimNode["action"] => {
+    const f = factionFor(t);
+    return { kind: "desecrate", side, bone: boneFor(t), echoes: inp.echoes !== false, ...(f ? { faction: f } : {}) };
+  };
+  /**
    * 枠 2 つの側で 1 つが固定済みなら、光のお告げを使わずに回せる (0.5.5 の冒涜の解説): その側に付くエッセンス / 合金で
    * 上書き → 鎖骨で冒涜 (満杯の側なので、上書きした MOD が冒涜 MOD に置き換わる)。外れならまた上書き。付く側が同じでないと
    * クラフト MOD が残って次のエッセンスが打てないので、その側に付く一番安い物 (オーナー 2026-09-24:「使える場面は使える」)
@@ -353,7 +369,7 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
       const did = id(), eid = `o-${t.modId}`;
       desecrateNodes.push({
         // 古代の鎖骨は段 40 以上だけ。届かなければ普通の鎖骨 (下の光の輪と同じ)
-        ...base, id: did, action: { kind: "desecrate", side, bone: boneFor(t), echoes: true },
+        ...base, id: did, action: desecAction(t, side),
         targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: [], need: 1, onHit: null, onMiss: eid,
       });
       // 外れの冒涜 MOD (その側で唯一外せる物) を、同じ側のエッセンス / 合金で上書きして、また冒涜へ
@@ -363,7 +379,7 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
     const node: SimNode = {
       // 古代の鎖骨は段 40 以上だけ。届かなければ普通の鎖骨
       // 反響のお告げは必ず (3 択を 1 回引き直せる。オーナー 2026-09-24:「反響は冒涜の際必ず」)
-      ...base, id: id(), action: { kind: "desecrate", side, bone: boneFor(t), echoes: true },
+      ...base, id: id(), action: desecAction(t, side),
       targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: switchTypes ? [] : keepBreach, need: 1, onHit: null, onMiss: lightId,
     };
     desecrateNodes.push(node);

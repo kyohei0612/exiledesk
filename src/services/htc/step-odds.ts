@@ -19,7 +19,8 @@ import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { CATALYSTS, catalystsFor } from "./quality";
 import { jaOfOmen, jaOfPriceKey } from "./labels";
-import { OMEN } from "./omens";
+import { OMEN, FACTION_OMEN, FACTION_TAG } from "./omens";
+import { bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 import { familyBlocked, familyKeysOf, tierWeight } from "../mods/mod-rules";
 
 export type Side = "prefix" | "suffix";
@@ -234,6 +235,26 @@ export function stepHelpers(ctx: StepCtx) {
           if (!Number.isFinite(perTry)) continue;
           out.push({ kind: "desecrate", p, perTry, avg: perTry / p + light * (1 / p - 1), missSide: side, light,
             label: `冒涜 (${bone} + ${jaOfOmen(OMEN.necromancy[side]) ?? ""}${echoes ? ` + ${jaOfOmen("OmenofAbyssalEchoes") ?? ""}` : ""}) → 3 択から選ぶ` });
+        }
+      }
+      // 勢力のお告げ (武器・装飾品の勢力の冒涜 MOD だけ): 候補はその勢力の MOD を等しく、3 択に入る確率 min(3, N) / N × 段の割合 (2026-10-03)
+      const fo = t.source === "desecrated" && bossOmenAllowed(cls.category) ? desecrationOmenForMod(t) : undefined;
+      if (fo) {
+        for (const [k, floor] of bones) {
+          if (k === "desecrate_altered") continue;
+          const bone = jaOfPriceKey(k, cls) ?? k;
+          const n = cls.pools.desecrated[sk].filter((id) => { const m = mod(id); return !!m && m.tags.includes(FACTION_TAG[fo]) && !familyBlocked(m, occ) && sw(m, 0, floor) > 0; }).length;
+          const all = sw(t, 0, floor);
+          const q = n > 0 && all > 0 ? (Math.min(3, n) / n) * (sw(t, minTier, floor) / all) : 0;
+          if (!(q > 0)) continue;
+          for (const echoes of [false, true]) {
+            const p = echoes ? 1 - (1 - q) ** 2 : q;
+            const perTry = cur(k) + necro + cur(FACTION_OMEN[fo]) + (echoes ? cur("OmenofAbyssalEchoes") : 0);
+            if (!Number.isFinite(perTry)) continue;
+            out.push({ kind: "desecrate", p, perTry, avg: perTry / p + light * (1 / p - 1), missSide: side, light,
+              label: `冒涜 (${bone} + ${jaOfOmen(OMEN.necromancy[side]) ?? ""} + ${jaOfOmen(FACTION_OMEN[fo]) ?? ""}${echoes ? ` + ${jaOfOmen("OmenofAbyssalEchoes") ?? ""}` : ""}) → 3 択から選ぶ`,
+              note: `候補はこの勢力の冒涜の MOD ${n} 個だけ (MOD ごとに等しく)` });
+          }
         }
       }
     }

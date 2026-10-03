@@ -3,7 +3,7 @@ import type { Mod } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { catalystsFor } from "./quality";
 import { type Side } from "./step-odds";
-import { OMEN, BREACH_FAMILY } from "./omens";
+import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG } from "./omens";
 import { essenceClash, familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import type { RollOutcome, SimAction, SimCtx, SimNode, SimSlot, SimState } from "./sim-route-types";
 
@@ -214,7 +214,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         const rs = removeSideOf(s, a);
         return cur(`essence:perfect:${a.modId}`) + (need ? cur(OMEN.crystallisation[rs]) : 0) + (removable(s, rs).length ? 0 : cur("exalt") + feedOmen(s, rs));
       }
-      case "desecrate": return cur(a.bone) + (need ? cur(OMEN.necromancy[a.side]) : 0) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0);
+      case "desecrate": return cur(a.bone) + (need ? cur(OMEN.necromancy[a.side]) : 0) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0) + (a.faction ? cur(FACTION_OMEN[a.faction]) : 0);
       case "light": return cur("annul") + cur("OmenofLight");
       // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
       // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
@@ -241,19 +241,23 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
     // 変質した鎖骨は、その側の異界の MOD も候補に入る (2026-09-27)
     const ow = a.bone === "desecrate_altered" ? (cls.pools.otherworldly?.[a.side === "prefix" ? "prefixes" : "suffixes"] ?? []) : [];
     const want = new Map(n.targets.filter((t) => !has(s, t.modId)).map((t) => [t.modId, t.minTier] as const));
-    const key = `${a.side}|${a.bone}|${[...want].join()}|${[...occ].sort().join()}`;
+    const key = `${a.side}|${a.bone}|${a.faction ?? ""}|${[...want].join()}|${[...occ].sort().join()}`;
     const hit = desecMemo.get(key);
     if (hit) return hit;
     const k = a.side === "prefix" ? "prefixes" : "suffixes";
-    const ids = [...new Set([...cls.pools.normal[k], ...cls.pools.desecrated[k], ...ow])];
+    // 勢力のお告げ: その勢力の冒涜の MOD だけ (普通の MOD・異界は出ない)、MOD ごとに等しく (段の中は重みのまま)
+    const tag = a.faction ? FACTION_TAG[a.faction] : null;
+    const ids = tag ? cls.pools.desecrated[k] : [...new Set([...cls.pools.normal[k], ...cls.pools.desecrated[k], ...ow])];
     const opts: DesecOpt[] = ids.flatMap((id) => {
       const m = mod(id);
-      if (!m || familyBlocked(m, occ)) return [];
+      if (!m || familyBlocked(m, occ) || (tag && !m.tags.includes(tag))) return [];
       const min = want.get(id);
       const tiers = m.tiers.flatMap((t, i) => (t.ilvl <= itemLevel && t.ilvl >= floor && t.weight > 0 ? [{ lvl: t.ilvl, w: t.weight, good: min != null && i >= min }] : []));
       const w = tiers.reduce((x, t) => x + t.w, 0);
       const good = tiers.reduce((x, t) => x + (t.good ? t.w : 0), 0);
-      return w > 0 ? [{ id, family: m.family, w, good, tiers }] : [];
+      if (!(w > 0)) return [];
+      // 勢力のお告げは MOD ごとに 1 (段の重みはその中の割合に直す)
+      return tag ? [{ id, family: m.family, w: 1, good: good / w, tiers: tiers.map((t) => ({ ...t, w: t.w / w })) }] : [{ id, family: m.family, w, good, tiers }];
     });
     const v = { opts };
     desecMemo.set(key, v);

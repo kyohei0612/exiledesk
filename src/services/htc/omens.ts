@@ -17,5 +17,13 @@ export const OMEN = {
   necromancy: { prefix: "OmenofSinistralNecromancy", suffix: "OmenofDextralNecromancy" },
 } as const;
 
+/**
+ * 勢力のお告げ (次の武器・装飾品の冒涜をその勢力の MOD に。エンジンの DesecrationBossOmen → 値段のキー)。
+ * SaVeQ 0.5.5 の動画 (2026-10-03 調べ): 不在のアミュの「全スキルの品質」は黒血 (クルガル)、槍の攻撃速度・クロスボウのグレネードはリージュ (アマナム)
+ */
+export const FACTION_OMEN = { blackblooded: "OmenoftheBlackblooded", liege: "OmenoftheLiege", sovereign: "OmenoftheSovereign" } as const;
+/** 勢力のお告げが出す MOD のタグ (エンジンの DES_BOSS_TAG と同じ) */
+export const FACTION_TAG = { blackblooded: "kurgal_mod", liege: "amanamu_mod", sovereign: "ulaman_mod" } as const;
+
 /** ブリーチのエッセンスが付ける「品質の最大値 +20%」の系統 */
 export const BREACH_FAMILY = "LocalMaximumQuality";

@@ -7,7 +7,8 @@ import { computed } from "vue";
 import { RULES, type RedoPlan } from "./redo-cost";
 import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
 import { CATALYSTS } from "../../services/htc/quality";
-import { OMEN } from "../../services/htc/omens";
+import { OMEN, FACTION_OMEN } from "../../services/htc/omens";
+import { desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 import type { Side } from "../../services/htc/step-odds";
 import type { useHtcCraft } from "./useHtcCraft";
 import type { useCraftTree } from "./useCraftTree";
@@ -41,7 +42,12 @@ const howJa = (r: RedoPlan["rows"][number]): string => {
       // 反対側が埋まっていて側のお告げが効かない時は書かない (値段にも入れていない。2026-09-26 オーナー承認)
       return `${ORB_JA[r.orb ?? "exalt"] ?? "高貴なオーブ"}${r.noSideOmen ? "" : ` + ${omen(OMEN.exalt[r.side])}`}${cat ? ` + ${omen("OmenofCatalysingExaltation")} (${cat.ja})` : ""}${r.noSideOmen ? " (反対側が埋まっているのでお告げ不要)" : ""}`;
     }
-    case "desecrate": return r.noSideOmen ? `${priceJa(r.bone ?? "desecrate")} (反対側が埋まっているのでお告げ不要)` : `${priceJa(r.bone ?? "desecrate")} + ${omen(OMEN.necromancy[r.side])}`;
+    case "desecrate": {
+      // 勢力のお告げ・反響 (2026-10-03)
+      const fo = r.faction ? (() => { const m = props.c.data.value?.mods.get(r.modId); const f = m ? desecrationOmenForMod(m) : undefined; return f ? ` + ${omen(FACTION_OMEN[f])}` : ""; })() : "";
+      const ec = r.echoes === false ? " (反響無し)" : ` + ${omen("OmenofAbyssalEchoes")}`;
+      return r.noSideOmen ? `${priceJa(r.bone ?? "desecrate")}${fo}${ec} (反対側が埋まっているのでお告げ不要)` : `${priceJa(r.bone ?? "desecrate")} + ${omen(OMEN.necromancy[r.side])}${fo}${ec}`;
+    }
     case "essence": return r.noSideOmen ? "パーフェクトエッセンス (確定・反対側に外せる物が無いのでお告げ不要)" : `パーフェクトエッセンス + ${omen(OMEN.crystallisation[r.side])} (確定)`;
     default: return r.method;
   }

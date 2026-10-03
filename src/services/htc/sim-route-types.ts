@@ -1,5 +1,6 @@
 /** sim-route.ts から切り出し (2026-09-26): シミュレーターの型 (手・○×の行き先・指輪・結果・設定) と、確定の手 / 側のお告げの判定 */
 import { type Side, type StepCtx } from "./step-odds";
+import type { DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
 
 /** 1 回で付く物 1 つ (数える MOD = modId、それ以外 = 外れ)。tiers = 付いた時の段の MOD レベルの分布 (この中の割合) */
 export interface RollOutcome { modId: string | null; family: string; side: Side; p: number; tiers: ReadonlyArray<{ lvl: number; p: number }> }
@@ -15,7 +16,11 @@ export type SimAction =
    * エッセンスの MOD で決まる。省略時はエッセンスの MOD と同じ側
    */
   | { kind: "essence"; modId: string; removeSide?: Side | "auto" }
-  | { kind: "desecrate"; side: Side; bone: "desecrate" | "desecrate_ancient" | "desecrate_altered"; echoes: boolean }
+  /**
+   * faction = 勢力のお告げ (黒血 = クルガル / リージュ = アマナム / 君主 = ウラマン)。候補をその勢力の冒涜の MOD だけにし、MOD ごとに等しく引く
+   * (クラフトステージ・エンジンの desecrationBossProbability と同じ)。武器と装飾品だけ (防具には効かない)
+   */
+  | { kind: "desecrate"; side: Side; bone: "desecrate" | "desecrate_ancient" | "desecrate_altered"; echoes: boolean; faction?: DesecrationBossOmen }
   | { kind: "light" }
   | { kind: "breach"; removeSide?: Side }
   | { kind: "whittle" }

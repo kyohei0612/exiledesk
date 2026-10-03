@@ -20,7 +20,7 @@ import { hasSideOmen, type SimAction, type SimState } from "../../services/htc/s
 import type { Side } from "../../services/htc/step-odds";
 import type { useCraftTree } from "./useCraftTree";
 import type { useHtcCraft } from "./useHtcCraft";
-import { OMEN } from "../../services/htc/omens";
+import { OMEN, FACTION_OMEN } from "../../services/htc/omens";
 
 type Group = "exalt" | "annul" | "chaos" | "essence" | "desecrate";
 interface Omen { key: string; ja: string; group: Group; side?: Side; tag?: "catalyst" | "light" | "whittle" | "echoes" | "greater" }
@@ -64,7 +64,7 @@ function omensOf(a: SimAction | null): string[] {
     case "chaos": return a.side ? [OMEN.erasure[a.side]] : [];
     case "essence": return [OMEN.crystallisation[((a.removeSide === "auto" ? null : a.removeSide) ?? props.c.data.value?.mods.get(a.modId)?.type) === "suffix" ? "suffix" : "prefix"]];
     case "breach": return [OMEN.crystallisation[a.removeSide === "suffix" ? "suffix" : "prefix"]];
-    case "desecrate": return [OMEN.necromancy[a.side], ...(a.echoes ? ["OmenofAbyssalEchoes"] : [])];
+    case "desecrate": return [OMEN.necromancy[a.side], ...(a.faction ? [FACTION_OMEN[a.faction]] : []), ...(a.echoes ? ["OmenofAbyssalEchoes"] : [])];
     default: return [];
   }
 }

@@ -25,6 +25,10 @@ export interface MethodEstimate {
    * シミュレーターの omenNeeded と同じ決まり (2026-09-26 オーナー承認)
    */
   noSideOmen?: boolean;
+  /** 冒涜に勢力のお告げを付ける (代は perTry に入っている) */
+  faction?: boolean;
+  /** 冒涜に深淵の反響のお告げを付けない (false の時だけ入る) */
+  echoes?: boolean;
   /** カオスに抹消のお告げを付ける (触らない MOD がある側を消させない)。代は perTry に入っている */
   erasure?: boolean;
   /** 1 回の値段 (高貴建て) */
@@ -55,6 +59,10 @@ export interface RedoPlan {
   annulSides: Partial<Record<Side, "plain" | "side">>;
   reroll?: Reroll;
   bone?: "preserved";
+  /** 勢力のお告げを使わない (false の時だけ入る) */
+  faction?: boolean;
+  /** 冒涜に反響を付けない (false の時だけ入る) */
+  echoes?: boolean;
 }
 
 /** 決まり (画面にも出す) */

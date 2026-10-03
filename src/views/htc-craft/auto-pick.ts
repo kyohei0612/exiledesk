@@ -32,7 +32,7 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   const annuls = ([undefined, "plain"] as const);
   const canOverwrite = !!inp.limits && (inp.fixedSides ?? []).some((sd) => inp.limits![sd] === 2);
   const picks: Array<Partial<AutoTreeInput> & { label: string }> = [];
-  if (plan) picks.push({ label: "やり直しの費用から", chaosPick: plan.chaosPick, desecratePick: plan.desecratePick, exaltTiers: plan.exaltTiers, annul: plan.annulSides, ...(plan.reroll ? { reroll: plan.reroll } : {}), ...(plan.bone ? { bone: plan.bone } : {}), ...(plan.chaosPick ? {} : { chaosOk: false, chaosSide: null }) });
+  if (plan) picks.push({ label: "やり直しの費用から", chaosPick: plan.chaosPick, desecratePick: plan.desecratePick, exaltTiers: plan.exaltTiers, annul: plan.annulSides, ...(plan.reroll ? { reroll: plan.reroll } : {}), ...(plan.bone ? { bone: plan.bone } : {}), ...(plan.faction === false ? { faction: false } : {}), ...(plan.echoes === false ? { echoes: false } : {}), ...(plan.chaosPick ? {} : { chaosOk: false, chaosSide: null }) });
   // 決め打ちの骨は、上書きの輪が組める形 (固定 1 + 外れ 1 の枠 2 つの側) だけ普通の骨も試す (天体で回すなら普通の骨が安い)
   const bones = canOverwrite ? ([undefined, "preserved"] as const) : ([undefined] as const);
   for (const ch of chaosVariants) for (const bn of bones) picks.push({ label: `決め打ち${ch ? "" : "・カオス無し"}${bn ? "・普通の骨" : ""}`, ...(bn ? { bone: bn } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) });

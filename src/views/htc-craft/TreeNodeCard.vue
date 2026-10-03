@@ -14,7 +14,7 @@ import { computed, ref } from "vue";
 import { CERTAIN, hasSideOmen, type Goto, type SimAction, type SimNode } from "../../services/htc/sim-route";
 import { CATALYSTS } from "../../services/htc/quality";
 import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
-import { OMEN } from "../../services/htc/omens";
+import { OMEN, FACTION_OMEN } from "../../services/htc/omens";
 import type { Side } from "../../services/htc/step-odds";
 import type { useCraftTree } from "./useCraftTree";
 import ActionPicker from "./ActionPicker.vue";
@@ -55,7 +55,7 @@ function actionText(a: SimAction | null, off = false): string {
     case "annul": return join(a.side ? so(OMEN.annul[a.side]) : "", "消去のオーブ");
     case "essence": return join(off ? "" : a.removeSide === "auto" ? "外れのある側の結晶化のお告げ" : omenJa(OMEN.crystallisation[a.removeSide ?? (props.c.data.value?.mods.get(a.modId)?.type ?? "prefix") as Side]), "パーフェクトエッセンス");
     case "breach": return join(so(OMEN.crystallisation[a.removeSide ?? "prefix"]), "ブリーチのエッセンス (品質の上限 +20%)");
-    case "desecrate": return join(so(OMEN.necromancy[a.side]), a.echoes ? omenJa("OmenofAbyssalEchoes") : "", boneJa(a.bone));
+    case "desecrate": return join(so(OMEN.necromancy[a.side]), a.faction ? omenJa(FACTION_OMEN[a.faction]) : "", a.echoes ? omenJa("OmenofAbyssalEchoes") : "", boneJa(a.bone));
     case "light": return `${omenJa("OmenofLight")} + 消去のオーブ (冒涜だけ消す)`;
     case "whittle": return `${omenJa("OmenofWhittling")} + カオスオーブ (一番レベルの低い MOD を消す)`;
     case "check": return "確認だけ (打たない)";

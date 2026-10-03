@@ -14,7 +14,8 @@ import { familyBlocked, familyKeysOf, tierWeight } from "../../services/mods/mod
 import type { ItemBase, Mod } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { autoTreeMeta, breachPlanned, type AutoTreeInput } from "./tree-auto";
-import { OMEN, BREACH_FAMILY } from "../../services/htc/omens";
+import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG } from "../../services/htc/omens";
+import { bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 // 型と決まり (RULES) は 2026-09-26 に redo-cost-types.ts へ分けた
 import type { Bone, MethodEstimate, RedoPlan, Reroll } from "./redo-cost-types";
 export * from "./redo-cost-types";
@@ -48,6 +49,11 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     poolMemo.set(mk, v);
     return v;
   };
+  /** 勢力のお告げが効くか (武器・装飾品の、勢力のタグ付きの冒涜 MOD) → お告げ */
+  const factionOf = (m: Mod) => (bossOmenAllowed(cls.category) && m.source === "desecrated" ? desecrationOmenForMod(m) : undefined);
+  /** その側でその勢力の冒涜の MOD が何個出うるか (付いている系統・段の届かない物を除く) */
+  const factionCount = (s: Side, fo: keyof typeof FACTION_TAG, floor: number): number =>
+    cls.pools.desecrated[key(s)].filter((id) => { const x = d.mods.get(id); return !!x && x.tags.includes(FACTION_TAG[fo]) && !familyBlocked(x, occupied) && w(x, 0, floor) > 0; }).length;
   /** 異界の MOD (変質した鎖骨で冒涜した時だけ候補に入る。装飾品だけ) */
   const owIds = new Set([...(cls.pools.otherworldly?.prefixes ?? []), ...(cls.pools.otherworldly?.suffixes ?? [])]);
   const isOtherworldly = (id: string): boolean => owIds.has(id);
@@ -131,19 +137,31 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     return best!;
   }
   /** 冒涜で取る (その側に固定でない物が k 個ある = 満杯なら置き換えで巻き込む) */
-  function desecrateEst(t: TierTarget, k: number, bone: Bone, reroll: Reroll, redoPrior = 0): MethodEstimate {
+  function desecrateEst(t: TierTarget, k: number, bone: Bone, reroll: Reroll, redoPrior = 0, faction = false, echoes = true): MethodEstimate {
     const s = sideOf(t.modId), m = mod(t.modId);
     const floor = bone === "desecrate_ancient" ? 40 : 0;
     // 異界の MOD は変質した鎖骨でしか付かない
     const owOnly = isOtherworldly(t.modId);
-    const p1 = owOnly && bone !== "desecrate_altered" ? 0 : w(m, t.minTierIndex ?? 0, floor) / poolW(s, floor, bone === "desecrate_altered" ? "altered" : true, null, 1);
-    const pHit = 1 - (1 - p1) ** 6;
+    // 勢力のお告げ: 候補はその勢力の冒涜の MOD だけ・MOD ごとに等しく、3 択に入る確率 = min(3, N) / N、その中で狙いの段の割合
+    const fo = faction ? factionOf(m) : undefined;
+    let pHit: number;
+    if (fo) {
+      const n = factionCount(s, fo, floor);
+      const all = w(m, 0, floor);
+      const q = n > 0 && all > 0 ? (Math.min(3, n) / n) * (w(m, t.minTierIndex ?? 0, floor) / all) : 0;
+      pHit = echoes ? 1 - (1 - q) ** 2 : q;
+    } else {
+      const p1 = owOnly && bone !== "desecrate_altered" ? 0 : w(m, t.minTierIndex ?? 0, floor) / poolW(s, floor, bone === "desecrate_altered" ? "altered" : true, null, 1);
+      pHit = 1 - (1 - p1) ** (echoes ? 6 : 3);
+    }
     // 冒涜は最後の手。反対側が消えない物 + 狙い全部で埋まり、この側に枠があれば、ネクロマンシーのお告げは要らない
     const o = otherOf(s);
     const noOmen = lockedOn(o) + ts.filter((x) => sideOf(x.modId) === o).length >= limits[o]
       && limits[s] - (inp.startCount?.[s] ?? limits[s]) - k > 0;
-    const perTry = cur(bone) + (noOmen ? 0 : cur(OMEN.necromancy[s])) + cur("OmenofAbyssalEchoes");
+    const perTry = cur(bone) + (noOmen ? 0 : cur(OMEN.necromancy[s])) + (echoes ? cur("OmenofAbyssalEchoes") : 0) + (fo ? cur(FACTION_OMEN[fo]) : 0);
     let why: string | undefined;
+    if (faction && !fo) why = "勢力のお告げが効かない (防具・勢力の無い MOD)";
+    if (fo && bone === "desecrate_altered") why = "勢力のお告げと変質した鎖骨は一緒に使わない";
     if (inp.desecratedTaken) why = "冒涜の MOD がもう付いている";
     if (reach(t) < floor) why = "古代の骨では段が届かない";
     if (owOnly && bone !== "desecrate_altered") why = "異界の MOD は変質した鎖骨でしか付かない";
@@ -159,7 +177,8 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     // 満杯の側への冒涜は、最初の 1 回だけ固定でない物を置き換える (後は冒涜の外れが枠を埋め、光で消して打ち直すので
     // 巻き込まない)。その 1 回分の作り直し費用を足す (2026-09-26 レビュー: クラフター C の指摘で risk * 0 だったのを直した。
     // 外れのたびに足すと数えすぎで、見積もりが回した平均の 2 倍になった)
-    const e = finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss, safe: risk === 0, ...(why ? { why } : {}), ...(noOmen ? { noSideOmen: true } : {}) });
+    const e = finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss, safe: risk === 0, ...(why ? { why } : {}), ...(noOmen ? { noSideOmen: true } : {}),
+      ...(fo ? { faction: true } : {}), ...(echoes ? {} : { echoes: false }) });
     return risk > 0 ? { ...e, expected: e.expected + risk * redoPrior } : e;
   }
   /**
@@ -204,7 +223,9 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   if (desecOnly.length > 1) return null;
   const bestDesec = (t: TierTarget, k: number, redoPrior = 0): MethodEstimate => {
     const cands: MethodEstimate[] = [];
-    for (const bone of BONES) for (const rr of ["overwrite", "light"] as const) cands.push(desecrateEst(t, k, bone, rr, redoPrior));
+    // 勢力のお告げ (使える時だけ) × 反響の有無も比べる (2026-10-03、SaVeQ「反響は高い時は使わない」)
+    const factions = factionOf(mod(t.modId)) ? [false, true] : [false];
+    for (const bone of BONES) for (const rr of ["overwrite", "light"] as const) for (const f of factions) for (const ec of [true, false]) cands.push(desecrateEst(t, k, bone, rr, redoPrior, f, ec));
     return cands.reduce((a, b) => (b.expected < a.expected ? b : a));
   };
 
@@ -248,7 +269,8 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
         if (ex) annulSides[sd] = ex.plainAnnul ? "plain" : "side";
       }
       best = { rows, total, chaosPick: cc?.modId ?? null, desecratePick: dc && mod(dc.modId).source === "normal" ? dc.modId : null, exaltTiers, annulSides,
-        ...(dr?.reroll ? { reroll: dr.reroll } : {}), ...(dr?.bone === "desecrate" ? { bone: "preserved" as const } : {}) };
+        ...(dr?.reroll ? { reroll: dr.reroll } : {}), ...(dr?.bone === "desecrate" ? { bone: "preserved" as const } : {}),
+        ...(dr && !dr.faction ? { faction: false } : {}), ...(dr?.echoes === false ? { echoes: false } : {}) };
     }
   }
   return best;
