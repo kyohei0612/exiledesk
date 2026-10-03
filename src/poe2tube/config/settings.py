@@ -36,6 +36,11 @@ class Settings(BaseSettings):
         default=True,
         description="mp4 の書き出しに GPU (NVENC) を使う。使えない PC では自動で CPU (libx264)",
     )
+    render_workers: int = Field(
+        default=0,
+        ge=0,
+        description="コマを並べて作るプロセスの数 (0 = 自動: CPU の数 - 4、16 まで。1 = 並べない)",
+    )
     stage_capture: bool = Field(
         default=True, description="stage シーンを ExileDesk の実画面で撮る (False なら図解で代用)"
     )

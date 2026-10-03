@@ -61,15 +61,25 @@ def _tail(audio: Path, out: Path, vargs: list[str]) -> list[str]:
     ]
 
 
+Frame = Image.Image | tuple[int, int, bytes]  # 絵か、(幅, 高さ, RGB) (並べて作った時)
+
+
+def _rgb(frame: Frame) -> tuple[tuple[int, int], bytes]:
+    if isinstance(frame, tuple):
+        return (frame[0], frame[1]), frame[2]
+    rgb = frame.convert("RGB")
+    return rgb.size, rgb.tobytes()
+
+
 def encode_stream(
-    frames: Iterable[tuple[int, Image.Image]], audio: Path, fps: int, out: Path, use_gpu: bool
+    frames: Iterable[tuple[int, Frame]], audio: Path, fps: int, out: Path, use_gpu: bool
 ) -> int:
     """コマ (番号, 絵) を ffmpeg の標準入力に RGB で流して mp4 にする。書いたコマ数を返す."""
     it = iter(frames)
     first = next(it, None)
     if first is None:
         raise ValueError("コマが 1 枚も無い")
-    w, h = first[1].size
+    (w, h), data = _rgb(first[1])
     cmd = [ffmpeg_path(), "-y", "-hide_banner", "-loglevel", "error", "-f", "rawvideo"]
     cmd += ["-pix_fmt", "rgb24", "-s", f"{w}x{h}", "-framerate", str(fps), "-i", "-"]
     cmd += _tail(audio, out, video_args(use_gpu))
@@ -79,10 +89,10 @@ def encode_stream(
     assert proc.stdin is not None
     count = 0
     try:
-        proc.stdin.write(first[1].convert("RGB").tobytes())
+        proc.stdin.write(data)
         count = first[0] + 1
         for n, frame in it:
-            proc.stdin.write(frame.convert("RGB").tobytes())
+            proc.stdin.write(_rgb(frame)[1])
             count = n + 1
     finally:
         proc.stdin.close()

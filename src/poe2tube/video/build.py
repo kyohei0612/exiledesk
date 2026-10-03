@@ -18,9 +18,11 @@ from poe2tube.capture.views import capture_views, view_query
 from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
-from poe2tube.video.animate import iter_frames, sound_events, write_frames
+from poe2tube.video.animate import sound_events
 from poe2tube.video.clip_timing import plan_cue_timing, plan_hits
 from poe2tube.video.encode import encode_files, encode_stream
+from poe2tube.video.frames import iter_frames, make_context, write_frames
+from poe2tube.video.parallel import default_workers, iter_frames_parallel
 from poe2tube.video.results import ResultSet, load_results
 from poe2tube.video.timeline import Cue, build_cues, concat_audio, read_wav
 
@@ -140,8 +142,14 @@ def build_video(
         encode_files(work / "frames", audio, s.fps, out, s.nvenc)
     else:  # PNG を書かずに ffmpeg へ直接流す (GPU の書き出しを活かす、2026-10-04)
         shutil.rmtree(work / "frames", ignore_errors=True)
-        it = iter_frames(cues, rs, book, script.final_step, short, script.short_title)
-        frames = encode_stream(it, audio, s.fps, out, s.nvenc)
+        workers = s.render_workers or default_workers()
+        if workers > 1:  # CPU の複数のコアで並べて作る (2026-10-04)
+            ctx = make_context(cues, rs, book, script.final_step, short, script.short_title)
+            log.info("frames in parallel", workers=workers, total=ctx.total)
+            frames = encode_stream(iter_frames_parallel(ctx, workers), audio, s.fps, out, s.nvenc)
+        else:
+            it = iter_frames(cues, rs, book, script.final_step, short, script.short_title)
+            frames = encode_stream(it, audio, s.fps, out, s.nvenc)
     log.info("frames ready", frames=frames, seconds=round(frames / s.fps, 1))
     log.info("video built", mp4=str(out))
     return BuildResult(out, frames / s.fps, frames)
