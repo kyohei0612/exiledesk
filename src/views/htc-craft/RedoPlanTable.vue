@@ -70,6 +70,8 @@ const missJa = (r: RedoPlan["rows"][number]): string => {
  */
 const omenPrice = (side: Side): number => (c.prices.value?.omens[OMEN.annul[side]] ?? Infinity);
 const guardJa = (r: RedoPlan["rows"][number]): string => (r.expected > omenPrice(r.side) ? "守る" : "守らなくていい");
+/** 採用した形がこの表 (やり直しの費用からの見積もり) どおりか ([[auto-pick.ts]] の候補の名前) */
+const fromPlan = computed(() => !props.picked?.label || props.picked.label.startsWith("やり直しの費用から"));
 const pctHit = (p: number): string => (p >= 1 ? "確定" : `${(p * 100).toFixed(p < 0.01 ? 2 : 1)}%`);
 </script>
 
@@ -79,6 +81,10 @@ const pctHit = (p: number): string => (p >= 1 ? "確定" : `${(p * 100).toFixed(
         <b>取り方</b> <span class="opacity-60">見込み {{ t.baseEx.value > 0 || socketEx > 0 ? `初動 ${c.money(t.baseEx.value)}${socketEx > 0 ? ` + ソケット ${c.money(socketEx)}` : ""} + クラフト ${c.money(plan.total)} = ` : "" }}<b class="opacity-100">{{ c.money(plan.total + t.baseEx.value + socketEx) }}</b></span>
         <template v-if="picked"><span class="opacity-60"> ・ 採用「{{ picked.label }}」</span><template v-if="picked.expected != null"><span class="opacity-60">、平均 </span>{{ c.money(picked.expected) }}<span v-if="picked.done != null && picked.done < 0.9" class="text-rose-300"> (完成 {{ (picked.done * 100).toFixed(0) }}% しか無い)</span></template></template>
       </summary>
+      <!-- 採用がこの表の形でない時 (2026-10-03: 手袋 5 つで見込み 4,047 / 採用の平均 9,800 と並んでいて、どちらが本当か分からなかった) -->
+      <p v-if="picked && !fromPlan" class="mt-1 rounded bg-amber-500/10 px-2 py-1 text-amber-100">
+        この表は見積もりで選んだ取り方。回して比べると別の形「{{ picked.label }}」の方が良かったので、下の手順はそちら<template v-if="picked.expected != null"> (平均 {{ c.money(picked.expected) }})</template>。表の見込みは回した値より低く出ることがある
+      </p>
       <!-- 狙いごとの行 (オーナー 2026-09-26:「境目が分かりづらくてブス」→ 縞の行 + 数字は見出し付きの小さな枠) -->
       <div class="mt-2 overflow-hidden rounded-lg border border-white/[0.08]">
         <div v-for="(r, i) in planRows" :key="r.modId" class="grid grid-cols-[minmax(13rem,1fr)_minmax(18rem,1.6fr)_auto] items-center gap-x-4 px-3 py-2" :class="i % 2 ? 'bg-white/[0.03]' : 'bg-black/20'">
