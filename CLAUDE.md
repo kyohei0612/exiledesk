@@ -18,7 +18,8 @@
 ```bash
 python scripts/run_stage.py    data/briefs/<name>.json   # ExileDesk で手順を引く → data/results/<name>.json
 # (台本は Claude が導入から 1 章ずつ手で書く。approved/ の章をつないで data/scripts/<name>.json。write_script.py で全編を一気に生成しない)
-python scripts/build_video.py  data/scripts/<name>.json  # 音声・図解・撮影・合成 → output/<name>.mp4
+python scripts/build_chapter.py data/scripts/<name>.json --only N  # 章が OK になるたび: その章の 1080p 動画 (音入り) → 確認はこれで
+python scripts/build_video.py  data/scripts/<name>.json  # 全章そろったら: 作り済みの章をつないで音と合わせる → output/<name>.mp4
 python scripts/preview_frames.py data/scripts/<name>.json  # 台本チェック用の静止画 → output/preview/
 python scripts/make_thumbnail.py --top ... --main ... --bg cache/stage/<hash>/step_N.png --out output/<name>_thumb.jpg
 python scripts/publish_video.py <name>            # 投稿情報 data/publish/<name>.json を作って表示 (dry-run)
@@ -36,6 +37,8 @@ python scripts/publish_video.py <name> --execute  # チョコバナナに「非�
 - **1 本の流れ (kyohei 2026-10-02)**: ① 既定の質問 → ② **調べて情報を取る → ファクトチェック** (`_facts.md` に追記、ゲームのデータ優先) → ③ **導入を書く** → ④ **終わりまで 1 章ずつ** (合格したら次) → ⑤ 台本で使う画面を洗い出して **撮影用の素材を要求・実装** (ExileDesk は開発版で確認 → リリース、POE2Tube 側の素材は自前) → ⑥ **撮影** → ⑦ **合体** (build_video)。撮影は最後
 - **一気に全編を作る台本は書かない** (`write_script.py` で全体を生成しない、kyohei 2026-10-02)。導入から 1 章ずつ書いて、合格したら次の章 (2026-09-30)。確定した章は `output/work/<name>/approved/`
 - **台本ができたら動画にする前に kyohei と 1 章ずつチェック** (問題 → 直した案の表 → OK で反映 → 次の章)
+- **章ごとに動画を作る (kyohei 2026-10-04)**: 構成表で章の数を決めて台本 JSON の `planned_sections` に書く。章が OK になるたびに `build_chapter.py --only N` でその章の 1080p 動画 (その章の声・BGM・効果音入り) を作り、**確認はその動画で** (別の確認用は作らない)。直しはその章だけ作り直し (中身が同じ章は自動で使い回す)。最後は build_video がつなぐだけ (約 1 分)
+- 動画づくりの速さ: コマは CPU の 16 プロセスで並べて作り、書き出しは GPU (NVENC)。BGM は -34 dB (うっすら聞こえるくらい)
 - **全章 OK になったら、聞かずにそのまま build_video で動画まで作って送る** (kyohei 2026-09-28「台本の後に基本的に動画作る」)
 - **本編の動画を作っている間に、ショートの案を出して並行で進める** (台本とセット、kyohei 2026-09-28)。ショートは最後まで見られない前提で、最初の 2 秒で問い、本編への案内は出しっぱなし。**ショートは 1 本、尺は 1 分前後か未満** (kyohei 2026-10-02、ADR 005)
 - **海外向け**: 自動吹き替えはチャンネルの既定設定でオン (YouTube Studio、API に項目なし)。英訳は自動吹き替えに任せ、タイトル・説明文の翻訳は付けない (kyohei 2026-09-28)
