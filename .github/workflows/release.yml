@@ -37,7 +37,11 @@ jobs:
       # 1.1 GB のキャッシュを毎回作り直していた (保存に 52 秒 + 10 GB の枠を食って古い物が消える)。
       - name: Cache key (自分の版を除いた Cargo.lock)
         shell: bash
-        run: sed '/^name = "exiledesk"$/,+1 s/^version = .*/version = "x"/' src-tauri/Cargo.lock > .cargo-lock-key
+        # rustc の版も入れる (2026-10-03): stable が 1.98.1 → 1.99.0 に上がった後も Cargo.lock が同じでキーが変わらず、
+        # 古い rustc で作ったキャッシュを毎回戻しては全部作り直していた (tauri-action 3 分 → 8 分)。キーが同じだと新しい物で上書きもされない
+        run: |
+          sed '/^name = "exiledesk"$/,+1 s/^version = .*/version = "x"/' src-tauri/Cargo.lock > .cargo-lock-key
+          rustc -V >> .cargo-lock-key
 
       - name: Cache Rust target
         uses: actions/cache@v4
