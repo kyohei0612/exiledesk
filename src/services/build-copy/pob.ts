@@ -93,7 +93,7 @@ const SLOTS: Array<[string, string, BuildItemKind]> = [
 ];
 
 /** 1 アイテムの文面 (PoB の Item の中身) を読む */
-function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "kind"> {
+export function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "kind"> {
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const rarity = ((lines[0] ?? "").replace("Rarity: ", "").trim() || "NORMAL") as BuildItem["rarity"];
   const name = lines[1] ?? "";

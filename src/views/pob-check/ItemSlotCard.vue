@@ -9,6 +9,9 @@ import { linesToJa, rareNameJa } from "../../services/pob-check/item-text";
 import { slotJa as slotJaOf } from "../../services/pob-check/slots";
 import type { SlotView } from "../../services/pob-check/api";
 import type { PasteNote } from "./usePobCheck";
+import { toBuildItem } from "../../services/pob-check/hover-item";
+import ItemArt from "../../components/decor/ItemArt.vue";
+import BuildItemName from "../../components/build-copy/BuildItemName.vue";
 
 const props = defineProps<{ entry: SlotView; disabled: boolean; activeSet: number }>();
 /** 今使っていない方の武器セット (計算に入らない) */
@@ -38,6 +41,8 @@ const title = computed(() => {
   return JA_BASE[it.base] ?? it.base;
 });
 const baseJa = computed(() => (props.entry.item ? (JA_BASE[props.entry.item.base] ?? props.entry.item.base) : ""));
+/** 名前にカーソルで開くカード (値段のタブと同じ BuildItemHoverCard) の中身 */
+const hoverItem = computed(() => (props.entry.item ? toBuildItem(props.entry.item, props.entry.slot, { jewel: props.entry.jewel, weaponSet: props.entry.weaponSet }) : null));
 
 /** MOD の行 (日本語にして出す) */
 const mods = ref<Array<{ text: string; cls: string }>>([]);
@@ -97,8 +102,16 @@ function submit(): void {
       </span>
     </div>
     <template v-if="entry.item">
-      <p class="mt-1 truncate text-[13px] font-bold" :class="RARITY_CLS[entry.item.rarity] ?? ''">{{ title }}</p>
-      <p v-if="title !== baseJa" class="truncate text-[11px] text-[var(--exile-color-text-tertiary)]">{{ baseJa }}</p>
+      <!-- ゲーム内の絵 (左) と 名前 / ベース。名前にカーソルでアイテムのカード (2026-10-03、オーナー「ホバーでカード表示はいつもどおり」「アイコンで比較」) -->
+      <div class="mt-1 flex items-center gap-2">
+        <ItemArt :name="entry.item.title" :base="entry.item.base" :rarity="entry.item.rarity" :size="36" />
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-[13px] font-bold" :class="RARITY_CLS[entry.item.rarity] ?? ''">
+            <BuildItemName v-if="hoverItem" :item="hoverItem" :label="title" />
+          </p>
+          <p v-if="title !== baseJa" class="truncate text-[11px] text-[var(--exile-color-text-tertiary)]">{{ baseJa }}</p>
+        </div>
+      </div>
       <ul class="mt-1.5 space-y-px text-[11px] leading-snug">
         <li v-for="(m, i) in mods" :key="i" :class="m.cls">{{ m.text }}</li>
         <li v-if="entry.item.corrupted" class="text-rose-300">コラプト</li>

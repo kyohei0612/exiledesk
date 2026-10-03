@@ -12,6 +12,7 @@ import { computed, onMounted, ref } from "vue";
 import GameItemCard from "./GameItemCard.vue";
 import RichText from "./RichText.vue";
 import GemLevelBlock from "./GemLevelBlock.vue";
+import GemIcon from "./GemIcon.vue";
 import { gemHoverOf, loadGemHover, type GemLevelInfo } from "../../services/gem-hover";
 
 const props = defineProps<{ en: string; x: number; y: number; layerKey: number; pinned: boolean; z: number }>();
@@ -58,6 +59,10 @@ function paras(t: string | undefined): string[] {
     <template v-if="gem">
       <p class="g-dim text-[12px]">{{ kindLine }}</p>
       <p v-if="gem.tags?.length" class="g-white text-[12px]">{{ gem.tags.join(", ") }}</p>
+      <!-- ジェムの絵 (宝石。無ければスキルのアイコン、どちらも無ければ出さない) (2026-10-03、オーナー「アイコンで比較できる UI」) -->
+      <div class="flex justify-center">
+        <GemIcon :en="en" kind="gem" :size="56" class="my-1.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" />
+      </div>
       <!-- レベルの切り替え (ゲームは今のレベルの数値だけを出す) -->
       <div v-if="levels.length > 1" class="flex justify-center gap-1 mt-1.5">
         <button

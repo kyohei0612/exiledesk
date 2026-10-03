@@ -4,6 +4,8 @@
 -->
 <script setup lang="ts">
 import { gemJa, type GemView, type GroupView } from "../../services/pob-check/api";
+import GemName from "../../components/decor/GemName.vue";
+import GemIcon from "../../components/decor/GemIcon.vue";
 
 /** ± のボタン */
 const step = "h-5 w-5 rounded bg-white/5 text-[12px] leading-none text-[var(--exile-color-text-secondary)] hover:bg-white/15 disabled:opacity-30";
@@ -25,9 +27,11 @@ const emit = defineEmits<{
   <!-- 枠は全画面共通の .card (2026-10-03)。オフの組は暗く薄く -->
   <div class="card p-3 transition-opacity" :class="group.enabled ? '' : 'border-white/5 bg-black/20 opacity-55'">
     <div class="mb-2 flex items-center justify-between gap-2">
-      <p class="truncate text-[13px] font-bold">
-        {{ gemJa(group.gems[0]?.name ?? "") }}
-        <span v-if="group.slot" class="ml-1 text-[11px] font-normal text-[var(--exile-color-text-tertiary)]">{{ group.slot }}</span>
+      <!-- 組の名前 = 先頭のジェム。アイコンと、カーソルでジェムのカード (2026-10-03) -->
+      <p class="flex min-w-0 items-center gap-1.5 text-[13px] font-bold">
+        <GemIcon v-if="group.gems[0]" :en="group.gems[0].name" :size="22" />
+        <GemName v-if="group.gems[0]" :en="group.gems[0].name" :label="gemJa(group.gems[0].name)" class="truncate" />
+        <span v-if="group.slot" class="shrink-0 text-[11px] font-normal text-[var(--exile-color-text-tertiary)]">{{ group.slot }}</span>
       </p>
       <!-- 組のオン・オフ (スイッチ) -->
       <button
@@ -55,10 +59,12 @@ const emit = defineEmits<{
           :disabled="disabled"
           @click="emit('gem', gem.j, 'enabled', !gem.enabled)"
         >✓</button>
+        <!-- アイコン (アクティブ = スキルのアイコン、サポート = ジェムの絵) と名前 (カーソルでカード。サポートも) -->
+        <GemIcon :en="gem.name" :size="18" :class="gem.enabled ? '' : 'opacity-40'" />
         <span
           class="min-w-0 flex-1 truncate text-[12px]"
           :class="[gem.support ? 'text-sky-100' : 'font-semibold text-amber-50', gem.enabled ? '' : 'text-[var(--exile-color-text-tertiary)] line-through']"
-        >{{ gemJa(gem.name) }}</span>
+        ><GemName :en="gem.name" :label="gemJa(gem.name)" /></span>
         <template v-if="!gem.support">
           <!-- レベル -->
           <span class="flex items-center gap-0.5 text-[11px] tabular-nums">

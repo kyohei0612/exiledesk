@@ -418,12 +418,31 @@ export function usePobCheck() {
   }
 
   /** 全部戻す (2026-10-03 オーナー「火力チェックのリセット機能も欲しい」): 読み込んだ元をもう 1 回読み込む。比べる元も読み込んだ時に戻る。相手は残す */
-  /** 読み込んであれば押せる (2026-10-03 オーナー「リセットが死んでる」: 変えた所の記録が無い時 (今を比べる元にした後など) に押せなくなっていた) */
-  const canReset = computed(() => !!lastSource.value);
-  async function resetAll(): Promise<void> {
-    const src = lastSource.value;
-    if (!src) return;
-    await load({ text: src.text, code: src.code });
+  /**
+   * リセット = この画面を初めて開いた状態に戻す (2026-10-03 オーナー「全部戻すボタンはリセットボタンへ。初めてこのページを開く状態へ」)。
+   * 自分のビルド・比べる相手・試算・入力欄・変えた所を全部消す。PoB の中身は次の読み込みで入れ替わるので触らない。
+   * 何か読み込んである、または欄に何か入っていれば押せる
+   */
+  const canReset = computed(() => !!cur.value || !!target.value || !!input.value || !!targetInput.value);
+  function resetAll(): void {
+    if (loading.value || busy.value) return;
+    recordHistory("pob-check", "reset", { had: { mine: !!cur.value, target: !!target.value } });
+    cur.value = null;
+    base.value = null;
+    baseAt.value = "";
+    changes.value = [];
+    lastSource.value = null;
+    loadedFrom.value = "";
+    focusKey.value = null;
+    input.value = "";
+    treeNodes.value = [];
+    power.value = null;
+    powerProgress.value = "";
+    error.value = null;
+    estimates.value = null;
+    adopted.value = new Set();
+    clearTarget();
+    targetInput.value = "";
   }
   function setBaseToNow(): void {
     base.value = cur.value;

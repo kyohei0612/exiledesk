@@ -7,6 +7,8 @@ import { computed } from "vue";
 import DiffBadge from "./DiffBadge.vue";
 import { fmtNum, TYPE_STYLE } from "./fmt";
 import { gemJa, type GroupView, type SkillView } from "../../services/pob-check/api";
+import GemName from "../../components/decor/GemName.vue";
+import GemIcon from "../../components/decor/GemIcon.vue";
 
 const props = defineProps<{
   rows: Array<{ g: GroupView; s: SkillView; key: string; count: number }>;
@@ -45,8 +47,10 @@ function parts(s: SkillView): Array<{ type: string; pct: number; color: string; 
       <!-- 全体に占める割合の帯 (後ろ) -->
       <div class="pointer-events-none absolute inset-y-0 left-0 bg-gradient-to-r from-amber-400/[0.10] to-transparent" :style="{ width: `${(x.s.game.dps / maxDps) * 100}%` }" />
       <div class="relative min-w-0">
+        <!-- スキルのアイコンと名前 (名前にカーソルでジェムのカード、他の画面と同じ GemName。2026-10-03) -->
         <p class="flex items-center gap-1.5 truncate text-[13px] font-bold">
-          {{ gemJa(x.s.name) }}
+          <GemIcon :en="x.s.name" :size="22" />
+          <GemName :en="x.s.name" :label="gemJa(x.s.name)" class="truncate" />
           <span v-if="x.s.game.minionName" class="truncate text-[11px] font-semibold text-emerald-200/90">→ {{ x.s.game.minionName }}</span>
           <span class="rounded bg-white/10 px-1 text-[10px] font-semibold text-[var(--exile-color-text-secondary)]">Lv{{ x.s.level }}</span>
           <span v-if="x.count > 1" class="rounded bg-white/10 px-1 text-[10px] font-semibold text-[var(--exile-color-text-secondary)]" title="同じスキルが同じ数字で複数あるので 1 行にまとめました (合計には 1 つ分だけ)">×{{ x.count }}</span>

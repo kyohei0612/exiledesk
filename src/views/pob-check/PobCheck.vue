@@ -19,7 +19,7 @@ import PricesTab from "./PricesTab.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck, type PasteNote } from "./usePobCheck";
 
-const { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 /**
@@ -135,7 +135,7 @@ const resists = computed(() =>
   <!--
     2026-10-03 頭の整理 (オーナー「UI のブスさをまとめてきれいにシンプルに見やすい状態に」):
       上の帯 = 画面名だけ (他の画面と同じ TabBar)。読み込み系 (自分のコード / 比べる相手 / 同梱の PoB を開く) は 1 つの薄い枠に、
-      操作のボタン (今を比べる元に / 全部戻す / 共有 / ビルドプランナーに書き出す) は上のバーの右に 1 列の小さい枠だけのボタン。
+      操作のボタン (リセット / 共有 / ビルドプランナーに書き出す) は上のバーの右に 1 列の小さい枠だけのボタン。
       主役は「スキルの DPS と差」(上のバーの大きな数字とスキルの表)。読み込む前の案内は 1 行
   -->
   <div class="flex h-full flex-col overflow-hidden">
@@ -244,15 +244,9 @@ const resists = computed(() =>
           </div>
           <!-- 操作 (1 列の小さい枠だけのボタン) -->
           <div class="flex items-center gap-1.5 self-end">
-            <button type="button" class="btn btn-sm btn-outline" :disabled="sameAsBase" title="今の状態を比べる元にして、ここからの差を見る" @click="setBaseToNow">今を比べる元に</button>
-            <!-- 全部戻す: 読み込んだ元をもう 1 回読み込む (変えた所が 1 つ以上ある時だけ)。相手は残る -->
-            <button
-              type="button"
-              class="btn btn-sm btn-outline"
-              :disabled="!canReset || busy || loading"
-              title="変えた所を全部捨てて、読み込んだ時の状態に戻す (比べる元も読み込んだ時に戻る。比べる相手はそのまま)"
-              @click="resetAll"
-            >全部戻す</button>
+            <!-- 「今を比べる元に」は無し (2026-10-03 オーナー「比べる相手の欄を押した瞬間に比べる元になるので不要」)。差は読み込んだ時との差で固定 -->
+            <!-- リセット: この画面を初めて開いた状態に (自分・相手・試算・入力欄を全部消す) -->
+            <button type="button" class="btn btn-sm btn-outline" :disabled="!canReset || busy || loading" title="自分のビルド・比べる相手・試算・入力欄を全部消して、この画面を開いた直後の状態に戻す" @click="resetAll">リセット</button>
             <div class="relative">
               <button type="button" class="btn btn-sm btn-outline" title="今のビルド (変えた所も込み) を PoB のコードにしてコピー。PoB や poe.ninja 以外の人にも渡せる" @click="onShare">共有 (PoB コード)</button>
               <span v-if="shareMsg" class="absolute right-0 top-full z-10 mt-1 whitespace-nowrap rounded bg-black/80 px-2 py-0.5 text-[11px] text-sky-200">{{ shareMsg }}</span>

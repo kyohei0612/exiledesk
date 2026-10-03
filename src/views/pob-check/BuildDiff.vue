@@ -26,6 +26,11 @@ import { openTradeQuery, prepareTradeLinks, rareModsSearchQuery, uniqueSearchQue
 import type { Estimate, SkillRow } from "./usePobCheck";
 import { fmtNum } from "./fmt";
 import DiffBadge from "./DiffBadge.vue";
+import GemName from "../../components/decor/GemName.vue";
+import GemIcon from "../../components/decor/GemIcon.vue";
+import ItemArt from "../../components/decor/ItemArt.vue";
+import BuildItemName from "../../components/build-copy/BuildItemName.vue";
+import { toBuildItem } from "../../services/pob-check/hover-item";
 
 const props = defineProps<{
   mine: Summary;
@@ -129,11 +134,11 @@ const gemCards = computed(() => {
     }
     for (const rest of left.values()) for (const m of rest) rows.push({ mine: m, target: null, weaker: false });
     const diffCount = rows.filter((r) => !r.mine || !r.target || r.weaker).length;
-    return { title: gemJa(d.active.name), missingGroup: d.kind === "missing", fromItem: d.fromItem, diffCount, rows };
+    return { title: gemJa(d.active.name), en: d.active.name, missingGroup: d.kind === "missing", fromItem: d.fromItem, diffCount, rows };
   });
 });
-/** セルの文 (名前 + Lv と品質。品質 0 は出さない) */
-const gemCellText = (c: GemCell): string => `${gemJa(c.name)} Lv${c.level}${c.quality ? ` 品質${c.quality}%` : ""}`;
+/** セルの数字 (Lv と品質。品質 0 は出さない)。名前はアイコン + GemName で出す */
+const gemCellNums = (c: GemCell): string => `Lv${c.level}${c.quality ? ` 品質${c.quality}%` : ""}`;
 
 const JA_BASE = itemsJaClient as Record<string, string>;
 const JA_UNIQUE = uniqueNamesJa as Record<string, string>;
@@ -145,6 +150,9 @@ const nameJa = (it: ItemView | null): string => {
   if (r === "RARE") return `${rareNameJa(it.title) ?? it.title} (${base})`;
   return base;
 };
+
+/** 名前にカーソルで開くカード (値段のタブと同じ BuildItemHoverCard) の中身。欄の名前も入る */
+const hoverOf = (it: ItemView, slot: string) => toBuildItem(it, slot);
 
 const diff = computed(() => diffBuilds(props.mine, props.target));
 
@@ -222,12 +230,14 @@ const STATS = [
       <!-- DPS の変化 (主役) -->
       <div v-if="focus && targetSkill" class="mt-3 flex flex-wrap items-end gap-x-5 gap-y-2">
         <div>
-          <p class="note">自分 — {{ gemJa(focus.s.name) }}</p>
+          <p class="note flex items-center gap-1">自分 — <GemIcon :en="focus.s.name" :size="16" /><GemName :en="focus.s.name" :label="gemJa(focus.s.name)" /></p>
           <p class="text-3xl font-black leading-none tabular-nums text-amber-200">{{ fmtNum(focus.s.game.dps) }}</p>
         </div>
         <p class="pb-0.5 text-2xl leading-none text-[var(--exile-color-text-tertiary)]">→</p>
         <div>
-          <p class="note">相手 — {{ gemJa(targetSkill.name) }}<span v-if="targetSkill.name !== focus.s.name"> (同じスキルが無いので一番高い物)</span></p>
+          <p class="note flex items-center gap-1">
+            相手 — <GemIcon :en="targetSkill.name" :size="16" /><GemName :en="targetSkill.name" :label="gemJa(targetSkill.name)" /><span v-if="targetSkill.name !== focus.s.name"> (同じスキルが無いので一番高い物)</span>
+          </p>
           <p class="text-3xl font-black leading-none tabular-nums text-sky-200">{{ fmtNum(targetSkill.game.dps) }}</p>
         </div>
         <DiffBadge class="mb-0.5" :now="targetSkill.game.dps" :before="focus.s.game.dps" size="lg" />
@@ -272,11 +282,32 @@ const STATS = [
           <tbody>
             <template v-for="e in estimates.list" :key="e.c.key">
               <tr class="border-t border-white/[0.06] align-top first:border-t-0">
-                <td class="px-3 py-2 font-semibold text-[var(--exile-color-text-secondary)]">{{ what(e.c) }}</td>
+                <!-- 何を: 組はアイコンと名前 (カーソルでジェムのカード) -->
+                <td class="px-3 py-2 font-semibold text-[var(--exile-color-text-secondary)]">
+                  <span v-if="e.c.kind === 'gems'" class="inline-flex items-center gap-1">
+                    <GemIcon :en="e.c.active.name" :size="18" /><GemName :en="e.c.active.name" :label="gemJa(e.c.active.name)" /> の組{{ e.c.gi ? "" : " (組を足す)" }}
+                  </span>
+                  <template v-else>{{ what(e.c) }}</template>
+                </td>
+                <!-- 自分 → 相手: 装備は絵を左右に並べて真ん中に → (名前にカーソルでアイテムのカード)、組は相手のジェムのアイコンも -->
                 <td class="py-2 pr-3">
-                  <span :class="e.c.kind === 'item' && !e.c.from ? 'text-rose-300/80' : 'text-[var(--exile-color-text-tertiary)]'">{{ fromTo(e.c).from }}</span>
-                  <span class="mx-1.5 text-[var(--exile-color-text-tertiary)]">→</span>
-                  <span class="text-amber-200">{{ fromTo(e.c).to }}</span>
+                  <span v-if="e.c.kind === 'item'" class="inline-flex flex-wrap items-center gap-1.5">
+                    <ItemArt v-if="e.c.from" :name="e.c.from.title" :base="e.c.from.base" :rarity="e.c.from.rarity" :size="28" />
+                    <BuildItemName v-if="e.c.from" :item="hoverOf(e.c.from, e.c.slot)" :label="nameJa(e.c.from)" class="text-[var(--exile-color-text-tertiary)]" />
+                    <span v-else class="text-rose-300/80">無し</span>
+                    <span class="text-[var(--exile-color-text-tertiary)]">→</span>
+                    <ItemArt :name="e.c.to.title" :base="e.c.to.base" :rarity="e.c.to.rarity" :size="28" />
+                    <BuildItemName :item="hoverOf(e.c.to, e.c.slot)" :label="nameJa(e.c.to)" class="text-amber-200" />
+                  </span>
+                  <template v-else>
+                    <span class="text-[var(--exile-color-text-tertiary)]">{{ fromTo(e.c).from }}</span>
+                    <span class="mx-1.5 text-[var(--exile-color-text-tertiary)]">→</span>
+                    <span class="text-amber-200">{{ fromTo(e.c).to }}</span>
+                    <!-- 相手の組のジェム (アイコンにカーソルでカード) -->
+                    <span v-if="e.c.kind === 'gems'" class="ml-1.5 inline-flex items-center gap-0.5 align-middle">
+                      <GemIcon v-for="(g, gi) in e.c.gems" :key="gi" :en="g.name" :size="16" hover :title="gemJa(g.name)" />
+                    </span>
+                  </template>
                 </td>
                 <!-- DPS の変化 (この表の主役なので大きく) -->
                 <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
@@ -346,8 +377,9 @@ const STATS = [
       </h2>
       <div v-if="gems.groups.length" class="grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3">
         <div v-for="(c, ci) in gemCards" :key="ci" class="card p-3">
-          <p class="flex items-baseline gap-2 text-[12px]">
-            <span class="font-bold text-amber-200">{{ c.title }}</span>
+          <p class="flex items-center gap-2 text-[12px]">
+            <GemIcon :en="c.en" :size="20" />
+            <span class="font-bold text-amber-200"><GemName :en="c.en" :label="c.title" /></span>
             <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ c.missingGroup ? "自分に無い組" : `の組 ・ 差 ${c.diffCount} 件` }}</span>
             <span v-if="c.fromItem" class="text-[10px] text-sky-300/70" title="アミュレットやセプターなど装備が与えるスキル。アクティブの Lv / 品質は装備で決まるので、付けているサポートだけ比べる">装備が与えるスキル ・ サポートだけ比べる</span>
           </p>
@@ -355,12 +387,23 @@ const STATS = [
           <div class="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 text-[11px] leading-snug">
             <p class="diff-col-head">自分</p>
             <p class="diff-col-head diff-col-head-target">相手</p>
+            <!-- 各セル: アイコン + 名前 (カーソルでカード。サポートも) + Lv / 品質。行の高さは 1 行のまま (アイコンは字の高さ) -->
             <template v-for="(r, ri) in c.rows" :key="ri">
-              <p :class="r.mine ? (r.weaker ? 'text-[var(--exile-color-text-tertiary)]' : r.target ? 'text-[var(--exile-color-text-secondary)]' : 'text-[var(--exile-color-text-primary)]') : 'text-[var(--exile-color-text-tertiary)]'">
-                {{ r.mine ? gemCellText(r.mine) : "—" }}
+              <p class="flex min-w-0 items-center gap-1" :class="r.mine ? (r.weaker ? 'text-[var(--exile-color-text-tertiary)]' : r.target ? 'text-[var(--exile-color-text-secondary)]' : 'text-[var(--exile-color-text-primary)]') : 'text-[var(--exile-color-text-tertiary)]'">
+                <template v-if="r.mine">
+                  <GemIcon :en="r.mine.name" :size="16" />
+                  <GemName :en="r.mine.name" :label="gemJa(r.mine.name)" class="truncate" />
+                  <span class="shrink-0 tabular-nums">{{ gemCellNums(r.mine) }}</span>
+                </template>
+                <template v-else>—</template>
               </p>
-              <p :class="r.target ? (!r.mine || r.weaker ? 'font-semibold text-emerald-200' : 'text-[var(--exile-color-text-secondary)]') : 'text-[var(--exile-color-text-tertiary)]'">
-                {{ r.target ? gemCellText(r.target) : "—" }}
+              <p class="flex min-w-0 items-center gap-1" :class="r.target ? (!r.mine || r.weaker ? 'font-semibold text-emerald-200' : 'text-[var(--exile-color-text-secondary)]') : 'text-[var(--exile-color-text-tertiary)]'">
+                <template v-if="r.target">
+                  <GemIcon :en="r.target.name" :size="16" />
+                  <GemName :en="r.target.name" :label="gemJa(r.target.name)" class="truncate" />
+                  <span class="shrink-0 tabular-nums">{{ gemCellNums(r.target) }}</span>
+                </template>
+                <template v-else>—</template>
               </p>
             </template>
           </div>
@@ -381,17 +424,35 @@ const STATS = [
         <template v-for="d in diff.slots" :key="d.slot">
           <div v-if="d.kind === 'unique'" class="card p-3">
             <p class="text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">{{ slotJa(d.slot) }} — ユニーク (装備ごと)</p>
-            <p class="mt-1.5 text-[13px]">
-              <span :class="d.from ? 'text-[var(--exile-color-text-secondary)]' : 'text-rose-300/80'">{{ nameJa(d.from) }}</span>
-              <span class="mx-2 text-[var(--exile-color-text-tertiary)]">→</span>
-              <span class="font-bold text-amber-200">{{ nameJa(d.to) }}</span>
-            </p>
+            <!-- 絵を左右に並べて真ん中に → (2026-10-03 オーナー「アイコンで比較できる UI」)。名前にカーソルでアイテムのカード -->
+            <div class="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 text-[12px]">
+              <div class="flex min-w-0 items-center gap-1.5">
+                <ItemArt v-if="d.from" :name="d.from.title" :base="d.from.base" :rarity="d.from.rarity" :size="36" />
+                <BuildItemName v-if="d.from" :item="hoverOf(d.from, d.slot)" :label="nameJa(d.from)" class="min-w-0 text-[var(--exile-color-text-secondary)]" />
+                <span v-else class="text-rose-300/80">無し</span>
+              </div>
+              <span class="text-[var(--exile-color-text-tertiary)]">→</span>
+              <div class="flex min-w-0 items-center gap-1.5">
+                <ItemArt :name="d.to.title" :base="d.to.base" :rarity="d.to.rarity" :size="36" />
+                <BuildItemName :item="hoverOf(d.to, d.slot)" :label="nameJa(d.to)" class="min-w-0 font-bold text-amber-200" />
+              </div>
+            </div>
           </div>
           <div v-else-if="d.kind === 'mods'" class="card p-3">
-            <p class="text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">
-              {{ slotJa(d.slot) }} — 足りない MOD {{ d.mods.length }} 行
-              <span class="ml-1 font-normal">({{ nameJa(d.from) }} → {{ nameJa(d.to) }})</span>
-            </p>
+            <p class="text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">{{ slotJa(d.slot) }} — 足りない MOD {{ d.mods.length }} 行</p>
+            <!-- 自分の物 → 相手の物 (絵と名前。名前にカーソルでアイテムのカード) -->
+            <div class="mt-1 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 text-[11px]">
+              <div class="flex min-w-0 items-center gap-1.5">
+                <ItemArt v-if="d.from" :name="d.from.title" :base="d.from.base" :rarity="d.from.rarity" :size="28" />
+                <BuildItemName v-if="d.from" :item="hoverOf(d.from, d.slot)" :label="nameJa(d.from)" class="min-w-0 text-[var(--exile-color-text-secondary)]" />
+                <span v-else class="text-rose-300/80">無し</span>
+              </div>
+              <span class="text-[var(--exile-color-text-tertiary)]">→</span>
+              <div class="flex min-w-0 items-center gap-1.5">
+                <ItemArt :name="d.to.title" :base="d.to.base" :rarity="d.to.rarity" :size="28" />
+                <BuildItemName :item="hoverOf(d.to, d.slot)" :label="nameJa(d.to)" class="min-w-0 text-amber-200" />
+              </div>
+            </div>
             <div class="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-2 text-[11px]">
               <p class="diff-col-head">自分</p>
               <span />

@@ -9,6 +9,7 @@
 import { computed, onMounted } from "vue";
 import GameItemCard from "../decor/GameItemCard.vue";
 import RichText from "../decor/RichText.vue";
+import ItemArt from "../decor/ItemArt.vue";
 import { jaUniqueText, loadUniqueHoverDict } from "../../services/mods/unique-mod-ja";
 import { jaTypeName, jaUniqueName } from "../../services/trade2/localize";
 import { jaCurrency } from "../../i18n/currencies-ja";
@@ -27,6 +28,10 @@ const sub = computed(() => (unique.value && props.item.base ? jaTypeName(props.i
 <template>
   <GameItemCard :show="true" :x="x" :y="y" :name="name" :sub="sub" :tone="tone" :width="400" :layer-key="layerKey" :pinned="pinned" :z="z">
     <p class="g-dim text-[12px]">{{ item.slot }}<template v-if="item.rarity === 'RARE' && item.name"> · {{ item.name }}</template></p>
+    <!-- ゲーム内の絵 (ユニークはユニークの絵、他はベースの絵。無ければ出さない)。ユニーク装備価格推移のカードと同じく頭に (2026-10-03) -->
+    <div class="flex justify-center">
+      <ItemArt :name="item.name" :base="item.base" :rarity="item.rarity" :size="96" class="my-1.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" />
+    </div>
     <p v-if="item.quality" class="g-dim">品質: <span class="g-mod">+{{ item.quality }}%</span></p>
     <p v-if="item.itemLevel" class="g-dim">アイテムレベル: <span class="g-white">{{ item.itemLevel }}</span></p>
     <template v-if="item.runes.length">
