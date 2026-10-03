@@ -173,8 +173,9 @@ def cue_frames(
             )
             frame_static = with_panel(base, layer, 0, 1.0)
         elif is_hit and clip:
+            # 付いた後は録画の最後のコマで止める (別に撮った静止画だと大きさ・位置が違って絵が飛ぶ)
             layer = render_panel_layer(
-                c.line, res, stage_shot=extra, final_step=fin, zoom=2.0 if ctx.zoom else 0.0
+                c.line, res, stage_shot=clip[-1], final_step=fin, zoom=2.0 if ctx.zoom else 0.0
             )
             frame_static = with_panel(base, layer, 0, 1.0)
         elif zoom and not prev_zoom and tl < ZOOM_SECONDS:

@@ -37,8 +37,8 @@ class Settings(BaseSettings):
         description="mp4 の書き出しに GPU (NVENC) を使う。使えない PC では自動で CPU (libx264)",
     )
     hit_zoom: bool = Field(
-        default=False,
-        description="付ける瞬間にアイテムへ寄る拡大 (スローに見えて忙しいので既定は無し、10-04)",
+        default=True,
+        description="付ける瞬間にアイテムへ寄る拡大 (今の録画の形では ExileDesk 側の動きが使われる)",
     )
     render_workers: int = Field(
         default=0,

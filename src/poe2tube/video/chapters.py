@@ -30,7 +30,7 @@ from poe2tube.video.timeline import Cue, read_wav, write_wav
 
 log = structlog.get_logger()
 # 描き方を変えたら上げる (作り済みの章の動画を使い回さないように)
-RENDER_VER = "r2-nozoom"
+RENDER_VER = "r3-holdclip"
 
 
 def cue_range(cues: list[Cue], section: str) -> tuple[int, int]:
