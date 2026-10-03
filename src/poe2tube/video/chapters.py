@@ -29,6 +29,8 @@ from poe2tube.video.results import ResultSet
 from poe2tube.video.timeline import Cue, read_wav, write_wav
 
 log = structlog.get_logger()
+# 描き方を変えたら上げる (作り済みの章の動画を使い回さないように)
+RENDER_VER = "r2-nozoom"
 
 
 def cue_range(cues: list[Cue], section: str) -> tuple[int, int]:
@@ -62,6 +64,7 @@ def chapter_key(script: VideoScript, k: int, cues: list[Cue], n_sections: int) -
         "voices": [(c.wav.name, c.frames, c.voice_delay) for c in cues[i0:i1]],
         "n_sections": n_sections,
         "capture": CAPTURE_VER,
+        "render": (RENDER_VER, s.hit_zoom),
         "video": (s.width, s.height, s.fps, s.nvenc),
         "audio": (s.bgm, s.bgm_gain_db, s.se_gain_db),
         "script": (script.final_step, script.layout, script.short_title),

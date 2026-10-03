@@ -36,6 +36,10 @@ class Settings(BaseSettings):
         default=True,
         description="mp4 の書き出しに GPU (NVENC) を使う。使えない PC では自動で CPU (libx264)",
     )
+    hit_zoom: bool = Field(
+        default=False,
+        description="付ける瞬間にアイテムへ寄る拡大 (スローに見えて忙しいので既定は無し、10-04)",
+    )
     render_workers: int = Field(
         default=0,
         ge=0,

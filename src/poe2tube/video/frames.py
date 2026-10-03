@@ -17,6 +17,7 @@ from PIL import Image
 
 from poe2tube.capture.anim import anim_frames, anim_query, holds_first
 from poe2tube.capture.views import shot_for
+from poe2tube.config.settings import get_settings
 from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
@@ -59,6 +60,7 @@ class FrameContext:
     fps: float
     hits: dict[int, HitPlan]
     progress: tuple[float, ...]  # 行ごとの進み具合のバー (章の何番目の何割、0〜1)
+    zoom: bool = False  # 付ける瞬間の拡大 (設定 hit_zoom、既定は無し)
 
     @property
     def total(self) -> int:
@@ -78,7 +80,8 @@ def make_context(
     rs = as_set(result)
     hits = plan_hits([(c.section, c.line) for c in cues], rs.plan_of, round(fps))
     progress = chapter_progress([c.section for c in cues], n_sections)
-    return FrameContext(cues, rs, book, final_step, short, short_title, fps, hits, progress)
+    zoom = get_settings().hit_zoom
+    return FrameContext(cues, rs, book, final_step, short, short_title, fps, hits, progress, zoom)
 
 
 def chapter_progress(sections: list[str], n_sections: int | None = None) -> tuple[float, ...]:
@@ -105,6 +108,8 @@ def chapter_progress(sections: list[str], n_sections: int | None = None) -> tupl
 def zoom_on(ctx: FrameContext, i: int) -> bool:
     """行 i が打つ行か、次の行で打つ (手つきを流す) stage の行か."""
     c = ctx.cues[i]
+    if not ctx.zoom:
+        return False
     # 次の行で打つ時も寄る。ただし章はまたがない (章ごとに作れるように)
     same = i + 1 < len(ctx.cues) and ctx.cues[i + 1].section == c.section
     return c.line.scene.kind == "stage" and (i in ctx.hits or (same and (i + 1) in ctx.hits))
@@ -164,11 +169,13 @@ def cue_frames(
         elif 0 <= kl < len(clip) * CLIP_SLOWMO:
             shot = clip[kl // CLIP_SLOWMO]
             layer = render_panel_layer(
-                c.line, res, stage_shot=shot, final_step=fin, zoom=hit_zoom(tl)
+                c.line, res, stage_shot=shot, final_step=fin, zoom=hit_zoom(tl) if ctx.zoom else 0.0
             )
             frame_static = with_panel(base, layer, 0, 1.0)
         elif is_hit and clip:
-            layer = render_panel_layer(c.line, res, stage_shot=extra, final_step=fin, zoom=2.0)
+            layer = render_panel_layer(
+                c.line, res, stage_shot=extra, final_step=fin, zoom=2.0 if ctx.zoom else 0.0
+            )
             frame_static = with_panel(base, layer, 0, 1.0)
         elif zoom and not prev_zoom and tl < ZOOM_SECONDS:
             layer = render_panel_layer(c.line, res, final_step=fin, zoom=tl / ZOOM_SECONDS)
