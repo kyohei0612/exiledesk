@@ -24,6 +24,9 @@ import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
+import { kindOf } from "../../services/craft-stage/apply-currency";
+import { OMEN_FOR } from "../../services/craft-stage/omens";
+import ShelfButton from "./ShelfButton.vue";
 
 const s = craftStage;
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
@@ -48,6 +51,11 @@ onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.
 function hold(k: string): void {
   s.hold(s.held.value === k ? null : k);
 }
+/**
+ * 持っているカレンシーに掛けられるお告げ (オーナー 2026-10-04「オーブ使う時、下に使えるお告げを出して、持ったまま使えるように」)。
+ * 押すと持ったまま掛ける / 外す (お告げのタブに切り替えなくてよい)
+ */
+const heldOmens = computed(() => (s.held.value ? OMEN_FOR[kindOf(s.held.value)] ?? [] : []));
 /** 打った瞬間の演出 (波紋・枠の光・「レアに!」など) */
 const fx = useStageFx(mouse);
 const fxCls = computed(() => (fx.value ? { hit: "stage-hit", up: "stage-up", shake: "stage-shake" }[fx.value.kind] : ""));
@@ -156,6 +164,12 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
             <span v-else class="opacity-50">押して持つ → アイテムを押す</span>
             <span v-for="o in s.omens.value" :key="o" class="cursor-pointer rounded-full bg-violet-500/20 px-2 text-violet-200" title="押すと外す" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
           </p>
+          <div v-if="heldOmens.length" class="mb-3 rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
+            <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(s.held.value ?? "") }} に掛けられるお告げ (押すと持ったまま掛ける / 外す)</p>
+            <div class="flex flex-wrap gap-1.5">
+              <ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="s.toggleOmen($event)" />
+            </div>
+          </div>
           <CurrencyShelf @hold="hold" />
         </section>
         <section class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
