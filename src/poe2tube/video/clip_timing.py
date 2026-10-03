@@ -134,6 +134,8 @@ def plan_hits(
                     and prev.scene.kind == "stage"
                     and prev.scene.demo == demo
                     and not new_chapter
+                    # 発現の 3 択の絵は発現の前の姿そのもの。手つきを重ねるとちらつく
+                    and not prev.scene.offers
                 )
                 out[i] = HitPlan(step, tuple(clip), attach_index(clip), preroll, fps, demo)
         prev, prev_section = line, section

@@ -150,3 +150,16 @@ def test_line_after_offers_is_the_reveal_hit() -> None:
     pick = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=3))
     assert stage_hit(offers, pick)
     assert not stage_hit(pick, pick)
+
+
+def test_no_preroll_over_offers() -> None:
+    from pathlib import Path
+
+    from poe2tube.video.clip_timing import plan_hits
+
+    offers = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=3, offers=True))
+    pick = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=3))
+    plan = _result().plan
+    hits = plan_hits([("s", offers), ("s", pick)], lambda _sc: plan)
+    assert all(not h.preroll for h in hits.values())
+    assert isinstance(Path("."), Path)

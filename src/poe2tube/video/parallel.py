@@ -6,8 +6,9 @@ kyohei 2026-10-04「並列だな 10 分の 1 になるなら使わない手は�
 RGB のまま書き出し (video/encode.py) へ流す。描き方は 1 本の流れ (frames.iter_frames) と全く同じ。
 
 コマ (1 枚 6 MB) をプロセスの間でコピーして渡すと、そこが詰まる (測って 1 秒 130 コマ)。なので
-**共有メモリの置き場**を作業の数 + 2 だけ用意し、作業は置き場に直接描き込み、親は置き場から ffmpeg
-へ流すだけにする。置き場の数だけ先に作るので、メモリも置き場の分 (16 作業で約 7.8 GB) しか使わない。
+**共有メモリの置き場**を用意し、作業は置き場に直接描き込み、親は置き場から ffmpeg へ流すだけにする。
+番号の順に受け取るので、重い小分け (手を打つ演出の行) が終わるまで後ろは待つ。小分けを小さくし、
+置き場を多め (SLOT_BUDGET 分、約 96 個) にして、待っている間もほかの作業が先へ進めるようにする。
 """
 
 from __future__ import annotations
@@ -24,7 +25,8 @@ import structlog
 from poe2tube.video.frames import FrameContext, cue_frames
 
 log = structlog.get_logger()
-CHUNK = 72  # 1 つの仕事のコマ数。行の下準備 (約 0.1 秒) のやり直しを減らす (12 だと半分が下準備)
+CHUNK = 8  # 1 つの仕事のコマ数。小さいほど重い行 (手を打つ演出) の順番待ちが短い
+SLOT_BUDGET = 4_500_000_000  # 置き場 (共有メモリ) に使ってよいメモリ。先に作っておける量
 FRAME_BYTES = 1920 * 1080 * 3  # 横長も縦 (1080x1920) も同じ大きさ
 RawFrame = tuple[int, int, memoryview]  # (幅, 高さ, RGB)。次の小分けを受け取るまで有効
 _CTX: FrameContext | None = None
@@ -72,7 +74,8 @@ def _tasks(ctx: FrameContext) -> Iterator[tuple[int, int, int]]:
 
 def iter_frames_parallel(ctx: FrameContext, workers: int) -> Iterator[tuple[int, RawFrame]]:
     """(通し番号, RGB のコマ) を番号の順に返す。コマは受け取ったらすぐ使う (置き場を使い回す)."""
-    slots = [SharedMemory(create=True, size=CHUNK * FRAME_BYTES) for _ in range(workers + 2)]
+    n_slots = max(workers + 2, SLOT_BUDGET // (CHUNK * FRAME_BYTES))
+    slots = [SharedMemory(create=True, size=CHUNK * FRAME_BYTES) for _ in range(n_slots)]
     free = deque(range(len(slots)))
     tasks = _tasks(ctx)
     pending: deque[tuple[tuple[int, int, int], int, AsyncResult[tuple[int, int, int]]]] = deque()
