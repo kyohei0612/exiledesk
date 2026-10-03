@@ -8,13 +8,18 @@
 -->
 <script setup lang="ts">
 import { computed, type ComponentPublicInstance } from "vue";
-import { iconOf, nameOf } from "../../state/craft-stage";
+import { iconOfKey, nameOfKey } from "../../state/craft-stage-shelf";
+import type { StageItem } from "../../services/craft-stage/types";
 import { isShard, SHARDS_PER_ORB } from "../../services/craft-stage/apply-act";
 
 /** height: 撮影用 (inline) で合わせるアイテム枠の高さ (px)。棚の上端・下端をこの中に収める (POE2Tube 要望 ⑥) */
 /** glow: 撮影用。拾われた物を薄くせず光らせる (要望 ⑦) */
 /** counts: 拾ったシャードの数 (キー → 個数)。シャードの棚に「n/10」を出す (要望 ⑧) */
-const props = defineProps<{ keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement>; inline?: boolean; height?: number; glow?: boolean; counts?: Record<string, number> }>();
+/**
+ * item: 画面に出しているアイテム。骨は部位で鎖骨 / 顎骨 / 肋骨が決まるので、名前と絵はこれで引く (共有の状態の item に頼らない。
+ * 2026-10-04 POE2Tube: 撮影で骨の枠が「dese」(キーの頭 4 文字) になった。Vite が書き換え途中の古いモジュールを配り、棚だけ item が空の方を見ていた)
+ */
+const props = defineProps<{ item: StageItem; keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement>; inline?: boolean; height?: number; glow?: boolean; counts?: Record<string, number> }>();
 const GAP = 8;
 const PAD = 8;
 /**
@@ -45,6 +50,8 @@ const cols = computed(() => {
   return n > rows * 2 ? 3 : n > rows ? 2 : 1;
 });
 const grid = computed(() => ({ gridTemplateColumns: `repeat(${cols.value}, ${size.value}px)` }));
+const iconOf = (k: string): string => iconOfKey(k, props.item);
+const nameOf = (k: string): string => nameOfKey(k, props.item);
 function reg(k: string, el: Element | ComponentPublicInstance | null): void {
   if (el instanceof HTMLElement) props.slots.set(k, el);
 }

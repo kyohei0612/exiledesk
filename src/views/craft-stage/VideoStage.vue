@@ -20,7 +20,8 @@ import VideoTray from "./VideoTray.vue";
 import VideoPob from "./VideoPob.vue";
 import { useStageFx } from "./use-stage-fx";
 import { useVideoHand } from "./use-video-hand";
-import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
+import { craftStage } from "../../state/craft-stage";
+import { iconOfKey, nameOfKey } from "../../state/craft-stage-shelf";
 import { displayCurrency } from "../../state/display-currency";
 import { revealOffers } from "../../services/craft-stage/apply-desecrate";
 import { mulberry32 } from "../../services/htc/rng";
@@ -90,6 +91,9 @@ const stillOffers = computed(() => {
 });
 const item = computed(() => (stillOffers.value ? tape[idx.value - 1]!.before : idx.value === 0 ? start : tape[idx.value - 1]!.after));
 const last = computed(() => (idx.value ? tape[idx.value - 1]! : null));
+/** 名前と絵は画面のアイテムで引く (骨は部位で決まる。共有の状態の item に頼らない、2026-10-04 POE2Tube「dese」) */
+const iconOf = (k: string): string => iconOfKey(k, item.value);
+const nameOf = (k: string): string => nameOfKey(k, item.value);
 const recent = computed(() => tape.slice(Math.max(0, idx.value - 6), idx.value));
 const money = (v: number) => displayCurrency.money(v);
 
@@ -246,7 +250,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
             <StageItemCard v-bind="cardCommon" :item="item" :added="stillOffers ? [] : last?.added ?? []" :removed="stillOffers ? [] : last?.removed ?? []" :flash-key="idx" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : ['text-2xl', clip ? 'stage-float-in' : '']">{{ fx.text }}</span>
           </div>
-          <VideoTray v-if="clip" inline glow :counts="item.shards" :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
+          <VideoTray v-if="clip" :item="item" inline glow :counts="item.shards" :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
         </div>
 
         <!-- 撮影用の倍率を決めるため、全部の段階のアイテムを見えない所に並べて高さを測る (測ったら消す) -->
@@ -292,7 +296,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         </div>
 
         <!-- 棚 (カーソルがここから拾う) -->
-        <VideoTray v-if="!clip" :counts="item.shards" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
+        <VideoTray v-if="!clip" :item="item" :counts="item.shards" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
 
         <!-- 解呪・サルベージで棚へ飛ぶシャード (要望 ⑰-21) -->
         <img
