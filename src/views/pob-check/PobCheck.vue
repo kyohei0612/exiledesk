@@ -16,11 +16,15 @@ import ItemSlotCard from "./ItemSlotCard.vue";
 import TreeView from "./TreeView.vue";
 import BuildDiff from "./BuildDiff.vue";
 import PricesTab from "./PricesTab.vue";
+import BreakdownTab from "./BreakdownTab.vue";
+import type { ModAction } from "./BreakdownModList.vue";
+import type { ModRow } from "../../services/pob-check/breakdown";
 import { fmtNum } from "./fmt";
 import { usePobCheck, type PasteNote } from "./usePobCheck";
 
-const { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { chain, chainLoading, chainError, chainFresh, refreshChain, targetSkills, candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
+
 
 /**
  * 自分のキャラ: PoB でログインして取り込み、Import/Export のコードを上の欄に貼る (2026-10-02 オーナー決定)。
@@ -61,6 +65,7 @@ const TABS = [
   { id: "items", label: "装備" },
   { id: "gems", label: "ジェム" },
   { id: "tree", label: "パッシブツリー" },
+  { id: "breakdown", label: "内訳", hint: "上のバーのスキルの DPS がどう出ているか (式と、増加 / 増しの出所)" },
   { id: "diff", label: "相手との差" },
   { id: "prices", label: "値段" },
 ] as const;
@@ -73,6 +78,25 @@ const pricesOpened = ref(false);
 watch(tab, (t) => {
   if (t === "prices") pricesOpened.value = true;
 });
+/**
+ * 火力の内訳 (2026-10-03): 内訳のタブを開いている間、自分を変えた / 上のバーのスキルを変えた たびに取り直す (計算中は待つ。
+ * 変更の列 (run) に並ぶので、変えた後の数字で取れる)。要素の行の操作は既存の操作に流す
+ */
+watch(
+  () => [tab.value, chainFresh.value, busy.value, loading.value, focus.value?.key] as const,
+  ([t, fresh, b, l]) => {
+    if (t === "breakdown" && !fresh && !b && !l) void refreshChain();
+  },
+  { immediate: true },
+);
+function onModAction(m: ModRow, action: ModAction): void {
+  const s = m.src;
+  if (action === "clear" && s.slot) void clearItem(s.slot);
+  else if (action === "restore" && s.slot) void restoreItem(s.slot);
+  else if (action === "node" && typeof s.id === "number") void clickNode(s.id, 1);
+  else if (action === "gem-off" && s.gi && s.gj) void changeGem(s.gi, s.gj, "enabled", false);
+  else if (action === "charges0") void changeCharges(0);
+}
 /** 相手を読み込んだら「相手との差」を開く */
 async function onLoadTarget(): Promise<void> {
   await loadTarget();
@@ -321,6 +345,21 @@ const resists = computed(() =>
       </div>
       </div>
 
+      <!-- 内訳 (2026-10-03): 上のバーのスキルの DPS がどう出ているか。式の鎖と、増加 / 増しの出所 (外す / オフ もここから) -->
+      <div v-if="tab === 'breakdown'">
+        <BreakdownTab
+          :chain="chain?.chain ?? null"
+          :loading="chainLoading"
+          :error="chainError"
+          :fresh="chainFresh"
+          :focus="focus"
+          :busy="busy || loading"
+          :has-target="!!target"
+          @act="onModAction"
+          @go-diff="tab = 'diff'"
+        />
+      </div>
+
       <!-- 相手との差 -->
       <div v-if="tab === 'diff'">
         <BuildDiff
@@ -338,10 +377,13 @@ const resists = computed(() =>
           :estimate-progress="estimateProgress"
           :estimates-stale="estimatesStale"
           :adopted="adopted"
+          :mine-skills="skills"
+          :target-skills="targetSkills"
           @clear="clearTarget"
           @plan="onPlan('target')"
           @estimate="runEstimates"
           @adopt="async (c, done) => done(await adopt(c))"
+          @focus="(k) => (focusKey = k)"
         />
         <p v-else class="mb-6 text-[12px] text-[var(--exile-color-text-secondary)]">上の「比べる相手」に忍者のビルドの URL か PoB コードを貼って読み込むと、ユニークは装備ごと、レアは足りない MOD だけが「自分 → 相手」で並びます。</p>
       </div>

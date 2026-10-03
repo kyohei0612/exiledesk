@@ -13,6 +13,7 @@ import itemsJaClient from "../../i18n/items-ja-client.json";
 import passiveIds from "../../data/passive-ids.json";
 import { parseNinjaUrl } from "../build-copy/ninja-url";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
+import type { BreakdownRaw } from "./breakdown";
 
 export interface GemView {
   j: number;
@@ -323,3 +324,10 @@ export const setGroupGems = (gi: number, gems: GemSpec[]): Promise<{ i: number; 
 /** 相手が取っていて自分に無いノード ids を全部取れたとして足したら (つながる道は見ない) */
 export const estimateNodes = (i: number, k: number, ids: number[]): Promise<EstimateNodesRaw> =>
   evalLua(`return PCK.estimateNodes(${luaNum(i)}, ${luaNum(k)}, {${ids.map((id) => luaNum(Math.floor(id))).join(",")}})`);
+
+// ---------------------------------------------------------------- 火力の内訳 (2026-10-03)
+/**
+ * 組 i のスキル k の内訳の生の数字 (PCK.breakdown)。種類ごとの基礎 / 増加 / 増し、速さ、クリ率、クリ倍率と、各 MOD の出所。
+ * 式に組み立てるのは services/pob-check/breakdown.ts の buildChain。ビルドは変えない (主スキルの選びも戻す)
+ */
+export const breakdown = (i: number, k: number): Promise<BreakdownRaw> => evalLua(`return PCK.breakdown(${luaNum(i)}, ${luaNum(k)})`);

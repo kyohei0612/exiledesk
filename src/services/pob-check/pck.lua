@@ -53,6 +53,13 @@ local function alignCalcsToMain()
   end
 end
 
+--- スキルの印 (attack / bothWeaponAttack など)。PoE2 の PoB は activeSkill.skillFlags ではなく activeEffect.statSetCalcs (内訳 CALCS) /
+--- statSet (MAIN) に持つ (本家 CalcOffence の頭と同じ)。2026-10-03 まで ms.skillFlags を見ていて常に空 (二刀流の ÷2 が効かなかった)
+local function skillFlagsOf(ms)
+  local ae = ms and ms.activeEffect
+  return (ae and ((ae.statSetCalcs and ae.statSetCalcs.skillFlags) or (ae.statSet and ae.statSet.skillFlags))) or {}
+end
+
 --- 1 発の合計 (種類ごとの HitAverage の和)
 local function hitOf(src)
   local h = 0
@@ -101,7 +108,7 @@ end
 --- アタックは 1 発の数字が武器ごと (o.MainHand / o.OffHand) に入っていて上の段に無い。二刀流 (bothWeaponAttack) は本家 CalcOffence の
 --- combineStat と同じに合わせる: 1 発は両手の和 (combinesHitsWhenDualWielding でなければ ÷2)、クリ率・速さ・命中は上の段 (本家が合成済み)
 local function gameNumbers(o, ms, minionOut, minionName)
-  local flags = ms and ms.skillFlags or {}
+  local flags = skillFlagsOf(ms)
   local sdata = ms and ms.skillData or {}
   local hands = {}
   if hitOf(o) > 0 then
@@ -924,6 +931,317 @@ function PCK.estimateNodes(i, k, ids)
     local out = calcFunc({ addNodes = set }, false)
     return { base = estDpsOf(base), with = estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), n = n }
   end)
+end
+
+-- ---------------------------------------------------------------- 火力の内訳 (2026-10-03)
+--- オーナー「どこの火力が乗っているから今こんな火力が出ている、という詳細が欲しい。出した数字を辿ればその数字になればクリア」。
+--- 上のバーのスキル (組 i のスキル k) について、内訳 (CALCS) の出力の数字と、増加 (INC) / 増し (MORE) / 基礎 (BASE) の各 MOD を
+--- 出所つき (本家 ModStore:Tabulate。計算タブの表と同じ物) で返す。式に組み立てて掛け算を確かめるのは画面側
+--- (services/pob-check/breakdown.ts)。ここは PoB の中の数字を取るだけで、計算はしない (本家 CalcOffence の式をなぞった物を返す)。
+---   * 手 (スペルは 1 つ、アタックは MainHand / OffHand) ごとに: 種類ごとの基礎 (SummedMin/MaxBase) と 増加 / 増し、速さ、クリ率、クリ倍率
+---   * 種類ごとの MOD の名前は本家 calcDamage の damageStatsForTypes と同じ (雷 = Damage + LightningDamage + ElementalDamage)
+---   * 出所 (mod.source): "Item:13:名前" → 欄と装備、"Tree:12882" → ノード、"Skill:…" → その組のジェム、"Config" → 設定。
+---     装備の MOD は装備の行 (modLine.line) も探して返す (画面で日本語にする)
+local MOD_NAMES_OF_TYPE = {
+  Physical = { "Damage", "PhysicalDamage" },
+  Lightning = { "Damage", "LightningDamage", "ElementalDamage" },
+  Cold = { "Damage", "ColdDamage", "ElementalDamage" },
+  Fire = { "Damage", "FireDamage", "ElementalDamage" },
+  Chaos = { "Damage", "ChaosDamage" },
+}
+local ELEMENTAL = { Lightning = true, Cold = true, Fire = true }
+
+--- MOD の flags / keywordFlags の名前 (本家 CalcBreakdownControl と同じ。両方が同じ値でも片方を落とさないよう別々に見る)
+local function flagNames(mod)
+  local out, seen = {}, {}
+  local function add(flags, src)
+    if not flags or flags == 0 then return end
+    for name, val in pairs(src) do
+      -- Spell は ModFlag と KeywordFlag の両方にあるので 1 回だけ
+      if AND64(flags, val) == val and not seen[name] then
+        seen[name] = true
+        out[#out + 1] = name
+      end
+    end
+  end
+  add(mod.flags, ModFlag)
+  add(mod.keywordFlags, KeywordFlag)
+  table.sort(out)
+  return out
+end
+
+--- MOD の条件 (Condition / Multiplier など) を短く。pc = パワーチャージの数で変わる MOD (画面の「0 に」のボタン用)
+local function tagInfo(mod)
+  local tags, pc = {}, false
+  for _, tag in ipairs(mod) do
+    local var = tag.var or tag.stat or tag.skillName
+    if not var and tag.varList then var = table.concat(tag.varList, "/") end
+    if not var and tag.statList then var = table.concat(tag.statList, "/") end
+    if tag.type == "Condition" or tag.type == "ActorCondition" or tag.type == "Multiplier" or tag.type == "MultiplierThreshold" or tag.type == "PerStat" or tag.type == "StatThreshold" or tag.type == "SkillName" then
+      tags[#tags + 1] = { t = tag.type, v = tostring(var or ""), neg = tag.neg and true or nil }
+      if (tag.type == "Multiplier" or tag.type == "MultiplierThreshold") and tostring(var or ""):find("PowerCharge") then pc = true end
+    end
+  end
+  return tags, pc
+end
+
+--- 装備の MOD → その装備の行 (画面で日本語にする)。名前・型・flags が同じ物。値まで同じ行があればそれ、無ければ最初の物 (品質で伸びた値など)
+local function itemLineOf(item, mod)
+  if not item then return nil end
+  local loose
+  for _, list in ipairs({ item.implicitModLines, item.runeModLines, item.explicitModLines, item.enchantModLines }) do
+    for _, ml in ipairs(list or {}) do
+      for _, m in ipairs(ml.modList or {}) do
+        if m.name == mod.name and m.type == mod.type and (m.flags or 0) == (mod.flags or 0) and (m.keywordFlags or 0) == (mod.keywordFlags or 0) then
+          if type(m.value) == "number" and type(mod.value) == "number" and math.abs(m.value - mod.value) < 1e-6 then return ml.line end
+          loose = loose or ml.line
+        end
+      end
+    end
+  end
+  return loose
+end
+
+--- mod.source → 画面が操作に結び付けられる形。gi = 上のバーのスキルの組 (ジェムを探す範囲)
+local function resolveSource(source, gi)
+  source = tostring(source or "")
+  local id, name = source:match("^Item:(%d+):(.*)")
+  if id then
+    id = tonumber(id)
+    local it = build.itemsTab
+    local item = it.items[id]
+    local slotName, jewel
+    for _, slot in ipairs(it.orderedSlots) do
+      if slot.selItemId == id then
+        slotName = slot.slotName
+        jewel = slot.nodeId ~= nil
+        break
+      end
+    end
+    return {
+      kind = "item", id = id, label = item and (item.title or item.name) or name, base = item and item.baseName, rarity = item and item.rarity,
+      slot = slotName, jewel = jewel or false, changed = (slotName ~= nil and PCK.orig[slotName] ~= nil) or false,
+    }, item
+  end
+  local nid = source:match("^Tree:(%d+)")
+  if nid then
+    nid = tonumber(nid)
+    local node = build.spec.nodes[nid] or (build.spec.tree.nodes and build.spec.tree.nodes[nid])
+    local granted = build.calcsTab.mainEnv and build.calcsTab.mainEnv.grantedPassives and build.calcsTab.mainEnv.grantedPassives[nid] and true or false
+    return { kind = "tree", id = nid, label = node and node.dn or ("#" .. nid), alloc = node and node.alloc and true or false, granted = granted, nodeType = node and node.type }
+  end
+  local sid = source:match("^Skill:(.+)")
+  if sid then
+    local sk = build.data.skills[sid]
+    local r = { kind = "gem", id = sid, label = sk and sk.name or sid }
+    local g = build.skillsTab.socketGroupList[gi]
+    for j, gem in ipairs(g and g.gemList or {}) do
+      local gd = gem.gemData
+      if gd and (gd.grantedEffectId == sid or gd.secondaryGrantedEffectId == sid) then
+        r.gi, r.gj = gi, j
+        r.gemName = gem.nameSpec or (gd.grantedEffect and gd.grantedEffect.name)
+        r.support = (gd.grantedEffect and gd.grantedEffect.support) and true or false
+        r.enabled = gem.enabled ~= false
+        break
+      end
+    end
+    return r
+  end
+  if source == "Config" then return { kind = "config", label = "Config" } end
+  if source == "Base" then return { kind = "base", label = "Base" } end
+  local many = source:match("^Many Sources:(.*)")
+  return { kind = "other", label = many or source }
+end
+
+--- Tabulate の 1 行 → 画面の行
+local function modRow(entry, gi)
+  local mod = entry.mod
+  local src, item = resolveSource(mod.source, gi)
+  local tags, pc = tagInfo(mod)
+  local r = { value = type(entry.value) == "number" and entry.value or 0, type = mod.type, name = mod.name, flags = flagNames(mod), source = tostring(mod.source or ""), src = src, tags = tags }
+  if pc then r.pc = true end
+  if item then r.line = itemLineOf(item, mod) end
+  return r
+end
+local function modRows(list, gi)
+  local out = {}
+  for _, e in ipairs(list) do out[#out + 1] = modRow(e, gi) end
+  return out
+end
+
+--- 出力から必要な鍵だけ (数だけ。JSON を小さく)
+local OUT_KEYS = {
+  "TotalDPS", "AverageDamage", "AverageHit", "Speed", "HitSpeed", "CastRate", "HitChance", "AccuracyHitChance", "CritChance", "PreEffectiveCritChance",
+  "CritMultiplier", "PreEffectiveCritMultiplier", "CritEffect", "DpsMultiplier", "QuantityMultiplier", "CullingDPS", "CombinedDPS", "ActionSpeedMod", "Repeats", "Cooldown",
+  "ImpaleDPS", "MirageDPS", "TotalDot", "BleedDPS", "PoisonDPS", "IgniteDPS", "TotalBleedDPS", "TotalPoisonDPS", "TotalIgniteDPS", "allMult", "ScaledDamageEffect", "TotemActionSpeed",
+}
+local function pick(o)
+  local t = {}
+  for _, k in ipairs(OUT_KEYS) do
+    if type(o[k]) == "number" then t[k] = o[k] end
+  end
+  return t
+end
+
+--- 手 1 つ分 (スペルは 1 つ、アタックは MainHand / OffHand)。src = 本家の pass.source (スペル = skillData、アタック = weaponData)
+local function handBreakdown(env, ms, key, out, cfg, src, gi)
+  local sm = ms.skillModList
+  local sd = ms.skillData
+  local skillCfg = ms.skillCfg
+  local enemyDB = env.player.enemy.modDB
+  local flags = skillFlagsOf(ms)
+  local isAttack = flags.attack and true or false
+  local h = { key = key, out = pick(out), types = {} }
+  local baseMultiplier = (ms.activeEffect.grantedEffectLevel and ms.activeEffect.grantedEffectLevel.baseMultiplier) or sd.baseMultiplier or 1
+  for _, t in ipairs(TYPES) do
+    if (out[t .. "HitAverage"] or 0) > 0 or (out[t .. "SummedMinBase"] or 0) ~= 0 or (out[t .. "SummedMaxBase"] or 0) ~= 0 then
+      local names = MOD_NAMES_OF_TYPE[t]
+      -- 運の良いヒット (本家 CalcOffence: pass 2 = 非クリ)
+      local lucky
+      if sm:Flag(skillCfg, "LuckyHits") or (t == "Lightning" and sm:Flag(skillCfg, "LightningNoCritLucky")) or (ELEMENTAL[t] and sm:Flag(skillCfg, "ElementalLuckHits")) then
+        lucky = 1
+      else
+        lucky = math.min(sm:Sum("BASE", skillCfg, t .. "LuckyHitsChance", "LuckyHitsChance"), 100) / 100
+      end
+      local critLucky
+      if sm:Flag(skillCfg, "LuckyHits") or sm:Flag(skillCfg, "CritLucky") or (ELEMENTAL[t] and sm:Flag(skillCfg, "ElementalLuckHits")) then
+        critLucky = 1
+      else
+        critLucky = math.min(sm:Sum("BASE", skillCfg, t .. "LuckyHitsChance", "LuckyHitsChance"), 100) / 100
+      end
+      -- 追加ダメージの出所 (Min と Max を出所ごとに 1 行に)
+      local added, addedIdx = {}, {}
+      for _, which in ipairs({ "Min", "Max" }) do
+        for _, e in ipairs(sm:Tabulate("BASE", cfg, t .. which)) do
+          local k = tostring(e.mod.source) .. "|" .. tostring(e.mod.name:gsub("M[ia][nx]$", "")) .. "|" .. tostring(e.mod.flags) .. "|" .. tostring(e.mod.keywordFlags) .. "|" .. tostring(#e.mod)
+          local row = addedIdx[k]
+          if not row then
+            row = modRow(e, gi)
+            row.min, row.max = 0, 0
+            addedIdx[k] = row
+            added[#added + 1] = row
+          end
+          if which == "Min" then row.min = row.min + (type(e.value) == "number" and e.value or 0) else row.max = row.max + (type(e.value) == "number" and e.value or 0) end
+        end
+      end
+      h.types[#h.types + 1] = {
+        type = t,
+        -- 基礎 (本家の順): 武器 / スキルの基礎 + 追加 × 追加の倍率、× 基礎の倍率 → 変換 → SummedMin/MaxBase
+        srcMin = src[t .. "Min"] or 0, srcMax = src[t .. "Max"] or 0, srcIsWeapon = src.type and true or false,
+        bonusMin = src[t .. "BonusMin"] or 0, bonusMax = src[t .. "BonusMax"] or 0,
+        addedMin = sm:Sum("BASE", cfg, t .. "Min") + enemyDB:Sum("BASE", cfg, "Self" .. t .. "Min"),
+        addedMax = sm:Sum("BASE", cfg, t .. "Max") + enemyDB:Sum("BASE", cfg, "Self" .. t .. "Max"),
+        addedMult = calcLib.mod(sm, cfg, "Added" .. t .. "Damage", "AddedDamage"),
+        baseMultiplier = baseMultiplier,
+        baseMin = out[t .. "MinBase"] or 0, baseMax = out[t .. "MaxBase"] or 0,
+        convMult = ms.conversionTable and ms.conversionTable[t] and ms.conversionTable[t].mult or 1,
+        summedMin = out[t .. "SummedMinBase"] or 0, summedMax = out[t .. "SummedMaxBase"] or 0,
+        -- 増加 / 増し (本家 calcDamage と同じ名前の束)
+        inc = sm:Sum("INC", cfg, unpack(names)), more = sm:More(cfg, unpack(names)),
+        moreMin = sm:More(cfg, "Min" .. t .. "Damage"), moreMax = sm:More(cfg, "Max" .. t .. "Damage"),
+        allMult = out.allMult or 1,
+        lucky = lucky, critLucky = critLucky,
+        -- 敵に当たる前 (Stored) と 当たった後 (HitAverage)、敵側の倍率
+        storedHit = out[t .. "StoredHitAvg"] or 0, storedCrit = out[t .. "StoredCritAvg"] or 0,
+        hitAvg = out[t .. "HitAverage"] or 0, critAvg = out[t .. "CritAverage"] or 0, effMult = out[t .. "EffMult"] or 1,
+        incMods = modRows(sm:Tabulate("INC", cfg, unpack(names)), gi),
+        moreMods = modRows(sm:Tabulate("MORE", cfg, unpack(names)), gi),
+        addedMods = added,
+      }
+    end
+  end
+  -- 速さ (本家: 1 / (baseTime / round((1 + inc) × more, 2) + 追加の時間) × 行動速度。クールダウン・サーバーティックで上限)
+  local castTime = ms.activeEffect.grantedEffect.castTime
+  local baseTime
+  if isAttack then
+    baseTime = 1 / (src.AttackRate or 1) + sm:Sum("BASE", cfg, "Speed")
+  else
+    baseTime = (sd.castTimeOverride or castTime or 1) + sm:Sum("BASE", cfg, "Speed")
+  end
+  h.speed = {
+    attack = isAttack, baseTime = baseTime, castTime = castTime, attackRate = src.AttackRate,
+    inc = sm:Sum("INC", cfg, "Speed"), more = sm:More(cfg, "Speed"),
+    extraTime = sm:Sum("BASE", cfg, "TotalAttackTime") + sm:Sum("BASE", cfg, "TotalCastTime"),
+    action = (flags.selfCast and env.player.output.ActionSpeedMod) or (flags.totem and out.TotemActionSpeed) or 1,
+    speed = out.Speed or 0, hitSpeed = out.HitSpeed, cooldown = out.Cooldown, repeats = out.Repeats or 1,
+    -- 速さが固定 (発動・固定の詠唱時間など) なら増加 / 増しは効かない
+    fixed = (castTime == 0 and not sd.castTimeOverride and not sd.triggered) or sd.timeOverride ~= nil or sd.fixedCastTime == true or (sd.triggered and (sd.triggerTime ~= nil or sd.triggerRate ~= nil)) or false,
+    triggered = sd.triggered and true or false,
+    incMods = modRows(sm:Tabulate("INC", cfg, "Speed"), gi),
+    moreMods = modRows(sm:Tabulate("MORE", cfg, "Speed"), gi),
+  }
+  -- クリ率 (本家: (基礎 + 加算) × (1 + inc) × more → 上限 → 命中 → 運 → 分岐)
+  local critOverride = sm:Override(cfg, "CritChance")
+  h.crit = {
+    baseCrit = critOverride or src.CritChance or (ms.activeEffect.grantedEffectLevel and ms.activeEffect.grantedEffectLevel.critChance) or 0,
+    override = critOverride,
+    base = sm:Sum("BASE", cfg, "CritChance") + (enemyDB:Sum("BASE", nil, "SelfCritChance") or 0),
+    inc = sm:Sum("INC", cfg, "CritChance") + (enemyDB:Sum("INC", nil, "SelfCritChance") or 0),
+    more = sm:More(cfg, "CritChance"),
+    cap = sm:Override(nil, "CritChanceCap") or sm:Sum("BASE", cfg, "CritChanceCap"),
+    pre = out.PreEffectiveCritChance or 0, eff = out.CritChance or 0, accuracy = out.AccuracyHitChance or 100,
+    lucky = sm:Flag(cfg, "CritChanceLucky") and true or false, bifurcate = sm:Flag(cfg, "BifurcateCrit") and true or false,
+    inevitable = sm:Flag(cfg, "InevitableCriticalHits") and true or false, never = sm:Flag(cfg, "NeverCrit") and true or false,
+    baseMods = modRows(sm:Tabulate("BASE", cfg, "CritChance"), gi),
+    incMods = modRows(sm:Tabulate("INC", cfg, "CritChance"), gi),
+    moreMods = modRows(sm:Tabulate("MORE", cfg, "CritChance"), gi),
+    -- 固定 (OVERRIDE) の出所 (「クリティカル率は X%」など。あると加算・増加・増しは効かない)
+    overrideMods = modRows(sm:Tabulate("OVERRIDE", cfg, "CritChance"), gi),
+  }
+  -- クリ倍率 (本家: 1 + 追加ダメージ% × (1 + inc) × more / 100。敵側の受けるクリダメージ増加も)
+  h.critMult = {
+    base = sm:Sum("BASE", cfg, "CritMultiplier"), inc = sm:Sum("INC", cfg, "CritMultiplier"), more = sm:More(cfg, "CritMultiplier"),
+    override = sm:Override(skillCfg, "CritMultiplier"),
+    enemyBase = enemyDB:Sum("BASE", nil, "SelfCritMultiplier") or 0, enemyInc = enemyDB:Sum("INC", nil, "SelfCritMultiplier") or 0,
+    value = out.CritMultiplier or 1, none = sm:Flag(cfg, "NoCritMultiplier") and true or false,
+    baseMods = modRows(sm:Tabulate("BASE", cfg, "CritMultiplier"), gi),
+    incMods = modRows(sm:Tabulate("INC", cfg, "CritMultiplier"), gi),
+    moreMods = modRows(sm:Tabulate("MORE", cfg, "CritMultiplier"), gi),
+    overrideMods = modRows(sm:Tabulate("OVERRIDE", skillCfg, "CritMultiplier"), gi),
+  }
+  return h
+end
+
+--- 組 i のスキル k の内訳。主スキルの選びは summary と同じ evalSkill (MAIN と CALCS を両方そろえる) で、終わったら戻す
+function PCK.breakdown(i, k)
+  local calcs = build.calcsTab
+  local g = build.skillsTab.socketGroupList[i]
+  if not g then return json.encode({ ok = false, error = "組が無い" }) end
+  local origMain, origCalcs = build.mainSocketGroup, calcs.input.skill_number
+  local origSkill, origSkillCalcs = g.mainActiveSkill, g.mainActiveSkillCalcs
+  local ok, res = pcall(function()
+    alignCalcsToMain()
+    if wipeGlobalCache then wipeGlobalCache() end
+    local o, env = evalSkill(i, k)
+    local ms = env.player.mainSkill
+    if not ms then fail("スキルが無い") end
+    local sd = ms.skillData or {}
+    local flags = skillFlagsOf(ms)
+    local m = env.minion
+    local res = {
+      skill = ms.activeEffect and ms.activeEffect.grantedEffect and ms.activeEffect.grantedEffect.name or "?",
+      attack = flags.attack and true or false, dual = flags.bothWeaponAttack and true or false,
+      combines = sd.combinesHitsWhenDualWielding and true or false, showAverage = sd.showAverage and true or false, triggered = sd.triggered and true or false,
+      out = pick(o),
+      game = gameNumbers(o, ms, m and m.output, m and m.minionData and m.minionData.name),
+      powerCharges = o.PowerCharges or 0,
+      hands = {},
+    }
+    if flags.attack then
+      if flags.weapon1Attack and o.MainHand then res.hands[#res.hands + 1] = handBreakdown(env, ms, "MainHand", o.MainHand, ms.weapon1Cfg, env.player.weaponData1 or {}, i) end
+      if flags.weapon2Attack and o.OffHand then res.hands[#res.hands + 1] = handBreakdown(env, ms, "OffHand", o.OffHand, ms.weapon2Cfg, env.player.weaponData2 or {}, i) end
+    else
+      res.hands[1] = handBreakdown(env, ms, nil, o, ms.skillCfg, sd, i)
+    end
+    return res
+  end)
+  build.mainSocketGroup = origMain
+  calcs.input.skill_number = origCalcs
+  g.mainActiveSkill, g.mainActiveSkillCalcs = origSkill, origSkillCalcs
+  calcs:BuildOutput()
+  if not ok then return json.encode({ ok = false, error = tostring(res) }) end
+  res.ok = true
+  return json.encode(res)
 end
 
 return "ok"

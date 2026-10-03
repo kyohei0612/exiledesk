@@ -19,7 +19,8 @@ import itemsJaClient from "../../i18n/items-ja-client.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
 import passivesJa from "../../i18n/passives-ja-client.json";
 import { gemJa, type GemView, type ItemView, type Summary } from "../../services/pob-check/api";
-import { diffBuilds, diffGems, type AdoptCandidate } from "../../services/pob-check/build-diff";
+import { diffBuilds, diffGems, pairSkills, type AdoptCandidate } from "../../services/pob-check/build-diff";
+import SkillCompareTable from "./SkillCompareTable.vue";
 import { linesToJa, rareNameJa } from "../../services/pob-check/item-text";
 import { slotJa } from "../../services/pob-check/slots";
 import { openTradeQuery, prepareTradeLinks, rareModsSearchQuery, uniqueSearchQuery } from "../../services/pob-check/trade-links";
@@ -50,8 +51,14 @@ const props = defineProps<{
   /** 試算した後に自分を変えた = もう一度試算 */
   estimatesStale: boolean;
   adopted: Set<string>;
+  /** スキルごとの比較 (2026-10-03): 自分と相手のスキルの表 (usePobCheck の skills / targetSkills) */
+  mineSkills: SkillRow[];
+  targetSkills: SkillRow[];
 }>();
-const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void; (e: "estimate"): void; (e: "adopt", c: AdoptCandidate, done: (err: string | null) => void): void }>();
+const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void; (e: "estimate"): void; (e: "adopt", c: AdoptCandidate, done: (err: string | null) => void): void; (e: "focus", key: string): void }>();
+
+/** スキルごとの比較: 名前で突き合わせて 1 つの表に (決まりは build-diff.ts の pairSkills) */
+const skillPairs = computed(() => pairSkills(props.mineSkills, props.targetSkills));
 
 // ---------------------------------------------------------------- 取り入れたら
 const PASSIVE_JA = passivesJa as Record<string, string>;
@@ -250,6 +257,15 @@ const STATS = [
           <span class="chip-value text-sky-200">{{ Math.round(stat(target, s.k)) }}</span>
         </span>
       </div>
+    </section>
+
+    <!-- スキルごとの比較 (2026-10-03 オーナー「各スキルごとの比較が現状できてない」): 名前で突き合わせた 1 つの表。行を押すと上のバーのスキルに -->
+    <section>
+      <h2 class="sec-title">
+        スキルごと
+        <span class="sec-note">自分と相手のスキルを名前で合わせて並べる (片方だけの物は —)。押すと上のバーのスキルをそれに (内訳のタブでそのスキルの式が見える)</span>
+      </h2>
+      <SkillCompareTable :rows="skillPairs" :focus-key="focus?.key ?? null" @focus="(k) => emit('focus', k)" />
     </section>
 
     <!-- 取り入れたら: 差の 1 項目ずつを自分に当てた時の変化 (PoB で試算、ビルドは変えない) -->

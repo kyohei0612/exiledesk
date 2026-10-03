@@ -13,7 +13,7 @@
  *     自分に無い組は組ごと、ある組は 相手にあって自分に無いジェム / レベル・品質が相手の方が高い物 だけ (diffGems)。
  *     コラプトの +レベルは level に含めない (corrupt は別の欄)。英語の名前のまま返し、日本語にするのは画面 (gemJa)
  */
-import type { GemView, GroupView, ItemView, SlotView, Summary, TreeNode } from "./api";
+import type { GemView, GroupView, ItemView, SkillView, SlotView, Summary, TreeNode } from "./api";
 
 export interface ModDiff {
   /** 自分の行 (無ければ null = 足りない) */
@@ -227,6 +227,26 @@ export function diffBuilds(mine: Summary, target: Summary): { slots: SlotDiff[];
   }
   const jewels = { mine: mine.items.filter((x) => x.jewel && x.item).length, target: target.items.filter((x) => x.jewel && x.item).length };
   return { slots, jewels };
+}
+
+// ---------------------------------------------------------------- スキルごとの比較 (2026-10-03)
+/**
+ * オーナー「各スキルごとの比較が現状できてない」: 自分と相手のスキルの表 (usePobCheck の skillsOf の行) を**名前で突き合わせて 1 つの表**に。
+ * 同じ名前が複数 (CoEA のアーク×2 など) なら順に合わせる。片方にしか無いスキルも行に (もう片方は null)。
+ * 並びは 自分 / 相手 の高い方の DPS の降順。自分の行の key はそのまま (押すと上のバーのスキルにする)
+ */
+export interface SkillPair {
+  name: string;
+  mine: { key: string; s: SkillView } | null;
+  target: SkillView | null;
+}
+export function pairSkills(mine: Array<{ key: string; s: SkillView }>, target: Array<{ s: SkillView }>): SkillPair[] {
+  const rest = new Map<string, SkillView[]>();
+  for (const t of target) rest.set(t.s.name, [...(rest.get(t.s.name) ?? []), t.s]);
+  const out: SkillPair[] = mine.map((m) => ({ name: m.s.name, mine: { key: m.key, s: m.s }, target: rest.get(m.s.name)?.shift() ?? null }));
+  for (const list of rest.values()) for (const s of list) out.push({ name: s.name, mine: null, target: s });
+  const top = (r: SkillPair): number => Math.max(r.mine?.s.game.dps ?? 0, r.target?.game.dps ?? 0);
+  return out.sort((a, b) => top(b) - top(a));
 }
 
 // ---------------------------------------------------------------- 取り入れの試算の対象 (2026-10-03)

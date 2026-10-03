@@ -8,7 +8,8 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateNodes, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateNodesRaw } from "../../services/pob-check/api";
+import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateNodes, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateNodesRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
+import { buildChain, type Chain } from "../../services/pob-check/breakdown";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
 import { slotJa } from "../../services/pob-check/slots";
@@ -87,6 +88,13 @@ const estimating = ref(false);
 const estimateProgress = ref("");
 /** 取り入れた項目の鍵 (表に「取り入れた」の印) */
 const adopted = ref<Set<string>>(new Set());
+/**
+ * 火力の内訳 (2026-10-03 オーナー「どこの火力が乗っているから今こんな火力が出ている、という詳細が欲しい」)。
+ * 上のバーのスキルの式の鎖 (services/pob-check/breakdown.ts)。of = その時の自分、key = その時のスキル (どちらかが変わったら取り直す)
+ */
+const chain = shallowRef<{ chain: Chain; of: Summary; key: string } | null>(null);
+const chainLoading = ref(false);
+const chainError = ref<string | null>(null);
 
 /**
  * スキルの鍵。比べる時に同じスキル同士を合わせる。組の番号は読み込み直しで入れ替わることがあるので使わず、
@@ -279,6 +287,32 @@ export function usePobCheck() {
     adopted.value = new Set();
   }
 
+  // ---------------------------------------------------------------- 火力の内訳 (2026-10-03)
+  /** 今の自分・上のバーのスキルの内訳があるか (変えた・スキルを切り替えた後は古い) */
+  const chainFresh = computed(() => !!chain.value && chain.value.of === cur.value && chain.value.key === focus.value?.key);
+  /**
+   * 内訳を取り直す (内訳のタブが開いている時だけ画面が呼ぶ。1 回 1 秒くらい)。act() の計算し直しと同じ列に並ぶので、変えた直後に呼んでも
+   * 変えた後の数字になる。PoB のビルドは変えない (PCK.breakdown は主スキルの選びを戻す)
+   */
+  async function refreshChain(): Promise<void> {
+    const f = focus.value;
+    const mine = cur.value;
+    if (!f || !mine || chainLoading.value) return;
+    if (chain.value && chain.value.of === mine && chain.value.key === f.key) return;
+    chainLoading.value = true;
+    try {
+      const raw = await run(() => fetchBreakdown(f.g.i, f.s.k));
+      const c = buildChain(raw);
+      chain.value = { chain: c, of: mine, key: f.key };
+      chainError.value = null;
+      recordHistory("pob-check", "breakdown", { skill: f.s.name, dps: Math.round(c.dps), hitDps: Math.round(c.hitDps), ok: c.okDps && c.okHit, mismatches: c.mismatches });
+    } catch (e) {
+      chainError.value = msg(e);
+    } finally {
+      chainLoading.value = false;
+    }
+  }
+
   // ---------------------------------------------------------------- 取り入れの試算 (2026-10-03)
   /** 試算の対象 (差の 1 項目ずつ)。相手が無ければ空 */
   const candidates = computed(() => (cur.value && target.value ? adoptCandidates(cur.value, target.value, treeNodes.value) : []));
@@ -441,6 +475,8 @@ export function usePobCheck() {
     error.value = null;
     estimates.value = null;
     adopted.value = new Set();
+    chain.value = null;
+    chainError.value = null;
     clearTarget();
     targetInput.value = "";
   }
@@ -595,5 +631,8 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  /** 相手のスキルの表 (スキルごとの比較用。自分と同じ決まりで 2 重を除き DPS 0 を落とす) */
+  const targetSkills = computed(() => skillsOf(target.value));
+
+  return { chain, chainLoading, chainError, chainFresh, refreshChain, targetSkills, candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }
