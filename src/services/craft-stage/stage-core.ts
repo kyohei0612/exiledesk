@@ -9,6 +9,7 @@ import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfMod } from "../htc/mod-text";
+import modTextJa from "../../i18n/mod-text-ja.json";
 import { maxQualityForBase } from "../htc/catalysing-setup";
 import { displayedValue } from "../htc/quality";
 import { displayValue, tierDisplayRanges, type TierLike } from "../mods/stat-scale";
@@ -59,7 +60,7 @@ export const skip = (item: StageItem, reason: string): StageApply => ({ applied:
 
 /** MOD の系統の鍵 (決まりは services/mods/mod-rules.ts に 1 つ) */
 export const familyKeys = familyKeysOf;
-/** 付いている MOD の系統 (except は除く。開示の時の未開示の枠など) */
+/** 付いている MOD の系統 (except は除く。発現の時の未発現の枠など) */
 export function takenFamilies(data: PatchData, item: StageItem, except?: StageMod): Set<string> {
   return new Set(allMods(item).filter((m) => m !== except).flatMap((m) => {
     const md = data.mods.get(m.modId);
@@ -159,6 +160,13 @@ export function makeStageMod(mod: Mod, side: StageSide, tierIndex: number, rng: 
     textEn: "",
   }, mod, rng);
 }
+/** 説明文のまま入っている MOD の、付いた 1 つの英語文 (系統 → 文)。日本語は mod-text-ja の同じ文から */
+const ONE_OF_TEXT: Record<string, string> = {
+  PercentageStrength: "#% increased Strength",
+  PercentageDexterity: "#% increased Dexterity",
+  PercentageIntelligence: "#% increased Intelligence",
+};
+const jaOfText = (en: string): string | undefined => (modTextJa as Record<string, string>)[en];
 /**
  * 段はそのままで数値だけ転がし直す (神のオーブ)。段の範囲はデータから引き直す。
  * データの値の単位 → 画面の単位 (リーチ・クリティカル率は 1 万分率 645 → 6.45%、再生は毎分 60 → 毎秒 1) の決まりは
@@ -174,9 +182,12 @@ export function withValues(m: StageMod, mod: Mod, rng: () => number, fixed?: rea
   const statOf = (i: number): string | undefined => (stats && stats.length === raw.length ? stats[i] : undefined);
   const values = raw.map(([a, b], i) => (fixed?.[i] != null ? fixed[i]! : displayValue(statOf(i), rollValue(a!, b!, rng))));
   const ranges = tierDisplayRanges(tier as TierLike);
-  const en = mod.text ?? mod.id;
+  // 無限のパーフェクトエッセンスは 3 つの MOD とも文が説明文のまま (「筋力、器用さまたは知性」)。付いた 1 つの文にする (要望 ㉕-4)
+  const one = ONE_OF_TEXT[mod.family];
+  const en = one && mod.text === "#% increased Strength, Dexterity or Intelligence" ? one : mod.text ?? mod.id;
+  const ja = one && en === one ? jaOfText(one) ?? jaOfMod(mod) : jaOfMod(mod);
   const textEn = fillEn(en, values);
-  return { ...m, values, ranges, textJa: fillJa(jaOfMod(mod), textEn, values, signsOf(en)), textEn, ...(stats ? { stats: [...stats] } : {}), ...(mod.tags?.length ? { tags: [...mod.tags] } : {}) };
+  return { ...m, values, ranges, textJa: fillJa(ja, textEn, values, signsOf(en)), textEn, ...(stats ? { stats: [...stats] } : {}), ...(mod.tags?.length ? { tags: [...mod.tags] } : {}) };
 }
 /**
  * 日本語文に値を入れる。値の範囲の無い MOD (固定の「+1 to Level of all Minion Skills」、2 行目が固定の物) は日本語だけ「#」なので、
@@ -204,7 +215,7 @@ export interface PoolOpts {
   pools?: (side: StageSide) => readonly string[];
   /** 重みを掛ける MOD (触媒の高貴のお告げ: 品質の種類の MOD) */
   boost?: { test: (mod: Mod) => boolean; mult: number };
-  /** 系統の比較で除く MOD (開示で差し替える未開示の枠) */
+  /** 系統の比較で除く MOD (発現で差し替える未発現の枠) */
   except?: StageMod;
 }
 export function candidates(data: PatchData, item: StageItem, sides: readonly StageSide[], floor: number, o: PoolOpts = {}): Candidate[] {

@@ -36,7 +36,7 @@ export interface StageMod {
   /** エッセンスの MOD (普通・パーフェクトとも。1 つのアイテムに 1 つまで) */
   crafted?: boolean;
   /**
-   * 骨で付いたまだ開示していない冒涜 MOD (ゲームと同じく、開示の時に 3 つから選ぶ)。floor は古びた骨の段の下限、
+   * 骨で付いたまだ発現していない冒涜 MOD (ゲームと同じく、発現の時に 3 つから選ぶ)。floor は古びた骨の段の下限、
    * altered は変質した鎖骨 (異界の MOD も出る)、faction は王 / 君主 / 黒血のお告げで絞った勢力のタグ
    */
   unrevealed?: { floor: number; altered: boolean; faction: string | null; plain?: boolean };

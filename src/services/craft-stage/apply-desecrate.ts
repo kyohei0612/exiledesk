@@ -1,11 +1,11 @@
 /**
- * クラフトステージ: 冒涜 (骨) と開示 (2026-09-27、ADR-001)
+ * クラフトステージ: 冒涜 (骨) と発現 (2026-09-27、ADR-001)
  *
  * ゲームと同じく 2 手に分ける:
- *   1. 骨 (desecrate / desecrate_ancient / desecrate_altered。骨の種類は装備で決まる): **レア**に未開示の冒涜 MOD を 1 つ付ける。
+ *   1. 骨 (desecrate / desecrate_ancient / desecrate_altered。骨の種類は装備で決まる): **レア**に未発現の冒涜 MOD を 1 つ付ける。
  *      どちらの側に付くかは、その側で出うる MOD の重みの合計で決まる (計算機の desecrateAnyOutcomes と同じ割合)。
  *      左右のネクロマンシーのお告げで側を指せる。両側が埋まっていれば、その側の固定済み以外を 1 つ差し替える (計算機のオーナー判断)
- *   2. 開示 (reveal:N): 3 つの候補から N 番目を選ぶ。候補は普通 + 冒涜 (+ 変質した鎖骨なら異界) の置き場から、系統の被りを除き、
+ *   2. 発現 (reveal:N): 3 つの候補から N 番目を選ぶ。候補は普通 + 冒涜 (+ 変質した鎖骨なら異界) の置き場から、系統の被りを除き、
  *      重みで重複無しに 3 つ (計算機の sim と同じ)。深淵の残響のお告げがあれば 1 回引き直せる (reveal:N:reroll = 引き直した方)
  *   - 冒涜の MOD はアイテムに 1 つまで。古びた骨は段の下限 40 (ANCIENT_BONE_FLOOR)
  *   - 王 / 君主 / 黒血のお告げ: 候補をその勢力の冒涜の MOD だけに (MOD ごとに等しく。エンジンの desecrationBossProbability)。防具には使えない
@@ -18,7 +18,7 @@ import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
 const OFFERS = 3;
 
-/** 開示で出うる置き場。plain (腐食のお告げ) は冒涜専用の MOD (勢力の MOD・異界) を出さない = 普通の MOD だけ */
+/** 発現で出うる置き場。plain (腐食のお告げ) は冒涜専用の MOD (勢力の MOD・異界) を出さない = 普通の MOD だけ */
 function poolsFor(item: StageItem, altered: boolean, plain = false) {
   return (side: StageSide): string[] => {
     const k = side === "prefix" ? "prefixes" : "suffixes";
@@ -61,25 +61,25 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   }
   const hidden: StageMod = {
     modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 0,
-    values: [], ranges: [], textJa: `未開示の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
+    values: [], ranges: [], textJa: `未発現の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
     textEn: `Unrevealed Desecrated ${side === "prefix" ? "Prefix" : "Suffix"}`,
     desecrated: true, unrevealed: { floor, altered, faction },
   };
   return { applied: true, item: withMod(cur, hidden), added: [hidden], removed };
 }
 
-/** 開示の候補の置き場 (勢力のお告げなら、その勢力の冒涜の MOD だけを MOD ごとに等しく) */
+/** 発現の候補の置き場 (勢力のお告げなら、その勢力の冒涜の MOD だけを MOD ごとに等しく) */
 function pool(data: PatchData, item: StageItem, side: StageSide, floor: number, altered: boolean, faction: string | null, except: StageMod | undefined, plain = false): Candidate[] {
   const c = candidates(data, item, [side], floor, { pools: poolsFor(item, altered, plain), except });
   if (!faction) return c;
   return c.filter((x) => x.mod.tags.includes(faction)).map((x) => ({ ...x, w: 1 }));
 }
 
-/** 未開示の枠 */
+/** 未発現の枠 */
 export const unrevealedOf = (item: StageItem): StageMod | undefined => allMods(item).find((m) => m.unrevealed);
 
 /**
- * 開示の候補 3 つ (と、深淵の残響で引き直した 3 つ)。同じ rng から順に引くので、画面で見せる候補と手順の結果が一致する
+ * 発現の候補 3 つ (と、深淵の残響で引き直した 3 つ)。同じ rng から順に引くので、画面で見せる候補と手順の結果が一致する
  */
 export function revealOffers(data: PatchData, item: StageItem, rng: () => number): { first: StageMod[]; reroll: StageMod[] } {
   const hidden = unrevealedOf(item);
@@ -102,9 +102,9 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
 /** reveal:N (N は 1 から) / reveal:N:reroll */
 export function applyReveal(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
   const hidden = unrevealedOf(item);
-  if (!hidden) return skip(item, "未開示の冒涜 MOD が無い");
+  if (!hidden) return skip(item, "未発現の冒涜 MOD が無い");
   const m = /^reveal:(\d)(:reroll)?$/.exec(key);
-  if (!m) return skip(item, `開示の手の形が違う (${key})`);
+  if (!m) return skip(item, `発現の手の形が違う (${key})`);
   const reroll = !!m[2];
   if (reroll && !used.includes("OmenofAbyssalEchoes")) return skip(item, "引き直しには深淵の残響のお告げが要る");
   const offers = revealOffers(data, item, rng);
@@ -116,14 +116,14 @@ export function applyReveal(data: PatchData, item: StageItem, key: string, rng: 
 
 const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>): StageMod => ({
   modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 0,
-  values: [], ranges: [], textJa: `未開示の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
+  values: [], ranges: [], textJa: `未発現の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
   textEn: `Unrevealed Desecrated ${side === "prefix" ? "Prefix" : "Suffix"}`,
   desecrated: true, unrevealed: u,
 });
 
 /**
- * 腐食のお告げ: 固定済み (フラクチャー) 以外の MOD を全部外し、枠いっぱいまで未開示の MOD にしてコラプトする (普通 6 つ、フラクチャーがあれば 5 つ)。
- * 開示で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)。古びた骨でも段の下限は掛からない (PoE2 Wiki の Omen of Putrefaction)
+ * 腐食のお告げ: 固定済み (フラクチャー) 以外の MOD を全部外し、枠いっぱいまで未発現の MOD にしてコラプトする (普通 6 つ、フラクチャーがあれば 5 つ)。
+ * 発現で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)。古びた骨でも段の下限は掛からない (PoE2 Wiki の Omen of Putrefaction)
  */
 function putrefy(item: StageItem, key: string): StageApply {
   const removed = allMods(item).filter((m) => !m.fractured);

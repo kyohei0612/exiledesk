@@ -3,7 +3,7 @@
  *
  * オーナー:「カレンシーっていうかクラフトに使える奴全部だねこのステージは」。
  * ここはオーブ (変成 / 増強 / 王者 / 錬金 / 高貴 / カオス / 消去) とそれに掛かるお告げ、そして他の物への振り分け:
- *   エッセンス → [[apply-essence.ts]]、骨と開示 → [[apply-desecrate.ts]]、神 / フラクチャー / カタリスト / アーティファサー → [[apply-other.ts]]、
+ *   エッセンス → [[apply-essence.ts]]、骨と発現 → [[apply-desecrate.ts]]、神 / フラクチャー / カタリスト / アーティファサー → [[apply-other.ts]]、
  *   ヴァールと聖別 → [[apply-vaal.ts]]
  * 規則は計算機 (sim-route-helpers.ts の roll / usable / apply、エンジンの probability.ts) と同じ:
  *   - 足す MOD は、その側の普通の MOD の置き場から、**付いている系統を除き**、アイテムレベル以下 (上級・完全は段の下限以上) の段の重みで引く
@@ -93,7 +93,7 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // 解呪・サルベージ (要望 ⑰-5) は未鑑定・コラプトでもできる
   if (isDispose(currency)) return applyDispose(item, currency);
   if (item.identified === false && currency !== "wisdom") return skip(item, "未鑑定 (先に鑑定の巻物で鑑定する)");
-  // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未開示の MOD の開示だけはできる (ゲームと同じ)
+  // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未発現の MOD の発現だけはできる (ゲームと同じ)
   // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す
  // ルーン (要望 ⑰-1) はコラプト・聖別の後でもはめられる物がある (クライアントの CanSocketInCorruptedSanctified、applyRune で見る)
   if (isRune(currency)) return applyRune(item, currency);

@@ -454,7 +454,7 @@ P
 ~b/o 10 mirror`);
     expect(it.base).toBe("Dueling Wand");
     expect(it.unread).toEqual([]);
-    expect(it.notes).toEqual(["未発現プレフィックス があり、開示するまで計算に入らない"]);
+    expect(it.notes).toEqual(["未発現プレフィックス があり、魂の井戸で発現させるまで計算に入らない"]);
     expect(it.lines[0]).toMatchObject({ kind: "implicit", en: "Grants Skill: Level 19 Spellslinger" });
     expect(it.lines.filter((l) => l.kind === "explicit")).toHaveLength(7);
     expect(it.text.split(NL)).toContain("Requires: Level 65, 79 Int");

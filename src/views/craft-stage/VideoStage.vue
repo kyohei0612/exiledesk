@@ -22,6 +22,8 @@ import { useStageFx } from "./use-stage-fx";
 import { useVideoHand } from "./use-video-hand";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
+import { revealOffers } from "../../services/craft-stage/apply-desecrate";
+import { mulberry32 } from "../../services/htc/rng";
 
 const s = craftStage;
 const opts = s.video.value ?? { from: 0, autoplay: false, controls: true };
@@ -73,7 +75,20 @@ const playing = ref(false);
 const speed = ref(1);
 const title = s.replay.value?.plan.title ?? `${start.baseJa} をクラフト`;
 
-const item = computed(() => (idx.value === 0 ? start : tape[idx.value - 1]!.after));
+/**
+ * 発現の 3 択を止めて見せる (URL の offers=1、POE2Tube 要望 ㉕-3): 今の手が発現の手なら、アイテムは発現の前 (未発現の札のまま) で、
+ * 候補 3 つを出したまま選ぶ物を点ける。アビスの反響の引き直し (reveal:N:reroll) は「最初の 3 つ → 引き直した 3 つ」を横に並べ、
+ * 点けるのは引き直した方。候補は結果 JSON の reveal_offers と同じ (同じ種で引く)。撮影の準備の目印: 「魂の井戸で発現」の文字
+ */
+const stillOffers = computed(() => {
+  const st = opts.offers && idx.value ? tape[idx.value - 1] : null;
+  const rv = st ? /^reveal:(\d)(:reroll)?$/.exec(st.out.currency) : null;
+  const data = craftStage.data.value;
+  if (!st || !rv || !data || !st.out.applied) return null;
+  const off = revealOffers(data, st.before, mulberry32(st.out.seed));
+  return { first: off.first, reroll: rv[2] ? off.reroll : null, lit: Number(rv[1]) - 1 };
+});
+const item = computed(() => (stillOffers.value ? tape[idx.value - 1]!.before : idx.value === 0 ? start : tape[idx.value - 1]!.after));
 const last = computed(() => (idx.value ? tape[idx.value - 1]! : null));
 const recent = computed(() => tape.slice(Math.max(0, idx.value - 6), idx.value));
 const money = (v: number) => displayCurrency.money(v);
@@ -84,7 +99,7 @@ const anchor = ref({ x: 0, y: 0 });
 const fx = useStageFx(anchor, { count: () => idx.value, last: () => last.value });
 const fxCls = computed(() => (fx.value ? { hit: "stage-hit", up: "stage-up", shake: "stage-shake" }[fx.value.kind] : ""));
 
-/** 棚に並べる物 (工程で使うカレンシー等とお告げ。開示の手は棚を使わない) */
+/** 棚に並べる物 (工程で使うカレンシー等とお告げ。発現の手は棚を使わない) */
 /**
  * 手順 JSON の tray (追加キー、POE2Tube 要望 ⑧「棚に並べる物を手順 JSON で決められるように (使う物だけ、使う順)」) があればその順。
  * 無ければ工程で使う順。お告げは下の段 (id が Omenof…)
@@ -228,7 +243,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
           <!-- PoB の DPS (要望 ⑰-3、URL の stage-pob= がある時だけ) -->
           <VideoPob v-if="craftStage.pob.value && clip" :pob="craftStage.pob.value" :idx="idx" />
           <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
-            <StageItemCard v-bind="cardCommon" :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :flash-key="idx" />
+            <StageItemCard v-bind="cardCommon" :item="item" :added="stillOffers ? [] : last?.added ?? []" :removed="stillOffers ? [] : last?.removed ?? []" :flash-key="idx" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : ['text-2xl', clip ? 'stage-float-in' : '']">{{ fx.text }}</span>
           </div>
           <VideoTray v-if="clip" inline glow :counts="item.shards" :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
@@ -241,9 +256,9 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
           </div>
         </div>
 
-        <!-- 開示の候補 (アイテムの上に出して、選ぶ物を点ける) -->
+        <!-- 発現の候補 (アイテムの上に出して、選ぶ物を点ける) -->
         <div v-if="hand.reveal.value" class="stage-row-in absolute z-20 space-y-2 rounded-2xl border border-rose-400/50 bg-black/85 p-4 shadow-[0_0_40px_rgba(0,0,0,0.8)]" :class="clip ? 'left-1/2 top-[190px] w-[640px] -translate-x-[55%] text-[20px]' : 'left-[50px] top-[260px] w-[540px]'">
-          <p class="text-[15px] font-bold text-rose-200">開示する — 1 つ選ぶ</p>
+          <p class="text-[15px] font-bold text-rose-200">魂の井戸で発現 — 1 つ選ぶ</p>
           <div
             v-for="(m, i) in hand.reveal.value.offers"
             :key="m.modId + i"
@@ -253,6 +268,27 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
             <span>{{ m.textJa }}</span>
             <span class="text-[12px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>
           </div>
+        </div>
+
+        <!-- 発現の 3 択を止めて見せる (offers=1)。引き直しは 最初の 3 つ → 引き直した 3 つ -->
+        <div v-if="stillOffers && !hand.reveal.value" class="absolute z-20 flex items-start gap-3" :class="clip ? 'left-1/2 top-[150px] -translate-x-1/2' : 'left-[50px] top-[220px]'" data-reveal-offers="1">
+          <template v-for="(set, k) in (stillOffers.reroll ? [stillOffers.first, stillOffers.reroll] : [stillOffers.first])" :key="k">
+            <div v-if="k" class="self-center text-3xl text-rose-200/80">→</div>
+            <div class="space-y-2 rounded-2xl border border-rose-400/50 bg-[#0b0708] p-4 shadow-[0_0_40px_rgba(0,0,0,0.9)]" :class="stillOffers.reroll ? 'w-[500px]' : 'w-[620px]'">
+              <p class="text-[15px] font-bold text-rose-200">
+                魂の井戸で発現 — {{ stillOffers.reroll ? (k ? "アビスの反響で引き直した 3 つ" : "最初の 3 つ") : "1 つ選ぶ" }}
+              </p>
+              <div
+                v-for="(m, i) in set"
+                :key="m.modId + i"
+                class="flex items-center justify-between gap-3 rounded-xl border px-4 py-2 text-[17px]"
+                :class="(stillOffers.reroll ? k === 1 : true) && stillOffers.lit === i ? 'scale-[1.04] border-rose-300 bg-rose-500/25 text-white shadow-[0_0_18px_rgba(244,63,94,0.6)]' : stillOffers.reroll && k === 0 ? 'border-white/10 bg-white/[0.03] text-mod-desecrated opacity-60' : 'border-white/10 bg-white/[0.03] text-mod-desecrated'"
+              >
+                <span>{{ m.textJa }}</span>
+                <span class="shrink-0 text-[12px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>
+              </div>
+            </div>
+          </template>
         </div>
 
         <!-- 棚 (カーソルがここから拾う) -->

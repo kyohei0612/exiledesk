@@ -5,7 +5,7 @@
  * 「操作は Craft of Exile 仕様 (アイコンを持ってアイテムをクリック)」「カレンシーっていうかクラフトに使える奴全部」。
  *   - 手で打つ: 棚の物を持って (held) アイテムを押すと 1 手。お告げは押すと「掛けておく」(何枚でも)。次の手に関係する物だけ食う。
  *     seed は 開始の seed + 手の番号 なので、打った手をそのまま手順 JSON にして scripts/craft-stage-run.mjs に流すと同じ結果になる
- *   - 冒涜: 骨で未開示の MOD が付き、開示の候補 3 つ (revealOffers) から選ぶと reveal:N の手になる
+ *   - 冒涜: 骨で未発現の MOD が付き、発現の候補 3 つ (revealOffers) から選ぶと reveal:N の手になる
  *   - 再生: 手順 JSON と step (URL の ?stage-plan=…&step=N) で、その手まで進めた状態を出す (POE2Tube の撮影用)
  *   - 動画モード: 打った手 (か手順 JSON) を 16:9 の撮影用画面で 1 手ずつ再生する ([[VideoStage.vue]])。
  *     URL に &video=1 を付けると最初から動画モード (step=N でその手から、autoplay=1 で自動再生、controls=0 で操作欄を出さない、
@@ -46,7 +46,8 @@ const itemLevel = ref(82);
  * 動画モード (開始の手・自動再生・操作欄・見た目)。layout "clip" は POE2Tube の撮影用 (要望 ⑤、2026-09-28):
  * アイテム + 棚だけを大きく、見出し・右の欄・進行バー無し、下 15% 空け (結果の文字を重ねる所)
  */
-const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?: "default" | "clip" } | null>(null);
+/** offers = 発現の手で止めた時に候補 3 つを出したままにする (URL の offers=1、POE2Tube 要望 ㉕-3) */
+const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?: "default" | "clip"; offers?: boolean } | null>(null);
 /**
  * 動画用の別の画面 (POE2Tube 要望 ⑪、2026-09-29)。URL の view= で開く (手順は要らない):
  *   view=tiers&base=<英語のベース名>&mod=<MOD の id か系統>&ilvl=N … 段の表
@@ -155,7 +156,7 @@ export const craftStage = {
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
   /** 直前の手 */
   last: computed(() => log.value[log.value.length - 1] ?? null),
-  /** 開示の候補 (未開示の冒涜 MOD がある時。次の手の seed で引くので、選んだ手の結果と一致する) */
+  /** 発現の候補 (未発現の冒涜 MOD がある時。次の手の seed で引くので、選んだ手の結果と一致する) */
   offers: computed(() => {
     if (!data.value || !item.value || !unrevealedOf(item.value)) return null;
     return revealOffers(data.value, item.value, mulberry32(seed.value + log.value.length + 1));
@@ -222,6 +223,7 @@ export const craftStage = {
           autoplay: q.get("autoplay") === "1",
           controls: q.get("controls") !== "0",
           layout: q.get("layout") === "clip" ? "clip" : "default",
+          offers: q.get("offers") === "1",
         };
       }
     } catch (e) {

@@ -7,7 +7,7 @@
  *   1. お告げがあれば、棚のお告げへ動いて押す (点灯して「掛けた」状態になる)
  *   2. 棚のカレンシーへ動いて押す → カーソルにアイコンが付く (持つ)
  *   3. アイテムまで運ぶ (弧を描く) → 押す → ここで初めて MOD が付く (呼ぶ側の apply)
- *   開示 (reveal:N) はカレンシーを持たず、アイテムの上に候補 3 つを出し、選ぶ物を点けてから付ける
+ *   発現 (reveal:N) はカレンシーを持たず、アイテムの上に候補 3 つを出し、選ぶ物を点けてから付ける
  * 座標は 1280×720 の枠の中 (拡大しても合う)。skip() で残りを 0 秒にして一気に終わらせる (→ の連打)。
  */
 import { reactive, ref, type Ref } from "vue";
@@ -26,7 +26,7 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
   const armed = ref<string[]>([]);
   /** 今の手で使われて消えるお告げ (消える動きを見せる間だけ) */
   const spent = ref<string[]>([]);
-  /** 開示の候補 (選ぶ物を lit で点ける) */
+  /** 発現の候補 (選ぶ物を lit で点ける) */
   const reveal = ref<{ offers: StageMod[]; lit: number } | null>(null);
   /** 棚の 1 つ 1 つ (キー → 要素)。VideoTray が入れる */
   const slots = new Map<string, HTMLElement>();
@@ -81,7 +81,7 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
         await wait(350);
         hand.hint = "";
       }
-      // 2. カレンシーを持つ (開示は持たない)
+      // 2. カレンシーを持つ (発現は持たない)
       if (!rv) {
         await moveTo(pointOf(slots.get(cur)), 560);
         await click();
@@ -91,7 +91,7 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
       // 3. アイテムまで運ぶ
       await moveTo(pointOf(card, 0.35), 700);
       if (rv && craftStage.data.value) {
-        // 開示: 候補 3 つを出し、選ぶ物を点けてから付ける (引き直しは 1 組目を見せてから入れ替える)
+        // 発現: 候補 3 つを出し、選ぶ物を点けてから付ける (引き直しは 1 組目を見せてから入れ替える)
         const off = revealOffers(craftStage.data.value, st.before, mulberry32(st.out.seed));
         reveal.value = { offers: off.first, lit: -1 };
         await wait(700);

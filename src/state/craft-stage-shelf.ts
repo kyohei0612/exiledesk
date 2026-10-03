@@ -82,7 +82,7 @@ export function bonesFor(item: StageItem | null): string[] {
 export const CATALYSTS = Object.keys(KEYS.currency).filter((k) => k.startsWith("catalyst_"));
 const OMEN_LABEL: Record<string, string> = {
   exalt: "高貴", regal: "王者", alchemy: "錬金", chaos: "カオス", annul: "消去", essence_perfect: "パーフェクトエッセンス",
-  desecrate: "冒涜", reveal: "開示", vaal: "ヴァール", divine: "神",
+  desecrate: "冒涜", reveal: "発現", vaal: "ヴァール", divine: "神",
 };
 /** お告げ (掛かる手の種類ごと) */
 export const OMEN_GROUPS: ShelfGroup[] = Object.entries(OMEN_FOR).map(([kind, keys]) => ({ kind, label: OMEN_LABEL[kind] ?? kind, keys: [...keys] }));
@@ -118,7 +118,7 @@ export function enOf(key: string, item: StageItem | null): string {
   return KEYS.currency[key]?.en ?? KEYS.omens[key]?.en ?? KEYS.bones[key]?.en ?? key;
 }
 const row = (key: string, item: StageItem | null) => marketStore.items.value.find((x) => x.Text === enOf(key, item));
-/** 1 個の値段 (高貴建て、相場。無ければ 0。開示は 0) */
+/** 1 個の値段 (高貴建て、相場。無ければ 0。発現は 0) */
 export function priceOfKey(key: string, item: StageItem | null): number {
   const it = row(key, item);
   const p = it && typeof it.CurrentPrice === "number" ? it.CurrentPrice : 0;
@@ -128,7 +128,7 @@ export function priceOfKey(key: string, item: StageItem | null): number {
 }
 /** アイコン: 相場の行の絵。ルーンは相場に無い物もあるのでクライアントから書き出した絵 (rune-art) を先に */
 export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(runeNameOf(key)) : null) ?? row(key, item)?.IconUrl ?? "";
-/** 日本語名 (お告げ・開示も) */
+/** 日本語名 (お告げ・発現も) */
 export function nameOfKey(key: string, item: StageItem | null): string {
   if (KEYS.omens[key]) return jaOfOmen(key) ?? key;
   if (!item) return KEYS.currency[key]?.ja ?? key;

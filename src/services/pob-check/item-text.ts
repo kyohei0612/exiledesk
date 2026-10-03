@@ -376,7 +376,7 @@ const TRADE_NOTE_LINE = /^~/;
 const TRADE_TOTAL_LINE = /合計\s*[+-]?\d/;
 /** 取引所のコピーの末尾に付く性能の写し「アーマー174」「回避力159」(ラベルに数字が直接つながり、コロンが無い) */
 const TRADE_ECHO_LINE = /^[^\d\s:：+\-%]+\d[\d.,]*%?$/;
-/** 冒涜で付いた開示前の MOD「未発現プレフィックス」「未発現サフィックス」(ClientStrings の表記は実物で確認) */
+/** 冒涜で付いた発現前の MOD「未発現プレフィックス」「未発現サフィックス」(ClientStrings の表記は実物で確認) */
 const UNREVEALED_LINE = /^未発現/;
 /** フレーバーテキストの行 (poe2-flavour-ja.json の日本語を 1 行ずつ) */
 const flavourLines: Set<string> = (() => {
@@ -646,8 +646,8 @@ function readFlat(all: string[], pats: LinePattern[]): Parsed {
     // 取引所のコピーだけに付く行 (2026-10-02 オーナーの実物 4 つで確認): 値段のメモ「~b/o 100 divine」、
     // 合計の擬似 MOD「最大マナ合計 +105」、末尾の性能の写し「アーマー174」(コロン無し)
     if (TRADE_NOTE_LINE.test(raw) || TRADE_TOTAL_LINE.test(raw) || (bodyStarted && TRADE_ECHO_LINE.test(raw))) continue;
-    // 未発現 (冒涜で付いた開示前の MOD)。中身が無いので計算に入れようが無い。読めなかった扱いではなく注意として返す
-    if (UNREVEALED_LINE.test(raw)) { notes.push(`${raw} があり、開示するまで計算に入らない`); continue; }
+    // 未発現 (冒涜で付いた発現前の MOD)。中身が無いので計算に入れようが無い。読めなかった扱いではなく注意として返す
+    if (UNREVEALED_LINE.test(raw)) { notes.push(`${raw} があり、魂の井戸で発現させるまで計算に入らない`); continue; }
     const row = readModRow(raw, pats);
     if (row.en) {
       bodyStarted = true;

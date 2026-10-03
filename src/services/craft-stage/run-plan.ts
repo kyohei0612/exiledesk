@@ -16,6 +16,7 @@ import { jaOfOmen, jaOfPriceKey } from "../htc/labels";
 import { mulberry32 } from "../htc/rng";
 import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
+import { revealOffers } from "./apply-desecrate";
 import { addForced, boostedMod, type Force } from "./stage-core";
 import { socketCapOf } from "./stage-runes";
 import { isShard } from "./apply-act";
@@ -111,10 +112,10 @@ export interface PlayedStep {
 }
 
 export const splitOmens = (omen: string | null | undefined): string[] => (omen ? omen.split("+").filter(Boolean) : []);
-/** 手の日本語名 (開示は「開示 (2 番目)」) */
+/** 手の日本語名 (発現は「発現 (2 番目)」) */
 export function stepJa(currency: string, item: StageItem): string {
   const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
-  if (rv) return `開示 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
+  if (rv) return `発現 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
   if (isRune(currency)) {
     // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
@@ -155,9 +156,28 @@ export function playStep(
     ...(r.picked ? ({ picked: true, pick_chance: r.picked.map((p) => ({ mod_id: p.modId, tier_name: p.tierName, chance: p.chance })) } as object) : {}),
     // オーグメント (ルーン) をはめた手 (2026-10-03、足したキー): どのソケット (1 から) に何を。置き換えた時は外れた物と、その行き先
     // (replaced_goes "destroyed" = 壊れて戻らない。src/services/augment-rules.ts)。POE2Tube は無視してよい
+    // 発現の手 (要望 ㉕-2): 出た 3 つの候補と選んだ番号 (1 から)。:reroll (アビスの反響) は引き直す前 (first) と後 (rerolled) の両方。
+    // applyReveal と同じ種で引くので、選んだ物は changed.added と同じ
+    ...(revealOut(data, item, currency, o.seed, r.applied)),
     ...(r.augment ? ({ augment_change: { socket: r.augment.socket, put: outAug(r.augment.put), replaced: r.augment.replaced ? outAug(r.augment.replaced) : null, replaced_goes: r.augment.replacedGoes } } as object) : {}),
   };
   return { out, before: item, after: r.item, added: r.added, removed: r.removed };
+}
+
+/** 発現の手の候補 (結果 JSON の reveal_offers)。発現の手でなければ空 */
+function revealOut(data: PatchData, item: StageItem, currency: string, seed: number, applied: boolean): object {
+  const m = /^reveal:(\d)(:reroll)?$/.exec(currency);
+  if (!m || !applied) return {};
+  const offers = revealOffers(data, item, mulberry32(seed));
+  const rerolled = !!m[2];
+  return {
+    reveal_offers: {
+      chosen: Number(m[1]),
+      rerolled,
+      first: offers.first.map((x) => outModIn(item, x, data)),
+      after_reroll: rerolled ? offers.reroll.map((x) => outModIn(item, x, data)) : null,
+    },
+  };
 }
 
 export interface RunMeta {

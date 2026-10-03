@@ -43,16 +43,16 @@ const OMEN: Record<string, string[]> = {
   OmenofSinistralAnnulment: ["次の消去のオーブは **プレフィックスから** 消す"],
   OmenofDextralAnnulment: ["次の消去のオーブは **サフィックスから** 消す"],
   OmenofGreaterAnnulment: ["次の消去のオーブは MOD を **2 つ** 消す", "左右の消去のお告げと重ねられる"],
-  OmenofLight: ["次の消去のオーブは **冒涜の MOD だけ** を消す (未開示でも)", "冒涜の MOD が無いと打てない"],
+  OmenofLight: ["次の消去のオーブは **冒涜の MOD だけ** を消す (未発現でも)", "冒涜の MOD が無いと打てない"],
   OmenofSinistralCrystallisation: ["次のパーフェクトエッセンスは **プレフィックスから** 消してから付ける", "足す側が埋まっていて、お告げが反対側を指すと打てない"],
   OmenofDextralCrystallisation: ["次のパーフェクトエッセンスは **サフィックスから** 消してから付ける"],
-  OmenofSinistralNecromancy: ["次の骨 (冒涜) は未開示の MOD を **プレフィックス** に付ける"],
-  OmenofDextralNecromancy: ["次の骨 (冒涜) は未開示の MOD を **サフィックス** に付ける"],
-  OmenoftheSovereign: ["次の骨の開示の候補を **ウラマンの MOD だけ** にする (MOD ごとに等しく)", "武器とアクセサリーだけ (防具には使えない)"],
-  OmenoftheLiege: ["次の骨の開示の候補を **アマナムの MOD だけ** にする", "武器とアクセサリーだけ"],
-  OmenoftheBlackblooded: ["次の骨の開示の候補を **クルガルの MOD だけ** にする", "武器とアクセサリーだけ"],
-  OmenofPutrefaction: ["次の骨は **フラクチャー以外の MOD を全部外し**、枠いっぱい (普通 6 つ) を未開示の MOD にして **コラプト** する", "開示で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)", "古びた骨でもティアの下限は掛からない"],
-  OmenofAbyssalEchoes: ["次の開示で、候補 3 つを **1 回だけ引き直せる**", "引き直さなくても、その開示で使い切る"],
+  OmenofSinistralNecromancy: ["次の骨 (冒涜) は未発現の MOD を **プレフィックス** に付ける"],
+  OmenofDextralNecromancy: ["次の骨 (冒涜) は未発現の MOD を **サフィックス** に付ける"],
+  OmenoftheSovereign: ["次の骨の発現の候補を **ウラマンの MOD だけ** にする (MOD ごとに等しく)", "武器とアクセサリーだけ (防具には使えない)"],
+  OmenoftheLiege: ["次の骨の発現の候補を **アマナムの MOD だけ** にする", "武器とアクセサリーだけ"],
+  OmenoftheBlackblooded: ["次の骨の発現の候補を **クルガルの MOD だけ** にする", "武器とアクセサリーだけ"],
+  OmenofPutrefaction: ["次の骨は **フラクチャー以外の MOD を全部外し**、枠いっぱい (普通 6 つ) を未発現の MOD にして **コラプト** する", "発現で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)", "古びた骨でもティアの下限は掛からない"],
+  OmenofAbyssalEchoes: ["次の発現で、候補 3 つを **1 回だけ引き直せる**", "引き直さなくても、その発現で使い切る"],
   OmenofCorruption: ["次のヴァールオーブの「変化なし」を外す (残り 3 つから等しく)", "アクセサリーの 4 つ目 (ソケットの代わりの変化なし) は外れない", "0.5.0 で入手できなくなった"],
   OmenofSanctification: ["次の神のオーブをレアに使うと **聖別** する: MOD ごとに 0.78〜1.22 倍 (0.01 刻み) を掛けて丸める", "聖別したアイテムは、以後手を加えられない"],
 };
@@ -117,7 +117,7 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     case "divine":
       return ["フラクチャー以外の MOD の **数値だけ** を、そのティアの範囲の中で振り直す (ティアは変わらない)", "お告げ: 聖別 (0.78〜1.22 倍にして聖別。以後手を加えられない)"];
     case "fracture":
-      return ["**レア** で MOD が **4 つ以上**、まだフラクチャーが無い時", "MOD を 1 つ **固定 (フラクチャー)** する。どれになるかは等しく (未開示の冒涜 MOD は選ばれない)", "フラクチャーした MOD は、カオス・消去・エッセンスでも消えない"];
+      return ["**レア** で MOD が **4 つ以上**、まだフラクチャーが無い時", "MOD を 1 つ **固定 (フラクチャー)** する。どれになるかは等しく (未発現の冒涜 MOD は選ばれない)", "フラクチャーした MOD は、カオス・消去・エッセンスでも消えない"];
     case "artificer": {
       const n = item ? socketCapOf(item.base, item.cls.category) : 1;
       return ["マーシャル武器・ワンド・スタッフ・防具に **ソケットを 1 つ** 足す", n ? `このベースは ${n} つまで (胴・両手武器 2 / ほか 1。コラプトで +1)` : "このベース (アクセサリー・矢筒・フラスコ) には付けられない"];
@@ -125,7 +125,7 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     case "vaal": {
       const pool = item ? enchantPool(item).length : 0;
       return [
-        "アイテムを **コラプト** する。以後手を加えられない (開示だけはできる)",
+        "アイテムを **コラプト** する。以後手を加えられない (発現だけはできる)",
         "結果は次の 4 つから等しく 1 つ (公開の実測が無いので等分と仮定):",
         "① 変化なし",
         "② MOD を 1〜3 つ、別の新しい MOD に振り直す (フラクチャーは残る)",
@@ -139,14 +139,14 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     case "desecrate_gnawed": {
       const bone = item ? { jawbone: "顎の骨 (武器・矢筒)", rib: "肋骨 (防具)", collarbone: "鎖骨 (アクセサリー)" }[desecrationBoneFor(item.cls.category)] : "";
       return [
-        "**レア** に **未開示の冒涜 MOD** を 1 つ付ける (冒涜の MOD はアイテムに 1 つまで)",
+        "**レア** に **未発現の冒涜 MOD** を 1 つ付ける (冒涜の MOD はアイテムに 1 つまで)",
         "付く側は、その側で出うる MOD の重みの合計で決まる。両側が埋まっていれば、その側の MOD を 1 つ差し替える",
-        "開示で **候補 3 つから 1 つ選ぶ**。候補は普通の MOD + 冒涜の MOD から、系統の被りを除いて重みで重複なしに 3 つ",
+        "発現で **候補 3 つから 1 つ選ぶ**。候補は普通の MOD + 冒涜の MOD から、系統の被りを除いて重みで重複なしに 3 つ",
         key === "desecrate_ancient" ? "古びた骨: 候補は MOD レベル 40 以上のティアだけ" : "",
         key === "desecrate_gnawed" ? `噛み切られた骨: **アイテムレベル ${GNAWED_MAX_ILVL} 以下** にだけ使える (クライアントの表)。候補は保存された骨と同じ` : "",
         key === "desecrate_altered" ? "変質した鎖骨: 候補に **異界の MOD** も入る (アクセサリーだけ)" : "",
         bone ? `このベースで使う骨: ${bone}` : "",
-        "お告げ: 左右のネクロマンシー (側) / 支配者・君主・ブラックブラッド (勢力で絞る) / 腐食 (全部を未開示にしてコラプト) / アビスの反響 (開示の引き直し)",
+        "お告げ: 左右のネクロマンシー (側) / 支配者・君主・ブラックブラッド (勢力で絞る) / 腐食 (全部を未発現にしてコラプト) / アビスの反響 (発現の引き直し)",
       ].filter(Boolean);
     }
   }

@@ -1,7 +1,7 @@
 <!--
-  RevealPanel.vue — クラフトステージの冒涜の開示 (2026-09-27、ADR-001)
+  RevealPanel.vue — クラフトステージの冒涜の発現 (2026-09-27、ADR-001)
 
-  骨で付いた未開示の冒涜 MOD を、候補 3 つから選んで開示する (ゲームの「魂の井戸」と同じ)。選ぶと reveal:N の手になる。
+  骨で付いた未発現の冒涜 MOD を、候補 3 つから選んで発現する (ゲームの「魂の井戸」と同じ)。選ぶと reveal:N の手になる。
   深淵の残響のお告げを掛けてあれば 1 回だけ引き直せる (引き直した方から選ぶと reveal:N:reroll)。
   候補は次の手の seed で引いてあるので、見せた候補と選んだ手の結果は一致する ([[craft-stage.ts]] の offers)。
 -->
@@ -21,7 +21,7 @@ function pick(i: number): void {
 <template>
   <section v-if="craftStage.offers.value && !craftStage.replay.value" class="w-[380px] rounded-xl border border-rose-400/40 bg-rose-500/10 p-3 text-[12px]">
     <p class="mb-2 flex items-center justify-between">
-      <b class="text-rose-200">開示する — 1 つ選ぶ<span v-if="left() > 1" class="ml-1 font-normal opacity-70">(未開示 残り {{ left() }})</span></b>
+      <b class="text-rose-200">魂の井戸で発現 — 1 つ選ぶ<span v-if="left() > 1" class="ml-1 font-normal opacity-70">(未発現 残り {{ left() }})</span></b>
       <button
         v-if="canReroll() && !rerolled"
         type="button"

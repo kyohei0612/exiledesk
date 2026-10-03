@@ -59,7 +59,7 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
     ({ applied: true, item: { ...it, corrupted: true }, added, removed });
   switch (outcome) {
     case "reroll": {
-      // 最大 3 つ (1〜3 を等分。フラクチャー・未開示は振り直さない)。消した側に新しい MOD を 1 つずつ
+      // 最大 3 つ (1〜3 を等分。フラクチャー・未発現は振り直さない)。消した側に新しい MOD を 1 つずつ
       const pool = allMods(item).filter((m) => !m.fractured && !m.unrevealed);
       const n = Math.min(pool.length, 1 + Math.floor(rng() * 3));
       let cur = item;
