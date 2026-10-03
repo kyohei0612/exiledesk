@@ -7,3 +7,4 @@ cache/
 assets/characters/*.psd
 assets/characters/*.zip
 assets/characters/*/**/*.psd
+*.egg-info/
