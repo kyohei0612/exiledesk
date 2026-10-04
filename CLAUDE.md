@@ -22,7 +22,7 @@ python scripts/build_chapter.py data/scripts/<name>.json --only N  # 章が OK �
 python scripts/build_video.py  data/scripts/<name>.json  # 全章そろったら: 作り済みの章をつないで音と合わせる → output/<name>.mp4
 python scripts/check_flicker.py data/scripts/<name>.json  # 動画を作ったら: ちらつき (絵がパッと変わってすぐ戻る所) を探す。0 か所が合格
 python scripts/preview_frames.py data/scripts/<name>.json  # 台本チェック用の静止画 → output/preview/
-python scripts/make_thumbnail.py --top ... --main ... --bg cache/stage/<hash>/step_N.png --out output/<name>_thumb.jpg
+python scripts/thumbs/end_craft_materials_2_panels.py --variant g  # 解説系のサムネの基本の形 (アイコンの列 + 帯 + びっしり解説文 + 真ん中にめたん)。COLUMNS をその回に替える。題は kyohei
 python scripts/publish_video.py <name>            # 投稿情報 data/publish/<name>.json を作って表示 (dry-run)
 python scripts/publish_video.py <name> --execute  # チョコバナナに「非公開」で上げる (--publish-at で予約)
 ```
