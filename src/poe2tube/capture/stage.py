@@ -174,6 +174,13 @@ def capture_plan(
     return paths
 
 
+def needs_capture(plan: CraftStagePlan, steps: list[int], clips: bool = True) -> bool:
+    """撮っていない静止画か手つきがあるか (撮り済みならプロセスを立ち上げない)."""
+    return any(not cached_path(plan, st).exists() for st in steps) or any(
+        clips and st >= 1 and not clip_frames(plan, st) for st in steps
+    )
+
+
 class NotVideoModeError(RuntimeError):
     """ExileDesk が動画モードで開けていない (普通の画面を撮ってしまうので止める)."""
 

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import multiprocessing as mp
 import os
 import shutil
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -13,9 +15,10 @@ import structlog
 from poe2tube.audio.mix import mix
 from poe2tube.audio.voicevox import VoicevoxClient
 from poe2tube.capture.anim import anim_query, capture_anims, intro_timing
-from poe2tube.capture.stage import capture_plan, pob_json
+from poe2tube.capture.stage import capture_plan, ensure_vite, needs_capture, pob_json
 from poe2tube.capture.views import capture_views, view_query
 from poe2tube.config.settings import REPO_ROOT, get_settings
+from poe2tube.contracts.craft_stage import CraftStagePlan
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
 from poe2tube.video.animate import sound_events
@@ -47,11 +50,23 @@ def load_script(path: Path) -> tuple[VideoScript, ResultSet]:
     return script, rs
 
 
+CAPTURE_WORKERS = 6  # 手つきを同時に撮るブラウザの数 (実演ごとに 1 つ)
+
+
+def _capture_one(key: str | None, plan: CraftStagePlan, steps: list[int], pob: str | None) -> str:
+    capture_plan(plan, steps, pob=pob)
+    return str(key)
+
+
 def capture_stage_scenes(script: VideoScript, rs: ResultSet) -> None:
-    """stage シーンが指す手を実演ごとに ExileDesk の実画面で撮る (失敗時は図解で代用)."""
+    """stage シーンが指す手を実演ごとに ExileDesk の実画面で撮る (失敗時は図解で代用).
+
+    撮っていない実演が 2 つ以上なら、実演ごとに別のプロセスでブラウザを開いて同時に撮る。
+    """
     s = get_settings()
     if not s.stage_capture:
         return
+    jobs = []
     for key, res in rs.items():
         steps = sorted(
             {
@@ -60,15 +75,27 @@ def capture_stage_scenes(script: VideoScript, rs: ResultSet) -> None:
                 if ln.scene.kind == "stage" and ln.scene.demo == key
             }
         )
-        if not steps:
-            continue
-        try:
-            paths = capture_plan(res.plan, steps, pob=pob_json(res))
-            log.info("stage scenes ready", demo=key, steps=steps, cached=len(paths))
-        except Exception as e:  # noqa: BLE001 — 撮影は補助。落ちても動画は作る
-            log.warning(
-                "stage capture failed, falling back to drawn panel", demo=key, error=str(e)[:300]
-            )
+        if steps and needs_capture(res.plan, steps):
+            jobs.append((key, res.plan, steps, pob_json(res)))
+    if not jobs:
+        log.info("stage scenes ready", cached="all")
+        return
+    ensure_vite()  # 同時に起動しないよう、先に 1 回だけ
+    if len(jobs) == 1:
+        workers = 1
+    else:
+        workers = min(CAPTURE_WORKERS, len(jobs))
+    with ProcessPoolExecutor(workers, mp_context=mp.get_context("spawn")) as ex:
+        futures = {ex.submit(_capture_one, *job): job[0] for job in jobs}
+        for fut in as_completed(futures):
+            try:
+                log.info("stage scenes ready", demo=fut.result())
+            except Exception as e:  # noqa: BLE001 — 撮影は補助。落ちても動画は作る
+                log.warning(
+                    "stage capture failed, falling back to drawn panel",
+                    demo=futures[fut],
+                    error=str(e)[:300],
+                )
 
 
 def capture_view_scenes(script: VideoScript, rs: ResultSet) -> None:
