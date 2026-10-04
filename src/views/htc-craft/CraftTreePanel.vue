@@ -58,7 +58,25 @@ function loadPreset(id: string): void {
  */
 const canAuto = computed(() => !!c.data.value && !!c.prices.value && c.targets.value.length > 0 && startKindOf(c).kind !== "unsafe" && !c.unreachableTargets.value.length);
 /** 診断 (② 始め方 → ③ 完成品) が済んでから回す (オーナー 2026-09-25:「完成終わったらシミュレーションって順番」) */
-const autoReady = computed(() => canAuto.value && !c.diagBusy.value);
+const autoReady = computed(() => canAuto.value && !c.diagBusy.value && c.treeRoute.value != null);
+/** 始め方を選ぶ所を先に出す (選ぶまでツリーは出さない。2026-10-04 オーナー「順に表示していこうか、選択肢から」) */
+const choosing = computed(() => !!c.routeOptions.value && c.treeRoute.value == null);
+const ROUTE_JA = { fixed: "固定済みを買って途中から作る", self: "自分でフラクチャーして作る" } as const;
+const routeCards = computed(() => {
+  const o = c.routeOptions.value;
+  if (!o) return [];
+  return (["fixed", "self"] as const).map((k) => ({
+    key: k,
+    name: ROUTE_JA[k],
+    sub: k === "fixed" ? "ベースから: 固定済み (フラクチャー済み) の素材を買って、残りを自動クラフト" : "1 から: 固定無しを買って自分でフラクチャー (固定) してから、残りを自動クラフト",
+    cost: o[k]?.cost ?? null,
+    label: o[k]?.label ?? "出品が足りない",
+    recommended: o.recommended === k,
+  }));
+});
+function chooseRoute(k: "fixed" | "self"): void {
+  c.treeRoute.value = k;
+}
 /** 組んでいる最中 (候補を短く回して比べるので数秒かかる) */
 const autoBusy = ref(false);
 /** やり直しの費用から決めた取り方 ([[redo-cost.ts]]、自動で組んだ時に出す) */
@@ -93,6 +111,7 @@ async function loadAuto(): Promise<void> {
       item: c.item.value,
       targets: c.targets.value,
       fractured: c.fracturedTargets.value,
+      route: c.treeRoute.value,
       sockets: c.socketOn.value,
       start: t.start.value,
       picked: picked.value,
@@ -185,8 +204,36 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
 </script>
 
 <template>
-  <div id="craft-tree-panel" class="flex items-start gap-3 text-sm">
+  <!-- 始め方を選ぶ (選ぶと自動クラフトを組む) -->
+  <div v-if="choosing" class="text-sm">
+    <p class="mb-2 text-[13px] text-[var(--exile-color-text-secondary)]">どちらで作るかを選ぶと、その始め方で自動クラフトを組みます</p>
+    <div class="grid gap-2 md:grid-cols-2">
+      <button
+        v-for="r in routeCards"
+        :key="r.key"
+        type="button"
+        class="rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-40"
+        :class="r.recommended ? 'border-emerald-400/70 bg-emerald-500/10 hover:bg-emerald-500/20' : 'border-white/15 bg-white/[0.03] hover:bg-white/[0.07]'"
+        :disabled="r.cost == null"
+        @click="chooseRoute(r.key)"
+      >
+        <p class="flex items-center gap-2 font-bold">
+          {{ r.name }}
+          <span v-if="r.recommended" class="rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">おすすめ</span>
+        </p>
+        <p class="mt-0.5 text-[11px] opacity-60">{{ r.sub }}</p>
+        <p class="mt-1.5 text-lg font-bold" :class="r.recommended ? 'text-emerald-300' : ''">{{ r.cost != null ? c.money(r.cost) : "—" }}</p>
+        <p class="text-[11px] opacity-70">{{ r.label }}</p>
+      </button>
+    </div>
+  </div>
+  <div v-else id="craft-tree-panel" class="flex items-start gap-3 text-sm">
    <div class="min-w-0 flex-1">
+    <!-- 選んだ始め方 (選び直せる) -->
+    <p v-if="c.routeOptions.value && c.treeRoute.value" class="mb-2 text-[12px]">
+      始め方: <b class="text-amber-200">{{ ROUTE_JA[c.treeRoute.value] }}</b>
+      <button type="button" class="ml-2 underline opacity-70 hover:opacity-100" :disabled="autoBusy" @click="c.treeRoute.value = null">選び直す</button>
+    </p>
     <!-- 道具の列 -->
     <div class="mb-3 flex flex-wrap items-center gap-2">
       <button type="button" class="rounded-lg bg-amber-500 px-4 py-1.5 text-sm font-bold text-black shadow hover:bg-amber-400 disabled:opacity-40" :disabled="t.running.value || autoBusy || !!t.blocked.value" @click="t.run()">
@@ -197,7 +244,8 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
       <button v-for="x in presets" :key="x.id" type="button" class="rounded-lg border border-sky-500/50 px-3 py-1.5 text-sky-200 hover:bg-sky-500/10" @click="loadPreset(x.id)">見本: {{ x.label }}</button>
       <button type="button" class="rounded-lg border border-white/20 px-3 py-1.5 hover:bg-white/5" :class="showSettings ? 'bg-white/10' : ''" @click="showSettings = !showSettings">設定 {{ showSettings ? "▴" : "▾" }}</button>
       <SocketPicker :c="c" :category="c.base.value?.category" class="basis-full" />
-      <span v-if="busyText" class="ml-1 text-xs text-amber-200/80"><span class="inline-block animate-pulse">●</span> {{ busyText }}</span>
+      <span v-if="c.treeRoute.value == null && !autoBusy" class="ml-1 text-xs text-amber-200/80">② で探して始め方を選ぶと、自動で組みます (自分で組むなら「1 から組む」)</span>
+      <span v-else-if="busyText" class="ml-1 text-xs text-amber-200/80"><span class="inline-block animate-pulse">●</span> {{ busyText }}</span>
       <span v-else-if="autoError" class="ml-1 text-xs text-rose-300">{{ autoError }}</span>
       <span v-else-if="t.blocked.value" class="ml-1 text-xs text-rose-300">{{ t.blocked.value }}</span>
     </div>

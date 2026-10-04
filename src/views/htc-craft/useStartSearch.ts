@@ -53,6 +53,9 @@ export interface StartCandidate {
 /** 固定不要の時の 1 本の結果 (最安 1 件、値段は高貴換算) */
 type SideResult = { kind: "side"; price: number | null; total: number; url: string | null; error?: string };
 
+/** 自分でフラクチャーする道の行 ([[start-rows.ts]] の 固定無し・厳しい / ゆるい を買って固定)。他 (固定済み・固定しない・買う) は fixed */
+const SELF_ROUTES = new Set(["strict", "loose"]);
+
 export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () => Promise<void>) {
   const kind = computed(() => startKindOf(c));
   // 樹 MOD の固定の検索 (3 本) は、重い側の樹 MOD だけを固定済みにする
@@ -104,6 +107,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     results.value = {};
     picked.value = null;
     manual.value = {};
+    c.treeRoute.value = null;
   }, { immediate: true });
 
   /** 固定不要の時の検索: 樹 MOD (固定の有無は問わない) + 固定済みにする狙い (あれば)。無ければフラクチャー: いいえ */
@@ -146,6 +150,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const ticket = tradeLock.ticket();
     busy.value = true;
     c.diagBusy.value = true;
+    // 探し直したら始め方は選び直し (順に出す: ② → 始め方 → 作り方)
+    c.treeRoute.value = null;
     // 打ち切り (入口に戻る・画面を離れる): 世代が進んだら次は投げず、戻ってきた結果も捨てる
     const gen = c.fetchGen.value;
     const alive = (): boolean => c.fetchGen.value === gen;
@@ -220,13 +226,18 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
         const total = r.cost == null ? null : r.id === "buy" ? r.cost : e ? r.cost + e.value : null;
         return { ...r, total };
       }).sort((a, b) => (a.total ?? Infinity) - (b.total ?? Infinity));
-      const best = sub.find((y) => y.total != null) ?? sub.find((y) => y.cost != null) ?? null;
+      // 作り方の始め方を選んだら (固定済みを買う / 自分でフラクチャー)、その道の行だけから選ぶ (2026-10-04)
+      const route = c.treeRoute.value;
+      const pool = route ? sub.filter((y) => SELF_ROUTES.has(y.id) === (route === "self")) : sub;
+      const best = pool.find((y) => y.total != null) ?? pool.find((y) => y.cost != null) ?? null;
       /** 完成品の比べに渡す初動 (買う値段だけ。作る見込みは向こうで足す) */
       const startCost = side ? side.price ?? (m != null && m > 0 ? m * div.value : null) : best?.cost ?? null;
       return { ...x, res, sub, best, startCost, waiting: pending.value.includes(x.key) };
     })
     .sort((a, b) => (a.best?.total ?? a.best?.cost ?? Infinity) - (b.best?.total ?? b.best?.cost ?? Infinity)));
   const chosen = computed(() => rows.value.find((x) => x.key === picked.value && x.best) ?? rows.value.find((x) => x.best) ?? null);
+  // 始め方を選び直したら、その道で一番安い候補に
+  watch(() => c.treeRoute.value, () => { picked.value = rows.value.find((x) => x.best)?.key ?? null; });
 
   /**
    * 3 つの道を一気に比べる (オーナー 2026-09-25:「結局買うのがいいのか、途中からクラフトがいいのか、自分でベース買って

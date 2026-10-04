@@ -56,6 +56,14 @@ export interface TargetRow {
   assumedWeight?: boolean;
 }
 
+/** 作り方の始め方の選択肢 (cost は初動 + 作る見込み、高貴建て) */
+export interface RouteOptions {
+  fixed: { cost: number; label: string } | null;
+  self: { cost: number; label: string } | null;
+  /** ② で安い方 */
+  recommended: "fixed" | "self" | null;
+}
+
 export function useHtcCraft() {
   const data = shallowRef<PatchData | null>(null);
   const loading = ref(false);
@@ -167,6 +175,13 @@ export function useHtcCraft() {
   const startKeep = ref<string[]>([]);
   /** 始め方で選んだベースの買う値段 (高貴建て)。作り方の結果に足す (オーナー 2026-09-24:「最終収支に買ったベースの値段含めてなさそう」) */
   const startPrice = ref<number | null>(null);
+  /**
+   * 作り方の始め方 (2026-10-04 オーナー「自動クラフトに行く前に 1 からなのかベースからなのかは選択させてから実行」「順に表示」)。
+   * fixed = 固定済みを買って途中から作る / self = 自分でフラクチャーして作る。null = まだ選んでいない (自動クラフトは回さない)
+   */
+  const treeRoute = ref<"fixed" | "self" | null>(null);
+  /** 選べる始め方 (② の道から DiagnosisCard が入れる)。null = 選ぶ物が無い (固定不要など。その時は fixed で進む) */
+  const routeOptions = shallowRef<RouteOptions | null>(null);
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
   const dropOnly = shallowRef<DropOnlyRow[]>([]);
   /** 固定済み・固定無しの検索と判定 ([[useTreeSearch.ts]]) */
@@ -238,6 +253,8 @@ export function useHtcCraft() {
     treeResult.value = null;
     startPrice.value = null;
     startKeep.value = [];
+    treeRoute.value = null;
+    routeOptions.value = null;
     treeTierPick.value = {};
     abortFetch();
     phase.value = "analyzed";
@@ -409,7 +426,7 @@ export function useHtcCraft() {
     }).join(" + ");
 
   return {
-    stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
+    stepTarget, setTier, setFractured, startPrice, startKeep, treeRoute, routeOptions, refreshPrices,
     fracturedTargets, slotsUsed, dropOnly,
     loading, stage, diagBusy, phase, resumeFlow, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices, socket, socketOn, socketSlots, socketsMin, rawBase, aldur,

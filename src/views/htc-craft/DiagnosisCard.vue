@@ -101,6 +101,26 @@ const calls = computed(() => ss.checked.value.length * (ss.kind.value.kind === "
 const sideJa = (x: "P" | "S" | null): string => (x === "P" ? "プレ" : x === "S" ? "サフィ" : "片側");
 /** 3 つの道と一番安い道 ([[three-way.ts]]) */
 const { threeWay, verdict3 } = useThreeWay(c, ss, fin);
+/**
+ * ② が済んだら作り方の始め方の選択肢を入れる (2026-10-04 オーナー「1 からなのかベースからなのかは選択させてから実行」)。
+ * 固定不要 (買う + 残りを作る) と非推奨は選ぶ物が無いので、そのまま進める
+ */
+watch([() => c.phase.value, () => c.diagBusy.value, () => ss.threeWay.value, () => ss.kind.value.kind], () => {
+  if (c.phase.value !== "done" || c.diagBusy.value) return;
+  const tw = ss.threeWay.value;
+  const k = ss.kind.value.kind;
+  if (k === "separate" || k === "unsafe" || (!tw.fixed && !tw.self)) {
+    c.routeOptions.value = null;
+    if (c.treeRoute.value == null) c.treeRoute.value = "fixed";
+    return;
+  }
+  const recommended = tw.fixed && tw.self ? (tw.self.cost < tw.fixed.cost ? "self" : "fixed") : tw.fixed ? "fixed" : "self";
+  c.routeOptions.value = {
+    fixed: tw.fixed ? { cost: tw.fixed.cost, label: tw.fixed.label } : null,
+    self: tw.self ? { cost: tw.self.cost, label: tw.self.label } : null,
+    recommended,
+  };
+}, { immediate: true });
 /** 道しるべ: 貼る → 固定を決めて探す → 買うか作るか → 作り方を回す */
 const steps = computed(() => {
   // 取得中 (②③) はまだ「済み」にしない (2026-09-25: ③ を探している最中に ③ ✓ ④ が出ていた)
