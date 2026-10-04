@@ -1101,7 +1101,7 @@ end
 ---   items = + 中身の違う欄を全部相手の物に (raw = 相手の文面、nil = 外す。ジュエルの穴は tree で取られる)
 ---   gems  = + ジェムの組を相手の構成に (gi = 合わせた自分の組、0 = 足す)
 --- 計算が終わったら全部元に戻す (欄の中身・足した物・組のジェム)
-function PCK.estimateAll(i, k, items, add, remove, groups, config, off, attrs)
+function PCK.estimateAll(i, k, items, add, remove, groups, config, off, attrs, lineage)
   local res = withMainSkill(i, k, function()
     local it, st = build.itemsTab, build.skillsTab
     local spec = build.spec
@@ -1182,6 +1182,51 @@ function PCK.estimateAll(i, k, items, add, remove, groups, config, off, attrs)
         end
       end
       out.gems, out.statsGems = step()
+      -- 全部相手と同じ (ツリー・装備・ジュエル・ジェム) から 1 つずつ戻す (2026-10-04 オーナー「アッツィリとかリネージュセットした場合、効く
+      -- サポジェムやらノードとかで火力変わってくる。サポジェムもツリーと一緒で合わせられるからそれも前提で」)
+      out.leaveFull, out.leaveLineage = {}, {}
+      for _, x in ipairs(items or {}) do
+        local sl = it.slots[x.slot]
+        if sl then
+          local cur = sl.selItemId or 0
+          sl:SetSelItemId(before[x.slot] and before[x.slot].id or 0)
+          reapplyTree(treeIds)
+          out.leaveFull[x.slot] = (step())
+          sl:SetSelItemId(cur)
+        end
+      end
+      reapplyTree(treeIds)
+      -- リネージュ: 相手の組の構成から、そのリネージュだけ外す
+      for _, l in ipairs(lineage or {}) do
+        local g = st.socketGroupList[tonumber(l.gi) or 0]
+        if g then
+          local names = {}
+          for _, n in ipairs(l.names or {}) do names[n] = true end
+          local keep, dropped = {}, 0
+          for _, gem in ipairs(g.gemList) do
+            local n = gem.nameSpec or (gem.gemData and gem.gemData.name)
+            if names[n] then dropped = dropped + 1 else keep[#keep + 1] = gem end
+          end
+          if dropped > 0 then
+            local orig = g.gemList
+            g.gemList = keep
+            st:ProcessSocketGroup(g)
+            out.leaveLineage[l.key] = (step())
+            g.gemList = orig
+            st:ProcessSocketGroup(g)
+          end
+        end
+      end
+      -- ツリーとジェムだけ相手と同じ (装備・ジュエルは自分の物) = 表の行の元の DPS
+      local curIds = {}
+      for _, x in ipairs(items or {}) do
+        local sl = it.slots[x.slot]
+        if sl then curIds[x.slot] = sl.selItemId or 0; sl:SetSelItemId(before[x.slot] and before[x.slot].id or 0) end
+      end
+      reapplyTree(treeIds)
+      out.treeGems = (step())
+      for slot, id in pairs(curIds) do it.slots[slot]:SetSelItemId(id) end
+      reapplyTree(treeIds)
       -- + 設定 (自分の側だけ相手の物に。敵の設定は今のまま)
       if config then
         local ci = build.configTab.input

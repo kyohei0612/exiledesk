@@ -420,6 +420,8 @@ export function usePobCheck() {
           off: plan.off,
           attr: tgt.tree.attr ?? [],
           config: tgt.config.input ?? null,
+          // リネージュの行: 相手の構成の中で、それだけ外した時を見る
+          lineage: list.flatMap((c) => (c.kind === "gems" && c.lineage?.length ? [{ key: c.key, gi: c.gi, names: c.lineage }] : [])),
         }));
         const k = r.cur > 0 ? f.s.game.dps / r.cur : 1;
         all = { tree: r.tree * k, items: r.items * k, gems: r.gems * k, config: r.config != null ? r.config * k : null, life: [r.stats.Life, r.statsTree.Life, r.statsItems.Life, r.statsGems.Life], es: [r.stats.EnergyShield, r.statsTree.EnergyShield, r.statsItems.EnergyShield, r.statsGems.EnergyShield] };
@@ -428,15 +430,21 @@ export function usePobCheck() {
         if (treeRow && r.cur > 0) treeRow.dps = all.tree;
         // ツリーを相手と同じにした上での行は、その時の DPS (ツリーの段) を元に出す (2026-10-04 オーナー「ここに表示する DPS は相手の比べる
         // ノードにした状態だからね」。前は今の DPS に比を掛けていて、ツリーを付け替えていないように見えた)
-        // 揃えた時の効き (全部入れた状態から、その欄だけ戻すと幾ら下がるか)
+        // 揃えた時の効き: ツリー・装備・ジュエル・ジェムを全部相手と同じにした中で、それだけ戻す (外す) と幾ら下がるか
+        // (2026-10-04 オーナー「サポジェムもツリーと一緒で合わせられるからそれも前提で」)。取れなければ装備までの状態で
         for (const e of out) {
-          if ((e.c.kind === "item" || e.c.kind === "jewel") && r.leave && r.leave[e.c.slot] != null && r.leave[e.c.slot]! > 0) e.together = r.items / r.leave[e.c.slot]!;
+          const c0 = e.c;
+          const full = c0.kind === "item" || c0.kind === "jewel" ? r.leaveFull?.[c0.slot] : c0.kind === "gems" ? r.leaveLineage?.[c0.key] : undefined;
+          if (full != null && full > 0) e.together = r.gems / full;
+          else if ((c0.kind === "item" || c0.kind === "jewel") && r.leave?.[c0.slot] != null && r.leave[c0.slot]! > 0) e.together = r.items / r.leave[c0.slot]!;
         }
         if (treeBased || (plan.tree.add.length || plan.tree.remove.length)) {
           // 装備・ジュエルは「揃えた時の効き」で出す (2026-10-04 オーナー「基本そろえた時で DPS 出していいよ、見栄え悪いから」)
-          for (const e of out) if (e.c.kind !== "tree" && !e.error && all.tree > 0) {
-            const k = e.together ?? e.ratio;
-            if (k != null) { e.dps = all.tree * k; e.baseDps = all.tree; }
+          // 元の DPS = ツリーとジェムを相手と同じにした時 (装備・ジュエルは自分の物)。無ければツリーだけの時
+          const base0 = r.treeGems != null && r.treeGems > 0 ? r.treeGems * k : all.tree;
+          for (const e of out) if (e.c.kind !== "tree" && !e.error && base0 > 0) {
+            const t = e.together ?? e.ratio;
+            if (t != null) { e.dps = base0 * t; e.baseDps = base0; }
           }
         }
       } catch (err) {

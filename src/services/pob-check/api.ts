@@ -366,6 +366,11 @@ export interface EstimateAllRaw {
   config?: number;
   /** 装備・ジュエルを全部相手の物にした状態から、その欄だけ自分の物に戻した時の DPS (欄の名前 → DPS) */
   leave?: Record<string, number>;
+  /** ツリー・装備・ジェムを全部相手と同じにした状態から、その欄だけ戻した時 / そのリネージュだけ外した時 (候補の key → DPS) */
+  leaveFull?: Record<string, number>;
+  leaveLineage?: Record<string, number>;
+  /** ツリーとジェムだけ相手と同じ (装備・ジュエルは自分の物) */
+  treeGems?: number;
   stats: EstimateStats;
   statsTree: EstimateStats;
   statsItems: EstimateStats;
@@ -375,8 +380,8 @@ export interface EstimateAllRaw {
 /** Lua の表 (設定の写し)。キーは文字、値は真偽・数・文字 */
 const luaConfig = (c: Record<string, boolean | number | string>): string =>
   `{${Object.entries(c).map(([k, v]) => `[ ${luaStr(k)} ]=${typeof v === "string" ? luaStr(v) : typeof v === "number" ? luaNum(v) : v ? "true" : "false"}`).join(",")}}`;
-export const estimateAll = (i: number, k: number, plan: { items: Array<{ slot: string; raw: string | null }>; tree: { add: number[]; remove: number[] }; groups: Array<{ gi: number; gems: GemSpec[] }>; off?: number[]; attr?: Array<{ id: number; dn: string }>; config?: Record<string, boolean | number | string> | null }): Promise<EstimateAllRaw> =>
-  evalLua(`return PCK.estimateAll(${luaNum(i)}, ${luaNum(k)}, {${plan.items.map((x) => `{ slot = ${luaStr(x.slot)}, raw = ${x.raw == null ? "nil" : luaStr(x.raw)} }`).join(",")}}, {${plan.tree.add.map((id) => luaNum(Math.floor(id))).join(",")}}, {${plan.tree.remove.map((id) => luaNum(Math.floor(id))).join(",")}}, {${plan.groups.map((g) => `{ gi = ${luaNum(g.gi)}, gems = ${luaGems(g.gems)} }`).join(",")}}, ${plan.config ? luaConfig(plan.config) : "nil"}, {${(plan.off ?? []).map(luaNum).join(",")}}, ${luaAttrs(plan.attr)})`);
+export const estimateAll = (i: number, k: number, plan: { items: Array<{ slot: string; raw: string | null }>; tree: { add: number[]; remove: number[] }; groups: Array<{ gi: number; gems: GemSpec[] }>; off?: number[]; attr?: Array<{ id: number; dn: string }>; config?: Record<string, boolean | number | string> | null; lineage?: Array<{ key: string; gi: number; names: string[] }> }): Promise<EstimateAllRaw> =>
+  evalLua(`return PCK.estimateAll(${luaNum(i)}, ${luaNum(k)}, {${plan.items.map((x) => `{ slot = ${luaStr(x.slot)}, raw = ${x.raw == null ? "nil" : luaStr(x.raw)} }`).join(",")}}, {${plan.tree.add.map((id) => luaNum(Math.floor(id))).join(",")}}, {${plan.tree.remove.map((id) => luaNum(Math.floor(id))).join(",")}}, {${plan.groups.map((g) => `{ gi = ${luaNum(g.gi)}, gems = ${luaGems(g.gems)} }`).join(",")}}, ${plan.config ? luaConfig(plan.config) : "nil"}, {${(plan.off ?? []).map(luaNum).join(",")}}, ${luaAttrs(plan.attr)}, {${(plan.lineage ?? []).map((l) => `{ key = ${luaStr(l.key)}, gi = ${luaNum(l.gi)}, names = {${l.names.map(luaStr).join(",")}} }`).join(",")}})`);
 export const estimateNodes = (i: number, k: number, ids: number[]): Promise<EstimateNodesRaw> =>
   evalLua(`return PCK.estimateNodes(${luaNum(i)}, ${luaNum(k)}, {${ids.map((id) => luaNum(Math.floor(id))).join(",")}})`);
 
