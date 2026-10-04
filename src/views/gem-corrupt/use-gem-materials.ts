@@ -9,12 +9,12 @@ import { computed, ref, type ComputedRef, type Ref } from "vue";
 import { marketStore } from "../../state/market-store";
 import { isSpiritGem, spiritGemMeasured } from "../../state/gem-spirit";
 import { baseBuyTotal, baseSourceOf, cachedBaseBuy, type BaseSource } from "../../state/gem-base-source";
-import { cachedBuy, fetchBuy, payable, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
+import { bestFor, cachedBuy, fetchBuy, payable, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import type { MaterialPrices } from "./model";
 import { baseGemSourceFor, finisherIsFlux, FINISHER_JA, materialPricesFor, MATERIAL_API, uncut20ApiId, type BaseGemSource } from "./materials";
 import type { GemInfo } from "./gem-list";
 
-export function useGemMaterials(selected: Ref<GemInfo | null>, tradeLeague: ComputedRef<string>) {
+export function useGemMaterials(selected: Ref<GemInfo | null>, tradeLeague: ComputedRef<string>, attempts: Ref<number>) {
   /**
    * 低レベルのジェム本体 = 原石のうち一番安い物 (2026-09-16 オーナー指示「スキルジェムとスピリットジェムの 15 以上を対象に一番安いのを表示」)。
    * 以前は「相場が無いので手入力」で既定 1 高貴のままだったため、ジェムが高い今は自作の収支が良く出すぎていた。
@@ -70,6 +70,7 @@ export function useGemMaterials(selected: Ref<GemInfo | null>, tradeLeague: Comp
   const materials = computed<MaterialPrices>(() => {
     void marketStore.items.value;
     void exchange.value;
+    void attempts.value;
     return materialPricesFor(isSpirit.value, (apiId) => bestBuy(apiId)?.exalted ?? null, baseGemSource.value);
   });
   /**
@@ -114,11 +115,19 @@ export function useGemMaterials(selected: Ref<GemInfo | null>, tradeLeague: Comp
       exchangeLoading.value = false;
     }
   }
-  /** その素材を一番安く買える通貨 (高貴換算つき)。取っていなければ null */
+  /**
+   * その素材を一番安く買える通貨 (高貴換算つき)。取っていなければ null。
+   * 回数分 (1 回の数 × 回数) の在庫がある通貨から選ぶ (2026-10-04 オーナー「60 回なら在庫が高貴であって安いなら高貴で」)。
+   * 1 回の数はプリズムが 4、他は 1 (結晶・原石は 1 回あたり 1 個未満なので多めに見る)
+   */
+  function needOf(apiId: string): number {
+    const n = Math.max(1, attempts.value || 1);
+    return apiId === MATERIAL_API.gcp ? 4 * n : n;
+  }
   function bestBuy(apiId: string | null | undefined): { currency: PayCurrency; perUnit: number; rawPerUnit: number; exalted: number } | null {
     if (!apiId) return null;
     const e = exchange.value[apiId];
-    const b = e?.best;
+    const b = bestFor(e, needOf(apiId));
     if (!b) return null;
     // 単価は「実際に払う額」に繰り上げる (rawPerUnit は繰り上げ前の取引所レート)
     const p = payable(b);

@@ -23,6 +23,12 @@ import { useGemSale } from "./use-gem-sale";
 export { GEMS, SALE_ROWS, type GemInfo, type SaleKey, type SaleRow } from "./gem-list";
 
 export function useGemCorrupt() {
+  /**
+   * 「N 回やった場合」の N。**素材・経路・収支のどこで変えても全部が動く**
+   * (オーナー指示 2026-09-20:「回数はどこ動かしてもどれも一緒に変化させて欲しい、収支も含めて」)。
+   * 素材をどの通貨で買うかも、回数分の在庫があるかで決める (2026-10-04) ので、ここで持つ
+   */
+  const attempts = ref(10);
   // ---- ジェム選択 ----
   const query = ref("");
   const selected = ref<GemInfo | null>(null);
@@ -78,7 +84,7 @@ export function useGemCorrupt() {
     fetchExchange,
     bestBuy,
     uncutLabel,
-  } = useGemMaterials(selected, tradeLeague);
+  } = useGemMaterials(selected, tradeLeague, attempts);
 
   // ---- 売値 (手入力 or trade2) は use-gem-sale.ts ----
   const {
@@ -125,6 +131,7 @@ export function useGemCorrupt() {
   });
 
   return {
+    attempts,
     query,
     selected,
     matches,

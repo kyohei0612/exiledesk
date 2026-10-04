@@ -14,10 +14,11 @@ import { ceilMoney } from "../money";
 
 /**
  * 支払いに使う通貨。
- * オーナー指示 (2026-09-16): 高貴で買うと取引所の手数料 (ゴールド) がかなり掛かるので外す。
- * カオスか神のどちらで買うのが安いかだけ比べる。
+ * 2026-09-16 は「高貴は手数料 (ゴールド) が掛かるので外す」でカオスと神だけだったが、
+ * 2026-10-04 オーナー「スピリットジェム 17 は高貴で交換した方が安い」「在庫を見て、回数分の在庫が高貴であって安いなら高貴で経費を出すべき」で
+ * 高貴も比べる (実測: 原石 lv17 = 高貴のペア 80.7 / カオスのペア 176 (高貴換算))。回数分の在庫があるかは bestFor で見る
  */
-export const PAY_CURRENCIES = ["chaos", "divine"] as const;
+export const PAY_CURRENCIES = ["chaos", "divine", "exalted"] as const;
 export type PayCurrency = (typeof PAY_CURRENCIES)[number];
 
 export interface PayOption {
@@ -61,7 +62,8 @@ const MIN_VOLUME = 5;
  * 上の実測でも 4.11 の原石が 1.5 (= 相場の 0.36 倍) と出ていた。
  */
 const SANE_FLOOR = 0.5;
-const CACHE_KEY = "exiledesk.exchange.pairRates";
+// v2 = 高貴のペアも入れた (2026-10-04)。前の版の覚えはカオスと神だけなので読まない
+const CACHE_KEY = "exiledesk.exchange.pairRates.v2";
 const FRESH_MS = 30 * 60 * 1000;
 
 type Cache = Record<string, BestBuy>;
@@ -129,7 +131,18 @@ function pickBest(options: PayOption[]): PayOption | null {
   return options.reduce<PayOption | null>((a, b) => (a == null || payable(b).payExalted < payable(a).payExalted ? b : a), null);
 }
 
-/** 素材 1 つをカオス / 神で引いて、安い方を決める (高貴は手数料が高いので使わない) */
+/**
+ * 必要な数 need を買える在庫のある通貨のうち、実際に払う額が一番安い物 (2026-10-04 オーナー「在庫とか確認して 60 回なら在庫が高貴であって、
+ * 計算しても高貴で買う方が安いなら高貴で経費を出すべき」)。どの通貨も在庫が足りなければ、在庫の一番多い物
+ */
+export function bestFor(entry: BestBuy | null | undefined, need = 1): PayOption | null {
+  if (!entry) return null;
+  const enough = entry.options.filter((o) => o.stock >= need);
+  if (enough.length) return pickBest(enough);
+  return entry.options.reduce<PayOption | null>((a, b) => (a == null || b.stock > a.stock ? b : a), null);
+}
+
+/** 素材 1 つをカオス / 神 / 高貴で引いて、安い方を決める */
 export async function fetchBuy(league: string, apiId: string): Promise<BestBuy | null> {
   const hit = cachedBuy(apiId);
   if (hit) return hit;
@@ -147,7 +160,7 @@ export async function fetchBuy(league: string, apiId: string): Promise<BestBuy |
     const market = marketStore.priceOf(apiId);
     if (market != null && market > 0 && r.onePrice < market * SANE_FLOOR) continue;
     // 支払い量はアプリ共通の換算レートで出す (ペア内の相対値は薄い板で暴れるため)
-    const rate = currency === "chaos" ? marketStore.rates.value.chaos : marketStore.rates.value.divine;
+    const rate = currency === "chaos" ? marketStore.rates.value.chaos : currency === "divine" ? marketStore.rates.value.divine : 1;
     options.push({ currency, exalted: r.onePrice, perUnit: rate > 0 ? r.onePrice / rate : r.onePrice, stock: r.oneStock });
   }
   if (options.length === 0) return null;

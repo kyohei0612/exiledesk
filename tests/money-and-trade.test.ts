@@ -11,7 +11,8 @@ vi.mock("../src/state/market-store", async () => {
 
 const { roundMoney } = await import("../src/state/display-currency");
 const { toExalted } = await import("../src/services/trade2/pricing/listings");
-const { payableUnit } = await import("../src/services/trade2/exchange");
+const { payableUnit, bestFor } = await import("../src/services/trade2/exchange");
+const { bestPayByApiId } = await import("../src/api/poe2scout/rank");
 const { snapshotNameToTradeLeague, trade2QueryUrl } = await import("../src/services/trade2/league");
 const { buildUniqueNameQuery } = await import("../src/services/trade2/query/item-queries");
 
@@ -95,5 +96,31 @@ describe("換算と丸めの決まりは services/money.ts に 1 つ", async () 
     expect(payableUnit(3.00001)).toBe(3);
     expect(ceilMoney(59.99999)).toBe(60);
     expect(floorMoney(59.99999)).toBe(60);
+  });
+});
+
+describe("一番安く交換できる通貨 (高貴も比べる、オーナー 2026-10-04)", () => {
+  const side = (price: number, stock = 100, vol = 100) => ({ RelativePrice: price, HighestStock: stock, VolumeTraded: vol });
+  const pair = (item: string, pay: string, price: number, itemStock = 100) => ({
+    CurrencyOne: { ApiId: item }, CurrencyTwo: { ApiId: pay }, CurrencyOneData: side(price, itemStock), CurrencyTwoData: side(1),
+  });
+  it("スピリットジェム 17: 高貴のペア 80.7 がカオスのペア 176 (高貴換算) より安い", () => {
+    const best = bestPayByApiId(
+      [pair("uncut-spirit-gem-17", "chaos", 176.26), pair("uncut-spirit-gem-17", "divine", 275.19), pair("uncut-spirit-gem-17", "exalted", 80.71)],
+      new Map([["uncut-spirit-gem-17", 135.7]]),
+      { chaos: 7, divine: 500 },
+    ).get("uncut-spirit-gem-17");
+    expect(best).toMatchObject({ currency: "exalted", perUnit: 80.71 });
+  });
+  it("回数分の在庫がある通貨から選ぶ (60 回で高貴の在庫が 30 ならカオス)", () => {
+    const entry = {
+      apiId: "x", fetchedAt: 0, best: null,
+      options: [
+        { currency: "exalted" as const, exalted: 80, perUnit: 80, stock: 30 },
+        { currency: "chaos" as const, exalted: 176, perUnit: 176 / 7, stock: 300 },
+      ],
+    };
+    expect(bestFor(entry, 10)?.currency).toBe("exalted");
+    expect(bestFor(entry, 60)?.currency).toBe("chaos");
   });
 });
