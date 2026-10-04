@@ -29,10 +29,20 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from functools import lru_cache  # noqa: E402
+
 from defence_mechanics import H, W, background, fit  # noqa: E402
 from end_craft_materials_2 import PICK_SHOT, bust, glow, icon, zundamon_hold  # noqa: E402
+from PIL import ImageFont  # noqa: E402
 
-from poe2tube.render.palette import font  # noqa: E402
+# 塗りの太い字 (kyohei 2026-10-04「フォントは塗り幅おおきいね、説明も含め」)
+HEAVY = Path.home() / "AppData/Local/Microsoft/Windows/Fonts/NotoSansJP-Black.ttf"
+
+
+@lru_cache(maxsize=64)
+def font(size: int) -> ImageFont.FreeTypeFont:
+    return ImageFont.truetype(str(HEAVY), size)
+
 
 # (絵, 帯の名前, 説明, 帯の色)。絵はアイコンのキー (assets/icons_hd にあれば大きい方) か
 # "pick" (発現の実画面)。kyohei 2026-10-04「でっかくアイコンを数種類並べる」→ 全部アイコン
@@ -114,8 +124,8 @@ def column(
         font=font(size),
         fill="white",
         anchor="mm",
-        stroke_width=4,
-        stroke_fill=(20, 10, 10),
+        stroke_width=6,
+        stroke_fill=(15, 8, 8),
     )
     y0 = BAND_Y + BAND_H
     d.rectangle((0, y0, COL_W, y0 + DESC_H), fill=(18, 16, 30, 235))
@@ -169,8 +179,8 @@ def rich_lines(d: ImageDraw.ImageDraw, text: str, w: int, y0: int, h: int) -> No
                 font=f,
                 fill=RED if red else "white",
                 anchor="lm",
-                stroke_width=2 if red else 0,
-                stroke_fill=(40, 0, 0),
+                stroke_width=4,
+                stroke_fill=(10, 6, 6),
             )
             x += d.textlength(ch, font=f)
         y += step
