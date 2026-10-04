@@ -126,17 +126,17 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 @click="expanded = expanded === `${sec.g}:${r.id}` ? null : `${sec.g}:${r.id}`"
               >
                 <span class="pointer-events-none absolute inset-y-0 left-0" :class="TONE[sec.g].bar" :style="{ width: `${(r.share / col.top) * 100}%` }" />
+                <!-- 2026-10-04 オーナー: タグは MOD 名の横に細く (行を太らせない)、右は poe2db と同じく 出やすさ % ・ ティア数 (緑) ・ 一番上の段のレベル (灰) を数字だけ -->
                 <span class="relative flex items-center gap-2">
-                  <span class="min-w-0 flex-1">
-                    <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
-                    <span v-if="r.on" class="ml-1.5 rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">付いている</span>
-                    <span class="mt-0.5 flex flex-wrap gap-1">
-                      <span v-for="t in shownTags(r.tags)" :key="t" class="rounded px-1.5 text-[10px]" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
-                    </span>
+                  <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
+                    <span class="mr-0.5 text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
+                    <span v-for="t in shownTags(r.tags)" :key="t" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
+                    <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
                   </span>
-                  <span class="shrink-0 text-right tabular-nums">
-                    <span class="block text-[13px] font-bold text-amber-100">{{ pct(r.share) }}</span>
-                    <span class="block text-[10px] opacity-60">{{ r.tiers.length }} ティア · Lv {{ r.topLevel }}</span>
+                  <span class="flex shrink-0 items-center gap-1 tabular-nums">
+                    <span class="w-11 text-right text-[13px] font-bold text-amber-100">{{ pct(r.share) }}</span>
+                    <span class="min-w-[22px] rounded-sm bg-emerald-600/80 px-1 text-center text-[11px] font-bold leading-[18px] text-white" :title="`${r.tiers.length} ティア`">{{ r.tiers.length }}</span>
+                    <span class="min-w-[26px] rounded-sm bg-white/15 px-1 text-center text-[11px] font-bold leading-[18px] text-white/90" :title="`一番上のティアの MOD レベル ${r.topLevel}`">{{ r.topLevel }}</span>
                   </span>
                 </span>
               </button>
