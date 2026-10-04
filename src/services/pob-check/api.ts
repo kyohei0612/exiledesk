@@ -69,8 +69,27 @@ export interface SkillView {
   /** メタジェム (CoEA など) から出るスキル */
   triggered: boolean;
   game: GameNumbers;
+  /** 火力の中身 (主なダメージの種類で、そのスキルに効く 増加・増し・クリティカル・速度)。ミニオン・継続だけのスキルは無し */
+  core?: CoreStats;
   /** PoB の CombinedDPS (敵込み) */
   pobDps: number;
+}
+export interface CoreStats {
+  /** 主なダメージの種類 (Physical / Fire / Cold / Lightning / Chaos) */
+  type: string;
+  /** ダメージの増加の合計 (%) と 増し (掛け算、1.5 = 50% 増し) */
+  incDamage: number;
+  moreDamage: number;
+  critChance: number;
+  /** クリティカル時の倍率 (2.5 = 250%) */
+  critMulti: number;
+  incCrit: number;
+  incCritMulti: number;
+  incSpeed: number;
+  speed: number;
+  /** クリティカル込みの平均の 1 発 */
+  avg: number;
+  hitChance: number;
 }
 export interface GroupView {
   i: number;

@@ -158,6 +158,32 @@ local function gameNumbers(o, ms, minionOut, minionName)
   }
 end
 
+--- 火力の中身 (2026-10-04 オーナー「基礎 DPS に関わってる主なステータス、クリ率やらダメージやらクリダメやら、自分と相手で分かりやすく」)。
+--- 一番大きいダメージの種類で、そのスキルに効く 増加 (INC) の合計と 増し (MORE) の掛け算、クリティカルの増加、速度の増加を本家の ModStore から引く
+local CORE_TYPES = { Physical = true, Fire = true, Cold = true, Lightning = true, Chaos = true }
+local function coreStatsOf(o, ms, game)
+  if not ms or not ms.skillModList or (game.hit or 0) <= 0 then return nil end
+  local main, best = nil, 0
+  for _, p in ipairs(game.parts or {}) do if p.hit > best and CORE_TYPES[p.type] then main, best = p.type, p.hit end end
+  if not main then return nil end
+  local m, cfg = ms.skillModList, ms.skillCfg
+  local names = { "Damage", main .. "Damage" }
+  if main == "Fire" or main == "Cold" or main == "Lightning" then names[#names + 1] = "ElementalDamage" end
+  return {
+    type = main,
+    incDamage = m:Sum("INC", cfg, unpack(names)),
+    moreDamage = m:More(cfg, unpack(names)),
+    critChance = o.CritChance or 0,
+    critMulti = o.CritMultiplier or 0,
+    incCrit = m:Sum("INC", cfg, "CritChance"),
+    incCritMulti = m:Sum("INC", cfg, "CritMultiplier"),
+    incSpeed = m:Sum("INC", cfg, "Speed"),
+    speed = o.Speed or 0,
+    avg = game.avg or 0,
+    hitChance = o.HitChance or 100,
+  }
+end
+
 local function gemInfo(gem)
   local ge = gem.gemData and gem.gemData.grantedEffect
   return {
@@ -265,10 +291,12 @@ function PCK.summary()
           local ms = menv.player.mainSkill
           local name = ms and ms.activeEffect and ms.activeEffect.grantedEffect and ms.activeEffect.grantedEffect.name or "?"
           local m = menv.minion
+          local game = gameNumbers(mo, ms, m and m.output, m and m.minionData and m.minionData.name)
           gr.skills[#gr.skills + 1] = {
             k = k, name = name, level = ms and ms.activeEffect and ms.activeEffect.level or 0,
             triggered = (isMeta and k > 1) and true or false,
-            game = gameNumbers(mo, ms, m and m.output, m and m.minionData and m.minionData.name),
+            game = game,
+            core = (not m) and coreStatsOf(mo, ms, game) or nil,
             -- PoB の Hit DPS (敵込み)。移動スキル等 (showAverage) は CombinedDPS が 1 発の平均になるので使わない
             pobDps = mo.TotalDPS or 0,
           }

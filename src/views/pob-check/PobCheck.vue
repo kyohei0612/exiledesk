@@ -15,6 +15,7 @@ import GemGroupCard from "./GemGroupCard.vue";
 import ItemSlotCard from "./ItemSlotCard.vue";
 import TreeView from "./TreeView.vue";
 import BuildDiff from "./BuildDiff.vue";
+import CoreStatsCard from "./CoreStatsCard.vue";
 import PricesTab from "./PricesTab.vue";
 import BreakdownTab from "./BreakdownTab.vue";
 import type { ModAction } from "./BreakdownModList.vue";
@@ -351,6 +352,14 @@ const resists = computed(() =>
         </div>
       </div>
 
+      <!-- 火力の中身 (上のバーのスキル。比較の時は 自分 → 相手) -->
+      <CoreStatsCard
+        v-if="focus?.s.core"
+        class="mb-4"
+        :mine="focus.s.core"
+        :target="mode === 'compare' ? targetFocus?.s.core ?? null : null"
+        :skill-ja="gemJa(focus.s.name)"
+      />
       <!-- スキル (自分の火力を見る時の主役)。比較の時は「火力の差」のスキルごとの比べに出すので、ここには出さない -->
       <div v-if="mode !== 'compare'" class="mb-5">
         <SkillTable :rows="skills" :before="baseSkills" :focus-key="focus?.key ?? null" @focus="(k) => (focusKey = k)" />
