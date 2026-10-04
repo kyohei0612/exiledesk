@@ -52,13 +52,13 @@ COLUMNS = [
     (
         "OmenofGreaterExaltation",
         "偉大なる高貴",
-        "次の高貴な|オーブで、|MOD が一気に|[2 個]付く",
+        "次の高貴な|オーブで、|MOD が一気|に[2 個]付く",
         (214, 150, 20),
     ),
     (
         "OmenofWhittling",
         "削減",
-        "次のカオス|オーブで、|[一番レベルの|低い MOD]が|消える",
+        "次のカオス|オーブで、|[一番レベル|の低い MOD]|が消える",
         (140, 50, 200),
     ),
     (
@@ -67,19 +67,19 @@ COLUMNS = [
         "冒涜で付く|MOD が、|[レベル 40|以上]の物|だけになる",
         (40, 90, 214),
     ),
-    ("OmenofLight", "光", "次の消去の|オーブで、|[冒涜の MOD|だけ]を消す", (30, 150, 90)),
-    ("OmenoftheLiege", "勢力", "武器と宝飾品|に、勢力の|MOD が|[必ず 1 つ]付く", (214, 40, 40)),
+    ("OmenofLight", "光", "次の消去の|オーブで、|[冒涜の|MOD だけ]|を消す", (30, 150, 90)),
+    ("OmenoftheLiege", "勢力", "武器と|宝飾品に、|勢力の MOD|が[必ず|1 つ]付く", (214, 40, 40)),
     (
         "OmenofSanctification",
         "聖別",
-        "神のオーブで|数値が[上下]|する。その後は|[クラフト|できない]",
+        "神のオーブで|数値が[上下]|その後は|[クラフト|できない]",
         (200, 120, 40),
     ),
 ]
 HD = ROOT / "assets" / "icons_hd"
 LABELS = True  # --no-labels で絵だけ
 BAND_Y, BAND_H = 330, 84  # 色の帯 (アイコンの欄は真ん中の少し上まで、kyohei 2026-10-04)
-DESC_H = 230  # 帯の下の解説文 (欄の幅で折り返す)
+DESC_H = 720 - 330 - 84  # 帯の下の解説文: 下の端まで、字は欄ぎりぎり (kyohei「下の説明はつめつめ」)
 RED = (255, 70, 70)
 
 
@@ -151,13 +151,16 @@ def _lines(text: str) -> list[list[tuple[str, bool]]]:
     return out
 
 
-def desc_size(d: ImageDraw.ImageDraw, w: int) -> int:
-    """全部の列の解説文が収まる、そろった文字の大きさ."""
-    size = 36
-    while any(
-        sum(d.textlength(ch, font=font(size)) for ch, _ in ln) > w - 14
-        for _, _, text, _ in COLUMNS
-        for ln in _lines(text)
+LINE = 1.1  # 解説文の行の間隔 (字の大きさの倍)
+
+
+def desc_size(d: ImageDraw.ImageDraw, text: str, w: int, h: int) -> int:
+    """この列の解説文が欄の幅と高さにぎりぎり収まる大きさ (列ごと、つめつめ)."""
+    lines = _lines(text)
+    size = 80
+    while size > 12 and (
+        max(sum(d.textlength(ch, font=font(size)) for ch, _ in ln) for ln in lines) > w - 4
+        or size * LINE * len(lines) > h - 8
     ):
         size -= 1
     return size
@@ -165,10 +168,10 @@ def desc_size(d: ImageDraw.ImageDraw, w: int) -> int:
 
 def rich_lines(d: ImageDraw.ImageDraw, text: str, w: int, y0: int, h: int) -> None:
     """解説文を上下の真ん中に。[..] は赤."""
-    size = desc_size(d, w)
+    size = desc_size(d, text, w, h)
     f = font(size)
     lines = _lines(text)
-    step = size * 1.42
+    step = size * LINE
     y = y0 + (h - step * len(lines)) / 2 + step / 2
     for ln in lines:
         x = (w - sum(d.textlength(ch, font=f) for ch, _ in ln)) / 2
