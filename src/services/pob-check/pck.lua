@@ -181,6 +181,23 @@ local function coreStatsOf(o, ms, game)
     speed = o.Speed or 0,
     avg = game.avg or 0,
     hitChance = o.HitChance or 100,
+    -- ゲームのスキルの詳細と同じ並びの分 (2026-10-04 オーナーの Spark の詳細の画面): 種類ごとのダメージの幅・耐性貫通・投射物
+    dps = game.dps or 0,
+    totalMin = o.TotalMin or 0,
+    totalMax = o.TotalMax or 0,
+    ranges = (function()
+      local out = {}
+      for _, t in ipairs(TYPES) do
+        local lo, hi = o[t .. "Min"] or 0, o[t .. "Max"] or 0
+        if hi > 0 then
+          local pen = m:Sum("BASE", cfg, t .. "Penetration") + ((t == "Fire" or t == "Cold" or t == "Lightning") and m:Sum("BASE", cfg, "ElementalPenetration") or 0)
+          out[#out + 1] = { type = t, min = lo, max = hi, pen = pen }
+        end
+      end
+      return out
+    end)(),
+    projectiles = o.ProjectileCount or 0,
+    incProjSpeed = m:Sum("INC", cfg, "ProjectileSpeed"),
   }
 end
 

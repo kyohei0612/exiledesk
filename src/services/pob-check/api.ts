@@ -90,6 +90,13 @@ export interface CoreStats {
   /** クリティカル込みの平均の 1 発 */
   avg: number;
   hitChance: number;
+  /** ゲームのスキルの詳細と同じ並びの分: 秒間ダメージ量・合計ダメージの幅・種類ごとの幅と耐性貫通・投射物数・投射物スピードの増加 */
+  dps?: number;
+  totalMin?: number;
+  totalMax?: number;
+  ranges?: Array<{ type: string; min: number; max: number; pen: number }>;
+  projectiles?: number;
+  incProjSpeed?: number;
 }
 export interface GroupView {
   i: number;
