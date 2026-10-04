@@ -61,15 +61,39 @@ async function onPlan(which: "mine" | "target"): Promise<void> {
   setTimeout(() => (box.value = ""), 8000);
 }
 
-const TABS = [
+/**
+ * 2026-10-04 作り直し (オーナー「火力チェックに特化した UI に。比べる相手を入れたら UI がガラッと変わる感じ。火力を比較する / 自分の火力を見る
+ * で選択式、取り込み後に UI が開く。自分のなら自分のだけ、比較なら 2 つ入れてそれぞれ読み込みボタン、終わったら UI が開く」「ごりっと変えよう」)。
+ *   mode = null … 入口 (2 枚のカードから選ぶ)
+ *   mode あり・まだ読み込めていない … 読み込みの欄 (自分 1 つ / 比較は 自分 + 相手 の 2 つ)
+ *   読み込めた … 自分 = 装備 / ジェム / ツリー / 内訳 / 値段、比較 = 火力の差 (主役) + 同じタブ
+ */
+type Mode = "self" | "compare";
+const mode = ref<Mode | null>(target.value ? "compare" : cur.value ? "self" : null);
+const opened = computed(() => (mode.value === "self" ? !!cur.value : mode.value === "compare" ? !!cur.value && !!target.value : false));
+function choose(m: Mode): void {
+  mode.value = m;
+  tab.value = m === "compare" ? "diff" : "items";
+}
+/** 入口に戻る (読み込んだ物は全部消す) */
+function backToEntry(): void {
+  resetAll();
+  mode.value = null;
+}
+const ALL_TABS = [
+  { id: "diff", label: "火力の差" },
   { id: "items", label: "装備" },
   { id: "gems", label: "ジェム" },
   { id: "tree", label: "パッシブツリー" },
   { id: "breakdown", label: "内訳", hint: "上のバーのスキルの DPS がどう出ているか (式と、増加 / 増しの出所)" },
-  { id: "diff", label: "相手との差" },
   { id: "prices", label: "値段" },
 ] as const;
-const tab = ref<(typeof TABS)[number]["id"]>("items");
+type TabId = (typeof ALL_TABS)[number]["id"];
+/** 自分の火力を見る時は「火力の差」は出さない */
+const TABS = computed(() => ALL_TABS.filter((t) => mode.value === "compare" || t.id !== "diff"));
+const tab = ref<TabId>(mode.value === "compare" ? "diff" : "items");
+// 比較で 2 つとも読み込めたら「火力の差」を開く
+watch(opened, (o) => { if (o && mode.value === "compare") tab.value = "diff"; });
 /**
  * 「値段」(旧 忍者ビルドコピー、2026-10-03 統合) は一度開いたら v-show で保つ (取った値段を消さないため)。
  * 開くまでは作らない (解析はローカルだが、使わない人の分まで走らせない)
@@ -97,11 +121,17 @@ function onModAction(m: ModRow, action: ModAction): void {
   else if (action === "gem-off" && s.gi && s.gj) void changeGem(s.gi, s.gj, "enabled", false);
   else if (action === "charges0") void changeCharges(0);
 }
-/** 相手を読み込んだら「相手との差」を開く */
+/** 相手を読み込んだら「火力の差」を開く */
 async function onLoadTarget(): Promise<void> {
   await loadTarget();
   if (target.value) tab.value = "diff";
 }
+/** 比較の上の帯: 上のバーのスキルの相手の DPS (同じ名前のスキル) */
+const targetFocus = computed(() => {
+  const f = focus.value;
+  if (!f) return null;
+  return targetSkills.value.filter((x) => x.s.name === f.s.name).sort((a, b) => b.s.game.dps - a.s.game.dps)[0] ?? null;
+});
 
 // 読み込む前の案内は 1 行だけ (2026-10-03 見た目の整理。前は 読み込む / 変える / 比べる / そろえる の 4 枚のカードだった)
 
@@ -165,36 +195,61 @@ const resists = computed(() =>
   <div class="flex h-full flex-col overflow-hidden">
     <TabBar icon="🔥" title="火力チェック" />
     <div class="min-h-0 flex-1 overflow-auto p-4 @container">
-    <!-- 読み込み (自分 / 比べる相手 / 同梱の PoB)。PoB コード (人のビルドも自分のキャラも) か poe.ninja の URL -->
-    <section class="card mb-3 p-3">
+    <!-- 入口: 選ぶ (2026-10-04) -->
+    <section v-if="!mode" class="mx-auto mt-8 max-w-4xl">
+      <p class="mb-4 text-center text-[13px] text-[var(--exile-color-text-secondary)]">何をしますか</p>
+      <div class="grid gap-4 md:grid-cols-2">
+        <button type="button" class="card group p-6 text-left transition hover:border-amber-400/60 hover:bg-amber-500/[0.06]" @click="choose('self')">
+          <p class="text-2xl">🔥</p>
+          <p class="mt-2 text-lg font-bold text-amber-100">自分の火力を見る</p>
+          <p class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">自分のビルドを読み込んで、装備・ジェム・パッシブツリーを変えるとスキルの DPS がどう変わるかを見る</p>
+        </button>
+        <button type="button" class="card group p-6 text-left transition hover:border-sky-400/60 hover:bg-sky-500/[0.06]" @click="choose('compare')">
+          <p class="text-2xl">⚔</p>
+          <p class="mt-2 text-lg font-bold text-sky-100">火力を比較する</p>
+          <p class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">自分と相手 (忍者の上位の人など) の 2 つを読み込んで、何を真似するとどれだけ火力が伸びるかを並べる</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- 読み込み: 自分 1 つ / 比較は 自分 + 相手。読み込めたら画面が開く -->
+    <section v-else-if="!opened" class="card mx-auto mt-6 max-w-3xl p-5">
+      <div class="mb-4 flex items-center gap-3">
+        <button type="button" class="btn-link text-[12px]" :disabled="loading" @click="backToEntry">← 選び直す</button>
+        <p class="text-lg font-bold" :class="mode === 'compare' ? 'text-sky-100' : 'text-amber-100'">{{ mode === "compare" ? "⚔ 火力を比較する" : "🔥 自分の火力を見る" }}</p>
+      </div>
       <form class="flex items-center gap-2" @submit.prevent="load()">
-        <span class="w-[5.5rem] shrink-0 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]">自分のビルド</span>
-        <input v-model="input" type="text" placeholder="PoB コード (「Import/Export」の Generate) / https://poe.ninja/poe2/builds/... のキャラの URL" class="input flex-1" />
-        <button type="submit" class="btn btn-primary w-28" :disabled="loading || !input.trim()">{{ loading ? "読み込み中…" : "読み込む" }}</button>
+        <span class="w-[5.5rem] shrink-0 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]">{{ mode === "compare" ? "自分" : "ビルド" }}</span>
+        <input v-model="input" type="text" placeholder="PoB コード (「Import/Export」の Generate) / https://poe.ninja/poe2/builds/... のキャラの URL" class="input flex-1" :disabled="!!cur && mode === 'compare'" />
+        <span v-if="cur && mode === 'compare'" class="w-28 text-center text-[12px] font-semibold text-emerald-300">✓ 読み込み済み</span>
+        <button v-else type="submit" class="btn btn-primary w-28" :disabled="loading || !input.trim()">{{ loading && !cur ? "読み込み中…" : "読み込む" }}</button>
       </form>
-      <!-- 比べる相手 (忍者のビルド等)。同じ流れで読み込み、「相手との差」に出す -->
-      <form v-if="cur" class="mt-2 flex items-center gap-2" @submit.prevent="onLoadTarget()">
-        <span class="w-[5.5rem] shrink-0 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]">比べる相手</span>
-        <input v-model="targetInput" type="text" placeholder="相手の PoB コード / poe.ninja の URL (忍者の人のビルドと、自分に足りない物を比べる)" class="input flex-1" />
-        <button type="submit" class="btn btn-outline btn-accent w-28" :disabled="loading || busy || !targetInput.trim()">{{ loading ? "読み込み中…" : target ? "相手を読み直す" : "相手を読み込む" }}</button>
+      <p v-if="cur && mode === 'compare'" class="note mt-1 pl-[6rem]">{{ cur.char.ascendancy || cur.char.class }} Lv {{ cur.char.level }}<template v-if="loadedFrom"> ・ {{ loadedFrom }} から</template></p>
+      <form v-if="mode === 'compare'" class="mt-3 flex items-center gap-2" @submit.prevent="onLoadTarget()">
+        <span class="w-[5.5rem] shrink-0 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]">相手</span>
+        <input v-model="targetInput" type="text" placeholder="相手の PoB コード / poe.ninja の URL" class="input flex-1" />
+        <button type="submit" class="btn btn-outline btn-accent w-28" :disabled="loading || busy || !targetInput.trim() || !cur" :title="cur ? '' : '先に自分を読み込んでください'">{{ loading && cur ? "読み込み中…" : "読み込む" }}</button>
       </form>
-      <p class="note mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+      <p v-if="mode === 'compare' && !cur" class="note mt-1 pl-[6rem]">先に自分を読み込むと、相手を読み込めます</p>
+      <div v-if="loading" class="mt-4 flex items-center gap-2 text-sm text-amber-200/80">
+        <span class="h-2.5 w-2.5 animate-ping rounded-full bg-amber-300" />PoB で読み込んで計算しています (数秒)
+      </div>
+      <p v-if="error" class="mt-3 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
+      <p class="note mt-4 flex flex-wrap items-center gap-x-2 gap-y-1">
         <span>自分のキャラは同梱の PoB でログインして取り込み、「Import/Export」のコードを貼る。</span>
         <button type="button" class="btn-link" @click="openPobApp">同梱の PoB を開く</button>
         <span v-if="pobMsg" class="text-[var(--exile-color-text-secondary)]">{{ pobMsg }}</span>
       </p>
-      <p v-if="error" class="mt-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
     </section>
 
-    <!-- まだ読み込んでいない時の案内 (1 行) -->
-    <p v-if="!cur && !loading" class="note px-1">
-      読み込むとスキルの DPS とライフ・ES が出ます。装備 (ゲームで Ctrl+C した物を貼る) / ジェム (Lv・品質を ±) / パッシブツリー (ノードを押す) を変えるたびに差が出て、相手を読み込むと足りない物が「相手との差」に並びます。
-    </p>
-    <div v-if="loading" class="mt-10 flex items-center justify-center gap-2 text-sm text-amber-200/80">
-      <span class="h-2.5 w-2.5 animate-ping rounded-full bg-amber-300" />PoB で読み込んで計算しています (数秒)
-    </div>
-
-    <template v-if="cur">
+    <template v-else-if="cur">
+      <!-- 開いた画面の頭: どちらの使い方か・選び直す・読み込み中・エラー -->
+      <div class="mb-2 flex flex-wrap items-center gap-2">
+        <span class="rounded-full px-2.5 py-0.5 text-[12px] font-bold" :class="mode === 'compare' ? 'bg-sky-500/15 text-sky-200' : 'bg-amber-500/15 text-amber-200'">{{ mode === "compare" ? "⚔ 火力を比較する" : "🔥 自分の火力を見る" }}</span>
+        <button type="button" class="btn-link text-[12px]" :disabled="loading || busy" @click="backToEntry">← 選び直す</button>
+        <span v-if="loading" class="flex items-center gap-1 text-[12px] text-amber-200/80"><span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />読み込み中</span>
+        <p v-if="error" class="w-full rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
+      </div>
       <!-- キャラの札 -->
       <div class="mb-3 flex flex-wrap items-center gap-1.5">
         <span class="chip bg-white/[0.07]">
@@ -237,6 +292,12 @@ const resists = computed(() =>
             <div class="flex items-baseline gap-2">
               <span class="text-3xl font-black leading-none tabular-nums text-amber-200">{{ fmtNum(focus.s.game.dps) }}</span>
               <DiffBadge :now="focus.s.game.dps" :before="focusBase?.game.dps" size="lg" />
+              <!-- 比較: 相手の同じスキル -->
+              <template v-if="mode === 'compare' && targetFocus">
+                <span class="mx-1 text-lg text-[var(--exile-color-text-tertiary)]">→ 相手</span>
+                <span class="text-3xl font-black leading-none tabular-nums text-sky-200">{{ fmtNum(targetFocus.s.game.dps) }}</span>
+                <DiffBadge :now="targetFocus.s.game.dps" :before="focus.s.game.dps" size="lg" />
+              </template>
               <span v-if="busy" class="flex items-center gap-1 text-[11px] text-amber-200/80"><span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />計算中</span>
             </div>
           </div>
@@ -290,13 +351,13 @@ const resists = computed(() =>
         </div>
       </div>
 
-      <!-- スキル (主役) -->
-      <div class="mb-5">
+      <!-- スキル (自分の火力を見る時の主役)。比較の時は「火力の差」のスキルごとの比べに出すので、ここには出さない -->
+      <div v-if="mode !== 'compare'" class="mb-5">
         <SkillTable :rows="skills" :before="baseSkills" :focus-key="focus?.key ?? null" @focus="(k) => (focusKey = k)" />
       </div>
 
       <!-- 変える所 (装備 / ジェム / ツリー / 相手との差 / 値段)。タブの見た目は上の帯と同じ部品 (画面名は無し) -->
-      <TabBar :tabs="TABS" :model-value="tab" class="mb-3" aria-label="火力チェックの中身" @update:model-value="tab = $event as (typeof TABS)[number]['id']" />
+      <TabBar :tabs="TABS" :model-value="tab" class="mb-3" aria-label="火力チェックの中身" @update:model-value="tab = $event as TabId" />
 
       <!-- 装備 -->
       <div v-show="tab === 'items'">
@@ -360,8 +421,8 @@ const resists = computed(() =>
         />
       </div>
 
-      <!-- 相手との差 -->
-      <div v-if="tab === 'diff'">
+      <!-- 火力の差 (比較の時だけ) -->
+      <div v-if="tab === 'diff' && mode === 'compare'">
         <BuildDiff
           v-if="target"
           :mine="cur"
@@ -385,7 +446,7 @@ const resists = computed(() =>
           @adopt="async (c, done) => done(await adopt(c))"
           @focus="(k) => (focusKey = k)"
         />
-        <p v-else class="mb-6 text-[12px] text-[var(--exile-color-text-secondary)]">上の「比べる相手」に忍者のビルドの URL か PoB コードを貼って読み込むと、ユニークは装備ごと、レアは足りない MOD だけが「自分 → 相手」で並びます。</p>
+
       </div>
 
       <!-- 値段 (旧 忍者ビルドコピー)。自分 = 読んだコード、相手 = 比べる相手のコード。値段は押した時だけ -->

@@ -240,8 +240,8 @@ const STATS = [
     主役は DPS の変化 (上の「自分 → 相手」の大きな数字と、取り入れたらの DPS の列)。注記は .note で薄く小さく、取引所は小さなリンク
   -->
   <div class="mb-6 space-y-5">
-    <!-- 相手と火力 -->
-    <section class="card p-4">
+    <!-- 相手 (細い 1 段)。DPS の 自分 → 相手 は画面の上のバーに出す (2026-10-04 作り直し) -->
+    <section class="card px-4 py-3">
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
         <p class="text-[13px] font-bold">
           比べる相手: {{ target.char.ascendancy || target.char.class }}
@@ -261,22 +261,7 @@ const STATS = [
         </span>
         <span v-if="planMsg" class="basis-full text-[11px] text-emerald-200">{{ planMsg }}</span>
       </div>
-      <!-- DPS の変化 (主役) -->
-      <div v-if="focus && targetSkill" class="mt-3 flex flex-wrap items-end gap-x-5 gap-y-2">
-        <div>
-          <p class="note flex items-center gap-1">自分 — <GemIcon :en="focus.s.name" :size="16" /><GemName :en="focus.s.name" :label="gemJa(focus.s.name)" /></p>
-          <p class="text-3xl font-black leading-none tabular-nums text-amber-200">{{ fmtNum(focus.s.game.dps) }}</p>
-        </div>
-        <p class="pb-0.5 text-2xl leading-none text-[var(--exile-color-text-tertiary)]">→</p>
-        <div>
-          <p class="note flex items-center gap-1">
-            相手 — <GemIcon :en="targetSkill.name" :size="16" /><GemName :en="targetSkill.name" :label="gemJa(targetSkill.name)" /><span v-if="targetSkill.name !== focus.s.name"> (同じスキルが無いので一番高い物)</span>
-          </p>
-          <p class="text-3xl font-black leading-none tabular-nums text-sky-200">{{ fmtNum(targetSkill.game.dps) }}</p>
-        </div>
-        <DiffBadge class="mb-0.5" :now="targetSkill.game.dps" :before="focus.s.game.dps" size="lg" />
-      </div>
-      <div class="mt-3 flex flex-wrap gap-1.5">
+      <div class="mt-2 flex flex-wrap gap-1.5">
         <span v-for="s in STATS" :key="s.k" class="chip">
           <span class="chip-label">{{ s.label }}</span>
           <span class="chip-value">{{ Math.round(stat(mine, s.k)) }}</span>
@@ -470,7 +455,10 @@ const STATS = [
       <SkillCompareTable :rows="skillPairs" :focus-key="focus?.key ?? null" @focus="(k) => emit('focus', k)" />
     </section>
 
-    <!-- ジェムの差 (相手の組ごと) -->
+    <!-- 細かい差 (ジェムの Lv・サポート / 装備の MOD)。火力の差 試算と被るので畳む (2026-10-04 オーナー「相手との差で装備とかジェムとか被ってる」) -->
+    <details class="card px-4 py-3">
+      <summary class="cursor-pointer select-none text-[13px] font-semibold text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]">細かい差 (装備の MOD・ジェムの Lv / サポート)</summary>
+      <div class="mt-3 space-y-5">
     <section>
       <h2 class="sec-title">
         ジェム
@@ -579,5 +567,7 @@ const STATS = [
         ジュエル: 自分 {{ diff.jewels.mine }} 個 / 相手 {{ diff.jewels.target }} 個 (穴の位置が人ごとに違うので数だけ)。相手の装備は読み込んだ時の写しで、相手の DPS はゲーム内の表記に寄せた同じ物差しです。
       </p>
     </section>
+      </div>
+    </details>
   </div>
 </template>
