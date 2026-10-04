@@ -18,7 +18,7 @@ from pathlib import Path
 
 import structlog
 
-from poe2tube.capture.stage import CAPTURE_VER
+from poe2tube.capture.stage import cache_ver
 from poe2tube.config.settings import get_settings
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
@@ -63,7 +63,7 @@ def chapter_key(script: VideoScript, k: int, cues: list[Cue], n_sections: int) -
         "k": k,
         "voices": [(c.wav.name, c.frames, c.voice_delay) for c in cues[i0:i1]],
         "n_sections": n_sections,
-        "capture": CAPTURE_VER,
+        "capture": cache_ver(),  # 撮影先 (固定版 / 開発版) も。開発版の章を本番に混ぜない
         "render": (RENDER_VER, s.hit_zoom),
         "video": (s.width, s.height, s.fps, s.nvenc),
         "audio": (s.bgm, s.bgm_gain_db, s.se_gain_db),
