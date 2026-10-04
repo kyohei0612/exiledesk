@@ -11,7 +11,7 @@
  *      (2026-09-29 オーナー「色が全体的に淡い」: 金の指輪が青く出ていた) → public/base-art/<ファイル名>.webp と src/services/craft-stage/base-art.json (英語名 → ファイル名)
  * フラスコの DDS は 3 枚横並び (枠 / 暗いガラス / 液体)。ゲームの見た目は「液体の上に枠を重ねる」(枠のガラスの所は透けている) なので、そう合成して 1 枚にする
  * (2026-09-29 オーナー「フラスコとか画像ちょっとおかしい奴」: 3 つ並んで出ていた)。
- * 対象は計算機のベース (ルーンフォージ等・[DNT] を除く) とフラスコ。
+ * 対象は計算機のベース (ルーンフォージ等・[DNT] を除く) とフラスコ、ジュエル (2026-10-04)。
  *   (cd data-cache/client-export-art && npx pathofexile-dat) && node scripts/build-base-art-from-client.mjs
  */
 import * as loaders from "../node_modules/pathofexile-dat/dist/cli/bundle-loaders.js";
@@ -34,6 +34,8 @@ const stage = JSON.parse(readFileSync(resolve(ROOT, "src/services/craft-stage/st
 const want = new Set([
   ...Object.keys(extra.baseInfo).filter((n) => !/^(Runeforged|Runemastered|Runefather's) /.test(n) && !n.startsWith("[DNT]")),
   ...Object.entries(stage).filter(([, v]) => v.cls === "LifeFlask" || v.cls === "ManaFlask").map(([n]) => n),
+  // ジュエル (2026-10-04 オーナー「ジュエル系のアイコンもほしいね」: 火力チェックの試算・装備の欄で絵が無かった)
+  ...B.filter((b) => /^Metadata\/Items\/Jewels\//.test(b.Id ?? "")).map((b) => b.Name),
 ]);
 // 同じ名前の行が複数ある (旧版・イベント品) ので、先に見つけた絵のある行を使う
 const dds = new Map();

@@ -287,21 +287,8 @@ const STATS = [
         </span>
       </div>
 
-      <!-- ツリー: 丸ごと真似したら (大きく 1 行) -->
-      <div v-if="treeEst" class="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl bg-white/[0.04] px-4 py-3">
-        <span class="text-[14px] font-bold">ツリーを丸ごと真似すると</span>
-        <template v-if="treeEst.error"><span class="text-rose-300">試算できませんでした: {{ treeEst.error }}</span></template>
-        <template v-else>
-          <span class="text-2xl font-black tabular-nums text-amber-200">{{ fmtNum(treeEst.dps) }}</span>
-          <DiffBadge :now="treeEst.dps" :before="estimates!.dps" size="lg" />
-          <span v-if="delta(treeEst.stats.Life)" :class="treeEst.stats.Life > 0 ? 'text-emerald-300' : 'text-rose-300'">ライフ {{ delta(treeEst.stats.Life) }}</span>
-          <span v-if="delta(treeEst.stats.EnergyShield)" :class="treeEst.stats.EnergyShield > 0 ? 'text-emerald-300' : 'text-rose-300'">ES {{ delta(treeEst.stats.EnergyShield) }}</span>
-          <span class="note">足す {{ treeEst.n ?? 0 }} ・ 外す {{ treeEst.removed ?? 0 }} ノード (つながる道は見ていない。振り直しで真似する前提)</span>
-        </template>
-      </div>
-
-      <!-- 装備 / リネージュ / ジュエル -->
-      <table v-if="estimates && rowEsts.length" class="mt-3 w-full text-[13px]">
+      <!-- 装備 / リネージュ / ジュエル、一番下に「その他: パッシブツリーのノード」(まとめて真似した時の 1 行) -->
+      <table v-if="estimates && (rowEsts.length || treeEst)" class="mt-3 w-full text-[13px]">
         <thead>
           <tr class="border-b border-white/10 text-left text-[11px] text-[var(--exile-color-text-tertiary)]">
             <th class="py-1.5 pr-3 font-semibold">何を</th>
@@ -379,6 +366,38 @@ const STATS = [
                   <button type="button" class="btn-link" :title="e.c.unique ? '相手のユニーク (名前 + ベース) を取引所で探す (URL を開くだけ)' : '足りない MOD の行を条件にして取引所で探す (数値はそのまま下限。URL を開くだけ)'" @click="onTrade(e.c)">取引所で探す ↗</button>
                   <span v-if="tradeMsg[e.c.key]" class="ml-2">{{ tradeMsg[e.c.key] }}</span>
                 </p>
+              </td>
+            </tr>
+          </template>
+          <!-- その他: パッシブツリーのノード (2026-10-04 オーナー「ノードで変わる奴は一番下に、その他ノードで火力が変わる系の文言でまとめて」) -->
+          <template v-if="treeEst">
+            <tr class="border-t-2 border-white/15 align-top">
+              <td class="py-2 pr-3 font-semibold text-[var(--exile-color-text-secondary)]">その他: パッシブツリー</td>
+              <td class="py-2 pr-3">
+                <span class="text-amber-200">ノードをまとめて相手と同じにする</span>
+                <span class="note ml-1.5">(足す {{ treeEst.n ?? 0 }} ・ 外す {{ treeEst.removed ?? 0 }})</span>
+              </td>
+              <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
+                <template v-if="treeEst.error"><span class="text-rose-300">—</span></template>
+                <template v-else>
+                  <span class="text-[17px] font-bold">{{ fmtNum(treeEst.dps) }}</span>
+                  <DiffBadge class="ml-1.5" :now="treeEst.dps" :before="estimates.dps" />
+                </template>
+              </td>
+              <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
+                <template v-if="!treeEst.error">
+                  <span v-if="delta(treeEst.stats.Life)" :class="treeEst.stats.Life > 0 ? 'text-emerald-300' : 'text-rose-300'">ライフ {{ delta(treeEst.stats.Life) }}</span>
+                  <span v-if="delta(treeEst.stats.EnergyShield)" class="ml-2" :class="treeEst.stats.EnergyShield > 0 ? 'text-emerald-300' : 'text-rose-300'">ES {{ delta(treeEst.stats.EnergyShield) }}</span>
+                  <span v-if="!delta(treeEst.stats.Life) && !delta(treeEst.stats.EnergyShield)" class="text-[var(--exile-color-text-tertiary)]">—</span>
+                </template>
+              </td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td colspan="4" class="note pb-2 pr-3 leading-snug">
+                <p v-if="treeEst.error" class="text-rose-300">試算できませんでした: {{ treeEst.error }}</p>
+                <p v-else>ノードで火力が変わる分をまとめた数字です (振り直しで真似する前提。つながる道は見ていない)</p>
               </td>
             </tr>
           </template>
