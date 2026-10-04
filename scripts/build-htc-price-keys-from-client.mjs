@@ -91,6 +91,11 @@ const CURRENCY = {
   mirror: "Metadata/Items/Currency/CurrencyDuplicate",
   hinekora: "Metadata/Items/Currency/CurrencyHinekorasLock",
   extraction: "Metadata/Items/Currency/CurrencyIncursionExtractAllSocketablesCurrency",
+  // 耐性のフラックス (2026-10-04 オーナー「カレンシーフルチェック」: 相場に値段があって棚に無かった物)
+  flux_fire: "Metadata/Items/Currency/CurrencyArcaneFluxFire",
+  flux_cold: "Metadata/Items/Currency/CurrencyArcaneFluxCold",
+  flux_lightning: "Metadata/Items/Currency/CurrencyArcaneFluxLightning",
+  flux_chaos: "Metadata/Items/Currency/CurrencyArcaneFluxChaos",
 };
 
 /**

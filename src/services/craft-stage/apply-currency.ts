@@ -25,6 +25,7 @@ import { isFlask, isGem, uniquesForBase } from "./stage-bases";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
+import { applyFlux, isFlux } from "./apply-flux";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
 import { applyRune, isRune } from "./stage-runes";
 
@@ -130,6 +131,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
   if (currency === "chance") return applyChance(item, rng, uniquesForBase(item.base), hint.outcome);
   if (isExtra(currency)) return applyExtra(item, currency, rng, hint.outcome);
+  if (isFlux(currency)) return applyFlux(data, item, currency);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? "スキルジェムには使えない" : "フラスコには使えない (このステージでは MOD を扱わない)");
   if (kind === "essence" || kind === "essence_perfect") return applyEssence(data, item, currency, rng, used);

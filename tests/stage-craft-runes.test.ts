@@ -73,3 +73,23 @@ describe("遺産のルーン", () => {
     expect(r2.applied).toBe(false);
   });
 });
+
+describe("耐性のフラックス・合金 (2026-10-04 カレンシーフルチェック。合金はもともとエッセンスの棚にある)", () => {
+  it("火炎フラックスで冷気耐性が火耐性に変わる", () => {
+    let it0 = rare("Knightly Mitts");
+    it0 = add(it0, "Gloves_str/ColdResistance", "suffix");
+    const r = A(it0, "flux_fire");
+    expect(r.applied).toBe(true);
+    expect(r.item.suffixes[0]!.modId).toBe("Gloves_str/FireResistance");
+    expect(A(rare("Knightly Mitts"), "flux_fire").applied).toBe(false);
+  });
+  it("合金がエッセンスの棚に並び、打てる", async () => {
+    const { essenceShelf } = await import("../src/state/craft-stage-shelf");
+    const keys = essenceShelf(data, rare("Knightly Mitts")).flatMap((x) => x.keys).filter((k) => data.mods.get(k.replace(/^essence:perfect:/, ""))?.alloy);
+    expect(keys.length).toBeGreaterThan(0);
+    let it0 = rare("Knightly Mitts");
+    it0 = add(it0, "Gloves_str/ColdResistance", "suffix");
+    const r = A(it0, keys[0]!);
+    expect(r.applied).toBe(true);
+  });
+});

@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28",
+ "generated": "2026-10-04",
  "source": "GGG クライアント BaseItemTypes (data-cache/client-export)。キーは poe2htc の optimizer/cost.ts",
  "currency": {
   "transmute": {
@@ -193,6 +193,22 @@
   "extraction": {
    "en": "Orb of Extraction",
    "ja": "抽出のオーブ"
+  },
+  "flux_fire": {
+   "en": "Blazing Flux",
+   "ja": "火炎フラックス"
+  },
+  "flux_cold": {
+   "en": "Chilling Flux",
+   "ja": "冷却フラックス"
+  },
+  "flux_lightning": {
+   "en": "Crackling Flux",
+   "ja": "雷撃フラックス"
+  },
+  "flux_chaos": {
+   "en": "Void Flux",
+   "ja": "虚無フラックス"
   },
   "essence:breach": {
    "en": "Essence of the Breach",

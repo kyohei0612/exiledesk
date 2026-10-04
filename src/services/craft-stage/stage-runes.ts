@@ -186,13 +186,14 @@ function applyMasterwork(item: StageItem, socket: number | null): StageApply {
 const EL_EN: Record<string, string> = { fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos" };
 export const EL_JA: Record<string, string> = { fire: "火", cold: "冷気", lightning: "雷", chaos: "混沌" };
 /**
+ * 属性の変換 (アルダーのルーン・耐性のフラックスで共通)。only で変える MOD を絞る (フラックスは耐性の MOD だけ)。
  * アルダーの情熱 / 息吹 / 怒り / 裏切り (POE2Tube 要望 ㉙ 2026-10-04): 差した瞬間に、付いている「食う属性」の MOD を同じ段の
  * 対応する属性の MOD に置き換える (説明文「アイテム上の全ての冷気および雷モッドを同等の火モッドに変化させる」)。
  * 対応の決め方はサーバー側で公開されていないので仮定: 同じベースの置き場の、id (無ければ文面) の属性の言葉だけを替えた MOD
  * (Bows/LocalColdDamage → Bows/LocalFireDamage、Wands/DamageGainedAsCold → DamageGainedAsFire)。段は上から数えて同じ順位、
  * 数値は段の範囲の中の同じ位置。対応する MOD が無い物は変えない。後から付けた MOD は変えない (差した時だけ)
  */
-function aldurConvert(data: PatchData, item: StageItem, element: string, eats: readonly string[]): { item: StageItem; mods: Array<{ from: StageMod; to: StageMod }> } {
+export function convertElements(data: PatchData, item: StageItem, element: string, eats: readonly string[], only?: (md: Mod) => boolean): { item: StageItem; mods: Array<{ from: StageMod; to: StageMod }> } {
   const words = eats.map((e) => EL_EN[e]).filter((w): w is string => !!w);
   const to = EL_EN[element]!;
   const hit = new RegExp(`(${words.join("|")})`);
@@ -204,7 +205,7 @@ function aldurConvert(data: PatchData, item: StageItem, element: string, eats: r
   for (const m of allMods(item)) {
     if (m.unrevealed) continue;
     const md = byId.get(m.modId);
-    if (!md || !(hit.test(md.id) || hit.test(md.text ?? ""))) continue;
+    if (!md || (only && !only(md)) || !(hit.test(md.id) || hit.test(md.text ?? ""))) continue;
     let target = hit.test(md.id) ? byId.get(swap(md.id)) : undefined;
     if (!target && md.text) {
       if (!byText) {
@@ -274,7 +275,7 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   // アルダーのルーン: 差した瞬間に属性を変える。変える物が無ければ打てない (ClientStrings 9272 の文)
   const conv = RUNE_BY_ID.get(runeIdByName(p.en) ?? "")?.effect;
   if (conv?.kind === "convert" && data) {
-    const c = aldurConvert(data, item, conv.element, conv.eats);
+    const c = convertElements(data, item, conv.element, conv.eats);
     if (!c.mods.length) return skip(item, "この変換で有効なモッドが対象のアイテムにありません");
     return {
       applied: true,

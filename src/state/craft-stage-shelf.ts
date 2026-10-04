@@ -43,6 +43,8 @@ export const ORBS: ShelfGroup[] = [
   // 2026-09-29 オーナー「全部足して」: 今の相場にあって棚に無かった物 (apply-extra.ts)
   { kind: "vaal_extra", label: "ヴァール", keys: ["vaal_infuser_jewellery", "vaal_infuser_armour", "vaal_infuser_martial", "vaal_infuser_caster", "sacrifice_jewellery", "sacrifice_armour", "sacrifice_weapon", "architect", "cultivation", "siphoner"] },
   { kind: "special", label: "特殊", keys: ["mirror", "hinekora", "extraction"] },
+  // 耐性のフラックス (2026-10-04 オーナー「カレンシーフルチェック」、apply-flux.ts)
+  { kind: "flux", label: "フラックス (耐性の変換)", keys: ["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"] },
   { kind: "shard", label: "シャード", keys: ["transmute_shard", "regal_shard", "artificer_shard", "chance_shard"] },
   // 2026-09-29 (POE2Tube 要望 ⑰-5): 解呪・サルベージ (アイテムは無くなり、シャード・品質カレンシーになる。apply-dispose.ts)
   { kind: "dispose", label: "解呪・サルベージ", keys: ["disenchant", "salvage"] },

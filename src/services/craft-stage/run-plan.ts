@@ -162,6 +162,8 @@ export function playStep(
     // 発現の手 (要望 ㉕-2): 出た 3 つの候補と選んだ番号 (1 から)。:reroll (アビスの反響) は引き直す前 (first) と後 (rerolled) の両方。
     // applyReveal と同じ種で引くので、選んだ物は changed.added と同じ
     ...(revealOut(data, item, currency, o.seed, r.applied)),
+    // 耐性のフラックス: converted = { element, mods: [{ from, to }] }
+    ...(r.converted ? ({ converted: { element: r.converted.element, mods: r.converted.mods.map((x) => ({ from: outMod(x.from), to: outMod(x.to) })) } } as object) : {}),
     ...(r.augment ? ({ augment_change: { socket: r.augment.socket, put: outAug(r.augment.put), replaced: r.augment.replaced ? outAug(r.augment.replaced) : null, replaced_goes: r.augment.replacedGoes,
       // 傑作のルーン: upgraded = { from: 上げる前, to: 上げた後 } (POE2Tube 要望 ㉘)
       ...(r.augment.upgraded ? { upgraded: { from: outAug(r.augment.replaced!), to: outAug(r.augment.put) } } : {}),

@@ -32,6 +32,8 @@ const COLOR = { magic: "var(--color-rarity-magic)", rare: "var(--color-rarity-ra
  * アクト中に落ちる物 (要望 ⑧) の結果の文字: 品質 / 鑑定 / サポート枠 / ソケット / シャード。関係なければ null
  */
 /** オーグメントの手の文字 (結果 JSON の augment_change) */
+/** 耐性のフラックスで変えた先の属性 (結果 JSON の converted.element) */
+const convertedOf = (o: object): string | null => (o as { converted?: { element: string } }).converted?.element ?? null;
 function augText(o: object): { kind: "hit" | "up"; color: string; text: string } | null {
   const a = (o as { augment_change?: { put: { ja: string; en?: string; text_ja?: string }; replaced: { ja: string } | null; upgraded?: { from: { ja: string }; to: { ja: string; en?: string } }; converted?: { element: string } } }).augment_change;
   if (!a) return null;
@@ -128,6 +130,8 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource =
     else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: "聖別!" };
     // オーグメント (POE2Tube 要望 ㉘): 傑作のルーンで上げた / 置き換えた / はめた (ルーン・ソウルコア・アイドルは名前で)
     else if (augText(o)) next = augText(o)!;
+    // 耐性のフラックス (2026-10-04): 「火耐性に変わった!」
+    else if (convertedOf(o)) next = { kind: "up", color: COLOR.top, text: `${EL_JA[convertedOf(o)!] ?? ""}耐性に変わった!` };
     else if (o.changed.rarity_from !== o.changed.rarity_to) next = { kind: "up", color: COLOR[o.changed.rarity_to], text: `${RARITY_TEXT[o.changed.rarity_to]}${mods ? ` ${mods}` : ""}` };
     else if (top) next = { kind: "up", color: COLOR.top, text: mods || "T1 がついた!" };
     else if (st.added.some((m) => m.fractured)) next = { kind: "hit", color: COLOR.fractured, text: "フラクチャー!" };
