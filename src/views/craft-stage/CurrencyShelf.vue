@@ -15,6 +15,19 @@ import { bonesFor, CATALYSTS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "
 import { runeEffectFor, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
 
 const emit = defineEmits<{ hold: [key: string] }>();
+/**
+ * 持っているカレンシーに掛けられるお告げの並び (呼ぶ側の slot "held")。オーナー 2026-10-04「高貴なオーブからヴァールオーブの段の下に。
+ * 小さい画面だと棚の下はスクロールが要る」: オーブのタブでは「その他」(神〜ヴァール) の段の直後に行を切って出す。
+ * 持っている物がそれより下の段 (骨・アクト等) なら、その段の直後 (持っている物の位置がずれないように)。他のタブは一番下
+ */
+const ORB_ANCHOR = ORBS.findIndex((g) => g.kind === "other");
+const heldAt = computed(() => {
+  const k = craftStage.held.value;
+  if (!k) return ORB_ANCHOR;
+  const i = ORBS.findIndex((g) => g.keys.includes(k));
+  if (i >= 0) return Math.max(ORB_ANCHOR, i);
+  return bonesFor(craftStage.item.value).includes(k) ? ORBS.length : ORB_ANCHOR;
+});
 const tab = ref<"orb" | "essence" | "catalyst" | "rune" | "omen">("orb");
 const runes = computed(() => runesFor(craftStage.item.value));
 /** ソケット: 今の数 / 熟練工の上限、はめたルーンの数 */
@@ -53,12 +66,16 @@ const TABS = computed(() => [
     </div>
 
     <div v-if="tab === 'orb'" class="flex flex-wrap gap-x-4 gap-y-2">
-      <div v-for="g in ORBS" :key="g.kind" class="flex gap-1.5">
-        <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
-      </div>
+      <template v-for="(g, i) in ORBS" :key="g.kind">
+        <div class="flex gap-1.5">
+          <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+        </div>
+        <div v-if="i === heldAt && $slots.held" class="w-full"><slot name="held" /></div>
+      </template>
       <div v-if="bonesFor(craftStage.item.value).length" class="flex gap-1.5">
         <ShelfButton v-for="k in bonesFor(craftStage.item.value)" :key="k" :k="k" @pick="emit('hold', $event)" />
       </div>
+      <div v-if="heldAt === ORBS.length && $slots.held" class="w-full"><slot name="held" /></div>
     </div>
 
     <div v-else-if="tab === 'essence'" class="flex flex-wrap gap-x-4 gap-y-2">
@@ -99,5 +116,7 @@ const TABS = computed(() => [
       </div>
       </div>
     </div>
+    <!-- オーブ以外のタブ (エッセンス等) で持った時は一番下 (お告げのタブは棚そのものがお告げなので出さない) -->
+    <div v-if="tab !== 'orb' && tab !== 'omen' && $slots.held" class="mt-3"><slot name="held" /></div>
   </div>
 </template>
