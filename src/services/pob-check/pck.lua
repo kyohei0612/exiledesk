@@ -637,11 +637,21 @@ function PCK.equip(slotName, raw)
 end
 
 --- 使う武器セット (1 / 2)。PoB の I / II のボタンと同じ (メインのスキルの組もその武器セットの物に寄せる)
+-- 本家のボタンは、メインの組が切り替え先の武器セットに無い時にその武器セットの最初の組へ移すだけで、戻した時に元の組へは戻さない。
+-- そのため II → I と戻しても数字が戻らなかった (2026-10-04 オーナー「差し替えてセットをまた元に戻しても火力差し替えた状態のまま」、
+-- マナ・ES・DPS が変わったまま)。武器セットごとに切り替える前のメインの組を覚えて、戻した時はその組に戻す
+PCK.mainBySet = {} -- 読み込みのたびに部品を送り直すので、ビルドが変われば空に
 function PCK.setWeaponSet(n)
   return PCK.mutate(function()
-    local c = build.itemsTab.controls
+    local it = build.itemsTab
+    local c = it.controls
+    local from = it.activeItemSet.useSecondWeaponSet and 2 or 1
+    if from == n then return end
+    PCK.mainBySet[from] = build.mainSocketGroup
     local btn = n == 2 and c.weaponSwap2 or c.weaponSwap1
     btn.onClick()
+    local back = PCK.mainBySet[n]
+    if back and build.skillsTab.socketGroupList[back] then build.mainSocketGroup = back end
   end)
 end
 
