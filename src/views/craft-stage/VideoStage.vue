@@ -24,8 +24,6 @@ import { installAnimClock, type StageAnimInfo } from "./anim-clock";
 import { craftStage } from "../../state/craft-stage";
 import { iconOfKey, nameOfKey } from "../../state/craft-stage-shelf";
 import { displayCurrency } from "../../state/display-currency";
-import { revealOffers } from "../../services/craft-stage/apply-desecrate";
-import { mulberry32 } from "../../services/htc/rng";
 
 const s = craftStage;
 const opts = s.video.value ?? { from: 0, autoplay: false, controls: true };
@@ -77,20 +75,7 @@ const playing = ref(false);
 const speed = ref(1);
 const title = s.replay.value?.plan.title ?? `${start.baseJa} をクラフト`;
 
-/**
- * 発現の 3 択を止めて見せる (URL の offers=1、POE2Tube 要望 ㉕-3): 今の手が発現の手なら、アイテムは発現の前 (未発現の札のまま) で、
- * 候補 3 つを出したまま選ぶ物を点ける。アビスの反響の引き直し (reveal:N:reroll) は「最初の 3 つ → 引き直した 3 つ」を横に並べ、
- * 点けるのは引き直した方。候補は結果 JSON の reveal_offers と同じ (同じ種で引く)。撮影の準備の目印: 「魂の井戸で発現」の文字
- */
-const stillOffers = computed(() => {
-  const st = opts.offers && idx.value ? tape[idx.value - 1] : null;
-  const rv = st ? /^reveal:(\d)(:reroll)?$/.exec(st.out.currency) : null;
-  const data = craftStage.data.value;
-  if (!st || !rv || !data || !st.out.applied) return null;
-  const off = revealOffers(data, st.before, mulberry32(st.out.seed));
-  return { first: off.first, reroll: rv[2] ? off.reroll : null, lit: Number(rv[1]) - 1 };
-});
-const item = computed(() => (stillOffers.value ? tape[idx.value - 1]!.before : idx.value === 0 ? start : tape[idx.value - 1]!.after));
+const item = computed(() => (idx.value === 0 ? start : tape[idx.value - 1]!.after));
 const last = computed(() => (idx.value ? tape[idx.value - 1]! : null));
 /** 名前と絵は画面のアイテムで引く (骨は部位で決まる。共有の状態の item に頼らない、2026-10-04 POE2Tube「dese」) */
 const iconOf = (k: string): string => iconOfKey(k, item.value);
@@ -118,16 +103,60 @@ const trayOmens = planTray
   : [...new Set(tape.flatMap((st) => (st.out.omen ? st.out.omen.split("+") : [])))];
 const frameEl = ref<HTMLElement | null>(null);
 const hand = useVideoHand(frameEl, speed);
+/**
+ * 発現の小窓の位置 (枠 1280×720 の中の座標)。アイテムの枠の真下、横はアイテムの真ん中にそろえる。枠の下にはみ出すなら下端に合わせる
+ * (POE2Tube 要望 ㉗「ゲーム内みたいにアイテムの枠の下」)
+ */
+const revealEl = ref<HTMLElement | null>(null);
+const revealPos = ref({ x: 0, y: 0, w: 560 });
+/**
+ * 撮影用 (clip) はアイテムが画面の高さいっぱいなので、小窓を枠の下に出すと切れる (上へずらすと未発現の行を隠す)。
+ * 小窓が出ている間だけアイテム + 棚を縮めて (0.35 秒)、空いた所に出す。付いたら元の大きさへ戻す
+ */
+const revealShrink = ref(1);
+const shrinkMoving = ref(false);
+const REVEAL_GAP = 10;
+/** 撮影用は下 15% (612 から下) を字幕のために空ける決まり (要望 ⑤) なので、小窓もその上に収める */
+const REVEAL_BOTTOM = 712;
+const revealBottom = (): number => (clip.value ? CLIP_BOTTOM : REVEAL_BOTTOM);
+watch(() => !!hand.reveal.value, async (open) => {
+  if (!open) {
+    if (revealShrink.value !== 1) {
+      revealShrink.value = 1;
+      setTimeout(() => (shrinkMoving.value = false), 400);
+    }
+    return;
+  }
+  await nextTick();
+  const f = frameEl.value?.getBoundingClientRect();
+  const r = cardEl.value?.getBoundingClientRect();
+  const g = groupEl.value?.getBoundingClientRect();
+  const h = revealEl.value?.offsetHeight ?? 0;
+  if (!f || !r || !g || !f.width) return;
+  const u = f.width / 1280;
+  const top = (g.top - f.top) / u;
+  const bottom = (r.bottom - f.top) / u;
+  const k = clip.value ? Math.min(1, (revealBottom() - REVEAL_GAP - h - top) / Math.max(1, bottom - top)) : 1;
+  const w = Math.max(480, Math.min(700, r.width / u));
+  const gx = (g.left + g.width / 2 - f.left) / u;
+  const cx = gx + ((r.left + r.width / 2 - f.left) / u - gx) * k;
+  const y = Math.min(top + (bottom - top) * k + REVEAL_GAP, revealBottom() - h);
+  revealPos.value = { x: Math.max(8, Math.min(1280 - w - 8, cx - w / 2)), y, w };
+  if (k < 1) {
+    shrinkMoving.value = true;
+    revealShrink.value = k;
+  }
+});
 // 撮影用の倍率は開いた時と見た目を切り替えた時に 1 回だけ決める
 watch(layout, () => void fitClip());
 onMounted(() => void (opts.animT != null ? stillAt(opts.animT) : fitClip()));
 
 /**
- * 手つきを時刻で止める (URL の anim_t、POE2Tube 要望 ㉖): 倍率を決めてから時計を仮の物に差し替え、1 つ前の手から step 手目を打ち、
+ * 手つきを時刻で止める (URL の anim_t、POE2Tube 要望 ㉖。t = "pick" は発現の 3 択が出そろった瞬間 = &offers=1 の静止画、要望 ㉗): 倍率を決めてから時計を仮の物に差し替え、1 つ前の手から step 手目を打ち、
  * 指定の時刻まで一気に進めて止める ([[anim-clock.ts]])。時刻の情報は window.__stageAnim (attach_ms = 付いた瞬間、
  * total_ms = anim_t=end の時の全体の長さ)、撮ってよくなったら ready と目印 data-anim-ready="1"。window.__stageSeek(t) で開いたまま先へ進める
  */
-async function stillAt(t: number | "end"): Promise<void> {
+async function stillAt(t: number | "end" | "pick"): Promise<void> {
   await fitClip();
   // 倍率 (fit) は ResizeObserver の知らせを待たずに決めておく (来る前に始めると枠の大きさ 0 で位置を測っていた)
   for (let i = 0; i < 100 && !(rootEl.value?.clientWidth && frameEl.value?.getBoundingClientRect().width); i++) {
@@ -135,7 +164,7 @@ async function stillAt(t: number | "end"): Promise<void> {
     await new Promise((r) => setTimeout(r, 20));
   }
   const w = window as unknown as { __stageAnim?: StageAnimInfo };
-  const info: StageAnimInfo = { t: 0, attach_ms: null, total_ms: null, ready: false };
+  const info: StageAnimInfo = { t: 0, attach_ms: null, pick_ms: null, total_ms: null, ready: false };
   w.__stageAnim = info;
   const clock = installAnimClock();
   let doneAt: number | null = null;
@@ -145,9 +174,10 @@ async function stillAt(t: number | "end"): Promise<void> {
       anchor.value = hand.screenPoint();
       idx.value = to;
       info.attach_ms = clock.now();
-    }).then(() => (doneAt = clock.now()));
+    }, () => (info.pick_ms = clock.now())).then(() => (doneAt = clock.now()));
   } else doneAt = 0;
   if (t === "end") info.total_ms = await clock.runToEnd(() => doneAt);
+  else if (t === "pick") await clock.runUntil(() => info.pick_ms != null || doneAt != null);
   else await clock.advanceTo(t);
   info.t = clock.now();
   info.ready = true;
@@ -285,12 +315,12 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         <div
           ref="groupEl"
           :class="clip ? 'absolute left-1/2 top-[12px] flex origin-top items-center gap-5' : 'absolute left-[40px] top-[120px] flex w-[560px] justify-center'"
-          :style="clip ? { transform: `translateX(-50%) scale(${clipScale})` } : undefined"
+          :style="clip ? { transform: `translateX(-50%) scale(${clipScale * revealShrink})`, transition: shrinkMoving ? 'transform 350ms ease-out' : undefined } : undefined"
         >
           <!-- PoB の DPS (要望 ⑰-3、URL の stage-pob= がある時だけ) -->
           <VideoPob v-if="craftStage.pob.value && clip" :pob="craftStage.pob.value" :idx="idx" />
           <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
-            <StageItemCard v-bind="cardCommon" :item="item" :added="stillOffers ? [] : last?.added ?? []" :removed="stillOffers ? [] : last?.removed ?? []" :flash-key="idx" />
+            <StageItemCard v-bind="cardCommon" :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :flash-key="idx" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : ['text-2xl', clip ? 'stage-float-in' : '']">{{ fx.text }}</span>
           </div>
           <VideoTray v-if="clip" :item="item" inline glow :counts="item.shards" :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
@@ -303,39 +333,36 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
           </div>
         </div>
 
-        <!-- 発現の候補 (アイテムの上に出して、選ぶ物を点ける) -->
-        <div v-if="hand.reveal.value" class="stage-row-in absolute z-20 space-y-2 rounded-2xl border border-rose-400/50 bg-black/85 p-4 shadow-[0_0_40px_rgba(0,0,0,0.8)]" :class="clip ? 'left-1/2 top-[190px] w-[640px] -translate-x-[55%] text-[20px]' : 'left-[50px] top-[260px] w-[540px]'">
-          <p class="text-[15px] font-bold text-rose-200">魂の井戸で発現 — 1 つ選ぶ</p>
+        <!--
+          発現の小窓 (魂の井戸)。POE2Tube 要望 ㉗: アイテムの枠の下に出す (MOD を隠さない)。カーソルが行・引き直しのボタンへ動いて押す
+          (use-video-hand.ts)。&offers=1 の静止画もこれを pick_ms で止めた絵。撮影の目印は data-reveal-offers と「魂の井戸で発現」
+        -->
+        <div
+          v-if="hand.reveal.value"
+          ref="revealEl"
+          class="stage-row-in absolute z-20 space-y-1.5 rounded-2xl border border-rose-400/50 bg-[#0b0708]/95 px-4 py-3 shadow-[0_0_40px_rgba(0,0,0,0.9)]"
+          :style="{ left: `${revealPos.x}px`, top: `${revealPos.y}px`, width: `${revealPos.w}px` }"
+          data-reveal-offers="1"
+        >
+          <p class="flex items-center justify-between text-[15px] font-bold text-rose-200">
+            <span>魂の井戸で発現 — {{ hand.reveal.value.rerolled ? "アビスの反響で引き直した 3 つ" : "1 つ選ぶ" }}</span>
+            <span
+              v-if="hand.reveal.value.reroll"
+              :ref="(el) => { if (el) hand.slots.set('reveal:reroll', el as HTMLElement); }"
+              class="rounded-lg border px-2.5 py-0.5 text-[13px] transition-all duration-150"
+              :class="hand.reveal.value.rerollLit ? 'border-violet-300 bg-violet-500/30 text-white shadow-[0_0_14px_rgba(167,139,250,0.6)]' : 'border-violet-400/60 text-violet-200'"
+            >引き直す</span>
+          </p>
           <div
             v-for="(m, i) in hand.reveal.value.offers"
-            :key="m.modId + i"
-            class="flex items-center justify-between rounded-xl border px-4 py-2 text-[17px] transition-all duration-200"
-            :class="hand.reveal.value.lit === i ? 'scale-[1.04] border-rose-300 bg-rose-500/25 text-white shadow-[0_0_18px_rgba(244,63,94,0.6)]' : 'border-white/10 bg-black/40 text-mod-desecrated'"
+            :key="(hand.reveal.value.rerolled ? 'r' : 'f') + m.modId + i"
+            :ref="(el) => { if (el) hand.slots.set(`reveal:row:${i}`, el as HTMLElement); }"
+            class="flex items-center justify-between gap-3 rounded-xl border px-4 py-1.5 text-[17px] transition-all duration-150"
+            :class="hand.reveal.value.lit === i ? 'scale-[1.03] border-rose-300 bg-rose-500/25 text-white shadow-[0_0_18px_rgba(244,63,94,0.6)]' : 'border-white/10 bg-white/[0.03] text-mod-desecrated'"
           >
             <span>{{ m.textJa }}</span>
-            <span class="text-[12px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>
+            <span class="shrink-0 text-[12px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>
           </div>
-        </div>
-
-        <!-- 発現の 3 択を止めて見せる (offers=1)。引き直しは 最初の 3 つ → 引き直した 3 つ -->
-        <div v-if="stillOffers && !hand.reveal.value" class="absolute z-20 flex items-start gap-3" :class="clip ? 'left-1/2 top-[150px] -translate-x-1/2' : 'left-[50px] top-[220px]'" data-reveal-offers="1">
-          <template v-for="(set, k) in (stillOffers.reroll ? [stillOffers.first, stillOffers.reroll] : [stillOffers.first])" :key="k">
-            <div v-if="k" class="self-center text-3xl text-rose-200/80">→</div>
-            <div class="space-y-2 rounded-2xl border border-rose-400/50 bg-[#0b0708] p-4 shadow-[0_0_40px_rgba(0,0,0,0.9)]" :class="stillOffers.reroll ? 'w-[500px]' : 'w-[620px]'">
-              <p class="text-[15px] font-bold text-rose-200">
-                魂の井戸で発現 — {{ stillOffers.reroll ? (k ? "アビスの反響で引き直した 3 つ" : "最初の 3 つ") : "1 つ選ぶ" }}
-              </p>
-              <div
-                v-for="(m, i) in set"
-                :key="m.modId + i"
-                class="flex items-center justify-between gap-3 rounded-xl border px-4 py-2 text-[17px]"
-                :class="(stillOffers.reroll ? k === 1 : true) && stillOffers.lit === i ? 'scale-[1.04] border-rose-300 bg-rose-500/25 text-white shadow-[0_0_18px_rgba(244,63,94,0.6)]' : stillOffers.reroll && k === 0 ? 'border-white/10 bg-white/[0.03] text-mod-desecrated opacity-60' : 'border-white/10 bg-white/[0.03] text-mod-desecrated'"
-              >
-                <span>{{ m.textJa }}</span>
-                <span class="shrink-0 text-[12px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>
-              </div>
-            </div>
-          </template>
         </div>
 
         <!-- 棚 (カーソルがここから拾う) -->

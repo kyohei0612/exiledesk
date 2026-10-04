@@ -20,6 +20,8 @@ export interface StageAnimInfo {
   t: number;
   /** 付いた瞬間 (アイテムの手が進んだ時刻)。まだなら null */
   attach_ms: number | null;
+  /** 発現の手で、選ぶ 3 つが出そろってカーソルが選びに動き始める時刻 (POE2Tube 要望 ㉗)。発現でない手・まだなら null */
+  pick_ms: number | null;
   /** 手つきと付いた後の演出が全部終わる時刻 (`anim_t=end` の時だけ。それ以外は null) */
   total_ms: number | null;
   /** この時刻の絵が出来上がった (撮ってよい) */
@@ -143,5 +145,15 @@ export function installAnimClock() {
     await advanceTo(end);
     return end;
   }
-  return { now: () => now, advanceTo, runToEnd };
+  /** done() が true になるまで待ち合わせを 1 つずつ進める (発現の 3 択が出そろう瞬間で止める、&offers=1) */
+  async function runUntil(done: () => boolean): Promise<void> {
+    await advanceTo(now);
+    for (let guard = 0; guard < 5000 && !done(); guard++) {
+      let first: Timer | null = null;
+      for (const t of timers.values()) if (!t.every && (!first || t.at < first.at)) first = t;
+      if (!first || first.at > END_CAP) break;
+      await advanceTo(first.at);
+    }
+  }
+  return { now: () => now, advanceTo, runToEnd, runUntil };
 }

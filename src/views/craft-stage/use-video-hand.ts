@@ -26,8 +26,11 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
   const armed = ref<string[]>([]);
   /** 今の手で使われて消えるお告げ (消える動きを見せる間だけ) */
   const spent = ref<string[]>([]);
-  /** 発現の候補 (選ぶ物を lit で点ける) */
-  const reveal = ref<{ offers: StageMod[]; lit: number } | null>(null);
+  /**
+   * 発現の小窓 (魂の井戸)。offers = 今出ている 3 つ、lit = カーソルが乗って光っている行、reroll = 引き直しのボタンを出すか、
+   * rerolled = 引き直した後の 3 つか。行と引き直しのボタンの要素は slots に `reveal:row:<i>` / `reveal:reroll` で入れてもらう
+   */
+  const reveal = ref<{ offers: StageMod[]; lit: number; reroll: boolean; rerolled: boolean; rerollLit: boolean } | null>(null);
   /** 棚の 1 つ 1 つ (キー → 要素)。VideoTray が入れる */
   const slots = new Map<string, HTMLElement>();
   let skipping = false;
@@ -55,8 +58,11 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
     await wait(220);
   }
 
-  /** 1 手を見せる。card はアイテム枠、apply は「付いた」瞬間に呼ぶ (画面の手を進める) */
-  async function play(st: PlayedStep, card: HTMLElement | null, apply: () => void): Promise<void> {
+  /**
+   * 1 手を見せる。card はアイテム枠、apply は「付いた」瞬間に呼ぶ (画面の手を進める)。
+   * onPick = 発現の手で、選ぶ 3 つが出そろってカーソルが選びに動き始める瞬間 (POE2Tube 要望 ㉗ の pick_ms)
+   */
+  async function play(st: PlayedStep, card: HTMLElement | null, apply: () => void, onPick?: () => void): Promise<void> {
     if (busy) return;
     busy = true;
     skipping = false;
@@ -91,19 +97,28 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
       // 3. アイテムまで運ぶ
       await moveTo(pointOf(card, 0.35), 700);
       if (rv && craftStage.data.value) {
-        // 発現: 候補 3 つを出し、選ぶ物を点けてから付ける (引き直しは 1 組目を見せてから入れ替える)
+        // 発現 (POE2Tube 要望 ㉗): アイテムを押すと魂の井戸の小窓がアイテムの枠の下に出る → (反響なら引き直しのボタンへ動いて押す →
+        // 新しい 3 つ) → 選ぶ行へ動く → 乗せて光る → 少し待って押す → 小窓が閉じて付く
         const off = revealOffers(craftStage.data.value, st.before, mulberry32(st.out.seed));
-        reveal.value = { offers: off.first, lit: -1 };
-        await wait(700);
+        await click();
+        reveal.value = { offers: off.first, lit: -1, reroll: !!rv[2], rerolled: false, rerollLit: false };
+        await wait(550);
         if (rv[2]) {
-          reveal.value = { offers: off.reroll, lit: -1 };
-          await wait(600);
+          await moveTo(pointOf(slots.get("reveal:reroll")), 550);
+          reveal.value = { ...reveal.value, rerollLit: true };
+          await wait(300);
+          await click();
+          reveal.value = { offers: off.reroll, lit: -1, reroll: false, rerolled: true, rerollLit: false };
+          await wait(550);
         }
-        reveal.value = { ...reveal.value, lit: Number(rv[1]) - 1 };
-        await wait(650);
+        const pick = Number(rv[1]) - 1;
+        onPick?.();
+        await moveTo(pointOf(slots.get(`reveal:row:${pick}`)), 650);
+        reveal.value = { ...reveal.value!, lit: pick };
+        await wait(300);
+        await click();
         reveal.value = null;
-      }
-      await click();
+      } else await click();
       hand.held = "";
       // 使われたお告げは消える (ゲームでは有効なお告げは使うと無くなる)
       spent.value = armed.value;
