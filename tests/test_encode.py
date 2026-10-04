@@ -41,3 +41,20 @@ def test_encode_stream_writes_mp4(tmp_path: Path) -> None:
 def test_encode_stream_needs_frames(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         encode.encode_stream(iter([]), tmp_path / "a.wav", 24, tmp_path / "a.mp4", False)
+
+
+def test_frame_times_cover_total() -> None:
+    from poe2tube.capture.clip_step import frame_times
+
+    ts = frame_times(4510, 24)
+    assert ts[0] == 0 and ts[-1] >= 4510 and len(ts) == 110
+
+
+def test_attach_from_file(tmp_path: Path) -> None:
+    from poe2tube.capture.clip_step import ATTACH_FILE, attach_from_file
+
+    f = tmp_path / "f001.png"
+    f.write_bytes(b"")
+    assert attach_from_file([f]) is None
+    (tmp_path / ATTACH_FILE).write_text("70", encoding="utf-8")
+    assert attach_from_file([f]) == 70

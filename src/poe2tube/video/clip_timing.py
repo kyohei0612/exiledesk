@@ -16,6 +16,7 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image
 
+from poe2tube.capture.clip_step import attach_from_file
 from poe2tube.capture.stage import clip_frames
 from poe2tube.contracts.craft_stage import CraftStagePlan
 from poe2tube.render.overlay_fx import CHAPTER_SECONDS
@@ -47,6 +48,9 @@ def attach_index(clip: list[Path]) -> int:
     """クリップの中で付いた瞬間のコマ番号 (クリップが空なら 0)."""
     if len(clip) < 2:
         return 0
+    known = attach_from_file(clip)  # 時刻を指定して撮った時は ExileDesk が付いた時刻を教える (㉖)
+    if known is not None:
+        return min(known, len(clip) - 1)
     return _attach_index(tuple(str(p) for p in clip))
 
 

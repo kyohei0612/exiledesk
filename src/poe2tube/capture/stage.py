@@ -21,6 +21,7 @@ from typing import Any
 
 import structlog
 
+from poe2tube.capture.clip_step import step_clip
 from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.contracts.craft_stage import CraftStagePlan, CraftStageResult
 
@@ -164,9 +165,11 @@ def capture_plan(
             ensure_video_mode(page)
             page.screenshot(path=str(paths[st]))
             log.info("stage captured", step=st, path=paths[st].name)
-        page.close()
         for st in todo_clips:
-            _record_clip(browser, base, plan, st, fps, pob)
+            # 1/24 秒ずつ時刻を指定して撮る (㉖)。ExileDesk が古ければ録画に戻す
+            if not step_clip(page, replay_url(plan, st, base, pob), clip_dir(plan, st), fps):
+                _record_clip(browser, base, plan, st, fps, pob)
+        page.close()
         browser.close()
     return paths
 
