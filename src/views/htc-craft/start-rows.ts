@@ -22,6 +22,11 @@ export interface StartRow {
   status: string;
   /** 初動 + 作る見込み (useStartSearch で足す。見込みが出るまでは null) */
   total?: number | null;
+  /**
+   * 画面の「ベース」に出す額 (素材 1 個分)。cost との差はクラフト費用に入れて見せる (2026-10-04 オーナー「ベースは 24 神でしょ」
+   * 「複数買って作るならそれはクラフト費用として乗せるべき」)。無ければ cost をそのままベースに
+   */
+  basePrice?: number | null;
 }
 
 /** r = 3 本の結果 (まだなら null)。div = 神の値段 (高貴)。manualDivine = 手で入れた固定済みの値段 (神) */
@@ -48,14 +53,17 @@ export function startRows(r: TreeResult | null, div: number, opts: { busy: boole
     if (err) { rows.push({ id: key, label, cost: null, note: `取れず: ${err}`, link: null, manual: false, status: "取れず" }); continue; }
     const b = r[key];
     const total = r.found.find((x) => x.key === key)?.total ?? 0;
-    // 85% に届く個数をまとめて買う合計。出品が足りない (足りない分を仮に足した) なら挑戦できない
-    const ok = b != null && b.assumed === 0;
+    // 初動は平均 (安い物から 1 個ずつ試して、当たったら止める。外れ続けたら固定済みを買う)。2026-10-04 まで 85% に届く個数をまとめて買う額で、
+    // オーナー「ベースに 161 神もかかんのか、24 神でしょ」。ベースは 1 個分、2 個目以降と固定の代 (オーブ・深淵のエッセンス・冒涜) はクラフト費用に
+    const route = r.routes.find((x) => x.key === key);
+    if (!route || r.loosePrice == null) {
+      rows.push({ id: key, label, cost: null, link: linkOf(key), manual: false, status: "-", note: `出品が足りない (${total} 件)` });
+      continue;
+    }
+    const s = route.summary;
     rows.push({
-      id: key, label, cost: ok ? b.total * div : null, link: linkOf(key), manual: false, status: "-",
-      // 1 個の値段と個数も出す (2026-10-04 オーナー「ベースに 161 神もかかんのか、ベースあるぞ普通に 24 神とかで」: 1 個で当たるのは 1/3 前後なので
-      // 85% に届くまで何個か要る)
-      note: ok ? `${b.count} 個まとめて買う (85% で 1 個固定。安い物から 1 個ずつ試して当たれば残りは要らない)`
-        : b ? `出品が足りない (${total} 件、85% に ${b.count} 個要る)` : `出品が足りない (${total} 件)`,
+      id: key, label, cost: s.expected * div, basePrice: r.loosePrice * div, link: linkOf(key), manual: false, status: "-",
+      note: `1 個 ${r.loosePrice.toFixed(1)} 神〜 × 平均 ${s.avgItems.toFixed(1)} 個で 1 個固定 (外れると別の MOD が固定されて使えない)${b ? `。85% なら ${b.count} 個` : ""}`,
     });
   }
   return rows.sort((a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity));

@@ -264,7 +264,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
         const which = r.id === "fractured" || r.id === "buy" || r.id === "keep" ? "fixed" : "self";
         const cur = out[which];
         const split = r.id !== "buy" && r.cost != null;
-        if (!cur || total < cur.cost) out[which] = { cost: total, base: split ? r.cost : null, craft: split ? total - r.cost! : null, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}`, url: r.link?.url ?? null };
+        const base = split ? (r.basePrice ?? r.cost) : null;
+        if (!cur || total < cur.cost) out[which] = { cost: total, base, craft: base != null ? total - base : null, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}`, url: r.link?.url ?? null };
       }
     }
     return out;
