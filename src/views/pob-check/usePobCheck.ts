@@ -8,7 +8,7 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateTree, estimateJewel, estimateAll, setEstimateTree, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateTreeRaw, type EstimateJewelRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
+import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, summarySkip, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateTree, estimateJewel, estimateAll, setEstimateTree, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateTreeRaw, type EstimateJewelRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
 import { buildChain, type Chain } from "../../services/pob-check/breakdown";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
@@ -208,6 +208,25 @@ interface ActOpts<T> {
   tree?: boolean;
   /** 失敗を呼ぶ側にも投げる (欄の中に理由を出すカード用)。既定は error に入れて飲む */
   rethrow?: boolean;
+  /** 軽い取り直し: 前に DPS 0 だったスキルの計算を飛ばす (装備・武器セット・チャージ・ツリー。ジェムを変えた時は全部) */
+  fast?: boolean;
+}
+/** 前に DPS 0 だったスキル ("組|番号|名前")。ミニオンの行は飛ばさない (ミニオンの数字は別に出る) */
+function zeroKeys(s: Summary | null): string[] {
+  if (!s) return [];
+  return s.groups.flatMap((g) => (g.enabled && !g.duplicateOf ? g.skills.filter((x) => !(x.game.dps > 0) && !x.game.minionName).map((x) => `${g.i}|${x.k}|${x.name}`) : []));
+}
+/** 飛ばした行に前の値を当てる (組の番号・スキルの番号・名前が同じ行) */
+function mergeSkipped(next: Summary, prev: Summary | null): Summary {
+  if (!prev) return next;
+  return {
+    ...next,
+    groups: next.groups.map((g) => {
+      if (!g.skills.some((x) => x.skipped)) return g;
+      const old = prev.groups.find((x) => x.i === g.i);
+      return { ...g, skills: g.skills.map((x) => (x.skipped ? old?.skills.find((o) => o.k === x.k && o.name === x.name) ?? x : x)) };
+    }),
+  };
 }
 /**
  * PoB を変える操作の共通の枠。失敗は error に出し (画面の上の帯)、成功したら計算し直して cur を更新する。
@@ -221,7 +240,11 @@ async function act<T>(o: ActOpts<T>): Promise<T | undefined> {
     if (o.history) recordHistory("pob-check", o.history[0], typeof o.history[1] === "function" ? o.history[1](r) : o.history[1]);
     if (o.note) note(typeof o.note === "function" ? o.note(r) : o.note);
     if (o.tree) treeNodes.value = (await run(treeStatic)).nodes;
-    cur.value = await run(summary);
+    if (o.fast) {
+      const prev = cur.value;
+      const skip = zeroKeys(prev);
+      cur.value = mergeSkipped(await run(() => summarySkip(skip)), prev);
+    } else cur.value = await run(summary);
     error.value = null;
     return r;
   } catch (e) {
@@ -715,7 +738,7 @@ export function usePobCheck() {
   }
   async function changeCharges(n: number): Promise<void> {
     const before = cur.value?.config.powerCharges ?? 0;
-    await act({ fn: () => setPowerCharges(n), history: ["charges", { n }], note: `パワーチャージ ${before}→${n}` });
+    await act({ fn: () => setPowerCharges(n), history: ["charges", { n }], note: `パワーチャージ ${before}→${n}`, fast: true });
   }
 
   /** 貼られた文面で欄の物を差し替える。返り値は画面に出す注意 (英語にできなかった行 / PoB が計算しない行 / その他の注意)。失敗は投げる (欄の中に出す) */
@@ -723,6 +746,7 @@ export function usePobCheck() {
     const conv = await toPobItem(pasted);
     const r = await act({
       fn: () => equip(slot, conv.text),
+      fast: true,
       history: ["equip", (x) => ({ slot, english: conv.english, base: conv.base, rarity: conv.rarity, ambiguous: conv.ambiguous, unidentified: conv.unidentified, notes: conv.notes, unread: conv.unread, notCalculated: x.unread, text: conv.text })],
       note: `${slotJa(slot)} 差し替え`,
       rethrow: true,
@@ -734,9 +758,9 @@ export function usePobCheck() {
     warnings.push(...conv.notes);
     return { unread: conv.unread, notCalculated: r.unread, warnings };
   }
-  const clearItem = (slot: string): Promise<unknown> => act({ fn: () => unequip(slot), history: ["unequip", { slot }], note: `${slotJa(slot)} 外す` });
-  const changeWeaponSet = (n: 1 | 2): Promise<unknown> => act({ fn: () => setWeaponSet(n), history: ["weapon-set", { n }], note: `武器セット ${n === 1 ? "I" : "II"}` });
-  const restoreItem = (slot: string): Promise<unknown> => act({ fn: () => restore(slot), history: ["restore", { slot }], note: `${slotJa(slot)} 元に戻す` });
+  const clearItem = (slot: string): Promise<unknown> => act({ fn: () => unequip(slot), history: ["unequip", { slot }], note: `${slotJa(slot)} 外す`, fast: true });
+  const changeWeaponSet = (n: 1 | 2): Promise<unknown> => act({ fn: () => setWeaponSet(n), history: ["weapon-set", { n }], note: `武器セット ${n === 1 ? "I" : "II"}`, fast: true });
+  const restoreItem = (slot: string): Promise<unknown> => act({ fn: () => restore(slot), history: ["restore", { slot }], note: `${slotJa(slot)} 元に戻す`, fast: true });
 
   /** 読み込み直せる元か (poe.ninja の URL だけ。PoB コードは同じ文字列を読み直すだけなので最新は取れない) */
   const canReload = computed(() => !!lastSource.value && !!parseNinjaUrl(lastSource.value.text));
@@ -766,6 +790,7 @@ export function usePobCheck() {
     try {
       const r = await act({
         fn: () => toggleNode(id, attr),
+        fast: true,
         history: ["node", (x) => ({ id, attr, alloc: x.alloc, changed: x.changed })],
         note: (x) => `${(passivesJa as Record<string, string>)[nn] ?? nn} ${x.alloc ? "取る" : "外す"} (${x.changed > 0 ? "+" : "−"}${Math.abs(x.changed)})`,
         tree: true,
@@ -776,7 +801,7 @@ export function usePobCheck() {
       return msg(e);
     }
   }
-  const resetTreeToLoaded = (): Promise<unknown> => act({ fn: resetTree, history: ["tree-reset", {}], note: "ツリーを戻す", tree: true });
+  const resetTreeToLoaded = (): Promise<unknown> => act({ fn: resetTree, history: ["tree-reset", {}], note: "ツリーを戻す", tree: true, fast: true });
 
   /**
    * ノードの寄与を計算する。target = スキルの鍵 か "all" (全スキルの合計 = ゲーム内の表記の DPS で重みづけ)。

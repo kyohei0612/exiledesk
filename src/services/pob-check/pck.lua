@@ -302,6 +302,29 @@ local function evalSkill(i, k)
   return calcs.calcsOutput, calcs.calcsEnv
 end
 
+--- 1 スキル分の火力の中身 (core)。主スキルの選びは元に戻す
+function PCK.core(i, k)
+  local calcs = build.calcsTab
+  alignCalcsToMain()
+  local g = build.skillsTab.socketGroupList[i]
+  if not g then return json.encode({ ok = false, error = "組が無い" }) end
+  local origMain, origCalcs = build.mainSocketGroup, calcs.input.skill_number
+  local origSkill, origSkillCalcs = g.mainActiveSkill, g.mainActiveSkillCalcs
+  local ok, res = pcall(function()
+    local mo, menv = evalSkill(i, k)
+    local ms = menv.player.mainSkill
+    local m = menv.minion
+    if m then return nil end
+    return coreStatsOf(mo, ms, gameNumbers(mo, ms, nil, nil))
+  end)
+  g.mainActiveSkill, g.mainActiveSkillCalcs = origSkill, origSkillCalcs
+  build.mainSocketGroup = origMain
+  calcs.input.skill_number = origCalcs
+  calcs:BuildOutput()
+  if not ok then return json.encode({ ok = false, error = tostring(res) }) end
+  return json.encode({ ok = true, core = res })
+end
+
 --- 今のビルドの全体 (キャラ・数値・スキルの組とスキルごとの数字)。DPS 0 のスキルも行に出す (画面側で出す・出さないを決める)
 --- 設定の表から自分の側の物だけ (敵 = enemy を名前に含む物は除く)。値は真偽・数・文字だけ
 local function playerConfig(input)
@@ -313,7 +336,11 @@ local function playerConfig(input)
   return out
 end
 
-function PCK.summary()
+-- light = 火力の中身 (core: 計算に関わる数値・条件付きの MOD) を出さない。core は PCK.core(i, k) で 1 スキル分だけ取れる。
+-- skip = 計算を飛ばすスキル ("組|番号|名前" = true)。前の取り直しで DPS 0 だった物 (オーラ・ブリンク・発動役など) を、装備・武器セット・
+-- チャージ・ツリーを変えた時に飛ばす (2026-10-04 オーナー「武器セットの切り替え重い」: 29 個のうち 20 個が DPS 0 で、1 つ 60〜190 ms)。
+-- 飛ばした行は { skipped = true } で返し、画面側が前の値を使う。名前まで合わせるので、組の並びが変わった時は飛ばさない
+function PCK.summary(light, skip)
   local calcs = build.calcsTab
   alignCalcsToMain()
   PCK.recalc()
@@ -372,7 +399,12 @@ function PCK.summary()
       gr.meta = isMeta
       if gr.enabled and not gr.duplicateOf then
         local origSkill, origSkillCalcs = g.mainActiveSkill, g.mainActiveSkillCalcs
-        for k, _ in ipairs(g.displaySkillList or {}) do
+        for k, sk in ipairs(g.displaySkillList or {}) do
+          local skName = sk.activeEffect and sk.activeEffect.grantedEffect and sk.activeEffect.grantedEffect.name or "?"
+          if skip and skip[i .. "|" .. k .. "|" .. skName] then
+            gr.skills[#gr.skills + 1] = { k = k, name = skName, skipped = true }
+            goto continue
+          end
           local mo, menv = evalSkill(i, k)
           local ms = menv.player.mainSkill
           local name = ms and ms.activeEffect and ms.activeEffect.grantedEffect and ms.activeEffect.grantedEffect.name or "?"
@@ -382,10 +414,11 @@ function PCK.summary()
             k = k, name = name, level = ms and ms.activeEffect and ms.activeEffect.level or 0,
             triggered = (isMeta and k > 1) and true or false,
             game = game,
-            core = (not m) and coreStatsOf(mo, ms, game) or nil,
+            core = (not m and not light) and coreStatsOf(mo, ms, game) or nil,
             -- PoB の Hit DPS (敵込み)。移動スキル等 (showAverage) は CombinedDPS が 1 発の平均になるので使わない
             pobDps = mo.TotalDPS or 0,
           }
+          ::continue::
         end
         g.mainActiveSkill = origSkill
         g.mainActiveSkillCalcs = origSkillCalcs

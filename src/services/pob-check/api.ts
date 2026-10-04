@@ -65,6 +65,8 @@ export interface GameNumbers {
 export interface SkillView {
   k: number;
   name: string;
+  /** 軽い取り直しで計算を飛ばした行 (画面側で前の値に置き換える) */
+  skipped?: boolean;
   level: number;
   /** メタジェム (CoEA など) から出るスキル */
   triggered: boolean;
@@ -260,6 +262,12 @@ export async function exportCode(main?: { i: number; k: number }): Promise<strin
 }
 
 export const summary = (): Promise<Summary> => evalLua<Summary>("return PCK.summary()");
+/**
+ * 軽い取り直し (2026-10-04): skip のスキル ("組|番号|名前") は計算を飛ばして { skipped: true } の行で返る。前の値を当てるのは呼ぶ側
+ * (usePobCheck の mergeSkipped)。装備・武器セット・チャージ・ツリーを変えた時に、前に DPS 0 だったスキルを飛ばす
+ */
+export const summarySkip = (skip: readonly string[]): Promise<Summary> =>
+  evalLua<Summary>(`return PCK.summary(false, {${skip.map((k) => `[ ${luaStr(k)} ] = true`).join(",")}})`);
 
 /** ゲームのビルドプランナー (.build) の中身。json = そのまま書く文字列、unknownNodes = ID の表に無かったノード (出せなかった) */
 export interface BuildPlan {
