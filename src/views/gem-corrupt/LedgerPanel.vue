@@ -7,6 +7,7 @@ import BaseCard from "../../components/decor/BaseCard.vue";
 import MoneyInput from "../../components/vaal-scales/MoneyInput.vue";
 import CountInput from "../../components/CountInput.vue";
 import AttemptsSelect from "../../components/AttemptsSelect.vue";
+import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fmtQty, type GemLedgerApi } from "./ledger";
 import { cost, evClass, fmtStamp, income } from "./ui";
 import type { useGemCorrupt } from "./useGemCorrupt";
@@ -28,6 +29,8 @@ const {
             収支<span v-if="g.selected.value" class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ g.selected.value.ja }}</span>
           </h2>
           <div class="flex items-center gap-3 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
+            <!-- 画面の上と同じ表示通貨のプルダウン (同じ値につながっている。オーナー 2026-10-04「収支のとこにも同期できる同じプルダウン」) -->
+            <CurrencyPicker />
             <span>経路と回数を入れると使った数と売れた数が期待値で埋まる。実際と違う数だけ上書き</span>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" title="上書きした数を消して、回数から出る期待値に戻します (回数・経路・単価はそのまま)" @click="clearCounts">数を期待値に戻す</button>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" title="手で入れた 1 個の売値を消して、上の売値 (取引所の最安) に戻します" @click="clearEach">売値を相場に戻す</button>
