@@ -1,4 +1,4 @@
-"""サムネ用の大きいアイコン (ゲームの元の絵、108px 前後) を poe2db から取って assets/icons_hd/<key>.png に.
+"""サムネ用の大きいアイコン (ゲームの元の絵、108px) を poe2db から assets/icons_hd/<key>.png に.
 
     python scripts/fetch_icons_hd.py OmenofSanctification rib
 
