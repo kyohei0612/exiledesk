@@ -9,7 +9,8 @@ import CountInput from "../../components/CountInput.vue";
 import AttemptsSelect from "../../components/AttemptsSelect.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fmtQty, type GemLedgerApi } from "./ledger";
-import { cost, evClass, fmtStamp, income } from "./ui";
+import { cost, evClass, fmtBuy, fmtStamp, income } from "./ui";
+import { currencyJa } from "../../state/display-currency";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
 const props = defineProps<{ g: ReturnType<typeof useGemCorrupt>; api: GemLedgerApi }>();
@@ -19,6 +20,19 @@ const {
   setAttemptsValue, setRoute, setQtyValue, setSoldValue, setUnit, setEach,
   resetLedger, clearCounts, clearEach, refreshLedgerPrices,
 } = props.api;
+
+/**
+ * 素材の費用は素材表と同じく「買う通貨」の単位で出す (2026-10-04 オーナー「素材代そのまま収支の経費でも表示して、合計だけ何神とかカオスとか」)。
+ * 単価を手で入れた行と、相場の方が安い / 固定した単価が今の取引所の値と違う行は、これまで通り表示通貨で出す
+ */
+function buyCost(r: { key: string; each: number | null; pinned: number | null; market: number | null; qty: number }): string | null {
+  if (r.each != null) return null;
+  const apiId = g.materialApiIds.value.find((m) => m.key === r.key)?.apiId;
+  const buy = g.bestBuy(apiId);
+  const base = r.pinned ?? r.market;
+  if (!buy || base == null || buy.exalted <= 0 || Math.abs(base - buy.exalted) > buy.exalted * 0.02) return null;
+  return `${fmtBuy(buy.perUnit * r.qty)} ${currencyJa(buy.currency)}`;
+}
 </script>
 
 <template>
@@ -99,7 +113,7 @@ const {
                   <CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtQty(r.auto)" :class="r.override != null ? 'ring-1 ring-amber-500/70 rounded' : ''" @update:model-value="setQtyValue(r.key, $event)" />
                   <button type="button" class="ml-1 w-3 text-[11px] text-amber-300 hover:text-rose-300" :class="r.override != null ? '' : 'invisible'" :disabled="!(r.override != null)" title="手で入れた数を消して期待値に戻す" @click="setQtyValue(r.key, null)">×</button>
                 </td>
-                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ cost(r.cost) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ buyCost(r) ?? cost(r.cost) }}</td>
               </tr>
               <tr class="border-t border-[var(--exile-color-border-brass)]">
                 <td class="py-1.5 pr-2 font-bold">費用合計</td>

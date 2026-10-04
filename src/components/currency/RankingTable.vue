@@ -1,6 +1,6 @@
 <!--
   RankingTable.vue — 1 アイテム = 1 行、値段 + 過去 7 日
-  値段は表示通貨で 1 種類 (適正 = 神 → カオス → 高貴)。横の「取引の推奨」は一番安く交換できる通貨 (カオス・神・高貴で安い方)。
+  値段は表示通貨で 1 種類 (適正 = 神 → カオス → 高貴)。横の「取引の推奨」は一番安く交換できる通貨 (カオスと神で安い方。表示通貨が最安値なら高貴も)。
   オーナー指示 2026-09-26:「0.003 神とか 3 種類並ぶと気持ち悪いし目移りする。カレンシーは 1 種類に統一」
   CurrencyRanking.vue から切り出し (2026-09-07)。行ホバーは親へ emit (効果カード表示用)。
 -->
@@ -9,7 +9,7 @@ import { computed } from "vue";
 import type { ItemTrend, RankedItem } from "../../api/poe2scout";
 import { jaCurrency } from "../../i18n/currencies-ja";
 import { fmt } from "../../views/currency/format";
-import { displayCurrency } from "../../state/display-currency";
+import { displayCurrency, payWithExalted } from "../../state/display-currency";
 import Sparkline from "./Sparkline.vue";
 
 const props = defineProps<{
@@ -34,7 +34,8 @@ const cells = computed(() => {
   const m = new Map<string, { main: { value: number; cur: Cur; label: string }; rec: { value: number; cur: Cur; label: string } | null }>();
   for (const p of props.rows) {
     const u = displayCurrency.unit(p.exaltedPrice);
-    const bp = p.bestPay;
+    // 最安値の時は高貴のペアも込み (高貴はゴールドが掛かるので適正などはカオスと神だけ。2026-10-04)
+    const bp = payWithExalted.value ? (p.bestPayAny ?? p.bestPay) : p.bestPay;
     m.set(p.apiId, {
       main: { value: u.value, cur: u.cur, label: u.label },
       // 値段の列と同じ通貨なら出さない (オーナー 2026-09-26「推奨が同じなら表示はいらない、ハイフンで」)
@@ -56,7 +57,7 @@ function iconOf(c: Cur): string {
           <th class="text-left px-3 py-3 whitespace-nowrap">#</th>
           <th class="text-left px-3 py-3 whitespace-nowrap">アイテム</th>
           <th class="text-right px-3 py-3 whitespace-nowrap">値段</th>
-          <th class="text-right px-3 py-3 whitespace-nowrap" title="取引所のペアで一番安く交換できる通貨 (カオス・神・高貴で安い方)">取引の推奨</th>
+          <th class="text-right px-3 py-3 whitespace-nowrap" title="取引所のペアで一番安く交換できる通貨 (カオスと神で安い方。表示通貨が最安値なら高貴も)">取引の推奨</th>
           <th class="text-right px-3 py-3 whitespace-nowrap">
             過去7日間<span v-if="loading7d" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)] normal-case">読込中…</span>
           </th>

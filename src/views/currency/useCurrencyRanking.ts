@@ -217,7 +217,16 @@ export function useCurrencyRanking() {
         new Map(ranked.map((r) => [r.apiId, r.exaltedPrice])),
         { chaos: chaosDivinePrice.value > 0 ? divinePrice.value / chaosDivinePrice.value : 0, divine: divinePrice.value },
       );
-      for (const r of ranked) r.bestPay = best.get(r.apiId) ?? null;
+      const bestAny = bestPayByApiId(
+        pairs,
+        new Map(ranked.map((r) => [r.apiId, r.exaltedPrice])),
+        { chaos: chaosDivinePrice.value > 0 ? divinePrice.value / chaosDivinePrice.value : 0, divine: divinePrice.value },
+        true,
+      );
+      for (const r of ranked) {
+        r.bestPay = best.get(r.apiId) ?? null;
+        r.bestPayAny = bestAny.get(r.apiId) ?? null;
+      }
       ranking.value = ranked;
       trend7d.clear(); // 新データなので 7 日キャッシュは破棄して取り直す
       trends.value = trendMap;

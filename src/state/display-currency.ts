@@ -15,7 +15,12 @@ export type DisplayCurrency = "exalted" | "chaos" | "divine";
  * カレンシーランキングも同じ。一番安く交換できる通貨は横の「取引の推奨」に出す。
  * オーナー指示 2026-09-26:「表示通貨は神じゃないし、その合わせて表示は適正って名前で」
  */
-export type DisplayChoice = DisplayCurrency | "fair";
+/**
+ * 「最安値」(2026-10-04 オーナー「高貴はゴールドがめっちゃ飛ぶ。適正は今まで通りカオスと神、最安値ってタブなら高貴も込みで」):
+ * 表示は適正と同じ (神 → カオス → 高貴 の段)。違うのは「どの通貨で買うと安いか」に高貴も入れること
+ * (カレンシーランキングの取引の推奨 / ジェムコラプトの素材の買い方)。適正はカオスと神だけで比べる
+ */
+export type DisplayChoice = DisplayCurrency | "fair" | "cheapest";
 const KEY = "exiledesk.vaal.currency";
 /** 2026-09-26 から。旧 KEY の "divine" は今の「適正」と同じ動き (神から段を下げる) だったので読み替える */
 const KEY2 = "exiledesk.displayCurrency.v2";
@@ -32,7 +37,7 @@ export function currencyJa(c: string | null | undefined): string {
 function load(): DisplayChoice {
   try {
     const v2 = localStorage.getItem(KEY2);
-    if (v2 === "fair" || v2 === "divine" || v2 === "chaos" || v2 === "exalted") return v2;
+    if (v2 === "fair" || v2 === "cheapest" || v2 === "divine" || v2 === "chaos" || v2 === "exalted") return v2;
     const v = localStorage.getItem(KEY);
     return v === "chaos" || v === "exalted" ? v : "fair";
   } catch {
@@ -40,8 +45,12 @@ function load(): DisplayChoice {
   }
 }
 const choice = ref<DisplayChoice>(load());
-/** 入力欄・合計など 1 種類の通貨が要る所で使う通貨 (適正の時は神) */
-const cur = computed<DisplayCurrency>(() => (choice.value === "fair" ? "divine" : choice.value));
+/** 額に合わせて通貨を選ぶ (適正・最安値) */
+const ladderChoice = (c: DisplayChoice): c is "fair" | "cheapest" => c === "fair" || c === "cheapest";
+/** 入力欄・合計など 1 種類の通貨が要る所で使う通貨 (適正・最安値の時は神) */
+const cur = computed<DisplayCurrency>(() => (ladderChoice(choice.value) ? "divine" : choice.value));
+/** 買う通貨に高貴も入れるか (最安値の時だけ。適正などはカオスと神だけ、高貴はゴールドが掛かるので) */
+export const payWithExalted = computed<boolean>(() => choice.value === "cheapest");
 
 /** 1 表示通貨 = ? 高貴 */
 const rate = computed<number>(() => rateOf(cur.value));
@@ -68,7 +77,8 @@ const LADDER: readonly DisplayCurrency[] = ["divine", "chaos", "exalted"] as con
  */
 function pickUnit(exalted: number, from?: DisplayCurrency): { c: DisplayCurrency; value: number } {
   // 通貨を 1 つ選んでいる時は段を下げない (ladder: "top" を渡された所だけ下げる)
-  if (from == null && choice.value !== "fair") return { c: choice.value, value: exalted / rateOf(choice.value) };
+  const ch = choice.value;
+  if (from == null && !ladderChoice(ch)) return { c: ch, value: exalted / rateOf(ch) };
   const start = Math.max(0, LADDER.indexOf(from ?? "divine"));
   for (let i = start; i < LADDER.length; i++) {
     const c = LADDER[i];
@@ -137,6 +147,7 @@ export const displayCurrency = {
   label: computed(() => LABEL[cur.value]),
   options: [
     { value: "fair" as DisplayChoice, label: "適正" },
+    { value: "cheapest" as DisplayChoice, label: "最安値" },
     ...(Object.keys(LABEL) as DisplayCurrency[]).map((k) => ({ value: k as DisplayChoice, label: LABEL[k] })),
   ],
   /** 選んでいる通貨から段を下げた 1 種類の通貨と数値 (アイコンを付けて出す所用) */

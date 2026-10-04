@@ -13,7 +13,7 @@
  */
 import { evaluateRoutes, roi, DEFAULT_PARAMS, type RouteResult, type SalePrices } from "./model";
 import { baseGemSourceFor, materialPricesFor } from "./materials";
-import { cachedBuy, payable } from "../../services/trade2/exchange";
+import { bestFor, cachedBuy, payable } from "../../services/trade2/exchange";
 import type { GemInfo } from "./useGemCorrupt";
 
 /**
@@ -23,7 +23,8 @@ import type { GemInfo } from "./useGemCorrupt";
  */
 function cachedPayable(apiId: string | null | undefined): number | null {
   if (!apiId) return null;
-  const b = cachedBuy(apiId)?.best;
+  // 表示通貨が最安値なら高貴も (payWithExalted を読むので切り替えで計算し直される)
+  const b = bestFor(cachedBuy(apiId));
   return b ? payable(b).payExalted : null;
 }
 

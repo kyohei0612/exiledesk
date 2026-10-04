@@ -11,12 +11,13 @@ import { shallowRef } from "vue";
 import { fetchPairRate } from "../../api/poe2scout";
 import { marketStore } from "../../state/market-store";
 import { ceilMoney } from "../money";
+import { payWithExalted } from "../../state/display-currency";
 
 /**
- * 支払いに使う通貨。
- * 2026-09-16 は「高貴は手数料 (ゴールド) が掛かるので外す」でカオスと神だけだったが、
- * 2026-10-04 オーナー「スピリットジェム 17 は高貴で交換した方が安い」「在庫を見て、回数分の在庫が高貴であって安いなら高貴で経費を出すべき」で
- * 高貴も比べる (実測: 原石 lv17 = 高貴のペア 80.7 / カオスのペア 176 (高貴換算))。回数分の在庫があるかは bestFor で見る
+ * 支払いに使う通貨。取引所のレートは 3 つとも取っておき、どれで買うかは bestFor で決める。
+ * 2026-09-16「高貴は手数料 (ゴールド) が掛かるので外す」→ 2026-10-04「スピリットジェム 17 は高貴で交換した方が安い」で一度入れたが、
+ * 「めっちゃゴールド飛ぶ」で、高貴は表示通貨「最安値」の時だけ (payWithExalted)。適正などはカオスと神だけ
+ * (実測: 原石 lv17 = 高貴のペア 80.7 / カオスのペア 176 (高貴換算))
  */
 export const PAY_CURRENCIES = ["chaos", "divine", "exalted"] as const;
 export type PayCurrency = (typeof PAY_CURRENCIES)[number];
@@ -135,11 +136,12 @@ function pickBest(options: PayOption[]): PayOption | null {
  * 必要な数 need を買える在庫のある通貨のうち、実際に払う額が一番安い物 (2026-10-04 オーナー「在庫とか確認して 60 回なら在庫が高貴であって、
  * 計算しても高貴で買う方が安いなら高貴で経費を出すべき」)。どの通貨も在庫が足りなければ、在庫の一番多い物
  */
-export function bestFor(entry: BestBuy | null | undefined, need = 1): PayOption | null {
+export function bestFor(entry: BestBuy | null | undefined, need = 1, withExalted = payWithExalted.value): PayOption | null {
   if (!entry) return null;
-  const enough = entry.options.filter((o) => o.stock >= need);
+  const options = entry.options.filter((o) => withExalted || o.currency !== "exalted");
+  const enough = options.filter((o) => o.stock >= need);
   if (enough.length) return pickBest(enough);
-  return entry.options.reduce<PayOption | null>((a, b) => (a == null || b.stock > a.stock ? b : a), null);
+  return options.reduce<PayOption | null>((a, b) => (a == null || b.stock > a.stock ? b : a), null);
 }
 
 /** 素材 1 つをカオス / 神 / 高貴で引いて、安い方を決める */
@@ -164,7 +166,8 @@ export async function fetchBuy(league: string, apiId: string): Promise<BestBuy |
     options.push({ currency, exalted: r.onePrice, perUnit: rate > 0 ? r.onePrice / rate : r.onePrice, stock: r.oneStock });
   }
   if (options.length === 0) return null;
-  const entry: BestBuy = { apiId, options, best: pickBest(options), fetchedAt: Date.now() };
+  // best は高貴を除いた物 (適正の決め方)。画面は bestFor で表示通貨に合わせて選び直す
+  const entry: BestBuy = { apiId, options, best: pickBest(options.filter((o) => o.currency !== "exalted")), fetchedAt: Date.now() };
   const cache = loadCache();
   cache[apiId] = entry;
   saveCache(cache);

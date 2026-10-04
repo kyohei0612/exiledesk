@@ -134,6 +134,16 @@ export function useGemMaterials(selected: Ref<GemInfo | null>, tradeLeague: Comp
     return { currency: b.currency, perUnit: p.payPerUnit, rawPerUnit: b.perUnit, exalted: p.payExalted };
   }
   /**
+   * 費用を切り上げる通貨 (2026-10-04): 取引所で買う素材は**買う通貨の単位**で切り上げる。
+   * 表示通貨の段 (神 → カオス → 高貴) で切り上げると、高貴で 81 の素材が 2 カオス (136 高貴) になり、行 (高貴) と合計が合わなかった。
+   * unit (使っている単価) が今の取引所の値と同じ時だけ (相場の方が安い / 手で入れた / 固定した単価が違う時は表示通貨の段のまま)
+   */
+  function roundCurrencyOf(apiId: string | null | undefined, unit: number | null | undefined): PayCurrency | undefined {
+    const buy = bestBuy(apiId);
+    if (!buy || unit == null || buy.exalted <= 0) return undefined;
+    return Math.abs(unit - buy.exalted) <= buy.exalted * 0.02 ? buy.currency : undefined;
+  }
+  /**
    * 仕上げ (レベル 20 に上げる) に使う物の名前。
    * オーナー指摘 2026-09-19: 仕上げは ソーマタージ・フラックス (レベル 20)。
    * 相場一覧に無い時だけ、これまで通り原石の名前を出す。
@@ -162,6 +172,7 @@ export function useGemMaterials(selected: Ref<GemInfo | null>, tradeLeague: Comp
     loadExchangeCache,
     fetchExchange,
     bestBuy,
+    roundCurrencyOf,
     uncutLabel,
   };
 }

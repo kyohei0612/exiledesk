@@ -99,7 +99,7 @@ describe("換算と丸めの決まりは services/money.ts に 1 つ", async () 
   });
 });
 
-describe("一番安く交換できる通貨 (高貴も比べる、オーナー 2026-10-04)", () => {
+describe("一番安く交換できる通貨 (高貴は最安値の時だけ、オーナー 2026-10-04)", () => {
   const side = (price: number, stock = 100, vol = 100) => ({ RelativePrice: price, HighestStock: stock, VolumeTraded: vol });
   const pair = (item: string, pay: string, price: number, itemStock = 100) => ({
     CurrencyOne: { ApiId: item }, CurrencyTwo: { ApiId: pay }, CurrencyOneData: side(price, itemStock), CurrencyTwoData: side(1),
@@ -109,8 +109,17 @@ describe("一番安く交換できる通貨 (高貴も比べる、オーナー 2
       [pair("uncut-spirit-gem-17", "chaos", 176.26), pair("uncut-spirit-gem-17", "divine", 275.19), pair("uncut-spirit-gem-17", "exalted", 80.71)],
       new Map([["uncut-spirit-gem-17", 135.7]]),
       { chaos: 7, divine: 500 },
+      true,
     ).get("uncut-spirit-gem-17");
     expect(best).toMatchObject({ currency: "exalted", perUnit: 80.71 });
+  });
+  it("適正 (高貴を入れない) ならカオスのペア", () => {
+    const best = bestPayByApiId(
+      [pair("uncut-spirit-gem-17", "chaos", 176.26), pair("uncut-spirit-gem-17", "exalted", 80.71)],
+      new Map([["uncut-spirit-gem-17", 135.7]]),
+      { chaos: 7, divine: 500 },
+    ).get("uncut-spirit-gem-17");
+    expect(best?.currency).toBe("chaos");
   });
   it("回数分の在庫がある通貨から選ぶ (60 回で高貴の在庫が 30 ならカオス)", () => {
     const entry = {
@@ -120,7 +129,9 @@ describe("一番安く交換できる通貨 (高貴も比べる、オーナー 2
         { currency: "chaos" as const, exalted: 176, perUnit: 176 / 7, stock: 300 },
       ],
     };
-    expect(bestFor(entry, 10)?.currency).toBe("exalted");
-    expect(bestFor(entry, 60)?.currency).toBe("chaos");
+    expect(bestFor(entry, 10, true)?.currency).toBe("exalted");
+    expect(bestFor(entry, 60, true)?.currency).toBe("chaos");
+    // 最安値でなければ高貴は使わない
+    expect(bestFor(entry, 10, false)?.currency).toBe("chaos");
   });
 });

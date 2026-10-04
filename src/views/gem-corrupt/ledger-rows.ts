@@ -89,7 +89,10 @@ export function useLedgerTotals(g: Gem, ledger: ComputedRef<GemLedger>, ledgerRo
       const unit = each ?? pinned ?? r.market;
       // 費用は**切り上げた単価**で数え直す (オーナー指示 2026-09-20:「丸めた単価で計算し直す」
       // 「基本経費は多く、収入は厳しくのスタンス」)。画面の縦の掛け算が必ず合う
-      const unitUp = unit == null ? null : (roundMoney(unit, "up")?.exalted ?? unit);
+      // 取引所で買う素材は買う通貨の単位で切り上げる (高貴で買う物を 2 カオスに切り上げない)
+      const apiId = g.materialApiIds.value.find((m) => m.key === r.key)?.apiId;
+      const from = each == null ? g.roundCurrencyOf(apiId, unit) : undefined;
+      const unitUp = unit == null ? null : (roundMoney(unit, "up", from)?.exalted ?? unit);
       return { ...r, auto, override, qty, each, pinned, unit: unitUp, cost: unitUp == null ? null : unitUp * qty };
     });
   });

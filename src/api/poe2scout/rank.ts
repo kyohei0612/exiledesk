@@ -33,11 +33,15 @@ export interface RankedItem {
   /** 1 アイテム = ? カオス(Chaos) */
   chaosPrice: number;
   /**
-   * 一番安く交換できる通貨 (カオス・神・高貴のペアで安い方)。取引所のペアが薄い / 無い時は null (2026-09-26)。
-   * オーナー:「カオスと神でどっちが安いか。神で交換よりカオスで交換した方が良いならそっちの通貨で」。
-   * 2026-10-04 から高貴のペアも比べる (オーナー「スピリットジェム 17 は高貴で交換した方が安い」。実測 高貴 80.7 / カオス 176 高貴換算)
+   * 一番安く交換できる通貨 (カオスと神のペアで安い方)。取引所のペアが薄い / 無い時は null (2026-09-26)。
+   * オーナー:「カオスと神でどっちが安いか。神で交換よりカオスで交換した方が良いならそっちの通貨で」
    */
   bestPay?: BestPay | null;
+  /**
+   * 高貴のペアも入れた一番安い通貨 (表示通貨「最安値」の時に出す。2026-10-04 オーナー「スピリットジェム 17 は高貴で交換した方が安い」
+   * 「ゴールドがめっちゃ飛ぶ。適正は今まで通りカオスと神、最安値ってタブなら高貴込み」。実測 高貴 80.7 / カオス 176 高貴換算)
+   */
+  bestPayAny?: BestPay | null;
 }
 
 export interface BestPay {
@@ -87,13 +91,14 @@ export function bestPayByApiId(
   pairs: SnapshotPairRow[],
   market: Map<string, number>,
   exaltedPer: { chaos: number; divine: number },
+  withExalted = false,
 ): Map<string, BestPay> {
   const num = (v: number | string | undefined) => (typeof v === "number" ? v : Number(v ?? NaN));
   const out = new Map<string, BestPay>();
   for (const p of pairs) {
     const a = p.CurrencyOne?.ApiId, b = p.CurrencyTwo?.ApiId;
     if (!a || !b) continue;
-    const isPay = (x: string): boolean => x === "chaos" || x === "divine" || x === "exalted";
+    const isPay = (x: string): boolean => x === "chaos" || x === "divine" || (withExalted && x === "exalted");
     const payIsTwo = isPay(b);
     const payIsOne = isPay(a);
     if (payIsOne === payIsTwo) continue; // 素材同士 / 基本通貨同士は見ない

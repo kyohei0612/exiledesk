@@ -86,11 +86,11 @@ const materialRows = computed(() => {
       buyTotal: r.key === "baseGem" && qtyN != null ? g.baseBuyTotalFor(Math.ceil(qtyN)) : null,
       // 費用は**切り上げた単価**で数え直す (オーナー指示 2026-09-20:「丸めた単価で計算し直す」
       // 「基本経費は多く、収入は厳しくのスタンス」)。表示と縦の掛け算が必ず合う
-      unitUp: r.price == null ? null : (roundMoney(r.price, "up")?.exalted ?? r.price),
+      unitUp: r.price == null ? null : (roundMoney(r.price, "up", g.roundCurrencyOf(apiId, r.price))?.exalted ?? r.price),
       costPerAttempt:
-        r.price == null || r.perAttempt == null ? null : (roundMoney(r.price, "up")?.exalted ?? r.price) * r.perAttempt,
+        r.price == null || r.perAttempt == null ? null : (roundMoney(r.price, "up", g.roundCurrencyOf(apiId, r.price))?.exalted ?? r.price) * r.perAttempt,
       qtyN,
-      costN: r.price == null || qtyN == null ? null : (roundMoney(r.price, "up")?.exalted ?? r.price) * qtyN,
+      costN: r.price == null || qtyN == null ? null : (roundMoney(r.price, "up", g.roundCurrencyOf(apiId, r.price))?.exalted ?? r.price) * qtyN,
       // 買う通貨建ての費用 (取引所を取っていれば)
       buyCostPerAttempt: unitAmount == null || r.perAttempt == null ? null : unitAmount * r.perAttempt,
       buyCostN: unitAmount == null || qtyN == null ? null : unitAmount * qtyN,
@@ -231,7 +231,7 @@ const baseBuyTitle = computed(() => {
             単価の決め方と通貨の出し方
           </summary>
           <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)] mt-2">
-            <span class="text-emerald-300">緑</span>は値段が入っている行です (<span class="text-amber-300">琥珀</span>は相場が取れていない行)。取引所で買う方が安ければ単価と費用をその通貨の単位で、相場の方が安ければ相場の値を出します。公式の取引所で カオス / 神 / 高貴 のうち、回数分の在庫があって一番安く買える物を出します (ジェムを選んだ時に自動で取り、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。<span class="text-[var(--exile-color-text-secondary)]">1 {{ unit }} 未満になる額は 1 つ下のカレンシーで出します</span> (神 → カオス → 高貴。0.02 神 のような読みにくい表記を避けるため)。
+            <span class="text-emerald-300">緑</span>は値段が入っている行です (<span class="text-amber-300">琥珀</span>は相場が取れていない行)。取引所で買う方が安ければ単価と費用をその通貨の単位で、相場の方が安ければ相場の値を出します。公式の取引所で カオス / 神 のうち、回数分の在庫があって一番安く買える物を出します (表示通貨が「最安値」なら高貴も。高貴は取引のゴールドが多く掛かります。ジェムを選んだ時に自動で取り、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。<span class="text-[var(--exile-color-text-secondary)]">1 {{ unit }} 未満になる額は 1 つ下のカレンシーで出します</span> (神 → カオス → 高貴。0.02 神 のような読みにくい表記を避けるため)。
             単価は<span class="text-[var(--exile-color-text-secondary)]">実際に払う額に繰り上げ</span>ています (3.2 神 → 4 神)。通貨は 1 個単位でしか渡せないためで、費用も期待値もこの繰り上げ後の値で計算します (1 未満の単価は束で買う物なのでそのまま)。繰り上げた結果より相場の方が安い素材は相場のまま使います (その行は相場の値を出します)。
             仕上げ (レベル 20 に上げる) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。仕上げは調達先と揃えます: <span class="text-[var(--exile-color-text-secondary)]">原石から作るジェムは原石 (レベル 20)</span>、<span class="text-[var(--exile-color-text-secondary)]">現物を買うジェムは ソーマタージ・フラックス (レベル 20)</span> (原石ではレベルを上げられないため)。
             低レベルのジェム本体は、原石 (レベル 15〜20) のうち一番安い物の相場です。<span class="text-[var(--exile-color-text-secondary)]">原石から作れないジェム (カルグール系) は、トレードで現物 (コラプト無し・二重コラプト無し) の最安</span>を使います (行の切替で手で変えられます)。スキルの原石かスピリットの原石かは、<span class="text-[var(--exile-color-text-secondary)]">素のスキル (コラプト無し) の出品にスピリットのリザーブが出ているか</span>で決めます (一度見たら覚えます。まだ見ていないジェムはクライアントのタグから推定)。

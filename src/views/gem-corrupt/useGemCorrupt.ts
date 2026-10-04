@@ -83,6 +83,7 @@ export function useGemCorrupt() {
     loadExchangeCache,
     fetchExchange,
     bestBuy,
+    roundCurrencyOf,
     uncutLabel,
   } = useGemMaterials(selected, tradeLeague, attempts);
 
@@ -153,6 +154,7 @@ export function useGemCorrupt() {
     exchangeDone,
     fetchExchange,
     bestBuy,
+    roundCurrencyOf,
     materials,
     uncutLabel,
     isSpirit,
