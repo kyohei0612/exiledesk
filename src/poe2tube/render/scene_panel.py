@@ -136,7 +136,10 @@ def _fitted(shot: Path, im: Image.Image, size: tuple[int, int]) -> Image.Image:
     # 並べて作るとほかのプロセスが同じ絵を読むので、別の名前で書き切ってから付け替える
     tmp = cache.with_name(f"{cache.stem}.{os.getpid()}.tmp.png")
     small.save(tmp, compress_level=1)
-    os.replace(tmp, cache)
+    try:
+        os.replace(tmp, cache)
+    except OSError:  # Windows: ほかのプロセスが同じ絵を開いている (もう取ってある) → 取っておかない
+        tmp.unlink(missing_ok=True)
     return small
 
 
