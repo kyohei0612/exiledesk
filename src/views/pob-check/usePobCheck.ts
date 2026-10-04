@@ -618,13 +618,32 @@ export function usePobCheck() {
         name = target.value ? planName(target.value, "相手") : "相手 - ExileDesk";
         if (!p) throw new Error("相手のビルドプランナーの中身がありません (相手を読み直してください)");
       }
-      const path = await buildPlannerWrite(name, p.json);
+      // 保存先を選ぶ (2026-10-04 オーナー「保存先選べるように、今どっか行ってる」)。WebView2 の保存の画面 (前に選んだフォルダを覚える)。
+      // 無い時だけゲームのフォルダ (Documents/My Games/Path of Exile 2/BuildPlanner) に直接
+      type Picker = (o: { id?: string; suggestedName?: string; startIn?: string; types?: Array<{ description: string; accept: Record<string, string[]> }> }) => Promise<{ name: string; createWritable: () => Promise<{ write: (d: string) => Promise<void>; close: () => Promise<void> }> }>;
+      const picker = (window as unknown as { showSaveFilePicker?: Picker }).showSaveFilePicker;
+      let path: string;
+      if (picker) {
+        let h: Awaited<ReturnType<Picker>>;
+        try {
+          h = await picker({ id: "exiledesk-build-planner", suggestedName: `${name}.build`, startIn: "documents", types: [{ description: "ビルドプランナー (.build)", accept: { "application/json": [".build"] } }] });
+        } catch (e) {
+          if (e instanceof DOMException && e.name === "AbortError") return "保存をやめました";
+          throw e;
+        }
+        const w = await h.createWritable();
+        await w.write(p.json);
+        await w.close();
+        path = h.name;
+      } else {
+        path = await buildPlannerWrite(name, p.json);
+      }
       recordHistory("pob-check", "plan", { which, path, passives: p.passives, skills: p.skills, unknownNodes: p.unknownNodes, skippedGems: p.skippedGems, changes: which === "mine" ? changes.value : undefined });
       const file = path.split(/[\\/]/).pop() ?? path;
       const notes: string[] = [];
       if (p.unknownNodes.length) notes.push(`ID の分からないノード ${p.unknownNodes.length} 個は入れていません`);
       if (p.skippedGems) notes.push(`PoB が知らないジェム ${p.skippedGems} 個は入れていません`);
-      return `${file} に書きました。ゲームのビルドプランナーの一覧に出ます (ゲームを開き直す)${notes.length ? "。" + notes.join("、") : ""}`;
+      return `${file} に保存しました。ゲームの一覧に出すなら Documents/My Games/Path of Exile 2/BuildPlanner に置く (ゲームを開き直す)${notes.length ? "。" + notes.join("、") : ""}`;
     } catch (e) {
       error.value = msg(e);
       return null;

@@ -250,7 +250,7 @@ const STATS = [
             type="button"
             class="btn btn-sm btn-outline"
             :disabled="!canPlan || busy"
-            :title="canPlan ? '相手のパッシブとジェムを Documents/My Games/Path of Exile 2/BuildPlanner に .build で書く。ゲームのビルドプランナーの一覧に出る' : '相手を読み込んだ時にビルドプランナーの中身を作れませんでした (相手を読み直す)'"
+            :title="canPlan ? '相手のパッシブとジェムを .build で保存 (保存先を選ぶ。ゲームの一覧に出すなら Documents/My Games/Path of Exile 2/BuildPlanner に)' : '相手を読み込んだ時にビルドプランナーの中身を作れませんでした (相手を読み直す)'"
             @click="emit('plan')"
           >相手をビルドプランナーに書き出す</button>
           <button type="button" class="btn btn-sm btn-ghost" @click="emit('clear')">相手を外す</button>

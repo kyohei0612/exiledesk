@@ -291,7 +291,7 @@ const resists = computed(() =>
                 type="button"
                 class="btn btn-sm btn-outline"
                 :disabled="busy || loading"
-                title="今のパッシブとジェム (変えた所も込み) を Documents/My Games/Path of Exile 2/BuildPlanner に .build で書く。ゲームのビルドプランナーの一覧に出る (ゲームを開き直す)"
+                title="今のパッシブとジェム (変えた所も込み) を .build で保存 (保存先を選ぶ。ゲームの一覧に出すなら Documents/My Games/Path of Exile 2/BuildPlanner に置いてゲームを開き直す)"
                 @click="onPlan('mine')"
               >ビルドプランナーに書き出す</button>
               <span v-if="planMsg" class="absolute right-0 top-full z-10 mt-1 max-w-[28rem] rounded bg-black/90 px-2 py-0.5 text-[11px] text-emerald-200">{{ planMsg }}</span>
