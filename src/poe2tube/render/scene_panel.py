@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -127,12 +128,26 @@ def _fitted(shot: Path, im: Image.Image, size: tuple[int, int]) -> Image.Image:
     if im.size == size:
         return im
     cache = shot.parent / f"_{size[0]}x{size[1]}" / shot.name
-    if cache.exists():
-        return Image.open(cache).convert("RGB")
+    got = _read_cached(cache)
+    if got is not None:
+        return got
     small = im.resize(size, Image.Resampling.LANCZOS, reducing_gap=2.0)
     cache.parent.mkdir(parents=True, exist_ok=True)
-    small.save(cache, compress_level=1)
+    # 並べて作るとほかのプロセスが同じ絵を読むので、別の名前で書き切ってから付け替える
+    tmp = cache.with_name(f"{cache.stem}.{os.getpid()}.tmp.png")
+    small.save(tmp, compress_level=1)
+    os.replace(tmp, cache)
     return small
+
+
+def _read_cached(cache: Path) -> Image.Image | None:
+    """取ってある縮めた絵。無い・読めない (書きかけ等) なら None (その場で縮める)."""
+    if not cache.exists():
+        return None
+    try:
+        return Image.open(cache).convert("RGB")
+    except OSError:
+        return None
 
 
 def _stage_capture(
@@ -153,9 +168,9 @@ def _stage_capture(
     im: Image.Image = Image.open(shot)
     if USE_CLIP_LAYOUT and zoom <= 0:  # 縮めた絵が取ってあれば元の大きな PNG は開かない
         px, py, qx, qy = stage_shot_rect(box)
-        cache = shot.parent / f"_{qx - px}x{qy - py}" / shot.name
-        if cache.exists():
-            im = Image.open(cache)
+        got = _read_cached(shot.parent / f"_{qx - px}x{qy - py}" / shot.name)
+        if got is not None:
+            im = got
     im = im.convert("RGB")
     # ExileDesk v0.1.313 の撮影用レイアウト (layout=clip) はアイテム + 棚だけを大きく描き、下 15% を
     # 空けてくれる → POE2Tube では拡大しない (kyohei 2026-09-28「拡大せずに使える形で」)
