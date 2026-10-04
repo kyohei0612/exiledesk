@@ -32,6 +32,8 @@ export function toBuildItem(it: ItemView, slot: string, opts: { jewel?: boolean;
     base: it.base,
     // 「Rune: None」は空のソケット
     runes: (parsed?.runes ?? []).filter((x) => x && x !== "None"),
+    enchants: parsed?.enchants ?? [],
+    raw: it.raw,
     implicits: it.implicits,
     mods: it.explicits,
     corrupted: it.corrupted,

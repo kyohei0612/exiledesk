@@ -20,6 +20,10 @@ export interface BuildItem {
   /** ベース (マジックは空のことがある) */
   base: string;
   runes: string[];
+  /** PoB の文面 (火力チェックのカードから取引所へ「そのティアで」探す時に使う、2026-10-05)。無ければボタンを出さない */
+  raw?: string;
+  /** エンチャント (アノイント「Allocates ○○」など、ルーンの効果は除く)。カードに出すだけ (2026-10-05) */
+  enchants?: string[];
   implicits: string[];
   /** 明示 MOD (ルーン・エンチャントの行は除く) */
   mods: string[];
@@ -129,6 +133,7 @@ export function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "
   }
   const rest = lines.slice(i).filter((l) => !l.startsWith("<"));
   const implicits: string[] = [];
+  const enchants: string[] = [];
   const mods: string[] = [];
   rest.forEach((l, j) => {
     if (l === "Corrupted") {
@@ -144,11 +149,12 @@ export function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "
     if (!plain) return;
     if (j < implicitCount) {
       if (!l.includes("{rune}") && !l.includes("{enchant}")) implicits.push(plain);
+      else if (l.includes("{enchant}") && !l.includes("{rune}")) enchants.push(plain);
       return;
     }
     mods.push(plain);
   });
-  return { rarity, name, base, runes, implicits, mods, corrupted, sanctified, quality, itemLevel, armour, evasion, energyShield, sockets };
+  return { rarity, name, base, runes, enchants, implicits, mods, corrupted, sanctified, quality, itemLevel, armour, evasion, energyShield, sockets };
 }
 
 const unescape = (s: string) => s.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
