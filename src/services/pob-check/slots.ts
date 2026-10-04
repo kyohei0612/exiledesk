@@ -26,6 +26,9 @@ export function slotJa(slot: string, opts: { jewel?: boolean; weaponSet?: number
   if (opts.jewel || slot.startsWith("Jewel")) return "ジュエル";
   const charm = /^Charm (\d+)$/.exec(slot);
   if (charm) return `チャーム ${charm[1]}`;
+  // 装備のジュエルの穴 (手袋の「Gloves Jewel Socket 1」など。2026-10-04 英語のまま出ていた)
+  const sock = /^(.+) Jewel Socket (\d+)$/.exec(slot);
+  if (sock) return `${SLOT_JA[sock[1]!] ?? sock[1]} のジュエル ${sock[2]}`;
   const swap = /^(Weapon [12]) Swap$/.exec(slot);
   if (swap) return `${SLOT_JA[swap[1]!]} (II)`;
   return (SLOT_JA[slot] ?? slot) + (opts.weaponSet ? " (I)" : "");

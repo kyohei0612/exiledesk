@@ -433,7 +433,11 @@ export function usePobCheck() {
           if ((e.c.kind === "item" || e.c.kind === "jewel") && r.leave && r.leave[e.c.slot] != null && r.leave[e.c.slot]! > 0) e.together = r.items / r.leave[e.c.slot]!;
         }
         if (treeBased || (plan.tree.add.length || plan.tree.remove.length)) {
-          for (const e of out) if (e.c.kind !== "tree" && !e.error && e.ratio != null && all.tree > 0) { e.dps = all.tree * e.ratio; e.baseDps = all.tree; }
+          // 装備・ジュエルは「揃えた時の効き」で出す (2026-10-04 オーナー「基本そろえた時で DPS 出していいよ、見栄え悪いから」)
+          for (const e of out) if (e.c.kind !== "tree" && !e.error && all.tree > 0) {
+            const k = e.together ?? e.ratio;
+            if (k != null) { e.dps = all.tree * k; e.baseDps = all.tree; }
+          }
         }
       } catch (err) {
         all = { tree: 0, items: 0, gems: 0, config: null, life: [], es: [], error: msg(err) };
@@ -442,8 +446,7 @@ export function usePobCheck() {
       // ツリーとリネージュは出す。並びは DPS の変化が大きい順 (失敗は最後)
       const base = f.s.game.dps;
       // 揃えた時に効く物は出す (1 つだけだと変わらなくても)
-      const quiet = (e: Estimate): boolean => !e.error && (e.c.kind === "item" || e.c.kind === "jewel") && Math.abs((e.ratio ?? (base > 0 ? e.dps / base : 1)) - 1) < 0.005
-        && Math.abs((e.together ?? 1) - 1) < 0.005;
+      const quiet = (e: Estimate): boolean => !e.error && (e.c.kind === "item" || e.c.kind === "jewel") && Math.abs((e.together ?? e.ratio ?? (base > 0 ? e.dps / base : 1)) - 1) < 0.005;
       const shown = out.filter((e) => !quiet(e));
       shown.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || b.dps - a.dps);
       estimates.value = { list: shown, of: mine, focusKey: f.key, dps: base, quiet: out.length - shown.length, all, treeBased: !!(plan.tree.add.length || plan.tree.remove.length) };

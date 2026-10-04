@@ -349,11 +349,6 @@ const STATS = [
                   <span class="text-[17px] font-bold">{{ fmtNum(e.dps) }}</span>
                   <DiffBadge class="ml-1.5" :now="e.dps" :before="e.baseDps ?? estimates.dps" />
                   <p v-if="e.baseDps != null" class="note text-right">ツリーを相手と同じにした時 {{ fmtNum(e.baseDps) }} から</p>
-                  <!-- 揃えた時の効き (全部入れた状態から、これだけ戻すと下がる分) -->
-                  <p v-if="e.together != null" class="mt-0.5 text-right text-[12px]">
-                    <span class="note">揃えた時の効き</span>
-                    <span class="ml-1 font-bold tabular-nums" :class="e.together >= 1 ? 'text-emerald-300' : 'text-rose-300'">{{ e.together >= 1 ? "+" : "−" }}{{ Math.abs((e.together - 1) * 100).toFixed(1) }}%</span>
-                  </p>
                 </template>
               </td>
               <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
@@ -460,7 +455,7 @@ const STATS = [
       </div>
       <p v-if="estimates" class="note mt-2">
         DPS は上のバーのスキルの、入れた後の見込み (自分の行と同じ物差し)。1 項目ずつの数字なので合計ではありません。
-        <template v-if="estimates.treeBased">装備・ジュエル・リネージュの行は「ツリーを相手と同じにした上で」それを入れた時の差です (ツリーの増加・増しが乗った状態で比べる)。</template>
+        <template v-if="estimates.treeBased">装備・ジュエルの行は、ツリーと装備・ジュエルを全部相手と同じにした中での効きです (それだけ自分の物に戻すと下がる分。揃って初めて効く分も入る)。リネージュの行は、ツリーを相手と同じにした上でそれを足した時の差です。</template>
         <template v-if="estimates.quiet">火力が変わらない装備・ジュエル {{ estimates.quiet }} 個は出していません。</template>
       </p>
     </section>
