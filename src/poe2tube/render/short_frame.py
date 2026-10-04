@@ -10,7 +10,7 @@ from __future__ import annotations
 from PIL import Image, ImageDraw
 
 from poe2tube.render.draw import pill
-from poe2tube.render.overlay_fx import draw_countdown, draw_emphasis_text
+from poe2tube.render.overlay_fx import draw_countdown, draw_emphasis_text, tight_spaces
 from poe2tube.render.palette import ACCENT, INK, WHITE, font
 from poe2tube.render.tachie import render_tachie
 from poe2tube.script.model import Emotion, Line, Speaker
@@ -111,7 +111,7 @@ def _telop(img: Image.Image, line: Line) -> None:
     d.rounded_rectangle((30, TELOP_Y0, SW - 30, TELOP_Y1), 32, fill=WHITE, outline=color, width=6)
     name = "ずんだもん" if line.speaker == "zundamon" else "四国めたん"
     pill(img, (60, TELOP_Y0 - 28), name, color, size=30)
-    rows = wrap_text(line.text)
+    rows = wrap_text(tight_spaces(line.text))
     step = 92
     top = (TELOP_Y0 + TELOP_Y1) // 2 - step * (len(rows) - 1) // 2
     for i, row in enumerate(rows):

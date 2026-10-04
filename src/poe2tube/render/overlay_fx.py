@@ -173,6 +173,23 @@ def draw_chapter(img: Image.Image, name: str, t: float) -> None:
     _paste_center(img, im, img.width // 2, 500, _pop(t), fade)
 
 
+_SPACES = re.compile(" +")
+
+
+def tight_spaces(text: str) -> str:
+    """字幕の半角スペースを詰める (日本語の隣だけ。英単語どうしの間は残す).
+
+    台本は「MOD が」「10% 増加」のように書いてあるが、字幕では「MODが」「10%増加」
+    (kyohei 2026-10-04「字幕に半角スペースが多い、いらん」)。声 (VOICEVOX) には元の文を渡す。
+    """
+
+    def keep(m: re.Match[str]) -> str:
+        a, b = m.string[m.start() - 1 : m.start()], m.string[m.end() : m.end() + 1]
+        return m.group(0) if a.isascii() and b.isascii() else ""
+
+    return _SPACES.sub(keep, text)
+
+
 def draw_emphasis_text(img: Image.Image, text: str, center: tuple[int, int], max_w: int) -> None:
     """テロップ本文: 強調語 (数字・ティア・個数) だけ GiftCut スタイル、他は普通の文字で並べる."""
     parts = [p for p in EMPHASIS.split(text) if p]

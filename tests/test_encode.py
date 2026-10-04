@@ -71,3 +71,12 @@ def test_pick_starts_reveal_clip(tmp_path: Path) -> None:
     hp = HitPlan(3, tuple(clip), 70, preroll=False, pick=40)
     assert hp.start == 40 and hp.land_at == 30 / 24
     assert HitPlan(3, tuple(clip), 70, preroll=False).start == 70 - int(0.4 * 24)
+
+
+def test_tight_spaces() -> None:
+    from poe2tube.render.overlay_fx import tight_spaces
+
+    assert tight_spaces("レートが 10% 増加する") == "レートが10%増加する"
+    assert tight_spaces("MOD が[2 個]付く") == "MODが[2個]付く"
+    assert tight_spaces("キャストスピードが T1 なのだ！") == "キャストスピードがT1なのだ！"
+    assert tight_spaces("Path of Exile 2 の話") == "Path of Exile 2の話"
