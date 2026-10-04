@@ -182,7 +182,10 @@ def cue_frames(
             )
             frame_static = with_panel(base, layer, 0, 1.0)
         elif zoom and not prev_zoom and tl < ZOOM_SECONDS:
-            layer = render_panel_layer(c.line, res, final_step=fin, zoom=tl / ZOOM_SECONDS)
+            # 行で指定した絵 (3 択の絵など) のまま寄る。無いと普段の撮影画面に入れ替わってちらつく
+            layer = render_panel_layer(
+                c.line, res, stage_shot=extra, final_step=fin, zoom=tl / ZOOM_SECONDS
+            )
             frame_static = with_panel(base, layer, 0, 1.0)
         elif (animate or lead > 0) and tl < SLIDE_SECONDS and panel is not None:
             dy, alpha = slide_in(tl)
