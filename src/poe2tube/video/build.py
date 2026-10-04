@@ -167,6 +167,7 @@ def prepare(script_path: Path) -> Prepared:
     hold, delay = plan_cue_timing(lines, secs, hits, intros)
     cues = build_cues(script.sections, wavs, s.fps, min_seconds=hold, voice_delay=delay)
     write_chapters(cues, work / "chapters.json")
+    write_lines(cues, work / "lines.json")  # 行ごとの開始時刻 (check_flicker・check_sync で使う)
     voice = concat_audio(cues, work / "voice.wav")
     events = sound_events(cues, book, script.final_step or len(rs.main.steps), rs)
     audio = mix(voice, work / "audio.wav", s.bgm, events, s.bgm_gain_db, s.se_gain_db)
@@ -178,6 +179,17 @@ def build_chapters(script_path: Path, only: list[int] | None = None) -> list[Pat
     """章ごとの 1080p の動画を作る (作り済みで変わっていない章は使い回す)。確認はこの動画で."""
     p = prepare(script_path)
     return build_all(p.script, p.rs, p.cues, p.audio, p.work, p.book, p.n_sections, only)
+
+
+def write_lines(cues: list[Cue], path: Path) -> None:
+    """行ごとの (開始秒, 長さ, 章, 台詞)。出来た動画のどこがどの行かを後で調べる用."""
+    rows = [
+        {"start": round(c.start, 3), "duration": round(c.duration, 3), "section": c.section}
+        | {"text": c.line.text}
+        for c in cues
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(rows, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
 def build_video(
