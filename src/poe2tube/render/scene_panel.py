@@ -128,7 +128,9 @@ def _fitted(shot: Path, im: Image.Image, size: tuple[int, int]) -> Image.Image:
     if im.size == size:
         return im
     cache = shot.parent / f"_{size[0]}x{size[1]}" / shot.name
-    got = _read_cached(cache)
+    # 元の絵を撮り直した後は使わない (開発版で 3 択を撮り直しても古い縮めた絵が出た、2026-10-04)
+    stale = cache.exists() and cache.stat().st_mtime < shot.stat().st_mtime
+    got = None if stale else _read_cached(cache)
     if got is not None:
         return got
     small = im.resize(size, Image.Resampling.LANCZOS, reducing_gap=2.0)
