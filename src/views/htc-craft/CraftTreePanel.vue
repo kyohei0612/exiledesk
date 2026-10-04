@@ -64,7 +64,7 @@ const choosing = computed(() => !!c.routeOptions.value && c.treeRoute.value == n
 const ROUTE_JA = { fixed: "固定済みを買って途中から作る", self: "自分でフラクチャーして作る", white: "白のベースから作る" } as const;
 const ROUTE_SUB = {
   fixed: "固定済み (フラクチャー済み) の素材を買って、残りを自動クラフト",
-  self: "固定無しを買って自分でフラクチャー (固定) してから、残りを自動クラフト",
+  self: "固定無し・4 MOD を買い、反対側に深淵のエッセンス → 冒涜 → フラクチャーのオーブ (1/3) で固定してから、残りを自動クラフト",
   white: "変成のオーブ・増強のオーブ (完全) → 外れなら消去のオーブで消して増強し直す → 狙いが 1 つ付いたら王者のオーブでレアに → 残りを自動クラフト",
 } as const;
 const routeCards = computed(() => {

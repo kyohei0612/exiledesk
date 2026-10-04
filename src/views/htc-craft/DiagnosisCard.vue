@@ -97,7 +97,7 @@ const candGroups = computed(() => [
 ].filter((g) => g.list.length));
 const pctOf = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
 /** 取引所へ投げる本数の目安 (候補ごとに 3 本 + 完成品 1 本) */
-const calls = computed(() => ss.checked.value.length * (ss.kind.value.kind === "separate" ? 1 : 3) + (fin.query.value && !fin.found.value ? 1 : 0));
+const calls = computed(() => ss.checked.value.length * (ss.kind.value.kind === "separate" ? 1 : 2) + (fin.query.value && !fin.found.value ? 1 : 0));
 const sideJa = (x: "P" | "S" | null): string => (x === "P" ? "プレ" : x === "S" ? "サフィ" : "片側");
 /** 3 つの道と一番安い道 ([[three-way.ts]]) */
 const { threeWay, verdict3 } = useThreeWay(c, ss, fin);

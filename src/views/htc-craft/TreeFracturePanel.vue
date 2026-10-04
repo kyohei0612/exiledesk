@@ -21,6 +21,7 @@ const howJa: Record<string, string> = {
   desecrate: "冒涜 → 固定 (1/3、消去なし)",
   direct: "そのまま固定",
   reduce: "消去で 3 MOD まで減らす → 冒涜 → 固定",
+  abyss: "反対側に結晶化のお告げ + 深淵のエッセンス → 冒涜 (印を置き換え) → 固定 (1/3)",
 };
 </script>
 
@@ -62,7 +63,7 @@ const howJa: Record<string, string> = {
             <span class="text-amber-300">({{ sq.key === "fractured" ? "Fractured" : "Explicit" }}<template
               v-if="b.filters[0]?.min"> 最小 {{ b.filters[0].min }}</template>)</span>
           </template>
-          <template v-if="sq.key === 'strict'"> / 疑似 プレフィックスモッド #個 最大 1</template>
+          <template v-if="sq.key === 'four'"> / 疑似 モッド #個 4〜4 / 冒涜モッド 最大 0 / クラフトモッド 最大 0</template>
           <span class="opacity-50"> — 最安 {{ sq.take }} 件</span>
         </td>
       </tr>

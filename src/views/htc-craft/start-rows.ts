@@ -40,9 +40,9 @@ export function startRows(r: TreeResult | null, div: number, opts: { busy: boole
   }];
   // 固定無しの最安 1 件を、固定せずにそのまま作る (その MOD は触らない: 消去は使わず冒涜 + 光で作る側になる)
   if (r && r.loosePrice != null) {
-    rows.push({ id: "keep", label: "固定無しを買ってそのまま作る (固定しない)", cost: r.loosePrice * div, note: "その MOD は触らない (消去を使わない側)", link: linkOf("loose"), manual: false, status: "-" });
+    rows.push({ id: "keep", label: "固定無しを買ってそのまま作る (固定しない)", cost: r.loosePrice * div, note: "その MOD は触らない (消去を使わない側)", link: linkOf("four"), manual: false, status: "-" });
   }
-  for (const [key, label] of [["strict", "固定無し・厳しいを買って固定"], ["loose", "固定無し・ゆるいを買って固定"]] as const) {
+  for (const [key, label] of [["four", "固定無し・4 MOD を買って固定 (深淵のエッセンス → 冒涜 → 固定)"]] as const) {
     if (!r) { rows.push({ id: key, label, cost: null, note: "", link: null, manual: false, status: waiting }); continue; }
     const err = errOf(key);
     if (err) { rows.push({ id: key, label, cost: null, note: `取れず: ${err}`, link: null, manual: false, status: "取れず" }); continue; }

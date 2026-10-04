@@ -67,6 +67,15 @@ export function candidateOf(l: TreeListing, p: DecidePrices): Candidate | null {
   const make = (how: Candidate["how"], perTry: number, hit: number): Candidate =>
     ({ listing: l, how, perTry, hit, perSuccess: perTry / hit });
 
+  // ---- 4 MOD (2026-10-04 オーナー「欲しい MOD 側とか関係なく 4 MOD で検索したら、ゆるいも厳しいも無い。深淵のエッセンスで欲しい MOD の
+  // 反対側を狙って付けて、そのまま冒涜したら 1 個確定で MOD を入れ替えられる」): 反対側の結晶化のお告げ + 深淵のエッセンス (反対側の 1 つを消して印)
+  // → 冒涜 (印を置き換える) で 普通 3 + 冒涜 1 → 固定 1/3 (当て馬は抽選に入らない)。深淵のエッセンスが相場に無ければそのまま固定 1/4
+  if (l.source === "four") {
+    const ways: Candidate[] = [make("direct", l.price + p.orb, 1 / 4)];
+    if (p.abyss != null) ways.push(make("abyss", l.price + p.abyss + (p.crystal ?? 0) + p.bone + p.orb, 1 / 3));
+    return ways.reduce((a, b) => (b.perSuccess < a.perSuccess ? b : a));
+  }
+
   // ---- 厳しい検索: 消去ガチャを使わない道だけ ----
   // オーナー:「フラクチャー無し品で、今の厳しいけど消去いらない道 (サフィ確定冒涜でフラクチャーチャレンジ)」。
   // 期待値だけなら素の消去で運ゲーするほうが安いことがあるが、この道はそれを使わないために分けた物

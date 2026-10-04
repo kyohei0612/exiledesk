@@ -4,7 +4,7 @@
  * オーナー:「ベースの所で複数選択で開始フラクチャー選びたいな。その時点で検索かけたいから、やっぱ取得は手動がいい。
  * 真ん中は結果表示にしよう。取得後に表示する形で徐々にやってく感じでいい」。
  * 候補は樹 MOD と作る側の関係で変わる ([[start-kind.ts]]):
- *   none     … 作る MOD のうち普通に付く物から「○○ を固定」。1 つ 3 本 (固定済み / 厳しい / ゆるい)
+ *   none     … 作る MOD のうち普通に付く物から「○○ を固定」。1 つ 2 本 (固定済み / 固定無し・4 MOD。2026-10-04 に厳しい・ゆるいを 1 本に)
  *   fix      … 「樹 MOD を固定」の 1 択 (重い側の樹 MOD だけ固定済み、他の樹 MOD は付いていればいい)。3 本
  *   separate … 固定不要。「フラクチャー無し」と「重い側の狙いが固定済み」(オーナー:「プレのフラクチャー品もしくは
  *              フラクチャー無しに絞ったらよくね。成功率段違いでしょ、安いならやけど」)。1 つ 1 本 (最安 1 件)、
@@ -53,8 +53,8 @@ export interface StartCandidate {
 /** 固定不要の時の 1 本の結果 (最安 1 件、値段は高貴換算) */
 type SideResult = { kind: "side"; price: number | null; total: number; url: string | null; error?: string };
 
-/** 自分でフラクチャーする道の行 ([[start-rows.ts]] の 固定無し・厳しい / ゆるい を買って固定)。他 (固定済み・固定しない・買う) は fixed */
-const SELF_ROUTES = new Set(["strict", "loose"]);
+/** 自分でフラクチャーする道の行 ([[start-rows.ts]] の 固定無し・4 MOD を買って固定)。他 (固定済み・固定しない・買う) は fixed */
+const SELF_ROUTES = new Set(["four"]);
 
 export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () => Promise<void>) {
   const kind = computed(() => startKindOf(c));
@@ -158,11 +158,11 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const keys = candidates.value.filter((x) => checked.value.includes(x.key));
     pending.value = keys.map((x) => x.key);
     try {
-      // 使う信号の数 (候補ごとに 3 本、分けて買う形は 1 本 + 完成品 2 本) で、途中で制限にかからず回り切れるまで待つ
+      // 使う信号の数 (候補ごとに 2 本、分けて買う形は 1 本 + 完成品 2 本) で、途中で制限にかからず回り切れるまで待つ
       c.stage.value = "② 取引所の枠が空くのを待っています (途中で制限にかからず回り切れるように。残りは下のタイマー)";
-      const n = keys.length * (kind.value.kind === "separate" ? 1 : 3) + 2;
+      const n = keys.length * (kind.value.kind === "separate" ? 1 : 2) + 2;
       if (!(await tradeLock.reserve("craft", n)) || !alive()) return;
-      // 候補ごとに 3 本 (固定済み / 固定無し・ゆるい / 厳しい) を全部取る (オーナー 2026-09-26:「そっちでやろう」。
+      // 候補ごとに 2 本 (固定済み / 固定無し・4 MOD) を全部取る (オーナー 2026-09-26:「そっちでやろう」。
       // 固定済みだけにすると、固定済みは高いが固定無しなら安い候補を見逃していた)。1 回の貼り付けで最大 9 本 + 完成品。
       // 門番が検索 + 取得の合計を ≈ 13.6 秒に 1 回 (バースト 6、5 分 22 回) で流し、超える分は待ってから投げる
       for (const [i, cand] of keys.entries()) {

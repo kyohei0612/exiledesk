@@ -12,12 +12,17 @@ export interface DecidePrices {
   dextralExalt: number | null;
   /** 王者のオーブ (マジックをレアにして 1 個足す)。無ければ高貴と同じ値段とみなす */
   regal?: number | null;
+  /** 深淵のエッセンス (このベースの物)。無ければ null */
+  abyss?: number | null;
+  /** 狙いの反対側の結晶化のお告げ (深淵のエッセンスを反対側に打つ)。無ければ 0 とみなす */
+  crystal?: number | null;
 }
 
 /** 取引所から返ってきた 1 件 */
 export interface TreeListing {
   /** どの検索から来たか */
-  source: "fractured" | "strict" | "loose";
+  /** four = 固定無し・4 MOD (2026-10-04、厳しい / ゆるいをやめて 1 本に) */
+  source: "fractured" | "strict" | "loose" | "four";
   /** 値段 (神) */
   price: number;
   /** 樹 MOD を含むプレフィックスの数 */
@@ -36,7 +41,7 @@ export interface TreeListing {
 export interface Candidate {
   listing: TreeListing;
   /** どうやって固定するか */
-  how: "buy" | "necro-desecrate" | "desecrate" | "direct" | "reduce";
+  how: "buy" | "necro-desecrate" | "desecrate" | "direct" | "reduce" | "abyss";
   /** 1 回試すのにかかる期待費用 (神)。物の値段込み */
   perTry: number;
   hit: number;
