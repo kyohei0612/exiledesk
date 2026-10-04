@@ -24,7 +24,7 @@ from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
 from poe2tube.video.encode import encode_stream
 from poe2tube.video.frames import cue_frames, make_context
-from poe2tube.video.parallel import default_workers, iter_frames_parallel
+from poe2tube.video.parallel import FramePool, default_workers, iter_frames_parallel
 from poe2tube.video.results import ResultSet
 from poe2tube.video.timeline import Cue, read_wav, write_wav
 
@@ -96,8 +96,12 @@ def build_chapter(
     work: Path,
     book: NameBook,
     n_sections: int,
+    pool: FramePool | None = None,
 ) -> Path:
-    """章 k の 1080p の動画 (映像 + その章の音) を作る。指紋が同じなら作らない."""
+    """章 k の 1080p の動画 (映像 + その章の音) を作る。指紋が同じなら作らない.
+
+    ``pool`` を渡すと、並べて作るプロセスをほかの章と使い回す (起動の時間を省く)。
+    """
     s = get_settings()
     out = chapter_path(work, k)
     key = chapter_key(script, k, cues, n_sections)
@@ -111,7 +115,9 @@ def build_chapter(
     ctx = make_context(cues, rs, book, script.final_step, short, script.short_title, n_sections)
     audio = cut_audio(full_audio, cues, i0, i1, out.with_suffix(".wav"))
     workers = s.render_workers or default_workers()
-    if workers > 1:
+    if pool is not None:
+        frames = encode_stream(pool.frames(range(i0, i1)), audio, s.fps, out, s.nvenc)
+    elif workers > 1:
         frames = encode_stream(
             iter_frames_parallel(ctx, workers, range(i0, i1)), audio, s.fps, out, s.nvenc
         )
@@ -121,3 +127,36 @@ def build_chapter(
     out.with_suffix(".key").write_text(key, encoding="utf-8")
     log.info("chapter built", k=k, name=sec.name, frames=frames, path=out.name)
     return out
+
+
+def build_all(
+    script: VideoScript,
+    rs: ResultSet,
+    cues: list[Cue],
+    full_audio: Path,
+    work: Path,
+    book: NameBook,
+    n_sections: int,
+    only: list[int] | None = None,
+) -> list[Path]:
+    """章をまとめて作る。作る章が 2 つ以上なら、並べて作るプロセスを 1 回だけ立ち上げて使い回す."""
+    s = get_settings()
+    ks = only if only is not None else list(range(len(script.sections)))
+    todo = [
+        k
+        for k in ks
+        if not is_fresh(chapter_path(work, k), chapter_key(script, k, cues, n_sections))
+    ]
+    workers = s.render_workers or default_workers()
+    pool: FramePool | None = None
+    if len(todo) >= 2 and workers > 1:
+        short = script.layout == "short"
+        ctx = make_context(cues, rs, book, script.final_step, short, script.short_title, n_sections)
+        pool = FramePool(ctx, workers)
+    try:
+        return [
+            build_chapter(script, rs, k, cues, full_audio, work, book, n_sections, pool) for k in ks
+        ]
+    finally:
+        if pool is not None:
+            pool.close()

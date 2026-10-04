@@ -19,7 +19,7 @@ from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
 from poe2tube.video.animate import sound_events
-from poe2tube.video.chapters import build_chapter
+from poe2tube.video.chapters import build_all
 from poe2tube.video.clip_timing import plan_cue_timing, plan_hits
 from poe2tube.video.encode import concat_with_audio, encode_files
 from poe2tube.video.frames import write_frames
@@ -150,10 +150,7 @@ def prepare(script_path: Path) -> Prepared:
 def build_chapters(script_path: Path, only: list[int] | None = None) -> list[Path]:
     """章ごとの 1080p の動画を作る (作り済みで変わっていない章は使い回す)。確認はこの動画で."""
     p = prepare(script_path)
-    ks = only if only is not None else list(range(len(p.script.sections)))
-    return [
-        build_chapter(p.script, p.rs, k, p.cues, p.audio, p.work, p.book, p.n_sections) for k in ks
-    ]
+    return build_all(p.script, p.rs, p.cues, p.audio, p.work, p.book, p.n_sections, only)
 
 
 def build_video(
@@ -174,10 +171,7 @@ def build_video(
         encode_files(p.work / "frames", audio, s.fps, out, s.nvenc)
     else:  # 章ごとの動画 (2026-10-04) をつなぐだけ。映像は作り直さない
         shutil.rmtree(p.work / "frames", ignore_errors=True)
-        segments = [
-            build_chapter(script, rs, k, cues, audio, p.work, book, p.n_sections)
-            for k in range(len(script.sections))
-        ]
+        segments = build_all(script, rs, cues, audio, p.work, book, p.n_sections)
         concat_with_audio(segments, audio, out)
     log.info("video built", mp4=str(out), frames=total)
     return BuildResult(out, total / s.fps, total)

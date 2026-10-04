@@ -79,49 +79,75 @@ def _tasks(ctx: FrameContext, only: range | None = None) -> Iterator[tuple[int, 
             yield i, k0, min(n, k0 + CHUNK)
 
 
+class FramePool:
+    """並べて作るプロセスと置き場 (共有メモリ) を 1 回だけ用意して、何章分でも使う.
+
+    章ごとに作る時、章ごとに 16 プロセスを立ち上げ直すと 1 章数秒かかるので使い回す (2026-10-04)。
+    ``with FramePool(ctx, workers) as fp: fp.frames(range(i0, i1))``
+    """
+
+    def __init__(self, ctx: FrameContext, workers: int) -> None:
+        self.ctx = ctx
+        self.workers = workers
+        n_slots = max(workers + 2, SLOT_BUDGET // (CHUNK * FRAME_BYTES))
+        self.slots = [SharedMemory(create=True, size=CHUNK * FRAME_BYTES) for _ in range(n_slots)]
+        self.pool = mp.get_context("spawn").Pool(workers, initializer=_init, initargs=(ctx,))
+
+    def __enter__(self) -> FramePool:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        self.pool.terminate()
+        self.pool.join()
+        for shm in self.slots:
+            shm.close()
+            shm.unlink()
+
+    def frames(self, only: range | None = None) -> Iterator[tuple[int, RawFrame]]:
+        """(通し番号, RGB のコマ) を番号の順に返す。コマは受け取ったらすぐ使う (置き場を使い回す).
+
+        ``only`` を渡すとその行だけ (章ごとの動画)。番号は 0 から数え直す。
+        """
+        ctx, slots = self.ctx, self.slots
+        free = deque(range(len(slots)))
+        tasks = _tasks(ctx, only)
+        pending: deque[tuple[tuple[int, int, int], int, AsyncResult[tuple[int, int, int]]]] = (
+            deque()
+        )
+        n = 0
+
+        def submit() -> None:
+            task = next(tasks, None) if free else None
+            if task is not None:
+                s = free.popleft()
+                job = self.pool.apply_async(_render, ((*task, slots[s].name),))
+                pending.append((task, s, job))
+
+        for _ in range(len(slots)):
+            submit()
+        while pending:
+            (i, _k0, k1), s, job = pending.popleft()
+            count, w, h = job.get()
+            buf = slots[s].buf
+            assert buf is not None
+            for k in range(count):
+                view = buf[k * FRAME_BYTES : (k + 1) * FRAME_BYTES]
+                yield n, (w, h, view)
+                view.release()  # 流し終わったら手放す (置き場を片付けられるように)
+                n += 1
+            free.append(s)  # 書き出しに流し終わったので置き場を返す
+            submit()
+            c = ctx.cues[i]
+            if k1 == len(c.mouth_levels):
+                log.info("frames", line=c.index, scene=c.line.scene.kind, done=n, total=ctx.total)
+
+
 def iter_frames_parallel(
     ctx: FrameContext, workers: int, only: range | None = None
 ) -> Iterator[tuple[int, RawFrame]]:
-    """(通し番号, RGB のコマ) を番号の順に返す。コマは受け取ったらすぐ使う (置き場を使い回す).
-
-    ``only`` を渡すとその行だけ (章ごとの動画)。番号は 0 から数え直す。
-    """
-    n_slots = max(workers + 2, SLOT_BUDGET // (CHUNK * FRAME_BYTES))
-    slots = [SharedMemory(create=True, size=CHUNK * FRAME_BYTES) for _ in range(n_slots)]
-    free = deque(range(len(slots)))
-    tasks = _tasks(ctx, only)  # only: 作る行の位置 (章ごとに作る時)
-    pending: deque[tuple[tuple[int, int, int], int, AsyncResult[tuple[int, int, int]]]] = deque()
-    n = 0
-    try:
-        with mp.get_context("spawn").Pool(workers, initializer=_init, initargs=(ctx,)) as pool:
-
-            def submit() -> None:
-                task = next(tasks, None) if free else None
-                if task is not None:
-                    s = free.popleft()
-                    job = pool.apply_async(_render, ((*task, slots[s].name),))
-                    pending.append((task, s, job))
-
-            for _ in range(len(slots)):
-                submit()
-            while pending:
-                (i, _k0, k1), s, job = pending.popleft()
-                count, w, h = job.get()
-                buf = slots[s].buf
-                assert buf is not None
-                for k in range(count):
-                    view = buf[k * FRAME_BYTES : (k + 1) * FRAME_BYTES]
-                    yield n, (w, h, view)
-                    view.release()  # 流し終わったら手放す (置き場を片付けられるように)
-                    n += 1
-                free.append(s)  # 書き出しに流し終わったので置き場を返す
-                submit()
-                c = ctx.cues[i]
-                if k1 == len(c.mouth_levels):
-                    log.info(
-                        "frames", line=c.index, scene=c.line.scene.kind, done=n, total=ctx.total
-                    )
-    finally:
-        for shm in slots:
-            shm.close()
-            shm.unlink()
+    """1 回だけ並べて作る時の近道 (プロセスは使い終わったら片付ける)."""
+    with FramePool(ctx, workers) as fp:
+        yield from fp.frames(only)
