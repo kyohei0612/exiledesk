@@ -35,6 +35,12 @@ describe("特殊 MOD のルーン", () => {
     const rows = modListFor(data, r.item).filter((x) => x.group === "rune");
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((x) => x.share > 0)).toBe(true);
+    expect(rows.filter((x) => x.runeJa === "コルの狩り").every((x) => x.socketed)).toBe(true);
+  });
+  it("差す前から付く MOD の一覧にルーンの MOD が全部出る (「○○を差すと」)", () => {
+    const rows = modListFor(data, rare("Knightly Mitts")).filter((x) => x.group === "rune");
+    expect(new Set(rows.map((x) => x.runeJa))).toEqual(new Set(["コルの狩り", "カトラの陰鬱"]));
+    expect(rows.every((x) => x.socketed === false && x.share > 0)).toBe(true);
   });
 });
 

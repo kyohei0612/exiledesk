@@ -10,7 +10,9 @@
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { fillHashes, jaOfMod } from "../htc/mod-text";
 import type { StageItem, StageSide } from "./types";
-import { allMods, effectiveCls, takenFamilies } from "./stage-core";
+import { allMods, effectiveCls, stageRuneIds, takenFamilies } from "./stage-core";
+import { RUNES } from "./stage-runes";
+import { RUNE_BY_ID } from "../../vendor/poe2htc/engine/runes";
 import { TAG_STYLE } from "../mods/tag-ja";
 import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
 import { tierDisplayRanges } from "../mods/stat-scale";
@@ -40,35 +42,65 @@ export interface ListRow {
   /** 今のアイテムに付いている / 同じ系統が付いていて付かない */
   on: boolean;
   blocked: boolean;
+  /** ルーンの特殊 MOD: どのルーンの物か (日本語名) と、今差しているか */
+  runeJa?: string;
+  socketed?: boolean;
 }
 
+/** 特殊 MOD のルーンの日本語名 (エンジンの id → ステージの表。名前の ’ は ' に) */
+function runeJaOf(id: string): string {
+  const en = RUNE_BY_ID.get(id)?.name.replace(/’/g, "'") ?? id;
+  return RUNES[en]?.ja ?? en;
+}
+
+/**
+ * 「このベースに付く MOD」(2026-10-04 オーナー「差したら見えるとかじゃなくて、MOD は全て最初から見える状態がいい、異界とかも含め全部」)。
+ * 普通 / エッセンス / 冒涜 / 異界 (このベースに有る物全部) に加えて、このベースに差せる特殊 MOD のルーンの MOD を全部
+ * 「ルーンの特殊 MOD」に出す。差していないルーンの行は runeJa (「○○を差すと」) 付きで、出やすさはそのルーンを差した時の割合
+ */
 export function modListFor(data: PatchData, item: StageItem): ListRow[] {
-  // 普通の置き場は差した特殊 MOD のルーンの MOD 込み (要望 ㉙)。行の種類は "rune"、出やすさは普通と一緒に引くので一緒に割る
-  const pools = effectiveCls(item).pools as typeof item.cls.pools & { otherworldly?: { prefixes: readonly string[]; suffixes: readonly string[] } };
+  // 普通の置き場は差した特殊 MOD のルーンの MOD 込み (要望 ㉙)。出やすさは普通と一緒に引くので一緒に割る
+  const eff = effectiveCls(item);
+  const pools = eff.pools as typeof item.cls.pools & { otherworldly?: { prefixes: readonly string[]; suffixes: readonly string[] } };
   const onIds = new Set(allMods(item).map((m) => m.modId));
   const taken = takenFamilies(data, item);
+  const socketed = new Set(stageRuneIds(item));
   const out: ListRow[] = [];
+  const rowOf = (m: Mod, side: StageSide, group: ModGroup): ListRow => {
+    const ja = jaOfMod(m);
+    const n = m.tiers.length;
+    // 数値は画面の単位に (1 万分率の 400 → 4%。決まりは services/mods/stat-scale.ts、2026-10-03 に生の値が出ていた)
+    const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillHashes(ja, tierDisplayRanges(t)) }));
+    const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
+    const on = onIds.has(m.id);
+    return {
+      id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...m.tags], tiers, weight,
+      topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked: !on && familyBlocked(m, taken),
+    };
+  };
+  const modsOf = (ids: readonly string[]) => ids.map((id) => data.mods.get(id)).filter((m): m is Mod => !!m);
   const groups: Array<[ModGroup, { prefixes: readonly string[]; suffixes: readonly string[] } | undefined]> = [
     ["normal", pools.normal], ["essence", pools.essence], ["desecrated", pools.desecrated], ["otherworldly", pools.otherworldly],
   ];
   for (const [group, pool] of groups) {
     if (!pool) continue;
     for (const side of ["prefix", "suffix"] as const) {
-      const mods = (side === "prefix" ? pool.prefixes : pool.suffixes).map((id) => data.mods.get(id)).filter((m): m is Mod => !!m);
-      const rows = mods.map((m): ListRow => {
-        const ja = jaOfMod(m);
-        const n = m.tiers.length;
-        // 数値は画面の単位に (1 万分率の 400 → 4%。決まりは services/mods/stat-scale.ts、2026-10-03 に生の値が出ていた)
-        const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillHashes(ja, tierDisplayRanges(t)) }));
-        const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
-        const on = onIds.has(m.id);
-        return {
-          id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...m.tags], tiers, weight,
-          topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked: !on && familyBlocked(m, taken),
-        };
-      });
-      // 割合を普通と一緒に出してから、ルーンの MOD の行を「ルーン」の種類に
-      out.push(...fillShares(rows).map((r) => (group === "normal" && data.mods.get(r.id)?.rune ? { ...r, group: "rune" as const } : r)));
+      const rows = modsOf(side === "prefix" ? pool.prefixes : pool.suffixes).map((m) => rowOf(m, side, group));
+      // 割合を普通と一緒に出してから、差したルーンの MOD の行を「ルーン」の種類に
+      out.push(...fillShares(rows).map((r) => {
+        const rune = group === "normal" ? data.mods.get(r.id)?.rune : undefined;
+        return rune ? { ...r, group: "rune" as const, runeJa: runeJaOf(rune), socketed: true } : r;
+      }));
+    }
+  }
+  // 差していないルーン: そのルーンを差した時の割合 (今の普通の置き場 + そのルーンの MOD で割る)
+  for (const [id, pool] of Object.entries(item.cls.pools.rune ?? {})) {
+    if (socketed.has(id)) continue;
+    for (const side of ["prefix", "suffix"] as const) {
+      const k = side === "prefix" ? "prefixes" : "suffixes";
+      const own = new Set(pool[k]);
+      const rows = modsOf([...pools.normal[k], ...pool[k]]).map((m) => rowOf(m, side, "normal"));
+      out.push(...fillShares(rows).filter((r) => own.has(r.id)).map((r) => ({ ...r, group: "rune" as const, runeJa: runeJaOf(id), socketed: false })));
     }
   }
   return out;

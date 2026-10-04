@@ -28,6 +28,15 @@ import type { StageItem } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
 import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
 import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../services/craft-stage/defence";
+import { socketCapOf } from "../services/craft-stage/stage-runes";
+/**
+ * 手で打つ画面の新品は、熟練工で付けられる数までソケットを開けておく (2026-10-04 オーナー「オーブ刺すのめんどいから、ソケットも初めからデフォでマックス」)。
+ * 手順 JSON の再生 (動画) は手順どおりなので開けない
+ */
+const fullSockets = (it: StageItem): StageItem => {
+  const cap = socketCapOf(it.base, it.cls.category);
+  return cap > (it.sockets ?? 0) ? { ...it, sockets: cap } : it;
+};
 
 const data = shallowRef<PatchData | null>(null);
 const item = shallowRef<StageItem | null>(null);
@@ -250,7 +259,7 @@ export const craftStage = {
     if (!data.value || log.value.length || replay.value) return;
     const next = [...startMods.value, f];
     try {
-      item.value = startFrom(data.value, base.value, itemLevel.value, { mods: next }, seed.value - 1);
+      item.value = fullSockets(startFrom(data.value, base.value, itemLevel.value, { mods: next }, seed.value - 1));
       startMods.value = next;
     } catch (e) {
       miss.value = { n: (miss.value?.n ?? 0) + 1, reason: e instanceof Error ? e.message.replace(/^始めの状態の MOD \d+ つ目: /, "") : String(e) };
@@ -261,7 +270,7 @@ export const craftStage = {
     if (!data.value) return;
     try {
       startMods.value = [];
-      item.value = freshItem(data.value, base.value, itemLevel.value);
+      item.value = fullSockets(freshItem(data.value, base.value, itemLevel.value));
       log.value = [];
       omens.value = [];
       seed.value = newSeed();

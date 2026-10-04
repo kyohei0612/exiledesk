@@ -133,6 +133,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <span class="mr-0.5 text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
                     <span v-for="t in shownTags(r.tags)" :key="t" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
+                    <span v-if="r.runeJa" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="r.socketed ? 'bg-amber-500/30 text-amber-100' : 'bg-white/10 text-amber-200/80'" :title="r.socketed ? 'はめているルーンの MOD (重みは仮定)' : 'このルーンを差すと付くようになる (出やすさは差した時の割合、重みは仮定)'">{{ r.socketed ? r.runeJa : `${r.runeJa}を差すと` }}</span>
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
                     <span class="w-11 text-right text-[13px] font-bold text-amber-100">{{ pct(r.share) }}</span>
