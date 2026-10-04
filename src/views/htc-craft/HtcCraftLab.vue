@@ -52,22 +52,7 @@ watchEffect(() => pk.useData(c.data.value));
 // 表示してるから直してくれ」)。09-23 に開発ビルドだけ見本を並べて始めていたのをやめた。見本は入口の先のボタンで選ぶ。
 const DEV = import.meta.env.DEV;
 const door = ref<"none" | "paste" | "base">("none");
-/** 前回貼った物 (この端末で覚える)。入口に「前回の続きから」を出す */
-const LAST_PASTE_KEY = "exiledesk.htc.lastPaste";
-const lastPaste = ref<string | null>(null);
-try { lastPaste.value = localStorage.getItem(LAST_PASTE_KEY); } catch { /* 無し */ }
-const lastPasteLabel = computed(() => {
-  const t = lastPaste.value ?? "";
-  const lines = t.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
-  return lines[2] ?? lines[1] ?? lines[0] ?? "";
-});
-function resumeLast(): void {
-  if (!lastPaste.value) return;
-  door.value = "paste";
-  text.value = lastPaste.value;
-  c.resumeFlow.value = true;
-  void reread(lastPaste.value);
-}
+// 入口の「前回の続きから」は 2026-10-04 に外した (オーナー「前回の云々はいらん、削除でおｋ」)
 const text = ref("");
 const picked = ref<string | null>(null);
 
@@ -85,7 +70,6 @@ async function reread(t: string): Promise<void> {
   await c.run(t);
   if (c.base.value) {
     inputOpen.value = false;
-    try { localStorage.setItem(LAST_PASTE_KEY, t); lastPaste.value = t; } catch { /* 無視 */ }
   }
 }
 function pick(id: string): void {
@@ -201,13 +185,7 @@ const inputSummary = computed(() => {
     </p>
 
     <!-- 入口。開いた時はここだけ。何も計算していない -->
-    <div v-if="door === 'none'" class="mb-4 grid gap-3" :class="lastPaste ? 'sm:grid-cols-3' : 'sm:grid-cols-2'">
-      <!-- 前回の続き: 貼り直し → おｋ → 探す (キャッシュ) → 作り方 まで 1 押しで -->
-      <!-- 入口の 3 枚は同じ枠 (.card) で、前回の続きだけ金の枠 (2026-10-03 見た目をそろえた) -->
-      <button v-if="lastPaste" type="button" class="card border-amber-500/40 bg-amber-500/10 p-4 text-left hover:border-amber-400" @click="resumeLast()">
-        <div class="mb-1 text-[13px] font-bold text-amber-300">前回の続きから</div>
-        <div class="note">{{ lastPasteLabel }} — 作り方まで自動で進む</div>
-      </button>
+    <div v-if="door === 'none'" class="mb-4 grid gap-3 sm:grid-cols-2">
       <button type="button" class="card p-4 text-left hover:border-amber-400" @click="door = 'paste'">
         <div class="mb-1 text-[13px] font-bold text-amber-300">コピーを貼る</div>
         <div class="note">poe.ninja やゲームから Ctrl+C した物をそのまま貼る。<b>既にある物を真似る</b>時。</div>
