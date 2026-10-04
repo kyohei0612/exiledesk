@@ -26,3 +26,13 @@ describe("白のベースから", () => {
     expect(r.perDone).toBeGreaterThan(5);
   });
 });
+
+describe("白のベースから固定 (5 個で 1 個、フラクチャーは必ず成功)", () => {
+  it("変成 → 増強 → 消去 → 王者 → 固定 の後に本線", () => {
+    const tg = [{ modId: LIFE, minTierIndex: 0 }];
+    const nodes = autoTree({ data, prices, targets: tg, fixedIds: [LIFE], qualityTag: null, limits: { prefix: 3, suffix: 3 }, startCount: { prefix: 1, suffix: 0 }, startLoose: { prefix: 0, suffix: 0 }, chaosOk: false, magicSpam: { tier: "perfect", targets: tg }, whiteFracture: LIFE } as never);
+    expect(nodes.slice(0, 5).map((n) => n.action?.kind)).toEqual(["transmute", "augment", "annul", "regal", "fracture"]);
+    const r = simulateTree({ ctx: { ...ctx, prices: { ...prices, currency: { ...prices.currency, desecrate: 1, fracture: 10 } } as never }, start, nodes, runs: 300 });
+    expect(r.pDone).toBe(1);
+  });
+});

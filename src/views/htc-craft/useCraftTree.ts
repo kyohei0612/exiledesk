@@ -24,7 +24,8 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
   const ctx = computed(() => simCtxOf(c));
 
   /** 出発点 ([[sim-setup.ts]])。固定済みで始める狙いは始め方で選んだ物 */
-  // 白のベースから (2026-10-04) は何も付いていない形から (変成・増強 → 王者)
+  // 白のベースからは何も付いていない形から (マジックの段 → 王者 → フラクチャー (必ず成功) → 残り。2026-10-04 オーナー「2000 回転回す時は
+  // 絶対に成功するのはフラクチャーのとこのみ」)。他は固定した後から
   const start = computed<SimState>(() => (c.treeRoute.value === "white" ? { slots: [], breach: false } : startStateOf(c, c.fracturedTargets.value.map((t) => t.modId))));
 
   /** 手の並び。最初は空の手 1 つだけ (オーナー:「最初から入力はしない」) */
@@ -85,6 +86,10 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
       } else if (a?.kind === "magicEssence") {
         // 変成の 1 つ (外れ) + エッセンスの狙い
         hit = { ...s, slots: [...s.slots, { modId: a.modId, side: sideOf(a.modId), fixed: false, crafted: true }, { modId: null, side: sideOf(a.modId) === "prefix" ? "suffix" : "prefix", fixed: false }] };
+      } else if (a?.kind === "fracture") {
+        // 固定済みのベースを買った時と同じ形 (固定 1 + 外れ 1)
+        const tg = s.slots.find((x) => x.modId === a.modId);
+        hit = tg ? { ...s, magic: false, slots: [{ ...tg, fixed: true }, { modId: null, side: tg.side === "prefix" ? "suffix" : "prefix", fixed: false }] } : s;
       } else if (a?.kind === "transmute" || a?.kind === "augment" || a?.kind === "regal") {
         // ○ = 狙いが付いた / × = 外れが付いた (王者は狙いの無い手なので外れが 1 つ付いた形)
         const t = { ...s, magic: a.kind !== "regal" };

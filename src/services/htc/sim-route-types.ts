@@ -43,6 +43,11 @@ export type SimAction =
   | { kind: "augment"; tier: "augment" | "augment_greater" | "augment_perfect" }
   | { kind: "regal"; tier: "regal" | "regal_greater" | "regal_perfect" }
   /**
+   * 白のベースからの道の、高貴 (普通の MOD 3 つに) → 冒涜 (当て馬) → フラクチャーのオーブ で狙いを固定する手 (2026-10-04)。
+   * **必ず成功する前提** (オーナー「2000 回転回す時は絶対に成功するのはフラクチャーのとこのみ」。5 個で 1 個できる前提で、外れ 4 個分は初動に入れる)
+   */
+  | { kind: "fracture"; modId: string }
+  /**
    * 特別な MOD のルーン (コルの狩り 等) をここで差す (2026-10-03、その 3 ソケットの時機)。差す前は ctx.rawCls (ルーンの置き場無し) で引き、
    * 差した後はルーンの置き場込み (ctx.cls)。ルーンと熟練工の代 (ctx.socketCost) はこの手で払う (この手が無いツリーは今まで通り最初に払う)
    */
@@ -181,7 +186,7 @@ export interface SimResult {
  * 確定の手 (必ず付く・必ず消える)。× の行き先が未設定でも止めずに○の行き先へ進む
  * (オーナー 2026-09-24:「一応確定やから、そこの手でバツはデフォで入力しなかったら無視するように」)
  */
-export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality", "abyss", "magicEssence", "socket"]);
+export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality", "abyss", "magicEssence", "socket", "fracture"]);
 
 /** 側のお告げを使う手か (高貴・消去・カオスは側を選んだ時、エッセンス・ブリーチ・冒涜はいつも)。画面の「お告げ不要」の出し分け用 */
 export function hasSideOmen(a: SimAction | null): boolean {

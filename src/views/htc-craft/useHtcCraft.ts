@@ -61,8 +61,8 @@ export interface RouteOptions {
   /** cost = null は出品なし・足りない。link = その検索 (0 件でも条件を取引所で見られる。2026-10-04 オーナー「どんな条件で検索してヒットなかったのか知りたい」) */
   fixed: { cost: number | null; base?: number | null; craft?: number | null; label: string; link: { text: string; url: string } | null } | null;
   self: { cost: number | null; base?: number | null; craft?: number | null; label: string; link: { text: string; url: string } | null } | null;
-  /** 白のベースから (変成・増強 → 王者)。値段は自動で組んで回すまで分からない。樹 MOD がある時は出さない */
-  white: { label: string } | null;
+  /** 白のベースから (変成・増強 → 王者 → 冒涜 → フラクチャー、5 個で 1 個)。樹 MOD がある時は出さない */
+  white: { cost: number | null; base?: number | null; craft?: number | null; label: string; link: { text: string; url: string } | null } | null;
   /** ② で安い方 */
   recommended: "fixed" | "self" | null;
 }

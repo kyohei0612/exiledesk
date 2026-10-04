@@ -27,6 +27,8 @@ import { marketStore } from "../../state/market-store";
 import { startRows, type StartRow } from "./start-rows";
 import { startKindOf } from "./start-kind";
 import { craftEstimate, estimateSettled, spawnChance } from "./craft-estimate";
+import { FRACTURE_BATCH, whitePrep } from "./white-prep";
+import { simCtxOf } from "./sim-setup";
 import { grantedSkillFor, zeroStart } from "./craft-settings";
 import type { TreeResult } from "./useTreeSearch";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -53,8 +55,8 @@ export interface StartCandidate {
 /** 固定不要の時の 1 本の結果 (最安 1 件、値段は高貴換算) */
 type SideResult = { kind: "side"; price: number | null; total: number; url: string | null; error?: string };
 
-/** 自分でフラクチャーする道の行 ([[start-rows.ts]] の 固定無しを買って固定)。他 (固定済み・固定しない・買う) は fixed */
-const SELF_ROUTES = new Set(["loose"]);
+/** 行 → 作り方の始め方: loose (固定無しを買って固定) = self、white (白のベースから固定) = white、他 (固定済み・固定しない・買う) = fixed */
+const routeOf = (id: string): "fixed" | "self" | "white" => (id === "loose" ? "self" : id === "white" ? "white" : "fixed");
 
 export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () => Promise<void>) {
   const kind = computed(() => startKindOf(c));
@@ -90,6 +92,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
    * 固定済みを買う (3 本の時) / 買う (固定不要の時) の出品ゼロに効く
    */
   const manual = ref<Record<string, number | null>>({});
+  /** 白のベース (ノーマル) の最安 1 件 (高貴建て) */
+  const whiteBase = shallowRef<{ price: number | null; total: number; url: string | null; error?: string } | null>(null);
 
   // 解析し直したら、チェックを戻す
   watch(() => [c.item.value, c.base.value, kind.value.kind], () => {
@@ -107,6 +111,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     results.value = {};
     picked.value = null;
     manual.value = {};
+    whiteBase.value = null;
     c.treeRoute.value = null;
   }, { immediate: true });
 
@@ -132,6 +137,20 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       // 武器・防具は規格外 (ルーンソケット 2 つ) のベースで作る (オーナー 2026-09-26)
       ...(c.socketsMin?.value != null ? { socketsMin: c.socketsMin.value } : {}),
     });
+  }
+  async function searchWhite(): Promise<{ price: number | null; total: number; url: string | null; error?: string } | null> {
+    const baseType = c.item.value?.baseType ?? zeroStart.value.baseType;
+    if (!baseType) return null;
+    const q = buildSpecQuery({
+      baseType,
+      rarity: "normal",
+      ilvlMin: c.item.value?.itemLevel ?? zeroStart.value.itemLevel,
+      noSanctified: true,
+      ...(c.socketsMin?.value != null ? { socketsMin: c.socketsMin.value } : {}),
+    });
+    const r = await autoPriceCached(marketStore.tradeLeague.value, q, marketStore.rates.value, 1);
+    if (!r) return { price: null, total: 0, url: null, error: tradeAuto.lastError.value ?? "取れませんでした" };
+    return { price: r.minExalted ?? null, total: r.total, url: r.searchUrl || null };
   }
   async function searchSide(modIds: readonly string[]): Promise<SideResult | null> {
     const q = sideQuery(modIds);
@@ -160,7 +179,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     try {
       // 使う信号の数 (候補ごとに 2 本、分けて買う形は 1 本 + 完成品 2 本) で、途中で制限にかからず回り切れるまで待つ
       c.stage.value = "② 取引所の枠が空くのを待っています (途中で制限にかからず回り切れるように。残りは下のタイマー)";
-      const n = keys.length * (kind.value.kind === "separate" ? 1 : 2) + 2;
+      const n = keys.length * (kind.value.kind === "separate" ? 1 : 2) + 3;
       if (!(await tradeLock.reserve("craft", n)) || !alive()) return;
       // 候補ごとに 2 本 (固定済み / 固定無し) を全部取る (オーナー 2026-09-26:「そっちでやろう」。
       // 固定済みだけにすると、固定済みは高いが固定無しなら安い候補を見逃していた)。1 回の貼り付けで最大 9 本 + 完成品。
@@ -178,6 +197,11 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
         if (!alive()) return;
         results.value = { ...results.value, [cand.key]: r ?? "error" };
         pending.value = pending.value.filter((k) => k !== cand.key);
+      }
+      // 白のベースの最安 1 件 (白のベースから固定する道。樹 MOD がある時は要らない)
+      if (alive() && !c.dropOnly.value.length && kind.value.kind === "none") {
+        c.stage.value = "② 白のベースの値段を探しています";
+        whiteBase.value = await searchWhite().catch(() => ({ price: null, total: 0, url: null, error: "取れませんでした" }));
       }
       current.value = null;
       c.stage.value = "③ 完成品を探しています…";
@@ -209,6 +233,28 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       note: `買う ${c.money(price)}${res.price == null ? " (手で入れた値段)" : ""}${est != null ? ` + 作る見込み ${c.money(est.value)} (${est.basis})` : ""}`,
     };
   }
+  /**
+   * 白のベースから固定する行 (2026-10-04 オーナー「白ベースでも 5 個買って 1 つできるまでの費用」「最初の増強・消去スパムは 1 MOD でも狙った MOD が
+   * 出たら止めてフラクチャーまでの道」)。5 個とも 変成・増強 → 王者 → 高貴 → 冒涜 → フラクチャー まで進め、1 個だけ成功する前提 ([[white-prep.ts]])。
+   * 樹 MOD (創生の樹からしか出ない) がある時・固定する MOD が普通の MOD 1 つでない時は出さない
+   */
+  function whiteRows(modIds: readonly string[]): StartRow[] {
+    if (c.dropOnly.value.length || modIds.length !== 1) return [];
+    const wb = whiteBase.value;
+    if (!wb) return [];
+    const link = wb.url ? { text: `${wb.total} 件`, url: wb.url } : null;
+    const label = `白のベースを ${FRACTURE_BATCH} 個買って固定`;
+    if (wb.error) return [{ id: "white", label, cost: null, note: `取れず: ${wb.error}`, link, manual: false, status: "取れず" }];
+    if (wb.price == null) return [{ id: "white", label, cost: null, note: "白のベースの出品なし", link, manual: false, status: "出品なし" }];
+    const ctx = simCtxOf(c);
+    const t = c.targets.value.find((x) => x.modId === modIds[0]);
+    const prep = ctx && t ? whitePrep(ctx, t.modId, t.minTierIndex ?? 0) : null;
+    if (!prep) return [{ id: "white", label, cost: null, note: "白のベースから狙いの段が付かない・相場が無い", link, manual: false, status: "-" }];
+    return [{
+      id: "white", label, cost: FRACTURE_BATCH * (wb.price + prep.prep), basePrice: wb.price, treeStart: wb.price + (FRACTURE_BATCH - 1) * (wb.price + prep.prep), link, manual: false, status: "-",
+      note: `白のベース 1 個 ${c.money(wb.price)} × ${FRACTURE_BATCH} 個。1 個ごとに 変成・増強${prep.tier ? ` (${prep.tier})` : ""} で狙いが付くまで (平均 ${c.money(prep.magic)}) → 王者 → 高貴 → 冒涜 → フラクチャー、${FRACTURE_BATCH} 個で 1 個固定`,
+    }];
+  }
   /** 探した候補ごとの行と一番安い物。安い順 (取れていない物は後ろ) */
   const rows = computed(() => candidates.value
     .filter((x) => checked.value.includes(x.key) || results.value[x.key])
@@ -217,7 +263,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       const side = res && res !== "error" && "kind" in res ? res : null;
       const m = manual.value[x.key] ?? null;
       const sub0: StartRow[] = side ? [sideRow(side, x.modIds, m)]
-        : res && res !== "error" ? startRows(res as TreeResult, div.value, { busy: false, manualDivine: m }) : [];
+        : res && res !== "error" ? [...startRows(res as TreeResult, div.value, { busy: false, manualDivine: m }), ...whiteRows(x.modIds)] : [];
       // 行ごとの合計 = 初動 + 作る見込み (固定しない行はその MOD を触らない扱いの見込み)。一番安い行はこの合計で選ぶ
       // (2026-09-25: 初動だけで選んでいて、22 神の「固定しない」素材が 3 万神の作り方になっていた)
       const est = craftEstimate(c, x.modIds), estKeep = craftEstimate(c, [], { keepIds: x.modIds });
@@ -228,7 +274,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       }).sort((a, b) => (a.total ?? Infinity) - (b.total ?? Infinity));
       // 作り方の始め方を選んだら (固定済みを買う / 自分でフラクチャー)、その道の行だけから選ぶ (2026-10-04)
       const route = c.treeRoute.value;
-      const pool = route && route !== "white" ? sub.filter((y) => SELF_ROUTES.has(y.id) === (route === "self")) : sub;
+      const pool = route ? sub.filter((y) => routeOf(y.id) === route) : sub;
       const best = pool.find((y) => y.total != null) ?? pool.find((y) => y.cost != null) ?? null;
       /** 完成品の比べに渡す初動 (買う値段だけ。作る見込みは向こうで足す) */
       const startCost = side ? side.price ?? (m != null && m > 0 ? m * div.value : null) : best?.cost ?? null;
@@ -237,15 +283,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     .sort((a, b) => (a.best?.total ?? a.best?.cost ?? Infinity) - (b.best?.total ?? b.best?.cost ?? Infinity)));
   const chosen = computed(() => rows.value.find((x) => x.key === picked.value && x.best) ?? rows.value.find((x) => x.best) ?? null);
   // 始め方を選び直したら、その道で一番安い候補に
-  watch(() => c.treeRoute.value, (r) => {
-    picked.value = rows.value.find((x) => x.best)?.key ?? null;
-    // 白のベースから: 固定・触らない狙いは無し、初動 (白のベース代) は設定で入れる
-    if (r === "white") {
-      c.startKeep.value = [];
-      if (c.fracturedTargets.value.length) c.setFractured([]);
-      c.startPrice.value = null;
-    }
-  });
+  watch(() => c.treeRoute.value, () => { picked.value = rows.value.find((x) => x.best)?.key ?? null; });
 
   /**
    * 3 つの道を一気に比べる (オーナー 2026-09-25:「結局買うのがいいのか、途中からクラフトがいいのか、自分でベース買って
@@ -256,12 +294,12 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     // base = ベース (素材) の値段、craft = クラフト費用 (作る見込み)。cost = 合計 (2026-10-04 オーナー「ベースの値段 + クラフト費用 = 合計 みたいな書き方」)。
     // 「買う + 残りを作る」(固定不要) は 1 行に足してあるので分けない (null)
     type Way = { cost: number; base: number | null; craft: number | null; label: string; url: string | null };
-    const out: { fixed: Way | null; self: Way | null } = { fixed: null, self: null };
+    const out: { fixed: Way | null; self: Way | null; white: Way | null } = { fixed: null, self: null, white: null };
     for (const x of rows.value) {
       for (const r of x.sub) {
         if (r.total == null) continue;
         const total = r.total;
-        const which = r.id === "fractured" || r.id === "buy" || r.id === "keep" ? "fixed" : "self";
+        const which = routeOf(r.id);
         const cur = out[which];
         const split = r.id !== "buy" && r.cost != null;
         const base = split ? (r.basePrice ?? r.cost) : null;
@@ -280,8 +318,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   watch(settled, (ok) => { if (ok && picked.value == null) picked.value = rows.value.find((x) => x.best)?.key ?? null; });
   // 選んだ候補の固定済みにして、ツリーの開始の指輪と確認用の表 (treeResult) をそれに合わせる
   watch(chosen, async (x) => {
-    if (c.treeRoute.value === "white") return;
-    c.startPrice.value = x?.startCost ?? null;
+    c.startPrice.value = x?.best?.treeStart ?? x?.startCost ?? null;
     if (!x || x.res === "error" || !x.res) return;
     // 「固定無しを買ってそのまま作る」なら固定ではなく触らない狙い (2026-09-25: 固定扱いにしていて、消去で巻き込む形を
     // 確定と見ていた)

@@ -116,7 +116,10 @@ export function simulateTree(inp: {
    * 王者へ戻って「マジックにだけ」で止まっていた)。消えた狙いはレアの段の手で付け直す
    */
   const magicStageDone = (st: SimState, x: SimNode): boolean => {
-    const k = x.action?.kind;
+    const a = x.action;
+    const k = a?.kind;
+    // 固定する手 (白のベースから) は、固定した後は戻らない
+    if (a?.kind === "fracture") return st.slots.some((y) => y.modId === a.modId && y.fixed);
     return (k === "transmute" || k === "augment" || k === "regal") && !st.magic && (st.slots.length > 0 || st.breach);
   };
   const autoNext = (st: SimState, cur: number): string | "done" | null => {

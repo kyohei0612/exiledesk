@@ -110,7 +110,9 @@ watch([() => c.phase.value, () => c.diagBusy.value, () => ss.threeWay.value, () 
   const tw = ss.threeWay.value;
   const k = ss.kind.value.kind;
   // 白のベースから は樹 MOD (創生の樹からしか出ない) が無い時だけ
-  const white = !c.dropOnly.value.length && k !== "unsafe" ? { label: "白のベース代は設定の「初動」に入れる。変成・増強 → 王者 → 残りを自動クラフト" } : null;
+  const white = c.dropOnly.value.length || k === "unsafe" ? null
+    : tw.white ? { cost: tw.white.cost, base: tw.white.base, craft: tw.white.craft, label: tw.white.label, link: tw.white.url ? { text: "取引所で見る", url: tw.white.url } : null }
+      : { cost: null, label: "白のベースから固定できない (出品なし・段が届かない)", link: null };
   if (k === "separate" || k === "unsafe" || (!tw.fixed && !tw.self && !white)) {
     c.routeOptions.value = null;
     if (c.treeRoute.value == null) c.treeRoute.value = "fixed";

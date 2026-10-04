@@ -80,6 +80,8 @@ export interface AutoTreeInput {
    * (2026-10-04 オーナー「変成・増強 (パーフェクト) 打ってからダメなら消去スパム」「1 つ揃えば王者」)。tier = 変成・増強の等級、targets = マジックで狙う物
    */
   magicSpam?: { tier: "plain" | "greater" | "perfect"; targets: readonly TierTarget[] } | null;
+  /** 白のベースから: 王者の後に 高貴 → 冒涜 → フラクチャー でこの狙いを固定する手を入れる (必ず成功する前提。2026-10-04) */
+  whiteFracture?: string | null;
   /** 持てるクラフト MOD の数 (アストリッドの創造性で 2)。深淵の印の輪は 2 が要る */
   craftedLimit?: number;
   /** 勢力のお告げ (黒血・リージュ・君主) を使うか。省くと使える時は使う (武器・装飾品の勢力の冒涜 MOD)。false = 使わない (比べる用) */

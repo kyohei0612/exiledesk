@@ -16,6 +16,7 @@ import ItemCard from "./ItemCard.vue";
 import SocketPicker from "./SocketPicker.vue";
 import { cardOfState, cardOfTarget } from "./item-card-data";
 import { useCraftTree } from "./useCraftTree";
+import { startStateOf } from "./sim-setup";
 import { TREE_PRESETS } from "./tree-presets";
 import { recordHistory } from "../../services/history";
 import { openExternal } from "../../services/trade2/open-external";
@@ -66,7 +67,7 @@ const ROUTE_JA = { fixed: "固定済みを買って途中から作る", self: "�
 const ROUTE_SUB = {
   fixed: "固定済み (フラクチャー済み) の素材を買って、残りを自動クラフト",
   self: "固定無しを買って自分で固定 (4 MOD なら深淵のエッセンス → 冒涜、3 MOD なら冒涜 → フラクチャーのオーブ 1/3) してから、残りを自動クラフト",
-  white: "変成のオーブ・増強のオーブ (完全) → 外れなら消去のオーブで消して増強し直す → 狙いが 1 つ付いたら王者のオーブでレアに → 残りを自動クラフト",
+  white: "白のベースを 5 個。変成のオーブ・増強のオーブ (外れなら消去のオーブで消して増強し直す) で狙いが 1 つ付いたら 王者のオーブ → 高貴 → 冒涜 → フラクチャー。5 個で 1 個固定した後を自動クラフト",
 } as const;
 const routeCards = computed(() => {
   const o = c.routeOptions.value;
@@ -75,13 +76,12 @@ const routeCards = computed(() => {
     key: k,
     name: ROUTE_JA[k],
     sub: ROUTE_SUB[k],
-    cost: k === "white" ? null : (o[k]?.cost ?? null),
-    base: k === "white" ? null : (o[k]?.base ?? null),
-    craft: k === "white" ? null : (o[k]?.craft ?? null),
-    label: k === "white" ? (o.white?.label ?? "") : (o[k]?.label ?? "出品が足りない"),
-    link: k === "white" ? null : (o[k]?.link ?? null),
-    // 白のベースは値段が回すまで分からないので選べる (他は値段が無ければ選べない)
-    disabled: k !== "white" && o[k]?.cost == null,
+    cost: o[k]?.cost ?? null,
+    base: o[k]?.base ?? null,
+    craft: o[k]?.craft ?? null,
+    label: o[k]?.label ?? "出品が足りない",
+    link: o[k]?.link ?? null,
+    disabled: o[k]?.cost == null,
     recommended: o.recommended === k,
   }));
 });
@@ -109,7 +109,11 @@ async function loadAuto(): Promise<void> {
     await c.refreshPrices();
     const ctx = t.ctx.value;
     if (!ctx) return;
-    const inp = autoInputFor(c, ctx, t.start.value, c.fracturedTargets.value.map((x) => x.modId));
+    const fixedIds = c.fracturedTargets.value.map((x) => x.modId);
+    // 白のベースから: 残りの組み方は固定した後の形で決め、回すのは何も付いていない形から (マジックの段 → 王者 → フラクチャー → 残り)
+    const white = c.treeRoute.value === "white" && fixedIds.length === 1;
+    const inp0 = autoInputFor(c, ctx, white ? startStateOf(c, fixedIds) : t.start.value, fixedIds);
+    const inp = inp0 && white ? { ...inp0, whiteFracture: fixedIds[0]! } : inp0;
     if (!inp) return;
     const got = await pickAutoTree(inp, ctx, t.start.value);
     plan.value = got.plan;
@@ -233,7 +237,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
         </p>
         <p class="mt-0.5 text-[11px] opacity-60">{{ r.sub }}</p>
         <p v-if="r.cost != null && r.base != null && r.craft != null" class="mt-1.5 text-[11px] tabular-nums opacity-80">ベース {{ c.money(r.base) }} + クラフト {{ c.money(r.craft) }} =</p>
-        <p class="text-lg font-bold" :class="[r.recommended ? 'text-emerald-300' : '', r.base == null ? 'mt-1.5' : '']">{{ r.cost != null ? c.money(r.cost) : r.key === "white" ? "選ぶと回して出す" : "—" }}</p>
+        <p class="text-lg font-bold" :class="[r.recommended ? 'text-emerald-300' : '', r.base == null ? 'mt-1.5' : '']">{{ r.cost != null ? c.money(r.cost) : "—" }}</p>
         <p class="text-[11px] opacity-70">{{ r.label }}</p>
       </button>
       <!-- 検索の条件を取引所で見る (0 件でも。2026-10-04 オーナー「どんな条件で検索してヒットなかったのか知りたい」) -->

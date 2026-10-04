@@ -471,8 +471,11 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
     // 増強で 2 つになって外れなら消去 (マジックの 2 つから 1 つ)、消したらもう一度増強
     au.onHit = rg.id; au.onMiss = an.id;
     an.onHit = au.id; an.onMiss = au.id;
-    rg.onHit = main[0]?.id ?? "done"; rg.onMiss = rg.onHit;
-    return { nodes: [tr, au, an, rg, ...main, ...extra], catalystOff };
+    const next = main[0]?.id ?? "done";
+    // 白のベースから: 王者の後に固定する手 (必ず成功)
+    const fr: SimNode | null = inp.whiteFracture ? { ...base, id: id(), action: { kind: "fracture", modId: inp.whiteFracture }, targets: [], keep: [], need: 1, onHit: next, onMiss: next } : null;
+    rg.onHit = fr ? fr.id : next; rg.onMiss = rg.onHit;
+    return { nodes: [tr, au, an, rg, ...(fr ? [fr] : []), ...main, ...extra], catalystOff };
   }
   return { nodes: [...main, ...extra], catalystOff };
 }

@@ -40,7 +40,7 @@ function onFin(): void {
           </button>
         </p>
         <!-- 3 つの道。一番安い物を強調 -->
-        <div v-if="threeWay.length" class="mb-2 grid grid-cols-3 gap-2">
+        <div v-if="threeWay.length" class="mb-2 grid grid-cols-4 gap-2">
           <div v-for="w in threeWay" :key="w.key" class="rounded-lg p-2" :class="w.best ? 'bg-emerald-500/15 ring-1 ring-emerald-400/60 shadow-[0_0_14px_rgba(52,211,153,0.25)]' : 'bg-black/30'">
             <p class="text-[11px] opacity-70">{{ w.name }}</p>
             <!-- ベース + クラフト = 合計 (オーナー 2026-10-04「ベースの値段 + クラフト費用 = 合計 みたいな書き方しないとややこしい」) -->

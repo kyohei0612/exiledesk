@@ -174,6 +174,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
       case "transmute": return s.slots.length || s.breach || s.magic ? "白のベースにだけ" : null;
       case "augment": return !s.magic ? "マジックにだけ (変成の後)" : SIDES.some((x) => room(s, x)) ? null : "足す枠が無い (マジックはプレ 1・サフィ 1)";
       case "regal": return s.magic ? null : "マジックにだけ (変成の後)";
+      case "fracture": return s.magic ? "レアにだけ (王者の後)" : has(s, a.modId) ? null : "固定する狙いが付いていない";
       case "socket": return s.socketed === false ? null : "もう差してある";
       case "abyss":
         if (craftedFull(s)) return `${craftedMsg()} (エッセンスの MOD が付いている)`;
@@ -242,6 +243,8 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
       case "abyss": return cur(abyssKey) + (need ? cur(OMEN.crystallisation[a.side]) : 0);
       case "magicEssence": return cur("transmute") + cur(a.key);
       case "transmute": case "augment": case "regal": return cur(a.tier);
+      // 高貴 1 回 (普通の MOD 3 つに) + 冒涜 (当て馬) + フラクチャーのオーブ
+      case "fracture": return cur("exalt") + cur("desecrate") + cur("fracture");
       case "socket": return ctx.socketCost ?? 0;
       // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
       // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
@@ -384,6 +387,14 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
       case "regal": {
         const t: SimState = { ...s, magic: false };
         return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), FLOOR[a.tier]!, null, 20)));
+      }
+      // 狙いを固定済みに (必ず成功)。その後は固定済みのベースを買った時と同じ形 (固定 1 + 外れ 1) から作る (オーナー「1 発で付いたと仮定してスタート」。
+      // マジック・王者・高貴・冒涜で付いた外れを残すと、後の手が想定していない満杯の側で冒涜と光を何百回も回していた)
+      case "fracture": {
+        const t = s.slots.find((x) => x.modId === a.modId);
+        if (!t) return s;
+        const other: Side = t.side === "prefix" ? "suffix" : "prefix";
+        return { ...s, magic: false, slots: [{ ...t, fixed: true }, { modId: null, side: other, fixed: false }] };
       }
       case "magicEssence": {
         // エッセンスの MOD + 変成で付いた 1 つ (外れ、狙いなら狙い。エッセンスと同じ系統は出ない = 先に置いてから引く)

@@ -8,6 +8,7 @@
  *   - 取れるまでは「取得中…」(busy) / 「まだ」
  */
 import type { TreeResult } from "./useTreeSearch";
+import { FRACTURE_BATCH } from "./white-prep";
 
 export interface StartRow {
   id: string;
@@ -27,6 +28,11 @@ export interface StartRow {
    * 「複数買って作るならそれはクラフト費用として乗せるべき」)。無ければ cost をそのままベースに
    */
   basePrice?: number | null;
+  /**
+   * 作り方のツリーに入れる初動 (無ければ cost)。白のベースから は 1 個分のベース + 外れ 4 個分 (ベース + 固定までの平均)。
+   * 当たりの 1 個のマジックの段とフラクチャーはツリーの中で回す (2026-10-04)
+   */
+  treeStart?: number | null;
 }
 
 /** r = 3 本の結果 (まだなら null)。div = 神の値段 (高貴)。manualDivine = 手で入れた固定済みの値段 (神) */
@@ -53,17 +59,19 @@ export function startRows(r: TreeResult | null, div: number, opts: { busy: boole
     if (err) { rows.push({ id: key, label, cost: null, note: `取れず: ${err}`, link: null, manual: false, status: "取れず" }); continue; }
     const b = r[key];
     const total = r.found.find((x) => x.key === key)?.total ?? 0;
-    // 初動は平均 (安い物から 1 個ずつ試して、当たったら止める。外れ続けたら固定済みを買う)。2026-10-04 まで 85% に届く個数をまとめて買う額で、
-    // オーナー「ベースに 161 神もかかんのか、24 神でしょ」。ベースは 1 個分、2 個目以降と固定の代 (オーブ・深淵のエッセンス・冒涜) はクラフト費用に
+    // 5 個買って 5 個ともフラクチャーまで進め、1 個だけ成功する前提 (2026-10-04 オーナー「5 個を基本としよう。必ず 5 でスタートして 1 個作れると仮定」
+    // 「MOD 付きの奴を買うのも同じで、4 つは失敗する費用 (ベースとフラクチャー代) をクラフト費用に入れて、1 つはフラクチャー成功した時のそれ以降を
+    // 自動クラフトで回そう」)。安い順に 5 件の「1 回分」(値段 + 固定までの代) の合計。ベースは 1 個分、残りはクラフト費用に見せる
     const route = r.routes.find((x) => x.key === key);
-    if (!route || r.loosePrice == null) {
-      rows.push({ id: key, label, cost: null, link: linkOf(key), manual: false, status: "-", note: `出品が足りない (${total} 件)` });
+    const tries = route ? [...route.decision.order, ...route.decision.skipped].filter((x) => x.how !== "buy").sort((a, z) => a.perTry - z.perTry).slice(0, FRACTURE_BATCH) : [];
+    if (tries.length < FRACTURE_BATCH) {
+      rows.push({ id: key, label, cost: null, link: linkOf(key), manual: false, status: "-", note: `出品が足りない (${total} 件、${FRACTURE_BATCH} 個要る)` });
       continue;
     }
-    const s = route.summary;
+    void b;
     rows.push({
-      id: key, label, cost: s.expected * div, basePrice: r.loosePrice * div, link: linkOf(key), manual: false, status: "-",
-      note: `1 個 ${r.loosePrice.toFixed(1)} 神〜 × 平均 ${s.avgItems.toFixed(1)} 個で 1 個固定 (外れると別の MOD が固定されて使えない)${b ? `。85% なら ${b.count} 個` : ""}`,
+      id: key, label, cost: tries.reduce((a, x) => a + x.perTry, 0) * div, basePrice: tries[0]!.listing.price * div, link: linkOf(key), manual: false, status: "-",
+      note: `${FRACTURE_BATCH} 個買って 5 個ともフラクチャーまで進め、1 個固定できる前提 (1 個 ${tries[0]!.listing.price.toFixed(1)} 神〜。外れ 4 個の素材代と固定の代はクラフト費用に)`,
     });
   }
   return rows.sort((a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity));

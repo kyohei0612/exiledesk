@@ -58,11 +58,15 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   // 変成 → エッセンス の形も残す (2026-10-04 オーナー「変成・増強 (パーフェクト) 打ってからダメなら消去スパム」「1 つ揃えば王者」)
   if (!start.slots.length && !start.breach) {
     const white: typeof picks = [];
-    for (const tier of ["perfect", "greater"] as const) {
-      const ms = magicSpamTargets(inp, ctx.itemLevel, tier === "perfect" ? 50 : 35);
-      if (ms.length) white.push({ label: `変成・増強 (${tier === "perfect" ? "完全" : "上級"}) → 王者`, magicSpam: { tier, targets: ms } });
+    // 白のベースから固定する道 (2026-10-04): マジックで狙うのは固定する狙い 1 つだけ (付いたら止めてフラクチャーへ)
+    const only = inp.whiteFracture ? inp.targets.filter((t) => t.modId === inp.whiteFracture) : null;
+    for (const tier of ["perfect", "greater", "plain"] as const) {
+      const ms = magicSpamTargets(only ? { ...inp, targets: only, fixedIds: [] } : inp, ctx.itemLevel, tier === "perfect" ? 50 : tier === "greater" ? 35 : 0);
+      if (ms.length) white.push({ label: `変成・増強${tier === "perfect" ? " (完全)" : tier === "greater" ? " (上級)" : ""} → 王者`, magicSpam: { tier, targets: ms } });
+      // 届く一番上の等級だけで十分 (下の等級は段が届かない物も引くので回して比べる候補を増やさない)
+      if (ms.length && only) break;
     }
-    if (me) white.push({ label: "変成 → エッセンス", magicEssence: me, chaosOk: false, chaosSide: null });
+    if (me && !inp.whiteFracture) white.push({ label: "変成 → エッセンス", magicEssence: me, chaosOk: false, chaosSide: null });
     picks.splice(0, picks.length, ...white);
   }
   const variants: Array<{ greater: string; nodes: ReturnType<typeof autoTree> }> = [];
