@@ -28,6 +28,9 @@ import type { useHtcCraft } from "./useHtcCraft";
 /** 完成品の検索のゆるさ (full → light → min の順に軽い) */
 type Level = "full" | "light" | "min";
 
+/** 完成品を緩める時に先に外す耐性 (火・冷気・雷、混沌との 2 つ持ち) */
+const SINGLE_RES = new Set(["FireResistance", "ColdResistance", "LightningResistance", "FireAndChaosDamageResistance", "ColdAndChaosDamageResistance", "LightningAndChaosDamageResistance"]);
+
 export function useFinishedCompare(
   c: ReturnType<typeof useHtcCraft>,
   /** 始め方で選ばれた物の初動 (高貴換算)。無ければ null */
@@ -120,7 +123,7 @@ export function useFinishedCompare(
   /**
    * 組み合わせだけでも無い時に外していく順 (オーナー 2026-09-24:「つきやすい確率順で MOD 消して検索かけようか。特にサフィとか
    * クラフト MOD やフラクチャーで探す MOD は優先度低いから外して、徐々に緩くしていこう。値は 0 で MOD が付いていればいい」):
-   *   クラフト MOD (エッセンス等)・固定済みで探す MOD → サフィ (付きやすい順) → プレ (付きやすい順) → 樹の冒涜 MOD など。
+   *   火・冷気・雷の耐性 → クラフト MOD (エッセンス等)・固定済みで探す MOD → サフィ (付きやすい順) → プレ (付きやすい順) → 樹の冒涜 MOD など。
    * 樹 MOD は外さない (クラフトではどうにもならない物なので)
    */
   const dropOrder = computed(() => {
@@ -130,7 +133,9 @@ export function useFinishedCompare(
     // ブリーチの品質の最大値は元から条件に入れていない (品質の下限で探す) ので外す対象にしない
     const ts = c.targets.value.filter((t) => d.mods.get(t.modId)?.family !== "LocalMaximumQuality").map((t) => {
       const m = d.mods.get(t.modId);
-      const rank = !m || m.source !== "normal" || fixed.has(t.modId) ? 0 : m.type === "suffix" ? 1 : 2;
+      // 火・冷気・雷の耐性 (混沌との 2 つ持ちも) は一番先に外す (オーナー 2026-10-04「全耐性は MOD としてあるけど、火とか冷気とかの耐性系は
+      // 優先的に外そう。耐性って他でカバー効いたりするから」)。全耐性・混沌耐性・最大耐性はこれまで通り
+      const rank = m && SINGLE_RES.has(m.family) ? -1 : !m || m.source !== "normal" || fixed.has(t.modId) ? 0 : m.type === "suffix" ? 1 : 2;
       return { key: t.modId, name: c.stepTarget([t.modId]), rank, chance: spawnChance(c, t.modId, t.minTierIndex ?? 0) ?? 1 };
     });
     const ex = extraLines.value.map((x) => ({ key: `extra:${x.bare}`, name: jaOfPastedLine(x.text) ?? x.text, rank: 3, chance: 0 }));
