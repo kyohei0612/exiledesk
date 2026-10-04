@@ -75,9 +75,8 @@ const LADDER: readonly DisplayCurrency[] = ["divine", "chaos", "exalted"] as con
  * 選んでいる通貨から始めて、1 未満なら 1 つ下へ (一番下まで来たらそのまま)。
  * 0 と符号は元のまま扱う (絶対値で判断)。
  */
-function pickUnit(exalted: number, from?: DisplayCurrency): { c: DisplayCurrency; value: number } {
+function pickUnit(exalted: number, from?: DisplayCurrency, ch: DisplayChoice = choice.value): { c: DisplayCurrency; value: number } {
   // 通貨を 1 つ選んでいる時は段を下げない (ladder: "top" を渡された所だけ下げる)
-  const ch = choice.value;
   if (from == null && !ladderChoice(ch)) return { c: ch, value: exalted / rateOf(ch) };
   const start = Math.max(0, LADDER.indexOf(from ?? "divine"));
   for (let i = start; i < LADDER.length; i++) {
@@ -202,6 +201,44 @@ export const displayCurrency = {
     const sign = opts?.signed && value > 0 ? "+" : "";
     return `${sign}${fmtNum(value)} ${LABEL[c]}`;
   },
+};
+
+/**
+ * カレンシーランキング (カレンシーのタブ) だけの表示通貨 (2026-10-04 オーナー「カレンシーは最安値でおｋ、取引所の推奨が適正だとおかしい。
+ * カレンシーランキングでは適正はいらん、独立させた方が良い」)。選べるのは 最安値 (既定) / 高貴 / カオス / 神。他の画面の表示通貨とは別に覚える
+ */
+type RankingChoice = Exclude<DisplayChoice, "fair">;
+const RANKING_KEY = "exiledesk.rankingCurrency";
+function loadRanking(): RankingChoice {
+  try {
+    const v = localStorage.getItem(RANKING_KEY);
+    return v === "exalted" || v === "chaos" || v === "divine" ? v : "cheapest";
+  } catch {
+    return "cheapest";
+  }
+}
+const rankingChoice = ref<RankingChoice>(loadRanking());
+export const rankingCurrency = {
+  choice: rankingChoice,
+  options: [
+    { value: "cheapest" as RankingChoice, label: "最安値" },
+    ...(Object.keys(LABEL) as DisplayCurrency[]).map((k) => ({ value: k as RankingChoice, label: LABEL[k] })),
+  ],
+  set(c: RankingChoice): void {
+    rankingChoice.value = c;
+    try {
+      localStorage.setItem(RANKING_KEY, c);
+    } catch {
+      /* 保存できなくても動く */
+    }
+  },
+  /** 最安値は額に合わせて 神 → カオス → 高貴、通貨を選んでいればその通貨 */
+  unit(exalted: number): { cur: DisplayCurrency; value: number; label: string } {
+    const { c, value } = pickUnit(exalted, undefined, rankingChoice.value);
+    return { cur: c, value, label: LABEL[c] };
+  },
+  /** 取引の推奨に高貴のペアも入れるか (最安値の時) */
+  withExalted: computed<boolean>(() => rankingChoice.value === "cheapest"),
 };
 
 /**

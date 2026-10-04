@@ -97,7 +97,7 @@ watch(tab, (t) => {
           </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-          <CurrencyPicker />
+          <CurrencyPicker ranking />
           <select v-model="r.league.value" @change="r.onLeagueChange" class="sel">
             <option v-for="l in r.leagues.value" :key="l.Value" :value="l.Value">{{ l.Value }}{{ l.IsCurrent ? " ★" : "" }}</option>
             <option v-if="!r.leagues.value.length" :value="r.league.value">{{ r.league.value }}</option>
@@ -173,7 +173,7 @@ watch(tab, (t) => {
         Powered by
         <a href="https://poe2scout.com" target="_blank" class="hover:text-[var(--exile-color-accent-focus)] underline">poe2scout</a>
         / <span class="font-mono">{{ r.league.value }}</span>
-        / 値段は表示通貨 (適正 = 神、1 未満はカオス、1 カオス未満は高貴) / 取引の推奨 = カオスと神で交換の安い方 (1 個あたりの値段)
+        / 値段は表示通貨 (最安値 = 神、1 未満はカオス、1 カオス未満は高貴。この画面だけの設定) / 取引の推奨 = 交換の一番安い通貨 (最安値なら高貴も込み、1 個あたりの値段)
       </p>
     </div>
    </div>
