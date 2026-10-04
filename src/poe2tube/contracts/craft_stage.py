@@ -68,9 +68,10 @@ KNOWN_CURRENCIES: frozenset[str] = frozenset(
 )
 # エッセンスの実キーは "essence:lesser:Bows/Essence_PhysicalDamage" のように ":" と "/" を含む
 # ルーンは "rune:Lesser Iron Rune" (ExileDesk stage-runes.json の英語名、⑰)
+# ソウルコア・アイドルも同じ。"rune:<英語名>@<n>" = n 番目のソケットに差す (名前にハイフン等もある)
 # 冒涜の開示は "reveal:N" (3 つの候補の N 番目)、"reveal:N:reroll" (お告げで引き直した方)
 _CURRENCY_PREFIX = re.compile(
-    r"^(essence:\S+|catalyst_[a-z]+|rune:[A-Za-z' ]+|reveal:[1-3](:reroll)?)$"
+    r"^(essence:\S+|catalyst_[a-z]+|rune:[^\W\d_][\w' -]*(@[1-9])?|reveal:[1-3](:reroll)?)$"
 )
 
 

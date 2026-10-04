@@ -80,3 +80,10 @@ def test_tight_spaces() -> None:
     assert tight_spaces("MOD が[2 個]付く") == "MODが[2個]付く"
     assert tight_spaces("キャストスピードが T1 なのだ！") == "キャストスピードがT1なのだ！"
     assert tight_spaces("Path of Exile 2 の話") == "Path of Exile 2の話"
+
+
+def test_rune_keys_with_socket_index() -> None:
+    from poe2tube.contracts.craft_stage import _check_currency
+
+    for key in ("rune:Lesser Desert Rune@2", "rune:Raven-Touched Shard", "rune:Legacy of Mjölner"):
+        assert _check_currency(key) == key
