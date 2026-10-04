@@ -270,21 +270,19 @@ const STATS = [
     -->
     <section v-if="focus && candidates.length" class="card border-amber-400/40 p-4">
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 class="text-lg font-bold text-amber-100">火力の差 試算</h2>
+        <!-- 見出しがそのまま試算のボタン (2026-10-04 オーナー「火力の差 試算のところ左側にボタンでおｋ、右側はいらん、分かりづらい」) -->
+        <button
+          type="button"
+          class="rounded-lg border border-amber-400/70 bg-amber-500/20 px-4 py-1.5 text-lg font-bold text-amber-100 shadow-[0_0_12px_rgba(251,191,36,0.25)] transition hover:bg-amber-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="estimating || busy"
+          title="1 項目 1〜3 秒。PoB の中で計算するだけで、ビルドは変えません"
+          @click="emit('estimate')"
+        >{{ estimating ? `試算中… ${estimateProgress}` : estimates ? "火力の差 もう一度試算" : "火力の差 試算" }}</button>
+        <span v-if="estimatesStale && !estimating" class="rounded-full bg-amber-500/15 px-2 py-px text-[11px] text-amber-200">自分のビルドを変えたので数字が古い</span>
         <p class="note">
           相手の物を自分に入れたら {{ gemJa(focus.s.name) }} の DPS がどう変わるか (PoB の中で計算するだけで、ビルドは変えません)。
           対象: 装備 {{ candCount.items }} ・ リネージュ {{ candCount.lineage }} ・ ジュエル {{ candCount.jewels }}{{ candCount.tree ? " ・ ツリー" : "" }}
         </p>
-        <span class="ml-auto flex items-center gap-2">
-          <span v-if="estimatesStale && !estimating" class="rounded-full bg-amber-500/15 px-2 py-px text-[11px] text-amber-200">自分のビルドを変えたので数字が古い</span>
-          <button
-            type="button"
-            class="btn btn-accent px-5 text-[14px] font-bold"
-            :disabled="estimating || busy"
-            title="1 項目 1〜3 秒。PoB の中で計算するだけで、ビルドは変えません"
-            @click="emit('estimate')"
-          >{{ estimating ? `試算中… ${estimateProgress}` : estimates ? "もう一度試算" : "火力の差を試算する" }}</button>
-        </span>
       </div>
 
       <!-- 装備 / リネージュ / ジュエル、一番下に「その他: パッシブツリーのノード」(まとめて真似した時の 1 行) -->
