@@ -740,10 +740,21 @@ export function usePobCheck() {
   const CONFLUX_JA: Record<number, string> = { 1: "平均", 2: "雷", 3: "冷気", 4: "火" };
   async function changeConflux(n: number): Promise<void> {
     await act({ fn: () => setConflux(n), history: ["conflux", { n }], note: `コンフラックス ${CONFLUX_JA[n] ?? n}`, fast: true });
+    rebaseIfSettingsOnly();
+  }
+  /**
+   * 設定 (パワーチャージ・コンフラックス) だけ変えた時は、比べる元もその状態にする = 差の % を出さない
+   * (2026-10-05 オーナー「自分の火力チェックで 0 からチャージ 8 とかに上げてもプラスで表示しないで、ややこしい。自分のだから上がりますやん」)。
+   * 装備・ジェム・ツリーを変えた後なら、その差を消さないよう比べる元はそのまま
+   */
+  const SETTING_NOTE = /^(パワーチャージ|コンフラックス) /;
+  function rebaseIfSettingsOnly(): void {
+    if (changes.value.every((c) => SETTING_NOTE.test(c))) setBaseToNow();
   }
   async function changeCharges(n: number): Promise<void> {
     const before = cur.value?.config.powerCharges ?? 0;
     await act({ fn: () => setPowerCharges(n), history: ["charges", { n }], note: `パワーチャージ ${before}→${n}`, fast: true });
+    rebaseIfSettingsOnly();
   }
 
   /** 貼られた文面で欄の物を差し替える。返り値は画面に出す注意 (英語にできなかった行 / PoB が計算しない行 / その他の注意)。失敗は投げる (欄の中に出す) */
