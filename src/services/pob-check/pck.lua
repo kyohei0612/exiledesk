@@ -198,6 +198,28 @@ local function coreStatsOf(o, ms, game)
     end)(),
     projectiles = o.ProjectileCount or 0,
     incProjSpeed = m:Sum("INC", cfg, "ProjectileSpeed"),
+    -- 計算に入る数値を全部 (2026-10-04 オーナー「計算に関わるやつ全部出して比較してあげるか。処刑とかアッツィリ加わるとどこ変化するかわからんけど」)。
+    -- 本家の ModStore から名前ごとに 増加 (INC) / 上昇 (MORE、掛け算) / 基本 (BASE) を引く。0 の物は出さない
+    calc = (function()
+      local out = {}
+      local function add(name, kind)
+        local v = kind == "MORE" and (m:More(cfg, name) - 1) * 100 or m:Sum(kind, cfg, name)
+        if math.abs(v) > 1e-6 then out[#out + 1] = { name = name, kind = kind, value = v } end
+      end
+      local EL = { "Physical", "Fire", "Cold", "Lightning", "Chaos" }
+      for _, n in ipairs({ "Damage", "ElementalDamage", "PhysicalDamage", "FireDamage", "ColdDamage", "LightningDamage", "ChaosDamage" }) do add(n, "INC"); add(n, "MORE") end
+      for _, n in ipairs({ "CritChance", "CritMultiplier", "Speed", "ProjectileSpeed", "AreaOfEffect", "Duration" }) do add(n, "INC"); add(n, "MORE") end
+      for _, n in ipairs({ "ProjectileCount", "ElementalPenetration", "FirePenetration", "ColdPenetration", "LightningPenetration", "ChaosPenetration", "CritChance", "CritMultiplier" }) do add(n, "BASE") end
+      for _, src in ipairs({ "", "Physical", "Fire", "Cold", "Lightning", "Chaos", "Elemental" }) do
+        for _, dst in ipairs(EL) do
+          if src ~= dst then
+            add(src .. "DamageGainAs" .. dst, "BASE")
+            if src ~= "" and src ~= "Elemental" then add(src .. "DamageConvertTo" .. dst, "BASE") end
+          end
+        end
+      end
+      return out
+    end)(),
   }
 end
 

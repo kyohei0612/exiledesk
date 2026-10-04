@@ -97,6 +97,8 @@ export interface CoreStats {
   ranges?: Array<{ type: string; min: number; max: number; pen: number }>;
   projectiles?: number;
   incProjSpeed?: number;
+  /** 計算に入る数値 (本家の ModStore の名前ごとに 増加 INC / 上昇 MORE (%) / 基本 BASE)。0 の物は無し */
+  calc?: Array<{ name: string; kind: "INC" | "MORE" | "BASE"; value: number }>;
 }
 export interface GroupView {
   i: number;

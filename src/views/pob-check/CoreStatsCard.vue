@@ -24,6 +24,38 @@ const range = (lo: number, hi: number) => `${fmtNum(lo)} - ${fmtNum(hi)}`;
 type Row = { label: string; a: string; b: string | null; na?: number; nb?: number | null; hint?: string };
 type Section = { title: string; rows: Row[] };
 
+/** 本家の名前 → 画面の言葉 (ゲーム内の書き方。増加 = 増加、増し = 上昇) */
+const STAT_JA: Record<string, string> = {
+  Damage: "ダメージ", ElementalDamage: "元素ダメージ", PhysicalDamage: "物理ダメージ", FireDamage: "火ダメージ", ColdDamage: "冷気ダメージ",
+  LightningDamage: "雷ダメージ", ChaosDamage: "混沌ダメージ", CritChance: "クリティカルヒット率", CritMultiplier: "クリティカルダメージボーナス",
+  Speed: "スキルスピード", ProjectileSpeed: "投射物スピード", AreaOfEffect: "効果範囲", Duration: "スキル効果持続時間", ProjectileCount: "追加の投射物",
+};
+const EL_JA: Record<string, string> = { "": "", Physical: "物理", Fire: "火", Cold: "冷気", Lightning: "雷", Chaos: "混沌", Elemental: "元素" };
+/** 計算に入る数値の 1 行の名前 */
+function calcLabel(name: string, kind: string): string {
+  const gain = /^(\w*?)DamageGainAs(\w+)$/.exec(name);
+  if (gain) return `${EL_JA[gain[1]!] ?? gain[1]}ダメージを${EL_JA[gain[2]!] ?? gain[2]}ダメージとして追加で得る`;
+  const conv = /^(\w+?)DamageConvertTo(\w+)$/.exec(name);
+  if (conv) return `${EL_JA[conv[1]!] ?? conv[1]}ダメージを${EL_JA[conv[2]!] ?? conv[2]}ダメージに変換`;
+  const base = STAT_JA[name] ?? name;
+  if (kind === "INC") return `${base}増加`;
+  if (kind === "MORE") return `${base}上昇`;
+  return name === "ProjectileCount" ? base : `${base} (基本に加算)`;
+}
+/** 計算に入る数値を 自分 → 相手 で (どちらかで 0 でない物。耐性貫通は上の ダメージ に出すので除く) */
+function calcRows(a: CoreStats, b: CoreStats | null): Row[] {
+  const key = (x: { name: string; kind: string }) => `${x.kind}|${x.name}`;
+  const ma = new Map((a.calc ?? []).map((x) => [key(x), x.value]));
+  const mb = new Map((b?.calc ?? []).map((x) => [key(x), x.value]));
+  const order = [...new Set([...(a.calc ?? []), ...(b?.calc ?? [])].map(key))].filter((k) => !/Penetration$/.test(k));
+  return order.map((k) => {
+    const [kind, name] = k.split("|") as [string, string];
+    const va = ma.get(k) ?? 0, vb = b ? mb.get(k) ?? 0 : null;
+    const show = (v: number) => (name === "ProjectileCount" ? `${v > 0 ? "+" : ""}${Math.round(v)}` : `${kind === "INC" || kind === "MORE" ? "" : "+"}${Math.round(v)}%`);
+    return { label: calcLabel(name, kind), a: show(va), b: vb != null ? show(vb) : null, na: va, nb: vb };
+  });
+}
+
 const sections = computed<Section[]>(() => {
   const a = props.mine, b = props.target ?? null;
   if (!a) return [];
@@ -43,8 +75,6 @@ const sections = computed<Section[]>(() => {
     if ((ra?.pen ?? 0) > 0 || (rb?.pen ?? 0) > 0) out.push({ label: `${ja}耐性貫通`, a: pct(ra?.pen ?? 0), b: b ? pct(rb?.pen ?? 0) : null, na: ra?.pen ?? 0, nb: b ? rb?.pen ?? 0 : null });
     return out;
   });
-  const ta = TYPE_JA[a.type] ?? a.type, tb = b ? TYPE_JA[b.type] ?? b.type : ta;
-  const t = ta === tb ? ta : `${ta} / 相手は${tb}`;
   return [
     { title: "ダメージ", rows: [
       ...keep([
@@ -66,13 +96,7 @@ const sections = computed<Section[]>(() => {
       row("クリティカルヒット率", (c) => c.critChance, (v) => `${v.toFixed(2)}%`),
       row("クリティカルダメージボーナス", (c) => (c.critMulti - 1) * 100, plusPct),
     ]) },
-    { title: "増加と上昇 (ノード・サポートで上がる所)", rows: keep([
-      row(`${t}ダメージ増加`, (c) => c.incDamage, pct, { hint: "このスキルに効く「ダメージが #% 増加する」の合計 (ダメージ・元素・その種類)" }),
-      row(`${t}ダメージ上昇`, (c) => (c.moreDamage - 1) * 100, pct, { hint: "このスキルに効く「ダメージが #% 上昇する」を掛け合わせた物 (サポートジェム・ノードなど)" }),
-      row("クリティカルヒット率増加", (c) => c.incCrit, pct),
-      row("クリティカルダメージボーナス増加", (c) => c.incCritMulti, pct),
-      row("スキルスピード増加", (c) => c.incSpeed, pct),
-    ]) },
+    { title: "計算に関わる数値 (ノード・装備・サポートで変わる所)", rows: calcRows(a, b) },
   ].filter((s) => s.rows.length);
 });
 </script>
