@@ -24,7 +24,7 @@ import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
-import { kindOf } from "../../services/craft-stage/apply-currency";
+import { kindOf, whittleTargets } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import ShelfButton from "./ShelfButton.vue";
 
@@ -56,6 +56,12 @@ function hold(k: string): void {
  * 押すと持ったまま掛ける / 外す (お告げのタブに切り替えなくてよい)
  */
 const heldOmens = computed(() => (s.held.value ? OMEN_FOR[kindOf(s.held.value)] ?? [] : []));
+/** 削減のお告げを掛けてカオスを持っている時に消える候補 (ゲームと同じく打つ前に色を付ける、オーナー 2026-10-04) */
+const doomed = computed(() => {
+  const it = s.item.value;
+  if (!it || !s.held.value || kindOf(s.held.value) !== "chaos" || it.rarity !== "rare" || !s.omens.value.includes("OmenofWhittling")) return [];
+  return whittleTargets(it).map((m) => m.modId);
+});
 /** 打った瞬間の演出 (波紋・枠の光・「レアに!」など) */
 const fx = useStageFx(mouse);
 const fxCls = computed(() => (fx.value ? { hit: "stage-hit", up: "stage-up", shake: "stage-shake" }[fx.value.kind] : ""));
@@ -121,6 +127,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
       <div class="flex flex-col items-center gap-8">
         <div class="relative" :class="fxCls" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
+          :doomed="doomed"
           :item="s.item.value!"
           :added="s.last.value?.added ?? []"
           :removed="s.last.value?.removed ?? []"

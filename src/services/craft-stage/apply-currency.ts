@@ -51,6 +51,16 @@ export function kindOf(currency: string): string {
   if (currency.startsWith("catalyst_")) return "catalyst";
   return parseKey(currency).kind;
 }
+/**
+ * 削減のお告げでカオスを打った時に消える候補: フラクチャー以外で MOD レベルが一番低い物 (同じなら全部、等しい確率)。
+ * 打つ前に画面で色を付ける (ゲームと同じ、オーナー 2026-10-04) のにも使う
+ */
+export function whittleTargets(item: StageItem): StageMod[] {
+  const rem = allMods(item).filter((m) => !m.fractured);
+  if (!rem.length) return [];
+  const low = Math.min(...rem.map((m) => m.modLevel));
+  return rem.filter((m) => m.modLevel === low);
+}
 /** その手に掛かるお告げ (持っている中から) */
 export function omensFor(currency: string, held: readonly string[]): string[] {
   const ok = OMEN_FOR[kindOf(currency)] ?? [];
@@ -203,9 +213,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
         r = f;
       } else if (used.includes("OmenofWhittling")) {
         // 削りのお告げ: 一番 MOD レベルの低い物を消す (同じなら等しく)
-        const rem = allMods(item).filter((m) => !m.fractured);
-        const low = Math.min(...rem.map((m) => m.modLevel));
-        const lows = rem.filter((m) => m.modLevel === low);
+        const lows = whittleTargets(item);
         const mod = lows[Math.floor(rng() * lows.length)];
         r = mod ? { item: without(item, mod), mod } : null;
       } else {
