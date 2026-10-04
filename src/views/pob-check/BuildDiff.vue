@@ -32,6 +32,7 @@ import GemIcon from "../../components/decor/GemIcon.vue";
 import ItemArt from "../../components/decor/ItemArt.vue";
 import BuildItemName from "../../components/build-copy/BuildItemName.vue";
 import { toBuildItem } from "../../services/pob-check/hover-item";
+import passivesJa from "../../i18n/passives-ja-client.json";
 
 const props = defineProps<{
   mine: Summary;
@@ -228,6 +229,41 @@ const STATS = [
   { k: "LightningResist", label: "雷" },
   { k: "ChaosResist", label: "混" },
 ];
+
+/**
+ * アノイントの差 (2026-10-05 オーナー「比較でアノイントの差も出しといて、これアノイントだ、やられた」)。
+ * 部位ごとに 自分 / 相手 の「Allocates ○○」を並べ、違う物を目立たせる。スキルの枠を増やす物 (Augmented Flesh など) は札を付ける
+ */
+const PASSIVE_JA = passivesJa as Record<string, string>;
+const anointRows = computed(() => {
+  // ツリーのジュエルの穴は自分と相手で番号が違うので「ジュエル」1 行にまとめる
+  const keyOf = (slot: string): string => (/^Jewel \d+$/.test(slot) ? "Jewel" : slot);
+  const bySlot = (s: Summary) => {
+    const m = new Map<string, Array<{ name: string; sd: string[] }>>();
+    for (const x of s.items) if (x.item?.anoints?.length) m.set(keyOf(x.slot), [...(m.get(keyOf(x.slot)) ?? []), ...x.item.anoints]);
+    return m;
+  };
+  const a = bySlot(props.mine), b = bySlot(props.target);
+  const slots = [...new Set([...a.keys(), ...b.keys()])];
+  return slots.map((slot) => {
+    const mine = a.get(slot) ?? [], target = b.get(slot) ?? [];
+    const same = mine.map((x) => x.name).sort().join("|") === target.map((x) => x.name).sort().join("|");
+    return { slot, mine, target, same };
+  }).sort((x, y) => Number(x.same) - Number(y.same));
+});
+/** 効果の日本語 (英語の文 → 日本語)。ノードの効果は数が少ないのでまとめて 1 回 */
+const anointSdJa = shallowRef<Map<string, string>>(new Map());
+watch(anointRows, async (rows) => {
+  const lines = [...new Set(rows.flatMap((r) => [...r.mine, ...r.target]).flatMap((x) => x.sd))];
+  if (!lines.length) return;
+  const ja = await linesToJa(lines);
+  anointSdJa.value = new Map(lines.map((l, i) => [l, ja[i] ?? l]));
+}, { immediate: true });
+const anointName = (n: string): string => PASSIVE_JA[n] ?? n;
+const skillSlotNote = (sd: string[]): string | null => {
+  const m = sd.map((l) => /Grants (\d+) additional Skill Slots?/i.exec(l)).find(Boolean);
+  return m ? `スキルの枠 +${m[1]}` : null;
+};
 </script>
 
 <template>
@@ -437,6 +473,38 @@ const STATS = [
         <template v-if="estimates.treeBased">装備・ジュエル・リネージュの行は、ツリー・装備・ジュエル・ジェム (サポート込み) を全部相手と同じにした中での効きです (それだけ自分の物に戻す・外すと下がる分。揃って初めて効く分も入る)。数字は「ツリーとジェムを相手と同じにした時」の DPS に、その効きを掛けた物です。</template>
         <template v-if="estimates.quiet">火力が変わらない装備・ジュエル {{ estimates.quiet }} 個は出していません。</template>
       </p>
+    </section>
+
+    <!-- アノイントの差 (2026-10-05)。違う物を上に -->
+    <section v-if="anointRows.length" class="card px-4 py-3">
+      <h2 class="sec-title">
+        アノイント
+        <span class="sec-note">調合 (とジュエル) の「○○を割り当てる」を部位ごとに。違う物を上に</span>
+      </h2>
+      <table class="w-full text-[12px]">
+        <thead>
+          <tr class="text-[10px] text-[var(--exile-color-text-tertiary)]">
+            <th class="w-28 py-1 text-left font-normal">部位</th>
+            <th class="py-1 text-left font-normal">自分</th>
+            <th class="py-1 text-left font-normal text-sky-300/80">相手</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="r in anointRows" :key="r.slot" class="border-t border-white/5 align-top" :class="r.same ? 'opacity-60' : ''">
+            <td class="py-1.5 pr-2 text-[var(--exile-color-text-secondary)]">{{ r.slot === "Jewel" ? "ジュエル" : slotJa(r.slot) }}</td>
+            <td v-for="(side, k) in [r.mine, r.target]" :key="k" class="py-1.5 pr-3">
+              <p v-if="!side.length" class="text-[var(--exile-color-text-tertiary)]">—</p>
+              <div v-for="x in side" :key="x.name" class="mb-1">
+                <p class="font-semibold" :class="r.same ? '' : k === 0 ? 'text-amber-200' : 'text-sky-200'">
+                  {{ anointName(x.name) }}
+                  <span v-if="skillSlotNote(x.sd)" class="ml-1 rounded bg-emerald-500/20 px-1.5 py-px text-[10px] text-emerald-200">{{ skillSlotNote(x.sd) }}</span>
+                </p>
+                <p v-for="l in x.sd" :key="l" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ anointSdJa.get(l) ?? l }}</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </section>
 
     <!-- 細かい差 (ジェムの Lv・サポート / 装備の MOD)。火力の差 試算と被るので畳む (2026-10-04 オーナー「相手との差で装備とかジェムとか被ってる」) -->

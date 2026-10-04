@@ -125,6 +125,8 @@ export interface ItemView {
   runes: string[];
   explicits: string[];
   corrupted: boolean;
+  /** アノイント (調合) とジュエルの「Allocates ○○」: ノードの英語名と効果 (2026-10-05) */
+  anoints?: Array<{ name: string; sd: string[] }>;
   /** PoB の文面 (本家 BuildRaw)。相手の物を自分の欄に当てる試算・取り入れに使う */
   raw: string;
 }

@@ -612,6 +612,28 @@ local function settleSlots(bySlot)
   end
 end
 
+--- アノイント (調合) と、ジュエルの「Allocates ○○」: エンチャントの行からノードの名前を取り、ツリーのノードの効果 (sd) を添える
+--- (2026-10-05 オーナー「比較でアノイントの差も出しといて、これアノイントだ、やられた」: 相手はアミュレットに Augmented Flesh
+--- = スキルの枠 +2 を付けていて、スキルの数が自分より 2 つ多かった)
+local anointNodeByName
+local function anointsOf(item)
+  local out = {}
+  for _, ml in ipairs(item.enchantModLines or {}) do
+    local name = ml.line and ml.line:match("^Allocates (.+)$")
+    if name then
+      if not anointNodeByName then
+        anointNodeByName = {}
+        for _, node in pairs(build.spec.tree.nodes or {}) do
+          if node.dn and not anointNodeByName[node.dn] then anointNodeByName[node.dn] = node end
+        end
+      end
+      local node = anointNodeByName[name]
+      out[#out + 1] = { name = name, sd = node and node.sd or {} }
+    end
+  end
+  return out
+end
+
 --- 装備の欄 (武器・防具・装飾品・フラスコ・取っているジュエルの穴) と、入っている物
 function PCK.items()
   local it = build.itemsTab
@@ -630,6 +652,7 @@ function PCK.items()
           title = item.title or item.name, base = item.baseName, rarity = item.rarity,
           implicits = modLines(item.implicitModLines), runes = modLines(item.runeModLines),
           explicits = modLines(item.explicitModLines), corrupted = item.corrupted and true or false,
+          anoints = anointsOf(item),
           -- PoB の文面 (本家 BuildRaw)。相手の物を自分の欄に当てる試算・取り入れ (PCK.estimateItem / equip) に使う
           raw = item:BuildRaw(),
         }
