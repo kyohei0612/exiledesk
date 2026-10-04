@@ -10,6 +10,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import pckLua from "./pck.lua?raw";
 import itemsJaClient from "../../i18n/items-ja-client.json";
+import { jaSkill } from "../../i18n/skills-ja";
 import passiveIds from "../../data/passive-ids.json";
 import { parseNinjaUrl } from "../build-copy/ninja-url";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
@@ -148,8 +149,23 @@ export interface Summary {
 }
 
 const JA = itemsJaClient as Record<string, string>;
-/** ジェムの日本語名 (公式訳。無ければ英語のまま) */
-export const gemJa = (en: string): string => JA[en] ?? en;
+/**
+ * ジェム・スキルの日本語名 (公式訳。無ければ英語のまま)。ジェムの名前 → スキル名 (ActiveSkills、Summon Wolf 等の装備が与えるスキル) の順。
+ * PoB のミニオンのスキルの行 (Skeletal Frost Mage Minion) は「スケルタルフロストメイジ (ミニオン)」、スペクター (Spectre: Powered Zealot) は
+ * 「スペクター: …」(モンスター名の辞書は無いので後ろは英語) (2026-10-04 オーナー「英語のとこあるね」)
+ */
+export function gemJa(en: string): string {
+  const hit = JA[en] ?? jaSkill(en);
+  if (hit !== en) return hit;
+  const minion = /^(.+) Minion$/.exec(en);
+  if (minion) {
+    const base = gemJa(minion[1]!);
+    if (base !== minion[1]) return `${base} (ミニオン)`;
+  }
+  const spectre = /^Spectre: (.+)$/.exec(en);
+  if (spectre) return `スペクター: ${spectre[1]}`;
+  return en;
+}
 
 /** PCK の関数を呼ぶ。Rust の失敗は reject、PCK の { ok: false } はその error で throw (呼ぶ側は 1 つの catch で足りる) */
 async function evalLua<T>(script: string): Promise<T> {
