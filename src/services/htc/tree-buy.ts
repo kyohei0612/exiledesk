@@ -23,6 +23,7 @@
  * ## ここは投げません
  * 組み立てるだけです ([[api-probing-policy]])。
  */
+import { splitResists } from "../trade2/resist-group";
 import { hasStatKind } from "../trade2/stat-kinds";
 import statMapping from "../../i18n/trade2-stat-mapping.json";
 import { htcDropOnly } from "./patch";
@@ -183,7 +184,11 @@ export function treeBuyQuery(
     ...(category ? { category } : {}),
     rarity: "nonunique",
     ...(opts.ilvlMin != null ? { ilvlMin: opts.ilvlMin } : {}),
-    stats: filters,
+    // 単体の耐性は種類を問わない (2026-10-04)。固定済みなら固定済みの、固定無しなら普通の「どれかの耐性」
+    ...((): { stats: typeof filters; anyOf: Array<{ filters: Array<{ id: string; min?: number }>; count: number }> } => {
+      const r = splitResists(filters, [fractured ? "fractured" : "explicit"]);
+      return { stats: r.rest, anyOf: r.group ? [r.group] : [] };
+    })(),
     // 固定無しを探す時は「フラクチャー: いいえ」も入れる。stat を explicit にしただけだと、
     // 別の MOD が固定された物 (= もう樹 MOD を固定できない物) が返ってくる
     ...(fractured ? {} : { fracturedItem: false }),

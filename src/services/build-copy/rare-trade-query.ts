@@ -6,6 +6,7 @@ import { Rarity, SecurityStatus } from "../../constants/trade2";
 import { statFilter } from "./prices";
 import { grantedSkillStatId } from "../trade2/query/spec";
 import { existingKinds } from "../trade2/stat-kinds";
+import { isSingleResist, splitResists } from "../trade2/resist-group";
 import type { Equip, RareLine, RareLink } from "./rare-query";
 
 export type Filter = { id: string; value?: { min?: number; max?: number; option?: number } };
@@ -45,12 +46,16 @@ export function query(base: string, filters: Filter[], equip: Equip, defScale: n
 function statGroups(filters: Filter[]): unknown[] {
   if (!filters.length) return [];
   const plain = filters.filter((f) => !f.id.startsWith("explicit."));
-  const any = filters.filter((f) => f.id.startsWith("explicit."));
+  // 単体の耐性 (火・冷気・雷・混沌) は種類を問わず「どれかの耐性 N 個」(2026-10-04 オーナー「何付いててもいい、どの検索ルートでも」)
+  const res = splitResists(filters.filter((f) => f.id.startsWith("explicit.")).map((f) => ({ id: f.id, min: f.value?.min })), ["explicit", "desecrated", "fractured"]);
+  const resIds = new Set(filters.filter((f) => f.id.startsWith("explicit.") && isSingleResist(f.id)).map((f) => f.id));
+  const any = filters.filter((f) => f.id.startsWith("explicit.") && !resIds.has(f.id));
   const bare = (id: string) => id.replace(/^explicit\./, "");
   return [
     ...(plain.length ? [{ type: "and", filters: plain }] : []),
     // 取引所に無い種類 (冒涜の無い MOD など) は送らない (「使用不能なスタッツ」になる、2026-09-30)
     ...any.map((f) => ({ type: "count", value: { min: 1 }, filters: existingKinds(bare(f.id), ["explicit", "desecrated", "fractured"] as const).map((k) => ({ ...f, id: `${k}.${bare(f.id)}` })) })),
+    ...(res.group ? [{ type: "count", value: { min: res.group.count }, filters: res.group.filters.map((f) => ({ id: f.id, ...(f.min != null ? { value: { min: f.min } } : {}) })) }] : []),
   ];
 }
 /** 段を下げた時の防御値の下限 (1 段ごとに 1 割) */

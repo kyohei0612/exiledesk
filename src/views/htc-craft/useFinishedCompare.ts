@@ -14,6 +14,7 @@ import { tradeLock } from "../../state/trade-lock";
 import { computed, ref, shallowRef, watch } from "vue";
 import { tradeCategoryOf, tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
+import { splitResists } from "../../services/trade2/resist-group";
 import { buildSpecQuery } from "../../services/trade2/query";
 import { tradeAuto } from "../../services/trade2/auto-price";
 import { autoPriceCached } from "../../services/trade2/query-cache";
@@ -60,6 +61,9 @@ export function useFinishedCompare(
       .map((f) => (withMins ? { id: f.id, min: f.min } : { id: f.id }));
     const q = c.item.value?.quality ?? null;
     if (unmatched.length) return null;
+    // 単体の耐性は種類を問わず「どれかの耐性 N 個」(2026-10-04 オーナー「冷気だろうが雷だろうが火だろうが混沌だろうが何付いててもいい」)
+    const res = splitResists(filters, level === "full" ? ["explicit", "fractured", "desecrated"] : ["explicit"]);
+    filters.splice(0, filters.length, ...res.rest);
     const bareOf = (id: string): string => id.replace(/^(explicit|fractured|desecrated)\./, "");
     const plain: { id: string; min?: number }[] = [];
     const anyOf: { filters: { id: string; min?: number }[] }[] = [];
@@ -84,6 +88,7 @@ export function useFinishedCompare(
       else if (real) plain.push({ id: `${real[0] ?? "explicit"}.${key}`, ...(f.min != null ? { min: f.min } : {}) });
       else plain.push(f.min != null ? f : { id: f.id });
     }
+    if (res.group) anyOf.push(res.group);
     // 狙い以外の付いている MOD (冒涜のみ・作れない)。値は問わず、付いていること (冒涜の物は冒涜で)
     for (const x of extraLines.value) if (!seen.has(x.bare) && !drop.has(`extra:${x.bare}`)) { seen.add(x.bare); plain.push({ id: `${x.desecrated ? "desecrated" : "explicit"}.${x.bare}` }); }
     const baseType = c.item.value?.baseType ?? zeroStart.value.baseType;

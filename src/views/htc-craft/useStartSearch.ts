@@ -21,6 +21,7 @@ import { computed, nextTick, ref, shallowRef, watch } from "vue";
 import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { hasStatKind } from "../../services/trade2/stat-kinds";
 import { buildSpecQuery } from "../../services/trade2/query";
+import { splitResists } from "../../services/trade2/resist-group";
 import { tradeAuto } from "../../services/trade2/auto-price";
 import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";
@@ -129,7 +130,11 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       ...(c.item.value?.baseType ? { baseType: c.item.value.baseType } : {}),
       rarity: "nonunique",
       ilvlMin: c.item.value?.itemLevel ?? zeroStart.value.itemLevel,
-      stats: [...tree, ...filters.map((f) => ({ id: f.id.replace(/^explicit\./, "fractured."), min: f.min }))],
+      ...((): { stats: Array<{ id: string; min?: number }>; anyOf: Array<{ filters: Array<{ id: string; min?: number }>; count: number }> } => {
+        // 単体の耐性は種類を問わない (固定済みの「どれかの耐性」。2026-10-04)
+        const r = splitResists(filters.map((f) => ({ id: f.id.replace(/^explicit\./, "fractured."), min: f.min })), ["fractured"]);
+        return { stats: [...tree, ...r.rest], anyOf: r.group ? [r.group] : [] };
+      })(),
       ...(modIds.length ? {} : { fracturedItem: false }),
       // 素材に買うので聖別化された物は除く (手を加えられない、オーナー 2026-09-30)
       noSanctified: true,

@@ -53,7 +53,7 @@ export interface SpecQueryOptions {
    * 「どれか 1 つ」の条件 (取引所の count グループ、1 つ以上)。グループごとに AND。
    * 完成品を探す時に、同じ MOD を固定済み (`fractured.`) でも普通 (`explicit.`) でも拾う用 (2026-09-24)
    */
-  anyOf?: { filters: { id: string; min?: number }[] }[];
+  anyOf?: { filters: { id: string; min?: number }[]; count?: number }[];
   /**
    * 「どれも無い」の条件 (取引所の not グループ)。0 個の物を探す時に使う: 疑似の個数は 0 個の物には付いていないので、
    * 「最大 0」で探すと全部が外れて 0 件になる (2026-10-04 の 4 MOD の検索で踏んだ)
@@ -96,7 +96,7 @@ export function buildSpecQuery(o: SpecQueryOptions) {
   for (const g of o.anyOf ?? []) {
     stats.push({
       type: "count",
-      value: { min: 1 },
+      value: { min: g.count ?? 1 },
       filters: g.filters.map((f) => ({ id: f.id, disabled: false, value: f.min != null ? { min: f.min } : {} })),
     } as (typeof stats)[number]);
   }
