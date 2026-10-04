@@ -36,10 +36,9 @@ const STAT_MAP = statMapping as Record<string, string>;
 /** 取引所の「プレフィックスモッド #個」「サフィックスモッド #個」(data-cache/trade2-stats-*.json で確認) */
 export const STRICT_PREFIX = "pseudo.pseudo_number_of_prefix_mods";
 export const STRICT_SUFFIX = "pseudo.pseudo_number_of_suffix_mods";
-/** 固定無し・4 MOD の検索 (2026-10-04) */
-export const FOUR_AFFIX = "pseudo.pseudo_number_of_affix_mods";
-export const FOUR_DESECRATED = "pseudo.pseudo_number_of_desecrated_mods";
-export const FOUR_CRAFTED = "pseudo.pseudo_number_of_crafted_mods";
+/** MOD の数 (固定無しは 4 まで、2026-10-04) */
+export const AFFIX_COUNT = "pseudo.pseudo_number_of_affix_mods";
+
 
 /** 固定済みで買うしかない 1 行 */
 export interface TreeBuy {
@@ -153,10 +152,6 @@ export function treeBuyQuery(
      * お告げで足してから冒涜するので、条件はプレフィックスの上限だけです。
      */
     strict?: boolean;
-    /**
-     * 固定無しで MOD がちょうど 4 つ (2026-10-04)。冒涜の MOD・クラフト MOD が付いていない物だけ (冒涜は 1 つまで、深淵のエッセンスの印はクラフト MOD)
-     */
-    fourMods?: boolean;
     /** ベースの付与スキル (不在のアミュレットなど。同じ付与スキルの素材だけ探す) */
     grantedSkill?: string | null;
     /** ルーンソケットの下限 (equipment_filters.rune_sockets)。武器・防具の規格外ベース用 (2026-09-26)。null なら送らない */
@@ -175,9 +170,9 @@ export function treeBuyQuery(
     if (nP) filters.push({ id: STRICT_PREFIX, max: nP });
     if (nS) filters.push({ id: STRICT_SUFFIX, max: nS });
   }
-  if (opts.fourMods && !fractured) {
-    filters.push({ id: FOUR_AFFIX, min: 4, max: 4 });
-  }
+  // 固定無しは MOD 4 つまで (2026-10-04 オーナー「5 MOD は無理じゃね、ベースとして成り立たん」)。この個数は MOD が 1 つ以上ある物には必ず付く
+  // (樹 MOD が付いている物を探すので 0 個の物は来ない。0 個の物を「最大 0」で探すのはダメ: [[trade-search-rules]])
+  if (!fractured) filters.push({ id: AFFIX_COUNT, max: 4 });
   if (filters.length === 0) return null;
   // 固定品を探す時、取引所にフラクチャーの番号が無い MOD がある = その固定品は取引所に無い。送ると「使用不能」で条件が効かない (2026-09-30)
   if (fractured && filters.some((f) => f.id.startsWith("fractured.") && !hasStatKind(f.id.slice("fractured.".length), "fractured"))) return null;
@@ -196,7 +191,5 @@ export function treeBuyQuery(
     noSanctified: true,
     grantedSkill: opts.grantedSkill ?? null,
     ...(opts.socketsMin != null ? { socketsMin: opts.socketsMin } : {}),
-    // 冒涜の MOD・クラフト MOD が 1 つでもある物は除く (not。「最大 0」だと 0 個の物に疑似の個数が付いていないので全部外れて 0 件だった)
-    ...(opts.fourMods && !fractured ? { noneOf: [{ id: FOUR_DESECRATED, min: 1 }, { id: FOUR_CRAFTED, min: 1 }] } : {}),
   });
 }

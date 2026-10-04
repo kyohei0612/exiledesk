@@ -124,8 +124,8 @@ watch([() => c.phase.value, () => c.diagBusy.value, () => ss.threeWay.value, () 
   c.routeOptions.value = {
     fixed: tw.fixed ? { cost: tw.fixed.cost, base: tw.fixed.base, craft: tw.fixed.craft, label: tw.fixed.label, link: tw.fixed.url ? { text: "取引所で見る", url: tw.fixed.url } : linkOf("fractured") }
       : { cost: null, label: noteOf("fractured"), link: linkOf("fractured") },
-    self: tw.self ? { cost: tw.self.cost, base: tw.self.base, craft: tw.self.craft, label: tw.self.label, link: tw.self.url ? { text: "取引所で見る", url: tw.self.url } : linkOf("four") }
-      : { cost: null, label: noteOf("four"), link: linkOf("four") },
+    self: tw.self ? { cost: tw.self.cost, base: tw.self.base, craft: tw.self.craft, label: tw.self.label, link: tw.self.url ? { text: "取引所で見る", url: tw.self.url } : linkOf("loose") }
+      : { cost: null, label: noteOf("loose"), link: linkOf("loose") },
     white,
     recommended,
   };

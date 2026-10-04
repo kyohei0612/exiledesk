@@ -56,16 +56,12 @@ function onFin(): void {
         <p v-if="verdict3" class="mb-3 rounded-lg bg-emerald-500/10 px-2 py-1">
           → <b class="text-emerald-300">{{ verdict3.name }}</b> が一番安い<span v-if="verdict3.diff != null" class="opacity-70"> ({{ verdict3.second }} より <b class="text-emerald-200">{{ c.money(verdict3.diff) }}</b> 安い)</span>
         </p>
-        <div class="grid gap-3 md:grid-cols-2">
-          <!-- 作る側: 始め方 (固定済みを買って途中から作る / 自分でフラクチャーして作る の中身) -->
-          <div class="rounded-lg border border-white/10 bg-black/20 p-2">
-            <p class="mb-1 font-bold text-amber-100">作るなら: 一番安い始め方</p>
-            <StartResults v-if="show2" :c="c" :ss="ss" />
-            <p v-else class="opacity-50">{{ ss.kind.value.kind === "unsafe" ? "クラフト非推奨なので、始め方はありません" : "始め方は取れていません" }}</p>
-          </div>
+        <!-- 作るなら の箱は上の 3 枚を見れば分かるので外し、完成品 (この MOD 条件の物) だけ全幅で (オーナー 2026-10-04「作るならの奴は上見りゃ分かる。
+             このMOD条件なら完成品を買えって話でおｋ」)。始め方の候補の選び直し・手で入れる値段は下の「始め方の内訳」に畳む -->
+        <div>
           <!-- 買う側: 完成品 -->
           <div class="rounded-lg border border-white/10 bg-black/20 p-2">
-            <p class="mb-1 font-bold text-amber-100">買うなら: 完成品</p>
+            <p class="mb-1 font-bold text-amber-100">この MOD 条件の完成品</p>
         <p>
           完成品: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value ? "取得中…" : "まだ" }}</b>
           <!-- 取引所に無い時だけ手で埋める -->
@@ -87,10 +83,15 @@ function onFin(): void {
         <p v-else class="opacity-50">始め方を探すと出る</p>
           </div>
         </div>
-        <!-- 3 つの道の中身 -->
-        <div v-if="threeWay.length" class="mt-2 rounded border border-white/10 bg-black/20 p-2">
-          <p v-for="w in threeWay.filter((x) => x.detail)" :key="w.key" class="opacity-70">{{ w.name }}: {{ w.detail }}</p>
-        </div>
+        <!-- 始め方の内訳 (候補・ほかの買い方・検索の条件・手で入れる値段)。確認用なので畳む -->
+        <details class="mt-2 rounded border border-white/10 bg-black/20 p-2">
+          <summary class="cursor-pointer select-none opacity-70 hover:opacity-100">始め方の内訳 (候補の選び直し・ほかの買い方・検索の条件)</summary>
+          <div class="mt-2">
+            <p v-for="w in threeWay.filter((x) => x.detail)" :key="w.key" class="opacity-70">{{ w.name }}: {{ w.detail }}</p>
+            <StartResults v-if="show2" :c="c" :ss="ss" class="mt-2" />
+            <p v-else class="opacity-50">{{ ss.kind.value.kind === "unsafe" ? "クラフト非推奨なので、始め方はありません" : "始め方は取れていません" }}</p>
+          </div>
+        </details>
         <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>
       </section>
 </template>

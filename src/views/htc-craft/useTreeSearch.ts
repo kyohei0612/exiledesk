@@ -22,7 +22,7 @@ type Src<T> = { readonly value: T };
 
 /** 樹 MOD を固定済みにする道 1 本の平均 (1 個ずつ買って試し、成功で止め、外れ続けたら固定済みを買う) */
 export interface TreeRoute {
-  key: "four" | "fractured";
+  key: "loose" | "fractured";
   label: string;
   summary: RouteSummary;
   decision: Decision;
@@ -39,10 +39,10 @@ export type TreeResult = {
    * オーナーの比べ方 (2026-09-23): ゆるい / 厳しいそれぞれ「85% に届く最小の個数だけ買う」総額と、
    * 固定済みの値段。**それ以上は買う必要が無い**。
    */
-  /** 固定無し・4 MOD (2026-10-04 に 厳しい / ゆるい を 1 本に) */
-  four: Batch | null;
+  /** 固定無し (MOD の数は問わない。2026-10-04 に 厳しい / ゆるい を 1 本に) */
+  loose: Batch | null;
   fracturedPrice: number | null;
-  /** 固定無し・4 MOD の最安 1 件 (神)。固定せずにそのまま作る時の初動 (オーナー 2026-09-25:「フラクチャー無し品の方が安い場合もある」) */
+  /** 固定無しの最安 1 件 (神)。固定せずにそのまま作る時の初動 (オーナー 2026-09-25:「フラクチャー無し品の方が安い場合もある」) */
   loosePrice: number | null;
   /**
    * 道ごとの平均 (1 個ずつ買って試し、成功で止め、外れ続けたら固定済みを買う)。
@@ -50,7 +50,7 @@ export type TreeResult = {
    */
   routes: TreeRoute[];
   /** 平均が一番安い道 */
-  best: "four" | "fractured" | null;
+  best: "loose" | "fractured" | null;
 };
 
 export function useTreeSearch(deps: {
@@ -135,9 +135,10 @@ export function useTreeSearch(deps: {
     const searches = [
       { key: "fractured" as const, label: "固定済み (買えばそのまま使える)", take: 1,
         query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: true }) : null },
-      // 固定無しは MOD 4 つの物 1 本 (2026-10-04 オーナー「4 MOD で検索したらゆるいも厳しいも無い」。反対側に深淵のエッセンス → 冒涜で 1/3)
-      { key: "four" as const, label: "固定無し・4 MOD (深淵のエッセンス → 冒涜 → 固定)", take: 10,
-        query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false, fourMods: true }) : null },
+      // 固定無しは 1 本 (2026-10-04 オーナー「ゆるいも厳しいも無い」「ベースあるぞ普通に 24 神とかで」)。MOD の数は問わず、
+      // 1 件ごとに数で手順を決める (4 なら深淵のエッセンス → 冒涜、3 なら冒涜、2 以下は足す。5 以上は検索で外す。[[tree-decide.ts]])
+      { key: "loose" as const, label: "固定無し (MOD 4 つまで)", take: 10,
+        query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false }) : null },
     ].filter((x) => x.query != null);
     return { plan, buys, searches };
   };
@@ -179,7 +180,7 @@ export function useTreeSearch(deps: {
         const mods = x.mods ?? null;
         if (sq.key !== "fractured" && mods == null) { skippedNoMods++; continue; }
         const n = mods ?? 4;
-        // 4 MOD は総数だけで決まる (側は問わない)
+        // 固定無しは総数だけで決まる (側は問わない)
         const prefixes = Math.ceil(n / 2);
         listings.push({
           source: sq.key,
@@ -204,22 +205,22 @@ export function useTreeSearch(deps: {
       abyss: base.value ? toDiv(p.currency[`essence:perfect:${base.value.id}/PerfectEssence_EssenceAbyss`]) : null,
       crystal: toDiv(p.omens[OMEN.crystallisation[tp.buys[0]?.side === "S" ? "prefix" : "suffix"]]),
     };
-    const four = batchFor(listings.filter((l) => l.source === "four"), dp, BATCH_TARGET);
+    const loose = batchFor(listings.filter((l) => l.source === "loose"), dp, BATCH_TARGET);
     const frList = listings.filter((l) => l.source === "fractured").sort((a, b) => a.price - b.price);
     const fracturedPrice = frList[0]?.price ?? null;
-    const loosePrice = listings.filter((l) => l.source === "four").sort((a, b) => a.price - b.price)[0]?.price ?? null;
+    const loosePrice = listings.filter((l) => l.source === "loose").sort((a, b) => a.price - b.price)[0]?.price ?? null;
     const only = (src: TreeListing["source"]) => [...listings.filter((l) => l.source === src), ...frList.slice(0, 1)];
     const routes: TreeRoute[] = [];
-    const add = (key: "four" | "fractured", label: string, ls: TreeListing[], b: Batch | null) => {
+    const add = (key: "loose" | "fractured", label: string, ls: TreeListing[], b: Batch | null) => {
       if (ls.length === 0) return;
       const dd = decide(ls, dp);
       if (dd.order.length === 0 && !dd.fallback) return;
       routes.push({ key, label, summary: summarize(dd), decision: dd, need85: b?.count ?? null });
     };
-    add("four", "4 MOD を 1 個ずつ", only("four"), four);
+    add("loose", "固定無しを 1 個ずつ", only("loose"), loose);
     if (fracturedPrice != null) add("fractured", "固定済みを買う", frList.slice(0, 1), null);
     const best = routes.length ? routes.reduce((a, b) => (b.summary.expected < a.summary.expected ? b : a)).key : null;
-    return { found, skippedNoMods, four, fracturedPrice, loosePrice, routes, best };
+    return { found, skippedNoMods, loose, fracturedPrice, loosePrice, routes, best };
   }
 
   /** 固定済みにする MOD を指定して 3 本を取る (候補の各行)。組めなければ null */

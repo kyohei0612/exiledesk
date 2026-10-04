@@ -67,15 +67,6 @@ export function candidateOf(l: TreeListing, p: DecidePrices): Candidate | null {
   const make = (how: Candidate["how"], perTry: number, hit: number): Candidate =>
     ({ listing: l, how, perTry, hit, perSuccess: perTry / hit });
 
-  // ---- 4 MOD (2026-10-04 オーナー「欲しい MOD 側とか関係なく 4 MOD で検索したら、ゆるいも厳しいも無い。深淵のエッセンスで欲しい MOD の
-  // 反対側を狙って付けて、そのまま冒涜したら 1 個確定で MOD を入れ替えられる」): 反対側の結晶化のお告げ + 深淵のエッセンス (反対側の 1 つを消して印)
-  // → 冒涜 (印を置き換える) で 普通 3 + 冒涜 1 → 固定 1/3 (当て馬は抽選に入らない)。深淵のエッセンスが相場に無ければそのまま固定 1/4
-  if (l.source === "four") {
-    const ways: Candidate[] = [make("direct", l.price + p.orb, 1 / 4)];
-    if (p.abyss != null) ways.push(make("abyss", l.price + p.abyss + (p.crystal ?? 0) + p.bone + p.orb, 1 / 3));
-    return ways.reduce((a, b) => (b.perSuccess < a.perSuccess ? b : a));
-  }
-
   // ---- 厳しい検索: 消去ガチャを使わない道だけ ----
   // オーナー:「フラクチャー無し品で、今の厳しいけど消去いらない道 (サフィ確定冒涜でフラクチャーチャレンジ)」。
   // 期待値だけなら素の消去で運ゲーするほうが安いことがあるが、この道はそれを使わないために分けた物
@@ -104,13 +95,22 @@ export function candidateOf(l: TreeListing, p: DecidePrices): Candidate | null {
   }
 
   // ---- ゆるい検索: そのまま固定 / 減らして冒涜 (消去ガチャ) の安い方。どちらも 1/N ----
+  // 5 MOD 以上は素材にしない (オーナー 2026-10-04「5 MOD は無理じゃね、ベースとして成り立たん」。検索も 4 まで)
+  if (mods >= 5) return null;
   if (mods >= 3) {
     const est = selfFracture(mods, { base: l.price, orb: p.orb, annul: p.annul, bone: p.bone });
     const best = est.best;
     if (!best) return null;
     // 最初から 3 MOD なら減らす必要が無い (消去 0 回)。冒涜して 1/3。言葉だけ分ける
     const how = best.kind === "reduce" && mods === 3 ? "desecrate" : best.kind;
-    return make(how, best.perTry, best.hit);
+    const plain = make(how, best.perTry, best.hit);
+    // 4 MOD (2026-10-04 オーナー「深淵のエッセンスで欲しい MOD の反対側を狙って付けて、そのまま冒涜したら 1 個確定で MOD を入れ替えられる」):
+    // 反対側の結晶化のお告げ + 深淵のエッセンス (反対側の 1 つを消して印) → 冒涜 (印を置き換える) で 普通 3 + 冒涜 1 → 固定 1/3 (消去ガチャ無し)
+    if (mods === 4 && p.abyss != null) {
+      const abyss = make("abyss", l.price + p.abyss + (p.crystal ?? 0) + p.bone + p.orb, 1 / 3);
+      return abyss.perSuccess < plain.perSuccess ? abyss : plain;
+    }
+    return plain;
   }
   // 2 MOD 以下は高貴で 3 MOD まで足してから、3 MOD と同じ道 (冒涜で当て馬を足して 4 MOD、1/3)。
   // オーナー 2026-09-24:「4 MOD 以下なら尚更調整できるから件数数えていいよ。高貴打てば 4 MOD になるし」。

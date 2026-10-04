@@ -57,13 +57,12 @@ const howJa: Record<string, string> = {
         <td class="py-0.5 pr-2 whitespace-nowrap">{{ sq.label }}</td>
         <td class="opacity-80">
           {{ c.item.value?.baseText ?? c.item.value?.baseType }} / ilvl {{ c.item.value?.itemLevel ?? "?" }} 以上 / レア / コラプト無し /
-          <template v-if="sq.key !== 'fractured'">フラクチャー: いいえ / </template>
+          <template v-if="sq.key !== 'fractured'">フラクチャー: いいえ / 疑似 モッド #個 最大 4 / </template>
           <template v-for="b in c.treePlan.value.buys" :key="b.text">
             <b>{{ b.text.replace(/[0-9]+/, "#") }}</b>
             <span class="text-amber-300">({{ sq.key === "fractured" ? "Fractured" : "Explicit" }}<template
               v-if="b.filters[0]?.min"> 最小 {{ b.filters[0].min }}</template>)</span>
           </template>
-          <template v-if="sq.key === 'four'"> / 疑似 モッド #個 4〜4 / 次を除く: 冒涜モッド #個 1 以上・クラフトモッド #個 1 以上</template>
           <span class="opacity-50"> — 最安 {{ sq.take }} 件</span>
         </td>
       </tr>

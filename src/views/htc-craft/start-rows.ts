@@ -40,9 +40,9 @@ export function startRows(r: TreeResult | null, div: number, opts: { busy: boole
   }];
   // 固定無しの最安 1 件を、固定せずにそのまま作る (その MOD は触らない: 消去は使わず冒涜 + 光で作る側になる)
   if (r && r.loosePrice != null) {
-    rows.push({ id: "keep", label: "固定無しを買ってそのまま作る (固定しない)", cost: r.loosePrice * div, note: "その MOD は触らない (消去を使わない側)", link: linkOf("four"), manual: false, status: "-" });
+    rows.push({ id: "keep", label: "固定無しを買ってそのまま作る (固定しない)", cost: r.loosePrice * div, note: "その MOD は触らない (消去を使わない側)", link: linkOf("loose"), manual: false, status: "-" });
   }
-  for (const [key, label] of [["four", "固定無し・4 MOD を買って固定 (深淵のエッセンス → 冒涜 → 固定)"]] as const) {
+  for (const [key, label] of [["loose", "固定無しを買って固定"]] as const) {
     if (!r) { rows.push({ id: key, label, cost: null, note: "", link: null, manual: false, status: waiting }); continue; }
     const err = errOf(key);
     if (err) { rows.push({ id: key, label, cost: null, note: `取れず: ${err}`, link: null, manual: false, status: "取れず" }); continue; }
@@ -52,7 +52,9 @@ export function startRows(r: TreeResult | null, div: number, opts: { busy: boole
     const ok = b != null && b.assumed === 0;
     rows.push({
       id: key, label, cost: ok ? b.total * div : null, link: linkOf(key), manual: false, status: "-",
-      note: ok ? `${b.count} 個まとめて買う (85%)`
+      // 1 個の値段と個数も出す (2026-10-04 オーナー「ベースに 161 神もかかんのか、ベースあるぞ普通に 24 神とかで」: 1 個で当たるのは 1/3 前後なので
+      // 85% に届くまで何個か要る)
+      note: ok ? `${b.count} 個まとめて買う (85% で 1 個固定。安い物から 1 個ずつ試して当たれば残りは要らない)`
         : b ? `出品が足りない (${total} 件、85% に ${b.count} 個要る)` : `出品が足りない (${total} 件)`,
     });
   }

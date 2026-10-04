@@ -21,8 +21,8 @@ export interface DecidePrices {
 /** 取引所から返ってきた 1 件 */
 export interface TreeListing {
   /** どの検索から来たか */
-  /** four = 固定無し・4 MOD (2026-10-04、厳しい / ゆるいをやめて 1 本に) */
-  source: "fractured" | "strict" | "loose" | "four";
+  /** loose = 固定無し (MOD の数は問わない。2026-10-04 に厳しいをやめて 1 本に) */
+  source: "fractured" | "strict" | "loose";
   /** 値段 (神) */
   price: number;
   /** 樹 MOD を含むプレフィックスの数 */
