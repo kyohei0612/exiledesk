@@ -16,7 +16,7 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image
 
-from poe2tube.capture.clip_step import attach_from_file
+from poe2tube.capture.clip_step import attach_from_file, pick_from_file
 from poe2tube.capture.stage import clip_frames
 from poe2tube.contracts.craft_stage import CraftStagePlan
 from poe2tube.render.overlay_fx import CHAPTER_SECONDS
@@ -82,6 +82,8 @@ class HitPlan:
 
     preroll=True: 1 つ前の行 (「○○を使うわね」) の終わりで手つき (clip[:attach]) を流し、
     反応の行の頭ちょうどで付く。反応の行は clip[attach:] から始める。
+    pick: 発現の 3 択の絵の次の行は、カーソルが候補を選びに動き始めるコマから流す
+    (kyohei 2026-10-04「マウスで選んで付ける挙動になってない」、ExileDesk ㉗)。
     """
 
     step: int
@@ -90,10 +92,13 @@ class HitPlan:
     preroll: bool
     fps: int = 24
     demo: str | None = None
+    pick: int | None = None
 
     @property
     def start(self) -> int:
         """反応の行で最初に出すコマ."""
+        if self.pick is not None and not self.preroll:
+            return min(self.pick, self.attach)
         return (
             self.attach
             if self.preroll
@@ -141,7 +146,9 @@ def plan_hits(
                     # 発現の 3 択の絵は発現の前の姿そのもの。手つきを重ねるとちらつく
                     and not prev.scene.offers
                 )
-                out[i] = HitPlan(step, tuple(clip), attach_index(clip), preroll, fps, demo)
+                pick = pick_from_file(clip) if prev is not None and prev.scene.offers else None
+                attach = attach_index(clip)
+                out[i] = HitPlan(step, tuple(clip), attach, preroll, fps, demo, pick)
         prev, prev_section = line, section
     return out
 

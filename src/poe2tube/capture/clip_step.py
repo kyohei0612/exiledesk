@@ -7,6 +7,7 @@
 - ``window.__stageSeek(t)`` があれば、ページを開いたまま時刻を進めて撮る (速い)
 - 無ければ 1 コマずつ URL を開き直して撮る (遅いが同じ絵)
 - 付いた瞬間のコマ番号を ``attach.txt`` に残す (画面の変化量からの推定をやめる)
+- 発現の手は、3 択が出そろってカーソルが選びに動き始めるコマを ``pick.txt`` に (㉗、``pick_ms``)
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ import structlog
 log = structlog.get_logger()
 READY = 'body[data-anim-ready="1"]'
 ATTACH_FILE = "attach.txt"
+PICK_FILE = "pick.txt"
 
 
 def anim_info(page: Any, url: str) -> dict[str, Any] | None:
@@ -59,15 +61,25 @@ def step_clip(page: Any, url: str, out_dir: Path, fps: int) -> bool:
             page.wait_for_selector(READY, timeout=30000, state="attached")
         page.screenshot(path=str(out_dir / f"f{k:03d}.png"))
     attach = info.get("attach_ms")
-    if attach is not None:
-        (out_dir / ATTACH_FILE).write_text(str(round(float(attach) * fps / 1000)), encoding="utf-8")
+    for name, ms in ((ATTACH_FILE, attach), (PICK_FILE, info.get("pick_ms"))):
+        if ms is not None:
+            (out_dir / name).write_text(str(round(float(ms) * fps / 1000)), encoding="utf-8")
     log.info("stage clip stepped", frames=len(times), seek=seek, attach_ms=attach, dir=out_dir.name)
     return True
 
 
-def attach_from_file(clip: list[Path]) -> int | None:
-    """撮った時に残した付いた瞬間のコマ番号 (無ければ None)."""
+def _index_file(clip: list[Path], name: str) -> int | None:
     if not clip:
         return None
-    f = clip[0].parent / ATTACH_FILE
+    f = clip[0].parent / name
     return int(f.read_text(encoding="utf-8")) if f.exists() else None
+
+
+def attach_from_file(clip: list[Path]) -> int | None:
+    """撮った時に残した付いた瞬間のコマ番号 (無ければ None)."""
+    return _index_file(clip, ATTACH_FILE)
+
+
+def pick_from_file(clip: list[Path]) -> int | None:
+    """発現の手で、カーソルが候補を選びに動き始めるコマ番号 (無ければ None、㉗)."""
+    return _index_file(clip, PICK_FILE)

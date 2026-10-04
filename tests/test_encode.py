@@ -58,3 +58,16 @@ def test_attach_from_file(tmp_path: Path) -> None:
     assert attach_from_file([f]) is None
     (tmp_path / ATTACH_FILE).write_text("70", encoding="utf-8")
     assert attach_from_file([f]) == 70
+
+
+def test_pick_starts_reveal_clip(tmp_path: Path) -> None:
+    from poe2tube.capture.clip_step import PICK_FILE, pick_from_file
+    from poe2tube.video.clip_timing import HitPlan
+
+    clip = [tmp_path / f"f{k:03d}.png" for k in range(1, 101)]
+    assert pick_from_file(clip) is None
+    (tmp_path / PICK_FILE).write_text("40", encoding="utf-8")
+    assert pick_from_file(clip) == 40
+    hp = HitPlan(3, tuple(clip), 70, preroll=False, pick=40)
+    assert hp.start == 40 and hp.land_at == 30 / 24
+    assert HitPlan(3, tuple(clip), 70, preroll=False).start == 70 - int(0.4 * 24)
