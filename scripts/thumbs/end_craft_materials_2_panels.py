@@ -47,32 +47,42 @@ def font(size: int) -> ImageFont.FreeTypeFont:
 # (絵, 帯の名前, 説明, 帯の色)。絵はアイコンのキー (assets/icons_hd にあれば大きい方) か
 # "pick" (発現の実画面)。kyohei 2026-10-04「でっかくアイコンを数種類並べる」→ 全部アイコン
 COLUMNS = [
-    # kyohei 2026-10-04「お告げは最上位、紫・古代・光、聖別と勢力は OK」「名前の下には分かりやすい
-    # 解説文、長ったらしく」。[..] は赤、| で改行。言葉は _facts.md (後編) の範囲
+    # kyohei 2026-10-04「お告げは最上位、紫・古代・光、聖別と勢力は OK」「名前の下は解説文で
+    # びっしり、句読点いらん、横は半分隠れてもいい、下まで書く」。[..] は赤。言葉は _facts.md
     (
         "OmenofGreaterExaltation",
         "偉大なる高貴",
-        "次の高貴な|オーブで、|MOD が一気|に[2 個]付く",
+        "次の高貴なオーブで MOD が一気に[2 個]付く 高貴なオーブ 1 回で[MOD 2 個]足せる",
         (214, 150, 20),
     ),
     (
         "OmenofWhittling",
         "削減",
-        "次のカオス|オーブで、|[一番レベル|の低い MOD]|が消える",
+        "次のカオスオーブで[一番レベルの低い MOD]が消える 消える MOD を[狙える]",
         (140, 50, 200),
     ),
     (
         "rib_ancient",
         "古代の骨",
-        "冒涜で付く|MOD が、|[レベル 40|以上]の物|だけになる",
+        "冒涜で付く MOD が[レベル 40 以上]の物だけになる 低いレベルの MOD は[出ない]",
         (40, 90, 214),
     ),
-    ("OmenofLight", "光", "次の消去の|オーブで、|[冒涜の|MOD だけ]|を消す", (30, 150, 90)),
-    ("OmenoftheLiege", "勢力", "武器と|宝飾品に、|勢力の MOD|が[必ず|1 つ]付く", (214, 40, 40)),
+    (
+        "OmenofLight",
+        "光",
+        "次の消去のオーブで[冒涜の MOD だけ]を消す ほかの MOD は[消えない]",
+        (30, 150, 90),
+    ),
+    (
+        "OmenoftheLiege",
+        "勢力",
+        "武器と宝飾品に勢力の MOD が[必ず 1 つ]付く 君主なら[アマナム]の MOD 防具には効かない",
+        (214, 40, 40),
+    ),
     (
         "OmenofSanctification",
         "聖別",
-        "神のオーブで|数値が[上下]|その後は|[クラフト|できない]",
+        "神のオーブで数値が[0.78〜1.22 倍]に上下 元の上限も超える その後は[クラフトできない]",
         (200, 120, 40),
     ),
 ]
@@ -136,56 +146,66 @@ def column(
     return col
 
 
-def _lines(text: str) -> list[list[tuple[str, bool]]]:
-    """| で行に分け、[..] の赤を行をまたいでも保つ."""
-    out: list[list[tuple[str, bool]]] = []
+Run = list[tuple[str, bool]]  # (文字, 赤か) の並び
+
+
+def _tokens(text: str) -> list[Run]:
+    """改行してよい単位: 日本語は 1 文字ずつ、英数字 (MOD・40) は切らない。[..] は赤."""
+    out: list[Run] = []
     red = False
-    for raw in text.split("|"):
-        ln: list[tuple[str, bool]] = []
-        for ch in raw:
-            if ch in "[]":
-                red = ch == "["
-                continue
-            ln.append((ch, red))
-        out.append(ln)
+    for ch in text:
+        if ch in "[]":
+            red = ch == "["
+            continue
+        if ch == " ":  # 英数字と日本語の間の空白は詰める (びっしり)
+            continue
+        if ch.isascii() and out and out[-1][-1][0].isascii():
+            out[-1].append((ch, red))
+        else:
+            out.append([(ch, red)])
     return out
 
 
-LINE = 1.1  # 解説文の行の間隔 (字の大きさの倍)
+LINE = 1.04  # 解説文の行の間隔 (字の大きさの倍)
+DESC_FONT = 50  # 全部の列で同じ大きさ。横は欄から少しはみ出して隠れてよい
+OVERFLOW = 1.12  # 欄の幅の何倍まで 1 行に詰めるか (はみ出た分は隣の列に隠れる)
 
 
-def desc_size(d: ImageDraw.ImageDraw, text: str, w: int, h: int) -> int:
-    """この列の解説文が欄の幅と高さにぎりぎり収まる大きさ (列ごと、つめつめ)."""
-    lines = _lines(text)
-    size = 80
-    while size > 12 and (
-        max(sum(d.textlength(ch, font=font(size)) for ch, _ in ln) for ln in lines) > w - 4
-        or size * LINE * len(lines) > h - 8
-    ):
-        size -= 1
-    return size
+def _wrap_px(d: ImageDraw.ImageDraw, tokens: list[Run], f: object, w: float) -> list[Run]:
+    """幅 w (px) で折り返す."""
+    lines: list[Run] = [[]]
+    width = 0.0
+    for tok in tokens:
+        tw = sum(d.textlength(c, font=f) for c, _ in tok)  # type: ignore[arg-type]
+        if lines[-1] and width + tw > w:
+            lines.append([])
+            width = 0.0
+        lines[-1].extend(tok)
+        width += tw
+    return lines
 
 
 def rich_lines(d: ImageDraw.ImageDraw, text: str, w: int, y0: int, h: int) -> None:
-    """解説文を上下の真ん中に。[..] は赤."""
-    size = desc_size(d, text, w, h)
-    f = font(size)
-    lines = _lines(text)
-    step = size * LINE
-    y = y0 + (h - step * len(lines)) / 2 + step / 2
+    """解説文を上から下までびっしり。横は少しはみ出す。[..] は赤."""
+    f = font(DESC_FONT)
+    lines = _wrap_px(d, _tokens(text), f, w * OVERFLOW)
+    step = DESC_FONT * LINE
+    # 1 行目は色の帯のすぐ下から (字の上の余白を測って詰める、kyohei「帯からぎりぎり」)
+    top = d.textbbox((0, 0), "冒", font=f, anchor="ls", stroke_width=4)[1]  # 基準線から上の端 (負)
+    y = y0 - top + 2
     for ln in lines:
-        x = (w - sum(d.textlength(ch, font=f) for ch, _ in ln)) / 2
-        for ch, red in ln:
+        x = (w - sum(d.textlength(c, font=f) for c, _ in ln)) / 2
+        for c, red in ln:
             d.text(
                 (x, y),
-                ch,
+                c,
                 font=f,
                 fill=RED if red else "white",
-                anchor="lm",
+                anchor="ls",
                 stroke_width=4,
                 stroke_fill=(10, 6, 6),
             )
-            x += d.textlength(ch, font=f)
+            x += d.textlength(c, font=f)
         y += step
 
 
