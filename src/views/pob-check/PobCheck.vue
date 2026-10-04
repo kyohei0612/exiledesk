@@ -80,6 +80,25 @@ function openSelf(): void {
   selfOpen.value = true;
   selfTab.value = "items";
 }
+/**
+ * 入口で選ぶ (2026-10-04 オーナー「ページ分けたらいいやん、最初 自分のセルフチェックと比較で」)。
+ * null = 入口の 2 枚、"self" = 自分を取り込む → 取り込めたらそのまま開く、"compare" = 自分 + 相手 → 比較する
+ */
+const mode = ref<"self" | "compare" | null>(opened.value ? "compare" : null);
+function choose(m: "self" | "compare"): void {
+  mode.value = m;
+  error.value = null;
+}
+/** 自分の火力を見る: 取り込めたら開く */
+async function loadSelf(): Promise<void> {
+  await load();
+  if (cur.value && mode.value === "self") openSelf();
+}
+/** 取り込みに戻る (取り込んだ物は残す) */
+function backToLoad(): void {
+  selfOpen.value = false;
+  compared.value = false;
+}
 const SELF_TABS = [
   { id: "items", label: "装備" },
   { id: "gems", label: "ジェム" },
@@ -231,15 +250,36 @@ const resists = computed(() =>
     <TabBar icon="🔥" title="火力チェック" />
     <div class="min-h-0 flex-1 overflow-auto p-4 @container">
     <!-- 1 ページ目: 自分・相手を取り込む → 両方そろったら「比較する」→ 試算が済んだら 2 ページ目 (2026-10-04) -->
-    <section v-if="!opened && !(selfOpen && cur)" class="card mx-auto mt-6 max-w-3xl p-5">
-      <p class="mb-1 text-lg font-bold text-amber-100">🔥 火力チェック</p>
-      <p class="note mb-4">自分を取り込むと「自分の火力を見る」、相手も取り込むと「比較する」</p>
-      <form class="flex items-center gap-2" @submit.prevent="load()">
+    <!-- 入口: 自分の火力を見る / 火力を比較する -->
+    <section v-if="!opened && !(selfOpen && cur) && !mode" class="mx-auto mt-8 max-w-4xl">
+      <p class="mb-4 text-center text-[13px] text-[var(--exile-color-text-secondary)]">何をしますか</p>
+      <div class="grid gap-4 md:grid-cols-2">
+        <button type="button" class="card p-6 text-left transition hover:border-amber-400/60 hover:bg-amber-500/[0.06]" @click="choose('self')">
+          <p class="text-2xl">🔥</p>
+          <p class="mt-2 text-lg font-bold text-amber-100">自分の火力を見る</p>
+          <p class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">自分のビルドを取り込んで、スキルごとの DPS と火力の中身を見る。装備・ジェム・パッシブツリーを変えるとすぐ計算し直す</p>
+        </button>
+        <button type="button" class="card p-6 text-left transition hover:border-sky-400/60 hover:bg-sky-500/[0.06]" @click="choose('compare')">
+          <p class="text-2xl">⚔</p>
+          <p class="mt-2 text-lg font-bold text-sky-100">火力を比較する</p>
+          <p class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">自分と相手 (忍者の上位の人など) を取り込んで、何を真似するとどれだけ火力が伸びるかを並べる</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- 取り込み: 自分だけ (自分の火力を見る) / 自分 + 相手 (比較) -->
+    <section v-else-if="!opened && !(selfOpen && cur)" class="card mx-auto mt-6 max-w-3xl p-5">
+      <div class="mb-4 flex items-center gap-3">
+        <button type="button" class="btn-link text-[12px]" :disabled="loading || estimating" @click="mode = null">← 選び直す</button>
+        <p class="text-lg font-bold" :class="mode === 'compare' ? 'text-sky-100' : 'text-amber-100'">{{ mode === "compare" ? "⚔ 火力を比較する" : "🔥 自分の火力を見る" }}</p>
+      </div>
+      <form class="flex items-center gap-2" @submit.prevent="mode === 'self' ? loadSelf() : load()">
         <span class="w-[5.5rem] shrink-0 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]">自分</span>
         <input v-model="input" type="text" placeholder="PoB コード (「Import/Export」の Generate) / https://poe.ninja/poe2/builds/... のキャラの URL" class="input flex-1" :disabled="estimating" />
         <button type="submit" class="btn w-28" :class="cur ? 'btn-outline' : 'btn-primary'" :disabled="loading || busy || estimating || !input.trim()">{{ loading && !cur ? "取り込み中…" : cur ? "取り込み直す" : "取り込む" }}</button>
       </form>
       <p v-if="cur" class="note mt-1 pl-[6rem] text-emerald-300">✓ {{ cur.char.ascendancy || cur.char.class }} Lv {{ cur.char.level }}<template v-if="loadedFrom"> ・ {{ loadedFrom }} から</template></p>
+      <template v-if="mode === 'compare'">
       <form class="mt-3 flex items-center gap-2" @submit.prevent="loadTarget()">
         <span class="w-[5.5rem] shrink-0 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]">相手</span>
         <input v-model="targetInput" type="text" placeholder="相手の PoB コード / poe.ninja の URL" class="input flex-1" :disabled="estimating" />
@@ -247,16 +287,14 @@ const resists = computed(() =>
       </form>
       <p v-if="target" class="note mt-1 pl-[6rem] text-emerald-300">✓ {{ target.char.ascendancy || target.char.class }} Lv {{ target.char.level }}<template v-if="targetFrom"> ・ {{ targetFrom }} から</template></p>
       <p v-else-if="!cur" class="note mt-1 pl-[6rem]">先に自分を取り込むと、相手を取り込めます</p>
-      <p v-else class="note mt-1 pl-[6rem]">比べる時だけ (自分の火力を見るだけなら要らない)</p>
+      </template>
       <div v-if="loading" class="mt-4 flex items-center gap-2 text-sm text-amber-200/80">
         <span class="h-2.5 w-2.5 animate-ping rounded-full bg-amber-300" />PoB で取り込んで計算しています (数秒)
       </div>
-      <!-- 自分だけ → 自分の火力を見る、両方そろったら → 比較する -->
-      <div v-if="cur && !loading" class="mt-5 flex flex-col items-center gap-2">
-        <div class="flex flex-wrap justify-center gap-3">
-          <button type="button" class="btn h-10 px-8 text-base" :class="target ? 'btn-outline' : 'btn-primary'" :disabled="busy || estimating || !!compareStep" @click="openSelf">🔥 自分の火力を見る</button>
-          <button v-if="target" type="button" class="btn btn-primary h-10 px-12 text-base" :disabled="busy || estimating || !!compareStep" @click="onCompare">{{ estimating || compareStep ? "試算中…" : "⚔ 比較する" }}</button>
-        </div>
+      <!-- 自分の火力を見る: 取り込み済みならもう一度開ける。比較: 両方そろったら比較する -->
+      <div v-if="cur && !loading && (mode === 'self' || target)" class="mt-5 flex flex-col items-center gap-2">
+        <button v-if="mode === 'self'" type="button" class="btn btn-primary h-10 px-10 text-base" :disabled="busy" @click="openSelf">🔥 自分の火力を見る</button>
+        <button v-else type="button" class="btn btn-primary h-10 px-12 text-base" :disabled="busy || estimating || !!compareStep" @click="onCompare">{{ estimating || compareStep ? "試算中…" : "⚔ 比較する" }}</button>
         <p v-if="compareStep" class="flex items-center gap-2 text-[12px] text-amber-200/90">
           <span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />DPS が一番高いスキルから試算しています: {{ compareStep }} ・ {{ estimateProgress }} (済んだら開いて、残りは裏で)
           <button type="button" class="btn btn-sm btn-outline" :disabled="cancelled" @click="onCancel">{{ cancelling ? "止めています…" : "中止" }}</button>
@@ -274,7 +312,7 @@ const resists = computed(() =>
       <!-- 今の使い方と 1 ページ目に戻る -->
       <div class="mb-2 flex flex-wrap items-center gap-2">
         <span class="rounded-full px-2.5 py-0.5 text-[12px] font-bold" :class="opened ? 'bg-sky-500/15 text-sky-200' : 'bg-amber-500/15 text-amber-200'">{{ opened ? "⚔ 火力を比較する" : "🔥 自分の火力を見る" }}</span>
-        <button type="button" class="btn-link text-[12px]" :disabled="loading || busy || estimating" @click="selfOpen = false; compared = false">← 取り込みに戻る</button>
+        <button type="button" class="btn-link text-[12px]" :disabled="loading || busy || estimating" @click="backToLoad">← 取り込みに戻る</button>
       </div>
       <p v-if="error" class="mb-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
       <!-- キャラの札 -->
