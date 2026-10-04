@@ -76,11 +76,13 @@ const rowEsts = computed(() => props.estimates?.list.filter((e) => e.c.kind !== 
 const allSteps = computed(() => {
   const a = props.estimates?.all;
   if (!a || a.error) return [];
+  // prev = 1 つ前の段 (% はその段からの伸び。行の % と比べやすい。2026-10-04 オーナー「% が合わないよ装備とジュエルで」)
+  const base = props.estimates?.dps ?? 0;
   return [
-    { label: "ツリーを相手と同じに", dps: a.tree },
-    { label: "＋ 装備・ジュエル", dps: a.items },
-    { label: "＋ ジェム (Lv・サポート)", dps: a.gems },
-    ...(a.config != null ? [{ label: "＋ 設定 (チャージ・バフ等)", dps: a.config }] : []),
+    { label: "ツリーを相手と同じに", dps: a.tree, prev: base },
+    { label: "＋ 装備・ジュエル", dps: a.items, prev: a.tree },
+    { label: "＋ ジェム (Lv・サポート)", dps: a.gems, prev: a.items },
+    ...(a.config != null ? [{ label: "＋ 設定 (チャージ・バフ等)", dps: a.config, prev: a.gems }] : []),
   ];
 });
 /** 全部真似した後に残る相手との差 (%) */
@@ -345,7 +347,13 @@ const STATS = [
                 <template v-if="e.error"><span class="text-rose-300">—</span></template>
                 <template v-else>
                   <span class="text-[17px] font-bold">{{ fmtNum(e.dps) }}</span>
-                  <DiffBadge class="ml-1.5" :now="e.dps" :before="estimates.dps" />
+                  <DiffBadge class="ml-1.5" :now="e.dps" :before="e.baseDps ?? estimates.dps" />
+                  <p v-if="e.baseDps != null" class="note text-right">ツリーを相手と同じにした時 {{ fmtNum(e.baseDps) }} から</p>
+                  <!-- 揃えた時の効き (全部入れた状態から、これだけ戻すと下がる分) -->
+                  <p v-if="e.together != null" class="mt-0.5 text-right text-[12px]">
+                    <span class="note">揃えた時の効き</span>
+                    <span class="ml-1 font-bold tabular-nums" :class="e.together >= 1 ? 'text-emerald-300' : 'text-rose-300'">{{ e.together >= 1 ? "+" : "−" }}{{ Math.abs((e.together - 1) * 100).toFixed(1) }}%</span>
+                  </p>
                 </template>
               </td>
               <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
@@ -434,7 +442,8 @@ const STATS = [
             <span class="pb-1 text-[var(--exile-color-text-tertiary)]">→</span>
             <div>
               <p class="note">{{ st.label }}</p>
-              <p class="text-[17px] font-bold text-amber-200">{{ fmtNum(st.dps) }} <DiffBadge :now="st.dps" :before="estimates.dps" /></p>
+              <p class="text-[17px] font-bold text-amber-200">{{ fmtNum(st.dps) }} <DiffBadge :now="st.dps" :before="st.prev" /></p>
+              <p class="note">前の段から・今から {{ estimates.dps > 0 ? `${st.dps >= estimates.dps ? "+" : "−"}${Math.abs((st.dps / estimates.dps - 1) * 100).toFixed(1)}%` : "" }}</p>
             </div>
           </template>
           <template v-if="targetSkill && targetSkill.name === focus.s.name">

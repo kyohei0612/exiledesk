@@ -816,16 +816,33 @@ end
 --- 画面は 自分の行の DPS × (with / base) で出すので、取り入れた後の行とそろう
 local function estDpsOf(o) return gameNumbers(o, nil, o.Minion, nil).dps end
 
+--- 取っているノードだけを覚えて戻す (本家の作り直し = つながらないノードを外す、を通さない)。試算の基準のツリー (setEstimateTree) を
+--- 付け替えている間の行の試算用: 作り直すと相手のツリーの付け替えが崩れる (道を見ずに付けているので)
+local function saveAlloc()
+  local ids = {}
+  for id in pairs(build.spec.allocNodes) do ids[id] = true end
+  return ids
+end
+local function restoreAlloc(ids)
+  local spec = build.spec
+  for id, node in pairs(spec.nodes) do
+    local want = ids[id] == true
+    if node.alloc ~= want then node.alloc = want; spec.allocNodes[id] = want and node or nil end
+  end
+  build.buildFlag = true
+end
 --- 本当に入れ替える試算の前後で、ツリーと組の選択を覚えて戻す (2026-10-04: 自分のメガロマニアック・フロムナッシングを相手のジュエルに
 --- 替えると、本家がつながらなくなったノード (今回は 10 個) を外し、物を戻してもノードは戻らなかった。読み込み直後の 1 回目の試算の後から
 --- 自分の DPS が 2 割下がり、2 回目からの数字がずれていた)。組の選択 = 装備が出すスキルの組の mainActiveSkill (入れ替えで nil になる)
-local function saveBuildState()
+local function saveBuildState(light)
   local main = {}
   for idx, g in ipairs(build.skillsTab.socketGroupList) do main[idx] = { g = g, m = g.mainActiveSkill } end
+  -- light = 取っているノードだけ (試算の基準のツリーを付け替えている間の行の試算。作り直すと付け替えが崩れる)
+  if light then return { alloc = saveAlloc(), main = main } end
   return { tree = build.spec:CreateUndoState(), main = main }
 end
 local function restoreBuildState(state)
-  build.spec:RestoreUndoState(state.tree)
+  if state.alloc then restoreAlloc(state.alloc) else build.spec:RestoreUndoState(state.tree) end
   for _, x in ipairs(state.main) do x.g.mainActiveSkill = x.m end
   build.buildFlag = true
 end
@@ -880,7 +897,7 @@ function PCK.estimateItem(i, k, slotName, raw, withLines)
     -- 両手武器: 試算の間だけ本当に入れる (欄の中身を全部覚えて戻す。足した物は PoB から消す)
     local before = {}
     for name, s in pairs(it.slots) do before[name] = { id = s.selItemId or 0, active = s.active } end
-    local saved = saveBuildState()
+    local saved = saveBuildState(true)
     it:AddItem(item, true)
     local ok, err = pcall(function()
       putInSlot(slot, item.id, true)
@@ -1047,15 +1064,35 @@ end
 --- ツリーのジュエルの穴 slotName (Jewel <ノード番号>) に相手のジュエル raw を入れたら (2026-10-04 オーナー「無いジュエルを足したら火力が変わる、
 --- 心臓やらメガロやら」)。穴のノードを取っていなければ、そのノードも足して計算する (道は見ない)。範囲で効くジュエルも本家の計算どおり
 function PCK.estimateJewel(i, k, slotName, raw, nodeId)
-  return withMainSkill(i, k, function(calcFunc, base)
+  return withMainSkill(i, k, function(_, base)
     local item = new("Item", raw)
     if not item or not item.base then fail("PoB が読めない文面です") end
-    local ov = { repSlotName = slotName, repItem = item }
-    local node = build.spec.nodes[nodeId]
+    local spec, it = build.spec, build.itemsTab
+    local node = spec.nodes[nodeId]
     if not node then fail("自分のツリーにこの穴がありません") end
-    if not node.alloc then ov.addNodes = { [node] = true } end
-    local out = calcFunc(ov, false)
-    return { base = estDpsOf(base), with = estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), socketAdded = not node.alloc }
+    local socketAdded = not node.alloc
+    -- 計算の上書き (repItem) だとタイムロストジュエルなどの範囲の効果が乗らない (2026-10-04: 相手の鷲の光が -4.5% に見え、行を足しても
+    -- 全部まとめての「+ 装備・ジュエル」と合わなかった)。試算の間だけ本当にはめて計算し、終わったら全部戻す
+    local saved = saveAlloc()
+    local before = {}
+    for name, sl in pairs(it.slots) do before[name] = { id = sl.selItemId or 0, active = sl.active } end
+    it:AddItem(item, true)
+    local ok, res = pcall(function()
+      if socketAdded then node.alloc = true; spec.allocNodes[nodeId] = node end
+      local sl = it.slots[slotName]
+      if not sl then fail("ジュエルの穴の欄がありません: " .. tostring(slotName)) end
+      putInSlot(sl, item.id, true)
+      PCK.recalc()
+      local _, out = build.calcsTab.calcs.getMiscCalculator(build)
+      return { base = estDpsOf(base), with = estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), socketAdded = socketAdded }
+    end)
+    for name, sl in pairs(it.slots) do
+      if before[name] then sl:SetSelItemId(before[name].id); if isFlaskLike(name) then sl.active = before[name].active end end
+    end
+    it:DeleteItem(item, true)
+    restoreAlloc(saved)
+    if not ok then error(res, 0) end
+    return res
   end)
 end
 
@@ -1109,6 +1146,20 @@ function PCK.estimateAll(i, k, items, add, remove, groups, config, off, attrs)
       it:PopulateSlots()
       reapplyTree(treeIds)
       out.items, out.statsItems = step()
+      -- 1 つだけ自分の物に戻したら (2026-10-04 オーナー「ノードとの噛み合い方とかで全然違うと思う」): 1 つずつ入れた伸びは揃って効く分が
+      -- 入らないので、全部入れた状態から 1 つずつ戻して、その物が抜けると幾ら下がるかを見る (行の「揃えた時の効き」)
+      out.leave = {}
+      for _, x in ipairs(items or {}) do
+        local sl = it.slots[x.slot]
+        if sl then
+          local cur = sl.selItemId or 0
+          sl:SetSelItemId(before[x.slot] and before[x.slot].id or 0)
+          reapplyTree(treeIds)
+          out.leave[x.slot] = (step())
+          sl:SetSelItemId(cur)
+        end
+      end
+      reapplyTree(treeIds)
       -- 相手に無い自分の組は止める (最後に戻す)
       for _, gi in ipairs(off or {}) do
         local g = st.socketGroupList[gi]

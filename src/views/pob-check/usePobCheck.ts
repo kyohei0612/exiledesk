@@ -65,6 +65,17 @@ const treeNodes = shallowRef<TreeNode[]>([]);
 export interface Estimate {
   c: AdoptCandidate;
   dps: number;
+  /** 入れた後 / 入れる前 (PoB の計算の比)。ツリーを相手と同じにした上での行は、その状態が「前」 */
+  ratio?: number;
+  /** 比べる元の DPS (ツリーを相手と同じにした上での行は、ツリーを相手と同じにした時の DPS。無ければ今の DPS) */
+  baseDps?: number;
+  /** PoB の中の「前」の DPS (確かめる用) */
+  baseRaw?: number;
+  /**
+   * 揃えた時の効き: 相手の装備・ジュエルを全部入れた状態から、これだけ自分の物に戻すと DPS が何倍になるかの逆 (全部 / これだけ戻した時)。
+   * 1 つずつ入れた比には揃って初めて効く分が入らない (2026-10-04 オーナー「ノードとの噛み合い方とかで全然違う、だって 200% ちゃんだよ」)
+   */
+  together?: number;
   stats: EstimateStats;
   lines?: Array<{ line: string; loss: number }>;
   /** PoB が知らないジェム (計算に入っていない) */
@@ -366,7 +377,7 @@ export function usePobCheck() {
                   : estimateJewel(f.g.i, f.s.k, c.slot, c.to.raw, c.nodeId),
           );
           const ratio = r.base > 0 ? r.with / r.base : 1;
-          const e: Estimate = { c, dps: f.s.game.dps * ratio, stats: statDelta(r) };
+          const e: Estimate = { c, dps: f.s.game.dps * ratio, ratio, baseRaw: r.base, stats: statDelta(r) };
           if ("lines" in r && r.lines) {
             // 行を抜いた時に DPS が下がる割合 = その行の効き。下がらない行は出さない
             e.lines = r.lines
@@ -415,13 +426,24 @@ export function usePobCheck() {
         // ツリーの行は計算の上書きで出した物なので、本当に付け替えた「ツリーを相手と同じに」の段の数字にそろえる (属性ノード・ジュエルの範囲込み)
         const treeRow = out.find((e) => e.c.kind === "tree" && !e.error);
         if (treeRow && r.cur > 0) treeRow.dps = all.tree;
+        // ツリーを相手と同じにした上での行は、その時の DPS (ツリーの段) を元に出す (2026-10-04 オーナー「ここに表示する DPS は相手の比べる
+        // ノードにした状態だからね」。前は今の DPS に比を掛けていて、ツリーを付け替えていないように見えた)
+        // 揃えた時の効き (全部入れた状態から、その欄だけ戻すと幾ら下がるか)
+        for (const e of out) {
+          if ((e.c.kind === "item" || e.c.kind === "jewel") && r.leave && r.leave[e.c.slot] != null && r.leave[e.c.slot]! > 0) e.together = r.items / r.leave[e.c.slot]!;
+        }
+        if (treeBased || (plan.tree.add.length || plan.tree.remove.length)) {
+          for (const e of out) if (e.c.kind !== "tree" && !e.error && e.ratio != null && all.tree > 0) { e.dps = all.tree * e.ratio; e.baseDps = all.tree; }
+        }
       } catch (err) {
         all = { tree: 0, items: 0, gems: 0, config: null, life: [], es: [], error: msg(err) };
       }
       // 火力に関係ない装備・ジュエル (DPS の変化 0.5% 未満) は出さない (2026-10-04 オーナー「火力に関係ない装備は表示しなくていい、ややこしい」)。
       // ツリーとリネージュは出す。並びは DPS の変化が大きい順 (失敗は最後)
       const base = f.s.game.dps;
-      const quiet = (e: Estimate): boolean => !e.error && (e.c.kind === "item" || e.c.kind === "jewel") && base > 0 && Math.abs(e.dps / base - 1) < 0.005;
+      // 揃えた時に効く物は出す (1 つだけだと変わらなくても)
+      const quiet = (e: Estimate): boolean => !e.error && (e.c.kind === "item" || e.c.kind === "jewel") && Math.abs((e.ratio ?? (base > 0 ? e.dps / base : 1)) - 1) < 0.005
+        && Math.abs((e.together ?? 1) - 1) < 0.005;
       const shown = out.filter((e) => !quiet(e));
       shown.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || b.dps - a.dps);
       estimates.value = { list: shown, of: mine, focusKey: f.key, dps: base, quiet: out.length - shown.length, all, treeBased: !!(plan.tree.add.length || plan.tree.remove.length) };

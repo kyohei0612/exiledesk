@@ -364,6 +364,8 @@ export interface EstimateAllRaw {
   gems: number;
   /** + 設定 (相手の設定を渡した時だけ) */
   config?: number;
+  /** 装備・ジュエルを全部相手の物にした状態から、その欄だけ自分の物に戻した時の DPS (欄の名前 → DPS) */
+  leave?: Record<string, number>;
   stats: EstimateStats;
   statsTree: EstimateStats;
   statsItems: EstimateStats;
