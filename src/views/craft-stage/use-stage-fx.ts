@@ -30,6 +30,17 @@ const COLOR = { magic: "var(--color-rarity-magic)", rare: "var(--color-rarity-ra
 /**
  * アクト中に落ちる物 (要望 ⑧) の結果の文字: 品質 / 鑑定 / サポート枠 / ソケット / シャード。関係なければ null
  */
+/** オーグメントの手の文字 (結果 JSON の augment_change) */
+function augText(o: object): { kind: "hit" | "up"; color: string; text: string } | null {
+  const a = (o as { augment_change?: { put: { ja: string; en?: string }; replaced: { ja: string } | null; upgraded?: { from: { ja: string }; to: { ja: string; en?: string } } } }).augment_change;
+  if (!a) return null;
+  if (a.upgraded) {
+    const tier = /^Perfect /.test(a.upgraded.to.en ?? "") ? "パーフェクト" : /^Greater /.test(a.upgraded.to.en ?? "") ? "グレーター" : "1 段上";
+    return { kind: "up", color: COLOR.top, text: `${tier}に!` };
+  }
+  if (a.replaced) return { kind: "hit", color: COLOR.miss, text: `${a.replaced.ja}はなくなった — ${a.put.ja}をはめた!` };
+  return { kind: "up", color: COLOR.fractured, text: `${a.put.ja}をはめた!` };
+}
 function actText(before: StageItem, after: StageItem): { kind: "hit" | "up"; color: string; text: string } | null {
   if (after.quality > before.quality && !after.qualityTag) return { kind: "hit", color: COLOR.top, text: `品質 +${Math.round((after.quality - before.quality) * 10) / 10}%` };
   if (before.identified === false && after.identified !== false) return { kind: "up", color: COLOR[after.rarity], text: "鑑定!" };
@@ -108,6 +119,8 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource =
     else if (st.after.corrupted && !st.before.corrupted && o.currency !== "vaal") next = { kind: "up", color: COLOR.desecrated, text: "腐食!" };
     else if (st.after.corrupted && !st.before.corrupted) next = { kind: "up", color: COLOR.corrupt, text: vaalText(st.before, st.after, st.added.length + st.removed.length) };
     else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: "聖別!" };
+    // オーグメント (POE2Tube 要望 ㉘): 傑作のルーンで上げた / 置き換えた / はめた (ルーン・ソウルコア・アイドルは名前で)
+    else if (augText(o)) next = augText(o)!;
     else if (o.changed.rarity_from !== o.changed.rarity_to) next = { kind: "up", color: COLOR[o.changed.rarity_to], text: `${RARITY_TEXT[o.changed.rarity_to]}${mods ? ` ${mods}` : ""}` };
     else if (top) next = { kind: "up", color: COLOR.top, text: mods || "T1 がついた!" };
     else if (st.added.some((m) => m.fractured)) next = { kind: "hit", color: COLOR.fractured, text: "フラクチャー!" };

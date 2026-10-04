@@ -56,6 +56,9 @@ export const RUNE_GROUPS: ShelfGroup[] = [
   { kind: "greater", label: "グレーター", keys: runeKeys("greater") },
   { kind: "perfect", label: "パーフェクト", keys: runeKeys("perfect") },
   { kind: "special", label: "特別なルーン (古代・ウォード・人の名前の物など)", keys: runeKeys("special") },
+  // ソウルコア・アイドルも (POE2Tube 要望 ㉘ 2026-10-04、手で打つ画面の棚に)
+  { kind: "soulcore", label: "ソウルコア", keys: runeKeys(undefined, "soulcore") },
+  { kind: "idol", label: "アイドル", keys: runeKeys(undefined, "talisman") },
 ];
 /**
  * 今のアイテムに効き目がある (効果のデータにこの部位の行がある) ルーンだけ
@@ -66,7 +69,8 @@ export function runesFor(item: StageItem | null): ShelfGroup[] {
   const fits = (k: string): boolean => {
     const r = runeOf(k);
     // 部位は効果のデータ (この部位に効果の行があるか) を正にする。説明文の部位とは 5 件食い違う (augment-rules.ts の placeBlock)
-    return !!r && !!runeEffectFor(r, item.cls.category);
+    // 傑作のルーンは自分の効き目を持たない (はまっているルーンを上げる) ので出しておく
+    return !!r && (runeNameOf(k) === "Masterwork Rune" || !!runeEffectFor(r, item.cls.category));
   };
   return RUNE_GROUPS.map((g) => ({ ...g, keys: g.keys.filter(fits) })).filter((g) => g.keys.length);
 }

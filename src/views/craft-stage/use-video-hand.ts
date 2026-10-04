@@ -94,8 +94,11 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
         hand.held = cur;
         await wait(120);
       }
-      // 3. アイテムまで運ぶ
-      await moveTo(pointOf(card, 0.35), 700);
+      // 3. アイテムまで運ぶ。オーグメント (ルーン・ソウルコア・アイドル・傑作のルーン) は、はめる / 置き換える / 上げるソケットの丸の上まで
+      // (POE2Tube 要望 ㉘)。ソケットは結果 JSON の augment_change.socket (打てなかった手は指した番号、無ければ 1 番目)
+      const augSock = (st.out as { augment_change?: { socket: number } }).augment_change?.socket ?? (/^rune:.*@(\d+)$/.exec(cur)?.[1] ? Number(/@(\d+)$/.exec(cur)![1]) : null);
+      const sockEl = cur.startsWith("rune:") ? card?.querySelector(`[data-stage-socket="${augSock ?? 1}"]`) : null;
+      await moveTo(sockEl ? pointOf(sockEl) : pointOf(card, 0.35), 700);
       if (rv && craftStage.data.value) {
         // 発現 (POE2Tube 要望 ㉗): アイテムを押すと魂の井戸の小窓がアイテムの枠の下に出る → (反響なら引き直しのボタンへ動いて押す →
         // 新しい 3 つ) → 選ぶ行へ動く → 乗せて光る → 少し待って押す → 小窓が閉じて付く

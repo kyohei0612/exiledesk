@@ -123,11 +123,11 @@ export function runeEffectFor(rune: RuneRow, category: string): RuneEffect | nul
   return hits.sort((a, b) => sizeOf(CAT_TO_CLASSES[a.cat]) - sizeOf(CAT_TO_CLASSES[b.cat]))[0] ?? null;
 }
 
-/** 棚に並べるルーン (ルーンだけ、段 → ドロップレベル順)。tier を渡すとその段だけ */
-export function runeKeys(tier?: string): string[] {
+/** 棚に並べるルーン (ルーンだけ、段 → ドロップレベル順)。tier を渡すとその段だけ。kind でソウルコア / アイドル (talisman) も */
+export function runeKeys(tier?: string, kind: RuneRow["kind"] = "rune"): string[] {
   const order: Record<string, number> = { lesser: 0, normal: 1, greater: 2, perfect: 3, special: 4 };
   return Object.entries(RUNES)
-    .filter(([, r]) => r.kind === "rune" && r.available !== false && (!tier || r.tier === tier))
+    .filter(([, r]) => r.kind === kind && r.available !== false && (!tier || r.tier === tier))
     .sort(([, a], [, b]) => (order[a.tier ?? ""] ?? 9) - (order[b.tier ?? ""] ?? 9) || (a.drop ?? 0) - (b.drop ?? 0))
     .map(([en]) => `${RUNE_PREFIX}${en}`);
 }
@@ -136,8 +136,53 @@ export function runeKeys(tier?: string): string[] {
  * ルーンを 1 つはめる。空きがあれば空きに、無ければ置き換え (augment-rules.ts の決まり)。
  * 置き換えた時は StageApply.augment.replaced に外れた物 (壊れて戻らない = replacedGoes "destroyed")
  */
+/** 段の順 (傑作のルーンで 1 つ上へ) */
+const TIER_UP: Record<string, string> = { lesser: "normal", normal: "greater", greater: "perfect" };
+const TIER_PREFIX: Record<string, string> = { lesser: "Lesser ", normal: "", greater: "Greater ", perfect: "Perfect " };
+export const TIER_JA: Record<string, string> = { lesser: "レッサー", normal: "無印", greater: "グレーター", perfect: "パーフェクト" };
+/** そのルーンの 1 段上の英語名 (砂漠のグレータールーン → 砂漠のパーフェクトルーン)。段の無い物・最上段は null */
+export function upgradedRuneOf(en: string): string | null {
+  const r = RUNES[en];
+  if (!r || r.kind !== "rune" || !r.tier || !TIER_UP[r.tier]) return null;
+  const family = en.replace(/^(Lesser|Greater|Perfect) /, "");
+  const next = `${TIER_PREFIX[TIER_UP[r.tier]!]}${family}`;
+  return RUNES[next] ? next : null;
+}
+
+/**
+ * 傑作のルーン (Masterwork Rune、POE2Tube 要望 ㉘ 2026-10-04): 説明文「ティアを持つルーンを持つオーグメントソケットにはめて、そのルーンを
+ * アップグレードできる」。n 番目 (指していなければ左から最初に上げられる物) のソケットのルーンを 1 段上げる。傑作のルーンは残らない (使い切り)。
+ * ティアの無い物 (ソウルコア・アイドル・特別なルーン) と最上段 (パーフェクト) には打てない
+ */
+function applyMasterwork(item: StageItem, socket: number | null): StageApply {
+  const now = item.augments ?? [];
+  const sockets = item.sockets ?? 0;
+  if (!sockets) return skip(item, "ソケットが無い (先に熟練工のオーブ)");
+  if (socket != null && (socket < 1 || socket > sockets)) return skip(item, `ソケットは ${sockets} つ (${socket} 番目は無い)`);
+  const at = socket != null ? socket - 1 : now.findIndex((a) => !!upgradedRuneOf(a.en));
+  const old = at >= 0 ? now[at] : undefined;
+  if (!old) return skip(item, socket != null ? `${socket} 番目のソケットは空 (ティアを持つルーンがはまったソケットにだけ使える)` : "ティアを持つルーンがはまったソケットが無い");
+  const oldRow = RUNES[old.en];
+  if (!oldRow || oldRow.kind !== "rune" || !oldRow.tier || oldRow.tier === "special") return skip(item, `${old.ja}はティアを持たないので上げられない (ティアを持つルーンにだけ使える)`);
+  if (oldRow.tier === "perfect") return skip(item, `${old.ja}はもうパーフェクトなので上げられない`);
+  const nextEn = upgradedRuneOf(old.en);
+  const next = nextEn ? RUNES[nextEn] : null;
+  if (!nextEn || !next) return skip(item, `${old.ja}の 1 段上のルーンが表に無い`);
+  const eff = runeEffectFor(next, item.cls.category);
+  if (!eff) return skip(item, "この部位には効き目が無い");
+  const aug: StageAugment = { key: `${RUNE_PREFIX}${nextEn}`, en: nextEn, ja: next.ja, cat: eff.catJa, textJa: eff.ja, textEn: eff.en, stats: eff.stats };
+  return {
+    applied: true,
+    item: { ...item, augments: now.map((a, i) => (i === at ? aug : a)) },
+    added: [],
+    removed: [],
+    augment: { socket: at + 1, put: aug, replaced: old, replacedGoes: null, upgraded: true },
+  };
+}
+
 export function applyRune(item: StageItem, key: string): StageApply {
   const p = parseRuneKey(key)!;
+  if (p.en === "Masterwork Rune") return applyMasterwork(item, p.socket);
   const rune = runeOf(key)!;
   const rule = augmentRule(p.en);
   const sockets = item.sockets ?? 0;

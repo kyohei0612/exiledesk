@@ -120,5 +120,5 @@ export interface StageApply {
    * オーグメント (ルーン) をはめた手 (2026-10-03): どのソケット (1 から) に何を、置き換えた時は外れた物と、その行き先
    * ("destroyed" = 壊れて戻らない。src/services/augment-rules.ts の決まり)
    */
-  augment?: { socket: number; put: StageAugment; replaced: StageAugment | null; replacedGoes: "destroyed" | null };
+  augment?: { socket: number; put: StageAugment; replaced: StageAugment | null; replacedGoes: "destroyed" | null; /** 傑作のルーンで 1 段上げた (replaced = 上げる前) */ upgraded?: boolean };
 }
