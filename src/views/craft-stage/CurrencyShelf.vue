@@ -11,7 +11,7 @@
 import { computed, ref } from "vue";
 import ShelfButton from "./ShelfButton.vue";
 import { craftStage } from "../../state/craft-stage";
-import { bonesFor, CATALYSTS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
+import { bonesFor, CATALYSTS, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
 import { runeEffectFor, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
 
 const emit = defineEmits<{ hold: [key: string] }>();
@@ -30,6 +30,13 @@ const heldAt = computed(() => {
 });
 const tab = ref<"orb" | "essence" | "catalyst" | "rune" | "omen">("orb");
 const runes = computed(() => runesFor(craftStage.item.value));
+/** 開いたルーンのまとまり (初めは全部閉じて、クラフトに関わる物だけ出す) */
+const openRunes = ref(new Set<string>());
+function toggleRunes(kind: string): void {
+  const s = new Set(openRunes.value);
+  if (s.has(kind)) s.delete(kind); else s.add(kind);
+  openRunes.value = s;
+}
 /** ソケット: 今の数 / 熟練工の上限、はめたルーンの数 */
 const sockets = computed(() => {
   const it = craftStage.item.value;
@@ -94,25 +101,19 @@ const TABS = computed(() => [
         ソケット {{ sockets.now }} / {{ sockets.cap }} (熟練工のオーブで足す、コラプトで +1)・はめたルーン {{ sockets.used }}。はめたら外せないが、他のルーンで置き換えられる (置き換えた方は壊れる。ソケットバウンドの物は置き換えも不可)。ルーンを持ってソケットの絵を押すとそのソケットを置き換える
         <ShelfButton k="artificer" class="ml-2 inline-block align-middle" @pick="emit('hold', $event)" />
       </p>
+      <!-- 段ごとのまとまり。初めはクラフトに関わるルーンだけ出して、他は「他 ○ 個」で畳む (2026-10-04 オーナー) -->
       <div class="space-y-2">
-        <div v-for="g in runes.filter((x) => !x.folded)" :key="g.kind">
-          <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>
-          <div class="flex flex-wrap gap-1.5">
-            <ShelfButton v-for="k in g.keys" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
+        <div v-for="g in runes" :key="g.kind">
+          <p class="mb-0.5 flex items-center gap-2 text-[10px]">
+            <span class="opacity-60">{{ g.label }}</span>
+            <button v-if="g.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" type="button" class="rounded px-1 text-[10px] text-sky-300/80 hover:bg-white/10" @click="toggleRunes(g.kind)">
+              {{ openRunes.has(g.kind) ? "たたむ ▴" : `他 ${g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸` }}
+            </button>
+          </p>
+          <div v-if="openRunes.has(g.kind) || g.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5">
+            <ShelfButton v-for="k in openRunes.has(g.kind) ? g.keys : g.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
           </div>
         </div>
-        <!-- 効果を足すだけのルーン・ソウルコア・アイドルは畳んで下に (2026-10-04) -->
-        <details v-if="runes.some((x) => x.folded)" class="rounded border border-white/10 px-2 py-1">
-          <summary class="cursor-pointer select-none text-[11px] opacity-70 hover:opacity-100">効果を足すだけのルーン・ソウルコア・アイドル ({{ runes.filter((x) => x.folded).reduce((n, x) => n + x.keys.length, 0) }})</summary>
-          <div class="mt-1.5 space-y-2">
-            <div v-for="g in runes.filter((x) => x.folded)" :key="g.kind">
-              <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>
-              <div class="flex flex-wrap gap-1.5">
-                <ShelfButton v-for="k in g.keys" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
-              </div>
-            </div>
-          </div>
-        </details>
       </div>
       <p v-if="!runes.length" class="text-[12px] opacity-50">このベースに効くルーンはありません</p>
     </div>
