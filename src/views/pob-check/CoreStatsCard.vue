@@ -38,13 +38,14 @@ const EL_JA: Record<string, string> = { "": "", Physical: "物理", Fire: "火",
 /** 計算に入る数値の 1 行の名前 */
 function calcLabel(name: string, kind: string): string {
   const gain = /^(\w*?)DamageGainAs(\w+)$/.exec(name);
-  if (gain) return `${EL_JA[gain[1]!] ?? gain[1]}ダメージを${EL_JA[gain[2]!] ?? gain[2]}ダメージとして追加で得る`;
+  // 短く (段組の幅に収める): 「火ダメージとして追加で得る」/ 種類の決まった物は「冷気から雷ダメージとして追加で得る」
+  if (gain) return `${gain[1] ? `${EL_JA[gain[1]!] ?? gain[1]}から` : ""}${EL_JA[gain[2]!] ?? gain[2]}ダメージとして追加で得る`;
   const conv = /^(\w+?)DamageConvertTo(\w+)$/.exec(name);
-  if (conv) return `${EL_JA[conv[1]!] ?? conv[1]}ダメージを${EL_JA[conv[2]!] ?? conv[2]}ダメージに変換`;
+  if (conv) return `${EL_JA[conv[1]!] ?? conv[1]}から${EL_JA[conv[2]!] ?? conv[2]}ダメージに変換`;
   const base = STAT_JA[name] ?? name;
   if (kind === "INC") return `${base}増加`;
   if (kind === "MORE") return `${base}上昇`;
-  return name === "ProjectileCount" ? base : `${base} (基本に加算)`;
+  return name === "ProjectileCount" ? base : `基本の${base}`;
 }
 /** 計算に入る数値を 自分 → 相手 で (どちらかで 0 でない物。耐性貫通は上の ダメージ に出すので除く) */
 function calcRows(a: CoreStats, b: CoreStats | null): Row[] {
@@ -74,7 +75,7 @@ const VAR_JA: Record<string, string> = {
   FullEnergyShield: "ES が満タン", Debilitated: "衰弱", UsedSkillRecently: "最近スキルを使った", CastSpellRecently: "最近呪文を詠唱した",
   BrandedEnemy: "刻印された敵", targetBrandedEnemy: "刻印された敵",
 };
-const varJa = (v: string) => v.split("/").map((x) => VAR_JA[x] ?? x).join(" か ");
+const varJa = (v: string) => v.split("/").map((x) => VAR_JA[x] ?? (/Infused$/.test(x) ? "インフュージョン中" : x)).join(" か ");
 /** 条件の書き方 (「敵が盲目の時」「敵が感電でない時」「自分が最近クリティカルヒットした時」) */
 function condJa(c: { var: string; actor?: string; neg?: boolean }): string {
   const who = c.actor === "enemy" ? "敵が" : c.actor ? `${c.actor}が` : "";
@@ -195,18 +196,32 @@ const sections = computed<Section[]>(() => {
     </div>
     <template v-if="open">
     <p class="note mb-2 mt-1">名前と並びはゲームのスキルの詳細と同じ (スキル専用の項目は PoB に無いので出さない)</p>
-    <div class="grid gap-x-8 gap-y-3 @4xl:grid-cols-2 @7xl:grid-cols-3">
-      <div v-for="s in sections" :key="s.title">
-        <p class="mb-1 border-b border-white/10 pb-0.5 text-[12px] font-bold text-[var(--exile-color-text-secondary)]">{{ s.title }}</p>
-        <div v-for="r in s.rows" :key="r.label" class="flex items-baseline gap-2 py-0.5 text-[13px]" :title="r.hint">
+    <!--
+      段組 (2026-10-04 オーナー「見づらい、隙間多い、UI 工夫して」): 節を上から詰めて流す (CSS の段組)。行は 名前 | 自分 | 相手 | 差 の列をそろえた表、
+      1 行おきに薄い地。差の印は右端にそろえる
+    -->
+    <div class="columns-1 gap-6 @4xl:columns-2 @7xl:columns-3">
+      <!-- 短い節は段の途中で切らない。長い節 (計算に関わる数値) は段をまたいで流す -->
+      <div v-for="s in sections" :key="s.title" class="mb-3" :class="s.rows.length <= 12 ? 'break-inside-avoid' : ''">
+        <p class="mb-0.5 flex items-baseline justify-between border-b border-white/10 pb-0.5 text-[12px] font-bold text-[var(--exile-color-text-secondary)]">
+          <span>{{ s.title }}</span>
+          <span v-if="target" class="flex gap-0 text-[10px] font-normal text-[var(--exile-color-text-tertiary)]"><span class="w-[6.5rem] text-right">自分</span><span class="w-[6.5rem] text-right">相手</span><span class="w-[4.25rem]" /></span>
+        </p>
+        <div
+          v-for="(r, i) in s.rows"
+          :key="r.label"
+          class="flex items-center rounded px-1 text-[12.5px] leading-6"
+          :class="i % 2 ? 'bg-white/[0.025]' : ''"
+          :title="r.hint"
+        >
           <span class="min-w-0 flex-1 truncate text-[var(--exile-color-text-secondary)]">{{ r.label }}</span>
-          <span class="font-bold tabular-nums text-amber-200">{{ r.a }}</span>
+          <span class="w-[6.5rem] shrink-0 text-right font-bold tabular-nums text-amber-200">{{ r.a }}</span>
           <template v-if="r.b != null">
-            <span class="text-[var(--exile-color-text-tertiary)]">→</span>
-            <span class="font-bold tabular-nums text-sky-200">{{ r.b }}</span>
-            <DiffBadge v-if="r.na != null && r.nb != null && r.na > 0" :now="r.nb" :before="r.na" />
-            <span v-else-if="r.na === 0 && (r.nb ?? 0) > 0" class="text-[11px] text-emerald-300">0 →</span>
-            <span v-else class="w-[3.5rem]" />
+            <span class="w-[6.5rem] shrink-0 text-right font-bold tabular-nums text-sky-200">{{ r.b }}</span>
+            <span class="flex w-[4.25rem] shrink-0 justify-end">
+              <DiffBadge v-if="r.na != null && r.nb != null && r.na > 0 && r.nb !== r.na" :now="r.nb" :before="r.na" />
+              <span v-else-if="r.na === 0 && (r.nb ?? 0) > 0" class="text-[11px] text-emerald-300">新たに</span>
+            </span>
           </template>
         </div>
       </div>

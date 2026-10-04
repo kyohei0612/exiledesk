@@ -255,7 +255,9 @@ export function pairSkills(mine: Array<{ key: string; s: SkillView }>, target: A
   const out: SkillPair[] = mine.map((m) => ({ name: m.s.name, mine: { key: m.key, s: m.s }, target: rest.get(m.s.name)?.shift() ?? null }));
   for (const list of rest.values()) for (const s of list) out.push({ name: s.name, mine: null, target: s });
   const top = (r: SkillPair): number => Math.max(r.mine?.s.game.dps ?? 0, r.target?.game.dps ?? 0);
-  return out.sort((a, b) => top(b) - top(a));
+  // 両方にあるスキルを先に (片方だけの物は比べられないので後ろ。2026-10-04 オーナー「無い奴で比べてもダメ、比較するのはあるスキルを先に」)
+  const both = (r: SkillPair): number => (r.mine && r.target ? 0 : 1);
+  return out.sort((a, b) => both(a) - both(b) || top(b) - top(a));
 }
 
 // ---------------------------------------------------------------- 取り入れの試算の対象 (2026-10-03)

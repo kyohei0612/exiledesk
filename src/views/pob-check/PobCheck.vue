@@ -138,6 +138,17 @@ async function onLoadTarget(): Promise<void> {
   await nextTick();
   if (candidates.value.length) void runEstimates();
 }
+/** 上のバーのスキルの選択肢。比較の時は両方にあるスキルを先に、自分だけの物は後ろに印付きで (2026-10-04 オーナー「比較するのはあるスキルを先に」) */
+const focusOptions = computed(() => {
+  if (mode.value !== "compare" || !target.value) return skills.value.map((x) => ({ ...x, only: false }));
+  const names = new Set(targetSkills.value.map((x) => x.s.name));
+  const list = skills.value.map((x) => ({ ...x, only: !names.has(x.s.name) }));
+  return [...list.filter((x) => !x.only), ...list.filter((x) => x.only)];
+});
+// 比較の時、上のバーのスキルを選び直したら試算し直す (試算のボタンは無い)
+watch(() => focus.value?.key, (k, old) => {
+  if (mode.value === "compare" && opened.value && k && old && k !== old && !estimating.value && candidates.value.length) void runEstimates();
+});
 /** 比較の上の帯: 上のバーのスキルの相手の DPS (同じ名前のスキル) */
 const targetFocus = computed(() => {
   const f = focus.value;
@@ -299,7 +310,7 @@ const resists = computed(() =>
               title="上に出すスキルを選ぶ (初めは DPS が一番高いスキル)"
               @change="focusKey = ($event.target as HTMLSelectElement).value"
             >
-              <option v-for="x in skills" :key="x.key" :value="x.key">{{ gemJa(x.s.name) }}{{ x.s.game.minionName ? ` → ${x.s.game.minionName}` : "" }} の DPS</option>
+              <option v-for="x in focusOptions" :key="x.key" :value="x.key">{{ gemJa(x.s.name) }}{{ x.s.game.minionName ? ` → ${x.s.game.minionName}` : "" }} の DPS{{ x.only ? " (自分だけ)" : "" }}</option>
             </select>
             <div class="flex items-baseline gap-2">
               <span class="text-3xl font-black leading-none tabular-nums text-amber-200">{{ fmtNum(focus.s.game.dps) }}</span>
