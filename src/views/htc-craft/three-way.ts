@@ -20,14 +20,14 @@ export function useThreeWay(
     // 完成品が無くても近い物 (MOD だけ同じ形) は「妥協」として比べる
     const compromise = !!fin.found.value && fin.buyCost.value != null && (fin.tierless.value || fin.dropped.value.length > 0);
     const list = [
-      { key: "buy", name: compromise ? "完成品を買う (妥協)" : "完成品を買う", cost: fin.outlier.value ? null : fin.buyCost.value, base: null as number | null, craft: null as number | null,
+      { key: "buy", name: compromise ? "完成品を買う (妥協)" : "完成品を買う", cost: fin.outlier.value ? null : fin.buyCost.value, base: null as number | null, craft: null as number | null, baseCount: 1, baseUnit: null as number | null,
         why: fin.found.value ? (fin.exhausted.value ? "緩めても無し" : fin.outlier.value ? "当てにならない" : "出品なし") : "まだ",
         detail: compromise ? (fin.dropped.value.length ? `MOD だけ同じ形。${fin.dropped.value.join(" / ")} は付いていない (買ってから付ける)` : "MOD だけ同じ形 (段は問わず)") : "",
         url: fin.found.value?.url ?? null },
-      { key: "fixed", name: "固定済みを買って途中から作る", cost: tw.fixed?.cost ?? null, base: tw.fixed?.base ?? null, craft: tw.fixed?.craft ?? null, why: ss.busy.value ? "取得中…" : "出品なし", detail: tw.fixed?.label ?? "", url: tw.fixed?.url ?? null },
-      { key: "white", name: "白のベースから作る", cost: tw.white?.cost ?? null, base: tw.white?.base ?? null, craft: tw.white?.craft ?? null,
+      { key: "fixed", name: "固定済みを買って途中から作る", cost: tw.fixed?.cost ?? null, base: tw.fixed?.base ?? null, craft: tw.fixed?.craft ?? null, baseCount: tw.fixed?.baseCount ?? 1, baseUnit: tw.fixed?.baseUnit ?? null, why: ss.busy.value ? "取得中…" : "出品なし", detail: tw.fixed?.label ?? "", url: tw.fixed?.url ?? null },
+      { key: "white", name: "白のベースから作る", cost: tw.white?.cost ?? null, base: tw.white?.base ?? null, craft: tw.white?.craft ?? null, baseCount: tw.white?.baseCount ?? 1, baseUnit: tw.white?.baseUnit ?? null,
         why: c.dropOnly.value.length ? "樹 MOD は白から付かない" : ss.busy.value ? "取得中…" : "出せない", detail: tw.white?.label ?? "", url: tw.white?.url ?? null },
-      { key: "self", name: "自分でフラクチャーして作る", cost: tw.self?.cost ?? null, base: tw.self?.base ?? null, craft: tw.self?.craft ?? null, why: ss.kind.value.kind === "separate" ? "固定不要" : ss.busy.value ? "取得中…" : "出品が足りない", detail: tw.self?.label ?? "", url: tw.self?.url ?? null },
+      { key: "self", name: "自分でフラクチャーして作る", cost: tw.self?.cost ?? null, base: tw.self?.base ?? null, craft: tw.self?.craft ?? null, baseCount: tw.self?.baseCount ?? 1, baseUnit: tw.self?.baseUnit ?? null, why: ss.kind.value.kind === "separate" ? "固定不要" : ss.busy.value ? "取得中…" : "出品が足りない", detail: tw.self?.label ?? "", url: tw.self?.url ?? null },
     ];
     const min = Math.min(...list.map((w) => w.cost ?? Infinity));
     return list.map((w) => ({ ...w, best: w.cost != null && w.cost === min }));

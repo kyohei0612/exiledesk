@@ -251,7 +251,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const prep = ctx && t ? whitePrep(ctx, t.modId, t.minTierIndex ?? 0) : null;
     if (!prep) return [{ id: "white", label, cost: null, note: "白のベースから狙いの段が付かない・相場が無い", link, manual: false, status: "-" }];
     return [{
-      id: "white", label, cost: FRACTURE_BATCH * (wb.price + prep.prep), basePrice: wb.price, treeStart: wb.price + (FRACTURE_BATCH - 1) * (wb.price + prep.prep), link, manual: false, status: "-",
+      id: "white", label, cost: FRACTURE_BATCH * (wb.price + prep.prep), basePrice: FRACTURE_BATCH * wb.price, baseCount: FRACTURE_BATCH, baseUnit: wb.price, treeStart: wb.price + (FRACTURE_BATCH - 1) * (wb.price + prep.prep), link, manual: false, status: "-",
       note: `白のベース 1 個 ${c.money(wb.price)} × ${FRACTURE_BATCH} 個。1 個ごとに 変成・増強${prep.tier ? ` (${prep.tier})` : ""} で狙いが付くまで (平均 ${c.money(prep.magic)}) → 王者 → 高貴 → 冒涜 → フラクチャー、${FRACTURE_BATCH} 個で 1 個固定`,
     }];
   }
@@ -293,7 +293,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   const threeWay = computed(() => {
     // base = ベース (素材) の値段、craft = クラフト費用 (作る見込み)。cost = 合計 (2026-10-04 オーナー「ベースの値段 + クラフト費用 = 合計 みたいな書き方」)。
     // 「買う + 残りを作る」(固定不要) は 1 行に足してあるので分けない (null)
-    type Way = { cost: number; base: number | null; craft: number | null; label: string; url: string | null };
+    type Way = { cost: number; base: number | null; craft: number | null; baseCount: number; baseUnit: number | null; label: string; url: string | null };
     const out: { fixed: Way | null; self: Way | null; white: Way | null } = { fixed: null, self: null, white: null };
     for (const x of rows.value) {
       for (const r of x.sub) {
@@ -303,7 +303,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
         const cur = out[which];
         const split = r.id !== "buy" && r.cost != null;
         const base = split ? (r.basePrice ?? r.cost) : null;
-        if (!cur || total < cur.cost) out[which] = { cost: total, base, craft: base != null ? total - base : null, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}`, url: r.link?.url ?? null };
+        if (!cur || total < cur.cost) out[which] = { cost: total, base, craft: base != null ? total - base : null, baseCount: r.baseCount ?? 1, baseUnit: r.baseUnit ?? null, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}`, url: r.link?.url ?? null };
       }
     }
     return out;

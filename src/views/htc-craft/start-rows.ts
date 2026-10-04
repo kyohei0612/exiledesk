@@ -28,6 +28,9 @@ export interface StartRow {
    * 「複数買って作るならそれはクラフト費用として乗せるべき」)。無ければ cost をそのままベースに
    */
   basePrice?: number | null;
+  /** ベースを何個買うか (5 個で 1 個固定する道は 5) と 1 個の値段 (一番安い物)。画面は「ベース 1 個 × 5 = ベース代」(2026-10-04 オーナー「ベース買うなら *5 とかで表示」) */
+  baseCount?: number;
+  baseUnit?: number | null;
   /**
    * 作り方のツリーに入れる初動 (無ければ cost)。白のベースから は 1 個分のベース + 外れ 4 個分 (ベース + 固定までの平均)。
    * 当たりの 1 個のマジックの段とフラクチャーはツリーの中で回す (2026-10-04)
@@ -61,7 +64,7 @@ export function startRows(r: TreeResult | null, div: number, opts: { busy: boole
     const total = r.found.find((x) => x.key === key)?.total ?? 0;
     // 5 個買って 5 個ともフラクチャーまで進め、1 個だけ成功する前提 (2026-10-04 オーナー「5 個を基本としよう。必ず 5 でスタートして 1 個作れると仮定」
     // 「MOD 付きの奴を買うのも同じで、4 つは失敗する費用 (ベースとフラクチャー代) をクラフト費用に入れて、1 つはフラクチャー成功した時のそれ以降を
-    // 自動クラフトで回そう」)。安い順に 5 件の「1 回分」(値段 + 固定までの代) の合計。ベースは 1 個分、残りはクラフト費用に見せる
+    // 自動クラフトで回そう」「ベース買うなら *5 とかで表示」)。安い順に 5 件の「1 回分」(値段 + 固定までの代) の合計。ベース代は 5 個分、固定の代はクラフト費用に見せる
     const route = r.routes.find((x) => x.key === key);
     const tries = route ? [...route.decision.order, ...route.decision.skipped].filter((x) => x.how !== "buy").sort((a, z) => a.perTry - z.perTry).slice(0, FRACTURE_BATCH) : [];
     if (tries.length < FRACTURE_BATCH) {
@@ -70,8 +73,9 @@ export function startRows(r: TreeResult | null, div: number, opts: { busy: boole
     }
     void b;
     rows.push({
-      id: key, label, cost: tries.reduce((a, x) => a + x.perTry, 0) * div, basePrice: tries[0]!.listing.price * div, link: linkOf(key), manual: false, status: "-",
-      note: `${FRACTURE_BATCH} 個買って 5 個ともフラクチャーまで進め、1 個固定できる前提 (1 個 ${tries[0]!.listing.price.toFixed(1)} 神〜。外れ 4 個の素材代と固定の代はクラフト費用に)`,
+      id: key, label, cost: tries.reduce((a, x) => a + x.perTry, 0) * div, basePrice: tries.reduce((a, x) => a + x.listing.price, 0) * div,
+      baseCount: FRACTURE_BATCH, baseUnit: tries[0]!.listing.price * div, link: linkOf(key), manual: false, status: "-",
+      note: `${FRACTURE_BATCH} 個買って 5 個ともフラクチャーまで進め、1 個固定できる前提 (1 個 ${tries[0]!.listing.price.toFixed(1)} 神〜。ベース代は 5 個分、固定の代 (5 個分) はクラフト費用に)`,
     });
   }
   return rows.sort((a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity));

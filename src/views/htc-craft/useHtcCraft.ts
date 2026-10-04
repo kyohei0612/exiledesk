@@ -56,13 +56,18 @@ export interface TargetRow {
   assumedWeight?: boolean;
 }
 
+/** 始め方 1 つ (cost = 合計、base = ベース代 (baseUnit × baseCount)、craft = 残り) */
+export interface RouteOption {
+  cost: number | null; base?: number | null; craft?: number | null; baseCount?: number; baseUnit?: number | null;
+  label: string; link: { text: string; url: string } | null;
+}
 /** 作り方の始め方の選択肢 (cost は初動 + 作る見込み、高貴建て) */
 export interface RouteOptions {
   /** cost = null は出品なし・足りない。link = その検索 (0 件でも条件を取引所で見られる。2026-10-04 オーナー「どんな条件で検索してヒットなかったのか知りたい」) */
-  fixed: { cost: number | null; base?: number | null; craft?: number | null; label: string; link: { text: string; url: string } | null } | null;
-  self: { cost: number | null; base?: number | null; craft?: number | null; label: string; link: { text: string; url: string } | null } | null;
+  fixed: RouteOption | null;
+  self: RouteOption | null;
   /** 白のベースから (変成・増強 → 王者 → 冒涜 → フラクチャー、5 個で 1 個)。樹 MOD がある時は出さない */
-  white: { cost: number | null; base?: number | null; craft?: number | null; label: string; link: { text: string; url: string } | null } | null;
+  white: RouteOption | null;
   /** ② で安い方 */
   recommended: "fixed" | "self" | null;
 }

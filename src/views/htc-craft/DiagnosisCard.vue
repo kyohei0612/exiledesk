@@ -111,7 +111,7 @@ watch([() => c.phase.value, () => c.diagBusy.value, () => ss.threeWay.value, () 
   const k = ss.kind.value.kind;
   // 白のベースから は樹 MOD (創生の樹からしか出ない) が無い時だけ
   const white = c.dropOnly.value.length || k === "unsafe" ? null
-    : tw.white ? { cost: tw.white.cost, base: tw.white.base, craft: tw.white.craft, label: tw.white.label, link: tw.white.url ? { text: "取引所で見る", url: tw.white.url } : null }
+    : tw.white ? { cost: tw.white.cost, base: tw.white.base, craft: tw.white.craft, baseCount: tw.white.baseCount, baseUnit: tw.white.baseUnit, label: tw.white.label, link: tw.white.url ? { text: "取引所で見る", url: tw.white.url } : null }
       : { cost: null, label: "白のベースから固定できない (出品なし・段が届かない)", link: null };
   if (k === "separate" || k === "unsafe" || (!tw.fixed && !tw.self && !white)) {
     c.routeOptions.value = null;
@@ -124,9 +124,9 @@ watch([() => c.phase.value, () => c.diagBusy.value, () => ss.threeWay.value, () 
   const linkOf = (id: string) => row?.sub.find((x) => x.id === id)?.link ?? null;
   const noteOf = (id: string) => row?.sub.find((x) => x.id === id)?.note || "出品が足りない";
   c.routeOptions.value = {
-    fixed: tw.fixed ? { cost: tw.fixed.cost, base: tw.fixed.base, craft: tw.fixed.craft, label: tw.fixed.label, link: tw.fixed.url ? { text: "取引所で見る", url: tw.fixed.url } : linkOf("fractured") }
+    fixed: tw.fixed ? { cost: tw.fixed.cost, base: tw.fixed.base, craft: tw.fixed.craft, baseCount: tw.fixed.baseCount, baseUnit: tw.fixed.baseUnit, label: tw.fixed.label, link: tw.fixed.url ? { text: "取引所で見る", url: tw.fixed.url } : linkOf("fractured") }
       : { cost: null, label: noteOf("fractured"), link: linkOf("fractured") },
-    self: tw.self ? { cost: tw.self.cost, base: tw.self.base, craft: tw.self.craft, label: tw.self.label, link: tw.self.url ? { text: "取引所で見る", url: tw.self.url } : linkOf("loose") }
+    self: tw.self ? { cost: tw.self.cost, base: tw.self.base, craft: tw.self.craft, baseCount: tw.self.baseCount, baseUnit: tw.self.baseUnit, label: tw.self.label, link: tw.self.url ? { text: "取引所で見る", url: tw.self.url } : linkOf("loose") }
       : { cost: null, label: noteOf("loose"), link: linkOf("loose") },
     white,
     recommended,

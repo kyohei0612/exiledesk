@@ -79,6 +79,8 @@ const routeCards = computed(() => {
     cost: o[k]?.cost ?? null,
     base: o[k]?.base ?? null,
     craft: o[k]?.craft ?? null,
+    baseCount: o[k]?.baseCount ?? 1,
+    baseUnit: o[k]?.baseUnit ?? null,
     label: o[k]?.label ?? "出品が足りない",
     link: o[k]?.link ?? null,
     disabled: o[k]?.cost == null,
@@ -236,7 +238,9 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
           <span v-if="r.recommended" class="rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">おすすめ</span>
         </p>
         <p class="mt-0.5 text-[11px] opacity-60">{{ r.sub }}</p>
-        <p v-if="r.cost != null && r.base != null && r.craft != null" class="mt-1.5 text-[11px] tabular-nums opacity-80">ベース {{ c.money(r.base) }} + クラフト {{ c.money(r.craft) }} =</p>
+        <p v-if="r.cost != null && r.base != null && r.craft != null" class="mt-1.5 text-[11px] tabular-nums opacity-80">
+          ベース <template v-if="r.baseCount > 1 && r.baseUnit != null">{{ c.money(r.baseUnit) }}〜 × {{ r.baseCount }} = </template>{{ c.money(r.base) }} + クラフト {{ c.money(r.craft) }} =
+        </p>
         <p class="text-lg font-bold" :class="[r.recommended ? 'text-emerald-300' : '', r.base == null ? 'mt-1.5' : '']">{{ r.cost != null ? c.money(r.cost) : "—" }}</p>
         <p class="text-[11px] opacity-70">{{ r.label }}</p>
       </button>
