@@ -31,10 +31,10 @@ function parts(s: SkillView): Array<{ type: string; pct: number; color: string; 
     <div class="grid grid-cols-[minmax(0,1fr)_7.5rem_5.5rem_5.5rem_4.5rem_4.5rem] items-center gap-x-3 border-b border-white/10 px-4 py-1.5 text-[10px] text-[var(--exile-color-text-tertiary)]">
       <span>スキル</span>
       <span class="text-right">DPS</span>
-      <span class="text-right">1 発</span>
-      <span class="text-right">クリティカル</span>
-      <span class="text-right">クリ率</span>
-      <span class="text-right">1 秒の回数</span>
+      <span class="text-right">ヒットダメージ</span>
+      <span class="text-right">クリティカル時</span>
+      <span class="text-right">クリティカルヒット率</span>
+      <span class="text-right">1 秒あたりの回数</span>
     </div>
     <div
       v-for="x in rows"

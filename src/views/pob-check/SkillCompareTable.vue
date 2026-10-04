@@ -35,9 +35,9 @@ const cmpCls = (a: number | undefined, b: number | undefined): string => (a == n
       <span class="text-right">自分の DPS</span>
       <span class="text-right text-sky-300/80">相手の DPS</span>
       <span class="text-right">差</span>
-      <span class="text-right">1 発 (自分 → 相手)</span>
-      <span class="text-right">クリ率</span>
-      <span class="text-right">1 秒の回数</span>
+      <span class="text-right">ヒットダメージ</span>
+      <span class="text-right">クリティカルヒット率</span>
+      <span class="text-right">1 秒あたりの回数</span>
     </div>
     <div
       v-for="r in rows"
