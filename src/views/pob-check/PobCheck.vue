@@ -209,7 +209,13 @@ const num = (k: string): number => {
 };
 /** 実効のパワーチャージ (PoB が使っている数。Min のあるビルドは 0 にしても Min 個が効く) */
 const charges = computed(() => cur.value?.config.powerCharges ?? 0);
-const chargesMax = computed(() => Math.max(num("PowerChargesMax"), 3));
+/**
+ * パワーチャージのボタンの数。PoB の最大より上も選べるように 10 まで (2026-10-04 オーナー「チャージは 8、武器セット II のノードで最大を
+ * 上げてる」: 武器セット II で最大を上げて溜め、I に戻しても溜めたチャージは残る。PoB は今の武器セットのノードで最大 5 と見る)。
+ * PoB は指定した数を最大で止めない (8 を指定すると 8 個で計算する、2026-10-05 確認)
+ */
+const chargesMax = computed(() => Math.max(num("PowerChargesMax"), 10));
+const chargesPobMax = computed(() => num("PowerChargesMax"));
 const statChips = computed(() => {
   if (!cur.value) return [];
   const list: Array<{ label: string; value: string; cls: string }> = [
@@ -357,7 +363,8 @@ const resists = computed(() =>
                 :key="n"
                 type="button"
                 class="h-6 w-6 rounded text-[11px] font-semibold tabular-nums transition-colors"
-                :class="n - 1 === charges ? 'bg-[var(--exile-color-accent-focus)] text-[var(--exile-color-bg-canvas)]' : 'bg-white/5 text-[var(--exile-color-text-secondary)] hover:bg-white/15'"
+                :class="[n - 1 === charges ? 'bg-[var(--exile-color-accent-focus)] text-[var(--exile-color-bg-canvas)]' : 'bg-white/5 text-[var(--exile-color-text-secondary)] hover:bg-white/15', n - 1 > chargesPobMax && n - 1 !== charges ? 'opacity-50' : '']"
+                :title="n - 1 > chargesPobMax ? `PoB の最大 (${chargesPobMax}) より上。武器セット II のノードで最大を上げて溜め、I に戻した時など` : undefined"
                 :disabled="busy"
                 @click="changeCharges(n - 1)"
               >{{ n - 1 }}</button>
