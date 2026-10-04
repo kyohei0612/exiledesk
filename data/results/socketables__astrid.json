@@ -1,0 +1,1632 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-04T12:15:51.106Z",
+  "exiledesk_version": "0.1.367",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "アストリッドの創造性: パーフェクトエッセンスを 2 つ",
+    "base": "Glorious Plate",
+    "item_level": 80,
+    "start_rarity": "rare",
+    "seed": 14,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "artificer",
+        "times": 1
+      },
+      {
+        "currency": "essence:perfect:Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+        "times": 1,
+        "note": "クラフト MOD 1 個目"
+      },
+      {
+        "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+        "times": 1,
+        "note": "2 個目は付かない (1 個まで)"
+      },
+      {
+        "currency": "rune:Astrid's Creativity",
+        "times": 1,
+        "note": "クラフト MOD +1"
+      },
+      {
+        "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+        "times": 1,
+        "note": "2 個目が付く"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 15,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T13",
+            "mod_level": 1,
+            "text_ja": "最大ライフ +10",
+            "text_en": "+10 to maximum Life",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                19
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Hale"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T13",
+            "mod_level": 1,
+            "text_ja": "最大ライフ +10",
+            "text_en": "+10 to maximum Life",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                19
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Hale"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "essence:perfect:Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+      "currency_ja": "肉体のパーフェクトエッセンス",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 16,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T13",
+            "mod_level": 1,
+            "text_ja": "最大ライフ +10",
+            "text_en": "+10 to maximum Life",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                19
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Hale"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          },
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Body_Armours_str/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T13",
+            "mod_level": 1,
+            "text_ja": "最大ライフ +10",
+            "text_en": "+10 to maximum Life",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                19
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Hale"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+      "currency_ja": "ヒステリーのエッセンス",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 17,
+      "applied": false,
+      "reason": "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)",
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          },
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          },
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 4,
+      "currency": "rune:Astrid's Creativity",
+      "currency_ja": "アストリッドの創造性",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 18,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          },
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Astrid's Creativity",
+            "en": "Astrid's Creativity",
+            "ja": "アストリッドの創造性",
+            "category": "全ての装備品",
+            "text_ja": "クラフトモッドを追加で1個持つことができる",
+            "text_en": "Can have 1 additional Crafted Modifier",
+            "stats": [
+              {
+                "id": "local_can_have_additional_crafted_mods",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          },
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "augment_change": {
+        "socket": 1,
+        "put": {
+          "key": "rune:Astrid's Creativity",
+          "en": "Astrid's Creativity",
+          "ja": "アストリッドの創造性",
+          "category": "全ての装備品",
+          "text_ja": "クラフトモッドを追加で1個持つことができる",
+          "text_en": "Can have 1 additional Crafted Modifier",
+          "stats": [
+            {
+              "id": "local_can_have_additional_crafted_mods",
+              "value": 1
+            }
+          ]
+        },
+        "replaced": null,
+        "replaced_goes": null
+      }
+    },
+    {
+      "index": 5,
+      "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+      "currency_ja": "ヒステリーのエッセンス",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 19,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Astrid's Creativity",
+            "en": "Astrid's Creativity",
+            "ja": "アストリッドの創造性",
+            "category": "全ての装備品",
+            "text_ja": "クラフトモッドを追加で1個持つことができる",
+            "text_en": "Can have 1 additional Crafted Modifier",
+            "stats": [
+              {
+                "id": "local_can_have_additional_crafted_mods",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          },
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "623",
+            "up": true
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Astrid's Creativity",
+            "en": "Astrid's Creativity",
+            "ja": "アストリッドの創造性",
+            "category": "全ての装備品",
+            "text_ja": "クラフトモッドを追加で1個持つことができる",
+            "text_en": "Can have 1 additional Crafted Modifier",
+            "stats": [
+              {
+                "id": "local_can_have_additional_crafted_mods",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 25,
+            "text_ja": "アーマー +89",
+            "text_en": "+89 to Armour",
+            "values": [
+              89
+            ],
+            "ranges": [
+              [
+                78,
+                98
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Fortified"
+          },
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_Thorns",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 63,
+            "text_ja": "65から113の物理棘ダメージ",
+            "text_en": "65 to 113 Physical Thorns damage",
+            "values": [
+              65,
+              113
+            ],
+            "ranges": [
+              [
+                64,
+                97
+              ],
+              [
+                98,
+                145
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of Hysteria"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 24,
+            "text_ja": "火耐性 +16%",
+            "text_en": "+16% to Fire Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drake"
+          },
+          {
+            "mod_id": "Body_Armours_str/ReducedBleedDuration",
+            "family": "ReducedAilmentDuration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 64,
+            "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+            "text_en": "-52% reduced Duration of Bleeding on You",
+            "values": [
+              -52
+            ],
+            "ranges": [
+              [
+                -55,
+                -51
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Assuaging"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_Thorns",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 63,
+            "text_ja": "65から113の物理棘ダメージ",
+            "text_en": "65 to 113 Physical Thorns damage",
+            "values": [
+              65,
+              113
+            ],
+            "ranges": [
+              [
+                64,
+                97
+              ],
+              [
+                98,
+                145
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of Hysteria"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "栄光のプレート",
+    "base": "Glorious Plate",
+    "base_ja": "栄光のプレート",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 65,
+      "str": 121
+    },
+    "properties": [
+      {
+        "key": "armour",
+        "label": "アーマー",
+        "value": "623",
+        "up": true
+      }
+    ],
+    "augments": [
+      {
+        "key": "rune:Astrid's Creativity",
+        "en": "Astrid's Creativity",
+        "ja": "アストリッドの創造性",
+        "category": "全ての装備品",
+        "text_ja": "クラフトモッドを追加で1個持つことができる",
+        "text_en": "Can have 1 additional Crafted Modifier",
+        "stats": [
+          {
+            "id": "local_can_have_additional_crafted_mods",
+            "value": 1
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+        "family": "BaseLocalDefences",
+        "side": "prefix",
+        "tier_name": "T8",
+        "mod_level": 25,
+        "text_ja": "アーマー +89",
+        "text_en": "+89 to Armour",
+        "values": [
+          89
+        ],
+        "ranges": [
+          [
+            78,
+            98
+          ]
+        ],
+        "tier_index": 3,
+        "affix": "Fortified"
+      },
+      {
+        "mod_id": "Body_Armours_str/PerfectEssence_Thorns",
+        "family": "Thorns",
+        "side": "prefix",
+        "tier_name": "T1",
+        "mod_level": 63,
+        "text_ja": "65から113の物理棘ダメージ",
+        "text_en": "65 to 113 Physical Thorns damage",
+        "values": [
+          65,
+          113
+        ],
+        "ranges": [
+          [
+            64,
+            97
+          ],
+          [
+            98,
+            145
+          ]
+        ],
+        "crafted": true,
+        "tier_index": 0,
+        "affix": "Perfect Essence of Hysteria"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Body_Armours_str/FireResistance",
+        "family": "FireResistance",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 24,
+        "text_ja": "火耐性 +16%",
+        "text_en": "+16% to Fire Resistance",
+        "values": [
+          16
+        ],
+        "ranges": [
+          [
+            16,
+            20
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of the Drake"
+      },
+      {
+        "mod_id": "Body_Armours_str/ReducedBleedDuration",
+        "family": "ReducedAilmentDuration",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 64,
+        "text_ja": "プレイヤーに対する出血の持続時間が52%減少する",
+        "text_en": "-52% reduced Duration of Bleeding on You",
+        "values": [
+          -52
+        ],
+        "ranges": [
+          [
+            -55,
+            -51
+          ]
+        ],
+        "tier_index": 3,
+        "affix": "of Assuaging"
+      }
+    ]
+  },
+  "total_cost": 0
+}

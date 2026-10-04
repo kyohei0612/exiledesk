@@ -1,14 +1,14 @@
 {
   "name": "socketables",
-  "title_hint": "【PoE2】ソケットに差す物を全部解説: ルーン・ソウルコア・アイドル",
-  "audience": "マップに入って装備を整え始めた人 (前編・後編を見た人)",
+  "title_hint": "【PoE2】差すとクラフトの決まりが変わるルーン: セールの凱旋・アストリッド・特殊MOD・アルダー・遺産",
+  "audience": "マップに入って装備を本気で作り始めた人 (前編・後編を見た人)",
   "player_stage": "endgame",
-  "goal": "ソケットに入れる物 (ルーン・ソウルコア・アイドル) が何をして、どう選ぶか・どう差すかが分かる",
+  "goal": "ソケットに差すとクラフトの決まりが変わるルーン (サフィックス +1・クラフト MOD +1・特殊 MOD・属性の変換・遺産) と、ソケットバウンド (差したら替えられない) が分かる",
   "target_seconds": 600,
-  "final_step": 4,
+  "final_step": 5,
   "plan": {
     "schema": "craft-stage-plan/1",
-    "title": "胴: 熟練工 ×2 → 砂漠のグレータールーン → シアクラトルのソウルコア (→ 置き換え・傑作のルーン・上限)",
+    "title": "基本: 胴に熟練工 ×2 → 砂漠のグレータールーン → シアクラトルのソウルコア → ウサギのアイドルで置き換え",
     "base": "Glorious Plate",
     "item_level": 80,
     "start_rarity": "rare",
@@ -20,85 +20,176 @@
       },
       {
         "currency": "artificer",
-        "note": "ソケット 2 個目 (胴は 2 個まで)"
+        "note": "2 個目 (胴は 2 個まで)"
       },
       {
         "currency": "rune:Greater Desert Rune",
-        "note": "防具には火耐性 +18%"
+        "note": "普通のルーン: 防具は火耐性"
       },
       {
         "currency": "rune:Soul Core of Citaqualotl",
-        "note": "防具には全ての元素耐性 +6%"
+        "note": "ソウルコア"
       },
       {
         "currency": "rune:Rabbit Idol@2",
-        "note": "置き換え: ソウルコアはなくなる。胴のアイドルはレアリティ"
-      },
-      {
-        "currency": "rune:Masterwork Rune@1",
-        "note": "傑作のルーン: グレーター → パーフェクト (火耐性 +22%)"
-      },
-      {
-        "currency": "artificer",
-        "note": "3 個目は付かない (上限 2)"
+        "note": "置き換え: ソウルコアはなくなる"
       }
     ]
   },
   "demos": {
-    "weapon": {
+    "serle": {
       "schema": "craft-stage-plan/1",
-      "title": "両手のマーシャル武器: 同じ砂漠のルーンとソウルコアが武器では火力に",
-      "base": "Wyrm Quarterstaff",
+      "title": "セールの凱旋: 6 MOD で埋まった胴に、サフィックスの 4 個目",
+      "base": "Glorious Plate",
       "item_level": 80,
-      "start_rarity": "rare",
-      "seed": 20261011,
+      "start_rarity": "magic",
+      "seed": 12,
       "steps": [
         {
-          "currency": "artificer"
+          "currency": "regal"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "exalt",
+          "note": "6 個目"
+        },
+        {
+          "currency": "exalt",
+          "note": "埋まっていて打てない"
         },
         {
           "currency": "artificer"
         },
         {
-          "currency": "rune:Greater Desert Rune",
-          "note": "火ダメージ追加"
+          "currency": "rune:Serle's Triumph",
+          "note": "サフィックス +1、ソケットバウンド"
         },
         {
-          "currency": "rune:Soul Core of Citaqualotl",
-          "note": "アタックの元素ダメージ 40% 増加"
+          "currency": "exalt",
+          "note": "4 個目のサフィックス"
         }
       ]
     },
-    "staff": {
+    "astrid": {
       "schema": "craft-stage-plan/1",
-      "title": "スタッフ: 同じ砂漠のルーンがダメージの一部を火に",
-      "base": "Dark Staff",
+      "title": "アストリッドの創造性: パーフェクトエッセンスを 2 つ",
+      "base": "Glorious Plate",
       "item_level": 80,
       "start_rarity": "rare",
-      "seed": 20261012,
+      "seed": 14,
       "steps": [
         {
           "currency": "artificer"
         },
         {
-          "currency": "rune:Greater Desert Rune",
-          "note": "ダメージの 10% を追加火ダメージ"
+          "currency": "essence:perfect:Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+          "note": "クラフト MOD 1 個目"
+        },
+        {
+          "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+          "note": "2 個目は付かない (1 個まで)"
+        },
+        {
+          "currency": "rune:Astrid's Creativity",
+          "note": "クラフト MOD +1"
+        },
+        {
+          "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+          "note": "2 個目が付く"
+        }
+      ]
+    },
+    "kolr": {
+      "schema": "craft-stage-plan/1",
+      "title": "コルの狩り: 手袋にマークスマンの MOD",
+      "base": "Grand Mitts",
+      "item_level": 80,
+      "start_rarity": "magic",
+      "seed": 11,
+      "steps": [
+        {
+          "currency": "regal"
+        },
+        {
+          "currency": "artificer",
+          "note": "手袋は 1 個"
+        },
+        {
+          "currency": "rune:Kolr's Hunt",
+          "note": "ソケットバウンド: もう替えられない"
+        },
+        {
+          "currency": "exalt",
+          "pick": {
+            "mod": "Rune_marksman_ProjectileDamage"
+          },
+          "note": "特殊 MOD (出やすさは非公開)"
+        }
+      ]
+    },
+    "aldur": {
+      "schema": "craft-stage-plan/1",
+      "title": "アルダーの情熱: 武器の雷の MOD が火に",
+      "base": "Wyrm Quarterstaff",
+      "item_level": 80,
+      "start_rarity": "magic",
+      "seed": 13,
+      "steps": [
+        {
+          "currency": "regal"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "artificer"
+        },
+        {
+          "currency": "rune:Passion of Aldur",
+          "note": "差した時の MOD だけ変わる"
+        }
+      ]
+    },
+    "legacy": {
+      "schema": "craft-stage-plan/1",
+      "title": "黒い組紐の遺産: 胴にユニークの効果の一部",
+      "base": "Glorious Plate",
+      "item_level": 80,
+      "start_rarity": "rare",
+      "seed": 15,
+      "steps": [
+        {
+          "currency": "artificer"
+        },
+        {
+          "currency": "rune:Legacy of Blackbraid",
+          "note": "アーマーの +50% が元素ダメージにも"
         }
       ]
     }
   },
   "notes": [
-    "言葉はゲームの日本語: オーグメントソケット / オーグメント (総称) / ルーン / ソウルコア / アイドル。「タリスマン」は武器の種類なので差す物として言わない。「ルーンワード」は守りの仕組みの名前なので、ルーンの組み合わせの意味で使わない (組み合わせの仕組みは無い)",
-    "カルグールのスキル・ルーンシェイプ・レムナントの作り方は扱わない (kyohei 2026-10-04「いるのはソケット品」)。傑作のルーンの入手先も深く言わない",
-    "同じルーンが「マーシャル武器 / ワンド・スタッフ / 防具」で別の効果になる所を、3 つの実演で並べて見せる",
-    "一度差すと外せない、置き換えると元の物はなくなる (ソウルコア → アイドルの置き換えで見せる)。ソケットバウンドの物 (セールの凱旋など) は置き換えもできない、は言葉で",
-    "段階: レッサー → 無印 → グレーターはリフォージベンチで同じ物 3 個 → 1 つ上。パーフェクトはソケットに差したグレーターに傑作のルーン。ベンチでグレーター 3 個 → パーフェクトはできない、1 段ずつ、は言い切らない (未確認)",
-    "熟練工で足せる数: 胴・両手武器 2、ほか 1 (kyohei 確認)。規格外のベース・コラプトで +1 は言葉で",
-    "要求レベルはキャラのレベル (パーフェクトを差すとレベル 50 から)。多くのオーグメントは 1 アイテムに 1 個まで",
-    "ルーン関係が今あるかは相場の値段で決める。値段の無い物 (鍛錬のルーン等) は出さない",
-    "導入: 完成品 (ソケットが埋まった胴) を先に見せて「アクトで見たルーン、実はもっと種類がある」",
-    "値段の話はしない。PoE1 の仕様 (リンク・色付きソケット) は言わない",
-    "数字は結果 JSON の効果の文のまま。DPS の数字は出さない (PoB は使わない)"
+    "主題: 差すとクラフトの決まりが変わるルーン。普通のルーン・ソウルコア・アイドルは冒頭で短く (外せない・置き換えると消える、の説明もここ)。kyohei 2026-10-04",
+    "言葉はゲームの日本語: オーグメントソケット / オーグメント / ルーン / ソウルコア / アイドル。「タリスマン」は武器の種類、「ルーンワード」は守りの仕組みの名前なので取り違えない",
+    "ソケットバウンド (差したら外せない・置き換えられない) をセットで: セールの凱旋・特殊 MOD のルーン・アルダーの 4 種。アストリッドの創造性と遺産のルーンは置き換えできる。全部コラプト・聖別品には差せない (遺産のルーンを除く)",
+    "手袋・兜・靴はソケット 1 個 → 特殊 MOD のルーンを差すとその 1 個が埋まる。「差す前に決める物」",
+    "特殊 MOD の出やすさは公開データに無い → 確率は言わない。ExileDesk の重みは仮定",
+    "アルダーは「差した時に付いている MOD だけ変わる、後から付けた MOD は変わらない」。同じ段に置き換わるのは推測なので言い切らない",
+    "遺産は短く: ユニークを壊してルーンにする、元のユニークの効果の一部を持つ、例 2〜3 個 (黒い組紐・ブランブルジャック・リージョンストライド)。作る所は撮らない (言葉と図)",
+    "入手 (レムナントのレシピ)、カルグールのスキル、傑作のルーン、能力値のルーンの図鑑は扱わない",
+    "導入: 完成品 (サフィックス 4 個の胴) を先に見せてよい",
+    "値段の話はしない。PoE1 の仕様は言わない。数字は結果 JSON の文のまま"
   ],
   "sources": [
     {
@@ -106,20 +197,20 @@
       "url": "https://www.pathofexile.com/forum/view-thread/3932540"
     },
     {
-      "title": "Path of Exile 2 パッチノート 0.2.0 (Dawn of the Hunt)",
-      "url": "https://www.pathofexile.com/forum/view-thread/3740562"
+      "title": "Path of Exile 2 パッチノート 0.5.5 (Forbidden Rites)",
+      "url": "https://www.pathofexile.com/forum/view-thread/4000864"
     },
     {
       "title": "PoE2DB: ルーン",
       "url": "https://poe2db.tw/jp/Runes"
     },
     {
-      "title": "PoE2DB: 傑作のルーン",
-      "url": "https://poe2db.tw/us/Masterwork_Rune"
+      "title": "PoE2DB: Serle's Triumph",
+      "url": "https://poe2db.tw/us/Serles_Triumph"
     },
     {
-      "title": "Maxroll: Runes and Soul Cores",
-      "url": "https://maxroll.gg/poe2/resources/runes-and-soul-cores"
+      "title": "timesaver.gg: Aldur's Legacy Rune Crafting Guide (0.5.5)",
+      "url": "https://timesaver.gg/blog/poe2-aldurs-legacy-rune-crafting-guide-0-5-5"
     }
   ]
 }
