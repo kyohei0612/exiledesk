@@ -8,9 +8,11 @@
       (段の決まりは [[hover-stack.ts]])
     - 位置: 必ず窓の中 (オーナー「見切れるから絶対にホバーはウィンドウ内で」)。カーソルの右 (右端では左)、
       縦はカーソルの高さを真ん中にして上下の端で止める。窓より高い時は縮めて全部を収める
+    - 動かす: ピン留めしたカードは名前 (見出し) を長押し (0.25 秒) するとつかめて、好きな所へ動かせる (2026-10-04 オーナー
+      「カード固定したら名前長押して移動できるように、比較しづらいから」。全部のカードがこの枠なので全部に効く)
 -->
 <script setup lang="ts">
-import { computed, provide, ref, watch } from "vue";
+import { computed, onBeforeUnmount, provide, ref, watch } from "vue";
 import { hoverStack } from "../../state/hover-stack";
 import { toCss } from "../../utils/zoom";
 
@@ -52,11 +54,21 @@ const scale = computed(() => {
   const vh = toCss(window.innerHeight);
   return height.value > 0 ? Math.min(1, (vh - EDGE * 2) / height.value) : 1;
 });
+/** 動かした後の位置 (CSS px)。ピン留めを外したら元の決まりの位置に戻す */
+const moved = ref<{ left: number; top: number } | null>(null);
+watch(() => props.pinned, (p) => { if (!p) moved.value = null; });
 const position = computed(() => {
   const vw = toCss(window.innerWidth);
   const vh = toCss(window.innerHeight);
   const w = props.width * scale.value;
   const h = height.value * scale.value;
+  if (moved.value) {
+    // 動かした時も窓の中に収める (見出しが外へ出て掴めなくならないように)
+    return {
+      left: Math.min(Math.max(EDGE - w + 80, moved.value.left), vw - 80),
+      top: Math.min(Math.max(EDGE, moved.value.top), vh - 40),
+    };
+  }
   let left = props.x + 10;
   if (left + w + EDGE > vw) left = Math.max(EDGE, props.x - w - 10);
   let top = props.y - h / 2;
@@ -64,6 +76,37 @@ const position = computed(() => {
   top = Math.max(EDGE, top);
   return { left, top };
 });
+
+/** 長押しでつかむ。押してから 0.25 秒で掴み、離すまでカーソルに付いて動く (ピン留めしている時だけ) */
+const LONG_PRESS = 250;
+const dragging = ref(false);
+let pressTimer: ReturnType<typeof setTimeout> | null = null;
+let grab = { dx: 0, dy: 0 };
+function onHeadDown(e: PointerEvent): void {
+  if (!props.pinned || e.button !== 0) return;
+  const start = { x: toCss(e.clientX), y: toCss(e.clientY) };
+  const at = position.value;
+  pressTimer = setTimeout(() => {
+    pressTimer = null;
+    dragging.value = true;
+    grab = { dx: start.x - at.left, dy: start.y - at.top };
+    moved.value = { left: at.left, top: at.top };
+  }, LONG_PRESS);
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onUp, { once: true });
+}
+function onMove(e: PointerEvent): void {
+  if (!dragging.value) return;
+  e.preventDefault();
+  moved.value = { left: toCss(e.clientX) - grab.dx, top: toCss(e.clientY) - grab.dy };
+}
+function onUp(): void {
+  if (pressTimer) clearTimeout(pressTimer);
+  pressTimer = null;
+  dragging.value = false;
+  window.removeEventListener("pointermove", onMove);
+}
+onBeforeUnmount(onUp);
 </script>
 
 <template>
@@ -92,7 +135,12 @@ const position = computed(() => {
           </button>
           <button v-if="pinned" type="button" class="w-6 h-6 rounded text-[14px] leading-none text-[#cfc6ae] hover:text-white" title="閉じる" @click.stop="hoverStack.close(layerKey)">×</button>
         </div>
-        <div class="g-head">
+        <div
+          class="g-head select-none"
+          :class="pinned ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : ''"
+          :title="pinned ? '長押しでつかんで動かせます' : undefined"
+          @pointerdown="onHeadDown"
+        >
           <p class="g-name">{{ name }}</p>
           <p v-if="sub" class="g-name g-sub">{{ sub }}</p>
         </div>
