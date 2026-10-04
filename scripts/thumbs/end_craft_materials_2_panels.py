@@ -37,18 +37,39 @@ from poe2tube.render.palette import font  # noqa: E402
 # (絵, 帯の名前, 説明, 帯の色)。絵はアイコンのキー (assets/icons_hd にあれば大きい方) か
 # "pick" (発現の実画面)。kyohei 2026-10-04「でっかくアイコンを数種類並べる」→ 全部アイコン
 COLUMNS = [
-    # kyohei 2026-10-04「お告げは最上位、紫・古代・光、聖別と勢力は OK」。説明の [..] は赤、| で改行
-    ("OmenofGreaterExaltation", "偉大なる高貴", "MOD が|[2 個] 付く", (214, 150, 20)),
-    ("OmenofWhittling", "削減", "[一番低い] MOD|を消す", (140, 50, 200)),
-    ("rib_ancient", "古代の骨", "MOD レベル|[40] 以上", (40, 90, 214)),
-    ("OmenofLight", "光", "[冒涜だけ]|消す", (30, 150, 90)),
-    ("OmenoftheLiege", "勢力", "勢力の MOD が|[必ず] 付く", (214, 40, 40)),
-    ("OmenofSanctification", "聖別", "数値が|[上下] する", (200, 120, 40)),
+    # kyohei 2026-10-04「お告げは最上位、紫・古代・光、聖別と勢力は OK」「名前の下には分かりやすい
+    # 解説文、長ったらしく」。[..] は赤、| で改行。言葉は _facts.md (後編) の範囲
+    (
+        "OmenofGreaterExaltation",
+        "偉大なる高貴",
+        "次の高貴な|オーブで、|MOD が一気に|[2 個]付く",
+        (214, 150, 20),
+    ),
+    (
+        "OmenofWhittling",
+        "削減",
+        "次のカオス|オーブで、|[一番レベルの|低い MOD]が|消える",
+        (140, 50, 200),
+    ),
+    (
+        "rib_ancient",
+        "古代の骨",
+        "冒涜で付く|MOD が、|[レベル 40|以上]の物|だけになる",
+        (40, 90, 214),
+    ),
+    ("OmenofLight", "光", "次の消去の|オーブで、|[冒涜の MOD|だけ]を消す", (30, 150, 90)),
+    ("OmenoftheLiege", "勢力", "武器と宝飾品|に、勢力の|MOD が|[必ず 1 つ]付く", (214, 40, 40)),
+    (
+        "OmenofSanctification",
+        "聖別",
+        "神のオーブで|数値が[上下]|する。その後は|[クラフト|できない]",
+        (200, 120, 40),
+    ),
 ]
 HD = ROOT / "assets" / "icons_hd"
 LABELS = True  # --no-labels で絵だけ
 BAND_Y, BAND_H = 330, 84  # 色の帯 (アイコンの欄は真ん中の少し上まで、kyohei 2026-10-04)
-DESC_H = 116  # 帯の下の説明 (2 行)
+DESC_H = 230  # 帯の下の解説文 (欄の幅で折り返す)
 RED = (255, 70, 70)
 
 
@@ -105,38 +126,54 @@ def column(
     return col
 
 
-def _segments(line: str) -> list[tuple[str, bool]]:
-    """「[2 個] 付く」→ [("2 個", True), (" 付く", False)] (角括弧の中が赤)."""
-    out: list[tuple[str, bool]] = []
-    for i, part in enumerate(line.replace("]", "[").split("[")):
-        if part:
-            out.append((part, i % 2 == 1))
+def _lines(text: str) -> list[list[tuple[str, bool]]]:
+    """| で行に分け、[..] の赤を行をまたいでも保つ."""
+    out: list[list[tuple[str, bool]]] = []
+    red = False
+    for raw in text.split("|"):
+        ln: list[tuple[str, bool]] = []
+        for ch in raw:
+            if ch in "[]":
+                red = ch == "["
+                continue
+            ln.append((ch, red))
+        out.append(ln)
     return out
 
 
+def desc_size(d: ImageDraw.ImageDraw, w: int) -> int:
+    """全部の列の解説文が収まる、そろった文字の大きさ."""
+    size = 36
+    while any(
+        sum(d.textlength(ch, font=font(size)) for ch, _ in ln) > w - 14
+        for _, _, text, _ in COLUMNS
+        for ln in _lines(text)
+    ):
+        size -= 1
+    return size
+
+
 def rich_lines(d: ImageDraw.ImageDraw, text: str, w: int, y0: int, h: int) -> None:
-    """| で改行、[..] を赤で、欄の幅に収まる同じ大きさで真ん中に."""
-    lines = [_segments(x) for x in text.split("|")]
-    size = 44
-    while max(sum(d.textlength(t, font=font(size)) for t, _ in ln) for ln in lines) > w - 14:
-        size -= 2
+    """解説文を上下の真ん中に。[..] は赤."""
+    size = desc_size(d, w)
     f = font(size)
-    step = h / len(lines)
-    for i, ln in enumerate(lines):
-        x = (w - sum(d.textlength(t, font=f) for t, _ in ln)) / 2
-        y = y0 + step * (i + 0.5)
-        for t, red in ln:
-            d.text((x, y), t, font=f, fill=RED if red else "white", anchor="lm")
+    lines = _lines(text)
+    step = size * 1.42
+    y = y0 + (h - step * len(lines)) / 2 + step / 2
+    for ln in lines:
+        x = (w - sum(d.textlength(ch, font=f) for ch, _ in ln)) / 2
+        for ch, red in ln:
             d.text(
                 (x, y),
-                t,
+                ch,
                 font=f,
                 fill=RED if red else "white",
                 anchor="lm",
                 stroke_width=2 if red else 0,
                 stroke_fill=(40, 0, 0),
             )
-            x += d.textlength(t, font=f)
+            x += d.textlength(ch, font=f)
+        y += step
 
 
 def panels(rng: random.Random, width: int) -> Image.Image:
