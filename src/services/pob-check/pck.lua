@@ -690,6 +690,43 @@ local function dpsOf(o) return (o.CombinedDPS or o.TotalDPS or 0) + ((o.Minion a
 
 --- 画面の上のバーのスキル (組 i のスキル k) を主スキルにして fn(calcFunc, base) を走らせ、終わったら主スキルの選びを戻す。
 --- calcFunc = 本家 getMiscCalculator (override で ビルドを変えずに「〜したら」を計算)、base = 今の出力。nodePower と取り入れの試算の共通の枠
+--- 火力の差の試算の基準のツリー (2026-10-04 オーナー「基準はノード類は真似前提にしないと乗算効かんからな」)。
+--- PCK.setEstimateTree(add, remove) で入れている間、試算 (withMainSkill の中) の計算は全部「ツリーを相手と同じにした上で」になる
+--- (計算の上書き addNodes / removeNodes を混ぜる。道は見ない)。PCK.setEstimateTree(nil) で外す。内訳・ノードの寄与など他の計算は入れないこと
+PCK.estTree = nil
+function PCK.setEstimateTree(add, remove)
+  PCK.estTree = add and { add = add, remove = remove or {} } or nil
+  return json.encode({ ok = true })
+end
+local function estTreeOverride()
+  if not PCK.estTree then return nil end
+  local add, rem = {}, {}
+  for _, id in ipairs(PCK.estTree.add or {}) do
+    local node = build.spec.nodes[id]
+    if node and not node.alloc then add[node] = true end
+  end
+  for _, id in ipairs(PCK.estTree.remove or {}) do
+    local node = build.spec.nodes[id]
+    if node and node.alloc then rem[node] = true end
+  end
+  return { addNodes = add, removeNodes = rem }
+end
+--- calcFunc に基準のツリーを混ぜる (基準が無ければそのまま)
+local function withEstTree(calcFunc)
+  local tree = estTreeOverride()
+  if not tree then return calcFunc end
+  return function(ov, full)
+    local merged = {}
+    for key, v in pairs(ov or {}) do merged[key] = v end
+    local add = {}
+    for node in pairs(tree.addNodes) do add[node] = true end
+    for node in pairs((ov and ov.addNodes) or {}) do add[node] = true end
+    merged.addNodes = add
+    merged.removeNodes = (ov and ov.removeNodes) or tree.removeNodes
+    return calcFunc(merged, full)
+  end
+end
+
 local function withMainSkill(i, k, fn)
   local g = build.skillsTab.socketGroupList[i]
   if not g then return json.encode({ ok = false, error = "組が無い" }) end
@@ -699,7 +736,13 @@ local function withMainSkill(i, k, fn)
   local ok, res = pcall(function()
     PCK.recalc()
     local calcFunc, base = build.calcsTab.calcs.getMiscCalculator(build)
-    return fn(calcFunc, base)
+    -- rawBase = 基準のツリーを混ぜる前 (今の自分)。まとめて真似の「今」に使う
+    local rawBase = base
+    if PCK.estTree then
+      calcFunc = withEstTree(calcFunc)
+      base = calcFunc({}, false)
+    end
+    return fn(calcFunc, base, rawBase)
   end)
   build.mainSocketGroup = origMain
   g.mainActiveSkill = origSkill
@@ -800,7 +843,8 @@ function PCK.estimateItem(i, k, slotName, raw, withLines)
         if name ~= slotName and (s.selItemId or 0) ~= before[name].id then res.displaced[#res.displaced + 1] = name end
       end
       PCK.recalc()
-      local cf, out = build.calcsTab.calcs.getMiscCalculator(build)
+      local cf = withEstTree((build.calcsTab.calcs.getMiscCalculator(build)))
+      local out = cf({}, false)
       res.with = estDpsOf(out)
       res.statsWith = statsOf(out)
       res.lines = lines(cf)
@@ -884,12 +928,12 @@ function PCK.estimateGems(i, k, gi, gems)
           PCK.recalc()
         end
       end
-      local _, out = build.calcsTab.calcs.getMiscCalculator(build)
+      local out = withEstTree((build.calcsTab.calcs.getMiscCalculator(build)))({}, false)
       local r = { base = estDpsOf(base), with = focusLost and 0 or estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), unknown = unknownGems(g), focusLost = focusLost }
       if gi == 0 and g.displaySkillList and g.displaySkillList[1] then
         build.mainSocketGroup = #st.socketGroupList
         PCK.recalc()
-        local _, o2 = build.calcsTab.calcs.getMiscCalculator(build)
+        local o2 = withEstTree((build.calcsTab.calcs.getMiscCalculator(build)))({}, false)
         r.newDps = estDpsOf(o2)
         build.mainSocketGroup = i
       end
@@ -967,6 +1011,85 @@ function PCK.estimateJewel(i, k, slotName, raw, nodeId)
     local out = calcFunc(ov, false)
     return { base = estDpsOf(base), with = estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), socketAdded = not node.alloc }
   end)
+end
+
+--- 全部まとめて真似したら (2026-10-04 オーナー「全部足したら 207% になるはずだけど、せいぜい 30%」)。順に重ねて段ごとの DPS を返す:
+---   tree  = ツリーを相手と同じに (add / remove。計算の上書き)
+---   items = + 中身の違う欄を全部相手の物に (raw = 相手の文面、nil = 外す。ジュエルの穴は tree で取られる)
+---   gems  = + ジェムの組を相手の構成に (gi = 合わせた自分の組、0 = 足す)
+--- 計算が終わったら全部元に戻す (欄の中身・足した物・組のジェム)
+function PCK.estimateAll(i, k, items, add, remove, groups)
+  local saveTree = PCK.estTree
+  PCK.estTree = { add = add or {}, remove = remove or {} }
+  local res = withMainSkill(i, k, function(calcFunc, base0, rawBase)
+    local it, st = build.itemsTab, build.skillsTab
+    local focus = st.socketGroupList[i]
+    local focusName = focus.displaySkillList and focus.displaySkillList[k] and focus.displaySkillList[k].activeEffect.grantedEffect.name
+    local out = { cur = estDpsOf(rawBase), stats = statsOf(rawBase), tree = estDpsOf(base0), statsTree = statsOf(base0) }
+    local before = {}
+    for name, sl in pairs(it.slots) do before[name] = { id = sl.selItemId or 0, active = sl.active } end
+    local addedItems, savedGems, addedGroups = {}, {}, {}
+    local ok, err = pcall(function()
+      for _, x in ipairs(items or {}) do
+        local sl = it.slots[x.slot]
+        if sl then
+          if x.raw and x.raw ~= "" then
+            local item = new("Item", x.raw)
+            if item and item.base then
+              it:AddItem(item, true)
+              addedItems[#addedItems + 1] = item
+              putInSlot(sl, item.id, true)
+            end
+          else
+            sl:SetSelItemId(0)
+          end
+        end
+      end
+      it:PopulateSlots()
+      PCK.recalc()
+      local o1 = withEstTree((build.calcsTab.calcs.getMiscCalculator(build)))({}, false)
+      out.items = estDpsOf(o1)
+      out.statsItems = statsOf(o1)
+      for _, g in ipairs(groups or {}) do
+        local gi = tonumber(g.gi) or 0
+        if gi > 0 and st.socketGroupList[gi] then savedGems[gi] = st.socketGroupList[gi].gemList end
+        local grp = putGems(gi, newGemList(g.gems))
+        if gi == 0 then addedGroups[#addedGroups + 1] = grp end
+      end
+      PCK.recalc()
+      -- 上のバーのスキルの組を差し替えたなら、同じ名前のスキルの位置に合わせる
+      if focusName then
+        for idx, sk in ipairs(focus.displaySkillList or {}) do
+          if sk.activeEffect and sk.activeEffect.grantedEffect.name == focusName then
+            if focus.mainActiveSkill ~= idx then focus.mainActiveSkill = idx; PCK.recalc() end
+            break
+          end
+        end
+      end
+      local o2 = withEstTree((build.calcsTab.calcs.getMiscCalculator(build)))({}, false)
+      out.gems = estDpsOf(o2)
+      out.statsGems = statsOf(o2)
+    end)
+    for gi, list in pairs(savedGems) do
+      st.socketGroupList[gi].gemList = list
+      st:ProcessSocketGroup(st.socketGroupList[gi])
+    end
+    for _, grp in ipairs(addedGroups) do
+      for idx = #st.socketGroupList, 1, -1 do
+        if st.socketGroupList[idx] == grp then table.remove(st.socketGroupList, idx) break end
+      end
+    end
+    for name, sl in pairs(it.slots) do
+      sl:SetSelItemId(before[name].id)
+      if isFlaskLike(name) then sl.active = before[name].active end
+    end
+    for _, item in ipairs(addedItems) do it:DeleteItem(item, true) end
+    build.buildFlag = true
+    if not ok then error(err, 0) end
+    return out
+  end)
+  PCK.estTree = saveTree
+  return res
 end
 
 -- ---------------------------------------------------------------- 火力の内訳 (2026-10-03)

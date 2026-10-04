@@ -8,12 +8,12 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateTree, estimateJewel, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateTreeRaw, type EstimateJewelRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
+import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateTree, estimateJewel, estimateAll, setEstimateTree, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateTreeRaw, type EstimateJewelRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
 import { buildChain, type Chain } from "../../services/pob-check/breakdown";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
 import { slotJa } from "../../services/pob-check/slots";
-import { adoptCandidates, type AdoptCandidate } from "../../services/pob-check/build-diff";
+import { adoptCandidates, copyAllPlan, type AdoptCandidate } from "../../services/pob-check/build-diff";
 import { parseNinjaUrl } from "../../services/build-copy/ninja-url";
 import passivesJa from "../../i18n/passives-ja-client.json";
 import { toPobItem } from "../../services/pob-check/item-text";
@@ -87,8 +87,12 @@ export interface Estimate {
   error?: string;
 }
 /** 試算の結果。of = 試算した時の自分 (cur が変わったら古い = もう一度試算)、dps = その時の上のバーのスキルの DPS */
-/** quiet = 火力が変わらないので出さなかった装備・ジュエルの数 */
-const estimates = shallowRef<{ list: Estimate[]; of: Summary; focusKey: string; dps: number; quiet: number } | null>(null);
+/**
+ * 全部まとめて真似した時の段ごとの DPS (上のバーのスキル、自分の行と同じ物差し)。life / es = [今, ツリー, + 装備, + ジェム]
+ */
+export interface EstimateAll { tree: number; items: number; gems: number; life: number[]; es: number[]; error?: string }
+/** quiet = 火力が変わらないので出さなかった装備・ジュエルの数、treeBased = 装備等の行はツリーを相手と同じにした上での差 */
+const estimates = shallowRef<{ list: Estimate[]; of: Summary; focusKey: string; dps: number; quiet: number; all: EstimateAll | null; treeBased: boolean } | null>(null);
 const estimating = ref(false);
 const estimateProgress = ref("");
 /** 取り入れた項目の鍵 (表に「取り入れた」の印) */
@@ -336,13 +340,24 @@ export function usePobCheck() {
   async function runEstimates(): Promise<void> {
     const f = focus.value;
     const mine = cur.value;
-    const list = candidates.value;
-    if (!f || !mine || !list.length || estimating.value || busy.value || loading.value) return;
+    // ツリーを先に (今の自分が基準)。残り (装備・ジュエル・リネージュ) は「ツリーを相手と同じにした上で」を基準にする
+    // (2026-10-04 オーナー「基準はノード類は真似前提にしないと乗算効かんからな」「そら装備だけ真似してもね」)
+    const list = [...candidates.value].sort((a, b) => (a.kind === "tree" ? 0 : 1) - (b.kind === "tree" ? 0 : 1));
+    const tgt = target.value;
+    if (!f || !mine || !tgt || !list.length || estimating.value || busy.value || loading.value) return;
     estimating.value = true;
     const out: Estimate[] = [];
+    const plan = copyAllPlan(mine, tgt, treeNodes.value);
+    const total = list.length + 1;
+    let treeBased = false;
+    let all: EstimateAll | null = null;
     try {
       for (const [idx, c] of list.entries()) {
-        estimateProgress.value = `${idx + 1}/${list.length}`;
+        estimateProgress.value = `${idx + 1}/${total}`;
+        if (c.kind !== "tree" && !treeBased && (plan.tree.add.length || plan.tree.remove.length)) {
+          await run(() => setEstimateTree(plan.tree));
+          treeBased = true;
+        }
         try {
           const r = await run<EstimateItemRaw | EstimateGemsRaw | EstimateTreeRaw | EstimateJewelRaw>(() =>
             c.kind === "item" ? estimateItem(f.g.i, f.s.k, c.slot, c.to.raw, c.unique)
@@ -379,19 +394,39 @@ export function usePobCheck() {
           out.push({ c, dps: f.s.game.dps, stats: {} as EstimateStats, error: msg(err) });
         }
       }
+      // 全部まとめて真似したら (ツリー → + 装備・ジュエル → + ジェム)。1 つずつの数字は掛け算で伸びる分・揃って初めて効く分が入らないので、
+      // 足しても相手との差にならない (オーナー 2026-10-04「全部足したら 207% のはずが 30%」)
+      estimateProgress.value = `${total}/${total}`;
+      if (treeBased) {
+        await run(() => setEstimateTree(null));
+        treeBased = false;
+      }
+      try {
+        const r = await run(() => estimateAll(f.g.i, f.s.k, {
+          items: plan.items,
+          tree: plan.tree,
+          groups: plan.groups.map((g) => ({ gi: g.gi, gems: g.gems.map((x) => ({ name: x.name, gemId: x.gemId, level: x.level, quality: x.quality, corrupt: x.corrupt, enabled: x.enabled })) })),
+        }));
+        const k = r.cur > 0 ? f.s.game.dps / r.cur : 1;
+        all = { tree: r.tree * k, items: r.items * k, gems: r.gems * k, life: [r.stats.Life, r.statsTree.Life, r.statsItems.Life, r.statsGems.Life], es: [r.stats.EnergyShield, r.statsTree.EnergyShield, r.statsItems.EnergyShield, r.statsGems.EnergyShield] };
+      } catch (err) {
+        all = { tree: 0, items: 0, gems: 0, life: [], es: [], error: msg(err) };
+      }
       // 火力に関係ない装備・ジュエル (DPS の変化 0.5% 未満) は出さない (2026-10-04 オーナー「火力に関係ない装備は表示しなくていい、ややこしい」)。
       // ツリーとリネージュは出す。並びは DPS の変化が大きい順 (失敗は最後)
       const base = f.s.game.dps;
       const quiet = (e: Estimate): boolean => !e.error && (e.c.kind === "item" || e.c.kind === "jewel") && base > 0 && Math.abs(e.dps / base - 1) < 0.005;
       const shown = out.filter((e) => !quiet(e));
       shown.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || b.dps - a.dps);
-      estimates.value = { list: shown, of: mine, focusKey: f.key, dps: base, quiet: out.length - shown.length };
+      estimates.value = { list: shown, of: mine, focusKey: f.key, dps: base, quiet: out.length - shown.length, all, treeBased: !!(plan.tree.add.length || plan.tree.remove.length) };
       recordHistory("pob-check", "adopt-estimate", {
         skill: f.s.name,
         dps: f.s.game.dps,
         results: out.map((e) => ({ kind: e.c.kind, key: e.c.key, dps: Math.round(e.dps), life: e.stats.Life, error: e.error })),
       });
     } finally {
+      // 試算の基準のツリーは必ず外す (他の計算に混ざらないように)
+      if (treeBased) await run(() => setEstimateTree(null)).catch(() => undefined);
       estimating.value = false;
       estimateProgress.value = "";
     }

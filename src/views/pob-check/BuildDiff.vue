@@ -25,7 +25,7 @@ import { slotJa } from "../../services/pob-check/slots";
 import { openTradeQuery, prepareTradeLinks, rareModsSearchQuery, uniqueSearchQuery } from "../../services/pob-check/trade-links";
 import { pobRawToCopy } from "../../services/pob-check/to-craft";
 import { openCraftPaste } from "../../state/app-nav";
-import type { Estimate, SkillRow } from "./usePobCheck";
+import type { Estimate, EstimateAll, SkillRow } from "./usePobCheck";
 import { fmtNum } from "./fmt";
 import DiffBadge from "./DiffBadge.vue";
 import GemName from "../../components/decor/GemName.vue";
@@ -46,7 +46,7 @@ const props = defineProps<{
   busy: boolean;
   /** 取り入れの試算 (usePobCheck)。candidates = 対象の数 (0 なら「試算する」を出さない) */
   candidates: AdoptCandidate[];
-  estimates: { list: Estimate[]; dps: number; quiet: number } | null;
+  estimates: { list: Estimate[]; dps: number; quiet: number; all: EstimateAll | null; treeBased: boolean } | null;
   estimating: boolean;
   estimateProgress: string;
   /** 試算した後に自分を変えた = もう一度試算 */
@@ -72,6 +72,24 @@ const what = (c: AdoptCandidate): string => {
 /** 試算の結果のうちツリー (見出しの下に大きく 1 行) と、それ以外 (表) */
 const treeEst = computed(() => props.estimates?.list.find((e) => e.c.kind === "tree") ?? null);
 const rowEsts = computed(() => props.estimates?.list.filter((e) => e.c.kind !== "tree") ?? []);
+/** 全部まとめて真似の段 */
+const allSteps = computed(() => {
+  const a = props.estimates?.all;
+  if (!a || a.error) return [];
+  return [
+    { label: "ツリーを相手と同じに", dps: a.tree },
+    { label: "＋ 装備・ジュエル", dps: a.items },
+    { label: "＋ ジェム (Lv・サポート)", dps: a.gems },
+  ];
+});
+/** 全部真似した後に残る相手との差 (%) */
+const restGap = computed(() => {
+  const a = props.estimates?.all;
+  const t = targetSkill.value;
+  if (!a || !t || a.gems <= 0) return "";
+  const d = (t.game.dps / a.gems - 1) * 100;
+  return `${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}%`;
+});
 /** 試算する前の数 (見出しの説明) */
 const candCount = computed(() => ({
   items: props.candidates.filter((c) => c.kind === "item").length,
@@ -401,8 +419,37 @@ const STATS = [
           </template>
         </tbody>
       </table>
+      <!-- 全部まとめて真似すると (2026-10-04 オーナー「全部足したら 207% のはずが 30%」「基準はノード類は真似前提」): ツリー → 装備 → ジェム と重ねる -->
+      <div v-if="estimates?.all" class="mt-4 rounded-xl border border-amber-400/30 bg-amber-500/[0.06] p-3">
+        <p class="mb-2 text-[14px] font-bold text-amber-100">全部まとめて真似すると</p>
+        <p v-if="estimates.all.error" class="text-rose-300">試算できませんでした: {{ estimates.all.error }}</p>
+        <div v-else class="flex flex-wrap items-end gap-x-3 gap-y-2 tabular-nums">
+          <div>
+            <p class="note">今</p>
+            <p class="text-[17px] font-bold">{{ fmtNum(estimates.dps) }}</p>
+          </div>
+          <template v-for="st in allSteps" :key="st.label">
+            <span class="pb-1 text-[var(--exile-color-text-tertiary)]">→</span>
+            <div>
+              <p class="note">{{ st.label }}</p>
+              <p class="text-[17px] font-bold text-amber-200">{{ fmtNum(st.dps) }} <DiffBadge :now="st.dps" :before="estimates.dps" /></p>
+            </div>
+          </template>
+          <template v-if="targetSkill && targetSkill.name === focus.s.name">
+            <span class="pb-1 text-[var(--exile-color-text-tertiary)]">／</span>
+            <div>
+              <p class="note">相手</p>
+              <p class="text-[17px] font-bold text-sky-200">{{ fmtNum(targetSkill.game.dps) }} <DiffBadge :now="targetSkill.game.dps" :before="estimates.dps" /></p>
+            </div>
+          </template>
+        </div>
+        <p v-if="!estimates.all.error && targetSkill && targetSkill.name === focus.s.name" class="note mt-2">
+          全部真似しても相手と {{ restGap }} 違う分は、PoB の設定 (チャージ・敵の状態など) やスキルの選び方の違いです。
+        </p>
+      </div>
       <p v-if="estimates" class="note mt-2">
         DPS は上のバーのスキルの、入れた後の見込み (自分の行と同じ物差し)。1 項目ずつの数字なので合計ではありません。
+        <template v-if="estimates.treeBased">装備・ジュエル・リネージュの行は「ツリーを相手と同じにした上で」それを入れた時の差です (ツリーの増加・増しが乗った状態で比べる)。</template>
         <template v-if="estimates.quiet">火力が変わらない装備・ジュエル {{ estimates.quiet }} 個は出していません。</template>
       </p>
     </section>

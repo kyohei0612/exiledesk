@@ -267,6 +267,48 @@ export type AdoptCandidate =
   /** ツリーのジュエル (自分に無い物)。slot = 相手の穴 (Jewel <番号>)、nodeId = その穴のノード、from = 自分のその穴に入っている物 */
   | { kind: "jewel"; key: string; slot: string; nodeId: number; from: ItemView | null; to: ItemView };
 
+/**
+ * ツリーを丸ごと相手の物にする差 (add = 相手にあって自分に無い、remove = 自分にあって相手に無い)。クラスの始点は除く。
+ * アセンダンシーのノードは同じアセンダンシーの時だけ入れる (2026-10-04: 除いていたので、同じ Stormweaver 同士でも差に入らず「全部足しても合わない」原因の 1 つだった)
+ */
+export function treeDiff(mine: Summary, target: Summary, treeNodes: readonly TreeNode[]): { add: number[]; remove: number[] } {
+  const byId = new Map(treeNodes.map((x) => [x.id, x]));
+  const sameAsc = !!mine.char.ascendancy && mine.char.ascendancy === target.char.ascendancy;
+  const plain = (id: number): boolean => {
+    const node = byId.get(id);
+    return !!node && node.t !== "C" && (node.t !== "A" || sameAsc);
+  };
+  const mineAlloc = new Set(mine.tree.alloc);
+  const targetAlloc = new Set(target.tree.alloc);
+  return {
+    add: target.tree.alloc.filter((id) => !mineAlloc.has(id) && !mine.tree.granted.includes(id) && plain(id)),
+    remove: mine.tree.alloc.filter((id) => !targetAlloc.has(id) && plain(id)),
+  };
+}
+
+/**
+ * 全部まとめて真似した時の材料 (2026-10-04 オーナー「全部足したら 207% になるはずだけど、せいぜい 30%」): 1 つずつの試算は掛け算で伸びる分・揃って
+ * 初めて効く分・ジェムのレベル / サポート・アセンダンシーが入らないので足しても合わない。装備 → ツリー → ジェム の順に重ねて段ごとの DPS を出す。
+ *   items = 中身の違う欄 (相手の文面、相手が空なら null = 外す)。ジュエルの穴も入る
+ *   groups = 相手の組の構成 (gi = 合わせた自分の組、0 = 足す)。装備が与える組は除く
+ */
+export function copyAllPlan(mine: Summary, target: Summary, treeNodes: readonly TreeNode[]): {
+  items: Array<{ slot: string; raw: string | null }>;
+  tree: { add: number[]; remove: number[] };
+  groups: Array<{ gi: number; gems: GemView[] }>;
+} {
+  const mineBy = new Map(mine.items.filter((x) => x.item).map((x) => [x.slot, x.item!]));
+  const targetBy = new Map(target.items.filter((x) => x.item).map((x) => [x.slot, x.item!]));
+  const items: Array<{ slot: string; raw: string | null }> = [];
+  for (const slot of new Set([...mineBy.keys(), ...targetBy.keys()])) {
+    const a = mineBy.get(slot)?.raw ?? null;
+    const b = targetBy.get(slot)?.raw ?? null;
+    if (a !== b) items.push({ slot, raw: b });
+  }
+  const groups = diffGems(mine, target).groups.filter((g) => !g.fromItem).map((g) => ({ gi: g.kind === "changes" ? g.gi : 0, gems: g.gems }));
+  return { items, tree: treeDiff(mine, target, treeNodes), groups };
+}
+
 export function adoptCandidates(mine: Summary, target: Summary, treeNodes: readonly TreeNode[]): AdoptCandidate[] {
   // 2026-10-04 オーナー「試算は火力の差の試算」: 装備 (火力に効かない物は試算の後に隠す) / リネージュのサポートだけ (他のサポートは
   // ビルドを変える時に真似する) / ツリーは丸ごと 1 件 (振り直しで真似する) / ツリーのジュエル (心臓・メガロ等。装備の中の穴は装備の欄で出る)
@@ -284,17 +326,9 @@ export function adoptCandidates(mine: Summary, target: Summary, treeNodes: reado
     if (!add.length || !own) continue;
     out.push({ kind: "gems", key: `lineage:${n}:${g.active.name}`, active: g.active, gi: g.gi, gems: [...own.gems, ...add], lines: g.lines.filter((l) => add.some((x) => x.name === l.gem)), lineage: add.map((x) => x.name) });
   }
-  // ツリー: 丸ごと相手の物に (クラスの始点・アセンダンシーは除く)
-  const byId = new Map(treeNodes.map((x) => [x.id, x]));
-  const plain = (id: number): boolean => {
-    const node = byId.get(id);
-    return !!node && node.t !== "C" && node.t !== "A";
-  };
-  const mineAlloc = new Set(mine.tree.alloc);
-  const targetAlloc = new Set(target.tree.alloc);
-  const addIds = target.tree.alloc.filter((id) => !mineAlloc.has(id) && !mine.tree.granted.includes(id) && plain(id));
-  const removeIds = mine.tree.alloc.filter((id) => !targetAlloc.has(id) && plain(id));
-  if (addIds.length || removeIds.length) out.push({ kind: "tree", key: "tree", add: addIds, remove: removeIds });
+  // ツリー: 丸ごと相手の物に
+  const t = treeDiff(mine, target, treeNodes);
+  if (t.add.length || t.remove.length) out.push({ kind: "tree", key: "tree", add: t.add, remove: t.remove });
   // ツリーのジュエル: 自分に無い物 (ユニークは名前、レア等は文面で比べる)
   const keyOf = (it: ItemView): string => (it.rarity === "UNIQUE" ? `u:${it.title}` : `r:${it.raw}`);
   const own = new Set(mine.items.filter((x) => x.jewel && x.item).map((x) => keyOf(x.item!)));

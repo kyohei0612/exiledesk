@@ -348,6 +348,23 @@ export interface EstimateJewelRaw extends EstimateRaw { socketAdded: boolean }
 /** ツリーのジュエルの穴 slot (Jewel <番号>) に相手のジュエルを入れたら (穴を取っていなければ穴も足す) */
 export const estimateJewel = (i: number, k: number, slot: string, raw: string, nodeId: number): Promise<EstimateJewelRaw> =>
   evalLua(`return PCK.estimateJewel(${luaNum(i)}, ${luaNum(k)}, ${luaStr(slot)}, ${luaStr(raw)}, ${luaNum(Math.floor(nodeId))})`);
+/** 火力の差の試算の基準のツリー (この間の試算は「ツリーを相手と同じにした上で」になる)。null で外す */
+export const setEstimateTree = (t: { add: number[]; remove: number[] } | null): Promise<unknown> =>
+  evalLua(t ? `return PCK.setEstimateTree({${t.add.map((id) => luaNum(Math.floor(id))).join(",")}}, {${t.remove.map((id) => luaNum(Math.floor(id))).join(",")}})` : "return PCK.setEstimateTree(nil)");
+export interface EstimateAllRaw {
+  /** 今の自分 / ツリーを相手と同じに / + 装備・ジュエル / + ジェム の DPS (同じ物差し) */
+  cur: number;
+  tree: number;
+  items: number;
+  gems: number;
+  stats: EstimateStats;
+  statsTree: EstimateStats;
+  statsItems: EstimateStats;
+  statsGems: EstimateStats;
+}
+/** 全部まとめて真似したら (ツリー → 装備・ジュエル → ジェム の順に重ねる) */
+export const estimateAll = (i: number, k: number, plan: { items: Array<{ slot: string; raw: string | null }>; tree: { add: number[]; remove: number[] }; groups: Array<{ gi: number; gems: GemSpec[] }> }): Promise<EstimateAllRaw> =>
+  evalLua(`return PCK.estimateAll(${luaNum(i)}, ${luaNum(k)}, {${plan.items.map((x) => `{ slot = ${luaStr(x.slot)}, raw = ${x.raw == null ? "nil" : luaStr(x.raw)} }`).join(",")}}, {${plan.tree.add.map((id) => luaNum(Math.floor(id))).join(",")}}, {${plan.tree.remove.map((id) => luaNum(Math.floor(id))).join(",")}}, {${plan.groups.map((g) => `{ gi = ${luaNum(g.gi)}, gems = ${luaGems(g.gems)} }`).join(",")}})`);
 export const estimateNodes = (i: number, k: number, ids: number[]): Promise<EstimateNodesRaw> =>
   evalLua(`return PCK.estimateNodes(${luaNum(i)}, ${luaNum(k)}, {${ids.map((id) => luaNum(Math.floor(id))).join(",")}})`);
 
