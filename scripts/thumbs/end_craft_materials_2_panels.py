@@ -37,16 +37,19 @@ from poe2tube.render.palette import font  # noqa: E402
 # (絵, 帯の名前, 説明, 帯の色)。絵はアイコンのキー (assets/icons_hd にあれば大きい方) か
 # "pick" (発現の実画面)。kyohei 2026-10-04「でっかくアイコンを数種類並べる」→ 全部アイコン
 COLUMNS = [
-    ("OmenofDextralExaltation", "高貴のお告げ", "付く側を選ぶ", (214, 40, 40)),
-    ("rib", "骨", "冒涜の MOD", (40, 90, 214)),
-    ("OmenofAbyssalEchoes", "反響", "引き直す", (30, 150, 90)),
-    ("OmenoftheLiege", "勢力", "付く MOD を絞る", (140, 50, 200)),
-    ("OmenofSanctification", "聖別", "数値が上下", (214, 150, 20)),
+    # kyohei 2026-10-04「お告げは最上位、紫・古代・光、聖別と勢力は OK」。説明の [..] は赤、| で改行
+    ("OmenofGreaterExaltation", "偉大なる高貴", "MOD が|[2 個] 付く", (214, 150, 20)),
+    ("OmenofWhittling", "削減", "[一番低い] MOD|を消す", (140, 50, 200)),
+    ("rib_ancient", "古代の骨", "MOD レベル|[40] 以上", (40, 90, 214)),
+    ("OmenofLight", "光", "[冒涜だけ]|消す", (30, 150, 90)),
+    ("OmenoftheLiege", "勢力", "勢力の MOD が|[必ず] 付く", (214, 40, 40)),
+    ("OmenofSanctification", "聖別", "数値が|[上下] する", (200, 120, 40)),
 ]
 HD = ROOT / "assets" / "icons_hd"
 LABELS = True  # --no-labels で絵だけ
-BAND_Y, BAND_H = 300, 92  # 色の帯
-DESC_H = 70  # 帯の下の説明
+BAND_Y, BAND_H = 330, 84  # 色の帯 (アイコンの欄は真ん中の少し上まで、kyohei 2026-10-04)
+DESC_H = 116  # 帯の下の説明 (2 行)
+RED = (255, 70, 70)
 
 
 def pick_crop(w: int, h: int) -> Image.Image:
@@ -70,7 +73,7 @@ def column(
     if key == "pick":
         col.alpha_composite(pick_crop(COL_W, BAND_Y), (0, 0))
     else:
-        size = min(250, COL_W - 16)
+        size = min(BAND_Y - 20, COL_W - 6)
         hd = HD / f"{key}.png"
         art = fit(Image.open(hd).convert("RGBA"), size, size) if hd.exists() else icon(key, size)
         im = glow(art, (255, 240, 200), 16)
@@ -95,14 +98,45 @@ def column(
     )
     y0 = BAND_Y + BAND_H
     d.rectangle((0, y0, COL_W, y0 + DESC_H), fill=(18, 16, 30, 235))
-    ds = 40
-    while d.textlength(desc, font=font(ds)) > COL_W - 16:
-        ds -= 2
-    d.text((COL_W // 2, y0 + DESC_H // 2), desc, font=font(ds), fill="white", anchor="mm")
+    rich_lines(d, desc, COL_W, y0, DESC_H)
     # 下は題のために暗く沈める
     shade = Image.new("RGBA", (COL_W, H - y0 - DESC_H), (0, 0, 0, 150))
     col.alpha_composite(shade, (0, y0 + DESC_H))
     return col
+
+
+def _segments(line: str) -> list[tuple[str, bool]]:
+    """「[2 個] 付く」→ [("2 個", True), (" 付く", False)] (角括弧の中が赤)."""
+    out: list[tuple[str, bool]] = []
+    for i, part in enumerate(line.replace("]", "[").split("[")):
+        if part:
+            out.append((part, i % 2 == 1))
+    return out
+
+
+def rich_lines(d: ImageDraw.ImageDraw, text: str, w: int, y0: int, h: int) -> None:
+    """| で改行、[..] を赤で、欄の幅に収まる同じ大きさで真ん中に."""
+    lines = [_segments(x) for x in text.split("|")]
+    size = 44
+    while max(sum(d.textlength(t, font=font(size)) for t, _ in ln) for ln in lines) > w - 14:
+        size -= 2
+    f = font(size)
+    step = h / len(lines)
+    for i, ln in enumerate(lines):
+        x = (w - sum(d.textlength(t, font=f) for t, _ in ln)) / 2
+        y = y0 + step * (i + 0.5)
+        for t, red in ln:
+            d.text((x, y), t, font=f, fill=RED if red else "white", anchor="lm")
+            d.text(
+                (x, y),
+                t,
+                font=f,
+                fill=RED if red else "white",
+                anchor="lm",
+                stroke_width=2 if red else 0,
+                stroke_fill=(40, 0, 0),
+            )
+            x += d.textlength(t, font=f)
 
 
 def panels(rng: random.Random, width: int) -> Image.Image:
