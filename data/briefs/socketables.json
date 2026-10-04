@@ -1,0 +1,125 @@
+{
+  "name": "socketables",
+  "title_hint": "【PoE2】ソケットに差す物を全部解説: ルーン・ソウルコア・アイドル",
+  "audience": "マップに入って装備を整え始めた人 (前編・後編を見た人)",
+  "player_stage": "endgame",
+  "goal": "ソケットに入れる物 (ルーン・ソウルコア・アイドル) が何をして、どう選ぶか・どう差すかが分かる",
+  "target_seconds": 600,
+  "final_step": 4,
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "胴: 熟練工 ×2 → 砂漠のグレータールーン → シアクラトルのソウルコア (→ 置き換え・傑作のルーン・上限)",
+    "base": "Glorious Plate",
+    "item_level": 80,
+    "start_rarity": "rare",
+    "seed": 20261010,
+    "steps": [
+      {
+        "currency": "artificer",
+        "note": "ソケット 1 個目"
+      },
+      {
+        "currency": "artificer",
+        "note": "ソケット 2 個目 (胴は 2 個まで)"
+      },
+      {
+        "currency": "rune:Greater Desert Rune",
+        "note": "防具には火耐性 +18%"
+      },
+      {
+        "currency": "rune:Soul Core of Citaqualotl",
+        "note": "防具には全ての元素耐性 +6%"
+      },
+      {
+        "currency": "rune:Rabbit Idol@2",
+        "note": "置き換え: ソウルコアはなくなる。胴のアイドルはレアリティ"
+      },
+      {
+        "currency": "rune:Masterwork Rune@1",
+        "note": "傑作のルーン: グレーター → パーフェクト (火耐性 +22%)"
+      },
+      {
+        "currency": "artificer",
+        "note": "3 個目は付かない (上限 2)"
+      }
+    ]
+  },
+  "demos": {
+    "weapon": {
+      "schema": "craft-stage-plan/1",
+      "title": "両手のマーシャル武器: 同じ砂漠のルーンとソウルコアが武器では火力に",
+      "base": "Wyrm Quarterstaff",
+      "item_level": 80,
+      "start_rarity": "rare",
+      "seed": 20261011,
+      "steps": [
+        {
+          "currency": "artificer"
+        },
+        {
+          "currency": "artificer"
+        },
+        {
+          "currency": "rune:Greater Desert Rune",
+          "note": "火ダメージ追加"
+        },
+        {
+          "currency": "rune:Soul Core of Citaqualotl",
+          "note": "アタックの元素ダメージ 40% 増加"
+        }
+      ]
+    },
+    "staff": {
+      "schema": "craft-stage-plan/1",
+      "title": "スタッフ: 同じ砂漠のルーンがダメージの一部を火に",
+      "base": "Dark Staff",
+      "item_level": 80,
+      "start_rarity": "rare",
+      "seed": 20261012,
+      "steps": [
+        {
+          "currency": "artificer"
+        },
+        {
+          "currency": "rune:Greater Desert Rune",
+          "note": "ダメージの 10% を追加火ダメージ"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "言葉はゲームの日本語: オーグメントソケット / オーグメント (総称) / ルーン / ソウルコア / アイドル。「タリスマン」は武器の種類なので差す物として言わない。「ルーンワード」は守りの仕組みの名前なので、ルーンの組み合わせの意味で使わない (組み合わせの仕組みは無い)",
+    "カルグールのスキル・ルーンシェイプ・レムナントの作り方は扱わない (kyohei 2026-10-04「いるのはソケット品」)。傑作のルーンの入手先も深く言わない",
+    "同じルーンが「マーシャル武器 / ワンド・スタッフ / 防具」で別の効果になる所を、3 つの実演で並べて見せる",
+    "一度差すと外せない、置き換えると元の物はなくなる (ソウルコア → アイドルの置き換えで見せる)。ソケットバウンドの物 (セールの凱旋など) は置き換えもできない、は言葉で",
+    "段階: レッサー → 無印 → グレーターはリフォージベンチで同じ物 3 個 → 1 つ上。パーフェクトはソケットに差したグレーターに傑作のルーン。ベンチでグレーター 3 個 → パーフェクトはできない、1 段ずつ、は言い切らない (未確認)",
+    "熟練工で足せる数: 胴・両手武器 2、ほか 1 (kyohei 確認)。規格外のベース・コラプトで +1 は言葉で",
+    "要求レベルはキャラのレベル (パーフェクトを差すとレベル 50 から)。多くのオーグメントは 1 アイテムに 1 個まで",
+    "ルーン関係が今あるかは相場の値段で決める。値段の無い物 (鍛錬のルーン等) は出さない",
+    "導入: 完成品 (ソケットが埋まった胴) を先に見せて「アクトで見たルーン、実はもっと種類がある」",
+    "値段の話はしない。PoE1 の仕様 (リンク・色付きソケット) は言わない",
+    "数字は結果 JSON の効果の文のまま。DPS の数字は出さない (PoB は使わない)"
+  ],
+  "sources": [
+    {
+      "title": "Path of Exile 2 パッチノート 0.5.0 (Return of the Ancients)",
+      "url": "https://www.pathofexile.com/forum/view-thread/3932540"
+    },
+    {
+      "title": "Path of Exile 2 パッチノート 0.2.0 (Dawn of the Hunt)",
+      "url": "https://www.pathofexile.com/forum/view-thread/3740562"
+    },
+    {
+      "title": "PoE2DB: ルーン",
+      "url": "https://poe2db.tw/jp/Runes"
+    },
+    {
+      "title": "PoE2DB: 傑作のルーン",
+      "url": "https://poe2db.tw/us/Masterwork_Rune"
+    },
+    {
+      "title": "Maxroll: Runes and Soul Cores",
+      "url": "https://maxroll.gg/poe2/resources/runes-and-soul-cores"
+    }
+  ]
+}

@@ -1,0 +1,674 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-04T10:22:05.577Z",
+  "exiledesk_version": "0.1.362",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "スタッフ: 同じ砂漠のルーンがダメージの一部を火に",
+    "base": "Dark Staff",
+    "item_level": 80,
+    "start_rarity": "rare",
+    "seed": 20261012,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "artificer",
+        "times": 1
+      },
+      {
+        "currency": "rune:Greater Desert Rune",
+        "times": 1,
+        "note": "ダメージの 10% を追加火ダメージ"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261013,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "闇のスタッフ",
+        "base": "Dark Staff",
+        "base_ja": "闇のスタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "int": 114
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Staves/DamageGainedAsLightning",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 60,
+            "text_ja": "ダメージの52%を追加雷ダメージとして獲得する",
+            "text_en": "Gain 52% of Damage as Extra Lightning Damage",
+            "values": [
+              52
+            ],
+            "ranges": [
+              [
+                49,
+                54
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Electrifying"
+          },
+          {
+            "mod_id": "Staves/PhysicalSpellDamageWeaponPrefix",
+            "family": "WeaponDamageTypePrefix",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 2,
+            "text_ja": "スペル物理ダメージが66%増加する",
+            "text_en": "66% increased Spell Physical Damage",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                50,
+                68
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Punishing"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Staves/GlobalIncreasePhysicalSpellSkillGemLevelWeapon",
+            "family": "IncreaseSocketedGemLevel",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 18,
+            "text_ja": "全ての物理スペルスキルのレベル +2",
+            "text_en": "+2 to Level of all Physical Spell Skills",
+            "values": [
+              2
+            ],
+            "ranges": [
+              [
+                2,
+                2
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of Suffering"
+          },
+          {
+            "mod_id": "Staves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "after": {
+        "name": "闇のスタッフ",
+        "base": "Dark Staff",
+        "base_ja": "闇のスタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "int": 114
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Staves/DamageGainedAsLightning",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 60,
+            "text_ja": "ダメージの52%を追加雷ダメージとして獲得する",
+            "text_en": "Gain 52% of Damage as Extra Lightning Damage",
+            "values": [
+              52
+            ],
+            "ranges": [
+              [
+                49,
+                54
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Electrifying"
+          },
+          {
+            "mod_id": "Staves/PhysicalSpellDamageWeaponPrefix",
+            "family": "WeaponDamageTypePrefix",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 2,
+            "text_ja": "スペル物理ダメージが66%増加する",
+            "text_en": "66% increased Spell Physical Damage",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                50,
+                68
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Punishing"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Staves/GlobalIncreasePhysicalSpellSkillGemLevelWeapon",
+            "family": "IncreaseSocketedGemLevel",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 18,
+            "text_ja": "全ての物理スペルスキルのレベル +2",
+            "text_en": "+2 to Level of all Physical Spell Skills",
+            "values": [
+              2
+            ],
+            "ranges": [
+              [
+                2,
+                2
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of Suffering"
+          },
+          {
+            "mod_id": "Staves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "rune:Greater Desert Rune",
+      "currency_ja": "砂漠のグレータールーン",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261014,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "闇のスタッフ",
+        "base": "Dark Staff",
+        "base_ja": "闇のスタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "int": 114
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Staves/DamageGainedAsLightning",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 60,
+            "text_ja": "ダメージの52%を追加雷ダメージとして獲得する",
+            "text_en": "Gain 52% of Damage as Extra Lightning Damage",
+            "values": [
+              52
+            ],
+            "ranges": [
+              [
+                49,
+                54
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Electrifying"
+          },
+          {
+            "mod_id": "Staves/PhysicalSpellDamageWeaponPrefix",
+            "family": "WeaponDamageTypePrefix",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 2,
+            "text_ja": "スペル物理ダメージが66%増加する",
+            "text_en": "66% increased Spell Physical Damage",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                50,
+                68
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Punishing"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Staves/GlobalIncreasePhysicalSpellSkillGemLevelWeapon",
+            "family": "IncreaseSocketedGemLevel",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 18,
+            "text_ja": "全ての物理スペルスキルのレベル +2",
+            "text_en": "+2 to Level of all Physical Spell Skills",
+            "values": [
+              2
+            ],
+            "ranges": [
+              [
+                2,
+                2
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of Suffering"
+          },
+          {
+            "mod_id": "Staves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "after": {
+        "name": "闇のスタッフ",
+        "base": "Dark Staff",
+        "base_ja": "闇のスタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "int": 114
+        },
+        "properties": [],
+        "augments": [
+          {
+            "key": "rune:Greater Desert Rune",
+            "en": "Greater Desert Rune",
+            "ja": "砂漠のグレータールーン",
+            "category": "ワンドまたはスタッフ",
+            "text_ja": "ダメージの10%を追加火ダメージとして獲得する",
+            "text_en": "Gain 10% of Damage as Extra Fire Damage",
+            "stats": [
+              {
+                "id": "non_skill_base_all_damage_%_to_gain_as_fire",
+                "value": 10
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Staves/DamageGainedAsLightning",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 60,
+            "text_ja": "ダメージの52%を追加雷ダメージとして獲得する",
+            "text_en": "Gain 52% of Damage as Extra Lightning Damage",
+            "values": [
+              52
+            ],
+            "ranges": [
+              [
+                49,
+                54
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Electrifying"
+          },
+          {
+            "mod_id": "Staves/PhysicalSpellDamageWeaponPrefix",
+            "family": "WeaponDamageTypePrefix",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 2,
+            "text_ja": "スペル物理ダメージが66%増加する",
+            "text_en": "66% increased Spell Physical Damage",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                50,
+                68
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Punishing"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Staves/GlobalIncreasePhysicalSpellSkillGemLevelWeapon",
+            "family": "IncreaseSocketedGemLevel",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 18,
+            "text_ja": "全ての物理スペルスキルのレベル +2",
+            "text_en": "+2 to Level of all Physical Spell Skills",
+            "values": [
+              2
+            ],
+            "ranges": [
+              [
+                2,
+                2
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of Suffering"
+          },
+          {
+            "mod_id": "Staves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "augment_change": {
+        "socket": 1,
+        "put": {
+          "key": "rune:Greater Desert Rune",
+          "en": "Greater Desert Rune",
+          "ja": "砂漠のグレータールーン",
+          "category": "ワンドまたはスタッフ",
+          "text_ja": "ダメージの10%を追加火ダメージとして獲得する",
+          "text_en": "Gain 10% of Damage as Extra Fire Damage",
+          "stats": [
+            {
+              "id": "non_skill_base_all_damage_%_to_gain_as_fire",
+              "value": 10
+            }
+          ]
+        },
+        "replaced": null,
+        "replaced_goes": null
+      }
+    }
+  ],
+  "final": {
+    "name": "闇のスタッフ",
+    "base": "Dark Staff",
+    "base_ja": "闇のスタッフ",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 65,
+      "int": 114
+    },
+    "properties": [],
+    "augments": [
+      {
+        "key": "rune:Greater Desert Rune",
+        "en": "Greater Desert Rune",
+        "ja": "砂漠のグレータールーン",
+        "category": "ワンドまたはスタッフ",
+        "text_ja": "ダメージの10%を追加火ダメージとして獲得する",
+        "text_en": "Gain 10% of Damage as Extra Fire Damage",
+        "stats": [
+          {
+            "id": "non_skill_base_all_damage_%_to_gain_as_fire",
+            "value": 10
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Staves/DamageGainedAsLightning",
+        "family": "LightningDamage",
+        "side": "prefix",
+        "tier_name": "T2",
+        "mod_level": 60,
+        "text_ja": "ダメージの52%を追加雷ダメージとして獲得する",
+        "text_en": "Gain 52% of Damage as Extra Lightning Damage",
+        "values": [
+          52
+        ],
+        "ranges": [
+          [
+            49,
+            54
+          ]
+        ],
+        "tier_index": 4,
+        "affix": "Electrifying"
+      },
+      {
+        "mod_id": "Staves/PhysicalSpellDamageWeaponPrefix",
+        "family": "WeaponDamageTypePrefix",
+        "side": "prefix",
+        "tier_name": "T8",
+        "mod_level": 2,
+        "text_ja": "スペル物理ダメージが66%増加する",
+        "text_en": "66% increased Spell Physical Damage",
+        "values": [
+          66
+        ],
+        "ranges": [
+          [
+            50,
+            68
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "Punishing"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Staves/GlobalIncreasePhysicalSpellSkillGemLevelWeapon",
+        "family": "IncreaseSocketedGemLevel",
+        "side": "suffix",
+        "tier_name": "T4",
+        "mod_level": 18,
+        "text_ja": "全ての物理スペルスキルのレベル +2",
+        "text_en": "+2 to Level of all Physical Spell Skills",
+        "values": [
+          2
+        ],
+        "ranges": [
+          [
+            2,
+            2
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "of Suffering"
+      },
+      {
+        "mod_id": "Staves/LocalAttributeRequirements",
+        "family": "LocalAttributeRequirements",
+        "side": "suffix",
+        "tier_name": "T5",
+        "mod_level": 24,
+        "text_ja": "要求能力値が15%減少する",
+        "text_en": "-15% reduced Attribute Requirements",
+        "values": [
+          -15
+        ],
+        "ranges": [
+          [
+            -15,
+            -15
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Worthy"
+      }
+    ]
+  },
+  "total_cost": 0
+}

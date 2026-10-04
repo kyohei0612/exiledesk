@@ -1,0 +1,1543 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-04T10:22:04.965Z",
+  "exiledesk_version": "0.1.362",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "両手のマーシャル武器: 同じ砂漠のルーンとソウルコアが武器では火力に",
+    "base": "Wyrm Quarterstaff",
+    "item_level": 80,
+    "start_rarity": "rare",
+    "seed": 20261011,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "artificer",
+        "times": 1
+      },
+      {
+        "currency": "artificer",
+        "times": 1
+      },
+      {
+        "currency": "rune:Greater Desert Rune",
+        "times": 1,
+        "note": "火ダメージ追加"
+      },
+      {
+        "currency": "rune:Soul Core of Citaqualotl",
+        "times": 1,
+        "note": "アタックの元素ダメージ 40% 増加"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261012,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ワームクォータースタッフ",
+        "base": "Wyrm Quarterstaff",
+        "base_ja": "ワームクォータースタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "dex": 89,
+          "int": 36
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜94",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "68〜90",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T4",
+            "mod_level": 60,
+            "text_ja": "68から90の火ダメージを追加する",
+            "text_en": "Adds 68 to 90 Fire Damage",
+            "values": [
+              68,
+              90
+            ],
+            "ranges": [
+              [
+                56,
+                70
+              ],
+              [
+                84,
+                107
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Incinerating"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/ManaLeechLocalPermyriad",
+            "family": "ManaLeech",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "物理ダメージの7.34%をマナとしてリーチする",
+            "text_en": "Leeches 7.34% of Physical Damage as Mana",
+            "values": [
+              7.34
+            ],
+            "ranges": [
+              [
+                7,
+                7.9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drought"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "倒した敵1体ごとに10のライフを獲得する",
+            "text_en": "Gain 10 Life per enemy killed",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                18
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Triumph"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeLeechLocalPermyriad",
+            "family": "LifeLeech",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 21,
+            "text_ja": "物理ダメージの6.64%をライフとしてリーチする",
+            "text_en": "Leeches 6.64% of Physical Damage as Life",
+            "values": [
+              6.64
+            ],
+            "ranges": [
+              [
+                6,
+                6.9
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Locust"
+          }
+        ]
+      },
+      "after": {
+        "name": "ワームクォータースタッフ",
+        "base": "Wyrm Quarterstaff",
+        "base_ja": "ワームクォータースタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "dex": 89,
+          "int": 36
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜94",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "68〜90",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T4",
+            "mod_level": 60,
+            "text_ja": "68から90の火ダメージを追加する",
+            "text_en": "Adds 68 to 90 Fire Damage",
+            "values": [
+              68,
+              90
+            ],
+            "ranges": [
+              [
+                56,
+                70
+              ],
+              [
+                84,
+                107
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Incinerating"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/ManaLeechLocalPermyriad",
+            "family": "ManaLeech",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "物理ダメージの7.34%をマナとしてリーチする",
+            "text_en": "Leeches 7.34% of Physical Damage as Mana",
+            "values": [
+              7.34
+            ],
+            "ranges": [
+              [
+                7,
+                7.9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drought"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "倒した敵1体ごとに10のライフを獲得する",
+            "text_en": "Gain 10 Life per enemy killed",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                18
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Triumph"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeLeechLocalPermyriad",
+            "family": "LifeLeech",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 21,
+            "text_ja": "物理ダメージの6.64%をライフとしてリーチする",
+            "text_en": "Leeches 6.64% of Physical Damage as Life",
+            "values": [
+              6.64
+            ],
+            "ranges": [
+              [
+                6,
+                6.9
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Locust"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261013,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ワームクォータースタッフ",
+        "base": "Wyrm Quarterstaff",
+        "base_ja": "ワームクォータースタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "dex": 89,
+          "int": 36
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜94",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "68〜90",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T4",
+            "mod_level": 60,
+            "text_ja": "68から90の火ダメージを追加する",
+            "text_en": "Adds 68 to 90 Fire Damage",
+            "values": [
+              68,
+              90
+            ],
+            "ranges": [
+              [
+                56,
+                70
+              ],
+              [
+                84,
+                107
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Incinerating"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/ManaLeechLocalPermyriad",
+            "family": "ManaLeech",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "物理ダメージの7.34%をマナとしてリーチする",
+            "text_en": "Leeches 7.34% of Physical Damage as Mana",
+            "values": [
+              7.34
+            ],
+            "ranges": [
+              [
+                7,
+                7.9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drought"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "倒した敵1体ごとに10のライフを獲得する",
+            "text_en": "Gain 10 Life per enemy killed",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                18
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Triumph"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeLeechLocalPermyriad",
+            "family": "LifeLeech",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 21,
+            "text_ja": "物理ダメージの6.64%をライフとしてリーチする",
+            "text_en": "Leeches 6.64% of Physical Damage as Life",
+            "values": [
+              6.64
+            ],
+            "ranges": [
+              [
+                6,
+                6.9
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Locust"
+          }
+        ]
+      },
+      "after": {
+        "name": "ワームクォータースタッフ",
+        "base": "Wyrm Quarterstaff",
+        "base_ja": "ワームクォータースタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "dex": 89,
+          "int": 36
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜94",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "68〜90",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 2,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T4",
+            "mod_level": 60,
+            "text_ja": "68から90の火ダメージを追加する",
+            "text_en": "Adds 68 to 90 Fire Damage",
+            "values": [
+              68,
+              90
+            ],
+            "ranges": [
+              [
+                56,
+                70
+              ],
+              [
+                84,
+                107
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Incinerating"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/ManaLeechLocalPermyriad",
+            "family": "ManaLeech",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "物理ダメージの7.34%をマナとしてリーチする",
+            "text_en": "Leeches 7.34% of Physical Damage as Mana",
+            "values": [
+              7.34
+            ],
+            "ranges": [
+              [
+                7,
+                7.9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drought"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "倒した敵1体ごとに10のライフを獲得する",
+            "text_en": "Gain 10 Life per enemy killed",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                18
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Triumph"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeLeechLocalPermyriad",
+            "family": "LifeLeech",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 21,
+            "text_ja": "物理ダメージの6.64%をライフとしてリーチする",
+            "text_en": "Leeches 6.64% of Physical Damage as Life",
+            "values": [
+              6.64
+            ],
+            "ranges": [
+              [
+                6,
+                6.9
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Locust"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "rune:Greater Desert Rune",
+      "currency_ja": "砂漠のグレータールーン",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261014,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ワームクォータースタッフ",
+        "base": "Wyrm Quarterstaff",
+        "base_ja": "ワームクォータースタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "dex": 89,
+          "int": 36
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜94",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "68〜90",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 2,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T4",
+            "mod_level": 60,
+            "text_ja": "68から90の火ダメージを追加する",
+            "text_en": "Adds 68 to 90 Fire Damage",
+            "values": [
+              68,
+              90
+            ],
+            "ranges": [
+              [
+                56,
+                70
+              ],
+              [
+                84,
+                107
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Incinerating"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/ManaLeechLocalPermyriad",
+            "family": "ManaLeech",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "物理ダメージの7.34%をマナとしてリーチする",
+            "text_en": "Leeches 7.34% of Physical Damage as Mana",
+            "values": [
+              7.34
+            ],
+            "ranges": [
+              [
+                7,
+                7.9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drought"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "倒した敵1体ごとに10のライフを獲得する",
+            "text_en": "Gain 10 Life per enemy killed",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                18
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Triumph"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeLeechLocalPermyriad",
+            "family": "LifeLeech",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 21,
+            "text_ja": "物理ダメージの6.64%をライフとしてリーチする",
+            "text_en": "Leeches 6.64% of Physical Damage as Life",
+            "values": [
+              6.64
+            ],
+            "ranges": [
+              [
+                6,
+                6.9
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Locust"
+          }
+        ]
+      },
+      "after": {
+        "name": "ワームクォータースタッフ",
+        "base": "Wyrm Quarterstaff",
+        "base_ja": "ワームクォータースタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "dex": 89,
+          "int": 36
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜94",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "81〜106",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Greater Desert Rune",
+            "en": "Greater Desert Rune",
+            "ja": "砂漠のグレータールーン",
+            "category": "マーシャル武器",
+            "text_ja": "13から16の火ダメージを追加する",
+            "text_en": "Adds 13 to 16 Fire Damage",
+            "stats": [
+              {
+                "id": "local_minimum_added_fire_damage",
+                "value": 13
+              },
+              {
+                "id": "local_maximum_added_fire_damage",
+                "value": 16
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 2,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T4",
+            "mod_level": 60,
+            "text_ja": "68から90の火ダメージを追加する",
+            "text_en": "Adds 68 to 90 Fire Damage",
+            "values": [
+              68,
+              90
+            ],
+            "ranges": [
+              [
+                56,
+                70
+              ],
+              [
+                84,
+                107
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Incinerating"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/ManaLeechLocalPermyriad",
+            "family": "ManaLeech",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "物理ダメージの7.34%をマナとしてリーチする",
+            "text_en": "Leeches 7.34% of Physical Damage as Mana",
+            "values": [
+              7.34
+            ],
+            "ranges": [
+              [
+                7,
+                7.9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drought"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "倒した敵1体ごとに10のライフを獲得する",
+            "text_en": "Gain 10 Life per enemy killed",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                18
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Triumph"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeLeechLocalPermyriad",
+            "family": "LifeLeech",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 21,
+            "text_ja": "物理ダメージの6.64%をライフとしてリーチする",
+            "text_en": "Leeches 6.64% of Physical Damage as Life",
+            "values": [
+              6.64
+            ],
+            "ranges": [
+              [
+                6,
+                6.9
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Locust"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "augment_change": {
+        "socket": 1,
+        "put": {
+          "key": "rune:Greater Desert Rune",
+          "en": "Greater Desert Rune",
+          "ja": "砂漠のグレータールーン",
+          "category": "マーシャル武器",
+          "text_ja": "13から16の火ダメージを追加する",
+          "text_en": "Adds 13 to 16 Fire Damage",
+          "stats": [
+            {
+              "id": "local_minimum_added_fire_damage",
+              "value": 13
+            },
+            {
+              "id": "local_maximum_added_fire_damage",
+              "value": 16
+            }
+          ]
+        },
+        "replaced": null,
+        "replaced_goes": null
+      }
+    },
+    {
+      "index": 4,
+      "currency": "rune:Soul Core of Citaqualotl",
+      "currency_ja": "シアクラトルのソウルコア",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261015,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ワームクォータースタッフ",
+        "base": "Wyrm Quarterstaff",
+        "base_ja": "ワームクォータースタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "dex": 89,
+          "int": 36
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜94",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "81〜106",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Greater Desert Rune",
+            "en": "Greater Desert Rune",
+            "ja": "砂漠のグレータールーン",
+            "category": "マーシャル武器",
+            "text_ja": "13から16の火ダメージを追加する",
+            "text_en": "Adds 13 to 16 Fire Damage",
+            "stats": [
+              {
+                "id": "local_minimum_added_fire_damage",
+                "value": 13
+              },
+              {
+                "id": "local_maximum_added_fire_damage",
+                "value": 16
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 2,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T4",
+            "mod_level": 60,
+            "text_ja": "68から90の火ダメージを追加する",
+            "text_en": "Adds 68 to 90 Fire Damage",
+            "values": [
+              68,
+              90
+            ],
+            "ranges": [
+              [
+                56,
+                70
+              ],
+              [
+                84,
+                107
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Incinerating"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/ManaLeechLocalPermyriad",
+            "family": "ManaLeech",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "物理ダメージの7.34%をマナとしてリーチする",
+            "text_en": "Leeches 7.34% of Physical Damage as Mana",
+            "values": [
+              7.34
+            ],
+            "ranges": [
+              [
+                7,
+                7.9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drought"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "倒した敵1体ごとに10のライフを獲得する",
+            "text_en": "Gain 10 Life per enemy killed",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                18
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Triumph"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeLeechLocalPermyriad",
+            "family": "LifeLeech",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 21,
+            "text_ja": "物理ダメージの6.64%をライフとしてリーチする",
+            "text_en": "Leeches 6.64% of Physical Damage as Life",
+            "values": [
+              6.64
+            ],
+            "ranges": [
+              [
+                6,
+                6.9
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Locust"
+          }
+        ]
+      },
+      "after": {
+        "name": "ワームクォータースタッフ",
+        "base": "Wyrm Quarterstaff",
+        "base_ja": "ワームクォータースタッフ",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "dex": 89,
+          "int": 36
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜94",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "81〜106",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Greater Desert Rune",
+            "en": "Greater Desert Rune",
+            "ja": "砂漠のグレータールーン",
+            "category": "マーシャル武器",
+            "text_ja": "13から16の火ダメージを追加する",
+            "text_en": "Adds 13 to 16 Fire Damage",
+            "stats": [
+              {
+                "id": "local_minimum_added_fire_damage",
+                "value": 13
+              },
+              {
+                "id": "local_maximum_added_fire_damage",
+                "value": 16
+              }
+            ]
+          },
+          {
+            "key": "rune:Soul Core of Citaqualotl",
+            "en": "Soul Core of Citaqualotl",
+            "ja": "シアクラトルのソウルコア",
+            "category": "マーシャル武器",
+            "text_ja": "アタックスキルによる元素ダメージが40%増加する",
+            "text_en": "40% increased Elemental Damage with Attacks",
+            "stats": [
+              {
+                "id": "elemental_damage_with_attack_skills_+%",
+                "value": 40
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 2,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T4",
+            "mod_level": 60,
+            "text_ja": "68から90の火ダメージを追加する",
+            "text_en": "Adds 68 to 90 Fire Damage",
+            "values": [
+              68,
+              90
+            ],
+            "ranges": [
+              [
+                56,
+                70
+              ],
+              [
+                84,
+                107
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Incinerating"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/ManaLeechLocalPermyriad",
+            "family": "ManaLeech",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "物理ダメージの7.34%をマナとしてリーチする",
+            "text_en": "Leeches 7.34% of Physical Damage as Mana",
+            "values": [
+              7.34
+            ],
+            "ranges": [
+              [
+                7,
+                7.9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Drought"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "倒した敵1体ごとに10のライフを獲得する",
+            "text_en": "Gain 10 Life per enemy killed",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                18
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Triumph"
+          },
+          {
+            "mod_id": "Quarterstaves/LifeLeechLocalPermyriad",
+            "family": "LifeLeech",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 21,
+            "text_ja": "物理ダメージの6.64%をライフとしてリーチする",
+            "text_en": "Leeches 6.64% of Physical Damage as Life",
+            "values": [
+              6.64
+            ],
+            "ranges": [
+              [
+                6,
+                6.9
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Locust"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "augment_change": {
+        "socket": 2,
+        "put": {
+          "key": "rune:Soul Core of Citaqualotl",
+          "en": "Soul Core of Citaqualotl",
+          "ja": "シアクラトルのソウルコア",
+          "category": "マーシャル武器",
+          "text_ja": "アタックスキルによる元素ダメージが40%増加する",
+          "text_en": "40% increased Elemental Damage with Attacks",
+          "stats": [
+            {
+              "id": "elemental_damage_with_attack_skills_+%",
+              "value": 40
+            }
+          ]
+        },
+        "replaced": null,
+        "replaced_goes": null
+      }
+    }
+  ],
+  "final": {
+    "name": "ワームクォータースタッフ",
+    "base": "Wyrm Quarterstaff",
+    "base_ja": "ワームクォータースタッフ",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 65,
+      "dex": 89,
+      "int": 36
+    },
+    "properties": [
+      {
+        "key": "phys",
+        "label": "物理ダメージ",
+        "value": "57〜94",
+        "up": false
+      },
+      {
+        "key": "fire",
+        "label": "火ダメージ",
+        "value": "81〜106",
+        "up": true
+      },
+      {
+        "key": "crit",
+        "label": "クリティカルヒット率",
+        "value": "10.00%",
+        "up": false
+      },
+      {
+        "key": "aps",
+        "label": "アタック/秒",
+        "value": "1.40",
+        "up": false
+      }
+    ],
+    "augments": [
+      {
+        "key": "rune:Greater Desert Rune",
+        "en": "Greater Desert Rune",
+        "ja": "砂漠のグレータールーン",
+        "category": "マーシャル武器",
+        "text_ja": "13から16の火ダメージを追加する",
+        "text_en": "Adds 13 to 16 Fire Damage",
+        "stats": [
+          {
+            "id": "local_minimum_added_fire_damage",
+            "value": 13
+          },
+          {
+            "id": "local_maximum_added_fire_damage",
+            "value": 16
+          }
+        ]
+      },
+      {
+        "key": "rune:Soul Core of Citaqualotl",
+        "en": "Soul Core of Citaqualotl",
+        "ja": "シアクラトルのソウルコア",
+        "category": "マーシャル武器",
+        "text_ja": "アタックスキルによる元素ダメージが40%増加する",
+        "text_en": "40% increased Elemental Damage with Attacks",
+        "stats": [
+          {
+            "id": "elemental_damage_with_attack_skills_+%",
+            "value": 40
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 2,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Quarterstaves/LocalFireDamage",
+        "family": "FireDamage",
+        "side": "prefix",
+        "tier_name": "T4",
+        "mod_level": 60,
+        "text_ja": "68から90の火ダメージを追加する",
+        "text_en": "Adds 68 to 90 Fire Damage",
+        "values": [
+          68,
+          90
+        ],
+        "ranges": [
+          [
+            56,
+            70
+          ],
+          [
+            84,
+            107
+          ]
+        ],
+        "tier_index": 6,
+        "affix": "Incinerating"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Quarterstaves/ManaLeechLocalPermyriad",
+        "family": "ManaLeech",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 54,
+        "text_ja": "物理ダメージの7.34%をマナとしてリーチする",
+        "text_en": "Leeches 7.34% of Physical Damage as Mana",
+        "values": [
+          7.34
+        ],
+        "ranges": [
+          [
+            7,
+            7.9
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of the Drought"
+      },
+      {
+        "mod_id": "Quarterstaves/LifeGainedFromEnemyDeath",
+        "family": "LifeGainedFromEnemyDeath",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 22,
+        "text_ja": "倒した敵1体ごとに10のライフを獲得する",
+        "text_en": "Gain 10 Life per enemy killed",
+        "values": [
+          10
+        ],
+        "ranges": [
+          [
+            10,
+            18
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of Triumph"
+      },
+      {
+        "mod_id": "Quarterstaves/LifeLeechLocalPermyriad",
+        "family": "LifeLeech",
+        "side": "suffix",
+        "tier_name": "T4",
+        "mod_level": 21,
+        "text_ja": "物理ダメージの6.64%をライフとしてリーチする",
+        "text_en": "Leeches 6.64% of Physical Damage as Life",
+        "values": [
+          6.64
+        ],
+        "ranges": [
+          [
+            6,
+            6.9
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Locust"
+      }
+    ]
+  },
+  "total_cost": 0
+}
