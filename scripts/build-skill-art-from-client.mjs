@@ -10,6 +10,7 @@
  *     → public/skill-art/<id>_icon.webp / <id>_gem.webp と src/services/craft-stage/skill-art.json
  *        [{ id, en, ja, color: red|green|blue|white, support, tags, icon, gem }]
  *   - ルーン: stage-runes.json の dds → public/rune-art/<id>.webp と src/services/craft-stage/rune-art.json (英語名 → ファイル名)
+ *   - PoB に無いジェムはクライアントの表から (SkillGems / GemEffects / GrantedEffects / ActiveSkills / SupportGems / GemTags、2026-10-04)
  *   (cd data-cache/client-export-art && npx pathofexile-dat) && node scripts/build-skill-art-from-client.mjs
  */
 import * as loaders from "../node_modules/pathofexile-dat/dist/cli/bundle-loaders.js";
@@ -49,7 +50,7 @@ const artById = new Map(B.map((b) => [b.Id, V[b.ItemVisualIdentity]?.DDSFile ?? 
 const artByGemName = new Map();
 for (const b of B) {
   const f = V[b.ItemVisualIdentity]?.DDSFile;
-  if (f && b.Id.startsWith("Metadata/Items/Gems/") && !artByGemName.has(b.Name)) artByGemName.set(b.Name, f);
+  if (f && /^Metadata\/Items\/Gems?\//.test(b.Id) && !artByGemName.has(b.Name)) artByGemName.set(b.Name, f);
 }
 const colorOf = (g) => { const mx = Math.max(g.str, g.dex, g.int); return mx === 0 ? "white" : mx === g.str ? "red" : mx === g.dex ? "green" : "blue"; };
 
@@ -89,14 +90,59 @@ const list = [];
 const seen = new Set();
 for (const g of gems) {
   if (!g.name || seen.has(g.name)) continue;
-  seen.add(g.name);
   const id = safe(g.gameId.replace("Metadata/Items/Gems/", ""));
   const iconDds = g.effect ? icons.get(g.effect) : null;
   const gemDds = artById.get(g.gameId) ?? artByGemName.get(g.name);
   const icon = iconDds ? await toWebp(iconDds, SKILL, `${id}_icon`) : null;
   const gem = gemDds ? await toWebp(gemDds, SKILL, `${id}_gem`) : null;
+  // 絵が取れなかった物は、下のクライアントの表からもう一度探す (2026-10-04: ブリンクは PoB の表にあるがアイコンが引けず、印だけ付いて漏れていた)
   if (!icon && !gem) continue;
+  seen.add(g.name);
   list.push({ id, en: g.name, ja: gemsJa.get(g.name) ?? itemsJa[g.name] ?? g.name, color: colorOf(g), support: g.tags.includes("support"), tags: g.tagString ? g.tagString.split(", ") : [], icon, gem });
+}
+// ---- PoB に無いジェム (2026-10-04: ブリンク・新しいリネージュ (ウートレドの前兆・アッツィリの交感 等) が PoB の表に無く、火力チェックで
+// アイコンもカードも出なかった)。クライアントの表 SkillGems → GemEffects → GrantedEffects → ActiveSkills.Icon_DDSFile (アクティブ) /
+// SupportGems.Icon (サポート)。サポートの「Blank○○Support」は色だけの仮の絵なので使わず、ジェムの絵に落とす
+const SG = T("SkillGems"), GE = T("GemEffects"), GRE = T("GrantedEffects"), AS = T("ActiveSkills"), SUP = T("SupportGems"), GT = T("GemTags");
+const supByGem = new Map(SUP.map((x) => [x.SkillGem, x]));
+for (const [idx, sg] of SG.entries()) {
+  const b = B[sg.BaseItemType];
+  const en = b?.Name;
+  // 新しいジェムは「Metadata/Items/Gem/」(単数) の下にある (ブリンク等)
+  if (!en || seen.has(en) || !/^Metadata\/Items\/Gems?\//.test(b.Id)) continue;
+  const ge = Array.isArray(sg.GemEffects) && sg.GemEffects.length ? GE[sg.GemEffects[0]] : null;
+  const gr = ge?.GrantedEffect != null ? GRE[ge.GrantedEffect] : null;
+  const sup = supByGem.get(idx);
+  const support = !!gr?.IsSupport || !!sup;
+  let iconDds = support ? (sup?.Icon ?? null) : (gr?.ActiveSkill != null ? AS[gr.ActiveSkill]?.Icon_DDSFile ?? null : null);
+  if (iconDds && /\/Blank[A-Za-z]*Support\.dds$/.test(iconDds)) iconDds = null;
+  const gemDds = artById.get(b.Id) ?? artByGemName.get(en);
+  if (!iconDds && !gemDds) continue;
+  seen.add(en);
+  const id = safe(b.Id.replace(/^Metadata\/Items\/Gems?\//, ""));
+  const icon = iconDds ? await toWebp(iconDds, SKILL, `${id}_icon`) : null;
+  const gem = gemDds ? await toWebp(gemDds, SKILL, `${id}_gem`) : null;
+  if (!icon && !gem) continue;
+  const mx = Math.max(sg.StrengthRequirementPercent ?? 0, sg.DexterityRequirementPercent ?? 0, sg.IntelligenceRequirementPercent ?? 0);
+  const color = mx === 0 ? "white" : mx === sg.StrengthRequirementPercent ? "red" : mx === sg.DexterityRequirementPercent ? "green" : "blue";
+  const tags = (ge?.GemTags ?? []).map((t) => GT[t]?.Name).filter(Boolean);
+  if (sup?.IsLineage && !tags.includes("Lineage")) tags.push("Lineage");
+  list.push({ id, en, ja: gemsJa.get(en) ?? itemsJa[en] ?? en, color, support, tags, icon, gem });
+}
+// PoB の表にあってもアイコンが引けなかった物 (ブリンク等) は、クライアントの表のアイコンで埋める
+const iconByName = new Map();
+for (const [idx, sg] of SG.entries()) {
+  const en = B[sg.BaseItemType]?.Name;
+  if (!en || iconByName.has(en)) continue;
+  const ge = Array.isArray(sg.GemEffects) && sg.GemEffects.length ? GE[sg.GemEffects[0]] : null;
+  const gr = ge?.GrantedEffect != null ? GRE[ge.GrantedEffect] : null;
+  const sup = supByGem.get(idx);
+  const dds = gr?.IsSupport || sup ? sup?.Icon : gr?.ActiveSkill != null ? AS[gr.ActiveSkill]?.Icon_DDSFile : null;
+  if (dds && !/\/Blank[A-Za-z]*Support\.dds$/.test(dds)) iconByName.set(en, dds);
+}
+for (const x of list) {
+  if (x.icon || !iconByName.has(x.en)) continue;
+  x.icon = await toWebp(iconByName.get(x.en), SKILL, `${x.id}_icon`);
 }
 // 原石 (Uncut)
 for (const [gameId, en] of [["Metadata/Items/Gems/SkillGemUncut", "Uncut Skill Gem"], ["Metadata/Items/Gems/SupportGemUncut", "Uncut Support Gem"], ["Metadata/Items/Gems/ReservationGemUncut", "Uncut Spirit Gem"]]) {

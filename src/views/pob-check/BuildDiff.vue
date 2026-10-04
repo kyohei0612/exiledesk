@@ -322,9 +322,8 @@ const STATS = [
           <template v-for="e in rowEsts" :key="e.c.key">
             <tr class="border-t border-white/[0.06] align-top first:border-t-0">
               <td class="py-2 pr-3 font-semibold text-[var(--exile-color-text-secondary)]">
-                <span v-if="e.c.kind === 'gems'" class="inline-flex items-center gap-1">
-                  <GemIcon :en="e.c.active.name" :size="18" /><GemName :en="e.c.active.name" :label="gemJa(e.c.active.name)" /> の組にリネージュ
-                </span>
+                <!-- 何を は文字だけ (2026-10-04 オーナー「アイコン有ったり無かったりするの統一感持たせて」)。絵とカードは右の 自分 → 相手 に -->
+                <template v-if="e.c.kind === 'gems'">リネージュ <span class="note">({{ gemJa(e.c.active.name) }} の組)</span></template>
                 <template v-else>{{ what(e.c) }}</template>
               </td>
               <td class="py-2 pr-3">
@@ -336,11 +335,13 @@ const STATS = [
                   <ItemArt :name="e.c.to.title" :base="e.c.to.base" :rarity="e.c.to.rarity" :size="28" />
                   <BuildItemName :item="hoverOf(e.c.to, e.c.slot)" :label="nameJa(e.c.to)" class="text-amber-200" />
                 </span>
-                <span v-else-if="e.c.kind === 'gems'" class="inline-flex flex-wrap items-center gap-1">
-                  <template v-for="(g, gi) in e.c.lineage ?? []" :key="gi">
-                    <GemIcon :en="g" :size="18" hover :title="gemJa(g)" /><span class="text-amber-200">{{ gemJa(g) }}</span>
+                <!-- 装備の行と同じ形: 無し → 絵 + 名前 (名前と絵どちらでもカード) -->
+                <span v-else-if="e.c.kind === 'gems'" class="inline-flex flex-wrap items-center gap-1.5">
+                  <span class="text-rose-300/80">無し</span>
+                  <span class="text-[var(--exile-color-text-tertiary)]">→</span>
+                  <template v-for="g in e.c.lineage ?? []" :key="g">
+                    <span class="inline-flex items-center gap-1"><GemIcon :en="g" :size="28" kind="gem" hover /><GemName :en="g" :label="gemJa(g)" class="text-amber-200" /></span>
                   </template>
-                  <span class="note">を足す</span>
                 </span>
               </td>
               <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
