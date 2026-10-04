@@ -12,11 +12,17 @@ import TabBar from "../../components/ui/TabBar.vue";
 import BuildDiff from "./BuildDiff.vue";
 import CoreStatsCard from "./CoreStatsCard.vue";
 import SkillCompareTable from "./SkillCompareTable.vue";
+import SkillTable from "./SkillTable.vue";
+import GemGroupCard from "./GemGroupCard.vue";
+import ItemSlotCard from "./ItemSlotCard.vue";
+import TreeView from "./TreeView.vue";
+import PricesTab from "./PricesTab.vue";
 import { pairSkills } from "../../services/pob-check/build-diff";
 import { fmtNum } from "./fmt";
-import { usePobCheck } from "./usePobCheck";
+import { usePobCheck, type PasteNote } from "./usePobCheck";
 
-const { targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, input, loading, busy, error, cur, skills, focus, focusKey, load, changeCharges } =
+const { targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, input, loading, busy, error, cur, skills, focus, focusKey, load, changeCharges,
+  baseSkills, base, targetCode, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, groups, merged, changeGem, toggleGroup, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 
@@ -63,7 +69,40 @@ async function onPlan(which: "mine" | "target"): Promise<void> {
  *   2 ページ目 (試算が済んだら) … 上のバー (スキルの DPS 自分 → 相手) と タブ 2 つ (火力の差 / 内訳 = 火力の中身)
  */
 const compared = ref(!!cur.value && !!target.value && !!estimates.value);
+/**
+ * 自分の火力を見る (2026-10-04 オーナー「比較しかなくて自分のセルフチェックが無い」): 自分を取り込んだら 1 ページ目に「自分の火力を見る」。
+ * 開くとスキルの表と 装備 / ジェム / パッシブツリー / 内訳 (火力の中身) / 値段 のタブ (変えるとすぐ計算し直して、取り込んだ時との差)
+ */
+const selfOpen = ref(false);
 const opened = computed(() => !!cur.value && !!target.value && compared.value);
+watch(() => !!cur.value, (has) => { if (!has) selfOpen.value = false; });
+function openSelf(): void {
+  selfOpen.value = true;
+  selfTab.value = "items";
+}
+const SELF_TABS = [
+  { id: "items", label: "装備" },
+  { id: "gems", label: "ジェム" },
+  { id: "tree", label: "パッシブツリー" },
+  { id: "core", label: "内訳" },
+  { id: "prices", label: "値段" },
+] as const;
+type SelfTabId = (typeof SELF_TABS)[number]["id"];
+const selfTab = ref<SelfTabId>("items");
+/** 「値段」は一度開いたら v-show で保つ (取った値段を消さないため) */
+const pricesOpened = ref(false);
+watch(selfTab, (t) => { if (t === "prices") pricesOpened.value = true; });
+/** ツリーに渡す寄与 (毎レンダーで新しい物を作ると TreeView が描き直し続けるので computed) */
+const treePower = computed(() => (power.value ? { label: power.value.label, nodes: power.value.nodes, stale: power.value.of !== cur.value } : null));
+const treeSkillOptions = computed(() => skills.value.map((x) => ({ key: x.key, name: x.s.name + (x.s.game.minionName ? ` → ${x.s.game.minionName}` : "") })));
+/** 差し替えの結果をカードに返す */
+async function onPaste(slot: string, text: string, done: (r: PasteNote | null, err?: string) => void): Promise<void> {
+  try {
+    done(await changeItem(slot, text));
+  } catch (e) {
+    done(null, e instanceof Error ? e.message : String(e));
+  }
+}
 // 相手を外した・リセットした → 1 ページ目に戻る
 watch(() => !!cur.value && !!target.value, (both) => { if (!both) compared.value = false; });
 const TABS = [
@@ -192,8 +231,9 @@ const resists = computed(() =>
     <TabBar icon="🔥" title="火力チェック" />
     <div class="min-h-0 flex-1 overflow-auto p-4 @container">
     <!-- 1 ページ目: 自分・相手を取り込む → 両方そろったら「比較する」→ 試算が済んだら 2 ページ目 (2026-10-04) -->
-    <section v-if="!opened" class="card mx-auto mt-6 max-w-3xl p-5">
-      <p class="mb-4 text-lg font-bold text-sky-100">⚔ 火力を比較する</p>
+    <section v-if="!opened && !(selfOpen && cur)" class="card mx-auto mt-6 max-w-3xl p-5">
+      <p class="mb-1 text-lg font-bold text-amber-100">🔥 火力チェック</p>
+      <p class="note mb-4">自分を取り込むと「自分の火力を見る」、相手も取り込むと「比較する」</p>
       <form class="flex items-center gap-2" @submit.prevent="load()">
         <span class="w-[5.5rem] shrink-0 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]">自分</span>
         <input v-model="input" type="text" placeholder="PoB コード (「Import/Export」の Generate) / https://poe.ninja/poe2/builds/... のキャラの URL" class="input flex-1" :disabled="estimating" />
@@ -207,12 +247,16 @@ const resists = computed(() =>
       </form>
       <p v-if="target" class="note mt-1 pl-[6rem] text-emerald-300">✓ {{ target.char.ascendancy || target.char.class }} Lv {{ target.char.level }}<template v-if="targetFrom"> ・ {{ targetFrom }} から</template></p>
       <p v-else-if="!cur" class="note mt-1 pl-[6rem]">先に自分を取り込むと、相手を取り込めます</p>
+      <p v-else class="note mt-1 pl-[6rem]">比べる時だけ (自分の火力を見るだけなら要らない)</p>
       <div v-if="loading" class="mt-4 flex items-center gap-2 text-sm text-amber-200/80">
         <span class="h-2.5 w-2.5 animate-ping rounded-full bg-amber-300" />PoB で取り込んで計算しています (数秒)
       </div>
-      <!-- 両方そろったら比較する -->
-      <div v-if="cur && target && !loading" class="mt-5 flex flex-col items-center gap-2">
-        <button type="button" class="btn btn-primary h-10 px-12 text-base" :disabled="busy || estimating || !!compareStep" @click="onCompare">{{ estimating || compareStep ? "試算中…" : "比較する" }}</button>
+      <!-- 自分だけ → 自分の火力を見る、両方そろったら → 比較する -->
+      <div v-if="cur && !loading" class="mt-5 flex flex-col items-center gap-2">
+        <div class="flex flex-wrap justify-center gap-3">
+          <button type="button" class="btn h-10 px-8 text-base" :class="target ? 'btn-outline' : 'btn-primary'" :disabled="busy || estimating || !!compareStep" @click="openSelf">🔥 自分の火力を見る</button>
+          <button v-if="target" type="button" class="btn btn-primary h-10 px-12 text-base" :disabled="busy || estimating || !!compareStep" @click="onCompare">{{ estimating || compareStep ? "試算中…" : "⚔ 比較する" }}</button>
+        </div>
         <p v-if="compareStep" class="flex items-center gap-2 text-[12px] text-amber-200/90">
           <span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />DPS が一番高いスキルから試算しています: {{ compareStep }} ・ {{ estimateProgress }} (済んだら開いて、残りは裏で)
           <button type="button" class="btn btn-sm btn-outline" :disabled="cancelled" @click="onCancel">{{ cancelling ? "止めています…" : "中止" }}</button>
@@ -226,7 +270,12 @@ const resists = computed(() =>
       </p>
     </section>
 
-    <template v-else-if="cur && target">
+    <template v-else-if="cur">
+      <!-- 今の使い方と 1 ページ目に戻る -->
+      <div class="mb-2 flex flex-wrap items-center gap-2">
+        <span class="rounded-full px-2.5 py-0.5 text-[12px] font-bold" :class="opened ? 'bg-sky-500/15 text-sky-200' : 'bg-amber-500/15 text-amber-200'">{{ opened ? "⚔ 火力を比較する" : "🔥 自分の火力を見る" }}</span>
+        <button type="button" class="btn-link text-[12px]" :disabled="loading || busy || estimating" @click="selfOpen = false; compared = false">← 取り込みに戻る</button>
+      </div>
       <p v-if="error" class="mb-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
       <!-- キャラの札 -->
       <div class="mb-3 flex flex-wrap items-center gap-1.5">
@@ -300,6 +349,89 @@ const resists = computed(() =>
         </div>
       </div>
 
+      <!-- 自分の火力を見る: スキルの表 (取り込んだ時との差) とタブ -->
+      <template v-if="!opened">
+        <div class="mb-4">
+          <SkillTable :rows="skills" :before="baseSkills" :focus-key="focus?.key ?? null" @focus="(k) => (focusKey = k)" />
+        </div>
+        <p v-if="changes.length" class="mb-3 flex flex-wrap items-center gap-1">
+          <span class="note">取り込んだ時から変えた所:</span>
+          <span v-for="(c, i) in changes.slice(-8)" :key="i" class="rounded-full bg-sky-500/15 px-2 py-px text-[11px] text-sky-200">{{ c }}</span>
+          <span v-if="changes.length > 8" class="note px-1">ほか {{ changes.length - 8 }} 件</span>
+        </p>
+        <TabBar :tabs="SELF_TABS" :model-value="selfTab" class="mb-3" aria-label="自分の火力" @update:model-value="selfTab = $event as SelfTabId" />
+        <!-- 装備 -->
+        <div v-show="selfTab === 'items'">
+          <p class="note mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>ゲームで Ctrl+C したアイテムを貼ると入れ替えて計算し直します (日本語のままで OK)</span>
+            <span class="inline-flex overflow-hidden rounded-lg border border-white/15 text-[11px] font-semibold">
+              <button
+                v-for="n in [1, 2] as const"
+                :key="n"
+                type="button"
+                class="h-6 px-2.5"
+                :class="cur.weaponSet === n ? 'bg-[var(--exile-color-accent-focus)] text-[var(--exile-color-bg-canvas)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/10'"
+                :disabled="busy"
+                @click="changeWeaponSet(n)"
+              >武器セット {{ n === 1 ? "I" : "II" }}</button>
+            </span>
+          </p>
+          <div class="mb-6 grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3 @[100rem]:grid-cols-4">
+            <ItemSlotCard
+              v-for="s in cur.items"
+              :key="s.slot"
+              :entry="s"
+              :active-set="cur.weaponSet"
+              :disabled="busy"
+              @paste="(text, done) => onPaste(s.slot, text, done)"
+              @clear="clearItem(s.slot)"
+              @restore="restoreItem(s.slot)"
+            />
+          </div>
+        </div>
+        <!-- ジェム -->
+        <div v-show="selfTab === 'gems'">
+          <p class="note mb-2">変えるとすぐ計算し直します<template v-if="merged > 0"> ・ 同じ中身の組 {{ merged }} 個はまとめました</template></p>
+          <div class="mb-6 grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3">
+            <GemGroupCard
+              v-for="g in groups"
+              :key="g.i"
+              :group="g"
+              :disabled="busy"
+              @gem="(j, field, value) => changeGem(g.i, j, field, value)"
+              @group="(en) => toggleGroup(g.i, en)"
+            />
+          </div>
+        </div>
+        <!-- ツリー -->
+        <div v-if="selfTab === 'tree'" class="mb-6">
+          <TreeView
+            :nodes="treeNodes"
+            :state="cur.tree"
+            :base-alloc="base && base !== cur ? base.tree.alloc : undefined"
+            :power="treePower"
+            :power-progress="powerProgress"
+            :skill-options="treeSkillOptions"
+            :default-target="focus?.key ?? ''"
+            :fit-key="loadSeq"
+            :busy="busy"
+            @power="computePower"
+            @toggle="async (id, attr, done) => done(await clickNode(id, attr))"
+            @reset="resetTreeToLoaded"
+          />
+        </div>
+        <!-- 内訳: 火力の中身 (表で選んだスキル) -->
+        <div v-if="selfTab === 'core'" class="mb-4">
+          <CoreStatsCard v-if="focus?.s.core" :mine="focus.s.core" :target="null" :skill-ja="gemJa(focus.s.name)" :enemy-mine="cur.config.enemy" :enemy-target="null" expanded />
+          <p v-else class="note">このスキルは内訳が取れません (ミニオンなど)</p>
+        </div>
+        <!-- 値段 (旧 忍者ビルドコピー)。値段は押した時だけ -->
+        <div v-if="pricesOpened" v-show="selfTab === 'prices'">
+          <PricesTab :mine-code="lastSource?.code ?? null" :target-code="targetCode" />
+        </div>
+      </template>
+
+      <template v-else-if="target">
       <!-- スキルごと (先頭)。行を押すとそのスキルで 火力の差 / 内訳 を出す -->
       <section class="mb-4">
         <h2 class="sec-title">
@@ -350,6 +482,7 @@ const resists = computed(() =>
         />
 
       </div>
+      </template>
 
       <p class="note">
         数字はゲームのスキルの詳細と同じ書き方です (敵の耐性・呪い・露出は入れない。常時のバフは入れる)。「自動」のスキルは PoB が発動の頻度を計算しないので自分で撃った時の数字。計算は同梱の PoB のままです。
