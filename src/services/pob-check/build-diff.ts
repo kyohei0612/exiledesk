@@ -260,35 +260,50 @@ export function pairSkills(mine: Array<{ key: string; s: SkillView }>, target: A
  */
 export type AdoptCandidate =
   | { kind: "item"; key: string; slot: string; from: ItemView | null; to: ItemView; unique: boolean; mods: ModDiff[] }
-  | { kind: "gems"; key: string; active: GemView; gi: number; gems: GemView[]; lines: GemLineDiff[] }
-  | { kind: "nodes"; key: string; name: string; ids: number[]; names: string[] };
+  /** lineage = 足すリネージュのサポートの名前 (火力の差の試算はサポートのうちこれだけ。gems = 自分の組 + それ) */
+  | { kind: "gems"; key: string; active: GemView; gi: number; gems: GemView[]; lines: GemLineDiff[]; lineage?: string[] }
+  /** ツリーを丸ごと相手の物に (add = 足すノード、remove = 外すノード)。取り入れは振り直しなので試算だけ */
+  | { kind: "tree"; key: string; add: number[]; remove: number[] }
+  /** ツリーのジュエル (自分に無い物)。slot = 相手の穴 (Jewel <番号>)、nodeId = その穴のノード、from = 自分のその穴に入っている物 */
+  | { kind: "jewel"; key: string; slot: string; nodeId: number; from: ItemView | null; to: ItemView };
 
 export function adoptCandidates(mine: Summary, target: Summary, treeNodes: readonly TreeNode[]): AdoptCandidate[] {
+  // 2026-10-04 オーナー「試算は火力の差の試算」: 装備 (火力に効かない物は試算の後に隠す) / リネージュのサポートだけ (他のサポートは
+  // ビルドを変える時に真似する) / ツリーは丸ごと 1 件 (振り直しで真似する) / ツリーのジュエル (心臓・メガロ等。装備の中の穴は装備の欄で出る)
   const out: AdoptCandidate[] = [];
   for (const d of diffBuilds(mine, target).slots) {
     if (d.kind === "unique") out.push({ kind: "item", key: `item:${d.slot}`, slot: d.slot, from: d.from, to: d.to, unique: true, mods: [] });
     else if (d.kind === "mods") out.push({ kind: "item", key: `item:${d.slot}`, slot: d.slot, from: d.from, to: d.to, unique: false, mods: d.mods });
   }
+  // リネージュ: 合わせた自分の組に無いリネージュのサポートを、自分の組に足したら
   for (const [n, g] of diffGems(mine, target).groups.entries()) {
-    // 装備が与えるスキルの組は、サポートの差だけ見せて取り入れの対象にしない (アクティブは装備で決まり、PoB の組の作りも違う)
-    if (g.fromItem) continue;
-    out.push({ kind: "gems", key: `gems:${n}:${g.active.name}`, active: g.active, gi: g.kind === "changes" ? g.gi : 0, gems: g.gems, lines: g.kind === "changes" ? g.lines : [] });
+    if (g.fromItem || g.kind !== "changes") continue;
+    const missing = new Set(g.lines.filter((l) => l.kind === "missing").map((l) => l.gem));
+    const add = g.gems.filter((x) => x.lineage && missing.has(x.name));
+    const own = mine.groups.find((x) => x.i === g.gi);
+    if (!add.length || !own) continue;
+    out.push({ kind: "gems", key: `lineage:${n}:${g.active.name}`, active: g.active, gi: g.gi, gems: [...own.gems, ...add], lines: g.lines.filter((l) => add.some((x) => x.name === l.gem)), lineage: add.map((x) => x.name) });
   }
-  // ツリー: 相手にあって自分に無いノード (装備が与えている物も除く) を g で束ねる
-  const have = new Set([...mine.tree.alloc, ...mine.tree.granted]);
+  // ツリー: 丸ごと相手の物に (クラスの始点・アセンダンシーは除く)
   const byId = new Map(treeNodes.map((x) => [x.id, x]));
-  const bundles = new Map<number, TreeNode[]>();
-  for (const id of target.tree.alloc) {
+  const plain = (id: number): boolean => {
     const node = byId.get(id);
-    // 自分のツリーに無いノード (違うアセンダンシー・始点) は取れないので飛ばす
-    if (have.has(id) || !node || node.g == null || node.t === "C" || node.t === "A") continue;
-    bundles.set(node.g, [...(bundles.get(node.g) ?? []), node]);
-  }
-  for (const [g, nodes] of bundles) {
-    const big = nodes.filter((x) => x.t === "N" || x.t === "K");
-    if (!big.length) continue;
-    const names = big.map((x) => x.n).filter(Boolean);
-    out.push({ kind: "nodes", key: `nodes:${g}`, name: names.join(" / ") || `まとまり ${g}`, ids: nodes.map((x) => x.id).sort((a, b) => a - b), names });
+    return !!node && node.t !== "C" && node.t !== "A";
+  };
+  const mineAlloc = new Set(mine.tree.alloc);
+  const targetAlloc = new Set(target.tree.alloc);
+  const addIds = target.tree.alloc.filter((id) => !mineAlloc.has(id) && !mine.tree.granted.includes(id) && plain(id));
+  const removeIds = mine.tree.alloc.filter((id) => !targetAlloc.has(id) && plain(id));
+  if (addIds.length || removeIds.length) out.push({ kind: "tree", key: "tree", add: addIds, remove: removeIds });
+  // ツリーのジュエル: 自分に無い物 (ユニークは名前、レア等は文面で比べる)
+  const keyOf = (it: ItemView): string => (it.rarity === "UNIQUE" ? `u:${it.title}` : `r:${it.raw}`);
+  const own = new Set(mine.items.filter((x) => x.jewel && x.item).map((x) => keyOf(x.item!)));
+  const mineBySlot = new Map(mine.items.filter((x) => x.jewel).map((x) => [x.slot, x.item ?? null]));
+  for (const x of target.items) {
+    if (!x.jewel || !x.item || own.has(keyOf(x.item))) continue;
+    const nodeId = Number(/^Jewel (\d+)$/.exec(x.slot)?.[1]);
+    if (!Number.isFinite(nodeId)) continue;
+    out.push({ kind: "jewel", key: `jewel:${x.slot}`, slot: x.slot, nodeId, from: mineBySlot.get(x.slot) ?? null, to: x.item });
   }
   return out;
 }

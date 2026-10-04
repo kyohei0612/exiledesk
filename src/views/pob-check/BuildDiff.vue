@@ -17,7 +17,6 @@
 import { computed, onMounted, ref, shallowRef, watch } from "vue";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
-import passivesJa from "../../i18n/passives-ja-client.json";
 import { gemJa, type GemView, type ItemView, type Summary } from "../../services/pob-check/api";
 import { diffBuilds, diffGems, pairSkills, type AdoptCandidate } from "../../services/pob-check/build-diff";
 import SkillCompareTable from "./SkillCompareTable.vue";
@@ -47,7 +46,7 @@ const props = defineProps<{
   busy: boolean;
   /** 取り入れの試算 (usePobCheck)。candidates = 対象の数 (0 なら「試算する」を出さない) */
   candidates: AdoptCandidate[];
-  estimates: { list: Estimate[]; dps: number } | null;
+  estimates: { list: Estimate[]; dps: number; quiet: number } | null;
   estimating: boolean;
   estimateProgress: string;
   /** 試算した後に自分を変えた = もう一度試算 */
@@ -63,19 +62,23 @@ const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void; (e: "estimate"
 const skillPairs = computed(() => pairSkills(props.mineSkills, props.targetSkills));
 
 // ---------------------------------------------------------------- 取り入れたら
-const PASSIVE_JA = passivesJa as Record<string, string>;
 /** 試算の行の「何を」 */
 const what = (c: AdoptCandidate): string => {
   if (c.kind === "item") return `${slotJa(c.slot)} ${c.unique ? "(ユニーク)" : "(レア)"}`;
-  if (c.kind === "gems") return `${gemJa(c.active.name)} の組${c.gi ? "" : " (組を足す)"}`;
-  return `${c.names.map((n) => PASSIVE_JA[n] ?? n).join(" / ")} (${c.ids.length} ノード)`;
+  if (c.kind === "jewel") return "ジュエル (ツリー)";
+  if (c.kind === "gems") return `${gemJa(c.active.name)} の組にリネージュ`;
+  return "ツリーを丸ごと";
 };
-/** 試算の行の「自分 → 相手」(短く) */
-const fromTo = (c: AdoptCandidate): { from: string; to: string } => {
-  if (c.kind === "item") return { from: nameJa(c.from), to: nameJa(c.to) };
-  if (c.kind === "gems") return c.gi ? { from: `差 ${c.lines.length} 件`, to: "相手の構成" } : { from: "無し", to: c.gems.map((g) => gemJa(g.name)).join("、") };
-  return { from: "取っていない", to: "ツリーに足す" };
-};
+/** 試算の結果のうちツリー (見出しの下に大きく 1 行) と、それ以外 (表) */
+const treeEst = computed(() => props.estimates?.list.find((e) => e.c.kind === "tree") ?? null);
+const rowEsts = computed(() => props.estimates?.list.filter((e) => e.c.kind !== "tree") ?? []);
+/** 試算する前の数 (見出しの説明) */
+const candCount = computed(() => ({
+  items: props.candidates.filter((c) => c.kind === "item").length,
+  lineage: props.candidates.filter((c) => c.kind === "gems").length,
+  jewels: props.candidates.filter((c) => c.kind === "jewel").length,
+  tree: props.candidates.some((c) => c.kind === "tree"),
+}));
 /** 取り入れの失敗 (行の下に出す) */
 const adoptErr = ref<Record<string, string>>({});
 const adopting = ref<string | null>(null);
@@ -261,6 +264,132 @@ const STATS = [
       </div>
     </section>
 
+    <!--
+      火力の差 試算 (2026-10-04 オーナー「試算をわかりやすく、ちっさすぎてこれメインなのに」「試算は火力の差試算って感じ」): この画面の主役。
+      ツリーは丸ごと真似した時の 1 行 (振り直しで真似するので 1 つずつは出さない)、表は装備 (火力が変わらない物は出さない) / リネージュ / ジュエル
+    -->
+    <section v-if="focus && candidates.length" class="card border-amber-400/40 p-4">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h2 class="text-lg font-bold text-amber-100">火力の差 試算</h2>
+        <p class="note">
+          相手の物を自分に入れたら {{ gemJa(focus.s.name) }} の DPS がどう変わるか (PoB の中で計算するだけで、ビルドは変えません)。
+          対象: 装備 {{ candCount.items }} ・ リネージュ {{ candCount.lineage }} ・ ジュエル {{ candCount.jewels }}{{ candCount.tree ? " ・ ツリー" : "" }}
+        </p>
+        <span class="ml-auto flex items-center gap-2">
+          <span v-if="estimatesStale && !estimating" class="rounded-full bg-amber-500/15 px-2 py-px text-[11px] text-amber-200">自分のビルドを変えたので数字が古い</span>
+          <button
+            type="button"
+            class="btn btn-accent px-5 text-[14px] font-bold"
+            :disabled="estimating || busy"
+            title="1 項目 1〜3 秒。PoB の中で計算するだけで、ビルドは変えません"
+            @click="emit('estimate')"
+          >{{ estimating ? `試算中… ${estimateProgress}` : estimates ? "もう一度試算" : "火力の差を試算する" }}</button>
+        </span>
+      </div>
+
+      <!-- ツリー: 丸ごと真似したら (大きく 1 行) -->
+      <div v-if="treeEst" class="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl bg-white/[0.04] px-4 py-3">
+        <span class="text-[14px] font-bold">ツリーを丸ごと真似すると</span>
+        <template v-if="treeEst.error"><span class="text-rose-300">試算できませんでした: {{ treeEst.error }}</span></template>
+        <template v-else>
+          <span class="text-2xl font-black tabular-nums text-amber-200">{{ fmtNum(treeEst.dps) }}</span>
+          <DiffBadge :now="treeEst.dps" :before="estimates!.dps" size="lg" />
+          <span v-if="delta(treeEst.stats.Life)" :class="treeEst.stats.Life > 0 ? 'text-emerald-300' : 'text-rose-300'">ライフ {{ delta(treeEst.stats.Life) }}</span>
+          <span v-if="delta(treeEst.stats.EnergyShield)" :class="treeEst.stats.EnergyShield > 0 ? 'text-emerald-300' : 'text-rose-300'">ES {{ delta(treeEst.stats.EnergyShield) }}</span>
+          <span class="note">足す {{ treeEst.n ?? 0 }} ・ 外す {{ treeEst.removed ?? 0 }} ノード (つながる道は見ていない。振り直しで真似する前提)</span>
+        </template>
+      </div>
+
+      <!-- 装備 / リネージュ / ジュエル -->
+      <table v-if="estimates && rowEsts.length" class="mt-3 w-full text-[13px]">
+        <thead>
+          <tr class="border-b border-white/10 text-left text-[11px] text-[var(--exile-color-text-tertiary)]">
+            <th class="py-1.5 pr-3 font-semibold">何を</th>
+            <th class="py-1.5 pr-3 font-semibold">自分 → 相手</th>
+            <th class="py-1.5 pr-3 text-right font-semibold">DPS</th>
+            <th class="py-1.5 pr-3 text-right font-semibold">ライフ / ES</th>
+            <th class="py-1.5"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="e in rowEsts" :key="e.c.key">
+            <tr class="border-t border-white/[0.06] align-top first:border-t-0">
+              <td class="py-2 pr-3 font-semibold text-[var(--exile-color-text-secondary)]">
+                <span v-if="e.c.kind === 'gems'" class="inline-flex items-center gap-1">
+                  <GemIcon :en="e.c.active.name" :size="18" /><GemName :en="e.c.active.name" :label="gemJa(e.c.active.name)" /> の組にリネージュ
+                </span>
+                <template v-else>{{ what(e.c) }}</template>
+              </td>
+              <td class="py-2 pr-3">
+                <span v-if="e.c.kind === 'item' || e.c.kind === 'jewel'" class="inline-flex flex-wrap items-center gap-1.5">
+                  <ItemArt v-if="e.c.from" :name="e.c.from.title" :base="e.c.from.base" :rarity="e.c.from.rarity" :size="28" />
+                  <BuildItemName v-if="e.c.from" :item="hoverOf(e.c.from, e.c.slot)" :label="nameJa(e.c.from)" class="text-[var(--exile-color-text-tertiary)]" />
+                  <span v-else class="text-rose-300/80">無し</span>
+                  <span class="text-[var(--exile-color-text-tertiary)]">→</span>
+                  <ItemArt :name="e.c.to.title" :base="e.c.to.base" :rarity="e.c.to.rarity" :size="28" />
+                  <BuildItemName :item="hoverOf(e.c.to, e.c.slot)" :label="nameJa(e.c.to)" class="text-amber-200" />
+                </span>
+                <span v-else-if="e.c.kind === 'gems'" class="inline-flex flex-wrap items-center gap-1">
+                  <template v-for="(g, gi) in e.c.lineage ?? []" :key="gi">
+                    <GemIcon :en="g" :size="18" hover :title="gemJa(g)" /><span class="text-amber-200">{{ gemJa(g) }}</span>
+                  </template>
+                  <span class="note">を足す</span>
+                </span>
+              </td>
+              <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
+                <template v-if="e.error"><span class="text-rose-300">—</span></template>
+                <template v-else>
+                  <span class="text-[17px] font-bold">{{ fmtNum(e.dps) }}</span>
+                  <DiffBadge class="ml-1.5" :now="e.dps" :before="estimates.dps" />
+                </template>
+              </td>
+              <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
+                <template v-if="!e.error">
+                  <span v-if="delta(e.stats.Life)" :class="e.stats.Life > 0 ? 'text-emerald-300' : 'text-rose-300'">ライフ {{ delta(e.stats.Life) }}</span>
+                  <span v-if="delta(e.stats.EnergyShield)" class="ml-2" :class="e.stats.EnergyShield > 0 ? 'text-emerald-300' : 'text-rose-300'">ES {{ delta(e.stats.EnergyShield) }}</span>
+                  <span v-if="!delta(e.stats.Life) && !delta(e.stats.EnergyShield)" class="text-[var(--exile-color-text-tertiary)]">—</span>
+                </template>
+              </td>
+              <td class="whitespace-nowrap py-1.5 text-right">
+                <button
+                  v-if="!e.error"
+                  type="button"
+                  class="btn btn-sm btn-outline"
+                  :disabled="busy || estimating || adopting === e.c.key || adopted.has(e.c.key)"
+                  :title="e.c.kind === 'gems' ? '自分の組にリネージュのサポートを足す' : e.c.kind === 'jewel' ? '相手のジュエルを同じ穴に入れる (穴を取っていなければ始点からの道も取る)' : '相手の物を自分の欄に入れる (元に戻すは装備のタブ)'"
+                  @click="onAdopt(e.c)"
+                >{{ adopted.has(e.c.key) ? "取り入れた" : adopting === e.c.key ? "入れています…" : "取り入れる" }}</button>
+              </td>
+            </tr>
+            <tr v-if="e.error || adoptErr[e.c.key] || tradeMsg[e.c.key] || e.lines?.length || e.c.kind === 'item' || e.displaced || e.unknown || e.focusLost || e.socketAdded || e.unusedSet">
+              <td></td>
+              <td colspan="4" class="note pb-2 pr-3 leading-snug">
+                <p v-if="e.error" class="text-rose-300">試算できませんでした: {{ e.error }}</p>
+                <p v-if="adoptErr[e.c.key]" class="text-rose-300">{{ adoptErr[e.c.key] }}</p>
+                <p v-if="e.lines?.length">
+                  ここが効く:
+                  <span v-for="(l, i) in e.lines" :key="i" class="ml-1.5 text-emerald-200/90">{{ lineJa(l.line) }} <span class="text-emerald-300">(+{{ (l.loss * 100).toFixed(1) }}%)</span></span>
+                </p>
+                <p v-if="e.displaced" class="text-amber-200/80">両手武器なので {{ e.displaced.map((s) => slotJa(s)).join("、") }} が外れます</p>
+                <p v-if="e.unusedSet" class="text-amber-200/80">使っていない武器セットの欄なので、今の DPS は変わりません (装備のタブで武器セットを切り替えると効く)</p>
+                <p v-if="e.focusLost" class="text-rose-300">この構成にすると {{ gemJa(focus?.s.name ?? "") }} がこの組から無くなります (DPS は出せない)</p>
+                <p v-if="e.unknown" class="text-amber-200/80">PoB が知らないジェムは計算に入っていません: {{ e.unknown.map(gemJa).join("、") }}</p>
+                <p v-if="e.socketAdded">自分はこの穴を取っていないので、穴も取ったとして計算しています (道は見ていない)</p>
+                <p v-if="e.c.kind === 'item'">
+                  <button type="button" class="btn-link" :title="e.c.unique ? '相手のユニーク (名前 + ベース) を取引所で探す (URL を開くだけ)' : '足りない MOD の行を条件にして取引所で探す (数値はそのまま下限。URL を開くだけ)'" @click="onTrade(e.c)">取引所で探す ↗</button>
+                  <span v-if="tradeMsg[e.c.key]" class="ml-2">{{ tradeMsg[e.c.key] }}</span>
+                </p>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <p v-if="estimates" class="note mt-2">
+        DPS は上のバーのスキルの、入れた後の見込み (自分の行と同じ物差し)。1 項目ずつの数字なので合計ではありません。
+        <template v-if="estimates.quiet">火力が変わらない装備・ジュエル {{ estimates.quiet }} 個は出していません。</template>
+      </p>
+    </section>
+
     <!-- スキルごとの比較 (2026-10-03 オーナー「各スキルごとの比較が現状できてない」): 名前で突き合わせた 1 つの表。行を押すと上のバーのスキルに -->
     <section>
       <h2 class="sec-title">
@@ -268,119 +397,6 @@ const STATS = [
         <span class="sec-note">自分と相手のスキルを名前で合わせて並べる (片方だけの物は —)。押すと上のバーのスキルをそれに (内訳のタブでそのスキルの式が見える)</span>
       </h2>
       <SkillCompareTable :rows="skillPairs" :focus-key="focus?.key ?? null" @focus="(k) => emit('focus', k)" />
-    </section>
-
-    <!-- 取り入れたら: 差の 1 項目ずつを自分に当てた時の変化 (PoB で試算、ビルドは変えない) -->
-    <section v-if="focus && candidates.length">
-      <h2 class="sec-title items-center">
-        取り入れたら
-        <span class="sec-note">差の {{ candidates.length }} 項目 (装備 / 組 / ツリーのまとまり) を 1 つずつ自分に当てた時の {{ gemJa(focus.s.name) }} の DPS</span>
-        <span class="ml-auto flex items-center gap-2">
-          <span v-if="estimatesStale && !estimating" class="rounded-full bg-amber-500/15 px-2 py-px text-[11px] font-normal text-amber-200">自分のビルドを変えたので数字が古い</span>
-          <button
-            type="button"
-            class="btn btn-sm btn-outline btn-accent"
-            :disabled="estimating || busy"
-            :title="'1 項目 1〜3 秒。PoB の中で計算するだけで、ビルドは変えません'"
-            @click="emit('estimate')"
-          >{{ estimating ? `試算中… ${estimateProgress}` : estimates ? "もう一度試算" : "試算する" }}</button>
-        </span>
-      </h2>
-      <div v-if="estimates" class="card overflow-hidden">
-        <table class="w-full text-[12px]">
-          <thead>
-            <tr class="border-b border-white/10 text-left text-[10px] text-[var(--exile-color-text-tertiary)]">
-              <th class="px-3 py-1.5 font-semibold">何を</th>
-              <th class="py-1.5 pr-3 font-semibold">自分 → 相手</th>
-              <th class="py-1.5 pr-3 text-right font-semibold">DPS</th>
-              <th class="py-1.5 pr-3 text-right font-semibold">ライフ / ES</th>
-              <th class="py-1.5 pr-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="e in estimates.list" :key="e.c.key">
-              <tr class="border-t border-white/[0.06] align-top first:border-t-0">
-                <!-- 何を: 組はアイコンと名前 (カーソルでジェムのカード) -->
-                <td class="px-3 py-2 font-semibold text-[var(--exile-color-text-secondary)]">
-                  <span v-if="e.c.kind === 'gems'" class="inline-flex items-center gap-1">
-                    <GemIcon :en="e.c.active.name" :size="18" /><GemName :en="e.c.active.name" :label="gemJa(e.c.active.name)" /> の組{{ e.c.gi ? "" : " (組を足す)" }}
-                  </span>
-                  <template v-else>{{ what(e.c) }}</template>
-                </td>
-                <!-- 自分 → 相手: 装備は絵を左右に並べて真ん中に → (名前にカーソルでアイテムのカード)、組は相手のジェムのアイコンも -->
-                <td class="py-2 pr-3">
-                  <span v-if="e.c.kind === 'item'" class="inline-flex flex-wrap items-center gap-1.5">
-                    <ItemArt v-if="e.c.from" :name="e.c.from.title" :base="e.c.from.base" :rarity="e.c.from.rarity" :size="28" />
-                    <BuildItemName v-if="e.c.from" :item="hoverOf(e.c.from, e.c.slot)" :label="nameJa(e.c.from)" class="text-[var(--exile-color-text-tertiary)]" />
-                    <span v-else class="text-rose-300/80">無し</span>
-                    <span class="text-[var(--exile-color-text-tertiary)]">→</span>
-                    <ItemArt :name="e.c.to.title" :base="e.c.to.base" :rarity="e.c.to.rarity" :size="28" />
-                    <BuildItemName :item="hoverOf(e.c.to, e.c.slot)" :label="nameJa(e.c.to)" class="text-amber-200" />
-                  </span>
-                  <template v-else>
-                    <span class="text-[var(--exile-color-text-tertiary)]">{{ fromTo(e.c).from }}</span>
-                    <span class="mx-1.5 text-[var(--exile-color-text-tertiary)]">→</span>
-                    <span class="text-amber-200">{{ fromTo(e.c).to }}</span>
-                    <!-- 相手の組のジェム (アイコンにカーソルでカード) -->
-                    <span v-if="e.c.kind === 'gems'" class="ml-1.5 inline-flex items-center gap-0.5 align-middle">
-                      <GemIcon v-for="(g, gi) in e.c.gems" :key="gi" :en="g.name" :size="16" hover :title="gemJa(g.name)" />
-                    </span>
-                  </template>
-                </td>
-                <!-- DPS の変化 (この表の主役なので大きく) -->
-                <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
-                  <template v-if="e.error"><span class="text-rose-300">—</span></template>
-                  <template v-else>
-                    <span class="text-[15px] font-bold">{{ fmtNum(e.dps) }}</span>
-                    <DiffBadge class="ml-1.5" :now="e.dps" :before="estimates.dps" />
-                  </template>
-                </td>
-                <td class="whitespace-nowrap py-2 pr-3 text-right tabular-nums">
-                  <template v-if="!e.error">
-                    <span v-if="delta(e.stats.Life)" :class="e.stats.Life > 0 ? 'text-emerald-300' : 'text-rose-300'">ライフ {{ delta(e.stats.Life) }}</span>
-                    <span v-if="delta(e.stats.EnergyShield)" class="ml-2" :class="e.stats.EnergyShield > 0 ? 'text-emerald-300' : 'text-rose-300'">ES {{ delta(e.stats.EnergyShield) }}</span>
-                    <span v-if="!delta(e.stats.Life) && !delta(e.stats.EnergyShield)" class="text-[var(--exile-color-text-tertiary)]">—</span>
-                  </template>
-                </td>
-                <td class="whitespace-nowrap py-1.5 pr-3 text-right">
-                  <button
-                    v-if="!e.error"
-                    type="button"
-                    class="btn btn-sm btn-outline"
-                    :disabled="busy || estimating || adopting === e.c.key || adopted.has(e.c.key)"
-                    :title="e.c.kind === 'nodes' ? '束のノードを 1 つずつ取る (始点からの道も取る。つながらないノードがあれば止めて理由を出す)' : e.c.kind === 'gems' ? (e.c.gi ? '自分の組のジェムを相手の構成に差し替える' : '相手の組を自分に足す (装着先の欄は無し)') : '相手の物を自分の欄に入れる (元に戻すは装備のタブ)'"
-                    @click="onAdopt(e.c)"
-                  >{{ adopted.has(e.c.key) ? "取り入れた" : adopting === e.c.key ? "入れています…" : "取り入れる" }}</button>
-                </td>
-              </tr>
-              <!-- 行の下: 失敗 / ここが効く / 取引所で探す / 注記 (薄く小さく) -->
-              <tr v-if="e.error || adoptErr[e.c.key] || tradeMsg[e.c.key] || e.lines?.length || e.c.kind === 'item' || e.displaced || e.unknown || e.focusLost || e.c.kind === 'nodes'">
-                <td></td>
-                <td colspan="4" class="note pb-2 pr-3 leading-snug">
-                  <p v-if="e.error" class="text-rose-300">試算できませんでした: {{ e.error }}</p>
-                  <p v-if="adoptErr[e.c.key]" class="text-rose-300">{{ adoptErr[e.c.key] }}</p>
-                  <p v-if="e.lines?.length">
-                    ここが効く:
-                    <span v-for="(l, i) in e.lines" :key="i" class="ml-1.5 text-emerald-200/90">{{ lineJa(l.line) }} <span class="text-emerald-300">(+{{ (l.loss * 100).toFixed(1) }}%)</span></span>
-                  </p>
-                  <p v-if="e.displaced" class="text-amber-200/80">両手武器なので {{ e.displaced.map((s) => slotJa(s)).join("、") }} が外れます</p>
-                  <p v-if="e.unusedSet" class="text-amber-200/80">使っていない武器セットの欄なので、今の DPS は変わりません (装備のタブで武器セットを切り替えると効く)</p>
-                  <p v-if="e.focusLost" class="text-rose-300">この構成にすると {{ gemJa(focus?.s.name ?? "") }} がこの組から無くなります (DPS は出せない)</p>
-                  <p v-if="e.unknown" class="text-amber-200/80">PoB が知らないジェムは計算に入っていません: {{ e.unknown.map(gemJa).join("、") }}</p>
-                  <p v-if="e.c.kind === 'nodes'">全部取れたとしての数字です (つながる道は見ていない。取り入れる時は始点からの道も一緒に取る)</p>
-                  <p v-if="e.c.kind === 'item'">
-                    <button type="button" class="btn-link" :title="e.c.unique ? '相手のユニーク (名前 + ベース) を取引所で探す (URL を開くだけ)' : '足りない MOD の行を条件にして取引所で探す (数値はそのまま下限。URL を開くだけ)'" @click="onTrade(e.c)">取引所で探す ↗</button>
-                    <span v-if="tradeMsg[e.c.key]" class="ml-2">{{ tradeMsg[e.c.key] }}</span>
-                  </p>
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-      <p v-if="estimates" class="note mt-2">
-        DPS は上のバーのスキルの、取り入れた後の見込み (自分の行と同じ物差し)。1 項目ずつの数字なので、2 つ以上を取り入れた時の合計ではありません。
-      </p>
     </section>
 
     <!-- ジェムの差 (相手の組ごと) -->

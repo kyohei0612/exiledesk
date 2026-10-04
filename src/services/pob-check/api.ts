@@ -27,6 +27,8 @@ export interface GemView {
   support: boolean;
   /** PoB が丸める上限のレベル */
   maxLevel: number;
+  /** リネージュのサポート (ゲームのタグ Lineage) */
+  lineage?: boolean;
 }
 export interface GameNumbers {
   /** 1 発 (クリティカル無し、敵の軽減なし) */
@@ -322,6 +324,14 @@ export const estimateGems = (i: number, k: number, gi: number, gems: GemSpec[]):
 export const setGroupGems = (gi: number, gems: GemSpec[]): Promise<{ i: number; unknown: string[] }> =>
   evalLua(`return PCK.setGroupGems(${luaNum(gi)}, ${luaGems(gems)})`);
 /** 相手が取っていて自分に無いノード ids を全部取れたとして足したら (つながる道は見ない) */
+export interface EstimateTreeRaw extends EstimateRaw { n: number; removed: number }
+/** ツリーを丸ごと相手の物にしたら (add = 足すノード、remove = 外すノード) */
+export const estimateTree = (i: number, k: number, add: number[], remove: number[]): Promise<EstimateTreeRaw> =>
+  evalLua(`return PCK.estimateTree(${luaNum(i)}, ${luaNum(k)}, {${add.map((id) => luaNum(Math.floor(id))).join(",")}}, {${remove.map((id) => luaNum(Math.floor(id))).join(",")}})`);
+export interface EstimateJewelRaw extends EstimateRaw { socketAdded: boolean }
+/** ツリーのジュエルの穴 slot (Jewel <番号>) に相手のジュエルを入れたら (穴を取っていなければ穴も足す) */
+export const estimateJewel = (i: number, k: number, slot: string, raw: string, nodeId: number): Promise<EstimateJewelRaw> =>
+  evalLua(`return PCK.estimateJewel(${luaNum(i)}, ${luaNum(k)}, ${luaStr(slot)}, ${luaStr(raw)}, ${luaNum(Math.floor(nodeId))})`);
 export const estimateNodes = (i: number, k: number, ids: number[]): Promise<EstimateNodesRaw> =>
   evalLua(`return PCK.estimateNodes(${luaNum(i)}, ${luaNum(k)}, {${ids.map((id) => luaNum(Math.floor(id))).join(",")}})`);
 

@@ -119,30 +119,40 @@ describe("build-diff (取り入れの試算の対象)", () => {
   const withTree = (s: Summary, alloc: number[], granted: number[] = []): Summary => ({ ...s, tree: { alloc, granted, jewels: [] } });
   const withItems = (s: Summary, items: Array<[string, ItemView]>): Summary => ({ ...s, items: items.map(([slot, it]) => ({ slot, jewel: false, changed: false, item: it })) });
 
-  it("装備: 差のある欄だけ (ユニークは装備ごと、レアは足りない行付き)。ジェム: 差のある組 (自分の組の番号、無ければ 0 = 足す)", () => {
+  it("装備: 差のある欄だけ (ユニークは装備ごと、レアは足りない行付き)。ジェム: リネージュのサポートだけ、自分の組に足す形 (他のサポート・無い組は出さない)", () => {
     const mage = item({ title: "Mageblood", base: "Utility Belt", rarity: "UNIQUE", raw: "Rarity: UNIQUE\nMageblood" });
+    const lin = { ...gem("Oisin's Oath"), lineage: true };
     const mine = withItems(sum([group(1, [gem("Spark"), gem("Pierce III")])]), [["Belt", item({ title: "Rift Post" })], ["Ring 1", item({ explicits: ["+38 to maximum Life"] })], ["Ring 2", item({ explicits: ["+50 to maximum Life"] })]]);
-    const target = withItems(sum([group(3, [gem("Spark"), gem("Pierce III"), gem("Embitter Support")]), group(4, [gem("Firestorm")])]), [["Belt", mage], ["Ring 1", item({ explicits: ["+101 to maximum Life"], raw: "ring" })], ["Ring 2", item({ explicits: ["+50 to maximum Life"] })]]);
+    const target = withItems(sum([group(3, [gem("Spark"), gem("Pierce III"), gem("Embitter Support"), lin]), group(4, [gem("Firestorm"), { ...gem("Uhtred's Augury"), lineage: true }])]), [["Belt", mage], ["Ring 1", item({ explicits: ["+101 to maximum Life"], raw: "ring" })], ["Ring 2", item({ explicits: ["+50 to maximum Life"] })]]);
     const c = adoptCandidates(mine, target, []);
-    expect(c.map((x) => x.key)).toEqual(["item:Belt", "item:Ring 1", "gems:0:Spark", "gems:1:Firestorm"]);
+    expect(c.map((x) => x.key)).toEqual(["item:Belt", "item:Ring 1", "lineage:0:Spark"]);
     expect(c[0]).toMatchObject({ kind: "item", slot: "Belt", unique: true, to: mage, mods: [] });
     expect(c[1]).toMatchObject({ kind: "item", slot: "Ring 1", unique: false, mods: [{ from: "+38 to maximum Life", to: "+101 to maximum Life" }] });
-    expect(c[2]).toMatchObject({ kind: "gems", gi: 1, lines: [{ gem: "Embitter Support", kind: "missing" }] });
-    expect((c[2] as { gems: GemView[] }).gems.map((g) => g.name)).toEqual(["Spark", "Pierce III", "Embitter Support"]);
-    expect(c[3]).toMatchObject({ kind: "gems", gi: 0, active: { name: "Firestorm" }, lines: [] });
+    // 自分の組 (Spark / Pierce III) + 足りないリネージュだけ。Embitter (普通のサポート) は足さない
+    expect(c[2]).toMatchObject({ kind: "gems", gi: 1, lineage: ["Oisin's Oath"], lines: [{ gem: "Oisin's Oath", kind: "missing" }] });
+    expect((c[2] as { gems: GemView[] }).gems.map((g) => g.name)).toEqual(["Spark", "Pierce III", "Oisin's Oath"]);
   });
 
-  it("ツリー: 相手にあって自分に無いノードをまとまり (g) で束ね、ノータブル / キーストーンを含む束だけ。装備が与える物・始点・ツリーに無い物は除く", () => {
-    const mine = withTree(sum([]), [1, 7], [8]);
-    const target = withTree(sum([]), [1, 2, 3, 4, 5, 6, 7, 8, 9, 999]);
+  it("ツリー: 丸ごと相手の物にする 1 件 (足す = 相手にあって自分に無い、外す = 自分にあって相手に無い)。装備が与える物・始点・アセンダンシー・ツリーに無い物は除く", () => {
+    const mine = withTree(sum([]), [1, 7, 4], [8]);
+    const target = withTree(sum([]), [1, 2, 3, 6, 7, 8, 9, 999]);
     const c = adoptCandidates(mine, target, tree);
-    expect(c).toEqual([
-      // 束 10: 1 は自分も取っている。ノータブルの名前が束の名前
-      { kind: "nodes", key: "nodes:10", name: "Heartstopper", ids: [2, 3], names: ["Heartstopper"] },
-      // 束 20 は小さいノードだけなので出さない。束 30 はキーストーン 1 つ
-      { kind: "nodes", key: "nodes:30", name: "Pain Attunement", ids: [6], names: ["Pain Attunement"] },
-      // 束 40: 7 は取っている、8 は装備が与えている → 何も残らないので出ない。束 50 は始点 (A) なので出ない
-    ]);
+    expect(c).toEqual([{ kind: "tree", key: "tree", add: [2, 3, 6], remove: [4] }]);
+    // 同じツリーなら出さない
+    expect(adoptCandidates(withTree(sum([]), [1, 2]), withTree(sum([]), [1, 2]), tree)).toEqual([]);
+  });
+
+  it("ジュエル: 自分に無いツリーのジュエル (ユニークは名前、レアは文面で比べる)。穴のノード番号と、自分のその穴の物", () => {
+    const heart = item({ title: "Heart of the Well", base: "Diamond", rarity: "UNIQUE", raw: "heart" });
+    const megalo = item({ title: "Megalomaniac", base: "Diamond", rarity: "UNIQUE", raw: "megalo" });
+    const rare = item({ title: "Blight Spark", base: "Ruby", rarity: "RARE", raw: "rare jewel" });
+    const jw = (s: Summary, list: Array<[string, ItemView]>): Summary => ({ ...s, items: list.map(([slot, it]) => ({ slot, jewel: true, changed: false, item: it })) });
+    const mine = jw(sum([]), [["Jewel 100", megalo], ["Jewel 200", rare]]);
+    const target = jw(sum([]), [["Jewel 100", heart], ["Jewel 300", megalo], ["Jewel 400", item({ ...rare, raw: "another rare" })]]);
+    const c = adoptCandidates(mine, target, []);
+    expect(c.map((x) => x.key)).toEqual(["jewel:Jewel 100", "jewel:Jewel 400"]);
+    expect(c[0]).toMatchObject({ kind: "jewel", slot: "Jewel 100", nodeId: 100, from: megalo, to: heart });
+    expect(c[1]).toMatchObject({ kind: "jewel", nodeId: 400, from: null });
   });
 });
 

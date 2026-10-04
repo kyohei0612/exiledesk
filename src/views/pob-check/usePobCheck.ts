@@ -8,7 +8,7 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateNodes, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateNodesRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
+import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateTree, estimateJewel, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateTreeRaw, type EstimateJewelRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
 import { buildChain, type Chain } from "../../services/pob-check/breakdown";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
@@ -77,13 +77,18 @@ export interface Estimate {
   newDps?: number;
   /** 組の差し替えで上のバーのスキルがその組から無くなる (dps は 0) */
   focusLost?: boolean;
+  /** ツリー: 外したノードの数 */
+  removed?: number;
+  /** ジュエル: 穴を取っていないので穴も足して計算した */
+  socketAdded?: boolean;
   /** 使っていない武器セットの欄 (今の DPS は変わらない) */
   unusedSet?: boolean;
   /** 試算できなかった理由 */
   error?: string;
 }
 /** 試算の結果。of = 試算した時の自分 (cur が変わったら古い = もう一度試算)、dps = その時の上のバーのスキルの DPS */
-const estimates = shallowRef<{ list: Estimate[]; of: Summary; focusKey: string; dps: number } | null>(null);
+/** quiet = 火力が変わらないので出さなかった装備・ジュエルの数 */
+const estimates = shallowRef<{ list: Estimate[]; of: Summary; focusKey: string; dps: number; quiet: number } | null>(null);
 const estimating = ref(false);
 const estimateProgress = ref("");
 /** 取り入れた項目の鍵 (表に「取り入れた」の印) */
@@ -339,8 +344,11 @@ export function usePobCheck() {
       for (const [idx, c] of list.entries()) {
         estimateProgress.value = `${idx + 1}/${list.length}`;
         try {
-          const r = await run<EstimateItemRaw | EstimateGemsRaw | EstimateNodesRaw>(() =>
-            c.kind === "item" ? estimateItem(f.g.i, f.s.k, c.slot, c.to.raw, c.unique) : c.kind === "gems" ? estimateGems(f.g.i, f.s.k, c.gi, c.gems) : estimateNodes(f.g.i, f.s.k, c.ids),
+          const r = await run<EstimateItemRaw | EstimateGemsRaw | EstimateTreeRaw | EstimateJewelRaw>(() =>
+            c.kind === "item" ? estimateItem(f.g.i, f.s.k, c.slot, c.to.raw, c.unique)
+              : c.kind === "gems" ? estimateGems(f.g.i, f.s.k, c.gi, c.gems)
+                : c.kind === "tree" ? estimateTree(f.g.i, f.s.k, c.add, c.remove)
+                  : estimateJewel(f.g.i, f.s.k, c.slot, c.to.raw, c.nodeId),
           );
           const ratio = r.base > 0 ? r.with / r.base : 1;
           const e: Estimate = { c, dps: f.s.game.dps * ratio, stats: statDelta(r) };
@@ -358,6 +366,8 @@ export function usePobCheck() {
           // 武器の欄が使っていない側の武器セット (Weapon 1 Swap を I で使っている時など) なら、今の DPS は変わらない
           if (c.kind === "item" && /^Weapon/.test(c.slot)) e.unusedSet = c.slot.endsWith(" Swap") !== (mine.weaponSet === 2);
           if ("n" in r) e.n = r.n;
+          if ("removed" in r) e.removed = r.removed;
+          if ("socketAdded" in r) e.socketAdded = r.socketAdded;
           if ("newDps" in r && r.newDps != null && c.kind === "gems" && c.gi === 0) {
             const g = target.value?.groups.find((x) => x.gems.some((y) => y === c.active));
             const ratio2 = g?.skills.find((s) => s.name === c.active.name)?.game.enemyRatio;
@@ -369,9 +379,13 @@ export function usePobCheck() {
           out.push({ c, dps: f.s.game.dps, stats: {} as EstimateStats, error: msg(err) });
         }
       }
-      // DPS の変化が大きい順 (失敗は最後)
-      out.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || b.dps - a.dps);
-      estimates.value = { list: out, of: mine, focusKey: f.key, dps: f.s.game.dps };
+      // 火力に関係ない装備・ジュエル (DPS の変化 0.5% 未満) は出さない (2026-10-04 オーナー「火力に関係ない装備は表示しなくていい、ややこしい」)。
+      // ツリーとリネージュは出す。並びは DPS の変化が大きい順 (失敗は最後)
+      const base = f.s.game.dps;
+      const quiet = (e: Estimate): boolean => !e.error && (e.c.kind === "item" || e.c.kind === "jewel") && base > 0 && Math.abs(e.dps / base - 1) < 0.005;
+      const shown = out.filter((e) => !quiet(e));
+      shown.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || b.dps - a.dps);
+      estimates.value = { list: shown, of: mine, focusKey: f.key, dps: base, quiet: out.length - shown.length };
       recordHistory("pob-check", "adopt-estimate", {
         skill: f.s.name,
         dps: f.s.game.dps,
@@ -399,14 +413,16 @@ export function usePobCheck() {
         });
         if (!r) return "読み込み中か計算中です";
         if (r.unknown.length) return `PoB が知らないジェムは入れていません: ${r.unknown.map(gemJa).join("、")}`;
-      } else {
-        for (const id of c.ids) {
-          // 前のノードを取った時に道として取れた物は飛ばす (もう 1 度押すと外れてしまう)
-          if (cur.value?.tree.alloc.includes(id)) continue;
-          const err = await clickNode(id, 1);
-          if (err) return `${c.name}: ${err} (途中まで取りました)`;
+      } else if (c.kind === "jewel") {
+        // 穴を取っていなければ先に取る (始点からの道も PoB が取る)。それからジュエルを入れる
+        if (!cur.value?.tree.alloc.includes(c.nodeId)) {
+          const err = await clickNode(c.nodeId, 1);
+          if (err) return `ジュエルの穴: ${err}`;
         }
-        recordHistory("pob-check", "adopt", { kind: "nodes", name: c.name, ids: c.ids });
+        await changeItem(c.slot, c.to.raw);
+        recordHistory("pob-check", "adopt", { kind: "jewel", slot: c.slot, title: c.to.title });
+      } else {
+        return "ツリーは振り直しで真似してください (試算だけ)";
       }
       if (c.kind === "item") recordHistory("pob-check", "adopt", { kind: "item", slot: c.slot, title: c.to.title, base: c.to.base });
       adopted.value = new Set([...adopted.value, c.key]);

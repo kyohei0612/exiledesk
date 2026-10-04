@@ -169,6 +169,8 @@ local function gemInfo(gem)
     corrupt = tonumber(gem.corruptLevel) or 0,
     enabled = gem.enabled ~= false,
     support = (ge and ge.support) and true or false,
+    -- リネージュのサポート (ゲームのタグ Lineage。火力の差の試算はサポートのうちこれだけ出す、2026-10-04)
+    lineage = (gem.gemData and gem.gemData.tags and gem.gemData.tags.lineage) and true or nil,
     -- 本家 validateGemLevel が丸める上限 (無ければ 40)
     maxLevel = (ge and ge.levels and #ge.levels > 0) and #ge.levels or (gem.gemData and gem.gemData.naturalMaxLevel) or 40,
   }
@@ -930,6 +932,40 @@ function PCK.estimateNodes(i, k, ids)
     if n == 0 then fail("足すノードがありません (もう取っている)") end
     local out = calcFunc({ addNodes = set }, false)
     return { base = estDpsOf(base), with = estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), n = n }
+  end)
+end
+
+--- ツリーを丸ごと相手の物にしたら (2026-10-04 オーナー「ノードは振り直しで真似するから 1 つずつ出さなくていい、まとめて真似したら合計でいくら変わるか」)。
+--- addIds = 相手にあって自分に無いノード、removeIds = 自分にあって相手に無いノード。つながる道は見ない (本家の Node Power と同じく計算の上書き)
+function PCK.estimateTree(i, k, addIds, removeIds)
+  return withMainSkill(i, k, function(calcFunc, base)
+    local add, rem, na, nr = {}, {}, 0, 0
+    for _, id in ipairs(addIds or {}) do
+      local node = build.spec.nodes[id]
+      if node and not node.alloc then add[node] = true; na = na + 1 end
+    end
+    for _, id in ipairs(removeIds or {}) do
+      local node = build.spec.nodes[id]
+      if node and node.alloc then rem[node] = true; nr = nr + 1 end
+    end
+    if na + nr == 0 then fail("ツリーは同じです") end
+    local out = calcFunc({ addNodes = add, removeNodes = rem }, false)
+    return { base = estDpsOf(base), with = estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), n = na, removed = nr }
+  end)
+end
+
+--- ツリーのジュエルの穴 slotName (Jewel <ノード番号>) に相手のジュエル raw を入れたら (2026-10-04 オーナー「無いジュエルを足したら火力が変わる、
+--- 心臓やらメガロやら」)。穴のノードを取っていなければ、そのノードも足して計算する (道は見ない)。範囲で効くジュエルも本家の計算どおり
+function PCK.estimateJewel(i, k, slotName, raw, nodeId)
+  return withMainSkill(i, k, function(calcFunc, base)
+    local item = new("Item", raw)
+    if not item or not item.base then fail("PoB が読めない文面です") end
+    local ov = { repSlotName = slotName, repItem = item }
+    local node = build.spec.nodes[nodeId]
+    if not node then fail("自分のツリーにこの穴がありません") end
+    if not node.alloc then ov.addNodes = { [node] = true } end
+    local out = calcFunc(ov, false)
+    return { base = estDpsOf(base), with = estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), socketAdded = not node.alloc }
   end)
 end
 
