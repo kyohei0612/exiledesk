@@ -34,23 +34,36 @@ const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.valu
 const query = ref("");
 /** 開いている段の表 (種類:系統) */
 const expanded = ref<string | null>(null);
-/** 種類ごとの節 (中身のある物だけ)。各節はプレフィックス / サフィックスの 2 列 */
-const sections = computed(() => {
+/**
+ * 種類ごとの節 (中身のある物だけ)。各節はプレフィックス / サフィックスの 2 列。
+ * ルーンの特殊 MOD はルーンごとに別の節で、見出しはルーンの名前 (2026-10-04 オーナー「ルーンの特殊 MOD で終わらせないで、手袋ならコルの狩りとか
+ * 名前で。コルとカトラは別々に分けて、名前も DB 仕様に」)
+ */
+interface Section { g: ModGroup; sid: string; label: string; rune: string | null; socketed: boolean; count: number; columns: Array<{ side: "prefix" | "suffix"; title: string; items: ListRow[]; top: number }> }
+const sections = computed((): Section[] => {
   const q = query.value.trim();
-  return GROUPS.filter((g) => counts.value[g]).map((g) => {
-    const list = rows.value.filter((r) => r.group === g && (!q || r.text.includes(q) || r.tags.some((t) => TAG_STYLE[t]?.ja.includes(q))));
+  const parts: Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> = GROUPS.filter((g) => counts.value[g]).flatMap((g): Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> =>
+    g === "rune"
+      ? [...new Set(rows.value.filter((r) => r.group === "rune").map((r) => r.runeJa ?? ""))].map((ja) => ({ g, sid: `rune:${ja}`, label: ja, rune: ja }))
+      : [{ g, sid: g as string, label: GROUP_JA[g], rune: null as string | null }],
+  );
+  return parts.map(({ g, sid, label, rune }) => {
+    const all = rows.value.filter((r) => r.group === g && (rune == null || r.runeJa === rune));
+    const list = all.filter((r) => !q || r.text.includes(q) || r.tags.some((t) => TAG_STYLE[t]?.ja.includes(q)));
     const columns = (["prefix", "suffix"] as const).map((side) => {
       const items = list.filter((r) => r.side === side).sort((a, b) => b.share - a.share || b.topLevel - a.topLevel);
       return { side, title: side === "prefix" ? "プレフィックス" : "サフィックス", items, top: Math.max(0.0001, ...items.map((r) => r.share)) };
     });
-    return { g, columns };
+    // 差しているか (ルーンの節の見出しに「はめている」/「差すと付く」)
+    const socketed = rune != null && all.some((r) => r.socketed);
+    return { g, sid, label, rune, socketed, count: all.length, columns };
   });
 });
 
 /** 目次: タブを押すとその節へスクロール。スクロールに合わせて今見ている節のタブを光らせる */
-const sectionEls = new Map<ModGroup, HTMLElement>();
-const active = ref<ModGroup>("normal");
-function jump(g: ModGroup): void {
+const sectionEls = new Map<string, HTMLElement>();
+const active = ref<string>("normal");
+function jump(g: string): void {
   active.value = g;
   sectionEls.get(g)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -66,7 +79,7 @@ function observe(): void {
 }
 watch([sections, open], () => void nextTick(observe), { immediate: true });
 onBeforeUnmount(() => io?.disconnect());
-function setSection(g: ModGroup, el: unknown): void {
+function setSection(g: string, el: unknown): void {
   if (el instanceof HTMLElement) sectionEls.set(g, el);
   else sectionEls.delete(g);
 }
@@ -97,18 +110,17 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
     <div v-if="open" class="border-t border-white/10 px-3 pb-3 pt-2">
       <!-- 目次 (押すとその種類までスクロール。スクロールしても上に残る) と検索 -->
       <div class="sticky top-0 z-10 -mx-3 mb-2 flex flex-wrap items-center gap-1.5 bg-[#15130f]/95 px-3 py-1.5 backdrop-blur">
-        <template v-for="g in GROUPS" :key="g">
-          <button v-if="counts[g]" type="button" class="rounded-full px-3 py-0.5" :class="active === g ? TONE[g].tab : 'border border-white/15 opacity-70 hover:opacity-100'" @click="jump(g)">
-            {{ GROUP_JA[g] }} <span class="opacity-60">{{ counts[g] }}</span>
-          </button>
-        </template>
+        <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5" :class="active === sec.sid ? TONE[sec.g].tab : 'border border-white/15 opacity-70 hover:opacity-100'" @click="jump(sec.sid)">
+          {{ sec.label }} <span class="opacity-60">{{ sec.count }}</span>
+        </button>
         <input v-model="query" type="search" placeholder="文面やタグで探す (例: 耐性、ライフ)" class="ml-auto w-60 rounded-lg border border-white/15 bg-black/30 px-2 py-0.5" />
       </div>
 
-      <section v-for="sec in sections" :key="sec.g" :ref="(el) => setSection(sec.g, el)" class="mb-4 scroll-mt-12">
+      <section v-for="sec in sections" :key="sec.sid" :ref="(el) => setSection(sec.sid, el)" class="mb-4 scroll-mt-12">
         <h3 class="mb-2 flex items-center gap-2 text-[13px] font-bold">
-          <span class="rounded-full px-2.5 py-0.5" :class="TONE[sec.g].tab">{{ GROUP_JA[sec.g] }}</span>
-          <span class="font-normal opacity-50">{{ counts[sec.g] }} 系統</span>
+          <span class="rounded-full px-2.5 py-0.5" :class="TONE[sec.g].tab">{{ sec.label }}</span>
+          <span class="font-normal opacity-50">{{ sec.count }} 系統</span>
+          <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差すと付く" }} · 重みは公開されていないので仮定 · 出やすさは差した時の割合</span>
         </h3>
         <div class="grid gap-3 md:grid-cols-2">
           <div v-for="col in sec.columns" :key="col.side" class="min-w-0">
@@ -122,9 +134,9 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
               <button
                 type="button"
                 class="relative w-full overflow-hidden rounded-lg border px-2 py-1 text-left transition"
-                :class="[r.on ? 'border-emerald-400/70' : 'border-white/5 hover:border-white/25', r.blocked ? 'opacity-40' : '', expanded === `${sec.g}:${r.id}` ? 'bg-white/[0.06]' : 'bg-black/20']"
+                :class="[r.on ? 'border-emerald-400/70' : 'border-white/5 hover:border-white/25', r.blocked ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : 'bg-black/20']"
                 :title="r.blocked ? '同じ系統の MOD が付いているので、今は付かない' : undefined"
-                @click="expanded = expanded === `${sec.g}:${r.id}` ? null : `${sec.g}:${r.id}`"
+                @click="expanded = expanded === `${sec.sid}:${r.id}` ? null : `${sec.sid}:${r.id}`"
               >
                 <span class="pointer-events-none absolute inset-y-0 left-0" :class="TONE[sec.g].bar" :style="{ width: `${(r.share / col.top) * 100}%` }" />
                 <!-- 2026-10-04 オーナー: タグは MOD 名の横に細く (行を太らせない)、右は poe2db と同じく 出やすさ % ・ ティア数 (緑) ・ 一番上の段のレベル (灰) を数字だけ -->
@@ -133,7 +145,6 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <span class="mr-0.5 text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
                     <span v-for="t in shownTags(r.tags)" :key="t" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
-                    <span v-if="r.runeJa" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="r.socketed ? 'bg-amber-500/30 text-amber-100' : 'bg-white/10 text-amber-200/80'" :title="r.socketed ? 'はめているルーンの MOD (重みは仮定)' : 'このルーンを差すと付くようになる (出やすさは差した時の割合、重みは仮定)'">{{ r.socketed ? r.runeJa : `${r.runeJa}を差すと` }}</span>
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
                     <span class="w-11 text-right text-[13px] font-bold text-amber-100">{{ pct(r.share) }}</span>
@@ -143,7 +154,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 </span>
               </button>
               <!-- 段の表 -->
-              <table v-if="expanded === `${sec.g}:${r.id}`" class="mt-1 w-full text-[11px]">
+              <table v-if="expanded === `${sec.sid}:${r.id}`" class="mt-1 w-full text-[11px]">
                 <tbody>
                   <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5">
                     <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
