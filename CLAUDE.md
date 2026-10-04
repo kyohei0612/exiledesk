@@ -20,6 +20,7 @@ python scripts/run_stage.py    data/briefs/<name>.json   # ExileDesk で手順�
 # (台本は Claude が導入から 1 章ずつ手で書く。approved/ の章をつないで data/scripts/<name>.json。write_script.py で全編を一気に生成しない)
 python scripts/build_chapter.py data/scripts/<name>.json --only N  # 章が OK になるたび: その章の 1080p 動画 (音入り) → 確認はこれで
 python scripts/build_video.py  data/scripts/<name>.json  # 全章そろったら: 作り済みの章をつないで音と合わせる → output/<name>.mp4
+python scripts/check_flicker.py data/scripts/<name>.json  # 動画を作ったら: ちらつき (絵がパッと変わってすぐ戻る所) を探す。0 か所が合格
 python scripts/preview_frames.py data/scripts/<name>.json  # 台本チェック用の静止画 → output/preview/
 python scripts/make_thumbnail.py --top ... --main ... --bg cache/stage/<hash>/step_N.png --out output/<name>_thumb.jpg
 python scripts/publish_video.py <name>            # 投稿情報 data/publish/<name>.json を作って表示 (dry-run)
