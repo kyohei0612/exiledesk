@@ -7,7 +7,7 @@
   見た目は SkillTable.vue と揃える (同じ字の大きさ・帯・色)
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import DiffBadge from "./DiffBadge.vue";
 import { fmtNum } from "./fmt";
 import { gemJa, type GameNumbers } from "../../services/pob-check/api";
@@ -18,6 +18,15 @@ import GemIcon from "../../components/decor/GemIcon.vue";
 /** pending = 試算がまだのスキル (「試算中」と出して押せない) */
 const props = defineProps<{ rows: SkillPair[]; focusKey: string | null; pending?: Set<string> }>();
 const isPending = (r: SkillPair): boolean => !!r.mine && !!props.pending?.has(r.mine.key);
+/**
+ * 自分だけ・相手だけのスキルは下にまとめて畳む。比べる相手が無いので押せない (試算もしない)
+ * (2026-10-04 オーナー「相手だけと自分だけのスキルはまとめてたたんでたら、その枠の試算もくそもないでしょ」)
+ */
+const both = (r: SkillPair): boolean => !!r.mine && !!r.target;
+const shared = computed(() => props.rows.filter(both));
+const only = computed(() => props.rows.filter((r) => !both(r)));
+const openOnly = ref(false);
+const visible = computed(() => [...shared.value, ...(openOnly.value ? only.value : [])]);
 const emit = defineEmits<{ (e: "focus", key: string): void }>();
 const maxDps = computed(() => Math.max(1, ...props.rows.flatMap((r) => [r.mine?.s.game.dps ?? 0, r.target?.game.dps ?? 0])));
 
@@ -42,12 +51,12 @@ const cmpCls = (a: number | undefined, b: number | undefined): string => (a == n
       <span class="text-right">1 秒あたりの回数</span>
     </div>
     <div
-      v-for="r in rows"
+      v-for="r in visible"
       :key="r.mine?.key ?? `t|${r.name}`"
       class="relative grid grid-cols-[minmax(0,1fr)_6rem_6rem_5rem_7rem_6.5rem_6rem] items-center gap-x-3 border-b border-white/5 px-4 py-1.5 last:border-b-0"
-      :class="[isPending(r) ? 'cursor-wait opacity-60' : r.mine ? 'cursor-pointer hover:bg-white/[0.03]' : 'opacity-80', r.mine && r.mine.key === focusKey ? 'bg-amber-400/[0.06]' : '']"
-      :title="isPending(r) ? '試算中 (済んだら押せます)' : r.mine ? '押すとこのスキルで 火力の差 / 内訳 を出す' : '相手にだけあるスキル'"
-      @click="r.mine && !isPending(r) && emit('focus', r.mine.key)"
+      :class="[!both(r) ? 'opacity-60' : isPending(r) ? 'opacity-60' : 'cursor-pointer hover:bg-white/[0.03]', both(r) && r.mine!.key === focusKey ? 'bg-amber-400/[0.06]' : '']"
+      :title="!both(r) ? (r.mine ? '自分にだけあるスキル (比べる相手が無い)' : '相手にだけあるスキル') : isPending(r) ? '試算中 (済んだら押せます)' : '押すとこのスキルで 火力の差 / 内訳 を出す'"
+      @click="both(r) && !isPending(r) && emit('focus', r.mine!.key)"
     >
       <!-- 自分 (暖色) と 相手 (空色) の帯を重ねる -->
       <div class="pointer-events-none absolute inset-y-0 left-0 bg-gradient-to-r from-amber-400/[0.10] to-transparent" :style="{ width: `${((r.mine?.s.game.dps ?? 0) / maxDps) * 100}%` }" />
@@ -71,5 +80,12 @@ const cmpCls = (a: number | undefined, b: number | undefined): string => (a == n
       <p class="relative text-right text-[11px] tabular-nums" :class="cmpCls(r.mine?.s.game.critChance, r.target?.game.critChance)">{{ pair(r.mine?.s.game, r.target?.game, critPct) }}</p>
       <p class="relative text-right text-[11px] tabular-nums" :class="cmpCls(r.mine?.s.game.speed, r.target?.game.speed)">{{ pair(r.mine?.s.game, r.target?.game, speed) }}</p>
     </div>
+    <!-- 片方だけのスキル (畳む) -->
+    <button
+      v-if="only.length"
+      type="button"
+      class="w-full border-t border-white/10 px-4 py-1.5 text-left text-[11px] text-[var(--exile-color-text-tertiary)] hover:bg-white/[0.03]"
+      @click="openOnly = !openOnly"
+    >{{ openOnly ? "▴ 片方だけのスキルをたたむ" : `▸ 片方だけのスキル ${only.length} 個 (自分だけ / 相手だけ。比べられないので試算しない)` }}</button>
   </div>
 </template>

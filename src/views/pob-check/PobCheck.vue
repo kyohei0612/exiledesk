@@ -82,19 +82,19 @@ async function onCompare(): Promise<void> {
     if (shared) focusKey.value = shared.key;
   }
   await nextTick();
-  // 両方にあるスキルを自分の DPS の高い順に。上から 3 つ試算し終えたら開き、残りは裏で回す
-  // (2026-10-04 オーナー「メイン DPS 順に並べて 3 つ試算終わった時点で UI 出す、他は裏で試算回しておく」)。選び直した時は覚えからすぐ出す
+  // 両方にあるスキルを自分の DPS の高い順に。一番上が試算できたら開き、残りは裏で回す (まだの物は表で「試算中」で押せない)
+  // (2026-10-04 オーナー「メイン DPS 順に並べて、他は裏で試算」「このルールなら 1 つ試算出来次第 UI 表示でおk」)。選び直した時は覚えからすぐ出す
   const keys = sharedKeys.value;
-  const head = keys.slice(0, 3);
+  const head = keys.slice(0, 1);
   if (keys[0]) focusKey.value = keys[0];
   cancelled.value = false;
   try {
     if (candidates.value.length) {
-      for (const [i, k] of head.entries()) {
+      for (const k of head) {
         if (cancelled.value) break;
         const row = skills.value.find((x) => x.key === k);
         if (!row) continue;
-        compareStep.value = `${i + 1}/${head.length} ${gemJa(row.s.name)}`;
+        compareStep.value = gemJa(row.s.name);
         await runEstimates(row);
       }
     }
@@ -106,9 +106,9 @@ async function onCompare(): Promise<void> {
   showCached(focus.value?.key);
   tab.value = "diff";
   compared.value = true;
-  if (!cancelled.value) void estimateQueue(keys.slice(3));
+  if (!cancelled.value) void estimateQueue(keys.slice(1));
 }
-/** 比較するの進み具合 (スキル n/3) */
+/** 比較するの進み具合 (一番上のスキル) */
 const compareStep = ref("");
 const cancelled = ref(false);
 function onCancel(): void {
@@ -214,7 +214,7 @@ const resists = computed(() =>
       <div v-if="cur && target && !loading" class="mt-5 flex flex-col items-center gap-2">
         <button type="button" class="btn btn-primary h-10 px-12 text-base" :disabled="busy || estimating || !!compareStep" @click="onCompare">{{ estimating || compareStep ? "試算中…" : "比較する" }}</button>
         <p v-if="compareStep" class="flex items-center gap-2 text-[12px] text-amber-200/90">
-          <span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />DPS の高いスキルから試算しています: スキル {{ compareStep }} ・ {{ estimateProgress }} (3 つ済んだら開いて、残りは裏で)
+          <span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />DPS が一番高いスキルから試算しています: {{ compareStep }} ・ {{ estimateProgress }} (済んだら開いて、残りは裏で)
           <button type="button" class="btn btn-sm btn-outline" :disabled="cancelled" @click="onCancel">{{ cancelling ? "止めています…" : "中止" }}</button>
         </p>
       </div>
