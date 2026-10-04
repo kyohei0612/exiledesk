@@ -99,6 +99,8 @@ export interface CoreStats {
   incProjSpeed?: number;
   /** 計算に入る数値 (本家の ModStore の名前ごとに 増加 INC / 上昇 MORE (%) / 基本 BASE)。0 の物は無し */
   calc?: Array<{ name: string; kind: "INC" | "MORE" | "BASE"; value: number }>;
+  /** 条件付きで、今の設定では効いていない火力の MOD (var = 条件、actor = enemy なら敵の状態、neg = 「でない時」) */
+  cond?: Array<{ name: string; kind: string; value: number; var: string; actor?: string; neg?: boolean; source: string }>;
 }
 export interface GroupView {
   i: number;
@@ -169,7 +171,7 @@ export interface Summary {
   stats: Record<string, number | boolean | null>;
   /** powerCharges = 実効の数 (PoB が使っている数)、powerChargesInput = 設定に書いた数 */
   /** input = 設定の写し (自分の側だけ。敵の設定は入れない) */
-  config: { powerCharges: number; powerChargesInput: number; input?: Record<string, boolean | number | string> };
+  config: { powerCharges: number; powerChargesInput: number; input?: Record<string, boolean | number | string>; /** 敵の想定 (入っている敵の状態の設定) */ enemy?: Record<string, boolean | number> };
   /** PoB の主スキルの組 (ビルドの作者の選び) */
   mainSocketGroup: number;
   groups: GroupView[];

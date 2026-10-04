@@ -8,12 +8,16 @@
   どのスキルにもある火力の数字だけを同じ名前で出す。上のバーのスキルについて 自分 → 相手 (相手は比較の時だけ)
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import type { CoreStats } from "../../services/pob-check/api";
 import { fmtNum } from "./fmt";
 import DiffBadge from "./DiffBadge.vue";
 
-const props = defineProps<{ mine: CoreStats | null | undefined; target?: CoreStats | null; skillJa: string }>();
+const props = defineProps<{
+  mine: CoreStats | null | undefined; target?: CoreStats | null; skillJa: string;
+  /** 敵の想定 (入っている敵の状態の設定) */
+  enemyMine?: Record<string, boolean | number>; enemyTarget?: Record<string, boolean | number> | null;
+}>();
 
 const TYPE_JA: Record<string, string> = { Physical: "物理", Fire: "火", Cold: "冷気", Lightning: "雷", Chaos: "混沌" };
 const pct = (v: number) => `${Math.round(v)}%`;
@@ -55,6 +59,84 @@ function calcRows(a: CoreStats, b: CoreStats | null): Row[] {
     return { label: calcLabel(name, kind), a: show(va), b: vb != null ? show(vb) : null, na: va, nb: vb };
   });
 }
+
+/** 条件の名前 (本家の変数名) → 日本語 (ゲーム内の書き方)。無い物は変数名のまま */
+const VAR_JA: Record<string, string> = {
+  Blinded: "盲目", LowLife: "低ライフ", FullLife: "ライフが満タン", Shocked: "感電", Chilled: "冷却", Frozen: "凍結", Ignited: "発火",
+  Poisoned: "毒", Bleeding: "出血", Cursed: "呪い", Stunned: "スタン", Electrocuted: "電撃", Dazed: "幻惑", Pinned: "釘付け",
+  Burning: "燃焼", Moving: "移動中", UsingFlask: "フラスコ効果中", RareOrUnique: "レアかユニーク", Unique: "ユニーク", Rare: "レア",
+  Hindered: "妨害", Maimed: "不具", Intimidated: "威圧", Unnerved: "動揺", Exposed: "曝露", BrokenArmour: "アーマー破壊", HeavyStunned: "ヘビースタン",
+  Immobilised: "移動不能", CritRecently: "最近クリティカルヒットした", KilledRecently: "最近キルした", HitRecently: "最近ヒットした",
+  BeenHitRecently: "最近ヒットを受けた", OnFullEnergyShield: "ES が満タン", LowMana: "低マナ", HaveTotem: "トーテムがいる",
+  WeaponSet1: "武器セット I", WeaponSet2: "武器セット II", TriggeredSkillRecently: "最近トリガーしたスキルがある",
+  InfusionConsumedRecently: "最近インフュージョンを消費した", ShockedEnemyRecently: "最近敵を感電させた", ChilledEnemyRecently: "最近敵を冷却した",
+  IgnitedEnemyRecently: "最近敵を発火させた", FrozenEnemyRecently: "最近敵を凍結させた", GainedPowerChargeRecently: "最近パワーチャージを得た",
+  FullEnergyShield: "ES が満タン", Debilitated: "衰弱", UsedSkillRecently: "最近スキルを使った", CastSpellRecently: "最近呪文を詠唱した",
+  BrandedEnemy: "刻印された敵", targetBrandedEnemy: "刻印された敵",
+};
+const varJa = (v: string) => v.split("/").map((x) => VAR_JA[x] ?? x).join(" か ");
+/** 条件の書き方 (「敵が盲目の時」「敵が感電でない時」「自分が最近クリティカルヒットした時」) */
+function condJa(c: { var: string; actor?: string; neg?: boolean }): string {
+  const who = c.actor === "enemy" ? "敵が" : c.actor ? `${c.actor}が` : "";
+  const v = varJa(c.var);
+  // 「最近スキルを使った」「トーテムがいる」のような動きの言葉は「時」、名前は「の時」
+  const verb = /[たるい]$/.test(v);
+  return `${who}${v}${c.neg ? (verb ? "ではない時" : "でない時") : verb ? "時" : "の時"}`;
+}
+/** 出所 (Tree:… = ノード、Item:番号:名前 = 装備、Skill:… = ジェム) */
+function srcJa(s: string): string {
+  if (s.startsWith("Tree")) return "ノード";
+  const item = /^Item:\d+:(.+)$/.exec(s);
+  if (item) return item[1]!;
+  if (s.startsWith("Skill")) return "ジェム";
+  return s.split(":")[0] ?? s;
+}
+/** 敵の想定の設定の名前 (conditionEnemyBlinded → 盲目) */
+function enemyJa(key: string): string {
+  const m = /^(?:condition)?Enemy(\w+)$/i.exec(key) ?? /^conditionEnemy(\w+)$/.exec(key);
+  return m ? varJa(m[1]!) : VAR_JA[key] ?? key;
+}
+const enemyLine = computed(() => {
+  const list = (e?: Record<string, boolean | number> | null) => Object.keys(e ?? {}).map(enemyJa).sort();
+  return { mine: list(props.enemyMine), target: props.target ? list(props.enemyTarget) : null };
+});
+/** 条件付きで今は効いていない火力の MOD (自分 / 相手) */
+const condLists = computed(() => {
+  const fmt = (c: NonNullable<CoreStats["cond"]>[number]) => ({
+    text: `${condJa(c)}: ${calcLabel(c.name, c.kind)} ${c.kind === "MORE" || c.kind === "INC" ? "" : "+"}${Math.round(c.value)}%`,
+    src: srcJa(c.source),
+  });
+  const group = (list: NonNullable<CoreStats["cond"]>) => {
+    const m = new Map<string, NonNullable<CoreStats["cond"]>[number] & { n: number; srcs: Set<string> }>();
+    for (const c of list) {
+      if (c.source === "Base" || c.source.startsWith("Base")) continue;
+      const k = `${c.var}|${c.actor ?? ""}|${c.neg ? 1 : 0}|${c.name}|${c.kind}`;
+      const cur = m.get(k);
+      if (cur) { cur.value += c.value; cur.n++; cur.srcs.add(srcJa(c.source)); }
+      else m.set(k, { ...c, n: 1, srcs: new Set([srcJa(c.source)]) });
+    }
+    return [...m.values()].map((c) => ({ ...fmt(c), src: [...c.srcs].join("・") + (c.n > 1 ? ` ${c.n} 個` : "") }));
+  };
+  return { mine: group(props.mine?.cond ?? []), target: props.target ? group(props.target.cond ?? []) : null };
+});
+
+/**
+ * 開くかどうか (2026-10-04 オーナー「最初の UI がブスすぎる。スキル選択して火力の詳細が知りたい時になったら展開する形で、詳細とかでボタン、たためるように」)。
+ * 初めは閉じて 1 行だけ。スキルを選び直したら開く
+ */
+const open = ref(false);
+watch(() => props.skillJa, (n, o) => { if (o != null && n !== o) open.value = true; });
+/** 閉じている時の 1 行 (平均ヒット・クリティカルヒット率・クリティカルダメージボーナス) */
+const brief = computed(() => {
+  const a = props.mine, b = props.target ?? null;
+  if (!a) return [];
+  const two = (f: (c: CoreStats) => string) => (b ? `${f(a)} → ${f(b)}` : f(a));
+  return [
+    { label: "ヒットごとの平均ダメージ", v: two((c) => fmtNum(c.avg)) },
+    { label: "クリティカルヒット率", v: two((c) => `${c.critChance.toFixed(2)}%`) },
+    { label: "クリティカルダメージボーナス", v: two((c) => plusPct((c.critMulti - 1) * 100)) },
+  ];
+});
 
 const sections = computed<Section[]>(() => {
   const a = props.mine, b = props.target ?? null;
@@ -102,10 +184,17 @@ const sections = computed<Section[]>(() => {
 </script>
 
 <template>
-  <section v-if="sections.length" class="card px-4 py-3">
-    <p class="mb-2 text-[13px] font-bold">
-      火力の中身 <span class="note font-normal">— {{ skillJa }}{{ target ? " (自分 → 相手)" : "" }}。名前と並びはゲームのスキルの詳細と同じ</span>
-    </p>
+  <section v-if="sections.length" class="card px-4 py-2.5">
+    <!-- 見出しの 1 行 (閉じている時はこれだけ) -->
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+      <p class="text-[13px] font-bold">火力の中身 <span class="note font-normal">— {{ skillJa }}{{ target ? " (自分 → 相手)" : "" }}</span></p>
+      <template v-if="!open">
+        <span v-for="x in brief" :key="x.label" class="text-[12px]"><span class="text-[var(--exile-color-text-tertiary)]">{{ x.label }}</span> <b class="tabular-nums">{{ x.v }}</b></span>
+      </template>
+      <button type="button" class="ml-auto rounded-md border border-white/15 px-2.5 py-0.5 text-[12px] hover:bg-white/10" @click="open = !open">{{ open ? "たたむ ▴" : "詳細 ▾" }}</button>
+    </div>
+    <template v-if="open">
+    <p class="note mb-2 mt-1">名前と並びはゲームのスキルの詳細と同じ (スキル専用の項目は PoB に無いので出さない)</p>
     <div class="grid gap-x-8 gap-y-3 @4xl:grid-cols-2 @7xl:grid-cols-3">
       <div v-for="s in sections" :key="s.title">
         <p class="mb-1 border-b border-white/10 pb-0.5 text-[12px] font-bold text-[var(--exile-color-text-secondary)]">{{ s.title }}</p>
@@ -122,5 +211,26 @@ const sections = computed<Section[]>(() => {
         </div>
       </div>
     </div>
+    <!-- 敵の想定と、条件付きで今は効いていない火力 (2026-10-04 オーナー「盲目の時とか、乗るか分からんけど相手の想定が分からん」) -->
+    <div class="mt-3 border-t border-white/10 pt-2">
+      <p class="text-[12px] font-bold text-[var(--exile-color-text-secondary)]">敵の想定 (PoB の設定) と、条件付きで今は効いていない火力</p>
+      <p class="mt-1 text-[12px]">
+        <span class="text-amber-200">自分:</span> {{ enemyLine.mine.length ? enemyLine.mine.join("・") : "なし" }}
+        <template v-if="enemyLine.target"><span class="ml-3 text-sky-200">相手:</span> {{ enemyLine.target.length ? enemyLine.target.join("・") : "なし" }}</template>
+      </p>
+      <div class="mt-1.5 grid gap-x-8 gap-y-1" :class="condLists.target ? '@4xl:grid-cols-2' : ''">
+        <div>
+          <p v-if="condLists.target" class="text-[11px] text-amber-200">自分</p>
+          <p v-if="!condLists.mine.length" class="note">なし</p>
+          <p v-for="(c, i) in condLists.mine" :key="i" class="text-[12px]">{{ c.text }} <span class="note">({{ c.src }})</span></p>
+        </div>
+        <div v-if="condLists.target">
+          <p class="text-[11px] text-sky-200">相手</p>
+          <p v-if="!condLists.target.length" class="note">なし</p>
+          <p v-for="(c, i) in condLists.target" :key="i" class="text-[12px]">{{ c.text }} <span class="note">({{ c.src }})</span></p>
+        </div>
+      </div>
+    </div>
+    </template>
   </section>
 </template>

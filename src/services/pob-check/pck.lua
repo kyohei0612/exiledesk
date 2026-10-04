@@ -161,6 +161,44 @@ end
 --- 火力の中身 (2026-10-04 オーナー「基礎 DPS に関わってる主なステータス、クリ率やらダメージやらクリダメやら、自分と相手で分かりやすく」)。
 --- 一番大きいダメージの種類で、そのスキルに効く 増加 (INC) の合計と 増し (MORE) の掛け算、クリティカルの増加、速度の増加を本家の ModStore から引く
 local CORE_TYPES = { Physical = true, Fire = true, Cold = true, Lightning = true, Chaos = true }
+--- 条件付きで、今の設定 (敵の状態など) では効いていない火力の MOD (2026-10-04 オーナー「ノードとかサポジェムに書いてあったら特殊な感じで火力伸びる奴、
+--- 盲目の時とか。乗るか分からんけど相手の想定が分からんからな」)。本家の Tabulate と同じ歩き方 (ModList は self[i]、ModDB は mods[名前]、親へ) で、
+--- 条件の印 (Condition / ActorCondition) が付いていて、今の計算では 0 になる物を集める
+local COND_NAMES = { "Damage", "ElementalDamage", "PhysicalDamage", "FireDamage", "ColdDamage", "LightningDamage", "ChaosDamage", "CritChance", "CritMultiplier", "Speed" }
+local COND_SET = {}
+for _, n in ipairs(COND_NAMES) do COND_SET[n] = true end
+local function inactiveConditional(ms)
+  local out, seen = {}, {}
+  local store, cfg = ms.skillModList, ms.skillCfg
+  local flags, kw = (cfg and cfg.flags) or 0, (cfg and cfg.keywordFlags) or 0
+  local function consider(mod)
+    if not mod[1] or #out >= 40 then return end
+    if bit.band(flags, mod.flags) ~= mod.flags or not MatchKeywordFlags(kw, mod.keywordFlags) then return end
+    local cond
+    for _, tag in ipairs(mod) do if tag.type == "Condition" or tag.type == "ActorCondition" then cond = tag break end end
+    if not cond then return end
+    local ok, v = pcall(store.EvalMod, store, mod, cfg)
+    if not ok or (v and v ~= 0) then return end
+    local key = table.concat({ mod.name, mod.type, tostring(mod.value), tostring(mod.source) }, "|")
+    if seen[key] then return end
+    seen[key] = true
+    out[#out + 1] = {
+      name = mod.name, kind = mod.type, value = type(mod.value) == "number" and mod.value or 0,
+      var = cond.var or (cond.varList and table.concat(cond.varList, "/")) or "?", actor = cond.actor, neg = cond.neg and true or nil,
+      source = tostring(mod.source or ""),
+    }
+  end
+  local node = store
+  while node do
+    if node.mods then
+      for _, n in ipairs(COND_NAMES) do for _, mod in ipairs(node.mods[n] or {}) do consider(mod) end end
+    else
+      for i = 1, #node do local mod = node[i]; if COND_SET[mod.name] then consider(mod) end end
+    end
+    node = node.parent
+  end
+  return out
+end
 local function coreStatsOf(o, ms, game)
   if not ms or not ms.skillModList or (game.hit or 0) <= 0 then return nil end
   local main, best = nil, 0
@@ -198,6 +236,7 @@ local function coreStatsOf(o, ms, game)
     end)(),
     projectiles = o.ProjectileCount or 0,
     incProjSpeed = m:Sum("INC", cfg, "ProjectileSpeed"),
+    cond = inactiveConditional(ms),
     -- 計算に入る数値を全部 (2026-10-04 オーナー「計算に関わるやつ全部出して比較してあげるか。処刑とかアッツィリ加わるとどこ変化するかわからんけど」)。
     -- 本家の ModStore から名前ごとに 増加 (INC) / 上昇 (MORE、掛け算) / 基本 (BASE) を引く。0 の物は出さない
     calc = (function()
@@ -300,6 +339,14 @@ function PCK.summary()
       -- 設定の写し (自分の側だけ。敵の設定は入れない = DPS はゲーム内表記で見るので仮想敵は関係ない、2026-10-04 オーナー)。
       -- 全部まとめて真似の「+ 設定」に使う
       input = playerConfig(build.configTab.input),
+      -- 敵の想定 (敵の状態の設定で、入っている物)。比べる時にどちらが何を想定しているかを出す
+      enemy = (function()
+        local out = {}
+        for key, v in pairs(build.configTab.input or {}) do
+          if type(key) == "string" and key:lower():find("enemy", 1, true) and (v == true or (type(v) == "number" and v ~= 0)) then out[key] = v end
+        end
+        return out
+      end)(),
     },
     mainSocketGroup = build.mainSocketGroup,
     groups = {},

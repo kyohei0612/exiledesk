@@ -6,7 +6,7 @@
   オーナー「pob新しいやつはUIシンプルかつわかりやすく、色付きで今風で表示してくれ」
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { gemJa, openPob } from "../../services/pob-check/api";
 import TabBar from "../../components/ui/TabBar.vue";
 import DiffBadge from "./DiffBadge.vue";
@@ -122,10 +122,21 @@ function onModAction(m: ModRow, action: ModAction): void {
   else if (action === "gem-off" && s.gi && s.gj) void changeGem(s.gi, s.gj, "enabled", false);
   else if (action === "charges0") void changeCharges(0);
 }
-/** 相手を読み込んだら「火力の差」を開く */
+/**
+ * 比較する: 相手を読み込んで、そのまま火力の差を試算する (2026-10-04 オーナー「火力試算は URL 打って比較ボタンで即比較でいいだろ」)。
+ * 上のバーのスキルが相手に無ければ、両方にあるスキルのうち自分の DPS が一番高い物に替えてから
+ */
 async function onLoadTarget(): Promise<void> {
   await loadTarget();
-  if (target.value) tab.value = "diff";
+  if (!target.value) return;
+  tab.value = "diff";
+  const names = new Set(targetSkills.value.map((x) => x.s.name));
+  if (focus.value && !names.has(focus.value.s.name)) {
+    const shared = skills.value.filter((x) => names.has(x.s.name)).sort((a, b) => b.s.game.dps - a.s.game.dps)[0];
+    if (shared) focusKey.value = shared.key;
+  }
+  await nextTick();
+  if (candidates.value.length) void runEstimates();
 }
 /** 比較の上の帯: 上のバーのスキルの相手の DPS (同じ名前のスキル) */
 const targetFocus = computed(() => {
@@ -229,7 +240,7 @@ const resists = computed(() =>
       <form v-if="mode === 'compare'" class="mt-3 flex items-center gap-2" @submit.prevent="onLoadTarget()">
         <span class="w-[5.5rem] shrink-0 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]">相手</span>
         <input v-model="targetInput" type="text" placeholder="相手の PoB コード / poe.ninja の URL" class="input flex-1" />
-        <button type="submit" class="btn btn-outline btn-accent w-28" :disabled="loading || busy || !targetInput.trim() || !cur" :title="cur ? '' : '先に自分を読み込んでください'">{{ loading && cur ? "読み込み中…" : "読み込む" }}</button>
+        <button type="submit" class="btn btn-accent w-28" :disabled="loading || busy || !targetInput.trim() || !cur" :title="cur ? '読み込んで、そのまま火力の差を試算します' : '先に自分を読み込んでください'">{{ loading && cur ? "読み込み中…" : "比較する" }}</button>
       </form>
       <p v-if="mode === 'compare' && !cur" class="note mt-1 pl-[6rem]">先に自分を読み込むと、相手を読み込めます</p>
       <div v-if="loading" class="mt-4 flex items-center gap-2 text-sm text-amber-200/80">
@@ -359,6 +370,8 @@ const resists = computed(() =>
         :mine="focus.s.core"
         :target="mode === 'compare' ? targetFocus?.s.core ?? null : null"
         :skill-ja="gemJa(focus.s.name)"
+        :enemy-mine="cur.config.enemy"
+        :enemy-target="mode === 'compare' ? target?.config.enemy ?? null : null"
       />
       <!-- スキル (自分の火力を見る時の主役)。比較の時は「火力の差」のスキルごとの比べに出すので、ここには出さない -->
       <div v-if="mode !== 'compare'" class="mb-5">
