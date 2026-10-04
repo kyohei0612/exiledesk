@@ -140,8 +140,22 @@ export function bestFor(entry: BestBuy | null | undefined, need = 1, withExalted
   if (!entry) return null;
   const options = entry.options.filter((o) => withExalted || o.currency !== "exalted");
   const enough = options.filter((o) => o.stock >= need);
-  if (enough.length) return pickBest(enough);
-  return options.reduce<PayOption | null>((a, b) => (a == null || b.stock > a.stock ? b : a), null);
+  const best = enough.length ? pickBest(enough) : options.reduce<PayOption | null>((a, b) => (a == null || b.stock > a.stock ? b : a), null);
+  return withExalted ? best : cheaperByExalted(entry, best, need);
+}
+
+/**
+ * 適正 (カオスと神だけ) でも、高貴で買うと need 個まとめて 1 カオス分以上安いなら高貴にする (2026-10-04 オーナー「高貴で買った方が
+ * 1 カオス分安いとかの市場なら適正でも 1 つ下の奴で買わせたい」「あまりにも離れ過ぎてたら 1 つ下の高貴で」)。高貴はゴールドが掛かるので、
+ * 差が 1 カオスに満たない時は今まで通りカオスか神
+ */
+function cheaperByExalted(entry: BestBuy, best: PayOption | null, need: number): PayOption | null {
+  const ex = entry.options.find((o) => o.currency === "exalted" && o.stock >= need);
+  if (!ex) return best;
+  if (!best) return ex;
+  const chaos = marketStore.rates.value.chaos;
+  const saved = (payable(best).payExalted - payable(ex).payExalted) * Math.max(1, need);
+  return chaos > 0 && saved >= chaos ? ex : best;
 }
 
 /** 素材 1 つをカオス / 神 / 高貴で引いて、安い方を決める */

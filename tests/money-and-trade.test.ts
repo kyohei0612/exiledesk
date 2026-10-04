@@ -99,7 +99,7 @@ describe("換算と丸めの決まりは services/money.ts に 1 つ", async () 
   });
 });
 
-describe("一番安く交換できる通貨 (高貴は最安値の時だけ、オーナー 2026-10-04)", () => {
+describe("一番安く交換できる通貨 (高貴は最安値か、1 カオス分以上安い時、オーナー 2026-10-04)", () => {
   const side = (price: number, stock = 100, vol = 100) => ({ RelativePrice: price, HighestStock: stock, VolumeTraded: vol });
   const pair = (item: string, pay: string, price: number, itemStock = 100) => ({
     CurrencyOne: { ApiId: item }, CurrencyTwo: { ApiId: pay }, CurrencyOneData: side(price, itemStock), CurrencyTwoData: side(1),
@@ -131,7 +131,20 @@ describe("一番安く交換できる通貨 (高貴は最安値の時だけ、�
     };
     expect(bestFor(entry, 10, true)?.currency).toBe("exalted");
     expect(bestFor(entry, 60, true)?.currency).toBe("chaos");
-    // 最安値でなければ高貴は使わない
-    expect(bestFor(entry, 10, false)?.currency).toBe("chaos");
+    // 適正でも、回数分まとめて 1 カオス分以上安ければ高貴 (2026-10-04 夕方)
+    expect(bestFor(entry, 10, false)?.currency).toBe("exalted");
+  });
+  it("適正: 高貴の方が安くても、まとめて 1 カオス分に満たなければカオスのまま (ゴールドが掛かるので)", () => {
+    // このテストの換算は 1 カオス = 7 高貴。差は 1 個 1 高貴
+    const entry = {
+      apiId: "x", fetchedAt: 0, best: null,
+      options: [
+        { currency: "exalted" as const, exalted: 174, perUnit: 174, stock: 300 },
+        { currency: "chaos" as const, exalted: 175, perUnit: 25, stock: 300 }, // ちょうど 25 カオス (切り上げ無し)
+      ],
+    };
+    expect(bestFor(entry, 1, false)?.currency).toBe("chaos");
+    expect(bestFor(entry, 6, false)?.currency).toBe("chaos"); // 6 高貴 < 1 カオス (7)
+    expect(bestFor(entry, 7, false)?.currency).toBe("exalted"); // 7 高貴 = 1 カオス
   });
 });
