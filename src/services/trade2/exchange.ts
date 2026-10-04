@@ -127,9 +127,21 @@ export function payable(o: PayOption): PayableOption {
   return { ...o, payPerUnit, payExalted: o.exalted * ratio };
 }
 
-/** 一番安いのは「実際に払う額」で比べる (1.1 神 = 2 神 払うより、カオスで買う方が安いこともある) */
-function pickBest(options: PayOption[]): PayOption | null {
-  return options.reduce<PayOption | null>((a, b) => (a == null || payable(b).payExalted < payable(a).payExalted ? b : a), null);
+/**
+ * need 個まとめて買った時に実際に払う総額 (高貴換算)。通貨は 1 個単位でしか渡せないので、総額を最後に 1 回だけ切り上げる
+ * (2026-10-04 夕方: 1 個ずつ切り上げて比べていて、完全の宝石細工師 3.02 カオスを 4 カオスと数え、高貴との差が 7 倍に見えていた。
+ * 60 個まとめれば 181 カオス)
+ */
+export function totalPayExalted(o: PayOption, need = 1): number {
+  const n = Math.max(1, need);
+  const amount = o.perUnit * n;
+  const paid = amount >= 1 ? ceilMoney(amount) : amount;
+  return amount > 0 ? o.exalted * n * (paid / amount) : o.exalted * n;
+}
+
+/** 一番安いのは need 個まとめて「実際に払う額」で比べる (1.1 神 = 2 神 払うより、カオスで買う方が安いこともある) */
+function pickBest(options: PayOption[], need = 1): PayOption | null {
+  return options.reduce<PayOption | null>((a, b) => (a == null || totalPayExalted(b, need) < totalPayExalted(a, need) ? b : a), null);
 }
 
 /**
@@ -140,22 +152,22 @@ export function bestFor(entry: BestBuy | null | undefined, need = 1, withExalted
   if (!entry) return null;
   const options = entry.options.filter((o) => withExalted || o.currency !== "exalted");
   const enough = options.filter((o) => o.stock >= need);
-  const best = enough.length ? pickBest(enough) : options.reduce<PayOption | null>((a, b) => (a == null || b.stock > a.stock ? b : a), null);
+  const best = enough.length ? pickBest(enough, need) : options.reduce<PayOption | null>((a, b) => (a == null || b.stock > a.stock ? b : a), null);
   return withExalted ? best : cheaperByExalted(entry, best, need);
 }
 
 /**
- * 適正 (カオスと神だけ) でも、高貴で買うと need 個まとめて 1 カオス分以上安いなら高貴にする (2026-10-04 オーナー「高貴で買った方が
- * 1 カオス分安いとかの市場なら適正でも 1 つ下の奴で買わせたい」「あまりにも離れ過ぎてたら 1 つ下の高貴で」)。高貴はゴールドが掛かるので、
- * 差が 1 カオスに満たない時は今まで通りカオスか神
+ * 適正 (カオスと神だけ) でも、高貴で need 個まとめて買う総額が 20% 以上安ければ高貴にする (2026-10-04 夕方 オーナー「高貴で買った方が
+ * 安い市場なら適正でも 1 つ下の奴で」→ 線は「ゴールドとかめんどさも含めて」で率に、「20%」)。
+ * ゴールドは動かすカレンシーの個数で増え、高貴はカオスの約 70 倍の個数を動かすので、少し安いだけなら高貴にしない
+ * (60 回: 原石 lv17 は 54% 安い → 高貴、完全の宝石細工師は 6% → カオスのまま)
  */
+export const EXALTED_DISCOUNT = 0.2;
 function cheaperByExalted(entry: BestBuy, best: PayOption | null, need: number): PayOption | null {
   const ex = entry.options.find((o) => o.currency === "exalted" && o.stock >= need);
   if (!ex) return best;
   if (!best) return ex;
-  const chaos = marketStore.rates.value.chaos;
-  const saved = (payable(best).payExalted - payable(ex).payExalted) * Math.max(1, need);
-  return chaos > 0 && saved >= chaos ? ex : best;
+  return totalPayExalted(ex, need) <= totalPayExalted(best, need) * (1 - EXALTED_DISCOUNT) ? ex : best;
 }
 
 /** 素材 1 つをカオス / 神 / 高貴で引いて、安い方を決める */

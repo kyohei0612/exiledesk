@@ -11,7 +11,7 @@ vi.mock("../src/state/market-store", async () => {
 
 const { roundMoney } = await import("../src/state/display-currency");
 const { toExalted } = await import("../src/services/trade2/pricing/listings");
-const { payableUnit, bestFor } = await import("../src/services/trade2/exchange");
+const { payableUnit, bestFor, totalPayExalted, EXALTED_DISCOUNT } = await import("../src/services/trade2/exchange");
 const { bestPayByApiId } = await import("../src/api/poe2scout/rank");
 const { snapshotNameToTradeLeague, trade2QueryUrl } = await import("../src/services/trade2/league");
 const { buildUniqueNameQuery } = await import("../src/services/trade2/query/item-queries");
@@ -99,7 +99,7 @@ describe("換算と丸めの決まりは services/money.ts に 1 つ", async () 
   });
 });
 
-describe("一番安く交換できる通貨 (高貴は最安値か、1 カオス分以上安い時、オーナー 2026-10-04)", () => {
+describe("一番安く交換できる通貨 (高貴は最安値か、まとめて 20% 以上安い時、オーナー 2026-10-04)", () => {
   const side = (price: number, stock = 100, vol = 100) => ({ RelativePrice: price, HighestStock: stock, VolumeTraded: vol });
   const pair = (item: string, pay: string, price: number, itemStock = 100) => ({
     CurrencyOne: { ApiId: item }, CurrencyTwo: { ApiId: pay }, CurrencyOneData: side(price, itemStock), CurrencyTwoData: side(1),
@@ -134,17 +134,25 @@ describe("一番安く交換できる通貨 (高貴は最安値か、1 カオス
     // 適正でも、回数分まとめて 1 カオス分以上安ければ高貴 (2026-10-04 夕方)
     expect(bestFor(entry, 10, false)?.currency).toBe("exalted");
   });
-  it("適正: 高貴の方が安くても、まとめて 1 カオス分に満たなければカオスのまま (ゴールドが掛かるので)", () => {
-    // このテストの換算は 1 カオス = 7 高貴。差は 1 個 1 高貴
-    const entry = {
+  it("適正: 高貴はまとめ買いの総額で 20% 以上安い時だけ (ゴールドは動かす個数で増えるので)", () => {
+    // このテストの換算は 1 カオス = 7 高貴。カオスはちょうど 25 カオス = 175 高貴
+    const entry = (ex: number) => ({
       apiId: "x", fetchedAt: 0, best: null,
       options: [
-        { currency: "exalted" as const, exalted: 174, perUnit: 174, stock: 300 },
-        { currency: "chaos" as const, exalted: 175, perUnit: 25, stock: 300 }, // ちょうど 25 カオス (切り上げ無し)
+        { currency: "exalted" as const, exalted: ex, perUnit: ex, stock: 300 },
+        { currency: "chaos" as const, exalted: 175, perUnit: 25, stock: 300 },
       ],
-    };
-    expect(bestFor(entry, 1, false)?.currency).toBe("chaos");
-    expect(bestFor(entry, 6, false)?.currency).toBe("chaos"); // 6 高貴 < 1 カオス (7)
-    expect(bestFor(entry, 7, false)?.currency).toBe("exalted"); // 7 高貴 = 1 カオス
+    });
+    expect(bestFor(entry(174), 60, false)?.currency).toBe("chaos"); // 0.6% 安いだけ
+    expect(bestFor(entry(141), 60, false)?.currency).toBe("chaos"); // 19.4%
+    expect(bestFor(entry(140), 1, false)?.currency).toBe("exalted"); // ちょうど 20%
+    expect(EXALTED_DISCOUNT).toBe(0.2);
+  });
+  it("まとめ買いは総額を最後に 1 回だけ切り上げる (完全の宝石細工師 3.02 カオス × 60 = 182 カオス、1 個ずつなら 240)", () => {
+    const o = { currency: "chaos" as const, exalted: 3.02 * 7, perUnit: 3.02, stock: 999 };
+    expect(totalPayExalted(o, 60)).toBeCloseTo(182 * 7, 6);
+    expect(totalPayExalted(o, 1)).toBeCloseTo(4 * 7, 6);
+    // 1 未満の束 (プリズム 0.03 神) は 1 に満たなければ切り上げない
+    expect(totalPayExalted({ currency: "divine", exalted: 23, perUnit: 0.03, stock: 999 }, 10)).toBeCloseTo(230, 6);
   });
 });
