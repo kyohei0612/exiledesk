@@ -95,12 +95,24 @@ const TABS = computed(() => [
         <ShelfButton k="artificer" class="ml-2 inline-block align-middle" @pick="emit('hold', $event)" />
       </p>
       <div class="space-y-2">
-        <div v-for="g in runes" :key="g.kind">
+        <div v-for="g in runes.filter((x) => !x.folded)" :key="g.kind">
           <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>
           <div class="flex flex-wrap gap-1.5">
             <ShelfButton v-for="k in g.keys" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
           </div>
         </div>
+        <!-- 効果を足すだけのルーン・ソウルコア・アイドルは畳んで下に (2026-10-04) -->
+        <details v-if="runes.some((x) => x.folded)" class="rounded border border-white/10 px-2 py-1">
+          <summary class="cursor-pointer select-none text-[11px] opacity-70 hover:opacity-100">効果を足すだけのルーン・ソウルコア・アイドル ({{ runes.filter((x) => x.folded).reduce((n, x) => n + x.keys.length, 0) }})</summary>
+          <div class="mt-1.5 space-y-2">
+            <div v-for="g in runes.filter((x) => x.folded)" :key="g.kind">
+              <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>
+              <div class="flex flex-wrap gap-1.5">
+                <ShelfButton v-for="k in g.keys" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
+              </div>
+            </div>
+          </div>
+        </details>
       </div>
       <p v-if="!runes.length" class="text-[12px] opacity-50">このベースに効くルーンはありません</p>
     </div>

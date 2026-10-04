@@ -6,6 +6,7 @@
  * カタリスト (指輪・アミュレット)、お告げ。キーは計算機と同じ price-keys.json / essence-keys.json の物。
  * 値段とアイコンは相場 (market-store) の行を英語名で引く (計算機の buildHtcPrices と同じ引き方)。
  */
+import { CRAFT_RUNES_EN } from "../services/htc/sockets";
 import { isLegacyRune, LEGACY_SOURCE } from "../services/market/legacy-rune";
 import priceKeys from "../services/htc/price-keys.json";
 import essenceKeys from "../services/htc/essence-keys.json";
@@ -25,7 +26,8 @@ type Named = Record<string, { en: string; ja: string }>;
 const KEYS = priceKeys as unknown as { currency: Named; bones: Named; omens: Named };
 const ESS = (essenceKeys as { keys: Named }).keys;
 
-export interface ShelfGroup { kind: string; label: string; keys: string[] }
+/** folded = 畳んで下に置く (能力値を足すだけのルーンなど) */
+export interface ShelfGroup { kind: string; label: string; keys: string[]; folded?: boolean }
 
 /** オーブと、MOD を足し引きしない物 */
 export const ORBS: ShelfGroup[] = [
@@ -50,15 +52,20 @@ export const ORBS: ShelfGroup[] = [
  * ルーン (ソケットにはめる。stage-runes.ts、POE2Tube 要望 ⑰-1)。2026-09-29 オーナー「ルーン関係タブでまとめてもいいかも」で棚の別のタブに。
  * アクト中に拾える下位 (レッサー) から段ごと。今のベースに効き目の無い物は出さない (runesFor)
  */
+// クラフトに使うルーン (クラフトの決まりを変える / 特別な MOD を足す) を上に。ほかは効果を足すだけなので畳む (2026-10-04 オーナー
+// 「邪魔なルーンが多すぎる、クラフトで使うルーンのみ上に表示して、効果だけ付与する系の奴は畳んで下に」)
+const CRAFT_RUNE_KEYS = CRAFT_RUNES_EN.map((en) => `rune:${en}`).filter((k) => runeOf(k));
+const notCraft = (keys: string[]) => keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k));
 export const RUNE_GROUPS: ShelfGroup[] = [
-  { kind: "lesser", label: "レッサー", keys: runeKeys("lesser") },
-  { kind: "normal", label: "普通", keys: runeKeys("normal") },
-  { kind: "greater", label: "グレーター", keys: runeKeys("greater") },
-  { kind: "perfect", label: "パーフェクト", keys: runeKeys("perfect") },
-  { kind: "special", label: "特別なルーン (古代・ウォード・人の名前の物など)", keys: runeKeys("special") },
+  { kind: "craft", label: "クラフトに使うルーン (クラフトモッド +1・サフィ +1・特別な MOD)", keys: CRAFT_RUNE_KEYS },
+  { kind: "lesser", label: "レッサー", keys: runeKeys("lesser"), folded: true },
+  { kind: "normal", label: "普通", keys: runeKeys("normal"), folded: true },
+  { kind: "greater", label: "グレーター", keys: runeKeys("greater"), folded: true },
+  { kind: "perfect", label: "パーフェクト", keys: runeKeys("perfect"), folded: true },
+  { kind: "special", label: "特別なルーン (古代・ウォード・人の名前の物など)", keys: notCraft(runeKeys("special")), folded: true },
   // ソウルコア・アイドルも (POE2Tube 要望 ㉘ 2026-10-04、手で打つ画面の棚に)
-  { kind: "soulcore", label: "ソウルコア", keys: runeKeys(undefined, "soulcore") },
-  { kind: "idol", label: "アイドル", keys: runeKeys(undefined, "talisman") },
+  { kind: "soulcore", label: "ソウルコア", keys: runeKeys(undefined, "soulcore"), folded: true },
+  { kind: "idol", label: "アイドル", keys: runeKeys(undefined, "talisman"), folded: true },
 ];
 /**
  * 今のアイテムに効き目がある (効果のデータにこの部位の行がある) ルーンだけ

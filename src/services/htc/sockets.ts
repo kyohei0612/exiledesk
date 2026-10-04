@@ -39,6 +39,12 @@ import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { augmentRule } from "../augment-rules";
 
+/**
+ * クラフトに関係するルーン (英語名): クラフトの決まりを変える物 (アストリッドの創造性 = クラフトモッド +1、セールの凱旋 = サフィ +1) と、
+ * 特別な MOD を足す物 (下の SPECIALS)。クラフトステージの棚で上に出す (2026-10-04 オーナー「邪魔なルーンが多すぎる、クラフトで使うルーンのみ上に」)
+ */
+export const CRAFT_RUNES_EN: readonly string[] = ["Astrid's Creativity", "Serle's Triumph", "Kolr's Hunt", "Katla's Gloom", "Vorana's Carnage", "Medved's Tending", "Uhtred's Sidereus", "Thrud's Might"];
+
 /** セールの凱旋のルーンの id (`engine/runes.ts` の表と同じ) */
 export const SERLE_RUNE = "serles-triumph";
 
