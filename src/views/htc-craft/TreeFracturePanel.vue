@@ -63,7 +63,7 @@ const howJa: Record<string, string> = {
             <span class="text-amber-300">({{ sq.key === "fractured" ? "Fractured" : "Explicit" }}<template
               v-if="b.filters[0]?.min"> 最小 {{ b.filters[0].min }}</template>)</span>
           </template>
-          <template v-if="sq.key === 'four'"> / 疑似 モッド #個 4〜4 / 冒涜モッド 最大 0 / クラフトモッド 最大 0</template>
+          <template v-if="sq.key === 'four'"> / 疑似 モッド #個 4〜4 / 次を除く: 冒涜モッド #個 1 以上・クラフトモッド #個 1 以上</template>
           <span class="opacity-50"> — 最安 {{ sq.take }} 件</span>
         </td>
       </tr>

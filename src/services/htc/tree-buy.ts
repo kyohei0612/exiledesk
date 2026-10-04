@@ -176,7 +176,7 @@ export function treeBuyQuery(
     if (nS) filters.push({ id: STRICT_SUFFIX, max: nS });
   }
   if (opts.fourMods && !fractured) {
-    filters.push({ id: FOUR_AFFIX, min: 4, max: 4 }, { id: FOUR_DESECRATED, max: 0 }, { id: FOUR_CRAFTED, max: 0 });
+    filters.push({ id: FOUR_AFFIX, min: 4, max: 4 });
   }
   if (filters.length === 0) return null;
   // 固定品を探す時、取引所にフラクチャーの番号が無い MOD がある = その固定品は取引所に無い。送ると「使用不能」で条件が効かない (2026-09-30)
@@ -196,5 +196,7 @@ export function treeBuyQuery(
     noSanctified: true,
     grantedSkill: opts.grantedSkill ?? null,
     ...(opts.socketsMin != null ? { socketsMin: opts.socketsMin } : {}),
+    // 冒涜の MOD・クラフト MOD が 1 つでもある物は除く (not。「最大 0」だと 0 個の物に疑似の個数が付いていないので全部外れて 0 件だった)
+    ...(opts.fourMods && !fractured ? { noneOf: [{ id: FOUR_DESECRATED, min: 1 }, { id: FOUR_CRAFTED, min: 1 }] } : {}),
   });
 }

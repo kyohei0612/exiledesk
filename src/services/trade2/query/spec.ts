@@ -55,6 +55,11 @@ export interface SpecQueryOptions {
    */
   anyOf?: { filters: { id: string; min?: number }[] }[];
   /**
+   * 「どれも無い」の条件 (取引所の not グループ)。0 個の物を探す時に使う: 疑似の個数は 0 個の物には付いていないので、
+   * 「最大 0」で探すと全部が外れて 0 件になる (2026-10-04 の 4 MOD の検索で踏んだ)
+   */
+  noneOf?: { id: string; min?: number }[];
+  /**
    * ベースの付与スキル (「Grants Skill: Level 20 Cast on Critical」の名前)。不在のアミュレットは付与スキルで値段が別物なので、
    * 完成品も素材も同じ付与スキルで探す (オーナー 2026-09-25)。取引所の `skill.` の stat (i18n/trade2-skills.json、
    * data-cache/trade2-stats-en.json の skill グループから作る)。表に無い名前なら送らない
@@ -94,6 +99,9 @@ export function buildSpecQuery(o: SpecQueryOptions) {
       value: { min: 1 },
       filters: g.filters.map((f) => ({ id: f.id, disabled: false, value: f.min != null ? { min: f.min } : {} })),
     } as (typeof stats)[number]);
+  }
+  if (o.noneOf?.length) {
+    stats.push({ type: "not", filters: o.noneOf.map((f) => ({ id: f.id, disabled: false, value: f.min != null ? { min: f.min } : {} })) } as (typeof stats)[number]);
   }
   return {
     query: {

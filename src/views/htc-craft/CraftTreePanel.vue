@@ -18,6 +18,7 @@ import { cardOfState, cardOfTarget } from "./item-card-data";
 import { useCraftTree } from "./useCraftTree";
 import { TREE_PRESETS } from "./tree-presets";
 import { recordHistory } from "../../services/history";
+import { openExternal } from "../../services/trade2/open-external";
 import { zeroStart } from "./craft-settings";
 import { finishedNumbers } from "./finished-numbers";
 import { autoInputFor, pickAutoTree } from "./auto-pick";
@@ -76,8 +77,9 @@ const routeCards = computed(() => {
     sub: ROUTE_SUB[k],
     cost: k === "white" ? null : (o[k]?.cost ?? null),
     label: k === "white" ? (o.white?.label ?? "") : (o[k]?.label ?? "出品が足りない"),
+    link: k === "white" ? null : (o[k]?.link ?? null),
     // 白のベースは値段が回すまで分からないので選べる (他は値段が無ければ選べない)
-    disabled: k !== "white" && o[k] == null,
+    disabled: k !== "white" && o[k]?.cost == null,
     recommended: o.recommended === k,
   }));
 });
@@ -215,11 +217,10 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
   <div v-if="choosing" class="text-sm">
     <p class="mb-2 text-[13px] text-[var(--exile-color-text-secondary)]">どちらで作るかを選ぶと、その始め方で自動クラフトを組みます</p>
     <div class="grid gap-2 md:grid-cols-3">
+      <div v-for="r in routeCards" :key="r.key" class="flex flex-col gap-1">
       <button
-        v-for="r in routeCards"
-        :key="r.key"
         type="button"
-        class="rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-40"
+        class="flex-1 rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-40"
         :class="r.recommended ? 'border-emerald-400/70 bg-emerald-500/10 hover:bg-emerald-500/20' : 'border-white/15 bg-white/[0.03] hover:bg-white/[0.07]'"
         :disabled="r.disabled"
         @click="chooseRoute(r.key)"
@@ -232,6 +233,9 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
         <p class="mt-1.5 text-lg font-bold" :class="r.recommended ? 'text-emerald-300' : ''">{{ r.cost != null ? c.money(r.cost) : r.key === "white" ? "選ぶと回して出す" : "—" }}</p>
         <p class="text-[11px] opacity-70">{{ r.label }}</p>
       </button>
+      <!-- 検索の条件を取引所で見る (0 件でも。2026-10-04 オーナー「どんな条件で検索してヒットなかったのか知りたい」) -->
+      <button v-if="r.link" type="button" class="self-start text-[11px] text-sky-300 underline hover:text-sky-200" @click="openExternal(r.link.url)">取引所で検索の条件を見る ({{ r.link.text }}) ↗</button>
+      </div>
     </div>
   </div>
   <div v-else id="craft-tree-panel" class="flex items-start gap-3 text-sm">

@@ -117,9 +117,15 @@ watch([() => c.phase.value, () => c.diagBusy.value, () => ss.threeWay.value, () 
     return;
   }
   const recommended = tw.fixed && tw.self ? (tw.self.cost < tw.fixed.cost ? "self" : "fixed") : tw.fixed ? "fixed" : tw.self ? "self" : null;
+  // 検索のリンク (0 件でも条件を見られるように): 選んでいる候補、無ければ取れた最初の候補の行から
+  const row = ss.chosen.value ?? ss.rows.value.find((x) => x.res && x.res !== "error") ?? null;
+  const linkOf = (id: string) => row?.sub.find((x) => x.id === id)?.link ?? null;
+  const noteOf = (id: string) => row?.sub.find((x) => x.id === id)?.note || "出品が足りない";
   c.routeOptions.value = {
-    fixed: tw.fixed ? { cost: tw.fixed.cost, label: tw.fixed.label } : null,
-    self: tw.self ? { cost: tw.self.cost, label: tw.self.label } : null,
+    fixed: tw.fixed ? { cost: tw.fixed.cost, label: tw.fixed.label, link: tw.fixed.url ? { text: "取引所で見る", url: tw.fixed.url } : linkOf("fractured") }
+      : { cost: null, label: noteOf("fractured"), link: linkOf("fractured") },
+    self: tw.self ? { cost: tw.self.cost, label: tw.self.label, link: tw.self.url ? { text: "取引所で見る", url: tw.self.url } : linkOf("four") }
+      : { cost: null, label: noteOf("four"), link: linkOf("four") },
     white,
     recommended,
   };
