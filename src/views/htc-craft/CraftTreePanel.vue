@@ -76,6 +76,8 @@ const routeCards = computed(() => {
     name: ROUTE_JA[k],
     sub: ROUTE_SUB[k],
     cost: k === "white" ? null : (o[k]?.cost ?? null),
+    base: k === "white" ? null : (o[k]?.base ?? null),
+    craft: k === "white" ? null : (o[k]?.craft ?? null),
     label: k === "white" ? (o.white?.label ?? "") : (o[k]?.label ?? "出品が足りない"),
     link: k === "white" ? null : (o[k]?.link ?? null),
     // 白のベースは値段が回すまで分からないので選べる (他は値段が無ければ選べない)
@@ -230,7 +232,8 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
           <span v-if="r.recommended" class="rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">おすすめ</span>
         </p>
         <p class="mt-0.5 text-[11px] opacity-60">{{ r.sub }}</p>
-        <p class="mt-1.5 text-lg font-bold" :class="r.recommended ? 'text-emerald-300' : ''">{{ r.cost != null ? c.money(r.cost) : r.key === "white" ? "選ぶと回して出す" : "—" }}</p>
+        <p v-if="r.cost != null && r.base != null && r.craft != null" class="mt-1.5 text-[11px] tabular-nums opacity-80">ベース {{ c.money(r.base) }} + クラフト {{ c.money(r.craft) }} =</p>
+        <p class="text-lg font-bold" :class="[r.recommended ? 'text-emerald-300' : '', r.base == null ? 'mt-1.5' : '']">{{ r.cost != null ? c.money(r.cost) : r.key === "white" ? "選ぶと回して出す" : "—" }}</p>
         <p class="text-[11px] opacity-70">{{ r.label }}</p>
       </button>
       <!-- 検索の条件を取引所で見る (0 件でも。2026-10-04 オーナー「どんな条件で検索してヒットなかったのか知りたい」) -->

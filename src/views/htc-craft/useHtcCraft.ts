@@ -59,8 +59,8 @@ export interface TargetRow {
 /** 作り方の始め方の選択肢 (cost は初動 + 作る見込み、高貴建て) */
 export interface RouteOptions {
   /** cost = null は出品なし・足りない。link = その検索 (0 件でも条件を取引所で見られる。2026-10-04 オーナー「どんな条件で検索してヒットなかったのか知りたい」) */
-  fixed: { cost: number | null; label: string; link: { text: string; url: string } | null } | null;
-  self: { cost: number | null; label: string; link: { text: string; url: string } | null } | null;
+  fixed: { cost: number | null; base?: number | null; craft?: number | null; label: string; link: { text: string; url: string } | null } | null;
+  self: { cost: number | null; base?: number | null; craft?: number | null; label: string; link: { text: string; url: string } | null } | null;
   /** 白のベースから (変成・増強 → 王者)。値段は自動で組んで回すまで分からない。樹 MOD がある時は出さない */
   white: { label: string } | null;
   /** ② で安い方 */

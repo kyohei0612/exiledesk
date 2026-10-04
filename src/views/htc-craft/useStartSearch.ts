@@ -253,14 +253,18 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
    *   fixed = 固定済み (フラクチャー済み) の素材を買って作る / self = 固定無しを買って自分でフラクチャーして作る
    */
   const threeWay = computed(() => {
-    const out: { fixed: { cost: number; label: string; url: string | null } | null; self: { cost: number; label: string; url: string | null } | null } = { fixed: null, self: null };
+    // base = ベース (素材) の値段、craft = クラフト費用 (作る見込み)。cost = 合計 (2026-10-04 オーナー「ベースの値段 + クラフト費用 = 合計 みたいな書き方」)。
+    // 「買う + 残りを作る」(固定不要) は 1 行に足してあるので分けない (null)
+    type Way = { cost: number; base: number | null; craft: number | null; label: string; url: string | null };
+    const out: { fixed: Way | null; self: Way | null } = { fixed: null, self: null };
     for (const x of rows.value) {
       for (const r of x.sub) {
         if (r.total == null) continue;
         const total = r.total;
         const which = r.id === "fractured" || r.id === "buy" || r.id === "keep" ? "fixed" : "self";
         const cur = out[which];
-        if (!cur || total < cur.cost) out[which] = { cost: total, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}`, url: r.link?.url ?? null };
+        const split = r.id !== "buy" && r.cost != null;
+        if (!cur || total < cur.cost) out[which] = { cost: total, base: split ? r.cost : null, craft: split ? total - r.cost! : null, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}`, url: r.link?.url ?? null };
       }
     }
     return out;

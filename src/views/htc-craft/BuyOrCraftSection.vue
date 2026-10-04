@@ -43,6 +43,8 @@ function onFin(): void {
         <div v-if="threeWay.length" class="mb-2 grid grid-cols-3 gap-2">
           <div v-for="w in threeWay" :key="w.key" class="rounded-lg p-2" :class="w.best ? 'bg-emerald-500/15 ring-1 ring-emerald-400/60 shadow-[0_0_14px_rgba(52,211,153,0.25)]' : 'bg-black/30'">
             <p class="text-[11px] opacity-70">{{ w.name }}</p>
+            <!-- ベース + クラフト = 合計 (オーナー 2026-10-04「ベースの値段 + クラフト費用 = 合計 みたいな書き方しないとややこしい」) -->
+            <p v-if="w.cost != null && w.base != null && w.craft != null" class="text-[11px] tabular-nums opacity-80">ベース {{ c.money(w.base) }} + クラフト {{ c.money(w.craft) }} =</p>
             <p class="text-lg font-bold leading-tight" :class="w.best ? 'text-emerald-300' : w.cost == null ? 'text-sm opacity-60' : ''">{{ w.cost != null ? c.money(w.cost) : w.why }}</p>
             <p class="mt-0.5 flex items-center gap-2">
               <span v-if="w.best" class="inline-block rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">一番安い</span>
