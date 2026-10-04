@@ -22,7 +22,7 @@ import { fmtNum } from "./fmt";
 import { usePobCheck, type PasteNote } from "./usePobCheck";
 
 const { targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, input, loading, busy, error, cur, skills, focus, focusKey, load, changeCharges,
-  baseSkills, base, targetCode, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, groups, merged, changeGem, toggleGroup, changeItem, clearItem, restoreItem, changeWeaponSet } =
+  baseSkills, base, targetCode, changeConflux, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, groups, merged, changeGem, toggleGroup, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 
@@ -216,6 +216,13 @@ const charges = computed(() => cur.value?.config.powerCharges ?? 0);
  */
 const chargesMax = computed(() => Math.max(num("PowerChargesMax"), 10));
 const chargesPobMax = computed(() => num("PowerChargesMax"));
+/**
+ * エレメンタルコンフラックスの属性 (2026-10-05 オーナー「コンフラックスの属性選べるように」)。ビルドにコンフラックスがある時だけ出す。
+ * 本家の既定は「平均」(3 属性に 1/3 ずつ)。ゲームでは今の属性が順に変わるので、見たい時の属性を選ぶ
+ */
+const hasConflux = computed(() => !!cur.value?.groups.some((g) => g.enabled && g.gems.some((x) => x.name === "Elemental Conflux" && x.enabled)));
+const conflux = computed(() => Number(cur.value?.config.input?.elementalConfluxElement ?? 1) || 1);
+const CONFLUX_OPTIONS = [{ v: 1, ja: "平均" }, { v: 2, ja: "雷" }, { v: 3, ja: "冷気" }, { v: 4, ja: "火" }];
 const statChips = computed(() => {
   if (!cur.value) return [];
   const list: Array<{ label: string; value: string; cls: string }> = [
@@ -368,6 +375,22 @@ const resists = computed(() =>
                 :disabled="busy"
                 @click="changeCharges(n - 1)"
               >{{ n - 1 }}</button>
+            </div>
+          </div>
+          <!-- エレメンタルコンフラックスの属性 (ビルドにある時だけ) -->
+          <div v-if="hasConflux">
+            <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">エレメンタルコンフラックス</p>
+            <div class="flex gap-0.5">
+              <button
+                v-for="o in CONFLUX_OPTIONS"
+                :key="o.v"
+                type="button"
+                class="h-6 rounded px-2 text-[11px] font-semibold transition-colors"
+                :class="o.v === conflux ? 'bg-[var(--exile-color-accent-focus)] text-[var(--exile-color-bg-canvas)]' : 'bg-white/5 text-[var(--exile-color-text-secondary)] hover:bg-white/15'"
+                :title="o.v === 1 ? 'PoB の既定 (3 属性に 1/3 ずつ)' : `今の属性が${o.ja}の時`"
+                :disabled="busy"
+                @click="changeConflux(o.v)"
+              >{{ o.ja }}</button>
             </div>
           </div>
           <!-- 操作 (1 列の小さい枠だけのボタン) -->

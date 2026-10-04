@@ -8,7 +8,7 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, summarySkip, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateTree, estimateJewel, estimateAll, setEstimateTree, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateTreeRaw, type EstimateJewelRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
+import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, setConflux, summary, summarySkip, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateTree, estimateJewel, estimateAll, setEstimateTree, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateTreeRaw, type EstimateJewelRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
 import { buildChain, type Chain } from "../../services/pob-check/breakdown";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
@@ -736,6 +736,11 @@ export function usePobCheck() {
       note: `${gemJa(g?.gems[0]?.name ?? "")} の組 ${enabled ? "オン" : "オフ"}`,
     });
   }
+  /** エレメンタルコンフラックスの属性 (2026-10-05) */
+  const CONFLUX_JA: Record<number, string> = { 1: "平均", 2: "雷", 3: "冷気", 4: "火" };
+  async function changeConflux(n: number): Promise<void> {
+    await act({ fn: () => setConflux(n), history: ["conflux", { n }], note: `コンフラックス ${CONFLUX_JA[n] ?? n}`, fast: true });
+  }
   async function changeCharges(n: number): Promise<void> {
     const before = cur.value?.config.powerCharges ?? 0;
     await act({ fn: () => setPowerCharges(n), history: ["charges", { n }], note: `パワーチャージ ${before}→${n}`, fast: true });
@@ -858,5 +863,5 @@ export function usePobCheck() {
   /** 相手のスキルの表 (スキルごとの比較用。自分と同じ決まりで 2 重を除き DPS 0 を落とす) */
   const targetSkills = computed(() => skillsOf(target.value));
 
-  return { chain, chainLoading, chainError, chainFresh, refreshChain, targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, estimatesStale, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { chain, chainLoading, chainError, chainFresh, refreshChain, targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, estimatesStale, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeConflux, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

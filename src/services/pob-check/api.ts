@@ -303,6 +303,8 @@ export const setGem = (i: number, j: number, field: "level" | "quality" | "corru
 export const setGroup = (i: number, enabled: boolean): Promise<unknown> => evalLua(`return PCK.setGroup(${luaNum(i)}, ${enabled})`);
 
 export const setPowerCharges = (n: number): Promise<unknown> => evalLua(`return PCK.setPowerCharges(${luaNum(Math.max(0, Math.floor(n)))})`);
+/** エレメンタルコンフラックスの属性 (1 = 平均 / 2 = 雷 / 3 = 冷気 / 4 = 火) */
+export const setConflux = (n: number): Promise<unknown> => evalLua(`return PCK.setConflux(${luaNum(Math.floor(n))})`);
 
 /** 欄に物を入れる (text = PoB の文面)。unread = PoB が計算しない行 */
 export const equip = (slot: string, text: string): Promise<{ unread: string[] }> => evalLua(`return PCK.equip(${luaStr(slot)}, ${luaStr(text)})`);

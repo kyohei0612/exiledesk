@@ -17,6 +17,13 @@
 --     接頭を外しても読めない行 (Archon recovery period expires 90% faster、Fissure Skills have +3 to Limit など) は本家の結果 (読めない) のまま。
 --   直した結果は本家のキャッシュ (modLib.parseModCache) に入れるので、2 回目からは本家の関数がそのまま同じ結果を返す。
 --
+-- [2] ピナクル・オブ・パワーの増しが混沌にも掛かる本家の取り違い (2026-10-05、Data/Skills/other.lua の PinnacleOfPowerPlayer):
+--   ゲームの説明文は「消費したパワーチャージ 1 個ごとに **元素** ダメージが 15% 増加する」(stat elemental_power_elemental_damage_+%_final_per_power_charge)。
+--   本家は mod("Damage", "MORE", …, { type = "SkillType", skillTypeList = { Cold, Fire, Lightning } }) = 元素タイプのスキルの **全ダメージ**
+--   (混沌も物理も) に掛けている。オーナーのスパーク (パーム・オブ・ザ・ドリーマーの「ダメージの 27% を追加の混沌」) で、混沌がゲームの
+--   約 2.3 倍に出ていた (チャージ 8 で 144% 増しが混沌にも乗る。ゲームの混沌 36-684 に対し PoB 81-1548)。
+--   → 名前を ElementalDamage にし (火・冷気・雷にだけ掛かる)、スキルのタイプの縛りも外す (バフなので元素ダメージ全部に)
+--
 -- ここで EXILEDESK_FIXES を立てる (確かめの Lua が「補正が入っているか」を見る印)。
 EXILEDESK_FIXES = EXILEDESK_FIXES or {}
 
@@ -50,4 +57,17 @@ do
     return copyTable(innerList), nil
   end
   EXILEDESK_FIXES.bondedParseMod = true
+end
+
+do
+  local sk = data and data.skills and data.skills["PinnacleOfPowerPlayer"]
+  local entry = sk and sk.statSets and sk.statSets[1] and sk.statSets[1].statMap and sk.statSets[1].statMap["elemental_power_elemental_damage_+%_final_per_power_charge"]
+  local m = entry and entry[1]
+  if m and m.name == "Damage" and m.type == "MORE" then
+    m.name = "ElementalDamage"
+    for i = #m, 1, -1 do
+      if type(m[i]) == "table" and m[i].type == "SkillType" then table.remove(m, i) end
+    end
+    EXILEDESK_FIXES.pinnacleElemental = true
+  end
 end

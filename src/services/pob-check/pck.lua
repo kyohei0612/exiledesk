@@ -760,6 +760,17 @@ function PCK.setGroup(i, enabled)
 end
 
 --- パワーチャージの数 (ピナクルオブパワーで注ぐ数)。0 で使わない (Min のあるビルドは PoB が Min 個を効かせる。実効値は summary の config.powerCharges)
+--- エレメンタルコンフラックスの属性 (1 = 平均 / 2 = 雷 / 3 = 冷気 / 4 = 火)。本家の設定 elementalConfluxElement と同じ番号
+--- (2026-10-05 オーナー「コンフラックスの属性選べるように」: ゲームでは今の属性が順に変わる。本家の既定は平均 = 3 属性に 1/3 ずつ)
+function PCK.setConflux(n)
+  return PCK.mutate(function()
+    local ci = build.configTab.input
+    -- 平均も 1 と書く (空にすると本家は設定を当てず、平均とは違う数字になる)
+    ci.elementalConfluxElement = (n and n >= 1 and n <= 4) and n or 1
+    build.configTab:BuildModList()
+  end)
+end
+
 function PCK.setPowerCharges(n)
   return PCK.mutate(function()
     local ci = build.configTab.input
