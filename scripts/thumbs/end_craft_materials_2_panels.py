@@ -34,13 +34,17 @@ from end_craft_materials_2 import PICK_SHOT, bust, glow, icon, zundamon_hold  # 
 
 from poe2tube.render.palette import font  # noqa: E402
 
-# (絵, 帯の名前, 説明, 帯の色)。絵はアイコンのキーか "pick" (発現の実画面)
+# (絵, 帯の名前, 説明, 帯の色)。絵はアイコンのキー (assets/icons_hd にあれば大きい方) か
+# "pick" (発現の実画面)。kyohei 2026-10-04「でっかくアイコンを数種類並べる」→ 全部アイコン
 COLUMNS = [
     ("OmenofDextralExaltation", "高貴のお告げ", "付く側を選ぶ", (214, 40, 40)),
-    ("rib", "冒涜", "未発現の MOD", (40, 90, 214)),
-    ("pick", "発現", "3 つから選ぶ", (140, 50, 200)),
-    ("OmenofSanctification", "聖別", "数値が上下する", (214, 150, 20)),
+    ("rib", "骨", "冒涜の MOD", (40, 90, 214)),
+    ("OmenofAbyssalEchoes", "反響", "引き直す", (30, 150, 90)),
+    ("OmenoftheLiege", "勢力", "付く MOD を絞る", (140, 50, 200)),
+    ("OmenofSanctification", "聖別", "数値が上下", (214, 150, 20)),
 ]
+HD = ROOT / "assets" / "icons_hd"
+LABELS = True  # --no-labels で絵だけ
 BAND_Y, BAND_H = 300, 92  # 色の帯
 DESC_H = 70  # 帯の下の説明
 
@@ -66,9 +70,16 @@ def column(
     if key == "pick":
         col.alpha_composite(pick_crop(COL_W, BAND_Y), (0, 0))
     else:
-        im = glow(icon(key, min(230, COL_W - 40)), (255, 240, 200), 16)
+        size = min(250, COL_W - 16)
+        hd = HD / f"{key}.png"
+        art = fit(Image.open(hd).convert("RGBA"), size, size) if hd.exists() else icon(key, size)
+        im = glow(art, (255, 240, 200), 16)
         col.alpha_composite(im, ((COL_W - im.width) // 2, (BAND_Y - im.height) // 2 + 6))
     d = ImageDraw.Draw(col)
+    if not LABELS:
+        shade = Image.new("RGBA", (COL_W, H - BAND_Y), (0, 0, 0, 120))
+        col.alpha_composite(shade, (0, BAND_Y))
+        return col
     d.rectangle((0, BAND_Y, COL_W, BAND_Y + BAND_H), fill=(*color, 255))
     size = 64
     while d.textlength(name, font=font(size)) > COL_W - 20:
@@ -145,7 +156,12 @@ def variant_e(rng: random.Random) -> Image.Image:
     return with_zundamon(panels(rng, width), width + (W - width) // 2 - 20, 480)
 
 
-VARIANTS = {"d": variant_d, "e": variant_e}
+def variant_f(rng: random.Random) -> Image.Image:
+    """背景だけ (ずんだもんは後で生成した物を被せる)."""
+    return panels(rng, W)
+
+
+VARIANTS = {"d": variant_d, "e": variant_e, "f": variant_f}
 
 
 def main() -> None:
@@ -153,11 +169,14 @@ def main() -> None:
     ap.add_argument("--variant", default="all", choices=[*VARIANTS, "all"])
     ap.add_argument("--seed", type=int, default=20261004)
     ap.add_argument("--zundamon", type=Path, default=None, help="グリーンバックのずんだもん")
+    ap.add_argument("--no-labels", action="store_true", help="帯の名前と説明を入れない")
     a = ap.parse_args()
-    global ZUNDAMON_ART
+    global ZUNDAMON_ART, LABELS
     ZUNDAMON_ART = a.zundamon
+    LABELS = not a.no_labels
     for k in VARIANTS if a.variant == "all" else [a.variant]:
-        out = ROOT / "output" / f"end_craft_materials_2_thumb_base_{k}.jpg"
+        tail = "" if LABELS else "_plain"
+        out = ROOT / "output" / f"end_craft_materials_2_thumb_base_{k}{tail}.jpg"
         VARIANTS[k](random.Random(a.seed)).filter(ImageFilter.SHARPEN).convert("RGB").save(
             out, quality=92
         )
