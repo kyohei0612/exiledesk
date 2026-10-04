@@ -8,7 +8,7 @@
   どのスキルにもある火力の数字だけを同じ名前で出す。上のバーのスキルについて 自分 → 相手 (相手は比較の時だけ)
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import type { CoreStats } from "../../services/pob-check/api";
 import { fmtNum } from "./fmt";
 import DiffBadge from "./DiffBadge.vue";
@@ -17,6 +17,8 @@ const props = defineProps<{
   mine: CoreStats | null | undefined; target?: CoreStats | null; skillJa: string;
   /** 敵の想定 (入っている敵の状態の設定) */
   enemyMine?: Record<string, boolean | number>; enemyTarget?: Record<string, boolean | number> | null;
+  /** 開いたまま (火力チェックの「内訳」タブ) */
+  expanded?: boolean;
 }>();
 
 const TYPE_JA: Record<string, string> = { Physical: "物理", Fire: "火", Cold: "冷気", Lightning: "雷", Chaos: "混沌" };
@@ -123,10 +125,9 @@ const condLists = computed(() => {
 
 /**
  * 開くかどうか (2026-10-04 オーナー「最初の UI がブスすぎる。スキル選択して火力の詳細が知りたい時になったら展開する形で、詳細とかでボタン、たためるように」)。
- * 初めは閉じて 1 行だけ。スキルを選び直したら開く
+ * 初めは閉じて 1 行だけ。expanded (火力チェックの「内訳」タブ、2026-10-04) は開いたまま
  */
-const open = ref(false);
-watch(() => props.skillJa, (n, o) => { if (o != null && n !== o) open.value = true; });
+const open = ref(!!props.expanded);
 /** 閉じている時の 1 行 (平均ヒット・クリティカルヒット率・クリティカルダメージボーナス) */
 const brief = computed(() => {
   const a = props.mine, b = props.target ?? null;

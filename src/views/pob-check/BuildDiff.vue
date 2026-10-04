@@ -18,8 +18,7 @@ import { computed, onMounted, ref, shallowRef, watch } from "vue";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
 import { gemJa, type GemView, type ItemView, type Summary } from "../../services/pob-check/api";
-import { diffBuilds, diffGems, pairSkills, type AdoptCandidate } from "../../services/pob-check/build-diff";
-import SkillCompareTable from "./SkillCompareTable.vue";
+import { diffBuilds, diffGems, type AdoptCandidate } from "../../services/pob-check/build-diff";
 import { linesToJa, rareNameJa } from "../../services/pob-check/item-text";
 import { slotJa } from "../../services/pob-check/slots";
 import { openTradeQuery, prepareTradeLinks, rareModsSearchQuery, uniqueSearchQuery } from "../../services/pob-check/trade-links";
@@ -52,14 +51,9 @@ const props = defineProps<{
   /** 試算した後に自分を変えた = もう一度試算 */
   estimatesStale: boolean;
   adopted: Set<string>;
-  /** スキルごとの比較 (2026-10-03): 自分と相手のスキルの表 (usePobCheck の skills / targetSkills) */
-  mineSkills: SkillRow[];
-  targetSkills: SkillRow[];
 }>();
-const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void; (e: "estimate"): void; (e: "adopt", c: AdoptCandidate, done: (err: string | null) => void): void; (e: "focus", key: string): void }>();
+const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void; (e: "adopt", c: AdoptCandidate, done: (err: string | null) => void): void; (e: "focus", key: string): void }>();
 
-/** スキルごとの比較: 名前で突き合わせて 1 つの表に (決まりは build-diff.ts の pairSkills) */
-const skillPairs = computed(() => pairSkills(props.mineSkills, props.targetSkills));
 
 // ---------------------------------------------------------------- 取り入れたら
 /** 試算の行の「何を」 */
@@ -280,10 +274,6 @@ const STATS = [
         <!-- 試算は「比較する」・スキルの選び直しで自動 (2026-10-04 オーナー「試算ボタンいらんよな設計上」)。見出しと進み具合だけ -->
         <h2 class="text-lg font-bold text-amber-100">火力の差</h2>
         <span v-if="estimating" class="flex items-center gap-1.5 text-[12px] text-amber-200/90"><span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />試算中… {{ estimateProgress }}</span>
-        <template v-else-if="estimatesStale || !estimates">
-          <span v-if="estimatesStale" class="rounded-full bg-amber-500/15 px-2 py-px text-[11px] text-amber-200">自分のビルドを変えたので数字が古い</span>
-          <button type="button" class="rounded-md border border-amber-400/50 px-2.5 py-0.5 text-[12px] text-amber-100 hover:bg-amber-500/15 disabled:opacity-40" :disabled="busy" @click="emit('estimate')">{{ estimates ? "数字を取り直す" : "試算する" }}</button>
-        </template>
         <p class="note">
           相手の物を自分に入れたら {{ gemJa(focus.s.name) }} の DPS がどう変わるか (PoB の中で計算するだけで、ビルドは変えません)。
           対象: 装備 {{ candCount.items }} ・ リネージュ {{ candCount.lineage }} ・ ジュエル {{ candCount.jewels }}{{ candCount.tree ? " ・ ツリー" : "" }}
@@ -363,7 +353,7 @@ const STATS = [
                   <span v-for="(l, i) in e.lines" :key="i" class="ml-1.5 text-emerald-200/90">{{ lineJa(l.line) }} <span class="text-emerald-300">(+{{ (l.loss * 100).toFixed(1) }}%)</span></span>
                 </p>
                 <p v-if="e.displaced" class="text-amber-200/80">両手武器なので {{ e.displaced.map((s) => slotJa(s)).join("、") }} が外れます</p>
-                <p v-if="e.unusedSet" class="text-amber-200/80">使っていない武器セットの欄なので、今の DPS は変わりません (装備のタブで武器セットを切り替えると効く)</p>
+                <p v-if="e.unusedSet" class="text-amber-200/80">使っていない武器セットの欄なので、今の DPS は変わりません (武器セットを切り替えると効く)</p>
                 <p v-if="e.focusLost" class="text-rose-300">この構成にすると {{ gemJa(focus?.s.name ?? "") }} がこの組から無くなります (DPS は出せない)</p>
                 <p v-if="e.unknown" class="text-amber-200/80">PoB が知らないジェムは計算に入っていません: {{ e.unknown.map(gemJa).join("、") }}</p>
                 <p v-if="e.socketAdded">自分はこの穴を取っていないので、穴も取ったとして計算しています (道は見ていない)</p>
@@ -442,15 +432,6 @@ const STATS = [
         <template v-if="estimates.treeBased">装備・ジュエル・リネージュの行は、ツリー・装備・ジュエル・ジェム (サポート込み) を全部相手と同じにした中での効きです (それだけ自分の物に戻す・外すと下がる分。揃って初めて効く分も入る)。数字は「ツリーとジェムを相手と同じにした時」の DPS に、その効きを掛けた物です。</template>
         <template v-if="estimates.quiet">火力が変わらない装備・ジュエル {{ estimates.quiet }} 個は出していません。</template>
       </p>
-    </section>
-
-    <!-- スキルごとの比較 (2026-10-03 オーナー「各スキルごとの比較が現状できてない」): 名前で突き合わせた 1 つの表。行を押すと上のバーのスキルに -->
-    <section>
-      <h2 class="sec-title">
-        スキルごと
-        <span class="sec-note">自分と相手のスキルを名前で合わせて並べる (片方だけの物は —)。押すと上のバーのスキルをそれに (内訳のタブでそのスキルの式が見える)</span>
-      </h2>
-      <SkillCompareTable :rows="skillPairs" :focus-key="focus?.key ?? null" @focus="(k) => emit('focus', k)" />
     </section>
 
     <!-- 細かい差 (ジェムの Lv・サポート / 装備の MOD)。火力の差 試算と被るので畳む (2026-10-04 オーナー「相手との差で装備とかジェムとか被ってる」) -->
