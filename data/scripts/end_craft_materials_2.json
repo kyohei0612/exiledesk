@@ -1551,7 +1551,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "候補が 3 つとも気に入らない時は、アビスの反響のお告げ。",
+          "text": "候補を引き直したい時は、発現の前にアビスの反響のお告げを使っておくの。",
           "scene": {
             "kind": "icons",
             "panel": {
@@ -1565,7 +1565,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "持っていると、発現の候補をもう 1 回だけ引き直せるの。",
+          "text": "使っておくと、発現の候補をもう 1 回だけ引き直せるの。",
           "scene": {
             "kind": "icons",
             "panel": {
@@ -1579,7 +1579,7 @@
         {
           "speaker": "zundamon",
           "emotion": "normal",
-          "text": "引き直せるのは、1 回だけなのだ？",
+          "text": "最初の 3 つが良かったら、お告げは取っておけるのだ？",
           "scene": {
             "kind": "icons",
             "panel": {
@@ -1593,7 +1593,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "そう。次の発現で、1 回だけよ。",
+          "text": "取っておけないわ。引き直さなくても、発現した時点でなくなるの。",
           "scene": {
             "kind": "icons",
             "panel": {
