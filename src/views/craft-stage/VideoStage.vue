@@ -125,7 +125,7 @@ onMounted(() => void (opts.animT != null ? stillAt(opts.animT) : fitClip()));
 /**
  * 手つきを時刻で止める (URL の anim_t、POE2Tube 要望 ㉖): 倍率を決めてから時計を仮の物に差し替え、1 つ前の手から step 手目を打ち、
  * 指定の時刻まで一気に進めて止める ([[anim-clock.ts]])。時刻の情報は window.__stageAnim (attach_ms = 付いた瞬間、
- * total_ms = anim_t=end の時の全体の長さ)、撮ってよくなったら ready と目印 data-anim-ready="1"
+ * total_ms = anim_t=end の時の全体の長さ)、撮ってよくなったら ready と目印 data-anim-ready="1"。window.__stageSeek(t) で開いたまま先へ進める
  */
 async function stillAt(t: number | "end"): Promise<void> {
   await fitClip();
@@ -152,6 +152,16 @@ async function stillAt(t: number | "end"): Promise<void> {
   info.t = clock.now();
   info.ready = true;
   document.body.dataset.animReady = "1";
+  // ページを開いたまま時刻を先へ進める (POE2Tube 要望 ㉖ の追加: 1 コマごとに開き直すと手つき 1 回で 1〜2 分かかる)。
+  // t は手つきの始まりからのミリ秒で、増える向きだけ (戻すなら開き直す)。絵が出来上がったら解決し、__stageAnim も更新
+  (window as unknown as { __stageSeek?: (t: number) => Promise<void> }).__stageSeek = async (to: number) => {
+    info.ready = false;
+    document.body.dataset.animReady = "0";
+    await clock.advanceTo(Math.max(clock.now(), to));
+    info.t = clock.now();
+    info.ready = true;
+    document.body.dataset.animReady = "1";
+  };
 }
 
 /**
