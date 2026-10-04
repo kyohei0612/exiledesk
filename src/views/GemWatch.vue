@@ -205,11 +205,12 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             @fetch="fetchRanking"
           />
         </template>
+        <!-- アセンダンシー別のスキル使用率 (poe.ninja の全キャラ)。2026-10-04 から使用率ランキングの枠の中で、アセンダンシーの選択も 1 つ -->
+        <template #after>
+          <AscendancySkillUsage :klass="s.klass" />
+        </template>
       </GemUsageRanking>
     </div>
-
-    <!-- アセンダンシー別のスキル使用率 (poe.ninja の全キャラ)。上位プレイヤー MOD 一覧から移した (2026-09-29) -->
-    <AscendancySkillUsage />
 
 
     <SoldListDialog :open="soldFor !== ''" :title="soldTitle" :keys="soldKeys" :store="flowStore" @close="soldFor = ''" />

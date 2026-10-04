@@ -291,6 +291,8 @@ defineExpose({ fetchNow, cancelNow, busy, waiting, needFetch, topN, spread, sele
       まだ取得していません。アセンダンシーを選んで「取得」を押してください (まずは使用率トップの 1 つで十分です)。
     </p>
     <UsageTable v-else :rows="result.rows" />
+    <!-- 同じアセンダンシーのスキル使用率 (親から差し込む。2026-10-04 オーナー「2 つの枠は一緒に、2 つ選択し合ってややこしい」) -->
+    <slot name="after" />
   </section>
 </template>
 

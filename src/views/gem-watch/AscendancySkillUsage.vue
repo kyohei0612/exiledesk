@@ -10,16 +10,22 @@ import SkillUsageCard from "../../components/craft-v2/SkillUsageCard.vue";
 import { craftV2Store } from "../../state/craft-v2-store";
 import { TARGET_ASCENDANCY_COUNT } from "../craft-v2/helpers";
 
+/**
+ * klass = 使用率ランキングで選んでいるアセンダンシー (英語のクラス名)。2026-10-04 オーナー「使用率の 2 つの枠は一緒に、2 つ選択し合って
+ * ややこしい」で、使用率ランキングの枠の中に入れ、選ぶのはランキングの選択 1 つに。全アセンダンシー ("") の時だけ、ここで選ぶボタンを出す
+ */
+const props = defineProps<{ klass?: string | null }>();
 const list = computed(() => [...craftV2Store.ascendancies].sort((a, b) => b.usagePercent - a.usagePercent).slice(0, TARGET_ASCENDANCY_COUNT));
 const picked = ref<string>("");
-const asc = computed(() => list.value.find((a) => a.id === picked.value) ?? list.value[0] ?? null);
+const fixed = computed(() => (props.klass ? craftV2Store.ascendancies.find((a) => a.classEn === props.klass) ?? null : null));
+const asc = computed(() => (props.klass ? fixed.value : list.value.find((a) => a.id === picked.value) ?? list.value[0] ?? null));
 </script>
 
 <template>
-  <section class="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
-    <h2 class="mb-1 text-sm font-bold text-amber-100">アセンダンシー別のスキル使用率</h2>
-    <p class="mb-3 text-[11px] text-white/45">poe.ninja に登録されている、そのアセンダンシーの全キャラの使用率 (上位プレイヤー MOD 一覧の取得と一緒に取れた物)。</p>
-    <div v-if="list.length" class="mb-3 flex flex-wrap gap-1.5">
+  <div class="mt-5 border-t border-white/10 pt-4">
+    <h3 class="mb-1 text-sm font-bold text-amber-100">スキルの使用率<span v-if="asc" class="ml-1.5 font-normal text-white/60">— {{ asc.name }}</span></h3>
+    <p class="mb-3 text-[11px] text-white/45">poe.ninja に登録されている、そのアセンダンシーの全キャラの使用率 (上位プレイヤー MOD 一覧の取得と一緒に取れた物)。アセンダンシーは上の選択と同じ。</p>
+    <div v-if="!klass && list.length" class="mb-3 flex flex-wrap gap-1.5">
       <button
         v-for="a in list"
         :key="a.id"
@@ -32,6 +38,7 @@ const asc = computed(() => list.value.find((a) => a.id === picked.value) ?? list
       </button>
     </div>
     <SkillUsageCard v-if="asc" :ninja="asc.ninjaSkills ?? null" :skills="asc.skills" :sample-size="asc.sampleSize" :ascendancy-name="asc.name" />
+    <p v-else-if="klass && list.length" class="text-[12px] text-white/40">このアセンダンシーのスキル使用率はまだ取れていません (上位プレイヤー MOD 一覧で取ったアセンダンシーだけ出ます)</p>
     <p v-else class="text-[12px] text-white/40">まだ取れていません (上位プレイヤー MOD 一覧の取得が終わると出ます)</p>
-  </section>
+  </div>
 </template>
