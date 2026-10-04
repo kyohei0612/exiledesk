@@ -22,7 +22,7 @@ import { fmtNum } from "./fmt";
 import { usePobCheck, type PasteNote } from "./usePobCheck";
 
 const { targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, input, loading, busy, error, cur, skills, focus, focusKey, load, changeCharges,
-  baseSkills, base, targetCode, changeConflux, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, groups, merged, changeGem, toggleGroup, changeItem, clearItem, restoreItem, changeWeaponSet } =
+  baseSkills, base, targetCode, changeConflux, changeChargeDouble, chargeDouble, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, groups, merged, changeGem, toggleGroup, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 
@@ -222,6 +222,9 @@ const chargesPobMax = computed(() => num("PowerChargesMax"));
  */
 const hasConflux = computed(() => !!cur.value?.groups.some((g) => g.enabled && g.gems.some((x) => x.name === "Elemental Conflux" && x.enabled)));
 const conflux = computed(() => Number(cur.value?.config.input?.elementalConfluxElement ?? 1) || 1);
+/** Heightened Charges (消費したチャージの効果が 20% の確率で 2 倍) が付いている時だけ、平均 / 2 倍 / 等倍 を選べる */
+const hasChargeDouble = computed(() => !!cur.value?.groups.some((g) => g.enabled && g.gems.some((x) => x.name === "Heightened Charges" && x.enabled)));
+const DOUBLE_OPTIONS = [{ v: "avg", ja: "平均", tip: "PoB のまま (20% の確率を平均して 1.2 倍)" }, { v: "double", ja: "2 倍", tip: "2 倍が出た時 (消費したチャージが 2 倍分)" }, { v: "single", ja: "等倍", tip: "2 倍が出なかった時" }] as const;
 const CONFLUX_OPTIONS = [{ v: 1, ja: "平均" }, { v: 2, ja: "雷" }, { v: 3, ja: "冷気" }, { v: 4, ja: "火" }];
 const statChips = computed(() => {
   if (!cur.value) return [];
@@ -375,6 +378,22 @@ const resists = computed(() =>
                 :disabled="busy"
                 @click="changeCharges(n - 1)"
               >{{ n - 1 }}</button>
+            </div>
+          </div>
+          <!-- Heightened Charges の 2 倍 (付いている時だけ) -->
+          <div v-if="hasChargeDouble">
+            <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">チャージ消費の 2 倍</p>
+            <div class="flex gap-0.5">
+              <button
+                v-for="o in DOUBLE_OPTIONS"
+                :key="o.v"
+                type="button"
+                class="h-6 rounded px-2 text-[11px] font-semibold transition-colors"
+                :class="o.v === chargeDouble ? 'bg-[var(--exile-color-accent-focus)] text-[var(--exile-color-bg-canvas)]' : 'bg-white/5 text-[var(--exile-color-text-secondary)] hover:bg-white/15'"
+                :title="o.tip"
+                :disabled="busy"
+                @click="changeChargeDouble(o.v)"
+              >{{ o.ja }}</button>
             </div>
           </div>
           <!-- エレメンタルコンフラックスの属性 (ビルドにある時だけ) -->

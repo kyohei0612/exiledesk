@@ -8,7 +8,7 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, setConflux, summary, summarySkip, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateTree, estimateJewel, estimateAll, setEstimateTree, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateTreeRaw, type EstimateJewelRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
+import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, setConflux, setChargeDouble, summary, summarySkip, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateTree, estimateJewel, estimateAll, setEstimateTree, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateTreeRaw, type EstimateJewelRaw, breakdown as fetchBreakdown } from "../../services/pob-check/api";
 import { buildChain, type Chain } from "../../services/pob-check/breakdown";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
@@ -296,6 +296,8 @@ export function usePobCheck() {
       // 上のバーのスキルは読み込んだ時に確定 (DPS が一番高い物)。変更で順位が入れ替わっても勝手に変わらない
       focusKey.value = skillsOf(s)[0]?.key ?? null;
       loadSeq.value++;
+      // PoB の部品は読み込みのたびに送り直す (2 倍の扱いは平均に戻る)
+      chargeDouble.value = "avg";
       recordHistory("pob-check", opts.keepBase ? "reload" : opts.code ? "reset" : "load", { input: text.slice(0, 200), char: s.char, stats: s.stats });
       loadedFrom.value = parseNinjaUrl(text) ? "poe.ninja" : "PoB コード";
     } catch (e) {
@@ -736,6 +738,14 @@ export function usePobCheck() {
       note: `${gemJa(g?.gems[0]?.name ?? "")} の組 ${enabled ? "オン" : "オフ"}`,
     });
   }
+  /** Heightened Charges の 2 倍 (2026-10-05)。設定なので比べる元もそろえる */
+  const chargeDouble = ref<"avg" | "double" | "single">("avg");
+  const DOUBLE_JA = { avg: "平均", double: "2 倍", single: "等倍" } as const;
+  async function changeChargeDouble(mode: "avg" | "double" | "single"): Promise<void> {
+    await act({ fn: () => setChargeDouble(mode), history: ["charge-double", { mode }], note: `チャージ倍化 ${DOUBLE_JA[mode]}`, fast: true });
+    chargeDouble.value = mode;
+    rebaseIfSettingsOnly();
+  }
   /** エレメンタルコンフラックスの属性 (2026-10-05) */
   const CONFLUX_JA: Record<number, string> = { 1: "平均", 2: "雷", 3: "冷気", 4: "火" };
   async function changeConflux(n: number): Promise<void> {
@@ -747,7 +757,7 @@ export function usePobCheck() {
    * (2026-10-05 オーナー「自分の火力チェックで 0 からチャージ 8 とかに上げてもプラスで表示しないで、ややこしい。自分のだから上がりますやん」)。
    * 装備・ジェム・ツリーを変えた後なら、その差を消さないよう比べる元はそのまま
    */
-  const SETTING_NOTE = /^(パワーチャージ|コンフラックス) /;
+  const SETTING_NOTE = /^(パワーチャージ|コンフラックス|チャージ倍化) /;
   function rebaseIfSettingsOnly(): void {
     if (changes.value.every((c) => SETTING_NOTE.test(c))) setBaseToNow();
   }
@@ -874,5 +884,5 @@ export function usePobCheck() {
   /** 相手のスキルの表 (スキルごとの比較用。自分と同じ決まりで 2 重を除き DPS 0 を落とす) */
   const targetSkills = computed(() => skillsOf(target.value));
 
-  return { chain, chainLoading, chainError, chainFresh, refreshChain, targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, estimatesStale, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeConflux, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { chain, chainLoading, chainError, chainFresh, refreshChain, targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, estimatesStale, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeConflux, changeChargeDouble, chargeDouble, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

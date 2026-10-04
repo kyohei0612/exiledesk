@@ -303,6 +303,8 @@ export const setGem = (i: number, j: number, field: "level" | "quality" | "corru
 export const setGroup = (i: number, enabled: boolean): Promise<unknown> => evalLua(`return PCK.setGroup(${luaNum(i)}, ${enabled})`);
 
 export const setPowerCharges = (n: number): Promise<unknown> => evalLua(`return PCK.setPowerCharges(${luaNum(Math.max(0, Math.floor(n)))})`);
+/** 消費したチャージの効果が 2 倍になる確率 (Heightened Charges) の扱い: 平均 (本家) / 2 倍が出た時 / 出なかった時 */
+export const setChargeDouble = (mode: "avg" | "double" | "single"): Promise<unknown> => evalLua(`return PCK.setChargeDouble(${luaStr(mode)})`);
 /** エレメンタルコンフラックスの属性 (1 = 平均 / 2 = 雷 / 3 = 冷気 / 4 = 火) */
 export const setConflux = (n: number): Promise<unknown> => evalLua(`return PCK.setConflux(${luaNum(Math.floor(n))})`);
 

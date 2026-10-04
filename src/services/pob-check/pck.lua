@@ -771,6 +771,44 @@ function PCK.setConflux(n)
   end)
 end
 
+--- 消費したチャージの効果が 2 倍になる確率 (Heightened Charges「20% の確率で消費の効果が 2 倍」) の扱い
+--- (2026-10-05 オーナーのスパーク: ゲームのピナクルは 2 倍が出た時の 16 個分で 3.72 倍。本家は確率を平均して 1.2 倍にする)。
+--- mode = "avg" (本家のまま) / "double" (2 倍が出た時) / "single" (出なかった時)。本家の設定の後に Multiplier:ConsumedPowerChargeEffect を足し引きする
+PCK.chargeDouble = "avg"
+local function wrapConfigForDouble()
+  local ct = build.configTab
+  if ct.__exiledeskWrapped then return end
+  local orig = ct.BuildModList
+  ct.BuildModList = function(self, ...)
+    local r = orig(self, ...)
+    if PCK.chargeDouble ~= "avg" then
+      -- 確率 c% は平均で c を足す。2 倍 = 100、等倍 = 0 になるよう差を足す
+      local c = 0
+      for _, g in ipairs(build.skillsTab.socketGroupList) do
+        if g.enabled ~= false then
+          for _, gem in ipairs(g.gemList or {}) do
+            local nm = gem.nameSpec or (gem.gemData and gem.gemData.grantedEffect and gem.gemData.grantedEffect.name)
+            if gem.enabled ~= false and nm == "Heightened Charges" then c = 20 end
+          end
+        end
+      end
+      if c > 0 then
+        local want = PCK.chargeDouble == "double" and 100 or 0
+        self.modList:NewMod("Multiplier:ConsumedPowerChargeEffect", "BASE", want - c, "ExileDesk")
+      end
+    end
+    return r
+  end
+  ct.__exiledeskWrapped = true
+end
+function PCK.setChargeDouble(mode)
+  return PCK.mutate(function()
+    wrapConfigForDouble()
+    PCK.chargeDouble = (mode == "double" or mode == "single") and mode or "avg"
+    build.configTab:BuildModList()
+  end)
+end
+
 function PCK.setPowerCharges(n)
   return PCK.mutate(function()
     local ci = build.configTab.input
