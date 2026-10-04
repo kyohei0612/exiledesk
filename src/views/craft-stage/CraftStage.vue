@@ -171,13 +171,14 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
             <span v-else class="opacity-50">押して持つ → アイテムを押す</span>
             <span v-for="o in s.omens.value" :key="o" class="cursor-pointer rounded-full bg-violet-500/20 px-2 text-violet-200" title="押すと外す" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
           </p>
-          <div v-if="heldOmens.length" class="mb-3 rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
+          <CurrencyShelf @hold="hold" />
+          <!-- 棚の下に出す (上に出すと持っているカレンシーの位置がずれる。オーナー 2026-10-04) -->
+          <div v-if="heldOmens.length" class="mt-3 rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
             <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(s.held.value ?? "") }} に掛けられるお告げ (押すと持ったまま掛ける / 外す)</p>
             <div class="flex flex-wrap gap-1.5">
               <ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="s.toggleOmen($event)" />
             </div>
           </div>
-          <CurrencyShelf @hold="hold" />
         </section>
         <section class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
           <p class="mb-2 text-sm font-bold text-amber-100">工程</p>
