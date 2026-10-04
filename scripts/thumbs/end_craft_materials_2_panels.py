@@ -32,7 +32,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from functools import lru_cache  # noqa: E402
 
 from defence_mechanics import H, W, background, fit  # noqa: E402
-from end_craft_materials_2 import PICK_SHOT, bust, glow, icon, zundamon_hold  # noqa: E402
+from end_craft_materials_2 import (  # noqa: E402
+    PICK_SHOT,
+    bust,
+    glow,
+    icon,
+    metan_point,
+    zundamon_hold,
+)
 from PIL import ImageFont  # noqa: E402
 
 # 塗りの太い字 (kyohei 2026-10-04「フォントは塗り幅おおきいね、説明も含め」)
@@ -265,7 +272,16 @@ def variant_f(rng: random.Random) -> Image.Image:
     return panels(rng, W)
 
 
-VARIANTS = {"d": variant_d, "e": variant_e, "f": variant_f}
+def variant_g(rng: random.Random) -> Image.Image:
+    """背景 (f) の真ん中に大きなめたん (kyohei 2026-10-04「めたんを真ん中にでかく」)."""
+    canvas = panels(rng, W)
+    m = fit(bust(metan_point(), 0.6), 760, 760)
+    m = glow(m, (255, 255, 255), 7)  # 白い縁で背景から浮かせる
+    canvas.alpha_composite(m, ((W - m.width) // 2, H - m.height + 30))
+    return canvas
+
+
+VARIANTS = {"d": variant_d, "e": variant_e, "f": variant_f, "g": variant_g}
 
 
 def main() -> None:
