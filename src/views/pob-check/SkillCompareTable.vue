@@ -15,7 +15,9 @@ import type { SkillPair } from "../../services/pob-check/build-diff";
 import GemName from "../../components/decor/GemName.vue";
 import GemIcon from "../../components/decor/GemIcon.vue";
 
-const props = defineProps<{ rows: SkillPair[]; focusKey: string | null }>();
+/** pending = 試算がまだのスキル (「試算中」と出して押せない) */
+const props = defineProps<{ rows: SkillPair[]; focusKey: string | null; pending?: Set<string> }>();
+const isPending = (r: SkillPair): boolean => !!r.mine && !!props.pending?.has(r.mine.key);
 const emit = defineEmits<{ (e: "focus", key: string): void }>();
 const maxDps = computed(() => Math.max(1, ...props.rows.flatMap((r) => [r.mine?.s.game.dps ?? 0, r.target?.game.dps ?? 0])));
 
@@ -43,9 +45,9 @@ const cmpCls = (a: number | undefined, b: number | undefined): string => (a == n
       v-for="r in rows"
       :key="r.mine?.key ?? `t|${r.name}`"
       class="relative grid grid-cols-[minmax(0,1fr)_6rem_6rem_5rem_7rem_6.5rem_6rem] items-center gap-x-3 border-b border-white/5 px-4 py-1.5 last:border-b-0"
-      :class="[r.mine ? 'cursor-pointer hover:bg-white/[0.03]' : 'opacity-80', r.mine && r.mine.key === focusKey ? 'bg-amber-400/[0.06]' : '']"
-      :title="r.mine ? '押すと上のバーにこのスキルを出す' : '相手にだけあるスキル'"
-      @click="r.mine && emit('focus', r.mine.key)"
+      :class="[isPending(r) ? 'cursor-wait opacity-60' : r.mine ? 'cursor-pointer hover:bg-white/[0.03]' : 'opacity-80', r.mine && r.mine.key === focusKey ? 'bg-amber-400/[0.06]' : '']"
+      :title="isPending(r) ? '試算中 (済んだら押せます)' : r.mine ? '押すとこのスキルで 火力の差 / 内訳 を出す' : '相手にだけあるスキル'"
+      @click="r.mine && !isPending(r) && emit('focus', r.mine.key)"
     >
       <!-- 自分 (暖色) と 相手 (空色) の帯を重ねる -->
       <div class="pointer-events-none absolute inset-y-0 left-0 bg-gradient-to-r from-amber-400/[0.10] to-transparent" :style="{ width: `${((r.mine?.s.game.dps ?? 0) / maxDps) * 100}%` }" />
@@ -57,6 +59,7 @@ const cmpCls = (a: number | undefined, b: number | undefined): string => (a == n
         <span v-if="r.target && r.target.level !== r.mine?.s.level" class="rounded bg-sky-500/15 px-1 text-[10px] font-semibold text-sky-200" title="相手のレベル">Lv{{ r.target.level }}</span>
         <span v-if="!r.mine" class="rounded bg-sky-500/15 px-1 text-[10px] font-semibold text-sky-200">相手だけ</span>
         <span v-else-if="!r.target" class="rounded bg-white/10 px-1 text-[10px] font-semibold text-[var(--exile-color-text-tertiary)]">自分だけ</span>
+        <span v-if="isPending(r)" class="flex items-center gap-1 rounded bg-amber-500/15 px-1.5 text-[10px] font-semibold text-amber-200"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-300" />試算中</span>
       </p>
       <p class="relative text-right text-[15px] font-black tabular-nums text-amber-200">{{ r.mine ? fmtNum(r.mine.s.game.dps) : "—" }}</p>
       <p class="relative text-right text-[15px] font-black tabular-nums text-sky-200">{{ r.target ? fmtNum(r.target.game.dps) : "—" }}</p>

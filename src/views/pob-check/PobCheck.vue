@@ -16,7 +16,7 @@ import { pairSkills } from "../../services/pob-check/build-diff";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { targetSkills, candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, input, loading, busy, error, cur, skills, focus, focusKey, load, changeCharges } =
+const { targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, input, loading, busy, error, cur, skills, focus, focusKey, load, changeCharges } =
   usePobCheck();
 
 
@@ -82,18 +82,59 @@ async function onCompare(): Promise<void> {
     if (shared) focusKey.value = shared.key;
   }
   await nextTick();
-  if (candidates.value.length) await runEstimates();
+  // 両方にあるスキルを自分の DPS の高い順に。上から 3 つ試算し終えたら開き、残りは裏で回す
+  // (2026-10-04 オーナー「メイン DPS 順に並べて 3 つ試算終わった時点で UI 出す、他は裏で試算回しておく」)。選び直した時は覚えからすぐ出す
+  const keys = sharedKeys.value;
+  const head = keys.slice(0, 3);
+  if (keys[0]) focusKey.value = keys[0];
+  cancelled.value = false;
+  try {
+    if (candidates.value.length) {
+      for (const [i, k] of head.entries()) {
+        if (cancelled.value) break;
+        const row = skills.value.find((x) => x.key === k);
+        if (!row) continue;
+        compareStep.value = `${i + 1}/${head.length} ${gemJa(row.s.name)}`;
+        await runEstimates(row);
+      }
+    }
+  } finally {
+    compareStep.value = "";
+  }
+  // 中止して上のスキルがまだなら 1 ページ目のまま
+  if (cancelled.value && !showCached(focus.value?.key)) return;
+  showCached(focus.value?.key);
   tab.value = "diff";
   compared.value = true;
+  if (!cancelled.value) void estimateQueue(keys.slice(3));
 }
+/** 比較するの進み具合 (スキル n/3) */
+const compareStep = ref("");
+const cancelled = ref(false);
+function onCancel(): void {
+  cancelled.value = true;
+  cancelEstimates();
+}
+/**
+ * 試算が回っている間、まだ済んでいない両方にあるスキル。表では「試算中」と出して押せない
+ * (2026-10-04 オーナー「スキルのとこに試算まだ終わってなかったら試算中って出してクリックできないように」)。止まっていれば押せる (押すと試算)
+ */
+const pendingKeys = computed(() => (queueActive.value || estimating.value ? new Set(sharedKeys.value.filter((k) => !readyKeys.value.has(k))) : new Set<string>()));
+/** 両方にあるスキル (相手にも同じ名前のスキルがある物)。自分の DPS の高い順 */
+const sharedKeys = computed(() => {
+  const names = new Set(targetSkills.value.map((x) => x.s.name));
+  return skills.value.filter((x) => names.has(x.s.name)).sort((a, b) => b.s.game.dps - a.s.game.dps).map((x) => x.key);
+});
 /** スキルごとの表: 名前で突き合わせて 1 つの表に (決まりは build-diff.ts の pairSkills、両方にある物が先) */
 const skillPairs = computed(() => pairSkills(skills.value, targetSkills.value));
-// 上のバーのスキルを選び直した・取り入れて自分が変わった → 試算し直す (試算のボタンは無い)
-watch(() => focus.value?.key, (k, old) => {
-  if (opened.value && k && old && k !== old && !estimating.value && candidates.value.length) void runEstimates();
+// スキルを選び直した → 試算済みならすぐ出す、まだなら順番待ちの先頭へ。取り入れて自分が変わった → 全部取り直し (覚えは今の自分の物だけ使う)
+watch(() => focus.value?.key, (k) => {
+  if (!opened.value || !k || !candidates.value.length) return;
+  if (!showCached(k)) void estimateQueue([k, ...sharedKeys.value]);
 });
-watch(() => [estimatesStale.value, busy.value, loading.value] as const, ([stale, b, l]) => {
-  if (opened.value && stale && !b && !l && !estimating.value && candidates.value.length) void runEstimates();
+watch(cur, () => {
+  if (!opened.value || !candidates.value.length || !focus.value) return;
+  if (!showCached(focus.value.key)) void estimateQueue([focus.value.key, ...sharedKeys.value]);
 });
 /** 上の帯: 上のバーのスキルの相手の DPS (同じ名前のスキル) */
 const targetFocus = computed(() => {
@@ -171,8 +212,11 @@ const resists = computed(() =>
       </div>
       <!-- 両方そろったら比較する -->
       <div v-if="cur && target && !loading" class="mt-5 flex flex-col items-center gap-2">
-        <button type="button" class="btn btn-primary h-10 px-12 text-base" :disabled="busy || estimating" @click="onCompare">{{ estimating ? "試算中…" : "比較する" }}</button>
-        <p v-if="estimating" class="flex items-center gap-2 text-[12px] text-amber-200/90"><span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />相手の物を自分に入れて計算しています {{ estimateProgress }}</p>
+        <button type="button" class="btn btn-primary h-10 px-12 text-base" :disabled="busy || estimating || !!compareStep" @click="onCompare">{{ estimating || compareStep ? "試算中…" : "比較する" }}</button>
+        <p v-if="compareStep" class="flex items-center gap-2 text-[12px] text-amber-200/90">
+          <span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />DPS の高いスキルから試算しています: スキル {{ compareStep }} ・ {{ estimateProgress }} (3 つ済んだら開いて、残りは裏で)
+          <button type="button" class="btn btn-sm btn-outline" :disabled="cancelled" @click="onCancel">{{ cancelling ? "止めています…" : "中止" }}</button>
+        </p>
       </div>
       <p v-if="error" class="mt-3 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
       <p class="note mt-4 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -215,6 +259,8 @@ const resists = computed(() =>
       <div class="mb-3">
         <div class="flex flex-wrap items-center justify-end gap-x-6 gap-y-2">
           <span v-if="busy" class="mr-auto flex items-center gap-1 text-[11px] text-amber-200/80"><span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />計算中</span>
+          <span v-else-if="estimating && estimatingKey !== focus?.key" class="mr-auto flex items-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]" title="選び直した時にすぐ出せるように、両方にある他のスキルを順に試算しています"><span class="h-2 w-2 animate-pulse rounded-full bg-sky-300" />他のスキルを裏で試算中 {{ gemJa(skills.find((x) => x.key === estimatingKey)?.s.name ?? "") }} {{ estimateProgress }}
+            <button type="button" class="ml-1 rounded border border-white/15 px-1.5 text-[10px] hover:bg-white/10" :disabled="cancelling" @click="onCancel">{{ cancelling ? "止めています…" : "中止" }}</button></span>
           <!-- パワーチャージ -->
           <div>
             <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">パワーチャージ</p>
@@ -260,7 +306,7 @@ const resists = computed(() =>
           スキルごと
           <span class="sec-note">自分と相手のスキルを名前で合わせて並べる (片方だけの物は —)。押すとそのスキルで下の 火力の差 / 内訳 を出す</span>
         </h2>
-        <SkillCompareTable :rows="skillPairs" :focus-key="focus?.key ?? null" @focus="(k) => (focusKey = k)" />
+        <SkillCompareTable :rows="skillPairs" :focus-key="focus?.key ?? null" :pending="pendingKeys" @focus="(k) => (focusKey = k)" />
       </section>
 
       <TabBar :tabs="TABS" :model-value="tab" class="mb-3" aria-label="火力の比較" @update:model-value="tab = $event as TabId" />
@@ -291,12 +337,14 @@ const resists = computed(() =>
           :busy="busy || loading"
           :candidates="candidates"
           :estimates="estimates"
-          :estimating="estimating"
+          :estimating="estimating && estimatingKey === focus?.key"
+          :queued="queueActive"
+          :cancelling="cancelling"
           :estimate-progress="estimateProgress"
-          :estimates-stale="estimatesStale"
           :adopted="adopted"
           @clear="clearTarget"
           @plan="onPlan('target')"
+          @cancel="onCancel"
           @adopt="async (c, done) => done(await adopt(c))"
           @focus="(k) => (focusKey = k)"
         />

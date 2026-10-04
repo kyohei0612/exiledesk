@@ -1260,19 +1260,9 @@ function PCK.estimateAll(i, k, items, add, remove, groups, config, off, attrs, l
       it:PopulateSlots()
       reapplyTree(treeIds)
       out.items, out.statsItems = step()
-      -- 1 つだけ自分の物に戻したら (2026-10-04 オーナー「ノードとの噛み合い方とかで全然違うと思う」): 1 つずつ入れた伸びは揃って効く分が
-      -- 入らないので、全部入れた状態から 1 つずつ戻して、その物が抜けると幾ら下がるかを見る (行の「揃えた時の効き」)
+      -- 装備まで揃えた所で 1 つずつ戻す計算は外した (2026-10-04 オーナー「19/19 になってもしばらく待たされる」)。行の効きは下の
+      -- 全部揃えた中で戻す leaveFull で出す
       out.leave = {}
-      for _, x in ipairs(items or {}) do
-        local sl = it.slots[x.slot]
-        if sl then
-          local cur = sl.selItemId or 0
-          sl:SetSelItemId(before[x.slot] and before[x.slot].id or 0)
-          reapplyTree(treeIds)
-          out.leave[x.slot] = (step())
-          sl:SetSelItemId(cur)
-        end
-      end
       reapplyTree(treeIds)
       -- 相手に無い自分の組は止める (最後に戻す)
       for _, gi in ipairs(off or {}) do

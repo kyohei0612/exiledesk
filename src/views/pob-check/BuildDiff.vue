@@ -47,12 +47,14 @@ const props = defineProps<{
   candidates: AdoptCandidate[];
   estimates: { list: Estimate[]; dps: number; quiet: number; all: EstimateAll | null; treeBased: boolean } | null;
   estimating: boolean;
+  /** 裏の順番待ちが回っている (まだのスキルは「順番待ち」、止まっていれば「未試算」) */
+  queued?: boolean;
+  cancelling?: boolean;
   estimateProgress: string;
   /** 試算した後に自分を変えた = もう一度試算 */
-  estimatesStale: boolean;
   adopted: Set<string>;
 }>();
-const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void; (e: "adopt", c: AdoptCandidate, done: (err: string | null) => void): void; (e: "focus", key: string): void }>();
+const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void; (e: "cancel"): void; (e: "adopt", c: AdoptCandidate, done: (err: string | null) => void): void; (e: "focus", key: string): void }>();
 
 
 // ---------------------------------------------------------------- 取り入れたら
@@ -273,7 +275,10 @@ const STATS = [
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
         <!-- 試算は「比較する」・スキルの選び直しで自動 (2026-10-04 オーナー「試算ボタンいらんよな設計上」)。見出しと進み具合だけ -->
         <h2 class="text-lg font-bold text-amber-100">火力の差</h2>
-        <span v-if="estimating" class="flex items-center gap-1.5 text-[12px] text-amber-200/90"><span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />試算中… {{ estimateProgress }}</span>
+        <span v-if="estimating" class="flex items-center gap-1.5 text-[12px] text-amber-200/90"><span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />試算中… {{ estimateProgress }}
+          <button type="button" class="ml-1 rounded-md border border-white/20 px-2 py-px text-[11px] text-[var(--exile-color-text-secondary)] hover:bg-white/10" :disabled="cancelling" @click="emit('cancel')">{{ cancelling ? "止めています…" : "中止" }}</button></span>
+        <span v-else-if="!estimates && queued" class="flex items-center gap-1.5 text-[12px] text-sky-200/80"><span class="h-2 w-2 animate-pulse rounded-full bg-sky-300" />順番待ち (今のスキルが済んだら次に試算)</span>
+        <span v-else-if="!estimates" class="text-[12px] text-[var(--exile-color-text-tertiary)]">まだ試算していません (中止した時など。スキルを選び直すと試算します)</span>
         <p class="note">
           相手の物を自分に入れたら {{ gemJa(focus.s.name) }} の DPS がどう変わるか (PoB の中で計算するだけで、ビルドは変えません)。
           対象: 装備 {{ candCount.items }} ・ リネージュ {{ candCount.lineage }} ・ ジュエル {{ candCount.jewels }}{{ candCount.tree ? " ・ ツリー" : "" }}

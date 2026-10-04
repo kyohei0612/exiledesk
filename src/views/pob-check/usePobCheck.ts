@@ -103,9 +103,28 @@ export interface Estimate {
  */
 export interface EstimateAll { tree: number; items: number; gems: number; config?: number | null; life: number[]; es: number[]; error?: string }
 /** quiet = 火力が変わらないので出さなかった装備・ジュエルの数、treeBased = 装備等の行はツリーを相手と同じにした上での差 */
-const estimates = shallowRef<{ list: Estimate[]; of: Summary; focusKey: string; dps: number; quiet: number; all: EstimateAll | null; treeBased: boolean } | null>(null);
+type Estimates = { list: Estimate[]; of: Summary; focusKey: string; dps: number; quiet: number; all: EstimateAll | null; treeBased: boolean };
+const estimates = shallowRef<Estimates | null>(null);
 const estimating = ref(false);
 const estimateProgress = ref("");
+/** 今試算しているスキル (裏で他のスキルを回している時に、上の見出しを「試算中」にしないため) */
+const estimatingKey = ref<string | null>(null);
+/**
+ * スキルごとの試算の覚え (2026-10-04 オーナー「スキル変えるごとに試算してんだけど」)。of が今の自分の物だけ使う。
+ * 相手を替えた・リセットで消す (estGen を進めると裏の順番待ちも止まる)
+ */
+const estCache = new Map<string, Estimates>();
+let estGen = 0;
+let estQueue: string[] = [];
+let queueRunning = false;
+/** 裏の順番待ちが回っている (見出しの「順番待ち」/「未試算」の出し分け) */
+const queueActive = ref(false);
+/** 覚えが変わった印 (estCache は reactive でないので、試算済みのスキルの一覧をこれで取り直す) */
+const estVersion = ref(0);
+/** 中止の合図 (2026-10-04 オーナー「途中で停止ボタンも、試算中のとこに中止ボタン」)。次の 1 件の前で止まる */
+let cancelReq = false;
+/** 中止を押してから今の 1 件が終わるまで (PoB の 1 回の計算は途中で止められないので「止めています」と出す) */
+const cancelling = ref(false);
 /** 取り入れた項目の鍵 (表に「取り入れた」の印) */
 const adopted = ref<Set<string>>(new Set());
 /**
@@ -286,6 +305,9 @@ export function usePobCheck() {
         return { s, p, code };
       });
       target.value = s;
+      estCache.clear();
+      estQueue = [];
+      estGen++;
       targetPlan.value = p;
       targetCode.value = code;
       targetFrom.value = parseNinjaUrl(t) ? "poe.ninja" : "PoB コード";
@@ -305,6 +327,9 @@ export function usePobCheck() {
     targetFrom.value = "";
     estimates.value = null;
     adopted.value = new Set();
+    estCache.clear();
+    estQueue = [];
+    estGen++;
   }
 
   // ---------------------------------------------------------------- 火力の内訳 (2026-10-03)
@@ -348,8 +373,64 @@ export function usePobCheck() {
    * 候補を順に PoB で試算する (1 つ 1〜3 秒。装備はユニークだけ行ごとの効きも)。ビルドは変えない。
    * 1 つ失敗しても残りは続け、その行に理由を出す
    */
-  async function runEstimates(): Promise<void> {
-    const f = focus.value;
+  /** 今の自分で試算が済んでいるスキル (表の「試算中」の出し分け) */
+  const readyKeys = computed(() => {
+    void estVersion.value;
+    return new Set([...estCache].filter(([, v]) => v.of === cur.value).map(([k]) => k));
+  });
+  /** そのスキルの試算が今の自分で済んでいるか */
+  const estFresh = (k: string | undefined | null): boolean => !!k && estCache.get(k)?.of === cur.value;
+  /** 上のバーのスキルを替えた時: 覚えがあればすぐ出す (無ければ空にして順番待ちの先頭へ) */
+  function showCached(k: string | undefined | null): boolean {
+    const hit = k ? estCache.get(k) : undefined;
+    if (hit && hit.of === cur.value) {
+      estimates.value = hit;
+      return true;
+    }
+    if (estimates.value?.focusKey !== k) estimates.value = null;
+    return false;
+  }
+  /**
+   * 裏の順番待ち: keys のスキルを 1 つずつ試算して覚える。上のバーのスキルがまだなら先に。取り入れ等で計算中の間は待つ
+   * (2026-10-04 オーナー「スキル変えるごとに試算してんの」→ 比較した時に両方にあるスキルを全部回しておく)
+   */
+  async function estimateQueue(keys: string[]): Promise<void> {
+    for (const k of keys) if (!estQueue.includes(k)) estQueue.push(k);
+    if (queueRunning) return;
+    queueRunning = true;
+    queueActive.value = true;
+    const gen = estGen;
+    try {
+      for (;;) {
+        if (gen !== estGen) return;
+        estQueue = estQueue.filter((k) => !estFresh(k) && skills.value.some((x) => x.key === k));
+        if (!estQueue.length) return;
+        if (busy.value || loading.value || estimating.value) {
+          await new Promise((r) => setTimeout(r, 300));
+          continue;
+        }
+        const fk = focus.value?.key;
+        const k = fk && estQueue.includes(fk) ? fk : estQueue[0]!;
+        const row = skills.value.find((x) => x.key === k)!;
+        await runEstimates(row);
+        // 取れなかった物は外す (回り続けないように)
+        if (!estFresh(k)) estQueue = estQueue.filter((x) => x !== k);
+      }
+    } finally {
+      queueRunning = false;
+      queueActive.value = false;
+    }
+  }
+  /** 試算の中止: 今の試算は次の 1 件の前で止め (覚えには残さない)、裏の順番待ちも空にする */
+  function cancelEstimates(): void {
+    cancelReq = true;
+    if (estimating.value) cancelling.value = true;
+    estQueue = [];
+    estGen++;
+  }
+
+  async function runEstimates(row?: SkillRow): Promise<void> {
+    const f = row ?? focus.value;
     const mine = cur.value;
     // ツリーを先に (今の自分が基準)。残り (装備・ジュエル・リネージュ) は「ツリーを相手と同じにした上で」を基準にする
     // (2026-10-04 オーナー「基準はノード類は真似前提にしないと乗算効かんからな」「そら装備だけ真似してもね」)
@@ -357,6 +438,8 @@ export function usePobCheck() {
     const tgt = target.value;
     if (!f || !mine || !tgt || !list.length || estimating.value || busy.value || loading.value) return;
     estimating.value = true;
+    estimatingKey.value = f.key;
+    cancelReq = false;
     const out: Estimate[] = [];
     const plan = copyAllPlan(mine, tgt, treeNodes.value);
     const total = list.length + 1;
@@ -364,6 +447,7 @@ export function usePobCheck() {
     let all: EstimateAll | null = null;
     try {
       for (const [idx, c] of list.entries()) {
+        if (cancelReq) return;
         estimateProgress.value = `${idx + 1}/${total}`;
         if (c.kind !== "tree" && !treeBased && (plan.tree.add.length || plan.tree.remove.length)) {
           await run(() => setEstimateTree({ ...plan.tree, attr: tgt.tree.attr ?? [] }));
@@ -407,6 +491,7 @@ export function usePobCheck() {
       }
       // 全部まとめて真似したら (ツリー → + 装備・ジュエル → + ジェム)。1 つずつの数字は掛け算で伸びる分・揃って初めて効く分が入らないので、
       // 足しても相手との差にならない (オーナー 2026-10-04「全部足したら 207% のはずが 30%」)
+      if (cancelReq) return;
       estimateProgress.value = `${total}/${total}`;
       if (treeBased) {
         await run(() => setEstimateTree(null));
@@ -457,7 +542,10 @@ export function usePobCheck() {
       const quiet = (e: Estimate): boolean => !e.error && (e.c.kind === "item" || e.c.kind === "jewel") && Math.abs((e.together ?? e.ratio ?? (base > 0 ? e.dps / base : 1)) - 1) < 0.005;
       const shown = out.filter((e) => !quiet(e));
       shown.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || b.dps - a.dps);
-      estimates.value = { list: shown, of: mine, focusKey: f.key, dps: base, quiet: out.length - shown.length, all, treeBased: !!(plan.tree.add.length || plan.tree.remove.length) };
+      const done: Estimates = { list: shown, of: mine, focusKey: f.key, dps: base, quiet: out.length - shown.length, all, treeBased: !!(plan.tree.add.length || plan.tree.remove.length) };
+      estCache.set(f.key, done);
+      estVersion.value++;
+      if (focus.value?.key === f.key) estimates.value = done;
       recordHistory("pob-check", "adopt-estimate", {
         skill: f.s.name,
         dps: f.s.game.dps,
@@ -467,6 +555,8 @@ export function usePobCheck() {
       // 試算の基準のツリーは必ず外す (他の計算に混ざらないように)
       if (treeBased) await run(() => setEstimateTree(null)).catch(() => undefined);
       estimating.value = false;
+      estimatingKey.value = null;
+      cancelling.value = false;
       estimateProgress.value = "";
     }
   }
@@ -724,5 +814,5 @@ export function usePobCheck() {
   /** 相手のスキルの表 (スキルごとの比較用。自分と同じ決まりで 2 重を除き DPS 0 を落とす) */
   const targetSkills = computed(() => skillsOf(target.value));
 
-  return { chain, chainLoading, chainError, chainFresh, refreshChain, targetSkills, candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { chain, chainLoading, chainError, chainFresh, refreshChain, targetSkills, candidates, estimates, estimating, estimatingKey, estimateProgress, estimatesStale, adopted, runEstimates, estimateQueue, showCached, cancelEstimates, queueActive, readyKeys, cancelling, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }
