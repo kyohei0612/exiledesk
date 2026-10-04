@@ -103,7 +103,16 @@ describe("build-diff (相手とのジェムの差)", () => {
 
   it("差の無い組は出さない", () => {
     const g = [gem("Spark"), gem("Pierce III")];
-    expect(diffGems(sum([group(1, g)]), sum([group(1, g)]))).toEqual({ groups: [], onlyMine: 0 });
+    const d = diffGems(sum([group(1, g)]), sum([group(1, g)]));
+    expect(d.groups).toEqual([]);
+    expect(d.onlyMine).toBe(0);
+    // 全部まとめて真似: 差が無くても相手の組の中身で合わせる
+    expect(d.pairs.map((x) => x.gi)).toEqual([1]);
+  });
+  it("全部まとめて真似: 相手に無い自分の組は止める (off)", () => {
+    const d = diffGems(sum([group(1, [gem("Spark")]), group(2, [gem("Arc")])]), sum([group(1, [gem("Spark")]), group(2, [gem("Frostbomb")])]));
+    expect(d.onlyMineGi).toEqual([2]);
+    expect(d.pairs.map((x) => x.gi)).toEqual([1, 0]);
   });
 });
 

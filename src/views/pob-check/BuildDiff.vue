@@ -80,14 +80,16 @@ const allSteps = computed(() => {
     { label: "ツリーを相手と同じに", dps: a.tree },
     { label: "＋ 装備・ジュエル", dps: a.items },
     { label: "＋ ジェム (Lv・サポート)", dps: a.gems },
+    ...(a.config != null ? [{ label: "＋ 設定 (チャージ・バフ等)", dps: a.config }] : []),
   ];
 });
 /** 全部真似した後に残る相手との差 (%) */
 const restGap = computed(() => {
   const a = props.estimates?.all;
   const t = targetSkill.value;
-  if (!a || !t || a.gems <= 0) return "";
-  const d = (t.game.dps / a.gems - 1) * 100;
+  const last = a?.config ?? a?.gems ?? 0;
+  if (!a || !t || last <= 0) return "";
+  const d = (t.game.dps / last - 1) * 100;
   return `${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}%`;
 });
 /** 試算する前の数 (見出しの説明) */
@@ -444,7 +446,7 @@ const STATS = [
           </template>
         </div>
         <p v-if="!estimates.all.error && targetSkill && targetSkill.name === focus.s.name" class="note mt-2">
-          全部真似しても相手と {{ restGap }} 違う分は、PoB の設定 (チャージ・敵の状態など) やスキルの選び方の違いです。
+          全部真似しても相手と {{ restGap }} 違う分は、真似できない所の差です<template v-if="mine.char.level !== target.char.level"> (キャラのレベル 自分 {{ mine.char.level }} ／ 相手 {{ target.char.level }}。レベルでライフ・マナ・属性が変わる)</template>。ツリーは属性ノードの選び方まで相手と同じにしています。DPS はゲーム内の表記と同じ物差しで、仮想敵 (敵の設定) は見ていません。
         </p>
       </div>
       <p v-if="estimates" class="note mt-2">

@@ -90,7 +90,7 @@ export interface Estimate {
 /**
  * 全部まとめて真似した時の段ごとの DPS (上のバーのスキル、自分の行と同じ物差し)。life / es = [今, ツリー, + 装備, + ジェム]
  */
-export interface EstimateAll { tree: number; items: number; gems: number; life: number[]; es: number[]; error?: string }
+export interface EstimateAll { tree: number; items: number; gems: number; config?: number | null; life: number[]; es: number[]; error?: string }
 /** quiet = 火力が変わらないので出さなかった装備・ジュエルの数、treeBased = 装備等の行はツリーを相手と同じにした上での差 */
 const estimates = shallowRef<{ list: Estimate[]; of: Summary; focusKey: string; dps: number; quiet: number; all: EstimateAll | null; treeBased: boolean } | null>(null);
 const estimating = ref(false);
@@ -355,7 +355,7 @@ export function usePobCheck() {
       for (const [idx, c] of list.entries()) {
         estimateProgress.value = `${idx + 1}/${total}`;
         if (c.kind !== "tree" && !treeBased && (plan.tree.add.length || plan.tree.remove.length)) {
-          await run(() => setEstimateTree(plan.tree));
+          await run(() => setEstimateTree({ ...plan.tree, attr: tgt.tree.attr ?? [] }));
           treeBased = true;
         }
         try {
@@ -406,11 +406,17 @@ export function usePobCheck() {
           items: plan.items,
           tree: plan.tree,
           groups: plan.groups.map((g) => ({ gi: g.gi, gems: g.gems.map((x) => ({ name: x.name, gemId: x.gemId, level: x.level, quality: x.quality, corrupt: x.corrupt, enabled: x.enabled })) })),
+          off: plan.off,
+          attr: tgt.tree.attr ?? [],
+          config: tgt.config.input ?? null,
         }));
         const k = r.cur > 0 ? f.s.game.dps / r.cur : 1;
-        all = { tree: r.tree * k, items: r.items * k, gems: r.gems * k, life: [r.stats.Life, r.statsTree.Life, r.statsItems.Life, r.statsGems.Life], es: [r.stats.EnergyShield, r.statsTree.EnergyShield, r.statsItems.EnergyShield, r.statsGems.EnergyShield] };
+        all = { tree: r.tree * k, items: r.items * k, gems: r.gems * k, config: r.config != null ? r.config * k : null, life: [r.stats.Life, r.statsTree.Life, r.statsItems.Life, r.statsGems.Life], es: [r.stats.EnergyShield, r.statsTree.EnergyShield, r.statsItems.EnergyShield, r.statsGems.EnergyShield] };
+        // ツリーの行は計算の上書きで出した物なので、本当に付け替えた「ツリーを相手と同じに」の段の数字にそろえる (属性ノード・ジュエルの範囲込み)
+        const treeRow = out.find((e) => e.c.kind === "tree" && !e.error);
+        if (treeRow && r.cur > 0) treeRow.dps = all.tree;
       } catch (err) {
-        all = { tree: 0, items: 0, gems: 0, life: [], es: [], error: msg(err) };
+        all = { tree: 0, items: 0, gems: 0, config: null, life: [], es: [], error: msg(err) };
       }
       // 火力に関係ない装備・ジュエル (DPS の変化 0.5% 未満) は出さない (2026-10-04 オーナー「火力に関係ない装備は表示しなくていい、ややこしい」)。
       // ツリーとリネージュは出す。並びは DPS の変化が大きい順 (失敗は最後)

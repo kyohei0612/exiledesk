@@ -135,7 +135,13 @@ export function diffGemGroup(mine: GemView[], target: GemView[], supportsOnly = 
  * 中のジェムの名前が一番多く重なる組と合わせる (2026-10-03: 順で合わせると 自分の CoEA (アーク×2) に相手の CoEA (ライトニングワープ) が
  * 当たり、取り入れの試算で主スキルが消えて −86% に見えた)。onlyMine = 相手に無く自分だけの組の数
  */
-export function diffGems(mine: Summary, target: Summary): { groups: GemGroupDiff[]; onlyMine: number } {
+export function diffGems(mine: Summary, target: Summary): {
+  groups: GemGroupDiff[];
+  onlyMine: number;
+  /** 相手のジェムの組 (装備が与える物以外) ごとに合わせた自分の組 (0 = 無い) と、相手に無い自分の組の番号。全部まとめて真似で使う */
+  pairs: Array<{ gi: number; gems: GemView[] }>;
+  onlyMineGi: number[];
+} {
   const own = new Map<string, Array<{ g: GroupView; gems: GemView[]; fromItem: boolean }>>();
   // 鍵 = 装備が与える組か + アクティブ名 (装備が与えるブリンクと、ジェムのブリンクは別物として合わせる)
   const keyOf = (x: { active: GemView; fromItem: boolean }): string => `${x.fromItem ? "item" : "gem"}|${x.active.name}`;
@@ -145,6 +151,7 @@ export function diffGems(mine: Summary, target: Summary): { groups: GemGroupDiff
     return b.filter((x) => names.has(x.name)).length;
   };
   const groups: GemGroupDiff[] = [];
+  const pairs: Array<{ gi: number; gems: GemView[] }> = [];
   for (const t of liveGroups(target)) {
     const list = own.get(keyOf(t));
     let m: { g: GroupView; gems: GemView[]; fromItem: boolean } | undefined;
@@ -152,6 +159,7 @@ export function diffGems(mine: Summary, target: Summary): { groups: GemGroupDiff
       m = list.reduce((best, x) => (overlap(x.gems, t.gems) > overlap(best.gems, t.gems) ? x : best));
       list.splice(list.indexOf(m), 1);
     }
+    if (!t.fromItem && !m?.fromItem) pairs.push({ gi: m ? m.g.i : 0, gems: t.gems });
     if (!m) {
       // 装備が与える組は「自分の装備にそのスキルが無い」= 装備の差で出るので、ここでは組ごとには出さない
       if (t.fromItem) continue;
@@ -162,7 +170,8 @@ export function diffGems(mine: Summary, target: Summary): { groups: GemGroupDiff
     if (lines.length) groups.push({ kind: "changes", active: t.active, lines, gi: m.g.i, gems: t.gems, fromItem: t.fromItem || m.fromItem });
   }
   const onlyMine = [...own.values()].reduce((n, arr) => n + arr.length, 0);
-  return { groups, onlyMine };
+  const onlyMineGi = [...own.values()].flat().filter((x) => !x.fromItem).map((x) => x.g.i);
+  return { groups, onlyMine, pairs, onlyMineGi };
 }
 
 // ---------------------------------------------------------------- 全体
@@ -271,7 +280,11 @@ export type AdoptCandidate =
  * ツリーを丸ごと相手の物にする差 (add = 相手にあって自分に無い、remove = 自分にあって相手に無い)。クラスの始点は除く。
  * アセンダンシーのノードは同じアセンダンシーの時だけ入れる (2026-10-04: 除いていたので、同じ Stormweaver 同士でも差に入らず「全部足しても合わない」原因の 1 つだった)
  */
-export function treeDiff(mine: Summary, target: Summary, treeNodes: readonly TreeNode[]): { add: number[]; remove: number[] } {
+/**
+ * keepGranted = 自分の装備が与えているノード (メガロマニアック・アノイント等) も足す側に入れる。全部まとめて真似は装備も相手の物に替えるので、
+ * 入れないと替えた後にそのノードが消える (2026-10-04: 相手のタイムロストジュエルの範囲のノードが 1 つ欠けて効果が半分になっていた)
+ */
+export function treeDiff(mine: Summary, target: Summary, treeNodes: readonly TreeNode[], keepGranted = false): { add: number[]; remove: number[] } {
   const byId = new Map(treeNodes.map((x) => [x.id, x]));
   const sameAsc = !!mine.char.ascendancy && mine.char.ascendancy === target.char.ascendancy;
   const plain = (id: number): boolean => {
@@ -281,7 +294,7 @@ export function treeDiff(mine: Summary, target: Summary, treeNodes: readonly Tre
   const mineAlloc = new Set(mine.tree.alloc);
   const targetAlloc = new Set(target.tree.alloc);
   return {
-    add: target.tree.alloc.filter((id) => !mineAlloc.has(id) && !mine.tree.granted.includes(id) && plain(id)),
+    add: target.tree.alloc.filter((id) => !mineAlloc.has(id) && (keepGranted || !mine.tree.granted.includes(id)) && plain(id)),
     remove: mine.tree.alloc.filter((id) => !targetAlloc.has(id) && plain(id)),
   };
 }
@@ -296,6 +309,7 @@ export function copyAllPlan(mine: Summary, target: Summary, treeNodes: readonly 
   items: Array<{ slot: string; raw: string | null }>;
   tree: { add: number[]; remove: number[] };
   groups: Array<{ gi: number; gems: GemView[] }>;
+  off: number[];
 } {
   const mineBy = new Map(mine.items.filter((x) => x.item).map((x) => [x.slot, x.item!]));
   const targetBy = new Map(target.items.filter((x) => x.item).map((x) => [x.slot, x.item!]));
@@ -305,8 +319,14 @@ export function copyAllPlan(mine: Summary, target: Summary, treeNodes: readonly 
     const b = targetBy.get(slot)?.raw ?? null;
     if (a !== b) items.push({ slot, raw: b });
   }
-  const groups = diffGems(mine, target).groups.filter((g) => !g.fromItem).map((g) => ({ gi: g.kind === "changes" ? g.gi : 0, gems: g.gems }));
-  return { items, tree: treeDiff(mine, target, treeNodes), groups };
+  // ジェムは相手の組の中身そのままに (自分だけ多いサポートも外す)。相手に無い自分の組は止める (off。2026-10-04: 自分だけのオーラ等が
+  // 残って精神とマナの予約が相手と違い、丸写ししても +7% 違った)。装備が与える組は差のある時だけ (アクティブは装備の物)
+  const d = diffGems(mine, target);
+  const groups = [
+    ...d.pairs,
+    ...d.groups.filter((g): g is Extract<GemGroupDiff, { kind: "changes" }> => g.kind === "changes" && g.fromItem).map((g) => ({ gi: g.gi, gems: g.gems })),
+  ];
+  return { items, tree: treeDiff(mine, target, treeNodes, true), groups, off: d.onlyMineGi };
 }
 
 export function adoptCandidates(mine: Summary, target: Summary, treeNodes: readonly TreeNode[]): AdoptCandidate[] {
