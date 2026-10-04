@@ -33,6 +33,10 @@ export interface StageMod {
   tags?: string[];
   fractured?: boolean;
   desecrated?: boolean;
+  /** 特殊 MOD のルーン (コルの狩りなど) の MOD = そのルーンの id。重みは公開データに無く仮定 (要望 ㉙) */
+  rune?: string;
+  /** アルダーのルーンで属性を変えた MOD = 変える前の文 (要望 ㉙) */
+  convertedFrom?: string;
   /** エッセンスの MOD (普通・パーフェクトとも。1 つのアイテムに 1 つまで、アストリッドの創造性で 2 つ) */
   crafted?: boolean;
   /** 深淵の王の印 (深淵のエッセンス、crafted も立つ)。次の骨はこれを置き換え、段の下限 MOD レベル 33 (仮、2026-10-03) */
@@ -120,5 +124,7 @@ export interface StageApply {
    * オーグメント (ルーン) をはめた手 (2026-10-03): どのソケット (1 から) に何を、置き換えた時は外れた物と、その行き先
    * ("destroyed" = 壊れて戻らない。src/services/augment-rules.ts の決まり)
    */
-  augment?: { socket: number; put: StageAugment; replaced: StageAugment | null; replacedGoes: "destroyed" | null; /** 傑作のルーンで 1 段上げた (replaced = 上げる前) */ upgraded?: boolean };
+  augment?: { socket: number; put: StageAugment; replaced: StageAugment | null; replacedGoes: "destroyed" | null; /** 傑作のルーンで 1 段上げた (replaced = 上げる前) */ upgraded?: boolean;
+    /** アルダーのルーン (要望 ㉙): 変えた MOD (from = 前、to = 後) と、変えた先の属性 */
+    converted?: { element: string; mods: Array<{ from: StageMod; to: StageMod }> } };
 }

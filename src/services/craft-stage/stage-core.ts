@@ -5,7 +5,8 @@
  * [[apply-currency.ts]] (オーブ) / [[apply-essence.ts]] / [[apply-desecrate.ts]] / [[apply-other.ts]] に置く。
  * 候補の規則は計算機 (sim-route-helpers.ts の roll) と同じ: 付いている系統を除き、アイテムレベル以下・段の下限以上の段の重みで引く。
  */
-import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import { runeIdByName, withRunes } from "../../vendor/poe2htc/engine/runes";
 import { familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfMod } from "../htc/mod-text";
@@ -20,16 +21,30 @@ export const SIDES: StageSide[] = ["prefix", "suffix"];
 const MAGIC_LIMIT = 1;
 export const SIDE_JA = { prefix: "プレフィックス", suffix: "サフィックス" } as const;
 
+/**
+ * はまっているルーンのうち、クラフトの決まりを変える物 (計算機のエンジンの id: serles-triumph / kolrs-hunt …)。
+ * 名前の ' と ’ の違いはエンジンの runeIdByName が吸収する
+ */
+export const stageRuneIds = (item: StageItem): string[] =>
+  (item.augments ?? []).flatMap((a) => { const id = runeIdByName(a.en); return id ? [id] : []; });
+/**
+ * ルーン込みのベース (POE2Tube 要望 ㉙ 2026-10-04): 計算機と同じ withRunes で、セールの凱旋はサフィックスの枠 +1、
+ * 特殊 MOD のルーン (コルの狩りなど) はそのタグの MOD を普通の置き場 (高貴・カオス・エッセンス・骨の抽選と「付く MOD」) に混ぜる
+ */
+export function effectiveCls(item: StageItem): ItemBase {
+  const ids = stageRuneIds(item);
+  return ids.length ? withRunes(item.cls, ids) : item.cls;
+}
 /** 側の枠 (マジックは 1 / 1) */
 export function limitOf(item: StageItem, side: StageSide): number {
   if (item.rarity === "magic") return MAGIC_LIMIT;
   if (item.rarity === "normal") return 0;
-  const lim = item.cls.limits ?? DEFAULT_LIMITS;
+  const lim = effectiveCls(item).limits ?? DEFAULT_LIMITS;
   return side === "prefix" ? lim.prefixes : lim.suffixes;
 }
 /** レアにした時の枠 (マジック → レアになる手で見る) */
 export function rareLimitOf(item: StageItem, side: StageSide): number {
-  const lim = item.cls.limits ?? DEFAULT_LIMITS;
+  const lim = effectiveCls(item).limits ?? DEFAULT_LIMITS;
   return side === "prefix" ? lim.prefixes : lim.suffixes;
 }
 export const listOf = (item: StageItem, side: StageSide): StageMod[] => (side === "prefix" ? item.prefixes : item.suffixes);
@@ -158,6 +173,7 @@ export function makeStageMod(mod: Mod, side: StageSide, tierIndex: number, rng: 
     ranges: [],
     textJa: "",
     textEn: "",
+    ...(mod.rune ? { rune: mod.rune } : {}),
   }, mod, rng);
 }
 /** 説明文のまま入っている MOD の、付いた 1 つの英語文 (系統 → 文)。日本語は mod-text-ja の同じ文から */
@@ -222,7 +238,7 @@ export function candidates(data: PatchData, item: StageItem, sides: readonly Sta
   const taken = takenFamilies(data, item, o.except);
   const out: Candidate[] = [];
   for (const side of sides) {
-    const ids = o.pools ? o.pools(side) : item.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"];
+    const ids = o.pools ? o.pools(side) : effectiveCls(item).pools.normal[side === "prefix" ? "prefixes" : "suffixes"];
     for (const id of ids) {
       const mod = data.mods.get(id);
       if (!mod || familyBlocked(mod, taken)) continue;

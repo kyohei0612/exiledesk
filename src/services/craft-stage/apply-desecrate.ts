@@ -12,7 +12,7 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { ANCIENT_BONE_FLOOR, bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
-import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, withMod, without, type Candidate } from "./stage-core";
+import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, withMod, without, type Candidate, effectiveCls } from "./stage-core";
 import { ABYSS_MARK_FLOOR } from "../htc/omens";
 import { FACTION_TAG } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
@@ -23,7 +23,8 @@ const OFFERS = 3;
 function poolsFor(item: StageItem, altered: boolean, plain = false) {
   return (side: StageSide): string[] => {
     const k = side === "prefix" ? "prefixes" : "suffixes";
-    const p = item.cls.pools;
+    // 普通の置き場は特殊 MOD のルーン込み (要望 ㉙)
+    const p = { ...item.cls.pools, normal: effectiveCls(item).pools.normal };
     if (plain) return [...p.normal[k]];
     return [...p.normal[k], ...p.desecrated[k], ...(altered ? p.otherworldly?.[k] ?? [] : [])];
   };

@@ -75,6 +75,9 @@ function look(m: StageMod): { cls: string; tag: string } {
   if (m.fractured) return { cls: "text-mod-fractured", tag: "フラクチャー" };
   if (m.desecrated) return { cls: "text-mod-desecrated", tag: "冒涜" };
   if (m.crafted) return { cls: "text-mod-crafted", tag: "エッセンス" };
+  // 要望 ㉙: 特殊 MOD のルーンの MOD (重みは仮定) / アルダーのルーンで属性を変えた MOD
+  if (m.rune) return { cls: "text-rarity-magic", tag: "ルーン (重みは仮定)" };
+  if (m.convertedFrom) return { cls: "text-rarity-magic", tag: "アルダー" };
   return { cls: "text-rarity-magic", tag: "" };
 }
 /** ユニークの効果 (poe2db のページから。値はユニークごとに決まった 1 つ。ページの無いユニークは空) */

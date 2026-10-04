@@ -57,6 +57,9 @@ export function outMod(m: StageMod): OutMod {
     ...(m.desecrated ? { desecrated: true } : {}),
     ...(m.crafted ? { crafted: true } : {}),
     ...(m.unrevealed ? ({ unrevealed: true } as object) : {}),
+    // 特殊 MOD のルーンの MOD (重みは公開データに無く仮定) / アルダーのルーンで属性を変えた MOD (要望 ㉙)
+    ...(m.rune ? ({ rune: m.rune, assumed_weight: true } as object) : {}),
+    ...(m.convertedFrom ? ({ converted_from: m.convertedFrom } as object) : {}),
     // 足したキー (POE2Tube は無視してよい): 段の添字と接頭 / 接尾語
     ...({ tier_index: m.tierIndex, affix: m.affix } as object),
   } as OutMod;
@@ -161,7 +164,9 @@ export function playStep(
     ...(revealOut(data, item, currency, o.seed, r.applied)),
     ...(r.augment ? ({ augment_change: { socket: r.augment.socket, put: outAug(r.augment.put), replaced: r.augment.replaced ? outAug(r.augment.replaced) : null, replaced_goes: r.augment.replacedGoes,
       // 傑作のルーン: upgraded = { from: 上げる前, to: 上げた後 } (POE2Tube 要望 ㉘)
-      ...(r.augment.upgraded ? { upgraded: { from: outAug(r.augment.replaced!), to: outAug(r.augment.put) } } : {}) } } as object) : {}),
+      ...(r.augment.upgraded ? { upgraded: { from: outAug(r.augment.replaced!), to: outAug(r.augment.put) } } : {}),
+      // アルダーのルーン: converted = { element, mods: [{ from, to }] } (要望 ㉙)
+      ...(r.augment.converted ? { converted: { element: r.augment.converted.element, mods: r.augment.converted.mods.map((x) => ({ from: outMod(x.from), to: outMod(x.to) })) } } : {}) } } as object) : {}),
   };
   return { out, before: item, after: r.item, added: r.added, removed: r.removed };
 }

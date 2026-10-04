@@ -22,8 +22,10 @@
 import runesRaw from "./stage-runes.json";
 import basesPob from "./stage-bases-pob.json";
 import { ARMOUR, CASTER, MARTIAL } from "./apply-act";
-import type { StageApply, StageItem, StageAugment } from "./types";
-import { skip } from "./stage-core";
+import type { StageApply, StageItem, StageAugment, StageMod } from "./types";
+import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import { RUNE_BY_ID, runeIdByName } from "../../vendor/poe2htc/engine/runes";
+import { allMods, makeStageMod, replaced, skip, withValues } from "./stage-core";
 import { augmentRule, limitBlock, placeBlock, replaceBlock } from "../augment-rules";
 
 export interface RuneEffect { cat: string; catJa: string; stats: Array<{ id: string; value: number }>; ja: string; en: string }
@@ -180,7 +182,63 @@ function applyMasterwork(item: StageItem, socket: number | null): StageApply {
   };
 }
 
-export function applyRune(item: StageItem, key: string): StageApply {
+/** アルダーのルーンの属性 (エンジンの表の element / eats) の英語の言葉と日本語 */
+const EL_EN: Record<string, string> = { fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos" };
+export const EL_JA: Record<string, string> = { fire: "火", cold: "冷気", lightning: "雷", chaos: "混沌" };
+/**
+ * アルダーの情熱 / 息吹 / 怒り / 裏切り (POE2Tube 要望 ㉙ 2026-10-04): 差した瞬間に、付いている「食う属性」の MOD を同じ段の
+ * 対応する属性の MOD に置き換える (説明文「アイテム上の全ての冷気および雷モッドを同等の火モッドに変化させる」)。
+ * 対応の決め方はサーバー側で公開されていないので仮定: 同じベースの置き場の、id (無ければ文面) の属性の言葉だけを替えた MOD
+ * (Bows/LocalColdDamage → Bows/LocalFireDamage、Wands/DamageGainedAsCold → DamageGainedAsFire)。段は上から数えて同じ順位、
+ * 数値は段の範囲の中の同じ位置。対応する MOD が無い物は変えない。後から付けた MOD は変えない (差した時だけ)
+ */
+function aldurConvert(data: PatchData, item: StageItem, element: string, eats: readonly string[]): { item: StageItem; mods: Array<{ from: StageMod; to: StageMod }> } {
+  const words = eats.map((e) => EL_EN[e]).filter((w): w is string => !!w);
+  const to = EL_EN[element]!;
+  const hit = new RegExp(`(${words.join("|")})`);
+  const swap = (x: string) => x.replace(new RegExp(`(${words.join("|")})`, "g"), to);
+  const byId = data.mods;
+  let byText: Map<string, Mod> | null = null;
+  const mods: Array<{ from: StageMod; to: StageMod }> = [];
+  let out = item;
+  for (const m of allMods(item)) {
+    if (m.unrevealed) continue;
+    const md = byId.get(m.modId);
+    if (!md || !(hit.test(md.id) || hit.test(md.text ?? ""))) continue;
+    let target = hit.test(md.id) ? byId.get(swap(md.id)) : undefined;
+    if (!target && md.text) {
+      if (!byText) {
+        byText = new Map();
+        for (const x of byId.values()) if (x.text) byText.set(`${x.id.split("/")[0]}|${x.source}|${x.text}`, x);
+      }
+      target = byText.get(`${md.id.split("/")[0]}|${md.source}|${swap(md.text)}`);
+    }
+    if (!target || target.id === md.id || !target.tiers.length) continue;
+    const rank = md.tiers.length - m.tierIndex;
+    const idx = Math.max(0, target.tiers.length - rank);
+    const fresh = makeStageMod(target, m.side, idx, () => 0.5);
+    // 数値は段の範囲の中の同じ位置 (下限 0 〜 上限 1)
+    const fixed = fresh.ranges.map((r, i) => {
+      const lo2 = Math.min(r[0]!, r[1]!), hi2 = Math.max(r[0]!, r[1]!);
+      const or = m.ranges[i], v = m.values[i];
+      const f = or && v != null && or[1] !== or[0] ? (v - Math.min(or[0]!, or[1]!)) / Math.abs(or[1]! - or[0]!) : 0.5;
+      const x = lo2 + Math.min(1, Math.max(0, f)) * (hi2 - lo2);
+      return Number.isInteger(lo2) && Number.isInteger(hi2) ? Math.round(x) : Math.round(x * 100) / 100;
+    });
+    const next: StageMod = {
+      ...withValues(fresh, target, () => 0.5, fixed),
+      ...(m.fractured ? { fractured: true } : {}),
+      ...(m.desecrated ? { desecrated: true } : {}),
+      ...(m.crafted ? { crafted: true } : {}),
+      convertedFrom: m.textJa,
+    };
+    out = replaced(out, m, next);
+    mods.push({ from: m, to: next });
+  }
+  return { item: out, mods };
+}
+
+export function applyRune(item: StageItem, key: string, data?: PatchData): StageApply {
   const p = parseRuneKey(key)!;
   if (p.en === "Masterwork Rune") return applyMasterwork(item, p.socket);
   const rune = runeOf(key)!;
@@ -213,6 +271,19 @@ export function applyRune(item: StageItem, key: string): StageApply {
   // 手順のキーは @n を外して持つ (同じルーンなら同じキー。絵・相場もこれで引く)
   const aug: StageAugment = { key: `${RUNE_PREFIX}${p.en}`, en: p.en, ja: rune.ja, cat: eff.catJa, textJa: eff.ja, textEn: eff.en, stats: eff.stats };
   const augments = old ? now.map((a, i) => (i === at ? aug : a)) : [...now, aug];
+  // アルダーのルーン: 差した瞬間に属性を変える。変える物が無ければ打てない (ClientStrings 9272 の文)
+  const conv = RUNE_BY_ID.get(runeIdByName(p.en) ?? "")?.effect;
+  if (conv?.kind === "convert" && data) {
+    const c = aldurConvert(data, item, conv.element, conv.eats);
+    if (!c.mods.length) return skip(item, "この変換で有効なモッドが対象のアイテムにありません");
+    return {
+      applied: true,
+      item: { ...c.item, augments },
+      added: c.mods.map((x) => x.to),
+      removed: c.mods.map((x) => x.from),
+      augment: { socket: at + 1, put: aug, replaced: old, replacedGoes: old ? augmentRule(old.en)!.replacedGoes : null, converted: { element: conv.element, mods: c.mods } },
+    };
+  }
   return {
     applied: true,
     item: { ...item, augments },

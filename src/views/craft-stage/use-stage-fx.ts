@@ -10,6 +10,7 @@
  *     何も出ていなかった手 (高貴・カオス・消去・神・カタリスト等) にも「T3 がついた!」「T4 が消えた」「数値を振り直し!」などを出す
  * 手が増えた時と、打てなかった時 (craftStage.miss。工程には積まない) だけ動く (1 手戻す・再生では動かない)。色と文字は style.css の stage-* と --fx。
  */
+import { EL_JA } from "../../services/craft-stage/stage-runes";
 import { ref, watch, type Ref } from "vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import type { StageItem } from "../../services/craft-stage/types";
@@ -32,13 +33,19 @@ const COLOR = { magic: "var(--color-rarity-magic)", rare: "var(--color-rarity-ra
  */
 /** オーグメントの手の文字 (結果 JSON の augment_change) */
 function augText(o: object): { kind: "hit" | "up"; color: string; text: string } | null {
-  const a = (o as { augment_change?: { put: { ja: string; en?: string }; replaced: { ja: string } | null; upgraded?: { from: { ja: string }; to: { ja: string; en?: string } } } }).augment_change;
+  const a = (o as { augment_change?: { put: { ja: string; en?: string; text_ja?: string }; replaced: { ja: string } | null; upgraded?: { from: { ja: string }; to: { ja: string; en?: string } }; converted?: { element: string } } }).augment_change;
   if (!a) return null;
+  // クラフトの決まりを変えるルーン (POE2Tube 要望 ㉙): アルダー = 「火に変わった!」、セール = 「サフィックス +1!」、特殊 MOD = 「マークスマンモッドが出るように!」
+  if (a.converted) return { kind: "up", color: COLOR.top, text: `${EL_JA[a.converted.element] ?? a.converted.element}に変わった!` };
+  if (/^Serle.s Triumph$/.test(a.put.en ?? "")) return { kind: "up", color: COLOR.top, text: "サフィックス +1!" };
+  if (/^Astrid.s Creativity$/.test(a.put.en ?? "")) return { kind: "up", color: COLOR.top, text: "クラフトモッド +1!" };
+  const pool = /^(.+モッド)をロールできるようになる/.exec(a.put.text_ja ?? "");
+  if (pool) return { kind: "up", color: COLOR.top, text: `${pool[1]}が出るように!` };
   if (a.upgraded) {
     const tier = /^Perfect /.test(a.upgraded.to.en ?? "") ? "パーフェクト" : /^Greater /.test(a.upgraded.to.en ?? "") ? "グレーター" : "1 段上";
     return { kind: "up", color: COLOR.top, text: `${tier}に!` };
   }
-  if (a.replaced) return { kind: "hit", color: COLOR.miss, text: `${a.replaced.ja}はなくなった — ${a.put.ja}をはめた!` };
+  if (a.replaced) return { kind: "hit", color: COLOR.miss, text: `${a.replaced.ja}はなくなった\n${a.put.ja}をはめた!` };
   return { kind: "up", color: COLOR.fractured, text: `${a.put.ja}をはめた!` };
 }
 function actText(before: StageItem, after: StageItem): { kind: "hit" | "up"; color: string; text: string } | null {

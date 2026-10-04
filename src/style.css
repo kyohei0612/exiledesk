@@ -580,7 +580,10 @@ table th,
     position: absolute;
     left: 50%;
     top: -10px;
-    white-space: nowrap;
+    /* 改行だけで折る。長い文 (置き換えの「○○はなくなった / △△をはめた!」) は 2 行に (POE2Tube 要望 ㉘ の確認) */
+    white-space: pre;
+    text-align: center;
+    line-height: 1.25;
     pointer-events: none;
     font-weight: 700;
     color: var(--fx);

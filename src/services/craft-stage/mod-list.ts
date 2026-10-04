@@ -10,13 +10,13 @@
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { fillHashes, jaOfMod } from "../htc/mod-text";
 import type { StageItem, StageSide } from "./types";
-import { allMods, takenFamilies } from "./stage-core";
+import { allMods, effectiveCls, takenFamilies } from "./stage-core";
 import { TAG_STYLE } from "../mods/tag-ja";
 import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
 import { tierDisplayRanges } from "../mods/stat-scale";
 
-export type ModGroup = "normal" | "essence" | "desecrated" | "otherworldly";
-export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", essence: "エッセンス", desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)" };
+export type ModGroup = "normal" | "rune" | "essence" | "desecrated" | "otherworldly";
+export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", rune: "ルーンの特殊 MOD (重みは仮定)", essence: "エッセンス", desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)" };
 
 export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string }
 export interface ListRow {
@@ -43,7 +43,8 @@ export interface ListRow {
 }
 
 export function modListFor(data: PatchData, item: StageItem): ListRow[] {
-  const pools = item.cls.pools as typeof item.cls.pools & { otherworldly?: { prefixes: readonly string[]; suffixes: readonly string[] } };
+  // 普通の置き場は差した特殊 MOD のルーンの MOD 込み (要望 ㉙)。行の種類は "rune"、出やすさは普通と一緒に引くので一緒に割る
+  const pools = effectiveCls(item).pools as typeof item.cls.pools & { otherworldly?: { prefixes: readonly string[]; suffixes: readonly string[] } };
   const onIds = new Set(allMods(item).map((m) => m.modId));
   const taken = takenFamilies(data, item);
   const out: ListRow[] = [];
@@ -66,7 +67,8 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
           topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked: !on && familyBlocked(m, taken),
         };
       });
-      out.push(...fillShares(rows));
+      // 割合を普通と一緒に出してから、ルーンの MOD の行を「ルーン」の種類に
+      out.push(...fillShares(rows).map((r) => (group === "normal" && data.mods.get(r.id)?.rune ? { ...r, group: "rune" as const } : r)));
     }
   }
   return out;
