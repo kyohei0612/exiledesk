@@ -153,6 +153,9 @@ def cue_frames(
     land = hp.land_at if hp else 0.0  # 結果の文字は付いた瞬間から数える
     new_chapter = prev_section is not None and prev_section != c.section
     lead = chapter_lead(new_chapter)
+    # 同じ絵のコマは描き直さない (止まった画面 + 同じ口の形 + 同じ小道具の大きさ)。時間で変わる物
+    # (付いた瞬間の文字・秒読み・章名のカード・手つきのコマ) がある時は使い回さない (2026-10-04)
+    memo: dict[tuple[bool, int, float], Image.Image] = {}
     for k in range(k0, k1):
         mouth = c.mouth_levels[k]
         t = k / fps
@@ -188,15 +191,27 @@ def cue_frames(
             frame_static = static
         cd = c.line.scene.countdown
         num = countdown_number(c.duration, cd, t) if cd else None
+        steady = frame_static is static or frame_static is base
+        reuse = steady and hit_step is None and num is None
+        scale = pop_scale(t) if props else 1.0
+        key = (frame_static is static, mouth, round(scale, 4))
         if ctx.short:
+            if reuse and key in memo:
+                yield memo[key]
+                continue
             # 縦: 結果の文字・数字はパネルの中に描いてから切り出す。章カードは出さない (ADR 005)
             tmp = frame_static.copy() if hit_step is not None else frame_static
             if hit_step is not None:
                 draw_hit(tmp, hit_step, tl - land)
-            yield compose_short(tmp, c.line, mouth, ctx.short_title, num)
+            out = compose_short(tmp, c.line, mouth, ctx.short_title, num)
+            if reuse:
+                memo[key] = out
+            yield out
             continue
-        scale = pop_scale(t) if props else 1.0
         card = new_chapter and t < CHAPTER_SECONDS  # 章名カードの間: テロップなし・背景はぼかし
+        if reuse and not card and key in memo:
+            yield memo[key]
+            continue
         frame = compose_frame(frame_static, c.line, mouth, props, scale, telop=not card)
         if hit_step is not None:
             draw_hit(frame, hit_step, tl - land)
@@ -205,6 +220,8 @@ def cue_frames(
         if card:
             frame = blur_bg(frame)
             draw_chapter(frame, c.section, t)
+        elif reuse:
+            memo[key] = frame
         yield frame
 
 

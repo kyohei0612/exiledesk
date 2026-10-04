@@ -122,6 +122,19 @@ def _lerp_box(a: tuple[int, int, int, int], b: tuple[int, int, int, int], e: flo
     return [int(a[i] + (b[i] - a[i]) * e) for i in range(4)]
 
 
+def _fitted(shot: Path, im: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """撮った画面を貼る大きさに縮めた絵。縮めた物はディスクに取っておき、次からは読むだけ."""
+    if im.size == size:
+        return im
+    cache = shot.parent / f"_{size[0]}x{size[1]}" / shot.name
+    if cache.exists():
+        return Image.open(cache).convert("RGB")
+    small = im.resize(size, Image.Resampling.LANCZOS, reducing_gap=2.0)
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    small.save(cache, compress_level=1)
+    return small
+
+
 def _stage_capture(
     img: Image.Image,
     box: Box,
@@ -136,7 +149,14 @@ def _stage_capture(
     kyohei 2026-09-28: 付く瞬間の前から付いた時までアイテムを拡大、文字はクラフト画面に被せない。
     """
     x0, y0, x1, y1 = box
-    im = Image.open(shot).convert("RGBA")
+    # 撮った画面は不透明なので RGB のまま縮めて貼る (透明の計算を省く、2026-10-04)
+    im: Image.Image = Image.open(shot)
+    if USE_CLIP_LAYOUT and zoom <= 0:  # 縮めた絵が取ってあれば元の大きな PNG は開かない
+        px, py, qx, qy = stage_shot_rect(box)
+        cache = shot.parent / f"_{qx - px}x{qy - py}" / shot.name
+        if cache.exists():
+            im = Image.open(cache)
+    im = im.convert("RGB")
     # ExileDesk v0.1.313 の撮影用レイアウト (layout=clip) はアイテム + 棚だけを大きく描き、下 15% を
     # 空けてくれる → POE2Tube では拡大しない (kyohei 2026-09-28「拡大せずに使える形で」)
     zoom = 0.0 if USE_CLIP_LAYOUT else zoom
@@ -154,20 +174,21 @@ def _stage_capture(
     d = ImageDraw.Draw(img)
     if USE_CLIP_LAYOUT:
         px, py, qx, qy = stage_shot_rect((x0, y0, x1, y1))
-        im = im.resize((qx - px, qy - py), Image.Resampling.LANCZOS)
+        im = _fitted(shot, im, (qx - px, qy - py))
         d.rounded_rectangle((px - 6, py - 6, qx + 6, qy + 6), 16, fill=INK)
-        img.alpha_composite(im, (px, py))
+        img.paste(im, (px, py))
         # アイテム枠の左の黒地に「N 手目」だけ (長い札はアイテム名に被る)
         if tag != "":  # "" = 札なし (ExileDesk の画面が自分の見出しを持つ時)
             tag = tag or (f"{step} 手目" if step else "開始前")
             pill(img, (px + 14, py + 14), tag, ACCENT, size=26)
         return
     scale = min((x1 - x0) / im.width, (y1 - y0 - 44) / im.height)
-    im = im.resize((int(im.width * scale), int(im.height * scale)), Image.Resampling.LANCZOS)
+    size = (int(im.width * scale), int(im.height * scale))
+    im = im.resize(size, Image.Resampling.LANCZOS, reducing_gap=2.0)
     px = x0 + (x1 - x0 - im.width) // 2
     py = y0 + 44
     d.rounded_rectangle((px - 6, py - 6, px + im.width + 6, py + im.height + 6), 16, fill=INK)
-    img.alpha_composite(im, (px, py))
+    img.paste(im, (px, py))
     pill(img, (x0, y0), label, ACCENT, size=24)
 
 

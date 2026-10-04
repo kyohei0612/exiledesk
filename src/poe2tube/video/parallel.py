@@ -51,10 +51,15 @@ def _render(task: tuple[int, int, int, str]) -> tuple[int, int, int]:
     assert out is not None
     try:
         count, w, h = 0, 0, 0
+        last: tuple[object, bytes] | None = None  # 同じ絵 (使い回したコマ) は RGB にし直さない
         for frame in cue_frames(_CTX, i, k0, k1):
-            rgb = frame.convert("RGB")
-            w, h = rgb.size
-            data = rgb.tobytes()
+            if last is not None and last[0] is frame:
+                data = last[1]
+            else:
+                rgb = frame.convert("RGB")
+                w, h = rgb.size
+                data = rgb.tobytes()
+                last = (frame, data)
             if len(data) != FRAME_BYTES:
                 raise ValueError(f"コマの大きさが想定外: {w}x{h}")
             out[count * FRAME_BYTES : (count + 1) * FRAME_BYTES] = data

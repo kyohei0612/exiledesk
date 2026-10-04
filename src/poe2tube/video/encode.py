@@ -94,8 +94,11 @@ def encode_stream(
     try:
         proc.stdin.write(data)
         count = first[0] + 1
+        last: tuple[object, bytes | memoryview] | None = None
         for n, frame in it:
-            proc.stdin.write(_rgb(frame)[1])
+            if last is None or last[0] is not frame:  # 同じ絵は RGB にし直さない
+                last = (frame, _rgb(frame)[1])
+            proc.stdin.write(last[1])
             count = n + 1
     finally:
         proc.stdin.close()

@@ -24,13 +24,19 @@ def shadow_panel(
     """柔らかい影付きの角丸パネル (白背景で浮かせる用)."""
     x0, y0, x1, y1 = box
     pad = blur * 2
-    sh = Image.new("RGBA", (x1 - x0 + pad * 2, y1 - y0 + pad * 2), (0, 0, 0, 0))
-    ImageDraw.Draw(sh).rounded_rectangle(
-        (pad, pad + offset, pad + x1 - x0, pad + offset + y1 - y0), radius, fill=(0, 0, 0, 60)
-    )
-    sh = sh.filter(ImageFilter.GaussianBlur(blur))
-    img.alpha_composite(sh, (x0 - pad, y0 - pad))
+    img.alpha_composite(_shadow(x1 - x0, y1 - y0, radius, blur, offset), (x0 - pad, y0 - pad))
     ImageDraw.Draw(img).rounded_rectangle(box, radius, fill=fill, outline=outline, width=2)
+
+
+@lru_cache(maxsize=64)
+def _shadow(w: int, h: int, radius: int, blur: int, offset: int) -> Image.Image:
+    """ぼかした影の絵。形が同じなら 1 回だけ作る (コマごとにぼかすと重い、2026-10-04)."""
+    pad = blur * 2
+    sh = Image.new("RGBA", (w + pad * 2, h + pad * 2), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).rounded_rectangle(
+        (pad, pad + offset, pad + w, pad + offset + h), radius, fill=(0, 0, 0, 60)
+    )
+    return sh.filter(ImageFilter.GaussianBlur(blur))
 
 
 def pill(
