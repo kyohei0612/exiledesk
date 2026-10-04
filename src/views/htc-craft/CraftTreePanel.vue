@@ -61,20 +61,27 @@ const canAuto = computed(() => !!c.data.value && !!c.prices.value && c.targets.v
 const autoReady = computed(() => canAuto.value && !c.diagBusy.value && c.treeRoute.value != null);
 /** 始め方を選ぶ所を先に出す (選ぶまでツリーは出さない。2026-10-04 オーナー「順に表示していこうか、選択肢から」) */
 const choosing = computed(() => !!c.routeOptions.value && c.treeRoute.value == null);
-const ROUTE_JA = { fixed: "固定済みを買って途中から作る", self: "自分でフラクチャーして作る" } as const;
+const ROUTE_JA = { fixed: "固定済みを買って途中から作る", self: "自分でフラクチャーして作る", white: "白のベースから作る" } as const;
+const ROUTE_SUB = {
+  fixed: "固定済み (フラクチャー済み) の素材を買って、残りを自動クラフト",
+  self: "固定無しを買って自分でフラクチャー (固定) してから、残りを自動クラフト",
+  white: "変成のオーブ・増強のオーブ (完全) → 外れなら消去のオーブで消して増強し直す → 狙いが 1 つ付いたら王者のオーブでレアに → 残りを自動クラフト",
+} as const;
 const routeCards = computed(() => {
   const o = c.routeOptions.value;
   if (!o) return [];
-  return (["fixed", "self"] as const).map((k) => ({
+  return (["fixed", "self", "white"] as const).filter((k) => k !== "white" || o.white).map((k) => ({
     key: k,
     name: ROUTE_JA[k],
-    sub: k === "fixed" ? "ベースから: 固定済み (フラクチャー済み) の素材を買って、残りを自動クラフト" : "1 から: 固定無しを買って自分でフラクチャー (固定) してから、残りを自動クラフト",
-    cost: o[k]?.cost ?? null,
-    label: o[k]?.label ?? "出品が足りない",
+    sub: ROUTE_SUB[k],
+    cost: k === "white" ? null : (o[k]?.cost ?? null),
+    label: k === "white" ? (o.white?.label ?? "") : (o[k]?.label ?? "出品が足りない"),
+    // 白のベースは値段が回すまで分からないので選べる (他は値段が無ければ選べない)
+    disabled: k !== "white" && o[k] == null,
     recommended: o.recommended === k,
   }));
 });
-function chooseRoute(k: "fixed" | "self"): void {
+function chooseRoute(k: "fixed" | "self" | "white"): void {
   c.treeRoute.value = k;
 }
 /** 組んでいる最中 (候補を短く回して比べるので数秒かかる) */
@@ -207,14 +214,14 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
   <!-- 始め方を選ぶ (選ぶと自動クラフトを組む) -->
   <div v-if="choosing" class="text-sm">
     <p class="mb-2 text-[13px] text-[var(--exile-color-text-secondary)]">どちらで作るかを選ぶと、その始め方で自動クラフトを組みます</p>
-    <div class="grid gap-2 md:grid-cols-2">
+    <div class="grid gap-2 md:grid-cols-3">
       <button
         v-for="r in routeCards"
         :key="r.key"
         type="button"
         class="rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-40"
         :class="r.recommended ? 'border-emerald-400/70 bg-emerald-500/10 hover:bg-emerald-500/20' : 'border-white/15 bg-white/[0.03] hover:bg-white/[0.07]'"
-        :disabled="r.cost == null"
+        :disabled="r.disabled"
         @click="chooseRoute(r.key)"
       >
         <p class="flex items-center gap-2 font-bold">
@@ -222,7 +229,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
           <span v-if="r.recommended" class="rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">おすすめ</span>
         </p>
         <p class="mt-0.5 text-[11px] opacity-60">{{ r.sub }}</p>
-        <p class="mt-1.5 text-lg font-bold" :class="r.recommended ? 'text-emerald-300' : ''">{{ r.cost != null ? c.money(r.cost) : "—" }}</p>
+        <p class="mt-1.5 text-lg font-bold" :class="r.recommended ? 'text-emerald-300' : ''">{{ r.cost != null ? c.money(r.cost) : r.key === "white" ? "選ぶと回して出す" : "—" }}</p>
         <p class="text-[11px] opacity-70">{{ r.label }}</p>
       </button>
     </div>

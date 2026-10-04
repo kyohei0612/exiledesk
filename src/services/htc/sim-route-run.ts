@@ -111,9 +111,17 @@ export function simulateTree(inp: {
     const a = lastQualityAt != null ? nodes[lastQualityAt]!.action : null;
     return finalQualityDone && a?.kind === "quality" && st.quality != null && st.qualityTag === a.catalyst && st.quality >= (ctx.baseQuality ?? 20) + 20;
   };
+  /**
+   * マジックの段の手 (変成・増強・王者) は、レアになった後は自動の戻り先にしない (2026-10-04 白のベースから: 後で狙いが消えた時に
+   * 王者へ戻って「マジックにだけ」で止まっていた)。消えた狙いはレアの段の手で付け直す
+   */
+  const magicStageDone = (st: SimState, x: SimNode): boolean => {
+    const k = x.action?.kind;
+    return (k === "transmute" || k === "augment" || k === "regal") && !st.magic && (st.slots.length > 0 || st.breach);
+  };
   const autoNext = (st: SimState, cur: number): string | "done" | null => {
-    const mp = main.findIndex((i, pos) => (!hasGoal(nodes[i]!) && !qualityReady(st, pos))
-      || (hasGoal(nodes[i]!) && !goalMet(st, nodes[i]!) && !(nodes[i]!.action?.kind === "breach" && breachDone(st))));
+    const mp = main.findIndex((i, pos) => !magicStageDone(st, nodes[i]!) && ((!hasGoal(nodes[i]!) && !qualityReady(st, pos))
+      || (hasGoal(nodes[i]!) && !goalMet(st, nodes[i]!) && !(nodes[i]!.action?.kind === "breach" && breachDone(st)))));
     const m = mp >= 0 ? main[mp] : undefined;
     if (m == null) return mainEndsDone ? "done" : null;
     const target = nodes[m]!;

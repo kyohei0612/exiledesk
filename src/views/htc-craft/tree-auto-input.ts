@@ -75,6 +75,11 @@ export interface AutoTreeInput {
   lateSocket?: readonly string[];
   /** 白のベースに 変成 → 普通のエッセンス で最初に付ける狙い ([[magicEssenceFor]])。省くと使わない (比べる用の候補) */
   magicEssence?: { modId: string; key: string } | null;
+  /**
+   * 白のベースから: 変成 → 増強 (外れなら消去して増強し直す) で狙いを 1 つ付け、王者のオーブでレアにしてから残りを作る
+   * (2026-10-04 オーナー「変成・増強 (パーフェクト) 打ってからダメなら消去スパム」「1 つ揃えば王者」)。tier = 変成・増強の等級、targets = マジックで狙う物
+   */
+  magicSpam?: { tier: "plain" | "greater" | "perfect"; targets: readonly TierTarget[] } | null;
   /** 持てるクラフト MOD の数 (アストリッドの創造性で 2)。深淵の印の輪は 2 が要る */
   craftedLimit?: number;
   /** 勢力のお告げ (黒血・リージュ・君主) を使うか。省くと使える時は使う (武器・装飾品の勢力の冒涜 MOD)。false = 使わない (比べる用) */

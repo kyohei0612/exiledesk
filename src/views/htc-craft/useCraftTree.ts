@@ -24,13 +24,14 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
   const ctx = computed(() => simCtxOf(c));
 
   /** 出発点 ([[sim-setup.ts]])。固定済みで始める狙いは始め方で選んだ物 */
-  const start = computed<SimState>(() => startStateOf(c, c.fracturedTargets.value.map((t) => t.modId)));
+  // 白のベースから (2026-10-04) は何も付いていない形から (変成・増強 → 王者)
+  const start = computed<SimState>(() => (c.treeRoute.value === "white" ? { slots: [], breach: false } : startStateOf(c, c.fracturedTargets.value.map((t) => t.modId))));
 
   /** 手の並び。最初は空の手 1 つだけ (オーナー:「最初から入力はしない」) */
   const nodes = ref<SimNode[]>([emptyNode()]);
   // 文字列のキーで見る (配列を返す getter は再評価のたびに新しい配列 = 必ず発火し、見積もりが 1 件届くたびにツリーと
   // 回した結果が消えていた。2026-09-26 レビュー B)
-  watch([() => c.item.value, () => c.base.value, () => c.fracturedTargets.value.map((t) => t.modId).join(), () => c.startKeep.value.join()], () => { nodes.value = [emptyNode()]; result.value = null; });
+  watch([() => c.item.value, () => c.base.value, () => c.fracturedTargets.value.map((t) => t.modId).join(), () => c.startKeep.value.join(), () => c.treeRoute.value === "white"], () => { nodes.value = [emptyNode()]; result.value = null; });
   // ソケットに差す物を変えたら、回した結果は古い (枠・クラフト MOD の上限・代が違う。2026-09-26)
   watch(() => JSON.stringify(socketOnOf(c)), () => { result.value = null; });
   /** ツリーを空にして自分で組む (「1 から組む」。オーナー 2026-09-25: 自動で組んだ後、自分でやる時に押したらリセット) */
@@ -84,6 +85,12 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
       } else if (a?.kind === "magicEssence") {
         // 変成の 1 つ (外れ) + エッセンスの狙い
         hit = { ...s, slots: [...s.slots, { modId: a.modId, side: sideOf(a.modId), fixed: false, crafted: true }, { modId: null, side: sideOf(a.modId) === "prefix" ? "suffix" : "prefix", fixed: false }] };
+      } else if (a?.kind === "transmute" || a?.kind === "augment" || a?.kind === "regal") {
+        // ○ = 狙いが付いた / × = 外れが付いた (王者は狙いの無い手なので外れが 1 つ付いた形)
+        const t = { ...s, magic: a.kind !== "regal" };
+        const side: Side = !t.slots.some((x) => x.side === "suffix") ? "suffix" : "prefix";
+        hit = want ? { ...t, slots: [...t.slots, { modId: want.modId, side: sideOf(want.modId), fixed: false }] } : { ...t, slots: [...t.slots, { modId: null, side, fixed: false }] };
+        miss = { ...t, slots: [...t.slots, { modId: null, side, fixed: false }] };
       } else if (a?.kind === "abyss") {
         // 深淵のエッセンス: その側の外れ (冒涜の外れ・上書きのエッセンス) を 1 つ消して印
         const j = s.slots.findIndex((x) => !x.fixed && !x.modId && x.side === a.side);

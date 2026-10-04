@@ -54,6 +54,17 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   if (runeIds.length === 1 && !desecOnly) {
     for (const pk of picks.slice(0, 2)) picks.push({ ...pk, label: `${pk.label}・ルーンは後で差す`, lateSocket: runeIds, desecratePick: runeIds[0]! });
   }
+  // 白のベースから (開始の指輪が空): 変成・増強 (完全 / 上級) → 消去スパム → 王者 の形だけを比べる (レアでないと高貴・カオスは打てない)。
+  // 変成 → エッセンス の形も残す (2026-10-04 オーナー「変成・増強 (パーフェクト) 打ってからダメなら消去スパム」「1 つ揃えば王者」)
+  if (!start.slots.length && !start.breach) {
+    const white: typeof picks = [];
+    for (const tier of ["perfect", "greater"] as const) {
+      const ms = magicSpamTargets(inp, ctx.itemLevel, tier === "perfect" ? 50 : 35);
+      if (ms.length) white.push({ label: `変成・増強 (${tier === "perfect" ? "完全" : "上級"}) → 王者`, magicSpam: { tier, targets: ms } });
+    }
+    if (me) white.push({ label: "変成 → エッセンス", magicEssence: me, chaosOk: false, chaosSide: null });
+    picks.splice(0, picks.length, ...white);
+  }
   const variants: Array<{ greater: string; nodes: ReturnType<typeof autoTree> }> = [];
   for (const pk of picks) {
     for (const g of ["catalyst", "all"] as const) for (const an of annuls) variants.push({
@@ -73,6 +84,19 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   const ok = scored.filter((x) => x.pDone >= 0.9);
   const best = ok.length ? ok.reduce((a, b) => (b.expected < a.expected ? b : a)) : scored.reduce((a, b) => (b.pDone > a.pDone ? b : a));
   return { ...best.v, plan, simExpected: best.expected, simDone: best.pDone };
+}
+
+/**
+ * マジックで狙える物 (白のベースから、2026-10-04): 普通の MOD の狙いで、等級の下限 (上級 35 / 完全 50) 以上・ilvl 以下に狙いの段がある物。
+ * 狙いの中で一番出にくい物から 1 つ付けば良いので、届く物は全部 (どれか 1 つ付いたら王者)
+ */
+function magicSpamTargets(inp: AutoTreeInput, itemLevel: number, floor: number): AutoTreeInput["targets"] {
+  const fixed = new Set(inp.fixedIds);
+  return inp.targets.filter((t) => {
+    const m = inp.data.mods.get(t.modId);
+    if (!m || fixed.has(t.modId) || m.source !== "normal") return false;
+    return m.tiers.some((x, i) => i >= (t.minTierIndex ?? 0) && x.ilvl >= floor && x.ilvl <= itemLevel && x.weight > 0);
+  });
 }
 
 /** 自動で組む入力を、計算機の状態と開始の指輪から作る (作り方のツリーと作る見込みで共通) */

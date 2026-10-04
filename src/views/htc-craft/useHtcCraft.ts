@@ -60,6 +60,8 @@ export interface TargetRow {
 export interface RouteOptions {
   fixed: { cost: number; label: string } | null;
   self: { cost: number; label: string } | null;
+  /** 白のベースから (変成・増強 → 王者)。値段は自動で組んで回すまで分からない。樹 MOD がある時は出さない */
+  white: { label: string } | null;
   /** ② で安い方 */
   recommended: "fixed" | "self" | null;
 }
@@ -177,9 +179,10 @@ export function useHtcCraft() {
   const startPrice = ref<number | null>(null);
   /**
    * 作り方の始め方 (2026-10-04 オーナー「自動クラフトに行く前に 1 からなのかベースからなのかは選択させてから実行」「順に表示」)。
-   * fixed = 固定済みを買って途中から作る / self = 自分でフラクチャーして作る。null = まだ選んでいない (自動クラフトは回さない)
+   * fixed = 固定済みを買って途中から作る / self = 自分でフラクチャーして作る / white = 白のベースから (変成・増強 → 王者)。
+   * null = まだ選んでいない (自動クラフトは回さない)
    */
-  const treeRoute = ref<"fixed" | "self" | null>(null);
+  const treeRoute = ref<"fixed" | "self" | "white" | null>(null);
   /** 選べる始め方 (② の道から DiagnosisCard が入れる)。null = 選ぶ物が無い (固定不要など。その時は fixed で進む) */
   const routeOptions = shallowRef<RouteOptions | null>(null);
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */

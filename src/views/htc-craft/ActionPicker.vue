@@ -80,6 +80,8 @@ function orbOf(a: SimAction | null): string {
     // 深淵のエッセンスは自動で組んだ時だけ (手で選ぶ欄はまだ無い)
     case "abyss": return "essence:abyss";
     case "magicEssence": return a.key;
+    // 変成・増強・王者は自動で組んだ時だけ (手で選ぶ欄はまだ無い)
+    case "transmute": case "augment": case "regal": return a.tier;
     case "socket": return "socket";
     case "desecrate": return a.bone;
     case "check": return "check";

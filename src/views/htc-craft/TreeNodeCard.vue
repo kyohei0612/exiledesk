@@ -59,6 +59,7 @@ function actionText(a: SimAction | null, off = false): string {
     case "light": return `${omenJa("OmenofLight")} + 消去のオーブ (冒涜だけ消す)`;
     case "socket": return "ソケットに特別な MOD のルーンを差す (ここから先はルーンの MOD も出る。代はここで払う)";
     case "magicEssence": return `変成のオーブ → ${boneJa(a.key)} (マジックからレアに。エッセンスの MOD は確定)`;
+    case "transmute": case "augment": case "regal": return `${boneJa(a.tier)}${a.kind === "transmute" ? " (白 → マジック、MOD 1 つ)" : a.kind === "augment" ? " (マジックに 1 つ足す)" : " (マジック → レア、1 つ足す)"}`;
     case "abyss": return join(so(OMEN.crystallisation[a.side]), "深淵のエッセンス (印を付ける。次の冒涜は印を置き換え、段の下限 MOD レベル 33 = 仮)");
     case "whittle": return `${omenJa("OmenofWhittling")} + カオスオーブ (一番レベルの低い MOD を消す)`;
     case "check": return "確認だけ (打たない)";

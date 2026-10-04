@@ -109,15 +109,18 @@ watch([() => c.phase.value, () => c.diagBusy.value, () => ss.threeWay.value, () 
   if (c.phase.value !== "done" || c.diagBusy.value) return;
   const tw = ss.threeWay.value;
   const k = ss.kind.value.kind;
-  if (k === "separate" || k === "unsafe" || (!tw.fixed && !tw.self)) {
+  // 白のベースから は樹 MOD (創生の樹からしか出ない) が無い時だけ
+  const white = !c.dropOnly.value.length && k !== "unsafe" ? { label: "白のベース代は設定の「初動」に入れる。変成・増強 → 王者 → 残りを自動クラフト" } : null;
+  if (k === "separate" || k === "unsafe" || (!tw.fixed && !tw.self && !white)) {
     c.routeOptions.value = null;
     if (c.treeRoute.value == null) c.treeRoute.value = "fixed";
     return;
   }
-  const recommended = tw.fixed && tw.self ? (tw.self.cost < tw.fixed.cost ? "self" : "fixed") : tw.fixed ? "fixed" : "self";
+  const recommended = tw.fixed && tw.self ? (tw.self.cost < tw.fixed.cost ? "self" : "fixed") : tw.fixed ? "fixed" : tw.self ? "self" : null;
   c.routeOptions.value = {
     fixed: tw.fixed ? { cost: tw.fixed.cost, label: tw.fixed.label } : null,
     self: tw.self ? { cost: tw.self.cost, label: tw.self.label } : null,
+    white,
     recommended,
   };
 }, { immediate: true });

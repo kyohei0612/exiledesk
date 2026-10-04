@@ -228,7 +228,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       }).sort((a, b) => (a.total ?? Infinity) - (b.total ?? Infinity));
       // 作り方の始め方を選んだら (固定済みを買う / 自分でフラクチャー)、その道の行だけから選ぶ (2026-10-04)
       const route = c.treeRoute.value;
-      const pool = route ? sub.filter((y) => SELF_ROUTES.has(y.id) === (route === "self")) : sub;
+      const pool = route && route !== "white" ? sub.filter((y) => SELF_ROUTES.has(y.id) === (route === "self")) : sub;
       const best = pool.find((y) => y.total != null) ?? pool.find((y) => y.cost != null) ?? null;
       /** 完成品の比べに渡す初動 (買う値段だけ。作る見込みは向こうで足す) */
       const startCost = side ? side.price ?? (m != null && m > 0 ? m * div.value : null) : best?.cost ?? null;
@@ -237,7 +237,15 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     .sort((a, b) => (a.best?.total ?? a.best?.cost ?? Infinity) - (b.best?.total ?? b.best?.cost ?? Infinity)));
   const chosen = computed(() => rows.value.find((x) => x.key === picked.value && x.best) ?? rows.value.find((x) => x.best) ?? null);
   // 始め方を選び直したら、その道で一番安い候補に
-  watch(() => c.treeRoute.value, () => { picked.value = rows.value.find((x) => x.best)?.key ?? null; });
+  watch(() => c.treeRoute.value, (r) => {
+    picked.value = rows.value.find((x) => x.best)?.key ?? null;
+    // 白のベースから: 固定・触らない狙いは無し、初動 (白のベース代) は設定で入れる
+    if (r === "white") {
+      c.startKeep.value = [];
+      if (c.fracturedTargets.value.length) c.setFractured([]);
+      c.startPrice.value = null;
+    }
+  });
 
   /**
    * 3 つの道を一気に比べる (オーナー 2026-09-25:「結局買うのがいいのか、途中からクラフトがいいのか、自分でベース買って
@@ -267,6 +275,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   watch(settled, (ok) => { if (ok && picked.value == null) picked.value = rows.value.find((x) => x.best)?.key ?? null; });
   // 選んだ候補の固定済みにして、ツリーの開始の指輪と確認用の表 (treeResult) をそれに合わせる
   watch(chosen, async (x) => {
+    if (c.treeRoute.value === "white") return;
     c.startPrice.value = x?.startCost ?? null;
     if (!x || x.res === "error" || !x.res) return;
     // 「固定無しを買ってそのまま作る」なら固定ではなく触らない狙い (2026-09-25: 固定扱いにしていて、消去で巻き込む形を

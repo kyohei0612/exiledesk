@@ -459,6 +459,21 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
     const did = abyssNext.get(x.id);
     if (did) { x.onHit = did; const dn = extra.find((e) => e.id === did); if (dn) dn.onHit = next; } else x.onHit = next;
   });
+  // 白のベースから: 変成 → 増強 → (外れなら消去 → 増強 …) → 狙いが 1 つ付いたら王者でレアにして本線へ (2026-10-04)
+  if (inp.magicSpam && inp.magicSpam.targets.length) {
+    const suf = inp.magicSpam.tier === "plain" ? "" : `_${inp.magicSpam.tier}`;
+    const tg = inp.magicSpam.targets.map((t) => ({ modId: t.modId, minTier: t.minTierIndex ?? 0 }));
+    const tr: SimNode = { ...base, id: id(), action: { kind: "transmute", tier: `transmute${suf}` as "transmute" }, targets: tg, keep: [], need: 1, onHit: null, onMiss: null };
+    const au: SimNode = { ...base, id: id(), action: { kind: "augment", tier: `augment${suf}` as "augment" }, targets: tg, keep: [], need: 1, onHit: null, onMiss: null };
+    const an: SimNode = { ...base, id: id(), action: { kind: "annul", side: null }, targets: [], keep: [], need: 1, onHit: null, onMiss: null };
+    const rg: SimNode = { ...base, id: id(), action: { kind: "regal", tier: "regal" }, targets: [], keep: [], need: 1, onHit: null, onMiss: null };
+    tr.onHit = rg.id; tr.onMiss = au.id;
+    // 増強で 2 つになって外れなら消去 (マジックの 2 つから 1 つ)、消したらもう一度増強
+    au.onHit = rg.id; au.onMiss = an.id;
+    an.onHit = au.id; an.onMiss = au.id;
+    rg.onHit = main[0]?.id ?? "done"; rg.onMiss = rg.onHit;
+    return { nodes: [tr, au, an, rg, ...main, ...extra], catalystOff };
+  }
   return { nodes: [...main, ...extra], catalystOff };
 }
 

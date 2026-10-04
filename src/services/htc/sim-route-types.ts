@@ -35,6 +35,14 @@ export type SimAction =
    */
   | { kind: "magicEssence"; modId: string; key: string }
   /**
+   * 白のベースからのマジックの段 (2026-10-04 オーナー「ベースからやる時は 変成・増強 (パーフェクト) 打ってから、ダメなら消去スパム」
+   * 「1 つ揃えば王者」): 変成のオーブ (白 → マジック、MOD 1 つ) / 増強のオーブ (マジックに 1 つ足す。マジックはプレ 1・サフィ 1 まで) /
+   * 王者のオーブ (マジック → レア、1 つ足す)。tier は値段のキー (上級 = MOD レベル 35 以上、完全 = 50 以上)
+   */
+  | { kind: "transmute"; tier: "transmute" | "transmute_greater" | "transmute_perfect" }
+  | { kind: "augment"; tier: "augment" | "augment_greater" | "augment_perfect" }
+  | { kind: "regal"; tier: "regal" | "regal_greater" | "regal_perfect" }
+  /**
    * 特別な MOD のルーン (コルの狩り 等) をここで差す (2026-10-03、その 3 ソケットの時機)。差す前は ctx.rawCls (ルーンの置き場無し) で引き、
    * 差した後はルーンの置き場込み (ctx.cls)。ルーンと熟練工の代 (ctx.socketCost) はこの手で払う (この手が無いツリーは今まで通り最初に払う)
    */
@@ -136,6 +144,8 @@ export interface SimState {
    */
   quality?: number;
   qualityTag?: string | null;
+  /** マジック (変成の後、王者の前)。枠はプレ 1・サフィ 1 */
+  magic?: boolean;
 }
 
 export interface SimResult {

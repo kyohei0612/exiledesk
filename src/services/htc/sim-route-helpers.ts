@@ -7,7 +7,10 @@ import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG, ABYSS_MARK_FLOOR } from
 import { essenceClash, familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import type { RollOutcome, SimAction, SimCtx, SimNode, SimSlot, SimState } from "./sim-route-types";
 
-const FLOOR: Record<string, number> = { chaos: 0, chaos_greater: 35, chaos_perfect: 50, exalt: 0, exalt_greater: 35, exalt_perfect: 50 };
+const FLOOR: Record<string, number> = {
+  chaos: 0, chaos_greater: 35, chaos_perfect: 50, exalt: 0, exalt_greater: 35, exalt_perfect: 50,
+  transmute: 0, transmute_greater: 35, transmute_perfect: 50, augment: 0, augment_greater: 35, augment_perfect: 50, regal: 0, regal_greater: 35, regal_perfect: 50,
+};
 const SIDES: Side[] = ["prefix", "suffix"];
 
 /**
@@ -27,7 +30,8 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
   const cur = (k: string): number => prices.currency[k] ?? prices.omens[k] ?? Infinity;
   const mod = (id: string): Mod | undefined => data.mods.get(id);
   const count = (s: SimState, side: Side): number => s.slots.filter((x) => x.side === side).length + (side === "prefix" && s.breach ? 1 : 0);
-  const room = (s: SimState, side: Side): boolean => count(s, side) < ctx.limits[side];
+  // マジックはプレ 1・サフィ 1 まで
+  const room = (s: SimState, side: Side): boolean => count(s, side) < (s.magic ? 1 : ctx.limits[side]);
   /** 付いている系統 (狙いの MOD も外れも。系統が分からない物は数えない) */
   const keysOf = (x: SimSlot, raw = false): string[] => {
     const m = x.modId ? mod(x.modId) : undefined;
@@ -167,6 +171,9 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
       }
       case "magicEssence": return s.slots.length || s.breach ? "白のベースにだけ (変成 → エッセンス)" : null;
+      case "transmute": return s.slots.length || s.breach || s.magic ? "白のベースにだけ" : null;
+      case "augment": return !s.magic ? "マジックにだけ (変成の後)" : SIDES.some((x) => room(s, x)) ? null : "足す枠が無い (マジックはプレ 1・サフィ 1)";
+      case "regal": return s.magic ? null : "マジックにだけ (変成の後)";
       case "socket": return s.socketed === false ? null : "もう差してある";
       case "abyss":
         if (craftedFull(s)) return `${craftedMsg()} (エッセンスの MOD が付いている)`;
@@ -234,6 +241,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
       case "light": return cur("annul") + cur("OmenofLight");
       case "abyss": return cur(abyssKey) + (need ? cur(OMEN.crystallisation[a.side]) : 0);
       case "magicEssence": return cur("transmute") + cur(a.key);
+      case "transmute": case "augment": case "regal": return cur(a.tier);
       case "socket": return ctx.socketCost ?? 0;
       // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
       // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
@@ -369,6 +377,14 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         return { ...u, slots: [...u.slots, { modId: a.modId, side, fixed: false, crafted: true, ...(em ? { family: em.family, lvl: em.tiers[0]?.ilvl ?? 1 } : {}) }] };
       }
       case "socket": return { ...s, socketed: true };
+      case "transmute": case "augment": {
+        const t: SimState = a.kind === "transmute" ? { ...s, magic: true } : s;
+        return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), FLOOR[a.tier]!, null, 20)));
+      }
+      case "regal": {
+        const t: SimState = { ...s, magic: false };
+        return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), FLOOR[a.tier]!, null, 20)));
+      }
       case "magicEssence": {
         // エッセンスの MOD + 変成で付いた 1 つ (外れ、狙いなら狙い。エッセンスと同じ系統は出ない = 先に置いてから引く)
         const em = mod(a.modId);
