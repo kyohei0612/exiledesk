@@ -221,8 +221,9 @@ class StageItem(BaseModel):
     requirements: dict[str, int] | None = Field(
         default=None, description="要求 {level, str, dex, int} (要求レベル = ドロップレベル、⑱)"
     )
+    # サフィックスはセールの凱旋で 4 まで (ExileDesk ㉙)
     prefixes: list[StageMod] = Field(default_factory=list, max_length=3)
-    suffixes: list[StageMod] = Field(default_factory=list, max_length=3)
+    suffixes: list[StageMod] = Field(default_factory=list, max_length=4)
 
     @model_validator(mode="after")
     def _sides(self) -> StageItem:

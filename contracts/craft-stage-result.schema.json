@@ -881,7 +881,7 @@
           "items": {
             "$ref": "#/$defs/StageMod"
           },
-          "maxItems": 3,
+          "maxItems": 4,
           "title": "Suffixes",
           "type": "array"
         }
