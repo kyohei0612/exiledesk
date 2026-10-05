@@ -1431,6 +1431,272 @@
           }
         }
       ]
+    },
+    {
+      "name": "遺産のルーン",
+      "target_seconds": 70,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最後は遺産のルーン。ユニークの力の一部を持ったルーンよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "ユニークの力なのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アルダーの遺産を、カルグールかエゾマイトのユニークの空いたソケットに差すの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "すると、そのユニークが壊れて、遺産のルーンになるわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "ユニークが壊れちゃうのだ！？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。代わりに、元のユニークの効果の一部を持ったルーンができるの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "例えば黒い組紐の遺産。元はユニークの胴よ。このレアの胴に差してみるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まず熟練工のオーブでソケットを作るわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "黒い組紐の遺産を差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アーマーの+50%が元素ダメージにも適用される。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ユニークの効果が、レアの胴に付いたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "元のユニークより数字が下がる物もあるけど、レアの好きなMODと組み合わせられるのが強みね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "これもソケットバウンドなのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "遺産のルーンは置き換えられるし、コラプトした装備にも差せるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、1つのアイテムに1個までよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "ほかには、どんな遺産があるのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ブランブルジャックの遺産は、受けた近接物理ダメージの250%を反射する胴のルーン。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "リージョンストライドの遺産は、靴にブロック率+10%を付けるわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "元のユニークを知ってると、選ぶのが楽しそうなのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }
