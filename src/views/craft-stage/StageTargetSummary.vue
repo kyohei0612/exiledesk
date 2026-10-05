@@ -54,6 +54,14 @@ const rows = computed(() => {
  * グループ = フラクチャーの候補全部 / ② の手順 (本体 + あるいは)。2 つ以上の時だけ枠で囲んで「どれか 1 つ」
  */
 type Row = (typeof rows.value)[number];
+/**
+ * 完成図から外す (選んでいる間だけ「×」。2026-10-05 オーナー「狙う MOD の段階で UI 的にバツボタン付けるべき」)。
+ * あるいはの候補はその候補だけ、本体は手順ごと (候補も一緒に)
+ */
+function drop(r: Row): void {
+  if (r.alt) s.simTargets.value = s.simTargets.value.map((t) => (t.modId === r.group ? { ...t, alts: (t.alts ?? []).filter((a) => a.modId !== r.modId) } : t));
+  else s.simTargets.value = s.simTargets.value.filter((t) => t.modId !== r.modId);
+}
 const columns = computed(() => (["P", "S"] as const).map((side) => {
   const list = rows.value.filter((r) => r.side === side);
   const groups: Array<{ key: string; no: number | null; kind: Kind; host: string; need: number; members: Row[] }> = [];
@@ -84,6 +92,7 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
             <span v-for="r in g.members" :key="r.modId" class="inline-flex max-w-full items-center gap-1 rounded bg-black/30 px-1">
               <span class="truncate" :title="r.text">{{ r.text }}</span>
               <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
+              <button v-if="s.simShowMods.value" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button>
             </span>
             <button v-if="s.simShowMods.value && (g.kind === 'normal' || g.kind === 'desecrated')" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
           </div>
@@ -91,6 +100,7 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
             <!-- 「＋」は MOD の名前のすぐ横 (2026-10-05 オーナー) -->
             <span class="min-w-0 truncate" :title="g.members[0]!.text">{{ g.members[0]!.text }}</span>
             <button v-if="s.simShowMods.value && (g.kind === 'normal' || g.kind === 'desecrated')" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
+            <template v-for="r in [g.members[0]!]" :key="r.modId"><button v-if="s.simShowMods.value" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button></template>
             <span class="ml-auto shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ g.members[0]!.rank }}</span>
           </div>
         </div>

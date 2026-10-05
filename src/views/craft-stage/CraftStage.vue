@@ -46,7 +46,8 @@ const mouse = ref({ x: 0, y: 0 });
 const onMove = (e: MouseEvent) => (mouse.value = { x: e.clientX, y: e.clientY });
 function onKey(e: KeyboardEvent): void {
   if (e.key === "Escape") s.hold(null);
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); s.undo(); }
+  // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && (s.mode.value === "hand" || s.replay.value)) { e.preventDefault(); s.undo(); }
 }
 onMounted(() => { window.addEventListener("mousemove", onMove); window.addEventListener("keydown", onKey); });
 onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.removeEventListener("keydown", onKey); s.hold(null); });

@@ -10,7 +10,7 @@
   探す自動 (計算機の自動のツリー) は外した。計算機 (htc-craft) はそのまま。
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
@@ -83,10 +83,30 @@ function setNeed(modId: string, n: number): void {
   s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, need: n } : t));
 }
 /** その手順で選べる N の上限 (候補の数と、その側の空き枠) */
-function needMax(r: { modId: string; side: string; alts: unknown[] }): number {
-  const others = rows.value.filter((x) => x.side === r.side && x.modId !== r.modId && x.method !== "fracture").reduce((a, x) => a + x.need, 0)
-    + (rows.value.some((x) => x.side === r.side && x.method === "fracture") ? 1 : 0);
-  return Math.max(1, Math.min(1 + r.alts.length, 3 - others));
+/** 選べる N の上限 = 選んだ候補の数 (2026-10-05 オーナー「当たりの数は選択 MOD の数だけ、5 つ選択したら 5 つが上限」) */
+function needMax(r: { alts: unknown[] }): number {
+  return 1 + r.alts.length;
+}
+/** その側の空き枠 (ほかの手順の N とフラクチャーの 1 枠を引いた数)。N がこれを超えると作れないので注意を出す */
+function freeSlots(r: { modId: string; side: string }): number {
+  return 3 - rows.value.filter((x) => x.side === r.side && x.modId !== r.modId && x.method !== "fracture").reduce((a, x) => a + x.need, 0)
+    - (rows.value.some((x) => x.side === r.side && x.method === "fracture") ? 1 : 0);
+}
+/**
+ * ① の行で段を直接変える (下の一覧で押し直さなくてよい)。選べるのはこのアイテムレベルで届く段 (良い順)
+ */
+function tierOptions(modId: string): Array<{ i: number; label: string }> {
+  const m = s.data.value?.mods.get(modId);
+  if (!m) return [];
+  return m.tiers.map((t, i) => ({ i, ilvl: t.ilvl, label: `T${m.tiers.length - i} 以上` })).filter((x) => x.ilvl <= s.itemLevel.value).reverse();
+}
+function minTierOf(owner: string, modId: string): number {
+  const t = s.simTargets.value.find((x) => x.modId === owner);
+  return owner === modId ? t?.minTierIndex ?? 0 : t?.alts?.find((a) => a.modId === modId)?.minTierIndex ?? 0;
+}
+function setTier(owner: string, modId: string, idx: number): void {
+  s.simTargets.value = s.simTargets.value.map((t) => (t.modId !== owner ? t
+    : owner === modId ? { ...t, minTierIndex: idx } : { ...t, alts: (t.alts ?? []).map((a) => (a.modId === modId ? { ...a, minTierIndex: idx } : a)) }));
 }
 function removeAlt(modId: string, alt: string): void {
   s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, alts: (t.alts ?? []).filter((a) => a.modId !== alt) } : t));
@@ -208,7 +228,9 @@ function saveKept(which: "white" | "four" | "bought", v: number | null): void {
   keptAll.value = { ...keptAll.value, [keptKey.value]: cur };
   try { localStorage.setItem(PRICE_KEY, JSON.stringify(keptAll.value)); } catch { /* 無くてよい */ }
 }
-watch(keptKey, loadKept, { immediate: true });
+/** 「1 つ戻す」で状態を戻している間 (ソケットを戻した時に値段の読み込み・工程のリセットで上書きしない) */
+let restoring = false;
+watch(keptKey, () => { if (!restoring) loadKept(); }, { immediate: true });
 // 単位を変えたら覚えた値段を出し直す (入れ直しではないので、いつ入れたかは変えない)
 watch(unit, (u) => {
   try { localStorage.setItem(UNIT_KEY, u); } catch { /* 無くてよい */ }
@@ -515,7 +537,7 @@ const step3 = computed(() => step2.value && modsDone.value && rows.value.length 
 const stepOrder = computed(() => step3.value && fracDone.value);
 const step4 = computed(() => stepOrder.value && orderDone.value);
 watch(() => rows.value.length, (n) => { if (n === 0) { modsDone.value = false; fracDone.value = false; orderDone.value = false; } });
-watch(keptKey, () => { modsDone.value = false; fracDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
+watch(keptKey, () => { if (restoring) return; modsDone.value = false; fracDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
 // 下の MOD 一覧は ① で選んでいる間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
 // 足し直す時は ① の「直す」で開き直す
 watch(() => step2.value && !modsDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
@@ -530,8 +552,37 @@ function goTo(st: Stage): void {
   if (st !== "order") fracDone.value = false;
   orderDone.value = false;
 }
-/** 今決めている工程の 1 つ前 (無ければ null) */
-const backTo = computed((): Stage | null => (orderDone.value ? "order" : fracDone.value ? "frac" : modsDone.value ? "mods" : whiteOk.value ? "white" : null));
+/**
+ * 「1 つ戻す」= 直前の操作を 1 つ取り消す (工程ではなく、1 つ前の状態に。2026-10-05 オーナー「1 つ戻すは手じゃなくて行動、1 つ前の作業の状態」)。
+ * 狙い (MOD・段・あるいは・どれか N つ・フラクチャー・付け方・順番)・工程の決めた / 戻した・ソケット・白ベースの値段を、変わるたびに前の形を積む
+ */
+type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; orderDone: boolean; sockets: number | null; white: number | null };
+const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value });
+const undoStack = ref<Snap[]>([]);
+let lastSnap = snapNow();
+watch(() => JSON.stringify(snapNow()), () => {
+  const cur = snapNow();
+  if (!restoring && JSON.stringify(cur) !== JSON.stringify(lastSnap)) undoStack.value = [...undoStack.value.slice(-49), lastSnap];
+  lastSnap = cur;
+});
+// ベースを変えたら積んだ物は捨てる (別のアイテムの状態に戻さない)
+watch(() => s.base.value, () => { undoStack.value = []; lastSnap = snapNow(); });
+// Ctrl+Z (手で打つ画面と同じ)。シミュレーションを開いている時はこちらの「1 つ戻す」(CraftStage.vue は手で打つ時だけ)
+function onKey(e: KeyboardEvent): void {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); undo(); }
+}
+onMounted(() => window.addEventListener("keydown", onKey));
+onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
+function undo(): void {
+  const prev = undoStack.value[undoStack.value.length - 1];
+  if (!prev) return;
+  undoStack.value = undoStack.value.slice(0, -1);
+  restoring = true;
+  s.simTargets.value = JSON.parse(prev.targets);
+  whiteOk.value = prev.whiteOk; modsDone.value = prev.modsDone; fracDone.value = prev.fracDone; orderDone.value = prev.orderDone;
+  sockets.value = prev.sockets; whiteDivine.value = prev.white;
+  void nextTick(() => { lastSnap = snapNow(); restoring = false; });
+}
 /**
  * ② フラクチャーにできる MOD (普通の MOD だけ。冒涜・エッセンスの MOD は固定の候補にしない、あるいは付きの手順も外す)。
  * 候補は同じ側だけ (1 つ目の側に揃える)
@@ -603,7 +654,7 @@ function replay(): void {
       <b class="text-sm text-amber-100">シミュレーション</b>
       <span class="rounded bg-amber-500/20 px-1.5 text-[10px] text-amber-200">実験</span>
       <span class="opacity-60">{{ s.item.value?.baseJa }} / ilvl {{ s.itemLevel.value }}</span>
-      <button type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!backTo" title="1 つ前の工程に戻る" @click="backTo && goTo(backTo)">↶ 1 つ戻す</button>
+      <button type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!undoStack.length" title="直前の操作を 1 つ取り消す" @click="undo">↶ 1 つ戻す</button>
       <button type="button" class="rounded-full border px-2 py-0.5 text-[11px]" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
     </div>
     <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
@@ -650,18 +701,20 @@ function replay(): void {
                     </template>
                     <template v-else>{{ r.need }}</template>
                     つ:
+                    <span v-if="r.need > freeSlots(r)" class="font-normal text-rose-300">(枠が足りない: この側は残り {{ Math.max(0, freeSlots(r)) }} つ)</span>
                   </span>
-                  <span :class="r.alts.length ? 'inline-flex items-center rounded bg-black/30 px-1' : ''"><span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></span>
+                  <span :class="r.alts.length ? 'inline-flex items-center rounded bg-black/30 px-1' : ''"><span :class="r.tone">{{ r.text }}</span> <select v-if="!modsDone && tierOptions(r.modId).length > 1" class="ml-1 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="minTierOf(r.modId, r.modId)" @change="setTier(r.modId, r.modId, Number(($event.target as HTMLSelectElement).value))"><option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option></select><span v-else class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></span>
                   <span v-for="a in r.alts" :key="a.modId" class="inline-flex items-center rounded bg-black/30 px-1">
                     <span :class="r.tone">{{ a.text }}</span>
-                    <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ a.rank }} 以上</span>
+                    <select v-if="!modsDone && tierOptions(a.modId).length > 1" class="ml-1 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="minTierOf(r.modId, a.modId)" @change="setTier(r.modId, a.modId, Number(($event.target as HTMLSelectElement).value))"><option v-for="o in tierOptions(a.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option></select><span v-else class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ a.rank }} 以上</span>
                     <button v-if="!modsDone" type="button" class="ml-1 opacity-50 hover:opacity-100" title="この候補を外す" @click="removeAlt(r.modId, a.modId)">×</button>
                   </span>
                   <!-- 「＋」は MOD の名前のすぐ横 (2026-10-05 オーナー) -->
                   <button v-if="!modsDone && r.method !== 'essence'" type="button" class="ml-1 rounded border border-amber-400/40 px-1.5 py-px text-[11px] leading-none text-amber-200 hover:bg-amber-500/10" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="addAlts(r.modId)">＋</button>
+                  <!-- 外す「×」も＋の隣に (2026-10-05 オーナー) -->
+                  <button v-if="!modsDone" type="button" class="ml-0.5 rounded border border-white/15 px-1.5 py-px text-[11px] leading-none opacity-70 hover:border-rose-400/60 hover:text-rose-300 hover:opacity-100" :title="r.alts.length ? 'この手順を外す (あるいはの候補ごと)' : 'この MOD を外す'" @click="remove(r.modId)">×</button>
                 </div>
               </td>
-              <td class="w-6 py-1 text-right align-top"><button v-if="!modsDone" type="button" class="opacity-60 hover:opacity-100" title="外す" @click="remove(r.modId)">×</button></td>
             </tr>
           </tbody>
         </table>

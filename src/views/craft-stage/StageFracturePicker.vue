@@ -26,15 +26,17 @@ const hostGroup = computed(() => (host.value && s.data.value?.mods.get(host.valu
  * 上限は候補の数と、その側の空き枠 (ほかの手順の N とフラクチャーの 1 枠を引いた数)
  */
 const typeOf = (id: string) => s.data.value?.mods.get(id)?.type;
-const needMax = computed(() => {
+/** その側の空き枠 (ほかの手順の N とフラクチャーの 1 枠を引いた数)。N がこれを超えると作れないので注意を出す */
+const free = computed(() => {
   const h = host.value;
-  if (!h) return 1;
+  if (!h) return 3;
   const side = typeOf(h.modId);
-  const others = s.simTargets.value.filter((t) => t !== h && t.method !== "fracture" && typeOf(t.modId) === side)
+  return 3 - s.simTargets.value.filter((t) => t !== h && t.method !== "fracture" && typeOf(t.modId) === side)
     .reduce((a, t) => a + Math.max(1, Math.min(t.need ?? 1, 1 + (t.alts?.length ?? 0))), 0)
-    + (s.simTargets.value.some((t) => t.method === "fracture" && typeOf(t.modId) === side) ? 1 : 0);
-  return Math.max(1, Math.min(candidates.value.length, 3 - others));
+    - (s.simTargets.value.some((t) => t.method === "fracture" && typeOf(t.modId) === side) ? 1 : 0);
 });
+/** 選べる N の上限 = 選んだ候補の数 (2026-10-05 オーナー「当たりの数は選択 MOD の数だけ、5 つ選択したら 5 つが上限」) */
+const needMax = computed(() => Math.max(1, candidates.value.length));
 const need = computed(() => Math.max(1, Math.min(host.value?.need ?? 1, needMax.value)));
 function setNeed(n: number): void {
   const h = host.value;
@@ -129,6 +131,7 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
             <span class="opacity-70">元の MOD とチェックした物のうち</span>
             <button v-for="n in needMax" :key="n" type="button" class="rounded px-1.5 font-bold leading-tight" :class="need === n ? 'bg-amber-500/40 text-amber-50 ring-1 ring-amber-300' : 'border border-amber-400/30 text-amber-200 opacity-70 hover:opacity-100'" :title="`${n} つ付けば当たり (枠を ${n} つ使う)`" @click="setNeed(n)">{{ n }}</button>
             <span class="opacity-70">つ付けば当たり · 同じ側だけ</span>
+            <span v-if="need > free" class="text-rose-300">(枠が足りない: この側は残り {{ Math.max(0, free) }} つ)</span>
           </span>
           <span v-else class="opacity-60">{{ s.item.value?.baseJa }} · チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合</span>
           <span class="ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-emerald-100">{{ candidates.length }} 個</span>
