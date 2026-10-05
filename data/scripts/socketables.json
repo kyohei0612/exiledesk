@@ -809,6 +809,336 @@
           }
         }
       ]
+    },
+    {
+      "name": "特殊MODのルーン",
+      "target_seconds": 75,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次は特殊MODのルーン。差すと、普段は出ないMODが出るようになる物よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "普段出ないMODって、どういうことなのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ルーンごとに決まった種類のMODが、抽選に加わるの。全部で6つあるわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "特殊MODのルーン",
+              "rows": [
+                [
+                  "ルーン",
+                  "差す場所",
+                  "出るMOD"
+                ],
+                [
+                  "コルの狩り",
+                  "手袋",
+                  "マークスマン"
+                ],
+                [
+                  "カトラの陰鬱",
+                  "手袋",
+                  "腐敗"
+                ],
+                [
+                  "ヴォラナの虐殺",
+                  "兜",
+                  "バーサーク"
+                ],
+                [
+                  "ウートレドの星読み",
+                  "靴",
+                  "クロノマンシー"
+                ],
+                [
+                  "メドヴェッドの世話",
+                  "胴",
+                  "ソウル"
+                ],
+                [
+                  "スルードの力",
+                  "武器",
+                  "デストラクション"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "手袋に2つ、兜・靴・胴・武器に1つずつ。差せる場所が決まっているの。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "特殊MODのルーン",
+              "rows": [
+                [
+                  "ルーン",
+                  "差す場所",
+                  "出るMOD"
+                ],
+                [
+                  "コルの狩り",
+                  "手袋",
+                  "マークスマン"
+                ],
+                [
+                  "カトラの陰鬱",
+                  "手袋",
+                  "腐敗"
+                ],
+                [
+                  "ヴォラナの虐殺",
+                  "兜",
+                  "バーサーク"
+                ],
+                [
+                  "ウートレドの星読み",
+                  "靴",
+                  "クロノマンシー"
+                ],
+                [
+                  "メドヴェッドの世話",
+                  "胴",
+                  "ソウル"
+                ],
+                [
+                  "スルードの力",
+                  "武器",
+                  "デストラクション"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "どこにでも差せるわけじゃないのだ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "特殊MODのルーン",
+              "rows": [
+                [
+                  "ルーン",
+                  "差す場所",
+                  "出るMOD"
+                ],
+                [
+                  "コルの狩り",
+                  "手袋",
+                  "マークスマン"
+                ],
+                [
+                  "カトラの陰鬱",
+                  "手袋",
+                  "腐敗"
+                ],
+                [
+                  "ヴォラナの虐殺",
+                  "兜",
+                  "バーサーク"
+                ],
+                [
+                  "ウートレドの星読み",
+                  "靴",
+                  "クロノマンシー"
+                ],
+                [
+                  "メドヴェッドの世話",
+                  "胴",
+                  "ソウル"
+                ],
+                [
+                  "スルードの力",
+                  "武器",
+                  "デストラクション"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "今回は手袋にコルの狩りを差して、マークスマンのMODを狙うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まず王者のオーブでレアにするわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "2から3の物理ダメージをアタックに追加する、が付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次に熟練工のオーブ。手袋のソケットは1つだけよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "その1つに差すのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。コルの狩りを差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "マークスマンモッドをロールできるようになる。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "高貴なオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "投射物ダメージが15%増加する。これがマークスマンのMODよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "毎回、特殊MODが付くのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "普通のMODと一緒に抽選されるから、毎回じゃないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "データサイトによると、特殊MODの中では完全にランダムな抽選よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "別のルーンに替えられるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "コルの狩りもソケットバウンド。手袋はソケットが1つだから、差したらもうそのままよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "差す前に、何を狙うか決めておくのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        }
+      ]
     }
   ]
 }
