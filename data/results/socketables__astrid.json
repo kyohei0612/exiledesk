@@ -1,13 +1,13 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-10-05T02:25:30.373Z",
+  "generated_at": "2026-10-05T03:31:08.030Z",
   "exiledesk_version": "0.1.376",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
   "plan": {
     "schema": "craft-stage-plan/1",
-    "title": "アストリッドの創造性: パーフェクトエッセンスを 2 つ",
+    "title": "アストリッドの創造性: パーフェクトエッセンスを 2 つ (2 つ目は結晶化のお告げで 1 つ目を守る)",
     "base": "Glorious Plate",
     "item_level": 80,
     "start_rarity": "rare",
@@ -35,8 +35,9 @@
       },
       {
         "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+        "omen": "OmenofDextralCrystallisation",
         "times": 1,
-        "note": "2 個目が付く"
+        "note": "2 個目。右側の結晶化のお告げでサフィックスだけ消す = 1 個目 (プレフィックス) を守る"
       }
     ]
   },
@@ -1171,8 +1172,8 @@
       "index": 5,
       "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
       "currency_ja": "ヒステリーのエッセンス",
-      "omen": null,
-      "omen_ja": null,
+      "omen": "OmenofDextralCrystallisation",
+      "omen_ja": "右側の結晶化のお告げ",
       "seed": 30,
       "applied": true,
       "reason": null,
@@ -1407,24 +1408,24 @@
         ],
         "suffixes": [
           {
-            "mod_id": "Body_Armours_str/Strength",
-            "family": "Strength",
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
             "side": "suffix",
-            "tier_name": "T1",
-            "mod_level": 74,
-            "text_ja": "筋力 +33",
-            "text_en": "+33 to Strength",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
             "values": [
-              33
+              7
             ],
             "ranges": [
               [
-                31,
-                33
+                6,
+                10
               ]
             ],
-            "tier_index": 7,
-            "affix": "of the Titan"
+            "tier_index": 0,
+            "affix": "of the Whelpling"
           },
           {
             "mod_id": "Body_Armours_str/LocalAttributeRequirements",
@@ -1479,24 +1480,24 @@
         ],
         "removed": [
           {
-            "mod_id": "Body_Armours_str/FireResistance",
-            "family": "FireResistance",
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
             "side": "suffix",
-            "tier_name": "T8",
-            "mod_level": 1,
-            "text_ja": "火耐性 +7%",
-            "text_en": "+7% to Fire Resistance",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
             "values": [
-              7
+              33
             ],
             "ranges": [
               [
-                6,
-                10
+                31,
+                33
               ]
             ],
-            "tier_index": 0,
-            "affix": "of the Whelpling"
+            "tier_index": 7,
+            "affix": "of the Titan"
           }
         ],
         "rarity_from": "rare",
@@ -1504,7 +1505,7 @@
       },
       "cost": {
         "each": 0,
-        "amount": 1,
+        "amount": 2,
         "subtotal": 0,
         "cumulative": 0
       }
@@ -1608,24 +1609,24 @@
     ],
     "suffixes": [
       {
-        "mod_id": "Body_Armours_str/Strength",
-        "family": "Strength",
+        "mod_id": "Body_Armours_str/FireResistance",
+        "family": "FireResistance",
         "side": "suffix",
-        "tier_name": "T1",
-        "mod_level": 74,
-        "text_ja": "筋力 +33",
-        "text_en": "+33 to Strength",
+        "tier_name": "T8",
+        "mod_level": 1,
+        "text_ja": "火耐性 +7%",
+        "text_en": "+7% to Fire Resistance",
         "values": [
-          33
+          7
         ],
         "ranges": [
           [
-            31,
-            33
+            6,
+            10
           ]
         ],
-        "tier_index": 7,
-        "affix": "of the Titan"
+        "tier_index": 0,
+        "affix": "of the Whelpling"
       },
       {
         "mod_id": "Body_Armours_str/LocalAttributeRequirements",
