@@ -128,6 +128,8 @@ def upload_video(
     """動画 → サムネ → 再生リストの順に上げる。戻り値は (やった/やる事, video_id).
 
     ``video_id`` を渡すと動画は上げ直さず、サムネと再生リストだけ付ける (途中で止まった時の続き)。
+    その時は公開範囲も ``meta.privacy`` (予約なら publish_at) に合わせる
+    (非公開で上げてサムネを待ってから公開する流れ、kyohei 2026-10-05)。
     """
     video = root / meta.video
     if not video.exists():
@@ -137,7 +139,7 @@ def upload_video(
         raise FileNotFoundError(f"サムネが無い: {thumb}")
     when = f"予約 {meta.publish_at}" if meta.publish_at else meta.privacy
     actions = (
-        [Action("動画は上げ済み", video_id)]
+        [Action("動画は上げ済み", video_id), Action("公開範囲を合わせる", when)]
         if video_id
         else [Action("動画を上げる", f"{meta.title} ({video.name}, {when})")]
     )
@@ -162,6 +164,11 @@ def upload_video(
                 log.info("uploading", progress=round(status.progress() * 100))
         video_id = str(res["id"])
         log.info("video uploaded", video_id=video_id)
+    else:
+        service.videos().update(
+            part="status", body={"id": video_id, "status": video_body(meta)["status"]}
+        ).execute()
+        log.info("privacy set", video_id=video_id, privacy=when)
     if thumb is not None:
         failed = set_thumbnail(service, video_id, thumb)
         if failed:
