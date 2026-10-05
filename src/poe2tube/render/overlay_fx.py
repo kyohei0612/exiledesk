@@ -113,6 +113,10 @@ def hit_label(step: StageStep) -> tuple[str, str]:
         return "消えた! " + _short(ch.removed[0].text_ja), STYLE_REMOVED
     if len(a.augments) > len(b.augments):  # ルーンをはめた (ExileDesk ⑰)
         return "+ " + _short(str(a.augments[-1].get("text_ja", "ルーン"))), STYLE_ADDED
+    if len(a.augments) == len(b.augments) and a.augments != b.augments:
+        # 置き換え・傑作のルーン: 数は同じで中身が変わる (ExileDesk ㉘)。新しい方の効き目を出す
+        new = next(x for x, y in zip(a.augments, b.augments, strict=True) if x != y)
+        return "+ " + _short(str(new.get("text_ja", "ルーン"))), STYLE_ADDED
     if a.disposed and not b.disposed:
         return ("解呪!" if a.disposed == "disenchant" else "サルベージ!"), STYLE_ADDED
     if a.quality > b.quality:
@@ -135,6 +139,8 @@ def _short(text: str, n: int = 12) -> str:
         return text
     if "が" in text:
         head = text.split("が", 1)[0]
+        if len(head) > n - 3 and "の" in head:  # 「見つかるアイテムのレアリティ」→「レアリティ」
+            head = head.rsplit("の", 1)[1]
         num = NUMBER.search(text)
         short = f"{head} {num.group(0)}" if num and num.group(0) not in head else head
         if len(short) <= n + 2:
