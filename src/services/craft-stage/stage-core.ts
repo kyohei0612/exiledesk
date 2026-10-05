@@ -274,7 +274,7 @@ export function addOne(data: PatchData, item: StageItem, floor: number, rng: () 
  * 付く MOD の指名 (POE2Tube 要望 ⑱-1 kyohei「MOD を自分で選んで組み合わせる機能いるんじゃね？」)。
  * mod = MOD の id (Rings/ColdResistance) か系統 (ColdResistance)、tier = "T6" (無ければ段は乱数)、values = 数値 (画面の単位、無ければ乱数)
  */
-export interface Force { mod: string; tier?: string; values?: number[] }
+export interface Force { mod: string; tier?: string; values?: number[]; /** 固定済みで付ける (始めの状態だけ。シミュレーションの「付いた状態で始める」、2026-10-05) */ fractured?: boolean }
 /** 指名した MOD と、指名しなかったら付く確率 (その段 (段を指名しなければその MOD) の重み ÷ その手で付きうる全部の重み) */
 export interface Forced { item: StageItem; mod: StageMod; chance: number }
 const matchesMod = (mod: Mod, key: string): boolean => mod.id === key || mod.id.endsWith(`/${key}`) || mod.family === key;

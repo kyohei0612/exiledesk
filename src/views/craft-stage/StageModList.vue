@@ -98,8 +98,11 @@ function isTarget(modId: string, t: { name: string; ilvl: number }): boolean {
 function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
   const idx = tierIndexOf(modId, t);
   if (idx < 0) return;
-  const rest = s.simTargets.value.filter((x) => x.modId !== modId);
-  s.simTargets.value = isTarget(modId, t) ? rest : [...rest, { modId, minTierIndex: idx }];
+  const list = s.simTargets.value;
+  // 同じ段なら外す、別の段なら順番と付け方はそのまま段だけ差し替える、無ければ最後に足す
+  if (isTarget(modId, t)) s.simTargets.value = list.filter((x) => x.modId !== modId);
+  else if (list.some((x) => x.modId === modId)) s.simTargets.value = list.map((x) => (x.modId === modId ? { ...x, minTierIndex: idx } : x));
+  else s.simTargets.value = [...list, { modId, minTierIndex: idx }];
 }
 
 /** エッセンスの段の名前 (英語) → 日本語 */
@@ -180,7 +183,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td class="py-0.5 pl-2 opacity-60">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-16 py-0.5 text-right tabular-nums opacity-70">{{ t.weight ? `重み ${t.weight}` : "" }}</td>
-                    <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'desecrated')" class="w-14 py-0.5 text-right">
+                    <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'desecrated' || sec.g === 'essence')" class="w-14 py-0.5 text-right">
                       <button type="button" class="rounded border px-1.5 text-[10px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/25 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="`シミュレーションの狙いにする (${t.rank} 以上)`" @click.stop="toggleTarget(t.modId ?? r.id, t)">狙う</button>
                     </td>
                     <td v-else-if="canStart && sec.g === 'normal'" class="w-14 py-0.5 text-right">

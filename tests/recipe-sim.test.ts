@@ -1,0 +1,48 @@
+// 決めた順番と付け方どおりに作るシミュレーション (2026-10-05)。完成すること、記録した 1 回を手順 JSON で再生すると同じ物になること
+import { describe, expect, it } from "vitest";
+import { loadPatch } from "./helpers/patch";
+import { runRecipe, runRecipeOnce, recipePlan, type RecipeSpec } from "../src/services/craft-stage/recipe-sim";
+import { playPlan } from "../src/services/craft-stage/run-plan";
+import { allMods } from "../src/services/craft-stage/stage-core";
+import type { PatchData } from "../src/vendor/poe2htc/engine/types";
+
+function targetOf(data: PatchData, base: string, re: RegExp, rank: number): { modId: string; minTierIndex: number } {
+  const m = [...data.mods.values()].find((x) => x.id.startsWith(`${base}/`) && x.source === "normal" && re.test(x.id))!;
+  return { modId: m.id, minTierIndex: m.tiers.length - rank };
+}
+
+describe("順番どおりのシミュレーション", () => {
+  it("金の指輪: ライフ (高貴) → 火耐性 (高貴) → 雷耐性 (冒涜) が作れて、再生で同じ物になる", async () => {
+    const data = await loadPatch();
+    const life = targetOf(data, "Rings", /IncreasedLife$/, 3);
+    const fire = targetOf(data, "Rings", /FireResistance$/, 3);
+    const light = targetOf(data, "Rings", /LightningResistance$/, 3);
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 40, price: () => 1, seed: 1000,
+      targets: [{ ...life, method: "exalt" }, { ...fire, method: "exalt" }, { ...light, method: "desecrate" }],
+    };
+    const r = await runRecipe(spec);
+    expect(r).not.toBeNull();
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    const run = r!.sample!;
+    const { final } = playPlan(data, recipePlan(spec, run), {});
+    for (const t of spec.targets) expect(allMods(final).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex)).toBe(true);
+  });
+
+  it("フラクチャー: 作る (確率込み) と 付いた状態 の両方で完成し、固定済みが残る", async () => {
+    const data = await loadPatch();
+    const life = targetOf(data, "Rings", /IncreasedLife$/, 4);
+    const fire = targetOf(data, "Rings", /FireResistance$/, 4);
+    for (const fractureStart of [{ kind: "make" as const }, { kind: "bought" as const, price: 50 }]) {
+      const spec: RecipeSpec = {
+        data, base: "Gold Ring", itemLevel: 82, runs: 1, price: () => 1, fractureStart,
+        targets: [{ ...life, method: "fracture" }, { ...fire, method: "exalt" }],
+      };
+      const run = runRecipeOnce(spec, 77_000);
+      expect(run.done, run.reason).toBe(true);
+      const { final } = playPlan(data, recipePlan(spec, run), {});
+      expect(allMods(final).find((m) => m.fractured)?.modId).toBe(life.modId);
+      expect(allMods(final).some((m) => m.modId === fire.modId)).toBe(true);
+    }
+  });
+});

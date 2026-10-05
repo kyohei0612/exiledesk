@@ -17,7 +17,7 @@ import { mulberry32 } from "../htc/rng";
 import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
-import { addForced, boostedMod, type Force } from "./stage-core";
+import { addForced, boostedMod, replaced, type Force } from "./stage-core";
 import { socketCapOf } from "./stage-runes";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOf } from "./stage-bases";
@@ -219,7 +219,7 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
   for (const [i, f] of (s.mods ?? []).entries()) {
     const r = addForced(data, item, 0, rng, f);
     if ("error" in r) throw new Error(`始めの状態の MOD ${i + 1} つ目: ${r.error}`);
-    item = r.item;
+    item = f.fractured ? replaced(r.item, r.mod, { ...r.mod, fractured: true }) : r.item;
   }
   if (s.quality != null) item = { ...item, quality: s.quality };
   if (s.sockets != null) {
