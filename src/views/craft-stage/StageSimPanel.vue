@@ -33,7 +33,8 @@ const s = craftStage;
 const RUNS = [500, 1000, 3000] as const;
 const runs = ref<number>(1000);
 
-const METHOD_JA: Record<RecipeMethod, string> = { exalt: "高貴", chaos: "カオス", desecrate: "冒涜", essence: "エッセンス", fracture: "フラクチャー" };
+/** 付け方の名前 (2026-10-05 オーナー「カオスはカオススパム、高貴はガチャなので高貴ガチャ」) */
+const METHOD_JA: Record<RecipeMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス", fracture: "フラクチャー" };
 /** その MOD に使える付け方 (最初が既定) */
 function methodsFor(modId: string): RecipeMethod[] {
   const m = s.data.value?.mods.get(modId);
@@ -550,6 +551,16 @@ function toggleFracture(modId: string): void {
   if (r.method === "fracture") s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, method: methodsFor(modId)[0] } : t));
   else if (canFracture(r)) setMethod(modId, "fracture");
 }
+/**
+ * 白ベースからの流れ (エンジン recipe-sim.ts の作り方と同じ)。1 番が普通の MOD で高貴ガチャ / カオススパムなら、マジックの間に
+ * 変成 → 増強・消去スパムで 1 番だけ付けてから王者。フラクチャーがある時は候補を増強・消去スパムで付けて骨の壁 → フラクチャー
+ */
+const whiteFlow = computed(() => {
+  if (fractureRow.value) return "変成 → 増強・消去スパムでフラクチャーの候補を付ける → 王者 → 骨の壁 → フラクチャー (1/3、外れたら白から) → 消去 × 2 → 1 番から順に";
+  const first = restRows.value[0];
+  if (first && (first.method === "exalt" || first.method === "chaos") && first.methods.includes("exalt")) return "変成 → 増強・消去スパムで 1 番を付ける (外れは消去か白の買い直しの安い方) → 王者 → 2 番から順に";
+  return "変成 → 王者 → 1 番から順に";
+});
 /** 「しない」: フラクチャーの印を全部外して進む */
 function noFracture(): void {
   s.simTargets.value = s.simTargets.value.map((t) => (t.method === "fracture" ? { ...t, method: methodsFor(t.modId)[0] } : t));
@@ -616,7 +627,7 @@ function replay(): void {
     <!-- 2 ベースの値段 (手で) -->
     <div v-if="socketsOk" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
       <p class="mb-1.5 flex items-center gap-2">
-        <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="whiteOk ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteOk && goTo('white')">2 ベースの値段</button>
+        <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="whiteOk ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteOk && goTo('white')">2 白ベース設定</button>
         <button v-if="whiteOk" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="goTo('white')">ここからやり直す</button>
       </p>
       <div class="flex flex-wrap items-center gap-2 text-[11px]">
@@ -686,6 +697,8 @@ function replay(): void {
           <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="orderDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="orderDone && goTo('order')">5 付ける順番と付け方</button> <span v-if="help" class="font-normal opacity-60">(上から順。前に付けた物が消えたら、また上から)</span>
           <button v-if="orderDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('order')">ここからやり直す</button>
         </p>
+        <!-- 白ベースからの流れ (2026-10-05 オーナー「フラクチャー無しの段階の説明が足りてなさすぎる」) -->
+        <p class="mb-1 text-[11px] text-amber-100/80">白ベースから: {{ whiteFlow }}</p>
         <p v-if="!restRows.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
           <tbody>

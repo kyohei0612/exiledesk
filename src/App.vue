@@ -66,7 +66,9 @@ onMounted(() => {
   void ensureAssetPacks();
   // 捌き速度: 追跡する銘柄 (自動ジェム監視の設定で決まる) を 1 日 1 回そろえ直す。
   // 出品の追跡そのものは Rust 側が周期 (既定 8 時間) ごとに回す
-  startWatchAutoRefresh();
+  // 開発版 (vite の開発サーバー) では止める: 監視リストの作り直しはインストール版と同じ AppData を書き換え、見回りは取引所を叩く
+  // (2026-10-05 オーナー「開発版はデフォで止めておきたい」)。import.meta.env.DEV は本番のビルドでは必ず false なので本体には入らない
+  if (!import.meta.env.DEV) startWatchAutoRefresh();
   // ログイン状態を読む。未ログインなら LoginGate が前に出る (枠が半分だとすぐ制限に当たるため)
   startSessionWatch();
   // 同梱の捌き速度データを取り込む (サブ機の初期データ。自分で測った分は消さない)
@@ -75,7 +77,7 @@ onMounted(() => {
   // 画面の下に何が走っているかを出す (オーナー指示 2026-09-20)
   startFetchBusyWatch();
   // ユニークのお気に入りの最安値の見回り (1 分おき。間隔が来ていて取引所が空いていれば取る。2026-09-27)
-  uniqueWatch.start();
+  if (!import.meta.env.DEV) uniqueWatch.start();
 });
 </script>
 

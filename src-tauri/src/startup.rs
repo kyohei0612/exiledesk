@@ -23,7 +23,14 @@ pub(crate) fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Erro
     )));
 
     // 2026-09-16: ジェムの売れ行きを 周期ごとに記録する (追跡リストが空なら何もしない)
-    market_flow::spawn_scheduler(app.handle().clone());
+    // 開発ビルド (debug) では回さない: インストール版と同じ設定で取引所を巡回して問い合わせが倍になる (2026-10-05 オーナー
+    // 「開発版はデフォで止めておきたい」)。debug_assertions はコンパイル時に決まり、リリースのビルドでは必ず偽なので本体には入らない。
+    // 開発版で巡回を試す時だけ EXILEDESK_DEV_PATROL=1 で起動する
+    if !cfg!(debug_assertions) || std::env::var("EXILEDESK_DEV_PATROL").as_deref() == Ok("1") {
+        market_flow::spawn_scheduler(app.handle().clone());
+    } else {
+        crate::app_log::line_static("[巡回] 開発ビルドなので自動巡回は止めている (EXILEDESK_DEV_PATROL=1 で回す)");
+    }
 
     // ----------------------------------------------------------------
     // 設定の disk → in-memory state ロード (起動時 1 回だけ)
