@@ -171,6 +171,219 @@
           }
         }
       ]
+    },
+    {
+      "name": "ソケットの基本",
+      "target_seconds": 90,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まずは普通のソケットの使い方から。この胴には、まだソケットが無いわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "熟練工のオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットが1つ増えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "もっと使ったら、どんどん増えるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "胴は2つまでよ。もう1回使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "これで2つ目。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "胴と両手武器は2つ、ほかの防具や片手武器は1つまでなの。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "指輪やアミュレットはどうなのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "指輪・アミュレット・ベルトには、ソケットが付かないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まずは砂漠のグレータールーンを差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "防具に差すと、火耐性+18%。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "武器に差したら、どうなるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "武器なら火ダメージの追加になるの。同じルーンでも、差す場所で中身が変わるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次はシアクラトルのソウルコア。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての元素耐性+6%が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "ルーンとソウルコアって、何が違うのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ルーンはカルグール、ソウルコアはヴァールの物。差し方は同じで、アイドルも仲間よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "気に入らなかったら、外せばいいのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それができないの。一度差したら、外せないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "代わりに、上から別の物を差して置き換えられる。ウサギのアイドルを差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソウルコアはなくなって、見つかるアイテムのレアリティが12%増加する、になったわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "置き換えたら、元のは返ってこないのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。だから、何を差すかは先によく考えてね。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        }
+      ]
     }
   ]
 }
