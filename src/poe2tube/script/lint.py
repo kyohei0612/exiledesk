@@ -152,6 +152,9 @@ def lint_script(
     ratio = zunda / len(lines) if lines else 0
     if not 0.25 <= ratio <= 0.5:
         problems.append(f"聞き役 (ずんだもん) の比率 {ratio:.0%} が 25〜50% の外")
+    if (script.planned_sections or 0) > len(script.sections):
+        # 1 章ずつ書いている途中: 導入の割合・全体の尺・実践の手の抜けは、全部そろってから見る
+        return problems + hidden_dps_on_hit(script)
     if script.sections:
         intro = script.sections[0]
         intro_chars = sum(len(ln.spoken) for ln in intro.lines)

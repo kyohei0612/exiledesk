@@ -329,7 +329,9 @@ class VideoScript(BaseModel):
                         f"line {i}: step {sc.step} は MOD が増えていないのに highlight=added"
                     )
         est = self.estimated_seconds()
-        if abs(est - self.target_seconds) > self.target_seconds * 0.25:
+        # 1 章ずつ書いている途中 (予定の章がまだそろっていない) は全体の尺を見ない
+        writing = (self.planned_sections or 0) > len(self.sections)
+        if not writing and abs(est - self.target_seconds) > self.target_seconds * 0.25:
             problems.append(
                 f"尺の見込み {est:.0f} 秒が目標 {self.target_seconds} 秒から 25% 以上ずれている"
             )

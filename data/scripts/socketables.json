@@ -1,0 +1,172 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】差すとクラフトの決まりが変わるルーン: セールの凱旋・アストリッド・特殊MOD・アルダー・遺産",
+  "target_seconds": 600,
+  "result_file": "data/results/socketables.json",
+  "final_step": 5,
+  "layout": "wide",
+  "planned_sections": 8,
+  "demos": {
+    "serle": "data/results/socketables__serle.json",
+    "astrid": "data/results/socketables__astrid.json",
+    "kolr": "data/results/socketables__kolr.json",
+    "aldur": "data/results/socketables__aldur.json",
+    "legacy": "data/results/socketables__legacy.json"
+  },
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 45,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "この胴、よく見るとサフィックスが4つ付いてるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "えっ、サフィックスは3つまでじゃないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "普通はね。ソケットに差すルーンの中に、クラフトの決まりそのものを変える物があるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "ルーンって、耐性とかを足すだけじゃないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "足すだけの物が多いけど、今日はそうじゃない物を集めたわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスが増える物、エッセンスを2つ付けられる物、",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "普段出ないMODが出るようになる物、属性を変える物、ユニークの力を持つ物。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "全部差したら最強なのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、ほとんどは一度差したら外せないし、差し替えもできないの。だから差す前に知っておいてほしいわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "失敗できないのだ……ちゃんと覚えるのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

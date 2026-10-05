@@ -87,3 +87,23 @@ def test_rune_keys_with_socket_index() -> None:
 
     for key in ("rune:Lesser Desert Rune@2", "rune:Raven-Touched Shard", "rune:Legacy of Mjölner"):
         assert _check_currency(key) == key
+
+
+def test_lint_skips_whole_script_checks_while_writing() -> None:
+    from poe2tube.script.lint import lint_script
+    from poe2tube.script.model import VideoScript
+
+    sec = {
+        "name": "導入",
+        "target_seconds": 30,
+        "lines": [
+            {"speaker": "metan", "text": "今日はルーンの話をするわ。", "scene": {"kind": "talk"}},
+            {"speaker": "zundamon", "text": "楽しみなのだ！", "scene": {"kind": "talk"}},
+        ],
+    }
+    base = {"schema": "poe2tube-script/1", "title": "t", "target_seconds": 600}
+    base |= {"result_file": "data/results/socketables.json", "sections": [sec]}
+    writing = VideoScript.model_validate(base | {"planned_sections": 8})
+    done = VideoScript.model_validate(base)
+    assert not any("尺の見込み" in p for p in lint_script(writing))
+    assert any("尺の見込み" in p for p in lint_script(done))
