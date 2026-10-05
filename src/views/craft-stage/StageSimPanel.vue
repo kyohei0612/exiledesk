@@ -144,11 +144,11 @@ const unitEx = (): number => rateOf(unit.value);
 /** 覚えた値段を今の単位に (小数 2 桁) */
 const toUnit = (k: { v: number; u?: Unit } | undefined): number | null => {
   const v = num(k?.v);
-  return v == null ? null : Math.round((v * rateOf(k?.u ?? "divine")) / unitEx() * 100) / 100;
+  return v == null ? null : Math.round((v * rateOf(k?.u ?? "divine")) / unitEx());
 };
 type Kept = { v: number; at: number; u?: Unit };
-/** 入れた値段 (空欄・負は未入力。v-model.number は空欄で "" になる) */
-const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : null);
+/** 入れた値段 (空欄・負は未入力。v-model.number は空欄で "" になる)。整数だけ (2026-10-05 オーナー「小数点ではしないで、数値で 1 2 3 等」) */
+const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.round(v) : null);
 const PRICE_KEY = "exiledesk.craftStageSim.basePrices";
 const keptAll = ref<Record<string, Partial<Record<"white" | "four" | "bought", Kept>>>>({});
 try { keptAll.value = JSON.parse(localStorage.getItem(PRICE_KEY) ?? "{}"); } catch { /* 無くてよい */ }
@@ -196,6 +196,8 @@ watch(unit, (u) => {
 watch(whiteDivine, (v) => saveKept("white", v));
 watch(fourDivine, (v) => saveKept("four", v));
 watch(boughtDivine, (v) => saveKept("bought", v));
+// 小数で入れたら欄の数字も整数に丸める (計算は num が丸める)
+for (const r of [whiteDivine, fourDivine, boughtDivine]) watch(r, (v) => { if (typeof v === "number" && !Number.isInteger(v)) r.value = Math.round(v); });
 /** いつ入れた値段か (「3 時間前」)。1 日以上前は old */
 function ageOf(which: "white" | "four" | "bought"): { text: string; old: boolean } | null {
   const k = kept.value[which];
@@ -249,6 +251,7 @@ watch(doneKey, () => {
   doneDivine.value = toUnit(doneAll.value[doneKey.value]);
   void Promise.resolve().then(() => { loadingDone = false; });
 }, { immediate: true });
+watch(doneDivine, (v) => { if (typeof v === "number" && !Number.isInteger(v)) doneDivine.value = Math.round(v); });
 watch(doneDivine, (v) => {
   if (loadingDone) return;
   const cur = { ...doneAll.value };
@@ -553,7 +556,7 @@ function replay(): void {
     <!-- 白のベースの値段 (手で) -->
     <div v-if="socketsOk" class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
       <span class="opacity-70">白ベース</span>
-      <input v-model.number="whiteDivine" type="number" min="0" step="0.1" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" />
+      <input v-model.number="whiteDivine" type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" />
       <select v-model="unit" class="rounded border border-white/15 bg-black/30 px-1 py-0.5" title="手で入れる値段の単位 (白 / 4 MOD / 固定済み / 完成品の全部)">
         <option v-for="x in UNITS" :key="x.k" :value="x.k">{{ x.ja }}</option>
       </select>
@@ -740,17 +743,17 @@ function replay(): void {
             <td class="py-1">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
             <td class="py-1">
               <span v-if="x.key === 'four'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <input v-model.number="fourDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> {{ unitJa }}
+                <input v-model.number="fourDivine" type="number" min="0" step="1" inputmode="numeric" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> {{ unitJa }}
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
                 <span v-if="ageOf('four')" :class="ageOf('four')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")!.text }}</span>
               </span>
               <span v-else-if="x.key === 'bought'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <input v-model.number="boughtDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> {{ unitJa }}
+                <input v-model.number="boughtDivine" type="number" min="0" step="1" inputmode="numeric" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> {{ unitJa }}
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="この MOD が固定済みのベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
                 <span v-if="ageOf('bought')" :class="ageOf('bought')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")!.text }}</span>
               </span>
               <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <input v-model.number="doneDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> {{ unitJa }}
+                <input v-model.number="doneDivine" type="number" min="0" step="1" inputmode="numeric" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> {{ unitJa }}
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
                 <span v-if="doneAge" :class="doneAge.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge.text }}</span>
               </span>
