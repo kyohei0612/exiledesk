@@ -9,6 +9,7 @@
  *   - ほかの候補は畳む。開くと候補ごとに一番安い買い方 1 行 + 選び直すボタン
  * 取得中の候補は上に「取得中…」で出す (取れた物から順に埋まる)。
  */
+import PriceInput from "../../components/PriceInput.vue";
 import { computed } from "vue";
 import { openExternal } from "../../services/trade2/open-external";
 import SearchChecks from "./SearchChecks.vue";
@@ -26,11 +27,6 @@ const otherRoutes = computed(() => top.value?.sub.filter((o) => o.id !== top.val
 const others = computed(() => rows.value.filter((r) => r.key !== top.value?.key && (r.res || r.waiting)));
 const waiting = computed(() => rows.value.filter((r) => r.waiting));
 const started = computed(() => rows.value.some((r) => r.res || r.waiting));
-/** 手入力欄の値 (空なら null) */
-const num = (e: Event): number | null => {
-  const v = (e.target as HTMLInputElement).value;
-  return v === "" ? null : Number(v);
-};
 </script>
 
 <template>
@@ -65,7 +61,7 @@ const num = (e: Event): number | null => {
         <b>{{ r.name }}</b>
         <div v-for="o in r.sub" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">
           {{ o.label }}: {{ o.cost != null ? c.money(o.cost) : o.status }}<span v-if="o.total != null && o.id !== 'buy'" class="opacity-60"> (合計 {{ c.money(o.total) }})</span>
-          <span v-if="o.manual" class="ml-1">手で入れる <input type="number" min="0" class="num w-14" :value="ss.manual.value[r.key] ?? ''" @change="ss.setManual(r.key, num($event))" /> 神</span>
+          <span v-if="o.manual" class="ml-1">手で入れる <PriceInput :model-value="ss.manual.value[r.key]" unit-key="htc.start" @update:model-value="ss.setManual(r.key, $event)" /></span>
           <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
           <span v-if="o.note" class="opacity-50"> {{ o.note }}</span>
         </div>
@@ -77,7 +73,7 @@ const num = (e: Event): number | null => {
       <summary class="cursor-pointer opacity-60">ほかの買い方 ({{ otherRoutes.length }})</summary>
       <div v-for="o in otherRoutes" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">
         {{ o.label }}: <b>{{ o.cost != null ? c.money(o.cost) : o.status }}</b><span v-if="o.total != null && o.id !== 'buy'" class="opacity-60"> (合計 {{ c.money(o.total) }})</span>
-        <span v-if="o.manual && top" class="ml-1">手で入れる <input type="number" min="0" class="num w-14" :value="ss.manual.value[top.key] ?? ''" @change="ss.setManual(top.key, num($event))" /> 神</span>
+        <span v-if="o.manual && top" class="ml-1">手で入れる <PriceInput :model-value="ss.manual.value[top.key]" unit-key="htc.start" @update:model-value="ss.setManual(top.key, $event)" /></span>
         <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
         <span v-if="o.note" class="block pl-2 opacity-50">{{ o.note }}</span>
       </div>
@@ -98,7 +94,7 @@ const num = (e: Event): number | null => {
         </div>
         <div v-for="o in r.sub" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">
           {{ o.label }}: {{ o.cost != null ? c.money(o.cost) : o.status }}<span v-if="o.total != null && o.id !== 'buy'" class="opacity-60"> (合計 {{ c.money(o.total) }})</span>
-          <span v-if="o.manual" class="ml-1">手で入れる <input type="number" min="0" class="num w-14" :value="ss.manual.value[r.key] ?? ''" @change="ss.setManual(r.key, num($event))" /> 神</span>
+          <span v-if="o.manual" class="ml-1">手で入れる <PriceInput :model-value="ss.manual.value[r.key]" unit-key="htc.start" @update:model-value="ss.setManual(r.key, $event)" /></span>
           <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
           <span v-if="o.note" class="opacity-50"> {{ o.note }}</span>
         </div>

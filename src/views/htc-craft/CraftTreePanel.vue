@@ -9,6 +9,7 @@
  * 感覚で操作できる感じ」): 上から 道具の列 (回す / 組み直す / 1 から / 設定) → 回した結果 (大きな数字 4 つ + 手ごとの費用の棒) →
  * 取り方の表 (畳める) → ツリー。手のカードは畳んだ状態が既定 ([[TreeNodeCard.vue]])
  */
+import PriceInput from "../../components/PriceInput.vue";
 import { computed, nextTick, ref, watch } from "vue";
 import TreeBranch from "./TreeBranch.vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
@@ -272,9 +273,9 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
       <span v-else-if="t.blocked.value" class="ml-1 text-xs text-rose-300">{{ t.blocked.value }}</span>
     </div>
     <div v-if="showSettings" class="mb-3 flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs">
-      <label>予算 <input v-model.number="t.budgetDivine.value" type="number" min="1" step="50" class="num w-20" /> 神</label>
+      <label>予算 <PriceInput :model-value="t.budgetDivine.value" unit-key="htc.budget" @update:model-value="t.budgetDivine.value = $event ?? 0" /></label>
       <label>目標の成功確率 <input v-model.number="t.targetPct.value" type="number" min="1" max="100" step="5" class="num w-14" /> %</label>
-      <label title="始め方で選んだ物の初動 (固定済みを買う値段、または自分でフラクチャーする費用の見込み) が入ります。予算と結果の額はこれ込み">初動 (素材・フラクチャー) <input v-model.number="t.baseDivine.value" type="number" min="0" step="1" class="num w-20" /> 神</label>
+      <label title="始め方で選んだ物の初動 (固定済みを買う値段、または自分でフラクチャーする費用の見込み) が入ります。予算と結果の額はこれ込み">初動 (素材・フラクチャー) <PriceInput :model-value="t.baseDivine.value" unit-key="htc.base" @update:model-value="t.baseDivine.value = $event ?? 0" /></label>
       <label>回す回数 <input v-model.number="t.runs.value" type="number" min="100" step="500" class="num w-20" /> 回</label>
     </div>
 

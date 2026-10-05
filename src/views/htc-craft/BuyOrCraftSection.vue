@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PriceInput from "../../components/PriceInput.vue";
 import { computed } from "vue";
 import { tradeLock, tradeRefetch } from "../../state/trade-lock";
 /**
@@ -68,7 +69,7 @@ function onFin(): void {
           完成品: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value ? "取得中…" : "まだ" }}</b>
           <!-- 取引所に無い時だけ手で埋める -->
           <span v-if="fin.found.value && fin.found.value.min == null" class="ml-1 opacity-80">
-            手で入れる <input v-model.number="fin.manual.value" type="number" min="0" class="num w-14" /> 神
+            手で入れる <PriceInput v-model="fin.manual.value" unit-key="htc.finished" />
           </span>
           <button v-if="fin.found.value?.url" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(fin.found.value.url)">{{ fin.found.value.total }} 件 →</button>
         </p>
