@@ -310,16 +310,6 @@ watch(makeKey, async (key) => {
   makeCost.value = r ? { key, perDone: r.perDone, p50: r.p50, p90: r.p90, pDone: r.pDone, fractures: n(/^fracture$/), magic: n(/^(transmute|augment)/), chaos: n(/^(alchemy|chaos)/), bases: r.bases } : null;
 }, { immediate: true });
 /**
- * フラクチャーの当たりの確率 (計算): 4 つのうち、固定されても良い物の数。壁 (未発現の冒涜) は選ばれないので候補が 3 つ。
- * 錬金 → カオスは 4 つのうち狙いが付いた数 (1 つで数える)
- */
-const fractureOdds = computed((): { hit: number; of: number } => {
-  const wall = makeRoute.value === "magic" && blocker.value;
-  // 候補は同じ側で、付いているのはそのうち 1 つ
-  const hit = 1;
-  return { hit, of: wall ? 3 : 4 };
-});
-/**
  * 計算の費用 (2026-10-05 オーナー「3 個買って 1 個成功品と仮定して、最低完全変成 3、次の完全増強、消去はセットで使う、フラクチャー 3 つは
  * 絶対にいる。深淵エッセンスは 3 個、ネクロマンシー、結晶化、骨それぞれ 3 回、確率的に計算してくれ。平均コスト 1 個作るコスト分かれば 3 倍」
  * 「完全やね消去 2 つ使うのは」)。
@@ -486,32 +476,46 @@ const whiteOk = ref(false);
 const modsDone = ref(false);
 const fracDone = ref(false);
 const orderDone = ref(false);
-const step2 = computed(() => whiteOk.value && num(whiteDivine.value) != null);
-const step3 = computed(() => step2.value && modsDone.value && rows.value.length > 0);
-const stepOrder = computed(() => step3.value && fracDone.value);
+/** 4 最安値スタートを決めた (フラクチャーがある時だけの工程) */
+const startDone = ref(false);
+/**
+ * 工程 (2026-10-05 オーナーと組み直し「狙う MOD が 2 工程目、次が白ベース設定で増強消去スパムで狙う MOD (フラクチャー予定)、
+ * ルートは 3 つ (自作の増強スパム / レアのフラクチャー無しベース / フラクチャー済み)、流れが一緒になるのはフラクチャー後。最安値クラフト設定」):
+ *   1 ベース → 2 狙う MOD → 3 白ベース設定 (値段 + 増強・消去スパムで狙う = フラクチャー予定) → 4 最安値スタート (回さずに 3 ルートの計算)
+ *   → 5 付ける順番と付け方 (フラクチャー後は共通) → 6 回す
+ */
+const step3 = computed(() => modsDone.value && rows.value.length > 0);
+const whiteDone = computed(() => step3.value && whiteOk.value && fracDone.value && num(whiteDivine.value) != null);
+const stepStart = computed(() => whiteDone.value && fractureRows.value.length > 0);
+const stepOrder = computed(() => whiteDone.value && (fractureRows.value.length === 0 || startDone.value));
 const step4 = computed(() => stepOrder.value && orderDone.value);
-watch(() => rows.value.length, (n) => { if (n === 0) { modsDone.value = false; fracDone.value = false; orderDone.value = false; } });
-watch(keptKey, () => { if (restoring) return; modsDone.value = false; fracDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
+watch(() => rows.value.length, (n) => { if (n === 0) { modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
+watch(keptKey, () => { if (restoring) return; modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
 // 下の MOD 一覧は ① で選んでいる間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
 // 足し直す時は ① の「直す」で開き直す
-watch(() => step2.value && !modsDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
+watch(() => socketsOk.value && !modsDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
 /**
  * 工程を押すとそこからやり直す (後ろの工程は決め直し)。「1 つ戻す」は今の 1 つ前の工程へ
  * (2026-10-05 オーナー「各工程クリックでそこからやり直させて欲しい。ミスクリックもあるから 1 つ戻すボタンも」)
  */
-type Stage = "white" | "mods" | "frac" | "order";
+type Stage = "mods" | "white" | "start" | "order";
 function goTo(st: Stage): void {
-  if (st === "white") whiteOk.value = false;
-  if (st === "white" || st === "mods") modsDone.value = false;
-  if (st !== "order") fracDone.value = false;
+  if (st === "mods") modsDone.value = false;
+  if (st === "mods" || st === "white") { whiteOk.value = false; fracDone.value = false; }
+  if (st !== "order") startDone.value = false;
   orderDone.value = false;
+}
+/** 3 白ベース設定の「決めた」: 値段とフラクチャー予定 (無ければ「しない」) */
+function whiteDecide(): void {
+  whiteOk.value = true;
+  fracDone.value = true;
 }
 /**
  * 「1 つ戻す」= 直前の操作を 1 つ取り消す (工程ではなく、1 つ前の状態に。2026-10-05 オーナー「1 つ戻すは手じゃなくて行動、1 つ前の作業の状態」)。
  * 狙い (MOD・段・あるいは・どれか N つ・フラクチャー・付け方・順番)・工程の決めた / 戻した・ソケット・白ベースの値段を、変わるたびに前の形を積む
  */
-type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; orderDone: boolean; sockets: number | null; white: number | null };
-const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value });
+type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; startDone: boolean; orderDone: boolean; sockets: number | null; white: number | null };
+const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value });
 const undoStack = ref<Snap[]>([]);
 let lastSnap = snapNow();
 watch(() => JSON.stringify(snapNow()), () => {
@@ -534,7 +538,7 @@ function undo(): void {
   undoStack.value = undoStack.value.slice(0, -1);
   restoring = true;
   s.simTargets.value = JSON.parse(prev.targets);
-  whiteOk.value = prev.whiteOk; modsDone.value = prev.modsDone; fracDone.value = prev.fracDone; orderDone.value = prev.orderDone;
+  whiteOk.value = prev.whiteOk; modsDone.value = prev.modsDone; fracDone.value = prev.fracDone; startDone.value = prev.startDone ?? false; orderDone.value = prev.orderDone;
   sockets.value = prev.sockets; whiteDivine.value = prev.white;
   void nextTick(() => { lastSnap = snapNow(); restoring = false; });
 }
@@ -561,10 +565,28 @@ const whiteFlow = computed(() => {
   if (first && (first.method === "exalt" || first.method === "chaos") && first.methods.includes("exalt")) return "変成 → 増強・消去スパムで 1 番を付ける (外れは消去か白の買い直しの安い方) → 王者 → 2 番から順に";
   return "変成 → 王者 → 1 番から順に";
 });
+/**
+ * 4 最安値スタート: フラクチャー済みのベースを手に入れるまでの 3 ルート (回さずに計算。高貴建て)。流れが一緒になるのはフラクチャーの後
+ *   self   … 自作 (白から増強・消去スパム → 王者 → 骨の壁 → フラクチャー)。1 回分 × 3 (1/3) + 固定後の消去 × 2
+ *   four   … レアのフラクチャー無しベース (4 MOD・当たり 1) を買う → 壁 → フラクチャー。1 回分 × 3 + 消去 × 2
+ *   bought … フラクチャー済みのベースを買う (× 1)
+ */
+const routes = computed(() => {
+  const c = calc.value;
+  const fourN = num(fourDivine.value), bN = num(boughtDivine.value);
+  const list = [
+    { key: "self", name: "① 自作 (白から増強・消去スパム)", cost: c ? c.total : null },
+    { key: "four", name: "② レアのフラクチャー無しベース (4 MOD・当たり 1) を買う", cost: c && fourN != null ? (fourN + c.buyRest) * 3 + c.after : null },
+    { key: "bought", name: "③ フラクチャー済みのベースを買う", cost: bN },
+  ];
+  const known = list.filter((x) => x.cost != null && Number.isFinite(x.cost));
+  const best = known.length ? known.reduce((a, b) => (b.cost! < a.cost! ? b : a)).key : null;
+  return { list, best };
+});
 /** 「しない」: フラクチャーの印を全部外して進む */
 function noFracture(): void {
   s.simTargets.value = s.simTargets.value.map((t) => (t.method === "fracture" ? { ...t, method: methodsFor(t.modId)[0] } : t));
-  fracDone.value = true;
+  whiteDecide();
 }
 onBeforeUnmount(() => { s.simShowMods.value = false; });
 const money = (x: number): string => (Number.isFinite(x) ? displayCurrency.money(x) : "—");
@@ -624,28 +646,12 @@ function replay(): void {
     </Teleport>
     <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
-    <!-- 2 ベースの値段 (手で) -->
-    <div v-if="socketsOk" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-      <p class="mb-1.5 flex items-center gap-2">
-        <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="whiteOk ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteOk && goTo('white')">2 白ベース設定</button>
-        <button v-if="whiteOk" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="goTo('white')">ここからやり直す</button>
-      </p>
-      <div class="flex flex-wrap items-center gap-2 text-[11px]">
-      <span class="opacity-70">白ベース</span>
-      <PriceInput v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="0" />
-      <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
-      <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
-      <button v-if="!whiteOk" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="num(whiteDivine) == null" @click="whiteOk = true">進む →</button>
-      <span v-if="help" class="opacity-60">規格外のソケット付きならその値段。白から始める時・作り直す時に数え、マジックで外れた時は「消去」と「白を買い直して変成」の安い方を使う</span>
-      </div>
-    </div>
-
-    <!-- 3 狙う MOD → 4 フラクチャー → 5 付ける順番と付け方 -->
-    <template v-if="step2">
+    <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
+    <template v-if="socketsOk">
       <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->
       <div class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
         <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="modsDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="modsDone && goTo('mods')">3 狙う MOD</button> <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="modsDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="modsDone && goTo('mods')">2 狙う MOD</button> <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
           <button v-if="modsDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('mods')">ここからやり直す</button>
         </p>
         <!-- 完成図 (ベースの横から移した。段・＋・×・どれか N つ・付きやすさ) -->
@@ -660,44 +666,91 @@ function replay(): void {
         </div>
       </div>
 
-      <!-- ② フラクチャー (① の中から固定する MOD。同じ側でどれか 1 つが固定されれば良い) -->
+      <!-- 3 白ベース設定: 白ベースの値段 + 増強・消去スパムで狙う MOD (= フラクチャー予定、2 の中から) -->
       <div v-if="step3" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
         <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="fracDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="fracDone && goTo('frac')">4 フラクチャーベース設定</button> <span v-if="help" class="font-normal opacity-60">(3 の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span>
-          <button v-if="fracDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('frac')">ここからやり直す</button>
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="whiteDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteDone && goTo('white')">3 白ベース設定</button>
+          <button v-if="whiteDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('white')">ここからやり直す</button>
         </p>
-        <template v-if="!fracDone">
+        <div class="flex flex-wrap items-center gap-2 text-[11px]">
+          <span class="opacity-70">白ベース</span>
+          <PriceInput v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="0" />
+          <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
+          <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
+        </div>
+        <p class="mt-2 text-[11px] font-bold opacity-80">増強・消去スパムで狙う MOD (フラクチャー予定) <span v-if="help" class="font-normal opacity-70">(2 の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span></p>
+        <template v-if="!whiteDone">
           <label v-for="r in rows.filter((x) => x.methods.includes('exalt'))" :key="r.modId" class="flex items-center gap-2 py-0.5" :class="canFracture(r) ? 'cursor-pointer' : 'opacity-40'">
             <input type="checkbox" class="h-4 w-4 accent-emerald-400" :checked="r.method === 'fracture'" :disabled="!canFracture(r)" @change="toggleFracture(r.modId)" />
             <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
             <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-            <span v-if="r.alts.length" class="text-[10px] text-amber-200">ほか {{ r.alts.length }} つも全部候補 (どれか 1 つが固定されれば良い)</span>
+            <span v-if="r.alts.length" class="text-[10px] text-amber-200">ほか {{ r.alts.length }} つも全部候補</span>
             <span v-if="!canFracture(r)" class="text-[10px] opacity-60">(候補と違う側)</span>
           </label>
-          <p v-if="!rows.some((x) => x.methods.includes('exalt'))" class="text-[11px] opacity-50">固定にできる普通の MOD がありません</p>
+          <p v-if="!rows.some((x) => x.methods.includes('exalt'))" class="text-[11px] opacity-50">増強で狙える普通の MOD がありません</p>
           <div class="mt-1 flex items-center gap-2">
             <span v-if="calc && fractureRows.length" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
-            <button type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10" @click="noFracture">しない</button>
-            <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40" :disabled="!fractureRows.length" @click="fracDone = true">決めた →</button>
+            <span v-if="num(whiteDivine) == null" class="ml-auto text-[11px] text-amber-200/80">白ベースの値段を入れる</span>
+            <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-40" :class="num(whiteDivine) == null ? '' : 'ml-auto'" :disabled="num(whiteDivine) == null" title="フラクチャーしない (白から順に作る)" @click="noFracture">フラクチャーしない</button>
+            <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40" :disabled="!fractureRows.length || num(whiteDivine) == null" @click="whiteDecide">決めた →</button>
           </div>
         </template>
         <template v-else>
-          <p v-if="!fractureRows.length" class="text-[11px] opacity-50">しない</p>
+          <p v-if="!fractureRows.length" class="text-[11px] opacity-50">フラクチャーしない</p>
           <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
             <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
             <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
             <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80">付きやすさ {{ pct(calc.each[i]!.p) }}</span>
           </p>
-          <!-- 固定済みのベースの値段 (ベースを買う方。2026-10-05 オーナー「ベース購入の方はフラクチャーベース設定、フラクチャーする奴を選ぶだけ」) -->
-          <div v-if="fractureRows.length" class="mt-1.5 border-t border-white/10 pt-1.5">
-              <span class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span class="opacity-70">固定済みのベースを買うなら</span>
-                <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" />
-                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="この MOD が固定済みのベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
-                <span class="inline-block w-24 shrink-0" :class="ageOf('bought')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")?.text ?? "" }}</span>
-              </span>
-          </div>
         </template>
+      </div>
+
+      <!-- 4 最安値スタート: フラクチャー済みのベースを手に入れるまでの 3 ルート (回さずに計算)。入れるのは買うベースの値段だけ -->
+      <div v-if="stepStart" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="startDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="startDone && goTo('start')">4 最安値スタート</button>
+          <span class="opacity-60">フラクチャー済みのベースを手に入れるまで (この先の流れはどれも同じ)</span>
+          <button v-if="startDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('start')">ここからやり直す</button>
+        </p>
+        <table class="w-full table-fixed text-[12px]">
+          <colgroup><col /><col class="w-[22rem]" /><col class="w-36" /></colgroup>
+          <tbody>
+            <tr v-for="x in routes.list" :key="x.key" class="border-t border-white/5" :class="routes.best === x.key ? 'bg-emerald-500/10' : ''">
+              <td class="py-1">{{ x.name }}<span v-if="routes.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
+              <td class="py-1">
+                <span v-if="x.key === 'self'" class="text-[11px] opacity-70">1 回分 × 3 (当たり 1/3) + 消去 × 2<template v-if="calc && calc.grade !== '完全'"> · {{ calc.grade }}の増強で計算</template></span>
+                <span v-else class="flex items-center gap-1.5 text-[11px]">
+                  <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" />
+                  <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" />
+                  <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" :title="x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)'" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す ↗</button>
+                </span>
+              </td>
+              <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50">値段を入れると出ます</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="calc?.cantRoll" class="mt-1 text-[11px] text-rose-300">増強ではこの段は出ません (アイテムレベルが足りない)</p>
+        <div class="mt-1.5 flex items-center gap-2">
+          <button type="button" class="rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="toggle('calc')">内訳 {{ open.calc ? "▲" : "▼" }}</button>
+          <button v-if="!startDone" type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="startDone = true">決めた →</button>
+        </div>
+        <!-- 内訳 (① 自作の 1 回分と、② の分かれ目) -->
+        <div v-if="open.calc && calc" class="mt-1.5 rounded bg-black/25 px-2 py-1.5 text-[11px]">
+          <p class="mb-1">① 自作: 1 個 = 1 回分 <b>{{ money(calc.once) }}</b> × 3 + 固定できた後の消去 × 2 {{ money(calc.after) }} = <b class="text-amber-100">{{ money(calc.total) }}</b>
+            <span class="opacity-60">(増強 1 回で候補のどれかが付く {{ calc.pHit > 0 ? pct(calc.pHit) : "0%" }} → リロール平均 {{ Number.isFinite(calc.rerolls) ? calc.rerolls.toFixed(1) : "—" }} 回)</span></p>
+          <table class="w-full">
+            <tbody>
+              <tr v-for="l in calc.lines" :key="l.name" class="border-t border-white/5">
+                <td class="py-0.5">{{ l.name }}</td>
+                <td class="w-20 py-0.5 text-right tabular-nums">× {{ Number.isFinite(l.n) ? l.n.toFixed(l.n < 10 && l.n % 1 ? 1 : 0) : "—" }}</td>
+                <td class="w-24 py-0.5 text-right tabular-nums opacity-70">{{ money(l.each) }}</td>
+                <td class="w-24 py-0.5 text-right tabular-nums">{{ money(l.n * l.each) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="mt-1">② は 1 回分 = ベースの値段 + {{ money(calc.buyRest) }} (深淵のエッセンス・結晶化・骨・ネクロマンシーで印を置き換える壁 + フラクチャー) × 3 + 消去 × 2。<b class="text-sky-100">{{ money(calc.breakEven) }}</b> より安いベースなら ① より安い</p>
+          <p v-if="calc.noAbyss" class="text-amber-300">このベースの深淵のエッセンスの値段が分かりません (0 で数えています)</p>
+        </div>
       </div>
 
       <!-- ③ 付ける順番と付け方 (フラクチャー以外) -->
@@ -748,87 +801,6 @@ function replay(): void {
       <span :class="market.fetchedAt.value && Date.now() - market.fetchedAt.value > MARKET_MAX_AGE_MS ? 'text-amber-300' : ''">{{ market.loading.value ? "取り直しています…" : market.fetchedLabel.value || "まだ読んでいない" }}</span>
       <button type="button" class="rounded border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-40" :disabled="market.loading.value" title="カレンシーランキングと同じ相場を取り直す (計算・回した結果も出し直す)" @click="refreshPrices">相場を取り直す</button>
       <span v-if="help" class="opacity-60">計算と回した結果は、この相場の値段で出しています</span>
-    </div>
-
-    <!-- フラクチャーの始め方 -->
-    <div v-if="fractureRow" class="border-t border-white/10 pt-2">
-      <p class="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <b class="text-emerald-100">フラクチャーまで</b>
-        <span v-if="calc">計算 <b class="text-amber-100">{{ money(calc.total) }}</b></span>
-        <span>回した平均 <b class="text-amber-100">{{ makeBusy ? "…" : makeCost ? money(makeCost.perDone) : "—" }}</b></span>
-        <span class="opacity-70">当たり {{ fractureOdds.hit }}/{{ fractureOdds.of }}</span>
-        <span v-if="calc?.cantRoll" class="text-rose-300">増強ではこの段は出ません (アイテムレベルが足りない)</span>
-        <span v-else-if="calc && calc.grade !== '完全'" class="text-[11px] text-amber-200">完全の増強では出ない段なので{{ calc.grade }}で計算</span>
-        <button type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="toggle('calc')">内訳 {{ open.calc ? "▲" : "▼" }}</button>
-      </p>
-      <template v-if="open.calc">
-      <!-- 計算の費用 (1 回分 × 3) -->
-      <div v-if="calc" class="mt-1.5 rounded bg-black/25 px-2 py-1.5 text-[11px]">
-        <p class="mb-1 text-[12px]">
-          計算: 1 個 = 1 回分 <b>{{ money(calc.once) }}</b> × 3 + 固定できた後の消去 × 2 {{ money(calc.after) }} = <b class="text-amber-100">{{ money(calc.total) }}</b>
-          <span v-if="help" class="opacity-60">(完全の増強 1 回で候補のどれかが付く {{ calc.pHit > 0 ? pct(calc.pHit) : "0%" }} → リロール平均 {{ Number.isFinite(calc.rerolls) ? calc.rerolls.toFixed(1) : "—" }} 回)</span>
-        </p>
-        <p v-if="calc.each.length >= 2" class="mb-1 opacity-80">
-          付きやすさ: <template v-for="(x, i) in calc.each" :key="x.name">{{ i ? " + " : "" }}{{ x.name }} {{ pct(x.p) }}</template> = {{ pct(calc.pHit) }}
-        </p>
-        <p v-if="calc.noAbyss" class="text-amber-300">このベースの深淵のエッセンスの値段が分かりません (0 で数えています)</p>
-        <!-- 買うか自前か (4 MOD・当たり 1 のベース) -->
-        <div class="mb-1.5 rounded border border-sky-400/25 bg-sky-500/[0.06] px-2 py-1.5">
-          <p>
-            4 MOD・当たり 1 のベースは <b class="text-sky-100">{{ money(calc.breakEven) }}</b> より安ければ買う方が得
-            <span v-if="help" class="opacity-60">(自前の 1 回分 {{ money(calc.once) }} − 買う時のベース代以外 {{ money(calc.buyRest) }} = 深淵のエッセンス・結晶化・骨・ネクロマンシー (満杯なので印を置き換える壁) + フラクチャー。固定できた後の消去 × 2 はどちらも同じ)</span>
-          </p>
-          <p v-if="calc.buyOnce != null" class="mt-0.5">
-            買う: 1 回分 {{ money(calc.buyOnce) }} × 3 + 消去 × 2 = <b>{{ money(calc.buyOnce * 3 + calc.after) }}</b> / 自前: {{ money(calc.total) }}
-            <span v-if="calc.buyOnce < calc.once" class="ml-1 rounded bg-emerald-500/20 px-1.5 text-emerald-200">買う方が {{ money((calc.once - calc.buyOnce) * 3) }} 得</span>
-            <span v-else class="ml-1 rounded bg-amber-500/20 px-1.5 text-amber-200">自前の方が {{ money((calc.buyOnce - calc.once) * 3) }} 得</span>
-          </p>
-        </div>
-        <table class="w-full">
-          <tbody>
-            <tr v-for="l in calc.lines" :key="l.name" class="border-t border-white/5">
-              <td class="py-0.5">{{ l.name }}</td>
-              <td class="w-20 py-0.5 text-right tabular-nums">× {{ Number.isFinite(l.n) ? l.n.toFixed(l.n < 10 && l.n % 1 ? 1 : 0) : "—" }}</td>
-              <td class="w-24 py-0.5 text-right tabular-nums opacity-70">{{ money(l.each) }}</td>
-              <td class="w-24 py-0.5 text-right tabular-nums">{{ money(l.n * l.each) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="mt-1 text-[12px]">
-        <span class="opacity-60">回した結果: </span>
-        <template v-if="makeBusy">作る費用を出しています…</template>
-        <template v-else-if="makeCost">
-          自分で作ると平均 <b class="text-amber-100">{{ money(makeCost.perDone) }}</b>
-          <span v-if="help" class="text-[11px] opacity-60">(半分の人 {{ money(makeCost.p50) }} 以内・9 割 {{ money(makeCost.p90) }} 以内<template v-if="makeCost.pDone < 0.95">・作れた割合 {{ pct(makeCost.pDone) }}</template>)</span>
-          <span class="mt-1 grid grid-cols-2 gap-1.5 @3xl:grid-cols-4">
-            <span class="rounded bg-black/30 px-2 py-1">
-              <span class="block text-[10px] opacity-60">フラクチャーの当たり</span>
-              <b>{{ fractureOdds.hit }}/{{ fractureOdds.of }}</b> <span class="text-[11px] opacity-70">= 平均 {{ (fractureOdds.of / fractureOdds.hit).toFixed(1) }} 回に 1 回</span>
-              <span class="block text-[10px] opacity-60">回した結果: 平均 {{ makeCost.fractures.toFixed(1) }} 回</span>
-            </span>
-            <span v-if="makeRoute === 'magic'" class="rounded bg-black/30 px-2 py-1">
-              <span class="block text-[10px] opacity-60">変成・増強 ({{ fracMembers.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで、全部のベースで)</span>
-              <b>平均 {{ makeCost.magic.toFixed(0) }} 回</b>
-            </span>
-            <span v-else class="rounded bg-black/30 px-2 py-1">
-              <span class="block text-[10px] opacity-60">錬金・カオス (全部のベースで)</span>
-              <b>平均 {{ makeCost.chaos.toFixed(0) }} 回</b>
-            </span>
-            <span class="rounded bg-black/30 px-2 py-1">
-              <span class="block text-[10px] opacity-60">使った白のベース</span>
-              <b>平均 {{ makeCost.bases.toFixed(1) }} 個</b>
-              <span v-if="help" class="block text-[10px] opacity-60">外れの固定・マジックの買い直し込み</span>
-            </span>
-          </span>
-        </template>
-      </p>
-      <div v-if="help" class="mt-1 text-[11px]">
-        <p class="mt-0.5 opacity-70">
-          変成 → {{ fracMembers.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 (狙いだけの 1 つなら高貴で 3 つに) → 骨 1 本の壁 (未発現の冒涜、側は問わない) で 4 つ → フラクチャー (1/3)。外れを固定したら白を買い直して始めから。固定できたら消去を 2 つ (残りの外れはカオスが入れ替え、高貴・冒涜は要る時にその側を消す)。ここまでの費用も込み
-        </p>
-      </div>
-      </template>
     </div>
 
     <!-- 回す -->
