@@ -241,7 +241,37 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
  * 付く MOD だけ (カードの上に色を変えて箇条書き、2026-10-05 オーナー「エッセンスは特に説明欄が見づらいから、ルーンとか特定の MOD が付く奴は
  * 分かりやすい色にそこだけ変えよう」「付く MOD だけ箇条書きで書いてあげたい」)。今のアイテムの部位での物。無い物は空
  */
-export function stageAdds(key: string, data: PatchData | null, item: StageItem | null): { head: string; lines: string[] } | null {
+/**
+ * エッセンスの値が普通の MOD (同じ系統・同じ側) のどのティアに当たるか (2026-10-05 オーナー「エッセンスはティアも一応欲しいな、
+ * ここからここまでのティアみたいな、もしティア間で被るなら」)。1 つ目の値の範囲が重なるティアを全部。T1 が一番上
+ */
+function essenceTierSpan(data: PatchData, item: StageItem, mod: { family: string; type: string }, range: readonly number[] | undefined): string | null {
+  if (!range || range.length < 2) return null;
+  const lo = Math.min(range[0]!, range[1]!), hi = Math.max(range[0]!, range[1]!);
+  const pool = item.cls.pools.normal;
+  const ids = mod.type === "prefix" ? pool.prefixes : pool.suffixes;
+  for (const id of ids) {
+    const m = data.mods.get(id);
+    if (!m || m.family !== mod.family || !m.tiers.length) continue;
+    const n = m.tiers.length;
+    const hit: number[] = [];
+    m.tiers.forEach((t, i) => {
+      const r = t.ranges[0];
+      if (!r || r.length < 2) return;
+      const a = Math.min(r[0]!, r[1]!), b = Math.max(r[0]!, r[1]!);
+      if (a <= hi && lo <= b) hit.push(n - i);
+    });
+    if (!hit.length) {
+      const top = m.tiers[n - 1]!.ranges[0];
+      return top && lo > Math.max(top[0]!, top[1]!) ? `普通の MOD の T1 (全 ${n} 段) より上` : null;
+    }
+    const best = Math.min(...hit), worst = Math.max(...hit);
+    return `普通の MOD の ${best === worst ? `T${best}` : `T${worst}〜T${best}`} 相当 (全 ${n} 段)`;
+  }
+  return null;
+}
+
+export function stageAdds(key: string, data: PatchData | null, item: StageItem | null): { head: string; lines: string[]; tier?: string | null } | null {
   if (!item) return null;
   if (isRune(key)) {
     const eff = runeEffectFor(runeOf(key)!, item.cls.category);
@@ -252,7 +282,7 @@ export function stageAdds(key: string, data: PatchData | null, item: StageItem |
     if (!t || t.mod.family === "EssenceAbyss") return null;
     const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
     const text = fillHashes(jaOfMod(t.mod), tier ? tierDisplayRanges(tier) : []);
-    return { head: `付く MOD (${t.side === "prefix" ? "プレフィックス" : "サフィックス"})`, lines: text.split("\n").filter(Boolean) };
+    return { head: `付く MOD (${t.side === "prefix" ? "プレフィックス" : "サフィックス"})`, lines: text.split("\n").filter(Boolean), tier: tier ? essenceTierSpan(data, item, t.mod, tier.ranges[0]) : null };
   }
   return null;
 }

@@ -14,3 +14,19 @@ describe("shortMod", () => {
     expect(shortMod("プレイヤーに対する減速のデバフのポテンシャルが#%減少する")).toBe("減速のデバフのポテンシャル");
   });
 });
+
+describe("エッセンスのティア (普通の MOD の何段に当たるか)", () => {
+  it("耐性・ライフのエッセンスに段が出る", async () => {
+    const { loadPatch } = await import("./helpers/patch");
+    const { freshItem } = await import("../src/services/craft-stage/run-plan");
+    const { stageAdds } = await import("../src/state/craft-stage-help");
+    const data = await loadPatch();
+    const ring = freshItem(data, "Gold Ring", 82, "magic");
+    const out: string[] = [];
+    for (const lv of ["lesser", "normal", "greater"]) {
+      const a = stageAdds(`essence:${lv}:Rings/Essence_LightningResistance`, data, ring);
+      out.push(`${lv}: ${a?.lines.join(" ")} → ${a?.tier}`);
+      expect(a?.tier).toMatch(/^普通の MOD の T\d/);
+    }
+  });
+});

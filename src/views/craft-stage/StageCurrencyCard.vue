@@ -45,6 +45,7 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
         <p v-for="(l, i) in adds.lines" :key="'a' + i" class="flex gap-1.5 text-[13px] font-semibold text-emerald-200">
           <span class="text-emerald-400">・</span><span>{{ l }}</span>
         </p>
+        <p v-if="adds.tier" class="mt-0.5 text-[11px] text-emerald-100/80">ティア: {{ adds.tier }}</p>
       </div>
       <div v-if="official.length" class="mt-2 border-t border-white/10 pt-2 text-[#b8c8e8]">
         <p v-for="(l, i) in official" :key="'o' + i">{{ l }}</p>
