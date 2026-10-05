@@ -88,9 +88,7 @@ function move(modId: string, d: -1 | 1): void {
   [list[i], list[j]] = [list[j]!, list[i]!];
   s.simTargets.value = list;
 }
-/** ① の候補を選ぶポップアップ ([[StageFracturePicker.vue]]) */
-const pickerOpen = ref(false);
-/** ② 順番に付ける MOD (① の候補以外、上から順) */
+/** ③ 付ける順番 (フラクチャー以外、上から順) */
 const restRows = computed(() => rows.value.filter((r) => r.method !== "fracture"));
 /**
  * 付け方を変える。フラクチャーはいくつでも選べる = 始める MOD の候補 (同じ側。どれか 1 つが付いたら進み、どれが固定されても良い)。
@@ -473,23 +471,44 @@ function toggle(k: "help" | "calc" | "usage"): void {
 const help = computed(() => !!open.value.help);
 
 /**
- * 1 つずつ進む (2026-10-05 オーナー「まだ決めてないところは表示させないでね、1 個 1 個進んで行く形で」)。
- *   1 白ベースの値段 → 2 ① フラクチャー (選ぶか「しない」) → 3 ② 付ける順番 (「決めた」) → 4 相場・回す → 5 比べ・結果 (回した後)
- * 前の段を決め直しても後ろは消さない。狙いが空になった時とベースを変えた時だけ始めに戻る
+ * 1 つずつ進む (2026-10-05 オーナー「まだ決めてないところは表示させないでね、1 個 1 個進んで行く形で」
+ * 「先に MOD 決めからでしょ」「フラクチャーは 2 番目で 1 番目は MOD 決め」)。
+ *   白ベースの値段「進む」→ ① 狙う MOD (下の一覧から、「決めた」) → ② フラクチャー (① の中から固定する物、か「しない」)
+ *   → ③ 付ける順番と付け方 (「決めた」) → 相場・回す → 比べ・結果 (回した後)
+ * 前の段を直しても後ろは消さない。狙いが空になった時とベースを変えた時だけ始めに戻る
  */
-const noFracture = ref(false);
 /** 白ベースの値段を入れて「進む」を押した */
 const whiteOk = ref(false);
+const modsDone = ref(false);
+const fracDone = ref(false);
 const orderDone = ref(false);
 const step2 = computed(() => whiteOk.value && num(whiteDivine.value) != null);
-const step3 = computed(() => step2.value && (fractureRows.value.length > 0 || noFracture.value));
-const step4 = computed(() => step3.value && orderDone.value && rows.value.length > 0);
-watch(() => rows.value.length, (n) => { if (n === 0) orderDone.value = false; });
-watch(() => fractureRows.value.length, (n) => { if (n > 0) noFracture.value = false; });
-watch(keptKey, () => { noFracture.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
-// 下の MOD 一覧は ② で足している間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
-// 足し直す時は ② の「MOD を足す」で開き直す
-watch(() => step3.value && !orderDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
+const step3 = computed(() => step2.value && modsDone.value && rows.value.length > 0);
+const stepOrder = computed(() => step3.value && fracDone.value);
+const step4 = computed(() => stepOrder.value && orderDone.value);
+watch(() => rows.value.length, (n) => { if (n === 0) { modsDone.value = false; fracDone.value = false; orderDone.value = false; } });
+watch(keptKey, () => { modsDone.value = false; fracDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
+// 下の MOD 一覧は ① で選んでいる間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
+// 足し直す時は ① の「直す」で開き直す
+watch(() => step2.value && !modsDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
+/**
+ * ② フラクチャーにできる MOD (普通の MOD だけ。冒涜・エッセンスの MOD は固定の候補にしない、あるいは付きの手順も外す)。
+ * 候補は同じ側だけ (1 つ目の側に揃える)
+ */
+const fracSide = computed(() => fractureRows.value[0]?.side ?? null);
+const canFracture = (r: { method: RecipeMethod; methods: RecipeMethod[]; alts: unknown[]; side: string }): boolean =>
+  r.methods.includes("exalt") && !r.alts.length && (!fracSide.value || fracSide.value === r.side || r.method === "fracture");
+function toggleFracture(modId: string): void {
+  const r = rows.value.find((x) => x.modId === modId);
+  if (!r) return;
+  if (r.method === "fracture") s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, method: methodsFor(modId)[0] } : t));
+  else if (canFracture(r)) setMethod(modId, "fracture");
+}
+/** 「しない」: フラクチャーの印を全部外して進む */
+function noFracture(): void {
+  s.simTargets.value = s.simTargets.value.map((t) => (t.method === "fracture" ? { ...t, method: methodsFor(t.modId)[0] } : t));
+  fracDone.value = true;
+}
 onBeforeUnmount(() => { s.simShowMods.value = false; });
 const money = (x: number): string => (Number.isFinite(x) ? displayCurrency.money(x) : "—");
 const pct = (x: number): string => `${(x * 100).toFixed(x < 0.1 && x > 0 ? 1 : 0)}%`;
@@ -566,41 +585,18 @@ function replay(): void {
       <span v-if="help" class="opacity-60">規格外のソケット付きならその値段。白から始める時・作り直す時に数え、マジックで外れた時は「消去」と「白を買い直して変成」の安い方を使う</span>
     </div>
 
-    <!-- 狙い: ① フラクチャーの候補 (ポップアップの MOD 一覧から選ぶ) → ② 順番に付ける MOD (下の一覧の「狙う」) -->
-    <div v-if="step2" class="mb-3">
-      <!-- ① フラクチャーの候補 -->
-      <div class="mb-2 rounded-lg border border-emerald-400/40 bg-emerald-500/[0.05] px-2 py-1.5">
-        <p class="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-emerald-100">
-          ① フラクチャー <span v-if="help" class="font-normal opacity-60">(同じ側。どれか 1 つが付いたら進み、どれが固定されても良い)</span>
-          <button type="button" class="ml-auto rounded border border-emerald-400/60 bg-emerald-500/15 px-2 py-0.5 font-normal text-emerald-100 hover:bg-emerald-500/25" @click="pickerOpen = true">MOD を選ぶ</button>
-          <button v-if="!fractureRows.length && !noFracture" type="button" class="rounded border border-white/20 px-2 py-0.5 font-normal hover:bg-white/10" @click="noFracture = true">しない</button>
+    <!-- ① 狙う MOD → ② フラクチャー → ③ 付ける順番と付け方 -->
+    <div v-if="step2" class="mb-3 space-y-2">
+      <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->
+      <div class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
+        <p class="mb-1 flex items-center gap-2 text-[11px] font-bold text-amber-100">
+          ① 狙う MOD <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
+          <button v-if="modsDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="modsDone = false">直す</button>
         </p>
-        <p v-if="!fractureRows.length && noFracture" class="text-[11px] opacity-50">しない</p>
+        <p v-if="!rows.length" class="text-[11px] opacity-50">下の MOD 一覧の「T○ 以上」で足す</p>
         <table v-else class="w-full">
           <tbody>
-            <tr v-for="(r, i) in fractureRows" :key="r.modId" class="border-t border-white/5">
-              <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
-              <td class="py-1"><span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></td>
-              <td class="w-28 py-1 text-right text-[11px] tabular-nums opacity-80"><template v-if="calc?.each[i]">付きやすさ {{ pct(calc.each[i]!.p) }}</template></td>
-              <td class="w-6 py-1 text-right"><button type="button" class="opacity-60 hover:opacity-100" title="外す" @click="remove(r.modId)">×</button></td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-if="calc && fractureRows.length >= 2" class="mt-0.5 text-right text-[11px]">合計 {{ pct(calc.pHit) }}</p>
-      </div>
-
-      <!-- ② 順番に付ける MOD -->
-      <div v-if="step3" class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
-        <p class="mb-1 text-[11px] font-bold text-amber-100">② 付ける順番 <span v-if="help" class="font-normal opacity-60">(下の「このベースに付く MOD」の段の表の「狙う」で足す。上から順。前に付けた物が消えたら、また上から)</span></p>
-        <p v-if="!restRows.length" class="text-[11px] opacity-50">下の MOD 一覧の「狙う」で足す</p>
-        <table v-else class="w-full">
-          <tbody>
-            <tr v-for="(r, i) in restRows" :key="r.modId" class="border-t border-white/5">
-              <td class="w-14 py-1">
-                <span class="mr-1 font-bold text-amber-200">{{ i + 1 }}</span>
-                <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="move(r.modId, -1)">▲</button>
-                <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === restRows.length - 1" title="下へ" @click="move(r.modId, 1)">▼</button>
-              </td>
+            <tr v-for="r in rows" :key="r.modId" class="border-t border-white/5">
               <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
               <td class="py-1">
                 <!-- あるいはがあれば枠で囲んで「どれか 1 つ」(完成図と同じ) -->
@@ -610,28 +606,89 @@ function replay(): void {
                   <span v-for="a in r.alts" :key="a.modId" class="inline-flex items-center rounded bg-black/30 px-1">
                     <span :class="r.tone">{{ a.text }}</span>
                     <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ a.rank }} 以上</span>
-                    <button type="button" class="ml-1 opacity-50 hover:opacity-100" title="この候補を外す" @click="removeAlt(r.modId, a.modId)">×</button>
+                    <button v-if="!modsDone" type="button" class="ml-1 opacity-50 hover:opacity-100" title="この候補を外す" @click="removeAlt(r.modId, a.modId)">×</button>
                   </span>
                 </div>
               </td>
-              <td class="py-1 align-top">
-                <span class="flex flex-wrap gap-1">
-                  <button v-if="r.method !== 'essence' && !orderDone" type="button" class="rounded border border-amber-400/40 px-1.5 py-px text-[11px] text-amber-200 hover:bg-amber-500/10" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="addAlts(r.modId)">＋</button>
-                  <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px]" :class="r.method === m ? (m === 'desecrate' ? 'bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/60' : 'bg-white/15 text-white ring-1 ring-white/40') : 'border border-white/10 opacity-60 hover:opacity-100'" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
-                </span>
+              <td class="w-8 py-1 text-right align-top">
+                <button v-if="!modsDone && r.method !== 'essence'" type="button" class="rounded border border-amber-400/40 px-1.5 py-px text-[11px] text-amber-200 hover:bg-amber-500/10" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="addAlts(r.modId)">＋</button>
               </td>
-              <td class="w-6 py-1 text-right"><button type="button" class="opacity-60 hover:opacity-100" title="外す" @click="remove(r.modId)">×</button></td>
+              <td class="w-6 py-1 text-right align-top"><button v-if="!modsDone" type="button" class="opacity-60 hover:opacity-100" title="外す" @click="remove(r.modId)">×</button></td>
             </tr>
           </tbody>
         </table>
+        <div v-if="rows.length && !modsDone" class="mt-1 flex items-center gap-2">
+          <button type="button" class="rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
+          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="modsDone = true">決めた →</button>
+        </div>
       </div>
-      <div v-if="step3" class="mt-1 flex items-center gap-2">
-        <button v-if="rows.length" type="button" class="rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
-        <button v-if="rows.length && !orderDone" type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="orderDone = true">決めた →</button>
-        <button v-if="orderDone" type="button" class="ml-auto rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="orderDone = false">MOD を足す</button>
+
+      <!-- ② フラクチャー (① の中から固定する MOD。同じ側でどれか 1 つが固定されれば良い) -->
+      <div v-if="step3" class="rounded-lg border border-emerald-400/40 bg-emerald-500/[0.05] px-2 py-1.5">
+        <p class="mb-1 flex items-center gap-2 text-[11px] font-bold text-emerald-100">
+          ② フラクチャー <span v-if="help" class="font-normal opacity-60">(① の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span>
+          <button v-if="fracDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="fracDone = false">直す</button>
+        </p>
+        <template v-if="!fracDone">
+          <label v-for="r in rows.filter((x) => x.methods.includes('exalt'))" :key="r.modId" class="flex items-center gap-2 py-0.5" :class="canFracture(r) ? 'cursor-pointer' : 'opacity-40'">
+            <input type="checkbox" class="h-4 w-4 accent-emerald-400" :checked="r.method === 'fracture'" :disabled="!canFracture(r)" @change="toggleFracture(r.modId)" />
+            <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
+            <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
+            <span v-if="r.alts.length" class="text-[10px] opacity-60">(あるいは付きは固定にできない)</span>
+            <span v-else-if="!canFracture(r)" class="text-[10px] opacity-60">(候補と違う側)</span>
+          </label>
+          <p v-if="!rows.some((x) => x.methods.includes('exalt'))" class="text-[11px] opacity-50">固定にできる普通の MOD がありません</p>
+          <div class="mt-1 flex items-center gap-2">
+            <span v-if="calc && fractureRows.length" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
+            <button type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10" @click="noFracture">しない</button>
+            <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40" :disabled="!fractureRows.length" @click="fracDone = true">決めた →</button>
+          </div>
+        </template>
+        <template v-else>
+          <p v-if="!fractureRows.length" class="text-[11px] opacity-50">しない</p>
+          <p v-for="(r, i) in fractureRows" :key="r.modId" class="flex items-center gap-2 py-0.5">
+            <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
+            <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
+            <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80">付きやすさ {{ pct(calc.each[i]!.p) }}</span>
+          </p>
+        </template>
+      </div>
+
+      <!-- ③ 付ける順番と付け方 (フラクチャー以外) -->
+      <div v-if="stepOrder" class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
+        <p class="mb-1 flex items-center gap-2 text-[11px] font-bold text-amber-100">
+          ③ 付ける順番と付け方 <span v-if="help" class="font-normal opacity-60">(上から順。前に付けた物が消えたら、また上から)</span>
+          <button v-if="orderDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="orderDone = false">直す</button>
+        </p>
+        <p v-if="!restRows.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
+        <table v-else class="w-full">
+          <tbody>
+            <tr v-for="(r, i) in restRows" :key="r.modId" class="border-t border-white/5">
+              <td class="w-14 py-1">
+                <span class="mr-1 font-bold text-amber-200">{{ i + 1 }}</span>
+                <template v-if="!orderDone">
+                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="move(r.modId, -1)">▲</button>
+                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === restRows.length - 1" title="下へ" @click="move(r.modId, 1)">▼</button>
+                </template>
+              </td>
+              <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
+              <td class="py-1">
+                <span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
+                <span v-if="r.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ r.alts.length }} つのどれか</span>
+              </td>
+              <td class="py-1">
+                <span class="flex flex-wrap justify-end gap-1">
+                  <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px] disabled:cursor-default" :class="r.method === m ? (m === 'desecrate' ? 'bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/60' : 'bg-white/15 text-white ring-1 ring-white/40') : 'border border-white/10 opacity-60 hover:opacity-100'" :disabled="orderDone" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-if="!orderDone" class="mt-1 flex">
+          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="orderDone = true">決めた →</button>
+        </div>
       </div>
     </div>
-    <StageFracturePicker v-if="pickerOpen" @close="pickerOpen = false" />
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
 
     <template v-if="step4">
