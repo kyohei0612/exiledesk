@@ -145,6 +145,8 @@ def _short(text: str, n: int = 12) -> str:
         short = f"{head} {num.group(0)}" if num and num.group(0) not in head else head
         if len(short) <= n + 2:
             return short
+    if "が" not in text and len(text) <= n + 3:  # 「サフィックスモッド +1個」は切らない
+        return text
     return text[: n - 1] + "…"
 
 
