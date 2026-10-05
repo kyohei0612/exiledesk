@@ -10,7 +10,7 @@
   探す自動 (計算機の自動のツリー) は外した。計算機 (htc-craft) はそのまま。
 -->
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
@@ -419,13 +419,18 @@ const help = computed(() => !!open.value.help);
  * 前の段を決め直しても後ろは消さない。狙いが空になった時とベースを変えた時だけ始めに戻る
  */
 const noFracture = ref(false);
+/** 白ベースの値段を入れて「進む」を押した */
+const whiteOk = ref(false);
 const orderDone = ref(false);
-const step2 = computed(() => num(whiteDivine.value) != null);
+const step2 = computed(() => whiteOk.value && num(whiteDivine.value) != null);
 const step3 = computed(() => step2.value && (fractureRows.value.length > 0 || noFracture.value));
 const step4 = computed(() => step3.value && orderDone.value && rows.value.length > 0);
 watch(() => rows.value.length, (n) => { if (n === 0) orderDone.value = false; });
 watch(() => fractureRows.value.length, (n) => { if (n > 0) noFracture.value = false; });
-watch(() => s.base.value, () => { noFracture.value = false; orderDone.value = false; });
+watch(keptKey, () => { noFracture.value = false; orderDone.value = false; whiteOk.value = false; });
+// 下の MOD 一覧は ② から (「狙う」で足す所)
+watch(step3, (v) => { s.simShowMods.value = v; }, { immediate: true });
+onBeforeUnmount(() => { s.simShowMods.value = false; });
 const money = (x: number): string => (Number.isFinite(x) ? displayCurrency.money(x) : "—");
 const pct = (x: number): string => `${(x * 100).toFixed(x < 0.1 && x > 0 ? 1 : 0)}%`;
 const stale = computed(() => ranFor.value !== sig.value);
@@ -488,6 +493,7 @@ function replay(): void {
       <input v-model.number="whiteDivine" type="number" min="0" step="0.1" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
       <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
       <span v-if="ageOf('white')" :class="ageOf('white')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")!.text }}</span>
+      <button v-if="!whiteOk" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="num(whiteDivine) == null" @click="whiteOk = true">進む →</button>
       <span v-if="help" class="opacity-60">規格外のソケット付きならその値段。白から始める時・作り直す時に数え、マジックで外れた時は「消去」と「白を買い直して変成」の安い方を使う</span>
     </div>
 

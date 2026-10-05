@@ -19,6 +19,7 @@ import VideoStage from "./VideoStage.vue";
 import StageBasePicker from "./StageBasePicker.vue";
 import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
+import StageTargetSummary from "./StageTargetSummary.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
@@ -88,6 +89,8 @@ async function copy(label: string, v: unknown): Promise<void> {
   }
   setTimeout(() => (copied.value = ""), 2500);
 }
+/** シミュレーションでまだベースを選んでいない (ベース選びだけを出す) */
+const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);
 const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabled:opacity-40";
 </script>
 
@@ -103,7 +106,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
     <div v-if="!s.replay.value" class="mb-3 flex gap-1.5">
-      <button v-for="t in ([['hand', '手で打つ'], ['sim', 'シミュレーション (実験)']] as const)" :key="t[0]" type="button" class="rounded-lg px-4 py-1.5 text-[13px]" :class="s.mode.value === t[0] ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" @click="s.hold(null); s.mode.value = t[0]">{{ t[1] }}</button>
+      <button v-for="t in ([['hand', '手で打つ'], ['sim', 'シミュレーション (実験)']] as const)" :key="t[0]" type="button" class="rounded-lg px-4 py-1.5 text-[13px]" :class="s.mode.value === t[0] ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" @click="s.hold(null); if (t[0] === 'sim' && s.mode.value !== 'sim') s.simPicked.value = false; s.mode.value = t[0]">{{ t[1] }}</button>
     </div>
 
     <!-- 再生モード -->
@@ -115,13 +118,15 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     </div>
 
     <!-- 設定と操作 -->
-    <section v-if="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px]">
+    <section v-if="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 px-3 py-2 text-[12px]" :class="s.mode.value === 'sim' ? 'sticky top-0 z-20 bg-[#16130f]/95 backdrop-blur' : 'bg-white/[0.03]'">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
-      <StageBasePicker :base="s.base.value" :data="s.data.value" @pick="(en) => { s.base.value = en; s.simTargets.value = []; s.reset(); }" />
-      <span class="flex items-center gap-1">
+      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="(en) => { s.base.value = en; s.simTargets.value = []; s.simPicked.value = true; s.reset(); }" />
+      <span v-if="!simNoBase" class="flex items-center gap-1">
         <span class="opacity-60">アイテムレベル</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>
+      <!-- 選んだ MOD (完成図)。下の一覧で「狙う」を押してもここで見える (上に貼り付く) -->
+      <StageTargetSummary v-if="s.mode.value === 'sim' && !simNoBase" class="basis-full" />
       <template v-if="s.mode.value === 'hand'">
       <button type="button" :class="btn" @click="s.reset()">白に戻す</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
@@ -138,7 +143,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     <p v-if="s.error.value" class="mb-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300">{{ s.error.value }}</p>
     <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center opacity-50">データを読んでいます…</p>
 
-    <StageSimPanel v-if="s.ready.value && s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
+    <StageSimPanel v-if="s.ready.value && s.mode.value === 'sim' && !s.replay.value && !simNoBase" class="mb-4" />
     <div v-if="s.ready.value && (s.mode.value === 'hand' || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex flex-col items-center gap-8">
@@ -208,7 +213,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
       </div>
     </div>
     <!-- このベースに付く MOD (StageModList.vue、2026-09-29) -->
-    <StageModList v-if="s.ready.value && s.item.value" />
+    <StageModList v-if="s.ready.value && s.item.value && (s.mode.value === 'hand' || s.replay.value || s.simShowMods.value)" />
 
     <!-- 押した所の波紋と、吸い込まれるアイコン -->
     <template v-if="fx && fx.kind !== 'shake'">

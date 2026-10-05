@@ -156,6 +156,12 @@ const startMods = ref<Force[]>([]);
 const mode = ref<"hand" | "sim">("hand");
 
 /** method = 付け方 (順番どおりのシミュレーション、[[recipe-sim.ts]])。省くと MOD の種類で決める (普通 = 高貴、冒涜 = 冒涜、エッセンス = エッセンス) */
+/**
+ * シミュレーションはベース選びから (2026-10-05 オーナー「実験開いたらベース決めからでしょ、ベースはデフォは選択なしでスタート」)。
+ * simPicked = このタブでベースを選んだ。simShowMods = 下の MOD 一覧を出す段まで来た (② 付ける順番から)
+ */
+const simPicked = ref(false);
+const simShowMods = ref(false);
 const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture" }>>([]);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
@@ -173,7 +179,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
