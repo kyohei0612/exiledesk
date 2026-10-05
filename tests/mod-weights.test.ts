@@ -6,8 +6,6 @@ import { loadPatch } from "./helpers/patch";
 import { classOfBase } from "../src/services/htc/bridge";
 import { pageFromHtc } from "../src/views/rare-craft/htc-pages";
 import { htcFamilyStats } from "../src/services/htc/patch";
-import { tagSetsForSlotWithBases } from "../src/services/mods/item-class-tags";
-import { tiersForTemplate } from "../src/services/mods/tiers";
 
 const data = loadPatch();
 /** 行の MOD の名前 (id の "/" の後ろ。系統名は STR / INT で同じ「BaseLocalDefences」なので、違いは id に出る) */
@@ -67,12 +65,15 @@ describe("規格外の賭けの重み表 (エンジンから作る)", () => {
 });
 
 describe("上位プレイヤー MOD 一覧の段の表", () => {
-  it("STR の手袋の段の表に ES は出ず、INT の手袋にアーマーは出ない", () => {
-    const str = tagSetsForSlotWithBases("gloves", [{ nameEn: "Ancient Mitts", cls: "Gloves" }]);
-    const int = tagSetsForSlotWithBases("gloves", [{ nameEn: "Adorned Gloves", cls: "Gloves" }]);
-    expect(tiersForTemplate("+# to maximum Energy Shield", str).length).toBe(0);
-    expect(tiersForTemplate("+# to Armour", str).length).toBeGreaterThan(0);
-    expect(tiersForTemplate("+# to maximum Energy Shield", int).length).toBeGreaterThan(0);
-    expect(tiersForTemplate("+# to Armour", int).length).toBe(0);
+  // 2026-10-05 から段の表はエンジン (クラフトステージと同じデータ、engine-mods.ts) から。ベースのエンジンの行 (Gloves_str 等) で絞る
+  it("STR の手袋の段の表に ES は出ず、INT の手袋にアーマーは出ない", async () => {
+    const { prepareEngineMods, rowsForSlot, engineTiers } = await import("../src/services/mods/engine-mods");
+    await prepareEngineMods();
+    const str = rowsForSlot("gloves", ["Ancient Mitts"]);
+    const int = rowsForSlot("gloves", ["Adorned Gloves"]);
+    expect(engineTiers("+# to maximum Energy Shield", str, "prefix").length).toBe(0);
+    expect(engineTiers("+# to Armour", str, "prefix").length).toBeGreaterThan(0);
+    expect(engineTiers("+# to maximum Energy Shield", int, "prefix").length).toBeGreaterThan(0);
+    expect(engineTiers("+# to Armour", int, "prefix").length).toBe(0);
   });
 });
