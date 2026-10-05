@@ -1707,6 +1707,166 @@
           }
         }
       ]
+    },
+    {
+      "name": "クイズとまとめ",
+      "target_seconds": 50,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここでクイズ。コラプトした装備にも差せるのは、どれ？",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "rune:Serle's Triumph",
+              "rune:Astrid's Creativity",
+              "rune:Legacy of Blackbraid"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "3秒で考えてね。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "rune:Serle's Triumph",
+              "rune:Astrid's Creativity",
+              "rune:Legacy of Blackbraid"
+            ],
+            "countdown": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "正解は黒い組紐の遺産。遺産のルーンは、コラプトした装備にも差せるの。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "rune:Serle's Triumph",
+              "rune:Astrid's Creativity",
+              "rune:Legacy of Blackbraid"
+            ],
+            "answer": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "セールとアストリッドは、コラプトの前に差すのだ！",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "rune:Serle's Triumph",
+              "rune:Astrid's Creativity",
+              "rune:Legacy of Blackbraid"
+            ],
+            "answer": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "まとめると、ルーンは置き換えられるけど、外すことはできないのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "セールの凱旋でサフィックスが4つになるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "アストリッドの創造性で、クラフトMODが2つになるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "特殊MODのルーンで普段出ないMODが出て、アルダーで属性が変わるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "遺産のルーンは、ユニークの力の一部を持っているのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ほとんどは一度差したら替えられないから、差す前に何を作るか決めておいてね。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "このチャンネルでは、PoE2の基礎を初心者向けにまとめていくわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "happy",
+          "text": "分からない所や知りたい事があったら、コメントで教えてね。チャンネル登録もよろしく！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "よろしくなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        }
+      ]
     }
   ]
 }
