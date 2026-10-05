@@ -100,7 +100,19 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const mod = (id: string) => data.mods.get(id)!;
   const sideOf = (id: string): StageSide => (mod(id).type === "suffix" ? "suffix" : "prefix");
   const meets = (it: StageItem, t: RecipeTarget): boolean => allMods(it).some((m) => m.modId === t.modId && !m.unrevealed && m.tierIndex >= t.minTierIndex);
-  const isGood = (m: StageMod): boolean => !m.unrevealed && spec.targets.some((t) => m.modId === t.modId && m.tierIndex >= t.minTierIndex);
+  // 冒涜の MOD は、付け方が冒涜の狙いに当たる時だけ当たり (骨の壁が発現でフラクチャーの候補などになっても、冒涜は 1 つまでなので
+  // 冒涜の狙いの邪魔になる。外れとして光 + 消去で外す。2026-10-05 流れの確かめで 36% が「冒涜の MOD はアイテムに 1 つまで」で止まっていた)
+  const isGood = (m: StageMod): boolean => !m.unrevealed && spec.targets.some((t) => m.modId === t.modId && m.tierIndex >= t.minTierIndex
+    && (!m.desecrated || t.method === "desecrate" || !spec.targets.some((x) => x.method === "desecrate")));
+  /**
+   * 外れを消す手: 反対側に守る物 (固定でない当たり) が無ければ素の消去 (お告げは反対側を守るだけなので、守る物が無いなら要らない)。
+   * あれば側の消去のお告げ (計算機と同じ決まり、[[htc-craft-engine-direction]] の「外れの消し方」)
+   */
+  const annulOn = (s0: StageSide): string | null => {
+    const other: StageSide = s0 === "prefix" ? "suffix" : "prefix";
+    const guard = listOf(item, other).some((m) => !m.fractured && isGood(m));
+    return guard ? play("annul", [SIDE_OMEN.annul[s0]]) : play("annul");
+  };
   const junkOn = (it: StageItem, s: StageSide): StageMod[] => listOf(it, s).filter((m) => !m.fractured && !isGood(m));
   const junkAll = (it: StageItem): StageMod[] => allMods(it).filter((m) => !m.fractured && !isGood(m));
   /** 狙いの段以上で一番高い段のレベル (等級の下限が届くか) */
@@ -254,14 +266,14 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     } else if (t.method === "chaos") {
       e = play("chaos");
     } else if (t.method === "exalt") {
-      if (junkOn(item, side).length) e = play("annul", [SIDE_OMEN.annul[side]]);
+      if (junkOn(item, side).length) e = annulOn(side);
       else if (room(item, side)) e = play(grade("exalt", t), [SIDE_OMEN.exalt[side]]);
       else return fail("枠が足りない (狙いが多すぎる)");
     } else if (t.method === "desecrate") {
       const desec = allMods(item).find((m) => m.desecrated && !m.unrevealed && !isGood(m));
       if (desec) e = play("annul", ["OmenofLight"]);
       else if (!room(item, side)) {
-        if (junkOn(item, side).length) e = play("annul", [SIDE_OMEN.annul[side]]);
+        if (junkOn(item, side).length) e = annulOn(side);
         else return fail("冒涜する枠が足りない");
       } else e = play(boneFor(t), [SIDE_OMEN.necro[side]]);
     } else if (t.method === "essence") {

@@ -70,3 +70,21 @@ describe("フラクチャーの作り方と白のベースの値段 (2026-10-05)
     }
   });
 });
+
+describe("流れの確かめで見つけた物 (2026-10-05)", () => {
+  it("骨の壁が発現で候補の MOD になっても、冒涜の狙いが止まらない。守る物が無い側の外れは素の消去", async () => {
+    const data = await loadPatch();
+    const fire = targetOf(data, "Rings", /FireResistance$/, 2);
+    const light = targetOf(data, "Rings", /LightningResistance$/, 2);
+    const life = targetOf(data, "Rings", /IncreasedLife$/, 2);
+    const chaos = targetOf(data, "Rings", /ChaosResistance$/, 2);
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 40, price: (k) => (k.startsWith("Omen") ? 50 : 1), whiteBasePrice: 1, seed: 3000,
+      fractureStart: { kind: "make", route: "magic", blocker: true },
+      targets: [{ ...fire, method: "fracture" }, { ...light, method: "fracture" }, { ...life, method: "exalt" }, { ...chaos, method: "desecrate" }],
+    };
+    const r = (await runRecipe(spec))!;
+    expect(r.stops.find((x) => x.reason.includes("1 つまで"))).toBeUndefined();
+    expect(r.pDone).toBeGreaterThan(0.9);
+  });
+});
