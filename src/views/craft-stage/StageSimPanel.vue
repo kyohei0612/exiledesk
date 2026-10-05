@@ -520,6 +520,19 @@ watch(keptKey, () => { modsDone.value = false; fracDone.value = false; orderDone
 // 足し直す時は ① の「直す」で開き直す
 watch(() => step2.value && !modsDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
 /**
+ * 工程を押すとそこからやり直す (後ろの工程は決め直し)。「1 つ戻す」は今の 1 つ前の工程へ
+ * (2026-10-05 オーナー「各工程クリックでそこからやり直させて欲しい。ミスクリックもあるから 1 つ戻すボタンも」)
+ */
+type Stage = "white" | "mods" | "frac" | "order";
+function goTo(st: Stage): void {
+  if (st === "white") whiteOk.value = false;
+  if (st === "white" || st === "mods") modsDone.value = false;
+  if (st !== "order") fracDone.value = false;
+  orderDone.value = false;
+}
+/** 今決めている工程の 1 つ前 (無ければ null) */
+const backTo = computed((): Stage | null => (orderDone.value ? "order" : fracDone.value ? "frac" : modsDone.value ? "mods" : whiteOk.value ? "white" : null));
+/**
  * ② フラクチャーにできる MOD (普通の MOD だけ。冒涜・エッセンスの MOD は固定の候補にしない、あるいは付きの手順も外す)。
  * 候補は同じ側だけ (1 つ目の側に揃える)
  */
@@ -590,7 +603,8 @@ function replay(): void {
       <b class="text-sm text-amber-100">シミュレーション</b>
       <span class="rounded bg-amber-500/20 px-1.5 text-[10px] text-amber-200">実験</span>
       <span class="opacity-60">{{ s.item.value?.baseJa }} / ilvl {{ s.itemLevel.value }}</span>
-      <button type="button" class="ml-auto rounded-full border px-2 py-0.5 text-[11px]" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
+      <button type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!backTo" title="1 つ前の工程に戻る" @click="backTo && goTo(backTo)">↶ 1 つ戻す</button>
+      <button type="button" class="rounded-full border px-2 py-0.5 text-[11px]" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
     </div>
     <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
@@ -602,7 +616,7 @@ function replay(): void {
     </div>
     <!-- 白のベースの値段 (手で) -->
     <div v-if="socketsOk" class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
-      <span class="opacity-70">白ベース</span>
+      <button type="button" class="opacity-70 hover:underline" :class="whiteOk ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteOk && goTo('white')">白ベース</button>
       <input v-model.number="whiteDivine" type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" />
       <select v-model="unit" class="rounded border border-white/15 bg-black/30 px-1 py-0.5" title="手で入れる値段の単位 (白 / 4 MOD / 固定済み / 完成品の全部)">
         <option v-for="x in UNITS" :key="x.k" :value="x.k">{{ x.ja }}</option>
@@ -618,8 +632,8 @@ function replay(): void {
       <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->
       <div class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
         <p class="mb-1 flex items-center gap-2 text-[11px] font-bold text-amber-100">
-          ① 狙う MOD <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
-          <button v-if="modsDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="modsDone = false">直す</button>
+          <button type="button" class="font-bold hover:underline" :class="modsDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="modsDone && goTo('mods')">① 狙う MOD</button> <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
+          <button v-if="modsDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="goTo('mods')">ここからやり直す</button>
         </p>
         <p v-if="!rows.length" class="text-[11px] opacity-50">下の MOD 一覧の「T○ 以上」で足す</p>
         <table v-else class="w-full">
@@ -660,8 +674,8 @@ function replay(): void {
       <!-- ② フラクチャー (① の中から固定する MOD。同じ側でどれか 1 つが固定されれば良い) -->
       <div v-if="step3" class="rounded-lg border border-emerald-400/40 bg-emerald-500/[0.05] px-2 py-1.5">
         <p class="mb-1 flex items-center gap-2 text-[11px] font-bold text-emerald-100">
-          ② フラクチャー <span v-if="help" class="font-normal opacity-60">(① の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span>
-          <button v-if="fracDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="fracDone = false">直す</button>
+          <button type="button" class="font-bold hover:underline" :class="fracDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="fracDone && goTo('frac')">② フラクチャー</button> <span v-if="help" class="font-normal opacity-60">(① の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span>
+          <button v-if="fracDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="goTo('frac')">ここからやり直す</button>
         </p>
         <template v-if="!fracDone">
           <label v-for="r in rows.filter((x) => x.methods.includes('exalt'))" :key="r.modId" class="flex items-center gap-2 py-0.5" :class="canFracture(r) ? 'cursor-pointer' : 'opacity-40'">
@@ -691,8 +705,8 @@ function replay(): void {
       <!-- ③ 付ける順番と付け方 (フラクチャー以外) -->
       <div v-if="stepOrder" class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
         <p class="mb-1 flex items-center gap-2 text-[11px] font-bold text-amber-100">
-          ③ 付ける順番と付け方 <span v-if="help" class="font-normal opacity-60">(上から順。前に付けた物が消えたら、また上から)</span>
-          <button v-if="orderDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="orderDone = false">直す</button>
+          <button type="button" class="font-bold hover:underline" :class="orderDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="orderDone && goTo('order')">③ 付ける順番と付け方</button> <span v-if="help" class="font-normal opacity-60">(上から順。前に付けた物が消えたら、また上から)</span>
+          <button v-if="orderDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="goTo('order')">ここからやり直す</button>
         </p>
         <p v-if="!restRows.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
