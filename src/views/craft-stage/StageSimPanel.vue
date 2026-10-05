@@ -62,6 +62,8 @@ const rows = computed(() => {
         const at = am?.tiers[a.minTierIndex];
         return { modId: a.modId, text: am ? fillHashes(jaOfMod(am), at ? tierDisplayRanges(at) : []).replace(/\n/g, " / ") : a.modId, rank: am ? `T${am.tiers.length - a.minTierIndex}` : "" };
       }),
+      /** 候補のうちいくつ付けば当たりか (どれか N つ。候補の数まで) */
+      need: Math.max(1, Math.min(t.need ?? 1, 1 + (t.alts?.length ?? 0))),
     };
   });
 });
@@ -73,11 +75,24 @@ function remove(modId: string): void {
 function addAlts(modId: string): void {
   s.simAltFor.value = modId;
 }
+/**
+ * どれか N つ (2026-10-05 オーナー「この状態ならどれか 2 つとかも選ばせてあげたい」)。候補のうち N 個付けば当たり、その数だけ枠を使う。
+ * 枠はその側の 3 つまで (ほかの手順の分を引いた数まで選べる)
+ */
+function setNeed(modId: string, n: number): void {
+  s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, need: n } : t));
+}
+/** その手順で選べる N の上限 (候補の数と、その側の空き枠) */
+function needMax(r: { modId: string; side: string; alts: unknown[] }): number {
+  const others = rows.value.filter((x) => x.side === r.side && x.modId !== r.modId && x.method !== "fracture").reduce((a, x) => a + x.need, 0)
+    + (rows.value.some((x) => x.side === r.side && x.method === "fracture") ? 1 : 0);
+  return Math.max(1, Math.min(1 + r.alts.length, 3 - others));
+}
 function removeAlt(modId: string, alt: string): void {
   s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, alts: (t.alts ?? []).filter((a) => a.modId !== alt) } : t));
 }
 /** 狙いの全部の MOD の印 (段も、どれかの候補も) */
-const targetsSig = (): string => s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}${(t.alts ?? []).map((a) => `|${a.modId}:${a.minTierIndex}`).join("")}`).join(",");
+const targetsSig = (): string => s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}${t.need && t.need > 1 ? `x${t.need}` : ""}${(t.alts ?? []).map((a) => `|${a.modId}:${a.minTierIndex}`).join("")}`).join(",");
 /** ② の中で 1 つ上 / 下へ (① の候補は飛ばす) */
 function move(modId: string, d: -1 | 1): void {
   const list = [...s.simTargets.value];
@@ -103,6 +118,17 @@ function setMethod(modId: string, method: RecipeMethod): void {
 
 /** フラクチャーの狙いの始め方。付いた状態のベースの値段は手で (神) */
 const fractureRows = computed(() => rows.value.filter((r) => r.method === "fracture"));
+/**
+ * フラクチャーの候補を 1 つずつに (あるいは付きの手順は候補を全部。2026-10-05 オーナー「フラクチャーは複数あったら全部で 1 つのグループで
+ * いい、全部フラクチャー予定として」)。どれか 1 つが固定されれば良い (どれか N つの N はフラクチャーでは見ない)
+ */
+const fracMembers = computed(() => fractureRows.value.flatMap((r) => {
+  const t = s.simTargets.value.find((x) => x.modId === r.modId);
+  return [
+    { modId: r.modId, minTierIndex: r.minTierIndex, text: r.text, rank: r.rank, side: r.side, tone: r.tone },
+    ...r.alts.map((a) => ({ modId: a.modId, minTierIndex: t?.alts?.find((x) => x.modId === a.modId)?.minTierIndex ?? 0, text: a.text, rank: a.rank, side: r.side, tone: r.tone })),
+  ];
+}));
 const fractureRow = computed(() => fractureRows.value[0] ?? null);
 /**
  * 作り方は 変成・増強ガチャ → 王者 → 骨の壁 (4 つ目を骨の未発現の冒涜に、候補が 1 つ減る) だけ
@@ -281,10 +307,10 @@ async function searchDone(): Promise<void> {
       return KINDS.filter((k) => hasStatKind(key, k)).map((k) => ({ id: `${k}.${key}`, ...(f.min != null ? { min: f.min } : {}) }));
     });
   const stats: { id: string; min?: number }[] = [];
-  const anyOf: { filters: { id: string; min?: number }[] }[] = [];
-  const put = (fs: { id: string; min?: number }[]): void => { if (fs.length === 1) stats.push(fs[0]!); else if (fs.length > 1) anyOf.push({ filters: fs }); };
-  if (fractureRows.value.length) put(fractureRows.value.flatMap(kindsOf));
-  for (const r of restRows.value) put([r, ...(s.simTargets.value.find((t) => t.modId === r.modId)?.alts ?? [])].flatMap(kindsOf));
+  const anyOf: { filters: { id: string; min?: number }[]; count?: number }[] = [];
+  const put = (fs: { id: string; min?: number }[], count = 1): void => { if (fs.length === 1) stats.push(fs[0]!); else if (fs.length > 1) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) }); };
+  if (fracMembers.value.length) put(fracMembers.value.flatMap(kindsOf));
+  for (const r of restRows.value) put([r, ...(s.simTargets.value.find((t) => t.modId === r.modId)?.alts ?? [])].flatMap(kindsOf), r.need);
   await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, anyOf, noSanctified: true, ...socketQuery() }));
 }
 
@@ -296,7 +322,7 @@ const makeCost = ref<{ key: string; perDone: number; p50: number; p90: number; p
 const makeBusy = ref(false);
 let makeGen = 0;
 const makeKey = computed(() => (fractureRow.value && !(makeRoute.value === "magic" && mixedSides.value)
-  ? `${s.base.value}|${s.itemLevel.value}|${fractureRows.value.map((f) => `${f.modId}:${f.minTierIndex}`).join(",")}|${makeRoute.value}|${makeSpec.value.blocker}|${whiteDivine.value ?? 0}|s${socketCount.value}|${market.fetchedAt.value ?? 0}` : ""));
+  ? `${s.base.value}|${s.itemLevel.value}|${fracMembers.value.map((f) => `${f.modId}:${f.minTierIndex}`).join(",")}|${makeRoute.value}|${makeSpec.value.blocker}|${whiteDivine.value ?? 0}|s${socketCount.value}|${market.fetchedAt.value ?? 0}` : ""));
 watch(makeKey, async (key) => {
   const d = s.data.value, f = fractureRow.value;
   const my = ++makeGen;
@@ -311,7 +337,7 @@ watch(makeKey, async (key) => {
   const r = await runRecipe({
     data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: 500, price, fractureStart: makeSpec.value,
     whiteBasePrice: (num(whiteDivine.value) ?? 0) * unitEx(), sockets: socketCount.value,
-    targets: fractureRows.value.map((x) => ({ modId: x.modId, minTierIndex: x.minTierIndex, method: "fracture" as const })),
+    targets: fracMembers.value.map((x) => ({ modId: x.modId, minTierIndex: x.minTierIndex, method: "fracture" as const })),
   }, undefined, () => my !== makeGen);
   if (my !== makeGen) return;
   makeBusy.value = false;
@@ -351,7 +377,7 @@ const calc = computed(() => {
   };
   const total = it.cls.pools.normal[sideKey].reduce((a, id) => a + w(id, 0), 0);
   // 候補ごとの付きやすさと合計 (どれか 1 つで良い)
-  const each = fractureRows.value.map((r) => ({ name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 }));
+  const each = fracMembers.value.map((r) => ({ name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 }));
   const pHit = Math.min(1, each.reduce((a, x) => a + x.p, 0));
   const wall: "prefix" | "suffix" = m.type === "suffix" ? "prefix" : "suffix";
   const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
@@ -427,7 +453,9 @@ async function run(): Promise<void> {
     const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
     const spec: RecipeSpec = {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: runs.value, price,
-      targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}) })),
+      targets: s.simTargets.value.flatMap((t) => (methodOf(t) === "fracture"
+        ? [{ modId: t.modId, minTierIndex: t.minTierIndex, method: "fracture" as const }, ...(t.alts ?? []).map((a) => ({ ...a, method: "fracture" as const }))]
+        : [{ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts, ...(t.need && t.need > 1 ? { need: t.need } : {}) } : {}) }])),
       whiteBasePrice: (num(whiteDivine.value) ?? 0) * divine, sockets: socketCount.value,
       ...(fractureRow.value ? { fractureStart: makeSpec.value } : {}),
     };
@@ -497,7 +525,7 @@ watch(() => step2.value && !modsDone.value, (v) => { s.simShowMods.value = v; },
  */
 const fracSide = computed(() => fractureRows.value[0]?.side ?? null);
 const canFracture = (r: { method: RecipeMethod; methods: RecipeMethod[]; alts: unknown[]; side: string }): boolean =>
-  r.methods.includes("exalt") && !r.alts.length && (!fracSide.value || fracSide.value === r.side || r.method === "fracture");
+  r.methods.includes("exalt") && (!fracSide.value || fracSide.value === r.side || r.method === "fracture");
 function toggleFracture(modId: string): void {
   const r = rows.value.find((x) => x.modId === modId);
   if (!r) return;
@@ -601,7 +629,14 @@ function replay(): void {
               <td class="py-1">
                 <!-- あるいはがあれば枠で囲んで「どれか 1 つ」(完成図と同じ) -->
                 <div :class="r.alts.length ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
-                  <span v-if="r.alts.length" class="text-[10px] font-bold text-amber-200">どれか 1 つ:</span>
+                  <span v-if="r.alts.length" class="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-200">
+                    どれか
+                    <template v-if="!modsDone && needMax(r) > 1">
+                      <button v-for="n in needMax(r)" :key="n" type="button" class="rounded px-1 leading-tight" :class="r.need === n ? 'bg-amber-500/40 text-amber-50 ring-1 ring-amber-300' : 'border border-amber-400/30 opacity-70 hover:opacity-100'" :title="`候補のうち ${n} つ付けば当たり (枠を ${n} つ使う)`" @click="setNeed(r.modId, n)">{{ n }}</button>
+                    </template>
+                    <template v-else>{{ r.need }}</template>
+                    つ:
+                  </span>
                   <span :class="r.alts.length ? 'inline-flex items-center rounded bg-black/30 px-1' : ''"><span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></span>
                   <span v-for="a in r.alts" :key="a.modId" class="inline-flex items-center rounded bg-black/30 px-1">
                     <span :class="r.tone">{{ a.text }}</span>
@@ -633,8 +668,8 @@ function replay(): void {
             <input type="checkbox" class="h-4 w-4 accent-emerald-400" :checked="r.method === 'fracture'" :disabled="!canFracture(r)" @change="toggleFracture(r.modId)" />
             <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
             <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-            <span v-if="r.alts.length" class="text-[10px] opacity-60">(あるいは付きは固定にできない)</span>
-            <span v-else-if="!canFracture(r)" class="text-[10px] opacity-60">(候補と違う側)</span>
+            <span v-if="r.alts.length" class="text-[10px] text-amber-200">ほか {{ r.alts.length }} つも全部候補 (どれか 1 つが固定されれば良い)</span>
+            <span v-if="!canFracture(r)" class="text-[10px] opacity-60">(候補と違う側)</span>
           </label>
           <p v-if="!rows.some((x) => x.methods.includes('exalt'))" class="text-[11px] opacity-50">固定にできる普通の MOD がありません</p>
           <div class="mt-1 flex items-center gap-2">
@@ -645,7 +680,7 @@ function replay(): void {
         </template>
         <template v-else>
           <p v-if="!fractureRows.length" class="text-[11px] opacity-50">しない</p>
-          <p v-for="(r, i) in fractureRows" :key="r.modId" class="flex items-center gap-2 py-0.5">
+          <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
             <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
             <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
             <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80">付きやすさ {{ pct(calc.each[i]!.p) }}</span>
@@ -673,7 +708,7 @@ function replay(): void {
               <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
               <td class="py-1">
                 <span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-                <span v-if="r.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ r.alts.length }} つのどれか</span>
+                <span v-if="r.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ r.alts.length }} つと合わせてどれか {{ r.need }} つ</span>
               </td>
               <td class="py-1">
                 <span class="flex flex-wrap justify-end gap-1">
@@ -756,7 +791,7 @@ function replay(): void {
               <span class="block text-[10px] opacity-60">回した結果: 平均 {{ makeCost.fractures.toFixed(1) }} 回</span>
             </span>
             <span v-if="makeRoute === 'magic'" class="rounded bg-black/30 px-2 py-1">
-              <span class="block text-[10px] opacity-60">変成・増強 ({{ fractureRows.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで、全部のベースで)</span>
+              <span class="block text-[10px] opacity-60">変成・増強 ({{ fracMembers.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで、全部のベースで)</span>
               <b>平均 {{ makeCost.magic.toFixed(0) }} 回</b>
             </span>
             <span v-else class="rounded bg-black/30 px-2 py-1">
@@ -773,7 +808,7 @@ function replay(): void {
       </p>
       <div v-if="help" class="mt-1 text-[11px]">
         <p class="mt-0.5 opacity-70">
-          変成 → {{ fractureRows.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 (狙いだけの 1 つなら高貴で 3 つに) → 骨 1 本の壁 (未発現の冒涜、側は問わない) で 4 つ → フラクチャー (1/3)。外れを固定したら白を買い直して始めから。固定できたら消去を 2 つ (残りの外れはカオスが入れ替え、高貴・冒涜は要る時にその側を消す)。ここまでの費用も込み
+          変成 → {{ fracMembers.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 (狙いだけの 1 つなら高貴で 3 つに) → 骨 1 本の壁 (未発現の冒涜、側は問わない) で 4 つ → フラクチャー (1/3)。外れを固定したら白を買い直して始めから。固定できたら消去を 2 つ (残りの外れはカオスが入れ替え、高貴・冒涜は要る時にその側を消す)。ここまでの費用も込み
         </p>
       </div>
       </template>

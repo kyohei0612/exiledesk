@@ -37,7 +37,11 @@ export type RecipeMethod = "exalt" | "chaos" | "desecrate" | "essence" | "fractu
  * 狙いの 1 手順。alts があれば「どれか 1 つが付けば当たり」(2026-10-05 オーナー「マークスマンの MOD をプレで複数選んで狙いたい。
  * その 1 つの MOD の所は他の MOD でも当たりとする」)。alts は modId と同じ側・同じ付け方 (普通 / 冒涜) の物だけ
  */
-export interface RecipeTarget { modId: string; minTierIndex: number; method: RecipeMethod; alts?: ReadonlyArray<{ modId: string; minTierIndex: number }> }
+export interface RecipeTarget {
+  modId: string; minTierIndex: number; method: RecipeMethod; alts?: ReadonlyArray<{ modId: string; minTierIndex: number }>;
+  /** 候補 (本体 + alts) のうちいくつ付けば当たりか (既定 1。2026-10-05 オーナー「どれか 2 つとかも選ばせたい」)。その数だけ枠を使う */
+  need?: number;
+}
 /** その手順で当たりになる MOD (本体 + alts) */
 export const membersOf = (t: RecipeTarget): Array<{ modId: string; minTierIndex: number }> => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
 const hits = (t: RecipeTarget, m: StageMod): boolean => membersOf(t).some((x) => m.modId === x.modId && m.tierIndex >= x.minTierIndex);
@@ -108,7 +112,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   let bases = 0;
   const mod = (id: string) => data.mods.get(id)!;
   const sideOf = (id: string): StageSide => (mod(id).type === "suffix" ? "suffix" : "prefix");
-  const meets = (it: StageItem, t: RecipeTarget): boolean => allMods(it).some((m) => !m.unrevealed && hits(t, m));
+  // 候補のうち need 個 (違う MOD で) 付いていれば当たり
+  const meets = (it: StageItem, t: RecipeTarget): boolean =>
+    new Set(allMods(it).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size >= Math.max(1, Math.min(t.need ?? 1, membersOf(t).length));
   // 冒涜の MOD は、付け方が冒涜の狙いに当たる時だけ当たり (骨の壁が発現でフラクチャーの候補などになっても、冒涜は 1 つまでなので
   // 冒涜の狙いの邪魔になる。外れとして光 + 消去で外す。2026-10-05 流れの確かめで 36% が「冒涜の MOD はアイテムに 1 つまで」で止まっていた)
   const isGood = (m: StageMod): boolean => !m.unrevealed && spec.targets.some((t) => hits(t, m)

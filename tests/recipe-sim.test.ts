@@ -122,3 +122,20 @@ describe("ソケット付きの白のベース (2026-10-05)", () => {
     expect(final.sockets).toBe(3);
   });
 });
+
+describe("どれか N つ (2026-10-05)", () => {
+  it("金の指輪: 火 / 冷気 / 雷耐性のどれか 2 つ (高貴) で完成し、2 つ付いている", async () => {
+    const data = await loadPatch();
+    const fire = targetOf(data, "Rings", /FireResistance$/, 3);
+    const cold = targetOf(data, "Rings", /ColdResistance$/, 3);
+    const light = targetOf(data, "Rings", /LightningResistance$/, 3);
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 30, price: () => 1, seed: 7000,
+      targets: [{ ...fire, method: "exalt", alts: [cold, light], need: 2 }],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    const { final } = playPlan(data, recipePlan(spec, r!.sample!), {});
+    expect([fire, cold, light].filter((t) => allMods(final).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex)).length).toBeGreaterThanOrEqual(2);
+  });
+});

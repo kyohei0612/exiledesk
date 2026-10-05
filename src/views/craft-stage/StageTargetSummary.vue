@@ -45,7 +45,8 @@ const rows = computed(() => {
         rank: xm ? `T${xm.tiers.length - x.minTierIndex} 以上` : "",
       };
     };
-    return [row(t, false), ...(t.alts ?? []).map((a) => row(a, true))];
+    const need = Math.max(1, Math.min(t.need ?? 1, 1 + (t.alts?.length ?? 0)));
+    return [{ ...row(t, false), need }, ...(t.alts ?? []).map((a) => ({ ...row(a, true), need }))];
   });
 });
 /**
@@ -55,14 +56,15 @@ const rows = computed(() => {
 type Row = (typeof rows.value)[number];
 const columns = computed(() => (["P", "S"] as const).map((side) => {
   const list = rows.value.filter((r) => r.side === side);
-  const groups: Array<{ key: string; no: number | null; kind: Kind; host: string; members: Row[] }> = [];
+  const groups: Array<{ key: string; no: number | null; kind: Kind; host: string; need: number; members: Row[] }> = [];
   for (const r of list) {
     const key = r.kind === "fracture" ? "fracture" : r.group;
     const g = groups.find((x) => x.key === key);
     if (g) g.members.push(r);
-    else groups.push({ key, no: r.no, kind: r.kind, host: r.group, members: [r] });
+    else groups.push({ key, no: r.no, kind: r.kind, host: r.group, need: r.kind === "fracture" ? 1 : r.need, members: [r] });
   }
-  return { title: side === "P" ? "プレフィックス" : "サフィックス", groups, used: groups.length };
+  // どれか N つは N 枠 (フラクチャーの候補は 1 枠)
+  return { title: side === "P" ? "プレフィックス" : "サフィックス", groups, used: groups.reduce((a, g) => a + g.need, 0) };
 }));
 </script>
 
@@ -78,7 +80,7 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
           <!-- 2 つ以上は横に並べて折り返す (縦に積むと太くなる、2026-10-05 オーナー) -->
           <div v-if="g.members.length > 1" class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-            <span class="text-[10px] font-bold text-amber-200">どれか 1 つ:</span>
+            <span class="text-[10px] font-bold text-amber-200">どれか {{ g.need }} つ:</span>
             <span v-for="r in g.members" :key="r.modId" class="inline-flex max-w-full items-center gap-1 rounded bg-black/30 px-1">
               <span class="truncate" :title="r.text">{{ r.text }}</span>
               <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
