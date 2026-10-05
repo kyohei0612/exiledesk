@@ -91,11 +91,18 @@ export function takenRawFamilies(data: PatchData, item: StageItem): Set<string> 
   }));
 }
 
-/** 数値を 1 つ転がす (範囲の両端を含む。小数の範囲は 0.01 刻み) */
+const decimalsOf = (n: number): number => { const t = String(n); return t.includes(".") ? t.split(".")[1]!.length : 0; };
+/**
+ * 数値を 1 つ転がす (範囲の両端を含む)。小数の範囲は、範囲の数字の桁の刻み (0.1-0.2 なら 0.1 / 0.2 の 2 通り、0.75-1 なら 0.01 刻み)。
+ * 前は小数なら一律 0.01 刻みで、冒涜の回避ロールの距離 (生の値 1〜2 = 0.1 / 0.2 m) に「+0.13 メートル」のような出ない値が出ていた
+ * (2026-10-06 POE2Tube 要望 ㉝ の 10)。stats を持つ段はデータの整数のまま転がすのでここは通らない
+ */
 function rollValue(min: number, max: number, rng: () => number): number {
   const lo = Math.min(min, max), hi = Math.max(min, max);
   if (Number.isInteger(lo) && Number.isInteger(hi)) return lo + Math.floor(rng() * (hi - lo + 1));
-  return Math.round((lo + rng() * (hi - lo)) * 100) / 100;
+  const p = 10 ** Math.max(decimalsOf(lo), decimalsOf(hi));
+  const a = Math.round(lo * p), b = Math.round(hi * p);
+  return (a + Math.floor(rng() * (b - a + 1))) / p;
 }
 /**
  * 文面の # に数値を順に入れる (英語・日本語どちらも)。signs は英語の文面の各 # の前の符号 (「+# to Evasion Rating」の +)。

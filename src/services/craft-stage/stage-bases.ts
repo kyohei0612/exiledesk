@@ -95,6 +95,8 @@ export function uniquesOfClassForBase(base: string): Array<{ en: string; ja: str
   if (!cls?.cls) return uniquesForBase(base);
   return Object.entries(UNIQUES).filter(([, u]) => (u as { cls?: string }).cls === cls.cls).map(([en, u]) => ({ en, ja: u.ja }));
 }
+/** そのユニークのベース (英語名)。無ければ null */
+export const uniqueBaseOf = (en: string): string | null => UNIQUES[en]?.base ?? null;
 export function uniquesForBase(base: string): Array<{ en: string; ja: string }> {
   return Object.entries(UNIQUES).filter(([, u]) => u.base === base).map(([en, u]) => ({ en, ja: u.ja }));
 }

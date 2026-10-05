@@ -86,6 +86,8 @@ export interface StageItem {
   shards?: Record<string, number>;
   /** ソケットにはめたオーグメント (ルーン)。はめた順。要望 ⑰-1 */
   augments?: StageAugment[];
+  /** 固有 MOD・ユニークの効果の値を振る種 (手順の seed。roll-text.ts、要望 ㉝ の 5) */
+  rollSeed?: number;
   /** 解呪 / サルベージで無くなった (POE2Tube 要望 ⑰-5)。以後何も打てない */
   disposed?: "disenchant" | "salvage";
   /** 解呪 / サルベージで手に入った品質カレンシー (キー → 個数)。シャードは shards の方 */
@@ -130,6 +132,8 @@ export interface StageApply {
    */
   /** 耐性のフラックス (2026-10-04): 変えた MOD と変えた先の属性 (アルダーのルーンと同じ形) */
   converted?: { element: string; mods: Array<{ from: StageMod; to: StageMod }> };
+  /** 抽出のオーブで取り戻したオーグメント (ソケットバウンドでない物。要望 ㉝ の 13) */
+  returned?: StageAugment[];
   augment?: { socket: number; put: StageAugment; replaced: StageAugment | null; replacedGoes: "destroyed" | null; /** 傑作のルーンで 1 段上げた (replaced = 上げる前) */ upgraded?: boolean;
     /** アルダーのルーン (要望 ㉙): 変えた MOD (from = 前、to = 後) と、変えた先の属性 */
     converted?: { element: string; mods: Array<{ from: StageMod; to: StageMod }> } };

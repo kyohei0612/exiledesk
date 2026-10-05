@@ -36,6 +36,23 @@ export function essenceTarget(data: PatchData, item: StageItem, key: string): { 
   return hit ? { level: m[1]!, ...hit } : null;
 }
 
+/**
+ * エッセンスの段は、ゲームでは普通の MOD の段そのもの (EssenceMods → Mods: 肉体のグレーターエッセンスのアミュレット = IncreasedLife7
+ * = Rotund、85〜99、ライフ 9 段の上から 3 番目)。ティアの数え方と段の名前を普通の MOD の系統で出す (2026-10-06 POE2Tube 要望 ㉝ の 4。
+ * 前はエッセンスの 3 段で数えて「T1」、名前も Greater Essence of the Body)。同じ系統・同じ側で MOD レベルと値の幅が同じ段を探す。無ければそのまま
+ */
+function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: Mod["tiers"][number]): { tierName: string; affix: string } | {} {
+  const pool = item.cls.pools.normal;
+  const r0 = tier.ranges[0];
+  for (const id of mod.type === "prefix" ? pool.prefixes : pool.suffixes) {
+    const m = data.mods.get(id);
+    if (!m || m.source !== "normal" || m.family !== mod.family) continue;
+    const i = m.tiers.findIndex((t) => t.ilvl === tier.ilvl && String(t.ranges[0]) === String(r0));
+    if (i >= 0) return { tierName: `T${m.tiers.length - i}`, affix: String(m.tiers[i]!.name ?? "") };
+  }
+  return {};
+}
+
 export function applyEssence(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
   const t = essenceTarget(data, item, key);
   if (!t) return skip(item, "このベースには使えないエッセンス");
@@ -49,7 +66,7 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   const limit = craftedLimitOf(item);
   if (allMods(item).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? "クラフト MOD はアストリッドの創造性込みで 2 つまで" : "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)");
   const clash = (it: StageItem) => essenceClash(mod, takenRawFamilies(data, it));
-  const sm = { ...makeStageMod(mod, side, tierIndex, rng), crafted: true };
+  const sm = { ...makeStageMod(mod, side, tierIndex, rng), ...normalTierOf(data, item, mod, tier), crafted: true };
 
   if (level !== "perfect") {
     if (item.rarity !== "magic") return skip(item, "マジックのアイテムにだけ使える (レアにはパーフェクト)");

@@ -290,7 +290,7 @@ export const craftStage = {
     if (!data.value) return;
     try {
       startMods.value = [];
-      item.value = fullSockets(freshItem(data.value, base.value, itemLevel.value));
+      item.value = { ...fullSockets(freshItem(data.value, base.value, itemLevel.value)), rollSeed: seed.value };
       log.value = [];
       omens.value = [];
       seed.value = newSeed();

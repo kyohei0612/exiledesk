@@ -32,3 +32,39 @@ describe("最低 MOD レベル", () => {
     expect(r.reason).toContain("35 未満");
   });
 });
+
+describe("エッセンスの段は普通の MOD の段 (要望 ㉝ の 4)", () => {
+  it("肉体のグレーターエッセンス (アミュレット) = ライフの T3 Rotund", async () => {
+    const data = await loadPatch();
+    let it = freshItem(data, "Gold Amulet", 82);
+    it = applyCurrency(data, it, "transmute", mulberry32(1)).item;
+    // 付いた MOD と側がぶつからないよう、マジックの MOD を消してから
+    it = { ...it, prefixes: [], suffixes: [] };
+    const r = applyCurrency(data, it, "essence:greater:Amulets/Essence_IncreasedLife", mulberry32(2));
+    expect(r.applied).toBe(true);
+    expect(r.added[0]!.tierName).toBe("T3");
+    expect(r.added[0]!.affix).toBe("Rotund");
+  });
+});
+
+describe("ユニーク・抽出・小数 (要望 ㉝ の 6 / 13 / 10)", () => {
+  it("古代のお告げでユニークになったらそのユニークのベースになる", async () => {
+    const { uniqueBaseOf } = await import("../src/services/craft-stage/stage-bases");
+    const data = await loadPatch();
+    for (let s = 1; s < 40; s++) {
+      const r = applyCurrency(data, freshItem(data, "Sapphire Ring", 82), "chance", mulberry32(s), ["OmenoftheAncients"], { outcome: "unique" });
+      expect(r.applied).toBe(true);
+      const want = uniqueBaseOf(r.item.unique!.en);
+      if (want) expect(r.item.base).toBe(want);
+    }
+  });
+  it("抽出のオーブはソケットバウンドでないオーグメントを取り戻す", async () => {
+    const data = await loadPatch();
+    let it = { ...freshItem(data, "Warlord Cuirass", 82), sockets: 2 };
+    it = applyCurrency(data, it, "rune:Greater Iron Rune", mulberry32(1)).item;
+    expect(it.augments?.length).toBe(1);
+    const r = applyCurrency(data, it, "extraction", mulberry32(2));
+    expect(r.item.destroyed).toBe(true);
+    expect(r.returned?.map((a) => a.en)).toEqual(["Greater Iron Rune"]);
+  });
+});

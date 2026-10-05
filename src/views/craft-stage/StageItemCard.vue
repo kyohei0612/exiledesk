@@ -17,6 +17,7 @@ import { isFlask, isGem, reqText } from "../../services/craft-stage/stage-bases"
 import { propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
+import { rollLines } from "../../services/craft-stage/roll-text";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { uniqueArt } from "../../services/assets/unique-art";
 import { boostedMod } from "../../services/craft-stage/stage-core";
@@ -63,7 +64,8 @@ const kindJa = computed(() => (isGem(props.item.cls.category) ? "スキルジェ
 const baseRows = computed(() => propRows(props.item));
 /** 未鑑定なら MOD を隠す */
 const hidden = computed(() => props.item.identified === false);
-const implicits = computed(() => (htcBaseInfo()[props.item.base]?.implicits ?? []).map((i) => i.ja));
+// 範囲 (20-30) はゲームのように振った値で (要望 ㉝ の 5)
+const implicits = computed(() => rollLines(props.item, (htcBaseInfo()[props.item.base]?.implicits ?? []).map((i) => i.ja), "implicit"));
 /** 絵: ユニークになったらユニークの見た目、それ以外はベースの絵 */
 const art = computed(() => (props.item.unique ? uniqueArt(props.item.unique.en) : null) ?? baseArt(props.item.base));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
@@ -83,7 +85,7 @@ function look(m: StageMod): { cls: string; tag: string } {
   return { cls: "text-rarity-magic", tag: "" };
 }
 /** ユニークの効果 (poe2db のページから。値はユニークごとに決まった 1 つ。ページの無いユニークは空) */
-const uLines = computed(() => (props.item.rarity === "unique" && props.item.unique ? uniqueLines(props.item.unique.en) : []));
+const uLines = computed(() => (props.item.rarity === "unique" && props.item.unique ? rollLines(props.item, uniqueLines(props.item.unique.en), props.item.unique.en) : []));
 const rows = computed(() =>
   [...props.item.prefixes.map((m) => ({ m, side: "プレ" })), ...props.item.suffixes.map((m) => ({ m, side: "サフィ" }))].map((r) => {
     // カタリストの品質で伸びた数値 (伸びない MOD は null)

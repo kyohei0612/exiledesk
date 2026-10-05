@@ -166,6 +166,8 @@ export function playStep(
     ...(revealOut(data, item, currency, o.seed, r.applied)),
     // 耐性のフラックス: converted = { element, mods: [{ from, to }] }
     ...(r.converted ? ({ converted: { element: r.converted.element, mods: r.converted.mods.map((x) => ({ from: outMod(x.from), to: outMod(x.to) })) } } as object) : {}),
+    // 抽出のオーブで取り戻したオーグメント (要望 ㉝ の 13、足したキー)
+    ...(r.returned?.length ? ({ returned_augments: r.returned.map(outAug) } as object) : {}),
     ...(r.augment ? ({ augment_change: { socket: r.augment.socket, put: outAug(r.augment.put), replaced: r.augment.replaced ? outAug(r.augment.replaced) : null, replaced_goes: r.augment.replacedGoes,
       // 傑作のルーン: upgraded = { from: 上げる前, to: 上げた後 } (POE2Tube 要望 ㉘)
       ...(r.augment.upgraded ? { upgraded: { from: outAug(r.augment.replaced!), to: outAug(r.augment.put) } } : {}),
@@ -215,7 +217,7 @@ export interface RunMeta {
 export interface StartSpec { rarity?: StageItem["rarity"]; mods?: Force[]; quality?: number; sockets?: number; runes?: string[] }
 export function startFrom(data: PatchData, base: string, itemLevel: number, s: StartSpec, seed: number): StageItem {
   const rarity = s.rarity ?? (s.mods && s.mods.length > 2 ? "rare" : s.mods?.length ? "magic" : "normal");
-  let item: StageItem = { ...freshItem(data, base, itemLevel), rarity };
+  let item: StageItem = { ...freshItem(data, base, itemLevel), rarity, rollSeed: seed };
   const rng = mulberry32(seed);
   if (s.sockets != null) {
     const cap = socketCapOf(item.base, item.cls.category);
@@ -240,7 +242,7 @@ export function startItem(data: PatchData, plan: CraftStagePlan): StageItem {
   const start = (plan as { start?: StartSpec }).start;
   if (start) return startFrom(data, plan.base, plan.item_level ?? 80, start, plan.seed - 1);
   const rarity = plan.start_rarity ?? "normal";
-  let item = freshItem(data, plan.base, plan.item_level ?? 80);
+  let item: StageItem = { ...freshItem(data, plan.base, plan.item_level ?? 80), rollSeed: plan.seed - 1 };
   const rng = mulberry32(plan.seed - 1);
   if (rarity === "magic") {
     item = applyCurrency(data, item, "transmute", rng).item;

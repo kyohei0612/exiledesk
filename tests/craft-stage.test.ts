@@ -72,8 +72,11 @@ describe("2026-09-29 に足した物", () => {
     expect(s.item.enchant?.id.startsWith("CorruptionUpgrade")).toBe(true);
     expect(s.item.prefixes.length + s.item.suffixes.length).toBe(r.prefixes.length + r.suffixes.length - 1);
   });
-  it("鏡の後は何も打てない、髪束の予見はアイテムが変わると消える", () => {
-    expect(A(A(rare("Gold Ring", 82), "mirror").item, "exalt").applied).toBe(false);
+  it("鏡はコピーを作るだけで元のアイテムは変わらない (要望 ㉝ の 7)、髪束の予見はアイテムが変わると消える", () => {
+    const m = A(rare("Gold Ring", 82), "mirror");
+    expect(m.applied).toBe(true);
+    expect(m.item.mirrored).toBeFalsy();
+    expect(A(m.item, "exalt").applied).toBe(true);
     const h = A(rare("Gold Ring", 82), "hinekora").item;
     expect(h.foreseen).toBe(true);
     expect(A(h, "exalt", 3).item.foreseen).toBe(false);

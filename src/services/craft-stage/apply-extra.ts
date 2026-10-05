@@ -13,6 +13,7 @@
  *   - 抽出のオーブ: 装備を壊して、差してあるオーグメントを取り戻す
  * 噛み切られた骨 (アイテムレベル 64 以下) は apply-desecrate、秘術師の彫刻針は apply-act の品質。
  */
+import { augmentRule } from "../augment-rules";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { allMods, maxQualityOf, skip, without } from "./stage-core";
 import { ARMOUR, CASTER, MARTIAL, QUALITY_MAX, QUALITY_STEP } from "./apply-act";
@@ -109,13 +110,17 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
       if (item.siphoner) return skip(item, "もうキル閾値が付いている");
       return done({ ...item, siphoner: true });
     case "mirror":
+      // 説明文「アイテムのミラー化コピーを生成する」: 元のアイテムは変わらない (ミラー化されるのはコピー)。要望 ㉝ の 7
       if (item.mirrored) return skip(item, "ミラーしたアイテムには使えない");
-      return done({ ...item, mirrored: true, foreseen: false });
+      return { ...done(item), note: "ミラー化したコピーを作った (元のアイテムはそのまま。コピーは変更できない)" };
     case "hinekora":
       if (item.foreseen) return skip(item, "もう予見できる");
       return done({ ...item, foreseen: true });
-    case "extraction":
-      return done({ ...item, destroyed: true });
+    case "extraction": {
+      // 説明文「装備品アイテムを破壊し、それにソケットされているソケットバウンドでないオーグメントを取り戻す」(要望 ㉝ の 13)
+      const back = (item.augments ?? []).filter((a) => augmentRule(a.en)?.bound !== true);
+      return { ...done({ ...item, destroyed: true }), ...(back.length ? { returned: back, note: `取り戻した: ${back.map((a) => a.ja).join("・")}` } : {}) };
+    }
   }
   return skip(item, "このカレンシーはまだ入れていない");
 }

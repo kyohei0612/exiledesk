@@ -21,7 +21,9 @@ import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
 import { applyChance, applyJeweller, applyQuality, applyWisdom, collectShard, isShard, QUALITY_TARGET, SHARD_REASON } from "./apply-act";
-import { isFlask, isGem, uniquesForBase, uniquesOfClassForBase } from "./stage-bases";
+import { isFlask, isGem, uniqueBaseOf, uniquesForBase, uniquesOfClassForBase } from "./stage-bases";
+import { itemBaseFor } from "../htc/bridge";
+import { jaTypeName } from "../trade2/localize";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
@@ -99,6 +101,20 @@ export interface ApplyHint {
 /** 指名が通らなかった時 (理由つきで打てない、pickError) */
 const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, `指名できない: ${why}`), pickError: true });
 
+/**
+ * ユニークになった (古代のお告げの可能性・ヴァール培養) 時は、そのユニークのベースに変える (説明文「同じアイテムクラスのランダムなユニーク」
+ * = そのユニークのベースになる。2026-10-06 POE2Tube 要望 ㉝ の 6: サファイアの指輪 → ベレクの山道 なのにカードがサファイアの指輪のままだった)。
+ * 計算機のベースに無いベースならそのまま
+ */
+function toUniqueBase(data: PatchData, r: StageApply): StageApply {
+  const u = r.applied ? r.item.unique : undefined;
+  const to = u ? uniqueBaseOf(u.en) : null;
+  if (!u || !to || to === r.item.base) return r;
+  const cls = itemBaseFor(data, to);
+  if (!cls) return r;
+  return { ...r, item: { ...r.item, base: to, baseJa: jaTypeName(to), cls } };
+}
+
 export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = [], hint: ApplyHint = {}): StageApply {
   // シャード: 手順では 1 個拾う (アイテムは変わらない)。アイテムに使おうとした時は打てない
   if (isShard(currency)) return hint.collect ? collectShard(item, currency) : skip(item, SHARD_REASON);
@@ -134,8 +150,8 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (currency === "wisdom") return applyWisdom(item);
   if (currency in QUALITY_TARGET) return applyQuality(item, currency);
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
-  if (currency === "chance") return applyChance(item, rng, used.includes("OmenoftheAncients") ? uniquesOfClassForBase(item.base) : uniquesForBase(item.base), hint.outcome, used);
-  if (isExtra(currency)) return applyExtra(item, currency, rng, hint.outcome);
+  if (currency === "chance") return toUniqueBase(data, applyChance(item, rng, used.includes("OmenoftheAncients") ? uniquesOfClassForBase(item.base) : uniquesForBase(item.base), hint.outcome, used));
+  if (isExtra(currency)) return toUniqueBase(data, applyExtra(item, currency, rng, hint.outcome));
   if (isFlux(currency)) return applyFlux(data, item, currency);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? "スキルジェムには使えない" : "フラスコには使えない (このステージでは MOD を扱わない)");
