@@ -65,7 +65,10 @@ export function whittleTargets(item: StageItem): StageMod[] {
 /** その手に掛かるお告げ (持っている中から) */
 export function omensFor(currency: string, held: readonly string[]): string[] {
   const ok = OMEN_FOR[kindOf(currency)] ?? [];
-  return held.filter((o) => ok.includes(o));
+  const used = held.filter((o) => ok.includes(o));
+  // 腐食のお告げは単体で効く (全部の MOD を置き換えるので、左右のネクロマンシー・勢力は関係が無い)。他のお告げは使わずに残す
+  // (2026-10-05 オーナー「腐食は単体だよね、属さないはず」)
+  return used.includes("OmenofPutrefaction") ? ["OmenofPutrefaction"] : used;
 }
 
 /** お告げの側 (左 = プレ / 右 = サフィ) */
@@ -185,10 +188,12 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
       return add(rare, 1, () => (side ? [side] : SIDES));
     }
     case "alchemy": {
-      if (item.rarity !== "normal") return skip(item, "ノーマルのアイテムにだけ使える");
+      // ノーマルかマジック → MOD 4 個のレア (クライアントの説明文)。マジックは付いている MOD を残して 4 個まで足す
+      // (2026-10-05 オーナー「錬金術とかマジックにも使えるけど使えない判定なのなんで」)
+      if (item.rarity !== "normal" && item.rarity !== "magic") return skip(item, "ノーマルかマジックのアイテムにだけ使える");
       // 左右の錬金のお告げ: その側を上限まで (残りは反対側)
       const side = sideOmen(used, "OmenofSinistralAlchemy", "OmenofDextralAlchemy");
-      return add({ ...item, rarity: "rare" }, 4, (_k, cur) => (side ? (room(cur, side) ? [side] : SIDES.filter((s) => s !== side)) : SIDES));
+      return add({ ...item, rarity: "rare" }, Math.max(1, 4 - count), (_k, cur) => (side ? (room(cur, side) ? [side] : SIDES.filter((s) => s !== side)) : SIDES));
     }
     case "exalt": {
       if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");

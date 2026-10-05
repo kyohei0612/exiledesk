@@ -42,3 +42,19 @@ describe("値の幅が無いエッセンス", () => {
     expect(a?.lines.join("")).toContain("20");
   });
 });
+
+describe("説明と動作の突き合わせ (2026-10-05)", () => {
+  it("錬金術はマジックにも使えて、MOD は 4 つになる。腐食のお告げは単体で使われる", async () => {
+    const { loadPatch } = await import("./helpers/patch");
+    const { freshItem } = await import("../src/services/craft-stage/run-plan");
+    const { applyCurrency, omensFor } = await import("../src/services/craft-stage/apply-currency");
+    const { mulberry32 } = await import("../src/services/htc/rng");
+    const data = await loadPatch();
+    const magic = applyCurrency(data, freshItem(data, "Ironclad Vestments", 82), "transmute", mulberry32(1)).item;
+    const r = applyCurrency(data, magic, "alchemy", mulberry32(2));
+    expect(r.applied).toBe(true);
+    expect(r.item.rarity).toBe("rare");
+    expect(r.item.prefixes.length + r.item.suffixes.length).toBe(4);
+    expect(omensFor("desecrate", ["OmenoftheSovereign", "OmenofPutrefaction", "OmenofSinistralNecromancy"])).toEqual(["OmenofPutrefaction"]);
+  });
+});

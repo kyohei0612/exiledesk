@@ -112,7 +112,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     case "regal":
       return ["**マジック → レア** にして MOD を 1 つ足す (付いている MOD は残る)", ADD, FLOOR("regal", s)].filter(Boolean);
     case "alchemy":
-      return ["**ノーマル → レア** にして MOD を **4 つ** 付ける", ADD];
+      return ["**ノーマルかマジック → レア** にして MOD を **4 つ** にする (マジックの MOD は残して足りない分を足す)", ADD];
     case "exalt":
       return ["**レア** に MOD を 1 つ足す (プレ・サフィ合わせて空きがある時)", ADD, FLOOR("regal", s), "お告げ: 左右の高貴 (足す側) / 偉大なる高貴 (2 つ) / 触媒の高貴 (品質の種類を重く)"].filter(Boolean);
     case "chaos":
@@ -157,7 +157,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
         key === "desecrate_gnawed" ? `噛み切られた骨: **アイテムレベル ${GNAWED_MAX_ILVL} 以下** にだけ使える (クライアントの表)。候補は保存された骨と同じ` : "",
         key === "desecrate_altered" ? "変質した鎖骨: 候補に **異界の MOD** も入る (アクセサリーだけ)" : "",
         bone ? `このベースで使う骨: ${bone}` : "",
-        "お告げ: 左右のネクロマンシー (側) / 支配者・君主・ブラックブラッド (勢力で絞る) / 腐食 (全部を未発現にしてコラプト) / アビスの反響 (発現の引き直し)",
+        "お告げ: 左右のネクロマンシー (側) / 支配者・君主・ブラックブラッド (勢力で絞る) / 腐食 (単体で効く: 全部の MOD を未発現の冒涜 MOD 最大 6 個に置き換えてコラプト。一緒に掛けた他のお告げは使わずに残る) / アビスの反響 (発現の引き直し)",
       ].filter(Boolean);
     }
   }
