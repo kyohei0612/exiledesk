@@ -46,13 +46,21 @@ const rows = computed(() => {
     return [row(t, false), ...(t.alts ?? []).map((a) => row(a, true))];
   });
 });
-/** フラクチャーの候補は「どれか 1 つ」なので枠は 1 つで数える */
-const fractureMany = computed(() => rows.value.filter((r) => r.kind === "fracture").length >= 2);
+/**
+ * 1 つの枠を争う物はグループにまとめる (2026-10-05 オーナー「そのうちどれかの場合グループでまとめたい。2 MOD とか複数ある時分かりづらい」)。
+ * グループ = フラクチャーの候補全部 / ② の手順 (本体 + あるいは)。2 つ以上の時だけ枠で囲んで「どれか 1 つ」
+ */
+type Row = (typeof rows.value)[number];
 const columns = computed(() => (["P", "S"] as const).map((side) => {
   const list = rows.value.filter((r) => r.side === side);
-  // 「どれか」の候補は本体と同じ枠
-  const used = list.filter((r) => r.kind !== "fracture" && !r.alt).length + (list.some((r) => r.kind === "fracture") ? 1 : 0);
-  return { title: side === "P" ? "プレフィックス" : "サフィックス", list, used };
+  const groups: Array<{ key: string; no: number | null; kind: Kind; host: string; members: Row[] }> = [];
+  for (const r of list) {
+    const key = r.kind === "fracture" ? "fracture" : r.group;
+    const g = groups.find((x) => x.key === key);
+    if (g) g.members.push(r);
+    else groups.push({ key, no: r.no, kind: r.kind, host: r.group, members: [r] });
+  }
+  return { title: side === "P" ? "プレフィックス" : "サフィックス", groups, used: groups.length };
 }));
 </script>
 
@@ -60,13 +68,19 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
   <div v-if="rows.length" class="grid min-w-0 flex-1 gap-x-6 gap-y-1 text-[12px] md:grid-cols-2">
     <div v-for="col in columns" :key="col.title" class="min-w-0">
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold opacity-70">{{ col.title }} ({{ col.used }}/3)</p>
-      <p v-if="!col.list.length" class="opacity-40">なし</p>
-      <div v-for="r in col.list" :key="r.modId" class="flex items-center gap-1.5 py-px">
-        <span class="w-4 shrink-0 text-right font-bold text-amber-200">{{ r.no ?? "" }}</span>
-        <span class="shrink-0 rounded border px-1 text-[10px]" :class="KINDS[r.kind].cls">{{ KINDS[r.kind].label }}<template v-if="(r.kind === 'fracture' && fractureMany) || r.alt || rows.some((x) => x.alt && x.group === r.modId)"> (どれか)</template></span>
-        <span class="min-w-0 flex-1 truncate" :title="r.text">{{ r.text }}</span>
-        <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
-        <button v-if="s.simShowMods.value && !r.alt && (r.kind === 'normal' || r.kind === 'desecrated')" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = r.modId">＋</button>
+      <p v-if="!col.groups.length" class="opacity-40">なし</p>
+      <div v-for="g in col.groups" :key="g.key" class="flex items-start gap-1.5 py-px">
+        <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
+        <span class="shrink-0 rounded border px-1 text-[10px]" :class="KINDS[g.kind].cls">{{ KINDS[g.kind].label }}</span>
+        <!-- 2 つ以上は枠で囲んで「どれか 1 つ」 -->
+        <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
+          <p v-if="g.members.length > 1" class="text-[10px] font-bold text-amber-200">どれか 1 つ</p>
+          <div v-for="r in g.members" :key="r.modId" class="flex items-center gap-1.5">
+            <span class="min-w-0 flex-1 truncate" :title="r.text">{{ r.text }}</span>
+            <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
+          </div>
+        </div>
+        <button v-if="s.simShowMods.value && (g.kind === 'normal' || g.kind === 'desecrated')" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
         <span v-else class="w-[18px] shrink-0" />
       </div>
     </div>
