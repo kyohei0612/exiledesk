@@ -107,3 +107,10 @@ def test_lint_skips_whole_script_checks_while_writing() -> None:
     done = VideoScript.model_validate(base)
     assert not any("尺の見込み" in p for p in lint_script(writing))
     assert any("尺の見込み" in p for p in lint_script(done))
+
+
+def test_short_added_damage() -> None:
+    from poe2tube.render.overlay_fx import _short
+
+    assert _short("14から23の火ダメージを追加する") == "火ダメージ 14〜23"
+    assert _short("見つかるアイテムのレアリティが12%増加する") == "レアリティ 12%"

@@ -131,12 +131,16 @@ def hit_label(step: StageStep) -> tuple[str, str]:
 
 
 NUMBER = re.compile(r"[+＋-]?\d+(?:\.\d+)?%?")
+ADDS = re.compile(r"(\d+)から(\d+)の(.+?)を(?:アタックに)?追加する")
 
 
 def _short(text: str, n: int = 12) -> str:
     """MOD 文を短い名前に: 「火ダメージが22%増加する」→「火ダメージ 22%」."""
     if len(text) <= n:
         return text
+    m = ADDS.fullmatch(text)  # 「14から23の火ダメージを追加する」→「火ダメージ 14〜23」
+    if m:
+        return f"{m.group(3)} {m.group(1)}〜{m.group(2)}"
     if "が" in text:
         head = text.split("が", 1)[0]
         if len(head) > n - 3 and "の" in head:  # 「見つかるアイテムのレアリティ」→「レアリティ」
