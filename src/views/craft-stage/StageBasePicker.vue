@@ -38,7 +38,8 @@ function choose(en: string): void {
       <span class="ml-1 opacity-60">{{ open ? "▲ 閉じる" : "▼ 変える" }}</span>
     </button>
     <div v-if="open" class="mt-2 rounded-xl border border-white/10 bg-black/30 p-3">
-      <BaseCatalog :data="data" :selected="base" extras @pick="choose" />
+      <!-- 未選択の時は前のベース・種類を選んだ状態にしない (2026-10-05 オーナー「リセットの時ベース未選択から始めんかい」) -->
+      <BaseCatalog :data="data" :selected="unpicked ? '' : base" extras @pick="choose" />
     </div>
   </div>
 </template>

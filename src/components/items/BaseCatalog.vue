@@ -19,7 +19,8 @@ const count = computed(() => {
   for (const b of all.value) m.set(b.cls, (m.get(b.cls) ?? 0) + 1);
   return m;
 });
-const cls = ref(all.value.find((b) => b.en === props.selected)?.cls ?? "Rings");
+/** 今の種類。selected が空文字 = 未選択の時は種類も選ばない (クラフトステージのシミュレーションのリセット後・最初。2026-10-05) */
+const cls = ref<string | null>(all.value.find((b) => b.en === props.selected)?.cls ?? (props.selected === "" ? null : "Rings"));
 const query = ref("");
 /** 並べるベース: 検索中は全種類から名前で、そうでなければ選んだ種類を必要レベル順 (ジェムは名前順) */
 const list = computed(() => {
@@ -50,6 +51,7 @@ const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring
       </template>
     </div>
     <!-- ② ベースのカード (ゲーム内の絵・必要レベル・素の数値・固有の効果) -->
+    <p v-if="!cls && !query.trim()" class="py-2 text-[12px] opacity-60">種類を選ぶか、名前で探す</p>
     <div class="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-1.5 overflow-y-auto pr-1" :style="{ maxHeight: height ?? '340px' }">
       <button
         v-for="b in list"
