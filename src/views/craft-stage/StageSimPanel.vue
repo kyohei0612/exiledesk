@@ -333,15 +333,27 @@ const calc = computed(() => {
   const m = d.mods.get(f.modId);
   if (!m) return null;
   const sideKey = m.type === "suffix" ? "suffixes" : "prefixes";
-  const floor = CURRENCY_FLOOR.augment.perfect;
-  const w = (id: string, minIdx: number): number => {
-    const x = d.mods.get(id);
-    return x ? x.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl >= floor && t.ilvl <= s.itemLevel.value ? t.weight : 0), 0) : 0;
+  /**
+   * 変成・増強の等級は完全 (オーナー「最低完全変成、次の完全増強」)。完全の段の下限で狙いの段が出ない時 (兜のライフ T2 以上など) は
+   * 上級 → 無印に落とす (2026-10-05、前は 0% と「—」で止まって見えた)
+   */
+  const pAt = (floor: number) => {
+    const w = (id: string, minIdx: number): number => {
+      const x = d.mods.get(id);
+      return x ? x.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl >= floor && t.ilvl <= s.itemLevel.value ? t.weight : 0), 0) : 0;
+    };
+    const total = it.cls.pools.normal[sideKey].reduce((a, id) => a + w(id, 0), 0);
+    const each = fracMembers.value.map((r) => ({ name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 }));
+    return { each, pHit: Math.min(1, each.reduce((a, x) => a + x.p, 0)) };
   };
-  const total = it.cls.pools.normal[sideKey].reduce((a, id) => a + w(id, 0), 0);
+  const grades = [
+    { g: "perfect", floor: CURRENCY_FLOOR.augment.perfect, aug: "augment_perfect", tra: "transmute_perfect", ja: "完全" },
+    { g: "greater", floor: CURRENCY_FLOOR.augment.greater, aug: "augment_greater", tra: "transmute_greater", ja: "上級" },
+    { g: "base", floor: CURRENCY_FLOOR.augment.base, aug: "augment", tra: "transmute", ja: "無印" },
+  ] as const;
+  const gr = grades.find((x) => pAt(x.floor).pHit > 0) ?? grades[0];
   // 候補ごとの付きやすさと合計 (どれか 1 つで良い)
-  const each = fracMembers.value.map((r) => ({ name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 }));
-  const pHit = Math.min(1, each.reduce((a, x) => a + x.p, 0));
+  const { each, pHit } = pAt(gr.floor);
   const wall: "prefix" | "suffix" = m.type === "suffix" ? "prefix" : "suffix";
   const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
   const rerolls = pHit > 0 ? 1 / pHit : Infinity;
@@ -352,8 +364,8 @@ const calc = computed(() => {
   // (2026-10-05 オーナー「1 からの場合骨壁は単純で王者後は骨 1 個でいい、選ぶ必要ない」「増強リロールで 1 個だけ付いたら王者すると 1 個足りないから高貴打って 3 つに」)
   const lines: Array<{ name: string; n: number; each: number }> = [
     { name: "白のベース", n: 1, each: white },
-    { name: nameOf("transmute_perfect"), n: 1, each: priceOf("transmute_perfect") },
-    { name: `${nameOf("augment_perfect")} (リロール)`, n: rerolls, each: priceOf("augment_perfect") },
+    { name: nameOf(gr.tra), n: 1, each: priceOf(gr.tra) },
+    { name: `${nameOf(gr.aug)} (リロール)`, n: rerolls, each: priceOf(gr.aug) },
     { name: `${nameOf("annul")} (リロールに 2 つ)`, n: rerolls * 2, each: priceOf("annul") },
     // マジック → レアにする王者 (等級は問わないので無印。2026-10-05 オーナー「適当な王者がいるのか、レア化に。チャレンジ品作る時だから 3 個か」)
     { name: nameOf("regal"), n: 1, each: priceOf("regal") },
@@ -382,7 +394,7 @@ const calc = computed(() => {
   const fourN = num(fourDivine.value);
   const fourB = fourN;
   const buyOnce = fourB != null ? fourB + buyRest : null;
-  return { pHit, each, rerolls, lines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, buyRest, breakEven, buyOnce };
+  return { pHit, each, rerolls, lines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce };
 });
 const busy = ref(false);
 const phase = ref("");
@@ -611,7 +623,7 @@ function replay(): void {
       <span class="opacity-70">白ベース</span>
       <PriceInput v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="0" />
       <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
-      <span v-if="ageOf('white')" :class="ageOf('white')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")!.text }}</span>
+      <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
       <button v-if="!whiteOk" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="num(whiteDivine) == null" @click="whiteOk = true">進む →</button>
       <span v-if="help" class="opacity-60">規格外のソケット付きならその値段。白から始める時・作り直す時に数え、マジックで外れた時は「消去」と「白を買い直して変成」の安い方を使う</span>
       </div>
@@ -688,7 +700,7 @@ function replay(): void {
               <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
               <td class="py-1">
                 <span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-                <span v-if="r.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ r.alts.length }} つと合わせてどれか {{ r.need }} つ</span>
+                <span v-if="r.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ r.alts.length }} つと合わせてどれか {{ r.need }} つ<template v-if="r.method === 'desecrate' && r.need > 1"> (冒涜で 1 つ、残り {{ r.need - 1 }} つは高貴)</template></span>
               </td>
               <td class="py-1">
                 <span class="flex flex-wrap justify-end gap-1">
@@ -723,7 +735,8 @@ function replay(): void {
         <span v-if="calc">計算 <b class="text-amber-100">{{ money(calc.total) }}</b></span>
         <span>回した平均 <b class="text-amber-100">{{ makeBusy ? "…" : makeCost ? money(makeCost.perDone) : "—" }}</b></span>
         <span class="opacity-70">当たり {{ fractureOdds.hit }}/{{ fractureOdds.of }}</span>
-        <span v-if="calc?.cantRoll" class="text-rose-300">完全の増強ではこの段は出ません</span>
+        <span v-if="calc?.cantRoll" class="text-rose-300">増強ではこの段は出ません (アイテムレベルが足りない)</span>
+        <span v-else-if="calc && calc.grade !== '完全'" class="text-[11px] text-amber-200">完全の増強では出ない段なので{{ calc.grade }}で計算</span>
         <button type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="toggle('calc')">内訳 {{ open.calc ? "▲" : "▼" }}</button>
       </p>
       <template v-if="open.calc">
@@ -800,9 +813,11 @@ function replay(): void {
     <div class="flex flex-wrap items-center gap-2 border-t border-white/10 pt-2">
       <span class="opacity-60">回す回数</span>
       <button v-for="n in RUNS" :key="n" type="button" class="rounded-lg px-2 py-0.5" :class="runs === n ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="runs = n">{{ n.toLocaleString() }}</button>
+      <!-- フラクチャーがあると比べ用に 2 本回す (2026-10-05 オーナー「1000 回押しても 2000 回になる、別に 2000 回でおｋだから UI 直して」) -->
+      <span v-if="fractureRow" class="text-[11px] opacity-70">白から {{ runs.toLocaleString() }} 回 + 固定済みから {{ runs.toLocaleString() }} 回 = 計 {{ (runs * 2).toLocaleString() }} 回</span>
       <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="blocked ?? ''" @click="run">回す</button>
       <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-1 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
-      <span v-if="busy" class="text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0] }} / {{ progress[1] }}</template>…</span>
+      <span v-if="busy" class="text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
       <span v-else-if="blocked && rows.length" class="text-amber-200/80">{{ blocked }}</span>
       <span v-if="error" class="text-rose-300">{{ error }}</span>
     </div>
@@ -811,7 +826,9 @@ function replay(): void {
     <!-- 始め方の比べ (回した後) -->
     <div v-if="recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
       <p class="mb-1 font-bold text-sky-100">始め方の比べ <span v-if="help" class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
-      <table class="w-full">
+      <!-- 列の幅は固定 (金額の欄の字が変わっても入力欄が動かない。2026-10-05 オーナー「入力時 UI がズレる、入力する所は軸に」) -->
+      <table class="w-full table-fixed">
+        <colgroup><col class="w-64" /><col /><col class="w-40" /></colgroup>
         <tbody>
           <tr v-for="x in compare.list" :key="x.key" class="border-t border-white/5" :class="compare.best === x.key ? 'bg-emerald-500/10' : ''">
             <td class="py-1">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
@@ -819,20 +836,20 @@ function replay(): void {
               <span v-if="x.key === 'four'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
                 <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" />
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
-                <span v-if="ageOf('four')" :class="ageOf('four')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")!.text }}</span>
+                <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
               </span>
               <span v-else-if="x.key === 'bought'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
                 <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" />
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="この MOD が固定済みのベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
-                <span v-if="ageOf('bought')" :class="ageOf('bought')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")!.text }}</span>
+                <span class="inline-block w-24 shrink-0" :class="ageOf('bought')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")?.text ?? "" }}</span>
               </span>
               <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
                 <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" />
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
-                <span v-if="doneAge" :class="doneAge.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge.text }}</span>
+                <span class="inline-block w-24 shrink-0" :class="doneAge?.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge?.text ?? "" }}</span>
               </span>
             </td>
-            <td class="w-28 py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50">{{ x.note }}</span></td>
+            <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50">{{ x.note }}</span></td>
           </tr>
         </tbody>
       </table>
@@ -851,7 +868,7 @@ function replay(): void {
         <div class="rounded-lg bg-black/30 px-3 py-2">
           <p class="text-[10px] opacity-60">完成の割合</p>
           <p class="text-lg font-bold" :class="summary.pDone >= 0.9 ? 'text-emerald-300' : 'text-amber-300'">{{ pct(summary.pDone) }}</p>
-          <p class="text-[10px] opacity-50">{{ summary.runs.toLocaleString() }} 回のうち</p>
+          <p class="text-[10px] opacity-50">{{ fractureRow ? "白から作る " : "" }}{{ summary.runs.toLocaleString() }} 回のうち</p>
         </div>
         <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">半分の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p50) }}</p></div>
         <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">8 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p80) }}</p></div>

@@ -44,6 +44,12 @@ export interface RecipeTarget {
 }
 /** その手順で当たりになる MOD (本体 + alts) */
 export const membersOf = (t: RecipeTarget): Array<{ modId: string; minTierIndex: number }> => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
+/**
+ * 候補のうちいくつ付けば当たりか (どれか N つ)。冒涜の手順でも N はそのまま: 冒涜で付けるのは候補のどれか 1 つ (冒涜の MOD は
+ * アイテムに 1 つまで)、残りの N − 1 つは高貴で付ける (2026-10-05 オーナー「3 つのうちどれかは 3 つのうちどれが当たりでも可能とする話、
+ * 今回の奴に関しては結局 3 パターンいる」)
+ */
+export const needOf = (t: RecipeTarget): number => Math.max(1, Math.min(t.need ?? 1, membersOf(t).length));
 const hits = (t: RecipeTarget, m: StageMod): boolean => membersOf(t).some((x) => m.modId === x.modId && m.tierIndex >= x.minTierIndex);
 export interface RecipeSpec {
   data: PatchData;
@@ -114,7 +120,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const sideOf = (id: string): StageSide => (mod(id).type === "suffix" ? "suffix" : "prefix");
   // 候補のうち need 個 (違う MOD で) 付いていれば当たり
   const meets = (it: StageItem, t: RecipeTarget): boolean =>
-    new Set(allMods(it).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size >= Math.max(1, Math.min(t.need ?? 1, membersOf(t).length));
+    new Set(allMods(it).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size >= needOf(t);
   // 冒涜の MOD は、付け方が冒涜の狙いに当たる時だけ当たり (骨の壁が発現でフラクチャーの候補などになっても、冒涜は 1 つまでなので
   // 冒涜の狙いの邪魔になる。外れとして光 + 消去で外す。2026-10-05 流れの確かめで 36% が「冒涜の MOD はアイテムに 1 つまで」で止まっていた)
   const isGood = (m: StageMod): boolean => !m.unrevealed && spec.targets.some((t) => hits(t, m)
@@ -285,6 +291,11 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // カオスは外して付ける。外せる物 (固定でない・未発現でない) が無ければ、先に高貴で 1 つ足す
       e = allMods(item).some((m) => !m.fractured && !m.unrevealed) ? play("chaos") : play("exalt");
     } else if (t.method === "exalt") {
+      if (junkOn(item, side).length) e = annulOn(side);
+      else if (room(item, side)) e = play(grade("exalt", t), [SIDE_OMEN.exalt[side]]);
+      else return fail("枠が足りない (狙いが多すぎる)");
+    } else if (t.method === "desecrate" && allMods(item).some((m) => m.desecrated && !m.unrevealed && isGood(m))) {
+      // 冒涜で 1 つ付いた後の残り (どれか N つの N − 1 つ) は高貴で付ける (冒涜の MOD はアイテムに 1 つまで)
       if (junkOn(item, side).length) e = annulOn(side);
       else if (room(item, side)) e = play(grade("exalt", t), [SIDE_OMEN.exalt[side]]);
       else return fail("枠が足りない (狙いが多すぎる)");

@@ -132,7 +132,7 @@ const canAlt = (k: Kind): boolean => k === "normal" || k === "desecrated";
               <button v-for="n in g.members.length" :key="n" type="button" class="rounded px-1 leading-tight" :class="g.need === n ? 'bg-amber-500/40 text-amber-50 ring-1 ring-amber-300' : 'border border-amber-400/30 opacity-70 hover:opacity-100'" :title="`候補のうち ${n} つ付けば当たり (枠を ${n} つ使う)`" @click="setNeed(g.host, n)">{{ n }}</button>
             </template>
             <template v-else>{{ g.need }}</template>
-            つ
+            つ<template v-if="g.kind === 'desecrated' && g.need > 1"> (冒涜で 1 つ、残り {{ g.need - 1 }} つは高貴)</template>
             <span v-if="g.share != null" class="ml-1 font-normal tabular-nums text-amber-100/80">付きやすさ 合計 {{ pct(g.share) }}</span>
           </p>
           <div :class="g.members.length > 1 ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5' : 'flex items-center gap-1.5'">

@@ -139,3 +139,21 @@ describe("どれか N つ (2026-10-05)", () => {
     expect([fire, cold, light].filter((t) => allMods(final).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex)).length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("冒涜でどれか N つ (2026-10-05)", () => {
+  it("金の指輪: 火 / 冷気 / 雷耐性のどれか 2 つを冒涜で: 冒涜で 1 つ、残りは高貴で 2 つ付いて完成する", async () => {
+    const data = await loadPatch();
+    const fire = targetOf(data, "Rings", /FireResistance$/, 3);
+    const cold = targetOf(data, "Rings", /ColdResistance$/, 3);
+    const light = targetOf(data, "Rings", /LightningResistance$/, 3);
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 30, price: () => 1, seed: 8100,
+      targets: [{ ...fire, method: "desecrate", alts: [cold, light], need: 2 }],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.stops.find((x) => /1 つまで/.test(x.reason))).toBeUndefined();
+    expect(r!.pDone).toBeGreaterThan(0.8);
+    const { final } = playPlan(data, recipePlan(spec, r!.sample!), {});
+    expect([fire, cold, light].filter((t) => allMods(final).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex)).length).toBeGreaterThanOrEqual(2);
+  });
+});

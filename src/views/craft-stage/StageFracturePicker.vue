@@ -130,7 +130,7 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
           <span v-if="host" class="inline-flex items-center gap-1">
             <span class="opacity-70">元の MOD とチェックした物のうち</span>
             <button v-for="n in needMax" :key="n" type="button" class="rounded px-1.5 font-bold leading-tight" :class="need === n ? 'bg-amber-500/40 text-amber-50 ring-1 ring-amber-300' : 'border border-amber-400/30 text-amber-200 opacity-70 hover:opacity-100'" :title="`${n} つ付けば当たり (枠を ${n} つ使う)`" @click="setNeed(n)">{{ n }}</button>
-            <span class="opacity-70">つ付けば当たり · 同じ側だけ</span>
+            <span class="opacity-70">つ付けば当たり · 同じ側だけ<template v-if="host.method === 'desecrate' && need > 1"> · 冒涜で 1 つ、残りは高貴</template></span>
             <span v-if="need > free" class="text-rose-300">(枠が足りない: この側は残り {{ Math.max(0, free) }} つ)</span>
           </span>
           <span v-else class="opacity-60">{{ s.item.value?.baseJa }} · チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合</span>
