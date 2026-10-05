@@ -282,7 +282,9 @@ export function checkTierSources(bundle: Bundle, hidden: HiddenStats, sourceRang
 export function checkModValues(input: CheckInput, keyOf: (textEn: string) => string): CheckResult {
   const a = checkBundle(input.bundle, input.hidden);
   const b = checkHtc(input.bundle, input.hidden, input.htcMods, "htc");
-  const x = checkHtc(input.bundle, input.hidden, input.extraMods, "extra");
+  // 通貨では付かない MOD (創生の樹・ハンドラップ、special: 文面・段・側を引くだけ) は点検しない。固定値の文面 (「追加で 1 つ」) を原本の別の MOD と
+  // 突き合わせて「違う」と出るだけで、画面の値には使わない (2026-10-05)
+  const x = checkHtc(input.bundle, input.hidden, input.extraMods.filter((m) => !(m as { special?: boolean }).special), "extra");
   const d = checkDropOnly(input.bundle, input.hidden, input.dropOnly, keyOf);
   const t = input.sourceRanges ? checkTierSources(input.bundle, input.hidden, input.sourceRanges) : { issues: [], checked: 0 };
   return {

@@ -158,6 +158,8 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
     const pools = { ...cls.pools };
     if (add.desecrated) pools.desecrated = merge(cls.pools.desecrated, add.desecrated);
     if (add.otherworldly) pools.otherworldly = merge(cls.pools.otherworldly, add.otherworldly);
+    // 通貨では付かないが上位プレイヤーの装備には付く MOD (創生の樹・ハンドラップ)。文面を引くだけの置き場 (2026-10-05)
+    if (add.special) pools.special = merge(cls.pools.special, add.special);
     if (add.rune) {
       const rune: Record<string, ReadonlyPool> = { ...(cls.pools.rune ?? {}) };
       for (const [runeId, p] of Object.entries(add.rune)) rune[runeId] = merge(rune[runeId], p);

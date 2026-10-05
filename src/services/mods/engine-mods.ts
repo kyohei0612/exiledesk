@@ -61,16 +61,19 @@ const everyRow = (): ItemBase[] => (allRows ??= data ? [...data.bases.values()] 
 /**
  * 文面 → MOD (行ごとの索引で、MOD 全文の一致。`+` の有無のずれも見る)。lines = 複合 MOD の 1 行だけの一致も拾う
  */
-export function engineModsFor(template: string, rows: readonly ItemBase[] = everyRow(), o: { lines?: boolean; exactOnly?: boolean; side?: "prefix" | "suffix"; wholeOnly?: boolean } = {}): Mod[] {
+export function engineModsFor(template: string, rows: readonly ItemBase[] = everyRow(), o: { lines?: boolean; exactOnly?: boolean; side?: "prefix" | "suffix"; wholeOnly?: boolean; special?: boolean } = {}): Mod[] {
   const d = data;
   if (!d) return [];
   const keys = [matchKey(template), matchKey(template.startsWith("+") ? template.slice(1) : `+${template}`)];
   const out = new Map<string, { mod: Mod; exact: boolean }>();
   // 自身の文面で当たる物は、行の置き場を全部見る (索引は 1 つの文面に 1 つの MOD なので、プレとサフィに同じ文面がある物
   // (アイテムのレアリティ) は片方が落ちる)
-  for (const row of rows) {
-    for (const m of poolMods(d, row)) if (keys.some((k) => (o.wholeOnly ? wholeKey(m) === k : ownKeys(m).has(k)))) out.set(m.id, { mod: m, exact: true });
-  }
+  const hits = (list: (row: ItemBase) => Mod[]) => {
+    for (const row of rows) for (const m of list(row)) if (keys.some((k) => (o.wholeOnly ? wholeKey(m) === k : ownKeys(m).has(k)))) out.set(m.id, { mod: m, exact: true });
+  };
+  hits((row) => poolMods(d, row));
+  // 通貨では付かないが現物に付く MOD (創生の樹・ハンドラップ、special) は、普通の置き場で引けない時だけ
+  if (!out.size && o.special !== false) hits((row) => specialMods(d, row));
   if (out.size) return [...out.values()].map((x) => x.mod).filter((m) => !o.side || m.type === o.side);
   if (o.exactOnly) return [];
   for (const row of rows) {
@@ -87,6 +90,16 @@ export function engineModsFor(template: string, rows: readonly ItemBase[] = ever
   return (exact.length ? exact : all).map((x) => x.mod).filter((m) => !o.side || m.type === o.side);
 }
 
+/** 通貨では付かないが現物に付く MOD (創生の樹・ハンドラップ。extra-bases の special、文面を引くだけ) */
+const specialCache = new WeakMap<ItemBase, Mod[]>();
+function specialMods(d: PatchData, row: ItemBase): Mod[] {
+  let list = specialCache.get(row);
+  if (list) return list;
+  const p = (row.pools as { special?: { prefixes: readonly string[]; suffixes: readonly string[] } }).special;
+  list = p ? [...p.prefixes, ...p.suffixes].map((id) => d.mods.get(id)).filter((m): m is Mod => !!m) : [];
+  specialCache.set(row, list);
+  return list;
+}
 /** 行の置き場 (普通・冒涜・エッセンス・異界・特殊 MOD のルーン) の MOD 全部 */
 const poolCache = new WeakMap<ItemBase, Mod[]>();
 function poolMods(d: PatchData, row: ItemBase): Mod[] {
@@ -149,13 +162,13 @@ const fmtRange = (lo: number, hi: number): string => (lo === hi ? `${lo}` : `${l
  * 段の表 (T1 = 一番上)。その行で付く MOD の段 (重み > 0、エッセンスだけの物は全部) を画面の単位で。同じ範囲の段は 1 つに。
  * 複数値 (Adds # to #) の下限は平均値範囲の中央 (取引所は平均 1 本で照合する、前の tiers.ts と同じ決まり)
  */
-export function engineTiers(template: string, rows: readonly ItemBase[], side?: "prefix" | "suffix"): ModTierRow[] {
+export function engineTiers(template: string, rows: readonly ItemBase[], side?: "prefix" | "suffix", o: { special?: boolean } = {}): ModTierRow[] {
   const seen = new Set<string>();
   const list: Array<{ mins: number[]; maxs: number[]; level: number }> = [];
   // 「#% reduced …」は内部では負の値。poe.ninja・画面は正の数で出すので向きを揃える
   const flip = /\breduced\b/i.test(template);
   // 段は文面全体で当たる MOD だけ (複合 MOD の 1 行は別物)。普通の MOD があればそれだけ (同じ文面のエッセンス・冒涜の段を混ぜない)
-  const found = engineModsFor(template, rows, { wholeOnly: true, exactOnly: true, ...(side ? { side } : {}) });
+  const found = engineModsFor(template, rows, { wholeOnly: true, exactOnly: true, ...(side ? { side } : {}), ...(o.special === false ? { special: false } : {}) });
   const normal = found.filter((m) => m.source === "normal");
   for (const m of normal.length ? normal : found) {
     const live = m.tiers.filter((t) => t.weight > 0);

@@ -174,6 +174,27 @@ const main = async () => {
    * 冒涜プールは上流が poe2db から作っていて patch 0.5.0 のまま = 素直に古いので、ここだけ埋めます。
    */
   const addedPools = {};
+  /** 創生の樹のタグ (MOD の出現重みに出てくる genesis_tree_*) */
+  const GENESIS_TAGS = [...new Set(Object.values(MODS).flatMap((m) => (m.spawn_weights || []).map((w) => w.tag)).filter((t) => t && t.startsWith("genesis_tree")))];
+  /**
+   * ハンドラップのベース (昇華の手袋。Id が Gloves/…Ascendancy = Fists of Stone / Runeforged Fists of Stone) の防具の種類のタグ
+   * (dex_int_armour)。その行の手袋だけに足す (STR の手袋にハンドラップの ES が出ないように)
+   */
+  const HAND_WRAP_TAGS = new Set();
+  for (const r of B) {
+    if (!/\/Gloves\/[^/]*Ascendancy/.test(r.Id || "")) continue;
+    for (const t of ownTags(r)) if (t.endsWith("_armour")) HAND_WRAP_TAGS.add(t);
+  }
+  /** ハンドラップの MOD (HandWraps*、ユニーク以外) を側 → 系統 → MOD[] に */
+  const HAND_WRAPS = { prefix: new Map(), suffix: new Map() };
+  for (const [id, m] of Object.entries(MODS)) {
+    if (!id.startsWith("HandWraps") || m.domain !== "item" || (m.generation_type !== "prefix" && m.generation_type !== "suffix")) continue;
+    const f = familyOf(m);
+    if (!f) continue;
+    const b = HAND_WRAPS[m.generation_type];
+    if (!b.has(f)) b.set(f, []);
+    b.get(f).push(m);
+  }
   for (const cls of htcBases.items) {
     const { tags, cls: cid } = tagSetFor(cls.bases || []);
     if (!cid) continue;
@@ -240,7 +261,32 @@ const main = async () => {
       }
     }
 
+    // 通貨では付かないが上位プレイヤーの装備には付く MOD (2026-10-05、上位 MOD 一覧をエンジン 1 か所から引くため):
+    //   - 創生の樹: genesis_tree_* のタグを足した時だけ出る差分 (指輪・アミュレット等)
+    //   - ハンドラップ: HandWraps* の MOD (どのタグでも重み 0。手袋の同じ系統の MOD がハンドラップではこの文面になる) を手袋の行に
+    // 文面・段・側を引くだけの置き場 (special)。クラフトの抽選・ステージは読まない。系統は元の系統のまま (同じ系統は一緒に付かない)
+    const special = { prefixes: [], suffixes: [] };
+    const putSpecial = (kind, family, list, tagSet, tagName) => {
+      const mod = buildMod(cls.id, family, kind, list, tagSet, "normal", 0);
+      const sid = `${cls.id}/Special_${tagName}_${family}`;
+      // 抽選には出ない (重み 0)。文面・段・側を引くだけ
+      outMods.push({ ...mod, id: sid, special: true, tiers: mod.tiers.map((t) => ({ ...t, weight: 0 })), weightSource: "special" });
+      special[kind === "prefix" ? "prefixes" : "suffixes"].push(sid);
+    };
+    for (const g of GENESIS_TAGS) {
+      const withG = familiesFor(new Set([...tags, g]), "item");
+      for (const kind of ["prefix", "suffix"]) {
+        for (const [family, list] of withG[kind]) if (!fams0[kind].has(family)) putSpecial(kind, family, list, new Set([...tags, g]), g);
+      }
+    }
+    if (cid === "Gloves" && [...tags].some((t) => HAND_WRAP_TAGS.has(t))) {
+      for (const kind of ["prefix", "suffix"]) {
+        for (const [family, list] of HAND_WRAPS[kind]) putSpecial(kind, family, list, tags, "hand_wraps");
+      }
+    }
+
     const entry = {};
+    if (special.prefixes.length || special.suffixes.length) entry.special = special;
     if (add.prefixes.length || add.suffixes.length) entry.desecrated = add;
     if (Object.keys(rune).length) entry.rune = rune;
     if (otherworldly.prefixes.length || otherworldly.suffixes.length) entry.otherworldly = otherworldly;

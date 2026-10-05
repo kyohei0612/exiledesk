@@ -116,6 +116,12 @@ export interface ItemBase {
      * Ancient bones' odds are untouched. Present only on Amulets / Rings / Belts.
      */
     readonly otherworldly?: Pool;
+    /**
+     * ExileDesk 2026-10-05: mods that never roll from currency but do appear on top players' items — Genesis Tree mods
+     * (genesis_tree_* tags) and the Hand Wraps mods (weight 0 everywhere). **Lookup only** (which side / tiers a pasted or
+     * poe.ninja line has, services/mods/engine-mods.ts); no planner or the craft stage reads it.
+     */
+    readonly special?: Pool;
   };
   /** Absent means the game's own limits — see `ItemLimits` and `limitsOf` (item.ts). */
   readonly limits?: ItemLimits;

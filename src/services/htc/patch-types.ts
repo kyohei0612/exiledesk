@@ -25,6 +25,8 @@ export interface ExtraBases {
     rune?: Record<string, PoolAdd>;
     /** 変質した鎖骨で冒涜した時だけ候補に入る「異界の MOD」(2026-09-27) */
     otherworldly?: PoolAdd;
+    /** 通貨では付かないが現物に付く MOD (創生の樹・ハンドラップ)。文面を引くだけ (2026-10-05) */
+    special?: PoolAdd;
   }>;
   /**
    * 既存クラスの family → **今の文言**。同梱の MOD 文言は patch 0.5.0 のままなので、

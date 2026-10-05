@@ -66,14 +66,16 @@ describe("規格外の賭けの重み表 (エンジンから作る)", () => {
 
 describe("上位プレイヤー MOD 一覧の段の表", () => {
   // 2026-10-05 から段の表はエンジン (クラフトステージと同じデータ、engine-mods.ts) から。ベースのエンジンの行 (Gloves_str 等) で絞る
+  // 普通の置き場で見る (創生の樹の MOD は手袋の種類を問わず付くので、special を除いて確かめる)
   it("STR の手袋の段の表に ES は出ず、INT の手袋にアーマーは出ない", async () => {
     const { prepareEngineMods, rowsForSlot, engineTiers } = await import("../src/services/mods/engine-mods");
     await prepareEngineMods();
     const str = rowsForSlot("gloves", ["Ancient Mitts"]);
     const int = rowsForSlot("gloves", ["Adorned Gloves"]);
-    expect(engineTiers("+# to maximum Energy Shield", str, "prefix").length).toBe(0);
-    expect(engineTiers("+# to Armour", str, "prefix").length).toBeGreaterThan(0);
-    expect(engineTiers("+# to maximum Energy Shield", int, "prefix").length).toBeGreaterThan(0);
-    expect(engineTiers("+# to Armour", int, "prefix").length).toBe(0);
+    const n = { special: false };
+    expect(engineTiers("+# to maximum Energy Shield", str, "prefix", n).length).toBe(0);
+    expect(engineTiers("+# to Armour", str, "prefix", n).length).toBeGreaterThan(0);
+    expect(engineTiers("+# to maximum Energy Shield", int, "prefix", n).length).toBeGreaterThan(0);
+    expect(engineTiers("+# to Armour", int, "prefix", n).length).toBe(0);
   });
 });
