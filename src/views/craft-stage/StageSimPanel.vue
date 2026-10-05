@@ -66,7 +66,7 @@ const rows = computed(() => {
         return { modId: a.modId, text: am ? fillHashes(jaOfMod(am), at ? tierDisplayRanges(at) : []).replace(/\n/g, " / ") : a.modId, rank: am ? `T${am.tiers.length - a.minTierIndex}` : "" };
       }),
       /** 候補のうちいくつ付けば当たりか (どれか N つ。候補の数まで) */
-      need: Math.max(1, Math.min(t.need ?? 1, 1 + (t.alts?.length ?? 0))),
+      need: 1, // グループは 1 MOD (2 つ欲しい時はコピーして並べる)
     };
   });
 });
@@ -430,7 +430,7 @@ async function run(): Promise<void> {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: runs.value, price,
       targets: s.simTargets.value.flatMap((t) => (methodOf(t) === "fracture"
         ? [{ modId: t.modId, minTierIndex: t.minTierIndex, method: "fracture" as const }, ...(t.alts ?? []).map((a) => ({ ...a, method: "fracture" as const }))]
-        : [{ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts, ...(t.need && t.need > 1 ? { need: t.need } : {}) } : {}) }])),
+        : [{ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}) }])),
       whiteBasePrice: (num(whiteDivine.value) ?? 0) * divine, sockets: socketCount.value,
       ...(fractureRow.value ? { fractureStart: makeSpec.value } : {}),
     };
@@ -700,7 +700,7 @@ function replay(): void {
               <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
               <td class="py-1">
                 <span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-                <span v-if="r.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ r.alts.length }} つと合わせてどれか {{ r.need }} つ<template v-if="r.method === 'desecrate' && r.need > 1"> (冒涜で 1 つ、残り {{ r.need - 1 }} つは高貴)</template></span>
+                <span v-if="r.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ r.alts.length }} つと合わせてどれか 1 つ</span>
               </td>
               <td class="py-1">
                 <span class="flex flex-wrap justify-end gap-1">

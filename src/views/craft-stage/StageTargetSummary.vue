@@ -5,7 +5,7 @@
   「狙う MOD がシミュレーションの枠に入っていて、その下の枠にまた MOD 選択枠があって分かれているのかと思う。枠は一緒の枠で、
   ベースの所に出している表示を ① の MOD の所でするべきで、ベースには非表示でいい。そこに付きやすさの % も出そう、T2 以上なら確率が上がる」。
   クラフト計算機の MOD 解析 ([[ModBreakdown.vue]]) と同じく、左にプレ・右にサフィ、種類の札 + 文 + 段。番号は付ける順番。
-  editable の時は ① で選んでいる間: 段のプルダウン・＋ (あるいは)・× (外す)・どれか N つ。
+  editable の時は ① で選んでいる間: 段のプルダウン・＋ (あるいは)・× (外す)・⧉ コピー (同じ候補のグループをもう 1 つ)。
   付きやすさ = その段以上の重み ÷ 同じ側の全部の重み (このアイテムレベルで出る段、普通の MOD は差したルーンの MOD 込み、冒涜は冒涜の置き場)。
   同じ系統の除外は見ない目安。エッセンスは確定なので出さない
 -->
@@ -18,7 +18,7 @@ import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { ESSENCE_KIND, essenceKindOf } from "../../services/mods/essence-kind";
 import { effectiveCls } from "../../services/craft-stage/stage-core";
 
-const props = defineProps<{ /** ① で選んでいる間 (段・＋・×・どれか N つを出す) */ editable?: boolean }>();
+const props = defineProps<{ /** ① で選んでいる間 (段・＋・×・コピーを出す) */ editable?: boolean }>();
 const s = craftStage;
 
 type Kind = "fracture" | "normal" | "desecrated" | "essence" | "perfect_essence";
@@ -90,13 +90,34 @@ function setTier(r: Row, idx: number): void {
   s.simTargets.value = s.simTargets.value.map((t) => (t.modId !== r.group ? t
     : !r.alt ? { ...t, minTierIndex: idx } : { ...t, alts: (t.alts ?? []).map((a) => (a.modId === r.modId ? { ...a, minTierIndex: idx } : a)) }));
 }
-function setNeed(host: string, n: number): void {
-  s.simTargets.value = s.simTargets.value.map((t) => (t.modId === host ? { ...t, need: n } : t));
+/**
+ * グループをコピーして、同じ候補の手順をもう 1 つ作る (2026-10-05 オーナー「その MOD 群は 1 MOD としての扱い、コピーボタンで同じ奴が
+ * もう 1 個できる」: 耐性 3 つのどれかを 2 つ欲しい時はグループを 2 つ)。手順の名前 (本体) は候補の中でまだ本体に使っていない物に回す。
+ * 冒涜の手順を並べた時、2 つ目からは高貴 (冒涜の MOD は 1 つまで)。手順はすぐ後ろに入る
+ */
+function copyGroup(host: string): void {
+  const list = s.simTargets.value;
+  const i = list.findIndex((t) => t.modId === host);
+  const t = list[i];
+  if (!t) return;
+  const members = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
+  const mains = new Set(list.map((x) => x.modId));
+  const next = members.find((m) => !mains.has(m.modId));
+  if (!next) return;
+  const method = t.method === "desecrate" ? "exalt" : t.method === "fracture" ? undefined : t.method;
+  const copy = { modId: next.modId, minTierIndex: next.minTierIndex, ...(method ? { method } : {}), alts: members.filter((m) => m.modId !== next.modId) };
+  s.simTargets.value = [...list.slice(0, i + 1), copy, ...list.slice(i + 1)];
+}
+/** コピーできるか (候補の中にまだ手順の本体になっていない物がある) */
+function canCopy(host: string): boolean {
+  const t = s.simTargets.value.find((x) => x.modId === host);
+  const mains = new Set(s.simTargets.value.map((x) => x.modId));
+  return !!t && (t.alts ?? []).some((a) => !mains.has(a.modId));
 }
 
 /**
- * 1 つの枠を争う物はグループにまとめる (フラクチャーの候補全部 / 手順の本体 + あるいは)。2 つ以上の時だけ点線の枠で「どれか N つ」。
- * どれか N つは N 枠、フラクチャーの候補は 1 枠。グループの付きやすさは候補の合計
+ * 1 つの枠を争う物はグループにまとめる (フラクチャーの候補全部 / 手順の本体 + あるいは)。2 つ以上の時だけ点線の枠で「どれか 1 つ」。
+ * グループは 1 MOD (1 枠)。グループの付きやすさは候補の合計
  */
 const columns = computed(() => (["P", "S"] as const).map((side) => {
   const list = rows.value.filter((r) => r.side === side);
@@ -105,7 +126,7 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
     const key = r.kind === "fracture" ? "fracture" : r.group;
     const g = groups.find((x) => x.key === key);
     if (g) g.members.push(r);
-    else groups.push({ key, no: r.no, kind: r.kind, host: r.group, need: r.kind === "fracture" ? 1 : r.need, members: [r], share: null });
+    else groups.push({ key, no: r.no, kind: r.kind, host: r.group, need: 1, members: [r], share: null });
   }
   for (const g of groups) g.share = g.members.every((m) => m.share == null) ? null : Math.min(1, g.members.reduce((a, m) => a + (m.share ?? 0), 0));
   const used = groups.reduce((a, g) => a + g.need, 0);
@@ -125,14 +146,9 @@ const canAlt = (k: Kind): boolean => k === "normal" || k === "desecrated";
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <span class="shrink-0 rounded border px-1 text-[10px]" :class="KINDS[g.kind].cls">{{ KINDS[g.kind].label }}</span>
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
-          <!-- 2 つ以上: 見出し (どれか N つ・合計の付きやすさ) と、横に並べて折り返す候補 -->
+          <!-- 2 つ以上: 見出し (どれか 1 つ・合計の付きやすさ) と、横に並べて折り返す候補 -->
           <p v-if="g.members.length > 1" class="mb-0.5 flex flex-wrap items-center gap-1 text-[10px] font-bold text-amber-200">
-            どれか
-            <template v-if="props.editable && g.kind !== 'fracture'">
-              <button v-for="n in g.members.length" :key="n" type="button" class="rounded px-1 leading-tight" :class="g.need === n ? 'bg-amber-500/40 text-amber-50 ring-1 ring-amber-300' : 'border border-amber-400/30 opacity-70 hover:opacity-100'" :title="`候補のうち ${n} つ付けば当たり (枠を ${n} つ使う)`" @click="setNeed(g.host, n)">{{ n }}</button>
-            </template>
-            <template v-else>{{ g.need }}</template>
-            つ<template v-if="g.kind === 'desecrated' && g.need > 1"> (冒涜で 1 つ、残り {{ g.need - 1 }} つは高貴)</template>
+            どれか 1 つ
             <span v-if="g.share != null" class="ml-1 font-normal tabular-nums text-amber-100/80">付きやすさ 合計 {{ pct(g.share) }}</span>
           </p>
           <div :class="g.members.length > 1 ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5' : 'flex items-center gap-1.5'">
@@ -147,6 +163,8 @@ const canAlt = (k: Kind): boolean => k === "normal" || k === "desecrated";
             </span>
             <!-- 「＋」は MOD のすぐ横 (2026-10-05 オーナー) -->
             <button v-if="props.editable && canAlt(g.kind)" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
+            <!-- コピー: 同じ候補のグループをもう 1 つ (2 つ欲しい時) -->
+            <button v-if="props.editable && g.members.length > 1 && g.kind !== 'fracture'" type="button" class="shrink-0 rounded border border-sky-400/40 px-1 text-[11px] leading-none text-sky-200 hover:bg-sky-500/15 disabled:opacity-30" :disabled="!canCopy(g.host)" :title="canCopy(g.host) ? 'このグループをコピーして、同じ候補からもう 1 つ狙う' : '候補の数だけコピー済み'" @click="copyGroup(g.host)">⧉ コピー</button>
           </div>
         </div>
       </div>

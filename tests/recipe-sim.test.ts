@@ -157,3 +157,20 @@ describe("冒涜でどれか N つ (2026-10-05)", () => {
     expect([fire, cold, light].filter((t) => allMods(final).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex)).length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("同じ候補のグループをコピーして並べる (2026-10-05)", () => {
+  it("金の指輪: 耐性 3 つのどれか × 2 (グループを 2 つ) で、違う耐性が 2 つ付いて完成する", async () => {
+    const data = await loadPatch();
+    const fire = targetOf(data, "Rings", /FireResistance$/, 3);
+    const cold = targetOf(data, "Rings", /ColdResistance$/, 3);
+    const light = targetOf(data, "Rings", /LightningResistance$/, 3);
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 30, price: () => 1, seed: 9100,
+      targets: [{ ...fire, method: "exalt", alts: [cold, light] }, { ...cold, method: "exalt", alts: [fire, light] }],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    const { final } = playPlan(data, recipePlan(spec, r!.sample!), {});
+    expect([fire, cold, light].filter((t) => allMods(final).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex)).length).toBeGreaterThanOrEqual(2);
+  });
+});

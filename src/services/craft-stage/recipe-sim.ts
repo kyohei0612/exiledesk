@@ -118,6 +118,23 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   let bases = 0;
   const mod = (id: string) => data.mods.get(id)!;
   const sideOf = (id: string): StageSide => (mod(id).type === "suffix" ? "suffix" : "prefix");
+  /**
+   * まだ当たっていない一番上の手順。付いている MOD は 1 つの手順にしか数えない (同じ候補のグループをコピーして並べた時、1 つの MOD で
+   * 両方を満たしたことにしない。2026-10-05 オーナー「その MOD 群は 1 MOD としての扱い」「コピーボタンでもう 1 個同じのができる」)。上から順に取る
+   */
+  const unmet = (it: StageItem): RecipeTarget | null => {
+    const claimed = new Set<string>();
+    const present = allMods(it).filter((m) => !m.unrevealed);
+    for (const x of spec.targets) {
+      if (x.method === "fracture") continue;
+      for (let k = 0; k < needOf(x); k++) {
+        const m = present.find((y) => hits(x, y) && !claimed.has(y.modId));
+        if (!m) return x;
+        claimed.add(m.modId);
+      }
+    }
+    return null;
+  };
   // 候補のうち need 個 (違う MOD で) 付いていれば当たり
   const meets = (it: StageItem, t: RecipeTarget): boolean =>
     new Set(allMods(it).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size >= needOf(t);
@@ -271,7 +288,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     // 未発現の冒涜 MOD が残っていれば先に発現 (冒涜の狙いの手の中で選ぶ)
     // フラクチャーの狙い (候補) は、どれか 1 つが固定されていれば良い (固定されなかった候補は作らない)
     if (fractureTs.length && !fixedHit()) return fail("固定した MOD が消えた");
-    const t = spec.targets.find((x) => x.method !== "fracture" && !meets(item, x));
+    const t = unmet(item);
     if (!t) return { done: true, cost, steps, seed, replayFrom, bases };
     const side = sideOf(t.modId);
     let e: string | null = null;
