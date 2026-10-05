@@ -20,6 +20,7 @@ import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../services/trade2/query/spec";
 import { openTradeQuery } from "../../services/pob-check/trade-links";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
+import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 
 const s = craftStage;
 const RUNS = [500, 1000, 3000] as const;
@@ -152,6 +153,46 @@ const fractureOdds = computed((): { hit: number; of: number } => {
   const hit = makeRoute.value === "magic" ? fractureRows.value.length : 1;
   return { hit, of: wall ? 3 : 4 };
 });
+/**
+ * 計算の費用 (2026-10-05 オーナー「3 個買って 1 個成功品と仮定して、最低完全変成 3、次の完全増強、消去はセットで使う、フラクチャー 3 つは
+ * 絶対にいる。深淵エッセンスは 3 個、ネクロマンシー、結晶化、骨それぞれ 3 回、確率的に計算してくれ。平均コスト 1 個作るコスト分かれば 3 倍」
+ * 「完全やね消去 2 つ使うのは」)。
+ *   1 回分 = 白 + 完全の変成 + (完全の増強 + 消去 × 2) × リロールの回数 + 深淵のエッセンス + 結晶化 + 骨 + ネクロマンシー + フラクチャー
+ *   リロールの回数 = 1 ÷ (完全の増強 1 回で狙いが付く確率)。確率はその側の普通の置き場の重み (下限 = 完全の増強の段の下限)
+ *   1 個 = 1 回分 × 3 (骨の壁でフラクチャーが 1/3)
+ * お告げの側は、壁を置く側 = 狙いの反対側
+ */
+const calc = computed(() => {
+  const d = s.data.value, it = s.item.value, f = fractureRow.value;
+  if (!d || !it || !f) return null;
+  const m = d.mods.get(f.modId);
+  if (!m) return null;
+  const sideKey = m.type === "suffix" ? "suffixes" : "prefixes";
+  const floor = CURRENCY_FLOOR.augment.perfect;
+  const w = (id: string, minIdx: number): number => {
+    const x = d.mods.get(id);
+    return x ? x.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl >= floor && t.ilvl <= s.itemLevel.value ? t.weight : 0), 0) : 0;
+  };
+  const total = it.cls.pools.normal[sideKey].reduce((a, id) => a + w(id, 0), 0);
+  const pHit = total > 0 ? w(f.modId, f.minTierIndex) / total : 0;
+  const wall: "prefix" | "suffix" = m.type === "suffix" ? "prefix" : "suffix";
+  const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
+  const rerolls = pHit > 0 ? 1 / pHit : Infinity;
+  const white = (whiteDivine.value ?? 0) * divineEx();
+  const lines: Array<{ name: string; n: number; each: number }> = [
+    { name: "白のベース", n: 1, each: white },
+    { name: nameOf("transmute_perfect"), n: 1, each: priceOf("transmute_perfect") },
+    { name: `${nameOf("augment_perfect")} (リロール)`, n: rerolls, each: priceOf("augment_perfect") },
+    { name: `${nameOf("annul")} (リロールに 2 つ)`, n: rerolls * 2, each: priceOf("annul") },
+    { name: nameOf(abyss), n: 1, each: priceOf(abyss) },
+    { name: nameOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation") },
+    { name: nameOf("desecrate"), n: 1, each: priceOf("desecrate") },
+    { name: nameOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy") },
+    { name: nameOf("fracture"), n: 1, each: priceOf("fracture") },
+  ];
+  const once = lines.reduce((a, l) => a + l.n * l.each, 0);
+  return { pHit, rerolls, lines, once, total: once * 3, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0 };
+});
 /** 入れた値段との比べ (高貴建て) */
 const buyVsMake = computed(() => {
   const m = makeCost.value;
@@ -280,7 +321,27 @@ function replay(): void {
       <p class="mb-1 font-bold text-emerald-100">フラクチャー: <template v-for="(f, i) in fractureRows" :key="f.modId">{{ i ? " か " : "" }}{{ f.text }} ({{ f.rank }} 以上)</template><span v-if="fractureRows.length === 2" class="ml-1 text-[11px] font-normal opacity-70">(どちらが固定されても良い。両方付いてからフラクチャー)</span></p>
       <label class="mr-4 inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="make" /> 作る (確率込み)</label>
       <label class="inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="bought" /> 付いた状態で始める (ベースを買う)</label>
+      <!-- 計算の費用 (1 回分 × 3) -->
+      <div v-if="calc" class="mt-1 rounded bg-black/25 px-2 py-1.5 text-[11px]">
+        <p class="mb-1 text-[12px]">
+          計算: 1 個 = 1 回分 <b>{{ money(calc.once) }}</b> × 3 = <b class="text-amber-100">{{ money(calc.total) }}</b>
+          <span class="opacity-60">(完全の増強 1 回で狙いが付く {{ calc.pHit > 0 ? pct(calc.pHit) : "0%" }} → リロール平均 {{ Number.isFinite(calc.rerolls) ? calc.rerolls.toFixed(1) : "—" }} 回)</span>
+        </p>
+        <p v-if="calc.cantRoll" class="text-rose-300">完全の増強 (段の下限 {{ CURRENCY_FLOOR.augment.perfect }}) ではこの段は出ません</p>
+        <p v-if="calc.noAbyss" class="text-amber-300">このベースの深淵のエッセンスの値段が分かりません (0 で数えています)</p>
+        <table class="w-full">
+          <tbody>
+            <tr v-for="l in calc.lines" :key="l.name" class="border-t border-white/5">
+              <td class="py-0.5">{{ l.name }}</td>
+              <td class="w-20 py-0.5 text-right tabular-nums">× {{ Number.isFinite(l.n) ? l.n.toFixed(l.n < 10 && l.n % 1 ? 1 : 0) : "—" }}</td>
+              <td class="w-24 py-0.5 text-right tabular-nums opacity-70">{{ money(l.each) }}</td>
+              <td class="w-24 py-0.5 text-right tabular-nums">{{ money(l.n * l.each) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <p class="mt-1 text-[12px]">
+        <span class="opacity-60">回した結果: </span>
         <template v-if="makeBusy">作る費用を出しています…</template>
         <template v-else-if="makeCost">
           自分で作ると平均 <b class="text-amber-100">{{ money(makeCost.perDone) }}</b>
