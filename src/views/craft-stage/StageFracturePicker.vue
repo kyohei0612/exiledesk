@@ -21,6 +21,25 @@ const s = craftStage;
 /** 「あるいは」を選ぶ手順 */
 const host = computed(() => (props.altFor ? s.simTargets.value.find((t) => t.modId === props.altFor) ?? null : null));
 const hostGroup = computed(() => (host.value && s.data.value?.mods.get(host.value.modId)?.source === "desecrated" ? "desecrated" : "normal"));
+/**
+ * どれか N つ (候補のうち N 個付けば当たり)。選ぶ画面でも決められる (2026-10-05 オーナー「分かりづら、それなら最初の複数選択画面でも表示すべき」)。
+ * 上限は候補の数と、その側の空き枠 (ほかの手順の N とフラクチャーの 1 枠を引いた数)
+ */
+const typeOf = (id: string) => s.data.value?.mods.get(id)?.type;
+const needMax = computed(() => {
+  const h = host.value;
+  if (!h) return 1;
+  const side = typeOf(h.modId);
+  const others = s.simTargets.value.filter((t) => t !== h && t.method !== "fracture" && typeOf(t.modId) === side)
+    .reduce((a, t) => a + Math.max(1, Math.min(t.need ?? 1, 1 + (t.alts?.length ?? 0))), 0)
+    + (s.simTargets.value.some((t) => t.method === "fracture" && typeOf(t.modId) === side) ? 1 : 0);
+  return Math.max(1, Math.min(candidates.value.length, 3 - others));
+});
+const need = computed(() => Math.max(1, Math.min(host.value?.need ?? 1, needMax.value)));
+function setNeed(n: number): void {
+  const h = host.value;
+  if (h) s.simTargets.value = s.simTargets.value.map((t) => (t === h ? { ...t, need: n } : t));
+}
 /** 見出しに出す元の MOD の名前 (段の幅の付いた文) */
 const hostName = computed(() => rows.value.find((r) => isHost(r))?.text ?? "");
 const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.value, s.item.value).filter((r) => r.group === hostGroup.value) : []));
@@ -106,7 +125,11 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
         <div class="flex items-center gap-2 border-b border-white/10 px-4 py-2">
           <b v-if="host" class="text-sm text-amber-100">「{{ hostName }}」のあるいはを選ぶ</b>
           <b v-else class="text-sm text-emerald-100">① フラクチャーの候補を選ぶ</b>
-          <span v-if="host" class="opacity-60">チェックした物のどれか 1 つが付けば当たり · 同じ側だけ</span>
+          <span v-if="host" class="inline-flex items-center gap-1">
+            <span class="opacity-70">元の MOD とチェックした物のうち</span>
+            <button v-for="n in needMax" :key="n" type="button" class="rounded px-1.5 font-bold leading-tight" :class="need === n ? 'bg-amber-500/40 text-amber-50 ring-1 ring-amber-300' : 'border border-amber-400/30 text-amber-200 opacity-70 hover:opacity-100'" :title="`${n} つ付けば当たり (枠を ${n} つ使う)`" @click="setNeed(n)">{{ n }}</button>
+            <span class="opacity-70">つ付けば当たり · 同じ側だけ</span>
+          </span>
           <span v-else class="opacity-60">{{ s.item.value?.baseJa }} · チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合</span>
           <span class="ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-emerald-100">{{ candidates.length }} 個</span>
           <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-1 font-bold text-emerald-100" @click="emit('close')">決定</button>
