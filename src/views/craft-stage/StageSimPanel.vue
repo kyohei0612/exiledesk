@@ -36,6 +36,14 @@ const runs = ref<number>(1000);
 
 /** 付け方の名前 (2026-10-05 オーナー「カオスはカオススパム、高貴はガチャなので高貴ガチャ」) */
 const METHOD_JA: Record<RecipeMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス", fracture: "フラクチャー" };
+/** 選んでいる付け方の色 (2 狙う MOD の予定と同じ: 高貴ガチャ 黄 / フラクチャー 橙 / 冒涜 深緑) */
+const METHOD_ON: Record<RecipeMethod, string> = {
+  exalt: "bg-yellow-500/20 text-yellow-100 ring-1 ring-yellow-400/70",
+  chaos: "bg-yellow-500/20 text-yellow-100 ring-1 ring-yellow-400/70",
+  desecrate: "bg-green-800/40 text-green-300 ring-1 ring-green-600",
+  essence: "bg-sky-500/20 text-sky-100 ring-1 ring-sky-400/60",
+  fracture: "bg-orange-500/20 text-orange-100 ring-1 ring-orange-400/70",
+};
 /** その MOD に使える付け方 (最初が既定) */
 function methodsFor(modId: string): RecipeMethod[] {
   const m = s.data.value?.mods.get(modId);
@@ -787,7 +795,7 @@ function replay(): void {
               </td>
               <td class="py-1">
                 <span class="flex flex-wrap justify-end gap-1">
-                  <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px] disabled:cursor-default" :class="r.method === m ? (m === 'desecrate' ? 'bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/60' : 'bg-white/15 text-white ring-1 ring-white/40') : 'border border-white/10 opacity-60 hover:opacity-100'" :disabled="orderDone" :title="orderDone ? '決めた後は変えられない (「ここからやり直す」で戻る)' : undefined" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
+                  <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px] disabled:cursor-default" :class="r.method === m ? METHOD_ON[m] : 'border border-white/10 opacity-60 hover:opacity-100'" :disabled="orderDone" :title="orderDone ? '決めた後は変えられない (「ここからやり直す」で戻る)' : undefined" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
                 </span>
               </td>
             </tr>

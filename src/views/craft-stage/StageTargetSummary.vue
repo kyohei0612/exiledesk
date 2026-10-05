@@ -22,14 +22,7 @@ const props = defineProps<{ /** ① で選んでいる間 (段・＋・×・コ�
 const s = craftStage;
 
 type Kind = "fracture" | "normal" | "desecrated" | "essence" | "perfect_essence";
-/** 札 (MOD 解析と同じ色。フラクチャーは 🔒 固定済みに合わせる) */
-const KINDS: Record<Kind, { label: string; cls: string }> = {
-  fracture: { label: "🔒 フラクチャー", cls: "border-white/40 text-white" },
-  normal: { label: "クラフトで付く", cls: "border-emerald-400/60 text-emerald-200" },
-  desecrated: { label: "冒涜", cls: "border-violet-400/60 text-violet-200" },
-  essence: { label: ESSENCE_KIND.essence.short, cls: "border-sky-400/60 text-sky-200" },
-  perfect_essence: { label: ESSENCE_KIND.perfect_essence.short, cls: "border-indigo-400/60 text-indigo-200" },
-};
+
 
 /** 付きやすさ (その段以上が、同じ側の 1 回の抽選で出る割合) */
 function shareOf(modId: string, minTierIndex: number): number | null {
@@ -154,6 +147,14 @@ function srcOf(host: string): Src {
 }
 type Plan = "fracture" | "exalt" | "chaos" | "desecrate" | "essence";
 const PLAN_JA: Record<Plan, string> = { fracture: "🔒 フラクチャー予定", exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス" };
+/** 付け方の予定の色 (2026-10-05 オーナー「高貴ガチャは黄色、フラクチャーはオレンジ、冒涜は深緑」「カオスも黄色」) */
+const PLAN_CLS: Record<Plan, string> = {
+  fracture: "border-orange-400/80 text-orange-200",
+  exalt: "border-yellow-400/80 text-yellow-200",
+  chaos: "border-yellow-400/80 text-yellow-200",
+  desecrate: "border-green-700 text-green-500",
+  essence: "border-sky-400/60 text-sky-200",
+};
 function plansOf(host: string): Plan[] {
   const m = s.data.value?.mods.get(host);
   if (!m) return ["exalt"];
@@ -221,10 +222,10 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
           </div>
         </div>
         <!-- 付け方の予定は MOD の右側 (2026-10-05 オーナー「普通カオススパムとかの設定って MOD の右側よ」) -->
-        <select v-if="props.editable && plansOf(g.host).length > 1" class="shrink-0 rounded border bg-[#14120e] px-0.5 text-[10px]" :class="KINDS[g.kind].cls" title="付け方の予定" :value="planOf(g)" @change="setPlan(g, ($event.target as HTMLSelectElement).value as Plan)">
+        <select v-if="props.editable && plansOf(g.host).length > 1" class="shrink-0 rounded border bg-[#14120e] px-0.5 text-[10px]" :class="PLAN_CLS[planOf(g)]" title="付け方の予定" :value="planOf(g)" @change="setPlan(g, ($event.target as HTMLSelectElement).value as Plan)">
           <option v-for="p in plansOf(g.host)" :key="p" :value="p">{{ PLAN_JA[p] }}{{ p === "fracture" && g.kind !== "fracture" && !canFracture(g.host) ? " (違う側・非推奨)" : "" }}</option>
         </select>
-        <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="KINDS[g.kind].cls">{{ PLAN_JA[planOf(g)] }}</span>
+        <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS[planOf(g)]">{{ PLAN_JA[planOf(g)] }}</span>
       </div>
     </div>
   </div>
