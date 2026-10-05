@@ -7,6 +7,7 @@
  * → ③ 作り方の設定 → 計算。右に完成図 (アイテムの絵) を出し、選んだ物がその場で絵に並ぶ。
  * 中身の状態は [[usePicker.ts]]、計算は親 (HtcCraftLab.runPicked)
  */
+import { ESSENCE_KIND } from "../../services/mods/essence-kind";
 import { computed, ref } from "vue";
 import ItemCard from "./ItemCard.vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
@@ -84,7 +85,7 @@ const groupFilter = ref<ModGroup | "all">("all");
 const GROUP_CHIPS: Array<{ k: ModGroup | "all"; ja: string; on: string }> = [
   { k: "all", ja: "すべて", on: "bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60" },
   { k: "normal", ja: "普通", on: "bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/60" },
-  { k: "essence", ja: "エッセンス・合金", on: "bg-sky-500/25 text-sky-100 ring-1 ring-sky-400/60" },
+  { k: "essence", ja: ESSENCE_KIND.perfect_essence.label, on: "bg-sky-500/25 text-sky-100 ring-1 ring-sky-400/60" },
   { k: "desecrated", ja: "冒涜", on: "bg-violet-500/25 text-violet-100 ring-1 ring-violet-400/60" },
   { k: "otherworldly", ja: "変質した鎖骨 (異界)", on: "bg-teal-500/25 text-teal-100 ring-1 ring-teal-400/60" },
   { k: "rune", ja: "オーグメント (特別な MOD)", on: "bg-orange-500/25 text-orange-100 ring-1 ring-orange-400/60" },

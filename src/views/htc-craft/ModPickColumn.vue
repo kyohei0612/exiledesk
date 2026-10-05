@@ -8,6 +8,7 @@
   オーグメント (コルの狩り 等、2026-10-03) は橙。行にルーンの名前の札と「仮」(出やすさがエンジンの仮の値) を付ける。
 -->
 <script setup lang="ts">
+import { ESSENCE_KIND } from "../../services/mods/essence-kind";
 import { computed } from "vue";
 import type { ModGroup, ModRow, usePicker } from "./usePicker";
 import { ASSUMED_RUNE_WEIGHT_NOTE } from "../../services/htc/sockets";
@@ -33,7 +34,8 @@ const emit = defineEmits<{ toggle: [m: ModRow] }>();
 interface GroupStyle { label: string; how: string; head: string; bar: string; chip: string }
 const GROUPS: Record<ModGroup, GroupStyle> = {
   normal: { label: "普通の MOD", how: "カオス・高貴で確率で狙う", head: "text-emerald-300", bar: "border-l-emerald-400/70", chip: "bg-emerald-500/15 text-emerald-200" },
-  essence: { label: "エッセンス・合金", how: "パーフェクトエッセンス・合金で確定 (クラフト MOD は 1 つまで)", head: "text-sky-300", bar: "border-l-sky-400/70", chip: "bg-sky-500/15 text-sky-200" },
+  // 計算機はレアに付けるパーフェクト (合金も) だけ ([[essence-kind.ts]])
+  essence: { label: ESSENCE_KIND.perfect_essence.label, how: ESSENCE_KIND.perfect_essence.how, head: "text-sky-300", bar: "border-l-sky-400/70", chip: "bg-sky-500/15 text-sky-200" },
   desecrated: { label: "冒涜", how: "骨で冒涜して 3 択から (冒涜の MOD は 1 つまで)", head: "text-violet-300", bar: "border-l-violet-400/70", chip: "bg-violet-500/15 text-violet-200" },
   otherworldly: { label: "変質した鎖骨 (異界の MOD)", how: "変質した鎖骨の冒涜でだけ出る (冒涜の MOD として 1 つまで)", head: "text-teal-300", bar: "border-l-teal-400/70", chip: "bg-teal-500/15 text-teal-200" },
   rune: { label: "オーグメント (特別な MOD)", how: "そのルーンを差したまま作ると高貴・カオスで出る (ソケットバウンド。出やすさは仮)", head: "text-orange-300", bar: "border-l-orange-400/70", chip: "bg-orange-500/15 text-orange-200" },

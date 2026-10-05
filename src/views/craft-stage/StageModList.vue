@@ -28,7 +28,7 @@ const open = ref(true);
 try { open.value = localStorage.getItem(KEY) !== "0"; } catch { /* 無くてよい */ }
 watch(open, (v) => { try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /* 無くてよい */ } });
 
-const GROUPS: ModGroup[] = ["normal", "rune", "essence", "desecrated", "otherworldly"];
+const GROUPS: ModGroup[] = ["normal", "rune", "essence", "perfect_essence", "desecrated", "otherworldly"];
 const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => r.group === g).length])) as Record<ModGroup, number>);
 
 const query = ref("");
@@ -121,13 +121,14 @@ function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
 
 /** エッセンスの段の名前 (英語) → 日本語 */
 const ESS_JA = new Map(Object.values((essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys).map((k) => [k.en, k.ja]));
-const tierName = (r: ListRow, name: string): string => (r.group === "essence" ? (ESS_JA.get(name) ?? name) : name);
+const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? (ESS_JA.get(name) ?? name) : name);
 const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "—");
 /** 種類の色 (ゲームの MOD の色: 普通 = 青、エッセンス = 薄い青、冒涜 = 赤、異界 = 緑がかった青) */
 const TONE: Record<ModGroup, { tab: string; bar: string }> = {
   normal: { tab: "bg-rarity-magic/25 text-[#c8c8ff] ring-1 ring-rarity-magic/60", bar: "bg-rarity-magic/20" },
   rune: { tab: "bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/60", bar: "bg-amber-500/15" },
   essence: { tab: "bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/60", bar: "bg-sky-400/15" },
+  perfect_essence: { tab: "bg-indigo-400/20 text-indigo-100 ring-1 ring-indigo-300/60", bar: "bg-indigo-400/15" },
   desecrated: { tab: "bg-rose-500/20 text-rose-100 ring-1 ring-rose-400/60", bar: "bg-rose-500/15" },
   otherworldly: { tab: "bg-teal-500/20 text-teal-100 ring-1 ring-teal-400/60", bar: "bg-teal-500/15" },
 };
@@ -197,7 +198,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td class="py-0.5 pl-2 opacity-60">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-16 py-0.5 text-right tabular-nums opacity-70">{{ t.weight ? `重み ${t.weight}` : "" }}</td>
-                    <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'desecrated' || sec.g === 'essence')" class="w-20 py-0.5 text-right">
+                    <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'desecrated' || sec.g === 'essence' || sec.g === 'perfect_essence')" class="w-20 py-0.5 text-right">
                       <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? 'もう一度押すと外す' : `② に足す (${t.rank} 以上)`" @click.stop="toggleTarget(t.modId ?? r.id, t)">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
                     </td>
                     <td v-else-if="canStart && sec.g === 'normal'" class="w-14 py-0.5 text-right">

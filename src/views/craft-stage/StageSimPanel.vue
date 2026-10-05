@@ -608,10 +608,9 @@ function replay(): void {
                     <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ a.rank }} 以上</span>
                     <button v-if="!modsDone" type="button" class="ml-1 opacity-50 hover:opacity-100" title="この候補を外す" @click="removeAlt(r.modId, a.modId)">×</button>
                   </span>
+                  <!-- 「＋」は MOD の名前のすぐ横 (2026-10-05 オーナー) -->
+                  <button v-if="!modsDone && r.method !== 'essence'" type="button" class="ml-1 rounded border border-amber-400/40 px-1.5 py-px text-[11px] leading-none text-amber-200 hover:bg-amber-500/10" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="addAlts(r.modId)">＋</button>
                 </div>
-              </td>
-              <td class="w-8 py-1 text-right align-top">
-                <button v-if="!modsDone && r.method !== 'essence'" type="button" class="rounded border border-amber-400/40 px-1.5 py-px text-[11px] text-amber-200 hover:bg-amber-500/10" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="addAlts(r.modId)">＋</button>
               </td>
               <td class="w-6 py-1 text-right align-top"><button v-if="!modsDone" type="button" class="opacity-60 hover:opacity-100" title="外す" @click="remove(r.modId)">×</button></td>
             </tr>

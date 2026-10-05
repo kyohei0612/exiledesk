@@ -11,16 +11,18 @@ import { craftStage } from "../../state/craft-stage";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
+import { ESSENCE_KIND, essenceKindOf } from "../../services/mods/essence-kind";
 
 const s = craftStage;
 
-type Kind = "fracture" | "normal" | "desecrated" | "essence";
+type Kind = "fracture" | "normal" | "desecrated" | "essence" | "perfect_essence";
 /** 札 (MOD 解析と同じ色。フラクチャーは 🔒 固定済みに合わせる) */
 const KINDS: Record<Kind, { label: string; cls: string }> = {
   fracture: { label: "🔒 フラクチャー", cls: "border-white/40 text-white" },
   normal: { label: "クラフトで付く", cls: "border-emerald-400/60 text-emerald-200" },
   desecrated: { label: "冒涜", cls: "border-violet-400/60 text-violet-200" },
-  essence: { label: "エッセンス", cls: "border-sky-400/60 text-sky-200" },
+  essence: { label: ESSENCE_KIND.essence.short, cls: "border-sky-400/60 text-sky-200" },
+  perfect_essence: { label: ESSENCE_KIND.perfect_essence.short, cls: "border-indigo-400/60 text-indigo-200" },
 };
 
 const rows = computed(() => {
@@ -31,7 +33,7 @@ const rows = computed(() => {
     const m = d.mods.get(t.modId);
     const kind: Kind = t.method === "fracture" ? "fracture"
       : m?.source === "desecrated" || t.method === "desecrate" ? "desecrated"
-      : m && CRAFTED_SOURCES.has(m.source) ? "essence" : "normal";
+      : m && CRAFTED_SOURCES.has(m.source) ? essenceKindOf(m) ?? "perfect_essence" : "normal";
     const no = t.method === "fracture" ? null : ++n;
     const row = (x: { modId: string; minTierIndex: number }, alt: boolean) => {
       const xm = d.mods.get(x.modId);
@@ -81,14 +83,15 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
               <span class="truncate" :title="r.text">{{ r.text }}</span>
               <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
             </span>
+            <button v-if="s.simShowMods.value && (g.kind === 'normal' || g.kind === 'desecrated')" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
           </div>
           <div v-else class="flex items-center gap-1.5">
-            <span class="min-w-0 flex-1 truncate" :title="g.members[0]!.text">{{ g.members[0]!.text }}</span>
-            <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ g.members[0]!.rank }}</span>
+            <!-- 「＋」は MOD の名前のすぐ横 (2026-10-05 オーナー) -->
+            <span class="min-w-0 truncate" :title="g.members[0]!.text">{{ g.members[0]!.text }}</span>
+            <button v-if="s.simShowMods.value && (g.kind === 'normal' || g.kind === 'desecrated')" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
+            <span class="ml-auto shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ g.members[0]!.rank }}</span>
           </div>
         </div>
-        <button v-if="s.simShowMods.value && (g.kind === 'normal' || g.kind === 'desecrated')" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
-        <span v-else class="w-[18px] shrink-0" />
       </div>
     </div>
   </div>

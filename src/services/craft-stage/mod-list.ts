@@ -7,6 +7,7 @@
  *   - 種類: 普通 / エッセンス / 冒涜 / 異界 (変質した鎖骨)
  *   - 1 行 = 1 系統の MOD。重みは全段の合計、出やすさは同じ種類・同じ側の合計に対する割合
  */
+import { ESSENCE_KIND, essenceKindOf } from "../mods/essence-kind";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { fillHashes, jaOfMod } from "../htc/mod-text";
 import type { StageItem, StageSide } from "./types";
@@ -17,8 +18,9 @@ import { TAG_STYLE } from "../mods/tag-ja";
 import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
 import { tierDisplayRanges } from "../mods/stat-scale";
 
-export type ModGroup = "normal" | "rune" | "essence" | "desecrated" | "otherworldly";
-export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", rune: "ルーンの特殊 MOD (重みは仮定)", essence: "エッセンス", desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)" };
+/** エッセンスはパーフェクト (合金も) とそれ以外を分ける (使い道が違う、[[essence-kind.ts]]) */
+export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "desecrated" | "otherworldly";
+export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", rune: "ルーンの特殊 MOD (重みは仮定)", essence: ESSENCE_KIND.essence.label, perfect_essence: ESSENCE_KIND.perfect_essence.label, desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)" };
 
 /** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05) */
 export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string; modId?: string }
@@ -86,7 +88,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
   for (const [group, pool] of groups) {
     if (!pool) continue;
     for (const side of ["prefix", "suffix"] as const) {
-      const rows = modsOf(side === "prefix" ? pool.prefixes : pool.suffixes).map((m) => rowOf(m, side, group));
+      const rows = modsOf(side === "prefix" ? pool.prefixes : pool.suffixes).map((m) => rowOf(m, side, group === "essence" ? essenceKindOf(m) ?? "essence" : group));
       // 割合を普通と一緒に出してから、差したルーンの MOD の行を「ルーン」の種類に
       out.push(...fillShares(rows).map((r) => {
         const rune = group === "normal" ? data.mods.get(r.id)?.rune : undefined;

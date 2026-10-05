@@ -21,7 +21,8 @@ const s = craftStage;
 /** 「あるいは」を選ぶ手順 */
 const host = computed(() => (props.altFor ? s.simTargets.value.find((t) => t.modId === props.altFor) ?? null : null));
 const hostGroup = computed(() => (host.value && s.data.value?.mods.get(host.value.modId)?.source === "desecrated" ? "desecrated" : "normal"));
-const hostNo = computed(() => s.simTargets.value.filter((t) => t.method !== "fracture").findIndex((t) => t.modId === props.altFor) + 1);
+/** 見出しに出す元の MOD の名前 (段の幅の付いた文) */
+const hostName = computed(() => rows.value.find((r) => isHost(r))?.text ?? "");
 const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.value, s.item.value).filter((r) => r.group === hostGroup.value) : []));
 const columns = computed(() => (["prefix", "suffix"] as const).map((side) => ({
   side, title: side === "prefix" ? "プレフィックス" : "サフィックス",
@@ -103,7 +104,7 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
     <div class="fixed inset-0 z-[400] flex items-center justify-center bg-black/60 p-6" @click.self="emit('close')">
       <div class="flex max-h-[88vh] w-[1100px] max-w-full flex-col rounded-xl border border-emerald-400/40 bg-[#14120e] text-[12px] shadow-2xl">
         <div class="flex items-center gap-2 border-b border-white/10 px-4 py-2">
-          <b v-if="host" class="text-sm text-amber-100">② の {{ hostNo }} 番の「あるいは」を選ぶ</b>
+          <b v-if="host" class="text-sm text-amber-100">「{{ hostName }}」のあるいはを選ぶ</b>
           <b v-else class="text-sm text-emerald-100">① フラクチャーの候補を選ぶ</b>
           <span v-if="host" class="opacity-60">チェックした物のどれか 1 つが付けば当たり · 同じ側だけ</span>
           <span v-else class="opacity-60">{{ s.item.value?.baseJa }} · チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合</span>
@@ -114,12 +115,13 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
           <div v-for="col in columns" :key="col.side" :class="lockedSide && lockedSide !== col.side ? 'opacity-35' : ''">
             <p class="mb-1 font-bold">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }} 系統</span><span v-if="lockedSide && lockedSide !== col.side" class="ml-2 font-normal text-amber-300">候補と違う側は選べない</span></p>
             <div v-for="r in col.items" :key="r.id" class="mb-1">
-              <div class="flex items-center gap-2 rounded px-2 py-1" :class="pickedOf(r) ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
-                <input type="checkbox" :checked="!!pickedOf(r)" :disabled="blocked(r) || isHost(r)" class="h-4 w-4 accent-emerald-400" @change="toggle(r)" />
+              <!-- あるいはを選ぶ時は、元の MOD とほかの手順の MOD はグレー (2026-10-05 オーナー「＋を押したらその MOD はグレーアウトで、それ以外から探させる」) -->
+              <div class="flex items-center gap-2 rounded px-2 py-1" :class="isHost(r) || usedElsewhere(r) ? 'bg-white/[0.02] opacity-35' : pickedOf(r) ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
+                <input type="checkbox" :checked="!!pickedOf(r) && !isHost(r)" :disabled="blocked(r) || isHost(r)" class="h-4 w-4 accent-emerald-400" @change="toggle(r)" />
                 <button type="button" class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 text-left" @click="expanded = expanded === r.id ? null : r.id">
                   <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
                   <span v-for="t in shownTags(r.tags)" :key="t" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
-                  <span v-if="pickedOf(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">T{{ (s.data.value?.mods.get(pickedOf(r)!.modId)?.tiers.length ?? 0) - pickedOf(r)!.minTierIndex }} 以上</span>
+                  <span v-if="isHost(r)" class="text-[10px] opacity-80">(元の MOD)</span><span v-if="pickedOf(r) && !isHost(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">T{{ (s.data.value?.mods.get(pickedOf(r)!.modId)?.tiers.length ?? 0) - pickedOf(r)!.minTierIndex }} 以上</span>
                 </button>
                 <span class="w-11 text-right font-bold tabular-nums text-amber-100">{{ pct(r.share) }}</span>
                 <span class="min-w-[22px] rounded-sm bg-emerald-600/80 px-1 text-center text-[11px] font-bold text-white">{{ r.tiers.length }}</span>

@@ -11,6 +11,7 @@
  */
 import { computed } from "vue";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
+import { ESSENCE_KIND, essenceKindOf } from "../../services/mods/essence-kind";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { zeroStart } from "./craft-settings";
 import { htcModSides } from "../../services/htc/patch";
@@ -21,7 +22,7 @@ import type { useHtcCraft } from "./useHtcCraft";
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
 
-type Kind = "tree" | "normal" | "rune" | "desecrated" | "otherworldly" | "essence" | "cannot";
+type Kind = "tree" | "normal" | "rune" | "desecrated" | "otherworldly" | "essence" | "perfect_essence" | "cannot";
 /** 種類ごとの札・色・説明 */
 const KINDS: Record<Kind, { label: string; cls: string; note: string }> = {
   tree: { label: "特殊 (樹 MOD)", cls: "border-fuchsia-400/60 text-fuchsia-200", note: "創生の樹からしか出ない。クラフトでは付かないので、固定済みの品を買って始める" },
@@ -33,10 +34,11 @@ const KINDS: Record<Kind, { label: string; cls: string; note: string }> = {
   otherworldly: { label: "特殊 (異界の MOD)", cls: "border-teal-400/60 text-teal-200", note: "変質した鎖骨の冒涜でしか付かない。外れは普通の冒涜と同じく光のお告げか合金の上書きで回す" },
   // 特別な MOD (コルの狩り 等のルーンを差すと出る。2026-10-03)。重みがデータに無く仮の値なので、ここでも断る
   rune: { label: "オーグメント (ルーンの MOD)", cls: "border-orange-400/60 text-orange-200", note: "そのルーン (ソケットバウンド) を差したまま作ると高貴・カオスで出る。この MOD の出やすさは仮 (重みがデータに無く、エンジンの仮の値)" },
-  essence: { label: "エッセンスで確定", cls: "border-sky-400/60 text-sky-200", note: "パーフェクトエッセンスで確定で付けられる (クラフト MOD)。1 つのアイテムに 1 つまで" },
+  essence: { label: ESSENCE_KIND.essence.label, cls: "border-sky-400/60 text-sky-200", note: ESSENCE_KIND.essence.how },
+  perfect_essence: { label: ESSENCE_KIND.perfect_essence.label, cls: "border-indigo-400/60 text-indigo-200", note: ESSENCE_KIND.perfect_essence.how },
   cannot: { label: "作れない", cls: "border-rose-500/60 text-rose-300", note: "このベースのクラフトでは付かない (出どころがデータに無い)。付いている物を買うしかない。枠は使う" },
 };
-const ORDER: Kind[] = ["tree", "otherworldly", "desecrated", "cannot", "normal", "rune", "essence"];
+const ORDER: Kind[] = ["tree", "otherworldly", "desecrated", "cannot", "normal", "rune", "essence", "perfect_essence"];
 
 interface Row { key: string; text: string; side: "P" | "S" | null; kind: Kind; fixed: boolean; tier: string | null; modId: string | null }
 
@@ -45,7 +47,7 @@ const fixedIds = computed(() => new Set(c.fracturedTargets.value.map((t) => t.mo
 const kindOf = (modId: string): Kind => {
   const m = c.data.value?.mods.get(modId);
   const src = m?.source;
-  if (src && CRAFTED_SOURCES.has(src)) return "essence";
+  if (src && CRAFTED_SOURCES.has(src)) return essenceKindOf(m) ?? "perfect_essence";
   if (m?.tags.includes("breach_desecration")) return "otherworldly";
   if (m?.rune) return "rune";
   return src === "desecrated" ? "desecrated" : "normal";
