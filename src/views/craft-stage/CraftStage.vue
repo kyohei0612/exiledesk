@@ -19,7 +19,6 @@ import VideoStage from "./VideoStage.vue";
 import StageBasePicker from "./StageBasePicker.vue";
 import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
-import StageTargetSummary from "./StageTargetSummary.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
@@ -119,15 +118,13 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     </div>
 
     <!-- 設定と操作 -->
-    <section v-if="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 px-3 py-2 text-[12px]" :class="s.mode.value === 'sim' ? 'sticky top-0 z-20 bg-[#16130f]/95 backdrop-blur' : 'bg-white/[0.03]'">
+    <section v-if="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 px-3 py-2 text-[12px]" :class="'bg-white/[0.03]'">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
       <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="(en) => { s.base.value = en; s.simTargets.value = []; s.simPicked.value = true; s.reset(); }" />
       <span v-if="!simNoBase" class="flex items-center gap-1">
         <span class="opacity-60">アイテムレベル</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>
-      <!-- 選んだ MOD (完成図)。下の一覧で「狙う」を押してもここで見える (上に貼り付く) -->
-      <StageTargetSummary v-if="s.mode.value === 'sim' && !simNoBase" class="basis-full" />
       <template v-if="s.mode.value === 'hand'">
       <button type="button" :class="btn" @click="s.reset()">白に戻す</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
@@ -214,7 +211,8 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
       </div>
     </div>
     <!-- このベースに付く MOD (StageModList.vue、2026-09-29) -->
-    <StageModList v-if="s.ready.value && s.item.value && (s.mode.value === 'hand' || s.replay.value || s.simShowMods.value)" />
+    <!-- シミュレーションでは ① 狙う MOD の枠の中に出す (StageSimPanel.vue) -->
+    <StageModList v-if="s.ready.value && s.item.value && (s.mode.value === 'hand' || s.replay.value)" />
 
     <!-- 押した所の波紋と、吸い込まれるアイコン -->
     <template v-if="fx && fx.kind !== 'shake'">

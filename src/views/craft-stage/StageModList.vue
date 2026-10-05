@@ -17,6 +17,8 @@ import { craftStage } from "../../state/craft-stage";
 import { GROUP_JA, modListFor, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import essenceKeys from "../../services/htc/essence-keys.json";
 
+/** シミュレーションの ① の枠の中に置く時 (外の枠を付けない) */
+const props = defineProps<{ embedded?: boolean }>();
 const s = craftStage;
 /** 始めの状態を組める (まだ打っていない・再生でない) */
 const canStart = computed(() => !s.log.value.length && !s.replay.value);
@@ -135,7 +137,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 </script>
 
 <template>
-  <section class="mt-4 rounded-xl border border-white/10 bg-white/[0.03] text-[12px]">
+  <section class="text-[12px]" :class="props.embedded ? '' : 'mt-4 rounded-xl border border-white/10 bg-white/[0.03]'">
     <!-- 見出し (押すと畳む) -->
     <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left" @click="open = !open">
       <b class="text-sm text-amber-100">このベースに付く MOD</b>

@@ -21,6 +21,8 @@ import { buildSpecQuery } from "../../services/trade2/query/spec";
 import { openTradeQuery } from "../../services/pob-check/trade-links";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import StageFracturePicker from "./StageFracturePicker.vue";
+import StageTargetSummary from "./StageTargetSummary.vue";
+import StageModList from "./StageModList.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
@@ -67,50 +69,6 @@ const rows = computed(() => {
     };
   });
 });
-function remove(modId: string): void {
-  s.simTargets.value = s.simTargets.value.filter((t) => t.modId !== modId);
-  if (s.simAltFor.value === modId) s.simAltFor.value = null;
-}
-/** この手順の「あるいは」を選ぶポップアップを開く ([[StageFracturePicker.vue]] の altFor) */
-function addAlts(modId: string): void {
-  s.simAltFor.value = modId;
-}
-/**
- * どれか N つ (2026-10-05 オーナー「この状態ならどれか 2 つとかも選ばせてあげたい」)。候補のうち N 個付けば当たり、その数だけ枠を使う。
- * 枠はその側の 3 つまで (ほかの手順の分を引いた数まで選べる)
- */
-function setNeed(modId: string, n: number): void {
-  s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, need: n } : t));
-}
-/** その手順で選べる N の上限 (候補の数と、その側の空き枠) */
-/** 選べる N の上限 = 選んだ候補の数 (2026-10-05 オーナー「当たりの数は選択 MOD の数だけ、5 つ選択したら 5 つが上限」) */
-function needMax(r: { alts: unknown[] }): number {
-  return 1 + r.alts.length;
-}
-/** その側の空き枠 (ほかの手順の N とフラクチャーの 1 枠を引いた数)。N がこれを超えると作れないので注意を出す */
-function freeSlots(r: { modId: string; side: string }): number {
-  return 3 - rows.value.filter((x) => x.side === r.side && x.modId !== r.modId && x.method !== "fracture").reduce((a, x) => a + x.need, 0)
-    - (rows.value.some((x) => x.side === r.side && x.method === "fracture") ? 1 : 0);
-}
-/**
- * ① の行で段を直接変える (下の一覧で押し直さなくてよい)。選べるのはこのアイテムレベルで届く段 (良い順)
- */
-function tierOptions(modId: string): Array<{ i: number; label: string }> {
-  const m = s.data.value?.mods.get(modId);
-  if (!m) return [];
-  return m.tiers.map((t, i) => ({ i, ilvl: t.ilvl, label: `T${m.tiers.length - i} 以上` })).filter((x) => x.ilvl <= s.itemLevel.value).reverse();
-}
-function minTierOf(owner: string, modId: string): number {
-  const t = s.simTargets.value.find((x) => x.modId === owner);
-  return owner === modId ? t?.minTierIndex ?? 0 : t?.alts?.find((a) => a.modId === modId)?.minTierIndex ?? 0;
-}
-function setTier(owner: string, modId: string, idx: number): void {
-  s.simTargets.value = s.simTargets.value.map((t) => (t.modId !== owner ? t
-    : owner === modId ? { ...t, minTierIndex: idx } : { ...t, alts: (t.alts ?? []).map((a) => (a.modId === modId ? { ...a, minTierIndex: idx } : a)) }));
-}
-function removeAlt(modId: string, alt: string): void {
-  s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, alts: (t.alts ?? []).filter((a) => a.modId !== alt) } : t));
-}
 /** 狙いの全部の MOD の印 (段も、どれかの候補も) */
 const targetsSig = (): string => s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}${t.need && t.need > 1 ? `x${t.need}` : ""}${(t.alts ?? []).map((a) => `|${a.modId}:${a.minTierIndex}`).join("")}`).join(",");
 /** ② の中で 1 つ上 / 下へ (① の候補は飛ばす) */
@@ -686,41 +644,15 @@ function replay(): void {
           <button type="button" class="font-bold hover:underline" :class="modsDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="modsDone && goTo('mods')">① 狙う MOD</button> <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
           <button v-if="modsDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="goTo('mods')">ここからやり直す</button>
         </p>
-        <p v-if="!rows.length" class="text-[11px] opacity-50">下の MOD 一覧の「T○ 以上」で足す</p>
-        <table v-else class="w-full">
-          <tbody>
-            <tr v-for="r in rows" :key="r.modId" class="border-t border-white/5">
-              <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
-              <td class="py-1">
-                <!-- あるいはがあれば枠で囲んで「どれか 1 つ」(完成図と同じ) -->
-                <div :class="r.alts.length ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
-                  <span v-if="r.alts.length" class="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-200">
-                    どれか
-                    <template v-if="!modsDone && needMax(r) > 1">
-                      <button v-for="n in needMax(r)" :key="n" type="button" class="rounded px-1 leading-tight" :class="r.need === n ? 'bg-amber-500/40 text-amber-50 ring-1 ring-amber-300' : 'border border-amber-400/30 opacity-70 hover:opacity-100'" :title="`候補のうち ${n} つ付けば当たり (枠を ${n} つ使う)`" @click="setNeed(r.modId, n)">{{ n }}</button>
-                    </template>
-                    <template v-else>{{ r.need }}</template>
-                    つ:
-                    <span v-if="r.need > freeSlots(r)" class="font-normal text-rose-300">(枠が足りない: この側は残り {{ Math.max(0, freeSlots(r)) }} つ)</span>
-                  </span>
-                  <span :class="r.alts.length ? 'inline-flex items-center rounded bg-black/30 px-1' : ''"><span :class="r.tone">{{ r.text }}</span> <select v-if="!modsDone && tierOptions(r.modId).length > 1" class="ml-1 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="minTierOf(r.modId, r.modId)" @change="setTier(r.modId, r.modId, Number(($event.target as HTMLSelectElement).value))"><option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option></select><span v-else class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></span>
-                  <span v-for="a in r.alts" :key="a.modId" class="inline-flex items-center rounded bg-black/30 px-1">
-                    <span :class="r.tone">{{ a.text }}</span>
-                    <select v-if="!modsDone && tierOptions(a.modId).length > 1" class="ml-1 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="minTierOf(r.modId, a.modId)" @change="setTier(r.modId, a.modId, Number(($event.target as HTMLSelectElement).value))"><option v-for="o in tierOptions(a.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option></select><span v-else class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ a.rank }} 以上</span>
-                    <button v-if="!modsDone" type="button" class="ml-1 opacity-50 hover:opacity-100" title="この候補を外す" @click="removeAlt(r.modId, a.modId)">×</button>
-                  </span>
-                  <!-- 「＋」は MOD の名前のすぐ横 (2026-10-05 オーナー) -->
-                  <button v-if="!modsDone && r.method !== 'essence'" type="button" class="ml-1 rounded border border-amber-400/40 px-1.5 py-px text-[11px] leading-none text-amber-200 hover:bg-amber-500/10" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="addAlts(r.modId)">＋</button>
-                  <!-- 外す「×」も＋の隣に (2026-10-05 オーナー) -->
-                  <button v-if="!modsDone" type="button" class="ml-0.5 rounded border border-white/15 px-1.5 py-px text-[11px] leading-none opacity-70 hover:border-rose-400/60 hover:text-rose-300 hover:opacity-100" :title="r.alts.length ? 'この手順を外す (あるいはの候補ごと)' : 'この MOD を外す'" @click="remove(r.modId)">×</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- 完成図 (ベースの横から移した。段・＋・×・どれか N つ・付きやすさ) -->
+        <StageTargetSummary :editable="!modsDone" />
         <div v-if="rows.length && !modsDone" class="mt-1 flex items-center gap-2">
           <button type="button" class="rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
           <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="modsDone = true">決めた →</button>
+        </div>
+        <!-- このベースに付く MOD (同じ枠の中。2026-10-05 オーナー「枠は一緒の枠で表示するべき」)。長いので枠の中で送り、上の完成図は見えたまま -->
+        <div v-if="!modsDone" class="mt-2 max-h-[62vh] overflow-auto rounded-lg border border-white/10">
+          <StageModList embedded />
         </div>
       </div>
 
