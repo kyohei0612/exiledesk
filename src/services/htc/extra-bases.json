@@ -67084,7 +67084,8 @@
    "type": "suffix",
    "family": "CompanionReservationEfficiency",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -67115,7 +67116,8 @@
    "type": "suffix",
    "family": "DeflectDamageTaken",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -70211,7 +70213,8 @@
    "type": "suffix",
    "family": "DamageRemovedFromManaBeforeLife",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -70245,7 +70248,8 @@
    "type": "suffix",
    "family": "CompanionReservationEfficiency",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -70276,7 +70280,8 @@
    "type": "suffix",
    "family": "DeflectDamageTaken",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -73372,7 +73377,8 @@
    "type": "suffix",
    "family": "DamageRemovedFromManaBeforeLife",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -79536,7 +79542,8 @@
    "type": "suffix",
    "family": "CompanionReservationEfficiency",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -79567,7 +79574,8 @@
    "type": "suffix",
    "family": "DeflectDamageTaken",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -82663,7 +82671,8 @@
    "type": "suffix",
    "family": "DamageRemovedFromManaBeforeLife",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -107334,7 +107343,8 @@
    "type": "suffix",
    "family": "ParriedDebuff",
    "tags": [
-    "shield"
+    "shield",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -115465,7 +115475,8 @@
    "type": "suffix",
    "family": "CurseAreaOfEffect",
    "tags": [
-    "gloves"
+    "gloves",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -115498,7 +115509,8 @@
    "type": "suffix",
    "family": "Immobilise",
    "tags": [
-    "gloves"
+    "gloves",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -119173,7 +119185,8 @@
    "type": "suffix",
    "family": "CurseAreaOfEffect",
    "tags": [
-    "gloves"
+    "gloves",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -119206,7 +119219,8 @@
    "type": "suffix",
    "family": "Immobilise",
    "tags": [
-    "gloves"
+    "gloves",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -119237,7 +119251,8 @@
    "type": "suffix",
    "family": "ArcaneSurgeOnCrit",
    "tags": [
-    "gloves"
+    "gloves",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -119269,7 +119284,8 @@
    "type": "suffix",
    "family": "CastSpeedOnFullLife",
    "tags": [
-    "gloves"
+    "gloves",
+    "kurgal_mod"
    ],
    "displayTags": [
     "caster_speed",
@@ -119303,7 +119319,8 @@
    "type": "suffix",
    "family": "IncreasedSpeed",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -119335,7 +119352,8 @@
    "type": "suffix",
    "family": "IncisionChance",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "bleed",
@@ -131180,7 +131198,8 @@
    "type": "suffix",
    "family": "ArcaneSurgeOnCrit",
    "tags": [
-    "gloves"
+    "gloves",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -131212,7 +131231,8 @@
    "type": "suffix",
    "family": "CastSpeedOnFullLife",
    "tags": [
-    "gloves"
+    "gloves",
+    "kurgal_mod"
    ],
    "displayTags": [
     "caster_speed",
@@ -131246,7 +131266,8 @@
    "type": "suffix",
    "family": "IncreasedSpeed",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -131278,7 +131299,8 @@
    "type": "suffix",
    "family": "IncisionChance",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "bleed",
@@ -138600,7 +138622,8 @@
    "type": "suffix",
    "family": "CurseAreaOfEffect",
    "tags": [
-    "gloves"
+    "gloves",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -138633,7 +138656,8 @@
    "type": "suffix",
    "family": "Immobilise",
    "tags": [
-    "gloves"
+    "gloves",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -142308,7 +142332,8 @@
    "type": "suffix",
    "family": "ArcaneSurgeOnCrit",
    "tags": [
-    "gloves"
+    "gloves",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -142340,7 +142365,8 @@
    "type": "suffix",
    "family": "CastSpeedOnFullLife",
    "tags": [
-    "gloves"
+    "gloves",
+    "kurgal_mod"
    ],
    "displayTags": [
     "caster_speed",
@@ -142374,7 +142400,8 @@
    "type": "suffix",
    "family": "IncreasedSpeed",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -142406,7 +142433,8 @@
    "type": "suffix",
    "family": "IncisionChance",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "bleed",
@@ -146084,7 +146112,8 @@
    "type": "suffix",
    "family": "ElementalDamageTakenRecoupedAsEnergyShield",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -146115,7 +146144,8 @@
    "type": "suffix",
    "family": "CriticalStrikeMultiplier",
    "tags": [
-    "helmet"
+    "helmet",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -146148,7 +146178,8 @@
    "type": "suffix",
    "family": "MarkDamage",
    "tags": [
-    "helmet"
+    "helmet",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -149563,7 +149594,8 @@
    "type": "suffix",
    "family": "ElementalDamageTakenRecoupedAsEnergyShield",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -149594,7 +149626,8 @@
    "type": "suffix",
    "family": "ArcaneSurgeEffect",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -149628,7 +149661,8 @@
    "type": "suffix",
    "family": "CriticalStrikeMultiplier",
    "tags": [
-    "helmet"
+    "helmet",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -149661,7 +149695,8 @@
    "type": "suffix",
    "family": "MarkDamage",
    "tags": [
-    "helmet"
+    "helmet",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -153076,7 +153111,8 @@
    "type": "suffix",
    "family": "ElementalDamageTakenRecoupedAsEnergyShield",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -153107,7 +153143,8 @@
    "type": "suffix",
    "family": "ArcaneSurgeEffect",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -156525,7 +156562,8 @@
    "type": "suffix",
    "family": "DamageTakenGainedAsLife",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "resource",
@@ -156558,7 +156596,8 @@
    "type": "suffix",
    "family": "ArmourAppliesToChaosDamage",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -156589,7 +156628,8 @@
    "type": "suffix",
    "family": "ElementalDamageTakenRecoupedAsEnergyShield",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -156620,7 +156660,8 @@
    "type": "suffix",
    "family": "GloryGeneration",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -160035,7 +160076,8 @@
    "type": "suffix",
    "family": "DamageTakenGainedAsLife",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "resource",
@@ -160068,7 +160110,8 @@
    "type": "suffix",
    "family": "ArmourAppliesToChaosDamage",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -160099,7 +160142,8 @@
    "type": "suffix",
    "family": "ElementalDamageTakenRecoupedAsEnergyShield",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -160130,7 +160174,8 @@
    "type": "suffix",
    "family": "GloryGeneration",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -160161,7 +160206,8 @@
    "type": "suffix",
    "family": "CriticalStrikeMultiplier",
    "tags": [
-    "helmet"
+    "helmet",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -160194,7 +160240,8 @@
    "type": "suffix",
    "family": "MarkDamage",
    "tags": [
-    "helmet"
+    "helmet",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -163609,7 +163656,8 @@
    "type": "suffix",
    "family": "DamageTakenGainedAsLife",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "resource",
@@ -163642,7 +163690,8 @@
    "type": "suffix",
    "family": "ArmourAppliesToChaosDamage",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -163673,7 +163722,8 @@
    "type": "suffix",
    "family": "ElementalDamageTakenRecoupedAsEnergyShield",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -163704,7 +163754,8 @@
    "type": "suffix",
    "family": "GloryGeneration",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -163735,7 +163786,8 @@
    "type": "suffix",
    "family": "ArcaneSurgeEffect",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -169991,7 +170043,8 @@
    "type": "prefix",
    "family": "ChaosDamage",
    "tags": [
-    "staff"
+    "staff",
+    "amanamu_mod"
    ],
    "displayTags": [
     "chaos_damage",
@@ -170025,7 +170078,8 @@
    "type": "prefix",
    "family": "BaseSpirit",
    "tags": [
-    "staff"
+    "staff",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -170056,7 +170110,10 @@
    "type": "prefix",
    "family": "WeaponCasterDamagePrefix",
    "tags": [
-    "staff"
+    "staff",
+    "amanamu_mod",
+    "kurgal_mod",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -170123,7 +170180,8 @@
    "type": "prefix",
    "family": "ElementalInfusion",
    "tags": [
-    "staff"
+    "staff",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -170155,7 +170213,8 @@
    "type": "prefix",
    "family": "AilmentEffect",
    "tags": [
-    "staff"
+    "staff",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -170187,7 +170246,8 @@
    "type": "suffix",
    "family": "ArchonDuration",
    "tags": [
-    "staff"
+    "staff",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -170218,7 +170278,8 @@
    "type": "suffix",
    "family": "AdditionalBlock",
    "tags": [
-    "staff"
+    "staff",
+    "amanamu_mod"
    ],
    "displayTags": [
     "block",
@@ -170250,7 +170311,8 @@
    "type": "suffix",
    "family": "SkillLifeCost",
    "tags": [
-    "staff"
+    "staff",
+    "amanamu_mod"
    ],
    "displayTags": [
     "resource",
@@ -170284,7 +170346,8 @@
    "type": "suffix",
    "family": "ArchonDelayRecovery",
    "tags": [
-    "staff"
+    "staff",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -170315,7 +170378,8 @@
    "type": "suffix",
    "family": "MaximumPuppeteerStacks",
    "tags": [
-    "staff"
+    "staff",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -170347,7 +170411,8 @@
    "type": "suffix",
    "family": "CastSpeedOnLowLife",
    "tags": [
-    "staff"
+    "staff",
+    "ulaman_mod"
    ],
    "displayTags": [
     "caster_speed",
@@ -170381,7 +170446,8 @@
    "type": "suffix",
    "family": "SpellsFire2AdditionalProjectileChance",
    "tags": [
-    "staff"
+    "staff",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -177633,7 +177699,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -177669,7 +177736,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -177705,7 +177773,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -177741,7 +177810,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -177772,7 +177842,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -177804,7 +177875,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -180598,7 +180670,8 @@
    "type": "suffix",
    "family": "DamageTakenGainedAsLife",
    "tags": [
-    "shield"
+    "shield",
+    "amanamu_mod"
    ],
    "displayTags": [
     "resource",
@@ -180631,7 +180704,8 @@
    "type": "suffix",
    "family": "ArmourAppliesToChaosDamage",
    "tags": [
-    "shield"
+    "shield",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -180662,7 +180736,8 @@
    "type": "suffix",
    "family": "HeavyStunDecayRate",
    "tags": [
-    "shield"
+    "shield",
+    "amanamu_mod"
    ],
    "displayTags": [
     "block",
@@ -180694,7 +180769,8 @@
    "type": "suffix",
    "family": "ShieldSkillsStunningAlsoFullyBreaksArmour",
    "tags": [
-    "shield"
+    "shield",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -180725,7 +180801,8 @@
    "type": "suffix",
    "family": "PhysicalDamageTakenAsLightningWhileActiveBlocking",
    "tags": [
-    "shield"
+    "shield",
+    "ulaman_mod"
    ],
    "displayTags": [
     "block",
@@ -183594,7 +183671,8 @@
    "type": "suffix",
    "family": "DamageTakenGainedAsLife",
    "tags": [
-    "shield"
+    "shield",
+    "amanamu_mod"
    ],
    "displayTags": [
     "resource",
@@ -183627,7 +183705,8 @@
    "type": "suffix",
    "family": "ArmourAppliesToChaosDamage",
    "tags": [
-    "shield"
+    "shield",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -183658,7 +183737,8 @@
    "type": "suffix",
    "family": "HeavyStunDecayRate",
    "tags": [
-    "shield"
+    "shield",
+    "amanamu_mod"
    ],
    "displayTags": [
     "block",
@@ -183690,7 +183770,8 @@
    "type": "suffix",
    "family": "ShieldSkillsStunningAlsoFullyBreaksArmour",
    "tags": [
-    "shield"
+    "shield",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -183721,7 +183802,8 @@
    "type": "suffix",
    "family": "PhysicalDamageTakenAsLightningWhileActiveBlocking",
    "tags": [
-    "shield"
+    "shield",
+    "ulaman_mod"
    ],
    "displayTags": [
     "block",
@@ -183761,7 +183843,8 @@
    "type": "suffix",
    "family": "ParriedDebuff",
    "tags": [
-    "shield"
+    "shield",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -186635,7 +186718,8 @@
    "type": "suffix",
    "family": "DamageTakenGainedAsLife",
    "tags": [
-    "shield"
+    "shield",
+    "amanamu_mod"
    ],
    "displayTags": [
     "resource",
@@ -186668,7 +186752,8 @@
    "type": "suffix",
    "family": "ArmourAppliesToChaosDamage",
    "tags": [
-    "shield"
+    "shield",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -186699,7 +186784,8 @@
    "type": "suffix",
    "family": "ElementalDamageTakenRecoupedAsEnergyShield",
    "tags": [
-    "shield"
+    "shield",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -186730,7 +186816,8 @@
    "type": "suffix",
    "family": "HeavyStunDecayRate",
    "tags": [
-    "shield"
+    "shield",
+    "amanamu_mod"
    ],
    "displayTags": [
     "block",
@@ -186762,7 +186849,8 @@
    "type": "suffix",
    "family": "ShieldSkillsStunningAlsoFullyBreaksArmour",
    "tags": [
-    "shield"
+    "shield",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -186793,7 +186881,8 @@
    "type": "suffix",
    "family": "EnergyShieldRechargeRateIfBlockedRecently",
    "tags": [
-    "shield"
+    "shield",
+    "kurgal_mod"
    ],
    "displayTags": [
     "block",
@@ -186827,7 +186916,8 @@
    "type": "suffix",
    "family": "PhysicalDamageTakenAsLightningWhileActiveBlocking",
    "tags": [
-    "shield"
+    "shield",
+    "ulaman_mod"
    ],
    "displayTags": [
     "block",
@@ -192534,7 +192624,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -192570,7 +192661,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -192606,7 +192698,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -192642,7 +192735,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -192673,7 +192767,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -192705,7 +192800,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -195389,7 +195485,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -195425,7 +195522,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -195461,7 +195559,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -195497,7 +195596,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -195528,7 +195628,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -195560,7 +195661,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -198244,7 +198346,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -198280,7 +198383,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -198316,7 +198420,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -198352,7 +198457,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -198383,7 +198489,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -198415,7 +198522,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -201099,7 +201207,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -201135,7 +201244,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -201171,7 +201281,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -201207,7 +201318,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -201238,7 +201350,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -201270,7 +201383,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -203954,7 +204068,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -203990,7 +204105,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -204026,7 +204142,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -204062,7 +204179,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -204093,7 +204211,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -204125,7 +204244,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -206809,7 +206929,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -206845,7 +206966,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -206881,7 +207003,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -206917,7 +207040,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -206948,7 +207072,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -206980,7 +207105,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -212502,7 +212628,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -212538,7 +212665,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -212574,7 +212702,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -212610,7 +212739,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -212641,7 +212771,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -212673,7 +212804,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -215357,7 +215489,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -215393,7 +215526,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -215429,7 +215563,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -215465,7 +215600,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -215496,7 +215632,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -215528,7 +215665,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -218212,7 +218350,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -218248,7 +218387,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -218284,7 +218424,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -218320,7 +218461,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -218351,7 +218493,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -218383,7 +218526,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -221067,7 +221211,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -221103,7 +221248,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -221139,7 +221285,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -221175,7 +221322,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -221206,7 +221354,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -221238,7 +221387,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -223922,7 +224072,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -223958,7 +224109,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -223994,7 +224146,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -224030,7 +224183,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -224061,7 +224215,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -224093,7 +224248,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -226777,7 +226933,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -226813,7 +226970,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -226849,7 +227007,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -226885,7 +227044,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -226916,7 +227076,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -226948,7 +227109,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -232497,7 +232659,8 @@
    "type": "prefix",
    "family": "ExertedAttackDamage",
    "tags": [
-    "talisman"
+    "talisman",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232530,7 +232693,8 @@
    "type": "prefix",
    "family": "TotemDamage",
    "tags": [
-    "talisman"
+    "talisman",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232562,7 +232726,8 @@
    "type": "prefix",
    "family": "AdditionalTotems",
    "tags": [
-    "talisman"
+    "talisman",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232593,7 +232758,8 @@
    "type": "prefix",
    "family": "CompanionDamage",
    "tags": [
-    "talisman"
+    "talisman",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232629,7 +232795,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -232665,7 +232832,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -232701,7 +232869,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -232737,7 +232906,8 @@
    "type": "prefix",
    "family": "IncreasedMinionDamageIfYouHitEnemy",
    "tags": [
-    "talisman"
+    "talisman",
+    "amanamu_mod"
    ],
    "displayTags": [
     "minion_damage",
@@ -232771,7 +232941,8 @@
    "type": "prefix",
    "family": "WarcriesExertAnAdditionalAttack",
    "tags": [
-    "talisman"
+    "talisman",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232803,7 +232974,8 @@
    "type": "suffix",
    "family": "FissureChance",
    "tags": [
-    "talisman"
+    "talisman",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232835,7 +233007,8 @@
    "type": "suffix",
    "family": "WarcryCooldownSpeed",
    "tags": [
-    "talisman"
+    "talisman",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232866,7 +233039,8 @@
    "type": "suffix",
    "family": "SummonTotemCastSpeed",
    "tags": [
-    "talisman"
+    "talisman",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232898,7 +233072,8 @@
    "type": "suffix",
    "family": "CompanionAttackSpeed",
    "tags": [
-    "talisman"
+    "talisman",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232934,7 +233109,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232965,7 +233141,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -232997,7 +233174,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -233030,7 +233208,8 @@
    "type": "suffix",
    "family": "MarkCritical",
    "tags": [
-    "talisman"
+    "talisman",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -233062,7 +233241,8 @@
    "type": "suffix",
    "family": "RageOnHit",
    "tags": [
-    "talisman"
+    "talisman",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -236624,7 +236804,8 @@
    "type": "suffix",
    "family": "FireAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "amanamu_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -236662,7 +236843,9 @@
    "type": "suffix",
    "family": "Strength",
    "tags": [
-    "armour"
+    "armour",
+    "amanamu_mod",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -236709,7 +236892,8 @@
    "type": "suffix",
    "family": "ColdAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -236747,7 +236931,8 @@
    "type": "suffix",
    "family": "Dexterity",
    "tags": [
-    "armour"
+    "armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -236779,7 +236964,8 @@
    "type": "suffix",
    "family": "LightningAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -236817,7 +237003,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -236848,7 +237035,8 @@
    "type": "suffix",
    "family": "DamageRemovedFromManaBeforeLife",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -236882,7 +237070,8 @@
    "type": "suffix",
    "family": "CompanionReservationEfficiency",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -236913,7 +237102,8 @@
    "type": "suffix",
    "family": "DeflectDamageTaken",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -236944,7 +237134,8 @@
    "type": "suffix",
    "family": "ReducedCurseEffect",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -236977,7 +237168,8 @@
    "type": "suffix",
    "family": "PercentDamageGoesToMana",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -237011,7 +237203,8 @@
    "type": "suffix",
    "family": "ChanceToTakeCriticalStrike",
    "tags": [
-    "body_armour"
+    "body_armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -240393,7 +240586,8 @@
    "type": "suffix",
    "family": "FireAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "amanamu_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -240431,7 +240625,9 @@
    "type": "suffix",
    "family": "Strength",
    "tags": [
-    "armour"
+    "armour",
+    "amanamu_mod",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -240478,7 +240674,8 @@
    "type": "suffix",
    "family": "ColdAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -240516,7 +240713,8 @@
    "type": "suffix",
    "family": "Dexterity",
    "tags": [
-    "armour"
+    "armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -240548,7 +240746,8 @@
    "type": "suffix",
    "family": "LightningAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -240586,7 +240785,8 @@
    "type": "suffix",
    "family": "DamageTakenGainedAsLife",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "resource",
@@ -240619,7 +240819,8 @@
    "type": "suffix",
    "family": "ArmourAppliesToChaosDamage",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -240650,7 +240851,8 @@
    "type": "suffix",
    "family": "ElementalDamageTakenRecoupedAsEnergyShield",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -240681,7 +240883,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -240714,7 +240917,8 @@
    "type": "suffix",
    "family": "GloryGeneration",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -240745,7 +240949,8 @@
    "type": "suffix",
    "family": "PresenceRadius",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -240777,7 +240982,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "helmet"
+    "helmet",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -240808,7 +241014,8 @@
    "type": "suffix",
    "family": "ArcaneSurgeEffect",
    "tags": [
-    "helmet"
+    "helmet",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -240842,7 +241049,8 @@
    "type": "suffix",
    "family": "CriticalStrikeMultiplier",
    "tags": [
-    "helmet"
+    "helmet",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -240875,7 +241083,8 @@
    "type": "suffix",
    "family": "LifeCostEfficiency",
    "tags": [
-    "helmet"
+    "helmet",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -240908,7 +241117,8 @@
    "type": "suffix",
    "family": "MarkDamage",
    "tags": [
-    "helmet"
+    "helmet",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245369,7 +245579,8 @@
    "type": "suffix",
    "family": "FireAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "amanamu_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -245407,7 +245618,9 @@
    "type": "suffix",
    "family": "Strength",
    "tags": [
-    "armour"
+    "armour",
+    "amanamu_mod",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245454,7 +245667,8 @@
    "type": "suffix",
    "family": "ColdAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -245492,7 +245706,8 @@
    "type": "suffix",
    "family": "Dexterity",
    "tags": [
-    "armour"
+    "armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245524,7 +245739,8 @@
    "type": "suffix",
    "family": "LightningAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -245562,7 +245778,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "gloves"
+    "gloves",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -245595,7 +245812,8 @@
    "type": "suffix",
    "family": "CurseAreaOfEffect",
    "tags": [
-    "gloves"
+    "gloves",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245628,7 +245846,8 @@
    "type": "suffix",
    "family": "DazeBuildup",
    "tags": [
-    "gloves"
+    "gloves",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245659,7 +245878,8 @@
    "type": "suffix",
    "family": "Immobilise",
    "tags": [
-    "gloves"
+    "gloves",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245690,7 +245910,8 @@
    "type": "suffix",
    "family": "ArcaneSurgeOnCrit",
    "tags": [
-    "gloves"
+    "gloves",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245722,7 +245943,8 @@
    "type": "suffix",
    "family": "CastSpeedOnFullLife",
    "tags": [
-    "gloves"
+    "gloves",
+    "kurgal_mod"
    ],
    "displayTags": [
     "caster_speed",
@@ -245756,7 +245978,8 @@
    "type": "suffix",
    "family": "AilmentEffect",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245789,7 +246012,8 @@
    "type": "suffix",
    "family": "BleedChanceIncrease",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245820,7 +246044,8 @@
    "type": "suffix",
    "family": "IncreasedSpeed",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -245852,7 +246077,8 @@
    "type": "suffix",
    "family": "IncisionChance",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "bleed",
@@ -245886,7 +246112,8 @@
    "type": "suffix",
    "family": "PoisonChanceIncrease",
    "tags": [
-    "gloves"
+    "gloves",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -249738,7 +249965,8 @@
    "type": "suffix",
    "family": "FireAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "amanamu_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -249776,7 +250004,9 @@
    "type": "suffix",
    "family": "Strength",
    "tags": [
-    "armour"
+    "armour",
+    "amanamu_mod",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -249823,7 +250053,8 @@
    "type": "suffix",
    "family": "ColdAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -249861,7 +250092,8 @@
    "type": "suffix",
    "family": "Dexterity",
    "tags": [
-    "armour"
+    "armour",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -249893,7 +250125,8 @@
    "type": "suffix",
    "family": "LightningAndChaosDamageResistance",
    "tags": [
-    "armour"
+    "armour",
+    "ulaman_mod"
    ],
    "displayTags": [
     "chaos_resistance",
@@ -249931,7 +250164,8 @@
    "type": "suffix",
    "family": "DodgeRoll",
    "tags": [
-    "boots"
+    "boots",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -249962,7 +250196,8 @@
    "type": "suffix",
    "family": "SlowPotency",
    "tags": [
-    "boots"
+    "boots",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -249993,7 +250228,8 @@
    "type": "suffix",
    "family": "ReducedSelfIgniteDuration",
    "tags": [
-    "boots"
+    "boots",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -250027,7 +250263,9 @@
    "type": "suffix",
    "family": "ReducedAilmentDuration",
    "tags": [
-    "boots"
+    "boots",
+    "kurgal_mod",
+    "ulaman_mod"
    ],
    "displayTags": [
     "bleed",
@@ -250078,7 +250316,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "boots"
+    "boots",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -250111,7 +250350,8 @@
    "type": "suffix",
    "family": "ManaRegeneration",
    "tags": [
-    "boots"
+    "boots",
+    "kurgal_mod"
    ],
    "displayTags": [
     "resource",
@@ -250144,7 +250384,8 @@
    "type": "suffix",
    "family": "CorruptedBlood",
    "tags": [
-    "boots"
+    "boots",
+    "ulaman_mod"
    ],
    "displayTags": [
     "bleed",
@@ -250178,7 +250419,8 @@
    "type": "suffix",
    "family": "LifeRegenerationPlusPercentWhileMoving",
    "tags": [
-    "boots"
+    "boots",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",
@@ -253322,7 +253564,8 @@
    "type": "prefix",
    "family": "GrenadeCooldownUse",
    "tags": [
-    "crossbow"
+    "crossbow",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253353,7 +253596,8 @@
    "type": "prefix",
    "family": "GrenadeDamage",
    "tags": [
-    "crossbow"
+    "crossbow",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253390,7 +253634,8 @@
    "type": "prefix",
    "family": "ProjectileDamage",
    "tags": [
-    "crossbow"
+    "crossbow",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253422,7 +253667,8 @@
    "type": "prefix",
    "family": "AdditionalBallistaTotem",
    "tags": [
-    "crossbow"
+    "crossbow",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253453,7 +253699,8 @@
    "type": "prefix",
    "family": "FireResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -253489,7 +253736,8 @@
    "type": "prefix",
    "family": "ColdResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -253525,7 +253773,8 @@
    "type": "prefix",
    "family": "LightningResistancePenetration",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "elemental_damage",
@@ -253561,7 +253810,8 @@
    "type": "suffix",
    "family": "GrenadeAdditionalDetonationChance",
    "tags": [
-    "crossbow"
+    "crossbow",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253592,7 +253842,8 @@
    "type": "suffix",
    "family": "CrossbowReloadSpeed",
    "tags": [
-    "crossbow"
+    "crossbow",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253639,7 +253890,8 @@
    "type": "suffix",
    "family": "Chain",
    "tags": [
-    "crossbow"
+    "crossbow",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253670,7 +253922,8 @@
    "type": "suffix",
    "family": "CriticalStrikeMultiplier",
    "tags": [
-    "crossbow"
+    "crossbow",
+    "ulaman_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253701,7 +253954,8 @@
    "type": "suffix",
    "family": "SpiritReservationEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "amanamu_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253732,7 +253986,8 @@
    "type": "suffix",
    "family": "ManaCostEfficiency",
    "tags": [
-    "weapon"
+    "weapon",
+    "kurgal_mod"
    ],
    "displayTags": [
     "unveiled_mod",
@@ -253764,7 +254019,8 @@
    "type": "suffix",
    "family": "LifeCost",
    "tags": [
-    "weapon"
+    "weapon",
+    "ulaman_mod"
    ],
    "displayTags": [
     "resource",

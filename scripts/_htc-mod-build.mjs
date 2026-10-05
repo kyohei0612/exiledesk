@@ -11,6 +11,9 @@ import { weightOn } from "./_htc-base-tags.mjs";
  * 同梱の MOD から「family@ilvl -> 重み」を作り、それを使う組み立て関数を返す。
  * 借りた数 / 置いた数は `stats()` で取れる (生成の最後に報告する)。
  */
+/** 冒涜の勢力のタグ (同梱の冒涜の MOD が tags に持つ物と同じ) */
+const FACTION_TAGS = new Set(["ulaman_mod", "amanamu_mod", "kurgal_mod"]);
+
 export function makeModBuilder(hmods) {
   // ---- 同梱の重みを family + ilvl で借りる ----
   const borrow = new Map();
@@ -60,6 +63,9 @@ export function makeModBuilder(hmods) {
     // (2026-10-05 オーナー「タグ全然足りてない、冒涜しかりエッセンスしかり全てチェック」)
     const displayTags = new Set();
     for (const m of list) for (const t of m.implicit_tags || []) displayTags.add(t);
+    // 冒涜の MOD は勢力のタグ (ウラマン / アマナム / クルガル) を tags にも持つ: 勢力のお告げの候補は tags で選ぶ
+    // (2026-10-05 タグの点検で、足した冒涜の MOD 249 個が勢力のタグ無しで、お告げの候補に入っていなかった)
+    if (source === "desecrated") for (const m of list) for (const t of m.implicit_tags || []) if (FACTION_TAGS.has(t)) tags.add(t);
     return {
       id: `${classId}/${family}`,
       source,
