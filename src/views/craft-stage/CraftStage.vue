@@ -142,7 +142,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     <div v-if="s.ready.value && (s.mode.value === 'hand' || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex flex-col items-center gap-8">
-        <div class="relative" :class="fxCls" :style="fx ? { '--fx': fx.color } : undefined">
+        <div class="relative" :class="[fxCls, fx?.text ? 'stage-fx-on' : '']" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed"
           :item="s.item.value!"

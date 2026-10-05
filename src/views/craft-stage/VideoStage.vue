@@ -319,7 +319,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         >
           <!-- PoB の DPS (要望 ⑰-3、URL の stage-pob= がある時だけ) -->
           <VideoPob v-if="craftStage.pob.value && clip" :pob="craftStage.pob.value" :idx="idx" />
-          <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
+          <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls, fx?.text ? 'stage-fx-on' : '']" :style="fx ? { '--fx': fx.color } : undefined">
             <StageItemCard v-bind="cardCommon" :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :flash-key="idx" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : ['text-2xl', clip ? 'stage-float-in' : '']">{{ fx.text }}</span>
           </div>

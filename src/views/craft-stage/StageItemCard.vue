@@ -76,7 +76,9 @@ function look(m: StageMod): { cls: string; tag: string } {
   if (m.desecrated) return { cls: "text-mod-desecrated", tag: "冒涜" };
   if (m.crafted) return { cls: "text-mod-crafted", tag: "エッセンス" };
   // 要望 ㉙: 特殊 MOD のルーンの MOD (重みは仮定) / アルダーのルーンで属性を変えた MOD
-  if (m.rune) return { cls: "text-rarity-magic", tag: "ルーン (重みは仮定)" };
+  // 札は「ルーン」だけ (POE2Tube 要望 ㉚-3: 動画では「データサイトでは特殊 MOD の出やすさは全部同じ = 完全にランダムな抽選」と説明する。
+  // 重みが仮定なのは結果 JSON の assumed_weight に残る)
+  if (m.rune) return { cls: "text-rarity-magic", tag: "ルーン" };
   if (m.convertedFrom) return { cls: "text-rarity-magic", tag: "アルダー" };
   return { cls: "text-rarity-magic", tag: "" };
 }
@@ -111,9 +113,10 @@ const rows = computed(() =>
     <div class="rounded-t-md bg-gradient-to-b to-transparent px-4 text-center" :class="[tone.head, compact ? 'pb-1 pt-2' : 'pb-2 pt-3', item.disposed ? 'stage-crumble' : '']">
       <!-- ゲーム内と同じ絵 (2026-09-29 オーナー「クラフトステージ上とか」) -->
       <img v-if="art" :src="art" alt="" class="mx-auto mb-1 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" :class="compact ? 'h-14' : 'h-20'" draggable="false" />
-      <p v-if="item.unique" class="text-lg font-bold" :class="tone.name">{{ item.unique.ja }}</p>
-      <p :class="item.unique ? ['text-[15px]', tone.name] : ['text-lg font-bold', tone.name]">{{ item.baseJa }}</p>
-      <p v-if="!compact" class="text-[11px] opacity-60">{{ item.base }}</p>
+      <!-- stage-item-name: 付いた瞬間の大きな文字が出ている間は薄くする (POE2Tube 要望 ㉚-1、style.css の .stage-fx-on) -->
+      <p v-if="item.unique" class="stage-item-name text-lg font-bold" :class="tone.name">{{ item.unique.ja }}</p>
+      <p class="stage-item-name" :class="item.unique ? ['text-[15px]', tone.name] : ['text-lg font-bold', tone.name]">{{ item.baseJa }}</p>
+      <p v-if="!compact" class="stage-item-name text-[11px] opacity-60">{{ item.base }}</p>
     </div>
     <!-- 解呪 / サルベージで崩れる (要望 ⑰-21) -->
     <div class="space-y-1 px-4 text-center text-[13px]" :class="[compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">

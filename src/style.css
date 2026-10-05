@@ -735,6 +735,18 @@ table th,
   /* 撮影用 (layout=clip) はアイテムが画面の上端近くまで来るので、「レアに!」などは枠の内側の上の方に出す (はみ出して切れていた) */
   .stage-float.stage-float-in {
     top: 72px;
+    /* 名前の上に重なるので下地を敷く (POE2Tube 要望 ㉚-1「ソ栄光のプレ+1!」と混ざって読めない) */
+    padding: 2px 14px;
+    border-radius: 10px;
+    background: rgba(10, 8, 6, 0.82);
+  }
+  /* 付いた瞬間の大きな文字が出ている間は、アイテムの名前を薄くする (同 ㉚-1) */
+  .stage-fx-on .stage-item-name {
+    opacity: 0.12;
+    transition: opacity 0.15s ease-out;
+  }
+  .stage-item-name {
+    transition: opacity 0.4s ease-in;
   }
   /* 動画モードのカーソルが押した時 */
   .stage-press {
