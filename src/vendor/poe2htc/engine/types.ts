@@ -38,6 +38,11 @@ export interface Mod {
   /** Desecration boss pools are selected by tag (`DES_BOSS_TAG`, probability.ts) — solver data. */
   readonly tags: readonly string[];
   /**
+   * ExileDesk: tags shown in the UI (the client's implicit_tags: life, resistance, …). Display only — `tags` above drives
+   * weights / boss pools / catalysts and must not change. Filled by src/services/htc/patch.ts (2026-10-05)
+   */
+  readonly displayTags?: readonly string[];
+  /**
    * This mod comes from an ALLOY, a Runes of Aldur currency, rather than from a Perfect Essence.
    *
    * Present only on `source: 'perfect_essence'` mods, and it changes nothing the solver does — the two

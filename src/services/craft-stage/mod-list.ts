@@ -77,7 +77,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
     const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
     const on = onIds.has(m.id);
     return {
-      id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...m.tags], tiers, weight,
+      id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...(m.displayTags ?? m.tags)], tiers, weight,
       topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked: !on && familyBlocked(m, taken),
     };
   };

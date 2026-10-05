@@ -32,8 +32,8 @@ const TAGS: Record<string, { ja: string; short?: string; cls?: string }> = {
   curse: { ja: "呪い", cls: "bg-purple-600/20 text-purple-200" },
   aura: { ja: "オーラ", cls: "bg-yellow-600/20 text-yellow-100" },
   ailment: { ja: "状態異常", cls: "bg-purple-400/20 text-purple-200" },
-  bleed: { ja: "出血" },
-  poison: { ja: "毒" },
+  bleed: { ja: "出血", cls: "bg-red-800/30 text-red-200" },
+  poison: { ja: "毒", cls: "bg-lime-700/30 text-lime-200" },
   block: { ja: "ブロック", cls: "bg-stone-500/20 text-stone-200" },
   flask: { ja: "フラスコ", cls: "bg-red-400/20 text-red-100" },
   charm: { ja: "チャーム", cls: "bg-red-300/20 text-red-100" },
@@ -53,6 +53,21 @@ const TAGS: Record<string, { ja: string; short?: string; cls?: string }> = {
   ulaman_mod: { ja: "ウラマン", cls: "bg-rose-700/30 text-rose-200" },
   amanamu_mod: { ja: "アマナム", cls: "bg-rose-700/30 text-rose-200" },
   kurgal_mod: { ja: "クルガル", cls: "bg-rose-700/30 text-rose-200" },
+  // 2026-10-05 タグの点検で足した物 (クライアントの implicit_tags に出てくるのに無かった物)
+  skill: { ja: "スキル", cls: "bg-sky-600/20 text-sky-100" },
+  dot_multi: { ja: "継続ダメージ", cls: "bg-orange-700/25 text-orange-200" },
+  power_charge: { ja: "パワーチャージ", cls: "bg-blue-600/25 text-blue-100" },
+  endurance_charge: { ja: "エンデュランスチャージ", cls: "bg-red-700/25 text-red-100" },
+  frenzy_charge: { ja: "フレンジーチャージ", cls: "bg-green-700/25 text-green-100" },
+  melee: { ja: "近接", cls: "bg-amber-700/25 text-amber-100" },
+  runic_ward: { ja: "ルーンワード", cls: "bg-cyan-700/25 text-cyan-100" },
+  minion_damage: { ja: "ミニオンダメージ" },
+  minion_speed: { ja: "ミニオンスピード" },
+  minion_resistance: { ja: "ミニオン耐性" },
+  strength: { ja: "筋力" },
+  dexterity: { ja: "器用さ" },
+  intelligence: { ja: "知性" },
+  life_flask: { ja: "ライフフラスコ" },
 };
 
 /** タグの日本語 (無ければ英語のまま) */

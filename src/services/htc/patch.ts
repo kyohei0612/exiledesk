@@ -183,6 +183,11 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
     placeholderWeightMods: placeholder,
   };
   fillJewelleryTags(mods);
+  // 画面用のタグ (中身のタグ) を同梱の MOD に付ける。足した MOD は自分で displayTags を持っている (2026-10-05)
+  for (const [id, m] of mods) {
+    const t = extra.modDisplayTags?.[id];
+    if (t && !m.displayTags) mods.set(id, { ...m, displayTags: t });
+  }
   // 重みが仮置きの 1 のままの MOD を埋める (キャストスピードなど)。**ここで掛けるのは、アプリと検算が
   // 同じ applyExtras を通るから**。別の場所で掛けると片方だけ直ることになる ([[weight-overrides.ts]])
   // 特殊 MOD のルーンの、中身の違う MOD が 1 つにまとめられていた物を分ける (2026-10-05、[[rune-split.ts]])

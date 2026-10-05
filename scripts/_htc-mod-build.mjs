@@ -56,12 +56,17 @@ export function makeModBuilder(hmods) {
       });
     const tags = new Set();
     for (const m of list) for (const sw of m.spawn_weights || []) if (sw.weight > 0 && tagSet.has(sw.tag)) tags.add(sw.tag);
+    // 画面に出すタグ (中身のタグ: ライフ・耐性など) はクライアントの implicit_tags。tags (出現の重み・お告げに使う) とは別に持つ
+    // (2026-10-05 オーナー「タグ全然足りてない、冒涜しかりエッセンスしかり全てチェック」)
+    const displayTags = new Set();
+    for (const m of list) for (const t of m.implicit_tags || []) displayTags.add(t);
     return {
       id: `${classId}/${family}`,
       source,
       type: kind,
       family,
       tags: [...tags],
+      displayTags: [...displayTags],
       text: list[0].text ?? null,
       tiers,
       weightSource: allBorrowed ? "poe2htc" : "client-placeholder",

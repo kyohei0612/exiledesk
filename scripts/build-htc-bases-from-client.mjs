@@ -60,6 +60,40 @@ const main = async () => {
   const byName = new Map(B.map((r) => [r.Name, r]));
   const hmods = new Map((htcMods.mods || htcMods.items || []).map((m) => [m.id, m]));
 
+  /**
+   * 同梱の MOD の画面用タグ (中身のタグ、クライアントの implicit_tags)。同梱のデータは tags が空 (エッセンス) か勢力だけ (冒涜) なので、
+   * ① 段の codes (クライアントの Mods の Id) から引く → ② 無ければ同じ領域 (item / desecrated) の同じ系統 → ③ エッセンスは普通の系統
+   * (2026-10-05 オーナー「タグ全然足りてない、エンジン見直してしっかりタグ付けて」)。確率に使う tags とは別の欄
+   */
+  // 文面は数を # にして比べる (クライアント "+(13-17)% to …" / 同梱 "+#% to …")。同じ系統にも複合 MOD などが同居するので、
+  // 系統だけで合わせると別物のタグが混ざる (普通の最大ライフに マナ が付いた)。文面が合う物を先に、無ければ系統
+  const normText = (t) => String(t ?? "").replace(/\(\s*-?[\d.]+\s*[-—–]\s*-?[\d.]+\s*\)|-?[\d.]+/g, "#").replace(/\s+/g, " ").trim().toLowerCase();
+  const famTags = new Map();
+  const textTags = new Map();
+  const put = (map, k, tags) => { const set = map.get(k) ?? new Set(); for (const t of tags || []) set.add(t); map.set(k, set); };
+  for (const m of Object.values(MODS)) {
+    const fam = m.groups?.[0];
+    if (!fam || (m.domain !== "item" && m.domain !== "desecrated")) continue;
+    put(famTags, `${m.domain}|${fam}`, m.implicit_tags);
+    put(textTags, `${m.domain}|${fam}|${normText(m.text)}`, m.implicit_tags);
+  }
+  const modDisplayTags = {};
+  for (const m of hmods.values()) {
+    // 普通の MOD は同梱の tags がクライアントの implicit_tags と同じなので作らない (画面は tags をそのまま使う)
+    if (m.source === "normal") continue;
+    const set = new Set();
+    for (const t of m.tiers || []) for (const c of t.codes || []) for (const tag of MODS[c]?.implicit_tags || []) set.add(tag);
+    if (!set.size) {
+      const dom = m.source === "desecrated" ? "desecrated" : "item";
+      const hit = textTags.get(`${dom}|${m.family}|${normText(m.text)}`) ?? textTags.get(`item|${m.family}|${normText(m.text)}`)
+        ?? famTags.get(`${dom}|${m.family}`) ?? famTags.get(`item|${m.family}`);
+      for (const tag of hit ?? []) set.add(tag);
+    }
+    // 冒涜の勢力のタグ (ulaman_mod など) は同梱の tags にあるので足しておく
+    for (const t of m.tags || []) if (/_mod$/.test(t)) set.add(t);
+    if (set.size) modDisplayTags[m.id] = [...set];
+  }
+
   /** ベース名の集合 -> 装備タグ。同じクラスの中ではタグ和で足りる (検算で確認済み) */
   const tagSetFor = (names) => {
     const s = new Set(["default"]);
@@ -540,6 +574,7 @@ const main = async () => {
     baseInfo,
     familyStats,
     modTags,
+    modDisplayTags,
     modSides,
     dropOnly,
     source:

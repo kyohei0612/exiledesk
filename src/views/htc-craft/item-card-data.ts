@@ -52,7 +52,8 @@ function headOf(c: ReturnType<typeof useHtcCraft>, modId: string, tierIndex: num
   const tiers = m.tiers ?? [];
   const i = tierIndex ?? (c.targets.value.find((t) => t.modId === modId)?.minTierIndex ?? 0);
   const tier = tiers[i];
-  const tags = (m.tags ?? []).filter((t) => HEAD_TAGS.includes(t)).map(tagJa);
+  // 画面用のタグ (クライアントの implicit_tags、2026-10-05)。無ければ今までの tags
+  const tags = (m.displayTags ?? m.tags ?? []).filter((t) => HEAD_TAGS.includes(t)).map(tagJa);
   // オーナー 2026-09-26:「詳細の中身はプレフィックス T● — その MOD に付いているタグ。無ければ表示なし」
   void tier;
   const parts = [side ? SIDE_JA[side] : "MOD", tiers.length ? `T${tiers.length - i}` : ""].filter(Boolean).join(" ");

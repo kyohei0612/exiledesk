@@ -35,6 +35,8 @@ export interface ExtraBases {
   familyTexts: Record<string, Record<string, string[]>>;
   /** family → カタリストが見るタグ ([[quality.ts]])。同梱の MOD はこれを持っていない */
   modTags: Record<string, string[]>;
+  /** 同梱の MOD の画面用タグ (クライアントの implicit_tags、2026-10-05)。足した MOD は各 MOD の displayTags に持つ */
+  modDisplayTags?: Record<string, string[]>;
   /**
    * family → 「stat が何個の時はこの id 並び」。同梱の冒涜 / エッセンス MOD は
    * `tiers[].stats` を持っていないので、取引所の条件を組む時にここから借りる ([[buy-or-craft.ts]])。
