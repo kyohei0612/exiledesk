@@ -3,14 +3,18 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { displayCurrency, rankingCurrency, setDisplayCurrency, type DisplayChoice } from "../../state/display-currency";
+import { displayCurrency, rankingCurrency, setDisplayCurrency, simCurrency, type DisplayChoice } from "../../state/display-currency";
 
-/** ranking = カレンシーランキングだけの表示通貨 (適正なし、既定は最安値。2026-10-04) */
-const props = defineProps<{ ranking?: boolean }>();
-const value = computed(() => (props.ranking ? rankingCurrency.choice.value : displayCurrency.choice.value));
-const options = computed(() => (props.ranking ? rankingCurrency.options : displayCurrency.options));
+/**
+ * ranking = カレンシーランキングだけの表示通貨 (適正なし、既定は最安値。2026-10-04)。
+ * sim = クラフトステージのシミュレーションだけの表示通貨 (既定は適正。2026-10-05)
+ */
+const props = defineProps<{ ranking?: boolean; sim?: boolean }>();
+const value = computed(() => (props.ranking ? rankingCurrency.choice.value : props.sim ? simCurrency.choice.value : displayCurrency.choice.value));
+const options = computed(() => (props.ranking ? rankingCurrency.options : props.sim ? simCurrency.options : displayCurrency.options));
 function onChange(v: string): void {
   if (props.ranking) rankingCurrency.set(v as Parameters<typeof rankingCurrency.set>[0]);
+  else if (props.sim) simCurrency.set(v as DisplayChoice);
   else setDisplayCurrency(v as DisplayChoice);
 }
 </script>

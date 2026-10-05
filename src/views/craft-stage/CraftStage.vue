@@ -105,7 +105,8 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
         <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフトステージ</h1>
         <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)]">カレンシー・骨・エッセンス・カタリストを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは掛けておくと次の関係する手で使われます。確率はクラフト計算機と同じ規則です。</p>
       </div>
-      <CurrencyPicker />
+      <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
+      <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" />
     </div>
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->

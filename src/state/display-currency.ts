@@ -250,6 +250,40 @@ export const rankingCurrency = {
 };
 
 /**
+ * クラフトステージのシミュレーションだけの表示通貨 (2026-10-05 オーナー「合計金額は普通に適正の数え方で出してくれ、デフォで。
+ * プルダウンで変えれるように、ジェムコラと同じプルダウンでいい、共通はしないけど同じ物を用意」)。選べるのは 適正 (既定) / 高貴 / カオス / 神。
+ * ほかの画面の表示通貨とは別に覚える
+ */
+const SIM_KEY = "exiledesk.simCurrency";
+function loadSim(): DisplayChoice {
+  try {
+    const v = localStorage.getItem(SIM_KEY);
+    return v === "exalted" || v === "chaos" || v === "divine" ? v : "fair";
+  } catch {
+    return "fair";
+  }
+}
+const simChoice = ref<DisplayChoice>(loadSim());
+export const simCurrency = {
+  choice: simChoice,
+  options: displayCurrency.options,
+  set(c: DisplayChoice): void {
+    simChoice.value = c;
+    try {
+      localStorage.setItem(SIM_KEY, c);
+    } catch {
+      /* 保存できなくても動く */
+    }
+  },
+  /** "123 神" 形式 (適正は額に合わせて 神 → カオス → 高貴、通貨を選んでいればその通貨) */
+  money(exalted: number | null | undefined): string {
+    if (exalted == null || !Number.isFinite(exalted)) return "—";
+    const { c, value } = pickUnit(exalted, undefined, simChoice.value);
+    return `${fmtNum(value)} ${LABEL[c]}`;
+  },
+};
+
+/**
  * 出品時の通貨がバラバラな値段を、**高貴建て**に揃えて平均する (2026-09-17)。
  *
  * オーナー指示:「早い / 普通 / 遅い の横に平均売り単価を、表示通貨の単位で」。

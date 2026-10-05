@@ -12,7 +12,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
-import { displayCurrency } from "../../state/display-currency";
+import { simCurrency } from "../../state/display-currency";
+import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { runRecipe, recipePlan, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
@@ -589,7 +590,8 @@ function noFracture(): void {
   whiteDecide();
 }
 onBeforeUnmount(() => { s.simShowMods.value = false; });
-const money = (x: number): string => (Number.isFinite(x) ? displayCurrency.money(x) : "—");
+/** 合計金額はシミュレーションだけの表示通貨で (既定は適正。display-currency.ts の simCurrency) */
+const money = (x: number): string => (Number.isFinite(x) ? simCurrency.money(x) : "—");
 const pct = (x: number): string => `${(x * 100).toFixed(x < 0.1 && x > 0 ? 1 : 0)}%`;
 const stale = computed(() => ranFor.value !== sig.value);
 /**
@@ -641,6 +643,7 @@ function replay(): void {
   <div class="space-y-3 text-[12px]">
     <!-- 1 つ戻す・説明はタブの行の右端に (工程の枠の間に行を挟まない) -->
     <Teleport to="#sim-tools" :disabled="s.mode.value !== 'sim' || !!s.replay.value">
+      <CurrencyPicker sim />
       <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!undoStack.length" title="直前の操作を 1 つ取り消す" @click="undo">↶ 1 つ戻す</button>
       <button type="button" class="rounded-full border px-2 py-0.5 text-[11px]" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
     </Teleport>
