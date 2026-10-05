@@ -27,6 +27,7 @@ import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
 import { kindOf, whittleTargets } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
+import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import ShelfButton from "./ShelfButton.vue";
 
 const s = craftStage;
@@ -91,6 +92,9 @@ async function copy(label: string, v: unknown): Promise<void> {
 }
 /** シミュレーションでまだベースを選んでいない (ベース選びだけを出す) */
 const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);
+/** シミュレーションのソケットの上限 (熟練工の上限と、その + 1 = 規格外) */
+const simCraftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.item.value.cls.category) : 0));
+const simSocketCap = computed(() => (simCraftCap.value > 0 ? simCraftCap.value + 1 : 0));
 const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabled:opacity-40";
 </script>
 
@@ -107,6 +111,8 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
     <div v-if="!s.replay.value" class="mb-3 flex gap-1.5">
       <button v-for="t in ([['hand', '手で打つ'], ['sim', 'シミュレーション (実験)']] as const)" :key="t[0]" type="button" class="rounded-lg px-4 py-1.5 text-[13px]" :class="s.mode.value === t[0] ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" @click="s.hold(null); if (t[0] === 'sim' && s.mode.value !== 'sim') s.simPicked.value = false; s.mode.value = t[0]">{{ t[1] }}</button>
+      <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
+      <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px]" />
     </div>
 
     <!-- 再生モード -->
@@ -120,10 +126,17 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     <!-- 設定と操作 -->
     <section v-if="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 px-3 py-2 text-[12px]" :class="'bg-white/[0.03]'">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
+      <b v-if="s.mode.value === 'sim'" class="text-[13px] text-amber-100">1 ベース</b>
       <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="(en) => { s.base.value = en; s.simTargets.value = []; s.simPicked.value = true; s.reset(); }" />
       <span v-if="!simNoBase" class="flex items-center gap-1">
         <span class="opacity-60">アイテムレベル</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
+      </span>
+      <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
+      <span v-if="s.mode.value === 'sim' && !simNoBase && simSocketCap > 0" class="flex items-center gap-1">
+        <span class="opacity-60">ソケット</span>
+        <button v-for="n in simSocketCap + 1" :key="n" type="button" class="rounded-lg px-2 py-0.5" :class="s.simSockets.value === n - 1 ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-0.5 text-[10px] text-amber-300">規格外</span></button>
+        <span v-if="s.simSockets.value == null" class="text-amber-200/80">ソケットの数を選ぶ</span>
       </span>
       <template v-if="s.mode.value === 'hand'">
       <button type="button" :class="btn" @click="s.reset()">白に戻す</button>

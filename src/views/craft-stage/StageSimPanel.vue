@@ -161,7 +161,8 @@ try { keptAll.value = JSON.parse(localStorage.getItem(PRICE_KEY) ?? "{}"); } cat
  */
 const craftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.item.value.cls.category) : 0));
 const socketCap = computed(() => (craftCap.value > 0 ? craftCap.value + 1 : 0));
-const sockets = ref<number | null>(null);
+/** ソケットの数は 1 ベースの枠 (CraftStage.vue) で選ぶので状態に置く */
+const sockets = s.simSockets;
 const socketsOk = computed(() => socketCap.value === 0 || sockets.value != null);
 const socketCount = computed(() => (socketCap.value === 0 ? 0 : sockets.value ?? 0));
 watch(() => s.base.value, () => { sockets.value = null; });
@@ -607,25 +608,24 @@ function replay(): void {
 </script>
 
 <template>
-  <section class="rounded-xl border border-amber-400/30 bg-amber-500/[0.04] p-3 text-[12px]">
-    <div class="mb-2 flex flex-wrap items-center gap-2">
-      <b class="text-sm text-amber-100">シミュレーション</b>
-      <span class="rounded bg-amber-500/20 px-1.5 text-[10px] text-amber-200">実験</span>
-      <span class="opacity-60">{{ s.item.value?.baseJa }} / ilvl {{ s.itemLevel.value }}</span>
-      <button type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!undoStack.length" title="直前の操作を 1 つ取り消す" @click="undo">↶ 1 つ戻す</button>
+  <!-- 工程ごとに同じ高さの枠を縦に並べる (入れ子の枠はやめた。2026-10-05 オーナー「枠の中に何個枠あんのよ、きもいやろ」
+       「1 がベース選定、2 がベース値段、3 が狙う MOD と分けたら」)。1 ベースは上の CraftStage.vue の枠 -->
+  <div class="space-y-3 text-[12px]">
+    <!-- 1 つ戻す・説明はタブの行の右端に (工程の枠の間に行を挟まない) -->
+    <Teleport to="#sim-tools">
+      <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!undoStack.length" title="直前の操作を 1 つ取り消す" @click="undo">↶ 1 つ戻す</button>
       <button type="button" class="rounded-full border px-2 py-0.5 text-[11px]" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
-    </div>
+    </Teleport>
     <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
-    <!-- ソケットの数 (ベースを選んだ後、白ベースの値段の前) -->
-    <div v-if="socketCap > 0" class="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
-      <span class="opacity-70">ソケット</span>
-      <button v-for="n in socketCap + 1" :key="n" type="button" class="rounded-lg px-2.5 py-0.5" :class="sockets === n - 1 ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="sockets = n - 1">{{ n - 1 }}<span v-if="n - 1 > craftCap" class="ml-0.5 text-[10px] text-amber-300">規格外</span></button>
-      <span v-if="sockets == null" class="text-amber-200/80">白のベースのソケットの数を選ぶ</span>
-    </div>
-    <!-- 白のベースの値段 (手で) -->
-    <div v-if="socketsOk" class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
-      <button type="button" class="opacity-70 hover:underline" :class="whiteOk ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteOk && goTo('white')">白ベース</button>
+    <!-- 2 ベースの値段 (手で) -->
+    <div v-if="socketsOk" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+      <p class="mb-1.5 flex items-center gap-2">
+        <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="whiteOk ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteOk && goTo('white')">2 ベースの値段</button>
+        <button v-if="whiteOk" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="goTo('white')">ここからやり直す</button>
+      </p>
+      <div class="flex flex-wrap items-center gap-2 text-[11px]">
+      <span class="opacity-70">白ベース</span>
       <input v-model.number="whiteDivine" type="number" min="0" step="1" inputmode="numeric" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" />
       <select v-model="unit" class="rounded border border-white/15 bg-black/30 px-1 py-0.5" title="手で入れる値段の単位 (白 / 4 MOD / 固定済み / 完成品の全部)">
         <option v-for="x in UNITS" :key="x.k" :value="x.k">{{ x.ja }}</option>
@@ -634,15 +634,16 @@ function replay(): void {
       <span v-if="ageOf('white')" :class="ageOf('white')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")!.text }}</span>
       <button v-if="!whiteOk" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="num(whiteDivine) == null" @click="whiteOk = true">進む →</button>
       <span v-if="help" class="opacity-60">規格外のソケット付きならその値段。白から始める時・作り直す時に数え、マジックで外れた時は「消去」と「白を買い直して変成」の安い方を使う</span>
+      </div>
     </div>
 
-    <!-- ① 狙う MOD → ② フラクチャー → ③ 付ける順番と付け方 -->
-    <div v-if="step2" class="mb-3 space-y-2">
+    <!-- 3 狙う MOD → 4 フラクチャー → 5 付ける順番と付け方 -->
+    <template v-if="step2">
       <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->
-      <div class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
-        <p class="mb-1 flex items-center gap-2 text-[11px] font-bold text-amber-100">
-          <button type="button" class="font-bold hover:underline" :class="modsDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="modsDone && goTo('mods')">① 狙う MOD</button> <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
-          <button v-if="modsDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="goTo('mods')">ここからやり直す</button>
+      <div class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="modsDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="modsDone && goTo('mods')">3 狙う MOD</button> <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
+          <button v-if="modsDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('mods')">ここからやり直す</button>
         </p>
         <!-- 完成図 (ベースの横から移した。段・＋・×・どれか N つ・付きやすさ) -->
         <StageTargetSummary :editable="!modsDone" />
@@ -651,16 +652,16 @@ function replay(): void {
           <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="modsDone = true">決めた →</button>
         </div>
         <!-- このベースに付く MOD (同じ枠の中。2026-10-05 オーナー「枠は一緒の枠で表示するべき」)。長いので枠の中で送り、上の完成図は見えたまま -->
-        <div v-if="!modsDone" class="mt-2 max-h-[62vh] overflow-auto rounded-lg border border-white/10">
+        <div v-if="!modsDone" class="-mx-3 mt-3 max-h-[62vh] overflow-auto border-t border-white/10 px-3">
           <StageModList embedded />
         </div>
       </div>
 
       <!-- ② フラクチャー (① の中から固定する MOD。同じ側でどれか 1 つが固定されれば良い) -->
-      <div v-if="step3" class="rounded-lg border border-emerald-400/40 bg-emerald-500/[0.05] px-2 py-1.5">
-        <p class="mb-1 flex items-center gap-2 text-[11px] font-bold text-emerald-100">
-          <button type="button" class="font-bold hover:underline" :class="fracDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="fracDone && goTo('frac')">② フラクチャー</button> <span v-if="help" class="font-normal opacity-60">(① の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span>
-          <button v-if="fracDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="goTo('frac')">ここからやり直す</button>
+      <div v-if="step3" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="fracDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="fracDone && goTo('frac')">4 フラクチャー</button> <span v-if="help" class="font-normal opacity-60">(3 の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span>
+          <button v-if="fracDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('frac')">ここからやり直す</button>
         </p>
         <template v-if="!fracDone">
           <label v-for="r in rows.filter((x) => x.methods.includes('exalt'))" :key="r.modId" class="flex items-center gap-2 py-0.5" :class="canFracture(r) ? 'cursor-pointer' : 'opacity-40'">
@@ -688,10 +689,10 @@ function replay(): void {
       </div>
 
       <!-- ③ 付ける順番と付け方 (フラクチャー以外) -->
-      <div v-if="stepOrder" class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
-        <p class="mb-1 flex items-center gap-2 text-[11px] font-bold text-amber-100">
-          <button type="button" class="font-bold hover:underline" :class="orderDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="orderDone && goTo('order')">③ 付ける順番と付け方</button> <span v-if="help" class="font-normal opacity-60">(上から順。前に付けた物が消えたら、また上から)</span>
-          <button v-if="orderDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 font-normal opacity-70 hover:opacity-100" @click="goTo('order')">ここからやり直す</button>
+      <div v-if="stepOrder" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="orderDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="orderDone && goTo('order')">5 付ける順番と付け方</button> <span v-if="help" class="font-normal opacity-60">(上から順。前に付けた物が消えたら、また上から)</span>
+          <button v-if="orderDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('order')">ここからやり直す</button>
         </p>
         <p v-if="!restRows.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
@@ -721,12 +722,14 @@ function replay(): void {
           <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="orderDone = true">決めた →</button>
         </div>
       </div>
-    </div>
+    </template>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
 
     <template v-if="step4">
-    <!-- カレンシーの相場 -->
-    <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+    <!-- 6 回す (相場・フラクチャーまでの費用・回す) -->
+    <div class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 space-y-2">
+    <p class="text-[13px] font-bold text-amber-100">6 回す</p>
+    <div class="flex flex-wrap items-center gap-2 text-[11px]">
       <span class="opacity-70">相場</span>
       <span :class="market.fetchedAt.value && Date.now() - market.fetchedAt.value > MARKET_MAX_AGE_MS ? 'text-amber-300' : ''">{{ market.loading.value ? "取り直しています…" : market.fetchedLabel.value || "まだ読んでいない" }}</span>
       <button type="button" class="rounded border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-40" :disabled="market.loading.value" title="カレンシーランキングと同じ相場を取り直す (計算・回した結果も出し直す)" @click="refreshPrices">相場を取り直す</button>
@@ -734,7 +737,7 @@ function replay(): void {
     </div>
 
     <!-- フラクチャーの始め方 -->
-    <div v-if="fractureRow" class="mb-3 rounded-lg border border-emerald-400/30 bg-emerald-500/[0.06] px-3 py-2">
+    <div v-if="fractureRow" class="border-t border-white/10 pt-2">
       <p class="flex flex-wrap items-center gap-x-3 gap-y-1">
         <b class="text-emerald-100">フラクチャーまで</b>
         <span v-if="calc">計算 <b class="text-amber-100">{{ money(calc.total) }}</b></span>
@@ -814,7 +817,7 @@ function replay(): void {
     </div>
 
     <!-- 回す -->
-    <div class="mb-3 flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2 border-t border-white/10 pt-2">
       <span class="opacity-60">回す回数</span>
       <button v-for="n in RUNS" :key="n" type="button" class="rounded-lg px-2 py-0.5" :class="runs === n ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="runs = n">{{ n.toLocaleString() }}</button>
       <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="blocked ?? ''" @click="run">回す</button>
@@ -824,8 +827,9 @@ function replay(): void {
       <span v-if="error" class="text-rose-300">{{ error }}</span>
     </div>
 
+    </div>
     <!-- 始め方の比べ (回した後) -->
-    <div v-if="recipeOut" class="mb-3 rounded-lg border border-sky-400/30 bg-sky-500/[0.05] px-3 py-2">
+    <div v-if="recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
       <p class="mb-1 font-bold text-sky-100">始め方の比べ <span v-if="help" class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
       <table class="w-full">
         <tbody>
@@ -856,7 +860,7 @@ function replay(): void {
     </div>
 
     <!-- 結果 -->
-    <div v-if="summary" :class="stale ? 'opacity-50' : ''">
+    <div v-if="summary" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2" :class="stale ? 'opacity-50' : ''">
       <p v-if="stale" class="mb-1 text-[11px] text-amber-200">設定が変わりました。もう一度「回す」で出し直してください</p>
       <div class="mb-2 grid grid-cols-2 gap-2 @3xl:grid-cols-5">
         <div class="rounded-lg bg-black/30 px-3 py-2">
@@ -901,5 +905,5 @@ function replay(): void {
 
     </div>
     </template>
-  </section>
+  </div>
 </template>
