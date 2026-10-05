@@ -83,3 +83,19 @@ describe("祝福・可能性・古代人のお告げ (2026-10-05)", () => {
     expect(bl.omensUsed).toContain("OmenoftheBlessed");
   });
 });
+
+describe("手順のカタリストは 1 手 = 1 個 (要望 ㉜ の 2)", () => {
+  it("手順の再生では品質 +1% ずつ、手で打つ (hint 無し) は上限まで", async () => {
+    const { loadPatch } = await import("./helpers/patch");
+    const { freshItem } = await import("../src/services/craft-stage/run-plan");
+    const { applyCurrency } = await import("../src/services/craft-stage/apply-currency");
+    const { mulberry32 } = await import("../src/services/htc/rng");
+    const data = await loadPatch();
+    const it0 = freshItem(data, "Gold Ring", 82);
+    const one = applyCurrency(data, it0, "catalyst_life", mulberry32(1), [], { oneCatalyst: true });
+    expect(one.applied).toBe(true);
+    expect(one.item.quality).toBe(1);
+    const all = applyCurrency(data, it0, "catalyst_life", mulberry32(1));
+    expect(all.item.quality).toBe(20);
+  });
+});

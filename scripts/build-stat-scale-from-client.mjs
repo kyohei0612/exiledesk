@@ -47,6 +47,9 @@ const J = async (p) => JSON.parse(await readFile(resolve(ROOT, p), "utf8"));
 export function scaleOfTokens(tokens) {
   let mul = 1;
   let digits = null;
+  // 切り捨て (per_minute_to_per_second だけ: ÷60 して小数 1 桁に切り捨て。PoB の StatDescriber と同じ。
+  // 2026-10-06 POE2Tube 要望 ㉜ の 1「毎秒20.8 が 20.82 になった」)
+  let floor = false;
   for (const { k } of tokens) {
     switch (k) {
       case "negate_and_double": case "double": mul *= 2; break;
@@ -63,7 +66,8 @@ export function scaleOfTokens(tokens) {
       case "milliseconds_to_seconds": case "milliseconds_to_seconds_0dp": case "milliseconds_to_seconds_1dp":
       case "milliseconds_to_seconds_2dp": case "milliseconds_to_seconds_2dp_if_required":
         mul /= 1000; digits = k.endsWith("0dp") ? 0 : k.includes("1dp") ? 1 : k.includes("2dp") ? 2 : digits; break;
-      case "per_minute_to_per_second": case "per_minute_to_per_second_0dp": case "per_minute_to_per_second_1dp":
+      case "per_minute_to_per_second": mul /= 60; digits = 1; floor = true; break;
+      case "per_minute_to_per_second_0dp": case "per_minute_to_per_second_1dp":
       case "per_minute_to_per_second_2dp": case "per_minute_to_per_second_2dp_if_required":
         mul /= 60; digits = k.endsWith("0dp") ? 0 : k.includes("1dp") ? 1 : k.includes("2dp") ? 2 : digits; break;
       case "times_twenty": mul *= 20; break;
@@ -76,7 +80,7 @@ export function scaleOfTokens(tokens) {
   if (mul === 1) return null;
   // div は 1 / mul。浮動小数の誤差を落とす (1/(1/100) = 100.00000000000001 にならないように)
   const div = Math.round((1 / mul) * 1e6) / 1e6;
-  return { div, digits: digits ?? 2 };
+  return floor ? { div, digits: digits ?? 2, floor: true } : { div, digits: digits ?? 2 };
 }
 
 /** 行の文がその位置 (0 始まり) の stat を出すか。`{0}` `{1:+d}` のほか、添字なしの `{}` は出現順 */
@@ -122,7 +126,7 @@ export function scaleOfStat(descriptor, statId) {
     // token の対象は 1 始まりの stat 番号。番号の無い token (`v: true`) は 1 つ目の stat
     const mine = l.tokens.filter((t) => (typeof t.v === "number" ? t.v === pos + 1 : pos === 0));
     const sc = scaleOfTokens(mine);
-    seen.set(sc ? `${sc.div}/${sc.digits}` : "1", sc);
+    seen.set(sc ? `${sc.div}/${sc.digits}${sc.floor ? "f" : ""}` : "1", sc);
   }
   if (seen.size > 1) log(`WARN: ${statId} は行ごとに換算が違う (${[...seen.keys()].join(", ")})。最初の行の物を使う`);
   return [...seen.values()][0] ?? null;

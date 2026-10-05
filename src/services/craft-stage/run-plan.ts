@@ -269,7 +269,7 @@ export function playPlan(data: PatchData, plan: CraftStagePlan, prices: Readonly
       // pick / remove: 付く MOD・消える MOD の指名 (要望 ⑱-1)。pick は 1 つか配列
       const x = ps as { outcome?: string; pick?: Force | Force[]; remove?: string };
       const pick = x.pick ? (Array.isArray(x.pick) ? x.pick : [x.pick]) : undefined;
-      const hint = { collect: isShard(ps.currency), ...(x.outcome ? { outcome: x.outcome } : {}), ...(pick ? { pick } : {}), ...(x.remove ? { remove: x.remove } : {}) };
+      const hint = { collect: isShard(ps.currency), oneCatalyst: true, ...(x.outcome ? { outcome: x.outcome } : {}), ...(pick ? { pick } : {}), ...(x.remove ? { remove: x.remove } : {}) };
       const p = playStep(data, item, ps.currency, { index, seed: plan.seed + index, price: (k) => prices[k] ?? 0, cumulative, omen: ps.omen ?? null, hint });
       // 指名が通らない手順はエラーで止める (理由を返す)。指名の無い手の「打てない」は今まで通り記録して進む
       if ((pick || x.remove) && !p.out.applied) throw new Error(`手 ${index} (${ps.currency}): ${p.out.reason}`);

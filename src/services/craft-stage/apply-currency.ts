@@ -93,6 +93,8 @@ export interface ApplyHint {
   pick?: Force[];
   /** 消える MOD の指名 (カオス) */
   remove?: string;
+  /** 手順の再生: カタリストは 1 手 = 1 個 (手で打つ画面は 1 手で上限まで。要望 ㉜ の 2) */
+  oneCatalyst?: boolean;
 }
 /** 指名が通らなかった時 (理由つきで打てない、pickError) */
 const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, `指名できない: ${why}`), pickError: true });
@@ -146,7 +148,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(data, item, rng);
   // 祝福のお告げ: 暗黙 MOD だけを振り直す (クライアントの説明)。このステージは暗黙 MOD の数値を持たないので、明示 MOD はそのまま
   if (kind === "divine" && used.includes("OmenoftheBlessed")) return { applied: true, item, added: [], removed: [], note: "祝福のお告げ: 暗黙 MOD だけを振り直した (明示 MOD は変わらない。このステージは暗黙の数値を持たない)" };
-  if (kind === "catalyst" || OTHER_KINDS.includes(kind)) return applyOther(data, item, currency, rng);
+  if (kind === "catalyst" || OTHER_KINDS.includes(kind)) return applyOther(data, item, currency, rng, !!hint.oneCatalyst);
 
   const { strength } = parseKey(currency);
   const floor = floorOf(kind, strength);

@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-03",
+ "generated": "2026-10-05",
  "source": "GGG client Data/StatDescriptions/stat_descriptions.csd の token (scripts/build-stat-scale-from-client.mjs)。表に無い stat は割らない",
  "stats": {
   "additional_base_critical_strike_chance": {
@@ -16,11 +16,13 @@
   },
   "allies_in_presence_life_regeneration_rate_per_minute": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "allies_in_presence_life_regeneration_rate_per_minute_equal_to_your_maximum_life_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "apply_ancients_challenge_in_front_facing_radius_on_raise_shield": {
    "div": 10,
@@ -28,7 +30,8 @@
   },
   "base_banner_life_regeneration_rate_per_minute_%_to_apply": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "base_body_armour_permyriad_to_gain_as_physical_thorns_damage": {
    "div": 100,
@@ -36,7 +39,8 @@
   },
   "base_chaos_damage_taken_per_minute": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "base_life_leech_from_all_thorns_damage_permyriad": {
    "div": 100,
@@ -48,11 +52,13 @@
   },
   "base_life_regeneration_rate_per_minute": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "base_life_regeneration_rate_per_minute_per_10_intelligence": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "base_mana_leech_from_physical_attack_damage_permyriad": {
    "div": 100,
@@ -64,7 +70,8 @@
   },
   "base_rage_regeneration_per_minute": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "base_thorns_critical_strike_chance": {
    "div": 100,
@@ -104,7 +111,8 @@
   },
   "energy_shield_recharge_rate_per_minute_with_all_corrupted_equipped_items": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "fire_spell_additional_critical_strike_chance_permyriad": {
    "div": 100,
@@ -160,7 +168,8 @@
   },
   "golem_life_regeneration_per_minute_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "grant_void_arrow_every_x_ms": {
    "div": 1000,
@@ -168,7 +177,8 @@
   },
   "guardian_gain_life_regeneration_per_minute_%_for_1_second_every_10_seconds": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "heist_alert_level_gained_per_10_sec": {
    "div": 100,
@@ -184,31 +194,38 @@
   },
   "life_regen_per_minute_per_endurance_charge": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_per_minute_%_if_used_a_command_skill_recently": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_per_minute_%_while_frozen": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_per_minute_%_while_ignited": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_per_minute_per_active_buff": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_per_minute_while_moving": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_per_minute_with_no_corrupted_equipped_items": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_rate_per_minute_%": {
    "div": 60,
@@ -216,15 +233,18 @@
   },
   "life_regeneration_rate_per_minute_%_if_have_been_hit_recently": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_rate_per_minute_%_if_used_life_flask_in_past_10_seconds": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_rate_per_minute_%_per_endurance_charge": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_rate_per_minute_%_per_fragile_regrowth": {
    "div": 60,
@@ -232,15 +252,18 @@
   },
   "life_regeneration_rate_per_minute_%_per_frenzy_charge": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_rate_per_minute_%_when_on_low_life": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "life_regeneration_rate_per_minute_per_level": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "local_critical_strike_chance": {
    "div": 100,
@@ -252,7 +275,8 @@
   },
   "local_display_nearby_enemies_take_X_lightning_damage_per_minute": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "local_display_socketed_gems_additional_critical_strike_chance_%": {
    "div": 100,
@@ -276,11 +300,13 @@
   },
   "local_unique_flask_chaos_damage_%_of_maximum_life_to_deal_per_minute_while_healing": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "local_unique_flask_life_loss_%_per_minute_while_you_have_no_runic_ward_during_flask_effect": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "local_unique_flask_ward_gained_as_guard_duration_ms_when_flask_effect_ends": {
    "div": 1000,
@@ -292,23 +318,28 @@
   },
   "mana_degeneration_per_minute_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "mana_recharge_rate_per_minute_with_all_corrupted_equipped_items": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "mana_regeneration_rate_per_minute_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "mana_regeneration_rate_per_minute_per_10_devotion": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "mana_regeneration_rate_per_minute_per_power_charge": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "mana_reservation_efficiency_-2%_per_1": {
    "div": 0.5,
@@ -324,19 +355,23 @@
   },
   "map_magic_monster_life_regeneration_rate_per_minute_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "map_non_unique_monster_life_regeneration_rate_per_minute_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "map_normal_monster_life_regeneration_rate_per_minute_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "map_player_base_chaos_damage_taken_per_minute": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "map_player_death_mark_on_rare_unique_kill_ms": {
    "div": 1000,
@@ -352,7 +387,8 @@
   },
   "map_rare_monster_life_regeneration_rate_per_minute_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "map_ritual_offered_rewards_from_rerolls_have_permyriad_chance_to_cost_no_tribute": {
    "div": 100,
@@ -376,11 +412,13 @@
   },
   "minion_caustic_cloud_on_death_maximum_life_per_minute_to_deal_as_chaos_damage_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "minion_life_regeneration_rate_per_minute_%": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "movement_speed_bonus_when_throwing_trap_ms": {
    "div": 1000,
@@ -436,7 +474,8 @@
   },
   "unique_blood_barrier_corrupted_blood_base_physical_damage_per_minute_as_%_of_maximum_life": {
    "div": 60,
-   "digits": 2
+   "digits": 1,
+   "floor": true
   },
   "unique_blood_barrier_corrupted_blood_duration_ms": {
    "div": 1000,

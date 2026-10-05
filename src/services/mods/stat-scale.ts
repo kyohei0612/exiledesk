@@ -23,6 +23,8 @@ export interface StatScale {
   div: number;
   /** 小数の桁 */
   digits: number;
+  /** 桁で切り捨てる (per_minute_to_per_second。無ければ四捨五入) */
+  floor?: boolean;
 }
 
 const TABLE = (table as { stats: Record<string, StatScale> }).stats;
@@ -30,7 +32,7 @@ const TABLE = (table as { stats: Record<string, StatScale> }).stats;
 /** 表に無い stat の語尾の規則 (表と同じ答えになることをテストで押さえている) */
 function fallbackScale(statId: string): StatScale | null {
   if (/permyriad/.test(statId)) return { div: 100, digits: 2 };
-  if (/per_minute/.test(statId)) return { div: 60, digits: 2 };
+  if (/per_minute/.test(statId)) return { div: 60, digits: 1, floor: true };
   if (/_ms(_|$)/.test(statId)) return { div: 1000, digits: 2 };
   // 武器のクリティカル率 (local_critical_strike_chance) と「+#% to Critical Hit Chance」系は 1 万分率だが id に permyriad が無い
   if (/^local_critical_strike_chance$|additional_base_critical_strike_chance|base_thorns_critical_strike_chance/.test(statId)) return { div: 100, digits: 2 };
@@ -48,7 +50,8 @@ export function displayValue(statId: string | undefined | null, raw: number): nu
   const sc = scaleOf(statId);
   if (!sc) return raw;
   const p = 10 ** sc.digits;
-  return Math.round((raw / sc.div) * p) / p;
+  // 切り捨ては浮動小数の誤差 (1248/60*10 = 207.99999…) で 1 つ下に落ちないように少し足してから
+  return sc.floor ? Math.floor((raw / sc.div) * p + 1e-9) / p : Math.round((raw / sc.div) * p) / p;
 }
 
 /** 段の幅 [下, 上] を画面の値に */
