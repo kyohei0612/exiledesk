@@ -85,10 +85,12 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
       return done({ ...item, enchant: { id, textJa: rollText(e.ja, vals), textEn: rollText(e.en, vals) } });
     }
     case "fourth": {
-      // コラプトで熟練工の上限を 1 つ超えられる (stage-runes.ts の socketCapOf + 1)
+      // コラプトは上限を無視して 1 つ足す。一番多いのは規格外 (熟練工の上限 + 1) にもう 1 つ = 熟練工の上限 + 2
+      // (胴・両手 4 / ほか 3 = PoB の socketLimit。2026-10-05 オーナー「上限ソケットはヴァールコラプトに合わせよう」、前は + 1 で止めていて
+      // 規格外 3 の胴が 4 にならなかった)
       const max = socketCapOf(item.base, item.cls.category);
       if (!max) return done(item);
-      return done({ ...item, sockets: Math.min(max + 1, (item.sockets ?? 0) + 1) });
+      return done({ ...item, sockets: Math.min(max + 2, (item.sockets ?? 0) + 1) });
     }
     default:
       return done(item);

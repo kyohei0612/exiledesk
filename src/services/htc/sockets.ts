@@ -11,8 +11,10 @@
  *     取り外して手元に戻すことはできない (置き換えると壊れる) ので、代は 1 回の作成につき 1 度
  *   - **セールの凱旋**: サフィックスの枠 +1 (3 / 4)。**ソケットバウンド** (取り外しも置き換えもできない。説明文から作った表 augment-rules.json)
  *   - ソケットを付けられるのは**武器と防具だけ**。指輪・アミュレット・ベルト・矢筒は付かない
- *   - 武器・防具のクラフトは、ほぼ**規格外 (ルーンソケット 2 つ) のベース**でやる (オーナー 2026-09-26)。なので買うベースの
- *     ソケットの数は既定 2 (0 / 1 / 2 を選べる)。足りない分だけ熟練工のオーブ (1 つ 1 個) で開ける
+ *   - 武器・防具のクラフトは、ほぼ**規格外のベース**でやる (オーナー 2026-09-26)。規格外 = 熟練工の上限 + 1 で、装備ごとに違う
+ *     (胴・両手 3 / ほか 2。熟練工の上限は胴・両手 2 / ほか 1、コラプトでさらに +1。2026-10-05 オーナー「ヴァール抜きのマックスソケットを
+ *     各装備で出すように」、前は全部 2 にしていた)。買うベースのソケットの数は既定がその規格外 (0〜規格外を選べる)。
+ *     足りない分だけ熟練工のオーブ (1 つ 1 個) で開ける
  *   - アストリッドは置き換えられるので、ソケットバウンドの物と同じ穴を順に使える (先にアストリッド → クラフト → セールで置き換え)。
  *     要る穴 = ソケットバウンドの物の数 (無ければ、何か差すなら 1)
  *   - コラプト済み・聖別済みの物には差せない (表の corruptOk。全部 false。貼り付けで分かるのはコラプトだけ)
@@ -38,6 +40,7 @@ import { jaOfPastedLine } from "./mod-text";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { augmentRule } from "../augment-rules";
+import { socketCapOf } from "../craft-stage/stage-runes";
 
 /**
  * クラフトに関係するルーン (英語名): クラフトの決まりを変える物 (アストリッドの創造性 = クラフトモッド +1、セールの凱旋 = サフィ +1) と、
@@ -59,11 +62,11 @@ export type SocketKey = "astrid" | "serle" | SpecialKey;
 export interface SocketPick extends Partial<Record<SpecialKey, boolean>> {
   astrid: boolean;
   serle: boolean;
-  /** 買うベースのルーンソケットの数 (武器・防具は規格外の 2 が既定)。素材の検索もこの数以上で探す */
-  baseSockets: 0 | 1 | 2;
+  /** 買うベースのルーンソケットの数 (既定は装備ごとの規格外、socketCountFor)。素材の検索もこの数以上で探す */
+  baseSockets: number;
 }
-/** 規格外 (ルーンソケット 2 つ) のベースを既定にする (オーナー 2026-09-26) */
-export const DEFAULT_BASE_SOCKETS = 2;
+/** 規格外のベースを既定にする (オーナー 2026-09-26)。装備ごとの規格外 (胴・両手 3 / ほか 2) に effectiveSocket が丸める */
+export const DEFAULT_BASE_SOCKETS = 3;
 export const NO_SOCKET: SocketPick = { astrid: false, serle: false, baseSockets: DEFAULT_BASE_SOCKETS };
 
 
@@ -193,11 +196,14 @@ export const ARTIFICER_KEY = "artificer";
 const NO_SOCKET_CATEGORIES = new Set(["Rings", "Amulets", "Belts", "Quivers"]);
 
 /**
- * その種類が持てるソケットの数 (0 = 付けられない)。武器・防具は規格外で 2 つまで (オーナー 2026-09-26: 規格外のベースで作るので、
- * 鎧・両手武器に限らずどの武器・防具でも 2 つ)
+ * その種類が持てるソケットの数 (0 = 付けられない)。ヴァール抜きの一番多い数 = 規格外 = 熟練工の上限 + 1
+ * (胴・両手 3 / ほか 2。熟練工の上限はクラフトステージと同じ socketCapOf。2026-10-05 オーナー「ヴァール抜きのマックスソケットを各装備で」)。
+ * ステージの部位の表に無い種類は 2
  */
-export function socketCountFor(category: string | null | undefined): 0 | 2 {
-  return !category || NO_SOCKET_CATEGORIES.has(category) ? 0 : 2;
+export function socketCountFor(category: string | null | undefined): number {
+  if (!category || NO_SOCKET_CATEGORIES.has(category)) return 0;
+  const cap = socketCapOf("", category);
+  return cap > 0 ? cap + 1 : 2;
 }
 
 /**
@@ -228,7 +234,7 @@ export function socketBlock(category: string | null | undefined, corrupted: bool
 /** 実際に効く選び方 (種類・コラプトで差せない物を落とす)。計算は全部これを通す */
 export function effectiveSocket(category: string | null | undefined, corrupted: boolean, pick: SocketPick): SocketPick {
   const n = socketCountFor(category);
-  const baseSockets = Math.min(n, Math.max(0, pick.baseSockets)) as SocketPick["baseSockets"];
+  const baseSockets = Math.min(n, Math.max(0, pick.baseSockets));
   if (n === 0 || corrupted) return { astrid: false, serle: false, baseSockets };
   const out: SocketPick = { astrid: pick.astrid, serle: pick.serle, baseSockets };
   // 特別な MOD のルーンは差せる部位の時だけ (別の部位で選んだ物が残っていても効かせない)

@@ -30,7 +30,8 @@ const rows = computed(() => socketRunesFor(props.category).map((r) => {
 /** 特別な MOD のルーンを差している (確率・費用が仮の重みに乗る) */
 const assumed = computed(() => usesAssumedWeight(on.value));
 const onRows = computed(() => rows.value.filter((x) => x.on));
-const BASE_SOCKETS = [0, 1, 2] as const;
+/** 選べるソケットの数: 0〜その装備の規格外 (胴・両手 3 / ほか 2) */
+const BASE_SOCKETS = computed(() => Array.from({ length: count.value + 1 }, (_, i) => i));
 function toggle(key: SocketKey): void {
   const r = rows.value.find((x) => x.key === key);
   if (!r || r.locked || (!r.on && r.why)) return;
@@ -55,7 +56,7 @@ const astridMissing = computed(() => !!c.slots.value?.needsAstrid && !on.value.a
       <span class="opacity-50">買うベースのソケット</span>
       <button v-for="n in BASE_SOCKETS" :key="n" type="button" class="rounded px-1.5 py-0.5"
         :class="on.baseSockets === n ? 'bg-white/15 ring-1 ring-white/30' : 'border border-white/10 opacity-60 hover:opacity-100'"
-        :title="n === 2 ? '規格外 (ルーンソケット 2 つ)。武器・防具のクラフトはほぼこれ。素材もこの数以上で探す' : `ソケット ${n} つ以上で探す。足りない穴は熟練工のオーブで開ける`" @click="setBase(n)">{{ n }}</button>
+        :title="n === count ? `規格外 (ルーンソケット ${n} つ)。武器・防具のクラフトはほぼこれ。素材もこの数以上で探す` : `ソケット ${n} つ以上で探す。足りない穴は熟練工のオーブで開ける`" @click="setBase(n)">{{ n }}</button>
     </template>
     <button v-for="r in rows" :key="r.key" type="button" class="rounded-lg px-2 py-0.5 disabled:cursor-not-allowed disabled:opacity-40"
       :class="[r.on ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5', r.locked ? 'cursor-default' : '']"

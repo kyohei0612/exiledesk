@@ -168,10 +168,10 @@ if (!(cut.pDone === 0 && cut.stops[0]?.reason.includes("未設定"))) fail("未�
   if (M.simHelpers({ ...base, limits: lim4 }, []).usable(suf3, exS)) fail("セールの凱旋でサフィ 4 つ目の高貴が打てない");
   const serleCost = M.socketCostOf(sp, { astrid: false, serle: true, baseSockets: 0 });
   if (Math.abs(serleCost.total - (D * 2 + D * 0.01)) > 1e-9) fail("セールの凱旋の代がルーン + 熟練工のオーブになっていない");
-  // 差せる種類: 指輪・アミュレット・ベルト・矢筒は 0、武器・防具は規格外で 2。コラプト済みは差せない
+  // 差せる種類: 指輪・アミュレット・ベルト・矢筒は 0、武器・防具は規格外 (熟練工の上限 + 1: 胴・両手 3 / ほか 2、2026-10-05)。コラプト済みは差せない
   const cnt = (k) => M.socketCountFor(k);
   if (cnt("Rings") || cnt("Amulets") || cnt("Belts") || cnt("Quivers")) fail("装飾品・矢筒にソケットが付くことになっている");
-  if (cnt("Body_Armours") !== 2 || cnt("Helmets") !== 2 || cnt("Wands") !== 2) fail("武器・防具の穴の数が 2 になっていない");
+  if (cnt("Body_Armours") !== 3 || cnt("Helmets") !== 2 || cnt("Wands") !== 2) fail("武器・防具の穴の数が規格外 (胴 3 / 兜・ワンド 2) になっていない");
   const both = { astrid: true, serle: true, baseSockets: 2 };
   if (!M.effectiveSocket("Helmets", false, both).serle || M.socketBlock("Helmets", false, { ...both, serle: false }, "serle")) fail("兜に両方差せない");
   if (M.effectiveSocket("Body_Armours", true, both).astrid) fail("コラプト済みに差せている");
