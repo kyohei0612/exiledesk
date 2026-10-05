@@ -99,20 +99,11 @@ function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
   const idx = tierIndexOf(modId, t);
   if (idx < 0) return;
   const list = s.simTargets.value;
-  // 同じ段なら外す、別の段なら順番と付け方はそのまま段だけ差し替える、無ければ最後に足す (① フラクチャーの候補を選んでいる時は候補として)
+  // 同じ段なら外す、別の段なら順番と付け方はそのまま段だけ差し替える、無ければ ② の最後に足す
+  // (① フラクチャーの候補はシミュレーションのポップアップ [[StageFracturePicker.vue]] で選ぶ)
   if (isTarget(modId, t)) s.simTargets.value = list.filter((x) => x.modId !== modId);
   else if (list.some((x) => x.modId === modId)) s.simTargets.value = list.map((x) => (x.modId === modId ? { ...x, minTierIndex: idx } : x));
-  else if (s.simStep.value === "fracture") {
-    if (!canCandidate(modId)) return;
-    s.simTargets.value = [...list.filter((x) => x.method === "fracture"), { modId, minTierIndex: idx, method: "fracture" as const }, ...list.filter((x) => x.method !== "fracture")];
-  } else s.simTargets.value = [...list, { modId, minTierIndex: idx }];
-}
-/** ① フラクチャーの候補にできるか: 普通の MOD で、もう選んだ候補と同じ側 */
-function canCandidate(modId: string): boolean {
-  const m = s.data.value?.mods.get(modId);
-  if (!m || m.source !== "normal") return false;
-  const first = s.simTargets.value.find((x) => x.method === "fracture");
-  return !first || s.data.value?.mods.get(first.modId)?.type === m.type;
+  else s.simTargets.value = [...list, { modId, minTierIndex: idx }];
 }
 
 /** エッセンスの段の名前 (英語) → 日本語 */
@@ -193,8 +184,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td class="py-0.5 pl-2 opacity-60">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-16 py-0.5 text-right tabular-nums opacity-70">{{ t.weight ? `重み ${t.weight}` : "" }}</td>
-                    <td v-if="s.mode.value === 'sim' && (s.simStep.value === 'fracture' ? sec.g === 'normal' : (sec.g === 'normal' || sec.g === 'desecrated' || sec.g === 'essence'))" class="w-14 py-0.5 text-right">
-                      <button type="button" class="rounded border px-1.5 text-[10px] disabled:opacity-30" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/25 text-amber-100' : s.simStep.value === 'fracture' ? 'border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/15' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :disabled="s.simStep.value === 'fracture' && !isTarget(t.modId ?? r.id, t) && !canCandidate(t.modId ?? r.id)" :title="s.simStep.value === 'fracture' ? (canCandidate(t.modId ?? r.id) ? `① フラクチャーの候補にする (${t.rank} 以上)` : '候補は同じ側だけ') : `② 順番に付ける MOD にする (${t.rank} 以上)`" @click.stop="toggleTarget(t.modId ?? r.id, t)">{{ s.simStep.value === "fracture" ? "候補" : "狙う" }}</button>
+                    <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'desecrated' || sec.g === 'essence')" class="w-14 py-0.5 text-right">
+                      <button type="button" class="rounded border px-1.5 text-[10px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/25 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="`② 順番に付ける MOD にする (${t.rank} 以上)`" @click.stop="toggleTarget(t.modId ?? r.id, t)">狙う</button>
                     </td>
                     <td v-else-if="canStart && sec.g === 'normal'" class="w-14 py-0.5 text-right">
                       <button type="button" class="rounded border border-sky-400/50 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/15" :title="`始めの状態に ${t.rank} を付ける (付きうる物だけ)`" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">付ける</button>

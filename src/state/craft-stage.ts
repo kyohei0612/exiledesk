@@ -154,11 +154,7 @@ const startMods = ref<Force[]>([]);
  * minTierIndex はエンジンの段の番号 (0 = 一番下、T1 = tiers.length - 1)。[[stage-sim.ts]]
  */
 const mode = ref<"hand" | "sim">("hand");
-/**
- * シミュレーションの狙いの選び方 (順に選ぶ、2026-10-05 オーナー「フラクチャー品だけ複数選択させれるようにするか、これも順に選択式に」):
- * "fracture" = ① フラクチャーの候補 (複数・同じ側、どれか 1 つが付いたら進む)、"rest" = ② 順番に付ける MOD。MOD の一覧の「狙う」はここへ足す
- */
-const simStep = ref<"fracture" | "rest">("fracture");
+
 /** method = 付け方 (順番どおりのシミュレーション、[[recipe-sim.ts]])。省くと MOD の種類で決める (普通 = 高貴、冒涜 = 冒涜、エッセンス = エッセンス) */
 const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture" }>>([]);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
@@ -177,7 +173,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simStep,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

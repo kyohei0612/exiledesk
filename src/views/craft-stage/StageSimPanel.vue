@@ -20,6 +20,7 @@ import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../services/trade2/query/spec";
 import { openTradeQuery } from "../../services/pob-check/trade-links";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
+import StageFracturePicker from "./StageFracturePicker.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 
@@ -69,6 +70,8 @@ function move(modId: string, d: -1 | 1): void {
   [list[i], list[j]] = [list[j]!, list[i]!];
   s.simTargets.value = list;
 }
+/** ① の候補を選ぶポップアップ ([[StageFracturePicker.vue]]) */
+const pickerOpen = ref(false);
 /** ② 順番に付ける MOD (① の候補以外、上から順) */
 const restRows = computed(() => rows.value.filter((r) => r.method !== "fracture"));
 /**
@@ -366,16 +369,14 @@ function replay(): void {
 
     <p class="mb-2 text-[11px] opacity-60">上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
-    <!-- 狙い: 順に選ぶ (① フラクチャーの候補 → ② 順番に付ける MOD)。下の一覧の「候補」/「狙う」は開いている方へ足す -->
+    <!-- 狙い: ① フラクチャーの候補 (ポップアップの MOD 一覧から選ぶ) → ② 順番に付ける MOD (下の一覧の「狙う」) -->
     <div class="mb-3">
-      <div class="mb-2 flex flex-wrap items-center gap-1.5">
-        <button v-for="st in ([['fracture', `① フラクチャーの候補 (${fractureRows.length})`], ['rest', `② 順番に付ける MOD (${restRows.length})`]] as const)" :key="st[0]" type="button" class="rounded-lg px-3 py-1" :class="s.simStep.value === st[0] ? (st[0] === 'fracture' ? 'bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/60' : 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60') : 'border border-white/15 opacity-70 hover:opacity-100'" @click="s.simStep.value = st[0]">{{ st[1] }}</button>
-        <span class="text-[11px] opacity-60">{{ s.simStep.value === "fracture" ? "下の一覧の「候補」で足す。複数なら同じ側で、どれか 1 つが付いたらフラクチャーへ進む。無ければ白から ② を順に" : "下の一覧の「狙う」で足す。上から順に作る" }}</span>
-      </div>
-
       <!-- ① フラクチャーの候補 -->
-      <div class="mb-2 rounded-lg border px-2 py-1.5" :class="s.simStep.value === 'fracture' ? 'border-emerald-400/40 bg-emerald-500/[0.05]' : 'border-white/10'">
-        <p class="mb-1 text-[11px] font-bold text-emerald-100">① フラクチャーの候補 <span class="font-normal opacity-60">(どれか 1 つが付いたら進み、どれが固定されても良い)</span></p>
+      <div class="mb-2 rounded-lg border border-emerald-400/40 bg-emerald-500/[0.05] px-2 py-1.5">
+        <p class="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-emerald-100">
+          ① フラクチャーの候補 <span class="font-normal opacity-60">(同じ側。どれか 1 つが付いたら進み、どれが固定されても良い)</span>
+          <button type="button" class="ml-auto rounded border border-emerald-400/60 bg-emerald-500/15 px-2 py-0.5 font-normal text-emerald-100 hover:bg-emerald-500/25" @click="pickerOpen = true">MOD を選ぶ</button>
+        </p>
         <p v-if="!fractureRows.length" class="text-[11px] opacity-50">なし (白から ② を順に作る)</p>
         <table v-else class="w-full">
           <tbody>
@@ -391,8 +392,8 @@ function replay(): void {
       </div>
 
       <!-- ② 順番に付ける MOD -->
-      <div class="rounded-lg border px-2 py-1.5" :class="s.simStep.value === 'rest' ? 'border-amber-400/40 bg-amber-500/[0.04]' : 'border-white/10'">
-        <p class="mb-1 text-[11px] font-bold text-amber-100">② 順番に付ける MOD <span class="font-normal opacity-60">(上から順。前に付けた物が消えたら、また上から)</span></p>
+      <div class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
+        <p class="mb-1 text-[11px] font-bold text-amber-100">② 順番に付ける MOD <span class="font-normal opacity-60">(下の「このベースに付く MOD」の段の表の「狙う」で足す。上から順。前に付けた物が消えたら、また上から)</span></p>
         <p v-if="!restRows.length" class="text-[11px] opacity-50">まだありません</p>
         <table v-else class="w-full">
           <tbody>
@@ -416,6 +417,7 @@ function replay(): void {
       </div>
       <button v-if="rows.length" type="button" class="mt-1 rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
     </div>
+    <StageFracturePicker v-if="pickerOpen" @close="pickerOpen = false" />
 
     <!-- 白のベースの値段 (手で) -->
     <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
