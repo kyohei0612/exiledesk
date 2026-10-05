@@ -10,6 +10,7 @@ import { recordHistory } from "../../services/history";
 import { computed, ref, type Ref } from "vue";
 import { cancelSweep, CYCLE_OFF, DEFAULT_CYCLE_SECS, loadFlowStatus, setFlowCycle, sweepNow, tradePaceSecs, tradeRateSecs, type FlowStatus } from "../../services/market-flow";
 import { fmtClock } from "../../utils/format-time";
+import { CYCLE_HOUR_OPTIONS } from "../../state/watch-settings";
 
 export function useSweep(opts: {
   /** 門番と記録を読み直す (この PC のファイルだけなので何回呼んでも通信しない) */
@@ -114,7 +115,7 @@ export function useSweep(opts: {
    * 記録側 (market_flow.rs) が持っている値をそのまま出し入れする。
    * 前回の一括取得 (手動でも自動でも) からこの時間ぶん経ったら、全銘柄をまとめて 1 巡する。
    */
-  const CYCLE_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24];
+  const CYCLE_OPTIONS = CYCLE_HOUR_OPTIONS;
   /** 選択中の値。0 = 自動取得しない (オーナー指示 2026-09-19) */
   /** 1 巡にかかる見込み (分)。門番が決めた今の間隔 × 本数 (自動巡回も同じ速さ。2026-09-20) */
   const sweepMinutes = computed(() => {

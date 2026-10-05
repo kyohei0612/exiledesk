@@ -9,6 +9,7 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     let top_n = req.top_n.unwrap_or(40).clamp(5, 100);
     let spread = req.spread.unwrap_or(1).clamp(1, 10);
     CANCEL.store(false, Ordering::Relaxed);
+    let _auto = super::RankingAutoGuard::new(req.auto);
     let app = window.app_handle().clone();
     // 前と同じ条件で、顔ぶれもジェムも全部キャッシュにあるなら **1 リクエストも投げずに** 組み立て直す
     // (2026-09-18 オーナー報告「即レート制限」: 1 人も新しく取らない時でも index-state / search で

@@ -13,13 +13,14 @@ import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
-import { loadFlow, setWatches } from "../services/market-flow";
+import { loadFlow, loadFlowStatus, setWatches } from "../services/market-flow";
 import { rowQuery, SALE_KEYS, SALE_KEY_LABEL, watchKey } from "../views/gem-corrupt/row-query";
-import { watchGems, watchSettings, type GemUsageRow } from "./watch-settings";
+import { MANUAL_ONLY, watchGems, watchSettings, type GemUsageRow } from "./watch-settings";
 import { jaSkill } from "../i18n/skills-ja";
 import { GEMS } from "../views/gem-corrupt/useGemCorrupt";
 import { marketStore } from "./market-store";
 import { trade2Site } from "../services/trade2/league";
+import { ascendancies, loadAscendancies } from "./ascendancy-list";
 
 /** リストを取り直す間隔 */
 /**
@@ -145,6 +146,79 @@ export function startWatchAutoRefresh(): void {
   });
   // MOD 一覧が走らない時のための保険 (キャッシュが新しければ何もしない)
   setTimeout(() => void refreshIfStale(), START_DELAY_MS);
+  // 使用率ランキングの自動取得 (間隔を選んだ時だけ)。1 分おきに見る
+  setTimeout(() => {
+    void rankingTick();
+    setInterval(() => void rankingTick(), 60_000);
+  }, START_DELAY_MS);
+}
+
+const appLog = (msg: string): Promise<unknown> => invoke("app_log_write", { msg }).catch(() => undefined);
+
+/** 自動取得で使用率ランキングを取り直した時刻 (ミリ秒)。使用率ランキングの画面が見て出し直す */
+export const rankingAutoAt = ref(0);
+let rankingRunning = false;
+let rankingDeferLogged = false;
+
+/**
+ * 使用率ランキングの自動取得 (2026-10-06 オーナー「使用率ランキングも一緒で自動取得の間隔プルダウン、中身一緒で」
+ * 「9 か、合計 全体アセと上位 8 アセ」)。取るのは全アセンダンシー + 使用率の上位 8 アセンダンシー (取得先のプルダウンと同じ顔ぶれ)。
+ * 前に取った時刻から間隔ぶん経った物だけ、1 つずつ順に取る (人数は画面の値、散らさない)。
+ * 監視の一括取得 (手動 / 自動) が走っている間は後に回す (「同時に取得させない、被ったら後に回す。一括取得だけね」)。
+ * 1 つ取るごとに見直すので、途中で一括取得が始まったら残りは次の見回りで。
+ * 逆に、こちらが走っている間は監視の自動巡回が後に回る (Rust の market_flow/sweep.rs)
+ */
+async function rankingTick(): Promise<void> {
+  const hours = watchSettings.value.rankingCycleHours;
+  if (!hours || rankingRunning) return;
+  rankingRunning = true;
+  try {
+    await loadAscendancies();
+    const top = [...ascendancies.value].sort((a, b) => b.percentage - a.percentage).slice(0, 8).map((a) => a.class);
+    const topN = Number(localStorage.getItem("exiledesk.gem-break.topn")) || 100;
+    for (const klass of ["", ...top]) {
+      if (watchSettings.value.rankingCycleHours !== hours) return;
+      const key = `${RESULT_KEY}.${klass || "all"}`;
+      let last = 0;
+      try {
+        last = (JSON.parse(localStorage.getItem(key) ?? "null") as Result | null)?.fetched_at ?? 0;
+      } catch {
+        /* 壊れていたら取り直す */
+      }
+      if (Date.now() / 1000 - last < hours * 3600) continue;
+      try {
+        const st = await loadFlowStatus();
+        if (st?.sampling) {
+          if (!rankingDeferLogged) void appLog("[使用率] 自動取得の時間だが、監視の一括取得中なので後に回す");
+          rankingDeferLogged = true;
+          return;
+        }
+      } catch {
+        /* 状態が読めなければそのまま取る */
+      }
+      rankingDeferLogged = false;
+      try {
+        const r = await invoke<Result>("gem_break_fetch", { req: { class: klass, topN, spread: 1, auto: true } });
+        if (!r?.rows?.length) continue;
+        try {
+          localStorage.setItem(key, JSON.stringify(r));
+          const sel = watchSettings.value.klass === MANUAL_ONLY ? "" : (watchSettings.value.klass ?? "");
+          if (klass === sel) localStorage.setItem(RESULT_KEY, JSON.stringify(r));
+        } catch {
+          /* 保存できなくても次の回で取り直す */
+        }
+        rankingAutoAt.value = Date.now();
+      } catch (e) {
+        // 上位プレイヤーMOD一覧の取得中などで断られた時は、残りも次の 1 分でまた見る
+        void appLog(`[使用率] 自動取得できず (${klass || "全体"}): ${e instanceof Error ? e.message : String(e)}`);
+        return;
+      }
+    }
+    // 上位を自動で入れる設定なら監視リストも新しい上位に (手で選んでいる時は変わらない)
+    if (watchSettings.value.autoTop) await rebuildWatches();
+  } finally {
+    rankingRunning = false;
+  }
 }
 
 /**

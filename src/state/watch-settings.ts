@@ -22,6 +22,7 @@ export {
   MANUAL_ONLY,
   MAX_WATCH_GEMS,
   WATCH_METRIC_LABEL,
+  CYCLE_HOUR_OPTIONS,
   type WatchMetric,
   type WatchSettings,
 } from "./watch-settings-defaults";

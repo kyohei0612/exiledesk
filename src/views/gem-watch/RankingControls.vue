@@ -8,7 +8,7 @@ import { computed } from "vue";
 import { jaAscendancy } from "../../i18n/ascendancies-ja";
 import { fmtClock } from "../../utils/format-time";
 import { ascendancies } from "../../state/ascendancy-list";
-import { WATCH_METRIC_LABEL, type updateWatchSettings, type WatchMetric, type WatchSettings } from "../../state/watch-settings";
+import { CYCLE_HOUR_OPTIONS, WATCH_METRIC_LABEL, type updateWatchSettings, type WatchMetric, type WatchSettings } from "../../state/watch-settings";
 
 const props = defineProps<{
   settings: WatchSettings;
@@ -65,6 +65,19 @@ const topAscendancies = computed(() => {
   >
     {{ rankingBusy ? (rankingWaiting ? "待機中…" : "取得中…") : rankingNeedFetch ? "ランキングを取得" : "ランキングを取り直す" }}
   </button>
+  <!-- 自動取得の間隔 (監視の「自動取得の間隔」と同じ中身。2026-10-06 オーナー) -->
+  <label class="inline-flex items-center gap-2">
+    <span class="text-[var(--exile-color-text-secondary)]">自動取得の間隔</span>
+    <select
+      class="sel w-44"
+      :value="settings.rankingCycleHours"
+      title="全アセンダンシー + 使用率の上位 8 アセンダンシー (合計 9 つ) を、前に取った時刻からこの時間ごとに 1 つずつ取り直します。監視の一括取得と重なったら、終わってから取ります"
+      @change="emit('apply', { rankingCycleHours: Number(($event.target as HTMLSelectElement).value) })"
+    >
+      <option :value="0">自動取得しない</option>
+      <option v-for="h in CYCLE_HOUR_OPTIONS" :key="h" :value="h">{{ h }} 時間ごとに 9 つ</option>
+    </select>
+  </label>
   <!-- 取り直していないことが分かるように、出している結果の取得時刻を出す (オーナー指摘 2026-09-20) -->
   <span v-if="rankingFetchedAt" class="text-[11px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
     {{ fmtClock(rankingFetchedAt) }} に取得した分を表示中

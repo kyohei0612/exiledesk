@@ -92,6 +92,33 @@ pub struct GemBreakRequest {
     /// 何アセンダンシーに散らすか (既定 1 = class だけ)。2 以上なら使用率上位から均等に取る
     #[serde(alias = "spread")]
     pub spread: Option<usize>,
+    /// 自動取得 (使用率ランキングの「自動取得の間隔」) からの取得か。走っている間は監視の自動巡回を後に回す
+    #[serde(default)]
+    pub auto: bool,
+}
+
+/// 使用率ランキングの自動取得が走っているか (2026-10-06 オーナー「同時に取得させないように、被ったら後に回す」。
+/// 一括取得同士だけ。手で押す取得とは重なって良い)
+static RANKING_AUTO: AtomicBool = AtomicBool::new(false);
+pub fn ranking_auto_busy() -> bool {
+    RANKING_AUTO.load(Ordering::SeqCst)
+}
+/// 自動取得の間だけ立てて、終わったら (失敗でも) 下ろす
+pub(crate) struct RankingAutoGuard(bool);
+impl RankingAutoGuard {
+    pub(crate) fn new(auto: bool) -> Self {
+        if auto {
+            RANKING_AUTO.store(true, Ordering::SeqCst);
+        }
+        Self(auto)
+    }
+}
+impl Drop for RankingAutoGuard {
+    fn drop(&mut self) {
+        if self.0 {
+            RANKING_AUTO.store(false, Ordering::SeqCst);
+        }
+    }
 }
 
 #[derive(Serialize, Clone)]

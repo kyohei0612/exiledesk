@@ -184,6 +184,14 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
                 tokio::time::sleep(Duration::from_secs(60)).await;
                 continue;
             }
+            if crate::gem_break::ranking_auto_busy() {
+                // 使用率ランキングの自動取得が走っている。一括取得同士は重ねず、終わってから回す (オーナー 2026-10-06)
+                if now >= next_sweep_at(&store) {
+                    crate::app_log::line_static("[巡回] 時間だが、使用率ランキングの自動取得中なので後に回す (1 分後に見直す)");
+                }
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                continue;
+            }
             if RUNNING_AUTO.load(Ordering::SeqCst) {
                 // 自動 (巡回か取り直し) が走っている。終わってから次の判断をする
                 tokio::time::sleep(Duration::from_secs(60)).await;

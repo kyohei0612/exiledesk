@@ -15,7 +15,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { resumeAtText, waitText } from "../utils/wait-text";
 import { MANUAL_ONLY, watchSettings } from "../state/watch-settings";
-import { rankingClass } from "../state/gem-watch-auto";
+import { rankingAutoAt, rankingClass } from "../state/gem-watch-auto";
 import { loadAscendancies } from "../state/ascendancy-list";
 import UsageTable from "./gem-watch/UsageTable.vue";
 import UsageRankingHeader from "./gem-watch/UsageRankingHeader.vue";
@@ -190,6 +190,8 @@ const { resultClassJa, fetchedAtText, waiting, doneText, shortfall, progressText
 
 let unlisten: UnlistenFn | null = null;
 watch(selectedClass, () => void showCached());
+// 自動取得 (使用率ランキングの「自動取得の間隔」) で取り直したら、出している分も新しくする
+watch(rankingAutoAt, () => void showCached());
 watch(resultClass, (v) => (rankingClass.value = v), { immediate: true });
 
 onMounted(async () => {

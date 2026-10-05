@@ -49,7 +49,16 @@ export interface WatchSettings {
   droppedAt: Record<string, number>;
   /** 自動で上位を入れるか (false なら手動のジェムだけ監視する) */
   autoTop: boolean;
+  /**
+   * 使用率ランキングの自動取得の間隔 (時間)。0 = 自動取得しない (MOD 一覧の時に一緒に取る分だけ)。
+   * 選べる値は監視の「自動取得の間隔」と同じ (2026-10-06 オーナー「使用率ランキングも一緒で自動取得の間隔プルダウン、中身一緒で」)
+   */
+  rankingCycleHours: number;
 }
+
+/** 自動取得の間隔の選択肢 (時間)。監視の一括取得と使用率ランキングで共通 */
+export const CYCLE_HOUR_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24] as const;
+const cycleHours = (v: unknown): number => (typeof v === "number" && (CYCLE_HOUR_OPTIONS as readonly number[]).includes(v) ? v : 0);
 
 /** 監視できるジェムの上限 (オーナー指示 2026-09-20「監視ジェム最大 7 にしよう」)。
  *
@@ -85,6 +94,7 @@ export const DEFAULT_WATCH_SETTINGS: WatchSettings = {
   excluded: [],
   droppedAt: {},
   autoTop: false,
+  rankingCycleHours: 0,
 };
 
 export const WATCH_SETTINGS_KEY = "exiledesk.watch-settings";
@@ -109,6 +119,7 @@ export function loadWatchSettings(): WatchSettings {
         droppedAt: stamps(s.droppedAt),
         // v4 で「自動で上位を入れない」を既定にしたので、古い設定の値は引き継がない
         autoTop: DEFAULT_WATCH_SETTINGS.autoTop,
+        rankingCycleHours: cycleHours(s.rankingCycleHours),
       };
     }
     return {
@@ -121,6 +132,7 @@ export function loadWatchSettings(): WatchSettings {
       excluded: strings(s.excluded),
       droppedAt: stamps(s.droppedAt),
       autoTop: s.autoTop !== false,
+      rankingCycleHours: cycleHours(s.rankingCycleHours),
     };
   } catch {
     return { ...DEFAULT_WATCH_SETTINGS };
