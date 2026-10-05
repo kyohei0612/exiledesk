@@ -183,7 +183,7 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
   if (isRune(key)) {
     const eff = item ? runeEffectFor(runeOf(key)!, item.cls.category) : null;
     return [
-      ...(eff ? [`この部位 (${eff.catJa}) での効き目: ${eff.ja}`] : item ? ["この部位には効き目が無い"] : []),
+      ...(eff ? [] : item ? ["この部位には効き目が無い"] : []),
       ...ruleLines(runeNameOf(key)),
       "空きソケットが無い時は、はまっている物と置き換える (ソケットの絵を押すとそのソケット、アイテムを押すと左から最初の置き換えられる物)",
     ];
@@ -202,9 +202,6 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     const t = essenceTarget(data, item, key);
     if (!t) return ["このベースには使えないエッセンス"];
     const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
-    // 数値は画面の単位で (services/mods/stat-scale.ts)
-    const text = fillHashes(jaOfMod(t.mod), tier ? tierDisplayRanges(tier) : []);
-    const side = t.side === "prefix" ? "プレフィックス" : "サフィックス";
     // 深淵のエッセンス (2026-10-03)
     if (t.mod.family === "EssenceAbyss") {
       return [
@@ -217,7 +214,6 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     if (t.level === "perfect") {
       return [
         "**レア** の MOD を 1 つ消してから、この MOD を付ける",
-        `付く MOD (${side}): ${text}`,
         "消すのはフラクチャー以外から等しく 1 つ。付ける側が埋まっていれば、その側から消す",
         "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)。同じ系統が付いていると打てない",
         `必要なアイテムレベル: ${tier?.ilvl ?? "?"}`,
@@ -226,7 +222,6 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     }
     return [
       "**マジック → レア** にして、この MOD を付ける (付いている MOD は残る)",
-      `付く MOD (${side}): ${text}`,
       "エッセンスの MOD はアイテムに 1 つまで。同じ系統が付いていると打てない",
       `必要なアイテムレベル: ${tier?.ilvl ?? "?"}`,
       "レアに使うにはパーフェクトエッセンス",
@@ -235,3 +230,22 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
   return [];
 }
 
+/**
+ * 付く MOD だけ (カードの上に色を変えて箇条書き、2026-10-05 オーナー「エッセンスは特に説明欄が見づらいから、ルーンとか特定の MOD が付く奴は
+ * 分かりやすい色にそこだけ変えよう」「付く MOD だけ箇条書きで書いてあげたい」)。今のアイテムの部位での物。無い物は空
+ */
+export function stageAdds(key: string, data: PatchData | null, item: StageItem | null): { head: string; lines: string[] } | null {
+  if (!item) return null;
+  if (isRune(key)) {
+    const eff = runeEffectFor(runeOf(key)!, item.cls.category);
+    return eff ? { head: `付く MOD (${eff.catJa})`, lines: eff.ja.split("\n").map((x) => x.trim()).filter(Boolean) } : null;
+  }
+  if (key.startsWith("essence:") && data) {
+    const t = essenceTarget(data, item, key);
+    if (!t || t.mod.family === "EssenceAbyss") return null;
+    const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
+    const text = fillHashes(jaOfMod(t.mod), tier ? tierDisplayRanges(tier) : []);
+    return { head: `付く MOD (${t.side === "prefix" ? "プレフィックス" : "サフィックス"})`, lines: text.split("\n").filter(Boolean) };
+  }
+  return null;
+}

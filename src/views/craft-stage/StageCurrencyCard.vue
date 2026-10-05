@@ -7,9 +7,9 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { enOf } from "../../state/craft-stage-shelf";
-import { stageHelp } from "../../state/craft-stage-help";
+import { stageAdds, stageHelp } from "../../state/craft-stage-help";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { displayCurrency } from "../../state/display-currency";
 
@@ -18,6 +18,8 @@ const props = defineProps<{ k: string; x: number; y: number; reason: string | nu
 const plain = (s: string): string => s.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
 const official = computed(() => (currencyHoverOf(enOf(props.k, craftStage.item.value))?.e ?? []).map(plain));
 const help = computed(() => stageHelp(props.k, craftStage.data.value, craftStage.item.value));
+/** 付く MOD (エッセンス・ルーン等)。アイコンの下に色を変えて箇条書き (2026-10-05 オーナー「説明欄が見づらいから、特定の MOD が付く奴はそこだけ分かりやすい色に」) */
+const adds = computed(() => (props.omen ? null : stageAdds(props.k, craftStage.data.value, craftStage.item.value)));
 /** 「**強調**」を太字の区切りにする */
 const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**").map((t, i) => ({ t, b: i % 2 === 1 }));
 </script>
@@ -25,8 +27,19 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
 <template>
   <Teleport to="body">
     <div class="pointer-events-none fixed z-[500] w-[340px] rounded-xl border border-amber-300/40 bg-[#0d0b08]/95 p-3 text-[12px] leading-relaxed shadow-[0_8px_30px_rgba(0,0,0,0.7)]" :style="{ left: `${x}px`, top: `${y}px` }">
-      <p class="text-[14px] font-bold" :class="omen ? 'text-violet-200' : 'text-amber-100'">{{ nameOf(k) }}</p>
-      <p v-if="priceOf(k)" class="text-[11px] text-white/50">相場 {{ displayCurrency.money(priceOf(k)) }}</p>
+      <div class="flex items-center gap-2">
+        <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-10 w-10 shrink-0 object-contain" />
+        <div>
+          <p class="text-[14px] font-bold" :class="omen ? 'text-violet-200' : 'text-amber-100'">{{ nameOf(k) }}</p>
+          <p v-if="priceOf(k)" class="text-[11px] text-white/50">相場 {{ displayCurrency.money(priceOf(k)) }}</p>
+        </div>
+      </div>
+      <div v-if="adds" class="mt-2 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
+        <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
+        <p v-for="(l, i) in adds.lines" :key="'a' + i" class="flex gap-1.5 text-[13px] font-semibold text-emerald-200">
+          <span class="text-emerald-400">・</span><span>{{ l }}</span>
+        </p>
+      </div>
       <div v-if="official.length" class="mt-2 border-t border-white/10 pt-2 text-[#b8c8e8]">
         <p v-for="(l, i) in official" :key="'o' + i">{{ l }}</p>
       </div>

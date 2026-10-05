@@ -19,7 +19,7 @@ const emit = defineEmits<{ hold: [key: string] }>();
  * 持っているカレンシーに掛けられるお告げの並び (呼ぶ側の slot "held")。オーブのタブでは使える物の並びの直後 (2026-10-05 から。前は「その他」の段の直後)、
  * 他のタブは一番下
  */
-const tab = ref<"orb" | "essence" | "catalyst" | "rune" | "omen">("orb");
+const tab = ref<"usable" | "orb" | "essence" | "catalyst" | "rune" | "omen">("orb");
 /**
  * オーブ・骨のタブ: 今のアイテムに使える (光っている) 物を前に、使えない物を後ろに (2026-10-05 オーナー「使える光ってるオーブを丸ごと前に
  * 持ってきちゃおうか。1 段目に入らなければ折り返して 2 段目に。その方がこれ使えるんだなってなる」)。まとまり (変成・増強…) の並びは保つ
@@ -55,7 +55,26 @@ const effectOf = (k: string): string => {
 };
 const essences = computed(() => essenceShelf(craftStage.data.value, craftStage.item.value));
 const hasCatalyst = computed(() => ["Rings", "Amulets"].includes(craftStage.item.value?.cls.category ?? ""));
+/**
+ * 使用可能のタブ (実験、2026-10-05 オーナー「他のエッセンスとかも。使用可能ってタブを足して、そこに使える物だけ全部」)。
+ * オーブ・骨 / エッセンス / カタリスト / ルーン (ソウルコア・アイドルも) のうち、今のアイテムに打てる物だけを種類ごとに。お告げは掛けておく物なので入れない
+ */
+const usableAll = computed(() => {
+  const it = craftStage.item.value;
+  void craftStage.omens.value;
+  const ok = (k: string): boolean => !craftStage.usable(k);
+  const sec = (label: string, keys: string[], kind?: string) => ({ label, keys: keys.filter(ok), kind });
+  return [
+    sec("オーブ・骨", [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
+    sec("エッセンス", essences.value.flatMap((g) => g.keys)),
+    ...(hasCatalyst.value ? [sec("カタリスト", [...CATALYSTS])] : []),
+    // ルーンはルーンのタブと同じ段ごとのまとまりで、クラフトに関わる物以外は畳む (2026-10-05 オーナー「そこでもルーンはルーンページみたく閉じる奴は閉じちゃっておk」)
+    ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
+  ].filter((x) => x.keys.length);
+});
+const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
 const TABS = computed(() => [
+  { id: "usable" as const, label: `使用可能 (${usableCount.value})` },
   { id: "orb" as const, label: "オーブ・骨" },
   { id: "essence" as const, label: `エッセンス (${essences.value.length})` },
   ...(hasCatalyst.value ? [{ id: "catalyst" as const, label: "カタリスト" }] : []),
@@ -77,8 +96,25 @@ const TABS = computed(() => [
       >{{ t.label }}</button>
     </div>
 
+    <!-- 使用可能 (実験): 今のアイテムに打てる物だけを種類ごとに -->
+    <div v-if="tab === 'usable'" class="space-y-2">
+      <div v-for="sec in usableAll" :key="sec.kind ?? sec.label">
+        <p class="mb-0.5 flex items-center gap-2 text-[10px]">
+          <span class="opacity-60">{{ sec.label }} ({{ sec.keys.length }})</span>
+          <button v-if="sec.kind && sec.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" type="button" class="rounded px-1 text-[10px] text-sky-300/80 hover:bg-white/10" @click="toggleRunes(sec.kind)">
+            {{ openRunes.has(sec.kind) ? "たたむ ▴" : `他 ${sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸` }}
+          </button>
+        </p>
+        <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5">
+          <ShelfButton v-for="k in !sec.kind || openRunes.has(sec.kind) ? sec.keys : sec.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
+        </div>
+      </div>
+      <p v-if="!usableAll.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
+      <div v-if="$slots.held" class="mt-2"><slot name="held" /></div>
+    </div>
+
     <!-- 使える物を前に、使えない物は線の下に (2026-10-05)。持っているカレンシーのお告げは使える物の直後 -->
-    <div v-if="tab === 'orb'">
+    <div v-else-if="tab === 'orb'">
       <div class="flex flex-wrap gap-x-4 gap-y-2">
         <div v-for="g in orbSplit.usable" :key="'u' + g.kind" class="flex gap-1.5">
           <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
@@ -141,6 +177,6 @@ const TABS = computed(() => [
       </div>
     </div>
     <!-- オーブ以外のタブ (エッセンス等) で持った時は一番下 (お告げのタブは棚そのものがお告げなので出さない) -->
-    <div v-if="tab !== 'orb' && tab !== 'omen' && $slots.held" class="mt-3"><slot name="held" /></div>
+    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held" class="mt-3"><slot name="held" /></div>
   </div>
 </template>
