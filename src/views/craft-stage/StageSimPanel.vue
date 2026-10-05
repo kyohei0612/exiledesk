@@ -569,7 +569,7 @@ const whiteFlow = computed(() => {
 /**
  * 4 最安値スタート: フラクチャー済みのベースを手に入れるまでの 3 ルート (回さずに計算。高貴建て)。流れが一緒になるのはフラクチャーの後
  *   self   … 自作 (白から増強・消去スパム → 王者 → 骨の壁 → フラクチャー)。1 回分 × 3 (1/3) + 固定後の消去 × 2
- *   four   … レアのフラクチャー無しベース (4 MOD・当たり 1) を買う → 壁 → フラクチャー。1 回分 × 3 + 消去 × 2
+ *   four   … レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD、2026-10-05 オーナー「3 MOD + 1 MOD (狙い) で表示」) を買う → 壁 → フラクチャー。1 回分 × 3 + 消去 × 2
  *   bought … フラクチャー済みのベースを買う (× 1)
  */
 const routes = computed(() => {
@@ -577,7 +577,7 @@ const routes = computed(() => {
   const fourN = num(fourDivine.value), bN = num(boughtDivine.value);
   const list = [
     { key: "self", name: "① 自作 (白から増強・消去スパム)", cost: c ? c.total : null },
-    { key: "four", name: "② レアのフラクチャー無しベース (4 MOD・当たり 1) を買う", cost: c && fourN != null ? (fourN + c.buyRest) * 3 + c.after : null },
+    { key: "four", name: "② レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: c && fourN != null ? (fourN + c.buyRest) * 3 + c.after : null },
     { key: "bought", name: "③ フラクチャー済みのベースを買う", cost: bN },
   ];
   const known = list.filter((x) => x.cost != null && Number.isFinite(x.cost));
@@ -611,7 +611,7 @@ const compare = computed(() => {
     const rest = restCost.value;
     const c = calc.value;
     const four = c && c.buyOnce != null && rest != null ? c.buyOnce * 3 + c.after + rest : null;
-    list.push({ key: "four", name: "4 MOD・当たり 1 のベースを買う", cost: four, note: num(fourDivine.value) == null ? "値段を入れると出ます" : "回すと出ます" });
+    list.push({ key: "four", name: "レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: four, note: num(fourDivine.value) == null ? "値段を入れると出ます" : "回すと出ます" });
     const bN = num(boughtDivine.value);
     const bought = bN != null && rest != null ? bN * dv + rest : null;
     list.push({ key: "bought", name: "固定済みのベースを買う", cost: bought, note: num(boughtDivine.value) == null ? "値段を入れると出ます" : "回すと出ます" });
