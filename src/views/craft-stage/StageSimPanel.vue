@@ -552,10 +552,10 @@ function replay(): void {
               <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
               <td class="py-1">
                 <!-- あるいはがあれば枠で囲んで「どれか 1 つ」(完成図と同じ) -->
-                <div :class="r.alts.length ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
-                  <p v-if="r.alts.length" class="text-[10px] font-bold text-amber-200">どれか 1 つ</p>
-                  <span class="block"><span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></span>
-                  <span v-for="a in r.alts" :key="a.modId" class="block">
+                <div :class="r.alts.length ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
+                  <span v-if="r.alts.length" class="text-[10px] font-bold text-amber-200">どれか 1 つ:</span>
+                  <span :class="r.alts.length ? 'inline-flex items-center rounded bg-black/30 px-1' : ''"><span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></span>
+                  <span v-for="a in r.alts" :key="a.modId" class="inline-flex items-center rounded bg-black/30 px-1">
                     <span :class="r.tone">{{ a.text }}</span>
                     <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ a.rank }} 以上</span>
                     <button type="button" class="ml-1 opacity-50 hover:opacity-100" title="この候補を外す" @click="removeAlt(r.modId, a.modId)">×</button>

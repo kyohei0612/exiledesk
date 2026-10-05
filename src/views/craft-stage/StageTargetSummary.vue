@@ -74,10 +74,17 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
         <span class="shrink-0 rounded border px-1 text-[10px]" :class="KINDS[g.kind].cls">{{ KINDS[g.kind].label }}</span>
         <!-- 2 つ以上は枠で囲んで「どれか 1 つ」 -->
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
-          <p v-if="g.members.length > 1" class="text-[10px] font-bold text-amber-200">どれか 1 つ</p>
-          <div v-for="r in g.members" :key="r.modId" class="flex items-center gap-1.5">
-            <span class="min-w-0 flex-1 truncate" :title="r.text">{{ r.text }}</span>
-            <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
+          <!-- 2 つ以上は横に並べて折り返す (縦に積むと太くなる、2026-10-05 オーナー) -->
+          <div v-if="g.members.length > 1" class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <span class="text-[10px] font-bold text-amber-200">どれか 1 つ:</span>
+            <span v-for="r in g.members" :key="r.modId" class="inline-flex max-w-full items-center gap-1 rounded bg-black/30 px-1">
+              <span class="truncate" :title="r.text">{{ r.text }}</span>
+              <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
+            </span>
+          </div>
+          <div v-else class="flex items-center gap-1.5">
+            <span class="min-w-0 flex-1 truncate" :title="g.members[0]!.text">{{ g.members[0]!.text }}</span>
+            <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ g.members[0]!.rank }}</span>
           </div>
         </div>
         <button v-if="s.simShowMods.value && (g.kind === 'normal' || g.kind === 'desecrated')" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
