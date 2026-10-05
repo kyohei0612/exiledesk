@@ -6,6 +6,10 @@
  * (元素 496 件 vs エレメント 6 件、アタック 1224 vs 攻撃 45。2026-09-26 オーナー「タグの日本語訳をチェック」)。
  * short = 札に出す短い名前、cls = 札の色 (無いタグは札に出さない)
  */
+/**
+ * 札 (cls あり) に出すのは poe2db が札にしているタグだけ (2026-10-05 オーナー「poe2db が出していない物は外した方が良さそう」:
+ * 出血・毒・防御・ドロップ・チャージ・ルーンワード は名前だけ残して札にしない)
+ */
 const TAGS: Record<string, { ja: string; short?: string; cls?: string }> = {
   mana: { ja: "マナ", cls: "bg-blue-500/20 text-blue-200" },
   life: { ja: "ライフ", cls: "bg-rose-500/20 text-rose-200" },
@@ -19,7 +23,7 @@ const TAGS: Record<string, { ja: string; short?: string; cls?: string }> = {
   chaos: { ja: "混沌", cls: "bg-fuchsia-600/25 text-fuchsia-200" },
   physical: { ja: "物理", cls: "bg-zinc-400/20 text-zinc-200" },
   resistance: { ja: "耐性", cls: "bg-emerald-500/20 text-emerald-200" },
-  defences: { ja: "防御", cls: "bg-slate-400/20 text-slate-200" },
+  defences: { ja: "防御" },
   armour: { ja: "アーマー", cls: "bg-stone-400/20 text-stone-200" },
   evasion: { ja: "回避", cls: "bg-lime-500/20 text-lime-200" },
   energy_shield: { ja: "エナジーシールド", short: "ES", cls: "bg-cyan-500/20 text-cyan-200" },
@@ -32,12 +36,12 @@ const TAGS: Record<string, { ja: string; short?: string; cls?: string }> = {
   curse: { ja: "呪い", cls: "bg-purple-600/20 text-purple-200" },
   aura: { ja: "オーラ", cls: "bg-yellow-600/20 text-yellow-100" },
   ailment: { ja: "状態異常", cls: "bg-purple-400/20 text-purple-200" },
-  bleed: { ja: "出血", cls: "bg-red-800/30 text-red-200" },
-  poison: { ja: "毒", cls: "bg-lime-700/30 text-lime-200" },
+  bleed: { ja: "出血" },
+  poison: { ja: "毒" },
   block: { ja: "ブロック", cls: "bg-stone-500/20 text-stone-200" },
   flask: { ja: "フラスコ", cls: "bg-red-400/20 text-red-100" },
   charm: { ja: "チャーム", cls: "bg-red-300/20 text-red-100" },
-  drop: { ja: "ドロップ", cls: "bg-yellow-500/15 text-yellow-100" },
+  drop: { ja: "ドロップ" },
   elemental_damage: { ja: "元素ダメージ" },
   physical_damage: { ja: "物理ダメージ" },
   chaos_damage: { ja: "混沌ダメージ" },
@@ -56,11 +60,11 @@ const TAGS: Record<string, { ja: string; short?: string; cls?: string }> = {
   // 2026-10-05 タグの点検で足した物 (クライアントの implicit_tags に出てくるのに無かった物)
   skill: { ja: "スキル", cls: "bg-sky-600/20 text-sky-100" },
   dot_multi: { ja: "継続ダメージ", cls: "bg-orange-700/25 text-orange-200" },
-  power_charge: { ja: "パワーチャージ", cls: "bg-blue-600/25 text-blue-100" },
-  endurance_charge: { ja: "エンデュランスチャージ", cls: "bg-red-700/25 text-red-100" },
-  frenzy_charge: { ja: "フレンジーチャージ", cls: "bg-green-700/25 text-green-100" },
+  power_charge: { ja: "パワーチャージ" },
+  endurance_charge: { ja: "エンデュランスチャージ" },
+  frenzy_charge: { ja: "フレンジーチャージ" },
   melee: { ja: "近接", cls: "bg-amber-700/25 text-amber-100" },
-  runic_ward: { ja: "ルーンワード", cls: "bg-cyan-700/25 text-cyan-100" },
+  runic_ward: { ja: "ルーンワード" },
   minion_damage: { ja: "ミニオンダメージ" },
   minion_speed: { ja: "ミニオンスピード" },
   minion_resistance: { ja: "ミニオン耐性" },

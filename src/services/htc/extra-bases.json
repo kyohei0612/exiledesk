@@ -48365,8 +48365,8 @@
   "Body_Armours_dex_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Body_Armours_dex_int/Essence_Dexterity": [
    "attribute"
@@ -48487,8 +48487,8 @@
   "Body_Armours_dex/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Body_Armours_dex/Essence_Dexterity": [
    "attribute"
@@ -48606,8 +48606,8 @@
   "Body_Armours_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Body_Armours_int/Essence_FireResistance": [
    "elemental_resistance",
@@ -48725,8 +48725,8 @@
   "Body_Armours_str_dex/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Body_Armours_str_dex/Essence_Dexterity": [
    "attribute"
@@ -48847,8 +48847,8 @@
   "Body_Armours_str_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Body_Armours_str_int/Essence_FireResistance": [
    "elemental_resistance",
@@ -48969,8 +48969,8 @@
   "Body_Armours_str/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Body_Armours_str/Essence_FireResistance": [
    "elemental_resistance",
@@ -49115,8 +49115,8 @@
   "Boots_dex_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Boots_dex_int/Essence_Dexterity": [
    "attribute"
@@ -49257,8 +49257,8 @@
   "Boots_dex/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Boots_dex/Essence_Dexterity": [
    "attribute"
@@ -49396,8 +49396,8 @@
   "Boots_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Boots_int/Essence_FireResistance": [
    "elemental_resistance",
@@ -49535,8 +49535,8 @@
   "Boots_str_dex/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Boots_str_dex/Essence_Dexterity": [
    "attribute"
@@ -49677,8 +49677,8 @@
   "Boots_str_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Boots_str_int/Essence_FireResistance": [
    "elemental_resistance",
@@ -49819,8 +49819,8 @@
   "Boots_str/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Boots_str/Essence_FireResistance": [
    "elemental_resistance",
@@ -50238,9 +50238,7 @@
    "speed"
   ],
   "Crossbows/PerfectEssence_IncreaseSocketedGemLevel": [
-   "attack",
-   "caster",
-   "gem"
+   "attack"
   ],
   "Crossbows/PerfectEssence_MartialWeaponGainedDamage": [
    "physical_damage",
@@ -50499,8 +50497,8 @@
   "Gloves_dex_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Gloves_dex_int/Essence_Dexterity": [
    "attribute"
@@ -50538,10 +50536,7 @@
   ],
   "Gloves_dex_int/PerfectEssence_CriticalStrikeMultiplier": [
    "damage",
-   "attack",
-   "critical",
-   "caster_critical",
-   "caster"
+   "critical"
   ],
   "Gloves_dex_int/PerfectEssence_DamagingAilmentDuration": [
    "ailment"
@@ -50641,8 +50636,8 @@
   "Gloves_dex/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Gloves_dex/Essence_Dexterity": [
    "attribute"
@@ -50677,10 +50672,7 @@
   ],
   "Gloves_dex/PerfectEssence_CriticalStrikeMultiplier": [
    "damage",
-   "attack",
-   "critical",
-   "caster_critical",
-   "caster"
+   "critical"
   ],
   "Gloves_dex/PerfectEssence_DamagingAilmentDuration": [
    "ailment"
@@ -50780,8 +50772,8 @@
   "Gloves_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Gloves_int/Essence_FireResistance": [
    "elemental_resistance",
@@ -50816,10 +50808,7 @@
   ],
   "Gloves_int/PerfectEssence_CriticalStrikeMultiplier": [
    "damage",
-   "attack",
-   "critical",
-   "caster_critical",
-   "caster"
+   "critical"
   ],
   "Gloves_int/PerfectEssence_DamagingAilmentDuration": [
    "ailment"
@@ -50919,8 +50908,8 @@
   "Gloves_str_dex/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Gloves_str_dex/Essence_Dexterity": [
    "attribute"
@@ -50958,10 +50947,7 @@
   ],
   "Gloves_str_dex/PerfectEssence_CriticalStrikeMultiplier": [
    "damage",
-   "attack",
-   "critical",
-   "caster_critical",
-   "caster"
+   "critical"
   ],
   "Gloves_str_dex/PerfectEssence_DamagingAilmentDuration": [
    "ailment"
@@ -51061,8 +51047,8 @@
   "Gloves_str_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Gloves_str_int/Essence_FireResistance": [
    "elemental_resistance",
@@ -51100,10 +51086,7 @@
   ],
   "Gloves_str_int/PerfectEssence_CriticalStrikeMultiplier": [
    "damage",
-   "attack",
-   "critical",
-   "caster_critical",
-   "caster"
+   "critical"
   ],
   "Gloves_str_int/PerfectEssence_DamagingAilmentDuration": [
    "ailment"
@@ -51203,8 +51186,8 @@
   "Gloves_str/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Gloves_str/Essence_FireResistance": [
    "elemental_resistance",
@@ -51239,10 +51222,7 @@
   ],
   "Gloves_str/PerfectEssence_CriticalStrikeMultiplier": [
    "damage",
-   "attack",
-   "critical",
-   "caster_critical",
-   "caster"
+   "critical"
   ],
   "Gloves_str/PerfectEssence_DamagingAilmentDuration": [
    "ailment"
@@ -51340,8 +51320,8 @@
   "Helmets_dex_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Helmets_dex_int/Essence_Dexterity": [
    "attribute"
@@ -51465,8 +51445,8 @@
   "Helmets_dex/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Helmets_dex/Essence_Dexterity": [
    "attribute"
@@ -51587,8 +51567,8 @@
   "Helmets_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Helmets_int/Essence_FireResistance": [
    "elemental_resistance",
@@ -51709,8 +51689,8 @@
   "Helmets_str_dex/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Helmets_str_dex/Essence_Dexterity": [
    "attribute"
@@ -51834,8 +51814,8 @@
   "Helmets_str_int/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Helmets_str_int/Essence_FireResistance": [
    "elemental_resistance",
@@ -51959,8 +51939,8 @@
   "Helmets_str/Essence_DefencesPercent": [
    "defences",
    "armour",
-   "energy_shield",
-   "evasion"
+   "evasion",
+   "energy_shield"
   ],
   "Helmets_str/Essence_FireResistance": [
    "elemental_resistance",
@@ -52298,9 +52278,7 @@
    "speed"
   ],
   "Quarterstaves/PerfectEssence_IncreaseSocketedGemLevel": [
-   "attack",
-   "caster",
-   "gem"
+   "attack"
   ],
   "Quarterstaves/PerfectEssence_MartialWeaponGainedDamage": [
    "physical_damage",
@@ -53832,9 +53810,7 @@
    "speed"
   ],
   "TwoHand_Maces/PerfectEssence_IncreaseSocketedGemLevel": [
-   "attack",
-   "caster",
-   "gem"
+   "attack"
   ],
   "TwoHand_Maces/PerfectEssence_MartialWeaponGainedDamage": [
    "physical_damage",
@@ -53981,7 +53957,6 @@
    "mana"
   ],
   "Wands_chaos/PerfectEssence_IncreaseSocketedGemLevel": [
-   "attack",
    "caster",
    "gem"
   ],
@@ -54105,7 +54080,6 @@
    "mana"
   ],
   "Wands_cold/PerfectEssence_IncreaseSocketedGemLevel": [
-   "attack",
    "caster",
    "gem"
   ],
@@ -54229,7 +54203,6 @@
    "mana"
   ],
   "Wands_fire/PerfectEssence_IncreaseSocketedGemLevel": [
-   "attack",
    "caster",
    "gem"
   ],
@@ -54353,7 +54326,6 @@
    "mana"
   ],
   "Wands_lightning/PerfectEssence_IncreaseSocketedGemLevel": [
-   "attack",
    "caster",
    "gem"
   ],
@@ -54477,7 +54449,6 @@
    "mana"
   ],
   "Wands_physical/PerfectEssence_IncreaseSocketedGemLevel": [
-   "attack",
    "caster",
    "gem"
   ],
@@ -54601,7 +54572,6 @@
    "mana"
   ],
   "Wands/PerfectEssence_IncreaseSocketedGemLevel": [
-   "attack",
    "caster",
    "gem"
   ],

@@ -88,7 +88,9 @@ const rows = computed(() =>
   [...props.item.prefixes.map((m) => ({ m, side: "プレ" })), ...props.item.suffixes.map((m) => ({ m, side: "サフィ" }))].map((r) => {
     // カタリストの品質で伸びた数値 (伸びない MOD は null)
     const b = boostedMod(props.item, r.m, craftStage.data.value ?? undefined);
-    const tags = props.showTags ? shownTags(r.m.tags ?? craftStage.data.value?.mods.get(r.m.modId)?.tags ?? []) : [];
+    // 画面用のタグ (クライアントの implicit_tags) を先に。r.m.tags は確率用 (カタリスト等) なので中身のタグが無い MOD がある (2026-10-05)
+    const em = craftStage.data.value?.mods.get(r.m.modId);
+    const tags = props.showTags ? shownTags(em?.displayTags ?? r.m.tags ?? em?.tags ?? []) : [];
     return { ...r, text: b?.textJa ?? r.m.textJa, boosted: !!b, tags };
   }),
 );

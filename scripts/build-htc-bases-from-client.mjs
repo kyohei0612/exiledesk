@@ -83,7 +83,17 @@ const main = async () => {
     // 普通の MOD は同梱の tags がクライアントの implicit_tags と同じなので作らない (画面は tags をそのまま使う)
     if (m.source === "normal") continue;
     const set = new Set();
-    for (const t of m.tiers || []) for (const c of t.codes || []) for (const tag of MODS[c]?.implicit_tags || []) set.add(tag);
+    // 段の codes は候補が複数並ぶ事がある (完全なヒステリーのエッセンス = 攻撃用・呪文用・味方用・罠用・普通 の 5 つ)。
+    // 全部の和を取ると別物のタグ (攻撃・呪文) が混ざるので、文面が合う code だけを使う。合う物が無ければ共通するタグだけ
+    // (2026-10-05 オーナー「腕のエッセンスでクリダメ増加にダメージとクリティカルしかないのに付いてる」)
+    for (const t of m.tiers || []) {
+      const cs = (t.codes || []).filter((c) => MODS[c]);
+      if (!cs.length) continue;
+      const same = cs.filter((c) => normText(MODS[c].text) === normText(m.text));
+      if (same.length) { for (const c of same) for (const tag of MODS[c].implicit_tags || []) set.add(tag); continue; }
+      const common = cs.map((c) => new Set(MODS[c].implicit_tags || [])).reduce((x, y) => new Set([...x].filter((q) => y.has(q))));
+      for (const tag of common) set.add(tag);
+    }
     if (!set.size) {
       const dom = m.source === "desecrated" ? "desecrated" : "item";
       const hit = textTags.get(`${dom}|${m.family}|${normText(m.text)}`) ?? textTags.get(`item|${m.family}|${normText(m.text)}`)
