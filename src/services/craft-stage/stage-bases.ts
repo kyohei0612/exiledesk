@@ -89,6 +89,12 @@ export function uniquesOfSameClass(en: string): Array<{ en: string; ja: string }
   if (!cls) return [];
   return Object.entries(UNIQUES).filter(([n, u]) => n !== en && (u as { cls?: string }).cls === cls).map(([n, u]) => ({ en: n, ja: u.ja }));
 }
+/** そのベースと同じ種類 (trade2 のクラス) のユニーク全部 (古代人のお告げ:「同じアイテムクラスのランダムなユニーク」) */
+export function uniquesOfClassForBase(base: string): Array<{ en: string; ja: string }> {
+  const cls = Object.values(UNIQUES).find((u) => u.base === base && (u as { cls?: string }).cls) as { cls?: string } | undefined;
+  if (!cls?.cls) return uniquesForBase(base);
+  return Object.entries(UNIQUES).filter(([, u]) => (u as { cls?: string }).cls === cls.cls).map(([en, u]) => ({ en, ja: u.ja }));
+}
 export function uniquesForBase(base: string): Array<{ en: string; ja: string }> {
   return Object.entries(UNIQUES).filter(([, u]) => u.base === base).map(([en, u]) => ({ en, ja: u.ja }));
 }

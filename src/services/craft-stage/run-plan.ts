@@ -156,6 +156,7 @@ export function playStep(
     after: outItem(r.item, data),
     changed: { added: r.added.map((m) => outModIn(r.item, m, data)), removed: r.removed.map((m) => outModIn(item, m, data)), rarity_from: item.rarity, rarity_to: r.item.rarity },
     cost: { each, amount, subtotal, cumulative },
+    ...(r.note ? { note: r.note } : {}),
     // 指名で付けた手 (要望 ⑱-1): picked と、指名しなかったら付く確率 (動画で「本当は○% の当たり」と言うため)
     ...(r.picked ? ({ picked: true, pick_chance: r.picked.map((p) => ({ mod_id: p.modId, tier_name: p.tierName, chance: p.chance })) } as object) : {}),
     // オーグメント (ルーン) をはめた手 (2026-10-03、足したキー): どのソケット (1 から) に何を。置き換えた時は外れた物と、その行き先

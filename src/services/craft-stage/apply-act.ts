@@ -94,11 +94,19 @@ export function applyQuality(item: StageItem, key: string): StageApply {
 export const CHANCE_UNIQUE_P = 0.1;
 export const CHANCE_P_CONFIRMED = false;
 
-export function applyChance(item: StageItem, rng: () => number, uniques: Array<{ en: string; ja: string }>, outcome?: string): StageApply {
+/**
+ * お告げ (2026-10-05): 可能性のお告げ = 壊さない (外れてもノーマルのまま残る)。古代人のお告げ = 同じアイテムクラスのランダムなユニーク
+ * (候補は呼ぶ側が同じクラスの全部を渡す。ゲームではそのユニークのベースに変わるが、このステージはベースを変えない)
+ */
+export function applyChance(item: StageItem, rng: () => number, uniques: Array<{ en: string; ja: string }>, outcome?: string, used: readonly string[] = []): StageApply {
   if (item.rarity !== "normal") return skip(item, "ノーマルのアイテムにだけ使える");
   if (!uniques.length) return skip(item, "このベースのユニークが無い");
   const win = outcome === "unique" ? true : outcome === "destroyed" ? false : rng() < CHANCE_UNIQUE_P;
-  if (!win) return { applied: true, item: { ...item, destroyed: true }, added: [], removed: [] };
+  if (!win) {
+    if (used.includes("OmenofChance")) return { applied: true, item, added: [], removed: [], note: "可能性のお告げ: ユニークにはならなかったが、壊れずにノーマルのまま残った" };
+    return { applied: true, item: { ...item, destroyed: true }, added: [], removed: [] };
+  }
   const u = uniques[Math.floor(rng() * uniques.length)]!;
-  return { applied: true, item: { ...item, rarity: "unique", unique: u, prefixes: [], suffixes: [] }, added: [], removed: [] };
+  const note = used.includes("OmenoftheAncients") ? `古代人のお告げ: 同じ種類のユニーク ${uniques.length} 種類から選んだ` : undefined;
+  return { applied: true, item: { ...item, rarity: "unique", unique: u, prefixes: [], suffixes: [] }, added: [], removed: [], ...(note ? { note } : {}) };
 }

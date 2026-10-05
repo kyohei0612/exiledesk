@@ -163,6 +163,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
           <p class="mb-1 flex items-center justify-between"><b class="text-amber-100">直前の変化</b><span class="tabular-nums opacity-70">累計 {{ displayCurrency.money(s.total.value) }} · {{ s.log.value.length }} 手</span></p>
           <template v-if="s.last.value">
             <p class="opacity-80">{{ s.last.value.out.currency_ja }}<span v-if="s.last.value.out.omen_ja" class="ml-1 text-violet-300">+ {{ s.last.value.out.omen_ja }}</span><span v-if="!s.last.value.out.applied" class="ml-1 text-rose-300/80">— {{ s.last.value.out.reason }}</span></p>
+            <p v-if="s.last.value.out.note" class="text-sky-200/90">{{ String(s.last.value.out.note) }}</p>
             <p v-for="m in s.last.value.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ m.textJa }}</p>
             <p v-for="m in s.last.value.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ m.textJa }}</p>
           </template>

@@ -21,7 +21,7 @@ import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
 import { applyChance, applyJeweller, applyQuality, applyWisdom, collectShard, isShard, QUALITY_TARGET, SHARD_REASON } from "./apply-act";
-import { isFlask, isGem, uniquesForBase } from "./stage-bases";
+import { isFlask, isGem, uniquesForBase, uniquesOfClassForBase } from "./stage-bases";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
@@ -132,7 +132,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (currency === "wisdom") return applyWisdom(item);
   if (currency in QUALITY_TARGET) return applyQuality(item, currency);
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
-  if (currency === "chance") return applyChance(item, rng, uniquesForBase(item.base), hint.outcome);
+  if (currency === "chance") return applyChance(item, rng, used.includes("OmenoftheAncients") ? uniquesOfClassForBase(item.base) : uniquesForBase(item.base), hint.outcome, used);
   if (isExtra(currency)) return applyExtra(item, currency, rng, hint.outcome);
   if (isFlux(currency)) return applyFlux(data, item, currency);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
@@ -144,6 +144,8 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (kind === "reveal") return applyReveal(data, item, currency, rng, used);
   if (kind === "vaal") return applyVaal(data, item, rng, used);
   if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(data, item, rng);
+  // 祝福のお告げ: 暗黙 MOD だけを振り直す (クライアントの説明)。このステージは暗黙 MOD の数値を持たないので、明示 MOD はそのまま
+  if (kind === "divine" && used.includes("OmenoftheBlessed")) return { applied: true, item, added: [], removed: [], note: "祝福のお告げ: 暗黙 MOD だけを振り直した (明示 MOD は変わらない。このステージは暗黙の数値を持たない)" };
   if (kind === "catalyst" || OTHER_KINDS.includes(kind)) return applyOther(data, item, currency, rng);
 
   const { strength } = parseKey(currency);

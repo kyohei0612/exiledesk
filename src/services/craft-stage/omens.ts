@@ -11,7 +11,9 @@ export const OMEN_FOR: Readonly<Record<string, readonly string[]>> = {
   essence_perfect: ["OmenofSinistralCrystallisation", "OmenofDextralCrystallisation"],
   desecrate: ["OmenofSinistralNecromancy", "OmenofDextralNecromancy", "OmenoftheSovereign", "OmenoftheLiege", "OmenoftheBlackblooded", "OmenofPutrefaction"],
   reveal: ["OmenofAbyssalEchoes"],
-  divine: ["OmenofSanctification"],
+  divine: ["OmenofSanctification", "OmenoftheBlessed"],
+  // 2026-10-05 オーナー「その 3 つも足して」(相場に値段がある = 今のゲームにある)
+  chance: ["OmenofChance", "OmenoftheAncients"],
 };
 /**
  * 今のゲームに無いお告げ (2026-09-29、Forbidden Rites の相場 poe2scout で値段が 0 = 取引されていない。data-cache/market-snapshot-2026-09-29.json)。

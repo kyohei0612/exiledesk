@@ -58,3 +58,28 @@ describe("説明と動作の突き合わせ (2026-10-05)", () => {
     expect(omensFor("desecrate", ["OmenoftheSovereign", "OmenofPutrefaction", "OmenofSinistralNecromancy"])).toEqual(["OmenofPutrefaction"]);
   });
 });
+
+describe("祝福・可能性・古代人のお告げ (2026-10-05)", () => {
+  it("可能性のお告げは外れても壊れない、古代人は同じ種類のユニークから、祝福は明示 MOD を変えない", async () => {
+    const { loadPatch } = await import("./helpers/patch");
+    const { freshItem } = await import("../src/services/craft-stage/run-plan");
+    const { applyCurrency } = await import("../src/services/craft-stage/apply-currency");
+    const { uniquesForBase, uniquesOfClassForBase } = await import("../src/services/craft-stage/stage-bases");
+    const { mulberry32 } = await import("../src/services/htc/rng");
+    const data = await loadPatch();
+    const ring = freshItem(data, "Gold Ring", 82);
+    const miss = applyCurrency(data, ring, "chance", mulberry32(1), ["OmenofChance"], { outcome: "destroyed" });
+    expect(miss.applied).toBe(true);
+    expect(miss.item.destroyed).toBeFalsy();
+    expect(miss.omensUsed).toContain("OmenofChance");
+    expect(applyCurrency(data, ring, "chance", mulberry32(1), [], { outcome: "destroyed" }).item.destroyed).toBe(true);
+    expect(uniquesOfClassForBase("Gold Ring").length).toBeGreaterThan(uniquesForBase("Gold Ring").length);
+    const anc = applyCurrency(data, ring, "chance", mulberry32(3), ["OmenoftheAncients"], { outcome: "unique" });
+    expect(anc.item.rarity).toBe("unique");
+    const rare = applyCurrency(data, ring, "alchemy", mulberry32(4)).item;
+    const bl = applyCurrency(data, rare, "divine", mulberry32(5), ["OmenoftheBlessed"]);
+    expect(bl.applied).toBe(true);
+    expect(bl.item.prefixes).toEqual(rare.prefixes);
+    expect(bl.omensUsed).toContain("OmenoftheBlessed");
+  });
+});

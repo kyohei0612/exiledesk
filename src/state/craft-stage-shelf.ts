@@ -94,7 +94,7 @@ export function bonesFor(item: StageItem | null): string[] {
 export const CATALYSTS = Object.keys(KEYS.currency).filter((k) => k.startsWith("catalyst_"));
 const OMEN_LABEL: Record<string, string> = {
   exalt: "高貴", regal: "王者", alchemy: "錬金", chaos: "カオス", annul: "消去", essence_perfect: "パーフェクトエッセンス",
-  desecrate: "冒涜", reveal: "発現", vaal: "ヴァール", divine: "神",
+  desecrate: "冒涜", reveal: "発現", vaal: "ヴァール", divine: "神", chance: "可能性",
 };
 /** お告げ (掛かる手の種類ごと) */
 export const OMEN_GROUPS: ShelfGroup[] = Object.entries(OMEN_FOR).map(([kind, keys]) => ({ kind, label: OMEN_LABEL[kind] ?? kind, keys: [...keys] }));
