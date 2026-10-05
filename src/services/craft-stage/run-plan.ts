@@ -139,8 +139,9 @@ export function playStep(
   const used = r.omensUsed ?? [];
   // 使えない手は使っていない (費用も 0)。each はカレンシー 1 個、subtotal はお告げ込み
   const each = o.price(currency);
-  const amount = r.applied ? 1 + used.length : 0;
-  const subtotal = r.applied ? each + used.reduce((a, k) => a + o.price(k), 0) : 0;
+  const n = r.count ?? 1;
+  const amount = r.applied ? n + used.length : 0;
+  const subtotal = r.applied ? each * n + used.reduce((a, k) => a + o.price(k), 0) : 0;
   const cumulative = o.cumulative + subtotal;
   const out: OutStep = {
     index: o.index,

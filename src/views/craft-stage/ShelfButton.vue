@@ -12,6 +12,7 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import StageCurrencyCard from "./StageCurrencyCard.vue";
 import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
+import { shelfTag } from "../../state/craft-stage-help";
 
 const props = defineProps<{ k: string; omen?: boolean }>();
 const emit = defineEmits<{ pick: [key: string] }>();
@@ -26,6 +27,8 @@ const BADGE: Array<[RegExp, string, string]> = [
   [/^desecrate_altered$/, "変質", "text-fuchsia-300"],
 ];
 const badge = computed(() => BADGE.find(([re]) => re.test(props.k)) ?? null);
+/** 値段の代わりに出す付く MOD の短い名前 (エッセンス・カタリスト、2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで」「カタリストも一緒」) */
+const tag = computed(() => (props.omen ? null : shelfTag(props.k, craftStage.data.value, craftStage.item.value)));
 const reason = computed(() => (props.omen ? null : craftStage.usable(props.k)));
 const on = computed(() => (props.omen ? craftStage.omens.value.includes(props.k) : craftStage.held.value === props.k));
 
@@ -68,7 +71,10 @@ onBeforeUnmount(leave);
     <span class="mt-0.5 line-clamp-2 text-center leading-tight">{{ nameOf(k) }}</span>
     <span v-if="badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px]" :class="badge[2]">{{ badge[1] }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] font-bold text-white">有効</span>
-    <span v-if="priceOf(k)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
+    <span v-if="tag" class="mt-px w-full">
+      <span v-for="(t, i) in tag" :key="i" class="block truncate text-center text-[9px] font-semibold leading-tight text-emerald-300">・{{ t }}</span>
+    </span>
+    <span v-else-if="priceOf(k)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
   </button>
   <StageCurrencyCard v-if="card" :k="k" :x="card.x" :y="card.y" :reason="reason" :omen="omen" />
 </template>

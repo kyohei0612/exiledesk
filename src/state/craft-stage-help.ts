@@ -18,6 +18,8 @@ import { maxQualityOf } from "../services/craft-stage/stage-core";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
 import { CHANCE_UNIQUE_P, isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
+import { CATALYSTS as HTC_CATALYSTS } from "../services/htc/quality";
+import { enOf } from "./craft-stage-shelf";
 import type { StageItem } from "../services/craft-stage/types";
 
 const FLOOR = (kind: "transmute" | "regal", s: string): string => {
@@ -193,7 +195,7 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     const max = item ? maxQualityOf(item) : 20;
     return [
       // 上限はベースの最大品質 + MOD の「品質の最大値 +N%」(ブリーチのエッセンス) なので「このベースで」ではなく「今のアイテムで」
-      "**指輪・アミュレット** に品質を +1.5% (計算機と同じ)。上限は今のアイテムで " + `${max}%`,
+      `**指輪・アミュレット** の品質を **1 回で上限 (今のアイテムで ${max}%) まで** 上げる。使う数は 1 個 +1% で数える (計算機と同じ。ゲームは 1 個で 1〜2%、ほとんど 1%)`,
       "品質の種類はカタリストで決まる。**別の種類を使うと品質は 0 からやり直し**",
       "触媒の高貴のお告げと組むと、その種類の MOD が付きやすくなる (品質は使い切る)",
     ];
@@ -246,6 +248,38 @@ export function stageAdds(key: string, data: PatchData | null, item: StageItem |
     const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
     const text = fillHashes(jaOfMod(t.mod), tier ? tierDisplayRanges(tier) : []);
     return { head: `付く MOD (${t.side === "prefix" ? "プレフィックス" : "サフィックス"})`, lines: text.split("\n").filter(Boolean) };
+  }
+  return null;
+}
+
+/**
+ * MOD の文を棚のボタン用に短く (数値・「増加する」等を外す)。「マナ自動回復レートが#%増加する」→「マナ自動回復」、「火耐性 #%」→「火耐性」、
+ * 「#から#の火ダメージを追加する」→「追加火ダメージ」。2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで。マナ自動回復ならマナ自動とかで」
+ */
+export function shortMod(text: string): string {
+  return text.split(/\s*\/\s*|\n/).map((raw) => {
+    let s = raw.replace(/\([^)]*\)/g, "#").replace(/\d+(\.\d+)?/g, "#").trim();
+    let m: RegExpExecArray | null;
+    if ((m = /^#から#の(.+)を追加する$/.exec(s))) return `追加${m[1]}`;
+    if ((m = /^(.*?)ダメージの#%を追加(.+)として獲得する$/.exec(s))) return `${m[1] ? `${m[1].replace(/の$/, "")}の` : ""}${m[2]}獲得`;
+    if ((m = /^受けた(.*)ダメージの#%をライフとして回収する$/.exec(s))) return `${m[1] || ""}被ダメ回収`;
+    if ((m = /^#から#の(.+)$/.exec(s))) return m[1]!;
+    s = s.replace(/(が|を)?#?%?(増加|減少|上昇)する$/, "").replace(/#%?(の|個の)?/g, "").replace(/[#%+]/g, "").replace(/レート$/, "").replace(/\s+/g, "").trim();
+    return s;
+  }).filter(Boolean).join(" / ");
+}
+
+/** 棚のボタンの値段の代わりに出す、付く MOD の短い名前 (エッセンス・カタリスト)。無い物は null (値段のまま) */
+export function shelfTag(key: string, data: PatchData | null, item: StageItem | null): string[] | null {
+  if (key.startsWith("essence:")) {
+    const a = stageAdds(key, data, item);
+    return a ? a.lines.map(shortMod) : null;
+  }
+  if (key.startsWith("catalyst_")) {
+    const en = enOf(key, item);
+    const c = HTC_CATALYSTS.find((x) => x.en === en);
+    const m = c ? /\((.+?)(モッド)?\)/.exec(c.label.ja) : null;
+    return m ? [`${m[1]}系`] : null;
   }
   return null;
 }

@@ -16,7 +16,13 @@ import { displayCurrency } from "../../state/display-currency";
 const props = defineProps<{ k: string; x: number; y: number; reason: string | null; omen?: boolean }>();
 /** ゲームの書式記号 ([Corrupted|コラプト] → コラプト、[Hit] → Hit) を外す */
 const plain = (s: string): string => s.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
-const official = computed(() => (currencyHoverOf(enOf(props.k, craftStage.item.value))?.e ?? []).map(plain));
+const hover = computed(() => currencyHoverOf(enOf(props.k, craftStage.item.value)));
+const official = computed(() => (hover.value?.e ?? []).map(plain));
+/**
+ * 他の装備に使った時に付く物 (エッセンス・合金: クライアントの説明の部位ごとの一覧)。
+ * 2026-10-05 オーナー「違う武器とかでも付けれたり他のでも付けれるから、その説明は欲しい。分かりやすく教えて欲しいカード」
+ */
+const others = computed(() => (hover.value?.g ?? []).map((g) => ({ h: plain(g.h).replace(/に付く$/, ""), l: g.l.map(plain) })));
 const help = computed(() => stageHelp(props.k, craftStage.data.value, craftStage.item.value));
 /** 付く MOD (エッセンス・ルーン等)。アイコンの下に色を変えて箇条書き (2026-10-05 オーナー「説明欄が見づらいから、特定の MOD が付く奴はそこだけ分かりやすい色に」) */
 const adds = computed(() => (props.omen ? null : stageAdds(props.k, craftStage.data.value, craftStage.item.value)));
@@ -42,6 +48,13 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
       </div>
       <div v-if="official.length" class="mt-2 border-t border-white/10 pt-2 text-[#b8c8e8]">
         <p v-for="(l, i) in official" :key="'o' + i">{{ l }}</p>
+      </div>
+      <div v-if="others.length" class="mt-2 border-t border-white/10 pt-2">
+        <p class="mb-1 text-[11px] font-bold text-sky-200/80">使える装備と付く MOD</p>
+        <div v-for="(g, i) in others" :key="'g' + i" class="mb-1 grid grid-cols-[96px_1fr] gap-2">
+          <span class="text-[11px] text-white/55">{{ g.h }}</span>
+          <span><span v-for="(l, j) in g.l" :key="j" class="block text-sky-100">{{ l }}</span></span>
+        </div>
       </div>
       <div v-if="help.length" class="mt-2 border-t border-white/10 pt-2">
         <p class="mb-1 text-[11px] font-bold text-amber-200/80">このステージでの動き</p>

@@ -5,7 +5,9 @@
  *   - フラクチャーのオーブ: レアで MOD 4 つ以上、固定済みが無い時。固定する MOD は等しく 1 つ (未発現の冒涜 MOD は選ばれない。
  *     計算機の self-fracture.ts と同じ)
  *   - アーティファサーのオーブ: 武器・防具にソケットを 1 つ (規格外で 2 つまで。計算機の sockets.ts)
- *   - カタリスト: 指輪・アミュレットに品質 +1.5% (計算機の QUALITY_PER_CATALYST)。種類を変えると品質は 0 からやり直し。上限はベースの最大品質
+ *   - カタリスト: 1 手で指輪・アミュレットの品質を上限まで盛る (使う数は 上げた品質 ÷ 計算機の QUALITY_PER_CATALYST = 1%)。
+ *     2026-10-05 オーナー「カタリストは 1 回打ったらマックスまで付けておk。品質は 1 か 2 で、ほとんど 1、小数点は付かない」。
+ *     種類を変えると品質は 0 からやり直し。上限はベースの最大品質
  *   - ヴァールのオーブと聖別は [[apply-vaal.ts]]
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
@@ -26,8 +28,8 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
     const max = maxQualityOf(item);
     const base = item.qualityTag === tag ? item.quality : 0;
     if (base >= max) return skip(item, `品質が上限 (${max}%)`);
-    const quality = Math.min(max, Math.round((base + QUALITY_PER_CATALYST) * 10) / 10);
-    return { applied: true, item: { ...item, quality, qualityTag: tag }, added: [], removed: [] };
+    const count = Math.ceil((max - base) / QUALITY_PER_CATALYST);
+    return { applied: true, item: { ...item, quality: max, qualityTag: tag }, added: [], removed: [], count };
   }
   switch (currency) {
     case "divine": {
