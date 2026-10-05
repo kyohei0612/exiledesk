@@ -37,6 +37,24 @@ const query = ref("");
 /** 開いている段の表 (種類:系統) */
 const expanded = ref<string | null>(null);
 /**
+ * 行を押して段の表を開く / 閉じる。押した行は画面の同じ所に残し、表はその下に開く (2026-10-05 オーナー「展開だけど上に開くから
+ * スクロールによっては見えない、下に開こう」: 上で開いていた行が閉じた分だけ押した行が上へずれ、表が見えなくなっていた)
+ */
+function toggleRow(key: string, ev: MouseEvent): void {
+  const el = ev.currentTarget as HTMLElement;
+  const before = el.getBoundingClientRect().top;
+  expanded.value = expanded.value === key ? null : key;
+  void nextTick(() => {
+    // 送っている枠 (シミュレーションの 3 の中なら一覧の枠、手で打つ時は画面) を同じだけ戻す
+    const box = el.closest(".overflow-auto") as HTMLElement | null;
+    if (!box) return;
+    const shift = el.getBoundingClientRect().top - before;
+    if (shift) box.scrollBy({ top: shift });
+    // 開いた表が下にはみ出したら、表の下まで見えるように送る (一覧の枠も画面も。はみ出していなければ動かさない)
+    el.parentElement?.querySelector("table")?.scrollIntoView({ block: "nearest" });
+  });
+}
+/**
  * 種類ごとの節 (中身のある物だけ)。各節はプレフィックス / サフィックスの 2 列。
  * ルーンの特殊 MOD はルーンごとに別の節で、見出しはルーンの名前 (2026-10-04 オーナー「ルーンの特殊 MOD で終わらせないで、手袋ならコルの狩りとか
  * 名前で。コルとカトラは別々に分けて、名前も DB 仕様に」)
@@ -174,7 +192,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 class="relative w-full overflow-hidden rounded-lg border px-2 py-1 text-left transition"
                 :class="[r.on ? 'border-emerald-400/70' : 'border-white/5 hover:border-white/25', r.blocked ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : 'bg-black/20']"
                 :title="r.blocked ? '同じ系統の MOD が付いているので、今は付かない' : undefined"
-                @click="expanded = expanded === `${sec.sid}:${r.id}` ? null : `${sec.sid}:${r.id}`"
+                @click="toggleRow(`${sec.sid}:${r.id}`, $event)"
               >
                 <span class="pointer-events-none absolute inset-y-0 left-0" :class="TONE[sec.g].bar" :style="{ width: `${(r.share / col.top) * 100}%` }" />
                 <!-- 2026-10-04 オーナー: タグは MOD 名の横に細く (行を太らせない)、右は poe2db と同じく 出やすさ % ・ ティア数 (緑) ・ 一番上の段のレベル (灰) を数字だけ -->
