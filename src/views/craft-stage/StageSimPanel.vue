@@ -204,11 +204,21 @@ async function refreshPrices(): Promise<void> {
 onMounted(() => void market.ensureMarket(MARKET_MAX_AGE_MS));
 /** 4 MOD のベースを取引所で探す (狙いの MOD が付いたレア。固定済みは除く。開くだけ) */
 async function searchFour(): Promise<void> {
-  const d = s.data.value, f = fractureRow.value;
-  if (!d || !f) return;
-  const got = tradeFiltersFor(d, [{ modId: f.modId, minTierIndex: f.minTierIndex }]);
-  const stats = got.filters.map((x) => ({ id: x.id, ...(x.min != null ? { min: x.min } : {}) }));
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: false, noSanctified: true, ...socketQuery() }));
+  const q = fracQuery("explicit");
+  if (q) await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, ...q, fracturedItem: false, noSanctified: true, ...socketQuery() }));
+}
+/**
+ * フラクチャーの候補の取引所の条件。候補が 2 つ以上なら「どれか 1 つ」のグループ (取引所の count、1 つ以上)
+ * (2026-10-05 オーナー「フラクチャーどれか 1 つで検索かけるのに、これだと火耐性しか出ない、どれかの検索方法ないか」: 前は最初の候補だけで探していた)。
+ * kind: 普通 (explicit) か固定済み (fractured)
+ */
+function fracQuery(kind: "explicit" | "fractured"): { stats: { id: string; min?: number }[]; anyOf: { filters: { id: string; min?: number }[]; count: number }[] } | null {
+  const d = s.data.value;
+  if (!d || !fracMembers.value.length) return null;
+  const fs = fracMembers.value.flatMap((m) => tradeFiltersFor(d, [{ modId: m.modId, minTierIndex: m.minTierIndex }]).filters
+    .map((x) => ({ id: x.id.replace(/^explicit\./, `${kind}.`), ...(x.min != null ? { min: x.min } : {}) })));
+  if (!fs.length) return null;
+  return fs.length === 1 ? { stats: fs, anyOf: [] } : { stats: [], anyOf: [{ filters: fs, count: 1 }] };
 }
 /** 白のベースを取引所で探す (開くだけ) */
 async function searchWhite(): Promise<void> {
@@ -219,11 +229,8 @@ const mixedSides = computed(() => new Set(fractureRows.value.map((r) => r.side))
 const makeSpec = computed(() => ({ kind: "make" as const, route: makeRoute.value, blocker: makeRoute.value === "magic" && blocker.value }));
 /** 付いた状態のベースを取引所で探す (開くだけ。値段は手で入れる) */
 async function searchBought(): Promise<void> {
-  const d = s.data.value, f = fractureRow.value;
-  if (!d || !f) return;
-  const got = tradeFiltersFor(d, [{ modId: f.modId, minTierIndex: f.minTierIndex }]);
-  const stats = got.filters.map((x) => ({ id: x.id.replace(/^explicit\./, "fractured."), ...(x.min != null ? { min: x.min } : {}) }));
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: true, noSanctified: true, ...socketQuery() }));
+  const q = fracQuery("fractured");
+  if (q) await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, ...q, fracturedItem: true, noSanctified: true, ...socketQuery() }));
 }
 
 /**
