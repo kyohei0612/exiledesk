@@ -33,7 +33,14 @@ import type { CraftStagePlan } from "./contract";
 import essenceKeys from "../htc/essence-keys.json";
 
 export type RecipeMethod = "exalt" | "chaos" | "desecrate" | "essence" | "fracture";
-export interface RecipeTarget { modId: string; minTierIndex: number; method: RecipeMethod }
+/**
+ * 狙いの 1 手順。alts があれば「どれか 1 つが付けば当たり」(2026-10-05 オーナー「マークスマンの MOD をプレで複数選んで狙いたい。
+ * その 1 つの MOD の所は他の MOD でも当たりとする」)。alts は modId と同じ側・同じ付け方 (普通 / 冒涜) の物だけ
+ */
+export interface RecipeTarget { modId: string; minTierIndex: number; method: RecipeMethod; alts?: ReadonlyArray<{ modId: string; minTierIndex: number }> }
+/** その手順で当たりになる MOD (本体 + alts) */
+export const membersOf = (t: RecipeTarget): Array<{ modId: string; minTierIndex: number }> => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
+const hits = (t: RecipeTarget, m: StageMod): boolean => membersOf(t).some((x) => m.modId === x.modId && m.tierIndex >= x.minTierIndex);
 export interface RecipeSpec {
   data: PatchData;
   base: string;
@@ -99,10 +106,10 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   let bases = 0;
   const mod = (id: string) => data.mods.get(id)!;
   const sideOf = (id: string): StageSide => (mod(id).type === "suffix" ? "suffix" : "prefix");
-  const meets = (it: StageItem, t: RecipeTarget): boolean => allMods(it).some((m) => m.modId === t.modId && !m.unrevealed && m.tierIndex >= t.minTierIndex);
+  const meets = (it: StageItem, t: RecipeTarget): boolean => allMods(it).some((m) => !m.unrevealed && hits(t, m));
   // 冒涜の MOD は、付け方が冒涜の狙いに当たる時だけ当たり (骨の壁が発現でフラクチャーの候補などになっても、冒涜は 1 つまでなので
   // 冒涜の狙いの邪魔になる。外れとして光 + 消去で外す。2026-10-05 流れの確かめで 36% が「冒涜の MOD はアイテムに 1 つまで」で止まっていた)
-  const isGood = (m: StageMod): boolean => !m.unrevealed && spec.targets.some((t) => m.modId === t.modId && m.tierIndex >= t.minTierIndex
+  const isGood = (m: StageMod): boolean => !m.unrevealed && spec.targets.some((t) => hits(t, m)
     && (!m.desecrated || t.method === "desecrate" || !spec.targets.some((x) => x.method === "desecrate")));
   /**
    * 外れを消す手: 反対側に守る物 (固定でない当たり) が無ければ素の消去 (お告げは反対側を守るだけなので、守る物が無いなら要らない)。
@@ -115,7 +122,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   };
   const junkOn = (it: StageItem, s: StageSide): StageMod[] => listOf(it, s).filter((m) => !m.fractured && !isGood(m));
   /** 狙いの段以上で一番高い段のレベル (等級の下限が届くか) */
-  const reach = (t: RecipeTarget): number => Math.max(0, ...mod(t.modId).tiers.filter((x, i) => i >= t.minTierIndex && x.ilvl <= spec.itemLevel).map((x) => x.ilvl));
+  const reach = (t: RecipeTarget): number => Math.max(0, ...membersOf(t).flatMap((y) => mod(y.modId).tiers.filter((x, i) => i >= y.minTierIndex && x.ilvl <= spec.itemLevel).map((x) => x.ilvl)));
   /**
    * 等級 (無印 / 上級 / 完全) は「1 個の値段 ÷ 狙いが出る確率」が一番安い物 (2026-10-05)。下限 (高貴 35 / 50、変成・増強 55 / 70) が上がると低い段が
    * 出なくなるが、狙いの段も下限より下は出なくなる (ライフ T5 以上を完全で狙うと T1 しか出ず、変成・増強ガチャが回り続けた)。
@@ -123,7 +130,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
    */
   const gradeMemo = new Map<string, string>();
   const grade = (base: "exalt" | "transmute" | "augment", t: RecipeTarget): string => {
-    const key = `${base}|${t.modId}|${t.minTierIndex}`;
+    const key = `${base}|${membersOf(t).map((x) => `${x.modId}:${x.minTierIndex}`).join(",")}`;
     const hit = gradeMemo.get(key);
     if (hit) return hit;
     const cls = item.cls;
@@ -138,7 +145,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     const fl = CURRENCY_FLOOR[base];
     for (const [k, floor] of [[base, fl.base], [`${base}_greater`, fl.greater], [`${base}_perfect`, fl.perfect]] as const) {
       const total = ids.reduce((a, id) => a + w(id, 0, floor), 0);
-      const p = total > 0 ? w(t.modId, t.minTierIndex, floor) / total : 0;
+      const p = total > 0 ? membersOf(t).reduce((a, x) => a + w(x.modId, x.minTierIndex, floor), 0) / total : 0;
       const c = p > 0 ? (spec.price(k) || 1e-9) / p : Infinity;
       if (c < bestCost) { bestCost = c; best = k; }
     }
@@ -173,7 +180,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const reveal = (desire: RecipeTarget | null): string | null => {
     const n = steps.length + 1;
     const offers = revealOffers(data, item, mulberry32(seed + n));
-    const hit = (list: StageMod[]) => (desire ? list.findIndex((m) => m.modId === desire.modId && m.tierIndex >= desire.minTierIndex) : -1);
+    const hit = (list: StageMod[]) => (desire ? list.findIndex((m) => hits(desire, m)) : -1);
     const a = hit(offers.first);
     if (a >= 0) return play(`reveal:${a + 1}`);
     if (desire && offers.reroll.length) {
@@ -274,7 +281,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     } else if (t.method === "desecrate") {
       const desec = allMods(item).find((m) => m.desecrated && !m.unrevealed && !isGood(m));
       // 狙いと同じ系統の外れ (カオスで付いた低い段の混沌耐性など) があると、冒涜の候補にその系統が出ず回り続ける。先にその側を消す
-      const sameFamily = allMods(item).find((m) => !m.fractured && !m.unrevealed && !m.desecrated && !isGood(m) && data.mods.get(m.modId)?.family === mod(t.modId).family);
+      const fams = new Set(membersOf(t).map((x) => mod(x.modId).family));
+      const sameFamily = allMods(item).find((m) => !m.fractured && !m.unrevealed && !m.desecrated && !isGood(m) && fams.has(data.mods.get(m.modId)?.family ?? ""));
       if (desec) e = play("annul", ["OmenofLight"]);
       else if (sameFamily) e = annulOn(sameFamily.side);
       else if (!room(item, side)) {

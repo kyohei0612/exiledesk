@@ -162,7 +162,9 @@ const mode = ref<"hand" | "sim">("hand");
  */
 const simPicked = ref(false);
 const simShowMods = ref(false);
-const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture" }>>([]);
+const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }> }>>([]);
+/** ② のこの手順 (本体の modId) の「あるいは」を選ぶポップアップを開いている ([[StageFracturePicker.vue]] の altFor) */
+const simAltFor = ref<string | null>(null);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
@@ -179,7 +181,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

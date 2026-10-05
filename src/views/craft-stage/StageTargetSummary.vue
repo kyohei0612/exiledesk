@@ -27,27 +27,31 @@ const rows = computed(() => {
   const d = s.data.value;
   if (!d) return [];
   let n = 0;
-  return s.simTargets.value.map((t) => {
+  return s.simTargets.value.flatMap((t) => {
     const m = d.mods.get(t.modId);
-    const tier = m?.tiers[t.minTierIndex];
     const kind: Kind = t.method === "fracture" ? "fracture"
       : m?.source === "desecrated" || t.method === "desecrate" ? "desecrated"
       : m && CRAFTED_SOURCES.has(m.source) ? "essence" : "normal";
-    return {
-      modId: t.modId,
-      kind,
-      no: t.method === "fracture" ? null : ++n,
-      side: m?.type === "suffix" ? "S" : "P",
-      text: m ? fillHashes(jaOfMod(m), tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ") : t.modId,
-      rank: m ? `T${m.tiers.length - t.minTierIndex} 以上` : "",
+    const no = t.method === "fracture" ? null : ++n;
+    const row = (x: { modId: string; minTierIndex: number }, alt: boolean) => {
+      const xm = d.mods.get(x.modId);
+      const xt = xm?.tiers[x.minTierIndex];
+      return {
+        modId: x.modId, kind, no: alt ? null : no, alt, group: t.modId,
+        side: (xm ?? m)?.type === "suffix" ? "S" : "P",
+        text: xm ? fillHashes(jaOfMod(xm), xt ? tierDisplayRanges(xt) : []).replace(/\n/g, " / ") : x.modId,
+        rank: xm ? `T${xm.tiers.length - x.minTierIndex} 以上` : "",
+      };
     };
+    return [row(t, false), ...(t.alts ?? []).map((a) => row(a, true))];
   });
 });
 /** フラクチャーの候補は「どれか 1 つ」なので枠は 1 つで数える */
 const fractureMany = computed(() => rows.value.filter((r) => r.kind === "fracture").length >= 2);
 const columns = computed(() => (["P", "S"] as const).map((side) => {
   const list = rows.value.filter((r) => r.side === side);
-  const used = list.filter((r) => r.kind !== "fracture").length + (list.some((r) => r.kind === "fracture") ? 1 : 0);
+  // 「どれか」の候補は本体と同じ枠
+  const used = list.filter((r) => r.kind !== "fracture" && !r.alt).length + (list.some((r) => r.kind === "fracture") ? 1 : 0);
   return { title: side === "P" ? "プレフィックス" : "サフィックス", list, used };
 }));
 </script>
@@ -59,9 +63,11 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
       <p v-if="!col.list.length" class="opacity-40">なし</p>
       <div v-for="r in col.list" :key="r.modId" class="flex items-center gap-1.5 py-px">
         <span class="w-4 shrink-0 text-right font-bold text-amber-200">{{ r.no ?? "" }}</span>
-        <span class="shrink-0 rounded border px-1 text-[10px]" :class="KINDS[r.kind].cls">{{ KINDS[r.kind].label }}<template v-if="r.kind === 'fracture' && fractureMany"> (どれか)</template></span>
+        <span class="shrink-0 rounded border px-1 text-[10px]" :class="KINDS[r.kind].cls">{{ KINDS[r.kind].label }}<template v-if="(r.kind === 'fracture' && fractureMany) || r.alt || rows.some((x) => x.alt && x.group === r.modId)"> (どれか)</template></span>
         <span class="min-w-0 flex-1 truncate" :title="r.text">{{ r.text }}</span>
         <span class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
+        <button v-if="s.simShowMods.value && !r.alt && (r.kind === 'normal' || r.kind === 'desecrated')" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = r.modId">＋</button>
+        <span v-else class="w-[18px] shrink-0" />
       </div>
     </div>
   </div>

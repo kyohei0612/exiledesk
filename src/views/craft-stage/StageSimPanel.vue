@@ -55,12 +55,28 @@ const rows = computed(() => {
       tone: m?.source === "desecrated" ? "text-rose-200" : m && CRAFTED_SOURCES.has(m.source) ? "text-sky-200" : "text-[#c8c8ff]",
       text: m ? fillHashes(jaOfMod(m), tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ") : t.modId,
       rank: m ? `T${m.tiers.length - t.minTierIndex}` : "",
+      /** 「どれか」の候補 (この手順はどれか 1 つが付けば当たり) */
+      alts: (t.alts ?? []).map((a) => {
+        const am = d.mods.get(a.modId);
+        const at = am?.tiers[a.minTierIndex];
+        return { modId: a.modId, text: am ? fillHashes(jaOfMod(am), at ? tierDisplayRanges(at) : []).replace(/\n/g, " / ") : a.modId, rank: am ? `T${am.tiers.length - a.minTierIndex}` : "" };
+      }),
     };
   });
 });
 function remove(modId: string): void {
   s.simTargets.value = s.simTargets.value.filter((t) => t.modId !== modId);
+  if (s.simAltFor.value === modId) s.simAltFor.value = null;
 }
+/** この手順の「あるいは」を選ぶポップアップを開く ([[StageFracturePicker.vue]] の altFor) */
+function addAlts(modId: string): void {
+  s.simAltFor.value = modId;
+}
+function removeAlt(modId: string, alt: string): void {
+  s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, alts: (t.alts ?? []).filter((a) => a.modId !== alt) } : t));
+}
+/** 狙いの全部の MOD の印 (段も、どれかの候補も) */
+const targetsSig = (): string => s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}${(t.alts ?? []).map((a) => `|${a.modId}:${a.minTierIndex}`).join("")}`).join(",");
 /** ② の中で 1 つ上 / 下へ (① の候補は飛ばす) */
 function move(modId: string, d: -1 | 1): void {
   const list = [...s.simTargets.value];
@@ -186,7 +202,7 @@ const doneDivine = ref<number | null>(null);
 const DONE_KEY = "exiledesk.craftStageSim.donePrices";
 const doneAll = ref<Record<string, Kept>>({});
 try { doneAll.value = JSON.parse(localStorage.getItem(DONE_KEY) ?? "{}"); } catch { /* 無くてよい */ }
-const doneKey = computed(() => `${keptKey.value}|${s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}`).sort().join(",")}`);
+const doneKey = computed(() => `${keptKey.value}|${targetsSig().split(",").sort().join(",")}`);
 let loadingDone = false;
 watch(doneKey, () => {
   loadingDone = true;
@@ -227,7 +243,7 @@ async function searchDone(): Promise<void> {
   const anyOf: { filters: { id: string; min?: number }[] }[] = [];
   const put = (fs: { id: string; min?: number }[]): void => { if (fs.length === 1) stats.push(fs[0]!); else if (fs.length > 1) anyOf.push({ filters: fs }); };
   if (fractureRows.value.length) put(fractureRows.value.flatMap(kindsOf));
-  for (const r of restRows.value) put(kindsOf(r));
+  for (const r of restRows.value) put([r, ...(s.simTargets.value.find((t) => t.modId === r.modId)?.alts ?? [])].flatMap(kindsOf));
   await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, anyOf, noSanctified: true }));
 }
 
@@ -346,7 +362,7 @@ const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
 /** フラクチャー済みから残りを作る費用 (ベース代 0 で回した平均)。買う側の比べに足す */
 const restCost = ref<number | null>(null);
 const ranFor = ref("");
-const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|${s.itemLevel.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}:${methodOf(t)}`).join(",")}`);
+const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|${s.itemLevel.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => methodOf(t)).join(",")}|${targetsSig()}`);
 let gen = 0;
 
 const blocked = computed((): string | null => {
@@ -370,7 +386,7 @@ async function run(): Promise<void> {
     const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
     const spec: RecipeSpec = {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: runs.value, price,
-      targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t) })),
+      targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}) })),
       whiteBasePrice: (num(whiteDivine.value) ?? 0) * divine,
       ...(fractureRow.value ? { fractureStart: makeSpec.value } : {}),
     };
@@ -427,7 +443,7 @@ const step3 = computed(() => step2.value && (fractureRows.value.length > 0 || no
 const step4 = computed(() => step3.value && orderDone.value && rows.value.length > 0);
 watch(() => rows.value.length, (n) => { if (n === 0) orderDone.value = false; });
 watch(() => fractureRows.value.length, (n) => { if (n > 0) noFracture.value = false; });
-watch(keptKey, () => { noFracture.value = false; orderDone.value = false; whiteOk.value = false; });
+watch(keptKey, () => { noFracture.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
 // 下の MOD 一覧は ② で足している間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
 // 足し直す時は ② の「MOD を足す」で開き直す
 watch(() => step3.value && !orderDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
@@ -534,9 +550,17 @@ function replay(): void {
                 <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === restRows.length - 1" title="下へ" @click="move(r.modId, 1)">▼</button>
               </td>
               <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
-              <td class="py-1"><span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></td>
               <td class="py-1">
+                <span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
+                <span v-for="a in r.alts" :key="a.modId" class="block pl-3">
+                  <span class="text-[10px] opacity-60">か</span> <span :class="r.tone">{{ a.text }}</span>
+                  <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ a.rank }} 以上</span>
+                  <button type="button" class="ml-1 opacity-50 hover:opacity-100" title="この候補を外す" @click="removeAlt(r.modId, a.modId)">×</button>
+                </span>
+              </td>
+              <td class="py-1 align-top">
                 <span class="flex flex-wrap gap-1">
+                  <button v-if="r.method !== 'essence' && !orderDone" type="button" class="rounded border border-amber-400/40 px-1.5 py-px text-[11px] text-amber-200 hover:bg-amber-500/10" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="addAlts(r.modId)">＋</button>
                   <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px]" :class="r.method === m ? (m === 'desecrate' ? 'bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/60' : 'bg-white/15 text-white ring-1 ring-white/40') : 'border border-white/10 opacity-60 hover:opacity-100'" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
                 </span>
               </td>
@@ -552,6 +576,7 @@ function replay(): void {
       </div>
     </div>
     <StageFracturePicker v-if="pickerOpen" @close="pickerOpen = false" />
+    <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
 
     <template v-if="step4">
     <!-- カレンシーの相場 -->

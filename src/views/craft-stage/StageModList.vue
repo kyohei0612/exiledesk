@@ -93,7 +93,7 @@ function tierIndexOf(modId: string, t: { name: string; ilvl: number }): number {
 }
 function isTarget(modId: string, t: { name: string; ilvl: number }): boolean {
   const idx = tierIndexOf(modId, t);
-  return s.simTargets.value.some((x) => x.modId === modId && x.minTierIndex === idx);
+  return s.simTargets.value.some((x) => [x, ...(x.alts ?? [])].some((y) => y.modId === modId && y.minTierIndex === idx));
 }
 /**
  * その段が狙いに入っているか (T2 以上を選んだら T1 も入る。2026-10-05 オーナー「ティア 2 とか選択したら自動で 1 も選択される挙動、
@@ -101,12 +101,17 @@ function isTarget(modId: string, t: { name: string; ilvl: number }): boolean {
  */
 function isCovered(modId: string, t: { name: string; ilvl: number }): boolean {
   const idx = tierIndexOf(modId, t);
-  return idx >= 0 && s.simTargets.value.some((x) => x.modId === modId && idx >= x.minTierIndex);
+  return idx >= 0 && s.simTargets.value.some((x) => [x, ...(x.alts ?? [])].some((y) => y.modId === modId && idx >= y.minTierIndex));
 }
 function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
   const idx = tierIndexOf(modId, t);
   if (idx < 0) return;
   const list = s.simTargets.value;
+  // 「あるいは」に入っている物は、そこから外す (足すのは選んだ MOD の「＋」から)
+  if (list.some((x) => x.alts?.some((a) => a.modId === modId))) {
+    s.simTargets.value = list.map((x) => (x.alts?.some((a) => a.modId === modId) ? { ...x, alts: x.alts.filter((a) => a.modId !== modId) } : x));
+    return;
+  }
   // 同じ段なら外す、別の段なら順番と付け方はそのまま段だけ差し替える、無ければ ② の最後に足す
   // (① フラクチャーの候補はシミュレーションのポップアップ [[StageFracturePicker.vue]] で選ぶ)
   if (isTarget(modId, t)) s.simTargets.value = list.filter((x) => x.modId !== modId);

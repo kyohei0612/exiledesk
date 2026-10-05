@@ -88,3 +88,21 @@ describe("流れの確かめで見つけた物 (2026-10-05)", () => {
     expect(r.pDone).toBeGreaterThan(0.9);
   });
 });
+
+describe("どれか 1 つが当たりの手順 (2026-10-05)", () => {
+  it("金の指輪: ライフ → 火 / 冷気 / 雷耐性のどれか (高貴) で完成し、どれか 1 つが付いている", async () => {
+    const data = await loadPatch();
+    const life = targetOf(data, "Rings", /IncreasedLife$/, 3);
+    const fire = targetOf(data, "Rings", /FireResistance$/, 2);
+    const cold = targetOf(data, "Rings", /ColdResistance$/, 2);
+    const light = targetOf(data, "Rings", /LightningResistance$/, 2);
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 30, price: () => 1, seed: 5000,
+      targets: [{ ...life, method: "exalt" }, { ...fire, method: "exalt", alts: [cold, light] }],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    const { final } = playPlan(data, recipePlan(spec, r!.sample!), {});
+    expect([fire, cold, light].some((t) => allMods(final).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex))).toBe(true);
+  });
+});
