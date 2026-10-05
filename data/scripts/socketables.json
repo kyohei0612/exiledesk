@@ -384,6 +384,205 @@
           }
         }
       ]
+    },
+    {
+      "name": "セールの凱旋",
+      "target_seconds": 75,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次はセールの凱旋。プレフィックス3つ、サフィックス3つで埋まった胴を用意したわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "もう何も付かないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "試しに高貴なオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "足す枠が無くて、使えない。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "やっぱり6つで満杯なのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここで熟練工のオーブを使って、ソケットを作るわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そこにセールの凱旋を差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスモッド+1個。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "サフィックスが4つまで付くようになったのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。プレフィックスは3つのまま、サフィックスだけ4つになるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう一度、高貴なオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "スタン閾値+80が、4つ目のサフィックスに付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "7つ目のMODなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、セールの凱旋はソケットバウンド。一度差したら、外すことも置き換えることもできないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "そのソケットは、ずっとセールの凱旋なのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。胴ならソケットは2つ作れるから、もう1つは普通のルーンに使えるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それと、コラプトや聖別をしたアイテムには差せないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "差すなら、コラプトの前なのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        }
+      ]
     }
   ]
 }
