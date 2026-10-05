@@ -135,9 +135,11 @@ const keptAll = ref<Record<string, Partial<Record<"white" | "four" | "bought", K
 try { keptAll.value = JSON.parse(localStorage.getItem(PRICE_KEY) ?? "{}"); } catch { /* 無くてよい */ }
 /**
  * 白のベースのソケットの数 (2026-10-05 オーナー「ベース選択後ソケットの数を 0 / 1 / 2 で選ばせて、これだとただの通常品のベース」)。
- * 付けられる数はベースの上限 (熟練工の上限: 胴・両手 2 / ほか 1)。付けられない部位 (装飾品など) は 0 で選ばない
+ * 選べる数は規格外まで = 熟練工の上限 + 1 (胴・両手 3 / ほか 2。2026-10-05 オーナー「規格外計算でやってくれ、マックスの +1 まであるでしょ」)。
+ * 付けられない部位 (装飾品など) は 0 で選ばない
  */
-const socketCap = computed(() => (s.item.value ? Math.min(2, socketCapOf(s.base.value, s.item.value.cls.category)) : 0));
+const craftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.item.value.cls.category) : 0));
+const socketCap = computed(() => (craftCap.value > 0 ? craftCap.value + 1 : 0));
 const sockets = ref<number | null>(null);
 const socketsOk = computed(() => socketCap.value === 0 || sockets.value != null);
 const socketCount = computed(() => (socketCap.value === 0 ? 0 : sockets.value ?? 0));
@@ -519,7 +521,7 @@ function replay(): void {
     <!-- ソケットの数 (ベースを選んだ後、白ベースの値段の前) -->
     <div v-if="socketCap > 0" class="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
       <span class="opacity-70">ソケット</span>
-      <button v-for="n in socketCap + 1" :key="n" type="button" class="rounded-lg px-2.5 py-0.5" :class="sockets === n - 1 ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="sockets = n - 1">{{ n - 1 }}</button>
+      <button v-for="n in socketCap + 1" :key="n" type="button" class="rounded-lg px-2.5 py-0.5" :class="sockets === n - 1 ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="sockets = n - 1">{{ n - 1 }}<span v-if="n - 1 > craftCap" class="ml-0.5 text-[10px] text-amber-300">規格外</span></button>
       <span v-if="sockets == null" class="text-amber-200/80">白のベースのソケットの数を選ぶ</span>
     </div>
     <!-- 白のベースの値段 (手で) -->
