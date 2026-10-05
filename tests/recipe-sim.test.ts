@@ -46,3 +46,27 @@ describe("順番どおりのシミュレーション", () => {
     }
   });
 });
+
+describe("フラクチャーの作り方と白のベースの値段 (2026-10-05)", () => {
+  it("変成・増強ガチャ → 王者 → 高貴 / 骨の壁、狙い 2 つのどちらか固定、白の値段も数える", async () => {
+    const data = await loadPatch();
+    const life = targetOf(data, "Rings", /IncreasedLife$/, 5);
+    const fire = targetOf(data, "Rings", /FireResistance$/, 5);
+    for (const blocker of [false, true]) {
+      const spec: RecipeSpec = {
+        data, base: "Gold Ring", itemLevel: 82, runs: 1, price: (k) => (k === "annul" ? 100 : 1), whiteBasePrice: 5,
+        fractureStart: { kind: "make", route: "magic", blocker },
+        targets: [{ ...life, method: "fracture" }, { ...fire, method: "fracture" }],
+      };
+      const run = runRecipeOnce(spec, 55_000);
+      expect(run.done, run.reason).toBe(true);
+      // 消去 (100) より白 5 + 変成 1 が安いので、マジックの外れは消去せずに買い直す
+      expect(run.steps.filter((s) => s.currency === "annul" && !s.omen).length).toBeLessThanOrEqual(3);
+      expect(run.cost).toBeGreaterThanOrEqual(5);
+      const { final } = playPlan(data, recipePlan(spec, run), {});
+      const fixed = allMods(final).find((m) => m.fractured)!;
+      expect([life.modId, fire.modId]).toContain(fixed.modId);
+      if (blocker) expect(run.steps.some((s) => s.currency === "desecrate")).toBe(true);
+    }
+  });
+});

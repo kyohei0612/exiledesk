@@ -65,17 +65,41 @@ function move(i: number, d: -1 | 1): void {
   [list[i], list[j]] = [list[j]!, list[i]!];
   s.simTargets.value = list;
 }
-/** 付け方を変える。フラクチャーは 1 つだけで、一番上に置く (最初に作る物) */
+/**
+ * 付け方を変える。フラクチャーは 2 つまで (どちらが固定されても良い。2026-10-05 オーナー「固定したい MOD の数による」)。
+ * 3 つ目を選んだら一番古い物を外す。フラクチャーの物は一番上へ (最初に作る物)
+ */
 function setMethod(modId: string, method: RecipeMethod): void {
-  let list = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, method } : method === "fracture" && t.method === "fracture" ? { ...t, method: undefined } : t));
-  if (method === "fracture") list = [...list.filter((t) => t.modId === modId), ...list.filter((t) => t.modId !== modId)];
+  let list = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, method } : t));
+  if (method === "fracture") {
+    const fr = list.filter((t) => t.method === "fracture");
+    if (fr.length > 2) list = list.map((t) => (t.modId === fr.find((x) => x.modId !== modId)!.modId ? { ...t, method: undefined } : t));
+    list = [...list.filter((t) => t.method === "fracture"), ...list.filter((t) => t.method !== "fracture")];
+  }
   s.simTargets.value = list;
 }
 
 /** フラクチャーの狙いの始め方。付いた状態のベースの値段は手で (神) */
-const fractureRow = computed(() => rows.value.find((r) => r.method === "fracture") ?? null);
+const fractureRows = computed(() => rows.value.filter((r) => r.method === "fracture"));
+const fractureRow = computed(() => fractureRows.value[0] ?? null);
 const fractureStart = ref<"make" | "bought">("make");
+/** 作り方: 錬金 → カオス / 変成・増強ガチャ → 王者 → 高貴。壁 = 4 つ目を骨の未発現の冒涜に (候補が 1 つ減る) */
+const makeRoute = ref<"alch" | "magic">("magic");
+const blocker = ref(false);
 const boughtDivine = ref<number | null>(null);
+/**
+ * 白のベースの値段 (神、手で入れる。規格外のソケット付きならその値段)。白から始める時・作り直す時に数え、マジックで外れた時の
+ * 「消去」と「白を買い直して変成」の比べに使う (2026-10-05 オーナー「消去もバカにならんが」「ベースの規格外の値段次第」)
+ */
+const whiteDivine = ref<number | null>(null);
+const divineEx = (): number => priceOf("divine") || 1;
+/** 白のベースを取引所で探す (開くだけ) */
+async function searchWhite(): Promise<void> {
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "normal", ilvlMin: s.itemLevel.value, stats: [], noSanctified: true }));
+}
+/** マジックは片側 1 つずつなので、同じ側の 2 つは変成・増強ガチャでは揃わない */
+const sameSidePair = computed(() => fractureRows.value.length === 2 && fractureRows.value[0]!.side === fractureRows.value[1]!.side);
+const makeSpec = computed(() => ({ kind: "make" as const, route: makeRoute.value, blocker: makeRoute.value === "magic" && blocker.value }));
 /** 付いた状態のベースを取引所で探す (開くだけ。値段は手で入れる) */
 async function searchBought(): Promise<void> {
   const d = s.data.value, f = fractureRow.value;
@@ -92,18 +116,23 @@ async function searchBought(): Promise<void> {
 const makeCost = ref<{ key: string; perDone: number; p50: number; p90: number; pDone: number } | null>(null);
 const makeBusy = ref(false);
 let makeGen = 0;
-const makeKey = computed(() => (fractureRow.value ? `${s.base.value}|${s.itemLevel.value}|${fractureRow.value.modId}:${fractureRow.value.minTierIndex}` : ""));
+const makeKey = computed(() => (fractureRow.value && !(makeRoute.value === "magic" && sameSidePair.value)
+  ? `${s.base.value}|${s.itemLevel.value}|${fractureRows.value.map((f) => `${f.modId}:${f.minTierIndex}`).join(",")}|${makeRoute.value}|${makeSpec.value.blocker}|${whiteDivine.value ?? 0}` : ""));
 watch(makeKey, async (key) => {
   const d = s.data.value, f = fractureRow.value;
   const my = ++makeGen;
   if (!key || !d || !f) { makeCost.value = null; makeBusy.value = false; return; }
+  // 入力を打っている間は待つ
+  await new Promise((r) => setTimeout(r, 300));
+  if (my !== makeGen) return;
   if (makeCost.value?.key === key) return;
   makeBusy.value = true;
   const memo = new Map<string, number>();
   const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
   const r = await runRecipe({
-    data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: 500, price, fractureStart: { kind: "make" },
-    targets: [{ modId: f.modId, minTierIndex: f.minTierIndex, method: "fracture" }],
+    data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: 500, price, fractureStart: makeSpec.value,
+    whiteBasePrice: (whiteDivine.value ?? 0) * divineEx(),
+    targets: fractureRows.value.map((x) => ({ modId: x.modId, minTierIndex: x.minTierIndex, method: "fracture" as const })),
   }, undefined, () => my !== makeGen);
   if (my !== makeGen) return;
   makeBusy.value = false;
@@ -123,12 +152,13 @@ const progress = ref<[number, number] | null>(null);
 const error = ref("");
 const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
 const ranFor = ref("");
-const sig = computed(() => `${s.base.value}|${s.itemLevel.value}|${fractureStart.value}|${boughtDivine.value}|${s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}:${methodOf(t)}`).join(",")}`);
+const sig = computed(() => `${s.base.value}|${s.itemLevel.value}|${fractureStart.value}|${boughtDivine.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}:${methodOf(t)}`).join(",")}`);
 let gen = 0;
 
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
   if (fractureRow.value && fractureStart.value === "bought" && !(boughtDivine.value != null && boughtDivine.value >= 0)) return "付いた状態のベースの値段 (神) を入れてください";
+  if (fractureRow.value && fractureStart.value === "make" && makeRoute.value === "magic" && sameSidePair.value) return "変成・増強ガチャでは同じ側の 2 つは揃わない (マジックは片側 1 つずつ)。錬金 → カオスにするか、フラクチャーを 1 つに";
   return null;
 });
 
@@ -148,7 +178,8 @@ async function run(): Promise<void> {
     const spec: RecipeSpec = {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: runs.value, price,
       targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t) })),
-      ...(fractureRow.value ? { fractureStart: fractureStart.value === "bought" ? { kind: "bought" as const, price: (boughtDivine.value ?? 0) * divine } : { kind: "make" as const } } : {}),
+      whiteBasePrice: (whiteDivine.value ?? 0) * divine,
+      ...(fractureRow.value ? { fractureStart: fractureStart.value === "bought" ? { kind: "bought" as const, price: (boughtDivine.value ?? 0) * divine } : makeSpec.value } : {}),
     };
     const r = await runRecipe(spec, (done, total) => { if (my === gen) progress.value = [done, total]; }, () => my !== gen);
     if (my !== gen || !r) return;
@@ -222,9 +253,17 @@ function replay(): void {
       <button v-if="rows.length" type="button" class="mt-1 rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
     </div>
 
+    <!-- 白のベースの値段 (手で) -->
+    <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+      <span class="opacity-70">白のベースの値段</span>
+      <input v-model.number="whiteDivine" type="number" min="0" step="0.1" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
+      <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
+      <span class="opacity-60">規格外のソケット付きならその値段。白から始める時・作り直す時に数え、マジックで外れた時は「消去」と「白を買い直して変成」の安い方を使う</span>
+    </div>
+
     <!-- フラクチャーの始め方 -->
     <div v-if="fractureRow" class="mb-3 rounded-lg border border-emerald-400/30 bg-emerald-500/[0.06] px-3 py-2">
-      <p class="mb-1 font-bold text-emerald-100">フラクチャー: {{ fractureRow.text }} ({{ fractureRow.rank }} 以上)</p>
+      <p class="mb-1 font-bold text-emerald-100">フラクチャー: <template v-for="(f, i) in fractureRows" :key="f.modId">{{ i ? " か " : "" }}{{ f.text }} ({{ f.rank }} 以上)</template><span v-if="fractureRows.length === 2" class="ml-1 text-[11px] font-normal opacity-70">(どちらが固定されても良い。両方付いてからフラクチャー)</span></p>
       <label class="mr-4 inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="make" /> 作る (確率込み)</label>
       <label class="inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="bought" /> 付いた状態で始める (ベースを買う)</label>
       <p class="mt-1 text-[12px]">
@@ -239,7 +278,18 @@ function replay(): void {
           </template>
         </template>
       </p>
-      <p v-if="fractureStart === 'make'" class="mt-1 text-[11px] opacity-70">錬金 → 狙いが付くまでカオス → フラクチャー (MOD 4 個なら 1/4。外れを固定したら白から作り直し、ベース代は数えない) → 外れが無くなるまで消去。ここまでの費用も込み</p>
+      <div v-if="fractureStart === 'make'" class="mt-1 text-[11px]">
+        <p class="flex flex-wrap items-center gap-3">
+          <label class="inline-flex items-center gap-1"><input v-model="makeRoute" type="radio" value="magic" /> 変成・増強ガチャ → 王者 → 高貴</label>
+          <label class="inline-flex items-center gap-1"><input v-model="makeRoute" type="radio" value="alch" /> 錬金 → カオス</label>
+          <label v-if="makeRoute === 'magic'" class="inline-flex items-center gap-1" title="4 つ目を骨の未発現の冒涜にする。冒涜の MOD はフラクチャーされないので、候補が 4 → 3"><input v-model="blocker" type="checkbox" /> 4 つ目を骨の壁に (1/4 → 1/3)</label>
+        </p>
+        <p class="mt-0.5 opacity-70">
+          <template v-if="makeRoute === 'magic'">変成 → 狙い{{ fractureRows.length === 2 ? "が両方" : "が" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 → {{ blocker ? "骨 (未発現の冒涜)" : "高貴" }}で 4 つ → フラクチャー ({{ blocker ? "1/3" : "1/4" }}{{ fractureRows.length === 2 ? " × 2" : "" }})</template>
+          <template v-else>錬金 → 狙い{{ fractureRows.length === 2 ? "のどちらか" : "" }}が付くまでカオス → フラクチャー (4 つなら 1/4)</template>
+          。外れを固定したら白を買い直して始めから → 外れが無くなるまで消去。ここまでの費用も込み
+        </p>
+      </div>
       <p v-else class="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
         <span class="opacity-70">ベースの値段</span>
         <input v-model.number="boughtDivine" type="number" min="0" step="0.1" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>

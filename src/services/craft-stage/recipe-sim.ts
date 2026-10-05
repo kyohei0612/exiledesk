@@ -11,7 +11,7 @@
  * 決まり (どの回も同じ):
  *   - 順番の上から、まだ付いていない (段が足りない) 最初の狙いを作る。前に付けた物が消えたら、また上から
  *   - 高貴: その側に外れがあれば、その側の消去 (左右の消去のお告げ) で消す。空きがあればその側の高貴 (左右の高貴のお告げ)。
- *     高貴の等級は狙いの段が届く一番上 (段 50 以上 = 完全 / 35 以上 = 上級)
+ *     変成・増強・高貴の等級は「1 個の値段 ÷ 狙いが出る確率」が一番安い物
  *   - カオス: 狙いが付くまでカオス (お告げ無し)
  *   - 冒涜: その側に空きが無く外れがあれば側の消去。骨 (左右のネクロマンシー) → 発現は狙いがあれば選ぶ、無ければアビスの反響で
  *     引き直し、それでも無ければ 1 番を選んで、光のお告げ + 消去で消して打ち直し。骨は異界の MOD = 変質、段 40 以上 = 古代
@@ -21,7 +21,7 @@
  *   - フラクチャー (1 つ): 「作る」= 錬金 → 狙いが付くまでカオス → フラクチャー (4 個なら 1/4、外れたら白から作り直し) →
  *     外れが無くなるまで消去。「付いた状態」= その MOD を固定済みにしたレアから (費用は手で入れたベースの値段)
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { CURRENCY_FLOOR, type PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { applyCurrency } from "./apply-currency";
 import { revealOffers, unrevealedOf } from "./apply-desecrate";
@@ -40,8 +40,17 @@ export interface RecipeSpec {
   itemLevel: number;
   /** 上から順に作る */
   targets: readonly RecipeTarget[];
-  /** フラクチャーの狙いの始め方。"make" = 確率込みで作る、"bought" = 付いた状態のベースを買う (price は高貴建て) */
-  fractureStart?: { kind: "make" } | { kind: "bought"; price: number };
+  /**
+   * フラクチャーの狙い (付け方 fracture、2 つまで = どちらが固定されても良い) の始め方。"bought" = 付いた状態のベースを買う (price は高貴建て)。
+   * "make" = 確率込みで作る。route "alch" = 錬金 → 狙いが付くまでカオス、"magic" = 変成・増強ガチャ (狙いが全部揃うまで) → 王者 → 高貴
+   * (blocker = 4 つ目を骨の未発現の冒涜にして、フラクチャーの候補を 1 つ減らす)
+   */
+  fractureStart?: { kind: "make"; route?: "alch" | "magic"; blocker?: boolean } | { kind: "bought"; price: number };
+  /**
+   * 白のベースの値段 (高貴建て、手で入れる。規格外のソケット付きならその値段)。白から始める時・作り直す時に数え、マジックで外れた時に
+   * 「消去」と「白を買い直して変成」の安い方を選ぶ (2026-10-05 オーナー「消去もバカにならんが」「フラクチャーと消去の値段、ベースの規格外の値段次第」)
+   */
+  whiteBasePrice?: number;
   /** 1 個の値段 (高貴建て) */
   price: (key: string) => number;
   runs: number;
@@ -91,13 +100,41 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const junkAll = (it: StageItem): StageMod[] => allMods(it).filter((m) => !m.fractured && !isGood(m));
   /** 狙いの段以上で一番高い段のレベル (等級の下限が届くか) */
   const reach = (t: RecipeTarget): number => Math.max(0, ...mod(t.modId).tiers.filter((x, i) => i >= t.minTierIndex && x.ilvl <= spec.itemLevel).map((x) => x.ilvl));
+  /**
+   * 等級 (無印 / 上級 / 完全) は「1 個の値段 ÷ 狙いが出る確率」が一番安い物 (2026-10-05)。下限 (高貴 35 / 50、変成・増強 55 / 70) が上がると低い段が
+   * 出なくなるが、狙いの段も下限より下は出なくなる (ライフ T5 以上を完全で狙うと T1 しか出ず、変成・増強ガチャが回り続けた)。
+   * 確率は普通の置き場の重み (その側、変成は両側) で、同じ系統の除外は見ない目安
+   */
+  const gradeMemo = new Map<string, string>();
   const grade = (base: "exalt" | "transmute" | "augment", t: RecipeTarget): string => {
-    const r = reach(t);
-    return r >= 50 ? `${base}_perfect` : r >= 35 ? `${base}_greater` : base;
+    const key = `${base}|${t.modId}|${t.minTierIndex}`;
+    const hit = gradeMemo.get(key);
+    if (hit) return hit;
+    const cls = item.cls;
+    const sides = base === "transmute" ? (["prefixes", "suffixes"] as const) : ([sideOf(t.modId) === "prefix" ? "prefixes" : "suffixes"] as const);
+    const ids = sides.flatMap((k) => cls.pools.normal[k]);
+    const w = (id: string, minIdx: number, floor: number): number => {
+      const m = data.mods.get(id);
+      return m ? m.tiers.reduce((a, x, i) => a + (i >= minIdx && x.ilvl >= floor && x.ilvl <= spec.itemLevel ? x.weight : 0), 0) : 0;
+    };
+    let best = base as string, bestCost = Infinity;
+    // 下限はエンジンの表 (変成・増強 55 / 70、高貴 35 / 50)
+    const fl = CURRENCY_FLOOR[base];
+    for (const [k, floor] of [[base, fl.base], [`${base}_greater`, fl.greater], [`${base}_perfect`, fl.perfect]] as const) {
+      const total = ids.reduce((a, id) => a + w(id, 0, floor), 0);
+      const p = total > 0 ? w(t.modId, t.minTierIndex, floor) / total : 0;
+      const c = p > 0 ? (spec.price(k) || 1e-9) / p : Infinity;
+      if (c < bestCost) { bestCost = c; best = k; }
+    }
+    gradeMemo.set(key, best);
+    return best;
   };
 
-  const fractureT = spec.targets.find((t) => t.method === "fracture") ?? null;
+  const fractureTs = spec.targets.filter((t) => t.method === "fracture");
+  const fractureT = fractureTs[0] ?? null;
+  const white = spec.whiteBasePrice ?? 0;
   let item = freshItem(data, spec.base, spec.itemLevel);
+  if (!(fractureT && spec.fractureStart?.kind === "bought")) cost += white;
   if (fractureT && spec.fractureStart?.kind === "bought") {
     // 手順 JSON の始めの状態と同じ作り方 (再生で同じ物になる)
     const m = mod(fractureT.modId);
@@ -130,20 +167,54 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     return play("reveal:1");
   };
   const fail = (reason: string): RecipeRun => ({ done: false, cost, steps, seed, reason, replayFrom });
-
-  // フラクチャーで作る: 錬金 → 狙いが付くまでカオス → フラクチャー (外れたら白から) → 外れが無くなるまで消去
-  if (fractureT && spec.fractureStart?.kind !== "bought") {
+  /** 白のベースを買い直して始めから (再生はここから) */
+  const restart = (): void => {
+    cost += white;
+    item = freshItem(data, spec.base, spec.itemLevel);
+    replayFrom = steps.length;
+  };
+  /** マジックで外れた: 消去と「白を買い直して変成」の安い方 */
+  const missMagic = (t: RecipeTarget): string | null => {
+    if (spec.price("annul") <= white + spec.price(grade("transmute", t))) return play("annul");
+    restart();
+    return null;
+  };
+  /** 固定された MOD がフラクチャーの狙いのどれかか */
+  const fixedHit = (): boolean => {
+    const fixed = allMods(item).find((m) => m.fractured);
+    return !!fixed && fractureTs.some((t) => fixed.modId === t.modId && fixed.tierIndex >= t.minTierIndex);
+  };
+  const isF = (m: StageMod): boolean => !m.unrevealed && fractureTs.some((t) => m.modId === t.modId && m.tierIndex >= t.minTierIndex);
+  // フラクチャーで作る (外れを固定したら白を買い直して始めから) → 外れが無くなるまで消去
+  const fs = spec.fractureStart;
+  if (fractureT && fs?.kind === "make") {
+    const magicRoute = fs.route === "magic";
     for (;;) {
       if (steps.length >= max) return fail("手が多すぎる (フラクチャーまで)");
-      if (item.rarity === "normal") { const e = play("alchemy"); if (e) return fail(`錬金: ${e}`); continue; }
-      if (!meets(item, fractureT)) { const e = play("chaos"); if (e) return fail(`カオス: ${e}`); continue; }
-      const e = play("fracture");
-      if (e) return fail(`フラクチャー: ${e}`);
-      const fixed = allMods(item).find((m) => m.fractured);
-      if (fixed && fixed.modId === fractureT.modId && fixed.tierIndex >= fractureT.minTierIndex) break;
-      // 外れを固定した: 白から作り直し (ベース代は数えない)
-      item = freshItem(data, spec.base, spec.itemLevel);
-      replayFrom = steps.length;
+      let e: string | null = null;
+      if (!magicRoute) {
+        // 錬金 → 狙いが付くまでカオス (2 つの時はどちらか 1 つ付けば良い)
+        if (item.rarity === "normal") e = play("alchemy");
+        else if (!fractureTs.some((t) => meets(item, t))) e = play("chaos");
+        else { e = play("fracture"); if (!e) { if (fixedHit()) break; restart(); } }
+      } else if (item.rarity === "normal") {
+        e = play(grade("transmute", fractureT));
+      } else if (item.rarity === "magic") {
+        // 変成・増強ガチャ: 狙いが全部揃うまで (マジックは片側 1 つずつ)。外れは消去か買い直しの安い方
+        const missing = fractureTs.filter((t) => !meets(item, t));
+        if (!missing.length) e = play("regal");
+        else if (allMods(item).some((m) => !isF(m)) || allMods(item).length >= 2) e = missMagic(missing[0]!);
+        else e = play(grade("augment", missing[0]!));
+      } else if (allMods(item).length < 4) {
+        // 4 つにする。壁 = 4 つ目を骨の未発現の冒涜に (フラクチャーされないので候補が 1 つ減る)
+        const open = (["prefix", "suffix"] as StageSide[]).find((sd) => room(item, sd));
+        if (fs.blocker && allMods(item).length === 3 && open && !unrevealedOf(item)) e = play("desecrate", [SIDE_OMEN.necro[open]]);
+        else e = play("exalt");
+      } else {
+        e = play("fracture");
+        if (!e) { if (fixedHit()) break; restart(); }
+      }
+      if (e) return fail(e);
     }
     while (junkAll(item).length) {
       if (steps.length >= max) return fail("手が多すぎる (消去)");
@@ -154,9 +225,11 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
 
   while (steps.length < max) {
     // 未発現の冒涜 MOD が残っていれば先に発現 (冒涜の狙いの手の中で選ぶ)
-    const t = spec.targets.find((x) => !meets(item, x));
-    if (!t) return { done: true, cost, steps, seed, replayFrom };
-    if (t.method === "fracture") return fail("固定した MOD が消えた");
+    const t0 = spec.targets.find((x) => !meets(item, x));
+    if (!t0) return { done: true, cost, steps, seed, replayFrom };
+    // フラクチャーの狙いが 2 つで固定されなかった方は、高貴で付け直す
+    const t: RecipeTarget = t0.method === "fracture" ? { ...t0, method: "exalt" } : t0;
+    if (t0.method === "fracture" && !allMods(item).some((m) => m.fractured)) return fail("固定した MOD が消えた");
     const side = sideOf(t.modId);
     let e: string | null = null;
     if (unrevealedOf(item)) {
@@ -169,7 +242,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       else if ((t.method === "exalt" || t.method === "chaos") && mod(t.modId).source === "normal" && !allMods(item).some(isGood)) {
         // マジックで最初の狙いを 1 つだけ作る (変成・増強、外れは消去)。その側に外れがある / 2 つ埋まっていれば消去。
         // 1 つ付いたら王者 (2 つ目までマジックで狙うと、消去が付けた物を消して回り続けた)
-        e = junkOn(item, side).length || allMods(item).length >= 2 ? play("annul") : play(grade("augment", t));
+        e = junkOn(item, side).length || allMods(item).length >= 2 ? missMagic(t) : play(grade("augment", t));
       } else e = play("regal");
     } else if (t.method === "chaos") {
       e = play("chaos");
