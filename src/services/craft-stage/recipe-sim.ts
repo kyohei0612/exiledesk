@@ -58,6 +58,8 @@ export interface RecipeSpec {
    * 「消去」と「白を買い直して変成」の安い方を選ぶ (2026-10-05 オーナー「消去もバカにならんが」「フラクチャーと消去の値段、ベースの規格外の値段次第」)
    */
   whiteBasePrice?: number;
+  /** 白のベースのソケットの数 (0 / 1 / 2、規格外のベース。2026-10-05 オーナー「ベース選択後ソケット何個か選ばせて、これだとただの通常品のベース」) */
+  sockets?: number;
   /** 1 個の値段 (高貴建て) */
   price: (key: string) => number;
   runs: number;
@@ -156,12 +158,14 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const fractureTs = spec.targets.filter((t) => t.method === "fracture");
   const fractureT = fractureTs[0] ?? null;
   const white = spec.whiteBasePrice ?? 0;
-  let item = freshItem(data, spec.base, spec.itemLevel);
+  /** 白のベース (ソケット付きならその数) */
+  const fresh = (): StageItem => { const it = freshItem(data, spec.base, spec.itemLevel); return spec.sockets ? { ...it, sockets: spec.sockets } : it; };
+  let item = fresh();
   if (!(fractureT && spec.fractureStart?.kind === "bought")) { cost += white; bases = 1; }
   if (fractureT && spec.fractureStart?.kind === "bought") {
     // 手順 JSON の始めの状態と同じ作り方 (再生で同じ物になる)
     const m = mod(fractureT.modId);
-    item = startFrom(data, spec.base, spec.itemLevel, { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }] }, seed - 1);
+    item = startFrom(data, spec.base, spec.itemLevel, { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }], ...(spec.sockets ? { sockets: spec.sockets } : {}) }, seed - 1);
     cost += spec.fractureStart.price;
   }
 
@@ -194,7 +198,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const restart = (): void => {
     cost += white;
     bases++;
-    item = freshItem(data, spec.base, spec.itemLevel);
+    item = fresh();
     replayFrom = steps.length;
   };
   /** マジックで外れた: 消去と「白を買い直して変成」の安い方 */
@@ -374,7 +378,8 @@ export function recipePlan(spec: RecipeSpec, run: RecipeRun): CraftStagePlan {
     item_level: spec.itemLevel,
     // 作り直した回は最後の作り直しから (n 手目の乱数は seed + n なので、seed をずらすと同じ結果になる)
     seed: run.seed + run.replayFrom,
-    ...(bought && m ? ({ start: { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }] } } as object) : {}),
+    ...(bought && m ? ({ start: { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }], ...(spec.sockets ? { sockets: spec.sockets } : {}) } } as object)
+      : spec.sockets ? ({ start: { rarity: "normal", sockets: spec.sockets } } as object) : {}),
     steps: run.steps.slice(run.replayFrom).map((s) => ({ currency: s.currency, ...(s.omen ? { omen: s.omen } : {}) })) as CraftStagePlan["steps"],
   } as CraftStagePlan;
 }

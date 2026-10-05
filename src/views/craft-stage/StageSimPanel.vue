@@ -24,6 +24,7 @@ import StageFracturePicker from "./StageFracturePicker.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
+import { socketCapOf } from "../../services/craft-stage/stage-runes";
 
 const s = craftStage;
 const RUNS = [500, 1000, 3000] as const;
@@ -132,7 +133,18 @@ const num = (v: unknown): number | null => (typeof v === "number" && Number.isFi
 const PRICE_KEY = "exiledesk.craftStageSim.basePrices";
 const keptAll = ref<Record<string, Partial<Record<"white" | "four" | "bought", Kept>>>>({});
 try { keptAll.value = JSON.parse(localStorage.getItem(PRICE_KEY) ?? "{}"); } catch { /* 無くてよい */ }
-const keptKey = computed(() => `${s.base.value}|${s.itemLevel.value}`);
+/**
+ * 白のベースのソケットの数 (2026-10-05 オーナー「ベース選択後ソケットの数を 0 / 1 / 2 で選ばせて、これだとただの通常品のベース」)。
+ * 付けられる数はベースの上限 (熟練工の上限: 胴・両手 2 / ほか 1)。付けられない部位 (装飾品など) は 0 で選ばない
+ */
+const socketCap = computed(() => (s.item.value ? Math.min(2, socketCapOf(s.base.value, s.item.value.cls.category)) : 0));
+const sockets = ref<number | null>(null);
+const socketsOk = computed(() => socketCap.value === 0 || sockets.value != null);
+const socketCount = computed(() => (socketCap.value === 0 ? 0 : sockets.value ?? 0));
+watch(() => s.base.value, () => { sockets.value = null; });
+/** ソケットの数だけ下限にした取引所の条件 (0 なら付けない) */
+const socketQuery = (): { socketsMin?: number } => (socketCount.value > 0 ? { socketsMin: socketCount.value } : {});
+const keptKey = computed(() => `${s.base.value}|${s.itemLevel.value}${socketCount.value ? `|s${socketCount.value}` : ""}`);
 const kept = computed(() => keptAll.value[keptKey.value] ?? {});
 let loadingKept = false;
 function loadKept(): void {
@@ -175,12 +187,12 @@ async function searchFour(): Promise<void> {
   if (!d || !f) return;
   const got = tradeFiltersFor(d, [{ modId: f.modId, minTierIndex: f.minTierIndex }]);
   const stats = got.filters.map((x) => ({ id: x.id, ...(x.min != null ? { min: x.min } : {}) }));
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: false, noSanctified: true }));
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: false, noSanctified: true, ...socketQuery() }));
 }
 const divineEx = (): number => priceOf("divine") || 1;
 /** 白のベースを取引所で探す (開くだけ) */
 async function searchWhite(): Promise<void> {
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "normal", ilvlMin: s.itemLevel.value, stats: [], noSanctified: true }));
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "normal", ilvlMin: s.itemLevel.value, stats: [], noSanctified: true, ...socketQuery() }));
 }
 /** フラクチャーの候補が違う側に分かれている (作り方が変わるので今は止める) */
 const mixedSides = computed(() => new Set(fractureRows.value.map((r) => r.side)).size > 1);
@@ -191,7 +203,7 @@ async function searchBought(): Promise<void> {
   if (!d || !f) return;
   const got = tradeFiltersFor(d, [{ modId: f.modId, minTierIndex: f.minTierIndex }]);
   const stats = got.filters.map((x) => ({ id: x.id.replace(/^explicit\./, "fractured."), ...(x.min != null ? { min: x.min } : {}) }));
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: true, noSanctified: true }));
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: true, noSanctified: true, ...socketQuery() }));
 }
 
 /**
@@ -244,7 +256,7 @@ async function searchDone(): Promise<void> {
   const put = (fs: { id: string; min?: number }[]): void => { if (fs.length === 1) stats.push(fs[0]!); else if (fs.length > 1) anyOf.push({ filters: fs }); };
   if (fractureRows.value.length) put(fractureRows.value.flatMap(kindsOf));
   for (const r of restRows.value) put([r, ...(s.simTargets.value.find((t) => t.modId === r.modId)?.alts ?? [])].flatMap(kindsOf));
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, anyOf, noSanctified: true }));
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, anyOf, noSanctified: true, ...socketQuery() }));
 }
 
 /**
@@ -255,7 +267,7 @@ const makeCost = ref<{ key: string; perDone: number; p50: number; p90: number; p
 const makeBusy = ref(false);
 let makeGen = 0;
 const makeKey = computed(() => (fractureRow.value && !(makeRoute.value === "magic" && mixedSides.value)
-  ? `${s.base.value}|${s.itemLevel.value}|${fractureRows.value.map((f) => `${f.modId}:${f.minTierIndex}`).join(",")}|${makeRoute.value}|${makeSpec.value.blocker}|${whiteDivine.value ?? 0}|${market.fetchedAt.value ?? 0}` : ""));
+  ? `${s.base.value}|${s.itemLevel.value}|${fractureRows.value.map((f) => `${f.modId}:${f.minTierIndex}`).join(",")}|${makeRoute.value}|${makeSpec.value.blocker}|${whiteDivine.value ?? 0}|s${socketCount.value}|${market.fetchedAt.value ?? 0}` : ""));
 watch(makeKey, async (key) => {
   const d = s.data.value, f = fractureRow.value;
   const my = ++makeGen;
@@ -269,7 +281,7 @@ watch(makeKey, async (key) => {
   const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
   const r = await runRecipe({
     data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: 500, price, fractureStart: makeSpec.value,
-    whiteBasePrice: (num(whiteDivine.value) ?? 0) * divineEx(),
+    whiteBasePrice: (num(whiteDivine.value) ?? 0) * divineEx(), sockets: socketCount.value,
     targets: fractureRows.value.map((x) => ({ modId: x.modId, minTierIndex: x.minTierIndex, method: "fracture" as const })),
   }, undefined, () => my !== makeGen);
   if (my !== makeGen) return;
@@ -362,7 +374,7 @@ const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
 /** フラクチャー済みから残りを作る費用 (ベース代 0 で回した平均)。買う側の比べに足す */
 const restCost = ref<number | null>(null);
 const ranFor = ref("");
-const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|${s.itemLevel.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => methodOf(t)).join(",")}|${targetsSig()}`);
+const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|s${socketCount.value}|${s.itemLevel.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => methodOf(t)).join(",")}|${targetsSig()}`);
 let gen = 0;
 
 const blocked = computed((): string | null => {
@@ -387,7 +399,7 @@ async function run(): Promise<void> {
     const spec: RecipeSpec = {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: runs.value, price,
       targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}) })),
-      whiteBasePrice: (num(whiteDivine.value) ?? 0) * divine,
+      whiteBasePrice: (num(whiteDivine.value) ?? 0) * divine, sockets: socketCount.value,
       ...(fractureRow.value ? { fractureStart: makeSpec.value } : {}),
     };
     // 白から作る + (フラクチャーがあれば) 固定済みから残りを作る (ベース代 0) の 2 本。始め方の比べに使う
@@ -504,8 +516,14 @@ function replay(): void {
     </div>
     <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
+    <!-- ソケットの数 (ベースを選んだ後、白ベースの値段の前) -->
+    <div v-if="socketCap > 0" class="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
+      <span class="opacity-70">ソケット</span>
+      <button v-for="n in socketCap + 1" :key="n" type="button" class="rounded-lg px-2.5 py-0.5" :class="sockets === n - 1 ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="sockets = n - 1">{{ n - 1 }}</button>
+      <span v-if="sockets == null" class="text-amber-200/80">白のベースのソケットの数を選ぶ</span>
+    </div>
     <!-- 白のベースの値段 (手で) -->
-    <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+    <div v-if="socketsOk" class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
       <span class="opacity-70">白ベース</span>
       <input v-model.number="whiteDivine" type="number" min="0" step="0.1" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
       <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>

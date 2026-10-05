@@ -106,3 +106,19 @@ describe("どれか 1 つが当たりの手順 (2026-10-05)", () => {
     expect([fire, cold, light].some((t) => allMods(final).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex))).toBe(true);
   });
 });
+
+describe("ソケット付きの白のベース (2026-10-05)", () => {
+  it("胴 (ソケット 2) から作っても完成し、再生でもソケット 2 のまま", async () => {
+    const data = await loadPatch();
+    const base = "Warlord Cuirass";
+    const life = [...data.mods.values()].find((x) => x.id.startsWith("Body_Armours_str/") && x.source === "normal" && /IncreasedLife$/.test(x.id))!;
+    const spec: RecipeSpec = {
+      data, base, itemLevel: 82, runs: 10, price: () => 1, seed: 9000, sockets: 2,
+      targets: [{ modId: life.id, minTierIndex: life.tiers.length - 4, method: "exalt" }],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    const { final } = playPlan(data, recipePlan(spec, r!.sample!), {});
+    expect(final.sockets).toBe(2);
+  });
+});
