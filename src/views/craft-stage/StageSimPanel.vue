@@ -34,9 +34,9 @@ function methodsFor(modId: string): RecipeMethod[] {
   if (!m) return ["exalt"];
   if (m.source === "desecrated") return ["desecrate"];
   if (CRAFTED_SOURCES.has(m.source)) return ["essence"];
-  return ["exalt", "chaos", "desecrate", "fracture"];
+  return ["exalt", "chaos", "desecrate"];
 }
-const methodOf = (t: { modId: string; method?: RecipeMethod }): RecipeMethod => (t.method && methodsFor(t.modId).includes(t.method) ? t.method : methodsFor(t.modId)[0]!);
+const methodOf = (t: { modId: string; method?: RecipeMethod }): RecipeMethod => (t.method === "fracture" ? "fracture" : t.method && methodsFor(t.modId).includes(t.method) ? t.method : methodsFor(t.modId)[0]!);
 
 /** 狙いの行 (文は狙いの段の値、「T2 以上」) */
 const rows = computed(() => {
@@ -56,28 +56,29 @@ const rows = computed(() => {
     };
   });
 });
-const sideCount = computed(() => ({ p: rows.value.filter((r) => r.side === "プレ").length, s: rows.value.filter((r) => r.side === "サフィ").length }));
 function remove(modId: string): void {
   s.simTargets.value = s.simTargets.value.filter((t) => t.modId !== modId);
 }
-function move(i: number, d: -1 | 1): void {
+/** ② の中で 1 つ上 / 下へ (① の候補は飛ばす) */
+function move(modId: string, d: -1 | 1): void {
   const list = [...s.simTargets.value];
-  const j = i + d;
-  if (j < 0 || j >= list.length) return;
+  const i = list.findIndex((t) => t.modId === modId);
+  let j = i + d;
+  while (j >= 0 && j < list.length && list[j]!.method === "fracture") j += d;
+  if (i < 0 || j < 0 || j >= list.length) return;
   [list[i], list[j]] = [list[j]!, list[i]!];
   s.simTargets.value = list;
 }
+/** ② 順番に付ける MOD (① の候補以外、上から順) */
+const restRows = computed(() => rows.value.filter((r) => r.method !== "fracture"));
 /**
- * 付け方を変える。フラクチャーは 2 つまで (どちらが固定されても良い。2026-10-05 オーナー「固定したい MOD の数による」)。
- * 3 つ目を選んだら一番古い物を外す。フラクチャーの物は一番上へ (最初に作る物)
+ * 付け方を変える。フラクチャーはいくつでも選べる = 始める MOD の候補 (同じ側。どれか 1 つが付いたら進み、どれが固定されても良い)。
+ * 2026-10-05 オーナー「始める MOD 選んでもらって、どれか付いたら始めれる。選んだ個数によってそれぞれ付きやすさがあるから計算して」
+ * 「フラクチャー品だから選ぶ MOD は複数でも同じ側。違う側同士は作り方も完成図も変わる」。フラクチャーの物は一番上へ (最初に作る物)
  */
 function setMethod(modId: string, method: RecipeMethod): void {
   let list = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, method } : t));
-  if (method === "fracture") {
-    const fr = list.filter((t) => t.method === "fracture");
-    if (fr.length > 2) list = list.map((t) => (t.modId === fr.find((x) => x.modId !== modId)!.modId ? { ...t, method: undefined } : t));
-    list = [...list.filter((t) => t.method === "fracture"), ...list.filter((t) => t.method !== "fracture")];
-  }
+  if (method === "fracture") list = [...list.filter((t) => t.method === "fracture"), ...list.filter((t) => t.method !== "fracture")];
   s.simTargets.value = list;
 }
 
@@ -159,8 +160,8 @@ const divineEx = (): number => priceOf("divine") || 1;
 async function searchWhite(): Promise<void> {
   await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "normal", ilvlMin: s.itemLevel.value, stats: [], noSanctified: true }));
 }
-/** マジックは片側 1 つずつなので、同じ側の 2 つは変成・増強ガチャでは揃わない */
-const sameSidePair = computed(() => fractureRows.value.length === 2 && fractureRows.value[0]!.side === fractureRows.value[1]!.side);
+/** フラクチャーの候補が違う側に分かれている (作り方が変わるので今は止める) */
+const mixedSides = computed(() => new Set(fractureRows.value.map((r) => r.side)).size > 1);
 const makeSpec = computed(() => ({ kind: "make" as const, route: makeRoute.value, blocker: makeRoute.value === "magic" && blocker.value }));
 /** 付いた状態のベースを取引所で探す (開くだけ。値段は手で入れる) */
 async function searchBought(): Promise<void> {
@@ -178,7 +179,7 @@ async function searchBought(): Promise<void> {
 const makeCost = ref<{ key: string; perDone: number; p50: number; p90: number; pDone: number; fractures: number; magic: number; chaos: number; bases: number } | null>(null);
 const makeBusy = ref(false);
 let makeGen = 0;
-const makeKey = computed(() => (fractureRow.value && !(makeRoute.value === "magic" && sameSidePair.value)
+const makeKey = computed(() => (fractureRow.value && !(makeRoute.value === "magic" && mixedSides.value)
   ? `${s.base.value}|${s.itemLevel.value}|${fractureRows.value.map((f) => `${f.modId}:${f.minTierIndex}`).join(",")}|${makeRoute.value}|${makeSpec.value.blocker}|${whiteDivine.value ?? 0}|${market.fetchedAt.value ?? 0}` : ""));
 watch(makeKey, async (key) => {
   const d = s.data.value, f = fractureRow.value;
@@ -208,7 +209,8 @@ watch(makeKey, async (key) => {
  */
 const fractureOdds = computed((): { hit: number; of: number } => {
   const wall = makeRoute.value === "magic" && blocker.value;
-  const hit = makeRoute.value === "magic" ? fractureRows.value.length : 1;
+  // 候補は同じ側で、付いているのはそのうち 1 つ
+  const hit = 1;
   return { hit, of: wall ? 3 : 4 };
 });
 /**
@@ -232,7 +234,9 @@ const calc = computed(() => {
     return x ? x.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl >= floor && t.ilvl <= s.itemLevel.value ? t.weight : 0), 0) : 0;
   };
   const total = it.cls.pools.normal[sideKey].reduce((a, id) => a + w(id, 0), 0);
-  const pHit = total > 0 ? w(f.modId, f.minTierIndex) / total : 0;
+  // 候補ごとの付きやすさと合計 (どれか 1 つで良い)
+  const each = fractureRows.value.map((r) => ({ name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 }));
+  const pHit = Math.min(1, each.reduce((a, x) => a + x.p, 0));
   const wall: "prefix" | "suffix" = m.type === "suffix" ? "prefix" : "suffix";
   const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
   const rerolls = pHit > 0 ? 1 / pHit : Infinity;
@@ -271,7 +275,7 @@ const calc = computed(() => {
   const breakEven = once - buyRest;
   const fourB = fourDivine.value != null && fourDivine.value >= 0 ? fourDivine.value * divineEx() : null;
   const buyOnce = fourB != null ? fourB + buyRest : null;
-  return { pHit, rerolls, lines, once, total: once * 3, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, buyRest, breakEven, buyOnce };
+  return { pHit, each, rerolls, lines, once, total: once * 3, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, buyRest, breakEven, buyOnce };
 });
 /** 入れた値段との比べ (高貴建て) */
 const buyVsMake = computed(() => {
@@ -293,7 +297,7 @@ let gen = 0;
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
   if (fractureRow.value && fractureStart.value === "bought" && !(boughtDivine.value != null && boughtDivine.value >= 0)) return "付いた状態のベースの値段 (神) を入れてください";
-  if (fractureRow.value && fractureStart.value === "make" && makeRoute.value === "magic" && sameSidePair.value) return "変成・増強ガチャでは同じ側の 2 つは揃わない (マジックは片側 1 つずつ)。フラクチャーは別の側の 2 つか、1 つに";
+  if (fractureRow.value && fractureStart.value === "make" && makeRoute.value === "magic" && mixedSides.value) return "フラクチャーの候補は同じ側だけ (違う側同士は作り方も完成図も変わる)";
   return null;
 });
 
@@ -362,29 +366,54 @@ function replay(): void {
 
     <p class="mb-2 text-[11px] opacity-60">上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
-    <!-- 狙い -->
+    <!-- 狙い: 順に選ぶ (① フラクチャーの候補 → ② 順番に付ける MOD)。下の一覧の「候補」/「狙う」は開いている方へ足す -->
     <div class="mb-3">
-      <p class="mb-1 text-[11px] opacity-70">狙い {{ rows.length }} 個 (プレ {{ sideCount.p }} / サフィ {{ sideCount.s }})</p>
-      <p v-if="!rows.length" class="rounded-lg border border-dashed border-white/15 px-3 py-3 text-center opacity-60">まだありません。下の MOD の行を押して段の表を開き、「狙う」を押してください</p>
-      <table v-else class="w-full">
-        <tbody>
-          <tr v-for="(r, i) in rows" :key="r.modId" class="border-t border-white/5">
-            <td class="w-14 py-1">
-              <span class="mr-1 font-bold text-amber-200">{{ i + 1 }}</span>
-              <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="move(i, -1)">▲</button>
-              <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === rows.length - 1" title="下へ" @click="move(i, 1)">▼</button>
-            </td>
-            <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
-            <td class="py-1"><span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></td>
-            <td class="py-1">
-              <span class="flex flex-wrap gap-1">
-                <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px]" :class="r.method === m ? (m === 'fracture' ? 'bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/60' : m === 'desecrate' ? 'bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/60' : 'bg-white/15 text-white ring-1 ring-white/40') : 'border border-white/10 opacity-60 hover:opacity-100'" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
-              </span>
-            </td>
-            <td class="w-6 py-1 text-right"><button type="button" class="opacity-60 hover:opacity-100" title="外す" @click="remove(r.modId)">×</button></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="mb-2 flex flex-wrap items-center gap-1.5">
+        <button v-for="st in ([['fracture', `① フラクチャーの候補 (${fractureRows.length})`], ['rest', `② 順番に付ける MOD (${restRows.length})`]] as const)" :key="st[0]" type="button" class="rounded-lg px-3 py-1" :class="s.simStep.value === st[0] ? (st[0] === 'fracture' ? 'bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/60' : 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60') : 'border border-white/15 opacity-70 hover:opacity-100'" @click="s.simStep.value = st[0]">{{ st[1] }}</button>
+        <span class="text-[11px] opacity-60">{{ s.simStep.value === "fracture" ? "下の一覧の「候補」で足す。複数なら同じ側で、どれか 1 つが付いたらフラクチャーへ進む。無ければ白から ② を順に" : "下の一覧の「狙う」で足す。上から順に作る" }}</span>
+      </div>
+
+      <!-- ① フラクチャーの候補 -->
+      <div class="mb-2 rounded-lg border px-2 py-1.5" :class="s.simStep.value === 'fracture' ? 'border-emerald-400/40 bg-emerald-500/[0.05]' : 'border-white/10'">
+        <p class="mb-1 text-[11px] font-bold text-emerald-100">① フラクチャーの候補 <span class="font-normal opacity-60">(どれか 1 つが付いたら進み、どれが固定されても良い)</span></p>
+        <p v-if="!fractureRows.length" class="text-[11px] opacity-50">なし (白から ② を順に作る)</p>
+        <table v-else class="w-full">
+          <tbody>
+            <tr v-for="(r, i) in fractureRows" :key="r.modId" class="border-t border-white/5">
+              <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
+              <td class="py-1"><span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></td>
+              <td class="w-28 py-1 text-right text-[11px] tabular-nums opacity-80"><template v-if="calc?.each[i]">付きやすさ {{ pct(calc.each[i]!.p) }}</template></td>
+              <td class="w-6 py-1 text-right"><button type="button" class="opacity-60 hover:opacity-100" title="外す" @click="remove(r.modId)">×</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="calc && fractureRows.length >= 2" class="mt-0.5 text-right text-[11px]">合計 {{ pct(calc.pHit) }}</p>
+      </div>
+
+      <!-- ② 順番に付ける MOD -->
+      <div class="rounded-lg border px-2 py-1.5" :class="s.simStep.value === 'rest' ? 'border-amber-400/40 bg-amber-500/[0.04]' : 'border-white/10'">
+        <p class="mb-1 text-[11px] font-bold text-amber-100">② 順番に付ける MOD <span class="font-normal opacity-60">(上から順。前に付けた物が消えたら、また上から)</span></p>
+        <p v-if="!restRows.length" class="text-[11px] opacity-50">まだありません</p>
+        <table v-else class="w-full">
+          <tbody>
+            <tr v-for="(r, i) in restRows" :key="r.modId" class="border-t border-white/5">
+              <td class="w-14 py-1">
+                <span class="mr-1 font-bold text-amber-200">{{ i + 1 }}</span>
+                <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="move(r.modId, -1)">▲</button>
+                <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === restRows.length - 1" title="下へ" @click="move(r.modId, 1)">▼</button>
+              </td>
+              <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
+              <td class="py-1"><span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span></td>
+              <td class="py-1">
+                <span class="flex flex-wrap gap-1">
+                  <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px]" :class="r.method === m ? (m === 'desecrate' ? 'bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/60' : 'bg-white/15 text-white ring-1 ring-white/40') : 'border border-white/10 opacity-60 hover:opacity-100'" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
+                </span>
+              </td>
+              <td class="w-6 py-1 text-right"><button type="button" class="opacity-60 hover:opacity-100" title="外す" @click="remove(r.modId)">×</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <button v-if="rows.length" type="button" class="mt-1 rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
     </div>
 
@@ -406,14 +435,17 @@ function replay(): void {
 
     <!-- フラクチャーの始め方 -->
     <div v-if="fractureRow" class="mb-3 rounded-lg border border-emerald-400/30 bg-emerald-500/[0.06] px-3 py-2">
-      <p class="mb-1 font-bold text-emerald-100">フラクチャー: <template v-for="(f, i) in fractureRows" :key="f.modId">{{ i ? " か " : "" }}{{ f.text }} ({{ f.rank }} 以上)</template><span v-if="fractureRows.length === 2" class="ml-1 text-[11px] font-normal opacity-70">(どちらが固定されても良い。両方付いてからフラクチャー)</span></p>
+      <p class="mb-1 font-bold text-emerald-100">フラクチャー: <template v-for="(f, i) in fractureRows" :key="f.modId">{{ i ? " か " : "" }}{{ f.text }} ({{ f.rank }} 以上)</template><span v-if="fractureRows.length >= 2" class="ml-1 text-[11px] font-normal opacity-70">(始める MOD の候補。どれか 1 つが付いたら進み、どれが固定されても良い)</span></p>
       <label class="mr-4 inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="make" /> 作る (確率込み)</label>
       <label class="inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="bought" /> 付いた状態で始める (ベースを買う)</label>
       <!-- 計算の費用 (1 回分 × 3) -->
       <div v-if="calc" class="mt-1 rounded bg-black/25 px-2 py-1.5 text-[11px]">
         <p class="mb-1 text-[12px]">
           計算: 1 個 = 1 回分 <b>{{ money(calc.once) }}</b> × 3 = <b class="text-amber-100">{{ money(calc.total) }}</b>
-          <span class="opacity-60">(完全の増強 1 回で狙いが付く {{ calc.pHit > 0 ? pct(calc.pHit) : "0%" }} → リロール平均 {{ Number.isFinite(calc.rerolls) ? calc.rerolls.toFixed(1) : "—" }} 回)</span>
+          <span class="opacity-60">(完全の増強 1 回で候補のどれかが付く {{ calc.pHit > 0 ? pct(calc.pHit) : "0%" }} → リロール平均 {{ Number.isFinite(calc.rerolls) ? calc.rerolls.toFixed(1) : "—" }} 回)</span>
+        </p>
+        <p v-if="calc.each.length >= 2" class="mb-1 opacity-80">
+          付きやすさ: <template v-for="(x, i) in calc.each" :key="x.name">{{ i ? " + " : "" }}{{ x.name }} {{ pct(x.p) }}</template> = {{ pct(calc.pHit) }}
         </p>
         <p v-if="calc.cantRoll" class="text-rose-300">完全の増強 (段の下限 {{ CURRENCY_FLOOR.augment.perfect }}) ではこの段は出ません</p>
         <p v-if="calc.noAbyss" class="text-amber-300">このベースの深淵のエッセンスの値段が分かりません (0 で数えています)</p>
@@ -460,7 +492,7 @@ function replay(): void {
               <span class="block text-[10px] opacity-60">回した結果: 平均 {{ makeCost.fractures.toFixed(1) }} 回</span>
             </span>
             <span v-if="makeRoute === 'magic'" class="rounded bg-black/30 px-2 py-1">
-              <span class="block text-[10px] opacity-60">変成・増強 (狙いが{{ fractureRows.length === 2 ? "両方" : "" }}付くまで、全部のベースで)</span>
+              <span class="block text-[10px] opacity-60">変成・増強 ({{ fractureRows.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで、全部のベースで)</span>
               <b>平均 {{ makeCost.magic.toFixed(0) }} 回</b>
             </span>
             <span v-else class="rounded bg-black/30 px-2 py-1">
@@ -481,7 +513,7 @@ function replay(): void {
       </p>
       <div v-if="fractureStart === 'make'" class="mt-1 text-[11px]">
         <p class="mt-0.5 opacity-70">
-          変成 → 狙い{{ fractureRows.length === 2 ? "が両方" : "が" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 (狙いだけの 1 つなら高貴で 3 つに) → 骨 1 本の壁 (未発現の冒涜、側は問わない) で 4 つ → フラクチャー ({{ fractureRows.length === 2 ? "2/3" : "1/3" }})。外れを固定したら白を買い直して始めから → 外れが無くなるまで消去。ここまでの費用も込み
+          変成 → {{ fractureRows.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 (狙いだけの 1 つなら高貴で 3 つに) → 骨 1 本の壁 (未発現の冒涜、側は問わない) で 4 つ → フラクチャー (1/3)。外れを固定したら白を買い直して始めから → 外れが無くなるまで消去。ここまでの費用も込み
         </p>
       </div>
       <p v-else class="mt-1 flex flex-wrap items-center gap-2 text-[11px]">

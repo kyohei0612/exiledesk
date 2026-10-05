@@ -41,7 +41,7 @@ export interface RecipeSpec {
   /** 上から順に作る */
   targets: readonly RecipeTarget[];
   /**
-   * フラクチャーの狙い (付け方 fracture、2 つまで = どちらが固定されても良い) の始め方。"bought" = 付いた状態のベースを買う (price は高貴建て)。
+   * フラクチャーの狙い (付け方 fracture、いくつでも = 同じ側の候補で、どれか 1 つが付いたら進み、どれが固定されても良い) の始め方。"bought" = 付いた状態のベースを買う (price は高貴建て)。
    * "make" = 確率込みで作る。route "alch" = 錬金 → 狙いが付くまでカオス、"magic" = 変成・増強ガチャ (狙いが全部揃うまで) → 王者 → 高貴
    * (blocker = 4 つ目を骨の未発現の冒涜にして、フラクチャーの候補を 1 つ減らす)
    */
@@ -206,11 +206,12 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       } else if (item.rarity === "normal") {
         e = play(grade("transmute", fractureT));
       } else if (item.rarity === "magic") {
-        // 変成・増強ガチャ: 狙いが全部揃うまで (マジックは片側 1 つずつ)。外れは消去か買い直しの安い方
-        const missing = fractureTs.filter((t) => !meets(item, t));
-        if (!missing.length) e = play("regal");
-        else if (allMods(item).some((m) => !isF(m)) || allMods(item).length >= 2) e = missMagic(missing[0]!);
-        else e = play(grade("augment", missing[0]!));
+        // 変成・増強ガチャ: 候補のどれか 1 つが付いたら王者 (2026-10-05 オーナー「始める MOD を選んでもらって、どれか付いたら始められる」。
+        // 候補は同じ側)。その側に外れがある / 2 つ埋まっていれば外れ (消去か買い直しの安い方)
+        const fSide = sideOf(fractureT.modId);
+        if (fractureTs.some((t) => meets(item, t))) e = play("regal");
+        else if (junkOn(item, fSide).some((m) => !isF(m)) || allMods(item).length >= 2) e = missMagic(fractureT);
+        else e = play(grade("augment", fractureT));
       } else if (allMods(item).length < 4) {
         // 4 つにする。壁 = 4 つ目を骨の未発現の冒涜に (フラクチャーされないので候補が 1 つ減る)
         const open = (["prefix", "suffix"] as StageSide[]).find((sd) => room(item, sd));
@@ -232,11 +233,10 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
 
   while (steps.length < max) {
     // 未発現の冒涜 MOD が残っていれば先に発現 (冒涜の狙いの手の中で選ぶ)
-    const t0 = spec.targets.find((x) => !meets(item, x));
-    if (!t0) return { done: true, cost, steps, seed, replayFrom, bases };
-    // フラクチャーの狙いが 2 つで固定されなかった方は、高貴で付け直す
-    const t: RecipeTarget = t0.method === "fracture" ? { ...t0, method: "exalt" } : t0;
-    if (t0.method === "fracture" && !allMods(item).some((m) => m.fractured)) return fail("固定した MOD が消えた");
+    // フラクチャーの狙い (候補) は、どれか 1 つが固定されていれば良い (固定されなかった候補は作らない)
+    if (fractureTs.length && !fixedHit()) return fail("固定した MOD が消えた");
+    const t = spec.targets.find((x) => x.method !== "fracture" && !meets(item, x));
+    if (!t) return { done: true, cost, steps, seed, replayFrom, bases };
     const side = sideOf(t.modId);
     let e: string | null = null;
     if (unrevealedOf(item)) {
