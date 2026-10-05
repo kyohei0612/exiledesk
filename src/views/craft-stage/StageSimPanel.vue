@@ -412,6 +412,20 @@ function toggle(k: "help" | "calc" | "usage"): void {
   try { localStorage.setItem(FOLD_KEY, JSON.stringify(open.value)); } catch { /* 無くてよい */ }
 }
 const help = computed(() => !!open.value.help);
+
+/**
+ * 1 つずつ進む (2026-10-05 オーナー「まだ決めてないところは表示させないでね、1 個 1 個進んで行く形で」)。
+ *   1 白ベースの値段 → 2 ① フラクチャー (選ぶか「しない」) → 3 ② 付ける順番 (「決めた」) → 4 相場・回す → 5 比べ・結果 (回した後)
+ * 前の段を決め直しても後ろは消さない。狙いが空になった時とベースを変えた時だけ始めに戻る
+ */
+const noFracture = ref(false);
+const orderDone = ref(false);
+const step2 = computed(() => num(whiteDivine.value) != null);
+const step3 = computed(() => step2.value && (fractureRows.value.length > 0 || noFracture.value));
+const step4 = computed(() => step3.value && orderDone.value && rows.value.length > 0);
+watch(() => rows.value.length, (n) => { if (n === 0) orderDone.value = false; });
+watch(() => fractureRows.value.length, (n) => { if (n > 0) noFracture.value = false; });
+watch(() => s.base.value, () => { noFracture.value = false; orderDone.value = false; });
 const money = (x: number): string => (Number.isFinite(x) ? displayCurrency.money(x) : "—");
 const pct = (x: number): string => `${(x * 100).toFixed(x < 0.1 && x > 0 ? 1 : 0)}%`;
 const stale = computed(() => ranFor.value !== sig.value);
@@ -478,14 +492,15 @@ function replay(): void {
     </div>
 
     <!-- 狙い: ① フラクチャーの候補 (ポップアップの MOD 一覧から選ぶ) → ② 順番に付ける MOD (下の一覧の「狙う」) -->
-    <div class="mb-3">
+    <div v-if="step2" class="mb-3">
       <!-- ① フラクチャーの候補 -->
       <div class="mb-2 rounded-lg border border-emerald-400/40 bg-emerald-500/[0.05] px-2 py-1.5">
         <p class="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-emerald-100">
           ① フラクチャー <span v-if="help" class="font-normal opacity-60">(同じ側。どれか 1 つが付いたら進み、どれが固定されても良い)</span>
           <button type="button" class="ml-auto rounded border border-emerald-400/60 bg-emerald-500/15 px-2 py-0.5 font-normal text-emerald-100 hover:bg-emerald-500/25" @click="pickerOpen = true">MOD を選ぶ</button>
+          <button v-if="!fractureRows.length && !noFracture" type="button" class="rounded border border-white/20 px-2 py-0.5 font-normal hover:bg-white/10" @click="noFracture = true">しない</button>
         </p>
-        <p v-if="!fractureRows.length" class="text-[11px] opacity-50">なし</p>
+        <p v-if="!fractureRows.length && noFracture" class="text-[11px] opacity-50">しない</p>
         <table v-else class="w-full">
           <tbody>
             <tr v-for="(r, i) in fractureRows" :key="r.modId" class="border-t border-white/5">
@@ -500,9 +515,9 @@ function replay(): void {
       </div>
 
       <!-- ② 順番に付ける MOD -->
-      <div class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
+      <div v-if="step3" class="rounded-lg border border-amber-400/40 bg-amber-500/[0.04] px-2 py-1.5">
         <p class="mb-1 text-[11px] font-bold text-amber-100">② 付ける順番 <span v-if="help" class="font-normal opacity-60">(下の「このベースに付く MOD」の段の表の「狙う」で足す。上から順。前に付けた物が消えたら、また上から)</span></p>
-        <p v-if="!restRows.length" class="text-[11px] opacity-50">まだありません</p>
+        <p v-if="!restRows.length" class="text-[11px] opacity-50">下の MOD 一覧の「狙う」で足す</p>
         <table v-else class="w-full">
           <tbody>
             <tr v-for="(r, i) in restRows" :key="r.modId" class="border-t border-white/5">
@@ -523,10 +538,14 @@ function replay(): void {
           </tbody>
         </table>
       </div>
-      <button v-if="rows.length" type="button" class="mt-1 rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
+      <div v-if="step3" class="mt-1 flex items-center gap-2">
+        <button v-if="rows.length" type="button" class="rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
+        <button v-if="rows.length && !orderDone" type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="orderDone = true">決めた →</button>
+      </div>
     </div>
     <StageFracturePicker v-if="pickerOpen" @close="pickerOpen = false" />
 
+    <template v-if="step4">
     <!-- カレンシーの相場 -->
     <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
       <span class="opacity-70">相場</span>
@@ -626,8 +645,8 @@ function replay(): void {
       <span v-if="error" class="text-rose-300">{{ error }}</span>
     </div>
 
-    <!-- 始め方の比べ -->
-    <div v-if="rows.length" class="mb-3 rounded-lg border border-sky-400/30 bg-sky-500/[0.05] px-3 py-2">
+    <!-- 始め方の比べ (回した後) -->
+    <div v-if="recipeOut" class="mb-3 rounded-lg border border-sky-400/30 bg-sky-500/[0.05] px-3 py-2">
       <p class="mb-1 font-bold text-sky-100">始め方の比べ <span v-if="help" class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
       <table class="w-full">
         <tbody>
@@ -702,5 +721,6 @@ function replay(): void {
       </template>
 
     </div>
+    </template>
   </section>
 </template>
