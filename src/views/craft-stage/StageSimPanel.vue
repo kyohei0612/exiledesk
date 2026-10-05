@@ -222,7 +222,7 @@ const fractureOdds = computed((): { hit: number; of: number } => {
  * 「完全やね消去 2 つ使うのは」)。
  *   1 回分 = 白 + 完全の変成 + (完全の増強 + 消去 × 2) × リロールの回数 + 王者 (無印) + 高貴 × (1 − p) + 骨 (壁) + フラクチャー
  *   リロールの回数 = 1 ÷ (完全の増強 1 回で狙いが付く確率)。確率はその側の普通の置き場の重み (下限 = 完全の増強の段の下限)
- *   1 個 = 1 回分 × 3 (骨の壁でフラクチャーが 1/3)
+ *   1 個 = 1 回分 × 3 (骨の壁でフラクチャーが 1/3) + 固定できた後の消去 × 2 (2026-10-05 オーナー「消去 2 は必ずいるよ、完成後」)
  * お告げの側は、壁を置く側 = 狙いの反対側
  */
 const calc = computed(() => {
@@ -260,9 +260,10 @@ const calc = computed(() => {
     { name: nameOf("fracture"), n: 1, each: priceOf("fracture") },
   ];
   const once = lines.reduce((a, l) => a + l.n * l.each, 0);
+  /** 固定できた後に 1 度だけ: 消去 × 2 (固定した物と骨の壁のほかの外れ 2 つ) */
+  const after = 2 * priceOf("annul");
   // 4 MOD のベースを買う時は満杯なので、壁は 深淵のエッセンス (結晶化で消す側を選ぶ) → 骨 (ネクロマンシー) で印を置き換える
   const buyLines: Array<{ name: string; n: number; each: number }> = [
-    { name: nameOf("annul"), n: 2, each: priceOf("annul") },
     { name: nameOf(abyss), n: 1, each: priceOf(abyss) },
     { name: nameOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation") },
     { name: nameOf("desecrate"), n: 1, each: priceOf("desecrate") },
@@ -278,7 +279,7 @@ const calc = computed(() => {
   const breakEven = once - buyRest;
   const fourB = fourDivine.value != null && fourDivine.value >= 0 ? fourDivine.value * divineEx() : null;
   const buyOnce = fourB != null ? fourB + buyRest : null;
-  return { pHit, each, rerolls, lines, once, total: once * 3, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, buyRest, breakEven, buyOnce };
+  return { pHit, each, rerolls, lines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, buyRest, breakEven, buyOnce };
 });
 /** 入れた値段との比べ (高貴建て) */
 const buyVsMake = computed(() => {
@@ -443,7 +444,7 @@ function replay(): void {
       <!-- 計算の費用 (1 回分 × 3) -->
       <div v-if="calc" class="mt-1 rounded bg-black/25 px-2 py-1.5 text-[11px]">
         <p class="mb-1 text-[12px]">
-          計算: 1 個 = 1 回分 <b>{{ money(calc.once) }}</b> × 3 = <b class="text-amber-100">{{ money(calc.total) }}</b>
+          計算: 1 個 = 1 回分 <b>{{ money(calc.once) }}</b> × 3 + 固定できた後の消去 × 2 {{ money(calc.after) }} = <b class="text-amber-100">{{ money(calc.total) }}</b>
           <span class="opacity-60">(完全の増強 1 回で候補のどれかが付く {{ calc.pHit > 0 ? pct(calc.pHit) : "0%" }} → リロール平均 {{ Number.isFinite(calc.rerolls) ? calc.rerolls.toFixed(1) : "—" }} 回)</span>
         </p>
         <p v-if="calc.each.length >= 2" class="mb-1 opacity-80">
@@ -461,10 +462,10 @@ function replay(): void {
           </p>
           <p class="mt-0.5">
             分かれ目: <b class="text-sky-100">{{ money(calc.breakEven) }}</b> より安ければ買う方が得
-            <span class="opacity-60">(自前の 1 回分 {{ money(calc.once) }} − 買う時のベース代以外 {{ money(calc.buyRest) }} = 消去 2 + 深淵のエッセンス・結晶化・骨・ネクロマンシー (満杯なので印を置き換える壁) + フラクチャー)</span>
+            <span class="opacity-60">(自前の 1 回分 {{ money(calc.once) }} − 買う時のベース代以外 {{ money(calc.buyRest) }} = 深淵のエッセンス・結晶化・骨・ネクロマンシー (満杯なので印を置き換える壁) + フラクチャー。固定できた後の消去 × 2 はどちらも同じ)</span>
           </p>
           <p v-if="calc.buyOnce != null" class="mt-0.5">
-            買う: 1 回分 {{ money(calc.buyOnce) }} × 3 = <b>{{ money(calc.buyOnce * 3) }}</b> / 自前: {{ money(calc.total) }}
+            買う: 1 回分 {{ money(calc.buyOnce) }} × 3 + 消去 × 2 = <b>{{ money(calc.buyOnce * 3 + calc.after) }}</b> / 自前: {{ money(calc.total) }}
             <span v-if="calc.buyOnce < calc.once" class="ml-1 rounded bg-emerald-500/20 px-1.5 text-emerald-200">買う方が {{ money((calc.once - calc.buyOnce) * 3) }} 得</span>
             <span v-else class="ml-1 rounded bg-amber-500/20 px-1.5 text-amber-200">自前の方が {{ money((calc.buyOnce - calc.once) * 3) }} 得</span>
           </p>
@@ -515,7 +516,7 @@ function replay(): void {
       </p>
       <div v-if="fractureStart === 'make'" class="mt-1 text-[11px]">
         <p class="mt-0.5 opacity-70">
-          変成 → {{ fractureRows.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 (狙いだけの 1 つなら高貴で 3 つに) → 骨 1 本の壁 (未発現の冒涜、側は問わない) で 4 つ → フラクチャー (1/3)。外れを固定したら白を買い直して始めから。固定した後の外れは残す (カオスは入れ替える、高貴・冒涜は要る時にその側を消す)。ここまでの費用も込み
+          変成 → {{ fractureRows.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 (狙いだけの 1 つなら高貴で 3 つに) → 骨 1 本の壁 (未発現の冒涜、側は問わない) で 4 つ → フラクチャー (1/3)。外れを固定したら白を買い直して始めから。固定できたら消去を 2 つ (残りの外れはカオスが入れ替え、高貴・冒涜は要る時にその側を消す)。ここまでの費用も込み
         </p>
       </div>
       <p v-else class="mt-1 flex flex-wrap items-center gap-2 text-[11px]">

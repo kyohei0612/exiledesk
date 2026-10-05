@@ -235,8 +235,13 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       }
       if (e) return fail(e);
     }
-    // 固定した後の外れは消さずに残す (2026-10-05 オーナー「カオスオーブは付け直しも含めてできる」): カオスは外れを入れ替えるので消去が要らない。
-    // 高貴・冒涜は、その側に外れがあれば次の手で消す (前は 1 MOD まで消してからで、カオスが「外せる MOD が無い」で止まり、消去も 3 つ余計だった)
+    // 固定できたら消去を 2 つ (2026-10-05 オーナー「消去 2 は必ずいるよ、完成後」: 固定した物と骨の壁のほかの外れ 2 つ)。
+    // 1 MOD まで消し切りはしない (前は 3 つ消して、カオスが「外せる MOD が無い」で止まっていた)。残りの外れはカオスが入れ替え、高貴・冒涜は要る時にその側を消す
+    for (let k = 0; k < 2; k++) {
+      if (!allMods(item).some((m) => !m.fractured && !m.unrevealed)) break;
+      const e = play("annul");
+      if (e) return fail(`消去: ${e}`);
+    }
   }
 
   while (steps.length < max) {
