@@ -20,7 +20,8 @@ import { tierDisplayRanges } from "../mods/stat-scale";
 export type ModGroup = "normal" | "rune" | "essence" | "desecrated" | "otherworldly";
 export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", rune: "ルーンの特殊 MOD (重みは仮定)", essence: "エッセンス", desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)" };
 
-export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string }
+/** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05) */
+export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string; modId?: string }
 export interface ListRow {
   id: string;
   /** 系統 (URL の mod= で id の代わりに使える) */
@@ -102,6 +103,37 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
       const rows = modsOf([...pools.normal[k], ...pool[k]]).map((m) => rowOf(m, side, "normal"));
       out.push(...fillShares(rows).filter((r) => own.has(r.id)).map((r) => ({ ...r, group: "rune" as const, runeJa: runeJaOf(id), socketed: false })));
     }
+  }
+  return mergeFamilies(out);
+}
+
+/**
+ * 同じ系統 (どちらか片方しか付かない) の MOD を 1 行にまとめる (2026-10-05 オーナー「この表示だとスキルレベルが 2 個被って付くんじゃねってなる、
+ * 同じグループ内では共存できないから」)。poe2db と同じく行の文は「呪印スキルのレベル # / 投射物スキルのレベル #」、重み・出やすさは合計、
+ * 段の表に全部の段 (段ごとの MOD の id つき = 「付ける」はその段の MOD)。抽選は段ごとの重みのまま (rune-split.ts で分けた物もここで見た目だけ戻す)
+ */
+function mergeFamilies(rows: ListRow[]): ListRow[] {
+  const groups = new Map<string, ListRow[]>();
+  for (const r of rows) {
+    const k = `${r.group}|${r.side}|${r.runeJa ?? ""}|${r.family}`;
+    groups.set(k, [...(groups.get(k) ?? []), r]);
+  }
+  const out: ListRow[] = [];
+  for (const g of groups.values()) {
+    if (g.length === 1) { out.push(g[0]!); continue; }
+    const first = g[0]!;
+    out.push({
+      ...first,
+      template: g.map((r) => r.template).join(" / "),
+      text: g.map((r) => r.text).join(" / "),
+      tags: [...new Set(g.flatMap((r) => r.tags))],
+      tiers: g.flatMap((r) => r.tiers.map((t) => ({ ...t, modId: r.id }))),
+      weight: g.reduce((a, r) => a + r.weight, 0),
+      share: g.reduce((a, r) => a + r.share, 0),
+      topLevel: Math.max(...g.map((r) => r.topLevel)),
+      on: g.some((r) => r.on),
+      blocked: g.every((r) => r.blocked),
+    });
   }
   return out;
 }
