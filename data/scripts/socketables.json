@@ -583,6 +583,232 @@
           }
         }
       ]
+    },
+    {
+      "name": "アストリッドの創造性",
+      "target_seconds": 80,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次はアストリッドの創造性。エッセンスで付くMODは、クラフトMODと呼ばれるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "前編で、1つまでって言ってたやつなのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。1つのアイテムに1つまで。まず、ソケットを作っておくわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "肉体のパーフェクトエッセンスを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アーマーのMODが消えて、最大ライフが9%増加する、が付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ヒステリーのエッセンスも使うのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "使ってみるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エッセンスのMODは1つまでで、使えない。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "やっぱり1つまでなのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここでアストリッドの創造性を差すわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "クラフトモッドを追加で1個持つことができる。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "これで2つ目が付けられるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、ヒステリーも、ランダムなMODを1つ消してから付けるエッセンスなの。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "1つ目のエッセンスのMODが消えることもあるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "あるわ。そこで右側の結晶化のお告げ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次のパーフェクトかコラプトのエッセンスは、サフィックスだけを消すの。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1つ目はプレフィックスだから、これで守れるわ。ヒステリーのエッセンスを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "筋力が消えて、93から139の物理棘ダメージが付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "エッセンスのMODが2つ並んだのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アストリッドの創造性はソケットバウンドじゃないから、置き換えもできるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、コラプトや聖別をしたアイテムには差せないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        }
+      ]
     }
   ]
 }
