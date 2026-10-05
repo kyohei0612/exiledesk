@@ -10,7 +10,7 @@
   探す自動 (計算機の自動のツリー) は外した。計算機 (htc-craft) はそのまま。
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
@@ -20,6 +20,7 @@ import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../services/trade2/query/spec";
 import { openTradeQuery } from "../../services/pob-check/trade-links";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
+import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 
 const s = craftStage;
@@ -98,6 +99,53 @@ const boughtDivine = ref<number | null>(null);
 const whiteDivine = ref<number | null>(null);
 /** 4 MOD・当たり 1 (フラクチャーの狙いが付いた、固定していないレア) のベースの値段 (神、手で入れる) */
 const fourDivine = ref<number | null>(null);
+
+/**
+ * 値段の変わりに付いていく (2026-10-05 オーナー「価格変動に対応できる仕組みがいいね、カレンシーとベースの。結局 1 からでも白ベースは買う」)。
+ *   - カレンシー: 相場 (カレンシーランキングと同じ) をいつの値段か出し、取り直せる。取り直すと計算も回した結果も出し直す
+ *   - ベース: 手で入れた値段 (白 / 4 MOD / 固定済み) をベースとアイテムレベルごとに覚え、いつ入れたかを出す (1 日以上前は色を変える)。
+ *     取引所は自動で取らない (サーバーに置く前提、[[sim-no-trade-fetch]])
+ */
+type Kept = { v: number; at: number };
+const PRICE_KEY = "exiledesk.craftStageSim.basePrices";
+const keptAll = ref<Record<string, Partial<Record<"white" | "four" | "bought", Kept>>>>({});
+try { keptAll.value = JSON.parse(localStorage.getItem(PRICE_KEY) ?? "{}"); } catch { /* 無くてよい */ }
+const keptKey = computed(() => `${s.base.value}|${s.itemLevel.value}`);
+const kept = computed(() => keptAll.value[keptKey.value] ?? {});
+let loadingKept = false;
+function loadKept(): void {
+  loadingKept = true;
+  whiteDivine.value = kept.value.white?.v ?? null;
+  fourDivine.value = kept.value.four?.v ?? null;
+  boughtDivine.value = kept.value.bought?.v ?? null;
+  void Promise.resolve().then(() => { loadingKept = false; });
+}
+function saveKept(which: "white" | "four" | "bought", v: number | null): void {
+  if (loadingKept) return;
+  const cur = { ...(keptAll.value[keptKey.value] ?? {}) };
+  if (v == null || !(v >= 0)) delete cur[which];
+  else cur[which] = { v, at: Date.now() };
+  keptAll.value = { ...keptAll.value, [keptKey.value]: cur };
+  try { localStorage.setItem(PRICE_KEY, JSON.stringify(keptAll.value)); } catch { /* 無くてよい */ }
+}
+watch(keptKey, loadKept, { immediate: true });
+watch(whiteDivine, (v) => saveKept("white", v));
+watch(fourDivine, (v) => saveKept("four", v));
+watch(boughtDivine, (v) => saveKept("bought", v));
+/** いつ入れた値段か (「3 時間前」)。1 日以上前は old */
+function ageOf(which: "white" | "four" | "bought"): { text: string; old: boolean } | null {
+  const k = kept.value[which];
+  if (!k) return null;
+  const min = Math.floor((Date.now() - k.at) / 60000);
+  const text = min < 1 ? "今入れた" : min < 60 ? `${min} 分前に入れた` : min < 1440 ? `${Math.floor(min / 60)} 時間前に入れた` : `${Math.floor(min / 1440)} 日前に入れた`;
+  return { text, old: min >= 1440 };
+}
+/** 相場 (カレンシー) */
+const market = marketStore;
+async function refreshPrices(): Promise<void> {
+  await market.refreshMarket();
+}
+onMounted(() => void market.ensureMarket(MARKET_MAX_AGE_MS));
 /** 4 MOD のベースを取引所で探す (狙いの MOD が付いたレア。固定済みは除く。開くだけ) */
 async function searchFour(): Promise<void> {
   const d = s.data.value, f = fractureRow.value;
@@ -131,7 +179,7 @@ const makeCost = ref<{ key: string; perDone: number; p50: number; p90: number; p
 const makeBusy = ref(false);
 let makeGen = 0;
 const makeKey = computed(() => (fractureRow.value && !(makeRoute.value === "magic" && sameSidePair.value)
-  ? `${s.base.value}|${s.itemLevel.value}|${fractureRows.value.map((f) => `${f.modId}:${f.minTierIndex}`).join(",")}|${makeRoute.value}|${makeSpec.value.blocker}|${whiteDivine.value ?? 0}` : ""));
+  ? `${s.base.value}|${s.itemLevel.value}|${fractureRows.value.map((f) => `${f.modId}:${f.minTierIndex}`).join(",")}|${makeRoute.value}|${makeSpec.value.blocker}|${whiteDivine.value ?? 0}|${market.fetchedAt.value ?? 0}` : ""));
 watch(makeKey, async (key) => {
   const d = s.data.value, f = fractureRow.value;
   const my = ++makeGen;
@@ -229,7 +277,7 @@ const progress = ref<[number, number] | null>(null);
 const error = ref("");
 const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
 const ranFor = ref("");
-const sig = computed(() => `${s.base.value}|${s.itemLevel.value}|${fractureStart.value}|${boughtDivine.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}:${methodOf(t)}`).join(",")}`);
+const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|${s.itemLevel.value}|${fractureStart.value}|${boughtDivine.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}:${methodOf(t)}`).join(",")}`);
 let gen = 0;
 
 const blocked = computed((): string | null => {
@@ -335,7 +383,15 @@ function replay(): void {
       <span class="opacity-70">白のベースの値段</span>
       <input v-model.number="whiteDivine" type="number" min="0" step="0.1" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
       <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
+      <span v-if="ageOf('white')" :class="ageOf('white')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")!.text }}</span>
       <span class="opacity-60">規格外のソケット付きならその値段。白から始める時・作り直す時に数え、マジックで外れた時は「消去」と「白を買い直して変成」の安い方を使う</span>
+    </div>
+    <!-- カレンシーの相場 -->
+    <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+      <span class="opacity-70">カレンシーの相場</span>
+      <span :class="market.fetchedAt.value && Date.now() - market.fetchedAt.value > MARKET_MAX_AGE_MS ? 'text-amber-300' : ''">{{ market.loading.value ? "取り直しています…" : market.fetchedLabel.value || "まだ読んでいない" }}</span>
+      <button type="button" class="rounded border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-40" :disabled="market.loading.value" title="カレンシーランキングと同じ相場を取り直す (計算・回した結果も出し直す)" @click="refreshPrices">相場を取り直す</button>
+      <span class="opacity-60">計算と回した結果は、この相場の値段で出しています</span>
     </div>
 
     <!-- フラクチャーの始め方 -->
@@ -357,6 +413,7 @@ function replay(): void {
             <span>4 MOD・当たり 1 のベース</span>
             <input v-model.number="fourDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
             <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
+            <span v-if="ageOf('four')" :class="ageOf('four')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")!.text }}</span>
           </p>
           <p class="mt-0.5">
             分かれ目: <b class="text-sky-100">{{ money(calc.breakEven) }}</b> より安ければ買う方が得
@@ -421,7 +478,8 @@ function replay(): void {
         <span class="opacity-70">ベースの値段</span>
         <input v-model.number="boughtDivine" type="number" min="0" step="0.1" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
         <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="この MOD が固定済みのベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
-        <span class="opacity-60">見つけた値段を入れてください</span>
+        <span v-if="ageOf('bought')" :class="ageOf('bought')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")!.text }}</span>
+        <span v-else class="opacity-60">見つけた値段を入れてください</span>
       </p>
     </div>
 
