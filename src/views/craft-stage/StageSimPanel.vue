@@ -96,6 +96,16 @@ const boughtDivine = ref<number | null>(null);
  * 「消去」と「白を買い直して変成」の比べに使う (2026-10-05 オーナー「消去もバカにならんが」「ベースの規格外の値段次第」)
  */
 const whiteDivine = ref<number | null>(null);
+/** 4 MOD・当たり 1 (フラクチャーの狙いが付いた、固定していないレア) のベースの値段 (神、手で入れる) */
+const fourDivine = ref<number | null>(null);
+/** 4 MOD のベースを取引所で探す (狙いの MOD が付いたレア。固定済みは除く。開くだけ) */
+async function searchFour(): Promise<void> {
+  const d = s.data.value, f = fractureRow.value;
+  if (!d || !f) return;
+  const got = tradeFiltersFor(d, [{ modId: f.modId, minTierIndex: f.minTierIndex }]);
+  const stats = got.filters.map((x) => ({ id: x.id, ...(x.min != null ? { min: x.min } : {}) }));
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: false, noSanctified: true }));
+}
 const divineEx = (): number => priceOf("divine") || 1;
 /** 白のベースを取引所で探す (開くだけ) */
 async function searchWhite(): Promise<void> {
@@ -179,21 +189,31 @@ const calc = computed(() => {
   const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
   const rerolls = pHit > 0 ? 1 / pHit : Infinity;
   const white = (whiteDivine.value ?? 0) * divineEx();
-  const lines: Array<{ name: string; n: number; each: number }> = [
+  // buy = 4 MOD のベースを買っても要る物 (壁とフラクチャー)
+  const lines: Array<{ name: string; n: number; each: number; buy?: boolean }> = [
     { name: "白のベース", n: 1, each: white },
     { name: nameOf("transmute_perfect"), n: 1, each: priceOf("transmute_perfect") },
     { name: `${nameOf("augment_perfect")} (リロール)`, n: rerolls, each: priceOf("augment_perfect") },
     { name: `${nameOf("annul")} (リロールに 2 つ)`, n: rerolls * 2, each: priceOf("annul") },
     // マジック → レアにする王者 (等級は問わないので無印。2026-10-05 オーナー「適当な王者がいるのか、レア化に。チャレンジ品作る時だから 3 個か」)
     { name: nameOf("regal"), n: 1, each: priceOf("regal") },
-    { name: nameOf(abyss), n: 1, each: priceOf(abyss) },
-    { name: nameOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation") },
-    { name: nameOf("desecrate"), n: 1, each: priceOf("desecrate") },
-    { name: nameOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy") },
-    { name: nameOf("fracture"), n: 1, each: priceOf("fracture") },
+    { name: nameOf(abyss), n: 1, each: priceOf(abyss), buy: true },
+    { name: nameOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), buy: true },
+    { name: nameOf("desecrate"), n: 1, each: priceOf("desecrate"), buy: true },
+    { name: nameOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy"), buy: true },
+    { name: nameOf("fracture"), n: 1, each: priceOf("fracture"), buy: true },
   ];
   const once = lines.reduce((a, l) => a + l.n * l.each, 0);
-  return { pHit, rerolls, lines, once, total: once * 3, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0 };
+  /**
+   * 4 MOD・当たり 1 のベースを買う時の 1 回分 (2026-10-05 オーナー「ベース買うか自前でするかの指標は? 4 MOD で当たり 1 のベース買って、
+   * フラクチャーはどのみちかかるけど、消去が 2 個でいい、あとベース代」)。ベース代 + 消去 × 2 + 壁 (深淵のエッセンス・結晶化・骨・ネクロマンシー) + フラクチャー。
+   * 分かれ目 = 自前の 1 回分 − ベース代以外 (これより安いベースなら買う方が得)
+   */
+  const buyRest = 2 * priceOf("annul") + lines.filter((l) => l.buy).reduce((a, l) => a + l.n * l.each, 0);
+  const breakEven = once - buyRest;
+  const fourB = fourDivine.value != null && fourDivine.value >= 0 ? fourDivine.value * divineEx() : null;
+  const buyOnce = fourB != null ? fourB + buyRest : null;
+  return { pHit, rerolls, lines, once, total: once * 3, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, buyRest, breakEven, buyOnce };
 });
 /** 入れた値段との比べ (高貴建て) */
 const buyVsMake = computed(() => {
@@ -331,6 +351,23 @@ function replay(): void {
         </p>
         <p v-if="calc.cantRoll" class="text-rose-300">完全の増強 (段の下限 {{ CURRENCY_FLOOR.augment.perfect }}) ではこの段は出ません</p>
         <p v-if="calc.noAbyss" class="text-amber-300">このベースの深淵のエッセンスの値段が分かりません (0 で数えています)</p>
+        <!-- 買うか自前か (4 MOD・当たり 1 のベース) -->
+        <div class="mb-1.5 rounded border border-sky-400/25 bg-sky-500/[0.06] px-2 py-1.5">
+          <p class="flex flex-wrap items-center gap-2">
+            <span>4 MOD・当たり 1 のベース</span>
+            <input v-model.number="fourDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
+            <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
+          </p>
+          <p class="mt-0.5">
+            分かれ目: <b class="text-sky-100">{{ money(calc.breakEven) }}</b> より安ければ買う方が得
+            <span class="opacity-60">(自前の 1 回分 {{ money(calc.once) }} − 買う時のベース代以外 {{ money(calc.buyRest) }} = 消去 2 + 壁 + フラクチャー)</span>
+          </p>
+          <p v-if="calc.buyOnce != null" class="mt-0.5">
+            買う: 1 回分 {{ money(calc.buyOnce) }} × 3 = <b>{{ money(calc.buyOnce * 3) }}</b> / 自前: {{ money(calc.total) }}
+            <span v-if="calc.buyOnce < calc.once" class="ml-1 rounded bg-emerald-500/20 px-1.5 text-emerald-200">買う方が {{ money((calc.once - calc.buyOnce) * 3) }} 得</span>
+            <span v-else class="ml-1 rounded bg-amber-500/20 px-1.5 text-amber-200">自前の方が {{ money((calc.buyOnce - calc.once) * 3) }} 得</span>
+          </p>
+        </div>
         <table class="w-full">
           <tbody>
             <tr v-for="l in calc.lines" :key="l.name" class="border-t border-white/5">
