@@ -1139,6 +1139,260 @@
           }
         }
       ]
+    },
+    {
+      "name": "アルダーの4種",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次はアルダーの4種。差すと、武器の属性のMODを別の属性に変えるルーンよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "aldur",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "属性を変えるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "aldur",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "4つあって、それぞれ変える先が決まっているの。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アルダーの4種",
+              "rows": [
+                [
+                  "ルーン",
+                  "変えるMOD",
+                  "変わる先"
+                ],
+                [
+                  "アルダーの情熱",
+                  "冷気・雷",
+                  "火"
+                ],
+                [
+                  "アルダーの息吹",
+                  "火・雷",
+                  "冷気"
+                ],
+                [
+                  "アルダーの怒り",
+                  "火・冷気",
+                  "雷"
+                ],
+                [
+                  "アルダーの裏切り",
+                  "火・冷気・雷",
+                  "混沌"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "情熱は火、息吹は冷気、怒りは雷、裏切りは混沌に変えるわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アルダーの4種",
+              "rows": [
+                [
+                  "ルーン",
+                  "変えるMOD",
+                  "変わる先"
+                ],
+                [
+                  "アルダーの情熱",
+                  "冷気・雷",
+                  "火"
+                ],
+                [
+                  "アルダーの息吹",
+                  "火・雷",
+                  "冷気"
+                ],
+                [
+                  "アルダーの怒り",
+                  "火・冷気",
+                  "雷"
+                ],
+                [
+                  "アルダーの裏切り",
+                  "火・冷気・雷",
+                  "混沌"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "差せるのは武器だけなのだ？",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アルダーの4種",
+              "rows": [
+                [
+                  "ルーン",
+                  "変えるMOD",
+                  "変わる先"
+                ],
+                [
+                  "アルダーの情熱",
+                  "冷気・雷",
+                  "火"
+                ],
+                [
+                  "アルダーの息吹",
+                  "火・雷",
+                  "冷気"
+                ],
+                [
+                  "アルダーの怒り",
+                  "火・冷気",
+                  "雷"
+                ],
+                [
+                  "アルダーの裏切り",
+                  "火・冷気・雷",
+                  "混沌"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう、レアの武器だけ。この両手武器には、2から36の雷ダメージを追加する、が付いているわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "aldur",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "熟練工のオーブでソケットを作るわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "aldur",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アルダーの情熱を差すわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "雷ダメージの追加が、14から23の火ダメージを追加する、に変わった。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "本当に火になったのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "変わるのは、差した時に付いているMODだけ。後から付けたMODは、そのままよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "火の武器を作りたい時に、まとめて火にできるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そういう使い方ね。ただ、変える物が付いていないと差せないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それと、アルダーの4種もソケットバウンド。一度差したら、外せないし置き換えもできないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "雷に戻したくなっても、無理なのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        }
+      ]
     }
   ]
 }
