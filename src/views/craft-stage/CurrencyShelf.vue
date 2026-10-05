@@ -16,19 +16,24 @@ import { runeEffectFor, runeOf, socketCapOf } from "../../services/craft-stage/s
 
 const emit = defineEmits<{ hold: [key: string] }>();
 /**
- * 持っているカレンシーに掛けられるお告げの並び (呼ぶ側の slot "held")。オーナー 2026-10-04「高貴なオーブからヴァールオーブの段の下に。
- * 小さい画面だと棚の下はスクロールが要る」: オーブのタブでは「その他」(神〜ヴァール) の段の直後に行を切って出す。
- * 持っている物がそれより下の段 (骨・アクト等) なら、その段の直後 (持っている物の位置がずれないように)。他のタブは一番下
+ * 持っているカレンシーに掛けられるお告げの並び (呼ぶ側の slot "held")。オーブのタブでは使える物の並びの直後 (2026-10-05 から。前は「その他」の段の直後)、
+ * 他のタブは一番下
  */
-const ORB_ANCHOR = ORBS.findIndex((g) => g.kind === "other");
-const heldAt = computed(() => {
-  const k = craftStage.held.value;
-  if (!k) return ORB_ANCHOR;
-  const i = ORBS.findIndex((g) => g.keys.includes(k));
-  if (i >= 0) return Math.max(ORB_ANCHOR, i);
-  return bonesFor(craftStage.item.value).includes(k) ? ORBS.length : ORB_ANCHOR;
-});
 const tab = ref<"orb" | "essence" | "catalyst" | "rune" | "omen">("orb");
+/**
+ * オーブ・骨のタブ: 今のアイテムに使える (光っている) 物を前に、使えない物を後ろに (2026-10-05 オーナー「使える光ってるオーブを丸ごと前に
+ * 持ってきちゃおうか。1 段目に入らなければ折り返して 2 段目に。その方がこれ使えるんだなってなる」)。まとまり (変成・増強…) の並びは保つ
+ */
+const orbSplit = computed(() => {
+  const it = craftStage.item.value;
+  void craftStage.omens.value;
+  const groups = [...ORBS, { kind: "bones", label: "骨", keys: bonesFor(it) }];
+  const ok = (k: string): boolean => !craftStage.usable(k);
+  return {
+    usable: groups.map((g) => ({ kind: g.kind, keys: g.keys.filter(ok) })).filter((g) => g.keys.length),
+    unusable: groups.map((g) => ({ kind: g.kind, keys: g.keys.filter((k) => !ok(k)) })).filter((g) => g.keys.length),
+  };
+});
 const runes = computed(() => runesFor(craftStage.item.value));
 /** 開いたルーンのまとまり (初めは全部閉じて、クラフトに関わる物だけ出す) */
 const openRunes = ref(new Set<string>());
@@ -72,17 +77,23 @@ const TABS = computed(() => [
       >{{ t.label }}</button>
     </div>
 
-    <div v-if="tab === 'orb'" class="flex flex-wrap gap-x-4 gap-y-2">
-      <template v-for="(g, i) in ORBS" :key="g.kind">
-        <div class="flex gap-1.5">
+    <!-- 使える物を前に、使えない物は線の下に (2026-10-05)。持っているカレンシーのお告げは使える物の直後 -->
+    <div v-if="tab === 'orb'">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <div v-for="g in orbSplit.usable" :key="'u' + g.kind" class="flex gap-1.5">
           <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
         </div>
-        <div v-if="i === heldAt && $slots.held" class="w-full"><slot name="held" /></div>
-      </template>
-      <div v-if="bonesFor(craftStage.item.value).length" class="flex gap-1.5">
-        <ShelfButton v-for="k in bonesFor(craftStage.item.value)" :key="k" :k="k" @pick="emit('hold', $event)" />
+        <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
       </div>
-      <div v-if="heldAt === ORBS.length && $slots.held" class="w-full"><slot name="held" /></div>
+      <div v-if="$slots.held" class="mt-2"><slot name="held" /></div>
+      <template v-if="orbSplit.unusable.length">
+        <p class="mb-1 mt-3 border-t border-white/10 pt-2 text-[10px] opacity-50">今のアイテムには使えない物</p>
+        <div class="flex flex-wrap gap-x-4 gap-y-2">
+          <div v-for="g in orbSplit.unusable" :key="'x' + g.kind" class="flex gap-1.5">
+            <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+          </div>
+        </div>
+      </template>
     </div>
 
     <div v-else-if="tab === 'essence'" class="flex flex-wrap gap-x-4 gap-y-2">
