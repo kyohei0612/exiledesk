@@ -215,7 +215,7 @@ const fractureOdds = computed((): { hit: number; of: number } => {
  * 計算の費用 (2026-10-05 オーナー「3 個買って 1 個成功品と仮定して、最低完全変成 3、次の完全増強、消去はセットで使う、フラクチャー 3 つは
  * 絶対にいる。深淵エッセンスは 3 個、ネクロマンシー、結晶化、骨それぞれ 3 回、確率的に計算してくれ。平均コスト 1 個作るコスト分かれば 3 倍」
  * 「完全やね消去 2 つ使うのは」)。
- *   1 回分 = 白 + 完全の変成 + (完全の増強 + 消去 × 2) × リロールの回数 + 王者 (無印) + 深淵のエッセンス + 結晶化 + 骨 + ネクロマンシー + フラクチャー
+ *   1 回分 = 白 + 完全の変成 + (完全の増強 + 消去 × 2) × リロールの回数 + 王者 (無印) + 高貴 × (1 − p) + 骨 (壁) + フラクチャー
  *   リロールの回数 = 1 ÷ (完全の増強 1 回で狙いが付く確率)。確率はその側の普通の置き場の重み (下限 = 完全の増強の段の下限)
  *   1 個 = 1 回分 × 3 (骨の壁でフラクチャーが 1/3)
  * お告げの側は、壁を置く側 = 狙いの反対側
@@ -238,26 +238,36 @@ const calc = computed(() => {
   const rerolls = pHit > 0 ? 1 / pHit : Infinity;
   const white = (whiteDivine.value ?? 0) * divineEx();
   // buy = 4 MOD のベースを買っても要る物 (壁とフラクチャー)
-  const lines: Array<{ name: string; n: number; each: number; buy?: boolean }> = [
+  // 1 から (自前): 壁は王者の後に骨 1 本だけ (側を選ばないのでお告げも深淵のエッセンスも要らない)。増強のリロールで狙いの 1 つだけ
+  // になった時 (最初の増強で付かなかった時、確率 1 − p) は、王者で 2 つにしかならないので高貴で 3 つにしてから骨
+  // (2026-10-05 オーナー「1 からの場合骨壁は単純で王者後は骨 1 個でいい、選ぶ必要ない」「増強リロールで 1 個だけ付いたら王者すると 1 個足りないから高貴打って 3 つに」)
+  const lines: Array<{ name: string; n: number; each: number }> = [
     { name: "白のベース", n: 1, each: white },
     { name: nameOf("transmute_perfect"), n: 1, each: priceOf("transmute_perfect") },
     { name: `${nameOf("augment_perfect")} (リロール)`, n: rerolls, each: priceOf("augment_perfect") },
     { name: `${nameOf("annul")} (リロールに 2 つ)`, n: rerolls * 2, each: priceOf("annul") },
     // マジック → レアにする王者 (等級は問わないので無印。2026-10-05 オーナー「適当な王者がいるのか、レア化に。チャレンジ品作る時だから 3 個か」)
     { name: nameOf("regal"), n: 1, each: priceOf("regal") },
-    { name: nameOf(abyss), n: 1, each: priceOf(abyss), buy: true },
-    { name: nameOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), buy: true },
-    { name: nameOf("desecrate"), n: 1, each: priceOf("desecrate"), buy: true },
-    { name: nameOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy"), buy: true },
-    { name: nameOf("fracture"), n: 1, each: priceOf("fracture"), buy: true },
+    { name: `${nameOf("exalt")} (リロールで 1 つだけの時)`, n: Math.max(0, 1 - pHit), each: priceOf("exalt") },
+    { name: `${nameOf("desecrate")} (壁)`, n: 1, each: priceOf("desecrate") },
+    { name: nameOf("fracture"), n: 1, each: priceOf("fracture") },
   ];
   const once = lines.reduce((a, l) => a + l.n * l.each, 0);
+  // 4 MOD のベースを買う時は満杯なので、壁は 深淵のエッセンス (結晶化で消す側を選ぶ) → 骨 (ネクロマンシー) で印を置き換える
+  const buyLines: Array<{ name: string; n: number; each: number }> = [
+    { name: nameOf("annul"), n: 2, each: priceOf("annul") },
+    { name: nameOf(abyss), n: 1, each: priceOf(abyss) },
+    { name: nameOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation") },
+    { name: nameOf("desecrate"), n: 1, each: priceOf("desecrate") },
+    { name: nameOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy") },
+    { name: nameOf("fracture"), n: 1, each: priceOf("fracture") },
+  ];
   /**
    * 4 MOD・当たり 1 のベースを買う時の 1 回分 (2026-10-05 オーナー「ベース買うか自前でするかの指標は? 4 MOD で当たり 1 のベース買って、
    * フラクチャーはどのみちかかるけど、消去が 2 個でいい、あとベース代」)。ベース代 + 消去 × 2 + 壁 (深淵のエッセンス・結晶化・骨・ネクロマンシー) + フラクチャー。
    * 分かれ目 = 自前の 1 回分 − ベース代以外 (これより安いベースなら買う方が得)
    */
-  const buyRest = 2 * priceOf("annul") + lines.filter((l) => l.buy).reduce((a, l) => a + l.n * l.each, 0);
+  const buyRest = buyLines.reduce((a, l) => a + l.n * l.each, 0);
   const breakEven = once - buyRest;
   const fourB = fourDivine.value != null && fourDivine.value >= 0 ? fourDivine.value * divineEx() : null;
   const buyOnce = fourB != null ? fourB + buyRest : null;
@@ -417,7 +427,7 @@ function replay(): void {
           </p>
           <p class="mt-0.5">
             分かれ目: <b class="text-sky-100">{{ money(calc.breakEven) }}</b> より安ければ買う方が得
-            <span class="opacity-60">(自前の 1 回分 {{ money(calc.once) }} − 買う時のベース代以外 {{ money(calc.buyRest) }} = 消去 2 + 壁 + フラクチャー)</span>
+            <span class="opacity-60">(自前の 1 回分 {{ money(calc.once) }} − 買う時のベース代以外 {{ money(calc.buyRest) }} = 消去 2 + 深淵のエッセンス・結晶化・骨・ネクロマンシー (満杯なので印を置き換える壁) + フラクチャー)</span>
           </p>
           <p v-if="calc.buyOnce != null" class="mt-0.5">
             買う: 1 回分 {{ money(calc.buyOnce) }} × 3 = <b>{{ money(calc.buyOnce * 3) }}</b> / 自前: {{ money(calc.total) }}
@@ -471,7 +481,7 @@ function replay(): void {
       </p>
       <div v-if="fractureStart === 'make'" class="mt-1 text-[11px]">
         <p class="mt-0.5 opacity-70">
-          変成 → 狙い{{ fractureRows.length === 2 ? "が両方" : "が" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 → 骨の壁 (未発現の冒涜) で 4 つ → フラクチャー ({{ fractureRows.length === 2 ? "2/3" : "1/3" }})。外れを固定したら白を買い直して始めから → 外れが無くなるまで消去。ここまでの費用も込み
+          変成 → 狙い{{ fractureRows.length === 2 ? "が両方" : "が" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 (狙いだけの 1 つなら高貴で 3 つに) → 骨 1 本の壁 (未発現の冒涜、側は問わない) で 4 つ → フラクチャー ({{ fractureRows.length === 2 ? "2/3" : "1/3" }})。外れを固定したら白を買い直して始めから → 外れが無くなるまで消去。ここまでの費用も込み
         </p>
       </div>
       <p v-else class="mt-1 flex flex-wrap items-center gap-2 text-[11px]">

@@ -214,7 +214,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       } else if (allMods(item).length < 4) {
         // 4 つにする。壁 = 4 つ目を骨の未発現の冒涜に (フラクチャーされないので候補が 1 つ減る)
         const open = (["prefix", "suffix"] as StageSide[]).find((sd) => room(item, sd));
-        if (fs.blocker && allMods(item).length === 3 && open && !unrevealedOf(item)) e = play("desecrate", [SIDE_OMEN.necro[open]]);
+        // 壁は骨 1 本だけ (空いている側に付く。側は問わないのでお告げは要らない。2026-10-05 オーナー「王者後は骨 1 個でいい、選ぶ必要ない」)
+        if (fs.blocker && allMods(item).length === 3 && open && !unrevealedOf(item)) e = play("desecrate");
         else e = play("exalt");
       } else {
         e = play("fracture");
