@@ -4,7 +4,7 @@
 + 色の帯の名前 + びっしりの解説文 (強調は赤) + 真ん中に大きなめたん。列の中身だけこの回に替える。
 題は kyohei が入れる。
 
-    python scripts/thumbs/socketables.py
+    python scripts/thumbs/socketables.py [--zunda]
 """
 
 from __future__ import annotations
@@ -69,5 +69,68 @@ def main() -> None:
     structlog.get_logger().info("thumbnail base written", path=str(out))
 
 
+# ずんだもんの 3 パターン (kyohei 2026-10-05「ずんだもん使うか、パターン 3 つ」)。PSD の組み合わせ
+ZUNDA_POSES = {
+    "z1": [  # 驚き: 両手を挙げて目を丸く
+        ("!右腕", "*手を挙げる"),
+        ("!左腕", "*手を挙げる"),
+        ("!顔色", "*ほっぺ赤め"),
+        ("!枝豆", "*枝豆立ち"),
+        ("!眉", "*上がり眉"),
+        ("!目", "*〇〇"),
+        ("!口", "*うわー"),
+    ],
+    "z2": [  # 指差し: 得意げ
+        ("!右腕", "*指差し横"),
+        ("!左腕", "*腰"),
+        ("!顔色", "*ほっぺ基本"),
+        ("!枝豆", "*枝豆通常"),
+        ("!眉", "*基本眉"),
+        ("!目", "*^^"),
+        ("!口", "*にやり"),
+    ],
+    "z3": [  # 腕組み: ジト目
+        ("!右腕", "*(非表示)"),
+        ("!左腕", "*腕組み(右腕は非表示に)"),
+        ("!顔色", "*ほっぺ基本"),
+        ("!枝豆", "*枝豆通常"),
+        ("!眉", "*怒り眉"),
+        ("!目", "*ジト目"),
+        ("!口", "*むふ"),
+    ],
+}
+
+
+def zundamon(pose: str) -> base.Image.Image:
+    from psd_tools import PSDImage
+
+    from poe2tube.render.tachie import ZUNDAMON, _apply
+
+    path = base.ROOT / "cache" / "thumb" / f"zundamon_{pose}.png"
+    if path.exists():
+        return base.Image.open(path).convert("RGBA")
+    psd = PSDImage.open(ZUNDAMON.psd)
+    _apply(psd, ZUNDA_POSES[pose])
+    im = psd.composite(force=True).convert("RGBA")
+    im = im.crop(im.getbbox())
+    path.parent.mkdir(parents=True, exist_ok=True)
+    im.save(path)
+    return im
+
+
+def zunda_variants() -> None:
+    for pose in ZUNDA_POSES:
+        canvas = base.panels(random.Random(20261005), base.W)
+        z = base.fit(base.bust(zundamon(pose), 0.6), 760, 760)
+        z = base.glow(z, (255, 255, 255), 7)
+        canvas.alpha_composite(z, ((base.W - z.width) // 2, base.H - z.height + 30))
+        out = base.ROOT / "output" / f"socketables_thumb_base_{pose}.jpg"
+        canvas.filter(ImageFilter.SHARPEN).convert("RGB").save(out, quality=92)
+        structlog.get_logger().info("thumbnail base written", path=str(out))
+
+
 if __name__ == "__main__":
-    main()
+    if "--zunda" in sys.argv:
+        zunda_variants()
+    else:
+        main()
