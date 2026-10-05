@@ -66,7 +66,7 @@ const rows = computed(() => {
       method: methodOf(t),
       methods: methodsFor(t.modId),
       side: m?.type === "suffix" ? "サフィ" : "プレ",
-      tone: m?.source === "desecrated" ? "text-rose-200" : m && CRAFTED_SOURCES.has(m.source) ? "text-sky-200" : "text-[#c8c8ff]",
+      tone: m?.source === "desecrated" ? "text-lime-200/90" : m && CRAFTED_SOURCES.has(m.source) ? "text-sky-200" : "text-[#c8c8ff]",
       text: m ? fillHashes(jaOfMod(m), tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ") : t.modId,
       rank: m ? `T${m.tiers.length - t.minTierIndex}` : "",
       /** 「どれか」の候補 (この手順はどれか 1 つが付けば当たり) */

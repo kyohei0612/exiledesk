@@ -18,7 +18,7 @@ import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { ESSENCE_KIND, essenceKindOf } from "../../services/mods/essence-kind";
 import { effectiveCls } from "../../services/craft-stage/stage-core";
 import { withRunes } from "../../vendor/poe2htc/engine/runes";
-import { runeJaOf } from "../../services/craft-stage/mod-list";
+import { runeJaOf, runeToneOf } from "../../services/craft-stage/mod-list";
 
 const props = defineProps<{ /** ① で選んでいる間 (段・＋・×・コピーを出す) */ editable?: boolean }>();
 const s = craftStage;
@@ -148,15 +148,15 @@ function essTitle(modId: string): string {
 /** MOD の種類 (出どころ。左の札) */
 type Src = "normal" | "desecrated" | "essence" | "perfect_essence";
 const SRC: Record<Src, { label: string; cls: string }> = {
-  normal: { label: "クラフト MOD", cls: "border-emerald-400/60 text-emerald-200" },
-  desecrated: { label: "冒涜 MOD", cls: "border-violet-400/60 text-violet-200" },
+  normal: { label: "クラフト MOD", cls: "border-rarity-magic/70 text-[#c8c8ff]" },
+  desecrated: { label: "冒涜 MOD", cls: "border-green-700/80 bg-gradient-to-r from-green-900/60 to-lime-900/40 text-lime-200/90" },
   essence: { label: ESSENCE_KIND.essence.short, cls: "border-sky-400/60 text-sky-200" },
-  perfect_essence: { label: ESSENCE_KIND.perfect_essence.short, cls: "border-indigo-400/60 text-indigo-200" },
+  perfect_essence: { label: ESSENCE_KIND.perfect_essence.short, cls: "border-cyan-400/60 text-cyan-200" },
 };
 /** 左の札: ルーンの MOD はルーンの名前 (コルの狩りなど) */
 function badgeOf(host: string): { label: string; cls: string } {
   const r = s.data.value?.mods.get(host)?.rune;
-  return r ? { label: runeJaOf(r), cls: "border-amber-400/60 text-amber-200" } : SRC[srcOf(host)];
+  return r ? { label: runeJaOf(r), cls: runeToneOf(runeJaOf(r))?.badge ?? "border-amber-400/60 text-amber-200" } : SRC[srcOf(host)];
 }
 function srcOf(host: string): Src {
   const m = s.data.value?.mods.get(host);

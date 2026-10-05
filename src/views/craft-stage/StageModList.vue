@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { GROUP_JA, modListFor, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
+import { GROUP_JA, modListFor, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import essenceKeys from "../../services/htc/essence-keys.json";
 
 /** シミュレーションの ① の枠の中に置く時 (外の枠を付けない) */
@@ -155,13 +155,18 @@ function essName(r: ListRow): string | null {
 }
 const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? (ESS_JA.get(name) ?? name) : name);
 const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "—");
-/** 種類の色 (ゲームの MOD の色: 普通 = 青、エッセンス = 薄い青、冒涜 = 赤、異界 = 緑がかった青) */
+/** 節の色 (ルーンの節はルーンのアイコンの色) */
+const toneOf = (sec: { g: ModGroup; rune: string | null }): { tab: string; bar: string } => runeToneOf(sec.rune) ?? TONE[sec.g];
+/**
+ * 種類の色 (普通 = 青、エッセンス = 水色、冒涜 = 淀んだ深緑のグラデーション、異界 = 緑がかった青。
+ * 2026-10-05 オーナー「エッセンスは水色で普通は青、冒涜は深緑、冒涜の緑はよどんでる感じでふよふよってグラデーション」)
+ */
 const TONE: Record<ModGroup, { tab: string; bar: string }> = {
   normal: { tab: "bg-rarity-magic/25 text-[#c8c8ff] ring-1 ring-rarity-magic/60", bar: "bg-rarity-magic/20" },
   rune: { tab: "bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/60", bar: "bg-amber-500/15" },
   essence: { tab: "bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/60", bar: "bg-sky-400/15" },
-  perfect_essence: { tab: "bg-indigo-400/20 text-indigo-100 ring-1 ring-indigo-300/60", bar: "bg-indigo-400/15" },
-  desecrated: { tab: "bg-rose-500/20 text-rose-100 ring-1 ring-rose-400/60", bar: "bg-rose-500/15" },
+  perfect_essence: { tab: "bg-cyan-400/20 text-cyan-100 ring-1 ring-cyan-300/60", bar: "bg-cyan-400/15" },
+  desecrated: { tab: "bg-gradient-to-r from-green-900/70 via-emerald-800/40 to-lime-900/60 text-lime-100/90 ring-1 ring-green-700/70", bar: "bg-gradient-to-r from-green-950/60 via-emerald-900/40 to-lime-900/30" },
   otherworldly: { tab: "bg-teal-500/20 text-teal-100 ring-1 ring-teal-400/60", bar: "bg-teal-500/15" },
 };
 </script>
@@ -178,7 +183,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
     <div v-if="open" class="border-t border-white/10 px-3 pb-3 pt-2">
       <!-- 目次 (押すとその種類までスクロール。スクロールしても上に残る) と検索 -->
       <div class="sticky top-0 z-10 -mx-3 mb-2 flex flex-wrap items-center gap-1.5 bg-[#15130f]/95 px-3 py-1.5 backdrop-blur">
-        <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5" :class="active === sec.sid ? TONE[sec.g].tab : 'border border-white/15 opacity-70 hover:opacity-100'" @click="jump(sec.sid)">
+        <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5" :class="active === sec.sid ? toneOf(sec).tab : 'border border-white/15 opacity-70 hover:opacity-100'" @click="jump(sec.sid)">
           {{ sec.label }} <span class="opacity-60">{{ sec.count }}</span>
         </button>
         <input v-model="query" type="search" placeholder="文面やタグで探す (例: 耐性、ライフ)" class="ml-auto w-60 rounded-lg border border-white/15 bg-black/30 px-2 py-0.5" />
@@ -186,7 +191,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 
       <section v-for="sec in sections" :key="sec.sid" :ref="(el) => setSection(sec.sid, el)" class="mb-4 scroll-mt-12">
         <h3 class="mb-2 flex items-center gap-2 text-[13px] font-bold">
-          <span class="rounded-full px-2.5 py-0.5" :class="TONE[sec.g].tab">{{ sec.label }}</span>
+          <span class="rounded-full px-2.5 py-0.5" :class="toneOf(sec).tab">{{ sec.label }}</span>
           <span class="font-normal opacity-50">{{ sec.count }} 系統</span>
           <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差すと付く" }} · 重みは公開されていないので仮定 · 出やすさは差した時の割合</span>
         </h3>
@@ -206,7 +211,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 :title="r.blocked ? '同じ系統の MOD が付いているので、今は付かない' : undefined"
                 @click="toggleRow(`${sec.sid}:${r.id}`, $event)"
               >
-                <span class="pointer-events-none absolute inset-y-0 left-0" :class="TONE[sec.g].bar" :style="{ width: `${(r.share / col.top) * 100}%` }" />
+                <span class="pointer-events-none absolute inset-y-0 left-0" :class="toneOf(sec).bar" :style="{ width: `${(r.share / col.top) * 100}%` }" />
                 <!-- 2026-10-04 オーナー: タグは MOD 名の横に細く (行を太らせない)、右は poe2db と同じく 出やすさ % ・ ティア数 (緑) ・ 一番上の段のレベル (灰) を数字だけ -->
                 <span class="relative flex items-center gap-2">
                   <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">

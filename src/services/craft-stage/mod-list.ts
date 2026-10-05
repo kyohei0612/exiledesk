@@ -50,6 +50,21 @@ export interface ListRow {
   socketed?: boolean;
 }
 
+/**
+ * 特殊 MOD のルーンの色 (アイコンのメインカラー、2026-10-05 オーナー「カトラは紫でコルは緑、アイコンのメインカラーに」)。
+ * tab = 節の見出し・切り替え、bar = 出やすさの帯、badge = 狙う MOD の左の札。日本語名で引く
+ */
+const RUNE_TONE_EN: Record<string, { tab: string; bar: string; badge: string }> = {
+  "Kolr's Hunt": { tab: "bg-emerald-500/20 text-emerald-100 ring-1 ring-emerald-400/60", bar: "bg-emerald-500/15", badge: "border-emerald-400/60 text-emerald-200" },
+  "Katla's Gloom": { tab: "bg-purple-500/20 text-purple-100 ring-1 ring-purple-400/60", bar: "bg-purple-500/15", badge: "border-purple-400/60 text-purple-200" },
+  "Thrud's Might": { tab: "bg-orange-500/20 text-orange-100 ring-1 ring-orange-400/60", bar: "bg-orange-500/15", badge: "border-orange-400/60 text-orange-200" },
+  "Medved's Tending": { tab: "bg-slate-300/20 text-slate-100 ring-1 ring-slate-300/60", bar: "bg-slate-300/15", badge: "border-slate-300/60 text-slate-100" },
+  "Uhtred's Sidereus": { tab: "bg-violet-400/20 text-violet-100 ring-1 ring-violet-300/60", bar: "bg-violet-400/15", badge: "border-violet-300/60 text-violet-200" },
+  "Vorana's Carnage": { tab: "bg-red-500/20 text-red-100 ring-1 ring-red-400/60", bar: "bg-red-500/15", badge: "border-red-400/60 text-red-200" },
+};
+const RUNE_TONE = new Map(Object.entries(RUNE_TONE_EN).map(([en, t]) => [RUNES[en]?.ja ?? en, t]));
+export const runeToneOf = (ja: string | null | undefined): { tab: string; bar: string; badge: string } | null => (ja ? RUNE_TONE.get(ja) ?? null : null);
+
 /** 特殊 MOD のルーンの日本語名 (エンジンの id → ステージの表。名前の ’ は ' に) */
 export function runeJaOf(id: string): string {
   const en = RUNE_BY_ID.get(id)?.name.replace(/’/g, "'") ?? id;
