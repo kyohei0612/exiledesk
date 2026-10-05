@@ -62,6 +62,8 @@ export interface RecipeRun {
   done: boolean; cost: number; steps: Array<{ currency: string; omen: string | null }>; seed: number; reason?: string;
   /** 白から作り直した時の、最後の作り直しの手の番号 (再生はここから。前の手は費用にだけ入る) */
   replayFrom: number;
+  /** 使った白のベースの数 (始めの 1 個 + 作り直し。付いた状態で始めた時は 0) */
+  bases: number;
 }
 export interface RecipeResult {
   runs: number;
@@ -75,6 +77,8 @@ export interface RecipeResult {
   stops: Array<{ reason: string; p: number }>;
   /** 費用が真ん中くらいの完成した回 (ステージで再生する用) */
   sample: RecipeRun | null;
+  /** 1 個できるまでに使った白のベースの平均 */
+  bases: number;
 }
 
 const ESS = (essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys;
@@ -92,6 +96,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const steps: RecipeRun["steps"] = [];
   let cost = 0;
   let replayFrom = 0;
+  let bases = 0;
   const mod = (id: string) => data.mods.get(id)!;
   const sideOf = (id: string): StageSide => (mod(id).type === "suffix" ? "suffix" : "prefix");
   const meets = (it: StageItem, t: RecipeTarget): boolean => allMods(it).some((m) => m.modId === t.modId && !m.unrevealed && m.tierIndex >= t.minTierIndex);
@@ -134,7 +139,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const fractureT = fractureTs[0] ?? null;
   const white = spec.whiteBasePrice ?? 0;
   let item = freshItem(data, spec.base, spec.itemLevel);
-  if (!(fractureT && spec.fractureStart?.kind === "bought")) cost += white;
+  if (!(fractureT && spec.fractureStart?.kind === "bought")) { cost += white; bases = 1; }
   if (fractureT && spec.fractureStart?.kind === "bought") {
     // 手順 JSON の始めの状態と同じ作り方 (再生で同じ物になる)
     const m = mod(fractureT.modId);
@@ -166,10 +171,11 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     }
     return play("reveal:1");
   };
-  const fail = (reason: string): RecipeRun => ({ done: false, cost, steps, seed, reason, replayFrom });
+  const fail = (reason: string): RecipeRun => ({ done: false, cost, steps, seed, reason, replayFrom, bases });
   /** 白のベースを買い直して始めから (再生はここから) */
   const restart = (): void => {
     cost += white;
+    bases++;
     item = freshItem(data, spec.base, spec.itemLevel);
     replayFrom = steps.length;
   };
@@ -226,7 +232,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   while (steps.length < max) {
     // 未発現の冒涜 MOD が残っていれば先に発現 (冒涜の狙いの手の中で選ぶ)
     const t0 = spec.targets.find((x) => !meets(item, x));
-    if (!t0) return { done: true, cost, steps, seed, replayFrom };
+    if (!t0) return { done: true, cost, steps, seed, replayFrom, bases };
     // フラクチャーの狙いが 2 つで固定されなかった方は、高貴で付け直す
     const t: RecipeTarget = t0.method === "fracture" ? { ...t0, method: "exalt" } : t0;
     if (t0.method === "fracture" && !allMods(item).some((m) => m.fractured)) return fail("固定した MOD が消えた");
@@ -327,6 +333,7 @@ export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, to
     usage,
     stops: [...stopMap].map(([reason, n]) => ({ reason, p: n / runs.length })).sort((a, b) => b.p - a.p),
     sample,
+    bases: runs.reduce((a, r) => a + r.bases, 0) / per,
   };
 }
 

@@ -83,9 +83,12 @@ function setMethod(modId: string, method: RecipeMethod): void {
 const fractureRows = computed(() => rows.value.filter((r) => r.method === "fracture"));
 const fractureRow = computed(() => fractureRows.value[0] ?? null);
 const fractureStart = ref<"make" | "bought">("make");
-/** 作り方: 錬金 → カオス / 変成・増強ガチャ → 王者 → 高貴。壁 = 4 つ目を骨の未発現の冒涜に (候補が 1 つ減る) */
+/**
+ * 作り方は 変成・増強ガチャ → 王者 → 骨の壁 (4 つ目を骨の未発現の冒涜に、候補が 1 つ減る) だけ
+ * (2026-10-05 オーナー「基本これする時骨壁するから他の選択肢いらない」。錬金 → カオス・壁なしは recipe-sim.ts には残す)
+ */
 const makeRoute = ref<"alch" | "magic">("magic");
-const blocker = ref(false);
+const blocker = ref(true);
 const boughtDivine = ref<number | null>(null);
 /**
  * 白のベースの値段 (神、手で入れる。規格外のソケット付きならその値段)。白から始める時・作り直す時に数え、マジックで外れた時の
@@ -113,7 +116,7 @@ async function searchBought(): Promise<void> {
  * フラクチャー済みのベースを自分で作ったらいくらか (買うかの分かれ目)。2026-10-05 オーナー「ベースって買った方がええよな、基準は」→
  * 「作るとこのくらい → これより安ければ買う方が得」。錬金 → カオス → フラクチャー (外れたら白から) → 消去で固定した 1 個だけ、を回す
  */
-const makeCost = ref<{ key: string; perDone: number; p50: number; p90: number; pDone: number } | null>(null);
+const makeCost = ref<{ key: string; perDone: number; p50: number; p90: number; pDone: number; fractures: number; magic: number; chaos: number; bases: number } | null>(null);
 const makeBusy = ref(false);
 let makeGen = 0;
 const makeKey = computed(() => (fractureRow.value && !(makeRoute.value === "magic" && sameSidePair.value)
@@ -136,8 +139,19 @@ watch(makeKey, async (key) => {
   }, undefined, () => my !== makeGen);
   if (my !== makeGen) return;
   makeBusy.value = false;
-  makeCost.value = r ? { key, perDone: r.perDone, p50: r.p50, p90: r.p90, pDone: r.pDone } : null;
+  // 指標 (2026-10-05 オーナー「結局指標が欲しいよね、4 回に 1 回フラクチャー成功なんだっけ」「1/3 の場合ね」): 1 個できるまでの平均の回数
+  const n = (re: RegExp): number => (r?.usage ?? []).filter((u) => re.test(u.key)).reduce((a, u) => a + u.count, 0);
+  makeCost.value = r ? { key, perDone: r.perDone, p50: r.p50, p90: r.p90, pDone: r.pDone, fractures: n(/^fracture$/), magic: n(/^(transmute|augment)/), chaos: n(/^(alchemy|chaos)/), bases: r.bases } : null;
 }, { immediate: true });
+/**
+ * フラクチャーの当たりの確率 (計算): 4 つのうち、固定されても良い物の数。壁 (未発現の冒涜) は選ばれないので候補が 3 つ。
+ * 錬金 → カオスは 4 つのうち狙いが付いた数 (1 つで数える)
+ */
+const fractureOdds = computed((): { hit: number; of: number } => {
+  const wall = makeRoute.value === "magic" && blocker.value;
+  const hit = makeRoute.value === "magic" ? fractureRows.value.length : 1;
+  return { hit, of: wall ? 3 : 4 };
+});
 /** 入れた値段との比べ (高貴建て) */
 const buyVsMake = computed(() => {
   const m = makeCost.value;
@@ -158,7 +172,7 @@ let gen = 0;
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
   if (fractureRow.value && fractureStart.value === "bought" && !(boughtDivine.value != null && boughtDivine.value >= 0)) return "付いた状態のベースの値段 (神) を入れてください";
-  if (fractureRow.value && fractureStart.value === "make" && makeRoute.value === "magic" && sameSidePair.value) return "変成・増強ガチャでは同じ側の 2 つは揃わない (マジックは片側 1 つずつ)。錬金 → カオスにするか、フラクチャーを 1 つに";
+  if (fractureRow.value && fractureStart.value === "make" && makeRoute.value === "magic" && sameSidePair.value) return "変成・増強ガチャでは同じ側の 2 つは揃わない (マジックは片側 1 つずつ)。フラクチャーは別の側の 2 つか、1 つに";
   return null;
 });
 
@@ -272,6 +286,26 @@ function replay(): void {
           自分で作ると平均 <b class="text-amber-100">{{ money(makeCost.perDone) }}</b>
           <span class="text-[11px] opacity-60">(半分の人 {{ money(makeCost.p50) }} 以内・9 割 {{ money(makeCost.p90) }} 以内<template v-if="makeCost.pDone < 0.95">・作れた割合 {{ pct(makeCost.pDone) }}</template>)</span>
           → <b class="text-emerald-200">これより安ければ買う方が得</b>
+          <span class="mt-1 grid grid-cols-2 gap-1.5 @3xl:grid-cols-4">
+            <span class="rounded bg-black/30 px-2 py-1">
+              <span class="block text-[10px] opacity-60">フラクチャーの当たり</span>
+              <b>{{ fractureOdds.hit }}/{{ fractureOdds.of }}</b> <span class="text-[11px] opacity-70">= 平均 {{ (fractureOdds.of / fractureOdds.hit).toFixed(1) }} 回に 1 回</span>
+              <span class="block text-[10px] opacity-60">回した結果: 平均 {{ makeCost.fractures.toFixed(1) }} 回</span>
+            </span>
+            <span v-if="makeRoute === 'magic'" class="rounded bg-black/30 px-2 py-1">
+              <span class="block text-[10px] opacity-60">変成・増強 (狙いが{{ fractureRows.length === 2 ? "両方" : "" }}付くまで、全部のベースで)</span>
+              <b>平均 {{ makeCost.magic.toFixed(0) }} 回</b>
+            </span>
+            <span v-else class="rounded bg-black/30 px-2 py-1">
+              <span class="block text-[10px] opacity-60">錬金・カオス (全部のベースで)</span>
+              <b>平均 {{ makeCost.chaos.toFixed(0) }} 回</b>
+            </span>
+            <span class="rounded bg-black/30 px-2 py-1">
+              <span class="block text-[10px] opacity-60">使った白のベース</span>
+              <b>平均 {{ makeCost.bases.toFixed(1) }} 個</b>
+              <span class="block text-[10px] opacity-60">外れの固定・マジックの買い直し込み</span>
+            </span>
+          </span>
           <template v-if="buyVsMake">
             <span v-if="buyVsMake.diff > 0" class="ml-2 rounded bg-emerald-500/20 px-1.5 text-emerald-200">入れた値段なら買う方が {{ money(buyVsMake.diff) }} 得</span>
             <span v-else class="ml-2 rounded bg-amber-500/20 px-1.5 text-amber-200">入れた値段なら作る方が {{ money(-buyVsMake.diff) }} 得</span>
@@ -279,15 +313,8 @@ function replay(): void {
         </template>
       </p>
       <div v-if="fractureStart === 'make'" class="mt-1 text-[11px]">
-        <p class="flex flex-wrap items-center gap-3">
-          <label class="inline-flex items-center gap-1"><input v-model="makeRoute" type="radio" value="magic" /> 変成・増強ガチャ → 王者 → 高貴</label>
-          <label class="inline-flex items-center gap-1"><input v-model="makeRoute" type="radio" value="alch" /> 錬金 → カオス</label>
-          <label v-if="makeRoute === 'magic'" class="inline-flex items-center gap-1" title="4 つ目を骨の未発現の冒涜にする。冒涜の MOD はフラクチャーされないので、候補が 4 → 3"><input v-model="blocker" type="checkbox" /> 4 つ目を骨の壁に (1/4 → 1/3)</label>
-        </p>
         <p class="mt-0.5 opacity-70">
-          <template v-if="makeRoute === 'magic'">変成 → 狙い{{ fractureRows.length === 2 ? "が両方" : "が" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 → {{ blocker ? "骨 (未発現の冒涜)" : "高貴" }}で 4 つ → フラクチャー ({{ blocker ? "1/3" : "1/4" }}{{ fractureRows.length === 2 ? " × 2" : "" }})</template>
-          <template v-else>錬金 → 狙い{{ fractureRows.length === 2 ? "のどちらか" : "" }}が付くまでカオス → フラクチャー (4 つなら 1/4)</template>
-          。外れを固定したら白を買い直して始めから → 外れが無くなるまで消去。ここまでの費用も込み
+          変成 → 狙い{{ fractureRows.length === 2 ? "が両方" : "が" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 → 骨の壁 (未発現の冒涜) で 4 つ → フラクチャー ({{ fractureRows.length === 2 ? "2/3" : "1/3" }})。外れを固定したら白を買い直して始めから → 外れが無くなるまで消去。ここまでの費用も込み
         </p>
       </div>
       <p v-else class="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
