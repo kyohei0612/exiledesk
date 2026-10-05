@@ -25,7 +25,8 @@
           "scene": {
             "kind": "stage",
             "step": 9,
-            "demo": "serle"
+            "demo": "serle",
+            "still": true
           }
         },
         {
@@ -35,7 +36,8 @@
           "scene": {
             "kind": "stage",
             "step": 9,
-            "demo": "serle"
+            "demo": "serle",
+            "still": true
           }
         },
         {
@@ -45,7 +47,8 @@
           "scene": {
             "kind": "stage",
             "step": 9,
-            "demo": "serle"
+            "demo": "serle",
+            "still": true
           }
         },
         {
@@ -55,7 +58,8 @@
           "scene": {
             "kind": "stage",
             "step": 9,
-            "demo": "serle"
+            "demo": "serle",
+            "still": true
           }
         },
         {
