@@ -88,6 +88,38 @@ async function searchBought(): Promise<void> {
   await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: true, noSanctified: true }));
 }
 
+/**
+ * フラクチャー済みのベースを自分で作ったらいくらか (買うかの分かれ目)。2026-10-05 オーナー「ベースって買った方がええよな、基準は」→
+ * 「作るとこのくらい → これより安ければ買う方が得」。錬金 → カオス → フラクチャー (外れたら白から) → 消去で固定した 1 個だけ、を回す
+ */
+const makeCost = ref<{ key: string; perDone: number; p50: number; p90: number; pDone: number } | null>(null);
+const makeBusy = ref(false);
+let makeGen = 0;
+const makeKey = computed(() => (fractureRow.value ? `${s.base.value}|${s.itemLevel.value}|${fractureRow.value.modId}:${fractureRow.value.minTierIndex}` : ""));
+watch(makeKey, async (key) => {
+  const d = s.data.value, f = fractureRow.value;
+  const my = ++makeGen;
+  if (!key || !d || !f) { makeCost.value = null; makeBusy.value = false; return; }
+  if (makeCost.value?.key === key) return;
+  makeBusy.value = true;
+  const memo = new Map<string, number>();
+  const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
+  const r = await runRecipe({
+    data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: 500, price, fractureStart: { kind: "make" },
+    targets: [{ modId: f.modId, minTierIndex: f.minTierIndex, method: "fracture" }],
+  }, undefined, () => my !== makeGen);
+  if (my !== makeGen) return;
+  makeBusy.value = false;
+  makeCost.value = r ? { key, perDone: r.perDone, p50: r.p50, p90: r.p90, pDone: r.pDone } : null;
+}, { immediate: true });
+/** 入れた値段との比べ (高貴建て) */
+const buyVsMake = computed(() => {
+  const m = makeCost.value;
+  if (!m || boughtDivine.value == null || !(boughtDivine.value >= 0) || !Number.isFinite(m.perDone)) return null;
+  const buy = boughtDivine.value * (priceOf("divine") || 1);
+  return { buy, diff: m.perDone - buy };
+});
+
 const busy = ref(false);
 const phase = ref("");
 const progress = ref<[number, number] | null>(null);
@@ -221,6 +253,18 @@ function replay(): void {
       <p class="mb-1 font-bold text-emerald-100">フラクチャー: {{ fractureRow.text }} ({{ fractureRow.rank }} 以上)</p>
       <label class="mr-4 inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="make" /> 作る (確率込み)</label>
       <label class="inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="bought" /> 付いた状態で始める (ベースを買う)</label>
+      <p class="mt-1 text-[12px]">
+        <template v-if="makeBusy">作る費用を出しています…</template>
+        <template v-else-if="makeCost">
+          自分で作ると平均 <b class="text-amber-100">{{ money(makeCost.perDone) }}</b>
+          <span class="text-[11px] opacity-60">(半分の人 {{ money(makeCost.p50) }} 以内・9 割 {{ money(makeCost.p90) }} 以内<template v-if="makeCost.pDone < 0.95">・作れた割合 {{ pct(makeCost.pDone) }}</template>)</span>
+          → <b class="text-emerald-200">これより安ければ買う方が得</b>
+          <template v-if="buyVsMake">
+            <span v-if="buyVsMake.diff > 0" class="ml-2 rounded bg-emerald-500/20 px-1.5 text-emerald-200">入れた値段なら買う方が {{ money(buyVsMake.diff) }} 得</span>
+            <span v-else class="ml-2 rounded bg-amber-500/20 px-1.5 text-amber-200">入れた値段なら作る方が {{ money(-buyVsMake.diff) }} 得</span>
+          </template>
+        </template>
+      </p>
       <p v-if="fractureStart === 'make'" class="mt-1 text-[11px] opacity-70">錬金 → 狙いが付くまでカオス → フラクチャー (MOD 4 個なら 1/4。外れを固定したら白から作り直し、ベース代は数えない) → 外れが無くなるまで消去。ここまでの費用も込み</p>
       <p v-else class="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
         <span class="opacity-70">ベースの値段</span>
