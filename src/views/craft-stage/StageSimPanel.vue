@@ -516,6 +516,29 @@ function goTo(st: Stage): void {
   if (st !== "order") startDone.value = false;
   orderDone.value = false;
 }
+/**
+ * リセット: シミュレーションを最初 (1 ベースを選ぶ所) に戻す。選んだ MOD・工程・結果は消し、入れた値段 (ベースごとに覚えている) は残す。
+ * 1 つ戻すでも戻せないので、2 回押した時だけ (2026-10-05 オーナー「シンプルにリセットボタン上に作って」)
+ */
+const resetArmed = ref(false);
+let resetTimer: ReturnType<typeof setTimeout> | undefined;
+function resetAll(): void {
+  if (!resetArmed.value) {
+    resetArmed.value = true;
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { resetArmed.value = false; }, 3000);
+    return;
+  }
+  resetArmed.value = false;
+  s.simTargets.value = [];
+  s.simAltFor.value = null;
+  modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false;
+  recipeOut.value = null;
+  restCost.value = null;
+  s.simSockets.value = null;
+  // ベースを選ぶ所から (この画面は一度消えて、選び直すと新しく始まる)
+  s.simPicked.value = false;
+}
 /** 3 白ベース設定の「決めた」: 値段とフラクチャー予定 (無ければ「しない」) */
 function whiteDecide(): void {
   whiteOk.value = true;
@@ -636,7 +659,8 @@ function replay(): void {
     <!-- 1 つ戻す・説明はタブの行の右端に (工程の枠の間に行を挟まない) -->
     <Teleport to="#sim-tools" :disabled="s.mode.value !== 'sim' || !!s.replay.value">
       <CurrencyPicker sim />
-      <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!undoStack.length" title="直前の操作を 1 つ取り消す" @click="undo">↶ 1 つ戻す</button>
+      <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px]" :class="resetArmed ? 'border-rose-400 bg-rose-500/25 text-rose-100' : 'border-white/20 hover:bg-white/10'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll">{{ resetArmed ? "もう一度押すとリセット" : "リセット" }}</button>
+      <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo">↶ 1 つ戻す</button>
       <button type="button" class="rounded-full border px-2 py-0.5 text-[11px]" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
     </Teleport>
     <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
@@ -680,12 +704,12 @@ function replay(): void {
         <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
           <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
           <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-          <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80">付きやすさ {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}の増強では出ない段)</template></span>
+          <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80">付きやすさ {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}では MOD レベルが低い)</template></span>
         </p>
         <div v-if="!whiteDone" class="mt-1 flex items-center gap-2">
           <span v-if="calc && fracMembers.length >= 2" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
           <span v-if="num(whiteDivine) == null" class="ml-auto text-[11px] text-amber-200/80">白ベースの値段を入れる</span>
-          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40" :class="num(whiteDivine) == null ? '' : 'ml-auto'" :disabled="num(whiteDivine) == null" @click="whiteDecide">決めた →</button>
+          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40" :class="num(whiteDivine) == null ? '' : 'ml-auto'" :disabled="num(whiteDivine) == null" :title="num(whiteDivine) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">決めた →</button>
         </div>
       </div>
 
@@ -763,7 +787,7 @@ function replay(): void {
               </td>
               <td class="py-1">
                 <span class="flex flex-wrap justify-end gap-1">
-                  <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px] disabled:cursor-default" :class="r.method === m ? (m === 'desecrate' ? 'bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/60' : 'bg-white/15 text-white ring-1 ring-white/40') : 'border border-white/10 opacity-60 hover:opacity-100'" :disabled="orderDone" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
+                  <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px] disabled:cursor-default" :class="r.method === m ? (m === 'desecrate' ? 'bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/60' : 'bg-white/15 text-white ring-1 ring-white/40') : 'border border-white/10 opacity-60 hover:opacity-100'" :disabled="orderDone" :title="orderDone ? '決めた後は変えられない (「ここからやり直す」で戻る)' : undefined" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
                 </span>
               </td>
             </tr>
@@ -793,7 +817,7 @@ function replay(): void {
       <button v-for="n in RUNS" :key="n" type="button" class="rounded-lg px-2 py-0.5" :class="runs === n ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="runs = n">{{ n.toLocaleString() }}</button>
       <!-- フラクチャーがあると比べ用に 2 本回す (2026-10-05 オーナー「1000 回押しても 2000 回になる、別に 2000 回でおｋだから UI 直して」) -->
       <span v-if="fractureRow" class="text-[11px] opacity-70">白から {{ runs.toLocaleString() }} 回 + 固定済みから {{ runs.toLocaleString() }} 回 = 計 {{ (runs * 2).toLocaleString() }} 回</span>
-      <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="blocked ?? ''" @click="run">回す</button>
+      <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="busy ? '回している途中' : blocked ?? '決めた作り方で回す'" @click="run">回す</button>
       <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-1 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
       <span v-if="busy" class="text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
       <span v-else-if="blocked && rows.length" class="text-amber-200/80">{{ blocked }}</span>

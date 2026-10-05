@@ -38,6 +38,15 @@ const usedElsewhere = (r: ListRow): boolean => !!host.value && s.simTargets.valu
   && !(t.alts ?? []).some((a) => a.modId === host.value!.modId)
   && [t, ...(t.alts ?? [])].some((x) => r.tiers.some((y) => (y.modId ?? r.id) === x.modId)));
 const isHost = (r: ListRow): boolean => !!host.value && r.tiers.some((t) => (t.modId ?? r.id) === host.value!.modId);
+/**
+ * グレーにした理由 (ホバーで出す。2026-10-05 オーナー「注意書きは全部ホバー時に出るように、グレーアウトの奴全て」)。選べるなら undefined
+ */
+function whyBlocked(r: ListRow): string | undefined {
+  if (isHost(r)) return "元の MOD (この手順の本体なので、あるいはには入れない)";
+  if (usedElsewhere(r)) return "ほかの手順で使っている MOD";
+  if (lockedSide.value && lockedSide.value !== r.side && !pickedOf(r)) return "候補と違う側 (どれか 1 つの候補は同じ側だけ)";
+  return undefined;
+}
 const blocked = (r: ListRow): boolean => (!!lockedSide.value && lockedSide.value !== r.side && !pickedOf(r)) || usedElsewhere(r);
 const lockedSide = computed(() => {
   const first = candidates.value[0];
@@ -120,7 +129,7 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
             <p class="mb-1 font-bold">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }} 系統</span><span v-if="lockedSide && lockedSide !== col.side" class="ml-2 font-normal text-amber-300">候補と違う側は選べない</span></p>
             <div v-for="r in col.items" :key="r.id" class="mb-1">
               <!-- あるいはを選ぶ時は、元の MOD とほかの手順の MOD はグレー (2026-10-05 オーナー「＋を押したらその MOD はグレーアウトで、それ以外から探させる」) -->
-              <div class="flex items-center gap-2 rounded px-2 py-1" :class="isHost(r) || usedElsewhere(r) ? 'bg-white/[0.02] opacity-35' : pickedOf(r) ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
+              <div class="flex items-center gap-2 rounded px-2 py-1" :title="whyBlocked(r)" :class="isHost(r) || usedElsewhere(r) ? 'bg-white/[0.02] opacity-35' : pickedOf(r) ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
                 <input type="checkbox" :checked="!!pickedOf(r) && !isHost(r)" :disabled="blocked(r) || isHost(r)" class="h-4 w-4 accent-emerald-400" @change="toggle(r)" />
                 <button type="button" class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 text-left" @click="expanded = expanded === r.id ? null : r.id">
                   <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
@@ -137,7 +146,7 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
                     <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-20 py-0.5 text-right">
-                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30" :class="isPickedTier(r, t) ? 'border-emerald-400 bg-emerald-500/40 font-bold text-emerald-50' : isCoveredTier(r, t) ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100' : 'border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/15'" :disabled="blocked(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
+                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30" :class="isPickedTier(r, t) ? 'border-emerald-400 bg-emerald-500/40 font-bold text-emerald-50' : isCoveredTier(r, t) ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100' : 'border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/15'" :disabled="blocked(r)" :title="whyBlocked(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
                     </td>
                   </tr>
                 </tbody>
