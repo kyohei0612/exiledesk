@@ -95,6 +95,14 @@ function isTarget(modId: string, t: { name: string; ilvl: number }): boolean {
   const idx = tierIndexOf(modId, t);
   return s.simTargets.value.some((x) => x.modId === modId && x.minTierIndex === idx);
 }
+/**
+ * その段が狙いに入っているか (T2 以上を選んだら T1 も入る。2026-10-05 オーナー「ティア 2 とか選択したら自動で 1 も選択される挙動、
+ * MOD のとこはティア 2 以上みたいな選択でおけ」)。段の配列は低い段から順なので、番号が狙いの下限以上なら入る
+ */
+function isCovered(modId: string, t: { name: string; ilvl: number }): boolean {
+  const idx = tierIndexOf(modId, t);
+  return idx >= 0 && s.simTargets.value.some((x) => x.modId === modId && idx >= x.minTierIndex);
+}
 function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
   const idx = tierIndexOf(modId, t);
   if (idx < 0) return;
@@ -184,8 +192,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td class="py-0.5 pl-2 opacity-60">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-16 py-0.5 text-right tabular-nums opacity-70">{{ t.weight ? `重み ${t.weight}` : "" }}</td>
-                    <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'desecrated' || sec.g === 'essence')" class="w-14 py-0.5 text-right">
-                      <button type="button" class="rounded border px-1.5 text-[10px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/25 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="`② 順番に付ける MOD にする (${t.rank} 以上)`" @click.stop="toggleTarget(t.modId ?? r.id, t)">狙う</button>
+                    <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'desecrated' || sec.g === 'essence')" class="w-20 py-0.5 text-right">
+                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? 'もう一度押すと外す' : `② に足す (${t.rank} 以上)`" @click.stop="toggleTarget(t.modId ?? r.id, t)">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
                     </td>
                     <td v-else-if="canStart && sec.g === 'normal'" class="w-14 py-0.5 text-right">
                       <button type="button" class="rounded border border-sky-400/50 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/15" :title="`始めの状態に ${t.rank} を付ける (付きうる物だけ)`" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">付ける</button>

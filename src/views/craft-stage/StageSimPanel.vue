@@ -428,8 +428,9 @@ const step4 = computed(() => step3.value && orderDone.value && rows.value.length
 watch(() => rows.value.length, (n) => { if (n === 0) orderDone.value = false; });
 watch(() => fractureRows.value.length, (n) => { if (n > 0) noFracture.value = false; });
 watch(keptKey, () => { noFracture.value = false; orderDone.value = false; whiteOk.value = false; });
-// 下の MOD 一覧は ② から (「狙う」で足す所)
-watch(step3, (v) => { s.simShowMods.value = v; }, { immediate: true });
+// 下の MOD 一覧は ② で足している間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
+// 足し直す時は ② の「MOD を足す」で開き直す
+watch(() => step3.value && !orderDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
 onBeforeUnmount(() => { s.simShowMods.value = false; });
 const money = (x: number): string => (Number.isFinite(x) ? displayCurrency.money(x) : "—");
 const pct = (x: number): string => `${(x * 100).toFixed(x < 0.1 && x > 0 ? 1 : 0)}%`;
@@ -547,6 +548,7 @@ function replay(): void {
       <div v-if="step3" class="mt-1 flex items-center gap-2">
         <button v-if="rows.length" type="button" class="rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
         <button v-if="rows.length && !orderDone" type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="orderDone = true">決めた →</button>
+        <button v-if="orderDone" type="button" class="ml-auto rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="orderDone = false">MOD を足す</button>
       </div>
     </div>
     <StageFracturePicker v-if="pickerOpen" @close="pickerOpen = false" />

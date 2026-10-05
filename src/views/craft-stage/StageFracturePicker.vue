@@ -66,6 +66,13 @@ const isPickedTier = (r: ListRow, t: ListTier): boolean => {
   const { modId, idx } = idOf(r, t);
   return c.modId === modId && c.minTierIndex === idx;
 };
+/** 選んだ段より上の段も入る (T2 以上なら T1 も) */
+const isCoveredTier = (r: ListRow, t: ListTier): boolean => {
+  const c = pickedOf(r);
+  if (!c) return false;
+  const { modId, idx } = idOf(r, t);
+  return c.modId === modId && idx >= c.minTierIndex;
+};
 const expanded = ref<string | null>(null);
 const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "—");
 </script>
@@ -101,7 +108,7 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
                     <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-20 py-0.5 text-right">
-                      <button type="button" class="rounded border px-1.5 text-[10px] disabled:opacity-30" :class="isPickedTier(r, t) ? 'border-emerald-400 bg-emerald-500/25 text-emerald-100' : 'border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/15'" :disabled="!!lockedSide && lockedSide !== r.side && !pickedOf(r)" @click="pickTier(r, t)">この段以上</button>
+                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30" :class="isPickedTier(r, t) ? 'border-emerald-400 bg-emerald-500/40 font-bold text-emerald-50' : isCoveredTier(r, t) ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100' : 'border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/15'" :disabled="!!lockedSide && lockedSide !== r.side && !pickedOf(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
                     </td>
                   </tr>
                 </tbody>
