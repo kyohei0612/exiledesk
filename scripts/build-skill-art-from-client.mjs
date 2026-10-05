@@ -164,5 +164,7 @@ for (const [en, r] of Object.entries(runes)) {
   if (id) runeMap[en] = id;
 }
 writeFileSync(resolve(ROOT, "src/services/craft-stage/rune-art.json"), JSON.stringify(runeMap, null, 1) + "\n");
+// 遺産のルーン (63 種とも同じ絵) に元のユニークの絵を重ねる (POE2Tube 要望 ㉛)
+execFileSync(process.execPath, [resolve(ROOT, "scripts/build-legacy-rune-art.mjs")], { stdio: "inherit" });
 rmSync(tmp, { recursive: true, force: true });
 console.log(`ジェム ${list.length} 件 (アイコン ${list.filter((x) => x.icon).length} / ジェムの絵 ${list.filter((x) => x.gem).length}) / ルーン ${Object.keys(runeMap).length} / ${Object.keys(runes).length} 件 (失敗 ${fail})`);
