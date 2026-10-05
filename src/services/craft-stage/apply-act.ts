@@ -97,7 +97,7 @@ export const CHANCE_P_CONFIRMED = false;
 
 /**
  * お告げ (2026-10-05): 可能性のお告げ = 壊さない (外れてもノーマルのまま残る)。古代人のお告げ = 同じアイテムクラスのランダムなユニーク
- * (候補は呼ぶ側が同じクラスの全部を渡す。ゲームではそのユニークのベースに変わるが、このステージはベースを変えない)
+ * (候補は呼ぶ側が同じクラスの全部を渡す。ベースはそのユニークのベースに変わる: apply-currency.ts の toUniqueBase、要望 ㉝ の 6)
  */
 export function applyChance(item: StageItem, rng: () => number, uniques: Array<{ en: string; ja: string }>, outcome?: string, used: readonly string[] = []): StageApply {
   if (item.rarity !== "normal") return skip(item, "ノーマルのアイテムにだけ使える");
