@@ -30,12 +30,14 @@ import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
 import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../services/craft-stage/defence";
 import { socketCapOf } from "../services/craft-stage/stage-runes";
 /**
- * 手で打つ画面の新品は、熟練工で付けられる数までソケットを開けておく (2026-10-04 オーナー「オーブ刺すのめんどいから、ソケットも初めからデフォでマックス」)。
+ * 手で打つ画面の新品は、規格外のソケット数 (熟練工で付けられる数 +1) で始める (2026-10-04 オーナー「オーブ刺すのめんどいから、ソケットも初めからデフォでマックス」)。
  * 手順 JSON の再生 (動画) は手順どおりなので開けない
  */
 const fullSockets = (it: StageItem): StageItem => {
+  // 規格外 (ドロップで熟練工の上限 +1。胴・両手 3 / ほか 2) で始める (2026-10-05 オーナー「デフォでもう規格外でソケットしていい、ドロップで落ちるソケットをデフォで 2 個以上」)
   const cap = socketCapOf(it.base, it.cls.category);
-  return cap > (it.sockets ?? 0) ? { ...it, sockets: cap } : it;
+  const want = cap > 0 ? cap + 1 : 0;
+  return want > (it.sockets ?? 0) ? { ...it, sockets: want } : it;
 };
 
 const data = shallowRef<PatchData | null>(null);
