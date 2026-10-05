@@ -259,9 +259,11 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       } else if (item.rarity === "magic") {
         // 変成・増強ガチャ: 候補のどれか 1 つが付いたら王者 (2026-10-05 オーナー「始める MOD を選んでもらって、どれか付いたら始められる」。
         // 候補は同じ側)。その側に外れがある / 2 つ埋まっていれば外れ (消去か買い直しの安い方)
-        const fSide = sideOf(fractureT.modId);
+        // 候補は両側でも良い (2026-10-05 オーナー「シミュレーションだしどっちも選択できるでいい、推奨で出しておけば」)。
+        // 候補のある側に外れが付いた / 2 つ埋まった時が外れ
+        const fSides = new Set(fractureTs.map((t) => sideOf(t.modId)));
         if (fractureTs.some((t) => meets(item, t))) e = play("regal");
-        else if (junkOn(item, fSide).some((m) => !isF(m)) || allMods(item).length >= 2) e = missMagic(fractureT);
+        else if (allMods(item).some((m) => !isF(m) && !m.fractured && fSides.has(m.side)) || allMods(item).length >= 2) e = missMagic(fractureT);
         else e = play(grade("augment", fractureT));
       } else if (allMods(item).length < 4) {
         // 4 つにする。壁 = 4 つ目を骨の未発現の冒涜に (フラクチャーされないので候補が 1 つ減る)

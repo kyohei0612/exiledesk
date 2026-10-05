@@ -225,6 +225,7 @@ async function searchWhite(): Promise<void> {
   await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "normal", ilvlMin: s.itemLevel.value, stats: [], noSanctified: true, ...socketQuery() }));
 }
 /** フラクチャーの候補が違う側に分かれている (作り方が変わるので今は止める) */
+/** フラクチャーの候補が両側に分かれている (選べるが、同じ側を推奨する) */
 const mixedSides = computed(() => new Set(fractureRows.value.map((r) => r.side)).size > 1);
 const makeSpec = computed(() => ({ kind: "make" as const, route: makeRoute.value, blocker: makeRoute.value === "magic" && blocker.value }));
 /** 付いた状態のベースを取引所で探す (開くだけ。値段は手で入れる) */
@@ -293,7 +294,7 @@ async function searchDone(): Promise<void> {
 const makeCost = ref<{ key: string; perDone: number; p50: number; p90: number; pDone: number; fractures: number; magic: number; chaos: number; bases: number } | null>(null);
 const makeBusy = ref(false);
 let makeGen = 0;
-const makeKey = computed(() => (fractureRow.value && !(makeRoute.value === "magic" && mixedSides.value)
+const makeKey = computed(() => (fractureRow.value
   ? `${s.base.value}|${s.itemLevel.value}|${fracMembers.value.map((f) => `${f.modId}:${f.minTierIndex}`).join(",")}|${makeRoute.value}|${makeSpec.value.blocker}|${whiteDivine.value ?? 0}|s${socketCount.value}|${market.fetchedAt.value ?? 0}` : ""));
 watch(makeKey, async (key) => {
   const d = s.data.value, f = fractureRow.value;
@@ -331,7 +332,6 @@ const calc = computed(() => {
   if (!d || !it || !f) return null;
   const m = d.mods.get(f.modId);
   if (!m) return null;
-  const sideKey = m.type === "suffix" ? "suffixes" : "prefixes";
   /**
    * 変成・増強の等級は完全 (オーナー「最低完全変成、次の完全増強」)。完全の段の下限で狙いの段が出ない時 (兜のライフ T2 以上など) は
    * 上級 → 無印に落とす (2026-10-05、前は 0% と「—」で止まって見えた)
@@ -341,8 +341,12 @@ const calc = computed(() => {
       const x = d.mods.get(id);
       return x ? x.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl >= floor && t.ilvl <= s.itemLevel.value ? t.weight : 0), 0) : 0;
     };
-    const total = it.cls.pools.normal[sideKey].reduce((a, id) => a + w(id, 0), 0);
-    const each = fracMembers.value.map((r) => ({ name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 }));
+    // 候補ごとに自分の側の重みで割る (候補は両側でも良い)
+    const totalOf = (k: "prefixes" | "suffixes"): number => it.cls.pools.normal[k].reduce((a, id) => a + w(id, 0), 0);
+    const each = fracMembers.value.map((r) => {
+      const total = totalOf(d.mods.get(r.modId)?.type === "suffix" ? "suffixes" : "prefixes");
+      return { name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 };
+    });
     return { each, pHit: Math.min(1, each.reduce((a, x) => a + x.p, 0)) };
   };
   const grades = [
@@ -408,7 +412,6 @@ let gen = 0;
 
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
-  if (fractureRow.value && makeRoute.value === "magic" && mixedSides.value) return "フラクチャーの候補は同じ側だけ (違う側同士は作り方も完成図も変わる)";
   return null;
 });
 
@@ -551,19 +554,6 @@ function undo(): void {
   void nextTick(() => { lastSnap = snapNow(); restoring = false; });
 }
 /**
- * ② フラクチャーにできる MOD (普通の MOD だけ。冒涜・エッセンスの MOD は固定の候補にしない、あるいは付きの手順も外す)。
- * 候補は同じ側だけ (1 つ目の側に揃える)
- */
-const fracSide = computed(() => fractureRows.value[0]?.side ?? null);
-const canFracture = (r: { method: RecipeMethod; methods: RecipeMethod[]; alts: unknown[]; side: string }): boolean =>
-  r.methods.includes("exalt") && (!fracSide.value || fracSide.value === r.side || r.method === "fracture");
-function toggleFracture(modId: string): void {
-  const r = rows.value.find((x) => x.modId === modId);
-  if (!r) return;
-  if (r.method === "fracture") s.simTargets.value = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, method: methodsFor(modId)[0] } : t));
-  else if (canFracture(r)) setMethod(modId, "fracture");
-}
-/**
  * 白ベースからの流れ (エンジン recipe-sim.ts の作り方と同じ)。1 番が普通の MOD で高貴ガチャ / カオススパムなら、マジックの間に
  * 変成 → 増強・消去スパムで 1 番だけ付けてから王者。フラクチャーがある時は候補を増強・消去スパムで付けて骨の壁 → フラクチャー
  */
@@ -591,11 +581,6 @@ const routes = computed(() => {
   const best = known.length ? known.reduce((a, b) => (b.cost! < a.cost! ? b : a)).key : null;
   return { list, best };
 });
-/** 「しない」: フラクチャーの印を全部外して進む */
-function noFracture(): void {
-  s.simTargets.value = s.simTargets.value.map((t) => (t.method === "fracture" ? { ...t, method: methodsFor(t.modId)[0] } : t));
-  whiteDecide();
-}
 onBeforeUnmount(() => { s.simShowMods.value = false; });
 /** 合計金額はシミュレーションだけの表示通貨で (既定は適正。display-currency.ts の simCurrency) */
 const money = (x: number): string => (Number.isFinite(x) ? simCurrency.money(x) : "—");
@@ -688,31 +673,20 @@ function replay(): void {
           <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
           <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
         </div>
-        <p class="mt-2 text-[11px] font-bold opacity-80">増強・消去スパムで狙う MOD (フラクチャー予定) <span v-if="help" class="font-normal opacity-70">(2 の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span></p>
-        <template v-if="!whiteDone">
-          <label v-for="r in rows.filter((x) => x.methods.includes('exalt'))" :key="r.modId" class="flex items-center gap-2 py-0.5" :class="canFracture(r) ? 'cursor-pointer' : 'opacity-40'">
-            <input type="checkbox" class="h-4 w-4 accent-emerald-400" :checked="r.method === 'fracture'" :disabled="!canFracture(r)" @change="toggleFracture(r.modId)" />
-            <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
-            <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-            <span v-if="r.alts.length" class="text-[10px] text-amber-200">ほか {{ r.alts.length }} つも全部候補</span>
-            <span v-if="!canFracture(r)" class="text-[10px] opacity-60">(候補と違う側)</span>
-          </label>
-          <p v-if="!rows.some((x) => x.methods.includes('exalt'))" class="text-[11px] opacity-50">増強で狙える普通の MOD がありません</p>
-          <div class="mt-1 flex items-center gap-2">
-            <span v-if="calc && fractureRows.length" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
-            <span v-if="num(whiteDivine) == null" class="ml-auto text-[11px] text-amber-200/80">白ベースの値段を入れる</span>
-            <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-40" :class="num(whiteDivine) == null ? '' : 'ml-auto'" :disabled="num(whiteDivine) == null" title="フラクチャーしない (白から順に作る)" @click="noFracture">フラクチャーしない</button>
-            <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40" :disabled="!fractureRows.length || num(whiteDivine) == null" @click="whiteDecide">決めた →</button>
-          </div>
-        </template>
-        <template v-else>
-          <p v-if="!fractureRows.length" class="text-[11px] opacity-50">フラクチャーしない</p>
-          <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
-            <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
-            <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-            <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80">付きやすさ {{ pct(calc.each[i]!.p) }}</span>
-          </p>
-        </template>
+        <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ -->
+        <p class="mt-2 text-[11px] font-bold opacity-80">増強・消去スパムで狙う MOD (フラクチャー予定)</p>
+        <p v-if="!fractureRows.length" class="text-[11px] opacity-50">無し (フラクチャーしない。2 の付け方の予定で「フラクチャー予定」を選ぶと出る)</p>
+        <p v-if="mixedSides" class="text-[11px] text-amber-200">候補がプレとサフィに分かれています (推奨は同じ側。マジックの間はどちらの側に付いても当たり)</p>
+        <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
+          <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
+          <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
+          <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80">付きやすさ {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}の増強では出ない段)</template></span>
+        </p>
+        <div v-if="!whiteDone" class="mt-1 flex items-center gap-2">
+          <span v-if="calc && fracMembers.length >= 2" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
+          <span v-if="num(whiteDivine) == null" class="ml-auto text-[11px] text-amber-200/80">白ベースの値段を入れる</span>
+          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40" :class="num(whiteDivine) == null ? '' : 'ml-auto'" :disabled="num(whiteDivine) == null" @click="whiteDecide">決めた →</button>
+        </div>
       </div>
 
       <!-- 4 最安値スタート: フラクチャー済みのベースを手に入れるまでの 3 ルート (回さずに計算)。入れるのは買うベースの値段だけ -->

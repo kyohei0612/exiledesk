@@ -174,3 +174,21 @@ describe("同じ候補のグループをコピーして並べる (2026-10-05)", 
     expect([fire, cold, light].filter((t) => allMods(final).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex)).length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("フラクチャーの候補が両側 (2026-10-05)", () => {
+  it("金の指輪: ライフ (プレ) か 火耐性 (サフィ) のどちらかを固定して完成する", async () => {
+    const data = await loadPatch();
+    const life = targetOf(data, "Rings", /IncreasedLife$/, 5);
+    const fire = targetOf(data, "Rings", /FireResistance$/, 5);
+    const cold = targetOf(data, "Rings", /ColdResistance$/, 5);
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 20, price: () => 1, seed: 9300,
+      fractureStart: { kind: "make", route: "magic", blocker: true },
+      targets: [{ ...life, method: "fracture" }, { ...fire, method: "fracture" }, { ...cold, method: "exalt" }],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.8);
+    const { final } = playPlan(data, recipePlan(spec, r!.sample!), {});
+    expect([life.modId, fire.modId]).toContain(allMods(final).find((m) => m.fractured)?.modId);
+  });
+});

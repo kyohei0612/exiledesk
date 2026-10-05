@@ -133,6 +133,45 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
   return { title: side === "P" ? "プレフィックス" : "サフィックス", groups, used };
 }));
 const canAlt = (k: Kind): boolean => k === "normal" || k === "desecrated";
+
+/**
+ * 付け方の予定をここで決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか冒涜予定とかカオススパム予定とか、そこで全部決めたら
+ * 後が楽」)。選べるのはその MOD に使える物だけ: 冒涜の MOD は冒涜、エッセンスの MOD はエッセンス、普通の MOD は
+ * フラクチャー予定 / 高貴ガチャ / カオススパム / 冒涜。フラクチャー予定は同じ側だけ (どれか 1 つが固定されれば良い)
+ */
+type Plan = "fracture" | "exalt" | "chaos" | "desecrate" | "essence";
+const PLAN_JA: Record<Plan, string> = { fracture: "🔒 フラクチャー予定", exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス" };
+function plansOf(host: string): Plan[] {
+  const m = s.data.value?.mods.get(host);
+  if (!m) return ["exalt"];
+  if (m.source === "desecrated") return ["desecrate"];
+  if (CRAFTED_SOURCES.has(m.source)) return ["essence"];
+  return ["fracture", "exalt", "chaos", "desecrate"];
+}
+function planOf(g: { kind: Kind; host: string }): Plan {
+  if (g.kind === "fracture") return "fracture";
+  const t = s.simTargets.value.find((x) => x.modId === g.host);
+  const ps = plansOf(g.host);
+  return t?.method && (ps as string[]).includes(t.method) ? (t.method as Plan) : ps.find((p) => p !== "fracture") ?? ps[0]!;
+}
+/** ほかのフラクチャー予定と同じ側か (違う側も選べるが、同じ側を推奨。2026-10-05 オーナー「どっちも選択できるでいい、推奨とかで出しておけば」) */
+function canFracture(host: string): boolean {
+  const type = s.data.value?.mods.get(host)?.type;
+  return !s.simTargets.value.some((t) => t.method === "fracture" && t.modId !== host && s.data.value?.mods.get(t.modId)?.type !== type);
+}
+function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
+  let list = s.simTargets.value;
+  if (g.kind === "fracture") {
+    if (p === "fracture") return;
+    // フラクチャー予定のまとまりを全部その付け方に
+    list = list.map((t) => (t.method === "fracture" ? { ...t, method: p } : t));
+  } else {
+    list = list.map((t) => (t.modId === g.host ? { ...t, method: p } : t));
+    // フラクチャー予定は一番上へ (最初に作る物)
+    if (p === "fracture") list = [...list.filter((t) => t.method === "fracture"), ...list.filter((t) => t.method !== "fracture")];
+  }
+  s.simTargets.value = list;
+}
 </script>
 
 <template>
@@ -144,7 +183,11 @@ const canAlt = (k: Kind): boolean => k === "normal" || k === "desecrated";
       <p v-if="!col.groups.length" class="py-0.5 opacity-40">{{ props.editable ? "下の一覧の「T○ 以上」で足す" : "なし" }}</p>
       <div v-for="g in col.groups" :key="g.key" class="flex items-start gap-1.5 py-0.5">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
-        <span class="shrink-0 rounded border px-1 text-[10px]" :class="KINDS[g.kind].cls">{{ KINDS[g.kind].label }}</span>
+        <!-- 付け方の予定 (選んでいる間はプルダウン) -->
+        <select v-if="props.editable && plansOf(g.host).length > 1" class="shrink-0 rounded border bg-[#14120e] px-0.5 text-[10px]" :class="KINDS[g.kind].cls" title="付け方の予定" :value="planOf(g)" @change="setPlan(g, ($event.target as HTMLSelectElement).value as Plan)">
+          <option v-for="p in plansOf(g.host)" :key="p" :value="p">{{ PLAN_JA[p] }}{{ p === "fracture" && g.kind !== "fracture" && !canFracture(g.host) ? " (違う側・非推奨)" : "" }}</option>
+        </select>
+        <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="KINDS[g.kind].cls">{{ PLAN_JA[planOf(g)] }}</span>
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
           <!-- 2 つ以上: 見出し (どれか 1 つ・合計の付きやすさ) と、横に並べて折り返す候補 -->
           <p v-if="g.members.length > 1" class="mb-0.5 flex flex-wrap items-center gap-1 text-[10px] font-bold text-amber-200">
