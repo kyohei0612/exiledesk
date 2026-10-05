@@ -157,7 +157,7 @@ const fractureOdds = computed((): { hit: number; of: number } => {
  * 計算の費用 (2026-10-05 オーナー「3 個買って 1 個成功品と仮定して、最低完全変成 3、次の完全増強、消去はセットで使う、フラクチャー 3 つは
  * 絶対にいる。深淵エッセンスは 3 個、ネクロマンシー、結晶化、骨それぞれ 3 回、確率的に計算してくれ。平均コスト 1 個作るコスト分かれば 3 倍」
  * 「完全やね消去 2 つ使うのは」)。
- *   1 回分 = 白 + 完全の変成 + (完全の増強 + 消去 × 2) × リロールの回数 + 深淵のエッセンス + 結晶化 + 骨 + ネクロマンシー + フラクチャー
+ *   1 回分 = 白 + 完全の変成 + (完全の増強 + 消去 × 2) × リロールの回数 + 王者 (無印) + 深淵のエッセンス + 結晶化 + 骨 + ネクロマンシー + フラクチャー
  *   リロールの回数 = 1 ÷ (完全の増強 1 回で狙いが付く確率)。確率はその側の普通の置き場の重み (下限 = 完全の増強の段の下限)
  *   1 個 = 1 回分 × 3 (骨の壁でフラクチャーが 1/3)
  * お告げの側は、壁を置く側 = 狙いの反対側
@@ -184,6 +184,8 @@ const calc = computed(() => {
     { name: nameOf("transmute_perfect"), n: 1, each: priceOf("transmute_perfect") },
     { name: `${nameOf("augment_perfect")} (リロール)`, n: rerolls, each: priceOf("augment_perfect") },
     { name: `${nameOf("annul")} (リロールに 2 つ)`, n: rerolls * 2, each: priceOf("annul") },
+    // マジック → レアにする王者 (等級は問わないので無印。2026-10-05 オーナー「適当な王者がいるのか、レア化に。チャレンジ品作る時だから 3 個か」)
+    { name: nameOf("regal"), n: 1, each: priceOf("regal") },
     { name: nameOf(abyss), n: 1, each: priceOf(abyss) },
     { name: nameOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation") },
     { name: nameOf("desecrate"), n: 1, each: priceOf("desecrate") },
