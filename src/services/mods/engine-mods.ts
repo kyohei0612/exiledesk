@@ -69,7 +69,7 @@ export function engineModsFor(template: string, rows: readonly ItemBase[] = ever
   // 自身の文面で当たる物は、行の置き場を全部見る (索引は 1 つの文面に 1 つの MOD なので、プレとサフィに同じ文面がある物
   // (アイテムのレアリティ) は片方が落ちる)
   const hits = (list: (row: ItemBase) => Mod[]) => {
-    for (const row of rows) for (const m of list(row)) if (keys.some((k) => (o.wholeOnly ? wholeKey(m) === k : ownKeys(m).has(k)))) out.set(m.id, { mod: m, exact: true });
+    for (const row of rows) for (const m of list(row)) if (keys.some((k) => (o.wholeOnly ? wholeKeys(m).includes(k) : ownKeys(m).has(k)))) out.set(m.id, { mod: m, exact: true });
   };
   hits((row) => poolMods(d, row));
   // 通貨では付かないが現物に付く MOD (創生の樹・ハンドラップ、special) は、普通の置き場で引けない時だけ
@@ -116,15 +116,18 @@ function poolMods(d: PatchData, row: ItemBase): Mod[] {
   return list;
 }
 
-/** MOD 自身の文面全体の鍵 (複合 MOD の 1 行では当てない時) */
-const wholeKey = (m: Mod): string => matchKey((m.text ?? "").replace(/\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)|-?\d+(?:\.\d+)?/g, "#"));
+/** 文面の数値・範囲を # に */
+const hashed = (t: string): string => t.replace(/\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)|-?\d+(?:\.\d+)?/g, "#");
+/** MOD 自身の文面全体の鍵 (複合 MOD の 1 行では当てない時。段ごとの文面 altTexts も) */
+const wholeKeys = (m: Mod): string[] => [m.text ?? "", ...((m as { altTexts?: string[] }).altTexts ?? [])].map((t) => matchKey(hashed(t)));
 /** MOD 自身の文面の鍵 (数値・範囲は # に。複合 MOD は 1 行ずつも) */
 const ownKeyCache = new WeakMap<Mod, Set<string>>();
 function ownKeys(m: Mod): Set<string> {
   let s = ownKeyCache.get(m);
   if (s) return s;
-  const text = (m.text ?? "").replace(/\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)|-?\d+(?:\.\d+)?/g, "#");
-  s = new Set([text, ...text.split(NL)].map((t) => matchKey(t)).filter(Boolean));
+  // 段ごとの文面 (altTexts、special の MOD だけ持つ) も
+  const texts = [m.text ?? "", ...((m as { altTexts?: string[] }).altTexts ?? [])].map(hashed);
+  s = new Set(texts.flatMap((t) => [t, ...t.split(NL)]).map((t) => matchKey(t)).filter(Boolean));
   ownKeyCache.set(m, s);
   return s;
 }
@@ -170,6 +173,9 @@ export function engineTiers(template: string, rows: readonly ItemBase[], side?: 
   // 段は文面全体で当たる MOD だけ (複合 MOD の 1 行は別物)。普通の MOD があればそれだけ (同じ文面のエッセンス・冒涜の段を混ぜない)
   const found = engineModsFor(template, rows, { wholeOnly: true, exactOnly: true, ...(side ? { side } : {}), ...(o.special === false ? { special: false } : {}) });
   const normal = found.filter((m) => m.source === "normal");
+  // 文面全体で当たる物が無ければ、複合 MOD のその 1 行の値だけで段を作る (「5% increased Light Radius / +# to Accuracy」の光の範囲、
+  // アーマーと ES の複合のアーマー、リーチの速さ、最大耐性など。上位 MOD 一覧は複合 MOD を 1 行ずつで数える)
+  if (!found.length) return lineTiers(template, rows, side, flip, o);
   for (const m of normal.length ? normal : found) {
     const live = m.tiers.filter((t) => t.weight > 0);
     for (const t of live.length ? live : m.tiers) {
@@ -182,6 +188,42 @@ export function engineTiers(template: string, rows: readonly ItemBase[], side?: 
       list.push({ mins, maxs, level: t.ilvl });
     }
   }
+  return toRows(list);
+}
+
+/** 複合 MOD の 1 行の段 (engineTiers の続き)。行の # の数で、その行の値が段の何番目の範囲かを数える */
+function lineTiers(template: string, rows: readonly ItemBase[], side: "prefix" | "suffix" | undefined, flip: boolean, o: { special?: boolean }): ModTierRow[] {
+  const keys = [matchKey(template), matchKey(template.startsWith("+") ? template.slice(1) : `+${template}`)];
+  const mods = engineModsFor(template, rows, { exactOnly: true, ...(side ? { side } : {}), ...(o.special === false ? { special: false } : {}) });
+  // 特殊 MOD のルーンの複合 (ソウルの「ライフ / マナ」等、段の幅が大きい仮の物) の 1 行には当てない
+  const own = mods.filter((m) => !(m as { rune?: string }).rune);
+  const normal = own.filter((m) => m.source === "normal");
+  const seen = new Set<string>();
+  const list: Array<{ mins: number[]; maxs: number[]; level: number }> = [];
+  for (const m of normal.length ? normal : own) {
+    const lines = hashed(m.text ?? "").split(NL);
+    const at = lines.findIndex((l) => keys.includes(matchKey(l)));
+    if (at < 0) continue;
+    const count = (l: string) => (l.match(/#/g) ?? []).length;
+    const offset = lines.slice(0, at).reduce((a, l) => a + count(l), 0);
+    const n = count(lines[at]!);
+    const total = lines.reduce((a, l) => a + count(l), 0);
+    for (const t of m.tiers) {
+      const all = tierDisplayRanges(t);
+      if (all.length !== total || !n) continue;
+      const r = all.slice(offset, offset + n).map((x) => (x.every((v) => v <= 0) && (flip || /\b(slower|less)\b/i.test(template)) ? x.map((v) => -v) : x));
+      const mins = r.map((x) => Math.min(x[0]!, x[1] ?? x[0]!)), maxs = r.map((x) => Math.max(x[0]!, x[1] ?? x[0]!));
+      const sig = `${mins.join("/")}|${maxs.join("/")}`;
+      if (seen.has(sig)) continue;
+      seen.add(sig);
+      list.push({ mins, maxs, level: t.ilvl });
+    }
+  }
+  return toRows(list);
+}
+
+/** 段の一覧 → 表 (T1 = 一番上) */
+function toRows(list: Array<{ mins: number[]; maxs: number[]; level: number }>): ModTierRow[] {
   list.sort((a, b) => mean(b.mins) - mean(a.mins) || b.level - a.level);
   return list.map((r, i) => ({
     tier: i + 1,

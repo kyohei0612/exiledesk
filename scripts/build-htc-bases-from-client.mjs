@@ -270,7 +270,9 @@ const main = async () => {
       const mod = buildMod(cls.id, family, kind, list, tagSet, "normal", 0);
       const sid = `${cls.id}/Special_${tagName}_${family}`;
       // 抽選には出ない (重み 0)。文面・段・側を引くだけ
-      outMods.push({ ...mod, id: sid, special: true, tiers: mod.tiers.map((t) => ({ ...t, weight: 0 })), weightSource: "special" });
+      // 段で文面が変わる物 (「an additional time」→「2 additional times」) も引けるように、段ごとの文面を altTexts に
+      const altTexts = [...new Set(list.map((m) => m.text).filter((t) => t && t !== mod.text))];
+      outMods.push({ ...mod, id: sid, special: true, tiers: mod.tiers.map((t) => ({ ...t, weight: 0 })), weightSource: "special", ...(altTexts.length ? { altTexts } : {}) });
       special[kind === "prefix" ? "prefixes" : "suffixes"].push(sid);
     };
     for (const g of GENESIS_TAGS) {
