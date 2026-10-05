@@ -11,7 +11,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { craftStage } from "../../state/craft-stage";
+import { craftStage, nameOf } from "../../state/craft-stage";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
@@ -132,6 +132,16 @@ const canAlt = (k: Kind): boolean => k === "normal" || k === "desecrated";
  * 後が楽」)。選べるのはその MOD に使える物だけ: 冒涜の MOD は冒涜、エッセンスの MOD はエッセンス、普通の MOD は
  * フラクチャー予定 / 高貴ガチャ / カオススパム / 冒涜。フラクチャー予定は同じ側だけ (どれか 1 つが固定されれば良い)
  */
+/** エッセンス / 合金の MOD なら、付ける物の名前 (MOD 名のホバーに出す) */
+function essTitle(modId: string): string {
+  const m = s.data.value?.mods.get(modId);
+  const k = m ? essenceKindOf(m) : null;
+  if (!k) return "";
+  const key = `essence:${k === "perfect_essence" ? "perfect" : "normal"}:${modId}`;
+  const n = nameOf(key);
+  return n && n !== key ? `
+付ける物: ${n}` : "";
+}
 /** MOD の種類 (出どころ。左の札) */
 type Src = "normal" | "desecrated" | "essence" | "perfect_essence";
 const SRC: Record<Src, { label: string; cls: string }> = {
@@ -207,7 +217,7 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
           </p>
           <div :class="g.members.length > 1 ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5' : 'flex items-center gap-1.5'">
             <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1" :class="g.members.length > 1 ? 'rounded bg-black/30 px-1' : ''">
-              <span class="truncate" :title="r.text">{{ r.text }}</span>
+              <span class="truncate" :title="r.text + essTitle(r.modId)">{{ r.text }}</span>
               <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
                 <option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option>
               </select>

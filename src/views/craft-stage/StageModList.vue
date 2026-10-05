@@ -13,7 +13,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import { craftStage } from "../../state/craft-stage";
+import { craftStage, nameOf } from "../../state/craft-stage";
 import { GROUP_JA, modListFor, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import essenceKeys from "../../services/htc/essence-keys.json";
 
@@ -141,6 +141,18 @@ function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
 
 /** エッセンスの段の名前 (英語) → 日本語 */
 const ESS_JA = new Map(Object.values((essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys).map((k) => [k.en, k.ja]));
+/**
+ * そのエッセンス / 合金の MOD を付ける物の名前 (2026-10-05 オーナー「エッセンスと合金は使うエッセンスを表示、タグの後ろに簡易的に名前」)。
+ * 名前はカレンシーの棚と同じ引き方 (パーフェクトの深淵・ヒステリーなど essence-keys に無い物も出る)
+ */
+function essName(r: ListRow): string | null {
+  if (r.group !== "essence" && r.group !== "perfect_essence") return null;
+  const key = `essence:${r.group === "perfect_essence" ? "perfect" : "normal"}:${r.id}`;
+  const n = nameOf(key);
+  if (n && n !== key) return n;
+  const top = r.tiers[0]?.name;
+  return top ? ESS_JA.get(top) ?? top : null;
+}
 const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? (ESS_JA.get(name) ?? name) : name);
 const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "—");
 /** 種類の色 (ゲームの MOD の色: 普通 = 青、エッセンス = 薄い青、冒涜 = 赤、異界 = 緑がかった青) */
@@ -200,6 +212,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                   <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
                     <span class="mr-0.5 text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
                     <span v-for="t in shownTags(r.tags)" :key="t" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
+                    <span v-if="essName(r)" class="rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r) }}</span>
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
