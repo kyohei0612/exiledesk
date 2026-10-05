@@ -149,6 +149,12 @@ const pob = shallowRef<PobBlock | null>(null);
  * まだ 1 手も打っていない間だけ、MOD 一覧から足せる。手順 JSON の start.mods に書き出す
  */
 const startMods = ref<Force[]>([]);
+/**
+ * シミュレーションのタブ (2026-10-05、実験): 画面の切り替えと、狙いの MOD (MOD の一覧の段の表の「狙う」で足す)。
+ * minTierIndex はエンジンの段の番号 (0 = 一番下、T1 = tiers.length - 1)。[[stage-sim.ts]]
+ */
+const mode = ref<"hand" | "sim">("hand");
+const simTargets = ref<Array<{ modId: string; minTierIndex: number }>>([]);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
@@ -165,7 +171,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

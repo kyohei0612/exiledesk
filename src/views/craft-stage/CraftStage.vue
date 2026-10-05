@@ -18,6 +18,7 @@ import { useStageFx } from "./use-stage-fx";
 import VideoStage from "./VideoStage.vue";
 import StageBasePicker from "./StageBasePicker.vue";
 import StageModList from "./StageModList.vue";
+import StageSimPanel from "./StageSimPanel.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
@@ -100,6 +101,11 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
       <CurrencyPicker />
     </div>
 
+    <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
+    <div v-if="!s.replay.value" class="mb-3 flex gap-1.5">
+      <button v-for="t in ([['hand', '手で打つ'], ['sim', 'シミュレーション (実験)']] as const)" :key="t[0]" type="button" class="rounded-lg px-4 py-1.5 text-[13px]" :class="s.mode.value === t[0] ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" @click="s.hold(null); s.mode.value = t[0]">{{ t[1] }}</button>
+    </div>
+
     <!-- 再生モード -->
     <div v-if="s.replay.value" class="mb-3 flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
       <b class="text-sky-200">再生中</b>
@@ -111,11 +117,12 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     <!-- 設定と操作 -->
     <section v-if="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px]">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
-      <StageBasePicker :base="s.base.value" :data="s.data.value" @pick="(en) => { s.base.value = en; s.reset(); }" />
+      <StageBasePicker :base="s.base.value" :data="s.data.value" @pick="(en) => { s.base.value = en; s.simTargets.value = []; s.reset(); }" />
       <span class="flex items-center gap-1">
         <span class="opacity-60">アイテムレベル</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>
+      <template v-if="s.mode.value === 'hand'">
       <button type="button" :class="btn" @click="s.reset()">白に戻す</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
       <button type="button" :class="btn" class="border-amber-400/60 text-amber-100" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
@@ -125,12 +132,14 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
         <button type="button" :class="btn" :disabled="!s.log.value.length" title="POE2Tube に渡す結果 JSON (今の相場の値段で)" @click="copy('結果 JSON', s.result(pkg.version))">結果 JSON</button>
         <button type="button" :class="btn" title="craft-stage-run.mjs の --prices に渡す相場 (高貴建て)" @click="copy('相場 JSON', s.prices())">相場 JSON</button>
       </span>
+      </template>
     </section>
 
     <p v-if="s.error.value" class="mb-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300">{{ s.error.value }}</p>
     <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center opacity-50">データを読んでいます…</p>
 
-    <div v-if="s.ready.value" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
+    <StageSimPanel v-if="s.ready.value && s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
+    <div v-if="s.ready.value && (s.mode.value === 'hand' || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex flex-col items-center gap-8">
         <div class="relative" :class="fxCls" :style="fx ? { '--fx': fx.color } : undefined">

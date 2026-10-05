@@ -84,6 +84,24 @@ function setSection(g: string, el: unknown): void {
   else sectionEls.delete(g);
 }
 
+/**
+ * シミュレーションの狙い (2026-10-05、実験)。段の表の「狙う」で、その段以上を狙いにする (同じ MOD は段を差し替え、同じ段なら外す)。
+ * 段の番号はその MOD の段の表から (同じ系統をまとめた行は段が混ざるので、名前とレベルで引く)
+ */
+function tierIndexOf(modId: string, t: { name: string; ilvl: number }): number {
+  return s.data.value?.mods.get(modId)?.tiers.findIndex((x) => x.name === t.name && x.ilvl === t.ilvl) ?? -1;
+}
+function isTarget(modId: string, t: { name: string; ilvl: number }): boolean {
+  const idx = tierIndexOf(modId, t);
+  return s.simTargets.value.some((x) => x.modId === modId && x.minTierIndex === idx);
+}
+function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
+  const idx = tierIndexOf(modId, t);
+  if (idx < 0) return;
+  const rest = s.simTargets.value.filter((x) => x.modId !== modId);
+  s.simTargets.value = isTarget(modId, t) ? rest : [...rest, { modId, minTierIndex: idx }];
+}
+
 /** エッセンスの段の名前 (英語) → 日本語 */
 const ESS_JA = new Map(Object.values((essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys).map((k) => [k.en, k.ja]));
 const tierName = (r: ListRow, name: string): string => (r.group === "essence" ? (ESS_JA.get(name) ?? name) : name);
@@ -162,7 +180,10 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td class="py-0.5 pl-2 opacity-60">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-16 py-0.5 text-right tabular-nums opacity-70">{{ t.weight ? `重み ${t.weight}` : "" }}</td>
-                    <td v-if="canStart && sec.g === 'normal'" class="w-14 py-0.5 text-right">
+                    <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'desecrated')" class="w-14 py-0.5 text-right">
+                      <button type="button" class="rounded border px-1.5 text-[10px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/25 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="`シミュレーションの狙いにする (${t.rank} 以上)`" @click.stop="toggleTarget(t.modId ?? r.id, t)">狙う</button>
+                    </td>
+                    <td v-else-if="canStart && sec.g === 'normal'" class="w-14 py-0.5 text-right">
                       <button type="button" class="rounded border border-sky-400/50 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/15" :title="`始めの状態に ${t.rank} を付ける (付きうる物だけ)`" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">付ける</button>
                     </td>
                   </tr>
