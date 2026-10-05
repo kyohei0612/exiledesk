@@ -7,6 +7,7 @@
  * 2026-09-26: カウンタ型 / スロットへの積み上げ / スキル集計は ingest/ 以下に分割 (ここから再 export)。
  */
 
+import { rowsForSlot } from "../mods/engine-mods";
 import type { CharacterItems } from "./types";
 import { classifyEquipItem, classifyUniqueItem, isPoeNinjaItem } from "./ninja-item";
 import { emptySlotSets, type AscendancyCounter } from "./ingest/counters";
@@ -52,8 +53,10 @@ export function ingestCharacterItems(asc: AscendancyCounter, charItems: Characte
       const mods = deboostMods(raw.itemData?.baseType, raw.itemData?.properties, shown);
       const seen = seenPerSlot[rareSlot];
       const slotCounter = asc.slots[rareSlot];
+      // MOD の側はその装備のエンジンの行で引く (同じ文面でも装備で側が違う物がある)
+      const rows = rowsForSlot(rareSlot, raw.itemData?.baseType ? [raw.itemData.baseType] : []);
       for (const modText of mods) {
-        addModToSlot(slotCounter, modText, seen);
+        addModToSlot(slotCounter, modText, seen, rows);
       }
       addBaseToSlot(slotCounter, raw, seenBasesPerSlot[rareSlot]);
       continue;

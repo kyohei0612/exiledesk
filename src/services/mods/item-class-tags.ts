@@ -6,9 +6,7 @@
  * src/services/htc/base-rows.json) から属性を引いて絞る (2026-09-29 オーナー「ベースの能力値によってつく MOD 違う」。
  * 前は種別単位で全属性を含めていて、STR の手袋しか使われていなくてもエナジーシールドの段が出ていた)。
  */
-import baseRows from "../htc/base-rows.json";
 
-import type { SlotKey } from "../craft-v2/types";
 
 /**
  * 防具 / 盾はベースの属性種別 (str / dex / int …) でタグが変わり、spawn には `str_armour:0` の後に `gloves:1`
@@ -62,54 +60,6 @@ const CLASS_TAG_SETS: Record<string, string[][]> = {
   "Fishing Rod": [["fishing_rod"]],
 };
 
-const WEAPON_CLASSES = ["Bow", "Crossbow", "Wand", "Sceptre", "Staff", "Warstaff", "One Hand Mace", "Two Hand Mace", "One Hand Sword", "Two Hand Sword", "One Hand Axe", "Two Hand Axe", "Spear", "Flail", "Claw", "Dagger"];
-const OFFHAND_CLASSES = ["Shield", "Buckler", "Focus", "Quiver"];
-
-function setsOf(classes: string[]): string[][] {
-  return classes.flatMap((c) => CLASS_TAG_SETS[c] ?? []);
-}
-
-/**
- * 発見 V2 のスロット → 種別ごとの spawn タグ集合 (武器 / オフハンドは全種別)。
- * 出現判定は spawn の並び順に依存するので、種別ごとに別々の集合として評価する (和集合にしない)。
- */
-function tagSetsForSlot(slot: SlotKey): string[][] {
-  switch (slot) {
-    case "ring":
-      return CLASS_TAG_SETS.Ring;
-    case "amulet":
-      return CLASS_TAG_SETS.Amulet;
-    case "helm":
-      return CLASS_TAG_SETS.Helmet;
-    case "gloves":
-      return CLASS_TAG_SETS.Gloves;
-    case "body":
-      return CLASS_TAG_SETS["Body Armour"];
-    case "boots":
-      return CLASS_TAG_SETS.Boots;
-    case "weapon":
-      return setsOf(WEAPON_CLASSES);
-    case "weapon2":
-      return setsOf([...WEAPON_CLASSES, ...OFFHAND_CLASSES]);
-  }
-}
-
-const ROWS = baseRows as Record<string, string>;
-const ARMOUR_ROW = /^(Gloves|Boots|Helmets|Body_Armours)_((?:str|dex|int)(?:_(?:str|dex|int))*)$/;
-const SLOT_TAG: Record<string, string> = { Gloves: "gloves", Boots: "boots", Helmets: "helmet", Body_Armours: "body_armour" };
-const SHIELD_ROW = /^Shields_((?:str|dex|int)(?:_(?:str|dex|int))*)$/;
-/**
- * ベース 1 つのタグ集合。防具・盾はエンジンの行の属性だけ (手袋 STR なら gloves / armour / str_armour)、
- * それ以外は種別の集合。どちらも引けなければ null
- */
-function setsOfBase(nameEn: string, cls: string | undefined): string[][] | null {
-  const row = ROWS[nameEn];
-  const a = row ? ARMOUR_ROW.exec(row) : null;
-  if (a) return [[SLOT_TAG[a[1]!]!, "armour", `${a[2]}_armour`]];
-  const s = row ? SHIELD_ROW.exec(row) : null;
-  if (s) return [["shield", `${s[1]}_shield`]];
-  return cls ? (CLASS_TAG_SETS[cls] ?? null) : null;
-}
 /**
  * 計算機のエンジンの種類 (category) → GGG の ItemClasses.Id。種類 → タグの表は上の CLASS_TAG_SETS だけ
  * (2026-09-29 統一: クラフトステージのヴァールの付加が別の表を持っていて、弓・クロスボウの ranged が抜けていた)
@@ -134,15 +84,17 @@ export function tagsOfEngineRow(category: string, rowId: string): Set<string> {
   return new Set(hit ?? sets.flat());
 }
 
-/** スロットで実際に使われていたベースに絞る (防具・盾は属性まで)。1 つも引けなければスロット既定 */
-export function tagSetsForSlotWithBases(slot: SlotKey, bases: Array<{ nameEn: string; cls: string | undefined }>): string[][] {
+/**
+ * エンジンの行 → 種別ごとのタグ集合 (上位 MOD 一覧で、エンジンに無い MOD だけ前の表の段を絞る時。[[engine-mods.ts]] の行と揃える)。
+ * 行が無ければ null (絞らない)
+ */
+export function tagSetsForRows(rows: ReadonlyArray<{ category: string; id: string }>): string[][] | null {
   const seen = new Set<string>();
   const out: string[][] = [];
-  for (const b of bases) {
-    for (const set of setsOfBase(b.nameEn, b.cls) ?? []) {
-      const k = [...set].sort().join(",");
-      if (!seen.has(k)) (seen.add(k), out.push(set));
-    }
+  for (const r of rows) {
+    const set = [...tagsOfEngineRow(r.category, r.id)];
+    const k = [...set].sort().join(",");
+    if (set.length && !seen.has(k)) (seen.add(k), out.push(set));
   }
-  return out.length ? out : tagSetsForSlot(slot);
+  return out.length ? out : null;
 }

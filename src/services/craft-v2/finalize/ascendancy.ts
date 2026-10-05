@@ -19,8 +19,7 @@ import type {
 } from "../types";
 import type { AscendancyCounter, BaseBucket, SlotCounter, UniqueBucket } from "../ingest";
 import { displayUniqueNameJa } from "../../mods/dictionaries";
-import { tagSetsForSlotWithBases } from "../../mods/item-class-tags";
-import { baseClassOf } from "../../trade2/category";
+import { rowsForSlot } from "../../mods/engine-mods";
 import { finalizeBuckets } from "./mods";
 import { GEM_INFO } from "./gems";
 import { jaTypeName, jaUniqueName } from "../../trade2/localize";
@@ -80,11 +79,11 @@ function finalizeBases(buckets: Map<string, BaseBucket>): BaseEntry[] {
  * (武器スロットなら弓 / 杖 / メイス … の和集合)。ベースが取れていない古いキャッシュはスロット既定タグ。
  */
 function finalizeSlot(slot: SlotCounter, slotKey: SlotKey): SlotMods {
-  // 防具・盾は計算機のエンジンの行 (Gloves_str 等) の属性で絞る (2026-09-29、属性違いの段が混ざっていた)
-  const tagSets = tagSetsForSlotWithBases(slotKey, [...slot.bases.values()].map((b) => ({ nameEn: b.nameEn, cls: baseClassOf(b.nameEn)?.cls })));
+  // 段と系統は、そのスロットで使われていたベースのエンジンの行から (防具は属性違いの行まで。2026-10-05 エンジンに一本化)
+  const rows = rowsForSlot(slotKey, [...slot.bases.values()].map((b) => b.nameEn));
   return {
-    prefix: finalizeBuckets(slot.prefix, "P", tagSets),
-    suffix: finalizeBuckets(slot.suffix, "S", tagSets),
+    prefix: finalizeBuckets(slot.prefix, "P", rows),
+    suffix: finalizeBuckets(slot.suffix, "S", rows),
     bases: finalizeBases(slot.bases),
   };
 }

@@ -7,6 +7,7 @@
  */
 
 import { SecurityStatus, Rarity } from "../../constants/trade2";
+import { engineStatIds } from "../mods/engine-mods";
 import { getModStatIds } from "../../data/mod-translations";
 import trade2StatMapping from "../../i18n/trade2-stat-mapping.json";
 import type { ModEntry, SlotKey } from "../craft-v2/types";
@@ -79,7 +80,12 @@ export function buildStatFilters(
 
   for (const mod of selectedMods) {
     let internalIds: string[] = [];
-    if (mod.rawTemplate) internalIds = getModStatIds(mod.rawTemplate);
+    // stat はエンジン (クラフトステージと同じ MOD のデータ、[[engine-mods.ts]]) から
+    // 集計の時にスロットのベースの行から引いた物 (local / global が装備で違う)。古い集計は文面から
+    if (mod.statIds?.length) internalIds = [...mod.statIds];
+    else if (mod.rawTemplate) internalIds = engineStatIds(mod.rawTemplate);
+    // エンジンに無い MOD (ハンドラップ・創生の樹等のまだ入れていない種類) だけ、クライアントから作った前の表
+    if (internalIds.length === 0 && mod.rawTemplate) internalIds = getModStatIds(mod.rawTemplate);
     if (internalIds.length === 0 && mod.text) internalIds = getModStatIds(mod.text);
     if (internalIds.length === 0) {
       missingMods.push(mod.text || mod.rawTemplate || "(unknown mod)");

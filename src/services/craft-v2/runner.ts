@@ -26,6 +26,7 @@ import type {
 } from "./types";
 import { loadCraftV2Cache, saveCraftV2Cache } from "./cache";
 import { aggregateFromCache, aggregateFromProgress } from "./finalize";
+import { prepareEngineMods } from "../mods/engine-mods";
 import { GEM_INFO } from "./finalize/gems";
 import { prepareDeboost } from "./deboost";
 
@@ -68,6 +69,8 @@ export async function startCraftDiscoveryV2(
 
   // 集計で装飾品の数値を素に戻すのに計算機のデータが要る (集計は同期なので先に読む)
   await prepareDeboost().catch((e) => console.warn("[craft-discovery-v2] 計算機のデータを読めず、品質の割り戻しなしで集計:", e));
+  // MOD の側・段・系統・stat はエンジンから引く (集計は同期なので先に読む、[[engine-mods.ts]])
+  await prepareEngineMods().catch((e) => console.warn("[craft-discovery-v2] MOD のデータを読めず:", e));
 
   // キャッシュロード + 即時 UI 反映 (差分モード判定は Rust 側に任せる)
   let prevCache: CraftV2Cache | null = null;

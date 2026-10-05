@@ -8,6 +8,9 @@ import type { AggregatedModBucket } from "../ingest";
 import { countPlaceholders, fillTemplate, stripRichTextMarkers } from "../../mods/normalize";
 import { lookupGroups, lookupModTextJa } from "../../mods/dictionaries";
 import { tiersForTemplate } from "../../mods/tiers";
+import { tagSetsForRows } from "../../mods/item-class-tags";
+import { engineGroups, engineStatIds, engineTiers } from "../../mods/engine-mods";
+import type { ItemBase } from "../../../vendor/poe2htc/engine/types";
 
 // ============================================================================
 // MOD バケット → ModEntry
@@ -68,7 +71,8 @@ export function usageTierFromValues(tiers: ModEntry["tiers"], flatValues: number
   return bestIdx >= 0 && bestCnt > 0 ? bestIdx + 1 : undefined;
 }
 
-export function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix: AffixKind, tagSets: string[][] | null): ModEntry[] {
+/** rows = そのスロットで使われていたベースのエンジンの行 (段と系統はエンジンから、[[engine-mods.ts]]) */
+export function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix: AffixKind, rows: readonly ItemBase[]): ModEntry[] {
   const entries: ModEntry[] = [];
   for (const bucket of buckets.values()) {
     // 各 # 位置ごとの平均値
@@ -101,8 +105,11 @@ export function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix
           : bucket.template;
     }
     const text = stripRichTextMarkers(fillTemplate(tpl, avgValues));
-    const tiers = tiersForTemplate(bucket.template, tagSets);
-    const groupIds = lookupGroups(bucket.template);
+    // エンジンに無い MOD (ハンドラップ等のまだ入れていない種類) だけ、クライアントから作った前の表
+    const fromEngine = engineTiers(bucket.template, rows, affix === "P" ? "prefix" : "suffix");
+    const tiers = fromEngine.length ? fromEngine : tiersForTemplate(bucket.template, tagSetsForRows(rows));
+    const eg = engineGroups(bucket.template, rows);
+    const groupIds = eg.length ? eg : lookupGroups(bucket.template);
 
     // ティア判定: 単一値はそのまま、複数値 ("Adds # to #") は各 occurrence の平均値を
     // ティア側も (mins の平均 .. maxs の平均) に潰して比較する (2026-09-08)
@@ -133,6 +140,7 @@ export function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix
       values: flatValues,
       tiers,
       groupIds,
+      statIds: engineStatIds(bucket.template, rows, affix === "P" ? "prefix" : "suffix"),
       inferredTier,
       usageTier,
       ...(overCap > 0 ? { overCap } : {}),

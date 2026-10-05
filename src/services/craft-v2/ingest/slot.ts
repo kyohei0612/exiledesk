@@ -7,6 +7,8 @@ import type { AffixKind, SlotKey, UniqueRepresentative } from "../types";
 import { grantedSkillStrings, parseGrantedSkill, socketedGemNames, type PoeNinjaItem } from "../ninja-item";
 import { extractNumbers, normalizeModTemplate } from "../../mods/normalize";
 import { heuristicAffix, modBundleIndex } from "../../mods/dictionaries";
+import { engineJaTemplate, engineSide } from "../../mods/engine-mods";
+import type { ItemBase } from "../../../vendor/poe2htc/engine/types";
 import type { AscendancyCounter, SkillBucket, SlotCounter } from "./counters";
 
 // ============================================================================
@@ -27,14 +29,19 @@ export function addModToSlot(
   slot: SlotCounter,
   modText: string,
   perCharSeen: Set<string>,
+  /** その装備のエンジンの行 (側を装備で引く。[[engine-mods.ts]] rowsForSlot) */
+  rows?: readonly ItemBase[],
 ): void {
   if (!modText || typeof modText !== "string") return;
   const tpl = normalizeModTemplate(modText);
   if (!tpl) return;
 
-  const idx = modBundleIndex.get(tpl);
-  const affix: AffixKind = idx ? idx.affix : heuristicAffix(tpl);
-  const textJaTemplate = idx ? idx.textJaTemplate : null;
+  // 側と日本語はエンジン (クラフトステージと同じ MOD のデータ、[[engine-mods.ts]]) から。エンジンに無い MOD (ハンドラップ等の
+  // まだ入れていない種類) だけ、クライアントから作った前の表、それも無ければ文面の目安
+  const side = engineSide(tpl, rows);
+  const idx = side ? null : modBundleIndex.get(tpl);
+  const affix: AffixKind = side ?? idx?.affix ?? heuristicAffix(tpl);
+  const textJaTemplate = engineJaTemplate(tpl) ?? idx?.textJaTemplate ?? modBundleIndex.get(tpl)?.textJaTemplate ?? null;
 
   const seenKey = `${affix}::${tpl}`;
   if (perCharSeen.has(seenKey)) {

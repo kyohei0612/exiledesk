@@ -72,6 +72,11 @@ export interface ModEntry {
   tiers: ModTier[];
   /** この MOD が属するカテゴリ ID (例: `["IncreasedLife"]`)。排他選択に使う。 */
   groupIds: string[];
+  /**
+   * ゲームの stat id (取引所の検索用)。そのスロットのベースのエンジンの行から (同じ文面でも装備で local / global が違う:
+   * 胴の回避力は local_base_evasion_rating)。エンジンに無い MOD は無い (検索は前の表で引く)。2026-10-05
+   */
+  statIds?: string[];
   /** 平均値から推定したティア (1-based、T1 = 最高)。tiers が空 or avg 不明なら undefined */
   inferredTier?: number;
   /**
