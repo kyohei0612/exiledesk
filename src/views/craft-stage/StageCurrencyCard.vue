@@ -6,14 +6,18 @@
   打てない時は理由、相場があれば値段。棚のボタン ([[ShelfButton.vue]]) に 0.4 秒乗せると出る。
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useFitCard, type CardAnchor } from "../../utils/fit-card";
 import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { enOf } from "../../state/craft-stage-shelf";
 import { specialEssence, stageAdds, stageHelp } from "../../state/craft-stage-help";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { displayCurrency } from "../../state/display-currency";
 
-const props = defineProps<{ k: string; x: number; y: number; reason: string | null; omen?: boolean }>();
+const props = defineProps<{ k: string; anchor: CardAnchor; reason: string | null; omen?: boolean }>();
+/** 窓の中に収める (2026-10-05 オーナー「カードが表示時に枠内で収まるように」、共通の [[fit-card.ts]]) */
+const box = ref<HTMLElement | null>(null);
+const style = useFitCard(box, () => props.anchor, 340);
 /** ゲームの書式記号 ([Corrupted|コラプト] → コラプト、[Hit] → Hit) を外す */
 const plain = (s: string): string => s.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
 const hover = computed(() => currencyHoverOf(enOf(props.k, craftStage.item.value)));
@@ -32,7 +36,7 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
 
 <template>
   <Teleport to="body">
-    <div class="pointer-events-none fixed z-[500] w-[340px] rounded-xl border border-amber-300/40 bg-[#0d0b08]/95 p-3 text-[12px] leading-relaxed shadow-[0_8px_30px_rgba(0,0,0,0.7)]" :style="{ left: `${x}px`, top: `${y}px` }">
+    <div class="pointer-events-none fixed z-[500] w-[340px] rounded-xl border border-amber-300/40 bg-[#0d0b08]/95 p-3 text-[12px] leading-relaxed shadow-[0_8px_30px_rgba(0,0,0,0.7)]" ref="box" :style="style">
       <div class="flex items-center gap-2">
         <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-10 w-10 shrink-0 object-contain" />
         <div>

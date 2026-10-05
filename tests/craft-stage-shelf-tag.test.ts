@@ -30,3 +30,15 @@ describe("エッセンスのティア (普通の MOD の何段に当たるか)",
     }
   });
 });
+
+describe("値の幅が無いエッセンス", () => {
+  it("ブリーチの品質の最大値に数字が入る", async () => {
+    const { loadPatch } = await import("./helpers/patch");
+    const { freshItem } = await import("../src/services/craft-stage/run-plan");
+    const { stageAdds } = await import("../src/state/craft-stage-help");
+    const data = await loadPatch();
+    const a = stageAdds("essence:breach", data, freshItem(data, "Gold Ring", 82, "rare"));
+    expect(a?.lines.join("")).not.toContain("#");
+    expect(a?.lines.join("")).toContain("20");
+  });
+});

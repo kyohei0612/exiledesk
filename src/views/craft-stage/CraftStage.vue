@@ -55,7 +55,15 @@ function hold(k: string): void {
  * 持っているカレンシーに掛けられるお告げ (オーナー 2026-10-04「オーブ使う時、下に使えるお告げを出して、持ったまま使えるように」)。
  * 押すと持ったまま掛ける / 外す (お告げのタブに切り替えなくてよい)
  */
-const heldOmens = computed(() => (s.held.value ? OMEN_FOR[kindOf(s.held.value)] ?? [] : []));
+/**
+ * 骨 (冒涜) を持った時は、後の発現で使うアビスの反響も並べる (2026-10-05 オーナー「アビス系だけど、骨持った瞬間に反響のお告げも
+ * ON にできるように下に表示しないと」)。掛けるだけで、使われるのは発現の手 (OMEN_FOR の決まりは変えない)
+ */
+const heldOmens = computed(() => {
+  if (!s.held.value) return [];
+  const kind = kindOf(s.held.value);
+  return [...(OMEN_FOR[kind] ?? []), ...(kind === "desecrate" ? OMEN_FOR.reveal ?? [] : [])];
+});
 /** 削減のお告げを掛けてカオスを持っている時に消える候補 (ゲームと同じく打つ前に色を付ける、オーナー 2026-10-04) */
 const doomed = computed(() => {
   const it = s.item.value;

@@ -281,7 +281,12 @@ export function stageAdds(key: string, data: PatchData | null, item: StageItem |
     const t = essenceTarget(data, item, key);
     if (!t || t.mod.family === "EssenceAbyss") return null;
     const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
-    const text = fillHashes(jaOfMod(t.mod), tier ? tierDisplayRanges(tier) : []);
+    let text = fillHashes(jaOfMod(t.mod), tier ? tierDisplayRanges(tier) : []);
+    // 値の幅が無い固定の MOD (ブリーチの「+20% to Maximum Quality」等) は # が残るので、英語の文の数字で埋める
+    if (text.includes("#")) {
+      const nums = [...(t.mod.text ?? "").matchAll(/\d+(?:\.\d+)?/g)].map((x) => x[0]);
+      text = text.replace(/#/g, () => nums.shift() ?? "#");
+    }
     return { head: `付く MOD (${t.side === "prefix" ? "プレフィックス" : "サフィックス"})`, lines: text.split("\n").filter(Boolean), tier: tier ? essenceTierSpan(data, item, t.mod, tier.ranges[0]) : null };
   }
   return null;

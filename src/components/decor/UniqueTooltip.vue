@@ -17,8 +17,8 @@
     - z-50 の position: fixed
 -->
 <script setup lang="ts">
-import { toCss } from "../../utils/zoom";
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useFitCard } from "../../utils/fit-card";
 import { jaCurrency } from "../../i18n/currencies-ja";
 import type { UniqueUsage } from "../../services/craft-v2/types";
 // 日本語化 + リッチテキスト整形は unique-tooltip-i18n.ts へ (2026-09-26 の分割)
@@ -90,40 +90,20 @@ const summaryFooter = computed<string>(() => {
 // ---------------------------------------------------------------------------
 /** カードの想定幅 (見切れ判定用、実描画は max-w で制御) */
 const TOOLTIP_WIDTH = 360;
-/** カードの想定高さ (見切れ判定用、実際は内容次第) */
-const TOOLTIP_HEIGHT = 320;
-/** 画面端からの余白 */
-const EDGE_MARGIN = 12;
 
-const position = computed<{ left: number; top: number }>(() => {
-  // SSR ガード: window が無い場合は単純に props 値を返す
-  if (typeof window === "undefined") {
-    return { left: props.x, top: props.y };
-  }
-  const vw = toCss(window.innerWidth);
-  const vh = toCss(window.innerHeight);
-  // 2026-05-22: マウス直近だとカーソルとカード端が被って邪魔という指摘 (#36)
-  // → 右側オフセットをやや広げ、上方向にも少し持ち上げる
-  let left = props.x + 32;
-  let top = props.y + 4;
-  // 右端で見切れるなら左フリップ (要素の左側に表示)
-  if (left + TOOLTIP_WIDTH + EDGE_MARGIN > vw) {
-    left = Math.max(EDGE_MARGIN, props.x - TOOLTIP_WIDTH - 16);
-  }
-  // 下端で見切れるなら上にずらす
-  if (top + TOOLTIP_HEIGHT + EDGE_MARGIN > vh) {
-    top = Math.max(EDGE_MARGIN, vh - TOOLTIP_HEIGHT - EDGE_MARGIN);
-  }
-  return { left, top };
-});
+// 窓の中に収める (2026-10-05、共通の [[fit-card.ts]]。実際の高さを測る。前は高さ 320 の決め打ちで、長いユニークが下にはみ出していた)。
+// マウスの右 32px・下 4px、右に入らなければ左へ
+const box = ref<HTMLElement | null>(null);
+const style = useFitCard(box, () => ({ left: props.x - 8, right: props.x + 24, top: props.y + 4 }), TOOLTIP_WIDTH);
 </script>
 
 <template>
   <Teleport to="body">
     <div
       v-if="unique"
+      ref="box"
       class="fixed z-50 pointer-events-none"
-      :style="{ left: position.left + 'px', top: position.top + 'px' }"
+      :style="style"
       role="tooltip"
     >
       <div

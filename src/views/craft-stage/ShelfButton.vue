@@ -12,6 +12,8 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import StageCurrencyCard from "./StageCurrencyCard.vue";
 import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
+import { toCss } from "../../utils/zoom";
+import type { CardAnchor } from "../../utils/fit-card";
 import { shelfTag } from "../../state/craft-stage-help";
 
 const props = defineProps<{ k: string; omen?: boolean }>();
@@ -33,15 +35,15 @@ const reason = computed(() => (props.omen ? null : craftStage.usable(props.k)));
 const on = computed(() => (props.omen ? craftStage.omens.value.includes(props.k) : craftStage.held.value === props.k));
 
 /** 詳細カード: 0.4 秒乗せたら出す (すぐ出すと誤爆するので。オーナー 2026-09-27 のカードの決まりと同じ) */
-const card = ref<{ x: number; y: number } | null>(null);
+const card = ref<CardAnchor | null>(null);
 let timer: ReturnType<typeof setTimeout> | undefined;
 function enter(e: MouseEvent): void {
   const el = e.currentTarget as HTMLElement;
   clearTimeout(timer);
   timer = setTimeout(() => {
     const r = el.getBoundingClientRect();
-    const right = r.right + 350 < window.innerWidth;
-    card.value = { x: right ? r.right + 8 : Math.max(8, r.left - 348), y: Math.max(8, Math.min(r.top, window.innerHeight - 420)) };
+    // 位置は CSS ピクセル (拡大の補正)。窓に収めるのはカードの側 ([[fit-card.ts]])
+    card.value = { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top) };
   }, 400);
 }
 function leave(): void {
@@ -76,5 +78,5 @@ onBeforeUnmount(leave);
     </span>
     <span v-else-if="priceOf(k)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
   </button>
-  <StageCurrencyCard v-if="card" :k="k" :x="card.x" :y="card.y" :reason="reason" :omen="omen" />
+  <StageCurrencyCard v-if="card" :k="k" :anchor="card" :reason="reason" :omen="omen" />
 </template>
