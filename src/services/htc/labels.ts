@@ -40,7 +40,8 @@ const ESSENCE_KEYS = (essenceKeys as { keys: Record<string, GameName> }).keys;
  * 上流の `pricesForBase` が値段に対してやっているのと同じ対応。
  */
 export function jaOfPriceKey(key: string, cls?: ItemBase): string | null {
-  if (key.startsWith("essence:")) return ESSENCE_KEYS[key]?.ja ?? null;
+  // ブリーチのエッセンスは essence-keys に無く、カレンシーの表にだけある (要望 ㉝ の 8: 手順の名前が "essence:breach" のままだった)
+  if (key.startsWith("essence:")) return ESSENCE_KEYS[key]?.ja ?? KEYS.currency[key]?.ja ?? null;
   const boneMatch = /^desecrate(?:_(ancient|altered|gnawed))?$/.exec(key);
   if (cls && boneMatch) {
     const bone = desecrationBoneFor(cls.category);

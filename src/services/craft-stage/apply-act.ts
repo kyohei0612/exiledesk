@@ -12,6 +12,7 @@
 import type { StageApply, StageItem } from "./types";
 import { skip } from "./stage-core";
 import { isGem } from "./stage-bases";
+import { jaOfOmen } from "../htc/labels";
 
 /** シャードのキー → 揃った時に変わるオーブのキー (クライアントの full_stack_turns_into) */
 export const SHARD_TO_ORB: Record<string, string> = {
@@ -107,6 +108,6 @@ export function applyChance(item: StageItem, rng: () => number, uniques: Array<{
     return { applied: true, item: { ...item, destroyed: true }, added: [], removed: [] };
   }
   const u = uniques[Math.floor(rng() * uniques.length)]!;
-  const note = used.includes("OmenoftheAncients") ? `古代人のお告げ: 同じ種類のユニーク ${uniques.length} 種類から選んだ` : undefined;
+  const note = used.includes("OmenoftheAncients") ? `${jaOfOmen("OmenoftheAncients") ?? "古代のお告げ"}: 同じ種類のユニーク ${uniques.length} 種類から選んだ` : undefined;
   return { applied: true, item: { ...item, rarity: "unique", unique: u, prefixes: [], suffixes: [] }, added: [], removed: [], ...(note ? { note } : {}) };
 }

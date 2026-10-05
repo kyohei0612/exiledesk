@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { craftStage } from "../../state/craft-stage";
+import { jaOfOmen } from "../../services/htc/labels";
 
 const rerolled = ref(false);
 watch(() => craftStage.log.value.length, () => (rerolled.value = false));
@@ -26,7 +27,7 @@ function pick(i: number): void {
         v-if="canReroll() && !rerolled"
         type="button"
         class="rounded-lg border border-violet-400/60 px-2 py-0.5 text-violet-200 hover:bg-violet-500/15"
-        title="深淵の残響のお告げ: 候補を 1 回だけ引き直す"
+        :title="`${jaOfOmen('OmenofAbyssalEchoes') ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`"
         @click="rerolled = true"
       >引き直す</button>
       <span v-else-if="rerolled" class="text-violet-200">引き直した候補</span>

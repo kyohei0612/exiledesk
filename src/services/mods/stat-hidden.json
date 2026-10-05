@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-03",
+ "generated": "2026-10-05",
  "source": "文に値が出ない stat (scripts/build-stat-scale-from-client.mjs)。点検 (check-mod-values) だけが読む",
  "hidden": [
   "abyssal_wasting_on_hit",

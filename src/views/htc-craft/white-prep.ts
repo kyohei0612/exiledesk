@@ -7,6 +7,7 @@
  * マジックの段はシミュレーター ([[sim-route.ts]] の transmute / augment / regal) で回した平均。王者の後の高貴は 1 回 (費用は多め)。
  * 5 個とも ここまで進め、1 個だけ成功する前提なので、呼ぶ側が 5 倍する
  */
+import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
 import { simulateTree, type SimNode, type SimCtx } from "../../services/htc/sim-route";
 
 /** 5 個買って 1 個固定できる前提 (オーナー 2026-10-04) */
@@ -29,7 +30,7 @@ export function whitePrep(ctx: SimCtx, modId: string, minTier: number): { magic:
   const m = ctx.data.mods.get(modId);
   const cur = ctx.prices.currency;
   let out: { magic: number; prep: number; tier: string } | null = null;
-  const tier = m && TIERS.find(([, floor]) => m.tiers.some((t, i) => i >= minTier && t.ilvl >= floor && t.ilvl <= ctx.itemLevel && t.weight > 0));
+  const tier = m && TIERS.find(([, floor]) => { const keep = floorKeepIndex(m, floor, ctx.itemLevel); return m.tiers.some((t, i) => i >= minTier && (t.ilvl >= floor || i === keep) && t.ilvl <= ctx.itemLevel && t.weight > 0); });
   if (m && tier) {
     const [suf, , ja] = tier;
     const tg = [{ modId, minTier }];

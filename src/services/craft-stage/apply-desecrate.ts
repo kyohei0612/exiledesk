@@ -16,6 +16,7 @@ import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, r
 import { ABYSS_MARK_FLOOR } from "../htc/omens";
 import { FACTION_TAG } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
+import { jaOfOmen } from "../htc/labels";
 
 const OFFERS = 3;
 
@@ -39,8 +40,10 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   // 深淵の王の印があれば、骨は必ず印を置き換える (側は印の側)。段の下限 33 (仮)。古代の骨とは重ならない (高い方)
   const mark = allMods(item).find((m) => m.abyssMark);
   const floor = Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0);
+  // 古代の骨も最低 MOD レベルのあるカレンシー (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 3)。深淵の王の印の下限 (仮) は別
+  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR) return skip(item, `アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`);
   const factionOmen = used.find((o) => FACTION_TAG[o]);
-  if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, "勢力のお告げは武器とアクセサリーだけ");
+  if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, "勢力のお告げは武器または宝飾品だけ");
   const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;
 
   // 側: お告げ → それ、無ければ出うる MOD の重みで
@@ -113,7 +116,7 @@ export function applyReveal(data: PatchData, item: StageItem, key: string, rng: 
   const m = /^reveal:(\d)(:reroll)?$/.exec(key);
   if (!m) return skip(item, `発現の手の形が違う (${key})`);
   const reroll = !!m[2];
-  if (reroll && !used.includes("OmenofAbyssalEchoes")) return skip(item, "引き直しには深淵の残響のお告げが要る");
+  if (reroll && !used.includes("OmenofAbyssalEchoes")) return skip(item, `引き直しには${jaOfOmen("OmenofAbyssalEchoes") ?? "アビスの反響のお告げ"}が要る`);
   const offers = revealOffers(data, item, rng);
   const list = reroll ? offers.reroll : offers.first;
   const pick = list[Number(m[1]) - 1];

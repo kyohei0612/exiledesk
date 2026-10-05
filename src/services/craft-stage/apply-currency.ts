@@ -152,6 +152,8 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
 
   const { strength } = parseKey(currency);
   const floor = floorOf(kind, strength);
+  // 用語集 BetterCurrencyMinimumLevel「最低 MOD レベルのあるカレンシーは、アイテムレベルがそれより低い品には使えない」(要望 ㉝ の 3)
+  if (floor > 0 && item.itemLevel < floor) return skip(item, `アイテムレベルが ${floor} 未満には使えない`);
   const count = allMods(item).length;
   const add = (it: StageItem, n: number, pick: (k: number, cur: StageItem) => readonly StageSide[] = () => SIDES, boost?: PoolOpts["boost"]): StageApply => {
     let cur = it;

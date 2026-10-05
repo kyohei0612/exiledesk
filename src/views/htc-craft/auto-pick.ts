@@ -5,6 +5,7 @@
  * 違った (段は問わず: 死体の円環 カタリストが同じ時だけ 135 神 / 同じ側をまとめる 490 神、金の指輪 1,466 / 1,339 神)。
  * なので両方組んで、完成 90% 以上の中で平均の安い方 (どれも届かなければ完成の多い方)。カオスを使う / 使わないも同じく比べる。
  */
+import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
 import { simulateTreeChunked, type SimNode, type SimState } from "../../services/htc/sim-route";
 import { autoTree, chaosSideFor, magicEssenceFor, type AutoTreeInput } from "./tree-auto";
 import { spawnChance } from "./craft-estimate";
@@ -99,7 +100,8 @@ function magicSpamTargets(inp: AutoTreeInput, itemLevel: number, floor: number):
   return inp.targets.filter((t) => {
     const m = inp.data.mods.get(t.modId);
     if (!m || fixed.has(t.modId) || m.source !== "normal") return false;
-    return m.tiers.some((x, i) => i >= (t.minTierIndex ?? 0) && x.ilvl >= floor && x.ilvl <= itemLevel && x.weight > 0);
+    const keep = floorKeepIndex(m, floor, itemLevel);
+    return m.tiers.some((x, i) => i >= (t.minTierIndex ?? 0) && (x.ilvl >= floor || i === keep) && x.ilvl <= itemLevel && x.weight > 0);
   });
 }
 

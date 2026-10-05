@@ -21,6 +21,7 @@
  *   - フラクチャー: 「作る」= 変成・増強ガチャ → 王者 → 骨の壁 → フラクチャー (1/3、外れたら白から作り直し)。固定した後の外れは
  *     消さずに残す (カオスは入れ替える、高貴・冒涜は要る時にその側を消す)。「付いた状態」= その MOD を固定済みにしたレアから (費用は手で入れたベースの値段)
  */
+import { modTierWeight } from "../../vendor/poe2htc/engine/pool";
 import { CURRENCY_FLOOR, type PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { applyCurrency } from "./apply-currency";
@@ -171,7 +172,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     const ids = sides.flatMap((k) => cls.pools.normal[k]);
     const w = (id: string, minIdx: number, floor: number): number => {
       const m = data.mods.get(id);
-      return m ? m.tiers.reduce((a, x, i) => a + (i >= minIdx && x.ilvl >= floor && x.ilvl <= spec.itemLevel ? x.weight : 0), 0) : 0;
+      return m ? modTierWeight(m, floor, spec.itemLevel, minIdx) : 0;
     };
     let best = base as string, bestCost = Infinity;
     // 下限はエンジンの表 (変成・増強 55 / 70、高貴 35 / 50)

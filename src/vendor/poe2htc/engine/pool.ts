@@ -15,12 +15,31 @@ export function resolveMod(data: PatchData, id: string): Mod {
  * Mirrors ExaltAndRegalProbability.NormalCompute's weight accumulation.
  */
 export function modTierWeight(mod: Mod, floor: number, cap: number, minIndex = 0): number {
+  const keep = floorKeepIndex(mod, floor, cap);
   let w = 0;
   for (let i = minIndex; i < mod.tiers.length; i++) {
     const t: Tier = mod.tiers[i]!;
-    if (t.ilvl >= floor && t.ilvl <= cap) w += t.weight;
+    if ((t.ilvl >= floor || i === keep) && t.ilvl <= cap) w += t.weight;
   }
   return w;
+}
+
+/**
+ * The game's Minimum Modifier Level exception (KeywordPopups BetterCurrencyMinimumLevel): "Added random
+ * Modifiers are at least this level or higher, except if a specific Modifier type would be excluded
+ * entirely". When no tier of the mod reaches `floor` (within `cap`), its highest tier under the cap stays
+ * in. Returns that tier's index, or -1 when the floor excludes nothing whole (2026-10-06, POE2Tube ㉝-2).
+ */
+export function floorKeepIndex(mod: Mod, floor: number, cap: number): number {
+  if (floor <= 0) return -1;
+  let best = -1;
+  for (let i = 0; i < mod.tiers.length; i++) {
+    const t: Tier = mod.tiers[i]!;
+    if (t.ilvl > cap || !(t.weight > 0)) continue;
+    if (t.ilvl >= floor) return -1;
+    if (best < 0 || t.ilvl > mod.tiers[best]!.ilvl) best = i;
+  }
+  return best;
 }
 
 /**

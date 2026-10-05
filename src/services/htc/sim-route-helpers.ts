@@ -1,4 +1,5 @@
 /** sim-route.ts から切り出し (2026-09-26): 1 手ごとの計算 (抽選の分布・打てるか・値段・打つ・○の条件)。simHelpers で使い回す */
+import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
 import type { Mod } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { catalystsFor } from "./quality";
@@ -122,7 +123,8 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         const k = tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1;
         const min = minTierOf.get(id) ?? Infinity;
         const good: Array<{ lvl: number; p: number }> = [], bad: Array<{ lvl: number; p: number }> = [];
-        m.tiers.forEach((t, i) => { if (t.ilvl <= itemLevel && t.ilvl >= floor && t.weight > 0) (i >= min ? good : bad).push({ lvl: t.ilvl, p: t.weight }); });
+        const keep = floorKeepIndex(m, floor, itemLevel);
+        m.tiers.forEach((t, i) => { if (t.ilvl <= itemLevel && (t.ilvl >= floor || i === keep) && t.weight > 0) (i >= min ? good : bad).push({ lvl: t.ilvl, p: t.weight }); });
         for (const [list, mid] of [[good, id], [bad, null]] as const) {
           const w = list.reduce((a, x) => a + x.p, 0);
           if (w > 0) out.push({ modId: mid, family: m.family, side, w: w * k, tiers: list.map((x) => ({ lvl: x.lvl, p: x.p / w })) });
@@ -284,7 +286,8 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
       const m = mod(id);
       if (!m || familyBlocked(m, occ) || (tag && !m.tags.includes(tag))) return [];
       const min = want.get(id);
-      const tiers = m.tiers.flatMap((t, i) => (t.ilvl <= itemLevel && t.ilvl >= floor && t.weight > 0 ? [{ lvl: t.ilvl, w: t.weight, good: min != null && i >= min }] : []));
+      const keep = floorKeepIndex(m, floor, itemLevel);
+      const tiers = m.tiers.flatMap((t, i) => (t.ilvl <= itemLevel && (t.ilvl >= floor || i === keep) && t.weight > 0 ? [{ lvl: t.ilvl, w: t.weight, good: min != null && i >= min }] : []));
       const w = tiers.reduce((x, t) => x + t.w, 0);
       const good = tiers.reduce((x, t) => x + (t.good ? t.w : 0), 0);
       if (!(w > 0)) return [];
