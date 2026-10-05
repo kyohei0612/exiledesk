@@ -17,6 +17,8 @@ import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { ESSENCE_KIND, essenceKindOf } from "../../services/mods/essence-kind";
 import { effectiveCls } from "../../services/craft-stage/stage-core";
+import { withRunes } from "../../vendor/poe2htc/engine/runes";
+import { runeJaOf } from "../../services/craft-stage/mod-list";
 
 const props = defineProps<{ /** ① で選んでいる間 (段・＋・×・コピーを出す) */ editable?: boolean }>();
 const s = craftStage;
@@ -29,7 +31,8 @@ function shareOf(modId: string, minTierIndex: number): number | null {
   const d = s.data.value, it = s.item.value;
   const m = d?.mods.get(modId);
   if (!d || !it || !m || CRAFTED_SOURCES.has(m.source)) return null;
-  const pools = effectiveCls(it).pools;
+  // ルーンの MOD (コルの狩りなど) はそのルーンを差した時の置き場で割る (シミュレーションは差した白から始める)
+  const pools = (m.rune ? withRunes(effectiveCls(it), [m.rune]) : effectiveCls(it)).pools;
   const pool = m.source === "desecrated" ? pools.desecrated : pools.normal;
   const ids = m.type === "suffix" ? pool?.suffixes : pool?.prefixes;
   if (!ids?.length) return null;
@@ -150,6 +153,11 @@ const SRC: Record<Src, { label: string; cls: string }> = {
   essence: { label: ESSENCE_KIND.essence.short, cls: "border-sky-400/60 text-sky-200" },
   perfect_essence: { label: ESSENCE_KIND.perfect_essence.short, cls: "border-indigo-400/60 text-indigo-200" },
 };
+/** 左の札: ルーンの MOD はルーンの名前 (コルの狩りなど) */
+function badgeOf(host: string): { label: string; cls: string } {
+  const r = s.data.value?.mods.get(host)?.rune;
+  return r ? { label: runeJaOf(r), cls: "border-amber-400/60 text-amber-200" } : SRC[srcOf(host)];
+}
 function srcOf(host: string): Src {
   const m = s.data.value?.mods.get(host);
   if (m?.source === "desecrated") return "desecrated";
@@ -208,7 +216,7 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
       <div v-for="g in col.groups" :key="g.key" class="flex items-start gap-1.5 py-0.5">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
-        <span class="shrink-0 rounded border px-1 text-[10px]" :class="SRC[srcOf(g.host)].cls">{{ SRC[srcOf(g.host)].label }}</span>
+        <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="s.data.value?.mods.get(g.host)?.rune ? '差すと付く MOD。回す時はこのルーンを差した白から始める' : undefined">{{ badgeOf(g.host).label }}</span>
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
           <!-- 2 つ以上: 見出し (どれか 1 つ・合計の付きやすさ) と、横に並べて折り返す候補 -->
           <p v-if="g.members.length > 1" class="mb-0.5 flex flex-wrap items-center gap-1 text-[10px] font-bold text-amber-200">

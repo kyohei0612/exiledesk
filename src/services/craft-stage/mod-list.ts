@@ -51,7 +51,7 @@ export interface ListRow {
 }
 
 /** 特殊 MOD のルーンの日本語名 (エンジンの id → ステージの表。名前の ’ は ' に) */
-function runeJaOf(id: string): string {
+export function runeJaOf(id: string): string {
   const en = RUNE_BY_ID.get(id)?.name.replace(/’/g, "'") ?? id;
   return RUNES[en]?.ja ?? en;
 }

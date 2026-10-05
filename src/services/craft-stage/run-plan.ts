@@ -22,7 +22,7 @@ import { socketCapOf } from "./stage-runes";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOf } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
-import { isRune, parseRuneKey, runeOf } from "./stage-runes";
+import { applyRune, isRune, parseRuneKey, runeOf } from "./stage-runes";
 import { propRows } from "./stage-props";
 
 /** スキルジェムのサポート枠の最初の数 (未確定。上の freshItem のコメント) */
@@ -211,22 +211,28 @@ export interface RunMeta {
  *   手順 JSON の start: { rarity, mods: [{ mod, tier?, values? }], quality?, sockets? }。「拾ったレア」「高貴を打ちまくったレア」を手を見せずに出す。
  *   MOD は 1 つずつ付きうる物だけ (付く MOD の指名 pick と同じ決まり。強さの下限は無し)。付けられなければエラーで止める
  */
-export interface StartSpec { rarity?: StageItem["rarity"]; mods?: Force[]; quality?: number; sockets?: number }
+/** runes = 始めから差しておくルーン (英語名、シミュレーションでコルの狩りなどの MOD を狙う時。MOD より先に差す) */
+export interface StartSpec { rarity?: StageItem["rarity"]; mods?: Force[]; quality?: number; sockets?: number; runes?: string[] }
 export function startFrom(data: PatchData, base: string, itemLevel: number, s: StartSpec, seed: number): StageItem {
   const rarity = s.rarity ?? (s.mods && s.mods.length > 2 ? "rare" : s.mods?.length ? "magic" : "normal");
   let item: StageItem = { ...freshItem(data, base, itemLevel), rarity };
   const rng = mulberry32(seed);
+  if (s.sockets != null) {
+    const cap = socketCapOf(item.base, item.cls.category);
+    if (s.sockets > cap + 1) throw new Error(`始めの状態のソケット ${s.sockets} は上限 (${cap}、コラプトで +1) を超える`);
+    item = { ...item, sockets: s.sockets };
+  }
+  for (const en of s.runes ?? []) {
+    const r = applyRune(item, `rune:${en}`, data);
+    if (!r.applied) throw new Error(`始めの状態のルーン ${en}: ${r.reason ?? "差せない"}`);
+    item = r.item;
+  }
   for (const [i, f] of (s.mods ?? []).entries()) {
     const r = addForced(data, item, 0, rng, f);
     if ("error" in r) throw new Error(`始めの状態の MOD ${i + 1} つ目: ${r.error}`);
     item = f.fractured ? replaced(r.item, r.mod, { ...r.mod, fractured: true }) : r.item;
   }
   if (s.quality != null) item = { ...item, quality: s.quality };
-  if (s.sockets != null) {
-    const cap = socketCapOf(item.base, item.cls.category);
-    if (s.sockets > cap + 1) throw new Error(`始めの状態のソケット ${s.sockets} は上限 (${cap}、コラプトで +1) を超える`);
-    item = { ...item, sockets: s.sockets };
-  }
   return item;
 }
 

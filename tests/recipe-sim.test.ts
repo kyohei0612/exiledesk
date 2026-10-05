@@ -192,3 +192,21 @@ describe("フラクチャーの候補が両側 (2026-10-05)", () => {
     expect([life.modId, fire.modId]).toContain(allMods(final).find((m) => m.fractured)?.modId);
   });
 });
+
+describe("ルーンの MOD を狙う (2026-10-05)", () => {
+  it("手袋: コルの狩りの MOD を狙うと、コルの狩りを差した白から始めて完成し、再生でも差したまま", async () => {
+    const data = await loadPatch();
+    const kol = [...data.mods.values()].find((x) => x.id.startsWith("Gloves_dex/") && x.rune === "kolrs-hunt")!;
+    expect(kol).toBeTruthy();
+    const spec: RecipeSpec = {
+      data, base: "Suede Bracers", itemLevel: 82, runs: 10, price: () => 1, seed: 7000,
+      targets: [{ modId: kol.id, minTierIndex: kol.tiers.length - 1, method: "exalt" }],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    const { final } = playPlan(data, recipePlan(spec, r!.sample!), {});
+    expect(final.sockets).toBe(1);
+    expect(final.augments?.length).toBe(1);
+    expect(allMods(final).some((m) => m.modId === kol.id)).toBe(true);
+  });
+});

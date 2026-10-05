@@ -27,6 +27,8 @@ import { applyCurrency } from "./apply-currency";
 import { revealOffers, unrevealedOf } from "./apply-desecrate";
 import { mulberry32 } from "../htc/rng";
 import { freshItem, startFrom } from "./run-plan";
+import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
+import { RUNES } from "./stage-runes";
 import { allMods, listOf, room } from "./stage-core";
 import type { StageItem, StageMod, StageSide } from "./types";
 import type { CraftStagePlan } from "./contract";
@@ -188,13 +190,21 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const fractureT = fractureTs[0] ?? null;
   const white = spec.whiteBasePrice ?? 0;
   /** 白のベース (ソケット付きならその数) */
-  const fresh = (): StageItem => { const it = freshItem(data, spec.base, spec.itemLevel); return spec.sockets ? { ...it, sockets: spec.sockets } : it; };
+  const { runes, sockets } = runeStart(spec);
+  /** 白のベースに差しておくルーンの値段 (ソケットに縛られるので、作り直す白ごとに買う) */
+  const runeCost = runes.reduce((a, en) => a + spec.price(`rune:${en}`), 0);
+  const fresh = (): StageItem => {
+    if (runes.length) return startFrom(data, spec.base, spec.itemLevel, { rarity: "normal", sockets, runes }, seed - 1);
+    const it = freshItem(data, spec.base, spec.itemLevel);
+    return sockets ? { ...it, sockets } : it;
+  };
   let item = fresh();
+  cost += runeCost;
   if (!(fractureT && spec.fractureStart?.kind === "bought")) { cost += white; bases = 1; }
   if (fractureT && spec.fractureStart?.kind === "bought") {
     // 手順 JSON の始めの状態と同じ作り方 (再生で同じ物になる)
     const m = mod(fractureT.modId);
-    item = startFrom(data, spec.base, spec.itemLevel, { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }], ...(spec.sockets ? { sockets: spec.sockets } : {}) }, seed - 1);
+    item = startFrom(data, spec.base, spec.itemLevel, { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }], ...(sockets ? { sockets } : {}), ...(runes.length ? { runes } : {}) }, seed - 1);
     cost += spec.fractureStart.price;
   }
 
@@ -225,7 +235,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const fail = (reason: string): RecipeRun => ({ done: false, cost, steps, seed, reason, replayFrom, bases });
   /** 白のベースを買い直して始めから (再生はここから) */
   const restart = (): void => {
-    cost += white;
+    cost += white + runeCost;
     bases++;
     item = fresh();
     replayFrom = steps.length;
@@ -403,19 +413,33 @@ export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, to
   };
 }
 
+/**
+ * 狙いにルーンの MOD (コルの狩りなど、差した時だけ付く) がある時は、白のベースにそのルーンを差してから始める。
+ * ソケットが足りなければルーンの数まで増やす (2026-10-05 オーナー「シミュレーションだからコルも選べるように」)
+ */
+export function runeStart(spec: Pick<RecipeSpec, "data" | "targets" | "sockets">): { runes: string[]; sockets: number } {
+  const ids = new Set<string>();
+  for (const t of spec.targets) for (const x of [t, ...(t.alts ?? [])]) { const r = spec.data.mods.get(x.modId)?.rune; if (r) ids.add(r); }
+  // ステージのルーンの名前 (相場・絵のキー) で持つ。エンジンの名前とは ' と ’ が違う事がある
+  const runes = [...ids].flatMap((id) => { const en = Object.keys(RUNES).find((k) => runeIdByName(k) === id); return en ? [en] : []; });
+  return { runes, sockets: Math.max(spec.sockets ?? 0, runes.length) };
+}
+
 /** 記録した 1 回を手順 JSON に (ステージで再生する用)。付いた状態から始める時は始めの MOD を固定済みで */
 export function recipePlan(spec: RecipeSpec, run: RecipeRun): CraftStagePlan {
   const fractureT = spec.targets.find((t) => t.method === "fracture");
   const bought = fractureT && spec.fractureStart?.kind === "bought";
   const m = bought ? spec.data.mods.get(fractureT.modId) : null;
+  const { runes, sockets } = runeStart(spec);
+  const extra = { ...(sockets ? { sockets } : {}), ...(runes.length ? { runes } : {}) };
   return {
     title: "シミュレーションの 1 回",
     base: spec.base,
     item_level: spec.itemLevel,
     // 作り直した回は最後の作り直しから (n 手目の乱数は seed + n なので、seed をずらすと同じ結果になる)
     seed: run.seed + run.replayFrom,
-    ...(bought && m ? ({ start: { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }], ...(spec.sockets ? { sockets: spec.sockets } : {}) } } as object)
-      : spec.sockets ? ({ start: { rarity: "normal", sockets: spec.sockets } } as object) : {}),
+    ...(bought && m ? ({ start: { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }], ...extra } } as object)
+      : sockets ? ({ start: { rarity: "normal", ...extra } } as object) : {}),
     steps: run.steps.slice(run.replayFrom).map((s) => ({ currency: s.currency, ...(s.omen ? { omen: s.omen } : {}) })) as CraftStagePlan["steps"],
   } as CraftStagePlan;
 }
