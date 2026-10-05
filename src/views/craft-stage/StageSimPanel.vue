@@ -127,7 +127,26 @@ const fourDivine = ref<number | null>(null);
  *   - ベース: 手で入れた値段 (白 / 4 MOD / 固定済み) をベースとアイテムレベルごとに覚え、いつ入れたかを出す (1 日以上前は色を変える)。
  *     取引所は自動で取らない (サーバーに置く前提、[[sim-no-trade-fetch]])
  */
-type Kept = { v: number; at: number };
+/**
+ * 手で入れる値段の単位 (2026-10-05 オーナー「単位は自分で決めさせて、プルダウンで高貴・カオス・神、デフォはカオス」)。
+ * 白 / 4 MOD / 固定済み / 完成品の欄は全部この単位。覚えた値段は入れた時の単位 (u) ごと持ち、出す時に今の相場で今の単位に直す
+ * (u の無い前の値段は神)。計算は高貴建てなので、入れた値 × その単位の高貴の値段
+ */
+type Unit = "exalt" | "chaos" | "divine";
+const UNITS: Array<{ k: Unit; ja: string }> = [{ k: "exalt", ja: "高貴" }, { k: "chaos", ja: "カオス" }, { k: "divine", ja: "神" }];
+const UNIT_KEY = "exiledesk.craftStageSim.unit";
+const unit = ref<Unit>("chaos");
+try { const u = localStorage.getItem(UNIT_KEY); if (u === "exalt" || u === "chaos" || u === "divine") unit.value = u; } catch { /* 無くてよい */ }
+const unitJa = computed(() => UNITS.find((x) => x.k === unit.value)!.ja);
+/** その単位 1 つの高貴の値段 */
+const rateOf = (u: Unit): number => (u === "exalt" ? 1 : priceOf(u) || 1);
+const unitEx = (): number => rateOf(unit.value);
+/** 覚えた値段を今の単位に (小数 2 桁) */
+const toUnit = (k: { v: number; u?: Unit } | undefined): number | null => {
+  const v = num(k?.v);
+  return v == null ? null : Math.round((v * rateOf(k?.u ?? "divine")) / unitEx() * 100) / 100;
+};
+type Kept = { v: number; at: number; u?: Unit };
 /** 入れた値段 (空欄・負は未入力。v-model.number は空欄で "" になる) */
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : null);
 const PRICE_KEY = "exiledesk.craftStageSim.basePrices";
@@ -151,9 +170,9 @@ const kept = computed(() => keptAll.value[keptKey.value] ?? {});
 let loadingKept = false;
 function loadKept(): void {
   loadingKept = true;
-  whiteDivine.value = num(kept.value.white?.v);
-  fourDivine.value = num(kept.value.four?.v);
-  boughtDivine.value = num(kept.value.bought?.v);
+  whiteDivine.value = toUnit(kept.value.white);
+  fourDivine.value = toUnit(kept.value.four);
+  boughtDivine.value = toUnit(kept.value.bought);
   void Promise.resolve().then(() => { loadingKept = false; });
 }
 function saveKept(which: "white" | "four" | "bought", v: number | null): void {
@@ -161,11 +180,19 @@ function saveKept(which: "white" | "four" | "bought", v: number | null): void {
   const cur = { ...(keptAll.value[keptKey.value] ?? {}) };
   const n = num(v);
   if (n == null) delete cur[which];
-  else cur[which] = { v: n, at: Date.now() };
+  else cur[which] = { v: n, at: Date.now(), u: unit.value };
   keptAll.value = { ...keptAll.value, [keptKey.value]: cur };
   try { localStorage.setItem(PRICE_KEY, JSON.stringify(keptAll.value)); } catch { /* 無くてよい */ }
 }
 watch(keptKey, loadKept, { immediate: true });
+// 単位を変えたら覚えた値段を出し直す (入れ直しではないので、いつ入れたかは変えない)
+watch(unit, (u) => {
+  try { localStorage.setItem(UNIT_KEY, u); } catch { /* 無くてよい */ }
+  loadKept();
+  loadingDone = true;
+  doneDivine.value = toUnit(doneAll.value[doneKey.value]);
+  void Promise.resolve().then(() => { loadingDone = false; });
+});
 watch(whiteDivine, (v) => saveKept("white", v));
 watch(fourDivine, (v) => saveKept("four", v));
 watch(boughtDivine, (v) => saveKept("bought", v));
@@ -191,7 +218,6 @@ async function searchFour(): Promise<void> {
   const stats = got.filters.map((x) => ({ id: x.id, ...(x.min != null ? { min: x.min } : {}) }));
   await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: false, noSanctified: true, ...socketQuery() }));
 }
-const divineEx = (): number => priceOf("divine") || 1;
 /** 白のベースを取引所で探す (開くだけ) */
 async function searchWhite(): Promise<void> {
   await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "normal", ilvlMin: s.itemLevel.value, stats: [], noSanctified: true, ...socketQuery() }));
@@ -220,7 +246,7 @@ const doneKey = computed(() => `${keptKey.value}|${targetsSig().split(",").sort(
 let loadingDone = false;
 watch(doneKey, () => {
   loadingDone = true;
-  doneDivine.value = num(doneAll.value[doneKey.value]?.v);
+  doneDivine.value = toUnit(doneAll.value[doneKey.value]);
   void Promise.resolve().then(() => { loadingDone = false; });
 }, { immediate: true });
 watch(doneDivine, (v) => {
@@ -228,7 +254,7 @@ watch(doneDivine, (v) => {
   const cur = { ...doneAll.value };
   const n = num(v);
   if (n == null) delete cur[doneKey.value];
-  else cur[doneKey.value] = { v: n, at: Date.now() };
+  else cur[doneKey.value] = { v: n, at: Date.now(), u: unit.value };
   doneAll.value = cur;
   try { localStorage.setItem(DONE_KEY, JSON.stringify(cur)); } catch { /* 無くてよい */ }
 });
@@ -283,7 +309,7 @@ watch(makeKey, async (key) => {
   const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
   const r = await runRecipe({
     data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: 500, price, fractureStart: makeSpec.value,
-    whiteBasePrice: (num(whiteDivine.value) ?? 0) * divineEx(), sockets: socketCount.value,
+    whiteBasePrice: (num(whiteDivine.value) ?? 0) * unitEx(), sockets: socketCount.value,
     targets: fractureRows.value.map((x) => ({ modId: x.modId, minTierIndex: x.minTierIndex, method: "fracture" as const })),
   }, undefined, () => my !== makeGen);
   if (my !== makeGen) return;
@@ -329,7 +355,7 @@ const calc = computed(() => {
   const wall: "prefix" | "suffix" = m.type === "suffix" ? "prefix" : "suffix";
   const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
   const rerolls = pHit > 0 ? 1 / pHit : Infinity;
-  const white = (num(whiteDivine.value) ?? 0) * divineEx();
+  const white = (num(whiteDivine.value) ?? 0) * unitEx();
   // buy = 4 MOD のベースを買っても要る物 (壁とフラクチャー)
   // 1 から (自前): 壁は王者の後に骨 1 本だけ (側を選ばないのでお告げも深淵のエッセンスも要らない)。増強のリロールで狙いの 1 つだけ
   // になった時 (最初の増強で付かなかった時、確率 1 − p) は、王者で 2 つにしかならないので高貴で 3 つにしてから骨
@@ -364,7 +390,7 @@ const calc = computed(() => {
   const buyRest = buyLines.reduce((a, l) => a + l.n * l.each, 0);
   const breakEven = once - buyRest;
   const fourN = num(fourDivine.value);
-  const fourB = fourN != null ? fourN * divineEx() : null;
+  const fourB = fourN != null ? fourN * unitEx() : null;
   const buyOnce = fourB != null ? fourB + buyRest : null;
   return { pHit, each, rerolls, lines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, buyRest, breakEven, buyOnce };
 });
@@ -394,7 +420,7 @@ async function run(): Promise<void> {
   progress.value = null;
   try {
     phase.value = "回しています";
-    const divine = priceOf("divine") || 1;
+    const divine = unitEx();
     // 値段は 1 回引いたら覚える (相場の一覧を毎手引くと、500 回で 46 秒かかっていた)
     const memo = new Map<string, number>();
     const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
@@ -475,7 +501,7 @@ const stale = computed(() => ranFor.value !== sig.value);
  */
 const compare = computed(() => {
   const out = recipeOut.value;
-  const dv = divineEx();
+  const dv = unitEx();
   const list: Array<{ key: string; name: string; cost: number | null; note: string }> = [];
   list.push({ key: "make", name: fractureRow.value ? "白から作る (フラクチャーも自前)" : "白から作る", cost: out ? out.r.perDone : null, note: "回すと出ます" });
   if (fractureRow.value) {
@@ -527,7 +553,10 @@ function replay(): void {
     <!-- 白のベースの値段 (手で) -->
     <div v-if="socketsOk" class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
       <span class="opacity-70">白ベース</span>
-      <input v-model.number="whiteDivine" type="number" min="0" step="0.1" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
+      <input v-model.number="whiteDivine" type="number" min="0" step="0.1" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" />
+      <select v-model="unit" class="rounded border border-white/15 bg-black/30 px-1 py-0.5" title="手で入れる値段の単位 (白 / 4 MOD / 固定済み / 完成品の全部)">
+        <option v-for="x in UNITS" :key="x.k" :value="x.k">{{ x.ja }}</option>
+      </select>
       <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
       <span v-if="ageOf('white')" :class="ageOf('white')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")!.text }}</span>
       <button v-if="!whiteOk" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="num(whiteDivine) == null" @click="whiteOk = true">進む →</button>
@@ -711,17 +740,17 @@ function replay(): void {
             <td class="py-1">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
             <td class="py-1">
               <span v-if="x.key === 'four'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <input v-model.number="fourDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> 神
+                <input v-model.number="fourDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> {{ unitJa }}
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
                 <span v-if="ageOf('four')" :class="ageOf('four')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")!.text }}</span>
               </span>
               <span v-else-if="x.key === 'bought'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <input v-model.number="boughtDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> 神
+                <input v-model.number="boughtDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> {{ unitJa }}
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="この MOD が固定済みのベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
                 <span v-if="ageOf('bought')" :class="ageOf('bought')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")!.text }}</span>
               </span>
               <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <input v-model.number="doneDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> 神
+                <input v-model.number="doneDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> {{ unitJa }}
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
                 <span v-if="doneAge" :class="doneAge.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge.text }}</span>
               </span>
