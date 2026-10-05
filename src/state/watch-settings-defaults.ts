@@ -51,14 +51,23 @@ export interface WatchSettings {
   autoTop: boolean;
   /**
    * 使用率ランキングの自動取得の間隔 (時間)。0 = 自動取得しない (MOD 一覧の時に一緒に取る分だけ)。
-   * 選べる値は監視の「自動取得の間隔」と同じ (2026-10-06 オーナー「使用率ランキングも一緒で自動取得の間隔プルダウン、中身一緒で」)
+   * 選べる値は RANKING_CYCLE_OPTIONS (1 日〜1 か月。2026-10-06 オーナー「間隔もっと長く、1 日から 3 日、5 日、1 週間、2 週間、1 か月」)
    */
   rankingCycleHours: number;
 }
 
 /** 自動取得の間隔の選択肢 (時間)。監視の一括取得と使用率ランキングで共通 */
 export const CYCLE_HOUR_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24] as const;
-const cycleHours = (v: unknown): number => (typeof v === "number" && (CYCLE_HOUR_OPTIONS as readonly number[]).includes(v) ? v : 0);
+/** 使用率ランキングの自動取得の間隔 (時間と表示)。顔ぶれは日単位でほとんど変わらないので長め */
+export const RANKING_CYCLE_OPTIONS = [
+  { hours: 24, label: "1 日" },
+  { hours: 72, label: "3 日" },
+  { hours: 120, label: "5 日" },
+  { hours: 168, label: "1 週間" },
+  { hours: 336, label: "2 週間" },
+  { hours: 720, label: "1 か月" },
+] as const;
+const cycleHours = (v: unknown): number => (typeof v === "number" && RANKING_CYCLE_OPTIONS.some((o) => o.hours === v) ? v : 0);
 
 /** 監視できるジェムの上限 (オーナー指示 2026-09-20「監視ジェム最大 7 にしよう」)。
  *
