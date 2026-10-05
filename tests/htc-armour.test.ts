@@ -28,7 +28,8 @@ import extra from "../src/services/htc/extra-bases.json";
 
 const data = loadPatch();
 type RawItem = { id: string; category: string; bases: string[]; pools: { rune?: Record<string, { prefixes: string[]; suffixes: string[] }> } };
-const ITEMS = (bases as unknown as { items: RawItem[] }).items;
+// 置き場は読み込んだ後の物 (中身の違う MOD を分けた後、rune-split.ts 2026-10-05)。生の表のままだと分けた MOD と数が合わない
+const ITEMS = (bases as unknown as { items: RawItem[] }).items.map((x) => ({ ...x, pools: { ...x.pools, rune: (data.bases.get(x.id)?.pools.rune ?? x.pools.rune) as RawItem["pools"]["rune"] } }));
 const GLOVES = ITEMS.filter((x) => x.category === "Gloves");
 const KOLR = "kolrs-hunt", KATLA = "katlas-gloom";
 

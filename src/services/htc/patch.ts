@@ -11,6 +11,7 @@
  * `extra-bases.json` (クライアントから生成、`scripts/build-htc-bases-from-client.mjs`) を
  * ここで重ねて埋めます。上流の `data/` は触りません。
  */
+import { splitMixedRuneMods } from "./rune-split";
 import { indexPatch } from "../../vendor/poe2htc/engine/indexPatch";
 import { applyWeightOverrides } from "./weight-overrides";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -182,7 +183,8 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
   fillJewelleryTags(mods);
   // 重みが仮置きの 1 のままの MOD を埋める (キャストスピードなど)。**ここで掛けるのは、アプリと検算が
   // 同じ applyExtras を通るから**。別の場所で掛けると片方だけ直ることになる ([[weight-overrides.ts]])
-  return applyWeightOverrides({ patch: data.patch, mods, bases }).data;
+  // 特殊 MOD のルーンの、中身の違う MOD が 1 つにまとめられていた物を分ける (2026-10-05、[[rune-split.ts]])
+  return splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases }).data).data;
 }
 
 /**
