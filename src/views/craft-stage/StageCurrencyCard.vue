@@ -9,7 +9,7 @@
 import { computed } from "vue";
 import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { enOf } from "../../state/craft-stage-shelf";
-import { stageAdds, stageHelp } from "../../state/craft-stage-help";
+import { specialEssence, stageAdds, stageHelp } from "../../state/craft-stage-help";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { displayCurrency } from "../../state/display-currency";
 
@@ -22,7 +22,7 @@ const official = computed(() => (hover.value?.e ?? []).map(plain));
  * 他の装備に使った時に付く物 (エッセンス・合金: クライアントの説明の部位ごとの一覧)。
  * 2026-10-05 オーナー「違う武器とかでも付けれたり他のでも付けれるから、その説明は欲しい。分かりやすく教えて欲しいカード」
  */
-const others = computed(() => (hover.value?.g ?? []).map((g) => ({ h: plain(g.h).replace(/に付く$/, ""), l: g.l.map(plain) })));
+const others = computed(() => specialEssence(props.k, craftStage.item.value)?.groups ?? (hover.value?.g ?? []).map((g) => ({ h: plain(g.h).replace(/に付く$/, ""), l: g.l.map(plain) })));
 const help = computed(() => stageHelp(props.k, craftStage.data.value, craftStage.item.value));
 /** 付く MOD (エッセンス・ルーン等)。アイコンの下に色を変えて箇条書き (2026-10-05 オーナー「説明欄が見づらいから、特定の MOD が付く奴はそこだけ分かりやすい色に」) */
 const adds = computed(() => (props.omen ? null : stageAdds(props.k, craftStage.data.value, craftStage.item.value)));

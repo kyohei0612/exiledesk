@@ -96,6 +96,11 @@ const EXTRA_HELP: Record<string, string[]> = {
 };
 
 export function stageHelp(key: string, data: PatchData | null, item: StageItem | null): string[] {
+  const sp = specialEssence(key, item);
+  return [...(sp?.notes ?? []), ...stageHelpBase(key, data, item)];
+}
+
+function stageHelpBase(key: string, data: PatchData | null, item: StageItem | null): string[] {
   if (OMEN[key]) return [...OMEN[key]!, "押すと掛けておく (何枚でも)。次に打つ、関係する手でだけ使われる"];
   const s = strengthOf(key);
   const kind = key.replace(/_(greater|perfect)$/, "");
@@ -264,13 +269,61 @@ export function shortMod(text: string): string {
     if ((m = /^(.*?)ダメージの#%を追加(.+)として獲得する$/.exec(s))) return `${m[1] ? `${m[1].replace(/の$/, "")}の` : ""}${m[2]}獲得`;
     if ((m = /^受けた(.*)ダメージの#%をライフとして回収する$/.exec(s))) return `${m[1] || ""}被ダメ回収`;
     if ((m = /^#から#の(.+)$/.exec(s))) return m[1]!;
-    s = s.replace(/(が|を)?#?%?(増加|減少|上昇)する$/, "").replace(/#%?(の|個の)?/g, "").replace(/[#%+]/g, "").replace(/レート$/, "").replace(/\s+/g, "").trim();
+    s = s.replace(/^プレイヤーに対する(ヒットは)?/, "").replace(/の#%?を/g, "を").replace(/(が|を)?#?%?(増加|減少|上昇)する$/, "").replace(/#%?(の|個の)?/g, "").replace(/[#%+]/g, "").replace(/レート$/, "").replace(/\s+/g, "").trim();
     return s;
   }).filter(Boolean).join(" / ");
 }
 
+/**
+ * 特殊なエッセンス (レアだけ・MOD を 1 つ消して付ける物) の説明 (2026-10-05 オーナー「錯乱ちょっと違うかもな、ランダムなノータブルパッシブ付くし
+ * 鎧だけやな。説明しっかり作ろか、細かい所」)。部位は同梱の MOD の表 (perfect_essence) で確かめた。
+ * short = 棚の短い名前、groups = カードの「使える装備と付く MOD」(クライアントの文が壊れている・無い物だけ差し替え)、notes = 動きの先頭に足す
+ */
+const SPECIAL_ESSENCE: Record<string, { short?: string; groups?: Array<{ h: string; l: string[] }>; notes: string[] }> = {
+  "Essence of Delirium": {
+    short: "ランダムノータブル",
+    // クライアントの文は「0 を割り当てる」(ノード名の差し込みが空) なので書き直す
+    groups: [{ h: "鎧 (胴の防具) だけ", l: ["ランダムなノータブルパッシブスキルを割り当てる (プレフィックス)"] }],
+    notes: [
+      "**レアの胴の防具 (鎧) だけ**。他の部位には使えない",
+      "付くのは「ランダムなノータブルパッシブスキルを割り当てる」。どのノータブルかはパッシブツリーのノータブルからランダムで、**選べない** (重みは公開値なし)。ゲームでは付いた後「○○を割り当てる」とノード名が出る",
+      "数値の無い MOD なので神のオーブで変わらない",
+    ],
+  },
+  "Essence of Horror": {
+    short: "オーグメント効果",
+    notes: [
+      "**レアの手袋・靴だけ**",
+      "サフィックスに「ソケットされているオーグメントの効果が 60% 増加する」(固定値)。はめたルーン・ソウルコア等の効き目が 1.6 倍になるので、ソケットの多い物ほど得",
+    ],
+  },
+  "Essence of Hysteria": {
+    notes: ["**レアだけ**。部位ごとに付く MOD が違う (下の「使える装備と付く MOD」)。武器には使えない"],
+  },
+  "Essence of Insanity": {
+    short: "コラプトでエンチャ2",
+    notes: [
+      "**レアのベルトだけ**",
+      "サフィックスに「コラプト時に、アイテムは 2 個のエンチャントを獲得する」。ヴァールのオーブでエンチャントが付く結果になった時、1 個ではなく 2 個付く",
+    ],
+  },
+  "Essence of the Breach": {
+    notes: ["**レアの指輪・アミュレットだけ**", "プレフィックスに「品質の最大値 +20%」。カタリストで品質を 40% まで盛れる (触媒の MOD がその分強くなる)"],
+  },
+  "Essence of the Abyss": {
+    short: "深淵の王の印",
+    groups: [{ h: "防具・装飾品・ベルト など", l: ["アビサルロードの紋章 (深淵の王の印)。次の骨で冒涜 MOD に置き換わる"] }],
+    notes: [],
+  },
+};
+export function specialEssence(key: string, item: StageItem | null) {
+  return key.startsWith("essence:") ? SPECIAL_ESSENCE[enOf(key, item)] ?? null : null;
+}
+
 /** 棚のボタンの値段の代わりに出す、付く MOD の短い名前 (エッセンス・カタリスト)。無い物は null (値段のまま) */
 export function shelfTag(key: string, data: PatchData | null, item: StageItem | null): string[] | null {
+  const sp = specialEssence(key, item);
+  if (sp?.short) return [sp.short];
   if (key.startsWith("essence:")) {
     const a = stageAdds(key, data, item);
     return a ? a.lines.map(shortMod) : null;

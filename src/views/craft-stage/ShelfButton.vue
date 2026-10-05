@@ -68,7 +68,7 @@ onBeforeUnmount(leave);
   >
     <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain" draggable="false" />
     <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
-    <span class="mt-0.5 line-clamp-2 text-center leading-tight">{{ nameOf(k) }}</span>
+    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 text-center">{{ nameOf(k) }}</span></span>
     <span v-if="badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px]" :class="badge[2]">{{ badge[1] }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] font-bold text-white">有効</span>
     <span v-if="tag" class="mt-px w-full">
