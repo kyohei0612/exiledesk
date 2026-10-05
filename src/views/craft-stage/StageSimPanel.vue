@@ -23,6 +23,7 @@ import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import StageFracturePicker from "./StageFracturePicker.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
+import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
 
 const s = craftStage;
 const RUNS = [500, 1000, 3000] as const;
@@ -88,7 +89,6 @@ function setMethod(modId: string, method: RecipeMethod): void {
 /** フラクチャーの狙いの始め方。付いた状態のベースの値段は手で (神) */
 const fractureRows = computed(() => rows.value.filter((r) => r.method === "fracture"));
 const fractureRow = computed(() => fractureRows.value[0] ?? null);
-const fractureStart = ref<"make" | "bought">("make");
 /**
  * 作り方は 変成・増強ガチャ → 王者 → 骨の壁 (4 つ目を骨の未発現の冒涜に、候補が 1 つ減る) だけ
  * (2026-10-05 オーナー「基本これする時骨壁するから他の選択肢いらない」。錬金 → カオス・壁なしは recipe-sim.ts には残す)
@@ -173,6 +173,58 @@ async function searchBought(): Promise<void> {
   const got = tradeFiltersFor(d, [{ modId: f.modId, minTierIndex: f.minTierIndex }]);
   const stats = got.filters.map((x) => ({ id: x.id.replace(/^explicit\./, "fractured."), ...(x.min != null ? { min: x.min } : {}) }));
   await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, fracturedItem: true, noSanctified: true }));
+}
+
+/**
+ * 完成品の値段 (神、手で入れる)。2026-10-05 オーナー「完成品はトレードへ案内させる URL でおけ、手動で入れてもらおう」。
+ * ベース・アイテムレベル・狙い (段) の組ごとに覚える
+ */
+const doneDivine = ref<number | null>(null);
+const DONE_KEY = "exiledesk.craftStageSim.donePrices";
+const doneAll = ref<Record<string, Kept>>({});
+try { doneAll.value = JSON.parse(localStorage.getItem(DONE_KEY) ?? "{}"); } catch { /* 無くてよい */ }
+const doneKey = computed(() => `${keptKey.value}|${s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}`).sort().join(",")}`);
+let loadingDone = false;
+watch(doneKey, () => {
+  loadingDone = true;
+  doneDivine.value = doneAll.value[doneKey.value]?.v ?? null;
+  void Promise.resolve().then(() => { loadingDone = false; });
+}, { immediate: true });
+watch(doneDivine, (v) => {
+  if (loadingDone) return;
+  const cur = { ...doneAll.value };
+  if (v == null || !(v >= 0)) delete cur[doneKey.value];
+  else cur[doneKey.value] = { v, at: Date.now() };
+  doneAll.value = cur;
+  try { localStorage.setItem(DONE_KEY, JSON.stringify(cur)); } catch { /* 無くてよい */ }
+});
+const doneAge = computed(() => {
+  const k = doneAll.value[doneKey.value];
+  if (!k) return null;
+  const min = Math.floor((Date.now() - k.at) / 60000);
+  const text = min < 1 ? "今入れた" : min < 60 ? `${min} 分前に入れた` : min < 1440 ? `${Math.floor(min / 60)} 時間前に入れた` : `${Math.floor(min / 1440)} 日前に入れた`;
+  return { text, old: min >= 1440 };
+});
+/**
+ * 完成品を取引所で探す (開くだけ)。一番ゆるく: どの MOD も 普通 / 固定済み / 冒涜 のどれでもいい。
+ * フラクチャーの候補が 2 つ以上なら「そのどれか」を 1 つのグループに
+ */
+async function searchDone(): Promise<void> {
+  const d = s.data.value;
+  if (!d) return;
+  const KINDS: StatKind[] = ["explicit", "fractured", "desecrated"];
+  const kindsOf = (t: { modId: string; minTierIndex: number }): { id: string; min?: number }[] =>
+    tradeFiltersFor(d, [t]).filters.flatMap((f) => {
+      if (!/^explicit\./.test(f.id)) return [{ id: f.id, ...(f.min != null ? { min: f.min } : {}) }];
+      const key = f.id.replace(/^explicit\./, "");
+      return KINDS.filter((k) => hasStatKind(key, k)).map((k) => ({ id: `${k}.${key}`, ...(f.min != null ? { min: f.min } : {}) }));
+    });
+  const stats: { id: string; min?: number }[] = [];
+  const anyOf: { filters: { id: string; min?: number }[] }[] = [];
+  const put = (fs: { id: string; min?: number }[]): void => { if (fs.length === 1) stats.push(fs[0]!); else if (fs.length > 1) anyOf.push({ filters: fs }); };
+  if (fractureRows.value.length) put(fractureRows.value.flatMap(kindsOf));
+  for (const r of restRows.value) put(kindsOf(r));
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, anyOf, noSanctified: true }));
 }
 
 /**
@@ -281,27 +333,20 @@ const calc = computed(() => {
   const buyOnce = fourB != null ? fourB + buyRest : null;
   return { pHit, each, rerolls, lines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, buyRest, breakEven, buyOnce };
 });
-/** 入れた値段との比べ (高貴建て) */
-const buyVsMake = computed(() => {
-  const m = makeCost.value;
-  if (!m || boughtDivine.value == null || !(boughtDivine.value >= 0) || !Number.isFinite(m.perDone)) return null;
-  const buy = boughtDivine.value * (priceOf("divine") || 1);
-  return { buy, diff: m.perDone - buy };
-});
-
 const busy = ref(false);
 const phase = ref("");
 const progress = ref<[number, number] | null>(null);
 const error = ref("");
 const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
+/** フラクチャー済みから残りを作る費用 (ベース代 0 で回した平均)。買う側の比べに足す */
+const restCost = ref<number | null>(null);
 const ranFor = ref("");
-const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|${s.itemLevel.value}|${fractureStart.value}|${boughtDivine.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}:${methodOf(t)}`).join(",")}`);
+const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|${s.itemLevel.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}:${methodOf(t)}`).join(",")}`);
 let gen = 0;
 
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
-  if (fractureRow.value && fractureStart.value === "bought" && !(boughtDivine.value != null && boughtDivine.value >= 0)) return "付いた状態のベースの値段 (神) を入れてください";
-  if (fractureRow.value && fractureStart.value === "make" && makeRoute.value === "magic" && mixedSides.value) return "フラクチャーの候補は同じ側だけ (違う側同士は作り方も完成図も変わる)";
+  if (fractureRow.value && makeRoute.value === "magic" && mixedSides.value) return "フラクチャーの候補は同じ側だけ (違う側同士は作り方も完成図も変わる)";
   return null;
 });
 
@@ -322,11 +367,20 @@ async function run(): Promise<void> {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: runs.value, price,
       targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t) })),
       whiteBasePrice: (whiteDivine.value ?? 0) * divine,
-      ...(fractureRow.value ? { fractureStart: fractureStart.value === "bought" ? { kind: "bought" as const, price: (boughtDivine.value ?? 0) * divine } : makeSpec.value } : {}),
+      ...(fractureRow.value ? { fractureStart: makeSpec.value } : {}),
     };
-    const r = await runRecipe(spec, (done, total) => { if (my === gen) progress.value = [done, total]; }, () => my !== gen);
+    // 白から作る + (フラクチャーがあれば) 固定済みから残りを作る (ベース代 0) の 2 本。始め方の比べに使う
+    const total = runs.value * (fractureRow.value ? 2 : 1);
+    const r = await runRecipe(spec, (done) => { if (my === gen) progress.value = [done, total]; }, () => my !== gen);
     if (my !== gen || !r) return;
+    let rest: number | null = null;
+    if (fractureRow.value) {
+      const r2 = await runRecipe({ ...spec, fractureStart: { kind: "bought", price: 0 } }, (done) => { if (my === gen) progress.value = [runs.value + done, total]; }, () => my !== gen);
+      if (my !== gen || !r2) return;
+      rest = r2.perDone;
+    }
     recipeOut.value = { r, spec };
+    restCost.value = rest;
     ranFor.value = sig.value;
   } catch (e) {
     if (my === gen) error.value = e instanceof Error ? e.message : String(e);
@@ -339,11 +393,37 @@ function stop(): void {
   busy.value = false;
   phase.value = "";
 }
-watch(() => s.base.value, () => { recipeOut.value = null; });
+watch(() => s.base.value, () => { recipeOut.value = null; restCost.value = null; });
 
 const money = (x: number): string => (Number.isFinite(x) ? displayCurrency.money(x) : "—");
 const pct = (x: number): string => `${(x * 100).toFixed(x < 0.1 && x > 0 ? 1 : 0)}%`;
 const stale = computed(() => ranFor.value !== sig.value);
+/**
+ * 始め方の比べ (2026-10-05 オーナー「作った方が安いか、ベースから作った方が安いのか、完成品の方が安いのか」)。
+ * 作り方を探す自動は無いので、出るのは「この作り方なら」の比べ。値段は全部 高貴建て
+ *   白から作る          … 回した平均 (フラクチャーも確率込み)
+ *   4 MOD のベースを買う … (ベース代 + 壁 + フラクチャー) × 3 + 消去 × 2 + 固定済みから残りを作る平均
+ *   固定済みを買う       … 入れた値段 + 固定済みから残りを作る平均
+ *   完成品を買う         … 入れた値段
+ */
+const compare = computed(() => {
+  const out = recipeOut.value;
+  const dv = divineEx();
+  const list: Array<{ key: string; name: string; cost: number | null; note: string }> = [];
+  list.push({ key: "make", name: fractureRow.value ? "白から作る (フラクチャーも自前)" : "白から作る", cost: out ? out.r.perDone : null, note: "回すと出ます" });
+  if (fractureRow.value) {
+    const rest = restCost.value;
+    const c = calc.value;
+    const four = c && c.buyOnce != null && rest != null ? c.buyOnce * 3 + c.after + rest : null;
+    list.push({ key: "four", name: "4 MOD・当たり 1 のベースを買う", cost: four, note: fourDivine.value == null ? "値段を入れると出ます" : "回すと出ます" });
+    const bought = boughtDivine.value != null && boughtDivine.value >= 0 && rest != null ? boughtDivine.value * dv + rest : null;
+    list.push({ key: "bought", name: "固定済みのベースを買う", cost: bought, note: boughtDivine.value == null ? "値段を入れると出ます" : "回すと出ます" });
+  }
+  list.push({ key: "done", name: "完成品を買う", cost: doneDivine.value != null && doneDivine.value >= 0 ? doneDivine.value * dv : null, note: "値段を入れると出ます" });
+  const known = list.filter((x) => x.cost != null && Number.isFinite(x.cost));
+  const best = known.length >= 2 ? known.reduce((a, b) => (b.cost! < a.cost! ? b : a)).key : null;
+  return { list, best };
+});
 /** 上の 5 つの数 (どちらの回し方でも同じ形) */
 const summary = computed(() => {
   if (recipeOut.value) { const r = recipeOut.value.r; return { perDone: r.perDone, pDone: r.pDone, runs: r.runs, p50: r.p50, p80: r.p80, p90: r.p90 }; }
@@ -368,6 +448,14 @@ function replay(): void {
       <span class="opacity-60">{{ s.item.value?.baseJa }} (アイテムレベル {{ s.itemLevel.value }})。狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)</span>
     </div>
 
+    <!-- 白のベースの値段 (手で) -->
+    <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+      <span class="opacity-70">白のベースの値段</span>
+      <input v-model.number="whiteDivine" type="number" min="0" step="0.1" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
+      <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
+      <span v-if="ageOf('white')" :class="ageOf('white')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")!.text }}</span>
+      <span class="opacity-60">規格外のソケット付きならその値段。白から始める時・作り直す時に数え、マジックで外れた時は「消去」と「白を買い直して変成」の安い方を使う</span>
+    </div>
     <p class="mb-2 text-[11px] opacity-60">上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
     <!-- 狙い: ① フラクチャーの候補 (ポップアップの MOD 一覧から選ぶ) → ② 順番に付ける MOD (下の一覧の「狙う」) -->
@@ -420,14 +508,6 @@ function replay(): void {
     </div>
     <StageFracturePicker v-if="pickerOpen" @close="pickerOpen = false" />
 
-    <!-- 白のベースの値段 (手で) -->
-    <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
-      <span class="opacity-70">白のベースの値段</span>
-      <input v-model.number="whiteDivine" type="number" min="0" step="0.1" placeholder="0" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
-      <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
-      <span v-if="ageOf('white')" :class="ageOf('white')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")!.text }}</span>
-      <span class="opacity-60">規格外のソケット付きならその値段。白から始める時・作り直す時に数え、マジックで外れた時は「消去」と「白を買い直して変成」の安い方を使う</span>
-    </div>
     <!-- カレンシーの相場 -->
     <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
       <span class="opacity-70">カレンシーの相場</span>
@@ -439,8 +519,6 @@ function replay(): void {
     <!-- フラクチャーの始め方 -->
     <div v-if="fractureRow" class="mb-3 rounded-lg border border-emerald-400/30 bg-emerald-500/[0.06] px-3 py-2">
       <p class="mb-1 font-bold text-emerald-100">フラクチャー: <template v-for="(f, i) in fractureRows" :key="f.modId">{{ i ? " か " : "" }}{{ f.text }} ({{ f.rank }} 以上)</template><span v-if="fractureRows.length >= 2" class="ml-1 text-[11px] font-normal opacity-70">(始める MOD の候補。どれか 1 つが付いたら進み、どれが固定されても良い)</span></p>
-      <label class="mr-4 inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="make" /> 作る (確率込み)</label>
-      <label class="inline-flex items-center gap-1.5"><input v-model="fractureStart" type="radio" value="bought" /> 付いた状態で始める (ベースを買う)</label>
       <!-- 計算の費用 (1 回分 × 3) -->
       <div v-if="calc" class="mt-1 rounded bg-black/25 px-2 py-1.5 text-[11px]">
         <p class="mb-1 text-[12px]">
@@ -454,11 +532,8 @@ function replay(): void {
         <p v-if="calc.noAbyss" class="text-amber-300">このベースの深淵のエッセンスの値段が分かりません (0 で数えています)</p>
         <!-- 買うか自前か (4 MOD・当たり 1 のベース) -->
         <div class="mb-1.5 rounded border border-sky-400/25 bg-sky-500/[0.06] px-2 py-1.5">
-          <p class="flex flex-wrap items-center gap-2">
-            <span>4 MOD・当たり 1 のベース</span>
-            <input v-model.number="fourDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
-            <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
-            <span v-if="ageOf('four')" :class="ageOf('four')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")!.text }}</span>
+          <p>
+            <span class="opacity-70">4 MOD・当たり 1 のベース (値段は下の「始め方の比べ」で入れる)</span>
           </p>
           <p class="mt-0.5">
             分かれ目: <b class="text-sky-100">{{ money(calc.breakEven) }}</b> より安ければ買う方が得
@@ -508,24 +583,13 @@ function replay(): void {
               <span class="block text-[10px] opacity-60">外れの固定・マジックの買い直し込み</span>
             </span>
           </span>
-          <template v-if="buyVsMake">
-            <span v-if="buyVsMake.diff > 0" class="ml-2 rounded bg-emerald-500/20 px-1.5 text-emerald-200">入れた値段なら買う方が {{ money(buyVsMake.diff) }} 得</span>
-            <span v-else class="ml-2 rounded bg-amber-500/20 px-1.5 text-amber-200">入れた値段なら作る方が {{ money(-buyVsMake.diff) }} 得</span>
-          </template>
         </template>
       </p>
-      <div v-if="fractureStart === 'make'" class="mt-1 text-[11px]">
+      <div class="mt-1 text-[11px]">
         <p class="mt-0.5 opacity-70">
           変成 → {{ fractureRows.length >= 2 ? "候補のどれかが" : "狙いが" }}付くまで増強 (外れは消去か白の買い直しの安い方) → 王者 (狙いだけの 1 つなら高貴で 3 つに) → 骨 1 本の壁 (未発現の冒涜、側は問わない) で 4 つ → フラクチャー (1/3)。外れを固定したら白を買い直して始めから。固定できたら消去を 2 つ (残りの外れはカオスが入れ替え、高貴・冒涜は要る時にその側を消す)。ここまでの費用も込み
         </p>
       </div>
-      <p v-else class="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
-        <span class="opacity-70">ベースの値段</span>
-        <input v-model.number="boughtDivine" type="number" min="0" step="0.1" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> <span>神</span>
-        <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="この MOD が固定済みのベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
-        <span v-if="ageOf('bought')" :class="ageOf('bought')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")!.text }}</span>
-        <span v-else class="opacity-60">見つけた値段を入れてください</span>
-      </p>
     </div>
 
     <!-- 回す -->
@@ -537,6 +601,37 @@ function replay(): void {
       <span v-if="busy" class="text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0] }} / {{ progress[1] }}</template>…</span>
       <span v-else-if="blocked && rows.length" class="text-amber-200/80">{{ blocked }}</span>
       <span v-if="error" class="text-rose-300">{{ error }}</span>
+    </div>
+
+    <!-- 始め方の比べ -->
+    <div v-if="rows.length" class="mb-3 rounded-lg border border-sky-400/30 bg-sky-500/[0.05] px-3 py-2">
+      <p class="mb-1 font-bold text-sky-100">始め方の比べ <span class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
+      <table class="w-full">
+        <tbody>
+          <tr v-for="x in compare.list" :key="x.key" class="border-t border-white/5" :class="compare.best === x.key ? 'bg-emerald-500/10' : ''">
+            <td class="py-1">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
+            <td class="py-1">
+              <span v-if="x.key === 'four'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <input v-model.number="fourDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> 神
+                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
+                <span v-if="ageOf('four')" :class="ageOf('four')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")!.text }}</span>
+              </span>
+              <span v-else-if="x.key === 'bought'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <input v-model.number="boughtDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> 神
+                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="この MOD が固定済みのベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
+                <span v-if="ageOf('bought')" :class="ageOf('bought')!.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")!.text }}</span>
+              </span>
+              <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <input v-model.number="doneDivine" type="number" min="0" step="0.1" placeholder="値段" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" /> 神
+                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
+                <span v-if="doneAge" :class="doneAge.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge.text }}</span>
+              </span>
+            </td>
+            <td class="w-28 py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50">{{ x.note }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-if="stale && recipeOut" class="mt-1 text-[11px] text-amber-200">設定が変わりました。「回す」で出し直すと作る側の数字も合います</p>
     </div>
 
     <!-- 結果 -->
