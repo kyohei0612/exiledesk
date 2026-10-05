@@ -7,7 +7,8 @@
 -->
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { openTierSearch } from "../../services/pob-check/tier-search";
+import { openTierSearch, prepareTierSearch } from "../../services/pob-check/tier-search";
+import { linesToJa } from "../../services/pob-check/item-text";
 import GameItemCard from "../decor/GameItemCard.vue";
 import RichText from "../decor/RichText.vue";
 import ItemArt from "../decor/ItemArt.vue";
@@ -26,6 +27,26 @@ const enchantJa = (l: string): string => {
 
 const props = defineProps<{ item: BuildItem; x: number; y: number; layerKey: number; pinned: boolean; z: number }>();
 onMounted(() => void loadUniqueHoverDict());
+/**
+ * MOD の文の日本語 (2026-10-05 オーナー「解析後表示してるからか英語だよ。カードにはちゃんとコピーのまんま表示させて、数字とか火力変わってくるから」)。
+ * jaUniqueText はユニークの辞書なのでレアの MOD が英語のまま出ていた → 装備の文の訳 (linesToJa) を先に。数字は品質込みのコピーのまま
+ */
+const jaLine = ref(new Map<string, string>());
+onMounted(async () => {
+  const lines = [...props.item.implicits, ...props.item.mods];
+  if (lines.length) {
+    try {
+      const ja = await linesToJa(lines);
+      jaLine.value = new Map(lines.map((l, i) => [l, ja[i] ?? l]));
+    } catch { /* 訳せなければユニークの辞書のまま */ }
+  }
+  // 取引所の条件は開いた時に裏で組んでおく (押したらすぐ開く)
+  if (props.item.raw && !/UNIQUE|RELIC/i.test(props.item.rarity)) void prepareTierSearch(props.item.raw);
+});
+const lineJa = (m: string): string => {
+  const j = jaLine.value.get(m);
+  return j && j !== m ? j : jaUniqueText(m);
+};
 
 const unique = computed(() => props.item.rarity === "UNIQUE" || props.item.rarity === "RELIC");
 const tone = computed(() => (unique.value ? "unique" : props.item.rarity === "RARE" ? "rare" : props.item.rarity === "MAGIC" ? "magic" : "currency"));
@@ -72,10 +93,10 @@ const sub = computed(() => (unique.value && props.item.base ? jaTypeName(props.i
     </template>
     <template v-if="item.implicits.length">
       <div class="g-sep" />
-      <p v-for="(m, i) in item.implicits" :key="'i' + i" class="g-mod"><RichText :text="jaUniqueText(m)" /></p>
+      <p v-for="(m, i) in item.implicits" :key="'i' + i" class="g-mod"><RichText :text="lineJa(m)" /></p>
     </template>
     <div class="g-sep" />
-    <p v-for="(m, i) in item.mods" :key="'m' + i" class="g-mod"><RichText :text="jaUniqueText(m)" /></p>
+    <p v-for="(m, i) in item.mods" :key="'m' + i" class="g-mod"><RichText :text="lineJa(m)" /></p>
     <p v-if="!item.mods.length" class="g-dim">MOD なし</p>
     <template v-if="item.corrupted">
       <div class="g-sep" />
@@ -86,14 +107,12 @@ const sub = computed(() => (unique.value && props.item.base ? jaTypeName(props.i
       <div class="g-sep" />
       <div class="flex flex-wrap items-center justify-center gap-2 text-[12px]">
         <button
-          v-if="pinned"
           type="button"
           class="rounded border border-[#8a7a4a] px-2.5 py-0.5 text-[#ffd479] hover:bg-[#4a3a1a] disabled:opacity-50"
           :disabled="tradeBusy"
           :title="unique ? '名前 + ベースで取引所を開く' : 'ルーン・品質の底上げを抜いた、付いている MOD のティアの下限で取引所を開く'"
           @click.stop="onTrade"
         >{{ tradeBusy ? "開いています…" : unique ? "取引所で探す ↗" : "このティアで取引所 ↗" }}</button>
-        <span v-else class="g-dim">ピン留めすると取引所で探せます</span>
         <span v-if="tradeNote" class="g-dim">{{ tradeNote }}</span>
       </div>
     </template>

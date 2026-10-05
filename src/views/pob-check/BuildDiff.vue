@@ -32,6 +32,7 @@ import GemIcon from "../../components/decor/GemIcon.vue";
 import ItemArt from "../../components/decor/ItemArt.vue";
 import BuildItemName from "../../components/build-copy/BuildItemName.vue";
 import { toBuildItem } from "../../services/pob-check/hover-item";
+import { prepareTierSearch } from "../../services/pob-check/tier-search";
 import passivesJa from "../../i18n/passives-ja-client.json";
 
 const props = defineProps<{
@@ -111,6 +112,10 @@ function onAdopt(c: AdoptCandidate): void {
 /** 取引所で探す (URL を開くだけ)。レアは足りない行、ユニークは名前 + ベース。条件にできない時は理由を行の下に */
 const tradeMsg = ref<Record<string, string>>({});
 onMounted(() => void prepareTradeLinks().catch(() => undefined));
+// 相手の装備 (レア・マジック) の「このティアで取引所」の条件を裏で用意しておく (2026-10-05 オーナー「いつでもトレードサイト行けるように準備」)
+watch(() => props.target, (t) => {
+  for (const x of t?.items ?? []) if (x.item?.raw && !/UNIQUE|RELIC/i.test(x.item.rarity)) void prepareTierSearch(x.item.raw);
+}, { immediate: true });
 async function onTrade(c: AdoptCandidate): Promise<void> {
   if (c.kind !== "item") return;
   try {

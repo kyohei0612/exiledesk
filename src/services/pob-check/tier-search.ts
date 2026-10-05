@@ -41,10 +41,24 @@ export async function openTierSearch(it: { raw: string; rarity: string; name: st
     await openTradeQuery(uniqueSearchQuery({ title: it.name, base: it.base }));
     return { ok: true, note: "名前 + ベースで開きました" };
   }
-  const b = await tierSearchQuery(it.raw);
+  const b = await prepareTierSearch(it.raw);
   if ("error" in b) return { ok: false, note: b.error };
   await openTradeQuery(b.query);
   return { ok: true, note: b.note };
+}
+
+/**
+ * 用意しておく (2026-10-05 オーナー「取り込んで計算時に全て一旦裏で品質抜いて、いつでもトレードサイト行けるよう準備するのもあり」)。
+ * カードを開いた時に裏で組み、押した時はできている物を使う。同じ文面は 1 回だけ組む
+ */
+const prepared = new Map<string, Promise<{ query: unknown; note: string } | { error: string }>>();
+export function prepareTierSearch(raw: string): Promise<{ query: unknown; note: string } | { error: string }> {
+  let p = prepared.get(raw);
+  if (!p) {
+    p = tierSearchQuery(raw).catch((e) => ({ error: e instanceof Error ? e.message : String(e) }));
+    prepared.set(raw, p);
+  }
+  return p;
 }
 
 /** レア・マジックの検索の中身 (開かない)。確かめ用にも分けてある */
