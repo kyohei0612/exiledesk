@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw
 
 from poe2tube.capture.stage import cached_path
 from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
-from poe2tube.names import NameBook
+from poe2tube.names import NameBook, icon_file, icon_path
 from poe2tube.render.draw import load_icon, pill, shadow_panel
 from poe2tube.render.item_card import card_height, draw_item_card
 from poe2tube.render.palette import ACCENT, GOLD, GREEN, INK, LINE, MUTED, WHITE, font
@@ -338,7 +338,9 @@ def draw_quiz(img: Image.Image, box: Box, scene: Scene, icon_dir: Path) -> None:
         )
         if right:
             d.rounded_rectangle((cx0, top, cx0 + cw, top + ch), 28, outline=GREEN, width=10)
-        icon = icon_dir / f"{key}.png"
+        icon = icon_dir / f"{icon_file(key)}.png"  # rune: などのキーも (2026-10-05)
+        if not icon.exists():
+            icon = icon_path(key, icon_dir)
         size = int(cw * 0.58)
         if icon.exists():
             ic = load_icon(icon, size)
@@ -347,7 +349,10 @@ def draw_quiz(img: Image.Image, box: Box, scene: Scene, icon_dir: Path) -> None:
             img.alpha_composite(ic, (cx0 + (cw - ic.width) // 2, top + 30))
         if icon.exists():
             name = _names().ja(key) if key in _names().names else key
-            f = font(52 if len(name) <= 6 else 44)
+            fs = 52 if len(name) <= 6 else 44
+            while fs > 24 and d.textlength(name, font=font(fs)) > cw - 24:
+                fs -= 2
+            f = font(fs)
             d.text(
                 (cx0 + cw // 2, top + 60 + size),
                 name,
