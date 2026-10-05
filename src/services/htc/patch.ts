@@ -191,7 +191,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
   // 重みが仮置きの 1 のままの MOD を埋める (キャストスピードなど)。**ここで掛けるのは、アプリと検算が
   // 同じ applyExtras を通るから**。別の場所で掛けると片方だけ直ることになる ([[weight-overrides.ts]])
   // 特殊 MOD のルーンの、中身の違う MOD が 1 つにまとめられていた物を分ける (2026-10-05、[[rune-split.ts]])
-  return splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases }).data).data;
+  return splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases }).data, extra.statTags ?? {}).data;
 }
 
 /**

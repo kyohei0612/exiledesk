@@ -37,7 +37,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { ROOT, OUT, rj, rows } from "./_htc-client-tables.mjs";
 import { CLASS_TAGS, RUNE_POOLS, weightOn, familyOf, signature, signatureTags, ROW_NAME, verifyRuneTags, isSkippedBase } from "./_htc-base-tags.mjs";
-import { makeModBuilder } from "./_htc-mod-build.mjs";
+import { makeModBuilder, FACTION_TAGS, cleanDisplayTags } from "./_htc-mod-build.mjs";
 import { buildModTags, buildModSides, buildDropOnly } from "./_htc-mod-tags.mjs";
 import { report } from "./_htc-report.mjs";
 
@@ -67,7 +67,8 @@ const main = async () => {
    */
   // 文面は数を # にして比べる (クライアント "+(13-17)% to …" / 同梱 "+#% to …")。同じ系統にも複合 MOD などが同居するので、
   // 系統だけで合わせると別物のタグが混ざる (普通の最大ライフに マナ が付いた)。文面が合う物を先に、無ければ系統
-  const normText = (t) => String(t ?? "").replace(/\(\s*-?[\d.]+\s*[-—–]\s*-?[\d.]+\s*\)|-?[\d.]+/g, "#").replace(/\s+/g, " ").trim().toLowerCase();
+  // クライアントの文は [Attack] や [Critical|Critical Hit] のカッコ付き (見た目の字は | の後ろ)。同梱は無し。先頭の + も揃える
+  const normText = (t) => String(t ?? "").replace(/\[([^\]|]*\|)?([^\]]*)\]/g, "$2").replace(/^\+/gm, "").replace(/\(\s*-?[\d.]+\s*[-—–]\s*-?[\d.]+\s*\)|-?[\d.]+/g, "#").replace(/\s+/g, " ").trim().toLowerCase();
   const famTags = new Map();
   const textTags = new Map();
   const put = (map, k, tags) => { const set = map.get(k) ?? new Set(); for (const t of tags || []) set.add(t); map.set(k, set); };
@@ -89,10 +90,24 @@ const main = async () => {
         ?? famTags.get(`${dom}|${m.family}`) ?? famTags.get(`item|${m.family}`);
       for (const tag of hit ?? []) set.add(tag);
     }
-    // 冒涜の勢力のタグ (ulaman_mod など) は同梱の tags にあるので足しておく
-    for (const t of m.tags || []) if (/_mod$/.test(t)) set.add(t);
-    if (set.size) modDisplayTags[m.id] = [...set];
+    // 勢力のタグは同梱の tags (確率に使う、正しい) の物だけにする。系統の和に落ちた時に別の勢力が混ざるので (2026-10-05 点検: 169 件)
+    for (const t of [...set]) if (FACTION_TAGS.has(t)) set.delete(t);
+    for (const t of m.tags || []) if (FACTION_TAGS.has(t)) set.add(t);
+    const clean = cleanDisplayTags(set);
+    if (clean.length) modDisplayTags[m.id] = clean;
   }
+  /**
+   * stat の組 → 画面用のタグ (勢力は除く)。ルーン等の中身の違う MOD を 1 行にまとめた物を分けた後 (src/services/htc/rune-split.ts)、
+   * 分けた行ごとにタグを引き直すのに使う (2026-10-05 点検: 分けた行が元の和のタグを引き継いでいた、120 件)
+   */
+  const statTagSets = new Map();
+  for (const m of Object.values(MODS)) {
+    if (m.domain !== "item" && m.domain !== "desecrated") continue;
+    const key = (m.stats || []).map((x) => x.id).filter(Boolean).join(",");
+    if (!key) continue;
+    put(statTagSets, key, (m.implicit_tags || []).filter((t) => !FACTION_TAGS.has(t)));
+  }
+  const statTags = Object.fromEntries([...statTagSets].map(([k, v]) => [k, cleanDisplayTags(v)]).filter(([, v]) => v.length));
 
   /** ベース名の集合 -> 装備タグ。同じクラスの中ではタグ和で足りる (検算で確認済み) */
   const tagSetFor = (names) => {
@@ -575,6 +590,7 @@ const main = async () => {
     familyStats,
     modTags,
     modDisplayTags,
+    statTags,
     modSides,
     dropOnly,
     source:

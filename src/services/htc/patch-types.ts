@@ -37,6 +37,8 @@ export interface ExtraBases {
   modTags: Record<string, string[]>;
   /** 同梱の MOD の画面用タグ (クライアントの implicit_tags、2026-10-05)。足した MOD は各 MOD の displayTags に持つ */
   modDisplayTags?: Record<string, string[]>;
+  /** stat の組 (段の stat の id を , でつないだ物) → 画面用のタグ。分けた行のタグを引き直す ([[rune-split.ts]]) */
+  statTags?: Record<string, string[]>;
   /**
    * family → 「stat が何個の時はこの id 並び」。同梱の冒涜 / エッセンス MOD は
    * `tiers[].stats` を持っていないので、取引所の条件を組む時にここから借りる ([[buy-or-craft.ts]])。

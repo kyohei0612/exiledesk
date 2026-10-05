@@ -12,7 +12,12 @@ import { weightOn } from "./_htc-base-tags.mjs";
  * 借りた数 / 置いた数は `stats()` で取れる (生成の最後に報告する)。
  */
 /** 冒涜の勢力のタグ (同梱の冒涜の MOD が tags に持つ物と同じ) */
-const FACTION_TAGS = new Set(["ulaman_mod", "amanamu_mod", "kurgal_mod"]);
+export const FACTION_TAGS = new Set(["ulaman_mod", "amanamu_mod", "kurgal_mod"]);
+/**
+ * 画面に出さない内部用のタグ (クライアントの implicit_tags に混ざっている。2026-10-05 タグの点検)。画面用のタグ (displayTags) から最初に除く
+ */
+const INTERNAL_TAG = /^(unveiled_mod|mutatedunique_vaal|upgraded_corruption_mod|has_attack_mod|chaos_warband|vaal|unmutatable)$|_abyss_|^heart_unique_jewel|_herring$|^historic_/;
+export const cleanDisplayTags = (tags) => [...new Set(tags)].filter((t) => !INTERNAL_TAG.test(t));
 
 export function makeModBuilder(hmods) {
   // ---- 同梱の重みを family + ilvl で借りる ----
@@ -72,7 +77,7 @@ export function makeModBuilder(hmods) {
       type: kind,
       family,
       tags: [...tags],
-      displayTags: [...displayTags],
+      displayTags: cleanDisplayTags(displayTags),
       text: list[0].text ?? null,
       tiers,
       weightSource: allBorrowed ? "poe2htc" : "client-placeholder",

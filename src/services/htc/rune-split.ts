@@ -72,7 +72,7 @@ function textFor(sig: string, byStats: Map<string, string>): string | null {
  * 「状態異常の時間短縮」= 出血・発火・毒 / 凍結・感電・チル、冒涜のパリィ・ライフを消費するスペル・クロスボウのリロード) ので全部の MOD に掛ける。
  * 置き場は普通・冒涜・エッセンス・ルーンのどれも差し替える
  */
-export function splitMixedRuneMods(data: PatchData): { data: PatchData; split: number } {
+export function splitMixedRuneMods(data: PatchData, statTags: Readonly<Record<string, readonly string[]>> = {}): { data: PatchData; split: number } {
   const mods = new Map(data.mods);
   const replace = new Map<string, string[]>();
   let byStats: Map<string, string> | null = null;
@@ -90,7 +90,10 @@ export function splitMixedRuneMods(data: PatchData): { data: PatchData; split: n
       // stat の組全部で名前を作る (防御 × スピリット / 最大マナ は 1 つ目の stat だけだとぶつかる)
       const key = sig.replace(/[^A-Za-z0-9]+/g, "_").replace(/_+$/, "");
       const id = `${m.id}__${key}`;
-      const next: Mod = { ...m, id, text: textFor(sig, byStats) ?? m.text, tiers: [...tiers].sort((a, b) => a.ilvl - b.ilvl) };
+      // 画面用のタグは分けた行の stat の組から引き直す (元の行のは和なので別物のタグが混ざる。2026-10-05 点検: 120 件)。勢力は元の tags の物
+      const own = statTags[sig];
+      const displayTags = own ? [...new Set([...own, ...m.tags.filter((t) => /^(ulaman|amanamu|kurgal)_mod$/.test(t))])] : m.displayTags;
+      const next: Mod = { ...m, id, text: textFor(sig, byStats) ?? m.text, tiers: [...tiers].sort((a, b) => a.ilvl - b.ilvl), ...(displayTags ? { displayTags } : {}) };
       mods.set(id, next);
       ids.push(id);
     }
