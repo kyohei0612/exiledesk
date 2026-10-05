@@ -18,8 +18,8 @@
  *   - エッセンス: パーフェクト (レアに。外れのある側を結晶化のお告げで消す)。パーフェクトが無い物は、マジックの時に普通の
  *     エッセンス (段が届く一番下の等級)
  *   - 白から: 最初の狙いが普通の MOD なら 変成 → 増強 (外れなら消去) で付けてから王者。それ以外は 変成 → 王者
- *   - フラクチャー (1 つ): 「作る」= 錬金 → 狙いが付くまでカオス → フラクチャー (4 個なら 1/4、外れたら白から作り直し) →
- *     外れが無くなるまで消去。「付いた状態」= その MOD を固定済みにしたレアから (費用は手で入れたベースの値段)
+ *   - フラクチャー: 「作る」= 変成・増強ガチャ → 王者 → 骨の壁 → フラクチャー (1/3、外れたら白から作り直し)。固定した後の外れは
+ *     消さずに残す (カオスは入れ替える、高貴・冒涜は要る時にその側を消す)。「付いた状態」= その MOD を固定済みにしたレアから (費用は手で入れたベースの値段)
  */
 import { CURRENCY_FLOOR, type PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
@@ -114,7 +114,6 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     return guard ? play("annul", [SIDE_OMEN.annul[s0]]) : play("annul");
   };
   const junkOn = (it: StageItem, s: StageSide): StageMod[] => listOf(it, s).filter((m) => !m.fractured && !isGood(m));
-  const junkAll = (it: StageItem): StageMod[] => allMods(it).filter((m) => !m.fractured && !isGood(m));
   /** 狙いの段以上で一番高い段のレベル (等級の下限が届くか) */
   const reach = (t: RecipeTarget): number => Math.max(0, ...mod(t.modId).tiers.filter((x, i) => i >= t.minTierIndex && x.ilvl <= spec.itemLevel).map((x) => x.ilvl));
   /**
@@ -236,11 +235,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       }
       if (e) return fail(e);
     }
-    while (junkAll(item).length) {
-      if (steps.length >= max) return fail("手が多すぎる (消去)");
-      const e = play("annul");
-      if (e) return fail(`消去: ${e}`);
-    }
+    // 固定した後の外れは消さずに残す (2026-10-05 オーナー「カオスオーブは付け直しも含めてできる」): カオスは外れを入れ替えるので消去が要らない。
+    // 高貴・冒涜は、その側に外れがあれば次の手で消す (前は 1 MOD まで消してからで、カオスが「外せる MOD が無い」で止まり、消去も 3 つ余計だった)
   }
 
   while (steps.length < max) {
@@ -264,14 +260,18 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         e = junkOn(item, side).length || allMods(item).length >= 2 ? missMagic(t) : play(grade("augment", t));
       } else e = play("regal");
     } else if (t.method === "chaos") {
-      e = play("chaos");
+      // カオスは外して付ける。外せる物 (固定でない・未発現でない) が無ければ、先に高貴で 1 つ足す
+      e = allMods(item).some((m) => !m.fractured && !m.unrevealed) ? play("chaos") : play("exalt");
     } else if (t.method === "exalt") {
       if (junkOn(item, side).length) e = annulOn(side);
       else if (room(item, side)) e = play(grade("exalt", t), [SIDE_OMEN.exalt[side]]);
       else return fail("枠が足りない (狙いが多すぎる)");
     } else if (t.method === "desecrate") {
       const desec = allMods(item).find((m) => m.desecrated && !m.unrevealed && !isGood(m));
+      // 狙いと同じ系統の外れ (カオスで付いた低い段の混沌耐性など) があると、冒涜の候補にその系統が出ず回り続ける。先にその側を消す
+      const sameFamily = allMods(item).find((m) => !m.fractured && !m.unrevealed && !m.desecrated && !isGood(m) && data.mods.get(m.modId)?.family === mod(t.modId).family);
       if (desec) e = play("annul", ["OmenofLight"]);
+      else if (sameFamily) e = annulOn(sameFamily.side);
       else if (!room(item, side)) {
         if (junkOn(item, side).length) e = annulOn(side);
         else return fail("冒涜する枠が足りない");
