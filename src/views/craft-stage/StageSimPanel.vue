@@ -663,7 +663,7 @@ function replay(): void {
       <!-- ② フラクチャー (① の中から固定する MOD。同じ側でどれか 1 つが固定されれば良い) -->
       <div v-if="step3" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
         <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="fracDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="fracDone && goTo('frac')">4 フラクチャー</button> <span v-if="help" class="font-normal opacity-60">(3 の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span>
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="fracDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="fracDone && goTo('frac')">4 フラクチャーベース設定</button> <span v-if="help" class="font-normal opacity-60">(3 の中から固定する MOD。いくつ選んでも同じ側で、どれか 1 つが固定されれば良い)</span>
           <button v-if="fracDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('frac')">ここからやり直す</button>
         </p>
         <template v-if="!fracDone">
@@ -688,6 +688,15 @@ function replay(): void {
             <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
             <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80">付きやすさ {{ pct(calc.each[i]!.p) }}</span>
           </p>
+          <!-- 固定済みのベースの値段 (ベースを買う方。2026-10-05 オーナー「ベース購入の方はフラクチャーベース設定、フラクチャーする奴を選ぶだけ」) -->
+          <div v-if="fractureRows.length" class="mt-1.5 border-t border-white/10 pt-1.5">
+              <span class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <span class="opacity-70">固定済みのベースを買うなら</span>
+                <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" />
+                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="この MOD が固定済みのベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
+                <span class="inline-block w-24 shrink-0" :class="ageOf('bought')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")?.text ?? "" }}</span>
+              </span>
+          </div>
         </template>
       </div>
 
@@ -851,11 +860,7 @@ function replay(): void {
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
                 <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
               </span>
-              <span v-else-if="x.key === 'bought'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" />
-                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="この MOD が固定済みのベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
-                <span class="inline-block w-24 shrink-0" :class="ageOf('bought')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")?.text ?? "" }}</span>
-              </span>
+              <span v-else-if="x.key === 'bought'" class="text-[11px] opacity-60">値段は 4 フラクチャーベース設定で入れる</span>
               <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
                 <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" />
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
