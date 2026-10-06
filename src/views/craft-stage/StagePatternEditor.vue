@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
+import { checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageItemCard from "./StageItemCard.vue";
@@ -71,7 +71,8 @@ function annulRisk(i: number, set: PatternSet | undefined, step: PatternStep): {
 }
 const s = craftStage;
 const active = ref(0);
-const sets = computed<PatternSet[]>(() => (s.item.value ? patternSets(s.item.value.cls) : []));
+// 基本情報 (始めのレアリティ・ソケット・部位) で使わない物は出さない (setsForStart)
+const sets = computed<PatternSet[]>(() => (s.item.value ? setsForStart(patternSets(s.item.value.cls), s.item.value.cls, props.start) : []));
 const ctx = computed<CheckCtx | null>(() => {
   const d = s.data.value, it = s.item.value;
   if (!d || !it) return null;
@@ -365,14 +366,26 @@ defineExpose({ rows });
             外れたら = やり直し (2026-10-07 オーナー「外れの挙動キモい、シンプルで。外れたらは "やり直し" ひとつ、選んだら下にやり直しのカレンシーを置く。
             使う物は光って、グレーアウトの物も選択はできる」)。何も選ばなければ自動 (やり直しの費用で素の消去か側のお告げ、冒涜の外れは光)
           -->
-          <p v-if="r.set && RARITY_CHANGE.has(r.set.kind)" class="mt-1.5 rounded border border-white/10 bg-black/30 px-1.5 py-1 opacity-70">外れたら: この手はレアリティが変わるので、外してやり直せない (そのまま次へ)</p>
-          <div v-else-if="!noMiss(r.set)" class="mt-1.5 rounded border border-rose-400/30 bg-rose-950/20 p-1.5">
-            <p class="mb-1 flex items-center gap-2">
-              <span class="font-bold text-rose-200">外れたら やり直し</span>
-              <span class="opacity-60">{{ missSet(r.step) ? "このカレンシーで外して、もう一度" : "選ばなければ自動 (やり直しの費用で消去を選ぶ)" }}</span>
-              <button v-if="r.step.miss" type="button" class="ml-auto rounded border border-white/15 px-1.5 opacity-60 hover:opacity-100" @click="patch(i, { miss: null })">自動に戻す</button>
-            </p>
-            <StagePatternStepPicker :sets="removals" :why="whyMissAt(i)" :current="r.step.miss ?? ''" inline @pick="(k) => patch(i, { miss: k, onMiss: 'annul_redo' })" />
+          <p v-if="r.set && RARITY_CHANGE.has(r.set.kind)" class="mt-1.5 opacity-60" title="レアリティが変わる手は外してやり直せない">外れたら そのまま次へ</p>
+          <!-- 外れたら: 普段は 1 行 (選んだ物のアイコン or 自動)。押した時だけやり直しの棚を開く (2026-10-07 オーナー「UI ゴミ、ずっと表示されてる」) -->
+          <div v-else-if="!noMiss(r.set)" class="mt-1.5">
+            <span class="flex items-center gap-1.5">
+              <span class="text-rose-200">外れたら やり直し</span>
+              <button type="button" class="flex min-w-0 items-center gap-1 rounded border px-1.5 py-0.5" :class="openRow === `${i}:miss` ? 'border-rose-400/70 bg-rose-950/40' : 'border-white/15 bg-black/40 hover:border-white/30'" @click="openRow = openRow === `${i}:miss` ? null : `${i}:miss`">
+                <template v-if="missSet(r.step)">
+                  <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-5 w-5 object-contain" />
+                  <span v-else class="grid h-5 w-5 place-items-center rounded bg-white/10">◎</span>
+                  <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
+                  <span class="truncate">{{ setLabel(missSet(r.step)!) }}</span>
+                </template>
+                <span v-else class="opacity-70" title="やり直しの費用で、素の消去か側の消去のお告げを決める (冒涜の外れは光)">自動</span>
+                <span class="opacity-50">{{ openRow === `${i}:miss` ? "▲" : "▼" }}</span>
+              </button>
+              <button v-if="r.step.miss" type="button" class="rounded border border-white/15 px-1.5 opacity-60 hover:opacity-100" @click="patch(i, { miss: null })">自動に戻す</button>
+            </span>
+            <div v-if="openRow === `${i}:miss`" class="mt-1">
+              <StagePatternStepPicker :sets="removals" :why="whyMissAt(i)" :current="r.step.miss ?? ''" inline @pick="(k) => patch(i, { miss: k, onMiss: 'annul_redo' })" />
+            </div>
           </div>
           <div class="mt-1.5 flex items-center gap-2">
             <span v-if="r.bad" class="text-rose-300">{{ r.bad }}</span>

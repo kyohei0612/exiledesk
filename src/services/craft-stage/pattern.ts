@@ -97,13 +97,34 @@ export function checkRemoval(add: PatternSet, rm: PatternSet): string | null {
   if (RARITY_CHANGE.has(add.kind)) return "この手はレアリティが変わるので、外してやり直せない";
   if (rm.kind === "chaos" && add.kind === "augment") return "カオスはレアだけ (この手はマジック)";
   if (rm.omens.includes("OmenofLight") && add.kind !== "desecrate") return "光のお告げは冒涜の MOD だけ消す (外れは普通の MOD)";
+  if ((rm.kind === "essence_perfect" || rm.kind === "desecrate") && add.kind === "augment") return "レアだけ (この手はマジック)";
+  if (rm.kind === "desecrate" && add.kind === "desecrate") return "冒涜の MOD は 1 つまで (外れの冒涜は光か消去で外す)";
   const junk = add.kind === "exalt" || add.kind === "desecrate" ? sideOf(add.omens) : null;
   const only = sideOf(rm.omens);
   if (junk && only && junk !== only) return `外れは${SIDE_JA[junk]}に付くので、${SIDE_JA[only]}だけを消すお告げでは消えない`;
   return null;
 }
 /** 外す時に使えるセット (消去・カオス) */
-export const removalSets = (sets: readonly PatternSet[]): PatternSet[] => sets.filter((x) => x.kind === "annul" || x.kind === "chaos");
+/**
+ * 外す時に使えるセット: 消去・カオス・パーフェクトエッセンス (結晶化で外れの側を上書き)・冒涜 (骨 + 側のネクロマンシーで外れの側を置き換え)。
+ * 2026-10-07 オーナー「やり直し効く奴沢山あるでしょ、エッセンスとか冒涜系」
+ */
+export const removalSets = (sets: readonly PatternSet[]): PatternSet[] =>
+  sets.filter((x) => x.kind === "annul" || x.kind === "chaos" || x.kind === "essence_perfect" || (x.kind === "desecrate" && !x.omens.some((o) => FACTION_OMEN[o])));
+/**
+ * シミュレーションの基本情報 (始めのレアリティ・ソケット・部位) で、そもそも使わない物を外す (灰色で並べない)。
+ * 2026-10-07 オーナー「フラクチャー品だし、フラクチャー後なんだからレアだろ、基本情報連携してくれ、一括管理なんだからわかるだろ」。
+ * フラクチャー済み (レア) から始めるなら変成・増強・王者・錬金・マジックのエッセンスは出さない。ソケットが 0 ならルーン、勢力のお告げが効かない部位なら勢力、
+ * 触媒の高貴はパターンにカタリストの手が無いので出さない
+ */
+export function setsForStart(sets: readonly PatternSet[], cls: ItemBase, start: { rarity: "normal" | "rare"; sockets: number }): PatternSet[] {
+  const magicOnly = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "essence"]);
+  return sets.filter((x) =>
+    !(start.rarity === "rare" && magicOnly.has(x.kind))
+    && !(x.kind === "rune" && start.sockets <= 0)
+    && !(x.omens.some((o) => FACTION_OMEN[o]) && !bossOmenAllowed(cls.category))
+    && !x.omens.includes("OmenofCatalysingExaltation"));
+}
 export const setByKey = (sets: readonly PatternSet[], key: string): PatternSet | undefined => sets.find((x) => x.key === key);
 
 /** 狙う MOD の手順 (simTargets の 1 つ) */

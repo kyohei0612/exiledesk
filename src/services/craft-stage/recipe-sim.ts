@@ -63,8 +63,8 @@ export interface CompiledStep {
   /** ルーンを差す手の英語名 */
   rune?: string;
   onMiss: MissRule;
-  /** 外す時の打つ物 + お告げ (無ければ自動) */
-  miss?: { currency: string; omens: string[] };
+  /** 外す時の打つ物 + お告げ (無ければ自動)。kind はパーフェクトエッセンス (一番安い物を選ぶ)・冒涜 (発現まで) を見分ける */
+  miss?: { kind?: PatternKind; currency: string; omens: string[] };
 }
 export interface RecipeSpec {
   /**
@@ -417,8 +417,16 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       if (p.onMiss === "next") { i++; continue; }
       if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; continue; }
       if (p.onMiss === "annul_redo" && p.miss) {
-        // 外す物を手で決めた手 (消去 + お告げ / カオス + 削減 など)。打ってから同じ手をもう一度
-        e = play(p.miss.currency, p.miss.omens);
+        // 外す物を手で決めた手 (消去 + お告げ / カオス + 削減 / パーフェクトエッセンス + 結晶化 / 骨 + ネクロマンシー)。打ってから同じ手をもう一度
+        if (p.miss.kind === "essence_perfect") {
+          // 外れの側 (結晶化の側、無ければ狙いの側) に付く一番安いパーフェクトエッセンスで上書き (計算機の「天体」と同じ)
+          const sd: StageSide = p.miss.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : p.miss.omens.some((o) => /Dextral/.test(o)) ? "suffix" : sideOf(p.target.modId);
+          const key = cheapestPerfectEssence(sd);
+          e = key ? play(key, p.miss.omens) : "外れの側に使えるパーフェクトエッセンスが無い";
+        } else if (p.miss.kind === "desecrate") {
+          e = play(p.miss.currency, p.miss.omens.filter((o) => o !== "OmenofAbyssalEchoes"));
+          if (!e && unrevealedOf(item)) e = reveal(null, false);
+        } else e = play(p.miss.currency, p.miss.omens);
         if (e) return fail(`${i + 1} 手目の外し: ${e}`);
       } else if (p.onMiss === "annul_redo") {
         // 冒涜の外れは光のお告げで冒涜の MOD を消す。ほかは外れのある側 (狙いの側を先に)
@@ -434,6 +442,21 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // redo / annul_redo: 同じ手をもう一度
     }
     return fail("手が多すぎる");
+  }
+
+  /** その側に付けられる一番安いパーフェクトエッセンス (同じ系統が付いている物・値段の無い物は除く) */
+  function cheapestPerfectEssence(sd: StageSide): string | null {
+    const ids = item.cls.pools.essence[sd === "prefix" ? "prefixes" : "suffixes"] ?? [];
+    const taken = new Set(allMods(item).map((m) => m.family));
+    let best: string | null = null, bestP = Infinity;
+    for (const id of ids) {
+      const m = data.mods.get(id);
+      const key = `essence:perfect:${id}`;
+      if (!m || m.source !== "perfect_essence" || taken.has(m.family) || !ESS[key]) continue;
+      const pr = spec.price(key);
+      if (pr > 0 && pr < bestP) { bestP = pr; best = key; }
+    }
+    return best;
   }
 
   function boneFor(t: RecipeTarget): string {
