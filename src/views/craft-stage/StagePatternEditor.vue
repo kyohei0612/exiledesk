@@ -14,6 +14,8 @@ import StageItemCard from "./StageItemCard.vue";
 import { freshItem } from "../../services/craft-stage/run-plan";
 import { makeStageMod, withMod } from "../../services/craft-stage/stage-core";
 import { applyRune } from "../../services/craft-stage/stage-runes";
+import { applyCurrency } from "../../services/craft-stage/apply-currency";
+import { mulberry32 } from "../../services/htc/rng";
 import type { StageItem } from "../../services/craft-stage/types";
 import { iconOf } from "../../state/craft-stage";
 import { baseArt } from "../../services/craft-stage/base-art";
@@ -198,8 +200,9 @@ const preNodes = computed(() => {
   ];
 });
 const previewAt = computed(() => Math.min(focusRow.value ?? Infinity, pat.value.steps.length - 1));
-const preview = computed<StageItem | null>(() => {
-  if (focusPre.value != null && preNodes.value[focusPre.value]) return preNodes.value[focusPre.value]!.item;
+/** 右のアイテムと、そこで光らせる物 (打つだけの手で付いた物) */
+const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"] } | null>(() => {
+  if (focusPre.value != null && preNodes.value[focusPre.value]) return { item: preNodes.value[focusPre.value]!.item, added: [] };
   const d = s.data.value;
   if (!d || !s.base.value) return null;
   let it: StageItem;
@@ -211,18 +214,27 @@ const preview = computed<StageItem | null>(() => {
   };
   const frac = s.simTargets.value.find((t) => t.method === "fracture");
   if (frac) add(frac.modId, frac.minTierIndex, { fractured: true });
+  const c = ctx.value;
+  let newMods: StageItem["prefixes"] = [];
   for (let j = 0; j <= previewAt.value; j++) {
     const st = pat.value.steps[j]!;
     const x = setByKey(sets.value, st.set);
     if (!x || !st.target) continue;
+    // 打つだけの手は、そのカレンシー (お告げも) を実際に打った姿 (2026-10-07 オーナー「打つだけなら指定のカレンシーで打った時の挙動で表示しちゃっていい」)。
+    // 乱数は手ごとに決まった値なので、押すたびに変わらない
+    if (st.target === ANY_TARGET) {
+      const r = applyCurrency(d, { ...it, rarity: c ? stateBefore(c, pat.value.steps, j).rarity : it.rarity }, x.currency, mulberry32(7919 + j), x.omens);
+      if (r.applied) { it = r.item; if (j === previewAt.value) newMods = r.added; }
+      continue;
+    }
     if (x.kind === "rune") { const r = applyRune(it, `rune:${st.target}`, d); if (r.applied) it = r.item; continue; }
     const t = s.simTargets.value.find((y) => y.modId === st.target);
     if (t) add(t.modId, t.minTierIndex, x.kind === "desecrate" ? { desecrated: true } : x.kind === "essence" || x.kind === "essence_perfect" ? { crafted: true } : {});
   }
-  const c = ctx.value;
   const rarity = c ? stateBefore(c, pat.value.steps, previewAt.value + 1).rarity : "rare";
-  return { ...it, rarity: it.prefixes.length + it.suffixes.length ? (rarity === "normal" ? "magic" : rarity) : rarity };
+  return { item: { ...it, rarity: it.prefixes.length + it.suffixes.length ? (rarity === "normal" ? "magic" : rarity) : rarity }, added: newMods };
 });
+const preview = computed<StageItem | null>(() => previewOut.value?.item ?? null);
 
 const removals = computed(() => removalSets(sets.value));
 /** 外す時のセット (外す時は付けた後 = レア。付ける手の後の状態で見る) */
@@ -670,7 +682,7 @@ defineExpose({ rows });
       <!-- その手まで当たった時のアイテム -->
       <div v-if="preview" class="w-[280px] shrink-0 overflow-y-auto">
         <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
-        <StageItemCard :item="preview" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="280" compact />
+        <StageItemCard :item="preview" :added="previewOut?.added ?? []" :removed="[]" :holding="false" :flash-key="0" :width="280" compact />
       </div>
     </div>
   </div>
