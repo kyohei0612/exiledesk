@@ -13,6 +13,7 @@
  *
  * 2026-09-26: 取得のコア (runFetch) と進捗表示のタイマーは fetch/ 以下に分割 (ここから再 export)。
  */
+import { bootTimed } from "../../utils/boot-timing";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { clearCraftV2Cache } from "../../services/craft-v2/cache";
@@ -81,7 +82,7 @@ export async function ensureCraftV2Started(): Promise<void> {
   }
 
   try {
-    const leagues = await fetchEconomyLeagues();
+    const leagues = await bootTimed("MOD 一覧: リーグ一覧の取得", () => fetchEconomyLeagues());
     craftV2Store.availableLeagues = leagues;
     craftV2Store.leaguesLoadFailed = false;
     if (!craftV2Store.selectedLeagueUrl && leagues.length > 0) {
@@ -96,7 +97,7 @@ export async function ensureCraftV2Started(): Promise<void> {
   checkDictionaryFreshness();
 
   // 起動時: キャッシュが 3 日以内なら取りに行かない (手動ボタンはいつでも可)
-  await runFetch(true, { bgWhenCached: true, onlyIfStale: true });
+  await bootTimed("MOD 一覧: 取得 (キャッシュが新しければすぐ終わる)", () => runFetch(true, { bgWhenCached: true, onlyIfStale: true }));
 }
 
 /** 「更新」ボタン (差分更新): 既存データがあればバックグラウンド更新。 */

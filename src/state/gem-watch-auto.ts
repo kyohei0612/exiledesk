@@ -9,6 +9,7 @@
  * poe.ninja 側は 1 アセンダンシー分 (100 人 + 2 リクエスト) で数分かかるので、
  * 1 日 1 回より短い間隔では回さない (レート制限を焼かないため)。
  */
+import { bootLog, bootTimed } from "../utils/boot-timing";
 import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -198,7 +199,7 @@ async function rankingTick(): Promise<void> {
       }
       rankingDeferLogged = false;
       try {
-        const r = await invoke<Result>("gem_break_fetch", { req: { class: klass, topN, spread: 1, auto: true } });
+        const r = await bootTimed(`使用率の自動取得 (${klass || "全体"})`, () => invoke<Result>("gem_break_fetch", { req: { class: klass, topN, spread: 1, auto: true } }));
         if (!r?.rows?.length) continue;
         try {
           localStorage.setItem(key, JSON.stringify(r));
@@ -210,7 +211,9 @@ async function rankingTick(): Promise<void> {
         rankingAutoAt.value = Date.now();
       } catch (e) {
         // 上位プレイヤーMOD一覧の取得中などで断られた時は、残りも次の 1 分でまた見る
-        void appLog(`[使用率] 自動取得できず (${klass || "全体"}): ${e instanceof Error ? e.message : String(e)}`);
+        // 監視リストのそろえ直し (同じ poe.ninja の枠) と重なった時は黙って次の 1 分に回す (毎分ログが並んでいた)
+        const msg = e instanceof Error ? e.message : String(e);
+        if (!msg.includes("取得中")) void appLog(`[使用率] 自動取得できず (${klass || "全体"}): ${msg}`);
         return;
       }
     }
@@ -246,6 +249,7 @@ async function rebuildIfQueryChanged(flow: Awaited<ReturnType<typeof loadFlow>>,
 }
 
 async function refreshIfStale(): Promise<void> {
+  bootLog("監視リストのそろえ直し: 見る");
   try {
     const flow = await loadFlow();
     const nowSec = Math.floor(Date.now() / 1000);

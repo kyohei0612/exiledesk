@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { bootLog, bootTimed, watchBootLongTasks } from "./utils/boot-timing";
 import { uniqueWatch } from "./state/unique-watch";
 import { onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
@@ -57,13 +58,16 @@ useKeyboardShortcuts({
 //   画面遷移時に「取得待ち」が発生しにくい。
 //   `ensureCraftV2Started` は冪等 (initialBootStarted ガード) なので、複数回呼んでも安全。
 onMounted(() => {
+  // 起動の重さを調べる (2026-10-06): 各処理の時間と、画面が固まった時間を exiledesk.log に (起動から 3 分だけ)
+  watchBootLongTasks();
+  bootLog("画面の準備ができた (ここまでがスクリプトの読み込み)");
   // 中身が描けたのでウィンドウを出してもらう (白い窓を見せないため、起動時は隠してある)
   if (isTauriRuntime()) void invoke("show_main_window").catch(() => {});
-  void ensureCraftV2Started();
+  void bootTimed("上位 MOD 一覧の準備", () => ensureCraftV2Started());
   // PoB 同梱物: 30 日空いていたら manifest を確認して自動更新 (未インストールなら PoB 画面で案内)
-  void ensurePobBundleFresh();
+  void bootTimed("PoB の確認", () => ensurePobBundleFresh());
   // 画像パック (ベースの絵・スキンの画像): 要る版と違う時だけ落とす (初回と画像が変わった時だけ。2026-09-29)
-  void ensureAssetPacks();
+  void bootTimed("画像パックの確認", () => ensureAssetPacks());
   // 捌き速度: 追跡する銘柄 (自動ジェム監視の設定で決まる) を 1 日 1 回そろえ直す。
   // 出品の追跡そのものは Rust 側が周期 (既定 8 時間) ごとに回す
   // 開発版 (vite の開発サーバー) では止める: 監視リストの作り直しはインストール版と同じ AppData を書き換え、見回りは取引所を叩く
@@ -73,7 +77,7 @@ onMounted(() => {
   // ログイン状態を読む。未ログインなら LoginGate が前に出る (枠が半分だとすぐ制限に当たるため)
   startSessionWatch();
   // 同梱の捌き速度データを取り込む (サブ機の初期データ。自分で測った分は消さない)
-  void importFlowSeed();
+  void bootTimed("捌き速度の初期データ", () => importFlowSeed());
   // 取得 (自動巡回 / 一括 / 追加時) が走っているかを見張る。走っている間は他の取得を押せなくし、
   // 画面の下に何が走っているかを出す (オーナー指示 2026-09-20)
   startFetchBusyWatch();

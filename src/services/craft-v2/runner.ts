@@ -12,6 +12,7 @@
  * UI 側で前回の unlisten を呼んでから再 start すること。
  */
 
+import { bootTimed, bootTimedSync } from "../../utils/boot-timing";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
@@ -68,17 +69,18 @@ export async function startCraftDiscoveryV2(
   } = options;
 
   // 集計で装飾品の数値を素に戻すのに計算機のデータが要る (集計は同期なので先に読む)
-  await prepareDeboost().catch((e) => console.warn("[craft-discovery-v2] 計算機のデータを読めず、品質の割り戻しなしで集計:", e));
+  await bootTimed("MOD 一覧: 計算機のデータ", () => prepareDeboost()).catch((e) => console.warn("[craft-discovery-v2] 計算機のデータを読めず、品質の割り戻しなしで集計:", e));
   // MOD の側・段・系統・stat はエンジンから引く (集計は同期なので先に読む、[[engine-mods.ts]])
-  await prepareEngineMods().catch((e) => console.warn("[craft-discovery-v2] MOD のデータを読めず:", e));
+  await bootTimed("MOD 一覧: エンジンの MOD", () => prepareEngineMods()).catch((e) => console.warn("[craft-discovery-v2] MOD のデータを読めず:", e));
 
   // キャッシュロード + 即時 UI 反映 (差分モード判定は Rust 側に任せる)
   let prevCache: CraftV2Cache | null = null;
   if (useCache) {
-    prevCache = await loadCraftV2Cache();
+    prevCache = await bootTimed("MOD 一覧: キャッシュの読み込み", () => loadCraftV2Cache());
     if (prevCache && onCacheReady) {
       try {
-        onCacheReady(aggregateFromCache(prevCache), prevCache);
+        const agg = bootTimedSync("MOD 一覧: キャッシュの集計", () => aggregateFromCache(prevCache!));
+        bootTimedSync("MOD 一覧: 画面に反映", () => onCacheReady(agg, prevCache!));
       } catch (err) {
         console.warn("[craft-discovery-v2] aggregateFromCache failed, ignoring cache:", err);
         prevCache = null;
@@ -92,7 +94,7 @@ export async function startCraftDiscoveryV2(
   const [unProgress, unError, unDone, unCheckpoint, unCharProgress] = await Promise.all([
     listen<CraftV2Progress>("craft-v2-progress", (e) => {
       try {
-        onProgress(aggregateFromProgress(e.payload));
+        onProgress(bootTimedSync(`MOD 一覧: 取得中の集計 (${e.payload.ascendancy})`, () => aggregateFromProgress(e.payload)));
       } catch (err) {
         onError(
           `集計エラー (${e.payload.ascendancy}): ${err instanceof Error ? err.message : String(err)}`,
