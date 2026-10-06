@@ -535,11 +535,17 @@ const ranFor = ref("");
 const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|s${socketCount.value}|${s.itemLevel.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => methodOf(t)).join(",")}|${targetsSig()}|${JSON.stringify(s.simPatterns.value)}`);
 let gen = 0;
 
+/**
+ * 回すパターン = 手があって打てない手の無い物。未完成のパターンがあっても、出来ている物だけ回す
+ * (2026-10-07: パターン 1 を作りかけのままパターン 2 を試したい時に、全部止まっていた)
+ */
+const patternChecks = computed(() => s.simPatterns.value.filter((p) => p.steps.length).map((p) => ({ p, why: patternProblem(p) })));
+const runnable = computed(() => patternChecks.value.filter((x) => !x.why).map((x) => x.p));
+const skipped = computed(() => patternChecks.value.filter((x) => x.why).map((x) => `${x.p.name} (${x.why})`));
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
-  const ps = s.simPatterns.value.filter((p) => p.steps.length);
-  if (!ps.length) return "6 パターンに手がありません";
-  for (const p of ps) { const w = patternProblem(p); if (w) return `${p.name} の ${w}`; }
+  if (!patternChecks.value.length) return "6 パターンに手がありません";
+  if (!runnable.value.length) { const x = patternChecks.value[0]!; return `${x.p.name} の ${x.why}`; }
   return null;
 });
 
@@ -577,11 +583,14 @@ async function run(): Promise<void> {
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
     // 回すのはフラクチャー済みから先だけ (2026-10-06 オーナー「白ベースでもフラクチャーまでの平均はほぼ一緒、3 回に 1 回当たる予算で
     // そこまでは固定で出しておｋ、他の選択肢も」)。始め方ごとの合計 = その始め方の費用 + 固定済みから先の平均
-    const ps = s.simPatterns.value.filter((p) => p.steps.length);
+    const ps = runnable.value;
     const total = runs.value * ps.length;
     const out: typeof results.value = [];
     for (const [k, p] of ps.entries()) {
-      const pspec: RecipeSpec = { ...spec, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
+      // 完成の判定は、そのパターンで付ける物 + 固定する物だけ (狙い全部だと、一部だけ試すパターンが絶対に完成しなかった。2026-10-07)
+      const used = new Set(p.steps.map((st) => st.target).filter((x): x is string => !!x));
+      const goal = spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId));
+      const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
       const base = k * runs.value;
       const r = await runRecipe(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
       if (my !== gen || !r) return;
@@ -667,7 +676,7 @@ const orderInfo = computed(() => Object.fromEntries(orderKeys.value.map((k) => {
 })));
 /** 2〜5 を 1 行に畳む (6 パターンを作る間) */
 const fold = ref(true);
-const step4 = computed(() => step4pre.value && patternDone.value);
+const step4 = computed(() => step4pre.value);
 watch(orderDone, (v) => { if (!v) patternDone.value = false; });
 watch(() => rows.value.length, (n) => { if (n === 0) { modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
 watch(keptKey, () => { if (restoring) return; modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
@@ -1007,7 +1016,14 @@ function replay(): void {
         <StagePatternEditor :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
         <div v-if="!patternDone" class="mt-1 flex items-center gap-2">
           <span v-if="blocked" class="ml-auto text-[11px] text-amber-200/80">{{ blocked }}</span>
-          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="blocked ? '' : 'ml-auto'" :disabled="!!blocked" :title="blocked ?? undefined" @click="patternDone = true">決めた →</button>
+          <span v-else-if="skipped.length" class="ml-auto text-[11px] text-amber-200/70" :title="skipped.join(' / ')">未完成で回さない: {{ skipped.map((x) => x.replace(/ \(.*$/, "")).join("・") }}</span>
+          <!-- 回すはいつでも (2026-10-07 オーナー「回しはいつでも回せるようにしよう」)。結果は下の 7 回すに出る -->
+          <span v-if="!busy && results.length" class="flex flex-wrap items-center gap-1 text-[11px]" :class="stale ? 'opacity-50' : ''" :title="stale ? '設定が変わりました。回し直すと合う' : '1 個できるまでの平均 (詳しくは下の 7 回す)'">
+            <button v-for="(x, i) in results" :key="x.name" type="button" class="rounded-full border px-2 py-0.5" :class="shown === i ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/15 hover:bg-white/5'" @click="showResult(i)">{{ x.name }} <b class="tabular-nums">{{ money(x.out.r.perDone + (fractureRow ? startMin ?? 0 : 0)) }}</b> <span class="opacity-60">完成 {{ pct(x.out.r.pDone) }}</span></button>
+          </span>
+          <span v-if="busy" class="text-[11px] text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
+          <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
+          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="blocked || skipped.length || busy ? '' : 'ml-auto'" :disabled="busy || !!blocked" :title="blocked ?? `出来ているパターンを ${runs.toLocaleString()} 回ずつ回す`" @click="run">回す ▶</button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />

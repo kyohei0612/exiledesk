@@ -381,6 +381,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
    */
   function runPattern(pat: readonly CompiledStep[]): RecipeRun {
     const startItem = item, startCost = cost;
+    let preRunes = new Set(runes);
     const count = (t: RecipeTarget): number => new Set(allMods(item).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size;
     let i = 0;
     while (steps.length < max) {
@@ -394,6 +395,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       const p = pat[i]!;
       const before = p.target ? count(p.target) : 0;
       let e: string | null = null;
+      // 始めから差さっているルーン (固定する MOD に要る物) の手は打たずに次へ
+      if (p.kind === "rune" && p.rune && preRunes.has(p.rune)) { preRunes.delete(p.rune); i++; continue; }
       if (p.kind === "rune") e = p.rune ? play(`rune:${p.rune}`) : "ルーンが選ばれていない";
       else if (p.kind === "essence" || p.kind === "essence_perfect") {
         // セットのエッセンス (1 個ずつ選んだ物)。古いパターン (エッセンスが空) は付ける物から引く
@@ -416,7 +419,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       if (!p.target || count(p.target) > before || meets(item, p.target)) { i++; continue; }
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
-      if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; continue; }
+      if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); continue; }
       if (p.onMiss === "annul_redo" && p.miss) {
         // 外す物を手で決めた手 (消去 + お告げ / カオス + 削減 / パーフェクトエッセンス + 結晶化 / 骨 + ネクロマンシー)。打ってから同じ手をもう一度
         if (p.miss.kind === "essence_perfect") {
@@ -529,12 +532,17 @@ export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, to
  * ソケットが足りなければルーンの数まで増やす (2026-10-05 オーナー「シミュレーションだからコルも選べるように」)
  */
 export function runeStart(spec: Pick<RecipeSpec, "data" | "targets" | "sockets" | "pattern">): { runes: string[]; sockets: number } {
-  // パターンではルーンも手で差す。ソケットはルーンの手の数まで
-  if (spec.pattern) return { runes: [], sockets: Math.max(spec.sockets ?? 0, spec.pattern.filter((p) => p.kind === "rune").length) };
+  // パターンではルーンも手で差す。ただし固定する MOD (フラクチャー) に要るルーンは、固定済みのベースに始めから差さっている
+  // (2026-10-07: 手袋の「全ての投射物スキルのレベル」はコルの狩りが無いと付かず、固定済みのベースを作れずに止まっていた)。
+  // ソケットは始めのルーン + パターンのルーンの手 (始めに差さっている物は除く) の数まで
   const ids = new Set<string>();
-  for (const t of spec.targets) for (const x of [t, ...(t.alts ?? [])]) { const r = spec.data.mods.get(x.modId)?.rune; if (r) ids.add(r); }
+  for (const t of spec.pattern ? spec.targets.filter((x) => x.method === "fracture") : spec.targets) for (const x of [t, ...(t.alts ?? [])]) { const r = spec.data.mods.get(x.modId)?.rune; if (r) ids.add(r); }
   // ステージのルーンの名前 (相場・絵のキー) で持つ。エンジンの名前とは ' と ’ が違う事がある
   const runes = [...ids].flatMap((id) => { const en = Object.keys(RUNES).find((k) => runeIdByName(k) === id); return en ? [en] : []; });
+  if (spec.pattern) {
+    const steps = spec.pattern.filter((p) => p.kind === "rune" && !(p.rune && runes.includes(p.rune))).length;
+    return { runes, sockets: Math.max(spec.sockets ?? 0, runes.length + steps) };
+  }
   return { runes, sockets: Math.max(spec.sockets ?? 0, runes.length) };
 }
 
