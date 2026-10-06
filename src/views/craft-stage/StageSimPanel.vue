@@ -469,6 +469,11 @@ const error = ref("");
 const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
 /** フラクチャー済みから残りを作る費用 (ベース代 0 で回した平均)。買う側の比べに足す */
 const restCost = ref<number | null>(null);
+/** フラクチャー済みのベースを手に入れる一番安い始め方 (4 最安値スタート、値段の有る物だけ) */
+const startMin = computed((): number | null => {
+  const xs = routes.value.list.map((x) => x.cost).filter((x): x is number => x != null && Number.isFinite(x));
+  return xs.length ? Math.min(...xs) : null;
+});
 /** パターンごとの結果 (回した後)。見ている物を recipeOut / restCost に出す */
 const results = ref<Array<{ name: string; out: { r: RecipeResult; spec: RecipeSpec }; rest: number | null }>>([]);
 const shown = ref(0);
@@ -521,22 +526,18 @@ async function run(): Promise<void> {
       const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
       return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: t, ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss }];
     });
+    // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
+    // 回すのはフラクチャー済みから先だけ (2026-10-06 オーナー「白ベースでもフラクチャーまでの平均はほぼ一緒、3 回に 1 回当たる予算で
+    // そこまでは固定で出しておｋ、他の選択肢も」)。始め方ごとの合計 = その始め方の費用 + 固定済みから先の平均
     const ps = s.simPatterns.value.filter((p) => p.steps.length);
-    const per = runs.value * (fractureRow.value ? 2 : 1);
-    const total = per * ps.length;
+    const total = runs.value * ps.length;
     const out: typeof results.value = [];
     for (const [k, p] of ps.entries()) {
-      const pspec: RecipeSpec = { ...spec, pattern: compile(p) };
-      const base = k * per;
+      const pspec: RecipeSpec = { ...spec, pattern: compile(p), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
+      const base = k * runs.value;
       const r = await runRecipe(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
       if (my !== gen || !r) return;
-      let rest: number | null = null;
-      if (fractureRow.value) {
-        const r2 = await runRecipe({ ...pspec, fractureStart: { kind: "bought", price: 0 } }, (done) => { if (my === gen) progress.value = [base + runs.value + done, total]; }, () => my !== gen);
-        if (my !== gen || !r2) return;
-        rest = r2.perDone;
-      }
-      out.push({ name: p.name, out: { r, spec: pspec }, rest });
+      out.push({ name: p.name, out: { r, spec: pspec }, rest: fractureRow.value ? r.perDone : null });
     }
     results.value = out;
     showResult(out.reduce((b, x, i) => (x.out.r.perDone < out[b]!.out.r.perDone ? i : b), 0));
@@ -710,7 +711,9 @@ const compare = computed(() => {
   const out = recipeOut.value;
   const dv = 1; // 手で入れた値段は高貴建て
   const list: Array<{ key: string; name: string; cost: number | null; note: string }> = [];
-  list.push({ key: "make", name: fractureRow.value ? "白から作る (フラクチャーも自前)" : "白から作る", cost: out ? out.r.perDone : null, note: "回すと出ます" });
+  // フラクチャーがある時: 白から作る = 4 の自作 (1 回分 × 3 + 消去 × 2) + 固定済みから先の平均
+  const selfCost = fractureRow.value ? (calc.value && restCost.value != null ? calc.value.total + restCost.value : null) : out ? out.r.perDone : null;
+  list.push({ key: "make", name: fractureRow.value ? "白から作る (フラクチャーまでは 4 の計算)" : "白から作る", cost: selfCost, note: "回すと出ます" });
   if (fractureRow.value) {
     const rest = restCost.value;
     const c = calc.value;
@@ -929,7 +932,7 @@ function replay(): void {
     <div class="flex flex-wrap items-center gap-2 border-t border-white/10 pt-2">
       <span v-if="!fractureRow" class="text-[11px] opacity-70">{{ runs.toLocaleString() }} 回</span>
       <!-- フラクチャーがあると比べ用に 2 本回す (2026-10-05 オーナー「1000 回押しても 2000 回になる、別に 2000 回でおｋだから UI 直して」) -->
-      <span v-if="fractureRow" class="text-[11px] opacity-70">白から {{ runs.toLocaleString() }} 回 + 固定済みから {{ runs.toLocaleString() }} 回 = 計 {{ (runs * 2).toLocaleString() }} 回</span>
+      <span v-if="fractureRow" class="text-[11px] opacity-70" title="フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定">フラクチャー済みから {{ runs.toLocaleString() }} 回</span>
       <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="busy ? '回している途中' : blocked ?? '決めた作り方で回す'" @click="run">回す</button>
       <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-1 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
       <span v-if="busy" class="text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
@@ -944,9 +947,9 @@ function replay(): void {
       <div class="flex flex-wrap gap-1.5 text-[11px]">
         <button v-for="(x, i) in results" :key="x.name" type="button" class="rounded-lg px-2.5 py-1 text-left" :class="shown === i ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="showResult(i)">
           <b>{{ x.name }}</b>
-          <span class="ml-1.5 tabular-nums">{{ money(x.out.r.perDone) }}</span>
+          <span class="ml-1.5 tabular-nums" :title="fractureRow ? `一番安い始め方 ${money(startMin ?? 0)} + フラクチャー済みから ${money(x.out.r.perDone)}` : undefined">{{ money(x.out.r.perDone + (fractureRow ? startMin ?? 0 : 0)) }}</span>
           <span class="ml-1.5 opacity-70">完成 {{ pct(x.out.r.pDone) }}</span>
-          <span v-if="results.reduce((b, y, k) => (y.out.r.perDone < results[b]!.out.r.perDone ? k : b), 0) === i" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span>
+          <span v-if="results.length > 1 && results.reduce((b, y, k) => (y.out.r.perDone < results[b]!.out.r.perDone ? k : b), 0) === i" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span>
         </button>
       </div>
     </div>
@@ -984,14 +987,14 @@ function replay(): void {
       <p v-if="stale" class="mb-1 text-[11px] text-amber-200">設定が変わりました。もう一度「回す」で出し直してください</p>
       <div class="mb-2 grid grid-cols-2 gap-2 @3xl:grid-cols-5">
         <div class="rounded-lg bg-black/30 px-3 py-2">
-          <p class="text-[10px] opacity-60">1 個できるまでの平均</p>
+          <p class="text-[10px] opacity-60">{{ fractureRow ? "フラクチャー済みから 1 個できるまでの平均" : "1 個できるまでの平均" }}</p>
           <p class="text-lg font-bold text-amber-100">{{ money(summary.perDone) }}</p>
           <p v-if="help" class="text-[10px] opacity-50">失敗した回の費用も込み</p>
         </div>
         <div class="rounded-lg bg-black/30 px-3 py-2">
           <p class="text-[10px] opacity-60">完成の割合</p>
           <p class="text-lg font-bold" :class="summary.pDone >= 0.9 ? 'text-emerald-300' : 'text-amber-300'">{{ pct(summary.pDone) }}</p>
-          <p class="text-[10px] opacity-50">{{ fractureRow ? "白から作る " : "" }}{{ summary.runs.toLocaleString() }} 回のうち</p>
+          <p class="text-[10px] opacity-50">{{ fractureRow ? "フラクチャー済みから " : "" }}{{ summary.runs.toLocaleString() }} 回のうち</p>
         </div>
         <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">半分の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p50) }}</p></div>
         <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">8 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p80) }}</p></div>
