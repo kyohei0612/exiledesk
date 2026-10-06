@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { checkMiss, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
+import { checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageItemCard from "./StageItemCard.vue";
@@ -191,9 +191,11 @@ function whyAt(i: number): (x: PatternSet) => string | null {
 const missSet = (step: PatternStep): PatternSet | undefined => (step.miss ? setByKey(sets.value, step.miss) : undefined);
 function whyMissAt(i: number): (x: PatternSet) => string | null {
   const c = ctx.value;
-  if (!c) return () => null;
-  const st = { ...stateBefore(c, pat.value.steps, i + 1), rarity: "rare" as const };
-  return (x) => checkSet(c, st, x);
+  const add = setByKey(sets.value, pat.value.steps[i]?.set ?? "");
+  if (!c || !add) return () => null;
+  // 外す時は付けた手の後の状態 (増強ならマジック、それ以外はレア)
+  const st = { ...stateBefore(c, pat.value.steps, i + 1), rarity: (add.kind === "augment" ? "magic" : "rare") as "magic" | "rare" };
+  return (x) => checkRemoval(add, x) ?? (x.kind === "annul" ? null : checkSet(c, st, x));
 }
 /** 手のカードの色 (打つ物の種類。2 狙う MOD の予定の色と同じ: 高貴・カオス 黄 / 冒涜 深緑 / エッセンス 水色) */
 const KIND_TONE: Record<string, string> = {
@@ -222,7 +224,7 @@ function addStep(): void {
   if (!c) return;
   const st = stateBefore(c, pat.value.steps, pat.value.steps.length);
   const first = sets.value.find((x) => !checkSet(c, st, x));
-  setSteps((list) => [...list, { set: first?.key ?? sets.value[0]?.key ?? "", target: null, onMiss: "annul_redo" }]);
+  setSteps((list) => [...list, { set: first?.key ?? sets.value[0]?.key ?? "", target: null, onMiss: first && RARITY_CHANGE.has(first.kind) ? "next" : "annul_redo" }]);
   openRow.value = `${pat.value.steps.length - 1}:add`;
   focusRow.value = pat.value.steps.length - 1;
 }
@@ -240,18 +242,16 @@ function confirmStep(i: number): void {
 function patch(i: number, p: Partial<PatternStep>): void {
   setSteps((list) => list.map((x, k) => (k === i ? { ...x, ...p } : x)));
 }
-/** そのセットで選べる外れた時の決まり (今のが選べなければ、選べる最初の物) */
-function missFor(set: PatternSet | undefined, cur: MissRule): MissRule {
-  if (!set || !checkMiss(set, cur)) return cur;
-  return (["annul_redo", "next", "redo", "restart"] as MissRule[]).find((r) => !checkMiss(set, r)) ?? "next";
-}
 function onSet(i: number, key: string): void {
   // セットを変えたら付ける物は選び直し (打ち方で付けられる物が違う)。外れた時は選べる物に寄せる
   const set = setByKey(sets.value, key);
   const cur = pat.value.steps[i]!;
-  const miss = missFor(set, cur.onMiss);
-  patch(i, { set: key, target: null, onMiss: miss });
+  // やり直せない手は「そのまま次へ」、ほかは「やり直し」。外す物がその手で使えなくなったら自動に戻す
+  const miss: MissRule = set && RARITY_CHANGE.has(set.kind) ? "next" : "annul_redo";
+  const rm = cur.miss ? setByKey(sets.value, cur.miss) : undefined;
+  patch(i, { set: key, target: null, onMiss: miss, ...(rm && set && checkRemoval(set, rm) ? { miss: null } : {}) });
 }
+
 function move(i: number, d: -1 | 1): void {
   setSteps((list) => { const j = i + d; [list[i], list[j]] = [list[j]!, list[i]!]; return list; });
 }
@@ -365,13 +365,14 @@ defineExpose({ rows });
             外れたら = やり直し (2026-10-07 オーナー「外れの挙動キモい、シンプルで。外れたらは "やり直し" ひとつ、選んだら下にやり直しのカレンシーを置く。
             使う物は光って、グレーアウトの物も選択はできる」)。何も選ばなければ自動 (やり直しの費用で素の消去か側のお告げ、冒涜の外れは光)
           -->
-          <div v-if="!noMiss(r.set)" class="mt-1.5 rounded border border-rose-400/30 bg-rose-950/20 p-1.5">
+          <p v-if="r.set && RARITY_CHANGE.has(r.set.kind)" class="mt-1.5 rounded border border-white/10 bg-black/30 px-1.5 py-1 opacity-70">外れたら: この手はレアリティが変わるので、外してやり直せない (そのまま次へ)</p>
+          <div v-else-if="!noMiss(r.set)" class="mt-1.5 rounded border border-rose-400/30 bg-rose-950/20 p-1.5">
             <p class="mb-1 flex items-center gap-2">
               <span class="font-bold text-rose-200">外れたら やり直し</span>
               <span class="opacity-60">{{ missSet(r.step) ? "このカレンシーで外して、もう一度" : "選ばなければ自動 (やり直しの費用で消去を選ぶ)" }}</span>
               <button v-if="r.step.miss" type="button" class="ml-auto rounded border border-white/15 px-1.5 opacity-60 hover:opacity-100" @click="patch(i, { miss: null })">自動に戻す</button>
             </p>
-            <StagePatternStepPicker :sets="removals" :why="whyMissAt(i)" :current="r.step.miss ?? ''" soft inline @pick="(k) => patch(i, { miss: k, onMiss: 'annul_redo' })" />
+            <StagePatternStepPicker :sets="removals" :why="whyMissAt(i)" :current="r.step.miss ?? ''" inline @pick="(k) => patch(i, { miss: k, onMiss: 'annul_redo' })" />
           </div>
           <div class="mt-1.5 flex items-center gap-2">
             <span v-if="r.bad" class="text-rose-300">{{ r.bad }}</span>

@@ -67,7 +67,11 @@ const match = computed(() => setsOf(chosen.value).find((x) => same(x.omens, omen
 function omenWhy(o: string): string | null {
   const next = omens.value.includes(o) ? omens.value.filter((x) => x !== o) : [...omens.value, o];
   const x = setsOf(chosen.value).find((y) => same(y.omens, next));
-  if (!x) return "今のお告げと一緒に使えない";
+  if (!x) {
+    // その組み合わせが無い時も、そのお告げ単体で使えない理由があればそちらを出す (外れが消えない など)
+    const alone = setsOf(chosen.value).find((y) => same(y.omens, [o]));
+    return (alone && props.why(alone)) || "今のお告げと一緒に使えない";
+  }
   return omens.value.includes(o) || props.soft ? null : props.why(x);
 }
 /** 灰色にする理由 (soft の時も見た目は灰色、押せる) */

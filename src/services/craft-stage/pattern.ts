@@ -84,6 +84,24 @@ export function patternSets(cls: ItemBase): PatternSet[] {
   out.push(set("rune", "", [], "ルーン"));
   return out;
 }
+/** レアリティが変わる手 (外れても外してやり直せない) */
+export const RARITY_CHANGE = new Set<PatternKind>(["transmute", "regal", "alchemy", "essence"]);
+const sideOf = (omens: readonly string[]): "prefix" | "suffix" | null =>
+  omens.some((o) => PREFIX_OMENS.has(o)) ? "prefix" : omens.some((o) => SUFFIX_OMENS.has(o)) ? "suffix" : null;
+const SIDE_JA = { prefix: "プレフィックス", suffix: "サフィックス" } as const;
+/**
+ * やり直しのカレンシーで、外れた MOD を消せない理由 (消せれば null)。2026-10-07 オーナー「やり直せない奴は選択させない、
+ * そのMODが消えない奴は選択できない」。外れが付く側は、付ける手の側のお告げで決まる (無ければどちらか分からないので、側の決め打ちは止めない)
+ */
+export function checkRemoval(add: PatternSet, rm: PatternSet): string | null {
+  if (RARITY_CHANGE.has(add.kind)) return "この手はレアリティが変わるので、外してやり直せない";
+  if (rm.kind === "chaos" && add.kind === "augment") return "カオスはレアだけ (この手はマジック)";
+  if (rm.omens.includes("OmenofLight") && add.kind !== "desecrate") return "光のお告げは冒涜の MOD だけ消す (外れは普通の MOD)";
+  const junk = add.kind === "exalt" || add.kind === "desecrate" ? sideOf(add.omens) : null;
+  const only = sideOf(rm.omens);
+  if (junk && only && junk !== only) return `外れは${SIDE_JA[junk]}に付くので、${SIDE_JA[only]}だけを消すお告げでは消えない`;
+  return null;
+}
 /** 外す時に使えるセット (消去・カオス) */
 export const removalSets = (sets: readonly PatternSet[]): PatternSet[] => sets.filter((x) => x.kind === "annul" || x.kind === "chaos");
 export const setByKey = (sets: readonly PatternSet[], key: string): PatternSet | undefined => sets.find((x) => x.key === key);
