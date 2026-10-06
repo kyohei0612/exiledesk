@@ -36,8 +36,8 @@ import StagePatternEditor from "./StagePatternEditor.vue";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
 
 const s = craftStage;
-/** 回す回数は 1500 で固定 (2026-10-07 オーナー「長いから一旦 1500 回で」。その前は 3000 / 1000) */
-const runs = ref<number>(1500);
+/** 回す回数は 500 で固定 (2026-10-07 オーナー「一旦 500 回でいい」。その前は 1500 / 3000 / 1000) */
+const runs = ref<number>(500);
 
 /** 付け方の名前 (2026-10-05 オーナー「カオスはカオススパム、高貴はガチャなので高貴ガチャ」) */
 const METHOD_JA: Record<RecipeMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス", fracture: "フラクチャー" };
