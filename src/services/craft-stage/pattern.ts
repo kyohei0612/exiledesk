@@ -13,6 +13,11 @@ import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
 import { RUNES } from "./stage-runes";
 
 const ESS = (essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys;
+/** エッセンスの MOD の id → 種類 (普通のエッセンス / パーフェクト)。patternSets が data を持たないので、キーの表から引く */
+const ESS_SOURCE = new Map<string, "essence" | "perfect_essence">(Object.keys(ESS).flatMap((k) => {
+  const m = /^essence:(lesser|normal|greater|perfect):(.+)$/.exec(k);
+  return m ? [[m[2]!, m[1] === "perfect" ? "perfect_essence" : "essence"] as const] : [];
+}));
 
 export type PatternKind = "transmute" | "augment" | "regal" | "alchemy" | "exalt" | "chaos" | "desecrate" | "essence" | "essence_perfect" | "annul" | "rune";
 /** 外れた時: そのまま次へ / 同じ手をもう一度 / 外れを消去してもう一度 / 最初から (フラクチャー済みのベースから) */
@@ -66,7 +71,10 @@ export function patternSets(cls: ItemBase): PatternSet[] {
   const cross = (...lists: string[][][]): string[][] => lists.reduce<string[][]>((acc, l) => acc.flatMap((a) => l.map((b) => [...a, ...b])), [[]]);
   for (const c of ["transmute", "transmute_greater", "transmute_perfect"]) out.push(set("transmute", c, [], "変成 (ノーマル → マジック)"));
   for (const c of ["augment", "augment_greater", "augment_perfect"]) out.push(set("augment", c, [], "増強 (マジック)"));
-  out.push(set("essence", "", [], "エッセンス (マジック → レア)"));
+  // エッセンスは 1 個ずつ (このベースで使える物。付く MOD と側がエッセンスごとに違う。2026-10-07 オーナー「パーフェクトエッセンスが簡略されてる、
+  // 何でするかによってサフィについたりプレについたりする、使える状態のエッセンスは全部表示」)
+  const essOf = (src: "essence" | "perfect_essence"): string[] => [...cls.pools.essence.prefixes, ...cls.pools.essence.suffixes].filter((id) => ESS_SOURCE.get(id) === src);
+  for (const id of essOf("essence")) for (const lv of ["lesser", "normal", "greater"]) { const k = `essence:${lv}:${id}`; if (ESS[k]) out.push(set("essence", k, [], "エッセンス (マジック → レア)")); }
   for (const c of ["regal", "regal_greater", "regal_perfect"]) out.push(set("regal", c, [], "王者 (マジック → レア)"));
   out.push(set("alchemy", "alchemy", [], "錬金 (→ レア)"));
   for (const c of ["exalt", "exalt_greater", "exalt_perfect"]) {
@@ -79,7 +87,7 @@ export function patternSets(cls: ItemBase): PatternSet[] {
   for (const c of bones) {
     for (const o of cross(sides(SIDE.necro), [[], ...Object.keys(FACTION_OMEN).map((f) => [f])], [[], ["OmenofAbyssalEchoes"]])) out.push(set("desecrate", c, o, "冒涜 (骨 → 発現)"));
   }
-  for (const o of sides(SIDE.crystal)) out.push(set("essence_perfect", "", o, "パーフェクトエッセンス (レア)"));
+  for (const id of essOf("perfect_essence")) { const k = `essence:perfect:${id}`; if (ESS[k]) for (const o of sides(SIDE.crystal)) out.push(set("essence_perfect", k, o, "パーフェクトエッセンス (レア)")); }
   for (const o of [[], [SIDE.annul[0]], [SIDE.annul[1]], ["OmenofLight"]]) out.push(set("annul", "annul", o, "消去"));
   out.push(set("rune", "", [], "ルーン"));
   return out;
@@ -235,8 +243,10 @@ export function checkTarget(ctx: CheckCtx, st: PatternState, s: PatternSet, t: P
       if (s.currency === "desecrate_altered" && !members.some((x) => x.tags.includes("breach_desecration") || x.source === "desecrated")) return "変質した鎖骨で出ない MOD";
       return null;
     }
-    case "essence": return ["lesser", "normal", "greater"].some((lv) => ESS[`essence:${lv}:${t.modId}`]) ? null : "マジックに使うエッセンスが無い MOD";
-    case "essence_perfect": return ESS[`essence:perfect:${t.modId}`] ? null : "パーフェクトエッセンスが無い MOD";
+    case "essence": case "essence_perfect":
+      // セットのエッセンスで付く MOD だけ (エッセンスごとに MOD が決まっている)
+      if (s.currency) return s.currency.endsWith(`:${t.modId}`) ? null : "このエッセンスで付く MOD ではない";
+      return s.kind === "essence" ? (["lesser", "normal", "greater"].some((lv) => ESS[`essence:${lv}:${t.modId}`]) ? null : "マジックに使うエッセンスが無い MOD") : ESS[`essence:perfect:${t.modId}`] ? null : "パーフェクトエッセンスが無い MOD";
     default: return null;
   }
 }

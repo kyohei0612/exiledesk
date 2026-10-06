@@ -6,7 +6,7 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { jaOfOmen } from "../../services/htc/labels";
 import type { PatternSet } from "../../services/craft-stage/pattern";
@@ -25,22 +25,27 @@ const props = defineProps<{
 const emit = defineEmits<{ pick: [key: string]; close: [] }>();
 
 /** 打つ物 (エッセンス・ルーンは付ける物で決まるので 1 つの札) */
-interface Tile { id: string; kind: PatternSet["kind"]; currency: string; label: string; icon: string; badge: string | null; price: number }
+interface Tile { id: string; kind: PatternSet["kind"]; currency: string; label: string; icon: string; badge: string | null; price: number; side: string | null }
 const BADGE: Array<[RegExp, string]> = [[/_greater$/, "上級"], [/_perfect$/, "完全"], [/^desecrate_ancient$/, "古びた"], [/^desecrate_altered$/, "変質"]];
 const tiles = computed<Tile[]>(() => {
   const seen = new Map<string, Tile>();
   for (const x of props.sets) {
     const id = `${x.kind}|${x.currency}`;
     if (seen.has(id)) continue;
-    const label = x.kind === "essence" ? "エッセンス (マジックに)" : x.kind === "essence_perfect" ? "パーフェクトエッセンス" : x.kind === "rune" ? "ルーンを差す" : nameOf(x.currency);
-    seen.set(id, { id, kind: x.kind, currency: x.currency, label, icon: x.currency ? iconOf(x.currency) : "", badge: BADGE.find(([re]) => re.test(x.currency))?.[1] ?? null, price: x.currency ? priceOf(x.currency) : 0 });
+    const label = !x.currency ? (x.kind === "essence" ? "エッセンス (マジックに)" : x.kind === "essence_perfect" ? "パーフェクトエッセンス" : "ルーンを差す") : nameOf(x.currency);
+    // エッセンスは付く側 (プレ / サフィ) を札に出す
+    const em = x.currency.startsWith("essence:") ? craftStage.data.value?.mods.get(x.currency.replace(/^essence:[a-z]+:/, "")) : undefined;
+    const side = em ? (em.type === "suffix" ? "サフィ" : "プレ") : null;
+    seen.set(id, { id, kind: x.kind, currency: x.currency, label, icon: x.currency ? iconOf(x.currency) : "", badge: BADGE.find(([re]) => re.test(x.currency))?.[1] ?? null, price: x.currency ? priceOf(x.currency) : 0, side });
   }
   return [...seen.values()];
 });
 /** 札の段 (棚のタブの代わりに、種類ごとに並べる) */
 const ROWS: Array<{ name: string; kinds: PatternSet["kind"][] }> = [
-  { name: "マジックまで", kinds: ["transmute", "augment", "regal", "alchemy", "essence"] },
-  { name: "レア", kinds: ["exalt", "chaos", "annul", "essence_perfect"] },
+  { name: "マジックまで", kinds: ["transmute", "augment", "regal", "alchemy"] },
+  { name: "エッセンス (マジック → レア)", kinds: ["essence"] },
+  { name: "レア", kinds: ["exalt", "chaos", "annul"] },
+  { name: "パーフェクトエッセンス (レア)", kinds: ["essence_perfect"] },
   { name: "骨", kinds: ["desecrate"] },
   { name: "ルーン", kinds: ["rune"] },
 ];
@@ -117,6 +122,7 @@ function decide(): void {
           <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
           <span class="mt-0.5 line-clamp-2 min-h-[2.5em] text-center leading-tight">{{ t.label }}</span>
           <span v-if="t.badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-sky-300">{{ t.badge }}</span>
+          <span v-if="t.side" class="absolute left-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-amber-200">{{ t.side }}</span>
           <span v-if="t.price" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(t.price) }}</span>
         </button>
       </div>

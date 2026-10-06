@@ -396,7 +396,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       let e: string | null = null;
       if (p.kind === "rune") e = p.rune ? play(`rune:${p.rune}`) : "ルーンが選ばれていない";
       else if (p.kind === "essence" || p.kind === "essence_perfect") {
-        const key = p.target ? (p.kind === "essence" ? magicEssenceKey(p.target) : `essence:perfect:${p.target.modId}`) : null;
+        // セットのエッセンス (1 個ずつ選んだ物)。古いパターン (エッセンスが空) は付ける物から引く
+        const key = p.currency || (p.target ? (p.kind === "essence" ? magicEssenceKey(p.target) : `essence:perfect:${p.target.modId}`) : null);
         e = key && ESS[key] ? play(key, p.omens) : "このエッセンスが無い";
       } else {
         // 高貴・冒涜は狙いの側に空きが無ければ、先にその側の外れを消す (戻った手で、外れが残ったまま埋まっていることがある)
@@ -421,7 +422,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         if (p.miss.kind === "essence_perfect") {
           // 外れの側 (結晶化の側、無ければ狙いの側) に付く一番安いパーフェクトエッセンスで上書き (計算機の「天体」と同じ)
           const sd: StageSide = p.miss.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : p.miss.omens.some((o) => /Dextral/.test(o)) ? "suffix" : sideOf(p.target.modId);
-          const key = cheapestPerfectEssence(sd);
+          const key = p.miss.currency || cheapestPerfectEssence(sd);
           e = key ? play(key, p.miss.omens) : "外れの側に使えるパーフェクトエッセンスが無い";
         } else if (p.miss.kind === "desecrate") {
           e = play(p.miss.currency, p.miss.omens.filter((o) => o !== "OmenofAbyssalEchoes"));
