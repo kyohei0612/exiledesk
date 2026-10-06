@@ -94,6 +94,14 @@ export function patternSets(cls: ItemBase): PatternSet[] {
 }
 /** レアリティが変わる手 (外れても外してやり直せない) */
 export const RARITY_CHANGE = new Set<PatternKind>(["transmute", "regal", "alchemy", "essence"]);
+/**
+ * 付ける物「何が付いてもいい (打つだけ)」(2026-10-07 オーナー「高貴だけ適当に打って、それを犠牲にエッセンスを選んだりする、打つってだけの選択肢も欲しい」)。
+ * 外れが無い手。回す時は付ける物無し (打って次へ)。使えるのはランダムに MOD が付く物だけ
+ */
+export const ANY_TARGET = "*";
+export const ANY_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "desecrate"]);
+/** 打つだけの手で増える MOD の数 (側は分からない。錬金は 4 つ、カオスは入れ替え) */
+const ANY_ADDS: Partial<Record<PatternKind, number>> = { transmute: 1, augment: 1, regal: 1, alchemy: 4, exalt: 1, desecrate: 1 };
 const sideOf = (omens: readonly string[]): "prefix" | "suffix" | null =>
   omens.some((o) => PREFIX_OMENS.has(o)) ? "prefix" : omens.some((o) => SUFFIX_OMENS.has(o)) ? "suffix" : null;
 const SIDE_JA = { prefix: "プレフィックス", suffix: "サフィックス" } as const;
@@ -147,6 +155,8 @@ export interface PatternState {
   essences: number; essenceLimit: number;
   desecrated: number;
   placed: Set<string>;
+  /** 打つだけの手で付いた物 (側は分からない) */
+  junk: number;
 }
 
 export interface CheckCtx {
@@ -165,7 +175,7 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     prefix: ctx.start.fracturedSide === "prefix" ? 1 : 0,
     suffix: ctx.start.fracturedSide === "suffix" ? 1 : 0,
     limits: { prefix: ctx.cls.limits?.prefixes ?? 3, suffix: ctx.cls.limits?.suffixes ?? 3 },
-    runes: new Set(), socketsLeft: ctx.start.sockets, essences: 0, essenceLimit: 1, desecrated: 0, placed: new Set(),
+    runes: new Set(), socketsLeft: ctx.start.sockets, essences: 0, essenceLimit: 1, desecrated: 0, placed: new Set(), junk: 0,
   };
   for (let i = 0; i < upTo && i < steps.length; i++) {
     const p = steps[i]!;
@@ -177,6 +187,11 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     }
     if (s.kind === "transmute") st.rarity = "magic";
     if (s.kind === "regal" || s.kind === "alchemy" || s.kind === "essence") st.rarity = "rare";
+    if (p.target === ANY_TARGET) {
+      st.junk += ANY_ADDS[s.kind] ?? 0;
+      if (s.kind === "desecrate") st.desecrated++;
+      continue;
+    }
     const t = ctx.targets.find((x) => x.modId === p.target);
     if (!t) continue;
     st.placed.add(t.modId);
@@ -212,7 +227,7 @@ export function checkSet(ctx: CheckCtx, st: PatternState, s: PatternSet): string
     if (side && st[side] >= st.limits[side]) return `${side === "prefix" ? "プレフィックス" : "サフィックス"}の枠が埋まっている`;
   }
   if (s.kind === "essence_perfect" && st.essences >= st.essenceLimit) return "エッセンスの MOD は 1 つまで (アストリッドの創造性で 2 つ)";
-  if (s.kind === "exalt" && st.prefix >= st.limits.prefix && st.suffix >= st.limits.suffix) return "枠が全部埋まっている";
+  if (s.kind === "exalt" && st.prefix + st.suffix + st.junk >= st.limits.prefix + st.limits.suffix) return "枠が全部埋まっている";
   if (s.omens.includes("OmenofCatalysingExaltation")) return "触媒の高貴のお告げは品質 (カタリスト) が要る (パターンにはまだカタリストの手が無い)";
   return null;
 }
@@ -226,6 +241,7 @@ export function checkTarget(ctx: CheckCtx, st: PatternState, s: PatternSet, t: P
   const side = m.type === "suffix" ? "suffix" : "prefix";
   const sideJa = side === "prefix" ? "プレフィックス" : "サフィックス";
   if (st[side] >= st.limits[side]) return `${sideJa}の枠が埋まる`;
+  if (st.prefix + st.suffix + st.junk >= st.limits.prefix + st.limits.suffix && s.kind !== "chaos" && s.kind !== "essence_perfect") return "枠が全部埋まる (打つだけの手で付いた物も数える)";
   if (s.omens.some((o) => PREFIX_OMENS.has(o)) && side !== "prefix") return "左 (シニスター) のお告げはプレフィックスだけ";
   if (s.omens.some((o) => SUFFIX_OMENS.has(o)) && side !== "suffix") return "右 (デクストラル) のお告げはサフィックスだけ";
   const members = [m, ...(t.alts ?? []).map((a) => ctx.data.mods.get(a.modId)).filter((x): x is Mod => !!x)];
@@ -249,6 +265,13 @@ export function checkTarget(ctx: CheckCtx, st: PatternState, s: PatternSet, t: P
       return s.kind === "essence" ? (["lesser", "normal", "greater"].some((lv) => ESS[`essence:${lv}:${t.modId}`]) ? null : "マジックに使うエッセンスが無い MOD") : ESS[`essence:perfect:${t.modId}`] ? null : "パーフェクトエッセンスが無い MOD";
     default: return null;
   }
+}
+
+/** 打つだけの手に使えない理由 */
+export function checkAny(st: PatternState, s: PatternSet): string | null {
+  if (!ANY_KINDS.has(s.kind)) return "打つだけには使えない (付く物が決まっている・付かない)";
+  if (s.kind === "exalt" && st.prefix + st.suffix + st.junk >= st.limits.prefix + st.limits.suffix) return "枠が全部埋まっている";
+  return null;
 }
 
 /** ルーンを差す手で選べない理由 */

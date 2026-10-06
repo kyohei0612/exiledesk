@@ -11,7 +11,8 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { craftStage, nameOf, priceOf, readSimSession, writeSimSession } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf, priceOf, readSimSession, writeSimSession } from "../../state/craft-stage";
+import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
 import { simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
@@ -29,7 +30,7 @@ import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern } from "../../services/craft-stage/pattern";
+import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
@@ -110,16 +111,28 @@ function addRune(en: string): void {
   if (en) s.simOrder.value = [...orderKeys.value, `rune:${en}`];
 }
 const removeRune = (k: string): void => { s.simOrder.value = orderKeys.value.filter((x) => x !== k); };
-/** 順番計画に足せるルーン (このベースに効く物。段 → 名前の順) */
+/**
+ * 順番計画に足せるルーン: クラフトに関わるルーンだけ (クラフトステージの棚と同じ CRAFT_RUNES_EN)、このベースに効く物。
+ * 選び方はステージの棚と同じ札 (2026-10-07 オーナー「基本クラフトルーンだけ表示、プルダウンじゃなくてステージの選ばせ方が好き」)
+ */
 const runeChoices = computed(() => {
   const it = s.item.value;
   if (!it) return [];
-  const TIER = ["lesser", "normal", "greater", "perfect", "special"];
-  return Object.entries(RUNES)
-    .filter(([en, r]) => r.available !== false && !!runeEffectFor(r, it.cls.category) && !orderKeys.value.includes(`rune:${en}`))
-    .sort(([, a], [, b]) => TIER.indexOf(a.tier ?? "") - TIER.indexOf(b.tier ?? "") || a.ja.localeCompare(b.ja, "ja"))
-    .map(([en, r]) => ({ en, ja: r.ja }));
+  return CRAFT_RUNES_EN.flatMap((en) => {
+    const r = RUNES[en];
+    const eff = r ? runeEffectFor(r, it.cls.category) : null;
+    if (!r || r.available === false || !eff) return [];
+    const k = `rune:${en}`;
+    const inOrder = orderKeys.value.includes(k);
+    const used = orderKeys.value.filter((x) => x.startsWith("rune:")).length;
+    const why = runeNeeded.value.has(k) ? "狙いの MOD に要る (外せない)" : !inOrder && used >= socketCount.value ? `ソケットが足りない (${socketCount.value} つ)` : null;
+    return [{ en, k, ja: r.ja, effect: eff.ja, inOrder, why }];
+  });
 });
+function toggleRune(x: { en: string; k: string; inOrder: boolean; why: string | null }): void {
+  if (x.why) return;
+  if (x.inOrder) removeRune(x.k); else addRune(x.en);
+}
 const orderRow = (k: string) => restRows.value.find((r) => `mod:${r.modId}` === k);
 const runeJa = (k: string): string => RUNES[k.slice(5)]?.ja ?? k.slice(5);
 
@@ -173,7 +186,7 @@ function patternProblem(p: Pattern): string | null {
     const tg = p.steps[i]!.target;
     if (x.kind === "annul") continue;
     if (!tg) return `${i + 1} 手目: 付ける物を選ぶ`;
-    const tw = x.kind === "rune" ? checkRune(ctx, st, tg) : (() => { const t = s.simTargets.value.find((y) => y.modId === tg); return t ? checkTarget(ctx, st, x, t) : "狙う MOD に無い"; })();
+    const tw = tg === ANY_TARGET ? checkAny(st, x) : x.kind === "rune" ? checkRune(ctx, st, tg) : (() => { const t = s.simTargets.value.find((y) => y.modId === tg); return t ? checkTarget(ctx, st, x, t) : "狙う MOD に無い"; })();
     if (tw) return `${i + 1} 手目: ${tw}`;
   }
   return null;
@@ -292,7 +305,11 @@ onMounted(() => void market.ensureMarket(MARKET_MAX_AGE_MS));
  */
 const searchIlvl = computed(() => {
   const d = s.data.value;
-  const need = s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]).map((x) => d?.mods.get(x.modId)?.tiers[x.minTierIndex]?.ilvl ?? 0);
+  // エッセンスの MOD はアイテムレベルに関係なく付くので数えない (2026-10-07)
+  const need = s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]).map((x) => {
+    const m = d?.mods.get(x.modId);
+    return m && m.source !== "essence" && m.source !== "perfect_essence" ? m.tiers[x.minTierIndex]?.ilvl ?? 0 : 0;
+  });
   const n = Math.max(0, ...need);
   return n > 0 ? Math.min(n, s.itemLevel.value) : s.itemLevel.value;
 });
@@ -957,12 +974,23 @@ function replay(): void {
             </tr>
           </tbody>
         </table>
-        <div v-if="!orderDone && socketCount > 0" class="mt-1 flex items-center gap-2 text-[11px]">
-          <span class="opacity-60">ルーンを足す</span>
-          <select class="rounded border border-white/15 bg-black/40 px-1 py-0.5" value="" @change="addRune(($event.target as HTMLSelectElement).value); ($event.target as HTMLSelectElement).value = ''">
-            <option value="">選ぶ</option>
-            <option v-for="r in runeChoices" :key="r.en" :value="r.en">{{ r.ja }}</option>
-          </select>
+        <!-- ルーン: ステージの棚と同じ札。押すと順番計画に入れる / 外す (効き目はホバー) -->
+        <div v-if="!orderDone && socketCount > 0 && runeChoices.length" class="mt-2 flex gap-2 text-[11px]">
+          <p class="w-24 shrink-0 pt-1 leading-tight opacity-60">ルーン<br />(押して入れ切り)</p>
+          <div class="flex flex-wrap gap-1">
+            <button
+              v-for="r in runeChoices" :key="r.en" type="button"
+              class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition"
+              :class="[r.inOrder ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30', r.why && !r.inOrder ? 'cursor-not-allowed opacity-35' : '']"
+              :title="`${r.ja}: ${r.effect}${r.why ? `\n${r.why}` : ''}`" @click="toggleRune(r)"
+            >
+              <img v-if="iconOf(r.k)" :src="iconOf(r.k)" alt="" class="h-7 w-7 object-contain" draggable="false" />
+              <span v-else class="h-7 w-7 rounded border border-white/20"></span>
+              <span class="w-full truncate text-center leading-tight">{{ r.ja }}</span>
+              <span v-if="priceOf(r.k)" class="text-[9px] tabular-nums opacity-60">{{ simCurrency.money(priceOf(r.k)) }}</span>
+              <span v-if="r.inOrder" class="absolute left-0.5 top-0.5 rounded bg-amber-600/90 px-1 text-[9px] font-bold text-white">{{ runeNeeded.has(r.k) ? "要る" : "入れた" }}</span>
+            </button>
+          </div>
         </div>
         <div v-if="!orderDone" class="mt-1 flex">
           <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="orderDone = true">決めた →</button>
