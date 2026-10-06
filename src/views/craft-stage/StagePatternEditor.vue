@@ -152,8 +152,31 @@ const rows = computed<Row[]>(() => {
  * 見る手は押した手 (棚を開いた手)、無ければ最後の手。固定の MOD + その手までの付ける物 (狙いの段の真ん中の値)、ルーンは差す
  */
 const focusRow = ref<number | null>(null);
+/**
+ * フラクチャーまでの成功品 (読むだけ。2026-10-07 オーナー「一応フラクチャー前の成功品を表示して、白からマジックになったんだなって分かる」)。
+ * 白 → 変成・増強 (消去スパム) で固定する MOD → 王者でレア → 骨の壁 → フラクチャー。費用は 4 最安値スタートの計算で固定なので、ここは見せるだけ
+ */
+const focusPre = ref<number | null>(null);
+const preNodes = computed(() => {
+  const d = s.data.value;
+  const frac = s.simTargets.value.find((t) => t.method === "fracture");
+  if (!d || !frac || props.start.rarity !== "rare" || !s.base.value) return [];
+  const m = d.mods.get(frac.modId);
+  if (!m) return [];
+  let white: StageItem;
+  try { white = { ...freshItem(d, s.base.value, s.itemLevel.value), sockets: props.start.sockets, rollSeed: 1 }; } catch { return []; }
+  const fm = makeStageMod(m, m.type === "suffix" ? "suffix" : "prefix", frac.minTierIndex, () => 0.5);
+  const name = cardTitleOf(frac.modId);
+  return [
+    { title: "白のベース", icons: [] as string[], item: white },
+    { title: `マジック: ${name}`, icons: ["transmute", "augment", "annul"], item: { ...withMod(white, fm), rarity: "magic" as const } },
+    { title: "王者でレア", icons: ["regal"], item: { ...withMod(white, fm), rarity: "rare" as const } },
+    { title: "骨の壁 → フラクチャー", icons: ["desecrate", "fracture"], item: { ...withMod(white, { ...fm, fractured: true }), rarity: "rare" as const } },
+  ];
+});
 const previewAt = computed(() => Math.min(focusRow.value ?? Infinity, pat.value.steps.length - 1));
 const preview = computed<StageItem | null>(() => {
+  if (focusPre.value != null && preNodes.value[focusPre.value]) return preNodes.value[focusPre.value]!.item;
   const d = s.data.value;
   if (!d || !s.base.value) return null;
   let it: StageItem;
@@ -208,7 +231,11 @@ function cardTitle(r: Row): string {
   if (r.set?.kind === "annul") return "外れを消す";
   if (!r.step.target) return r.set?.kind === "rune" ? "ルーン" : "付ける物を選ぶ";
   if (r.set?.kind === "rune") return RUNES[r.step.target]?.ja ?? r.step.target;
-  const full = modLabel(r.step.target);
+  return cardTitleOf(r.step.target);
+}
+/** 狙う MOD の短い名前 (「火耐性 T3+」) */
+function cardTitleOf(modId: string): string {
+  const full = modLabel(modId);
   const rank = /T(\d+) 以上/.exec(full)?.[1];
   const name = full.replace(/\s*T\d+ 以上.*$/, "").replace(/[+-]?\(?\d[\d.]*(?:[-—~]\d[\d.]*)?\)?/g, "").replace(/\s*%/g, "").replace(/\s+/g, " ").trim();
   return rank ? `${name} T${rank}+` : name;
@@ -217,6 +244,7 @@ function cardTitle(r: Row): string {
 const setShort = (x: PatternSet): string => (x.kind === "essence" ? "エッセンス" : x.kind === "essence_perfect" ? "パーフェクトエッセンス" : x.kind === "rune" ? "差す" : nameOf(x.currency));
 /** 手のカードを押した: その手の設定を開く (もう一度押すと閉じる)。右のアイテムもその手の時点に */
 function selectRow(i: number): void {
+  focusPre.value = null;
   focusRow.value = focusRow.value === i ? null : i;
   openRow.value = null;
 }
@@ -291,6 +319,18 @@ defineExpose({ rows });
       「外した場合の枝分かれにして視覚的に」)。当たりは下へ、外れは右へ枝分かれ。手のカードを押すと、その下に設定が開く
     -->
     <div class="flex flex-col items-start">
+      <!-- フラクチャーまでの成功品 (読むだけ、押すと右のアイテムがその時点に) -->
+      <template v-if="preNodes.length">
+        <p class="mb-0.5 opacity-50">フラクチャーまで (費用は 4 最安値スタートの計算)</p>
+        <template v-for="(n, k) in preNodes" :key="'pre' + k">
+          <div v-if="k > 0" class="ml-[5.5rem] h-3 w-px bg-white/20"></div>
+          <button type="button" class="flex w-48 items-center gap-1 rounded-md border border-dashed border-white/25 bg-black/30 px-1.5 py-0.5 text-left opacity-80 hover:opacity-100" :class="focusPre === k ? 'ring-2 ring-sky-400/60' : ''" @click="focusPre = focusPre === k ? null : k; focusRow = null">
+            <img v-for="c in n.icons" :key="c" :src="iconOf(c)" alt="" class="h-5 w-5 object-contain" />
+            <span class="truncate">{{ n.title }}</span>
+          </button>
+        </template>
+        <div class="ml-[5.5rem] h-3 w-px bg-white/20"></div>
+      </template>
       <div class="rounded-md border border-white/20 bg-black/40 px-2 py-0.5 opacity-80">{{ start.rarity === "rare" ? "始め: フラクチャー済み" : "始め: 白のベース" }}</div>
       <template v-for="(r, i) in rows" :key="i">
         <!-- 当たりの線 -->
@@ -401,7 +441,7 @@ defineExpose({ rows });
     </div>
     <!-- 右: その手まで当たった時のアイテム (押した手の時点) -->
     <div v-if="preview" class="sticky top-2 w-[280px] shrink-0">
-      <p class="mb-1 text-center opacity-70">{{ rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
+      <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
       <StageItemCard :item="preview" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="280" compact />
     </div>
     </div>
