@@ -32,6 +32,7 @@ import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/st
 import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
+import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
 
 const s = craftStage;
 /** 回す回数は 1000 で固定 (2026-10-06 オーナー「回すの 1000 やな」。前は 500 / 1000 / 3000 から選べた) */
@@ -121,6 +122,35 @@ const runeChoices = computed(() => {
 });
 const orderRow = (k: string) => restRows.value.find((r) => `mod:${r.modId}` === k);
 const runeJa = (k: string): string => RUNES[k.slice(5)]?.ja ?? k.slice(5);
+
+/**
+ * やり直しの費用 (計算機の redo-cost.ts をそのまま使う。2026-10-06 オーナー「消去で消す MOD はカオススパムがつらいほどアカン、
+ * 一回付いたらやり直せないみたいな基準によってリロール方法が変わる」)。狙いごとの取り方・1 回の値段・当たる確率・
+ * 外れ 1 回のやり直し費用・見込み (取り直すといくらか) と、側ごとの外れの消し方 (素の消去 / 側のお告げ)。値段は高貴建て
+ */
+const redoPlan = computed<RedoPlan | null>(() => {
+  const d = s.data.value, it = s.item.value;
+  if (!d || !it || !rows.value.length) return null;
+  // 計算機の値段の表の形 (無い物は undefined = 使えない)。値段はステージと同じ相場 (高貴建て)
+  const px = new Proxy({} as Record<string, number>, { get: (_t, k) => { if (typeof k !== "string") return undefined; const v = priceOf(k); return v > 0 ? v : undefined; } });
+  const fixedIds = fractureRows.value.map((r) => r.modId);
+  const fside = fractureRow.value ? (fractureRow.value.side === "サフィ" ? "suffix" : "prefix") : null;
+  try {
+    return planByRedoCost({
+      data: d, prices: { currency: px, omens: px, bones: px },
+      targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex })),
+      fixedIds, qualityTag: null, chaosOk: true,
+      limits: { prefix: it.cls.limits?.prefixes ?? 3, suffix: it.cls.limits?.suffixes ?? 3 },
+      fixedSides: fside ? [fside] : [],
+    }, it.cls, s.itemLevel.value);
+  } catch {
+    return null;
+  }
+});
+/** 狙いごとのやり直しの見積もり (5 順番計画・6 パターンに出す) */
+const redoOf = computed(() => new Map((redoPlan.value?.rows ?? []).map((r) => [r.modId, r])));
+const redoCostMap = computed<Record<string, number>>(() => Object.fromEntries((redoPlan.value?.rows ?? []).map((r) => [r.modId, r.expected])));
+const REDO_METHOD_JA: Record<string, string> = { chaos: "カオス", exalt: "高貴", desecrate: "冒涜", essence: "エッセンス" };
 
 /** 6 パターンの始めの状態 (フラクチャー済みのレアか白) */
 const patternStart = computed<CheckCtx["start"]>(() => ({
@@ -533,7 +563,7 @@ async function run(): Promise<void> {
     const total = runs.value * ps.length;
     const out: typeof results.value = [];
     for (const [k, p] of ps.entries()) {
-      const pspec: RecipeSpec = { ...spec, pattern: compile(p), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
+      const pspec: RecipeSpec = { ...spec, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
       const base = k * runs.value;
       const r = await runRecipe(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
       if (my !== gen || !r) return;
@@ -878,7 +908,9 @@ function replay(): void {
                   <span v-if="orderRow(k)!.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ orderRow(k)!.alts.length }} つと合わせてどれか</span>
                   <span class="ml-1 text-[10px] opacity-60">{{ METHOD_JA[orderRow(k)!.method] }}</span>
                 </td>
-                <td></td>
+                <td class="w-48 py-1 text-right text-[11px] tabular-nums">
+                  <span v-if="redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">取り直し 約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
+                </td>
               </template>
               <template v-else>
                 <td class="w-10 py-1 text-[10px] opacity-60">ルーン</td>
@@ -909,7 +941,7 @@ function replay(): void {
           <span class="opacity-60">{{ fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
-        <StagePatternEditor :start="patternStart" :order="orderKeys" :locked="patternDone" />
+        <StagePatternEditor :start="patternStart" :order="orderKeys" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
         <div v-if="!patternDone" class="mt-1 flex items-center gap-2">
           <span v-if="blocked" class="ml-auto text-[11px] text-amber-200/80">{{ blocked }}</span>
           <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="blocked ? '' : 'ml-auto'" :disabled="!!blocked" :title="blocked ?? undefined" @click="patternDone = true">決めた →</button>

@@ -70,6 +70,11 @@ export interface RecipeSpec {
    * ルーンもパターンの手で差す (白から差しておくのはやめる)
    */
   pattern?: readonly CompiledStep[];
+  /**
+   * 外れの消し方 (側ごと): 素の消去 / 側の消去のお告げ。計算機のやり直しの費用 (redo-cost.ts の annulSides) から決めた物。
+   * 無ければ「反対側に当たりがあれば側のお告げ」(2026-10-06)
+   */
+  annulSides?: Partial<Record<StageSide, "plain" | "side">>;
   data: PatchData;
   base: string;
   itemLevel: number;
@@ -413,7 +418,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         else {
           const ts = sideOf(p.target.modId);
           const side = junkOn(item, ts).length ? ts : junkOn(item, ts === "prefix" ? "suffix" : "prefix").length ? (ts === "prefix" ? "suffix" : "prefix") : null;
-          e = side ? annulOn(side) : null;
+          const mode = side ? spec.annulSides?.[side] : undefined;
+          e = !side ? null : mode === "side" ? play("annul", [SIDE_OMEN.annul[side]]) : mode === "plain" ? play("annul") : annulOn(side);
         }
         if (e) return fail(`${i + 1} 手目の消去: ${e}`);
       }

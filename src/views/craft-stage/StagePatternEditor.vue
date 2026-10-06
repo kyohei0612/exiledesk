@@ -20,7 +20,43 @@ const props = defineProps<{
   order: readonly string[];
   /** 決めた後は変えられない */
   locked: boolean;
+  /** 狙いごとの取り直しの見込み (高貴建て、計算機の redo-cost.ts) */
+  redo?: Record<string, number>;
+  /** 側ごとの外れの消し方 (redo-cost.ts の annulSides) */
+  annulSides?: Partial<Record<"prefix" | "suffix", "plain" | "side">>;
+  money?: (x: number) => string;
 }>();
+/** 付いたら取り直せない手 (レアリティが変わる手で付けた物は戻れない) */
+const ONCE = new Set(["transmute", "augment", "regal", "alchemy", "essence"]);
+/**
+ * その手の消去で巻き込みうる、前の手で付けた狙い (2026-10-06 オーナー「消去で消す MOD はカオススパムがつらいほどアカン、
+ * 一回付いたら取り直せないやつ」)。取り直せない物は赤、取り直せる物は取り直しの見込み
+ */
+function annulRisk(i: number, set: PatternSet | undefined, step: PatternStep): { text: string; bad: boolean } | null {
+  if (!set || !ctx.value) return null;
+  const c = ctx.value;
+  const sideOfId = (id: string): "prefix" | "suffix" => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  let scope: Array<"prefix" | "suffix"> | null = null;
+  if (set.kind === "annul") {
+    if (set.omens.includes("OmenofLight")) return null; // 光は冒涜の MOD だけ
+    scope = set.omens.includes("OmenofSinistralAnnulment") ? ["prefix"] : set.omens.includes("OmenofDextralAnnulment") ? ["suffix"] : ["prefix", "suffix"];
+  } else if (step.onMiss === "annul_redo" && !noMiss(set) && step.target) {
+    const sd = sideOfId(step.target);
+    scope = props.annulSides?.[sd] === "side" ? [sd] : ["prefix", "suffix"];
+  }
+  if (!scope) return null;
+  const hits = pat.value.steps.slice(0, i).flatMap((q) => {
+    const x = setByKey(sets.value, q.set);
+    if (!x || !q.target || x.kind === "rune" || x.kind === "annul" || !scope!.includes(sideOfId(q.target))) return [];
+    return [{ id: q.target, once: ONCE.has(x.kind) }];
+  });
+  if (!hits.length) return null;
+  const short = (id: string): string => modLabel(id).replace(/\s*T\d+ 以上.*$/, "").slice(0, 16);
+  const m = props.money ?? ((x: number) => x.toFixed(1));
+  const once = hits.filter((h) => h.once);
+  if (once.length) return { text: `消去で ${once.map((h) => short(h.id)).join("・")} を巻き込むと取り直せない`, bad: true };
+  return { text: `消去で巻き込みうる: ${hits.map((h) => `${short(h.id)} (取り直し 約 ${props.redo?.[h.id] != null ? m(props.redo[h.id]!) : "?"})`).join("・")}`, bad: false };
+}
 const s = craftStage;
 const active = ref(0);
 const sets = computed<PatternSet[]>(() => (s.item.value ? patternSets(s.item.value.cls) : []));
@@ -72,6 +108,8 @@ interface Row {
   missOpts: Array<{ rule: MissRule; why: string | null }>;
   /** 今の選び方で打てない理由 (前の手を変えた時に出る) */
   bad: string | null;
+  /** 消去で巻き込みうる物 */
+  risk: { text: string; bad: boolean } | null;
 }
 const rows = computed<Row[]>(() => {
   const c = ctx.value;
@@ -92,7 +130,7 @@ const rows = computed<Row[]>(() => {
     const missOpts = (Object.keys(MISS_JA) as MissRule[]).map((rule) => ({ rule, why: set ? checkMiss(set, rule) : null }));
     const setWhy = set ? checkSet(c, st, set) : "セットを選ぶ";
     const tWhy = step.target ? targetOpts.find((o) => o.key === step.target)?.why ?? null : set && set.kind !== "annul" ? "付ける物を選ぶ" : null;
-    return { step, set, setOpts, targetOpts, missOpts, bad: setWhy ?? tWhy };
+    return { step, set, setOpts, targetOpts, missOpts, bad: setWhy ?? tWhy, risk: annulRisk(i, set, step) };
   });
 });
 
@@ -177,6 +215,7 @@ defineExpose({ rows });
               <option v-for="o in r.targetOpts" :key="o.key" :value="o.key" :disabled="!!o.why" :title="o.why ?? undefined">{{ o.label }}{{ o.why ? ` — ${o.why}` : "" }}</option>
             </select>
             <p v-if="r.bad" class="mt-0.5 text-rose-300">{{ r.bad }}</p>
+            <p v-if="r.risk" class="mt-0.5" :class="r.risk.bad ? 'text-rose-300' : 'text-amber-200/80'">{{ r.risk.text }}</p>
           </td>
           <td class="py-1 pr-1">
             <template v-if="!noMiss(r.set)">
