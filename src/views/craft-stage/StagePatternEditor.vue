@@ -5,7 +5,7 @@
   エッセンス 2 回目とか、選択できずにグレーアウト、理由も」)。決まりは services/craft-stage/pattern.ts
 -->
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
 import { ANY_KINDS, ANY_TARGET, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
@@ -264,7 +264,8 @@ function cardTitle(r: Row): string {
 function cardTitleOf(modId: string): string {
   const full = modLabel(modId);
   const rank = /T(\d+) 以上/.exec(full)?.[1];
-  const name = full.replace(/\s*T\d+ 以上.*$/, "").replace(/[+-]?\(?\d[\d.]*(?:[-—~]\d[\d.]*)?\)?/g, "").replace(/\s*%/g, "").replace(/\s+/g, " ").trim();
+  // 「(27-31)から(39-41)の火ダメージ」の「〜から〜の」も数ごと外す (「からの火ダメージ」になっていた)
+  const name = full.replace(/\s*T\d+ 以上.*$/, "").replace(/[+-]?\(?\d[\d.]*(?:[-—~]\d[\d.]*)?\)?\s*から\s*[+-]?\(?\d[\d.]*(?:[-—~]\d[\d.]*)?\)?\s*の?/g, "").replace(/[+-]?\(?\d[\d.]*(?:[-—~]\d[\d.]*)?\)?/g, "").replace(/\s*%/g, "").replace(/\s+/g, " ").trim();
   return rank ? `${name} T${rank}+` : name;
 }
 /** カードの絵 (打つ物。ルーンの手は差すルーン) */
@@ -280,6 +281,20 @@ const setShort = (x: PatternSet): string => (x.currency ? nameOf(x.currency) : x
  * (オーナー「閉じたら閉じる前に戻ったらいい」「一回一回スクロールしないといけないのがだるい」「最小画面で見てる」)
  */
 const treeEl = ref<HTMLElement | null>(null);
+/**
+ * 開いた時 (パターンを切り替えた時も) は、自分で作る手が見える位置で始める。フラクチャーまでの固定の手は上に送れば見える
+ * (2026-10-07: 手袋だと固定の手 4 つでツリーが埋まり、毎回送らないと自分の手が見えなかった)
+ */
+const ownStart = ref<HTMLElement | null>(null);
+function treeToOwn(): void {
+  void nextTick(() => {
+    const box = treeEl.value, el = ownStart.value;
+    if (!box || !el || box.scrollHeight <= box.clientHeight) return;
+    box.scrollTop += el.getBoundingClientRect().top - box.getBoundingClientRect().top - 8;
+  });
+}
+onMounted(treeToOwn);
+watch(active, treeToOwn);
 /** その手のカードがツリーの中で見えるようにだけ送る (見えていれば動かさない。ページは動かさない) */
 function showInTree(i: number): void {
   void nextTick(() => {
@@ -322,6 +337,14 @@ function partOf(i: number, r: Row): "set" | "target" | "miss" | "done" {
   if (!r.set) return "set";
   return "done";
 }
+/**
+ * その手の付ける側の棚: 打つだけの手はランダムに付く物だけ、それ以外はルーンを出さない (ルーンは付ける物でルーンを選ぶと決まる)。
+ * 使えない物を灰色で並べても選べないだけなので出さない (2026-10-07 オーナー「打つだけの選択時、流れがおかしい」)
+ */
+function addSetsFor(r: Row): PatternSet[] {
+  if (r.step.target === ANY_TARGET) return addSets.value.filter((x) => ANY_KINDS.has(x.kind));
+  return addSets.value.filter((x) => x.kind !== "rune");
+}
 /** 付ける側の棚 (消去は外す側にだけ出す。2026-10-07 オーナー「付ける時は削除の手とか表示しなくてもおｋ」) */
 const addSets = computed(() => sets.value.filter((x) => x.kind !== "annul"));
 /** やり直しを選べる手か (外れがあって、レアリティが変わらない手) */
@@ -344,7 +367,7 @@ function nextPart(i: number): void {
   if (!r) return;
   const now = partOf(i, r);
   if (now === "target" && r.step.target) editPart.value = r.set?.kind === "rune" ? "done" : "set";
-  else if (now === "set" && r.set) editPart.value = hasMiss(r) ? "miss" : "done";
+  else if (now === "set" && r.set && hasMiss(r)) editPart.value = "miss";
   else confirmStep(i);
 }
 /** この手だけ消す (ツリーの位置はそのまま) */
@@ -489,7 +512,7 @@ defineExpose({ rows });
         </template>
         <!-- ここから自分で作る手 -->
         <div v-if="preNodes.length" class="my-2 flex items-center gap-2 text-[10px] text-amber-200/80">
-          <span class="h-px flex-1 bg-amber-400/30"></span>フラクチャー済み · ここから作る<span class="h-px flex-1 bg-amber-400/30"></span>
+          <span class="h-px flex-1 bg-amber-400/30"></span><span ref="ownStart">フラクチャー済み · ここから作る</span><span class="h-px flex-1 bg-amber-400/30"></span>
         </div>
         <div v-else class="w-52 rounded-md border border-white/20 bg-black/40 px-2 py-0.5 opacity-80">始め: 白のベース</div>
         <template v-for="(r, i) in rows" :key="i">
@@ -584,7 +607,7 @@ defineExpose({ rows });
               </div>
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'set'">
-              <StagePatternStepPicker :key="'set' + focusRow" :sets="addSets" :why="whyAddAt(focusRow)" :current="rows[focusRow]!.step.set" inline @pick="(k) => onSet(focusRow!, k)" />
+              <StagePatternStepPicker :key="'set' + focusRow" :sets="addSetsFor(rows[focusRow]!)" :why="whyAddAt(focusRow)" :current="rows[focusRow]!.step.set" inline @pick="(k) => onSet(focusRow!, k)" />
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'miss'">
               <div class="mb-1 flex items-center gap-2">
@@ -632,7 +655,7 @@ defineExpose({ rows });
               <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="focusRow === rows.length - 1" title="下へ" @click="move(focusRow, 1); focusRow = focusRow + 1">▼</button>
             </span>
             <button type="button" class="ml-auto rounded-lg border border-white/20 px-3 py-0.5 hover:bg-white/10" title="閉じる (決めた物はそのまま)" @click="closeFrame()">閉じる</button>
-            <button v-if="partOf(focusRow, rows[focusRow]!) === 'set' || partOf(focusRow, rows[focusRow]!) === 'target'" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="partOf(focusRow, rows[focusRow]!) === 'target' ? !rows[focusRow]!.step.target : !rows[focusRow]!.set" :title="partOf(focusRow, rows[focusRow]!) === 'target' ? '付ける物を選ぶ' : !rows[focusRow]!.set ? 'カレンシーを選ぶ' : undefined" @click="nextPart(focusRow)">次へ →</button>
+            <button v-if="partOf(focusRow, rows[focusRow]!) === 'set' || partOf(focusRow, rows[focusRow]!) === 'target'" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="partOf(focusRow, rows[focusRow]!) === 'target' ? !rows[focusRow]!.step.target : !rows[focusRow]!.set || (!hasMiss(rows[focusRow]!) && !!rows[focusRow]!.bad)" :title="partOf(focusRow, rows[focusRow]!) === 'target' ? '付ける物を選ぶ' : !rows[focusRow]!.set ? 'カレンシーを選ぶ' : rows[focusRow]!.bad ?? undefined" @click="nextPart(focusRow)">{{ partOf(focusRow, rows[focusRow]!) === 'set' && rows[focusRow]!.set && !hasMiss(rows[focusRow]!) ? "この手にする" : "次へ →" }}</button>
             <button v-else type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!!rows[focusRow]!.bad" :title="rows[focusRow]!.bad ?? (focusRow === rows.length - 1 ? '決めて次の手へ' : '決めて閉じる')" @click="confirmStep(focusRow)">この手にする</button>
           </div>
         </template>
