@@ -29,7 +29,7 @@ import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern } from "../../services/craft-stage/pattern";
+import { checkSet, checkTarget, checkRune, noMiss, patternSets, RARITY_CHANGE, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
@@ -175,6 +175,7 @@ function patternProblem(p: Pattern): string | null {
     if (!tg) return `${i + 1} 手目: 付ける物を選ぶ`;
     const tw = x.kind === "rune" ? checkRune(ctx, st, tg) : (() => { const t = s.simTargets.value.find((y) => y.modId === tg); return t ? checkTarget(ctx, st, x, t) : "狙う MOD に無い"; })();
     if (tw) return `${i + 1} 手目: ${tw}`;
+    if (!noMiss(x) && !RARITY_CHANGE.has(x.kind) && !p.steps[i]!.miss) return `${i + 1} 手目: 外れた時のやり直しを選ぶ`;
   }
   return null;
 }
