@@ -64,7 +64,7 @@ function annulRisk(i: number, set: PatternSet | undefined, step: PatternStep): {
   if (!scope) return null;
   const hits = pat.value.steps.slice(0, i).flatMap((q) => {
     const x = setByKey(sets.value, q.set);
-    if (!x || !q.target || x.kind === "rune" || x.kind === "annul" || !scope!.includes(sideOfId(q.target))) return [];
+    if (!x || !q.target || q.target === ANY_TARGET || x.kind === "rune" || x.kind === "annul" || !scope!.includes(sideOfId(q.target))) return [];
     return [{ id: q.target, once: ONCE.has(x.kind) }];
   });
   if (!hits.length) return null;
@@ -444,10 +444,19 @@ function addPattern(copy: boolean): void {
   s.simPatterns.value = [...s.simPatterns.value, { name: `パターン ${n}`, steps: copy ? pat.value.steps.map((x) => ({ ...x })) : [] }];
   active.value = s.simPatterns.value.length - 1;
 }
+/** 名前を付け替えているタブ */
+const renaming = ref<number | null>(null);
+function rename(i: number, name: string): void {
+  if (renaming.value !== i) return;
+  renaming.value = null;
+  const n = name.trim();
+  if (n && n !== s.simPatterns.value[i]?.name) s.simPatterns.value = s.simPatterns.value.map((p, k) => (k === i ? { ...p, name: n } : p));
+}
 function removePattern(): void {
   if (s.simPatterns.value.length <= 1) return;
   const k = Math.min(active.value, s.simPatterns.value.length - 1);
-  s.simPatterns.value = s.simPatterns.value.filter((_, i) => i !== k).map((p, i) => ({ ...p, name: `パターン ${i + 1}` }));
+  // 番号のままの名前だけ振り直す (付けた名前は残す)
+  s.simPatterns.value = s.simPatterns.value.filter((_, i) => i !== k).map((p, i) => (/^パターン \d+$/.test(p.name) ? { ...p, name: `パターン ${i + 1}` } : p));
   active.value = Math.max(0, k - 1);
 }
 defineExpose({ rows });
@@ -457,7 +466,11 @@ defineExpose({ rows });
   <div class="text-[11px]">
     <!-- パターンのタブ -->
     <div class="mb-1.5 flex flex-wrap items-center gap-1">
-      <button v-for="(p, i) in s.simPatterns.value" :key="i" type="button" class="rounded-full px-2.5 py-0.5" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" @click="active = i">{{ p.name }} <span class="opacity-60">({{ p.steps.length }} 手)</span></button>
+      <!-- タブはダブルクリックで名前を付け替える (2026-10-07 オーナー「名前も自分で変えて」。番号だけだと 10 個並ぶと取り違える) -->
+      <template v-for="(p, i) in s.simPatterns.value" :key="i">
+        <input v-if="renaming === i" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="p.name" class="w-40 rounded-full border border-amber-400/60 bg-black/50 px-2.5 py-0.5 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="renaming = null" @blur="rename(i, ($event.target as HTMLInputElement).value)" />
+        <button v-else type="button" class="rounded-full px-2.5 py-0.5" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" title="ダブルクリックで名前を変える" @click="active = i" @dblclick="locked || (renaming = i)">{{ p.name }} <span class="opacity-60">({{ p.steps.length }} 手)</span></button>
+      </template>
       <template v-if="!locked">
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100" title="空のパターンを足す" @click="addPattern(false)">＋</button>
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100" title="このパターンを写して足す (少しだけ変えて比べる時に)" @click="addPattern(true)">⧉</button>
