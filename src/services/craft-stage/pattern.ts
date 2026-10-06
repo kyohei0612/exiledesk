@@ -17,7 +17,7 @@ const ESS = (essenceKeys as unknown as { keys: Record<string, { en: string; ja: 
 export type PatternKind = "transmute" | "augment" | "regal" | "alchemy" | "exalt" | "chaos" | "desecrate" | "essence" | "essence_perfect" | "annul" | "rune";
 /** 外れた時: そのまま次へ / 同じ手をもう一度 / 外れを消去してもう一度 / 最初から (フラクチャー済みのベースから) */
 export type MissRule = "next" | "redo" | "annul_redo" | "restart";
-export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", redo: "同じ手をもう一度", annul_redo: "外れを消去してもう一度", restart: "最初からやり直す" };
+export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", redo: "同じ手をもう一度", annul_redo: "外してもう一度", restart: "最初からやり直す" };
 
 export interface PatternStep {
   /** セットのキー (PatternSet.key) */
@@ -25,6 +25,11 @@ export interface PatternStep {
   /** 付ける物: 狙う MOD の手順 (simTargets の modId) / ルーンの英語名。消去は無し */
   target: string | null;
   onMiss: MissRule;
+  /**
+   * 外す時の打つ物 + お告げ (セットのキー。消去・カオスの物)。「外してもう一度」の時に使う。無ければ自動 (やり直しの費用で素の消去か側のお告げ)。
+   * 2026-10-06 オーナー「付ける時と外す時で分けて、それぞれこのやり方で表示」
+   */
+  miss?: string | null;
 }
 export interface Pattern { name: string; steps: PatternStep[] }
 
@@ -79,6 +84,8 @@ export function patternSets(cls: ItemBase): PatternSet[] {
   out.push(set("rune", "", [], "ルーン"));
   return out;
 }
+/** 外す時に使えるセット (消去・カオス) */
+export const removalSets = (sets: readonly PatternSet[]): PatternSet[] => sets.filter((x) => x.kind === "annul" || x.kind === "chaos");
 export const setByKey = (sets: readonly PatternSet[], key: string): PatternSet | undefined => sets.find((x) => x.key === key);
 
 /** 狙う MOD の手順 (simTargets の 1 つ) */

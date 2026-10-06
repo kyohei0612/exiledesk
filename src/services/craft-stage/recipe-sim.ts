@@ -63,6 +63,8 @@ export interface CompiledStep {
   /** ルーンを差す手の英語名 */
   rune?: string;
   onMiss: MissRule;
+  /** 外す時の打つ物 + お告げ (無ければ自動) */
+  miss?: { currency: string; omens: string[] };
 }
 export interface RecipeSpec {
   /**
@@ -414,7 +416,11 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
       if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; continue; }
-      if (p.onMiss === "annul_redo") {
+      if (p.onMiss === "annul_redo" && p.miss) {
+        // 外す物を手で決めた手 (消去 + お告げ / カオス + 削減 など)。打ってから同じ手をもう一度
+        e = play(p.miss.currency, p.miss.omens);
+        if (e) return fail(`${i + 1} 手目の外し: ${e}`);
+      } else if (p.onMiss === "annul_redo") {
         // 冒涜の外れは光のお告げで冒涜の MOD を消す。ほかは外れのある側 (狙いの側を先に)
         if (p.kind === "desecrate" && allMods(item).some((m) => m.desecrated && !m.unrevealed && !isGood(m))) e = play("annul", ["OmenofLight"]);
         else {

@@ -554,7 +554,8 @@ async function run(): Promise<void> {
       const x = setByKey(sets, st.set);
       if (!x) return [];
       const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
-      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: t, ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss }];
+      const ms = st.miss ? setByKey(sets, st.miss) : undefined;
+      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: t, ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { currency: ms.currency, omens: [...ms.omens] } } : {}) }];
     });
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
     // 回すのはフラクチャー済みから先だけ (2026-10-06 オーナー「白ベースでもフラクチャーまでの平均はほぼ一緒、3 回に 1 回当たる予算で

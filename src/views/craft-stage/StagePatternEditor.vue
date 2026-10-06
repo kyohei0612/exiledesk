@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { checkMiss, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
+import { checkMiss, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import { iconOf } from "../../state/craft-stage";
@@ -44,7 +44,12 @@ function annulRisk(i: number, set: PatternSet | undefined, step: PatternStep): {
     scope = set.omens.includes("OmenofSinistralAnnulment") ? ["prefix"] : set.omens.includes("OmenofDextralAnnulment") ? ["suffix"] : ["prefix", "suffix"];
   } else if (step.onMiss === "annul_redo" && !noMiss(set) && step.target) {
     const sd = sideOfId(step.target);
-    scope = props.annulSides?.[sd] === "side" ? [sd] : ["prefix", "suffix"];
+    const ms = step.miss ? setByKey(sets.value, step.miss) : undefined;
+    if (ms) {
+      if (ms.omens.includes("OmenofLight")) return null;
+      const left = ms.omens.some((o) => /Sinistral/.test(o)), right = ms.omens.some((o) => /Dextral/.test(o));
+      scope = left ? ["prefix"] : right ? ["suffix"] : ["prefix", "suffix"];
+    } else scope = props.annulSides?.[sd] === "side" ? [sd] : ["prefix", "suffix"];
   }
   if (!scope) return null;
   const hits = pat.value.steps.slice(0, i).flatMap((q) => {
@@ -137,12 +142,21 @@ const rows = computed<Row[]>(() => {
 });
 
 /** 打つ物 + お告げを棚の見た目で選んでいる手 (2026-10-06 オーナー「クラフトステージそのまま使っていい」) */
-const openRow = ref<number | null>(null);
+const openRow = ref<string | null>(null);
+const removals = computed(() => removalSets(sets.value));
 /** その手の位置で、セットを打てない理由 */
 function whyAt(i: number): (x: PatternSet) => string | null {
   const c = ctx.value;
   if (!c) return () => null;
   const st = stateBefore(c, pat.value.steps, i);
+  return (x) => checkSet(c, st, x);
+}
+/** 外す時のセット (外す時は付けた後 = レア。付ける手の後の状態で見る) */
+const missSet = (step: PatternStep): PatternSet | undefined => (step.miss ? setByKey(sets.value, step.miss) : undefined);
+function whyMissAt(i: number): (x: PatternSet) => string | null {
+  const c = ctx.value;
+  if (!c) return () => null;
+  const st = { ...stateBefore(c, pat.value.steps, i + 1), rarity: "rare" as const };
   return (x) => checkSet(c, st, x);
 }
 function addStep(): void {
@@ -151,7 +165,7 @@ function addStep(): void {
   const st = stateBefore(c, pat.value.steps, pat.value.steps.length);
   const first = sets.value.find((x) => !checkSet(c, st, x));
   setSteps((list) => [...list, { set: first?.key ?? sets.value[0]?.key ?? "", target: null, onMiss: missFor(first, "annul_redo") }]);
-  openRow.value = pat.value.steps.length - 1;
+  openRow.value = `${pat.value.steps.length - 1}:add`;
 }
 function patch(i: number, p: Partial<PatternStep>): void {
   setSteps((list) => list.map((x, k) => (k === i ? { ...x, ...p } : x)));
@@ -214,11 +228,12 @@ defineExpose({ rows });
           </td>
           <td class="py-1 pr-1">
             <!-- セット (打つ物 + お告げ)。打てない物は理由つきで選べない -->
-            <button type="button" class="flex w-full items-center gap-1 rounded border px-1 py-0.5 text-left disabled:cursor-default" :class="openRow === i ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/15 bg-black/40 hover:border-white/30'" :disabled="locked" :title="locked ? undefined : '押すと棚から選ぶ'" @click="openRow = openRow === i ? null : i">
+            <span class="mb-0.5 block opacity-60">付ける</span>
+            <button type="button" class="flex w-full items-center gap-1 rounded border px-1 py-0.5 text-left disabled:cursor-default" :class="openRow === `${i}:add` ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/15 bg-black/40 hover:border-white/30'" :disabled="locked" :title="locked ? undefined : '押すと棚から選ぶ'" @click="openRow = openRow === `${i}:add` ? null : `${i}:add`">
               <img v-if="r.set?.currency && iconOf(r.set.currency)" :src="iconOf(r.set.currency)" alt="" class="h-5 w-5 object-contain" />
               <img v-for="o in r.set?.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
               <span class="truncate">{{ r.set ? setLabel(r.set) : "選ぶ" }}</span>
-              <span v-if="!locked" class="ml-auto opacity-50">{{ openRow === i ? "▲" : "▼" }}</span>
+              <span v-if="!locked" class="ml-auto opacity-50">{{ openRow === `${i}:add` ? "▲" : "▼" }}</span>
             </button>
           </td>
           <td class="py-1 pr-1">
@@ -237,15 +252,38 @@ defineExpose({ rows });
               <select class="w-44 rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.onMiss" :disabled="locked" @change="patch(i, { onMiss: ($event.target as HTMLSelectElement).value as MissRule })">
                 <option v-for="o in r.missOpts" :key="o.rule" :value="o.rule" :disabled="!!o.why" :title="o.why ?? undefined">{{ MISS_JA[o.rule] }}{{ o.why ? ` — ${o.why}` : "" }}</option>
               </select>
+              <!-- 外す時の打つ物 + お告げ (付ける時と同じ棚で選ぶ。無ければ自動) -->
+              <template v-if="r.step.onMiss === 'annul_redo'">
+                <span class="mb-0.5 mt-1 block opacity-60">外す</span>
+                <span class="flex items-center gap-1">
+                  <button type="button" class="flex min-w-0 flex-1 items-center gap-1 rounded border px-1 py-0.5 text-left disabled:cursor-default" :class="openRow === `${i}:miss` ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/15 bg-black/40 hover:border-white/30'" :disabled="locked" :title="locked ? undefined : '押すと棚から選ぶ'" @click="openRow = openRow === `${i}:miss` ? null : `${i}:miss`">
+                    <template v-if="missSet(r.step)">
+                      <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-5 w-5 object-contain" />
+                      <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
+                      <span class="truncate">{{ setLabel(missSet(r.step)!) }}</span>
+                    </template>
+                    <span v-else class="truncate opacity-70" title="やり直しの費用で、素の消去か側の消去のお告げを決める (冒涜の外れは光)">自動 (やり直しの費用で)</span>
+                    <span v-if="!locked" class="ml-auto opacity-50">{{ openRow === `${i}:miss` ? "▲" : "▼" }}</span>
+                  </button>
+                  <button v-if="r.step.miss && !locked" type="button" class="opacity-50 hover:opacity-100" title="自動に戻す" @click="patch(i, { miss: null })">×</button>
+                </span>
+              </template>
             </template>
           </td>
           <td class="py-1 text-right">
             <button v-if="!locked" type="button" class="opacity-50 hover:text-rose-300 hover:opacity-100" title="この手を消す" @click="remove(i)">×</button>
           </td>
         </tr>
-        <tr v-if="openRow === i && !locked">
+        <tr v-if="openRow === `${i}:add` && !locked">
           <td colspan="5" class="pb-2">
+            <p class="mb-1 font-bold text-amber-100">{{ i + 1 }} 手目: 付ける</p>
             <StagePatternStepPicker :sets="sets" :why="whyAt(i)" :current="r.step.set" @pick="(k) => { onSet(i, k); openRow = null; }" @close="openRow = null" />
+          </td>
+        </tr>
+        <tr v-if="openRow === `${i}:miss` && !locked">
+          <td colspan="5" class="pb-2">
+            <p class="mb-1 font-bold text-amber-100">{{ i + 1 }} 手目: 外れた時に外す</p>
+            <StagePatternStepPicker :sets="removals" :why="whyMissAt(i)" :current="r.step.miss ?? ''" @pick="(k) => { patch(i, { miss: k }); openRow = null; }" @close="openRow = null" />
           </td>
         </tr>
         </template>
