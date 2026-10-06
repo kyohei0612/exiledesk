@@ -5,7 +5,7 @@
   エッセンス 2 回目とか、選択できずにグレーアウト、理由も」)。決まりは services/craft-stage/pattern.ts
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
 import { checkMiss, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
@@ -167,6 +167,18 @@ function addStep(): void {
   setSteps((list) => [...list, { set: first?.key ?? sets.value[0]?.key ?? "", target: null, onMiss: missFor(first, "annul_redo") }]);
   openRow.value = `${pat.value.steps.length - 1}:add`;
 }
+/**
+ * 1 手が決まったら (打つ物 + 付ける物が揃って打てる)、それが最後の手なら下に次の手を足して棚を開く
+ * (2026-10-06 オーナー「1 手決まって進むと下に手を追加しよう」)
+ */
+function nextIfDone(i: number): void {
+  void nextTick(() => {
+    const r = rows.value[i];
+    if (!r || r.bad || i !== rows.value.length - 1) return;
+    if (r.set?.kind !== "annul" && !r.step.target) return;
+    addStep();
+  });
+}
 function patch(i: number, p: Partial<PatternStep>): void {
   setSteps((list) => list.map((x, k) => (k === i ? { ...x, ...p } : x)));
 }
@@ -239,7 +251,7 @@ defineExpose({ rows });
           <td class="py-1 pr-1">
             <!-- 付ける物 (5 順番計画の順)。付けられない物は理由つきで選べない -->
             <span v-if="r.set?.kind === 'annul'" class="opacity-50">(消す物は選べない。外れを消す手)</span>
-            <select v-else class="w-full rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.target ?? ''" :disabled="locked" @change="patch(i, { target: ($event.target as HTMLSelectElement).value || null })">
+            <select v-else class="w-full rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.target ?? ''" :disabled="locked" @change="patch(i, { target: ($event.target as HTMLSelectElement).value || null }); nextIfDone(i)">
               <option value="" disabled>{{ r.set?.kind === "rune" ? "差すルーンを選ぶ" : "付ける MOD を選ぶ" }}</option>
               <option v-for="o in r.targetOpts" :key="o.key" :value="o.key" :disabled="!!o.why" :title="o.why ?? undefined">{{ o.label }}{{ o.why ? ` — ${o.why}` : "" }}</option>
             </select>
@@ -277,7 +289,7 @@ defineExpose({ rows });
         <tr v-if="openRow === `${i}:add` && !locked">
           <td colspan="5" class="pb-2">
             <p class="mb-1 font-bold text-amber-100">{{ i + 1 }} 手目: 付ける</p>
-            <StagePatternStepPicker :sets="sets" :why="whyAt(i)" :current="r.step.set" @pick="(k) => { onSet(i, k); openRow = null; }" @close="openRow = null" />
+            <StagePatternStepPicker :sets="sets" :why="whyAt(i)" :current="r.step.set" @pick="(k) => { onSet(i, k); openRow = null; nextIfDone(i); }" @close="openRow = null" />
           </td>
         </tr>
         <tr v-if="openRow === `${i}:miss` && !locked">
