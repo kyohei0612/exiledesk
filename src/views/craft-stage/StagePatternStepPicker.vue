@@ -17,6 +17,10 @@ const props = defineProps<{
   why: (x: PatternSet) => string | null;
   /** 今のセット */
   current: string;
+  /** 灰色 (今は打てない) の物も押せる (2026-10-07 オーナー「グレーアウトはオフではなく別に選択できはする」) */
+  soft?: boolean;
+  /** 押したらすぐ決まる (下の「これにする」を出さない) */
+  inline?: boolean;
 }>();
 const emit = defineEmits<{ pick: [key: string]; close: [] }>();
 
@@ -64,18 +68,30 @@ function omenWhy(o: string): string | null {
   const next = omens.value.includes(o) ? omens.value.filter((x) => x !== o) : [...omens.value, o];
   const x = setsOf(chosen.value).find((y) => same(y.omens, next));
   if (!x) return "今のお告げと一緒に使えない";
-  return omens.value.includes(o) ? null : props.why(x);
+  return omens.value.includes(o) || props.soft ? null : props.why(x);
+}
+/** 灰色にする理由 (soft の時も見た目は灰色、押せる) */
+function omenDim(o: string): string | null {
+  const next = omens.value.includes(o) ? omens.value.filter((x) => x !== o) : [...omens.value, o];
+  const x = setsOf(chosen.value).find((y) => same(y.omens, next));
+  return x && !omens.value.includes(o) ? props.why(x) : null;
+}
+/** inline の時は選んだ組み合わせをすぐ渡す */
+function emitInline(): void {
+  if (props.inline && match.value) emit("pick", match.value.key);
 }
 function pickTile(t: Tile): void {
-  if (tileWhy(t)) return;
+  if (tileWhy(t) && !props.soft) return;
   chosen.value = t.id;
   // お告げは今の物のうち、その打つ物でも使える物だけ残す (組み合わせが無ければ外す)
   const keep = omens.value.filter((o) => setsOf(t.id).some((x) => x.omens.includes(o)));
   omens.value = setsOf(t.id).some((x) => same(x.omens, keep)) ? keep : [];
+  emitInline();
 }
 function toggleOmen(o: string): void {
   if (omenWhy(o)) return;
   omens.value = omens.value.includes(o) ? omens.value.filter((x) => x !== o) : [...omens.value, o];
+  emitInline();
 }
 function decide(): void {
   if (match.value && !props.why(match.value)) emit("pick", match.value.key);
@@ -90,7 +106,7 @@ function decide(): void {
         <button
           v-for="t in r.tiles" :key="t.id" type="button"
           class="relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition"
-          :class="[chosen === t.id ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30', tileWhy(t) ? 'cursor-not-allowed opacity-35' : '']"
+          :class="[chosen === t.id ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30', tileWhy(t) ? (soft ? 'opacity-45' : 'cursor-not-allowed opacity-35') : (soft ? 'shadow-[0_0_10px_rgba(251,191,36,0.35)]' : '')]"
           :title="tileWhy(t) ?? undefined" @click="pickTile(t)"
         >
           <img v-if="t.icon" :src="t.icon" alt="" class="h-9 w-9 object-contain" draggable="false" />
@@ -107,8 +123,8 @@ function decide(): void {
         <button
           v-for="o in omenChoices" :key="o" type="button"
           class="relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition"
-          :class="[omens.includes(o) ? 'stage-omen-on border-orange-300' : 'border-white/10 bg-black/30 hover:border-white/30', omenWhy(o) ? 'cursor-not-allowed opacity-35' : '']"
-          :title="omenWhy(o) ?? undefined" @click="toggleOmen(o)"
+          :class="[omens.includes(o) ? 'stage-omen-on border-orange-300' : 'border-white/10 bg-black/30 hover:border-white/30', omenWhy(o) ? 'cursor-not-allowed opacity-35' : omenDim(o) ? 'opacity-45' : '']"
+          :title="omenWhy(o) ?? omenDim(o) ?? undefined" @click="toggleOmen(o)"
         >
           <img v-if="iconOf(o)" :src="iconOf(o)" alt="" class="h-9 w-9 object-contain" draggable="false" />
           <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
@@ -118,7 +134,7 @@ function decide(): void {
         </button>
       </div>
     </div>
-    <div class="flex items-center gap-2">
+    <div v-if="!inline" class="flex items-center gap-2">
       <span v-if="match && why(match)" class="text-rose-300">{{ why(match) }}</span>
       <button type="button" class="ml-auto rounded border border-white/20 px-2 py-0.5 hover:bg-white/10" @click="emit('close')">閉じる</button>
       <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!match || !!why(match)" @click="decide">これにする</button>

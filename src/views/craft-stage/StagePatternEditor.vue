@@ -222,7 +222,7 @@ function addStep(): void {
   if (!c) return;
   const st = stateBefore(c, pat.value.steps, pat.value.steps.length);
   const first = sets.value.find((x) => !checkSet(c, st, x));
-  setSteps((list) => [...list, { set: first?.key ?? sets.value[0]?.key ?? "", target: null, onMiss: missFor(first, "annul_redo") }]);
+  setSteps((list) => [...list, { set: first?.key ?? sets.value[0]?.key ?? "", target: null, onMiss: "annul_redo" }]);
   openRow.value = `${pat.value.steps.length - 1}:add`;
   focusRow.value = pat.value.steps.length - 1;
 }
@@ -351,27 +351,6 @@ defineExpose({ rows });
                 <option v-for="o in r.targetOpts" :key="o.key" :value="o.key" :disabled="!!o.why" :title="o.why ?? undefined">{{ o.label }}{{ o.why ? ` — ${o.why}` : "" }}</option>
               </select>
             </label>
-            <label v-if="!noMiss(r.set)" class="flex w-40 flex-col gap-0.5">
-              <span class="opacity-60">外れたら</span>
-              <select class="rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.onMiss" @change="patch(i, { onMiss: ($event.target as HTMLSelectElement).value as MissRule })">
-                <option v-for="o in r.missOpts" :key="o.rule" :value="o.rule" :disabled="!!o.why" :title="o.why ?? undefined">{{ MISS_JA[o.rule] }}{{ o.why ? ` — ${o.why}` : "" }}</option>
-              </select>
-            </label>
-            <label v-if="!noMiss(r.set) && r.step.onMiss === 'annul_redo'" class="flex w-48 flex-col gap-0.5">
-              <span class="opacity-60">外す</span>
-              <span class="flex items-center gap-1">
-                <button type="button" class="flex min-w-0 flex-1 items-center gap-1 rounded border px-1 py-0.5 text-left" :class="openRow === `${i}:miss` ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/15 bg-black/40 hover:border-white/30'" @click="openRow = openRow === `${i}:miss` ? null : `${i}:miss`">
-                  <template v-if="missSet(r.step)">
-                    <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-5 w-5 object-contain" />
-                    <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
-                    <span class="truncate">{{ setLabel(missSet(r.step)!) }}</span>
-                  </template>
-                  <span v-else class="truncate opacity-70" title="やり直しの費用で、素の消去か側の消去のお告げを決める (冒涜の外れは光)">自動</span>
-                  <span class="ml-auto opacity-50">{{ openRow === `${i}:miss` ? "▲" : "▼" }}</span>
-                </button>
-                <button v-if="r.step.miss" type="button" class="opacity-50 hover:opacity-100" title="自動に戻す" @click="patch(i, { miss: null })">×</button>
-              </span>
-            </label>
             <span class="flex items-center gap-1">
               <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="move(i, -1); focusRow = i - 1">▲</button>
               <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === rows.length - 1" title="下へ" @click="move(i, 1); focusRow = i + 1">▼</button>
@@ -379,16 +358,24 @@ defineExpose({ rows });
             </span>
           </div>
           <p v-if="r.risk" class="mt-1" :class="r.risk.bad ? 'text-rose-300' : 'text-amber-200/80'">{{ r.risk.text }}</p>
-          <div class="mt-1.5 flex items-center gap-2">
-            <span v-if="r.bad" class="text-rose-300">{{ r.bad }}</span>
-            <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!!r.bad" :title="r.bad ?? (i === rows.length - 1 ? '決めて次の手へ' : '決めて閉じる')" @click="confirmStep(i)">この手にする</button>
-          </div>
           <div v-if="openRow === `${i}:add`" class="mt-1.5">
             <StagePatternStepPicker :sets="sets" :why="whyAt(i)" :current="r.step.set" @pick="(k) => { onSet(i, k); openRow = null; }" @close="openRow = null" />
           </div>
-          <div v-if="openRow === `${i}:miss`" class="mt-1.5">
-            <p class="mb-1 font-bold text-rose-200">外れた時に外す</p>
-            <StagePatternStepPicker :sets="removals" :why="whyMissAt(i)" :current="r.step.miss ?? ''" @pick="(k) => { patch(i, { miss: k }); openRow = null; }" @close="openRow = null" />
+          <!--
+            外れたら = やり直し (2026-10-07 オーナー「外れの挙動キモい、シンプルで。外れたらは "やり直し" ひとつ、選んだら下にやり直しのカレンシーを置く。
+            使う物は光って、グレーアウトの物も選択はできる」)。何も選ばなければ自動 (やり直しの費用で素の消去か側のお告げ、冒涜の外れは光)
+          -->
+          <div v-if="!noMiss(r.set)" class="mt-1.5 rounded border border-rose-400/30 bg-rose-950/20 p-1.5">
+            <p class="mb-1 flex items-center gap-2">
+              <span class="font-bold text-rose-200">外れたら やり直し</span>
+              <span class="opacity-60">{{ missSet(r.step) ? "このカレンシーで外して、もう一度" : "選ばなければ自動 (やり直しの費用で消去を選ぶ)" }}</span>
+              <button v-if="r.step.miss" type="button" class="ml-auto rounded border border-white/15 px-1.5 opacity-60 hover:opacity-100" @click="patch(i, { miss: null })">自動に戻す</button>
+            </p>
+            <StagePatternStepPicker :sets="removals" :why="whyMissAt(i)" :current="r.step.miss ?? ''" soft inline @pick="(k) => patch(i, { miss: k, onMiss: 'annul_redo' })" />
+          </div>
+          <div class="mt-1.5 flex items-center gap-2">
+            <span v-if="r.bad" class="text-rose-300">{{ r.bad }}</span>
+            <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!!r.bad" :title="r.bad ?? (i === rows.length - 1 ? '決めて次の手へ' : '決めて閉じる')" @click="confirmStep(i)">この手にする</button>
           </div>
         </div>
       </template>
