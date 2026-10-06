@@ -167,7 +167,7 @@ function patternProblem(p: Pattern): string | null {
   for (let i = 0; i < p.steps.length; i++) {
     const st = stateBefore(ctx, p.steps, i);
     const x = setByKey(sets, p.steps[i]!.set);
-    if (!x) return `${i + 1} 手目: セットを選ぶ`;
+    if (!x) return `${i + 1} 手目: カレンシーを選ぶ`;
     const w = checkSet(ctx, st, x);
     if (w) return `${i + 1} 手目: ${w}`;
     const tg = p.steps[i]!.target;
@@ -641,6 +641,15 @@ onMounted(() => {
   void nextTick(() => { patternDone.value = !!ses.flags.patternDone; restoring = false; });
 });
 const step4pre = computed(() => stepOrder.value && orderDone.value);
+/** 6 パターンの「付ける MOD」の行に出す物 (5 順番計画の行と同じ: 側・色・段・付け方・取り直し) */
+const orderInfo = computed(() => Object.fromEntries(orderKeys.value.map((k) => {
+  const r = orderRow(k);
+  if (!r) return [k, { side: "ルーン", tone: "text-amber-100", text: runeJa(k), rank: "", how: "", redo: "" }];
+  const rd = redoOf.value.get(r.modId);
+  return [k, { side: r.side, tone: r.tone, text: r.text, rank: r.rank, how: METHOD_JA[r.method], redo: rd ? `取り直し 約 ${money(rd.expected)}` : "" }];
+})));
+/** 2〜5 を 1 行に畳む (6 パターンを作る間) */
+const fold = ref(true);
 const step4 = computed(() => step4pre.value && patternDone.value);
 watch(orderDone, (v) => { if (!v) patternDone.value = false; });
 watch(() => rows.value.length, (n) => { if (n === 0) { modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
@@ -806,8 +815,16 @@ function replay(): void {
     </Teleport>
     <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
+    <!--
+      2〜5 は決めた後 (6 パターンを作る間) は 1 行に畳む。押すと開く (2026-10-07 オーナー採用の 2 枠の作業場。最小の窓 1660×860 で 6 が収まるように)
+    -->
+    <div v-if="socketsOk && step4pre" class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px]">
+      <b class="text-[12px] text-amber-100">2〜5</b>
+      <span class="truncate opacity-80">狙い {{ s.simTargets.value.length }} 個<template v-if="routes.best"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
+      <button type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="fold = !fold">{{ fold ? "開く ▼" : "畳む ▲" }}</button>
+    </div>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
-    <template v-if="socketsOk">
+    <template v-if="socketsOk && !(step4pre && fold)">
       <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->
       <div class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
         <p class="mb-1.5 flex items-center gap-2 text-[11px]">
@@ -959,7 +976,7 @@ function replay(): void {
           <span class="opacity-60">{{ fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
-        <StagePatternEditor :start="patternStart" :order="orderKeys" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
+        <StagePatternEditor :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
         <div v-if="!patternDone" class="mt-1 flex items-center gap-2">
           <span v-if="blocked" class="ml-auto text-[11px] text-amber-200/80">{{ blocked }}</span>
           <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="blocked ? '' : 'ml-auto'" :disabled="!!blocked" :title="blocked ?? undefined" @click="patternDone = true">決めた →</button>

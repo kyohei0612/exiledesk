@@ -87,7 +87,7 @@ function omenDim(o: string): string | null {
 }
 /** inline の時は選んだ組み合わせをすぐ渡す */
 function emitInline(): void {
-  if (props.inline && match.value) emit("pick", match.value.key);
+  if (props.inline && match.value && (props.soft || !props.why(match.value))) emit("pick", match.value.key);
 }
 function pickTile(t: Tile): void {
   if (tileWhy(t) && !props.soft) return;
@@ -108,37 +108,37 @@ function decide(): void {
 </script>
 
 <template>
-  <div class="rounded-lg border border-amber-400/40 bg-black/60 p-2 text-[11px]">
-    <div v-for="r in rows" :key="r.name" class="mb-1.5">
-      <p class="mb-0.5 opacity-60">{{ r.name }}</p>
+  <div class="text-[11px]">
+    <div v-for="r in rows" :key="r.name" class="mb-1 flex gap-2">
+      <p class="w-24 shrink-0 pt-1 leading-tight opacity-60">{{ r.name }}</p>
       <div class="flex flex-wrap gap-1">
         <button
           v-for="t in r.tiles" :key="t.id" type="button"
-          class="relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition"
+          class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition"
           :class="[chosen === t.id ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30', tileWhy(t) ? (soft ? 'opacity-45' : 'cursor-not-allowed opacity-35') : (soft ? 'shadow-[0_0_10px_rgba(251,191,36,0.35)]' : '')]"
-          :title="tileWhy(t) ?? undefined" @click="pickTile(t)"
+          :title="tileWhy(t) ?? t.label" @click="pickTile(t)"
         >
-          <img v-if="t.icon" :src="t.icon" alt="" class="h-9 w-9 object-contain" draggable="false" />
-          <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
-          <span class="mt-0.5 line-clamp-2 min-h-[2.5em] text-center leading-tight">{{ t.label }}</span>
+          <img v-if="t.icon" :src="t.icon" alt="" class="h-7 w-7 object-contain" draggable="false" />
+          <span v-else class="grid h-7 w-7 place-items-center rounded bg-white/10 text-[14px]">◎</span>
+          <span class="w-full truncate text-center leading-tight">{{ t.label }}</span>
           <span v-if="t.badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-sky-300">{{ t.badge }}</span>
           <span v-if="t.side" class="absolute left-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-amber-200">{{ t.side }}</span>
           <span v-if="t.price" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(t.price) }}</span>
         </button>
       </div>
     </div>
-    <div v-if="omenChoices.length" class="mb-1.5">
-      <p class="mb-0.5 opacity-60">お告げ (押して入れ切り)</p>
+    <div v-if="omenChoices.length" class="mb-1 flex gap-2">
+      <p class="w-24 shrink-0 pt-1 leading-tight opacity-60">お告げ<br />(押して入れ切り)</p>
       <div class="flex flex-wrap gap-1">
         <button
           v-for="o in omenChoices" :key="o" type="button"
-          class="relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition"
+          class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition"
           :class="[omens.includes(o) ? 'stage-omen-on border-orange-300' : 'border-white/10 bg-black/30 hover:border-white/30', omenWhy(o) ? 'cursor-not-allowed opacity-35' : omenDim(o) ? 'opacity-45' : '']"
-          :title="omenWhy(o) ?? omenDim(o) ?? undefined" @click="toggleOmen(o)"
+          :title="omenWhy(o) ?? omenDim(o) ?? jaOfOmen(o) ?? o" @click="toggleOmen(o)"
         >
-          <img v-if="iconOf(o)" :src="iconOf(o)" alt="" class="h-9 w-9 object-contain" draggable="false" />
-          <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
-          <span class="mt-0.5 line-clamp-2 min-h-[2.5em] text-center leading-tight">{{ jaOfOmen(o) ?? o }}</span>
+          <img v-if="iconOf(o)" :src="iconOf(o)" alt="" class="h-7 w-7 object-contain" draggable="false" />
+          <span v-else class="grid h-7 w-7 place-items-center rounded bg-white/10 text-[14px]">◎</span>
+          <span class="w-full truncate text-center leading-tight">{{ jaOfOmen(o) ?? o }}</span>
           <span v-if="omens.includes(o)" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] font-bold text-white">有効</span>
           <span v-if="priceOf(o)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(o)) }}</span>
         </button>
@@ -146,8 +146,7 @@ function decide(): void {
     </div>
     <div v-if="!inline" class="flex items-center gap-2">
       <span v-if="match && why(match)" class="text-rose-300">{{ why(match) }}</span>
-      <button type="button" class="ml-auto rounded border border-white/20 px-2 py-0.5 hover:bg-white/10" @click="emit('close')">閉じる</button>
-      <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!match || !!why(match)" @click="decide">これにする</button>
+      <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!match || !!why(match)" @click="decide">これにする</button>
     </div>
   </div>
 </template>
