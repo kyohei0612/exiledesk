@@ -382,6 +382,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   function runPattern(pat: readonly CompiledStep[]): RecipeRun {
     const startItem = item, startCost = cost;
     let preRunes = new Set(runes);
+    /** 消えた狙いを取り直す時の手 (元の手の番号 → 替えた手) */
+    const regain = new Map<number, CompiledStep>();
     const count = (t: RecipeTarget): number => new Set(allMods(item).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size;
     let i = 0;
     while (steps.length < max) {
@@ -390,9 +392,17 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 戻れるのはもう一度打てる手だけ (変成・増強・王者・錬金はレアリティが変わるので戻れない。その時は最後まで行って揃わなければ失敗)
       const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
       const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && !meets(item, q.target));
-      if (lost >= 0) i = lost;
+      if (lost >= 0) {
+        i = lost;
+        // 消えた狙いをカオスの手で取り直すと、付いている他の狙いもランダムに消してしまう (2026-10-07 手袋の比べで 9 割が止まった)。
+        // 取り直しは完全高貴 + その側のお告げ (外れは普通の消去) に替える。オーナー「完全高貴スパム、削減は消える可能性があるので使わない」
+        const q = pat[lost]!;
+        if (q.kind === "chaos" && q.target && !regain.has(lost)) {
+          regain.set(lost, { kind: "exalt", currency: "exalt_perfect", omens: [SIDE_OMEN.exalt[sideOf(q.target.modId)]], target: q.target, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] } });
+        }
+      }
       if (i >= pat.length) return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases };
-      const p = pat[i]!;
+      const p = regain.get(i) ?? pat[i]!;
       const before = p.target ? count(p.target) : 0;
       let e: string | null = null;
       // 始めから差さっているルーン (固定する MOD に要る物) の手は打たずに次へ
@@ -419,7 +429,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       if (!p.target || count(p.target) > before || meets(item, p.target)) { i++; continue; }
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
-      if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); continue; }
+      if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); continue; }
       if (p.onMiss === "annul_redo" && p.miss) {
         // 外す物を手で決めた手 (消去 + お告げ / カオス + 削減 / パーフェクトエッセンス + 結晶化 / 骨 + ネクロマンシー)。打ってから同じ手をもう一度
         if (p.miss.kind === "essence_perfect") {
