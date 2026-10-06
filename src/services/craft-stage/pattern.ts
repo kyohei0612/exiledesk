@@ -207,7 +207,7 @@ export const runeEnForId = (runeId: string): string | null => runeEnOf(null as u
 /** 外れた時の決まりを選べない理由 (選べれば null) */
 export function checkMiss(s: PatternSet, rule: MissRule): string | null {
   if (rule === "redo" && s.kind === "desecrate") return "冒涜の MOD は 1 つまで (消さないともう一度打てない)";
-  if (rule === "redo" && (s.kind === "transmute" || s.kind === "regal" || s.kind === "alchemy")) return "レアリティが変わるのでもう一度は打てない";
+  if ((rule === "redo" || rule === "annul_redo") && (s.kind === "transmute" || s.kind === "regal" || s.kind === "alchemy")) return "レアリティが変わるのでもう一度は打てない (次の手で直す)";
   return null;
 }
 /** 外れが無い手 (付ける物が必ず付く / 付ける物が無い) */

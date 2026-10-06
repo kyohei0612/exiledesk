@@ -12,6 +12,7 @@
  *     layout=clip で撮影用のすっきりレイアウト)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
+import type { Pattern } from "../services/craft-stage/pattern";
 import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../services/htc/patch";
@@ -167,6 +168,13 @@ const simSockets = ref<number | null>(null);
 const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }>>([]);
 /** ② のこの手順 (本体の modId) の「あるいは」を選ぶポップアップを開いている ([[StageFracturePicker.vue]] の altFor) */
 const simAltFor = ref<string | null>(null);
+/**
+ * 5 順番計画 (2026-10-06 オーナー「5 番は指標、順番計画みたいな欄のタイトルで今後には影響しない。付ける MOD を選ぶ時のプルダウンの順番をこれどおりに」
+ * 「ルーンとかも付けていく順番を考えないといけないから順に表示」)。並びのキー: "mod:<modId>" / "rune:<英語名>"
+ */
+const simOrder = ref<string[]>([]);
+/** 6 パターン (pattern.ts)。回すのはこの手の通り */
+const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [] }]);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
@@ -183,7 +191,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simOrder, simPatterns,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

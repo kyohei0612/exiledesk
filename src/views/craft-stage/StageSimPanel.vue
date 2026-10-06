@@ -28,7 +28,10 @@ import PriceInput from "../../components/PriceInput.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
-import { socketCapOf } from "../../services/craft-stage/stage-runes";
+import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
+import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern } from "../../services/craft-stage/pattern";
+import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
+import StagePatternEditor from "./StagePatternEditor.vue";
 
 const s = craftStage;
 /** 回す回数は 1000 で固定 (2026-10-06 オーナー「回すの 1000 やな」。前は 500 / 1000 / 3000 から選べた) */
@@ -36,14 +39,6 @@ const runs = ref<number>(1000);
 
 /** 付け方の名前 (2026-10-05 オーナー「カオスはカオススパム、高貴はガチャなので高貴ガチャ」) */
 const METHOD_JA: Record<RecipeMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス", fracture: "フラクチャー" };
-/** 選んでいる付け方の色 (2 狙う MOD の予定と同じ: 高貴ガチャ 黄 / フラクチャー 橙 / 冒涜 深緑) */
-const METHOD_ON: Record<RecipeMethod, string> = {
-  exalt: "bg-yellow-500/20 text-yellow-100 ring-1 ring-yellow-400/70",
-  chaos: "bg-yellow-500/20 text-yellow-100 ring-1 ring-yellow-400/70",
-  desecrate: "bg-green-800/40 text-green-300 ring-1 ring-green-600",
-  essence: "bg-sky-500/20 text-sky-100 ring-1 ring-sky-400/60",
-  fracture: "bg-orange-500/20 text-orange-100 ring-1 ring-orange-400/70",
-};
 /** その MOD に使える付け方 (最初が既定) */
 function methodsFor(modId: string): RecipeMethod[] {
   const m = s.data.value?.mods.get(modId);
@@ -82,27 +77,76 @@ const rows = computed(() => {
 });
 /** 狙いの全部の MOD の印 (段も、どれかの候補も) */
 const targetsSig = (): string => s.simTargets.value.map((t) => `${t.modId}:${t.minTierIndex}${t.need && t.need > 1 ? `x${t.need}` : ""}${(t.alts ?? []).map((a) => `|${a.modId}:${a.minTierIndex}`).join("")}`).join(",");
-/** ② の中で 1 つ上 / 下へ (① の候補は飛ばす) */
-function move(modId: string, d: -1 | 1): void {
-  const list = [...s.simTargets.value];
-  const i = list.findIndex((t) => t.modId === modId);
-  let j = i + d;
-  while (j >= 0 && j < list.length && list[j]!.method === "fracture") j += d;
-  if (i < 0 || j < 0 || j >= list.length) return;
-  [list[i], list[j]] = [list[j]!, list[i]!];
-  s.simTargets.value = list;
-}
 /** ③ 付ける順番 (フラクチャー以外、上から順) */
 const restRows = computed(() => rows.value.filter((r) => r.method !== "fracture"));
 /**
- * 付け方を変える。フラクチャーはいくつでも選べる = 始める MOD の候補 (同じ側。どれか 1 つが付いたら進み、どれが固定されても良い)。
- * 2026-10-05 オーナー「始める MOD 選んでもらって、どれか付いたら始めれる。選んだ個数によってそれぞれ付きやすさがあるから計算して」
- * 「フラクチャー品だから選ぶ MOD は複数でも同じ側。違う側同士は作り方も完成図も変わる」。フラクチャーの物は一番上へ (最初に作る物)
+ * 5 順番計画の並び (2026-10-06 オーナー「5 番は指標、順番計画。付ける MOD を選ぶ時のプルダウンの順番をこれどおりに」
+ * 「ルーンとかも付けていく順番を考えないといけないから順に表示」)。狙う MOD (フラクチャー以外) + 狙いのルーンの MOD に要るルーン + 足したルーン。
+ * 並びは simOrder (無い物は後ろに)
  */
-function setMethod(modId: string, method: RecipeMethod): void {
-  let list = s.simTargets.value.map((t) => (t.modId === modId ? { ...t, method } : t));
-  if (method === "fracture") list = [...list.filter((t) => t.method === "fracture"), ...list.filter((t) => t.method !== "fracture")];
-  s.simTargets.value = list;
+const runeNeeded = computed(() => {
+  const out = new Set<string>();
+  for (const t of s.simTargets.value) for (const x of [t, ...(t.alts ?? [])]) {
+    const r = s.data.value?.mods.get(x.modId)?.rune;
+    const en = r ? runeEnForId(r) : null;
+    if (en) out.add(`rune:${en}`);
+  }
+  return out;
+});
+const orderKeys = computed(() => {
+  const all = [...new Set([...restRows.value.map((r) => `mod:${r.modId}`), ...runeNeeded.value, ...s.simOrder.value.filter((k) => k.startsWith("rune:"))])];
+  const pos = (k: string): number => { const i = s.simOrder.value.indexOf(k); return i < 0 ? 1e6 + all.indexOf(k) : i; };
+  return all.sort((a, b) => pos(a) - pos(b));
+});
+function moveOrder(k: string, d: -1 | 1): void {
+  const list = [...orderKeys.value];
+  const i = list.indexOf(k), j = i + d;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j]!, list[i]!];
+  s.simOrder.value = list;
+}
+function addRune(en: string): void {
+  if (en) s.simOrder.value = [...orderKeys.value, `rune:${en}`];
+}
+const removeRune = (k: string): void => { s.simOrder.value = orderKeys.value.filter((x) => x !== k); };
+/** 順番計画に足せるルーン (このベースに効く物。段 → 名前の順) */
+const runeChoices = computed(() => {
+  const it = s.item.value;
+  if (!it) return [];
+  const TIER = ["lesser", "normal", "greater", "perfect", "special"];
+  return Object.entries(RUNES)
+    .filter(([en, r]) => r.available !== false && !!runeEffectFor(r, it.cls.category) && !orderKeys.value.includes(`rune:${en}`))
+    .sort(([, a], [, b]) => TIER.indexOf(a.tier ?? "") - TIER.indexOf(b.tier ?? "") || a.ja.localeCompare(b.ja, "ja"))
+    .map(([en, r]) => ({ en, ja: r.ja }));
+});
+const orderRow = (k: string) => restRows.value.find((r) => `mod:${r.modId}` === k);
+const runeJa = (k: string): string => RUNES[k.slice(5)]?.ja ?? k.slice(5);
+
+/** 6 パターンの始めの状態 (フラクチャー済みのレアか白) */
+const patternStart = computed<CheckCtx["start"]>(() => ({
+  rarity: fractureRow.value ? "rare" : "normal",
+  fracturedSide: fractureRow.value ? (fractureRow.value.side === "サフィ" ? "suffix" : "prefix") : null,
+  sockets: socketCount.value,
+}));
+/** パターンの打てない手 (回す前に止める。最初の 1 つ) */
+function patternProblem(p: Pattern): string | null {
+  const d = s.data.value, it = s.item.value;
+  if (!d || !it) return null;
+  const sets = patternSets(it.cls);
+  const ctx: CheckCtx = { data: d, cls: it.cls, targets: s.simTargets.value, sets, runeJa: (en) => RUNES[en]?.ja ?? en, start: patternStart.value };
+  for (let i = 0; i < p.steps.length; i++) {
+    const st = stateBefore(ctx, p.steps, i);
+    const x = setByKey(sets, p.steps[i]!.set);
+    if (!x) return `${i + 1} 手目: セットを選ぶ`;
+    const w = checkSet(ctx, st, x);
+    if (w) return `${i + 1} 手目: ${w}`;
+    const tg = p.steps[i]!.target;
+    if (x.kind === "annul") continue;
+    if (!tg) return `${i + 1} 手目: 付ける物を選ぶ`;
+    const tw = x.kind === "rune" ? checkRune(ctx, st, tg) : (() => { const t = s.simTargets.value.find((y) => y.modId === tg); return t ? checkTarget(ctx, st, x, t) : "狙う MOD に無い"; })();
+    if (tw) return `${i + 1} 手目: ${tw}`;
+  }
+  return null;
 }
 
 /** フラクチャーの狙いの始め方。付いた状態のベースの値段は手で (神) */
@@ -425,12 +469,25 @@ const error = ref("");
 const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
 /** フラクチャー済みから残りを作る費用 (ベース代 0 で回した平均)。買う側の比べに足す */
 const restCost = ref<number | null>(null);
+/** パターンごとの結果 (回した後)。見ている物を recipeOut / restCost に出す */
+const results = ref<Array<{ name: string; out: { r: RecipeResult; spec: RecipeSpec }; rest: number | null }>>([]);
+const shown = ref(0);
+function showResult(i: number): void {
+  const x = results.value[i];
+  if (!x) return;
+  shown.value = i;
+  recipeOut.value = x.out;
+  restCost.value = x.rest;
+}
 const ranFor = ref("");
-const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|s${socketCount.value}|${s.itemLevel.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => methodOf(t)).join(",")}|${targetsSig()}`);
+const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|s${socketCount.value}|${s.itemLevel.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => methodOf(t)).join(",")}|${targetsSig()}|${JSON.stringify(s.simPatterns.value)}`);
 let gen = 0;
 
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
+  const ps = s.simPatterns.value.filter((p) => p.steps.length);
+  if (!ps.length) return "6 パターンに手がありません";
+  for (const p of ps) { const w = patternProblem(p); if (w) return `${p.name} の ${w}`; }
   return null;
 });
 
@@ -455,18 +512,34 @@ async function run(): Promise<void> {
       whiteBasePrice: (num(whiteDivine.value) ?? 0) * divine, sockets: socketCount.value,
       ...(fractureRow.value ? { fractureStart: makeSpec.value } : {}),
     };
-    // 白から作る + (フラクチャーがあれば) 固定済みから残りを作る (ベース代 0) の 2 本。始め方の比べに使う
-    const total = runs.value * (fractureRow.value ? 2 : 1);
-    const r = await runRecipe(spec, (done) => { if (my === gen) progress.value = [done, total]; }, () => my !== gen);
-    if (my !== gen || !r) return;
-    let rest: number | null = null;
-    if (fractureRow.value) {
-      const r2 = await runRecipe({ ...spec, fractureStart: { kind: "bought", price: 0 } }, (done) => { if (my === gen) progress.value = [runs.value + done, total]; }, () => my !== gen);
-      if (my !== gen || !r2) return;
-      rest = r2.perDone;
+    // パターンごとに回す (2026-10-06 オーナー「パターンで回す」)。白から作る + (フラクチャーがあれば) 固定済みから残りを作る (ベース代 0) の 2 本。
+    // 始め方の比べに使う
+    const sets = patternSets(it.cls);
+    const compile = (p: Pattern): CompiledStep[] => p.steps.flatMap((st) => {
+      const x = setByKey(sets, st.set);
+      if (!x) return [];
+      const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
+      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: t, ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss }];
+    });
+    const ps = s.simPatterns.value.filter((p) => p.steps.length);
+    const per = runs.value * (fractureRow.value ? 2 : 1);
+    const total = per * ps.length;
+    const out: typeof results.value = [];
+    for (const [k, p] of ps.entries()) {
+      const pspec: RecipeSpec = { ...spec, pattern: compile(p) };
+      const base = k * per;
+      const r = await runRecipe(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
+      if (my !== gen || !r) return;
+      let rest: number | null = null;
+      if (fractureRow.value) {
+        const r2 = await runRecipe({ ...pspec, fractureStart: { kind: "bought", price: 0 } }, (done) => { if (my === gen) progress.value = [base + runs.value + done, total]; }, () => my !== gen);
+        if (my !== gen || !r2) return;
+        rest = r2.perDone;
+      }
+      out.push({ name: p.name, out: { r, spec: pspec }, rest });
     }
-    recipeOut.value = { r, spec };
-    restCost.value = rest;
+    results.value = out;
+    showResult(out.reduce((b, x, i) => (x.out.r.perDone < out[b]!.out.r.perDone ? i : b), 0));
     ranFor.value = sig.value;
   } catch (e) {
     if (my === gen) error.value = e instanceof Error ? e.message : String(e);
@@ -479,7 +552,7 @@ function stop(): void {
   busy.value = false;
   phase.value = "";
 }
-watch(() => s.base.value, () => { recipeOut.value = null; restCost.value = null; });
+watch(() => s.base.value, () => { recipeOut.value = null; restCost.value = null; results.value = []; });
 
 /**
  * 説明・内訳は閉じておき、要る時に開く (2026-10-05 オーナー「UI とにかく文字が多いから説明とかは閉じてデフォで、必要な時に開く感じで最低限に。活字疲れる」)。
@@ -518,7 +591,11 @@ const step3 = computed(() => modsDone.value && rows.value.length > 0);
 const whiteDone = computed(() => step3.value && whiteOk.value && fracDone.value && num(whiteDivine.value) != null);
 const stepStart = computed(() => whiteDone.value && fractureRows.value.length > 0);
 const stepOrder = computed(() => whiteDone.value && (fractureRows.value.length === 0 || startDone.value));
-const step4 = computed(() => stepOrder.value && orderDone.value);
+/** 6 パターンを決めた */
+const patternDone = ref(false);
+const step4pre = computed(() => stepOrder.value && orderDone.value);
+const step4 = computed(() => step4pre.value && patternDone.value);
+watch(orderDone, (v) => { if (!v) patternDone.value = false; });
 watch(() => rows.value.length, (n) => { if (n === 0) { modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
 watch(keptKey, () => { if (restoring) return; modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
 // 下の MOD 一覧は ① で選んでいる間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
@@ -554,6 +631,9 @@ function resetAll(): void {
   modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false;
   recipeOut.value = null;
   restCost.value = null;
+  results.value = [];
+  s.simOrder.value = [];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
   s.simSockets.value = null;
   // ベースを選ぶ所から (この画面は一度消えて、選び直すと新しく始まる)
   s.simPicked.value = false;
@@ -595,16 +675,6 @@ function undo(): void {
   sockets.value = prev.sockets; whiteDivine.value = prev.white;
   void nextTick(() => { lastSnap = snapNow(); restoring = false; });
 }
-/**
- * 白ベースからの流れ (エンジン recipe-sim.ts の作り方と同じ)。1 番が普通の MOD で高貴ガチャ / カオススパムなら、マジックの間に
- * 変成 → 増強・消去スパムで 1 番だけ付けてから王者。フラクチャーがある時は候補を増強・消去スパムで付けて骨の壁 → フラクチャー
- */
-const whiteFlow = computed(() => {
-  if (fractureRow.value) return "変成 → 増強・消去スパムでフラクチャーの候補を付ける → 王者 → 骨の壁 → フラクチャー (1/3、外れたら白から) → 消去 × 2 → 1 番から順に";
-  const first = restRows.value[0];
-  if (first && (first.method === "exalt" || first.method === "chaos") && first.methods.includes("exalt")) return "変成 → 増強・消去スパムで 1 番を付ける (外れは消去か白の買い直しの安い方) → 王者 → 2 番から順に";
-  return "変成 → 王者 → 1 番から順に";
-});
 /**
  * 4 最安値スタート: フラクチャー済みのベースを手に入れるまでの 3 ルート (回さずに計算。高貴建て)。流れが一緒になるのはフラクチャーの後
  *   self   … 自作 (白から増強・消去スパム → 王者 → 骨の壁 → フラクチャー)。1 回分 × 3 (1/3) + 固定後の消去 × 2
@@ -784,46 +854,70 @@ function replay(): void {
       <!-- ③ 付ける順番と付け方 (フラクチャー以外) -->
       <div v-if="stepOrder" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
         <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="orderDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="orderDone && goTo('order')">5 付ける順番と付け方</button> <span v-if="help" class="font-normal opacity-60">(上から順。前に付けた物が消えたら、また上から)</span>
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="orderDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="orderDone && goTo('order')">5 順番計画</button> <span v-if="help" class="font-normal opacity-60">(目安。6 パターンで付ける物を選ぶプルダウンがこの順に並ぶ)</span>
           <button v-if="orderDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('order')">ここからやり直す</button>
         </p>
-        <!-- 白ベースからの流れ (2026-10-05 オーナー「フラクチャー無しの段階の説明が足りてなさすぎる」) -->
-        <p class="mb-1 text-[11px] text-amber-100/80">白ベースから: {{ whiteFlow }}</p>
-        <p v-if="!restRows.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
+        <p v-if="!orderKeys.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
           <tbody>
-            <tr v-for="(r, i) in restRows" :key="r.modId" class="border-t border-white/5">
+            <tr v-for="(k, i) in orderKeys" :key="k" class="border-t border-white/5">
               <td class="w-14 py-1">
                 <span class="mr-1 font-bold text-amber-200">{{ i + 1 }}</span>
                 <template v-if="!orderDone">
-                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="move(r.modId, -1)">▲</button>
-                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === restRows.length - 1" title="下へ" @click="move(r.modId, 1)">▼</button>
+                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="moveOrder(k, -1)">▲</button>
+                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === orderKeys.length - 1" title="下へ" @click="moveOrder(k, 1)">▼</button>
                 </template>
               </td>
-              <td class="w-10 py-1 text-[10px] opacity-60">{{ r.side }}</td>
-              <td class="py-1">
-                <span :class="r.tone">{{ r.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-                <span v-if="r.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ r.alts.length }} つと合わせてどれか 1 つ</span>
-              </td>
-              <td class="py-1">
-                <span class="flex flex-wrap justify-end gap-1">
-                  <button v-for="m in r.methods" :key="m" type="button" class="rounded px-1.5 py-px text-[11px] disabled:cursor-default" :class="r.method === m ? METHOD_ON[m] : 'border border-white/10 opacity-60 hover:opacity-100'" :disabled="orderDone" :title="orderDone ? '決めた後は変えられない (「ここからやり直す」で戻る)' : undefined" @click="setMethod(r.modId, m)">{{ METHOD_JA[m] }}</button>
-                </span>
-              </td>
+              <template v-if="orderRow(k)">
+                <td class="w-10 py-1 text-[10px] opacity-60">{{ orderRow(k)!.side }}</td>
+                <td class="py-1">
+                  <span :class="orderRow(k)!.tone">{{ orderRow(k)!.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ orderRow(k)!.rank }} 以上</span>
+                  <span v-if="orderRow(k)!.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ orderRow(k)!.alts.length }} つと合わせてどれか</span>
+                  <span class="ml-1 text-[10px] opacity-60">{{ METHOD_JA[orderRow(k)!.method] }}</span>
+                </td>
+                <td></td>
+              </template>
+              <template v-else>
+                <td class="w-10 py-1 text-[10px] opacity-60">ルーン</td>
+                <td class="py-1"><span class="text-amber-100">{{ runeJa(k) }}</span><span v-if="runeNeeded.has(k)" class="ml-1 text-[10px] opacity-60">(狙いの MOD に要る)</span></td>
+                <td class="w-6 py-1 text-right">
+                  <button v-if="!orderDone && !runeNeeded.has(k)" type="button" class="opacity-50 hover:text-rose-300 hover:opacity-100" title="順番計画から外す" @click="removeRune(k)">×</button>
+                </td>
+              </template>
             </tr>
           </tbody>
         </table>
+        <div v-if="!orderDone && socketCount > 0" class="mt-1 flex items-center gap-2 text-[11px]">
+          <span class="opacity-60">ルーンを足す</span>
+          <select class="rounded border border-white/15 bg-black/40 px-1 py-0.5" value="" @change="addRune(($event.target as HTMLSelectElement).value); ($event.target as HTMLSelectElement).value = ''">
+            <option value="">選ぶ</option>
+            <option v-for="r in runeChoices" :key="r.en" :value="r.en">{{ r.ja }}</option>
+          </select>
+        </div>
         <div v-if="!orderDone" class="mt-1 flex">
           <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="orderDone = true">決めた →</button>
         </div>
       </div>
     </template>
+      <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
+      <div v-if="step4pre" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="patternDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="patternDone && (patternDone = false)">6 パターン</button>
+          <span class="opacity-60">{{ fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
+          <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
+        </p>
+        <StagePatternEditor :start="patternStart" :order="orderKeys" :locked="patternDone" />
+        <div v-if="!patternDone" class="mt-1 flex items-center gap-2">
+          <span v-if="blocked" class="ml-auto text-[11px] text-amber-200/80">{{ blocked }}</span>
+          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="blocked ? '' : 'ml-auto'" :disabled="!!blocked" :title="blocked ?? undefined" @click="patternDone = true">決めた →</button>
+        </div>
+      </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
 
     <template v-if="step4">
     <!-- 6 回す (相場・フラクチャーまでの費用・回す) -->
     <div class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 space-y-2">
-    <p class="text-[13px] font-bold text-amber-100">6 回す</p>
+    <p class="text-[13px] font-bold text-amber-100">7 回す</p>
     <div class="flex flex-wrap items-center gap-2 text-[11px]">
       <span class="opacity-70">相場</span>
       <span :class="market.fetchedAt.value && Date.now() - market.fetchedAt.value > MARKET_MAX_AGE_MS ? 'text-amber-300' : ''">{{ market.loading.value ? "取り直しています…" : market.fetchedLabel.value || "まだ読んでいない" }}</span>
@@ -843,6 +937,18 @@ function replay(): void {
       <span v-if="error" class="text-rose-300">{{ error }}</span>
     </div>
 
+    </div>
+    <!-- パターンごとの結果 (回した後)。押すとそのパターンの比べ・結果を下に出す -->
+    <div v-if="results.length > 1" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+      <p class="mb-1 font-bold text-sky-100">パターンの比べ</p>
+      <div class="flex flex-wrap gap-1.5 text-[11px]">
+        <button v-for="(x, i) in results" :key="x.name" type="button" class="rounded-lg px-2.5 py-1 text-left" :class="shown === i ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="showResult(i)">
+          <b>{{ x.name }}</b>
+          <span class="ml-1.5 tabular-nums">{{ money(x.out.r.perDone) }}</span>
+          <span class="ml-1.5 opacity-70">完成 {{ pct(x.out.r.pDone) }}</span>
+          <span v-if="results.reduce((b, y, k) => (y.out.r.perDone < results[b]!.out.r.perDone ? k : b), 0) === i" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span>
+        </button>
+      </div>
     </div>
     <!-- 始め方の比べ (回した後) -->
     <div v-if="recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">

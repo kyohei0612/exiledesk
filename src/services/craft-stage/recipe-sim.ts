@@ -379,7 +379,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     while (steps.length < max) {
       if (fractureTs.length && !fixedHit()) return fail("固定した MOD が消えた");
       // 前の手で付けた狙いが消えていたら (消去・カオスで)、その手に戻る (自動の付け方と同じ「前に付けた物が消えたら、また上から」)
-      const lost = pat.findIndex((q, j) => j < i && q.target && q.kind !== "rune" && !meets(item, q.target));
+      // 戻れるのはもう一度打てる手だけ (変成・増強・王者・錬金はレアリティが変わるので戻れない。その時は最後まで行って揃わなければ失敗)
+      const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
+      const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && !meets(item, q.target));
       if (lost >= 0) i = lost;
       if (i >= pat.length) return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases };
       const p = pat[i]!;
