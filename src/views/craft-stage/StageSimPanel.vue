@@ -31,7 +31,7 @@ import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 
 const s = craftStage;
-const RUNS = [500, 1000, 3000] as const;
+/** 回す回数は 1000 で固定 (2026-10-06 オーナー「回すの 1000 やな」。前は 500 / 1000 / 3000 から選べた) */
 const runs = ref<number>(1000);
 
 /** 付け方の名前 (2026-10-05 オーナー「カオスはカオススパム、高貴はガチャなので高貴ガチャ」) */
@@ -211,9 +211,20 @@ async function refreshPrices(): Promise<void> {
 }
 onMounted(() => void market.ensureMarket(MARKET_MAX_AGE_MS));
 /** 4 MOD のベースを取引所で探す (狙いの MOD が付いたレア。固定済みは除く。開くだけ) */
+/**
+ * 取引所で探すアイテムレベルの下限 = 狙う MOD (候補も) のうち、狙いの段 (T○ 以上の一番下の段) を付けられるアイテムレベルの一番高い物
+ * (2026-10-06 オーナー「最安値スタートは狙ってる MOD の最大値のアイテムレベルで探しておｋ」)。前は 1 で選んだアイテムレベルそのまま (82 など)。
+ * 狙いが無ければ選んだアイテムレベル
+ */
+const searchIlvl = computed(() => {
+  const d = s.data.value;
+  const need = s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]).map((x) => d?.mods.get(x.modId)?.tiers[x.minTierIndex]?.ilvl ?? 0);
+  const n = Math.max(0, ...need);
+  return n > 0 ? Math.min(n, s.itemLevel.value) : s.itemLevel.value;
+});
 async function searchFour(): Promise<void> {
   const q = fracQuery("explicit");
-  if (q) await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, ...q, fracturedItem: false, noSanctified: true, ...socketQuery() }));
+  if (q) await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: searchIlvl.value, ...q, fracturedItem: false, noSanctified: true, ...socketQuery() }));
 }
 /**
  * フラクチャーの候補の取引所の条件。候補が 2 つ以上なら「どれか 1 つ」のグループ (取引所の count、1 つ以上)
@@ -230,7 +241,7 @@ function fracQuery(kind: "explicit" | "fractured"): { stats: { id: string; min?:
 }
 /** 白のベースを取引所で探す (開くだけ) */
 async function searchWhite(): Promise<void> {
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "normal", ilvlMin: s.itemLevel.value, stats: [], noSanctified: true, ...socketQuery() }));
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "normal", ilvlMin: searchIlvl.value, stats: [], noSanctified: true, ...socketQuery() }));
 }
 /** フラクチャーの候補が違う側に分かれている (作り方が変わるので今は止める) */
 /** フラクチャーの候補が両側に分かれている (選べるが、同じ側を推奨する) */
@@ -239,7 +250,7 @@ const makeSpec = computed(() => ({ kind: "make" as const, route: makeRoute.value
 /** 付いた状態のベースを取引所で探す (開くだけ。値段は手で入れる) */
 async function searchBought(): Promise<void> {
   const q = fracQuery("fractured");
-  if (q) await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, ...q, fracturedItem: true, noSanctified: true, ...socketQuery() }));
+  if (q) await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: searchIlvl.value, ...q, fracturedItem: true, noSanctified: true, ...socketQuery() }));
 }
 
 /**
@@ -292,7 +303,7 @@ async function searchDone(): Promise<void> {
   const put = (fs: { id: string; min?: number }[], count = 1): void => { if (fs.length === 1) stats.push(fs[0]!); else if (fs.length > 1) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) }); };
   if (fracMembers.value.length) put(fracMembers.value.flatMap(kindsOf));
   for (const r of restRows.value) put([r, ...(s.simTargets.value.find((t) => t.modId === r.modId)?.alts ?? [])].flatMap(kindsOf), r.need);
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: s.itemLevel.value, stats, anyOf, noSanctified: true, ...socketQuery() }));
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: searchIlvl.value, stats, anyOf, noSanctified: true, ...socketQuery() }));
 }
 
 /**
@@ -702,7 +713,7 @@ function replay(): void {
         <div class="flex flex-wrap items-center gap-2 text-[11px]">
           <span class="opacity-70">白ベース</span>
           <PriceInput v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="0" />
-          <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="アイテムレベル以上の白のベースを取引所で探す (開くだけ)" @click="searchWhite">取引所で探す ↗</button>
+          <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" :title="`アイテムレベル ${searchIlvl} 以上 (狙う MOD の段が付く一番高いレベル) の白のベースを取引所で探す (開くだけ)`" @click="searchWhite">取引所で探す ↗</button>
           <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ -->
@@ -738,7 +749,7 @@ function replay(): void {
                 <span v-else class="flex items-center gap-1.5 text-[11px]">
                   <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" />
                   <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" />
-                  <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" :title="x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)'" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す ↗</button>
+                  <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す ↗</button>
                 </span>
               </td>
               <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50">値段を入れると出ます</span></td>
@@ -821,8 +832,7 @@ function replay(): void {
 
     <!-- 回す -->
     <div class="flex flex-wrap items-center gap-2 border-t border-white/10 pt-2">
-      <span class="opacity-60">回す回数</span>
-      <button v-for="n in RUNS" :key="n" type="button" class="rounded-lg px-2 py-0.5" :class="runs === n ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="runs = n">{{ n.toLocaleString() }}</button>
+      <span v-if="!fractureRow" class="text-[11px] opacity-70">{{ runs.toLocaleString() }} 回</span>
       <!-- フラクチャーがあると比べ用に 2 本回す (2026-10-05 オーナー「1000 回押しても 2000 回になる、別に 2000 回でおｋだから UI 直して」) -->
       <span v-if="fractureRow" class="text-[11px] opacity-70">白から {{ runs.toLocaleString() }} 回 + 固定済みから {{ runs.toLocaleString() }} 回 = 計 {{ (runs * 2).toLocaleString() }} 回</span>
       <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="busy ? '回している途中' : blocked ?? '決めた作り方で回す'" @click="run">回す</button>
