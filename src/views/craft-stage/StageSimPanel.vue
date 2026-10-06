@@ -30,7 +30,7 @@ import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny } from "../../services/craft-stage/pattern";
+import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
@@ -188,6 +188,13 @@ function patternProblem(p: Pattern): string | null {
     if (!tg) return `${i + 1} 手目: 付ける物を選ぶ`;
     const tw = tg === ANY_TARGET ? checkAny(st, x) : x.kind === "rune" ? checkRune(ctx, st, tg) : (() => { const t = s.simTargets.value.find((y) => y.modId === tg); return t ? checkTarget(ctx, st, x, t) : "狙う MOD に無い"; })();
     if (tw) return `${i + 1} 手目: ${tw}`;
+    if (isDouble(x) && tg !== ANY_TARGET) {
+      const t2 = p.steps[i]!.target2;
+      if (!t2) return `${i + 1} 手目: 2 つ目の MOD を選ぶ`;
+      const t = s.simTargets.value.find((y) => y.modId === t2);
+      const w2 = t ? checkTarget(ctx, stateBefore(ctx, [...p.steps.slice(0, i), { ...p.steps[i]!, target2: null }], i + 1), x, t) : "狙う MOD に無い";
+      if (w2) return `${i + 1} 手目 (2 つ目): ${w2}`;
+    }
   }
   return null;
 }
@@ -578,7 +585,8 @@ async function run(): Promise<void> {
       if (!x) return [];
       const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
       const ms = st.miss ? setByKey(sets, st.miss) : undefined;
-      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: t, ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}) }];
+      const t2 = isDouble(x) && st.target2 ? spec.targets.find((y) => y.modId === st.target2) ?? null : null;
+      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: t, ...(t2 ? { target2: t2 } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}) }];
     });
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
     // 回すのはフラクチャー済みから先だけ (2026-10-06 オーナー「白ベースでもフラクチャーまでの平均はほぼ一緒、3 回に 1 回当たる予算で
@@ -588,7 +596,7 @@ async function run(): Promise<void> {
     const out: typeof results.value = [];
     for (const [k, p] of ps.entries()) {
       // 完成の判定は、そのパターンで付ける物 + 固定する物だけ (狙い全部だと、一部だけ試すパターンが絶対に完成しなかった。2026-10-07)
-      const used = new Set(p.steps.map((st) => st.target).filter((x): x is string => !!x));
+      const used = new Set(p.steps.flatMap((st) => [st.target, st.target2]).filter((x): x is string => !!x));
       const goal = spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId));
       const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
       const base = k * runs.value;

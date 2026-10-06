@@ -60,6 +60,8 @@ export interface CompiledStep {
   kind: PatternKind; currency: string; omens: string[];
   /** 狙う MOD の手順 (無ければ付ける物の無い手: 消去・ルーン) */
   target: RecipeTarget | null;
+  /** 偉大なる高貴のお告げの手の 2 つ目の狙い (2 つとも付いたら当たり) */
+  target2?: RecipeTarget | null;
   /** ルーンを差す手の英語名 */
   rune?: string;
   onMiss: MissRule;
@@ -391,7 +393,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 前の手で付けた狙いが消えていたら (消去・カオスで)、その手に戻る (自動の付け方と同じ「前に付けた物が消えたら、また上から」)
       // 戻れるのはもう一度打てる手だけ (変成・増強・王者・錬金はレアリティが変わるので戻れない。その時は最後まで行って揃わなければ失敗)
       const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
-      const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && !meets(item, q.target));
+      const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && (!meets(item, q.target) || (!!q.target2 && !meets(item, q.target2))));
       if (lost >= 0) {
         i = lost;
         // 消えた狙いをカオスの手で取り直すと、付いている他の狙いもランダムに消してしまう (2026-10-07 手袋の比べで 9 割が止まった)。
@@ -402,7 +404,12 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         }
       }
       if (i >= pat.length) return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases };
-      const p = regain.get(i) ?? pat[i]!;
+      let p = regain.get(i) ?? pat[i]!;
+      // 偉大 (2 つ) の手で 1 つ目が付いている (か 2 つ目だけ付いている) 時は、偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
+      if (p.target2) {
+        const left = [p.target, p.target2].filter((t): t is RecipeTarget => !!t && !meets(item, t));
+        if (left.length === 1) p = { ...p, target: left[0]!, target2: null, omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") };
+      }
       const before = p.target ? count(p.target) : 0;
       let e: string | null = null;
       // 始めから差さっているルーン (固定する MOD に要る物) の手は打たずに次へ
@@ -426,7 +433,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         if (!e && p.kind === "desecrate" && unrevealedOf(item)) e = reveal(p.target, echoes);
       }
       if (e) return fail(`${i + 1} 手目: ${e}`);
-      if (!p.target || count(p.target) > before || meets(item, p.target)) { i++; continue; }
+      if (p.target2 ? meets(item, p.target!) && meets(item, p.target2) : !p.target || count(p.target) > before || meets(item, p.target)) { i++; continue; }
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
       if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); continue; }
@@ -434,7 +441,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         // 外す物を手で決めた手 (消去 + お告げ / カオス + 削減 / パーフェクトエッセンス + 結晶化 / 骨 + ネクロマンシー)。打ってから同じ手をもう一度
         if (p.miss.kind === "essence_perfect") {
           // 外れの側 (結晶化の側、無ければ狙いの側) に付く一番安いパーフェクトエッセンスで上書き (計算機の「天体」と同じ)
-          const sd: StageSide = p.miss.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : p.miss.omens.some((o) => /Dextral/.test(o)) ? "suffix" : sideOf(p.target.modId);
+          const sd: StageSide = p.miss.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : p.miss.omens.some((o) => /Dextral/.test(o)) ? "suffix" : sideOf(p.target!.modId);
           const key = p.miss.currency || cheapestPerfectEssence(sd);
           e = key ? play(key, p.miss.omens) : "外れの側に使えるパーフェクトエッセンスが無い";
         } else if (p.miss.kind === "desecrate") {
@@ -446,7 +453,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         // 冒涜の外れは光のお告げで冒涜の MOD を消す。ほかは外れのある側 (狙いの側を先に)
         if (p.kind === "desecrate" && allMods(item).some((m) => m.desecrated && !m.unrevealed && !isGood(m))) e = play("annul", ["OmenofLight"]);
         else {
-          const ts = sideOf(p.target.modId);
+          const ts = sideOf(p.target!.modId);
           const side = junkOn(item, ts).length ? ts : junkOn(item, ts === "prefix" ? "suffix" : "prefix").length ? (ts === "prefix" ? "suffix" : "prefix") : null;
           const mode = side ? spec.annulSides?.[side] : undefined;
           e = !side ? null : mode === "side" ? play("annul", [SIDE_OMEN.annul[side]]) : mode === "plain" ? play("annul") : annulOn(side);

@@ -29,6 +29,10 @@ export interface PatternStep {
   set: string;
   /** 付ける物: 狙う MOD の手順 (simTargets の modId) / ルーンの英語名。消去は無し */
   target: string | null;
+  /**
+   * 偉大なる高貴のお告げ (1 回で 2 つ) の手の 2 つ目の狙い (2026-10-07 オーナー「偉大を選ぶ時は MOD も選ばせないとダメ、次のページで狙う」)
+   */
+  target2?: string | null;
   onMiss: MissRule;
   /**
    * 外す時の打つ物 + お告げ (セットのキー。消去・カオスの物)。「外してもう一度」の時に使う。無ければ自動 (やり直しの費用で素の消去か側のお告げ)。
@@ -99,6 +103,8 @@ export const RARITY_CHANGE = new Set<PatternKind>(["transmute", "regal", "alchem
  * 外れが無い手。回す時は付ける物無し (打って次へ)。使えるのはランダムに MOD が付く物だけ
  */
 export const ANY_TARGET = "*";
+/** 1 回で 2 つ付ける手 (偉大なる高貴のお告げ) */
+export const isDouble = (s: PatternSet | undefined): boolean => !!s && s.kind === "exalt" && s.omens.includes("OmenofGreaterExaltation");
 export const ANY_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "desecrate"]);
 /** 打つだけの手で増える MOD の数 (側は分からない。錬金は 4 つ、カオスは入れ替え) */
 const ANY_ADDS: Partial<Record<PatternKind, number>> = { transmute: 1, augment: 1, regal: 1, alchemy: 4, exalt: 1, desecrate: 1 };
@@ -194,9 +200,10 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     }
     const t = ctx.targets.find((x) => x.modId === p.target);
     if (!t) continue;
-    st.placed.add(t.modId);
-    const side = ctx.data.mods.get(t.modId)?.type === "suffix" ? "suffix" : "prefix";
-    st[side] += 1;
+    for (const x of [t, ...(isDouble(s) && p.target2 ? ctx.targets.filter((y) => y.modId === p.target2) : [])]) {
+      st.placed.add(x.modId);
+      st[ctx.data.mods.get(x.modId)?.type === "suffix" ? "suffix" : "prefix"] += 1;
+    }
     if (s.kind === "essence" || s.kind === "essence_perfect") st.essences++;
     if (s.kind === "desecrate") st.desecrated++;
   }
