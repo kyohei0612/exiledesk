@@ -9,7 +9,7 @@
   状態と操作は [[craft-stage.ts]]、1 手の中身は services/craft-stage (計算機と同じ規則)。
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import StageItemCard from "./StageItemCard.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -21,7 +21,7 @@ import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
-import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf, readSimSession } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
@@ -91,6 +91,22 @@ async function copy(label: string, v: unknown): Promise<void> {
   setTimeout(() => (copied.value = ""), 2500);
 }
 /** シミュレーションでまだベースを選んでいない (ベース選びだけを出す) */
+/** シミュレーションを開いた時、覚えていた途中 (ベース・狙う MOD・パターン) を戻す (1 回だけ。工程の「決めた」は StageSimPanel が戻す) */
+let simRestored = false;
+watch(() => s.mode.value === "sim" && s.ready.value, (on) => {
+  if (!on || simRestored || s.simPicked.value) return;
+  simRestored = true;
+  const ses = readSimSession();
+  if (!ses || !s.data.value) return;
+  s.base.value = ses.base;
+  s.itemLevel.value = ses.itemLevel;
+  s.simTargets.value = ses.targets;
+  s.simSockets.value = ses.sockets;
+  s.simOrder.value = ses.order;
+  s.simPatterns.value = ses.patterns.length ? ses.patterns : [{ name: "パターン 1", steps: [] }];
+  s.simPicked.value = true;
+  s.reset();
+}, { immediate: true });
 const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);
 /** シミュレーションのソケットの上限 (熟練工の上限と、その + 1 = 規格外) */
 const simCraftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.item.value.cls.category) : 0));

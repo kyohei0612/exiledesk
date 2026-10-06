@@ -11,7 +11,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
+import { craftStage, nameOf, priceOf, readSimSession, writeSimSession } from "../../state/craft-stage";
 import { simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
@@ -625,6 +625,21 @@ const stepStart = computed(() => whiteDone.value && fractureRows.value.length > 
 const stepOrder = computed(() => whiteDone.value && (fractureRows.value.length === 0 || startDone.value));
 /** 6 パターンを決めた */
 const patternDone = ref(false);
+/** 途中を覚える (変わるたびに)。開き直した時は CraftStage がベース・狙い・パターンを、ここが「決めた」を戻す */
+const sessionNow = () => ({
+  base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, order: s.simOrder.value, patterns: s.simPatterns.value,
+  flags: { whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, patternDone: patternDone.value },
+});
+watch(() => JSON.stringify(sessionNow()), () => { if (s.simPicked.value) writeSimSession(sessionNow()); });
+onMounted(() => {
+  const ses = readSimSession();
+  if (!ses || ses.base !== s.base.value || !s.simTargets.value.length) return;
+  restoring = true;
+  whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
+  startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;
+  // patternDone は orderDone の watch で落ちるので、その後に戻す
+  void nextTick(() => { patternDone.value = !!ses.flags.patternDone; restoring = false; });
+});
 const step4pre = computed(() => stepOrder.value && orderDone.value);
 const step4 = computed(() => step4pre.value && patternDone.value);
 watch(orderDone, (v) => { if (!v) patternDone.value = false; });
@@ -667,6 +682,8 @@ function resetAll(): void {
   s.simOrder.value = [];
   s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
   s.simSockets.value = null;
+  // 覚えていた途中も消す (リセットはベースを選ぶ所から)
+  void nextTick(() => writeSimSession(null));
   // ベースを選ぶ所から (この画面は一度消えて、選び直すと新しく始まる)
   s.simPicked.value = false;
 }

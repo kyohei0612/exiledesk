@@ -175,6 +175,22 @@ const simAltFor = ref<string | null>(null);
 const simOrder = ref<string[]>([]);
 /** 6 パターン (pattern.ts)。回すのはこの手の通り */
 const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [] }]);
+
+/**
+ * シミュレーションの途中 (ベース・狙う MOD・工程の「決めた」・順番計画・パターン) を覚えて、開き直した時にそのまま出す
+ * (2026-10-07 オーナー「変わってない所はキャッシュでパッと表示させろ」)。工程の「決めた」は StageSimPanel が持つので flags に入れてもらう
+ */
+export const SIM_SESSION_KEY = "exiledesk.craftStageSim.session";
+export interface SimSession {
+  base: string; itemLevel: number; targets: typeof simTargets.value; sockets: number | null; order: string[]; patterns: Pattern[];
+  flags: Record<string, boolean>;
+}
+export function readSimSession(): SimSession | null {
+  try { const v = JSON.parse(localStorage.getItem(SIM_SESSION_KEY) ?? "null") as SimSession | null; return v && v.base ? v : null; } catch { return null; }
+}
+export function writeSimSession(v: SimSession | null): void {
+  try { if (v) localStorage.setItem(SIM_SESSION_KEY, JSON.stringify(v)); else localStorage.removeItem(SIM_SESSION_KEY); } catch { /* 覚えられなくても動く */ }
+}
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
