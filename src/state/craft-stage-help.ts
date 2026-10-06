@@ -16,7 +16,7 @@ import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../servi
 import { ruleLines } from "../services/augment-rules";
 import { maxQualityOf } from "../services/craft-stage/stage-core";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
-import { CHANCE_UNIQUE_P, EQUIP_QUALITY_STEP, isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
+import { CHANCE_UNIQUE_P, isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
 import { CURRENCY_FLOOR, type PatchData } from "../vendor/poe2htc/engine/types";
 import { CATALYSTS as HTC_CATALYSTS } from "../services/htc/quality";
 import { enOf } from "./craft-stage-shelf";
@@ -67,7 +67,7 @@ const OMEN: Record<string, string[]> = {
 /** apply-extra.ts の物の説明 (クライアントの説明文 + 仮の値) */
 const INFUSER_LINE = (ja: string) => [
   `**${ja}** の品質を上げる。上限を **最大 10% 超えられる** が、超えた時に一定確率で **コラプト** する (クライアントの説明文)`,
-  `1 回で上がる量は砥石などと同じ (**未確定**)。コラプトする確率は公開されていない (**未確定**、仮に ${Math.round(INFUSER_CORRUPT_P * 100)}%。手順の outcome "corrupted" / "safe" で指定できる)`,
+  `1 回で +1% (ゲームで確認)。コラプトする確率は公開されていない (**未確定**、仮に ${Math.round(INFUSER_CORRUPT_P * 100)}%。手順の outcome "corrupted" / "safe" で指定できる)`,
 ];
 const SACRIFICE_LINE = (ja: string) => [
   `**コラプトしたレア** の ${ja} の **コラプトエンチャントを上位版に上げ**、ランダムな MOD を **1 つ消す** (クライアントの説明文)`,
@@ -171,7 +171,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     const st = QUALITY_STEP;
     return [
       `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "etcher" ? "。ワンド・スタッフ・セプター用 (砥石はマーシャル武器用)" : ""}${key === "whetstone" ? "。マーシャル武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
-      key === "gemcutter" ? `1 回で +${st.gem}% (**未確定**: 1% と 5% の記述が食い違う)` : key === "bauble" ? `1 回で ノーマル +${st.normal}% / マジック +${st.magic}% / レア・ユニーク +${st.rare}% (**未確定**: 攻略サイトの記述のみ)` : `1 回で +${EQUIP_QUALITY_STEP}% (レアリティに関係なし。ゲームで確認)`,
+      `1 回で +${key === "gemcutter" ? st.gem : st.item}% (レアリティに関係なし。ゲームで確認)`,
       key === "whetstone" ? "品質 1% ごとに物理ダメージが 1% 増える (poe2db の Quality)" : key === "scrap" ? "品質 1% ごとにアーマー・回避力・エナジーシールドが 1% 増える" : key === "bauble" ? "品質 1% ごとにライフ・マナの回復量が 1% 増える" : "品質の効果はジェムごとに違う",
     ];
   }

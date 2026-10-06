@@ -64,7 +64,7 @@ describe("2026-09-29 に足した物", () => {
   it("インフューザーは上限 +10% まで、超えた時の outcome で コラプト / 無事", () => {
     let arm = freshItem(data, "Rusted Cuirass", 30);
     for (let i = 0; i < 20; i++) arm = A(arm, "scrap").item;
-    expect(A(arm, "vaal_infuser_armour", 1, { outcome: "safe" }).item).toMatchObject({ quality: 25, corrupted: false });
+    expect(A(arm, "vaal_infuser_armour", 1, { outcome: "safe" }).item).toMatchObject({ quality: 21, corrupted: false });
     expect(A(arm, "vaal_infuser_armour", 1, { outcome: "corrupted" }).item.corrupted).toBe(true);
   });
   it("生贄のオーブはエンチャントを上位版にして MOD を 1 つ消す", () => {

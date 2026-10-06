@@ -71,20 +71,18 @@ export const QUALITY_TARGET: Record<string, { cats: string[]; ja: string }> = {
 };
 export const QUALITY_MAX = 20;
 /**
- * 1 回で上がる品質。装備の品質カレンシー (鍛冶屋の砥石・秘術師の彫刻針・鎧鍛冶の端材) は**レアリティに関係なく 1 個 1%**
- * (2026-10-06 オーナーがゲームで確認、POE2Tube 要望 ㉞-8。前は攻略サイトの「ノーマル 5 / マジック 2 / レア 1」)。
- * ジェム (プリズム 5%)・フラスコ (飾り玉) とインフューザーはまだ確かめていないので、今までの値のまま
+ * 1 回で上がる品質 (2026-10-06 オーナーがゲームで確認、POE2Tube 要望 ㉞-8)。レアリティに関係なく、
+ * 装備の品質カレンシー (鍛冶屋の砥石・秘術師の彫刻針・鎧鍛冶の端材)・ガラス吹きの飾り玉 (フラスコ)・ヴァールインフューザーは 1 個 1%、
+ * 宝石細工師のプリズム (ジェム) は 5%。前は攻略サイトの「ノーマル 5 / マジック 2 / レア 1」
  */
-export const EQUIP_QUALITY_STEP = 1;
-export const QUALITY_STEP = { normal: 5, magic: 2, rare: 1, unique: 1, gem: 5 } as const;
+export const QUALITY_STEP = { item: 1, gem: 5 } as const;
 export const QUALITY_STEP_CONFIRMED = true;
-const EQUIP_QUALITY = ["whetstone", "scrap", "etcher"];
 
 export function applyQuality(item: StageItem, key: string): StageApply {
   const t = QUALITY_TARGET[key]!;
   if (!t.cats.includes(item.cls.category)) return skip(item, `${t.ja}にだけ使える`);
   if (item.quality >= QUALITY_MAX) return skip(item, `品質が上限 (${QUALITY_MAX}%)`);
-  const step = isGem(item.cls.category) ? QUALITY_STEP.gem : EQUIP_QUALITY.includes(key) ? EQUIP_QUALITY_STEP : QUALITY_STEP[item.rarity];
+  const step = isGem(item.cls.category) ? QUALITY_STEP.gem : QUALITY_STEP.item;
   return { applied: true, item: { ...item, quality: Math.min(QUALITY_MAX, item.quality + step) }, added: [], removed: [] };
 }
 

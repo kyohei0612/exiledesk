@@ -66,7 +66,7 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
     const base = JEWELLERY.includes(item.cls.category) ? maxQualityOf(item) : QUALITY_MAX;
     const cap = base + 10;
     if (item.quality >= cap) return skip(item, `品質が上限 (${cap}%)`);
-    const quality = Math.min(cap, item.quality + QUALITY_STEP[item.rarity]);
+    const quality = Math.min(cap, item.quality + QUALITY_STEP.item);
     // 上限を超えた分だけコラプトの危険 (outcome "corrupted" / "safe" で指定できる)
     const over = quality > base;
     const corrupt = over && (outcome === "corrupted" ? true : outcome === "safe" ? false : rng() < INFUSER_CORRUPT_P);
