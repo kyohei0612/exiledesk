@@ -210,3 +210,43 @@ describe("ルーンの MOD を狙う (2026-10-05)", () => {
     expect(allMods(final).some((m) => m.modId === kol.id)).toBe(true);
   });
 });
+
+describe("パターンで回す (2026-10-06)", () => {
+  it("金の指輪: 固定済みのライフから、高貴で火耐性 → 冷気耐性 (外れは消去してもう一度) で完成する", async () => {
+    const data = await loadPatch();
+    const life = targetOf(data, "Rings", /IncreasedLife$/, 3);
+    const fire = targetOf(data, "Rings", /FireResistance$/, 3);
+    const cold = targetOf(data, "Rings", /ColdResistance$/, 3);
+    const fireT = { ...fire, method: "exalt" as const }, coldT = { ...cold, method: "exalt" as const };
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 30, price: () => 1, seed: 4242,
+      targets: [{ ...life, method: "fracture" }, fireT, coldT],
+      fractureStart: { kind: "bought", price: 10 },
+      pattern: [
+        { kind: "exalt", currency: "exalt", omens: ["OmenofDextralExaltation"], target: fireT, onMiss: "annul_redo" },
+        { kind: "exalt", currency: "exalt", omens: ["OmenofDextralExaltation"], target: coldT, onMiss: "annul_redo" },
+      ],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.5);
+  });
+  it("手袋: ルーンの手でコルの狩りを差してから、その MOD を高貴で狙える", async () => {
+    const data = await loadPatch();
+    const kol = [...data.mods.values()].find((x) => x.id.startsWith("Gloves_dex/") && x.rune === "kolrs-hunt")!;
+    const t = { modId: kol.id, minTierIndex: kol.tiers.length - 1, method: "exalt" as const };
+    const spec: RecipeSpec = {
+      data, base: "Suede Bracers", itemLevel: 82, runs: 10, price: () => 1, seed: 777,
+      targets: [t],
+      pattern: [
+        { kind: "rune", currency: "", omens: [], target: null, rune: "Kolr's Hunt", onMiss: "next" },
+        { kind: "transmute", currency: "transmute", omens: [], target: null, onMiss: "next" },
+        { kind: "regal", currency: "regal", omens: [], target: null, onMiss: "next" },
+        { kind: "chaos", currency: "chaos", omens: [], target: t, onMiss: "redo" },
+      ],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    const { final } = playPlan(data, recipePlan(spec, r!.sample!), {});
+    expect(allMods(final).some((m) => m.modId === kol.id)).toBe(true);
+  });
+});

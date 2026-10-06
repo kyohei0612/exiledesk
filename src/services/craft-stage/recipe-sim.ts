@@ -29,6 +29,7 @@ import { revealOffers, unrevealedOf } from "./apply-desecrate";
 import { mulberry32 } from "../htc/rng";
 import { freshItem, startFrom } from "./run-plan";
 import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
+import type { MissRule, PatternKind } from "./pattern";
 import { RUNES } from "./stage-runes";
 import { allMods, listOf, room } from "./stage-core";
 import type { StageItem, StageMod, StageSide } from "./types";
@@ -54,7 +55,21 @@ export const membersOf = (t: RecipeTarget): Array<{ modId: string; minTierIndex:
  */
 export const needOf = (t: RecipeTarget): number => Math.max(1, Math.min(t.need ?? 1, membersOf(t).length));
 const hits = (t: RecipeTarget, m: StageMod): boolean => membersOf(t).some((x) => m.modId === x.modId && m.tierIndex >= x.minTierIndex);
+/** パターンの 1 手 (pattern.ts の手を狙いとつないだ物。打つ物はエッセンス以外セットで決まる) */
+export interface CompiledStep {
+  kind: PatternKind; currency: string; omens: string[];
+  /** 狙う MOD の手順 (無ければ付ける物の無い手: 消去・ルーン) */
+  target: RecipeTarget | null;
+  /** ルーンを差す手の英語名 */
+  rune?: string;
+  onMiss: MissRule;
+}
 export interface RecipeSpec {
+  /**
+   * パターン (2026-10-06): あれば、フラクチャーまで (か白) の後はこの手の通りに打つ (自動の付け方は使わない)。
+   * ルーンもパターンの手で差す (白から差しておくのはやめる)
+   */
+  pattern?: readonly CompiledStep[];
   data: PatchData;
   base: string;
   itemLevel: number;
@@ -297,6 +312,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     }
   }
 
+  if (spec.pattern) return runPattern(spec.pattern);
+
   while (steps.length < max) {
     // 未発現の冒涜 MOD が残っていれば先に発現 (冒涜の狙いの手の中で選ぶ)
     // フラクチャーの狙い (候補) は、どれか 1 つが固定されていれば良い (固定されなかった候補は作らない)
@@ -349,6 +366,59 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     if (e) return fail(e);
   }
   return fail("手が多すぎる");
+
+  /**
+   * パターンの通りに打つ。1 手打って、狙いの候補が増えた (か揃った) ら当たりで次の手へ。外れたら手ごとの決まり:
+   * そのまま次へ / 同じ手をもう一度 / 外れを消去してもう一度 / 最初から (ここまで = フラクチャー済みのベースを手に入れ直す)。
+   * 最後の手まで来て狙いが揃っていなければ失敗
+   */
+  function runPattern(pat: readonly CompiledStep[]): RecipeRun {
+    const startItem = item, startCost = cost;
+    const count = (t: RecipeTarget): number => new Set(allMods(item).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size;
+    let i = 0;
+    while (steps.length < max) {
+      if (fractureTs.length && !fixedHit()) return fail("固定した MOD が消えた");
+      // 前の手で付けた狙いが消えていたら (消去・カオスで)、その手に戻る (自動の付け方と同じ「前に付けた物が消えたら、また上から」)
+      const lost = pat.findIndex((q, j) => j < i && q.target && q.kind !== "rune" && !meets(item, q.target));
+      if (lost >= 0) i = lost;
+      if (i >= pat.length) return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases };
+      const p = pat[i]!;
+      const before = p.target ? count(p.target) : 0;
+      let e: string | null = null;
+      if (p.kind === "rune") e = p.rune ? play(`rune:${p.rune}`) : "ルーンが選ばれていない";
+      else if (p.kind === "essence" || p.kind === "essence_perfect") {
+        const key = p.target ? (p.kind === "essence" ? magicEssenceKey(p.target) : `essence:perfect:${p.target.modId}`) : null;
+        e = key && ESS[key] ? play(key, p.omens) : "このエッセンスが無い";
+      } else {
+        // 高貴・冒涜は狙いの側に空きが無ければ、先にその側の外れを消す (戻った手で、外れが残ったまま埋まっていることがある)
+        const ts = p.target ? sideOf(p.target.modId) : null;
+        if ((p.kind === "exalt" || p.kind === "desecrate") && ts && !room(item, ts) && junkOn(item, ts).length) {
+          e = annulOn(ts);
+          if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
+          continue;
+        }
+        e = play(p.currency, p.omens);
+        if (!e && p.kind === "desecrate" && unrevealedOf(item)) e = reveal(p.target);
+      }
+      if (e) return fail(`${i + 1} 手目: ${e}`);
+      if (!p.target || count(p.target) > before || meets(item, p.target)) { i++; continue; }
+      // 外れ
+      if (p.onMiss === "next") { i++; continue; }
+      if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; continue; }
+      if (p.onMiss === "annul_redo") {
+        // 冒涜の外れは光のお告げで冒涜の MOD を消す。ほかは外れのある側 (狙いの側を先に)
+        if (p.kind === "desecrate" && allMods(item).some((m) => m.desecrated && !m.unrevealed && !isGood(m))) e = play("annul", ["OmenofLight"]);
+        else {
+          const ts = sideOf(p.target.modId);
+          const side = junkOn(item, ts).length ? ts : junkOn(item, ts === "prefix" ? "suffix" : "prefix").length ? (ts === "prefix" ? "suffix" : "prefix") : null;
+          e = side ? annulOn(side) : null;
+        }
+        if (e) return fail(`${i + 1} 手目の消去: ${e}`);
+      }
+      // redo / annul_redo: 同じ手をもう一度
+    }
+    return fail("手が多すぎる");
+  }
 
   function boneFor(t: RecipeTarget): string {
     if (mod(t.modId).tags.includes("breach_desecration")) return "desecrate_altered";
@@ -418,7 +488,9 @@ export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, to
  * 狙いにルーンの MOD (コルの狩りなど、差した時だけ付く) がある時は、白のベースにそのルーンを差してから始める。
  * ソケットが足りなければルーンの数まで増やす (2026-10-05 オーナー「シミュレーションだからコルも選べるように」)
  */
-export function runeStart(spec: Pick<RecipeSpec, "data" | "targets" | "sockets">): { runes: string[]; sockets: number } {
+export function runeStart(spec: Pick<RecipeSpec, "data" | "targets" | "sockets" | "pattern">): { runes: string[]; sockets: number } {
+  // パターンではルーンも手で差す。ソケットはルーンの手の数まで
+  if (spec.pattern) return { runes: [], sockets: Math.max(spec.sockets ?? 0, spec.pattern.filter((p) => p.kind === "rune").length) };
   const ids = new Set<string>();
   for (const t of spec.targets) for (const x of [t, ...(t.alts ?? [])]) { const r = spec.data.mods.get(x.modId)?.rune; if (r) ids.add(r); }
   // ステージのルーンの名前 (相場・絵のキー) で持つ。エンジンの名前とは ' と ’ が違う事がある
