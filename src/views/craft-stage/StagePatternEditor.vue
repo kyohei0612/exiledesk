@@ -10,6 +10,11 @@ import { craftStage, nameOf } from "../../state/craft-stage";
 import { checkMiss, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
+import StageItemCard from "./StageItemCard.vue";
+import { freshItem } from "../../services/craft-stage/run-plan";
+import { makeStageMod, withMod } from "../../services/craft-stage/stage-core";
+import { applyRune } from "../../services/craft-stage/stage-runes";
+import type { StageItem } from "../../services/craft-stage/types";
 import { iconOf } from "../../state/craft-stage";
 import { RUNES } from "../../services/craft-stage/stage-runes";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
@@ -141,6 +146,37 @@ const rows = computed<Row[]>(() => {
   });
 });
 
+/**
+ * 右のアイテム: その手まで当たった時の姿 (2026-10-06 オーナー「文字だとマジで入ってこない、右側に今のアイテムに付いている MOD つきで表示」)。
+ * 見る手は押した手 (棚を開いた手)、無ければ最後の手。固定の MOD + その手までの付ける物 (狙いの段の真ん中の値)、ルーンは差す
+ */
+const focusRow = ref<number | null>(null);
+const previewAt = computed(() => Math.min(focusRow.value ?? Infinity, pat.value.steps.length - 1));
+const preview = computed<StageItem | null>(() => {
+  const d = s.data.value;
+  if (!d || !s.base.value) return null;
+  let it: StageItem;
+  try { it = { ...freshItem(d, s.base.value, s.itemLevel.value), sockets: props.start.sockets, rollSeed: 1 }; } catch { return null; }
+  const add = (modId: string, tierIndex: number, flags: Partial<StageItem["prefixes"][number]>): void => {
+    const m = d.mods.get(modId);
+    if (!m) return;
+    it = withMod(it, { ...makeStageMod(m, m.type === "suffix" ? "suffix" : "prefix", tierIndex, () => 0.5), ...flags });
+  };
+  const frac = s.simTargets.value.find((t) => t.method === "fracture");
+  if (frac) add(frac.modId, frac.minTierIndex, { fractured: true });
+  for (let j = 0; j <= previewAt.value; j++) {
+    const st = pat.value.steps[j]!;
+    const x = setByKey(sets.value, st.set);
+    if (!x || !st.target) continue;
+    if (x.kind === "rune") { const r = applyRune(it, `rune:${st.target}`, d); if (r.applied) it = r.item; continue; }
+    const t = s.simTargets.value.find((y) => y.modId === st.target);
+    if (t) add(t.modId, t.minTierIndex, x.kind === "desecrate" ? { desecrated: true } : x.kind === "essence" || x.kind === "essence_perfect" ? { crafted: true } : {});
+  }
+  const c = ctx.value;
+  const rarity = c ? stateBefore(c, pat.value.steps, previewAt.value + 1).rarity : "rare";
+  return { ...it, rarity: it.prefixes.length + it.suffixes.length ? (rarity === "normal" ? "magic" : rarity) : rarity };
+});
+
 /** 打つ物 + お告げを棚の見た目で選んでいる手 (2026-10-06 オーナー「クラフトステージそのまま使っていい」) */
 const openRow = ref<string | null>(null);
 const removals = computed(() => removalSets(sets.value));
@@ -166,6 +202,7 @@ function addStep(): void {
   const first = sets.value.find((x) => !checkSet(c, st, x));
   setSteps((list) => [...list, { set: first?.key ?? sets.value[0]?.key ?? "", target: null, onMiss: missFor(first, "annul_redo") }]);
   openRow.value = `${pat.value.steps.length - 1}:add`;
+  focusRow.value = null;
 }
 /**
  * 1 手が決まったら (打つ物 + 付ける物が揃って打てる)、それが最後の手なら下に次の手を足して棚を開く
@@ -225,12 +262,14 @@ defineExpose({ rows });
       </template>
     </div>
 
+    <div class="flex items-start gap-3">
+    <div class="min-w-0 flex-1">
     <p v-if="!rows.length" class="py-1 opacity-50">まだ手がありません。「＋ 手を足す」から 1 手ずつ</p>
     <table v-else class="w-full table-fixed">
-      <colgroup><col class="w-14" /><col class="w-[19rem]" /><col /><col class="w-64" /><col class="w-8" /></colgroup>
+      <colgroup><col class="w-12" /><col class="w-[17rem]" /><col /><col class="w-56" /><col class="w-6" /></colgroup>
       <tbody>
         <template v-for="(r, i) in rows" :key="i">
-        <tr class="border-t border-white/5 align-top">
+        <tr class="cursor-pointer border-t border-white/5 align-top" :class="previewAt === i ? 'bg-amber-500/[0.06]' : ''" @click="focusRow = i">
           <td class="py-1">
             <span class="mr-1 font-bold text-amber-200">{{ i + 1 }}</span>
             <template v-if="!locked">
@@ -260,8 +299,8 @@ defineExpose({ rows });
           </td>
           <td class="py-1 pr-1">
             <template v-if="!noMiss(r.set)">
-              <span class="mr-1 whitespace-nowrap opacity-60">外れたら</span>
-              <select class="w-44 rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.onMiss" :disabled="locked" @change="patch(i, { onMiss: ($event.target as HTMLSelectElement).value as MissRule })">
+              <span class="mb-0.5 block opacity-60">外れたら</span>
+              <select class="w-full rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.onMiss" :disabled="locked" @change="patch(i, { onMiss: ($event.target as HTMLSelectElement).value as MissRule })">
                 <option v-for="o in r.missOpts" :key="o.rule" :value="o.rule" :disabled="!!o.why" :title="o.why ?? undefined">{{ MISS_JA[o.rule] }}{{ o.why ? ` — ${o.why}` : "" }}</option>
               </select>
               <!-- 外す時の打つ物 + お告げ (付ける時と同じ棚で選ぶ。無ければ自動) -->
@@ -302,5 +341,12 @@ defineExpose({ rows });
       </tbody>
     </table>
     <button v-if="!locked" type="button" class="mt-1 rounded border border-amber-400/50 px-2 py-0.5 text-amber-200 hover:bg-amber-500/15" @click="addStep">＋ 手を足す</button>
+    </div>
+    <!-- 右: その手まで当たった時のアイテム (押した手の時点) -->
+    <div v-if="preview" class="sticky top-2 w-[280px] shrink-0">
+      <p class="mb-1 text-center opacity-70">{{ rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
+      <StageItemCard :item="preview" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="280" compact />
+    </div>
+    </div>
   </div>
 </template>
