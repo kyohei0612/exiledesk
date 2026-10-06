@@ -1,0 +1,127 @@
+<!--
+  StagePatternStepPicker.vue — 6 パターンの 1 手の「打つ物 + お告げ」を、クラフトステージの棚と同じ見た目で選ぶ (2026-10-06 オーナー
+  「UI めっちゃいい、クラフトステージそのまま使っていいんじゃないその場所」)。
+  上の段で打つ物 (アイコン・強さの札・値段) を選び、下の段でそれに掛けるお告げを入れ切りする (有効は棚と同じ赤金)。
+  それまでの手で打てない物・一緒に使えないお告げは灰色で、理由はホバー。選べる組み合わせは pattern.ts の patternSets と同じ
+-->
+<script setup lang="ts">
+import { computed, ref, watch } from "vue";
+import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
+import { displayCurrency } from "../../state/display-currency";
+import { jaOfOmen } from "../../services/htc/labels";
+import type { PatternSet } from "../../services/craft-stage/pattern";
+
+const props = defineProps<{
+  sets: readonly PatternSet[];
+  /** セットごとの打てない理由 (打てれば null) */
+  why: (x: PatternSet) => string | null;
+  /** 今のセット */
+  current: string;
+}>();
+const emit = defineEmits<{ pick: [key: string]; close: [] }>();
+
+/** 打つ物 (エッセンス・ルーンは付ける物で決まるので 1 つの札) */
+interface Tile { id: string; kind: PatternSet["kind"]; currency: string; label: string; icon: string; badge: string | null; price: number }
+const BADGE: Array<[RegExp, string]> = [[/_greater$/, "上級"], [/_perfect$/, "完全"], [/^desecrate_ancient$/, "古びた"], [/^desecrate_altered$/, "変質"]];
+const tiles = computed<Tile[]>(() => {
+  const seen = new Map<string, Tile>();
+  for (const x of props.sets) {
+    const id = `${x.kind}|${x.currency}`;
+    if (seen.has(id)) continue;
+    const label = x.kind === "essence" ? "エッセンス (マジックに)" : x.kind === "essence_perfect" ? "パーフェクトエッセンス" : x.kind === "rune" ? "ルーンを差す" : nameOf(x.currency);
+    seen.set(id, { id, kind: x.kind, currency: x.currency, label, icon: x.currency ? iconOf(x.currency) : "", badge: BADGE.find(([re]) => re.test(x.currency))?.[1] ?? null, price: x.currency ? priceOf(x.currency) : 0 });
+  }
+  return [...seen.values()];
+});
+/** 札の段 (棚のタブの代わりに、種類ごとに並べる) */
+const ROWS: Array<{ name: string; kinds: PatternSet["kind"][] }> = [
+  { name: "マジックまで", kinds: ["transmute", "augment", "regal", "alchemy", "essence"] },
+  { name: "レア", kinds: ["exalt", "chaos", "annul", "essence_perfect"] },
+  { name: "骨", kinds: ["desecrate"] },
+  { name: "ルーン", kinds: ["rune"] },
+];
+const rows = computed(() => ROWS.map((r) => ({ name: r.name, tiles: tiles.value.filter((t) => r.kinds.includes(t.kind)) })).filter((r) => r.tiles.length));
+
+const cur = computed(() => props.sets.find((x) => x.key === props.current));
+const chosen = ref<string>(cur.value ? `${cur.value.kind}|${cur.value.currency}` : "");
+const omens = ref<string[]>(cur.value?.omens ? [...cur.value.omens] : []);
+watch(() => props.current, () => { chosen.value = cur.value ? `${cur.value.kind}|${cur.value.currency}` : ""; omens.value = cur.value ? [...cur.value.omens] : []; });
+
+const setsOf = (id: string): PatternSet[] => props.sets.filter((x) => `${x.kind}|${x.currency}` === id);
+const same = (a: readonly string[], b: readonly string[]): boolean => a.length === b.length && a.every((o) => b.includes(o));
+/** 札の打てない理由 (お告げ無しで見る。お告げ無しのセットが無い物は、どれか 1 つでも打てれば打てる) */
+function tileWhy(t: Tile): string | null {
+  const list = setsOf(t.id);
+  const bare = list.find((x) => !x.omens.length);
+  if (bare) return props.why(bare);
+  return list.some((x) => !props.why(x)) ? null : props.why(list[0]!);
+}
+/** 選んだ打つ物に掛けられるお告げ */
+const omenChoices = computed(() => [...new Set(setsOf(chosen.value).flatMap((x) => x.omens))]);
+const match = computed(() => setsOf(chosen.value).find((x) => same(x.omens, omens.value)) ?? null);
+/** お告げを入れ切りした時に、その組み合わせが無い / 打てない理由 */
+function omenWhy(o: string): string | null {
+  const next = omens.value.includes(o) ? omens.value.filter((x) => x !== o) : [...omens.value, o];
+  const x = setsOf(chosen.value).find((y) => same(y.omens, next));
+  if (!x) return "今のお告げと一緒に使えない";
+  return omens.value.includes(o) ? null : props.why(x);
+}
+function pickTile(t: Tile): void {
+  if (tileWhy(t)) return;
+  chosen.value = t.id;
+  // お告げは今の物のうち、その打つ物でも使える物だけ残す (組み合わせが無ければ外す)
+  const keep = omens.value.filter((o) => setsOf(t.id).some((x) => x.omens.includes(o)));
+  omens.value = setsOf(t.id).some((x) => same(x.omens, keep)) ? keep : [];
+}
+function toggleOmen(o: string): void {
+  if (omenWhy(o)) return;
+  omens.value = omens.value.includes(o) ? omens.value.filter((x) => x !== o) : [...omens.value, o];
+}
+function decide(): void {
+  if (match.value && !props.why(match.value)) emit("pick", match.value.key);
+}
+</script>
+
+<template>
+  <div class="rounded-lg border border-amber-400/40 bg-black/60 p-2 text-[11px]">
+    <div v-for="r in rows" :key="r.name" class="mb-1.5">
+      <p class="mb-0.5 opacity-60">{{ r.name }}</p>
+      <div class="flex flex-wrap gap-1">
+        <button
+          v-for="t in r.tiles" :key="t.id" type="button"
+          class="relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition"
+          :class="[chosen === t.id ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30', tileWhy(t) ? 'cursor-not-allowed opacity-35' : '']"
+          :title="tileWhy(t) ?? undefined" @click="pickTile(t)"
+        >
+          <img v-if="t.icon" :src="t.icon" alt="" class="h-9 w-9 object-contain" draggable="false" />
+          <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
+          <span class="mt-0.5 line-clamp-2 min-h-[2.5em] text-center leading-tight">{{ t.label }}</span>
+          <span v-if="t.badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-sky-300">{{ t.badge }}</span>
+          <span v-if="t.price" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(t.price) }}</span>
+        </button>
+      </div>
+    </div>
+    <div v-if="omenChoices.length" class="mb-1.5">
+      <p class="mb-0.5 opacity-60">お告げ (押して入れ切り)</p>
+      <div class="flex flex-wrap gap-1">
+        <button
+          v-for="o in omenChoices" :key="o" type="button"
+          class="relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition"
+          :class="[omens.includes(o) ? 'stage-omen-on border-orange-300' : 'border-white/10 bg-black/30 hover:border-white/30', omenWhy(o) ? 'cursor-not-allowed opacity-35' : '']"
+          :title="omenWhy(o) ?? undefined" @click="toggleOmen(o)"
+        >
+          <img v-if="iconOf(o)" :src="iconOf(o)" alt="" class="h-9 w-9 object-contain" draggable="false" />
+          <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
+          <span class="mt-0.5 line-clamp-2 min-h-[2.5em] text-center leading-tight">{{ jaOfOmen(o) ?? o }}</span>
+          <span v-if="omens.includes(o)" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] font-bold text-white">有効</span>
+          <span v-if="priceOf(o)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(o)) }}</span>
+        </button>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span v-if="match && why(match)" class="text-rose-300">{{ why(match) }}</span>
+      <button type="button" class="ml-auto rounded border border-white/20 px-2 py-0.5 hover:bg-white/10" @click="emit('close')">閉じる</button>
+      <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!match || !!why(match)" @click="decide">この手にする</button>
+    </div>
+  </div>
+</template>

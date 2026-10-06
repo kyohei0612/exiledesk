@@ -9,6 +9,8 @@ import { computed, ref } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
 import { checkMiss, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
+import StagePatternStepPicker from "./StagePatternStepPicker.vue";
+import { iconOf } from "../../state/craft-stage";
 import { RUNES } from "../../services/craft-stage/stage-runes";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
@@ -134,12 +136,22 @@ const rows = computed<Row[]>(() => {
   });
 });
 
+/** 打つ物 + お告げを棚の見た目で選んでいる手 (2026-10-06 オーナー「クラフトステージそのまま使っていい」) */
+const openRow = ref<number | null>(null);
+/** その手の位置で、セットを打てない理由 */
+function whyAt(i: number): (x: PatternSet) => string | null {
+  const c = ctx.value;
+  if (!c) return () => null;
+  const st = stateBefore(c, pat.value.steps, i);
+  return (x) => checkSet(c, st, x);
+}
 function addStep(): void {
   const c = ctx.value;
   if (!c) return;
   const st = stateBefore(c, pat.value.steps, pat.value.steps.length);
   const first = sets.value.find((x) => !checkSet(c, st, x));
   setSteps((list) => [...list, { set: first?.key ?? sets.value[0]?.key ?? "", target: null, onMiss: missFor(first, "annul_redo") }]);
+  openRow.value = pat.value.steps.length - 1;
 }
 function patch(i: number, p: Partial<PatternStep>): void {
   setSteps((list) => list.map((x, k) => (k === i ? { ...x, ...p } : x)));
@@ -191,7 +203,8 @@ defineExpose({ rows });
     <table v-else class="w-full table-fixed">
       <colgroup><col class="w-14" /><col class="w-[19rem]" /><col /><col class="w-64" /><col class="w-8" /></colgroup>
       <tbody>
-        <tr v-for="(r, i) in rows" :key="i" class="border-t border-white/5 align-top">
+        <template v-for="(r, i) in rows" :key="i">
+        <tr class="border-t border-white/5 align-top">
           <td class="py-1">
             <span class="mr-1 font-bold text-amber-200">{{ i + 1 }}</span>
             <template v-if="!locked">
@@ -201,11 +214,12 @@ defineExpose({ rows });
           </td>
           <td class="py-1 pr-1">
             <!-- セット (打つ物 + お告げ)。打てない物は理由つきで選べない -->
-            <select class="w-full rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.set" :disabled="locked" @change="onSet(i, ($event.target as HTMLSelectElement).value)">
-              <optgroup v-for="g in r.setOpts" :key="g.name" :label="g.name">
-                <option v-for="o in g.items" :key="o.x.key" :value="o.x.key" :disabled="!!o.why" :title="o.why ?? undefined">{{ setLabel(o.x) }}{{ o.why ? ` — ${o.why}` : "" }}</option>
-              </optgroup>
-            </select>
+            <button type="button" class="flex w-full items-center gap-1 rounded border px-1 py-0.5 text-left disabled:cursor-default" :class="openRow === i ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/15 bg-black/40 hover:border-white/30'" :disabled="locked" :title="locked ? undefined : '押すと棚から選ぶ'" @click="openRow = openRow === i ? null : i">
+              <img v-if="r.set?.currency && iconOf(r.set.currency)" :src="iconOf(r.set.currency)" alt="" class="h-5 w-5 object-contain" />
+              <img v-for="o in r.set?.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
+              <span class="truncate">{{ r.set ? setLabel(r.set) : "選ぶ" }}</span>
+              <span v-if="!locked" class="ml-auto opacity-50">{{ openRow === i ? "▲" : "▼" }}</span>
+            </button>
           </td>
           <td class="py-1 pr-1">
             <!-- 付ける物 (5 順番計画の順)。付けられない物は理由つきで選べない -->
@@ -229,6 +243,12 @@ defineExpose({ rows });
             <button v-if="!locked" type="button" class="opacity-50 hover:text-rose-300 hover:opacity-100" title="この手を消す" @click="remove(i)">×</button>
           </td>
         </tr>
+        <tr v-if="openRow === i && !locked">
+          <td colspan="5" class="pb-2">
+            <StagePatternStepPicker :sets="sets" :why="whyAt(i)" :current="r.step.set" @pick="(k) => { onSet(i, k); openRow = null; }" @close="openRow = null" />
+          </td>
+        </tr>
+        </template>
       </tbody>
     </table>
     <button v-if="!locked" type="button" class="mt-1 rounded border border-amber-400/50 px-2 py-0.5 text-amber-200 hover:bg-amber-500/15" @click="addStep">＋ 手を足す</button>
