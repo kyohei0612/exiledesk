@@ -106,10 +106,6 @@ function setPattern(fn: (p: Pattern) => Pattern): void {
 const setSteps = (fn: (steps: PatternStep[]) => PatternStep[]): void => setPattern((p) => ({ ...p, steps: fn([...p.steps]) }));
 
 /** セットの名前 (打つ物 + お告げ) */
-function setLabel(x: PatternSet): string {
-  const head = x.currency ? nameOf(x.currency) : x.kind === "essence" ? "エッセンス (マジックに)" : x.kind === "essence_perfect" ? "パーフェクトエッセンス" : "ルーンを差す";
-  return [head, ...x.omens.map((o) => jaOfOmen(o) ?? o)].join(" + ");
-}
 const groups = computed(() => {
   const out: Array<{ name: string; items: PatternSet[] }> = [];
   for (const x of sets.value) {
@@ -296,7 +292,20 @@ function closeFrame(): void {
   openRow.value = null;
   if (savedScroll) { const { el, top } = savedScroll; savedScroll = null; void nextTick(() => { el.scrollTop = top; }); }
 }
+/** 選び直している物 (無ければ、まだ決めていない一番手前の物) */
+const editPart = ref<"set" | "target" | "miss" | null>(null);
+function partOf(i: number, r: Row): "set" | "target" | "miss" | "done" {
+  if (focusMode.value === "miss") return "miss";
+  if (focusRow.value === i && editPart.value) return editPart.value;
+  if (!r.set) return "set";
+  if (r.set.kind !== "annul" && !r.step.target) return "target";
+  if (!noMiss(r.set) && !RARITY_CHANGE.has(r.set.kind) && !r.step.miss) return "miss";
+  return "done";
+}
+/** 付ける側の棚 (消去は外す側にだけ出す。2026-10-07 オーナー「付ける時は削除の手とか表示しなくてもおｋ」) */
+const addSets = computed(() => sets.value.filter((x) => x.kind !== "annul"));
 function selectRow(i: number, mode: "all" | "miss" = "all"): void {
+  editPart.value = null;
   focusPre.value = null;
   if (focusRow.value === i && focusMode.value === mode) { closeFrame(); return; }
   focusRow.value = i;
@@ -317,10 +326,8 @@ function cutFrom(i: number): void {
 function addStep(): void {
   const c = ctx.value;
   if (!c) return;
-  const st = stateBefore(c, pat.value.steps, pat.value.steps.length);
-  const first = sets.value.find((x) => !checkSet(c, st, x));
-  setSteps((list) => [...list, { set: first?.key ?? sets.value[0]?.key ?? "", target: null, onMiss: first && RARITY_CHANGE.has(first.kind) ? "next" : "annul_redo" }]);
-  openRow.value = `${pat.value.steps.length - 1}:add`;
+  setSteps((list) => [...list, { set: "", target: null, onMiss: "annul_redo" }]);
+  editPart.value = null;
   focusRow.value = pat.value.steps.length - 1;
   focusMode.value = "all";
   revealFrame(pat.value.steps.length - 1);
@@ -449,84 +456,90 @@ defineExpose({ rows });
             </span>
           </button>
             <!-- 押した手の設定 (同じ枠の中に開く。2026-10-07 オーナー「クリックしたらその枠内で全部表示、枠 2 個おかしい」) -->
+            <!--
+              順に 1 つずつ決める (2026-10-07 オーナー「付ける時は別にそれ以外の削除の手とか表示しなくてもおｋ、順に決めていく」):
+              付ける (棚) → 付ける MOD → 外れたら やり直し (棚) → この手にする。決めた物は上に 1 行で並べ、押すとそこだけ選び直す
+            -->
             <div v-if="focusRow === i && !locked" class="border-t border-white/10 p-2" @click.stop>
-          <div v-if="focusMode === 'all'" class="flex flex-wrap items-end gap-2">
-            <label class="flex min-w-[14rem] flex-1 flex-col gap-0.5">
-              <span class="opacity-60">付ける</span>
-              <button type="button" class="flex items-center gap-1 rounded border px-1 py-0.5 text-left" :class="openRow === `${i}:add` ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/15 bg-black/40 hover:border-white/30'" @click="openRow = openRow === `${i}:add` ? null : `${i}:add`">
-                <img v-if="r.set?.currency && iconOf(r.set.currency)" :src="iconOf(r.set.currency)" alt="" class="h-5 w-5 object-contain" />
-                <img v-for="o in r.set?.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
-                <span class="truncate">{{ r.set ? setLabel(r.set) : "選ぶ" }}</span>
-                <span class="ml-auto opacity-50">{{ openRow === `${i}:add` ? "▲" : "▼" }}</span>
-              </button>
-            </label>
-            <label v-if="r.set?.kind !== 'annul'" class="flex min-w-[14rem] flex-1 flex-col gap-0.5">
-              <span class="opacity-60">{{ r.set?.kind === "rune" ? "差すルーン" : "付ける MOD" }}</span>
-              <select class="rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.target ?? ''" @change="patch(i, { target: ($event.target as HTMLSelectElement).value || null })">
-                <option value="" disabled>選ぶ</option>
-                <option v-for="o in r.targetOpts" :key="o.key" :value="o.key" :disabled="!!o.why" :title="o.why ?? undefined">{{ o.label }}{{ o.why ? ` — ${o.why}` : "" }}</option>
-              </select>
-            </label>
-            <span class="flex items-center gap-1">
-              <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="move(i, -1); focusRow = i - 1">▲</button>
-              <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === rows.length - 1" title="下へ" @click="move(i, 1); focusRow = i + 1">▼</button>
-            </span>
-          </div>
-          <p v-if="r.risk" class="mt-1" :class="r.risk.bad ? 'text-rose-300' : 'text-amber-200/80'">{{ r.risk.text }}</p>
-          <div v-if="focusMode === 'all' && openRow === `${i}:add`" class="mt-1.5">
-            <StagePatternStepPicker :sets="sets" :why="whyAt(i)" :current="r.step.set" @pick="(k) => { onSet(i, k); openRow = null; }" @close="openRow = null" />
-          </div>
-          <!--
-            外れたら = やり直し (2026-10-07 オーナー「外れの挙動キモい、シンプルで。外れたらは "やり直し" ひとつ、選んだら下にやり直しのカレンシーを置く。
-            使う物は光って、グレーアウトの物も選択はできる」)。何も選ばなければ自動 (やり直しの費用で素の消去か側のお告げ、冒涜の外れは光)
-          -->
-          <p v-if="r.set && RARITY_CHANGE.has(r.set.kind)" class="mt-1.5 opacity-60" title="レアリティが変わる手は外してやり直せない">外れたら そのまま次へ</p>
-          <!-- 外れたら: 普段は 1 行 (選んだ物のアイコン or 自動)。押した時だけやり直しの棚を開く (2026-10-07 オーナー「UI ゴミ、ずっと表示されてる」) -->
-          <div v-else-if="!noMiss(r.set)" class="mt-1.5">
-            <span class="flex items-center gap-1.5">
-              <span class="text-rose-200">外れたら やり直し</span>
-              <button type="button" class="flex min-w-0 items-center gap-1 rounded border px-1.5 py-0.5" :class="openRow === `${i}:miss` ? 'border-rose-400/70 bg-rose-950/40' : 'border-white/15 bg-black/40 hover:border-white/30'" @click="openRow = openRow === `${i}:miss` ? null : `${i}:miss`">
-                <template v-if="missSet(r.step)">
+              <!-- 決めた物 (押すと選び直す) -->
+              <div v-if="focusMode === 'all' && (r.set || r.step.target || r.step.miss)" class="mb-1.5 flex flex-wrap items-center gap-1">
+                <button v-if="r.set" type="button" class="flex items-center gap-1 rounded border px-1.5 py-0.5" :class="partOf(i, r) === 'set' ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/15 bg-black/40 hover:border-white/30'" title="押すと選び直す" @click="editPart = 'set'">
+                  <span class="opacity-60">付ける</span>
+                  <img v-if="r.set.currency && iconOf(r.set.currency)" :src="iconOf(r.set.currency)" alt="" class="h-5 w-5 object-contain" />
+                  <img v-for="o in r.set.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
+                </button>
+                <button v-if="r.step.target" type="button" class="flex items-center gap-1 rounded border px-1.5 py-0.5" :class="partOf(i, r) === 'target' ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/15 bg-black/40 hover:border-white/30'" title="押すと選び直す" @click="editPart = 'target'">
+                  <span class="opacity-60">MOD</span><span>{{ cardTitle(r) }}</span>
+                </button>
+                <button v-if="r.step.miss && missSet(r.step)" type="button" class="flex items-center gap-1 rounded border px-1.5 py-0.5" :class="partOf(i, r) === 'miss' ? 'border-rose-400/70 bg-rose-950/40' : 'border-white/15 bg-black/40 hover:border-white/30'" title="押すと選び直す" @click="editPart = 'miss'">
+                  <span class="text-rose-200">外れたら</span>
                   <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-5 w-5 object-contain" />
-                  <span v-else class="grid h-5 w-5 place-items-center rounded bg-white/10">◎</span>
                   <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
-                  <span class="truncate">{{ setLabel(missSet(r.step)!) }}</span>
-                </template>
-                <span v-else class="text-amber-200">選ぶ</span>
-                <span class="opacity-50">{{ openRow === `${i}:miss` ? "▲" : "▼" }}</span>
-              </button>
-            </span>
-            <div v-if="openRow === `${i}:miss`" class="mt-1">
-              <StagePatternStepPicker :sets="removals" :why="whyMissAt(i)" :current="r.step.miss ?? ''" inline @pick="(k) => patch(i, { miss: k, onMiss: 'annul_redo' })" />
-            </div>
-          </div>
-          <!-- 下のボタン: この手を消す / 閉じる / この手にする (2026-10-07 オーナー「× が分かりづらい、閉じると MOD 消すを用意」) -->
-          <div class="mt-1.5 flex items-center gap-2">
-            <button v-if="focusMode === 'all'" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/15" title="この手だけ消す (後の手はそのまま)" @click="remove(i); closeFrame()">この手を消す</button>
-            <span v-if="r.bad && focusMode === 'all'" class="text-rose-300">{{ r.bad }}</span>
-            <button type="button" class="ml-auto rounded-lg border border-white/20 px-3 py-0.5 hover:bg-white/10" @click="closeFrame()">閉じる</button>
-            <button v-if="focusMode === 'all'" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!!r.bad" :title="r.bad ?? (i === rows.length - 1 ? '決めて次の手へ' : '決めて閉じる')" @click="confirmStep(i)">この手にする</button>
-          </div>
+                </button>
+              </div>
+              <!-- いま決める物だけ出す -->
+              <template v-if="partOf(i, r) === 'set'">
+                <p class="mb-1 font-bold text-amber-100">付けるカレンシー</p>
+                <StagePatternStepPicker :sets="addSets" :why="whyAt(i)" :current="r.step.set" @pick="(k) => { onSet(i, k); editPart = null; }" @close="editPart = null" />
+              </template>
+              <template v-else-if="partOf(i, r) === 'target'">
+                <p class="mb-1 font-bold text-amber-100">{{ r.set?.kind === "rune" ? "差すルーン" : "付ける MOD" }}</p>
+                <div class="flex flex-wrap gap-1">
+                  <button v-for="o in r.targetOpts" :key="o.key" type="button" class="rounded border px-2 py-1 text-left disabled:cursor-not-allowed disabled:opacity-35" :class="r.step.target === o.key ? 'border-amber-400 bg-amber-500/15' : 'border-white/15 bg-black/40 hover:border-white/30'" :disabled="!!o.why" :title="o.why ?? undefined" @click="patch(i, { target: o.key }); editPart = null">{{ o.label }}</button>
+                </div>
+              </template>
+              <template v-else-if="partOf(i, r) === 'miss'">
+                <p class="mb-1 font-bold text-rose-200">外れたら やり直し <span class="font-normal opacity-60">(外れた MOD を消せる物だけ)</span></p>
+                <StagePatternStepPicker :sets="removals" :why="whyMissAt(i)" :current="r.step.miss ?? ''" @pick="(k) => { patch(i, { miss: k, onMiss: 'annul_redo' }); editPart = null; if (focusMode === 'miss') closeFrame(); }" @close="focusMode === 'miss' ? closeFrame() : (editPart = null)" />
+              </template>
+              <template v-else>
+                <p v-if="r.set && RARITY_CHANGE.has(r.set.kind)" class="opacity-60">外れたら そのまま次へ (レアリティが変わる手はやり直せない)</p>
+                <p v-if="r.risk" class="mt-1" :class="r.risk.bad ? 'text-rose-300' : 'text-amber-200/80'">{{ r.risk.text }}</p>
+                <div class="mt-1.5 flex items-center gap-2">
+                  <button type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/15" title="この手だけ消す (後の手はそのまま)" @click="remove(i); closeFrame()">この手を消す</button>
+                  <span class="flex items-center gap-1">
+                    <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="move(i, -1); focusRow = i - 1">▲</button>
+                    <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === rows.length - 1" title="下へ" @click="move(i, 1); focusRow = i + 1">▼</button>
+                  </span>
+                  <span v-if="r.bad" class="text-rose-300">{{ r.bad }}</span>
+                  <button type="button" class="ml-auto rounded-lg border border-white/20 px-3 py-0.5 hover:bg-white/10" @click="closeFrame()">閉じる</button>
+                  <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!!r.bad" :title="r.bad ?? (i === rows.length - 1 ? '決めて次の手へ' : '決めて閉じる')" @click="confirmStep(i)">この手にする</button>
+                </div>
+              </template>
         </div>
           </div>
           <!-- 外れの枝 (開いている時は枠の中に出るので出さない) -->
           <template v-if="r.set && !noMiss(r.set) && (focusRow !== i || locked)">
-            <span class="mt-5 h-px w-6 border-t border-dashed border-rose-400/60"></span>
-            <button type="button" class="mt-2 flex items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :title="`${MISS_JA[r.step.onMiss]} (押すと外れの設定だけ開く)`" @click="selectRow(i, 'miss')">
-              <span class="text-rose-300">外れ</span>
-              <template v-if="r.step.onMiss === 'annul_redo'">
-                <span class="opacity-60">→</span>
-                <template v-if="missSet(r.step)">
-                  <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-5 w-5 object-contain" />
-                  <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
-                </template>
-                <span v-else class="text-amber-200">選ぶ</span>
-                <span class="text-amber-200">↺</span>
-              </template>
-              <span v-else-if="r.step.onMiss === 'redo'" class="text-amber-200">↺ もう一度</span>
-              <span v-else-if="r.step.onMiss === 'next'" class="opacity-70">→ 次へ</span>
-              <span v-else class="text-rose-200">⟲ 最初から</span>
-            </button>
+            <!--
+              外れの枝。やり直す手は、外れ → やり直しのカレンシー → カードに戻る線で「付くまで繰り返す」
+              (2026-10-07 オーナー「繰り返す時は外れの後に同線つないで、付くまで繰り返すって UI」)
+            -->
+            <span class="flex flex-col">
+              <span class="flex items-center">
+                <span class="h-px w-6 border-t border-dashed border-rose-400/60"></span>
+                <button type="button" class="flex items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :title="`${MISS_JA[r.step.onMiss]} (押すと外れの設定だけ開く)`" @click="selectRow(i, 'miss')">
+                  <span class="text-rose-300">外れ</span>
+                  <template v-if="r.step.onMiss === 'annul_redo'">
+                    <span class="opacity-60">→</span>
+                    <template v-if="missSet(r.step)">
+                      <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-5 w-5 object-contain" />
+                      <span v-else class="grid h-5 w-5 place-items-center rounded bg-white/10">◎</span>
+                      <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
+                    </template>
+                    <span v-else class="text-amber-200">選ぶ</span>
+                  </template>
+                  <span v-else-if="r.step.onMiss === 'redo'" class="text-amber-200">↺ もう一度</span>
+                  <span v-else-if="r.step.onMiss === 'next'" class="opacity-70">→ 次へ</span>
+                  <span v-else class="text-rose-200">⟲ 最初から</span>
+                </button>
+              </span>
+              <!-- カードに戻る線 (付くまで繰り返す) -->
+              <span v-if="r.step.onMiss === 'annul_redo' || r.step.onMiss === 'redo'" class="-ml-px flex items-center text-[10px] text-amber-200/90">
+                <span class="text-rose-300">◀</span>
+                <span class="h-px w-8 border-t border-dashed border-rose-400/60"></span>
+                <span class="ml-1">付くまで繰り返す</span>
+              </span>
+            </span>
           </template>
           <span v-if="r.risk?.bad" class="ml-2 mt-2 text-rose-300" :title="r.risk.text">⚠</span>
         </div>
