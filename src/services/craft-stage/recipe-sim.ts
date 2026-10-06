@@ -31,7 +31,7 @@ import { freshItem, startFrom } from "./run-plan";
 import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
 import type { MissRule, PatternKind } from "./pattern";
 import { RUNES } from "./stage-runes";
-import { allMods, listOf, room } from "./stage-core";
+import { allMods, limitOf, listOf, room } from "./stage-core";
 import type { StageItem, StageMod, StageSide } from "./types";
 import type { CraftStagePlan } from "./contract";
 import essenceKeys from "../htc/essence-keys.json";
@@ -422,6 +422,14 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       } else {
         // 高貴・冒涜は狙いの側に空きが無ければ、先にその側の外れを消す (戻った手で、外れが残ったまま埋まっていることがある)
         const ts = p.target ? sideOf(p.target.modId) : null;
+        // 偉大 (2 つ狙い) は、その側に 2 枠空くまで外れを消してから打つ (空きが 1 つだと偉大でも 1 つしか付かない。狙いはまだ付いていないので消去で失う物が無い。
+        // 2026-10-07 手順を追うと、外れが残ったまま偉大を打っていた)
+        const free = ts ? limitOf(item, ts) - listOf(item, ts).length : 0;
+        if (p.kind === "exalt" && p.target2 && ts && free < 2 && junkOn(item, ts).length) {
+          e = annulOn(ts);
+          if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
+          continue;
+        }
         if ((p.kind === "exalt" || p.kind === "desecrate") && ts && !room(item, ts) && junkOn(item, ts).length) {
           e = annulOn(ts);
           if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
