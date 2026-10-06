@@ -216,7 +216,8 @@ export interface RunMeta {
 /** runes = 始めから差しておくルーン (英語名、シミュレーションでコルの狩りなどの MOD を狙う時。MOD より先に差す) */
 export interface StartSpec { rarity?: StageItem["rarity"]; mods?: Force[]; quality?: number; sockets?: number; runes?: string[] }
 export function startFrom(data: PatchData, base: string, itemLevel: number, s: StartSpec, seed: number): StageItem {
-  const rarity = s.rarity ?? (s.mods && s.mods.length > 2 ? "rare" : s.mods?.length ? "magic" : "normal");
+  // フラクチャー・冒涜の MOD はレアにしか無い (マジックではフラクチャーも冒涜もできない。2026-10-06 オーナー「ノーマルの奴ならそこで付けたらレアに」)
+  const rarity = s.rarity ?? (s.mods?.some((f) => f.fractured || f.desecrated) || (s.mods && s.mods.length > 2) ? "rare" : s.mods?.length ? "magic" : "normal");
   let item: StageItem = { ...freshItem(data, base, itemLevel), rarity, rollSeed: seed };
   const rng = mulberry32(seed);
   if (s.sockets != null) {
@@ -230,9 +231,10 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
     item = r.item;
   }
   for (const [i, f] of (s.mods ?? []).entries()) {
-    const r = addForced(data, item, 0, rng, f);
+    const cur = item;
+    const r = addForced(data, item, 0, rng, f, f.desecrated ? { pools: (sd) => cur.cls.pools.desecrated?.[sd === "prefix" ? "prefixes" : "suffixes"] ?? [] } : {});
     if ("error" in r) throw new Error(`始めの状態の MOD ${i + 1} つ目: ${r.error}`);
-    item = f.fractured ? replaced(r.item, r.mod, { ...r.mod, fractured: true }) : r.item;
+    item = f.fractured ? replaced(r.item, r.mod, { ...r.mod, fractured: true }) : f.desecrated ? replaced(r.item, r.mod, { ...r.mod, desecrated: true }) : r.item;
   }
   if (s.quality != null) item = { ...item, quality: s.quality };
   return item;
