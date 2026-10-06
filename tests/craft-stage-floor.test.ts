@@ -99,7 +99,7 @@ describe("要望 ㉞", () => {
     it = { ...it, prefixes: [], suffixes: [] };
     const r = applyCurrency(data, it, "essence:greater:Amulets/Essence_IncreasedLife", mulberry32(2));
     expect(r.applied).toBe(true);
-    expect(reqOfItem(r.item)?.level).toBe(46);
+    expect(reqOfItem(r.item)?.level).toBe(36);
   });
   it("⑦ 聖別はフラクチャーした MOD を変えない", async () => {
     const data = await loadPatch();
@@ -112,5 +112,24 @@ describe("要望 ㉞", () => {
     expect(r.applied).toBe(true);
     const after = [...r.item.prefixes, ...r.item.suffixes].find((m) => m.fractured)!;
     expect(after.values).toEqual(fr.values);
+  });
+});
+
+describe("要望 ㉟", () => {
+  it("① エンチャントの減少の文に負の数を入れない", async () => {
+    const { rollText } = await import("../src/services/craft-stage/apply-vaal");
+    expect(rollText("(20-10)% reduced Attribute Requirements", [-15])).toBe("15% reduced Attribute Requirements");
+    expect(rollText("+(5-10)% to all", [7])).toBe("+7% to all");
+  });
+  it("② 要求レベル = max(ベース、各 MOD の floor(MOD レベル × 0.8)、ルーン)", async () => {
+    const { reqOfItem } = await import("../src/services/craft-stage/stage-bases");
+    const data = await loadPatch();
+    let it = applyCurrency(data, freshItem(data, "Gold Amulet", 10), "transmute", mulberry32(1)).item;
+    it = { ...it, prefixes: [], suffixes: [] };
+    const r = applyCurrency(data, it, "essence:greater:Amulets/Essence_IncreasedLife", mulberry32(2));
+    expect(reqOfItem(r.item)?.level).toBe(36);
+    const ring = applyCurrency(data, freshItem(data, "Gold Ring", 82), "alchemy", mulberry32(3)).item;
+    const want = Math.max(...[...ring.prefixes, ...ring.suffixes].map((m) => Math.floor(m.modLevel * 0.8)));
+    expect(reqOfItem(ring)?.level ?? 0).toBe(Math.max(want, 0) || (reqOfItem(ring)?.level ?? 0));
   });
 });

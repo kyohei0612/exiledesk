@@ -61,7 +61,7 @@ export function kindOf(currency: string): string {
 export function whittleTargets(item: StageItem): StageMod[] {
   const rem = allMods(item).filter((m) => !m.fractured);
   if (!rem.length) return [];
-  // 未発現の冒涜 MOD は MOD レベル 1 として数える (poe2wiki Omen of Whittling・0.3.1、POE2Tube 要望 ㉞-6。前は 0 扱い)
+  // 未発現の冒涜 MOD は MOD レベル 1 として数える (poe2wiki Omen of Whittling・0.3.1、POE2Tube 要望 ㉞-6。modLevel も 1、要望 ㉟-3)
   const lv = (m: StageMod): number => (m.unrevealed ? 1 : m.modLevel);
   const low = Math.min(...rem.map(lv));
   return rem.filter((m) => lv(m) === low);

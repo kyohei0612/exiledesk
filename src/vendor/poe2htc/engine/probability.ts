@@ -526,8 +526,8 @@ export function perfectEssenceProbability(
  * the probability of obtaining it is 1 (no weights; user: "the essence is deterministic"). Per the
  * PoE2 rule these apply ONLY to a **Magic** item (adding the mod and converting it to Rare), never a
  * white or an already-Rare item. Returns 1 only if the forced add is legal: item is Magic, the mod
- * exists, its side has an open slot, its family isn't already present, and the chosen essence level's
- * tier is within the item's level; otherwise 0. `essenceTier` selects which level (Lesser/Normal/
+ * exists, its side has an open slot and its family isn't already present (no item-level gate, see
+ * below); otherwise 0. `essenceTier` selects which level (Lesser/Normal/
  * Greater) — an essence mod's tiers ARE its levels; it defaults to the lowest (Lesser).
  */
 export function essenceForcedProbability(
@@ -540,7 +540,10 @@ export function essenceForcedProbability(
   if (!slotOpen) return 0;
   if (!familyAvailable(data, item, mod)) return 0;
   const tier = mod.tiers[essenceTier ?? 0];
-  if (tier === undefined || tier.ilvl > item.level) return 0;
+  // No item-level gate: an essence adds its mod whatever the item level, and the mod's level raises the
+  // item's level requirement instead (POE2Tube's answer, 2026-10-06: Essences/EssenceMods carry no
+  // such column; forum 3849633 — a level-8 crossbow took a Cold essence and its requirement became 36).
+  if (tier === undefined) return 0;
   return 1;
 }
 

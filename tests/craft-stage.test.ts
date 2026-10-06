@@ -188,6 +188,9 @@ describe("指名 (要望 ⑱)", () => {
     const p = plan("Crescent Quarterstaff", [{ currency: "exalt" }], { start: { mods: [{ mod: "LocalPhysicalDamagePercent" }, { mod: "LocalIncreasedAttackSpeed" }, { mod: "LocalColdDamage" }] } });
     const r = playPlan(data, p, {});
     expect(r.steps[0]!.before.rarity).toBe("rare");
-    expect((r.steps[0]!.out.after as unknown as { requirements: { level: number } }).requirements.level).toBe(20);
+    // 要求レベル = max(ベース 20、各 MOD の floor(MOD レベル × 0.8)) (要望 ㉟-2)
+    const mods = [...r.steps[0]!.after.prefixes, ...r.steps[0]!.after.suffixes];
+    const want = Math.max(20, ...mods.map((m) => Math.floor(m.modLevel * 0.8)));
+    expect((r.steps[0]!.out.after as unknown as { requirements: { level: number } }).requirements.level).toBe(want);
   });
 });

@@ -48,7 +48,13 @@ export function rollEnchantValues(stats: ReadonlyArray<{ id: string; min: number
 
 export function rollText(text: string, vals: readonly number[]): string {
   let i = 0;
-  return text.replace(/\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)/g, (m) => (i < vals.length ? String(vals[i++]) : m));
+  // 文が「(20-10)% 減少」のように正の数で書かれていて値が負 (データは -20〜-10) の時は、正の数で入れる
+  // (「要求能力値が-10%減少する」の二重の否定になっていた。POE2Tube 要望 ㉟-1)
+  return text.replace(/\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)/g, (m, a: string, b: string) => {
+    if (i >= vals.length) return m;
+    const v = vals[i++]!;
+    return String(v < 0 && !a.startsWith("-") && !b.startsWith("-") ? Math.abs(v) : v);
+  });
 }
 
 const OUTCOMES = ["none", "reroll", "enchant", "fourth"] as const;
@@ -112,13 +118,17 @@ export function applySanctify(data: PatchData, item: StageItem, rng: () => numbe
   const mods = allMods(item).filter((m) => m.values.length && !m.unrevealed && !m.fractured);
   let cur = item;
   const added: StageMod[] = [];
+  const removed: StageMod[] = [];
   for (const m of mods) {
     const k = (78 + Math.floor(rng() * 45)) / 100;
     const digits = (v: number) => (Number.isInteger(v) ? 0 : 2);
     const values = m.values.map((v) => { const d = 10 ** digits(v); return Math.round(v * k * d) / d; });
+    // 値が変わらなかった MOD は変化に入れない (「+16% → +16%」、要望 ㉟-4)
+    if (values.every((v, i) => v === m.values[i])) continue;
     const next = { ...m, values, ...retext(m, values, data) };
     cur = replaced(cur, m, next);
     added.push(next);
+    removed.push(m);
   }
-  return { applied: true, item: { ...cur, sanctified: true }, added, removed: mods };
+  return { applied: true, item: { ...cur, sanctified: true }, added, removed };
 }

@@ -70,7 +70,7 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
     removed.push(r.mod);
   }
   const hidden: StageMod = {
-    modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 0,
+    modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 1,
     values: [], ranges: [], textJa: `未発現の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
     textEn: `Unrevealed Desecrated ${side === "prefix" ? "Prefix" : "Suffix"}`,
     desecrated: true, unrevealed: { floor, altered, faction },
@@ -125,7 +125,7 @@ export function applyReveal(data: PatchData, item: StageItem, key: string, rng: 
 }
 
 const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>): StageMod => ({
-  modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 0,
+  modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 1,
   values: [], ranges: [], textJa: `未発現の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
   textEn: `Unrevealed Desecrated ${side === "prefix" ? "Prefix" : "Suffix"}`,
   desecrated: true, unrevealed: u,
