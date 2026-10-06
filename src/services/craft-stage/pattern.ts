@@ -253,7 +253,10 @@ export function checkTarget(ctx: CheckCtx, st: PatternState, s: PatternSet, t: P
       return null;
     }
     case "desecrate": {
-      if (m.source !== "desecrated") return "冒涜の MOD ではない";
+      // 発現の候補には普通の MOD も入る (apply-desecrate.ts の poolsFor: 普通 + 冒涜 (+ 変質))。エッセンスの MOD は出ない
+      // (2026-10-07: 「冒涜の MOD ではない」で普通の MOD を骨で狙う手が組めなかった)
+      if (m.source === "essence" || m.source === "perfect_essence") return "エッセンスの MOD (エッセンスで付ける)";
+      if (m.rune && !st.runes.has(runeEnOf(ctx, m.rune) ?? "")) return `先に${ctx.runeJa(runeEnOf(ctx, m.rune) ?? m.rune)}を差す (差すと付く MOD)`;
       const f = s.omens.map((o) => FACTION_OMEN[o]).find(Boolean);
       if (f && !members.some((x) => x.tags.includes(f))) return "このお告げの勢力の MOD ではない";
       if (s.currency === "desecrate_altered" && !members.some((x) => x.tags.includes("breach_desecration") || x.source === "desecrated")) return "変質した鎖骨で出ない MOD";
