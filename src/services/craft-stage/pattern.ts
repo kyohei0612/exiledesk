@@ -51,25 +51,30 @@ export const FACTION_OMEN: Record<string, string> = { OmenoftheSovereign: "ulama
 
 const set = (kind: PatternKind, currency: string, omens: string[], group: string): PatternSet => ({ key: `${kind}|${currency}|${omens.join("+")}`, kind, currency, omens, group });
 
-/** セットの一覧 (プルダウンの中身。打てるかは checkSet で見る) */
+/**
+ * セットの一覧 (プルダウンの中身。打てるかは checkSet で見る)。お告げは重ねられる組み合わせを全部 (2026-10-06 オーナー「全パターンセットで置いて良い」)。
+ * 側のお告げは左右どちらか 1 つ、勢力のお告げは 1 つ。今のゲームに無いお告げ (REMOVED_OMENS) と、単体で効く腐食は入れない
+ */
 export function patternSets(cls: ItemBase): PatternSet[] {
   const out: PatternSet[] = [];
-  for (const c of ["transmute", "transmute_greater", "transmute_perfect"]) out.push(set("transmute", c, [], "ノーマル → マジック"));
-  for (const c of ["augment", "augment_greater", "augment_perfect"]) out.push(set("augment", c, [], "マジック"));
-  out.push(set("essence", "", [], "マジック"));
-  for (const c of ["regal", "regal_greater", "regal_perfect"]) out.push(set("regal", c, [], "マジック → レア"));
-  out.push(set("alchemy", "alchemy", [], "マジック → レア"));
+  const sides = (pair: readonly [string, string]): string[][] => [[], [pair[0]], [pair[1]]];
+  const cross = (...lists: string[][][]): string[][] => lists.reduce<string[][]>((acc, l) => acc.flatMap((a) => l.map((b) => [...a, ...b])), [[]]);
+  for (const c of ["transmute", "transmute_greater", "transmute_perfect"]) out.push(set("transmute", c, [], "変成 (ノーマル → マジック)"));
+  for (const c of ["augment", "augment_greater", "augment_perfect"]) out.push(set("augment", c, [], "増強 (マジック)"));
+  out.push(set("essence", "", [], "エッセンス (マジック → レア)"));
+  for (const c of ["regal", "regal_greater", "regal_perfect"]) out.push(set("regal", c, [], "王者 (マジック → レア)"));
+  out.push(set("alchemy", "alchemy", [], "錬金 (→ レア)"));
   for (const c of ["exalt", "exalt_greater", "exalt_perfect"]) {
-    for (const o of [[], [SIDE.exalt[0]], [SIDE.exalt[1]], ["OmenofGreaterExaltation"], ["OmenofGreaterExaltation", SIDE.exalt[0]], ["OmenofGreaterExaltation", SIDE.exalt[1]]]) out.push(set("exalt", c, o, "高貴"));
+    for (const o of cross(sides(SIDE.exalt), [[], ["OmenofGreaterExaltation"]], [[], ["OmenofCatalysingExaltation"]])) out.push(set("exalt", c, o, "高貴"));
   }
   for (const c of ["chaos", "chaos_greater", "chaos_perfect"]) {
-    for (const o of [[], ["OmenofWhittling"], [SIDE.erase[0]], [SIDE.erase[1]]]) out.push(set("chaos", c, o, "カオス"));
+    for (const o of cross([[], ["OmenofWhittling"]], sides(SIDE.erase))) out.push(set("chaos", c, o, "カオス"));
   }
   const bones = ["desecrate", "desecrate_ancient", ...(cls.pools.otherworldly ? ["desecrate_altered"] : [])];
   for (const c of bones) {
-    for (const o of [[], [SIDE.necro[0]], [SIDE.necro[1]], ...Object.keys(FACTION_OMEN).map((f) => [f])]) out.push(set("desecrate", c, o, "冒涜 (骨 → 発現)"));
+    for (const o of cross(sides(SIDE.necro), [[], ...Object.keys(FACTION_OMEN).map((f) => [f])], [[], ["OmenofAbyssalEchoes"]])) out.push(set("desecrate", c, o, "冒涜 (骨 → 発現)"));
   }
-  for (const o of [[], [SIDE.crystal[0]], [SIDE.crystal[1]]]) out.push(set("essence_perfect", "", o, "パーフェクトエッセンス (レア)"));
+  for (const o of sides(SIDE.crystal)) out.push(set("essence_perfect", "", o, "パーフェクトエッセンス (レア)"));
   for (const o of [[], [SIDE.annul[0]], [SIDE.annul[1]], ["OmenofLight"]]) out.push(set("annul", "annul", o, "消去"));
   out.push(set("rune", "", [], "ルーン"));
   return out;
@@ -154,6 +159,7 @@ export function checkSet(ctx: CheckCtx, st: PatternState, s: PatternSet): string
   }
   if (s.kind === "essence_perfect" && st.essences >= st.essenceLimit) return "エッセンスの MOD は 1 つまで (アストリッドの創造性で 2 つ)";
   if (s.kind === "exalt" && st.prefix >= st.limits.prefix && st.suffix >= st.limits.suffix) return "枠が全部埋まっている";
+  if (s.omens.includes("OmenofCatalysingExaltation")) return "触媒の高貴のお告げは品質 (カタリスト) が要る (パターンにはまだカタリストの手が無い)";
   return null;
 }
 

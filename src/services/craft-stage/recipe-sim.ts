@@ -241,13 +241,13 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     return null;
   };
   /** 発現: 狙い (desire) があれば選ぶ。無ければ反響で引き直し、それでも無ければ 1 番 */
-  const reveal = (desire: RecipeTarget | null): string | null => {
+  const reveal = (desire: RecipeTarget | null, echoes = true): string | null => {
     const n = steps.length + 1;
     const offers = revealOffers(data, item, mulberry32(seed + n));
     const hit = (list: StageMod[]) => (desire ? list.findIndex((m) => hits(desire, m)) : -1);
     const a = hit(offers.first);
     if (a >= 0) return play(`reveal:${a + 1}`);
-    if (desire && offers.reroll.length) {
+    if (desire && echoes && offers.reroll.length) {
       const b = hit(offers.reroll);
       return play(`reveal:${b >= 0 ? b + 1 : 1}:reroll`, ["OmenofAbyssalEchoes"]);
     }
@@ -404,8 +404,10 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
           continue;
         }
-        e = play(p.currency, p.omens);
-        if (!e && p.kind === "desecrate" && unrevealedOf(item)) e = reveal(p.target);
+        // アビスの反響は発現の手で使う (骨には掛けない)。セットに入っている時だけ引き直す
+        const echoes = p.omens.includes("OmenofAbyssalEchoes");
+        e = play(p.currency, p.omens.filter((o) => o !== "OmenofAbyssalEchoes"));
+        if (!e && p.kind === "desecrate" && unrevealedOf(item)) e = reveal(p.target, echoes);
       }
       if (e) return fail(`${i + 1} 手目: ${e}`);
       if (!p.target || count(p.target) > before || meets(item, p.target)) { i++; continue; }
