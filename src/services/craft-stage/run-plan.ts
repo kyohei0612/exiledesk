@@ -17,7 +17,7 @@ import { mulberry32 } from "../htc/rng";
 import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
-import { addForced, boostedMod, replaced, type Force } from "./stage-core";
+import { addForced, boostedMod, effectiveCls, replaced, type Force } from "./stage-core";
 import { socketCapOf } from "./stage-runes";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOfItem } from "./stage-bases";
@@ -28,7 +28,7 @@ import { propRows } from "./stage-props";
 /** スキルジェムのサポート枠の最初の数 (未確定。上の freshItem のコメント) */
 export const GEM_START_SOCKETS = 2;
 import type { CraftStagePlan, CraftStageResult, StageItem as OutItem, StageMod as OutMod, StageStep as OutStep } from "./contract";
-import type { StageAugment, StageItem, StageMod } from "./types";
+import type { StageAugment, StageItem, StageMod, StageSide } from "./types";
 
 /** 白 (か手順の開始のレアリティ) の新品 */
 export function freshItem(data: PatchData, base: string, itemLevel: number, rarity: StageItem["rarity"] = "normal"): StageItem {
@@ -232,7 +232,9 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
   }
   for (const [i, f] of (s.mods ?? []).entries()) {
     const cur = item;
-    const r = addForced(data, item, 0, rng, f, f.desecrated ? { pools: (sd) => cur.cls.pools.desecrated?.[sd === "prefix" ? "prefixes" : "suffixes"] ?? [] } : {});
+    // 冒涜は冒涜の置き場と普通の置き場から (骨の発現には普通の MOD も出る。2026-10-06 オーナー「普通の MOD も冒涜で付いたように」)
+    const k = (sd: StageSide) => (sd === "prefix" ? "prefixes" : "suffixes") as "prefixes" | "suffixes";
+    const r = addForced(data, item, 0, rng, f, f.desecrated ? { pools: (sd) => [...(cur.cls.pools.desecrated?.[k(sd)] ?? []), ...effectiveCls(cur).pools.normal[k(sd)]] } : {});
     if ("error" in r) throw new Error(`始めの状態の MOD ${i + 1} つ目: ${r.error}`);
     item = f.fractured ? replaced(r.item, r.mod, { ...r.mod, fractured: true }) : f.desecrated ? replaced(r.item, r.mod, { ...r.mod, desecrated: true }) : r.item;
   }
