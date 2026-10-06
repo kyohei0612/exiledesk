@@ -227,16 +227,15 @@ function addStep(): void {
   focusRow.value = pat.value.steps.length - 1;
 }
 /**
- * 1 手が決まったら (打つ物 + 付ける物が揃って打てる)、それが最後の手なら下に次の手を足して棚を開く
- * (2026-10-06 オーナー「1 手決まって進むと下に手を追加しよう」)
+ * 「この手にする」: 設定を閉じて、それが最後の手なら下に次の手を足して棚を開く (2026-10-06 オーナー「1 手決まって進むと下に手を追加」
+ * 「付ける MOD を選んだ瞬間に枠が足される、この手にするボタンを押さないと進まないように」)。打てない手は押せない
  */
-function nextIfDone(i: number): void {
-  void nextTick(() => {
-    const r = rows.value[i];
-    if (!r || r.bad || i !== rows.value.length - 1) return;
-    if (r.set?.kind !== "annul" && !r.step.target) return;
-    addStep();
-  });
+function confirmStep(i: number): void {
+  const r = rows.value[i];
+  if (!r || r.bad) return;
+  openRow.value = null;
+  if (i === rows.value.length - 1) void nextTick(() => addStep());
+  else focusRow.value = null;
 }
 function patch(i: number, p: Partial<PatternStep>): void {
   setSteps((list) => list.map((x, k) => (k === i ? { ...x, ...p } : x)));
@@ -347,7 +346,7 @@ defineExpose({ rows });
             </label>
             <label v-if="r.set?.kind !== 'annul'" class="flex min-w-[14rem] flex-1 flex-col gap-0.5">
               <span class="opacity-60">{{ r.set?.kind === "rune" ? "差すルーン" : "付ける MOD" }}</span>
-              <select class="rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.target ?? ''" @change="patch(i, { target: ($event.target as HTMLSelectElement).value || null }); nextIfDone(i)">
+              <select class="rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="r.step.target ?? ''" @change="patch(i, { target: ($event.target as HTMLSelectElement).value || null })">
                 <option value="" disabled>選ぶ</option>
                 <option v-for="o in r.targetOpts" :key="o.key" :value="o.key" :disabled="!!o.why" :title="o.why ?? undefined">{{ o.label }}{{ o.why ? ` — ${o.why}` : "" }}</option>
               </select>
@@ -379,10 +378,13 @@ defineExpose({ rows });
               <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:text-rose-300 hover:opacity-100" title="この手を消す" @click="remove(i); focusRow = null">×</button>
             </span>
           </div>
-          <p v-if="r.bad" class="mt-1 text-rose-300">{{ r.bad }}</p>
-          <p v-if="r.risk" class="mt-0.5" :class="r.risk.bad ? 'text-rose-300' : 'text-amber-200/80'">{{ r.risk.text }}</p>
+          <p v-if="r.risk" class="mt-1" :class="r.risk.bad ? 'text-rose-300' : 'text-amber-200/80'">{{ r.risk.text }}</p>
+          <div class="mt-1.5 flex items-center gap-2">
+            <span v-if="r.bad" class="text-rose-300">{{ r.bad }}</span>
+            <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!!r.bad" :title="r.bad ?? (i === rows.length - 1 ? '決めて次の手へ' : '決めて閉じる')" @click="confirmStep(i)">この手にする</button>
+          </div>
           <div v-if="openRow === `${i}:add`" class="mt-1.5">
-            <StagePatternStepPicker :sets="sets" :why="whyAt(i)" :current="r.step.set" @pick="(k) => { onSet(i, k); openRow = null; nextIfDone(i); }" @close="openRow = null" />
+            <StagePatternStepPicker :sets="sets" :why="whyAt(i)" :current="r.step.set" @pick="(k) => { onSet(i, k); openRow = null; }" @close="openRow = null" />
           </div>
           <div v-if="openRow === `${i}:miss`" class="mt-1.5">
             <p class="mb-1 font-bold text-rose-200">外れた時に外す</p>

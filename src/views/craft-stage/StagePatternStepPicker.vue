@@ -121,7 +121,7 @@ function decide(): void {
     <div class="flex items-center gap-2">
       <span v-if="match && why(match)" class="text-rose-300">{{ why(match) }}</span>
       <button type="button" class="ml-auto rounded border border-white/20 px-2 py-0.5 hover:bg-white/10" @click="emit('close')">閉じる</button>
-      <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!match || !!why(match)" @click="decide">この手にする</button>
+      <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!match || !!why(match)" @click="decide">これにする</button>
     </div>
   </div>
 </template>
