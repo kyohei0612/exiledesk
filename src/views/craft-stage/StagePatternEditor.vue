@@ -80,6 +80,25 @@ const ctx = computed<CheckCtx | null>(() => {
 });
 const pat = computed<Pattern>(() => s.simPatterns.value[Math.min(active.value, s.simPatterns.value.length - 1)]!);
 
+/**
+ * 1 つ戻す (パターンの操作。2026-10-07 オーナー「1 つ戻すボタンがない、パターン①の横らへんに」)。
+ * パターンが変わるたびに前の形を積み、押すと 1 つ前に戻す (戻した時は積まない)
+ */
+const history = ref<string[]>([]);
+let undoing = false;
+watch(() => JSON.stringify(s.simPatterns.value), (_now, prev) => {
+  if (undoing) { undoing = false; return; }
+  if (prev) history.value = [...history.value.slice(-49), prev];
+});
+function undoPattern(): void {
+  const prev = history.value[history.value.length - 1];
+  if (!prev) return;
+  history.value = history.value.slice(0, -1);
+  undoing = true;
+  s.simPatterns.value = JSON.parse(prev) as Pattern[];
+  active.value = Math.min(active.value, s.simPatterns.value.length - 1);
+  openRow.value = null;
+}
 function setPattern(fn: (p: Pattern) => Pattern): void {
   const k = Math.min(active.value, s.simPatterns.value.length - 1);
   s.simPatterns.value = s.simPatterns.value.map((p, i) => (i === k ? fn(p) : p));
@@ -358,6 +377,7 @@ defineExpose({ rows });
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100" title="空のパターンを足す" @click="addPattern(false)">＋</button>
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100" title="このパターンを写して足す (少しだけ変えて比べる時に)" @click="addPattern(true)">⧉</button>
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 disabled:opacity-30" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? 'パターンが 1 つの時は消せない' : 'このパターンを消す'" @click="removePattern">×</button>
+        <button type="button" class="ml-1 rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-30" :disabled="!history.length" :title="history.length ? 'パターンの直前の操作を 1 つ取り消す' : '戻せる操作がまだ無い'" @click="undoPattern">↶ 1 つ戻す</button>
       </template>
     </div>
 
