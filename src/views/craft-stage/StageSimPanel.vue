@@ -645,14 +645,15 @@ const compare = computed(() => {
     const rest = restCost.value;
     const c = calc.value;
     const four = c && c.buyOnce != null && rest != null ? c.buyOnce * 3 + c.after + rest : null;
-    list.push({ key: "four", name: "レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: four, note: num(fourDivine.value) == null ? "値段を入れると出ます" : "回すと出ます" });
+    list.push({ key: "four", name: "レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: four, note: num(fourDivine.value) == null ? "無し" : "回すと出ます" });
     const bN = num(boughtDivine.value);
     const bought = bN != null && rest != null ? bN * dv + rest : null;
-    list.push({ key: "bought", name: "固定済みのベースを買う", cost: bought, note: num(boughtDivine.value) == null ? "値段を入れると出ます" : "回すと出ます" });
+    list.push({ key: "bought", name: "固定済みのベースを買う", cost: bought, note: num(boughtDivine.value) == null ? "無し" : "回すと出ます" });
   }
-  list.push({ key: "done", name: "完成品を買う", cost: num(doneDivine.value) != null ? num(doneDivine.value)! * dv : null, note: "値段を入れると出ます" });
+  list.push({ key: "done", name: "完成品を買う", cost: num(doneDivine.value) != null ? num(doneDivine.value)! * dv : null, note: "無し" });
+  // 値段が空のベース・完成品は「無し」(取引所に出ていない) として比べから外す (2026-10-06 オーナー「無いパターンもあるから、未入力で無しとしてカウント」)
   const known = list.filter((x) => x.cost != null && Number.isFinite(x.cost));
-  const best = known.length >= 2 ? known.reduce((a, b) => (b.cost! < a.cost! ? b : a)).key : null;
+  const best = known.length ? known.reduce((a, b) => (b.cost! < a.cost! ? b : a)).key : null;
   return { list, best };
 });
 /** 上の 5 つの数 (どちらの回し方でも同じ形) */
@@ -747,12 +748,12 @@ function replay(): void {
               <td class="py-1">
                 <span v-if="x.key === 'self'" class="text-[11px] opacity-70">1 回分 × 3 (当たり 1/3) + 消去 × 2<template v-if="calc && calc.grade !== '完全'"> · {{ calc.grade }}の増強で計算</template></span>
                 <span v-else class="flex items-center gap-1.5 text-[11px]">
-                  <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" />
-                  <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" />
+                  <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
+                  <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="無し" />
                   <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す ↗</button>
                 </span>
               </td>
-              <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50">値段を入れると出ます</span></td>
+              <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50" :title="x.key === 'self' ? undefined : '値段が空 = 取引所に無い物として数えない (2026-10-06)'">{{ x.key === "self" ? "—" : "無し" }}</span></td>
             </tr>
           </tbody>
         </table>
@@ -854,13 +855,13 @@ function replay(): void {
             <td class="py-1">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
             <td class="py-1">
               <span v-if="x.key === 'four'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" />
+                <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
                 <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
               </span>
               <span v-else-if="x.key === 'bought'" class="text-[11px] opacity-60">値段は 4 フラクチャーベース設定で入れる</span>
               <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" />
+                <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" placeholder="無し" />
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
                 <span class="inline-block w-24 shrink-0" :class="doneAge?.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge?.text ?? "" }}</span>
               </span>
