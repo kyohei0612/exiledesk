@@ -320,7 +320,8 @@ function pickTarget(i: number, key: string): void {
   const t = c?.targets.find((x) => x.modId === key);
   const curOk = !!cur && !!c && (key === ANY_TARGET ? ANY_KINDS.has(cur.kind) : isRune ? cur.kind === "rune" : cur.kind !== "rune" && !!t && !checkTarget(c, stateBefore(c, pat.value.steps, i), cur, t));
   patch(i, { target: key, ...(isRune && runeSet ? { set: runeSet.key, onMiss: "next" as MissRule, miss: null } : key === ANY_TARGET ? { onMiss: "next" as MissRule, miss: null } : {}), ...(curOk || isRune ? {} : { set: "" }) });
-  editPart.value = null;
+  // 選んでもその段に留まる (お告げなど、続けて選ぶ物があるので。進むのは下のボタン。2026-10-07 オーナー「選択した瞬間次にいかなくさせる」)
+  editPart.value = "target";
 }
 /** 付けるカレンシーの棚: 選んだ付ける物に付けられない物は理由つきで選べない */
 function whyAddAt(i: number): (x: PatternSet) => string | null {
@@ -607,14 +608,14 @@ defineExpose({ rows });
               </div>
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'set'">
-              <StagePatternStepPicker :key="'set' + focusRow" :sets="addSetsFor(rows[focusRow]!)" :why="whyAddAt(focusRow)" :current="rows[focusRow]!.step.set" inline @pick="(k) => onSet(focusRow!, k)" />
+              <StagePatternStepPicker :key="'set' + focusRow" :sets="addSetsFor(rows[focusRow]!)" :why="whyAddAt(focusRow)" :current="rows[focusRow]!.step.set" inline @pick="(k) => { onSet(focusRow!, k); editPart = 'set'; }" />
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'miss'">
               <div class="mb-1 flex items-center gap-2">
-                <button type="button" class="rounded-lg border px-2 py-0.5" :class="!rows[focusRow]!.step.miss ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/20 hover:bg-white/10'" title="外れても消さずにそのまま次の手へ" @click="patch(focusRow, { miss: null, onMiss: 'next' })">選択無し (外れてもそのまま次へ)</button>
+                <button type="button" class="rounded-lg border px-2 py-0.5" :class="!rows[focusRow]!.step.miss ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/20 hover:bg-white/10'" title="外れても消さずにそのまま次の手へ" @click="patch(focusRow, { miss: null, onMiss: 'next' }); editPart = 'miss'">選択無し (外れてもそのまま次へ)</button>
                 <span class="opacity-50">外れた MOD を消せる物だけ</span>
               </div>
-              <StagePatternStepPicker :key="'miss' + focusRow" :sets="removals" :why="whyMissAt(focusRow)" :current="rows[focusRow]!.step.miss ?? ''" inline @pick="(k) => patch(focusRow!, { miss: k, onMiss: 'annul_redo' })" />
+              <StagePatternStepPicker :key="'miss' + focusRow" :sets="removals" :why="whyMissAt(focusRow)" :current="rows[focusRow]!.step.miss ?? ''" inline @pick="(k) => { patch(focusRow!, { miss: k, onMiss: 'annul_redo' }); editPart = 'miss'; }" />
             </template>
             <template v-else>
               <template v-for="r in [rows[focusRow]!]" :key="'sum' + focusRow">
