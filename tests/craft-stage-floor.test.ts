@@ -68,3 +68,49 @@ describe("ユニーク・抽出・小数 (要望 ㉝ の 6 / 13 / 10)", () => {
     expect(r.returned?.map((a) => a.en)).toEqual(["Greater Iron Rune"]);
   });
 });
+
+describe("要望 ㉞", () => {
+  it("① 錬金術をマジックに使うと付いていた MOD は残らず、新しい 4 個", async () => {
+    const data = await loadPatch();
+    const magic = applyCurrency(data, freshItem(data, "Gold Ring", 82), "transmute", mulberry32(3)).item;
+    const r = applyCurrency(data, magic, "alchemy", mulberry32(4));
+    expect(r.applied).toBe(true);
+    expect(r.item.prefixes.length + r.item.suffixes.length).toBe(4);
+    for (const m of [...magic.prefixes, ...magic.suffixes]) expect(r.removed.map((x) => x.modId)).toContain(m.modId);
+  });
+  it("② 上級の変成の下限は 44", async () => {
+    const { CURRENCY_FLOOR } = await import("../src/vendor/poe2htc/engine/types");
+    expect(CURRENCY_FLOOR.transmute.greater).toBe(44);
+    expect(CURRENCY_FLOOR.augment.greater).toBe(44);
+  });
+  it("③ アーキテクトはユニーク・ノーマルにも使え、2 つ目のエンチャントを足す", async () => {
+    const data = await loadPatch();
+    const base = { ...freshItem(data, "Gold Ring", 82), corrupted: true, enchant: { id: "CorruptionAllResistances1", textJa: "x", textEn: "x" } };
+    const r = applyCurrency(data, base, "architect", mulberry32(1), [], { outcome: "changed" });
+    expect(r.applied).toBe(true);
+    expect(r.item.enchant?.id).toBe("CorruptionAllResistances1");
+    expect(r.item.enchant2?.id).toBeTruthy();
+    expect(r.item.enchant2?.id).not.toBe("CorruptionAllResistances1");
+  });
+  it("④ エッセンスはアイテムレベル不足でも打てて、要求レベルが上がる", async () => {
+    const { reqOfItem } = await import("../src/services/craft-stage/stage-bases");
+    const data = await loadPatch();
+    let it = applyCurrency(data, freshItem(data, "Gold Amulet", 10), "transmute", mulberry32(1)).item;
+    it = { ...it, prefixes: [], suffixes: [] };
+    const r = applyCurrency(data, it, "essence:greater:Amulets/Essence_IncreasedLife", mulberry32(2));
+    expect(r.applied).toBe(true);
+    expect(reqOfItem(r.item)?.level).toBe(46);
+  });
+  it("⑦ 聖別はフラクチャーした MOD を変えない", async () => {
+    const data = await loadPatch();
+    let it = freshItem(data, "Gold Ring", 82);
+    it = applyCurrency(data, it, "alchemy", mulberry32(8)).item;
+    const f = it.prefixes[0] ?? it.suffixes[0]!;
+    const fr = { ...f, fractured: true };
+    it = { ...it, prefixes: it.prefixes.map((m) => (m === f ? fr : m)), suffixes: it.suffixes.map((m) => (m === f ? fr : m)) };
+    const r = applyCurrency(data, it, "divine", mulberry32(9), ["OmenofSanctification"]);
+    expect(r.applied).toBe(true);
+    const after = [...r.item.prefixes, ...r.item.suffixes].find((m) => m.fractured)!;
+    expect(after.values).toEqual(fr.values);
+  });
+});

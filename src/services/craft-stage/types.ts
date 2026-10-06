@@ -66,6 +66,8 @@ export interface StageItem {
   corrupted: boolean;
   /** ヴァールのエンチャント (コラプトで付く。1 つまで) */
   enchant?: { id: string; textJa: string; textEn: string } | null;
+  /** アーキテクトオーブで足した 2 つ目のエンチャント (要望 ㉞-3) */
+  enchant2?: { id: string; textJa: string; textEn: string } | null;
   /** 聖別 (聖別のお告げ + 神)。コラプトと同じくもう手を加えられない */
   sanctified?: boolean;
   /** 未鑑定 (false)。MOD を隠す。鑑定の巻物で true。無ければ鑑定済み (POE2Tube 要望 ⑧) */
@@ -86,6 +88,8 @@ export interface StageItem {
   shards?: Record<string, number>;
   /** ソケットにはめたオーグメント (ルーン)。はめた順。要望 ⑰-1 */
   augments?: StageAugment[];
+  /** ユニークにヴァールで掛かった各行の倍率 (0.78〜1.22。要望 ㉞-5) */
+  uniqueScale?: number[];
   /** 固有 MOD・ユニークの効果の値を振る種 (手順の seed。roll-text.ts、要望 ㉝ の 5) */
   rollSeed?: number;
   /** 解呪 / サルベージで無くなった (POE2Tube 要望 ⑰-5)。以後何も打てない */

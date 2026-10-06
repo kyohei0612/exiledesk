@@ -85,7 +85,7 @@ function look(m: StageMod): { cls: string; tag: string } {
   return { cls: "text-rarity-magic", tag: "" };
 }
 /** ユニークの効果 (poe2db のページから。値はユニークごとに決まった 1 つ。ページの無いユニークは空) */
-const uLines = computed(() => (props.item.rarity === "unique" && props.item.unique ? rollLines(props.item, uniqueLines(props.item.unique.en), props.item.unique.en) : []));
+const uLines = computed(() => (props.item.rarity === "unique" && props.item.unique ? rollLines(props.item, uniqueLines(props.item.unique.en), props.item.unique.en, props.item.uniqueScale) : []));
 const rows = computed(() =>
   [...props.item.prefixes.map((m) => ({ m, side: "プレ" })), ...props.item.suffixes.map((m) => ({ m, side: "サフィ" }))].map((r) => {
     // カタリストの品質で伸びた数値 (伸びない MOD は null)
@@ -126,7 +126,7 @@ const rows = computed(() =>
     <div class="space-y-1 px-4 text-center text-[13px]" :class="[compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">
       <p class="text-[12px] text-white/50">{{ kindJa }}<template v-if="!isGem(item.cls.category)"> · アイテムレベル <span class="text-white">{{ item.itemLevel }}</span></template></p>
       <!-- 要求 (要望 ⑱-3) -->
-      <p v-if="reqText(item.base)" class="text-[12px] text-white/50">{{ reqText(item.base) }}</p>
+      <p v-if="reqText(item)" class="text-[12px] text-white/50">{{ reqText(item) }}</p>
       <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
       <p v-for="r in baseRows" :key="r.label" class="text-[12px] text-white/50">{{ r.label }}: <span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
@@ -148,6 +148,7 @@ const rows = computed(() =>
       <template v-if="item.enchant">
         <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
         <p class="text-[#b8daf2]">{{ item.enchant.textJa }}</p>
+        <p v-if="item.enchant2" class="text-[#b8daf2]">{{ item.enchant2.textJa }}</p>
       </template>
       <template v-if="implicits.length">
         <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />

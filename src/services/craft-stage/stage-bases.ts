@@ -7,6 +7,7 @@
  *     (品質のカレンシー・宝飾職人のオーブなど、MOD を足さない物だけが打てる)
  */
 import type { ItemBase } from "../../vendor/poe2htc/engine/types";
+import type { StageItem } from "./types";
 import stageBases from "./stage-bases.json";
 import basesPob from "./stage-bases-pob.json";
 import gemsRaw from "../../i18n/gems-client.json";
@@ -37,9 +38,19 @@ const GEMS = (gemsRaw as Array<{ en: string; ja: string; kind: string }>).filter
 export interface BaseReq { level?: number; str?: number; dex?: number; int?: number }
 const REQS = (basesPob as unknown as { reqs: Record<string, BaseReq> }).reqs;
 export const reqOf = (base: string): BaseReq | null => REQS[base] ?? null;
+/**
+ * アイテムの要求。エッセンスの MOD の要求レベル (MOD レベル) がベースより高ければ、そちらに上がる (要望 ㉞-4)。
+ * 普通の MOD での要求レベルの上がり方は確かめていないので、エッセンス (crafted) の MOD だけ
+ */
+export function reqOfItem(item: StageItem): BaseReq | null {
+  const r = reqOf(item.base);
+  const craft = Math.max(0, ...[...item.prefixes, ...item.suffixes].filter((m) => m.crafted).map((m) => m.modLevel));
+  if (!craft || (r?.level ?? 0) >= craft) return r;
+  return { ...(r ?? {}), level: craft } as BaseReq;
+}
 /** 要求の言葉 (「要求 Lv 20・器用さ 30・知性 14」)。無ければ "" */
-export function reqText(base: string): string {
-  const r = reqOf(base);
+export function reqText(base: string | StageItem): string {
+  const r = typeof base === "string" ? reqOf(base) : reqOfItem(base);
   if (!r) return "";
   const parts = [r.level ? `Lv ${r.level}` : "", r.str ? `筋力 ${r.str}` : "", r.dex ? `器用さ ${r.dex}` : "", r.int ? `知性 ${r.int}` : ""].filter(Boolean);
   return parts.length ? `要求 ${parts.join("・")}` : "";

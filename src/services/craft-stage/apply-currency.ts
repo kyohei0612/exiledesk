@@ -61,8 +61,10 @@ export function kindOf(currency: string): string {
 export function whittleTargets(item: StageItem): StageMod[] {
   const rem = allMods(item).filter((m) => !m.fractured);
   if (!rem.length) return [];
-  const low = Math.min(...rem.map((m) => m.modLevel));
-  return rem.filter((m) => m.modLevel === low);
+  // 未発現の冒涜 MOD は MOD レベル 1 として数える (poe2wiki Omen of Whittling・0.3.1、POE2Tube 要望 ㉞-6。前は 0 扱い)
+  const lv = (m: StageMod): number => (m.unrevealed ? 1 : m.modLevel);
+  const low = Math.min(...rem.map(lv));
+  return rem.filter((m) => lv(m) === low);
 }
 /** その手に掛かるお告げ (持っている中から) */
 export function omensFor(currency: string, held: readonly string[]): string[] {
@@ -210,12 +212,14 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
       return add(rare, 1, () => (side ? [side] : SIDES));
     }
     case "alchemy": {
-      // ノーマルかマジック → MOD 4 個のレア (クライアントの説明文)。マジックは付いている MOD を残して 4 個まで足す
-      // (2026-10-05 オーナー「錬金術とかマジックにも使えるけど使えない判定なのなんで」)
+      // ノーマルかマジック → MOD 4 個のレア (クライアントの説明文)。マジックに使った時は**付いている MOD は残らない**
+      // (0.3.1「When used on Magic items the original modifiers are not retained」、POE2Tube 要望 ㉞-1。前は残して 4 個まで足していた)
       if (item.rarity !== "normal" && item.rarity !== "magic") return skip(item, "ノーマルかマジックのアイテムにだけ使える");
       // 左右の錬金のお告げ: その側を上限まで (残りは反対側)
       const side = sideOmen(used, "OmenofSinistralAlchemy", "OmenofDextralAlchemy");
-      return add({ ...item, rarity: "rare" }, Math.max(1, 4 - count), (_k, cur) => (side ? (room(cur, side) ? [side] : SIDES.filter((s) => s !== side)) : SIDES));
+      const gone = allMods(item);
+      const r = add({ ...item, rarity: "rare", prefixes: [], suffixes: [] }, 4, (_k, cur) => (side ? (room(cur, side) ? [side] : SIDES.filter((s) => s !== side)) : SIDES));
+      return r.applied ? { ...r, removed: [...gone, ...r.removed] } : r;
     }
     case "exalt": {
       if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");

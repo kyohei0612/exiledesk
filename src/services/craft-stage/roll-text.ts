@@ -17,15 +17,17 @@ function hashOf(s: string): number {
 }
 
 /** 行ごとの範囲を振った値に (salt で行ごと・アイテムごとに違う値) */
-export function rollLines(item: StageItem, lines: readonly string[], salt: string): string[] {
+export function rollLines(item: StageItem, lines: readonly string[], salt: string, scale?: readonly number[]): string[] {
   const rng = mulberry32(((item.rollSeed ?? 0) ^ hashOf(`${item.base}|${salt}`)) >>> 0);
-  return lines.map((line) =>
+  return lines.map((line, li) =>
     line.replace(RANGE, (_all, a: string, b: string) => {
       const lo = Number(a), hi = Number(b), d = Math.max(decimals(a), decimals(b));
       const p = 10 ** d;
       const steps = Math.round(Math.abs(hi - lo) * p);
       const v = Math.min(lo, hi) + Math.floor(rng() * (steps + 1)) / p;
-      return v.toFixed(d);
+      // ヴァールの倍率 (ユニーク、要望 ㉞-5) は振った値に掛けて同じ桁で丸める
+      const k = scale?.[li] ?? 1;
+      return (Math.round(v * k * p) / p).toFixed(d);
     }),
   );
 }

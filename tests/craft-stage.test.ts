@@ -36,10 +36,11 @@ describe("基本の流れ", () => {
 });
 
 describe("アクト中に落ちる物", () => {
-  it("砥石 5 回で品質 20%、6 回目は打てない", () => {
-    const r = runPlan(data, plan("Hardwood Spear", [{ currency: "whetstone", times: 6 }], { item_level: 30 }), META);
+  it("砥石は 1 個 1% (レアリティに関係なし、要望 ㉞-8)。20 回で品質 20%、21 回目は打てない", () => {
+    const r = runPlan(data, plan("Hardwood Spear", [{ currency: "whetstone", times: 21 }], { item_level: 30 }), META);
     expect(r.final.quality).toBe(20);
-    expect(r.steps[5]!.applied).toBe(false);
+    expect(r.steps[0]!.after.quality).toBe(1);
+    expect(r.steps[20]!.applied).toBe(false);
   });
   it("宝飾職人のオーブ: 見習い 3 / 上級 4 / 完全 5", () => {
     const r = runPlan(data, plan("Arc", [{ currency: "jeweller_lesser" }, { currency: "jeweller_greater" }, { currency: "jeweller_perfect" }]), META);
@@ -57,12 +58,12 @@ describe("2026-09-29 に足した物", () => {
     expect(A(rare("Gold Ring", 60), "desecrate_gnawed").applied).toBe(true);
   });
   it("秘術師の彫刻針はワンドにだけ", () => {
-    expect(A(freshItem(data, "Attuned Wand", 30), "etcher").item.quality).toBe(5);
+    expect(A(freshItem(data, "Attuned Wand", 30), "etcher").item.quality).toBe(1);
     expect(A(freshItem(data, "Hardwood Spear", 30), "etcher").applied).toBe(false);
   });
   it("インフューザーは上限 +10% まで、超えた時の outcome で コラプト / 無事", () => {
     let arm = freshItem(data, "Rusted Cuirass", 30);
-    for (let i = 0; i < 4; i++) arm = A(arm, "scrap").item;
+    for (let i = 0; i < 20; i++) arm = A(arm, "scrap").item;
     expect(A(arm, "vaal_infuser_armour", 1, { outcome: "safe" }).item).toMatchObject({ quality: 25, corrupted: false });
     expect(A(arm, "vaal_infuser_armour", 1, { outcome: "corrupted" }).item.corrupted).toBe(true);
   });

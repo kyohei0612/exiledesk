@@ -17,7 +17,7 @@ import { augmentRule } from "../augment-rules";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { allMods, maxQualityOf, skip, without } from "./stage-core";
 import { ARMOUR, CASTER, MARTIAL, QUALITY_MAX, QUALITY_STEP } from "./apply-act";
-import { ENCHANTS, rollEnchantValues, rollText } from "./apply-vaal";
+import { enchantPool, ENCHANTS, rollEnchantValues, rollText } from "./apply-vaal";
 import { uniquesOfSameClass } from "./stage-bases";
 import upgradesRaw from "./vaal-upgrades.json";
 
@@ -45,7 +45,7 @@ const INFUSER: Record<string, { cats: string[]; ja: string }> = {
 };
 /** インフューザーで上限を超えた時にコラプトする確率。**公開値なし (未確定)**、仮に 25% */
 export const INFUSER_CORRUPT_P = 0.25;
-/** アーキテクトオーブで壊れる確率。**公開値なし (未確定)**、仮に 50% */
+/** アーキテクトオーブで壊れる確率。説明文・poe2wiki の「50%」(有力、要望 ㉞-3) */
 export const ARCHITECT_DESTROY_P = 0.5;
 export const EXTRA_P_CONFIRMED = false;
 
@@ -87,23 +87,26 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
   }
   switch (key) {
     case "architect": {
-      if (item.rarity === "unique" || item.rarity === "normal") return skip(item, "マジック・レアの装備にだけ使える");
+      // 説明文「コラプト状態の装備品またはジュエル」(レアリティの制限なし。ユニーク・ノーマルにも使える: 2026-10-06 オーナーがゲームで確認)。
+      // 50% で壊れ、50% で **2 つ目のエンチャントを足す** (今のは残る、同じグループは出ない。poe2wiki Architect's Orb、要望 ㉞-3。前は差し替えていた)
+      if (item.enchant2) return skip(item, "エンチャントはもう 2 つ付いている");
       const destroy = outcome === "destroyed" ? true : outcome === "changed" ? false : rng() < ARCHITECT_DESTROY_P;
       if (destroy) return done({ ...item, destroyed: true });
-      // 変わる: コラプトエンチャントを別の物に (付いていなければ付ける)。どう変わるかは公開されていないので仮
-      const ids = Object.entries(ENCHANTS).filter(([id, e]) => e.domain === "item" && id !== item.enchant?.id).map(([id]) => id);
+      const have = item.enchant ? ENCHANTS[item.enchant.id]?.group : undefined;
+      const ids = enchantPool(item).filter((id) => id !== item.enchant?.id && (!have || ENCHANTS[id]?.group !== have));
       const id = ids[Math.floor(rng() * ids.length)];
       const e = id ? ENCHANTS[id] : undefined;
       if (!id || !e) return done(item);
       const vals = rollEnchantValues(e.stats, rng);
-      return done({ ...item, enchant: { id, textJa: rollText(e.ja, vals), textEn: rollText(e.en, vals) } });
+      const ench = { id, textJa: rollText(e.ja, vals), textEn: rollText(e.en, vals) };
+      return done(item.enchant ? { ...item, enchant2: ench } : { ...item, enchant: ench });
     }
     case "cultivation": {
       if (item.rarity !== "unique" || !item.unique) return skip(item, "ユニークにだけ使える");
       const list = uniquesOfSameClass(item.unique.en);
       if (!list.length) return skip(item, "同じ種類の別のユニークが無い");
       const u = list[Math.floor(rng() * list.length)]!;
-      return done({ ...item, unique: u });
+      return done({ ...item, unique: u, uniqueScale: undefined });
     }
     case "siphoner":
       if (item.rarity !== "rare" || !JEWELLERY.includes(item.cls.category)) return skip(item, "レアの宝飾品にだけ使える");

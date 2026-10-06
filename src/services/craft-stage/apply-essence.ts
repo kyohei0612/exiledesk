@@ -61,7 +61,8 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   const tierIndex = level === "perfect" ? 0 : mod.tiers.findIndex((x) => essenceLevelOf(String(x.name ?? "")) === level);
   const tier = mod.tiers[tierIndex];
   if (!tier) return skip(item, "このエッセンスのティアが無い");
-  if (tier.ilvl > item.itemLevel) return skip(item, `アイテムレベルが足りない (${tier.ilvl} 以上)`);
+  // アイテムレベルの制限は無い。MOD の要求レベルが高ければアイテムの要求レベルを上書きする (poe2wiki Essence、POE2Tube 要望 ㉞-4。
+  // 前はアイテムレベル不足で打てなくしていた)。要求レベルは stage-bases.ts の reqOfItem
   // クラフト MOD は 1 つまで、アストリッドの創造性をはめていれば 2 つ (2026-10-03: 前はアストリッドを見ていなかった)
   const limit = craftedLimitOf(item);
   if (allMods(item).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? "クラフト MOD はアストリッドの創造性込みで 2 つまで" : "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)");

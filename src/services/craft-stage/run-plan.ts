@@ -20,7 +20,7 @@ import { revealOffers } from "./apply-desecrate";
 import { addForced, boostedMod, replaced, type Force } from "./stage-core";
 import { socketCapOf } from "./stage-runes";
 import { isShard } from "./apply-act";
-import { extraBaseFor, reqOf } from "./stage-bases";
+import { extraBaseFor, reqOfItem } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
 import { applyRune, isRune, parseRuneKey, runeOf } from "./stage-runes";
 import { propRows } from "./stage-props";
@@ -91,12 +91,12 @@ export function outItem(it: StageItem, data?: PatchData): OutItem {
     // 要望 ⑰-5: 解呪 / サルベージで無くなった ("disenchant" / "salvage") と、手に入った品質カレンシー
     ...({ disposed: it.disposed ?? null, gained: it.gained ?? null } as object),
     // 要望 ⑱-3: 装備に必要なレベル・能力値 (PoB の req。要求レベル = ドロップレベル)
-    ...({ requirements: reqOf(it.base) } as object),
+    ...({ requirements: reqOfItem(it) } as object),
     // 要望 ⑰-2: 上の数値 (品質・ローカル MOD・ルーンを反映。up = 素の値から変わった = ゲームでは青)
     ...({ properties: propRows(it).map((r) => ({ key: r.key, label: r.label, value: r.value, up: r.up })) } as object),
     // 要望 ⑰-1: ソケットにはめたルーン (はめた順)
     ...({ augments: (it.augments ?? []).map(outAug) } as object),
-    ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, sanctified: !!it.sanctified } as object),
+    ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, enchant2: it.enchant2 ? { id: it.enchant2.id, text_ja: it.enchant2.textJa, text_en: it.enchant2.textEn } : null, sanctified: !!it.sanctified } as object),
     prefixes: it.prefixes.map((m) => outModIn(it, m, data)) as OutItem["prefixes"],
     suffixes: it.suffixes.map((m) => outModIn(it, m, data)) as OutItem["suffixes"],
   };

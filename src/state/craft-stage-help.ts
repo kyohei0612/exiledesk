@@ -16,15 +16,16 @@ import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../servi
 import { ruleLines } from "../services/augment-rules";
 import { maxQualityOf } from "../services/craft-stage/stage-core";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
-import { CHANCE_UNIQUE_P, isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
-import type { PatchData } from "../vendor/poe2htc/engine/types";
+import { CHANCE_UNIQUE_P, EQUIP_QUALITY_STEP, isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
+import { CURRENCY_FLOOR, type PatchData } from "../vendor/poe2htc/engine/types";
 import { CATALYSTS as HTC_CATALYSTS } from "../services/htc/quality";
 import { enOf } from "./craft-stage-shelf";
 import type { StageItem } from "../services/craft-stage/types";
 
 const FLOOR = (kind: "transmute" | "regal", s: string): string => {
-  const f = kind === "transmute" ? { greater: 55, perfect: 70 } : { greater: 35, perfect: 50 };
-  return s === "greater" ? `上級: 付く MOD は MOD レベル ${f.greater} 以上のティアだけ` : s === "perfect" ? `完全: 付く MOD は MOD レベル ${f.perfect} 以上のティアだけ` : "";
+  const f = CURRENCY_FLOOR[kind];
+  const tail = "(上の段が無い系統は一番上の段。アイテムレベルが下限未満の品には使えない)";
+  return s === "greater" ? `上級: 付く MOD は MOD レベル ${f.greater} 以上のティアだけ ${tail}` : s === "perfect" ? `完全: 付く MOD は MOD レベル ${f.perfect} 以上のティアだけ ${tail}` : "";
 };
 const strengthOf = (key: string): string => (key.endsWith("_greater") ? "greater" : key.endsWith("_perfect") ? "perfect" : "base");
 const ADD = "付く MOD は、その側の普通の MOD の置き場から、付いている系統を除き、アイテムレベル以下のティアの重みで引く (計算機と同じ)";
@@ -81,8 +82,8 @@ const EXTRA_HELP: Record<string, string[]> = {
   sacrifice_armour: SACRIFICE_LINE("防具"),
   sacrifice_weapon: SACRIFICE_LINE("武器・矢筒"),
   architect: [
-    "**コラプトした装備** を予測できない形で **変えるか、壊す** (クライアントの説明文)",
-    `壊れる確率も「変わる」中身も公開されていない (**未確定**、仮に 壊れる ${Math.round(ARCHITECT_DESTROY_P * 100)}% / 変わる = コラプトエンチャントが別の物に)。手順の outcome "destroyed" / "changed" で指定できる`,
+    "**コラプトした装備** (レアリティは問わない) に **2 つ目のエンチャントを足すか、壊す** (説明文・poe2wiki)",
+    `壊れる ${Math.round(ARCHITECT_DESTROY_P * 100)}%。足すエンチャントは今のと同じグループの物は出ない。手順の outcome "destroyed" / "changed" で指定できる`,
   ],
   cultivation: [
     "**コラプトしたユニーク** を、**同じ種類の別のユニーク** に変える (クライアントの説明文)",
@@ -170,7 +171,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     const st = QUALITY_STEP;
     return [
       `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "etcher" ? "。ワンド・スタッフ・セプター用 (砥石はマーシャル武器用)" : ""}${key === "whetstone" ? "。マーシャル武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
-      key === "gemcutter" ? `1 回で +${st.gem}% (**未確定**: 1% と 5% の記述が食い違う)` : `1 回で ノーマル +${st.normal}% / マジック +${st.magic}% / レア・ユニーク +${st.rare}% (**未確定**: 攻略サイトの記述のみ)`,
+      key === "gemcutter" ? `1 回で +${st.gem}% (**未確定**: 1% と 5% の記述が食い違う)` : key === "bauble" ? `1 回で ノーマル +${st.normal}% / マジック +${st.magic}% / レア・ユニーク +${st.rare}% (**未確定**: 攻略サイトの記述のみ)` : `1 回で +${EQUIP_QUALITY_STEP}% (レアリティに関係なし。ゲームで確認)`,
       key === "whetstone" ? "品質 1% ごとに物理ダメージが 1% 増える (poe2db の Quality)" : key === "scrap" ? "品質 1% ごとにアーマー・回避力・エナジーシールドが 1% 増える" : key === "bauble" ? "品質 1% ごとにライフ・マナの回復量が 1% 増える" : "品質の効果はジェムごとに違う",
     ];
   }

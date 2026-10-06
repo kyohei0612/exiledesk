@@ -14,6 +14,7 @@
  * 聖別 (聖別のお告げ + 神のオーブ、レアだけ): MOD ごとに 0.78〜1.22 倍 (0.01 刻み) を掛けて丸め、聖別済みになる (Wiki の Omen of Sanctification)。
  * コラプトと同じく、以後は手を加えられない。
  */
+import { uniqueLines } from "./stage-uniques";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { socketCapOf } from "./stage-runes";
 import vaal from "../../i18n/vaal-enchants.json";
@@ -22,7 +23,7 @@ import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
 import { displayValue } from "../mods/stat-scale";
 
-interface Enchant { domain: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }>; spawn: Array<{ t: string; w: number }> }
+interface Enchant { domain: string; group?: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }>; spawn: Array<{ t: string; w: number }> }
 export const ENCHANTS = (vaal as unknown as { mods: Record<string, Enchant> }).mods;
 
 /** そのアイテムのタグ (クライアントの BaseItemTypes.Tags と同じ名前。表は services/mods/item-class-tags.ts に 1 つ) */
@@ -59,6 +60,13 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
     ({ applied: true, item: { ...it, corrupted: true }, added, removed });
   switch (outcome) {
     case "reroll": {
+      // ユニークは振り直しの代わりに各 MOD を 0.78〜1.22 倍 (poe2wiki Corrupted「Unique equipment」・Maxroll、POE2Tube 要望 ㉞-5)。
+      // ユニークの効果は値を持たない (roll-text.ts で振る) ので、行ごとの倍率を持たせる
+      if (item.rarity === "unique") {
+        const lines = item.unique ? uniqueLines(item.unique.en).length : 0;
+        const uniqueScale = Array.from({ length: lines }, () => (78 + Math.floor(rng() * 45)) / 100);
+        return { ...done({ ...item, uniqueScale }), note: "ユニーク: 各 MOD を 0.78〜1.22 倍" };
+      }
       // 最大 3 つ (1〜3 を等分。フラクチャー・未発現は振り直さない)。消した側に新しい MOD を 1 つずつ
       const pool = allMods(item).filter((m) => !m.fractured && !m.unrevealed);
       const n = Math.min(pool.length, 1 + Math.floor(rng() * 3));
@@ -100,7 +108,8 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
 /** 聖別: MOD ごとに 0.78〜1.22 倍して丸める。文は stage-core の retext (雛形の「#」の位置だけ変える。カタリストの品質と同じ道) */
 export function applySanctify(data: PatchData, item: StageItem, rng: () => number): StageApply {
   if (item.rarity !== "rare") return skip(item, "聖別はレアのアイテムにだけ");
-  const mods = allMods(item).filter((m) => m.values.length && !m.unrevealed);
+  // フラクチャーした MOD は変えない (用語集「フラクチャーした MOD は変えられない」、2026-10-06 オーナーがゲームで確認、POE2Tube 要望 ㉞-7)
+  const mods = allMods(item).filter((m) => m.values.length && !m.unrevealed && !m.fractured);
   let cur = item;
   const added: StageMod[] = [];
   for (const m of mods) {
