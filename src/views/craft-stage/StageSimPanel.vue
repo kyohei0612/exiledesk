@@ -30,7 +30,7 @@ import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands } from "../../services/craft-stage/pattern";
+import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, restMembers } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
@@ -186,7 +186,8 @@ function patternProblem(p: Pattern): string | null {
     const tg = p.steps[i]!.target;
     if (x.kind === "annul") continue;
     if (!tg) return `${i + 1} 手目: 付ける物を選ぶ`;
-    const tw = tg === ANY_TARGET ? checkAny(st, x) : x.kind === "rune" ? checkRune(ctx, st, tg) : (() => { const t = s.simTargets.value.find((y) => y.modId === tg); return t ? checkTarget(ctx, st, x, t) : "狙う MOD に無い"; })();
+    const tgc = isRest(tg) ? restMembers(p.steps, tg)[0] ?? tg : tg;
+    const tw = tg === ANY_TARGET ? checkAny(st, x) : isRest(tg) ? (() => { const t = s.simTargets.value.find((y) => y.modId === tgc); return t ? checkTarget(ctx, { ...st, placed: new Set([...st.placed].filter((id) => !restMembers(p.steps, tg).includes(id))) }, x, t) : "残りの候補が無い"; })() : x.kind === "rune" ? checkRune(ctx, st, tg) : (() => { const t = s.simTargets.value.find((y) => y.modId === tg); return t ? checkTarget(ctx, st, x, t) : "狙う MOD に無い"; })();
     if (tw) return `${i + 1} 手目: ${tw}`;
     if (isDouble(x) && tg !== ANY_TARGET) {
       const t2 = p.steps[i]!.target2;
@@ -590,6 +591,14 @@ async function run(): Promise<void> {
       const [a, ...rest] = ms;
       return { ...a!, method: "exalt", alts: [...(a!.alts ?? []), ...rest.flatMap((y) => [{ modId: y.modId, minTierIndex: y.minTierIndex }, ...(y.alts ?? [])])], need: isDouble(x) ? 2 : 1 };
     };
+    /** 「残り」の手: 元の手の候補ぜんぶ (全部揃ったら当たり) */
+    const restOf = (steps: Pattern["steps"], st: Pattern["steps"][number]): RecipeSpec["targets"][number] | null => {
+      if (!isRest(st.target)) return null;
+      const ms = restMembers(steps, st.target).map((id) => spec.targets.find((y) => y.modId === id)).filter((y): y is RecipeSpec["targets"][number] => !!y);
+      if (!ms.length) return null;
+      const [a, ...rest] = ms;
+      return { ...a!, method: "exalt", alts: [...(a!.alts ?? []), ...rest.map((y) => ({ modId: y.modId, minTierIndex: y.minTierIndex }))], need: ms.length };
+    };
     const compile = (p: Pattern): CompiledStep[] => {
       // 打てる手だけ並べるので、「MOD が消えたら N 手目」の N を並べた後の番号に直す
       const at: number[] = [];
@@ -601,7 +610,7 @@ async function run(): Promise<void> {
       if (!x) return [];
       const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
       const ms = st.miss ? setByKey(sets, st.miss) : undefined;
-      const grp = groupOf(st, x);
+      const grp = groupOf(st, x) ?? restOf(p.steps, st);
       const one = grp && isDouble(x) ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
       return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? t, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}) }];
       });
@@ -615,7 +624,9 @@ async function run(): Promise<void> {
     for (const [k, p] of ps.entries()) {
       // 完成の判定は、そのパターンで付ける物 + 固定する物だけ (狙い全部だと、一部だけ試すパターンが絶対に完成しなかった。2026-10-07)
       // 偉大の手の候補は「どれか 2 つ」の 1 つの狙いとして数える (3 つ目は付かなくても当たり)
-      const groups = p.steps.flatMap((st) => { const x = setByKey(sets, st.set); const g = x ? groupOf(st, x) : null; return g ? [{ g, ids: [st.target, st.target2, st.target3] }] : []; });
+      // 「残り」の手がある時は、元の手の「どれか N つ」は数えない (残りの手の「全部」に含まれる。両方数えると MOD が足りなくなる)
+      const restRefs = new Set(p.steps.filter((st) => isRest(st.target)).map((st) => Number(st.target!.slice(5))));
+      const groups = p.steps.flatMap((st, j) => { if (restRefs.has(j)) return []; const x = setByKey(sets, st.set); const g = x ? groupOf(st, x) ?? restOf(p.steps, st) : null; return g ? [{ g, ids: isRest(st.target) ? restMembers(p.steps, st.target) : [st.target, st.target2, st.target3] }] : []; });
       const inGroup = new Set(groups.flatMap((x) => x.ids).filter((x): x is string => !!x));
       const used = new Set(p.steps.flatMap((st) => [st.target]).filter((x): x is string => !!x && !inGroup.has(x)));
       const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId)), ...groups.map((x) => x.g)];

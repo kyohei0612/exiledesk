@@ -126,6 +126,21 @@ export const isDouble = (s: PatternSet | undefined): boolean => !!s && s.kind ==
  */
 export const GACHA_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "exalt", "chaos", "desecrate"]);
 export const hasCands = (s: PatternSet | undefined): boolean => !!s && GACHA_KINDS.has(s.kind);
+/**
+ * 付ける物「前の手の候補の残り」(rest:<手の番号>)。候補が付く数より多い手 (偉大で 3 つのどれか 2 つ など) の後は、どれが残るか分からないので
+ * 次の手では個別に選ばず「残り」を狙う (2026-10-07 オーナー「偉大で 2/3 にするとそれ以降の設定どうするか。次の奴の選択肢に残りのプレフィックス MOD 1 つと表示」)
+ */
+export const REST = "rest:";
+export const isRest = (t: string | null | undefined): t is string => !!t && t.startsWith(REST);
+/** その手の候補 (target・target2・target3) */
+export const candsOfStep = (st: PatternStep | undefined): string[] => (st ? [st.target, st.target2, st.target3].filter((x): x is string => !!x && x !== ANY_TARGET && !isRest(x)) : []);
+/** 候補が付く数より多い (どれが付くか分からない) 手か */
+export function uncertainStep(sets: readonly PatternSet[], st: PatternStep | undefined): boolean {
+  const s = st ? setByKey(sets, st.set) : undefined;
+  return !!s && hasCands(s) && candsOfStep(st).length > (isDouble(s) ? 2 : 1);
+}
+/** 「残り」の手が狙う候補 (元の手の候補ぜんぶ。全部揃ったら当たり) */
+export const restMembers = (steps: readonly PatternStep[], target: string): string[] => candsOfStep(steps[Number(target.slice(REST.length))]);
 /** 偉大の手の既定の 1 発 (同じカレンシーで偉大だけ外す) のセットのキー */
 export const singleKeyOf = (s: PatternSet): string => `${s.kind}|${s.currency}|${s.omens.filter((o) => o !== "OmenofGreaterExaltation").join("+")}`;
 export const ANY_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "desecrate"]);
@@ -216,6 +231,13 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     }
     if (s.kind === "transmute") st.rarity = "magic";
     if (s.kind === "regal" || s.kind === "alchemy" || s.kind === "essence") st.rarity = "rare";
+    if (isRest(p.target)) {
+      // 残りの 1 つ: 枠を 1 つ使い、元の手の候補は全部付いた物になる
+      const ms = restMembers(steps, p.target);
+      if (ms[0]) st[ctx.data.mods.get(ms[0])?.type === "suffix" ? "suffix" : "prefix"] += 1;
+      for (const id of ms) st.placed.add(id);
+      continue;
+    }
     if (p.target === ANY_TARGET) {
       st.junk += ANY_ADDS[s.kind] ?? 0;
       if (s.kind === "desecrate") st.desecrated++;

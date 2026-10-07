@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { ANY_KINDS, ANY_TARGET, isDouble, singleKeyOf, hasCands, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
+import { ANY_KINDS, ANY_TARGET, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageItemCard from "./StageItemCard.vue";
@@ -141,6 +141,8 @@ interface Row {
   targetOpts: Array<{ key: string; label: string; why: string | null }>;
   /** 偉大 (2 つ) の手の 2 つ目に選べる物 (1 つ目を付けた後の状態で見る) */
   target2Opts: Array<{ key: string; label: string; why: string | null; n: number }>;
+  /** 前の手の候補の残り (rest:<手>) */
+  restOpts: Array<{ key: string; label: string; why: string | null }>;
   missOpts: Array<{ rule: MissRule; why: string | null }>;
   /** 今の選び方で打てない理由 (前の手を変えた時に出る) */
   bad: string | null;
@@ -157,11 +159,19 @@ const rows = computed<Row[]>(() => {
     // 付ける物 (MOD・ルーン) が先 (2026-10-07 オーナー「選択順は MOD → 付ける時に使うカレンシー → やり直しカレンシー」)。
     // 付けられるカレンシーが 1 つでもあれば選べる。理由は手前の決まり (前の手で付けた・枠・ルーン) を出す
     const usable = addSets.value.filter((x) => !checkSet(c, st, x));
+    // 前の手で「どれが付くか分からない」候補があれば、その残りを 1 行で (候補の MOD は個別に選べない)
+    const unsure = pat.value.steps.slice(0, i).map((x, j) => ({ j, x })).filter(({ x }) => uncertainStep(sets.value, x) && !pat.value.steps.slice(0, i).some((y) => y.target === `${REST}${pat.value.steps.indexOf(x)}`));
+    const unsureIds = new Map(unsure.flatMap(({ j, x }) => candsOfStep(x).map((id) => [id, j] as const)));
+    const restOpts = unsure.map(({ j, x }) => {
+      const side = c.data.mods.get(candsOfStep(x)[0] ?? "")?.type === "suffix" ? "サフィ" : "プレ";
+      return { key: `${REST}${j}`, label: `残りの${side} MOD 1 つ (${j + 1} 手目の候補で付かなかった物)`, why: null as string | null };
+    });
     const targetOpts = set?.kind === "annul" ? [] : props.order.map((k) => {
       const id = k.slice(k.indexOf(":") + 1);
       if (k.startsWith("rune:")) return { key: id, label: `ルーン: ${runeLabel(id)}`, why: usable.some((x) => x.kind === "rune") ? checkRune(c, st, id) : "ソケットが空いていない" };
       const t = c.targets.find((x) => x.modId === id);
       if (!t) return { key: id, label: modLabel(id), why: "狙う MOD に無い" };
+      if (unsureIds.has(id)) return { key: id, label: modLabel(id), why: `${unsureIds.get(id)! + 1} 手目の候補 (どれが残るか分からないので「残り」で選ぶ)` };
       const ok = usable.some((x) => x.kind !== "rune" && !checkTarget(c, st, x, t));
       const why = ok ? null : (usable.filter((x) => x.kind !== "rune").map((x) => checkTarget(c, st, x, t)).find((w) => w && /前の手|枠|差す|フラクチャー/.test(w)) ?? "今付けられるカレンシーが無い");
       return { key: id, label: modLabel(id), why };
@@ -179,9 +189,9 @@ const rows = computed<Row[]>(() => {
     });
     const t2Why = !many ? null : dbl && !step.target2 ? "一緒に狙う MOD を選ぶ" : [step.target2, step.target3].map((k) => (k ? target2Opts.find((o) => o.key === k)?.why ?? null : null)).find(Boolean) ?? null;
     const setWhy = set ? checkSet(c, st, set) : "カレンシーを選ぶ";
-    const tWhy = !step.target ? "付ける物を選ぶ" : step.target === ANY_TARGET ? (set ? checkAny(st, set) : null) : set && set.kind !== "rune" ? (() => { const t = c.targets.find((x) => x.modId === step.target); return t ? checkTarget(c, st, set, t) : null; })() : null;
+    const tWhy = !step.target ? "付ける物を選ぶ" : isRest(step.target) ? (set ? (() => { const id = restMembers(pat.value.steps, step.target!)[0]; const t = id ? c.targets.find((x) => x.modId === id) : undefined; return t ? checkTarget(c, { ...st, placed: new Set([...st.placed].filter((x) => !restMembers(pat.value.steps, step.target!).includes(x))) }, set, t) : "残りの候補が無い"; })() : null) : step.target === ANY_TARGET ? (set ? checkAny(st, set) : null) : set && set.kind !== "rune" ? (() => { const t = c.targets.find((x) => x.modId === step.target); return t ? checkTarget(c, st, set, t) : null; })() : null;
     // やり直しは「選択無し (外れてもそのまま次へ)」が既定 (2026-10-07 オーナー「外れてもいいならそこは選択無しをデフォで、他を選んだ時も選択無しを選べる」)
-    return { step, set, setOpts, targetOpts, target2Opts, missOpts, bad: tWhy ?? setWhy ?? t2Why, risk: annulRisk(i, set, step) };
+    return { step, set, setOpts, targetOpts, restOpts, target2Opts, missOpts, bad: tWhy ?? setWhy ?? t2Why, risk: annulRisk(i, set, step) };
   });
 });
 
@@ -272,6 +282,7 @@ function cardTitle(r: Row): string {
   if (r.set?.kind === "annul") return "外れを消す";
   if (!r.step.target) return r.set?.kind === "rune" ? "ルーン未定" : "MOD 未定";
   if (r.step.target === ANY_TARGET) return "打つだけ";
+  if (isRest(r.step.target)) return `残りの MOD (${Number(r.step.target.slice(REST.length)) + 1} 手目の候補)`;
   if (r.set?.kind === "rune") return RUNES[r.step.target]?.ja ?? r.step.target;
   if (isDouble(r.set) && r.step.target2) return r.step.target3 ? `${[r.step.target, r.step.target2, r.step.target3].map(cardTitleOf).join(" / ")} のどれか 2 つ` : `${cardTitleOf(r.step.target)} + ${cardTitleOf(r.step.target2)}`;
   if (hasCands(r.set) && r.step.target2) return `${[r.step.target, ...candsOf(r)].map(cardTitleOf).join(" / ")} のどれか`;
@@ -335,7 +346,7 @@ function pickTarget(i: number, key: string): void {
   const cur = setByKey(sets.value, pat.value.steps[i]?.set ?? "");
   const c = ctx.value;
   const t = c?.targets.find((x) => x.modId === key);
-  const curOk = !!cur && !!c && (key === ANY_TARGET ? ANY_KINDS.has(cur.kind) : isRune ? cur.kind === "rune" : cur.kind !== "rune" && !!t && !checkTarget(c, stateBefore(c, pat.value.steps, i), cur, t));
+  const curOk = !!cur && !!c && (isRest(key) ? hasCands(cur) : key === ANY_TARGET ? ANY_KINDS.has(cur.kind) : isRune ? cur.kind === "rune" : cur.kind !== "rune" && !!t && !checkTarget(c, stateBefore(c, pat.value.steps, i), cur, t));
   patch(i, { target: key, ...(isRune && runeSet ? { set: runeSet.key, onMiss: "next" as MissRule, miss: null } : key === ANY_TARGET ? { onMiss: "next" as MissRule, miss: null } : {}), ...(curOk || isRune ? {} : { set: "" }) });
   // 選んでもその段に留まる (お告げなど、続けて選ぶ物があるので。進むのは下のボタン。2026-10-07 オーナー「選択した瞬間次にいかなくさせる」)
   editPart.value = "target";
@@ -345,7 +356,8 @@ function whyAddAt(i: number): (x: PatternSet) => string | null {
   const c = ctx.value;
   if (!c) return () => null;
   const st = stateBefore(c, pat.value.steps, i);
-  const tg = pat.value.steps[i]?.target;
+  const tg0 = pat.value.steps[i]?.target;
+  const tg = isRest(tg0) ? restMembers(pat.value.steps, tg0)[0] : tg0;
   const t = tg ? c.targets.find((x) => x.modId === tg) : undefined;
   return (x) => checkSet(c, st, x) ?? (tg === ANY_TARGET ? checkAny(st, x) : t && x.kind !== "rune" ? checkTarget(c, st, x, t) : x.kind === "rune" ? "付ける物がルーンの時だけ" : null);
 }
@@ -395,7 +407,7 @@ function nextPart(i: number): void {
 /** 偉大 (2 つ) の手で、2 つ目の MOD を選ぶ段がある (打つだけの手は無し) */
 const needs2 = (r: Row): boolean => isDouble(r.set) && r.step.target !== ANY_TARGET;
 /** 候補を足せる手 (ガチャ。偉大でなければ任意、どれか 1 つで当たり) */
-const canCands = (r: Row): boolean => hasCands(r.set) && !!r.step.target && r.step.target !== ANY_TARGET;
+const canCands = (r: Row): boolean => hasCands(r.set) && !!r.step.target && r.step.target !== ANY_TARGET && !isRest(r.step.target);
 /** 下のボタンが「この手にする」になる段 (この後に選ぶ物が無い) */
 function lastPart(i: number, r: Row): boolean {
   const now = partOf(i, r);
@@ -769,6 +781,11 @@ defineExpose({ rows });
                   <span class="text-[10px] opacity-50">{{ orderInfo?.[order[n]!]?.how }}</span>
                   <span class="ml-auto text-[11px]" :class="o.why ? 'text-rose-300/70' : 'opacity-50'">{{ o.why ?? orderInfo?.[order[n]!]?.redo }}</span>
                 </button>
+                <!-- 前の手の候補の残り -->
+                <button v-for="o in rows[focusRow]!.restOpts" :key="o.key" type="button" class="mt-1 flex items-center gap-3 rounded-lg border px-3 py-2 text-left text-[12px] transition" :class="rows[focusRow]!.step.target === o.key ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-sky-400/40 bg-black/30 hover:border-amber-300/50 hover:bg-white/[0.04]'" title="前の手の候補のうち、付かなかった物を狙う (どれが残るかは回すまで分からない)" @click="pickTarget(focusRow, o.key)">
+                  <span class="w-4 text-center text-sky-200">↳</span>
+                  <span class="font-bold text-sky-100">{{ o.label }}</span>
+                </button>
                 <!-- 打つだけ (何が付いてもいい。後の手で上書き・消す捨ての MOD) -->
                 <button type="button" class="mt-1 flex items-center gap-3 rounded-lg border border-dashed px-3 py-2 text-left text-[12px] transition" :class="rows[focusRow]!.step.target === ANY_TARGET ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/20 bg-black/20 hover:border-amber-300/50 hover:bg-white/[0.04]'" title="狙わずに打つだけ。後の手 (エッセンス・消去など) で上書きする捨ての MOD に" @click="pickTarget(focusRow, ANY_TARGET)">
                   <span class="w-4 text-center text-amber-200">＊</span>
@@ -847,7 +864,7 @@ defineExpose({ rows });
               <template v-for="r in [rows[focusRow]!]" :key="'sum' + focusRow">
                 <div class="grid grid-cols-[5.5rem_1fr] items-center gap-x-3 gap-y-2 text-[12px]">
                   <span class="text-[11px] opacity-50">{{ r.set?.kind === "rune" ? "差すルーン" : "付ける MOD" }}</span>
-                  <button type="button" class="flex items-center gap-2 justify-self-start rounded px-1 text-left text-[14px] font-bold text-amber-50 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'target'"><img v-if="r.set?.kind === 'rune' && cardIcon(r)" :src="cardIcon(r)!" alt="" class="h-9 w-9 object-contain" />{{ r.step.target === ANY_TARGET ? "何が付いてもいい (打つだけ)" : r.step.target ? (r.set?.kind === "rune" ? runeLabel(r.step.target) : modLabel(r.step.target) + (isDouble(r.set) ? candsOf(r).map((x) => ` + ${modLabel(x)}`).join("") + (r.step.target3 ? " (どれか 2 つ)" : "") : "")) : "—" }}</button>
+                  <button type="button" class="flex items-center gap-2 justify-self-start rounded px-1 text-left text-[14px] font-bold text-amber-50 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'target'"><img v-if="r.set?.kind === 'rune' && cardIcon(r)" :src="cardIcon(r)!" alt="" class="h-9 w-9 object-contain" />{{ r.step.target === ANY_TARGET ? "何が付いてもいい (打つだけ)" : r.step.target ? (r.set?.kind === "rune" ? runeLabel(r.step.target) : isRest(r.step.target) ? cardTitle(r) : modLabel(r.step.target) + (isDouble(r.set) ? candsOf(r).map((x) => ` + ${modLabel(x)}`).join("") + (r.step.target3 ? " (どれか 2 つ)" : "") : "")) : "—" }}</button>
                   <template v-if="r.set?.kind !== 'rune'">
                     <span class="text-[11px] opacity-50">カレンシー</span>
                     <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'set'">
@@ -902,7 +919,7 @@ defineExpose({ rows });
             <template v-for="r in [rows[previewAt]!]" :key="'sum' + previewAt">
                 <div class="grid grid-cols-[5.5rem_1fr] items-center gap-x-3 gap-y-2 text-[12px]">
                   <span class="text-[11px] opacity-50">{{ r.set?.kind === "rune" ? "差すルーン" : "付ける MOD" }}</span>
-                  <button type="button" class="flex items-center gap-2 justify-self-start rounded px-1 text-left text-[14px] font-bold text-amber-50 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'target'"><img v-if="r.set?.kind === 'rune' && cardIcon(r)" :src="cardIcon(r)!" alt="" class="h-9 w-9 object-contain" />{{ r.step.target === ANY_TARGET ? "何が付いてもいい (打つだけ)" : r.step.target ? (r.set?.kind === "rune" ? runeLabel(r.step.target) : modLabel(r.step.target) + (isDouble(r.set) ? candsOf(r).map((x) => ` + ${modLabel(x)}`).join("") + (r.step.target3 ? " (どれか 2 つ)" : "") : "")) : "—" }}</button>
+                  <button type="button" class="flex items-center gap-2 justify-self-start rounded px-1 text-left text-[14px] font-bold text-amber-50 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'target'"><img v-if="r.set?.kind === 'rune' && cardIcon(r)" :src="cardIcon(r)!" alt="" class="h-9 w-9 object-contain" />{{ r.step.target === ANY_TARGET ? "何が付いてもいい (打つだけ)" : r.step.target ? (r.set?.kind === "rune" ? runeLabel(r.step.target) : isRest(r.step.target) ? cardTitle(r) : modLabel(r.step.target) + (isDouble(r.set) ? candsOf(r).map((x) => ` + ${modLabel(x)}`).join("") + (r.step.target3 ? " (どれか 2 つ)" : "") : "")) : "—" }}</button>
                   <template v-if="r.set?.kind !== 'rune'">
                     <span class="text-[11px] opacity-50">カレンシー</span>
                     <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'set'">
