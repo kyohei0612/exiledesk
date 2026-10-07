@@ -1,0 +1,14 @@
+{
+  "name": "exiledesk-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "ExileDesk Web 版 (dist-web/) を Cloudflare Workers の静的ファイルとして置く",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev --port 8788"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

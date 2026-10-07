@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseFeedVideoIds, parseLivePageVideoId, pickLive, readUntil, type VideoItem } from "../server/live/src/youtube";
 import { pickStreams, thumbOf, getAppToken } from "../server/live/src/twitch";
 import { buildState } from "../server/live/src/state";
-import { refresh } from "../server/live/src/index";
+import worker, { proxyScout, refresh } from "../server/live/src/index";
 import type { ChannelDef, Env } from "../server/live/src/types";
 
 const CH: ChannelDef[] = [
@@ -120,5 +120,29 @@ describe("まとめと 1 回分", () => {
     const n = seen.length;
     await refresh(env, CH, f, new Date("2026-10-07T09:05:00Z"));
     expect(seen.slice(n).some((u) => u.includes("/youtube/v3/channels") || u.includes("helix/users"))).toBe(false);
+  });
+});
+
+describe("相場の中継 (/api/poe2scout)", () => {
+  const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
+  it("path と query をそのまま poe2scout に渡し、CORS と 10 分のキャッシュを付けて返す", async () => {
+    let seen = "";
+    const f = (async (input: RequestInfo | URL) => { seen = String(input); return new Response('{"a":1}', { headers: { "content-type": "application/json" } }); }) as unknown as typeof fetch;
+    const r = await proxyScout(new URL("https://x.workers.dev/api/poe2scout/poe2/items/currency/currency?league=Rise%20of%20the%20Abyssal&page=1"), ctx, f);
+    expect(seen).toBe("https://api.poe2scout.com/poe2/items/currency/currency?league=Rise%20of%20the%20Abyssal&page=1");
+    expect(r.status).toBe(200);
+    expect(r.headers.get("access-control-allow-origin")).toBe("*");
+    expect(r.headers.get("cache-control")).toBe("public, max-age=600");
+    expect(await r.json()).toEqual({ a: 1 });
+  });
+  it("fetch の入口から届く (GET /api/poe2scout/…)、上流の 404 はそのまま", async () => {
+    const orig = globalThis.fetch;
+    globalThis.fetch = (async () => new Response("no", { status: 404 })) as unknown as typeof fetch;
+    try {
+      const env: Env = { LIVE: fakeKv() };
+      const r = await worker.fetch(new Request("https://x.workers.dev/api/poe2scout/poe2/Leagues"), env, ctx);
+      expect(r.status).toBe(404);
+      expect(r.headers.get("access-control-allow-origin")).toBe("*");
+    } finally { globalThis.fetch = orig; }
   });
 });

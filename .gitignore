@@ -38,3 +38,7 @@ src-tauri/resources/pob*/
 # server/live (Cloudflare Worker) の手元の秘密と KV
 server/live/.dev.vars
 server/live/.wrangler/
+
+# Web 版のビルドと手元の秘密
+dist-web
+server/web/.wrangler/

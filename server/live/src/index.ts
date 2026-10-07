@@ -62,6 +62,28 @@ export async function refresh(env: Env, channels: readonly ChannelDef[] = CHANNE
 }
 
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, OPTIONS" };
+
+/**
+ * 相場の中継 (Web 版用、2026-10-07): GET /api/poe2scout/<path> → https://api.poe2scout.com/<path>。
+ * 端のキャッシュに 10 分置くので、見る人が何人いても poe2scout には 10 分に 1 回ずつしか行かない。
+ * (ブラウザから poe2scout を直に叩くと CORS で弾かれる。アプリ版は Rust 経由で直に叩くのでここは使わない)
+ */
+const SCOUT = "https://api.poe2scout.com";
+const SCOUT_TTL = 600;
+export async function proxyScout(url: URL, ctx: ExecutionContext, fetchFn: Fetch = fetch): Promise<Response> {
+  const up = `${SCOUT}${url.pathname.slice("/api/poe2scout".length)}${url.search}`;
+  const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
+  const key = new Request(up, { method: "GET" });
+  let res = cache ? await cache.match(key) : undefined;
+  if (!res) {
+    const u = await fetchFn(up, { headers: { accept: "application/json", "user-agent": "ExileDesk-web/0.1 (https://github.com/kyohei0612/exiledesk)" } });
+    res = new Response(u.body, { status: u.status, headers: { "content-type": u.headers.get("content-type") ?? "application/json; charset=utf-8", "cache-control": `public, max-age=${SCOUT_TTL}` } });
+    if (u.ok && cache) ctx.waitUntil(cache.put(key, res.clone()));
+  }
+  const out = new Response(res.body, res);
+  for (const [k, v] of Object.entries(CORS)) out.headers.set(k, v);
+  return out;
+}
 const json = (body: unknown, status = 200, extra: Record<string, string> = {}): Response =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8", ...CORS, ...extra } });
 
@@ -74,6 +96,7 @@ export default {
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     if (req.method !== "GET") return json({ error: "GET だけ" }, 405);
+    if (url.pathname.startsWith("/api/poe2scout/")) return proxyScout(url, ctx);
     switch (url.pathname) {
       case "/live.json": {
         const raw = await env.LIVE.get(STATE_KEY);
@@ -89,7 +112,7 @@ export default {
       case "/health":
         return json({ ok: true, channels: CHANNELS.length });
       default:
-        return json({ error: "not found", paths: ["/live.json", "/health"] }, 404);
+        return json({ error: "not found", paths: ["/live.json", "/health", "/api/poe2scout/…"] }, 404);
     }
   },
 };
