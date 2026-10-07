@@ -95,10 +95,11 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
   if (!sum) {
     out.push(`訪問の集計は取れませんでした (${usage.why ?? "集計の設定が無い"})。`);
   } else if (!sum.sessions) {
-    out.push("昨日は誰も来ていません。");
+    out.push(label.includes("今日") ? "今日はまだ誰も来ていません。" : "昨日は誰も来ていません。");
   } else {
     const ret = sum.sessions - sum.newSessions;
-    const who = `昨日は ${n(sum.sessions)} 回の訪問がありました (新しい人 ${n(sum.newSessions)}、前にも来た人 ${n(ret)}、人数にして ${n(sum.users)} 人)。`;
+    const when = label.includes("今日") ? "今日はここまでで" : "昨日は";
+    const who = `${when} ${n(sum.sessions)} 回の訪問がありました (新しい人 ${n(sum.newSessions)}、前にも来た人 ${n(ret)}、人数にして ${n(sum.users)} 人)。`;
     const stay = sum.bounce == null ? "" : sum.bounce >= 0.5 ? `半分以上 (${pct(sum.bounce)}) は何もせずに閉じています。` : `${pct(sum.bounce)} は何もせずに閉じました。`;
     const dur = sum.medianMinutes == null ? "" : `残った人は真ん中で ${sum.medianMinutes < 1 ? "1 分未満" : `${sum.medianMinutes.toFixed(0)} 分ほど`}使っています。`;
     out.push([who, stay, dur].filter(Boolean).join(""));

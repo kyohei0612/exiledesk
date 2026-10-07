@@ -86,8 +86,11 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   for (const r of await q<{ f: string; s: number }>(`SELECT blob7 AS f, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'open' GROUP BY f`)) if (r.f === "1") out.newSessions = Number(r.s);
   const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'error')`);
   if (out.sessions && engaged[0]) out.bounce = Math.max(0, 1 - Number(engaged[0].s) / out.sessions);
-  const dur = await q<{ m: number }>(`SELECT quantiles(0.5)(d) AS m FROM (SELECT blob2, (toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp))) / 60 AS d FROM ${DATASET} WHERE ${w} GROUP BY blob2)`);
-  if (dur[0]?.m != null) { const v = Array.isArray(dur[0].m) ? (dur[0].m as unknown as number[])[0] : dur[0].m; if (v != null) out.medianMinutes = Number(v); }
+  // 滞在の中央値 (Analytics Engine の SQL は quantiles が無いので quantileWeighted。それも無ければ平均)
+  const perSession = `(SELECT blob2, (toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp))) / 60 AS d FROM ${DATASET} WHERE ${w} GROUP BY blob2)`;
+  let dur: Array<{ m: number }> = [];
+  try { dur = await sql<{ m: number }>(env, `SELECT quantileWeighted(0.5)(d, 1) AS m FROM ${perSession}`, fetchFn); } catch { dur = await q<{ m: number }>(`SELECT avg(d) AS m FROM ${perSession}`); }
+  if (dur[0]?.m != null) out.medianMinutes = Number(dur[0].m);
   const top = async (col: string): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
   out.refs = await top("blob5"); out.devices = await top("blob4"); out.countries = await top("blob6");
   out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'error' GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
