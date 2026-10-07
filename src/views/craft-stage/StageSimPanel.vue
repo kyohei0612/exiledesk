@@ -11,7 +11,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { craftStage, iconOf, nameOf, priceOf, readSimSession, writeSimSession } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf, priceOf, readSimRecipes, readSimSession, writeSimRecipes, writeSimSession, type SimRecipe, type SimSession } from "../../state/craft-stage";
 import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
 import { rateOf, simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
@@ -753,6 +753,70 @@ onMounted(() => {
   // patternDone は orderDone の watch で落ちるので、その後に戻す
   void nextTick(() => { patternDone.value = !!ses.flags.patternDone; restoring = false; });
 });
+/**
+ * レシピ (名前を付けて残した途中)。右上の「レシピ ▼」から保存・呼び出し・名前の付け替え・消す
+ * (2026-10-07 オーナー「このガチャの仕組みシミュレーターで保管しときたい」「レシピ保存ボタンで管理できるように、名前も自分で変えて」)
+ */
+const recipes = ref<SimRecipe[]>(readSimRecipes());
+const recipeOpen = ref(false);
+const recipeName = ref("");
+const recipeArmed = ref<string | null>(null);
+const recipeRenaming = ref<string | null>(null);
+const baseJa = computed(() => s.item.value?.baseJa ?? s.base.value);
+const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+function openRecipes(): void {
+  recipeOpen.value = !recipeOpen.value;
+  recipeArmed.value = null;
+  if (recipeOpen.value && !recipeName.value) recipeName.value = `${baseJa.value} ${fmtDate(Date.now())}`;
+}
+function saveRecipe(): void {
+  const name = recipeName.value.trim() || `${baseJa.value} ${fmtDate(Date.now())}`;
+  const r: SimRecipe = { id: `${Date.now()}`, name, savedAt: Date.now(), baseJa: baseJa.value, session: JSON.parse(JSON.stringify(sessionNow())) as SimSession };
+  recipes.value = [r, ...recipes.value];
+  writeSimRecipes(recipes.value);
+  recipeName.value = "";
+}
+/** 外を押す・Esc で閉じる */
+const recipeBox = ref<HTMLElement | null>(null);
+function recipeOutside(e: Event): void {
+  if (!recipeOpen.value) return;
+  if (e instanceof KeyboardEvent ? e.key === "Escape" && !recipeRenaming.value : !recipeBox.value?.contains(e.target as Node)) { recipeOpen.value = false; recipeArmed.value = null; }
+}
+onMounted(() => { document.addEventListener("pointerdown", recipeOutside, true); document.addEventListener("keydown", recipeOutside); });
+onBeforeUnmount(() => { document.removeEventListener("pointerdown", recipeOutside, true); document.removeEventListener("keydown", recipeOutside); });
+function renameRecipe(id: string, name: string): void {
+  if (recipeRenaming.value !== id) return;
+  recipeRenaming.value = null;
+  const n = name.trim();
+  if (!n) return;
+  recipes.value = recipes.value.map((x) => (x.id === id ? { ...x, name: n } : x));
+  writeSimRecipes(recipes.value);
+}
+function removeRecipe(id: string): void {
+  if (recipeArmed.value !== `del:${id}`) { recipeArmed.value = `del:${id}`; return; }
+  recipeArmed.value = null;
+  recipes.value = recipes.value.filter((x) => x.id !== id);
+  writeSimRecipes(recipes.value);
+}
+/** 呼び出す: 今の状態を置き換える (2 回押し)。1 つ戻すと同じやり方で、工程の「決めた」も戻す */
+function loadRecipe(r: SimRecipe): void {
+  if (recipeArmed.value !== `load:${r.id}`) { recipeArmed.value = `load:${r.id}`; return; }
+  recipeArmed.value = null;
+  const ses = r.session;
+  restoring = true;
+  s.base.value = ses.base;
+  s.itemLevel.value = ses.itemLevel;
+  s.simTargets.value = ses.targets;
+  s.simSockets.value = ses.sockets;
+  s.simOrder.value = ses.order;
+  s.simPatterns.value = ses.patterns.length ? ses.patterns : [{ name: "パターン 1", steps: [] }];
+  s.reset();
+  whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
+  startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;
+  results.value = [];
+  recipeOut.value = null;
+  void nextTick(() => { patternDone.value = !!ses.flags.patternDone; loadKept(); restoring = false; recipeOpen.value = false; });
+}
 const step4pre = computed(() => stepOrder.value && orderDone.value);
 /** 6 パターンの「付ける MOD」の行に出す物 (5 順番計画の行と同じ: 側・色・段・付け方・取り直し) */
 const orderInfo = computed(() => Object.fromEntries(orderKeys.value.map((k) => {
@@ -991,6 +1055,28 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     <!-- 1 つ戻す・説明はタブの行の右端に (工程の枠の間に行を挟まない) -->
     <Teleport to="#sim-tools" :disabled="s.mode.value !== 'sim' || !!s.replay.value">
       <CurrencyPicker sim />
+      <!-- レシピ (名前を付けて残す・呼び出す) -->
+      <span ref="recipeBox" class="relative">
+        <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px]" :class="recipeOpen ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/20 hover:bg-white/10'" title="今の途中 (ベース・狙い・順番・パターン) を名前を付けて残す / 呼び出す" @click="openRecipes">レシピ {{ recipeOpen ? "▲" : "▼" }}</button>
+        <div v-if="recipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl">
+          <div class="flex items-center gap-2">
+            <input v-model="recipeName" class="min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60" placeholder="レシピの名前" @keydown.enter="saveRecipe" />
+            <button type="button" class="shrink-0 rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 hover:bg-amber-500/30" @click="saveRecipe">今の状態を保存</button>
+          </div>
+          <p v-if="!recipes.length" class="mt-3 text-center opacity-50">まだ保存したレシピはありません</p>
+          <div v-else class="mt-3 max-h-[50vh] space-y-1 overflow-y-auto">
+            <div v-for="r in recipes" :key="r.id" class="flex items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2 py-1.5">
+              <div class="min-w-0 flex-1">
+                <input v-if="recipeRenaming === r.id" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="r.name" class="w-full rounded border border-amber-400/60 bg-black/50 px-1 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="recipeRenaming = null" @blur="renameRecipe(r.id, ($event.target as HTMLInputElement).value)" />
+                <p v-else class="cursor-text truncate font-bold" title="ダブルクリックで名前を変える" @dblclick="recipeRenaming = r.id">{{ r.name }}</p>
+                <p class="truncate text-[10px] opacity-50">{{ r.baseJa ?? r.session.base }} · パターン {{ r.session.patterns.length }} つ · {{ fmtDate(r.savedAt) }}</p>
+              </div>
+              <button type="button" class="shrink-0 rounded-lg border px-2 py-0.5" :class="recipeArmed === `load:${r.id}` ? 'border-amber-400 bg-amber-500/25 text-amber-100' : 'border-sky-400/50 text-sky-200 hover:bg-sky-500/10'" :title="recipeArmed === `load:${r.id}` ? '今の状態は置き換わる。もう一度押すと呼び出す' : 'このレシピを呼び出す (今の状態は置き換わる)'" @click="loadRecipe(r)">{{ recipeArmed === `load:${r.id}` ? "置き換える?" : "呼び出す" }}</button>
+              <button type="button" class="shrink-0 rounded px-1.5 py-0.5" :class="recipeArmed === `del:${r.id}` ? 'bg-rose-600/80 text-white' : 'opacity-50 hover:bg-rose-600/40 hover:opacity-100'" :title="recipeArmed === `del:${r.id}` ? 'もう一度押すと消す' : 'このレシピを消す'" @click="removeRecipe(r.id)">{{ recipeArmed === `del:${r.id}` ? "消す?" : "×" }}</button>
+            </div>
+          </div>
+        </div>
+      </span>
       <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px]" :class="resetArmed ? 'border-rose-400 bg-rose-500/25 text-rose-100' : 'border-white/20 hover:bg-white/10'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll">{{ resetArmed ? "もう一度押すとリセット" : "リセット" }}</button>
       <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo">↶ 1 つ戻す</button>
       <button type="button" class="rounded-full border px-2 py-0.5 text-[11px]" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>

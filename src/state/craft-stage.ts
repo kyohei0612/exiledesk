@@ -191,6 +191,19 @@ export function readSimSession(): SimSession | null {
 export function writeSimSession(v: SimSession | null): void {
   try { if (v) localStorage.setItem(SIM_SESSION_KEY, JSON.stringify(v)); else localStorage.removeItem(SIM_SESSION_KEY); } catch { /* 覚えられなくても動く */ }
 }
+
+/**
+ * レシピ: シミュレーションの途中 (ベース・狙い・順番・パターン・工程の「決めた」) を名前を付けて残す
+ * (2026-10-07 オーナー「このガチャの仕組みシミュレーターで保管しときたい」「レシピ保存ボタンで管理、名前も自分で変えて」)
+ */
+export const SIM_RECIPES_KEY = "exiledesk.craftStageSim.recipes";
+export interface SimRecipe { id: string; name: string; savedAt: number; session: SimSession; /** 一覧に出すベースの日本語名 */ baseJa?: string }
+export function readSimRecipes(): SimRecipe[] {
+  try { const v = JSON.parse(localStorage.getItem(SIM_RECIPES_KEY) ?? "[]") as SimRecipe[]; return Array.isArray(v) ? v.filter((x) => x && x.session?.base) : []; } catch { return []; }
+}
+export function writeSimRecipes(v: SimRecipe[]): void {
+  try { localStorage.setItem(SIM_RECIPES_KEY, JSON.stringify(v)); } catch { /* 覚えられなくても動く */ }
+}
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
