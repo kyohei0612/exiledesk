@@ -47,6 +47,8 @@ const ROWS: Array<{ name: string; kinds: PatternSet["kind"][] }> = [
   { name: "レア", kinds: ["exalt", "chaos", "annul"] },
   { name: "パーフェクトエッセンス (レア)", kinds: ["essence_perfect"] },
   { name: "骨", kinds: ["desecrate"] },
+  // 自前のフラクチャー (2026-10-07)
+  { name: "フラクチャー", kinds: ["fracture"] },
   { name: "ルーン", kinds: ["rune"] },
 ];
 const rows = computed(() => ROWS.map((r) => ({ name: r.name, tiles: tiles.value.filter((t) => r.kinds.includes(t.kind)) })).filter((r) => r.tiles.length));

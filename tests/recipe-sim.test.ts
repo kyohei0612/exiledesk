@@ -251,6 +251,32 @@ describe("パターンで回す (2026-10-06)", () => {
   });
 });
 
+describe("自前のフラクチャーの手 (2026-10-07)", () => {
+  it("金の指輪: 白から変成でライフ → 王者・高貴・骨 (壁) → フラクチャーでライフを固定。外れは最初から、固定した物は残る", async () => {
+    const data = await loadPatch();
+    const life = { ...targetOf(data, "Rings", /IncreasedLife$/, 4), method: "exalt" as const };
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 30, price: () => 1, seed: 99,
+      targets: [life],
+      pattern: [
+        { kind: "transmute", currency: "transmute", omens: [], target: life, onMiss: "restart" },
+        { kind: "regal", currency: "regal", omens: [], target: null, onMiss: "next" },
+        { kind: "exalt", currency: "exalt", omens: [], target: null, onMiss: "next" },
+        { kind: "desecrate", currency: "desecrate", omens: [], target: null, onMiss: "next" },
+        { kind: "fracture", currency: "fracture", omens: [], target: life, onMiss: "restart" },
+      ],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    const { final } = playPlan(data, recipePlan(spec, r!.sample!), {});
+    const fixed = allMods(final).filter((m) => m.fractured);
+    expect(fixed.length).toBe(1);
+    expect(fixed[0]!.modId).toBe(life.modId);
+    // 骨は発現させずに壁として残す (フラクチャーの候補を 3 つにする)
+    expect(allMods(final).some((m) => m.unrevealed)).toBe(true);
+  });
+});
+
 describe("人ごとの乱数の種 (2026-10-07)", () => {
   it("人の間隔は 1 人の上限の手の数より広い (n 手目の乱数は seed + n なので、重なると隣の人と同じ乱数になる)", async () => {
     const { seedsOf } = await import("../src/services/craft-stage/recipe-sim");

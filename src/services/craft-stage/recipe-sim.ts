@@ -405,7 +405,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     /** 消えた狙いを取り直す時の手 (元の手の番号 → 替えた手) */
     const regain = new Map<number, CompiledStep>();
     /** 前の手の後に付いていた狙い (消えた物を見つけて、その手の「MOD が消えたら」で戻る) と、最後に打った手 */
-    const metIds = (): Set<string> => new Set(allMods(item).filter((m) => !m.unrevealed && !m.fractured && spec.targets.some((t) => hits(t, m))).map((m) => m.modId));
+    // 固定した物も数える (自前のフラクチャーで固定した狙いが「消えた」ことにならないように)
+    const metIds = (): Set<string> => new Set(allMods(item).filter((m) => !m.unrevealed && spec.targets.some((t) => hits(t, m))).map((m) => m.modId));
     let prevMet = metIds();
     let lastAt = -1;
     const count = (t: RecipeTarget): number => new Set(allMods(item).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size;
@@ -445,6 +446,25 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       if (i >= pat.length) { accAt = -1; return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases, hits: hitsNow(), stepPresses, stepCost }; }
       let p = regain.get(i) ?? pat[i]!;
       lastAt = i;
+      // 自前のフラクチャー: 狙いが固定されていれば次へ。打って違う MOD が固定されたら外れ (既定は新しいベースで最初から)
+      if (p.kind === "fracture") {
+        const fixedNow = (): StageMod | undefined => allMods(item).find((m) => m.fractured);
+        const ok = (): boolean => { const f = fixedNow(); return !!f && !!p.target && hits(p.target, f); };
+        if (!ok()) {
+          if (!fixedNow()) {
+            stepPresses[i] = (stepPresses[i] ?? 0) + 1;
+            const e = play(p.currency || "fracture");
+            if (e) return fail(`${i + 1} 手目: ${e}`);
+          }
+          if (!ok()) {
+            if (p.onMiss === "next") { i++; continue; }
+            restartPattern();
+            continue;
+          }
+        }
+        i++;
+        continue;
+      }
       // 偉大の手 (候補のどれか 2 つ) は、もう 2 つ付いていれば次へ。1 つ付いている時は偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
       const two = !!p.target && needOf(p.target) >= 2;
       if (two && meets(item, p.target!)) { i++; continue; }
@@ -515,7 +535,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         const echoes = p.omens.includes("OmenofAbyssalEchoes");
         stepPresses[i] = (stepPresses[i] ?? 0) + 1;
         e = play(p.currency, p.omens.filter((o) => o !== "OmenofAbyssalEchoes"));
-        if (!e && p.kind === "desecrate" && unrevealedOf(item)) e = reveal(p.target, echoes);
+        // 打つだけの骨で、後ろに自前のフラクチャーの手があれば発現させない (未発現の冒涜はフラクチャーされない = 壁。2026-10-07 発現させていて当たりが 1/5 に下がっていた)
+        const wall = !p.target && pat.slice(i + 1).some((q) => q.kind === "fracture");
+        if (!e && p.kind === "desecrate" && unrevealedOf(item) && !wall) e = reveal(p.target, echoes);
       }
       if (e) return fail(`${i + 1} 手目: ${e}`);
       if (!p.target || (two ? meets(item, p.target) : count(p.target) > before || meets(item, p.target))) { i++; continue; }

@@ -71,7 +71,9 @@ function annulRisk(i: number, set: PatternSet | undefined, step: PatternStep): {
     } else scope = props.annulSides?.[sd] === "side" ? [sd] : ["prefix", "suffix"];
   }
   if (!scope) return null;
+  const fixed = stateBefore(c, pat.value.steps, i).fractured;
   const hits = pat.value.steps.slice(0, i).flatMap((q) => {
+    if (q.target && q.target === fixed) return [];
     const x = setByKey(sets.value, q.set);
     // 外れた時だけ打つ手 (同じ MOD をもう一度狙う) の外れでは、その MOD はまだ付いていない
     if (q.target === step.target && retryFrom.value.has(i)) return [];
@@ -324,6 +326,13 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
       continue;
     }
     if (x.kind === "rune") { const r = applyRune(it, `rune:${st.target}`, d); if (r.applied) it = r.item; continue; }
+    // 自前のフラクチャー: その MOD を固定した姿
+    if (x.kind === "fracture") {
+      const fix = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.map((m) => (m.modId === st.target ? { ...m, fractured: true } : m));
+      it = { ...it, prefixes: fix(it.prefixes), suffixes: fix(it.suffixes) };
+      if (j === previewAt.value) newMods = allMods(it).filter((m) => m.modId === st.target);
+      continue;
+    }
     // 残りの MOD の手: 元の手の候補のうち、まだ付いていない物を足す (骨なら冒涜の MOD として)。2026-10-07 オーナー「残りの MOD で冒涜選んでるなら足さないと」
     if (isRest(st.target)) {
       const have = new Set(allMods(it).map((m) => m.modId));
@@ -376,6 +385,7 @@ function whyMissAt(i: number): (x: PatternSet) => string | null {
 const KIND_TONE: Record<string, string> = {
   exalt: "border-yellow-500/60", chaos: "border-yellow-500/60", desecrate: "border-green-700/90", essence: "border-sky-400/60", essence_perfect: "border-sky-400/60",
   annul: "border-white/40", rune: "border-amber-400/60", transmute: "border-blue-400/50", augment: "border-blue-400/50", regal: "border-blue-400/50", alchemy: "border-blue-400/50",
+  fracture: "border-violet-400/70",
 };
 /** カードの見出し (付ける物を短く: 「火耐性 T3+」) */
 function cardTitle(r: Row): string {
@@ -384,6 +394,7 @@ function cardTitle(r: Row): string {
   if (r.step.target === ANY_TARGET) return "打つだけ";
   if (isRest(r.step.target)) return `残りの MOD (${Number(r.step.target.slice(REST.length)) + 1} 手目の候補)`;
   if (r.set?.kind === "rune") return RUNES[r.step.target]?.ja ?? r.step.target;
+  if (r.set?.kind === "fracture") return `${cardTitleOf(r.step.target)} を固定`;
   if (isDouble(r.set) && r.step.target2) return r.step.target3 ? `${[r.step.target, r.step.target2, r.step.target3].map(cardTitleOf).join(" / ")} のどれか 2 つ` : `${cardTitleOf(r.step.target)} + ${cardTitleOf(r.step.target2)}`;
   if (hasCands(r.set) && r.step.target2) return `${[r.step.target, ...candsOf(r)].map(cardTitleOf).join(" / ")} のどれか`;
   return cardTitleOf(r.step.target);
@@ -470,7 +481,7 @@ function addSetsFor(r: Row): PatternSet[] {
 /** 付ける側の棚 (消去は外す側にだけ出す。2026-10-07 オーナー「付ける時は削除の手とか表示しなくてもおｋ」) */
 const addSets = computed(() => sets.value.filter((x) => x.kind !== "annul"));
 /** やり直しを選べる手か (外れがあって、レアリティが変わらない手) */
-const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && !RARITY_CHANGE.has(r.set.kind) && r.step.target !== ANY_TARGET;
+const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && !RARITY_CHANGE.has(r.set.kind) && r.set.kind !== "fracture" && r.step.target !== ANY_TARGET;
 /** 外れの枝を出す手 (打つだけの手は外れが無い) */
 const showMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && r.step.target !== ANY_TARGET;
 /** 手のカードを押した: 右の枠でその手を決める (もう一度押すと閉じる)。外れの枝はやり直しだけ */
@@ -544,7 +555,9 @@ function removableIn(i: number, r: Row): (id: string) => boolean {
   if (ms) rems.push(ms);
   const sideOfId = (id: string): "prefix" | "suffix" => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
   const desecrated = new Set(pat.value.steps.slice(0, i + 1).filter((st) => setByKey(sets.value, st.set)?.kind === "desecrate").flatMap((st) => [st.target, st.target2, st.target3]).filter((x): x is string => !!x));
-  return (id) => rems.some((x) => {
+  // 自前のフラクチャーで固定した物は消えない
+  const fixed = stateBefore(c, pat.value.steps, i).fractured;
+  return (id) => id !== fixed && rems.some((x) => {
     if (x.omens.includes("OmenofLight")) return desecrated.has(id);
     const side = x.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : x.omens.some((o) => /Dextral/.test(o)) ? "suffix" : null;
     return !side || sideOfId(id) === side;
@@ -721,7 +734,8 @@ function onSet(i: number, key: string): void {
   const set = setByKey(sets.value, key);
   const cur = pat.value.steps[i]!;
   // やり直せない手は「そのまま次へ」、ほかは「やり直し」。外す物がその手で使えなくなったら選び直し
-  const miss: MissRule = set && RARITY_CHANGE.has(set.kind) ? "next" : "annul_redo";
+  // フラクチャーは外れたら (違う MOD が固定されたら) 新しいベースで最初から
+  const miss: MissRule = set?.kind === "fracture" ? "restart" : set && RARITY_CHANGE.has(set.kind) ? "next" : "annul_redo";
   const rm = cur.miss ? setByKey(sets.value, cur.miss) : undefined;
   const keepMiss = cur.miss && !(rm && set && checkRemoval(set, rm));
   if (!hasCands(set)) patch(i, { target2: null, target3: null });
@@ -874,7 +888,7 @@ defineExpose({ rows });
             <span v-if="showMiss(r) && !needs2(r)" class="flex flex-col">
               <span class="flex items-center">
                 <span class="h-px w-4 border-t border-dashed border-rose-400/60"></span>
-                <button type="button" class="flex items-center gap-1 whitespace-nowrap rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :class="focusRow === i && partOf(i, r) === 'miss' ? 'ring-2 ring-rose-400/70' : ''" :title="hasMiss(r) ? '押すとやり直しを選ぶ' : 'レアリティが変わる手はやり直せない'" :disabled="!hasMiss(r) || locked" @click="selectRow(i, 'miss')">
+                <button type="button" class="flex items-center gap-1 whitespace-nowrap rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :class="focusRow === i && partOf(i, r) === 'miss' ? 'ring-2 ring-rose-400/70' : ''" :title="hasMiss(r) ? '押すとやり直しを選ぶ' : r.set?.kind === 'fracture' ? '違う MOD が固定されたら新しいベースで最初から' : 'レアリティが変わる手はやり直せない'" :disabled="!hasMiss(r) || locked" @click="selectRow(i, 'miss')">
                   <span class="text-rose-300">付かなかった</span>
                   <template v-if="missSet(r.step)">
                     <span class="opacity-60">→</span>
@@ -882,7 +896,7 @@ defineExpose({ rows });
                     <span v-else class="h-5 w-5 rounded border border-dashed border-white/25"></span>
                     <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
                   </template>
-                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
+                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : r.step.onMiss === "restart" ? "→ 最初から" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
                 </button>
               </span>
               <!-- 付いた時は外れた時だけの手を飛ばす -->

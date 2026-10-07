@@ -19,7 +19,7 @@ const ESS_SOURCE = new Map<string, "essence" | "perfect_essence">(Object.keys(ES
   return m ? [[m[2]!, m[1] === "perfect" ? "perfect_essence" : "essence"] as const] : [];
 }));
 
-export type PatternKind = "transmute" | "augment" | "regal" | "alchemy" | "exalt" | "chaos" | "desecrate" | "essence" | "essence_perfect" | "annul" | "rune";
+export type PatternKind = "transmute" | "augment" | "regal" | "alchemy" | "exalt" | "chaos" | "desecrate" | "essence" | "essence_perfect" | "annul" | "rune" | "fracture";
 /** 外れた時: そのまま次へ / 同じ手をもう一度 / 外れを消去してもう一度 / 最初から (フラクチャー済みのベースから) */
 export type MissRule = "next" | "redo" | "annul_redo" | "restart";
 export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", redo: "同じ手をもう一度", annul_redo: "外してもう一度", restart: "最初からやり直す" };
@@ -110,6 +110,9 @@ export function patternSets(cls: ItemBase): PatternSet[] {
   }
   for (const id of essOf("perfect_essence")) { const k = `essence:perfect:${id}`; if (ESS[k]) for (const o of sides(SIDE.crystal)) out.push(set("essence_perfect", k, o, "パーフェクトエッセンス (レア)")); }
   for (const o of [[], [SIDE.annul[0]], [SIDE.annul[1]], ["OmenofLight"]]) out.push(set("annul", "annul", o, "消去"));
+  // 自前のフラクチャー (2026-10-07 オーナー「自前フラクチャーの仕組みができたら結構複雑な作り方でも対応できる」)。
+  // レアで MOD 4 つ以上の時、未発現の冒涜以外から 1 つが固定される。付ける物 = 固定したい MOD (前の手で付けた物)。外れたら新しいベースで最初から
+  out.push(set("fracture", "fracture", [], "フラクチャー (レア 4 MOD → 1 つ固定)"));
   out.push(set("rune", "", [], "ルーン"));
   return out;
 }
@@ -190,7 +193,7 @@ export const removalSets = (sets: readonly PatternSet[]): PatternSet[] =>
 export function setsForStart(sets: readonly PatternSet[], cls: ItemBase, start: { rarity: "normal" | "rare"; sockets: number }): PatternSet[] {
   const magicOnly = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "essence"]);
   return sets.filter((x) =>
-    !(start.rarity === "rare" && magicOnly.has(x.kind))
+    !(start.rarity === "rare" && (magicOnly.has(x.kind) || x.kind === "fracture"))
     && !(x.kind === "rune" && start.sockets <= 0)
     && !(x.omens.some((o) => FACTION_OMEN[o]) && !bossOmenAllowed(cls.category))
     && !x.omens.includes("OmenofCatalysingExaltation"));
@@ -209,6 +212,8 @@ export interface PatternState {
   essences: number; essenceLimit: number;
   desecrated: number;
   placed: Set<string>;
+  /** 自前のフラクチャーの手で固定した MOD (この後は消えない) */
+  fractured: string | null;
   /**
    * 「付かなかった → そのまま次へ」の手で狙った物 (付いていないかもしれない)。後の手でもう一度狙える (付いていれば計算はその手を飛ばす)。
    * 2026-10-07 オーナー「付かなかった場合次へはあるけど、次の所でもっかい狙いの MOD が選べない」(手袋: 上級の変成で外れたら上級の増強で同じ MOD)
@@ -234,7 +239,7 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     prefix: ctx.start.fracturedSide === "prefix" ? 1 : 0,
     suffix: ctx.start.fracturedSide === "suffix" ? 1 : 0,
     limits: { prefix: ctx.cls.limits?.prefixes ?? 3, suffix: ctx.cls.limits?.suffixes ?? 3 },
-    runes: new Set(), socketsLeft: ctx.start.sockets, essences: 0, essenceLimit: 1, desecrated: 0, placed: new Set(), maybe: new Set(), junk: 0,
+    runes: new Set(), socketsLeft: ctx.start.sockets, essences: 0, essenceLimit: 1, desecrated: 0, placed: new Set(), maybe: new Set(), fractured: null, junk: 0,
   };
   for (let i = 0; i < upTo && i < steps.length; i++) {
     const p = steps[i]!;
@@ -244,6 +249,7 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
       if (p.target) { st.runes.add(p.target); st.socketsLeft--; if (p.target === "Astrid's Creativity") st.essenceLimit = 2; }
       continue;
     }
+    if (s.kind === "fracture") { if (p.target) st.fractured = p.target; continue; }
     if (s.kind === "transmute") st.rarity = "magic";
     if (s.kind === "regal" || s.kind === "alchemy" || s.kind === "essence") st.rarity = "rare";
     if (isRest(p.target)) {
@@ -292,6 +298,12 @@ export function checkSet(ctx: CheckCtx, st: PatternState, s: PatternSet): string
       return null;
     }
     case "rune": return st.socketsLeft > 0 ? null : "ソケットが空いていない";
+    case "fracture": {
+      if (st.fractured || ctx.start.fracturedSide) return "もう固定した MOD がある (フラクチャーは 1 つだけ)";
+      if (st.rarity !== "rare") return "レアにだけ使える";
+      const n = st.prefix + st.suffix + st.junk;
+      return n >= 4 ? null : `MOD が 4 つ以上要る (この時点で ${n} つ。先に高貴・骨などで埋める)`;
+    }
     default: break;
   }
   const r = need("rare", "レア");
@@ -316,6 +328,8 @@ export function checkTarget(ctx: CheckCtx, st: PatternState, s: PatternSet, t: P
   const m = ctx.data.mods.get(t.modId);
   if (!m) return "MOD が見つからない";
   if (t.method === "fracture") return "フラクチャーで固定する MOD";
+  // フラクチャーは前の手で付けた物を固定する (付けるのではない)
+  if (s.kind === "fracture") return !st.placed.has(t.modId) ? "まだ付いていない (固定するのは前の手で付けた MOD)" : st.maybe.has(t.modId) ? "付いていないかもしれない (外れても次へ進む手で狙った物)" : null;
   const again = st.maybe.has(t.modId);
   if (st.placed.has(t.modId) && !again) return "前の手で付けた";
   const side = m.type === "suffix" ? "suffix" : "prefix";
@@ -375,6 +389,7 @@ export const runeEnForId = (runeId: string): string | null => runeEnOf(null as u
 
 /** 外れた時の決まりを選べない理由 (選べれば null) */
 export function checkMiss(s: PatternSet, rule: MissRule): string | null {
+  if (s.kind === "fracture" && rule !== "restart" && rule !== "next") return "フラクチャーはやり直せない (外れたら新しいベースで最初から)";
   if (rule === "redo" && s.kind === "desecrate") return "冒涜の MOD は 1 つまで (消さないともう一度打てない)";
   if ((rule === "redo" || rule === "annul_redo") && (s.kind === "transmute" || s.kind === "regal" || s.kind === "alchemy")) return "レアリティが変わるのでもう一度は打てない (次の手で直す)";
   return null;
