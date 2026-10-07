@@ -549,14 +549,27 @@ const progressBox = { progress };
 const error = ref("");
 const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
 /** フラクチャー済みから残りを作る費用 (ベース代 0 で回した平均)。買う側の比べに足す */
+/** 固定済みから先のクラフト費用だけ (ベース代を除く) と、使ったベースの数 (やり直しの買い直し・作り直し込み) */
 const restCost = ref<number | null>(null);
-/** フラクチャー済みのベースを手に入れる一番安い始め方 (4 最安値スタート、値段の有る物だけ) */
-const startMin = computed((): number | null => {
-  const xs = routes.value.list.map((x) => x.cost).filter((x): x is number => x != null && Number.isFinite(x));
-  return xs.length ? Math.min(...xs) : null;
+const restBases = ref(1);
+/**
+ * 固定済みのベース 1 個の費用 (始め方のうち一番安い物。結果に依らない値: 自作 = 1 回分 × 3 + 消去 × 2、② = (ベース + 壁 + フラクチャー) × 3 + 消去 × 2、固定済みを買う = その値段)。
+ * パターンを回す時のベース代にする。前は 0 で回していて、パターンの中で「最初から (新しいベース)」になった分 (違う MOD が固定された・固定済みで付けた狙いが消えた) が
+ * 無料になっていた (2026-10-08 オーナー「フラクチャー済みから始める時は費用も込みじゃないと。自分でやったやつは掛かった分を足す」)
+ */
+const startOnce = computed((): number | null => {
+  const c = calc.value;
+  const xs: number[] = [];
+  if (c) xs.push(c.total);
+  if (c && c.buyOnce != null) xs.push(c.buyOnce * 3 + c.after);
+  const bN = num(boughtDivine.value);
+  if (bN != null) xs.push(bN);
+  const ys = xs.filter((x) => Number.isFinite(x));
+  return ys.length ? Math.min(...ys) : null;
 });
+/** フラクチャー済みのベースを手に入れる一番安い始め方 (4 最安値スタート、値段の有る物だけ) */
 /** パターンごとの結果 (回した後)。見ている物を recipeOut / restCost に出す */
-const results = ref<Array<{ name: string; out: { r: RecipeResult; spec: RecipeSpec }; rest: number | null }>>([]);
+const results = ref<Array<{ name: string; out: { r: RecipeResult; spec: RecipeSpec }; rest: number | null; bases: number }>>([]);
 const shown = ref(0);
 /** パターンの名前で結果を引く (一覧はパターンの並びで出す) */
 const resultOf = (name: string) => results.value.find((x) => x.name === name) ?? null;
@@ -581,6 +594,7 @@ function showResult(i: number): void {
   shown.value = i;
   recipeOut.value = x.out;
   restCost.value = x.rest;
+  restBases.value = x.bases;
 }
 const ranFor = ref("");
 const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|s${socketCount.value}|${s.itemLevel.value}|${makeRoute.value}|${blocker.value}|${whiteDivine.value}|${s.simTargets.value.map((t) => methodOf(t)).join(",")}|${targetsSig()}|${JSON.stringify(s.simPatterns.value)}`);
@@ -695,12 +709,13 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       // カレンシーが決まっていない手 (未完成) の MOD は数えない: 組めている所までを完成品とする (2026-10-07 オーナー「そこまでを完成品とする」)
       const used = new Set(p.steps.filter((st) => !!setByKey(sets, st.set)).flatMap((st) => [st.target]).filter((x): x is string => !!x && !inGroup.has(x)));
       const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId)), ...groups.map((x) => x.g)];
-      const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
+      const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) };
       const base = k * spec.runs;
       // PC のコアに分けて回す (同じ seed なので 1 本と同じ結果。2026-10-07 オーナー「おっそいな」)
       const r = await runRecipeParallel(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
       if (my !== gen || !r) return;
-      out.push({ name: p.name, out: { r, spec: pspec }, rest: fractureRow.value ? r.perDone : null });
+      // rest = 固定済みから先のクラフト費用だけ (ベース代 × 使った数を引く)。始め方の比べは「その始め方のベース 1 個 × 使った数 + rest」
+      out.push({ name: p.name, out: { r, spec: pspec }, rest: fractureRow.value ? r.perDone - (startOnce.value ?? 0) * r.bases : null, bases: r.bases });
     }
     if (only != null && stepOnly != null) {
       // この手だけ: 並べた後の番号 (カレンシーの決まっていない手は飛ばす) でその手の打った数と費用を引く。全体の結果は触らない
@@ -1042,15 +1057,16 @@ const compare = computed(() => {
   const dv = 1; // 手で入れた値段は高貴建て
   const list: Array<{ key: string; name: string; cost: number | null; note: string }> = [];
   // フラクチャーがある時: 白から作る = 4 の自作 (1 回分 × 3 + 消去 × 2) + 固定済みから先の平均
-  const selfCost = fractureRow.value ? (calc.value && restCost.value != null ? calc.value.total + restCost.value : null) : out ? out.r.perDone : null;
+  const nb = restBases.value;
+  const selfCost = fractureRow.value ? (calc.value && restCost.value != null ? calc.value.total * nb + restCost.value : null) : out ? out.r.perDone : null;
   list.push({ key: "make", name: fractureRow.value ? "白から作る (フラクチャーまでは 4 の計算)" : "白から作る", cost: selfCost, note: "回すと出ます" });
   if (fractureRow.value) {
     const rest = restCost.value;
     const c = calc.value;
-    const four = c && c.buyOnce != null && rest != null ? c.buyOnce * 3 + c.after + rest : null;
+    const four = c && c.buyOnce != null && rest != null ? (c.buyOnce * 3 + c.after) * nb + rest : null;
     list.push({ key: "four", name: "レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: four, note: num(fourDivine.value) == null ? "無し" : "回すと出ます" });
     const bN = num(boughtDivine.value);
-    const bought = bN != null && rest != null ? bN * dv + rest : null;
+    const bought = bN != null && rest != null ? bN * dv * nb + rest : null;
     list.push({ key: "bought", name: "固定済みのベースを買う", cost: bought, note: num(boughtDivine.value) == null ? "無し" : "回すと出ます" });
   }
   list.push({ key: "done", name: "完成品を買う", cost: num(doneDivine.value) != null ? num(doneDivine.value)! * dv : null, note: "無し" });
@@ -1074,9 +1090,10 @@ const split = computed(() => {
   const r = recipeOut.value?.r;
   if (!r) return { base: 0, craft: 0, baseAdd: 0, baseNote: "" };
   if (fractureRow.value) {
-    const b = startMin.value ?? 0;
+    // ベース代は回した費用に入っている (やり直しの買い直し・作り直しの分も)
+    const b = (startOnce.value ?? 0) * r.bases;
     const name = routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? "";
-    return { base: b, craft: r.perDone, baseAdd: b, baseNote: `フラクチャー済みのベースを手に入れるまで (4 最安値スタート: ${name})` };
+    return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `フラクチャー済みのベース × ${r.bases.toFixed(1)} 個 (4 最安値スタート: ${name})` };
   }
   const b = (num(whiteDivine.value) ?? 0) * r.bases;
   return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `白のベース × ${r.bases.toFixed(1)} 個` };
@@ -1372,7 +1389,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
             <span class="grid h-3.5 w-3.5 place-items-center rounded-sm border text-[9px] leading-none" :class="p.off ? 'border-white/30' : 'border-amber-400 bg-amber-400 text-black'">{{ p.off ? "" : "✓" }}</span>
             <b>{{ p.name }}</b>
             <button v-if="resultOf(p.name)" type="button" class="res flex items-center gap-1 rounded-full px-1.5 hover:bg-white/10" :title="stale ? '設定が変わりました。回し直すと合う (押すと結果を下に)' : '押すと結果を下に出す'" @click.stop="showResultByName(p.name)">
-              <b class="tabular-nums text-amber-100">{{ money(resultOf(p.name)!.out.r.perDone + (fractureRow ? startMin ?? 0 : 0)) }}</b>
+              <b class="tabular-nums text-amber-100">{{ money(resultOf(p.name)!.out.r.perDone) }}</b>
               <span class="opacity-60">完成 {{ pct(resultOf(p.name)!.out.r.pDone) }}</span>
               <span v-if="cheapestName === p.name" class="rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">一番安い</span>
             </button>

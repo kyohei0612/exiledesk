@@ -248,6 +248,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     const m = mod(fractureT.modId);
     item = startFrom(data, spec.base, spec.itemLevel, { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }], ...(sockets ? { sockets } : {}), ...(runes.length ? { runes } : {}) }, seed - 1);
     cost += spec.fractureStart.price;
+    // 買った固定済みのベースも 1 個 (前は 0 のままで、やり直しで買い直した時だけ +1 だった → 画面の「ベース × N 個」が 0 になっていた。2026-10-08)
+    bases = 1;
   }
 
   /** 1 手打つ。打てなければ理由 (その回は止める) */

@@ -71,9 +71,9 @@ function annulRisk(i: number, set: PatternSet | undefined, step: PatternStep): {
     } else scope = props.annulSides?.[sd] === "side" ? [sd] : ["prefix", "suffix"];
   }
   if (!scope) return null;
-  const fixed = stateBefore(c, pat.value.steps, i).fractured;
+  const fixedIds = fixedIdsBefore(i);
   const hits = pat.value.steps.slice(0, i).flatMap((q) => {
-    if (q.target && q.target === fixed) return [];
+    if (q.target && fixedIds.has(q.target)) return [];
     const x = setByKey(sets.value, q.set);
     // 外れた時だけ打つ手 (同じ MOD をもう一度狙う) の外れでは、その MOD はまだ付いていない
     if (q.target === step.target && retryFrom.value.has(i)) return [];
@@ -406,6 +406,11 @@ function preAnnul(r: Row): string | null {
   const main = isRest(id) ? restMembers(pat.value.steps, id)[0] : id;
   return ctx.value?.data.mods.get(main ?? "")?.type === "suffix" ? "サフィ" : "プレ";
 }
+/** i 手目より前の自前のフラクチャーの手で固定した MOD (候補のどれか。候補があればどれが固定されたか分からないので全部) */
+function fixedIdsBefore(i: number): Set<string> {
+  const st = pat.value.steps.slice(0, i).find((x) => setByKey(sets.value, x.set)?.kind === "fracture");
+  return new Set(st ? candsOfStep(st) : []);
+}
 /**
  * 打つ前に計算が自動でやる前置き (必ず画面に出す。2026-10-08 レビュー D2 / D3 / D6)。短い方はツリー、長い方は「付かなかったら」の画面
  * - 高貴・骨・増強: 狙いの側がハズレで埋まっていたら先に消去 (反対の側に当たりがあれば側のお告げ付き) … recipe-sim の runPattern
@@ -463,7 +468,7 @@ function cardTitle(r: Row): string {
   }
   if (isRest(r.step.target)) return `残りの MOD (${Number(r.step.target.slice(REST.length)) + 1} 手目の候補)`;
   if (r.set?.kind === "rune") return RUNES[r.step.target]?.ja ?? r.step.target;
-  if (r.set?.kind === "fracture") return `${cardTitleOf(r.step.target)} を固定`;
+  if (r.set?.kind === "fracture") return candsOf(r).length ? `${[r.step.target, ...candsOf(r)].map(cardTitleOf).join(" / ")} のどれかを固定` : `${cardTitleOf(r.step.target)} を固定`;
   if (isDouble(r.set) && r.step.target2) return r.step.target3 ? `${[r.step.target, r.step.target2, r.step.target3].map(cardTitleOf).join(" / ")} のどれか 2 つ` : `${cardTitleOf(r.step.target)} + ${cardTitleOf(r.step.target2)}`;
   if (hasCands(r.set) && r.step.target2) return `${[r.step.target, ...candsOf(r)].map(cardTitleOf).join(" / ")} のどれか`;
   return cardTitleOf(r.step.target);
@@ -637,9 +642,9 @@ function removableIn(i: number, r: Row): (id: string) => boolean {
   if (ms) rems.push(ms);
   const sideOfId = (id: string): "prefix" | "suffix" => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
   const desecrated = new Set(pat.value.steps.slice(0, i + 1).filter((st) => setByKey(sets.value, st.set)?.kind === "desecrate").flatMap((st) => [st.target, st.target2, st.target3]).filter((x): x is string => !!x));
-  // 自前のフラクチャーで固定した物は消えない
-  const fixed = stateBefore(c, pat.value.steps, i).fractured;
-  return (id) => id !== fixed && rems.some((x) => {
+  // 自前のフラクチャーで固定した物 (候補のどれか) は消えない
+  const fixedIds = fixedIdsBefore(i);
+  return (id) => !fixedIds.has(id) && rems.some((x) => {
     if (x.omens.includes("OmenofLight")) return desecrated.has(id);
     const side = x.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : x.omens.some((o) => /Dextral/.test(o)) ? "suffix" : null;
     return !side || sideOfId(id) === side;
@@ -959,9 +964,13 @@ defineExpose({ rows });
         <div v-else class="w-52 rounded-md border border-white/20 bg-black/40 px-2 py-0.5 opacity-80">始め: 白のベース</div>
         <template v-for="(r, i) in rows" :key="i">
           <!-- 当たりの線 -->
-          <div v-if="(i > 0 || !preNodes.length) && retryFrom.has(i) && !retryFrom.has(i - 1)" class="ml-[6.5rem] flex h-4 items-center">
-            <span class="h-full w-px border-l border-dashed border-rose-400/60"></span>
-            <span class="ml-1 text-[9px] text-rose-300/90">{{ retryFrom.get(i)! + 1 }} 手目で付かなかった時だけ</span>
+          <!-- 外れた時だけの手の前: 緑 (付いた → 飛ばす先) と赤 (付かなかった時だけ ↓) を縦線の所に並べる (2026-10-08 レビュー A6: 緑が赤い枝の列に並んで「付かなかった → 完成」と読めた) -->
+          <div v-if="(i > 0 || !preNodes.length) && retryFrom.has(i) && !retryFrom.has(i - 1)" class="ml-[6.5rem] flex h-8 items-stretch">
+            <span class="w-px border-l border-dashed border-rose-400/60"></span>
+            <span class="ml-1 flex flex-col justify-center text-[9px] leading-tight">
+              <span class="text-emerald-300/80">付いた → {{ hitTo(retryFrom.get(i)!) < rows.length ? `${hitTo(retryFrom.get(i)!) + 1} 手目へ` : "完成" }} (この手は飛ばす)</span>
+              <span class="text-rose-300/90">{{ retryFrom.get(i)! + 1 }} 手目で付かなかった時だけ ↓</span>
+            </span>
           </div>
           <div v-else-if="i > 0 || !preNodes.length" class="ml-[6.5rem] flex h-4 items-center">
             <span class="h-full w-px bg-emerald-400/50"></span>
@@ -1025,11 +1034,6 @@ defineExpose({ rows });
               <span v-if="r.step.onMiss === 'annul_next' && targetSideJa(r)" class="mt-0.5 flex flex-col pl-5 text-[10px] leading-tight text-rose-200/90">
                 <span class="whitespace-nowrap">ハズレが{{ targetSideJa(r)!.t }} → 消去 → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
                 <span class="whitespace-nowrap">ハズレが{{ targetSideJa(r)!.o }} → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
-              </span>
-              <!-- 付いた時は外れた時だけの手を飛ばす -->
-              <span v-if="hitTo(i) > i + 1" class="mt-0.5 flex items-center text-[10px] text-emerald-300/90">
-                <span class="h-px w-4 bg-emerald-400/50"></span>
-                <span class="ml-1">付いた → {{ hitTo(i) < rows.length ? `${hitTo(i) + 1} 手目へ` : "完成" }}</span>
               </span>
               <span v-if="missSet(r.step) || r.step.onMiss === 'redo'" class="flex items-center text-[10px] text-amber-200/90">
                 <span class="text-rose-300">◀</span>
@@ -1143,7 +1147,7 @@ defineExpose({ rows });
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'target2'">
               <!-- 偉大で一緒に狙う候補 (1〜2 つ。最初の MOD と合わせた候補のどれか 2 つが付けば当たり) -->
-              <p class="mb-1 text-[11px] opacity-60">{{ needs2(rows[focusRow]!) ? `${cardTitleOf(rows[focusRow]!.step.target!)} と一緒に狙う物を 1〜2 つ (押して入れ切り)。候補のどれか 2 つが付けば当たり` : `${cardTitleOf(rows[focusRow]!.step.target!)} の代わりに付いても当たりにする物 (0〜2 つ、押して入れ切り)。候補のどれか 1 つが付けば当たり` }}</p>
+              <p class="mb-1 text-[11px] opacity-60">{{ needs2(rows[focusRow]!) ? `${cardTitleOf(rows[focusRow]!.step.target!)} と一緒に狙う物を 1〜2 つ (押して入れ切り)。候補のどれか 2 つが付けば当たり` : rows[focusRow]!.set?.kind === "fracture" ? `${cardTitleOf(rows[focusRow]!.step.target!)} の代わりに固定されても当たりにする物 (0〜2 つ、押して入れ切り)。候補のどれか 1 つが固定されれば当たり (ほかの候補が固定されたら新しいベースから)` : `${cardTitleOf(rows[focusRow]!.step.target!)} の代わりに付いても当たりにする物 (0〜2 つ、押して入れ切り)。候補のどれか 1 つが付けば当たり` }}</p>
               <div class="flex max-w-3xl flex-col gap-1">
                 <button v-for="o in rows[focusRow]!.target2Opts" :key="o.key" type="button" class="flex items-center gap-3 rounded-lg border px-3 py-2 text-left text-[12px] transition disabled:cursor-not-allowed" :class="candsOf(rows[focusRow]!).includes(o.key) ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : o.why ? 'border-white/5 bg-black/20' : 'border-white/10 bg-black/30 hover:border-amber-300/50 hover:bg-white/[0.04]'" :disabled="!!o.why && !candsOf(rows[focusRow]!).includes(o.key)" @click="toggleCand(focusRow!, o.key)">
                   <span class="w-4 text-center font-bold" :class="o.why ? 'opacity-30' : 'text-amber-200'">{{ o.n + 1 }}</span>

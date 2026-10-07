@@ -152,7 +152,7 @@ export const isDouble = (s: PatternSet | undefined): boolean => !!s && s.kind ==
  * 候補を足せる手 (ガチャ: ランダムに付く物)。候補のどれかが付けば当たり (偉大は 2 つ)
  * (2026-10-07 オーナー「ガチャの時だけ複数選択、偉大だからじゃなくて高貴やらカオススパムやら一緒」)
  */
-export const GACHA_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "exalt", "chaos", "desecrate"]);
+export const GACHA_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "exalt", "chaos", "desecrate", "fracture"]);
 export const hasCands = (s: PatternSet | undefined): boolean => !!s && GACHA_KINDS.has(s.kind);
 /**
  * 付ける物「前の手の候補の残り」(rest:<手の番号>)。候補が付く数より多い手 (偉大で 3 つのどれか 2 つ など) の後は、どれが残るか分からないので
@@ -169,7 +169,8 @@ export const candsOfStep = (st: PatternStep | undefined): string[] => (st ? [st.
 /** 候補が付く数より多い (どれが付くか分からない) 手か */
 export function uncertainStep(sets: readonly PatternSet[], st: PatternStep | undefined): boolean {
   const s = st ? setByKey(sets, st.set) : undefined;
-  return !!s && hasCands(s) && candsOfStep(st).length > (isDouble(s) ? 2 : 1);
+  // フラクチャーの候補は前の手でもう付いている物なので、「残り」の手は要らない (2026-10-08 オーナー「候補、足せるようにして」)
+  return !!s && hasCands(s) && s.kind !== "fracture" && candsOfStep(st).length > (isDouble(s) ? 2 : 1);
 }
 /** 「残り」の手が狙う候補 (元の手の候補ぜんぶ。全部揃ったら当たり) */
 export const restMembers = (steps: readonly PatternStep[], target: string): string[] => candsOfStep(steps[Number(target.slice(REST.length))]);
