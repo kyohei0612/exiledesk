@@ -394,6 +394,10 @@ const missSet = (step: PatternStep): PatternSet | undefined => (step.miss ? setB
 function preAnnul(r: Row): string | null {
   const id = r.step.target;
   if (!r.set || !id || id === ANY_TARGET) return null;
+  // 前の手 (外れたらこの手へ) が「狙いの側のハズレを消して次へ」なら、そちらに出ている
+  const i = rows.value.indexOf(r);
+  const from = retryFrom.value.get(i);
+  if (from != null && pat.value.steps[from]?.onMiss === "annul_next") return null;
   const k = r.set.kind;
   if (!(k === "exalt" || k === "desecrate" || (k === "augment" && !isRest(id) && !candsOf(r).length))) return null;
   const main = isRest(id) ? restMembers(pat.value.steps, id)[0] : id;
@@ -518,7 +522,19 @@ function addSetsFor(r: Row): PatternSet[] {
 /** 付ける側の棚 (消去は外す側にだけ出す。2026-10-07 オーナー「付ける時は削除の手とか表示しなくてもおｋ」) */
 const addSets = computed(() => sets.value.filter((x) => x.kind !== "annul"));
 /** やり直しを選べる手か (外れがあって、レアリティが変わらない手) */
-const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && !RARITY_CHANGE.has(r.set.kind) && r.set.kind !== "fracture" && r.step.target !== ANY_TARGET;
+const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && r.set.kind !== "fracture" && r.step.target !== ANY_TARGET && !!r.step.target;
+/** レアリティが変わる手 (外してもう一度は無理。選べるのは「そのまま次へ」か「狙いの側のハズレを消して次へ」) */
+const rarityStep = (r: Row): boolean => !!r.set && RARITY_CHANGE.has(r.set.kind);
+/** 狙いの側 (候補が両側なら「狙いの側」) */
+function targetSideJa(r: Row): { t: string; o: string } | null {
+  const id = r.step.target;
+  if (!id || id === ANY_TARGET || !ctx.value) return null;
+  const ids = isRest(id) ? restMembers(pat.value.steps, id) : [id, ...candsOf(r)];
+  const sides = new Set(ids.map((x) => (ctx.value!.data.mods.get(x)?.type === "suffix" ? "サフィ" : "プレ")));
+  if (sides.size !== 1) return { t: "狙いの側", o: "反対の側" };
+  const t = [...sides][0]!;
+  return { t, o: t === "サフィ" ? "プレ" : "サフィ" };
+}
 /** 外れの枝を出す手 (打つだけの手は外れが無い) */
 const showMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && r.step.target !== ANY_TARGET;
 /** 手のカードを押した: 右の枠でその手を決める (もう一度押すと閉じる)。外れの枝はやり直しだけ */
@@ -646,9 +662,10 @@ function setGoto(i: number, id: string, g: number): void {
 }
 /** やり直しの札: そのまま / 消去 / カオス / ほか (パーフェクトエッセンス・骨) */
 const missMore = ref(false);
-function missKind(r: Row): "none" | "redo" | "annul" | "chaos" | "other" {
+function missKind(r: Row): "none" | "annul_next" | "redo" | "annul" | "chaos" | "other" {
   const x = missSet(r.step);
   if (!x && r.step.onMiss === "redo") return "redo";
+  if (!x && r.step.onMiss === "annul_next") return "annul_next";
   return !x ? "none" : x.kind === "annul" ? "annul" : x.kind === "chaos" ? "chaos" : "other";
 }
 function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: readonly string[]): void {
@@ -660,8 +677,8 @@ function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: re
   if (x) patch(i, { miss: x.key, onMiss: "annul_redo" });
   editPart.value = "miss";
 }
-function pickMissKind(i: number, k: "none" | "redo" | "annul" | "chaos"): void {
-  if (k === "none" || k === "redo") { patch(i, { miss: null, onMiss: k === "redo" ? "redo" : "next" }); editPart.value = "miss"; return; }
+function pickMissKind(i: number, k: "none" | "annul_next" | "redo" | "annul" | "chaos"): void {
+  if (k === "none" || k === "redo" || k === "annul_next") { patch(i, { miss: null, onMiss: k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : "next" }); editPart.value = "miss"; return; }
   const cur = missSet(pat.value.steps[i]!);
   if (cur?.kind === k) { editPart.value = "miss"; return; }
   setMiss(i, k, k === "annul" ? "annul" : "chaos", []);
@@ -679,6 +696,7 @@ function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const x = missSet(r.step);
   const c = ctx.value;
   if (!x && r.step.onMiss === "redo") return { text: "ハズレは残して同じ手をもう一度。その側が満杯になったらハズレを 1 つ消す", bad: false };
+  if (!x && r.step.onMiss === "annul_next") { const sd = targetSideJa(r); return { text: sd ? `ハズレが${sd.t}に付いたら消去してから次の手へ。${sd.o}に付いたら残して次の手へ (次の手は必ず${sd.t}に付く)` : "", bad: false }; }
   if (!x) return { text: "ハズレは残したまま次の手へ進む", bad: false };
   if (!c) return { text: "", bad: false };
   if (x.omens.includes("OmenofLight")) return { text: "冒涜の MOD だけを消す (付いている狙いは消えない)", bad: false };
@@ -736,7 +754,7 @@ function chipsOf(i: number, r: Row): Chip[] {
   if (!isRune) out.push({ part: "set", name: "カレンシー", icons: icons(r.set), text: r.set && !icons(r.set).length ? setShort(r.set) : "", state: st("set", !!r.set) });
   if (needs2(r)) out.push({ part: "target2", name: "一緒に狙う MOD", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: st("target2", !!r.step.target2) });
   else if (canCands(r)) out.push({ part: "target2", name: "ほかの候補 (任意)", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: now === "target2" ? "now" : "done" });
-  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : "選択無し") : "", state: st("miss", hasMiss(r)) });
+  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : r.step.onMiss === "annul_next" ? "ハズレを消して次へ" : "選択無し") : "", state: st("miss", hasMiss(r)) });
   if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
   if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が消えたら", icons: [], text: "", state: st("lost", true) });
   return out;
@@ -782,7 +800,8 @@ function onSet(i: number, key: string): void {
   const cur = pat.value.steps[i]!;
   // やり直せない手は「そのまま次へ」、ほかは「やり直し」。外す物がその手で使えなくなったら選び直し
   // フラクチャーは外れたら (違う MOD が固定されたら) 新しいベースで最初から
-  const miss: MissRule = set?.kind === "fracture" ? "restart" : set && RARITY_CHANGE.has(set.kind) ? "next" : "annul_redo";
+  // レアリティが変わる手で狙いがあるなら「狙いの側のハズレを消して次へ」が既定 (2026-10-08 オーナー「付かなかったら消去で増強やん 1 手目から」)
+  const miss: MissRule = set?.kind === "fracture" ? "restart" : set && RARITY_CHANGE.has(set.kind) ? (cur.target && cur.target !== ANY_TARGET ? "annul_next" : "next") : "annul_redo";
   const rm = cur.miss ? setByKey(sets.value, cur.miss) : undefined;
   const keepMiss = cur.miss && !(rm && set && checkRemoval(set, rm));
   if (!hasCands(set)) patch(i, { target2: null, target3: null });
@@ -935,7 +954,7 @@ defineExpose({ rows });
             <span v-if="showMiss(r) && !needs2(r)" class="flex flex-col">
               <span class="flex items-center">
                 <span class="h-px w-4 border-t border-dashed border-rose-400/60"></span>
-                <button type="button" class="flex items-center gap-1 whitespace-nowrap rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :class="focusRow === i && partOf(i, r) === 'miss' ? 'ring-2 ring-rose-400/70' : ''" :title="hasMiss(r) ? '押すとやり直しを選ぶ' : r.set?.kind === 'fracture' ? '違う MOD が固定されたら新しいベースで最初から' : 'レアリティが変わる手はやり直せない'" :disabled="!hasMiss(r) || locked" @click="selectRow(i, 'miss')">
+                <button type="button" class="flex items-center gap-1 whitespace-nowrap rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :class="focusRow === i && partOf(i, r) === 'miss' ? 'ring-2 ring-rose-400/70' : ''" :title="hasMiss(r) ? '押すと付かなかった時の打ち方を選ぶ' : r.set?.kind === 'fracture' ? '違う MOD が固定されたら新しいベースで最初から' : '付ける物が無い手'" :disabled="!hasMiss(r) || locked" @click="selectRow(i, 'miss')">
                   <span class="text-rose-300">付かなかった</span>
                   <template v-if="missSet(r.step)">
                     <span class="opacity-60">→</span>
@@ -943,16 +962,16 @@ defineExpose({ rows });
                     <span v-else class="h-5 w-5 rounded border border-dashed border-white/25"></span>
                     <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
                   </template>
-                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : r.step.onMiss === "restart" ? "→ 最初から" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
+                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : r.step.onMiss === "restart" ? "→ 最初から" : r.step.onMiss === "annul_next" ? "→ ハズレを消して次へ" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
                 </button>
               </span>
               <!--
                 外れた時だけの次の手 (増強など) が打つ前に消去する時は、外れがどちらの側に付いたかで枝を分けて出す
                 (2026-10-07 オーナー「変成のオーブでハズレが狙いの MOD 群の所についてしまったら消去の表示がないぞ」)
               -->
-              <span v-if="retryFrom.get(i + 1) === i && rows[i + 1] && preAnnul(rows[i + 1]!)" class="mt-0.5 flex flex-col pl-5 text-[10px] leading-tight text-rose-200/90">
-                <span class="whitespace-nowrap">外れが{{ preAnnul(rows[i + 1]!) }} → 消去 → {{ i + 2 }}手目</span>
-                <span class="whitespace-nowrap">外れが{{ preAnnul(rows[i + 1]!) === "サフィ" ? "プレ" : "サフィ" }} → {{ i + 2 }}手目</span>
+              <span v-if="r.step.onMiss === 'annul_next' && targetSideJa(r)" class="mt-0.5 flex flex-col pl-5 text-[10px] leading-tight text-rose-200/90">
+                <span class="whitespace-nowrap">外れが{{ targetSideJa(r)!.t }} → 消去 → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
+                <span class="whitespace-nowrap">外れが{{ targetSideJa(r)!.o }} → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
               </span>
               <!-- 付いた時は外れた時だけの手を飛ばす -->
               <span v-if="hitTo(i) > i + 1" class="mt-0.5 flex items-center text-[10px] text-emerald-300/90">
@@ -1119,12 +1138,12 @@ defineExpose({ rows });
               <p class="mb-2 text-[13px] font-bold text-rose-100">狙いの MOD が付かなかったら、どうする？</p>
               <!-- もう一度打つ: 外れは残して同じ手を打ち直し、その側が満杯になった時だけ外れを消す (2026-10-07 靴のライフで、毎回消すより 2 割安かった) -->
               <div class="grid max-w-3xl grid-cols-4 gap-2">
-                <button v-for="k in (['none', 'redo', 'annul', 'chaos'] as const)" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" @click="pickMissKind(focusRow!, k)">
-                  <img v-if="(k === 'annul' || k === 'chaos') && iconOf(k)" :src="iconOf(k)" alt="" class="h-8 w-8 object-contain" />
+                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'none'] as const) : (['none', 'redo', 'annul', 'chaos'] as const))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" @click="pickMissKind(focusRow!, k)">
+                  <img v-if="(k === 'annul' || k === 'chaos' || k === 'annul_next') && iconOf(k === 'annul_next' ? 'annul' : k)" :src="iconOf(k === 'annul_next' ? 'annul' : k)" alt="" class="h-8 w-8 object-contain" />
                   <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "redo" ? "↺" : "→" }}</span>
                   <span>
-                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "redo" ? "もう一度打つ" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
-                    <span class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "redo" ? "満杯の時だけハズレを消す" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
+                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側のハズレを消して次へ" : k === "redo" ? "もう一度打つ" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
+                    <span class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "redo" ? "満杯の時だけハズレを消す" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
                   </span>
                 </button>
               </div>
@@ -1201,7 +1220,7 @@ defineExpose({ rows });
                         <span v-for="o in missSet(r.step)!.omens" :key="o" class="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/10 py-0.5 pl-0.5 pr-2 text-orange-100"><img :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />{{ jaOfOmen(o) ?? o }}</span>
                         <span class="text-[11px] text-amber-200/80">↺ 付くまで繰り返す</span>
                       </template>
-                      <span v-else class="opacity-60">そのまま次の手へ{{ hasMiss(r) ? "" : " (レアリティが変わる手はやり直せない)" }}</span>
+                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側のハズレを消して次の手へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次の手へ" }}</span>
                     </button>
                   </template>
                   <template v-if="needs2(r) && singleSet(r)">
@@ -1256,7 +1275,7 @@ defineExpose({ rows });
                         <span v-for="o in missSet(r.step)!.omens" :key="o" class="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/10 py-0.5 pl-0.5 pr-2 text-orange-100"><img :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />{{ jaOfOmen(o) ?? o }}</span>
                         <span class="text-[11px] text-amber-200/80">↺ 付くまで繰り返す</span>
                       </template>
-                      <span v-else class="opacity-60">そのまま次の手へ{{ hasMiss(r) ? "" : " (レアリティが変わる手はやり直せない)" }}</span>
+                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側のハズレを消して次の手へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次の手へ" }}</span>
                     </button>
                   </template>
                   <template v-if="needs2(r) && singleSet(r)">

@@ -551,6 +551,14 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       if (!p.target || (two ? meets(item, p.target) : count(p.target) > before || meets(item, p.target))) { i++; continue; }
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
+      // 狙いの側に外れが付いて埋まっていたら消去してから次へ (反対の側なら残して次へ: 次の増強は必ず狙いの側に付く)
+      if (p.onMiss === "annul_next") {
+        const sides = [...new Set(p.target ? membersOf(p.target).map((a) => sideOf(a.modId)) : [])];
+        const blocked = sides.find((sd) => !room(item, sd) && junkOn(item, sd).length);
+        if (blocked) { e = annulOn(blocked); if (e) return fail(`${i + 1} 手目の外し: ${e}`); }
+        i++;
+        continue;
+      }
       if (p.onMiss === "restart") { restartPattern(); continue; }
       // カオスの手のやり直しがカオス (同じ物・お告げ) なら、次のカオスがそのまま入れ替えになる。やり直しのカオスを別に打つと、
       // その結果を見ないまま次のカオスを打つので 2 回打って 1 回分しか判定していなかった (2026-10-07 オーナー「回る速度遅くね」「500 回の 50 神以内で付くかなと思ってた」)

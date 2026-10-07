@@ -21,8 +21,12 @@ const ESS_SOURCE = new Map<string, "essence" | "perfect_essence">(Object.keys(ES
 
 export type PatternKind = "transmute" | "augment" | "regal" | "alchemy" | "exalt" | "chaos" | "desecrate" | "essence" | "essence_perfect" | "annul" | "rune" | "fracture";
 /** 外れた時: そのまま次へ / 同じ手をもう一度 / 外れを消去してもう一度 / 最初から (フラクチャー済みのベースから) */
-export type MissRule = "next" | "redo" | "annul_redo" | "restart";
-export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", redo: "同じ手をもう一度", annul_redo: "外してもう一度", restart: "最初からやり直す" };
+export type MissRule = "next" | "annul_next" | "redo" | "annul_redo" | "restart";
+/**
+ * annul_next: 外れが狙いの側に付いて埋まっていたら消去してから次へ (反対の側なら残して次へ)。レアリティが変わる手 (変成など) 用。
+ * 2026-10-08 オーナー「1 手目から消去の下りの選択肢ないと 2 手目から表示も変。順番に案内して設定させてあげないと中途半端」
+ */
+export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", annul_next: "狙いの側のハズレを消して次へ", redo: "同じ手をもう一度", annul_redo: "外してもう一度", restart: "最初からやり直す" };
 
 export interface PatternStep {
   /** セットのキー (PatternSet.key) */
@@ -290,14 +294,14 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     if (!t) continue;
     // 前の手で狙って外れたかもしれない物をもう一度狙う手: 枠はもう数えてある。外れても次へ進まない手なら、ここで確かに付く
     if (st.maybe.has(p.target!)) {
-      if (p.onMiss !== "next") st.maybe.delete(p.target!);
+      if (p.onMiss !== "next" && p.onMiss !== "annul_next") st.maybe.delete(p.target!);
       continue;
     }
     // 候補のどれか (偉大は 2 つ) が付く。どれが付くか分からない時は、付いた物 (placed) には入れず枠だけ数える
     const cands = [t, ...(hasCands(s) ? ctx.targets.filter((y) => y.modId === p.target2 || y.modId === p.target3) : [])];
     const need = isDouble(s) ? 2 : 1;
     for (const x of cands.slice(0, need)) st[ctx.data.mods.get(x.modId)?.type === "suffix" ? "suffix" : "prefix"] += 1;
-    if (cands.length <= need) for (const x of cands) { st.placed.add(x.modId); if (p.onMiss === "next" && need === 1) st.maybe.add(x.modId); }
+    if (cands.length <= need) for (const x of cands) { st.placed.add(x.modId); if ((p.onMiss === "next" || p.onMiss === "annul_next") && need === 1) st.maybe.add(x.modId); }
     if (s.kind === "essence" || s.kind === "essence_perfect") st.essences++;
     if (s.kind === "desecrate") st.desecrated++;
   }
@@ -413,6 +417,7 @@ export function checkMiss(s: PatternSet, rule: MissRule): string | null {
   if (s.kind === "fracture" && rule !== "restart" && rule !== "next") return "フラクチャーはやり直せない (外れたら新しいベースで最初から)";
   if (rule === "redo" && s.kind === "desecrate") return "冒涜の MOD は 1 つまで (消さないともう一度打てない)";
   if ((rule === "redo" || rule === "annul_redo") && (s.kind === "transmute" || s.kind === "regal" || s.kind === "alchemy")) return "レアリティが変わるのでもう一度は打てない (次の手で直す)";
+  if (rule === "annul_next" && !(s.kind === "transmute" || s.kind === "regal" || s.kind === "alchemy")) return "レアリティが変わる手だけ (ほかは外してもう一度)";
   return null;
 }
 /** 外れが無い手 (付ける物が必ず付く / 付ける物が無い) */
