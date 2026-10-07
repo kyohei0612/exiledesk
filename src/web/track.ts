@@ -9,7 +9,12 @@ import { WEB_API_BASE } from "./config";
 
 const UID_KEY = "exiledesk.web.uid";
 const FLUSH_MS = 15_000;
-const PING_MS = 60_000;
+/**
+ * 滞在の印は 5 分おき、しかも最後に触ってから 5 分以内の時だけ (放置・裏に回したタブは何も送らない)。
+ * 2026-10-07 オーナー「開きっぱなしだけ対策できるかな」(1 分おきだと開きっぱなしの 1 時間で 60 回サーバーを呼んでいた)
+ */
+const PING_MS = 300_000;
+let lastActive = Date.now();
 
 const rand = (): string => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
 function uidOf(): { uid: string; first: boolean } {
@@ -93,7 +98,8 @@ export function startTracking(): void {
     const orig = console[k].bind(console);
     console[k] = (...args: unknown[]) => { try { recentConsole.push({ t: Date.now(), msg: `${k}: ${args.map((a) => (typeof a === "string" ? a : a instanceof Error ? a.message : JSON.stringify(a))).join(" ").slice(0, 200)}` }); if (recentConsole.length > 12) recentConsole.shift(); } catch { /* 無視 */ } orig(...args); };
   }
-  setInterval(() => { if (document.visibilityState === "visible") { track("ping"); flush(); } }, PING_MS);
+  for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.addEventListener(ev, () => { lastActive = Date.now(); }, { passive: true, capture: true });
+  setInterval(() => { if (document.visibilityState === "visible" && Date.now() - lastActive < PING_MS) { track("ping"); flush(); } }, PING_MS);
   setInterval(flush, FLUSH_MS);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
   window.addEventListener("pagehide", flush);
