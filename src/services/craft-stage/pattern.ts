@@ -274,6 +274,9 @@ export function checkSet(ctx: CheckCtx, st: PatternState, s: PatternSet): string
   }
   const r = need("rare", "レア");
   if (r) return r;
+  // カオス・消去は付いている MOD を消すので、固定 (フラクチャー) 以外に何か付いていないと打てない
+  // (2026-10-07 オーナー「パターン 3 で回せない理由は」: フラクチャー済みにすぐカオスで、1500 回とも「外せる MOD が無い」で止まっていた)
+  if ((s.kind === "chaos" || s.kind === "annul") && st.prefix + st.suffix + st.junk - (ctx.start.fracturedSide ? 1 : 0) <= 0) return "消せる MOD が無い (固定だけ。先に「打つだけ」で高貴などを 1 つ付ける)";
   if (s.kind === "desecrate") {
     if (st.desecrated >= 1) return "冒涜の MOD はアイテムに 1 つまで";
     if (s.omens.some((o) => FACTION_OMEN[o]) && !bossOmenAllowed(ctx.cls.category)) return "勢力のお告げは武器または宝飾品だけ";
