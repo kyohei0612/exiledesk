@@ -357,16 +357,6 @@ function treeToOwn(): void {
 }
 onMounted(treeToOwn);
 watch(active, treeToOwn);
-/** その手のカードがツリーの中で見えるようにだけ送る (見えていれば動かさない。ページは動かさない) */
-function showInTree(i: number): void {
-  void nextTick(() => {
-    const box = treeEl.value, el = box?.querySelector<HTMLElement>(`[data-step="${i}"]`);
-    if (!box || !el) return;
-    const r = el.getBoundingClientRect(), v = box.getBoundingClientRect();
-    if (r.top < v.top) box.scrollTop += r.top - v.top - 8;
-    else if (r.bottom > v.bottom) box.scrollTop += r.bottom - v.bottom + 8;
-  });
-}
 function closeFrame(): void {
   focusRow.value = null;
   editPart.value = null;
@@ -597,7 +587,8 @@ function addStep(): void {
   editPart.value = null;
   focusPre.value = null;
   focusRow.value = pat.value.steps.length - 1;
-  showInTree(pat.value.steps.length - 1);
+  // 手を足したらツリーを一番下まで送る (足した手と「＋ 手を足す」が見える。2026-10-07 オーナー「付けたらスクロール一番下に持っていっていい」)
+  void nextTick(() => { const box = treeEl.value; if (box) box.scrollTop = box.scrollHeight; });
 }
 /**
  * 「この手にする」: 設定を閉じて、それが最後の手なら下に次の手を足して棚を開く (2026-10-06 オーナー「1 手決まって進むと下に手を追加」
