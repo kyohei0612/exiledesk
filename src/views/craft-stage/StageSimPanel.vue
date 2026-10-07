@@ -28,11 +28,11 @@ import StageModList from "./StageModList.vue";
 import PriceInput from "../../components/PriceInput.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
-import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
 import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, restMembers } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
+import { searchModGroups, type ModGroup, type ModPick } from "../../services/craft-stage/trade-search";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
 
 const s = craftStage;
@@ -301,9 +301,6 @@ function ageOf(which: "white" | "four" | "bought"): { text: string; old: boolean
 }
 /** 相場 (カレンシー) */
 const market = marketStore;
-async function refreshPrices(): Promise<void> {
-  await market.refreshMarket();
-}
 onMounted(() => void market.ensureMarket(MARKET_MAX_AGE_MS));
 /** 4 MOD のベースを取引所で探す (狙いの MOD が付いたレア。固定済みは除く。開くだけ) */
 /**
@@ -390,19 +387,11 @@ const doneAge = computed(() => {
 async function searchDone(): Promise<void> {
   const d = s.data.value;
   if (!d) return;
-  const KINDS: StatKind[] = ["explicit", "fractured", "desecrated"];
-  const kindsOf = (t: { modId: string; minTierIndex: number }): { id: string; min?: number }[] =>
-    tradeFiltersFor(d, [t]).filters.flatMap((f) => {
-      if (!/^explicit\./.test(f.id)) return [{ id: f.id, ...(f.min != null ? { min: f.min } : {}) }];
-      const key = f.id.replace(/^explicit\./, "");
-      return KINDS.filter((k) => hasStatKind(key, k)).map((k) => ({ id: `${k}.${key}`, ...(f.min != null ? { min: f.min } : {}) }));
-    });
-  const stats: { id: string; min?: number }[] = [];
-  const anyOf: { filters: { id: string; min?: number }[]; count?: number }[] = [];
-  const put = (fs: { id: string; min?: number }[], count = 1): void => { if (fs.length === 1) stats.push(fs[0]!); else if (fs.length > 1) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) }); };
-  if (fracMembers.value.length) put(fracMembers.value.flatMap(kindsOf));
-  for (const r of restRows.value) put([r, ...(s.simTargets.value.find((t) => t.modId === r.modId)?.alts ?? [])].flatMap(kindsOf), r.need);
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: searchIlvl.value, stats, anyOf, noSanctified: true, ...socketQuery() }));
+  // 検索の組み立ては trade-search.ts に 1 本化 (2026-10-07 オーナー「エンジン作ってそれと同じ奴を実装、一括管理」)
+  const groups: ModGroup[] = [];
+  if (fracMembers.value.length) groups.push({ picks: fracMembers.value });
+  for (const r of restRows.value) groups.push({ picks: [r, ...(s.simTargets.value.find((t) => t.modId === r.modId)?.alts ?? [])], count: r.need });
+  await searchModGroups(d, { groups });
 }
 
 /**
@@ -414,30 +403,19 @@ async function searchPattern(k: number): Promise<void> {
   const d = s.data.value, it = s.item.value, p = s.simPatterns.value[k];
   if (!d || !it || !p) return;
   const sets = patternSets(it.cls);
-  const KINDS: StatKind[] = ["explicit", "fractured", "desecrated"];
-  const kindsOf = (t: { modId: string; minTierIndex: number }): { id: string; min?: number }[] =>
-    tradeFiltersFor(d, [t]).filters.flatMap((f) => {
-      if (!/^explicit\./.test(f.id)) return [{ id: f.id, ...(f.min != null ? { min: f.min } : {}) }];
-      const key = f.id.replace(/^explicit\./, "");
-      return KINDS.filter((kk) => hasStatKind(key, kk)).map((kk) => ({ id: `${kk}.${key}`, ...(f.min != null ? { min: f.min } : {}) }));
-    });
-  const stats: { id: string; min?: number }[] = [];
-  const anyOf: { filters: { id: string; min?: number }[]; count?: number }[] = [];
-  const put = (fs: { id: string; min?: number }[], count = 1): void => { if (fs.length === 1 && count <= 1) stats.push(fs[0]!); else if (fs.length) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) }); };
-  const tOf = (id: string) => s.simTargets.value.find((t) => t.modId === id);
-  const withAlts = (id: string) => { const t = tOf(id); return t ? [t, ...(t.alts ?? [])] : []; };
-  if (fracMembers.value.length) put(fracMembers.value.flatMap(kindsOf));
+  const withAlts = (id: string): ModPick[] => { const t = s.simTargets.value.find((x) => x.modId === id); return t ? [t, ...(t.alts ?? [])] : []; };
+  const groups: ModGroup[] = [];
+  if (fracMembers.value.length) groups.push({ picks: fracMembers.value });
   const restOfStep = new Set(p.steps.filter((st) => isRest(st.target)).map((st) => Number(st.target!.slice(5))));
   p.steps.forEach((st, j) => {
     const x = setByKey(sets, st.set);
     if (!x || !st.target || st.target === ANY_TARGET || x.kind === "rune" || isRest(st.target)) return;
     const ids = [st.target, st.target2, st.target3].filter((y): y is string => !!y);
-    if (ids.length > 1 && hasCands(x)) {
-      // 候補の手: 残りの手が後にあれば候補ぜんぶ、無ければどれか N つ (偉大は 2)
-      put(ids.flatMap((id) => withAlts(id)).flatMap(kindsOf), restOfStep.has(j) ? ids.length : isDouble(x) ? 2 : 1);
-    } else put(withAlts(st.target).flatMap(kindsOf), 1);
+    // 候補の手: 残りの手が後にあれば候補ぜんぶ、無ければどれか N つ (偉大は 2)
+    if (ids.length > 1 && hasCands(x)) groups.push({ picks: ids.flatMap(withAlts), count: restOfStep.has(j) ? ids.length : isDouble(x) ? 2 : 1 });
+    else groups.push({ picks: withAlts(st.target) });
   });
-  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: searchIlvl.value, stats, anyOf, noSanctified: true, ...socketQuery() }));
+  await searchModGroups(d, { groups });
 }
 
 /**
@@ -1213,8 +1191,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
           <span v-if="error" class="text-rose-300">{{ error }}</span>
           <!-- 開いているパターンの MOD 群を取引所 (JP) で探す (2026-10-07 オーナー「回すの横、相場ボタンじゃなくてこの MOD 群をそのまま検索にかけたい」) -->
-          <button type="button" class="rounded-lg border border-sky-400/60 bg-sky-500/10 px-2.5 py-0.5 font-bold text-sky-100 hover:bg-sky-500/20 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern]?.steps.length" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の組めている所まで (付ける MOD と固定) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">{{ s.simPatterns.value[activePattern]?.name ?? "" }} を取引所で探す ↗</button>
-          <button type="button" class="rounded border border-white/15 px-1.5 py-0.5 opacity-70 hover:opacity-100 disabled:opacity-40" :class="[ market.fetchedAt.value && Date.now() - market.fetchedAt.value > MARKET_MAX_AGE_MS ? 'text-amber-300' : '']" :disabled="market.loading.value" :title="`相場 ${market.fetchedLabel.value || 'まだ読んでいない'} (押すと取り直す。計算・回した結果は相場の値段で出す)`" @click="refreshPrices">{{ market.loading.value ? "相場を取り直し中…" : `相場 ${market.fetchedLabel.value || "—"} ↻` }}</button>
+          <button type="button" class="rounded-lg border border-sky-400/60 bg-sky-500/10 px-2.5 py-0.5 font-bold text-sky-100 hover:bg-sky-500/20 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern]?.steps.length" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の組めている所まで (付ける MOD と固定) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">ここまでの MOD を取引所で検索 ↗</button>
           <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (組みかけは組めている所まで)`" @click="run()">回す ▶</button>
         </div>
       </div>

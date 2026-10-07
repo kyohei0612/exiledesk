@@ -39,6 +39,9 @@ import { currencyJa, displayCurrency } from "../../state/display-currency";
 import { htcFamilyStats } from "./patch";
 import { tierDisplayRanges } from "../mods/stat-scale";
 import statMapping from "../../i18n/trade2-stat-mapping.json";
+import statText from "../../i18n/trade2-stat-text.json";
+/** 取引所の stat の英語の文 (小文字、数は #) → id */
+const STAT_TEXT = statText as unknown as Record<string, string[]>;
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 
@@ -207,6 +210,17 @@ export function tradeFiltersFor(
       continue;
     }
     const tier = tierOf(mod, t);
+    // stat を持たない MOD (パーフェクトエッセンスなど) は、family から借りる前に英語の文で取引所の stat を引く。family の借り物は
+    // 同じ系統の別の MOD (マークスマンのルーンの「2m 以内の敵に対する」版など) になることがあり、違う MOD で検索していた
+    // (2026-10-07 オーナー「変な MOD 付いてるな、合ってんのか」: 手袋のヒステリーのパーフェクトエッセンス)
+    const ownStats = ((tier as { stats?: readonly string[] }).stats ?? []).filter(Boolean);
+    const byText = !ownStats.length && mod.text ? STAT_TEXT[mod.text.toLowerCase()]?.find((x) => x.startsWith("explicit.")) : undefined;
+    if (byText) {
+      const shown0 = tierDisplayRanges(tier);
+      const r0 = shown0[0];
+      filters.push({ id: byText, min: r0 ? Math.min(r0[0]!, r0[1]!) : 0, modId: t.modId, statId: mod.text ?? "" });
+      continue;
+    }
     const statIds = statsOf(mod, tier);
     if (statIds.length === 0) {
       unmatched.push(`${t.modId} (取引所の条件にできる stat が見つからない)`);

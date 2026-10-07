@@ -29,6 +29,7 @@ import { kindOf, whittleTargets } from "../../services/craft-stage/apply-currenc
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import ShelfButton from "./ShelfButton.vue";
+import { searchModGroups, type ModGroup } from "../../services/craft-stage/trade-search";
 
 const s = craftStage;
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
@@ -107,6 +108,16 @@ watch(() => s.mode.value === "sim" && s.ready.value, (on) => {
   s.simPicked.value = true;
   s.reset();
 }, { immediate: true });
+/** 手で打つ画面の今のアイテムの MOD 群 (未発現は除く。固定・冒涜も同じ条件で、種類は問わない) */
+const stageModGroups = computed<ModGroup[]>(() => {
+  const it = s.item.value;
+  if (!it) return [];
+  return [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed).map((m) => ({ picks: [{ modId: m.modId, minTierIndex: m.tierIndex }] }));
+});
+async function searchStageMods(): Promise<void> {
+  const d = s.data.value;
+  if (d && stageModGroups.value.length) await searchModGroups(d, { groups: stageModGroups.value });
+}
 const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);
 /** シミュレーションのソケットの上限 (熟練工の上限と、その + 1 = 規格外) */
 const simCraftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.item.value.cls.category) : 0));
@@ -165,6 +176,8 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
         <button type="button" :class="btn" :disabled="!s.log.value.length" title="今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)" @click="copy('手順 JSON', s.plan())">手順 JSON</button>
         <button type="button" :class="btn" :disabled="!s.log.value.length" title="POE2Tube に渡す結果 JSON (今の相場の値段で)" @click="copy('結果 JSON', s.result(pkg.version))">結果 JSON</button>
         <button type="button" :class="btn" title="craft-stage-run.mjs の --prices に渡す相場 (高貴建て)" @click="copy('相場 JSON', s.prices())">相場 JSON</button>
+        <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
+        <button type="button" :class="btn" class="border-sky-400/60 text-sky-100" :disabled="!stageModGroups.length" title="今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (数値・ベースは入れない)" @click="searchStageMods">今の MOD を取引所で検索 ↗</button>
       </span>
       </template>
     </section>
