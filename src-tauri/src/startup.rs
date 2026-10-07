@@ -16,6 +16,13 @@ use crate::{
 };
 
 pub(crate) fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    // メインの窓はここで作る (tauri.conf.json の windows は空)。WebView2 の追加の引数を起動時に決めるため (2026-10-08、POE2Tube 要望 ㊲:
+    // インストール版を外から CDP で操作して録画したい。環境変数 WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS はリリース版で消している上、
+    // wry が渡す引数に上書きされて効かない)。
+    //   EXILEDESK_REMOTE_DEBUG_PORT=9333 … その時だけ --remote-debugging-port=9333 を足す (口は 127.0.0.1 だけ = WebView2 の既定)
+    //   EXILEDESK_FULLSCREEN=1           … 全画面で開く (録画の大きさをそろえる。オーナー「全画面表示でおｋ、サイズ調整わざわざしなくても」)
+    // どちらも無い普段の起動は今まで通り
+    build_main_window(app)?;
     // 2026-09-07: ヘッドレス PoB のスクリプト元は同梱版 (resources/pob) を優先。
     // 旧実装は CARGO_MANIFEST_DIR 固定で、リリースビルドでは存在しないパスを指していた。
     app.manage(pob::PobWorker::spawn(pob_launcher::headless_src_dir(
@@ -194,5 +201,36 @@ pub(crate) fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Erro
         }
     });
 
+    Ok(())
+}
+
+/// wry が Windows で既定で渡す WebView2 の引数 (additional_browser_args を指定すると既定が消えるので、同じ物を自分で付ける)
+const WEBVIEW_DEFAULT_ARGS: &str = "--autoplay-policy=no-user-gesture-required --disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection";
+
+/// メインの窓 (label "main")。見た目の設定は前の tauri.conf.json と同じ (1660×900、最小 1660×860、中央、最初は隠す)
+fn build_main_window(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    use tauri::{WebviewUrl, WebviewWindowBuilder};
+    let mut b = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
+        .title("ExileDesk")
+        .visible(false)
+        .inner_size(1660.0, 900.0)
+        .min_inner_size(1660.0, 860.0)
+        .center();
+    let debug_port = std::env::var("EXILEDESK_REMOTE_DEBUG_PORT")
+        .ok()
+        .and_then(|v| v.trim().parse::<u16>().ok());
+    #[cfg(windows)]
+    if let Some(port) = debug_port {
+        b = b.additional_browser_args(&format!("{WEBVIEW_DEFAULT_ARGS} --remote-debugging-port={port}"));
+        crate::app_log::line_static(&format!("[起動] CDP を 127.0.0.1:{port} で開く (EXILEDESK_REMOTE_DEBUG_PORT)"));
+    }
+    #[cfg(not(windows))]
+    let _ = debug_port;
+    let window = b.build()?;
+    // 全画面 (録画用) は窓を出す時に掛ける (lib.rs show_main_window_now。隠れている間に掛けても出す時の「画面に収める」で戻るため)
+    if std::env::var("EXILEDESK_FULLSCREEN").as_deref() == Ok("1") {
+        crate::app_log::line_static("[起動] 全画面で開く (EXILEDESK_FULLSCREEN=1)");
+    }
+    let _ = &window;
     Ok(())
 }

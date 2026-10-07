@@ -361,7 +361,22 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
     const t = s.simTargets.value.find((y) => y.modId === st.target);
     // 見ている手が「前の手で付かなかった時だけ」の手なら、その前の手は外れた姿 (狙いは付けない) で出す
     // (2026-10-08 スクリーンショットで、2 手目 (増強) を打つ前のアイテムに狙いがもう付いて見えていた)
-    const missedFor = editingStep.value && retryFrom.value.get(previewAt.value) === j;
+    // 見ている手が「この手で付かなかった時だけ」の手 (かその後) なら、この手は外れた世界: 狙い以外の MOD が 1 つ付いた姿で出す
+    // (2026-10-08 オーナー「2 手目の手を足した瞬間に別の MOD に切り替わらないと辻褄が合わん」「付かなかった時の世界線の話」)。
+    // 反対の側を優先 (枝の「ハズレが反対の側 → 消さずに打つ」の流れ)。乱数は手ごとに決まった値なので押すたびに変わらない
+    const missedFor = [...retryFrom.value.entries()].some(([k, f]) => f === j && k <= previewAt.value);
+    if (missedFor && t && c) {
+      const tside = c.data.mods.get(t.modId)?.type === "suffix" ? "suffix" : "prefix";
+      let pick: ReturnType<typeof applyCurrency> | null = null;
+      for (let k = 0; k < 40 && !pick; k++) {
+        const r = applyCurrency(d, { ...it, rarity: stateBefore(c, pat.value.steps, j).rarity }, x.currency, mulberry32(9973 + j * 100 + k), x.omens);
+        if (!r.applied || r.added.some((m) => targetIds.has(m.modId))) continue;
+        if (k < 30 && r.added.some((m) => m.side === tside)) continue;
+        pick = r;
+      }
+      if (pick) { it = pick.item; if (j === previewAt.value) newMods = pick.added; }
+      continue;
+    }
     // 見ている手で消える・入れ替わる可能性のある MOD (打つ物とやり直しで。クラフトステージの削減と同じ色。2026-10-07 オーナー
     // 「変更される可能性があるやつ色付けた方がいい、削減みたいな感じで一緒の色で」)
     if (j === previewAt.value) {

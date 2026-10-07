@@ -10,17 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [
-      {
-        "title": "ExileDesk",
-        "visible": false,
-        "width": 1660,
-        "height": 900,
-        "minWidth": 1660,
-        "minHeight": 860,
-        "center": true
-      }
-    ],
+    "windows": [],
     "security": {
       "csp": null,
       "assetProtocol": {

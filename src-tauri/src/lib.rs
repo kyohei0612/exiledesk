@@ -147,8 +147,15 @@ fn show_main_window_now(app: &tauri::AppHandle, why: &str) {
         return;
     }
     if let Some(window) = app.get_webview_window("main") {
-        clamp_into_visible_area(&window);
+        // 録画用の全画面 (EXILEDESK_FULLSCREEN=1、startup.rs)。画面に収める処理はサイズを戻すので飛ばし、出してから全画面にする
+        let fullscreen = std::env::var("EXILEDESK_FULLSCREEN").as_deref() == Ok("1");
+        if !fullscreen {
+            clamp_into_visible_area(&window);
+        }
         let _ = window.show();
+        if fullscreen {
+            let _ = window.set_fullscreen(true);
+        }
         let _ = window.set_focus();
     }
     app_log::line(app, &format!("[起動] ウィンドウを表示 ({why})"));

@@ -58,7 +58,13 @@ describe("2026-09-29 に足した物", () => {
     expect(A(rare("Gold Ring", 60), "desecrate_gnawed").applied).toBe(true);
   });
   it("秘術師の彫刻針はワンドにだけ", () => {
-    expect(A(freshItem(data, "Attuned Wand", 30), "etcher").item.quality).toBe(1);
+    // 装備の品質カレンシーは 1 個で +1 か +2 (2026-10-07 オーナーの訂正、POE2Tube 要望 ㊱)。20 個打っても上限 20% を超えない
+    expect([1, 2]).toContain(A(freshItem(data, "Attuned Wand", 30), "etcher").item.quality);
+    let wand = freshItem(data, "Attuned Wand", 30);
+    const seen = new Set<number>();
+    for (let i = 0; i < 20; i++) { const q = wand.quality; wand = A(wand, "etcher", i + 1).item; if (wand.quality < 20) seen.add(wand.quality - q); }
+    expect(wand.quality).toBe(20);
+    expect([...seen].sort()).toEqual([1, 2]);
     expect(A(freshItem(data, "Hardwood Spear", 30), "etcher").applied).toBe(false);
   });
   it("インフューザーは上限 +10% まで、超えた時の outcome で コラプト / 無事", () => {

@@ -150,7 +150,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   const kind = kindOf(currency);
   // アクト中に落ちる物 (要望 ⑧、apply-act.ts)
   if (currency === "wisdom") return applyWisdom(item);
-  if (currency in QUALITY_TARGET) return applyQuality(item, currency);
+  if (currency in QUALITY_TARGET) return applyQuality(item, currency, rng);
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
   if (currency === "chance") return toUniqueBase(data, applyChance(item, rng, used.includes("OmenoftheAncients") ? uniquesOfClassForBase(item.base) : uniquesForBase(item.base), hint.outcome, used));
   if (isExtra(currency)) return toUniqueBase(data, applyExtra(item, currency, rng, hint.outcome));
