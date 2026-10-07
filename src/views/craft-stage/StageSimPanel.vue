@@ -18,6 +18,7 @@ import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { runRecipe, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
+import { runRecipeParallel, stopParallel } from "../../services/craft-stage/recipe-parallel";
 import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { track } from "../../utils/track";
 import { buildSpecQuery } from "../../services/trade2/query/spec";
@@ -696,7 +697,8 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId)), ...groups.map((x) => x.g)];
       const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
       const base = k * spec.runs;
-      const r = await runRecipe(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
+      // PC のコアに分けて回す (同じ seed なので 1 本と同じ結果。2026-10-07 オーナー「おっそいな」)
+      const r = await runRecipeParallel(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
       if (my !== gen || !r) return;
       out.push({ name: p.name, out: { r, spec: pspec }, rest: fractureRow.value ? r.perDone : null });
     }
@@ -728,6 +730,7 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
 }
 function stop(): void {
   gen++;
+  stopParallel();
   busy.value = false;
   phase.value = "";
   if (stepRun.value?.busy) stepRun.value = null;

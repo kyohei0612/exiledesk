@@ -18,6 +18,9 @@ export default defineConfig(async () => ({
     },
   }],
 
+  // シミュレーションの作業場所 (recipe-worker.ts) は ES モジュールで (MOD 表を動的 import するので分割できる形が要る。2026-10-07)
+  worker: { format: "es" as const },
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent Vite from obscuring rust errors

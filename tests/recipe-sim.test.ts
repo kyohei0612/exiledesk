@@ -250,3 +250,14 @@ describe("パターンで回す (2026-10-06)", () => {
     expect(allMods(final).some((m) => m.modId === kol.id)).toBe(true);
   });
 });
+
+describe("人ごとの乱数の種 (2026-10-07)", () => {
+  it("人の間隔は 1 人の上限の手の数より広い (n 手目の乱数は seed + n なので、重なると隣の人と同じ乱数になる)", async () => {
+    const { seedsOf } = await import("../src/services/craft-stage/recipe-sim");
+    for (const maxSteps of [4000, 10_000, 20_000, 50_000]) {
+      const s = seedsOf({ seed: 1, runs: 5, maxSteps });
+      for (let i = 1; i < s.length; i++) expect(s[i]! - s[i - 1]!).toBeGreaterThan(maxSteps);
+    }
+    expect(seedsOf({ seed: 7, runs: 3, maxSteps: 4000 })).toEqual([7, 10_007, 20_007]);
+  });
+});

@@ -591,42 +591,43 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
  */
 const yieldToUi = (): Promise<void> => new Promise<void>((r) => setTimeout(r, 0));
 
-/** 何百回も回してまとめる (画面に手を返しながら) */
-export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, total: number) => void, stopped?: () => boolean): Promise<RecipeResult | null> {
-  const seed0 = spec.seed ?? Math.floor(Date.now() % 1_000_000) * 10_000;
-  const runs: RecipeRun[] = [];
-  let last = Date.now();
-  for (let i = 0; i < spec.runs; i++) {
-    runs.push(runRecipeOnce(spec, seed0 + i * 10_000));
-    if (Date.now() - last > 40) {
-      // 進み具合は手を返すたびに渡す (受け取る側は数字の部品 SimProgress.vue だけを描き直す。2026-10-07 オーナー「さっきまでぬるぬるだったのに」)
-      onProgress?.(i + 1, spec.runs);
-      await yieldToUi();
-      if (stopped?.()) return null;
-      last = Date.now();
+/**
+ * 1 回分を軽くした物 (並列で回す時に作業場所から送り返す形。手の並び steps は送らず、打った物ごとの数と費用 tally にまとめる)
+ */
+export type RunLite = Omit<RecipeRun, "steps"> & { tally: Record<string, [number, number]> };
+export function liteOf(spec: Pick<RecipeSpec, "price">, r: RecipeRun): RunLite {
+  const tally: Record<string, [number, number]> = {};
+  for (const s of r.steps) {
+    for (const k of [s.currency, ...(s.omen ? s.omen.split("+") : [])]) {
+      const key = k.replace(/^reveal:.*$/, "reveal");
+      const x = (tally[key] ??= [0, 0]);
+      x[0]++;
+      x[1] += key === "reveal" ? 0 : spec.price(k);
     }
   }
-  onProgress?.(spec.runs, spec.runs);
+  const { steps: _steps, ...rest } = r;
+  return { ...rest, tally };
+}
+
+/** 回した結果をまとめる。sample は費用が真ん中の完成した回を、同じ seed で回し直して手の並びごと取る */
+export function summarizeRuns(spec: RecipeSpec, runs: readonly RunLite[]): RecipeResult {
   const done = runs.filter((r) => r.done);
   const spent = runs.reduce((a, r) => a + r.cost, 0);
   const costs = done.map((r) => r.cost).sort((a, b) => a - b);
   const q = (p: number): number => (costs.length ? costs[Math.min(costs.length - 1, Math.floor(p * costs.length))]! : Infinity);
   const tally = new Map<string, { count: number; cost: number }>();
-  for (const r of runs) for (const s of r.steps) {
-    for (const k of [s.currency, ...(s.omen ? s.omen.split("+") : [])]) {
-      const key = k.replace(/^reveal:.*$/, "reveal");
-      const x = tally.get(key) ?? { count: 0, cost: 0 };
-      x.count++;
-      x.cost += key === "reveal" ? 0 : spec.price(k);
-      tally.set(key, x);
-    }
+  for (const r of runs) for (const [key, [n, c]] of Object.entries(r.tally)) {
+    const x = tally.get(key) ?? { count: 0, cost: 0 };
+    x.count += n; x.cost += c;
+    tally.set(key, x);
   }
   const per = done.length || 1;
   const usage = [...tally].map(([key, x]) => ({ key, count: x.count / per, cost: x.cost / per })).sort((a, b) => b.cost - a.cost);
   const stopMap = new Map<string, number>();
   for (const r of runs) if (!r.done) stopMap.set(r.reason ?? "?", (stopMap.get(r.reason ?? "?") ?? 0) + 1);
   const mid = q(0.5);
-  const sample = done.length ? done.reduce((a, b) => (Math.abs(b.cost - mid) < Math.abs(a.cost - mid) ? b : a)) : null;
+  const mids = done.length ? done.reduce((a, b) => (Math.abs(b.cost - mid) < Math.abs(a.cost - mid) ? b : a)) : null;
+  const sample = mids ? runRecipeOnce(spec, mids.seed) : null;
   return {
     runs: runs.length,
     pDone: done.length / runs.length,
@@ -651,6 +652,35 @@ export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, to
       });
     })(),
   };
+}
+
+/**
+ * 回す人ごとの seed (並列でも 1 本でも同じ seed を使うので、結果は同じになる)。n 手目の乱数は seed + n なので、
+ * 人の間隔は 1 人の上限の手の数より広く取る (10,000 ずつだった時、上限 20,000 / 50,000 手で隣の人と同じ乱数を使っていた。2026-10-07)
+ */
+export const seedsOf = (spec: Pick<RecipeSpec, "seed" | "runs" | "maxSteps">): number[] => {
+  const gap = Math.max(10_000, (spec.maxSteps ?? 4000) + 1_000);
+  const seed0 = spec.seed ?? Math.floor(Date.now() % 1_000_000) * 10_000;
+  return Array.from({ length: spec.runs }, (_, i) => seed0 + i * gap);
+};
+
+/** 何百回も回してまとめる (画面に手を返しながら。1 本で回す。並列は recipe-parallel.ts) */
+export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, total: number) => void, stopped?: () => boolean): Promise<RecipeResult | null> {
+  const seeds = seedsOf(spec);
+  const runs: RunLite[] = [];
+  let last = Date.now();
+  for (let i = 0; i < seeds.length; i++) {
+    runs.push(liteOf(spec, runRecipeOnce(spec, seeds[i]!)));
+    if (Date.now() - last > 40) {
+      // 進み具合は手を返すたびに渡す (受け取る側は数字の部品 SimProgress.vue だけを描き直す。2026-10-07 オーナー「さっきまでぬるぬるだったのに」)
+      onProgress?.(i + 1, spec.runs);
+      await yieldToUi();
+      if (stopped?.()) return null;
+      last = Date.now();
+    }
+  }
+  onProgress?.(spec.runs, spec.runs);
+  return summarizeRuns(spec, runs);
 }
 
 /**

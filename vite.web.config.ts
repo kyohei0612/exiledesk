@@ -20,6 +20,8 @@ export default defineConfig({
     },
   }],
   build: { outDir: "dist-web", emptyOutDir: true, rollupOptions: { input: "web.html" } },
+  // シミュレーションの作業場所は ES モジュールで (vite.config.ts と同じ)
+  worker: { format: "es" },
   clearScreen: false,
   server: {
     port: 1440,
