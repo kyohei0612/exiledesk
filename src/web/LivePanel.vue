@@ -4,7 +4,7 @@
  * server/live の /live.json を開いた時に 1 回だけ読む (読み直さない。サーバーが 5 分おきに調べた最新の動画と、配信中かどうか)。
  * 配信中のチャンネルはその配信を、ほかは最新の動画を出す。協賛は PR と出す (ステマ規制)
  */
-import { computed, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { WEB_API_BASE } from "./config";
 
 interface Entry { id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; status: "live" | "upcoming"; title: string; thumb: string | null; watchUrl: string; startedAt: string | null; scheduledAt: string | null; viewers: number | null }
@@ -15,15 +15,20 @@ interface State { updatedAt: string | null; live: Entry[]; upcoming: Entry[]; ch
 const state = ref<State | null>(null);
 const failed = ref("");
 
-onMounted(async () => {
+async function load(): Promise<void> {
   try {
     const r = await fetch(`${WEB_API_BASE}/live.json`);
     if (!r.ok) throw new Error(String(r.status));
     state.value = (await r.json()) as State;
+    failed.value = "";
   } catch (e) {
     failed.value = String((e as Error).message ?? e);
   }
-});
+}
+// 開いた時に 1 回。45 分以上放置して戻ってきた時は WebApp.vue が exiledesk:refresh を出すので、もう 1 回
+const onRefresh = (): void => { void load(); };
+onMounted(() => { void load(); window.addEventListener("exiledesk:refresh", onRefresh); });
+onBeforeUnmount(() => window.removeEventListener("exiledesk:refresh", onRefresh));
 
 const PF: Record<string, string> = { youtube: "YouTube", twitch: "Twitch" };
 /** 1 チャンネル 1 枚: 配信中ならその配信、無ければ最新の動画 */

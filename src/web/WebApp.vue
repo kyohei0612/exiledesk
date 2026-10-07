@@ -5,7 +5,8 @@
  * アプリ版の App.vue にある起動の処理 (更新・PoB・画像パック・ログイン・見回り) は Web では要らないので載せない。
  * 画面は 1660 幅で組んだ絵を窓に合わせて拡大縮小する (アプリと同じ。狭い時は縮める)
  */
-import { ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { marketStore } from "../state/market-store";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import LivePanel from "./LivePanel.vue";
 import FeedbackDialog from "./FeedbackDialog.vue";
@@ -14,6 +15,28 @@ import MarketNotice from "./MarketNotice.vue";
 import pkg from "../../package.json";
 
 const feedbackOpen = ref(false);
+/**
+ * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
+ * (2026-10-07 オーナー「45 分放置でリロードにしようかな」→ ページごと読み直すと手で打った手順などが消えるので、取り直しだけに)
+ */
+const IDLE_MS = 45 * 60_000;
+let lastActive = Date.now();
+function onActive(): void {
+  const idle = Date.now() - lastActive;
+  lastActive = Date.now();
+  if (idle < IDLE_MS) return;
+  void marketStore.refreshMarket();
+  window.dispatchEvent(new Event("exiledesk:refresh"));
+}
+const onVisible = (): void => { if (document.visibilityState === "visible") onActive(); };
+onMounted(() => {
+  for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.addEventListener(ev, onActive, { passive: true, capture: true });
+  document.addEventListener("visibilitychange", onVisible);
+});
+onBeforeUnmount(() => {
+  for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.removeEventListener(ev, onActive, { capture: true });
+  document.removeEventListener("visibilitychange", onVisible);
+});
 /** 初めて来た人の窓: 1 回閉じたら出さない (上の「はじめに」で開き直せる) */
 const WELCOME_KEY = "exiledesk.web.welcomed";
 const welcomeOpen = ref(false);
