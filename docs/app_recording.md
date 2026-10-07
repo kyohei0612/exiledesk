@@ -29,7 +29,7 @@ Start-Process "$env:LOCALAPPDATA\ExileDesk\exiledesk.exe"   # 開発ビルドな
 - Playwright: `p.chromium.connect_over_cdp("http://127.0.0.1:9333")` → `browser.contexts[0].pages[0]`
 - Playwright の操作では OS のカーソルは動かない → **カーソルの絵をページに重ねる** (SVG の矢印、`position: fixed`、`pointer-events: none`、mousemove で動かす、mousedown で波紋)。ページを切り替えたら入れ直す
 - 動きは smoothstep で 16ms ごとに少しずつ (一瞬で飛ばさない)
-- **操作は地図を作ってから**: 文字だけで掴むと同じ文字が 2 か所にある (「金の指輪」はベースのボタンとアイテム枠の両方)。data-* 属性や親子関係で一意に掴む
+- **操作は地図を見てから**: `docs/app_recording_map.md` (セレクタ・待つ目印・邪魔な物・宣伝の回の手順)。文字だけで掴むと同じ文字が何か所にもある (「金の指輪」はベースのボタン・アイテム枠・MOD 一覧、「黄金の指輪」にも含まれる)。data-* 属性や親子関係で一意に掴む
 - 映さない物: 「動画モード」「手順 JSON」「結果 JSON」「相場 JSON」のボタン、アカウント名・取引履歴
 
 ## 3. 録画する
