@@ -1099,17 +1099,16 @@ function replay(): void {
         -->
         <div v-if="!patternDone" class="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]" :class="stale && !busy ? '[&_.res]:opacity-50' : ''">
           <span class="opacity-60">パターン</span>
-          <span v-for="(p, i) in s.simPatterns.value" :key="i" class="flex items-center rounded-full border" :class="shownName === p.name && resultOf(p.name) ? 'border-amber-400/70 bg-amber-500/15' : 'border-white/15'">
-            <input type="checkbox" class="ml-2 h-3 w-3 accent-amber-400" :checked="!p.off" :title="p.off ? '全部まとめて回す時に入れる' : '全部まとめて回す時に入れない'" @change="togglePatternOff(i)" />
-            <button type="button" class="res flex items-center gap-1 rounded-full py-0.5 pl-1.5 pr-2.5 text-left disabled:cursor-default" :class="p.off ? 'opacity-40' : ''" :disabled="!resultOf(p.name)" :title="resultOf(p.name) ? (stale ? '設定が変わりました。回し直すと合う' : '押すと結果を下に出す') : patternNote(p)" @click="showResultByName(p.name)">
-              <b>{{ p.name }}</b>
-              <template v-if="resultOf(p.name)">
-                <b class="tabular-nums text-amber-100">{{ money(resultOf(p.name)!.out.r.perDone + (fractureRow ? startMin ?? 0 : 0)) }}</b>
-                <span class="opacity-60">完成 {{ pct(resultOf(p.name)!.out.r.pDone) }}</span>
-                <span v-if="cheapestName === p.name" class="rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">一番安い</span>
-              </template>
-              <span v-else class="opacity-50">{{ patternNote(p) }}</span>
+          <!-- 枠のどこを押してもチェックが切り替わる (2026-10-07 オーナー「チェックボックスだけじゃなくて枠クリックで」)。金額の所だけは結果を下に出す -->
+          <span v-for="(p, i) in s.simPatterns.value" :key="i" role="checkbox" :aria-checked="!p.off" tabindex="0" class="flex cursor-pointer select-none items-center gap-1 rounded-full border py-0.5 pl-2 pr-1 transition hover:border-white/40" :class="[shownName === p.name && resultOf(p.name) ? 'border-amber-400/70 bg-amber-500/15' : 'border-white/15', p.off ? 'opacity-45' : '']" :title="p.off ? '押すと全部まとめて回す時に入れる' : '押すと全部まとめて回す時に入れない'" @click="togglePatternOff(i)" @keydown.space.prevent="togglePatternOff(i)">
+            <span class="grid h-3.5 w-3.5 place-items-center rounded-sm border text-[9px] leading-none" :class="p.off ? 'border-white/30' : 'border-amber-400 bg-amber-400 text-black'">{{ p.off ? "" : "✓" }}</span>
+            <b>{{ p.name }}</b>
+            <button v-if="resultOf(p.name)" type="button" class="res flex items-center gap-1 rounded-full px-1.5 hover:bg-white/10" :title="stale ? '設定が変わりました。回し直すと合う (押すと結果を下に)' : '押すと結果を下に出す'" @click.stop="showResultByName(p.name)">
+              <b class="tabular-nums text-amber-100">{{ money(resultOf(p.name)!.out.r.perDone + (fractureRow ? startMin ?? 0 : 0)) }}</b>
+              <span class="opacity-60">完成 {{ pct(resultOf(p.name)!.out.r.pDone) }}</span>
+              <span v-if="cheapestName === p.name" class="rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">一番安い</span>
             </button>
+            <span v-else class="pr-1.5 opacity-50">{{ patternNote(p) }}</span>
           </span>
           <span v-if="busy" class="ml-auto text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
