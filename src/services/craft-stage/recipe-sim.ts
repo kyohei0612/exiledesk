@@ -605,11 +605,12 @@ const yieldToUi: () => Promise<void> = (() => {
 export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, total: number) => void, stopped?: () => boolean): Promise<RecipeResult | null> {
   const seed0 = spec.seed ?? Math.floor(Date.now() % 1_000_000) * 10_000;
   const runs: RecipeRun[] = [];
-  let last = Date.now();
+  let last = Date.now(), lastShown = 0;
   for (let i = 0; i < spec.runs; i++) {
     runs.push(runRecipeOnce(spec, seed0 + i * 10_000));
     if (Date.now() - last > 40) {
-      onProgress?.(i + 1, spec.runs);
+      // 進み具合は 0.5 秒に 1 回だけ渡す (渡すたびにシミュレーションの画面が丸ごと描き直され、ワンドのカオス 500 人で計算 20 秒に対し 1 分半かかっていた。2026-10-07)
+      if (Date.now() - lastShown > 500) { onProgress?.(i + 1, spec.runs); lastShown = Date.now(); }
       await yieldToUi();
       if (stopped?.()) return null;
       last = Date.now();
