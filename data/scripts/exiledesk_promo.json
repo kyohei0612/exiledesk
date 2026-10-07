@@ -503,6 +503,106 @@
           }
         }
       ]
+    },
+    {
+      "name": "MOD一覧とティア表",
+      "target_seconds": 45,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "画面の下には、このベースに付くMODの一覧も出るわ。",
+          "scene": {
+            "kind": "tiers",
+            "mod": "IncreasedLife"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "行を押すとティアの表が開いて、数値の幅と、ティアごとの出やすさが見られるの。",
+          "scene": {
+            "kind": "tiers",
+            "mod": "IncreasedLife"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "T1がどれくらい出にくいか、分かるのだ！",
+          "scene": {
+            "kind": "tiers",
+            "mod": "IncreasedLife"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "出やすさは、データサイトのpoe2dbの推定を使っているわ。",
+          "scene": {
+            "kind": "tiers",
+            "mod": "IncreasedLife"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "公式の数字じゃないのだ？",
+          "scene": {
+            "kind": "tiers",
+            "mod": "IncreasedLife"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "公式は出やすさを公開していないの。だから目安として見てね。",
+          "scene": {
+            "kind": "tiers",
+            "mod": "IncreasedLife"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それと、好きなMODを選んで、その状態から始めることもできるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "狙いのMODが付いた所から、試せるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。フラクチャーや冒涜のMODも選べるから、作りたい装備の途中から練習できるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "便利なのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        }
+      ]
     }
   ]
 }
