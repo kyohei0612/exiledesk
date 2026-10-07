@@ -40,6 +40,27 @@ import { htcFamilyStats } from "./patch";
 import { tierDisplayRanges } from "../mods/stat-scale";
 import statMapping from "../../i18n/trade2-stat-mapping.json";
 import statText from "../../i18n/trade2-stat-text.json";
+/**
+ * MOD の英語の文から取引所の stat を引く (行ごと)。全部の行が引けなければ null。
+ * negative: 「reduced / less」を「increased / more」で引いた (取引所の値はマイナス)
+ */
+function statsByText(text: string, modId = ""): Array<{ id: string; line: string; negative: boolean }> | null {
+  const out: Array<{ id: string; line: string; negative: boolean }> = [];
+  for (const line of text.split(/\n/).map((x) => x.trim()).filter(Boolean)) {
+    let key = line.toLowerCase().replace(/[+-]?\d+(?:\.\d+)?/g, "#").replace(/\+#/g, "#").replace(/\s+/g, " ").trim();
+    // 「筋力・器用さ・知性のどれか」は付く物が MOD で決まる (Essence_Dexterity なら器用さ)。取引所は単独の stat
+    const attr = /strength, dexterity or intelligence/.test(key) ? /Strength|Dexterity|Intelligence/.exec(modId)?.[0] : undefined;
+    if (attr) key = key.replace("strength, dexterity or intelligence", attr.toLowerCase());
+    const pick = (k: string): string | undefined => STAT_TEXT[k]?.find((x) => x.startsWith("explicit."));
+    const flip = key.replace(/\breduced\b/g, "increased").replace(/\bless\b/g, "more");
+    const id = pick(key);
+    if (id) { out.push({ id, line, negative: false }); continue; }
+    const id2 = flip !== key ? pick(flip) : undefined;
+    if (!id2) return null;
+    out.push({ id: id2, line, negative: true });
+  }
+  return out.length ? out : null;
+}
 /** 取引所の stat の英語の文 (小文字、数は #) → id */
 const STAT_TEXT = statText as unknown as Record<string, string[]>;
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -214,13 +235,16 @@ export function tradeFiltersFor(
     // 同じ系統の別の MOD (マークスマンのルーンの「2m 以内の敵に対する」版など) になることがあり、違う MOD で検索していた
     // (2026-10-07 オーナー「変な MOD 付いてるな、合ってんのか」: 手袋のヒステリーのパーフェクトエッセンス)
     const ownStats = ((tier as { stats?: readonly string[] }).stats ?? []).filter(Boolean);
-    // 文に数値が入っている物 (「60% increased effect of Socketed Augment Items」) は # にしてから引く (2026-10-07 オーナー「ソケット MOD が入ってない」)
-    const textKey = mod.text ? mod.text.toLowerCase().replace(/[+-]?\d+(?:\.\d+)?/g, "#").replace(/\s+/g, " ").trim() : "";
-    const byText = !ownStats.length && textKey ? (STAT_TEXT[mod.text!.toLowerCase()] ?? STAT_TEXT[textKey])?.find((x) => x.startsWith("explicit.")) : undefined;
+    // 文で引く: 数値は #、「+#」の + は外す (取引所の表は「# to strength」)、2 行の文は行ごと、「reduced / less」は取引所が
+    // 「increased / more」のマイナスで持つので引き直す (その時は下限を付けない)。全部の行が引けた時だけ使う
+    // (2026-10-07 オーナー「エッセンス系、トレードと相違あったら面倒だからフルチェック」: 引けずに family の別の MOD から借りて違う MOD で探していた)
+    const byText = !ownStats.length && mod.text ? statsByText(mod.text, mod.id) : null;
     if (byText) {
       const shown0 = tierDisplayRanges(tier);
-      const r0 = shown0[0];
-      filters.push({ id: byText, min: r0 ? Math.min(r0[0]!, r0[1]!) : 0, modId: t.modId, statId: mod.text ?? "" });
+      byText.forEach((x, i) => {
+        const r0 = shown0[i] ?? shown0[0];
+        filters.push({ id: x.id, min: x.negative ? -9999 : r0 ? Math.min(r0[0]!, r0[1]!) : 0, modId: t.modId, statId: x.line });
+      });
       continue;
     }
     const statIds = statsOf(mod, tier);
