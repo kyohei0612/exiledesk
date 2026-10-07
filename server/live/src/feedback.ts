@@ -74,7 +74,9 @@ export async function listFeedback(kv: KVNamespace, limit = 100): Promise<Feedba
 export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetch): Promise<boolean> {
   const head = fb.kind === "bug" ? "🐛 バグ" : "💡 要望";
   const ctx = fb.context ? "\n```json\n" + JSON.stringify(fb.context).slice(0, 600) + "\n```" : "";
-  const content = `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${fb.at.slice(0, 16).replace("T", " ")} UTC\n${fb.text.slice(0, 1200)}${ctx}`.slice(0, 1950);
+  // 日本時間で (Discord は文字列をそのまま出すので、ここで +9 時間)
+  const jst = new Date(Date.parse(fb.at) + 9 * 3600e3).toISOString().slice(0, 16).replace("T", " ");
+  const content = `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST\n${fb.text.slice(0, 1200)}${ctx}`.slice(0, 1950);
   try {
     const r = await fetchFn(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content, allowed_mentions: { parse: [] } }) });
     return r.ok;
