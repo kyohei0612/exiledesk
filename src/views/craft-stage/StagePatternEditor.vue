@@ -944,6 +944,14 @@ defineExpose({ rows });
                   <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : r.step.onMiss === "restart" ? "→ 最初から" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
                 </button>
               </span>
+              <!--
+                外れた時だけの次の手 (増強など) が打つ前に消去する時は、外れがどちらの側に付いたかで枝を分けて出す
+                (2026-10-07 オーナー「変成のオーブでハズレが狙いの MOD 群の所についてしまったら消去の表示がないぞ」)
+              -->
+              <span v-if="retryFrom.get(i + 1) === i && rows[i + 1] && preAnnul(rows[i + 1]!)" class="mt-0.5 flex flex-col pl-5 text-[10px] leading-tight text-rose-200/90">
+                <span class="whitespace-nowrap">外れが{{ preAnnul(rows[i + 1]!) }} → 消去 → {{ i + 2 }}手目</span>
+                <span class="whitespace-nowrap">外れが{{ preAnnul(rows[i + 1]!) === "サフィ" ? "プレ" : "サフィ" }} → {{ i + 2 }}手目</span>
+              </span>
               <!-- 付いた時は外れた時だけの手を飛ばす -->
               <span v-if="hitTo(i) > i + 1" class="mt-0.5 flex items-center text-[10px] text-emerald-300/90">
                 <span class="h-px w-4 bg-emerald-400/50"></span>
