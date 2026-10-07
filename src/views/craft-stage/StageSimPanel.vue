@@ -406,6 +406,41 @@ async function searchDone(): Promise<void> {
 }
 
 /**
+ * そのパターンの組めている所まで (付ける MOD と固定) が付いた物を取引所で探す (開くだけ、JP)。2026-10-07 オーナー「回すの横あたりに、
+ * ここまでを trade2 へそのまま JP で検索できるボタン」。完成品の検索と同じくゆるく (普通 / 固定済み / 冒涜のどれでも)。
+ * 候補の手 (どれか N つ) はグループに、残りの手があれば候補ぜんぶ。打つだけ・ルーンの手は入れない
+ */
+async function searchPattern(k: number): Promise<void> {
+  const d = s.data.value, it = s.item.value, p = s.simPatterns.value[k];
+  if (!d || !it || !p) return;
+  const sets = patternSets(it.cls);
+  const KINDS: StatKind[] = ["explicit", "fractured", "desecrated"];
+  const kindsOf = (t: { modId: string; minTierIndex: number }): { id: string; min?: number }[] =>
+    tradeFiltersFor(d, [t]).filters.flatMap((f) => {
+      if (!/^explicit\./.test(f.id)) return [{ id: f.id, ...(f.min != null ? { min: f.min } : {}) }];
+      const key = f.id.replace(/^explicit\./, "");
+      return KINDS.filter((kk) => hasStatKind(key, kk)).map((kk) => ({ id: `${kk}.${key}`, ...(f.min != null ? { min: f.min } : {}) }));
+    });
+  const stats: { id: string; min?: number }[] = [];
+  const anyOf: { filters: { id: string; min?: number }[]; count?: number }[] = [];
+  const put = (fs: { id: string; min?: number }[], count = 1): void => { if (fs.length === 1 && count <= 1) stats.push(fs[0]!); else if (fs.length) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) }); };
+  const tOf = (id: string) => s.simTargets.value.find((t) => t.modId === id);
+  const withAlts = (id: string) => { const t = tOf(id); return t ? [t, ...(t.alts ?? [])] : []; };
+  if (fracMembers.value.length) put(fracMembers.value.flatMap(kindsOf));
+  const restOfStep = new Set(p.steps.filter((st) => isRest(st.target)).map((st) => Number(st.target!.slice(5))));
+  p.steps.forEach((st, j) => {
+    const x = setByKey(sets, st.set);
+    if (!x || !st.target || st.target === ANY_TARGET || x.kind === "rune" || isRest(st.target)) return;
+    const ids = [st.target, st.target2, st.target3].filter((y): y is string => !!y);
+    if (ids.length > 1 && hasCands(x)) {
+      // 候補の手: 残りの手が後にあれば候補ぜんぶ、無ければどれか N つ (偉大は 2)
+      put(ids.flatMap((id) => withAlts(id)).flatMap(kindsOf), restOfStep.has(j) ? ids.length : isDouble(x) ? 2 : 1);
+    } else put(withAlts(st.target).flatMap(kindsOf), 1);
+  });
+  await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: searchIlvl.value, stats, anyOf, noSanctified: true, ...socketQuery() }));
+}
+
+/**
  * フラクチャー済みのベースを自分で作ったらいくらか (買うかの分かれ目)。2026-10-05 オーナー「ベースって買った方がええよな、基準は」→
  * 「作るとこのくらい → これより安ければ買う方が得」。錬金 → カオス → フラクチャー (外れたら白から) → 消去で固定した 1 個だけ、を回す
  */
@@ -1154,7 +1189,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span class="opacity-60">{{ fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
-        <StagePatternEditor :busy="busy" @run-one="(k: number) => run(k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
+        <StagePatternEditor :busy="busy" @run-one="(k: number) => run(k)" @search-one="(k: number) => searchPattern(k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」

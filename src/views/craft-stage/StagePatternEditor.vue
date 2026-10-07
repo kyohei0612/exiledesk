@@ -41,7 +41,7 @@ const props = defineProps<{
   /** 回している途中 */
   busy?: boolean;
 }>();
-const emit = defineEmits<{ "run-one": [index: number] }>();
+const emit = defineEmits<{ "run-one": [index: number]; "search-one": [index: number] }>();
 /** 付いたら取り直せない手 (レアリティが変わる手で付けた物は戻れない) */
 const ONCE = new Set(["transmute", "augment", "regal", "alchemy", "essence"]);
 /**
@@ -625,7 +625,7 @@ function chipsOf(i: number, r: Row): Chip[] {
   else if (canCands(r)) out.push({ part: "target2", name: "ほかの候補 (任意)", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: now === "target2" ? "now" : "done" });
   if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? "選択無し" : "", state: st("miss", hasMiss(r)) });
   if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
-  if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が外れたら", icons: [], text: "", state: st("lost", true) });
+  if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が消えたら", icons: [], text: "", state: st("lost", true) });
   return out;
 }
 /** 左右の枠の高さ (最小の窓 1660×860 でもページを送らずに収まる) */
@@ -717,6 +717,7 @@ defineExpose({ rows });
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100" title="このパターンを写して足す (少しだけ変えて比べる時に)" @click="addPattern(true)">⧉</button>
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 disabled:opacity-30" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? 'パターンが 1 つの時は消せない' : 'このパターンを消す'" @click="removePattern">×</button>
         <button type="button" class="ml-1 rounded-lg border border-amber-400/60 bg-amber-500/15 px-2 py-0.5 font-bold text-amber-100 hover:bg-amber-500/25 disabled:opacity-30" :disabled="busy || !pat.steps.length" :title="pat.steps.length ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))">このパターンを回す ▶</button>
+        <button type="button" class="ml-1 rounded-lg border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 disabled:opacity-30" :disabled="!pat.steps.length" title="このパターンの組めている所まで (付ける MOD と固定) が付いた物を取引所 (JP) で探す。開くだけ" @click="emit('search-one', Math.min(active, s.simPatterns.value.length - 1))">ここまでを取引所で探す ↗</button>
         <button type="button" class="ml-1 rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-30" :disabled="!history.length" :title="history.length ? 'パターンの直前の操作を 1 つ取り消す' : '戻せる操作がまだ無い'" @click="undoPattern">↶ 1 つ戻す</button>
       </template>
     </div>
@@ -853,9 +854,9 @@ defineExpose({ rows });
             <div v-for="id in presentMods(i, r)" :key="id" class="flex flex-col">
               <span class="flex items-center">
                 <span class="h-3 w-3 rounded-bl border-b border-l border-dashed border-rose-400/60"></span>
-                <button type="button" class="flex max-w-[15rem] items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-0.5 text-left hover:brightness-125" :disabled="locked" :title="`${cardTitleOf(id)} が外れたら ${gotoOf(i, r, id) + 1} 手目からやり直す (押すと戻る手を選ぶ)`" @click="selectRow(i, 'lost')">
+                <button type="button" class="flex max-w-[15rem] items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-0.5 text-left hover:brightness-125" :disabled="locked" :title="`${cardTitleOf(id)} が消えたら ${gotoOf(i, r, id) + 1} 手目からやり直す (押すと戻る手を選ぶ)`" @click="selectRow(i, 'lost')">
                   <span class="truncate font-bold text-rose-200">{{ cardTitleOf(id) }}</span>
-                  <span class="shrink-0 text-rose-300">が外れたら</span>
+                  <span class="shrink-0 text-rose-300">が消えたら</span>
                 </button>
               </span>
               <span class="ml-3 flex items-center text-amber-200/90">
@@ -928,12 +929,12 @@ defineExpose({ rows });
               </div>
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'lost'">
-              <p class="mb-1 text-[11px] opacity-60">この手を打っている間に、付いている MOD が外れたら何手目からやり直すか (固定は外れないので出さない)</p>
+              <p class="mb-1 text-[11px] opacity-60">この手を打っている間に、付いている MOD が消えたら何手目からやり直すか (固定は消えないので出さない)</p>
               <p v-if="lostRisk(focusRow!, rows[focusRow]!)" class="mb-2 text-[12px] font-bold" :class="lostRisk(focusRow!, rows[focusRow]!)!.bad ? 'text-rose-300' : 'text-amber-200'">{{ lostRisk(focusRow!, rows[focusRow]!)!.text }}</p>
               <div class="flex flex-wrap items-start gap-4">
                 <!-- 戻り先は上から 1 手目・2 手目…と縦に (手の名前つき)。MOD が複数なら縦の一覧を横に並べる (2026-10-07 オーナー「縦で上から下みたいな感じがいい」) -->
                 <div v-for="id in presentMods(focusRow, rows[focusRow]!)" :key="id" class="w-72">
-                  <p class="mb-1 truncate font-bold" :title="cardTitleOf(id)">{{ cardTitleOf(id) }} が外れたら</p>
+                  <p class="mb-1 truncate font-bold" :title="cardTitleOf(id)">{{ cardTitleOf(id) }} が消えたら</p>
                   <div class="flex flex-col gap-0.5">
                     <button v-for="g in focusRow + 1" :key="g" type="button" class="flex items-center gap-2 rounded-md border px-2 py-1 text-left disabled:cursor-not-allowed disabled:opacity-30" :class="gotoOf(focusRow, rows[focusRow]!, id) === g - 1 ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-black/20 hover:border-white/30'" :disabled="rows[g - 1]!.set?.kind === 'rune' || rows[g - 1]!.step.target === ANY_TARGET" :title="rows[g - 1]!.set?.kind === 'rune' ? 'ルーンの手には戻れない' : rows[g - 1]!.step.target === ANY_TARGET ? '打つだけの手には戻れない' : undefined" @click="setGoto(focusRow!, id, g - 1)">
                       <b class="w-10 shrink-0 text-amber-200">{{ g }} 手目</b>
@@ -1014,7 +1015,7 @@ defineExpose({ rows });
                     </button>
                   </template>
                   <template v-if="showMiss(r)">
-                    <span class="text-[11px] text-rose-300/80">外れたら</span>
+                    <span class="text-[11px] text-rose-300/80">付かなかったら</span>
                     <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked || !hasMiss(r)" @click="editPart = 'miss'">
                       <template v-if="missSet(r.step)">
                         <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-7 w-7 object-contain" />
@@ -1069,7 +1070,7 @@ defineExpose({ rows });
                     </button>
                   </template>
                   <template v-if="showMiss(r)">
-                    <span class="text-[11px] text-rose-300/80">外れたら</span>
+                    <span class="text-[11px] text-rose-300/80">付かなかったら</span>
                     <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked || !hasMiss(r)" @click="editPart = 'miss'">
                       <template v-if="missSet(r.step)">
                         <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-7 w-7 object-contain" />
