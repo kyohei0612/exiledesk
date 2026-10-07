@@ -1,0 +1,20 @@
+// Cloudflare Workers の設定 (exiledesk-live)。
+// 5 分おきに channels.json のチャンネルがライブ中かを調べ、KV に 1 つの JSON で置く。
+// サイトは GET /live.json を読むだけ (YouTube / Twitch には 5 分に 1 回しか問い合わせない)。
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "exiledesk-live",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "LIVE",
+      // `wrangler kv namespace create LIVE` が出す id に置き換える (README の手順 4)
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+    }
+  ],
+  "observability": { "enabled": true }
+}

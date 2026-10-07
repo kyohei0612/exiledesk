@@ -34,3 +34,7 @@ src-tauri/resources/pob*/
 # CI のキャッシュキー用 (自分の版を除いた Cargo.lock)
 .cargo-lock-key
 .pob-published
+
+# server/live (Cloudflare Worker) の手元の秘密と KV
+server/live/.dev.vars
+server/live/.wrangler/

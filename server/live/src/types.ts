@@ -1,0 +1,58 @@
+/** channels.json の 1 行 */
+export interface ChannelDef {
+  /** 画面で使う短い id (英数字) */
+  id: string;
+  name: string;
+  platform: "youtube" | "twitch";
+  /** UC で始まる 24 文字 */
+  youtubeChannelId?: string;
+  /** twitch.tv/<これ> */
+  twitchLogin?: string;
+  /** チャンネルページ (配信していない時のリンク先) */
+  url: string;
+  /** 協賛 (画面に PR と出す) */
+  pr?: boolean;
+  note?: string;
+}
+
+export type LiveStatus = "live" | "upcoming" | "off";
+
+/** 配信 1 本 (ライブ中か予定) */
+export interface LiveEntry {
+  id: string;
+  name: string;
+  platform: "youtube" | "twitch";
+  url: string;
+  pr: boolean;
+  status: "live" | "upcoming";
+  title: string;
+  /** サムネ (320×180 くらい)。無ければ null */
+  thumb: string | null;
+  /** 配信ページ */
+  watchUrl: string;
+  /** ISO 8601 */
+  startedAt: string | null;
+  scheduledAt: string | null;
+  viewers: number | null;
+}
+
+/** 配っている JSON (GET /live.json) */
+export interface LiveState {
+  updatedAt: string;
+  live: LiveEntry[];
+  upcoming: LiveEntry[];
+  /** 全チャンネル (配信していなくても出す。並びは channels.json のまま) */
+  channels: Array<{ id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; status: LiveStatus; avatar: string | null }>;
+  /** 調べられなかった時の理由 (画面には出さない。wrangler tail で見る) */
+  errors: string[];
+}
+
+export interface Env {
+  LIVE: KVNamespace;
+  YOUTUBE_API_KEY?: string;
+  TWITCH_CLIENT_ID?: string;
+  TWITCH_CLIENT_SECRET?: string;
+  REFRESH_KEY?: string;
+}
+
+export type Fetch = typeof fetch;

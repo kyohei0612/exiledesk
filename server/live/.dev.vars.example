@@ -1,0 +1,7 @@
+# ローカルで動かす時の秘密の値。この内容を .dev.vars という名前で同じ場所に置く (.dev.vars は git に入れない)。
+# 本番は `wrangler secret put <名前>` で 1 つずつ登録する (README の手順 5)。
+YOUTUBE_API_KEY=
+TWITCH_CLIENT_ID=
+TWITCH_CLIENT_SECRET=
+# 手で調べ直す時の合言葉 (GET /refresh?key=これ)。好きな文字列
+REFRESH_KEY=
