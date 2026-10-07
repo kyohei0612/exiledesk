@@ -391,7 +391,7 @@ async function searchDone(): Promise<void> {
   const groups: ModGroup[] = [];
   if (fracMembers.value.length) groups.push({ picks: fracMembers.value });
   for (const r of restRows.value) groups.push({ picks: [r, ...(s.simTargets.value.find((t) => t.modId === r.modId)?.alts ?? [])], count: r.need });
-  await searchModGroups(d, { groups });
+  await searchModGroups(d, { groups, ...socketQuery() });
 }
 
 /**
@@ -415,7 +415,7 @@ async function searchPattern(k: number): Promise<void> {
     if (ids.length > 1 && hasCands(x)) groups.push({ picks: ids.flatMap(withAlts), count: restOfStep.has(j) ? ids.length : isDouble(x) ? 2 : 1 });
     else groups.push({ picks: withAlts(st.target) });
   });
-  await searchModGroups(d, { groups });
+  await searchModGroups(d, { groups, ...socketQuery() });
 }
 
 /**

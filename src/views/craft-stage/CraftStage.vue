@@ -116,7 +116,7 @@ const stageModGroups = computed<ModGroup[]>(() => {
 });
 async function searchStageMods(): Promise<void> {
   const d = s.data.value;
-  if (d && stageModGroups.value.length) await searchModGroups(d, { groups: stageModGroups.value });
+  if (d && stageModGroups.value.length) await searchModGroups(d, { groups: stageModGroups.value, ...(s.item.value?.sockets ? { socketsMin: s.item.value.sockets } : {}) });
 }
 const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);
 /** シミュレーションのソケットの上限 (熟練工の上限と、その + 1 = 規格外) */
