@@ -81,9 +81,9 @@ function weightAt(donor: Mod, ilvl: number): number {
 }
 
 /** 同じ系統 (id の "/" の後ろ) で本物の重みを持つ普通 MOD。同じ部位 → 同じ能力値の組 → どこでも */
-function donorsFor(mod: Mod, all: Mod[]): Mod[] {
+function donorsFor(mod: Mod, byFam: ReadonlyMap<string, Mod[]>): Mod[] {
   const [cls, fam] = mod.id.split("/") as [string, string];
-  const pool = all.filter((m) => m.id !== mod.id && m.source === "normal" && m.id.split("/")[1] === fam && !isPlaceholderWeight(m));
+  const pool = (byFam.get(fam) ?? []).filter((m) => m.id !== mod.id);
   const slot = pool.filter((m) => slotOf(m.id.split("/")[0]!) === slotOf(cls));
   if (slot.length) return slot;
   const attrs = attrsOf(cls);
@@ -106,9 +106,18 @@ export function applyWeightOverrides(data: PatchData): { data: PatchData; applie
     applied.push(id);
   }
   const all = [...mods.values()];
+  // 借りる先の候補 (本物の重みの普通 MOD) を系統ごとに 1 回だけ並べる。MOD ごとに全部を見直すと、
+  // クライアント由来の MOD が増えて 0.8 秒かかり、計算機を開くたびに画面が止まっていた (2026-10-07)
+  const byFam = new Map<string, Mod[]>();
+  for (const m of all) {
+    if (m.source !== "normal" || isPlaceholderWeight(m)) continue;
+    const fam = m.id.split("/")[1] ?? "";
+    const list = byFam.get(fam);
+    if (list) list.push(m); else byFam.set(fam, [m]);
+  }
   for (const m of all) {
     if (m.source !== "normal" || !isPlaceholderWeight(m) || overridden.has(m.id)) continue;
-    const donors = donorsFor(m, all);
+    const donors = donorsFor(m, byFam);
     if (!donors.length) continue;
     const tiers = m.tiers.map((t) => ({ ...t, weight: Math.min(...donors.map((d) => weightAt(d, t.ilvl))) }));
     mods.set(m.id, { ...m, tiers });
