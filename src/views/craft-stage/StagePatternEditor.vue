@@ -359,6 +359,9 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
       continue;
     }
     const t = s.simTargets.value.find((y) => y.modId === st.target);
+    // 見ている手が「前の手で付かなかった時だけ」の手なら、その前の手は外れた姿 (狙いは付けない) で出す
+    // (2026-10-08 スクリーンショットで、2 手目 (増強) を打つ前のアイテムに狙いがもう付いて見えていた)
+    const missedFor = editingStep.value && retryFrom.value.get(previewAt.value) === j;
     // 見ている手で消える・入れ替わる可能性のある MOD (打つ物とやり直しで。クラフトステージの削減と同じ色。2026-10-07 オーナー
     // 「変更される可能性があるやつ色付けた方がいい、削減みたいな感じで一緒の色で」)
     if (j === previewAt.value) {
@@ -367,13 +370,13 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
     }
     // カオス・パーフェクトエッセンスは 1 つ消してから付ける (足すだけに見えて「もう 1 つ付くのか」となっていた。2026-10-07 オーナー
     // 「カオスで付く場合は今付いてる MOD 消して狙いの MOD 付くような感じで表示しないと」)。消すのは狙い以外 (打つだけで付いた外れなど)、側のお告げがあればその側
-    if (t && (x.kind === "chaos" || x.kind === "essence_perfect")) {
+    if (t && !missedFor && (x.kind === "chaos" || x.kind === "essence_perfect")) {
       const side = x.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : x.omens.some((o) => /Dextral/.test(o)) ? "suffix" : null;
       const junk = allMods(it).filter((m) => !m.fractured && !targetIds.has(m.modId) && (!side || m.side === side));
       const gone = junk[0];
       if (gone) { it = without(it, gone); if (j === previewAt.value) goneMods = [gone]; }
     }
-    if (t) add(t.modId, t.minTierIndex, x.kind === "desecrate" ? { desecrated: true } : x.kind === "essence" || x.kind === "essence_perfect" ? { crafted: true } : {});
+    if (t && !missedFor) add(t.modId, t.minTierIndex, x.kind === "desecrate" ? { desecrated: true } : x.kind === "essence" || x.kind === "essence_perfect" ? { crafted: true } : {});
     // 見ている手で付いた物は光らせる
     if (t && j === previewAt.value) newMods = allMods(it).filter((m) => m.modId === t.modId);
     const t2 = isDouble(x) && st.target2 ? s.simTargets.value.find((y) => y.modId === st.target2) : undefined;
