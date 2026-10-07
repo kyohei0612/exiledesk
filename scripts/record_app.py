@@ -23,10 +23,19 @@ from playwright.sync_api import Locator, Page, sync_playwright
 log = structlog.get_logger()
 CDP = "http://127.0.0.1:9333"
 CREATE_NO_WINDOW = 0x08000000
+# 操作の速さ (kyohei 2026-10-08「速度はこの倍でいい」: 編集で倍速・一時停止できるので速めに録る)
+SPEED = 2.0
+
+
+def pause(seconds: float) -> None:
+    """操作の間の待ち (SPEED で縮める)."""
+    time.sleep(seconds / SPEED)
+
 
 # カーソルの絵 (Playwright の操作では OS のカーソルが動かない)。
 # アプリの「持っているカレンシー」の絵・波紋は拡大 (zoom) の補正が抜けて右下にずれるので隠し、
-# 持っている絵は自前のカーソルに付ける。棚の詳細カード (0.4 秒で出る) も録画では隠す
+# 持っている絵は自前のカーソルに付ける。棚の詳細カード (0.4 秒で出る) と、
+# 画面の一番下の取得中の帯 (「自動巡回中」、FetchBusyBar) も録画では隠す
 CURSOR_JS = r"""
 (() => {
   if (window.__recCursor) return;
@@ -39,7 +48,8 @@ CURSOR_JS = r"""
   document.documentElement.appendChild(c);
   const st = document.createElement('style');
   st.textContent = 'img.fixed.z-\\[200\\], .stage-ripple, .stage-drop, '
-    + 'body > div.fixed.z-\\[500\\].w-\\[340px\\] { display: none !important; }';
+    + 'body > div.fixed.z-\\[500\\].w-\\[340px\\], '
+    + 'div.fixed.bottom-0.z-\\[95\\] { display: none !important; }';
   document.head.appendChild(st);
   const held = document.createElement('img');
   Object.assign(held.style, {position: 'absolute', left: '14px', top: '14px', width: '46px',
@@ -109,6 +119,7 @@ class Hand:
         self.x, self.y = 960.0, 540.0
 
     def glide(self, x: float, y: float, ms: int = 650) -> None:
+        ms = int(ms / SPEED)
         n = max(8, ms // 16)
         x0, y0 = self.x, self.y
         for i in range(1, n + 1):
@@ -122,11 +133,11 @@ class Hand:
         loc.scroll_into_view_if_needed()
         bb: Any = loc.bounding_box()
         self.glide(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2, ms)
-        time.sleep(0.15)
+        pause(0.15)
         self.page.mouse.down()
-        time.sleep(0.07)
+        pause(0.07)
         self.page.mouse.up()
-        time.sleep(after)
+        pause(after)
 
 
 def run(page: Page, out: Path, only: list[str]) -> None:
@@ -154,11 +165,11 @@ def run(page: Page, out: Path, only: list[str]) -> None:
     def use(n: int) -> None:
         hand.click(card.locator("p.stage-item-name").first, 700, 0)
         steps(n).wait_for(timeout=5000)
-        time.sleep(1.8)  # 演出 1.4 秒 + 付いた MOD の光 1.6 秒
+        pause(1.8)  # 演出 1.4 秒 + 付いた MOD の光 1.6 秒
 
     def top() -> None:
         scroller.evaluate("e => e.scrollTo({top: 0})")
-        time.sleep(0.3)
+        pause(0.3)
 
     def white() -> None:
         top()
@@ -172,7 +183,7 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         rec = Recorder(out / "ch2_open.mp4")
         hand.click(nav, 900, 0)
         page.locator("[data-shelf]").first.wait_for(timeout=20000)
-        time.sleep(0.8)
+        pause(0.8)
         setup()
         hand.click(page.get_by_role("button", name="手で打つ", exact=True))
         hand.click(page.get_by_role("button").filter(has_text=re.compile("▼ 変える")), 700, 0.8)
@@ -185,7 +196,7 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         steps(0).wait_for(timeout=3000)
         setup()
         hand.glide(480, 520, 700)
-        time.sleep(2.0)
+        pause(2.0)
         rec.stop()
     else:
         nav.click()
@@ -206,7 +217,7 @@ def run(page: Page, out: Path, only: list[str]) -> None:
             use(n)
         page.keyboard.press("Escape")
         hand.glide(480, 900, 600)
-        time.sleep(1.5)
+        pause(1.5)
         rec.stop()
 
     if "ch4" in only:
@@ -215,12 +226,12 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         hand.click(page.get_by_role("button", name="1 手戻す", exact=True), 700, 0)
         steps(5).wait_for(timeout=3000)
         hand.glide(480, 900, 600)
-        time.sleep(2.0)
+        pause(2.0)
         hold("exalt")
         use(6)  # 同じ種なので、さっきと同じ MOD が付く
         page.keyboard.press("Escape")
         hand.glide(480, 900, 600)
-        time.sleep(1.5)
+        pause(1.5)
         rec.stop()
 
     if "ch5" in only:
@@ -231,7 +242,7 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         modlist.get_by_role("button", name=re.compile("^このベースに付く MOD")).evaluate(
             "e => e.scrollIntoView({behavior: 'smooth', block: 'start'})"
         )
-        time.sleep(1.2)
+        pause(1.2)
         toc = modlist.locator("div.sticky button", has_text=re.compile(r"^\s*普通")).first
         hand.click(toc, 700, 1.0)
         normal = page.locator("h3 > span", has_text=re.compile("^普通$"))
@@ -240,12 +251,12 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         hand.click(row, 800, 1.0)
         tbl = row.locator("xpath=following-sibling::table[1]")
         tbl.wait_for(timeout=3000)
-        time.sleep(1.5)
+        pause(1.5)
         t1 = page.locator("td:first-child", has_text=re.compile("^T1$"))
         hand.click(tbl.locator("tr").filter(has=t1).get_by_role("button", name="付ける"), 800, 1.5)
         hand.click(row, 700, 0.8)  # 同じ行をもう一度押して表を閉じる
         top()
-        time.sleep(2.0)
+        pause(2.0)
         rec.stop()
 
 
