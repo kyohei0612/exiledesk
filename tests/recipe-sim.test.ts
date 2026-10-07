@@ -319,6 +319,27 @@ describe("増強 + お告げ無しの消去の枝 (2026-10-07)", () => {
   });
 });
 
+describe("「そのまま次へ」の手 (2026-10-08 レビュー B1)", () => {
+  it("金の指輪 (固定済み): 高貴で火耐性 (外れたらそのまま次へ) → 冷気耐性 (外して繰り返す)。火耐性が外れた人は戻らずに最後まで行って「揃っていない」で止まる", async () => {
+    const data = await loadPatch();
+    const life = targetOf(data, "Rings", /IncreasedLife$/, 3);
+    const fireT = { ...targetOf(data, "Rings", /FireResistance$/, 3), method: "exalt" as const };
+    const coldT = { ...targetOf(data, "Rings", /ColdResistance$/, 3), method: "exalt" as const };
+    const r = await runRecipe({
+      data, base: "Gold Ring", itemLevel: 82, runs: 60, price: () => 1, seed: 31,
+      targets: [{ ...life, method: "fracture" }, fireT, coldT],
+      fractureStart: { kind: "bought", price: 10 },
+      pattern: [
+        { kind: "exalt", currency: "exalt", omens: ["OmenofDextralExaltation"], target: fireT, onMiss: "next" },
+        { kind: "exalt", currency: "exalt", omens: ["OmenofDextralExaltation"], target: coldT, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] } },
+      ],
+    });
+    expect(r!.pDone).toBeLessThan(1);
+    expect(r!.stops.some((s) => /揃っていない/.test(s.reason))).toBe(true);
+    expect(r!.stops.some((s) => /手を超えた/.test(s.reason))).toBe(false);
+  });
+});
+
 describe("人ごとの乱数の種 (2026-10-07)", () => {
   it("人の間隔は 1 人の上限の手の数より広い (n 手目の乱数は seed + n なので、重なると隣の人と同じ乱数になる)", async () => {
     const { seedsOf } = await import("../src/services/craft-stage/recipe-sim");

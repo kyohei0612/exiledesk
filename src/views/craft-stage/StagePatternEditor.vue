@@ -435,7 +435,12 @@ const KIND_TONE: Record<string, string> = {
 function cardTitle(r: Row): string {
   if (r.set?.kind === "annul") return "ハズレを消す";
   if (!r.step.target) return r.set?.kind === "rune" ? "ルーン未定" : "MOD 未定";
-  if (r.step.target === ANY_TARGET) return "打つだけ";
+  if (r.step.target === ANY_TARGET) {
+    // 後ろに自前のフラクチャーがある骨は、発現させずに壁にする (計算と同じ。2026-10-08 レビュー D5: 画面に出ていなかった)
+    const i = pat.value.steps.indexOf(r.step);
+    if (r.set?.kind === "desecrate" && i >= 0 && pat.value.steps.slice(i + 1).some((st) => setByKey(sets.value, st.set)?.kind === "fracture")) return "打つだけ (壁: 発現させない)";
+    return "打つだけ";
+  }
   if (isRest(r.step.target)) return `残りの MOD (${Number(r.step.target.slice(REST.length)) + 1} 手目の候補)`;
   if (r.set?.kind === "rune") return RUNES[r.step.target]?.ja ?? r.step.target;
   if (r.set?.kind === "fracture") return `${cardTitleOf(r.step.target)} を固定`;
@@ -525,9 +530,9 @@ function addSetsFor(r: Row): PatternSet[] {
 /** 付ける側の棚 (消去は外す側にだけ出す。2026-10-07 オーナー「付ける時は削除の手とか表示しなくてもおｋ」) */
 const addSets = computed(() => sets.value.filter((x) => x.kind !== "annul"));
 /** やり直しを選べる手か (外れがあって、レアリティが変わらない手) */
-const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && r.set.kind !== "fracture" && r.step.target !== ANY_TARGET && !!r.step.target;
-/** レアリティが変わる手 (外してもう一度は無理。選べるのは「そのまま次へ」か「狙いの側のハズレを消して次へ」) */
-const rarityStep = (r: Row): boolean => !!r.set && RARITY_CHANGE.has(r.set.kind);
+const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && r.set.kind !== "fracture" && !(RARITY_CHANGE.has(r.set.kind) && r.set.kind !== "transmute") && r.step.target !== ANY_TARGET && !!r.step.target;
+/** 変成の手 (外してもう一度は無理。選べるのは「狙いの側のハズレを消して次へ」か「そのまま次へ」。王者・錬金の後は枠が空くので選ぶ物が無い) */
+const rarityStep = (r: Row): boolean => r.set?.kind === "transmute";
 /** 狙いの側 (候補が両側なら「狙いの側」) */
 function targetSideJa(r: Row): { t: string; o: string } | null {
   const id = r.step.target;
@@ -699,7 +704,7 @@ function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const x = missSet(r.step);
   const c = ctx.value;
   if (!x && r.step.onMiss === "redo") return { text: "ハズレは残して同じ手をもう一度。その側が満杯になったらハズレを 1 つ消す", bad: false };
-  if (!x && r.step.onMiss === "annul_next") { const sd = targetSideJa(r); return { text: sd ? `ハズレが${sd.t}に付いたら消去してから次の手へ。${sd.o}に付いたら残して次の手へ (次の手は必ず${sd.t}に付く)` : "", bad: false }; }
+  if (!x && r.step.onMiss === "annul_next") { const sd = targetSideJa(r); return { text: sd ? `ハズレが${sd.t}に付いたら消去してから次の手へ (消した後はどちらの側にも付く)。${sd.o}に付いたら残して次の手へ (その時は次の手が必ず${sd.t}に付く)` : "", bad: false }; }
   if (!x) return { text: "ハズレは残したまま次の手へ進む", bad: false };
   if (!c) return { text: "", bad: false };
   if (x.omens.includes("OmenofLight")) return { text: "冒涜の MOD だけを消す (付いている狙いは消えない)", bad: false };
@@ -711,7 +716,9 @@ function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const verb = x.kind === "chaos" ? "入れ替える" : "消す";
   // 偉大の手は「1 つだけ当たり」の時、当たった方も消す候補に入る
   if (needs2(r)) return { text: `どれも付かなかった時: ${n ? `狙いを巻き込む ${n}/${n + 1}` : "安全"} / 1 つだけ当たりの時: 当たった MOD を巻き込む ${n + 1}/${n + 2}`, bad: true };
-  return n ? { text: `ハズレと、付いている狙い ${n} つのどれかを${verb} → 狙いを巻き込む ${n}/${n + 1}`, bad: true } : { text: `ハズレを${verb} (この時点で付いている狙いは無いので安全)`, bad: false };
+  // 前の手が「どれか」(候補) の手なら、付いた方がどれかは決まっていない: 消去で 1/2 で消える (消えたらこの手でもう一度。2026-10-08 レビュー B4)
+  const unsure = isRest(r.step.target) || candsOf(r).length > 0;
+  return n ? { text: `ハズレと、付いている狙い ${n} つのどれかを${verb} → 狙いを巻き込む ${n}/${n + 1}`, bad: true } : unsure ? { text: `ハズレを${verb} (前の手で付いた方が消えることもある → 消えたらこの手でもう一度)`, bad: false } : { text: `ハズレを${verb} (この時点で付いている狙いは無いので安全)`, bad: false };
 }
 /**
  * この手を打つ時に消える確率 (打つ物が消してから付ける物の時: カオス・パーフェクトエッセンス)。その側の固定以外の MOD (狙い + 外れ) から 1 つ。
@@ -756,7 +763,7 @@ function chipsOf(i: number, r: Row): Chip[] {
   const out: Chip[] = [{ part: "target", name: isRune ? "ルーン" : "MOD", icons: [], text: !r.step.target ? "" : needs2(r) && r.step.target !== ANY_TARGET ? cardTitleOf(r.step.target) : cardTitle(r), state: st("target", !!r.step.target) }];
   if (!isRune) out.push({ part: "set", name: "カレンシー", icons: icons(r.set), text: r.set && !icons(r.set).length ? setShort(r.set) : "", state: st("set", !!r.set) });
   if (needs2(r)) out.push({ part: "target2", name: "一緒に狙う MOD", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: st("target2", !!r.step.target2) });
-  else if (canCands(r)) out.push({ part: "target2", name: "ほかの候補 (任意)", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: now === "target2" ? "now" : "done" });
+  else if (canCands(r)) out.push({ part: "target2", name: "ほかの候補 (任意)", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: now === "target2" ? "now" : candsOf(r).length ? "done" : "todo" });
   if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : r.step.onMiss === "annul_next" ? "ハズレを消して次へ" : "選択無し") : "", state: st("miss", hasMiss(r)) });
   if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
   if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が消えたら", icons: [], text: "", state: st("lost", true) });
@@ -804,11 +811,14 @@ function onSet(i: number, key: string): void {
   // やり直せない手は「そのまま次へ」、ほかは「やり直し」。外す物がその手で使えなくなったら選び直し
   // フラクチャーは外れたら (違う MOD が固定されたら) 新しいベースで最初から
   // レアリティが変わる手で狙いがあるなら「狙いの側のハズレを消して次へ」が既定 (2026-10-08 オーナー「付かなかったら消去で増強やん 1 手目から」)
-  const miss: MissRule = set?.kind === "fracture" ? "restart" : set && RARITY_CHANGE.has(set.kind) ? (cur.target && cur.target !== ANY_TARGET ? "annul_next" : "next") : "annul_redo";
+  const miss: MissRule = set?.kind === "fracture" ? "restart" : set?.kind === "transmute" ? (cur.target && cur.target !== ANY_TARGET ? "annul_next" : "next") : set && RARITY_CHANGE.has(set.kind) ? "next" : "annul_redo";
   const rm = cur.miss ? setByKey(sets.value, cur.miss) : undefined;
   const keepMiss = cur.miss && !(rm && set && checkRemoval(set, rm));
   if (!hasCands(set)) patch(i, { target2: null, target3: null });
-  patch(i, { set: key, onMiss: keepMiss ? "annul_redo" : miss === "annul_redo" ? "next" : miss, ...(keepMiss ? {} : { miss: null }) });
+  // 増強 (マジック) は「消去で消す (お告げ無し)」が既定: 1 手目の「ハズレを消して次へ」から消去 → 増強の繰り返しに繋がる (2026-10-08 レビュー A1)。
+  // ほかの手は選択無し (2026-10-07 オーナー「外れてもいいならそこは選択無しをデフォで」)
+  const plainAnnul = set?.kind === "augment" && cur.target && cur.target !== ANY_TARGET ? removals.value.find((x) => x.kind === "annul" && !x.omens.length)?.key ?? null : null;
+  patch(i, { set: key, onMiss: keepMiss ? "annul_redo" : miss === "annul_redo" ? (plainAnnul ? "annul_redo" : "next") : miss, ...(keepMiss ? {} : { miss: plainAnnul }) });
 }
 
 function move(i: number, d: -1 | 1): void {
@@ -973,8 +983,8 @@ defineExpose({ rows });
                 (2026-10-07 オーナー「変成のオーブでハズレが狙いの MOD 群の所についてしまったら消去の表示がないぞ」)
               -->
               <span v-if="r.step.onMiss === 'annul_next' && targetSideJa(r)" class="mt-0.5 flex flex-col pl-5 text-[10px] leading-tight text-rose-200/90">
-                <span class="whitespace-nowrap">外れが{{ targetSideJa(r)!.t }} → 消去 → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
-                <span class="whitespace-nowrap">外れが{{ targetSideJa(r)!.o }} → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
+                <span class="whitespace-nowrap">ハズレが{{ targetSideJa(r)!.t }} → 消去 → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
+                <span class="whitespace-nowrap">ハズレが{{ targetSideJa(r)!.o }} → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
               </span>
               <!-- 付いた時は外れた時だけの手を飛ばす -->
               <span v-if="hitTo(i) > i + 1" class="mt-0.5 flex items-center text-[10px] text-emerald-300/90">
@@ -986,10 +996,10 @@ defineExpose({ rows });
                 <span class="h-px w-5 border-t border-dashed border-rose-400/60"></span>
                 <span class="ml-1">付くまで繰り返す</span>
               </span>
-              <span v-if="preAnnul(r)" class="ml-5 text-[10px] leading-tight opacity-70">打つ前: {{ preAnnul(r) }}が外れで埋まっていたら消去</span>
+              <span v-if="preAnnul(r)" class="ml-5 text-[10px] leading-tight opacity-70">打つ前: {{ preAnnul(r) }}がハズレで埋まっていたら消去</span>
               <span v-if="sideSplit(r)" class="ml-5 flex flex-col text-[10px] leading-tight opacity-70">
-                <span>外れが{{ sideSplit(r)!.o }} → {{ otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep" ? "消さずに打つ" : "消去" }}</span>
-                <span>{{ sideSplit(r)!.t }}が残った → {{ otherGoneOf(r.set?.kind, r.step.otherGone) === "annul" ? "もう一度消去" : "打つ" }}</span>
+                <span>ハズレが{{ sideSplit(r)!.o }} → {{ otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep" ? "消さずに打つ" : "消去" }}</span>
+                <span>{{ sideSplit(r)!.t }}のハズレが残った → {{ otherGoneOf(r.set?.kind, r.step.otherGone) === "annul" ? "もう一度消去" : "打つ" }}</span>
               </span>
             </span>
             <span v-if="r.risk?.bad" class="ml-1 mt-2 text-rose-300" :title="r.risk.text">⚠</span>
@@ -1178,20 +1188,24 @@ defineExpose({ rows });
               </div>
               <p class="mt-2 text-[11px]" :class="missRisk(focusRow!, rows[focusRow]!).bad ? 'text-rose-300' : 'text-emerald-200/80'">{{ missRisk(focusRow!, rows[focusRow]!).text }}</p>
               <!-- お告げ無しの消去は、どちらの側が消えたかで枝が分かれる (2026-10-07 オーナー「サフィだけ消えるともう 1 回消去、プレだけ消えたら消去は使わずにトライ」) -->
-              <p v-if="preAnnul(rows[focusRow]!)" class="mt-3 text-[11px] opacity-80">打つ前に{{ preAnnul(rows[focusRow]!) }}が外れで埋まっていたら、先に消去してから打つ (埋まったままだと反対の側にしか付かない)</p>
+              <p v-if="preAnnul(rows[focusRow]!)" class="mt-3 text-[11px] opacity-80">打つ前に{{ preAnnul(rows[focusRow]!) }}がハズレで埋まっていたら、先に消去してから打つ (埋まったままだと反対の側にしか付かない)</p>
               <template v-for="sp in [sideSplit(rows[focusRow]!)]" :key="'split' + focusRow">
                 <div v-if="sp" class="mt-3 max-w-3xl space-y-1.5 rounded-lg border border-white/10 bg-black/20 p-2 text-[11px]">
+                  <p class="text-[10px] opacity-50">消去を打つ前 (ハズレがどちらに付いたか)</p>
                   <div class="flex items-center gap-2">
-                    <span class="w-52 shrink-0 opacity-70">外れが{{ sp.o }}に付いた</span>
+                    <span class="w-52 shrink-0 opacity-70">ハズレが{{ sp.o }}に付いた</span>
                     <button v-for="k in (['keep', 'annul'] as const)" :key="k" type="button" class="rounded border px-2 py-0.5" :class="otherJunkOf(rows[focusRow]!.set?.kind, rows[focusRow]!.step.otherJunk) === k ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-white/40'" @click="patch(focusRow!, { otherJunk: k })">{{ k === "keep" ? `消さずにもう一度打つ (${sp.t}に付く)` : "消去" }}</button>
                   </div>
+                  <p class="mt-1 text-[10px] opacity-50">消去を打った後 (どちらのハズレが消えたか)</p>
                   <div class="flex items-center gap-2">
-                    <span class="w-52 shrink-0 opacity-70">消去で{{ sp.t }}が消えた ({{ sp.o }}が残った)</span>
+                    <span class="w-52 shrink-0 opacity-70">{{ sp.t }}のハズレが消えた ({{ sp.o }}のハズレが残った)</span>
                     <span class="rounded border border-emerald-400/40 px-2 py-0.5 text-emerald-100">もう一度打つ ({{ sp.t }}に付く)</span>
                   </div>
                   <div class="flex items-center gap-2">
-                    <span class="w-52 shrink-0 opacity-70">消去で{{ sp.o }}が消えた ({{ sp.t }}の外れが残った)</span>
-                    <button v-for="k in (['annul', 'redo'] as const)" :key="k" type="button" class="rounded border px-2 py-0.5" :class="otherGoneOf(rows[focusRow]!.set?.kind, rows[focusRow]!.step.otherGone) === k ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-white/40'" @click="patch(focusRow!, { otherGone: k })">{{ k === "annul" ? "もう一度消去" : "もう一度打つ" }}</button>
+                    <span class="w-52 shrink-0 opacity-70">{{ sp.o }}のハズレが消えた ({{ sp.t }}のハズレが残った)</span>
+                    <!-- 増強 (マジック) は狙いの側が埋まったまま打つと反対の側にしか付かないので、消去しか無い (2026-10-08 レビュー A7) -->
+                    <span v-if="rows[focusRow]!.set?.kind === 'augment'" class="rounded border border-emerald-400/40 px-2 py-0.5 text-emerald-100">もう一度消去 (そのまま打つと{{ sp.o }}にしか付かない)</span>
+                    <button v-else v-for="k in (['annul', 'redo'] as const)" :key="k" type="button" class="rounded border px-2 py-0.5" :class="otherGoneOf(rows[focusRow]!.set?.kind, rows[focusRow]!.step.otherGone) === k ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-white/40'" @click="patch(focusRow!, { otherGone: k })">{{ k === "annul" ? "もう一度消去" : "もう一度打つ" }}</button>
                   </div>
                 </div>
               </template>
@@ -1223,7 +1237,7 @@ defineExpose({ rows });
                         <span v-for="o in missSet(r.step)!.omens" :key="o" class="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/10 py-0.5 pl-0.5 pr-2 text-orange-100"><img :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />{{ jaOfOmen(o) ?? o }}</span>
                         <span class="text-[11px] text-amber-200/80">↺ 付くまで繰り返す</span>
                       </template>
-                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側のハズレを消して次の手へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次の手へ" }}</span>
+                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側のハズレを消して次へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次へ" }}</span>
                     </button>
                   </template>
                   <template v-if="needs2(r) && singleSet(r)">
@@ -1278,7 +1292,7 @@ defineExpose({ rows });
                         <span v-for="o in missSet(r.step)!.omens" :key="o" class="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/10 py-0.5 pl-0.5 pr-2 text-orange-100"><img :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />{{ jaOfOmen(o) ?? o }}</span>
                         <span class="text-[11px] text-amber-200/80">↺ 付くまで繰り返す</span>
                       </template>
-                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側のハズレを消して次の手へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次の手へ" }}</span>
+                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側のハズレを消して次へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次へ" }}</span>
                     </button>
                   </template>
                   <template v-if="needs2(r) && singleSet(r)">

@@ -432,7 +432,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         // まだマジックで、消えた物がこの増強の手の狙い (候補) なら、この手をもう一度 (増強で 2 つ狙う時、普通の消去で当たった方が消えた。
         // 2026-10-07 前は新しいベースからで、指輪のライフ + 火耐性でベースを 10 個使っていた。オーナー「最初増強で 2 MOD 狙うやり方も作れる道」)
         if (goto == null && lastAt >= 0 && item.rarity === "magic" && pat[lastAt]?.kind === "augment" && pat[lastAt]!.target && gone.length && gone.every((id) => membersOf(pat[lastAt]!.target!).some((a) => a.modId === id))) goto = lastAt;
-        if (goto == null && lastAt >= 0 && gone.some((id) => { const j = pat.findIndex((q, k) => k < lastAt && !!q.target && membersOf(q.target).some((a) => a.modId === id)); return j >= 0 && ONCE_KINDS.has(pat[j]!.kind); })) goto = LOST_RESTART;
+        // 付けた手 = その MOD を狙った一番後ろの手 (画面の placedAt と同じ。2026-10-08 レビュー C2: 前は一番前の手を見ていて、変成 → 高貴で取り直した物でも新しいベースにしていた)
+        const placedAt = (id: string): number => { for (let k = lastAt - 1; k >= 0; k--) { const q = pat[k]!; if (q.target && membersOf(q.target).some((a) => a.modId === id)) return k; } return -1; };
+        if (goto == null && lastAt >= 0 && gone.some((id) => { const j = placedAt(id); return j >= 0 && ONCE_KINDS.has(pat[j]!.kind); })) goto = LOST_RESTART;
         lastAt = -1;
         if (goto === LOST_RESTART) { restartPattern(); continue; }
         if (goto != null && goto !== i && goto < pat.length) { i = goto; continue; }
@@ -440,7 +442,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 前の手で付けた狙いが消えていたら (消去・カオスで)、その手に戻る (自動の付け方と同じ「前に付けた物が消えたら、また上から」)
       // 戻れるのはもう一度打てる手だけ (変成・増強・王者・錬金はレアリティが変わるので戻れない。その時は最後まで行って揃わなければ失敗)
       const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
-      const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && !meets(item, q.target));
+      // 「付かなかった → そのまま次へ」の手は戻らない (外れを諦めて進む手。後の手で同じ MOD をもう一度狙う時は maybe で繋ぐ。2026-10-08 レビュー B1:
+      // 前は onMiss を見ずに毎周その手へ戻していて、高貴・カオス・骨の「そのまま次へ」が実質「もう一度打つ」になっていた)
+      const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && q.onMiss !== "next" && !meets(item, q.target));
       if (lost >= 0) {
         i = lost;
         // 消えた狙いをカオスの手で取り直すと、付いている他の狙いもランダムに消してしまう (2026-10-07 手袋の比べで 9 割が止まった)。

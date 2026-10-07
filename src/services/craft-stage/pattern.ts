@@ -417,7 +417,7 @@ export function checkMiss(s: PatternSet, rule: MissRule): string | null {
   if (s.kind === "fracture" && rule !== "restart" && rule !== "next") return "フラクチャーはやり直せない (外れたら新しいベースで最初から)";
   if (rule === "redo" && s.kind === "desecrate") return "冒涜の MOD は 1 つまで (消さないともう一度打てない)";
   if ((rule === "redo" || rule === "annul_redo") && (s.kind === "transmute" || s.kind === "regal" || s.kind === "alchemy")) return "レアリティが変わるのでもう一度は打てない (次の手で直す)";
-  if (rule === "annul_next" && !(s.kind === "transmute" || s.kind === "regal" || s.kind === "alchemy")) return "レアリティが変わる手だけ (ほかは外してもう一度)";
+  if (rule === "annul_next" && s.kind !== "transmute") return "変成の手だけ (マジックは側 1 つ。王者・錬金の後は枠が空くので消す必要が無い)";
   return null;
 }
 /** 外れが無い手 (付ける物が必ず付く / 付ける物が無い) */
