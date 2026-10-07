@@ -1,7 +1,8 @@
 /** 調べた結果を、配る JSON (LiveState) にまとめる */
 import type { ChannelDef, LiveEntry, LiveState } from "./types";
+import type { Latest } from "./youtube";
 
-export function buildState(channels: readonly ChannelDef[], found: ReadonlyMap<string, LiveEntry>, avatars: ReadonlyMap<string, string>, errors: readonly string[], now = new Date()): LiveState {
+export function buildState(channels: readonly ChannelDef[], found: ReadonlyMap<string, LiveEntry>, avatars: ReadonlyMap<string, string>, errors: readonly string[], now = new Date(), latest: ReadonlyMap<string, Latest> = new Map()): LiveState {
   const live: LiveEntry[] = [];
   const upcoming: LiveEntry[] = [];
   for (const c of channels) {
@@ -16,7 +17,7 @@ export function buildState(channels: readonly ChannelDef[], found: ReadonlyMap<s
     updatedAt: now.toISOString(),
     live,
     upcoming,
-    channels: channels.map((c) => ({ id: c.id, name: c.name, platform: c.platform, url: c.url, pr: !!c.pr, status: found.get(c.id)?.status ?? "off", avatar: avatars.get(c.id) ?? null })),
+    channels: channels.map((c) => ({ id: c.id, name: c.name, platform: c.platform, url: c.url, pr: !!c.pr, status: found.get(c.id)?.status ?? "off", avatar: avatars.get(c.id) ?? null, latest: latest.get(c.id) ?? null })),
     errors: [...errors],
   };
 }

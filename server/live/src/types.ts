@@ -42,7 +42,7 @@ export interface LiveState {
   live: LiveEntry[];
   upcoming: LiveEntry[];
   /** 全チャンネル (配信していなくても出す。並びは channels.json のまま) */
-  channels: Array<{ id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; status: LiveStatus; avatar: string | null }>;
+  channels: Array<{ id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; status: LiveStatus; avatar: string | null; latest?: { title: string; thumb: string; watchUrl: string; publishedAt: string | null } | null }>;
   /** 調べられなかった時の理由 (画面には出さない。wrangler tail で見る) */
   errors: string[];
 }

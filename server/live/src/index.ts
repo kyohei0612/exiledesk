@@ -17,7 +17,7 @@
 import channelsJson from "../channels.json";
 import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
-import { fetchYoutube, fetchYoutubeAvatars } from "./youtube";
+import { fetchYoutube, fetchYoutubeAvatars, type Latest } from "./youtube";
 import { allowIp, getFeedback, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
 import { parseBatch, writeEvents } from "./events";
 import { alert, dailyReport, reqLog } from "./monitor";
@@ -59,12 +59,13 @@ async function avatarsOf(env: Env, channels: readonly ChannelDef[], fetchFn: Fet
 export async function refresh(env: Env, channels: readonly ChannelDef[] = CHANNELS, fetchFn: Fetch = fetch, now = new Date()): Promise<LiveState> {
   const t0 = Date.now();
   const errors: string[] = [];
+  const latest = new Map<string, Latest>();
   const [yt, tw, avatars] = await Promise.all([
-    fetchYoutube(channels, env.YOUTUBE_API_KEY, fetchFn, errors),
+    fetchYoutube(channels, env.YOUTUBE_API_KEY, fetchFn, errors, latest),
     fetchTwitch(channels, env, env.LIVE, fetchFn, errors),
     avatarsOf(env, channels, fetchFn, errors, now.getTime()),
   ]);
-  const state = buildState(channels, new Map([...yt, ...tw]), avatars, errors, now);
+  const state = buildState(channels, new Map([...yt, ...tw]), avatars, errors, now, latest);
   await env.LIVE.put(STATE_KEY, JSON.stringify(state));
   console.log(JSON.stringify({ job: "refresh", live: state.live.length, upcoming: state.upcoming.length, errors: errors.length, ms: Date.now() - t0 }));
   if (errors.length) {

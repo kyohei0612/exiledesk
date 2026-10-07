@@ -28,6 +28,12 @@ describe("YouTube の読み取り", () => {
     const xml = `<feed><entry><yt:videoId>abcdefghijk</yt:videoId></entry><entry><yt:videoId>LMNOPQRSTU_</yt:videoId></entry></feed>`;
     expect(parseFeedVideoIds(xml)).toEqual(["abcdefghijk", "LMNOPQRSTU_"]);
   });
+  it("RSS の 1 つ目の entry を最新の動画に (チャンネル名の title ではなく動画の title、文字の実体参照を戻す)", async () => {
+    const { parseFeedLatest } = await import("../server/live/src/youtube");
+    const xml = `<feed><title>チャンネル名</title><entry><id>yt:video:abcdefghijk</id><yt:videoId>abcdefghijk</yt:videoId><title>手袋 &amp; ワンド 600 神</title><published>2026-10-06T12:00:00+00:00</published></entry><entry><yt:videoId>LMNOPQRSTU_</yt:videoId><title>古い</title></entry></feed>`;
+    expect(parseFeedLatest(xml)).toEqual({ title: "手袋 & ワンド 600 神", thumb: "https://i.ytimg.com/vi/abcdefghijk/mqdefault.jpg", watchUrl: "https://www.youtube.com/watch?v=abcdefghijk", publishedAt: "2026-10-06T12:00:00+00:00" });
+    expect(parseFeedLatest("<feed><title>x</title></feed>")).toBeNull();
+  });
   it("/live ページの canonical が watch なら動画 ID、チャンネルなら null", () => {
     expect(parseLivePageVideoId(`<html><link rel="canonical" href="https://www.youtube.com/watch?v=abcdefghijk"></html>`)).toBe("abcdefghijk");
     expect(parseLivePageVideoId(`<html><link rel="canonical" href="https://www.youtube.com/channel/UCaaaaaaaaaaaaaaaaaaaaaa/streams"></html>`)).toBeNull();
@@ -98,7 +104,7 @@ describe("まとめと 1 回分", () => {
     const f = (async (input: RequestInfo | URL) => {
       const u = String(input);
       seen.push(u);
-      if (u.includes("feeds/videos.xml")) return new Response(`<feed><entry><yt:videoId>feedvideo01</yt:videoId></entry></feed>`);
+      if (u.includes("feeds/videos.xml")) return new Response(`<feed><entry><yt:videoId>feedvideo01</yt:videoId><title>最新</title></entry></feed>`);
       if (u.endsWith("/live")) return new Response(`<html><link rel="canonical" href="https://www.youtube.com/watch?v=livevideo01">`);
       if (u.includes("/youtube/v3/videos")) {
         expect(new URL(u).searchParams.get("id")!.split(",").sort()).toEqual(["feedvideo01", "livevideo01"]);
@@ -113,6 +119,7 @@ describe("まとめと 1 回分", () => {
     const st = await refresh(env, CH, f, new Date("2026-10-07T09:00:00Z"));
     expect(st.live.map((x) => x.id)).toEqual(["me"]);
     expect(st.channels.map((c) => `${c.id}:${c.status}:${c.avatar}`)).toEqual(["me:live:https://a/me.jpg", "spon:off:https://a/spon.png"]);
+    expect(st.channels[0]!.latest).toMatchObject({ title: "最新", watchUrl: "https://www.youtube.com/watch?v=feedvideo01" });
     expect(st.errors.join(" ")).toMatch(/twitch: .*streams 500/);
     expect(JSON.parse(kv.store.get("state")!)).toEqual(st);
     // videos.list は 1 回 (1 点) だけ

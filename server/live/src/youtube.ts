@@ -20,6 +20,19 @@ export function parseFeedVideoIds(xml: string): string[] {
   return out;
 }
 
+/** 最新の動画 (RSS の 1 つ目の entry)。サイトを開いた時に紹介として出す (2026-10-07 オーナー「YouTube は紹介だけ、開いた瞬間最新動画が出るくらい」) */
+export interface Latest { title: string; thumb: string; watchUrl: string; publishedAt: string | null }
+const unxml = (s: string): string => s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+export function parseFeedLatest(xml: string): Latest | null {
+  const e = xml.match(/<entry>([\s\S]*?)<\/entry>/)?.[1];
+  if (!e) return null;
+  const id = e.match(/<yt:videoId>([\w-]{11})<\/yt:videoId>/)?.[1];
+  if (!id) return null;
+  const title = unxml(e.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() ?? "");
+  const publishedAt = e.match(/<published>([^<]+)<\/published>/)?.[1] ?? null;
+  return { title, thumb: thumbUrl(id), watchUrl: watchUrl(id), publishedAt };
+}
+
 /**
  * /live ページの canonical。ライブ中 (または予定の配信がある時) は watch?v=... に、無い時はチャンネルのページになる。
  * ページは 1 MB 近いので、読む側は canonical が出た所で読むのをやめる (readUntil)
@@ -88,10 +101,16 @@ export function pickLive(items: readonly VideoItem[], channels: readonly Channel
 }
 
 /** チャンネル 1 つ分の候補の動画 ID (RSS + /live。どちらかが落ちても片方で続ける) */
-export async function candidateIds(channelId: string, fetchFn: Fetch, errors: string[]): Promise<string[]> {
+export async function candidateIds(channelId: string, fetchFn: Fetch, errors: string[], onLatest?: (l: Latest) => void): Promise<string[]> {
   const ids = new Set<string>();
   const [feed, live] = await Promise.allSettled([
-    fetchFn(feedUrl(channelId), { headers: { "accept": "application/atom+xml" } }).then(async (r) => { if (!r.ok) throw new Error(`feed ${r.status}`); return parseFeedVideoIds(await r.text()); }),
+    fetchFn(feedUrl(channelId), { headers: { "accept": "application/atom+xml" } }).then(async (r) => {
+      if (!r.ok) throw new Error(`feed ${r.status}`);
+      const xml = await r.text();
+      const l = parseFeedLatest(xml);
+      if (l) onLatest?.(l);
+      return parseFeedVideoIds(xml);
+    }),
     fetchFn(livePageUrl(channelId), { headers: { "accept-language": "ja,en;q=0.5", "user-agent": "Mozilla/5.0 (compatible; exiledesk-live/0.1)" } })
       .then(async (r) => { if (!r.ok) throw new Error(`live page ${r.status}`); return parseLivePageVideoId(await readUntil(r, /<link rel="canonical"/)); }),
   ]);
@@ -118,11 +137,11 @@ export async function listVideos(ids: readonly string[], apiKey: string, fetchFn
 }
 
 /** 全チャンネルの、今ライブ中・予定の配信 (チャンネル id → 1 本) */
-export async function fetchYoutube(channels: readonly ChannelDef[], apiKey: string | undefined, fetchFn: Fetch, errors: string[]): Promise<Map<string, LiveEntry>> {
+export async function fetchYoutube(channels: readonly ChannelDef[], apiKey: string | undefined, fetchFn: Fetch, errors: string[], latest?: Map<string, Latest>): Promise<Map<string, LiveEntry>> {
   const yt = channels.filter((c) => c.platform === "youtube" && c.youtubeChannelId);
   if (!yt.length) return new Map();
   if (!apiKey) { errors.push("youtube: YOUTUBE_API_KEY が無い"); return new Map(); }
-  const idLists = await Promise.all(yt.map((c) => candidateIds(c.youtubeChannelId!, fetchFn, errors)));
+  const idLists = await Promise.all(yt.map((c) => candidateIds(c.youtubeChannelId!, fetchFn, errors, (l) => latest?.set(c.id, l))));
   const ids = [...new Set(idLists.flat())];
   if (!ids.length) return new Map();
   try {
