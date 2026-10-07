@@ -82,6 +82,12 @@ function annulRisk(i: number, set: PatternSet | undefined, step: PatternStep): {
   });
   if (!hits.length) return null;
   const short = (id: string): string => modLabel(id).replace(/\s*T\d+ 以上.*$/, "").slice(0, 16);
+  // 増強の手 (まだマジック) で、この手の狙いの候補は消えてもこの増強で取り直す (計算も同じ)
+  if (set.kind === "augment" && step.target) {
+    const mine = isRest(step.target) ? restMembers(pat.value.steps, step.target) : candsOfStep(step);
+    const again = hits.filter((h) => mine.includes(h.id));
+    if (again.length === hits.length) return { text: `消去で ${again.map((h) => short(h.id)).join("・")} が消えたら、この増強でもう一度`, bad: false };
+  }
   const m = props.money ?? ((x: number) => x.toFixed(1));
   const once = hits.filter((h) => h.once);
   if (once.length) return { text: `消去で ${once.map((h) => short(h.id)).join("・")} を巻き込むと取り直せない`, bad: true };
@@ -178,7 +184,8 @@ const rows = computed<Row[]>(() => {
     const unsure = pat.value.steps.slice(0, i).map((x, j) => ({ j, x })).filter(({ x }) => uncertainStep(sets.value, x) && !pat.value.steps.slice(0, i).some((y) => y.target === `${REST}${pat.value.steps.indexOf(x)}`));
     const unsureIds = new Map(unsure.flatMap(({ j, x }) => candsOfStep(x).map((id) => [id, j] as const)));
     const restOpts = unsure.map(({ j, x }) => {
-      const side = c.data.mods.get(candsOfStep(x)[0] ?? "")?.type === "suffix" ? "サフィ" : "プレ";
+      const sides = new Set(candsOfStep(x).map((id) => (c.data.mods.get(id)?.type === "suffix" ? "サフィ" : "プレ")));
+      const side = sides.size === 1 ? [...sides][0]! : "";
       return { key: `${REST}${j}`, label: `残りの${side} MOD 1 つ (${j + 1} 手目の候補で付かなかった物)`, why: null as string | null };
     });
     const targetOpts = set?.kind === "annul" ? [] : props.order.map((k) => {
@@ -572,15 +579,25 @@ function placedAt(id: string, i: number): number {
 function gotoOf(i: number, r: Row, id: string): number {
   const g = r.step.lostGoto?.[id];
   if (g != null) return g;
+  // まだマジックの増強の手で、消えた物がこの手の狙い (候補) なら、この手をもう一度 (増強で 2 つ狙う時。計算も同じ)
+  if (augmentAgain(r, id)) return i;
   const j = placedAt(id, i);
   const k = setByKey(sets.value, pat.value.steps[j]?.set ?? "")?.kind;
   return k && ONCE_KINDS.has(k) ? LOST_RESTART : j;
 }
+/** 増強の手 (マジック) で、その MOD がこの手の狙いの候補か (消えても同じ増強で取り直せる) */
+function augmentAgain(r: Row, id: string): boolean {
+  if (r.set?.kind !== "augment" || !r.step.target) return false;
+  const ids = isRest(r.step.target) ? restMembers(pat.value.steps, r.step.target) : candsOfStep(r.step);
+  return ids.includes(id);
+}
 const gotoJa = (g: number): string => (g === LOST_RESTART ? "最初から (新しいベース)" : `${g + 1} 手目に戻る`);
 /** 戻れない手の理由 (ルーン・打つだけ・マジックの手) */
-function whyNoGoto(r: Row): string | undefined {
+function whyNoGoto(r: Row, from?: Row): string | undefined {
   if (r.set?.kind === "rune") return "ルーンの手には戻れない";
   if (r.step.target === ANY_TARGET) return "打つだけの手には戻れない";
+  // 増強の手の間 (まだマジック) なら、増強の手には戻れる
+  if (r.set?.kind === "augment" && from?.set?.kind === "augment") return undefined;
   if (r.set && ONCE_KINDS.has(r.set.kind)) return "マジックの手 (レアには打てない)";
   return undefined;
 }
@@ -1035,7 +1052,7 @@ defineExpose({ rows });
                       <span class="truncate text-[11px]">新しいベース</span>
                       <span v-if="gotoOf(focusRow, rows[focusRow]!, id) === LOST_RESTART" class="ml-auto shrink-0 text-[10px]">← ここから</span>
                     </button>
-                    <button v-for="g in focusRow + 1" :key="g" type="button" class="flex items-center gap-2 rounded-md border px-2 py-1 text-left disabled:cursor-not-allowed disabled:opacity-30" :class="gotoOf(focusRow, rows[focusRow]!, id) === g - 1 ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-black/20 hover:border-white/30'" :disabled="!!whyNoGoto(rows[g - 1]!)" :title="whyNoGoto(rows[g - 1]!)" @click="setGoto(focusRow!, id, g - 1)">
+                    <button v-for="g in focusRow + 1" :key="g" type="button" class="flex items-center gap-2 rounded-md border px-2 py-1 text-left disabled:cursor-not-allowed disabled:opacity-30" :class="gotoOf(focusRow, rows[focusRow]!, id) === g - 1 ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-black/20 hover:border-white/30'" :disabled="!!whyNoGoto(rows[g - 1]!, rows[focusRow]!)" :title="whyNoGoto(rows[g - 1]!, rows[focusRow]!)" @click="setGoto(focusRow!, id, g - 1)">
                       <b class="w-10 shrink-0 text-amber-200">{{ g }} 手目</b>
                       <span class="truncate text-[11px]">{{ cardTitle(rows[g - 1]!) }}</span>
                       <span v-if="gotoOf(focusRow, rows[focusRow]!, id) === g - 1" class="ml-auto shrink-0 text-[10px]">← ここから</span>

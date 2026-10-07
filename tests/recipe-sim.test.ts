@@ -277,6 +277,25 @@ describe("自前のフラクチャーの手 (2026-10-07)", () => {
   });
 });
 
+describe("増強で 2 つ狙う (2026-10-07)", () => {
+  it("金の指輪: 変成 (ライフか火耐性) → 増強で残り。普通の消去で当たった方が消えても、マジックのまま増強をもう一度 (新しいベースにしない)", async () => {
+    const data = await loadPatch();
+    const life = { ...targetOf(data, "Rings", /IncreasedLife$/, 4), method: "exalt" as const };
+    const fire = { ...targetOf(data, "Rings", /FireResistance$/, 4), method: "exalt" as const };
+    const spec: RecipeSpec = {
+      data, base: "Gold Ring", itemLevel: 82, runs: 60, price: () => 1, seed: 5,
+      targets: [life, fire],
+      pattern: [
+        { kind: "transmute", currency: "transmute", omens: [], target: { ...life, alts: [fire], need: 1 }, onMiss: "next" },
+        { kind: "augment", currency: "augment", omens: [], target: { ...life, alts: [fire], need: 2 }, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] } },
+      ],
+    };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.95);
+    expect(r!.bases).toBeLessThan(1.2);
+  });
+});
+
 describe("人ごとの乱数の種 (2026-10-07)", () => {
   it("人の間隔は 1 人の上限の手の数より広い (n 手目の乱数は seed + n なので、重なると隣の人と同じ乱数になる)", async () => {
     const { seedsOf } = await import("../src/services/craft-stage/recipe-sim");

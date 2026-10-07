@@ -425,6 +425,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         let goto = lastAt >= 0 ? gone.map((id) => pat[lastAt]?.lostGoto?.[id]).find((g) => g != null) : undefined;
         // 決めていなければ、マジックの手 (変成・増強・王者・錬金・エッセンス) で付けた物は打ち直せないので新しいベースで最初から
         // (2026-10-07 靴で試すと、レアで移動スピードが消えても画面は「2 手目 (増強) に戻る」、計算は戻らず最後に失敗していた)
+        // まだマジックで、消えた物がこの増強の手の狙い (候補) なら、この手をもう一度 (増強で 2 つ狙う時、普通の消去で当たった方が消えた。
+        // 2026-10-07 前は新しいベースからで、指輪のライフ + 火耐性でベースを 10 個使っていた。オーナー「最初増強で 2 MOD 狙うやり方も作れる道」)
+        if (goto == null && lastAt >= 0 && item.rarity === "magic" && pat[lastAt]?.kind === "augment" && pat[lastAt]!.target && gone.length && gone.every((id) => membersOf(pat[lastAt]!.target!).some((a) => a.modId === id))) goto = lastAt;
         if (goto == null && lastAt >= 0 && gone.some((id) => { const j = pat.findIndex((q, k) => k < lastAt && !!q.target && membersOf(q.target).some((a) => a.modId === id)); return j >= 0 && ONCE_KINDS.has(pat[j]!.kind); })) goto = LOST_RESTART;
         lastAt = -1;
         if (goto === LOST_RESTART) { restartPattern(); continue; }
