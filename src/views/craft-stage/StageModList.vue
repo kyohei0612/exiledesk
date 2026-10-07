@@ -31,6 +31,8 @@ const KEY = "exiledesk.craftStage.modListOpen";
 const open = ref(true);
 try { open.value = localStorage.getItem(KEY) !== "0"; } catch { /* 無くてよい */ }
 watch(open, (v) => { try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /* 無くてよい */ } });
+// シミュレーションで狙いがまだ 1 つも無い時は開いておく (畳んだのを覚えていて、ベースを選んでも何をすればいいか分からなかった。2026-10-07)
+watch(() => s.mode.value === "sim" && !s.simTargets.value.length && s.base.value, (v) => { if (v) open.value = true; }, { immediate: true });
 
 const GROUPS: ModGroup[] = ["normal", "rune", "essence", "perfect_essence", "desecrated", "otherworldly"];
 const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => r.group === g).length])) as Record<ModGroup, number>);
