@@ -64,6 +64,8 @@ export interface CompiledStep {
   target2?: RecipeTarget | null;
   /** 偉大の手で片方当たった後、残りを打つ手 (無ければ偉大だけ外す) */
   single?: { kind?: PatternKind; currency: string; omens: string[] };
+  /** この手の間に消えた MOD (modId) → 戻る手の番号 (パターンの中の 0 始まり) */
+  lostGoto?: Record<string, number>;
   /** ルーンを差す手の英語名 */
   rune?: string;
   onMiss: MissRule;
@@ -388,10 +390,23 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     let preRunes = new Set(runes);
     /** 消えた狙いを取り直す時の手 (元の手の番号 → 替えた手) */
     const regain = new Map<number, CompiledStep>();
+    /** 前の手の後に付いていた狙い (消えた物を見つけて、その手の「MOD が消えたら」で戻る) と、最後に打った手 */
+    const metIds = (): Set<string> => new Set(spec.targets.filter((t) => t.method !== "fracture" && meets(item, t)).map((t) => t.modId));
+    let prevMet = metIds();
+    let lastAt = -1;
     const count = (t: RecipeTarget): number => new Set(allMods(item).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size;
     let i = 0;
     while (steps.length < max) {
       if (fractureTs.length && !fixedHit()) return fail("固定した MOD が消えた");
+      // 打った手で消えた MOD に、その手の「MOD が消えたら」があればそこへ戻る (無ければ下の、付けた手に戻る)
+      {
+        const now = metIds();
+        const gone = [...prevMet].filter((id) => !now.has(id));
+        prevMet = now;
+        const goto = lastAt >= 0 ? gone.map((id) => pat[lastAt]?.lostGoto?.[id]).find((g) => g != null) : undefined;
+        lastAt = -1;
+        if (goto != null && goto !== i && goto < pat.length) { i = goto; continue; }
+      }
       // 前の手で付けた狙いが消えていたら (消去・カオスで)、その手に戻る (自動の付け方と同じ「前に付けた物が消えたら、また上から」)
       // 戻れるのはもう一度打てる手だけ (変成・増強・王者・錬金はレアリティが変わるので戻れない。その時は最後まで行って揃わなければ失敗)
       const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
@@ -407,6 +422,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       }
       if (i >= pat.length) return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases };
       let p = regain.get(i) ?? pat[i]!;
+      lastAt = i;
       // 偉大 (2 つ) の手で 1 つ目が付いている (か 2 つ目だけ付いている) 時は、偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
       if (p.target2) {
         const left = [p.target, p.target2].filter((t): t is RecipeTarget => !!t && !meets(item, t));
@@ -446,7 +462,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       if (p.target2 ? meets(item, p.target!) && meets(item, p.target2) : !p.target || count(p.target) > before || meets(item, p.target)) { i++; continue; }
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
-      if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); continue; }
+      if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); continue; }
       if (p.onMiss === "annul_redo" && p.miss) {
         // 外す物を手で決めた手 (消去 + お告げ / カオス + 削減 / パーフェクトエッセンス + 結晶化 / 骨 + ネクロマンシー)。打ってから同じ手をもう一度
         if (p.miss.kind === "essence_perfect") {

@@ -580,15 +580,22 @@ async function run(): Promise<void> {
     // パターンごとに回す (2026-10-06 オーナー「パターンで回す」)。白から作る + (フラクチャーがあれば) 固定済みから残りを作る (ベース代 0) の 2 本。
     // 始め方の比べに使う
     const sets = patternSets(it.cls);
-    const compile = (p: Pattern): CompiledStep[] => p.steps.flatMap((st) => {
+    const compile = (p: Pattern): CompiledStep[] => {
+      // 打てる手だけ並べるので、「MOD が消えたら N 手目」の N を並べた後の番号に直す
+      const at: number[] = [];
+      let n = 0;
+      for (const st of p.steps) { at.push(n); if (setByKey(sets, st.set)) n++; }
+      return p.steps.flatMap((st) => {
       const x = setByKey(sets, st.set);
+      const lostGoto = st.lostGoto ? Object.fromEntries(Object.entries(st.lostGoto).map(([id, g]) => [id, at[g] ?? g])) : undefined;
       if (!x) return [];
       const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
       const ms = st.miss ? setByKey(sets, st.miss) : undefined;
       const t2 = isDouble(x) && st.target2 ? spec.targets.find((y) => y.modId === st.target2) ?? null : null;
       const one = t2 ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
-      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: t, ...(t2 ? { target2: t2 } : {}), ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}) }];
-    });
+      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: t, ...(t2 ? { target2: t2 } : {}), ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}) }];
+      });
+    };
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
     // 回すのはフラクチャー済みから先だけ (2026-10-06 オーナー「白ベースでもフラクチャーまでの平均はほぼ一緒、3 回に 1 回当たる予算で
     // そこまでは固定で出しておｋ、他の選択肢も」)。始め方ごとの合計 = その始め方の費用 + 固定済みから先の平均
