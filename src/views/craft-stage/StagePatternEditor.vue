@@ -6,7 +6,8 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { craftStage, nameOf } from "../../state/craft-stage";
+import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
+import { displayCurrency } from "../../state/display-currency";
 import { ANY_KINDS, ANY_TARGET, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
@@ -431,7 +432,27 @@ function presentMods(i: number, r: Row): string[] {
   if (!c || !r.set || r.set.kind === "rune") return [];
   const out = [...stateBefore(c, pat.value.steps, i).placed];
   if (needs2(r) && r.step.target && r.step.target !== ANY_TARGET) out.push(r.step.target, ...candsOf(r));
-  return [...new Set(out)].filter((id) => c.targets.find((t) => t.modId === id)?.method !== "fracture");
+  const can = removableIn(i, r);
+  return [...new Set(out)].filter((id) => c.targets.find((t) => t.modId === id)?.method !== "fracture" && can(id));
+}
+/**
+ * その手で外れうる MOD か (打つ物とやり直しの物で消える物だけ。2026-10-07 オーナー「光のお告げなのに冒涜以外の外れたら見たいな選択肢が出る」)。
+ * 光のお告げは冒涜で付けた物だけ、左右のお告げはその側だけ、足すだけの手 (高貴・骨など) でやり直しも無ければ何も外れない
+ */
+function removableIn(i: number, r: Row): (id: string) => boolean {
+  const c = ctx.value;
+  if (!c) return () => false;
+  const rems: PatternSet[] = [];
+  if (r.set && (r.set.kind === "chaos" || r.set.kind === "essence_perfect")) rems.push(r.set);
+  const ms = hasMiss(r) ? missSet(r.step) : undefined;
+  if (ms) rems.push(ms);
+  const sideOfId = (id: string): "prefix" | "suffix" => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const desecrated = new Set(pat.value.steps.slice(0, i + 1).filter((st) => setByKey(sets.value, st.set)?.kind === "desecrate").flatMap((st) => [st.target, st.target2, st.target3]).filter((x): x is string => !!x));
+  return (id) => rems.some((x) => {
+    if (x.omens.includes("OmenofLight")) return desecrated.has(id);
+    const side = x.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : x.omens.some((o) => /Dextral/.test(o)) ? "suffix" : null;
+    return !side || sideOfId(id) === side;
+  });
 }
 /** その MOD を付けた手 (i 手目まで。「MOD が消えたら」の既定の戻り先) */
 function placedAt(id: string, i: number): number {
@@ -841,17 +862,31 @@ defineExpose({ rows });
                   </span>
                 </button>
               </div>
-              <!-- 選んだ札のお告げ・強さだけ -->
-              <div v-if="missKind(rows[focusRow]!) === 'annul' || missKind(rows[focusRow]!) === 'chaos'" class="mt-2 flex flex-wrap items-center gap-1">
-                <template v-if="missKind(rows[focusRow]!) === 'chaos'">
-                  <span class="mr-1 text-[11px] opacity-60">強さ</span>
-                  <button v-for="g in ([['chaos', '普通'], ['chaos_greater', '上級'], ['chaos_perfect', '完全']] as const)" :key="g[0]" type="button" class="rounded-full border px-2 py-0.5 text-[11px]" :class="missSet(rows[focusRow]!.step)?.currency === g[0] ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:bg-white/10'" @click="setMiss(focusRow!, 'chaos', g[0], missSet(rows[focusRow]!.step)?.omens ?? [])">{{ g[1] }}</button>
-                  <span class="mx-1 opacity-30">|</span>
-                </template>
-                <span class="mr-1 text-[11px] opacity-60">お告げ</span>
-                <button v-for="o in missOmenChoices(rows[focusRow]!)" :key="o.key || 'none'" type="button" class="flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] disabled:cursor-not-allowed disabled:opacity-30" :class="o.on ? 'border-orange-300 bg-orange-500/20 text-orange-100' : 'border-white/15 hover:bg-white/10'" :disabled="!!o.why" :title="o.why ?? o.ja" @click="setMiss(focusRow!, missKind(rows[focusRow]!) as 'annul' | 'chaos', missSet(rows[focusRow]!.step)!.currency, o.omens)">
-                  <img v-if="o.key && iconOf(o.key)" :src="iconOf(o.key)" alt="" class="h-4 w-4 object-contain" />{{ o.ja }}
-                </button>
+              <!-- 選んだ札のお告げ・強さだけ。クラフトステージの棚と同じ札 (2026-10-07 オーナー「お告げちっさ、ステージのアイコンの表示でおｋ、どの段階も」) -->
+              <div v-if="missKind(rows[focusRow]!) === 'chaos'" class="mt-3 flex gap-2 text-[11px]">
+                <p class="w-24 shrink-0 pt-1 leading-tight opacity-60">強さ</p>
+                <div class="flex flex-wrap gap-1">
+                  <button v-for="g in (['chaos', 'chaos_greater', 'chaos_perfect'] as const)" :key="g" type="button" class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition" :class="missSet(rows[focusRow]!.step)?.currency === g ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30'" :title="nameOf(g)" @click="setMiss(focusRow!, 'chaos', g, missSet(rows[focusRow]!.step)?.omens ?? [])">
+                    <img v-if="iconOf(g)" :src="iconOf(g)" alt="" class="h-7 w-7 object-contain" draggable="false" />
+                    <span class="w-full truncate text-center leading-tight">{{ nameOf(g) }}</span>
+                    <span v-if="priceOf(g)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(g)) }}</span>
+                    <span v-if="g !== 'chaos'" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-sky-300">{{ g === "chaos_greater" ? "上級" : "完全" }}</span>
+                  </button>
+                </div>
+              </div>
+              <div v-if="missKind(rows[focusRow]!) === 'annul' || missKind(rows[focusRow]!) === 'chaos'" class="mt-2 flex gap-2 text-[11px]">
+                <p class="w-24 shrink-0 pt-1 leading-tight opacity-60">お告げ<br />(1 つ選ぶ)</p>
+                <div class="flex flex-wrap gap-1">
+                  <button v-for="o in missOmenChoices(rows[focusRow]!)" :key="o.key || 'none'" type="button" class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition" :class="[o.on ? (o.omens.length ? 'stage-omen-on border-orange-300' : 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60') : 'border-white/10 bg-black/30 hover:border-white/30', o.why ? 'cursor-not-allowed opacity-35' : '']" :disabled="!!o.why" :title="o.why ?? o.ja" @click="setMiss(focusRow!, missKind(rows[focusRow]!) as 'annul' | 'chaos', missSet(rows[focusRow]!.step)!.currency, o.omens)">
+                    <span v-if="!o.omens.length" class="grid h-7 w-7 place-items-center rounded border border-dashed border-white/25 text-[12px] opacity-60">−</span>
+                    <span v-else class="flex h-7 items-center">
+                      <img v-for="om in o.omens" :key="om" :src="iconOf(om)" alt="" class="h-7 w-7 object-contain" draggable="false" />
+                    </span>
+                    <span class="w-full truncate text-center leading-tight">{{ o.ja }}</span>
+                    <span v-if="o.omens.length && o.omens.reduce((a, om) => a + priceOf(om), 0)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(o.omens.reduce((a, om) => a + priceOf(om), 0)) }}</span>
+                    <span v-if="o.on && o.omens.length" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] font-bold text-white">有効</span>
+                  </button>
+                </div>
               </div>
               <p class="mt-2 text-[11px]" :class="missRisk(focusRow!, rows[focusRow]!).bad ? 'text-rose-300' : 'text-emerald-200/80'">{{ missRisk(focusRow!, rows[focusRow]!).text }}</p>
               <!-- ほかの消し方 (パーフェクトエッセンスで上書き・骨で置き換え) -->
