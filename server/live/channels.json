@@ -1,23 +1,14 @@
 {
-  "_": "横に出すチャンネルの一覧。足す・外す・並べ替えはここを直して `pnpm deploy`。pr: true は協賛 (画面に PR と出す。ステマ規制)。youtubeChannelId は UC で始まる 24 文字 (チャンネルの URL が @名前 の時は、チャンネルページのソースの channelId か、YouTube Studio の設定 → チャンネル → 詳細設定で見る)",
+  "_": "横に出すチャンネルの一覧。足す・外す・並べ替えはここを直して `pnpm deploy`。pr: true は協賛 (画面に PR と出す。ステマ規制)。youtubeChannelId は UC で始まる 24 文字 (チャンネルページの HTML の externalId。@名前 の URL を教えてもらえれば Claude が調べる)",
   "channels": [
     {
-      "id": "poe2tube",
-      "name": "POE2Tube",
+      "id": "chocobanana",
+      "name": "チョコバナナch",
       "platform": "youtube",
-      "youtubeChannelId": "UCxxxxxxxxxxxxxxxxxxxxxx",
-      "url": "https://www.youtube.com/@POE2Tube",
+      "youtubeChannelId": "UC2MDbuvIMyPX4_6rmEV6aEg",
+      "url": "https://www.youtube.com/@chocobanana_HS",
       "pr": false,
-      "note": "自分のチャンネル。youtubeChannelId を本物に置き換える"
-    },
-    {
-      "id": "example-twitch",
-      "name": "協賛チャンネルの例",
-      "platform": "twitch",
-      "twitchLogin": "example_login",
-      "url": "https://www.twitch.tv/example_login",
-      "pr": true,
-      "note": "例。消すか本物に置き換える"
+      "note": "自分のチャンネル (2026-10-07)"
     }
   ]
 }

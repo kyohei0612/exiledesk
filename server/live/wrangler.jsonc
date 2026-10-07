@@ -12,8 +12,8 @@
   "kv_namespaces": [
     {
       "binding": "LIVE",
-      // `wrangler kv namespace create LIVE` が出す id に置き換える (README の手順 4)
-      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+      // `wrangler kv namespace create LIVE` が出した id (2026-10-07、オーナーのアカウント)
+      "id": "381d091adcaa439cb38d1fff106f7c63"
     }
   ],
   // 見本ページと枠の部品 (public/)。/ と /live-panel.js はここから、/live.json などは Worker から
