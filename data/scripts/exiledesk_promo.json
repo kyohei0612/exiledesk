@@ -176,6 +176,192 @@
           }
         }
       ]
+    },
+    {
+      "name": "手で打つ",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここからは使い方。まずは「手で打つ」画面から。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "左にアイテム、右にカレンシーの棚。棚のオーブを押して持って、アイテムを押すと1回使えるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ベースは1000種類から選べて、アイテムレベルも変えられるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "持ったまま押し続けたら、どうなるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "連打になるわ。カオスオーブを何回も打つ時に便利よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "増強のオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最大マナ+65が付いた。T7よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "ティアまで出るのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "王者のオーブでレアにするわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "火耐性+32%、T3。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "続けて高貴なオーブを3回。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "火ダメージが25%増加する、T2。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "冷気ダメージが4%増加する、T6。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "しょぼいのが付いたのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それも抽選の結果ね。最後の1回。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "筋力+20。これで6つ埋まったわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "失敗したら、戻せるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "「1手戻す」を押せば、1つ前に戻せるわ。Ctrl+Zでもいいの。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "ゲームじゃできないのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "何度でも試せるから、本番の前の練習にちょうどいいわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        }
+      ]
     }
   ]
 }
