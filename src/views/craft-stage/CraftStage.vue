@@ -123,6 +123,18 @@ const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s
 const simCraftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.item.value.cls.category) : 0));
 const simSocketCap = computed(() => (simCraftCap.value > 0 ? simCraftCap.value + 1 : 0));
 const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabled:opacity-40";
+/**
+ * シミュレーションのベースを選んだ時は、狙い・順番・パターンを空に戻す (前のベースの手が残って変になっていた。
+ * 2026-10-07 オーナー「腕のキャッシュで表示されてた、一回やり直したらシミュレーションの所はリセットだね」)
+ */
+function pickSimBase(en: string): void {
+  s.base.value = en;
+  s.simTargets.value = [];
+  s.simOrder.value = [];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
+  s.simPicked.value = true;
+  s.reset();
+}
 </script>
 
 <template>
@@ -156,7 +168,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     <section v-if="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 px-3 py-2 text-[12px]" :class="'bg-white/[0.03]'">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
       <b v-if="s.mode.value === 'sim'" class="text-[13px] text-amber-100">1 ベース</b>
-      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="(en) => { s.base.value = en; s.simTargets.value = []; s.simPicked.value = true; s.reset(); }" />
+      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="pickSimBase" />
       <span v-if="!simNoBase" class="flex items-center gap-1">
         <span class="opacity-60">アイテムレベル</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>

@@ -789,7 +789,7 @@ onMounted(() => {
   whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
   startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;
   // patternDone は orderDone の watch で落ちるので、その後に戻す
-  void nextTick(() => { patternDone.value = !!ses.flags.patternDone; restoring = false; });
+  void nextTick(() => { patternDone.value = !!ses.flags.patternDone; restoring = false; resetStalePatterns(); });
 });
 /**
  * レシピ (名前を付けて残した途中)。右上の「レシピ ▼」から保存・呼び出し・名前の付け替え・消す
@@ -900,8 +900,30 @@ const orderInfo = computed(() => Object.fromEntries(orderKeys.value.map((k) => {
 const fold = ref(true);
 const step4 = computed(() => step4pre.value);
 watch(orderDone, (v) => { if (!v) patternDone.value = false; });
-watch(() => rows.value.length, (n) => { if (n === 0) { modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
-watch(keptKey, () => { if (restoring) return; modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
+/**
+ * 狙いを選び直して、パターンの手が今の狙いに無い MOD を指していたら、パターンを空に戻す
+ * (2026-10-07 オーナー「新しくしたらそもそもここのパターン 1 リセットだろ、前のキャッシュで読み込むと変なことになる」。
+ * 前の手が残って、カードに MOD の英語の id が出ていた)
+ */
+function resetStalePatterns(): void {
+  const ids = new Set(s.simTargets.value.flatMap((t) => [t.modId, ...(t.alts ?? []).map((a) => a.modId)]));
+  const stale = s.simPatterns.value.some((p) => p.steps.some((st) => !st.set.startsWith("rune|") && [st.target, st.target2, st.target3].some((x) => !!x && x !== ANY_TARGET && !isRest(x) && !ids.has(x))));
+  if (stale) resetPatterns();
+}
+/**
+ * パターンを空に戻す。6 パターンより前 (2〜5・アイテムレベル・ソケット) をやり直したら必ず (2026-10-07 オーナー「ベース選び直さなくても、
+ * シミュレーション手前でやり直しが起こったら絶対リセットかけないとバグる」)。空にする前の物は「1 つ戻す」の控えに入れる
+ */
+function resetPatterns(): void {
+  if (!s.simPatterns.value.some((p) => p.steps.length)) return;
+  lastSnap = { ...lastSnap, patterns: JSON.stringify(s.simPatterns.value) };
+  s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
+  results.value = [];
+  patternDone.value = false;
+}
+watch(() => s.simTargets.value.map((t) => t.modId).join(","), () => { if (!restoring) resetStalePatterns(); });
+watch(() => rows.value.length, (n) => { if (n === 0) { resetPatterns(); modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
+watch(keptKey, () => { if (restoring) return; resetPatterns(); modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
 // 下の MOD 一覧は ① で選んでいる間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
 // 足し直す時は ① の「直す」で開き直す
 watch(() => socketsOk.value && !modsDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
@@ -911,6 +933,7 @@ watch(() => socketsOk.value && !modsDone.value, (v) => { s.simShowMods.value = v
  */
 type Stage = "mods" | "white" | "start" | "order";
 function goTo(st: Stage): void {
+  resetPatterns();
   if (st === "mods") modsDone.value = false;
   if (st === "mods" || st === "white") { whiteOk.value = false; fracDone.value = false; }
   if (st !== "order") startDone.value = false;
@@ -953,7 +976,8 @@ function whiteDecide(): void {
  * 「1 つ戻す」= 直前の操作を 1 つ取り消す (工程ではなく、1 つ前の状態に。2026-10-05 オーナー「1 つ戻すは手じゃなくて行動、1 つ前の作業の状態」)。
  * 狙い (MOD・段・あるいは・どれか N つ・フラクチャー・付け方・順番)・工程の決めた / 戻した・ソケット・白ベースの値段を、変わるたびに前の形を積む
  */
-type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; startDone: boolean; orderDone: boolean; sockets: number | null; white: number | null };
+/** patterns: やり直しで空にする前のパターン (空にした時だけ入れる。「1 つ戻す」でパターンも戻す) */
+type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; startDone: boolean; orderDone: boolean; sockets: number | null; white: number | null; patterns?: string };
 const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value });
 const undoStack = ref<Snap[]>([]);
 let lastSnap = snapNow();
@@ -979,6 +1003,7 @@ function undo(): void {
   s.simTargets.value = JSON.parse(prev.targets);
   whiteOk.value = prev.whiteOk; modsDone.value = prev.modsDone; fracDone.value = prev.fracDone; startDone.value = prev.startDone ?? false; orderDone.value = prev.orderDone;
   sockets.value = prev.sockets; whiteDivine.value = prev.white;
+  if (prev.patterns) s.simPatterns.value = JSON.parse(prev.patterns) as Pattern[];
   void nextTick(() => { lastSnap = snapNow(); restoring = false; });
 }
 /**

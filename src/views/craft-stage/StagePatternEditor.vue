@@ -147,7 +147,9 @@ function modLabel(modId: string): string {
   const d = s.data.value;
   const t = s.simTargets.value.find((x) => x.modId === modId);
   const m = d?.mods.get(modId);
-  if (!m || !t) return modId;
+  if (!m) return modId;
+  // 狙いの一覧に無い MOD (選び直して外した物) も日本語で (英語の id を出さない)
+  if (!t) return `${fillHashes(jaOfMod(m), []).replace(/\n/g, " / ")} (狙いに無い)`;
   const tier = m.tiers[t.minTierIndex];
   const text = fillHashes(jaOfMod(m), tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ");
   const alts = t.alts?.length ? ` (ほか ${t.alts.length} つのどれか)` : "";
@@ -216,7 +218,7 @@ const rows = computed<Row[]>(() => {
       const sides = restMembers(pat.value.steps, step.target!).map((id) => c.data.mods.get(id)?.type === "suffix");
       return new Set(sides).size === sides.length ? null : "マジックはプレ・サフィ 1 つずつ (残りの候補が同じ側)";
     };
-    const tWhy = !step.target ? "付ける物を選ぶ" : isRest(step.target) && set?.kind === "augment" ? restMagic() : isRest(step.target) ? (set ? (() => { const id = restMembers(pat.value.steps, step.target!)[0]; const t = id ? c.targets.find((x) => x.modId === id) : undefined; return t ? checkTarget(c, { ...st, placed: new Set([...st.placed].filter((x) => !restMembers(pat.value.steps, step.target!).includes(x))) }, set, t) : "残りの候補が無い"; })() : null) : step.target === ANY_TARGET ? (set ? checkAny(st, set) : null) : set && set.kind !== "rune" ? (() => { const t = c.targets.find((x) => x.modId === step.target); return t ? checkTarget(c, st, set, t) : null; })() : null;
+    const tWhy = !step.target ? "付ける物を選ぶ" : isRest(step.target) && set?.kind === "augment" ? restMagic() : isRest(step.target) ? (set ? (() => { const id = restMembers(pat.value.steps, step.target!)[0]; const t = id ? c.targets.find((x) => x.modId === id) : undefined; return t ? checkTarget(c, { ...st, placed: new Set([...st.placed].filter((x) => !restMembers(pat.value.steps, step.target!).includes(x))) }, set, t) : "残りの候補が無い"; })() : null) : step.target === ANY_TARGET ? (set ? checkAny(st, set) : null) : set && set.kind !== "rune" ? (() => { const t = c.targets.find((x) => x.modId === step.target); return t ? checkTarget(c, st, set, t) : "狙う MOD に無い (選び直す)"; })() : null;
     // やり直しは「選択無し (外れてもそのまま次へ)」が既定 (2026-10-07 オーナー「外れてもいいならそこは選択無しをデフォで、他を選んだ時も選択無しを選べる」)
     return { step, set, setOpts, targetOpts, restOpts, target2Opts, missOpts, bad: tWhy ?? setWhy ?? t2Why, risk: annulRisk(i, set, step) };
   });
