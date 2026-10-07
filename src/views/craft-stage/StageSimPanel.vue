@@ -31,7 +31,7 @@ import PriceInput from "../../components/PriceInput.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, restMembers, otherJunkOf, otherGoneOf } from "../../services/craft-stage/pattern";
+import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, restMembers, otherJunkOf, otherGoneOf, candsOfStep } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import SimProgress from "./SimProgress.vue";
@@ -662,7 +662,8 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
      * 偉大の手の候補 (2〜3 つ) を「どれか 2 つ付けば当たり」の 1 つの狙いにまとめる (2 狙う MOD の「どれか N つ」と同じ仕組み)
      */
     const groupOf = (st: Pattern["steps"][number], x: NonNullable<ReturnType<typeof setByKey>>): RecipeSpec["targets"][number] | null => {
-      if (!hasCands(x) || !st.target || st.target === ANY_TARGET || !st.target2) return null;
+      // フラクチャーの候補はグループにしない (狙いは前の手で付けた個別の物のまま。グループにすると「どれか 1 つ」で完成になっていた。2026-10-08 レビュー N1)
+      if (!hasCands(x) || x.kind === "fracture" || !st.target || st.target === ANY_TARGET || !st.target2) return null;
       const ms = [st.target, st.target2, st.target3].filter((id): id is string => !!id).map((id) => spec.targets.find((y) => y.modId === id)).filter((y): y is RecipeSpec["targets"][number] => !!y);
       if (ms.length < 2) return null;
       const [a, ...rest] = ms;
@@ -686,10 +687,12 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const lostGoto = st.lostGoto ? Object.fromEntries(Object.entries(st.lostGoto).map(([id, g]) => [id, at[g] ?? g])) : undefined;
       if (!x) return [];
       const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
+      // 自前のフラクチャーの候補: 固定して良い物だけ候補に足す (完成の条件は個別の狙いのまま)
+      const tf = x.kind === "fracture" && t && candsOfStep(st).length ? { ...t, alts: [...(t.alts ?? []), ...candsOfStep(st).flatMap((id) => { const y = spec.targets.find((z) => z.modId === id); return y ? [{ modId: y.modId, minTierIndex: y.minTierIndex }] : []; })] } : t;
       const ms = st.miss ? setByKey(sets, st.miss) : undefined;
       const grp = groupOf(st, x) ?? restOf(p.steps, st);
       const one = grp && isDouble(x) ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
-      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? t, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}), ...(otherGoneOf(x.kind, st.otherGone) === "annul" ? { otherGone: "annul" as const } : {}), ...(otherJunkOf(x.kind, st.otherJunk) === "keep" ? { otherJunk: "keep" as const } : {}) }];
+      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? tf, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}), ...(otherGoneOf(x.kind, st.otherGone) === "annul" ? { otherGone: "annul" as const } : {}), ...(otherJunkOf(x.kind, st.otherJunk) === "keep" ? { otherJunk: "keep" as const } : {}) }];
       });
     };
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、

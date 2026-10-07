@@ -419,6 +419,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     let i = 0;
     /** 新しいベースで最初から */
     const restartPattern = (): void => { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); };
+    /** もう一度打てる手 (レアに打てる物。変成・増強・王者・錬金はレアリティが変わるので戻れない) */
+    const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
     while (steps.length < max) {
       // 手ごとの費用: 前の周の分をその手に足し、この周の始まりを覚える
       flushStep(); accAt = i; accCost = cost;
@@ -437,13 +439,15 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         // 付けた手 = その MOD を狙った一番後ろの手 (画面の placedAt と同じ。2026-10-08 レビュー C2: 前は一番前の手を見ていて、変成 → 高貴で取り直した物でも新しいベースにしていた)
         const placedAt = (id: string): number => { for (let k = lastAt - 1; k >= 0; k--) { const q = pat[k]!; if (q.target && membersOf(q.target).some((a) => a.modId === id)) return k; } return -1; };
         if (goto == null && lastAt >= 0 && gone.some((id) => { const j = placedAt(id); return j >= 0 && ONCE_KINDS.has(pat[j]!.kind); })) goto = LOST_RESTART;
+        // 「そのまま次へ」の高貴・カオス・骨などで付けた物が消えたら、その手へ戻ってもう一度 (画面の既定「N 手目に戻る」と同じ。
+        // 2026-10-08 レビュー N2: lost の引き戻しを「そのまま次へ」で止めたので、ここで戻さないと取り直さず最後まで行って失敗していた)
+        if (goto == null && lastAt >= 0) { for (const id of gone) { const j = placedAt(id); if (j >= 0 && REDO.has(pat[j]!.kind)) { goto = j; break; } } }
         lastAt = -1;
         if (goto === LOST_RESTART) { restartPattern(); continue; }
         if (goto != null && goto !== i && goto < pat.length) { i = goto; continue; }
       }
       // 前の手で付けた狙いが消えていたら (消去・カオスで)、その手に戻る (自動の付け方と同じ「前に付けた物が消えたら、また上から」)
       // 戻れるのはもう一度打てる手だけ (変成・増強・王者・錬金はレアリティが変わるので戻れない。その時は最後まで行って揃わなければ失敗)
-      const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
       // 「付かなかった → そのまま次へ」の手は戻らない (外れを諦めて進む手。後の手で同じ MOD をもう一度狙う時は maybe で繋ぐ。2026-10-08 レビュー B1:
       // 前は onMiss を見ずに毎周その手へ戻していて、高貴・カオス・骨の「そのまま次へ」が実質「もう一度打つ」になっていた)
       const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && q.onMiss !== "next" && !meets(item, q.target));
