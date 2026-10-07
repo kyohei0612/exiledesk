@@ -5,7 +5,7 @@ ExileDesk 要望 ㊲ (v0.1.390 以降)。
 
 ## 1. 録画モードで起動する
 
-1. **いつものアプリを閉じる** (single-instance なので、動いていると 2 つ目は前面に出て終わる)
+1. **いつものアプリをタスクキルする** (single-instance なので、トレイに残っていても 2 つ目は前面に出て終わる)
 2. 環境変数を付けて起動する:
    - `EXILEDESK_REMOTE_DEBUG_PORT=9333` … その時だけ WebView2 に `--remote-debugging-port=9333` (口は 127.0.0.1 だけ)
    - `EXILEDESK_FULLSCREEN=1` … 枠なしの全画面。1920×1080 のモニターならページもそのまま 1920×1080
@@ -21,7 +21,8 @@ Start-Process "$env:LOCALAPPDATA\ExileDesk\exiledesk.exe"   # 開発ビルドな
 
 - アプリは 1 枚目のモニター (DISPLAY6、0,0、1920×1080) に全画面で出る。**録っている間はそのモニターを触らない**
 - ログインの状態は起動ごと (ファイルに残さない)。取引所の機能を撮るならその起動でログインし直す (パスワードは kyohei が入れる)
-- 終わったら**環境変数を外して、いつもの起動に戻す** (アプリを閉じて普通に起動し直す)
+- **終わったらタスクキル** (kyohei 2026-10-08「終わったらタスクキルなんだよ」。窓を閉じるだけではトレイに残る):
+  `taskkill /F /IM exiledesk.exe` (PowerShell なら `Get-Process exiledesk | Stop-Process -Force`)。そのあと環境変数を外して、いつもの起動に戻す
 
 ## 2. つないで操作する
 
