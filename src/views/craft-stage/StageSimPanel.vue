@@ -30,7 +30,7 @@ import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf } from "../../services/craft-stage/pattern";
+import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
@@ -584,11 +584,11 @@ async function run(): Promise<void> {
      * 偉大の手の候補 (2〜3 つ) を「どれか 2 つ付けば当たり」の 1 つの狙いにまとめる (2 狙う MOD の「どれか N つ」と同じ仕組み)
      */
     const groupOf = (st: Pattern["steps"][number], x: NonNullable<ReturnType<typeof setByKey>>): RecipeSpec["targets"][number] | null => {
-      if (!isDouble(x) || !st.target || st.target === ANY_TARGET || !st.target2) return null;
+      if (!hasCands(x) || !st.target || st.target === ANY_TARGET || !st.target2) return null;
       const ms = [st.target, st.target2, st.target3].filter((id): id is string => !!id).map((id) => spec.targets.find((y) => y.modId === id)).filter((y): y is RecipeSpec["targets"][number] => !!y);
       if (ms.length < 2) return null;
       const [a, ...rest] = ms;
-      return { ...a!, method: "exalt", alts: [...(a!.alts ?? []), ...rest.flatMap((y) => [{ modId: y.modId, minTierIndex: y.minTierIndex }, ...(y.alts ?? [])])], need: 2 };
+      return { ...a!, method: "exalt", alts: [...(a!.alts ?? []), ...rest.flatMap((y) => [{ modId: y.modId, minTierIndex: y.minTierIndex }, ...(y.alts ?? [])])], need: isDouble(x) ? 2 : 1 };
     };
     const compile = (p: Pattern): CompiledStep[] => {
       // 打てる手だけ並べるので、「MOD が消えたら N 手目」の N を並べた後の番号に直す
@@ -602,7 +602,7 @@ async function run(): Promise<void> {
       const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
       const ms = st.miss ? setByKey(sets, st.miss) : undefined;
       const grp = groupOf(st, x);
-      const one = grp ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
+      const one = grp && isDouble(x) ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
       return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? t, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}) }];
       });
     };

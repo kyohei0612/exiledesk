@@ -120,6 +120,12 @@ export const RARITY_CHANGE = new Set<PatternKind>(["transmute", "regal", "alchem
 export const ANY_TARGET = "*";
 /** 1 回で 2 つ付ける手 (偉大なる高貴のお告げ) */
 export const isDouble = (s: PatternSet | undefined): boolean => !!s && s.kind === "exalt" && s.omens.includes("OmenofGreaterExaltation");
+/**
+ * 候補を足せる手 (ガチャ: ランダムに付く物)。候補のどれかが付けば当たり (偉大は 2 つ)
+ * (2026-10-07 オーナー「ガチャの時だけ複数選択、偉大だからじゃなくて高貴やらカオススパムやら一緒」)
+ */
+export const GACHA_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "exalt", "chaos", "desecrate"]);
+export const hasCands = (s: PatternSet | undefined): boolean => !!s && GACHA_KINDS.has(s.kind);
 /** 偉大の手の既定の 1 発 (同じカレンシーで偉大だけ外す) のセットのキー */
 export const singleKeyOf = (s: PatternSet): string => `${s.kind}|${s.currency}|${s.omens.filter((o) => o !== "OmenofGreaterExaltation").join("+")}`;
 export const ANY_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "desecrate"]);
@@ -217,11 +223,11 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     }
     const t = ctx.targets.find((x) => x.modId === p.target);
     if (!t) continue;
-    // 偉大の手は候補のどれか 2 つが付く。候補が 3 つの時はどれが付くか分からないので、付いた物 (placed) には入れず枠だけ数える
-    const cands = [t, ...(isDouble(s) ? ctx.targets.filter((y) => y.modId === p.target2 || y.modId === p.target3) : [])];
-    const sure = cands.length <= 2;
-    for (const x of cands.slice(0, 2)) st[ctx.data.mods.get(x.modId)?.type === "suffix" ? "suffix" : "prefix"] += 1;
-    if (sure) for (const x of cands) st.placed.add(x.modId);
+    // 候補のどれか (偉大は 2 つ) が付く。どれが付くか分からない時は、付いた物 (placed) には入れず枠だけ数える
+    const cands = [t, ...(hasCands(s) ? ctx.targets.filter((y) => y.modId === p.target2 || y.modId === p.target3) : [])];
+    const need = isDouble(s) ? 2 : 1;
+    for (const x of cands.slice(0, need)) st[ctx.data.mods.get(x.modId)?.type === "suffix" ? "suffix" : "prefix"] += 1;
+    if (cands.length <= need) for (const x of cands) st.placed.add(x.modId);
     if (s.kind === "essence" || s.kind === "essence_perfect") st.essences++;
     if (s.kind === "desecrate") st.desecrated++;
   }
