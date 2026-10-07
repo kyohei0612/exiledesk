@@ -62,6 +62,8 @@ export interface CompiledStep {
   target: RecipeTarget | null;
   /** 偉大なる高貴のお告げの手の 2 つ目の狙い (2 つとも付いたら当たり) */
   target2?: RecipeTarget | null;
+  /** 偉大の手で片方当たった後、残りを打つ手 (無ければ偉大だけ外す) */
+  single?: { kind?: PatternKind; currency: string; omens: string[] };
   /** ルーンを差す手の英語名 */
   rune?: string;
   onMiss: MissRule;
@@ -408,7 +410,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 偉大 (2 つ) の手で 1 つ目が付いている (か 2 つ目だけ付いている) 時は、偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
       if (p.target2) {
         const left = [p.target, p.target2].filter((t): t is RecipeTarget => !!t && !meets(item, t));
-        if (left.length === 1) p = { ...p, target: left[0]!, target2: null, omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") };
+        if (left.length === 1) p = { ...p, target: left[0]!, target2: null, ...(p.single ? { currency: p.single.currency, omens: [...p.single.omens] } : { omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") }) };
       }
       const before = p.target ? count(p.target) : 0;
       let e: string | null = null;

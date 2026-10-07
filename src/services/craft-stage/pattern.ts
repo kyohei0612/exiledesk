@@ -33,6 +33,11 @@ export interface PatternStep {
    * 偉大なる高貴のお告げ (1 回で 2 つ) の手の 2 つ目の狙い (2026-10-07 オーナー「偉大を選ぶ時は MOD も選ばせないとダメ、次のページで狙う」)
    */
   target2?: string | null;
+  /**
+   * 偉大の手で片方だけ当たり、消去で外れが消えた後に残りを打つ手 (セットのキー)。無ければ同じカレンシーで偉大だけ外した物
+   * (2026-10-07 オーナー「片方空いてたら同じ流れを単体のカレンシーで、偉大は OFF、側のお告げは ON のまま」)
+   */
+  single?: string | null;
   onMiss: MissRule;
   /**
    * 外す時の打つ物 + お告げ (セットのキー。消去・カオスの物)。「外してもう一度」の時に使う。無ければ自動 (やり直しの費用で素の消去か側のお告げ)。
@@ -105,6 +110,8 @@ export const RARITY_CHANGE = new Set<PatternKind>(["transmute", "regal", "alchem
 export const ANY_TARGET = "*";
 /** 1 回で 2 つ付ける手 (偉大なる高貴のお告げ) */
 export const isDouble = (s: PatternSet | undefined): boolean => !!s && s.kind === "exalt" && s.omens.includes("OmenofGreaterExaltation");
+/** 偉大の手の既定の 1 発 (同じカレンシーで偉大だけ外す) のセットのキー */
+export const singleKeyOf = (s: PatternSet): string => `${s.kind}|${s.currency}|${s.omens.filter((o) => o !== "OmenofGreaterExaltation").join("+")}`;
 export const ANY_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "desecrate"]);
 /** 打つだけの手で増える MOD の数 (側は分からない。錬金は 4 つ、カオスは入れ替え) */
 const ANY_ADDS: Partial<Record<PatternKind, number>> = { transmute: 1, augment: 1, regal: 1, alchemy: 4, exalt: 1, desecrate: 1 };

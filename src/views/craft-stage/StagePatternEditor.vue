@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { ANY_KINDS, ANY_TARGET, isDouble, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
+import { ANY_KINDS, ANY_TARGET, isDouble, singleKeyOf, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageItemCard from "./StageItemCard.vue";
@@ -325,7 +325,7 @@ function closeFrame(): void {
   editPart.value = null;
 }
 /** 選び直している物 (無ければ、まだ決めていない一番手前の物) */
-const editPart = ref<"set" | "target" | "target2" | "miss" | "done" | null>(null);
+const editPart = ref<"set" | "target" | "target2" | "miss" | "single" | "done" | null>(null);
 /** 付ける物を選んだ。ルーンはルーンのセットに決まる。今のセットで付かない物ならセットを選び直し */
 function pickTarget(i: number, key: string): void {
   const isRune = props.order.includes(`rune:${key}`);
@@ -347,7 +347,7 @@ function whyAddAt(i: number): (x: PatternSet) => string | null {
   const t = tg ? c.targets.find((x) => x.modId === tg) : undefined;
   return (x) => checkSet(c, st, x) ?? (tg === ANY_TARGET ? checkAny(st, x) : t && x.kind !== "rune" ? checkTarget(c, st, x, t) : x.kind === "rune" ? "付ける物がルーンの時だけ" : null);
 }
-function partOf(i: number, r: Row): "set" | "target" | "target2" | "miss" | "done" {
+function partOf(i: number, r: Row): "set" | "target" | "target2" | "miss" | "single" | "done" {
   if (focusRow.value === i && editPart.value) return editPart.value;
   if (!r.step.target) return "target";
   if (!r.set) return "set";
@@ -369,7 +369,7 @@ const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && !RARITY_CHANGE
 /** 外れの枝を出す手 (打つだけの手は外れが無い) */
 const showMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && r.step.target !== ANY_TARGET;
 /** 手のカードを押した: 右の枠でその手を決める (もう一度押すと閉じる)。外れの枝はやり直しだけ */
-function selectRow(i: number, part: "miss" | null = null): void {
+function selectRow(i: number, part: "miss" | "single" | null = null): void {
   focusPre.value = null;
   if (focusRow.value === i && editPart.value === part) { closeFrame(); return; }
   focusRow.value = i;
@@ -386,6 +386,7 @@ function nextPart(i: number): void {
   if (now === "target" && r.step.target) editPart.value = r.set?.kind === "rune" ? "done" : "set";
   else if (now === "set" && r.set && needs2(r)) editPart.value = "target2";
   else if ((now === "set" || now === "target2") && r.set && hasMiss(r)) editPart.value = "miss";
+  else if (now === "miss" && needs2(r)) editPart.value = "single";
   else confirmStep(i);
 }
 /** 偉大 (2 つ) の手で、2 つ目の MOD を選ぶ段がある (打つだけの手は無し) */
@@ -395,24 +396,33 @@ function lastPart(i: number, r: Row): boolean {
   const now = partOf(i, r);
   if (now === "set") return !!r.set && !needs2(r) && !hasMiss(r);
   if (now === "target2") return !!r.step.target2 && !hasMiss(r);
-  return now === "miss" || now === "done";
+  if (now === "miss") return !needs2(r);
+  return now === "single" || now === "done";
 }
+/** 偉大の手で片方当たった後の 1 発 (選んだ物、無ければ同じカレンシーで偉大だけ外した物) */
+function singleSet(r: Row): PatternSet | undefined {
+  if (!r.set || !needs2(r)) return undefined;
+  return setByKey(sets.value, r.step.single ?? singleKeyOf(r.set));
+}
+/** 1 発の棚: 1 つずつ付ける高貴 (偉大なし) */
+const singleSets = computed(() => addSets.value.filter((x) => x.kind === "exalt" && !isDouble(x)));
 /** この手だけ消す (ツリーの位置はそのまま) */
 function removeAt(i: number): void {
   remove(i);
   closeFrame();
 }
 /** 右の枠の上の決める順 (済み / いま / まだ) */
-interface Chip { part: "target" | "set" | "target2" | "miss"; name: string; icons: string[]; text: string; state: "done" | "now" | "todo" }
+interface Chip { part: "target" | "set" | "target2" | "miss" | "single"; name: string; icons: string[]; text: string; state: "done" | "now" | "todo" }
 function chipsOf(i: number, r: Row): Chip[] {
   const now = partOf(i, r);
   const st = (part: Chip["part"], done: boolean): Chip["state"] => (now === part ? "now" : done ? "done" : "todo");
   const icons = (x: PatternSet | undefined): string[] => (x ? [x.currency, ...x.omens].filter((c) => c && iconOf(c)) : []);
   const isRune = r.set?.kind === "rune";
-  const out: Chip[] = [{ part: "target", name: isRune ? "ルーン" : "MOD", icons: [], text: r.step.target ? cardTitle(r) : "", state: st("target", !!r.step.target) }];
+  const out: Chip[] = [{ part: "target", name: isRune ? "ルーン" : "MOD", icons: [], text: !r.step.target ? "" : needs2(r) && r.step.target !== ANY_TARGET ? cardTitleOf(r.step.target) : cardTitle(r), state: st("target", !!r.step.target) }];
   if (!isRune) out.push({ part: "set", name: "カレンシー", icons: icons(r.set), text: r.set && !icons(r.set).length ? setShort(r.set) : "", state: st("set", !!r.set) });
   if (needs2(r)) out.push({ part: "target2", name: "2 つ目の MOD", icons: [], text: r.step.target2 ? cardTitleOf(r.step.target2) : "", state: st("target2", !!r.step.target2) });
   if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "やり直し", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? "選択無し" : "", state: st("miss", hasMiss(r)) });
+  if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
   return out;
 }
 /** 左右の枠の高さ (最小の窓 1660×860 でもページを送らずに収まる) */
@@ -582,7 +592,7 @@ defineExpose({ rows });
               </button>
             </div>
             <!-- 外れの枝: やり直す手は、外れ → やり直しのカレンシー → カードに戻る線で「付くまで繰り返す」 -->
-            <span v-if="showMiss(r)" class="flex flex-col">
+            <span v-if="showMiss(r) && !needs2(r)" class="flex flex-col">
               <span class="flex items-center">
                 <span class="h-px w-4 border-t border-dashed border-rose-400/60"></span>
                 <button type="button" class="flex items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :class="focusRow === i && partOf(i, r) === 'miss' ? 'ring-2 ring-rose-400/70' : ''" :title="hasMiss(r) ? '押すとやり直しを選ぶ' : 'レアリティが変わる手はやり直せない'" :disabled="!hasMiss(r) || locked" @click="selectRow(i, 'miss')">
@@ -603,6 +613,34 @@ defineExpose({ rows });
               </span>
             </span>
             <span v-if="r.risk?.bad" class="ml-1 mt-2 text-rose-300" :title="r.risk.text">⚠</span>
+          </div>
+          <!--
+            偉大 (2 つ狙い) の外れ方ごとの枝 (2026-10-07 オーナー「狙い MOD 以外が消えた場合の外れのツリーが横に何個かいるね」)。
+            横に並べるとツリーの幅に入らないので、カードの下に段下げして並べる。押すとその枝の打ち方を選ぶ
+          -->
+          <div v-if="needs2(r) && r.set" class="ml-3 mt-1 space-y-1 border-l border-dashed border-rose-400/50 pl-2 text-[10px]">
+            <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すとやり直し (消去) を選ぶ" @click="selectRow(i, 'miss')">
+              <span class="rounded bg-rose-950/50 px-1 text-rose-300">2 つとも外れ</span>
+              <span class="opacity-60">→</span>
+              <img v-if="missSet(r.step) && iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-4 w-4 object-contain" />
+              <span>2 枠空くまで</span>
+              <span class="text-amber-200/90">◀ 偉大に戻る</span>
+            </button>
+            <div>
+              <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すとやり直し (消去) を選ぶ" @click="selectRow(i, 'miss')">
+                <span class="rounded bg-amber-900/40 px-1 text-amber-200">片方だけ当たり</span>
+                <span class="opacity-60">→</span>
+                <img v-if="missSet(r.step) && iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-4 w-4 object-contain" />
+                <span>消去</span>
+              </button>
+              <button type="button" class="ml-4 flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すと 1 発の打ち方を選ぶ" @click="selectRow(i, 'single')">
+                <span class="opacity-60">├ 外れが消えた →</span>
+                <img v-for="c in [singleSet(r)?.currency, ...(singleSet(r)?.omens ?? [])].filter((x) => x && iconOf(x))" :key="c" :src="iconOf(c!)" alt="" class="h-4 w-4 object-contain" />
+                <span>1 発</span>
+                <span class="text-amber-200/90">↺ 付くまで</span>
+              </button>
+              <p class="ml-4 px-1 opacity-60">└ 当たりが消えた → <span class="text-amber-200/90">◀ 偉大に戻る</span></p>
+            </div>
           </div>
         </template>
         <template v-if="!locked">
@@ -661,6 +699,10 @@ defineExpose({ rows });
                 </button>
               </div>
             </template>
+            <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'single'">
+              <p class="mb-1 text-[11px] opacity-60">片方だけ当たって、消去で外れが消えた後に、残りの 1 つを打つ手 (既定は同じカレンシーで偉大だけ外した物)</p>
+              <StagePatternStepPicker :key="'single' + focusRow" :sets="singleSets" :why="() => null" :current="singleSet(rows[focusRow]!)?.key ?? ''" inline @pick="(k) => { patch(focusRow!, { single: k }); editPart = 'single'; }" />
+            </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'set'">
               <StagePatternStepPicker :key="'set' + focusRow" :sets="addSetsFor(rows[focusRow]!)" :why="whyAddAt(focusRow)" :current="rows[focusRow]!.step.set" inline @pick="(k) => { onSet(focusRow!, k); editPart = 'set'; }" />
             </template>
@@ -696,6 +738,15 @@ defineExpose({ rows });
                       <span v-else class="opacity-60">そのまま次の手へ{{ hasMiss(r) ? "" : " (レアリティが変わる手はやり直せない)" }}</span>
                     </button>
                   </template>
+                  <template v-if="needs2(r) && singleSet(r)">
+                    <span class="text-[11px] text-amber-200/80">片方当たり後</span>
+                    <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'single'">
+                      <img v-if="iconOf(singleSet(r)!.currency)" :src="iconOf(singleSet(r)!.currency)" alt="" class="h-7 w-7 object-contain" />
+                      <span class="font-bold">{{ setShort(singleSet(r)!) }} を 1 発</span>
+                      <span v-for="o in singleSet(r)!.omens" :key="o" class="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/10 py-0.5 pl-0.5 pr-2 text-orange-100"><img :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />{{ jaOfOmen(o) ?? o }}</span>
+                      <span class="text-[11px] text-amber-200/80">↺ 付くまで</span>
+                    </button>
+                  </template>
                 </div>
                 <p v-if="r.risk" class="mt-3 text-[11px]" :class="r.risk.bad ? 'text-rose-300' : 'text-amber-200/80'">⚠ {{ r.risk.text }}</p>
                 <p v-if="r.bad" class="mt-1 text-[11px] text-rose-300">{{ r.bad }}</p>
@@ -710,7 +761,7 @@ defineExpose({ rows });
               <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="focusRow === rows.length - 1" title="下へ" @click="move(focusRow, 1); focusRow = focusRow + 1">▼</button>
             </span>
             <button type="button" class="ml-auto rounded-lg border border-white/20 px-3 py-0.5 hover:bg-white/10" title="閉じる (決めた物はそのまま)" @click="closeFrame()">閉じる</button>
-            <button v-if="['set', 'target', 'target2'].includes(partOf(focusRow, rows[focusRow]!))" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="partOf(focusRow, rows[focusRow]!) === 'target' ? !rows[focusRow]!.step.target : partOf(focusRow, rows[focusRow]!) === 'target2' ? !rows[focusRow]!.step.target2 || (lastPart(focusRow, rows[focusRow]!) && !!rows[focusRow]!.bad) : !rows[focusRow]!.set || (lastPart(focusRow, rows[focusRow]!) && !!rows[focusRow]!.bad)" :title="partOf(focusRow, rows[focusRow]!) === 'target' ? '付ける物を選ぶ' : partOf(focusRow, rows[focusRow]!) === 'target2' && !rows[focusRow]!.step.target2 ? '2 つ目の MOD を選ぶ' : !rows[focusRow]!.set ? 'カレンシーを選ぶ' : rows[focusRow]!.bad ?? undefined" @click="nextPart(focusRow)">{{ lastPart(focusRow, rows[focusRow]!) ? "この手にする" : "次へ →" }}</button>
+            <button v-if="['set', 'target', 'target2', 'miss', 'single'].includes(partOf(focusRow, rows[focusRow]!))" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="partOf(focusRow, rows[focusRow]!) === 'target' ? !rows[focusRow]!.step.target : partOf(focusRow, rows[focusRow]!) === 'target2' ? !rows[focusRow]!.step.target2 || (lastPart(focusRow, rows[focusRow]!) && !!rows[focusRow]!.bad) : !rows[focusRow]!.set || (lastPart(focusRow, rows[focusRow]!) && !!rows[focusRow]!.bad)" :title="partOf(focusRow, rows[focusRow]!) === 'target' ? '付ける物を選ぶ' : partOf(focusRow, rows[focusRow]!) === 'target2' && !rows[focusRow]!.step.target2 ? '2 つ目の MOD を選ぶ' : !rows[focusRow]!.set ? 'カレンシーを選ぶ' : rows[focusRow]!.bad ?? undefined" @click="nextPart(focusRow)">{{ lastPart(focusRow, rows[focusRow]!) ? "この手にする" : "次へ →" }}</button>
             <button v-else type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!!rows[focusRow]!.bad" :title="rows[focusRow]!.bad ?? (focusRow === rows.length - 1 ? '決めて次の手へ' : '決めて閉じる')" @click="confirmStep(focusRow)">この手にする</button>
           </div>
         </template>
@@ -740,6 +791,15 @@ defineExpose({ rows });
                         <span class="text-[11px] text-amber-200/80">↺ 付くまで繰り返す</span>
                       </template>
                       <span v-else class="opacity-60">そのまま次の手へ{{ hasMiss(r) ? "" : " (レアリティが変わる手はやり直せない)" }}</span>
+                    </button>
+                  </template>
+                  <template v-if="needs2(r) && singleSet(r)">
+                    <span class="text-[11px] text-amber-200/80">片方当たり後</span>
+                    <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'single'">
+                      <img v-if="iconOf(singleSet(r)!.currency)" :src="iconOf(singleSet(r)!.currency)" alt="" class="h-7 w-7 object-contain" />
+                      <span class="font-bold">{{ setShort(singleSet(r)!) }} を 1 発</span>
+                      <span v-for="o in singleSet(r)!.omens" :key="o" class="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/10 py-0.5 pl-0.5 pr-2 text-orange-100"><img :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />{{ jaOfOmen(o) ?? o }}</span>
+                      <span class="text-[11px] text-amber-200/80">↺ 付くまで</span>
                     </button>
                   </template>
                 </div>
