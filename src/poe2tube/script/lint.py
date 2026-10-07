@@ -158,11 +158,13 @@ def lint_script(
     if script.sections:
         intro = script.sections[0]
         intro_chars = sum(len(ln.spoken) for ln in intro.lines)
-        if (
-            intro_chars > script.char_count() * INTRO_MAX_RATIO
-            and intro_chars > 30 * CHARS_PER_MINUTE / 60
-        ):
-            problems.append(f"導入が長い ({intro_chars} 字、30 秒以内 = 約 160 字)")
+        # 導入の章に長めの目標 (例 60 秒) を書いた回はそれを上限に (kyohei 2026-10-07)
+        intro_sec = max(30, intro.target_seconds)
+        limit = intro_sec * CHARS_PER_MINUTE / 60 * (1.1 if intro_sec > 30 else 1.0)
+        if intro_chars > script.char_count() * INTRO_MAX_RATIO and intro_chars > limit:
+            problems.append(
+                f"導入が長い ({intro_chars} 字、{intro_sec} 秒以内 = 約 {int(limit)} 字)"
+            )
     lo, hi = script.target_seconds * 0.75, script.target_seconds * 1.25
     est = script.estimated_seconds()
     if not lo <= est <= hi:
