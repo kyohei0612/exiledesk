@@ -134,6 +134,8 @@ export interface RecipeResult {
 }
 
 const ESS = (essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys;
+/** 結晶化のお告げの側 (無ければ両側) */
+const crystalSides = (omens: readonly string[]): StageSide[] => (omens.some((o) => /SinistralCrystallisation/.test(o)) ? ["prefix"] : omens.some((o) => /DextralCrystallisation/.test(o)) ? ["suffix"] : ["prefix", "suffix"]);
 const SIDE_OMEN = {
   exalt: { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" },
   annul: { prefix: "OmenofSinistralAnnulment", suffix: "OmenofDextralAnnulment" },
@@ -435,13 +437,30 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 偉大の手 (候補のどれか 2 つ) は、もう 2 つ付いていれば次へ。1 つ付いている時は偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
       const two = !!p.target && needOf(p.target) >= 2;
       if (two && meets(item, p.target!)) { i++; continue; }
+      // 狙いがもう付いている手は打たない (消えた物の手に戻った後、続く手の狙いが残っていればそのまま次へ。
+      // 2026-10-07 パターンで試すと、付いている MOD の手もまた打っていた)
+      if (!two && p.target && p.kind !== "rune" && meets(item, p.target)) { i++; continue; }
       if (two && count(p.target!) === 1 && p.omens.includes("OmenofGreaterExaltation")) p = { ...p, ...(p.single ? { currency: p.single.currency, omens: [...p.single.omens] } : { omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") }) };
       const before = p.target ? count(p.target) : 0;
       let e: string | null = null;
       // 始めから差さっているルーン (固定する MOD に要る物) の手は打たずに次へ
       if (p.kind === "rune" && p.rune && preRunes.has(p.rune)) { preRunes.delete(p.rune); i++; continue; }
+      // もう差さっているルーンは差し直さない (消えた物の手に戻った後。2026-10-07 戻るたびにアストリッドを買い直していた)
+      if (p.kind === "rune" && p.rune && (item.augments ?? []).some((x) => x.key === `rune:${p.rune}`)) { i++; continue; }
       if (p.kind === "rune") e = p.rune ? play(`rune:${p.rune}`) : "ルーンが選ばれていない";
-      else if (p.kind === "essence" || p.kind === "essence_perfect") {
+      else if (p.kind === "essence_perfect" && p.target && allMods(item).some((m) => !m.fractured && !isGood(m) && m.family === mod(p.target!.modId).family)) {
+        // 狙いと同じ系統の外れ (埋めの高貴で付いた低い段など) があるとパーフェクトエッセンスが打てないので、先にその側を消す
+        // (2026-10-07 パターンで試すと、どのパターンも 2% ほどが「同じ系統の MOD が付いている」で止まっていた)
+        e = annulOn(sideOf(p.target.modId));
+        if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
+        continue;
+      } else if (p.kind === "essence_perfect" && !(["prefix", "suffix"] as StageSide[]).filter((x) => crystalSides(p.omens).includes(x)).some((x) => junkOn(item, x).length) && crystalSides(p.omens).some((x) => room(item, x))) {
+        // パーフェクトエッセンスは (結晶化の側の) MOD を 1 つ消してから付く。外れが無いと付けた当たりが消える (ソウルコアとクリティカルが消し合って回り続けた。
+        // 2026-10-07)。先に高貴でその側に外れを 1 つ足す
+        e = play("exalt", [SIDE_OMEN.exalt[crystalSides(p.omens).find((x) => room(item, x))!]]);
+        if (e) return fail(`${i + 1} 手目の前の高貴: ${e}`);
+        continue;
+      } else if (p.kind === "essence" || p.kind === "essence_perfect") {
         // セットのエッセンス (1 個ずつ選んだ物)。古いパターン (エッセンスが空) は付ける物から引く
         const key = p.currency || (p.target ? (p.kind === "essence" ? magicEssenceKey(p.target) : `essence:perfect:${p.target.modId}`) : null);
         e = key && ESS[key] ? play(key, p.omens) : "このエッセンスが無い";
@@ -462,6 +481,24 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           e = annulOn(ts);
           if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
           continue;
+        }
+        // 打つだけの高貴は埋めるための手なので、お告げの側 (無ければ両側) に空きが無ければ打たずに次へ
+        // (2026-10-07 パターンで試すと、プレが満杯の時に「お告げの側に空きが無い」で止まっていた)
+        if (p.kind === "exalt" && !p.target) {
+          const sds: StageSide[] = p.omens.includes(SIDE_OMEN.exalt.prefix) ? ["prefix"] : p.omens.includes(SIDE_OMEN.exalt.suffix) ? ["suffix"] : ["prefix", "suffix"];
+          if (!sds.some((x) => room(item, x))) { i++; continue; }
+        }
+        // カオスで外せる物がその側 (抹消のお告げの側、無ければ両側) に無い時は、先に高貴でその側に 1 つ足す
+        // (2026-10-07 左の抹消のカオスでサフィが付くとプレが空になり、次のカオスが「外せる MOD が無い」で止まっていた)
+        if (p.kind === "chaos") {
+          const sd: StageSide | null = p.omens.includes("OmenofSinistralErasure") ? "prefix" : p.omens.includes("OmenofDextralErasure") ? "suffix" : null;
+          const sds: StageSide[] = sd ? [sd] : ["prefix", "suffix"];
+          if (!sds.some((x) => listOf(item, x).some((m) => !m.fractured))) {
+            const to = sds.find((x) => room(item, x));
+            e = to ? play("exalt", [SIDE_OMEN.exalt[to]]) : "カオスで外せる MOD が無い";
+            if (e) return fail(`${i + 1} 手目の前の高貴: ${e}`);
+            continue;
+          }
         }
         // アビスの反響は発現の手で使う (骨には掛けない)。セットに入っている時だけ引き直す
         const echoes = p.omens.includes("OmenofAbyssalEchoes");
