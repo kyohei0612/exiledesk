@@ -226,6 +226,8 @@ const preNodes = computed(() => {
     { title: `${name} を固定`, icons: ["desecrate", "fracture"], sub: "骨の壁 → フラクチャー", tone: "border-orange-400/60", miss: { icons: [], text: "⟲ 白から (当たり 1/3)" }, item: { ...withMod(white, { ...fm, fractured: true }), rarity: "rare" as const } },
   ];
 });
+/** 右の枠で手を決めている途中 (その手はまだアイテムに移さない) */
+const editingStep = computed(() => focusRow.value != null && !props.locked && focusPre.value == null);
 const previewAt = computed(() => Math.min(focusRow.value ?? Infinity, pat.value.steps.length - 1));
 /** 右のアイテムと、そこで光らせる物 (打つだけの手で付いた物) */
 const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; removed?: StageItem["prefixes"]; doomed?: string[] } | null>(() => {
@@ -248,6 +250,14 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
   const targetIds = new Set(s.simTargets.value.flatMap((t) => [t.modId, ...(t.alts ?? []).map((a) => a.modId)]));
   for (let j = 0; j <= previewAt.value; j++) {
     const st = pat.value.steps[j]!;
+    // 決めている途中の手は打つ前の姿 (消える候補にだけ色)。打った後を出すと、カオスなら外れが消えて候補が減って見える
+    // (2026-10-07 オーナー「手を決定してなかったらアイテムに移しちゃだめ、消える奴の候補が減る、2 個とかでもそう」)
+    if (editingStep.value && j === previewAt.value) {
+      const row = rows.value[j];
+      if (row) { const can = removableIn(j, row); doomed = allMods(it).filter((m) => !m.fractured && (can(m.modId) || (!targetIds.has(m.modId) && removesAny(row)))).map((m) => m.modId); }
+      newMods = [];
+      break;
+    }
     const x = setByKey(sets.value, st.set);
     if (!x || !st.target) continue;
     // 打つだけの手は、そのカレンシー (お告げも) を実際に打った姿 (2026-10-07 オーナー「打つだけなら指定のカレンシーで打った時の挙動で表示しちゃっていい」)。
@@ -290,7 +300,7 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
     const t2 = isDouble(x) && st.target2 ? s.simTargets.value.find((y) => y.modId === st.target2) : undefined;
     if (t2) add(t2.modId, t2.minTierIndex, {});
   }
-  const rarity = c ? stateBefore(c, pat.value.steps, previewAt.value + 1).rarity : "rare";
+  const rarity = c ? stateBefore(c, pat.value.steps, previewAt.value + (editingStep.value ? 0 : 1)).rarity : "rare";
   return { item: { ...it, rarity: it.prefixes.length + it.suffixes.length ? (rarity === "normal" ? "magic" : rarity) : rarity }, added: newMods, removed: goneMods, doomed };
 });
 const preview = computed<StageItem | null>(() => previewOut.value?.item ?? null);
@@ -1030,7 +1040,7 @@ defineExpose({ rows });
 
       <!-- その手まで当たった時のアイテム -->
       <div v-if="preview" class="w-[280px] shrink-0 overflow-y-auto">
-        <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
+        <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : editingStep ? `${previewAt + 1} 手目を打つ前 (オレンジ = この手で消える候補)` : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
         <StageItemCard :item="preview" :added="previewOut?.added ?? []" :removed="previewOut?.removed ?? []" :doomed="previewOut?.doomed ?? []" :holding="false" :flash-key="0" :width="280" compact />
       </div>
     </div>
