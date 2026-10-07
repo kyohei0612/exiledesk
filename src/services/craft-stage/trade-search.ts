@@ -29,10 +29,10 @@ export function statsOfMod(data: PatchData, t: ModPick): Array<{ id: string }> {
 }
 
 /**
- * MOD のグループから取引所の検索を開く (開くだけ)。名前・ベース・種類・アイテムレベルは入れない (MOD の組み合わせで種類も決まる)。ソケットの数は入れる
+ * MOD のグループから取引所の検索を開く (開くだけ)。名前・ベース・種類・アイテムレベル・ソケットは入れない: MOD の組み合わせで種類も決まる
  * (2026-10-07 オーナー「検索する時は基本左側指定なしでおｋ、名前から何から」「MOD できてるから自動で指定しなくても入るでしょ」)
  */
-export async function searchModGroups(data: PatchData, opts: { groups: readonly ModGroup[]; socketsMin?: number }): Promise<void> {
+export async function searchModGroups(data: PatchData, opts: { groups: readonly ModGroup[] }): Promise<void> {
   const stats: Array<{ id: string }> = [];
   const anyOf: Array<{ filters: Array<{ id: string }>; count?: number }> = [];
   for (const g of opts.groups) {
@@ -41,6 +41,5 @@ export async function searchModGroups(data: PatchData, opts: { groups: readonly 
     if (fs.length === 1 && count <= 1) stats.push(fs[0]!);
     else if (fs.length) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) });
   }
-  // ソケットの数は入れる (規格外かどうかで値段が大きく変わる。2026-10-07 オーナー「ソケットが入ってないな、なんでだ」)
-  await openTradeQuery(buildSpecQuery({ rarity: "nonunique", stats, anyOf, ...(opts.socketsMin ? { socketsMin: opts.socketsMin } : {}) }));
+  await openTradeQuery(buildSpecQuery({ rarity: "nonunique", stats, anyOf }));
 }
