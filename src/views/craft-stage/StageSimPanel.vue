@@ -11,7 +11,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { craftStage, iconOf, nameOf, priceOf, readSimRecipes, readSimSession, writeSimRecipes, writeSimSession, type SimRecipe, type SimSession } from "../../state/craft-stage";
+import { craftStage, iconOf, mergeRecipesFromFile, nameOf, priceOf, readSimRecipes, readSimSession, recipesToFile, writeSimRecipes, writeSimSession, type SimRecipe, type SimSession } from "../../state/craft-stage";
 import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
 import { rateOf, simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
@@ -804,6 +804,7 @@ const baseJa = computed(() => s.item.value?.baseJa ?? s.base.value);
 const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 function openRecipes(): void {
   recipeOpen.value = !recipeOpen.value;
+  recipeNote.value = "";
   recipeArmed.value = null;
   if (recipeOpen.value && !recipeName.value) recipeName.value = `${baseJa.value} ${fmtDate(Date.now())}`;
 }
@@ -830,6 +831,35 @@ function renameRecipe(id: string, name: string): void {
   if (!n) return;
   recipes.value = recipes.value.map((x) => (x.id === id ? { ...x, name: n } : x));
   writeSimRecipes(recipes.value);
+}
+/**
+ * 書き出し・読み込み (URL を移す時・PC を替える時に持っていく。2026-10-07 オーナー「更新でレシピがなくならないように」)。
+ * 書き出しはファイルを保存 (保存できない環境ではクリップボードへ)、読み込みは選んだファイルから今の一覧に無い物だけ足す
+ */
+const recipeNote = ref("");
+const recipeFile = ref<HTMLInputElement | null>(null);
+async function exportRecipes(): Promise<void> {
+  const text = recipesToFile(recipes.value);
+  const name = `exiledesk-recipes-${new Date().toISOString().slice(0, 10)}.json`;
+  try {
+    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5_000);
+    recipeNote.value = `${recipes.value.length} 件を ${name} に書き出しました`;
+  } catch {
+    await navigator.clipboard.writeText(text).catch(() => undefined);
+    recipeNote.value = "ファイルに保存できなかったのでクリップボードに写しました";
+  }
+}
+async function importRecipes(ev: Event): Promise<void> {
+  const f = (ev.target as HTMLInputElement).files?.[0];
+  (ev.target as HTMLInputElement).value = "";
+  if (!f) return;
+  const r = mergeRecipesFromFile(await f.text(), recipes.value);
+  if (r.added) { recipes.value = r.list; writeSimRecipes(recipes.value); }
+  recipeNote.value = r.bad && !r.added && !r.skipped ? "レシピのファイルではありません" : `${r.added} 件足しました${r.skipped ? ` (同じ物 ${r.skipped} 件は飛ばした)` : ""}${r.bad ? ` · 読めない物 ${r.bad} 件` : ""}`;
 }
 function removeRecipe(id: string): void {
   if (recipeArmed.value !== `del:${id}`) { recipeArmed.value = `del:${id}`; return; }
@@ -1103,6 +1133,13 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <div class="flex items-center gap-2">
             <input v-model="recipeName" class="min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60" placeholder="レシピの名前" @keydown.enter="saveRecipe" />
             <button type="button" class="shrink-0 rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 hover:bg-amber-500/30" @click="saveRecipe">今の状態を保存</button>
+          </div>
+          <!-- 書き出し・読み込み (別の PC・URL に持っていく用) -->
+          <div class="mt-2 flex items-center gap-2 text-[11px]">
+            <button type="button" class="shrink-0 whitespace-nowrap rounded border border-white/15 px-2 py-0.5 opacity-80 hover:bg-white/10 hover:opacity-100 disabled:opacity-40" :disabled="!recipes.length" title="全部のレシピをファイルに保存する (別の PC やブラウザで「読み込む」と戻せる)" @click="exportRecipes">書き出す</button>
+            <button type="button" class="shrink-0 whitespace-nowrap rounded border border-white/15 px-2 py-0.5 opacity-80 hover:bg-white/10 hover:opacity-100" title="書き出したファイルからレシピを足す (今のレシピは消えない)" @click="recipeFile?.click()">読み込む</button>
+            <input ref="recipeFile" type="file" accept=".json,application/json" class="hidden" @change="importRecipes" />
+            <span v-if="recipeNote" class="truncate opacity-60">{{ recipeNote }}</span>
           </div>
           <p v-if="!recipes.length" class="mt-3 text-center opacity-50">まだ保存したレシピはありません</p>
           <div v-else class="mt-3 max-h-[50vh] space-y-1 overflow-y-auto">
