@@ -55,7 +55,8 @@ export interface PatternStep {
    */
   miss?: string | null;
 }
-export interface Pattern { name: string; steps: PatternStep[] }
+/** off: 全部まとめて回す時に回さない (2026-10-07 オーナー「回すパターンを選択できるように」) */
+export interface Pattern { name: string; steps: PatternStep[]; off?: boolean }
 
 export interface PatternSet {
   key: string;

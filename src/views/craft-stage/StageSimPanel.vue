@@ -532,6 +532,23 @@ const startMin = computed((): number | null => {
 /** パターンごとの結果 (回した後)。見ている物を recipeOut / restCost に出す */
 const results = ref<Array<{ name: string; out: { r: RecipeResult; spec: RecipeSpec }; rest: number | null }>>([]);
 const shown = ref(0);
+/** パターンの名前で結果を引く (一覧はパターンの並びで出す) */
+const resultOf = (name: string) => results.value.find((x) => x.name === name) ?? null;
+const shownName = computed(() => results.value[shown.value]?.name ?? "");
+const cheapestName = computed(() => (results.value.length > 1 ? results.value.reduce((b, y) => (y.out.r.perDone < b.out.r.perDone ? y : b)).name : ""));
+function showResultByName(name: string): void {
+  const i = results.value.findIndex((x) => x.name === name);
+  if (i >= 0) showResult(i);
+}
+/** 回していないパターンの一言 (未完成なら最初の打てない手) */
+function patternNote(p: Pattern): string {
+  if (!p.steps.length) return "手が無い";
+  const w = patternProblem(p);
+  return w ? `未完成 (${w})` : "未実行";
+}
+function togglePatternOff(i: number): void {
+  s.simPatterns.value = s.simPatterns.value.map((p, k) => (k === i ? { ...p, off: !p.off } : p));
+}
 function showResult(i: number): void {
   const x = results.value[i];
   if (!x) return;
@@ -544,16 +561,15 @@ const sig = computed(() => `${market.fetchedAt.value ?? 0}|${s.base.value}|s${so
 let gen = 0;
 
 /**
- * 回すパターン = 手があって打てない手の無い物。未完成のパターンがあっても、出来ている物だけ回す
- * (2026-10-07: パターン 1 を作りかけのままパターン 2 を試したい時に、全部止まっていた)
+ * 全部まとめて回すパターン = 手があってチェックの入った物。組みかけでも組めている所までを完成品として回す
+ * (2026-10-07 オーナー「回すパターンを選択できるように」「そこまでを完成品とする」)
  */
 const patternChecks = computed(() => s.simPatterns.value.filter((p) => p.steps.length).map((p) => ({ p, why: patternProblem(p) })));
-const runnable = computed(() => patternChecks.value.filter((x) => !x.why).map((x) => x.p));
-const skipped = computed(() => patternChecks.value.filter((x) => x.why).map((x) => `${x.p.name} (${x.why})`));
+const runnable = computed(() => s.simPatterns.value.filter((p) => p.steps.length && !p.off));
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
   if (!patternChecks.value.length) return "6 パターンに手がありません";
-  if (!runnable.value.length) { const x = patternChecks.value[0]!; return `${x.p.name} の ${x.why}`; }
+  if (!runnable.value.length) return "回すパターンにチェックが入っていません";
   return null;
 });
 
@@ -1077,16 +1093,28 @@ function replay(): void {
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
         <StagePatternEditor :busy="busy" @run-one="(k: number) => run(k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
-        <div v-if="!patternDone" class="mt-1 flex items-center gap-2">
-          <span v-if="blocked" class="ml-auto text-[11px] text-amber-200/80">{{ blocked }}</span>
-          <span v-else-if="skipped.length" class="ml-auto text-[11px] text-amber-200/70" :title="skipped.join(' / ')">未完成で回さない: {{ skipped.map((x) => x.replace(/ \(.*$/, "")).join("・") }}</span>
-          <!-- 回すはいつでも (2026-10-07 オーナー「回しはいつでも回せるようにしよう」)。結果は下の 7 回すに出る -->
-          <span v-if="!busy && results.length" class="flex flex-wrap items-center gap-1 text-[11px]" :class="stale ? 'opacity-50' : ''" :title="stale ? '設定が変わりました。回し直すと合う' : '1 個できるまでの平均 (詳しくは下の 7 回す)'">
-            <button v-for="(x, i) in results" :key="x.name" type="button" class="rounded-full border px-2 py-0.5" :class="shown === i ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/15 hover:bg-white/5'" @click="showResult(i)">{{ x.name }} <b class="tabular-nums">{{ money(x.out.r.perDone + (fractureRow ? startMin ?? 0 : 0)) }}</b> <span class="opacity-60">完成 {{ pct(x.out.r.pDone) }}</span></button>
+        <!--
+          パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
+          チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
+        -->
+        <div v-if="!patternDone" class="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]" :class="stale && !busy ? '[&_.res]:opacity-50' : ''">
+          <span class="opacity-60">パターン</span>
+          <span v-for="(p, i) in s.simPatterns.value" :key="i" class="flex items-center rounded-full border" :class="shownName === p.name && resultOf(p.name) ? 'border-amber-400/70 bg-amber-500/15' : 'border-white/15'">
+            <input type="checkbox" class="ml-2 h-3 w-3 accent-amber-400" :checked="!p.off" :title="p.off ? '全部まとめて回す時に入れる' : '全部まとめて回す時に入れない'" @change="togglePatternOff(i)" />
+            <button type="button" class="res flex items-center gap-1 rounded-full py-0.5 pl-1.5 pr-2.5 text-left disabled:cursor-default" :class="p.off ? 'opacity-40' : ''" :disabled="!resultOf(p.name)" :title="resultOf(p.name) ? (stale ? '設定が変わりました。回し直すと合う' : '押すと結果を下に出す') : patternNote(p)" @click="showResultByName(p.name)">
+              <b>{{ p.name }}</b>
+              <template v-if="resultOf(p.name)">
+                <b class="tabular-nums text-amber-100">{{ money(resultOf(p.name)!.out.r.perDone + (fractureRow ? startMin ?? 0 : 0)) }}</b>
+                <span class="opacity-60">完成 {{ pct(resultOf(p.name)!.out.r.pDone) }}</span>
+                <span v-if="cheapestName === p.name" class="rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">一番安い</span>
+              </template>
+              <span v-else class="opacity-50">{{ patternNote(p) }}</span>
+            </button>
           </span>
-          <span v-if="busy" class="text-[11px] text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
+          <span v-if="busy" class="ml-auto text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
-          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="blocked || skipped.length || busy ? '' : 'ml-auto'" :disabled="busy || !!blocked" :title="blocked ?? `出来ているパターンを ${runs.toLocaleString()} 回ずつ回す`" @click="run()">回す ▶</button>
+          <span v-if="error" class="text-rose-300">{{ error }}</span>
+          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンを ${runs.toLocaleString()} 回ずつ回す (組みかけは組めている所まで)`" @click="run()">回す ▶</button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
@@ -1102,30 +1130,6 @@ function replay(): void {
       <span v-if="help" class="opacity-60">計算と回した結果は、この相場の値段で出しています</span>
     </div>
 
-    <!-- 回す -->
-    <div class="flex flex-wrap items-center gap-2 border-t border-white/10 pt-2">
-      <span v-if="!fractureRow" class="text-[11px] opacity-70">{{ runs.toLocaleString() }} 回</span>
-      <!-- フラクチャーがあると比べ用に 2 本回す (2026-10-05 オーナー「1000 回押しても 2000 回になる、別に 2000 回でおｋだから UI 直して」) -->
-      <span v-if="fractureRow" class="text-[11px] opacity-70" title="フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定">フラクチャー済みから {{ runs.toLocaleString() }} 回</span>
-      <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="busy ? '回している途中' : blocked ?? '決めた作り方で回す'" @click="run()">回す</button>
-      <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-1 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
-      <span v-if="busy" class="text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
-      <span v-else-if="blocked && rows.length" class="text-amber-200/80">{{ blocked }}</span>
-      <span v-if="error" class="text-rose-300">{{ error }}</span>
-    </div>
-
-    </div>
-    <!-- パターンごとの結果 (回した後)。押すとそのパターンの比べ・結果を下に出す -->
-    <div v-if="results.length > 1" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-      <p class="mb-1 font-bold text-sky-100">パターンの比べ</p>
-      <div class="flex flex-wrap gap-1.5 text-[11px]">
-        <button v-for="(x, i) in results" :key="x.name" type="button" class="rounded-lg px-2.5 py-1 text-left" :class="shown === i ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="showResult(i)">
-          <b>{{ x.name }}</b>
-          <span class="ml-1.5 tabular-nums" :title="fractureRow ? `一番安い始め方 ${money(startMin ?? 0)} + フラクチャー済みから ${money(x.out.r.perDone)}` : undefined">{{ money(x.out.r.perDone + (fractureRow ? startMin ?? 0 : 0)) }}</span>
-          <span class="ml-1.5 opacity-70">完成 {{ pct(x.out.r.pDone) }}</span>
-          <span v-if="results.length > 1 && results.reduce((b, y, k) => (y.out.r.perDone < results[b]!.out.r.perDone ? k : b), 0) === i" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span>
-        </button>
-      </div>
     </div>
     <!-- 始め方の比べ (回した後) -->
     <div v-if="recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
