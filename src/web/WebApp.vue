@@ -9,10 +9,16 @@ import { ref } from "vue";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import LivePanel from "./LivePanel.vue";
 import FeedbackDialog from "./FeedbackDialog.vue";
+import WelcomeDialog from "./WelcomeDialog.vue";
 import { APP_DOWNLOAD_URL } from "./config";
 import pkg from "../../package.json";
 
 const feedbackOpen = ref(false);
+/** 初めて来た人の窓: 1 回閉じたら出さない (上の「はじめに」で開き直せる) */
+const WELCOME_KEY = "exiledesk.web.welcomed";
+const welcomeOpen = ref(false);
+try { welcomeOpen.value = !localStorage.getItem(WELCOME_KEY); } catch { welcomeOpen.value = true; }
+function closeWelcome(): void { welcomeOpen.value = false; try { localStorage.setItem(WELCOME_KEY, "1"); } catch { /* 無くてよい */ } }
 const DESIGN_WIDTH = 1660;
 const frame = ref({ w: DESIGN_WIDTH, h: 900 });
 function fitZoom(): void {
@@ -31,9 +37,11 @@ window.addEventListener("resize", fitZoom);
       <span class="opacity-50">Web</span>
       <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70">クラフトステージ</span>
       <span class="ml-auto opacity-40">v{{ pkg.version }}</span>
+      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">要望・バグを送る</button>
       <a :href="APP_DOWNLOAD_URL" target="_blank" rel="noopener" class="rounded-lg border border-amber-400/50 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100 hover:bg-amber-500/20" title="相場の自動取得・取引履歴・火力チェックなどはアプリ版で">アプリ版をダウンロード ↗</a>
     </header>
+    <WelcomeDialog :open="welcomeOpen" @close="closeWelcome" />
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
     <div class="flex min-h-0 flex-1">
       <CraftStage class="min-w-0 flex-1" />
