@@ -344,7 +344,7 @@ const KIND_TONE: Record<string, string> = {
 };
 /** カードの見出し (付ける物を短く: 「火耐性 T3+」) */
 function cardTitle(r: Row): string {
-  if (r.set?.kind === "annul") return "外れを消す";
+  if (r.set?.kind === "annul") return "違う MOD を消す";
   if (!r.step.target) return r.set?.kind === "rune" ? "ルーン未定" : "MOD 未定";
   if (r.step.target === ANY_TARGET) return "打つだけ";
   if (isRest(r.step.target)) return `残りの MOD (${Number(r.step.target.slice(REST.length)) + 1} 手目の候補)`;
@@ -566,18 +566,18 @@ function missOmenChoices(r: Row): Array<{ key: string; ja: string; omens: string
 function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const x = missSet(r.step);
   const c = ctx.value;
-  if (!x) return { text: "外れた MOD は残ったまま次の手へ進む", bad: false };
+  if (!x) return { text: "違う MOD は残したまま次の手へ進む", bad: false };
   if (!c) return { text: "", bad: false };
   if (x.omens.includes("OmenofLight")) return { text: "冒涜の MOD だけを消す (付いている狙いは消えない)", bad: false };
-  if (x.omens.includes("OmenofWhittling")) return { text: "一番 MOD レベルの低い物を入れ替える (外れが狙いより低ければ安全、高ければ狙いを消す)", bad: true };
+  if (x.omens.includes("OmenofWhittling")) return { text: "一番 MOD レベルの低い物を入れ替える (違う MOD が狙いより低ければ安全、高ければ狙いを消す)", bad: true };
   if (x.kind !== "annul" && x.kind !== "chaos") return { text: "", bad: false };
   const side = x.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : x.omens.some((o) => /Dextral/.test(o)) ? "suffix" : null;
   const sideOfId = (id: string): "prefix" | "suffix" => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
   const n = presentMods(i, r).filter((id) => !(needs2(r) && [r.step.target, ...candsOf(r)].includes(id)) && (!side || sideOfId(id) === side)).length;
   const verb = x.kind === "chaos" ? "入れ替える" : "消す";
   // 偉大の手は「1 つだけ当たり」の時、当たった方も消す候補に入る
-  if (needs2(r)) return { text: `どれも外れの時: ${n ? `狙いを巻き込む ${n}/${n + 1}` : "安全"} / 1 つだけ当たりの時: 当たった MOD を巻き込む ${n + 1}/${n + 2}`, bad: true };
-  return n ? { text: `外れと、付いている狙い ${n} つのどれかを${verb} → 狙いを巻き込む ${n}/${n + 1}`, bad: true } : { text: `外れを${verb} (この時点で付いている狙いは無いので安全)`, bad: false };
+  if (needs2(r)) return { text: `どれも失敗の時: ${n ? `狙いを巻き込む ${n}/${n + 1}` : "安全"} / 1 つだけ当たりの時: 当たった MOD を巻き込む ${n + 1}/${n + 2}`, bad: true };
+  return n ? { text: `違う MOD と、付いている狙い ${n} つのどれかを${verb} → 狙いを巻き込む ${n}/${n + 1}`, bad: true } : { text: `違う MOD を${verb} (この時点で付いている狙いは無いので安全)`, bad: false };
 }
 /**
  * この手を打つ時に消える確率 (打つ物が消してから付ける物の時: カオス・パーフェクトエッセンス)。その側の固定以外の MOD (狙い + 外れ) から 1 つ。
@@ -598,11 +598,11 @@ function lostRisk(i: number, r: Row): { text: string; bad: boolean } | null {
   // 打つだけで付いた外れは側が分からない (側のお告げの時は、その側に付いていれば候補が増える)
   if (side && count(side) <= goods.length) {
     return st.junk > 0
-      ? { text: `打つだけの外れが${sideJa}に付いていれば ${goods.length}/${goods.length + 1} で ${names} が消える。${sideJa}に無ければ必ず消える`, bad: true }
-      : { text: `この手で ${names} が必ず消える (${sideJa}に外れが無い。先に外れを付けておくか、戻り先を決める)`, bad: true };
+      ? { text: `打つだけで付いた MOD が${sideJa}にあれば ${goods.length}/${goods.length + 1} で ${names} が消える。${sideJa}に無ければ必ず消える`, bad: true }
+      : { text: `この手で ${names} が必ず消える (${sideJa}に違う MOD が無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
   }
   const n = side ? count(side) : count("prefix") + count("suffix") + st.junk;
-  if (n <= goods.length) return { text: `この手で ${names} が必ず消える (外れが無い。先に外れを付けておくか、戻り先を決める)`, bad: true };
+  if (n <= goods.length) return { text: `この手で ${names} が必ず消える (違う MOD が無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
   return { text: `この手で消える候補 ${n} つのうち、狙い ${goods.length} つ (${names}) → ${goods.length}/${n}`, bad: false };
 }
 /** 1 発の棚: 1 つずつ付ける高貴 (偉大なし) */
@@ -623,7 +623,7 @@ function chipsOf(i: number, r: Row): Chip[] {
   if (!isRune) out.push({ part: "set", name: "カレンシー", icons: icons(r.set), text: r.set && !icons(r.set).length ? setShort(r.set) : "", state: st("set", !!r.set) });
   if (needs2(r)) out.push({ part: "target2", name: "一緒に狙う MOD", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: st("target2", !!r.step.target2) });
   else if (canCands(r)) out.push({ part: "target2", name: "ほかの候補 (任意)", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: now === "target2" ? "now" : "done" });
-  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? "選択無し" : "", state: st("miss", hasMiss(r)) });
+  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "失敗したら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? "選択無し" : "", state: st("miss", hasMiss(r)) });
   if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
   if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が消えたら", icons: [], text: "", state: st("lost", true) });
   return out;
@@ -751,7 +751,7 @@ defineExpose({ rows });
               <span class="flex items-center">
                 <span class="h-px w-4 border-t border-dashed border-rose-400/60"></span>
                 <span class="flex items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1">
-                  <span class="text-rose-300">外れ</span>
+                  <span class="text-rose-300">失敗</span>
                   <template v-if="n.miss.icons.length">
                     <span class="opacity-60">→</span>
                     <img v-for="c in n.miss.icons" :key="c" :src="iconOf(c)" alt="" class="h-5 w-5 object-contain" />
@@ -801,7 +801,7 @@ defineExpose({ rows });
               <span class="flex items-center">
                 <span class="h-px w-4 border-t border-dashed border-rose-400/60"></span>
                 <button type="button" class="flex items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :class="focusRow === i && partOf(i, r) === 'miss' ? 'ring-2 ring-rose-400/70' : ''" :title="hasMiss(r) ? '押すとやり直しを選ぶ' : 'レアリティが変わる手はやり直せない'" :disabled="!hasMiss(r) || locked" @click="selectRow(i, 'miss')">
-                  <span class="text-rose-300">外れ</span>
+                  <span class="text-rose-300">失敗</span>
                   <template v-if="missSet(r.step)">
                     <span class="opacity-60">→</span>
                     <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-5 w-5 object-contain" />
@@ -825,7 +825,7 @@ defineExpose({ rows });
           -->
           <div v-if="needs2(r) && r.set" class="ml-3 mt-1 space-y-1 border-l border-dashed border-rose-400/50 pl-2 text-[10px]">
             <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すとやり直し (消去) を選ぶ" @click="selectRow(i, 'miss')">
-              <span class="rounded bg-rose-950/50 px-1 text-rose-300">どれも外れ</span>
+              <span class="rounded bg-rose-950/50 px-1 text-rose-300">どれも失敗</span>
               <span class="opacity-60">→</span>
               <img v-if="missSet(r.step) && iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-4 w-4 object-contain" />
               <span>2 枠空くまで</span>
@@ -839,7 +839,7 @@ defineExpose({ rows });
                 <span>消去</span>
               </button>
               <button type="button" class="ml-4 flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すと 1 発の打ち方を選ぶ" @click="selectRow(i, 'single')">
-                <span class="opacity-60">├ 外れが消えた →</span>
+                <span class="opacity-60">├ 違う MOD が消えたら →</span>
                 <img v-for="c in [singleSet(r)?.currency, ...(singleSet(r)?.omens ?? [])].filter((x) => x && iconOf(x))" :key="c" :src="iconOf(c!)" alt="" class="h-4 w-4 object-contain" />
                 <span>1 発</span>
                 <span class="text-amber-200/90">↺ 付くまで</span>
@@ -946,7 +946,7 @@ defineExpose({ rows });
               </div>
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'single'">
-              <p class="mb-1 text-[11px] opacity-60">片方だけ当たって、消去で外れが消えた後に、残りの 1 つを打つ手 (既定は同じカレンシーで偉大だけ外した物)</p>
+              <p class="mb-1 text-[11px] opacity-60">1 つだけ当たって、違う MOD が消えた後に、残りの 1 つを打つ手 (既定は同じカレンシーで偉大だけ外した物)</p>
               <StagePatternStepPicker :key="'single' + focusRow" :sets="singleSets" :why="() => null" :current="singleSet(rows[focusRow]!)?.key ?? ''" inline @pick="(k) => { patch(focusRow!, { single: k }); editPart = 'single'; }" />
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'set'">
@@ -957,14 +957,14 @@ defineExpose({ rows });
                 外れが付いたら、どう消すか (2026-10-07 オーナー「選択肢が意味わからない、何をする場所なんだろってなる」)。
                 大きい札 3 枚 (そのまま / 消去 / カオス) → 選んだ札のお告げ・強さだけ → 巻き込む確率 1 行。パーフェクトエッセンス・骨は畳む
               -->
-              <p class="mb-2 text-[13px] font-bold text-rose-100">狙いの MOD が付かなかったら、どうする？</p>
+              <p class="mb-2 text-[13px] font-bold text-rose-100">失敗したら (狙いと違う MOD が付いたら)、どうする？</p>
               <div class="grid max-w-2xl grid-cols-3 gap-2">
                 <button v-for="k in (['none', 'annul', 'chaos'] as const)" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" @click="pickMissKind(focusRow!, k)">
                   <img v-if="k !== 'none' && iconOf(k)" :src="iconOf(k)" alt="" class="h-8 w-8 object-contain" />
                   <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">→</span>
                   <span>
                     <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
-                    <span class="text-[10px] opacity-60">{{ k === "none" ? "外れは残す" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
+                    <span class="text-[10px] opacity-60">{{ k === "none" ? "違う MOD は残す" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
                   </span>
                 </button>
               </div>
@@ -1015,7 +1015,7 @@ defineExpose({ rows });
                     </button>
                   </template>
                   <template v-if="showMiss(r)">
-                    <span class="text-[11px] text-rose-300/80">付かなかったら</span>
+                    <span class="text-[11px] text-rose-300/80">失敗したら</span>
                     <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked || !hasMiss(r)" @click="editPart = 'miss'">
                       <template v-if="missSet(r.step)">
                         <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-7 w-7 object-contain" />
@@ -1070,7 +1070,7 @@ defineExpose({ rows });
                     </button>
                   </template>
                   <template v-if="showMiss(r)">
-                    <span class="text-[11px] text-rose-300/80">付かなかったら</span>
+                    <span class="text-[11px] text-rose-300/80">失敗したら</span>
                     <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked || !hasMiss(r)" @click="editPart = 'miss'">
                       <template v-if="missSet(r.step)">
                         <img v-if="iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-7 w-7 object-contain" />
