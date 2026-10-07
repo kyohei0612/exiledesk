@@ -13,7 +13,7 @@ import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageItemCard from "./StageItemCard.vue";
 import { freshItem } from "../../services/craft-stage/run-plan";
-import { makeStageMod, withMod } from "../../services/craft-stage/stage-core";
+import { allMods, makeStageMod, without, withMod } from "../../services/craft-stage/stage-core";
 import { applyRune } from "../../services/craft-stage/stage-runes";
 import { applyCurrency } from "../../services/craft-stage/apply-currency";
 import { mulberry32 } from "../../services/htc/rng";
@@ -228,7 +228,7 @@ const preNodes = computed(() => {
 });
 const previewAt = computed(() => Math.min(focusRow.value ?? Infinity, pat.value.steps.length - 1));
 /** 右のアイテムと、そこで光らせる物 (打つだけの手で付いた物) */
-const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"] } | null>(() => {
+const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; removed?: StageItem["prefixes"]; doomed?: string[] } | null>(() => {
   if (focusPre.value != null && preNodes.value[focusPre.value]) return { item: preNodes.value[focusPre.value]!.item, added: [] };
   const d = s.data.value;
   if (!d || !s.base.value) return null;
@@ -243,6 +243,9 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"] } | 
   if (frac) add(frac.modId, frac.minTierIndex, { fractured: true });
   const c = ctx.value;
   let newMods: StageItem["prefixes"] = [];
+  let goneMods: StageItem["prefixes"] = [];
+  let doomed: string[] = [];
+  const targetIds = new Set(s.simTargets.value.flatMap((t) => [t.modId, ...(t.alts ?? []).map((a) => a.modId)]));
   for (let j = 0; j <= previewAt.value; j++) {
     const st = pat.value.steps[j]!;
     const x = setByKey(sets.value, st.set);
@@ -256,12 +259,28 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"] } | 
     }
     if (x.kind === "rune") { const r = applyRune(it, `rune:${st.target}`, d); if (r.applied) it = r.item; continue; }
     const t = s.simTargets.value.find((y) => y.modId === st.target);
+    // 見ている手で消える・入れ替わる可能性のある MOD (打つ物とやり直しで。クラフトステージの削減と同じ色。2026-10-07 オーナー
+    // 「変更される可能性があるやつ色付けた方がいい、削減みたいな感じで一緒の色で」)
+    if (j === previewAt.value) {
+      const row = rows.value[j];
+      if (row) { const can = removableIn(j, row); doomed = allMods(it).filter((m) => !m.fractured && (can(m.modId) || (!targetIds.has(m.modId) && removesAny(row)))).map((m) => m.modId); }
+    }
+    // カオス・パーフェクトエッセンスは 1 つ消してから付ける (足すだけに見えて「もう 1 つ付くのか」となっていた。2026-10-07 オーナー
+    // 「カオスで付く場合は今付いてる MOD 消して狙いの MOD 付くような感じで表示しないと」)。消すのは狙い以外 (打つだけで付いた外れなど)、側のお告げがあればその側
+    if (t && (x.kind === "chaos" || x.kind === "essence_perfect")) {
+      const side = x.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : x.omens.some((o) => /Dextral/.test(o)) ? "suffix" : null;
+      const junk = allMods(it).filter((m) => !m.fractured && !targetIds.has(m.modId) && (!side || m.side === side));
+      const gone = junk[0];
+      if (gone) { it = without(it, gone); if (j === previewAt.value) goneMods = [gone]; }
+    }
     if (t) add(t.modId, t.minTierIndex, x.kind === "desecrate" ? { desecrated: true } : x.kind === "essence" || x.kind === "essence_perfect" ? { crafted: true } : {});
+    // 見ている手で付いた物は光らせる
+    if (t && j === previewAt.value) newMods = allMods(it).filter((m) => m.modId === t.modId);
     const t2 = isDouble(x) && st.target2 ? s.simTargets.value.find((y) => y.modId === st.target2) : undefined;
     if (t2) add(t2.modId, t2.minTierIndex, {});
   }
   const rarity = c ? stateBefore(c, pat.value.steps, previewAt.value + 1).rarity : "rare";
-  return { item: { ...it, rarity: it.prefixes.length + it.suffixes.length ? (rarity === "normal" ? "magic" : rarity) : rarity }, added: newMods };
+  return { item: { ...it, rarity: it.prefixes.length + it.suffixes.length ? (rarity === "normal" ? "magic" : rarity) : rarity }, added: newMods, removed: goneMods, doomed };
 });
 const preview = computed<StageItem | null>(() => previewOut.value?.item ?? null);
 
@@ -437,6 +456,11 @@ function presentMods(i: number, r: Row): string[] {
   if (needs2(r) && r.step.target && r.step.target !== ANY_TARGET) out.push(r.step.target, ...candsOf(r));
   const can = removableIn(i, r);
   return [...new Set(out)].filter((id) => c.targets.find((t) => t.modId === id)?.method !== "fracture" && can(id));
+}
+/** その手が狙い以外の MOD (外れ・打つだけで付いた物) も消しうるか (光のお告げは冒涜だけなので、冒涜でなければ消さない) */
+function removesAny(r: Row): boolean {
+  const ms = hasMiss(r) ? missSet(r.step) : undefined;
+  return (!!r.set && (r.set.kind === "chaos" || r.set.kind === "essence_perfect")) || (!!ms && !ms.omens.includes("OmenofLight"));
 }
 /**
  * その手で外れうる MOD か (打つ物とやり直しの物で消える物だけ。2026-10-07 オーナー「光のお告げなのに冒涜以外の外れたら見たいな選択肢が出る」)。
@@ -1006,7 +1030,7 @@ defineExpose({ rows });
       <!-- その手まで当たった時のアイテム -->
       <div v-if="preview" class="w-[280px] shrink-0 overflow-y-auto">
         <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
-        <StageItemCard :item="preview" :added="previewOut?.added ?? []" :removed="[]" :holding="false" :flash-key="0" :width="280" compact />
+        <StageItemCard :item="preview" :added="previewOut?.added ?? []" :removed="previewOut?.removed ?? []" :doomed="previewOut?.doomed ?? []" :holding="false" :flash-key="0" :width="280" compact />
       </div>
     </div>
   </div>
