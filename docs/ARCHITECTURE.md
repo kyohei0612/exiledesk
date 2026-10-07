@@ -70,7 +70,7 @@ PoE2 のための Windows アプリ。画面は Vue 3 + TypeScript、裏側は R
 - **PoB**: Release `pob-bundle` に別配布 (`src-tauri/src/pob_bundle.rs`)。
 - **キャッシュ**: `cache-warm.yml` が main でリリースと同じ `tauri build --no-bundle` を回してキャッシュを温める。
 - **サーバー (Web 版の準備)**: `server/live/` は Cloudflare Workers の小さなサーバー (5 分おきに自分・協賛チャンネルがライブ中かを調べ、`GET /live.json` で配る)。
-  アプリ本体とは別のプロジェクトで、`cd server/live && pnpm deploy` で置く (手順は `server/live/README.md`)。テストは `tests/live-worker.test.ts`。
+  アプリ本体とは別のプロジェクトで、`cd server/live && pnpm run deploy` で置く (手順は `server/live/README.md`)。テストは `tests/live-worker.test.ts`。
 
 ## テスト
 
