@@ -18,7 +18,7 @@ import channelsJson from "../channels.json";
 import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
 import { fetchYoutube, fetchYoutubeAvatars } from "./youtube";
-import { allowIp, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
+import { allowIp, getFeedback, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
 import { parseBatch, writeEvents } from "./events";
 import { alert, dailyReport, reqLog } from "./monitor";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
@@ -137,6 +137,13 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
   }
   if (req.method !== "GET") return json({ error: "GET だけ" }, 405);
   if (url.pathname.startsWith("/api/poe2scout/")) return proxyScout(url, ctx, fetch, env);
+  // 要望 1 件 (添付ごと)。Discord に付いたファイルと同じ物
+  const one = url.pathname.match(/^\/feedback\/([A-Za-z0-9-]{4,16})\.json$/);
+  if (one) {
+    if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+    const fb = await getFeedback(env.LIVE, one[1]!);
+    return fb ? json(fb, 200, { "cache-control": "no-store" }) : json({ error: "無い" }, 404);
+  }
   switch (url.pathname) {
     case "/live.json": {
       const raw = await env.LIVE.get(STATE_KEY);

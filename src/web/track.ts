@@ -48,6 +48,21 @@ export function trailNow(): Array<{ n: string; ago: number }> {
   return trail.map((e) => ({ n: e.n, ago: Math.round((now - e.t) / 1000) }));
 }
 
+/** 直近の JS エラーと console.error (要望・バグの添付用。本文が「バグっぽい」だけでも原因が追えるように) */
+const recentErrors: Array<{ t: number; msg: string; stack?: string }> = [];
+const recentConsole: Array<{ t: number; msg: string }> = [];
+function pushError(msg: string, stack?: string): void {
+  recentErrors.push({ t: Date.now(), msg: msg.slice(0, 300), ...(stack ? { stack: stack.slice(0, 600) } : {}) });
+  if (recentErrors.length > 8) recentErrors.shift();
+}
+export function diagNow(): { errors: Array<{ ago: number; msg: string; stack?: string }>; console: Array<{ ago: number; msg: string }> } {
+  const now = Date.now();
+  return {
+    errors: recentErrors.map((e) => ({ ago: Math.round((now - e.t) / 1000), msg: e.msg, ...(e.stack ? { stack: e.stack } : {}) })),
+    console: recentConsole.map((e) => ({ ago: Math.round((now - e.t) / 1000), msg: e.msg })),
+  };
+}
+
 let sentAny = false;
 export function flush(): void {
   if (!buf.length) return;
@@ -71,8 +86,13 @@ export function startTracking(): void {
   watch(() => s.simTargets.value.length, (n) => { if (n > 0) trackOnce("sim:targets"); });
   watch(() => s.simOrder.value.length, (n) => { if (n > 0) trackOnce("sim:order"); });
   watch(() => s.simPatterns.value.some((p) => p.steps.length > 0), (v) => { if (v) trackOnce("sim:pattern"); });
-  window.addEventListener("error", (e) => track("error", `${e.message ?? "error"} @${(e.filename ?? "").split("/").pop()}:${e.lineno ?? 0}`));
-  window.addEventListener("unhandledrejection", (e) => track("error", String((e.reason as Error)?.message ?? e.reason).slice(0, 120)));
+  window.addEventListener("error", (e) => { const m = `${e.message ?? "error"} @${(e.filename ?? "").split("/").pop()}:${e.lineno ?? 0}`; track("error", m); pushError(m, (e.error as Error)?.stack); });
+  window.addEventListener("unhandledrejection", (e) => { const m = String((e.reason as Error)?.message ?? e.reason).slice(0, 120); track("error", m); pushError(m, (e.reason as Error)?.stack); });
+  // console.error / warn も残す (画面の部品が出す「取れなかった」などの手がかり)
+  for (const k of ["error", "warn"] as const) {
+    const orig = console[k].bind(console);
+    console[k] = (...args: unknown[]) => { try { recentConsole.push({ t: Date.now(), msg: `${k}: ${args.map((a) => (typeof a === "string" ? a : a instanceof Error ? a.message : JSON.stringify(a))).join(" ").slice(0, 200)}` }); if (recentConsole.length > 12) recentConsole.shift(); } catch { /* 無視 */ } orig(...args); };
+  }
   setInterval(() => { if (document.visibilityState === "visible") { track("ping"); flush(); } }, PING_MS);
   setInterval(flush, FLUSH_MS);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });

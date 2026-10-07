@@ -20,7 +20,7 @@ export interface Feedback {
 
 const MAX_TEXT = 4000;
 const MAX_CONTACT = 200;
-const MAX_CONTEXT = 24 * 1024;
+const MAX_CONTEXT = 96 * 1024;
 const PER_HOUR = 10;
 /** 連投よけ: 同じ IP は 1 分に 1 件 (2026-10-07 オーナー「1 分レートで連続で送れないように」) */
 const PER_MINUTE = 1;
@@ -78,6 +78,13 @@ export async function saveFeedback(kv: KVNamespace, fb: Feedback): Promise<void>
   await kv.put(`${PREFIX}${rev}:${fb.id}`, JSON.stringify(fb), { expirationTtl: KEEP_DAYS * 86400 });
 }
 
+/** 1 件 (id で。キーは fb:<時刻>:<id> なので一覧から引く) */
+export async function getFeedback(kv: KVNamespace, id: string): Promise<Feedback | null> {
+  const l = await kv.list({ prefix: PREFIX, limit: 1000 });
+  const k = l.keys.find((x) => x.name.endsWith(`:${id}`));
+  return k ? ((await kv.get(k.name, "json")) as Feedback | null) : null;
+}
+
 export async function listFeedback(kv: KVNamespace, limit = 100): Promise<Feedback[]> {
   const l = await kv.list({ prefix: PREFIX, limit });
   const out: Feedback[] = [];
@@ -85,18 +92,47 @@ export async function listFeedback(kv: KVNamespace, limit = 100): Promise<Feedba
   return out;
 }
 
-/** Discord に 1 件流す (webhook。失敗しても保存は済んでいるので投げない) */
+/** 添付から「今の状態」を 1 行に (手で打つ / シミュレーション・ベース・手数・狙いとパターンの数・エラーの数) */
+export function stateLine(context: unknown): string {
+  if (!context || typeof context !== "object") return "";
+  const c = context as { version?: string; mode?: string; base?: string; itemLevel?: number; hand?: { steps?: number } | null; sim?: { targets?: unknown[]; patterns?: unknown[] } | null; errors?: unknown[]; market?: { error?: string | null } };
+  const parts = [
+    c.version ? `v${c.version}` : "",
+    c.mode === "sim" ? "シミュレーション" : c.mode === "hand" ? "手で打つ" : "",
+    c.base ? `${c.base}${c.itemLevel ? ` ilvl${c.itemLevel}` : ""}` : "",
+    c.hand?.steps ? `手で ${c.hand.steps} 手` : "",
+    c.sim ? `狙い ${c.sim.targets?.length ?? 0} · パターン ${c.sim.patterns?.length ?? 0}` : "",
+    c.errors?.length ? `JS エラー ${c.errors.length}` : "",
+    c.market?.error ? "相場が取れていない" : "",
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
+/**
+ * Discord に 1 件流す (webhook。失敗しても保存は済んでいるので投げない)。
+ * 本文の下に「状態」と「流れ」を 1 行ずつ、全部の添付 (手順の plan・レシピ・エラー) は JSON ファイルで付ける
+ * (本人は「バグっぽい」としか書かないので、受けた側がそのまま解析・再現できる分を自動で付ける。2026-10-07 オーナー)
+ */
 export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetch): Promise<boolean> {
   const head = fb.kind === "bug" ? "🐛 バグ" : "💡 要望";
-  // 「流れ」(直前の操作) は読みやすく 1 行に、残り (版・ベース・シミュレーションの途中) は JSON で
   const trail = trailText(fb.context);
-  const rest = fb.context && typeof fb.context === "object" ? Object.fromEntries(Object.entries(fb.context as Record<string, unknown>).filter(([k]) => k !== "trail")) : fb.context;
-  const ctx = (trail ? `\n流れ: ${trail}` : "") + (rest ? "\n```json\n" + JSON.stringify(rest).slice(0, 500) + "\n```" : "");
+  const state = stateLine(fb.context);
+  const firstErr = (fb.context as { errors?: Array<{ msg?: string }> } | null)?.errors?.[0]?.msg;
   // 日本時間で (Discord は文字列をそのまま出すので、ここで +9 時間)
   const jst = new Date(Date.parse(fb.at) + 9 * 3600e3).toISOString().slice(0, 16).replace("T", " ");
-  const content = `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST\n${fb.text.slice(0, 1200)}${ctx}`.slice(0, 1950);
+  const content = [
+    `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST · id ${fb.id}`,
+    fb.text.slice(0, 1200),
+    state ? `状態: ${state}` : "",
+    trail ? `流れ: ${trail}` : "",
+    firstErr ? `直近のエラー: ${String(firstErr).slice(0, 160)}` : "",
+    fb.context ? "添付の JSON に 手順 (同じ seed で再生できる plan)・レシピ・エラーの詳細が入っています" : "",
+  ].filter(Boolean).join("\n").slice(0, 1950);
   try {
-    const r = await fetchFn(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content, allowed_mentions: { parse: [] } }) });
+    const form = new FormData();
+    form.append("payload_json", JSON.stringify({ content, allowed_mentions: { parse: [] } }));
+    if (fb.context) form.append("files[0]", new Blob([JSON.stringify(fb, null, 1)], { type: "application/json" }), `feedback-${fb.id}.json`);
+    const r = await fetchFn(webhook, { method: "POST", body: form });
     return r.ok;
   } catch { return false; }
 }

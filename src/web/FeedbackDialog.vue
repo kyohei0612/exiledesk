@@ -6,7 +6,9 @@
 import { computed, ref, watch } from "vue";
 import { craftStage, readSimSession } from "../state/craft-stage";
 import { WEB_API_BASE } from "./config";
-import { track, trailNow } from "./track";
+import { diagNow, track, trailNow } from "./track";
+import { marketStore } from "../state/market-store";
+import { allMods } from "../services/craft-stage/stage-core";
 import pkg from "../../package.json";
 
 const props = defineProps<{ open: boolean }>();
@@ -23,19 +25,33 @@ const canSend = computed(() => text.value.trim().length > 0 && state.value !== "
 
 watch(() => props.open, (v) => { if (v) { state.value = "idle"; errorText.value = ""; track("feedback:open"); } });
 
-/** 今の画面の状態 (小さく): 版・URL・手で打つ / シミュレーション・ベース・シミュレーションの途中 */
+/**
+ * 今の画面の状態 (本文が「使いづらい」「バグっぽい」だけでも、受けた側がすぐ再現・解析できる分を自動で付ける。2026-10-07 オーナー):
+ * 版・URL・手で打つ / シミュレーション・ベース・直前の流れ・手で打った手順 (同じ seed で再生できる plan)・今のアイテム・
+ * シミュレーションの途中 (レシピとして読み込める形)・直近の JS エラーと console・相場の状態。名前やログインの情報は入らない
+ */
 function contextNow(): unknown {
   const ses = readSimSession();
+  const s = craftStage;
+  const it = s.item.value;
+  const hand = s.log.value.length ? { plan: s.plan(), steps: s.log.value.length } : null;
+  const d = diagNow();
   return {
     version: pkg.version,
     url: location.href,
-    mode: craftStage.mode.value,
-    base: craftStage.base.value,
-    itemLevel: craftStage.itemLevel.value,
+    mode: s.mode.value,
+    base: s.base.value,
+    itemLevel: s.itemLevel.value,
+    item: it ? { rarity: it.rarity, sockets: it.sockets ?? 0, mods: allMods(it).map((m) => `${m.modId}${m.tierIndex != null ? ` T${m.tierIndex}` : ""}${m.fractured ? " (固定)" : ""}${m.desecrated ? " (冒涜)" : ""}`) } : null,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
+    lang: navigator.language,
+    market: { league: marketStore.league.value?.Value ?? null, fetchedAt: marketStore.fetchedAt.value, error: marketStore.error.value },
     // 直前の流れ (何を押して、どこまで進んだか、何秒前か)。詰まった瞬間に送られることが多いので、これで再現の手がかりにする
     trail: trailNow(),
-    sim: ses ? { base: ses.base, itemLevel: ses.itemLevel, targets: ses.targets, sockets: ses.sockets, order: ses.order, patterns: ses.patterns } : null,
+    errors: d.errors,
+    console: d.console,
+    hand,
+    sim: ses ? { base: ses.base, itemLevel: ses.itemLevel, targets: ses.targets, sockets: ses.sockets, order: ses.order, patterns: ses.patterns, flags: ses.flags } : null,
   };
 }
 

@@ -179,12 +179,24 @@ describe("要望・バグ (/feedback)", () => {
   it("Discord のウェブフックがあれば流す (本文と添付の頭)", async () => {
     const { notifyDiscord } = await import("../server/live/src/feedback");
     let sent: { content: string } | null = null;
-    const f = (async (_u: RequestInfo | URL, init?: RequestInit) => { sent = JSON.parse(String(init?.body)); return new Response(null, { status: 204 }); }) as unknown as typeof fetch;
-    const ok = await notifyDiscord("https://discord/hook", { id: "a", at: "2026-10-07T12:00:00.000Z", kind: "bug", text: "壊れた", contact: "@me", context: { base: "X" }, ua: "", ip: "" }, f);
+    let file: { name: string; text: string } | null = null;
+    const f = (async (_u: RequestInfo | URL, init?: RequestInit) => {
+      const form = init?.body as FormData;
+      sent = JSON.parse(String(form.get("payload_json")));
+      const blob = form.get("files[0]") as File | null;
+      if (blob) file = { name: blob.name, text: await blob.text() };
+      return new Response(null, { status: 204 });
+    }) as unknown as typeof fetch;
+    const ctx = { version: "0.1.385", mode: "sim", base: "Polished Bracers", itemLevel: 82, sim: { targets: [1, 2, 3], patterns: [1] }, errors: [{ msg: "TypeError: x is undefined" }], trail: [{ n: "open", ago: 9 }] };
+    const ok = await notifyDiscord("https://discord/hook", { id: "a1b2", at: "2026-10-07T12:00:00.000Z", kind: "bug", text: "壊れた", contact: "@me", context: ctx, ua: "", ip: "" }, f);
     expect(ok).toBe(true);
     expect(sent!.content).toContain("🐛 バグ");
     expect(sent!.content).toContain("壊れた");
-    expect(sent!.content).toContain('"base":"X"');
+    expect(sent!.content).toContain("状態: v0.1.385 · シミュレーション · Polished Bracers ilvl82 · 狙い 3 · パターン 1 · JS エラー 1");
+    expect(sent!.content).toContain("流れ: open (9秒前)");
+    expect(sent!.content).toContain("直近のエラー: TypeError: x is undefined");
+    expect(file!.name).toBe("feedback-a1b2.json");
+    expect(JSON.parse(file!.text).context.sim.targets).toEqual([1, 2, 3]);
   });
 });
 
