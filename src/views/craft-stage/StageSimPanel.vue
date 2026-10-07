@@ -1145,35 +1145,6 @@ function replay(): void {
     </div>
 
     </div>
-    <!-- 始め方の比べ (回した後) -->
-    <div v-if="recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-      <p class="mb-1 font-bold text-sky-100">始め方の比べ <span v-if="help" class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
-      <!-- 列の幅は固定 (金額の欄の字が変わっても入力欄が動かない。2026-10-05 オーナー「入力時 UI がズレる、入力する所は軸に」) -->
-      <table class="w-full table-fixed">
-        <colgroup><col class="w-64" /><col /><col class="w-40" /></colgroup>
-        <tbody>
-          <tr v-for="x in compare.list" :key="x.key" class="border-t border-white/5" :class="compare.best === x.key ? 'bg-emerald-500/10' : ''">
-            <td class="py-1">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
-            <td class="py-1">
-              <span v-if="x.key === 'four'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
-                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
-                <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
-              </span>
-              <span v-else-if="x.key === 'bought'" class="text-[11px] opacity-60">値段は 4 フラクチャーベース設定で入れる</span>
-              <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" placeholder="無し" />
-                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
-                <span class="inline-block w-24 shrink-0" :class="doneAge?.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge?.text ?? "" }}</span>
-              </span>
-            </td>
-            <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50">{{ x.note }}</span></td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-if="stale && recipeOut" class="mt-1 text-[11px] text-amber-200">設定が変わりました。「回す」で出し直すと作る側の数字も合います</p>
-    </div>
-
     <!-- 結果 -->
     <div v-if="summary" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2" :class="stale ? 'opacity-50' : ''">
       <p v-if="stale" class="mb-1 text-[11px] text-amber-200">設定が変わりました。もう一度「回す」で出し直してください</p>
@@ -1182,8 +1153,8 @@ function replay(): void {
         <div class="rounded-lg bg-black/30 px-3 py-2">
           <p class="text-[10px] opacity-60">1 個できるまでの平均 (合計)</p>
           <p class="text-lg font-bold text-amber-100">{{ money(split.base + split.craft) }}</p>
-          <p class="text-[10px] tabular-nums opacity-70" :title="split.baseNote">ベース {{ money(split.base) }}</p>
-          <p class="text-[10px] tabular-nums opacity-70" :title="fractureRow ? 'フラクチャー済みから完成まで (失敗した回の費用も込み)' : '失敗した回の費用も込み'">クラフト {{ money(split.craft) }}</p>
+          <p class="mt-0.5 flex justify-between gap-2 border-t border-white/10 pt-0.5 text-[12px] tabular-nums" :title="split.baseNote"><span class="opacity-60">ベース</span><span>{{ money(split.base) }}</span></p>
+          <p class="flex justify-between gap-2 text-[12px] tabular-nums" :title="fractureRow ? 'フラクチャー済みから完成まで (失敗した回の費用も込み)' : '失敗した回の費用も込み'"><span class="opacity-60">クラフト</span><span>{{ money(split.craft) }}</span></p>
         </div>
         <div class="rounded-lg bg-black/30 px-3 py-2">
           <p class="text-[10px] opacity-60">完成の割合</p>
@@ -1229,6 +1200,35 @@ function replay(): void {
       </template>
 
     </div>
+    <!-- 始め方の比べ (回した後) -->
+    <div v-if="recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+      <p class="mb-1 font-bold text-sky-100">始め方の比べ <span v-if="help" class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
+      <!-- 列の幅は固定 (金額の欄の字が変わっても入力欄が動かない。2026-10-05 オーナー「入力時 UI がズレる、入力する所は軸に」) -->
+      <table class="w-full table-fixed">
+        <colgroup><col class="w-64" /><col /><col class="w-40" /></colgroup>
+        <tbody>
+          <tr v-for="x in compare.list" :key="x.key" class="border-t border-white/5" :class="compare.best === x.key ? 'bg-emerald-500/10' : ''">
+            <td class="py-1">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
+            <td class="py-1">
+              <span v-if="x.key === 'four'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
+                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
+                <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
+              </span>
+              <span v-else-if="x.key === 'bought'" class="text-[11px] opacity-60">値段は 4 フラクチャーベース設定で入れる</span>
+              <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" placeholder="無し" />
+                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
+                <span class="inline-block w-24 shrink-0" :class="doneAge?.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge?.text ?? "" }}</span>
+              </span>
+            </td>
+            <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50">{{ x.note }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-if="stale && recipeOut" class="mt-1 text-[11px] text-amber-200">設定が変わりました。「回す」で出し直すと作る側の数字も合います</p>
+    </div>
+
     </template>
   </div>
 </template>
