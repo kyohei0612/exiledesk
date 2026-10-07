@@ -613,6 +613,8 @@ const blocked = computed((): string | null => {
  * どんだけ付くのか実験したい、手動では個別に回す感じで、結果を下に」)。無ければ出来ているパターンを全部
  */
 const ONE_RUNS = 1500;
+/** 6 パターンで開いているパターン (取引所で探すのに使う) */
+const activePattern = ref(0);
 async function run(only?: number): Promise<void> {
   const it = s.item.value, d = s.data.value;
   if (!it || !d) return;
@@ -1189,7 +1191,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span class="opacity-60">{{ fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
-        <StagePatternEditor :busy="busy" @run-one="(k: number) => run(k)" @search-one="(k: number) => searchPattern(k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
+        <StagePatternEditor :busy="busy" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
@@ -1210,7 +1212,9 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span v-if="busy" class="ml-auto text-sky-200">{{ phase }}<template v-if="progress && phase === '試しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }} 人</template>…</span>
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
           <span v-if="error" class="text-rose-300">{{ error }}</span>
-          <button type="button" class="rounded border border-white/15 px-1.5 py-0.5 opacity-70 hover:opacity-100 disabled:opacity-40" :class="[busy ? '' : 'ml-auto', market.fetchedAt.value && Date.now() - market.fetchedAt.value > MARKET_MAX_AGE_MS ? 'text-amber-300' : '']" :disabled="market.loading.value" :title="`相場 ${market.fetchedLabel.value || 'まだ読んでいない'} (押すと取り直す。計算・回した結果は相場の値段で出す)`" @click="refreshPrices">{{ market.loading.value ? "相場を取り直し中…" : `相場 ${market.fetchedLabel.value || "—"} ↻` }}</button>
+          <!-- 開いているパターンの MOD 群を取引所 (JP) で探す (2026-10-07 オーナー「回すの横、相場ボタンじゃなくてこの MOD 群をそのまま検索にかけたい」) -->
+          <button type="button" class="rounded-lg border border-sky-400/60 bg-sky-500/10 px-2.5 py-0.5 font-bold text-sky-100 hover:bg-sky-500/20 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern]?.steps.length" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の組めている所まで (付ける MOD と固定) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">{{ s.simPatterns.value[activePattern]?.name ?? "" }} を取引所で探す ↗</button>
+          <button type="button" class="rounded border border-white/15 px-1.5 py-0.5 opacity-70 hover:opacity-100 disabled:opacity-40" :class="[ market.fetchedAt.value && Date.now() - market.fetchedAt.value > MARKET_MAX_AGE_MS ? 'text-amber-300' : '']" :disabled="market.loading.value" :title="`相場 ${market.fetchedLabel.value || 'まだ読んでいない'} (押すと取り直す。計算・回した結果は相場の値段で出す)`" @click="refreshPrices">{{ market.loading.value ? "相場を取り直し中…" : `相場 ${market.fetchedLabel.value || "—"} ↻` }}</button>
           <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (組みかけは組めている所まで)`" @click="run()">回す ▶</button>
         </div>
       </div>

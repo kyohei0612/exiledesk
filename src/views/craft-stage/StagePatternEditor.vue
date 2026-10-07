@@ -41,7 +41,7 @@ const props = defineProps<{
   /** 回している途中 */
   busy?: boolean;
 }>();
-const emit = defineEmits<{ "run-one": [index: number]; "search-one": [index: number] }>();
+const emit = defineEmits<{ "run-one": [index: number]; active: [index: number] }>();
 /** 付いたら取り直せない手 (レアリティが変わる手で付けた物は戻れない) */
 const ONCE = new Set(["transmute", "augment", "regal", "alchemy", "essence"]);
 /**
@@ -89,6 +89,8 @@ const ctx = computed<CheckCtx | null>(() => {
 });
 const pat = computed<Pattern>(() => s.simPatterns.value[Math.min(active.value, s.simPatterns.value.length - 1)]!);
 watch(active, () => { focusRow.value = null; editPart.value = null; focusPre.value = null; });
+// 開いているパターンを親に伝える (下の行の「取引所で探す」がこのパターンで探す)
+watch(active, (v) => emit("active", v), { immediate: true });
 
 /**
  * 1 つ戻す (パターンの操作。2026-10-07 オーナー「1 つ戻すボタンがない、パターン①の横らへんに」)。
@@ -344,7 +346,7 @@ const KIND_TONE: Record<string, string> = {
 };
 /** カードの見出し (付ける物を短く: 「火耐性 T3+」) */
 function cardTitle(r: Row): string {
-  if (r.set?.kind === "annul") return "違う MOD を消す";
+  if (r.set?.kind === "annul") return "ハズレを消す";
   if (!r.step.target) return r.set?.kind === "rune" ? "ルーン未定" : "MOD 未定";
   if (r.step.target === ANY_TARGET) return "打つだけ";
   if (isRest(r.step.target)) return `残りの MOD (${Number(r.step.target.slice(REST.length)) + 1} 手目の候補)`;
@@ -566,10 +568,10 @@ function missOmenChoices(r: Row): Array<{ key: string; ja: string; omens: string
 function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const x = missSet(r.step);
   const c = ctx.value;
-  if (!x) return { text: "違う MOD は残したまま次の手へ進む", bad: false };
+  if (!x) return { text: "ハズレは残したまま次の手へ進む", bad: false };
   if (!c) return { text: "", bad: false };
   if (x.omens.includes("OmenofLight")) return { text: "冒涜の MOD だけを消す (付いている狙いは消えない)", bad: false };
-  if (x.omens.includes("OmenofWhittling")) return { text: "一番 MOD レベルの低い物を入れ替える (違う MOD が狙いより低ければ安全、高ければ狙いを消す)", bad: true };
+  if (x.omens.includes("OmenofWhittling")) return { text: "一番 MOD レベルの低い物を入れ替える (ハズレが狙いより低ければ安全、高ければ狙いを消す)", bad: true };
   if (x.kind !== "annul" && x.kind !== "chaos") return { text: "", bad: false };
   const side = x.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : x.omens.some((o) => /Dextral/.test(o)) ? "suffix" : null;
   const sideOfId = (id: string): "prefix" | "suffix" => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
@@ -577,7 +579,7 @@ function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const verb = x.kind === "chaos" ? "入れ替える" : "消す";
   // 偉大の手は「1 つだけ当たり」の時、当たった方も消す候補に入る
   if (needs2(r)) return { text: `どれも付かなかった時: ${n ? `狙いを巻き込む ${n}/${n + 1}` : "安全"} / 1 つだけ当たりの時: 当たった MOD を巻き込む ${n + 1}/${n + 2}`, bad: true };
-  return n ? { text: `違う MOD と、付いている狙い ${n} つのどれかを${verb} → 狙いを巻き込む ${n}/${n + 1}`, bad: true } : { text: `違う MOD を${verb} (この時点で付いている狙いは無いので安全)`, bad: false };
+  return n ? { text: `ハズレと、付いている狙い ${n} つのどれかを${verb} → 狙いを巻き込む ${n}/${n + 1}`, bad: true } : { text: `ハズレを${verb} (この時点で付いている狙いは無いので安全)`, bad: false };
 }
 /**
  * この手を打つ時に消える確率 (打つ物が消してから付ける物の時: カオス・パーフェクトエッセンス)。その側の固定以外の MOD (狙い + 外れ) から 1 つ。
@@ -599,10 +601,10 @@ function lostRisk(i: number, r: Row): { text: string; bad: boolean } | null {
   if (side && count(side) <= goods.length) {
     return st.junk > 0
       ? { text: `打つだけで付いた MOD が${sideJa}にあれば ${goods.length}/${goods.length + 1} で ${names} が消える。${sideJa}に無ければ必ず消える`, bad: true }
-      : { text: `この手で ${names} が必ず消える (${sideJa}に違う MOD が無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
+      : { text: `この手で ${names} が必ず消える (${sideJa}にハズレが無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
   }
   const n = side ? count(side) : count("prefix") + count("suffix") + st.junk;
-  if (n <= goods.length) return { text: `この手で ${names} が必ず消える (違う MOD が無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
+  if (n <= goods.length) return { text: `この手で ${names} が必ず消える (ハズレが無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
   return { text: `この手で消える候補 ${n} つのうち、狙い ${goods.length} つ (${names}) → ${goods.length}/${n}`, bad: false };
 }
 /** 1 発の棚: 1 つずつ付ける高貴 (偉大なし) */
@@ -717,7 +719,6 @@ defineExpose({ rows });
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100" title="このパターンを写して足す (少しだけ変えて比べる時に)" @click="addPattern(true)">⧉</button>
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 disabled:opacity-30" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? 'パターンが 1 つの時は消せない' : 'このパターンを消す'" @click="removePattern">×</button>
         <button type="button" class="ml-1 rounded-lg border border-amber-400/60 bg-amber-500/15 px-2 py-0.5 font-bold text-amber-100 hover:bg-amber-500/25 disabled:opacity-30" :disabled="busy || !pat.steps.length" :title="pat.steps.length ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))">このパターンを回す ▶</button>
-        <button type="button" class="ml-1 rounded-lg border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 disabled:opacity-30" :disabled="!pat.steps.length" title="このパターンの組めている所まで (付ける MOD と固定) が付いた物を取引所 (JP) で探す。開くだけ" @click="emit('search-one', Math.min(active, s.simPatterns.value.length - 1))">ここまでを取引所で探す ↗</button>
         <button type="button" class="ml-1 rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-30" :disabled="!history.length" :title="history.length ? 'パターンの直前の操作を 1 つ取り消す' : '戻せる操作がまだ無い'" @click="undoPattern">↶ 1 つ戻す</button>
       </template>
     </div>
@@ -839,7 +840,7 @@ defineExpose({ rows });
                 <span>消去</span>
               </button>
               <button type="button" class="ml-4 flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すと 1 発の打ち方を選ぶ" @click="selectRow(i, 'single')">
-                <span class="opacity-60">├ 違う MOD が消えたら →</span>
+                <span class="opacity-60">├ ハズレが消えたら →</span>
                 <img v-for="c in [singleSet(r)?.currency, ...(singleSet(r)?.omens ?? [])].filter((x) => x && iconOf(x))" :key="c" :src="iconOf(c!)" alt="" class="h-4 w-4 object-contain" />
                 <span>1 発</span>
                 <span class="text-amber-200/90">↺ 付くまで</span>
@@ -946,7 +947,7 @@ defineExpose({ rows });
               </div>
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'single'">
-              <p class="mb-1 text-[11px] opacity-60">1 つだけ当たって、違う MOD が消えた後に、残りの 1 つを打つ手 (既定は同じカレンシーで偉大だけ外した物)</p>
+              <p class="mb-1 text-[11px] opacity-60">1 つだけ当たって、ハズレが消えた後に、残りの 1 つを打つ手 (既定は同じカレンシーで偉大だけ外した物)</p>
               <StagePatternStepPicker :key="'single' + focusRow" :sets="singleSets" :why="() => null" :current="singleSet(rows[focusRow]!)?.key ?? ''" inline @pick="(k) => { patch(focusRow!, { single: k }); editPart = 'single'; }" />
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'set'">
@@ -964,7 +965,7 @@ defineExpose({ rows });
                   <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">→</span>
                   <span>
                     <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
-                    <span class="text-[10px] opacity-60">{{ k === "none" ? "違う MOD は残す" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
+                    <span class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
                   </span>
                 </button>
               </div>
