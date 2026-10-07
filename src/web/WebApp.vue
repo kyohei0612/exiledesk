@@ -51,5 +51,11 @@ window.addEventListener("resize", fitZoom);
         <LivePanel />
       </aside>
     </div>
+    <!-- 決まり事 (2026-10-07): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
+    <footer class="flex h-7 shrink-0 items-center gap-3 border-t border-[var(--exile-color-border-subtle)] px-4 text-[10px] opacity-50">
+      <span>ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。</span>
+      <span>相場は <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>、確率はゲームのデータからの推定で、結果を保証するものではありません。</span>
+      <span class="ml-auto">協賛の枠には PR と表示します</span>
+    </footer>
   </div>
 </template>
