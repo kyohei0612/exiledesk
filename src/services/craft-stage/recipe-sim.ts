@@ -465,6 +465,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
       if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); continue; }
+      // カオスの手のやり直しがカオス (同じ物・お告げ) なら、次のカオスがそのまま入れ替えになる。やり直しのカオスを別に打つと、
+      // その結果を見ないまま次のカオスを打つので 2 回打って 1 回分しか判定していなかった (2026-10-07 オーナー「回る速度遅くね」「500 回の 50 神以内で付くかなと思ってた」)
+      if (p.onMiss === "annul_redo" && p.kind === "chaos" && p.miss?.kind === "chaos" && p.miss.currency === p.currency && p.miss.omens.join("+") === p.omens.join("+")) continue;
       if (p.onMiss === "annul_redo" && p.miss) {
         // 外す物を手で決めた手 (消去 + お告げ / カオス + 削減 / パーフェクトエッセンス + 結晶化 / 骨 + ネクロマンシー)。打ってから同じ手をもう一度
         if (p.miss.kind === "essence_perfect") {
