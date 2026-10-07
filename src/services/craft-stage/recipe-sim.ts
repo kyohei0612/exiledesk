@@ -515,7 +515,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
           continue;
         }
-        if ((p.kind === "exalt" || p.kind === "desecrate") && ts && !room(item, ts) && junkOn(item, ts).length) {
+        // 増強も同じ (変成の外れが狙いの側に付いた時、そのまま増強すると反対の側にしか付かない。2026-10-07 オーナー「付かなかったら消去で増強やん、1 手目から」)
+        if ((p.kind === "exalt" || p.kind === "desecrate" || (p.kind === "augment" && membersOf(p.target!).length === 1)) && ts && !room(item, ts) && junkOn(item, ts).length) {
           e = annulOn(ts);
           if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
           continue;

@@ -386,6 +386,18 @@ const removals = computed(() => removalSets(sets.value));
 /** 外す時のセット (外す時は付けた後 = レア。付ける手の後の状態で見る) */
 const missSet = (step: PatternStep): PatternSet | undefined => (step.miss ? setByKey(sets.value, step.miss) : undefined);
 /**
+ * 打つ前に先に消す側 (計算の決まりを画面にも出す。2026-10-07 オーナー「こういうの仕組みとして必ず UI で表示しておかないとだめ」)。
+ * 高貴・骨・増強 (狙いが 1 つ) は、狙いの側が外れで埋まっていたら、先にその側の外れを消してから打つ (recipe-sim の runPattern と同じ)
+ */
+function preAnnul(r: Row): string | null {
+  const id = r.step.target;
+  if (!r.set || !id || id === ANY_TARGET) return null;
+  const k = r.set.kind;
+  if (!(k === "exalt" || k === "desecrate" || (k === "augment" && !isRest(id) && !candsOf(r).length))) return null;
+  const main = isRest(id) ? restMembers(pat.value.steps, id)[0] : id;
+  return ctx.value?.data.mods.get(main ?? "")?.type === "suffix" ? "サフィ" : "プレ";
+}
+/**
  * お告げ無しの消去で外す、増強・高貴の手 (狙いが 1 つ) なら、狙いの側と反対の側 (どちらが消えたかで枝が分かれる。PatternStep.otherGone)
  */
 function sideSplit(r: Row): { t: string; o: string } | null {
@@ -942,6 +954,7 @@ defineExpose({ rows });
                 <span class="h-px w-5 border-t border-dashed border-rose-400/60"></span>
                 <span class="ml-1">付くまで繰り返す</span>
               </span>
+              <span v-if="preAnnul(r)" class="ml-5 text-[10px] leading-tight opacity-70">打つ前: {{ preAnnul(r) }}が外れで埋まっていたら消去</span>
               <span v-if="sideSplit(r)" class="ml-5 flex flex-col text-[10px] leading-tight opacity-70">
                 <span>外れが{{ sideSplit(r)!.o }} → {{ otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep" ? "消さずに打つ" : "消去" }}</span>
                 <span>{{ sideSplit(r)!.t }}が残った → {{ otherGoneOf(r.set?.kind, r.step.otherGone) === "annul" ? "もう一度消去" : "打つ" }}</span>
@@ -1133,6 +1146,7 @@ defineExpose({ rows });
               </div>
               <p class="mt-2 text-[11px]" :class="missRisk(focusRow!, rows[focusRow]!).bad ? 'text-rose-300' : 'text-emerald-200/80'">{{ missRisk(focusRow!, rows[focusRow]!).text }}</p>
               <!-- お告げ無しの消去は、どちらの側が消えたかで枝が分かれる (2026-10-07 オーナー「サフィだけ消えるともう 1 回消去、プレだけ消えたら消去は使わずにトライ」) -->
+              <p v-if="preAnnul(rows[focusRow]!)" class="mt-3 text-[11px] opacity-80">打つ前に{{ preAnnul(rows[focusRow]!) }}が外れで埋まっていたら、先に消去してから打つ (埋まったままだと反対の側にしか付かない)</p>
               <template v-for="sp in [sideSplit(rows[focusRow]!)]" :key="'split' + focusRow">
                 <div v-if="sp" class="mt-3 max-w-3xl space-y-1.5 rounded-lg border border-white/10 bg-black/20 p-2 text-[11px]">
                   <div class="flex items-center gap-2">
