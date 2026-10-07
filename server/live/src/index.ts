@@ -13,6 +13,7 @@ import channelsJson from "../channels.json";
 import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
 import { fetchYoutube, fetchYoutubeAvatars } from "./youtube";
+import { allowIp, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
 
 const STATE_KEY = "state";
@@ -61,7 +62,7 @@ export async function refresh(env: Env, channels: readonly ChannelDef[] = CHANNE
   return state;
 }
 
-const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, OPTIONS" };
+const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type" };
 
 /**
  * 相場の中継 (Web 版用、2026-10-07): GET /api/poe2scout/<path> → https://api.poe2scout.com/<path>。
@@ -95,7 +96,24 @@ export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+    // 要望・バグ (Web 版の「要望・バグを送る」)
+    if (url.pathname === "/feedback" && req.method === "POST") {
+      let body: unknown;
+      try { body = await req.json(); } catch { return json({ error: "JSON ではない" }, 400); }
+      const p = parseFeedback(body);
+      if (!p.ok) return json({ error: p.why }, p.why === "bot" ? 200 : 400);
+      const ip = req.headers.get("cf-connecting-ip") ?? "?";
+      if (!(await allowIp(env.LIVE, ip))) return json({ error: "送りすぎ (1 時間に 10 件まで)" }, 429);
+      const fb: Feedback = { id: crypto.randomUUID().slice(0, 8), at: new Date().toISOString(), kind: p.kind, text: p.text, contact: p.contact, context: p.context, ua: req.headers.get("user-agent") ?? "", ip };
+      await saveFeedback(env.LIVE, fb);
+      if (env.DISCORD_WEBHOOK) ctx.waitUntil(notifyDiscord(env.DISCORD_WEBHOOK, fb, fetch));
+      return json({ ok: true, id: fb.id });
+    }
     if (req.method !== "GET") return json({ error: "GET だけ" }, 405);
+    if (url.pathname === "/feedback.json") {
+      if (!env.REFRESH_KEY || url.searchParams.get("key") !== env.REFRESH_KEY) return json({ error: "key が違う" }, 403);
+      return json(await listFeedback(env.LIVE), 200, { "cache-control": "no-store" });
+    }
     if (url.pathname.startsWith("/api/poe2scout/")) return proxyScout(url, ctx);
     switch (url.pathname) {
       case "/live.json": {
@@ -112,7 +130,7 @@ export default {
       case "/health":
         return json({ ok: true, channels: CHANNELS.length });
       default:
-        return json({ error: "not found", paths: ["/live.json", "/health", "/api/poe2scout/…"] }, 404);
+        return json({ error: "not found", paths: ["/live.json", "/health", "/api/poe2scout/…", "POST /feedback"] }, 404);
     }
   },
 };

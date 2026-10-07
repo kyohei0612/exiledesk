@@ -18,6 +18,7 @@ function fakeKv(): KVNamespace & { store: Map<string, string> } {
     store,
     async get(key: string, type?: string) { const v = store.get(key) ?? null; return v != null && type === "json" ? JSON.parse(v) : v; },
     async put(key: string, value: string) { store.set(key, value); },
+    async list(o: { prefix?: string; limit?: number }) { return { keys: [...store.keys()].filter((k) => !o.prefix || k.startsWith(o.prefix)).sort().slice(0, o.limit ?? 1000).map((name) => ({ name })) }; },
   };
   return kv as unknown as KVNamespace & { store: Map<string, string> };
 }
@@ -144,5 +145,37 @@ describe("相場の中継 (/api/poe2scout)", () => {
       expect(r.status).toBe(404);
       expect(r.headers.get("access-control-allow-origin")).toBe("*");
     } finally { globalThis.fetch = orig; }
+  });
+});
+
+describe("要望・バグ (/feedback)", () => {
+  const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
+  const post = (body: unknown, ip = "1.2.3.4") => new Request("https://x.workers.dev/feedback", { method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": ip }, body: JSON.stringify(body) });
+  it("保存して新しい順に一覧、bot よけと空の本文は捨てる、同じ IP は 1 時間 10 件まで", async () => {
+    const env: Env = { LIVE: fakeKv(), REFRESH_KEY: "k" };
+    const r1 = await worker.fetch(post({ kind: "bug", text: "偉大で 2 つ付かない", contact: "@me", context: { base: "Polished Bracers" } }), env, ctx);
+    expect(r1.status).toBe(200);
+    const r2 = await worker.fetch(post({ kind: "request", text: "レシピの共有" }), env, ctx);
+    expect(r2.status).toBe(200);
+    expect((await worker.fetch(post({ kind: "bug", text: "x", website: "http://spam" }), env, ctx)).status).toBe(200); // bot には成功したふり
+    expect((await worker.fetch(post({ kind: "bug", text: "   " }), env, ctx)).status).toBe(400);
+    expect((await worker.fetch(post({ kind: "nope", text: "x" }), env, ctx)).status).toBe(400);
+    const list = await (await worker.fetch(new Request("https://x.workers.dev/feedback.json?key=k"), env, ctx)).json() as Array<{ text: string; kind: string; contact: string; context: unknown }>;
+    expect(list.map((x) => x.kind)).toEqual(["request", "bug"]);
+    expect(list[1]).toMatchObject({ contact: "@me", context: { base: "Polished Bracers" } });
+    expect((await worker.fetch(new Request("https://x.workers.dev/feedback.json?key=wrong"), env, ctx)).status).toBe(403);
+    for (let i = 0; i < 8; i++) await worker.fetch(post({ kind: "request", text: `n${i}` }), env, ctx);
+    expect((await worker.fetch(post({ kind: "request", text: "11 件目" }), env, ctx)).status).toBe(429);
+    expect((await worker.fetch(post({ kind: "request", text: "別の人" }, "5.6.7.8"), env, ctx)).status).toBe(200);
+  });
+  it("Discord のウェブフックがあれば流す (本文と添付の頭)", async () => {
+    const { notifyDiscord } = await import("../server/live/src/feedback");
+    let sent: { content: string } | null = null;
+    const f = (async (_u: RequestInfo | URL, init?: RequestInit) => { sent = JSON.parse(String(init?.body)); return new Response(null, { status: 204 }); }) as unknown as typeof fetch;
+    const ok = await notifyDiscord("https://discord/hook", { id: "a", at: "2026-10-07T12:00:00.000Z", kind: "bug", text: "壊れた", contact: "@me", context: { base: "X" }, ua: "", ip: "" }, f);
+    expect(ok).toBe(true);
+    expect(sent!.content).toContain("🐛 バグ");
+    expect(sent!.content).toContain("壊れた");
+    expect(sent!.content).toContain('"base":"X"');
   });
 });

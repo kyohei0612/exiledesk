@@ -31,6 +31,12 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
 - `channels` … 全チャンネル (配信していなくても出す。アイコン付き)。並びは channels.json のまま
 - `pr: true` は協賛。画面には「PR」と出す (ステマ規制: お金や物をもらった宣伝には表示が要る)
 
+## 要望・バグ (Web 版の「要望・バグを送る」)
+
+- `POST /feedback` に届いた物を KV に 90 日残す (同じ IP から 1 時間 10 件まで、bot よけの欄あり)
+- `GET /feedback.json?key=<REFRESH_KEY>` で新しい順の一覧 (添付 = 送った人の画面の状態: ベース・狙い・パターン)
+- Discord にも流すなら: Discord のサーバー設定 → 連携サービス → ウェブフック → 新しいウェブフック → 「ウェブフック URL をコピー」→ `npx wrangler secret put DISCORD_WEBHOOK` に貼る → `pnpm run deploy`
+
 ## オーナーがやること (初回だけ、全部無料)
 
 1. **Cloudflare のアカウント** を作る: https://dash.cloudflare.com/sign-up
@@ -48,7 +54,8 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
    npx wrangler secret put YOUTUBE_API_KEY
    npx wrangler secret put TWITCH_CLIENT_ID
    npx wrangler secret put TWITCH_CLIENT_SECRET
-   npx wrangler secret put REFRESH_KEY          # 好きな文字列 (手で調べ直す時の合言葉)
+   npx wrangler secret put REFRESH_KEY          # 好きな文字列 (手で調べ直す時の合言葉。要望の一覧を見る時にも使う)
+   npx wrangler secret put DISCORD_WEBHOOK      # (任意) 要望・バグを Discord に流す
    ```
 6. `channels.json` を本物にする (自分のチャンネルの `youtubeChannelId`、協賛チャンネル)。YouTube のチャンネル ID は UC で始まる 24 文字: YouTube Studio → 設定 → チャンネル → 詳細設定 に出る
 7. 置く:

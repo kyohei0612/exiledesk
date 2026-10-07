@@ -53,6 +53,8 @@ export interface Env {
   TWITCH_CLIENT_ID?: string;
   TWITCH_CLIENT_SECRET?: string;
   REFRESH_KEY?: string;
+  /** 要望・バグを流す Discord のウェブフック URL (無ければ保存だけ) */
+  DISCORD_WEBHOOK?: string;
 }
 
 export type Fetch = typeof fetch;
