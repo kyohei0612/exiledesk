@@ -13,7 +13,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, iconOf, nameOf, priceOf, readSimSession, writeSimSession } from "../../state/craft-stage";
 import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
-import { simCurrency } from "../../state/display-currency";
+import { rateOf, simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
@@ -515,7 +515,7 @@ const calc = computed(() => {
   const fourN = num(fourDivine.value);
   const fourB = fourN;
   const buyOnce = fourB != null ? fourB + buyRest : null;
-  return { pHit, each, rerolls, lines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce };
+  return { pHit, each, rerolls, lines, buyLines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce };
 });
 const busy = ref(false);
 const phase = ref("");
@@ -906,6 +906,59 @@ const split = computed(() => {
   const b = (num(whiteDivine.value) ?? 0) * r.bases;
   return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `白のベース × ${r.bases.toFixed(1)} 個` };
 });
+/** 結果の金額の単位: 適正の時は合計に合わせて神でそろえる (内訳の行ごとに神・カオス・高貴が混ざって比べにくかった) */
+function moneyT(x: number): string {
+  if (!Number.isFinite(x)) return "—";
+  if (simCurrency.choice.value !== "fair") return money(x);
+  const v = x / rateOf("divine");
+  return `${v >= 100 ? Math.round(v).toLocaleString() : v >= 10 ? v.toFixed(1) : v.toFixed(2)} 神`;
+}
+const barW = (x: number, total: number): string => `${total > 0 ? Math.max(0, Math.min(100, (x / total) * 100)) : 0}%`;
+const fmtCount = (n: number): string => (n >= 10 ? Math.round(n).toLocaleString() : n.toFixed(1));
+/** 運の幅の印 (半分・8 割・9 割の人。合計で) */
+const luck = computed(() => {
+  const sm = summary.value;
+  if (!sm) return [];
+  const add = split.value.baseAdd;
+  const xs = [
+    { label: "半分", v: sm.p50 + add, bar: "bg-emerald-400", text: "text-emerald-300" },
+    { label: "8 割", v: sm.p80 + add, bar: "bg-amber-400", text: "text-amber-200" },
+    { label: "9 割", v: sm.p90 + add, bar: "bg-rose-400", text: "text-rose-300" },
+  ];
+  const max = Math.max(...xs.map((x) => x.v)) * 1.15 || 1;
+  return xs.map((x) => ({ ...x, left: `${Math.min(92, Math.max(6, (x.v / max) * 100))}%` }));
+});
+/**
+ * 何にお金がかかったか: ベース (フラクチャー済みにするまで、4 の一番安い始め方の内訳) とクラフト (回した結果の使った物)。
+ * 金額の多い順、小さい物は「ほか N つ」
+ */
+const costGroups = computed(() => {
+  const r = recipeOut.value?.r;
+  if (!r) return [];
+  const top = (items: Array<{ name: string; n: number; cost: number }>, total: number) => {
+    const xs = items.filter((x) => x.cost > 0).sort((a, b) => b.cost - a.cost);
+    const head = xs.slice(0, 6);
+    const rest = xs.slice(6);
+    const list = rest.length ? [...head, { name: `ほか ${rest.length} つ`, n: 0, cost: rest.reduce((a, x) => a + x.cost, 0) }] : head;
+    return list.map((x) => ({ ...x, share: total > 0 ? x.cost / total : 0 }));
+  };
+  const out: Array<{ name: string; note: string; total: number; bar: string; items: Array<{ name: string; n: number; cost: number; share: number }> }> = [];
+  const c = calc.value;
+  if (fractureRow.value) {
+    const best = routes.value.best;
+    const name = routes.value.list.find((x) => x.key === best)?.name.replace(/\s*\(.*$/, "") ?? "";
+    let items: Array<{ name: string; n: number; cost: number }> = [];
+    if (best === "self" && c) items = [...c.lines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
+    else if (best === "four" && c) items = [{ name: "レアのベース (3 MOD + 狙い 1)", n: 3, cost: (num(fourDivine.value) ?? 0) * 3 }, ...c.buyLines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
+    else if (best === "bought") items = [{ name: "固定済みのベース", n: 1, cost: num(boughtDivine.value) ?? 0 }];
+    out.push({ name: "ベース", note: `フラクチャー済みまで (${name})`, total: split.value.base, bar: "bg-stone-400/80", items: top(items, split.value.base) });
+  } else {
+    out.push({ name: "ベース", note: "白のベース", total: split.value.base, bar: "bg-stone-400/80", items: top([{ name: "白のベース", n: r.bases, cost: split.value.base }], split.value.base) });
+  }
+  const craft = r.usage.filter((u) => u.key !== "reveal").map((u) => ({ name: usageName(u.key), n: u.count, cost: u.cost }));
+  out.push({ name: "クラフト", note: fractureRow.value ? "フラクチャー済みから完成まで" : "", total: split.value.craft, bar: "bg-amber-400/80", items: top(craft, craft.reduce((a, x) => a + x.cost, 0)) });
+  return out;
+});
 /** 上の 5 つの数 (どちらの回し方でも同じ形) */
 const summary = computed(() => {
   if (recipeOut.value) { const r = recipeOut.value.r; return { perDone: r.perDone, pDone: r.pDone, runs: r.runs, p50: r.p50, p80: r.p80, p90: r.p90 }; }
@@ -1128,80 +1181,68 @@ function replay(): void {
           <span v-if="busy" class="ml-auto text-sky-200">{{ phase }}<template v-if="progress && phase === '試しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }} 人</template>…</span>
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
           <span v-if="error" class="text-rose-300">{{ error }}</span>
-          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (組みかけは組めている所まで)`" @click="run()">回す ▶</button>
+          <button type="button" class="rounded border border-white/15 px-1.5 py-0.5 opacity-70 hover:opacity-100 disabled:opacity-40" :class="[busy ? '' : 'ml-auto', market.fetchedAt.value && Date.now() - market.fetchedAt.value > MARKET_MAX_AGE_MS ? 'text-amber-300' : '']" :disabled="market.loading.value" :title="`相場 ${market.fetchedLabel.value || 'まだ読んでいない'} (押すと取り直す。計算・回した結果は相場の値段で出す)`" @click="refreshPrices">{{ market.loading.value ? "相場を取り直し中…" : `相場 ${market.fetchedLabel.value || "—"} ↻` }}</button>
+          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (組みかけは組めている所まで)`" @click="run()">回す ▶</button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
 
     <template v-if="step4">
-    <!-- 6 回す (相場・フラクチャーまでの費用・回す) -->
-    <div class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 space-y-2">
-    <p class="text-[13px] font-bold text-amber-100">7 回す</p>
-    <div class="flex flex-wrap items-center gap-2 text-[11px]">
-      <span class="opacity-70">相場</span>
-      <span :class="market.fetchedAt.value && Date.now() - market.fetchedAt.value > MARKET_MAX_AGE_MS ? 'text-amber-300' : ''">{{ market.loading.value ? "取り直しています…" : market.fetchedLabel.value || "まだ読んでいない" }}</span>
-      <button type="button" class="rounded border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-40" :disabled="market.loading.value" title="カレンシーランキングと同じ相場を取り直す (計算・回した結果も出し直す)" @click="refreshPrices">相場を取り直す</button>
-      <span v-if="help" class="opacity-60">計算と回した結果は、この相場の値段で出しています</span>
-    </div>
-
-    </div>
-    <!-- 結果 -->
-    <div v-if="summary" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2" :class="stale ? 'opacity-50' : ''">
+    <!--
+      結果 (2026-10-07 作り直し。オーナー「UI カスすぎない、パッと見て数字が分かりづらい」「7 回すは機能してないからいらない」
+      「ベースとそれ以降のクラフト金額も、何にお金がかかったかに分けて」)。上から いくらか → 運でどれくらい振れるか → 何にお金がかかったか (ベース / クラフト)
+    -->
+    <div v-if="summary && recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3" :class="stale ? 'opacity-60' : ''">
       <p v-if="stale" class="mb-1 text-[11px] text-amber-200">設定が変わりました。もう一度「回す」で出し直してください</p>
-      <div class="mb-2 grid grid-cols-2 gap-2 @3xl:grid-cols-5">
-        <!-- 合計 (ベース + クラフト) を大きく、下にベース・クラフト (2026-10-07 オーナー「合計を書いて、下にベース料金、その下にクラフトの費用、今分かれちゃってて見づらい」) -->
-        <div class="rounded-lg bg-black/30 px-3 py-2">
-          <p class="text-[10px] opacity-60">1 個できるまでの平均 (合計)</p>
-          <p class="text-lg font-bold text-amber-100">{{ money(split.base + split.craft) }}</p>
-          <p class="mt-0.5 flex justify-between gap-2 border-t border-white/10 pt-0.5 text-[12px] tabular-nums" :title="split.baseNote"><span class="opacity-60">ベース</span><span>{{ money(split.base) }}</span></p>
-          <p class="flex justify-between gap-2 text-[12px] tabular-nums" :title="fractureRow ? 'フラクチャー済みから完成まで (失敗した回の費用も込み)' : '失敗した回の費用も込み'"><span class="opacity-60">クラフト</span><span>{{ money(split.craft) }}</span></p>
-        </div>
-        <div class="rounded-lg bg-black/30 px-3 py-2">
-          <p class="text-[10px] opacity-60">完成の割合</p>
-          <p class="text-lg font-bold" :class="summary.pDone >= 0.9 ? 'text-emerald-300' : 'text-amber-300'">{{ pct(summary.pDone) }}</p>
-          <p class="text-[10px] opacity-50">{{ fractureRow ? "フラクチャー済みから " : "" }}{{ summary.runs.toLocaleString() }} 人が作ってみて</p>
-        </div>
-        <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">半分の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p50 + split.baseAdd) }}</p></div>
-        <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">8 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p80 + split.baseAdd) }}</p></div>
-        <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">9 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p90 + split.baseAdd) }}</p></div>
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span class="text-[12px] opacity-60">{{ shownName }} の 1 個あたり</span>
+        <span class="text-[28px] font-bold leading-none tabular-nums text-amber-100">{{ moneyT(split.base + split.craft) }}</span>
+        <span class="text-[12px] tabular-nums opacity-70">= ベース {{ moneyT(split.base) }} + クラフト {{ moneyT(split.craft) }}</span>
+        <span v-if="summary.pDone < 0.995" class="text-[12px] font-bold text-rose-300" :title="recipeOut.r.stops.map((x) => `${pct(x.p)}: ${x.reason}`).join(' / ')">完成 {{ pct(summary.pDone) }}</span>
       </div>
-      <!-- 狙いの MOD ごとの、終わった時に付いていた割合 (未完成のパターンで「どこまで付くか」を見る) -->
-      <div v-if="recipeOut?.r.hitRates?.length" class="mb-2 flex flex-wrap items-center gap-1.5 text-[11px]">
-        <span class="opacity-60">終わった時に付いていた割合</span>
-        <span v-for="h in recipeOut.r.hitRates" :key="h.modId" class="rounded-full border border-white/15 bg-black/30 px-2 py-0.5">
-          <span :class="hitName(h.modId).tone">{{ hitName(h.modId).text }}</span>
-          <b class="ml-1 tabular-nums" :class="h.p >= 0.9 ? 'text-emerald-300' : h.p >= 0.5 ? 'text-amber-200' : 'text-rose-300'">{{ pct(h.p) }}</b>
-        </span>
+      <div class="mt-2 flex h-2.5 max-w-xl overflow-hidden rounded-full bg-white/10">
+        <div class="bg-stone-400/70" :style="{ width: barW(split.base, split.base + split.craft) }" :title="`ベース ${moneyT(split.base)}`"></div>
+        <div class="bg-amber-400/80" :style="{ width: barW(split.craft, split.base + split.craft) }" :title="`クラフト ${moneyT(split.craft)}`"></div>
       </div>
-
-      <!-- 使った物 -->
-      <template v-if="recipeOut">
-        <div class="mb-1 flex items-center gap-2">
-          <button type="button" class="rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="toggle('usage')">使った物 {{ open.usage ? "▲" : "▼" }}</button>
-          <button type="button" class="ml-auto rounded-lg border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 disabled:opacity-40" :disabled="!recipeOut.r.sample" title="費用が真ん中くらいだった 1 回を「手で打つ」で 1 手ずつ見る" @click="replay">真ん中くらいの 1 回をステージで再生 ▶</button>
+      <!-- 運の幅 -->
+      <p class="mt-4 text-[11px] opacity-60">運の幅 ({{ summary.runs.toLocaleString() }} 人が作ってみて)</p>
+      <div class="relative mt-1 h-11 max-w-xl">
+        <div class="absolute left-0 right-0 top-3 h-1 rounded bg-white/15"></div>
+        <template v-for="q in luck" :key="q.label">
+          <div class="absolute top-1.5 h-4 w-[3px] -translate-x-1/2 rounded" :class="q.bar" :style="{ left: q.left }"></div>
+          <div class="absolute top-6 -translate-x-1/2 whitespace-nowrap text-[11px] font-bold tabular-nums" :class="q.text" :style="{ left: q.left }">{{ q.label }} {{ moneyT(q.v) }}</div>
+        </template>
+      </div>
+      <!-- 何にお金がかかったか (ベース / クラフト) -->
+      <div class="mt-3 grid max-w-4xl gap-x-8 gap-y-3 @3xl:grid-cols-2">
+        <div v-for="g in costGroups" :key="g.name">
+          <p class="mb-1 flex items-baseline gap-2 text-[12px]"><b>{{ g.name }}</b><span class="text-[10px] opacity-50">{{ g.note }}</span><span class="ml-auto font-bold tabular-nums">{{ moneyT(g.total) }}</span></p>
+          <div class="grid grid-cols-[minmax(0,1fr)_5rem_4.5rem_2.5rem] items-center gap-x-2 gap-y-1 text-[12px]">
+            <template v-for="x in g.items" :key="x.name">
+              <span class="truncate" :title="x.name">{{ x.name }}<span v-if="x.n" class="opacity-50"> × {{ fmtCount(x.n) }}</span></span>
+              <div class="h-2 rounded-full bg-white/10"><div class="h-2 rounded-full" :class="g.bar" :style="{ width: `${Math.max(2, x.share * 100)}%` }"></div></div>
+              <span class="text-right tabular-nums">{{ moneyT(x.cost) }}</span>
+              <span class="text-right text-[11px] tabular-nums opacity-50">{{ Math.round(x.share * 100) }}%</span>
+            </template>
+          </div>
         </div>
-        <table v-if="open.usage" class="w-full text-[12px]">
-          <thead>
-            <tr class="text-[10px] opacity-60">
-              <th class="py-1 text-left font-normal">打つ物 / お告げ</th>
-              <th class="w-24 py-1 text-right font-normal">数</th>
-              <th class="w-28 py-1 text-right font-normal">費用</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="u in recipeOut.r.usage" :key="u.key" class="border-t border-white/5">
-              <td class="py-1">{{ usageName(u.key) }}</td>
-              <td class="py-1 text-right tabular-nums">{{ u.count.toFixed(u.count < 10 ? 1 : 0) }}</td>
-              <td class="py-1 text-right tabular-nums">{{ u.key === "reveal" ? "" : money(u.cost) }}</td>
-            </tr>
-          </tbody>
-        </table>
+      </div>
+      <!-- 畳む物 -->
+      <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+        <button type="button" class="rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="toggle('usage')">付いていた割合・始め方の比べ {{ open.usage ? "▲" : "▼" }}</button>
+        <button type="button" class="ml-auto rounded-lg border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 disabled:opacity-40" :disabled="!recipeOut.r.sample" title="費用が真ん中くらいだった 1 回を「手で打つ」で 1 手ずつ見る" @click="replay">真ん中くらいの 1 回をステージで再生 ▶</button>
+      </div>
+      <template v-if="open.usage">
+        <div v-if="recipeOut.r.hitRates?.length" class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+          <span class="opacity-60">終わった時に付いていた割合</span>
+          <span v-for="h in recipeOut.r.hitRates" :key="h.modId" class="rounded-full border border-white/15 bg-black/30 px-2 py-0.5">
+            <span :class="hitName(h.modId).tone">{{ hitName(h.modId).text }}</span>
+            <b class="ml-1 tabular-nums" :class="h.p >= 0.9 ? 'text-emerald-300' : h.p >= 0.5 ? 'text-amber-200' : 'text-rose-300'">{{ pct(h.p) }}</b>
+          </span>
+        </div>
         <p v-for="x in recipeOut.r.stops" :key="x.reason" class="mt-1 text-[11px] text-rose-300/80">止まった回 {{ pct(x.p) }}: {{ x.reason }}</p>
-      </template>
-
-    </div>
     <!-- 始め方の比べ (回した後) -->
-    <div v-if="recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+    <div v-if="recipeOut" class="mt-2 rounded-lg bg-black/20 px-3 py-2">
       <p class="mb-1 font-bold text-sky-100">始め方の比べ <span v-if="help" class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
       <!-- 列の幅は固定 (金額の欄の字が変わっても入力欄が動かない。2026-10-05 オーナー「入力時 UI がズレる、入力する所は軸に」) -->
       <table class="w-full table-fixed">
@@ -1229,6 +1270,8 @@ function replay(): void {
       <p v-if="stale && recipeOut" class="mt-1 text-[11px] text-amber-200">設定が変わりました。「回す」で出し直すと作る側の数字も合います</p>
     </div>
 
+      </template>
+    </div>
     </template>
   </div>
 </template>
