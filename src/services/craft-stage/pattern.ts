@@ -287,6 +287,8 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     if (p.target === ANY_TARGET) {
       st.junk = Math.max(0, st.junk + (ANY_ADDS[s.kind] ?? 0));
       if (s.kind === "desecrate") st.desecrated++;
+      // 光のお告げの消去は冒涜の MOD を消すので、その後にまた骨を打てる (2026-10-08 レビュー E4: 減らしていなくて、フラクチャー後の骨が組めなかった)
+      if (s.kind === "annul" && s.omens.includes("OmenofLight")) st.desecrated = Math.max(0, st.desecrated - 1);
       if (s.kind === "essence" || s.kind === "essence_perfect") st.essences++;
       continue;
     }

@@ -407,6 +407,26 @@ function preAnnul(r: Row): string | null {
   return ctx.value?.data.mods.get(main ?? "")?.type === "suffix" ? "サフィ" : "プレ";
 }
 /**
+ * 打つ前に計算が自動でやる前置き (必ず画面に出す。2026-10-08 レビュー D2 / D3 / D6)。短い方はツリー、長い方は「付かなかったら」の画面
+ * - 高貴・骨・増強: 狙いの側がハズレで埋まっていたら先に消去 (反対の側に当たりがあれば側のお告げ付き) … recipe-sim の runPattern
+ * - カオス: 抹消の側 (無ければ両側) に外せる MOD が無ければ先に高貴で 1 つ付ける
+ * - パーフェクトエッセンス: 同じ系統のハズレがあれば先に消去、結晶化の側にハズレが無ければ先に高貴で 1 つ付ける (当たりを上書きしないため)
+ */
+function preRule(r: Row, long = false): string | null {
+  const k = r.set?.kind;
+  if (!r.set || !r.step.target || r.step.target === ANY_TARGET) return null;
+  const sd = preAnnul(r);
+  if (sd) return long ? `打つ前に${sd}がハズレで埋まっていたら、先に消去してから打つ (埋まったままだと反対の側にしか付かない。反対の側に当たりがあれば側のお告げ付きの消去)` : `打つ前: ${sd}がハズレで埋まっていたら消去`;
+  if (k === "chaos") {
+    const side = r.set.omens.some((o) => /Sinistral/.test(o)) ? "プレ" : r.set.omens.some((o) => /Dextral/.test(o)) ? "サフィ" : "両側";
+    return long ? `打つ前に${side}に外せる MOD が無ければ、先に高貴で 1 つ付けてから打つ (カオスは 1 つ消して 1 つ付ける)` : "打つ前: 外せる物が無ければ高貴で 1 つ";
+  }
+  if (k === "essence_perfect") return long ? "打つ前に同じ系統のハズレがあれば先に消去、結晶化の側にハズレが無ければ先に高貴で 1 つ付けてから打つ (当たりを上書きしないため)" : "打つ前: 同系統のハズレは消去、無ければ高貴で 1 つ";
+  return null;
+}
+/** カオスの手の狙いが後で消えて戻った時、計算は完全高貴 + 側のお告げで取り直す (カオスだと付いている他の狙いも消すため。2026-10-08 レビュー D4) */
+const chaosRegain = (r: Row): boolean => r.set?.kind === "chaos" && !!r.step.target && r.step.target !== ANY_TARGET && !isRest(r.step.target);
+/**
  * お告げ無しの消去で外す、増強・高貴の手 (狙いが 1 つ) なら、狙いの側と反対の側 (どちらが消えたかで枝が分かれる。PatternStep.otherGone)
  */
 function sideSplit(r: Row): { t: string; o: string } | null {
@@ -601,7 +621,7 @@ function presentMods(i: number, r: Row): string[] {
 /** その手が狙い以外の MOD (外れ・打つだけで付いた物) も消しうるか (光のお告げは冒涜だけなので、冒涜でなければ消さない) */
 function removesAny(r: Row): boolean {
   const ms = hasMiss(r) ? missSet(r.step) : undefined;
-  return (!!r.set && (r.set.kind === "chaos" || r.set.kind === "essence_perfect")) || (!!ms && !ms.omens.includes("OmenofLight"));
+  return (!!r.set && (r.set.kind === "chaos" || r.set.kind === "essence_perfect" || (r.set.kind === "annul" && !r.set.omens.includes("OmenofLight")))) || (!!ms && !ms.omens.includes("OmenofLight"));
 }
 /**
  * その手で外れうる MOD か (打つ物とやり直しの物で消える物だけ。2026-10-07 オーナー「光のお告げなのに冒涜以外の外れたら見たいな選択肢が出る」)。
@@ -611,7 +631,8 @@ function removableIn(i: number, r: Row): (id: string) => boolean {
   const c = ctx.value;
   if (!c) return () => false;
   const rems: PatternSet[] = [];
-  if (r.set && (r.set.kind === "chaos" || r.set.kind === "essence_perfect")) rems.push(r.set);
+  // 打つだけの消去 (フラクチャー後の消去など) もランダムに当たりを消す (2026-10-08 レビュー D7: 枝もオレンジも出ていなかった)
+  if (r.set && (r.set.kind === "chaos" || r.set.kind === "essence_perfect" || r.set.kind === "annul")) rems.push(r.set);
   const ms = hasMiss(r) ? missSet(r.step) : undefined;
   if (ms) rems.push(ms);
   const sideOfId = (id: string): "prefix" | "suffix" => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
@@ -685,7 +706,20 @@ function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: re
   if (x) patch(i, { miss: x.key, onMiss: "annul_redo" });
   editPart.value = "miss";
 }
+/** 「付かなかったら」の札が選べない理由 (pattern.ts の checkMiss / checkRemoval。2026-10-08 レビュー B5: 骨で「もう一度打つ」を選べて、回すと止まっていた) */
+function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos"): string | null {
+  if (!r.set) return null;
+  const rule: MissRule = k === "none" ? "next" : k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : "annul_redo";
+  const w = checkMiss(r.set, rule);
+  if (w) return w;
+  if (k === "annul" || k === "chaos") {
+    const rm = removals.value.find((x) => x.kind === k && !x.omens.length);
+    return rm ? checkRemoval(r.set, rm) : null;
+  }
+  return null;
+}
 function pickMissKind(i: number, k: "none" | "annul_next" | "redo" | "annul" | "chaos"): void {
+  if (missWhy(rows.value[i]!, k)) return;
   if (k === "none" || k === "redo" || k === "annul_next") { patch(i, { miss: null, onMiss: k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : "next" }); editPart.value = "miss"; return; }
   const cur = missSet(pat.value.steps[i]!);
   if (cur?.kind === k) { editPart.value = "miss"; return; }
@@ -736,6 +770,12 @@ function lostRisk(i: number, r: Row): { text: string; bad: boolean } | null {
   if (!goods.length) return null;
   const names = goods.map(cardTitleOf).join("・");
   const sideJa = side === "suffix" ? "サフィ" : side === "prefix" ? "プレ" : "";
+  // パーフェクトエッセンスは、結晶化の側に空きがあれば計算が先に高貴でハズレを 1 つ付けてから打つ (当たりは上書きされない。2026-10-08 レビュー D3:
+  // 前は「必ず消える」と警告していて計算と逆だった)。側が当たりで埋まっていれば足せないので下の「必ず消える」
+  if (r.set.kind === "essence_perfect") {
+    const sds: Array<"prefix" | "suffix"> = side ? [side] : ["prefix", "suffix"];
+    if (sds.some((sd) => st[sd] < st.limits[sd])) return { text: `ハズレが無ければ先に高貴で 1 つ付けてから打つので、${names} は消えない (ハズレがあればそれを上書き)`, bad: false };
+  }
   // 打つだけで付いた外れは側が分からない (側のお告げの時は、その側に付いていれば候補が増える)
   if (side && count(side) <= goods.length) {
     return st.junk > 0
@@ -996,7 +1036,8 @@ defineExpose({ rows });
                 <span class="h-px w-5 border-t border-dashed border-rose-400/60"></span>
                 <span class="ml-1">付くまで繰り返す</span>
               </span>
-              <span v-if="preAnnul(r)" class="ml-5 text-[10px] leading-tight opacity-70">打つ前: {{ preAnnul(r) }}がハズレで埋まっていたら消去</span>
+              <span v-if="preRule(r)" class="ml-5 text-[10px] leading-tight opacity-70">{{ preRule(r) }}</span>
+              <span v-if="chaosRegain(r)" class="ml-5 text-[10px] leading-tight opacity-70">消えて戻った時: 完全高貴 + 側のお告げで取り直す</span>
               <span v-if="sideSplit(r)" class="ml-5 flex flex-col text-[10px] leading-tight opacity-70">
                 <span>ハズレが{{ sideSplit(r)!.o }} → {{ otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep" ? "消さずに打つ" : "消去" }}</span>
                 <span>{{ sideSplit(r)!.t }}のハズレが残った → {{ otherGoneOf(r.set?.kind, r.step.otherGone) === "annul" ? "もう一度消去" : "打つ" }}</span>
@@ -1151,7 +1192,7 @@ defineExpose({ rows });
               <p class="mb-2 text-[13px] font-bold text-rose-100">狙いの MOD が付かなかったら、どうする？</p>
               <!-- もう一度打つ: 外れは残して同じ手を打ち直し、その側が満杯になった時だけ外れを消す (2026-10-07 靴のライフで、毎回消すより 2 割安かった) -->
               <div class="grid max-w-3xl grid-cols-4 gap-2">
-                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'none'] as const) : (['none', 'redo', 'annul', 'chaos'] as const))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" @click="pickMissKind(focusRow!, k)">
+                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'none'] as const) : (['none', 'redo', 'annul', 'chaos'] as const))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
                   <img v-if="(k === 'annul' || k === 'chaos' || k === 'annul_next') && iconOf(k === 'annul_next' ? 'annul' : k)" :src="iconOf(k === 'annul_next' ? 'annul' : k)" alt="" class="h-8 w-8 object-contain" />
                   <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "redo" ? "↺" : "→" }}</span>
                   <span>
@@ -1188,7 +1229,8 @@ defineExpose({ rows });
               </div>
               <p class="mt-2 text-[11px]" :class="missRisk(focusRow!, rows[focusRow]!).bad ? 'text-rose-300' : 'text-emerald-200/80'">{{ missRisk(focusRow!, rows[focusRow]!).text }}</p>
               <!-- お告げ無しの消去は、どちらの側が消えたかで枝が分かれる (2026-10-07 オーナー「サフィだけ消えるともう 1 回消去、プレだけ消えたら消去は使わずにトライ」) -->
-              <p v-if="preAnnul(rows[focusRow]!)" class="mt-3 text-[11px] opacity-80">打つ前に{{ preAnnul(rows[focusRow]!) }}がハズレで埋まっていたら、先に消去してから打つ (埋まったままだと反対の側にしか付かない)</p>
+              <p v-if="preRule(rows[focusRow]!, true)" class="mt-3 text-[11px] opacity-80">{{ preRule(rows[focusRow]!, true) }}</p>
+              <p v-if="chaosRegain(rows[focusRow]!)" class="mt-1 text-[11px] opacity-80">この手の狙いが後の手で消えて戻った時は、カオスでなく完全高貴 + 側のお告げで取り直す (カオスだと付いている他の狙いも消すため。外れは消去)</p>
               <template v-for="sp in [sideSplit(rows[focusRow]!)]" :key="'split' + focusRow">
                 <div v-if="sp" class="mt-3 max-w-3xl space-y-1.5 rounded-lg border border-white/10 bg-black/20 p-2 text-[11px]">
                   <p class="text-[10px] opacity-50">消去を打つ前 (ハズレがどちらに付いたか)</p>
