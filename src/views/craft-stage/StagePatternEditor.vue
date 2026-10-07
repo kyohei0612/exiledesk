@@ -845,13 +845,25 @@ defineExpose({ rows });
               </button>
             </div>
           </div>
-          <!-- MOD が外れたら (固定以外、MOD ごとに戻る手)。押すと右の枠で戻る手を選ぶ -->
-          <div v-if="r.set && presentMods(i, r).length" class="ml-3 space-y-0.5 border-l border-dashed border-sky-400/40 pl-2 text-[10px]" :class="needs2(r) ? '' : 'mt-1'">
-            <button v-for="id in presentMods(i, r)" :key="id" type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すと戻る手を選ぶ" @click="selectRow(i, 'lost')">
-              <span class="max-w-[9rem] truncate font-bold">{{ cardTitleOf(id) }}</span>
-              <span class="opacity-60">が外れたら →</span>
-              <span class="text-amber-200/90">◀ {{ gotoOf(i, r, id) + 1 }} 手目</span>
-            </button>
+          <!--
+            MOD が外れたら (固定以外、MOD ごとに戻る手)。外れの枝と同じ見た目: 赤い札「○ が外れたら」→ 戻り先へ矢印の線
+            (2026-10-07 オーナー「ちゃんと外れたら戻る感じの UI がいい、外れ → で 7 手目みたいな」)。押すと右の枠で戻る手を選ぶ
+          -->
+          <div v-if="r.set && presentMods(i, r).length" class="ml-3 space-y-1 pl-1 text-[10px]" :class="needs2(r) ? '' : 'mt-1'">
+            <div v-for="id in presentMods(i, r)" :key="id" class="flex flex-col">
+              <span class="flex items-center">
+                <span class="h-3 w-3 rounded-bl border-b border-l border-dashed border-rose-400/60"></span>
+                <button type="button" class="flex max-w-[15rem] items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-0.5 text-left hover:brightness-125" :disabled="locked" :title="`${cardTitleOf(id)} が外れたら ${gotoOf(i, r, id) + 1} 手目からやり直す (押すと戻る手を選ぶ)`" @click="selectRow(i, 'lost')">
+                  <span class="truncate font-bold text-rose-200">{{ cardTitleOf(id) }}</span>
+                  <span class="shrink-0 text-rose-300">が外れたら</span>
+                </button>
+              </span>
+              <span class="ml-3 flex items-center text-amber-200/90">
+                <span class="text-rose-300">◀</span>
+                <span class="h-px w-6 border-t border-dashed border-rose-400/60"></span>
+                <span class="ml-1 font-bold">{{ gotoOf(i, r, id) + 1 }} 手目に戻る</span>
+              </span>
+            </div>
           </div>
         </template>
         <template v-if="!locked">
@@ -918,12 +930,17 @@ defineExpose({ rows });
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'lost'">
               <p class="mb-1 text-[11px] opacity-60">この手を打っている間に、付いている MOD が外れたら何手目からやり直すか (固定は外れないので出さない)</p>
               <p v-if="lostRisk(focusRow!, rows[focusRow]!)" class="mb-2 text-[12px] font-bold" :class="lostRisk(focusRow!, rows[focusRow]!)!.bad ? 'text-rose-300' : 'text-amber-200'">{{ lostRisk(focusRow!, rows[focusRow]!)!.text }}</p>
-              <div class="flex flex-col gap-2">
-                <div v-for="id in presentMods(focusRow, rows[focusRow]!)" :key="id" class="flex flex-wrap items-center gap-2">
-                  <span class="min-w-[14rem] rounded-lg border border-white/15 bg-black/30 px-2 py-1 font-bold">{{ cardTitleOf(id) }} が外れたら</span>
-                  <span class="opacity-50">→</span>
-                  <button v-for="g in focusRow + 1" :key="g" type="button" class="rounded-lg border px-2 py-0.5 disabled:cursor-not-allowed disabled:opacity-30" :class="gotoOf(focusRow, rows[focusRow]!, id) === g - 1 ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:bg-white/10'" :disabled="rows[g - 1]!.set?.kind === 'rune' || rows[g - 1]!.step.target === ANY_TARGET" :title="rows[g - 1]!.set?.kind === 'rune' ? 'ルーンの手には戻れない' : rows[g - 1]!.step.target === ANY_TARGET ? '打つだけの手には戻れない' : cardTitle(rows[g - 1]!)" @click="setGoto(focusRow!, id, g - 1)">{{ g }} 手目</button>
-                  <span class="text-[11px] opacity-50">から</span>
+              <div class="flex flex-wrap items-start gap-4">
+                <!-- 戻り先は上から 1 手目・2 手目…と縦に (手の名前つき)。MOD が複数なら縦の一覧を横に並べる (2026-10-07 オーナー「縦で上から下みたいな感じがいい」) -->
+                <div v-for="id in presentMods(focusRow, rows[focusRow]!)" :key="id" class="w-72">
+                  <p class="mb-1 truncate font-bold" :title="cardTitleOf(id)">{{ cardTitleOf(id) }} が外れたら</p>
+                  <div class="flex flex-col gap-0.5">
+                    <button v-for="g in focusRow + 1" :key="g" type="button" class="flex items-center gap-2 rounded-md border px-2 py-1 text-left disabled:cursor-not-allowed disabled:opacity-30" :class="gotoOf(focusRow, rows[focusRow]!, id) === g - 1 ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-black/20 hover:border-white/30'" :disabled="rows[g - 1]!.set?.kind === 'rune' || rows[g - 1]!.step.target === ANY_TARGET" :title="rows[g - 1]!.set?.kind === 'rune' ? 'ルーンの手には戻れない' : rows[g - 1]!.step.target === ANY_TARGET ? '打つだけの手には戻れない' : undefined" @click="setGoto(focusRow!, id, g - 1)">
+                      <b class="w-10 shrink-0 text-amber-200">{{ g }} 手目</b>
+                      <span class="truncate text-[11px]">{{ cardTitle(rows[g - 1]!) }}</span>
+                      <span v-if="gotoOf(focusRow, rows[focusRow]!, id) === g - 1" class="ml-auto shrink-0 text-[10px]">← ここから</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </template>
