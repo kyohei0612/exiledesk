@@ -84,7 +84,7 @@ const VIEW_TABS = [
 /** 折りたたむ人数 (この人数以下)。カードの「N 人以下」の表示 */
 const lowLimit = computed<number>(() => d.lowThreshold.value - 1);
 
-// 起動時に App.vue が呼んでいるので、ここでは念のため再度呼ぶ (冪等ガード済 = no-op)
+// 準備はこの画面を開いた時に始める (2026-10-07 起動時にやめた。キャッシュの集計で起動直後に 3〜7 秒固まっていた)。冪等
 onMounted(() => {
   void ensureCraftV2Started();
   void prepareCraftData().then(() => (craftDataReady.value = true));

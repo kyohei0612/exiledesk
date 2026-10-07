@@ -14,7 +14,6 @@ import FetchBusyBar from "./components/FetchBusyBar.vue";
 import AssetPackToast from "./components/AssetPackToast.vue";
 import { ensureAssetPacks } from "./services/assets/asset-packs";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
-import { ensureCraftV2Started } from "./state/craft-v2-store";
 import { ensurePobBundleFresh } from "./services/pob-bundle";
 import { startWatchAutoRefresh } from "./state/gem-watch-auto";
 import { startSessionWatch } from "./state/poe-session";
@@ -52,18 +51,14 @@ useKeyboardShortcuts({
   },
 });
 
-// 2026-05-23 シームレス徹底:
-//   起動時に MOD 一覧 (クラフト発見 V2) の fetch を背景で開始する。
-//   ユーザーが MOD 一覧画面を開かなくても、勝手にキャッシュ即時表示 → 差分更新が走るので
-//   画面遷移時に「取得待ち」が発生しにくい。
-//   `ensureCraftV2Started` は冪等 (initialBootStarted ガード) なので、複数回呼んでも安全。
 onMounted(() => {
   // 起動の重さを調べる (2026-10-06): 各処理の時間と、画面が固まった時間を exiledesk.log に (起動から 3 分だけ)
   watchBootLongTasks();
   bootLog("画面の準備ができた (ここまでがスクリプトの読み込み)");
   // 中身が描けたのでウィンドウを出してもらう (白い窓を見せないため、起動時は隠してある)
   if (isTauriRuntime()) void invoke("show_main_window").catch(() => {});
-  void bootTimed("上位 MOD 一覧の準備", () => ensureCraftV2Started());
+  // 上位 MOD 一覧の準備 (キャッシュの集計で画面が 3〜7 秒固まる) は起動時にしない。使う画面 (クラフト計算機の上位プレイヤーのタブ・
+  // 使用率ランキング) を開いた時に始める (2026-10-07 オーナー「アプリ立ち上げの重さの原因突き止めて」→ 起動直後の固まりの 9 割がこれだった)
   // PoB 同梱物: 30 日空いていたら manifest を確認して自動更新 (未インストールなら PoB 画面で案内)
   void bootTimed("PoB の確認", () => ensurePobBundleFresh());
   // 画像パック (ベースの絵・スキンの画像): 要る版と違う時だけ落とす (初回と画像が変わった時だけ。2026-09-29)

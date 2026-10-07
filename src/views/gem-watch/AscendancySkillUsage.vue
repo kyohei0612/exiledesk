@@ -5,9 +5,9 @@
   データは上位プレイヤー MOD 一覧の取得 (craftV2Store) のついでに取れている poe.ninja の集計。部品は SkillUsageCard をそのまま使う。
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import SkillUsageCard from "../../components/craft-v2/SkillUsageCard.vue";
-import { craftV2Store } from "../../state/craft-v2-store";
+import { craftV2Store, ensureCraftV2Started } from "../../state/craft-v2-store";
 import { TARGET_ASCENDANCY_COUNT } from "../craft-v2/helpers";
 
 /**
@@ -18,6 +18,8 @@ const props = defineProps<{ klass?: string | null }>();
 const list = computed(() => [...craftV2Store.ascendancies].sort((a, b) => b.usagePercent - a.usagePercent).slice(0, TARGET_ASCENDANCY_COUNT));
 const fixed = computed(() => (props.klass ? craftV2Store.ascendancies.find((a) => a.classEn === props.klass) ?? null : null));
 const asc = computed(() => fixed.value);
+// 上位 MOD 一覧の準備は起動時にしなくなった (2026-10-07 起動の重さ) ので、使う画面を開いた時に始める
+onMounted(() => { void ensureCraftV2Started(); });
 </script>
 
 <template>

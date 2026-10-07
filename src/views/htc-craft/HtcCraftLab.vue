@@ -24,8 +24,8 @@ import CraftDiscoveryV2B from "../CraftDiscoveryV2B.vue";
 /**
  * 上のタブ。lab = 計算機 / top-mods = 上位プレイヤーの MOD。どちらを開いているかは state/app-nav.ts (他の画面や Ctrl+2 から
  * 「上位プレイヤーの MOD のタブへ」と飛べるように)。計算機の中身は v-show で保ち、上位プレイヤーの MOD は一度開いたら
- * v-show で保つ (開くまでは描かない: 一覧は重いので、計算機だけ使う人に最初から描かせない。取得そのものは App.vue 起動時から
- * state/craft-v2-store が背景で回しているので、開いた時には出そろっている)
+ * v-show で保つ (開くまでは描かない: 一覧は重いので、計算機だけ使う人に最初から描かせない。取得 (state/craft-v2-store) も
+ * 開いた時に始まる。2026-10-07 起動時にやめた: キャッシュの集計で起動直後に 3〜7 秒固まっていた)
  */
 const TABS: readonly { id: HtcCraftTab; label: string; hint: string }[] = [
   { id: "lab", label: "計算機", hint: "貼るか選ぶかして、作り方と費用を出す" },
