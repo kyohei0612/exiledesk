@@ -54,8 +54,9 @@ export function flush(): void {
   const body = JSON.stringify({ uid, sid, first: first && !sentAny, dev, ref, ev: buf.splice(0, buf.length) });
   sentAny = true;
   try {
-    const blob = new Blob([body], { type: "application/json" });
-    if (!navigator.sendBeacon?.(`${WEB_API_BASE}/event`, blob)) void fetch(`${WEB_API_BASE}/event`, { method: "POST", body, headers: { "content-type": "application/json" }, keepalive: true }).catch(() => undefined);
+    // text/plain にするとプレフライト (OPTIONS) が要らず、sendBeacon の「資格情報あり」と `*` の組み合わせでも届く (サーバーは中身を JSON として読む)
+    const blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
+    if (!navigator.sendBeacon?.(`${WEB_API_BASE}/event`, blob)) void fetch(`${WEB_API_BASE}/event`, { method: "POST", body, headers: { "content-type": "text/plain;charset=UTF-8" }, keepalive: true, credentials: "omit" }).catch(() => undefined);
   } catch { /* 印は落としてよい */ }
 }
 

@@ -11,7 +11,6 @@ import LivePanel from "./LivePanel.vue";
 import FeedbackDialog from "./FeedbackDialog.vue";
 import WelcomeDialog from "./WelcomeDialog.vue";
 import MarketNotice from "./MarketNotice.vue";
-import { APP_DOWNLOAD_URL } from "./config";
 import pkg from "../../package.json";
 
 const feedbackOpen = ref(false);
@@ -40,7 +39,8 @@ window.addEventListener("resize", fitZoom);
       <span class="ml-auto opacity-40">v{{ pkg.version }}</span>
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">要望・バグを送る</button>
-      <a :href="APP_DOWNLOAD_URL" target="_blank" rel="noopener" class="rounded-lg border border-amber-400/50 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100 hover:bg-amber-500/20" title="相場の自動取得・取引履歴・火力チェックなどはアプリ版で">アプリ版をダウンロード ↗</a>
+      <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
+      <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" title="相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中">アプリ版 近日公開</span>
     </header>
     <MarketNotice />
     <WelcomeDialog :open="welcomeOpen" @close="closeWelcome" />

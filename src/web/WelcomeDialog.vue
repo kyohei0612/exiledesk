@@ -4,7 +4,6 @@
  * 1 回閉じたら出さない (localStorage)。上の「はじめに」で開き直せる
  */
 import { craftStage } from "../state/craft-stage";
-import { APP_DOWNLOAD_URL } from "./config";
 
 defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
@@ -37,7 +36,7 @@ function pick(mode: "hand" | "sim"): void {
           </button>
         </div>
         <div class="mt-4 flex items-center gap-3 text-[11px] opacity-60">
-          <span>取引履歴・火力チェック・取引所の自動取得は <a :href="APP_DOWNLOAD_URL" target="_blank" rel="noopener" class="underline hover:text-amber-200">アプリ版</a> で</span>
+          <span>取引履歴・火力チェック・取引所の自動取得は アプリ版 (近日公開) で</span>
           <button type="button" class="ml-auto rounded-lg border border-white/20 px-3 py-1 opacity-100 hover:bg-white/10" @click="emit('close')">閉じる</button>
         </div>
       </div>
