@@ -22,6 +22,8 @@ const MAX_TEXT = 4000;
 const MAX_CONTACT = 200;
 const MAX_CONTEXT = 24 * 1024;
 const PER_HOUR = 10;
+/** 連投よけ: 同じ IP は 1 分に 1 件 (2026-10-07 オーナー「1 分レートで連続で送れないように」) */
+const PER_MINUTE = 1;
 const KEEP_DAYS = 90;
 const PREFIX = "fb:";
 
@@ -47,14 +49,27 @@ export function parseFeedback(body: unknown): Parsed {
   return { ok: true, kind, text, contact, context };
 }
 
-/** 同じ IP の 1 時間の数 (KV。超えたら false) */
-export async function allowIp(kv: KVNamespace, ip: string, now = Date.now()): Promise<boolean> {
-  const hour = Math.floor(now / 3600e3);
-  const key = `fbip:${ip}:${hour}`;
-  const n = Number((await kv.get(key)) ?? 0);
-  if (n >= PER_HOUR) return false;
-  await kv.put(key, String(n + 1), { expirationTtl: 3700 });
-  return true;
+/** 同じ IP の数 (KV)。1 分に 1 件・1 時間に 10 件を超えたら理由を返す (通れば null) */
+export async function allowIp(kv: KVNamespace, ip: string, now = Date.now()): Promise<string | null> {
+  const minKey = `fbmin:${ip}:${Math.floor(now / 60e3)}`;
+  if (Number((await kv.get(minKey)) ?? 0) >= PER_MINUTE) return "続けて送れるのは 1 分に 1 件";
+  const hourKey = `fbip:${ip}:${Math.floor(now / 3600e3)}`;
+  const n = Number((await kv.get(hourKey)) ?? 0);
+  if (n >= PER_HOUR) return "送りすぎ (1 時間に 10 件まで)";
+  await kv.put(minKey, "1", { expirationTtl: 120 });
+  await kv.put(hourKey, String(n + 1), { expirationTtl: 3700 });
+  return null;
+}
+
+/** 添付の「直前の流れ」(Web 版が付ける: 印の名前と何秒前か) を 1 行に */
+export function trailText(context: unknown, max = 14): string {
+  const trail = (context as { trail?: unknown })?.trail;
+  if (!Array.isArray(trail) || !trail.length) return "";
+  return trail.slice(-max).map((e) => {
+    const n = String((e as { n?: unknown })?.n ?? "?");
+    const ago = Number((e as { ago?: unknown })?.ago);
+    return Number.isFinite(ago) ? `${n} (${ago >= 60 ? `${Math.round(ago / 60)}分` : `${Math.round(ago)}秒`}前)` : n;
+  }).join(" → ");
 }
 
 export async function saveFeedback(kv: KVNamespace, fb: Feedback): Promise<void> {
@@ -73,7 +88,10 @@ export async function listFeedback(kv: KVNamespace, limit = 100): Promise<Feedba
 /** Discord に 1 件流す (webhook。失敗しても保存は済んでいるので投げない) */
 export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetch): Promise<boolean> {
   const head = fb.kind === "bug" ? "🐛 バグ" : "💡 要望";
-  const ctx = fb.context ? "\n```json\n" + JSON.stringify(fb.context).slice(0, 600) + "\n```" : "";
+  // 「流れ」(直前の操作) は読みやすく 1 行に、残り (版・ベース・シミュレーションの途中) は JSON で
+  const trail = trailText(fb.context);
+  const rest = fb.context && typeof fb.context === "object" ? Object.fromEntries(Object.entries(fb.context as Record<string, unknown>).filter(([k]) => k !== "trail")) : fb.context;
+  const ctx = (trail ? `\n流れ: ${trail}` : "") + (rest ? "\n```json\n" + JSON.stringify(rest).slice(0, 500) + "\n```" : "");
   // 日本時間で (Discord は文字列をそのまま出すので、ここで +9 時間)
   const jst = new Date(Date.parse(fb.at) + 9 * 3600e3).toISOString().slice(0, 16).replace("T", " ");
   const content = `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST\n${fb.text.slice(0, 1200)}${ctx}`.slice(0, 1950);

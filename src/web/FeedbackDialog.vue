@@ -6,6 +6,7 @@
 import { computed, ref, watch } from "vue";
 import { craftStage, readSimSession } from "../state/craft-stage";
 import { WEB_API_BASE } from "./config";
+import { track, trailNow } from "./track";
 import pkg from "../../package.json";
 
 const props = defineProps<{ open: boolean }>();
@@ -20,7 +21,7 @@ const state = ref<"idle" | "sending" | "sent" | "error">("idle");
 const errorText = ref("");
 const canSend = computed(() => text.value.trim().length > 0 && state.value !== "sending");
 
-watch(() => props.open, (v) => { if (v) { state.value = "idle"; errorText.value = ""; } });
+watch(() => props.open, (v) => { if (v) { state.value = "idle"; errorText.value = ""; track("feedback:open"); } });
 
 /** 今の画面の状態 (小さく): 版・URL・手で打つ / シミュレーション・ベース・シミュレーションの途中 */
 function contextNow(): unknown {
@@ -32,6 +33,8 @@ function contextNow(): unknown {
     base: craftStage.base.value,
     itemLevel: craftStage.itemLevel.value,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
+    // 直前の流れ (何を押して、どこまで進んだか、何秒前か)。詰まった瞬間に送られることが多いので、これで再現の手がかりにする
+    trail: trailNow(),
     sim: ses ? { base: ses.base, itemLevel: ses.itemLevel, targets: ses.targets, sockets: ses.sockets, order: ses.order, patterns: ses.patterns } : null,
   };
 }
@@ -49,6 +52,7 @@ async function send(): Promise<void> {
     if (!r.ok || !j.ok) throw new Error(j.error ?? `${r.status}`);
     state.value = "sent";
     text.value = "";
+    track("feedback:sent");
   } catch (e) {
     state.value = "error";
     errorText.value = String((e as Error).message ?? e);
@@ -76,7 +80,7 @@ function onKey(e: KeyboardEvent): void { if (e.key === "Escape") emit("close"); 
           <textarea v-model="text" rows="6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="kind === 'bug' ? '何をしたら、何が起きたか (期待と違った所)' : 'こうなると嬉しい、を一言で'" autofocus></textarea>
           <input v-model="contact" class="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60" placeholder="連絡先 (任意: X や Discord の名前。返事が要る時だけ)" />
           <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />
-          <label class="mt-2 flex cursor-pointer items-center gap-2 opacity-80"><input v-model="attach" type="checkbox" class="accent-amber-400" /> 今の画面の状態を添付 (ベース・狙い・パターン。名前やログインの情報は入らない)</label>
+          <label class="mt-2 flex cursor-pointer items-center gap-2 opacity-80"><input v-model="attach" type="checkbox" class="accent-amber-400" /> 今の画面の状態を添付 (ベース・狙い・パターン・直前の操作の流れ。名前やログインの情報は入らない)</label>
           <p v-if="state === 'error'" class="mt-2 text-rose-300">送れなかった: {{ errorText }}</p>
           <div class="mt-3 flex items-center gap-2">
             <span class="text-[10px] opacity-40">{{ text.trim().length }} / 4000</span>

@@ -9,6 +9,7 @@
  */
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
+import { track } from "../../utils/track";
 import { marketStore } from "../../state/market-store";
 import { trade2QueryUrl } from "../trade2/league";
 import { buildUniqueNameQuery } from "../trade2/query/item-queries";
@@ -42,6 +43,7 @@ export function rareModsSearchQuery(base: string, lines: readonly string[]): { q
 /** 取引所をブラウザで開く (今のリーグ、jp / www は設定どおり)。Web 版 (Tauri でない) は新しいタブ */
 export async function openTradeQuery(q: unknown): Promise<void> {
   const url = trade2QueryUrl(marketStore.tradeLeague.value, q);
+  track("trade:open");
   if (isTauriRuntime()) await openUrl(url);
   else window.open(url, "_blank", "noopener");
 }

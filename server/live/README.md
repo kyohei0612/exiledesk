@@ -37,6 +37,14 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
 - `GET /feedback.json?key=<REFRESH_KEY>` で新しい順の一覧 (添付 = 送った人の画面の状態: ベース・狙い・パターン)
 - Discord にも流すなら: Discord のサーバー設定 → 連携サービス → ウェブフック → 新しいウェブフック → 「ウェブフック URL をコピー」→ `npx wrangler secret put DISCORD_WEBHOOK` に貼る → `pnpm run deploy`
 
+## 見張りと日報 (2026-10-07)
+
+- **操作の印** (`POST /event`): Web 版が「開いた → 手で打つ / シミュレーション → ベース → 狙い → 順番 → 手順 → 回した → 完成 → 取引所」などの印を送る (cookie なし、名前や IP は無い)。Analytics Engine に 3 か月残る (無料 10 万/日)。ダッシュボードの Workers → Analytics Engine で「有効にする」が 1 回要る
+- **日報**: 毎朝 9 時 (JST) に Discord へ。昨日の 訪問 (新規 / 再訪)・ユーザー・直帰・滞在の中央・どこから・端末 (PC / スマホ)・国・使い方・段階と一番減った所・JS エラー・サーバーの回数とエラー・要望 / バグ・配信の見張り・異常・7 日のユーザー。
+  訪問数などは `CF_ANALYTICS_TOKEN` (Cloudflare の API トークン、権限は Account Analytics: Read だけ) が要る。`GET /report?key=<REFRESH_KEY>` で今すぐ見られる
+- **異常の通知**: 相場の中継が落ちた・配信の見張りが失敗した・サーバーのエラー、を Discord にすぐ (同じ物は 6 時間に 1 回)
+- **ログ**: ダッシュボードの Workers → exiledesk-live → ログ に 1 回ごとの記録 (path・status・ms・国。無料は 3 日分)。手元で見るなら `pnpm tail`
+
 ## オーナーがやること (初回だけ、全部無料)
 
 1. **Cloudflare のアカウント** を作る: https://dash.cloudflare.com/sign-up
@@ -55,7 +63,8 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
    npx wrangler secret put TWITCH_CLIENT_ID
    npx wrangler secret put TWITCH_CLIENT_SECRET
    npx wrangler secret put REFRESH_KEY          # 好きな文字列 (手で調べ直す時の合言葉。要望の一覧を見る時にも使う)
-   npx wrangler secret put DISCORD_WEBHOOK      # (任意) 要望・バグを Discord に流す
+   npx wrangler secret put DISCORD_WEBHOOK      # (任意) 要望・バグ・異常・日報を Discord に流す
+   npx wrangler secret put CF_ANALYTICS_TOKEN   # (任意) 日報の訪問数など (Account Analytics: Read のトークン)
    ```
 6. `channels.json` を本物にする (自分のチャンネルの `youtubeChannelId`、協賛チャンネル)。YouTube のチャンネル ID は UC で始まる 24 文字: YouTube Studio → 設定 → チャンネル → 詳細設定 に出る
 7. 置く:

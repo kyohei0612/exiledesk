@@ -49,12 +49,19 @@ export interface LiveState {
 
 export interface Env {
   LIVE: KVNamespace;
+  /** 操作の印の置き場 (Workers Analytics Engine。無ければ印は捨てる) */
+  EVENTS?: AnalyticsEngineDataset;
   YOUTUBE_API_KEY?: string;
   TWITCH_CLIENT_ID?: string;
   TWITCH_CLIENT_SECRET?: string;
   REFRESH_KEY?: string;
-  /** 要望・バグを流す Discord のウェブフック URL (無ければ保存だけ) */
+  /** 要望・バグ・異常・日報を流す Discord のウェブフック URL (無ければ保存だけ) */
   DISCORD_WEBHOOK?: string;
+  /** 日報の集計に使う Cloudflare の API トークン (Account Analytics: Read)。無ければ訪問数などは出ない */
+  CF_ANALYTICS_TOKEN?: string;
+  /** wrangler.jsonc の vars */
+  CF_ACCOUNT_ID?: string;
+  WEB_ANALYTICS_SITE?: string;
 }
 
 export type Fetch = typeof fetch;

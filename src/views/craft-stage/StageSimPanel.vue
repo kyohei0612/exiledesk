@@ -19,6 +19,7 @@ import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { runRecipe, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
 import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
+import { track } from "../../utils/track";
 import { buildSpecQuery } from "../../services/trade2/query/spec";
 import { openTradeQuery } from "../../services/pob-check/trade-links";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
@@ -602,6 +603,7 @@ async function run(only?: number): Promise<void> {
   if (only != null && (!rows.value.length || !s.simPatterns.value[only]?.steps.length)) return;
   const my = ++gen;
   busy.value = true;
+  track(only == null ? "sim:run" : "sim:run:one");
   error.value = "";
   progress.value = null;
   try {
@@ -685,6 +687,7 @@ async function run(only?: number): Promise<void> {
       showResult(results.value.length - 1);
     } else {
       results.value = out;
+      if (out.some((x) => x.out.r.pDone >= 0.5)) track("sim:done");
       showResult(out.reduce((b, x, i) => (x.out.r.perDone < out[b]!.out.r.perDone ? i : b), 0));
     }
     ranFor.value = sig.value;
@@ -776,6 +779,7 @@ function saveRecipe(): void {
   const r: SimRecipe = { id: `${Date.now()}`, name, savedAt: Date.now(), baseJa: baseJa.value, session: JSON.parse(JSON.stringify(sessionNow())) as SimSession };
   recipes.value = [r, ...recipes.value];
   writeSimRecipes(recipes.value);
+  track("recipe:save");
   recipeName.value = "";
 }
 /** 外を押す・Esc で閉じる */

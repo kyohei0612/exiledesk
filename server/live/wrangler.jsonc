@@ -1,13 +1,14 @@
 // Cloudflare Workers の設定 (exiledesk-live)。
 // 5 分おきに channels.json のチャンネルがライブ中かを調べ、KV に 1 つの JSON で置く。
 // サイトは GET /live.json を読むだけ (YouTube / Twitch には 5 分に 1 回しか問い合わせない)。
+// ほかに: 相場の中継 (/api/poe2scout)・要望/バグ (/feedback)・操作の印 (/event → Analytics Engine)・毎朝 9 時 (JST) の日報 (0 0 * * * UTC)
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "exiledesk-live",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "triggers": {
-    "crons": ["*/5 * * * *"]
+    "crons": ["*/5 * * * *", "0 0 * * *"]
   },
   "kv_namespaces": [
     {
@@ -16,6 +17,14 @@
       "id": "381d091adcaa439cb38d1fff106f7c63"
     }
   ],
+  // 操作の印 (無料 10 万/日、3 か月残る)。日報は SQL API で集計する (CF_ANALYTICS_TOKEN が要る)
+  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "exiledesk_events" }],
+  "vars": {
+    // 日報の集計 (GraphQL / SQL API) に使う。秘密ではない
+    "CF_ACCOUNT_ID": "b824ebc2247db353f01cabcee65b567f",
+    // Web Analytics のサイト (web.html の beacon の token)
+    "WEB_ANALYTICS_SITE": "72192ac351aa4259ad607ec32e069cfb"
+  },
   // 見本ページと枠の部品 (public/)。/ と /live-panel.js はここから、/live.json などは Worker から
   "assets": { "directory": "./public" },
   "observability": { "enabled": true }

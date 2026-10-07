@@ -1,5 +1,5 @@
 // server/live (ライブ中のチャンネルを配る Worker) の、外に繋がずに確かめられる所 (2026-10-07)
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseFeedVideoIds, parseLivePageVideoId, pickLive, readUntil, type VideoItem } from "../server/live/src/youtube";
 import { pickStreams, thumbOf, getAppToken } from "../server/live/src/twitch";
 import { buildState } from "../server/live/src/state";
@@ -151,11 +151,17 @@ describe("相場の中継 (/api/poe2scout)", () => {
 describe("要望・バグ (/feedback)", () => {
   const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
   const post = (body: unknown, ip = "1.2.3.4") => new Request("https://x.workers.dev/feedback", { method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": ip }, body: JSON.stringify(body) });
+  afterEach(() => { vi.useRealTimers(); });
   it("保存して新しい順に一覧、bot よけと空の本文は捨てる、同じ IP は 1 時間 10 件まで", async () => {
+    // 1 分に 1 件の決まりがあるので、時計を進めながら送る
+    vi.useFakeTimers({ toFake: ["Date"] });
+    let t = Date.UTC(2026, 9, 7, 1, 0, 0);
+    const tick = (): void => { t += 61_000; vi.setSystemTime(t); };
+    vi.setSystemTime(t);
     const env: Env = { LIVE: fakeKv(), REFRESH_KEY: "k" };
     const r1 = await worker.fetch(post({ kind: "bug", text: "偉大で 2 つ付かない", contact: "@me", context: { base: "Polished Bracers" } }), env, ctx);
     expect(r1.status).toBe(200);
-    await new Promise((r) => setTimeout(r, 3)); // 同じミリ秒だと並びが決まらない (キーは時刻)
+    tick();
     const r2 = await worker.fetch(post({ kind: "request", text: "レシピの共有" }), env, ctx);
     expect(r2.status).toBe(200);
     expect((await worker.fetch(post({ kind: "bug", text: "x", website: "http://spam" }), env, ctx)).status).toBe(200); // bot には成功したふり
@@ -165,7 +171,8 @@ describe("要望・バグ (/feedback)", () => {
     expect(list.map((x) => x.kind)).toEqual(["request", "bug"]);
     expect(list[1]).toMatchObject({ contact: "@me", context: { base: "Polished Bracers" } });
     expect((await worker.fetch(new Request("https://x.workers.dev/feedback.json?key=wrong"), env, ctx)).status).toBe(403);
-    for (let i = 0; i < 8; i++) await worker.fetch(post({ kind: "request", text: `n${i}` }), env, ctx);
+    for (let i = 0; i < 8; i++) { tick(); await worker.fetch(post({ kind: "request", text: `n${i}` }), env, ctx); }
+    tick();
     expect((await worker.fetch(post({ kind: "request", text: "11 件目" }), env, ctx)).status).toBe(429);
     expect((await worker.fetch(post({ kind: "request", text: "別の人" }, "5.6.7.8"), env, ctx)).status).toBe(200);
   });
@@ -178,5 +185,48 @@ describe("要望・バグ (/feedback)", () => {
     expect(sent!.content).toContain("🐛 バグ");
     expect(sent!.content).toContain("壊れた");
     expect(sent!.content).toContain('"base":"X"');
+  });
+});
+
+describe("操作の印と日報 (events / monitor)", () => {
+  it("届いた印を確かめる: id の形、名前の形、50 件まで、端末と流入元", async () => {
+    const { parseBatch } = await import("../server/live/src/events");
+    expect(parseBatch(null)).toBeNull();
+    expect(parseBatch({ uid: "x", sid: "abcdefgh", ev: [{ n: "open" }] })).toBeNull();
+    const b = parseBatch({ uid: "abcdefgh1234", sid: "zzzzzzzz", first: true, dev: "mobile", ref: "WWW.YouTube.com", ev: [{ n: "open" }, { n: "BAD NAME" }, { n: "error", x: "x".repeat(300) }] })!;
+    expect(b.first).toBe(true); expect(b.dev).toBe("mobile"); expect(b.ref).toBe("www.youtube.com");
+    expect(b.ev.map((e) => e.n)).toEqual(["open", "error"]);
+    expect(b.ev[1]!.x!.length).toBe(120);
+    expect(parseBatch({ uid: "abcdefgh1234", sid: "zzzzzzzz", ev: Array.from({ length: 60 }, () => ({ n: "ping" })) })!.ev).toHaveLength(50);
+  });
+  it("段階の文: 到達した人数と一番減った所", async () => {
+    const { funnelText, FUNNEL_SIM } = await import("../server/live/src/events");
+    const byEvent = new Map([["open", 50], ["mode:sim", 30], ["sim:base", 28], ["sim:targets", 20], ["sim:order", 8], ["sim:pattern", 7], ["sim:run", 6], ["sim:done", 5], ["trade:open", 2]].map(([k, v]) => [k as string, { sessions: v as number, users: v as number, count: v as number }]));
+    const t = funnelText({ sessions: 50, users: 50, newSessions: 0, bounce: null, medianMinutes: null, byEvent, refs: [], devices: [], countries: [], errors: [], wau: null }, FUNNEL_SIM);
+    expect(t).toContain("開いた 50 → シミュレーション 30");
+    expect(t).toContain("一番減った所: 狙い→順番 (-60%)");
+  });
+  it("日本時間の昨日と、直前の流れの文、日報の文面", async () => {
+    const { yesterdayJst, reportText } = await import("../server/live/src/monitor");
+    const { trailText } = await import("../server/live/src/feedback");
+    const y = yesterdayJst(new Date("2026-10-07T00:00:00Z")); // = 10/7 09:00 JST
+    expect(y.since).toBe("2026-10-05T15:00:00.000Z"); expect(y.until).toBe("2026-10-06T15:00:00.000Z"); expect(y.label).toBe("10/6");
+    expect(trailText({ trail: [{ n: "open", ago: 130 }, { n: "mode:sim", ago: 40 }, { n: "sim:base", ago: 3 }] })).toBe("open (2分前) → mode:sim (40秒前) → sim:base (3秒前)");
+    const text = reportText("10/6", null, { visits: null, pageViews: null, liveRequests: null, liveErrors: null, why: "CF_ANALYTICS_TOKEN が無い" }, { requests: 1, bugs: 2 }, null, ["相場の中継"]);
+    expect(text).toContain("日報 10/6"); expect(text).toContain("取れなかった (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望** 1 · **バグ** 2"); expect(text).toContain("異常** 相場の中継");
+  });
+  it("異常の通知は同じ物を 6 時間に 1 回、要望は 1 分に 1 件", async () => {
+    const { alert } = await import("../server/live/src/monitor");
+    const { allowIp } = await import("../server/live/src/feedback");
+    const kv = fakeKv();
+    let posts = 0;
+    const f = (async () => { posts++; return new Response(null, { status: 204 }); }) as unknown as typeof fetch;
+    const env: Env = { LIVE: kv, DISCORD_WEBHOOK: "https://discord/hook" };
+    expect(await alert(env, "相場の中継", "落ちた", f)).toBe(true);
+    expect(await alert(env, "相場の中継", "また落ちた", f)).toBe(false);
+    expect(posts).toBe(1);
+    expect(await allowIp(kv, "9.9.9.9", 1_000_000)).toBeNull();
+    expect(await allowIp(kv, "9.9.9.9", 1_010_000)).toMatch(/1 分に 1 件/);
+    expect(await allowIp(kv, "9.9.9.9", 1_070_000)).toBeNull();
   });
 });
