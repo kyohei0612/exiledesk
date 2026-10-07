@@ -242,6 +242,8 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
       const ms = restMembers(steps, p.target);
       if (ms[0]) st[ctx.data.mods.get(ms[0])?.type === "suffix" ? "suffix" : "prefix"] += 1;
       for (const id of ms) st.placed.add(id);
+      // 骨で残りを付けた時も冒涜の数に入れる (2026-10-07 靴で骨を 2 回組めてしまい、回すと全部「冒涜の MOD は 1 つまで」で止まった)
+      if (s.kind === "desecrate") st.desecrated++;
       continue;
     }
     if (p.target === ANY_TARGET) {

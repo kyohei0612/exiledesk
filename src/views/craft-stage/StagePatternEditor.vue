@@ -552,8 +552,9 @@ function setGoto(i: number, id: string, g: number): void {
 }
 /** やり直しの札: そのまま / 消去 / カオス / ほか (パーフェクトエッセンス・骨) */
 const missMore = ref(false);
-function missKind(r: Row): "none" | "annul" | "chaos" | "other" {
+function missKind(r: Row): "none" | "redo" | "annul" | "chaos" | "other" {
   const x = missSet(r.step);
+  if (!x && r.step.onMiss === "redo") return "redo";
   return !x ? "none" : x.kind === "annul" ? "annul" : x.kind === "chaos" ? "chaos" : "other";
 }
 function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: readonly string[]): void {
@@ -565,8 +566,8 @@ function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: re
   if (x) patch(i, { miss: x.key, onMiss: "annul_redo" });
   editPart.value = "miss";
 }
-function pickMissKind(i: number, k: "none" | "annul" | "chaos"): void {
-  if (k === "none") { patch(i, { miss: null, onMiss: "next" }); editPart.value = "miss"; return; }
+function pickMissKind(i: number, k: "none" | "redo" | "annul" | "chaos"): void {
+  if (k === "none" || k === "redo") { patch(i, { miss: null, onMiss: k === "redo" ? "redo" : "next" }); editPart.value = "miss"; return; }
   const cur = missSet(pat.value.steps[i]!);
   if (cur?.kind === k) { editPart.value = "miss"; return; }
   setMiss(i, k, k === "annul" ? "annul" : "chaos", []);
@@ -583,6 +584,7 @@ function missOmenChoices(r: Row): Array<{ key: string; ja: string; omens: string
 function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const x = missSet(r.step);
   const c = ctx.value;
+  if (!x && r.step.onMiss === "redo") return { text: "ハズレは残して同じ手をもう一度。その側が満杯になったらハズレを 1 つ消す", bad: false };
   if (!x) return { text: "ハズレは残したまま次の手へ進む", bad: false };
   if (!c) return { text: "", bad: false };
   if (x.omens.includes("OmenofLight")) return { text: "冒涜の MOD だけを消す (付いている狙いは消えない)", bad: false };
@@ -640,7 +642,7 @@ function chipsOf(i: number, r: Row): Chip[] {
   if (!isRune) out.push({ part: "set", name: "カレンシー", icons: icons(r.set), text: r.set && !icons(r.set).length ? setShort(r.set) : "", state: st("set", !!r.set) });
   if (needs2(r)) out.push({ part: "target2", name: "一緒に狙う MOD", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: st("target2", !!r.step.target2) });
   else if (canCands(r)) out.push({ part: "target2", name: "ほかの候補 (任意)", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: now === "target2" ? "now" : "done" });
-  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? "選択無し" : "", state: st("miss", hasMiss(r)) });
+  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : "選択無し") : "", state: st("miss", hasMiss(r)) });
   if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
   if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が消えたら", icons: [], text: "", state: st("lost", true) });
   return out;
@@ -816,7 +818,7 @@ defineExpose({ rows });
             <span v-if="showMiss(r) && !needs2(r)" class="flex flex-col">
               <span class="flex items-center">
                 <span class="h-px w-4 border-t border-dashed border-rose-400/60"></span>
-                <button type="button" class="flex items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :class="focusRow === i && partOf(i, r) === 'miss' ? 'ring-2 ring-rose-400/70' : ''" :title="hasMiss(r) ? '押すとやり直しを選ぶ' : 'レアリティが変わる手はやり直せない'" :disabled="!hasMiss(r) || locked" @click="selectRow(i, 'miss')">
+                <button type="button" class="flex items-center gap-1 whitespace-nowrap rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :class="focusRow === i && partOf(i, r) === 'miss' ? 'ring-2 ring-rose-400/70' : ''" :title="hasMiss(r) ? '押すとやり直しを選ぶ' : 'レアリティが変わる手はやり直せない'" :disabled="!hasMiss(r) || locked" @click="selectRow(i, 'miss')">
                   <span class="text-rose-300">付かなかった</span>
                   <template v-if="missSet(r.step)">
                     <span class="opacity-60">→</span>
@@ -824,10 +826,10 @@ defineExpose({ rows });
                     <span v-else class="h-5 w-5 rounded border border-dashed border-white/25"></span>
                     <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
                   </template>
-                  <span v-else class="opacity-70">→ 次へ</span>
+                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : "→ 次へ" }}</span>
                 </button>
               </span>
-              <span v-if="missSet(r.step)" class="flex items-center text-[10px] text-amber-200/90">
+              <span v-if="missSet(r.step) || r.step.onMiss === 'redo'" class="flex items-center text-[10px] text-amber-200/90">
                 <span class="text-rose-300">◀</span>
                 <span class="h-px w-5 border-t border-dashed border-rose-400/60"></span>
                 <span class="ml-1">付くまで繰り返す</span>
@@ -980,13 +982,14 @@ defineExpose({ rows });
                 大きい札 3 枚 (そのまま / 消去 / カオス) → 選んだ札のお告げ・強さだけ → 巻き込む確率 1 行。パーフェクトエッセンス・骨は畳む
               -->
               <p class="mb-2 text-[13px] font-bold text-rose-100">狙いの MOD が付かなかったら、どうする？</p>
-              <div class="grid max-w-2xl grid-cols-3 gap-2">
-                <button v-for="k in (['none', 'annul', 'chaos'] as const)" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" @click="pickMissKind(focusRow!, k)">
-                  <img v-if="k !== 'none' && iconOf(k)" :src="iconOf(k)" alt="" class="h-8 w-8 object-contain" />
-                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">→</span>
+              <!-- もう一度打つ: 外れは残して同じ手を打ち直し、その側が満杯になった時だけ外れを消す (2026-10-07 靴のライフで、毎回消すより 2 割安かった) -->
+              <div class="grid max-w-3xl grid-cols-4 gap-2">
+                <button v-for="k in (['none', 'redo', 'annul', 'chaos'] as const)" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" @click="pickMissKind(focusRow!, k)">
+                  <img v-if="(k === 'annul' || k === 'chaos') && iconOf(k)" :src="iconOf(k)" alt="" class="h-8 w-8 object-contain" />
+                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "redo" ? "↺" : "→" }}</span>
                   <span>
-                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
-                    <span class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
+                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "redo" ? "もう一度打つ" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
+                    <span class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "redo" ? "満杯の時だけハズレを消す" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
                   </span>
                 </button>
               </div>
