@@ -588,7 +588,7 @@ async function run(only?: number): Promise<void> {
   error.value = "";
   progress.value = null;
   try {
-    phase.value = "回しています";
+    phase.value = "試しています";
     const divine = 1; // 手で入れた値段は高貴建て
     // 値段は 1 回引いたら覚える (相場の一覧を毎手引くと、500 回で 46 秒かかっていた)
     const memo = new Map<string, number>();
@@ -1110,10 +1110,10 @@ function replay(): void {
             </button>
             <span v-else class="pr-1.5 opacity-50">{{ patternNote(p) }}</span>
           </span>
-          <span v-if="busy" class="ml-auto text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
+          <span v-if="busy" class="ml-auto text-sky-200">{{ phase }}<template v-if="progress && phase === '試しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }} 人</template>…</span>
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
           <span v-if="error" class="text-rose-300">{{ error }}</span>
-          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンを ${runs.toLocaleString()} 回ずつ回す (組みかけは組めている所まで)`" @click="run()">回す ▶</button>
+          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (組みかけは組めている所まで)`" @click="run()">回す ▶</button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
@@ -1171,7 +1171,7 @@ function replay(): void {
         <div class="rounded-lg bg-black/30 px-3 py-2">
           <p class="text-[10px] opacity-60">完成の割合</p>
           <p class="text-lg font-bold" :class="summary.pDone >= 0.9 ? 'text-emerald-300' : 'text-amber-300'">{{ pct(summary.pDone) }}</p>
-          <p class="text-[10px] opacity-50">{{ fractureRow ? "フラクチャー済みから " : "" }}{{ summary.runs.toLocaleString() }} 回のうち</p>
+          <p class="text-[10px] opacity-50">{{ fractureRow ? "フラクチャー済みから " : "" }}{{ summary.runs.toLocaleString() }} 人が作ってみて</p>
         </div>
         <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">半分の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p50) }}</p></div>
         <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">8 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p80) }}</p></div>
