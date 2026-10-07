@@ -1,0 +1,181 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】無料のクラフトシミュレーター ExileDesk を作りました: テスター募集",
+  "target_seconds": 330,
+  "result_file": "data/results/exiledesk_promo.json",
+  "final_step": 6,
+  "layout": "wide",
+  "planned_sections": 6,
+  "demos": {
+    "reveal": "data/results/exiledesk_promo__reveal.json",
+    "serle": "data/results/exiledesk_promo__serle.json"
+  },
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "今までの動画のクラフトの画面、あれってAIで作った絵なのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "実は違うの。今まで見せた画面は全部、生成AIの絵じゃないの。アプリを実際に動かして撮っていたのよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "えっ、全部本物なのだ！？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。オーブを打った結果も、MODの数字も、アプリが出した物をそのまま見せていたの。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "reveal",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "だから数字がちゃんとしてたのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "reveal",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そのアプリがExileDesk。PoE2のクラフトを、実際に打って試せるツールよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "例えば、白い指輪にオーブを打っていくと……。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "付くMODは、打つたびにその場の抽選で決まるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "動画のために、都合よく作った結果じゃないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "違うわ。打ったら本当にこうなった、っていう結果をそのまま見せているの。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ガチの結果なのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そのExileDeskのウェブ版を、無料で公開したの。ブラウザで開くだけで、誰でも使えるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "タダなのだ！？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、試してくれる人が全然足りないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "テスターを探してるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。今日はできることを紹介するから、使ってみて、感想をコメント欄に書いてね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        }
+      ]
+    }
+  ]
+}
