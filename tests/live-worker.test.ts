@@ -155,6 +155,7 @@ describe("要望・バグ (/feedback)", () => {
     const env: Env = { LIVE: fakeKv(), REFRESH_KEY: "k" };
     const r1 = await worker.fetch(post({ kind: "bug", text: "偉大で 2 つ付かない", contact: "@me", context: { base: "Polished Bracers" } }), env, ctx);
     expect(r1.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 3)); // 同じミリ秒だと並びが決まらない (キーは時刻)
     const r2 = await worker.fetch(post({ kind: "request", text: "レシピの共有" }), env, ctx);
     expect(r2.status).toBe(200);
     expect((await worker.fetch(post({ kind: "bug", text: "x", website: "http://spam" }), env, ctx)).status).toBe(200); // bot には成功したふり
