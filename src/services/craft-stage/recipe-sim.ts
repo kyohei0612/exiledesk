@@ -445,7 +445,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         // 偉大 (2 つ狙い) は、その側に 2 枠空くまで外れを消してから打つ (空きが 1 つだと偉大でも 1 つしか付かない。狙いはまだ付いていないので消去で失う物が無い。
         // 2026-10-07 手順を追うと、外れが残ったまま偉大を打っていた)
         const free = ts ? limitOf(item, ts) - listOf(item, ts).length : 0;
-        if (p.kind === "exalt" && two && p.omens.includes("OmenofGreaterExaltation") && ts && free < 2 && junkOn(item, ts).length) {
+        // 狙いがまだ 1 つも付いていない時は外れを全部消す (2 枠空いていても外れを残すと、偉大で 2 つ当たった時にその側が満杯になり、
+        // 次の手 (骨など) の前の消去で当たりを巻き込んでいた。2026-10-07 オーナー「パターン 2 計算合ってる？」)
+        if (p.kind === "exalt" && two && p.omens.includes("OmenofGreaterExaltation") && ts && (free < 2 || count(p.target!) === 0) && junkOn(item, ts).length) {
           e = annulOn(ts);
           if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
           continue;
