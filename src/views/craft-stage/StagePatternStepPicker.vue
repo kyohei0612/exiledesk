@@ -85,6 +85,18 @@ function omenDim(o: string): string | null {
   const x = setsOf(chosen.value).find((y) => same(y.omens, next));
   return x && !omens.value.includes(o) ? props.why(x) : null;
 }
+/**
+ * 灰色の札に出す短い理由 (全文はホバー)。2026-10-07 オーナー「グレーアウトしてる所に打てる MOD が無いみたいな表記がいいのかな」
+ */
+const SHORT: Array<[RegExp, string]> = [
+  [/消せる MOD が無い/, "消せる物なし"], [/外れた MOD を消せない|消えない/, "外れを消せない"],
+  [/ノーマルにだけ/, "ノーマルだけ"], [/マジックにだけ|マジックかレア/, "マジックだけ"], [/レアにだけ|レアだけ/, "レアだけ"], [/ノーマルかマジック/, "レア不可"],
+  [/枠が全部|枠が埋ま/, "枠なし"], [/プレフィックスだけ/, "プレだけ"], [/サフィックスだけ/, "サフィだけ"],
+  [/冒涜の MOD は.*1 つまで/, "冒涜は 1 つまで"], [/エッセンスの MOD は 1 つまで/, "エッセンス 1 つまで"], [/ソケット/, "ソケットなし"],
+  [/打つだけには使えない/, "打つだけ不可"], [/付ける物がルーン/, "ルーンの時だけ"], [/このエッセンスで付く MOD ではない|付く MOD ではない|で出ない MOD/, "この MOD は付かない"],
+  [/勢力/, "勢力が違う"], [/カタリスト|品質/, "品質が要る"], [/一緒に使えない/, "併用不可"], [/レアリティが変わる/, "やり直せない"],
+];
+const shortWhy = (w: string): string => SHORT.find(([re]) => re.test(w))?.[1] ?? "使えない";
 /** inline の時は選んだ組み合わせをすぐ渡す */
 function emitInline(): void {
   if (props.inline && match.value && (props.soft || !props.why(match.value))) emit("pick", match.value.key);
@@ -115,7 +127,7 @@ function decide(): void {
         <button
           v-for="t in r.tiles" :key="t.id" type="button"
           class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition"
-          :class="[chosen === t.id ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30', tileWhy(t) ? (soft ? 'opacity-45' : 'cursor-not-allowed opacity-35') : (soft ? 'shadow-[0_0_10px_rgba(251,191,36,0.35)]' : '')]"
+          :class="[chosen === t.id ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30', tileWhy(t) ? (soft ? '[&>*:not(.why)]:opacity-45' : 'cursor-not-allowed [&>*:not(.why)]:opacity-30') : (soft ? 'shadow-[0_0_10px_rgba(251,191,36,0.35)]' : '')]"
           :title="tileWhy(t) ?? t.label" @click="pickTile(t)"
         >
           <img v-if="t.icon" :src="t.icon" alt="" class="h-7 w-7 object-contain" draggable="false" />
@@ -123,7 +135,8 @@ function decide(): void {
           <span class="w-full truncate text-center leading-tight">{{ t.label }}</span>
           <span v-if="t.badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-sky-300">{{ t.badge }}</span>
           <span v-if="t.side" class="absolute left-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-amber-200">{{ t.side }}</span>
-          <span v-if="t.price" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(t.price) }}</span>
+          <span v-if="tileWhy(t)" class="why w-full truncate text-center text-[9px] font-bold text-rose-300">{{ shortWhy(tileWhy(t)!) }}</span>
+          <span v-else-if="t.price" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(t.price) }}</span>
         </button>
       </div>
     </div>
@@ -133,14 +146,15 @@ function decide(): void {
         <button
           v-for="o in omenChoices" :key="o" type="button"
           class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition"
-          :class="[omens.includes(o) ? 'stage-omen-on border-orange-300' : 'border-white/10 bg-black/30 hover:border-white/30', omenWhy(o) ? 'cursor-not-allowed opacity-35' : omenDim(o) ? 'opacity-45' : '']"
+          :class="[omens.includes(o) ? 'stage-omen-on border-orange-300' : 'border-white/10 bg-black/30 hover:border-white/30', omenWhy(o) ? 'cursor-not-allowed [&>*:not(.why)]:opacity-30' : omenDim(o) ? 'opacity-45' : '']"
           :title="omenWhy(o) ?? omenDim(o) ?? jaOfOmen(o) ?? o" @click="toggleOmen(o)"
         >
           <img v-if="iconOf(o)" :src="iconOf(o)" alt="" class="h-7 w-7 object-contain" draggable="false" />
           <span v-else class="grid h-7 w-7 place-items-center rounded bg-white/10 text-[14px]">◎</span>
           <span class="w-full truncate text-center leading-tight">{{ jaOfOmen(o) ?? o }}</span>
           <span v-if="omens.includes(o)" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] font-bold text-white">有効</span>
-          <span v-if="priceOf(o)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(o)) }}</span>
+          <span v-if="omenWhy(o)" class="why w-full truncate text-center text-[9px] font-bold text-rose-300">{{ shortWhy(omenWhy(o)!) }}</span>
+          <span v-else-if="priceOf(o)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(o)) }}</span>
         </button>
       </div>
     </div>
