@@ -44,13 +44,13 @@ export function reqLog(req: Request, url: URL, status: number, ms: number, extra
   console.log(JSON.stringify({ path: url.pathname, status, ms: Math.round(ms), country: cf?.country ?? null, ...extra }));
 }
 
-/** 日本時間の「昨日」の始まりと終わり (UTC の ISO)、1 週間前 */
-export function yesterdayJst(now = new Date()): { since: string; until: string; weekSince: string; label: string } {
+/** 日本時間の「昨日」の始まりと終わり (UTC の ISO)、1 週間前。today = true なら「今日のここまで」(確かめ用) */
+export function yesterdayJst(now = new Date(), today = false): { since: string; until: string; weekSince: string; label: string } {
   const jst = new Date(now.getTime() + 9 * 3600e3);
   const todayStart = Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate()) - 9 * 3600e3;
-  const since = new Date(todayStart - 86400e3), until = new Date(todayStart), weekSince = new Date(todayStart - 7 * 86400e3);
+  const since = new Date(today ? todayStart : todayStart - 86400e3), until = today ? now : new Date(todayStart), weekSince = new Date(until.getTime() - 7 * 86400e3);
   const d = new Date(since.getTime() + 9 * 3600e3);
-  return { since: since.toISOString(), until: until.toISOString(), weekSince: weekSince.toISOString(), label: `${d.getUTCMonth() + 1}/${d.getUTCDate()}` };
+  return { since: since.toISOString(), until: until.toISOString(), weekSince: weekSince.toISOString(), label: `${d.getUTCMonth() + 1}/${d.getUTCDate()}${today ? " (今日のここまで)" : ""}` };
 }
 
 export interface Usage { visits: number | null; pageViews: number | null; liveRequests: number | null; liveErrors: number | null; why?: string }
@@ -99,6 +99,7 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     lines.push(`**段階 (手)** ${funnelText(sum, FUNNEL_HAND)}`);
     const err = sum.byEvent.get("error");
     lines.push(`**品質** JS エラー ${err ? `${err.count} 件 / ${err.sessions} 人${sum.errors.length ? ` (${sum.errors.map(([k, v]) => `${k.slice(0, 50)} ×${v}`).join(" / ")})` : ""}` : "0"} · サーバー ${n(usage.liveRequests)} 回 / エラー ${n(usage.liveErrors)}`);
+    if (sum.warnings.length) lines.push(`**集計の警告** ${sum.warnings.join(" / ")}`);
   } else {
     lines.push(`**人** 取れなかった (${usage.why ?? "集計の設定が無い"})`);
   }
@@ -111,8 +112,8 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
 }
 
 /** 日報を組んで Discord に (無ければ文面だけ返す) */
-export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Date()): Promise<string> {
-  const { since, until, weekSince, label } = yesterdayJst(now);
+export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Date(), today = false): Promise<string> {
+  const { since, until, weekSince, label } = yesterdayJst(now, today);
   const [sum, usage, fb, alerts] = await Promise.all([
     env.CF_ANALYTICS_TOKEN ? summarize(env, since, until, weekSince, fetchFn).catch((e) => { console.warn("summarize failed", String(e)); return null; }) : Promise.resolve(null),
     fetchUsage(env, since, until, fetchFn),

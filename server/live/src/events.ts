@@ -69,12 +69,14 @@ export interface Summary {
   refs: Array<[string, number]>; devices: Array<[string, number]>; countries: Array<[string, number]>;
   errors: Array<[string, number]>;
   wau: number | null;
+  /** 集計で失敗した問い合わせ (0 が「無い」のか「取れなかった」のかを日報で分かるように) */
+  warnings: string[];
 }
 
 /** 昨日のまとめ (SQL を数本。1 本ずつ失敗しても他は続ける) */
 export async function summarize(env: Env, since: string, until: string, weekSince: string, fetchFn: Fetch = fetch): Promise<Summary> {
-  const out: Summary = { sessions: 0, users: 0, newSessions: 0, bounce: null, medianMinutes: null, byEvent: new Map(), refs: [], devices: [], countries: [], errors: [], wau: null };
-  const q = async <T,>(query: string): Promise<T[]> => { try { return await sql<T>(env, query, fetchFn); } catch (e) { console.warn("summarize:", String(e).slice(0, 200)); return []; } };
+  const out: Summary = { sessions: 0, users: 0, newSessions: 0, bounce: null, medianMinutes: null, byEvent: new Map(), refs: [], devices: [], countries: [], errors: [], wau: null, warnings: [] };
+  const q = async <T,>(query: string): Promise<T[]> => { try { return await sql<T>(env, query, fetchFn); } catch (e) { const w = String(e).slice(0, 160); console.warn("summarize:", w); if (out.warnings.length < 3) out.warnings.push(w); return []; } };
   const w = range(since, until);
   for (const r of await q<{ n: string; s: number; u: number; c: number }>(`SELECT blob1 AS n, count(DISTINCT blob2) AS s, count(DISTINCT blob3) AS u, SUM(_sample_interval) AS c FROM ${DATASET} WHERE ${w} GROUP BY n`)) {
     out.byEvent.set(r.n, { sessions: Number(r.s), users: Number(r.u), count: Number(r.c) });

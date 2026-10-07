@@ -202,7 +202,7 @@ describe("操作の印と日報 (events / monitor)", () => {
   it("段階の文: 到達した人数と一番減った所", async () => {
     const { funnelText, FUNNEL_SIM } = await import("../server/live/src/events");
     const byEvent = new Map([["open", 50], ["mode:sim", 30], ["sim:base", 28], ["sim:targets", 20], ["sim:order", 8], ["sim:pattern", 7], ["sim:run", 6], ["sim:done", 5], ["trade:open", 2]].map(([k, v]) => [k as string, { sessions: v as number, users: v as number, count: v as number }]));
-    const t = funnelText({ sessions: 50, users: 50, newSessions: 0, bounce: null, medianMinutes: null, byEvent, refs: [], devices: [], countries: [], errors: [], wau: null }, FUNNEL_SIM);
+    const t = funnelText({ sessions: 50, users: 50, newSessions: 0, bounce: null, medianMinutes: null, byEvent, refs: [], devices: [], countries: [], errors: [], wau: null, warnings: [] }, FUNNEL_SIM);
     expect(t).toContain("開いた 50 → シミュレーション 30");
     expect(t).toContain("一番減った所: 狙い→順番 (-60%)");
   });

@@ -151,7 +151,8 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       return json(await refresh(env), 200, { "cache-control": "no-store" });
     case "/report":
       if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
-      return new Response(await dailyReport(env), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
+      // &today=1 で「今日のここまで」(集計が通っているかの確かめ用)
+      return new Response(await dailyReport(env, fetch, new Date(), url.searchParams.get("today") === "1"), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     case "/health":
       return json({ ok: true, channels: CHANNELS.length, events: !!env.EVENTS, analytics: !!env.CF_ANALYTICS_TOKEN });
     default:
