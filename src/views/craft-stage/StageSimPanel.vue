@@ -596,14 +596,23 @@ const ONE_RUNS = 1500;
 const activePattern = ref(0);
 // 上のタブで開いたパターンの結果を下に出す (回した物だけ。2026-10-07 パターンを並べて回すと、タブを替えても下は一番安い物のままだった)
 watch(() => s.simPatterns.value[activePattern.value]?.name, (n) => { if (n) showResultByName(n); });
-async function run(only?: number): Promise<void> {
+/**
+ * 「この手だけ回す」の結果 (2026-10-07 オーナー「カオス何個分で単純にできるか知りたい」「8 割の人で出した方が良さそう」)。
+ * その手の前までは当たった状態から、その手のカレンシーを何個打ったら付いたか (8 割の人・平均) とその手の費用。1 人 20,000 回まで
+ */
+const STEP_ONLY_MAX = 20_000;
+/** この手だけの人数 (重い手は 1,500 人で 20〜30 秒かかったので 500 人。2026-10-07 オーナー「500 人でよさそう」) */
+const STEP_ONLY_RUNS = 500;
+const stepRun = ref<{ k: number; i: number; presses: number; cost: number; p80Presses: number; p80Cost: number; pDone: number; busy: boolean } | null>(null);
+async function run(only?: number, stepOnly?: number): Promise<void> {
   const it = s.item.value, d = s.data.value;
   if (!it || !d) return;
   if (only == null && blocked.value) return;
   if (only != null && (!rows.value.length || !s.simPatterns.value[only]?.steps.length)) return;
   const my = ++gen;
   busy.value = true;
-  track(only == null ? "sim:run" : "sim:run:one");
+  if (stepOnly != null && only != null) stepRun.value = { k: only, i: stepOnly, presses: 0, cost: 0, p80Presses: 0, p80Cost: 0, pDone: 0, busy: true };
+  track(only == null ? "sim:run" : stepOnly != null ? "sim:run:step" : "sim:run:one");
   error.value = "";
   progress.value = null;
   try {
@@ -613,7 +622,8 @@ async function run(only?: number): Promise<void> {
     const memo = new Map<string, number>();
     const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
     const spec: RecipeSpec = {
-      data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: only != null ? ONE_RUNS : runs.value, price,
+      data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: stepOnly != null ? STEP_ONLY_RUNS : only != null ? ONE_RUNS : runs.value, price,
+      ...(stepOnly != null ? { maxSteps: STEP_ONLY_MAX } : {}),
       targets: s.simTargets.value.flatMap((t) => (methodOf(t) === "fracture"
         ? [{ modId: t.modId, minTierIndex: t.minTierIndex, method: "fracture" as const }, ...(t.alts ?? []).map((a) => ({ ...a, method: "fracture" as const }))]
         : [{ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}) }])),
@@ -660,7 +670,8 @@ async function run(only?: number): Promise<void> {
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
     // 回すのはフラクチャー済みから先だけ (2026-10-06 オーナー「白ベースでもフラクチャーまでの平均はほぼ一緒、3 回に 1 回当たる予算で
     // そこまでは固定で出しておｋ、他の選択肢も」)。始め方ごとの合計 = その始め方の費用 + 固定済みから先の平均
-    const ps = only != null ? [s.simPatterns.value[only]!] : runnable.value;
+    // この手だけ: パターンをその手までで切る (その手の狙いまでが完成)
+    const ps = only != null ? [stepOnly != null ? { ...s.simPatterns.value[only]!, steps: s.simPatterns.value[only]!.steps.slice(0, stepOnly + 1) } : s.simPatterns.value[only]!] : runnable.value;
     const total = spec.runs * ps.length;
     const out: typeof results.value = [];
     for (const [k, p] of ps.entries()) {
@@ -679,6 +690,14 @@ async function run(only?: number): Promise<void> {
       if (my !== gen || !r) return;
       out.push({ name: p.name, out: { r, spec: pspec }, rest: fractureRow.value ? r.perDone : null });
     }
+    if (only != null && stepOnly != null) {
+      // この手だけ: 並べた後の番号 (カレンシーの決まっていない手は飛ばす) でその手の打った数と費用を引く。全体の結果は触らない
+      const ci = s.simPatterns.value[only]!.steps.slice(0, stepOnly).filter((st) => !!setByKey(sets, st.set)).length;
+      const r = out[0]!.out.r;
+      const a = r.stepAvg?.[ci];
+      stepRun.value = { k: only, i: stepOnly, presses: a?.presses ?? 0, cost: a?.cost ?? 0, p80Presses: a?.p80Presses ?? 0, p80Cost: a?.p80Cost ?? 0, pDone: r.pDone, busy: false };
+      return;
+    }
     if (only != null) {
       // 1 つだけ回した時は、前の結果のそのパターンだけ入れ替える (他のパターンの結果は残す)
       const x = out[0]!;
@@ -694,13 +713,14 @@ async function run(only?: number): Promise<void> {
   } catch (e) {
     if (my === gen) error.value = e instanceof Error ? e.message : String(e);
   } finally {
-    if (my === gen) { busy.value = false; phase.value = ""; }
+    if (my === gen) { busy.value = false; phase.value = ""; if (stepRun.value?.busy) stepRun.value = null; }
   }
 }
 function stop(): void {
   gen++;
   busy.value = false;
   phase.value = "";
+  if (stepRun.value?.busy) stepRun.value = null;
 }
 watch(() => s.base.value, () => { recipeOut.value = null; restCost.value = null; results.value = []; });
 
@@ -1263,7 +1283,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span class="opacity-60">{{ fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
-        <StagePatternEditor :busy="busy" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
+        <StagePatternEditor :busy="busy" :step-run="stepRun" :step-max="STEP_ONLY_MAX" :step-runs="STEP_ONLY_RUNS" @run-one="(k: number) => run(k)" @run-step="(k: number, i: number) => run(k, i)" @close-step="stepRun = null" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」

@@ -114,6 +114,9 @@ export interface RecipeRun {
   bases: number;
   /** 終わった時に付いていた狙いの MOD (固定以外) */
   hits?: string[];
+  /** パターンの手ごと (並べた後の番号): その手のカレンシーを打った数と、その手にいる間にかかった費用 (外しの消去なども込み)。「この手だけ回す」用 */
+  stepPresses?: number[];
+  stepCost?: number[];
 }
 export interface RecipeResult {
   runs: number;
@@ -131,6 +134,8 @@ export interface RecipeResult {
   bases: number;
   /** 狙いの MOD ごとの、終わった時に付いていた割合 (全部の回で。未完成のパターンで「どこまで付くか」を見る) */
   hitRates: Array<{ modId: string; p: number }>;
+  /** パターンの手ごとの平均 (全部の回で、打った数と費用)。「この手だけ回す」の結果 (2026-10-07) */
+  stepAvg?: Array<{ presses: number; cost: number; p80Presses: number; p80Cost: number }>;
 }
 
 const ESS = (essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys;
@@ -266,7 +271,11 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     return play("reveal:1");
   };
   const hitsNow = (): string[] => [...new Set(allMods(item).filter((m) => !m.unrevealed && !m.fractured && spec.targets.some((t) => hits(t, m))).map((m) => m.modId))];
-  const fail = (reason: string): RecipeRun => ({ done: false, cost, steps, seed, reason, replayFrom, bases, hits: hitsNow() });
+  /** 手ごとの打った数と費用 (runPattern の中で数える) */
+  const stepPresses: number[] = [], stepCost: number[] = [];
+  let accAt = -1, accCost = 0;
+  const flushStep = (): void => { if (accAt >= 0) stepCost[accAt] = (stepCost[accAt] ?? 0) + (cost - accCost); accAt = -1; };
+  const fail = (reason: string): RecipeRun => { flushStep(); return { done: false, cost, steps, seed, reason, replayFrom, bases, hits: hitsNow(), stepPresses, stepCost }; };
   /** 白のベースを買い直して始めから (再生はここから) */
   const restart = (): void => {
     cost += white + runeCost;
@@ -404,6 +413,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     /** 新しいベースで最初から */
     const restartPattern = (): void => { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); };
     while (steps.length < max) {
+      // 手ごとの費用: 前の周の分をその手に足し、この周の始まりを覚える
+      flushStep(); accAt = i; accCost = cost;
       if (fractureTs.length && !fixedHit()) return fail("固定した MOD が消えた");
       // 打った手で消えた MOD に、その手の「MOD が消えたら」があればそこへ戻る (無ければ下の、付けた手に戻る)
       {
@@ -431,7 +442,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           regain.set(lost, { kind: "exalt", currency: "exalt_perfect", omens: [SIDE_OMEN.exalt[sideOf(q.target.modId)]], target: q.target, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] } });
         }
       }
-      if (i >= pat.length) return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases, hits: hitsNow() };
+      if (i >= pat.length) { accAt = -1; return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases, hits: hitsNow(), stepPresses, stepCost }; }
       let p = regain.get(i) ?? pat[i]!;
       lastAt = i;
       // 偉大の手 (候補のどれか 2 つ) は、もう 2 つ付いていれば次へ。1 つ付いている時は偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
@@ -502,6 +513,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         }
         // アビスの反響は発現の手で使う (骨には掛けない)。セットに入っている時だけ引き直す
         const echoes = p.omens.includes("OmenofAbyssalEchoes");
+        stepPresses[i] = (stepPresses[i] ?? 0) + 1;
         e = play(p.currency, p.omens.filter((o) => o !== "OmenofAbyssalEchoes"));
         if (!e && p.kind === "desecrate" && unrevealedOf(item)) e = reveal(p.target, echoes);
       }
@@ -637,6 +649,15 @@ export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, to
       const m = new Map<string, number>();
       for (const r of runs) for (const id of r.hits ?? []) m.set(id, (m.get(id) ?? 0) + 1);
       return [...m].map(([modId, n]) => ({ modId, p: n / runs.length })).sort((a, b) => b.p - a.p);
+    })(),
+    stepAvg: (() => {
+      const len = Math.max(0, ...runs.map((r) => Math.max(r.stepPresses?.length ?? 0, r.stepCost?.length ?? 0)));
+      // 8 割の人: 打った数・費用を並べて 8 割目 (2026-10-07 オーナー「8 割の人の完成度で出した方が良さそう」)
+      const p80 = (xs: number[]): number => { const a = [...xs].sort((x, y) => x - y); return a.length ? a[Math.min(a.length - 1, Math.floor(0.8 * a.length))]! : 0; };
+      return Array.from({ length: len }, (_, j) => {
+        const pr = runs.map((r) => r.stepPresses?.[j] ?? 0), co = runs.map((r) => r.stepCost?.[j] ?? 0);
+        return { presses: pr.reduce((a, x) => a + x, 0) / runs.length, cost: co.reduce((a, x) => a + x, 0) / runs.length, p80Presses: p80(pr), p80Cost: p80(co) };
+      });
     })(),
   };
 }

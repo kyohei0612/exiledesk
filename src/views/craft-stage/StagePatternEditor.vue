@@ -40,8 +40,13 @@ const props = defineProps<{
   orderInfo?: Record<string, { side: string; tone: string; text: string; rank: string; how: string; redo: string }>;
   /** 回している途中 */
   busy?: boolean;
+  /** 「この手だけ回す」の結果 (パターン k の i 手目。busy の間は回している) */
+  stepRun?: { k: number; i: number; presses: number; cost: number; p80Presses: number; p80Cost: number; pDone: number; busy: boolean } | null;
+  /** 「この手だけ回す」の 1 人の上限と人数 */
+  stepMax?: number;
+  stepRuns?: number;
 }>();
-const emit = defineEmits<{ "run-one": [index: number]; active: [index: number] }>();
+const emit = defineEmits<{ "run-one": [index: number]; "run-step": [index: number, step: number]; "close-step": []; active: [index: number] }>();
 /** 付いたら取り直せない手 (レアリティが変わる手で付けた物は戻れない) */
 const ONCE = new Set(["transmute", "augment", "regal", "alchemy", "essence"]);
 /**
@@ -814,6 +819,24 @@ defineExpose({ rows });
                   <span class="truncate" :class="r.set ? 'opacity-70' : 'opacity-35'">{{ r.set ? setShort(r.set) : "カレンシー未定" }}</span>
                 </span>
               </button>
+              <!--
+                この手だけ回す (ガチャで付くまで打つ手だけ。2026-10-07 オーナー「カオス何個分で単純にできるか知りたい」「8 割の人で出した方が良さそう」)。
+                その手の前までは当たった状態から、その手だけ 1,500 人分。結果はカードのすぐ下 (アイテムのカードは隠さない)
+              -->
+              <div v-if="hasMiss(r) && !r.bad && r.step.target" class="flex items-center border-t border-white/10 px-1.5 py-0.5">
+                <button type="button" class="rounded border border-sky-400/40 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/10 disabled:opacity-40" :disabled="busy" :title="`${i + 1} 手目の前までは当たった状態から、この手だけを ${(stepRuns ?? 0).toLocaleString()} 人分回す (1 人 ${(stepMax ?? 0).toLocaleString()} 回まで)`" @click.stop="emit('run-step', active, i)">この手だけ回す ▶</button>
+              </div>
+              <div v-if="stepRun && stepRun.k === active && stepRun.i === i" class="border-t border-sky-400/30 bg-sky-950/30 px-1.5 py-1 text-[11px]">
+                <div class="flex items-center gap-1">
+                  <span class="text-[10px] opacity-60">この手だけ · {{ (stepRuns ?? 0).toLocaleString() }} 人</span>
+                  <button type="button" class="ml-auto rounded px-1 leading-none opacity-50 hover:bg-white/10 hover:opacity-100" title="閉じる" @click.stop="emit('close-step')">×</button>
+                </div>
+                <p v-if="stepRun.busy" class="py-1 text-sky-200">回しています…</p>
+                <template v-else>
+                  <p class="font-bold text-sky-100" :title="`8 割の人がこの個数・金額までで付いた (${(stepRuns ?? 0).toLocaleString()} 人それぞれが打った数の 8 割目)`">8 割の人: {{ Math.round(stepRun.p80Presses).toLocaleString() }} 個 · {{ (money ?? ((x: number) => x.toFixed(1)))(stepRun.p80Cost) }}</p>
+                  <p class="opacity-60">平均 {{ Math.round(stepRun.presses).toLocaleString() }} 個 · {{ (money ?? ((x: number) => x.toFixed(1)))(stepRun.cost) }}<template v-if="stepRun.pDone < 0.995"> · 付かなかった人 {{ Math.round((1 - stepRun.pDone) * 100) }}%</template></p>
+                </template>
+              </div>
             </div>
             <!-- 外れの枝: やり直す手は、外れ → やり直しのカレンシー → カードに戻る線で「付くまで繰り返す」 -->
             <span v-if="showMiss(r) && !needs2(r)" class="flex flex-col">
