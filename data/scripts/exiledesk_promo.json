@@ -362,6 +362,147 @@
           }
         }
       ]
+    },
+    {
+      "name": "骨・お告げ・ルーン",
+      "target_seconds": 50,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "骨やお告げも打てるわ。後編で見せた冒涜と発現も、そのままよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "reveal",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "未発現の冒涜MODなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "reveal",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "魂の井戸で発現すると、候補が3つ出るの。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "reveal",
+            "offers": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アビスの反響のお告げを使っておけば、引き直しもできるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "reveal",
+            "offers": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "引き直した中から、キャストスピードが26%増加する、を選ぶわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "reveal"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "カーソルで選んで、ちゃんと付いたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "reveal"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ルーンも差せるわ。6つで埋まった胴に、セールの凱旋を差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスモッド+1個。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "高貴なオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "スタン閾値+80が、4つ目のサフィックスに付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "7つ目のMODなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "お告げは23種類、ルーンやソウルコアは300種類以上。クラフトに使う物は、ほとんど打てるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "全部試せるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        }
+      ]
     }
   ]
 }
