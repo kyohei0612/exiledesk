@@ -35,9 +35,24 @@ Start-Process "$env:LOCALAPPDATA\ExileDesk\exiledesk.exe"   # 開発ビルドな
 ## 3. 録画する
 
 ```bash
-ffmpeg -y -f lavfi -i "ddagrab=output_idx=0:framerate=30:draw_mouse=0" -c:v h264_nvenc -preset p4 -cq 23 -pix_fmt yuv420p out.mp4
+ffmpeg -y -f lavfi -i "ddagrab=output_idx=0:framerate=30:draw_mouse=0" -vf hwdownload,format=bgra -c:v h264_nvenc -preset p4 -cq 23 -pix_fmt yuv420p out.mp4
 ```
 
 - **ddagrab** (Desktop Duplication、GPU の画面) で 1 枚目のモニターを録る。30fps でコマ落ち無しを確認 (4 秒で 120 コマ)
 - 止める時は ffmpeg の標準入力に `q`
 - 使わない: gdigrab の `title=ExileDesk` (WebView2 の画面が更新されず古い絵のまま)、gdigrab の `desktop` (3 枚のモニター全部が入る)、Playwright の record_video (コマ落ち)
+
+## 4. スクリプト (宣伝の回 2〜5 章、2026-10-08 試し撮り OK)
+
+```bash
+python scripts/record_app.py output/app_rec            # 2〜5 章を章ごとに 1 本ずつ
+python scripts/record_app.py output/app_rec ch3 ch4    # 一部だけ (白い金の指輪から始める)
+```
+
+- 先に録画モードで起動しておき、終わったらタスクキル (1 章)
+- 30fps でコマ落ち無し (2 章 20 秒 / 3 章 34 秒 / 4 章 14 秒 / 5 章 19 秒)
+- 録画の間だけページに当てている物 (アプリのファイルは変えない):
+  - アプリの「持っているカレンシー」の絵・押した所の波紋・吸い込まれる絵は、拡大 (1920 幅で 1.157 倍) の補正が抜けて右下にずれる → 隠して、持っている絵は自前のカーソルに付ける (ExileDesk に直しを依頼 ㊳)
+  - 棚の詳細カード (0.4 秒乗せると出る) は隠す
+  - 「動画モード」「JSON」「取引所で検索」のボタンは隠す
+- 画面の一番下の「自動巡回中」の帯 (相場の取得) はそのまま写る。気になる時は自動巡回を止めてから録る
