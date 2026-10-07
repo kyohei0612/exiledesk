@@ -112,6 +112,8 @@ export interface RecipeRun {
   replayFrom: number;
   /** 使った白のベースの数 (始めの 1 個 + 作り直し。付いた状態で始めた時は 0) */
   bases: number;
+  /** 終わった時に付いていた狙いの MOD (固定以外) */
+  hits?: string[];
 }
 export interface RecipeResult {
   runs: number;
@@ -127,6 +129,8 @@ export interface RecipeResult {
   sample: RecipeRun | null;
   /** 1 個できるまでに使った白のベースの平均 */
   bases: number;
+  /** 狙いの MOD ごとの、終わった時に付いていた割合 (全部の回で。未完成のパターンで「どこまで付くか」を見る) */
+  hitRates: Array<{ modId: string; p: number }>;
 }
 
 const ESS = (essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys;
@@ -259,7 +263,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     }
     return play("reveal:1");
   };
-  const fail = (reason: string): RecipeRun => ({ done: false, cost, steps, seed, reason, replayFrom, bases });
+  const hitsNow = (): string[] => [...new Set(allMods(item).filter((m) => !m.unrevealed && !m.fractured && spec.targets.some((t) => hits(t, m))).map((m) => m.modId))];
+  const fail = (reason: string): RecipeRun => ({ done: false, cost, steps, seed, reason, replayFrom, bases, hits: hitsNow() });
   /** 白のベースを買い直して始めから (再生はここから) */
   const restart = (): void => {
     cost += white + runeCost;
@@ -330,7 +335,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     // フラクチャーの狙い (候補) は、どれか 1 つが固定されていれば良い (固定されなかった候補は作らない)
     if (fractureTs.length && !fixedHit()) return fail("固定した MOD が消えた");
     const t = unmet(item);
-    if (!t) return { done: true, cost, steps, seed, replayFrom, bases };
+    if (!t) return { done: true, cost, steps, seed, replayFrom, bases, hits: hitsNow() };
     const side = sideOf(t.modId);
     let e: string | null = null;
     if (unrevealedOf(item)) {
@@ -418,7 +423,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           regain.set(lost, { kind: "exalt", currency: "exalt_perfect", omens: [SIDE_OMEN.exalt[sideOf(q.target.modId)]], target: q.target, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] } });
         }
       }
-      if (i >= pat.length) return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases };
+      if (i >= pat.length) return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases, hits: hitsNow() };
       let p = regain.get(i) ?? pat[i]!;
       lastAt = i;
       // 偉大の手 (候補のどれか 2 つ) は、もう 2 つ付いていれば次へ。1 つ付いている時は偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
@@ -564,6 +569,11 @@ export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, to
     stops: [...stopMap].map(([reason, n]) => ({ reason, p: n / runs.length })).sort((a, b) => b.p - a.p),
     sample,
     bases: runs.reduce((a, r) => a + r.bases, 0) / per,
+    hitRates: (() => {
+      const m = new Map<string, number>();
+      for (const r of runs) for (const id of r.hits ?? []) m.set(id, (m.get(id) ?? 0) + 1);
+      return [...m].map(([modId, n]) => ({ modId, p: n / runs.length })).sort((a, b) => b.p - a.p);
+    })(),
   };
 }
 

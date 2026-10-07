@@ -557,9 +557,16 @@ const blocked = computed((): string | null => {
   return null;
 });
 
-async function run(): Promise<void> {
+/**
+ * only: そのパターンだけ回す (未完成でも組めている所まで、1500 回。2026-10-07 オーナー「パターンを自分で追加して未完成の状態で 1500 回回したら
+ * どんだけ付くのか実験したい、手動では個別に回す感じで、結果を下に」)。無ければ出来ているパターンを全部
+ */
+const ONE_RUNS = 1500;
+async function run(only?: number): Promise<void> {
   const it = s.item.value, d = s.data.value;
-  if (!it || !d || blocked.value) return;
+  if (!it || !d) return;
+  if (only == null && blocked.value) return;
+  if (only != null && (!rows.value.length || !s.simPatterns.value[only]?.steps.length)) return;
   const my = ++gen;
   busy.value = true;
   error.value = "";
@@ -571,7 +578,7 @@ async function run(): Promise<void> {
     const memo = new Map<string, number>();
     const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
     const spec: RecipeSpec = {
-      data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: runs.value, price,
+      data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: only != null ? ONE_RUNS : runs.value, price,
       targets: s.simTargets.value.flatMap((t) => (methodOf(t) === "fracture"
         ? [{ modId: t.modId, minTierIndex: t.minTierIndex, method: "fracture" as const }, ...(t.alts ?? []).map((a) => ({ ...a, method: "fracture" as const }))]
         : [{ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}) }])),
@@ -618,8 +625,8 @@ async function run(): Promise<void> {
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
     // 回すのはフラクチャー済みから先だけ (2026-10-06 オーナー「白ベースでもフラクチャーまでの平均はほぼ一緒、3 回に 1 回当たる予算で
     // そこまでは固定で出しておｋ、他の選択肢も」)。始め方ごとの合計 = その始め方の費用 + 固定済みから先の平均
-    const ps = runnable.value;
-    const total = runs.value * ps.length;
+    const ps = only != null ? [s.simPatterns.value[only]!] : runnable.value;
+    const total = spec.runs * ps.length;
     const out: typeof results.value = [];
     for (const [k, p] of ps.entries()) {
       // 完成の判定は、そのパターンで付ける物 + 固定する物だけ (狙い全部だと、一部だけ試すパターンが絶対に完成しなかった。2026-10-07)
@@ -628,16 +635,25 @@ async function run(): Promise<void> {
       const restRefs = new Set(p.steps.filter((st) => isRest(st.target)).map((st) => Number(st.target!.slice(5))));
       const groups = p.steps.flatMap((st, j) => { if (restRefs.has(j)) return []; const x = setByKey(sets, st.set); const g = x ? groupOf(st, x) ?? restOf(p.steps, st) : null; return g ? [{ g, ids: isRest(st.target) ? restMembers(p.steps, st.target) : [st.target, st.target2, st.target3] }] : []; });
       const inGroup = new Set(groups.flatMap((x) => x.ids).filter((x): x is string => !!x));
-      const used = new Set(p.steps.flatMap((st) => [st.target]).filter((x): x is string => !!x && !inGroup.has(x)));
+      // カレンシーが決まっていない手 (未完成) の MOD は数えない: 組めている所までを完成品とする (2026-10-07 オーナー「そこまでを完成品とする」)
+      const used = new Set(p.steps.filter((st) => !!setByKey(sets, st.set)).flatMap((st) => [st.target]).filter((x): x is string => !!x && !inGroup.has(x)));
       const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId)), ...groups.map((x) => x.g)];
       const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
-      const base = k * runs.value;
+      const base = k * spec.runs;
       const r = await runRecipe(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
       if (my !== gen || !r) return;
       out.push({ name: p.name, out: { r, spec: pspec }, rest: fractureRow.value ? r.perDone : null });
     }
-    results.value = out;
-    showResult(out.reduce((b, x, i) => (x.out.r.perDone < out[b]!.out.r.perDone ? i : b), 0));
+    if (only != null) {
+      // 1 つだけ回した時は、前の結果のそのパターンだけ入れ替える (他のパターンの結果は残す)
+      const x = out[0]!;
+      const list = results.value.filter((y) => y.name !== x.name);
+      results.value = [...list, x];
+      showResult(results.value.length - 1);
+    } else {
+      results.value = out;
+      showResult(out.reduce((b, x, i) => (x.out.r.perDone < out[b]!.out.r.perDone ? i : b), 0));
+    }
     ranFor.value = sig.value;
   } catch (e) {
     if (my === gen) error.value = e instanceof Error ? e.message : String(e);
@@ -852,6 +868,13 @@ const compare = computed(() => {
   const best = known.length ? known.reduce((a, b) => (b.cost! < a.cost! ? b : a)).key : null;
   return { list, best };
 });
+/** 付いていた割合の MOD の名前 (2 狙う MOD の行と同じ文と色。候補は短く) */
+function hitName(id: string): { text: string; tone: string } {
+  const r = rows.value.find((x) => x.modId === id);
+  if (r) return { text: `${r.text} ${r.rank}+`, tone: r.tone };
+  const a = rows.value.flatMap((x) => x.alts).find((x) => x.modId === id);
+  return { text: a ? `${a.text} ${a.rank}+` : id, tone: "" };
+}
 /** 上の 5 つの数 (どちらの回し方でも同じ形) */
 const summary = computed(() => {
   if (recipeOut.value) { const r = recipeOut.value.r; return { perDone: r.perDone, pDone: r.pDone, runs: r.runs, p50: r.p50, p80: r.p80, p90: r.p90 }; }
@@ -1053,7 +1076,7 @@ function replay(): void {
           <span class="opacity-60">{{ fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
-        <StagePatternEditor :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
+        <StagePatternEditor :busy="busy" @run-one="(k: number) => run(k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
         <div v-if="!patternDone" class="mt-1 flex items-center gap-2">
           <span v-if="blocked" class="ml-auto text-[11px] text-amber-200/80">{{ blocked }}</span>
           <span v-else-if="skipped.length" class="ml-auto text-[11px] text-amber-200/70" :title="skipped.join(' / ')">未完成で回さない: {{ skipped.map((x) => x.replace(/ \(.*$/, "")).join("・") }}</span>
@@ -1063,7 +1086,7 @@ function replay(): void {
           </span>
           <span v-if="busy" class="text-[11px] text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
-          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="blocked || skipped.length || busy ? '' : 'ml-auto'" :disabled="busy || !!blocked" :title="blocked ?? `出来ているパターンを ${runs.toLocaleString()} 回ずつ回す`" @click="run">回す ▶</button>
+          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :class="blocked || skipped.length || busy ? '' : 'ml-auto'" :disabled="busy || !!blocked" :title="blocked ?? `出来ているパターンを ${runs.toLocaleString()} 回ずつ回す`" @click="run()">回す ▶</button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
@@ -1084,7 +1107,7 @@ function replay(): void {
       <span v-if="!fractureRow" class="text-[11px] opacity-70">{{ runs.toLocaleString() }} 回</span>
       <!-- フラクチャーがあると比べ用に 2 本回す (2026-10-05 オーナー「1000 回押しても 2000 回になる、別に 2000 回でおｋだから UI 直して」) -->
       <span v-if="fractureRow" class="text-[11px] opacity-70" title="フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定">フラクチャー済みから {{ runs.toLocaleString() }} 回</span>
-      <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="busy ? '回している途中' : blocked ?? '決めた作り方で回す'" @click="run">回す</button>
+      <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="busy ? '回している途中' : blocked ?? '決めた作り方で回す'" @click="run()">回す</button>
       <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-1 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
       <span v-if="busy" class="text-sky-200">{{ phase }}<template v-if="progress && phase === '回しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }}</template>…</span>
       <span v-else-if="blocked && rows.length" class="text-amber-200/80">{{ blocked }}</span>
@@ -1150,6 +1173,14 @@ function replay(): void {
         <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">半分の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p50) }}</p></div>
         <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">8 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p80) }}</p></div>
         <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">9 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p90) }}</p></div>
+      </div>
+      <!-- 狙いの MOD ごとの、終わった時に付いていた割合 (未完成のパターンで「どこまで付くか」を見る) -->
+      <div v-if="recipeOut?.r.hitRates?.length" class="mb-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+        <span class="opacity-60">終わった時に付いていた割合</span>
+        <span v-for="h in recipeOut.r.hitRates" :key="h.modId" class="rounded-full border border-white/15 bg-black/30 px-2 py-0.5">
+          <span :class="hitName(h.modId).tone">{{ hitName(h.modId).text }}</span>
+          <b class="ml-1 tabular-nums" :class="h.p >= 0.9 ? 'text-emerald-300' : h.p >= 0.5 ? 'text-amber-200' : 'text-rose-300'">{{ pct(h.p) }}</b>
+        </span>
       </div>
 
       <!-- 使った物 -->
