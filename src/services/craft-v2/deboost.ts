@@ -11,7 +11,7 @@
  *
  * 品質の種類 (CachedRareItem.quality_kind) は 2026-09-29 から取る。それより前のキャッシュは種類が無く戻せない (「更新」で取り直すと入る)。
  */
-import { loadHtcPatch } from "../htc/patch";
+import { loadHtcPatch, onHtcPatchLoaded } from "../htc/patch";
 import { parseJaItem } from "../htc/paste";
 import { stripMarkers } from "../htc/paste-parse";
 import { bridgeMods } from "../htc/bridge";
@@ -19,6 +19,7 @@ import { boostedBy, catalystTagFromLabel, rawValue } from "../htc/quality";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
 let data: PatchData | null = null;
+onHtcPatchLoaded((d) => { data ??= d; });
 /** 計算機のデータを読んでおく (集計は同期なので、取得・キャッシュ表示の前に 1 回) */
 export async function prepareDeboost(): Promise<void> {
   data ??= await loadHtcPatch();

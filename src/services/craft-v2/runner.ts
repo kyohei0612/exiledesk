@@ -27,6 +27,8 @@ import type {
 } from "./types";
 import { loadCraftV2Cache, saveCraftV2Cache } from "./cache";
 import { aggregateFromCache, aggregateFromProgress } from "./finalize";
+import type { AggJob, AggMsg } from "./agg-worker";
+import type { AggregatedAscendancy } from "./types";
 import { prepareEngineMods } from "../mods/engine-mods";
 import { GEM_INFO } from "./finalize/gems";
 import { prepareDeboost } from "./deboost";
@@ -68,18 +70,13 @@ export async function startCraftDiscoveryV2(
     onCharacterProgress,
   } = options;
 
-  // 集計で装飾品の数値を素に戻すのに計算機のデータが要る (集計は同期なので先に読む)
-  await bootTimed("MOD 一覧: 計算機のデータ", () => prepareDeboost()).catch((e) => console.warn("[craft-discovery-v2] 計算機のデータを読めず、品質の割り戻しなしで集計:", e));
-  // MOD の側・段・系統・stat はエンジンから引く (集計は同期なので先に読む、[[engine-mods.ts]])
-  await bootTimed("MOD 一覧: エンジンの MOD", () => prepareEngineMods()).catch((e) => console.warn("[craft-discovery-v2] MOD のデータを読めず:", e));
-
-  // キャッシュロード + 即時 UI 反映 (差分モード判定は Rust 側に任せる)
+  // キャッシュロード + 即時 UI 反映 (差分モード判定は Rust 側に任せる)。集計は別の場所 (agg-worker.ts) で、画面は止めない
   let prevCache: CraftV2Cache | null = null;
   if (useCache) {
     prevCache = await bootTimed("MOD 一覧: キャッシュの読み込み", () => loadCraftV2Cache());
     if (prevCache && onCacheReady) {
       try {
-        const agg = bootTimedSync("MOD 一覧: キャッシュの集計", () => aggregateFromCache(prevCache!));
+        const agg = await bootTimed("MOD 一覧: キャッシュの集計 (別の場所で)", () => aggregateOffThread(prevCache!));
         bootTimedSync("MOD 一覧: 画面に反映", () => onCacheReady(agg, prevCache!));
       } catch (err) {
         console.warn("[craft-discovery-v2] aggregateFromCache failed, ignoring cache:", err);
@@ -90,6 +87,10 @@ export async function startCraftDiscoveryV2(
 
   // キャッシュが新しければここで終わり (poe.ninja には行かない)
   if (shouldFetch && !shouldFetch(prevCache)) return null;
+
+  // 取得中の集計 (aggregateFromProgress) は画面の側で同期なので、取りに行く時だけ計算機のデータを読む
+  await bootTimed("MOD 一覧: 計算機のデータ", () => prepareDeboost()).catch((e) => console.warn("[craft-discovery-v2] 計算機のデータを読めず、品質の割り戻しなしで集計:", e));
+  await bootTimed("MOD 一覧: エンジンの MOD", () => prepareEngineMods()).catch((e) => console.warn("[craft-discovery-v2] MOD のデータを読めず:", e));
 
   const [unProgress, unError, unDone, unCheckpoint, unCharProgress] = await Promise.all([
     listen<CraftV2Progress>("craft-v2-progress", (e) => {
@@ -153,4 +154,35 @@ export async function startCraftDiscoveryV2(
   });
 
   return unlistenAll;
+}
+
+/**
+ * キャッシュの集計を別の場所 (agg-worker.ts) で。置いてある結果が使えればそれを読むだけ。
+ * 別の場所が作れない・落ちた時は画面の側で集計する (前と同じ。固まるが一覧は出る)
+ */
+let aggWorker: Worker | null = null;
+let aggSeq = 0;
+async function aggregateOffThread(cache: CraftV2Cache): Promise<AggregatedAscendancy[]> {
+  try {
+    aggWorker ??= new Worker(new URL("./agg-worker.ts", import.meta.url), { type: "module" });
+    const w = aggWorker;
+    const id = ++aggSeq;
+    const r = await new Promise<AggMsg>((res, rej) => {
+      const onMsg = (e: MessageEvent<AggMsg>): void => { if (e.data.id !== id) return; w.removeEventListener("message", onMsg); w.removeEventListener("error", onErr); res(e.data); };
+      const onErr = (e: ErrorEvent): void => { w.removeEventListener("message", onMsg); w.removeEventListener("error", onErr); rej(new Error(e.message || "worker error")); };
+      w.addEventListener("message", onMsg);
+      w.addEventListener("error", onErr);
+      w.postMessage({ id, cache } satisfies AggJob);
+    });
+    if (!r.ok) throw new Error(r.message);
+    console.log(`[craft-discovery-v2] キャッシュの集計 ${r.hit ? "置いてある結果を読んだ" : "集計した"} ${r.ms}ms`);
+    return r.agg;
+  } catch (e) {
+    console.warn("[craft-discovery-v2] 別の場所で集計できず、画面の側で:", e);
+    aggWorker?.terminate();
+    aggWorker = null;
+    await prepareDeboost().catch(() => undefined);
+    await prepareEngineMods();
+    return bootTimedSync("MOD 一覧: キャッシュの集計 (画面の側)", () => aggregateFromCache(cache));
+  }
 }

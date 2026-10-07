@@ -107,10 +107,23 @@ export function loadHtcPatch(): Promise<PatchData> {
         (bases.default ?? bases) as unknown as Parameters<typeof indexPatch>[1],
       );
       const extra = (extraRaw.default ?? extraRaw) as unknown as ExtraBases;
-      return applyExtras(data, extra);
+      const out = applyExtras(data, extra);
+      for (const cb of loadedCbs.splice(0)) cb(out);
+      loadedNow = out;
+      return out;
     })();
   }
   return cached;
+}
+let loadedNow: PatchData | null = null;
+const loadedCbs: Array<(d: PatchData) => void> = [];
+/**
+ * 読み終わったら呼ぶ (読み終わっていればすぐ)。同期で引く所 (engine-mods・deboost) が、誰かが読んだ物をそのまま使うため
+ * (2026-10-07 上位 MOD 一覧の集計を別の場所に移し、画面の側では起動時に読まなくなった)
+ */
+export function onHtcPatchLoaded(cb: (d: PatchData) => void): void {
+  if (loadedNow) cb(loadedNow);
+  else loadedCbs.push(cb);
 }
 
 /**

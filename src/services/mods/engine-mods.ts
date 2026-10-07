@@ -14,7 +14,7 @@
  *
  * 同期で引く (集計は同期)。先に prepareEngineMods() で読んでおく (上位 MOD 一覧は取得・キャッシュ表示の前に読む)
  */
-import { loadHtcPatch } from "../htc/patch";
+import { loadHtcPatch, onHtcPatchLoaded } from "../htc/patch";
 import { classOfBase } from "../htc/bridge";
 import { matchKey, modIndexOf } from "../htc/bridge-index";
 import { jaOfMod } from "../htc/mod-text";
@@ -24,6 +24,8 @@ import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types
 import type { ModTierRow, SlotKey } from "../craft-v2/types";
 
 let data: PatchData | null = null;
+// 計算機などが読んだら、こちらも使う (prepareEngineMods を呼んでいなくても引ける)
+onHtcPatchLoaded((d) => { data ??= d; });
 /** エンジンを読んでおく (何度呼んでも 1 回) */
 export async function prepareEngineMods(): Promise<void> {
   data ??= await loadHtcPatch();
