@@ -1309,7 +1309,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <div class="bg-amber-400/80" :style="{ width: barW(split.craft, split.base + split.craft) }" :title="`クラフト ${moneyT(split.craft)}`"></div>
       </div>
       <!-- 運の幅 -->
-      <p class="mt-4 text-[11px] opacity-60">運の幅 ({{ summary.runs.toLocaleString() }} 人が作ってみて)</p>
+      <!-- 1 人が打てる手の上限 (recipe-sim の maxSteps 既定 4,000)。超えた人は「手が多すぎる」で未完成 (2026-10-07 オーナー「4000 回が限度って書いてない」) -->
+      <p class="mt-4 text-[11px] opacity-60" title="1 人が打てるのは 4,000 手まで (カオス・消去・ルーンなど 1 回ずつ)。それを超えた人は完成しなかった扱いで、使ったお金は 1 個あたりの費用に入る">運の幅 ({{ summary.runs.toLocaleString() }} 人が作ってみて、1 人 4,000 手まで)</p>
       <!-- 線には印だけ、言葉は下に 1 行で (印の横に書くと長い文がくっついた) -->
       <div class="relative mt-2 h-5 max-w-2xl">
         <div class="absolute left-0 right-0 top-2 h-1 rounded bg-white/15"></div>

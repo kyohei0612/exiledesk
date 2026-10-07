@@ -291,7 +291,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   if (fractureT && fs?.kind === "make") {
     const magicRoute = fs.route === "magic";
     for (;;) {
-      if (steps.length >= max) return fail("手が多すぎる (フラクチャーまで)");
+      if (steps.length >= max) return fail(`手が多すぎる (フラクチャーまでで ${max.toLocaleString()} 手を超えた)`);
       let e: string | null = null;
       if (!magicRoute) {
         // 錬金 → 狙いが付くまでカオス (2 つの時はどちらか 1 つ付けば良い)
@@ -383,7 +383,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     }
     if (e) return fail(e);
   }
-  return fail("手が多すぎる");
+  return fail(`手が多すぎる (${max.toLocaleString()} 手を超えた)`);
 
   /**
    * パターンの通りに打つ。1 手打って、狙いの候補が増えた (か揃った) ら当たりで次の手へ。外れたら手ごとの決まり:
@@ -538,7 +538,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       }
       // redo / annul_redo: 同じ手をもう一度
     }
-    return fail("手が多すぎる");
+    return fail(`手が多すぎる (${max.toLocaleString()} 手を超えた)`);
   }
 
   /** その側に付けられる一番安いパーフェクトエッセンス (同じ系統が付いている物・値段の無い物は除く) */
