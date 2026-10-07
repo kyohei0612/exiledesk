@@ -603,6 +603,92 @@
           }
         }
       ]
+    },
+    {
+      "name": "シミュレーション",
+      "target_seconds": 40,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最後に、実験中の機能も紹介するわ。シミュレーションよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "何をシミュレーションするのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "狙うMODを選ぶと、作り方ごとに、1個作るのにいくらかかるかを見積もってくれるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "フラクチャーしたベースを買うか、自分で作るか。一番安い始め方も比べられるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "お金のことまで分かるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "何回も作った時の結果をまとめて、運が良い時と悪い時の幅も出してくれるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "運が悪い時の目安も分かるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まだ実験中で、作りも変わっていく所だから、使った感想を特に聞きたいわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        }
+      ]
     }
   ]
 }
