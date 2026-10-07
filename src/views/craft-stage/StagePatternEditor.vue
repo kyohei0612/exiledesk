@@ -5,7 +5,7 @@
   エッセンス 2 回目とか、選択できずにグレーアウト、理由も」)。決まりは services/craft-stage/pattern.ts
 -->
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { ANY_KINDS, ANY_TARGET, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
@@ -226,6 +226,27 @@ const preNodes = computed(() => {
     { title: `${name} を固定`, icons: ["desecrate", "fracture"], sub: "骨の壁 → フラクチャー", tone: "border-orange-400/60", miss: { icons: [], text: "⟲ 白から (当たり 1/3)" }, item: { ...withMod(white, { ...fm, fractured: true }), rarity: "rare" as const } },
   ];
 });
+/** 右のアイテムを枠に収める縮み (0.55〜1)。中身の高さが変わるたび (手を選ぶ・MOD が増える) に測り直す */
+const cardBox = ref<HTMLElement | null>(null);
+const cardInner = ref<HTMLElement | null>(null);
+const cardZoom = ref(1);
+let cardObs: ResizeObserver | null = null;
+function fitCard(): void {
+  const box = cardBox.value, inner = cardInner.value;
+  if (!box || !inner) return;
+  const natural = inner.getBoundingClientRect().height / cardZoom.value; // zoom 前の高さ (見た目の高さ ÷ 今の縮み)
+  const z = Math.max(0.55, Math.min(1, (box.clientHeight - 2) / Math.max(1, natural)));
+  if (Math.abs(z - cardZoom.value) > 0.01) cardZoom.value = z;
+}
+watch([cardBox, cardInner], () => {
+  cardObs?.disconnect();
+  if (!cardBox.value || !cardInner.value || typeof ResizeObserver === "undefined") return;
+  cardObs = new ResizeObserver(() => fitCard());
+  cardObs.observe(cardBox.value);
+  cardObs.observe(cardInner.value);
+  fitCard();
+});
+onBeforeUnmount(() => cardObs?.disconnect());
 /** 右の枠で手を決めている途中 (その手はまだアイテムに移さない) */
 const editingStep = computed(() => focusRow.value != null && !props.locked && focusPre.value == null);
 const previewAt = computed(() => Math.min(focusRow.value ?? Infinity, pat.value.steps.length - 1));
@@ -434,6 +455,7 @@ function nextPart(i: number): void {
   if (now === "target" && r.step.target) editPart.value = r.set?.kind === "rune" ? "done" : "set";
   else if (now === "set" && r.set && needs2(r)) editPart.value = "target2";
   else if ((now === "set" || now === "target2") && r.set && hasMiss(r)) editPart.value = "miss";
+  else if (now === "set" && r.set && !needs2(r) && presentMods(i, r).length) editPart.value = "lost";
   else if (now === "miss" && needs2(r)) editPart.value = "single";
   else if ((now === "miss" || now === "single" || now === "target2") && presentMods(i, r).length) editPart.value = "lost";
   else confirmStep(i);
@@ -445,7 +467,7 @@ const canCands = (r: Row): boolean => hasCands(r.set) && !!r.step.target && r.st
 /** 下のボタンが「この手にする」になる段 (この後に選ぶ物が無い) */
 function lastPart(i: number, r: Row): boolean {
   const now = partOf(i, r);
-  if (now === "set") return !!r.set && !needs2(r) && !hasMiss(r);
+  if (now === "set") return !!r.set && !needs2(r) && !hasMiss(r) && !presentMods(i, r).length;
   if (now === "target2") return (needs2(r) ? !!r.step.target2 : true) && !hasMiss(r) && !presentMods(i, r).length;
   if (now === "miss") return !needs2(r) && !presentMods(i, r).length;
   if (now === "single") return !presentMods(i, r).length;
@@ -556,6 +578,32 @@ function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   // 偉大の手は「1 つだけ当たり」の時、当たった方も消す候補に入る
   if (needs2(r)) return { text: `どれも外れの時: ${n ? `狙いを巻き込む ${n}/${n + 1}` : "安全"} / 1 つだけ当たりの時: 当たった MOD を巻き込む ${n + 1}/${n + 2}`, bad: true };
   return n ? { text: `外れと、付いている狙い ${n} つのどれかを${verb} → 狙いを巻き込む ${n}/${n + 1}`, bad: true } : { text: `外れを${verb} (この時点で付いている狙いは無いので安全)`, bad: false };
+}
+/**
+ * この手を打つ時に消える確率 (打つ物が消してから付ける物の時: カオス・パーフェクトエッセンス)。その側の固定以外の MOD (狙い + 外れ) から 1 つ。
+ * 外れが無ければ狙いが必ず消える (2026-10-07 オーナー「最後のエッセンスで 1 手前に付けたエッセンスも消える時はやり直しの選択させるんじゃなかったか」)
+ */
+function lostRisk(i: number, r: Row): { text: string; bad: boolean } | null {
+  const c = ctx.value;
+  if (!c || !r.set || (r.set.kind !== "chaos" && r.set.kind !== "essence_perfect")) return null;
+  const side = r.set.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : r.set.omens.some((o) => /Dextral/.test(o)) ? "suffix" : null;
+  const st = stateBefore(c, pat.value.steps, i);
+  const sideOfId = (id: string): "prefix" | "suffix" => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const fr = c.start.fracturedSide;
+  const count = (sd: "prefix" | "suffix"): number => st[sd] - (fr === sd ? 1 : 0);
+  const goods = presentMods(i, r).filter((id) => !side || sideOfId(id) === side);
+  if (!goods.length) return null;
+  const names = goods.map(cardTitleOf).join("・");
+  const sideJa = side === "suffix" ? "サフィ" : side === "prefix" ? "プレ" : "";
+  // 打つだけで付いた外れは側が分からない (側のお告げの時は、その側に付いていれば候補が増える)
+  if (side && count(side) <= goods.length) {
+    return st.junk > 0
+      ? { text: `打つだけの外れが${sideJa}に付いていれば ${goods.length}/${goods.length + 1} で ${names} が消える。${sideJa}に無ければ必ず消える`, bad: true }
+      : { text: `この手で ${names} が必ず消える (${sideJa}に外れが無い。先に外れを付けておくか、戻り先を決める)`, bad: true };
+  }
+  const n = side ? count(side) : count("prefix") + count("suffix") + st.junk;
+  if (n <= goods.length) return { text: `この手で ${names} が必ず消える (外れが無い。先に外れを付けておくか、戻り先を決める)`, bad: true };
+  return { text: `この手で消える候補 ${n} つのうち、狙い ${goods.length} つ (${names}) → ${goods.length}/${n}`, bad: false };
 }
 /** 1 発の棚: 1 つずつ付ける高貴 (偉大なし) */
 const singleSets = computed(() => addSets.value.filter((x) => x.kind === "exalt" && !isDouble(x)));
@@ -868,7 +916,8 @@ defineExpose({ rows });
               </div>
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'lost'">
-              <p class="mb-2 text-[11px] opacity-60">この手を打っている間に、付いている MOD が外れたら何手目からやり直すか (固定は外れないので出さない)</p>
+              <p class="mb-1 text-[11px] opacity-60">この手を打っている間に、付いている MOD が外れたら何手目からやり直すか (固定は外れないので出さない)</p>
+              <p v-if="lostRisk(focusRow!, rows[focusRow]!)" class="mb-2 text-[12px] font-bold" :class="lostRisk(focusRow!, rows[focusRow]!)!.bad ? 'text-rose-300' : 'text-amber-200'">{{ lostRisk(focusRow!, rows[focusRow]!)!.text }}</p>
               <div class="flex flex-col gap-2">
                 <div v-for="id in presentMods(focusRow, rows[focusRow]!)" :key="id" class="flex flex-wrap items-center gap-2">
                   <span class="min-w-[14rem] rounded-lg border border-white/15 bg-black/30 px-2 py-1 font-bold">{{ cardTitleOf(id) }} が外れたら</span>
@@ -1039,9 +1088,12 @@ defineExpose({ rows });
       </div>
 
       <!-- その手まで当たった時のアイテム -->
-      <div v-if="preview" class="w-[280px] shrink-0 overflow-y-auto">
+      <!-- アイテムは枠に収まるまで縮める (スクロールさせない。2026-10-07 オーナー「レアアイテムの所はスクロールしたくない、画面に収まるように小さく」) -->
+      <div v-if="preview" ref="cardBox" class="w-[280px] shrink-0 overflow-hidden">
+        <div ref="cardInner" :style="{ zoom: cardZoom }">
         <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : editingStep ? `${previewAt + 1} 手目を打つ前 (オレンジ = この手で消える候補)` : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
         <StageItemCard :item="preview" :added="previewOut?.added ?? []" :removed="previewOut?.removed ?? []" :doomed="previewOut?.doomed ?? []" :holding="false" :flash-key="0" :width="280" compact />
+        </div>
       </div>
     </div>
   </div>
