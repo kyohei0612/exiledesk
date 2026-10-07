@@ -593,6 +593,8 @@ const blocked = computed((): string | null => {
 const ONE_RUNS = 1500;
 /** 6 パターンで開いているパターン (取引所で探すのに使う) */
 const activePattern = ref(0);
+// 上のタブで開いたパターンの結果を下に出す (回した物だけ。2026-10-07 パターンを並べて回すと、タブを替えても下は一番安い物のままだった)
+watch(() => s.simPatterns.value[activePattern.value]?.name, (n) => { if (n) showResultByName(n); });
 async function run(only?: number): Promise<void> {
   const it = s.item.value, d = s.data.value;
   if (!it || !d) return;
