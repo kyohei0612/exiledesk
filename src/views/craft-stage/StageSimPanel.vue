@@ -891,6 +891,21 @@ function hitName(id: string): { text: string; tone: string } {
   const a = rows.value.flatMap((x) => x.alts).find((x) => x.modId === id);
   return { text: a ? `${a.text} ${a.rank}+` : id, tone: "" };
 }
+/**
+ * 合計の内訳: ベース (フラクチャーがあれば 4 最安値スタートの一番安い始め方、無ければ白のベース × 使った数) とクラフト (残り)。
+ * baseAdd は半分・8 割・9 割の人の金額に足すベース (フラクチャーの時だけ。白は回した費用に入っている)
+ */
+const split = computed(() => {
+  const r = recipeOut.value?.r;
+  if (!r) return { base: 0, craft: 0, baseAdd: 0, baseNote: "" };
+  if (fractureRow.value) {
+    const b = startMin.value ?? 0;
+    const name = routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? "";
+    return { base: b, craft: r.perDone, baseAdd: b, baseNote: `フラクチャー済みのベースを手に入れるまで (4 最安値スタート: ${name})` };
+  }
+  const b = (num(whiteDivine.value) ?? 0) * r.bases;
+  return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `白のベース × ${r.bases.toFixed(1)} 個` };
+});
 /** 上の 5 つの数 (どちらの回し方でも同じ形) */
 const summary = computed(() => {
   if (recipeOut.value) { const r = recipeOut.value.r; return { perDone: r.perDone, pDone: r.pDone, runs: r.runs, p50: r.p50, p80: r.p80, p90: r.p90 }; }
@@ -1163,19 +1178,21 @@ function replay(): void {
     <div v-if="summary" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2" :class="stale ? 'opacity-50' : ''">
       <p v-if="stale" class="mb-1 text-[11px] text-amber-200">設定が変わりました。もう一度「回す」で出し直してください</p>
       <div class="mb-2 grid grid-cols-2 gap-2 @3xl:grid-cols-5">
+        <!-- 合計 (ベース + クラフト) を大きく、下にベース・クラフト (2026-10-07 オーナー「合計を書いて、下にベース料金、その下にクラフトの費用、今分かれちゃってて見づらい」) -->
         <div class="rounded-lg bg-black/30 px-3 py-2">
-          <p class="text-[10px] opacity-60">{{ fractureRow ? "フラクチャー済みから 1 個できるまでの平均" : "1 個できるまでの平均" }}</p>
-          <p class="text-lg font-bold text-amber-100">{{ money(summary.perDone) }}</p>
-          <p v-if="help" class="text-[10px] opacity-50">失敗した回の費用も込み</p>
+          <p class="text-[10px] opacity-60">1 個できるまでの平均 (合計)</p>
+          <p class="text-lg font-bold text-amber-100">{{ money(split.base + split.craft) }}</p>
+          <p class="text-[10px] tabular-nums opacity-70" :title="split.baseNote">ベース {{ money(split.base) }}</p>
+          <p class="text-[10px] tabular-nums opacity-70" :title="fractureRow ? 'フラクチャー済みから完成まで (失敗した回の費用も込み)' : '失敗した回の費用も込み'">クラフト {{ money(split.craft) }}</p>
         </div>
         <div class="rounded-lg bg-black/30 px-3 py-2">
           <p class="text-[10px] opacity-60">完成の割合</p>
           <p class="text-lg font-bold" :class="summary.pDone >= 0.9 ? 'text-emerald-300' : 'text-amber-300'">{{ pct(summary.pDone) }}</p>
           <p class="text-[10px] opacity-50">{{ fractureRow ? "フラクチャー済みから " : "" }}{{ summary.runs.toLocaleString() }} 人が作ってみて</p>
         </div>
-        <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">半分の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p50) }}</p></div>
-        <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">8 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p80) }}</p></div>
-        <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">9 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p90) }}</p></div>
+        <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">半分の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p50 + split.baseAdd) }}</p></div>
+        <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">8 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p80 + split.baseAdd) }}</p></div>
+        <div class="rounded-lg bg-black/30 px-3 py-2"><p class="text-[10px] opacity-60">9 割の人はこれ以内</p><p class="text-base font-bold">{{ money(summary.p90 + split.baseAdd) }}</p></div>
       </div>
       <!-- 狙いの MOD ごとの、終わった時に付いていた割合 (未完成のパターンで「どこまで付くか」を見る) -->
       <div v-if="recipeOut?.r.hitRates?.length" class="mb-2 flex flex-wrap items-center gap-1.5 text-[11px]">
