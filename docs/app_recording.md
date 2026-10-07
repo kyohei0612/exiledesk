@@ -1,0 +1,42 @@
+# ExileDesk のアプリを操作して録画する (操作説明用)
+
+kyohei 2026-10-08「アプリで操作感を録画、全部おまかせ」「ブラウザ録画はしない」「この録画モードでの起動は操作説明用にしっかり覚えておこう」。
+ExileDesk 要望 ㊲ (v0.1.390 以降)。
+
+## 1. 録画モードで起動する
+
+1. **いつものアプリを閉じる** (single-instance なので、動いていると 2 つ目は前面に出て終わる)
+2. 環境変数を付けて起動する:
+   - `EXILEDESK_REMOTE_DEBUG_PORT=9333` … その時だけ WebView2 に `--remote-debugging-port=9333` (口は 127.0.0.1 だけ)
+   - `EXILEDESK_FULLSCREEN=1` … 枠なしの全画面。1920×1080 のモニターならページもそのまま 1920×1080
+3. `http://127.0.0.1:9333/json/version` が返れば OK
+
+```powershell
+Get-Process exiledesk -ErrorAction SilentlyContinue | ForEach-Object { $_.CloseMainWindow() | Out-Null }
+Start-Sleep -Seconds 3
+Get-Process exiledesk -ErrorAction SilentlyContinue | Stop-Process -Force -Confirm:$false
+$env:EXILEDESK_REMOTE_DEBUG_PORT = "9333"; $env:EXILEDESK_FULLSCREEN = "1"
+Start-Process "$env:LOCALAPPDATA\ExileDesk\exiledesk.exe"   # 開発ビルドなら C:\Users\kyohei\ExileDesk\src-tauri\target\debug\exiledesk.exe
+```
+
+- アプリは 1 枚目のモニター (DISPLAY6、0,0、1920×1080) に全画面で出る。**録っている間はそのモニターを触らない**
+- ログインの状態は起動ごと (ファイルに残さない)。取引所の機能を撮るならその起動でログインし直す (パスワードは kyohei が入れる)
+- 終わったら**環境変数を外して、いつもの起動に戻す** (アプリを閉じて普通に起動し直す)
+
+## 2. つないで操作する
+
+- Playwright: `p.chromium.connect_over_cdp("http://127.0.0.1:9333")` → `browser.contexts[0].pages[0]`
+- Playwright の操作では OS のカーソルは動かない → **カーソルの絵をページに重ねる** (SVG の矢印、`position: fixed`、`pointer-events: none`、mousemove で動かす、mousedown で波紋)。ページを切り替えたら入れ直す
+- 動きは smoothstep で 16ms ごとに少しずつ (一瞬で飛ばさない)
+- **操作は地図を作ってから**: 文字だけで掴むと同じ文字が 2 か所にある (「金の指輪」はベースのボタンとアイテム枠の両方)。data-* 属性や親子関係で一意に掴む
+- 映さない物: 「動画モード」「手順 JSON」「結果 JSON」「相場 JSON」のボタン、アカウント名・取引履歴
+
+## 3. 録画する
+
+```bash
+ffmpeg -y -f lavfi -i "ddagrab=output_idx=0:framerate=30:draw_mouse=0" -c:v h264_nvenc -preset p4 -cq 23 -pix_fmt yuv420p out.mp4
+```
+
+- **ddagrab** (Desktop Duplication、GPU の画面) で 1 枚目のモニターを録る。30fps でコマ落ち無しを確認 (4 秒で 120 コマ)
+- 止める時は ffmpeg の標準入力に `q`
+- 使わない: gdigrab の `title=ExileDesk` (WebView2 の画面が更新されず古い絵のまま)、gdigrab の `desktop` (3 枚のモニター全部が入る)、Playwright の record_video (コマ落ち)
