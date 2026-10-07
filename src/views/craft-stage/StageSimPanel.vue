@@ -163,6 +163,16 @@ const redoPlan = computed<RedoPlan | null>(() => {
 });
 /** 狙いごとのやり直しの見積もり (5 順番計画・6 パターンに出す) */
 const redoOf = computed(() => new Map((redoPlan.value?.rows ?? []).map((r) => [r.modId, r])));
+/**
+ * 何回目までに付くか (半分・8 割・9 割の人)。取り直しの当たり p (1 回あたり) から、1 − (1 − p)^n ≥ q になる n
+ * (2026-10-07 オーナー「その MOD の 8 割の人はここまでやったら付く、というカオスの個数 (何回目) が知りたい」)
+ */
+function pressesOf(modId: string): { p50: number; p80: number; p90: number; how: string } | null {
+  const rd = redoOf.value.get(modId);
+  if (!rd || !(rd.p > 0) || rd.p >= 1 || rd.why) return null;
+  const n = (q: number): number => Math.max(1, Math.ceil(Math.log(1 - q) / Math.log(1 - rd.p)));
+  return { p50: n(0.5), p80: n(0.8), p90: n(0.9), how: REDO_METHOD_JA[rd.method] };
+}
 const redoCostMap = computed<Record<string, number>>(() => Object.fromEntries((redoPlan.value?.rows ?? []).map((r) => [r.modId, r.expected])));
 const REDO_METHOD_JA: Record<string, string> = { chaos: "カオス", exalt: "高貴", desecrate: "冒涜", essence: "エッセンス" };
 
@@ -1219,8 +1229,9 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
                   <span v-if="orderRow(k)!.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ orderRow(k)!.alts.length }} つと合わせてどれか</span>
                   <span class="ml-1 text-[10px] opacity-60">{{ METHOD_JA[orderRow(k)!.method] }}</span>
                 </td>
-                <td class="w-48 py-1 text-right text-[11px] tabular-nums">
+                <td class="w-64 py-1 text-right text-[11px] tabular-nums">
                   <span v-if="redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">取り直し 約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
+                  <span v-if="pressesOf(orderRow(k)!.modId)" class="ml-2 whitespace-nowrap opacity-70" :title="`${pressesOf(orderRow(k)!.modId)!.how}を打った回数の目安 (1 回あたりの当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)})。半分の人は ${pressesOf(orderRow(k)!.modId)!.p50} 回目まで、8 割の人は ${pressesOf(orderRow(k)!.modId)!.p80} 回目まで、9 割の人は ${pressesOf(orderRow(k)!.modId)!.p90} 回目までに付く`">8 割の人は {{ pressesOf(orderRow(k)!.modId)!.p80.toLocaleString("ja-JP") }} 回目まで</span>
                 </td>
               </template>
               <template v-else>

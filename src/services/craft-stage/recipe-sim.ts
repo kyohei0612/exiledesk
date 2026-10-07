@@ -573,6 +573,22 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   }
 }
 
+/**
+ * 画面に一瞬だけ手を返す。setTimeout(0) は Chrome が入れ子で 4 ms 以上待たせる (1,500 人で数百回 → 数秒の無駄) ので、
+ * scheduler.yield があればそれ、無ければ MessageChannel (待ち時間なし)。2026-10-07 オーナー「シミュレーション微妙に遅い」
+ */
+const yieldToUi: () => Promise<void> = (() => {
+  const sch = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
+  if (sch && typeof sch.yield === "function") return () => sch.yield!();
+  if (typeof MessageChannel !== "undefined") {
+    const ch = new MessageChannel();
+    let pending: (() => void) | null = null;
+    ch.port1.onmessage = () => { const r = pending; pending = null; r?.(); };
+    return () => new Promise<void>((r) => { pending = r; ch.port2.postMessage(null); });
+  }
+  return () => new Promise<void>((r) => setTimeout(r, 0));
+})();
+
 /** 何百回も回してまとめる (画面に手を返しながら) */
 export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, total: number) => void, stopped?: () => boolean): Promise<RecipeResult | null> {
   const seed0 = spec.seed ?? Math.floor(Date.now() % 1_000_000) * 10_000;
@@ -580,9 +596,9 @@ export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, to
   let last = Date.now();
   for (let i = 0; i < spec.runs; i++) {
     runs.push(runRecipeOnce(spec, seed0 + i * 10_000));
-    if (Date.now() - last > 15) {
+    if (Date.now() - last > 40) {
       onProgress?.(i + 1, spec.runs);
-      await new Promise((r) => setTimeout(r, 0));
+      await yieldToUi();
       if (stopped?.()) return null;
       last = Date.now();
     }
