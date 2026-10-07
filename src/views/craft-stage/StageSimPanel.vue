@@ -799,12 +799,14 @@ function removeRecipe(id: string): void {
   writeSimRecipes(recipes.value);
 }
 /** 呼び出す: 今の状態を置き換える (2 回押し)。1 つ戻すと同じやり方で、工程の「決めた」も戻す */
-function loadRecipe(r: SimRecipe): void {
+async function loadRecipe(r: SimRecipe): Promise<void> {
   if (recipeArmed.value !== `load:${r.id}`) { recipeArmed.value = `load:${r.id}`; return; }
   recipeArmed.value = null;
   const ses = r.session;
   restoring = true;
-  s.base.value = ses.base;
+  // ベースが変わる時は、先にベースだけ替えて、ベースの watch (ソケットを空にする等) を済ませてから残りを入れる
+  // (2026-10-07 靴から手袋のレシピを呼ぶと、ソケットと 2 以降が消えていた)
+  if (s.base.value !== ses.base) { s.base.value = ses.base; await nextTick(); }
   s.itemLevel.value = ses.itemLevel;
   s.simTargets.value = ses.targets;
   s.simSockets.value = ses.sockets;

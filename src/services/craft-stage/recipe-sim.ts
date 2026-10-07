@@ -29,7 +29,7 @@ import { revealOffers, unrevealedOf } from "./apply-desecrate";
 import { mulberry32 } from "../htc/rng";
 import { freshItem, startFrom } from "./run-plan";
 import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
-import type { MissRule, PatternKind } from "./pattern";
+import { LOST_RESTART, ONCE_KINDS, type MissRule, type PatternKind } from "./pattern";
 import { RUNES } from "./stage-runes";
 import { allMods, limitOf, listOf, room } from "./stage-core";
 import type { StageItem, StageMod, StageSide } from "./types";
@@ -399,6 +399,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     let lastAt = -1;
     const count = (t: RecipeTarget): number => new Set(allMods(item).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size;
     let i = 0;
+    /** 新しいベースで最初から */
+    const restartPattern = (): void => { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); };
     while (steps.length < max) {
       if (fractureTs.length && !fixedHit()) return fail("固定した MOD が消えた");
       // 打った手で消えた MOD に、その手の「MOD が消えたら」があればそこへ戻る (無ければ下の、付けた手に戻る)
@@ -406,8 +408,12 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         const now = metIds();
         const gone = [...prevMet].filter((id) => !now.has(id));
         prevMet = now;
-        const goto = lastAt >= 0 ? gone.map((id) => pat[lastAt]?.lostGoto?.[id]).find((g) => g != null) : undefined;
+        let goto = lastAt >= 0 ? gone.map((id) => pat[lastAt]?.lostGoto?.[id]).find((g) => g != null) : undefined;
+        // 決めていなければ、マジックの手 (変成・増強・王者・錬金・エッセンス) で付けた物は打ち直せないので新しいベースで最初から
+        // (2026-10-07 靴で試すと、レアで移動スピードが消えても画面は「2 手目 (増強) に戻る」、計算は戻らず最後に失敗していた)
+        if (goto == null && lastAt >= 0 && gone.some((id) => { const j = pat.findIndex((q, k) => k < lastAt && !!q.target && membersOf(q.target).some((a) => a.modId === id)); return j >= 0 && ONCE_KINDS.has(pat[j]!.kind); })) goto = LOST_RESTART;
         lastAt = -1;
+        if (goto === LOST_RESTART) { restartPattern(); continue; }
         if (goto != null && goto !== i && goto < pat.length) { i = goto; continue; }
       }
       // 前の手で付けた狙いが消えていたら (消去・カオスで)、その手に戻る (自動の付け方と同じ「前に付けた物が消えたら、また上から」)
@@ -466,7 +472,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       if (!p.target || (two ? meets(item, p.target) : count(p.target) > before || meets(item, p.target))) { i++; continue; }
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
-      if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); continue; }
+      if (p.onMiss === "restart") { restartPattern(); continue; }
       // カオスの手のやり直しがカオス (同じ物・お告げ) なら、次のカオスがそのまま入れ替えになる。やり直しのカオスを別に打つと、
       // その結果を見ないまま次のカオスを打つので 2 回打って 1 回分しか判定していなかった (2026-10-07 オーナー「回る速度遅くね」「500 回の 50 神以内で付くかなと思ってた」)
       if (p.onMiss === "annul_redo" && p.kind === "chaos" && p.miss?.kind === "chaos" && p.miss.currency === p.currency && p.miss.omens.join("+") === p.omens.join("+")) continue;

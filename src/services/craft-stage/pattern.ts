@@ -45,7 +45,8 @@ export interface PatternStep {
   single?: string | null;
   /**
    * この手を打っている間に、付いている MOD (固定以外) が消えたら何手目 (0 始まり) からやり直すか。MOD ごと。無ければその MOD を付けた手
-   * (2026-10-07 オーナー「片方当たり MOD が消えたら、にしよう。フラクチャーされてない MOD の数だけやり直しの選択肢、何手目かに設定」)
+   * (2026-10-07 オーナー「片方当たり MOD が消えたら、にしよう。フラクチャーされてない MOD の数だけやり直しの選択肢、何手目かに設定」)。
+   * LOST_RESTART (-1) は新しいベースで最初から。マジックの手 (変成・増強・王者・錬金・エッセンス) で付けた物はレアに打ち直せないので既定はこれ
    */
   lostGoto?: Record<string, number>;
   onMiss: MissRule;
@@ -132,6 +133,10 @@ export const hasCands = (s: PatternSet | undefined): boolean => !!s && GACHA_KIN
  * 次の手では個別に選ばず「残り」を狙う (2026-10-07 オーナー「偉大で 2/3 にするとそれ以降の設定どうするか。次の奴の選択肢に残りのプレフィックス MOD 1 つと表示」)
  */
 export const REST = "rest:";
+/** 「MOD が消えたら」の戻り先: 新しいベースで最初から */
+export const LOST_RESTART = -1;
+/** 打ち直せない手 (マジックにしか打てない・レアリティが変わる)。ここで付けた物が消えたら最初から */
+export const ONCE_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "essence"]);
 export const isRest = (t: string | null | undefined): t is string => !!t && t.startsWith(REST);
 /** その手の候補 (target・target2・target3) */
 export const candsOfStep = (st: PatternStep | undefined): string[] => (st ? [st.target, st.target2, st.target3].filter((x): x is string => !!x && x !== ANY_TARGET && !isRest(x)) : []);

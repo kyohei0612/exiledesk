@@ -8,7 +8,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
-import { ANY_KINDS, ANY_TARGET, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
+import { ANY_KINDS, ANY_TARGET, LOST_RESTART, ONCE_KINDS, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageItemCard from "./StageItemCard.vue";
@@ -521,7 +521,22 @@ function placedAt(id: string, i: number): number {
   for (let j = i; j >= 0; j--) { const st = pat.value.steps[j]!; if (st.target === id || st.target2 === id || st.target3 === id) return j; }
   return i;
 }
-const gotoOf = (i: number, r: Row, id: string): number => r.step.lostGoto?.[id] ?? placedAt(id, i);
+/** 消えたら戻る手 (決めていなければ付けた手。マジックの手で付けた物は打ち直せないので最初から) */
+function gotoOf(i: number, r: Row, id: string): number {
+  const g = r.step.lostGoto?.[id];
+  if (g != null) return g;
+  const j = placedAt(id, i);
+  const k = setByKey(sets.value, pat.value.steps[j]?.set ?? "")?.kind;
+  return k && ONCE_KINDS.has(k) ? LOST_RESTART : j;
+}
+const gotoJa = (g: number): string => (g === LOST_RESTART ? "最初から (新しいベース)" : `${g + 1} 手目に戻る`);
+/** 戻れない手の理由 (ルーン・打つだけ・マジックの手) */
+function whyNoGoto(r: Row): string | undefined {
+  if (r.set?.kind === "rune") return "ルーンの手には戻れない";
+  if (r.step.target === ANY_TARGET) return "打つだけの手には戻れない";
+  if (r.set && ONCE_KINDS.has(r.set.kind)) return "マジックの手 (レアには打てない)";
+  return undefined;
+}
 /** 偉大の手で一緒に狙う候補 (target2・target3) を入れ切りする (最大 2 つ) */
 function toggleCand(i: number, id: string): void {
   const st = pat.value.steps[i]!;
@@ -855,7 +870,7 @@ defineExpose({ rows });
             <div v-for="id in presentMods(i, r)" :key="id" class="flex flex-col">
               <span class="flex items-center">
                 <span class="h-3 w-3 rounded-bl border-b border-l border-dashed border-rose-400/60"></span>
-                <button type="button" class="flex max-w-[15rem] items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-0.5 text-left hover:brightness-125" :disabled="locked" :title="`${cardTitleOf(id)} が消えたら ${gotoOf(i, r, id) + 1} 手目からやり直す (押すと戻る手を選ぶ)`" @click="selectRow(i, 'lost')">
+                <button type="button" class="flex max-w-[15rem] items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-0.5 text-left hover:brightness-125" :disabled="locked" :title="`${cardTitleOf(id)} が消えたら ${gotoJa(gotoOf(i, r, id))} (押すと戻る手を選ぶ)`" @click="selectRow(i, 'lost')">
                   <span class="truncate font-bold text-rose-200">{{ cardTitleOf(id) }}</span>
                   <span class="shrink-0 text-rose-300">が消えたら</span>
                 </button>
@@ -863,7 +878,7 @@ defineExpose({ rows });
               <span class="ml-3 flex items-center text-amber-200/90">
                 <span class="text-rose-300">◀</span>
                 <span class="h-px w-6 border-t border-dashed border-rose-400/60"></span>
-                <span class="ml-1 font-bold">{{ gotoOf(i, r, id) + 1 }} 手目に戻る</span>
+                <span class="ml-1 font-bold">{{ gotoJa(gotoOf(i, r, id)) }}</span>
               </span>
             </div>
           </div>
@@ -937,7 +952,13 @@ defineExpose({ rows });
                 <div v-for="id in presentMods(focusRow, rows[focusRow]!)" :key="id" class="w-72">
                   <p class="mb-1 truncate font-bold" :title="cardTitleOf(id)">{{ cardTitleOf(id) }} が消えたら</p>
                   <div class="flex flex-col gap-0.5">
-                    <button v-for="g in focusRow + 1" :key="g" type="button" class="flex items-center gap-2 rounded-md border px-2 py-1 text-left disabled:cursor-not-allowed disabled:opacity-30" :class="gotoOf(focusRow, rows[focusRow]!, id) === g - 1 ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-black/20 hover:border-white/30'" :disabled="rows[g - 1]!.set?.kind === 'rune' || rows[g - 1]!.step.target === ANY_TARGET" :title="rows[g - 1]!.set?.kind === 'rune' ? 'ルーンの手には戻れない' : rows[g - 1]!.step.target === ANY_TARGET ? '打つだけの手には戻れない' : undefined" @click="setGoto(focusRow!, id, g - 1)">
+                    <!-- 新しいベースで最初から (2026-10-07 靴で試すと、マジックの手で付けた物が消えた時の戻り先が無かった) -->
+                    <button type="button" class="flex items-center gap-2 rounded-md border px-2 py-1 text-left" :class="gotoOf(focusRow, rows[focusRow]!, id) === LOST_RESTART ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-black/20 hover:border-white/30'" @click="setGoto(focusRow!, id, LOST_RESTART)">
+                      <b class="shrink-0 text-amber-200">最初から</b>
+                      <span class="truncate text-[11px]">新しいベース</span>
+                      <span v-if="gotoOf(focusRow, rows[focusRow]!, id) === LOST_RESTART" class="ml-auto shrink-0 text-[10px]">← ここから</span>
+                    </button>
+                    <button v-for="g in focusRow + 1" :key="g" type="button" class="flex items-center gap-2 rounded-md border px-2 py-1 text-left disabled:cursor-not-allowed disabled:opacity-30" :class="gotoOf(focusRow, rows[focusRow]!, id) === g - 1 ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-black/20 hover:border-white/30'" :disabled="!!whyNoGoto(rows[g - 1]!)" :title="whyNoGoto(rows[g - 1]!)" @click="setGoto(focusRow!, id, g - 1)">
                       <b class="w-10 shrink-0 text-amber-200">{{ g }} 手目</b>
                       <span class="truncate text-[11px]">{{ cardTitle(rows[g - 1]!) }}</span>
                       <span v-if="gotoOf(focusRow, rows[focusRow]!, id) === g - 1" class="ml-auto shrink-0 text-[10px]">← ここから</span>
