@@ -214,7 +214,9 @@ export function tradeFiltersFor(
     // 同じ系統の別の MOD (マークスマンのルーンの「2m 以内の敵に対する」版など) になることがあり、違う MOD で検索していた
     // (2026-10-07 オーナー「変な MOD 付いてるな、合ってんのか」: 手袋のヒステリーのパーフェクトエッセンス)
     const ownStats = ((tier as { stats?: readonly string[] }).stats ?? []).filter(Boolean);
-    const byText = !ownStats.length && mod.text ? STAT_TEXT[mod.text.toLowerCase()]?.find((x) => x.startsWith("explicit.")) : undefined;
+    // 文に数値が入っている物 (「60% increased effect of Socketed Augment Items」) は # にしてから引く (2026-10-07 オーナー「ソケット MOD が入ってない」)
+    const textKey = mod.text ? mod.text.toLowerCase().replace(/[+-]?\d+(?:\.\d+)?/g, "#").replace(/\s+/g, " ").trim() : "";
+    const byText = !ownStats.length && textKey ? (STAT_TEXT[mod.text!.toLowerCase()] ?? STAT_TEXT[textKey])?.find((x) => x.startsWith("explicit.")) : undefined;
     if (byText) {
       const shown0 = tierDisplayRanges(tier);
       const r0 = shown0[0];
