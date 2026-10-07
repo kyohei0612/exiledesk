@@ -1124,7 +1124,9 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
        「1 がベース選定、2 がベース値段、3 が狙う MOD と分けたら」)。1 ベースは上の CraftStage.vue の枠 -->
   <div class="space-y-3 text-[12px]">
     <!-- 1 つ戻す・説明はタブの行の右端に (工程の枠の間に行を挟まない) -->
-    <Teleport to="#sim-tools" :disabled="s.mode.value !== 'sim' || !!s.replay.value">
+    <!-- defer: 移し先 (#sim-tools、CraftStage.vue) ができてから描く。無いうちに描くと失敗し、以後の描き直しが全部エラーで止まっていた
+         (2026-10-07 オーナー「また進まない」: 2 狙う MOD の「決めた →」を押しても画面が変わらなかった) -->
+    <Teleport defer to="#sim-tools" :disabled="s.mode.value !== 'sim' || !!s.replay.value">
       <CurrencyPicker sim />
       <!-- レシピ (名前を付けて残す・呼び出す) -->
       <span ref="recipeBox" class="relative">
