@@ -60,8 +60,6 @@ export interface CompiledStep {
   kind: PatternKind; currency: string; omens: string[];
   /** 狙う MOD の手順 (無ければ付ける物の無い手: 消去・ルーン) */
   target: RecipeTarget | null;
-  /** 偉大なる高貴のお告げの手の 2 つ目の狙い (2 つとも付いたら当たり) */
-  target2?: RecipeTarget | null;
   /** 偉大の手で片方当たった後、残りを打つ手 (無ければ偉大だけ外す) */
   single?: { kind?: PatternKind; currency: string; omens: string[] };
   /** この手の間に消えた MOD (modId) → 戻る手の番号 (パターンの中の 0 始まり) */
@@ -391,7 +389,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     /** 消えた狙いを取り直す時の手 (元の手の番号 → 替えた手) */
     const regain = new Map<number, CompiledStep>();
     /** 前の手の後に付いていた狙い (消えた物を見つけて、その手の「MOD が消えたら」で戻る) と、最後に打った手 */
-    const metIds = (): Set<string> => new Set(spec.targets.filter((t) => t.method !== "fracture" && meets(item, t)).map((t) => t.modId));
+    const metIds = (): Set<string> => new Set(allMods(item).filter((m) => !m.unrevealed && !m.fractured && spec.targets.some((t) => hits(t, m))).map((m) => m.modId));
     let prevMet = metIds();
     let lastAt = -1;
     const count = (t: RecipeTarget): number => new Set(allMods(item).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size;
@@ -410,7 +408,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 前の手で付けた狙いが消えていたら (消去・カオスで)、その手に戻る (自動の付け方と同じ「前に付けた物が消えたら、また上から」)
       // 戻れるのはもう一度打てる手だけ (変成・増強・王者・錬金はレアリティが変わるので戻れない。その時は最後まで行って揃わなければ失敗)
       const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
-      const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && (!meets(item, q.target) || (!!q.target2 && !meets(item, q.target2))));
+      const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && !meets(item, q.target));
       if (lost >= 0) {
         i = lost;
         // 消えた狙いをカオスの手で取り直すと、付いている他の狙いもランダムに消してしまう (2026-10-07 手袋の比べで 9 割が止まった)。
@@ -423,11 +421,10 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       if (i >= pat.length) return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases };
       let p = regain.get(i) ?? pat[i]!;
       lastAt = i;
-      // 偉大 (2 つ) の手で 1 つ目が付いている (か 2 つ目だけ付いている) 時は、偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
-      if (p.target2) {
-        const left = [p.target, p.target2].filter((t): t is RecipeTarget => !!t && !meets(item, t));
-        if (left.length === 1) p = { ...p, target: left[0]!, target2: null, ...(p.single ? { currency: p.single.currency, omens: [...p.single.omens] } : { omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") }) };
-      }
+      // 偉大の手 (候補のどれか 2 つ) は、もう 2 つ付いていれば次へ。1 つ付いている時は偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
+      const two = !!p.target && needOf(p.target) >= 2;
+      if (two && meets(item, p.target!)) { i++; continue; }
+      if (two && count(p.target!) === 1 && p.omens.includes("OmenofGreaterExaltation")) p = { ...p, ...(p.single ? { currency: p.single.currency, omens: [...p.single.omens] } : { omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") }) };
       const before = p.target ? count(p.target) : 0;
       let e: string | null = null;
       // 始めから差さっているルーン (固定する MOD に要る物) の手は打たずに次へ
@@ -443,7 +440,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         // 偉大 (2 つ狙い) は、その側に 2 枠空くまで外れを消してから打つ (空きが 1 つだと偉大でも 1 つしか付かない。狙いはまだ付いていないので消去で失う物が無い。
         // 2026-10-07 手順を追うと、外れが残ったまま偉大を打っていた)
         const free = ts ? limitOf(item, ts) - listOf(item, ts).length : 0;
-        if (p.kind === "exalt" && p.target2 && ts && free < 2 && junkOn(item, ts).length) {
+        if (p.kind === "exalt" && two && p.omens.includes("OmenofGreaterExaltation") && ts && free < 2 && junkOn(item, ts).length) {
           e = annulOn(ts);
           if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
           continue;
@@ -459,7 +456,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         if (!e && p.kind === "desecrate" && unrevealedOf(item)) e = reveal(p.target, echoes);
       }
       if (e) return fail(`${i + 1} 手目: ${e}`);
-      if (p.target2 ? meets(item, p.target!) && meets(item, p.target2) : !p.target || count(p.target) > before || meets(item, p.target)) { i++; continue; }
+      if (!p.target || (two ? meets(item, p.target) : count(p.target) > before || meets(item, p.target))) { i++; continue; }
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
       if (p.onMiss === "restart") { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); continue; }

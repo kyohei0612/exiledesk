@@ -34,6 +34,11 @@ export interface PatternStep {
    */
   target2?: string | null;
   /**
+   * 偉大の手の 3 つ目の候補。候補 (target・target2・target3) のどれか 2 つが付けば当たり
+   * (2026-10-07 オーナー「偉大で狙うのは 3 MOD まで決められるように、そのうちどれか当たり、2 つだけの選択で確定じゃなく増やせる」)
+   */
+  target3?: string | null;
+  /**
    * 偉大の手で片方だけ当たり、消去で外れが消えた後に残りを打つ手 (セットのキー)。無ければ同じカレンシーで偉大だけ外した物
    * (2026-10-07 オーナー「片方空いてたら同じ流れを単体のカレンシーで、偉大は OFF、側のお告げは ON のまま」)
    */
@@ -212,10 +217,11 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     }
     const t = ctx.targets.find((x) => x.modId === p.target);
     if (!t) continue;
-    for (const x of [t, ...(isDouble(s) && p.target2 ? ctx.targets.filter((y) => y.modId === p.target2) : [])]) {
-      st.placed.add(x.modId);
-      st[ctx.data.mods.get(x.modId)?.type === "suffix" ? "suffix" : "prefix"] += 1;
-    }
+    // 偉大の手は候補のどれか 2 つが付く。候補が 3 つの時はどれが付くか分からないので、付いた物 (placed) には入れず枠だけ数える
+    const cands = [t, ...(isDouble(s) ? ctx.targets.filter((y) => y.modId === p.target2 || y.modId === p.target3) : [])];
+    const sure = cands.length <= 2;
+    for (const x of cands.slice(0, 2)) st[ctx.data.mods.get(x.modId)?.type === "suffix" ? "suffix" : "prefix"] += 1;
+    if (sure) for (const x of cands) st.placed.add(x.modId);
     if (s.kind === "essence" || s.kind === "essence_perfect") st.essences++;
     if (s.kind === "desecrate") st.desecrated++;
   }

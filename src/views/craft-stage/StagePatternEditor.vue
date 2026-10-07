@@ -173,10 +173,10 @@ const rows = computed<Row[]>(() => {
       if (!k.startsWith("mod:")) return [];
       const id = k.slice(4);
       const t = c.targets.find((x) => x.modId === id);
-      const why = id === step.target ? "1 つ目と同じ" : !t ? "狙う MOD に無い" : checkTarget(c, st2, set, t);
+      const why = id === step.target ? "最初に選んだ MOD" : !t ? "狙う MOD に無い" : checkTarget(c, st2, set, t);
       return [{ key: id, label: modLabel(id), why, n }];
     });
-    const t2Why = !dbl ? null : !step.target2 ? "2 つ目の MOD を選ぶ" : target2Opts.find((o) => o.key === step.target2)?.why ?? null;
+    const t2Why = !dbl ? null : !step.target2 ? "一緒に狙う MOD を選ぶ" : [step.target2, step.target3].map((k) => (k ? target2Opts.find((o) => o.key === k)?.why ?? null : null)).find(Boolean) ?? null;
     const setWhy = set ? checkSet(c, st, set) : "カレンシーを選ぶ";
     const tWhy = !step.target ? "付ける物を選ぶ" : step.target === ANY_TARGET ? (set ? checkAny(st, set) : null) : set && set.kind !== "rune" ? (() => { const t = c.targets.find((x) => x.modId === step.target); return t ? checkTarget(c, st, set, t) : null; })() : null;
     // やり直しは「選択無し (外れてもそのまま次へ)」が既定 (2026-10-07 オーナー「外れてもいいならそこは選択無しをデフォで、他を選んだ時も選択無しを選べる」)
@@ -272,7 +272,7 @@ function cardTitle(r: Row): string {
   if (!r.step.target) return r.set?.kind === "rune" ? "ルーン未定" : "MOD 未定";
   if (r.step.target === ANY_TARGET) return "打つだけ";
   if (r.set?.kind === "rune") return RUNES[r.step.target]?.ja ?? r.step.target;
-  if (isDouble(r.set) && r.step.target2) return `${cardTitleOf(r.step.target)} + ${cardTitleOf(r.step.target2)}`;
+  if (isDouble(r.set) && r.step.target2) return r.step.target3 ? `${[r.step.target, r.step.target2, r.step.target3].map(cardTitleOf).join(" / ")} のどれか 2 つ` : `${cardTitleOf(r.step.target)} + ${cardTitleOf(r.step.target2)}`;
   return cardTitleOf(r.step.target);
 }
 /** 狙う MOD の短い名前 (「火耐性 T3+」) */
@@ -414,15 +414,24 @@ function presentMods(i: number, r: Row): string[] {
   const c = ctx.value;
   if (!c || !r.set || r.set.kind === "rune") return [];
   const out = [...stateBefore(c, pat.value.steps, i).placed];
-  if (needs2(r) && r.step.target && r.step.target !== ANY_TARGET) { out.push(r.step.target); if (r.step.target2) out.push(r.step.target2); }
+  if (needs2(r) && r.step.target && r.step.target !== ANY_TARGET) out.push(r.step.target, ...candsOf(r));
   return [...new Set(out)].filter((id) => c.targets.find((t) => t.modId === id)?.method !== "fracture");
 }
 /** その MOD を付けた手 (i 手目まで。「MOD が消えたら」の既定の戻り先) */
 function placedAt(id: string, i: number): number {
-  for (let j = i; j >= 0; j--) { const st = pat.value.steps[j]!; if (st.target === id || st.target2 === id) return j; }
+  for (let j = i; j >= 0; j--) { const st = pat.value.steps[j]!; if (st.target === id || st.target2 === id || st.target3 === id) return j; }
   return i;
 }
 const gotoOf = (i: number, r: Row, id: string): number => r.step.lostGoto?.[id] ?? placedAt(id, i);
+/** 偉大の手で一緒に狙う候補 (target2・target3) を入れ切りする (最大 2 つ) */
+function toggleCand(i: number, id: string): void {
+  const st = pat.value.steps[i]!;
+  const cur = [st.target2, st.target3].filter((x): x is string => !!x);
+  const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id].slice(-2);
+  patch(i, { target2: next[0] ?? null, target3: next[1] ?? null });
+  editPart.value = "target2";
+}
+const candsOf = (r: Row): string[] => [r.step.target2, r.step.target3].filter((x): x is string => !!x);
 function setGoto(i: number, id: string, g: number): void {
   patch(i, { lostGoto: { ...(pat.value.steps[i]?.lostGoto ?? {}), [id]: g } });
   editPart.value = "lost";
@@ -443,7 +452,7 @@ function chipsOf(i: number, r: Row): Chip[] {
   const isRune = r.set?.kind === "rune";
   const out: Chip[] = [{ part: "target", name: isRune ? "ルーン" : "MOD", icons: [], text: !r.step.target ? "" : needs2(r) && r.step.target !== ANY_TARGET ? cardTitleOf(r.step.target) : cardTitle(r), state: st("target", !!r.step.target) }];
   if (!isRune) out.push({ part: "set", name: "カレンシー", icons: icons(r.set), text: r.set && !icons(r.set).length ? setShort(r.set) : "", state: st("set", !!r.set) });
-  if (needs2(r)) out.push({ part: "target2", name: "2 つ目の MOD", icons: [], text: r.step.target2 ? cardTitleOf(r.step.target2) : "", state: st("target2", !!r.step.target2) });
+  if (needs2(r)) out.push({ part: "target2", name: "一緒に狙う MOD", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: st("target2", !!r.step.target2) });
   if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "やり直し", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? "選択無し" : "", state: st("miss", hasMiss(r)) });
   if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
   if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が消えたら", icons: [], text: "", state: st("lost", true) });
@@ -492,7 +501,7 @@ function onSet(i: number, key: string): void {
   const miss: MissRule = set && RARITY_CHANGE.has(set.kind) ? "next" : "annul_redo";
   const rm = cur.miss ? setByKey(sets.value, cur.miss) : undefined;
   const keepMiss = cur.miss && !(rm && set && checkRemoval(set, rm));
-  if (!isDouble(set)) patch(i, { target2: null });
+  if (!isDouble(set)) patch(i, { target2: null, target3: null });
   patch(i, { set: key, onMiss: keepMiss ? "annul_redo" : miss === "annul_redo" ? "next" : miss, ...(keepMiss ? {} : { miss: null }) });
 }
 
@@ -644,7 +653,7 @@ defineExpose({ rows });
           -->
           <div v-if="needs2(r) && r.set" class="ml-3 mt-1 space-y-1 border-l border-dashed border-rose-400/50 pl-2 text-[10px]">
             <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すとやり直し (消去) を選ぶ" @click="selectRow(i, 'miss')">
-              <span class="rounded bg-rose-950/50 px-1 text-rose-300">2 つとも外れ</span>
+              <span class="rounded bg-rose-950/50 px-1 text-rose-300">どれも外れ</span>
               <span class="opacity-60">→</span>
               <img v-if="missSet(r.step) && iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-4 w-4 object-contain" />
               <span>2 枠空くまで</span>
@@ -652,7 +661,7 @@ defineExpose({ rows });
             </button>
             <div>
               <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すとやり直し (消去) を選ぶ" @click="selectRow(i, 'miss')">
-                <span class="rounded bg-amber-900/40 px-1 text-amber-200">片方だけ当たり</span>
+                <span class="rounded bg-amber-900/40 px-1 text-amber-200">1 つだけ当たり</span>
                 <span class="opacity-60">→</span>
                 <img v-if="missSet(r.step) && iconOf(missSet(r.step)!.currency)" :src="iconOf(missSet(r.step)!.currency)" alt="" class="h-4 w-4 object-contain" />
                 <span>消去</span>
@@ -718,10 +727,10 @@ defineExpose({ rows });
               </div>
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'target2'">
-              <!-- 偉大で一緒に付ける 2 つ目 (1 つ目を付けた後の状態で選べる物) -->
-              <p class="mb-1 text-[11px] opacity-60">偉大で 1 つ目 ({{ cardTitleOf(rows[focusRow]!.step.target!) }}) と一緒に付ける物</p>
+              <!-- 偉大で一緒に狙う候補 (1〜2 つ。最初の MOD と合わせた候補のどれか 2 つが付けば当たり) -->
+              <p class="mb-1 text-[11px] opacity-60">{{ cardTitleOf(rows[focusRow]!.step.target!) }} と一緒に狙う物を 1〜2 つ (押して入れ切り)。候補のどれか 2 つが付けば当たり</p>
               <div class="flex max-w-3xl flex-col gap-1">
-                <button v-for="o in rows[focusRow]!.target2Opts" :key="o.key" type="button" class="flex items-center gap-3 rounded-lg border px-3 py-2 text-left text-[12px] transition disabled:cursor-not-allowed" :class="rows[focusRow]!.step.target2 === o.key ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : o.why ? 'border-white/5 bg-black/20' : 'border-white/10 bg-black/30 hover:border-amber-300/50 hover:bg-white/[0.04]'" :disabled="!!o.why" @click="patch(focusRow!, { target2: o.key }); editPart = 'target2'">
+                <button v-for="o in rows[focusRow]!.target2Opts" :key="o.key" type="button" class="flex items-center gap-3 rounded-lg border px-3 py-2 text-left text-[12px] transition disabled:cursor-not-allowed" :class="candsOf(rows[focusRow]!).includes(o.key) ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : o.why ? 'border-white/5 bg-black/20' : 'border-white/10 bg-black/30 hover:border-amber-300/50 hover:bg-white/[0.04]'" :disabled="!!o.why && !candsOf(rows[focusRow]!).includes(o.key)" @click="toggleCand(focusRow!, o.key)">
                   <span class="w-4 text-center font-bold" :class="o.why ? 'opacity-30' : 'text-amber-200'">{{ o.n + 1 }}</span>
                   <span class="w-9 text-[10px]" :class="o.why ? 'opacity-30' : 'opacity-60'">{{ orderInfo?.[order[o.n]!]?.side }}</span>
                   <span :class="o.why ? 'opacity-35' : orderInfo?.[order[o.n]!]?.tone">{{ orderInfo?.[order[o.n]!]?.text ?? o.label }}</span>
@@ -759,7 +768,7 @@ defineExpose({ rows });
               <template v-for="r in [rows[focusRow]!]" :key="'sum' + focusRow">
                 <div class="grid grid-cols-[5.5rem_1fr] items-center gap-x-3 gap-y-2 text-[12px]">
                   <span class="text-[11px] opacity-50">{{ r.set?.kind === "rune" ? "差すルーン" : "付ける MOD" }}</span>
-                  <button type="button" class="flex items-center gap-2 justify-self-start rounded px-1 text-left text-[14px] font-bold text-amber-50 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'target'"><img v-if="r.set?.kind === 'rune' && cardIcon(r)" :src="cardIcon(r)!" alt="" class="h-9 w-9 object-contain" />{{ r.step.target === ANY_TARGET ? "何が付いてもいい (打つだけ)" : r.step.target ? (r.set?.kind === "rune" ? runeLabel(r.step.target) : modLabel(r.step.target) + (isDouble(r.set) && r.step.target2 ? ` + ${modLabel(r.step.target2)}` : "")) : "—" }}</button>
+                  <button type="button" class="flex items-center gap-2 justify-self-start rounded px-1 text-left text-[14px] font-bold text-amber-50 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'target'"><img v-if="r.set?.kind === 'rune' && cardIcon(r)" :src="cardIcon(r)!" alt="" class="h-9 w-9 object-contain" />{{ r.step.target === ANY_TARGET ? "何が付いてもいい (打つだけ)" : r.step.target ? (r.set?.kind === "rune" ? runeLabel(r.step.target) : modLabel(r.step.target) + (isDouble(r.set) ? candsOf(r).map((x) => ` + ${modLabel(x)}`).join("") + (r.step.target3 ? " (どれか 2 つ)" : "") : "")) : "—" }}</button>
                   <template v-if="r.set?.kind !== 'rune'">
                     <span class="text-[11px] opacity-50">カレンシー</span>
                     <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'set'">
@@ -814,7 +823,7 @@ defineExpose({ rows });
             <template v-for="r in [rows[previewAt]!]" :key="'sum' + previewAt">
                 <div class="grid grid-cols-[5.5rem_1fr] items-center gap-x-3 gap-y-2 text-[12px]">
                   <span class="text-[11px] opacity-50">{{ r.set?.kind === "rune" ? "差すルーン" : "付ける MOD" }}</span>
-                  <button type="button" class="flex items-center gap-2 justify-self-start rounded px-1 text-left text-[14px] font-bold text-amber-50 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'target'"><img v-if="r.set?.kind === 'rune' && cardIcon(r)" :src="cardIcon(r)!" alt="" class="h-9 w-9 object-contain" />{{ r.step.target === ANY_TARGET ? "何が付いてもいい (打つだけ)" : r.step.target ? (r.set?.kind === "rune" ? runeLabel(r.step.target) : modLabel(r.step.target) + (isDouble(r.set) && r.step.target2 ? ` + ${modLabel(r.step.target2)}` : "")) : "—" }}</button>
+                  <button type="button" class="flex items-center gap-2 justify-self-start rounded px-1 text-left text-[14px] font-bold text-amber-50 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'target'"><img v-if="r.set?.kind === 'rune' && cardIcon(r)" :src="cardIcon(r)!" alt="" class="h-9 w-9 object-contain" />{{ r.step.target === ANY_TARGET ? "何が付いてもいい (打つだけ)" : r.step.target ? (r.set?.kind === "rune" ? runeLabel(r.step.target) : modLabel(r.step.target) + (isDouble(r.set) ? candsOf(r).map((x) => ` + ${modLabel(x)}`).join("") + (r.step.target3 ? " (どれか 2 つ)" : "") : "")) : "—" }}</button>
                   <template v-if="r.set?.kind !== 'rune'">
                     <span class="text-[11px] opacity-50">カレンシー</span>
                     <button type="button" class="flex flex-wrap items-center gap-2 justify-self-start rounded-lg px-1 py-0.5 enabled:hover:bg-white/5" :disabled="locked" @click="editPart = 'set'">

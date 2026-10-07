@@ -190,7 +190,7 @@ function patternProblem(p: Pattern): string | null {
     if (tw) return `${i + 1} 手目: ${tw}`;
     if (isDouble(x) && tg !== ANY_TARGET) {
       const t2 = p.steps[i]!.target2;
-      if (!t2) return `${i + 1} 手目: 2 つ目の MOD を選ぶ`;
+      if (!t2) return `${i + 1} 手目: 一緒に狙う MOD を選ぶ`;
       const t = s.simTargets.value.find((y) => y.modId === t2);
       const w2 = t ? checkTarget(ctx, stateBefore(ctx, [...p.steps.slice(0, i), { ...p.steps[i]!, target2: null }], i + 1), x, t) : "狙う MOD に無い";
       if (w2) return `${i + 1} 手目 (2 つ目): ${w2}`;
@@ -580,6 +580,16 @@ async function run(): Promise<void> {
     // パターンごとに回す (2026-10-06 オーナー「パターンで回す」)。白から作る + (フラクチャーがあれば) 固定済みから残りを作る (ベース代 0) の 2 本。
     // 始め方の比べに使う
     const sets = patternSets(it.cls);
+    /**
+     * 偉大の手の候補 (2〜3 つ) を「どれか 2 つ付けば当たり」の 1 つの狙いにまとめる (2 狙う MOD の「どれか N つ」と同じ仕組み)
+     */
+    const groupOf = (st: Pattern["steps"][number], x: NonNullable<ReturnType<typeof setByKey>>): RecipeSpec["targets"][number] | null => {
+      if (!isDouble(x) || !st.target || st.target === ANY_TARGET || !st.target2) return null;
+      const ms = [st.target, st.target2, st.target3].filter((id): id is string => !!id).map((id) => spec.targets.find((y) => y.modId === id)).filter((y): y is RecipeSpec["targets"][number] => !!y);
+      if (ms.length < 2) return null;
+      const [a, ...rest] = ms;
+      return { ...a!, method: "exalt", alts: [...(a!.alts ?? []), ...rest.flatMap((y) => [{ modId: y.modId, minTierIndex: y.minTierIndex }, ...(y.alts ?? [])])], need: 2 };
+    };
     const compile = (p: Pattern): CompiledStep[] => {
       // 打てる手だけ並べるので、「MOD が消えたら N 手目」の N を並べた後の番号に直す
       const at: number[] = [];
@@ -591,9 +601,9 @@ async function run(): Promise<void> {
       if (!x) return [];
       const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
       const ms = st.miss ? setByKey(sets, st.miss) : undefined;
-      const t2 = isDouble(x) && st.target2 ? spec.targets.find((y) => y.modId === st.target2) ?? null : null;
-      const one = t2 ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
-      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: t, ...(t2 ? { target2: t2 } : {}), ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}) }];
+      const grp = groupOf(st, x);
+      const one = grp ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
+      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? t, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}) }];
       });
     };
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
@@ -604,8 +614,11 @@ async function run(): Promise<void> {
     const out: typeof results.value = [];
     for (const [k, p] of ps.entries()) {
       // 完成の判定は、そのパターンで付ける物 + 固定する物だけ (狙い全部だと、一部だけ試すパターンが絶対に完成しなかった。2026-10-07)
-      const used = new Set(p.steps.flatMap((st) => [st.target, st.target2]).filter((x): x is string => !!x));
-      const goal = spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId));
+      // 偉大の手の候補は「どれか 2 つ」の 1 つの狙いとして数える (3 つ目は付かなくても当たり)
+      const groups = p.steps.flatMap((st) => { const x = setByKey(sets, st.set); const g = x ? groupOf(st, x) : null; return g ? [{ g, ids: [st.target, st.target2, st.target3] }] : []; });
+      const inGroup = new Set(groups.flatMap((x) => x.ids).filter((x): x is string => !!x));
+      const used = new Set(p.steps.flatMap((st) => [st.target]).filter((x): x is string => !!x && !inGroup.has(x)));
+      const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId)), ...groups.map((x) => x.g)];
       const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: 0 } } : {}) };
       const base = k * runs.value;
       const r = await runRecipe(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
