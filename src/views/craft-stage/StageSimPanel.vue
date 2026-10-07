@@ -921,9 +921,11 @@ const luck = computed(() => {
   if (!sm) return [];
   const add = split.value.baseAdd;
   const xs = [
-    { label: "半分", v: sm.p50 + add, bar: "bg-emerald-400", text: "text-emerald-300" },
-    { label: "8 割", v: sm.p80 + add, bar: "bg-amber-400", text: "text-amber-200" },
-    { label: "9 割", v: sm.p90 + add, bar: "bg-rose-400", text: "text-rose-300" },
+    { label: "2 人に 1 人は", v: sm.p50 + add, bar: "bg-emerald-400", text: "text-emerald-300", tail: "以内", top: false },
+    { label: "10 人に 8 人は", v: sm.p80 + add, bar: "bg-amber-400", text: "text-amber-200", tail: "以内", top: false },
+    { label: "10 人に 9 人は", v: sm.p90 + add, bar: "bg-rose-400", text: "text-rose-300", tail: "以内", top: false },
+    // 平均は線の上に (運の悪い人の高い金額に引っ張られて、真ん中の人より高くなる。2026-10-07 オーナー「半分とか 8 割とか分かりづらい、平均？」)
+    { label: "平均", v: split.value.base + split.value.craft, bar: "bg-white", text: "text-white/80", tail: "", top: true },
   ];
   const max = Math.max(...xs.map((x) => x.v)) * 1.15 || 1;
   return xs.map((x) => ({ ...x, left: `${Math.min(92, Math.max(6, (x.v / max) * 100))}%` }));
@@ -1206,12 +1208,18 @@ function replay(): void {
       </div>
       <!-- 運の幅 -->
       <p class="mt-4 text-[11px] opacity-60">運の幅 ({{ summary.runs.toLocaleString() }} 人が作ってみて)</p>
-      <div class="relative mt-1 h-11 max-w-xl">
-        <div class="absolute left-0 right-0 top-3 h-1 rounded bg-white/15"></div>
-        <template v-for="q in luck" :key="q.label">
-          <div class="absolute top-1.5 h-4 w-[3px] -translate-x-1/2 rounded" :class="q.bar" :style="{ left: q.left }"></div>
-          <div class="absolute top-6 -translate-x-1/2 whitespace-nowrap text-[11px] font-bold tabular-nums" :class="q.text" :style="{ left: q.left }">{{ q.label }} {{ moneyT(q.v) }}</div>
-        </template>
+      <!-- 線には印だけ、言葉は下に 1 行で (印の横に書くと長い文がくっついた) -->
+      <div class="relative mt-2 h-5 max-w-2xl">
+        <div class="absolute left-0 right-0 top-2 h-1 rounded bg-white/15"></div>
+        <div v-for="q in luck" :key="q.label" class="absolute top-0.5 h-4 w-[3px] -translate-x-1/2 rounded" :class="q.bar" :style="{ left: q.left }" :title="`${q.label} ${moneyT(q.v)} ${q.tail}`"></div>
+      </div>
+      <div class="mt-1 flex max-w-3xl flex-wrap gap-x-5 gap-y-1 text-[12px]">
+        <span v-for="q in luck" :key="q.label" class="flex items-center gap-1.5 whitespace-nowrap">
+          <span class="h-2.5 w-2.5 rounded-full" :class="q.bar"></span>
+          <span class="opacity-70">{{ q.label }}</span>
+          <b class="tabular-nums" :class="q.text">{{ moneyT(q.v) }}</b>
+          <span v-if="q.tail" class="opacity-70">{{ q.tail }}</span>
+        </span>
       </div>
       <!-- 何にお金がかかったか (ベース / クラフト) -->
       <div class="mt-3 grid max-w-4xl gap-x-8 gap-y-3 @3xl:grid-cols-2">
