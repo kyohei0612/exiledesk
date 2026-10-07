@@ -10,6 +10,7 @@ import CraftStage from "../views/craft-stage/CraftStage.vue";
 import LivePanel from "./LivePanel.vue";
 import FeedbackDialog from "./FeedbackDialog.vue";
 import WelcomeDialog from "./WelcomeDialog.vue";
+import MarketNotice from "./MarketNotice.vue";
 import { APP_DOWNLOAD_URL } from "./config";
 import pkg from "../../package.json";
 
@@ -41,6 +42,7 @@ window.addEventListener("resize", fitZoom);
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">要望・バグを送る</button>
       <a :href="APP_DOWNLOAD_URL" target="_blank" rel="noopener" class="rounded-lg border border-amber-400/50 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100 hover:bg-amber-500/20" title="相場の自動取得・取引履歴・火力チェックなどはアプリ版で">アプリ版をダウンロード ↗</a>
     </header>
+    <MarketNotice />
     <WelcomeDialog :open="welcomeOpen" @close="closeWelcome" />
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
     <div class="flex min-h-0 flex-1">
