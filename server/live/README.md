@@ -53,12 +53,12 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
 6. `channels.json` を本物にする (自分のチャンネルの `youtubeChannelId`、協賛チャンネル)。YouTube のチャンネル ID は UC で始まる 24 文字: YouTube Studio → 設定 → チャンネル → 詳細設定 に出る
 7. 置く:
    ```bash
-   pnpm deploy
+   pnpm run deploy
    ```
    `https://exiledesk-live.<名前>.workers.dev` が出る。`…/health` を開いて `{"ok":true}` が出れば動いている。
    最初の 1 回は `…/refresh?key=<REFRESH_KEY>` を開くとすぐ調べる (あとは 5 分おきに勝手に)。`…/live.json` が結果
 
-チャンネルを足す・外す時は `channels.json` を直して `pnpm deploy` だけ。
+チャンネルを足す・外す時は `channels.json` を直して `pnpm run deploy` だけ。
 
 ## 手元で動かす (開発)
 

@@ -1,5 +1,5 @@
 {
-  "_": "横に出すチャンネルの一覧。足す・外す・並べ替えはここを直して `pnpm deploy`。pr: true は協賛 (画面に PR と出す。ステマ規制)。youtubeChannelId は UC で始まる 24 文字 (チャンネルページの HTML の externalId。@名前 の URL を教えてもらえれば Claude が調べる)",
+  "_": "横に出すチャンネルの一覧。足す・外す・並べ替えはここを直して `pnpm run deploy`。pr: true は協賛 (画面に PR と出す。ステマ規制)。youtubeChannelId は UC で始まる 24 文字 (チャンネルページの HTML の externalId。@名前 の URL を教えてもらえれば Claude が調べる)",
   "channels": [
     {
       "id": "chocobanana",
