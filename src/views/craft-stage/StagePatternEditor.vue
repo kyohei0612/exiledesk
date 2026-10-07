@@ -821,7 +821,7 @@ defineExpose({ rows });
               </button>
               <!--
                 この手だけ回す (ガチャで付くまで打つ手だけ。2026-10-07 オーナー「カオス何個分で単純にできるか知りたい」「8 割の人で出した方が良さそう」)。
-                その手の前までは当たった状態から、その手だけ 1,500 人分。結果はカードのすぐ下 (アイテムのカードは隠さない)
+                その手の前までは当たった状態から、その手だけ 500 人分 (上限は回すの横の設定)。結果はカードのすぐ下 (アイテムのカードは隠さない)
               -->
               <div v-if="hasMiss(r) && !r.bad && r.step.target" class="flex items-center border-t border-white/10 px-1.5 py-0.5">
                 <button type="button" class="rounded border border-sky-400/40 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/10 disabled:opacity-40" :disabled="busy" :title="`${i + 1} 手目の前までは当たった状態から、この手だけを ${(stepRuns ?? 0).toLocaleString()} 人分回す (1 人 ${(stepMax ?? 0).toLocaleString()} 回まで)`" @click.stop="emit('run-step', active, i)">この手だけ回す ▶</button>

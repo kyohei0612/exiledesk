@@ -37,8 +37,16 @@ import { searchModGroups, type ModGroup, type ModPick } from "../../services/cra
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
 
 const s = craftStage;
-/** 回す回数は 1500 (2026-10-07 オーナー「デフォ 1500 でおｋ、後から回転数は決める」。その前は 500 / 1500 / 3000 / 1000) */
-const runs = ref<number>(1500);
+/** 回す人数は 500 で固定 (2026-10-07 オーナー「全体 500 人でデフォ固定、上限 (4,000 手) の方を設定できれば」。その前は 1500) */
+const runs = ref<number>(500);
+/**
+ * 1 人が打てる手の上限 (超えた人は「手が多すぎる」で未完成)。既定 4,000、回すの横で選ぶ。このブラウザに覚える
+ * (2026-10-07 オーナー「回す回数だけ設定できれば…じゃない、上限設定 4000 手のほう」)
+ */
+const MAX_STEPS_KEY = "exiledesk.craftStageSim.maxSteps";
+const MAX_STEPS_CHOICES = [4_000, 10_000, 20_000, 50_000] as const;
+const maxSteps = ref<number>((() => { try { const v = Number(localStorage.getItem(MAX_STEPS_KEY)); return (MAX_STEPS_CHOICES as readonly number[]).includes(v) ? v : 4_000; } catch { return 4_000; } })());
+watch(maxSteps, (v) => { try { localStorage.setItem(MAX_STEPS_KEY, String(v)); } catch { /* 無くてよい */ } });
 
 /** 付け方の名前 (2026-10-05 オーナー「カオスはカオススパム、高貴はガチャなので高貴ガチャ」) */
 const METHOD_JA: Record<RecipeMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス", fracture: "フラクチャー" };
@@ -591,7 +599,7 @@ const blocked = computed((): string | null => {
  * only: そのパターンだけ回す (未完成でも組めている所まで、1500 回。2026-10-07 オーナー「パターンを自分で追加して未完成の状態で 1500 回回したら
  * どんだけ付くのか実験したい、手動では個別に回す感じで、結果を下に」)。無ければ出来ているパターンを全部
  */
-const ONE_RUNS = 1500;
+const ONE_RUNS = 500;
 /** 6 パターンで開いているパターン (取引所で探すのに使う) */
 const activePattern = ref(0);
 // 上のタブで開いたパターンの結果を下に出す (回した物だけ。2026-10-07 パターンを並べて回すと、タブを替えても下は一番安い物のままだった)
@@ -600,8 +608,7 @@ watch(() => s.simPatterns.value[activePattern.value]?.name, (n) => { if (n) show
  * 「この手だけ回す」の結果 (2026-10-07 オーナー「カオス何個分で単純にできるか知りたい」「8 割の人で出した方が良さそう」)。
  * その手の前までは当たった状態から、その手のカレンシーを何個打ったら付いたか (8 割の人・平均) とその手の費用。1 人 20,000 回まで
  */
-const STEP_ONLY_MAX = 20_000;
-/** この手だけの人数 (重い手は 1,500 人で 20〜30 秒かかったので 500 人。2026-10-07 オーナー「500 人でよさそう」) */
+/** この手だけの人数 (全体と同じ 500 人。上限は全体と同じ maxSteps) */
 const STEP_ONLY_RUNS = 500;
 const stepRun = ref<{ k: number; i: number; presses: number; cost: number; p80Presses: number; p80Cost: number; pDone: number; busy: boolean } | null>(null);
 async function run(only?: number, stepOnly?: number): Promise<void> {
@@ -623,7 +630,7 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
     const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
     const spec: RecipeSpec = {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: stepOnly != null ? STEP_ONLY_RUNS : only != null ? ONE_RUNS : runs.value, price,
-      ...(stepOnly != null ? { maxSteps: STEP_ONLY_MAX } : {}),
+      maxSteps: maxSteps.value,
       targets: s.simTargets.value.flatMap((t) => (methodOf(t) === "fracture"
         ? [{ modId: t.modId, minTierIndex: t.minTierIndex, method: "fracture" as const }, ...(t.alts ?? []).map((a) => ({ ...a, method: "fracture" as const }))]
         : [{ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}) }])),
@@ -1070,7 +1077,7 @@ const costGroups = computed(() => {
 });
 /** 上の 5 つの数 (どちらの回し方でも同じ形) */
 const summary = computed(() => {
-  if (recipeOut.value) { const r = recipeOut.value.r; return { perDone: r.perDone, pDone: r.pDone, runs: r.runs, p50: r.p50, p80: r.p80, p90: r.p90 }; }
+  if (recipeOut.value) { const r = recipeOut.value.r; return { perDone: r.perDone, pDone: r.pDone, runs: r.runs, p50: r.p50, p80: r.p80, p90: r.p90, maxSteps: recipeOut.value.spec.maxSteps ?? 4_000 }; }
   return null;
 });
 const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ)" : nameOf(k));
@@ -1283,7 +1290,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span class="opacity-60">{{ fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
-        <StagePatternEditor :busy="busy" :step-run="stepRun" :step-max="STEP_ONLY_MAX" :step-runs="STEP_ONLY_RUNS" @run-one="(k: number) => run(k)" @run-step="(k: number, i: number) => run(k, i)" @close-step="stepRun = null" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
+        <StagePatternEditor :busy="busy" :step-run="stepRun" :step-max="maxSteps" :step-runs="STEP_ONLY_RUNS" @run-one="(k: number) => run(k)" @run-step="(k: number, i: number) => run(k, i)" @close-step="stepRun = null" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
@@ -1306,7 +1313,13 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span v-if="error" class="text-rose-300">{{ error }}</span>
           <!-- 開いているパターンの MOD 群を取引所 (JP) で探す (2026-10-07 オーナー「回すの横、相場ボタンじゃなくてこの MOD 群をそのまま検索にかけたい」) -->
           <button type="button" class="rounded-lg border border-sky-400/60 bg-sky-500/10 px-2.5 py-0.5 font-bold text-sky-100 hover:bg-sky-500/20 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern]?.steps.length" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の組めている所まで (付ける MOD と固定) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">ここまでの MOD を取引所で検索 ↗</button>
-          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (組みかけは組めている所まで)`" @click="run()">回す ▶</button>
+          <!-- 1 人の上限 (手の数)。重い MOD を狙う時に上げる (2026-10-07) -->
+          <label class="flex items-center gap-1 text-[11px] opacity-80" title="1 人が打てる手の上限。超えた人は完成しなかった扱い (カオスで重い MOD を狙う時は上げる。回るのは遅くなる)">上限
+            <select v-model.number="maxSteps" class="rounded border border-white/15 bg-black/40 px-1 py-0.5" :disabled="busy">
+              <option v-for="n in MAX_STEPS_CHOICES" :key="n" :value="n">{{ n.toLocaleString() }} 手</option>
+            </select>
+          </label>
+          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()">回す ▶</button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
@@ -1330,7 +1343,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </div>
       <!-- 運の幅 -->
       <!-- 1 人が打てる手の上限 (recipe-sim の maxSteps 既定 4,000)。超えた人は「手が多すぎる」で未完成 (2026-10-07 オーナー「4000 回が限度って書いてない」) -->
-      <p class="mt-4 text-[11px] opacity-60" title="1 人が打てるのは 4,000 手まで (カオス・消去・ルーンなど 1 回ずつ)。それを超えた人は完成しなかった扱いで、使ったお金は 1 個あたりの費用に入る">運の幅 ({{ summary.runs.toLocaleString() }} 人が作ってみて、1 人 4,000 手まで)</p>
+      <p class="mt-4 text-[11px] opacity-60" title="1 人が打てる手の上限 (カオス・消去・ルーンなど 1 回ずつ。回すの横で変えられる)。それを超えた人は完成しなかった扱いで、使ったお金は 1 個あたりの費用に入る">運の幅 ({{ summary.runs.toLocaleString() }} 人が作ってみて、1 人 {{ (summary.maxSteps ?? maxSteps).toLocaleString() }} 手まで)</p>
       <!-- 線には印だけ、言葉は下に 1 行で (印の横に書くと長い文がくっついた) -->
       <div class="relative mt-2 h-5 max-w-2xl">
         <div class="absolute left-0 right-0 top-2 h-1 rounded bg-white/15"></div>
