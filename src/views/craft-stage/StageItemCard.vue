@@ -163,10 +163,11 @@ const rows = computed(() =>
           v-for="r in rows"
           :key="isNew(r.m) ? `${r.m.modId}#${flashKey}` : r.m.modId"
           class="relative rounded px-2 py-0.5"
-          :class="[look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? 'stage-mod-new' : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '', isDoomed(r.m) ? 'bg-rose-600/25 ring-1 ring-rose-400/80' : '']"
+          :class="[look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? 'stage-mod-new' : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? `この手で消える候補 (${doomed!.length} つのうち 1 つ)` : 'この手で消える') : undefined"
         >
-          <span :class="r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? `品質で伸びた数値 (素は ${r.m.textJa})` : undefined">{{ r.text }}</span>
+          <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
+          <span :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? `品質で伸びた数値 (素は ${r.m.textJa})` : undefined">{{ r.text }}</span>
           <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
           <span class="ml-2 whitespace-nowrap align-middle text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side }} {{ r.m.tierName }}</span>
         </p>
