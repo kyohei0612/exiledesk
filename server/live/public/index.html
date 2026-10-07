@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>exiledesk-live 見本</title>
+<link rel="stylesheet" href="/live-panel.css">
+<style>
+  /* Web 版の置き方の見本: 左に道具、右の細い列に配信の枠 */
+  body { margin: 0; background: #0b0a08; color: #f1e9d8; font: 13px system-ui, "Segoe UI", "Noto Sans JP", sans-serif; }
+  .wrap { display: grid; grid-template-columns: 1fr 280px; gap: 16px; max-width: 1660px; margin: 0 auto; padding: 16px; min-height: 100vh; }
+  .main { border: 1px dashed rgba(255,255,255,.15); border-radius: 12px; display: grid; place-items: center; color: rgba(255,255,255,.35); }
+  .side { display: flex; flex-direction: column; gap: 12px; }
+  .note { font-size: 11px; color: rgba(255,255,255,.45); }
+  .note code { color: #f5c86a; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="main">ここに道具 (シミュレーション・コラプトなど)</div>
+  <aside class="side">
+    <div id="live"></div>
+    <p class="note" id="note"></p>
+  </aside>
+</div>
+<script type="module">
+  import { mountLivePanel } from "/live-panel.js";
+  const q = new URLSearchParams(location.search);
+  const demo = q.get("demo") === "1";
+  mountLivePanel(document.getElementById("live"), { url: "/live.json", demo });
+  document.getElementById("note").innerHTML = demo
+    ? "見本の数字です。本物は <code>/</code> (鍵と channels.json を入れて deploy した後)"
+    : "本物の <code>/live.json</code> を 60 秒ごとに読んでいます。見た目の見本は <code>/?demo=1</code>";
+</script>
+</body>
+</html>

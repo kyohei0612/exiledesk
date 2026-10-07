@@ -16,5 +16,7 @@
       "id": "REPLACE_WITH_KV_NAMESPACE_ID"
     }
   ],
+  // 見本ページと枠の部品 (public/)。/ と /live-panel.js はここから、/live.json などは Worker から
+  "assets": { "directory": "./public" },
   "observability": { "enabled": true }
 }

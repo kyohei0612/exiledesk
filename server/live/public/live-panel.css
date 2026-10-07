@@ -1,0 +1,31 @@
+/* ライブ中のチャンネルの枠 (サイトの横に置く)。文字は最低限、押せる物は札ごと */
+.lp { --lp-bg: #15120d; --lp-line: rgba(255,255,255,.1); --lp-amber: #f5c86a; --lp-red: #e5484d; --lp-dim: rgba(255,255,255,.55);
+  font: 12px/1.4 system-ui, "Segoe UI", "Noto Sans JP", sans-serif; color: #f1e9d8; background: var(--lp-bg); border: 1px solid var(--lp-line); border-radius: 12px; padding: 10px; width: 100%; box-sizing: border-box; }
+.lp * { box-sizing: border-box; }
+.lp a { color: inherit; text-decoration: none; }
+.lp-head { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: 11px; color: var(--lp-dim); letter-spacing: .04em; }
+.lp-head b { color: var(--lp-amber); font-weight: 700; }
+.lp-head .lp-count { margin-left: auto; }
+.lp-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.lp-ch { border: 1px solid var(--lp-line); border-radius: 10px; background: rgba(0,0,0,.25); overflow: hidden; transition: border-color .15s, background .15s; }
+.lp-ch:hover { border-color: rgba(245,200,106,.5); background: rgba(0,0,0,.4); }
+.lp-ch > a { display: block; }
+.lp-thumb { position: relative; aspect-ratio: 16 / 9; background: linear-gradient(135deg, #2a2219, #0e0c09); overflow: hidden; }
+.lp-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lp-badge { position: absolute; left: 6px; top: 6px; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: .06em; color: #fff; background: var(--lp-red); }
+.lp-badge.up { background: rgba(0,0,0,.65); color: var(--lp-amber); border: 1px solid rgba(245,200,106,.5); font-weight: 700; letter-spacing: 0; }
+.lp-viewers { position: absolute; right: 6px; bottom: 6px; padding: 1px 6px; border-radius: 4px; font-size: 10px; background: rgba(0,0,0,.7); }
+.lp-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.lp-avatar { width: 28px; height: 28px; border-radius: 50%; flex: none; background: #2a2219; display: grid; place-items: center; font-weight: 700; color: var(--lp-amber); overflow: hidden; }
+.lp-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lp-ch.live .lp-avatar { box-shadow: 0 0 0 2px var(--lp-red); }
+.lp-body { min-width: 0; flex: 1; }
+.lp-name { display: flex; align-items: center; gap: 5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-name .lp-pf { font-size: 9px; font-weight: 700; padding: 0 4px; border-radius: 3px; color: #fff; flex: none; }
+.lp-pf.youtube { background: #c4302b; } .lp-pf.twitch { background: #8b5cf6; }
+.lp-pr { font-size: 9px; padding: 0 4px; border-radius: 3px; border: 1px solid var(--lp-dim); color: var(--lp-dim); flex: none; }
+.lp-title { color: var(--lp-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.lp-ch.off { opacity: .6; }
+.lp-ch.off:hover { opacity: 1; }
+.lp-foot { margin: 8px 0 0; font-size: 10px; color: var(--lp-dim); text-align: right; }
+.lp-empty { padding: 10px; text-align: center; color: var(--lp-dim); }
