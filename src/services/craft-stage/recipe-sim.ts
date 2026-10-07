@@ -69,6 +69,10 @@ export interface CompiledStep {
   onMiss: MissRule;
   /** 外す時の打つ物 + お告げ (無ければ自動)。kind はパーフェクトエッセンス (一番安い物を選ぶ)・冒涜 (発現まで) を見分ける */
   miss?: { kind?: PatternKind; currency: string; omens: string[] };
+  /** お告げ無しの消去で反対の側が消えたら、もう一度消去 (PatternStep.otherGone) */
+  otherGone?: "annul";
+  /** お告げ無しの消去で外す時、外れが反対の側に付いたら消さずにもう一度打つ (PatternStep.otherJunk) */
+  otherJunk?: "keep";
 }
 export interface RecipeSpec {
   /**
@@ -560,7 +564,21 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         } else if (p.miss.kind === "desecrate") {
           e = play(p.miss.currency, p.miss.omens.filter((o) => o !== "OmenofAbyssalEchoes"));
           if (!e && unrevealedOf(item)) e = reveal(null, false);
-        } else e = play(p.miss.currency, p.miss.omens);
+        } else {
+          // お告げ無しの消去は、どちらの側が消えたかで枝分かれ (PatternStep.otherGone)。反対の側が消えて、狙いの側に外れが残っていれば、もう一度消去
+          // 狙いが 1 つの手だけ (2 つ狙い・候補のある手は、どちらの側が狙いか決まらない)
+          const ts = p.target && membersOf(p.target).length === 1 ? sideOf(p.target.modId) : null;
+          const plain = p.miss.kind === "annul" && !p.miss.omens.length;
+          // 外れが反対の側に付いた (狙いの側に外れが無く空きがある) なら、消さずにもう一度打つ (反対の側を壁にする)
+          const keep = plain && ts && p.otherJunk === "keep" && !junkOn(item, ts).length && room(item, ts);
+          for (let k = 0; k < 6 && !keep; k++) {
+            const otherBefore = ts ? listOf(item, ts === "prefix" ? "suffix" : "prefix").length : 0;
+            e = play(p.miss.currency, p.miss.omens);
+            if (e || !plain || !ts || p.otherGone !== "annul") break;
+            const otherGone = listOf(item, ts === "prefix" ? "suffix" : "prefix").length < otherBefore;
+            if (!otherGone || !junkOn(item, ts).length) break;
+          }
+        }
         if (e) return fail(`${i + 1} 手目の外し: ${e}`);
       } else if (p.onMiss === "annul_redo") {
         // 冒涜の外れは光のお告げで冒涜の MOD を消す。ほかは外れのある側 (狙いの側を先に)

@@ -8,7 +8,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
-import { ANY_KINDS, ANY_TARGET, LOST_RESTART, ONCE_KINDS, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
+import { ANY_KINDS, ANY_TARGET, otherGoneOf, otherJunkOf, LOST_RESTART, ONCE_KINDS, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageItemCard from "./StageItemCard.vue";
@@ -211,7 +211,12 @@ const rows = computed<Row[]>(() => {
     });
     const t2Why = !many ? null : dbl && !step.target2 ? "一緒に狙う MOD を選ぶ" : [step.target2, step.target3].map((k) => (k ? target2Opts.find((o) => o.key === k)?.why ?? null : null)).find(Boolean) ?? null;
     const setWhy = set ? checkSet(c, st, set) : "カレンシーを選ぶ";
-    const tWhy = !step.target ? "付ける物を選ぶ" : isRest(step.target) ? (set ? (() => { const id = restMembers(pat.value.steps, step.target!)[0]; const t = id ? c.targets.find((x) => x.modId === id) : undefined; return t ? checkTarget(c, { ...st, placed: new Set([...st.placed].filter((x) => !restMembers(pat.value.steps, step.target!).includes(x))) }, set, t) : "残りの候補が無い"; })() : null) : step.target === ANY_TARGET ? (set ? checkAny(st, set) : null) : set && set.kind !== "rune" ? (() => { const t = c.targets.find((x) => x.modId === step.target); return t ? checkTarget(c, st, set, t) : null; })() : null;
+    // 増強 (マジック) の「残り」: 候補がプレとサフィに分かれていれば、どちらが付いても反対の側が空いている。同じ側なら付けられない
+    const restMagic = (): string | null => {
+      const sides = restMembers(pat.value.steps, step.target!).map((id) => c.data.mods.get(id)?.type === "suffix");
+      return new Set(sides).size === sides.length ? null : "マジックはプレ・サフィ 1 つずつ (残りの候補が同じ側)";
+    };
+    const tWhy = !step.target ? "付ける物を選ぶ" : isRest(step.target) && set?.kind === "augment" ? restMagic() : isRest(step.target) ? (set ? (() => { const id = restMembers(pat.value.steps, step.target!)[0]; const t = id ? c.targets.find((x) => x.modId === id) : undefined; return t ? checkTarget(c, { ...st, placed: new Set([...st.placed].filter((x) => !restMembers(pat.value.steps, step.target!).includes(x))) }, set, t) : "残りの候補が無い"; })() : null) : step.target === ANY_TARGET ? (set ? checkAny(st, set) : null) : set && set.kind !== "rune" ? (() => { const t = c.targets.find((x) => x.modId === step.target); return t ? checkTarget(c, st, set, t) : null; })() : null;
     // やり直しは「選択無し (外れてもそのまま次へ)」が既定 (2026-10-07 オーナー「外れてもいいならそこは選択無しをデフォで、他を選んだ時も選択無しを選べる」)
     return { step, set, setOpts, targetOpts, restOpts, target2Opts, missOpts, bad: tWhy ?? setWhy ?? t2Why, risk: annulRisk(i, set, step) };
   });
@@ -380,6 +385,17 @@ const preview = computed<StageItem | null>(() => previewOut.value?.item ?? null)
 const removals = computed(() => removalSets(sets.value));
 /** 外す時のセット (外す時は付けた後 = レア。付ける手の後の状態で見る) */
 const missSet = (step: PatternStep): PatternSet | undefined => (step.miss ? setByKey(sets.value, step.miss) : undefined);
+/**
+ * お告げ無しの消去で外す、増強・高貴の手 (狙いが 1 つ) なら、狙いの側と反対の側 (どちらが消えたかで枝が分かれる。PatternStep.otherGone)
+ */
+function sideSplit(r: Row): { t: string; o: string } | null {
+  const ms = missSet(r.step);
+  if (!r.set || (r.set.kind !== "augment" && r.set.kind !== "exalt") || needs2(r) || !hasMiss(r) || !ms || ms.kind !== "annul" || ms.omens.length) return null;
+  const id = r.step.target;
+  if (!id || id === ANY_TARGET || isRest(id)) return null;
+  const suf = ctx.value?.data.mods.get(id)?.type === "suffix";
+  return suf ? { t: "サフィ", o: "プレ" } : { t: "プレ", o: "サフィ" };
+}
 function whyMissAt(i: number): (x: PatternSet) => string | null {
   const c = ctx.value;
   const add = setByKey(sets.value, pat.value.steps[i]?.set ?? "");
@@ -926,6 +942,10 @@ defineExpose({ rows });
                 <span class="h-px w-5 border-t border-dashed border-rose-400/60"></span>
                 <span class="ml-1">付くまで繰り返す</span>
               </span>
+              <span v-if="sideSplit(r)" class="ml-5 flex flex-col text-[10px] leading-tight opacity-70">
+                <span>外れが{{ sideSplit(r)!.o }} → {{ otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep" ? "消さずに打つ" : "消去" }}</span>
+                <span>{{ sideSplit(r)!.t }}が残った → {{ otherGoneOf(r.set?.kind, r.step.otherGone) === "annul" ? "もう一度消去" : "打つ" }}</span>
+              </span>
             </span>
             <span v-if="r.risk?.bad" class="ml-1 mt-2 text-rose-300" :title="r.risk.text">⚠</span>
           </div>
@@ -1112,6 +1132,23 @@ defineExpose({ rows });
                 </div>
               </div>
               <p class="mt-2 text-[11px]" :class="missRisk(focusRow!, rows[focusRow]!).bad ? 'text-rose-300' : 'text-emerald-200/80'">{{ missRisk(focusRow!, rows[focusRow]!).text }}</p>
+              <!-- お告げ無しの消去は、どちらの側が消えたかで枝が分かれる (2026-10-07 オーナー「サフィだけ消えるともう 1 回消去、プレだけ消えたら消去は使わずにトライ」) -->
+              <template v-for="sp in [sideSplit(rows[focusRow]!)]" :key="'split' + focusRow">
+                <div v-if="sp" class="mt-3 max-w-3xl space-y-1.5 rounded-lg border border-white/10 bg-black/20 p-2 text-[11px]">
+                  <div class="flex items-center gap-2">
+                    <span class="w-52 shrink-0 opacity-70">外れが{{ sp.o }}に付いた</span>
+                    <button v-for="k in (['keep', 'annul'] as const)" :key="k" type="button" class="rounded border px-2 py-0.5" :class="otherJunkOf(rows[focusRow]!.set?.kind, rows[focusRow]!.step.otherJunk) === k ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-white/40'" @click="patch(focusRow!, { otherJunk: k })">{{ k === "keep" ? `消さずにもう一度打つ (${sp.t}に付く)` : "消去" }}</button>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-52 shrink-0 opacity-70">消去で{{ sp.t }}が消えた ({{ sp.o }}が残った)</span>
+                    <span class="rounded border border-emerald-400/40 px-2 py-0.5 text-emerald-100">もう一度打つ ({{ sp.t }}に付く)</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-52 shrink-0 opacity-70">消去で{{ sp.o }}が消えた ({{ sp.t }}の外れが残った)</span>
+                    <button v-for="k in (['annul', 'redo'] as const)" :key="k" type="button" class="rounded border px-2 py-0.5" :class="otherGoneOf(rows[focusRow]!.set?.kind, rows[focusRow]!.step.otherGone) === k ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-white/40'" @click="patch(focusRow!, { otherGone: k })">{{ k === "annul" ? "もう一度消去" : "もう一度打つ" }}</button>
+                  </div>
+                </div>
+              </template>
               <!-- ほかの消し方 (パーフェクトエッセンスで上書き・骨で置き換え) -->
               <button type="button" class="mt-3 rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="missMore = !missMore">ほかの消し方 (パーフェクトエッセンス・骨) {{ missMore || missKind(rows[focusRow]!) === 'other' ? "▲" : "▼" }}</button>
               <div v-if="missMore || missKind(rows[focusRow]!) === 'other'" class="mt-2">

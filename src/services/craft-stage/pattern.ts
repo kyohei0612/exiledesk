@@ -55,7 +55,26 @@ export interface PatternStep {
    * 2026-10-06 オーナー「付ける時と外す時で分けて、それぞれこのやり方で表示」
    */
   miss?: string | null;
+  /**
+   * 外しがお告げ無しの消去の時、反対の側の MOD が消えたら: "annul" = もう一度消去 (狙いの側の外れを消す) / "redo" = もう一度打つ。無ければ増強は annul、高貴は redo (otherGoneOf)。
+   * 狙いの側の外れが消えた時は必ずもう一度打つ (反対の側が埋まっていれば狙いの側に付く)。
+   * 2026-10-07 オーナー「増強 2 回打って消去 → サフィだけ消えるともう 1 回消去、プレだけ消えたら消去は使わずにトライを繰り返す。いろんな場面で使える仕組みに」→「ツリーの枝で手で決める」
+   */
+  otherGone?: "annul" | "redo" | null;
+  /**
+   * 外しがお告げ無しの消去の時、外れが反対の側に付いたら: "keep" = 消さずにもう一度打つ (壁にして狙いの側に打たせる) / "annul" = 消去。
+   * 無ければ増強は keep、高貴は annul (後の手で反対の側に別の狙いを付けることがある)。otherJunkOf で引く
+   */
+  otherJunk?: "keep" | "annul" | null;
 }
+/**
+ * お告げ無しの消去で反対の側が消えた時の既定 (PatternStep.otherGone)。増強はもう一度消去
+ * (2026-10-07 オーナー「狙いがプレ 1 で増強 2 回打ってどっちも外れた場合、消去 1 回でサフィが残ってプレが消えたらもう 1 度消去は要らない」= 狙いの側が消えたら打つ、
+ * 反対が消えて狙いの側に外れが残ったら消す。指輪のライフで消去 71 → 44)
+ */
+export const otherGoneOf = (kind: PatternKind | undefined, v: "annul" | "redo" | null | undefined): "annul" | "redo" => v ?? (kind === "augment" ? "annul" : "redo");
+/** 外れが反対の側に付いた時の既定 (PatternStep.otherJunk) */
+export const otherJunkOf = (kind: PatternKind | undefined, v: "keep" | "annul" | null | undefined): "keep" | "annul" => v ?? (kind === "augment" ? "keep" : "annul");
 /** off: 全部まとめて回す時に回さない (2026-10-07 オーナー「回すパターンを選択できるように」) */
 export interface Pattern { name: string; steps: PatternStep[]; off?: boolean }
 
@@ -334,8 +353,10 @@ export function checkTarget(ctx: CheckCtx, st: PatternState, s: PatternSet, t: P
   if (st.placed.has(t.modId) && !again) return "前の手で付けた";
   const side = m.type === "suffix" ? "suffix" : "prefix";
   const sideJa = side === "prefix" ? "プレフィックス" : "サフィックス";
-  // もう一度狙う物の枠は前の手で数えてある
-  if (!again && st[side] >= st.limits[side]) return `${sideJa}の枠が埋まる`;
+  // もう一度狙う物の枠は前の手で数えてある。マジック (増強で付ける時) はプレ・サフィ 1 つずつ
+  // (2026-10-07 オーナー「そこでプレ 2 個 MOD は選べないからな」)
+  const lim = st.rarity === "magic" && s.kind === "augment" ? 1 : st.limits[side];
+  if (!again && st[side] >= lim) return st.rarity === "magic" && s.kind === "augment" ? `マジックは${sideJa} 1 つまで (もう付いている)` : `${sideJa}の枠が埋まる`;
   if (!again && st.prefix + st.suffix + st.junk >= st.limits.prefix + st.limits.suffix && s.kind !== "chaos" && s.kind !== "essence_perfect") return "枠が全部埋まる (打つだけの手で付いた物も数える)";
   if (s.omens.some((o) => PREFIX_OMENS.has(o)) && side !== "prefix") return "左 (シニスター) のお告げはプレフィックスだけ";
   if (s.omens.some((o) => SUFFIX_OMENS.has(o)) && side !== "suffix") return "右 (デクストラル) のお告げはサフィックスだけ";

@@ -31,7 +31,7 @@ import PriceInput from "../../components/PriceInput.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, restMembers } from "../../services/craft-stage/pattern";
+import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, restMembers, otherJunkOf, otherGoneOf } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import SimProgress from "./SimProgress.vue";
@@ -675,7 +675,7 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const ms = st.miss ? setByKey(sets, st.miss) : undefined;
       const grp = groupOf(st, x) ?? restOf(p.steps, st);
       const one = grp && isDouble(x) ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
-      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? t, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}) }];
+      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? t, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}), ...(otherGoneOf(x.kind, st.otherGone) === "annul" ? { otherGone: "annul" as const } : {}), ...(otherJunkOf(x.kind, st.otherJunk) === "keep" ? { otherJunk: "keep" as const } : {}) }];
       });
     };
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、

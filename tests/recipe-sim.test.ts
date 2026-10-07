@@ -296,6 +296,29 @@ describe("増強で 2 つ狙う (2026-10-07)", () => {
   });
 });
 
+describe("増強 + お告げ無しの消去の枝 (2026-10-07)", () => {
+  it("指輪のライフ (プレ): サフィの外れは消さず、プレの外れが残った時だけ消す方が、毎回消すより消去が少ない", async () => {
+    const data = await loadPatch();
+    const m = data.mods.get("Rings/IncreasedLife")!;
+    const life = { modId: m.id, minTierIndex: m.tiers.length - 2, method: "exalt" as const };
+    const annuls = async (extra: { otherGone?: "annul"; otherJunk?: "keep" }): Promise<number> => {
+      const r = await runRecipe({
+        data, base: "Gold Ring", itemLevel: 82, runs: 300, price: (k: string) => (k === "annul" ? 10 : 0.01), seed: 11,
+        targets: [life],
+        pattern: [
+          { kind: "transmute", currency: "transmute", omens: [], target: null, onMiss: "next" },
+          { kind: "augment", currency: "augment", omens: [], target: life, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] }, ...extra },
+        ],
+      });
+      expect(r!.pDone).toBeGreaterThan(0.95);
+      return r!.usage.find((u) => u.key === "annul")!.count;
+    };
+    const always = await annuls({});
+    const owner = await annuls({ otherGone: "annul", otherJunk: "keep" });
+    expect(owner).toBeLessThan(always * 0.8);
+  });
+});
+
 describe("人ごとの乱数の種 (2026-10-07)", () => {
   it("人の間隔は 1 人の上限の手の数より広い (n 手目の乱数は seed + n なので、重なると隣の人と同じ乱数になる)", async () => {
     const { seedsOf } = await import("../src/services/craft-stage/recipe-sim");
