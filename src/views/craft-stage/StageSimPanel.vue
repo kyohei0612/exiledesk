@@ -33,6 +33,7 @@ import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/st
 import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, restMembers } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
+import SimProgress from "./SimProgress.vue";
 import { searchModGroups, type ModGroup, type ModPick } from "../../services/craft-stage/trade-search";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
 
@@ -542,6 +543,8 @@ const calc = computed(() => {
 const busy = ref(false);
 const phase = ref("");
 const progress = ref<[number, number] | null>(null);
+/** 進み具合は SimProgress.vue だけが読む (ここで progress.value を読むと、更新のたびにこの画面全体が描き直される) */
+const progressBox = { progress };
 const error = ref("");
 const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
 /** フラクチャー済みから残りを作る費用 (ベース代 0 で回した平均)。買う側の比べに足す */
@@ -1308,7 +1311,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
             </button>
             <span v-else class="pr-1.5 opacity-50">{{ patternNote(p) }}</span>
           </span>
-          <span v-if="busy" class="ml-auto text-sky-200">{{ phase }}<template v-if="progress && phase === '試しています'"> {{ progress[0].toLocaleString() }} / {{ progress[1].toLocaleString() }} 人</template>…</span>
+          <SimProgress v-if="busy" :box="progressBox" :phase="phase" />
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
           <span v-if="error" class="text-rose-300">{{ error }}</span>
           <!-- 開いているパターンの MOD 群を取引所 (JP) で探す (2026-10-07 オーナー「回すの横、相場ボタンじゃなくてこの MOD 群をそのまま検索にかけたい」) -->

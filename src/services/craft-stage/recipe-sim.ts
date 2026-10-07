@@ -586,31 +586,21 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
 }
 
 /**
- * 画面に一瞬だけ手を返す。setTimeout(0) は Chrome が入れ子で 4 ms 以上待たせる (1,500 人で数百回 → 数秒の無駄) ので、
- * scheduler.yield があればそれ、無ければ MessageChannel (待ち時間なし)。2026-10-07 オーナー「シミュレーション微妙に遅い」
+ * 画面に手を返す (数字の描き直し・ボタンの反応のため)。setTimeout(0) は 4 ms ほど待つが、40 ms ごとなので 1 割ほどで済む。
+ * scheduler.yield / MessageChannel は計算の続きが優先されて描画が後回しになり、進み具合の数字が止まって見えた (2026-10-07 オーナー「数字の描写遅い、前は 1 単位で回ってるの見えた」)
  */
-const yieldToUi: () => Promise<void> = (() => {
-  const sch = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
-  if (sch && typeof sch.yield === "function") return () => sch.yield!();
-  if (typeof MessageChannel !== "undefined") {
-    const ch = new MessageChannel();
-    let pending: (() => void) | null = null;
-    ch.port1.onmessage = () => { const r = pending; pending = null; r?.(); };
-    return () => new Promise<void>((r) => { pending = r; ch.port2.postMessage(null); });
-  }
-  return () => new Promise<void>((r) => setTimeout(r, 0));
-})();
+const yieldToUi = (): Promise<void> => new Promise<void>((r) => setTimeout(r, 0));
 
 /** 何百回も回してまとめる (画面に手を返しながら) */
 export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, total: number) => void, stopped?: () => boolean): Promise<RecipeResult | null> {
   const seed0 = spec.seed ?? Math.floor(Date.now() % 1_000_000) * 10_000;
   const runs: RecipeRun[] = [];
-  let last = Date.now(), lastShown = 0;
+  let last = Date.now();
   for (let i = 0; i < spec.runs; i++) {
     runs.push(runRecipeOnce(spec, seed0 + i * 10_000));
     if (Date.now() - last > 40) {
-      // 進み具合は 0.5 秒に 1 回だけ渡す (渡すたびにシミュレーションの画面が丸ごと描き直され、ワンドのカオス 500 人で計算 20 秒に対し 1 分半かかっていた。2026-10-07)
-      if (Date.now() - lastShown > 500) { onProgress?.(i + 1, spec.runs); lastShown = Date.now(); }
+      // 進み具合は手を返すたびに渡す (受け取る側は数字の部品 SimProgress.vue だけを描き直す。2026-10-07 オーナー「さっきまでぬるぬるだったのに」)
+      onProgress?.(i + 1, spec.runs);
       await yieldToUi();
       if (stopped?.()) return null;
       last = Date.now();
