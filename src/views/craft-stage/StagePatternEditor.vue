@@ -935,7 +935,7 @@ defineExpose({ rows });
                 この手だけ回す (ガチャで付くまで打つ手だけ。2026-10-07 オーナー「カオス何個分で単純にできるか知りたい」「8 割の人で出した方が良さそう」)。
                 その手の前までは当たった状態から、その手だけ 500 人分 (上限は回すの横の設定)。結果はカードのすぐ下 (アイテムのカードは隠さない)
               -->
-              <div v-if="hasMiss(r) && !r.bad && r.step.target" class="flex items-center border-t border-white/10 px-1.5 py-0.5">
+              <div v-if="hasMiss(r) && !rarityStep(r) && !r.bad && r.step.target" class="flex items-center border-t border-white/10 px-1.5 py-0.5">
                 <button type="button" class="rounded border border-sky-400/40 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/10 disabled:opacity-40" :disabled="busy" :title="`${i + 1} 手目の前までは当たった状態から、この手だけを ${(stepRuns ?? 0).toLocaleString()} 人分回す (1 人 ${(stepMax ?? 0).toLocaleString()} 回まで)`" @click.stop="emit('run-step', active, i)">この手だけ回す ▶</button>
               </div>
               <div v-if="stepRun && stepRun.k === active && stepRun.i === i" class="border-t border-sky-400/30 bg-sky-950/30 px-1.5 py-1 text-[11px]">
@@ -962,7 +962,7 @@ defineExpose({ rows });
                     <span v-else class="h-5 w-5 rounded border border-dashed border-white/25"></span>
                     <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
                   </template>
-                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : r.step.onMiss === "restart" ? "→ 最初から" : r.step.onMiss === "annul_next" ? "→ ハズレを消して次へ" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
+                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : r.step.onMiss === "restart" ? "→ 最初から" : r.step.onMiss === "annul_next" ? "→ 消して次へ" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
                 </button>
               </span>
               <!--
@@ -1193,8 +1193,8 @@ defineExpose({ rows });
                 </div>
               </template>
               <!-- ほかの消し方 (パーフェクトエッセンスで上書き・骨で置き換え) -->
-              <button type="button" class="mt-3 rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="missMore = !missMore">ほかの消し方 (パーフェクトエッセンス・骨) {{ missMore || missKind(rows[focusRow]!) === 'other' ? "▲" : "▼" }}</button>
-              <div v-if="missMore || missKind(rows[focusRow]!) === 'other'" class="mt-2">
+              <button v-if="!rarityStep(rows[focusRow]!)" type="button" class="mt-3 rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="missMore = !missMore">ほかの消し方 (パーフェクトエッセンス・骨) {{ missMore || missKind(rows[focusRow]!) === 'other' ? "▲" : "▼" }}</button>
+              <div v-if="!rarityStep(rows[focusRow]!) && (missMore || missKind(rows[focusRow]!) === 'other')" class="mt-2">
                 <StagePatternStepPicker :key="'miss' + focusRow" :sets="removals.filter((x) => x.kind === 'essence_perfect' || x.kind === 'desecrate')" :why="whyMissAt(focusRow)" :current="rows[focusRow]!.step.miss ?? ''" inline @pick="(k) => { patch(focusRow!, { miss: k, onMiss: 'annul_redo' }); editPart = 'miss'; }" />
               </div>
             </template>
