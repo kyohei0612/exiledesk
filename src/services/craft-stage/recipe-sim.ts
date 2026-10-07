@@ -454,7 +454,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         e = annulOn(sideOf(p.target.modId));
         if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
         continue;
-      } else if (p.kind === "essence_perfect" && !(["prefix", "suffix"] as StageSide[]).filter((x) => crystalSides(p.omens).includes(x)).some((x) => junkOn(item, x).length) && crystalSides(p.omens).some((x) => room(item, x))) {
+      } else if (p.kind === "essence_perfect" && p.target && !(["prefix", "suffix"] as StageSide[]).filter((x) => crystalSides(p.omens).includes(x)).some((x) => junkOn(item, x).length) && crystalSides(p.omens).some((x) => room(item, x))) {
         // パーフェクトエッセンスは (結晶化の側の) MOD を 1 つ消してから付く。外れが無いと付けた当たりが消える (ソウルコアとクリティカルが消し合って回り続けた。
         // 2026-10-07)。先に高貴でその側に外れを 1 つ足す
         e = play("exalt", [SIDE_OMEN.exalt[crystalSides(p.omens).find((x) => room(item, x))!]]);

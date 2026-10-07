@@ -430,7 +430,8 @@ function partOf(i: number, r: Row): "set" | "target" | "target2" | "miss" | "sin
  * 使えない物を灰色で並べても選べないだけなので出さない (2026-10-07 オーナー「打つだけの選択時、流れがおかしい」)
  */
 function addSetsFor(r: Row): PatternSet[] {
-  if (r.step.target === ANY_TARGET) return addSets.value.filter((x) => ANY_KINDS.has(x.kind));
+  // 打つだけ: 消去も含めて全部 (手で打つ画面の棚と同じ)。使えない物は理由つきで灰色 (whyAddAt)
+  if (r.step.target === ANY_TARGET) return sets.value.filter((x) => ANY_KINDS.has(x.kind));
   return addSets.value.filter((x) => x.kind !== "rune");
 }
 /** 付ける側の棚 (消去は外す側にだけ出す。2026-10-07 オーナー「付ける時は削除の手とか表示しなくてもおｋ」) */

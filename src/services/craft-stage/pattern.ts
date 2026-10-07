@@ -149,9 +149,13 @@ export function uncertainStep(sets: readonly PatternSet[], st: PatternStep | und
 export const restMembers = (steps: readonly PatternStep[], target: string): string[] => candsOfStep(steps[Number(target.slice(REST.length))]);
 /** 偉大の手の既定の 1 発 (同じカレンシーで偉大だけ外す) のセットのキー */
 export const singleKeyOf = (s: PatternSet): string => `${s.kind}|${s.currency}|${s.omens.filter((o) => o !== "OmenofGreaterExaltation").join("+")}`;
-export const ANY_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "desecrate"]);
-/** 打つだけの手で増える MOD の数 (側は分からない。錬金は 4 つ、カオスは入れ替え) */
-const ANY_ADDS: Partial<Record<PatternKind, number>> = { transmute: 1, augment: 1, regal: 1, alchemy: 4, exalt: 1, desecrate: 1 };
+/**
+ * 「打つだけ」で選べる物: ルーン以外の全部 (消去・エッセンスも。手で打つ画面の棚と同じ。打てるかは checkSet が見る)。
+ * 2026-10-07 オーナー「白ベースから始める時、途中でカオススパムの仕組みを自分で実験しようと思ったら消去とかが打てない。打つだけを選んだら今使えるカレンシーを全部出して」
+ */
+export const ANY_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "desecrate", "essence", "essence_perfect", "annul"]);
+/** 打つだけの手で増える MOD の数 (側は分からない。錬金は 4 つ、カオスとパーフェクトエッセンスは入れ替え、消去は 1 つ減る) */
+const ANY_ADDS: Partial<Record<PatternKind, number>> = { transmute: 1, augment: 1, regal: 1, alchemy: 4, exalt: 1, desecrate: 1, essence: 1, annul: -1 };
 const sideOf = (omens: readonly string[]): "prefix" | "suffix" | null =>
   omens.some((o) => PREFIX_OMENS.has(o)) ? "prefix" : omens.some((o) => SUFFIX_OMENS.has(o)) ? "suffix" : null;
 const SIDE_JA = { prefix: "プレフィックス", suffix: "サフィックス" } as const;
@@ -247,8 +251,9 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
       continue;
     }
     if (p.target === ANY_TARGET) {
-      st.junk += ANY_ADDS[s.kind] ?? 0;
+      st.junk = Math.max(0, st.junk + (ANY_ADDS[s.kind] ?? 0));
       if (s.kind === "desecrate") st.desecrated++;
+      if (s.kind === "essence" || s.kind === "essence_perfect") st.essences++;
       continue;
     }
     const t = ctx.targets.find((x) => x.modId === p.target);
@@ -336,7 +341,7 @@ export function checkTarget(ctx: CheckCtx, st: PatternState, s: PatternSet, t: P
 
 /** 打つだけの手に使えない理由 */
 export function checkAny(st: PatternState, s: PatternSet): string | null {
-  if (!ANY_KINDS.has(s.kind)) return "打つだけには使えない (付く物が決まっている・付かない)";
+  if (!ANY_KINDS.has(s.kind)) return "打つだけには使えない (ルーンは付ける物で選ぶ)";
   if (s.kind === "exalt" && st.prefix + st.suffix + st.junk >= st.limits.prefix + st.limits.suffix) return "枠が全部埋まっている";
   return null;
 }
