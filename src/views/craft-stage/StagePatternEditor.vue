@@ -258,6 +258,17 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
       continue;
     }
     if (x.kind === "rune") { const r = applyRune(it, `rune:${st.target}`, d); if (r.applied) it = r.item; continue; }
+    // 残りの MOD の手: 元の手の候補のうち、まだ付いていない物を足す (骨なら冒涜の MOD として)。2026-10-07 オーナー「残りの MOD で冒涜選んでるなら足さないと」
+    if (isRest(st.target)) {
+      const have = new Set(allMods(it).map((m) => m.modId));
+      for (const id of restMembers(pat.value.steps, st.target).filter((x) => !have.has(x))) {
+        const t = s.simTargets.value.find((y) => y.modId === id);
+        if (!t) continue;
+        add(t.modId, t.minTierIndex, x.kind === "desecrate" ? { desecrated: true } : {});
+        if (j === previewAt.value) newMods = allMods(it).filter((m) => m.modId === t.modId);
+      }
+      continue;
+    }
     const t = s.simTargets.value.find((y) => y.modId === st.target);
     // 見ている手で消える・入れ替わる可能性のある MOD (打つ物とやり直しで。クラフトステージの削減と同じ色。2026-10-07 オーナー
     // 「変更される可能性があるやつ色付けた方がいい、削減みたいな感じで一緒の色で」)
