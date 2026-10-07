@@ -17,7 +17,7 @@ import { rateOf, simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
-import { runRecipe, recipePlan, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
+import { runRecipe, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
 import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../services/trade2/query/spec";
 import { openTradeQuery } from "../../services/pob-check/trade-links";
@@ -967,14 +967,6 @@ const summary = computed(() => {
   return null;
 });
 const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ)" : nameOf(k));
-/** 真ん中くらいの 1 回を「手で打つ」で再生 */
-function replay(): void {
-  const o = recipeOut.value;
-  if (!o?.r.sample) return;
-  const plan = recipePlan(o.spec, o.r.sample);
-  s.mode.value = "hand";
-  s.loadReplay(plan, plan.steps.length);
-}
 </script>
 
 <template>
@@ -1238,7 +1230,6 @@ function replay(): void {
       <!-- 畳む物 -->
       <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
         <button type="button" class="rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="toggle('more')">始め方の比べ {{ open.more ? "▲" : "▼" }}</button>
-        <button type="button" class="ml-auto rounded-lg border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 disabled:opacity-40" :disabled="!recipeOut.r.sample" title="費用が真ん中くらいだった 1 回を「手で打つ」で 1 手ずつ見る" @click="replay">真ん中くらいの 1 回をステージで再生 ▶</button>
       </div>
       <!-- 付いていた割合は完成が 100% でない時だけ (組みかけのパターンでどこまで付くか。100% なら全部 100% で要らない。2026-10-07 オーナー「ここいらん、デフォで畳んでいい」) -->
       <div v-if="summary.pDone < 0.995 && recipeOut.r.hitRates?.length" class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
