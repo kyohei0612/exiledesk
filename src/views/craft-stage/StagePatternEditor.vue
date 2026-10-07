@@ -597,9 +597,8 @@ const allPlaced = computed(() => props.order.every((k) => pat.value.steps.some((
 function confirmStep(i: number): void {
   const r = rows.value[i];
   if (!r || r.bad) return;
-  // 最後の手なら次の手を足す。ただし付ける物を全部並べ終わったら足さずに閉じる (付けられる物の無い手が出来ていた)
-  if (i === rows.value.length - 1 && !allPlaced.value) void nextTick(() => addStep());
-  else closeFrame();
+  // 決めたら閉じるだけ。次の手は自分で「＋ 手を足す」で足す (2026-10-07 オーナー「設定が終わったら枠を勝手に増やさなくていい、手動でやる」)
+  closeFrame();
 }
 function patch(i: number, p: Partial<PatternStep>): void {
   setSteps((list) => list.map((x, k) => (k === i ? { ...x, ...p } : x)));
@@ -972,7 +971,7 @@ defineExpose({ rows });
             </span>
             <button type="button" class="ml-auto rounded-lg border border-white/20 px-3 py-0.5 hover:bg-white/10" title="閉じる (決めた物はそのまま)" @click="closeFrame()">閉じる</button>
             <button v-if="['set', 'target', 'target2', 'miss', 'single', 'lost'].includes(partOf(focusRow, rows[focusRow]!))" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="partOf(focusRow, rows[focusRow]!) === 'target' ? !rows[focusRow]!.step.target : partOf(focusRow, rows[focusRow]!) === 'target2' ? (needs2(rows[focusRow]!) && !rows[focusRow]!.step.target2) || (lastPart(focusRow, rows[focusRow]!) && !!rows[focusRow]!.bad) : !rows[focusRow]!.set || (lastPart(focusRow, rows[focusRow]!) && !!rows[focusRow]!.bad)" :title="partOf(focusRow, rows[focusRow]!) === 'target' ? '付ける物を選ぶ' : partOf(focusRow, rows[focusRow]!) === 'target2' && !rows[focusRow]!.step.target2 ? '2 つ目の MOD を選ぶ' : !rows[focusRow]!.set ? 'カレンシーを選ぶ' : rows[focusRow]!.bad ?? undefined" @click="nextPart(focusRow)">{{ lastPart(focusRow, rows[focusRow]!) ? "この手にする" : "次へ →" }}</button>
-            <button v-else type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!!rows[focusRow]!.bad" :title="rows[focusRow]!.bad ?? (focusRow === rows.length - 1 ? '決めて次の手へ' : '決めて閉じる')" @click="confirmStep(focusRow)">この手にする</button>
+            <button v-else type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="!!rows[focusRow]!.bad" :title="rows[focusRow]!.bad ?? '決めて閉じる'" @click="confirmStep(focusRow)">この手にする</button>
           </div>
         </template>
         <!-- 決めた後 (読むだけ): 押した手 (無ければ最後の手) の要約 -->
