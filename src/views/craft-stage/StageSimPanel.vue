@@ -192,7 +192,7 @@ function patternProblem(p: Pattern): string | null {
       const t2 = p.steps[i]!.target2;
       if (!t2) return `${i + 1} 手目: 一緒に狙う MOD を選ぶ`;
       const t = s.simTargets.value.find((y) => y.modId === t2);
-      const w2 = t ? checkTarget(ctx, stateBefore(ctx, [...p.steps.slice(0, i), { ...p.steps[i]!, target2: null }], i + 1), x, t) : "狙う MOD に無い";
+      const w2 = t ? checkTarget(ctx, stateBefore(ctx, [...p.steps.slice(0, i), { ...p.steps[i]!, target2: null, target3: null }], i + 1), x, t) : "狙う MOD に無い";
       if (w2) return `${i + 1} 手目 (2 つ目): ${w2}`;
     }
   }
