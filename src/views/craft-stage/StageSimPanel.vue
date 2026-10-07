@@ -691,7 +691,7 @@ watch(() => s.base.value, () => { recipeOut.value = null; restCost.value = null;
 const FOLD_KEY = "exiledesk.craftStageSim.open";
 const open = ref<Record<string, boolean>>({});
 try { open.value = JSON.parse(localStorage.getItem(FOLD_KEY) ?? "{}"); } catch { /* 無くてよい */ }
-function toggle(k: "help" | "calc" | "usage"): void {
+function toggle(k: "help" | "calc" | "usage" | "more"): void {
   open.value = { ...open.value, [k]: !open.value[k] };
   try { localStorage.setItem(FOLD_KEY, JSON.stringify(open.value)); } catch { /* 無くてよい */ }
 }
@@ -1237,11 +1237,11 @@ function replay(): void {
       </div>
       <!-- 畳む物 -->
       <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-        <button type="button" class="rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="toggle('usage')">付いていた割合・始め方の比べ {{ open.usage ? "▲" : "▼" }}</button>
+        <button type="button" class="rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="toggle('more')">始め方の比べ {{ open.more ? "▲" : "▼" }}</button>
         <button type="button" class="ml-auto rounded-lg border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 disabled:opacity-40" :disabled="!recipeOut.r.sample" title="費用が真ん中くらいだった 1 回を「手で打つ」で 1 手ずつ見る" @click="replay">真ん中くらいの 1 回をステージで再生 ▶</button>
       </div>
-      <template v-if="open.usage">
-        <div v-if="recipeOut.r.hitRates?.length" class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+      <!-- 付いていた割合は完成が 100% でない時だけ (組みかけのパターンでどこまで付くか。100% なら全部 100% で要らない。2026-10-07 オーナー「ここいらん、デフォで畳んでいい」) -->
+      <div v-if="summary.pDone < 0.995 && recipeOut.r.hitRates?.length" class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
           <span class="opacity-60">終わった時に付いていた割合</span>
           <span v-for="h in recipeOut.r.hitRates" :key="h.modId" class="rounded-full border border-white/15 bg-black/30 px-2 py-0.5">
             <span :class="hitName(h.modId).tone">{{ hitName(h.modId).text }}</span>
@@ -1249,6 +1249,7 @@ function replay(): void {
           </span>
         </div>
         <p v-for="x in recipeOut.r.stops" :key="x.reason" class="mt-1 text-[11px] text-rose-300/80">止まった回 {{ pct(x.p) }}: {{ x.reason }}</p>
+      <template v-if="open.more">
     <!-- 始め方の比べ (回した後) -->
     <div v-if="recipeOut" class="mt-2 rounded-lg bg-black/20 px-3 py-2">
       <p class="mb-1 font-bold text-sky-100">始め方の比べ <span v-if="help" class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
