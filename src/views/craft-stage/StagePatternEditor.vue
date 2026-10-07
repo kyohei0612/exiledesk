@@ -73,6 +73,8 @@ function annulRisk(i: number, set: PatternSet | undefined, step: PatternStep): {
   if (!scope) return null;
   const hits = pat.value.steps.slice(0, i).flatMap((q) => {
     const x = setByKey(sets.value, q.set);
+    // 外れた時だけ打つ手 (同じ MOD をもう一度狙う) の外れでは、その MOD はまだ付いていない
+    if (q.target === step.target && retryFrom.value.has(i)) return [];
     if (!x || !q.target || q.target === ANY_TARGET || x.kind === "rune" || x.kind === "annul" || !scope!.includes(sideOfId(q.target))) return [];
     return [{ id: q.target, once: ONCE.has(x.kind) }];
   });
@@ -207,6 +209,30 @@ const rows = computed<Row[]>(() => {
 });
 
 /**
+ * 外れた時だけ打つ手 (前の手が「付かなかった → 次へ」で狙った MOD をもう一度狙う手) → 元の手。
+ * 元の手で付いた時はこの手を飛ばす (計算も付いていれば飛ばす)。ツリーは当たりの線を飛ばした先へ引く
+ * (2026-10-07 オーナー「付いたら 4 手目以降に矢印行かせた方が良いね、変成で 1 発で付いたときの事」)
+ */
+const retryFrom = computed(() => {
+  const out = new Map<number, number>();
+  const c = ctx.value;
+  if (!c) return out;
+  pat.value.steps.forEach((step, j) => {
+    const t = step.target;
+    if (!t || t === ANY_TARGET || isRest(t) || !stateBefore(c, pat.value.steps, j).maybe.has(t)) return;
+    const from = pat.value.steps.findIndex((x, k) => k < j && x.target === t);
+    if (from >= 0) out.set(j, out.get(from) ?? from);
+  });
+  return out;
+});
+/** 元の手で付いた時に進む手 (外れた時だけ打つ手を飛ばした先) */
+function hitTo(i: number): number {
+  let k = i + 1;
+  while (retryFrom.value.get(k) === i) k++;
+  return k;
+}
+
+/**
  * 右のアイテム: その手まで当たった時の姿 (2026-10-06 オーナー「文字だとマジで入ってこない、右側に今のアイテムに付いている MOD つきで表示」)。
  * 見る手は押した手 (棚を開いた手)、無ければ最後の手。固定の MOD + その手までの付ける物 (狙いの段の真ん中の値)、ルーンは差す
  */
@@ -288,6 +314,8 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
     }
     const x = setByKey(sets.value, st.set);
     if (!x || !st.target) continue;
+    // 外れた時だけ打つ手は、前の手で付いた姿にもう足さない (同じ MOD が 2 つに見えていた)
+    if (retryFrom.value.has(j) && allMods(it).some((m) => m.modId === st.target)) { if (j === previewAt.value) newMods = allMods(it).filter((m) => m.modId === st.target); continue; }
     // 打つだけの手は、そのカレンシー (お告げも) を実際に打った姿 (2026-10-07 オーナー「打つだけなら指定のカレンシーで打った時の挙動で表示しちゃっていい」)。
     // 乱数は手ごとに決まった値なので、押すたびに変わらない
     if (st.target === ANY_TARGET) {
@@ -493,7 +521,7 @@ function singleSet(r: Row): PatternSet | undefined {
 function presentMods(i: number, r: Row): string[] {
   const c = ctx.value;
   if (!c || !r.set || r.set.kind === "rune") return [];
-  const out = [...stateBefore(c, pat.value.steps, i).placed];
+  const out = [...stateBefore(c, pat.value.steps, i).placed].filter((id) => !(id === r.step.target && retryFrom.value.has(i)));
   if (needs2(r) && r.step.target && r.step.target !== ANY_TARGET) out.push(r.step.target, ...candsOf(r));
   const can = removableIn(i, r);
   return [...new Set(out)].filter((id) => c.targets.find((t) => t.modId === id)?.method !== "fracture" && can(id));
@@ -798,9 +826,13 @@ defineExpose({ rows });
         <div v-else class="w-52 rounded-md border border-white/20 bg-black/40 px-2 py-0.5 opacity-80">始め: 白のベース</div>
         <template v-for="(r, i) in rows" :key="i">
           <!-- 当たりの線 -->
-          <div v-if="i > 0 || !preNodes.length" class="ml-[6.5rem] flex h-4 items-center">
+          <div v-if="(i > 0 || !preNodes.length) && retryFrom.has(i) && !retryFrom.has(i - 1)" class="ml-[6.5rem] flex h-4 items-center">
+            <span class="h-full w-px border-l border-dashed border-rose-400/60"></span>
+            <span class="ml-1 text-[9px] text-rose-300/90">{{ retryFrom.get(i)! + 1 }} 手目で付かなかった時だけ</span>
+          </div>
+          <div v-else-if="i > 0 || !preNodes.length" class="ml-[6.5rem] flex h-4 items-center">
             <span class="h-full w-px bg-emerald-400/50"></span>
-            <span class="ml-1 text-[9px] text-emerald-300/80">{{ i === 0 ? "" : "当たり" }}</span>
+            <span class="ml-1 text-[9px] text-emerald-300/80">{{ i === 0 ? "" : retryFrom.has(i - 1) && !retryFrom.has(i) ? `当たり (${[...new Set([...retryFrom.entries()].filter(([j]) => j < i).map(([, f]) => f + 1))].join("・")} 手目で付いた時もここへ)` : "当たり" }}</span>
           </div>
           <div class="flex items-start">
             <!-- 手のカード -->
@@ -850,8 +882,13 @@ defineExpose({ rows });
                     <span v-else class="h-5 w-5 rounded border border-dashed border-white/25"></span>
                     <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
                   </template>
-                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : "→ 次へ" }}</span>
+                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
                 </button>
+              </span>
+              <!-- 付いた時は外れた時だけの手を飛ばす -->
+              <span v-if="hitTo(i) > i + 1" class="mt-0.5 flex items-center text-[10px] text-emerald-300/90">
+                <span class="h-px w-4 bg-emerald-400/50"></span>
+                <span class="ml-1">付いた → {{ hitTo(i) < rows.length ? `${hitTo(i) + 1} 手目へ` : "完成" }}</span>
               </span>
               <span v-if="missSet(r.step) || r.step.onMiss === 'redo'" class="flex items-center text-[10px] text-amber-200/90">
                 <span class="text-rose-300">◀</span>

@@ -209,6 +209,11 @@ export interface PatternState {
   essences: number; essenceLimit: number;
   desecrated: number;
   placed: Set<string>;
+  /**
+   * 「付かなかった → そのまま次へ」の手で狙った物 (付いていないかもしれない)。後の手でもう一度狙える (付いていれば計算はその手を飛ばす)。
+   * 2026-10-07 オーナー「付かなかった場合次へはあるけど、次の所でもっかい狙いの MOD が選べない」(手袋: 上級の変成で外れたら上級の増強で同じ MOD)
+   */
+  maybe: Set<string>;
   /** 打つだけの手で付いた物 (側は分からない) */
   junk: number;
 }
@@ -229,7 +234,7 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     prefix: ctx.start.fracturedSide === "prefix" ? 1 : 0,
     suffix: ctx.start.fracturedSide === "suffix" ? 1 : 0,
     limits: { prefix: ctx.cls.limits?.prefixes ?? 3, suffix: ctx.cls.limits?.suffixes ?? 3 },
-    runes: new Set(), socketsLeft: ctx.start.sockets, essences: 0, essenceLimit: 1, desecrated: 0, placed: new Set(), junk: 0,
+    runes: new Set(), socketsLeft: ctx.start.sockets, essences: 0, essenceLimit: 1, desecrated: 0, placed: new Set(), maybe: new Set(), junk: 0,
   };
   for (let i = 0; i < upTo && i < steps.length; i++) {
     const p = steps[i]!;
@@ -258,11 +263,16 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     }
     const t = ctx.targets.find((x) => x.modId === p.target);
     if (!t) continue;
+    // 前の手で狙って外れたかもしれない物をもう一度狙う手: 枠はもう数えてある。外れても次へ進まない手なら、ここで確かに付く
+    if (st.maybe.has(p.target!)) {
+      if (p.onMiss !== "next") st.maybe.delete(p.target!);
+      continue;
+    }
     // 候補のどれか (偉大は 2 つ) が付く。どれが付くか分からない時は、付いた物 (placed) には入れず枠だけ数える
     const cands = [t, ...(hasCands(s) ? ctx.targets.filter((y) => y.modId === p.target2 || y.modId === p.target3) : [])];
     const need = isDouble(s) ? 2 : 1;
     for (const x of cands.slice(0, need)) st[ctx.data.mods.get(x.modId)?.type === "suffix" ? "suffix" : "prefix"] += 1;
-    if (cands.length <= need) for (const x of cands) st.placed.add(x.modId);
+    if (cands.length <= need) for (const x of cands) { st.placed.add(x.modId); if (p.onMiss === "next" && need === 1) st.maybe.add(x.modId); }
     if (s.kind === "essence" || s.kind === "essence_perfect") st.essences++;
     if (s.kind === "desecrate") st.desecrated++;
   }
@@ -306,11 +316,13 @@ export function checkTarget(ctx: CheckCtx, st: PatternState, s: PatternSet, t: P
   const m = ctx.data.mods.get(t.modId);
   if (!m) return "MOD が見つからない";
   if (t.method === "fracture") return "フラクチャーで固定する MOD";
-  if (st.placed.has(t.modId)) return "前の手で付けた";
+  const again = st.maybe.has(t.modId);
+  if (st.placed.has(t.modId) && !again) return "前の手で付けた";
   const side = m.type === "suffix" ? "suffix" : "prefix";
   const sideJa = side === "prefix" ? "プレフィックス" : "サフィックス";
-  if (st[side] >= st.limits[side]) return `${sideJa}の枠が埋まる`;
-  if (st.prefix + st.suffix + st.junk >= st.limits.prefix + st.limits.suffix && s.kind !== "chaos" && s.kind !== "essence_perfect") return "枠が全部埋まる (打つだけの手で付いた物も数える)";
+  // もう一度狙う物の枠は前の手で数えてある
+  if (!again && st[side] >= st.limits[side]) return `${sideJa}の枠が埋まる`;
+  if (!again && st.prefix + st.suffix + st.junk >= st.limits.prefix + st.limits.suffix && s.kind !== "chaos" && s.kind !== "essence_perfect") return "枠が全部埋まる (打つだけの手で付いた物も数える)";
   if (s.omens.some((o) => PREFIX_OMENS.has(o)) && side !== "prefix") return "左 (シニスター) のお告げはプレフィックスだけ";
   if (s.omens.some((o) => SUFFIX_OMENS.has(o)) && side !== "suffix") return "右 (デクストラル) のお告げはサフィックスだけ";
   const members = [m, ...(t.alts ?? []).map((a) => ctx.data.mods.get(a.modId)).filter((x): x is Mod => !!x)];
