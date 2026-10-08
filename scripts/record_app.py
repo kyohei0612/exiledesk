@@ -1,10 +1,13 @@
-"""ExileDesk のアプリ (録画モード) を操作して録る。宣伝の回 2〜5 章 (docs/app_recording.md).
+"""ExileDesk のアプリ (録画モード) を操作して録る。宣伝の回の操作 (docs/app_recording.md).
 
 先にアプリを録画モードで起動しておく (EXILEDESK_REMOTE_DEBUG_PORT=9333 / EXILEDESK_FULLSCREEN=1)。
 終わったらアプリをタスクキルして、いつもの起動に戻す。
 
-    python scripts/record_app.py output/app_rec            # 2〜5 章を全部
-    python scripts/record_app.py output/app_rec ch3 ch4    # 一部だけ (白い金の指輪から始める)
+録る物 (1 つ 1 ファイル): open (開いて白い金の指輪) / orbs (変成→増強→王者→高貴×3) /
+undo (1 手戻す) / modlist (MOD 一覧で指名) / sim (シミュレーション、record_app_sim.py)
+
+    python scripts/record_app.py output/app_rec               # 全部
+    python scripts/record_app.py output/app_rec orbs undo     # 一部だけ (白い金の指輪から始める)
 """
 
 from __future__ import annotations
@@ -89,10 +92,44 @@ HIDE_JS = r"""
 """
 
 
+def focus_app() -> None:
+    """全画面の ExileDesk の窓を前面に出す (前面でないとタスクバーが上に写る).
+
+    開発版など窓モードの ExileDesk が同時に開いていることがある → 0,0 から画面いっぱいの窓を選ぶ。
+    """
+    import ctypes
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    found: list[int] = []
+
+    def visit(hwnd: int, _: int) -> bool:
+        buf = ctypes.create_unicode_buffer(64)
+        user32.GetWindowTextW(hwnd, buf, 64)
+        rect = wintypes.RECT()
+        user32.GetWindowRect(hwnd, ctypes.byref(rect))
+        full = (rect.left, rect.top, rect.right, rect.bottom) == (0, 0, 1920, 1080)
+        if buf.value == "ExileDesk" and user32.IsWindowVisible(hwnd) and full:
+            found.append(hwnd)
+        return True
+
+    proc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+    user32.EnumWindows(proc(visit), 0)
+    if not found:
+        log.warning("fullscreen ExileDesk window not found")
+        return
+    user32.keybd_event(0x12, 0, 0, 0)  # Alt を押して離す (前面に出す制限を外す定番の手)
+    user32.keybd_event(0x12, 0, 2, 0)
+    user32.ShowWindow(found[0], 9)
+    user32.SetForegroundWindow(found[0])
+    time.sleep(0.5)
+
+
 class Recorder:
     """ddagrab で 1 枚目のモニターを録る (GPU のコマを下ろしてから NVENC)."""
 
     def __init__(self, path: Path) -> None:
+        focus_app()
         ff = shutil.which("ffmpeg") or "ffmpeg"
         cmd = [ff, "-y", "-loglevel", "error", "-f", "lavfi"]
         cmd += ["-i", "ddagrab=output_idx=0:framerate=30:draw_mouse=0"]
@@ -140,6 +177,15 @@ class Hand:
         pause(after)
 
 
+HAND_CLIPS = ["open", "orbs", "undo", "modlist"]
+
+
+def setup(page: Page) -> None:
+    """カーソルの絵を入れ、映さないボタンを隠す (ページを切り替えたら入れ直す)."""
+    page.evaluate(CURSOR_JS)
+    page.evaluate(HIDE_JS)
+
+
 def run(page: Page, out: Path, only: list[str]) -> None:
     hand = Hand(page)
     card = (
@@ -153,10 +199,6 @@ def run(page: Page, out: Path, only: list[str]) -> None:
 
     def steps(n: int) -> Locator:
         return page.get_by_text(re.compile(rf"· {n} 手$"))
-
-    def setup() -> None:
-        page.evaluate(CURSOR_JS)
-        page.evaluate(HIDE_JS)
 
     def hold(key: str) -> None:
         hand.click(page.locator(f'[data-shelf][data-key="{key}"]'), 650, 0)
@@ -177,14 +219,14 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         steps(0).wait_for(timeout=3000)
 
     page.keyboard.press("Escape")
-    setup()
+    setup(page)
     page.mouse.move(hand.x, hand.y)
-    if "ch2" in only:
-        rec = Recorder(out / "ch2_open.mp4")
+    if "open" in only:
+        rec = Recorder(out / "open.mp4")
         hand.click(nav, 900, 0)
         page.locator("[data-shelf]").first.wait_for(timeout=20000)
         pause(0.8)
-        setup()
+        setup(page)
         hand.click(page.get_by_role("button", name="手で打つ", exact=True))
         hand.click(page.get_by_role("button").filter(has_text=re.compile("▼ 変える")), 700, 0.8)
         cat = page.get_by_placeholder("名前で探す (例: サファイア、ルビー)").locator("xpath=../..")
@@ -194,7 +236,7 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         level = page.locator("span:has(> span:text-is('アイテムレベル'))")
         hand.click(level.get_by_role("button", name="82", exact=True), 700, 0.5)
         steps(0).wait_for(timeout=3000)
-        setup()
+        setup(page)
         hand.glide(480, 520, 700)
         pause(2.0)
         rec.stop()
@@ -202,12 +244,12 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         nav.click()
         page.locator("[data-shelf]").first.wait_for(timeout=20000)
         page.get_by_role("button", name="手で打つ", exact=True).click()
-        setup()
+        setup(page)
         white()
 
-    if "ch3" in only:
+    if "orbs" in only:
         top()
-        rec = Recorder(out / "ch3_orbs.mp4")
+        rec = Recorder(out / "orbs.mp4")
         hand.click(shelf.get_by_role("button", name="オーブ・骨", exact=True), 700, 0.6)
         for n, key in ((1, "transmute"), (2, "augment"), (3, "regal")):
             hold(key)
@@ -220,9 +262,9 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         pause(1.5)
         rec.stop()
 
-    if "ch4" in only:
+    if "undo" in only:
         top()
-        rec = Recorder(out / "ch4_undo.mp4")
+        rec = Recorder(out / "undo.mp4")
         hand.click(page.get_by_role("button", name="1 手戻す", exact=True), 700, 0)
         steps(5).wait_for(timeout=3000)
         hand.glide(480, 900, 600)
@@ -234,9 +276,9 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         pause(1.5)
         rec.stop()
 
-    if "ch5" in only:
+    if "modlist" in only:
         white()
-        rec = Recorder(out / "ch5_modlist.mp4")
+        rec = Recorder(out / "modlist.mp4")
         head = page.get_by_role("button", name=re.compile("^このベースに付く MOD"))
         modlist = page.locator("section").filter(has=head).filter(visible=True)
         modlist.get_by_role("button", name=re.compile("^このベースに付く MOD")).evaluate(
@@ -263,10 +305,16 @@ def run(page: Page, out: Path, only: list[str]) -> None:
 def main() -> None:
     out = Path(sys.argv[1])
     out.mkdir(parents=True, exist_ok=True)
-    only = sys.argv[2:] or ["ch2", "ch3", "ch4", "ch5"]
+    only = sys.argv[2:] or [*HAND_CLIPS, "sim"]
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP, timeout=20000)
-        run(browser.contexts[0].pages[0], out, only)
+        page = browser.contexts[0].pages[0]
+        if any(c in only for c in HAND_CLIPS):
+            run(page, out, only)
+        if "sim" in only:  # ベースが「手で打つ」と共通なので最後に (docs/app_recording_map.md)
+            from record_app_sim import run_sim
+
+            run_sim(page, out)
 
 
 if __name__ == "__main__":
