@@ -73,6 +73,8 @@ export interface CompiledStep {
   otherGone?: "annul";
   /** お告げ無しの消去で外す時、外れが反対の側に付いたら消さずにもう一度打つ (PatternStep.otherJunk) */
   otherJunk?: "keep";
+  /** 状況ごとの反応 (PatternStep.on をセットに直した物。goto は並べた後の番号) */
+  on?: Partial<Record<"pre_full" | "partial" | "miss_t" | "miss_o" | "miss", { pre?: { kind?: PatternKind; currency: string; omens: string[] } | null; then: "repeat" | "next" | "restart" | "goto"; goto?: number; again?: { kind?: PatternKind; currency: string; omens: string[] } | null }>>;
   /**
    * 「残り」の手の元の手 (パターンの中の番号)。この手の間に候補が消えても、まだ 1 つでも付いていればこの手を続け、全部消えたら元の手へ
    * (2026-10-08 オーナー「全部消えたら高貴 → 2 手目へ戻る流れ、消去はそのまま普通の消去」)
@@ -442,7 +444,24 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     let lastAt = -1;
     const count = (t: RecipeTarget): number => new Set(allMods(item).filter((m) => !m.unrevealed && hits(t, m)).map((m) => m.modId)).size;
     let i = 0;
-    /** 新しいベースで最初から */
+    /** 反応で「この手をもう一度 (別の打ち方で)」を選んだ時の、次の 1 回だけの打ち方 */
+    const againRef: { v: { i: number; s: { kind?: PatternKind; currency: string; omens: string[] } } | null } = { v: null };
+    /** 反応の先に打つ物を打ち、次にすることを返す (true = ループを続ける) */
+    const react = (rx: NonNullable<CompiledStep["on"]>[keyof NonNullable<CompiledStep["on"]>], at: number): string | null => {
+      if (!rx) return null;
+      if (rx.pre) {
+        let e: string | null = null;
+        if (rx.pre.kind === "essence_perfect" && !rx.pre.currency) { const k = cheapestPerfectEssence(pat[at]?.target ? sideOf(pat[at]!.target!.modId) : "prefix"); e = k ? play(k, rx.pre.omens) : "使えるパーフェクトエッセンスが無い"; }
+        else e = play(rx.pre.currency, rx.pre.omens.filter((o) => o !== "OmenofAbyssalEchoes"));
+        if (!e && rx.pre.kind === "desecrate" && unrevealedOf(item)) e = reveal(null, false);
+        if (e) return `${at + 1} 手目の反応: ${e}`;
+      }
+      if (rx.then === "next") i = at + 1;
+      else if (rx.then === "restart") restartPattern();
+      else if (rx.then === "goto" && rx.goto != null) i = rx.goto;
+      else { i = at; if (rx.again) againRef.v = { i: at, s: rx.again }; }
+      return null;
+    };
     const restartPattern = (): void => { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); };
     /** もう一度打てる手 (レアに打てる物。変成・増強・王者・錬金はレアリティが変わるので戻れない) */
     const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
@@ -530,7 +549,11 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 残りが 1 つだけの時に偉大を外す (「残り」の手で 3 つ揃える時、1 つしか付いていなければ偉大で 2 つ足す。2026-10-08: 前は 1 つ付いていれば
       // 必ず偉大を外していて、残り 2 つを 1 つずつ打っていた)
       if (two && needOf(p.target!) - count(p.target!) === 1 && p.omens.includes("OmenofGreaterExaltation")) p = { ...p, ...(p.single ? { currency: p.single.currency, omens: [...p.single.omens] } : { omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") }) };
+      const ag = againRef.v;
+      if (ag && ag.i === i) { p = { ...p, ...(ag.s.kind ? { kind: ag.s.kind } : {}), currency: ag.s.currency, omens: [...ag.s.omens] }; againRef.v = null; }
       const before = p.target ? count(p.target) : 0;
+      /** 打つ前に付いていた MOD (ハズレがどちらの側に付いたかを見る) */
+      const had = new Set(allMods(item));
       let e: string | null = null;
       // 始めから差さっているルーン (固定する MOD に要る物) の手は打たずに次へ
       if (p.kind === "rune" && p.rune && preRunes.has(p.rune)) { preRunes.delete(p.rune); i++; continue; }
@@ -556,6 +579,13 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       } else {
         // 高貴・冒涜は狙いの側に空きが無ければ、先にその側の外れを消す (戻った手で、外れが残ったまま埋まっていることがある)
         const ts = p.target ? sideOf(p.target.modId) : null;
+        // 状況「打つ前に狙いの側がハズレで埋まっている」の反応 (選んだ時だけ。下の組み込みの消去より先)
+        if (p.on?.pre_full && ts && !room(item, ts) && junkOn(item, ts).length) {
+          const at = i;
+          const err = react({ ...p.on.pre_full, then: p.on.pre_full.then === "repeat" ? "repeat" : p.on.pre_full.then }, at);
+          if (err) return fail(err);
+          continue;
+        }
         // 偉大 (2 つ狙い) は、その側に 2 枠空くまで外れを消してから打つ (空きが 1 つだと偉大でも 1 つしか付かない。狙いはまだ付いていないので消去で失う物が無い。
         // 2026-10-07 手順を追うと、外れが残ったまま偉大を打っていた)
         const free = ts ? limitOf(item, ts) - listOf(item, ts).length : 0;
@@ -600,6 +630,14 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       }
       if (e) return fail(`${i + 1} 手目: ${e}`);
       if (!p.target || (two ? meets(item, p.target) : count(p.target) > before || meets(item, p.target))) { i++; continue; }
+      // 状況ごとの反応 (選んだ時だけ): 一部当たり / ハズレが狙いの側・反対の側に付いた
+      if (p.on) {
+        const ts0 = membersOf(p.target).length && new Set(membersOf(p.target).map((a) => sideOf(a.modId))).size === 1 ? sideOf(p.target.modId) : null;
+        const junkNew = allMods(item).filter((m) => !had.has(m) && !isGood(m));
+        const sit = count(p.target) > before ? "partial" : !ts0 ? "miss" : junkNew.some((m) => m.side === ts0) ? "miss_t" : junkNew.length ? "miss_o" : "miss";
+        const rx = p.on[sit] ?? (sit === "miss_t" || sit === "miss_o" ? p.on.miss : sit === "partial" ? undefined : undefined);
+        if (rx) { const err = react(rx, i); if (err) return fail(err); continue; }
+      }
       // 外れ
       if (p.onMiss === "next") { i++; continue; }
       // 狙いの側に外れが付いて埋まっていたら消去してから次へ (反対の側なら残して次へ: 次の増強は必ず狙いの側に付く)

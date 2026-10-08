@@ -70,7 +70,31 @@ export interface PatternStep {
    * 無ければ増強は keep、高貴は annul (後の手で反対の側に別の狙いを付けることがある)。otherJunkOf で引く
    */
   otherJunk?: "keep" | "annul" | null;
+  /**
+   * 起こりうる状況ごとの反応 (2026-10-08 オーナー「● を実行した時の起こりうる状況を全てに対応する選択肢をユーザーが選ぶ、1 個 1 個。それがシミュレーション」)。
+   * 選んだ状況だけ上の決まり (onMiss・miss・otherGone…) より先に使う。選んでいない状況は今までの決まりのまま
+   */
+  on?: Partial<Record<Situation, Reaction>>;
 }
+/**
+ * 1 つの手で起こりうる状況。
+ *   pre_full … 打つ前に狙いの側がハズレで埋まっている (6 MOD・ルーンで 7 MOD の時も)
+ *   partial  … 一部だけ当たり (2 つ以上足す手・候補のうち N つ)
+ *   miss_t   … ハズレが狙いの側に付いた / miss_o … ハズレが反対の側に付いた / miss … ハズレ (側が決まらない手)
+ */
+export type Situation = "pre_full" | "partial" | "miss_t" | "miss_o" | "miss";
+export const SITUATION_JA: Record<Situation, string> = {
+  pre_full: "打つ前に狙いの側がハズレで埋まっている",
+  partial: "一部だけ当たった",
+  miss_t: "ハズレが狙いの側に付いた",
+  miss_o: "ハズレが反対の側に付いた",
+  miss: "ハズレが付いた",
+};
+/**
+ * 状況への反応: 先に打つ物 (消去・カオス・パーフェクトエッセンス・骨。セットのキー、無ければ打たない) → 次にすること。
+ * repeat はこの手をもう一度 (again があればその打ち方で: 偉大を外した 1 発など)、next は次の手、restart は新しいベースで最初から、goto は N 手目 (0 始まり)
+ */
+export interface Reaction { pre?: string | null; then: "repeat" | "next" | "restart" | "goto"; goto?: number; again?: string | null }
 /**
  * お告げ無しの消去で反対の側が消えた時の既定 (PatternStep.otherGone)。増強はもう一度消去
  * (2026-10-07 オーナー「狙いがプレ 1 で増強 2 回打ってどっちも外れた場合、消去 1 回でサフィが残ってプレが消えたらもう 1 度消去は要らない」= 狙いの側が消えたら打つ、

@@ -8,7 +8,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
-import { ANY_KINDS, ANY_TARGET, otherGoneOf, otherJunkOf, LOST_RESTART, ONCE_KINDS, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
+import { SITUATION_JA, type Reaction, type Situation, ANY_KINDS, ANY_TARGET, otherGoneOf, otherJunkOf, LOST_RESTART, ONCE_KINDS, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageItemCard from "./StageItemCard.vue";
@@ -438,6 +438,46 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
 const preview = computed<StageItem | null>(() => previewOut.value?.item ?? null);
 
 const removals = computed(() => removalSets(sets.value));
+/**
+ * 起こりうる状況 (2026-10-08 オーナー「● を実行した時の起こりうる状況を全てに対応する選択肢をユーザーが選ぶ、1 個 1 個」「錬金術も最たる例、
+ * ハズレが付いたらリロールみたいなムーブにも対応できるように」)。その手で起こりうる物だけ並べる
+ */
+function situationsOf(i: number, r: Row): Situation[] {
+  if (!r.set || !r.step.target || r.step.target === ANY_TARGET || r.set.kind === "rune" || r.set.kind === "annul" || r.set.kind === "fracture") return [];
+  const c = ctx.value;
+  const ids = isRest(r.step.target) ? restMembers(pat.value.steps, r.step.target) : [r.step.target, ...candsOf(r)];
+  const sides = new Set(ids.map((id) => (c?.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix")));
+  const out: Situation[] = [];
+  if (sides.size === 1 && r.set.kind !== "transmute" && r.set.kind !== "alchemy") out.push("pre_full");
+  // 一部当たり: 1 回で 2 つ以上足す手 (偉大・錬金)、または 2 つ以上揃える狙い (残り・どれか N つ)
+  // (狙いが 1 つなら一部当たりは起きない)
+  if (needs2(r) || (isRest(r.step.target) && ids.length > 1) || ((isDouble(r.set) || r.set.kind === "alchemy") && ids.length > 1)) out.push("partial");
+  if (sides.size === 1) out.push("miss_t", "miss_o"); else out.push("miss");
+  void i;
+  return out;
+}
+const rxOf = (r: Row, sit: Situation): Reaction | undefined => r.step.on?.[sit];
+function setRx(i: number, sit: Situation, rx: Reaction | null): void {
+  const cur = { ...(pat.value.steps[i]?.on ?? {}) };
+  if (rx) cur[sit] = rx; else delete cur[sit];
+  patch(i, { on: Object.keys(cur).length ? cur : undefined });
+}
+/** 反応の 1 行の要約 (ツリーと設定に出す) */
+function rxText(rx: Reaction): string {
+  const pre = rx.pre ? setByKey(sets.value, rx.pre) : undefined;
+  const ag = rx.again ? setByKey(sets.value, rx.again) : undefined;
+  const then = rx.then === "next" ? "次の手へ" : rx.then === "restart" ? (props.start.mods ? "この状態から最初から" : "新しいベースで最初から") : rx.then === "goto" ? `${(rx.goto ?? 0) + 1} 手目へ` : ag ? `${setShort(ag)}${ag.omens.length ? ` + ${ag.omens.map((o) => jaOfOmen(o) ?? o).join("・")}` : ""} でもう一度` : "この手をもう一度";
+  return `${pre ? `${setShort(pre)}${pre.omens.length ? ` + ${pre.omens.map((o) => jaOfOmen(o) ?? o).join("・")}` : ""} → ` : ""}${then}`;
+}
+/** 先に打つ物の選択肢 (消去・カオス・パーフェクトエッセンス・骨。その手の後に打てる物) */
+const preChoices = computed(() => removals.value.map((x) => ({ key: x.key, label: `${setShort(x)}${x.omens.length ? ` + ${x.omens.map((o) => jaOfOmen(o) ?? o).join("・")}` : ""}` })));
+/** もう一度の打ち方の選択肢 (同じ手 + その手の後に打てる物。錬金のハズレをカオスで振り直す、なども) */
+function againChoices(i: number): Array<{ key: string; label: string }> {
+  const c = ctx.value;
+  if (!c) return [];
+  const st = stateBefore(c, pat.value.steps, i + 1);
+  return sets.value.filter((x) => x.kind !== "rune" && x.kind !== "annul" && !checkSet(c, st, x)).map((x) => ({ key: x.key, label: `${setShort(x)}${x.omens.length ? ` + ${x.omens.map((o) => jaOfOmen(o) ?? o).join("・")}` : ""}` }));
+}
 /** 外す時のセット (外す時は付けた後 = レア。付ける手の後の状態で見る) */
 const missSet = (step: PatternStep): PatternSet | undefined => (step.miss ? setByKey(sets.value, step.miss) : undefined);
 /**
@@ -620,7 +660,8 @@ function addSetsFor(r: Row): PatternSet[] {
 /** 付ける側の棚 (消去は外す側にだけ出す。2026-10-07 オーナー「付ける時は削除の手とか表示しなくてもおｋ」) */
 const addSets = computed(() => sets.value.filter((x) => x.kind !== "annul"));
 /** やり直しを選べる手か (外れがあって、レアリティが変わらない手) */
-const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && r.set.kind !== "fracture" && !(RARITY_CHANGE.has(r.set.kind) && r.set.kind !== "transmute") && r.step.target !== ANY_TARGET && !!r.step.target;
+// 王者・錬金も「付かなかったら」を出す (錬金のハズレをカオスで振り直す、なども選べるように。2026-10-08 オーナー「錬金術も最たる例」)
+const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && r.set.kind !== "fracture" && r.step.target !== ANY_TARGET && !!r.step.target;
 /** 変成の手 (外してもう一度は無理。選べるのは「狙いの側のハズレを消して次へ」か「そのまま次へ」。王者・錬金の後は枠が空くので選ぶ物が無い) */
 const rarityStep = (r: Row): boolean => r.set?.kind === "transmute";
 /** 狙いの側 (候補が両側なら「狙いの側」) */
@@ -1156,6 +1197,7 @@ defineExpose({ rows });
                 <span class="ml-1">付くまで繰り返す</span>
               </span>
               <span v-if="preRule(r)" class="ml-5 text-[10px] leading-tight opacity-70">{{ preRule(r) }}</span>
+              <span v-for="(rx, sit) in (r.step.on ?? {})" :key="'rx' + sit" class="ml-5 text-[10px] leading-tight text-sky-200/90">{{ SITUATION_JA[sit as Situation] }} → {{ rxText(rx!) }}</span>
               <!-- 「残り」の手の決まり (計算と同じ。2026-10-08 オーナー「全部消えたら高貴 → 2 手目へ戻る」、完成判定 2 回目: 画面に出ていなかった) -->
               <span v-if="isRest(r.step.target)" class="ml-5 text-[10px] leading-tight opacity-70">候補が消えても 1 つでも残ればこの手を続ける、全部消えたら {{ Number(r.step.target!.slice(REST.length)) + 1 }} 手目へ</span>
               <span v-if="chaosRegain(r)" class="ml-5 text-[10px] leading-tight opacity-70">消えて戻った時: 完全高貴 + 側のお告げで取り直す</span>
@@ -1393,6 +1435,41 @@ defineExpose({ rows });
               <button v-if="!rarityStep(rows[focusRow]!) && removals.some((x) => (x.kind === 'essence_perfect' || x.kind === 'desecrate') && !whyMissAt(focusRow!)(x))" type="button" class="mt-3 rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100 max-md:min-h-10" @click="missMore = !missMore">ほかの消し方 (パーフェクトエッセンス・骨) {{ missMore || missKind(rows[focusRow]!) === 'other' ? "▲" : "▼" }}</button>
               <div v-if="!rarityStep(rows[focusRow]!) && (missMore || missKind(rows[focusRow]!) === 'other')" class="mt-2">
                 <StagePatternStepPicker :key="'miss' + focusRow" :sets="removals.filter((x) => x.kind === 'essence_perfect' || x.kind === 'desecrate')" :why="whyMissAt(focusRow)" :current="rows[focusRow]!.step.miss ?? ''" inline @pick="(k) => { patch(focusRow!, { miss: k, onMiss: 'annul_redo' }); editPart = 'miss'; }" />
+              </div>
+              <!-- 起こりうること: 状況ごとに反応を選ぶ (選んだ状況は上の決まりより先に使う) -->
+              <div v-if="situationsOf(focusRow!, rows[focusRow]!).length" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
+                <p class="mb-1 text-[12px] font-bold text-sky-100">起こりうること <span class="font-normal opacity-60">(状況ごとに選ぶ。選ばなければ上の決まり)</span></p>
+                <div v-for="sit in situationsOf(focusRow!, rows[focusRow]!)" :key="sit" class="border-t border-white/5 py-1.5">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="w-56 shrink-0 text-[12px] max-md:w-full">{{ SITUATION_JA[sit] }}</span>
+                    <span v-if="rxOf(rows[focusRow]!, sit)" class="text-[12px] font-bold text-sky-100">{{ rxText(rxOf(rows[focusRow]!, sit)!) }}</span>
+                    <span v-else class="text-[11px] opacity-50">上の決まりのまま</span>
+                    <button v-if="!rxOf(rows[focusRow]!, sit)" type="button" class="ml-auto rounded border border-sky-400/50 px-2 py-0.5 text-[11px] text-sky-100 max-md:min-h-10" @click="setRx(focusRow!, sit, { pre: null, then: 'repeat' })">選ぶ</button>
+                    <button v-else type="button" class="ml-auto rounded border border-white/20 px-2 py-0.5 text-[11px] opacity-70 max-md:min-h-10" @click="setRx(focusRow!, sit, null)">外す</button>
+                  </div>
+                  <div v-if="rxOf(rows[focusRow]!, sit)" class="mt-1 flex flex-wrap items-center gap-2 pl-2 text-[11px] max-md:pl-0">
+                    <label class="flex items-center gap-1">先に打つ
+                      <select class="max-w-[14rem] rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="rxOf(rows[focusRow]!, sit)!.pre ?? ''" @change="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, pre: ($event.target as HTMLSelectElement).value || null })">
+                        <option value="">なし</option>
+                        <option v-for="o in preChoices" :key="o.key" :value="o.key">{{ o.label }}</option>
+                      </select>
+                    </label>
+                    <label class="flex items-center gap-1">次に
+                      <select class="rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="rxOf(rows[focusRow]!, sit)!.then === 'goto' ? `g${rxOf(rows[focusRow]!, sit)!.goto}` : rxOf(rows[focusRow]!, sit)!.then" @change="(ev) => { const v = (ev.target as HTMLSelectElement).value; const cur = rxOf(rows[focusRow!]!, sit)!; setRx(focusRow!, sit, v.startsWith('g') ? { ...cur, then: 'goto', goto: Number(v.slice(1)) } : { ...cur, then: v as Reaction['then'] }); }">
+                        <option value="repeat">この手をもう一度</option>
+                        <option value="next">次の手へ</option>
+                        <option value="restart">{{ props.start.mods ? "この状態から最初から" : "新しいベースで最初から" }}</option>
+                        <option v-for="g in focusRow" :key="g" :value="`g${g - 1}`">{{ g }} 手目へ ({{ cardTitle(rows[g - 1]!) }})</option>
+                      </select>
+                    </label>
+                    <label v-if="rxOf(rows[focusRow]!, sit)!.then === 'repeat'" class="flex items-center gap-1">打ち方
+                      <select class="max-w-[16rem] rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="rxOf(rows[focusRow]!, sit)!.again ?? ''" @change="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: ($event.target as HTMLSelectElement).value || null })">
+                        <option value="">同じ</option>
+                        <option v-for="o in againChoices(focusRow!)" :key="o.key" :value="o.key">{{ o.label }}</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
               </div>
             </template>
             <template v-else>

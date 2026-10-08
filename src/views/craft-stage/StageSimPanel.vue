@@ -709,6 +709,12 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const [a, ...rest] = ms;
       return { ...a!, method: "exalt", alts: [...(a!.alts ?? []), ...rest.map((y) => ({ modId: y.modId, minTierIndex: y.minTierIndex }))], need: ms.length };
     };
+    /** 状況ごとの反応をセットに直す (goto は並べた後の番号) */
+    const compileOn = (on: NonNullable<Pattern["steps"][number]["on"]>, at: number[]): CompiledStep["on"] => Object.fromEntries(Object.entries(on).filter(([, rx]) => !!rx).map(([k, rx]) => {
+      const ps = rx!.pre ? setByKey(sets, rx!.pre) : undefined;
+      const ag = rx!.again ? setByKey(sets, rx!.again) : undefined;
+      return [k, { pre: ps ? { kind: ps.kind, currency: ps.currency, omens: [...ps.omens] } : null, then: rx!.then, ...(rx!.goto != null ? { goto: rx!.goto < 0 ? rx!.goto : at[rx!.goto] ?? rx!.goto } : {}), again: ag ? { kind: ag.kind, currency: ag.currency, omens: [...ag.omens] } : null }];
+    }));
     const compile = (p: Pattern): CompiledStep[] => {
       // 打てる手だけ並べるので、「MOD が消えたら N 手目」の N を並べた後の番号に直す
       const at: number[] = [];
@@ -724,7 +730,7 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const ms = st.miss ? setByKey(sets, st.miss) : undefined;
       const grp = groupOf(st, x) ?? restOf(p.steps, st);
       const one = grp && isDouble(x) ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
-      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? tf, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), ...(isRest(st.target) ? { restFrom: at[Number(st.target.slice(REST.length))] ?? 0 } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}), ...(otherGoneOf(x.kind, st.otherGone) === "annul" ? { otherGone: "annul" as const } : {}), ...(otherJunkOf(x.kind, st.otherJunk) === "keep" ? { otherJunk: "keep" as const } : {}) }];
+      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? tf, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), ...(isRest(st.target) ? { restFrom: at[Number(st.target.slice(REST.length))] ?? 0 } : {}), ...(st.on ? { on: compileOn(st.on, at) } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}), ...(otherGoneOf(x.kind, st.otherGone) === "annul" ? { otherGone: "annul" as const } : {}), ...(otherJunkOf(x.kind, st.otherJunk) === "keep" ? { otherJunk: "keep" as const } : {}) }];
       });
     };
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、

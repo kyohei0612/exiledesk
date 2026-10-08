@@ -351,3 +351,25 @@ describe("人ごとの乱数の種 (2026-10-07)", () => {
     expect(seedsOf({ seed: 7, runs: 3, maxSteps: 4000 })).toEqual([7, 10_007, 20_007]);
   });
 });
+
+describe("状況ごとの反応 (2026-10-08 オーナー「起こりうる状況を全てに対応する選択肢を 1 個 1 個」)", () => {
+  it("金の指輪: 錬金でライフが付かなかったらカオスで振り直す (錬金の手に「ハズレ → カオスでもう一度」)", async () => {
+    const data = await loadPatch();
+    const life = { ...targetOf(data, "Rings", /IncreasedLife$/, 4), method: "chaos" as const };
+    const r = await runRecipe({
+      data, base: "Gold Ring", itemLevel: 82, runs: 40, price: () => 1, seed: 11, whiteBasePrice: 0,
+      targets: [life],
+      pattern: [
+        { kind: "alchemy", currency: "alchemy", omens: [], target: life, onMiss: "next", on: {
+          miss_t: { pre: null, then: "repeat", again: { kind: "chaos", currency: "chaos", omens: [] } },
+          miss_o: { pre: null, then: "repeat", again: { kind: "chaos", currency: "chaos", omens: [] } },
+          partial: { pre: null, then: "repeat", again: { kind: "chaos", currency: "chaos", omens: [] } },
+        } },
+      ],
+    });
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    expect(r!.usage.some((u) => u.key === "chaos" && u.count > 1)).toBe(true);
+    // 白は 1 個で足りる (振り直しはカオス。新しいベースにしない)
+    expect(r!.bases).toBeLessThan(1.5);
+  });
+});
