@@ -278,7 +278,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
         <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフトステージ</h1>
         <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す
           <HelpTip title="シミュレーション" :width="320">
-            <p>1 ベース → 2 狙う MOD → 3〜5 始め方と順番 → 6 打ち方 (パターン) の順に決めて「回す」。</p>
+            <p>1 ベース → 2 狙う MOD → 始め方と順番 → 打ち方 (パターン) の順に決めて「回す」。</p>
             <p class="mt-1 text-[var(--exile-color-text-secondary)]">確率はクラフト計算機と同じ規則。値段は今の相場。</p>
           </HelpTip>
         </p>

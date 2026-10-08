@@ -296,10 +296,10 @@ const useShort = (key: string): string => { const x = setOf(props.sets, key); if
         <li v-for="(m, i) in moves" :key="i">
           <button type="button" class="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition" :class="sel === i ? 'bg-[var(--exile-color-bg-elevated)] shadow-[inset_2px_0_0_var(--exile-color-accent-focus)]' : 'hover:bg-white/[0.04]'" @click="sel = i">
             <span class="grid size-5 shrink-0 place-items-center rounded-full bg-white/10 text-[11px] font-semibold tabular-nums text-[var(--exile-color-text-secondary)]">{{ i + 1 }}</span>
-            <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in iconsOf(m.use)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
+            <span class="flex shrink-0 items-center -space-x-2.5"><img v-for="ic in iconsOf(m.use)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
             <span class="min-w-0 flex-1">
-              <span class="line-clamp-2 block font-medium text-[var(--exile-color-text-primary)]" :title="useLabel(m.use)">{{ useShort(m.use) }}</span>
-              <span class="line-clamp-2 block text-xs" :class="m.aim ? 'text-[var(--color-rarity-magic)]' : 'text-[var(--exile-color-text-tertiary)]'" :title="m.aim ? aimLabelAt(i) : ''">{{ m.aim ? aimShortAt(i) : "狙わない" }}</span>
+              <span class="line-clamp-2 block font-medium text-[var(--exile-color-text-primary)] [word-break:keep-all]" :title="useLabel(m.use)">{{ useShort(m.use) }}</span>
+              <span class="line-clamp-2 block text-xs [word-break:keep-all]" :class="m.aim ? 'text-[var(--color-rarity-magic)]' : 'text-[var(--exile-color-text-tertiary)]'" :title="m.aim ? aimLabelAt(i) : ''">{{ m.aim ? aimShortAt(i) : "狙わない" }}</span>
             </span>
             <span v-if="m.aim && shapes[i]" class="shrink-0 rounded-full px-1.5 text-[11px] tabular-nums" :class="shapes[i]!.left ? 'bg-white/[0.07] text-[var(--exile-color-text-secondary)]' : 'text-[var(--exile-color-signal-up)]'" :title="shapes[i]!.left ? `外れた時の形があと ${shapes[i]!.left} つ未定 (押すと決める)` : '外れも全部決めた'">
               <template v-if="shapes[i]!.left">外れ {{ shapes[i]!.left }}</template><Icon v-else name="check" class="size-3.5" />

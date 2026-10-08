@@ -327,7 +327,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
         <span class="mr-1 text-[var(--exile-color-text-tertiary)]">なる時</span>
         <template v-for="(t, ti) in viaParts" :key="ti">
           <Icon v-if="ti" name="arrow-right" class="size-3.5 text-[var(--exile-color-text-tertiary)]" />
-          <span class="rounded-full bg-white/[0.06] px-2 py-0.5" :class="ti === 1 ? 'text-[var(--exile-color-text-primary)]' : ''">{{ t }}</span>
+          <span :class="ti === 1 ? 'font-medium text-[var(--exile-color-text-primary)]' : ''">{{ t }}</span>
         </template>
       </p>
       <div class="flex items-start gap-5 max-md:flex-col" :class="viaParts.length ? '' : 'mt-3'">
