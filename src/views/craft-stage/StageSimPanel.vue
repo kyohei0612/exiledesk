@@ -936,9 +936,36 @@ function resetPatterns(): void {
   lastSnap = { ...lastSnap, patterns: JSON.stringify(s.simPatterns.value) };
   s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
   results.value = [];
+  // 結果のブロックも消す (残すとパターン名の無い「の 1 個あたり」と前の内訳が出て、ベース代がクラフトに化けて見えた。2026-10-08 使い倒しテスト 1)
+  recipeOut.value = null;
+  restCost.value = null;
+  restBases.value = 1;
   patternDone.value = false;
 }
 watch(() => s.simTargets.value.map((t) => t.modId).join(","), () => { if (!restoring) resetStalePatterns(); });
+/**
+ * アイテムレベルを下げたら、届かなくなった段の狙いはそのレベルで届く一番良い段に落とす (1 つも届かなければ外す)。
+ * 残すと付きやすさ <0.1% のまま回せて完成 0% になっていた (2026-10-08 使い倒しテスト 2)
+ */
+watch(() => s.itemLevel.value, (lv) => {
+  const d = s.data.value;
+  if (!d || restoring) return;
+  const clamp = (t: { modId: string; minTierIndex: number }): { modId: string; minTierIndex: number } | null => {
+    const tiers = d.mods.get(t.modId)?.tiers ?? [];
+    if (!tiers.length || (tiers[t.minTierIndex]?.ilvl ?? 0) <= lv) return t;
+    let best = -1;
+    for (let i = 0; i < t.minTierIndex; i++) if (tiers[i]!.ilvl <= lv) best = i;
+    return best < 0 ? null : { ...t, minTierIndex: best };
+  };
+  let changed = false;
+  const next = s.simTargets.value.flatMap((t) => {
+    const c = clamp(t);
+    const alts = (t.alts ?? []).map(clamp).filter((x): x is { modId: string; minTierIndex: number } => !!x);
+    if (!c || c.minTierIndex !== t.minTierIndex || alts.length !== (t.alts?.length ?? 0)) changed = true;
+    return c ? [{ ...t, minTierIndex: c.minTierIndex, ...(t.alts ? { alts } : {}) }] : [];
+  });
+  if (changed) s.simTargets.value = next;
+});
 watch(() => rows.value.length, (n) => { if (n === 0) { resetPatterns(); modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
 watch(keptKey, () => { if (restoring) return; resetPatterns(); modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
 // 下の MOD 一覧は ① で選んでいる間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
@@ -1115,11 +1142,12 @@ const luck = computed(() => {
   if (!sm) return [];
   const add = split.value.baseAdd;
   const xs = [
-    { label: "2 人に 1 人は", v: sm.p50 + add, bar: "bg-emerald-400", text: "text-emerald-300", tail: "以内", top: false },
-    { label: "10 人に 8 人は", v: sm.p80 + add, bar: "bg-amber-400", text: "text-amber-200", tail: "以内", top: false },
-    { label: "10 人に 9 人は", v: sm.p90 + add, bar: "bg-rose-400", text: "text-rose-300", tail: "以内", top: false },
+    { label: "完成した 2 人に 1 人は", v: sm.p50 + add, bar: "bg-emerald-400", text: "text-emerald-300", tail: "以内", top: false },
+    { label: "完成した 10 人に 8 人は", v: sm.p80 + add, bar: "bg-amber-400", text: "text-amber-200", tail: "以内", top: false },
+    { label: "完成した 10 人に 9 人は", v: sm.p90 + add, bar: "bg-rose-400", text: "text-rose-300", tail: "以内", top: false },
     // 平均は線の上に (運の悪い人の高い金額に引っ張られて、真ん中の人より高くなる。2026-10-07 オーナー「半分とか 8 割とか分かりづらい、平均？」)
-    { label: "平均", v: split.value.base + split.value.craft, bar: "bg-white", text: "text-white/80", tail: "", top: true },
+    // 平均 = 全員の出費 ÷ 完成した数 (完成が少ないと、完成した人の分位よりずっと高くなる。2026-10-08 使い倒しテスト 3)
+    { label: "平均 (全員の出費 ÷ 完成した数)", v: split.value.base + split.value.craft, bar: "bg-white", text: "text-white/80", tail: "", top: true },
   ];
   const max = Math.max(...xs.map((x) => x.v)) * 1.15 || 1;
   return xs.map((x) => ({ ...x, left: `${Math.min(92, Math.max(6, (x.v / max) * 100))}%` }));
@@ -1262,7 +1290,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
           <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
           <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-          <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80">付きやすさ {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}では MOD レベルが低い)</template></span>
+          <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80" title="増強 1 回でこの段以上が付く割合 (2 狙う MOD の出やすさは全段の重み、ここは打つ増強の下限で絞る)">増強で付く {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}では MOD レベルが低い)</template></span>
         </p>
         <div v-if="!whiteDone" class="mt-1 flex items-center gap-2">
           <span v-if="calc && fracMembers.length >= 2" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>

@@ -925,9 +925,16 @@ function move(i: number, d: -1 | 1): void {
 }
 const remove = (i: number): void => setSteps((list) => list.filter((_, k) => k !== i));
 
+/** 重ならない名前 (結果はパターンの名前で引くので、同じ名前は取り違える。2026-10-08 使い倒しテスト 4) */
+function uniqueName(base: string, skip: number | null = null): string {
+  const taken = new Set(s.simPatterns.value.filter((_, i) => i !== skip).map((p) => p.name));
+  if (!taken.has(base)) return base;
+  const m = /^(.*?)(?: (\d+))?$/.exec(base);
+  const stem = m?.[1] ?? base;
+  for (let n = (Number(m?.[2]) || 1) + 1; ; n++) if (!taken.has(`${stem} ${n}`)) return `${stem} ${n}`;
+}
 function addPattern(copy: boolean): void {
-  const n = s.simPatterns.value.length + 1;
-  s.simPatterns.value = [...s.simPatterns.value, { name: `パターン ${n}`, steps: copy ? pat.value.steps.map((x) => ({ ...x })) : [] }];
+  s.simPatterns.value = [...s.simPatterns.value, { name: uniqueName(`パターン ${s.simPatterns.value.length + 1}`), steps: copy ? pat.value.steps.map((x) => ({ ...x })) : [] }];
   active.value = s.simPatterns.value.length - 1;
 }
 /** 名前を付け替えているタブ */
@@ -936,7 +943,7 @@ function rename(i: number, name: string): void {
   if (renaming.value !== i) return;
   renaming.value = null;
   const n = name.trim();
-  if (n && n !== s.simPatterns.value[i]?.name) s.simPatterns.value = s.simPatterns.value.map((p, k) => (k === i ? { ...p, name: n } : p));
+  if (n && n !== s.simPatterns.value[i]?.name) s.simPatterns.value = s.simPatterns.value.map((p, k) => (k === i ? { ...p, name: uniqueName(n, i) } : p));
 }
 function removePattern(): void {
   if (s.simPatterns.value.length <= 1) return;
@@ -1442,7 +1449,7 @@ defineExpose({ rows });
       <!-- アイテムは枠に収まるまで縮める (スクロールさせない。2026-10-07 オーナー「レアアイテムの所はスクロールしたくない、画面に収まるように小さく」) -->
       <div v-if="preview" ref="cardBox" class="w-[280px] shrink-0 overflow-hidden max-md:order-2 max-md:w-full">
         <div ref="cardInner" class="max-md:mx-auto max-md:w-[280px]" :style="{ zoom: cardZoom }">
-        <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : editingStep ? `${previewAt + 1} 手目を打つ前 (前の手で外れた時の例。オレンジ = この手で消える候補)` : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
+        <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : editingStep ? `${previewAt + 1} 手目を打つ前${rows[previewAt]?.step.target ? " (前の手で外れた時の例。オレンジ = この手で消える候補)" : ""}` : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
         <StageItemCard :item="preview" :added="previewOut?.added ?? []" :removed="previewOut?.removed ?? []" :doomed="previewOut?.doomed ?? []" :holding="false" :flash-key="0" :width="280" compact />
         </div>
       </div>
