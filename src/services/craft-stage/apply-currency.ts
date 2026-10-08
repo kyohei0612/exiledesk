@@ -17,6 +17,7 @@ import { catalysingMultiplier } from "../htc/catalysing-multiplier";
 import { boostedBy } from "../htc/quality";
 import { addForced, addOne, allMods, removeForced, removeOne, room, SIDES, skip, without, type Force, type PoolOpts } from "./stage-core";
 import { applyEssence } from "./apply-essence";
+import { applyForce, isForce } from "./apply-force";
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
@@ -147,6 +148,8 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
 }
 
 function applyInner(data: PatchData, item: StageItem, currency: string, rng: () => number, used: readonly string[], hint: ApplyHint): StageApply {
+  // 指名で付ける手 (手で打つ画面の「付ける」。apply-force.ts)
+  if (isForce(currency)) return applyForce(data, item, currency, rng);
   const kind = kindOf(currency);
   // アクト中に落ちる物 (要望 ⑧、apply-act.ts)
   if (currency === "wisdom") return applyWisdom(item);

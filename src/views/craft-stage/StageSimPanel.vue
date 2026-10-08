@@ -11,7 +11,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { craftStage, iconOf, mergeRecipesFromFile, nameOf, priceOf, readSimRecipes, readSimSession, recipesToFile, writeSimRecipes, writeSimSession, type SimRecipe, type SimSession } from "../../state/craft-stage";
+import { craftStage, iconOf, mergeRecipesFromFile, nameOf, priceOf, readSimRecipes, recipesToFile, writeSimRecipes, writeSimSession, type SimRecipe, type SimSession } from "../../state/craft-stage";
 import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
 import { rateOf, simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
@@ -800,15 +800,7 @@ const sessionNow = () => ({
   flags: { whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, patternDone: patternDone.value },
 });
 watch(() => JSON.stringify(sessionNow()), () => { if (s.simPicked.value) writeSimSession(sessionNow()); });
-onMounted(() => {
-  const ses = readSimSession();
-  if (!ses || ses.base !== s.base.value || !s.simTargets.value.length) return;
-  restoring = true;
-  whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
-  startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;
-  // patternDone は orderDone の watch で落ちるので、その後に戻す
-  void nextTick(() => { patternDone.value = !!ses.flags.patternDone; restoring = false; resetStalePatterns(); });
-});
+// 工程の「決めた」を前回から戻すのはやめた (2026-10-08 オーナー「毎回リセットでおｋ」。途中の保存 (writeSimSession) は要望・バグの添付用にだけ残す)
 /**
  * レシピ (名前を付けて残した途中)。右上の「レシピ ▼」から保存・呼び出し・名前の付け替え・消す
  * (2026-10-07 オーナー「このガチャの仕組みシミュレーターで保管しときたい」「レシピ保存ボタンで管理できるように、名前も自分で変えて」)

@@ -16,6 +16,11 @@ import { ref } from "vue";
 import BaseCard from "./decor/BaseCard.vue";
 import { openLogin, poeSession, refreshSession } from "../state/poe-session";
 
+/**
+ * 開発ビルドだけ: localStorage に exiledesk.dev.skipLogin=1 があれば覆いを出さない (CDP で開発版を操作して確かめる時用。
+ * 2026-10-08 オーナー「ログイン邪魔」。import.meta.env.DEV は本番のビルドでは必ず false なので本体には入らない)
+ */
+const devSkipLogin = import.meta.env.DEV && (() => { try { return localStorage.getItem("exiledesk.dev.skipLogin") === "1"; } catch { return false; } })();
 const busy = ref(false);
 async function login(): Promise<void> {
   busy.value = true;
@@ -29,7 +34,7 @@ async function login(): Promise<void> {
 
 <template>
   <div
-    v-if="poeSession.needLogin.value"
+    v-if="poeSession.needLogin.value && !devSkipLogin"
     class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-[1px]"
   >
     <BaseCard solid class="max-w-md mx-6">

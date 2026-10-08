@@ -22,6 +22,7 @@ import { socketCapOf } from "./stage-runes";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOfItem } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
+import { parseForce } from "./apply-force";
 import { applyRune, isRune, parseRuneKey, runeOf } from "./stage-runes";
 import { propRows } from "./stage-props";
 
@@ -117,6 +118,8 @@ export interface PlayedStep {
 export const splitOmens = (omen: string | null | undefined): string[] => (omen ? omen.split("+").filter(Boolean) : []);
 /** 手の日本語名 (発現は「発現 (2 番目)」) */
 export function stepJa(currency: string, item: StageItem): string {
+  const fc = parseForce(currency);
+  if (fc) return `指名で付ける (${fc.rank ?? "T1"}${fc.flag === "e" ? "・エッセンス" : fc.flag === "d" ? "・冒涜" : fc.flag === "f" ? "・フラクチャー" : ""})`;
   const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
   if (rv) return `発現 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;

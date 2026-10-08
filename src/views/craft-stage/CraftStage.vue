@@ -9,7 +9,7 @@
   状態と操作は [[craft-stage.ts]]、1 手の中身は services/craft-stage (計算機と同じ規則)。
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import StageItemCard from "./StageItemCard.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -21,7 +21,7 @@ import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
-import { craftStage, iconOf, nameOf, readSimSession } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
@@ -92,22 +92,10 @@ async function copy(label: string, v: unknown): Promise<void> {
   setTimeout(() => (copied.value = ""), 2500);
 }
 /** シミュレーションでまだベースを選んでいない (ベース選びだけを出す) */
-/** シミュレーションを開いた時、覚えていた途中 (ベース・狙う MOD・パターン) を戻す (1 回だけ。工程の「決めた」は StageSimPanel が戻す) */
-let simRestored = false;
-watch(() => s.mode.value === "sim" && s.ready.value, (on) => {
-  if (!on || simRestored || s.simPicked.value) return;
-  simRestored = true;
-  const ses = readSimSession();
-  if (!ses || !s.data.value) return;
-  s.base.value = ses.base;
-  s.itemLevel.value = ses.itemLevel;
-  s.simTargets.value = ses.targets;
-  s.simSockets.value = ses.sockets;
-  s.simOrder.value = ses.order;
-  s.simPatterns.value = ses.patterns.length ? ses.patterns : [{ name: "パターン 1", steps: [] }];
-  s.simPicked.value = true;
-  s.reset();
-}, { immediate: true });
+/**
+ * シミュレーションは開くたびにまっさら (ベースを選ぶ所) から。前回閉じた途中は戻さない
+ * (2026-10-08 オーナー「前回閉じたクラフトの名残が残るから毎回リセットでおｋ」。途中は writeSimSession で要望・バグの添付にだけ残す。レシピは別に残る)
+ */
 /** 手で打つ画面の今のアイテムの MOD 群 (未発現は除く。固定・冒涜も同じ条件で、種類は問わない) */
 const stageModGroups = computed<ModGroup[]>(() => {
   const it = s.item.value;
