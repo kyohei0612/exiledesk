@@ -247,7 +247,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold" :class="col.used > 3 ? 'text-rose-300' : 'opacity-70'">
         {{ col.title }} ({{ col.used }}/3)<span v-if="col.used > 3" class="ml-1 font-normal">枠が足りない</span>
       </p>
-      <p v-if="!col.groups.length" class="py-0.5 opacity-40">{{ props.editable ? "下の一覧の「T○ 以上」で足す" : "なし" }}</p>
+      <p v-if="!col.groups.length" class="py-0.5 opacity-40">{{ props.editable ? "下の一覧で MOD を押し、開いた段の表の「T○ 以上」で足す" : "なし" }}</p>
       <div v-for="g in col.groups" :key="g.key" class="flex items-start gap-1.5 py-0.5 max-md:flex-wrap">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
