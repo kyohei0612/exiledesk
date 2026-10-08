@@ -73,6 +73,11 @@ export interface CompiledStep {
   otherGone?: "annul";
   /** お告げ無しの消去で外す時、外れが反対の側に付いたら消さずにもう一度打つ (PatternStep.otherJunk) */
   otherJunk?: "keep";
+  /**
+   * 「残り」の手の元の手 (パターンの中の番号)。この手の間に候補が消えても、まだ 1 つでも付いていればこの手を続け、全部消えたら元の手へ
+   * (2026-10-08 オーナー「全部消えたら高貴 → 2 手目へ戻る流れ、消去はそのまま普通の消去」)
+   */
+  restFrom?: number;
 }
 export interface RecipeSpec {
   /**
@@ -425,6 +430,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
    */
   function runPattern(pat: readonly CompiledStep[]): RecipeRun {
     const startItem = item, startCost = cost;
+    /** 始めから付いていた MOD (手打ちの状態から始めた時だけ) */
+    const startHad = new Set(spec.startItem ? allMods(spec.startItem).map((m) => m.modId) : []);
     let preRunes = new Set(runes);
     /** 消えた狙いを取り直す時の手 (元の手の番号 → 替えた手) */
     const regain = new Map<number, CompiledStep>();
@@ -449,6 +456,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         const gone = [...prevMet].filter((id) => !now.has(id));
         prevMet = now;
         let goto = lastAt >= 0 ? gone.map((id) => pat[lastAt]?.lostGoto?.[id]).find((g) => g != null) : undefined;
+        // 「残り」の手で候補が消えた: まだ付いていればこの手を続ける、全部消えたら元の手 (カオスなど) へ
+        const rq = lastAt >= 0 ? pat[lastAt] : undefined;
+        if (goto == null && rq?.restFrom != null && rq.target && gone.length && gone.every((id) => membersOf(rq.target!).some((a) => a.modId === id))) goto = count(rq.target) > 0 ? lastAt : rq.restFrom;
         // 決めていなければ、マジックの手 (変成・増強・王者・錬金・エッセンス) で付けた物は打ち直せないので新しいベースで最初から
         // (2026-10-07 靴で試すと、レアで移動スピードが消えても画面は「2 手目 (増強) に戻る」、計算は戻らず最後に失敗していた)
         // まだマジックで、消えた物がこの増強の手の狙い (候補) なら、この手をもう一度 (増強で 2 つ狙う時、普通の消去で当たった方が消えた。
@@ -456,6 +466,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         if (goto == null && lastAt >= 0 && item.rarity === "magic" && pat[lastAt]?.kind === "augment" && pat[lastAt]!.target && gone.length && gone.every((id) => membersOf(pat[lastAt]!.target!).some((a) => a.modId === id))) goto = lastAt;
         // 付けた手 = その MOD を狙った一番後ろの手 (画面の placedAt と同じ。2026-10-08 レビュー C2: 前は一番前の手を見ていて、変成 → 高貴で取り直した物でも新しいベースにしていた)
         const placedAt = (id: string): number => { for (let k = lastAt - 1; k >= 0; k--) { const q = pat[k]!; if (q.target && membersOf(q.target).some((a) => a.modId === id)) return k; } return -1; };
+        // 始めから付いていた狙い (手打ちの状態から) は、どの手も付けていない: 消えたらこの状態を買い直して最初から (2026-10-08 完成判定 1:
+        // 戻り先が決まらず取り直さないまま最後で失敗、97% が止まっていた)
+        if (goto == null && lastAt >= 0 && startHad.size && gone.some((id) => startHad.has(id) && placedAt(id) < 0)) goto = LOST_RESTART;
         if (goto == null && lastAt >= 0 && gone.some((id) => { const j = placedAt(id); return j >= 0 && ONCE_KINDS.has(pat[j]!.kind); })) goto = LOST_RESTART;
         // 「そのまま次へ」の高貴・カオス・骨などで付けた物が消えたら、その手へ戻ってもう一度 (画面の既定「N 手目に戻る」と同じ。
         // 2026-10-08 レビュー N2: lost の引き戻しを「そのまま次へ」で止めたので、ここで戻さないと取り直さず最後まで行って失敗していた)
@@ -478,7 +491,15 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           regain.set(lost, { kind: "exalt", currency: "exalt_perfect", omens: [SIDE_OMEN.exalt[sideOf(q.target.modId)]], target: q.target, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] } });
         }
       }
-      if (i >= pat.length) { accAt = -1; return unmet(item) ? fail("パターンの最後まで来たが狙いが揃っていない") : { done: true, cost, steps, seed, replayFrom, bases, hits: hitsNow(), stepPresses, stepCost }; }
+      if (i >= pat.length) {
+        accAt = -1;
+        if (!unmet(item)) return { done: true, cost, steps, seed, replayFrom, bases, hits: hitsNow(), stepPresses, stepCost };
+        // 最後まで来て揃っていなければ、新しいベース (手打ちの状態ならその状態) で最初から。実際のクラフトと同じく、1 個できるまで続ける
+        // (2026-10-08 完成判定 2: 前は「止まった」で終わり、完成 4% に全員の出費が乗って 1 個あたりが 10 倍に膨らんでいた)。
+        // 1 手も進まない組み方で回り続けないよう、作り直しは手の上限の中だけ
+        restartPattern();
+        continue;
+      }
       let p = regain.get(i) ?? pat[i]!;
       lastAt = i;
       // 自前のフラクチャー: 狙いが固定されていれば次へ。打って違う MOD が固定されたら外れ (既定は新しいベースで最初から)

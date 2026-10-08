@@ -59,7 +59,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   }
   // 同じ系統が先 (枠より分かりやすい理由)
   if (familyBlocked(mod, takenFamilies(data, it))) return skip(item, "同じ系統の MOD が付いている");
-  if (!room(it, side)) return skip(item, it.rarity === "magic" ? `マジックは${SIDE_JA[side]} 1 つまで (3 つ目は王者でレアにしてから)` : `${SIDE_JA[side]}の枠が埋まっている`);
+  if (!room(it, side)) return skip(item, it.rarity === "magic" ? `マジックは${SIDE_JA[side]} 1 つまで (同じ側の 2 つ目は王者でレアにしてから)` : `${SIDE_JA[side]}の枠が埋まっている`);
   if (p.flag === "d" && allMods(it).some((m) => m.desecrated)) return skip(item, "冒涜の MOD はアイテムに 1 つまで");
   if (p.flag === "f" && allMods(it).some((m) => m.fractured)) return skip(item, "フラクチャーは 1 つまで");
   if (p.flag === "e") {

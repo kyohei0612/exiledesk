@@ -32,7 +32,7 @@ import PriceInput from "../../components/PriceInput.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, restMembers, otherJunkOf, otherGoneOf, candsOfStep } from "../../services/craft-stage/pattern";
+import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, REST, restMembers, otherJunkOf, otherGoneOf, candsOfStep } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import SimProgress from "./SimProgress.vue";
@@ -722,7 +722,7 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const ms = st.miss ? setByKey(sets, st.miss) : undefined;
       const grp = groupOf(st, x) ?? restOf(p.steps, st);
       const one = grp && isDouble(x) ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
-      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? tf, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}), ...(otherGoneOf(x.kind, st.otherGone) === "annul" ? { otherGone: "annul" as const } : {}), ...(otherJunkOf(x.kind, st.otherJunk) === "keep" ? { otherJunk: "keep" as const } : {}) }];
+      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? tf, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), ...(isRest(st.target) ? { restFrom: at[Number(st.target.slice(REST.length))] ?? 0 } : {}), onMiss: st.onMiss, ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}), ...(otherGoneOf(x.kind, st.otherGone) === "annul" ? { otherGone: "annul" as const } : {}), ...(otherJunkOf(x.kind, st.otherJunk) === "keep" ? { otherJunk: "keep" as const } : {}) }];
       });
     };
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
@@ -1003,24 +1003,35 @@ watch(() => s.simStartItem.value, () => { if (!restoring && s.simStart.value ===
  * アイテムレベルを下げたら、届かなくなった段の狙いはそのレベルで届く一番良い段に落とす (1 つも届かなければ外す)。
  * 残すと付きやすさ <0.1% のまま回せて完成 0% になっていた (2026-10-08 使い倒しテスト 2)
  */
+/** アイテムレベルで下げる前の段 (戻した時に元の段へ。2026-10-08 完成判定 5: 下げたまま黙っていた) */
+const wantTier = new Map<string, number>();
+const ilvlNote = ref("");
 watch(() => s.itemLevel.value, (lv) => {
   const d = s.data.value;
   if (!d || restoring) return;
-  const clamp = (t: { modId: string; minTierIndex: number }): { modId: string; minTierIndex: number } | null => {
+  let lowered = 0, raised = 0;
+  const fit = (t: { modId: string; minTierIndex: number }): { modId: string; minTierIndex: number } | null => {
     const tiers = d.mods.get(t.modId)?.tiers ?? [];
-    if (!tiers.length || (tiers[t.minTierIndex]?.ilvl ?? 0) <= lv) return t;
+    if (!tiers.length) return t;
+    const want = Math.max(t.minTierIndex, wantTier.get(t.modId) ?? -1);
+    // 届く一番良い段 (want 以下)
     let best = -1;
-    for (let i = 0; i < t.minTierIndex; i++) if (tiers[i]!.ilvl <= lv) best = i;
-    return best < 0 ? null : { ...t, minTierIndex: best };
+    for (let i = 0; i <= want && i < tiers.length; i++) if (tiers[i]!.ilvl <= lv) best = i;
+    if (best < 0) return null;
+    if (best < want) wantTier.set(t.modId, want); else wantTier.delete(t.modId);
+    if (best < t.minTierIndex) lowered++;
+    if (best > t.minTierIndex) raised++;
+    return { ...t, minTierIndex: best };
   };
   let changed = false;
   const next = s.simTargets.value.flatMap((t) => {
-    const c = clamp(t);
-    const alts = (t.alts ?? []).map(clamp).filter((x): x is { modId: string; minTierIndex: number } => !!x);
-    if (!c || c.minTierIndex !== t.minTierIndex || alts.length !== (t.alts?.length ?? 0)) changed = true;
+    const c = fit(t);
+    const alts = (t.alts ?? []).map(fit).filter((x): x is { modId: string; minTierIndex: number } => !!x);
+    if (!c || c.minTierIndex !== t.minTierIndex || alts.length !== (t.alts?.length ?? 0) || alts.some((a, i) => a.minTierIndex !== t.alts![i]!.minTierIndex)) changed = true;
     return c ? [{ ...t, minTierIndex: c.minTierIndex, ...(t.alts ? { alts } : {}) }] : [];
   });
   if (changed) s.simTargets.value = next;
+  ilvlNote.value = lowered ? `アイテムレベル ${lv} では届かない段を ${lowered} つ下げました (レベルを戻すと元の段に戻る)` : raised ? `元の段に ${raised} つ戻しました` : "";
 });
 watch(() => rows.value.length, (n) => { if (n === 0) { resetPatterns(); modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
 watch(keptKey, () => { if (restoring) return; resetPatterns(); modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
@@ -1204,6 +1215,8 @@ function moneyT(x: number): string {
   if (!Number.isFinite(x)) return "—";
   if (simCurrency.choice.value !== "fair") return money(x);
   const v = x / rateOf("divine");
+  // 0.01 神に満たない (0.00 神と出ていた) 時は高貴で
+  if (v > 0 && v < 0.01) return money(x);
   return `${v >= 100 ? Math.round(v).toLocaleString() : v >= 10 ? v.toFixed(1) : v.toFixed(2)} 神`;
 }
 const barW = (x: number, total: number): string => `${total > 0 ? Math.max(0, Math.min(100, (x / total) * 100)) : 0}%`;
@@ -1240,14 +1253,18 @@ const costGroups = computed(() => {
   };
   const out: Array<{ name: string; note: string; total: number; bar: string; items: Array<{ name: string; n: number; cost: number; share: number }> }> = [];
   const c = calc.value;
-  if (fractureRow.value) {
-    const best = routes.value.best;
-    const name = routes.value.list.find((x) => x.key === best)?.name.replace(/\s*\(.*$/, "") ?? "";
+  if (fractureRow.value && s.simStart.value !== "item") {
+    // 1 で始め方を決めた時はその始め方 (前は一番安い始め方の内訳が出て、足し算も合わなかった。2026-10-08 完成判定 4)
+    const best = s.simStart.value === "fractured" ? "bought" : s.simStart.value === "four" ? "four" : routes.value.best;
+    const name = s.simStart.value === "fractured" ? "1 で決めた: 固定済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : routes.value.list.find((x) => x.key === best)?.name.replace(/\s*\(.*$/, "") ?? "";
     let items: Array<{ name: string; n: number; cost: number }> = [];
     if (best === "self" && c) items = [...c.lines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
     else if (best === "four" && c) items = [{ name: "レアのベース (3 MOD + 狙い 1)", n: 3, cost: (num(fourDivine.value) ?? 0) * 3 }, ...c.buyLines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
     else if (best === "bought") items = [{ name: "固定済みのベース", n: 1, cost: num(boughtDivine.value) ?? 0 }];
-    out.push({ name: "ベース", note: `フラクチャー済みまで (${name})`, total: split.value.base, bar: "bg-stone-400/80", items: top(items, split.value.base) });
+    // 内訳は 1 個分 × 使った数 (作り直し・買い直し込み)
+    const nb = r.bases;
+    items = items.map((x) => ({ ...x, n: x.n * nb, cost: x.cost * nb }));
+    out.push({ name: "ベース", note: `フラクチャー済みまで (${name}) × ${nb.toFixed(1)} 個`, total: split.value.base, bar: "bg-stone-400/80", items: top(items, split.value.base) });
   } else {
     out.push({ name: "ベース", note: s.simStart.value === "item" ? "手打ちの状態" : "白のベース", total: split.value.base, bar: "bg-stone-400/80", items: top([{ name: s.simStart.value === "item" ? "この状態の作り直し (累計 + 白ベース)" : "白のベース", n: s.simStart.value === "item" ? Math.max(0, r.bases - 1) : r.bases, cost: split.value.base }], split.value.base) });
   }
@@ -1320,7 +1337,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     -->
     <div v-if="socketsOk && step4pre" class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px]">
       <b class="text-[12px] text-amber-100">2〜5</b>
-      <span class="truncate opacity-80">狙い {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "固定済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
+      <span class="truncate opacity-80">狙い {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "固定済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
       <button type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="fold = !fold">{{ fold ? "開く ▼" : "畳む ▲" }}</button>
     </div>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
@@ -1331,6 +1348,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="modsDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="modsDone && goTo('mods')">2 狙う MOD</button> <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
           <button v-if="modsDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('mods')">ここからやり直す</button>
         </p>
+        <p v-if="ilvlNote" class="mb-1 text-[11px] text-amber-200">{{ ilvlNote }}</p>
         <!-- 完成図 (ベースの横から移した。段・＋・×・どれか N つ・付きやすさ) -->
         <StageTargetSummary :editable="!modsDone" />
         <div v-if="rows.length && !modsDone" class="mt-1 flex items-center gap-2">
@@ -1628,7 +1646,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
                 <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
               </span>
-              <span v-else-if="x.key === 'bought'" class="text-[11px] opacity-60">値段は 4 フラクチャーベース設定で入れる</span>
+              <span v-else-if="x.key === 'bought'" class="text-[11px] opacity-60">値段は 4 最安値スタート (始め方を 1 で決めた時は 3 ベース設定) で入れる</span>
               <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
                 <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" placeholder="無し" />
                 <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>

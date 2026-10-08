@@ -269,6 +269,13 @@ const preNodes = computed(() => {
   try { white = { ...freshItem(d, s.base.value, s.itemLevel.value), sockets: props.start.sockets, rollSeed: 1 }; } catch { return []; }
   const fm = makeStageMod(m, m.type === "suffix" ? "suffix" : "prefix", frac.minTierIndex, () => 0.5);
   const name = cardTitleOf(frac.modId);
+  const fixedItem = { ...withMod(white, { ...fm, fractured: true }), rarity: "rare" as const };
+  // 1 で始め方を決めた時はその道 (前は買う時も自作の道が出ていた。2026-10-08 完成判定)
+  if (s.simStart.value === "fractured") return [{ title: `${name} を固定済み`, icons: ["fracture"], sub: "固定済みのベースを買う", tone: "border-orange-400/60", miss: null as { icons: string[]; text: string } | null, item: fixedItem }];
+  if (s.simStart.value === "four") return [
+    { title: "4 MOD のレア", icons: [] as string[], sub: `買う (3 MOD + ${name})`, tone: "border-white/30", miss: null as { icons: string[]; text: string } | null, item: { ...withMod(white, fm), rarity: "rare" as const } },
+    { title: `${name} を固定`, icons: ["desecrate", "fracture"], sub: "骨の壁 → フラクチャー", tone: "border-orange-400/60", miss: { icons: [], text: "⟲ 買い直し (当たり 1/3)" }, item: fixedItem },
+  ];
   return [
     { title: "白のベース", icons: [] as string[], sub: "買う", tone: "border-white/30", miss: null as { icons: string[]; text: string } | null, item: white },
     { title: name, icons: ["transmute", "augment"], sub: "変成 → 増強", tone: "border-blue-400/50", miss: { icons: ["annul"], text: "↺" }, item: { ...withMod(white, fm), rarity: "magic" as const } },
@@ -467,7 +474,8 @@ const splitOpen = ref(false);
 function splitSummary(r: Row, sp: { t: string; o: string }): string {
   const keep = otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep";
   const again = otherGoneOf(r.set?.kind, r.step.otherGone) === "annul";
-  return `ハズレが${sp.t} (狙いの側) に付いた時だけ消去${keep ? `。${sp.o}に付いたら消さずに打つ` : ""}。消去後に${sp.t}のハズレが残ったら${again ? "もう一度消去" : "そのまま打つ"}`;
+  // 反対の側のハズレも消す時は「だけ」にならない (2026-10-08 完成判定: ツリーと逆の文になっていた)
+  return `${keep ? `ハズレが${sp.t} (狙いの側) に付いた時だけ消去。${sp.o}に付いたら消さずに打つ` : "ハズレはどちらの側に付いても消去"}。消去後に${sp.t}のハズレが残ったら${again ? "もう一度消去" : "そのまま打つ"}`;
 }
 function sideSplit(r: Row): { t: string; o: string } | null {
   const ms = missSet(r.step);
@@ -711,7 +719,9 @@ function removableIn(i: number, r: Row): (id: string) => boolean {
 }
 /** その MOD を付けた手 (i 手目まで。「MOD が消えたら」の既定の戻り先) */
 function placedAt(id: string, i: number): number {
-  for (let j = i; j >= 0; j--) { const st = pat.value.steps[j]!; if (st.target === id || st.target2 === id || st.target3 === id) return j; }
+  for (let j = i; j >= 0; j--) { const st = pat.value.steps[j]!; if (st.target === id || st.target2 === id || st.target3 === id || (isRest(st.target) && restMembers(pat.value.steps, st.target).includes(id))) return j; }
+  // 手打ちの状態から始めて最初から付いていた物 (どの手も付けていない)
+  if (props.start.mods?.placed.includes(id)) return -1;
   return i;
 }
 /** 消えたら戻る手 (決めていなければ付けた手。マジックの手で付けた物は打ち直せないので最初から) */
@@ -720,7 +730,11 @@ function gotoOf(i: number, r: Row, id: string): number {
   if (g != null) return g;
   // まだマジックの増強の手で、消えた物がこの手の狙い (候補) なら、この手をもう一度 (増強で 2 つ狙う時。計算も同じ)
   if (augmentAgain(r, id)) return i;
+  // 「残り」の手: 候補はこの手を続ける (全部消えたら元の手へ。計算と同じ)
+  if (isRest(r.step.target) && restMembers(pat.value.steps, r.step.target).includes(id)) return i;
   const j = placedAt(id, i);
+  // 始めから付いていた物: この状態を買い直して最初から
+  if (j < 0) return LOST_RESTART;
   const k = setByKey(sets.value, pat.value.steps[j]?.set ?? "")?.kind;
   return k && ONCE_KINDS.has(k) ? LOST_RESTART : j;
 }

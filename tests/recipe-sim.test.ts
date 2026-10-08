@@ -320,7 +320,7 @@ describe("増強 + お告げ無しの消去の枝 (2026-10-07)", () => {
 });
 
 describe("「そのまま次へ」の手 (2026-10-08 レビュー B1)", () => {
-  it("金の指輪 (固定済み): 高貴で火耐性 (外れたらそのまま次へ) → 冷気耐性 (外して繰り返す)。火耐性が外れた人は戻らずに最後まで行って「揃っていない」で止まる", async () => {
+  it("金の指輪 (固定済み): 高貴で火耐性 (外れたらそのまま次へ) → 冷気耐性 (外して繰り返す)。火耐性が外れた人は戻らずに最後まで行き、揃っていなければ新しいベースで最初から", async () => {
     const data = await loadPatch();
     const life = targetOf(data, "Rings", /IncreasedLife$/, 3);
     const fireT = { ...targetOf(data, "Rings", /FireResistance$/, 3), method: "exalt" as const };
@@ -334,9 +334,10 @@ describe("「そのまま次へ」の手 (2026-10-08 レビュー B1)", () => {
         { kind: "exalt", currency: "exalt", omens: ["OmenofDextralExaltation"], target: coldT, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] } },
       ],
     });
-    expect(r!.pDone).toBeLessThan(1);
-    expect(r!.stops.some((s) => /揃っていない/.test(s.reason))).toBe(true);
-    expect(r!.stops.some((s) => /手を超えた/.test(s.reason))).toBe(false);
+    // 2026-10-08 完成判定 2: 最後まで来て揃っていなければ、新しいベースで最初から (止まったにしない)。外れた人はベースを買い直す
+    expect(r!.pDone).toBeGreaterThan(0.9);
+    expect(r!.stops.some((s) => /揃っていない/.test(s.reason))).toBe(false);
+    expect(r!.bases).toBeGreaterThan(1);
   });
 });
 

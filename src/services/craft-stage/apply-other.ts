@@ -61,7 +61,8 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
       const pool = mods.filter((m) => !m.unrevealed);
       const m = pool[Math.floor(rng() * pool.length)]!;
       const next = { ...m, fractured: true };
-      return { applied: true, item: replaced(item, m, next), added: [next], removed: [m] };
+      // 固定は消えて付いたのではない (＋ と － に同じ MOD が並んで分かりづらかった。2026-10-08 完成判定)
+      return { applied: true, item: replaced(item, m, next), added: [next], removed: [] };
     }
     case "artificer": {
       // 上限はベースごと (PoB の socketLimit − 2、stage-runes.ts)。2026-09-29 までは全部 2 だった

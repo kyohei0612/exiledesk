@@ -193,6 +193,14 @@ function pickSimBase(en: string): void {
  */
 /** アプリ版だけ (Web 版は POE2Tube 用の JSON・動画モードを出さない) */
 const inApp = isTauriRuntime();
+/** 白に戻す (2 回押し) */
+const resetArmed = ref(false);
+let resetArmTimer: ReturnType<typeof setTimeout> | undefined;
+function armReset(): void {
+  if (!resetArmed.value) { resetArmed.value = true; clearTimeout(resetArmTimer); resetArmTimer = setTimeout(() => { resetArmed.value = false; }, 3000); return; }
+  resetArmed.value = false;
+  s.reset();
+}
 function simFromHand(): void {
   const it = s.item.value;
   if (!it) return;
@@ -216,7 +224,7 @@ const startItemMods = computed(() => {
 const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hint: string }> = [
   { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る" },
   { k: "fractured", label: "🔒 フラクチャー済みを買う", hint: "固定 MOD が 1 つ付いたベースを買う。固定 MOD は 2 狙う MOD で最初に足した物" },
-  { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って自分でフラクチャー (当たり 1/4)" },
+  { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)" },
 ];
 /** 手打ちから持ってきた時だけ出る札 */
 const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint: "手で打つ画面の今のアイテムから先を回す" };
@@ -301,7 +309,8 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
         <span v-else-if="s.simStart.value !== 'white'" class="text-[11px] opacity-60 max-md:w-full">固定 MOD は 2 狙う MOD で最初に足した物 (🔒)</span>
       </span>
       <template v-if="s.mode.value === 'hand'">
-      <button type="button" :class="btn" @click="s.reset()">白に戻す</button>
+      <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->
+      <button type="button" :class="[btn, resetArmed ? 'border-rose-400 bg-rose-500/25 text-rose-100' : '']" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArmed ? "もう一度押すと白に戻す" : "白に戻す" }}</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
       <!-- 今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08) -->
       <button type="button" :class="btn" class="border-amber-400/60 text-amber-100" title="今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーションへ。ベース代は 手打ちの累計 + 白ベース代" @click="simFromHand">この状態からシミュレーション →</button>
