@@ -437,6 +437,19 @@ async function searchPattern(k: number): Promise<void> {
   const withAlts = (id: string): ModPick[] => { const t = s.simTargets.value.find((x) => x.modId === id); return t ? [t, ...(t.alts ?? [])] : []; };
   const groups: ModGroup[] = [];
   if (fracMembers.value.length) groups.push({ picks: fracMembers.value });
+  // 打って作るパターン (ADR-002): 狙う手の狙い。同じ狙い (MOD が重なる) は数の一番大きい手で、「この中から N つ」(どれか 3 つなど)
+  if (p.play) {
+    const best = new Map<string, { mods: ModPick[]; need: number }>();
+    for (const m of p.play.moves) {
+      if (!m.aim) continue;
+      const key = m.aim.mods.map((x) => x.modId).sort().join(",");
+      const b = best.get(key);
+      if (!b || b.need < m.aim.need) best.set(key, { mods: m.aim.mods, need: m.aim.need });
+    }
+    for (const g of best.values()) groups.push(g.mods.length > 1 ? { picks: g.mods, count: g.need } : { picks: g.mods });
+    await searchModGroups(d, { groups });
+    return;
+  }
   const restOfStep = new Set(p.steps.filter((st) => isRest(st.target)).map((st) => Number(st.target!.slice(5))));
   p.steps.forEach((st, j) => {
     const x = setByKey(sets, st.set);
