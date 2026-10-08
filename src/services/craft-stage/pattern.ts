@@ -89,7 +89,7 @@ export interface PatternStep {
   policy?: Record<string, PolicyAct>;
 }
 /** 結果の状態での行動: 打つ物 (set) か、次の手・最初から・N 手目 (then) */
-export interface PolicyAct { set?: string; then?: "next" | "restart" | "goto" | "reset"; goto?: number }
+export interface PolicyAct { set?: string; then?: "next" | "restart" | "goto" | "reset" | "miss"; goto?: number }
 /** 状態のキー (狙いの側の当たり h・狙い以外 j) */
 export const policyKey = (h: number, j: number): string => `${h}-${j}`;
 /**

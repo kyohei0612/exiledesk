@@ -77,7 +77,7 @@ export interface CompiledStep {
   otherJunk?: "keep";
   /** 状況ごとの反応 (PatternStep.on をセットに直した物。goto は並べた後の番号) */
   /** 結果の状態ごとの行動 (PatternStep.policy をセットに直した物。キーは `${当たり}-${ハズレ}` (狙いの側)) */
-  policy?: Record<string, { act?: { kind?: PatternKind; currency: string; omens: string[] }; then?: "next" | "restart" | "goto" | "reset"; goto?: number }>;
+  policy?: Record<string, { act?: { kind?: PatternKind; currency: string; omens: string[] }; then?: "next" | "restart" | "goto" | "reset" | "miss"; goto?: number }>;
   on?: Partial<Record<"pre_full" | "partial" | "miss_t" | "miss_o" | "miss", { pre?: { kind?: PatternKind; currency: string; omens: string[] } | null; then: "repeat" | "next" | "restart" | "goto"; goto?: number; again?: { kind?: PatternKind; currency: string; omens: string[] } | null }>>;
   /**
    * 「残り」の手の元の手 (パターンの中の番号)。この手の間に候補が消えても、まだ 1 つでも付いていればこの手を続け、全部消えたら元の手へ

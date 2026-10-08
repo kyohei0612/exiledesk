@@ -37,9 +37,9 @@ const orbSplit = computed(() => {
 const runes = computed(() => runesFor(craftStage.item.value));
 /**
  * 「今のアイテムには使えない物」は畳める (2026-10-08 オーナー「使わないカレンシー閉じてもいいしな畳む」)。
- * スマホ (幅 768 CSS px 未満) は畳んだ状態が既定、PC は今まで通り開いたまま
+ * PC もスマホも畳んだ状態が既定 (2026-10-09 オーナー「使えないものはデフォで畳んでてくれ、これは手で打つ奴も」)
  */
-const unusableOpen = ref(!(typeof window !== "undefined" && window.innerWidth < 768));
+const unusableOpen = ref(false);
 /** 開いたルーンのまとまり (初めは全部閉じて、クラフトに関わる物だけ出す) */
 const openRunes = ref(new Set<string>());
 function toggleRunes(kind: string): void {

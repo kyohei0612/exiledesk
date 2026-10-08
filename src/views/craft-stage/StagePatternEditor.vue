@@ -25,6 +25,7 @@ import { baseArt } from "../../services/craft-stage/base-art";
 import { RUNES } from "../../services/craft-stage/stage-runes";
 import { fillHashes, fillModText, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
+import { shapesLeft } from "../../services/craft-stage/shape-table";
 import { modTierWeight } from "../../vendor/poe2htc/engine/pool";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 
@@ -914,6 +915,18 @@ function spamOf(i: number): number | null {
   for (let j = i - 1; j >= 0; j--) if (setByKey(sets.value, pat.value.steps[j]?.set ?? "")?.kind === "chaos") return j;
   return null;
 }
+/**
+ * 形の決まりで、まだ決めていない形がある時の理由 (全部決めるまでこの手にできない。2026-10-09 オーナー「全てのパターンが終わるまで次にいけないように」)
+ */
+function shapeWhy(i: number): string | null {
+  const r = rows.value[i];
+  if (!r?.step.policy) return null;
+  const t = treeOf(i, r);
+  if (!t) return null;
+  const n = shapesLeft({ side: t.side, limit: t.limit, need: t.need, otherRemovable: t.otherRemovable, pHit: t.pHit, sets: sets.value }, t.set, t.h0, t.j0, r.step.policy);
+  return n ? `打って決める: まだ決めていない形が ${n} つ` : null;
+}
+const badOf = (i: number): string | null => rows.value[i]?.bad ?? shapeWhy(i);
 /** 形の表で決めていない形の動き (やり直しの札の名前) */
 function missFallbackText(r: Row): string {
   const k = missKind(r);
@@ -1043,7 +1056,7 @@ function chipsOf(i: number, r: Row): Chip[] {
   if (!isRune) out.push({ part: "set", name: "カレンシー", icons: icons(r.set), text: r.set && !icons(r.set).length ? setShort(r.set) : "", state: st("set", !!r.set) });
   if (needs2(r)) out.push({ part: "target2", name: "一緒に狙う MOD", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: st("target2", !!r.step.target2) });
   else if (canCands(r)) out.push({ part: "target2", name: "ほかの候補 (任意)", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: now === "target2" ? "now" : candsOf(r).length ? "done" : "todo" });
-  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : r.step.onMiss === "annul_next" ? "狙い以外を消して次へ" : r.step.onMiss === "reset" ? "1 MOD 残し消去 (スパムまでリセット)" : r.step.onMiss === "restart" ? "新しいベースでもう一度" : "選択無し") + (r.step.policy ? " + 形ごと" : "") : "", state: st("miss", hasMiss(r)) });
+  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : r.step.onMiss === "annul_next" ? "狙い以外を消して次へ" : r.step.onMiss === "reset" ? "1 MOD 残し消去 (スパムまでリセット)" : r.step.onMiss === "restart" ? "新しいベースでもう一度" : "選択無し") + (r.step.policy ? " + 打って決める" : "") : "", state: st("miss", hasMiss(r)) });
   if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
   if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が消えたら", icons: [], text: "", state: st("lost", true) });
   return out;
@@ -1470,9 +1483,9 @@ defineExpose({ rows });
                   <img v-if="(k === 'annul' || k === 'chaos' || k === 'annul_next') && iconOf(k === 'annul_next' ? 'annul' : k)" :src="iconOf(k === 'annul_next' ? 'annul' : k)" alt="" class="h-8 w-8 object-contain" />
                   <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "restart" || k === "reset" ? "⟲" : k === "tree" ? "⑂" : "→" }}</span>
                   <span>
-                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側の狙い以外を消して次へ" : k === "restart" ? (props.start.mods ? "この状態からやり直す" : "新しいベースでもう一度") : k === "reset" ? "1 MOD 残し消去 (スパムまでリセット)" : k === "tree" ? "形ごとに決める" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
+                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側の狙い以外を消して次へ" : k === "restart" ? (props.start.mods ? "この状態からやり直す" : "新しいベースでもう一度") : k === "reset" ? "1 MOD 残し消去 (スパムまでリセット)" : k === "tree" ? "打って決める" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
                     <span v-if="missWhy(rows[focusRow]!, k)" class="text-[10px] text-rose-300">{{ missWhy(rows[focusRow]!, k) }}</span>
-                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "狙い以外は残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "restart" ? (props.start.mods ? "手打ちの状態を作り直して 1 手目から" : "白を買い直して 1 手目から") : k === "reset" ? (spamOf(focusRow!) != null ? `消去で 1 MOD にして ${spamOf(focusRow!)! + 1} 手目のカオスへ` : "前にカオスの手が無い") : k === "tree" ? (rows[focusRow!]!.step.policy ? "オン · 決めていない形は選んだ札で" : "狙い・狙い以外の数ごとに打つ物を決める (札と一緒に使う)") : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
+                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "狙い以外は残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "restart" ? (props.start.mods ? "手打ちの状態を作り直して 1 手目から" : "白を買い直して 1 手目から") : k === "reset" ? (spamOf(focusRow!) != null ? `消去で 1 MOD にして ${spamOf(focusRow!)! + 1} 手目のカオスへ` : "前にカオスの手が無い") : k === "tree" ? (rows[focusRow!]!.step.policy ? "オン · 外れた形ごとに次の手を決める" : "打って、外れた形ごとに次の手を決める") : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
                   </span>
                 </button>
               </div>
@@ -1541,7 +1554,7 @@ defineExpose({ rows });
               -->
               <!-- 打った結果ごとに次にすること (高貴・消去・カオスで、狙いが片側だけの手) -->
               <div v-if="rows[focusRow]!.step.policy && treeOf(focusRow!, rows[focusRow]!)" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
-                <StageOutcomeTree v-bind="treeOf(focusRow!, rows[focusRow]!)!" :policy="rows[focusRow]!.step.policy ?? {}" :sets="sets" :steps="rows.slice(0, focusRow!).map((rw, n) => ({ n, label: cardTitle(rw) }))" :fallback="missFallbackText(rows[focusRow]!)" :locked="locked" @change="(pol) => patch(focusRow!, { policy: pol })" />
+                <StageOutcomeTree v-bind="treeOf(focusRow!, rows[focusRow]!)!" :policy="rows[focusRow]!.step.policy ?? {}" :sets="sets" :steps="rows.slice(0, focusRow!).map((rw, n) => ({ n, label: cardTitle(rw) }))" :fallback="missFallbackText(rows[focusRow]!)" :base-item="preview" :locked="locked" @change="(pol) => patch(focusRow!, { policy: pol })" />
               </div>
               <div v-else-if="situationsOf(focusRow!, rows[focusRow]!).length" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
                 <p class="mb-1 text-[12px] font-bold text-sky-100">こうなったら？ <span class="font-normal opacity-60">(決めなければ上と同じ)</span></p>
@@ -1629,7 +1642,7 @@ defineExpose({ rows });
             </template>
           </div>
           <!-- 「この手にする」が押せない理由は文で (ホバーだけだと押せない訳が分からず止まった。2026-10-08 オーナー「ここで固まるね進めない」) -->
-          <p v-if="rows[focusRow]?.bad" class="mt-1 rounded bg-rose-500/10 px-2 py-1 text-[12px] font-bold text-rose-200">この手にできない: {{ rows[focusRow]!.bad }}</p>
+          <p v-if="badOf(focusRow)" class="mt-1 rounded bg-rose-500/10 px-2 py-1 text-[12px] font-bold text-rose-200">この手にできない: {{ badOf(focusRow!) }}</p>
           <!-- 下のボタン (いつも同じ所。スマホはシートの下に固定) -->
           <div class="mt-1.5 flex items-center gap-2 border-t border-white/10 pt-1.5 max-md:sticky max-md:bottom-0 max-md:z-10 max-md:flex-wrap max-md:bg-[#0e0c09] max-md:py-2">
             <button type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/15 max-md:hidden" title="この手だけ消す (後の手はそのまま)" @click="removeAt(focusRow)">この手を消す</button>
@@ -1638,8 +1651,8 @@ defineExpose({ rows });
               <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20 max-md:min-h-11 max-md:min-w-11" :disabled="focusRow === rows.length - 1" title="下へ" @click="move(focusRow, 1); focusRow = focusRow + 1">▼</button>
             </span>
             <button type="button" class="ml-auto rounded-lg border border-white/20 px-3 py-0.5 hover:bg-white/10 max-md:min-h-11" title="閉じる (決めた物はそのまま)" @click="closeSheet()">閉じる</button>
-            <button v-if="['set', 'target', 'target2', 'miss', 'single', 'lost'].includes(partOf(focusRow, rows[focusRow]!))" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40 max-md:min-h-11 max-md:flex-1" :disabled="partOf(focusRow, rows[focusRow]!) === 'target' ? !rows[focusRow]!.step.target : partOf(focusRow, rows[focusRow]!) === 'target2' ? (needs2(rows[focusRow]!) && !rows[focusRow]!.step.target2) || (lastPart(focusRow, rows[focusRow]!) && !!rows[focusRow]!.bad) : !rows[focusRow]!.set || (lastPart(focusRow, rows[focusRow]!) && !!rows[focusRow]!.bad)" :title="partOf(focusRow, rows[focusRow]!) === 'target' ? '付ける物を選ぶ' : partOf(focusRow, rows[focusRow]!) === 'target2' && !rows[focusRow]!.step.target2 ? '2 つ目の MOD を選ぶ' : !rows[focusRow]!.set ? 'カレンシーを選ぶ' : rows[focusRow]!.bad ?? undefined" @click="nextPart(focusRow)">{{ lastPart(focusRow, rows[focusRow]!) ? "この手にする" : "次へ →" }}</button>
-            <button v-else type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40 max-md:min-h-11 max-md:flex-1" :disabled="!!rows[focusRow]!.bad" :title="rows[focusRow]!.bad ?? '決めて閉じる'" @click="confirmStep(focusRow)">この手にする</button>
+            <button v-if="['set', 'target', 'target2', 'miss', 'single', 'lost'].includes(partOf(focusRow, rows[focusRow]!))" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40 max-md:min-h-11 max-md:flex-1" :disabled="partOf(focusRow, rows[focusRow]!) === 'target' ? !rows[focusRow]!.step.target : partOf(focusRow, rows[focusRow]!) === 'target2' ? (needs2(rows[focusRow]!) && !rows[focusRow]!.step.target2) || (lastPart(focusRow, rows[focusRow]!) && !!badOf(focusRow!)) : !rows[focusRow]!.set || (lastPart(focusRow, rows[focusRow]!) && !!badOf(focusRow!))" :title="partOf(focusRow, rows[focusRow]!) === 'target' ? '付ける物を選ぶ' : partOf(focusRow, rows[focusRow]!) === 'target2' && !rows[focusRow]!.step.target2 ? '2 つ目の MOD を選ぶ' : !rows[focusRow]!.set ? 'カレンシーを選ぶ' : badOf(focusRow!) ?? undefined" @click="nextPart(focusRow)">{{ lastPart(focusRow, rows[focusRow]!) ? "この手にする" : "次へ →" }}</button>
+            <button v-else type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40 max-md:min-h-11 max-md:flex-1" :disabled="!!badOf(focusRow!)" :title="badOf(focusRow!) ?? '決めて閉じる'" @click="confirmStep(focusRow)">この手にする</button>
             <!-- スマホ: 最後の段では「決めて次の手を足す」も (毎手 閉じる → ツリーの下まで送る → ＋ 手を足す の往復を省く。2026-10-08 レビュー 5。押すのは自分なので「手動」は守れる) -->
             <button v-if="phone && lastPart(focusRow, rows[focusRow]!) && !rows[focusRow]!.bad && rows[focusRow]!.set" type="button" class="w-full min-h-11 rounded-lg border border-dashed border-amber-400/50 font-bold text-amber-200" @click="confirmStep(focusRow); addStep()">この手にして、次の手を足す ＋</button>
           </div>
