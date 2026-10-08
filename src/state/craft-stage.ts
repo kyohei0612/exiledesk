@@ -471,7 +471,8 @@ export const craftStage = {
     // まだ打っていない時は、始めの MOD を 1 つ外す
     if (!l.length && startMods.value.length && data.value && !replay.value) {
       startMods.value = startMods.value.slice(0, -1);
-      item.value = startFrom(data.value, base.value, itemLevel.value, { mods: startMods.value }, seed.value - 1);
+      // ソケットも付ける時と同じに (外すと規格外のソケットが消えていた。2026-10-08 使い倒しテスト)
+      item.value = fullSockets(startFrom(data.value, base.value, itemLevel.value, { mods: startMods.value }, seed.value - 1));
       return;
     }
     if (!l.length || replay.value) return;

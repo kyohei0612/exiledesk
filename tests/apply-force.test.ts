@@ -79,4 +79,23 @@ describe("指名で付ける (force:)", () => {
     const yes = A(socketed, forceKey(kol.id, "T1", "n"));
     expect(yes.applied).toBe(true);
   });
+  it("エッセンスの MOD はレアになる (パーフェクトはレアだけ)、ユニークには付かない、フラクチャーは付いている物を固定 (2026-10-08 使い倒しテスト)", () => {
+    const ess = [...data.mods.values()].find((m) => m.source === "essence" && m.id.startsWith("Rings/"))!;
+    const perf = [...data.mods.values()].find((m) => m.source === "perfect_essence" && m.id.startsWith("Rings/"))!;
+    const white = freshItem(data, "Gold Ring", 82);
+    const r = A(white, forceKey(ess.id, null, "e"));
+    expect(r.applied).toBe(true);
+    expect(r.item.rarity).toBe("rare");
+    expect(A(white, forceKey(perf.id, null, "e")).reason).toMatch(/レアにだけ/);
+    expect(A({ ...white, rarity: "unique" }, forceKey(idOf("Rings", /IncreasedLife$/), "T2", "n")).reason).toMatch(/ユニーク/);
+    // 普通の MOD は冒涜で付かない
+    const life = idOf("Rings", /IncreasedLife$/);
+    let it = A(white, forceKey(life, "T2", "n")).item;
+    it = A(it, "regal").item;
+    expect(A(it, forceKey(life, "T2", "d")).reason).toMatch(/冒涜の MOD だけ/);
+    const f = A(it, forceKey(life, "T2", "f"));
+    expect(f.applied).toBe(true);
+    expect(allMods(f.item).filter((m) => m.modId === life)).toHaveLength(1);
+    expect(allMods(f.item).find((m) => m.modId === life)?.fractured).toBe(true);
+  });
 });

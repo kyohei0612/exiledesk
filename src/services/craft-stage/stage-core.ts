@@ -306,7 +306,14 @@ export function addForced(data: PatchData, item: StageItem, floor: number, rng: 
   const c = cands.find((x) => matchesMod(x.mod, force.mod));
   if (!c) {
     const any = [...data.mods.values()].find((m) => matchesMod(m, force.mod));
-    return { error: any ? `${force.mod} はこの手では付かない (空き枠・同じ系統・アイテムレベル・強さの下限のどれか)` : `${force.mod} という MOD が無い` };
+    if (!any) return { error: `${force.mod} という MOD が無い` };
+    // 理由を 1 つに絞る (中の名前は出さない。2026-10-08 使い倒しテスト)
+    const side: StageSide = any.type === "suffix" ? "suffix" : "prefix";
+    const sideJa = side === "prefix" ? "プレフィックス" : "サフィックス";
+    if (!sides.includes(side)) return { error: item.rarity === "magic" ? `マジックは${sideJa} 1 つまで (先にもう片方の側を付けるとレアになる)` : `${sideJa}の枠が埋まっている` };
+    if (familyBlocked(any, takenFamilies(data, item))) return { error: "同じ系統の MOD が付いている" };
+    if (!any.tiers.some((t) => t.ilvl <= item.itemLevel)) return { error: "このアイテムレベルでは付かない" };
+    return { error: "この手では付かない (強さの下限より弱い段しか無い)" };
   }
   let t: { index: number; w: number } | undefined;
   if (force.tier) {

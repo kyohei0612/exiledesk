@@ -21,12 +21,19 @@ const KINDS: StatKind[] = ["explicit", "fractured", "desecrated"];
  * (2026-10-07 オーナー「組み合わせだけの検索でおｋだから一旦数値は抜き」)
  */
 export function statsOfMod(data: PatchData, t: ModPick, withMin = false): Array<{ id: string; min?: number }> {
-  return tradeFiltersFor(data, [t]).filters.flatMap((f) => {
+  return statGroupsOfMod(data, t, withMin).flat();
+}
+/**
+ * 値ごとの条件 (1 つの値 = 普通 / 固定済み / 冒涜 のどれか)。2 つの値を持つ MOD (光半径 / マナ自動回復など) は、両方の値がそれぞれ要る
+ * (まとめて「どれか 1 つ」にすると片方だけの物も出ていた。2026-10-08 使い倒しテスト)
+ */
+export function statGroupsOfMod(data: PatchData, t: ModPick, withMin = false): Array<Array<{ id: string; min?: number }>> {
+  return tradeFiltersFor(data, [t]).filters.map((f) => {
     const min = withMin && f.min != null ? { min: f.min } : {};
     if (!/^explicit\./.test(f.id)) return [{ id: f.id, ...min }];
     const key = f.id.replace(/^explicit\./, "");
     return KINDS.filter((k) => hasStatKind(key, k)).map((k) => ({ id: `${k}.${key}`, ...min }));
-  });
+  }).filter((g) => g.length);
 }
 
 /**
@@ -41,8 +48,16 @@ export async function searchModGroups(
   const anyOf: Array<{ filters: Array<{ id: string; min?: number }>; count?: number }> = [];
   for (const g of opts.groups) {
     // exact (手で打つ画面の今のアイテム): 段の下限の値も入れる
-    const fs = g.picks.flatMap((p) => statsOfMod(data, p, !!opts.exact));
     const count = g.count ?? 1;
+    // 1 つの MOD だけの条件は、値ごとに「どれかの種類」で (2 つの値の MOD は両方要る)
+    if (g.picks.length === 1 && count <= 1) {
+      for (const vg of statGroupsOfMod(data, g.picks[0]!, !!opts.exact)) {
+        if (vg.length === 1) stats.push(vg[0]!);
+        else anyOf.push({ filters: vg });
+      }
+      continue;
+    }
+    const fs = g.picks.flatMap((p) => statsOfMod(data, p, !!opts.exact));
     if (fs.length === 1 && count <= 1) stats.push(fs[0]!);
     else if (fs.length) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) });
   }

@@ -163,6 +163,14 @@ function useFromBar(): void {
   barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
 }
 watch(() => s.held.value, () => { barMsg.value = null; });
+// 発現 (3 つから選ぶ) で付いた物も帯に出す (帯から打った時しか出ていなかった)
+watch(() => s.log.value.length, (n, o) => {
+  const last = s.last.value;
+  if (!phone.value || n <= (o ?? 0) || !last || !String(last.out.currency).startsWith("reveal")) return;
+  barMsg.value = { text: last.added.map((m) => `＋ ${m.textJa}`).join("  ") || "発現した", tone: "text-emerald-300" };
+  clearTimeout(barTimer);
+  barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
+});
 /** 発現の候補が出ている時: 帯を「発現する MOD を選ぶ ↑」にしてパネルへ送る (骨 → 発現の流れ。2026-10-08 レビュー A3) */
 function scrollToReveal(): void { document.querySelector("[data-reveal-panel]")?.scrollIntoView({ block: "center", behavior: "smooth" }); }
 /**
@@ -226,9 +234,10 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
       <template v-else>
         <!-- 打った直後は結果を 1 行 (1.8 秒)。その後は持っている物と掛けたお告げ -->
         <p v-if="barMsg" class="mb-1 line-clamp-2 text-[12px] font-bold leading-snug" :class="barMsg.tone">{{ barMsg.text }}</p>
-        <p v-else-if="heldWhy" class="mb-1 truncate text-[12px] text-rose-300">{{ heldWhy }}</p>
+        <!-- 結果を出している間も、次が打てない理由は出す (「使う」が灰色の訳が見えなかった。2026-10-08 使い倒しテスト) -->
+        <p v-if="heldWhy" class="mb-1 truncate text-[12px] text-rose-300">{{ heldWhy }}</p>
         <!-- 持っている物の説明 (箇条書き、既定は 2 行まで。押すと全部) -->
-        <div v-else-if="heldHelp.length" class="mb-1 flex items-start gap-2">
+        <div v-else-if="heldHelp.length && !barMsg" class="mb-1 flex items-start gap-2">
           <ul class="min-w-0 flex-1 list-disc pl-4 text-[11px] leading-snug text-white/70" :class="helpOpen ? '' : 'max-h-[2.6em] overflow-hidden'" @click="helpOpen = !helpOpen">
             <li v-for="(l, i) in (helpOpen ? heldHelp : heldHelp.slice(0, 2))" :key="i" class="pr-1" :class="helpOpen ? '' : 'truncate'">{{ l }}</li>
           </ul>
@@ -303,7 +312,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
         <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="POE2Tube に渡す結果 JSON (今の相場の値段で)" @click="copy('結果 JSON', s.result(pkg.version))">結果 JSON</button>
         <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" title="craft-stage-run.mjs の --prices に渡す相場 (高貴建て)" @click="copy('相場 JSON', s.prices())">相場 JSON</button>
         <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
-        <button type="button" :class="btn" class="border-sky-400/60 text-sky-100" :disabled="!stageModGroups.length" title="今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (数値・ベースは入れない)" @click="searchStageMods">今の MOD を取引所で検索 ↗</button>
+        <button type="button" :class="btn" class="border-sky-400/60 text-sky-100" :disabled="!stageModGroups.length" title="今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・段の下限まで)" @click="searchStageMods">今の MOD を取引所で検索 ↗</button>
       </span>
       </template>
     </section>

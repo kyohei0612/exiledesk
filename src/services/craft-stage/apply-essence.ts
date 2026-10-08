@@ -41,7 +41,8 @@ export function essenceTarget(data: PatchData, item: StageItem, key: string): { 
  * = Rotund、85〜99、ライフ 9 段の上から 3 番目)。ティアの数え方と段の名前を普通の MOD の系統で出す (2026-10-06 POE2Tube 要望 ㉝ の 4。
  * 前はエッセンスの 3 段で数えて「T1」、名前も Greater Essence of the Body)。同じ系統・同じ側で MOD レベルと値の幅が同じ段を探す。無ければそのまま
  */
-function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: Mod["tiers"][number]): { tierName: string; affix: string } | {} {
+/** エッセンスの MOD の段の名前を、普通の MOD の段で数え直す (エッセンスの 3 段で数えると T1 になる。要望 ㉝-4) */
+export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: Mod["tiers"][number]): { tierName: string; affix: string } | {} {
   const pool = item.cls.pools.normal;
   const r0 = tier.ranges[0];
   for (const id of mod.type === "prefix" ? pool.prefixes : pool.suffixes) {

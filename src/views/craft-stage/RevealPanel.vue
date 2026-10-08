@@ -37,7 +37,7 @@ function pick(i: number): void {
         v-for="(m, i) in rerolled ? craftStage.offers.value.reroll : craftStage.offers.value.first"
         :key="`${rerolled}-${m.modId}`"
         type="button"
-        class="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-left hover:border-rose-300/60 hover:bg-rose-500/10"
+        class="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-left max-md:min-h-11 hover:border-rose-300/60 hover:bg-rose-500/10"
         @click="pick(i)"
       >
         <span class="text-mod-desecrated">{{ m.textJa }}</span>

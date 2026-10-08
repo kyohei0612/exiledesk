@@ -38,6 +38,8 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
   }
   switch (currency) {
     case "divine": {
+      // ユニークは効果の値を振る種 (rollSeed) を変える (ユニークの数値も振り直せる。2026-10-08 使い倒しテスト)
+      if (item.rarity === "unique") return { applied: true, item: { ...item, rollSeed: 1 + Math.floor(rng() * 2 ** 30) }, added: [], removed: [], note: "ユニークの数値を振り直し" };
       const mods = allMods(item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length);
       if (!mods.length) return skip(item, "転がし直せる MOD が無い");
       let cur = item;
@@ -67,7 +69,7 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
       // 言葉はゲームの説明文「マーシャル武器、ワンド、スタッフまたは防具にオーグメントソケットを1個追加する」
       if (!max) return skip(item, "マーシャル武器・ワンド・スタッフ・防具にだけ使える");
       const n = item.sockets ?? 0;
-      if (n >= max) return skip(item, `ソケットが上限 (${max})`);
+      if (n >= max) return skip(item, n > max ? `ソケットが規格外 (${n})。熟練工のオーブで足せるのは ${max} まで` : `ソケットが上限 (${max})`);
       return { applied: true, item: { ...item, sockets: n + 1 }, added: [], removed: [] };
     }
     default:

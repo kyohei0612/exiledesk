@@ -247,7 +247,7 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
         </div>
         <!-- 付け方の予定は MOD の右側 (2026-10-05 オーナー「普通カオススパムとかの設定って MOD の右側よ」) -->
         <!-- 始め方が白以外の時、固定 MOD は 1 ベースで決めた物なので予定は変えない (2026-10-08) -->
-        <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white'" class="shrink-0 rounded border px-1 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めた固定 MOD">{{ s.simStart.value === "fractured" ? "🔒 固定 (買った物)" : "🔒 固定する (買った 4 MOD から)" }}</span>
+        <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white'" class="shrink-0 rounded border px-1 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めた固定 MOD">{{ s.simStart.value === "item" ? "🔒 固定済み (手打ち)" : s.simStart.value === "fractured" ? "🔒 固定 (買った物)" : "🔒 固定する (買った 4 MOD から)" }}</span>
         <select v-else-if="props.editable && plansOf(g.host).length > 1" class="shrink-0 rounded border bg-[#14120e] px-0.5 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS[planOf(g)]" title="付け方の予定" :value="planOf(g)" @change="setPlan(g, ($event.target as HTMLSelectElement).value as Plan)">
           <option v-for="p in plansOf(g.host)" :key="p" :value="p">{{ PLAN_JA[p] }}{{ p === "fracture" && g.kind !== "fracture" && !canFracture(g.host) ? " (違う側・非推奨)" : "" }}</option>
         </select>

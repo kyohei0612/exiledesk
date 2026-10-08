@@ -15,7 +15,7 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceClash, familyBlocked } from "../mods/mod-rules";
-import { craftedLimitOf } from "./apply-essence";
+import { craftedLimitOf, normalTierOf } from "./apply-essence";
 import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, takenRawFamilies, withMod } from "./stage-core";
 import type { StageApply, StageItem, StageSide } from "./types";
 
@@ -37,8 +37,12 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   const mod = data.mods.get(p.modId);
   if (!mod) return skip(item, `${p.modId} という MOD が無い`);
   const side: StageSide = mod.type === "suffix" ? "suffix" : "prefix";
-  // ノーマルに付けたらマジック
-  const it: StageItem = item.rarity === "normal" ? { ...item, rarity: "magic" } : item;
+  // ユニークには足せない (2026-10-08 使い倒しテスト)
+  if (item.rarity === "unique") return skip(item, "ユニークには MOD を足せない");
+  // ノーマルに付けたらマジック。エッセンスの MOD は必ずレア (普通のエッセンス = ノーマル / マジック → レア、パーフェクト = レアだけ)
+  const perfect = mod.source === "perfect_essence";
+  if (p.flag === "e" && perfect && item.rarity !== "rare") return skip(item, "パーフェクトエッセンスはレアにだけ (先に王者か錬金でレアに)");
+  const it: StageItem = p.flag === "e" ? (item.rarity === "rare" ? item : { ...item, rarity: "rare" }) : item.rarity === "normal" ? { ...item, rarity: "magic" } : item;
   if ((p.flag === "d" || p.flag === "f") && it.rarity !== "rare") return skip(item, `${p.flag === "d" ? "冒涜" : "フラクチャー"}の MOD はレアにだけ (先に王者か錬金でレアに)`);
   // 冒涜で付けられるのは冒涜の MOD だけ (2026-10-08 オーナー「冒涜 MOD しか冒涜は付けれない」)
   if (p.flag === "d" && mod.source !== "desecrated" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skip(item, "冒涜で付くのは冒涜の MOD だけ");
@@ -71,6 +75,6 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   const tier = mod.tiers[tierIndex];
   if (!tier) return skip(item, `${p.rank ?? "T1"} という段が無い`);
   if (p.flag !== "e" && tier.ilvl > it.itemLevel) return skip(item, `${p.rank ?? "T1"} はアイテムレベル ${tier.ilvl} から (今は ${it.itemLevel})`);
-  const sm = { ...makeStageMod(mod, side, tierIndex, rng), ...(p.flag === "e" ? { crafted: true } : p.flag === "d" ? { desecrated: true } : p.flag === "f" ? { fractured: true } : {}) };
+  const sm = { ...makeStageMod(mod, side, tierIndex, rng), ...(p.flag === "e" ? { ...normalTierOf(data, it, mod, tier), crafted: true } : p.flag === "d" ? { desecrated: true } : p.flag === "f" ? { fractured: true } : {}) };
   return { applied: true, item: withMod(it, sm), added: [sm], removed: [] };
 }
