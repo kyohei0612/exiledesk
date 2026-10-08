@@ -667,6 +667,16 @@
           }
         },
         {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ベースの値段は自分で入れるの。この例だと、フラクチャー済みを買うのが一番安いって出たわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
           "speaker": "zundamon",
           "emotion": "surprised",
           "text": "お金のことまで分かるのだ！",
@@ -680,6 +690,16 @@
           "speaker": "metan",
           "emotion": "normal",
           "text": "何回も作った時の結果をまとめて、運が良い時と悪い時の幅も出してくれるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "この手袋だと1個あたり40.6神。10人に9人は、55.2神までに完成するわ。",
           "scene": {
             "kind": "stage",
             "step": 0,
