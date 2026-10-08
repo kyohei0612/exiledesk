@@ -393,7 +393,17 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
       const gone = junk[0];
       if (gone) { it = without(it, gone); if (j === previewAt.value) goneMods = [gone]; }
     }
-    if (t && !missedFor) add(t.modId, t.minTierIndex, x.kind === "desecrate" ? { desecrated: true } : x.kind === "essence" || x.kind === "essence_perfect" ? { crafted: true } : {});
+    if (t && !missedFor) {
+      add(t.modId, t.minTierIndex, x.kind === "desecrate" ? { desecrated: true } : x.kind === "essence" || x.kind === "essence_perfect" ? { crafted: true } : {});
+      // 候補のどれかで当たりの手は、付いた物も「どれか」で出す (どれが付くかは回すまで分からない。2026-10-08 オーナー「アイテムの表示もどれかになるはず」)
+      const row = rows.value[j];
+      const members = [...new Set([t.modId, ...(t.alts ?? []).map((a) => a.modId), ...(row && !needs2(row) ? candsOf(row) : [])])];
+      if (members.length > 1) {
+        const text = `どれか: ${members.map((id) => cardTitleOf(id)).join(" / ")}`;
+        const relabel = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.map((m) => (m.modId === t.modId ? { ...m, textJa: text } : m));
+        it = { ...it, prefixes: relabel(it.prefixes), suffixes: relabel(it.suffixes) };
+      }
+    }
     // 見ている手で付いた物は光らせる
     if (t && j === previewAt.value) newMods = allMods(it).filter((m) => m.modId === t.modId);
     const t2 = isDouble(x) && st.target2 ? s.simTargets.value.find((y) => y.modId === st.target2) : undefined;

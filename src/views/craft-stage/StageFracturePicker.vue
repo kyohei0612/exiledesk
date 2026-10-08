@@ -109,6 +109,37 @@ const isCoveredTier = (r: ListRow, t: ListTier): boolean => {
   return c.modId === modId && idx >= c.minTierIndex;
 };
 const expanded = ref<string | null>(null);
+/**
+ * いくつ付けば当たりか (どれか N つ)。決定の時に同じ候補のグループを N 個に並べる (中はコピー、② では 1 枠「この中のどれか N つ」)。
+ * 2026-10-08 オーナー「欲しい MOD が複数あった場合のやり方が難しすぎる。どの順番でもいいから、この MOD 群のどれか 3 つ付けば終わり」
+ */
+const sigOf = (t: { modId: string; alts?: Array<{ modId: string }> }): string => [t.modId, ...(t.alts ?? []).map((a) => a.modId)].sort().join(",");
+const copiesNow = computed(() => (host.value ? s.simTargets.value.filter((t) => sigOf(t) === sigOf(host.value!)).length : 1));
+const wantN = ref(copiesNow.value);
+function decide(): void {
+  const h = host.value;
+  if (h) {
+    const members = [{ modId: h.modId, minTierIndex: h.minTierIndex }, ...(h.alts ?? [])];
+    const n = Math.max(1, Math.min(wantN.value, members.length));
+    let list = s.simTargets.value;
+    const sig = sigOf(h);
+    // 同じ候補のグループを n 個に (多ければ後ろから外す、足りなければまだ本体になっていない候補を本体にして足す)
+    let copies = list.filter((t) => sigOf(t) === sig);
+    while (copies.length > n) { const last = copies[copies.length - 1]!; list = list.filter((t) => t !== last); copies = copies.slice(0, -1); }
+    while (copies.length < n) {
+      const mains = new Set(list.map((t) => t.modId));
+      const next = members.find((m) => !mains.has(m.modId));
+      if (!next) break;
+      const method = h.method === "desecrate" ? "exalt" : h.method === "fracture" ? undefined : h.method;
+      const copy = { modId: next.modId, minTierIndex: next.minTierIndex, ...(method ? { method } : {}), alts: members.filter((m) => m.modId !== next.modId) };
+      const at = list.indexOf(copies[copies.length - 1]!);
+      list = [...list.slice(0, at + 1), copy, ...list.slice(at + 1)];
+      copies = [...copies, copy];
+    }
+    s.simTargets.value = list;
+  }
+  emit("close");
+}
 const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "—");
 </script>
 
@@ -119,10 +150,12 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
         <div class="flex items-center gap-2 border-b border-white/10 px-4 py-2">
           <b v-if="host" class="text-sm text-amber-100">「{{ hostName }}」のあるいはを選ぶ</b>
           <b v-else class="text-sm text-emerald-100">① フラクチャーの候補を選ぶ</b>
-          <span v-if="host" class="opacity-70">元の MOD とチェックした物のどれか 1 つが付けば当たり (1 MOD として数える。2 つ欲しい時は 3 の「⧉ コピー」) · 同じ側だけ</span>
+          <span v-if="host" class="flex flex-wrap items-center gap-1.5 opacity-90">元の MOD とチェックした物のうち
+            <button v-for="n in Math.min(3, candidates.length)" :key="n" type="button" class="min-w-7 rounded-lg px-2 py-0.5 font-bold max-md:min-h-10" :class="wantN === n ? 'bg-amber-500/30 text-amber-50 ring-1 ring-amber-400/70' : 'border border-white/20'" @click="wantN = n">{{ n }}</button>
+            つ付けば当たり (どの順番でもいい) · 同じ側だけ</span>
           <span v-else class="opacity-60">{{ s.item.value?.baseJa }} · チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合</span>
           <span class="ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-emerald-100">{{ candidates.length }} 個</span>
-          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-1 font-bold text-emerald-100" @click="emit('close')">決定</button>
+          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-1 font-bold text-emerald-100" @click="decide">決定</button>
         </div>
         <div class="grid min-h-0 flex-1 grid-cols-2 max-md:grid-cols-1 gap-4 overflow-auto px-4 py-3">
           <div v-for="col in columns" :key="col.side" :class="lockedSide && lockedSide !== col.side ? 'opacity-35' : ''">

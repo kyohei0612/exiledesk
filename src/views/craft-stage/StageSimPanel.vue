@@ -672,7 +672,10 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
     // 値段は 1 回引いたら覚える (相場の一覧を毎手引くと、500 回で 46 秒かかっていた)
     const memo = new Map<string, number>();
     const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
+    // 1 回の「回す」の中は全パターン同じ乱数の並び (同じ手なら同じ結果、比べは手の違いだけになる。2026-10-08 使い倒しテスト)
+    const runSeed = Math.floor(Date.now() % 1_000_000) * 10_000;
     const spec: RecipeSpec = {
+      seed: runSeed,
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: stepOnly != null ? STEP_ONLY_RUNS : only != null ? ONE_RUNS : runs.value, price,
       maxSteps: maxSteps.value,
       targets: s.simTargets.value.flatMap((t) => (methodOf(t) === "fracture"
@@ -743,7 +746,12 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) };
       const base = k * spec.runs;
       // PC のコアに分けて回す (同じ seed なので 1 本と同じ結果。2026-10-07 オーナー「おっそいな」)
-      const r = await runRecipeParallel(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
+      // 先に 40 人だけ試し、全員が手の上限で止まるなら 500 人は回さない (重い組み方で「試しています」のまま長く止まって見えた。
+      // 2026-10-08 オーナー「試していますでフリーズする」)。結果の上に「○ 手で完成しなかった → 上限を上げて回し直す」が出る
+      const probe = spec.runs > 40 ? await runRecipeParallel({ ...pspec, runs: 40 }, () => {}, () => my !== gen) : null;
+      if (my !== gen) return;
+      const hopeless = !!probe && probe.pDone === 0 && probe.stops.length > 0 && probe.stops.every((x) => /手が多すぎる/.test(x.reason));
+      const r = hopeless ? probe : await runRecipeParallel(pspec, (done) => { if (my === gen) progress.value = [base + done, total]; }, () => my !== gen);
       if (my !== gen || !r) return;
       // rest = 固定済みから先のクラフト費用だけ (ベース代 × 使った数を引く)。始め方の比べは「その始め方のベース 1 個 × 使った数 + rest」
       out.push({ name: p.name, out: { r, spec: pspec }, rest: fractureRow.value ? r.perDone - (startOnce.value ?? 0) * r.bases : null, bases: r.bases });
@@ -1252,6 +1260,12 @@ const summary = computed(() => {
   if (recipeOut.value) { const r = recipeOut.value.r; return { perDone: r.perDone, pDone: r.pDone, runs: r.runs, p50: r.p50, p80: r.p80, p90: r.p90, maxSteps: recipeOut.value.spec.maxSteps ?? 4_000 }; }
   return null;
 });
+/** 手の上限で止まった人の割合 (1 割を超えたら結果の上に出す) */
+const tooManySteps = computed(() => {
+  const p = recipeOut.value?.r.stops.filter((x) => /手が多すぎる/.test(x.reason)).reduce((a, x) => a + x.p, 0) ?? 0;
+  return p >= 0.1 ? p : 0;
+});
+const nextMaxSteps = computed(() => (MAX_STEPS_CHOICES as readonly number[]).find((n) => n > maxSteps.value) ?? null);
 const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ)" : nameOf(k));
 </script>
 
@@ -1541,6 +1555,11 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     <div v-if="summary && recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3" :class="stale ? 'opacity-60' : ''">
       <p v-if="stale" class="mb-1 text-[11px] text-amber-200">設定が変わりました。もう一度「回す」で出し直してください</p>
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <!-- 手の上限で止まった人が多い時は、バグではなく打つ回数が足りないと分かるように (2026-10-08 オーナー「手が多すぎて止まったのかバグったのか」) -->
+        <div v-if="tooManySteps" class="mb-2 flex w-full flex-wrap items-center gap-2 rounded-lg border border-amber-400/50 bg-amber-500/10 px-3 py-2 text-[12px]">
+          <span class="text-amber-100">{{ pct(tooManySteps) }} の人が {{ (summary.maxSteps ?? maxSteps).toLocaleString() }} 手で完成しなかった (止まっただけ。重い MOD は打つ回数が要る)</span>
+          <button v-if="nextMaxSteps" type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 max-md:min-h-11" :disabled="busy" @click="maxSteps = nextMaxSteps; void run()">{{ nextMaxSteps.toLocaleString() }} 手で回し直す</button>
+        </div>
         <span class="text-[12px] opacity-60">{{ shownName }} の 1 個あたり<template v-if="s.simStart.value === 'item'"> (この状態から先)</template></span>
         <span class="text-[28px] font-bold leading-none tabular-nums text-amber-100">{{ moneyT(split.base + split.craft) }}</span>
         <span class="text-[12px] tabular-nums opacity-70">= ベース {{ moneyT(split.base) }} + クラフト {{ moneyT(split.craft) }}</span>

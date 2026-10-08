@@ -381,8 +381,13 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         e = junkOn(item, side).length || allMods(item).length >= 2 ? missMagic(t) : play(grade("augment", t));
       } else e = play("regal");
     } else if (t.method === "chaos") {
-      // カオスは外して付ける。外せる物 (固定でない・未発現でない) が無ければ、先に高貴で 1 つ足す
-      e = allMods(item).some((m) => !m.fractured && !m.unrevealed) ? play("chaos") : play("exalt");
+      // カオススパム: 狙いの側に空きがあれば側の高貴で埋め、外れが付いていれば側のカオス (抹消のお告げ) でその側だけ入れ替える
+      // (2026-10-08 オーナー「プレフィックスに高貴ガチャではあるんだけど、カオススパムもこの中の MOD でやる。どれか 3 つ付けば終わり」。
+      // 前は側を見ずにカオスを打ち、付いた当たりも消して 4,000 手で止まっていた)。外せる物が無ければ高貴で 1 つ足す
+      const junk = junkOn(item, side);
+      if (junk.length) e = play("chaos", [side === "prefix" ? "OmenofSinistralErasure" : "OmenofDextralErasure"]);
+      else if (room(item, side)) e = play(grade("exalt", t), [SIDE_OMEN.exalt[side]]);
+      else e = allMods(item).some((m) => !m.fractured && !m.unrevealed) ? play("chaos") : play("exalt");
     } else if (t.method === "exalt") {
       if (junkOn(item, side).length) e = annulOn(side);
       else if (room(item, side)) e = play(grade("exalt", t), [SIDE_OMEN.exalt[side]]);

@@ -83,9 +83,29 @@ function presentOnStart(r: { modId: string; minTierIndex: number }): boolean {
 }
 
 /** 外す: あるいはの候補はその候補だけ、本体は手順ごと (候補も一緒に) */
-function drop(r: Row): void {
+function drop(r: Row, hosts: readonly string[] = [r.group]): void {
+  // まとめた「どれか N つ」の中の候補は、コピー全部から外す。手順の本体を外す時はまとまりごと
+  const memberOf = (t: { modId: string; alts?: Array<{ modId: string }> }): boolean => t.modId === r.modId || !!t.alts?.some((a) => a.modId === r.modId);
+  if (hosts.length > 1) {
+    const list = s.simTargets.value;
+    const left = list.filter((t) => hosts.includes(t.modId)).map((t) => {
+      const ms = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])].filter((m) => m.modId !== r.modId);
+      return ms.length ? { ...t, modId: ms[0]!.modId, minTierIndex: ms[0]!.minTierIndex, alts: ms.slice(1) } : null;
+    }).filter((t): t is NonNullable<typeof t> => !!t);
+    // 候補が減ったら、どれか N つの N も候補の数まで
+    const n = Math.min(left.length, (left[0]?.alts?.length ?? 0) + 1);
+    const keep = left.slice(0, n).map((t, i, arr) => ({ ...t, modId: [t.modId, ...(t.alts ?? []).map((a) => a.modId)].find((id) => !arr.slice(0, i).some((x) => x.modId === id)) ?? t.modId }));
+    const at = list.findIndex((t) => hosts.includes(t.modId));
+    s.simTargets.value = [...list.slice(0, at).filter((t) => !hosts.includes(t.modId)), ...keep, ...list.slice(at).filter((t) => !hosts.includes(t.modId) && !memberOf(t))];
+    return;
+  }
   if (r.alt) s.simTargets.value = s.simTargets.value.map((t) => (t.modId === r.group ? { ...t, alts: (t.alts ?? []).filter((a) => a.modId !== r.modId) } : t));
   else s.simTargets.value = s.simTargets.value.filter((t) => t.modId !== r.modId);
+}
+/** どれか N つ の N を減らす (最後のコピーを外す) */
+function lessOf(hosts: readonly string[]): void {
+  const last = hosts[hosts.length - 1];
+  if (hosts.length > 1 && last) s.simTargets.value = s.simTargets.value.filter((t) => t.modId !== last);
 }
 function setTier(r: Row, idx: number): void {
   s.simTargets.value = s.simTargets.value.map((t) => (t.modId !== r.group ? t
@@ -130,8 +150,17 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
     else groups.push({ key, no: r.no, kind: r.kind, host: r.group, need: 1, members: [r], share: null });
   }
   for (const g of groups) g.share = g.members.every((m) => m.share == null) ? null : Math.min(1, g.members.reduce((a, m) => a + (m.share ?? 0), 0));
-  const used = groups.reduce((a, g) => a + g.need, 0);
-  return { title: side === "P" ? "プレフィックス" : "サフィックス", groups, used };
+  // 同じ候補のグループ (コピー) は 1 つの枠「どれか N つ」にまとめて出す (2026-10-08 オーナー「この 3 つが狙いたいやつ、分かりづらい。
+  // どの順番でもいいから、この MOD 群のどれか 3 つ付けば終わり」)。中はコピーのまま (エンジンは 1 つの MOD を 1 つの手順にしか数えない)
+  const merged: Array<(typeof groups)[number] & { hosts: string[] }> = [];
+  for (const g of groups) {
+    const sig = g.kind !== "fracture" && g.members.length > 1 ? g.members.map((m) => m.modId).sort().join(",") : null;
+    const m = sig ? merged.find((x) => x.kind !== "fracture" && x.members.length > 1 && x.members.map((y) => y.modId).sort().join(",") === sig) : undefined;
+    if (m) { m.hosts.push(g.host); m.need += 1; continue; }
+    merged.push({ ...g, hosts: [g.host] });
+  }
+  const used = merged.reduce((a, g) => a + g.need, 0);
+  return { title: side === "P" ? "プレフィックス" : "サフィックス", groups: merged, used };
 }));
 const canAlt = (k: Kind): boolean => k === "normal" || k === "desecrated";
 
@@ -196,14 +225,15 @@ function canFracture(host: string): boolean {
   const type = s.data.value?.mods.get(host)?.type;
   return !s.simTargets.value.some((t) => t.method === "fracture" && t.modId !== host && s.data.value?.mods.get(t.modId)?.type !== type);
 }
-function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
+function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): void {
   let list = s.simTargets.value;
   if (g.kind === "fracture") {
     if (p === "fracture") return;
     // フラクチャー予定のまとまりを全部その付け方に
     list = list.map((t) => (t.method === "fracture" ? { ...t, method: p } : t));
   } else {
-    list = list.map((t) => (t.modId === g.host ? { ...t, method: p } : t));
+    const hs = g.hosts ?? [g.host];
+    list = list.map((t) => (hs.includes(t.modId) ? { ...t, method: p } : t));
     // フラクチャー予定は一番上へ (最初に作る物)
     if (p === "fracture") list = [...list.filter((t) => t.method === "fracture"), ...list.filter((t) => t.method !== "fracture")];
   }
@@ -224,9 +254,14 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
         <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="s.data.value?.mods.get(g.host)?.rune ? '差すと付く MOD。回す時はこのルーンを差した白から始める' : undefined">{{ badgeOf(g.host).label }}</span>
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
           <!-- 2 つ以上: 見出し (どれか 1 つ・合計の付きやすさ) と、横に並べて折り返す候補 -->
-          <p v-if="g.members.length > 1" class="mb-0.5 flex flex-wrap items-center gap-1 text-[10px] font-bold text-amber-200">
-            どれか 1 つ
-            <span v-if="g.share != null" class="ml-1 font-normal tabular-nums text-amber-100/80">付きやすさ 合計 {{ pct(g.share) }}</span>
+          <p v-if="g.members.length > 1" class="mb-0.5 flex flex-wrap items-center gap-1 text-[11px] font-bold text-amber-200">
+            <span>この中のどれか</span>
+            <button v-if="props.editable" type="button" class="grid h-5 w-5 place-items-center rounded border border-amber-400/50 leading-none disabled:opacity-30 max-md:h-8 max-md:w-8" :disabled="g.hosts.length <= 1" title="1 つ減らす" @click="lessOf(g.hosts)">−</button>
+            <b class="text-[13px] tabular-nums text-amber-100">{{ g.need }}</b>
+            <button v-if="props.editable" type="button" class="grid h-5 w-5 place-items-center rounded border border-amber-400/50 leading-none disabled:opacity-30 max-md:h-8 max-md:w-8" :disabled="!canCopy(g.host) || col.used >= 3" :title="!canCopy(g.host) ? '候補の数まで' : col.used >= 3 ? '枠が埋まっている' : '1 つ増やす'" @click="copyGroup(g.hosts[g.hosts.length - 1]!)">＋</button>
+            <span>つ</span>
+            <span class="font-normal text-amber-100/70">(どの順番でもいい。{{ g.need }} つ付けば完成)</span>
+            <span v-if="g.share != null" class="ml-1 font-normal tabular-nums text-amber-100/70">1 回で付く 合計 {{ pct(g.share) }}</span>
           </p>
           <div :class="g.members.length > 1 ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5' : 'flex items-center gap-1.5 max-md:flex-wrap'">
             <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1 max-md:flex-wrap" :class="g.members.length > 1 ? 'rounded bg-black/30 px-1' : ''">
@@ -237,12 +272,11 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
               <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
               <span v-if="presentOnStart(r)" class="shrink-0 rounded-sm bg-emerald-500/25 px-1 text-[10px] font-bold text-emerald-100" title="手打ちの状態にもう付いている (この段以上)">✓ 付いている</span>
               <span v-if="r.share != null" class="shrink-0 text-[10px] tabular-nums opacity-70" title="1 回の抽選でこの段以上が出る割合 (同じ側の重み)">{{ pct(r.share) }}</span>
-              <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100 max-md:min-h-9 max-md:min-w-9 max-md:text-[16px]" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button>
+              <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100 max-md:min-h-9 max-md:min-w-9 max-md:text-[16px]" :title="r.alt || g.hosts.length > 1 ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r, g.hosts)">×</button>
             </span>
             <!-- 「＋」は MOD のすぐ横 (2026-10-05 オーナー) -->
             <button v-if="props.editable && canAlt(g.kind)" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
-            <!-- コピー: 同じ候補のグループをもう 1 つ (2 つ欲しい時) -->
-            <button v-if="props.editable && g.members.length > 1 && g.kind !== 'fracture'" type="button" class="shrink-0 rounded border border-sky-400/40 px-1 text-[11px] leading-none text-sky-200 hover:bg-sky-500/15 disabled:opacity-30" :disabled="!canCopy(g.host)" :title="canCopy(g.host) ? 'このグループをコピーして、同じ候補からもう 1 つ狙う' : '候補の数だけコピー済み'" @click="copyGroup(g.host)">⧉ コピー</button>
+            
           </div>
         </div>
         <!-- 付け方の予定は MOD の右側 (2026-10-05 オーナー「普通カオススパムとかの設定って MOD の右側よ」) -->
