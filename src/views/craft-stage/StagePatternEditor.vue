@@ -161,7 +161,8 @@ interface Row {
   step: PatternStep;
   set: PatternSet | undefined;
   setOpts: Array<{ name: string; items: Array<{ x: PatternSet; why: string | null }> }>;
-  targetOpts: Array<{ key: string; label: string; why: string | null }>;
+  /** n = 5 順番計画の並びの番号、members = 「この中のどれか」のまとまりなら候補全部 (1 つの選択肢にまとめる) */
+  targetOpts: Array<{ key: string; label: string; why: string | null; n: number; members?: string[] }>;
   /** 偉大 (2 つ) の手の 2 つ目に選べる物 (1 つ目を付けた後の状態で見る) */
   target2Opts: Array<{ key: string; label: string; why: string | null; n: number }>;
   /** 前の手の候補の残り (rest:<手>) */
@@ -191,16 +192,28 @@ const rows = computed<Row[]>(() => {
       const left = Math.max(1, candsOfStep(x).length - (isDouble(setByKey(sets.value, x.set)) ? 2 : 1));
       return { key: `${REST}${j}`, label: `残りの${side} MOD ${left} つ (${j + 1} 手目の候補で付かなかった物)`, why: null as string | null };
     });
-    const targetOpts = set?.kind === "annul" ? [] : props.order.map((k) => {
+    const opts0 = set?.kind === "annul" ? [] : props.order.map((k, n) => {
       const id = k.slice(k.indexOf(":") + 1);
-      if (k.startsWith("rune:")) return { key: id, label: `ルーン: ${runeLabel(id)}`, why: usable.some((x) => x.kind === "rune") ? checkRune(c, st, id) : "ソケットが空いていない" };
+      if (k.startsWith("rune:")) return { key: id, label: `ルーン: ${runeLabel(id)}`, why: usable.some((x) => x.kind === "rune") ? checkRune(c, st, id) : "ソケットが空いていない", n };
       const t = c.targets.find((x) => x.modId === id);
-      if (!t) return { key: id, label: modLabel(id), why: "狙う MOD に無い" };
-      if (unsureIds.has(id)) return { key: id, label: modLabel(id), why: `${unsureIds.get(id)! + 1} 手目の候補 (どれが残るか分からないので「残り」で選ぶ)` };
+      if (!t) return { key: id, label: modLabel(id), why: "狙う MOD に無い", n };
+      if (unsureIds.has(id)) return { key: id, label: modLabel(id), why: `${unsureIds.get(id)! + 1} 手目の候補 (どれが残るか分からないので「残り」で選ぶ)`, n };
       const ok = usable.some((x) => x.kind !== "rune" && !checkTarget(c, st, x, t));
       const why = ok ? null : (usable.filter((x) => x.kind !== "rune").map((x) => checkTarget(c, st, x, t)).find((w) => w && /前の手|枠|差す|フラクチャー/.test(w)) ?? "今付けられるカレンシーが無い");
-      return { key: id, label: modLabel(id), why };
+      return { key: id, label: modLabel(id), why, n };
     });
+    // 「この中のどれか N つ」のまとまり (同じ候補のコピー) は 1 つの選択肢に (2026-10-08 オーナー「どれか 1 つを選択させるんじゃなくて 1 つの枠でどれか。
+    // 選択肢はこの場合は 1 つ」)。選べる物 (理由の無い物) を代表にし、候補は全部
+    const sigOf = (id: string): string | null => { const t = c.targets.find((x) => x.modId === id); return t?.alts?.length ? [t.modId, ...t.alts.map((a) => a.modId)].sort().join(",") : null; };
+    const targetOpts: Row["targetOpts"] = [];
+    for (const o of opts0) {
+      const sig = sigOf(o.key);
+      if (!sig) { targetOpts.push(o); continue; }
+      const prev = targetOpts.find((x) => x.members && [...x.members].sort().join(",") === sig);
+      if (prev) { if (prev.why && !o.why) Object.assign(prev, { key: o.key, why: null, n: o.n }); continue; }
+      const members = sig.split(",");
+      targetOpts.push({ ...o, members, label: `どれか: ${members.map((id) => cardTitleOf(id)).join(" / ")}` });
+    }
     const missOpts = (Object.keys(MISS_JA) as MissRule[]).map((rule) => ({ rule, why: set ? checkMiss(set, rule) : null }));
     // 「残り」を狙う手は、残りの候補がそのまま狙い (一緒に狙う MOD・ほかの候補は聞かない。2026-10-08 オーナー「ここで固まる、進めない」:
     // 「一緒に狙う MOD を選ぶ」が裏で残っていて「この手にする」が押せなかった)
@@ -572,6 +585,9 @@ function pickTarget(i: number, key: string): void {
   // (2026-10-08 オーナー「カレンシーは必ず次へ押さんとお告げが表示されないけど、他の奴とかは押したら次へ行ってもいい」。2026-10-07 の「選択した瞬間次にいかなくさせる」はカレンシーの話)
   // 打つだけ → MOD に変えた時など、カレンシーがそのままなら既定のやり直し (増強は消去、変成はハズレを消して次へ) を入れ直す (2026-10-08 レビュー N8)
   if (curOk && cur && !isRune && key !== ANY_TARGET) onSet(i, cur.key);
+  // 「この中のどれか」の選択肢: ほかの候補も入れる (候補のどれかで当たり)
+  const grp = rows.value[i]?.targetOpts.find((o) => o.key === key)?.members;
+  if (grp) { const others = grp.filter((id) => id !== key); patch(i, { target2: others[0] ?? null, target3: others[1] ?? null }); }
   editPart.value = "target";
   nextPart(i);
 }
@@ -952,6 +968,9 @@ function onSet(i: number, key: string): void {
   // ほかの手は選択無し (2026-10-07 オーナー「外れてもいいならそこは選択無しをデフォで」)
   const plainAnnul = set?.kind === "augment" && cur.target && cur.target !== ANY_TARGET ? removals.value.find((x) => x.kind === "annul" && !x.omens.length)?.key ?? null : null;
   patch(i, { set: key, onMiss: keepMiss ? "annul_redo" : miss === "annul_redo" ? (plainAnnul ? "annul_redo" : "next") : miss, ...(keepMiss ? {} : { miss: plainAnnul }) });
+  // 「この中のどれか」の狙いは、候補を付けられるカレンシーになったら残りの候補も入れる (MOD を先に選んだ時はまだ入らない)
+  const grp = cur.target ? rows.value[i]?.targetOpts.find((o) => o.key === cur.target)?.members : undefined;
+  if (grp && hasCands(set) && !cur.target2) { const others = grp.filter((id) => id !== cur.target); patch(i, { target2: others[0] ?? null, target3: others[1] ?? null }); }
 }
 
 function move(i: number, d: -1 | 1): void {
@@ -1234,13 +1253,13 @@ defineExpose({ rows });
             <template v-if="partOf(focusRow, rows[focusRow]!) === 'target'">
               <!-- 5 順番計画と同じ行 (順番・側・色・段・付け方)。付けられない物は理由を右に -->
               <div class="flex max-w-3xl flex-col gap-1">
-                <button v-for="(o, n) in rows[focusRow]!.targetOpts" :key="o.key" type="button" class="group flex items-center gap-3 rounded-lg border px-3 py-2 text-left text-[12px] transition disabled:cursor-not-allowed max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-0.5" :class="rows[focusRow]!.step.target === o.key ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : o.why ? 'border-white/5 bg-black/20' : 'border-white/10 bg-black/30 hover:border-amber-300/50 hover:bg-white/[0.04]'" :disabled="!!o.why" @click="pickTarget(focusRow, o.key)">
-                  <span class="w-4 text-center font-bold" :class="o.why ? 'opacity-30' : 'text-amber-200'">{{ n + 1 }}</span>
-                  <span class="w-9 text-[10px]" :class="o.why ? 'opacity-30' : 'opacity-60'">{{ orderInfo?.[order[n]!]?.side }}</span>
-                  <span :class="o.why ? 'opacity-35' : orderInfo?.[order[n]!]?.tone">{{ orderInfo?.[order[n]!]?.text ?? o.label }}</span>
-                  <span v-if="orderInfo?.[order[n]!]?.rank" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100" :class="o.why ? 'opacity-35' : ''">{{ orderInfo[order[n]!]!.rank }} 以上</span>
-                  <span class="text-[10px] opacity-50">{{ orderInfo?.[order[n]!]?.how }}</span>
-                  <span class="ml-auto text-[11px] max-md:ml-0 max-md:w-full" :class="o.why ? 'text-rose-300/70' : 'opacity-50'">{{ o.why ?? orderInfo?.[order[n]!]?.redo }}</span>
+                <button v-for="(o, k) in rows[focusRow]!.targetOpts" :key="o.key" type="button" class="group flex items-center gap-3 rounded-lg border px-3 py-2 text-left text-[12px] transition disabled:cursor-not-allowed max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-0.5" :class="rows[focusRow]!.step.target === o.key ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : o.why ? 'border-white/5 bg-black/20' : 'border-white/10 bg-black/30 hover:border-amber-300/50 hover:bg-white/[0.04]'" :disabled="!!o.why" @click="pickTarget(focusRow, o.key)">
+                  <span class="w-4 text-center font-bold" :class="o.why ? 'opacity-30' : 'text-amber-200'">{{ k + 1 }}</span>
+                  <span class="w-9 text-[10px]" :class="o.why ? 'opacity-30' : 'opacity-60'">{{ orderInfo?.[order[o.n]!]?.side }}</span>
+                  <span :class="o.why ? 'opacity-35' : orderInfo?.[order[o.n]!]?.tone">{{ o.members ? o.label : orderInfo?.[order[o.n]!]?.text ?? o.label }}</span>
+                  <span v-if="orderInfo?.[order[o.n]!]?.rank" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100" :class="o.why ? 'opacity-35' : ''">{{ orderInfo[order[o.n]!]!.rank }} 以上</span>
+                  <span class="text-[10px] opacity-50">{{ orderInfo?.[order[o.n]!]?.how }}</span>
+                  <span class="ml-auto text-[11px] max-md:ml-0 max-md:w-full" :class="o.why ? 'text-rose-300/70' : 'opacity-50'">{{ o.why ?? orderInfo?.[order[o.n]!]?.redo }}</span>
                 </button>
                 <!-- 前の手の候補の残り -->
                 <button v-for="o in rows[focusRow]!.restOpts" :key="o.key" type="button" class="mt-1 flex items-center gap-3 rounded-lg border px-3 py-2 text-left text-[12px] transition" :class="rows[focusRow]!.step.target === o.key ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-sky-400/40 bg-black/30 hover:border-amber-300/50 hover:bg-white/[0.04]'" title="前の手の候補のうち、付かなかった物を狙う (どれが残るかは回すまで分からない)" @click="pickTarget(focusRow, o.key)">
