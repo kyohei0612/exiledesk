@@ -681,9 +681,9 @@ function pickTarget(i: number, key: string): void {
   // (2026-10-08 オーナー「カレンシーは必ず次へ押さんとお告げが表示されないけど、他の奴とかは押したら次へ行ってもいい」。2026-10-07 の「選択した瞬間次にいかなくさせる」はカレンシーの話)
   // 打つだけ → MOD に変えた時など、カレンシーがそのままなら既定のやり直し (増強は消去、変成は狙い以外を消して次へ) を入れ直す (2026-10-08 レビュー N8)
   if (curOk && cur && !isRune && key !== ANY_TARGET) onSet(i, cur.key);
-  // 「この中のどれか」の選択肢: ほかの候補も入れる (候補のどれかで当たり)
-  const grp = rows.value[i]?.targetOpts.find((o) => o.key === key)?.members;
-  if (grp) { const others = grp.filter((id) => id !== key); patch(i, { target2: others[0] ?? null, target3: others[1] ?? null }); }
+  // 「この中のどれか」の残りの候補は、カレンシーを決めた時に入れる (onSet)。MOD を選んだだけで入れると、カレンシーの前から
+  // 「一緒に狙う MOD」などが出ていた (2026-10-08 オーナー「カレンシー選択前からその選択肢はおかしい、多分リークしてる」)
+  if (!(curOk && cur && !isRune && key !== ANY_TARGET)) patch(i, { target2: null, target3: null });
   editPart.value = "target";
   nextPart(i);
 }
