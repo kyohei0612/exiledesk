@@ -9,7 +9,7 @@
   状態と操作は [[craft-stage.ts]]、1 手の中身は services/craft-stage (計算機と同じ規則)。
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
 import StageItemCard from "./StageItemCard.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
@@ -141,8 +141,10 @@ function useFromBar(): void {
   }
   barMsg.value = { text: parts.join("  "), tone: last && !last.out.applied ? "text-rose-300" : last?.removed.length && !last.added.length ? "text-rose-300" : "text-emerald-300" };
   clearTimeout(barTimer);
-  barTimer = setTimeout(() => { barMsg.value = null; }, 1800);
+  // 2 行まで出して、次の操作 (持つ / 離す) か 5 秒で消す (1 行 1.8 秒だとカオスの ＋/－ が読めなかった。2026-10-08 レビュー)
+  barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
 }
+watch(() => s.held.value, () => { barMsg.value = null; });
 /** 発現の候補が出ている時: 帯を「発現する MOD を選ぶ ↑」にしてパネルへ送る (骨 → 発現の流れ。2026-10-08 レビュー A3) */
 function scrollToReveal(): void { document.querySelector("[data-reveal-panel]")?.scrollIntoView({ block: "center", behavior: "smooth" }); }
 /**
@@ -160,7 +162,7 @@ function pickSimBase(en: string): void {
 </script>
 
 <template>
-  <div class="h-full overflow-auto p-4 @container" :class="phone && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
+  <div class="h-full overflow-auto p-4 @container" :class="phone ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
     <div v-if="phone && (s.held.value || s.offers.value) && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
       <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
@@ -170,7 +172,7 @@ function pickSimBase(en: string): void {
       </div>
       <template v-else>
         <!-- 打った直後は結果を 1 行 (1.8 秒)。その後は持っている物と掛けたお告げ -->
-        <p v-if="barMsg" class="mb-1 truncate text-[12px] font-bold" :class="barMsg.tone">{{ barMsg.text }}</p>
+        <p v-if="barMsg" class="mb-1 line-clamp-2 text-[12px] font-bold leading-snug" :class="barMsg.tone">{{ barMsg.text }}</p>
         <p v-else-if="heldWhy" class="mb-1 truncate text-[12px] text-rose-300">{{ heldWhy }}</p>
         <div class="flex items-center gap-2">
           <img v-if="iconOf(s.held.value!)" :src="iconOf(s.held.value!)" alt="" class="h-9 w-9 object-contain" />

@@ -602,6 +602,13 @@ function selectRow(i: number, part: "miss" | "single" | "lost" | null = null): v
   if (focusRow.value === i && editPart.value === part) { closeFrame(); return; }
   focusRow.value = i;
   editPart.value = part;
+  scrollToEditor();
+}
+/** スマホ: 手を押したら設定の枠 (ツリーの下) へ送る。PC は動かさない (2026-10-08 レビュー: 手が多いと枠が画面外だった) */
+const editorEl = ref<HTMLElement | null>(null);
+function scrollToEditor(): void {
+  if (!phone.value) return;
+  void nextTick(() => editorEl.value?.scrollIntoView({ block: "start", behavior: "smooth" }));
 }
 /**
  * 下のボタン 1 つで進む (棚は押した時にそのまま入る。決定ボタンが 2 つ並ばないように)。
@@ -866,6 +873,7 @@ function addStep(): void {
   editPart.value = null;
   focusPre.value = null;
   focusRow.value = pat.value.steps.length - 1;
+  scrollToEditor();
   // 手を足したらツリーを一番下まで送る (足した手と「＋ 手を足す」が見える。2026-10-07 オーナー「付けたらスクロール一番下に持っていっていい」)
   void nextTick(() => { const box = treeEl.value; if (box) box.scrollTop = box.scrollHeight; });
 }
@@ -936,13 +944,13 @@ defineExpose({ rows });
       <!-- タブはダブルクリックで名前を付け替える (2026-10-07 オーナー「名前も自分で変えて」。番号だけだと 10 個並ぶと取り違える) -->
       <template v-for="(p, i) in s.simPatterns.value" :key="i">
         <input v-if="renaming === i" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="p.name" class="w-40 rounded-full border border-amber-400/60 bg-black/50 px-2.5 py-0.5 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="renaming = null" @blur="rename(i, ($event.target as HTMLInputElement).value)" />
-        <button v-else type="button" class="rounded-full px-2.5 py-0.5" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" title="ダブルクリックで名前を変える" @click="active = i" @dblclick="locked || (renaming = i)">{{ p.name }} <span class="opacity-60">({{ p.steps.length }} 手)</span></button>
+        <button v-else type="button" class="rounded-full px-2.5 py-0.5" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" title="ダブルクリックで名前を変える" @click="active = i" @dblclick="locked || (renaming = i)">{{ p.name }} <span class="opacity-60">({{ p.steps.length }} 手)</span></button><button v-if="!locked && renaming !== i" type="button" class="rounded px-1 text-[12px] opacity-60 md:hidden" title="名前を変える" @click.stop="renaming = i">✎</button>
       </template>
       <template v-if="!locked">
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100" title="空のパターンを足す" @click="addPattern(false)">＋</button>
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100" title="このパターンを写して足す (少しだけ変えて比べる時に)" @click="addPattern(true)">⧉</button>
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 disabled:opacity-30" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? 'パターンが 1 つの時は消せない' : 'このパターンを消す'" @click="removePattern">×</button>
-        <button type="button" class="ml-1 rounded-lg border border-amber-400/60 bg-amber-500/15 px-2 py-0.5 font-bold text-amber-100 hover:bg-amber-500/25 disabled:opacity-30" :disabled="busy || !pat.steps.length" :title="pat.steps.length ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))">このパターンを回す ▶</button>
+        <button type="button" class="ml-1 rounded-lg border border-amber-400/60 bg-amber-500/15 px-2 py-0.5 font-bold text-amber-100 hover:bg-amber-500/25 disabled:opacity-30 max-md:min-h-11 max-md:px-3" :disabled="busy || !pat.steps.length" :title="pat.steps.length ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))">このパターンを回す ▶</button>
         <button type="button" class="ml-1 rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-30" :disabled="!history.length" :title="history.length ? 'パターンの直前の操作を 1 つ取り消す' : '戻せる操作がまだ無い'" @click="undoPattern">↶ 1 つ戻す</button>
       </template>
     </div>
@@ -974,7 +982,7 @@ defineExpose({ rows });
             </button>
             <span v-if="n.miss" class="flex flex-col">
               <span class="flex items-center">
-                <span class="h-px w-4 border-t border-dashed border-rose-400/60"></span>
+                <span class="h-px w-4 border-t border-dashed border-rose-400/60 max-md:hidden"></span>
                 <span class="flex items-center gap-1 rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1">
                   <span class="text-rose-300">付かなかった</span>
                   <template v-if="n.miss.icons.length">
@@ -986,7 +994,7 @@ defineExpose({ rows });
               </span>
               <span class="flex items-center text-[10px] text-amber-200/90">
                 <span class="text-rose-300">◀</span>
-                <span class="h-px w-5 border-t border-dashed border-rose-400/60"></span>
+                <span class="h-px w-5 border-t border-dashed border-rose-400/60 max-md:hidden"></span>
                 <span class="ml-1">{{ n.miss.icons.length ? "付くまで繰り返す" : "当たり 1/3" }}</span>
               </span>
             </span>
@@ -1050,7 +1058,7 @@ defineExpose({ rows });
             <!-- 外れの枝: やり直す手は、外れ → やり直しのカレンシー → カードに戻る線で「付くまで繰り返す」 -->
             <span v-if="showMiss(r) && !needs2(r)" class="flex flex-col">
               <span class="flex items-center">
-                <span class="h-px w-4 border-t border-dashed border-rose-400/60"></span>
+                <span class="h-px w-4 border-t border-dashed border-rose-400/60 max-md:hidden"></span>
                 <button type="button" class="flex items-center gap-1 whitespace-nowrap rounded-md border border-rose-400/40 bg-rose-950/30 px-1.5 py-1 text-left hover:brightness-125" :class="focusRow === i && partOf(i, r) === 'miss' ? 'ring-2 ring-rose-400/70' : ''" :title="hasMiss(r) ? '押すと付かなかった時の打ち方を選ぶ' : r.set?.kind === 'fracture' ? '違う MOD が固定されたら新しいベースで最初から' : r.set && RARITY_CHANGE.has(r.set.kind) ? '王者・錬金の後は枠が空くので、外れても消す物が無い (そのまま次へ)' : '付ける物が無い手'" :disabled="!hasMiss(r) || locked" @click="selectRow(i, 'miss')">
                   <span class="text-rose-300">付かなかった</span>
                   <template v-if="missSet(r.step)">
@@ -1072,7 +1080,7 @@ defineExpose({ rows });
               </span>
               <span v-if="missSet(r.step) || r.step.onMiss === 'redo'" class="flex items-center text-[10px] text-amber-200/90">
                 <span class="text-rose-300">◀</span>
-                <span class="h-px w-5 border-t border-dashed border-rose-400/60"></span>
+                <span class="h-px w-5 border-t border-dashed border-rose-400/60 max-md:hidden"></span>
                 <span class="ml-1">付くまで繰り返す</span>
               </span>
               <span v-if="preRule(r)" class="ml-5 text-[10px] leading-tight opacity-70">{{ preRule(r) }}</span>
@@ -1134,12 +1142,12 @@ defineExpose({ rows });
         </template>
         <template v-if="!locked">
           <div class="ml-[6.5rem] h-3 w-px bg-white/20"></div>
-          <button type="button" class="w-52 rounded-md border border-dashed border-amber-400/50 py-1 text-amber-200 hover:bg-amber-500/10" @click="addStep">＋ 手を足す</button>
+          <button type="button" class="w-52 rounded-md border border-dashed border-amber-400/50 py-1 text-amber-200 hover:bg-amber-500/10 max-md:min-h-11 max-md:w-full" @click="addStep">＋ 手を足す</button>
         </template>
       </div>
 
       <!-- 右: 押した手を決める枠 -->
-      <div class="flex min-w-0 flex-1 flex-col rounded-lg bg-black/25 px-3 py-2">
+      <div ref="editorEl" class="flex min-w-0 flex-1 flex-col rounded-lg bg-black/25 px-3 py-2 max-md:order-3 max-md:scroll-mt-2">
         <template v-if="focusRow != null && rows[focusRow] && !locked">
           <!-- いまの手と、決める順 (MOD → カレンシー → やり直し)。済み 緑 / いま 黄、押すとそこだけ選び直す -->
           <div class="mb-2 flex flex-wrap items-center gap-1 border-b border-white/10 pb-2">
@@ -1396,16 +1404,16 @@ defineExpose({ rows });
         <div v-else class="grid flex-1 place-items-center text-center">
           <div class="flex flex-col items-center gap-2">
             <span class="h-10 w-10 rounded-lg border border-dashed border-white/20 bg-black/30"></span>
-            <p class="opacity-50">{{ locked ? "左の手を押すと、その手まで当たった時のアイテムが右に出ます" : allPlaced && rows.length ? "付ける物は全部並べました。左の手を押すと選び直せます" : rows.length ? "左の手を押すと、ここで選び直せます" : "1 手目を足して始めます" }}</p>
-            <button v-if="!locked" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/15 px-4 py-1 font-bold text-amber-100 hover:bg-amber-500/25" @click="addStep">＋ 手を足す</button>
+            <p class="opacity-50">{{ locked ? `${phone ? "上" : "左"}の手を押すと、その手まで当たった時のアイテムが${phone ? "下" : "右"}に出ます` : allPlaced && rows.length ? `付ける物は全部並べました。${phone ? "上" : "左"}の手を押すと選び直せます` : rows.length ? `${phone ? "上" : "左"}の手を押すと、ここで選び直せます` : "1 手目を足して始めます" }}</p>
+            <button v-if="!locked" type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/15 px-4 py-1 font-bold text-amber-100 hover:bg-amber-500/25 max-md:min-h-11" @click="addStep">＋ 手を足す</button>
           </div>
         </div>
       </div>
 
       <!-- その手まで当たった時のアイテム -->
       <!-- アイテムは枠に収まるまで縮める (スクロールさせない。2026-10-07 オーナー「レアアイテムの所はスクロールしたくない、画面に収まるように小さく」) -->
-      <div v-if="preview" ref="cardBox" class="w-[280px] shrink-0 overflow-hidden max-md:w-full">
-        <div ref="cardInner" :style="{ zoom: cardZoom }">
+      <div v-if="preview" ref="cardBox" class="w-[280px] shrink-0 overflow-hidden max-md:order-2 max-md:w-full">
+        <div ref="cardInner" class="max-md:mx-auto max-md:w-[280px]" :style="{ zoom: cardZoom }">
         <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : editingStep ? `${previewAt + 1} 手目を打つ前 (オレンジ = この手で消える候補)` : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
         <StageItemCard :item="preview" :added="previewOut?.added ?? []" :removed="previewOut?.removed ?? []" :doomed="previewOut?.doomed ?? []" :holding="false" :flash-key="0" :width="280" compact />
         </div>

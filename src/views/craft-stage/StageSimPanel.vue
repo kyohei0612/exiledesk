@@ -551,6 +551,11 @@ const recipeOut = ref<{ r: RecipeResult; spec: RecipeSpec } | null>(null);
 /** フラクチャー済みから残りを作る費用 (ベース代 0 で回した平均)。買う側の比べに足す */
 /** 固定済みから先のクラフト費用だけ (ベース代を除く) と、使ったベースの数 (やり直しの買い直し・作り直し込み) */
 const restCost = ref<number | null>(null);
+/** スマホ (幅 768 CSS px 未満): 2 狙う MOD の「決めた →」を画面の下に固定、道具を指の大きさに (2026-10-08 レビュー) */
+const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
+const onPhoneResize = (): void => { phone.value = window.innerWidth < 768; };
+onMounted(() => window.addEventListener("resize", onPhoneResize));
+onBeforeUnmount(() => window.removeEventListener("resize", onPhoneResize));
 const restBases = ref(1);
 /**
  * 固定済みのベース 1 個の費用 (始め方のうち一番安い物。結果に依らない値: 自作 = 1 回分 × 3 + 消去 × 2、② = (ベース + 壁 + フラクチャー) × 3 + 消去 × 2、固定済みを買う = その値段)。
@@ -1167,8 +1172,10 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <CurrencyPicker sim />
       <!-- レシピ (名前を付けて残す・呼び出す) -->
       <span ref="recipeBox" class="relative">
-        <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px]" :class="recipeOpen ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/20 hover:bg-white/10'" title="今の途中 (ベース・狙い・順番・パターン) を名前を付けて残す / 呼び出す" @click="openRecipes">レシピ {{ recipeOpen ? "▲" : "▼" }}</button>
+        <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px] max-md:py-2 max-md:text-[12px]" :class="recipeOpen ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/20 hover:bg-white/10'" title="今の途中 (ベース・狙い・順番・パターン) を名前を付けて残す / 呼び出す" @click="openRecipes">レシピ {{ recipeOpen ? "▲" : "▼" }}</button>
+        <div v-if="recipeOpen" class="fixed inset-0 z-30 bg-black/60 md:hidden" @click="recipeOpen = false"></div>
         <div v-if="recipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl max-md:fixed max-md:inset-x-3 max-md:top-14 max-md:w-auto max-md:max-h-[80vh] max-md:overflow-y-auto">
+          <button type="button" class="mb-2 w-full rounded-lg border border-white/20 py-2 md:hidden" @click="recipeOpen = false">閉じる</button>
           <div class="flex items-center gap-2">
             <input v-model="recipeName" class="min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60" placeholder="レシピの名前" @keydown.enter="saveRecipe" />
             <button type="button" class="shrink-0 rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 hover:bg-amber-500/30" @click="saveRecipe">今の状態を保存</button>
@@ -1185,7 +1192,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
             <div v-for="r in recipes" :key="r.id" class="flex items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2 py-1.5">
               <div class="min-w-0 flex-1">
                 <input v-if="recipeRenaming === r.id" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="r.name" class="w-full rounded border border-amber-400/60 bg-black/50 px-1 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="recipeRenaming = null" @blur="renameRecipe(r.id, ($event.target as HTMLInputElement).value)" />
-                <p v-else class="cursor-text truncate font-bold" title="ダブルクリックで名前を変える" @dblclick="recipeRenaming = r.id">{{ r.name }}</p>
+                <p v-else class="flex cursor-text items-center gap-1 font-bold" title="ダブルクリックで名前を変える" @dblclick="recipeRenaming = r.id"><span class="truncate">{{ r.name }}</span><button type="button" class="shrink-0 rounded px-1 text-[12px] opacity-70 md:hidden" title="名前を変える" @click.stop="recipeRenaming = r.id">✎</button></p>
                 <p class="truncate text-[10px] opacity-50">{{ r.baseJa ?? r.session.base }} · パターン {{ r.session.patterns.length }} つ · {{ fmtDate(r.savedAt) }}</p>
               </div>
               <button type="button" class="shrink-0 rounded-lg border px-2 py-0.5" :class="recipeArmed === `load:${r.id}` ? 'border-amber-400 bg-amber-500/25 text-amber-100' : 'border-sky-400/50 text-sky-200 hover:bg-sky-500/10'" :title="recipeArmed === `load:${r.id}` ? '今の状態は置き換わる。もう一度押すと呼び出す' : 'このレシピを呼び出す (今の状態は置き換わる)'" @click="loadRecipe(r)">{{ recipeArmed === `load:${r.id}` ? "置き換える?" : "呼び出す" }}</button>
@@ -1194,9 +1201,9 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           </div>
         </div>
       </span>
-      <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px]" :class="resetArmed ? 'border-rose-400 bg-rose-500/25 text-rose-100' : 'border-white/20 hover:bg-white/10'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll">{{ resetArmed ? "もう一度押すとリセット" : "リセット" }}</button>
-      <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo">↶ 1 つ戻す</button>
-      <button type="button" class="rounded-full border px-2 py-0.5 text-[11px]" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
+      <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px] max-md:py-2 max-md:text-[12px]" :class="resetArmed ? 'border-rose-400 bg-rose-500/25 text-rose-100' : 'border-white/20 hover:bg-white/10'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll">{{ resetArmed ? "もう一度押すとリセット" : "リセット" }}</button>
+      <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30 max-md:py-2 max-md:text-[12px]" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo">↶ 1 つ戻す</button>
+      <button type="button" class="rounded-full border px-2 py-0.5 text-[11px] max-md:hidden" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
     </Teleport>
     <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
@@ -1220,7 +1227,12 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <StageTargetSummary :editable="!modsDone" />
         <div v-if="rows.length && !modsDone" class="mt-1 flex items-center gap-2">
           <button type="button" class="rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
-          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="modsDone = true">決めた →</button>
+          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 max-md:min-h-11 max-md:px-4" @click="modsDone = true">決めた →</button>
+        </div>
+        <!-- スマホ: 一覧の下で「T○ 以上」を押しても上の完成図は見えないので、狙いの数と「決めた →」を画面の下に固定 (2026-10-08 レビュー) -->
+        <div v-if="phone && rows.length && !modsDone" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+          <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">狙い {{ rows.length }} 個</b><span class="opacity-60"> · 足したら決める</span></span>
+          <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-4 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70" @click="modsDone = true">決めた →</button>
         </div>
         <!-- このベースに付く MOD (同じ枠の中。2026-10-05 オーナー「枠は一緒の枠で表示するべき」)。長いので枠の中で送り、上の完成図は見えたまま -->
         <div v-if="!modsDone" class="-mx-3 mt-3 max-h-[62vh] overflow-auto border-t border-white/10 px-3 [overflow-anchor:none] max-md:max-h-none max-md:overflow-visible">
@@ -1401,7 +1413,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
               <option v-for="n in MAX_STEPS_CHOICES" :key="n" :value="n">{{ n.toLocaleString() }} 手</option>
             </select>
           </label>
-          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()">回す ▶</button>
+          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40 max-md:min-h-11 max-md:px-4" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()">回す ▶</button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
