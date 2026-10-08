@@ -244,21 +244,32 @@ def run(page: Page, out: Path, only: list[str]) -> None:
             "e => e.scrollIntoView({behavior: 'smooth', block: 'start'})"
         )
         pause(1.2)
-        toc = modlist.locator("div.sticky button", has_text=re.compile(r"^\s*普通")).first
-        hand.click(toc, 700, 1.0)
-        normal = page.locator("h3 > span", has_text=re.compile("^普通$"))
-        sec = modlist.locator("section.scroll-mt-12").filter(has=normal)
-        row = sec.locator("button.w-full").filter(has_text="火耐性").first
-        hand.click(row, 800, 1.0)
-        tbl = row.locator("xpath=following-sibling::table[1]")
-        tbl.wait_for(timeout=3000)
-        pause(1.5)
-        t1 = page.locator("td:first-child", has_text=re.compile("^T1$"))
-        hand.click(tbl.locator("tr").filter(has=t1).get_by_role("button", name="付ける"), 800, 1.5)
-        hand.click(row, 700, 0.8)  # 同じ行をもう一度押して表を閉じる
+
+        def attach(kind: str, text: str | None, tier: str, button: str) -> None:
+            """目次で種類へ飛ぶ → 行を押してティアの表 → その段のボタン → 表を閉じる."""
+            toc = modlist.locator("div.sticky button", has_text=re.compile(rf"^\s*{kind}")).first
+            hand.click(toc, 700, 1.0)
+            head = page.locator("h3 > span", has_text=re.compile(rf"^{kind}$"))
+            rows = modlist.locator("section.scroll-mt-12").filter(has=head).locator("button.w-full")
+            row = (rows.filter(has_text=text) if text else rows).first
+            hand.click(row, 800, 1.0)
+            tbl = row.locator("xpath=following-sibling::table[1]")
+            tbl.wait_for(timeout=3000)
+            pause(1.5)
+            cell = page.locator("td:first-child", has_text=re.compile(rf"^{tier}$"))
+            hand.click(
+                tbl.locator("tr").filter(has=cell).get_by_role("button", name=button), 800, 1.5
+            )
+            hand.click(row, 700, 0.8)  # 同じ行をもう一度押して表を閉じる
+
+        attach("普通", "火耐性", "T1", "付ける")
+        attach("普通", "最大ライフ", "T2", "フラクチャー")
+        attach("冒涜", "火および混沌耐性", "T1", "冒涜")
         top()
         pause(2.0)
+        notes.append({"item": card.inner_text()})
         rec.stop()
+        dump("modlist")
 
 
 def main() -> None:
