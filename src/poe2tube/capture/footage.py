@@ -46,9 +46,11 @@ def footage_frames(clip: str, fps: int, root: Path = FOOTAGE_DIR) -> list[Path]:
     return frames
 
 
-def shot_at(frames: list[Path], fps: float, at: float, hold: float | None, t: float) -> Path | None:
-    """行の頭から t 秒の時に貼るコマ: at 秒目から流し、hold 秒目 (無ければ最後) で止める."""
+def shot_at(
+    frames: list[Path], fps: float, at: float, hold: float | None, t: float, rate: float = 1.0
+) -> Path | None:
+    """行の頭から t 秒の時のコマ: at 秒目から rate 倍で流し、hold 秒目 (無ければ最後) で止める."""
     if not frames:
         return None
     last = len(frames) - 1 if hold is None else min(len(frames) - 1, round(hold * fps))
-    return frames[max(0, min(last, round((at + max(0.0, t)) * fps)))]
+    return frames[max(0, min(last, round((at + max(0.0, t) * rate) * fps)))]

@@ -149,6 +149,9 @@ class Scene(BaseModel):
     hold: float | None = Field(
         default=None, ge=0, description="footage: 何秒目で止めて出したままにするか (省略 = 最後)"
     )
+    rate: float = Field(
+        default=1.0, gt=0, le=8, description="footage: 流す速さ (2 = 倍速。操作の多い所を短く)"
+    )
 
     def key(self) -> tuple[object, ...]:
         """見た目が同じ場面かを比べる鍵 (実演・クイズの答えと札の違いも別の画面とみなす)."""
@@ -181,6 +184,7 @@ class Scene(BaseModel):
             self.clip,
             self.at,
             self.hold,
+            self.rate,
         )
 
     @model_validator(mode="before")

@@ -186,8 +186,10 @@
           "emotion": "normal",
           "text": "ここからは使い方。まずは「手で打つ」画面から。",
           "scene": {
-            "kind": "stage",
-            "step": 1
+            "kind": "footage",
+            "clip": "open",
+            "at": 0,
+            "hold": 1.0
           }
         },
         {
@@ -195,8 +197,10 @@
           "emotion": "normal",
           "text": "左にアイテム、右にカレンシーの棚。棚のオーブを押して持って、アイテムを押すと1回使えるわ。",
           "scene": {
-            "kind": "stage",
-            "step": 1
+            "kind": "footage",
+            "clip": "open",
+            "at": 1.0,
+            "hold": 1.8
           }
         },
         {
@@ -204,8 +208,9 @@
           "emotion": "normal",
           "text": "ベースは1000種類から選べて、アイテムレベルも変えられるの。",
           "scene": {
-            "kind": "stage",
-            "step": 1
+            "kind": "footage",
+            "clip": "open",
+            "at": 1.8
           }
         },
         {
@@ -213,8 +218,10 @@
           "emotion": "troubled",
           "text": "1回ずつ持ち直さないとダメなのだ？",
           "scene": {
-            "kind": "stage",
-            "step": 1
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 0,
+            "hold": 1.8
           }
         },
         {
@@ -222,8 +229,10 @@
           "emotion": "normal",
           "text": "持ったまま、アイテムを何回も押せるわ。カオスオーブを何回も打つ時に便利よ。",
           "scene": {
-            "kind": "stage",
-            "step": 1
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 1.8,
+            "hold": 2.9
           }
         },
         {
@@ -231,26 +240,21 @@
           "emotion": "normal",
           "text": "まずは変成のオーブでマジックにするわね。",
           "scene": {
-            "kind": "stage",
-            "step": 1
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 2.9,
+            "hold": 4.0
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "マナリーチ6.21%、T1よ。",
+          "text": "物理ダメージを4から10追加、T6。",
           "scene": {
-            "kind": "stage",
-            "step": 1
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "surprised",
-          "text": "いきなりT1なのだ！",
-          "scene": {
-            "kind": "stage",
-            "step": 2
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 4.0,
+            "hold": 5.6
           }
         },
         {
@@ -258,17 +262,32 @@
           "emotion": "normal",
           "text": "次は増強のオーブ。",
           "scene": {
-            "kind": "stage",
-            "step": 1
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 5.6,
+            "hold": 6.55
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "冷気ダメージを9から16追加、T5。",
+          "text": "全ての元素耐性+16%。T1よ。",
           "scene": {
-            "kind": "stage",
-            "step": 2
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 6.55,
+            "hold": 8.1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "いきなりT1なのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 8.1,
+            "hold": 8.1
           }
         },
         {
@@ -276,17 +295,21 @@
           "emotion": "normal",
           "text": "王者のオーブでレアにするわね。",
           "scene": {
-            "kind": "stage",
-            "step": 2
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 8.1,
+            "hold": 9.1
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "アイテムレアリティ+10%、T3。",
+          "text": "冷気耐性+40%、T2。",
           "scene": {
-            "kind": "stage",
-            "step": 3
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 9.1,
+            "hold": 10.7
           }
         },
         {
@@ -294,26 +317,32 @@
           "emotion": "normal",
           "text": "続けて高貴なオーブを3回。",
           "scene": {
-            "kind": "stage",
-            "step": 3
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 10.7,
+            "hold": 11.65
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "ライフリーチ6.36%、T2。",
+          "text": "混沌耐性+12%、T4。",
           "scene": {
-            "kind": "stage",
-            "step": 4
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 11.65,
+            "hold": 13.3
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "筋力+7、T8。",
+          "text": "冷気ダメージ5%増加、T6。",
           "scene": {
-            "kind": "stage",
-            "step": 5
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 13.3,
+            "hold": 15.0
           }
         },
         {
@@ -321,8 +350,10 @@
           "emotion": "sad",
           "text": "しょぼいのが付いたのだ……。",
           "scene": {
-            "kind": "stage",
-            "step": 5
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 15.0,
+            "hold": 15.0
           }
         },
         {
@@ -330,17 +361,20 @@
           "emotion": "normal",
           "text": "それも抽選の結果ね。最後の1回。",
           "scene": {
-            "kind": "stage",
-            "step": 5
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 15.0,
+            "hold": 15.2
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "最大ライフ+30、T6。これで6つ埋まったわ。",
+          "text": "最大マナ+40、T9。これで6つ埋まったわ。",
           "scene": {
-            "kind": "stage",
-            "step": 6
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 15.2
           }
         },
         {
@@ -348,8 +382,10 @@
           "emotion": "troubled",
           "text": "失敗したら、戻せるのだ？",
           "scene": {
-            "kind": "stage",
-            "step": 6
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 18.0,
+            "hold": 18.0
           }
         },
         {
@@ -357,8 +393,10 @@
           "emotion": "normal",
           "text": "「1手戻す」を押せば、1つ前に戻せるわ。Ctrl+Zでもいいの。",
           "scene": {
-            "kind": "stage",
-            "step": 6
+            "kind": "footage",
+            "clip": "undo",
+            "at": 0,
+            "hold": 3.5
           }
         },
         {
@@ -366,8 +404,10 @@
           "emotion": "surprised",
           "text": "ゲームじゃできないのだ！",
           "scene": {
-            "kind": "stage",
-            "step": 6
+            "kind": "footage",
+            "clip": "undo",
+            "at": 3.5,
+            "hold": 3.5
           }
         },
         {
@@ -375,8 +415,10 @@
           "emotion": "normal",
           "text": "何度でも試せるから、本番の前の練習にちょうどいいわ。",
           "scene": {
-            "kind": "stage",
-            "step": 6
+            "kind": "footage",
+            "clip": "undo",
+            "at": 3.5,
+            "hold": 3.5
           }
         }
       ]
@@ -390,10 +432,10 @@
           "emotion": "normal",
           "text": "骨やお告げも打てるわ。後編で見せた冒涜と発現も、そのままよ。",
           "scene": {
-            "kind": "stage",
-            "step": 2,
-            "demo": "reveal",
-            "still": true
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 0,
+            "hold": 6.5
           }
         },
         {
@@ -401,10 +443,10 @@
           "emotion": "surprised",
           "text": "未発現の冒涜MODなのだ！",
           "scene": {
-            "kind": "stage",
-            "step": 2,
-            "demo": "reveal",
-            "still": true
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 6.5,
+            "hold": 8.0
           }
         },
         {
@@ -412,10 +454,10 @@
           "emotion": "normal",
           "text": "魂の井戸で発現すると、候補が3つ出るの。",
           "scene": {
-            "kind": "stage",
-            "step": 3,
-            "demo": "reveal",
-            "offers": true
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 8.0,
+            "hold": 9.6
           }
         },
         {
@@ -423,20 +465,21 @@
           "emotion": "normal",
           "text": "アビスの反響のお告げを使っておけば、引き直しもできるわ。",
           "scene": {
-            "kind": "stage",
-            "step": 3,
-            "demo": "reveal",
-            "offers": true
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 9.6,
+            "hold": 11.6
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "引き直した中から、火ダメージ11%増加を選ぶわね。T5よ。",
+          "text": "引き直した中から、ライフリーチ量13%増加を選ぶわね。T1よ。",
           "scene": {
-            "kind": "stage",
-            "step": 3,
-            "demo": "reveal"
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 11.6,
+            "hold": 13.6
           }
         },
         {
@@ -444,9 +487,10 @@
           "emotion": "happy",
           "text": "カーソルで選んで、ちゃんと付いたのだ！",
           "scene": {
-            "kind": "stage",
-            "step": 3,
-            "demo": "reveal"
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 13.6,
+            "hold": 13.6
           }
         },
         {
@@ -454,10 +498,10 @@
           "emotion": "normal",
           "text": "ルーンも差せるわ。6つで埋まった胴に、セールの凱旋を差すわね。",
           "scene": {
-            "kind": "stage",
-            "step": 7,
-            "demo": "serle",
-            "still": true
+            "kind": "footage",
+            "clip": "rune",
+            "at": 0,
+            "hold": 5.2
           }
         },
         {
@@ -465,9 +509,10 @@
           "emotion": "normal",
           "text": "サフィックスモッド+1個。",
           "scene": {
-            "kind": "stage",
-            "step": 8,
-            "demo": "serle"
+            "kind": "footage",
+            "clip": "rune",
+            "at": 5.2,
+            "hold": 7.0
           }
         },
         {
@@ -475,19 +520,20 @@
           "emotion": "normal",
           "text": "高貴なオーブを使うわね。",
           "scene": {
-            "kind": "stage",
-            "step": 8,
-            "demo": "serle"
+            "kind": "footage",
+            "clip": "rune",
+            "at": 7.0,
+            "hold": 9.0
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "冷気耐性+45%が、4つ目のサフィックスに付いたわ。T1よ。",
+          "text": "筋力+21が、4つ目のサフィックスに付いたわ。",
           "scene": {
-            "kind": "stage",
-            "step": 9,
-            "demo": "serle"
+            "kind": "footage",
+            "clip": "rune",
+            "at": 9.0
           }
         },
         {
@@ -495,9 +541,10 @@
           "emotion": "happy",
           "text": "7つ目のMODなのだ！",
           "scene": {
-            "kind": "stage",
-            "step": 9,
-            "demo": "serle"
+            "kind": "footage",
+            "clip": "rune",
+            "at": 12.0,
+            "hold": 12.0
           }
         },
         {
@@ -505,9 +552,10 @@
           "emotion": "normal",
           "text": "お告げは23種類、ルーンやソウルコアは300種類以上。クラフトに使う物は、ほとんど打てるわ。",
           "scene": {
-            "kind": "stage",
-            "step": 9,
-            "demo": "serle"
+            "kind": "footage",
+            "clip": "rune",
+            "at": 12.0,
+            "hold": 12.0
           }
         },
         {
@@ -515,9 +563,10 @@
           "emotion": "happy",
           "text": "全部試せるのだ！",
           "scene": {
-            "kind": "stage",
-            "step": 9,
-            "demo": "serle"
+            "kind": "footage",
+            "clip": "rune",
+            "at": 12.0,
+            "hold": 12.0
           }
         }
       ]
@@ -531,8 +580,10 @@
           "emotion": "normal",
           "text": "画面の下には、このベースに付くMODの一覧も出るわ。",
           "scene": {
-            "kind": "tiers",
-            "mod": "IncreasedLife"
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 0,
+            "hold": 4.4
           }
         },
         {
@@ -540,8 +591,10 @@
           "emotion": "normal",
           "text": "行を押すとティアの表が開いて、数値の幅と、ティアごとの出やすさが見られるの。",
           "scene": {
-            "kind": "tiers",
-            "mod": "IncreasedLife"
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 4.4,
+            "hold": 6.6
           }
         },
         {
@@ -549,8 +602,10 @@
           "emotion": "surprised",
           "text": "T1がどれくらい出にくいか、分かるのだ！",
           "scene": {
-            "kind": "tiers",
-            "mod": "IncreasedLife"
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 6.6,
+            "hold": 6.6
           }
         },
         {
@@ -558,8 +613,10 @@
           "emotion": "normal",
           "text": "出やすさは、データサイトのpoe2dbの推定を使っているわ。",
           "scene": {
-            "kind": "tiers",
-            "mod": "IncreasedLife"
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 6.6,
+            "hold": 6.6
           }
         },
         {
@@ -567,8 +624,10 @@
           "emotion": "troubled",
           "text": "公式の数字じゃないのだ？",
           "scene": {
-            "kind": "tiers",
-            "mod": "IncreasedLife"
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 6.6,
+            "hold": 6.6
           }
         },
         {
@@ -576,8 +635,10 @@
           "emotion": "normal",
           "text": "公式は出やすさを公開していないの。だから目安として見てね。",
           "scene": {
-            "kind": "tiers",
-            "mod": "IncreasedLife"
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 6.6,
+            "hold": 6.6
           }
         },
         {
@@ -585,9 +646,10 @@
           "emotion": "normal",
           "text": "それと、好きなMODを選んで、その状態から始めることもできるわ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 6.6,
+            "hold": 9.0
           }
         },
         {
@@ -595,9 +657,10 @@
           "emotion": "surprised",
           "text": "狙いのMODが付いた所から、試せるのだ？",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 9.0,
+            "hold": 11.0
           }
         },
         {
@@ -605,9 +668,10 @@
           "emotion": "normal",
           "text": "そう。フラクチャーや冒涜のMODも選べるから、作りたい装備の途中から練習できるわ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 11.0,
+            "rate": 2.0
           }
         },
         {
@@ -615,9 +679,10 @@
           "emotion": "happy",
           "text": "便利なのだ！",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 23.0,
+            "hold": 23.0
           }
         }
       ]
@@ -631,9 +696,10 @@
           "emotion": "normal",
           "text": "最後に、実験中の機能も紹介するわ。シミュレーションよ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 0,
+            "hold": 2.0
           }
         },
         {
@@ -641,9 +707,10 @@
           "emotion": "troubled",
           "text": "何をシミュレーションするのだ？",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 2.0,
+            "hold": 2.0
           }
         },
         {
@@ -651,9 +718,10 @@
           "emotion": "normal",
           "text": "狙うMODを選ぶと、作り方ごとに、1個作るのにいくらかかるかを見積もってくれるの。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 2.0,
+            "hold": 5.5
           }
         },
         {
@@ -661,9 +729,11 @@
           "emotion": "normal",
           "text": "今回は手袋で、最大ライフとアタックスピードを狙うわ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 5.5,
+            "hold": 13.0,
+            "rate": 1.5
           }
         },
         {
@@ -671,9 +741,10 @@
           "emotion": "normal",
           "text": "ライフはフラクチャーで固定、アタックスピードはカオススパムで付けるの。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 13.0,
+            "hold": 17.0
           }
         },
         {
@@ -681,9 +752,10 @@
           "emotion": "normal",
           "text": "フラクチャーしたベースを買うか、自分で作るか。一番安い始め方も比べられるわ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 17.0,
+            "hold": 21.0
           }
         },
         {
@@ -691,9 +763,10 @@
           "emotion": "normal",
           "text": "ベースの値段は自分で入れるの。この例だと、フラクチャー済みを買うのが一番安いって出たわ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 21.0,
+            "hold": 25.0
           }
         },
         {
@@ -701,9 +774,10 @@
           "emotion": "surprised",
           "text": "お金のことまで分かるのだ！",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 25.0,
+            "hold": 25.0
           }
         },
         {
@@ -711,9 +785,11 @@
           "emotion": "normal",
           "text": "次に打ち方を組むの。高貴で3つ埋めてから、アタックスピードが付くまでカオスで入れ替える。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 25.0,
+            "hold": 43.5,
+            "rate": 3.0
           }
         },
         {
@@ -721,9 +797,10 @@
           "emotion": "normal",
           "text": "それを何回も試すのだ？",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 43.5,
+            "hold": 43.5
           }
         },
         {
@@ -731,9 +808,9 @@
           "emotion": "normal",
           "text": "「回す」を押すと、500人分を一気に試してくれるわ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 43.5
           }
         },
         {
@@ -741,19 +818,21 @@
           "emotion": "normal",
           "text": "何回も作った時の結果をまとめて、運が良い時と悪い時の幅も出してくれるわ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 48.5,
+            "hold": 48.5
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "この手袋だと1個あたり40.3神。10人に9人は、54.6神までに完成するわ。",
+          "text": "この手袋だと1個あたり41.0神。10人に9人は、56.1神までに完成するわ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 48.5,
+            "hold": 48.5
           }
         },
         {
@@ -761,9 +840,10 @@
           "emotion": "happy",
           "text": "運が悪い時の目安も分かるのだ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 48.5,
+            "hold": 48.5
           }
         },
         {
@@ -771,9 +851,10 @@
           "emotion": "normal",
           "text": "まだ実験中で、作りも変わっていく所だから、使った感想を特に聞きたいわ。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "sim",
+            "at": 48.5,
+            "hold": 48.5
           }
         }
       ]

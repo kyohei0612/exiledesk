@@ -167,7 +167,7 @@ def cue_frames(
         if tl < 0:
             frame_static = base  # 章カードの間はパネルを出さない (被せない)
         elif foot:  # 録画: at 秒目から流し、hold 秒目で止める (説明している間は出したまま)
-            shot = shot_at(foot, fps, sc.at or 0.0, sc.hold, tl)
+            shot = shot_at(foot, fps, sc.at or 0.0, sc.hold, tl, sc.rate)
             layer = render_panel_layer(c.line, res, stage_shot=shot, final_step=fin)
             frame_static = with_panel(base, layer, 0, 1.0)
         elif pre and k >= pre_from:

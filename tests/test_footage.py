@@ -17,11 +17,13 @@ def test_shot_at_plays_from_at_and_holds() -> None:
     assert shot_at(frames, 24, 1.0, None, 0.5) == frames[36]
     assert shot_at(frames, 24, 1.0, 2.0, 5.0) == frames[48]  # hold で止まる
     assert shot_at(frames, 24, 3.0, None, 9.0) == frames[99]  # 録画の最後で止まる
+    assert shot_at(frames, 24, 1.0, None, 0.5, rate=2.0) == frames[48]  # 倍速
     assert shot_at([], 24, 0.0, None, 0.0) is None
 
 
 def test_scene_footage_needs_clip_and_at() -> None:
-    assert Scene(kind="footage", clip="orbs", at=1.5, hold=3.0).key()[-3:] == ("orbs", 1.5, 3.0)
+    scene = Scene(kind="footage", clip="orbs", at=1.5, hold=3.0)
+    assert scene.key()[-4:] == ("orbs", 1.5, 3.0, 1.0)
     with pytest.raises(ValidationError):
         Scene(kind="footage", clip="orbs")
     with pytest.raises(ValidationError):
