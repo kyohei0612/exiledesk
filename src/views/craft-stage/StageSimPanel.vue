@@ -986,7 +986,9 @@ async function loadRecipe(r: SimRecipe): Promise<void> {
   s.simStartItem.value = ses.startItem ?? null;
   s.simStartCost.value = ses.startCost ?? 0;
   s.simOrder.value = ses.order;
-  s.simPatterns.value = ses.patterns.length ? ses.patterns : [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
+  // 前の作り方 (木・流れ) のパターンは読まない (2026-10-10 オーナー「前の作り方リセット」。打って作る形だけ)
+  const plays = ses.patterns.filter((p) => p.play);
+  s.simPatterns.value = plays.length ? plays : [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
   s.reset();
   whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
   startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;

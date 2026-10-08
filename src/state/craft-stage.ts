@@ -271,8 +271,22 @@ function keepUnread(xs: unknown[]): void {
     localStorage.setItem(SIM_RECIPES_UNREAD, JSON.stringify([...cur, ...xs.filter((x) => !seen.has(JSON.stringify(x)))]));
   } catch { /* 無くてよい */ }
 }
+/**
+ * 2026-10-10 オーナー「レシピリセット」: 試しで作ったレシピを 1 回だけ空にする (アプリだけ。Web の人のレシピは触らない)。
+ * 消す前の一覧は before-reset に残す (戻す時用)
+ */
+const SIM_RECIPES_RESET = "exiledesk.craftStageSim.recipes.reset-2026-10-10";
+function resetRecipesOnce(): void {
+  if (!isTauriRuntime() || localStorage.getItem(SIM_RECIPES_RESET)) return;
+  const prev = localStorage.getItem(SIM_RECIPES_KEY);
+  if (prev) localStorage.setItem("exiledesk.craftStageSim.recipes.before-reset", prev);
+  localStorage.setItem(SIM_RECIPES_KEY, "[]");
+  localStorage.removeItem(SIM_RECIPES_BAK);
+  localStorage.setItem(SIM_RECIPES_RESET, "1");
+}
 export function readSimRecipes(): SimRecipe[] {
   try {
+    resetRecipesOnce();
     // 本体が読めなければ控えから
     const main = parseList(localStorage.getItem(SIM_RECIPES_KEY));
     const list = main ?? parseList(localStorage.getItem(SIM_RECIPES_BAK)) ?? [];
