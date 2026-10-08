@@ -11,8 +11,10 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { iconOf, nameOf } from "../../state/craft-stage";
 import type { PatternSet, PolicyAct } from "../../services/craft-stage/pattern";
 import CurrencyShelf from "./CurrencyShelf.vue";
-import { provideShelf } from "../../state/shelf-context";
-import { applyCurrency, omensFor } from "../../services/craft-stage/apply-currency";
+import ShelfButton from "./ShelfButton.vue";
+import { OMEN_FOR } from "../../services/craft-stage/omens";
+import { provideShelf, simHidden } from "../../state/shelf-context";
+import { applyCurrency, kindOf, omensFor } from "../../services/craft-stage/apply-currency";
 import { mulberry32 } from "../../services/htc/rng";
 import { craftStage } from "../../state/craft-stage";
 import StageItemCard from "./StageItemCard.vue";
@@ -190,10 +192,22 @@ provideShelf({
   data: craftStage.data, item: shapeItem as unknown as import("vue").Ref<StageItem | null>, omens: shelfOmens, held: shelfHeld,
   usable: (k) => { const d = craftStage.data.value, it = shapeItem.value; if (!d || !it) return "準備中"; const r = applyCurrency(d, it, k, mulberry32(0), shelfOmens.value); return r.applied ? null : (r.reason ?? "打てない"); },
   toggleOmen: (id) => { shelfOmens.value = shelfOmens.value.includes(id) ? shelfOmens.value.filter((o) => o !== id) : [...shelfOmens.value, id]; },
+  hidden: simHidden,
 });
+/** 持った物に掛けられるお告げ (手打ちと同じ、エンジンの決まり OMEN_FOR) */
+const heldOmens = computed(() => { if (!shelfHeld.value) return []; const k = kindOf(shelfHeld.value); return [...(OMEN_FOR[k] ?? []), ...(k === "desecrate" ? OMEN_FOR.reveal ?? [] : [])]; });
+function toggleShelfOmen(id: string): void { shelfOmens.value = shelfOmens.value.includes(id) ? shelfOmens.value.filter((o) => o !== id) : [...shelfOmens.value, id]; }
+/** 持った物 + 掛けたお告げ (決める前の表示) */
+const heldUse = computed(() => (shelfHeld.value ? setOf(props.sets, useKey(shelfHeld.value, omensFor(shelfHeld.value, shelfOmens.value))) : undefined));
+/** 持つ: お告げが掛けられる物は、お告げを選んでから「決める」。掛けられない物 (品質など) はそのまま決まって次の形へ */
 function holdShelf(key: string): void {
   shelfHeld.value = key;
-  setAct(atKey.value, { set: useKey(key, omensFor(key, shelfOmens.value)) });
+  if (!heldOmens.value.length) confirmHeld();
+}
+function confirmHeld(): void {
+  const k = shelfHeld.value;
+  if (!k) return;
+  setAct(atKey.value, { set: useKey(k, omensFor(k, shelfOmens.value)) });
   shelfHeld.value = null;
   void nextTick(decided);
 }
@@ -237,7 +251,18 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
 
       <!-- 選ぶ (新しい形 / 変える) -->
       <div v-if="showPicker && useShelf" class="mt-1.5">
-        <CurrencyShelf @hold="holdShelf" />
+        <CurrencyShelf @hold="holdShelf">
+            <template v-if="heldOmens.length" #held>
+              <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
+                <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(shelfHeld ?? "") }} に掛けられるお告げ (押すと掛ける / 外す)</p>
+                <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleShelfOmen($event)" /></div>
+              </div>
+            </template>
+        </CurrencyShelf>
+        <div v-if="heldUse" class="mt-1.5 flex flex-wrap items-center gap-2 rounded-lg border border-sky-400/40 bg-sky-950/20 px-2 py-1">
+          <img v-for="ic in iconsOf(heldUse)" :key="ic" :src="iconOf(ic)" alt="" class="h-5 w-5 object-contain" /><b>{{ labelOf(heldUse) }}</b> を打つ
+          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="confirmHeld">決める →</button>
+        </div>
         <div class="mt-1.5 flex flex-wrap items-center gap-1">
           <span class="text-[11px] opacity-60">ほか:</span>
           <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'next' ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15'" @click="thenAct({ then: 'next' })">→ 次の手</button>

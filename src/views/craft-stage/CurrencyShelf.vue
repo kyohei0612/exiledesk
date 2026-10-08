@@ -28,7 +28,9 @@ const tab = ref<"usable" | "orb" | "essence" | "catalyst" | "rune" | "omen">("or
 const orbSplit = computed(() => {
   const it = craftStage.item.value;
   void craftStage.omens.value;
-  const groups = [...ORBS, { kind: "bones", label: "骨", keys: bonesFor(it) }];
+  const shown = (k: string): boolean => !craftStage.hidden?.(k);
+  // 棚に出さない物 (シミュレーションに要らない物) は写しから外す (ORBS は共通の一覧なので書き換えない)
+  const groups = [...ORBS, { kind: "bones", label: "骨", keys: bonesFor(it) }].map((g) => ({ ...g, keys: g.keys.filter(shown) }));
   const ok = (k: string): boolean => !craftStage.usable(k);
   return {
     usable: groups.map((g) => ({ kind: g.kind, keys: g.keys.filter(ok) })).filter((g) => g.keys.length),
@@ -69,7 +71,7 @@ const usableAll = computed(() => {
   const it = craftStage.item.value;
   void craftStage.omens.value;
   const ok = (k: string): boolean => !craftStage.usable(k);
-  const sec = (label: string, keys: string[], kind?: string) => ({ label, keys: keys.filter(ok), kind });
+  const sec = (label: string, keys: string[], kind?: string) => ({ label, keys: keys.filter((k) => ok(k) && !craftStage.hidden?.(k)), kind });
   return [
     sec("オーブ・骨", [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
     sec("エッセンス", essences.value.flatMap((g) => g.keys)),

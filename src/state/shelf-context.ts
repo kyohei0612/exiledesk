@@ -17,7 +17,15 @@ export interface ShelfCtx {
   /** 打てない理由 (打てるなら null) */
   usable(key: string): string | null;
   toggleOmen(id: string): void;
+  /** 棚に出さない物 (シミュレーションに要らない物。無ければ全部) */
+  hidden?: (key: string) => boolean;
 }
+/**
+ * シミュレーションの棚に出さない物 (2026-10-09 オーナー「基本的な動きはエンジン産、品質とか必要ないクラフトアイテムはそもそも削るってだけ」)。
+ * MOD に関わらない品質上げ (砥石・端材・ガラス玉・宝石細工・エッチャー)、識別・チャンス、鏡・髪束・抽出、解呪・サルベージ。指輪のカタリストは残す
+ */
+export const SIM_HIDDEN = new Set(["whetstone", "scrap", "bauble", "gemcutter", "etcher", "wisdom", "chance", "mirror", "hinekora", "extraction", "disenchant", "salvage", "transmute_shard", "regal_shard", "artificer_shard", "chance_shard"]);
+export const simHidden = (key: string): boolean => SIM_HIDDEN.has(key);
 const KEY: InjectionKey<ShelfCtx> = Symbol("shelf");
 const handCtx = (): ShelfCtx => ({
   data: craftStage.data, item: craftStage.item, omens: craftStage.omens, held: craftStage.held,

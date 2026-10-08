@@ -10,13 +10,15 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
-import { provideShelf } from "../../state/shelf-context";
+import { provideShelf, simHidden } from "../../state/shelf-context";
 import CurrencyShelf from "./CurrencyShelf.vue";
+import ShelfButton from "./ShelfButton.vue";
+import { OMEN_FOR } from "../../services/craft-stage/omens";
 import StageItemCard from "./StageItemCard.vue";
 import StageOutcomeTree from "./StageOutcomeTree.vue";
 import type { PatternSet, PolicyAct } from "../../services/craft-stage/pattern";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
-import { applyCurrency, omensFor } from "../../services/craft-stage/apply-currency";
+import { applyCurrency, kindOf, omensFor } from "../../services/craft-stage/apply-currency";
 import { mulberry32 } from "../../services/htc/rng";
 import { allMods, listOf, makeStageMod, without, withMod } from "../../services/craft-stage/stage-core";
 import { GREATER, hitChanceOf, setOf, shapesLeft, useKey } from "../../services/craft-stage/shape-table";
@@ -160,7 +162,11 @@ provideShelf({
   data: craftStage.data, item: now as unknown as import("vue").Ref<StageItem | null>, omens, held,
   usable: (k) => { const d = data.value, it = now.value; if (!d || !it) return "準備中"; const r = applyCurrency(d, it, k, mulberry32(0), omens.value); return r.applied ? null : (r.reason ?? "打てない"); },
   toggleOmen: (id) => { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; },
+  hidden: simHidden,
 });
+/** 持った物に掛けられるお告げ (手打ちと同じ、エンジンの決まり OMEN_FOR) */
+const heldOmens = computed(() => { if (!held.value) return []; const k = kindOf(held.value); return [...(OMEN_FOR[k] ?? []), ...(k === "desecrate" ? OMEN_FOR.reveal ?? [] : [])]; });
+function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
 /** 棚で持った物 (打つ物のキー)。次に「MOD を狙う？」 */
 const pending = computed(() => (held.value ? useKey(held.value, omensFor(held.value, omens.value)) : null));
 const pendingSet = computed(() => (pending.value ? setOf(props.sets, pending.value) : undefined));
@@ -218,9 +224,16 @@ const aimLabel = (a: PlayAim): string => (a.mods.length > 1 ? `どれか ${a.nee
       <template v-if="sel == null">
         <p class="mb-1.5 text-[13px] font-bold text-amber-100">{{ moves.length + 1 }} 手目 · 当たりで打つ <span class="text-[11px] font-normal opacity-60">棚から打つ物を選ぶ → MOD を狙う？</span></p>
         <div class="flex gap-3 max-md:flex-col">
-          <div class="shrink-0 max-md:mx-auto"><StageItemCard v-if="now" :item="now" :added="[]" :removed="[]" :holding="!!held" :flash-key="0" :width="260" compact /></div>
+          <div class="shrink-0 max-md:mx-auto"><StageItemCard v-if="now" :item="now" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="260" compact /></div>
           <div class="min-w-0 flex-1">
-            <CurrencyShelf v-if="!locked" @hold="(k: string) => (held = k)" />
+            <CurrencyShelf v-if="!locked" @hold="(k: string) => (held = k)">
+            <template v-if="heldOmens.length" #held>
+              <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
+                <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(held ?? "") }} に掛けられるお告げ (押すと掛ける / 外す)</p>
+                <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleOmen($event)" /></div>
+              </div>
+            </template>
+            </CurrencyShelf>
             <div v-if="pendingSet" class="mt-2 rounded-lg border border-sky-400/40 bg-sky-950/20 p-2">
               <p class="mb-1 flex flex-wrap items-center gap-1 font-bold"><img v-for="ic in iconsOf(pending!)" :key="ic" :src="iconOf(ic)" alt="" class="h-5 w-5 object-contain" />{{ useLabel(pending!) }} を打つ → MOD を狙う？</p>
               <div class="flex flex-wrap gap-1">
