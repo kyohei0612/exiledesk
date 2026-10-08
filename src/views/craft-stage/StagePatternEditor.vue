@@ -1185,7 +1185,7 @@ defineExpose({ rows });
 <template>
   <div class="text-[11px] max-md:text-[12px]">
     <!-- パターンのタブ -->
-    <div class="mb-4 flex flex-wrap items-center gap-1.5 text-[13px]">
+    <div class="mb-4 flex flex-wrap items-center gap-1.5 text-[13px] max-md:flex-nowrap max-md:overflow-x-auto max-md:whitespace-nowrap">
       <!-- タブはダブルクリックで名前を付け替える (2026-10-07 オーナー「名前も自分で変えて」。番号だけだと 10 個並ぶと取り違える) -->
       <template v-for="(p, i) in s.simPatterns.value" :key="i">
         <input v-if="renaming === i" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="p.name" class="w-40 rounded-full border border-amber-400/60 bg-black/50 px-2.5 py-0.5 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="renaming = null" @blur="rename(i, ($event.target as HTMLInputElement).value)" />

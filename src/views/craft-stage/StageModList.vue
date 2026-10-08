@@ -204,7 +204,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
     <!-- 見出し (押すと畳む) -->
     <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left" @click="open = !open">
       <b class="text-sm text-amber-100">このベースに付く MOD</b>
-      <span class="max-md:hidden opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合<template v-if="canStart"> · ティアの表の「付ける」で始めの状態を組める</template></span>
+      <span v-if="s.mode.value === 'sim'" class="max-md:hidden opacity-50">{{ s.item.value?.baseJa }} · 右の数: 出やすさ (同じ側の重みの割合) / 段の数 / T1 の Lv</span>
+      <span v-else class="max-md:hidden opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合<template v-if="canStart"> · ティアの表の「付ける」で始めの状態を組める</template></span>
       <span class="ml-auto opacity-60"><span class="whitespace-nowrap">{{ open ? "▲ 畳む" : "▼ 開く" }}</span></span>
     </button>
 
@@ -253,9 +254,9 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
-                    <span class="w-11 text-right text-[13px] font-bold text-amber-100">{{ pct(r.share) }}</span>
-                    <span class="min-w-[22px] rounded-sm bg-emerald-600/80 px-1 text-center text-[11px] font-bold leading-[18px] text-white" :title="`${r.tiers.length} ティア`">{{ r.tiers.length }}</span>
-                    <span class="min-w-[26px] rounded-sm bg-white/15 px-1 text-center text-[11px] font-bold leading-[18px] text-white/90" :title="`一番上のティアの MOD レベル ${r.topLevel}`">{{ r.topLevel }}</span>
+                    <span class="w-11 text-right text-[13px] font-bold text-amber-100" title="出やすさ (同じ側の重みの割合)">{{ pct(r.share) }}</span>
+                    <span class="min-w-[22px] rounded-sm bg-emerald-600/80 px-1 text-center text-[11px] font-bold leading-[18px] text-white" :title="`段の数 ${r.tiers.length}`">{{ r.tiers.length }}</span>
+                    <span class="min-w-[26px] rounded-sm bg-white/15 px-1 text-center text-[11px] font-bold leading-[18px] text-white/90" :title="`T1 の MOD レベル ${r.topLevel}`">{{ r.topLevel }}</span>
                   </span>
                 </span>
               </button>

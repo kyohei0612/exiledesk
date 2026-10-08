@@ -275,14 +275,15 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
               <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100 max-md:min-h-9 max-md:min-w-9 max-md:text-[16px]" :title="r.alt || g.hosts.length > 1 ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r, g.hosts)">×</button>
             </span>
             <!-- 「＋」は MOD のすぐ横 (2026-10-05 オーナー) -->
-            <button v-if="props.editable && canAlt(g.kind)" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
+            <button v-if="props.editable && canAlt(g.kind)" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="この枠に候補を足す (どれか 1 つ付けば当たり)" @click="s.simAltFor.value = g.host">＋</button>
             
           </div>
         </div>
         <!-- 付け方の予定は MOD の右側 (2026-10-05 オーナー「普通カオススパムとかの設定って MOD の右側よ」) -->
         <!-- 始め方が白以外の時、固定 MOD は 1 ベースで決めた物なので予定は変えない (2026-10-08) -->
+        <span v-if="props.editable && plansOf(g.host).length > 1 && !(g.kind === 'fracture' && s.simStart.value !== 'white')" class="shrink-0 pt-px text-[10px] text-[var(--exile-color-text-tertiary)] max-md:hidden">付け方</span>
         <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white'" class="shrink-0 rounded border px-1 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めたフラクチャーの MOD">{{ s.simStart.value === "item" ? "🔒 フラクチャー済み (手打ち)" : s.simStart.value === "fractured" ? "🔒 フラクチャー (買った物)" : "🔒 フラクチャーする (買った 4 MOD から)" }}</span>
-        <select v-else-if="props.editable && plansOf(g.host).length > 1" class="shrink-0 rounded border bg-[#14120e] px-0.5 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS[planOf(g)]" title="付け方の予定" :value="planOf(g)" @change="setPlan(g, ($event.target as HTMLSelectElement).value as Plan)">
+        <select v-else-if="props.editable && plansOf(g.host).length > 1" class="shrink-0 rounded border bg-[#14120e] px-0.5 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS[planOf(g)]" title="この MOD の付け方。打ち方の手で狙う時の目安 (後で変えられる)" :value="planOf(g)" @change="setPlan(g, ($event.target as HTMLSelectElement).value as Plan)">
           <option v-for="p in plansOf(g.host)" :key="p" :value="p">{{ PLAN_JA[p] }}{{ p === "fracture" && g.kind !== "fracture" && !canFracture(g.host) ? " (違う側・非推奨)" : "" }}</option>
         </select>
         <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「ここからやり直す」)'">{{ PLAN_JA[planOf(g)] }}</span>
