@@ -239,6 +239,14 @@ pub async fn install_from_manifest(
     if old_dir.exists() {
         let _ = std::fs::remove_dir_all(&old_dir);
     }
+    // ヘッドレス PoB は起動時にプロセスの作業フォルダを pob に移す (lua_boot.rs)。Windows は作業フォルダを rename できないので、
+    // 入れ替えの前に外へ出す (2026-10-08 フルチェック: 火力チェックを 1 度使うと更新が必ず「旧 PoB の退避に失敗」になっていた)。
+    // 入れ替えの後に worker は新しい場所で起動し直す (pob_bundle_install)
+    if let Ok(cwd) = std::env::current_dir() {
+        if cwd.starts_with(&dir) {
+            let _ = std::env::set_current_dir(parent);
+        }
+    }
     if dir.exists() {
         std::fs::rename(&dir, &old_dir).map_err(|e| format!("旧 PoB の退避に失敗 (PoB が起動中?): {e}"))?;
     }
