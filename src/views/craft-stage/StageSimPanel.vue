@@ -34,7 +34,9 @@ import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
 import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, REST, restMembers, otherJunkOf, otherGoneOf, candsOfStep } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
-import { aimTarget, compilePlay } from "../../services/craft-stage/play-recipe";
+import { aimTarget, compilePlay, type PlayAim, type PlayDecision } from "../../services/craft-stage/play-recipe";
+import { setOf } from "../../services/craft-stage/shape-table";
+import { drawRecipeCard, type RecipeCardData } from "../../services/craft-stage/recipe-card";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import SimProgress from "./SimProgress.vue";
 import { searchModGroups, type ModGroup, type ModPick } from "../../services/craft-stage/trade-search";
@@ -1299,6 +1301,87 @@ function moneyT(x: number): string {
 const barW = (x: number, total: number): string => `${total > 0 ? Math.max(0, Math.min(100, (x / total) * 100)) : 0}%`;
 const fmtCount = (n: number): string => (n >= 10 ? Math.round(n).toLocaleString() : n.toFixed(1));
 /** 運の幅の印 (半分・8 割・9 割の人。合計で) */
+/**
+ * 手順の画像 (打って作るパターンを回して、完成した人がいる時。2026-10-09 オーナー「無事完走出来たら、その手順を分かりやすく画像とかにまとめて出力できるようにしたい。やさしさ」)
+ */
+const shownPlay = computed(() => s.simPatterns.value.find((p) => p.name === shownName.value)?.play ?? null);
+const cardOk = computed(() => !!shownPlay.value?.moves.length && !!summary.value && summary.value.pDone > 0);
+const cardNote = ref("");
+/** MOD の短い名前 (数値を外して段の下限を付ける) */
+function modShort(id: string, minTier: number): string {
+  const m = s.data.value?.mods.get(id);
+  if (!m) return id;
+  const t = m.tiers[minTier];
+  const full = fillModText(m, t ? tierDisplayRanges(t) : []).replace(/\n/g, " / ");
+  const name = full.replace(/[+-]?\(?\d[\d.]*(?:[-—~]\d[\d.]*)?\)?\s*から\s*[+-]?\(?\d[\d.]*(?:[-—~]\d[\d.]*)?\)?\s*の?/g, "").replace(/[+-]?\(?\d[\d.]*(?:[-—~]\d[\d.]*)?\)?/g, "").replace(/\s*%/g, "").replace(/をアタックに追加する/, "").replace(/\s+/g, " ").trim();
+  return `${name} T${m.tiers.length - minTier}+`;
+}
+const aimText = (a: PlayAim): string => (a.mods.length > 1 ? `どれか ${a.need} つ (${a.mods.map((x) => modShort(x.modId, x.minTierIndex)).join(" / ")})` : modShort(a.mods[0]!.modId, a.mods[0]!.minTierIndex));
+function useText(key: string): string {
+  const it = s.item.value;
+  const x = it ? setOf(patternSets(it.cls), key) : undefined;
+  return x ? [nameOf(x.currency), ...x.omens.map((o) => nameOf(o))].join(" + ") : key;
+}
+function decisionText(d: PlayDecision): string {
+  if ("use" in d) return `${(d.pre ?? []).map(useText).map((t) => `${t} → `).join("")}${useText(d.use)} を打つ`;
+  if (d.go === "next") return "次の手へ";
+  if (d.go === "start") return "新しいベースで最初から";
+  return d.strip != null ? `1 MOD 残し消去 → ${d.to + 1} 手目へ` : `${d.to + 1} 手目へ`;
+}
+function shapeRule(key: string, side: "prefix" | "suffix"): string {
+  const [h, j, g] = key.split("-").map(Number);
+  const S = side === "prefix" ? "プレ" : "サフィ", O = side === "prefix" ? "サフィ" : "プレ";
+  return `${S}が 狙い ${h}・狙い以外 ${j}${g != null && !Number.isNaN(g) ? ` (${O}の狙い ${g})` : ""} の時`;
+}
+function cardData(): RecipeCardData | null {
+  const play = shownPlay.value, sm = summary.value, out = recipeOut.value;
+  if (!play || !sm || !out) return null;
+  const frac = s.simTargets.value.filter((t) => t.method === "fracture").map((t) => `固定: ${modShort(t.modId, t.minTierIndex)}`);
+  const best = new Map<string, PlayAim>();
+  for (const m of play.moves) if (m.aim) { const k = m.aim.mods.map((x) => x.modId).sort().join(","); const b = best.get(k); if (!b || b.need < m.aim.need) best.set(k, m.aim); }
+  const startJa = s.simStart.value === "white" ? "白ベースから" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : s.simStart.value === "four" ? "4 MOD のレアを買う" : "手打ちの状態から";
+  const it = s.item.value;
+  return {
+    title: `${baseJa.value} のクラフト手順`,
+    subtitle: `アイテムレベル ${s.itemLevel.value} · 始め方: ${startJa} · ${shownName.value}`,
+    goals: [...frac, ...[...best.values()].map(aimText)],
+    moves: play.moves.map((m) => {
+      const x = it ? setOf(patternSets(it.cls), m.use) : undefined;
+      return {
+        icons: x ? [x.currency, ...x.omens].map((k) => iconOf(k)).filter((u): u is string => !!u) : [],
+        label: useText(m.use),
+        sub: m.aim ? `狙い: ${aimText(m.aim)} (付くまでこの手)` : "打つだけ (打って次の手へ)",
+        rules: m.aim ? Object.entries(m.shapes ?? {}).map(([k, d]) => `${shapeRule(k, m.aim!.side)} → ${decisionText(d)}`) : [],
+      };
+    }),
+    result: {
+      total: moneyT(split.value.base + split.value.craft), base: moneyT(split.value.base), craft: moneyT(split.value.craft), done: `完成 ${pct(sm.pDone)}`,
+      luck: luck.value.filter((q) => !q.top).map((q) => ({ label: q.label, value: `${moneyT(q.v)} ${q.tail}` })),
+      usage: [...out.r.usage].sort((a, b) => b.cost - a.cost).slice(0, 6).map((u) => ({ icon: iconOf(u.key) ?? null, name: nameOf(u.key), count: u.count >= 10 ? Math.round(u.count).toLocaleString() : u.count.toFixed(1), cost: moneyT(u.cost) })),
+    },
+    footer: `ExileDesk のシミュレーション · ${fmtDate(Date.now())} · ${sm.runs.toLocaleString()} 人が作ってみた結果 (確率は重みからの目安)`,
+  };
+}
+async function cardCanvas(): Promise<HTMLCanvasElement | null> { const d = cardData(); return d ? drawRecipeCard(d) : null; }
+async function saveCard(): Promise<void> {
+  const cv = await cardCanvas();
+  if (!cv) return;
+  const name = `exiledesk-${baseJa.value}-${shownName.value}-${new Date().toISOString().slice(0, 10)}.png`.replace(/[\/:*?"<>|\s]+/g, "_");
+  const a = document.createElement("a");
+  a.href = cv.toDataURL("image/png"); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  cardNote.value = `${name} に保存しました`;
+}
+async function copyCard(): Promise<void> {
+  const cv = await cardCanvas();
+  if (!cv) return;
+  try {
+    const blob = await new Promise<Blob | null>((r) => cv.toBlob(r, "image/png"));
+    if (!blob) throw new Error("no blob");
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    cardNote.value = "画像をコピーしました (貼り付けて使えます)";
+  } catch { cardNote.value = "コピーできなかったので保存してください"; }
+}
 const luck = computed(() => {
   const sm = summary.value;
   if (!sm) return [];
@@ -1659,6 +1742,11 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <span class="text-[28px] font-bold leading-none tabular-nums text-amber-100">{{ moneyT(split.base + split.craft) }}</span>
         <span class="text-[12px] tabular-nums opacity-70">= ベース {{ moneyT(split.base) }} + クラフト {{ moneyT(split.craft) }}</span>
         <span v-if="summary.pDone < 0.995" class="text-[12px] font-bold text-rose-300" :title="recipeOut.r.stops.map((x) => `${pct(x.p)}: ${x.reason}`).join(' / ')">完成 {{ pct(summary.pDone) }}</span>
+        <span v-if="cardOk" class="ml-auto flex items-center gap-1">
+          <button type="button" class="rounded-lg border border-sky-400/60 bg-sky-500/10 px-2.5 py-0.5 text-[12px] font-bold text-sky-100 hover:bg-sky-500/20" title="この手順と結果を 1 枚の画像に (PNG で保存)" @click="saveCard">手順を画像で保存</button>
+          <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[12px] hover:bg-white/10" title="画像をクリップボードに (Discord などに貼れる)" @click="copyCard">画像をコピー</button>
+          <span v-if="cardNote" class="text-[11px] opacity-70">{{ cardNote }}</span>
+        </span>
       </div>
       <div class="mt-2 flex h-2.5 max-w-xl overflow-hidden rounded-full bg-white/10">
         <div class="bg-stone-400/70" :style="{ width: barW(split.base, split.base + split.craft) }" :title="`ベース ${moneyT(split.base)}`"></div>
