@@ -177,6 +177,8 @@ const simStart = ref<SimStart>("white");
  * simStart = "item" の時だけ使う。simStartCost = その時点の手打ちの累計 (高貴)
  */
 const simStartItem = ref<StageItem | null>(null);
+/** ベースを選ぶ前に選んだレシピ (StageSimPanel が開いたら読み込む。2026-10-08 完成判定: レシピはベースを選ぶまで出なかった) */
+const simPendingRecipe = ref<string | null>(null);
 const simStartCost = ref(0);
 const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }>>([]);
 /** ② のこの手順 (本体の modId) の「あるいは」を選ぶポップアップを開いている ([[StageFracturePicker.vue]] の altFor) */
@@ -323,7 +325,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simOrder, simPatterns,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

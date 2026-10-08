@@ -53,10 +53,19 @@ for (const [k, v] of Object.entries(TABLE)) {
  *
  * 呼ぶ側が英語のまま出すか落とすかを決められるよう、**ここでは代わりを作りません**。
  */
+/**
+ * 表の日本語の取りこぼし (2026-10-08 完成判定: 「最大ルーンワード」で値が抜け、「ノータブルパッシブスキル を」に空白、
+ * 品質の最大値は値を持たない MOD なので # が残った)。表は作り直しで上書きされるので、ここで直す
+ */
+const JA_FIX: Record<string, string> = {
+  "最大ルーンワード": "最大ルーンワード +#",
+  "ランダムなノータブルパッシブスキル を割り当てる": "ランダムなノータブルパッシブスキルを割り当てる",
+};
+const fixJa = (t: string | null | undefined): string | null => (t == null ? null : JA_FIX[t] ?? t);
 export function jaOfModLine(line: string): string | null {
-  if (TABLE[line]) return TABLE[line];
+  if (TABLE[line]) return fixJa(TABLE[line]);
   const hit = BY_NORM.get(normalise(line)) ?? HTC[line];
-  if (hit) return hit;
+  if (hit) return fixJa(hit);
   // クライアントから足した MOD (今リーグの冒涜・異界の MOD など) の文面は「(12-18)% increased [Reservation] …」の形。
   // 印を外し、範囲を # にしてから引く (2026-09-27: 足した MOD が英語のまま出ていた)
   const plain = line.replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1").replace(/\(-?[0-9.]+--?[0-9.]+\)/g, "#");
@@ -107,11 +116,16 @@ export function jaOfPastedLine(line: string): string | null {
  */
 export function fillHashes(text: string, ranges: ReadonlyArray<ReadonlyArray<number | string>>): string {
   let i = 0;
-  return text.replace(/([+-]?)#/g, (_m, pre: string) => {
+  // 「減少・低下・少なく」の文は数字を正で出す (データは負の数で持つので「(-60--56)%減少」と二重になっていた。2026-10-08 完成判定)
+  const down = /減少|低下|少なく|短く|遅く/.test(text);
+  const out = text.replace(/([+-]?)#/g, (_m, pre: string) => {
     const r = ranges[i++];
     if (!r) return `${pre}#`;
-    const [a, b] = r.map(Number);
+    let [a, b] = r.map(Number) as [number, number];
+    if (down && a <= 0 && b <= 0) [a, b] = [Math.min(-a, -b), Math.max(-a, -b)];
     const v = a === b ? `${a}` : `(${a}-${b})`;
     return `${pre}${v}`;
   });
+  // 値を持たない MOD (ブリーチのエッセンスの品質の最大値 +20% など) は # が残る。品質の最大値だけは 20 (取引所の条件と同じ)
+  return out.replace(/品質の最大値 #%/, "品質の最大値 +20%");
 }

@@ -9,6 +9,7 @@
   状態と操作は [[craft-stage.ts]]、1 手の中身は services/craft-stage (計算機と同じ規則)。
 -->
 <script setup lang="ts">
+import { readSimRecipes, type SimRecipe } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
@@ -201,6 +202,14 @@ function armReset(): void {
   resetArmed.value = false;
   s.reset();
 }
+/** 直前の手でルーンをはめた中身 (置き換えた物) */
+const augChange = computed(() => (s.last.value?.out as { augment_change?: { socket: number; put: { ja: string }; replaced: { ja: string } | null } } | undefined)?.augment_change ?? null);
+/** 保存したレシピ (ベースを選ぶ前に出す) */
+const savedRecipes = computed(() => (simNoBase.value ? readSimRecipes() : []));
+function startFromRecipe(r: SimRecipe): void {
+  s.simPendingRecipe.value = r.id;
+  pickSimBase(r.session.base);
+}
 function simFromHand(): void {
   const it = s.item.value;
   if (!it) return;
@@ -291,6 +300,11 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
       <b v-if="s.mode.value === 'sim'" class="text-[13px] text-amber-100">1 ベース</b>
       <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="pickSimBase" />
+      <!-- ベースを選ぶ前でも保存したレシピから始められる -->
+      <span v-if="simNoBase && savedRecipes.length" class="flex flex-wrap items-center gap-1">
+        <span class="opacity-60">保存したレシピから</span>
+        <button v-for="r in savedRecipes.slice(0, 6)" :key="r.id" type="button" class="rounded-lg border border-sky-400/50 px-2 py-0.5 text-sky-100 hover:bg-sky-500/10 max-md:min-h-10" :title="`${r.baseJa ?? r.session.base} · パターン ${r.session.patterns.length} つ`" @click="startFromRecipe(r)">{{ r.name }}</button>
+      </span>
       <span v-if="!simNoBase" class="flex items-center gap-1">
         <span class="opacity-60">アイテムレベル</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5 max-md:px-3 max-md:py-2" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
@@ -365,6 +379,8 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
           <template v-if="s.last.value">
             <p class="opacity-80">{{ s.last.value.out.currency_ja }}<span v-if="s.last.value.out.omen_ja" class="ml-1 text-violet-300">+ {{ s.last.value.out.omen_ja }}</span><span v-if="!s.last.value.out.applied" class="ml-1 text-rose-300/80">— {{ s.last.value.out.reason }}</span></p>
             <p v-if="s.last.value.out.note" class="text-sky-200/90">{{ String(s.last.value.out.note) }}</p>
+            <!-- ルーンを置き換えた時 (置き換えた方は壊れる。2026-10-08 完成判定: 直前の変化では分からなかった) -->
+            <p v-if="augChange?.replaced" class="text-rose-300">{{ augChange.socket }} 番目の <span class="line-through">{{ augChange.replaced.ja }}</span> を {{ augChange.put.ja }} に置き換え (外した方は壊れる)</p>
             <p v-for="m in s.last.value.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ m.textJa }}</p>
             <p v-for="m in s.last.value.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ m.textJa }}</p>
           </template>

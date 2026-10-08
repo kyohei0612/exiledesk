@@ -940,6 +940,13 @@ async function loadRecipe(r: SimRecipe): Promise<void> {
   recipeOut.value = null;
   void nextTick(() => { patternDone.value = !!ses.flags.patternDone; loadKept(); restoring = false; recipeOpen.value = false; });
 }
+// ベースを選ぶ前に選んだレシピを、開いたらそのまま読み込む (2 回押しの確認は要らない: まだ何も組んでいない)
+onMounted(() => {
+  const id = s.simPendingRecipe.value;
+  s.simPendingRecipe.value = null;
+  const r = id ? recipes.value.find((x) => x.id === id) : undefined;
+  if (r) { recipeArmed.value = `load:${r.id}`; void loadRecipe(r); }
+});
 const step4pre = computed(() => stepOrder.value && orderDone.value);
 /** 6 パターンの「付ける MOD」の行に出す物 (5 順番計画の行と同じ: 側・色・段・付け方・取り直し) */
 const orderInfo = computed(() => Object.fromEntries(orderKeys.value.map((k) => {
