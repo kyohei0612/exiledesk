@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 from playwright.sync_api import Locator, Page, sync_playwright
-from record_app import CDP, SPEED, Hand, Recorder, open_stage, pause, setup
+from record_app import CDP, SPEED, Hand, Recorder, mark, open_stage, pause, setup
 
 BASE_KIND, BASE = "手袋(dex)", "磨かれた弓籠手"
 TARGETS = [r"^最大ライフ \(120", r"^アタックスピードが"]
@@ -126,6 +126,7 @@ def run_sim(page: Page, out: Path) -> None:
         hand.click(done, 600, 0.8)
     hand.click(b6.get_by_role("button", name="回す ▶", exact=True), 700, 0.3)
     page.get_by_role("button", name="中止").wait_for(state="hidden", timeout=180000)
+    mark("結果が出た")
     result = page.get_by_text(re.compile(r" の 1 個あたり")).first
     result.evaluate("e => e.scrollIntoView({behavior: 'smooth', block: 'center'})")
     pause(1.5)

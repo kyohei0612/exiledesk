@@ -14,8 +14,6 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -24,6 +22,7 @@ from typing import Any
 import structlog
 from playwright.sync_api import Locator, Page, sync_playwright
 from record_app_js import APP_FX_FIXED, CURSOR_JS, HIDE_JS, LAST_CHANGE_JS
+from record_app_rec import Recorder, mark
 
 log = structlog.get_logger()
 CDP = "http://127.0.0.1:9333"
@@ -35,62 +34,6 @@ SPEED = 2.0
 def pause(seconds: float) -> None:
     """操作の間の待ち (SPEED で縮める)."""
     time.sleep(seconds / SPEED)
-
-
-def focus_app() -> None:
-    """全画面の ExileDesk の窓を前面に出す (前面でないとタスクバーが上に写る).
-
-    開発版など窓モードの ExileDesk が同時に開いていることがある → 0,0 から画面いっぱいの窓を選ぶ。
-    """
-    import ctypes
-    from ctypes import wintypes
-
-    user32 = ctypes.windll.user32
-    found: list[int] = []
-
-    def visit(hwnd: int, _: int) -> bool:
-        buf = ctypes.create_unicode_buffer(64)
-        user32.GetWindowTextW(hwnd, buf, 64)
-        rect = wintypes.RECT()
-        user32.GetWindowRect(hwnd, ctypes.byref(rect))
-        full = (rect.left, rect.top, rect.right, rect.bottom) == (0, 0, 1920, 1080)
-        if buf.value == "ExileDesk" and user32.IsWindowVisible(hwnd) and full:
-            found.append(hwnd)
-        return True
-
-    proc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-    user32.EnumWindows(proc(visit), 0)
-    if not found:
-        log.warning("fullscreen ExileDesk window not found")
-        return
-    user32.keybd_event(0x12, 0, 0, 0)  # Alt を押して離す (前面に出す制限を外す定番の手)
-    user32.keybd_event(0x12, 0, 2, 0)
-    user32.ShowWindow(found[0], 9)
-    user32.SetForegroundWindow(found[0])
-    time.sleep(0.5)
-
-
-class Recorder:
-    """ddagrab で 1 枚目のモニターを録る (GPU のコマを下ろしてから NVENC)."""
-
-    def __init__(self, path: Path) -> None:
-        focus_app()
-        ff = shutil.which("ffmpeg") or "ffmpeg"
-        cmd = [ff, "-y", "-loglevel", "error", "-f", "lavfi"]
-        cmd += ["-i", "ddagrab=output_idx=0:framerate=30:draw_mouse=0"]
-        cmd += ["-vf", "hwdownload,format=bgra", "-c:v", "h264_nvenc", "-preset", "p4"]
-        cmd += ["-cq", "21", "-pix_fmt", "yuv420p", str(path)]
-        self.proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, creationflags=CREATE_NO_WINDOW)
-        self.path = path
-        time.sleep(1.2)
-
-    def stop(self) -> None:
-        time.sleep(1.0)
-        assert self.proc.stdin is not None
-        self.proc.stdin.write(b"q")
-        self.proc.stdin.flush()
-        self.proc.wait(timeout=30)
-        log.info("recorded", file=str(self.path))
 
 
 class Hand:
@@ -114,8 +57,12 @@ class Hand:
     def click(self, loc: Locator, ms: int = 650, after: float = 0.35) -> None:
         loc.scroll_into_view_if_needed()
         bb: Any = loc.bounding_box()
+        what = (loc.inner_text(timeout=2000) or "").strip().splitlines()[:1]
+        what = what[0][:40] if what else ""
+        mark(f"動く: {what}")
         self.glide(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2, ms)
         pause(0.15)
+        mark(f"押す: {what}")
         self.page.mouse.down()
         pause(0.07)
         self.page.mouse.up()
@@ -160,6 +107,7 @@ def run(page: Page, out: Path, only: list[str]) -> None:
     def use(n: int) -> None:
         hand.click(card.locator("p.stage-item-name").first, 700, 0)
         steps(n).wait_for(timeout=5000)
+        mark(f"付いた: {n} 手目")
         change = page.evaluate(LAST_CHANGE_JS)
         notes.append({"step": n, "change": change, "item": card.inner_text()})
         pause(1.8)  # 演出 1.4 秒 + 付いた MOD の光 1.6 秒

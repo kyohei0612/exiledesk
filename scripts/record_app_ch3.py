@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from playwright.sync_api import Locator, Page, sync_playwright
-from record_app import CDP, Hand, Recorder, open_stage, pause, setup
+from record_app import CDP, Hand, Recorder, mark, open_stage, pause, setup
 from record_app_js import LAST_CHANGE_JS
 
 
@@ -58,6 +58,7 @@ def run_ch3(page: Page, out: Path, only: list[str]) -> None:
         n = count()
         hand.click(card.locator("p.stage-item-name").first, 700, 0)
         steps(n + 1).wait_for(timeout=5000)
+        mark(f"付いた: {n + 1} 手目")
         notes.append({"change": page.evaluate(LAST_CHANGE_JS), "item": card.inner_text()})
         pause(1.8)
 
