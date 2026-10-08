@@ -198,6 +198,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
 }
+/* スマホ (Web 版、幅 768 px 未満): ページ全体を指で縦に送る。PC は各画面の中で送るので body は固定のまま
+   (2026-10-08 オーナー「スクロールができんな Web 版スマホ」: body の overflow: hidden で指の送りが効かなかった) */
+@media (max-width: 767px) {
+  html, body, #app { height: auto; min-height: 100%; }
+  body { overflow: auto; -webkit-overflow-scrolling: touch; }
+}
 
 button {
   cursor: pointer;
