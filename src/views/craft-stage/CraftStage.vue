@@ -162,9 +162,9 @@ function pickSimBase(en: string): void {
 </script>
 
 <template>
-  <div class="h-full overflow-auto p-4 @container" :class="phone ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
+  <div class="h-full overflow-auto p-4 @container" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
-    <div v-if="phone && (s.held.value || s.offers.value) && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+    <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
       <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
       <div v-if="s.offers.value" class="flex items-center gap-2">
         <span class="min-w-0 flex-1 truncate text-rose-200">発現する MOD を 3 つから選ぶ</span>

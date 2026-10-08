@@ -608,7 +608,7 @@ function selectRow(i: number, part: "miss" | "single" | "lost" | null = null): v
 const editorEl = ref<HTMLElement | null>(null);
 function scrollToEditor(): void {
   if (!phone.value) return;
-  void nextTick(() => editorEl.value?.scrollIntoView({ block: "start", behavior: "smooth" }));
+  void nextTick(() => (cardBox.value ?? editorEl.value)?.scrollIntoView({ block: "start", behavior: "smooth" }));
 }
 /**
  * 下のボタン 1 つで進む (棚は押した時にそのまま入る。決定ボタンが 2 つ並ばないように)。

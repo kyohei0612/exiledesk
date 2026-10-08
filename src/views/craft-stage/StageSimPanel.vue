@@ -1234,6 +1234,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">狙い {{ rows.length }} 個</b><span class="opacity-60"> · 足したら決める</span></span>
           <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-4 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70" @click="modsDone = true">決めた →</button>
         </div>
+        <div v-if="phone && rows.length && !modsDone" class="h-20"></div>
         <!-- このベースに付く MOD (同じ枠の中。2026-10-05 オーナー「枠は一緒の枠で表示するべき」)。長いので枠の中で送り、上の完成図は見えたまま -->
         <div v-if="!modsDone" class="-mx-3 mt-3 max-h-[62vh] overflow-auto border-t border-white/10 px-3 [overflow-anchor:none] max-md:max-h-none max-md:overflow-visible">
           <StageModList embedded />
