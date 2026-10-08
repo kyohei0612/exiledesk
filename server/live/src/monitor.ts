@@ -21,15 +21,18 @@ export async function postDiscord(webhook: string | undefined, content: string, 
   } catch { return false; }
 }
 
-/** 異常をすぐ知らせる。同じ key は ALERT_TTL の間は 1 回だけ。日報のために alertlog: にも残す */
-export async function alert(env: Env, key: string, text: string, fetchFn: Fetch = fetch, now = new Date()): Promise<boolean> {
+/**
+ * 異常を控える。同じ key は ALERT_TTL の間は 1 回だけ。日報 (毎朝 9 時) の「異常の通知」に載せるために alertlog: に残すだけで、
+ * Discord にはすぐには送らない (2026-10-08 オーナー「配信の見張り通知はいらん、定時報告とバグのリアルタイム通知のみでおｋ」。
+ * 前は 🚨 で即時に送っていた)。すぐ送るのは要望・バグ (feedback.ts) だけ
+ */
+export async function alert(env: Env, key: string, text: string, _fetchFn: Fetch = fetch, now = new Date()): Promise<boolean> {
   const k = `alert:${key}`;
   if (await env.LIVE.get(k)) return false;
   await env.LIVE.put(k, now.toISOString(), { expirationTtl: ALERT_TTL });
   await env.LIVE.put(`alertlog:${now.toISOString()}:${key}`, text.slice(0, 200), { expirationTtl: ALERT_LOG_TTL });
   console.warn(JSON.stringify({ alert: key, text: text.slice(0, 200) }));
-  const jst = new Date(now.getTime() + 9 * 3600e3).toISOString().slice(11, 16);
-  return postDiscord(env.DISCORD_WEBHOOK, `🚨 **${key}** ${jst} JST\n${text}`, fetchFn);
+  return true;
 }
 
 /** 昨日 (since〜until) に出た異常の一覧 */

@@ -241,7 +241,7 @@ describe("操作の印と日報 (events / monitor)", () => {
     expect(full).toContain("一番減ったのは「狙い → 順番」(20 人 → 8 人、-60%)");
     expect(full).toContain("この 7 日で来た人は 120 人です。");
   });
-  it("異常の通知は同じ物を 6 時間に 1 回、要望は 1 分に 1 件", async () => {
+  it("異常は控えるだけで Discord には送らない (同じ物は 6 時間に 1 回)、要望は 1 分に 1 件", async () => {
     const { alert } = await import("../server/live/src/monitor");
     const { allowIp } = await import("../server/live/src/feedback");
     const kv = fakeKv();
@@ -250,7 +250,9 @@ describe("操作の印と日報 (events / monitor)", () => {
     const env: Env = { LIVE: kv, DISCORD_WEBHOOK: "https://discord/hook" };
     expect(await alert(env, "相場の中継", "落ちた", f)).toBe(true);
     expect(await alert(env, "相場の中継", "また落ちた", f)).toBe(false);
-    expect(posts).toBe(1);
+    // 2026-10-08 オーナー「定時報告とバグのリアルタイム通知のみ」: 異常は日報に載せるだけで、すぐには送らない
+    expect(posts).toBe(0);
+    expect((await kv.list({ prefix: "alertlog:" })).keys.length).toBe(1);
     expect(await allowIp(kv, "9.9.9.9", 1_000_000)).toBeNull();
     expect(await allowIp(kv, "9.9.9.9", 1_010_000)).toMatch(/1 分に 1 件/);
     expect(await allowIp(kv, "9.9.9.9", 1_070_000)).toBeNull();
