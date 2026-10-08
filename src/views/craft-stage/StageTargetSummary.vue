@@ -76,6 +76,11 @@ const rows = computed(() => {
   });
 });
 type Row = (typeof rows.value)[number];
+/** 手打ちの状態から始める時、その MOD がもう付いているか (その段以上) */
+function presentOnStart(r: { modId: string; minTierIndex: number }): boolean {
+  const it = s.simStart.value === "item" ? s.simStartItem.value : null;
+  return !!it && [...it.prefixes, ...it.suffixes].some((m) => m.modId === r.modId && m.tierIndex >= r.minTierIndex);
+}
 
 /** 外す: あるいはの候補はその候補だけ、本体は手順ごと (候補も一緒に) */
 function drop(r: Row): void {
@@ -230,6 +235,7 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
                 <option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option>
               </select>
               <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
+              <span v-if="presentOnStart(r)" class="shrink-0 rounded-sm bg-emerald-500/25 px-1 text-[10px] font-bold text-emerald-100" title="手打ちの状態にもう付いている (この段以上)">✓ 付いている</span>
               <span v-if="r.share != null" class="shrink-0 text-[10px] tabular-nums opacity-70" title="1 回の抽選でこの段以上が出る割合 (同じ側の重み)">{{ pct(r.share) }}</span>
               <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100 max-md:min-h-9 max-md:min-w-9 max-md:text-[16px]" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button>
             </span>

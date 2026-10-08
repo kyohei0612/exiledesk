@@ -18,12 +18,14 @@ const props = withDefaults(defineProps<{
   unitKey?: string;
   placeholder?: string;
   title?: string;
-}>(), { base: "divine", unitKey: "", placeholder: "値段", title: "" });
+  /** 覚えた単位が無い時の最初の単位 (既定はカオス。手打ちの累計のような高貴建ての小さい値は高貴で) */
+  initialUnit?: DisplayCurrency;
+}>(), { base: "divine", unitKey: "", placeholder: "値段", title: "", initialUnit: "chaos" });
 const emit = defineEmits<{ "update:modelValue": [v: number | null] }>();
 
 const UNITS: Array<{ k: DisplayCurrency; ja: string }> = [{ k: "exalted", ja: "高貴" }, { k: "chaos", ja: "カオス" }, { k: "divine", ja: "神" }];
 const KEY = props.unitKey ? `exiledesk.priceUnit.${props.unitKey}` : "";
-const unit = ref<DisplayCurrency>("chaos");
+const unit = ref<DisplayCurrency>(props.initialUnit);
 try { const u = KEY ? localStorage.getItem(KEY) : null; if (u === "exalted" || u === "chaos" || u === "divine") unit.value = u; } catch { /* 無くてよい */ }
 watch(unit, (u) => { try { if (KEY) localStorage.setItem(KEY, u); } catch { /* 無くてよい */ } });
 

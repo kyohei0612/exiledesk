@@ -101,6 +101,12 @@ export interface RecipeSpec {
    * 「消去」と「白を買い直して変成」の安い方を選ぶ (2026-10-05 オーナー「消去もバカにならんが」「フラクチャーと消去の値段、ベースの規格外の値段次第」)
    */
   whiteBasePrice?: number;
+  /**
+   * 手で打つ画面から持ってきた始めの状態 (その MOD が付いた状態から先を回す。2026-10-08)。これがある時は白・固定済みの始まりは使わず、
+   * 1 人ごとにこのアイテムの写しから始める。「最初から」はこの状態を買い直す (startPrice = 手打ちの累計 + 白ベース代)
+   */
+  startItem?: StageItem;
+  startPrice?: number;
   /** 白のベースのソケットの数 (0 / 1 / 2、規格外のベース。2026-10-05 オーナー「ベース選択後ソケット何個か選ばせて、これだとただの通常品のベース」) */
   sockets?: number;
   /** 1 個の値段 (高貴建て) */
@@ -241,9 +247,16 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     return sockets ? { ...it, sockets } : it;
   };
   let item = fresh();
+  if (spec.startItem) {
+    // 手打ちの状態から: その写し 1 個 (ルーン・白は込みの値段)
+    item = { ...spec.startItem, prefixes: spec.startItem.prefixes.map((m) => ({ ...m })), suffixes: spec.startItem.suffixes.map((m) => ({ ...m })) };
+    cost += spec.startPrice ?? 0;
+    bases = 1;
+  } else {
   cost += runeCost;
   if (!(fractureT && spec.fractureStart?.kind === "bought")) { cost += white; bases = 1; }
-  if (fractureT && spec.fractureStart?.kind === "bought") {
+  }
+  if (!spec.startItem && fractureT && spec.fractureStart?.kind === "bought") {
     // 手順 JSON の始めの状態と同じ作り方 (再生で同じ物になる)
     const m = mod(fractureT.modId);
     item = startFrom(data, spec.base, spec.itemLevel, { rarity: "rare", mods: [{ mod: m.id, tier: `T${m.tiers.length - fractureT.minTierIndex}`, fractured: true }], ...(sockets ? { sockets } : {}), ...(runes.length ? { runes } : {}) }, seed - 1);
@@ -303,7 +316,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   const isF = (m: StageMod): boolean => !m.unrevealed && fractureTs.some((t) => m.modId === t.modId && m.tierIndex >= t.minTierIndex);
   // フラクチャーで作る (外れを固定したら白を買い直して始めから) → 外れが無くなるまで消去
   const fs = spec.fractureStart;
-  if (fractureT && fs?.kind === "make") {
+  if (fractureT && fs?.kind === "make" && !spec.startItem) {
     const magicRoute = fs.route === "magic";
     for (;;) {
       if (steps.length >= max) return fail(`手が多すぎる (フラクチャーまでで ${max.toLocaleString()} 手を超えた)`);

@@ -172,15 +172,40 @@ function pickSimBase(en: string): void {
   s.simOrder.value = [];
   s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
   s.simStart.value = "white";
+  s.simStartItem.value = null;
   s.simPicked.value = true;
   s.reset();
 }
+/**
+ * 手で打つ画面の今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08 オーナー「その MOD が付いた状態以降を確認したい時があるから、
+ * 手打ちからそのまま持っていくコース」)。ベース・アイテムレベルは同じ、ベース代の既定は 手打ちの累計 + 白ベース代
+ */
+function simFromHand(): void {
+  const it = s.item.value;
+  if (!it) return;
+  s.simStartItem.value = { ...it, prefixes: it.prefixes.map((m) => ({ ...m })), suffixes: it.suffixes.map((m) => ({ ...m })) };
+  s.simStartCost.value = s.total.value;
+  s.simTargets.value = [];
+  s.simOrder.value = [];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
+  s.simSockets.value = it.sockets ?? 0;
+  s.simStart.value = "item";
+  s.simPicked.value = true;
+  s.mode.value = "sim";
+}
+/** 手打ちの状態の MOD (1 ベースの札の下に 1 行) */
+const startItemMods = computed(() => {
+  const it = s.simStartItem.value;
+  return it ? [...it.prefixes, ...it.suffixes].map((m) => `${m.fractured ? "🔒 " : ""}${m.textJa} (${m.tierName})`) : [];
+});
 /** 始め方の札 (1 ベース)。白以外は 2 狙う MOD の最初の 1 つが固定 MOD になる */
 const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hint: string }> = [
   { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る" },
   { k: "fractured", label: "🔒 フラクチャー済みを買う", hint: "固定 MOD が 1 つ付いたベースを買う。固定 MOD は 2 狙う MOD で最初に足した物" },
   { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って自分でフラクチャー (当たり 1/4)" },
 ];
+/** 手打ちから持ってきた時だけ出る札 */
+const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint: "手で打つ画面の今のアイテムから先を回す" };
 </script>
 
 <template>
@@ -256,12 +281,15 @@ const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hin
       <!-- 始め方 (白 / 固定済みを買う / 4 MOD を買う)。2026-10-08 オーナー「最初の段階から選択式がいい」 -->
       <span v-if="s.mode.value === 'sim' && !simNoBase" class="flex flex-wrap items-center gap-1 max-md:w-full">
         <span class="opacity-60">始め方</span>
-        <button v-for="x in START_KINDS" :key="x.k" type="button" class="rounded-lg px-2 py-0.5 max-md:min-h-10 max-md:px-3" :class="s.simStart.value === x.k ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" :title="x.hint" @click="s.simStart.value = x.k">{{ x.label }}</button>
-        <span v-if="s.simStart.value !== 'white'" class="text-[11px] opacity-60 max-md:w-full">固定 MOD は 2 狙う MOD で最初に足した物 (🔒)</span>
+        <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="rounded-lg px-2 py-0.5 max-md:min-h-10 max-md:px-3" :class="s.simStart.value === x.k ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" :title="x.hint" @click="s.simStart.value = x.k">{{ x.label }}</button>
+        <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? "レア" : s.simStartItem.value?.rarity === "magic" ? "マジック" : "ノーマル" }} · {{ startItemMods.length ? startItemMods.join(" / ") : "MOD なし" }}</span>
+        <span v-else-if="s.simStart.value !== 'white'" class="text-[11px] opacity-60 max-md:w-full">固定 MOD は 2 狙う MOD で最初に足した物 (🔒)</span>
       </span>
       <template v-if="s.mode.value === 'hand'">
       <button type="button" :class="btn" @click="s.reset()">白に戻す</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
+      <!-- 今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08) -->
+      <button type="button" :class="btn" class="border-amber-400/60 text-amber-100" title="今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーションへ。ベース代は 手打ちの累計 + 白ベース代" @click="simFromHand">この状態からシミュレーション →</button>
       <button type="button" :class="btn" class="border-amber-400/60 text-amber-100 max-md:hidden" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
       <span class="ml-auto flex items-center gap-1.5">
         <span v-if="copied" class="text-emerald-300">{{ copied }}</span>

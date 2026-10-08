@@ -214,10 +214,12 @@ export const removalSets = (sets: readonly PatternSet[]): PatternSet[] =>
  * フラクチャー済み (レア) から始めるなら変成・増強・王者・錬金・マジックのエッセンスは出さない。ソケットが 0 ならルーン、勢力のお告げが効かない部位なら勢力、
  * 触媒の高貴はパターンにカタリストの手が無いので出さない
  */
-export function setsForStart(sets: readonly PatternSet[], cls: ItemBase, start: { rarity: "normal" | "rare"; sockets: number }): PatternSet[] {
+export function setsForStart(sets: readonly PatternSet[], cls: ItemBase, start: CheckCtx["start"]): PatternSet[] {
   const magicOnly = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "essence"]);
+  // 手打ちの状態 (mods) から始める時は、固定が無ければレアでも自前のフラクチャーを出す
+  const noFracture = start.mods ? !!start.mods.fractured : start.rarity === "rare";
   return sets.filter((x) =>
-    !(start.rarity === "rare" && (magicOnly.has(x.kind) || x.kind === "fracture"))
+    !(start.rarity === "rare" && magicOnly.has(x.kind)) && !(x.kind === "fracture" && noFracture)
     && !(x.kind === "rune" && start.sockets <= 0)
     && !(x.omens.some((o) => FACTION_OMEN[o]) && !bossOmenAllowed(cls.category))
     && !x.omens.includes("OmenofCatalysingExaltation"));
@@ -253,17 +255,24 @@ export interface CheckCtx {
   targets: readonly PlanTarget[];
   sets: readonly PatternSet[];
   runeJa: (en: string) => string;
-  /** 始めの状態: フラクチャー済みのレア (固定の MOD の側) か白 */
-  start: { rarity: "normal" | "rare"; fracturedSide: "prefix" | "suffix" | null; sockets: number };
+  /**
+   * 始めの状態: フラクチャー済みのレア (固定の MOD の側) か白。mods があれば手で打つ画面から持ってきた状態
+   * (付いている MOD の数・狙いのうち付いている物・固定・冒涜・エッセンス。2026-10-08)
+   */
+  start: {
+    rarity: "normal" | "magic" | "rare"; fracturedSide: "prefix" | "suffix" | null; sockets: number;
+    mods?: { prefix: number; suffix: number; placed: string[]; fractured: string | null; desecrated: number; essences: number };
+  };
 }
 
 export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: number): PatternState {
   const st: PatternState = {
     rarity: ctx.start.rarity,
-    prefix: ctx.start.fracturedSide === "prefix" ? 1 : 0,
-    suffix: ctx.start.fracturedSide === "suffix" ? 1 : 0,
+    prefix: ctx.start.mods?.prefix ?? (ctx.start.fracturedSide === "prefix" ? 1 : 0),
+    suffix: ctx.start.mods?.suffix ?? (ctx.start.fracturedSide === "suffix" ? 1 : 0),
     limits: { prefix: ctx.cls.limits?.prefixes ?? 3, suffix: ctx.cls.limits?.suffixes ?? 3 },
-    runes: new Set(), socketsLeft: ctx.start.sockets, essences: 0, essenceLimit: 1, desecrated: 0, placed: new Set(), maybe: new Set(), fractured: null, junk: 0,
+    runes: new Set(), socketsLeft: ctx.start.sockets, essences: ctx.start.mods?.essences ?? 0, essenceLimit: 1, desecrated: ctx.start.mods?.desecrated ?? 0,
+    placed: new Set(ctx.start.mods?.placed ?? []), maybe: new Set(), fractured: ctx.start.mods?.fractured ?? null, junk: 0,
   };
   for (let i = 0; i < upTo && i < steps.length; i++) {
     const p = steps[i]!;

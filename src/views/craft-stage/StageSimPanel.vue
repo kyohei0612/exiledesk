@@ -178,11 +178,26 @@ const redoCostMap = computed<Record<string, number>>(() => Object.fromEntries((r
 const REDO_METHOD_JA: Record<string, string> = { chaos: "カオス", exalt: "高貴", desecrate: "冒涜", essence: "エッセンス" };
 
 /** 6 パターンの始めの状態 (フラクチャー済みのレアか白) */
-const patternStart = computed<CheckCtx["start"]>(() => ({
-  rarity: fractureRow.value ? "rare" : "normal",
-  fracturedSide: fractureRow.value ? (fractureRow.value.side === "サフィ" ? "suffix" : "prefix") : null,
-  sockets: socketCount.value,
-}));
+const patternStart = computed<CheckCtx["start"]>(() => {
+  const it = s.simStart.value === "item" ? s.simStartItem.value : null;
+  if (it) {
+    // 手打ちの状態から: 付いている MOD の数、狙いのうち付いている物 (その段以上)、固定・冒涜・エッセンス
+    const all = [...it.prefixes, ...it.suffixes];
+    const fixed = all.find((m) => m.fractured) ?? null;
+    const placed = s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]).filter((t) => all.some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex)).map((t) => t.modId);
+    return {
+      rarity: it.rarity === "unique" ? "rare" : it.rarity,
+      fracturedSide: fixed ? fixed.side : null,
+      sockets: Math.max(0, (it.sockets ?? 0) - (it.augments?.length ?? 0)),
+      mods: { prefix: it.prefixes.length, suffix: it.suffixes.length, placed: [...new Set(placed)], fractured: fixed?.modId ?? null, desecrated: all.filter((m) => m.desecrated).length, essences: all.filter((m) => m.crafted).length },
+    };
+  }
+  return {
+    rarity: fractureRow.value ? "rare" : "normal",
+    fracturedSide: fractureRow.value ? (fractureRow.value.side === "サフィ" ? "suffix" : "prefix") : null,
+    sockets: socketCount.value,
+  };
+});
 /** パターンの打てない手 (回す前に止める。最初の 1 つ) */
 function patternProblem(p: Pattern): string | null {
   const d = s.data.value, it = s.item.value;
@@ -568,6 +583,7 @@ const startOnce = computed((): number | null => {
   const c = calc.value;
   // 始め方を 1 で決めた時はその 1 つ (固定済みを買う = 入れた値段 / 4 MOD を買う = (ベース + 壁 + フラクチャー) × 3 + 消去 × 2)
   if (s.simStart.value === "fractured") return num(boughtDivine.value);
+  if (s.simStart.value === "item") return num(itemDivine.value);
   if (s.simStart.value === "four") return c && c.buyOnce != null && Number.isFinite(c.buyOnce) ? c.buyOnce * 3 + c.after : null;
   const xs: number[] = [];
   if (c) xs.push(c.total);
@@ -663,6 +679,7 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
         ? [{ modId: t.modId, minTierIndex: t.minTierIndex, method: "fracture" as const }, ...(t.alts ?? []).map((a) => ({ ...a, method: "fracture" as const }))]
         : [{ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}) }])),
       whiteBasePrice: (num(whiteDivine.value) ?? 0) * divine, sockets: socketCount.value,
+      ...(s.simStart.value === "item" && s.simStartItem.value ? { startItem: s.simStartItem.value, startPrice: num(itemDivine.value) ?? 0 } : {}),
       ...(fractureRow.value ? { fractureStart: makeSpec.value } : {}),
     };
     // パターンごとに回す (2026-10-06 オーナー「パターンで回す」)。白から作る + (フラクチャーがあれば) 固定済みから残りを作る (ベース代 0) の 2 本。
@@ -800,7 +817,7 @@ const startDone = ref(false);
  */
 const step3 = computed(() => modsDone.value && rows.value.length > 0);
 /** 3 で入れる始めのベース代 (始め方ごと: 白 / 固定済み / 4 MOD のレア) */
-const startPrice = computed(() => (s.simStart.value === "fractured" ? boughtDivine.value : s.simStart.value === "four" ? fourDivine.value : whiteDivine.value));
+const startPrice = computed(() => (s.simStart.value === "fractured" ? boughtDivine.value : s.simStart.value === "four" ? fourDivine.value : s.simStart.value === "item" ? itemDivine.value : whiteDivine.value));
 const whiteDone = computed(() => step3.value && whiteOk.value && fracDone.value && num(startPrice.value) != null);
 /** 4 最安値スタート (3 ルートの比べ) は白から + フラクチャー予定の時だけ。始め方を 1 で決めた時は飛ばす */
 const stepStart = computed(() => whiteDone.value && fractureRows.value.length > 0 && s.simStart.value === "white");
@@ -809,7 +826,7 @@ const stepOrder = computed(() => whiteDone.value && (fractureRows.value.length =
 const patternDone = ref(false);
 /** 途中を覚える (変わるたびに)。開き直した時は CraftStage がベース・狙い・パターンを、ここが「決めた」を戻す */
 const sessionNow = () => ({
-  base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, start: s.simStart.value, order: s.simOrder.value, patterns: s.simPatterns.value,
+  base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, start: s.simStart.value, startItem: s.simStartItem.value, startCost: s.simStartCost.value, order: s.simOrder.value, patterns: s.simPatterns.value,
   flags: { whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, patternDone: patternDone.value },
 });
 watch(() => JSON.stringify(sessionNow()), () => { if (s.simPicked.value) writeSimSession(sessionNow()); });
@@ -903,6 +920,8 @@ async function loadRecipe(r: SimRecipe): Promise<void> {
   s.simTargets.value = ses.targets;
   s.simSockets.value = ses.sockets;
   s.simStart.value = ses.start ?? "white";
+  s.simStartItem.value = ses.startItem ?? null;
+  s.simStartCost.value = ses.startCost ?? 0;
   s.simOrder.value = ses.order;
   s.simPatterns.value = ses.patterns.length ? ses.patterns : [{ name: "パターン 1", steps: [] }];
   s.reset();
@@ -950,15 +969,27 @@ function resetPatterns(): void {
   patternDone.value = false;
 }
 watch(() => s.simTargets.value.map((t) => t.modId).join(","), () => { if (!restoring) resetStalePatterns(); });
-/** 始め方が白以外なら、狙いの最初の 1 つが固定 MOD (1 ベースで選んだ始め方。2026-10-08) */
+/** 始め方が白以外なら、狙いの最初の 1 つが固定 MOD (1 ベースで選んだ始め方。2026-10-08)。手打ちの状態からは、固定されている MOD を狙いに入れた時だけ */
 watch([() => s.simStart.value, () => s.simTargets.value.length], () => {
   if (restoring || s.simStart.value === "white") return;
   const list = s.simTargets.value;
+  if (s.simStart.value === "item") {
+    const fixed = s.simStartItem.value ? [...s.simStartItem.value.prefixes, ...s.simStartItem.value.suffixes].find((m) => m.fractured)?.modId : undefined;
+    if (fixed && list.some((t) => t.modId === fixed && t.method !== "fracture")) s.simTargets.value = list.map((t) => (t.modId === fixed ? { ...t, method: "fracture" as const } : t));
+    return;
+  }
   if (!list.length || list.some((t) => t.method === "fracture")) return;
   s.simTargets.value = list.map((t, i) => (i === 0 ? { ...t, method: "fracture" as const } : t));
 });
+/** 手打ちの状態のベース代 (高貴。既定は 手打ちの累計 + 白ベース代、直せる。2026-10-08 オーナー「前者」) */
+const itemDivine = ref<number | null>(null);
 // 始め方を変えたら 3 から先はやり直し (ベース代の入れ方・4 の有無が変わる)
-watch(() => s.simStart.value, () => { if (!restoring && (whiteOk.value || startDone.value)) goTo("white"); });
+watch(() => s.simStart.value, (k) => {
+  if (restoring) return;
+  if (k === "item") itemDivine.value = s.simStartCost.value + (num(whiteDivine.value) ?? 0);
+  if (whiteOk.value || startDone.value) goTo("white");
+}, { immediate: true });
+watch(() => s.simStartItem.value, () => { if (!restoring && s.simStart.value === "item") itemDivine.value = s.simStartCost.value + (num(whiteDivine.value) ?? 0); });
 /**
  * アイテムレベルを下げたら、届かなくなった段の狙いはそのレベルで届く一番良い段に落とす (1 つも届かなければ外す)。
  * 残すと付きやすさ <0.1% のまま回せて完成 0% になっていた (2026-10-08 使い倒しテスト 2)
@@ -1023,6 +1054,7 @@ function resetAll(): void {
   s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
   s.simSockets.value = null;
   s.simStart.value = "white";
+  s.simStartItem.value = null;
   // 覚えていた途中も消す (リセットはベースを選ぶ所から)
   void nextTick(() => writeSimSession(null));
   // ベースを選ぶ所から (この画面は一度消えて、選び直すと新しく始まる)
@@ -1138,8 +1170,12 @@ const split = computed(() => {
   if (fractureRow.value) {
     // ベース代は回した費用に入っている (やり直しの買い直し・作り直しの分も)
     const b = (startOnce.value ?? 0) * r.bases;
-    const name = s.simStart.value === "fractured" ? "1 で決めた: 固定済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : `4 最安値スタート: ${routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? ""}`;
+    const name = s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "1 で決めた: 固定済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : `4 最安値スタート: ${routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? ""}`;
     return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `フラクチャー済みのベース × ${r.bases.toFixed(1)} 個 (${name})` };
+  }
+  if (s.simStart.value === "item") {
+    const b = (num(itemDivine.value) ?? 0) * r.bases;
+    return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `手打ちの状態 × ${r.bases.toFixed(1)} 個` };
   }
   const b = (num(whiteDivine.value) ?? 0) * r.bases;
   return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `白のベース × ${r.bases.toFixed(1)} 個` };
@@ -1194,7 +1230,7 @@ const costGroups = computed(() => {
     else if (best === "bought") items = [{ name: "固定済みのベース", n: 1, cost: num(boughtDivine.value) ?? 0 }];
     out.push({ name: "ベース", note: `フラクチャー済みまで (${name})`, total: split.value.base, bar: "bg-stone-400/80", items: top(items, split.value.base) });
   } else {
-    out.push({ name: "ベース", note: "白のベース", total: split.value.base, bar: "bg-stone-400/80", items: top([{ name: "白のベース", n: r.bases, cost: split.value.base }], split.value.base) });
+    out.push({ name: "ベース", note: s.simStart.value === "item" ? "手打ちの状態" : "白のベース", total: split.value.base, bar: "bg-stone-400/80", items: top([{ name: s.simStart.value === "item" ? "手打ちの状態 (累計 + 白ベース)" : "白のベース", n: r.bases, cost: split.value.base }], split.value.base) });
   }
   const craft = r.usage.filter((u) => u.key !== "reveal").map((u) => ({ name: usageName(u.key), n: u.count, cost: u.cost }));
   out.push({ name: "クラフト", note: fractureRow.value ? "フラクチャー済みから完成まで" : "", total: split.value.craft, bar: "bg-amber-400/80", items: top(craft, craft.reduce((a, x) => a + x.cost, 0)) });
@@ -1259,7 +1295,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     -->
     <div v-if="socketsOk && step4pre" class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px]">
       <b class="text-[12px] text-amber-100">2〜5</b>
-      <span class="truncate opacity-80">狙い {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "fractured" ? "固定済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
+      <span class="truncate opacity-80">狙い {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "固定済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
       <button type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="fold = !fold">{{ fold ? "開く ▼" : "畳む ▲" }}</button>
     </div>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
@@ -1296,7 +1332,12 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         </p>
         <div class="flex flex-wrap items-center gap-2 text-[11px]">
           <!-- 始め方ごとに入れるベース代 (1 ベースで決めた物。2026-10-08) -->
-          <template v-if="s.simStart.value === 'fractured'">
+          <template v-if="s.simStart.value === 'item'">
+            <span class="opacity-70">この状態のベース代</span>
+            <PriceInput v-model="itemDivine" base="exalted" unit-key="sim.item" initial-unit="exalted" placeholder="0" />
+            <span class="opacity-60">(手打ちの累計 {{ money(s.simStartCost.value) }} + 白ベース。直せる)</span>
+          </template>
+          <template v-else-if="s.simStart.value === 'fractured'">
             <span class="opacity-70">固定済みのベース (🔒 {{ fracMembers[0]?.text ?? "固定 MOD を 2 で足す" }})</span>
             <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="無し" />
             <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :disabled="!fracMembers.length" title="固定 MOD が付いた (固定済みの) ベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
@@ -1444,7 +1485,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <div v-if="step4pre" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
         <p class="mb-1.5 flex items-center gap-2 text-[11px]">
           <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="patternDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="patternDone && (patternDone = false)">6 パターン</button>
-          <span class="opacity-60">{{ fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
+          <span class="opacity-60">{{ s.simStart.value === "item" ? "手打ちの状態から" : fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
         <StagePatternEditor :busy="busy" :step-run="stepRun" :step-max="maxSteps" :step-runs="STEP_ONLY_RUNS" @run-one="(k: number) => run(k)" @run-step="(k: number, i: number) => run(k, i)" @close-step="stepRun = null" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />

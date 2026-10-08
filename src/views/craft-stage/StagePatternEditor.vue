@@ -261,7 +261,7 @@ const focusPre = ref<number | null>(null);
 const preNodes = computed(() => {
   const d = s.data.value;
   const frac = s.simTargets.value.find((t) => t.method === "fracture");
-  if (!d || !frac || props.start.rarity !== "rare" || !s.base.value) return [];
+  if (!d || !frac || props.start.rarity !== "rare" || !s.base.value || props.start.mods) return [];
   const m = d.mods.get(frac.modId);
   if (!m) return [];
   let white: StageItem;
@@ -305,14 +305,16 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
   const d = s.data.value;
   if (!d || !s.base.value) return null;
   let it: StageItem;
-  try { it = { ...freshItem(d, s.base.value, s.itemLevel.value), sockets: props.start.sockets, rollSeed: 1 }; } catch { return null; }
+  const startIt = s.simStart.value === "item" ? s.simStartItem.value : null;
+  if (startIt) it = { ...startIt, prefixes: startIt.prefixes.map((m) => ({ ...m })), suffixes: startIt.suffixes.map((m) => ({ ...m })) };
+  else { try { it = { ...freshItem(d, s.base.value, s.itemLevel.value), sockets: props.start.sockets, rollSeed: 1 }; } catch { return null; } }
   const add = (modId: string, tierIndex: number, flags: Partial<StageItem["prefixes"][number]>): void => {
     const m = d.mods.get(modId);
     if (!m) return;
     it = withMod(it, { ...makeStageMod(m, m.type === "suffix" ? "suffix" : "prefix", tierIndex, () => 0.5), ...flags });
   };
   const frac = s.simTargets.value.find((t) => t.method === "fracture");
-  if (frac) add(frac.modId, frac.minTierIndex, { fractured: true });
+  if (frac && !startIt) add(frac.modId, frac.minTierIndex, { fractured: true });
   const c = ctx.value;
   let newMods: StageItem["prefixes"] = [];
   let goneMods: StageItem["prefixes"] = [];
@@ -1022,7 +1024,7 @@ defineExpose({ rows });
         <div v-if="preNodes.length" class="my-2 flex items-center gap-2 text-[10px] text-amber-200/80">
           <span class="h-px flex-1 bg-amber-400/30"></span><span ref="ownStart">フラクチャー済み · ここから作る</span><span class="h-px flex-1 bg-amber-400/30"></span>
         </div>
-        <div v-else class="w-52 rounded-md border border-white/20 bg-black/40 px-2 py-0.5 opacity-80">始め: 白のベース</div>
+        <div v-else class="w-52 rounded-md border border-white/20 bg-black/40 px-2 py-0.5 opacity-80">始め: {{ props.start.mods ? "手打ちの状態" : "白のベース" }}</div>
         <template v-for="(r, i) in rows" :key="i">
           <!-- 当たりの線 -->
           <!-- 外れた時だけの手の前: 緑 (付いた → 飛ばす先) と赤 (付かなかった時だけ ↓) を縦線の所に並べる (2026-10-08 レビュー A6: 緑が赤い枝の列に並んで「付かなかった → 完成」と読めた) -->
