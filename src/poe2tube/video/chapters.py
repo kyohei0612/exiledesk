@@ -18,6 +18,7 @@ from pathlib import Path
 
 import structlog
 
+from poe2tube.capture.footage import footage_frames, footage_path
 from poe2tube.capture.stage import cache_ver
 from poe2tube.config.settings import get_settings
 from poe2tube.names import NameBook
@@ -69,6 +70,14 @@ def chapter_key(script: VideoScript, k: int, cues: list[Cue], n_sections: int) -
         "audio": (s.bgm, s.bgm_gain_db, s.se_gain_db),
         "script": (script.final_step, script.layout, script.short_title),
         "results": [_file_sha(f) for f in files],
+        # 録画を撮り直したら作り直す (footage の画面)
+        "footage": sorted(
+            {
+                (ln.scene.clip, _file_sha(str(footage_path(ln.scene.clip))))
+                for ln in sec.lines
+                if ln.scene.clip
+            }
+        ),
     }
     raw = json.dumps(parts, ensure_ascii=False, sort_keys=True, default=str)
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
@@ -113,6 +122,8 @@ def build_chapter(
     i0, i1 = cue_range(cues, sec.name)
     short = script.layout == "short"
     ctx = make_context(cues, rs, book, script.final_step, short, script.short_title, n_sections)
+    for clip in {ln.scene.clip for ln in sec.lines if ln.scene.clip}:
+        footage_frames(clip, s.fps)  # 並べて作る前に 1 回だけ切り出す (同時に切り出さない)
     audio = cut_audio(full_audio, cues, i0, i1, out.with_suffix(".wav"))
     workers = s.render_workers or default_workers()
     if pool is not None:

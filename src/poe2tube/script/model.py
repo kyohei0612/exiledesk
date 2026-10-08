@@ -39,6 +39,7 @@ SceneKind = Literal[
     "bases",
     "icons",
     "table",
+    "footage",
 ]
 # 防御の仕組みの画面 (ExileDesk 要望 ㉒)。中身は def_params をそのまま URL に渡す
 DEFENCE_KINDS = ("layers", "armour", "evasion", "es", "bases")
@@ -142,6 +143,12 @@ class Scene(BaseModel):
     panel: Panel | None = Field(
         default=None, description="icons / table: POE2Tube 側で描く図 (script/panel.py)"
     )
+    # --- footage: アプリを操作した録画 (scripts/record_app*.py、output/app_rec/<clip>.mp4)
+    clip: str | None = Field(default=None, description="footage: 録画の名前 (例 orbs)")
+    at: float | None = Field(default=None, ge=0, description="footage: 録画の何秒目から流すか")
+    hold: float | None = Field(
+        default=None, ge=0, description="footage: 何秒目で止めて出したままにするか (省略 = 最後)"
+    )
 
     def key(self) -> tuple[object, ...]:
         """見た目が同じ場面かを比べる鍵 (実演・クイズの答えと札の違いも別の画面とみなす)."""
@@ -171,6 +178,9 @@ class Scene(BaseModel):
             self.tags,
             self.still,
             self.offers,
+            self.clip,
+            self.at,
+            self.hold,
         )
 
     @model_validator(mode="before")
@@ -198,6 +208,10 @@ class Scene(BaseModel):
                 raise ValueError("quiz の badges は choices と同じ数")
         elif self.choices or self.answer is not None or self.badges or self.countdown:
             raise ValueError("choices / answer / badges / countdown は quiz 専用")
+        if (self.kind == "footage") != (self.clip is not None and self.at is not None):
+            raise ValueError("footage には clip と at が必要 (clip / at / hold は footage 専用)")
+        if self.hold is not None and (self.at is None or self.hold < self.at):
+            raise ValueError("footage の hold は at より後")
         if (self.kind == "tiers") != (self.mod is not None):
             raise ValueError("tiers には mod が必要 (mod は tiers 専用)")
         if self.kind == "compare" and self.compare_with is None:

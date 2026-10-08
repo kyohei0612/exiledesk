@@ -60,6 +60,11 @@ def draw_scene_panel(
             _stage_capture(img, inner, stage_shot, 0, tag="")
         else:
             pill(img, (x0, y0), f"{tag} (撮影なし)", MUTED, size=28)
+    elif scene.kind == "footage":  # アプリを操作した録画のコマ (capture/footage.py)
+        if stage_shot is not None and stage_shot.exists():
+            _stage_capture(img, inner, stage_shot, 0, tag="")
+        else:
+            pill(img, (x0, y0), f"録画 {scene.clip} (無し)", MUTED, size=28)
     elif scene.kind == "cost":
         _cost(img, inner, result)
     elif scene.kind == "quiz":

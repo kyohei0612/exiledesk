@@ -16,6 +16,7 @@ import structlog
 from PIL import Image
 
 from poe2tube.capture.anim import anim_frames, anim_query, holds_first
+from poe2tube.capture.footage import footage_frames, shot_at
 from poe2tube.capture.views import shot_for
 from poe2tube.config.settings import get_settings
 from poe2tube.contracts.craft_stage import CraftStageResult
@@ -149,6 +150,8 @@ def cue_frames(
     clip = list(hp.clip[hp.start :]) if hp else []
     animate = panel is not None and scene_changed(prev, c.line) and not clip and not intro
     static = with_panel(base, panel, 0, 1.0)
+    sc = c.line.scene
+    foot = footage_frames(sc.clip, round(fps)) if sc.kind == "footage" and sc.clip else []
     hit_step = res.steps[hp.step - 1] if hp else None
     land = hp.land_at if hp else 0.0  # 結果の文字は付いた瞬間から数える
     new_chapter = prev_section is not None and prev_section != c.section
@@ -163,6 +166,10 @@ def cue_frames(
         kl = int(round(tl * fps))
         if tl < 0:
             frame_static = base  # 章カードの間はパネルを出さない (被せない)
+        elif foot:  # 録画: at 秒目から流し、hold 秒目で止める (説明している間は出したまま)
+            shot = shot_at(foot, fps, sc.at or 0.0, sc.hold, tl)
+            layer = render_panel_layer(c.line, res, stage_shot=shot, final_step=fin)
+            frame_static = with_panel(base, layer, 0, 1.0)
         elif pre and k >= pre_from:
             layer = render_panel_layer(c.line, res, stage_shot=pre[k - pre_from], final_step=fin)
             frame_static = with_panel(base, layer, 0, 1.0)
