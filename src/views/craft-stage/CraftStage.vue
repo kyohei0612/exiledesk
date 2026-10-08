@@ -10,6 +10,7 @@
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { toCss } from "../../utils/zoom";
 import StageItemCard from "./StageItemCard.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -44,7 +45,9 @@ const ILVLS = [45, 65, 75, 82, 86];
 
 /** 持っているカレンシーのアイコンをカーソルに付ける */
 const mouse = ref({ x: 0, y: 0 });
-const onMove = (e: MouseEvent) => (mouse.value = { x: e.clientX, y: e.clientY });
+// マウスの位置は拡大前の CSS ピクセルに直して持つ (fixed の left/top に入れるため)。1660 幅より広い窓 (全画面 1920 で zoom 1.157) で
+// カーソルに付く絵と波紋が右下にずれていた (2026-10-08 POE2Tube 要望 ㊳。clientX は実ピクセル、fixed の left は CSS ピクセル)
+const onMove = (e: MouseEvent) => (mouse.value = { x: toCss(e.clientX), y: toCss(e.clientY) });
 function onKey(e: KeyboardEvent): void {
   if (e.key === "Escape") s.hold(null);
   // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
