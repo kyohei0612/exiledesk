@@ -255,6 +255,8 @@ const boughtDivine = ref<number | null>(null);
 const whiteDivine = ref<number | null>(null);
 /** 4 MOD・当たり 1 (フラクチャーの狙いが付いた、固定していないレア) のベースの値段 (神、手で入れる) */
 const fourDivine = ref<number | null>(null);
+/** 手打ちの状態のベース代 (高貴。既定は 手打ちの累計 + 白ベース代、直せる。2026-10-08 オーナー「前者」) */
+const itemDivine = ref<number | null>(null);
 
 /**
  * 値段の変わりに付いていく (2026-10-05 オーナー「価格変動に対応できる仕組みがいいね、カレンシーとベースの。結局 1 からでも白ベースは買う」)。
@@ -835,7 +837,7 @@ const stepOrder = computed(() => whiteDone.value && (fractureRows.value.length =
 const patternDone = ref(false);
 /** 途中を覚える (変わるたびに)。開き直した時は CraftStage がベース・狙い・パターンを、ここが「決めた」を戻す */
 const sessionNow = () => ({
-  base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, start: s.simStart.value, startItem: s.simStartItem.value, startCost: s.simStartCost.value, order: s.simOrder.value, patterns: s.simPatterns.value,
+  base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, start: s.simStart.value, startItem: s.simStartItem.value, startCost: s.simStartCost.value, prices: { white: whiteDivine.value, four: fourDivine.value, bought: boughtDivine.value, item: itemDivine.value }, order: s.simOrder.value, patterns: s.simPatterns.value,
   flags: { whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, patternDone: patternDone.value },
 });
 watch(() => JSON.stringify(sessionNow()), () => { if (s.simPicked.value) writeSimSession(sessionNow()); });
@@ -938,7 +940,19 @@ async function loadRecipe(r: SimRecipe): Promise<void> {
   startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;
   results.value = [];
   recipeOut.value = null;
-  void nextTick(() => { patternDone.value = !!ses.flags.patternDone; loadKept(); restoring = false; recipeOpen.value = false; });
+  void nextTick(() => {
+    patternDone.value = !!ses.flags.patternDone;
+    loadKept();
+    // このブラウザに覚えた値段が無ければ、レシピに残した値段 (呼び出した後に 3 のベース代が空で「決めた」が押せなかった。2026-10-08 完成判定 2 回目)
+    const pr = ses.prices;
+    if (pr) {
+      if (num(whiteDivine.value) == null && pr.white != null) whiteDivine.value = pr.white;
+      if (num(fourDivine.value) == null && pr.four != null) fourDivine.value = pr.four;
+      if (num(boughtDivine.value) == null && pr.bought != null) boughtDivine.value = pr.bought;
+      if (pr.item != null) itemDivine.value = pr.item;
+    }
+    restoring = false; recipeOpen.value = false;
+  });
 }
 // ベースを選ぶ前に選んだレシピを、開いたらそのまま読み込む (2 回押しの確認は要らない: まだ何も組んでいない)
 onMounted(() => {
@@ -997,8 +1011,6 @@ watch([() => s.simStart.value, () => s.simTargets.value.length], () => {
   if (!list.length || list.some((t) => t.method === "fracture")) return;
   s.simTargets.value = list.map((t, i) => (i === 0 ? { ...t, method: "fracture" as const } : t));
 });
-/** 手打ちの状態のベース代 (高貴。既定は 手打ちの累計 + 白ベース代、直せる。2026-10-08 オーナー「前者」) */
-const itemDivine = ref<number | null>(null);
 // 始め方を変えたら 3 から先はやり直し (ベース代の入れ方・4 の有無が変わる)
 watch(() => s.simStart.value, (k) => {
   if (restoring) return;
@@ -1091,6 +1103,7 @@ function resetAll(): void {
  * 手打ちの状態から: 2 狙う MOD を決めたら 3〜5 は飛ばしてそのまま 6 のツリー (2026-10-08 オーナー「この状態からシミュレーションツリーをスタート、
  * 費用もそこから」)。ベース代は既定のまま (作り直す時の買い直しの値段)、出す費用はこの状態から先
  */
+watch(modsDone, (v) => { if (v) ilvlNote.value = ""; });
 watch(modsDone, (v) => {
   if (!v || restoring || s.simStart.value !== "item") return;
   whiteOk.value = true; fracDone.value = true; orderDone.value = true;
@@ -1625,9 +1638,10 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <div class="mt-3 grid max-w-4xl gap-x-8 gap-y-3 @3xl:grid-cols-2 max-md:grid-cols-1">
         <div v-for="g in costGroups" :key="g.name">
           <p class="mb-1 flex items-baseline gap-2 text-[12px]"><b>{{ g.name }}</b><span class="text-[10px] opacity-50">{{ g.note }}</span><span class="ml-auto font-bold tabular-nums">{{ moneyT(g.total) }}</span></p>
-          <div class="grid grid-cols-[minmax(0,1fr)_5rem_4.5rem_2.5rem] items-center gap-x-2 gap-y-1 text-[12px]">
+          <!-- スマホは名前を 1 行目いっぱいに (「カオスオーブ × 5,…」と切れていた) -->
+          <div class="grid grid-cols-[minmax(0,1fr)_5rem_4.5rem_2.5rem] items-center gap-x-2 gap-y-1 text-[12px] max-md:grid-cols-[minmax(0,1fr)_4.5rem_2.5rem]">
             <template v-for="x in g.items" :key="x.name">
-              <span class="truncate" :title="x.name">{{ x.name }}<span v-if="x.n" class="opacity-50"> × {{ fmtCount(x.n) }}</span></span>
+              <span class="truncate max-md:col-span-3 max-md:whitespace-normal" :title="x.name">{{ x.name }}<span v-if="x.n" class="opacity-50"> × {{ fmtCount(x.n) }}</span></span>
               <div class="h-2 rounded-full bg-white/10"><div class="h-2 rounded-full" :class="g.bar" :style="{ width: `${Math.max(2, x.share * 100)}%` }"></div></div>
               <span class="text-right tabular-nums">{{ moneyT(x.cost) }}</span>
               <span class="text-right text-[11px] tabular-nums opacity-50">{{ Math.round(x.share * 100) }}%</span>

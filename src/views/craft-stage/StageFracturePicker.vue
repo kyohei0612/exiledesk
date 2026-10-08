@@ -71,7 +71,8 @@ function setCandidate(modId: string, idx: number | null): void {
   if (h) {
     if (modId === h.modId) { if (idx != null) s.simTargets.value = s.simTargets.value.map((t) => (t === h ? { ...t, minTierIndex: idx } : t)); return; }
     const alts = (h.alts ?? []).filter((a) => a.modId !== modId);
-    s.simTargets.value = s.simTargets.value.map((t) => (t === h ? { ...t, alts: idx == null ? alts : [...alts, { modId, minTierIndex: idx }] } : t));
+    const at = idx;
+    s.simTargets.value = s.simTargets.value.map((t) => (t === h ? { ...t, alts: at == null ? alts : [...alts, { modId, minTierIndex: at }] } : t));
     return;
   }
   const rest = s.simTargets.value.filter((t) => !(t.method === "fracture" && t.modId === modId));
@@ -85,7 +86,16 @@ function toggle(r: ListRow): void {
   if (blocked(r)) return;
   const t = topTier(r);
   if (!t) return;
-  const { modId, idx } = idOf(r, t);
+  const { modId, idx: top } = idOf(r, t);
+  // あるいはの候補は、元の MOD と同じ「T○ 以上」に揃える (届かなければ届く一番上。前は T1 以上で入っていた。2026-10-08 完成判定 2 回目)
+  let idx = top;
+  const h = host.value, d = s.data.value;
+  const hm = h ? d?.mods.get(h.modId) : undefined, m = d?.mods.get(modId);
+  if (h && hm && m) {
+    let want = Math.max(0, Math.min(m.tiers.length - 1, m.tiers.length - (hm.tiers.length - h.minTierIndex)));
+    while (want > 0 && m.tiers[want]!.ilvl > s.itemLevel.value) want--;
+    idx = want;
+  }
   if (idx >= 0) setCandidate(modId, idx);
 }
 function pickTier(r: ListRow, t: ListTier): void {

@@ -25,12 +25,11 @@ describe("指名で付ける (force:)", () => {
     r = A(it, forceKey(fire, "T1", "n"));
     expect(r.applied).toBe(true);
     it = r.item;
+    // 同じ側の 2 つ目はレアにして付ける (2026-10-08 オーナー「プレフィックス付けだしたらレアにしていい」。前は「サフィックス 1 つまで」で止めていた)
     r = A(it, forceKey(cold, "T1", "n"));
-    expect(r.applied).toBe(false);
-    expect(r.reason).toMatch(/サフィックス 1 つまで/);
-    // 王者でレアにすれば付く
+    expect(r.applied || /同じ系統/.test(r.reason ?? "")).toBe(true);
     it = A(it, "regal").item;
-    expect(it.rarity).toBe("rare");
+    if (r.applied) expect(r.item.rarity).toBe("rare");
     // 王者でサフィに付いたら、サフィの枠 (3) の範囲で冷気耐性も付く (同じ系統でなければ)
     r = A(it, forceKey(cold, "T1", "n"));
     expect(r.applied || /同じ系統|埋まって/.test(r.reason ?? "")).toBe(true);
@@ -97,5 +96,18 @@ describe("指名で付ける (force:)", () => {
     expect(f.applied).toBe(true);
     expect(allMods(f.item).filter((m) => m.modId === life)).toHaveLength(1);
     expect(allMods(f.item).find((m) => m.modId === life)?.fractured).toBe(true);
+  });
+  it("マジックで同じ側の 2 つ目はレアにして付ける、× で外す (2026-10-08 オーナー)", () => {
+    const life = idOf("Rings", /IncreasedLife$/), mana = idOf("Rings", /IncreasedMana$/);
+    let it = A(freshItem(data, "Gold Ring", 82), forceKey(life, "T2", "n")).item;
+    expect(it.rarity).toBe("magic");
+    const r = A(it, forceKey(mana, "T2", "n"));
+    expect(r.applied).toBe(true);
+    expect(r.item.rarity).toBe("rare");
+    it = r.item;
+    const x = A(it, forceKey(life, null, "x"));
+    expect(x.applied).toBe(true);
+    expect(allMods(x.item).some((m) => m.modId === life)).toBe(false);
+    expect(A(x.item, forceKey(life, null, "x")).reason).toMatch(/付いていない/);
   });
 });

@@ -746,7 +746,7 @@ function augmentAgain(r: Row, id: string): boolean {
   const ids = isRest(r.step.target) ? restMembers(pat.value.steps, r.step.target) : candsOfStep(r.step);
   return ids.includes(id);
 }
-const gotoJa = (g: number): string => (g === LOST_RESTART ? "最初から (新しいベース)" : `${g + 1} 手目に戻る`);
+const gotoJa = (g: number): string => (g === LOST_RESTART ? (props.start.mods ? "この状態を作り直して最初から" : "最初から (新しいベース)") : `${g + 1} 手目に戻る`);
 /** 戻れない手の理由 (ルーン・打つだけ・マジックの手) */
 function whyNoGoto(r: Row, from?: Row): string | undefined {
   if (r.set?.kind === "rune") return "ルーンの手には戻れない";
@@ -1041,7 +1041,7 @@ defineExpose({ rows });
                     <span class="opacity-60">→</span>
                     <img v-for="c in n.miss.icons" :key="c" :src="iconOf(c)" alt="" class="h-5 w-5 object-contain" />
                   </template>
-                  <span v-else class="text-rose-200">→ 白から</span>
+                  <span v-else class="text-rose-200">{{ n.miss.text.startsWith("⟲") ? n.miss.text.replace(/\s*\(.*$/, "") : "→ 白から" }}</span>
                 </span>
               </span>
               <span class="flex items-center text-[10px] text-amber-200/90">
@@ -1137,6 +1137,8 @@ defineExpose({ rows });
                 <span class="ml-1">付くまで繰り返す</span>
               </span>
               <span v-if="preRule(r)" class="ml-5 text-[10px] leading-tight opacity-70">{{ preRule(r) }}</span>
+              <!-- 「残り」の手の決まり (計算と同じ。2026-10-08 オーナー「全部消えたら高貴 → 2 手目へ戻る」、完成判定 2 回目: 画面に出ていなかった) -->
+              <span v-if="isRest(r.step.target)" class="ml-5 text-[10px] leading-tight opacity-70">候補が消えても 1 つでも残ればこの手を続ける、全部消えたら {{ Number(r.step.target!.slice(REST.length)) + 1 }} 手目へ</span>
               <span v-if="chaosRegain(r)" class="ml-5 text-[10px] leading-tight opacity-70">消えて戻った時: 完全高貴 + 側のお告げで取り直す</span>
               <span v-if="sideSplit(r)" class="ml-5 flex flex-col text-[10px] leading-tight opacity-70">
                 <span>ハズレが{{ sideSplit(r)!.o }}に付いた → {{ otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep" ? "消さずに打つ" : "消去" }}</span>
@@ -1277,7 +1279,7 @@ defineExpose({ rows });
                     <!-- 新しいベースで最初から (2026-10-07 靴で試すと、マジックの手で付けた物が消えた時の戻り先が無かった) -->
                     <button type="button" class="flex items-center gap-2 rounded-md border px-2 py-1 text-left" :class="gotoOf(focusRow, rows[focusRow]!, id) === LOST_RESTART ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-black/20 hover:border-white/30'" @click="setGoto(focusRow!, id, LOST_RESTART)">
                       <b class="shrink-0 text-amber-200">最初から</b>
-                      <span class="truncate text-[11px]">新しいベース</span>
+                      <span class="truncate text-[11px]">{{ props.start.mods ? "手打ちの状態を作り直す" : "新しいベース" }}</span>
                       <span v-if="gotoOf(focusRow, rows[focusRow]!, id) === LOST_RESTART" class="ml-auto shrink-0 text-[10px]">← ここから</span>
                     </button>
                     <button v-for="g in focusRow + 1" :key="g" type="button" class="flex items-center gap-2 rounded-md border px-2 py-1 text-left disabled:cursor-not-allowed disabled:opacity-30" :class="gotoOf(focusRow, rows[focusRow]!, id) === g - 1 ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-black/20 hover:border-white/30'" :disabled="!!whyNoGoto(rows[g - 1]!, rows[focusRow]!)" :title="whyNoGoto(rows[g - 1]!, rows[focusRow]!)" @click="setGoto(focusRow!, id, g - 1)">
@@ -1342,6 +1344,7 @@ defineExpose({ rows });
                 </div>
               </div>
               <p class="mt-2 text-[11px]" :class="missRisk(focusRow!, rows[focusRow]!).bad ? 'text-rose-300' : 'text-emerald-200/80'">{{ missRisk(focusRow!, rows[focusRow]!).text }}</p>
+              <p v-if="isRest(rows[focusRow]!.step.target)" class="mt-1 text-[11px] text-emerald-200/80">消去で候補が消えても、1 つでも残っていればこの手を続ける。全部消えたら {{ Number(rows[focusRow]!.step.target!.slice(REST.length)) + 1 }} 手目へ戻る</p>
               <!-- お告げ無しの消去は、どちらの側が消えたかで枝が分かれる (2026-10-07 オーナー「サフィだけ消えるともう 1 回消去、プレだけ消えたら消去は使わずにトライ」) -->
               <p v-if="preRule(rows[focusRow]!, true)" class="mt-3 text-[11px] opacity-80">{{ preRule(rows[focusRow]!, true) }}</p>
               <p v-if="chaosRegain(rows[focusRow]!)" class="mt-1 text-[11px] opacity-80">この手の狙いが後の手で消えて戻った時は、カオスでなく完全高貴 + 側のお告げで取り直す (カオスだと付いている他の狙いも消すため。外れは消去)</p>

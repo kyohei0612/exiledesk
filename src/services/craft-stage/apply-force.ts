@@ -19,14 +19,14 @@ import { craftedLimitOf, normalTierOf } from "./apply-essence";
 import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, takenRawFamilies, withMod } from "./stage-core";
 import type { StageApply, StageItem, StageSide } from "./types";
 
-export type ForceFlag = "n" | "e" | "d" | "f";
+export type ForceFlag = "n" | "e" | "d" | "f" | "x";
 export const isForce = (key: string): boolean => key.startsWith("force:");
 export const forceKey = (modId: string, rank: string | null, flag: ForceFlag): string => `force:${modId}|${rank ?? ""}|${flag}`;
 export function parseForce(key: string): { modId: string; rank: string | null; flag: ForceFlag } | null {
   if (!isForce(key)) return null;
   const [modId, rank, flag] = key.slice("force:".length).split("|");
   if (!modId) return null;
-  const f = (["n", "e", "d", "f"] as const).find((x) => x === flag) ?? "n";
+  const f = (["n", "e", "d", "f", "x"] as const).find((x) => x === flag) ?? "n";
   return { modId, rank: rank || null, flag: f };
 }
 const SIDE_JA: Record<StageSide, string> = { prefix: "プレフィックス", suffix: "サフィックス" };
@@ -37,12 +37,21 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   const mod = data.mods.get(p.modId);
   if (!mod) return skip(item, `${p.modId} という MOD が無い`);
   const side: StageSide = mod.type === "suffix" ? "suffix" : "prefix";
+  // x: アイテムのカードの × で外す (費用 0、1 手戻すで戻る。2026-10-08 オーナー「アイテムの所で × あったら消せるように」)
+  if (p.flag === "x") {
+    const have = allMods(item).find((m) => m.modId === p.modId);
+    if (!have) return skip(item, "その MOD は付いていない");
+    const drop = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.filter((m) => m !== have);
+    return { applied: true, item: { ...item, prefixes: drop(item.prefixes), suffixes: drop(item.suffixes) }, added: [], removed: [have] };
+  }
   // ユニークには足せない (2026-10-08 使い倒しテスト)
   if (item.rarity === "unique") return skip(item, "ユニークには MOD を足せない");
   // ノーマルに付けたらマジック。エッセンスの MOD は必ずレア (普通のエッセンス = ノーマル / マジック → レア、パーフェクト = レアだけ)
   const perfect = mod.source === "perfect_essence";
   if (p.flag === "e" && perfect && item.rarity !== "rare") return skip(item, "パーフェクトエッセンスはレアにだけ (先に王者か錬金でレアに)");
-  const it: StageItem = p.flag === "e" ? (item.rarity === "rare" ? item : { ...item, rarity: "rare" }) : item.rarity === "normal" ? { ...item, rarity: "magic" } : item;
+  let it: StageItem = p.flag === "e" ? (item.rarity === "rare" ? item : { ...item, rarity: "rare" }) : item.rarity === "normal" ? { ...item, rarity: "magic" } : item;
+  // マジックで同じ側が埋まっていたら、王者を打った事にしてレアに (1 つずつ止まらない。2026-10-08 オーナー)
+  if (it.rarity === "magic" && p.flag === "n" && !room(it, side)) it = { ...it, rarity: "rare" };
   if ((p.flag === "d" || p.flag === "f") && it.rarity !== "rare") return skip(item, `${p.flag === "d" ? "冒涜" : "フラクチャー"}の MOD はレアにだけ (先に王者か錬金でレアに)`);
   // 冒涜で付けられるのは冒涜の MOD だけ (2026-10-08 オーナー「冒涜 MOD しか冒涜は付けれない」)
   if (p.flag === "d" && mod.source !== "desecrated" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skip(item, "冒涜で付くのは冒涜の MOD だけ");

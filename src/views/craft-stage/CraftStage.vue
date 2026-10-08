@@ -9,6 +9,7 @@
   状態と操作は [[craft-stage.ts]]、1 手の中身は services/craft-stage (計算機と同じ規則)。
 -->
 <script setup lang="ts">
+import { forceKey } from "../../services/craft-stage/apply-force";
 import { readSimRecipes, type SimRecipe } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -357,6 +358,8 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
           :holding="!!s.held.value && !s.replay.value"
           :flash-key="flashKey"
           @use="s.use()"
+          :removable="!s.replay.value"
+          @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @socket="useAtSocket"
         />
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>

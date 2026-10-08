@@ -29,14 +29,14 @@ import { craftStage } from "../../state/craft-stage";
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
 /** doomed: 今持っている物を打つと消える MOD (削減のお告げ + カオスの時の候補。ゲームと同じく打つ前に色を付ける、オーナー 2026-10-04) */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[] }>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[] ; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean}>();
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
 /**
  * スポットライト (POE2Tube 要望 ⑪-2、URL の focus=<MOD の id か系統>): その MOD の行だけ光らせて少し大きく、他は暗く
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; remove: [modId: string] }>();
 /**
  * ルーンの入ったソケットを押した (2026-10-03): そのソケットを指して打つ (置き換え)。親が持っている物を見て決める
  * (ルーン以外を持っている時は、アイテムを押したのと同じ)。空のソケットはアイテムを押したのと同じ
@@ -170,6 +170,7 @@ const rows = computed(() =>
           <span :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? `品質で伸びた数値 (素は ${r.m.textJa})` : undefined">{{ r.text }}</span>
           <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
           <span class="ml-2 whitespace-nowrap align-middle text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side }} {{ r.m.tierName }}</span>
+          <button v-if="removable && !r.m.unrevealed" type="button" class="ml-1.5 rounded px-1 align-middle text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" title="この MOD を外す (費用 0、1 手戻すで戻る)" @click.stop="emit('remove', r.m.modId)">×</button>
         </p>
       </div>
       <!-- ユニークの効果 (要望 ⑨)。クライアントの表に「どのユニークがどの MOD」が無いので poe2db のページ (保存済み) から -->

@@ -202,6 +202,8 @@ export interface SimSession {
   start?: SimStart;
   startItem?: StageItem | null;
   startCost?: number;
+  /** 入れたベース代 (高貴建て)。呼び出した時に、そのベースの覚えた値段が無ければこれを入れる */
+  prices?: { white?: number | null; four?: number | null; bought?: number | null; item?: number | null };
   flags: Record<string, boolean>;
 }
 export function readSimSession(): SimSession | null {

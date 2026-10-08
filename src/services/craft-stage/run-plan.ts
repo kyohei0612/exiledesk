@@ -119,6 +119,7 @@ export const splitOmens = (omen: string | null | undefined): string[] => (omen ?
 /** 手の日本語名 (発現は「発現 (2 番目)」) */
 export function stepJa(currency: string, item: StageItem): string {
   const fc = parseForce(currency);
+  if (fc?.flag === "x") return "× で外す";
   if (fc) return `指名で付ける (${fc.rank ?? "T1"}${fc.flag === "e" ? "・エッセンス" : fc.flag === "d" ? "・冒涜" : fc.flag === "f" ? "・フラクチャー" : ""})`;
   const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
   if (rv) return `発現 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
@@ -220,7 +221,11 @@ export interface RunMeta {
 export interface StartSpec { rarity?: StageItem["rarity"]; mods?: Force[]; quality?: number; sockets?: number; runes?: string[] }
 export function startFrom(data: PatchData, base: string, itemLevel: number, s: StartSpec, seed: number): StageItem {
   // フラクチャー・冒涜の MOD はレアにしか無い (マジックではフラクチャーも冒涜もできない。2026-10-06 オーナー「ノーマルの奴ならそこで付けたらレアに」)
-  const rarity = s.rarity ?? (s.mods?.some((f) => f.fractured || f.desecrated) || (s.mods && s.mods.length > 2) ? "rare" : s.mods?.length ? "magic" : "normal");
+  // 同じ側に 2 つ目を付けたらレア (マジックは側 1 つずつなので、プレ 2 つは王者を打たないと組めず 1 つずつ止まっていた。2026-10-08 オーナー
+  // 「MOD 2 つ以上とかプレフィックス付けだしたらレアにしていいよ」)
+  const sideOfKey = (k: string): string => [...data.mods.values()].find((m) => m.id === k || m.id.endsWith(`/${k}`) || m.family === k)?.type ?? "prefix";
+  const sameSide = !!s.mods && s.mods.length >= 2 && new Set(s.mods.map((f) => sideOfKey(f.mod))).size < s.mods.length;
+  const rarity = s.rarity ?? (s.mods?.some((f) => f.fractured || f.desecrated) || (s.mods && s.mods.length > 2) || sameSide ? "rare" : s.mods?.length ? "magic" : "normal");
   let item: StageItem = { ...freshItem(data, base, itemLevel), rarity, rollSeed: seed };
   const rng = mulberry32(seed);
   if (s.sockets != null) {
