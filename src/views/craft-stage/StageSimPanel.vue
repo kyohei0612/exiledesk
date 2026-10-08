@@ -1253,7 +1253,7 @@ const compare = computed(() => {
     list.push({ key: "four", name: "レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: four, note: num(fourDivine.value) == null ? "無し" : "回すと出ます" });
     const bN = num(boughtDivine.value);
     const bought = bN != null && rest != null ? bN * dv * nb + rest : null;
-    list.push({ key: "bought", name: "固定済みのベースを買う", cost: bought, note: num(boughtDivine.value) == null ? "無し" : "回すと出ます" });
+    list.push({ key: "bought", name: "フラクチャー済みを買う", cost: bought, note: num(boughtDivine.value) == null ? "無し" : "回すと出ます" });
   }
   list.push({ key: "done", name: "完成品を買う", cost: num(doneDivine.value) != null ? num(doneDivine.value)! * dv : null, note: "無し" });
   // 値段が空のベース・完成品は「無し」(取引所に出ていない) として比べから外す (2026-10-06 オーナー「無いパターンもあるから、未入力で無しとしてカウント」)
@@ -1286,7 +1286,7 @@ const split = computed(() => {
   if (fractureRow.value) {
     // ベース代は回した費用に入っている (やり直しの買い直し・作り直しの分も)
     const b = (startOnce.value ?? 0) * r.bases;
-    const name = s.simStart.value === "fractured" ? "1 で決めた: 固定済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : `4 最安値スタート: ${routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? ""}`;
+    const name = s.simStart.value === "fractured" ? "1 で決めた: フラクチャー済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : `4 最安値スタート: ${routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? ""}`;
     return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `フラクチャー済みのベース × ${r.bases.toFixed(1)} 個 (${name})` };
   }
   const b = (num(whiteDivine.value) ?? 0) * r.bases;
@@ -1301,7 +1301,6 @@ function moneyT(x: number): string {
   if (v > 0 && v < 0.01) return money(x);
   return `${v >= 100 ? Math.round(v).toLocaleString() : v >= 10 ? v.toFixed(1) : v.toFixed(2)} 神`;
 }
-const barW = (x: number, total: number): string => `${total > 0 ? Math.max(0, Math.min(100, (x / total) * 100)) : 0}%`;
 const fmtCount = (n: number): string => (n >= 10 ? Math.round(n).toLocaleString() : n.toFixed(1));
 /** 運の幅の印 (半分・8 割・9 割の人。合計で) */
 /**
@@ -1419,11 +1418,11 @@ const costGroups = computed(() => {
   if (fractureRow.value && s.simStart.value !== "item") {
     // 1 で始め方を決めた時はその始め方 (前は一番安い始め方の内訳が出て、足し算も合わなかった。2026-10-08 完成判定 4)
     const best = s.simStart.value === "fractured" ? "bought" : s.simStart.value === "four" ? "four" : routes.value.best;
-    const name = s.simStart.value === "fractured" ? "1 で決めた: 固定済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : routes.value.list.find((x) => x.key === best)?.name.replace(/\s*\(.*$/, "") ?? "";
+    const name = s.simStart.value === "fractured" ? "1 で決めた: フラクチャー済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : routes.value.list.find((x) => x.key === best)?.name.replace(/\s*\(.*$/, "") ?? "";
     let items: Array<{ name: string; n: number; cost: number }> = [];
     if (best === "self" && c) items = [...c.lines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
     else if (best === "four" && c) items = [{ name: "レアのベース (3 MOD + 狙い 1)", n: 3, cost: (num(fourDivine.value) ?? 0) * 3 }, ...c.buyLines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
-    else if (best === "bought") items = [{ name: "固定済みのベース", n: 1, cost: num(boughtDivine.value) ?? 0 }];
+    else if (best === "bought") items = [{ name: "フラクチャー済みのベース", n: 1, cost: num(boughtDivine.value) ?? 0 }];
     // 内訳は 1 個分 × 使った数 (作り直し・買い直し込み)
     const nb = r.bases;
     items = items.map((x) => ({ ...x, n: x.n * nb, cost: x.cost * nb }));
@@ -1460,7 +1459,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <CurrencyPicker sim />
       <!-- レシピ (名前を付けて残す・呼び出す) -->
       <span ref="recipeBox" class="relative">
-        <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px] max-md:py-2 max-md:text-[12px]" :class="recipeOpen ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/20 hover:bg-white/10'" title="今の途中 (ベース・狙い・順番・パターン) を名前を付けて残す / 呼び出す" @click="openRecipes">レシピ {{ recipeOpen ? "▲" : "▼" }}</button>
+        <button type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-[13px] transition max-md:h-10" :class="recipeOpen ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" title="今の途中 (ベース・狙い・順番・パターン) を名前を付けて残す / 呼び出す" @click="openRecipes">レシピ<Icon :name="recipeOpen ? 'chevron-up' : 'chevron-down'" class="size-4" /></button>
         <div v-if="recipeOpen" class="fixed inset-0 z-30 bg-black/60 md:hidden" @click="recipeOpen = false"></div>
         <div v-if="recipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl max-md:fixed max-md:inset-x-3 max-md:top-14 max-md:w-auto max-md:max-h-[80vh] max-md:overflow-y-auto">
           <button type="button" class="mb-2 w-full rounded-lg border border-white/20 py-2 md:hidden" @click="recipeOpen = false">閉じる</button>
@@ -1489,11 +1488,11 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           </div>
         </div>
       </span>
-      <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px] max-md:py-2 max-md:text-[12px]" :class="resetArmed ? 'border-rose-400 bg-rose-500/25 text-rose-100' : 'border-white/20 hover:bg-white/10'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll">{{ resetArmed ? "もう一度押すとリセット" : "リセット" }}</button>
-      <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30 max-md:py-2 max-md:text-[12px]" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo">↶ 1 つ戻す</button>
-      <button type="button" class="rounded-full border px-2 py-0.5 text-[11px] max-md:min-h-10 max-md:px-3" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
+      <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] transition max-md:h-10" :class="resetArmed ? 'bg-[rgba(229,128,107,0.18)] text-[var(--exile-color-signal-down)] ring-1 ring-[var(--exile-color-signal-down)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)]'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll"><Icon name="rotate" class="size-4" />{{ resetArmed ? "もう一度押すと消える" : "リセット" }}</button>
+      <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] disabled:opacity-30 max-md:h-10" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo"><Icon name="undo" class="size-4" />1 つ戻す</button>
+      <button type="button" class="grid size-8 place-items-center rounded-md transition max-md:size-10" :class="help ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-tertiary)] hover:bg-white/5 hover:text-[var(--exile-color-text-secondary)]'" :title="help ? '説明を閉じる' : '説明を出す (各所の説明の文を開く)'" :aria-pressed="help" @click="toggle('help')"><Icon name="help" class="size-5" /></button>
     </Teleport>
-    <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
+    <p v-if="help" class="mb-3 rounded-md bg-white/[0.03] px-3 py-2 text-[13px] text-[var(--exile-color-text-secondary)]">狙いは「このベースに付く MOD」の表の「T○ 以上」で選ぶ。打ち方 (パターン) を組んで「回す」と、何百人分も作った平均の費用が出る。各所の <Icon name="help" class="inline size-3.5 align-[-2px]" /> にも説明がある</p>
 
     <!--
       2〜5 は決めた後 (6 パターンを作る間) は 1 行に畳む。押すと開く (2026-10-07 オーナー採用の 2 枠の作業場。最小の窓 1660×860 で 6 が収まるように)
@@ -1501,7 +1500,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     <div v-if="socketsOk && step4pre" class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-5 py-2.5 text-[13px]">
       <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-[12px] font-bold text-emerald-200 ring-1 ring-emerald-400/40">✓</span>
       <b class="text-[var(--exile-color-text-primary)]">2〜5 決めたこと</b>
-      <span class="truncate text-[var(--exile-color-text-secondary)]">狙う MOD {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "固定済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
+      <span class="truncate text-[var(--exile-color-text-secondary)]">狙う MOD {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 付ける順 {{ orderKeys.length }} つ</span>
       <button type="button" class="ml-auto inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="fold = !fold">{{ fold ? "開く" : "畳む" }}<Icon :name="fold ? 'chevron-down' : 'chevron-up'" class="size-4" /></button>
     </div>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
@@ -1540,13 +1539,13 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           </template>
           <template v-else-if="s.simStart.value === 'fractured'">
             <span class="opacity-70">固定済みのベース (🔒 {{ fracMembers[0]?.text ?? "固定 MOD を 2 で足す" }})</span>
-            <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="無し" />
+            <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="値段" />
             <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :disabled="!fracMembers.length" title="固定 MOD が付いた (固定済みの) ベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
             <span class="inline-block w-24 shrink-0" :class="ageOf('bought')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")?.text ?? "" }}</span>
           </template>
           <template v-else-if="s.simStart.value === 'four'">
             <span class="opacity-70">4 MOD のレア (3 MOD + 🔒 {{ fracMembers[0]?.text ?? "固定 MOD を 2 で足す" }})</span>
-            <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
+            <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
             <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :disabled="!fracMembers.length" title="狙いの MOD が付いたレア (固定済みは除く、MOD 4 つまで) を取引所で探す (開くだけ)" @click="searchFour">取引所で探す ↗</button>
             <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
           </template>
@@ -1584,8 +1583,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
               <td class="py-1">
                 <span v-if="x.key === 'self'" class="text-[11px] opacity-70">1 回分 × 3 (当たり 1/3) + 消去 × 2<template v-if="calc && calc.grade !== '完全'"> · {{ calc.grade }}の増強で計算</template></span>
                 <span v-else class="flex items-center gap-1.5 text-[11px]">
-                  <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
-                  <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="無し" />
+                  <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
+                  <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="値段" />
                   <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す ↗</button>
                 </span>
               </td>
@@ -1684,17 +1683,17 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
         -->
         <div v-if="!patternDone" class="mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-3 text-[12px]" :class="stale && !busy ? '[&_.res]:opacity-50' : ''">
-          <span class="flex items-center gap-1 text-[var(--exile-color-text-secondary)]">回すパターン <HelpTip text="チェックしたパターンをまとめて回し、費用を比べる。1 つだけ試す時は上の「このパターンを回す」" /></span>
+          <span class="flex items-center gap-1 text-[11px] font-medium tracking-wide text-[var(--exile-color-text-tertiary)]">まとめて回す <HelpTip text="チェックしたパターンをまとめて回し、費用を比べる。1 つだけ試す時は上の「このパターンを回す」" /></span>
           <!-- 枠のどこを押してもチェックが切り替わる (2026-10-07 オーナー「チェックボックスだけじゃなくて枠クリックで」)。金額の所だけは結果を下に出す -->
-          <span v-for="(p, i) in s.simPatterns.value" :key="i" role="checkbox" :aria-checked="!p.off" tabindex="0" class="flex cursor-pointer select-none items-center gap-1 rounded-full border py-0.5 pl-2 pr-1 transition hover:border-white/40" :class="[shownName === p.name && resultOf(p.name) ? 'border-amber-400/70 bg-amber-500/15' : 'border-white/15', p.off ? 'opacity-45' : '']" :title="p.off ? '押すと全部まとめて回す時に入れる' : '押すと全部まとめて回す時に入れない'" @click="togglePatternOff(i)" @keydown.space.prevent="togglePatternOff(i)">
-            <span class="grid h-3.5 w-3.5 place-items-center rounded-sm border text-[9px] leading-none" :class="p.off ? 'border-white/30' : 'border-amber-400 bg-amber-400 text-black'">{{ p.off ? "" : "✓" }}</span>
+          <span v-for="(p, i) in s.simPatterns.value" :key="i" role="checkbox" :aria-checked="hasSteps(p) && !p.off" :aria-disabled="!hasSteps(p)" tabindex="0" class="flex select-none items-center gap-1.5 rounded-md py-1 pl-2 pr-1 transition" :class="[!hasSteps(p) ? 'cursor-default opacity-40' : 'cursor-pointer hover:bg-white/5', shownName === p.name && resultOf(p.name) ? 'bg-[var(--exile-color-bg-elevated)] ring-1 ring-[var(--exile-color-border-brass)]' : '', p.off && hasSteps(p) ? 'opacity-50' : '']" :title="!hasSteps(p) ? '手が無いので回さない' : p.off ? '押すとまとめて回す時に入れる' : '押すとまとめて回す時に入れない'" @click="hasSteps(p) && togglePatternOff(i)" @keydown.space.prevent="hasSteps(p) && togglePatternOff(i)">
+            <span class="grid size-3.5 place-items-center rounded-sm border" :class="p.off || !hasSteps(p) ? 'border-white/30' : 'border-[var(--exile-color-accent-focus)] bg-[var(--exile-color-accent-focus)] text-black'"><Icon v-if="!p.off && hasSteps(p)" name="check" class="size-3" :stroke="3" /></span>
             <b>{{ p.name }}</b>
             <button v-if="resultOf(p.name)" type="button" class="res flex items-center gap-1 rounded-full px-1.5 hover:bg-white/10" :title="stale ? '設定が変わりました。回し直すと合う (押すと結果を下に)' : '押すと結果を下に出す'" @click.stop="showResultByName(p.name)">
-              <b class="tabular-nums text-amber-100">{{ money(resultOf(p.name)!.out.r.perDone) }}</b>
-              <span class="opacity-60">完成 {{ pct(resultOf(p.name)!.out.r.pDone) }}</span>
-              <span v-if="cheapestName === p.name" class="rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">一番安い</span>
+              <b class="tabular-nums text-[var(--exile-color-text-primary)]">{{ money(resultOf(p.name)!.out.r.perDone) }}</b>
+              <span class="text-[var(--exile-color-text-tertiary)]">完成 {{ pct(resultOf(p.name)!.out.r.pDone) }}</span>
+              <span v-if="cheapestName === p.name" class="rounded bg-[rgba(126,201,148,0.15)] px-1 text-[11px] text-[var(--exile-color-signal-up)]">一番安い</span>
             </button>
-            <span v-else class="pr-1.5 opacity-50">{{ patternNote(p) }}</span>
+            <span v-else class="pr-1.5 text-[var(--exile-color-text-tertiary)]">{{ hasSteps(p) ? patternNote(p) : "手が無い (回さない)" }}</span>
           </span>
           <SimProgress v-if="busy" :box="progressBox" :phase="phase" />
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
@@ -1707,7 +1706,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
               <option v-for="n in MAX_STEPS_CHOICES" :key="n" :value="n">{{ n.toLocaleString() }} 手</option>
             </select>
           </label>
-          <button type="button" class="inline-flex h-9 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-4 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()"><Icon name="play" class="size-4" />{{ runnable.length > 1 ? `チェックした ${runnable.length} つを回す` : "回す" }}</button>
+          <button type="button" class="inline-flex h-9 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-4 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()"><Icon name="play" class="size-4" />回す<span v-if="runnable.length > 1" class="rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums" :title="`チェックした ${runnable.length} つのパターン`">{{ runnable.length }}</span></button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
@@ -1726,7 +1725,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <button v-if="nextMaxSteps" type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 max-md:min-h-11" :disabled="busy" @click="maxSteps = nextMaxSteps; void run()">{{ nextMaxSteps.toLocaleString() }} 手で回し直す</button>
         </div>
         <div class="flex flex-col">
-          <span class="flex items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ shownName }} の 1 個あたり (平均)<template v-if="s.simStart.value === 'item'"> · この状態から先</template>
+          <span class="flex items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ shownName }} · 1 個あたりの平均<template v-if="s.simStart.value === 'item'"> · この状態から先</template>
             <HelpTip text="平均 = 全員の出費 ÷ 完成した数。運の悪い人も入るので、真ん中の人より高く出る" />
           </span>
           <span class="text-[30px] font-bold leading-tight tabular-nums text-[var(--exile-color-accent-focus)]">{{ moneyT(split.base + split.craft) }}</span>
@@ -1744,74 +1743,71 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span v-if="cardNote" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ cardNote }}</span>
         </span>
       </div>
-      <div class="mt-3 flex h-1.5 max-w-xl overflow-hidden rounded-full bg-white/10" title="1 個あたりの中の、ベース代 (灰) とクラフト代 (金) の割合">
-        <div class="bg-stone-400/70" :style="{ width: barW(split.base, split.base + split.craft) }" :title="`ベース ${moneyT(split.base)}`"></div>
-        <div class="bg-amber-400/80" :style="{ width: barW(split.craft, split.base + split.craft) }" :title="`クラフト ${moneyT(split.craft)}`"></div>
-      </div>
+
       <!-- 運の幅 -->
       <!-- 1 人が打てる手の上限 (recipe-sim の maxSteps 既定 4,000)。超えた人は「手が多すぎる」で未完成 (2026-10-07 オーナー「4000 回が限度って書いてない」) -->
-      <p class="mt-4 text-[11px] opacity-60" title="1 人が打てる手の上限 (カオス・消去・ルーンなど 1 回ずつ。回すの横で変えられる)。それを超えた人は完成しなかった扱いで、使ったお金は 1 個あたりの費用に入る">運の幅 ({{ summary.runs.toLocaleString() }} 人が作ってみて、1 人 {{ (summary.maxSteps ?? maxSteps).toLocaleString() }} 手まで)</p>
+      <p class="mt-5 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--exile-color-text-primary)]">運の幅 <span class="text-[12px] font-normal text-[var(--exile-color-text-tertiary)]">{{ summary.runs.toLocaleString() }} 人が作ってみた</span>
+        <HelpTip :text="`同じ打ち方で ${summary.runs.toLocaleString()} 人が 1 個ずつ作った時の、完成までの出費の散らばり。1 人 ${(summary.maxSteps ?? maxSteps).toLocaleString()} 手を超えた人は完成しなかった扱い (使ったお金は平均に入る)`" />
+      </p>
       <!-- 線には印だけ、言葉は下に 1 行で (印の横に書くと長い文がくっついた) -->
       <div class="relative mt-2 h-5 max-w-2xl">
         <div class="absolute left-0 right-0 top-2 h-1 rounded bg-white/15"></div>
-        <div v-for="q in luck" :key="q.label" class="absolute top-0.5 h-4 w-[3px] -translate-x-1/2 rounded" :class="q.bar" :style="{ left: q.left }" :title="`${q.label} ${moneyT(q.v)} ${q.tail}`"></div>
+        <div v-for="(q, qi) in luck" :key="q.label" class="absolute top-0.5 h-4 w-[3px] -translate-x-1/2 rounded" :class="q.top ? 'bg-white/70' : qi === 0 ? 'bg-[var(--exile-color-accent-focus)]' : 'bg-[var(--exile-color-text-tertiary)]'" :style="{ left: q.left }" :title="`${q.label} ${moneyT(q.v)} ${q.tail}`"></div>
       </div>
-      <div class="mt-1 flex max-w-3xl flex-wrap gap-x-5 gap-y-1 text-[12px]">
-        <span v-for="q in luck" :key="q.label" class="flex items-center gap-1.5 whitespace-nowrap">
-          <span class="h-2.5 w-2.5 rounded-full" :class="q.bar"></span>
-          <span class="opacity-70">{{ q.label }}</span>
-          <b class="tabular-nums" :class="q.text">{{ moneyT(q.v) }}</b>
-          <span v-if="q.tail" class="opacity-70">{{ q.tail }}</span>
-        </span>
+      <div class="mt-2 grid max-w-2xl grid-cols-3 gap-3 text-[12px] max-md:grid-cols-1">
+        <div v-for="(q, qi) in luck.filter((x) => !x.top)" :key="q.label" class="flex flex-col">
+          <span class="text-[var(--exile-color-text-secondary)]">{{ q.label.replace("完成した ", "") }}</span>
+          <b class="text-[15px] tabular-nums" :class="qi === 0 ? 'text-[var(--exile-color-accent-focus)]' : 'text-[var(--exile-color-text-primary)]'">{{ moneyT(q.v) }} <span class="text-[12px] font-normal text-[var(--exile-color-text-tertiary)]">{{ q.tail }}</span></b>
+        </div>
       </div>
       <!-- 何にお金がかかったか (ベース / クラフト) -->
-      <div class="mt-3 grid max-w-4xl gap-x-8 gap-y-3 @3xl:grid-cols-2 max-md:grid-cols-1">
+      <div class="mt-5 grid max-w-4xl gap-x-10 gap-y-4 @3xl:grid-cols-2 max-md:grid-cols-1">
         <div v-for="g in costGroups" :key="g.name">
-          <p class="mb-1 flex items-baseline gap-2 text-[12px]"><b>{{ g.name }}</b><span class="text-[10px] opacity-50">{{ g.note }}</span><span class="ml-auto font-bold tabular-nums">{{ moneyT(g.total) }}</span></p>
+          <p class="mb-1.5 flex items-baseline gap-2 text-[13px]"><b>{{ g.name }}</b><span class="truncate text-[12px] text-[var(--exile-color-text-tertiary)]">{{ g.note }}</span><span class="ml-auto font-semibold tabular-nums">{{ moneyT(g.total) }}</span></p>
           <!-- スマホは名前を 1 行目いっぱいに (「カオスオーブ × 5,…」と切れていた) -->
-          <div class="grid grid-cols-[minmax(0,1fr)_5rem_4.5rem_2.5rem] items-center gap-x-2 gap-y-1 text-[12px] max-md:grid-cols-[minmax(0,1fr)_4.5rem_2.5rem]">
+          <div class="grid grid-cols-[minmax(0,1fr)_5rem_5rem_2.5rem] items-center gap-x-3 gap-y-1.5 text-[13px] max-md:grid-cols-[minmax(0,1fr)_4.5rem_2.5rem]">
             <template v-for="x in g.items" :key="x.name">
-              <span class="truncate max-md:col-span-3 max-md:whitespace-normal" :title="x.name">{{ x.name }}<span v-if="x.n" class="opacity-50"> × {{ fmtCount(x.n) }}</span></span>
-              <div class="h-2 rounded-full bg-white/10"><div class="h-2 rounded-full" :class="g.bar" :style="{ width: `${Math.max(2, x.share * 100)}%` }"></div></div>
+              <span class="truncate max-md:col-span-3 max-md:whitespace-normal" :title="x.name">{{ x.name }}<span v-if="x.n" class="text-[12px] text-[var(--exile-color-text-tertiary)]"> × {{ fmtCount(x.n) }}</span></span>
+              <div class="h-1.5 rounded-full bg-white/10"><div class="h-1.5 rounded-full" :class="g.bar" :style="{ width: `${Math.max(2, x.share * 100)}%` }"></div></div>
               <span class="text-right tabular-nums">{{ moneyT(x.cost) }}</span>
-              <span class="text-right text-[11px] tabular-nums opacity-50">{{ Math.round(x.share * 100) }}%</span>
+              <span class="text-right text-[12px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ Math.round(x.share * 100) }}%</span>
             </template>
           </div>
         </div>
       </div>
       <!-- 畳む物 -->
-      <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-        <button type="button" class="rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="toggle('more')">始め方の比べ {{ open.more ? "▲" : "▼" }}</button>
+      <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-3 text-[13px]">
+        <button type="button" class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" :aria-expanded="open.more" @click="toggle('more')"><Icon :name="open.more ? 'chevron-down' : 'chevron-right'" class="size-4" />始め方の比べ</button>
+        <HelpTip text="同じ打ち方で、白から作る・レアのベースを買う・フラクチャー済みを買う・完成品を買う、のどれが安いか。買う値段は取引所で見て入れる" />
       </div>
       <!-- 付いていた割合は完成が 100% でない時だけ (組みかけのパターンでどこまで付くか。100% なら全部 100% で要らない。2026-10-07 オーナー「ここいらん、デフォで畳んでいい」) -->
-      <div v-if="summary.pDone < 0.995 && recipeOut.r.hitRates?.length" class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
-          <span class="opacity-60">終わった時に付いていた割合</span>
-          <span v-for="h in recipeOut.r.hitRates" :key="h.modId" class="rounded-full border border-white/15 bg-black/30 px-2 py-0.5">
+      <div v-if="summary.pDone < 0.995 && recipeOut.r.hitRates?.length" class="mt-3 flex flex-wrap items-center gap-1.5 text-[12px]">
+          <span class="text-[var(--exile-color-text-secondary)]">終わった時に付いていた割合</span>
+          <span v-for="h in recipeOut.r.hitRates" :key="h.modId" class="rounded-md bg-white/[0.05] px-2 py-0.5">
             <span :class="hitName(h.modId).tone">{{ hitName(h.modId).text }}</span>
             <b class="ml-1 tabular-nums" :class="h.p >= 0.9 ? 'text-emerald-300' : h.p >= 0.5 ? 'text-amber-200' : 'text-rose-300'">{{ pct(h.p) }}</b>
           </span>
         </div>
-        <p v-for="x in recipeOut.r.stops" :key="x.reason" class="mt-1 text-[11px] text-rose-300/80">止まった回 {{ pct(x.p) }}: {{ x.reason }}</p>
+        <p v-for="x in recipeOut.r.stops" :key="x.reason" class="mt-1.5 text-[12px] text-[var(--exile-color-signal-down)]">完成しなかった回 {{ pct(x.p) }}: {{ /手が多すぎる/.test(x.reason) ? `1 人の上限 (${(summary.maxSteps ?? maxSteps).toLocaleString()} 手) で打ち切り。上限を上げるか、外れの手を見直す` : x.reason }}</p>
       <template v-if="open.more">
     <!-- 始め方の比べ (回した後) -->
-    <div v-if="recipeOut" class="mt-2 rounded-lg bg-black/20 px-3 py-2">
-      <p class="mb-1 font-bold text-sky-100">始め方の比べ <span v-if="help" class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
+    <div v-if="recipeOut" class="mt-2 rounded-lg bg-black/20 px-4 py-3 text-[13px]">
       <!-- 列の幅は固定 (金額の欄の字が変わっても入力欄が動かない。2026-10-05 オーナー「入力時 UI がズレる、入力する所は軸に」) -->
       <table class="w-full table-fixed max-md:table-auto">
         <colgroup><col class="w-64 max-md:w-auto" /><col /><col class="w-40 max-md:w-auto" /></colgroup>
         <tbody>
           <tr v-for="x in compare.list" :key="x.key" class="border-t border-white/5" :class="compare.best === x.key ? 'bg-emerald-500/10' : ''">
-            <td class="py-1">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
+            <td class="py-1.5">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-[rgba(126,201,148,0.15)] px-1.5 text-[11px] text-[var(--exile-color-signal-up)]">一番安い</span></td>
             <td class="py-1">
               <span v-if="x.key === 'four'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
-                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
+                <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
+                <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline max-md:min-h-11" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す<Icon name="external" class="size-3.5" /></button>
                 <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
               </span>
-              <span v-else-if="x.key === 'bought'" class="text-[11px] opacity-60">値段は 4 最安値スタート (始め方を 1 で決めた時は 3 ベース設定) で入れる</span>
+              <span v-else-if="x.key === 'bought'" class="text-[12px] text-[var(--exile-color-text-tertiary)]">値段は上の 3〜4 で入れた物</span>
               <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" placeholder="無し" />
-                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
+                <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" placeholder="値段" />
+                <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline max-md:min-h-11" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す<Icon name="external" class="size-3.5" /></button>
                 <span class="inline-block w-24 shrink-0" :class="doneAge?.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge?.text ?? "" }}</span>
               </span>
             </td>

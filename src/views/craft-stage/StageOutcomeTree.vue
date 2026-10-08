@@ -295,7 +295,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
     <!-- 上の帯: 進み具合と戻る -->
     <div class="flex flex-wrap items-center gap-2">
       <span v-if="reach.length" class="inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold tabular-nums" :class="left.length ? 'bg-[rgba(224,201,122,0.12)] text-[var(--exile-color-signal-warn)]' : 'bg-[rgba(126,201,148,0.12)] text-[var(--exile-color-signal-up)]'">
-        <Icon v-if="!left.length" name="check" class="size-3.5" />{{ left.length ? `${reach.length - left.length} / ${reach.length} 形を決めた` : `全部決めた (${reach.length} 形)` }}
+        <Icon v-if="!left.length" name="check" class="size-3.5" />{{ left.length ? `${reach.length - left.length} / ${reach.length} 形を決めた` : `全部決めた · ${reach.length} 形` }}
       </span>
       <button v-if="broken.length" type="button" class="inline-flex h-7 items-center rounded-full bg-[rgba(229,128,107,0.14)] px-2.5 text-xs font-semibold text-[var(--exile-color-signal-down)]" title="押すとその形へ" @click="go(broken[0]!)">打てない手 {{ broken.length }}</button>
       <HelpTip v-if="useShelf" title="外れの手" :width="300">
@@ -304,7 +304,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
       </HelpTip>
       <span class="ml-auto flex items-center gap-1">
         <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] disabled:opacity-30" :disabled="!trail.length" title="1 つ前の形に戻る" @click="back"><Icon name="undo" class="size-4" />1 つ戻す</button>
-        <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" title="この手を打つ前の形に戻って、もう一度見る (決めた手は消えない)" @click="goStart"><Icon name="rotate" class="size-4" />この手の始め</button>
+        <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" title="この手を打つ前の形に戻って見直す (決めた手は消えない)" @click="goStart"><Icon name="rotate" class="size-4" />この手を打つ前へ</button>
       </span>
     </div>
 
@@ -314,10 +314,12 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
         <h5 class="text-[15px] font-semibold" :class="done ? 'text-[var(--exile-color-signal-up)]' : ''">{{ at.start ? "この手を打つ前" : done ? "揃った" : "この形の時" }}</h5>
         <span class="flex items-center gap-1 text-xs">
           <span class="text-[var(--exile-color-text-tertiary)]">{{ SIDE_JA }}</span>
-          <span class="rounded bg-[rgba(136,136,255,0.14)] px-1.5 tabular-nums text-[var(--color-rarity-magic)]">狙い {{ at.h }}</span>
-          <span class="rounded bg-white/[0.07] px-1.5 tabular-nums text-[var(--exile-color-text-secondary)]">ほか {{ at.j }}</span>
-          <span class="rounded px-1.5 tabular-nums text-[var(--exile-color-text-tertiary)] ring-1 ring-inset ring-white/10">空き {{ Math.max(0, limit - at.h - at.j) }}</span>
-          <span v-if="at.g != null" class="ml-1 rounded bg-[rgba(136,136,255,0.08)] px-1.5 tabular-nums text-[var(--color-rarity-magic)]/80">{{ OTHER_JA }}の狙い {{ at.g }}</span>
+          <span class="ml-1 text-[var(--exile-color-text-secondary)]">狙い <b class="tabular-nums text-[var(--color-rarity-magic)]">{{ at.h }}</b></span>
+          <span class="text-[var(--exile-color-text-tertiary)]">·</span>
+          <span class="text-[var(--exile-color-text-secondary)]">ほか <b class="tabular-nums text-[var(--exile-color-text-primary)]">{{ at.j }}</b></span>
+          <span class="text-[var(--exile-color-text-tertiary)]">·</span>
+          <span class="text-[var(--exile-color-text-secondary)]">空き <b class="tabular-nums text-[var(--exile-color-text-primary)]">{{ Math.max(0, limit - at.h - at.j) }}</b></span>
+          <span v-if="at.g != null" class="ml-2 text-[var(--exile-color-text-secondary)]">{{ OTHER_JA }}の狙い <b class="tabular-nums text-[var(--color-rarity-magic)]">{{ at.g }}</b></span>
           <span v-if="otherNow === 0" class="ml-1 text-[var(--exile-color-text-tertiary)]">{{ OTHER_JA }}はフラクチャーだけ</span>
         </span>
       </div>
@@ -348,7 +350,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
             </div>
             <p v-if="actWhy" class="text-xs font-semibold text-[var(--exile-color-signal-down)]">この形では打てない: {{ actWhy }}。先に打つ物 (触媒など) を足すか、変える</p>
           </div>
-          <p v-else-if="!locked" class="text-[15px] font-semibold text-[var(--exile-color-accent-focus)]">何を打つ？</p>
+          <p v-else-if="!locked" class="text-[15px] font-semibold text-[var(--exile-color-accent-focus)]">ここで何を打つか</p>
 
           <!-- 選ぶ: 手打ちと同じ棚 -->
           <div v-if="showPicker && useShelf" class="flex flex-col gap-2.5">
@@ -375,12 +377,12 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
             </CurrencyShelf>
             <!-- ほかの手 -->
             <div class="flex flex-wrap items-center gap-1.5 border-t border-white/[0.06] pt-2.5">
-              <span class="mr-1 text-xs text-[var(--exile-color-text-tertiary)]">ほかの手</span>
+              <span class="mr-1 text-[11px] font-medium tracking-wide text-[var(--exile-color-text-tertiary)]">ほかの手</span>
               <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 transition" :class="act?.then === 'next' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" title="この形のまま次の手へ進む" @click="thenAct({ then: 'next' })"><Icon name="arrow-right" class="size-4" />次の手へ</button>
-              <button v-if="backTo" type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 transition" :class="act?.then === 'reset' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" :title="`消去で MOD を 1 つになるまで消して、${backTo.label}`" @click="thenAct({ then: 'reset', goto: backTo.to })"><Icon name="corner-up-left" class="size-4" />1 MOD 残し消去 ({{ backTo.label }})</button>
-              <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 transition" :class="act?.then === 'restart' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" title="このアイテムは諦めて、新しいベースを用意して 1 手目から" @click="thenAct({ then: 'restart' })"><Icon name="rotate" class="size-4" />新しいベースで最初から</button>
+              <button v-if="backTo" type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 transition" :class="act?.then === 'reset' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-transparent text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" :title="`消去で MOD を 1 つになるまで消して、${backTo.label}`" @click="thenAct({ then: 'reset', goto: backTo.to })"><Icon name="corner-up-left" class="size-4" />1 MOD 残し消去 ({{ backTo.label }})</button>
+              <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 transition" :class="act?.then === 'restart' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-transparent text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" title="このアイテムは諦めて、新しいベースを用意して 1 手目から" @click="thenAct({ then: 'restart' })"><Icon name="rotate" class="size-4" />新しいベースで最初から</button>
               <!-- N 手目へ (2026-10-09 オーナー「●手へみたいな手順いるかもな」) -->
-              <button v-for="st in steps ?? []" :key="st.n" type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2 transition" :class="act?.then === 'goto' && act.goto === st.n ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" :title="`今のアイテムのまま ${st.label} に戻る`" @click="thenAct({ then: 'goto', goto: st.n })"><Icon name="corner-up-left" class="size-3.5" />{{ st.n + 1 }} 手目へ</button>
+              <button v-for="st in steps ?? []" :key="st.n" type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2 transition" :class="act?.then === 'goto' && act.goto === st.n ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-transparent text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" :title="`今のアイテムのまま ${st.label} に戻る`" @click="thenAct({ then: 'goto', goto: st.n })"><Icon name="corner-up-left" class="size-3.5" />{{ st.n + 1 }} 手目へ</button>
             </div>
           </div>
           <div v-else-if="showPicker" class="flex flex-wrap items-center gap-1.5">
@@ -401,7 +403,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
 
           <!-- どんどん進む: 直前に決めた形とその結果 -->
           <div v-if="auto && lastNote" class="rounded-md bg-white/[0.03] px-3 py-2 text-xs text-[var(--exile-color-text-secondary)]">
-            <span>直前: {{ lastNote.shape }} → </span><b class="text-[var(--exile-color-text-primary)]">{{ lastNote.label }}</b>
+            <span>ひとつ前の形: {{ lastNote.shape }} → </span><b class="text-[var(--exile-color-text-primary)]">{{ lastNote.label }}</b>
             <span v-for="o in lastNote.outs" :key="keyOfShape(o)" class="ml-3 whitespace-nowrap"><span class="tabular-nums text-[var(--exile-color-text-tertiary)]">{{ pct(o.p) }}</span> {{ o.label }}<Icon v-if="isDone(o)" name="check" class="ml-0.5 size-3 text-[var(--exile-color-signal-up)]" /></span>
           </div>
           <!-- どうなる？ (打つ前の形・表の形) -->
@@ -426,10 +428,10 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
 
     <!-- 決めた手 (表)。押すとその形へ -->
     <section v-if="reach.length">
-      <h5 class="mb-1.5 text-xs text-[var(--exile-color-text-secondary)]">決めた手 <span class="text-[var(--exile-color-text-tertiary)]">(押すとその形へ)</span></h5>
+      <h5 class="mb-1.5 text-[11px] font-medium tracking-wide text-[var(--exile-color-text-tertiary)]">決めた手</h5>
       <div class="overflow-hidden rounded-md ring-1 ring-white/[0.06]">
         <div class="grid grid-cols-[3.5rem_3.5rem_3.5rem_minmax(0,1fr)] bg-white/[0.03] px-3 py-1 text-[11px] tracking-wide text-[var(--exile-color-text-tertiary)]">
-          <span>狙い</span><span>ほか</span><span>空き</span><span>打つ物</span>
+          <span>{{ SIDE_JA }} 狙い</span><span>ほか</span><span>空き</span><span>打つ物</span>
         </div>
         <button v-for="r in reach" :key="keyOfShape(r)" type="button" class="grid w-full grid-cols-[3.5rem_3.5rem_3.5rem_minmax(0,1fr)] items-center border-t border-white/[0.04] px-3 py-1.5 text-left tabular-nums transition hover:bg-white/[0.04]" :class="!at.start && keyOfShape(at) === keyOfShape(r) ? 'bg-[var(--exile-color-bg-elevated)] shadow-[inset_2px_0_0_var(--exile-color-accent-focus)]' : ''" @click="go(r)">
           <span class="text-[var(--color-rarity-magic)]">{{ r.h }}<span v-if="r.g != null" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]">+{{ OTHER_JA }}{{ r.g }}</span></span>

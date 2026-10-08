@@ -134,7 +134,7 @@ export function shapeOutcomes(c: ShapeCtx, x: PatternSet, h: number | Shape, j?:
     if (s.j) r.push({ s: { ...s, j: s.j - 1 }, label: "狙い以外が消えた", p: s.j / n, what: "j" });
     if (s.h) r.push({ s: { ...s, h: s.h - 1 }, label: "狙いが消えた", p: s.h / n, what: "h" });
     if (g) r.push({ s: { ...s, g: g - 1 }, label: `${OTHER}の狙いが消えた`, p: g / n, what: "g" });
-    if (o) r.push({ s: { ...s, o: o - 1 }, label: track ? `${OTHER}の狙い以外が消えた` : `${OTHER}の MOD が消えた`, p: o / n, what: "o" });
+    if (o) r.push({ s: { ...s, o: o - 1 }, label: track ? `${OTHER}の狙い以外が消えた` : `${OTHER}の MOD (フラクチャー以外) が消えた`, p: o / n, what: "o" });
     return r;
   };
   if (x.kind === "annul") {

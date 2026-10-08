@@ -317,23 +317,23 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
       <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="pickSimBase" />
       <!-- ベースを選ぶ前でも保存したレシピから始められる -->
       <span v-if="simNoBase && savedRecipes.length" class="flex flex-wrap items-center gap-1">
-        <span class="opacity-60">保存したレシピから</span>
-        <button v-for="r in savedRecipes.slice(0, 6)" :key="r.id" type="button" class="rounded-lg border border-sky-400/50 px-2 py-0.5 text-sky-100 hover:bg-sky-500/10 max-md:min-h-10" :title="`${r.baseJa ?? r.session.base} · パターン ${r.session.patterns.length} つ`" @click="startFromRecipe(r)">{{ r.name }}</button>
+        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">保存したレシピから</span>
+        <button v-for="r in savedRecipes.slice(0, 6)" :key="r.id" type="button" class="inline-flex h-7 items-center rounded-md px-2 text-[var(--exile-color-text-link)] hover:bg-white/5 hover:underline max-md:min-h-10" :title="`${r.baseJa ?? r.session.base} · パターン ${r.session.patterns.length} つ`" @click="startFromRecipe(r)">{{ r.name }}</button>
       </span>
       <span v-if="!simNoBase" class="flex items-center gap-1">
-        <span class="opacity-60">アイテムレベル</span>
-        <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5 max-md:px-3 max-md:py-2" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
+        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">アイテムレベル</span>
+        <button v-for="lv in ILVLS" :key="lv" type="button" class="h-7 rounded-md px-2.5 tabular-nums transition max-md:h-10 max-md:px-3" :class="s.itemLevel.value === lv ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>
       <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
       <span v-if="s.mode.value === 'sim' && !simNoBase && simSocketCap > 0" class="flex items-center gap-1">
-        <span class="opacity-60">ソケット</span>
-        <button v-for="n in simSocketCap + 1" :key="n" type="button" class="rounded-lg px-2 py-0.5" :class="s.simSockets.value === n - 1 ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]" title="熟練工のオーブの上限より多い (規格外の品だけ)">規格外</span></button>
+        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">ソケット</span>
+        <button v-for="n in simSocketCap + 1" :key="n" type="button" class="h-7 rounded-md px-2.5 tabular-nums transition max-md:h-10" :class="s.simSockets.value === n - 1 ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]" title="熟練工のオーブの上限より多い (規格外の品だけ)">規格外</span></button>
         <span v-if="s.simSockets.value == null" class="text-amber-200/80">ソケットの数を選ぶ</span>
       </span>
       <!-- 始め方 (白 / 固定済みを買う / 4 MOD を買う)。2026-10-08 オーナー「最初の段階から選択式がいい」 -->
       <span v-if="s.mode.value === 'sim' && !simNoBase" class="flex flex-wrap items-center gap-1 max-md:w-full">
-        <span class="opacity-60">始め方</span>
-        <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="rounded-lg px-2 py-0.5 max-md:min-h-10 max-md:px-3" :class="s.simStart.value === x.k ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" :title="x.hint" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="mr-1 size-3.5 align-[-2px]" />{{ x.label }}</button>
+        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">始め方</span>
+        <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="h-7 rounded-md px-2.5 transition max-md:min-h-10 max-md:px-3" :class="s.simStart.value === x.k ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" :title="x.hint" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="mr-1 size-3.5 align-[-2px]" />{{ x.label }}</button>
         <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? "レア" : s.simStartItem.value?.rarity === "magic" ? "マジック" : "ノーマル" }} · {{ startItemMods.length ? startItemMods.join(" / ") : "MOD なし" }}</span>
         <HelpTip v-else-if="s.simStart.value !== 'white'" text="フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物" />
       </span>
