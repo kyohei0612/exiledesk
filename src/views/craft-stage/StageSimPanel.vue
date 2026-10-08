@@ -1211,6 +1211,8 @@ function hitName(id: string): { text: string; tone: string } {
 const split = computed(() => {
   const r = recipeOut.value?.r;
   if (!r) return { base: 0, craft: 0, baseAdd: 0, baseNote: "" };
+  // 1 人も完成していない時は 1 個あたりが出ないので、内訳も出さない (40 人分の出費が「ベース」に積まれて見えた)
+  if (!Number.isFinite(r.perDone)) return { base: NaN, craft: NaN, baseAdd: 0, baseNote: "" };
   if (s.simStart.value === "item") {
     // 1 個目は手元にあるので費用はこの状態から先 (作り直した分だけベース)。2026-10-08 オーナー「費用もそこから表示」
     const price = num(itemDivine.value) ?? 0;
@@ -1259,7 +1261,7 @@ const luck = computed(() => {
  */
 const costGroups = computed(() => {
   const r = recipeOut.value?.r;
-  if (!r) return [];
+  if (!r || !Number.isFinite(r.perDone)) return [];
   const top = (items: Array<{ name: string; n: number; cost: number }>, total: number) => {
     const xs = items.filter((x) => x.cost > 0).sort((a, b) => b.cost - a.cost);
     const head = xs.slice(0, 6);
