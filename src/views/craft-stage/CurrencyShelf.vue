@@ -105,7 +105,7 @@ const TABS = computed(() => [
             {{ openRunes.has(sec.kind) ? "たたむ ▴" : `他 ${sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸` }}
           </button>
         </p>
-        <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5">
+        <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:contents">
           <ShelfButton v-for="k in !sec.kind || openRunes.has(sec.kind) ? sec.keys : sec.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
         </div>
       </div>
@@ -116,7 +116,7 @@ const TABS = computed(() => [
     <!-- 使える物を前に、使えない物は線の下に (2026-10-05)。持っているカレンシーのお告げは使える物の直後 -->
     <div v-else-if="tab === 'orb'">
       <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
-        <div v-for="g in orbSplit.usable" :key="'u' + g.kind" class="flex flex-wrap gap-1.5">
+        <div v-for="g in orbSplit.usable" :key="'u' + g.kind" class="flex flex-wrap gap-1.5 max-md:contents">
           <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
         </div>
         <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
@@ -125,7 +125,7 @@ const TABS = computed(() => [
       <template v-if="orbSplit.unusable.length">
         <p class="mb-1 mt-3 border-t border-white/10 pt-2 text-[10px] opacity-50">今のアイテムには使えない物</p>
         <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
-          <div v-for="g in orbSplit.unusable" :key="'x' + g.kind" class="flex flex-wrap gap-1.5">
+          <div v-for="g in orbSplit.unusable" :key="'x' + g.kind" class="flex flex-wrap gap-1.5 max-md:contents">
             <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
           </div>
         </div>
@@ -133,13 +133,13 @@ const TABS = computed(() => [
     </div>
 
     <div v-else-if="tab === 'essence'" class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
-      <div v-for="g in essences" :key="g.kind" class="flex flex-wrap gap-1.5">
+      <div v-for="g in essences" :key="g.kind" class="flex flex-wrap gap-1.5 max-md:contents">
         <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
       </div>
       <p v-if="!essences.length" class="text-[12px] opacity-50">このベースに使えるエッセンスはありません</p>
     </div>
 
-    <div v-else-if="tab === 'catalyst'" class="flex flex-wrap gap-1.5">
+    <div v-else-if="tab === 'catalyst'" class="flex flex-wrap gap-1.5 max-md:contents">
       <ShelfButton v-for="k in CATALYSTS" :key="k" :k="k" @pick="emit('hold', $event)" />
     </div>
 
@@ -157,7 +157,7 @@ const TABS = computed(() => [
               {{ openRunes.has(g.kind) ? "たたむ ▴" : `他 ${g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸` }}
             </button>
           </p>
-          <div v-if="openRunes.has(g.kind) || g.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5">
+          <div v-if="openRunes.has(g.kind) || g.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:contents">
             <ShelfButton v-for="k in openRunes.has(g.kind) ? g.keys : g.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
           </div>
         </div>
@@ -170,7 +170,7 @@ const TABS = computed(() => [
       <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
       <div v-for="g in OMEN_GROUPS" :key="g.kind">
         <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>
-        <div class="flex flex-wrap gap-1.5">
+        <div class="flex flex-wrap gap-1.5 max-md:contents">
           <ShelfButton v-for="k in g.keys" :key="k" :k="k" omen @pick="craftStage.toggleOmen($event)" />
         </div>
       </div>

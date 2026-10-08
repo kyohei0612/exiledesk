@@ -139,7 +139,7 @@ function pickSimBase(en: string): void {
 <template>
   <div class="h-full overflow-auto p-4 @container" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
-    <div v-if="phone && s.held.value && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+    <div v-if="phone && s.held.value && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
       <img v-if="iconOf(s.held.value)" :src="iconOf(s.held.value)" alt="" class="h-9 w-9 object-contain" />
       <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value) }}</b><span class="opacity-60"> を持っている</span><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ お告げ {{ s.omens.value.length }}</span></span>
       <button type="button" class="rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50" @click="s.use()">アイテムに使う</button>
@@ -207,7 +207,7 @@ function pickSimBase(en: string): void {
     <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
     <div v-if="s.ready.value && (s.mode.value === 'hand' || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
-      <div class="flex flex-col items-center gap-8">
+      <div class="flex flex-col items-center gap-8 max-md:items-stretch">
         <div class="relative" :class="[fxCls, fx?.text ? 'stage-fx-on' : '']" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed"
@@ -223,7 +223,7 @@ function pickSimBase(en: string): void {
         </div>
         <RevealPanel />
         <!-- ヒネコラの髪束の予見: 持っているカレンシーを打った時の結果 (次の手の seed で引くので、打つとこの通りになる) -->
-        <div v-if="s.foresight.value" class="w-[380px] rounded-xl border border-violet-400/50 bg-violet-500/10 p-3 text-[12px]">
+        <div v-if="s.foresight.value" class="w-[380px] max-md:w-full rounded-xl border border-violet-400/50 bg-violet-500/10 p-3 text-[12px]">
           <p class="mb-1 font-bold text-violet-200">予見: {{ nameOf(s.foresight.value.key) }} を使うと</p>
           <p v-if="!s.foresight.value.applied" class="text-rose-300">使えない — {{ s.foresight.value.reason }}</p>
           <template v-else>
@@ -234,7 +234,7 @@ function pickSimBase(en: string): void {
             <p v-if="!s.foresight.value.added.length && !s.foresight.value.removed.length && !s.foresight.value.after.destroyed" class="opacity-60">MOD は変わらない</p>
           </template>
         </div>
-        <div class="w-[380px] rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px]">
+        <div class="w-[380px] max-md:w-full rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px]">
           <p class="mb-1 flex items-center justify-between"><b class="text-amber-100">直前の変化</b><span class="tabular-nums opacity-70">累計 {{ displayCurrency.money(s.total.value) }} · {{ s.log.value.length }} 手</span></p>
           <template v-if="s.last.value">
             <p class="opacity-80">{{ s.last.value.out.currency_ja }}<span v-if="s.last.value.out.omen_ja" class="ml-1 text-violet-300">+ {{ s.last.value.out.omen_ja }}</span><span v-if="!s.last.value.out.applied" class="ml-1 text-rose-300/80">— {{ s.last.value.out.reason }}</span></p>

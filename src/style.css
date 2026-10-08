@@ -201,8 +201,13 @@ body {
 /* スマホ (Web 版、幅 768 px 未満): ページ全体を指で縦に送る。PC は各画面の中で送るので body は固定のまま
    (2026-10-08 オーナー「スクロールができんな Web 版スマホ」: body の overflow: hidden で指の送りが効かなかった) */
 @media (max-width: 767px) {
-  html, body, #app { height: auto; min-height: 100%; }
-  body { overflow: auto; -webkit-overflow-scrolling: touch; }
+  html, body, #app { height: auto; min-height: 100%; max-width: 100vw; }
+  /* 横は送らない (縦だけ。横は目一杯に広げる) */
+  html, body { overflow-x: hidden; }
+  body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  /* スマホあるある: 二度押しの拡大と押した時の青い光を止める、長押しの画像メニューを出さない (2026-10-08) */
+  button, [role="button"], a, select, input { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 }
 
 button {

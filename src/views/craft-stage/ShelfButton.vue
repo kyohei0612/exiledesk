@@ -37,7 +37,13 @@ const on = computed(() => (props.omen ? craftStage.omens.value.includes(props.k)
 /** 詳細カード: 0.4 秒乗せたら出す (すぐ出すと誤爆するので。オーナー 2026-09-27 のカードの決まりと同じ) */
 const card = ref<CardAnchor | null>(null);
 let timer: ReturnType<typeof setTimeout> | undefined;
+/**
+ * 指の端末 (hover の無い画面 = スマホ) では乗せの説明カードを出さない。タップで mouseenter も飛んで来て、説明が被って押せなかった
+ * (2026-10-08 オーナー iPhone「付けたいカレンシーをタップしたら説明が出て、付けたい時に押せなかったり説明が邪魔」)
+ */
+const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
 function enter(e: MouseEvent): void {
+  if (touchOnly) return;
   const el = e.currentTarget as HTMLElement;
   clearTimeout(timer);
   timer = setTimeout(() => {
@@ -56,7 +62,7 @@ onBeforeUnmount(leave);
 <template>
   <button
     type="button"
-    class="group relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition max-md:w-[86px] max-md:text-[11px]"
+    class="group relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
     :class="[
       on ? (omen ? 'stage-omen-on border-orange-300' : 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60') : 'border-white/10 bg-black/30 hover:border-white/30',
       reason ? 'opacity-35' : '',
