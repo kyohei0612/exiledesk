@@ -624,7 +624,7 @@
     },
     {
       "name": "シミュレーション",
-      "target_seconds": 40,
+      "target_seconds": 70,
       "lines": [
         {
           "speaker": "metan",
@@ -659,6 +659,26 @@
         {
           "speaker": "metan",
           "emotion": "normal",
+          "text": "今回は手袋で、最大ライフとアタックスピードを狙うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ライフはフラクチャーで固定、アタックスピードはカオススパムで付けるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
           "text": "フラクチャーしたベースを買うか、自分で作るか。一番安い始め方も比べられるわ。",
           "scene": {
             "kind": "stage",
@@ -680,6 +700,36 @@
           "speaker": "zundamon",
           "emotion": "surprised",
           "text": "お金のことまで分かるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次に打ち方を組むの。高貴で3つ埋めてから、アタックスピードが付くまでカオスで入れ替える。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "それを何回も試すのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "「回す」を押すと、500人分を一気に試してくれるわ。",
           "scene": {
             "kind": "stage",
             "step": 0,
