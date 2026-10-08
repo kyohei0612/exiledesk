@@ -1095,6 +1095,15 @@ watch(modsDone, (v) => {
   if (!v || restoring || s.simStart.value !== "item") return;
   whiteOk.value = true; fracDone.value = true; orderDone.value = true;
 });
+/**
+ * 「決めた →」で次の工程が開いたら、その一番下まで送る (2026-10-08 オーナー「決めたで順に進むけど、スクロールは基本進むなら一番下に」)。
+ * 戻した時 (ここからやり直す) は動かさない
+ */
+const panelEl = ref<HTMLElement | null>(null);
+watch([modsDone, whiteOk, startDone, orderDone], (now, prev) => {
+  if (restoring || !now.some((v, i) => v && !prev[i])) return;
+  void nextTick(() => panelEl.value?.scrollIntoView({ block: "end", behavior: "smooth" }));
+});
 /** 3 白ベース設定の「決めた」: 値段とフラクチャー予定 (無ければ「しない」) */
 function whiteDecide(): void {
   whiteOk.value = true;
@@ -1296,7 +1305,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
 <template>
   <!-- 工程ごとに同じ高さの枠を縦に並べる (入れ子の枠はやめた。2026-10-05 オーナー「枠の中に何個枠あんのよ、きもいやろ」
        「1 がベース選定、2 がベース値段、3 が狙う MOD と分けたら」)。1 ベースは上の CraftStage.vue の枠 -->
-  <div class="space-y-3 text-[12px]">
+  <div ref="panelEl" class="space-y-3 text-[12px]">
     <!-- 1 つ戻す・説明はタブの行の右端に (工程の枠の間に行を挟まない) -->
     <!-- defer: 移し先 (#sim-tools、CraftStage.vue) ができてから描く。無いうちに描くと失敗し、以後の描き直しが全部エラーで止まっていた
          (2026-10-07 オーナー「また進まない」: 2 狙う MOD の「決めた →」を押しても画面が変わらなかった) -->
