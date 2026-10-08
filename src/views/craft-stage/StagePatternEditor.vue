@@ -8,9 +8,10 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
-import { SITUATION_JA, type Reaction, type Situation, ANY_KINDS, ANY_TARGET, otherGoneOf, otherJunkOf, LOST_RESTART, ONCE_KINDS, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
+import { SITUATION_JA, type Reaction, type Situation, ANY_KINDS, ANY_TARGET, otherGoneOf, otherJunkOf, LOST_RESTART, ONCE_KINDS, isDouble, singleKeyOf, hasCands, isRest, restMembers, uncertainStep, candsOfStep, REST, checkAny, checkMiss, checkRemoval, checkRune, checkSet, checkTarget, MISS_JA, noMiss, patternSets, RARITY_CHANGE, setsForStart, removalSets, setByKey, stateBefore, type CheckCtx, type MissRule, type Pattern, type FlowDef, type PatternSet, type PatternStep } from "../../services/craft-stage/pattern";
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
+import StageFlowEditor from "./StageFlowEditor.vue";
 import StageItemCard from "./StageItemCard.vue";
 import { freshItem } from "../../services/craft-stage/run-plan";
 import { allMods, makeStageMod, without, withMod } from "../../services/craft-stage/stage-core";
@@ -45,6 +46,8 @@ const props = defineProps<{
   /** 「この手だけ回す」の 1 人の上限と人数 */
   stepMax?: number;
   stepRuns?: number;
+  /** 流れの回した数 (今のパターン) */
+  flowStats?: { visits: number[]; routes: number[][]; runs: number } | null;
 }>();
 const emit = defineEmits<{ "run-one": [index: number]; "run-step": [index: number, step: number]; "close-step": []; active: [index: number] }>();
 /** 付いたら取り直せない手 (レアリティが変わる手で付けた物は戻れない) */
@@ -103,6 +106,12 @@ const ctx = computed<CheckCtx | null>(() => {
   return { data: d, cls: it.cls, targets: s.simTargets.value, sets: sets.value, runeJa: (en) => RUNES[en]?.ja ?? en, start: props.start };
 });
 const pat = computed<Pattern>(() => s.simPatterns.value[Math.min(active.value, s.simPatterns.value.length - 1)]!);
+/** 流れで組むパターンか (流れがある、または手がまだ無い。前の作り方の手があるパターンは前の画面のまま) */
+const isFlow = computed(() => !!pat.value.flow || !pat.value.steps.length);
+function setFlow(flow: FlowDef): void {
+  const k = Math.min(active.value, s.simPatterns.value.length - 1);
+  s.simPatterns.value = s.simPatterns.value.map((p, i) => (i === k ? { ...p, flow } : p));
+}
 watch(active, () => { focusRow.value = null; editPart.value = null; focusPre.value = null; });
 // 開いているパターンを親に伝える (下の行の「取引所で探す」がこのパターンで探す)
 watch(active, (v) => emit("active", v), { immediate: true });
@@ -1043,7 +1052,7 @@ function uniqueName(base: string, skip: number | null = null): string {
   for (let n = (Number(m?.[2]) || 1) + 1; ; n++) if (!taken.has(`${stem} ${n}`)) return `${stem} ${n}`;
 }
 function addPattern(copy: boolean): void {
-  s.simPatterns.value = [...s.simPatterns.value, { name: uniqueName(`パターン ${s.simPatterns.value.length + 1}`), steps: copy ? pat.value.steps.map((x) => ({ ...x })) : [] }];
+  s.simPatterns.value = [...s.simPatterns.value, { name: uniqueName(`パターン ${s.simPatterns.value.length + 1}`), steps: copy ? pat.value.steps.map((x) => ({ ...x })) : [], ...(copy && pat.value.flow ? { flow: JSON.parse(JSON.stringify(pat.value.flow)) as FlowDef } : {}) }];
   active.value = s.simPatterns.value.length - 1;
 }
 /** 名前を付け替えているタブ */
@@ -1082,8 +1091,10 @@ defineExpose({ rows });
       </template>
     </div>
 
+    <!-- 流れで組むパターン (2026-10-08 から。新しいパターンと空のパターンは流れ) -->
+    <StageFlowEditor v-if="isFlow" :flow="pat.flow ?? { steps: [] }" :stats="flowStats ?? null" :locked="locked" @change="setFlow" />
     <!-- 左: ツリー (自分の中で送る) / 右: 押した手を決める枠 + その時点のアイテム (動かない) -->
-    <div class="flex gap-3 max-md:flex-col" :style="phone ? undefined : { height: paneHeight }">
+    <div v-else class="flex gap-3 max-md:flex-col" :style="phone ? undefined : { height: paneHeight }">
       <div ref="treeEl" class="w-[372px] shrink-0 overflow-y-auto rounded-lg bg-black/25 p-2 [overflow-anchor:none] max-md:w-full max-md:overflow-visible">
         <!--
           フラクチャーまで: 後の手と同じカード・同じ枝で見せる (変えられない。費用は 4 最安値スタートの計算)。押すと右のアイテムがその時点に

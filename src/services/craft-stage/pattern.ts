@@ -6,6 +6,7 @@
  * 打てない物を理由つきで選べなくする (オーナー「ルーン嵌めてないのにコルの MOD とか、エッセンス 2 回目とか、選択できずにグレーアウト、理由も」)。
  * 状態は「狙いが当たった」として前の手から積む (外れは見ない。並べる時の目安)。回すのは recipe-sim.ts の pattern
  */
+import type { FlowRoute } from "./recipe-sim";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
 import essenceKeys from "../htc/essence-keys.json";
@@ -105,7 +106,11 @@ export const otherGoneOf = (kind: PatternKind | undefined, v: "annul" | "redo" |
 /** 外れが反対の側に付いた時の既定 (PatternStep.otherJunk) */
 export const otherJunkOf = (kind: PatternKind | undefined, v: "keep" | "annul" | null | undefined): "keep" | "annul" => v ?? (kind === "augment" ? "keep" : "annul");
 /** off: 全部まとめて回す時に回さない (2026-10-07 オーナー「回すパターンを選択できるように」) */
-export interface Pattern { name: string; steps: PatternStep[]; off?: boolean }
+/** 流れの手 (StageFlowEditor.vue、recipe-sim の runFlow)。set は打つ物 (PatternSet.key、空なら打たない) */
+export interface FlowStepDef { set: string; routes: FlowRoute[]; onNone: "loop" | "restart" | "end" }
+export interface FlowDef { steps: FlowStepDef[] }
+/** パターン。flow があれば流れで組んだ物 (2026-10-08 から。steps は前の作り方) */
+export interface Pattern { name: string; steps: PatternStep[]; off?: boolean; flow?: FlowDef }
 
 export interface PatternSet {
   key: string;

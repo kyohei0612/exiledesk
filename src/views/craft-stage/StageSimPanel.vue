@@ -18,7 +18,7 @@ import { rateOf, simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
-import { runRecipe, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
+import { runRecipe, type CompiledFlowStep, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
 import { runRecipeParallel, stopParallel } from "../../services/craft-stage/recipe-parallel";
 import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { track } from "../../utils/track";
@@ -601,6 +601,12 @@ const results = ref<Array<{ name: string; out: { r: RecipeResult; spec: RecipeSp
 const shown = ref(0);
 /** パターンの名前で結果を引く (一覧はパターンの並びで出す) */
 const resultOf = (name: string) => results.value.find((x) => x.name === name) ?? null;
+/** 今のパターンの流れの回した数 (流れの図に出す) */
+const activeFlowStats = computed(() => {
+  const p = s.simPatterns.value[activePattern.value];
+  const r = p ? resultOf(p.name)?.out.r : undefined;
+  return r?.flowAvg ? { visits: r.flowAvg.visits, routes: r.flowAvg.routes, runs: r.runs } : null;
+});
 const shownName = computed(() => results.value[shown.value]?.name ?? "");
 const cheapestName = computed(() => (results.value.length > 1 ? results.value.reduce((b, y) => (y.out.r.perDone < b.out.r.perDone ? y : b)).name : ""));
 function showResultByName(name: string): void {
@@ -632,8 +638,10 @@ let gen = 0;
  * 全部まとめて回すパターン = 手があってチェックの入った物。組みかけでも組めている所までを完成品として回す
  * (2026-10-07 オーナー「回すパターンを選択できるように」「そこまでを完成品とする」)
  */
-const patternChecks = computed(() => s.simPatterns.value.filter((p) => p.steps.length).map((p) => ({ p, why: patternProblem(p) })));
-const runnable = computed(() => s.simPatterns.value.filter((p) => p.steps.length && !p.off));
+/** 手があるか (流れの手か前の作り方の手) */
+const hasSteps = (p: Pattern): boolean => !!(p.flow?.steps.length || p.steps.length);
+const patternChecks = computed(() => s.simPatterns.value.filter(hasSteps).map((p) => ({ p, why: p.flow?.steps.length ? (p.flow.steps.some((x) => !x.set) ? "打つ物が決まっていない手がある" : null) : patternProblem(p) })));
+const runnable = computed(() => s.simPatterns.value.filter((p) => hasSteps(p) && !p.off));
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
   if (!patternChecks.value.length) return "6 パターンに手がありません";
@@ -715,6 +723,11 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const ag = rx!.again ? setByKey(sets, rx!.again) : undefined;
       return [k, { pre: ps ? { kind: ps.kind, currency: ps.currency, omens: [...ps.omens] } : null, then: rx!.then, ...(rx!.goto != null ? { goto: rx!.goto < 0 ? rx!.goto : at[rx!.goto] ?? rx!.goto } : {}), again: ag ? { kind: ag.kind, currency: ag.currency, omens: [...ag.omens] } : null }];
     }));
+    /** 流れ: 手の打つ物をセットに直す (無ければ打たない手) */
+    const compileFlow = (f: NonNullable<Pattern["flow"]>): CompiledFlowStep[] => f.steps.map((st) => {
+      const x = setByKey(sets, st.set);
+      return { act: x ? { kind: x.kind, currency: x.currency, omens: [...x.omens] } : null, routes: st.routes, onNone: st.onNone };
+    });
     const compile = (p: Pattern): CompiledStep[] => {
       // 打てる手だけ並べるので、「MOD が消えたら N 手目」の N を並べた後の番号に直す
       const at: number[] = [];
@@ -751,7 +764,7 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const used = new Set(p.steps.filter((st) => !!setByKey(sets, st.set)).flatMap((st) => [st.target]).filter((x): x is string => !!x && !inGroup.has(x)));
       const onStart = new Set(patternStart.value.mods?.placed ?? []);
       const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId) || onStart.has(t.modId)), ...groups.map((x) => x.g)];
-      const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) };
+      const pspec: RecipeSpec = p.flow?.steps.length ? { ...spec, flow: compileFlow(p.flow), ...(fractureRow.value && !spec.startItem ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) } : { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) };
       const base = k * spec.runs;
       // PC のコアに分けて回す (同じ seed なので 1 本と同じ結果。2026-10-07 オーナー「おっそいな」)
       // 先に 40 人だけ試し、全員が手の上限で止まるなら 500 人は回さない (重い組み方で「試しています」のまま長く止まって見えた。
@@ -1568,7 +1581,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span class="opacity-60">{{ s.simStart.value === "item" ? "手打ちの状態から" : fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
           <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
         </p>
-        <StagePatternEditor :busy="busy" :step-run="stepRun" :step-max="maxSteps" :step-runs="STEP_ONLY_RUNS" @run-one="(k: number) => run(k)" @run-step="(k: number, i: number) => run(k, i)" @close-step="stepRun = null" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" />
+        <StagePatternEditor :busy="busy" :step-run="stepRun" :step-max="maxSteps" :step-runs="STEP_ONLY_RUNS" @run-one="(k: number) => run(k)" @run-step="(k: number, i: number) => run(k, i)" @close-step="stepRun = null" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" :flow-stats="activeFlowStats" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
