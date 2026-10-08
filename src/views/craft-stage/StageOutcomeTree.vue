@@ -28,6 +28,11 @@ const props = defineProps<{
   /** 高貴で 1 つ付けた時に狙いが出る確率 (打つ物の通貨・今の狙いの数で)。分からなければ null */
   pHit?: (currency: string, h: number) => number | null;
   steps?: Array<{ n: number; label: string }>;
+  /**
+   * 反対の側の消せる MOD の数 (固定は消えない)。0 なら素の消去も必ず狙いの側に刺さる
+   * (2026-10-09 オーナー「プレフィックスから作るんだからサフィはフラクチャーされてる、普通に消去」)
+   */
+  otherRemovable?: number;
   /** 決めていない形の動き (付かなかったらの札) */
   fallback?: string;
   locked?: boolean;
@@ -53,7 +58,7 @@ const STRENGTHS: Record<K, Array<{ c: string; ja: string }>> = {
 const omenOpts = (k: K): Array<{ o: string; ja: string }> => (k === "exalt" ? [{ o: sideOmen("exalt"), ja: L.value }, { o: GREATER, ja: "偉大" }, { o: "OmenofCatalysingExaltation", ja: "触媒" }] : k === "annul" ? [{ o: sideOmen("annul"), ja: L.value }] : [{ o: sideOmen("chaos"), ja: L.value }, { o: "OmenofWhittling", ja: "削減" }]);
 const find = (kind: string, currency: string, omens: readonly string[]): PatternSet | undefined => props.sets.find((x) => x.kind === kind && x.currency === currency && x.omens.length === omens.length && omens.every((o) => x.omens.includes(o)));
 /** 種類を選んだ時の最初の形 (高貴は完全 + 側、消去は側、カオスは無印) */
-const firstOf = (k: K): PatternSet | undefined => (k === "exalt" ? find("exalt", "exalt_perfect", [sideOmen("exalt")]) ?? find("exalt", "exalt", []) : k === "annul" ? find("annul", "annul", [sideOmen("annul")]) ?? find("annul", "annul", []) : find("chaos", "chaos", []));
+const firstOf = (k: K): PatternSet | undefined => (k === "exalt" ? find("exalt", "exalt_perfect", [sideOmen("exalt")]) ?? find("exalt", "exalt", []) : k === "annul" ? find("annul", "annul", []) ?? find("annul", "annul", [sideOmen("annul")]) : find("chaos", "chaos", []));
 const OMEN_JA: Record<string, string> = { OmenofSinistralExaltation: "左", OmenofDextralExaltation: "右", OmenofSinistralAnnulment: "左", OmenofDextralAnnulment: "右", OmenofSinistralErasure: "左", OmenofDextralErasure: "右", OmenofGreaterExaltation: "偉大", OmenofCatalysingExaltation: "触媒", OmenofWhittling: "削減", OmenofLight: "光" };
 const CUR_JA: Record<string, string> = { exalt: "高貴", exalt_greater: "上級高貴", exalt_perfect: "完全高貴", chaos: "カオス", chaos_greater: "上級カオス", chaos_perfect: "完全カオス", annul: "消去" };
 /** 打つ物の短い名前 (完全高貴 偉大 左 など) */
@@ -104,9 +109,12 @@ function outcomes(x: PatternSet, h: number, j: number): Out[] {
   } else if (x.kind === "annul") {
     if (h + j === 0) return [];
     // 側のお告げなら側の中から 1 つ。お告げ無しは反対の側に刺さることもあるので確率は出さない
-    const sided = x.omens.length > 0;
-    if (j > 0) push("狙い以外が消えた", h, j - 1, sided ? j / (h + j) : null);
-    if (h > 0) push("狙いが消えた", h - 1, j, sided ? h / (h + j) : null);
+    // 側のお告げなら側の中から 1 つ。素の消去は反対の側の消せる物も合わせた中から 1 つ (反対の側が固定だけなら側と同じ)
+    const o = x.omens.includes(sideOmen("annul")) ? 0 : (props.otherRemovable ?? 0);
+    const n = h + j + o;
+    if (j > 0) push("狙い以外が消えた", h, j - 1, j / n);
+    if (h > 0) push("狙いが消えた", h - 1, j, h / n);
+    if (o > 0) push(`反対の側 (${props.side === "prefix" ? "サフィ" : "プレ"}) が消えた`, h, j, o / n);
   } else if (x.kind === "chaos") {
     if (h + j === 0) return [];
     // 1 つ消して 1 つ付く (付く側はランダムなので確率は出さない)。狙いの側が変わる形だけ

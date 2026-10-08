@@ -496,7 +496,7 @@ const quickPre = computed(() => {
  * 結果の木を出せる手か (高貴・消去・カオス、狙いが片側だけ) と、その中身 (側・枠・揃える数・打つ前の 狙い / 狙い以外)。
  * 揃える数はその側の狙いの手順の数 (どれか N つのコピーも 1 つずつ)
  */
-function treeOf(i: number, r: Row): { set: PatternSet; side: "prefix" | "suffix"; limit: number; need: number; h0: number; j0: number; pHit: (currency: string, h: number) => number | null } | null {
+function treeOf(i: number, r: Row): { set: PatternSet; side: "prefix" | "suffix"; limit: number; need: number; h0: number; j0: number; pHit: (currency: string, h: number) => number | null; otherRemovable: number } | null {
   const c = ctx.value;
   if (!c || !r.set || !["exalt", "annul", "chaos"].includes(r.set.kind) || !r.step.target || r.step.target === ANY_TARGET) return null;
   const ids = isRest(r.step.target) ? restMembers(pat.value.steps, r.step.target) : [r.step.target, ...candsOf(r)];
@@ -525,7 +525,10 @@ function treeOf(i: number, r: Row): { set: PatternSet; side: "prefix" | "suffix"
     const left = sideIds.length - Math.min(sideIds.length, Math.max(0, h - others));
     return Math.min(1, (want * (left / sideIds.length)) / total);
   };
-  return { set: r.set, side, limit: st.limits[side], need: Math.min(need, st.limits[side]), h0, j0, pHit };
+  // 反対の側の消せる数: その側の狙い・固定の数から固定を引いた物 (打つだけで付いた物は側が分からないので入らない)
+  const other = side === "prefix" ? "suffix" : "prefix";
+  const otherRemovable = Math.max(0, st[other] - ((st.fractured ? sideOfId(st.fractured) === other : props.start.fracturedSide === other) ? 1 : 0));
+  return { set: r.set, side, limit: st.limits[side], need: Math.min(need, st.limits[side]), h0, j0, pHit, otherRemovable };
 }
 const rxOf = (r: Row, sit: Situation): Reaction | undefined => r.step.on?.[sit];
 function setRx(i: number, sit: Situation, rx: Reaction | null): void {
