@@ -51,7 +51,17 @@ const ROWS: Array<{ name: string; kinds: PatternSet["kind"][] }> = [
   { name: "フラクチャー", kinds: ["fracture"] },
   { name: "ルーン", kinds: ["rune"] },
 ];
-const rows = computed(() => ROWS.map((r) => ({ name: r.name, tiles: tiles.value.filter((t) => r.kinds.includes(t.kind)) })).filter((r) => r.tiles.length));
+/**
+ * 打てない札 (灰色) は畳む。スマホは畳んだ状態が既定 (2026-10-08 札 50 枚のうち 30 枚が「この MOD は付かない」で壁になっていた。
+ * オーナー「必要なところ以外は畳んだりとかで」)。PC は今まで通り全部出す。選んでいる札は灰色でも出す
+ */
+const dimOpen = ref(!(typeof window !== "undefined" && window.innerWidth < 768));
+const rows = computed(() => ROWS.map((r) => {
+  const all = tiles.value.filter((t) => r.kinds.includes(t.kind));
+  const shown = dimOpen.value ? all : all.filter((t) => !tileWhy(t) || chosen.value === t.id);
+  return { name: r.name, tiles: shown, hidden: all.length - shown.length };
+}).filter((r) => r.tiles.length || r.hidden));
+const dimCount = computed(() => rows.value.reduce((a, r) => a + r.hidden, 0));
 
 const cur = computed(() => props.sets.find((x) => x.key === props.current));
 const chosen = ref<string>(cur.value ? `${cur.value.kind}|${cur.value.currency}` : "");
@@ -123,8 +133,8 @@ function decide(): void {
 
 <template>
   <div class="text-[11px]">
-    <div v-for="r in rows" :key="r.name" class="mb-1 flex gap-2">
-      <p class="w-24 shrink-0 pt-1 leading-tight opacity-60">{{ r.name }}</p>
+    <div v-for="r in rows.filter((x) => x.tiles.length)" :key="r.name" class="mb-1 flex gap-2 max-md:flex-col max-md:gap-0.5">
+      <p class="w-24 shrink-0 pt-1 leading-tight opacity-60 max-md:w-full max-md:pt-0">{{ r.name }}<span v-if="r.hidden" class="ml-1 opacity-60">(他 {{ r.hidden }})</span></p>
       <div class="flex flex-wrap gap-1">
         <button
           v-for="t in r.tiles" :key="t.id" type="button"
@@ -142,8 +152,11 @@ function decide(): void {
         </button>
       </div>
     </div>
-    <div v-if="omenChoices.length" class="mb-1 flex gap-2">
-      <p class="w-24 shrink-0 pt-1 leading-tight opacity-60">お告げ<br />(押して入れ切り)</p>
+    <button v-if="dimCount || !dimOpen" type="button" class="mb-1 rounded border border-white/15 px-2 py-0.5 text-[10px] opacity-60 hover:opacity-100 max-md:min-h-9" @click="dimOpen = !dimOpen">
+      {{ dimOpen ? "今は打てない物をたたむ ▴" : `今は打てない物 ${dimCount} 枚 ▾` }}
+    </button>
+    <div v-if="omenChoices.length" class="mb-1 flex gap-2 max-md:flex-col max-md:gap-0.5">
+      <p class="w-24 shrink-0 pt-1 leading-tight opacity-60 max-md:w-full max-md:pt-0">お告げ<br class="max-md:hidden" /><span class="md:hidden"> </span>(押して入れ切り)</p>
       <div class="flex flex-wrap gap-1">
         <button
           v-for="o in omenChoices" :key="o" type="button"

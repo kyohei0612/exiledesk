@@ -16,6 +16,7 @@ import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
+import { stageAdds, stageHelp } from "../../state/craft-stage-help";
 import VideoStage from "./VideoStage.vue";
 import StageBasePicker from "./StageBasePicker.vue";
 import StageModList from "./StageModList.vue";
@@ -125,6 +126,20 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 /** 帯から打った直後の結果 (1.8 秒だけ帯に出す。カードと直前の変化は画面の上で見えないため。2026-10-08 レビュー A1) */
 const barMsg = ref<{ text: string; tone: string } | null>(null);
 let barTimer: ReturnType<typeof setTimeout> | undefined;
+/**
+ * 持っている物の短い説明 (帯に箇条書き。PC の説明カードと同じ元 = craft-stage-help の stageHelp / stageAdds)。
+ * 2026-10-08 オーナー「説明文は小さくてもいいからタップした際付けた方がいい、箇条書きでいい。増強とかアイテムレベルの加減あるでしょ」
+ */
+const helpOpen = ref(false);
+const heldHelp = computed((): string[] => {
+  const k = s.held.value;
+  if (!k) return [];
+  const strip = (t: string): string => t.replace(/\*\*/g, "");
+  const lines = stageHelp(k, s.data.value, s.item.value).map(strip);
+  const adds = stageAdds(k, s.data.value, s.item.value);
+  return [...lines, ...(adds ? [`${adds.head}: ${adds.lines.slice(0, 3).join(" / ")}${adds.lines.length > 3 ? " …" : ""}`] : [])];
+});
+watch(() => s.held.value, () => { helpOpen.value = false; });
 /** 持っている物が今打てない理由 (帯のボタンを灰色に。2026-10-08 レビュー A2) */
 const heldWhy = computed(() => (s.held.value ? s.usable(s.held.value) : null));
 function useFromBar(): void {
@@ -174,12 +189,20 @@ function pickSimBase(en: string): void {
         <!-- 打った直後は結果を 1 行 (1.8 秒)。その後は持っている物と掛けたお告げ -->
         <p v-if="barMsg" class="mb-1 line-clamp-2 text-[12px] font-bold leading-snug" :class="barMsg.tone">{{ barMsg.text }}</p>
         <p v-else-if="heldWhy" class="mb-1 truncate text-[12px] text-rose-300">{{ heldWhy }}</p>
+        <!-- 持っている物の説明 (箇条書き、既定は 2 行まで。押すと全部) -->
+        <div v-else-if="heldHelp.length" class="mb-1 flex items-start gap-2">
+          <ul class="min-w-0 flex-1 list-disc pl-4 text-[11px] leading-snug text-white/70" :class="helpOpen ? '' : 'max-h-[2.6em] overflow-hidden'" @click="helpOpen = !helpOpen">
+            <li v-for="(l, i) in (helpOpen ? heldHelp : heldHelp.slice(0, 2))" :key="i" class="pr-1" :class="helpOpen ? '' : 'truncate'">{{ l }}</li>
+          </ul>
+          <button type="button" class="shrink-0 rounded-lg border border-white/20 px-2 py-1 text-[11px] opacity-80" @click="helpOpen = !helpOpen">{{ helpOpen ? "閉じる ▴" : "説明 ▾" }}</button>
+        </div>
         <div class="flex items-center gap-2">
           <img v-if="iconOf(s.held.value!)" :src="iconOf(s.held.value!)" alt="" class="h-9 w-9 object-contain" />
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join("・") }}</span></span>
           <button type="button" class="min-h-11 rounded-lg border border-white/20 px-2.5 py-2 opacity-80 disabled:opacity-30" :disabled="!s.log.value.length" title="1 手戻す" @click="s.undo()">戻す</button>
           <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!!heldWhy" @click="useFromBar">使う</button>
-          <button type="button" class="min-h-11 rounded-lg border border-white/20 px-2.5 py-2 opacity-80" @click="s.hold(null)">離す</button>
+          <!-- 離す = 大きめの × (2026-10-08 オーナー「バツボタン割とデカく」) -->
+          <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" title="離す" @click="s.hold(null)">×</button>
         </div>
       </template>
     </div>

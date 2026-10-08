@@ -100,8 +100,21 @@ const sectionEls = new Map<string, HTMLElement>();
 const active = ref<string>("normal");
 function jump(g: string): void {
   active.value = g;
-  sectionEls.get(g)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (phone && !secOpen.value.has(g)) toggleSec(g);
+  void nextTick(() => sectionEls.get(g)?.scrollIntoView({ behavior: "smooth", block: "start" }));
 }
+/**
+ * スマホ: 種類の節 (普通 / エッセンス / 冒涜 / 異界…) は見出しを押して開く。普通だけ開いた状態が既定 (一覧が 5000px あって
+ * 棚の下が延々続いていた。2026-10-08 オーナー「必要なところ以外は畳んだりとかで」)。検索中は全部開く。PC は今まで通り全部開く
+ */
+const phone = typeof window !== "undefined" && window.innerWidth < 768;
+const secOpen = ref(new Set<string>(["normal"]));
+function toggleSec(sid: string): void {
+  const n = new Set(secOpen.value);
+  if (n.has(sid)) n.delete(sid); else n.add(sid);
+  secOpen.value = n;
+}
+const secShown = (sid: string): boolean => !phone || !!query.value.trim() || secOpen.value.has(sid);
 let io: IntersectionObserver | null = null;
 function observe(): void {
   io?.disconnect();
@@ -208,12 +221,13 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
       </div>
 
       <section v-for="sec in sections" :key="sec.sid" :ref="(el) => setSection(sec.sid, el)" class="mb-4 scroll-mt-12">
-        <h3 class="mb-2 flex items-center gap-2 text-[13px] font-bold">
+        <h3 class="mb-2 flex items-center gap-2 text-[13px] font-bold max-md:min-h-11 max-md:cursor-pointer" @click="phone && toggleSec(sec.sid)">
           <span class="rounded-full px-2.5 py-0.5" :class="toneOf(sec).tab">{{ sec.label }}</span>
           <span class="font-normal opacity-50">{{ sec.count }} 系統</span>
           <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差すと付く" }} · 重みは公開されていないので仮定 · 出やすさは差した時の割合</span>
+          <span class="ml-auto font-normal opacity-60 md:hidden">{{ secShown(sec.sid) ? "▲" : "▼ 開く" }}</span>
         </h3>
-        <div class="grid gap-3 md:grid-cols-2">
+        <div v-if="secShown(sec.sid)" class="grid gap-3 md:grid-cols-2">
           <div v-for="col in sec.columns" :key="col.side" class="min-w-0">
             <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1">
               <b :class="col.side === 'prefix' ? 'text-sky-200' : 'text-violet-200'">{{ col.title }}</b>

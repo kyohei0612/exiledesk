@@ -49,6 +49,6 @@ const augOf = (out: object): AugChange | null => (out as { augment_change?: AugC
       </div>
       <span class="shrink-0 text-right tabular-nums text-[11px] opacity-70">{{ s.out.cost.cumulative ? money(s.out.cost.cumulative) : "" }}</span>
     </li>
-    <li v-if="!craftStage.log.value.length" class="rounded-lg bg-black/20 px-3 py-2 text-[12px] opacity-50">まだ何も使っていません。右の棚からカレンシーを選んでアイテムを押してください</li>
+    <li v-if="!craftStage.log.value.length" class="rounded-lg bg-black/20 px-3 py-2 text-[12px] opacity-50">まだ何も使っていません。<span class="max-md:hidden">右</span><span class="md:hidden">上</span>の棚からカレンシーを選んでアイテムを押してください</li>
   </ol>
 </template>

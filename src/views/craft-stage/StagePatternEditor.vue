@@ -604,12 +604,14 @@ function selectRow(i: number, part: "miss" | "single" | "lost" | null = null): v
   editPart.value = part;
   scrollToEditor();
 }
-/** スマホ: 手を押したら設定の枠 (ツリーの下) へ送る。PC は動かさない (2026-10-08 レビュー: 手が多いと枠が画面外だった) */
+/** スマホ: 手を押したら設定のシートが開く (シートの中を先頭へ)。PC は動かさない */
 const editorEl = ref<HTMLElement | null>(null);
+const sheetOpen = computed(() => focusRow.value != null || focusPre.value != null);
 function scrollToEditor(): void {
   if (!phone.value) return;
-  void nextTick(() => (cardBox.value ?? editorEl.value)?.scrollIntoView({ block: "start", behavior: "smooth" }));
+  void nextTick(() => (cardBox.value ?? editorEl.value)?.scrollIntoView({ block: "start" }));
 }
+function closeSheet(): void { closeFrame(); focusPre.value = null; }
 /**
  * 下のボタン 1 つで進む (棚は押した時にそのまま入る。決定ボタンが 2 つ並ばないように)。
  * カレンシーの次は、やり直しを選べる手ならやり直し、無ければ決まり (MOD → カレンシー → やり直しの順)
@@ -1147,6 +1149,15 @@ defineExpose({ rows });
       </div>
 
       <!-- 右: 押した手を決める枠 -->
+      <!--
+        スマホ: 手を押した時だけ、アイテム + 手の設定を下から出る全画面のシートに (スマホの定番。ツリーの下に並べると設定が画面外で組めなかった。
+        2026-10-08 オーナー「シミュレーターの方が UI 難しい、本気でやらんと」)。PC は contents で今まで通り横並び
+      -->
+      <div :class="phone ? (sheetOpen ? 'fixed inset-0 z-[170] flex flex-col overflow-y-auto bg-[#0e0c09] px-3 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]' : 'hidden') : 'contents'">
+        <div v-if="phone" class="mb-2 flex items-center justify-between max-md:order-1">
+          <b class="text-[15px] text-amber-100">{{ focusPre != null ? (preNodes[focusPre]?.title ?? "") : focusRow != null ? `${focusRow + 1} 手目` : "" }}</b>
+          <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none" title="閉じる" @click="closeSheet">×</button>
+        </div>
       <div ref="editorEl" class="flex min-w-0 flex-1 flex-col rounded-lg bg-black/25 px-3 py-2 max-md:order-3 max-md:scroll-mt-2">
         <template v-if="focusRow != null && rows[focusRow] && !locked">
           <!-- いまの手と、決める順 (MOD → カレンシー → やり直し)。済み 緑 / いま 黄、押すとそこだけ選び直す -->
@@ -1206,7 +1217,7 @@ defineExpose({ rows });
               <p v-if="lostRisk(focusRow!, rows[focusRow]!)" class="mb-2 text-[12px] font-bold" :class="lostRisk(focusRow!, rows[focusRow]!)!.bad ? 'text-rose-300' : 'text-amber-200'">{{ lostRisk(focusRow!, rows[focusRow]!)!.text }}</p>
               <div class="flex flex-wrap items-start gap-4">
                 <!-- 戻り先は上から 1 手目・2 手目…と縦に (手の名前つき)。MOD が複数なら縦の一覧を横に並べる (2026-10-07 オーナー「縦で上から下みたいな感じがいい」) -->
-                <div v-for="id in presentMods(focusRow, rows[focusRow]!)" :key="id" class="w-72">
+                <div v-for="id in presentMods(focusRow, rows[focusRow]!)" :key="id" class="w-72 max-md:w-full">
                   <p class="mb-1 truncate font-bold" :title="cardTitleOf(id)">{{ cardTitleOf(id) }} が消えたら</p>
                   <div class="flex flex-col gap-0.5">
                     <!-- 新しいベースで最初から (2026-10-07 靴で試すと、マジックの手で付けた物が消えた時の戻り先が無かった) -->
@@ -1238,7 +1249,7 @@ defineExpose({ rows });
               -->
               <p class="mb-2 text-[13px] font-bold text-rose-100">狙いの MOD が付かなかったら、どうする？</p>
               <!-- もう一度打つ: 外れは残して同じ手を打ち直し、その側が満杯になった時だけ外れを消す (2026-10-07 靴のライフで、毎回消すより 2 割安かった) -->
-              <div class="grid max-w-3xl grid-cols-4 gap-2">
+              <div class="grid max-w-3xl grid-cols-4 max-md:grid-cols-1 gap-2">
                 <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'none'] as const) : (['none', 'redo', 'annul', 'chaos'] as const))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
                   <img v-if="(k === 'annul' || k === 'chaos' || k === 'annul_next') && iconOf(k === 'annul_next' ? 'annul' : k)" :src="iconOf(k === 'annul_next' ? 'annul' : k)" alt="" class="h-8 w-8 object-contain" />
                   <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "redo" ? "↺" : "→" }}</span>
@@ -1249,8 +1260,8 @@ defineExpose({ rows });
                 </button>
               </div>
               <!-- 選んだ札のお告げ・強さだけ。クラフトステージの棚と同じ札 (2026-10-07 オーナー「お告げちっさ、ステージのアイコンの表示でおｋ、どの段階も」) -->
-              <div v-if="missKind(rows[focusRow]!) === 'chaos'" class="mt-3 flex gap-2 text-[11px]">
-                <p class="w-24 shrink-0 pt-1 leading-tight opacity-60">強さ</p>
+              <div v-if="missKind(rows[focusRow]!) === 'chaos'" class="mt-3 flex gap-2 text-[11px] max-md:flex-col max-md:gap-0.5">
+                <p class="w-24 shrink-0 pt-1 leading-tight opacity-60 max-md:w-full max-md:pt-0">強さ</p>
                 <div class="flex flex-wrap gap-1">
                   <button v-for="g in (['chaos', 'chaos_greater', 'chaos_perfect'] as const)" :key="g" type="button" class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition" :class="missSet(rows[focusRow]!.step)?.currency === g ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30'" :title="nameOf(g)" @click="setMiss(focusRow!, 'chaos', g, missSet(rows[focusRow]!.step)?.omens ?? [])">
                     <img v-if="iconOf(g)" :src="iconOf(g)" alt="" class="h-7 w-7 object-contain" draggable="false" />
@@ -1260,8 +1271,8 @@ defineExpose({ rows });
                   </button>
                 </div>
               </div>
-              <div v-if="missKind(rows[focusRow]!) === 'annul' || missKind(rows[focusRow]!) === 'chaos'" class="mt-2 flex gap-2 text-[11px]">
-                <p class="w-24 shrink-0 pt-1 leading-tight opacity-60">お告げ<br />(1 つ選ぶ)</p>
+              <div v-if="missKind(rows[focusRow]!) === 'annul' || missKind(rows[focusRow]!) === 'chaos'" class="mt-2 flex gap-2 text-[11px] max-md:flex-col max-md:gap-0.5">
+                <p class="w-24 shrink-0 pt-1 leading-tight opacity-60 max-md:w-full max-md:pt-0">お告げ<br class="max-md:hidden" /><span class="md:hidden"> </span>(1 つ選ぶ)</p>
                 <div class="flex flex-wrap gap-1">
                   <button v-for="o in missOmenChoices(rows[focusRow]!)" :key="o.key || 'none'" type="button" class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition" :class="[o.on ? (o.omens.length ? 'stage-omen-on border-orange-300' : 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60') : 'border-white/10 bg-black/30 hover:border-white/30', o.why ? 'cursor-not-allowed opacity-35' : '']" :disabled="!!o.why" :title="o.why ?? o.ja" @click="setMiss(focusRow!, missKind(rows[focusRow]!) as 'annul' | 'chaos', missSet(rows[focusRow]!.step)!.currency, o.omens)">
                     <span v-if="!o.omens.length" class="grid h-7 w-7 place-items-center rounded border border-dashed border-white/25 text-[12px] opacity-60">−</span>
@@ -1283,17 +1294,17 @@ defineExpose({ rows });
                 <p v-if="sp" class="mt-3 text-[11px] text-emerald-200/80">{{ splitSummary(rows[focusRow]!, sp) }} <button type="button" class="ml-2 rounded border border-white/15 px-1.5 text-[10px] opacity-70 hover:opacity-100" @click="splitOpen = !splitOpen">{{ splitOpen ? "閉じる ▲" : "変える ▼" }}</button></p>
                 <div v-if="sp && splitOpen" class="mt-2 max-w-3xl space-y-1.5 rounded-lg border border-white/10 bg-black/20 p-2 text-[11px]">
                   <p class="text-[10px] opacity-50">消去を打つ前 (ハズレがどちらに付いたか)</p>
-                  <div class="flex items-center gap-2">
-                    <span class="w-52 shrink-0 opacity-70">ハズレが{{ sp.o }}に付いた</span>
+                  <div class="flex items-center gap-2 max-md:flex-wrap">
+                    <span class="w-52 shrink-0 opacity-70 max-md:w-full">ハズレが{{ sp.o }}に付いた</span>
                     <button v-for="k in (['keep', 'annul'] as const)" :key="k" type="button" class="rounded border px-2 py-0.5" :class="otherJunkOf(rows[focusRow]!.set?.kind, rows[focusRow]!.step.otherJunk) === k ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-white/40'" @click="patch(focusRow!, { otherJunk: k })">{{ k === "keep" ? `消さずにもう一度打つ (${sp.t}に付く)` : "消去" }}</button>
                   </div>
                   <p class="mt-1 text-[10px] opacity-50">消去を打った後 (どちらのハズレが消えたか)</p>
-                  <div class="flex items-center gap-2">
-                    <span class="w-52 shrink-0 opacity-70">{{ sp.t }}のハズレが消えた ({{ sp.o }}のハズレが残った)</span>
+                  <div class="flex items-center gap-2 max-md:flex-wrap">
+                    <span class="w-52 shrink-0 opacity-70 max-md:w-full">{{ sp.t }}のハズレが消えた ({{ sp.o }}のハズレが残った)</span>
                     <span class="rounded border border-emerald-400/40 px-2 py-0.5 text-emerald-100">もう一度打つ ({{ sp.t }}に付く)</span>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <span class="w-52 shrink-0 opacity-70">{{ sp.o }}のハズレが消えた ({{ sp.t }}のハズレが残った)</span>
+                  <div class="flex items-center gap-2 max-md:flex-wrap">
+                    <span class="w-52 shrink-0 opacity-70 max-md:w-full">{{ sp.o }}のハズレが消えた ({{ sp.t }}のハズレが残った)</span>
                     <!-- 増強 (マジック) は狙いの側が埋まったまま打つと反対の側にしか付かないので、消去しか無い (2026-10-08 レビュー A7) -->
                     <span v-if="rows[focusRow]!.set?.kind === 'augment'" class="rounded border border-emerald-400/40 px-2 py-0.5 text-emerald-100">もう一度消去 (そのまま打つと{{ sp.o }}にしか付かない)</span>
                     <button v-else v-for="k in (['annul', 'redo'] as const)" :key="k" type="button" class="rounded border px-2 py-0.5" :class="otherGoneOf(rows[focusRow]!.set?.kind, rows[focusRow]!.step.otherGone) === k ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-white/40'" @click="patch(focusRow!, { otherGone: k })">{{ k === "annul" ? "もう一度消去" : "もう一度打つ" }}</button>
@@ -1346,8 +1357,8 @@ defineExpose({ rows });
               </template>
             </template>
           </div>
-          <!-- 下のボタン (いつも同じ所) -->
-          <div class="mt-1.5 flex items-center gap-2 border-t border-white/10 pt-1.5">
+          <!-- 下のボタン (いつも同じ所。スマホはシートの下に固定) -->
+          <div class="mt-1.5 flex items-center gap-2 border-t border-white/10 pt-1.5 max-md:sticky max-md:bottom-0 max-md:z-10 max-md:flex-wrap max-md:bg-[#0e0c09] max-md:py-2">
             <button type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/15" title="この手だけ消す (後の手はそのまま)" @click="removeAt(focusRow)">この手を消す</button>
             <span class="flex items-center gap-1">
               <button type="button" class="rounded border border-white/15 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="focusRow === 0" title="上へ" @click="move(focusRow, -1); focusRow = focusRow - 1">▲</button>
@@ -1417,6 +1428,7 @@ defineExpose({ rows });
         <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : editingStep ? `${previewAt + 1} 手目を打つ前 (オレンジ = この手で消える候補)` : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
         <StageItemCard :item="preview" :added="previewOut?.added ?? []" :removed="previewOut?.removed ?? []" :doomed="previewOut?.doomed ?? []" :holding="false" :flash-key="0" :width="280" compact />
         </div>
+      </div>
       </div>
     </div>
   </div>

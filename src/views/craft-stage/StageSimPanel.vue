@@ -1453,7 +1453,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         </span>
       </div>
       <!-- 何にお金がかかったか (ベース / クラフト) -->
-      <div class="mt-3 grid max-w-4xl gap-x-8 gap-y-3 @3xl:grid-cols-2">
+      <div class="mt-3 grid max-w-4xl gap-x-8 gap-y-3 @3xl:grid-cols-2 max-md:grid-cols-1">
         <div v-for="g in costGroups" :key="g.name">
           <p class="mb-1 flex items-baseline gap-2 text-[12px]"><b>{{ g.name }}</b><span class="text-[10px] opacity-50">{{ g.note }}</span><span class="ml-auto font-bold tabular-nums">{{ moneyT(g.total) }}</span></p>
           <div class="grid grid-cols-[minmax(0,1fr)_5rem_4.5rem_2.5rem] items-center gap-x-2 gap-y-1 text-[12px]">

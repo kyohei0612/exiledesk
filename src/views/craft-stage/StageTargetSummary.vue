@@ -207,7 +207,7 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
 </script>
 
 <template>
-  <div class="grid min-w-0 gap-x-6 gap-y-1 text-[12px] md:grid-cols-2">
+  <div class="grid min-w-0 gap-x-6 gap-y-1 text-[12px] md:grid-cols-2 max-md:grid-cols-1">
     <div v-for="col in columns" :key="col.title" class="min-w-0">
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold" :class="col.used > 3 ? 'text-rose-300' : 'opacity-70'">
         {{ col.title }} ({{ col.used }}/3)<span v-if="col.used > 3" class="ml-1 font-normal">枠が足りない</span>

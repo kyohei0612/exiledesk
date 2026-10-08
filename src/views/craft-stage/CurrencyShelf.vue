@@ -35,6 +35,11 @@ const orbSplit = computed(() => {
   };
 });
 const runes = computed(() => runesFor(craftStage.item.value));
+/**
+ * 「今のアイテムには使えない物」は畳める (2026-10-08 オーナー「使わないカレンシー閉じてもいいしな畳む」)。
+ * スマホ (幅 768 CSS px 未満) は畳んだ状態が既定、PC は今まで通り開いたまま
+ */
+const unusableOpen = ref(!(typeof window !== "undefined" && window.innerWidth < 768));
 /** 開いたルーンのまとまり (初めは全部閉じて、クラフトに関わる物だけ出す) */
 const openRunes = ref(new Set<string>());
 function toggleRunes(kind: string): void {
@@ -123,8 +128,10 @@ const TABS = computed(() => [
       </div>
       <div v-if="$slots.held" class="mt-2"><slot name="held" /></div>
       <template v-if="orbSplit.unusable.length">
-        <p class="mb-1 mt-3 border-t border-white/10 pt-2 text-[10px] opacity-50">今のアイテムには使えない物</p>
-        <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
+        <button type="button" class="mb-1 mt-3 flex w-full items-center gap-2 border-t border-white/10 pt-2 text-left text-[10px] opacity-50 hover:opacity-80 max-md:min-h-10" @click="unusableOpen = !unusableOpen">
+          今のアイテムには使えない物 ({{ orbSplit.unusable.reduce((a, g) => a + g.keys.length, 0) }}) {{ unusableOpen ? "▴ たたむ" : "▸ 開く" }}
+        </button>
+        <div v-if="unusableOpen" class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
           <div v-for="g in orbSplit.unusable" :key="'x' + g.kind" class="flex flex-wrap gap-1.5 max-md:contents">
             <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
           </div>
