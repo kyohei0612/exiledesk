@@ -109,9 +109,12 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     const dev = `端末は PC が ${Math.round(((devAll - devMobile) / devAll) * 100)}%、スマホが ${Math.round((devMobile / devAll) * 100)}%。`;
     const jp = sum.countries.find(([k]) => k === "JP")?.[1] ?? 0;
     const country = sum.countries.length ? (jp / devAll >= 0.9 ? "ほぼ日本からです。" : `国は ${sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}。`) : "";
-    out.push(`来た道は ${refs || "分かりません"}。${dev}${country}`);
+    // localhost は開発の確認 (自分) なので分けて書く (2026-10-08 オーナー「ガチで 13 人来たの？」)
+    const local = sum.refs.find(([k]) => /^localhost|127\.0\.0\.1/.test(k))?.[1] ?? 0;
+    out.push(`来た道は ${refs || "分かりません"}${local ? ` (localhost の ${n(local)} 回は開発の確認で、よそから来た人ではありません)` : ""}。${dev}${country}`);
     const use = (k: string): number => sum.byEvent.get(k)?.sessions ?? 0;
-    out.push(`使い方は、手で打った人が ${use("mode:hand")}、シミュレーションを開いた人が ${use("mode:sim")}。そのうち実際に回したのが ${use("sim:run")}、完成まで出たのが ${use("sim:done")}、取引所を開いたのが ${use("trade:open")}、レシピを保存したのが ${use("recipe:save")} です。`);
+    // 「手で打った」は実際に 1 手以上打った印 (hand:use)。前は開いた時の画面 (mode:hand = 最初の画面) で数えていて訪問数と同じになっていた (2026-10-08)
+    out.push(`使い方は、手で打った人が ${use("hand:use")}、シミュレーションを開いた人が ${use("mode:sim")}。そのうち実際に回したのが ${use("sim:run")}、完成まで出たのが ${use("sim:done")}、取引所を開いたのが ${use("trade:open")}、レシピを保存したのが ${use("recipe:save")} です。`);
     const f = funnelDrop(sum, FUNNEL_SIM);
     out.push(f ? `シミュレーションの流れで一番減ったのは「${f.from} → ${f.to}」(${f.before} 人 → ${f.after} 人、-${f.pct}%) です。ここでつまずく人が多いので見直す価値があります。` : "シミュレーションの流れで目立って減る所はありません。");
     const err = sum.byEvent.get("error");
