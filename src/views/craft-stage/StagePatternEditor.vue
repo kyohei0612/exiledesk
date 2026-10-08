@@ -106,8 +106,11 @@ const ctx = computed<CheckCtx | null>(() => {
   return { data: d, cls: it.cls, targets: s.simTargets.value, sets: sets.value, runeJa: (en) => RUNES[en]?.ja ?? en, start: props.start };
 });
 const pat = computed<Pattern>(() => s.simPatterns.value[Math.min(active.value, s.simPatterns.value.length - 1)]!);
-/** 流れで組むパターンか (流れがある、または手がまだ無い。前の作り方の手があるパターンは前の画面のまま) */
-const isFlow = computed(() => !!pat.value.flow || !pat.value.steps.length);
+/**
+ * 流れで組んだパターンか (流れがある物だけ)。新しいパターンは前の作り方 (ツリー) に戻した
+ * (2026-10-08 オーナー「マジで意味が分からん」「前のバージョンの方が好き、前のバージョンで改造していこう」)
+ */
+const isFlow = computed(() => !!pat.value.flow?.steps.length);
 function setFlow(flow: FlowDef): void {
   const k = Math.min(active.value, s.simPatterns.value.length - 1);
   s.simPatterns.value = s.simPatterns.value.map((p, i) => (i === k ? { ...p, flow } : p));

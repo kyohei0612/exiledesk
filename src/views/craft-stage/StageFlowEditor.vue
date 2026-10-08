@@ -64,6 +64,28 @@ const setOf = (i: number): PatternSet | undefined => setByKey(sets.value, steps.
 const iconsOf = (i: number): string[] => { const x = setOf(i); return x ? [x.currency, ...x.omens].filter((k) => k && iconOf(k)) : []; };
 const titleOf = (i: number): string => { const x = setOf(i); return x ? (x.currency ? nameOf(x.currency) : x.kind === "essence_perfect" ? "パーフェクトエッセンス" : x.kind) : "打つ物を選ぶ"; };
 
+/**
+ * 打つ物の札の灰色 (畳む物): 上の手から順に打った時のレアリティで打てない物と、狙いに関係ないエッセンス
+ * (2026-10-08 オーナー「札が多すぎるから打てない物は畳んで」)。流れは戻るので目安。灰色でも押せる
+ */
+function whyAt(i: number): (x: PatternSet) => string | null {
+  let rar: "normal" | "magic" | "rare" = s.simStart.value === "white" && !s.simTargets.value.some((t) => t.method === "fracture") ? "normal" : "rare";
+  for (let k = 0; k < i; k++) {
+    const x = setOf(k);
+    if (!x) continue;
+    if (x.kind === "transmute") rar = "magic";
+    if (x.kind === "regal" || x.kind === "alchemy" || x.kind === "essence") rar = "rare";
+  }
+  const targetIds = new Set(s.simTargets.value.flatMap((t) => [t.modId, ...(t.alts ?? []).map((a) => a.modId)]));
+  return (x) => {
+    if (x.kind === "transmute" && rar !== "normal") return "ノーマルにだけ";
+    if ((x.kind === "augment" || x.kind === "regal") && rar !== "magic") return "マジックにだけ";
+    if (x.kind === "alchemy" && rar === "rare") return "レアには打てない (ノーマルかマジック)";
+    if (["exalt", "chaos", "annul", "desecrate", "essence_perfect", "fracture"].includes(x.kind) && rar !== "rare") return "レアにだけ";
+    if ((x.kind === "essence" || x.kind === "essence_perfect") && x.currency && !targetIds.has(x.currency.replace(/^essence:[a-z]+:/, ""))) return "この MOD は付かない";
+    return null;
+  };
+}
 /** 狙いの短い名前 (条件の「○○ が付いた」) */
 const targetOpts = computed(() => {
   const d = s.data.value;
@@ -179,7 +201,7 @@ const doneCount = computed(() => total(props.stats ? props.stats.routes.reduce((
       </div>
       <!-- 打つ物 (棚と同じ札) -->
       <p class="mb-1 text-[11px] opacity-60">① 打つ物</p>
-      <StagePatternStepPicker :key="'f' + sel" :sets="sets" :why="() => null" :current="steps[sel]!.set" soft inline @pick="(k) => patchStep(sel!, { set: k })" />
+      <StagePatternStepPicker :key="'f' + sel" :sets="sets" :why="whyAt(sel)" :current="steps[sel]!.set" soft fold inline @pick="(k) => patchStep(sel!, { set: k })" />
       <!-- 行き先 -->
       <p class="mb-1 mt-3 text-[11px] opacity-60">② 打った後 (上から見て、条件が全部合った最初の所へ)</p>
       <div class="flex flex-col gap-1.5">

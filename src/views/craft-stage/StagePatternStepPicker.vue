@@ -19,6 +19,8 @@ const props = defineProps<{
   current: string;
   /** 灰色 (今は打てない) の物も押せる (2026-10-07 オーナー「グレーアウトはオフではなく別に選択できはする」) */
   soft?: boolean;
+  /** 打てない物を最初から畳む (PC でも。流れの画面) */
+  fold?: boolean;
   /** 押したらすぐ決まる (下の「これにする」を出さない) */
   inline?: boolean;
 }>();
@@ -56,7 +58,7 @@ const ROWS: Array<{ name: string; kinds: PatternSet["kind"][] }> = [
  * 打てない札 (灰色) は畳む。スマホは畳んだ状態が既定 (2026-10-08 札 50 枚のうち 30 枚が「この MOD は付かない」で壁になっていた。
  * オーナー「必要なところ以外は畳んだりとかで」)。PC は今まで通り全部出す。選んでいる札は灰色でも出す
  */
-const dimOpen = ref(!(typeof window !== "undefined" && window.innerWidth < 768));
+const dimOpen = ref(!props.fold && !(typeof window !== "undefined" && window.innerWidth < 768));
 const rows = computed(() => ROWS.map((r) => {
   const all = tiles.value.filter((t) => r.kinds.includes(t.kind));
   const shown = dimOpen.value ? all : all.filter((t) => !tileWhy(t) || chosen.value === t.id);

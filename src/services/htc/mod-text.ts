@@ -144,7 +144,8 @@ export function fillModText(mod: Mod, ranges: ReadonlyArray<ReadonlyArray<number
   const ja = jaOfMod(mod);
   const holes = (ja.match(/#/g) ?? []).length;
   const tokens = [...(mod.text ?? "").matchAll(/#|\d+(?:\.\d+)?/g)].map((t) => t[0]);
-  if (holes && tokens.length === holes && tokens.some((t) => t !== "#")) {
+  // 段の幅が足りている時はそのまま (英語の文の数字が古いだけの物がある: 「Adds # to 3 Fire damage」で幅は 2 つ)
+  if (holes && ranges.length < holes && tokens.length === holes && tokens.some((t) => t !== "#")) {
     let r = 0;
     const vals = tokens.map((t) => (t === "#" ? ranges[r++] ?? [NaN] : [Number(t), Number(t)]));
     if (!vals.some((v) => Number.isNaN(Number(v[0])))) return fillHashes(ja, vals);
