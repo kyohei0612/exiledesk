@@ -435,7 +435,7 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
       const row = rows.value[j];
       const members = [...new Set([t.modId, ...(t.alts ?? []).map((a) => a.modId), ...(row && !needs2(row) ? candsOf(row) : [])])];
       if (members.length > 1) {
-        const text = `どれか: ${members.map((id) => cardTitleOf(id)).join(" / ")}`;
+        const text = `どれか 1 MOD (${members.map((id) => cardTitleOf(id).replace(/をアタックに追加する/, "")).join(" / ")})`;
         const relabel = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.map((m) => (m.modId === t.modId ? { ...m, textJa: text } : m));
         it = { ...it, prefixes: relabel(it.prefixes), suffixes: relabel(it.suffixes) };
       }
@@ -444,6 +444,15 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
     if (t && j === previewAt.value) newMods = allMods(it).filter((m) => m.modId === t.modId);
     const t2 = isDouble(x) && st.target2 ? s.simTargets.value.find((y) => y.modId === st.target2) : undefined;
     if (t2) add(t2.modId, t2.minTierIndex, {});
+  }
+  // 「この中のどれか N つ」の候補の MOD は、どの手で付いても「どれか 1 MOD (火 / 冷気 / 雷)」で出す (順不同なので、3 つなら 3 行並ぶ。
+  // 2026-10-08 オーナー「レアアイテムには複数同じ MOD 群が候補の場合どれか 1 MOD って表記で、3 つ選んでたらその表記が 3 つ並ぶ」)
+  {
+    const grp = new Map<string, string[]>();
+    for (const t of s.simTargets.value) if (t.alts?.length) { const ms = [t.modId, ...t.alts.map((a) => a.modId)]; for (const id of ms) grp.set(id, ms); }
+    const relabel = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.map((m) => { const g = grp.get(m.modId); return g ? { ...m, textJa: `どれか 1 MOD (${[...new Set(g)].map((id) => cardTitleOf(id).replace(/をアタックに追加する/, "")).join(" / ")})` } : m; });
+    it = { ...it, prefixes: relabel(it.prefixes), suffixes: relabel(it.suffixes) };
+    newMods = newMods.map((m) => it.prefixes.concat(it.suffixes).find((x) => x.modId === m.modId) ?? m);
   }
   const rarity = c ? stateBefore(c, pat.value.steps, previewAt.value + (editingStep.value ? 0 : 1)).rarity : "rare";
   return { item: { ...it, rarity: it.prefixes.length + it.suffixes.length ? (rarity === "normal" ? "magic" : rarity) : rarity }, added: newMods, removed: goneMods, doomed };
