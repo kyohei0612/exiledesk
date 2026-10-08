@@ -401,7 +401,7 @@ const previewOut = computed<{ item: StageItem; added: StageItem["prefixes"]; rem
     // (2026-10-08 スクリーンショットで、2 手目 (増強) を打つ前のアイテムに狙いがもう付いて見えていた)
     // 見ている手が「この手で付かなかった時だけ」の手 (かその後) なら、この手は外れた世界: 狙い以外の MOD が 1 つ付いた姿で出す
     // (2026-10-08 オーナー「2 手目の手を足した瞬間に別の MOD に切り替わらないと辻褄が合わん」「付かなかった時の世界線の話」)。
-    // 反対の側を優先 (枝の「ハズレが反対の側 → 消さずに打つ」の流れ)。乱数は手ごとに決まった値なので押すたびに変わらない
+    // 反対の側を優先 (枝の「狙い以外が反対の側 → 消さずに打つ」の流れ)。乱数は手ごとに決まった値なので押すたびに変わらない
     const missedFor = [...retryFrom.value.entries()].some(([k, f]) => f === j && k <= previewAt.value);
     if (missedFor && t && c) {
       const tside = c.data.mods.get(t.modId)?.type === "suffix" ? "suffix" : "prefix";
@@ -453,7 +453,7 @@ const preview = computed<StageItem | null>(() => previewOut.value?.item ?? null)
 const removals = computed(() => removalSets(sets.value));
 /**
  * 起こりうる状況 (2026-10-08 オーナー「● を実行した時の起こりうる状況を全てに対応する選択肢をユーザーが選ぶ、1 個 1 個」「錬金術も最たる例、
- * ハズレが付いたらリロールみたいなムーブにも対応できるように」)。その手で起こりうる物だけ並べる
+ * 狙い以外が付いたらリロールみたいなムーブにも対応できるように」)。その手で起こりうる物だけ並べる
  */
 function situationsOf(i: number, r: Row): Situation[] {
   if (!r.set || !r.step.target || r.step.target === ANY_TARGET || r.set.kind === "rune" || r.set.kind === "annul" || r.set.kind === "fracture") return [];
@@ -465,7 +465,7 @@ function situationsOf(i: number, r: Row): Situation[] {
   // 一部当たり: 1 回で 2 つ以上足す手 (偉大・錬金)、または 2 つ以上揃える狙い (残り・どれか N つ)
   // (狙いが 1 つなら一部当たりは起きない)
   if (needs2(r) || (isRest(r.step.target) && ids.length > 1) || ((isDouble(r.set) || r.set.kind === "alchemy") && ids.length > 1)) out.push("partial");
-  // 側を決めるお告げ (左右の高貴・ネクロマンシーなど) ならハズレは狙う側にしか付かない (2026-10-08 オーナー「左側とか選んだら反対側に行かなくね」)
+  // 側を決めるお告げ (左右の高貴・ネクロマンシーなど) なら狙い以外は狙う側にしか付かない (2026-10-08 オーナー「左側とか選んだら反対側に行かなくね」)
   const forced = r.set.omens.some((o) => /Sinistral|Dextral/.test(o) && !/Annulment|Erasure|Crystallisation/.test(o));
   if (sides.size === 1 && !forced) out.push("miss_t", "miss_o"); else out.push("miss");
   void i;
@@ -494,8 +494,9 @@ function treeOf(i: number, r: Row): { set: PatternSet; side: "prefix" | "suffix"
   const side = [...sides][0] as "prefix" | "suffix";
   const sideOfId = (id: string): string => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
   const st = stateBefore(c, pat.value.steps, i);
-  const h0 = [...st.placed].filter((id) => sideOfId(id) === side).length;
-  const j0 = Math.max(0, st[side] - h0);
+  // 側の数 (st.prefix / st.suffix) は狙いと固定だけで数えている (打つだけで付いた物は側が分からないので入らない)。前の手の「どれか」で付く物も入る
+  const h0 = st[side];
+  const j0 = 0;
   const need = Math.max(h0 + 1, s.simTargets.value.filter((t) => sideOfId(t.modId) === side && t.method !== "fracture").length + (st.fractured && sideOfId(st.fractured) === side ? 1 : 0));
   return { set: r.set, side, limit: st.limits[side], need: Math.min(need, st.limits[side]), h0, j0 };
 }
@@ -517,7 +518,7 @@ function rxText(rx: Reaction): string {
 }
 /** 先に打つ物の選択肢 (消去・カオス・パーフェクトエッセンス・骨。その手の後に打てる物) */
 const preChoices = computed(() => removals.value.map((x) => ({ key: x.key, label: setShortly(x) })));
-/** もう一度の打ち方の選択肢 (同じ手 + その手の後に打てる物。錬金のハズレをカオスで振り直す、なども) */
+/** もう一度の打ち方の選択肢 (同じ手 + その手の後に打てる物。錬金の狙い以外をカオスで振り直す、なども) */
 function againChoices(i: number): Array<{ key: string; label: string }> {
   const c = ctx.value;
   if (!c) return [];
@@ -533,7 +534,7 @@ const missSet = (step: PatternStep): PatternSet | undefined => (step.miss ? setB
 function preAnnul(r: Row): string | null {
   const id = r.step.target;
   if (!r.set || !id || id === ANY_TARGET) return null;
-  // 前の手 (外れたらこの手へ) が「狙いの側のハズレを消して次へ」なら、そちらに出ている
+  // 前の手 (外れたらこの手へ) が「狙いの側の狙い以外を消して次へ」なら、そちらに出ている
   const i = rows.value.indexOf(r);
   const from = retryFrom.value.get(i);
   if (from != null && pat.value.steps[from]?.onMiss === "annul_next") return null;
@@ -549,20 +550,20 @@ function fixedIdsBefore(i: number): Set<string> {
 }
 /**
  * 打つ前に計算が自動でやる前置き (必ず画面に出す。2026-10-08 レビュー D2 / D3 / D6)。短い方はツリー、長い方は「付かなかったら」の画面
- * - 高貴・骨・増強: 狙いの側がハズレで埋まっていたら先に消去 (反対の側に当たりがあれば側のお告げ付き) … recipe-sim の runPattern
+ * - 高貴・骨・増強: 狙いの側が狙い以外で埋まっていたら先に消去 (反対の側に当たりがあれば側のお告げ付き) … recipe-sim の runPattern
  * - カオス: 抹消の側 (無ければ両側) に外せる MOD が無ければ先に高貴で 1 つ付ける
- * - パーフェクトエッセンス: 同じ系統のハズレがあれば先に消去、結晶化の側にハズレが無ければ先に高貴で 1 つ付ける (当たりを上書きしないため)
+ * - パーフェクトエッセンス: 同じ系統の狙い以外があれば先に消去、結晶化の側に狙い以外が無ければ先に高貴で 1 つ付ける (当たりを上書きしないため)
  */
 function preRule(r: Row, long = false): string | null {
   const k = r.set?.kind;
   if (!r.set || !r.step.target || r.step.target === ANY_TARGET) return null;
   const sd = preAnnul(r);
-  if (sd) return long ? `打つ前: ${sd}がハズレで満杯なら先に消去` : `打つ前: ${sd}がハズレで埋まっていたら消去`;
+  if (sd) return long ? `打つ前: ${sd}が狙い以外で満杯なら先に消去` : `打つ前: ${sd}が狙い以外で埋まっていたら消去`;
   if (k === "chaos") {
     const side = r.set.omens.some((o) => /Sinistral/.test(o)) ? "プレ" : r.set.omens.some((o) => /Dextral/.test(o)) ? "サフィ" : "両側";
     return long ? `打つ前: ${side}に外せる物が無ければ高貴で 1 つ` : "打つ前: 外せる物が無ければ高貴で 1 つ";
   }
-  if (k === "essence_perfect") return long ? "打つ前に同じ系統のハズレがあれば先に消去、結晶化の側にハズレが無ければ先に高貴で 1 つ付けてから打つ (当たりを上書きしないため)" : "打つ前: 同系統のハズレは消去、無ければ高貴で 1 つ";
+  if (k === "essence_perfect") return long ? "打つ前に同じ系統の狙い以外があれば先に消去、結晶化の側に狙い以外が無ければ先に高貴で 1 つ付けてから打つ (当たりを上書きしないため)" : "打つ前: 同系統の狙い以外は消去、無ければ高貴で 1 つ";
   return null;
 }
 /** カオスの手の狙いが後で消えて戻った時、計算は完全高貴 + 側のお告げで取り直す (カオスだと付いている他の狙いも消すため。2026-10-08 レビュー D4) */
@@ -575,8 +576,8 @@ const splitOpen = ref(false);
 function splitSummary(r: Row, sp: { t: string; o: string }): string {
   const keep = otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep";
   const again = otherGoneOf(r.set?.kind, r.step.otherGone) === "annul";
-  // 反対の側のハズレも消す時は「だけ」にならない (2026-10-08 完成判定: ツリーと逆の文になっていた)
-  return `${keep ? `ハズレが${sp.t} (狙いの側) に付いた時だけ消去。${sp.o}に付いたら消さずに打つ` : "ハズレはどちらの側に付いても消去"}。消去後に${sp.t}のハズレが残ったら${again ? "もう一度消去" : "そのまま打つ"}`;
+  // 反対の側の狙い以外も消す時は「だけ」にならない (2026-10-08 完成判定: ツリーと逆の文になっていた)
+  return `${keep ? `狙い以外が${sp.t} (狙いの側) に付いた時だけ消去。${sp.o}に付いたら消さずに打つ` : "狙い以外はどちらの側に付いても消去"}。消去後に${sp.t}の狙い以外が残ったら${again ? "もう一度消去" : "そのまま打つ"}`;
 }
 function sideSplit(r: Row): { t: string; o: string } | null {
   const ms = missSet(r.step);
@@ -602,7 +603,7 @@ const KIND_TONE: Record<string, string> = {
 };
 /** カードの見出し (付ける物を短く: 「火耐性 T3+」) */
 function cardTitle(r: Row): string {
-  if (r.set?.kind === "annul") return "ハズレを消す";
+  if (r.set?.kind === "annul") return "狙い以外を消す";
   if (!r.step.target) return r.set?.kind === "rune" ? "ルーン未定" : "MOD 未定";
   if (r.step.target === ANY_TARGET) {
     // 後ろに自前のフラクチャーがある骨は、発現させずに壁にする (計算と同じ。2026-10-08 レビュー D5: 画面に出ていなかった)
@@ -669,7 +670,7 @@ function pickTarget(i: number, key: string): void {
   patch(i, { target: key, ...(isRune && runeSet ? { set: runeSet.key, onMiss: "next" as MissRule, miss: null } : key === ANY_TARGET ? { onMiss: "next" as MissRule, miss: null } : {}), ...(curOk || isRune ? {} : { set: "" }) });
   // MOD を選んだらそのまま次の段 (カレンシー) へ。カレンシーの段だけはお告げを続けて選ぶので「次へ」を押す
   // (2026-10-08 オーナー「カレンシーは必ず次へ押さんとお告げが表示されないけど、他の奴とかは押したら次へ行ってもいい」。2026-10-07 の「選択した瞬間次にいかなくさせる」はカレンシーの話)
-  // 打つだけ → MOD に変えた時など、カレンシーがそのままなら既定のやり直し (増強は消去、変成はハズレを消して次へ) を入れ直す (2026-10-08 レビュー N8)
+  // 打つだけ → MOD に変えた時など、カレンシーがそのままなら既定のやり直し (増強は消去、変成は狙い以外を消して次へ) を入れ直す (2026-10-08 レビュー N8)
   if (curOk && cur && !isRune && key !== ANY_TARGET) onSet(i, cur.key);
   // 「この中のどれか」の選択肢: ほかの候補も入れる (候補のどれかで当たり)
   const grp = rows.value[i]?.targetOpts.find((o) => o.key === key)?.members;
@@ -706,9 +707,9 @@ function addSetsFor(r: Row): PatternSet[] {
 /** 付ける側の棚 (消去は外す側にだけ出す。2026-10-07 オーナー「付ける時は削除の手とか表示しなくてもおｋ」) */
 const addSets = computed(() => sets.value.filter((x) => x.kind !== "annul"));
 /** やり直しを選べる手か (外れがあって、レアリティが変わらない手) */
-// 王者・錬金も「付かなかったら」を出す (錬金のハズレをカオスで振り直す、なども選べるように。2026-10-08 オーナー「錬金術も最たる例」)
+// 王者・錬金も「付かなかったら」を出す (錬金の狙い以外をカオスで振り直す、なども選べるように。2026-10-08 オーナー「錬金術も最たる例」)
 const hasMiss = (r: Row): boolean => !!r.set && !noMiss(r.set) && r.set.kind !== "fracture" && r.step.target !== ANY_TARGET && !!r.step.target;
-/** 変成の手 (外してもう一度は無理。選べるのは「狙いの側のハズレを消して次へ」か「そのまま次へ」。王者・錬金の後は枠が空くので選ぶ物が無い) */
+/** 変成の手 (外してもう一度は無理。選べるのは「狙いの側の狙い以外を消して次へ」か「そのまま次へ」。王者・錬金の後は枠が空くので選ぶ物が無い) */
 const rarityStep = (r: Row): boolean => r.set?.kind === "transmute";
 /** 狙いの側 (候補が両側なら「狙いの側」) */
 function targetSideJa(r: Row): { t: string; o: string } | null {
@@ -877,7 +878,9 @@ function setGoto(i: number, id: string, g: number): void {
 }
 /** やり直しの札: そのまま / 消去 / カオス / ほか (パーフェクトエッセンス・骨) */
 const missMore = ref(false);
-function missKind(r: Row): "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "other" {
+function missKind(r: Row): "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "tree" | "other" {
+  // 結果ごとに決める (結果の木) を選んでいる
+  if (r.step.policy) return "tree";
   const x = missSet(r.step);
   if (!x && r.step.onMiss === "redo") return "redo";
   if (!x && r.step.onMiss === "annul_next") return "annul_next";
@@ -894,8 +897,9 @@ function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: re
   editPart.value = "miss";
 }
 /** 「付かなかったら」の札が選べない理由 (pattern.ts の checkMiss / checkRemoval。2026-10-08 レビュー B5: 骨で「もう一度打つ」を選べて、回すと止まっていた) */
-function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart"): string | null {
+function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "tree"): string | null {
   if (!r.set) return null;
+  if (k === "tree") return treeOf(rows.value.indexOf(r), r) ? null : "高貴・消去・カオスで、狙いが片側だけの手";
   const rule: MissRule = k === "none" ? "next" : k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : k === "restart" ? "restart" : "annul_redo";
   const w = checkMiss(r.set, rule);
   if (w) return w;
@@ -905,7 +909,10 @@ function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos" |
   }
   return null;
 }
-function pickMissKind(i: number, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart"): void {
+function pickMissKind(i: number, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "tree"): void {
+  if (k === "tree") { patch(i, { policy: pat.value.steps[i]?.policy ?? {}, miss: null, onMiss: "next" }); editPart.value = "miss"; return; }
+  // ほかの札を選んだら結果の木は外す (2026-10-08 オーナー「そのまま次へでも下のやつ要らんくないか」)
+  if (pat.value.steps[i]?.policy) patch(i, { policy: undefined });
   if (missWhy(rows.value[i]!, k)) return;
   // お告げの無い札はそのまま次の段へ (消去・カオスはお告げを続けて選ぶので留まる)
   if (k === "none" || k === "redo" || k === "annul_next" || k === "restart") { patch(i, { miss: null, onMiss: k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : k === "restart" ? "restart" : "next" }); editPart.value = "miss"; nextPart(i); return; }
@@ -925,9 +932,9 @@ function missOmenChoices(r: Row): Array<{ key: string; ja: string; omens: string
 function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const x = missSet(r.step);
   const c = ctx.value;
-  if (!x && r.step.onMiss === "redo") return { text: "ハズレは残してもう一度 (満杯なら 1 つ消す)", bad: false };
-  if (!x && r.step.onMiss === "annul_next") { const sd = targetSideJa(r); return { text: sd ? `ハズレが${sd.t}なら消去して次の手 · ${sd.o}なら残して次の手` : "狙う側のハズレだけ消して次の手", bad: false }; }
-  if (!x) return { text: "ハズレは残して次の手", bad: false };
+  if (!x && r.step.onMiss === "redo") return { text: "狙い以外は残してもう一度 (満杯なら 1 つ消す)", bad: false };
+  if (!x && r.step.onMiss === "annul_next") { const sd = targetSideJa(r); return { text: sd ? `狙い以外が${sd.t}なら消去して次の手 · ${sd.o}なら残して次の手` : "狙う側の狙い以外だけ消して次の手", bad: false }; }
+  if (!x) return { text: "狙い以外は残して次の手", bad: false };
   if (!c) return { text: "", bad: false };
   if (x.omens.includes("OmenofLight")) return { text: "冒涜の MOD だけ消す (狙いは消えない)", bad: false };
   if (x.omens.includes("OmenofWhittling")) return { text: "一番低い MOD を入れ替える (狙いの方が低いと消える)", bad: true };
@@ -937,10 +944,10 @@ function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const n = presentMods(i, r).filter((id) => !(needs2(r) && [r.step.target, ...candsOf(r)].includes(id)) && (!side || sideOfId(id) === side)).length;
   const verb = x.kind === "chaos" ? "入れ替える" : "消す";
   // 偉大の手は「1 つだけ当たり」の時、当たった方も消す候補に入る
-  if (needs2(r)) return { text: `全部ハズレ: ${n ? `狙いを消す確率 ${n}/${n + 1}` : "安全"} · 1 つ当たり: 当たりを消す確率 ${n + 1}/${n + 2}`, bad: true };
+  if (needs2(r)) return { text: `全部狙い以外: ${n ? `狙いを消す確率 ${n}/${n + 1}` : "安全"} · 1 つ当たり: 当たりを消す確率 ${n + 1}/${n + 2}`, bad: true };
   // 前の手が「どれか」(候補) の手なら、付いた方がどれかは決まっていない: 消去で 1/2 で消える (消えたらこの手でもう一度。2026-10-08 レビュー B4)
   const unsure = isRest(r.step.target) || candsOf(r).length > 0;
-  return n ? { text: `狙いを${verb}確率 ${n}/${n + 1}`, bad: true } : unsure ? { text: `当たりが消えることもある (消えたらもう一度)`, bad: false } : { text: `ハズレを${verb} (安全)`, bad: false };
+  return n ? { text: `狙いを${verb}確率 ${n}/${n + 1}`, bad: true } : unsure ? { text: `当たりが消えることもある (消えたらもう一度)`, bad: false } : { text: `狙い以外を${verb} (安全)`, bad: false };
 }
 /**
  * この手を打つ時に消える確率 (打つ物が消してから付ける物の時: カオス・パーフェクトエッセンス)。その側の固定以外の MOD (狙い + 外れ) から 1 つ。
@@ -958,20 +965,20 @@ function lostRisk(i: number, r: Row): { text: string; bad: boolean } | null {
   if (!goods.length) return null;
   const names = goods.map(cardTitleOf).join("・");
   const sideJa = side === "suffix" ? "サフィ" : side === "prefix" ? "プレ" : "";
-  // パーフェクトエッセンスは、結晶化の側に空きがあれば計算が先に高貴でハズレを 1 つ付けてから打つ (当たりは上書きされない。2026-10-08 レビュー D3:
+  // パーフェクトエッセンスは、結晶化の側に空きがあれば計算が先に高貴で狙い以外を 1 つ付けてから打つ (当たりは上書きされない。2026-10-08 レビュー D3:
   // 前は「必ず消える」と警告していて計算と逆だった)。側が当たりで埋まっていれば足せないので下の「必ず消える」
   if (r.set.kind === "essence_perfect") {
     const sds: Array<"prefix" | "suffix"> = side ? [side] : ["prefix", "suffix"];
-    if (sds.some((sd) => st[sd] < st.limits[sd])) return { text: `ハズレが無ければ先に高貴で 1 つ付けてから打つので、${names} は消えない (ハズレがあればそれを上書き)`, bad: false };
+    if (sds.some((sd) => st[sd] < st.limits[sd])) return { text: `狙い以外が無ければ先に高貴で 1 つ付けてから打つので、${names} は消えない (狙い以外があればそれを上書き)`, bad: false };
   }
   // 打つだけで付いた外れは側が分からない (側のお告げの時は、その側に付いていれば候補が増える)
   if (side && count(side) <= goods.length) {
     return st.junk > 0
       ? { text: `打つだけで付いた MOD が${sideJa}にあれば ${goods.length}/${goods.length + 1} で ${names} が消える。${sideJa}に無ければ必ず消える`, bad: true }
-      : { text: `この手で ${names} が必ず消える (${sideJa}にハズレが無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
+      : { text: `この手で ${names} が必ず消える (${sideJa}に狙い以外が無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
   }
   const n = side ? count(side) : count("prefix") + count("suffix") + st.junk;
-  if (n <= goods.length) return { text: `この手で ${names} が必ず消える (ハズレが無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
+  if (n <= goods.length) return { text: `この手で ${names} が必ず消える (狙い以外が無い。先に打つだけで 1 つ付けておくか、戻り先を決める)`, bad: true };
   return { text: `この手で消える候補 ${n} つのうち、狙い ${goods.length} つ (${names}) → ${goods.length}/${n}`, bad: false };
 }
 /** 1 発の棚: 1 つずつ付ける高貴 (偉大なし) */
@@ -992,7 +999,7 @@ function chipsOf(i: number, r: Row): Chip[] {
   if (!isRune) out.push({ part: "set", name: "カレンシー", icons: icons(r.set), text: r.set && !icons(r.set).length ? setShort(r.set) : "", state: st("set", !!r.set) });
   if (needs2(r)) out.push({ part: "target2", name: "一緒に狙う MOD", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: st("target2", !!r.step.target2) });
   else if (canCands(r)) out.push({ part: "target2", name: "ほかの候補 (任意)", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: now === "target2" ? "now" : candsOf(r).length ? "done" : "todo" });
-  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : r.step.onMiss === "annul_next" ? "ハズレを消して次へ" : "選択無し") : "", state: st("miss", hasMiss(r)) });
+  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : r.step.onMiss === "annul_next" ? "狙い以外を消して次へ" : "選択無し") : "", state: st("miss", hasMiss(r)) });
   if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
   if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が消えたら", icons: [], text: "", state: st("lost", true) });
   return out;
@@ -1046,12 +1053,12 @@ function onSet(i: number, key: string): void {
   const cur = pat.value.steps[i]!;
   // やり直せない手は「そのまま次へ」、ほかは「やり直し」。外す物がその手で使えなくなったら選び直し
   // フラクチャーは外れたら (違う MOD が固定されたら) 新しいベースで最初から
-  // レアリティが変わる手で狙いがあるなら「狙いの側のハズレを消して次へ」が既定 (2026-10-08 オーナー「付かなかったら消去で増強やん 1 手目から」)
+  // レアリティが変わる手で狙いがあるなら「狙いの側の狙い以外を消して次へ」が既定 (2026-10-08 オーナー「付かなかったら消去で増強やん 1 手目から」)
   const miss: MissRule = set?.kind === "fracture" ? "restart" : set?.kind === "transmute" ? (cur.target && cur.target !== ANY_TARGET ? "annul_next" : "next") : set && RARITY_CHANGE.has(set.kind) ? "next" : "annul_redo";
   const rm = cur.miss ? setByKey(sets.value, cur.miss) : undefined;
   const keepMiss = cur.miss && !(rm && set && checkRemoval(set, rm));
   if (!hasCands(set)) patch(i, { target2: null, target3: null });
-  // 増強 (マジック) は「消去で消す (お告げ無し)」が既定: 1 手目の「ハズレを消して次へ」から消去 → 増強の繰り返しに繋がる (2026-10-08 レビュー A1)。
+  // 増強 (マジック) は「消去で消す (お告げ無し)」が既定: 1 手目の「狙い以外を消して次へ」から消去 → 増強の繰り返しに繋がる (2026-10-08 レビュー A1)。
   // ほかの手は選択無し (2026-10-07 オーナー「外れてもいいならそこは選択無しをデフォで」)
   const plainAnnul = set?.kind === "augment" && cur.target && cur.target !== ANY_TARGET ? removals.value.find((x) => x.kind === "annul" && !x.omens.length)?.key ?? null : null;
   patch(i, { set: key, onMiss: keepMiss ? "annul_redo" : miss === "annul_redo" ? (plainAnnul ? "annul_redo" : "next") : miss, ...(keepMiss ? {} : { miss: plainAnnul }) });
@@ -1233,11 +1240,11 @@ defineExpose({ rows });
               </span>
               <!--
                 外れた時だけの次の手 (増強など) が打つ前に消去する時は、外れがどちらの側に付いたかで枝を分けて出す
-                (2026-10-07 オーナー「変成のオーブでハズレが狙いの MOD 群の所についてしまったら消去の表示がないぞ」)
+                (2026-10-07 オーナー「変成のオーブで狙い以外が狙いの MOD 群の所についてしまったら消去の表示がないぞ」)
               -->
               <span v-if="r.step.onMiss === 'annul_next' && targetSideJa(r)" class="mt-0.5 flex flex-col pl-5 text-[10px] leading-tight text-rose-200/90">
-                <span class="whitespace-nowrap">ハズレが{{ targetSideJa(r)!.t }} → 消去 → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
-                <span class="whitespace-nowrap">ハズレが{{ targetSideJa(r)!.o }} → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
+                <span class="whitespace-nowrap">狙い以外が{{ targetSideJa(r)!.t }} → 消去 → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
+                <span class="whitespace-nowrap">狙い以外が{{ targetSideJa(r)!.o }} → {{ i + 1 < rows.length ? `${i + 2}手目` : "次の手" }}</span>
               </span>
               <span v-if="missSet(r.step) || r.step.onMiss === 'redo'" class="flex items-center text-[10px] text-amber-200/90">
                 <span class="text-rose-300">◀</span>
@@ -1250,8 +1257,8 @@ defineExpose({ rows });
               <span v-if="isRest(r.step.target)" class="ml-5 text-[10px] leading-tight opacity-70">候補が消えても 1 つでも残ればこの手を続ける、全部消えたら {{ Number(r.step.target!.slice(REST.length)) + 1 }} 手目へ</span>
               <span v-if="chaosRegain(r)" class="ml-5 text-[10px] leading-tight opacity-70">消えて戻った時: 完全高貴 + 側のお告げで取り直す</span>
               <span v-if="sideSplit(r)" class="ml-5 flex flex-col text-[10px] leading-tight opacity-70">
-                <span>ハズレが{{ sideSplit(r)!.o }}に付いた → {{ otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep" ? "消さずに打つ" : "消去" }}</span>
-                <span>消去後 {{ sideSplit(r)!.t }}にハズレ → {{ otherGoneOf(r.set?.kind, r.step.otherGone) === "annul" ? "もう一度消去" : "打つ" }}</span>
+                <span>狙い以外が{{ sideSplit(r)!.o }}に付いた → {{ otherJunkOf(r.set?.kind, r.step.otherJunk) === "keep" ? "消さずに打つ" : "消去" }}</span>
+                <span>消去後 {{ sideSplit(r)!.t }}に狙い以外 → {{ otherGoneOf(r.set?.kind, r.step.otherGone) === "annul" ? "もう一度消去" : "打つ" }}</span>
               </span>
             </span>
             <span v-if="r.risk?.bad" class="ml-1 mt-2 text-rose-300" :title="r.risk.text">⚠</span>
@@ -1276,7 +1283,7 @@ defineExpose({ rows });
                 <span>消去</span>
               </button>
               <button type="button" class="ml-4 flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/5" :disabled="locked" title="押すと 1 発の打ち方を選ぶ" @click="selectRow(i, 'single')">
-                <span class="opacity-60">├ ハズレが消えたら →</span>
+                <span class="opacity-60">├ 狙い以外が消えたら →</span>
                 <img v-for="c in [singleSet(r)?.currency, ...(singleSet(r)?.omens ?? [])].filter((x) => x && iconOf(x))" :key="c" :src="iconOf(c!)" alt="" class="h-4 w-4 object-contain" />
                 <span>1 発</span>
                 <span class="text-amber-200/90">↺ 付くまで</span>
@@ -1401,7 +1408,7 @@ defineExpose({ rows });
               </div>
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'single'">
-              <p class="mb-1 text-[11px] opacity-60">1 つだけ当たって、ハズレが消えた後に、残りの 1 つを打つ手 (既定は同じカレンシーで偉大だけ外した物)</p>
+              <p class="mb-1 text-[11px] opacity-60">1 つだけ当たって、狙い以外が消えた後に、残りの 1 つを打つ手 (既定は同じカレンシーで偉大だけ外した物)</p>
               <StagePatternStepPicker :key="'single' + focusRow" :sets="singleSets" :why="() => null" :current="singleSet(rows[focusRow]!)?.key ?? ''" inline @pick="(k) => { patch(focusRow!, { single: k }); editPart = 'single'; }" />
             </template>
             <template v-else-if="partOf(focusRow, rows[focusRow]!) === 'set'">
@@ -1414,14 +1421,14 @@ defineExpose({ rows });
               -->
               <p class="mb-2 text-[13px] font-bold text-rose-100">狙いの MOD が付かなかったら、どうする？</p>
               <!-- もう一度打つ: 外れは残して同じ手を打ち直し、その側が満杯になった時だけ外れを消す (2026-10-07 靴のライフで、毎回消すより 2 割安かった) -->
-              <div class="grid max-w-3xl grid-cols-4 max-md:grid-cols-1 gap-2">
-                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'restart', 'none'] as const) : (['none', 'annul', 'chaos', 'restart'] as const))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
+              <div class="grid max-w-4xl grid-cols-5 max-md:grid-cols-1 gap-2">
+                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'restart', 'none'] as const) : (treeOf(focusRow!, rows[focusRow]!) ? (['none', 'annul', 'chaos', 'restart', 'tree'] as const) : (['none', 'annul', 'chaos', 'restart'] as const)))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
                   <img v-if="(k === 'annul' || k === 'chaos' || k === 'annul_next') && iconOf(k === 'annul_next' ? 'annul' : k)" :src="iconOf(k === 'annul_next' ? 'annul' : k)" alt="" class="h-8 w-8 object-contain" />
-                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "restart" ? "⟲" : "→" }}</span>
+                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "restart" ? "⟲" : k === "tree" ? "⑂" : "→" }}</span>
                   <span>
-                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側のハズレを消して次へ" : k === "restart" ? (props.start.mods ? "この状態からやり直す" : "新しいベースでもう一度") : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
+                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側の狙い以外を消して次へ" : k === "restart" ? (props.start.mods ? "この状態からやり直す" : "新しいベースでもう一度") : k === "tree" ? "結果ごとに決める" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
                     <span v-if="missWhy(rows[focusRow]!, k)" class="text-[10px] text-rose-300">{{ missWhy(rows[focusRow]!, k) }}</span>
-                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "restart" ? (props.start.mods ? "手打ちの状態を作り直して 1 手目から" : "白を買い直して 1 手目から") : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
+                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "狙い以外は残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "restart" ? (props.start.mods ? "手打ちの状態を作り直して 1 手目から" : "白を買い直して 1 手目から") : k === "tree" ? "狙い 2 / 狙い 1・狙い以外 1 … ごとに細かく" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
                   </span>
                 </button>
               </div>
@@ -1461,18 +1468,18 @@ defineExpose({ rows });
                 <!-- 枝は 1 行の要約が既定、細かく変える時だけ開く (2026-10-08 レビュー P2: 「消去で消す」の直下で「消さずに打つ」が光って矛盾に見えた) -->
                 <p v-if="sp" class="mt-3 text-[11px] text-emerald-200/80">{{ splitSummary(rows[focusRow]!, sp) }} <button type="button" class="ml-2 rounded border border-white/15 px-1.5 text-[10px] opacity-70 hover:opacity-100" @click="splitOpen = !splitOpen">{{ splitOpen ? "閉じる ▲" : "変える ▼" }}</button></p>
                 <div v-if="sp && splitOpen" class="mt-2 max-w-3xl space-y-1.5 rounded-lg border border-white/10 bg-black/20 p-2 text-[11px]">
-                  <p class="text-[10px] opacity-50">消去を打つ前 (ハズレがどちらに付いたか)</p>
+                  <p class="text-[10px] opacity-50">消去を打つ前 (狙い以外がどちらに付いたか)</p>
                   <div class="flex items-center gap-2 max-md:flex-wrap">
-                    <span class="w-52 shrink-0 opacity-70 max-md:w-full">ハズレが{{ sp.o }}に付いた</span>
+                    <span class="w-52 shrink-0 opacity-70 max-md:w-full">狙い以外が{{ sp.o }}に付いた</span>
                     <button v-for="k in (['keep', 'annul'] as const)" :key="k" type="button" class="rounded border px-2 py-0.5" :class="otherJunkOf(rows[focusRow]!.set?.kind, rows[focusRow]!.step.otherJunk) === k ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-white/40'" @click="patch(focusRow!, { otherJunk: k })">{{ k === "keep" ? `消さずにもう一度打つ (${sp.t}に付く)` : "消去" }}</button>
                   </div>
-                  <p class="mt-1 text-[10px] opacity-50">消去を打った後 (どちらのハズレが消えたか)</p>
+                  <p class="mt-1 text-[10px] opacity-50">消去を打った後 (どちらの狙い以外が消えたか)</p>
                   <div class="flex items-center gap-2 max-md:flex-wrap">
-                    <span class="w-52 shrink-0 opacity-70 max-md:w-full">{{ sp.t }}のハズレが消えた ({{ sp.o }}のハズレが残った)</span>
+                    <span class="w-52 shrink-0 opacity-70 max-md:w-full">{{ sp.t }}の狙い以外が消えた ({{ sp.o }}の狙い以外が残った)</span>
                     <span class="rounded border border-emerald-400/40 px-2 py-0.5 text-emerald-100">もう一度打つ ({{ sp.t }}に付く)</span>
                   </div>
                   <div class="flex items-center gap-2 max-md:flex-wrap">
-                    <span class="w-52 shrink-0 opacity-70 max-md:w-full">{{ sp.o }}のハズレが消えた ({{ sp.t }}のハズレが残った)</span>
+                    <span class="w-52 shrink-0 opacity-70 max-md:w-full">{{ sp.o }}の狙い以外が消えた ({{ sp.t }}の狙い以外が残った)</span>
                     <!-- 増強 (マジック) は狙いの側が埋まったまま打つと反対の側にしか付かないので、消去しか無い (2026-10-08 レビュー A7) -->
                     <span v-if="rows[focusRow]!.set?.kind === 'augment'" class="rounded border border-emerald-400/40 px-2 py-0.5 text-emerald-100">もう一度消去 (そのまま打つと{{ sp.o }}にしか付かない)</span>
                     <button v-else v-for="k in (['annul', 'redo'] as const)" :key="k" type="button" class="rounded border px-2 py-0.5" :class="otherGoneOf(rows[focusRow]!.set?.kind, rows[focusRow]!.step.otherGone) === k ? 'border-amber-400 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-white/40'" @click="patch(focusRow!, { otherGone: k })">{{ k === "annul" ? "もう一度消去" : "もう一度打つ" }}</button>
@@ -1489,8 +1496,8 @@ defineExpose({ rows });
                 2026-10-08 オーナー「説明は分かりやすいように、感覚で分かるように」: プルダウン 3 つ並びをやめて、文になる札の並びに
               -->
               <!-- 打った結果ごとに次にすること (高貴・消去・カオスで、狙いが片側だけの手) -->
-              <div v-if="treeOf(focusRow!, rows[focusRow]!)" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
-                <StageOutcomeTree v-bind="treeOf(focusRow!, rows[focusRow]!)!" :policy="rows[focusRow]!.step.policy ?? {}" :sets="sets" :steps="rows.slice(0, focusRow!).map((rw, n) => ({ n, label: cardTitle(rw) }))" :locked="locked" @change="(pol) => patch(focusRow!, { policy: Object.keys(pol).length ? pol : undefined })" />
+              <div v-if="missKind(rows[focusRow]!) === 'tree' && treeOf(focusRow!, rows[focusRow]!)" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
+                <StageOutcomeTree v-bind="treeOf(focusRow!, rows[focusRow]!)!" :policy="rows[focusRow]!.step.policy ?? {}" :sets="sets" :steps="rows.slice(0, focusRow!).map((rw, n) => ({ n, label: cardTitle(rw) }))" :locked="locked" @change="(pol) => patch(focusRow!, { policy: pol })" />
               </div>
               <div v-else-if="situationsOf(focusRow!, rows[focusRow]!).length" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
                 <p class="mb-1 text-[12px] font-bold text-sky-100">こうなったら？ <span class="font-normal opacity-60">(決めなければ上と同じ)</span></p>
@@ -1559,7 +1566,7 @@ defineExpose({ rows });
                         <span v-for="o in missSet(r.step)!.omens" :key="o" class="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/10 py-0.5 pl-0.5 pr-2 text-orange-100"><img :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />{{ jaOfOmen(o) ?? o }}</span>
                         <span class="text-[11px] text-amber-200/80">↺ 付くまで繰り返す</span>
                       </template>
-                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側のハズレを消して次へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次へ" }}</span>
+                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側の狙い以外を消して次へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次へ" }}</span>
                     </button>
                   </template>
                   <template v-if="needs2(r) && singleSet(r)">
@@ -1618,7 +1625,7 @@ defineExpose({ rows });
                         <span v-for="o in missSet(r.step)!.omens" :key="o" class="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/10 py-0.5 pl-0.5 pr-2 text-orange-100"><img :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />{{ jaOfOmen(o) ?? o }}</span>
                         <span class="text-[11px] text-amber-200/80">↺ 付くまで繰り返す</span>
                       </template>
-                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側のハズレを消して次へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次へ" }}</span>
+                      <span v-else class="opacity-60">{{ r.step.onMiss === "annul_next" ? "狙いの側の狙い以外を消して次へ" : r.step.onMiss === "redo" ? "もう一度打つ" : "そのまま次へ" }}</span>
                     </button>
                   </template>
                   <template v-if="needs2(r) && singleSet(r)">

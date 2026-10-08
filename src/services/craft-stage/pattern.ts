@@ -27,7 +27,7 @@ export type MissRule = "next" | "annul_next" | "redo" | "annul_redo" | "restart"
  * annul_next: 外れが狙いの側に付いて埋まっていたら消去してから次へ (反対の側なら残して次へ)。レアリティが変わる手 (変成など) 用。
  * 2026-10-08 オーナー「1 手目から消去の下りの選択肢ないと 2 手目から表示も変。順番に案内して設定させてあげないと中途半端」
  */
-export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", annul_next: "狙いの側のハズレを消して次へ", redo: "同じ手をもう一度", annul_redo: "外してもう一度", restart: "最初からやり直す" };
+export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", annul_next: "狙いの側の狙い以外を消して次へ", redo: "同じ手をもう一度", annul_redo: "外してもう一度", restart: "最初からやり直す" };
 
 export interface PatternStep {
   /** セットのキー (PatternSet.key) */
@@ -77,30 +77,30 @@ export interface PatternStep {
    */
   on?: Partial<Record<Situation, Reaction>>;
   /**
-   * 結果ごとの行動 (2026-10-08 オーナー「打った結果全てにどういう行動をとるかを選択肢に。偉大左を打ったらハズレ 2 / 当たり 1 ハズレ 1 / 当たり 2、
-   * ハズレ 2 なら消去、消去がハズレに刺さったら完全高貴、当たりに刺さったら…と細かく」)。
-   * 狙いの側の状態「当たり h・ハズレ j」(キー `${h}-${j}`) ごとに、次に打つ物 (set) かすること (then)。打った結果がまた別の状態になり、そこでも決めた物を使う
+   * 結果ごとの行動 (2026-10-08 オーナー「打った結果全てにどういう行動をとるかを選択肢に。偉大左を打ったら狙い以外 2 / 当たり 1 狙い以外 1 / 当たり 2、
+   * 狙い以外 2 なら消去、消去が狙い以外に刺さったら完全高貴、当たりに刺さったら…と細かく」)。
+   * 狙いの側の状態「当たり h・狙い以外 j」(キー `${h}-${j}`) ごとに、次に打つ物 (set) かすること (then)。打った結果がまた別の状態になり、そこでも決めた物を使う
    */
   policy?: Record<string, PolicyAct>;
 }
 /** 結果の状態での行動: 打つ物 (set) か、次の手・最初から・N 手目 (then) */
 export interface PolicyAct { set?: string; then?: "next" | "restart" | "goto"; goto?: number }
-/** 状態のキー (狙いの側の当たり h・ハズレ j) */
+/** 状態のキー (狙いの側の当たり h・狙い以外 j) */
 export const policyKey = (h: number, j: number): string => `${h}-${j}`;
 /**
  * 1 つの手で起こりうる状況。
- *   pre_full … 打つ前に狙いの側がハズレで埋まっている (6 MOD・ルーンで 7 MOD の時も)
+ *   pre_full … 打つ前に狙いの側が狙い以外で埋まっている (6 MOD・ルーンで 7 MOD の時も)
  *   partial  … 一部だけ当たり (2 つ以上足す手・候補のうち N つ)
- *   miss_t   … ハズレが狙いの側に付いた / miss_o … ハズレが反対の側に付いた / miss … ハズレ (側が決まらない手)
+ *   miss_t   … 狙い以外が狙いの側に付いた / miss_o … 狙い以外が反対の側に付いた / miss … 狙い以外 (側が決まらない手)
  */
 export type Situation = "pre_full" | "partial" | "miss_t" | "miss_o" | "miss";
 // 短く (2026-10-08 オーナー「日本語シンプルに、ややこしい」)
 export const SITUATION_JA: Record<Situation, string> = {
-  pre_full: "打つ前に狙う側がハズレで満杯",
+  pre_full: "打つ前に狙う側が狙い以外で満杯",
   partial: "一部だけ付いた",
-  miss_t: "ハズレ (狙う側)",
-  miss_o: "ハズレ (反対側)",
-  miss: "ハズレ",
+  miss_t: "狙い以外 (狙う側)",
+  miss_o: "狙い以外 (反対側)",
+  miss: "狙い以外",
 };
 /**
  * 状況への反応: 先に打つ物 (消去・カオス・パーフェクトエッセンス・骨。セットのキー、無ければ打たない) → 次にすること。
