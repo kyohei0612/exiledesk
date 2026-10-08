@@ -77,7 +77,7 @@ export interface CompiledStep {
   otherJunk?: "keep";
   /** 状況ごとの反応 (PatternStep.on をセットに直した物。goto は並べた後の番号) */
   /** 結果の状態ごとの行動 (PatternStep.policy をセットに直した物。キーは `${当たり}-${ハズレ}` (狙いの側)) */
-  policy?: Record<string, { act?: { kind?: PatternKind; currency: string; omens: string[] }; then?: "next" | "restart" | "goto" | "reset" | "miss"; goto?: number }>;
+  policy?: Record<string, { act?: { kind?: PatternKind; currency: string; omens: string[] }; then?: "next" | "restart" | "goto" | "reset" | "miss"; goto?: number; keep?: number }>;
   on?: Partial<Record<"pre_full" | "partial" | "miss_t" | "miss_o" | "miss", { pre?: { kind?: PatternKind; currency: string; omens: string[] } | null; then: "repeat" | "next" | "restart" | "goto"; goto?: number; again?: { kind?: PatternKind; currency: string; omens: string[] } | null }>>;
   /**
    * 「残り」の手の元の手 (パターンの中の番号)。この手の間に候補が消えても、まだ 1 つでも付いていればこの手を続け、全部消えたら元の手へ
@@ -568,9 +568,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       else { i = at; if (rx.again) againRef.v = { i: at, s: rx.again }; }
       return null;
     };
-    /** 1 MOD 残し消去: 固定以外の MOD が 1 つになるまで素の消去を打ち、カオスの手 (to) へ戻る */
-    const resetTo = (to: number): string | null => {
-      for (let g = 0; g < 12 && allMods(item).filter((m) => !m.fractured).length > 1 && steps.length < max; g++) {
+    /** N MOD 残し消去 (既定 1): 固定以外の MOD が keep 個になるまで素の消去を打ち、to の手へ戻る */
+    const resetTo = (to: number, keep = 1): string | null => {
+      for (let g = 0; g < 12 && allMods(item).filter((m) => !m.fractured).length > keep && steps.length < max; g++) {
         const e3 = play("annul", []);
         if (e3) return e3;
       }
@@ -762,7 +762,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           }
           if (rx.then === "next") { i++; moved = true; break; }
           if (rx.then === "restart") { restartPattern(); moved = true; break; }
-          if (rx.then === "reset" && rx.goto != null) { const e4 = resetTo(rx.goto); if (e4) return fail(`${i + 1} 手目のリセット: ${e4}`); moved = true; break; }
+          if (rx.then === "reset" && rx.goto != null) { const e4 = resetTo(rx.goto, rx.keep ?? 1); if (e4) return fail(`${i + 1} 手目のリセット: ${e4}`); moved = true; break; }
           if (rx.then === "goto" && rx.goto != null) { i = rx.goto; moved = true; break; }
           break;
         }
