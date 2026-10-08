@@ -96,7 +96,8 @@ const rows = computed((): Row[] => {
       seen.add(key);
       const act = props.policy[key];
       const nx = act?.set ? setByKey(props.sets, act.set) : undefined;
-      if (nx) walk(nx, o.h, o.j, depth + 1, labelOf(nx.key));
+      // カオスは入れ替えるだけで、結果は次の手で見る (下に結果を広げない)
+      if (nx && nx.kind !== "chaos") walk(nx, o.h, o.j, depth + 1, labelOf(nx.key));
     }
   };
   walk(props.set, props.h0, props.j0, 0, "");
@@ -122,6 +123,7 @@ const stateText = (h: number, j: number): string => `${SIDE_JA.value}: 狙い ${
           <b :class="r.done ? 'text-emerald-200' : r.stuck ? 'text-rose-300' : ''">{{ r.label }}</b>
           <span class="text-[10px] opacity-60">({{ stateText(r.h, r.j) }})</span>
           <span v-if="r.done" class="ml-auto text-emerald-200">✓ 揃った → 次の手</span>
+          <span v-else-if="r.first && policy[r.key]?.set && setByKey(sets, policy[r.key]!.set!)?.kind === 'chaos'" class="ml-auto text-[11px] text-amber-200/80">カオスで入れ替え → 結果は次の手で見る</span>
           <span v-else-if="!r.first" class="ml-auto text-[11px] text-sky-200/80">↑ 上で決めた: {{ actText(policy[r.key]) || "上の決まり" }}</span>
         </div>
         <div v-if="r.first && !r.done && !locked" class="mt-1 flex flex-wrap items-center gap-1">

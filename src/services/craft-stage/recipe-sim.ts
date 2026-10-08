@@ -746,6 +746,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           if (rx.act) {
             const e2 = play(rx.act.currency, rx.act.omens);
             if (e2) return fail(`${i + 1} 手目 (狙い・狙い以外 ${key} の時): ${e2}`);
+            // カオスは入れ替えるだけで、結果は次の手で見る (消去と違って付く物がランダム。2026-10-08 オーナー)
+            if (rx.act.kind === "chaos") { if (!meets(item, p.target)) { i++; moved = true; } break; }
             continue;
           }
           if (rx.then === "next") { i++; moved = true; break; }
