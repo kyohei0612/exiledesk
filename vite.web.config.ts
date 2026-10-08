@@ -8,8 +8,17 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
+import { execSync } from "node:child_process";
+
+/** 配信ごとに変わる版の印 (日本時間の月日・時分 + コミット)。Web 版は版の番号を上げずに配るので、更新されたか分かるように (2026-10-08 オーナー) */
+const jst = new Date(Date.now() + 9 * 3600_000);
+const pad = (n: number): string => String(n).padStart(2, "0");
+let sha = "";
+try { sha = execSync("git rev-parse --short HEAD").toString().trim(); } catch { /* 無くてよい */ }
+const WEB_BUILD = `${pad(jst.getUTCMonth() + 1)}/${pad(jst.getUTCDate())} ${pad(jst.getUTCHours())}:${pad(jst.getUTCMinutes())}${sha ? ` · ${sha}` : ""}`;
 
 export default defineConfig({
+  define: { __WEB_BUILD__: JSON.stringify(WEB_BUILD) },
   plugins: [vue(), tailwindcss(), {
     name: "exiledesk-web-finish",
     apply: "build" as const,
