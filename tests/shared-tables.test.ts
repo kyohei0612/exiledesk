@@ -14,7 +14,7 @@ describe("種類の日本語 (クライアントの ItemClasses と同じ)", () 
     expect(classJa("Foci")).toBe("フォーカス");
     expect(classJa("Body_Armours", false)).toBe("鎧");
     expect(classJa("Shields", false)).toBe("盾");
-    expect(classJa("Gloves_str")).toBe("手袋(str)");
+    expect(classJa("Gloves_str")).toBe("手袋 (筋力)");
     expect(classJa("Wands_fire", false)).toBe("ワンド");
   });
 });

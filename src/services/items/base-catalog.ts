@@ -13,8 +13,10 @@ import { baseStatsOf, FLASK_BASES, GEM_BASES } from "../craft-stage/stage-bases"
 import { jaTypeName } from "../trade2/localize";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
-const A = (k: string, ja: string): Array<[string, string]> => ["str", "dex", "int", "str_dex", "str_int", "dex_int"].map((x) => [`${k}_${x}`, `${ja}(${x})`]);
-const EL = (k: string, ja: string): Array<[string, string]> => [[k, ja], ...([["fire", "火"], ["cold", "冷気"], ["lightning", "雷"], ["chaos", "混沌"], ["physical", "物理"]] as const).map(([x, j]): [string, string] => [`${k}_${x}`, `${ja}(${j})`])];
+/** 能力値の要求 (ゲームの言葉で。2026-10-09 初見レビュー「手袋(dex_int) が読めない」) */
+const ATTR_JA: Record<string, string> = { str: "筋力", dex: "器用", int: "知性", str_dex: "筋力・器用", str_int: "筋力・知性", dex_int: "器用・知性" };
+const A = (k: string, ja: string): Array<[string, string]> => ["str", "dex", "int", "str_dex", "str_int", "dex_int"].map((x) => [`${k}_${x}`, `${ja} (${ATTR_JA[x]})`]);
+const EL = (k: string, ja: string): Array<[string, string]> => [[k, ja], ...([["fire", "火"], ["cold", "冷気"], ["lightning", "雷"], ["chaos", "混沌"], ["physical", "物理"]] as const).map(([x, j]): [string, string] => [`${k}_${x}`, `${ja} (${j})`])];
 /** 種類の段 (poe2db のモッドの一覧と同じ並び) */
 export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> = [
   { ja: "片手武器", cls: [...EL("Wands", "ワンド"), ["OneHand_Maces", "片手メイス"], ["Sceptres", "セプター"], ["Spears", "スピア"]] },
@@ -24,7 +26,7 @@ export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> =
   { ja: "靴", cls: A("Boots", "靴") },
   { ja: "鎧", cls: A("Body_Armours", "鎧") },
   { ja: "兜", cls: A("Helmets", "兜") },
-  { ja: "オフハンド", cls: [["Quivers", "矢筒"], ["Shields_str", "盾(str)"], ["Shields_str_dex", "盾(str_dex)"], ["Shields_str_int", "盾(str_int)"], ["Bucklers", "バックラー"], ["Foci", "フォーカス"]] },
+  { ja: "オフハンド", cls: [["Quivers", "矢筒"], ["Shields_str", "盾 (筋力)"], ["Shields_str_dex", "盾 (筋力・器用)"], ["Shields_str_int", "盾 (筋力・知性)"], ["Bucklers", "バックラー"], ["Foci", "フォーカス"]] },
   { ja: "フラスコ", cls: [["LifeFlask", "ライフフラスコ"], ["ManaFlask", "マナフラスコ"]] },
   { ja: "ジェム", cls: [["SkillGem", "スキルジェム"]] },
 ];
@@ -36,7 +38,7 @@ export const CATALOG_CLS_JA = new Map(CATALOG_ROWS.flatMap((r) => r.cls));
 export function classJa(cls: string, withAttr = true): string {
   const hit = CATALOG_CLS_JA.get(cls) ?? [...CATALOG_CLS_JA].find(([k]) => k.startsWith(`${cls}_`))?.[1];
   if (!hit) return cls.replace(/_/g, " ");
-  return withAttr && CATALOG_CLS_JA.has(cls) ? hit : hit.replace(/\(.*\)$/, "");
+  return withAttr && CATALOG_CLS_JA.has(cls) ? hit : hit.replace(/\s*\(.*\)$/, "");
 }
 /** ヴェリシウムで作る (最初から選ぶ物ではない) ベース */
 const RUNE_MADE = /^(Runeforged|Runemastered|Runefather's) /;

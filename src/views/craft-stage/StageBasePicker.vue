@@ -10,6 +10,7 @@ import { computed, ref, watch } from "vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import { baseCatalog, CATALOG_CLS_JA } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
+import Icon from "../../components/ui/Icon.vue";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
 const props = defineProps<{ base: string; data: PatchData | null; /** まだ選んでいない (開いた状態で始まり、今のベースは出さない) */ unpicked?: boolean }>();
@@ -27,17 +28,16 @@ function choose(en: string): void {
 <template>
   <div class="w-full">
     <!-- 今のベース (押すと開く) -->
-    <button type="button" class="flex items-center gap-2 rounded-lg border px-3 py-1 text-left hover:bg-white/5" :class="open ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/20'" @click="open = !open">
-      <span class="opacity-60">ベース</span>
-      <template v-if="unpicked"><b class="text-[13px] text-amber-100">選んでください</b></template>
+    <button type="button" class="group flex h-10 items-center gap-3 rounded-md px-2 text-left transition hover:bg-white/5" :class="open ? 'bg-white/[0.04]' : ''" :aria-expanded="open" @click="open = !open">
+      <template v-if="unpicked"><b class="text-[15px] text-[var(--exile-color-accent-focus)]">ベースを選ぶ</b></template>
       <template v-else>
-        <img v-if="baseArt(base)" :src="baseArt(base)!" alt="" class="h-7 w-7 object-contain" draggable="false" />
-        <b class="text-[13px] text-amber-100">{{ current?.ja ?? base }}</b>
-        <span v-if="current" class="opacity-50">{{ CATALOG_CLS_JA.get(current.cls) ?? current.cls }}</span>
+        <img v-if="baseArt(base)" :src="baseArt(base)!" alt="" class="size-8 object-contain" draggable="false" />
+        <b class="font-display text-[15px] tracking-wide text-[var(--color-rarity-rare)]">{{ current?.ja ?? base }}</b>
+        <span v-if="current" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ CATALOG_CLS_JA.get(current.cls) ?? current.cls }}</span>
       </template>
-      <span class="ml-1 opacity-60">{{ open ? "▲ 閉じる" : "▼ 変える" }}</span>
+      <span class="ml-1 inline-flex items-center gap-0.5 text-[12px] text-[var(--exile-color-text-tertiary)] group-hover:text-[var(--exile-color-text-secondary)]">{{ open ? "閉じる" : "変える" }}<Icon :name="open ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></span>
     </button>
-    <div v-if="open" class="mt-2 rounded-xl border border-white/10 bg-black/30 p-3">
+    <div v-if="open" class="mt-2 rounded-lg bg-black/30 p-4">
       <!-- 未選択の時は前のベース・種類を選んだ状態にしない (2026-10-05 オーナー「リセットの時ベース未選択から始めんかい」) -->
       <BaseCatalog :data="data" :selected="unpicked ? '' : base" extras @pick="choose" />
     </div>

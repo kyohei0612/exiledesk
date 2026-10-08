@@ -46,7 +46,7 @@ const families = computed((): Array<{ ja: string; fams: Family[] }> =>
     const fams: Family[] = [];
     for (const [c, ja] of r.cls) {
       if (!count.value.get(c)) continue;
-      const m = /^(.*?)\((.*)\)$/.exec(ja);
+      const m = /^(.*?)\s*\((.*)\)$/.exec(ja);
       const name = m ? m[1]! : ja;
       const raw = m ? m[2]! : "";
       const label = raw ? (ATTR_JA[raw] ?? raw) : (m ? "無印" : name);
