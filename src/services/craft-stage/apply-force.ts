@@ -40,6 +40,19 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   // ノーマルに付けたらマジック
   const it: StageItem = item.rarity === "normal" ? { ...item, rarity: "magic" } : item;
   if ((p.flag === "d" || p.flag === "f") && it.rarity !== "rare") return skip(item, `${p.flag === "d" ? "冒涜" : "フラクチャー"}の MOD はレアにだけ (先に王者か錬金でレアに)`);
+  // 冒涜で付けられるのは冒涜の MOD だけ (2026-10-08 オーナー「冒涜 MOD しか冒涜は付けれない」)
+  if (p.flag === "d" && mod.source !== "desecrated" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skip(item, "冒涜で付くのは冒涜の MOD だけ");
+  // フラクチャー: 同じ MOD が付いていればそれを固定する (付け直さない)
+  if (p.flag === "f") {
+    if (allMods(it).some((m) => m.fractured)) return skip(item, "フラクチャーは 1 つまで");
+    const have = allMods(it).find((m) => m.modId === p.modId);
+    if (have) {
+      if (have.desecrated || have.crafted) return skip(item, "冒涜・エッセンスの MOD は固定できない");
+      const fixed = { ...have, fractured: true };
+      const swap = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.map((m) => (m === have ? fixed : m));
+      return { applied: true, item: { ...it, prefixes: swap(it.prefixes), suffixes: swap(it.suffixes) }, added: [fixed], removed: [] };
+    }
+  }
   // 同じ系統が先 (枠より分かりやすい理由)
   if (familyBlocked(mod, takenFamilies(data, it))) return skip(item, "同じ系統の MOD が付いている");
   if (!room(it, side)) return skip(item, it.rarity === "magic" ? `マジックは${SIDE_JA[side]} 1 つまで (3 つ目は王者でレアにしてから)` : `${SIDE_JA[side]}の枠が埋まっている`);

@@ -9,6 +9,7 @@
   状態と操作は [[craft-stage.ts]]、1 手の中身は services/craft-stage (計算機と同じ規則)。
 -->
 <script setup lang="ts">
+import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
 import StageItemCard from "./StageItemCard.vue";
@@ -107,8 +108,10 @@ const stageModGroups = computed<ModGroup[]>(() => {
   return [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed).map((m) => ({ picks: [{ modId: m.modId, minTierIndex: m.tierIndex }] }));
 });
 async function searchStageMods(): Promise<void> {
-  const d = s.data.value;
-  if (d && stageModGroups.value.length) await searchModGroups(d, { groups: stageModGroups.value });
+  const d = s.data.value, it = s.item.value;
+  // 今のアイテムそのものを探すので、ベース・アイテムレベル・ソケット・各 MOD の段の下限まで入れる
+  // (2026-10-08 オーナー「今の MOD で検索なんだからベースからベースレベルからなにから。ティアだけは下限でおｋ」)
+  if (d && it && stageModGroups.value.length) await searchModGroups(d, { groups: stageModGroups.value, exact: { baseType: it.base, ilvlMin: it.itemLevel, socketsMin: it.sockets ?? 0 } });
 }
 const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);
 /** シミュレーションのソケットの上限 (熟練工の上限と、その + 1 = 規格外) */
@@ -180,12 +183,15 @@ function pickSimBase(en: string): void {
  * 手で打つ画面の今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08 オーナー「その MOD が付いた状態以降を確認したい時があるから、
  * 手打ちからそのまま持っていくコース」)。ベース・アイテムレベルは同じ、ベース代の既定は 手打ちの累計 + 白ベース代
  */
+/** アプリ版だけ (Web 版は POE2Tube 用の JSON・動画モードを出さない) */
+const inApp = isTauriRuntime();
 function simFromHand(): void {
   const it = s.item.value;
   if (!it) return;
   s.simStartItem.value = { ...it, prefixes: it.prefixes.map((m) => ({ ...m })), suffixes: it.suffixes.map((m) => ({ ...m })) };
   s.simStartCost.value = s.total.value;
-  s.simTargets.value = [];
+  // 付いている MOD は狙いに入れておく (その段以上。消えたら取り直す)。足したい MOD を 2 で足して決めたら、そのままツリー (3〜5 は飛ばす)
+  s.simTargets.value = [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, minTierIndex: m.tierIndex, ...(m.fractured ? { method: "fracture" as const } : m.desecrated ? { method: "desecrate" as const } : {}) }));
   s.simOrder.value = [];
   s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
   s.simSockets.value = it.sockets ?? 0;
@@ -259,7 +265,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
     <div v-if="s.replay.value" class="mb-3 flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
       <b class="text-sky-200">再生中</b>
       <span>{{ s.replay.value.plan.title ?? s.replay.value.plan.base }} · {{ s.log.value.length }} 手目まで (seed {{ s.replay.value.plan.seed }})</span>
-      <button type="button" :class="btn" class="ml-auto max-md:hidden" @click="s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
+      <button v-if="inApp" type="button" :class="btn" class="ml-auto max-md:hidden" @click="s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
       <button type="button" :class="btn" @click="s.leaveReplay()">手で打つ</button>
     </div>
 
@@ -290,12 +296,12 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
       <!-- 今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08) -->
       <button type="button" :class="btn" class="border-amber-400/60 text-amber-100" title="今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーションへ。ベース代は 手打ちの累計 + 白ベース代" @click="simFromHand">この状態からシミュレーション →</button>
-      <button type="button" :class="btn" class="border-amber-400/60 text-amber-100 max-md:hidden" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
+      <button v-if="inApp" type="button" :class="btn" class="border-amber-400/60 text-amber-100 max-md:hidden" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
       <span class="ml-auto flex items-center gap-1.5">
         <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
-        <button type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)" @click="copy('手順 JSON', s.plan())">手順 JSON</button>
-        <button type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="POE2Tube に渡す結果 JSON (今の相場の値段で)" @click="copy('結果 JSON', s.result(pkg.version))">結果 JSON</button>
-        <button type="button" :class="btn" class="max-md:hidden" title="craft-stage-run.mjs の --prices に渡す相場 (高貴建て)" @click="copy('相場 JSON', s.prices())">相場 JSON</button>
+        <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)" @click="copy('手順 JSON', s.plan())">手順 JSON</button>
+        <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="POE2Tube に渡す結果 JSON (今の相場の値段で)" @click="copy('結果 JSON', s.result(pkg.version))">結果 JSON</button>
+        <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" title="craft-stage-run.mjs の --prices に渡す相場 (高貴建て)" @click="copy('相場 JSON', s.prices())">相場 JSON</button>
         <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
         <button type="button" :class="btn" class="border-sky-400/60 text-sky-100" :disabled="!stageModGroups.length" title="今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (数値・ベースは入れない)" @click="searchStageMods">今の MOD を取引所で検索 ↗</button>
       </span>

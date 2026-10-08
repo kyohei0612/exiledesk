@@ -28,8 +28,8 @@ const canStart = computed(() => !s.log.value.length && !s.replay.value);
  * 種類: 普通・ルーン = n、エッセンス・パーフェクト = e、冒涜・異界 = d。付けられない時は理由 (ボタンを灰色に)
  * (2026-10-08 オーナー「クラフト途中でも MOD 付けれるように、ただ基本的な事は抑えて」)
  */
-function forceOf(g: ModGroup, modId: string, rank: string): { key: string; why: string | null } {
-  const flag: ForceFlag = g === "essence" || g === "perfect_essence" ? "e" : g === "desecrated" || g === "otherworldly" ? "d" : "n";
+function forceOf(g: ModGroup, modId: string, rank: string, as?: ForceFlag): { key: string; why: string | null } {
+  const flag: ForceFlag = as ?? (g === "essence" || g === "perfect_essence" ? "e" : g === "desecrated" || g === "otherworldly" ? "d" : "n");
   const key = forceKey(modId, rank, flag);
   return { key, why: s.replay.value ? "再生中は打てない" : s.usable(key) };
 }
@@ -276,11 +276,13 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                       <!-- 打ち始めた後 (と、始めの状態に入れられない種類) は指名の手として付ける。灰色 = 今は付けられない (理由は title) -->
                       <span v-if="!canStart || !(sec.g === 'normal' || sec.g === 'desecrated')" class="inline-flex gap-1">
                         <button type="button" class="rounded border px-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-30" :class="sec.g === 'desecrated' || sec.g === 'otherworldly' ? 'border-green-700/80 text-lime-200 hover:bg-green-800/30' : sec.g === 'essence' || sec.g === 'perfect_essence' ? 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15' : 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15'" :disabled="!!forceOf(sec.g, t.modId ?? r.id, t.rank).why" :title="forceOf(sec.g, t.modId ?? r.id, t.rank).why ?? `${t.rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`" @click.stop="s.use(forceOf(sec.g, t.modId ?? r.id, t.rank).key)">{{ sec.g === "desecrated" || sec.g === "otherworldly" ? "冒涜で付ける" : "付ける" }}</button>
+                      <!-- 途中でもフラクチャー (普通の MOD だけ。付いていればそれを固定、無ければ固定で付ける。レアだけ・1 つまで。2026-10-08 オーナー) -->
+                        <button v-if="sec.g === 'normal'" type="button" class="rounded border border-orange-400/60 px-1.5 text-[10px] text-orange-200 hover:bg-orange-500/15 disabled:cursor-not-allowed disabled:opacity-30" :disabled="!!forceOf(sec.g, t.modId ?? r.id, t.rank, 'f').why" :title="forceOf(sec.g, t.modId ?? r.id, t.rank, 'f').why ?? `${t.rank} をフラクチャー (付いていればそれを固定、無ければ固定で付ける)`" @click.stop="s.use(forceOf(sec.g, t.modId ?? r.id, t.rank, 'f').key)">フラクチャー</button>
                       </span>
                       <span v-else class="inline-flex gap-1 max-md:flex-wrap max-md:justify-end">
                         <button v-if="sec.g === 'normal'" type="button" class="rounded border border-sky-400/50 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/15" :title="`始めの状態に ${t.rank} を付ける (付きうる物だけ)`" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">付ける</button>
                         <button v-if="sec.g === 'normal'" type="button" class="rounded border border-orange-400/60 px-1.5 text-[10px] text-orange-200 hover:bg-orange-500/15 disabled:cursor-not-allowed disabled:opacity-30" :disabled="hasStart('fractured')" :title="hasStart('fractured') ? 'フラクチャーは 1 つまで (もう付いている)' : `始めの状態に ${t.rank} をフラクチャーで付ける (レアになる)`" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, fractured: true })">フラクチャー</button>
-                        <button v-if="sec.g === 'desecrated' || sec.g === 'normal'" type="button" class="rounded border border-green-700/80 px-1.5 text-[10px] text-lime-200 hover:bg-green-800/30 disabled:cursor-not-allowed disabled:opacity-30" :disabled="hasStart('desecrated')" :title="hasStart('desecrated') ? '冒涜の MOD はアイテムに 1 つまで (もう付いている)' : `始めの状態に ${t.rank} を冒涜の MOD で付ける (レアになる)`" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, desecrated: true })">冒涜</button>
+                        <button v-if="sec.g === 'desecrated'" type="button" class="rounded border border-green-700/80 px-1.5 text-[10px] text-lime-200 hover:bg-green-800/30 disabled:cursor-not-allowed disabled:opacity-30" :disabled="hasStart('desecrated')" :title="hasStart('desecrated') ? '冒涜の MOD はアイテムに 1 つまで (もう付いている)' : `始めの状態に ${t.rank} を冒涜の MOD で付ける (レアになる)`" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, desecrated: true })">冒涜</button>
                       </span>
                     </td>
                   </tr>

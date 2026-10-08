@@ -20,11 +20,12 @@ const KINDS: StatKind[] = ["explicit", "fractured", "desecrated"];
  * その MOD の取引所の条件 (普通 / 固定済み / 冒涜 のどれでも)。値の下限は入れない: 組み合わせだけで探す
  * (2026-10-07 オーナー「組み合わせだけの検索でおｋだから一旦数値は抜き」)
  */
-export function statsOfMod(data: PatchData, t: ModPick): Array<{ id: string }> {
+export function statsOfMod(data: PatchData, t: ModPick, withMin = false): Array<{ id: string; min?: number }> {
   return tradeFiltersFor(data, [t]).filters.flatMap((f) => {
-    if (!/^explicit\./.test(f.id)) return [{ id: f.id }];
+    const min = withMin && f.min != null ? { min: f.min } : {};
+    if (!/^explicit\./.test(f.id)) return [{ id: f.id, ...min }];
     const key = f.id.replace(/^explicit\./, "");
-    return KINDS.filter((k) => hasStatKind(key, k)).map((k) => ({ id: `${k}.${key}` }));
+    return KINDS.filter((k) => hasStatKind(key, k)).map((k) => ({ id: `${k}.${key}`, ...min }));
   });
 }
 
@@ -32,14 +33,19 @@ export function statsOfMod(data: PatchData, t: ModPick): Array<{ id: string }> {
  * MOD のグループから取引所の検索を開く (開くだけ)。名前・ベース・種類・アイテムレベル・ソケットは入れない: MOD の組み合わせで種類も決まる
  * (2026-10-07 オーナー「検索する時は基本左側指定なしでおｋ、名前から何から」「MOD できてるから自動で指定しなくても入るでしょ」)
  */
-export async function searchModGroups(data: PatchData, opts: { groups: readonly ModGroup[] }): Promise<void> {
-  const stats: Array<{ id: string }> = [];
-  const anyOf: Array<{ filters: Array<{ id: string }>; count?: number }> = [];
+export async function searchModGroups(
+  data: PatchData,
+  opts: { groups: readonly ModGroup[]; exact?: { baseType: string; ilvlMin: number; socketsMin: number } },
+): Promise<void> {
+  const stats: Array<{ id: string; min?: number }> = [];
+  const anyOf: Array<{ filters: Array<{ id: string; min?: number }>; count?: number }> = [];
   for (const g of opts.groups) {
-    const fs = g.picks.flatMap((p) => statsOfMod(data, p));
+    // exact (手で打つ画面の今のアイテム): 段の下限の値も入れる
+    const fs = g.picks.flatMap((p) => statsOfMod(data, p, !!opts.exact));
     const count = g.count ?? 1;
     if (fs.length === 1 && count <= 1) stats.push(fs[0]!);
     else if (fs.length) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) });
   }
-  await openTradeQuery(buildSpecQuery({ rarity: "nonunique", stats, anyOf }));
+  const ex = opts.exact;
+  await openTradeQuery(buildSpecQuery({ rarity: "nonunique", stats, anyOf, ...(ex ? { baseType: ex.baseType, ilvlMin: ex.ilvlMin, noSanctified: true, ...(ex.socketsMin > 0 ? { socketsMin: ex.socketsMin } : {}) } : {}) }));
 }

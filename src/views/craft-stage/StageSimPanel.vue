@@ -738,7 +738,8 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const inGroup = new Set(groups.flatMap((x) => x.ids).filter((x): x is string => !!x));
       // カレンシーが決まっていない手 (未完成) の MOD は数えない: 組めている所までを完成品とする (2026-10-07 オーナー「そこまでを完成品とする」)
       const used = new Set(p.steps.filter((st) => !!setByKey(sets, st.set)).flatMap((st) => [st.target]).filter((x): x is string => !!x && !inGroup.has(x)));
-      const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId)), ...groups.map((x) => x.g)];
+      const onStart = new Set(patternStart.value.mods?.placed ?? []);
+      const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId) || onStart.has(t.modId)), ...groups.map((x) => x.g)];
       const pspec: RecipeSpec = { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) };
       const base = k * spec.runs;
       // PC のコアに分けて回す (同じ seed なので 1 本と同じ結果。2026-10-07 オーナー「おっそいな」)
@@ -1060,6 +1061,14 @@ function resetAll(): void {
   // ベースを選ぶ所から (この画面は一度消えて、選び直すと新しく始まる)
   s.simPicked.value = false;
 }
+/**
+ * 手打ちの状態から: 2 狙う MOD を決めたら 3〜5 は飛ばしてそのまま 6 のツリー (2026-10-08 オーナー「この状態からシミュレーションツリーをスタート、
+ * 費用もそこから」)。ベース代は既定のまま (作り直す時の買い直しの値段)、出す費用はこの状態から先
+ */
+watch(modsDone, (v) => {
+  if (!v || restoring || s.simStart.value !== "item") return;
+  whiteOk.value = true; fracDone.value = true; orderDone.value = true;
+});
 /** 3 白ベース設定の「決めた」: 値段とフラクチャー予定 (無ければ「しない」) */
 function whiteDecide(): void {
   whiteOk.value = true;
@@ -1167,15 +1176,17 @@ function hitName(id: string): { text: string; tone: string } {
 const split = computed(() => {
   const r = recipeOut.value?.r;
   if (!r) return { base: 0, craft: 0, baseAdd: 0, baseNote: "" };
+  if (s.simStart.value === "item") {
+    // 1 個目は手元にあるので費用はこの状態から先 (作り直した分だけベース)。2026-10-08 オーナー「費用もそこから表示」
+    const price = num(itemDivine.value) ?? 0;
+    const b = price * Math.max(0, r.bases - 1);
+    return { base: b, craft: r.perDone - price * r.bases, baseAdd: -price, baseNote: `この状態の作り直し × ${Math.max(0, r.bases - 1).toFixed(1)} 個` };
+  }
   if (fractureRow.value) {
     // ベース代は回した費用に入っている (やり直しの買い直し・作り直しの分も)
     const b = (startOnce.value ?? 0) * r.bases;
-    const name = s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "1 で決めた: 固定済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : `4 最安値スタート: ${routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? ""}`;
+    const name = s.simStart.value === "fractured" ? "1 で決めた: 固定済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : `4 最安値スタート: ${routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? ""}`;
     return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `フラクチャー済みのベース × ${r.bases.toFixed(1)} 個 (${name})` };
-  }
-  if (s.simStart.value === "item") {
-    const b = (num(itemDivine.value) ?? 0) * r.bases;
-    return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `手打ちの状態 × ${r.bases.toFixed(1)} 個` };
   }
   const b = (num(whiteDivine.value) ?? 0) * r.bases;
   return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `白のベース × ${r.bases.toFixed(1)} 個` };
@@ -1230,7 +1241,7 @@ const costGroups = computed(() => {
     else if (best === "bought") items = [{ name: "固定済みのベース", n: 1, cost: num(boughtDivine.value) ?? 0 }];
     out.push({ name: "ベース", note: `フラクチャー済みまで (${name})`, total: split.value.base, bar: "bg-stone-400/80", items: top(items, split.value.base) });
   } else {
-    out.push({ name: "ベース", note: s.simStart.value === "item" ? "手打ちの状態" : "白のベース", total: split.value.base, bar: "bg-stone-400/80", items: top([{ name: s.simStart.value === "item" ? "手打ちの状態 (累計 + 白ベース)" : "白のベース", n: r.bases, cost: split.value.base }], split.value.base) });
+    out.push({ name: "ベース", note: s.simStart.value === "item" ? "手打ちの状態" : "白のベース", total: split.value.base, bar: "bg-stone-400/80", items: top([{ name: s.simStart.value === "item" ? "この状態の作り直し (累計 + 白ベース)" : "白のベース", n: s.simStart.value === "item" ? Math.max(0, r.bases - 1) : r.bases, cost: split.value.base }], split.value.base) });
   }
   const craft = r.usage.filter((u) => u.key !== "reveal").map((u) => ({ name: usageName(u.key), n: u.count, cost: u.cost }));
   out.push({ name: "クラフト", note: fractureRow.value ? "フラクチャー済みから完成まで" : "", total: split.value.craft, bar: "bg-amber-400/80", items: top(craft, craft.reduce((a, x) => a + x.cost, 0)) });
@@ -1530,7 +1541,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     <div v-if="summary && recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3" :class="stale ? 'opacity-60' : ''">
       <p v-if="stale" class="mb-1 text-[11px] text-amber-200">設定が変わりました。もう一度「回す」で出し直してください</p>
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span class="text-[12px] opacity-60">{{ shownName }} の 1 個あたり</span>
+        <span class="text-[12px] opacity-60">{{ shownName }} の 1 個あたり<template v-if="s.simStart.value === 'item'"> (この状態から先)</template></span>
         <span class="text-[28px] font-bold leading-none tabular-nums text-amber-100">{{ moneyT(split.base + split.craft) }}</span>
         <span class="text-[12px] tabular-nums opacity-70">= ベース {{ moneyT(split.base) }} + クラフト {{ moneyT(split.craft) }}</span>
         <span v-if="summary.pDone < 0.995" class="text-[12px] font-bold text-rose-300" :title="recipeOut.r.stops.map((x) => `${pct(x.p)}: ${x.reason}`).join(' / ')">完成 {{ pct(summary.pDone) }}</span>
