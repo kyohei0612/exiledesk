@@ -19,7 +19,7 @@ function pick(mode: "hand" | "sim"): void {
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-50 grid place-items-center bg-black/65" @click.self="emit('close')">
-      <div class="w-[40rem] rounded-xl border border-white/15 bg-[#14110d] p-5 shadow-2xl">
+      <div class="w-[40rem] max-w-[calc(100vw-2rem)] rounded-xl border border-white/15 bg-[#14110d] p-5 shadow-2xl">
         <div class="mb-1 flex items-baseline gap-2">
           <b class="text-[18px] text-amber-200">ExileDesk Web</b>
           <span class="text-[12px] opacity-60">PoE2 のクラフトを、日本語のまま試す道具</span>

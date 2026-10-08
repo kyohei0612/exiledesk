@@ -80,7 +80,7 @@ function onKey(e: KeyboardEvent): void { if (e.key === "Escape") emit("close"); 
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-50 grid place-items-center bg-black/60" @click.self="emit('close')" @keydown="onKey">
-      <div class="w-[30rem] rounded-xl border border-white/15 bg-[#14110d] p-4 text-[12px] shadow-2xl">
+      <div class="w-[30rem] max-w-[calc(100vw-2rem)] rounded-xl border border-white/15 bg-[#14110d] p-4 text-[12px] shadow-2xl">
         <div class="mb-3 flex items-center gap-2">
           <b class="text-[14px] text-amber-200">要望・バグを送る</b>
           <button type="button" class="ml-auto rounded px-2 py-0.5 opacity-60 hover:bg-white/10 hover:opacity-100" @click="emit('close')">×</button>

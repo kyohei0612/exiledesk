@@ -115,8 +115,8 @@ const TABS = computed(() => [
 
     <!-- 使える物を前に、使えない物は線の下に (2026-10-05)。持っているカレンシーのお告げは使える物の直後 -->
     <div v-else-if="tab === 'orb'">
-      <div class="flex flex-wrap gap-x-4 gap-y-2">
-        <div v-for="g in orbSplit.usable" :key="'u' + g.kind" class="flex gap-1.5">
+      <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
+        <div v-for="g in orbSplit.usable" :key="'u' + g.kind" class="flex flex-wrap gap-1.5">
           <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
         </div>
         <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
@@ -124,16 +124,16 @@ const TABS = computed(() => [
       <div v-if="$slots.held" class="mt-2"><slot name="held" /></div>
       <template v-if="orbSplit.unusable.length">
         <p class="mb-1 mt-3 border-t border-white/10 pt-2 text-[10px] opacity-50">今のアイテムには使えない物</p>
-        <div class="flex flex-wrap gap-x-4 gap-y-2">
-          <div v-for="g in orbSplit.unusable" :key="'x' + g.kind" class="flex gap-1.5">
+        <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
+          <div v-for="g in orbSplit.unusable" :key="'x' + g.kind" class="flex flex-wrap gap-1.5">
             <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
           </div>
         </div>
       </template>
     </div>
 
-    <div v-else-if="tab === 'essence'" class="flex flex-wrap gap-x-4 gap-y-2">
-      <div v-for="g in essences" :key="g.kind" class="flex gap-1.5">
+    <div v-else-if="tab === 'essence'" class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
+      <div v-for="g in essences" :key="g.kind" class="flex flex-wrap gap-1.5">
         <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
       </div>
       <p v-if="!essences.length" class="text-[12px] opacity-50">このベースに使えるエッセンスはありません</p>
@@ -167,10 +167,10 @@ const TABS = computed(() => [
 
     <div v-else>
       <p class="mb-2 text-[11px] opacity-60">押すと掛けておきます (何枚でも)。次に打つ手に関係する物だけ使われます。</p>
-      <div class="flex flex-wrap gap-x-4 gap-y-2">
+      <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
       <div v-for="g in OMEN_GROUPS" :key="g.kind">
         <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>
-        <div class="flex gap-1.5">
+        <div class="flex flex-wrap gap-1.5">
           <ShelfButton v-for="k in g.keys" :key="k" :k="k" omen @pick="craftStage.toggleOmen($event)" />
         </div>
       </div>

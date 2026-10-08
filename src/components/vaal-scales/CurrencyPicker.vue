@@ -20,7 +20,7 @@ function onChange(v: string): void {
 </script>
 
 <template>
-  <label class="inline-flex items-center gap-2 text-[11px] text-[var(--exile-color-text-secondary)]">
+  <label class="inline-flex shrink-0 items-center gap-2 whitespace-nowrap text-[11px] text-[var(--exile-color-text-secondary)]">
     <span>表示通貨</span>
     <select
       :value="value"

@@ -115,6 +115,14 @@ const simCraftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.i
 const simSocketCap = computed(() => (simCraftCap.value > 0 ? simCraftCap.value + 1 : 0));
 const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabled:opacity-40";
 /**
+ * スマホ (幅 768 CSS px 未満): 棚からアイテムまで縦に遠いので、何か持っている間は画面の下に「持っている物 → アイテムに使う」の帯を出す
+ * (2026-10-08 オーナー「タップして使う時はアイテムに再度付けるような動作で。押した瞬間付けるだとお告げが使えない」。お告げは掛けてから「アイテムに使う」)
+ */
+const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
+const onResize = (): void => { phone.value = window.innerWidth < 768; };
+onMounted(() => window.addEventListener("resize", onResize));
+onBeforeUnmount(() => window.removeEventListener("resize", onResize));
+/**
  * シミュレーションのベースを選んだ時は、狙い・順番・パターンを空に戻す (前のベースの手が残って変になっていた。
  * 2026-10-07 オーナー「腕のキャッシュで表示されてた、一回やり直したらシミュレーションの所はリセットだね」)
  */
@@ -130,6 +138,13 @@ function pickSimBase(en: string): void {
 
 <template>
   <div class="h-full overflow-auto p-4 @container" @contextmenu.prevent="s.hold(null)">
+    <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
+    <div v-if="phone && s.held.value && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+      <img v-if="iconOf(s.held.value)" :src="iconOf(s.held.value)" alt="" class="h-9 w-9 object-contain" />
+      <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value) }}</b><span class="opacity-60"> を持っている</span><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ お告げ {{ s.omens.value.length }}</span></span>
+      <button type="button" class="rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50" @click="s.use()">アイテムに使う</button>
+      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-2 opacity-80" @click="s.hold(null)">離す</button>
+    </div>
     <div class="mb-3 flex items-start justify-between gap-4">
       <div>
         <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフトステージ</h1>
@@ -269,7 +284,7 @@ function pickSimBase(en: string): void {
     </template>
     <!-- カーソルに付いたカレンシー -->
     <img
-      v-if="s.held.value && iconOf(s.held.value)"
+      v-if="s.held.value && iconOf(s.held.value) && !phone"
       :src="iconOf(s.held.value)"
       alt=""
       class="pointer-events-none fixed z-[200] h-10 w-10 object-contain drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]"

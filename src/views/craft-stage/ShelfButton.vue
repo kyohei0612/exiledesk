@@ -56,7 +56,7 @@ onBeforeUnmount(leave);
 <template>
   <button
     type="button"
-    class="group relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition"
+    class="group relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition max-md:w-[86px] max-md:text-[11px]"
     :class="[
       on ? (omen ? 'stage-omen-on border-orange-300' : 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60') : 'border-white/10 bg-black/30 hover:border-white/30',
       reason ? 'opacity-35' : '',

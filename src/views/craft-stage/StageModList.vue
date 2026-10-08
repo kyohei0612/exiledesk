@@ -191,8 +191,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
     <!-- 見出し (押すと畳む) -->
     <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left" @click="open = !open">
       <b class="text-sm text-amber-100">このベースに付く MOD</b>
-      <span class="opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合<template v-if="canStart"> · ティアの表の「付ける」で始めの状態を組める</template></span>
-      <span class="ml-auto opacity-60">{{ open ? "▲ 畳む" : "▼ 開く" }}</span>
+      <span class="max-md:hidden opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合<template v-if="canStart"> · ティアの表の「付ける」で始めの状態を組める</template></span>
+      <span class="ml-auto opacity-60"><span class="whitespace-nowrap">{{ open ? "▲ 畳む" : "▼ 開く" }}</span></span>
     </button>
 
     <div v-if="open" class="border-t border-white/10 px-3 pb-3 pt-2">

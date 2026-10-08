@@ -187,6 +187,6 @@ const rows = computed(() =>
       <p v-if="item.mirrored" class="pt-1 font-bold text-sky-200">ミラー</p>
       <p v-if="item.foreseen" class="pt-1 text-violet-200">予見 (次の手の結果が見える)</p>
     </div>
-    <p v-if="holding" class="absolute -bottom-6 left-0 right-0 text-center text-[11px] text-amber-200/90">押すと使う (右クリック / Esc で手放す)</p>
+    <p v-if="holding" class="absolute -bottom-6 left-0 right-0 text-center text-[11px] text-amber-200/90"><span class="max-md:hidden">押すと使う (右クリック / Esc で手放す)</span><span class="md:hidden">押すと使う (下の帯の「アイテムに使う」でも)</span></p>
   </div>
 </template>

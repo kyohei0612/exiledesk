@@ -44,8 +44,14 @@ try { welcomeOpen.value = !localStorage.getItem(WELCOME_KEY); } catch { welcomeO
 function closeWelcome(): void { welcomeOpen.value = false; try { localStorage.setItem(WELCOME_KEY, "1"); } catch { /* 無くてよい */ } }
 const DESIGN_WIDTH = 1660;
 const frame = ref({ w: DESIGN_WIDTH, h: 900 });
+/**
+ * スマホ (幅 768 CSS px 未満): 縮めずに等倍で、縦に積む並び (2026-10-08 オーナー「1080×1920 で表示頑張って作るか」「横スクロールは無しで調整」)。
+ * 前は 0.55 倍まで縮めていて、字が 6 px ほどで読めなかった
+ */
+const phone = ref(false);
 function fitZoom(): void {
-  const z = Math.min(1.6, Math.max(0.55, window.innerWidth / DESIGN_WIDTH));
+  phone.value = window.innerWidth < 768;
+  const z = phone.value ? 1 : Math.min(1.6, Math.max(0.55, window.innerWidth / DESIGN_WIDTH));
   document.documentElement.style.zoom = String(z);
   frame.value = { w: window.innerWidth / z, h: window.innerHeight / z };
 }
@@ -54,8 +60,9 @@ window.addEventListener("resize", fitZoom);
 </script>
 
 <template>
-  <div class="flex flex-col" :style="{ width: `${frame.w}px`, height: `${frame.h}px` }">
-    <header class="flex h-10 shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]">
+  <!-- スマホは高さを決めず、ページ全体を縦に送る (決まり事の footer も一緒に流れる) -->
+  <div class="flex flex-col" :style="phone ? { width: `${frame.w}px`, minHeight: `${frame.h}px` } : { width: `${frame.w}px`, height: `${frame.h}px` }">
+    <header class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto flex-wrap gap-y-1.5 py-2 text-[13px]' : 'h-10'">
       <span class="text-[15px] font-bold tracking-wide text-amber-200">ExileDesk</span>
       <span class="opacity-50">Web</span>
       <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70">クラフトステージ</span>
@@ -68,14 +75,15 @@ window.addEventListener("resize", fitZoom);
     <MarketNotice />
     <WelcomeDialog :open="welcomeOpen" @close="closeWelcome" />
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
-    <div class="flex min-h-0 flex-1">
-      <CraftStage class="min-w-0 flex-1" />
-      <aside class="w-[280px] shrink-0 overflow-y-auto border-l border-[var(--exile-color-border-subtle)] p-3">
+    <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
+    <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
+      <CraftStage class="min-w-0 flex-1" :class="phone ? 'shrink-0 !h-auto !overflow-visible' : ''" />
+      <aside class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] overflow-y-auto border-l'">
         <LivePanel />
       </aside>
     </div>
     <!-- 決まり事 (2026-10-07): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
-    <footer class="flex h-7 shrink-0 items-center gap-3 border-t border-[var(--exile-color-border-subtle)] px-4 text-[10px] opacity-50">
+    <footer class="flex shrink-0 items-center gap-3 border-t border-[var(--exile-color-border-subtle)] px-4 text-[10px] opacity-50" :class="phone ? 'h-auto flex-wrap py-1.5' : 'h-7'">
       <span>ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。</span>
       <span>相場は <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>、確率はゲームのデータからの推定で、結果を保証するものではありません。</span>
       <span class="ml-auto">協賛の枠には PR と表示します</span>
