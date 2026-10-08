@@ -18,6 +18,8 @@ import { applyCurrency, kindOf, omensFor } from "../../services/craft-stage/appl
 import { mulberry32 } from "../../services/htc/rng";
 import { craftStage } from "../../state/craft-stage";
 import StageItemCard from "./StageItemCard.vue";
+import HelpTip from "../../components/ui/HelpTip.vue";
+import Icon from "../../components/ui/Icon.vue";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import { GREATER, changesShape, keyOfShape, reachableShapes, setOf, shapeDone, shapeOf, shapeOutcomes, sideOmenOf, useKey, type Shape, type ShapeCtx, type ShapeOut } from "../../services/craft-stage/shape-table";
 
@@ -180,7 +182,8 @@ onMounted(() => { if (props.auto) autoNext(); });
 
 const OTHER_JA = computed(() => (props.side === "prefix" ? "サフィ" : "プレ"));
 /** 形の文 (反対の側に前の手の狙いがある時は、その数も) */
-const shapeText = (s: Shape): string => `狙い ${s.h} · 狙い以外 ${s.j} · 空き ${Math.max(0, props.limit - s.h - s.j)}${s.g != null ? ` (${OTHER_JA.value}の狙い ${s.g})` : ""}`;
+/** 形の文 (初見レビュー: 短く。狙い = 狙う MOD、ほか = それ以外、空き = 残りの枠) */
+const shapeText = (s: Shape): string => `狙い ${s.h} · ほか ${s.j} · 空き ${Math.max(0, props.limit - s.h - s.j)}${s.g != null ? ` (${OTHER_JA.value}の狙い ${s.g})` : ""}`;
 const pct = (p: number | null): string => (p == null ? "" : p >= 0.995 ? "100%" : p < 0.005 ? "1% 未満" : `${Math.round(p * 100)}%`);
 const thenText = (a: PolicyAct | undefined): string => (!a ? "" : a.then === "next" ? "次の手へ" : a.then === "restart" ? "新しいベースで最初から" : a.then === "miss" ? (props.fallback ?? "付かなかったらの札") : a.then === "reset" ? `1 MOD 残し消去 → ${(a.goto ?? 0) + 1} 手目へ` : a.then === "goto" ? `${(a.goto ?? 0) + 1} 手目へ` : "");
 const ruleText = (a: PolicyAct | undefined): string => { if (!a) return "未定"; const x = a.set ? setOf(props.sets, a.set) : undefined; return x ? `${preLabel(a.pre)}${labelOf(x)} を打つ` : thenText(a); };
@@ -288,120 +291,153 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
 </script>
 
 <template>
-  <div class="text-[12px]">
-    <div class="mb-1.5 flex flex-wrap items-center gap-2">
-      <b class="text-sky-100">打って決める</b>
-      <span v-if="reach.length" class="rounded-full px-2 py-0.5 text-[11px] font-bold" :class="left.length ? 'bg-amber-500/20 text-amber-100' : 'bg-emerald-500/20 text-emerald-100'">{{ left.length ? `パターン ${reach.length - left.length} / ${reach.length} 決めた` : `全部決めた ✓ ${reach.length} パターン` }}</span>
-      <button v-if="broken.length" type="button" class="rounded-full bg-rose-500/20 px-2 py-0.5 text-[11px] font-bold text-rose-200" title="押すとその形へ" @click="go(broken[0]!)">打てない手 {{ broken.length }}</button>
-      <span class="ml-auto flex gap-1 text-[11px]">
-        <button type="button" class="rounded border border-white/15 px-1.5 py-0.5 disabled:opacity-30" :disabled="!trail.length" title="1 つ前の形に戻る" @click="back">↶ 1 つ戻す</button>
-        <button type="button" class="rounded border border-white/15 px-1.5 py-0.5" @click="goStart">最初から打つ</button>
+  <div class="flex flex-col gap-4 text-[13px] text-[var(--exile-color-text-primary)]">
+    <!-- 上の帯: 進み具合と戻る -->
+    <div class="flex flex-wrap items-center gap-2">
+      <span v-if="reach.length" class="inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold tabular-nums" :class="left.length ? 'bg-[rgba(224,201,122,0.12)] text-[var(--exile-color-signal-warn)]' : 'bg-[rgba(126,201,148,0.12)] text-[var(--exile-color-signal-up)]'">
+        <Icon v-if="!left.length" name="check" class="size-3.5" />{{ left.length ? `${reach.length - left.length} / ${reach.length} 形を決めた` : `全部決めた (${reach.length} 形)` }}
+      </span>
+      <button v-if="broken.length" type="button" class="inline-flex h-7 items-center rounded-full bg-[rgba(229,128,107,0.14)] px-2.5 text-xs font-semibold text-[var(--exile-color-signal-down)]" title="押すとその形へ" @click="go(broken[0]!)">打てない手 {{ broken.length }}</button>
+      <HelpTip v-if="useShelf" title="外れの手" :width="300">
+        <p>狙う手を打って外れた時の「形」ごとに、次に打つ物を棚から選びます。選ぶと次の決めていない形へ進みます。</p>
+        <p class="mt-1 text-[var(--exile-color-text-secondary)]">形 = 狙う側の 狙い (狙う MOD) · ほか (それ以外) · 空き (残りの枠) の数。同じ形なら同じ手を使います。</p>
+      </HelpTip>
+      <span class="ml-auto flex items-center gap-1">
+        <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] disabled:opacity-30" :disabled="!trail.length" title="1 つ前の形に戻る" @click="back"><Icon name="undo" class="size-4" />1 つ戻す</button>
+        <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" title="この手を打つ前の形に戻って、もう一度見る (決めた手は消えない)" @click="goStart"><Icon name="rotate" class="size-4" />この手の始め</button>
       </span>
     </div>
 
-    <!-- このパターンの時: アイテムの上に形、右でカレンシーを選ぶ (2026-10-09 オーナー「このパターンの時みたいな感じでアイテムの上にだして、そこでカレンシー選べばいい」「ほぼ画面は手で打つと変わらん」) -->
-    <div class="rounded-lg border px-3 py-2" :class="done ? 'border-emerald-400/50 bg-emerald-950/20' : 'border-white/15 bg-black/30'">
-      <p class="mb-1.5 font-bold" :class="done ? 'text-emerald-100' : 'text-amber-100'">{{ at.start ? "この手を打つ前" : done ? "揃った" : "このパターンの時" }} <span class="ml-1 text-[11px] font-normal opacity-60">{{ SIDE_JA }}: {{ shapeText(at) }}{{ otherNow === 0 ? ` · ${side === "prefix" ? "サフィ" : "プレ"}は固定だけ` : "" }}</span></p>
-      <p v-if="viaText" class="-mt-1 mb-1.5 text-[11px] text-sky-200/80">この形になる時: {{ viaText }}</p>
-      <div class="flex gap-3 max-md:flex-col">
-      <div v-if="shapeItem" class="shrink-0 max-md:mx-auto"><StageItemCard :item="shapeItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="250" compact /></div>
-      <div v-else class="flex flex-wrap items-center gap-2">
-        <span v-for="(s, k) in slots" :key="k" class="grid h-7 w-20 place-items-center rounded border text-[11px]" :class="s === 'h' ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100' : s === 'j' ? 'border-rose-400/50 bg-rose-500/10 text-rose-100' : 'border-dashed border-white/20 opacity-50'">{{ s === "h" ? "狙い" : s === "j" ? "狙い以外" : "空き" }}</span>
+    <!-- この形の時: アイテムと、ここで打つ物 -->
+    <section class="rounded-lg p-4" :class="done ? 'bg-[rgba(126,201,148,0.06)] ring-1 ring-[rgba(126,201,148,0.35)]' : 'bg-black/25'">
+      <div class="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h5 class="text-[15px] font-semibold" :class="done ? 'text-[var(--exile-color-signal-up)]' : ''">{{ at.start ? "この手を打つ前" : done ? "揃った" : "この形の時" }}</h5>
+        <span class="flex items-center gap-1 text-xs">
+          <span class="text-[var(--exile-color-text-tertiary)]">{{ SIDE_JA }}</span>
+          <span class="rounded bg-[rgba(136,136,255,0.14)] px-1.5 tabular-nums text-[var(--color-rarity-magic)]">狙い {{ at.h }}</span>
+          <span class="rounded bg-white/[0.07] px-1.5 tabular-nums text-[var(--exile-color-text-secondary)]">ほか {{ at.j }}</span>
+          <span class="rounded px-1.5 tabular-nums text-[var(--exile-color-text-tertiary)] ring-1 ring-inset ring-white/10">空き {{ Math.max(0, limit - at.h - at.j) }}</span>
+          <span v-if="at.g != null" class="ml-1 rounded bg-[rgba(136,136,255,0.08)] px-1.5 tabular-nums text-[var(--color-rarity-magic)]/80">{{ OTHER_JA }}の狙い {{ at.g }}</span>
+          <span v-if="otherNow === 0" class="ml-1 text-[var(--exile-color-text-tertiary)]">{{ OTHER_JA }}はフラクチャーだけ</span>
+        </span>
       </div>
-      <div class="min-w-0 flex-1">
-      <!-- 打つ物 -->
-      <div>
-        <p v-if="at.start" class="flex flex-wrap items-center gap-1">この手: <img v-for="ic in iconsOf(set)" :key="ic" :src="iconOf(ic)" alt="" class="h-5 w-5 object-contain" /><b>{{ labelOf(set) }}</b> を打つ</p>
-        <p v-else-if="done" class="font-bold text-emerald-200">✓ 揃った → 次の手</p>
-        <p v-else-if="act && !editing" class="flex flex-wrap items-center gap-1">
-          <span class="opacity-60">前に決めた:</span>
-          <template v-if="actSet"><span v-if="act.pre?.length" class="opacity-80">{{ preLabel(act.pre) }}</span><img v-for="ic in iconsOf(actSet)" :key="ic" :src="iconOf(ic)" alt="" class="h-5 w-5 object-contain" /><b>{{ labelOf(actSet) }}</b> を打つ</template>
-          <b v-else class="text-sky-200">{{ thenText(act) }}</b>
-          <button v-if="!locked" type="button" class="ml-2 text-[11px] opacity-60 hover:opacity-100" @click="editing = true">変える</button>
-          <span v-if="actWhy" class="basis-full text-[11px] font-bold text-rose-300">この形では打てない: {{ actWhy }} (先に打つ物を足すか、変える)</span>
-        </p>
-        <p v-else-if="!locked" class="font-bold text-amber-100">この形で何を打つ？</p>
-      </div>
+      <p v-if="viaText" class="mb-3 text-xs text-[var(--exile-color-text-secondary)]">この形になる時: {{ viaText }}</p>
+      <div class="flex items-start gap-5 max-md:flex-col" :class="viaText ? '' : 'mt-3'">
+        <div v-if="shapeItem" class="shrink-0 max-md:mx-auto"><StageItemCard :item="shapeItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="250" compact /></div>
+        <div v-else class="flex flex-wrap items-center gap-2">
+          <span v-for="(s, k) in slots" :key="k" class="grid h-7 w-20 place-items-center rounded text-xs" :class="s === 'h' ? 'bg-[rgba(136,136,255,0.18)] text-[var(--color-rarity-magic)]' : s === 'j' ? 'bg-white/10 text-[var(--exile-color-text-secondary)]' : 'text-[var(--exile-color-text-tertiary)] ring-1 ring-inset ring-white/10'">{{ s === "h" ? "狙い" : s === "j" ? "ほか" : "空き" }}</span>
+        </div>
+        <div class="flex min-w-0 flex-1 flex-col gap-3">
+          <!-- 打つ物 (この手 / 決めた手) -->
+          <div v-if="at.start" class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-[var(--exile-color-text-secondary)]">この手</span>
+            <span class="flex items-center -space-x-1"><img v-for="ic in iconsOf(set)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
+            <b>{{ labelOf(set) }}</b>
+          </div>
+          <div v-else-if="done" class="flex items-center gap-2 font-semibold text-[var(--exile-color-signal-up)]"><Icon name="check" class="size-4" />揃った。次の手へ進む</div>
+          <div v-else-if="act && !editing" class="flex flex-col gap-1.5 rounded-md bg-white/[0.04] px-3 py-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs text-[var(--exile-color-text-secondary)]">決めた手</span>
+              <template v-if="actSet">
+                <span v-if="act.pre?.length" class="text-[var(--exile-color-text-secondary)]">{{ preLabel(act.pre) }}</span>
+                <span class="flex items-center -space-x-1"><img v-for="ic in iconsOf(actSet)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
+                <b>{{ labelOf(actSet) }}</b>
+              </template>
+              <b v-else class="text-[var(--exile-color-text-primary)]">{{ thenText(act) }}</b>
+              <button v-if="!locked" type="button" class="ml-auto inline-flex h-7 items-center rounded-md px-2 text-xs text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="editing = true">変える</button>
+            </div>
+            <p v-if="actWhy" class="text-xs font-semibold text-[var(--exile-color-signal-down)]">この形では打てない: {{ actWhy }}。先に打つ物 (触媒など) を足すか、変える</p>
+          </div>
+          <p v-else-if="!locked" class="text-[15px] font-semibold text-[var(--exile-color-accent-focus)]">何を打つ？</p>
 
-      <!-- 選ぶ (新しい形 / 変える) -->
-      <div v-if="showPicker && useShelf" class="mt-1.5">
-        <CurrencyShelf @hold="holdShelf">
-            <template v-if="heldOmens.length" #held>
-              <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
-                <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(shelfHeld ?? "") }} に掛けられるお告げ (押すと掛ける / 外す)</p>
-                <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleShelfOmen($event)" /></div>
-              </div>
+          <!-- 選ぶ: 手打ちと同じ棚 -->
+          <div v-if="showPicker && useShelf" class="flex flex-col gap-2.5">
+            <!-- 先に打つ物 (触媒など) と、持った物の決定 -->
+            <div v-if="preList.length" class="flex flex-wrap items-center gap-1.5 rounded-md bg-[rgba(90,62,107,0.14)] px-2.5 py-1.5 text-xs ring-1 ring-[rgba(150,110,180,0.3)]">
+              <span class="text-[#c9b3dc]">先に打つ</span>
+              <span v-for="(u, k) in preList" :key="k" class="inline-flex items-center gap-1 rounded bg-black/30 px-1.5 py-0.5"><img v-for="ic in (setOf(sets, u) ? iconsOf(setOf(sets, u)!) : [])" :key="ic" :src="iconOf(ic)" alt="" class="size-4 object-contain" />{{ setOf(sets, u) ? labelOf(setOf(sets, u)!) : u }}<button type="button" class="text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-signal-down)]" title="外す" @click="preList = preList.filter((_, n) => n !== k)"><Icon name="x" class="size-3" /></button></span>
+              <span class="text-[var(--exile-color-text-tertiary)]">次に打つ物を選ぶ</span>
+            </div>
+            <div v-if="heldUse" class="flex flex-wrap items-center gap-2 rounded-md bg-[var(--exile-color-bg-elevated)] px-3 py-2 ring-1 ring-[var(--exile-color-border-brass)]">
+              <span v-if="preList.length" class="text-[var(--exile-color-text-secondary)]">{{ preLabel(preList) }}</span>
+              <span class="flex items-center -space-x-1"><img v-for="ic in iconsOf(heldUse)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
+              <b>{{ labelOf(heldUse) }}</b>
+              <span class="text-xs text-[var(--exile-color-text-tertiary)]">お告げを選んで</span>
+              <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)]" @click="confirmHeld">これを打つ<Icon name="arrow-right" class="size-4" /></button>
+            </div>
+            <CurrencyShelf @hold="holdShelf">
+              <template v-if="heldOmens.length" #held>
+                <div class="rounded-lg bg-[rgba(90,62,107,0.14)] p-2.5 ring-1 ring-[rgba(150,110,180,0.35)]">
+                  <p class="mb-1.5 text-xs text-[#c9b3dc]">{{ nameOf(shelfHeld ?? "") }} に掛けるお告げ</p>
+                  <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleShelfOmen($event)" /></div>
+                </div>
+              </template>
+            </CurrencyShelf>
+            <!-- ほかの手 -->
+            <div class="flex flex-wrap items-center gap-1.5 border-t border-white/[0.06] pt-2.5">
+              <span class="mr-1 text-xs text-[var(--exile-color-text-tertiary)]">ほかの手</span>
+              <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 transition" :class="act?.then === 'next' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" title="この形のまま次の手へ進む" @click="thenAct({ then: 'next' })"><Icon name="arrow-right" class="size-4" />次の手へ</button>
+              <button v-if="backTo" type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 transition" :class="act?.then === 'reset' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" :title="`消去で MOD を 1 つになるまで消して、${backTo.label}`" @click="thenAct({ then: 'reset', goto: backTo.to })"><Icon name="corner-up-left" class="size-4" />1 MOD 残し消去 ({{ backTo.label }})</button>
+              <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 transition" :class="act?.then === 'restart' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" title="このアイテムは諦めて、新しいベースを用意して 1 手目から" @click="thenAct({ then: 'restart' })"><Icon name="rotate" class="size-4" />新しいベースで最初から</button>
+              <!-- N 手目へ (2026-10-09 オーナー「●手へみたいな手順いるかもな」) -->
+              <button v-for="st in steps ?? []" :key="st.n" type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2 transition" :class="act?.then === 'goto' && act.goto === st.n ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" :title="`今のアイテムのまま ${st.label} に戻る`" @click="thenAct({ then: 'goto', goto: st.n })"><Icon name="corner-up-left" class="size-3.5" />{{ st.n + 1 }} 手目へ</button>
+            </div>
+          </div>
+          <div v-else-if="showPicker" class="flex flex-wrap items-center gap-1.5">
+            <button v-for="kd in KINDS.filter((x) => kindOk(x.k))" :key="kd.k" type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2 transition" :class="actSet?.kind === kd.k ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)] hover:border-white/30'" @click="pick(kd.k)">
+              <img v-if="iconOf(kd.icon)" :src="iconOf(kd.icon)" alt="" class="size-5 object-contain" />{{ kd.ja }}
+            </button>
+            <template v-if="actSet && (['exalt', 'annul', 'chaos'] as const).includes(actSet.kind as K)">
+              <span class="mx-1 h-5 w-px bg-white/10"></span>
+              <button v-for="st in STRENGTHS[actSet.kind as K].filter((x) => find(actSet!.kind, x.c, actSet!.omens))" :key="st.c" type="button" class="h-7 rounded-md border px-2 text-xs" :class="actSet.currency === st.c ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)]'" @click="pick(actSet.kind as K, st.c)">{{ st.ja }}</button>
+              <button v-for="om in omenOpts(actSet.kind as K).filter((x) => find(actSet!.kind, actSet!.currency, actSet!.omens.includes(x.o) ? actSet!.omens.filter((o) => o !== x.o) : [...actSet!.omens, x.o]))" :key="om.o" type="button" class="inline-flex h-7 items-center gap-1 rounded-md border px-2 text-xs" :class="actSet.omens.includes(om.o) ? 'border-[rgba(150,110,180,0.6)] bg-[rgba(90,62,107,0.25)]' : 'border-[var(--exile-color-border-subtle)]'" @click="pick(actSet.kind as K, undefined, om.o)"><img v-if="iconOf(om.o)" :src="iconOf(om.o)" alt="" class="size-3.5 object-contain" />{{ om.ja }}</button>
             </template>
-        </CurrencyShelf>
-        <div v-if="preList.length" class="mt-1.5 flex flex-wrap items-center gap-1 rounded-lg border border-violet-400/30 bg-violet-500/[0.06] px-2 py-1 text-[11px]">
-          <span class="opacity-70">先に打つ:</span>
-          <span v-for="(u, k) in preList" :key="k" class="flex items-center gap-1 rounded border border-white/15 px-1.5 py-0.5"><img v-for="ic in (setOf(sets, u) ? iconsOf(setOf(sets, u)!) : [])" :key="ic" :src="iconOf(ic)" alt="" class="h-4 w-4 object-contain" />{{ setOf(sets, u) ? labelOf(setOf(sets, u)!) : u }}<button type="button" class="opacity-60 hover:opacity-100" title="外す" @click="preList = preList.filter((_, n) => n !== k)">×</button></span>
-          <span class="opacity-50">→ 次に打つ物を選ぶ</span>
-        </div>
-        <div v-if="heldUse" class="mt-1.5 flex flex-wrap items-center gap-2 rounded-lg border border-sky-400/40 bg-sky-950/20 px-2 py-1">
-          <span v-if="preList.length" class="opacity-80">{{ preLabel(preList) }}</span><img v-for="ic in iconsOf(heldUse)" :key="ic" :src="iconOf(ic)" alt="" class="h-5 w-5 object-contain" /><b>{{ labelOf(heldUse) }}</b> を打つ
-          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="confirmHeld">決める →</button>
-        </div>
-        <div class="mt-1.5 flex flex-wrap items-center gap-1">
-          <span class="text-[11px] opacity-60">ほか:</span>
-          <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'next' ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15'" @click="thenAct({ then: 'next' })">→ 次の手</button>
-          <button v-if="backTo" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'reset' ? 'border-orange-300 bg-orange-500/20 text-orange-50' : 'border-white/15'" @click="thenAct({ then: 'reset', goto: backTo.to })">⟲ 1 MOD 残し消去 ({{ backTo.label }})</button>
-          <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'restart' ? 'border-orange-300 bg-orange-500/20 text-orange-50' : 'border-white/15'" @click="thenAct({ then: 'restart' })">⟲ 新しいベースで最初から</button>
-          <!-- N 手目へ (2026-10-09 オーナー「●手へみたいな手順いるかもな」) -->
-          <button v-for="st in steps ?? []" :key="st.n" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'goto' && act.goto === st.n ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15'" :title="st.label" @click="thenAct({ then: 'goto', goto: st.n })">↩ {{ st.n + 1 }} 手目へ</button>
-        </div>
-      </div>
-      <div v-else-if="showPicker" class="mt-1.5 flex flex-wrap items-center gap-1">
-        <button v-for="kd in KINDS.filter((x) => kindOk(x.k))" :key="kd.k" type="button" class="flex items-center gap-1 rounded-lg border px-2 py-1 max-md:min-h-10" :class="actSet?.kind === kd.k ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="pick(kd.k)">
-          <img v-if="iconOf(kd.icon)" :src="iconOf(kd.icon)" alt="" class="h-5 w-5 object-contain" />{{ kd.ja }}
-        </button>
-        <template v-if="actSet && (['exalt', 'annul', 'chaos'] as const).includes(actSet.kind as K)">
-          <span class="mx-1 opacity-30">|</span>
-          <button v-for="st in STRENGTHS[actSet.kind as K].filter((x) => find(actSet!.kind, x.c, actSet!.omens))" :key="st.c" type="button" class="rounded border px-1.5 py-0.5 text-[11px]" :class="actSet.currency === st.c ? 'border-amber-300 bg-amber-500/15' : 'border-white/10'" @click="pick(actSet.kind as K, st.c)">{{ st.ja }}</button>
-          <button v-for="om in omenOpts(actSet.kind as K).filter((x) => find(actSet!.kind, actSet!.currency, actSet!.omens.includes(x.o) ? actSet!.omens.filter((o) => o !== x.o) : [...actSet!.omens, x.o]))" :key="om.o" type="button" class="flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[11px]" :class="actSet.omens.includes(om.o) ? 'border-orange-300 bg-orange-500/15' : 'border-white/10'" @click="pick(actSet.kind as K, undefined, om.o)"><img v-if="iconOf(om.o)" :src="iconOf(om.o)" alt="" class="h-3.5 w-3.5 object-contain" />{{ om.ja }}</button>
-        </template>
-        <button v-if="kindsNg.length" type="button" class="text-[10px] opacity-40 hover:opacity-80" @click="ngOpen = !ngOpen">打てない物 {{ kindsNg.length }} {{ ngOpen ? "▴" : "▸" }}</button>
-        <span v-if="ngOpen" class="flex gap-1 text-[10px] opacity-40"><span v-for="kd in kindsNg" :key="kd.k">{{ kd.ja }} ({{ firstOf(kd.k) ? whyNot(firstOf(kd.k)!, at.h, at.j) : "無い" }})</span></span>
-        <span class="basis-full"></span>
-        <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'next' ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15'" @click="thenAct({ then: 'next' })">→ 次の手</button>
-        <button v-if="fallback" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'miss' ? 'border-orange-300 bg-orange-500/20 text-orange-50' : 'border-white/15'" :title="fallback" @click="thenAct({ then: 'miss' })">⟲ {{ fallback ?? "付かなかったらの札" }}</button>
-      </div>
+            <button v-if="kindsNg.length" type="button" class="text-xs text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]" @click="ngOpen = !ngOpen">打てない物 {{ kindsNg.length }}</button>
+            <span v-if="ngOpen" class="flex gap-1 text-xs text-[var(--exile-color-text-tertiary)]"><span v-for="kd in kindsNg" :key="kd.k">{{ kd.ja }} ({{ firstOf(kd.k) ? whyNot(firstOf(kd.k)!, at.h, at.j) : "無い" }})</span></span>
+            <span class="basis-full"></span>
+            <button type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2.5" :class="act?.then === 'next' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)]'" @click="thenAct({ then: 'next' })"><Icon name="arrow-right" class="size-4" />次の手へ</button>
+            <button v-if="fallback" type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2.5" :class="act?.then === 'miss' ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)]' : 'border-[var(--exile-color-border-subtle)]'" :title="fallback" @click="thenAct({ then: 'miss' })"><Icon name="rotate" class="size-4" />{{ fallback ?? "付かなかったらの札" }}</button>
+          </div>
 
-      <!-- どんどん進む: 直前に決めた形とその結果 -->
-      <div v-if="auto && lastNote" class="mt-2 rounded-md border border-white/10 bg-black/20 px-2 py-1 text-[11px]">
-        <span class="opacity-60">直前: {{ lastNote.shape }} の時 → </span><b>{{ lastNote.label }}</b>
-        <span v-for="o in lastNote.outs" :key="keyOfShape(o)" class="ml-2 opacity-70">{{ pct(o.p) }} {{ o.label }}{{ isDone(o) ? " ✓" : "" }}</span>
-      </div>
-      <!-- どうなった？ -->
-      <div v-if="firing && outs.length && !(auto && !at.start && act && !editing)" class="mt-2">
-        <p class="mb-1 text-[11px] opacity-60">どうなった？</p>
-        <div class="flex flex-col gap-1">
-          <button v-for="o in outs" :key="keyOfShape(o)" type="button" class="flex items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-left hover:border-sky-300/60" @click="choose(o)">
-            <span class="w-12 shrink-0 whitespace-nowrap text-right tabular-nums opacity-70">{{ pct(o.p) }}</span>
-            <b>{{ o.label }}</b>
-            <span class="opacity-60">→ {{ isDone(o) ? "✓ 揃った" : shapeText(o) }}</span>
-            <span v-if="!isDone(o)" class="ml-auto text-[11px]" :class="policy[keyOfShape(o)] ? 'text-sky-200/80' : 'text-amber-200'">{{ policy[keyOfShape(o)] ? "決めた形" : "まだ決めていない" }}</span>
-          </button>
+          <!-- どんどん進む: 直前に決めた形とその結果 -->
+          <div v-if="auto && lastNote" class="rounded-md bg-white/[0.03] px-3 py-2 text-xs text-[var(--exile-color-text-secondary)]">
+            <span>直前: {{ lastNote.shape }} → </span><b class="text-[var(--exile-color-text-primary)]">{{ lastNote.label }}</b>
+            <span v-for="o in lastNote.outs" :key="keyOfShape(o)" class="ml-3 whitespace-nowrap"><span class="tabular-nums text-[var(--exile-color-text-tertiary)]">{{ pct(o.p) }}</span> {{ o.label }}<Icon v-if="isDone(o)" name="check" class="ml-0.5 size-3 text-[var(--exile-color-signal-up)]" /></span>
+          </div>
+          <!-- どうなる？ (打つ前の形・表の形) -->
+          <div v-if="firing && outs.length && !(auto && !at.start && act && !editing)">
+            <p class="mb-1.5 text-xs text-[var(--exile-color-text-secondary)]">打つと</p>
+            <div class="flex flex-col gap-1">
+              <button v-for="o in outs" :key="keyOfShape(o)" type="button" class="flex items-center gap-3 rounded-md bg-white/[0.03] px-3 py-1.5 text-left transition hover:bg-white/[0.07]" @click="choose(o)">
+                <span class="w-12 shrink-0 text-right text-xs tabular-nums text-[var(--exile-color-text-tertiary)]">{{ pct(o.p) }}</span>
+                <span class="font-medium">{{ o.label }}</span>
+                <span class="text-xs text-[var(--exile-color-text-secondary)]">{{ isDone(o) ? "揃う" : shapeText(o) }}</span>
+                <span v-if="!isDone(o)" class="ml-auto text-xs" :class="policy[keyOfShape(o)] ? 'text-[var(--exile-color-text-tertiary)]' : 'text-[var(--exile-color-signal-warn)]'">{{ policy[keyOfShape(o)] ? "決めた" : "未定" }}</span>
+                <Icon v-else name="check" class="ml-auto size-4 text-[var(--exile-color-signal-up)]" />
+              </button>
+            </div>
+          </div>
+          <p v-else-if="firing && !outs.length" class="text-xs text-[var(--exile-color-signal-down)]">ここでは打てない ({{ whyNot(firing, at.h, at.j) }})</p>
+
+          <button v-if="left.length && (done || (act && !editing && !firing))" type="button" class="inline-flex h-8 items-center gap-1.5 self-start rounded-md border border-[var(--exile-color-border-brass)] px-3 text-[var(--exile-color-text-primary)] hover:bg-[var(--exile-color-bg-elevated)]" @click="nextLeft">まだ決めていない形へ ({{ shapeText(left[0]!) }})<Icon name="arrow-right" class="size-4" /></button>
         </div>
       </div>
-      <p v-else-if="firing && !outs.length" class="mt-2 text-[11px] text-rose-200">ここでは打てない ({{ whyNot(firing, at.h, at.j) }})</p>
+    </section>
 
-      <div v-if="left.length && (done || (act && !editing && !firing))" class="mt-2">
-        <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/15 px-3 py-1 font-bold text-amber-100" @click="nextLeft">まだ決めていない形へ → ({{ shapeText(left[0]!) }})</button>
-      </div>
-      </div>
-      </div>
-    </div>
-
-    <!-- 決めた手 (文で全部)。押すとその形へ -->
-    <div v-if="reach.length" class="mt-2">
-      <p class="mb-0.5 text-[11px] opacity-60">決めた手</p>
-      <div class="flex flex-col gap-0.5">
-        <button v-for="r in reach" :key="keyOfShape(r)" type="button" class="flex gap-2 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :class="!at.start && keyOfShape(at) === keyOfShape(r) ? 'bg-sky-500/10' : ''" @click="go(r)">
-          <span class="tabular-nums opacity-70">{{ shapeText(r) }} の時</span>
-          <span :class="broken.some((b) => keyOfShape(b) === keyOfShape(r)) ? 'text-rose-300' : policy[keyOfShape(r)] ? '' : 'text-amber-200'">→ {{ ruleText(policy[keyOfShape(r)]) }}{{ broken.some((b) => keyOfShape(b) === keyOfShape(r)) ? " (この形では打てない)" : "" }}</span>
+    <!-- 決めた手 (表)。押すとその形へ -->
+    <section v-if="reach.length">
+      <h5 class="mb-1.5 text-xs text-[var(--exile-color-text-secondary)]">決めた手 <span class="text-[var(--exile-color-text-tertiary)]">(押すとその形へ)</span></h5>
+      <div class="overflow-hidden rounded-md ring-1 ring-white/[0.06]">
+        <div class="grid grid-cols-[3.5rem_3.5rem_3.5rem_minmax(0,1fr)] bg-white/[0.03] px-3 py-1 text-[11px] tracking-wide text-[var(--exile-color-text-tertiary)]">
+          <span>狙い</span><span>ほか</span><span>空き</span><span>打つ物</span>
+        </div>
+        <button v-for="r in reach" :key="keyOfShape(r)" type="button" class="grid w-full grid-cols-[3.5rem_3.5rem_3.5rem_minmax(0,1fr)] items-center border-t border-white/[0.04] px-3 py-1.5 text-left tabular-nums transition hover:bg-white/[0.04]" :class="!at.start && keyOfShape(at) === keyOfShape(r) ? 'bg-[var(--exile-color-bg-elevated)] shadow-[inset_2px_0_0_var(--exile-color-accent-focus)]' : ''" @click="go(r)">
+          <span class="text-[var(--color-rarity-magic)]">{{ r.h }}<span v-if="r.g != null" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]">+{{ OTHER_JA }}{{ r.g }}</span></span>
+          <span class="text-[var(--exile-color-text-secondary)]">{{ r.j }}</span>
+          <span class="text-[var(--exile-color-text-tertiary)]">{{ Math.max(0, limit - r.h - r.j) }}</span>
+          <span class="truncate" :class="broken.some((b) => keyOfShape(b) === keyOfShape(r)) ? 'text-[var(--exile-color-signal-down)]' : policy[keyOfShape(r)] ? '' : 'text-[var(--exile-color-signal-warn)]'">{{ ruleText(policy[keyOfShape(r)]) }}{{ broken.some((b) => keyOfShape(b) === keyOfShape(r)) ? " (この形では打てない)" : "" }}</span>
         </button>
       </div>
-    </div>
+    </section>
   </div>
 </template>

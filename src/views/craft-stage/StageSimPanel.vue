@@ -38,6 +38,9 @@ import { aimTarget, compilePlay, type PlayAim, type PlayDecision } from "../../s
 import { setOf } from "../../services/craft-stage/shape-table";
 import { drawRecipeCard, type RecipeCardData } from "../../services/craft-stage/recipe-card";
 import StagePatternEditor from "./StagePatternEditor.vue";
+import SimStepHead from "./SimStepHead.vue";
+import HelpTip from "../../components/ui/HelpTip.vue";
+import Icon from "../../components/ui/Icon.vue";
 import SimProgress from "./SimProgress.vue";
 import { searchModGroups, type ModGroup, type ModPick } from "../../services/craft-stage/trade-search";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
@@ -1495,19 +1498,17 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     <!--
       2〜5 は決めた後 (6 パターンを作る間) は 1 行に畳む。押すと開く (2026-10-07 オーナー採用の 2 枠の作業場。最小の窓 1660×860 で 6 が収まるように)
     -->
-    <div v-if="socketsOk && step4pre" class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px]">
-      <b class="text-[12px] text-amber-100">2〜5</b>
-      <span class="truncate opacity-80">狙い {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "固定済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
-      <button type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="fold = !fold">{{ fold ? "開く ▼" : "畳む ▲" }}</button>
+    <div v-if="socketsOk && step4pre" class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-5 py-2.5 text-[13px]">
+      <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-[12px] font-bold text-emerald-200 ring-1 ring-emerald-400/40">✓</span>
+      <b class="text-[var(--exile-color-text-primary)]">2〜5 決めたこと</b>
+      <span class="truncate text-[var(--exile-color-text-secondary)]">狙う MOD {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "固定済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
+      <button type="button" class="ml-auto inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="fold = !fold">{{ fold ? "開く" : "畳む" }}<Icon :name="fold ? 'chevron-down' : 'chevron-up'" class="size-4" /></button>
     </div>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
     <template v-if="socketsOk && !(step4pre && fold)">
       <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->
-      <div class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="modsDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="modsDone && goTo('mods')">2 狙う MOD</button> <span v-if="help" class="font-normal opacity-60">(下の一覧の「T○ 以上」で足す。「＋」でその MOD の代わりに付いても当たりにする物)</span>
-          <button v-if="modsDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('mods')">ここからやり直す</button>
-        </p>
+      <div :class="!modsDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+        <SimStepHead class="mb-3" :n="2" title="狙う MOD" :done="modsDone" :current="!modsDone" :redo="modsDone" help="下の「このベースに付く MOD」の表で「T○ 以上」を押して足す。「＋」は、その MOD の代わりに付いても当たりにする物 (どれか 1 つ)" @redo="goTo('mods')" />
         <p v-if="ilvlNote" class="mb-1 text-[11px] text-amber-200">{{ ilvlNote }}</p>
         <!-- 完成図 (ベースの横から移した。段・＋・×・どれか N つ・付きやすさ) -->
         <StageTargetSummary :editable="!modsDone" />
@@ -1528,11 +1529,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </div>
 
       <!-- 3 白ベース設定: 白ベースの値段 + 増強・消去スパムで狙う MOD (= フラクチャー予定、2 の中から) -->
-      <div v-if="step3" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="whiteDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteDone && goTo('white')">{{ s.simStart.value === "white" ? "3 白ベース設定" : "3 ベース設定" }}</button>
-          <button v-if="whiteDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('white')">ここからやり直す</button>
-        </p>
+      <div v-if="step3" :class="!whiteDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+        <SimStepHead class="mb-3" :n="3" :title="s.simStart.value === 'white' ? '白ベースの値段' : 'ベースの値段'" :done="whiteDone" :current="!whiteDone" :redo="whiteDone" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" @redo="goTo('white')" />
         <div class="flex flex-wrap items-center gap-2 text-[11px]">
           <!-- 始め方ごとに入れるベース代 (1 ベースで決めた物。2026-10-08) -->
           <template v-if="s.simStart.value === 'item'">
@@ -1576,12 +1574,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </div>
 
       <!-- 4 最安値スタート: フラクチャー済みのベースを手に入れるまでの 3 ルート (回さずに計算)。入れるのは買うベースの値段だけ -->
-      <div v-if="stepStart" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="startDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="startDone && goTo('start')">4 最安値スタート</button>
-          <span class="opacity-60">フラクチャー済みのベースを手に入れるまで (この先の流れはどれも同じ)</span>
-          <button v-if="startDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('start')">ここからやり直す</button>
-        </p>
+      <div v-if="stepStart" :class="!startDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+        <SimStepHead class="mb-3" :n="4" title="フラクチャー済みまでの一番安い道" :done="startDone" :current="!startDone" :redo="startDone" help="フラクチャー済みのベースを手に入れるまでの費用を、作る・買うの道ごとに比べる。この先の打ち方はどれも同じ" @redo="goTo('start')" />
         <table class="w-full table-fixed text-[12px] max-md:table-auto">
           <colgroup><col /><col class="w-[22rem] max-md:w-auto" /><col class="w-36 max-md:w-auto" /></colgroup>
           <tbody>
@@ -1624,11 +1618,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </div>
 
       <!-- ③ 付ける順番と付け方 (フラクチャー以外) -->
-      <div v-if="stepOrder" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="orderDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="orderDone && goTo('order')">5 順番計画</button> <span v-if="help" class="font-normal opacity-60">(目安。6 パターンで付ける物を選ぶプルダウンがこの順に並ぶ)</span>
-          <button v-if="orderDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('order')">ここからやり直す</button>
-        </p>
+      <div v-if="stepOrder" :class="!orderDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+        <SimStepHead class="mb-3" :n="5" title="付ける順番" :done="orderDone" :current="!orderDone" :redo="orderDone" help="目安の順番。6 の打ち方で付ける MOD を選ぶ時、この順に並ぶ" @redo="goTo('order')" />
         <p v-if="!orderKeys.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
           <tbody>
@@ -1685,19 +1676,15 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </div>
     </template>
       <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
-      <div v-if="step4pre" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-        <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="patternDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="patternDone && (patternDone = false)">6 パターン</button>
-          <span class="opacity-60">{{ s.simStart.value === "item" ? "手打ちの状態から" : fractureRow ? "フラクチャー済みのベースから" : "白のベースから" }} 1 手ずつ</span>
-          <button v-if="patternDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="patternDone = false">ここからやり直す</button>
-        </p>
+      <div v-if="step4pre" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+        <SimStepHead class="mb-3" :n="6" title="打ち方 (パターン)" :done="patternDone" :current="!patternDone" :redo="patternDone" :note="`${s.simStart.value === 'item' ? '手打ちの状態' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`" help="打つ物と狙う MOD を 1 手ずつ並べた物 = パターン。いくつか作って、回して費用を比べられる" @redo="patternDone = false" />
         <StagePatternEditor :busy="busy" :step-run="stepRun" :step-max="maxSteps" :step-runs="STEP_ONLY_RUNS" @run-one="(k: number) => run(k)" @run-step="(k: number, i: number) => run(k, i)" @close-step="stepRun = null" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" :flow-stats="activeFlowStats" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
         -->
-        <div v-if="!patternDone" class="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]" :class="stale && !busy ? '[&_.res]:opacity-50' : ''">
-          <span class="opacity-60">パターン</span>
+        <div v-if="!patternDone" class="mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-3 text-[12px]" :class="stale && !busy ? '[&_.res]:opacity-50' : ''">
+          <span class="flex items-center gap-1 text-[var(--exile-color-text-secondary)]">回すパターン <HelpTip text="チェックしたパターンをまとめて回し、費用を比べる。1 つだけ試す時は上の「このパターンを回す」" /></span>
           <!-- 枠のどこを押してもチェックが切り替わる (2026-10-07 オーナー「チェックボックスだけじゃなくて枠クリックで」)。金額の所だけは結果を下に出す -->
           <span v-for="(p, i) in s.simPatterns.value" :key="i" role="checkbox" :aria-checked="!p.off" tabindex="0" class="flex cursor-pointer select-none items-center gap-1 rounded-full border py-0.5 pl-2 pr-1 transition hover:border-white/40" :class="[shownName === p.name && resultOf(p.name) ? 'border-amber-400/70 bg-amber-500/15' : 'border-white/15', p.off ? 'opacity-45' : '']" :title="p.off ? '押すと全部まとめて回す時に入れる' : '押すと全部まとめて回す時に入れない'" @click="togglePatternOff(i)" @keydown.space.prevent="togglePatternOff(i)">
             <span class="grid h-3.5 w-3.5 place-items-center rounded-sm border text-[9px] leading-none" :class="p.off ? 'border-white/30' : 'border-amber-400 bg-amber-400 text-black'">{{ p.off ? "" : "✓" }}</span>
@@ -1713,14 +1700,14 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
           <span v-if="error" class="text-rose-300">{{ error }}</span>
           <!-- 開いているパターンの MOD 群を取引所 (JP) で探す (2026-10-07 オーナー「回すの横、相場ボタンじゃなくてこの MOD 群をそのまま検索にかけたい」) -->
-          <button type="button" class="rounded-lg border border-sky-400/60 bg-sky-500/10 px-2.5 py-0.5 font-bold text-sky-100 hover:bg-sky-500/20 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern] || !hasSteps(s.simPatterns.value[activePattern]!)" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の組めている所まで (付ける MOD と固定) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">ここまでの MOD を取引所で検索 ↗</button>
+          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[12px] text-[var(--exile-color-text-link)] hover:bg-white/5 hover:underline disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern] || !hasSteps(s.simPatterns.value[activePattern]!)" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の狙い (付ける MOD とフラクチャー) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">この狙いで取引所を見る<Icon name="external" class="size-3.5" /></button>
           <!-- 1 人の上限 (手の数)。重い MOD を狙う時に上げる (2026-10-07) -->
-          <label class="flex items-center gap-1 text-[11px] opacity-80" title="1 人が打てる手の上限。超えた人は完成しなかった扱い (カオスで重い MOD を狙う時は上げる。回るのは遅くなる)">上限
-            <select v-model.number="maxSteps" class="rounded border border-white/15 bg-black/40 px-1 py-0.5" :disabled="busy">
+          <label class="flex items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)]" title="1 人が打てる手の上限。超えた人は完成しなかった扱い (カオスで重い MOD を狙う時は上げる。回るのは遅くなる)">1 人の上限
+            <select v-model.number="maxSteps" class="h-8 rounded-md border border-[var(--exile-color-border-subtle)] bg-black/40 px-1.5" :disabled="busy">
               <option v-for="n in MAX_STEPS_CHOICES" :key="n" :value="n">{{ n.toLocaleString() }} 手</option>
             </select>
           </label>
-          <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 disabled:opacity-40 max-md:min-h-11 max-md:px-4" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()">回す ▶</button>
+          <button type="button" class="inline-flex h-9 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-4 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()"><Icon name="play" class="size-4" />{{ runnable.length > 1 ? `チェックした ${runnable.length} つを回す` : "回す" }}</button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
@@ -1732,23 +1719,32 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     -->
     <div v-if="summary && recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3" :class="stale ? 'opacity-60' : ''">
       <p v-if="stale" class="mb-1 text-[11px] text-amber-200">設定が変わりました。もう一度「回す」で出し直してください</p>
-      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <div class="flex flex-wrap items-stretch gap-x-5 gap-y-2">
         <!-- 手の上限で止まった人が多い時は、バグではなく打つ回数が足りないと分かるように (2026-10-08 オーナー「手が多すぎて止まったのかバグったのか」) -->
         <div v-if="tooManySteps" class="mb-2 flex w-full flex-wrap items-center gap-2 rounded-lg border border-amber-400/50 bg-amber-500/10 px-3 py-2 text-[12px]">
           <span class="text-amber-100">{{ pct(tooManySteps) }} の人が {{ (summary.maxSteps ?? maxSteps).toLocaleString() }} 手で完成しなかった (止まっただけ。重い MOD は打つ回数が要る)</span>
           <button v-if="nextMaxSteps" type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 max-md:min-h-11" :disabled="busy" @click="maxSteps = nextMaxSteps; void run()">{{ nextMaxSteps.toLocaleString() }} 手で回し直す</button>
         </div>
-        <span class="text-[12px] opacity-60">{{ shownName }} の 1 個あたり<template v-if="s.simStart.value === 'item'"> (この状態から先)</template></span>
-        <span class="text-[28px] font-bold leading-none tabular-nums text-amber-100">{{ moneyT(split.base + split.craft) }}</span>
-        <span class="text-[12px] tabular-nums opacity-70">= ベース {{ moneyT(split.base) }} + クラフト {{ moneyT(split.craft) }}</span>
-        <span v-if="summary.pDone < 0.995" class="text-[12px] font-bold text-rose-300" :title="recipeOut.r.stops.map((x) => `${pct(x.p)}: ${x.reason}`).join(' / ')">完成 {{ pct(summary.pDone) }}</span>
-        <span v-if="cardOk" class="ml-auto flex items-center gap-1">
-          <button type="button" class="rounded-lg border border-sky-400/60 bg-sky-500/10 px-2.5 py-0.5 text-[12px] font-bold text-sky-100 hover:bg-sky-500/20" title="この手順と結果を 1 枚の画像に (PNG で保存)" @click="saveCard">手順を画像で保存</button>
-          <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[12px] hover:bg-white/10" title="画像をクリップボードに (Discord などに貼れる)" @click="copyCard">画像をコピー</button>
-          <span v-if="cardNote" class="text-[11px] opacity-70">{{ cardNote }}</span>
+        <div class="flex flex-col">
+          <span class="flex items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ shownName }} の 1 個あたり (平均)<template v-if="s.simStart.value === 'item'"> · この状態から先</template>
+            <HelpTip text="平均 = 全員の出費 ÷ 完成した数。運の悪い人も入るので、真ん中の人より高く出る" />
+          </span>
+          <span class="text-[30px] font-bold leading-tight tabular-nums text-[var(--exile-color-accent-focus)]">{{ moneyT(split.base + split.craft) }}</span>
+          <span class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">ベース {{ moneyT(split.base) }} + クラフト {{ moneyT(split.craft) }}</span>
+        </div>
+        <div v-if="luck[0]" class="flex flex-col border-l border-white/10 pl-4">
+          <span class="text-[12px] text-[var(--exile-color-text-secondary)]">2 人に 1 人は</span>
+          <span class="text-[22px] font-semibold leading-tight tabular-nums text-[var(--exile-color-text-primary)]">{{ moneyT(luck[0].v) }}</span>
+          <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">以内で完成</span>
+        </div>
+        <span class="inline-flex h-7 items-center gap-1 self-center rounded-full px-2.5 text-[12px] font-semibold tabular-nums" :class="summary.pDone >= 0.995 ? 'bg-[rgba(126,201,148,0.14)] text-[var(--exile-color-signal-up)]' : summary.pDone >= 0.8 ? 'bg-[rgba(224,201,122,0.14)] text-[var(--exile-color-signal-warn)]' : 'bg-[rgba(229,128,107,0.14)] text-[var(--exile-color-signal-down)]'" :title="recipeOut.r.stops.map((x) => `${pct(x.p)}: ${x.reason}`).join(' / ') || '全員完成'"><Icon v-if="summary.pDone >= 0.995" name="check" class="size-3.5" />完成 {{ pct(summary.pDone) }}</span>
+        <span v-if="cardOk" class="ml-auto flex items-center gap-1.5 self-center">
+          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--exile-color-border-brass)] px-3 text-[13px] text-[var(--exile-color-text-primary)] transition hover:bg-[var(--exile-color-bg-elevated)]" title="この手順と結果を 1 枚の画像に (PNG で保存)" @click="saveCard"><Icon name="image" class="size-4" />手順を画像で保存</button>
+          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" title="画像をクリップボードに (Discord などに貼れる)" @click="copyCard"><Icon name="copy" class="size-4" />コピー</button>
+          <span v-if="cardNote" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ cardNote }}</span>
         </span>
       </div>
-      <div class="mt-2 flex h-2.5 max-w-xl overflow-hidden rounded-full bg-white/10">
+      <div class="mt-3 flex h-1.5 max-w-xl overflow-hidden rounded-full bg-white/10" title="1 個あたりの中の、ベース代 (灰) とクラフト代 (金) の割合">
         <div class="bg-stone-400/70" :style="{ width: barW(split.base, split.base + split.craft) }" :title="`ベース ${moneyT(split.base)}`"></div>
         <div class="bg-amber-400/80" :style="{ width: barW(split.craft, split.base + split.craft) }" :title="`クラフト ${moneyT(split.craft)}`"></div>
       </div>

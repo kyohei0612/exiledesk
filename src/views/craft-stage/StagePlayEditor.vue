@@ -16,6 +16,8 @@ import ShelfButton from "./ShelfButton.vue";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import StageItemCard from "./StageItemCard.vue";
 import StageOutcomeTree from "./StageOutcomeTree.vue";
+import HelpTip from "../../components/ui/HelpTip.vue";
+import Icon from "../../components/ui/Icon.vue";
 import type { PatternSet, PolicyAct } from "../../services/craft-stage/pattern";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import { applyCurrency, kindOf, omensFor } from "../../services/craft-stage/apply-currency";
@@ -236,73 +238,138 @@ function addMove(o: AimOpt | null): void {
 
 const iconsOf = (key: string): string[] => { const x = setOf(props.sets, key); return x ? [x.currency, ...x.omens].filter((i) => !!iconOf(i)) : []; };
 const useLabel = (key: string): string => { const x = setOf(props.sets, key); return x ? [nameOf(x.currency), ...x.omens.map((o) => nameOf(o))].join(" + ") : key; };
-const aimLabel = (a: PlayAim): string => (a.mods.length > 1 ? `どれか ${a.need} つ (${a.mods.map((m) => shortName(m.modId)).join(" / ")})` : props.nameOfMod(a.mods[0]!.modId));
+/** 手の狙いの文。前の手で同じ狙いが付いていれば「残り N つ (合わせて M つ)」(初見レビュー「どれか 3 つが 3 つ全部か残りか分からない」) */
+function aimLabelAt(i: number): string {
+  const a = moves.value[i]?.aim;
+  if (!a) return "";
+  const names = a.mods.map((m) => shortName(m.modId)).join(" / ");
+  if (a.mods.length < 2) return props.nameOfMod(a.mods[0]!.modId);
+  const before = prevNeedOf(a, i);
+  return before > 0 ? `残り ${a.need - before} つ (合わせて ${a.need} つ: ${names})` : `どれか ${a.need} つ (${names})`;
+}
+/** 左の一覧用の短い文 (MOD は種類だけ: 火・冷気・雷) */
+function aimShortAt(i: number): string {
+  const a = moves.value[i]?.aim;
+  if (!a) return "";
+  if (a.mods.length < 2) return props.nameOfMod(a.mods[0]!.modId);
+  const tier = /T\d+\+$/.exec(shortName(a.mods[0]!.modId))?.[0] ?? "";
+  const kinds = a.mods.map((m) => shortName(m.modId).replace(/\s*T\d+\+$/, "").replace(/ダメージ$/, "")).join("・");
+  const before = prevNeedOf(a, i);
+  return `${before > 0 ? `残り ${a.need - before}` : `${a.need} つ`}: ${kinds} ${tier}`.trim();
+}
+function prevNeedOf(a: PlayAim, i: number): number {
+  const ids = new Set(a.mods.map((m) => m.modId));
+  return moves.value.slice(0, i).reduce((acc, m) => (m.aim && m.aim.mods.some((x) => ids.has(x.modId)) ? Math.max(acc, m.aim.need) : acc), 0);
+}
+/** 打つ物の短い名前 (完全高貴 · 偉大 · 左 など)。正式な名前は乗せると出る */
+const OMEN_SHORT: Record<string, string> = { OmenofSinistralExaltation: "左", OmenofDextralExaltation: "右", OmenofSinistralAnnulment: "左", OmenofDextralAnnulment: "右", OmenofSinistralErasure: "左", OmenofDextralErasure: "右", OmenofGreaterExaltation: "偉大", OmenofCatalysingExaltation: "触媒", OmenofWhittling: "削減", OmenofLight: "光", OmenofSinistralCrystallisation: "左", OmenofDextralCrystallisation: "右", OmenofSinistralNecromancy: "左", OmenofDextralNecromancy: "右", OmenofAbyssalEchoes: "反響" };
+const CUR_SHORT: Record<string, string> = { exalt: "高貴", exalt_greater: "上級高貴", exalt_perfect: "完全高貴", chaos: "カオス", chaos_greater: "上級カオス", chaos_perfect: "完全カオス", annul: "消去" };
+const useShort = (key: string): string => { const x = setOf(props.sets, key); if (!x) return key; return [CUR_SHORT[x.currency] ?? nameOf(x.currency), ...x.omens.map((o) => OMEN_SHORT[o] ?? nameOf(o))].join(" · "); };
 </script>
 
 <template>
-  <div class="flex gap-3 max-md:flex-col">
-    <!-- 左: 手の並び -->
-    <div class="w-[300px] shrink-0 rounded-lg bg-black/25 p-2 max-md:w-full">
-      <div class="mb-2 flex flex-col gap-1 text-[11px]">
-        <button type="button" class="rounded-md border px-2 py-1 text-left" :class="sel == null ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/10 opacity-80 hover:opacity-100'" @click="sel = null"><b>① 当たりで打つ</b> <span class="opacity-70">{{ moves.length }} 手</span></button>
-        <button type="button" class="rounded-md border px-2 py-1 text-left disabled:opacity-40" :class="leftTotal ? 'border-amber-400/40' : 'border-emerald-400/40 text-emerald-100'" :disabled="!moves.some((m) => m.aim)" @click="goFill"><b>② 外れを埋める</b> <span class="opacity-70">{{ !moves.some((m) => m.aim) ? "狙う手がまだ無い" : leftTotal ? `残り ${leftTotal} 形` : "全部決めた ✓" }}</span></button>
+  <div class="grid grid-cols-[300px_minmax(0,1fr)] items-start gap-6 text-[13px] max-md:grid-cols-1">
+    <!-- 左: 2 段 (当たりの手 / 外れの手) と手の並び -->
+    <aside class="flex flex-col gap-3">
+      <div class="grid grid-cols-2 gap-1 rounded-lg bg-black/30 p-1" role="tablist">
+        <button type="button" role="tab" :aria-selected="sel == null" class="flex flex-col items-start rounded-md px-2.5 py-1.5 text-left transition" :class="sel == null ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5'" @click="sel = null">
+          <span class="text-[11px] tracking-wide text-[var(--exile-color-text-tertiary)]">1</span>
+          <span class="font-semibold">当たりの手</span>
+          <span class="text-xs tabular-nums text-[var(--exile-color-text-secondary)]">{{ moves.length }} 手</span>
+        </button>
+        <button type="button" role="tab" :aria-selected="sel != null" class="flex flex-col items-start rounded-md px-2.5 py-1.5 text-left transition disabled:opacity-40" :class="sel != null ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5'" :disabled="!moves.some((m) => m.aim)" @click="goFill">
+          <span class="text-[11px] tracking-wide text-[var(--exile-color-text-tertiary)]">2</span>
+          <span class="font-semibold">外れの手</span>
+          <span class="text-xs tabular-nums" :class="!moves.some((m) => m.aim) ? 'text-[var(--exile-color-text-tertiary)]' : leftTotal ? 'text-[var(--exile-color-signal-warn)]' : 'text-[var(--exile-color-signal-up)]'">{{ !moves.some((m) => m.aim) ? "狙う手のあとで" : leftTotal ? `残り ${leftTotal} 形` : "全部決めた" }}</span>
+        </button>
       </div>
-      <div v-for="(m, i) in moves" :key="i" class="mb-1.5 cursor-pointer rounded-md border bg-gradient-to-b from-white/[0.05] to-black/50 px-2 py-1" :class="sel === i ? 'border-amber-400/80 ring-2 ring-amber-400/40' : 'border-white/10 hover:border-white/30'" @click="sel = i">
-        <div class="flex items-center gap-1">
-          <b class="text-sky-200">{{ i + 1 }}</b>
-          <img v-for="ic in iconsOf(m.use)" :key="ic" :src="iconOf(ic)" alt="" class="h-5 w-5 object-contain" />
-          <span class="truncate font-bold">{{ useLabel(m.use) }}</span>
-          <button v-if="!locked" type="button" class="ml-auto shrink-0 px-1 opacity-50 hover:opacity-100" title="この手を消す" @click.stop="removeMove(i)">×</button>
-        </div>
-        <p class="text-[11px]" :class="m.aim ? 'text-[#8888ff]' : 'opacity-60'">{{ m.aim ? `→ ${aimLabel(m.aim)}` : "打つだけ" }}</p>
-        <span v-if="m.aim && shapes[i]" class="mt-0.5 inline-block rounded-full px-2 py-px text-[10px] font-bold" :class="shapes[i]!.left ? 'bg-amber-500/20 text-amber-100' : 'bg-emerald-500/20 text-emerald-100'">{{ shapes[i]!.left ? `外れ 残り ${shapes[i]!.left} 形` : "外れも全部決めた ✓" }}</span>
-      </div>
-      <button v-if="!locked" type="button" class="w-full rounded-md border border-dashed border-amber-400/50 px-2 py-1.5 text-amber-100 hover:bg-amber-500/10" :class="sel == null ? 'bg-amber-500/10' : ''" @click="sel = null">＋ 当たりで次の手を打つ</button>
-      <p v-if="leftTotal" class="mt-2 text-[10px] opacity-50">決めていない外れの形は、回すと新しいベースで最初から (仮の数字)</p>
-    </div>
+      <p class="flex items-center gap-1.5 text-xs text-[var(--exile-color-text-secondary)]">
+        打って作る
+        <HelpTip title="打って作る" :width="300">
+          <p>1. <b>当たりの手</b>: 棚から打つ物を選び、狙う MOD を決める。狙う手は当たったものとして次へ進む。</p>
+          <p class="mt-1">2. <b>外れの手</b>: 外れた形ごとに、次に打つ物を棚から選ぶ。選ぶと次の形へ進む。</p>
+          <p class="mt-1 text-[var(--exile-color-text-secondary)]">決めていない形は、回すと新しいベースで最初から (仮の数字)。</p>
+        </HelpTip>
+      </p>
+
+      <ol class="flex flex-col gap-1">
+        <li v-for="(m, i) in moves" :key="i">
+          <button type="button" class="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition" :class="sel === i ? 'bg-[var(--exile-color-bg-elevated)] shadow-[inset_2px_0_0_var(--exile-color-accent-focus)]' : 'hover:bg-white/[0.04]'" @click="sel = i">
+            <span class="grid size-5 shrink-0 place-items-center rounded-full bg-white/10 text-[11px] font-semibold tabular-nums text-[var(--exile-color-text-secondary)]">{{ i + 1 }}</span>
+            <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in iconsOf(m.use)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-medium text-[var(--exile-color-text-primary)]" :title="useLabel(m.use)">{{ useShort(m.use) }}</span>
+              <span class="block truncate text-xs" :class="m.aim ? 'text-[var(--color-rarity-magic)]' : 'text-[var(--exile-color-text-tertiary)]'" :title="m.aim ? aimLabelAt(i) : ''">{{ m.aim ? aimShortAt(i) : "狙わない" }}</span>
+            </span>
+            <span v-if="m.aim && shapes[i]" class="shrink-0 rounded-full px-1.5 text-[11px] font-semibold tabular-nums" :class="shapes[i]!.left ? 'bg-[rgba(224,201,122,0.15)] text-[var(--exile-color-signal-warn)]' : 'text-[var(--exile-color-signal-up)]'" :title="shapes[i]!.left ? `外れの形があと ${shapes[i]!.left} つ` : '外れも全部決めた'">
+              <template v-if="shapes[i]!.left">残り {{ shapes[i]!.left }}</template><Icon v-else name="check" class="size-3.5" />
+            </span>
+            <span v-if="!locked" role="button" tabindex="0" class="grid size-6 shrink-0 place-items-center rounded text-[var(--exile-color-text-tertiary)] opacity-0 transition hover:bg-white/10 hover:text-[var(--exile-color-signal-down)] focus:opacity-100 group-hover:opacity-100" title="この手を消す" @click.stop="removeMove(i)" @keydown.enter.stop="removeMove(i)"><Icon name="x" class="size-3.5" /></span>
+          </button>
+        </li>
+      </ol>
+      <button v-if="!locked" type="button" class="flex h-8 items-center justify-center gap-1.5 rounded-md border px-3 transition" :class="sel == null ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.08)] text-[var(--exile-color-text-primary)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" @click="sel = null"><Icon name="plus" class="size-4" />手を足す</button>
+    </aside>
 
     <!-- 右 -->
-    <div class="min-w-0 flex-1">
-      <!-- ① 当たりで次の手を打つ -->
+    <div class="min-w-0">
+      <!-- 1 当たりの手を足す -->
       <template v-if="sel == null">
-        <p class="mb-1.5 text-[13px] font-bold text-amber-100">{{ moves.length + 1 }} 手目 · 当たりで打つ <span class="text-[11px] font-normal opacity-60">棚から打つ物を選ぶ → MOD を狙う？</span></p>
-        <div class="flex gap-3 max-md:flex-col">
-          <div class="shrink-0 max-md:mx-auto"><StageItemCard v-if="now" :item="now" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="260" compact /></div>
-          <div class="min-w-0 flex-1">
-            <CurrencyShelf v-if="!locked" @hold="(k: string) => (held = k)">
-            <template v-if="heldOmens.length" #held>
-              <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
-                <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(held ?? "") }} に掛けられるお告げ (押すと掛ける / 外す)</p>
-                <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleOmen($event)" /></div>
+        <header class="mb-3 flex flex-wrap items-baseline gap-x-3">
+          <h4 class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ moves.length + 1 }} 手目</h4>
+          <span class="text-xs text-[var(--exile-color-text-secondary)]">{{ pendingSet ? "狙う MOD を選ぶ" : "棚から打つ物を選ぶ" }}</span>
+        </header>
+        <div class="flex items-start gap-5 max-md:flex-col">
+          <div class="shrink-0 max-md:mx-auto">
+            <StageItemCard v-if="now" :item="now" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="260" compact />
+          </div>
+          <div class="flex min-w-0 flex-1 flex-col gap-3">
+            <!-- 持った物と、狙う MOD (アイテムのすぐ横。初見レビュー「持った後に何も起きないように見える」) -->
+            <section v-if="pendingSet" class="rounded-lg bg-[var(--exile-color-bg-elevated)] p-3 ring-1 ring-[var(--exile-color-border-brass)]">
+              <div class="mb-2 flex flex-wrap items-center gap-2">
+                <span class="flex items-center -space-x-1"><img v-for="ic in iconsOf(pending!)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
+                <b class="text-[var(--exile-color-text-primary)]">{{ useLabel(pending!) }}</b>
+                <button type="button" class="ml-auto grid size-7 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" title="持つのをやめる" @click="held = null"><Icon name="x" class="size-4" /></button>
               </div>
-            </template>
-            </CurrencyShelf>
-            <div v-if="pendingSet" class="mt-2 rounded-lg border border-sky-400/40 bg-sky-950/20 p-2">
-              <p class="mb-1 flex flex-wrap items-center gap-1 font-bold"><img v-for="ic in iconsOf(pending!)" :key="ic" :src="iconOf(ic)" alt="" class="h-5 w-5 object-contain" />{{ useLabel(pending!) }} を打つ → MOD を狙う？</p>
-              <div class="flex flex-wrap gap-1">
-                <button type="button" class="rounded-lg border border-white/20 px-2 py-1 hover:border-white/50" @click="addMove(null)">打つだけ (1 手進む)</button>
+              <p class="mb-1.5 flex items-center gap-1.5 text-xs text-[var(--exile-color-text-secondary)]">狙う MOD <HelpTip text="狙う手は当たったものとして次へ進みます。外れた時の手は「外れの手」で決めます" /></p>
+              <div class="flex flex-wrap gap-1.5">
                 <template v-if="adds">
-                  <button v-for="o in aimOpts" :key="o.key" type="button" class="rounded-lg border border-[#8888ff]/50 px-2 py-1 text-[#c8c8ff] hover:bg-[#8888ff]/15" @click="addMove(o)">{{ o.label }}</button>
+                  <button v-for="o in aimOpts" :key="o.key" type="button" class="h-8 rounded-md border border-[rgba(136,136,255,0.45)] px-2.5 text-[var(--color-rarity-magic)] transition hover:bg-[rgba(136,136,255,0.12)]" @click="addMove(o)">{{ o.label }}</button>
                 </template>
+                <button type="button" class="h-8 rounded-md border border-[var(--exile-color-border-subtle)] px-2.5 text-[var(--exile-color-text-secondary)] transition hover:border-white/30 hover:text-[var(--exile-color-text-primary)]" @click="addMove(null)">狙わない</button>
               </div>
-              <p class="mt-1 text-[10px] opacity-50">狙う手は当たったものとして次へ進む。外れた時の手は ② で決める</p>
-            </div>
+            </section>
+            <CurrencyShelf v-if="!locked" @hold="(k: string) => (held = k)">
+              <template v-if="heldOmens.length" #held>
+                <div class="rounded-lg bg-[rgba(90,62,107,0.14)] p-2.5 ring-1 ring-[rgba(150,110,180,0.35)]">
+                  <p class="mb-1.5 text-xs text-[#c9b3dc]">{{ nameOf(held ?? "") }} に掛けるお告げ</p>
+                  <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleOmen($event)" /></div>
+                </div>
+              </template>
+            </CurrencyShelf>
           </div>
         </div>
       </template>
 
-      <!-- ② 外れを埋める (狙う手) -->
+      <!-- 2 外れの手 (狙う手) -->
       <template v-else-if="moves[sel]?.aim && shapes[sel]">
-        <p class="mb-1.5 text-[13px] font-bold text-amber-100">{{ sel + 1 }} 手目 · 外れを埋める <span class="text-[11px] font-normal opacity-60">{{ aimLabel(moves[sel]!.aim!) }}</span></p>
+        <header class="mb-3 flex flex-wrap items-baseline gap-x-3">
+          <h4 class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ sel + 1 }} 手目の外れ</h4>
+          <span class="text-xs text-[var(--color-rarity-magic)]">{{ aimLabelAt(sel) }}</span>
+        </header>
         <StageOutcomeTree v-bind="shapes[sel]!.props" :sets="sets" use-shelf auto :locked="locked" @change="(pol) => setShapes(sel!, pol)" />
       </template>
 
-      <!-- 打つだけの手 -->
+      <!-- 狙わない手 -->
       <template v-else-if="moves[sel]">
-        <p class="mb-1.5 text-[13px] font-bold">{{ sel + 1 }} 手目 · 打つだけ <span class="text-[11px] font-normal opacity-60">外れは無い (打って次の手へ)</span></p>
-        <div class="flex gap-3">
-          <div><p class="mb-1 text-center text-[11px] opacity-60">打つ前</p><StageItemCard v-if="items[sel]" :item="items[sel]!" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="240" compact /></div>
-          <div><p class="mb-1 text-center text-[11px] opacity-60">打った後 (例)</p><StageItemCard v-if="items[sel + 1]" :item="items[sel + 1]!" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="240" compact /></div>
+        <header class="mb-3 flex flex-wrap items-baseline gap-x-3">
+          <h4 class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ sel + 1 }} 手目</h4>
+          <span class="text-xs text-[var(--exile-color-text-secondary)]">狙わない手。打って次の手へ進む</span>
+        </header>
+        <div class="flex flex-wrap items-start gap-5">
+          <div><p class="mb-1.5 text-xs text-[var(--exile-color-text-secondary)]">打つ前</p><StageItemCard v-if="items[sel]" :item="items[sel]!" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="240" compact /></div>
+          <div class="self-center text-[var(--exile-color-text-tertiary)]"><Icon name="arrow-right" class="size-5" /></div>
+          <div><p class="mb-1.5 text-xs text-[var(--exile-color-text-secondary)]">打った後 (例)</p><StageItemCard v-if="items[sel + 1]" :item="items[sel + 1]!" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="240" compact /></div>
         </div>
       </template>
     </div>

@@ -34,6 +34,8 @@ import { kindOf, whittleTargets } from "../../services/craft-stage/apply-currenc
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import ShelfButton from "./ShelfButton.vue";
+import HelpTip from "../../components/ui/HelpTip.vue";
+import Icon from "../../components/ui/Icon.vue";
 import { searchModGroups, type ModGroup } from "../../services/craft-stage/trade-search";
 
 const s = craftStage;
@@ -233,7 +235,7 @@ const startItemMods = computed(() => {
 /** 始め方の札 (1 ベース)。白以外は 2 狙う MOD の最初の 1 つが固定 MOD になる */
 const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hint: string }> = [
   { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る" },
-  { k: "fractured", label: "🔒 フラクチャー済みを買う", hint: "固定 MOD が 1 つ付いたベースを買う。固定 MOD は 2 狙う MOD で最初に足した物" },
+  { k: "fractured", label: "フラクチャー済みを買う", hint: "フラクチャーの MOD が 1 つ付いたベースを買う。フラクチャーの MOD は 2 狙う MOD で最初に足した物" },
   { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)" },
 ];
 /** 手打ちから持ってきた時だけ出る札 */
@@ -274,7 +276,13 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
     <div class="mb-3 flex items-start justify-between gap-4">
       <div>
         <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフトステージ</h1>
-        <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">カレンシー・骨・エッセンス・カタリストを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは掛けておくと次の関係する手で使われます。確率はクラフト計算機と同じ規則です。</p>
+        <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す
+          <HelpTip title="シミュレーション" :width="320">
+            <p>1 ベース → 2 狙う MOD → 3〜5 始め方と順番 → 6 打ち方 (パターン) の順に決めて「回す」。</p>
+            <p class="mt-1 text-[var(--exile-color-text-secondary)]">確率はクラフト計算機と同じ規則。値段は今の相場。</p>
+          </HelpTip>
+        </p>
+        <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">カレンシー・骨・エッセンス・カタリストを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは掛けておくと次の関係する手で使われます。確率はクラフト計算機と同じ規則です。</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
       <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" />
@@ -282,8 +290,10 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
     <!-- 再生中も消さずに隠す (シミュレーションの「1 つ戻す」の置き場 #sim-tools を残す) -->
-    <div v-show="!s.replay.value" class="mb-3 flex flex-wrap gap-1.5">
-      <button v-for="t in ([['hand', '手で打つ'], ['sim', 'シミュレーション (実験)']] as const)" :key="t[0]" type="button" class="rounded-lg px-4 py-1.5 text-[13px]" :class="s.mode.value === t[0] ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" @click="s.hold(null); s.mode.value = t[0]">{{ t[1] }}</button>
+    <div v-show="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-1.5">
+      <div class="inline-flex rounded-lg bg-black/30 p-1" role="tablist">
+        <button v-for="t in ([['hand', '手で打つ'], ['sim', 'シミュレーション']] as const)" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="inline-flex h-8 items-center gap-1.5 rounded-md px-4 text-[13px] transition" :class="s.mode.value === t[0] ? 'bg-[var(--exile-color-bg-elevated)] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" @click="s.hold(null); s.mode.value = t[0]">{{ t[1] }}<span v-if="t[0] === 'sim'" class="rounded bg-white/10 px-1 text-[10px] font-normal tracking-wide text-[var(--exile-color-text-tertiary)]" title="作り込み中の機能。数字は今の相場と確率の目安">β</span></button>
+      </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
       <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap" />
     </div>
@@ -299,7 +309,11 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
     <!-- 設定と操作 -->
     <section v-if="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 px-3 py-2 text-[12px]" :class="'bg-white/[0.03]'">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
-      <b v-if="s.mode.value === 'sim'" class="text-[13px] text-amber-100">1 ベース</b>
+      <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
+        <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>
+        <h3 class="text-[15px] font-bold text-[var(--exile-color-text-primary)]">ベース</h3>
+        <HelpTip text="作るアイテムの種類 (ベース) とアイテムレベル。ソケットと始め方 (白から作るか、フラクチャー済みを買うか) もここで" />
+      </span>
       <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="pickSimBase" />
       <!-- ベースを選ぶ前でも保存したレシピから始められる -->
       <span v-if="simNoBase && savedRecipes.length" class="flex flex-wrap items-center gap-1">
@@ -313,15 +327,15 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
       <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
       <span v-if="s.mode.value === 'sim' && !simNoBase && simSocketCap > 0" class="flex items-center gap-1">
         <span class="opacity-60">ソケット</span>
-        <button v-for="n in simSocketCap + 1" :key="n" type="button" class="rounded-lg px-2 py-0.5" :class="s.simSockets.value === n - 1 ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-0.5 text-[10px] text-amber-300">規格外</span></button>
+        <button v-for="n in simSocketCap + 1" :key="n" type="button" class="rounded-lg px-2 py-0.5" :class="s.simSockets.value === n - 1 ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]" title="熟練工のオーブの上限より多い (規格外の品だけ)">規格外</span></button>
         <span v-if="s.simSockets.value == null" class="text-amber-200/80">ソケットの数を選ぶ</span>
       </span>
       <!-- 始め方 (白 / 固定済みを買う / 4 MOD を買う)。2026-10-08 オーナー「最初の段階から選択式がいい」 -->
       <span v-if="s.mode.value === 'sim' && !simNoBase" class="flex flex-wrap items-center gap-1 max-md:w-full">
         <span class="opacity-60">始め方</span>
-        <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="rounded-lg px-2 py-0.5 max-md:min-h-10 max-md:px-3" :class="s.simStart.value === x.k ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" :title="x.hint" @click="s.simStart.value = x.k">{{ x.label }}</button>
+        <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="rounded-lg px-2 py-0.5 max-md:min-h-10 max-md:px-3" :class="s.simStart.value === x.k ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" :title="x.hint" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="mr-1 size-3.5 align-[-2px]" />{{ x.label }}</button>
         <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? "レア" : s.simStartItem.value?.rarity === "magic" ? "マジック" : "ノーマル" }} · {{ startItemMods.length ? startItemMods.join(" / ") : "MOD なし" }}</span>
-        <span v-else-if="s.simStart.value !== 'white'" class="text-[11px] opacity-60 max-md:w-full">固定 MOD は 2 狙う MOD で最初に足した物 (🔒)</span>
+        <HelpTip v-else-if="s.simStart.value !== 'white'" text="フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物" />
       </span>
       <template v-if="s.mode.value === 'hand'">
       <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->

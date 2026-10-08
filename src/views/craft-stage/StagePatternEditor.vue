@@ -13,6 +13,7 @@ import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageFlowEditor from "./StageFlowEditor.vue";
 import StagePlayEditor from "./StagePlayEditor.vue";
+import Icon from "../../components/ui/Icon.vue";
 import type { PlayRecipe } from "../../services/craft-stage/play-recipe";
 import StageOutcomeTree from "./StageOutcomeTree.vue";
 import StageItemCard from "./StageItemCard.vue";
@@ -1184,18 +1185,18 @@ defineExpose({ rows });
 <template>
   <div class="text-[11px] max-md:text-[12px]">
     <!-- パターンのタブ -->
-    <div class="mb-1.5 flex flex-wrap items-center gap-1">
+    <div class="mb-4 flex flex-wrap items-center gap-1.5 text-[13px]">
       <!-- タブはダブルクリックで名前を付け替える (2026-10-07 オーナー「名前も自分で変えて」。番号だけだと 10 個並ぶと取り違える) -->
       <template v-for="(p, i) in s.simPatterns.value" :key="i">
         <input v-if="renaming === i" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="p.name" class="w-40 rounded-full border border-amber-400/60 bg-black/50 px-2.5 py-0.5 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="renaming = null" @blur="rename(i, ($event.target as HTMLInputElement).value)" />
-        <button v-else type="button" class="rounded-full px-2.5 py-0.5 max-md:min-h-10" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" title="ダブルクリックで名前を変える" @click="active = i" @dblclick="locked || (renaming = i)">{{ p.name }} <span class="opacity-60">({{ p.play ? p.play.moves.length : p.steps.length }} 手)</span></button><button v-if="!locked && renaming !== i" type="button" class="rounded px-1 text-[12px] opacity-60 md:hidden" title="名前を変える" @click.stop="renaming = i">✎</button>
+        <button v-else type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-3 transition max-md:min-h-10" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'bg-[var(--exile-color-bg-elevated)] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" title="ダブルクリックで名前を変える" @click="active = i" @dblclick="locked || (renaming = i)">{{ p.name }}<span class="rounded-full bg-white/[0.07] px-1.5 text-[11px] font-normal tabular-nums text-[var(--exile-color-text-tertiary)]">{{ p.play ? p.play.moves.length : p.steps.length }} 手</span><span v-if="!p.play" class="text-[11px] font-normal text-[var(--exile-color-text-tertiary)]" title="前の作り方 (木) のパターン">旧</span></button><button v-if="!locked && renaming !== i" type="button" class="rounded px-1 text-[12px] opacity-60 md:hidden" title="名前を変える" @click.stop="renaming = i">✎</button>
       </template>
       <template v-if="!locked">
-        <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 max-md:min-h-10 max-md:min-w-10" title="空のパターンを足す" @click="addPattern(false)">＋</button>
-        <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 max-md:min-h-10 max-md:min-w-10" title="このパターンを写して足す (少しだけ変えて比べる時に)" @click="addPattern(true)">⧉</button>
-        <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 disabled:opacity-30 max-md:min-h-10 max-md:min-w-10" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? 'パターンが 1 つの時は消せない' : 'このパターンを消す'" @click="removePattern">×</button>
-        <button type="button" class="ml-1 rounded-lg border border-amber-400/60 bg-amber-500/15 px-2 py-0.5 font-bold text-amber-100 hover:bg-amber-500/25 disabled:opacity-30 max-md:hidden" :disabled="busy || !(pat.steps.length || pat.play?.moves.length)" :title="pat.steps.length || pat.play?.moves.length ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))">このパターンを回す ▶</button>
-        <button type="button" class="ml-1 rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-30 max-md:min-h-10" :disabled="!history.length" :title="history.length ? 'パターンの直前の操作を 1 つ取り消す' : '戻せる操作がまだ無い'" @click="undoPattern">↶ 1 つ戻す</button>
+        <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] max-md:min-h-10 max-md:min-w-10" title="空のパターンを足す" @click="addPattern(false)"><Icon name="plus" class="size-4" /></button>
+        <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] max-md:min-h-10 max-md:min-w-10" title="このパターンを写して足す (少しだけ変えて比べる時に)" @click="addPattern(true)"><Icon name="copy" class="size-4" /></button>
+        <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)] disabled:opacity-30 max-md:min-h-10 max-md:min-w-10" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? 'パターンが 1 つの時は消せない' : 'このパターンを消す'" @click="removePattern"><Icon name="trash" class="size-4" /></button>
+        <button type="button" class="ml-2 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-30 max-md:hidden" :disabled="busy || !(pat.steps.length || pat.play?.moves.length)" :title="pat.steps.length || pat.play?.moves.length ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))"><Icon name="play" class="size-3.5" />このパターンを回す</button>
+        <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] disabled:opacity-30 max-md:min-h-10" :disabled="!history.length" :title="history.length ? 'パターンの直前の操作を 1 つ取り消す' : '戻せる操作がまだ無い'" @click="undoPattern"><Icon name="undo" class="size-4" />手を戻す</button>
       </template>
     </div>
 
