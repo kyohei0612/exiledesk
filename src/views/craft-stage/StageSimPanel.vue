@@ -566,6 +566,9 @@ const restBases = ref(1);
  */
 const startOnce = computed((): number | null => {
   const c = calc.value;
+  // 始め方を 1 で決めた時はその 1 つ (固定済みを買う = 入れた値段 / 4 MOD を買う = (ベース + 壁 + フラクチャー) × 3 + 消去 × 2)
+  if (s.simStart.value === "fractured") return num(boughtDivine.value);
+  if (s.simStart.value === "four") return c && c.buyOnce != null && Number.isFinite(c.buyOnce) ? c.buyOnce * 3 + c.after : null;
   const xs: number[] = [];
   if (c) xs.push(c.total);
   if (c && c.buyOnce != null) xs.push(c.buyOnce * 3 + c.after);
@@ -796,14 +799,17 @@ const startDone = ref(false);
  *   → 5 付ける順番と付け方 (フラクチャー後は共通) → 6 回す
  */
 const step3 = computed(() => modsDone.value && rows.value.length > 0);
-const whiteDone = computed(() => step3.value && whiteOk.value && fracDone.value && num(whiteDivine.value) != null);
-const stepStart = computed(() => whiteDone.value && fractureRows.value.length > 0);
-const stepOrder = computed(() => whiteDone.value && (fractureRows.value.length === 0 || startDone.value));
+/** 3 で入れる始めのベース代 (始め方ごと: 白 / 固定済み / 4 MOD のレア) */
+const startPrice = computed(() => (s.simStart.value === "fractured" ? boughtDivine.value : s.simStart.value === "four" ? fourDivine.value : whiteDivine.value));
+const whiteDone = computed(() => step3.value && whiteOk.value && fracDone.value && num(startPrice.value) != null);
+/** 4 最安値スタート (3 ルートの比べ) は白から + フラクチャー予定の時だけ。始め方を 1 で決めた時は飛ばす */
+const stepStart = computed(() => whiteDone.value && fractureRows.value.length > 0 && s.simStart.value === "white");
+const stepOrder = computed(() => whiteDone.value && (fractureRows.value.length === 0 || startDone.value || s.simStart.value !== "white"));
 /** 6 パターンを決めた */
 const patternDone = ref(false);
 /** 途中を覚える (変わるたびに)。開き直した時は CraftStage がベース・狙い・パターンを、ここが「決めた」を戻す */
 const sessionNow = () => ({
-  base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, order: s.simOrder.value, patterns: s.simPatterns.value,
+  base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, start: s.simStart.value, order: s.simOrder.value, patterns: s.simPatterns.value,
   flags: { whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, patternDone: patternDone.value },
 });
 watch(() => JSON.stringify(sessionNow()), () => { if (s.simPicked.value) writeSimSession(sessionNow()); });
@@ -896,6 +902,7 @@ async function loadRecipe(r: SimRecipe): Promise<void> {
   s.itemLevel.value = ses.itemLevel;
   s.simTargets.value = ses.targets;
   s.simSockets.value = ses.sockets;
+  s.simStart.value = ses.start ?? "white";
   s.simOrder.value = ses.order;
   s.simPatterns.value = ses.patterns.length ? ses.patterns : [{ name: "パターン 1", steps: [] }];
   s.reset();
@@ -943,6 +950,15 @@ function resetPatterns(): void {
   patternDone.value = false;
 }
 watch(() => s.simTargets.value.map((t) => t.modId).join(","), () => { if (!restoring) resetStalePatterns(); });
+/** 始め方が白以外なら、狙いの最初の 1 つが固定 MOD (1 ベースで選んだ始め方。2026-10-08) */
+watch([() => s.simStart.value, () => s.simTargets.value.length], () => {
+  if (restoring || s.simStart.value === "white") return;
+  const list = s.simTargets.value;
+  if (!list.length || list.some((t) => t.method === "fracture")) return;
+  s.simTargets.value = list.map((t, i) => (i === 0 ? { ...t, method: "fracture" as const } : t));
+});
+// 始め方を変えたら 3 から先はやり直し (ベース代の入れ方・4 の有無が変わる)
+watch(() => s.simStart.value, () => { if (!restoring && (whiteOk.value || startDone.value)) goTo("white"); });
 /**
  * アイテムレベルを下げたら、届かなくなった段の狙いはそのレベルで届く一番良い段に落とす (1 つも届かなければ外す)。
  * 残すと付きやすさ <0.1% のまま回せて完成 0% になっていた (2026-10-08 使い倒しテスト 2)
@@ -1006,6 +1022,7 @@ function resetAll(): void {
   s.simOrder.value = [];
   s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
   s.simSockets.value = null;
+  s.simStart.value = "white";
   // 覚えていた途中も消す (リセットはベースを選ぶ所から)
   void nextTick(() => writeSimSession(null));
   // ベースを選ぶ所から (この画面は一度消えて、選び直すと新しく始まる)
@@ -1121,8 +1138,8 @@ const split = computed(() => {
   if (fractureRow.value) {
     // ベース代は回した費用に入っている (やり直しの買い直し・作り直しの分も)
     const b = (startOnce.value ?? 0) * r.bases;
-    const name = routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? "";
-    return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `フラクチャー済みのベース × ${r.bases.toFixed(1)} 個 (4 最安値スタート: ${name})` };
+    const name = s.simStart.value === "fractured" ? "1 で決めた: 固定済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : `4 最安値スタート: ${routes.value.list.find((x) => x.key === routes.value.best)?.name.replace(/\s*\(.*$/, "") ?? ""}`;
+    return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `フラクチャー済みのベース × ${r.bases.toFixed(1)} 個 (${name})` };
   }
   const b = (num(whiteDivine.value) ?? 0) * r.bases;
   return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: `白のベース × ${r.bases.toFixed(1)} 個` };
@@ -1242,7 +1259,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     -->
     <div v-if="socketsOk && step4pre" class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px]">
       <b class="text-[12px] text-amber-100">2〜5</b>
-      <span class="truncate opacity-80">狙い {{ s.simTargets.value.length }} 個<template v-if="routes.best"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
+      <span class="truncate opacity-80">狙い {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "fractured" ? "固定済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 順番 {{ orderKeys.length }} つ</span>
       <button type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="fold = !fold">{{ fold ? "開く ▼" : "畳む ▲" }}</button>
     </div>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
@@ -1274,28 +1291,43 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <!-- 3 白ベース設定: 白ベースの値段 + 増強・消去スパムで狙う MOD (= フラクチャー予定、2 の中から) -->
       <div v-if="step3" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
         <p class="mb-1.5 flex items-center gap-2 text-[11px]">
-          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="whiteDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteDone && goTo('white')">3 白ベース設定</button>
+          <button type="button" class="text-[13px] font-bold text-amber-100 hover:underline" :class="whiteDone ? 'cursor-pointer' : 'cursor-default'" title="ここからやり直す" @click="whiteDone && goTo('white')">{{ s.simStart.value === "white" ? "3 白ベース設定" : "3 ベース設定" }}</button>
           <button v-if="whiteDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('white')">ここからやり直す</button>
         </p>
         <div class="flex flex-wrap items-center gap-2 text-[11px]">
+          <!-- 始め方ごとに入れるベース代 (1 ベースで決めた物。2026-10-08) -->
+          <template v-if="s.simStart.value === 'fractured'">
+            <span class="opacity-70">固定済みのベース (🔒 {{ fracMembers[0]?.text ?? "固定 MOD を 2 で足す" }})</span>
+            <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="無し" />
+            <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :disabled="!fracMembers.length" title="固定 MOD が付いた (固定済みの) ベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
+            <span class="inline-block w-24 shrink-0" :class="ageOf('bought')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")?.text ?? "" }}</span>
+          </template>
+          <template v-else-if="s.simStart.value === 'four'">
+            <span class="opacity-70">4 MOD のレア (3 MOD + 🔒 {{ fracMembers[0]?.text ?? "固定 MOD を 2 で足す" }})</span>
+            <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
+            <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :disabled="!fracMembers.length" title="狙いの MOD が付いたレア (固定済みは除く、MOD 4 つまで) を取引所で探す (開くだけ)" @click="searchFour">取引所で探す ↗</button>
+            <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
+          </template>
+          <template v-else>
           <span class="opacity-70">白ベース</span>
           <PriceInput v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="0" />
           <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :title="`アイテムレベル ${searchIlvl} 以上 (狙う MOD の段が付く一番高いレベル) の白のベースを取引所で探す (開くだけ)`" @click="searchWhite">取引所で探す ↗</button>
           <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
+          </template>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ -->
-        <p class="mt-2 text-[11px] font-bold opacity-80" :class="fractureRows.length ? '' : 'max-md:hidden'">増強・消去スパムで狙う MOD (フラクチャー予定)</p>
+        <p class="mt-2 text-[11px] font-bold opacity-80" :class="fractureRows.length ? '' : 'max-md:hidden'">{{ s.simStart.value === "fractured" ? "固定されている MOD (買う物)" : s.simStart.value === "four" ? "自分でフラクチャーする MOD" : "増強・消去スパムで狙う MOD (フラクチャー予定)" }}</p>
         <p v-if="!fractureRows.length" class="text-[11px] opacity-50 max-md:hidden">無し (フラクチャーしない。2 の付け方の予定で「フラクチャー予定」を選ぶと出る)</p>
         <p v-if="mixedSides" class="text-[11px] text-amber-200">候補がプレとサフィに分かれています (推奨は同じ側。マジックの間はどちらの側に付いても当たり)</p>
         <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
           <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
           <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
-          <span v-if="calc?.each[i]" class="ml-auto text-[11px] tabular-nums opacity-80" title="増強 1 回でこの段以上が付く割合 (2 狙う MOD の出やすさは全段の重み、ここは打つ増強の下限で絞る)">増強で付く {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}では MOD レベルが低い)</template></span>
+          <span v-if="calc?.each[i] && s.simStart.value !== 'fractured'" class="ml-auto text-[11px] tabular-nums opacity-80" title="増強 1 回でこの段以上が付く割合 (2 狙う MOD の出やすさは全段の重み、ここは打つ増強の下限で絞る)">増強で付く {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}では MOD レベルが低い)</template></span>
         </p>
         <div v-if="!whiteDone" class="mt-1 flex items-center gap-2">
           <span v-if="calc && fracMembers.length >= 2" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
-          <span v-if="num(whiteDivine) == null" class="ml-auto text-[11px] text-amber-200/80">白ベースの値段を入れる (分からなければ 0)</span>
-          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40 max-md:min-h-11" :class="num(whiteDivine) == null ? '' : 'ml-auto'" :disabled="num(whiteDivine) == null" :title="num(whiteDivine) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">決めた →</button>
+          <span v-if="num(startPrice) == null" class="ml-auto text-[11px] text-amber-200/80">{{ s.simStart.value === "white" ? "白ベースの値段を入れる (分からなければ 0)" : "買うベースの値段を入れる" }}</span>
+          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40 max-md:min-h-11" :class="num(startPrice) == null ? '' : 'ml-auto'" :disabled="num(startPrice) == null" :title="num(startPrice) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">決めた →</button>
         </div>
       </div>
 

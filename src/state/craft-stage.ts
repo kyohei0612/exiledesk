@@ -165,6 +165,13 @@ const simPicked = ref(false);
 const simShowMods = ref(false);
 /** シミュレーションの白のベースのソケットの数 (1 ベースの枠で選ぶ。null = まだ) */
 const simSockets = ref<number | null>(null);
+/**
+ * 始め方 (1 ベースの枠で選ぶ。2026-10-08 オーナー「フラクチャー MOD を選んでそこからシミュレーターしたい場合は最初の段階から選択式がいい」)。
+ * white = 白のベースから / fractured = 固定済みのベースを買う (固定 MOD は 2 狙う MOD の最初の 1 つ) / four = 4 MOD のレア (3 MOD + 狙い 1) を買って自分で固定。
+ * 4 最安値スタートの 3 ルートを前に出した物。white 以外は 4 を飛ばし、始めのベース代は 3 で入れた値段
+ */
+export type SimStart = "white" | "fractured" | "four";
+const simStart = ref<SimStart>("white");
 const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }>>([]);
 /** ② のこの手順 (本体の modId) の「あるいは」を選ぶポップアップを開いている ([[StageFracturePicker.vue]] の altFor) */
 const simAltFor = ref<string | null>(null);
@@ -183,6 +190,8 @@ const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [] }]);
 export const SIM_SESSION_KEY = "exiledesk.craftStageSim.session";
 export interface SimSession {
   base: string; itemLevel: number; targets: typeof simTargets.value; sockets: number | null; order: string[]; patterns: Pattern[];
+  /** 始め方 (無ければ白から) */
+  start?: SimStart;
   flags: Record<string, boolean>;
 }
 export function readSimSession(): SimSession | null {
@@ -306,7 +315,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simOrder, simPatterns,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simOrder, simPatterns,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

@@ -171,9 +171,16 @@ function pickSimBase(en: string): void {
   s.simTargets.value = [];
   s.simOrder.value = [];
   s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
+  s.simStart.value = "white";
   s.simPicked.value = true;
   s.reset();
 }
+/** 始め方の札 (1 ベース)。白以外は 2 狙う MOD の最初の 1 つが固定 MOD になる */
+const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hint: string }> = [
+  { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る" },
+  { k: "fractured", label: "🔒 フラクチャー済みを買う", hint: "固定 MOD が 1 つ付いたベースを買う。固定 MOD は 2 狙う MOD で最初に足した物" },
+  { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って自分でフラクチャー (当たり 1/4)" },
+];
 </script>
 
 <template>
@@ -245,6 +252,12 @@ function pickSimBase(en: string): void {
         <span class="opacity-60">ソケット</span>
         <button v-for="n in simSocketCap + 1" :key="n" type="button" class="rounded-lg px-2 py-0.5" :class="s.simSockets.value === n - 1 ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-0.5 text-[10px] text-amber-300">規格外</span></button>
         <span v-if="s.simSockets.value == null" class="text-amber-200/80">ソケットの数を選ぶ</span>
+      </span>
+      <!-- 始め方 (白 / 固定済みを買う / 4 MOD を買う)。2026-10-08 オーナー「最初の段階から選択式がいい」 -->
+      <span v-if="s.mode.value === 'sim' && !simNoBase" class="flex flex-wrap items-center gap-1 max-md:w-full">
+        <span class="opacity-60">始め方</span>
+        <button v-for="x in START_KINDS" :key="x.k" type="button" class="rounded-lg px-2 py-0.5 max-md:min-h-10 max-md:px-3" :class="s.simStart.value === x.k ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" :title="x.hint" @click="s.simStart.value = x.k">{{ x.label }}</button>
+        <span v-if="s.simStart.value !== 'white'" class="text-[11px] opacity-60 max-md:w-full">固定 MOD は 2 狙う MOD で最初に足した物 (🔒)</span>
       </span>
       <template v-if="s.mode.value === 'hand'">
       <button type="button" :class="btn" @click="s.reset()">白に戻す</button>
