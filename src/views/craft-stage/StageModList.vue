@@ -197,12 +197,14 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 
     <div v-if="open" class="border-t border-white/10 px-3 pb-3 pt-2">
       <!-- 目次 (押すとその種類までスクロール。スクロールしても上に残る) と検索 -->
+      <!-- スマホ: 検索は目次の横送りの外 (中だと右に隠れる) -->
+      <input v-model="query" type="search" placeholder="文面やタグで探す (例: 耐性、ライフ)" class="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 md:hidden" />
       <!-- スマホは固定せず 1 段の横送り (固定すると 4 段で 130px 占めていた。2026-10-08 レビュー) -->
       <div class="sticky top-0 z-10 -mx-3 mb-2 flex flex-wrap items-center gap-1.5 bg-[#15130f]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
         <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5 max-md:shrink-0 max-md:py-1.5" :class="active === sec.sid ? toneOf(sec).tab : 'border border-white/15 opacity-70 hover:opacity-100'" @click="jump(sec.sid)">
           {{ sec.label }} <span class="opacity-60">{{ sec.count }}</span>
         </button>
-        <input v-model="query" type="search" placeholder="文面やタグで探す (例: 耐性、ライフ)" class="ml-auto w-60 rounded-lg border border-white/15 bg-black/30 px-2 py-0.5 max-md:w-44 max-md:shrink-0" />
+        <input v-model="query" type="search" placeholder="文面やタグで探す (例: 耐性、ライフ)" class="ml-auto w-60 rounded-lg border border-white/15 bg-black/30 px-2 py-0.5 max-md:hidden" />
       </div>
 
       <section v-for="sec in sections" :key="sec.sid" :ref="(el) => setSection(sec.sid, el)" class="mb-4 scroll-mt-12">

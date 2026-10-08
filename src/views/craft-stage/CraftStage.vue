@@ -192,10 +192,10 @@ function pickSimBase(en: string): void {
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
     <!-- 再生中も消さずに隠す (シミュレーションの「1 つ戻す」の置き場 #sim-tools を残す) -->
-    <div v-show="!s.replay.value" class="mb-3 flex gap-1.5">
+    <div v-show="!s.replay.value" class="mb-3 flex flex-wrap gap-1.5">
       <button v-for="t in ([['hand', '手で打つ'], ['sim', 'シミュレーション (実験)']] as const)" :key="t[0]" type="button" class="rounded-lg px-4 py-1.5 text-[13px]" :class="s.mode.value === t[0] ? 'bg-amber-500/25 font-bold text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" @click="s.hold(null); s.mode.value = t[0]">{{ t[1] }}</button>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
-      <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px]" />
+      <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap" />
     </div>
 
     <!-- 再生モード -->

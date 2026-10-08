@@ -1168,7 +1168,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <!-- レシピ (名前を付けて残す・呼び出す) -->
       <span ref="recipeBox" class="relative">
         <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px]" :class="recipeOpen ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/20 hover:bg-white/10'" title="今の途中 (ベース・狙い・順番・パターン) を名前を付けて残す / 呼び出す" @click="openRecipes">レシピ {{ recipeOpen ? "▲" : "▼" }}</button>
-        <div v-if="recipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl">
+        <div v-if="recipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl max-md:fixed max-md:inset-x-3 max-md:top-14 max-md:w-auto max-md:max-h-[80vh] max-md:overflow-y-auto">
           <div class="flex items-center gap-2">
             <input v-model="recipeName" class="min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60" placeholder="レシピの名前" @keydown.enter="saveRecipe" />
             <button type="button" class="shrink-0 rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 hover:bg-amber-500/30" @click="saveRecipe">今の状態を保存</button>
@@ -1223,7 +1223,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="modsDone = true">決めた →</button>
         </div>
         <!-- このベースに付く MOD (同じ枠の中。2026-10-05 オーナー「枠は一緒の枠で表示するべき」)。長いので枠の中で送り、上の完成図は見えたまま -->
-        <div v-if="!modsDone" class="-mx-3 mt-3 max-h-[62vh] overflow-auto border-t border-white/10 px-3 [overflow-anchor:none]">
+        <div v-if="!modsDone" class="-mx-3 mt-3 max-h-[62vh] overflow-auto border-t border-white/10 px-3 [overflow-anchor:none] max-md:max-h-none max-md:overflow-visible">
           <StageModList embedded />
         </div>
       </div>
@@ -1263,8 +1263,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span class="opacity-60">フラクチャー済みのベースを手に入れるまで (この先の流れはどれも同じ)</span>
           <button v-if="startDone" type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 opacity-70 hover:opacity-100" @click="goTo('start')">ここからやり直す</button>
         </p>
-        <table class="w-full table-fixed text-[12px]">
-          <colgroup><col /><col class="w-[22rem]" /><col class="w-36" /></colgroup>
+        <table class="w-full table-fixed text-[12px] max-md:table-auto">
+          <colgroup><col /><col class="w-[22rem] max-md:w-auto" /><col class="w-36 max-md:w-auto" /></colgroup>
           <tbody>
             <tr v-for="x in routes.list" :key="x.key" class="border-t border-white/5" :class="routes.best === x.key ? 'bg-emerald-500/10' : ''">
               <td class="py-1">{{ x.name }}<span v-if="routes.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
@@ -1328,7 +1328,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
                   <span v-if="orderRow(k)!.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ orderRow(k)!.alts.length }} つと合わせてどれか</span>
                   <span class="ml-1 text-[10px] opacity-60">{{ METHOD_JA[orderRow(k)!.method] }}</span>
                 </td>
-                <td class="w-48 py-1 text-right text-[11px] tabular-nums">
+                <td class="w-48 py-1 text-right text-[11px] tabular-nums max-md:w-auto">
                   <span v-if="redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">取り直し 約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
                 </td>
               </template>
@@ -1471,8 +1471,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     <div v-if="recipeOut" class="mt-2 rounded-lg bg-black/20 px-3 py-2">
       <p class="mb-1 font-bold text-sky-100">始め方の比べ <span v-if="help" class="text-[11px] font-normal opacity-60">(この作り方なら。値段は取引所で見て手で入れる)</span></p>
       <!-- 列の幅は固定 (金額の欄の字が変わっても入力欄が動かない。2026-10-05 オーナー「入力時 UI がズレる、入力する所は軸に」) -->
-      <table class="w-full table-fixed">
-        <colgroup><col class="w-64" /><col /><col class="w-40" /></colgroup>
+      <table class="w-full table-fixed max-md:table-auto">
+        <colgroup><col class="w-64 max-md:w-auto" /><col /><col class="w-40 max-md:w-auto" /></colgroup>
         <tbody>
           <tr v-for="x in compare.list" :key="x.key" class="border-t border-white/5" :class="compare.best === x.key ? 'bg-emerald-500/10' : ''">
             <td class="py-1">{{ x.name }}<span v-if="compare.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>

@@ -846,6 +846,11 @@ function chipsOf(i: number, r: Row): Chip[] {
 }
 /** 左右の枠の高さ (最小の窓 1660×860 でもページを送らずに収まる) */
 const paneHeight = "max(420px, calc(100vh - 430px))";
+/** スマホ (幅 768 CSS px 未満): ツリー・手の設定・アイテムを縦に積み、高さを決めずページで送る (2026-10-08) */
+const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
+const onPhoneResize = (): void => { phone.value = window.innerWidth < 768; };
+onMounted(() => window.addEventListener("resize", onPhoneResize));
+onBeforeUnmount(() => window.removeEventListener("resize", onPhoneResize));
 /** ツリーの右上の ×: その手から後を全部消す (2 回押し。2026-10-07 オーナー「ツリーから × したらそれ以降の流れを消す」) */
 const cutArmed = ref<number | null>(null);
 function cutFrom(i: number): void {
@@ -943,8 +948,8 @@ defineExpose({ rows });
     </div>
 
     <!-- 左: ツリー (自分の中で送る) / 右: 押した手を決める枠 + その時点のアイテム (動かない) -->
-    <div class="flex gap-3" :style="{ height: paneHeight }">
-      <div ref="treeEl" class="w-[372px] shrink-0 overflow-y-auto rounded-lg bg-black/25 p-2 [overflow-anchor:none]">
+    <div class="flex gap-3 max-md:flex-col" :style="phone ? undefined : { height: paneHeight }">
+      <div ref="treeEl" class="w-[372px] shrink-0 overflow-y-auto rounded-lg bg-black/25 p-2 [overflow-anchor:none] max-md:w-full max-md:overflow-visible">
         <!--
           フラクチャーまで: 後の手と同じカード・同じ枝で見せる (変えられない。費用は 4 最安値スタートの計算)。押すと右のアイテムがその時点に
           (2026-10-07 オーナー「小さすぎてとりあえず表示しましたみたい、フラクチャー後の流れと同じ UI でクリックできない感じでおｋ」)
@@ -954,7 +959,7 @@ defineExpose({ rows });
             <span class="h-full w-px bg-emerald-400/50"></span>
             <span class="ml-1 text-[9px] text-emerald-300/80">当たり</span>
           </div>
-          <div class="flex items-start">
+          <div class="flex items-start max-md:flex-wrap">
             <button type="button" class="w-52 shrink-0 rounded-md border bg-gradient-to-b from-white/[0.05] to-black/50 text-left" :class="[n.tone, focusPre === k ? 'ring-2 ring-sky-400/70' : 'hover:brightness-125']" title="4 最安値スタートの計算 (ここは変えられない)。押すとその時点のアイテム" @click="focusPre = focusPre === k ? null : k; focusRow = null; editPart = null">
               <span class="flex items-center gap-1 border-b border-white/10 px-1.5 py-0.5">
                 <b class="text-sky-200">{{ ["①", "②", "③", "④"][k] }}</b>
@@ -1006,7 +1011,7 @@ defineExpose({ rows });
             <span class="h-full w-px bg-emerald-400/50"></span>
             <span class="ml-1 text-[9px] text-emerald-300/80">{{ i === 0 ? "" : retryFrom.has(i - 1) && !retryFrom.has(i) ? `当たり (${[...new Set([...retryFrom.entries()].filter(([j]) => j < i).map(([, f]) => f + 1))].join("・")} 手目で付いた時もここへ)` : "当たり" }}</span>
           </div>
-          <div class="flex items-start">
+          <div class="flex items-start max-md:flex-wrap">
             <!-- 手のカード -->
             <div :data-step="i" class="relative w-52 shrink-0 rounded-md border bg-gradient-to-b from-white/[0.05] to-black/50 transition" :class="[r.set ? KIND_TONE[r.set.kind] ?? 'border-white/20' : 'border-dashed border-white/25', focusRow === i ? 'ring-2 ring-amber-400/70' : 'hover:brightness-125', r.bad ? 'border-rose-500/80' : '']">
               <!-- 右上の ×: この手から後を全部消す (2 回押し) -->
@@ -1399,7 +1404,7 @@ defineExpose({ rows });
 
       <!-- その手まで当たった時のアイテム -->
       <!-- アイテムは枠に収まるまで縮める (スクロールさせない。2026-10-07 オーナー「レアアイテムの所はスクロールしたくない、画面に収まるように小さく」) -->
-      <div v-if="preview" ref="cardBox" class="w-[280px] shrink-0 overflow-hidden">
+      <div v-if="preview" ref="cardBox" class="w-[280px] shrink-0 overflow-hidden max-md:w-full">
         <div ref="cardInner" :style="{ zoom: cardZoom }">
         <p class="mb-1 text-center opacity-70">{{ focusPre != null ? preNodes[focusPre]?.title : editingStep ? `${previewAt + 1} 手目を打つ前 (オレンジ = この手で消える候補)` : rows.length ? `${previewAt + 1} 手目まで当たった時` : "始め" }}</p>
         <StageItemCard :item="preview" :added="previewOut?.added ?? []" :removed="previewOut?.removed ?? []" :doomed="previewOut?.doomed ?? []" :holding="false" :flash-key="0" :width="280" compact />
