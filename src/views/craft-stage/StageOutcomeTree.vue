@@ -55,26 +55,26 @@ function outcomes(x: PatternSet, h: number, j: number): Array<{ label: string; h
   const L = props.limit, f = L - h - j;
   const out: Array<{ label: string; h: number; j: number; stuck?: boolean }> = [];
   const push = (label: string, h2: number, j2: number): void => { if (!out.some((o) => o.h === h2 && o.j === j2)) out.push({ label, h: Math.max(0, h2), j: Math.max(0, j2) }); };
-  const sideOn = x.omens.some((o) => (props.side === "prefix" ? /Sinistral/ : /Dextral/).test(o));
+  // 狙いの側だけ見る。反対の側の出来事 (反対側に付いた・消えた) は狙いの側が変わらないので出さない (次の手で考える。
+  // 2026-10-08 オーナー「反対側云々は付いてから次の手で考えること、表示する必要なくね」)
+  const diff = (h2: number, j2: number): string => [h2 > h ? `狙い +${h2 - h}` : h2 < h ? `狙い −${h - h2}` : "", j2 > j ? `狙い以外 +${j2 - j}` : j2 < j ? `狙い以外 −${j - j2}` : ""].filter(Boolean).join("・");
   if (x.kind === "exalt") {
     if (f <= 0) return [{ label: `${SIDE_JA.value}が満杯で付かない`, h, j, stuck: true }];
     const k = Math.min(x.omens.includes("OmenofGreaterExaltation") ? 2 : 1, f);
     for (let a = k; a >= 0; a--) push(k === 2 ? (a === 2 ? "狙い 2" : a === 1 ? "狙い 1・狙い以外 1" : "狙い以外 2") : a === 1 ? "狙い" : "狙い以外", h + a, j + k - a);
-    if (!sideOn) push("反対側に付いた", h, j);
   } else if (x.kind === "annul") {
-    if (h + j === 0 && sideOn) return [{ label: "消せる物が無い", h, j, stuck: true }];
+    if (h + j === 0) return [{ label: "消せる物が無い", h, j, stuck: true }];
     if (j > 0) push("狙い以外が消えた", h, j - 1);
     if (h > 0) push("狙いが消えた", h - 1, j);
-    if (!sideOn) push("反対側が消えた", h, j);
   } else if (x.kind === "chaos") {
-    const rem: Array<[string, number, number]> = [];
-    if (j > 0) rem.push(["狙い以外", 0, -1]);
-    if (h > 0) rem.push(["狙い", -1, 0]);
-    if (!sideOn) rem.push(["反対側", 0, 0]);
-    for (const [rl, dh, dj] of rem) {
-      push(`${rl}が消えて狙い`, h + dh + 1, j + dj);
-      push(`${rl}が消えて狙い以外`, h + dh, j + dj + 1);
-      push(`${rl}が消えて反対側に付いた`, h + dh, j + dj);
+    // 1 つ消して 1 つ付く。狙いの側の 狙い・狙い以外 が変わる形だけ
+    const rem: Array<[number, number]> = [[0, 0]];
+    if (j > 0) rem.push([0, -1]);
+    if (h > 0) rem.push([-1, 0]);
+    for (const [dh, dj] of rem) for (const [ah, aj] of [[1, 0], [0, 1], [0, 0]] as const) {
+      const h2 = h + dh + ah, j2 = j + dj + aj;
+      if ((h2 === h && j2 === j) || h2 + j2 > L) continue;
+      push(diff(h2, j2), h2, j2);
     }
   }
   return out.filter((o) => o.h + o.j <= L);
