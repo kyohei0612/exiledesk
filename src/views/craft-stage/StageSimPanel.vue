@@ -1203,7 +1203,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </span>
       <button type="button" class="rounded-lg border px-2 py-0.5 text-[11px] max-md:py-2 max-md:text-[12px]" :class="resetArmed ? 'border-rose-400 bg-rose-500/25 text-rose-100' : 'border-white/20 hover:bg-white/10'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll">{{ resetArmed ? "もう一度押すとリセット" : "リセット" }}</button>
       <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-30 max-md:py-2 max-md:text-[12px]" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo">↶ 1 つ戻す</button>
-      <button type="button" class="rounded-full border px-2 py-0.5 text-[11px] max-md:hidden" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
+      <button type="button" class="rounded-full border px-2 py-0.5 text-[11px] max-md:min-h-10 max-md:px-3" :class="help ? 'border-sky-400/60 bg-sky-500/15 text-sky-100' : 'border-white/15 opacity-60 hover:opacity-100'" title="説明を出す / 閉じる" @click="toggle('help')">説明 {{ help ? "▲" : "?" }}</button>
     </Teleport>
     <p v-if="help" class="mb-2 text-[11px] opacity-60">狙いは下の「このベースに付く MOD」の段の表の「狙う」で選ぶ (その段以上)。上から順に作る (カオス・消去・冒涜の打ち直しは自動)。前に付けた物が消えたら、また上から</p>
 
@@ -1232,7 +1232,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <!-- スマホ: 一覧の下で「T○ 以上」を押しても上の完成図は見えないので、狙いの数と「決めた →」を画面の下に固定 (2026-10-08 レビュー) -->
         <div v-if="phone && rows.length && !modsDone" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">狙い {{ rows.length }} 個</b><span class="opacity-60"> · 足したら決める</span></span>
-          <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-4 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70" @click="modsDone = true">決めた →</button>
+          <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-4 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 max-md:min-h-11" @click="modsDone = true">決めた →</button>
         </div>
         <div v-if="phone && rows.length && !modsDone" class="h-20"></div>
         <!-- このベースに付く MOD (同じ枠の中。2026-10-05 オーナー「枠は一緒の枠で表示するべき」)。長いので枠の中で送り、上の完成図は見えたまま -->
@@ -1250,12 +1250,12 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <div class="flex flex-wrap items-center gap-2 text-[11px]">
           <span class="opacity-70">白ベース</span>
           <PriceInput v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="0" />
-          <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" :title="`アイテムレベル ${searchIlvl} 以上 (狙う MOD の段が付く一番高いレベル) の白のベースを取引所で探す (開くだけ)`" @click="searchWhite">取引所で探す ↗</button>
+          <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :title="`アイテムレベル ${searchIlvl} 以上 (狙う MOD の段が付く一番高いレベル) の白のベースを取引所で探す (開くだけ)`" @click="searchWhite">取引所で探す ↗</button>
           <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ -->
-        <p class="mt-2 text-[11px] font-bold opacity-80">増強・消去スパムで狙う MOD (フラクチャー予定)</p>
-        <p v-if="!fractureRows.length" class="text-[11px] opacity-50">無し (フラクチャーしない。2 の付け方の予定で「フラクチャー予定」を選ぶと出る)</p>
+        <p class="mt-2 text-[11px] font-bold opacity-80" :class="fractureRows.length ? '' : 'max-md:hidden'">増強・消去スパムで狙う MOD (フラクチャー予定)</p>
+        <p v-if="!fractureRows.length" class="text-[11px] opacity-50 max-md:hidden">無し (フラクチャーしない。2 の付け方の予定で「フラクチャー予定」を選ぶと出る)</p>
         <p v-if="mixedSides" class="text-[11px] text-amber-200">候補がプレとサフィに分かれています (推奨は同じ側。マジックの間はどちらの側に付いても当たり)</p>
         <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
           <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
@@ -1264,8 +1264,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         </p>
         <div v-if="!whiteDone" class="mt-1 flex items-center gap-2">
           <span v-if="calc && fracMembers.length >= 2" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
-          <span v-if="num(whiteDivine) == null" class="ml-auto text-[11px] text-amber-200/80">白ベースの値段を入れる</span>
-          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40" :class="num(whiteDivine) == null ? '' : 'ml-auto'" :disabled="num(whiteDivine) == null" :title="num(whiteDivine) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">決めた →</button>
+          <span v-if="num(whiteDivine) == null" class="ml-auto text-[11px] text-amber-200/80">白ベースの値段を入れる (分からなければ 0)</span>
+          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40 max-md:min-h-11" :class="num(whiteDivine) == null ? '' : 'ml-auto'" :disabled="num(whiteDivine) == null" :title="num(whiteDivine) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">決めた →</button>
         </div>
       </div>
 
@@ -1286,7 +1286,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
                 <span v-else class="flex items-center gap-1.5 text-[11px]">
                   <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
                   <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="無し" />
-                  <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す ↗</button>
+                  <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す ↗</button>
                 </span>
               </td>
               <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50" :title="x.key === 'self' ? undefined : '値段が空 = 取引所に無い物として数えない (2026-10-06)'">{{ x.key === "self" ? "—" : "無し" }}</span></td>
@@ -1374,7 +1374,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           </div>
         </div>
         <div v-if="!orderDone" class="mt-1 flex">
-          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="orderDone = true">決めた →</button>
+          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 max-md:min-h-11" @click="orderDone = true">決めた →</button>
         </div>
       </div>
     </template>
@@ -1492,13 +1492,13 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
             <td class="py-1">
               <span v-if="x.key === 'four'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
                 <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="無し" />
-                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
+                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す ↗</button>
                 <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
               </span>
               <span v-else-if="x.key === 'bought'" class="text-[11px] opacity-60">値段は 4 フラクチャーベース設定で入れる</span>
               <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
                 <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" placeholder="無し" />
-                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
+                <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す ↗</button>
                 <span class="inline-block w-24 shrink-0" :class="doneAge?.old ? 'text-amber-300' : 'opacity-60'">{{ doneAge?.text ?? "" }}</span>
               </span>
             </td>

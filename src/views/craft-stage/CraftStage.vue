@@ -199,7 +199,7 @@ function pickSimBase(en: string): void {
         <div class="flex items-center gap-2">
           <img v-if="iconOf(s.held.value!)" :src="iconOf(s.held.value!)" alt="" class="h-9 w-9 object-contain" />
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join("・") }}</span></span>
-          <button type="button" class="min-h-11 rounded-lg border border-white/20 px-2.5 py-2 opacity-80 disabled:opacity-30" :disabled="!s.log.value.length" title="1 手戻す" @click="s.undo()">戻す</button>
+          <button v-if="s.log.value.length" type="button" class="min-h-11 whitespace-nowrap rounded-lg border border-white/20 px-2.5 py-2 opacity-80" title="直前の 1 手を取り消す" @click="s.undo()">1 手戻す</button>
           <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!!heldWhy" @click="useFromBar">使う</button>
           <!-- 離す = 大きめの × (2026-10-08 オーナー「バツボタン割とデカく」) -->
           <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" title="離す" @click="s.hold(null)">×</button>

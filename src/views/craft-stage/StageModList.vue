@@ -261,6 +261,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
               </button>
               <!-- 段の表 -->
               <table v-if="expanded === `${sec.sid}:${r.id}`" class="mt-1 w-full text-[11px]">
+                <caption v-if="s.mode.value === 'sim'" class="pb-1 text-left text-[10px] opacity-60">T1 が一番良い段。「T○ 以上」= その段か、それより良い段が付けば当たり</caption>
                 <tbody>
                   <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5">
                     <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
@@ -269,7 +270,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :title="t.weight ? `重み ${t.weight}` : undefined">{{ t.weight && r.weight ? pct((r.share * t.weight) / r.weight) : "" }}</td>
                     <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'rune' || sec.g === 'desecrated' || sec.g === 'essence' || sec.g === 'perfect_essence')" class="w-20 py-0.5 text-right">
-                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? 'もう一度押すと外す' : sec.rune ? `② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める` : `② に足す (${t.rank} 以上)`" @click.stop="toggleTarget(t.modId ?? r.id, t)">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
+                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-10 max-md:px-3 max-md:text-[12px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? 'もう一度押すと外す' : sec.rune ? `② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める` : `② に足す (${t.rank} 以上)`" @click.stop="toggleTarget(t.modId ?? r.id, t)">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
                     </td>
                     <td v-else-if="s.mode.value !== 'sim' && !s.replay.value" class="w-44 py-0.5 text-right max-md:w-auto">
                       <!-- 打ち始めた後 (と、始めの状態に入れられない種類) は指名の手として付ける。灰色 = 今は付けられない (理由は title) -->

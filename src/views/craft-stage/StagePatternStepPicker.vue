@@ -42,7 +42,8 @@ const tiles = computed<Tile[]>(() => {
 });
 /** 札の段 (棚のタブの代わりに、種類ごとに並べる) */
 const ROWS: Array<{ name: string; kinds: PatternSet["kind"][] }> = [
-  { name: "マジックまで", kinds: ["transmute", "augment", "regal", "alchemy"] },
+  { name: "マジックに (白 → マジック)", kinds: ["transmute", "augment"] },
+  { name: "レアに", kinds: ["regal", "alchemy"] },
   { name: "エッセンス (マジック → レア)", kinds: ["essence"] },
   { name: "レア", kinds: ["exalt", "chaos", "annul"] },
   { name: "パーフェクトエッセンス (レア)", kinds: ["essence_perfect"] },
@@ -138,17 +139,17 @@ function decide(): void {
       <div class="flex flex-wrap gap-1">
         <button
           v-for="t in r.tiles" :key="t.id" type="button"
-          class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition"
+          class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition max-md:w-[72px] max-md:text-[11px]"
           :class="[chosen === t.id ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30', tileWhy(t) ? (soft ? '[&>*:not(.why)]:opacity-45' : 'cursor-not-allowed [&>*:not(.why)]:opacity-30') : (soft ? 'shadow-[0_0_10px_rgba(251,191,36,0.35)]' : '')]"
           :title="tileWhy(t) ?? t.label" @click="pickTile(t)"
         >
           <img v-if="t.icon" :src="t.icon" alt="" class="h-7 w-7 object-contain" draggable="false" />
           <span v-else class="grid h-7 w-7 place-items-center rounded bg-white/10 text-[14px]">◎</span>
           <span class="w-full truncate text-center leading-tight">{{ t.label }}</span>
-          <span v-if="t.badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-sky-300">{{ t.badge }}</span>
-          <span v-if="t.side" class="absolute left-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-amber-200">{{ t.side }}</span>
-          <span v-if="tileWhy(t)" class="why w-full truncate text-center text-[9px] font-bold text-rose-300">{{ shortWhy(tileWhy(t)!) }}</span>
-          <span v-else-if="t.price" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(t.price) }}</span>
+          <span v-if="t.badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px] text-sky-300">{{ t.badge }}</span>
+          <span v-if="t.side" class="absolute left-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px] text-amber-200">{{ t.side }}</span>
+          <span v-if="tileWhy(t)" class="why w-full truncate text-center text-[9px] max-md:text-[10px] font-bold text-rose-300">{{ shortWhy(tileWhy(t)!) }}</span>
+          <span v-else-if="t.price" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(t.price) }}</span>
         </button>
       </div>
     </div>
@@ -160,16 +161,16 @@ function decide(): void {
       <div class="flex flex-wrap gap-1">
         <button
           v-for="o in omenChoices" :key="o" type="button"
-          class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition"
+          class="relative flex w-[66px] flex-col items-center rounded-lg border px-0.5 pb-0.5 pt-1 text-[10px] transition max-md:w-[72px] max-md:text-[11px]"
           :class="[omens.includes(o) ? 'stage-omen-on border-orange-300' : 'border-white/10 bg-black/30 hover:border-white/30', omenWhy(o) ? 'cursor-not-allowed [&>*:not(.why)]:opacity-30' : omenDim(o) ? 'opacity-45' : '']"
           :title="omenWhy(o) ?? omenDim(o) ?? jaOfOmen(o) ?? o" @click="toggleOmen(o)"
         >
           <img v-if="iconOf(o)" :src="iconOf(o)" alt="" class="h-7 w-7 object-contain" draggable="false" />
           <span v-else class="grid h-7 w-7 place-items-center rounded bg-white/10 text-[14px]">◎</span>
           <span class="w-full truncate text-center leading-tight">{{ jaOfOmen(o) ?? o }}</span>
-          <span v-if="omens.includes(o)" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] font-bold text-white">有効</span>
-          <span v-if="omenWhy(o)" class="why w-full truncate text-center text-[9px] font-bold text-rose-300">{{ shortWhy(omenWhy(o)!) }}</span>
-          <span v-else-if="priceOf(o)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(o)) }}</span>
+          <span v-if="omens.includes(o)" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">有効</span>
+          <span v-if="omenWhy(o)" class="why w-full truncate text-center text-[9px] max-md:text-[10px] font-bold text-rose-300">{{ shortWhy(omenWhy(o)!) }}</span>
+          <span v-else-if="priceOf(o)" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(o)) }}</span>
         </button>
       </div>
     </div>
