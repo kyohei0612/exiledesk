@@ -20,7 +20,7 @@ function pick(i: number): void {
 </script>
 
 <template>
-  <section v-if="craftStage.offers.value && !craftStage.replay.value" class="w-[380px] rounded-xl border border-rose-400/40 bg-rose-500/10 p-3 text-[12px]">
+  <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="w-[380px] max-md:w-full rounded-xl border border-rose-400/40 bg-rose-500/10 p-3 text-[12px]">
     <p class="mb-2 flex items-center justify-between">
       <b class="text-rose-200">魂の井戸で発現 — 1 つ選ぶ<span v-if="left() > 1" class="ml-1 font-normal opacity-70">(未発現 残り {{ left() }})</span></b>
       <button

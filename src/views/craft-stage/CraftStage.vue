@@ -122,6 +122,29 @@ const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
 const onResize = (): void => { phone.value = window.innerWidth < 768; };
 onMounted(() => window.addEventListener("resize", onResize));
 onBeforeUnmount(() => window.removeEventListener("resize", onResize));
+/** 帯から打った直後の結果 (1.8 秒だけ帯に出す。カードと直前の変化は画面の上で見えないため。2026-10-08 レビュー A1) */
+const barMsg = ref<{ text: string; tone: string } | null>(null);
+let barTimer: ReturnType<typeof setTimeout> | undefined;
+/** 持っている物が今打てない理由 (帯のボタンを灰色に。2026-10-08 レビュー A2) */
+const heldWhy = computed(() => (s.held.value ? s.usable(s.held.value) : null));
+function useFromBar(): void {
+  if (heldWhy.value) return;
+  s.use();
+  const last = s.last.value;
+  const parts: string[] = [];
+  if (last) {
+    if (!last.out.applied) parts.push(`打てない: ${last.out.reason ?? ""}`);
+    for (const m of last.added) parts.push(`＋ ${m.textJa}`);
+    for (const m of last.removed) parts.push(`－ ${m.textJa}`);
+    if (last.out.note) parts.push(String(last.out.note));
+    if (!parts.length) parts.push("MOD は変わらない");
+  }
+  barMsg.value = { text: parts.join("  "), tone: last && !last.out.applied ? "text-rose-300" : last?.removed.length && !last.added.length ? "text-rose-300" : "text-emerald-300" };
+  clearTimeout(barTimer);
+  barTimer = setTimeout(() => { barMsg.value = null; }, 1800);
+}
+/** 発現の候補が出ている時: 帯を「発現する MOD を選ぶ ↑」にしてパネルへ送る (骨 → 発現の流れ。2026-10-08 レビュー A3) */
+function scrollToReveal(): void { document.querySelector("[data-reveal-panel]")?.scrollIntoView({ block: "center", behavior: "smooth" }); }
 /**
  * シミュレーションのベースを選んだ時は、狙い・順番・パターンを空に戻す (前のベースの手が残って変になっていた。
  * 2026-10-07 オーナー「腕のキャッシュで表示されてた、一回やり直したらシミュレーションの所はリセットだね」)
@@ -137,18 +160,31 @@ function pickSimBase(en: string): void {
 </script>
 
 <template>
-  <div class="h-full overflow-auto p-4 @container" @contextmenu.prevent="s.hold(null)">
+  <div class="h-full overflow-auto p-4 @container" :class="phone && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
-    <div v-if="phone && s.held.value && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
-      <img v-if="iconOf(s.held.value)" :src="iconOf(s.held.value)" alt="" class="h-9 w-9 object-contain" />
-      <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value) }}</b><span class="opacity-60"> を持っている</span><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ お告げ {{ s.omens.value.length }}</span></span>
-      <button type="button" class="rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50" @click="s.use()">アイテムに使う</button>
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-2 opacity-80" @click="s.hold(null)">離す</button>
+    <div v-if="phone && (s.held.value || s.offers.value) && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+      <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
+      <div v-if="s.offers.value" class="flex items-center gap-2">
+        <span class="min-w-0 flex-1 truncate text-rose-200">発現する MOD を 3 つから選ぶ</span>
+        <button type="button" class="min-h-11 rounded-lg bg-rose-500/30 px-3 py-2 font-bold text-rose-50 ring-1 ring-rose-400/70" @click="scrollToReveal">選ぶ ↑</button>
+      </div>
+      <template v-else>
+        <!-- 打った直後は結果を 1 行 (1.8 秒)。その後は持っている物と掛けたお告げ -->
+        <p v-if="barMsg" class="mb-1 truncate text-[12px] font-bold" :class="barMsg.tone">{{ barMsg.text }}</p>
+        <p v-else-if="heldWhy" class="mb-1 truncate text-[12px] text-rose-300">{{ heldWhy }}</p>
+        <div class="flex items-center gap-2">
+          <img v-if="iconOf(s.held.value!)" :src="iconOf(s.held.value!)" alt="" class="h-9 w-9 object-contain" />
+          <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join("・") }}</span></span>
+          <button type="button" class="min-h-11 rounded-lg border border-white/20 px-2.5 py-2 opacity-80 disabled:opacity-30" :disabled="!s.log.value.length" title="1 手戻す" @click="s.undo()">戻す</button>
+          <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!!heldWhy" @click="useFromBar">使う</button>
+          <button type="button" class="min-h-11 rounded-lg border border-white/20 px-2.5 py-2 opacity-80" @click="s.hold(null)">離す</button>
+        </div>
+      </template>
     </div>
     <div class="mb-3 flex items-start justify-between gap-4">
       <div>
         <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフトステージ</h1>
-        <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)]">カレンシー・骨・エッセンス・カタリストを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは掛けておくと次の関係する手で使われます。確率はクラフト計算機と同じ規則です。</p>
+        <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">カレンシー・骨・エッセンス・カタリストを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは掛けておくと次の関係する手で使われます。確率はクラフト計算機と同じ規則です。</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
       <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" />
@@ -166,7 +202,7 @@ function pickSimBase(en: string): void {
     <div v-if="s.replay.value" class="mb-3 flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
       <b class="text-sky-200">再生中</b>
       <span>{{ s.replay.value.plan.title ?? s.replay.value.plan.base }} · {{ s.log.value.length }} 手目まで (seed {{ s.replay.value.plan.seed }})</span>
-      <button type="button" :class="btn" class="ml-auto" @click="s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
+      <button type="button" :class="btn" class="ml-auto max-md:hidden" @click="s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
       <button type="button" :class="btn" @click="s.leaveReplay()">手で打つ</button>
     </div>
 
@@ -177,7 +213,7 @@ function pickSimBase(en: string): void {
       <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="pickSimBase" />
       <span v-if="!simNoBase" class="flex items-center gap-1">
         <span class="opacity-60">アイテムレベル</span>
-        <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
+        <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5 max-md:px-3 max-md:py-2" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>
       <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
       <span v-if="s.mode.value === 'sim' && !simNoBase && simSocketCap > 0" class="flex items-center gap-1">
@@ -188,12 +224,12 @@ function pickSimBase(en: string): void {
       <template v-if="s.mode.value === 'hand'">
       <button type="button" :class="btn" @click="s.reset()">白に戻す</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
-      <button type="button" :class="btn" class="border-amber-400/60 text-amber-100" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
+      <button type="button" :class="btn" class="border-amber-400/60 text-amber-100 max-md:hidden" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
       <span class="ml-auto flex items-center gap-1.5">
         <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
-        <button type="button" :class="btn" :disabled="!s.log.value.length" title="今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)" @click="copy('手順 JSON', s.plan())">手順 JSON</button>
-        <button type="button" :class="btn" :disabled="!s.log.value.length" title="POE2Tube に渡す結果 JSON (今の相場の値段で)" @click="copy('結果 JSON', s.result(pkg.version))">結果 JSON</button>
-        <button type="button" :class="btn" title="craft-stage-run.mjs の --prices に渡す相場 (高貴建て)" @click="copy('相場 JSON', s.prices())">相場 JSON</button>
+        <button type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)" @click="copy('手順 JSON', s.plan())">手順 JSON</button>
+        <button type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="POE2Tube に渡す結果 JSON (今の相場の値段で)" @click="copy('結果 JSON', s.result(pkg.version))">結果 JSON</button>
+        <button type="button" :class="btn" class="max-md:hidden" title="craft-stage-run.mjs の --prices に渡す相場 (高貴建て)" @click="copy('相場 JSON', s.prices())">相場 JSON</button>
         <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
         <button type="button" :class="btn" class="border-sky-400/60 text-sky-100" :disabled="!stageModGroups.length" title="今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (数値・ベースは入れない)" @click="searchStageMods">今の MOD を取引所で検索 ↗</button>
       </span>
@@ -253,7 +289,7 @@ function pickSimBase(en: string): void {
             <b class="text-sm text-amber-100">カレンシー</b>
             <span v-if="s.held.value" class="rounded-full bg-amber-500/20 px-2 text-amber-200">持っている: {{ nameOf(s.held.value) }}</span>
             <span v-else class="opacity-50">押して持つ → アイテムを押す</span>
-            <span v-for="o in s.omens.value" :key="o" class="cursor-pointer rounded-full bg-violet-500/20 px-2 text-violet-200" title="押すと外す" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
+            <span v-for="o in s.omens.value" :key="o" class="cursor-pointer rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" title="押すと外す" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
           </p>
           <CurrencyShelf @hold="hold">
             <!-- 棚の中の「神〜ヴァールオーブ」の段の下に出る (置き場は CurrencyShelf が決める。上に出すと持っているカレンシーがずれる、オーナー 2026-10-04) -->

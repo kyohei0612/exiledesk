@@ -25,7 +25,7 @@ function pick(mode: "hand" | "sim"): void {
           <span class="text-[12px] opacity-60">PoE2 のクラフトを、日本語のまま試す道具</span>
         </div>
         <p class="mb-4 text-[12px] opacity-60">相場は自動で入ります。取引所の検索は新しいタブで開きます。入れた物はこのブラウザに残ります。</p>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <button type="button" class="group rounded-xl border border-white/15 bg-black/30 p-4 text-left hover:border-amber-400/60 hover:bg-amber-500/10" @click="pick('hand')">
             <b class="block text-[15px] text-amber-100">手で打つ</b>
             <span class="mt-1 block text-[12px] opacity-70">カレンシーやお告げを押して、1 回ずつ付く MOD を見る。動画・配信の実演にも</span>

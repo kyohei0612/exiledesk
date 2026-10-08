@@ -65,10 +65,10 @@ window.addEventListener("resize", fitZoom);
     <header class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto flex-wrap gap-y-1.5 py-2 text-[13px]' : 'h-10'">
       <span class="text-[15px] font-bold tracking-wide text-amber-200">ExileDesk</span>
       <span class="opacity-50">Web</span>
-      <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70">クラフトステージ</span>
-      <span class="ml-auto opacity-40">v{{ pkg.version }}</span>
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">要望・バグを送る</button>
+      <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">クラフトステージ</span>
+      <span class="ml-auto opacity-40" :class="phone ? 'hidden' : ''">v{{ pkg.version }}</span>
+      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? 'ml-auto py-2' : ''" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
+      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? 'py-2' : ''" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">要望・バグを送る</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
       <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" title="相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中">アプリ版 近日公開</span>
     </header>
