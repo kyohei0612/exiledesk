@@ -83,12 +83,13 @@ export interface PatternStep {
  *   miss_t   … ハズレが狙いの側に付いた / miss_o … ハズレが反対の側に付いた / miss … ハズレ (側が決まらない手)
  */
 export type Situation = "pre_full" | "partial" | "miss_t" | "miss_o" | "miss";
+// 短く (2026-10-08 オーナー「日本語シンプルに、ややこしい」)
 export const SITUATION_JA: Record<Situation, string> = {
-  pre_full: "打つ前に狙いの側がハズレで埋まっている",
-  partial: "一部だけ当たった",
-  miss_t: "ハズレが狙いの側に付いた",
-  miss_o: "ハズレが反対の側に付いた",
-  miss: "ハズレが付いた",
+  pre_full: "打つ前に狙う側がハズレで満杯",
+  partial: "一部だけ付いた",
+  miss_t: "ハズレ (狙う側)",
+  miss_o: "ハズレ (反対側)",
+  miss: "ハズレ",
 };
 /**
  * 状況への反応: 先に打つ物 (消去・カオス・パーフェクトエッセンス・骨。セットのキー、無ければ打たない) → 次にすること。

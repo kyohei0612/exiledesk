@@ -452,7 +452,9 @@ function situationsOf(i: number, r: Row): Situation[] {
   // 一部当たり: 1 回で 2 つ以上足す手 (偉大・錬金)、または 2 つ以上揃える狙い (残り・どれか N つ)
   // (狙いが 1 つなら一部当たりは起きない)
   if (needs2(r) || (isRest(r.step.target) && ids.length > 1) || ((isDouble(r.set) || r.set.kind === "alchemy") && ids.length > 1)) out.push("partial");
-  if (sides.size === 1) out.push("miss_t", "miss_o"); else out.push("miss");
+  // 側を決めるお告げ (左右の高貴・ネクロマンシーなど) ならハズレは狙う側にしか付かない (2026-10-08 オーナー「左側とか選んだら反対側に行かなくね」)
+  const forced = r.set.omens.some((o) => /Sinistral|Dextral/.test(o) && !/Annulment|Erasure|Crystallisation/.test(o));
+  if (sides.size === 1 && !forced) out.push("miss_t", "miss_o"); else out.push("miss");
   void i;
   return out;
 }
@@ -473,20 +475,23 @@ function setRx(i: number, sit: Situation, rx: Reaction | null): void {
   patch(i, { on: Object.keys(cur).length ? cur : undefined });
 }
 /** 反応の 1 行の要約 (ツリーと設定に出す) */
+/** お告げの短い名前 (左・右・光・削減・偉大…) */
+const omenShort = (o: string): string => (/Sinistral/.test(o) ? "左" : /Dextral/.test(o) ? "右" : /Light/.test(o) ? "光" : /Whittling/.test(o) ? "削減" : /Greater/.test(o) ? "偉大" : jaOfOmen(o) ?? o);
+const setShortly = (x: PatternSet): string => `${setShort(x)}${x.omens.length ? ` (${x.omens.map(omenShort).join("・")})` : ""}`;
 function rxText(rx: Reaction): string {
   const pre = rx.pre ? setByKey(sets.value, rx.pre) : undefined;
   const ag = rx.again ? setByKey(sets.value, rx.again) : undefined;
-  const then = rx.then === "next" ? "次の手へ" : rx.then === "restart" ? (props.start.mods ? "この状態から最初から" : "新しいベースで最初から") : rx.then === "goto" ? `${(rx.goto ?? 0) + 1} 手目へ` : ag ? `${setShort(ag)}${ag.omens.length ? ` + ${ag.omens.map((o) => jaOfOmen(o) ?? o).join("・")}` : ""} でもう一度` : "この手をもう一度";
-  return `${pre ? `${setShort(pre)}${pre.omens.length ? ` + ${pre.omens.map((o) => jaOfOmen(o) ?? o).join("・")}` : ""} → ` : ""}${then}`;
+  const then = rx.then === "next" ? "次の手" : rx.then === "restart" ? "最初から" : rx.then === "goto" ? `${(rx.goto ?? 0) + 1} 手目へ` : ag ? `${setShortly(ag)} でもう一度` : "もう一度";
+  return `${pre ? `${setShortly(pre)} → ` : ""}${then}`;
 }
 /** 先に打つ物の選択肢 (消去・カオス・パーフェクトエッセンス・骨。その手の後に打てる物) */
-const preChoices = computed(() => removals.value.map((x) => ({ key: x.key, label: `${setShort(x)}${x.omens.length ? ` + ${x.omens.map((o) => jaOfOmen(o) ?? o).join("・")}` : ""}` })));
+const preChoices = computed(() => removals.value.map((x) => ({ key: x.key, label: setShortly(x) })));
 /** もう一度の打ち方の選択肢 (同じ手 + その手の後に打てる物。錬金のハズレをカオスで振り直す、なども) */
 function againChoices(i: number): Array<{ key: string; label: string }> {
   const c = ctx.value;
   if (!c) return [];
   const st = stateBefore(c, pat.value.steps, i + 1);
-  return sets.value.filter((x) => x.kind !== "rune" && x.kind !== "annul" && !checkSet(c, st, x)).map((x) => ({ key: x.key, label: `${setShort(x)}${x.omens.length ? ` + ${x.omens.map((o) => jaOfOmen(o) ?? o).join("・")}` : ""}` }));
+  return sets.value.filter((x) => x.kind !== "rune" && x.kind !== "annul" && !checkSet(c, st, x)).map((x) => ({ key: x.key, label: setShortly(x) }));
 }
 /** 外す時のセット (外す時は付けた後 = レア。付ける手の後の状態で見る) */
 const missSet = (step: PatternStep): PatternSet | undefined => (step.miss ? setByKey(sets.value, step.miss) : undefined);
@@ -521,10 +526,10 @@ function preRule(r: Row, long = false): string | null {
   const k = r.set?.kind;
   if (!r.set || !r.step.target || r.step.target === ANY_TARGET) return null;
   const sd = preAnnul(r);
-  if (sd) return long ? `打つ前に${sd}がハズレで埋まっていたら、先に消去してから打つ (埋まったままだと反対の側にしか付かない。反対の側に当たりがあれば側のお告げ付きの消去)` : `打つ前: ${sd}がハズレで埋まっていたら消去`;
+  if (sd) return long ? `打つ前: ${sd}がハズレで満杯なら先に消去` : `打つ前: ${sd}がハズレで埋まっていたら消去`;
   if (k === "chaos") {
     const side = r.set.omens.some((o) => /Sinistral/.test(o)) ? "プレ" : r.set.omens.some((o) => /Dextral/.test(o)) ? "サフィ" : "両側";
-    return long ? `打つ前に${side}に外せる MOD が無ければ、先に高貴で 1 つ付けてから打つ (カオスは 1 つ消して 1 つ付ける)` : "打つ前: 外せる物が無ければ高貴で 1 つ";
+    return long ? `打つ前: ${side}に外せる物が無ければ高貴で 1 つ` : "打つ前: 外せる物が無ければ高貴で 1 つ";
   }
   if (k === "essence_perfect") return long ? "打つ前に同じ系統のハズレがあれば先に消去、結晶化の側にハズレが無ければ先に高貴で 1 つ付けてから打つ (当たりを上書きしないため)" : "打つ前: 同系統のハズレは消去、無ければ高貴で 1 つ";
   return null;
@@ -889,22 +894,22 @@ function missOmenChoices(r: Row): Array<{ key: string; ja: string; omens: string
 function missRisk(i: number, r: Row): { text: string; bad: boolean } {
   const x = missSet(r.step);
   const c = ctx.value;
-  if (!x && r.step.onMiss === "redo") return { text: "ハズレは残して同じ手をもう一度。その側が満杯になったらハズレを 1 つ消す", bad: false };
-  if (!x && r.step.onMiss === "annul_next") { const sd = targetSideJa(r); return { text: sd ? `ハズレが${sd.t}に付いたら消去してから次の手へ (消した後はどちらの側にも付く)。${sd.o}に付いたら残して次の手へ (その時は次の手が必ず${sd.t}に付く)` : "", bad: false }; }
-  if (!x) return { text: "ハズレは残したまま次の手へ進む", bad: false };
+  if (!x && r.step.onMiss === "redo") return { text: "ハズレは残してもう一度 (満杯なら 1 つ消す)", bad: false };
+  if (!x && r.step.onMiss === "annul_next") { const sd = targetSideJa(r); return { text: sd ? `ハズレが${sd.t}なら消去して次の手 · ${sd.o}なら残して次の手` : "狙う側のハズレだけ消して次の手", bad: false }; }
+  if (!x) return { text: "ハズレは残して次の手", bad: false };
   if (!c) return { text: "", bad: false };
-  if (x.omens.includes("OmenofLight")) return { text: "冒涜の MOD だけを消す (付いている狙いは消えない)", bad: false };
-  if (x.omens.includes("OmenofWhittling")) return { text: "一番 MOD レベルの低い物を入れ替える (ハズレが狙いより低ければ安全、高ければ狙いを消す)", bad: true };
+  if (x.omens.includes("OmenofLight")) return { text: "冒涜の MOD だけ消す (狙いは消えない)", bad: false };
+  if (x.omens.includes("OmenofWhittling")) return { text: "一番低い MOD を入れ替える (狙いの方が低いと消える)", bad: true };
   if (x.kind !== "annul" && x.kind !== "chaos") return { text: "", bad: false };
   const side = x.omens.some((o) => /Sinistral/.test(o)) ? "prefix" : x.omens.some((o) => /Dextral/.test(o)) ? "suffix" : null;
   const sideOfId = (id: string): "prefix" | "suffix" => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
   const n = presentMods(i, r).filter((id) => !(needs2(r) && [r.step.target, ...candsOf(r)].includes(id)) && (!side || sideOfId(id) === side)).length;
   const verb = x.kind === "chaos" ? "入れ替える" : "消す";
   // 偉大の手は「1 つだけ当たり」の時、当たった方も消す候補に入る
-  if (needs2(r)) return { text: `どれも付かなかった時: ${n ? `狙いを巻き込む ${n}/${n + 1}` : "安全"} / 1 つだけ当たりの時: 当たった MOD を巻き込む ${n + 1}/${n + 2}`, bad: true };
+  if (needs2(r)) return { text: `全部ハズレ: ${n ? `狙いを消す確率 ${n}/${n + 1}` : "安全"} · 1 つ当たり: 当たりを消す確率 ${n + 1}/${n + 2}`, bad: true };
   // 前の手が「どれか」(候補) の手なら、付いた方がどれかは決まっていない: 消去で 1/2 で消える (消えたらこの手でもう一度。2026-10-08 レビュー B4)
   const unsure = isRest(r.step.target) || candsOf(r).length > 0;
-  return n ? { text: `ハズレと、付いている狙い ${n} つのどれかを${verb} → 狙いを巻き込む ${n}/${n + 1}`, bad: true } : unsure ? { text: `ハズレを${verb} (前の手で付いた方が消えることもある → 消えたらこの手でもう一度)`, bad: false } : { text: `ハズレを${verb} (この時点で付いている狙いは無いので安全)`, bad: false };
+  return n ? { text: `狙いを${verb}確率 ${n}/${n + 1}`, bad: true } : unsure ? { text: `当たりが消えることもある (消えたらもう一度)`, bad: false } : { text: `ハズレを${verb} (安全)`, bad: false };
 }
 /**
  * この手を打つ時に消える確率 (打つ物が消してから付ける物の時: カオス・パーフェクトエッセンス)。その側の固定以外の MOD (狙い + 外れ) から 1 つ。
@@ -1415,7 +1420,7 @@ defineExpose({ rows });
                 </div>
               </div>
               <p class="mt-2 text-[11px]" :class="missRisk(focusRow!, rows[focusRow]!).bad ? 'text-rose-300' : 'text-emerald-200/80'">{{ missRisk(focusRow!, rows[focusRow]!).text }}</p>
-              <p v-if="isRest(rows[focusRow]!.step.target)" class="mt-1 text-[11px] text-emerald-200/80">消去で候補が消えても、1 つでも残っていればこの手を続ける。全部消えたら {{ Number(rows[focusRow]!.step.target!.slice(REST.length)) + 1 }} 手目へ戻る</p>
+              <p v-if="isRest(rows[focusRow]!.step.target)" class="mt-1 text-[11px] text-emerald-200/80">候補が 1 つでも残ればこの手を続ける · 全部消えたら {{ Number(rows[focusRow]!.step.target!.slice(REST.length)) + 1 }} 手目へ</p>
               <!-- お告げ無しの消去は、どちらの側が消えたかで枝が分かれる (2026-10-07 オーナー「サフィだけ消えるともう 1 回消去、プレだけ消えたら消去は使わずにトライ」) -->
               <p v-if="preRule(rows[focusRow]!, true)" class="mt-3 text-[11px] opacity-80">{{ preRule(rows[focusRow]!, true) }}</p>
               <p v-if="chaosRegain(rows[focusRow]!)" class="mt-1 text-[11px] opacity-80">この手の狙いが後の手で消えて戻った時は、カオスでなく完全高貴 + 側のお告げで取り直す (カオスだと付いている他の狙いも消すため。外れは消去)</p>
@@ -1451,19 +1456,19 @@ defineExpose({ rows });
                 2026-10-08 オーナー「説明は分かりやすいように、感覚で分かるように」: プルダウン 3 つ並びをやめて、文になる札の並びに
               -->
               <div v-if="situationsOf(focusRow!, rows[focusRow]!).length" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
-                <p class="mb-1 text-[12px] font-bold text-sky-100">こうなったら、どうする？ <span class="font-normal opacity-60">(選ばなければ上の決まり)</span></p>
+                <p class="mb-1 text-[12px] font-bold text-sky-100">こうなったら？ <span class="font-normal opacity-60">(決めなければ上と同じ)</span></p>
                 <div v-for="sit in situationsOf(focusRow!, rows[focusRow]!)" :key="sit" class="border-t border-white/5 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span class="text-[12px] font-bold">{{ SIT_ICON[sit] }} {{ SITUATION_JA[sit] }}</span>
                     <span v-if="rxOf(rows[focusRow]!, sit)" class="text-[12px] text-sky-100">→ {{ rxText(rxOf(rows[focusRow]!, sit)!) }}</span>
-                    <span v-else class="text-[11px] opacity-50">→ 上の決まりのまま</span>
-                    <button v-if="!rxOf(rows[focusRow]!, sit)" type="button" class="ml-auto rounded-lg border border-sky-400/50 px-2 py-0.5 text-[11px] text-sky-100 max-md:min-h-10" @click="setRx(focusRow!, sit, { pre: null, then: 'repeat' })">自分で決める</button>
-                    <button v-else type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 text-[11px] opacity-70 max-md:min-h-10" @click="setRx(focusRow!, sit, null)">上の決まりに戻す</button>
+                    <span v-else class="text-[11px] opacity-50">→ 上と同じ</span>
+                    <button v-if="!rxOf(rows[focusRow]!, sit)" type="button" class="ml-auto rounded-lg border border-sky-400/50 px-2 py-0.5 text-[11px] text-sky-100 max-md:min-h-10" @click="setRx(focusRow!, sit, { pre: null, then: 'repeat' })">決める</button>
+                    <button v-else type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 text-[11px] opacity-70 max-md:min-h-10" @click="setRx(focusRow!, sit, null)">戻す</button>
                   </div>
                   <template v-if="rxOf(rows[focusRow]!, sit)">
                     <!-- ① 先に打つ (よく使う札 + ほか) -->
                     <div class="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
-                      <span class="w-16 shrink-0 opacity-60 max-md:w-full">① 先に打つ</span>
+                      <span class="w-16 shrink-0 opacity-60 max-md:w-full">① 先に</span>
                       <button v-for="o in quickPre" :key="o.key || 'none'" type="button" class="flex items-center gap-1 rounded-lg border px-2 py-1 max-md:min-h-10" :class="(rxOf(rows[focusRow]!, sit)!.pre ?? '') === o.key ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, pre: o.key || null })">
                         <img v-for="ic in o.icons" :key="ic" :src="iconOf(ic)" alt="" class="h-5 w-5 object-contain" />{{ o.label }}
                       </button>
@@ -1474,20 +1479,20 @@ defineExpose({ rows });
                     </div>
                     <!-- ② 次に -->
                     <div class="mt-1 flex flex-wrap items-center gap-1 text-[11px]">
-                      <span class="w-16 shrink-0 opacity-60 max-md:w-full">② 次に</span>
-                      <button v-for="o in ([['repeat', '↺ この手をもう一度'], ['next', '→ 次の手へ'], ['restart', props.start.mods ? '⟲ この状態から最初から' : '⟲ 新しいベースで最初から']] as const)" :key="o[0]" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="rxOf(rows[focusRow]!, sit)!.then === o[0] ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, then: o[0] })">{{ o[1] }}</button>
+                      <span class="w-16 shrink-0 opacity-60 max-md:w-full">② 次</span>
+                      <button v-for="o in ([['repeat', '↺ もう一度'], ['next', '→ 次の手'], ['restart', '⟲ 最初から']] as const)" :key="o[0]" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="rxOf(rows[focusRow]!, sit)!.then === o[0] ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, then: o[0] })">{{ o[1] }}</button>
                       <select v-if="focusRow" class="rounded border border-white/15 bg-black/40 px-1 py-1" :class="rxOf(rows[focusRow]!, sit)!.then === 'goto' ? 'border-sky-300 text-sky-50' : ''" :value="rxOf(rows[focusRow]!, sit)!.then === 'goto' ? String(rxOf(rows[focusRow]!, sit)!.goto) : ''" @change="($event.target as HTMLSelectElement).value !== '' && setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, then: 'goto', goto: Number(($event.target as HTMLSelectElement).value) })">
-                        <option value="">↑ 前の手へ…</option>
+                        <option value="">↑ 前の手へ</option>
                         <option v-for="g in focusRow" :key="g" :value="String(g - 1)">{{ g }} 手目 ({{ cardTitle(rows[g - 1]!) }})</option>
                       </select>
                     </div>
                     <!-- ③ もう一度の打ち方 -->
                     <div v-if="rxOf(rows[focusRow]!, sit)!.then === 'repeat'" class="mt-1 flex flex-wrap items-center gap-1 text-[11px]">
-                      <span class="w-16 shrink-0 opacity-60 max-md:w-full">③ 打ち方</span>
-                      <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="!rxOf(rows[focusRow]!, sit)!.again ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: null })">同じ手</button>
-                      <button v-if="rows[focusRow]!.set && rows[focusRow]!.set!.omens.includes('OmenofGreaterExaltation')" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="rxOf(rows[focusRow]!, sit)!.again === singleKeyOf(rows[focusRow]!.set!) ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: singleKeyOf(rows[focusRow]!.set!) })">偉大を外して 1 発</button>
+                      <span class="w-16 shrink-0 opacity-60 max-md:w-full">③ 何で</span>
+                      <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="!rxOf(rows[focusRow]!, sit)!.again ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: null })">同じ</button>
+                      <button v-if="rows[focusRow]!.set && rows[focusRow]!.set!.omens.includes('OmenofGreaterExaltation')" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="rxOf(rows[focusRow]!, sit)!.again === singleKeyOf(rows[focusRow]!.set!) ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: singleKeyOf(rows[focusRow]!.set!) })">偉大なし</button>
                       <select class="max-w-[16rem] rounded border border-white/15 bg-black/40 px-1 py-1" :value="''" @change="($event.target as HTMLSelectElement).value && setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: ($event.target as HTMLSelectElement).value })">
-                        <option value="">別のカレンシーで… (錬金のハズレをカオスで振り直す など)</option>
+                        <option value="">別の物で…</option>
                         <option v-for="o in againChoices(focusRow!)" :key="o.key" :value="o.key">{{ o.label }}</option>
                       </select>
                     </div>
