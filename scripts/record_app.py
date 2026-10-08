@@ -12,6 +12,7 @@ undo (1 手戻す) / modlist (MOD 一覧で指名) / sim (シミュレーショ�
 
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import subprocess
@@ -22,6 +23,7 @@ from typing import Any
 
 import structlog
 from playwright.sync_api import Locator, Page, sync_playwright
+from record_app_js import APP_FX_FIXED, CURSOR_JS, HIDE_JS, LAST_CHANGE_JS
 
 log = structlog.get_logger()
 CDP = "http://127.0.0.1:9333"
@@ -33,63 +35,6 @@ SPEED = 2.0
 def pause(seconds: float) -> None:
     """操作の間の待ち (SPEED で縮める)."""
     time.sleep(seconds / SPEED)
-
-
-# カーソルの絵 (Playwright の操作では OS のカーソルが動かない)。
-# アプリの「持っているカレンシー」の絵・波紋は拡大 (zoom) の補正が抜けて右下にずれるので隠し、
-# 持っている絵は自前のカーソルに付ける。棚の詳細カード (0.4 秒で出る) と、
-# 画面の一番下の取得中の帯 (「自動巡回中」、FetchBusyBar) も録画では隠す
-CURSOR_JS = r"""
-(() => {
-  if (window.__recCursor) return;
-  const c = document.createElement('div');
-  c.innerHTML = '<svg width="30" height="30" viewBox="0 0 28 28"><path d="M3 2 L3 22 L8.5 17 '
-    + 'L12 25 L15.5 23.5 L12 15.8 L19.5 15.8 Z" fill="white" stroke="black" stroke-width="1.6" '
-    + 'stroke-linejoin="round"/></svg>';
-  Object.assign(c.style, {position: 'fixed', left: '960px', top: '540px', zIndex: 2147483647,
-    pointerEvents: 'none', transform: 'translate(-3px,-2px)'});
-  document.documentElement.appendChild(c);
-  const st = document.createElement('style');
-  st.textContent = 'img.fixed.z-\\[200\\], .stage-ripple, .stage-drop, '
-    + 'body > div.fixed.z-\\[500\\].w-\\[340px\\], '
-    + 'div.fixed.bottom-0.z-\\[95\\] { display: none !important; }';
-  document.head.appendChild(st);
-  const held = document.createElement('img');
-  Object.assign(held.style, {position: 'absolute', left: '14px', top: '14px', width: '46px',
-    height: '46px', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(250,204,21,.85))',
-    display: 'none'});
-  c.appendChild(held);
-  setInterval(() => {
-    const a = document.querySelector('img.fixed.z-\\[200\\]');
-    if (a) { if (held.src !== a.src) held.src = a.src; held.style.display = 'block'; }
-    else held.style.display = 'none';
-  }, 50);
-  const z = () => parseFloat(getComputedStyle(document.documentElement).zoom || '1') || 1;
-  const ring = (x, y) => {
-    const r = document.createElement('div');
-    Object.assign(r.style, {position: 'fixed', left: (x - 16) + 'px', top: (y - 16) + 'px',
-      width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(255,200,60,.95)',
-      zIndex: 2147483646, pointerEvents: 'none',
-      transition: 'transform .45s ease-out, opacity .45s ease-out'});
-    document.documentElement.appendChild(r);
-    requestAnimationFrame(() => { r.style.transform = 'scale(2.2)'; r.style.opacity = '0'; });
-    setTimeout(() => r.remove(), 500);
-  };
-  addEventListener('mousemove', e => {
-    c.style.left = (e.clientX / z()) + 'px'; c.style.top = (e.clientY / z()) + 'px'; }, true);
-  addEventListener('mousedown', e => ring(e.clientX / z(), e.clientY / z()), true);
-  window.__recCursor = c;
-})();
-"""
-# 映さないボタン (動画モード・JSON・取引所検索)
-HIDE_JS = r"""
-(() => { for (const b of document.querySelectorAll('button')) {
-  const t = b.textContent.trim();
-  if (/^(動画モード|手順 JSON|結果 JSON|相場 JSON)$/.test(t)
-      || t.startsWith('今の MOD を取引所で検索'))
-    b.style.display = 'none';
-}})();
-"""
 
 
 def focus_app() -> None:
@@ -182,7 +127,7 @@ HAND_CLIPS = ["open", "orbs", "undo", "modlist"]
 
 def setup(page: Page) -> None:
     """カーソルの絵を入れ、映さないボタンを隠す (ページを切り替えたら入れ直す)."""
-    page.evaluate(CURSOR_JS)
+    page.evaluate(CURSOR_JS, APP_FX_FIXED)
     page.evaluate(HIDE_JS)
 
 
@@ -204,10 +149,20 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         hand.click(page.locator(f'[data-shelf][data-key="{key}"]'), 650, 0)
         page.get_by_text(re.compile("^持っている: ")).wait_for(timeout=3000)
 
+    notes: list[dict[str, Any]] = []  # 1 手ごとの結果 (台本の台詞を録画に合わせる用)
+
     def use(n: int) -> None:
         hand.click(card.locator("p.stage-item-name").first, 700, 0)
         steps(n).wait_for(timeout=5000)
+        change = page.evaluate(LAST_CHANGE_JS)
+        notes.append({"step": n, "change": change, "item": card.inner_text()})
         pause(1.8)  # 演出 1.4 秒 + 付いた MOD の光 1.6 秒
+
+    def dump(name: str) -> None:
+        """録画と同じ名前の JSON に、その録画で打った手の結果を書く."""
+        path = out / f"{name}.json"
+        path.write_text(json.dumps(notes, ensure_ascii=False, indent=1), encoding="utf-8")
+        notes.clear()
 
     def top() -> None:
         scroller.evaluate("e => e.scrollTo({top: 0})")
@@ -249,6 +204,7 @@ def run(page: Page, out: Path, only: list[str]) -> None:
 
     if "orbs" in only:
         top()
+        notes.clear()
         rec = Recorder(out / "orbs.mp4")
         hand.click(shelf.get_by_role("button", name="オーブ・骨", exact=True), 700, 0.6)
         for n, key in ((1, "transmute"), (2, "augment"), (3, "regal")):
@@ -261,9 +217,11 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         hand.glide(480, 900, 600)
         pause(1.5)
         rec.stop()
+        dump("orbs")
 
     if "undo" in only:
         top()
+        notes.clear()
         rec = Recorder(out / "undo.mp4")
         hand.click(page.get_by_role("button", name="1 手戻す", exact=True), 700, 0)
         steps(5).wait_for(timeout=3000)
@@ -275,6 +233,7 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         hand.glide(480, 900, 600)
         pause(1.5)
         rec.stop()
+        dump("undo")
 
     if "modlist" in only:
         white()

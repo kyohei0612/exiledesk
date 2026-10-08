@@ -211,7 +211,7 @@
         {
           "speaker": "zundamon",
           "emotion": "troubled",
-          "text": "持ったまま押し続けたら、どうなるのだ？",
+          "text": "1回ずつ持ち直さないとダメなのだ？",
           "scene": {
             "kind": "stage",
             "step": 1
@@ -220,7 +220,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "連打になるわ。カオスオーブを何回も打つ時に便利よ。",
+          "text": "持ったまま、アイテムを何回も押せるわ。カオスオーブを何回も打つ時に便利よ。",
           "scene": {
             "kind": "stage",
             "step": 1
@@ -229,7 +229,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "増強のオーブを使うわね。",
+          "text": "まずは変成のオーブでマジックにするわね。",
           "scene": {
             "kind": "stage",
             "step": 1
@@ -238,7 +238,25 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "最大マナ+65が付いた。T7よ。",
+          "text": "筋力+17、T5。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次は増強のオーブ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "回避力+222。T1よ。",
           "scene": {
             "kind": "stage",
             "step": 2
@@ -247,7 +265,7 @@
         {
           "speaker": "zundamon",
           "emotion": "surprised",
-          "text": "ティアまで出るのだ！",
+          "text": "いきなりT1なのだ！",
           "scene": {
             "kind": "stage",
             "step": 2
@@ -265,7 +283,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "火耐性+32%、T3。",
+          "text": "火耐性+26%、T4。",
           "scene": {
             "kind": "stage",
             "step": 3
@@ -283,7 +301,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "火ダメージが25%増加する、T2。",
+          "text": "光半径とマナ自動回復が一緒になったMOD、T3。",
           "scene": {
             "kind": "stage",
             "step": 4
@@ -292,7 +310,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "冷気ダメージが4%増加する、T6。",
+          "text": "最大ライフ+26、T7。",
           "scene": {
             "kind": "stage",
             "step": 5
@@ -319,7 +337,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "筋力+20。これで6つ埋まったわ。",
+          "text": "最大マナ+169、T1。これで6つ埋まったわ。",
           "scene": {
             "kind": "stage",
             "step": 6
