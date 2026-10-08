@@ -1527,13 +1527,13 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <!-- 完成図 (ベースの横から移した。段・＋・×・どれか N つ・付きやすさ) -->
         <StageTargetSummary :editable="!modsDone" />
         <div v-if="rows.length && !modsDone" class="mt-1 flex items-center gap-2">
-          <button type="button" class="rounded-lg border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="s.simTargets.value = []">全部外す</button>
-          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 max-md:min-h-11 max-md:px-4" @click="modsDone = true">決めた →</button>
+          <button type="button" class="inline-flex h-8 items-center rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)]" @click="s.simTargets.value = []">全部外す</button>
+          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11 max-md:px-4" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <!-- スマホ: 一覧の下で「T○ 以上」を押しても上の完成図は見えないので、狙いの数と「決めた →」を画面の下に固定 (2026-10-08 レビュー) -->
         <div v-if="phone && rows.length && !modsDone" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">狙い {{ rows.length }} 個</b><span class="opacity-60"> · 足したら決める</span></span>
-          <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-4 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 max-md:min-h-11" @click="modsDone = true">決めた →</button>
+          <button type="button" class="min-h-11 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 px-4" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <div v-if="phone && rows.length && !modsDone" class="h-20"></div>
         <!-- このベースに付く MOD (同じ枠の中。2026-10-05 オーナー「枠は一緒の枠で表示するべき」)。長いので枠の中で送り、上の完成図は見えたまま -->
@@ -1553,26 +1553,26 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
             <span class="opacity-60">(手打ちの累計 {{ money(s.simStartCost.value) }} + 白ベース。直せる)</span>
           </template>
           <template v-else-if="s.simStart.value === 'fractured'">
-            <span class="opacity-70">固定済みのベース (🔒 {{ fracMembers[0]?.text ?? "固定 MOD を 2 で足す" }})</span>
+            <span class="inline-flex items-center gap-1 text-[var(--exile-color-text-secondary)]"><Icon name="lock" class="size-3.5" />フラクチャー済みのベース · {{ fracMembers[0]?.text ?? "フラクチャーの MOD を 2 で足す" }}</span>
             <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="値段" />
-            <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :disabled="!fracMembers.length" title="固定 MOD が付いた (固定済みの) ベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す ↗</button>
+            <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline disabled:opacity-40 max-md:min-h-11" :disabled="!fracMembers.length" title="フラクチャーの MOD が付いたベースを取引所で探す (開くだけ)" @click="searchBought">取引所で探す<Icon name="external" class="size-3.5" /></button>
             <span class="inline-block w-24 shrink-0" :class="ageOf('bought')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")?.text ?? "" }}</span>
           </template>
           <template v-else-if="s.simStart.value === 'four'">
             <span class="opacity-70">4 MOD のレア (3 MOD + 🔒 {{ fracMembers[0]?.text ?? "固定 MOD を 2 で足す" }})</span>
             <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
-            <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :disabled="!fracMembers.length" title="狙いの MOD が付いたレア (固定済みは除く、MOD 4 つまで) を取引所で探す (開くだけ)" @click="searchFour">取引所で探す ↗</button>
+            <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline disabled:opacity-40 max-md:min-h-11" :disabled="!fracMembers.length" title="狙いの MOD が付いたレア (固定済みは除く、MOD 4 つまで) を取引所で探す (開くだけ)" @click="searchFour">取引所で探す<Icon name="external" class="size-3.5" /></button>
             <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
           </template>
           <template v-else>
           <span class="opacity-70">白ベース</span>
           <PriceInput v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="0" />
-          <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :title="`アイテムレベル ${searchIlvl} 以上 (狙う MOD の段が付く一番高いレベル) の白のベースを取引所で探す (開くだけ)`" @click="searchWhite">取引所で探す ↗</button>
+          <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline disabled:opacity-40 max-md:min-h-11" :title="`アイテムレベル ${searchIlvl} 以上 (狙う MOD の段が付く一番高いレベル) の白のベースを取引所で探す (開くだけ)`" @click="searchWhite">取引所で探す<Icon name="external" class="size-3.5" /></button>
           <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
           </template>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ -->
-        <p class="mt-2 text-[11px] font-bold opacity-80" :class="fractureRows.length ? '' : 'max-md:hidden'">{{ s.simStart.value === "fractured" ? "固定されている MOD (買う物)" : s.simStart.value === "four" ? "自分でフラクチャーする MOD" : "増強・消去スパムで狙う MOD (フラクチャー予定)" }}</p>
+        <p class="mt-3 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]" :class="fractureRows.length ? '' : 'max-md:hidden'">{{ s.simStart.value === "fractured" ? "フラクチャーの MOD (買う物)" : s.simStart.value === "four" ? "自分でフラクチャーする MOD" : "増強・消去スパムで狙う MOD (フラクチャー予定)" }}</p>
         <p v-if="!fractureRows.length" class="text-[11px] opacity-50 max-md:hidden">無し (フラクチャーしない。2 の付け方の予定で「フラクチャー予定」を選ぶと出る)</p>
         <p v-if="mixedSides" class="text-[11px] text-amber-200">候補がプレとサフィに分かれています (推奨は同じ側。マジックの間はどちらの側に付いても当たり)</p>
         <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
@@ -1583,7 +1583,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <div v-if="!whiteDone" class="mt-1 flex items-center gap-2">
           <span v-if="calc && fracMembers.length >= 2" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
           <span v-if="num(startPrice) == null" class="ml-auto text-[11px] text-amber-200/80">{{ s.simStart.value === "white" ? "白ベースの値段を入れる (分からなければ 0)" : "買うベースの値段を入れる" }}</span>
-          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-0.5 font-bold text-emerald-100 disabled:opacity-40 max-md:min-h-11" :class="num(startPrice) == null ? '' : 'ml-auto'" :disabled="num(startPrice) == null" :title="num(startPrice) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">決めた →</button>
+          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :class="num(startPrice) == null ? '' : 'ml-auto'" :disabled="num(startPrice) == null" :title="num(startPrice) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
       </div>
 
@@ -1600,7 +1600,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
                 <span v-else class="flex items-center gap-1.5 text-[11px]">
                   <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
                   <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="値段" />
-                  <button type="button" class="rounded border border-sky-400/50 px-2 py-0.5 text-sky-200 hover:bg-sky-500/10 max-md:min-h-11" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す ↗</button>
+                  <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline disabled:opacity-40 max-md:min-h-11" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す<Icon name="external" class="size-3.5" /></button>
                 </span>
               </td>
               <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50" :title="x.key === 'self' ? undefined : '値段が空 = 取引所に無い物として数えない (2026-10-06)'">{{ x.key === "self" ? "—" : "無し" }}</span></td>
@@ -1609,8 +1609,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         </table>
         <p v-if="calc?.cantRoll" class="mt-1 text-[11px] text-rose-300">増強ではこの段は出ません (アイテムレベルが足りない)</p>
         <div class="mt-1.5 flex items-center gap-2">
-          <button type="button" class="rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-70 hover:opacity-100" @click="toggle('calc')">内訳 {{ open.calc ? "▲" : "▼" }}</button>
-          <button v-if="!startDone" type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100" @click="startDone = true">決めた →</button>
+          <button type="button" class="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" :aria-expanded="open.calc" @click="toggle('calc')">内訳<Icon :name="open.calc ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></button>
+          <button v-if="!startDone" type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40" @click="startDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <!-- 内訳 (① 自作の 1 回分と、② の分かれ目) -->
         <div v-if="open.calc && calc" class="mt-1.5 rounded bg-black/25 px-2 py-1.5 text-[11px]">
@@ -1641,8 +1641,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
               <td class="w-14 py-1">
                 <span class="mr-1 font-bold text-amber-200">{{ i + 1 }}</span>
                 <template v-if="!orderDone">
-                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="moveOrder(k, -1)">▲</button>
-                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === orderKeys.length - 1" title="下へ" @click="moveOrder(k, 1)">▼</button>
+                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="moveOrder(k, -1)"><Icon name="chevron-up" class="size-4" /></button>
+                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === orderKeys.length - 1" title="下へ" @click="moveOrder(k, 1)"><Icon name="chevron-down" class="size-4" /></button>
                 </template>
               </td>
               <template v-if="orderRow(k)">
@@ -1685,7 +1685,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           </div>
         </div>
         <div v-if="!orderDone" class="mt-1 flex">
-          <button type="button" class="ml-auto rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-0.5 font-bold text-amber-100 max-md:min-h-11" @click="orderDone = true">決めた →</button>
+          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" @click="orderDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
       </div>
     </template>
