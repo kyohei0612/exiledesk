@@ -74,6 +74,8 @@ export interface CompiledStep {
   /** お告げ無しの消去で外す時、外れが反対の側に付いたら消さずにもう一度打つ (PatternStep.otherJunk) */
   otherJunk?: "keep";
   /** 状況ごとの反応 (PatternStep.on をセットに直した物。goto は並べた後の番号) */
+  /** 結果の状態ごとの行動 (PatternStep.policy をセットに直した物。キーは `${当たり}-${ハズレ}` (狙いの側)) */
+  policy?: Record<string, { act?: { kind?: PatternKind; currency: string; omens: string[] }; then?: "next" | "restart" | "goto"; goto?: number }>;
   on?: Partial<Record<"pre_full" | "partial" | "miss_t" | "miss_o" | "miss", { pre?: { kind?: PatternKind; currency: string; omens: string[] } | null; then: "repeat" | "next" | "restart" | "goto"; goto?: number; again?: { kind?: PatternKind; currency: string; omens: string[] } | null }>>;
   /**
    * 「残り」の手の元の手 (パターンの中の番号)。この手の間に候補が消えても、まだ 1 つでも付いていればこの手を続け、全部消えたら元の手へ
@@ -731,6 +733,29 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         if (!e && p.kind === "desecrate" && unrevealedOf(item) && !wall) e = reveal(p.target, echoes);
       }
       if (e) return fail(`${i + 1} 手目: ${e}`);
+      // 結果の状態ごとの行動 (選んだ状態だけ。狙いの側の 当たり・ハズレ の数で決める)。打った結果がまた別の状態になれば、そこで決めた物を続ける
+      if (p.policy && p.target && !meets(item, p.target)) {
+        const pts = membersOf(p.target).map((a) => sideOf(a.modId));
+        const side = pts.every((x) => x === pts[0]) ? pts[0]! : null;
+        let moved = false;
+        for (let g = 0; side && g < 400 && steps.length < max; g++) {
+          if (meets(item, p.target)) break;
+          const key = `${listOf(item, side).filter((m) => !m.unrevealed && isGood(m)).length}-${junkOn(item, side).length}`;
+          const rx = p.policy[key];
+          if (!rx) break;
+          if (rx.act) {
+            const e2 = play(rx.act.currency, rx.act.omens);
+            if (e2) return fail(`${i + 1} 手目 (狙い・狙い以外 ${key} の時): ${e2}`);
+            continue;
+          }
+          if (rx.then === "next") { i++; moved = true; break; }
+          if (rx.then === "restart") { restartPattern(); moved = true; break; }
+          if (rx.then === "goto" && rx.goto != null) { i = rx.goto; moved = true; break; }
+          break;
+        }
+        if (moved) continue;
+        if (meets(item, p.target)) { i++; continue; }
+      }
       if (!p.target || (two ? meets(item, p.target) : count(p.target) > before || meets(item, p.target))) { i++; continue; }
       // 状況ごとの反応 (選んだ時だけ): 一部当たり / ハズレが狙いの側・反対の側に付いた
       if (p.on) {

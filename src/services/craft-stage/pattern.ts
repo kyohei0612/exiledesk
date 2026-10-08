@@ -76,7 +76,17 @@ export interface PatternStep {
    * 選んだ状況だけ上の決まり (onMiss・miss・otherGone…) より先に使う。選んでいない状況は今までの決まりのまま
    */
   on?: Partial<Record<Situation, Reaction>>;
+  /**
+   * 結果ごとの行動 (2026-10-08 オーナー「打った結果全てにどういう行動をとるかを選択肢に。偉大左を打ったらハズレ 2 / 当たり 1 ハズレ 1 / 当たり 2、
+   * ハズレ 2 なら消去、消去がハズレに刺さったら完全高貴、当たりに刺さったら…と細かく」)。
+   * 狙いの側の状態「当たり h・ハズレ j」(キー `${h}-${j}`) ごとに、次に打つ物 (set) かすること (then)。打った結果がまた別の状態になり、そこでも決めた物を使う
+   */
+  policy?: Record<string, PolicyAct>;
 }
+/** 結果の状態での行動: 打つ物 (set) か、次の手・最初から・N 手目 (then) */
+export interface PolicyAct { set?: string; then?: "next" | "restart" | "goto"; goto?: number }
+/** 状態のキー (狙いの側の当たり h・ハズレ j) */
+export const policyKey = (h: number, j: number): string => `${h}-${j}`;
 /**
  * 1 つの手で起こりうる状況。
  *   pre_full … 打つ前に狙いの側がハズレで埋まっている (6 MOD・ルーンで 7 MOD の時も)

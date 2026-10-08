@@ -12,6 +12,7 @@ import { SITUATION_JA, type Reaction, type Situation, ANY_KINDS, ANY_TARGET, oth
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageFlowEditor from "./StageFlowEditor.vue";
+import StageOutcomeTree from "./StageOutcomeTree.vue";
 import StageItemCard from "./StageItemCard.vue";
 import { freshItem } from "../../services/craft-stage/run-plan";
 import { allMods, makeStageMod, without, withMod } from "../../services/craft-stage/stage-core";
@@ -480,6 +481,24 @@ const quickPre = computed(() => {
   };
   return [{ key: "", label: "なし", icons: [] as string[] }, ...[pick("annul", []), pick("annul", ["OmenofSinistralAnnulment"]), pick("annul", ["OmenofDextralAnnulment"]), pick("chaos", [])].filter((x): x is { key: string; label: string; icons: string[] } => !!x)];
 });
+/**
+ * 結果の木を出せる手か (高貴・消去・カオス、狙いが片側だけ) と、その中身 (側・枠・揃える数・打つ前の 狙い / 狙い以外)。
+ * 揃える数はその側の狙いの手順の数 (どれか N つのコピーも 1 つずつ)
+ */
+function treeOf(i: number, r: Row): { set: PatternSet; side: "prefix" | "suffix"; limit: number; need: number; h0: number; j0: number } | null {
+  const c = ctx.value;
+  if (!c || !r.set || !["exalt", "annul", "chaos"].includes(r.set.kind) || !r.step.target || r.step.target === ANY_TARGET) return null;
+  const ids = isRest(r.step.target) ? restMembers(pat.value.steps, r.step.target) : [r.step.target, ...candsOf(r)];
+  const sides = new Set(ids.map((id) => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix")));
+  if (sides.size !== 1) return null;
+  const side = [...sides][0] as "prefix" | "suffix";
+  const sideOfId = (id: string): string => (c.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const st = stateBefore(c, pat.value.steps, i);
+  const h0 = [...st.placed].filter((id) => sideOfId(id) === side).length;
+  const j0 = Math.max(0, st[side] - h0);
+  const need = Math.max(h0 + 1, s.simTargets.value.filter((t) => sideOfId(t.modId) === side && t.method !== "fracture").length + (st.fractured && sideOfId(st.fractured) === side ? 1 : 0));
+  return { set: r.set, side, limit: st.limits[side], need: Math.min(need, st.limits[side]), h0, j0 };
+}
 const rxOf = (r: Row, sit: Situation): Reaction | undefined => r.step.on?.[sit];
 function setRx(i: number, sit: Situation, rx: Reaction | null): void {
   const cur = { ...(pat.value.steps[i]?.on ?? {}) };
@@ -1469,7 +1488,11 @@ defineExpose({ rows });
                 起こりうること: 状況ごとに「先に打つ物 → 次にすること」を札で選ぶ (選んだ状況は上の決まりより先に使う)。
                 2026-10-08 オーナー「説明は分かりやすいように、感覚で分かるように」: プルダウン 3 つ並びをやめて、文になる札の並びに
               -->
-              <div v-if="situationsOf(focusRow!, rows[focusRow]!).length" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
+              <!-- 打った結果ごとに次にすること (高貴・消去・カオスで、狙いが片側だけの手) -->
+              <div v-if="treeOf(focusRow!, rows[focusRow]!)" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
+                <StageOutcomeTree v-bind="treeOf(focusRow!, rows[focusRow]!)!" :policy="rows[focusRow]!.step.policy ?? {}" :sets="sets" :steps="rows.slice(0, focusRow!).map((rw, n) => ({ n, label: cardTitle(rw) }))" :locked="locked" @change="(pol) => patch(focusRow!, { policy: Object.keys(pol).length ? pol : undefined })" />
+              </div>
+              <div v-else-if="situationsOf(focusRow!, rows[focusRow]!).length" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
                 <p class="mb-1 text-[12px] font-bold text-sky-100">こうなったら？ <span class="font-normal opacity-60">(決めなければ上と同じ)</span></p>
                 <div v-for="sit in situationsOf(focusRow!, rows[focusRow]!)" :key="sit" class="border-t border-white/5 py-2">
                   <div class="flex flex-wrap items-center gap-2">
