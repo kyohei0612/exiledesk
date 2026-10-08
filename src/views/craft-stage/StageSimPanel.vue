@@ -10,6 +10,7 @@
   探す自動 (計算機の自動のツリー) は外した。計算機 (htc-craft) はそのまま。
 -->
 <script setup lang="ts">
+import { AFFIX_COUNT } from "../../services/htc/tree-buy";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, iconOf, mergeRecipesFromFile, nameOf, priceOf, readSimRecipes, recipesToFile, writeSimRecipes, writeSimSession, type SimRecipe, type SimSession } from "../../state/craft-stage";
 import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
@@ -331,7 +332,8 @@ const searchIlvl = computed(() => {
 });
 async function searchFour(): Promise<void> {
   const q = fracQuery("explicit");
-  if (q) await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: searchIlvl.value, ...q, fracturedItem: false, noSanctified: true, ...socketQuery() }));
+  // MOD は 4 つまで (3 MOD + 狙い 1。5〜6 MOD だとフラクチャーの当たりが 1/5〜1/6 になる。2026-10-08 オーナー「4 MOD 以下の検索フィルターになってない」)
+  if (q) await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "nonunique", ilvlMin: searchIlvl.value, ...q, stats: [...q.stats, { id: AFFIX_COUNT, max: 4 }], fracturedItem: false, noSanctified: true, ...socketQuery() }));
 }
 /**
  * フラクチャーの候補の取引所の条件。候補が 2 つ以上なら「どれか 1 つ」のグループ (取引所の count、1 つ以上)

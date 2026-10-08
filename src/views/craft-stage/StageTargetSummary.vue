@@ -213,7 +213,7 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
         {{ col.title }} ({{ col.used }}/3)<span v-if="col.used > 3" class="ml-1 font-normal">枠が足りない</span>
       </p>
       <p v-if="!col.groups.length" class="py-0.5 opacity-40">{{ props.editable ? "下の一覧の「T○ 以上」で足す" : "なし" }}</p>
-      <div v-for="g in col.groups" :key="g.key" class="flex items-start gap-1.5 py-0.5">
+      <div v-for="g in col.groups" :key="g.key" class="flex items-start gap-1.5 py-0.5 max-md:flex-wrap">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
         <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="s.data.value?.mods.get(g.host)?.rune ? '差すと付く MOD。回す時はこのルーンを差した白から始める' : undefined">{{ badgeOf(g.host).label }}</span>
@@ -223,15 +223,15 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
             どれか 1 つ
             <span v-if="g.share != null" class="ml-1 font-normal tabular-nums text-amber-100/80">付きやすさ 合計 {{ pct(g.share) }}</span>
           </p>
-          <div :class="g.members.length > 1 ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5' : 'flex items-center gap-1.5'">
-            <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1" :class="g.members.length > 1 ? 'rounded bg-black/30 px-1' : ''">
-              <span class="truncate" :title="r.text + essTitle(r.modId)">{{ r.text }}</span>
+          <div :class="g.members.length > 1 ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5' : 'flex items-center gap-1.5 max-md:flex-wrap'">
+            <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1 max-md:flex-wrap" :class="g.members.length > 1 ? 'rounded bg-black/30 px-1' : ''">
+              <span class="truncate max-md:w-full max-md:whitespace-normal" :title="r.text + essTitle(r.modId)">{{ r.text }}</span>
               <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
                 <option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option>
               </select>
               <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
               <span v-if="r.share != null" class="shrink-0 text-[10px] tabular-nums opacity-70" title="1 回の抽選でこの段以上が出る割合 (同じ側の重み)">{{ pct(r.share) }}</span>
-              <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button>
+              <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100 max-md:min-h-9 max-md:min-w-9 max-md:text-[16px]" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button>
             </span>
             <!-- 「＋」は MOD のすぐ横 (2026-10-05 オーナー) -->
             <button v-if="props.editable && canAlt(g.kind)" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="あるいは (この MOD の代わりに付いても当たりにする MOD を選ぶ)" @click="s.simAltFor.value = g.host">＋</button>
@@ -240,7 +240,7 @@ function setPlan(g: { kind: Kind; host: string }, p: Plan): void {
           </div>
         </div>
         <!-- 付け方の予定は MOD の右側 (2026-10-05 オーナー「普通カオススパムとかの設定って MOD の右側よ」) -->
-        <select v-if="props.editable && plansOf(g.host).length > 1" class="shrink-0 rounded border bg-[#14120e] px-0.5 text-[10px]" :class="PLAN_CLS[planOf(g)]" title="付け方の予定" :value="planOf(g)" @change="setPlan(g, ($event.target as HTMLSelectElement).value as Plan)">
+        <select v-if="props.editable && plansOf(g.host).length > 1" class="shrink-0 rounded border bg-[#14120e] px-0.5 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS[planOf(g)]" title="付け方の予定" :value="planOf(g)" @change="setPlan(g, ($event.target as HTMLSelectElement).value as Plan)">
           <option v-for="p in plansOf(g.host)" :key="p" :value="p">{{ PLAN_JA[p] }}{{ p === "fracture" && g.kind !== "fracture" && !canFracture(g.host) ? " (違う側・非推奨)" : "" }}</option>
         </select>
         <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS[planOf(g)]">{{ PLAN_JA[planOf(g)] }}</span>
