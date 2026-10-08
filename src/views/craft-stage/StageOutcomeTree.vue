@@ -7,12 +7,17 @@
   全部の形を決めるまでこの手にできない (StagePatternEditor が shapesLeft で見る)
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { iconOf, nameOf } from "../../state/craft-stage";
-import { setByKey, type PatternSet, type PolicyAct } from "../../services/craft-stage/pattern";
+import type { PatternSet, PolicyAct } from "../../services/craft-stage/pattern";
+import CurrencyShelf from "./CurrencyShelf.vue";
+import { provideShelf } from "../../state/shelf-context";
+import { applyCurrency, omensFor } from "../../services/craft-stage/apply-currency";
+import { mulberry32 } from "../../services/htc/rng";
+import { craftStage } from "../../state/craft-stage";
 import StageItemCard from "./StageItemCard.vue";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
-import { GREATER, reachableShapes, shapeKey, shapeOutcomes, sideOmenOf, type ShapeCtx, type ShapeOut } from "../../services/craft-stage/shape-table";
+import { GREATER, reachableShapes, setOf, shapeKey, shapeOutcomes, sideOmenOf, useKey, type ShapeCtx, type ShapeOut } from "../../services/craft-stage/shape-table";
 
 const props = defineProps<{
   /** この手の打つ物 */
@@ -30,6 +35,15 @@ const props = defineProps<{
   steps?: Array<{ n: number; label: string }>;
   /** この手を打つ前のアイテム (形に合わせて狙いの側の MOD を並べ替えて見せる) */
   baseItem?: StageItem | null;
+  /**
+   * どんどん進む: 打つ物を選んだら記録して、次の決めていない形へ自動で進む (結果を選ばない)
+   * (2026-10-09 オーナー「打ったらどんどんパターン更新していってほしい、選んでポチポチはだるい」)
+   */
+  auto?: boolean;
+  /** 打つ物を手打ちと同じ棚から選ぶ (打って作るパターン)。無ければ高貴・消去・カオスの札 */
+  useShelf?: boolean;
+  /** 1 MOD 残し消去で戻る手 (スパムの手)。あれば「⟲ 1 MOD 残し消去 → N 手目」を出す */
+  backTo?: { to: number; label: string } | null;
   /** 付かなかったらの札 (形の手で「付かなかったらの札で」を選んだ時の動き) */
   fallback?: string;
   locked?: boolean;
@@ -55,7 +69,7 @@ const firstOf = (k: K): PatternSet | undefined => (k === "exalt" ? find("exalt",
 const OMEN_JA: Record<string, string> = { OmenofSinistralExaltation: "左", OmenofDextralExaltation: "右", OmenofSinistralAnnulment: "左", OmenofDextralAnnulment: "右", OmenofSinistralErasure: "左", OmenofDextralErasure: "右", OmenofGreaterExaltation: "偉大", OmenofCatalysingExaltation: "触媒", OmenofWhittling: "削減", OmenofLight: "光" };
 const CUR_JA: Record<string, string> = { exalt: "高貴", exalt_greater: "上級高貴", exalt_perfect: "完全高貴", chaos: "カオス", chaos_greater: "上級カオス", chaos_perfect: "完全カオス", annul: "消去" };
 /** 打つ物の短い名前 (完全高貴 偉大 左 など) */
-const labelOf = (x: PatternSet): string => [CUR_JA[x.currency] ?? nameOf(x.currency), ...[...x.omens].sort((a, b) => (OMEN_JA[a] === L.value ? 1 : 0) - (OMEN_JA[b] === L.value ? 1 : 0)).map((o) => OMEN_JA[o] ?? o)].join(" ");
+const labelOf = (x: PatternSet): string => [CUR_JA[x.currency] ?? nameOf(x.currency), ...[...x.omens].sort((a, b) => (OMEN_JA[a] === L.value ? 1 : 0) - (OMEN_JA[b] === L.value ? 1 : 0)).map((o) => OMEN_JA[o] ?? nameOf(o))].join(" ");
 const iconsOf = (x: PatternSet): string[] => [x.currency, ...x.omens].filter((i) => !!iconOf(i));
 /** その形で打てない理由 (打てない物は薄く) */
 function whyNot(x: PatternSet, h: number, j: number): string | null {
@@ -87,12 +101,12 @@ const at = ref<{ h: number; j: number; start: boolean }>({ h: props.h0, j: props
 const editing = ref(false);
 /** 1 つ戻す用 */
 const trail = ref<Array<{ h: number; j: number; start: boolean }>>([]);
-watch(() => [props.h0, props.j0, props.set.key], () => { at.value = { h: props.h0, j: props.j0, start: true }; trail.value = []; editing.value = false; });
+watch(() => [props.h0, props.j0, props.set.key], () => { at.value = { h: props.h0, j: props.j0, start: true }; trail.value = []; editing.value = false; if (props.auto) void nextTick(autoNext); });
 
 const atKey = computed(() => shapeKey(at.value.h, at.value.j));
 const done = computed(() => !at.value.start && at.value.h >= props.need);
 const act = computed<PolicyAct | undefined>(() => (at.value.start ? undefined : props.policy[atKey.value]));
-const actSet = computed<PatternSet | undefined>(() => (act.value?.set ? setByKey(props.sets, act.value.set) : undefined));
+const actSet = computed<PatternSet | undefined>(() => (act.value?.set ? setOf(props.sets, act.value.set) : undefined));
 /** 今打つ物 (この手の打つ物 / この形で決めた物) */
 const firing = computed<PatternSet | undefined>(() => (at.value.start ? props.set : done.value ? undefined : actSet.value));
 const outs = computed<ShapeOut[]>(() => (firing.value ? shapeOutcomes(ctx.value, firing.value, at.value.h, at.value.j) : []));
@@ -119,12 +133,27 @@ function back(): void {
   editing.value = false;
 }
 function nextLeft(): void { const r = left.value[0]; if (r) go(r.h, r.j); }
-function thenAct(a: PolicyAct): void { setAct(atKey.value, a); editing.value = false; }
+/** 直前に決めた形 (どんどん進む時に、その手の結果を小さく出す) */
+const lastNote = ref<{ shape: string; label: string; outs: ShapeOut[] } | null>(null);
+/** どんどん進む: 次の決めていない形へ (無ければ揃った形の所で止まる) */
+function autoNext(): void {
+  const r = left.value[0];
+  if (r) { at.value = { h: r.h, j: r.j, start: false }; editing.value = false; }
+}
+function decided(): void {
+  if (!props.auto) return;
+  const x = actSet.value;
+  lastNote.value = { shape: shapeText(at.value.h, at.value.j), label: x ? labelOf(x) : thenText(act.value), outs: x ? shapeOutcomes(ctx.value, x, at.value.h, at.value.j) : [] };
+  trail.value = [...trail.value.slice(-49), at.value];
+  void nextTick(autoNext);
+}
+function thenAct(a: PolicyAct): void { setAct(atKey.value, a); editing.value = false; void nextTick(decided); }
+onMounted(() => { if (props.auto) autoNext(); });
 
 const shapeText = (h: number, j: number): string => `狙い ${h} · 狙い以外 ${j} · 空き ${Math.max(0, props.limit - h - j)}`;
 const pct = (p: number | null): string => (p == null ? "" : p >= 0.995 ? "100%" : p < 0.005 ? "1% 未満" : `${Math.round(p * 100)}%`);
 const thenText = (a: PolicyAct | undefined): string => (!a ? "" : a.then === "next" ? "次の手へ" : a.then === "restart" ? "新しいベースで最初から" : a.then === "miss" ? (props.fallback ?? "付かなかったらの札") : a.then === "reset" ? `1 MOD 残し消去 → ${(a.goto ?? 0) + 1} 手目へ` : a.then === "goto" ? `${(a.goto ?? 0) + 1} 手目へ` : "");
-const ruleText = (a: PolicyAct | undefined): string => { if (!a) return "未定"; const x = a.set ? setByKey(props.sets, a.set) : undefined; return x ? `${labelOf(x)} を打つ` : thenText(a); };
+const ruleText = (a: PolicyAct | undefined): string => { if (!a) return "未定"; const x = a.set ? setOf(props.sets, a.set) : undefined; return x ? `${labelOf(x)} を打つ` : thenText(a); };
 /**
  * 今の形のアイテム: 打つ前のアイテムの狙いの側を、狙い h 行 (どれか 1 MOD …) + 狙い以外 j 行に並べ替えた物。反対の側はそのまま
  */
@@ -140,6 +169,20 @@ const shapeItem = computed<StageItem | null>(() => {
   const junk = Array.from({ length: Math.min(at.value.j, props.limit) }, (_, k): StageMod => ({ ...tmpl, side: props.side, modId: `junk#${k}`, textJa: "狙い以外の MOD", textEn: "", tierName: "", affix: "", tags: [], values: [], ranges: [], fractured: false, desecrated: false }));
   return { ...b, rarity: "rare", [key]: [...list.filter((m) => m.fractured), ...hits, ...junk] };
 });
+// 棚 (手打ちと同じ部品) は今の形のアイテムで「打てる物」を見る。持つ = この形で打つ物に決める
+const shelfOmens = ref<string[]>([]);
+const shelfHeld = ref<string | null>(null);
+provideShelf({
+  data: craftStage.data, item: shapeItem as unknown as import("vue").Ref<StageItem | null>, omens: shelfOmens, held: shelfHeld,
+  usable: (k) => { const d = craftStage.data.value, it = shapeItem.value; if (!d || !it) return "準備中"; const r = applyCurrency(d, it, k, mulberry32(0), shelfOmens.value); return r.applied ? null : (r.reason ?? "打てない"); },
+  toggleOmen: (id) => { shelfOmens.value = shelfOmens.value.includes(id) ? shelfOmens.value.filter((o) => o !== id) : [...shelfOmens.value, id]; },
+});
+function holdShelf(key: string): void {
+  shelfHeld.value = key;
+  setAct(atKey.value, { set: useKey(key, omensFor(key, shelfOmens.value)) });
+  shelfHeld.value = null;
+  void nextTick(decided);
+}
 /** 枠の絵 (狙い・狙い以外・空き) */
 const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("h"), ...Array(Math.min(at.value.j, props.limit)).fill("j"), ...Array(Math.max(0, props.limit - at.value.h - at.value.j)).fill("f")] as Array<"h" | "j" | "f">);
 </script>
@@ -178,7 +221,16 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
       </div>
 
       <!-- 選ぶ (新しい形 / 変える) -->
-      <div v-if="showPicker" class="mt-1.5 flex flex-wrap items-center gap-1">
+      <div v-if="showPicker && useShelf" class="mt-1.5">
+        <CurrencyShelf @hold="holdShelf" />
+        <div class="mt-1.5 flex flex-wrap items-center gap-1">
+          <span class="text-[11px] opacity-60">ほか:</span>
+          <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'next' ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15'" @click="thenAct({ then: 'next' })">→ 次の手</button>
+          <button v-if="backTo" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'reset' ? 'border-orange-300 bg-orange-500/20 text-orange-50' : 'border-white/15'" @click="thenAct({ then: 'reset', goto: backTo.to })">⟲ 1 MOD 残し消去 ({{ backTo.label }})</button>
+          <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'restart' ? 'border-orange-300 bg-orange-500/20 text-orange-50' : 'border-white/15'" @click="thenAct({ then: 'restart' })">⟲ 新しいベースで最初から</button>
+        </div>
+      </div>
+      <div v-else-if="showPicker" class="mt-1.5 flex flex-wrap items-center gap-1">
         <button v-for="kd in KINDS.filter((x) => kindOk(x.k))" :key="kd.k" type="button" class="flex items-center gap-1 rounded-lg border px-2 py-1 max-md:min-h-10" :class="actSet?.kind === kd.k ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="pick(kd.k)">
           <img v-if="iconOf(kd.icon)" :src="iconOf(kd.icon)" alt="" class="h-5 w-5 object-contain" />{{ kd.ja }}
         </button>
@@ -191,11 +243,16 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
         <span v-if="ngOpen" class="flex gap-1 text-[10px] opacity-40"><span v-for="kd in kindsNg" :key="kd.k">{{ kd.ja }} ({{ firstOf(kd.k) ? whyNot(firstOf(kd.k)!, at.h, at.j) : "無い" }})</span></span>
         <span class="basis-full"></span>
         <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'next' ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15'" @click="thenAct({ then: 'next' })">→ 次の手</button>
-        <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'miss' ? 'border-orange-300 bg-orange-500/20 text-orange-50' : 'border-white/15'" :title="fallback" @click="thenAct({ then: 'miss' })">⟲ {{ fallback ?? "付かなかったらの札" }}</button>
+        <button v-if="fallback" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="act?.then === 'miss' ? 'border-orange-300 bg-orange-500/20 text-orange-50' : 'border-white/15'" :title="fallback" @click="thenAct({ then: 'miss' })">⟲ {{ fallback ?? "付かなかったらの札" }}</button>
       </div>
 
+      <!-- どんどん進む: 直前に決めた形とその結果 -->
+      <div v-if="auto && lastNote" class="mt-2 rounded-md border border-white/10 bg-black/20 px-2 py-1 text-[11px]">
+        <span class="opacity-60">直前: {{ lastNote.shape }} の時 → </span><b>{{ lastNote.label }}</b>
+        <span v-for="o in lastNote.outs" :key="shapeKey(o.h, o.j)" class="ml-2 opacity-70">{{ pct(o.p) }} {{ o.label }}{{ o.h >= need ? " ✓" : "" }}</span>
+      </div>
       <!-- どうなった？ -->
-      <div v-if="firing && outs.length" class="mt-2">
+      <div v-if="firing && outs.length && !(auto && !at.start && act && !editing)" class="mt-2">
         <p class="mb-1 text-[11px] opacity-60">どうなった？</p>
         <div class="flex flex-col gap-1">
           <button v-for="o in outs" :key="shapeKey(o.h, o.j)" type="button" class="flex items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-left hover:border-sky-300/60" @click="choose(o)">

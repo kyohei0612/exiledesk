@@ -11,9 +11,9 @@
  * 前の型 (PatternStep) の onMiss / miss / otherGone / otherJunk / on / policy / resetTo は、全部「形ごとの次の手」で表す。
  * 計算は今のエンジン (recipe-sim の runPattern) に変換して回す (compilePlay)。
  */
-import { setByKey, type PatternSet } from "./pattern";
+import type { PatternSet } from "./pattern";
 import type { CompiledStep, RecipeTarget } from "./recipe-sim";
-import { reachableShapes, shapeKey, type ShapeCtx } from "./shape-table";
+import { reachableShapes, setOf, shapeKey, type ShapeCtx } from "./shape-table";
 
 /** 狙い: この中のどれかが need 個 (同じ側)。tier は MOD ごとの下限 (minTierIndex) */
 export interface PlayAim {
@@ -75,7 +75,7 @@ export function moveShapeCtx(recipe: PlayRecipe, i: number, sets: readonly Patte
 export function playLeft(recipe: PlayRecipe, sets: readonly PatternSet[], limit: number, otherRemovable: number): number[] {
   return recipe.moves.map((m, i) => {
     const c = moveShapeCtx(recipe, i, sets, limit, otherRemovable);
-    const x = setByKey(sets, m.use);
+    const x = setOf(sets, m.use);
     if (!c || !x) return 0;
     const pol = Object.fromEntries(Object.entries(m.shapes ?? {}).map(([k, d]) => [k, "use" in d ? { set: d.use } : { then: "next" as const }]));
     return reachableShapes(c.ctx, x, c.h0, 0, pol).filter((r) => !m.shapes?.[shapeKey(r.h, r.j)]).length;
@@ -86,12 +86,12 @@ export function playLeft(recipe: PlayRecipe, sets: readonly PatternSet[], limit:
 export function compilePlay(recipe: PlayRecipe, sets: readonly PatternSet[]): CompiledStep[] | null {
   const out: CompiledStep[] = [];
   for (const m of recipe.moves) {
-    const x = setByKey(sets, m.use);
+    const x = setOf(sets, m.use);
     if (!x) return null;
     const policy: NonNullable<CompiledStep["policy"]> = {};
     for (const [k, d] of Object.entries(m.shapes ?? {})) {
       if ("use" in d) {
-        const y = setByKey(sets, d.use);
+        const y = setOf(sets, d.use);
         if (!y) return null;
         policy[k] = { act: { kind: y.kind, currency: y.currency, omens: [...y.omens] } };
       } else if (d.go === "next") policy[k] = { then: "next" };

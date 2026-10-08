@@ -10,11 +10,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from "vue";
 import StageCurrencyCard from "./StageCurrencyCard.vue";
-import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
+import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { toCss } from "../../utils/zoom";
 import type { CardAnchor } from "../../utils/fit-card";
 import { shelfTag } from "../../state/craft-stage-help";
+import { useShelf } from "../../state/shelf-context";
 
 const props = defineProps<{ k: string; omen?: boolean }>();
 const emit = defineEmits<{ pick: [key: string] }>();
@@ -30,9 +31,10 @@ const BADGE: Array<[RegExp, string, string]> = [
 ];
 const badge = computed(() => BADGE.find(([re]) => re.test(props.k)) ?? null);
 /** 値段の代わりに出す付く MOD の短い名前 (エッセンス・カタリスト、2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで」「カタリストも一緒」) */
-const tag = computed(() => (props.omen ? null : shelfTag(props.k, craftStage.data.value, craftStage.item.value)));
-const reason = computed(() => (props.omen ? null : craftStage.usable(props.k)));
-const on = computed(() => (props.omen ? craftStage.omens.value.includes(props.k) : craftStage.held.value === props.k));
+const shelf = useShelf();
+const tag = computed(() => (props.omen ? null : shelfTag(props.k, shelf.data.value, shelf.item.value)));
+const reason = computed(() => (props.omen ? null : shelf.usable(props.k)));
+const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : shelf.held.value === props.k));
 
 /** 詳細カード: 0.4 秒乗せたら出す (すぐ出すと誤爆するので。オーナー 2026-09-27 のカードの決まりと同じ) */
 const card = ref<CardAnchor | null>(null);

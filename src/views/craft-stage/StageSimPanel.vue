@@ -34,6 +34,7 @@ import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
 import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, REST, restMembers, otherJunkOf, otherGoneOf, candsOfStep } from "../../services/craft-stage/pattern";
 import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
+import { aimTarget, compilePlay } from "../../services/craft-stage/play-recipe";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import SimProgress from "./SimProgress.vue";
 import { searchModGroups, type ModGroup, type ModPick } from "../../services/craft-stage/trade-search";
@@ -615,6 +616,7 @@ function showResultByName(name: string): void {
 }
 /** 回していないパターンの一言 (未完成なら最初の打てない手) */
 function patternNote(p: Pattern): string {
+  if (p.play) return p.play.moves.length ? "未実行" : "手が無い";
   if (!p.steps.length) return "手が無い";
   const w = patternProblem(p);
   return w ? `未完成 (${w})` : "未実行";
@@ -639,8 +641,8 @@ let gen = 0;
  * (2026-10-07 オーナー「回すパターンを選択できるように」「そこまでを完成品とする」)
  */
 /** 手があるか (流れの手か前の作り方の手) */
-const hasSteps = (p: Pattern): boolean => !!(p.flow?.steps.length || p.steps.length);
-const patternChecks = computed(() => s.simPatterns.value.filter(hasSteps).map((p) => ({ p, why: p.flow?.steps.length ? (p.flow.steps.some((x) => !x.set) ? "打つ物が決まっていない手がある" : null) : patternProblem(p) })));
+const hasSteps = (p: Pattern): boolean => !!(p.play ? p.play.moves.length : p.flow?.steps.length || p.steps.length);
+const patternChecks = computed(() => s.simPatterns.value.filter(hasSteps).map((p) => ({ p, why: p.play ? null : p.flow?.steps.length ? (p.flow.steps.some((x) => !x.set) ? "打つ物が決まっていない手がある" : null) : patternProblem(p) })));
 const runnable = computed(() => s.simPatterns.value.filter((p) => hasSteps(p) && !p.off));
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
@@ -669,7 +671,7 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
   const it = s.item.value, d = s.data.value;
   if (!it || !d) return;
   if (only == null && blocked.value) return;
-  if (only != null && (!rows.value.length || !s.simPatterns.value[only]?.steps.length)) return;
+  if (only != null && (!rows.value.length || !s.simPatterns.value[only] || !hasSteps(s.simPatterns.value[only]!))) return;
   const my = ++gen;
   busy.value = true;
   if (stepOnly != null && only != null) stepRun.value = { k: only, i: stepOnly, presses: 0, cost: 0, p80Presses: 0, p80Cost: 0, pDone: 0, busy: true };
@@ -769,7 +771,14 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       const used = new Set(p.steps.filter((st) => !!setByKey(sets, st.set)).flatMap((st) => [st.target]).filter((x): x is string => !!x && !inGroup.has(x)));
       const onStart = new Set(patternStart.value.mods?.placed ?? []);
       const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId) || onStart.has(t.modId)), ...groups.map((x) => x.g)];
-      const pspec: RecipeSpec = p.flow?.steps.length ? { ...spec, flow: compileFlow(p.flow), ...(fractureRow.value && !spec.startItem ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) } : { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) };
+      // 打って作るパターン (ADR-002): 完成の判定は固定 + 狙う手の狙い (同じ狙いは need の一番大きい物)。決めていない外れの形は新しいベースで最初から
+      const playGoal = (): RecipeSpec["targets"] => {
+        const best = new Map<string, NonNullable<NonNullable<Pattern["play"]>["moves"][number]["aim"]>>();
+        for (const m of p.play?.moves ?? []) if (m.aim) { const k = m.aim.mods.map((x) => x.modId).sort().join(","); const b = best.get(k); if (!b || b.need < m.aim.need) best.set(k, m.aim); }
+        return [...spec.targets.filter((t) => t.method === "fracture" || onStart.has(t.modId)), ...[...best.values()].map((a) => aimTarget(a))];
+      };
+      const played = p.play ? compilePlay(p.play, sets) : null;
+      const pspec: RecipeSpec = played ? { ...spec, targets: playGoal(), pattern: played, ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) } : p.flow?.steps.length ? { ...spec, flow: compileFlow(p.flow), ...(fractureRow.value && !spec.startItem ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) } : { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) };
       const base = k * spec.runs;
       // PC のコアに分けて回す (同じ seed なので 1 本と同じ結果。2026-10-07 オーナー「おっそいな」)
       // 先に 40 人だけ試し、全員が手の上限で止まるなら 500 人は回さない (重い組み方で「試しています」のまま長く止まって見えた。
@@ -958,7 +967,7 @@ async function loadRecipe(r: SimRecipe): Promise<void> {
   s.simStartItem.value = ses.startItem ?? null;
   s.simStartCost.value = ses.startCost ?? 0;
   s.simOrder.value = ses.order;
-  s.simPatterns.value = ses.patterns.length ? ses.patterns : [{ name: "パターン 1", steps: [] }];
+  s.simPatterns.value = ses.patterns.length ? ses.patterns : [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
   s.reset();
   whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
   startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;
@@ -1012,9 +1021,9 @@ function resetStalePatterns(): void {
  * シミュレーション手前でやり直しが起こったら絶対リセットかけないとバグる」)。空にする前の物は「1 つ戻す」の控えに入れる
  */
 function resetPatterns(): void {
-  if (!s.simPatterns.value.some((p) => p.steps.length)) return;
+  if (!s.simPatterns.value.some(hasSteps)) return;
   lastSnap = { ...lastSnap, patterns: JSON.stringify(s.simPatterns.value) };
-  s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
   results.value = [];
   // 結果のブロックも消す (残すとパターン名の無い「の 1 個あたり」と前の内訳が出て、ベース代がクラフトに化けて見えた。2026-10-08 使い倒しテスト 1)
   recipeOut.value = null;
@@ -1114,7 +1123,7 @@ function resetAll(): void {
   restCost.value = null;
   results.value = [];
   s.simOrder.value = [];
-  s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
   s.simSockets.value = null;
   s.simStart.value = "white";
   s.simStartItem.value = null;
@@ -1608,7 +1617,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
           <span v-if="error" class="text-rose-300">{{ error }}</span>
           <!-- 開いているパターンの MOD 群を取引所 (JP) で探す (2026-10-07 オーナー「回すの横、相場ボタンじゃなくてこの MOD 群をそのまま検索にかけたい」) -->
-          <button type="button" class="rounded-lg border border-sky-400/60 bg-sky-500/10 px-2.5 py-0.5 font-bold text-sky-100 hover:bg-sky-500/20 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern]?.steps.length" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の組めている所まで (付ける MOD と固定) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">ここまでの MOD を取引所で検索 ↗</button>
+          <button type="button" class="rounded-lg border border-sky-400/60 bg-sky-500/10 px-2.5 py-0.5 font-bold text-sky-100 hover:bg-sky-500/20 disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern] || !hasSteps(s.simPatterns.value[activePattern]!)" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の組めている所まで (付ける MOD と固定) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">ここまでの MOD を取引所で検索 ↗</button>
           <!-- 1 人の上限 (手の数)。重い MOD を狙う時に上げる (2026-10-07) -->
           <label class="flex items-center gap-1 text-[11px] opacity-80" title="1 人が打てる手の上限。超えた人は完成しなかった扱い (カオスで重い MOD を狙う時は上げる。回るのは遅くなる)">上限
             <select v-model.number="maxSteps" class="rounded border border-white/15 bg-black/40 px-1 py-0.5" :disabled="busy">

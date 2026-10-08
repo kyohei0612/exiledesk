@@ -12,6 +12,8 @@ import { SITUATION_JA, type Reaction, type Situation, ANY_KINDS, ANY_TARGET, oth
 import { jaOfOmen } from "../../services/htc/labels";
 import StagePatternStepPicker from "./StagePatternStepPicker.vue";
 import StageFlowEditor from "./StageFlowEditor.vue";
+import StagePlayEditor from "./StagePlayEditor.vue";
+import type { PlayRecipe } from "../../services/craft-stage/play-recipe";
 import StageOutcomeTree from "./StageOutcomeTree.vue";
 import StageItemCard from "./StageItemCard.vue";
 import { freshItem } from "../../services/craft-stage/run-plan";
@@ -115,6 +117,25 @@ const pat = computed<Pattern>(() => s.simPatterns.value[Math.min(active.value, s
  * (2026-10-08 オーナー「マジで意味が分からん」「前のバージョンの方が好き、前のバージョンで改造していこう」)
  */
 const isFlow = computed(() => !!pat.value.flow?.steps.length);
+/** 打って作るパターン (ADR-002) */
+const isPlay = computed(() => !!pat.value.play);
+function setPlay(play: PlayRecipe): void {
+  const k = Math.min(active.value, s.simPatterns.value.length - 1);
+  s.simPatterns.value = s.simPatterns.value.map((p, i) => (i === k ? { ...p, play } : p));
+}
+/** 打って作るパターンの始めのアイテム (ベース + 固定済み、手打ちから持ってきた物) */
+const playStartItem = computed<StageItem | null>(() => {
+  const d = s.data.value;
+  if (!d || !s.base.value) return null;
+  const startIt = s.simStart.value === "item" ? s.simStartItem.value : null;
+  if (startIt) return { ...startIt, prefixes: startIt.prefixes.map((m) => ({ ...m })), suffixes: startIt.suffixes.map((m) => ({ ...m })) };
+  let it: StageItem;
+  try { it = { ...freshItem(d, s.base.value, s.itemLevel.value), sockets: props.start.sockets, rollSeed: 1 }; } catch { return null; }
+  const frac = s.simTargets.value.find((t) => t.method === "fracture");
+  const fm = frac ? d.mods.get(frac.modId) : undefined;
+  if (frac && fm) it = withMod(it, { ...makeStageMod(fm, fm.type === "suffix" ? "suffix" : "prefix", frac.minTierIndex, () => 0.5), fractured: true });
+  return { ...it, rarity: props.start.rarity };
+});
 function setFlow(flow: FlowDef): void {
   const k = Math.min(active.value, s.simPatterns.value.length - 1);
   s.simPatterns.value = s.simPatterns.value.map((p, i) => (i === k ? { ...p, flow } : p));
@@ -1138,7 +1159,8 @@ function uniqueName(base: string, skip: number | null = null): string {
   for (let n = (Number(m?.[2]) || 1) + 1; ; n++) if (!taken.has(`${stem} ${n}`)) return `${stem} ${n}`;
 }
 function addPattern(copy: boolean): void {
-  s.simPatterns.value = [...s.simPatterns.value, { name: uniqueName(`パターン ${s.simPatterns.value.length + 1}`), steps: copy ? pat.value.steps.map((x) => ({ ...x })) : [], ...(copy && pat.value.flow ? { flow: JSON.parse(JSON.stringify(pat.value.flow)) as FlowDef } : {}) }];
+  // 新しいパターンは打って作る (ADR-002、2026-10-09)。写す時は元の作り方のまま
+  s.simPatterns.value = [...s.simPatterns.value, { name: uniqueName(`パターン ${s.simPatterns.value.length + 1}`), steps: copy ? pat.value.steps.map((x) => ({ ...x })) : [], ...(copy && pat.value.flow ? { flow: JSON.parse(JSON.stringify(pat.value.flow)) as FlowDef } : {}), ...(copy ? (pat.value.play ? { play: JSON.parse(JSON.stringify(pat.value.play)) as PlayRecipe } : {}) : { play: { v: 2, moves: [] } as PlayRecipe }) }];
   active.value = s.simPatterns.value.length - 1;
 }
 /** 名前を付け替えているタブ */
@@ -1166,19 +1188,21 @@ defineExpose({ rows });
       <!-- タブはダブルクリックで名前を付け替える (2026-10-07 オーナー「名前も自分で変えて」。番号だけだと 10 個並ぶと取り違える) -->
       <template v-for="(p, i) in s.simPatterns.value" :key="i">
         <input v-if="renaming === i" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="p.name" class="w-40 rounded-full border border-amber-400/60 bg-black/50 px-2.5 py-0.5 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="renaming = null" @blur="rename(i, ($event.target as HTMLInputElement).value)" />
-        <button v-else type="button" class="rounded-full px-2.5 py-0.5 max-md:min-h-10" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" title="ダブルクリックで名前を変える" @click="active = i" @dblclick="locked || (renaming = i)">{{ p.name }} <span class="opacity-60">({{ p.steps.length }} 手)</span></button><button v-if="!locked && renaming !== i" type="button" class="rounded px-1 text-[12px] opacity-60 md:hidden" title="名前を変える" @click.stop="renaming = i">✎</button>
+        <button v-else type="button" class="rounded-full px-2.5 py-0.5 max-md:min-h-10" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 opacity-70 hover:opacity-100'" title="ダブルクリックで名前を変える" @click="active = i" @dblclick="locked || (renaming = i)">{{ p.name }} <span class="opacity-60">({{ p.play ? p.play.moves.length : p.steps.length }} 手)</span></button><button v-if="!locked && renaming !== i" type="button" class="rounded px-1 text-[12px] opacity-60 md:hidden" title="名前を変える" @click.stop="renaming = i">✎</button>
       </template>
       <template v-if="!locked">
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 max-md:min-h-10 max-md:min-w-10" title="空のパターンを足す" @click="addPattern(false)">＋</button>
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 max-md:min-h-10 max-md:min-w-10" title="このパターンを写して足す (少しだけ変えて比べる時に)" @click="addPattern(true)">⧉</button>
         <button type="button" class="rounded border border-white/15 px-1.5 opacity-70 hover:opacity-100 disabled:opacity-30 max-md:min-h-10 max-md:min-w-10" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? 'パターンが 1 つの時は消せない' : 'このパターンを消す'" @click="removePattern">×</button>
-        <button type="button" class="ml-1 rounded-lg border border-amber-400/60 bg-amber-500/15 px-2 py-0.5 font-bold text-amber-100 hover:bg-amber-500/25 disabled:opacity-30 max-md:hidden" :disabled="busy || !pat.steps.length" :title="pat.steps.length ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))">このパターンを回す ▶</button>
+        <button type="button" class="ml-1 rounded-lg border border-amber-400/60 bg-amber-500/15 px-2 py-0.5 font-bold text-amber-100 hover:bg-amber-500/25 disabled:opacity-30 max-md:hidden" :disabled="busy || !(pat.steps.length || pat.play?.moves.length)" :title="pat.steps.length || pat.play?.moves.length ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))">このパターンを回す ▶</button>
         <button type="button" class="ml-1 rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/10 disabled:opacity-30 max-md:min-h-10" :disabled="!history.length" :title="history.length ? 'パターンの直前の操作を 1 つ取り消す' : '戻せる操作がまだ無い'" @click="undoPattern">↶ 1 つ戻す</button>
       </template>
     </div>
 
     <!-- 流れで組むパターン (2026-10-08 から。新しいパターンと空のパターンは流れ) -->
     <StageFlowEditor v-if="isFlow" :flow="pat.flow ?? { steps: [] }" :stats="flowStats ?? null" :locked="locked" @change="setFlow" />
+    <!-- 打って作るパターン (ADR-002): 画面は手打ちと同じ。① 当たりで打つ → ② 外れを埋める -->
+    <StagePlayEditor v-else-if="isPlay" :play="pat.play!" :sets="sets" :start-item="playStartItem" :name-of-mod="cardTitleOf" :locked="locked" @change="setPlay" />
     <!-- 左: ツリー (自分の中で送る) / 右: 押した手を決める枠 + その時点のアイテム (動かない) -->
     <div v-else class="flex gap-3 max-md:flex-col" :style="phone ? undefined : { height: paneHeight }">
       <div ref="treeEl" class="w-[372px] shrink-0 overflow-y-auto rounded-lg bg-black/25 p-2 [overflow-anchor:none] max-md:w-full max-md:overflow-visible">

@@ -125,7 +125,8 @@ export const otherJunkOf = (kind: PatternKind | undefined, v: "keep" | "annul" |
 export interface FlowStepDef { set: string; routes: FlowRoute[]; onNone: "loop" | "restart" | "end" }
 export interface FlowDef { steps: FlowStepDef[] }
 /** パターン。flow があれば流れで組んだ物 (2026-10-08 から。steps は前の作り方) */
-export interface Pattern { name: string; steps: PatternStep[]; off?: boolean; flow?: FlowDef }
+/** パターン。play があれば打って作った物 (ADR-002、2026-10-09 から新しいパターンはこれ)、flow は流れ (使っていない)、steps は前の作り方 */
+export interface Pattern { name: string; steps: PatternStep[]; off?: boolean; flow?: FlowDef; play?: import("./play-recipe").PlayRecipe }
 
 export interface PatternSet {
   key: string;

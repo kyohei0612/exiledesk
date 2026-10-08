@@ -10,11 +10,12 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import ShelfButton from "./ShelfButton.vue";
-import { craftStage } from "../../state/craft-stage";
+import { useShelf } from "../../state/shelf-context";
 import { bonesFor, CATALYSTS, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
 import { runeEffectFor, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
 
 const emit = defineEmits<{ hold: [key: string] }>();
+const craftStage = useShelf();
 /**
  * 持っているカレンシーに掛けられるお告げの並び (呼ぶ側の slot "held")。オーブのタブでは使える物の並びの直後 (2026-10-05 から。前は「その他」の段の直後)、
  * 他のタブは一番下

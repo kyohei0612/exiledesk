@@ -192,7 +192,7 @@ const simAltFor = ref<string | null>(null);
  */
 const simOrder = ref<string[]>([]);
 /** 6 パターン (pattern.ts)。回すのはこの手の通り */
-const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [] }]);
+const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }]);
 
 /**
  * シミュレーションの途中 (ベース・狙う MOD・工程の「決めた」・順番計画・パターン) を覚えて、開き直した時にそのまま出す

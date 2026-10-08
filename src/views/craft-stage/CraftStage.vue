@@ -183,7 +183,7 @@ function pickSimBase(en: string): void {
   s.base.value = en;
   s.simTargets.value = [];
   s.simOrder.value = [];
-  s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
   s.simStart.value = "white";
   s.simStartItem.value = null;
   s.simPicked.value = true;
@@ -219,7 +219,7 @@ function simFromHand(): void {
   // 付いている MOD は狙いに入れておく (その段以上。消えたら取り直す)。足したい MOD を 2 で足して決めたら、そのままツリー (3〜5 は飛ばす)
   s.simTargets.value = [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, minTierIndex: m.tierIndex, ...(m.fractured ? { method: "fracture" as const } : m.desecrated ? { method: "desecrate" as const } : {}) }));
   s.simOrder.value = [];
-  s.simPatterns.value = [{ name: "パターン 1", steps: [] }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
   s.simSockets.value = it.sockets ?? 0;
   s.simStart.value = "item";
   s.simPicked.value = true;
