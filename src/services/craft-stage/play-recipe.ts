@@ -13,7 +13,7 @@
  */
 import type { PatternSet } from "./pattern";
 import type { CompiledStep, RecipeTarget } from "./recipe-sim";
-import { reachableShapes, setOf, shapeKey, type ShapeCtx } from "./shape-table";
+import { keyOfShape, reachableShapes, setOf, type ShapeCtx } from "./shape-table";
 
 /** 狙い: この中のどれかが need 個 (同じ側)。tier は MOD ごとの下限 (minTierIndex) */
 export interface PlayAim {
@@ -71,6 +71,16 @@ export function moveShapeCtx(recipe: PlayRecipe, i: number, sets: readonly Patte
   return { ctx: { side, limit, need: Math.min(limit, others + m.aim.need), otherRemovable, pHit, sets }, h0: Math.min(limit, others + same) };
 }
 
+/** i 手目より前に、その側で揃っているはずの狙いの数 (同じ狙いは need の一番大きい物、別の狙いは合計) */
+export function sideNeedBefore(recipe: PlayRecipe, i: number, side: "prefix" | "suffix"): number {
+  const best = new Map<string, number>();
+  for (const p of recipe.moves.slice(0, i)) {
+    if (!p.aim || p.aim.side !== side) continue;
+    const k = p.aim.mods.map((x) => x.modId).sort().join(",");
+    best.set(k, Math.max(best.get(k) ?? 0, p.aim.need));
+  }
+  return [...best.values()].reduce((a, b) => a + b, 0);
+}
 /** まだ決めていない形の数 (手ごと)。全部 0 でレシピは完成 */
 export function playLeft(recipe: PlayRecipe, sets: readonly PatternSet[], limit: number, otherRemovable: number): number[] {
   return recipe.moves.map((m, i) => {
@@ -78,14 +88,17 @@ export function playLeft(recipe: PlayRecipe, sets: readonly PatternSet[], limit:
     const x = setOf(sets, m.use);
     if (!c || !x) return 0;
     const pol = Object.fromEntries(Object.entries(m.shapes ?? {}).map(([k, d]) => [k, "use" in d ? { set: d.use } : { then: "next" as const }]));
-    return reachableShapes(c.ctx, x, c.h0, 0, pol).filter((r) => !m.shapes?.[shapeKey(r.h, r.j)]).length;
+    return reachableShapes(c.ctx, x, c.h0, 0, pol).filter((r) => !m.shapes?.[keyOfShape(r)]).length;
   });
 }
 
 /** 計算の手にする (recipe-sim の runPattern で回す)。打つ物の無い手は null を返す (呼ぶ側で止める) */
 export function compilePlay(recipe: PlayRecipe, sets: readonly PatternSet[]): CompiledStep[] | null {
   const out: CompiledStep[] = [];
-  for (const m of recipe.moves) {
+  for (const [i, m] of recipe.moves.entries()) {
+    // 反対の側に前の手の狙いがあれば、その数 (減ったら揃っていても形の手で決める。画面の形のキー h-j-g と同じ)
+    const other = m.aim ? (m.aim.side === "prefix" ? "suffix" : "prefix") : null;
+    const gNeed = other ? sideNeedBefore(recipe, i, other) : 0;
     const x = setOf(sets, m.use);
     if (!x) return null;
     const policy: NonNullable<CompiledStep["policy"]> = {};
@@ -103,6 +116,8 @@ export function compilePlay(recipe: PlayRecipe, sets: readonly PatternSet[]): Co
       target: m.aim ? aimTarget(m.aim, x.kind === "chaos" ? "chaos" : "exalt") : null,
       // 形を全部決めた手は形の手で動く。決めていない形に来たら (UI で止めるので普通は来ない) 新しいベースで最初から
       onMiss: m.aim ? "restart" : "next",
+      play: true,
+      ...(gNeed > 0 ? { gNeed } : {}),
       ...(Object.keys(policy).length ? { policy } : {}),
     });
   }

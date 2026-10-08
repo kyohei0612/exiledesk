@@ -133,12 +133,18 @@ function shapeOf(i: number) {
   const targetIds = new Set(craftStage.simTargets.value.flatMap((t) => [t.modId, ...(t.alts ?? []).map((a) => a.modId)]));
   const j0 = listOf(it, side).filter((s) => !s.fractured && !targetIds.has(s.modId) && !/#h\d+$/.test(s.modId)).length;
   const pHit = hitChanceOf(d, it.cls, it.itemLevel, side, m.aim.mods, c.ctx.need - m.aim.need);
+  // 反対の側に前の手の狙いがあれば、その数も形に入れる (消えた時の次の手を決める。2026-10-09 両側の狙い)
+  const otherAimed = moves.value.slice(0, i).some((p) => p.aim && p.aim.side === other);
+  const otherHits = otherAimed ? listOf(it, other).filter((s) => !s.fractured && targetIds.has(s.modId)).length : undefined;
+  const otherFixed = listOf(it, other).filter((s) => s.fractured).length;
+  const otherLimit = limitOf(it, other);
+  const ctxMore = { ...(otherHits != null ? { otherHits } : {}), otherFixed, otherLimit };
   let spam: number | null = null;
   for (let k = i - 1; k >= 0; k--) if (setOf(props.sets, moves.value[k]!.use)?.kind === "chaos") { spam = k; break; }
   const policy = toPolicy(m.shapes);
   return {
-    props: { set: x, side, limit: limitOf(it, side), need: c.ctx.need, h0: c.h0, j0, policy, pHit, otherRemovable, baseItem: it, backTo: spam != null ? { to: spam, label: `${spam + 1} 手目のスパムへ` } : null },
-    left: shapesLeft({ ...c.ctx, pHit }, x, c.h0, j0, policy),
+    props: { set: x, side, limit: limitOf(it, side), need: c.ctx.need, h0: c.h0, j0, policy, pHit, otherRemovable, ...ctxMore, isTarget: (id: string) => targetIds.has(id) || /#h\d+$/.test(id), baseItem: it, backTo: spam != null ? { to: spam, label: `${spam + 1} 手目のスパムへ` } : null },
+    left: shapesLeft({ ...c.ctx, pHit, ...ctxMore }, x, c.h0, j0, policy),
   };
 }
 const shapes = computed(() => moves.value.map((_, i) => shapeOf(i)));

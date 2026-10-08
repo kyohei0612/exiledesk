@@ -67,6 +67,10 @@ export interface CompiledStep {
   /** ルーンを差す手の英語名 */
   rune?: string;
   onMiss: MissRule;
+  /** 打って作るパターンの手 (ADR-002)。前の手の狙いが消えても自動で取り直さない (消えた形の手はユーザーが決めている) */
+  play?: boolean;
+  /** 反対の側に残っているはずの前の手の狙いの数 (打って作るパターン)。減っていたら揃っていても形の手で決める */
+  gNeed?: number;
   /** 1 MOD 残し消去の戻り先 (並べた後の番号) */
   resetTo?: number;
   /** 外す時の打つ物 + お告げ (無ければ自動)。kind はパーフェクトエッセンス (一番安い物を選ぶ)・冒涜 (発現まで) を見分ける */
@@ -615,7 +619,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 戻れるのはもう一度打てる手だけ (変成・増強・王者・錬金はレアリティが変わるので戻れない。その時は最後まで行って揃わなければ失敗)
       // 「付かなかった → そのまま次へ」の手は戻らない (外れを諦めて進む手。後の手で同じ MOD をもう一度狙う時は maybe で繋ぐ。2026-10-08 レビュー B1:
       // 前は onMiss を見ずに毎周その手へ戻していて、高貴・カオス・骨の「そのまま次へ」が実質「もう一度打つ」になっていた)
-      const lost = pat.findIndex((q, j) => j < i && q.target && REDO.has(q.kind) && q.onMiss !== "next" && !meets(item, q.target));
+      const lost = pat.findIndex((q, j) => j < i && !q.play && q.target && REDO.has(q.kind) && q.onMiss !== "next" && !meets(item, q.target));
       if (lost >= 0) {
         i = lost;
         // 消えた狙いをカオスの手で取り直すと、付いている他の狙いもランダムに消してしまう (2026-10-07 手袋の比べで 9 割が止まった)。
@@ -745,13 +749,19 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       }
       if (e) return fail(`${i + 1} 手目: ${e}`);
       // 結果の状態ごとの行動 (選んだ状態だけ。狙いの側の 当たり・ハズレ の数で決める)。打った結果がまた別の状態になれば、そこで決めた物を続ける
-      if (p.policy && p.target && !meets(item, p.target)) {
+      // 揃った = この手の狙いが揃い、反対の側の前の手の狙いも減っていない (gNeed)
+      const otherGood = (sd: StageSide): number => listOf(item, sd === "prefix" ? "suffix" : "prefix").filter((m) => !m.fractured && !m.unrevealed && isGood(m)).length;
+      const doneHere = (t: RecipeTarget): boolean => meets(item, t) && (p.gNeed == null || otherGood(sideOf(t.modId)) >= p.gNeed);
+      if (p.policy && p.target && !doneHere(p.target)) {
         const pts = membersOf(p.target).map((a) => sideOf(a.modId));
         const side = pts.every((x) => x === pts[0]) ? pts[0]! : null;
         let moved = false;
         for (let g = 0; side && g < 400 && steps.length < max; g++) {
-          if (meets(item, p.target)) break;
-          const key = `${listOf(item, side).filter((m) => !m.unrevealed && isGood(m)).length}-${junkOn(item, side).length}`;
+          if (doneHere(p.target)) break;
+          // 反対の側の前の手の狙いを数える決まり (キーが h-j-g) なら、その数も (固定は消えないので数えない)
+          const other: StageSide = side === "prefix" ? "suffix" : "prefix";
+          const withG = Object.keys(p.policy).some((k) => k.split("-").length === 3);
+          const key = `${listOf(item, side).filter((m) => !m.unrevealed && isGood(m)).length}-${junkOn(item, side).length}${withG ? `-${listOf(item, other).filter((m) => !m.fractured && !m.unrevealed && isGood(m)).length}` : ""}`;
           const rx = p.policy[key];
           if (!rx) break;
           if (rx.act) {
@@ -767,7 +777,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           break;
         }
         if (moved) continue;
-        if (meets(item, p.target)) { i++; continue; }
+        if (doneHere(p.target)) { i++; continue; }
       }
       if (!p.target || (two ? meets(item, p.target) : count(p.target) > before || meets(item, p.target))) { i++; continue; }
       // 状況ごとの反応 (選んだ時だけ): 一部当たり / ハズレが狙いの側・反対の側に付いた

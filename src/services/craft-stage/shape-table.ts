@@ -46,112 +46,159 @@ export function hitChanceOf(data: PatchData, cls: ItemBase, itemLevel: number, s
 
 export interface ShapeCtx {
   side: "prefix" | "suffix";
-  /** 側の枠 (3) */
+  /** 側の枠 (3、マジックは 1) */
   limit: number;
   /** この側で揃える狙いの数 (揃ったらこの手は終わり) */
   need: number;
-  /** 反対の側の消せる MOD の数 (固定は消えない)。0 なら素の消去も必ず狙いの側に刺さる */
+  /** 反対の側の消せる MOD の数 (固定は消えない。前の手の狙いも入る)。0 なら素の消去も必ず狙いの側に刺さる */
   otherRemovable: number;
+  /**
+   * 反対の側に付いている前の手の狙いの数。あれば形のキーに入れて、消えた時の次の手も決める (両側に狙いがある時。2026-10-09)。
+   * 無ければ反対の側は数だけ見る (キーは今まで通り h-j)
+   */
+  otherHits?: number;
+  /** 反対の側の枠と固定の数 (付く側が運の手で、反対の側に付くか)。無ければ 3 と 0 */
+  otherLimit?: number;
+  otherFixed?: number;
   /** 高貴で 1 つ付けた時に狙いが出る確率 (通貨・今の狙いの数で)。分からなければ null */
   pHit?: (currency: string, h: number) => number | null;
   sets: readonly PatternSet[];
 }
-/** 結果: 狙いの側の形 (h, j) と、反対の側の消せる MOD の増減 (dOther、札の反対の側の行に使う) */
-export interface ShapeOut { label: string; h: number; j: number; p: number | null; dOther?: number }
-export const shapeKey = (h: number, j: number): string => `${h}-${j}`;
+/**
+ * 形: 狙いの側の狙い h・狙い以外 j、反対の側の前の手の狙い g (数える時だけ)・消せる狙い以外 o。
+ * キーは h-j (g を数える時は h-j-g)。o はキーに入れない (来た道で変わる数。札と結果の数え方に使う)
+ */
+export interface Shape { h: number; j: number; g?: number; o: number }
+/** 結果: 打った後の形と、その文・確率 */
+export interface ShapeOut extends Shape { label: string; p: number | null }
+export const shapeKey = (h: number, j: number, g?: number): string => (g == null ? `${h}-${j}` : `${h}-${j}-${g}`);
+export const keyOfShape = (x: Shape): string => shapeKey(x.h, x.j, x.g);
 
 export const GREATER = "OmenofGreaterExaltation";
 export const sideOmenOf = (side: "prefix" | "suffix", kind: "exalt" | "annul" | "chaos"): string => {
   const L = side === "prefix";
   return kind === "exalt" ? (L ? "OmenofSinistralExaltation" : "OmenofDextralExaltation") : kind === "annul" ? (L ? "OmenofSinistralAnnulment" : "OmenofDextralAnnulment") : L ? "OmenofSinistralErasure" : "OmenofDextralErasure";
 };
-
-/** 打つ物 x を (h, j) で打った時の、狙いの側の結果 (同じ形はまとめ、確率は足す)。反対の側の出来事は狙いの側の形で表す */
-export function shapeOutcomes(c: ShapeCtx, x: PatternSet, h: number, j: number): ShapeOut[] {
-  const f = c.limit - h - j;
-  const out: ShapeOut[] = [];
-  const push = (label: string, h2: number, j2: number, p: number | null, dOther = 0): void => {
-    const o = out.find((y) => y.h === h2 && y.j === j2);
-    if (o) { o.p = o.p != null && p != null ? o.p + p : null; return; }
-    out.push({ label, h: h2, j: j2, p, ...(dOther ? { dOther } : {}) });
-  };
-  const OTHER = c.side === "prefix" ? "サフィ" : "プレ";
-  if (x.kind === "exalt") {
-    if (f <= 0) return [];
-    const k = Math.min(x.omens.includes(GREATER) ? 2 : 1, f);
-    const ph = (hh: number): number | null => c.pHit?.(x.currency, hh) ?? null;
-    if (k === 1) {
-      const p = ph(h);
-      push("狙いが付いた", h + 1, j, p);
-      push("狙い以外が付いた", h, j + 1, p != null ? 1 - p : null);
-    } else {
-      const p1 = ph(h), p2 = ph(h + 1);
-      const ok = p1 != null && p2 != null;
-      push("狙いが 2 つ", h + 2, j, ok ? p1 * p2 : null);
-      push("狙い 1・狙い以外 1", h + 1, j + 1, ok ? p1 * (1 - p2) + (1 - p1) * p1 : null);
-      push("狙い以外が 2 つ", h, j + 2, ok ? (1 - p1) * (1 - p1) : null);
-    }
-  } else if (x.kind === "annul") {
-    if (h + j === 0) return [];
-    // 側のお告げなら側の中から 1 つ。素の消去は反対の側の消せる物も合わせた中から 1 つ (反対の側が固定だけなら側と同じ)
-    const o = x.omens.includes(sideOmenOf(c.side, "annul")) ? 0 : c.otherRemovable;
-    const n = h + j + o;
-    if (j > 0) push("狙い以外が消えた", h, j - 1, j / n);
-    if (h > 0) push("狙いが消えた", h - 1, j, h / n);
-    if (o > 0) push(`${OTHER}の MOD が消えた`, h, j, o / n, -1);
-  } else if (x.kind !== "chaos") {
-    // 付ける物 (変成・増強・王者・錬金・エッセンス・骨・フラクチャー…) は 1 つ付く目安。付けない物 (品質・触媒など) は形が変わらない
-    const adds = ["transmute", "augment", "regal", "alchemy", "essence", "essence_perfect", "desecrate"].includes(x.kind);
-    if (!adds) return [{ label: "形は変わらない", h, j, p: 1 }];
-    if (f <= 0) return [];
-    push("狙いが付いた", h + 1, j, null);
-    push("狙い以外が付いた", h, j + 1, null);
-  } else {
-    if (h + j + c.otherRemovable === 0) return [];
-    // 1 つ消して 1 つ付く (付く物は重みでランダムなので確率は出さない)。狙いの側が変わる形だけ
-    const rem: Array<[number, number, string]> = [];
-    if (j > 0) rem.push([0, -1, "狙い以外"]);
-    if (h > 0) rem.push([-1, 0, "狙い"]);
-    for (const [dh, dj, gone] of rem) for (const [ah, aj, got] of [[1, 0, "狙い"], [0, 1, "狙い以外"]] as const) {
-      const h2 = h + dh + ah, j2 = j + dj + aj;
-      // 狙い以外が別の狙い以外に入れ替わった時も形は同じだが、外れとして次の手を決める (カオスのスパムでもう一度打つ、など)
-      push(h2 === h && j2 === j ? `${gone}が入れ替わった` : `${gone}が消えて${got}が付いた`, h2, j2, null);
-    }
-    // 付いたのが反対の側 (狙いの側は 1 つ減る)
-    for (const [dh, dj, gone] of rem) push(`${gone}が消えて${OTHER}に付いた`, h + dh, j + dj, null, 1);
-    // お告げ無しは反対の側から消えて、狙いの側に付くこともある
-    if (!x.omens.includes(sideOmenOf(c.side, "chaos")) && c.otherRemovable > 0) {
-      if (h + j < c.limit) { push(`${OTHER}の MOD が消えて狙いが付いた`, h + 1, j, null, -1); push(`${OTHER}の MOD が消えて狙い以外が付いた`, h, j + 1, null, -1); }
-      push(`${OTHER}の MOD が入れ替わった`, h, j, null);
-    }
-  }
-  return out.filter((o) => o.h + o.j <= c.limit && o.h >= 0 && o.j >= 0);
+/** 呼ぶ側の (h, j) と ctx から形を作る (反対の側の消せる数は前の手の狙いと狙い以外に分ける) */
+export function shapeOf(c: ShapeCtx, h: number, j: number, g?: number, o?: number): Shape {
+  const gg = g ?? c.otherHits;
+  return { h, j, ...(gg != null ? { g: gg } : {}), o: o ?? Math.max(0, c.otherRemovable - (gg ?? 0)) };
 }
 
+/** 付ける物 (1 つ付く) か */
+const ADDS = new Set(["transmute", "augment", "regal", "alchemy", "exalt", "essence", "essence_perfect", "desecrate"]);
+
+/**
+ * 打つ物 x を形 s で打った時の結果 (同じ形はまとめ、確率は足す)。
+ *   付ける物: 側のお告げがある高貴は狙いの側だけ。無ければ空いている側のどちらか (運)。狙いの側は狙い / 狙い以外
+ *   消去: 側のお告げなら狙いの側から、無ければ両側の消せる物から 1 つ (同じ重み)
+ *   カオス: 消去と同じ選び方で 1 つ消して、付ける物と同じ選び方で 1 つ付く
+ */
+export function shapeOutcomes(c: ShapeCtx, x: PatternSet, h: number | Shape, j?: number): ShapeOut[] {
+  const s0: Shape = typeof h === "number" ? shapeOf(c, h, j ?? 0) : h;
+  const track = s0.g != null;
+  const OTHER = c.side === "prefix" ? "サフィ" : "プレ";
+  const OL = c.otherLimit ?? 3, OF = c.otherFixed ?? 0;
+  const out: ShapeOut[] = [];
+  const push = (s: Shape, label: string, p: number | null): void => {
+    if (s.h < 0 || s.j < 0 || s.h + s.j > c.limit || s.o < 0 || (s.g ?? 0) < 0) return;
+    const k = keyOfShape(s);
+    const y = out.find((z) => keyOfShape(z) === k);
+    if (y) { y.p = y.p != null && p != null ? y.p + p : null; return; }
+    out.push({ ...s, label, p });
+  };
+  /** 1 つ付く (sideOnly = 狙いの側だけ) */
+  const adds = (s: Shape, sideOnly: boolean, pHit: number | null): Array<{ s: Shape; label: string; p: number | null }> => {
+    const r: Array<{ s: Shape; label: string; p: number | null }> = [];
+    const room = s.h + s.j < c.limit;
+    const oroom = !sideOnly && (s.g ?? 0) + s.o + OF < OL;
+    // 両方の側が空いていれば、どちらに付くかは運 (確率は出さない)
+    const split = room && oroom;
+    if (room) {
+      r.push({ s: { ...s, h: s.h + 1 }, label: "狙いが付いた", p: split || pHit == null ? null : pHit });
+      r.push({ s: { ...s, j: s.j + 1 }, label: "狙い以外が付いた", p: split || pHit == null ? null : 1 - pHit });
+    }
+    if (oroom) r.push({ s: { ...s, o: s.o + 1 }, label: `${OTHER}に付いた`, p: room ? null : 1 });
+    return r;
+  };
+  /** 1 つ消える (sideOnly = 狙いの側だけ) */
+  const removes = (s: Shape, sideOnly: boolean): Array<{ s: Shape; label: string; p: number; what: "h" | "j" | "g" | "o" }> => {
+    const g = sideOnly ? 0 : (s.g ?? 0), o = sideOnly ? 0 : s.o;
+    const n = s.h + s.j + g + o;
+    if (!n) return [];
+    const r: Array<{ s: Shape; label: string; p: number; what: "h" | "j" | "g" | "o" }> = [];
+    if (s.j) r.push({ s: { ...s, j: s.j - 1 }, label: "狙い以外が消えた", p: s.j / n, what: "j" });
+    if (s.h) r.push({ s: { ...s, h: s.h - 1 }, label: "狙いが消えた", p: s.h / n, what: "h" });
+    if (g) r.push({ s: { ...s, g: g - 1 }, label: `${OTHER}の狙いが消えた`, p: g / n, what: "g" });
+    if (o) r.push({ s: { ...s, o: o - 1 }, label: track ? `${OTHER}の狙い以外が消えた` : `${OTHER}の MOD が消えた`, p: o / n, what: "o" });
+    return r;
+  };
+  if (x.kind === "annul") {
+    for (const r of removes(s0, x.omens.includes(sideOmenOf(c.side, "annul")))) push(r.s, r.label, r.p);
+  } else if (x.kind === "chaos") {
+    for (const r of removes(s0, x.omens.includes(sideOmenOf(c.side, "chaos")))) {
+      for (const a of adds(r.s, false, null)) {
+        const same = keyOfShape(a.s) === keyOfShape(s0);
+        const swapJ = same && r.what === "j" && a.label === "狙い以外が付いた";
+        const swapO = same && r.what === "o" && a.label.endsWith("に付いた");
+        push(a.s, swapJ ? "狙い以外が入れ替わった" : swapO ? `${OTHER}の MOD が入れ替わった` : `${r.label.replace(/た$/, "て")}${a.label}`, null);
+      }
+    }
+  } else if (ADDS.has(x.kind)) {
+    const sideOnly = x.kind === "exalt" && x.omens.includes(sideOmenOf(c.side, "exalt"));
+    const ph = (hh: number): number | null => (x.kind === "exalt" ? c.pHit?.(x.currency, hh) ?? null : null);
+    const k = x.kind === "exalt" && x.omens.includes(GREATER) ? 2 : 1;
+    let cur: Array<{ s: Shape; label: string; p: number | null }> = [{ s: s0, label: "", p: 1 }];
+    for (let n = 0; n < k; n++) {
+      const next: typeof cur = [];
+      for (const q of cur) {
+        const a = adds(q.s, sideOnly, ph(q.s.h));
+        if (!a.length) { next.push(q); continue; }
+        for (const y of a) next.push({ s: y.s, label: q.label ? `${q.label}・${y.label}` : y.label, p: q.p != null && y.p != null ? q.p * y.p : null });
+      }
+      cur = next;
+    }
+    for (const q of cur) {
+      if (q.s === s0) continue;
+      // 偉大の 2 つが狙いの側だけなら「狙いが 2 つ / 狙い 1・狙い以外 1 / 狙い以外が 2 つ」の文に
+      const dh = q.s.h - s0.h, dO = q.s.o - s0.o;
+      const label = k === 2 && dO === 0 ? (dh === 2 ? "狙いが 2 つ" : dh === 1 ? "狙い 1・狙い以外 1" : "狙い以外が 2 つ") : q.label;
+      push(q.s, label, q.p);
+    }
+  } else {
+    // 付けない物 (品質・触媒など) は形が変わらない
+    return [{ ...s0, label: "形は変わらない", p: 1 }];
+  }
+  return out;
+}
+
+/** 揃った形: 狙いが need に届き、反対の側の前の手の狙いも減っていない */
+export const shapeDone = (c: ShapeCtx, s: Shape): boolean => s.h >= c.need && (s.g == null || s.g >= (c.otherHits ?? 0));
+export interface ShapeVia { from: Shape | null; set: PatternSet; label: string }
 /**
  * この手を打った後に来うる形 (決めた手の結果を辿って増える)。並びは来る順。揃った形は入れない。
- * 打つ前の形は入らない (この手 = set の結果から)
+ * via は一番近い道 (どの形で何を打って、どうなったか)
  */
-export interface ShapeVia { from: { h: number; j: number } | null; set: PatternSet; label: string }
-/** 来うる形と、その形に来る一番近い道 (via: どの形で何を打って、どうなったか) と、その時の反対の側の消せる数 (other) */
-export function reachableShapes(c: ShapeCtx, set: PatternSet, h0: number, j0: number, policy: Record<string, PolicyAct>): Array<{ h: number; j: number; other: number; via: ShapeVia }> {
-  const order: Array<{ h: number; j: number; other: number; via: ShapeVia }> = [];
+export function reachableShapes(c: ShapeCtx, set: PatternSet, h0: number, j0: number, policy: Record<string, PolicyAct>): Array<Shape & { via: ShapeVia }> {
+  const order: Array<Shape & { via: ShapeVia }> = [];
   const seen = new Set<string>();
-  const queue: Array<{ h: number; j: number; other: number; via: ShapeVia }> = shapeOutcomes(c, set, h0, j0).map((o) => ({ h: o.h, j: o.j, other: Math.max(0, c.otherRemovable + (o.dOther ?? 0)), via: { from: null, set, label: o.label } }));
-  while (queue.length && order.length < 60) {
+  const strip = (o: ShapeOut): Shape => ({ h: o.h, j: o.j, ...(o.g != null ? { g: o.g } : {}), o: o.o });
+  const queue: Array<Shape & { via: ShapeVia }> = shapeOutcomes(c, set, h0, j0).map((o) => ({ ...strip(o), via: { from: null, set, label: o.label } }));
+  while (queue.length && order.length < 80) {
     const q = queue.shift()!;
-    const k = shapeKey(q.h, q.j);
+    const k = keyOfShape(q);
     if (seen.has(k)) continue;
     seen.add(k);
-    if (q.h >= c.need) continue;
+    if (shapeDone(c, q)) continue;
     order.push(q);
     const act = policy[k];
     const x = act?.set ? setOf(c.sets, act.set) : undefined;
-    if (x) for (const o of shapeOutcomes({ ...c, otherRemovable: q.other }, x, q.h, q.j)) queue.push({ h: o.h, j: o.j, other: Math.max(0, q.other + (o.dOther ?? 0)), via: { from: { h: q.h, j: q.j }, set: x, label: o.label } });
+    const from: Shape = { h: q.h, j: q.j, ...(q.g != null ? { g: q.g } : {}), o: q.o };
+    if (x) for (const o of shapeOutcomes(c, x, from)) queue.push({ ...strip(o), via: { from, set: x, label: o.label } });
   }
   return order;
 }
 
 /** まだ決めていない形の数 (全部決めるまでこの手にできない) */
 export const shapesLeft = (c: ShapeCtx, set: PatternSet, h0: number, j0: number, policy: Record<string, PolicyAct>): number =>
-  reachableShapes(c, set, h0, j0, policy).filter((r) => !policy[shapeKey(r.h, r.j)]).length;
+  reachableShapes(c, set, h0, j0, policy).filter((r) => !policy[keyOfShape(r)]).length;
