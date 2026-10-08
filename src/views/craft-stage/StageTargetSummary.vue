@@ -252,7 +252,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
         <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="s.data.value?.mods.get(g.host)?.rune ? '差すと付く MOD。回す時はこのルーンを差した白から始める' : 'MOD の種類 (出どころ)'">{{ badgeOf(g.host).label }}</span>
-        <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
+        <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded-md bg-[var(--exile-color-bg-elevated)]/60 px-2 py-1 ring-1 ring-white/[0.06]' : ''">
           <!-- 2 つ以上: 見出し (どれか 1 つ・合計の付きやすさ) と、横に並べて折り返す候補 -->
           <p v-if="g.members.length > 1" class="mb-0.5 flex flex-wrap items-center gap-1 text-[11px] font-bold text-amber-200">
             <span>この中のどれか</span>

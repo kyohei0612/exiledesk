@@ -132,11 +132,11 @@ const here = computed(() => (at.value.start ? null : reach.value.find((r) => key
 /** 反対の側の消せる数 (前の手の狙い + 狙い以外) */
 const otherNow = computed(() => (at.value.g ?? 0) + at.value.o);
 const outs = computed<ShapeOut[]>(() => (firing.value ? shapeOutcomes(ctx.value, firing.value, at.value) : []));
-/** この形になる時 (一番近い道の例) */
-const viaText = computed(() => {
+/** この形になる時 (一番近い道の例)。前の形 → 打つ物 → 起きたこと の札で (2026-10-09 レビュー: 文より札) */
+const viaParts = computed((): string[] => {
   const v = here.value?.via;
-  if (!v) return "";
-  return v.from ? `${shapeText(v.from)} の時に ${labelOf(v.set)} を打って、${v.label}` : `この手の ${labelOf(v.set)} を打って、${v.label}`;
+  if (!v) return [];
+  return [v.from ? shapeText(v.from) : "この手の始め", labelOf(v.set), v.label];
 });
 /** 決める形 (この手から来うる形) と、まだ決めていない形 */
 const reach = computed(() => reachableShapes(ctx.value, props.set, props.h0, props.j0, props.policy));
@@ -323,8 +323,14 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
           <span v-if="otherNow === 0" class="ml-1 text-[var(--exile-color-text-tertiary)]">{{ OTHER_JA }}はフラクチャーだけ</span>
         </span>
       </div>
-      <p v-if="viaText" class="mb-3 text-xs text-[var(--exile-color-text-secondary)]">この形になる時: {{ viaText }}</p>
-      <div class="flex items-start gap-5 max-md:flex-col" :class="viaText ? '' : 'mt-3'">
+      <p v-if="viaParts.length" class="mb-3 flex flex-wrap items-center gap-1 text-xs text-[var(--exile-color-text-secondary)]">
+        <span class="mr-1 text-[var(--exile-color-text-tertiary)]">なる時</span>
+        <template v-for="(t, ti) in viaParts" :key="ti">
+          <Icon v-if="ti" name="arrow-right" class="size-3.5 text-[var(--exile-color-text-tertiary)]" />
+          <span class="rounded-full bg-white/[0.06] px-2 py-0.5" :class="ti === 1 ? 'text-[var(--exile-color-text-primary)]' : ''">{{ t }}</span>
+        </template>
+      </p>
+      <div class="flex items-start gap-5 max-md:flex-col" :class="viaParts.length ? '' : 'mt-3'">
         <div v-if="shapeItem" class="shrink-0 max-md:mx-auto"><StageItemCard :item="shapeItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="250" compact /></div>
         <div v-else class="flex flex-wrap items-center gap-2">
           <span v-for="(s, k) in slots" :key="k" class="grid h-7 w-20 place-items-center rounded text-xs" :class="s === 'h' ? 'bg-[rgba(136,136,255,0.18)] text-[var(--color-rarity-magic)]' : s === 'j' ? 'bg-white/10 text-[var(--exile-color-text-secondary)]' : 'text-[var(--exile-color-text-tertiary)] ring-1 ring-inset ring-white/10'">{{ s === "h" ? "狙い" : s === "j" ? "ほか" : "空き" }}</span>
