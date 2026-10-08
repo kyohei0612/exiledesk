@@ -25,6 +25,8 @@ import { baseArt } from "../../services/craft-stage/base-art";
 import { RUNES } from "../../services/craft-stage/stage-runes";
 import { fillHashes, fillModText, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
+import { modTierWeight } from "../../vendor/poe2htc/engine/pool";
+import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 
 const props = defineProps<{
   /** 始めの状態 (フラクチャー済みのレアか白) */
@@ -494,7 +496,7 @@ const quickPre = computed(() => {
  * 結果の木を出せる手か (高貴・消去・カオス、狙いが片側だけ) と、その中身 (側・枠・揃える数・打つ前の 狙い / 狙い以外)。
  * 揃える数はその側の狙いの手順の数 (どれか N つのコピーも 1 つずつ)
  */
-function treeOf(i: number, r: Row): { set: PatternSet; side: "prefix" | "suffix"; limit: number; need: number; h0: number; j0: number } | null {
+function treeOf(i: number, r: Row): { set: PatternSet; side: "prefix" | "suffix"; limit: number; need: number; h0: number; j0: number; pHit: (currency: string, h: number) => number | null } | null {
   const c = ctx.value;
   if (!c || !r.set || !["exalt", "annul", "chaos"].includes(r.set.kind) || !r.step.target || r.step.target === ANY_TARGET) return null;
   const ids = isRest(r.step.target) ? restMembers(pat.value.steps, r.step.target) : [r.step.target, ...candsOf(r)];
@@ -507,7 +509,23 @@ function treeOf(i: number, r: Row): { set: PatternSet; side: "prefix" | "suffix"
   const h0 = st[side];
   const j0 = 0;
   const need = Math.max(h0 + 1, s.simTargets.value.filter((t) => sideOfId(t.modId) === side && t.method !== "fracture").length + (st.fractured && sideOfId(st.fractured) === side ? 1 : 0));
-  return { set: r.set, side, limit: st.limits[side], need: Math.min(need, st.limits[side]), h0, j0 };
+  // 高貴で 1 つ付けた時に狙いが出る確率: その側の置き場の重み (通貨の下限) のうち、狙いの段以上の重み。付いている狙いの分は除く (系統の除外は目安)
+  const sideIds = ids.filter((id) => sideOfId(id) === side);
+  const minOf = (id: string): number => { for (const t of s.simTargets.value) for (const m of [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])]) if (m.modId === id) return m.minTierIndex; return 0; };
+  const lvl = s.itemLevel.value;
+  const pHit = (currency: string, h: number): number | null => {
+    const strength = /_perfect$/.test(currency) ? "perfect" : /_greater$/.test(currency) ? "greater" : "base";
+    const floor = CURRENCY_FLOOR.exalt[strength];
+    const pool = c.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"];
+    const total = pool.reduce((a, id) => { const m = c.data.mods.get(id); return a + (m ? modTierWeight(m, floor, lvl) : 0); }, 0);
+    if (!total || !sideIds.length) return null;
+    const want = sideIds.reduce((a, id) => { const m = c.data.mods.get(id); return a + (m ? modTierWeight(m, floor, lvl, minOf(id)) : 0); }, 0);
+    // 狙いの数 h のうち、この手の候補以外 (ほかの手の狙い) は need − 候補の数。残りが候補のうち付いている数
+    const others = Math.max(0, Math.min(st.limits[side], need) - sideIds.length);
+    const left = sideIds.length - Math.min(sideIds.length, Math.max(0, h - others));
+    return Math.min(1, (want * (left / sideIds.length)) / total);
+  };
+  return { set: r.set, side, limit: st.limits[side], need: Math.min(need, st.limits[side]), h0, j0, pHit };
 }
 const rxOf = (r: Row, sit: Situation): Reaction | undefined => r.step.on?.[sit];
 function setRx(i: number, sit: Situation, rx: Reaction | null): void {
@@ -885,15 +903,28 @@ function setGoto(i: number, id: string, g: number): void {
   const r = rows.value[i];
   if (r && presentMods(i, r).length === 1) nextPart(i);
 }
+/**
+ * スパムの手 (この手より前の一番近いカオスの手)。1 MOD 残し消去 (スパムまでリセット) の戻り先
+ * (2026-10-09 オーナー「1 MOD 残し消去 (スパムまでリセット) にしようか選択肢」)
+ */
+function spamOf(i: number): number | null {
+  for (let j = i - 1; j >= 0; j--) if (setByKey(sets.value, pat.value.steps[j]?.set ?? "")?.kind === "chaos") return j;
+  return null;
+}
+/** 形の表で決めていない形の動き (やり直しの札の名前) */
+function missFallbackText(r: Row): string {
+  const k = missKind(r);
+  const x = missSet(r.step);
+  return k === "reset" ? "1 MOD 残し消去 (スパムまでリセット)" : k === "restart" ? "新しいベースでもう一度" : k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側の狙い以外を消して次へ" : x ? `${setShortly(x)} でもう一度` : "付かなかったらの札";
+}
 /** やり直しの札: そのまま / 消去 / カオス / ほか (パーフェクトエッセンス・骨) */
 const missMore = ref(false);
-function missKind(r: Row): "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "tree" | "other" {
-  // 結果ごとに決める (結果の木) を選んでいる
-  if (r.step.policy) return "tree";
+function missKind(r: Row): "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "reset" | "tree" | "other" {
   const x = missSet(r.step);
   if (!x && r.step.onMiss === "redo") return "redo";
   if (!x && r.step.onMiss === "annul_next") return "annul_next";
   if (!x && r.step.onMiss === "restart") return "restart";
+  if (!x && r.step.onMiss === "reset") return "reset";
   return !x ? "none" : x.kind === "annul" ? "annul" : x.kind === "chaos" ? "chaos" : "other";
 }
 function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: readonly string[]): void {
@@ -906,9 +937,10 @@ function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: re
   editPart.value = "miss";
 }
 /** 「付かなかったら」の札が選べない理由 (pattern.ts の checkMiss / checkRemoval。2026-10-08 レビュー B5: 骨で「もう一度打つ」を選べて、回すと止まっていた) */
-function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "tree"): string | null {
+function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "reset" | "tree"): string | null {
   if (!r.set) return null;
   if (k === "tree") return treeOf(rows.value.indexOf(r), r) ? null : "高貴・消去・カオスで、狙いが片側だけの手";
+  if (k === "reset") return spamOf(rows.value.indexOf(r)) != null ? null : "前にカオスの手が無い";
   const rule: MissRule = k === "none" ? "next" : k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : k === "restart" ? "restart" : "annul_redo";
   const w = checkMiss(r.set, rule);
   if (w) return w;
@@ -918,11 +950,11 @@ function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos" |
   }
   return null;
 }
-function pickMissKind(i: number, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "tree"): void {
-  if (k === "tree") { patch(i, { policy: pat.value.steps[i]?.policy ?? {}, miss: null, onMiss: "next" }); editPart.value = "miss"; return; }
-  // ほかの札を選んだら結果の木は外す (2026-10-08 オーナー「そのまま次へでも下のやつ要らんくないか」)
-  if (pat.value.steps[i]?.policy) patch(i, { policy: undefined });
+function pickMissKind(i: number, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "reset" | "tree"): void {
+  // 形ごとに決める (形の表) は、やり直しの札と別にオン・オフ。決めていない形はやり直しの札で動く (2026-10-09)
+  if (k === "tree") { patch(i, { policy: pat.value.steps[i]?.policy ? undefined : {} }); editPart.value = "miss"; return; }
   if (missWhy(rows.value[i]!, k)) return;
+  if (k === "reset") { patch(i, { miss: null, onMiss: "reset", resetTo: spamOf(i) ?? 0 }); editPart.value = "miss"; nextPart(i); return; }
   // お告げの無い札はそのまま次の段へ (消去・カオスはお告げを続けて選ぶので留まる)
   if (k === "none" || k === "redo" || k === "annul_next" || k === "restart") { patch(i, { miss: null, onMiss: k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : k === "restart" ? "restart" : "next" }); editPart.value = "miss"; nextPart(i); return; }
   const cur = missSet(pat.value.steps[i]!);
@@ -1008,7 +1040,7 @@ function chipsOf(i: number, r: Row): Chip[] {
   if (!isRune) out.push({ part: "set", name: "カレンシー", icons: icons(r.set), text: r.set && !icons(r.set).length ? setShort(r.set) : "", state: st("set", !!r.set) });
   if (needs2(r)) out.push({ part: "target2", name: "一緒に狙う MOD", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: st("target2", !!r.step.target2) });
   else if (canCands(r)) out.push({ part: "target2", name: "ほかの候補 (任意)", icons: [], text: candsOf(r).map(cardTitleOf).join(" / "), state: now === "target2" ? "now" : candsOf(r).length ? "done" : "todo" });
-  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : r.step.onMiss === "annul_next" ? "狙い以外を消して次へ" : "選択無し") : "", state: st("miss", hasMiss(r)) });
+  if ((!r.set && r.step.target !== ANY_TARGET) || hasMiss(r)) out.push({ part: "miss", name: "付かなかったら", icons: icons(missSet(r.step)), text: r.set && !r.step.miss ? (r.step.onMiss === "redo" ? "もう一度打つ" : r.step.onMiss === "annul_next" ? "狙い以外を消して次へ" : r.step.onMiss === "reset" ? "1 MOD 残し消去 (スパムまでリセット)" : r.step.onMiss === "restart" ? "新しいベースでもう一度" : "選択無し") + (r.step.policy ? " + 形ごと" : "") : "", state: st("miss", hasMiss(r)) });
   if (needs2(r)) out.push({ part: "single", name: "片方当たり後の 1 発", icons: icons(singleSet(r)), text: "", state: st("single", true) });
   if (presentMods(i, r).length) out.push({ part: "lost", name: "MOD が消えたら", icons: [], text: "", state: st("lost", true) });
   return out;
@@ -1244,7 +1276,7 @@ defineExpose({ rows });
                     <span v-else class="h-5 w-5 rounded border border-dashed border-white/25"></span>
                     <img v-for="o in missSet(r.step)!.omens" :key="o" :src="iconOf(o)" alt="" class="h-5 w-5 object-contain" />
                   </template>
-                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : r.step.onMiss === "restart" ? "→ 最初から" : r.step.onMiss === "annul_next" ? "→ 消して次へ" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
+                  <span v-else class="opacity-70">{{ r.step.onMiss === "redo" ? "→ ↺" : r.step.onMiss === "restart" ? "→ 最初から" : r.step.onMiss === "reset" ? "→ スパムまでリセット" : r.step.onMiss === "annul_next" ? "→ 消して次へ" : hitTo(i) > i + 1 ? `→ ${i + 2} 手目へ` : "→ 次へ" }}</span>
                 </button>
               </span>
               <!--
@@ -1431,13 +1463,13 @@ defineExpose({ rows });
               <p class="mb-2 text-[13px] font-bold text-rose-100">狙いの MOD が付かなかったら、どうする？</p>
               <!-- もう一度打つ: 外れは残して同じ手を打ち直し、その側が満杯になった時だけ外れを消す (2026-10-07 靴のライフで、毎回消すより 2 割安かった) -->
               <div class="grid max-w-4xl grid-cols-5 max-md:grid-cols-1 gap-2">
-                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'restart', 'none'] as const) : (treeOf(focusRow!, rows[focusRow]!) ? (['none', 'annul', 'chaos', 'restart', 'tree'] as const) : (['none', 'annul', 'chaos', 'restart'] as const)))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
+                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'restart', 'none'] as const) : (treeOf(focusRow!, rows[focusRow]!) ? (['none', 'annul', 'chaos', 'restart', 'reset', 'tree'] as const) : (['none', 'annul', 'chaos', 'restart', 'reset'] as const)))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="(k === 'tree' ? !!rows[focusRow]!.step.policy : missKind(rows[focusRow]!) === k) ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
                   <img v-if="(k === 'annul' || k === 'chaos' || k === 'annul_next') && iconOf(k === 'annul_next' ? 'annul' : k)" :src="iconOf(k === 'annul_next' ? 'annul' : k)" alt="" class="h-8 w-8 object-contain" />
-                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "restart" ? "⟲" : k === "tree" ? "⑂" : "→" }}</span>
+                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "restart" || k === "reset" ? "⟲" : k === "tree" ? "⑂" : "→" }}</span>
                   <span>
-                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側の狙い以外を消して次へ" : k === "restart" ? (props.start.mods ? "この状態からやり直す" : "新しいベースでもう一度") : k === "tree" ? "結果ごとに決める" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
+                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側の狙い以外を消して次へ" : k === "restart" ? (props.start.mods ? "この状態からやり直す" : "新しいベースでもう一度") : k === "reset" ? "1 MOD 残し消去 (スパムまでリセット)" : k === "tree" ? "形ごとに決める" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
                     <span v-if="missWhy(rows[focusRow]!, k)" class="text-[10px] text-rose-300">{{ missWhy(rows[focusRow]!, k) }}</span>
-                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "狙い以外は残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "restart" ? (props.start.mods ? "手打ちの状態を作り直して 1 手目から" : "白を買い直して 1 手目から") : k === "tree" ? "狙い 2 / 狙い 1・狙い以外 1 … ごとに細かく" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
+                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "狙い以外は残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "restart" ? (props.start.mods ? "手打ちの状態を作り直して 1 手目から" : "白を買い直して 1 手目から") : k === "reset" ? (spamOf(focusRow!) != null ? `消去で 1 MOD にして ${spamOf(focusRow!)! + 1} 手目のカオスへ` : "前にカオスの手が無い") : k === "tree" ? (rows[focusRow!]!.step.policy ? "オン · 決めていない形は選んだ札で" : "狙い・狙い以外の数ごとに打つ物を決める (札と一緒に使う)") : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
                   </span>
                 </button>
               </div>
@@ -1505,8 +1537,8 @@ defineExpose({ rows });
                 2026-10-08 オーナー「説明は分かりやすいように、感覚で分かるように」: プルダウン 3 つ並びをやめて、文になる札の並びに
               -->
               <!-- 打った結果ごとに次にすること (高貴・消去・カオスで、狙いが片側だけの手) -->
-              <div v-if="missKind(rows[focusRow]!) === 'tree' && treeOf(focusRow!, rows[focusRow]!)" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
-                <StageOutcomeTree v-bind="treeOf(focusRow!, rows[focusRow]!)!" :policy="rows[focusRow]!.step.policy ?? {}" :sets="sets" :steps="rows.slice(0, focusRow!).map((rw, n) => ({ n, label: cardTitle(rw) }))" :locked="locked" @change="(pol) => patch(focusRow!, { policy: pol })" />
+              <div v-if="rows[focusRow]!.step.policy && treeOf(focusRow!, rows[focusRow]!)" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
+                <StageOutcomeTree v-bind="treeOf(focusRow!, rows[focusRow]!)!" :policy="rows[focusRow]!.step.policy ?? {}" :sets="sets" :steps="rows.slice(0, focusRow!).map((rw, n) => ({ n, label: cardTitle(rw) }))" :fallback="missFallbackText(rows[focusRow]!)" :locked="locked" @change="(pol) => patch(focusRow!, { policy: pol })" />
               </div>
               <div v-else-if="situationsOf(focusRow!, rows[focusRow]!).length" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
                 <p class="mb-1 text-[12px] font-bold text-sky-100">こうなったら？ <span class="font-normal opacity-60">(決めなければ上と同じ)</span></p>

@@ -67,6 +67,8 @@ export interface CompiledStep {
   /** ルーンを差す手の英語名 */
   rune?: string;
   onMiss: MissRule;
+  /** 1 MOD 残し消去の戻り先 (並べた後の番号) */
+  resetTo?: number;
   /** 外す時の打つ物 + お告げ (無ければ自動)。kind はパーフェクトエッセンス (一番安い物を選ぶ)・冒涜 (発現まで) を見分ける */
   miss?: { kind?: PatternKind; currency: string; omens: string[] };
   /** お告げ無しの消去で反対の側が消えたら、もう一度消去 (PatternStep.otherGone) */
@@ -75,7 +77,7 @@ export interface CompiledStep {
   otherJunk?: "keep";
   /** 状況ごとの反応 (PatternStep.on をセットに直した物。goto は並べた後の番号) */
   /** 結果の状態ごとの行動 (PatternStep.policy をセットに直した物。キーは `${当たり}-${ハズレ}` (狙いの側)) */
-  policy?: Record<string, { act?: { kind?: PatternKind; currency: string; omens: string[] }; then?: "next" | "restart" | "goto"; goto?: number }>;
+  policy?: Record<string, { act?: { kind?: PatternKind; currency: string; omens: string[] }; then?: "next" | "restart" | "goto" | "reset"; goto?: number }>;
   on?: Partial<Record<"pre_full" | "partial" | "miss_t" | "miss_o" | "miss", { pre?: { kind?: PatternKind; currency: string; omens: string[] } | null; then: "repeat" | "next" | "restart" | "goto"; goto?: number; again?: { kind?: PatternKind; currency: string; omens: string[] } | null }>>;
   /**
    * 「残り」の手の元の手 (パターンの中の番号)。この手の間に候補が消えても、まだ 1 つでも付いていればこの手を続け、全部消えたら元の手へ
@@ -566,6 +568,15 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       else { i = at; if (rx.again) againRef.v = { i: at, s: rx.again }; }
       return null;
     };
+    /** 1 MOD 残し消去: 固定以外の MOD が 1 つになるまで素の消去を打ち、カオスの手 (to) へ戻る */
+    const resetTo = (to: number): string | null => {
+      for (let g = 0; g < 12 && allMods(item).filter((m) => !m.fractured).length > 1 && steps.length < max; g++) {
+        const e3 = play("annul", []);
+        if (e3) return e3;
+      }
+      i = to;
+      return null;
+    };
     const restartPattern = (): void => { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); };
     /** もう一度打てる手 (レアに打てる物。変成・増強・王者・錬金はレアリティが変わるので戻れない) */
     const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
@@ -746,12 +757,12 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           if (rx.act) {
             const e2 = play(rx.act.currency, rx.act.omens);
             if (e2) return fail(`${i + 1} 手目 (狙い・狙い以外 ${key} の時): ${e2}`);
-            // カオスは入れ替えるだけで、結果は次の手で見る (消去と違って付く物がランダム。2026-10-08 オーナー)
-            if (rx.act.kind === "chaos") { if (!meets(item, p.target)) { i++; moved = true; } break; }
+            // カオスも消去も、打った後の形の行で続ける (形の表。2026-10-09)
             continue;
           }
           if (rx.then === "next") { i++; moved = true; break; }
           if (rx.then === "restart") { restartPattern(); moved = true; break; }
+          if (rx.then === "reset" && rx.goto != null) { const e4 = resetTo(rx.goto); if (e4) return fail(`${i + 1} 手目のリセット: ${e4}`); moved = true; break; }
           if (rx.then === "goto" && rx.goto != null) { i = rx.goto; moved = true; break; }
           break;
         }
@@ -778,6 +789,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         continue;
       }
       if (p.onMiss === "restart") { restartPattern(); continue; }
+      if (p.onMiss === "reset" && p.resetTo != null) { const e4 = resetTo(p.resetTo); if (e4) return fail(`${i + 1} 手目のリセット: ${e4}`); continue; }
       // カオスの手のやり直しがカオス (同じ物・お告げ) なら、次のカオスがそのまま入れ替えになる。やり直しのカオスを別に打つと、
       // その結果を見ないまま次のカオスを打つので 2 回打って 1 回分しか判定していなかった (2026-10-07 オーナー「回る速度遅くね」「500 回の 50 神以内で付くかなと思ってた」)
       if (p.onMiss === "annul_redo" && p.kind === "chaos" && p.miss?.kind === "chaos" && p.miss.currency === p.currency && p.miss.omens.join("+") === p.omens.join("+")) continue;

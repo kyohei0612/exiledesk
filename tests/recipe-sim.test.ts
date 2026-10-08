@@ -432,4 +432,28 @@ describe("結果ごとの行動 (2026-10-08 オーナー「打った結果全て
     expect(r!.pDone).toBeGreaterThan(0.8);
     expect(r!.usage.some((u) => u.key === "annul" && u.count > 1)).toBe(true);
   });
+  it("形の表 (2026-10-09): 狙いが 0 の形は 1 MOD 残し消去 (スパムまでリセット) でカオスの手へ。新しいベースは使わない", async () => {
+    const data = await loadPatch();
+    const ids = ["Rings/FireDamage", "Rings/ColdDamage", "Rings/LightningDamage"];
+    const T = ids.map((id) => ({ modId: id, minTierIndex: data.mods.get(id)!.tiers.length - 4 }));
+    const group = { ...T[0]!, method: "exalt" as const, alts: T.slice(1), need: 3 };
+    const one = { ...T[0]!, method: "chaos" as const, alts: T.slice(1), need: 1 };
+    const g = { kind: "exalt" as const, currency: "exalt_perfect", omens: ["OmenofSinistralExaltation", "OmenofGreaterExaltation"] };
+    const s1 = { kind: "exalt" as const, currency: "exalt_perfect", omens: ["OmenofSinistralExaltation"] };
+    const an = { kind: "annul" as const, currency: "annul", omens: ["OmenofSinistralAnnulment"] };
+    const r = await runRecipe({
+      data, base: "Gold Ring", itemLevel: 82, runs: 40, price: () => 1, seed: 7, whiteBasePrice: 0, maxSteps: 20_000,
+      targets: [group],
+      pattern: [
+        { kind: "alchemy", currency: "alchemy", omens: [], target: null, onMiss: "next" },
+        { kind: "chaos", currency: "chaos", omens: [], target: one, onMiss: "annul_redo", miss: { kind: "chaos", currency: "chaos", omens: [] } },
+        { ...g, target: group, onMiss: "next", policy: {
+          "2-1": { act: an }, "1-2": { act: an }, "1-1": { act: an }, "2-0": { act: s1 }, "1-0": { act: g }, "2-2": { act: an },
+          "0-0": { then: "reset", goto: 1 }, "0-1": { then: "reset", goto: 1 }, "0-2": { then: "reset", goto: 1 }, "0-3": { then: "reset", goto: 1 },
+        } },
+      ],
+    });
+    expect(r!.pDone).toBeGreaterThan(0.8);
+    expect(r!.bases).toBeLessThan(1.01);
+  });
 });

@@ -22,12 +22,12 @@ const ESS_SOURCE = new Map<string, "essence" | "perfect_essence">(Object.keys(ES
 
 export type PatternKind = "transmute" | "augment" | "regal" | "alchemy" | "exalt" | "chaos" | "desecrate" | "essence" | "essence_perfect" | "annul" | "rune" | "fracture";
 /** 外れた時: そのまま次へ / 同じ手をもう一度 / 外れを消去してもう一度 / 最初から (フラクチャー済みのベースから) */
-export type MissRule = "next" | "annul_next" | "redo" | "annul_redo" | "restart";
+export type MissRule = "next" | "annul_next" | "redo" | "annul_redo" | "restart" | "reset";
 /**
  * annul_next: 外れが狙いの側に付いて埋まっていたら消去してから次へ (反対の側なら残して次へ)。レアリティが変わる手 (変成など) 用。
  * 2026-10-08 オーナー「1 手目から消去の下りの選択肢ないと 2 手目から表示も変。順番に案内して設定させてあげないと中途半端」
  */
-export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", annul_next: "狙いの側の狙い以外を消して次へ", redo: "同じ手をもう一度", annul_redo: "外してもう一度", restart: "最初からやり直す" };
+export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", annul_next: "狙いの側の狙い以外を消して次へ", redo: "同じ手をもう一度", annul_redo: "外してもう一度", restart: "最初からやり直す", reset: "1 MOD 残し消去 (スパムまでリセット)" };
 
 export interface PatternStep {
   /** セットのキー (PatternSet.key) */
@@ -55,6 +55,11 @@ export interface PatternStep {
    */
   lostGoto?: Record<string, number>;
   onMiss: MissRule;
+  /**
+   * 1 MOD 残し消去 (スパムまでリセット) の戻り先 (カオスの手の番号、0 始まり)。onMiss / 形の表の "reset" で使う
+   * (2026-10-09 オーナー「カオススパムが初手ならそこまで消去を打ってリセット。最初からは消去 1 個無駄、1 MOD 残して消去 (リセット)」)
+   */
+  resetTo?: number;
   /**
    * 外す時の打つ物 + お告げ (セットのキー。消去・カオスの物)。「外してもう一度」の時に使う。無ければ自動 (やり直しの費用で素の消去か側のお告げ)。
    * 2026-10-06 オーナー「付ける時と外す時で分けて、それぞれこのやり方で表示」
@@ -84,7 +89,7 @@ export interface PatternStep {
   policy?: Record<string, PolicyAct>;
 }
 /** 結果の状態での行動: 打つ物 (set) か、次の手・最初から・N 手目 (then) */
-export interface PolicyAct { set?: string; then?: "next" | "restart" | "goto"; goto?: number }
+export interface PolicyAct { set?: string; then?: "next" | "restart" | "goto" | "reset"; goto?: number }
 /** 状態のキー (狙いの側の当たり h・狙い以外 j) */
 export const policyKey = (h: number, j: number): string => `${h}-${j}`;
 /**
