@@ -118,7 +118,7 @@ export async function drawRecipeCard(d: RecipeCardData): Promise<HTMLCanvasEleme
       font(14);
       const w = ctx.measureText(g).width + 20;
       if (cx + w > W - PAD) { cx = PAD; y += 34; }
-      if (draw) { ctx.fillStyle = /^フラクチャー/.test(g) ? "rgba(200,168,106,0.14)" : C.magBg; rrect(ctx, cx, y, w, 26, 6); ctx.fill(); }
+      if (draw) { const fr = /^フラクチャー/.test(g); ctx.fillStyle = fr ? "rgba(200,168,106,0.10)" : "rgba(136,136,255,0.07)"; rrect(ctx, cx, y, w, 26, 6); ctx.fill(); ctx.strokeStyle = fr ? "rgba(200,168,106,0.5)" : "rgba(136,136,255,0.5)"; ctx.lineWidth = 1; rrect(ctx, cx + 0.5, y + 0.5, w - 1, 25, 6); ctx.stroke(); }
       text(g, cx + 10, y + 18, 14, /^フラクチャー/.test(g) ? "#c8a86a" : C.mag);
       cx += w + 8;
     }
@@ -126,6 +126,7 @@ export async function drawRecipeCard(d: RecipeCardData): Promise<HTMLCanvasEleme
 
     // 手順
     label("手順");
+    if (d.moves.some((m) => m.rules.length)) { y += 14; text("「外れたら」の表: 狙い = 狙う MOD の数、ほか = それ以外の MOD の数", PAD, y, 12, C.faint); }
     for (const [i, m] of d.moves.entries()) {
       y += 6;
       const top = y;
@@ -152,11 +153,14 @@ export async function drawRecipeCard(d: RecipeCardData): Promise<HTMLCanvasEleme
         let ry = top + 72;
         text("外れたら", PAD + 56, ry, 12, C.rose, true);
         ry += 8;
+        font(13);
+        const thenX = PAD + 56 + Math.min(360, Math.max(140, ...m.rules.map((r) => ctx.measureText(r.when).width)) + 28);
         for (const r of m.rules) {
           ry += 24;
           if (draw) { ctx.fillStyle = C.line; ctx.fillRect(PAD + 56, ry - 17, W - PAD * 2 - 72, 1); }
           text(r.when, PAD + 56, ry, 13, C.dim);
-          text(r.then, PAD + 56 + 300, ry, 13, C.text);
+          if (draw) text("→", thenX - 20, ry, 13, C.faint);
+          text(r.then, thenX, ry, 13, C.text);
         }
       }
       y = top + h;

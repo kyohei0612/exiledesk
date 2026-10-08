@@ -1371,7 +1371,7 @@ function cardData(): RecipeCardData | null {
       };
     }),
     result: {
-      total: moneyT(split.value.base + split.value.craft), base: moneyT(split.value.base), craft: moneyT(split.value.craft), done: `完成 ${pct(sm.pDone)}`, doneOk: sm.pDone >= 0.995,
+      total: moneyT(split.value.base + split.value.craft), base: moneyT(split.value.base), craft: moneyT(split.value.craft), done: sm.pDone >= 0.995 ? `完成 ${pct(sm.pDone)}` : `完成 ${pct(sm.pDone)} (${pct(1 - sm.pDone)} は打ち切り)`, doneOk: sm.pDone >= 0.995,
       ...(luck.value[0] ? { median: moneyT(luck.value[0].v) } : {}),
       luck: luck.value.filter((q) => !q.top).slice(1).map((q) => ({ label: q.label, value: `${moneyT(q.v)} ${q.tail}` })),
       usage: [...out.r.usage].sort((a, b) => b.cost - a.cost).slice(0, 6).map((u) => ({ icon: iconOf(u.key) ?? null, name: nameOf(u.key), count: u.count >= 10 ? Math.round(u.count).toLocaleString() : u.count.toFixed(1), cost: moneyT(u.cost) })),
@@ -1494,7 +1494,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
             <div v-for="r in recipes" :key="r.id" class="flex items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2 py-1.5">
               <div class="min-w-0 flex-1">
                 <input v-if="recipeRenaming === r.id" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="r.name" class="w-full rounded border border-amber-400/60 bg-black/50 px-1 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="recipeRenaming = null" @blur="renameRecipe(r.id, ($event.target as HTMLInputElement).value)" />
-                <p v-else class="flex cursor-text items-center gap-1 font-bold" title="ダブルクリックで名前を変える" @dblclick="recipeRenaming = r.id"><span class="truncate">{{ r.name }}</span><button type="button" class="shrink-0 rounded px-1 text-[12px] opacity-70 md:hidden" title="名前を変える" @click.stop="recipeRenaming = r.id">✎</button></p>
+                <p v-else class="flex cursor-text items-center gap-1 font-bold" title="ダブルクリックで名前を変える" @dblclick="recipeRenaming = r.id"><span class="truncate">{{ r.name }}</span><button type="button" class="shrink-0 rounded px-1 text-[12px] opacity-50 hover:opacity-100" title="名前を変える" @click.stop="recipeRenaming = r.id">✎</button></p>
                 <p class="truncate text-[10px] opacity-50">{{ r.baseJa ?? r.session.base }} · パターン {{ r.session.patterns.length }} つ · {{ fmtDate(r.savedAt) }}</p>
               </div>
               <button type="button" class="shrink-0 rounded-lg border px-2 py-0.5" :class="recipeArmed === `load:${r.id}` ? 'border-amber-400 bg-amber-500/25 text-amber-100' : 'border-sky-400/50 text-sky-200 hover:bg-sky-500/10'" :title="recipeArmed === `load:${r.id}` ? '今の状態は置き換わる。もう一度押すと呼び出す' : 'このレシピを呼び出す (今の状態は置き換わる)'" @click="loadRecipe(r)">{{ recipeArmed === `load:${r.id}` ? "置き換える?" : "呼び出す" }}</button>
@@ -1514,8 +1514,8 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     -->
     <div v-if="socketsOk && step4pre" class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-5 py-2.5 text-[13px]">
       <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-[12px] font-bold text-emerald-200 ring-1 ring-emerald-400/40">✓</span>
-      <b class="shrink-0 whitespace-nowrap text-[var(--exile-color-text-primary)]">2〜5 決めたこと</b>
-      <span class="truncate text-[var(--exile-color-text-secondary)]">狙う MOD {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 付ける順 {{ orderKeys.length }} つ</span>
+      <b class="shrink-0 whitespace-nowrap text-[var(--exile-color-text-primary)]">決めたこと</b>
+      <span class="min-w-0 truncate text-[var(--exile-color-text-secondary)] max-md:whitespace-normal">狙う MOD {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 付ける順 {{ orderKeys.length }} つ</span>
       <button type="button" class="ml-auto inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="fold = !fold">{{ fold ? "開く" : "畳む" }}<Icon :name="fold ? 'chevron-down' : 'chevron-up'" class="size-4" /></button>
     </div>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
@@ -1528,10 +1528,10 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <StageTargetSummary :editable="!modsDone" />
         <div v-if="rows.length && !modsDone" class="mt-1 flex items-center gap-2">
           <button type="button" class="inline-flex h-8 items-center rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)]" @click="s.simTargets.value = []">全部外す</button>
-          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11 max-md:px-4" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
+          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:hidden" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <!-- スマホ: 一覧の下で「T○ 以上」を押しても上の完成図は見えないので、狙いの数と「決めた →」を画面の下に固定 (2026-10-08 レビュー) -->
-        <div v-if="phone && rows.length && !modsDone" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+        <div v-if="phone && rows.length && !modsDone" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-[var(--exile-color-border-subtle)] bg-[#14110d]/95 px-3 backdrop-blur py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">狙い {{ rows.length }} 個</b><span class="opacity-60"> · 足したら決める</span></span>
           <button type="button" class="min-h-11 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 px-4" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
@@ -1559,7 +1559,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
             <span class="inline-block w-24 shrink-0" :class="ageOf('bought')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")?.text ?? "" }}</span>
           </template>
           <template v-else-if="s.simStart.value === 'four'">
-            <span class="opacity-70">4 MOD のレア (3 MOD + 🔒 {{ fracMembers[0]?.text ?? "固定 MOD を 2 で足す" }})</span>
+            <span class="inline-flex items-center gap-1 text-[var(--exile-color-text-secondary)]">4 MOD のレア · 3 MOD + <Icon name="lock" class="size-3.5" />{{ fracMembers[0]?.text ?? "フラクチャーの MOD を 2 で足す" }}</span>
             <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
             <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline disabled:opacity-40 max-md:min-h-11" :disabled="!fracMembers.length" title="狙いの MOD が付いたレア (固定済みは除く、MOD 4 つまで) を取引所で探す (開くだけ)" @click="searchFour">取引所で探す<Icon name="external" class="size-3.5" /></button>
             <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
@@ -1636,6 +1636,12 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <SimStepHead class="mb-3" :n="5" title="付ける順番" :done="orderDone" :current="!orderDone" :redo="orderDone" help="目安の順番。6 の打ち方で付ける MOD を選ぶ時、この順に並ぶ" @redo="goTo('order')" />
         <p v-if="!orderKeys.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
+          <thead v-if="redoOf.size">
+            <tr class="text-[11px] text-[var(--exile-color-text-tertiary)]">
+              <th colspan="3"></th>
+              <th class="pb-1 text-right font-normal"><span class="inline-flex items-center gap-1">外した時の取り直し (目安)<HelpTip text="消去などで外れた時に、その MOD を付け直す費用の見込み。黄色はほかの MOD を巻き込む物" /></span></th>
+            </tr>
+          </thead>
           <tbody>
             <tr v-for="(k, i) in orderKeys" :key="k" class="border-t border-white/5">
               <td class="w-14 py-1">
@@ -1653,7 +1659,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
                   <span class="ml-1 text-[10px] opacity-60">{{ METHOD_JA[orderRow(k)!.method] }}</span>
                 </td>
                 <td class="w-48 py-1 text-right text-[11px] tabular-nums max-md:w-auto">
-                  <span v-if="redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">取り直し 約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
+                  <span v-if="redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
                 </td>
               </template>
               <template v-else>
@@ -1751,7 +1757,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <span class="text-[22px] font-semibold leading-tight tabular-nums text-[var(--exile-color-text-primary)]">{{ moneyT(luck[0].v) }}</span>
           <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">以内で完成</span>
         </div>
-        <span class="inline-flex h-7 items-center gap-1 self-center rounded-full px-2.5 text-[12px] font-semibold tabular-nums" :class="summary.pDone >= 0.995 ? 'bg-[rgba(126,201,148,0.14)] text-[var(--exile-color-signal-up)]' : summary.pDone >= 0.8 ? 'bg-[rgba(224,201,122,0.14)] text-[var(--exile-color-signal-warn)]' : 'bg-[rgba(229,128,107,0.14)] text-[var(--exile-color-signal-down)]'" :title="recipeOut.r.stops.map((x) => `${pct(x.p)}: ${x.reason}`).join(' / ') || '全員完成'"><Icon v-if="summary.pDone >= 0.995" name="check" class="size-3.5" />完成 {{ pct(summary.pDone) }}</span>
+        <span class="inline-flex h-7 items-center gap-1 self-center rounded-full px-2.5 text-[12px] font-semibold tabular-nums" :class="summary.pDone >= 0.995 ? 'bg-[rgba(126,201,148,0.14)] text-[var(--exile-color-signal-up)]' : summary.pDone >= 0.8 ? 'bg-[rgba(224,201,122,0.14)] text-[var(--exile-color-signal-warn)]' : 'bg-[rgba(229,128,107,0.14)] text-[var(--exile-color-signal-down)]'" :title="recipeOut.r.stops.map((x) => `${pct(x.p)}: ${x.reason}`).join(' / ') || '全員完成'"><Icon v-if="summary.pDone >= 0.995" name="check" class="size-3.5" />完成 {{ pct(summary.pDone) }}<span v-if="summary.pDone < 0.995" class="font-normal opacity-80">(打ち切り {{ pct(1 - summary.pDone) }})</span></span>
         <span v-if="cardOk" class="ml-auto flex items-center gap-1.5 self-center">
           <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--exile-color-border-brass)] px-3 text-[13px] text-[var(--exile-color-text-primary)] transition hover:bg-[var(--exile-color-bg-elevated)]" title="この手順と結果を 1 枚の画像に (PNG で保存)" @click="saveCard"><Icon name="image" class="size-4" />手順を画像で保存</button>
           <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" title="画像をクリップボードに (Discord などに貼れる)" @click="copyCard"><Icon name="copy" class="size-4" />コピー</button>

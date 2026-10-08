@@ -251,7 +251,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
       <div v-for="g in col.groups" :key="g.key" class="flex items-start gap-1.5 py-0.5 max-md:flex-wrap">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
-        <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="s.data.value?.mods.get(g.host)?.rune ? '差すと付く MOD。回す時はこのルーンを差した白から始める' : undefined">{{ badgeOf(g.host).label }}</span>
+        <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="s.data.value?.mods.get(g.host)?.rune ? '差すと付く MOD。回す時はこのルーンを差した白から始める' : 'MOD の種類 (出どころ)'">{{ badgeOf(g.host).label }}</span>
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded border border-dashed border-amber-400/50 bg-amber-500/[0.06] px-1.5 py-0.5' : ''">
           <!-- 2 つ以上: 見出し (どれか 1 つ・合計の付きやすさ) と、横に並べて折り返す候補 -->
           <p v-if="g.members.length > 1" class="mb-0.5 flex flex-wrap items-center gap-1 text-[11px] font-bold text-amber-200">
@@ -281,11 +281,11 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
         </div>
         <!-- 付け方の予定は MOD の右側 (2026-10-05 オーナー「普通カオススパムとかの設定って MOD の右側よ」) -->
         <!-- 始め方が白以外の時、固定 MOD は 1 ベースで決めた物なので予定は変えない (2026-10-08) -->
-        <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white'" class="shrink-0 rounded border px-1 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めた固定 MOD">{{ s.simStart.value === "item" ? "🔒 固定済み (手打ち)" : s.simStart.value === "fractured" ? "🔒 固定 (買った物)" : "🔒 固定する (買った 4 MOD から)" }}</span>
+        <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white'" class="shrink-0 rounded border px-1 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めたフラクチャーの MOD">{{ s.simStart.value === "item" ? "🔒 フラクチャー済み (手打ち)" : s.simStart.value === "fractured" ? "🔒 フラクチャー (買った物)" : "🔒 フラクチャーする (買った 4 MOD から)" }}</span>
         <select v-else-if="props.editable && plansOf(g.host).length > 1" class="shrink-0 rounded border bg-[#14120e] px-0.5 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS[planOf(g)]" title="付け方の予定" :value="planOf(g)" @change="setPlan(g, ($event.target as HTMLSelectElement).value as Plan)">
           <option v-for="p in plansOf(g.host)" :key="p" :value="p">{{ PLAN_JA[p] }}{{ p === "fracture" && g.kind !== "fracture" && !canFracture(g.host) ? " (違う側・非推奨)" : "" }}</option>
         </select>
-        <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS[planOf(g)]">{{ PLAN_JA[planOf(g)] }}</span>
+        <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「ここからやり直す」)'">{{ PLAN_JA[planOf(g)] }}</span>
       </div>
     </div>
   </div>

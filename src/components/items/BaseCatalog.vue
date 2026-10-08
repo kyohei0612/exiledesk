@@ -29,7 +29,7 @@ const list = computed(() => {
   const l = all.value.filter((b) => b.cls === cls.value);
   return cls.value === "SkillGem" ? l : [...l].sort((a, b) => a.lvl - b.lvl || a.ja.localeCompare(b.ja, "ja"));
 });
-const chip = (on: boolean): string => (on ? "bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]" : "text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]");
+const chip = (on: boolean): string => (on ? "bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]" : "text-[var(--exile-color-text-secondary)] ring-1 ring-white/10 hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]");
 /**
  * スマホ (幅 768 CSS px 未満): 種類の札を全部並べると壁になる (手袋(str_dex) のような札が 50 個。2026-10-08 オーナー「UI カスすぎる」)。
  * 部位 (大きめのタイル) → 属性 / 元素 (日本語の札) → ベース (1 列) の 3 段にする。PC は今まで通り

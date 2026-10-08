@@ -277,7 +277,7 @@ const useShort = (key: string): string => { const x = setOf(props.sets, key); if
           <span class="font-semibold">当たりの手</span>
           <span class="text-xs tabular-nums text-[var(--exile-color-text-secondary)]">{{ moves.length }} 手</span>
         </button>
-        <button type="button" role="tab" :aria-selected="sel != null" class="flex flex-col items-start rounded-md px-2.5 py-1.5 text-left transition disabled:opacity-40" :class="sel != null ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5'" :disabled="!moves.some((m) => m.aim)" @click="goFill">
+        <button type="button" role="tab" :aria-selected="sel != null" class="flex flex-col items-start rounded-md px-2.5 py-1.5 text-left transition disabled:opacity-40" :class="sel != null ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5'" :disabled="!moves.some((m) => m.aim)" title="決めないと、外れた時は回す時に新しいベースで最初から" @click="goFill">
           <span class="text-[11px] tracking-wide text-[var(--exile-color-text-tertiary)]">2</span>
           <span class="flex items-center gap-1.5 font-semibold">外れの手<span v-if="leftTotal && sel == null && moves.some((m) => m.aim)" class="rounded-sm bg-[rgba(224,201,122,0.18)] px-1 text-[10px] font-semibold text-[var(--exile-color-signal-warn)]">次はここ</span></span>
           <span class="text-xs tabular-nums" :class="!moves.some((m) => m.aim) ? 'text-[var(--exile-color-text-tertiary)]' : leftTotal ? 'text-[var(--exile-color-signal-warn)]' : 'text-[var(--exile-color-signal-up)]'">{{ !moves.some((m) => m.aim) ? "狙う手のあとで" : leftTotal ? `残り ${leftTotal} 形` : "全部決めた" }}</span>
@@ -298,7 +298,7 @@ const useShort = (key: string): string => { const x = setOf(props.sets, key); if
             <span class="grid size-5 shrink-0 place-items-center rounded-full bg-white/10 text-[11px] font-semibold tabular-nums text-[var(--exile-color-text-secondary)]">{{ i + 1 }}</span>
             <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in iconsOf(m.use)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
             <span class="min-w-0 flex-1">
-              <span class="block truncate font-medium text-[var(--exile-color-text-primary)]" :title="useLabel(m.use)">{{ useShort(m.use) }}</span>
+              <span class="line-clamp-2 block font-medium text-[var(--exile-color-text-primary)]" :title="useLabel(m.use)">{{ useShort(m.use) }}</span>
               <span class="line-clamp-2 block text-xs" :class="m.aim ? 'text-[var(--color-rarity-magic)]' : 'text-[var(--exile-color-text-tertiary)]'" :title="m.aim ? aimLabelAt(i) : ''">{{ m.aim ? aimShortAt(i) : "狙わない" }}</span>
             </span>
             <span v-if="m.aim && shapes[i]" class="shrink-0 rounded-full px-1.5 text-[11px] tabular-nums" :class="shapes[i]!.left ? 'bg-white/[0.07] text-[var(--exile-color-text-secondary)]' : 'text-[var(--exile-color-signal-up)]'" :title="shapes[i]!.left ? `外れた時の形があと ${shapes[i]!.left} つ未定 (押すと決める)` : '外れも全部決めた'">
@@ -309,9 +309,9 @@ const useShort = (key: string): string => { const x = setOf(props.sets, key); if
         </li>
       </ol>
       <button v-if="!locked" type="button" class="flex h-8 items-center justify-center gap-1.5 rounded-md border px-3 transition" :class="sel == null ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.08)] text-[var(--exile-color-text-primary)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" @click="sel = null"><Icon name="plus" class="size-4" />手を足す</button>
-      <button v-if="leftTotal && sel == null && moves.some((m) => m.aim)" type="button" class="flex items-start gap-2 rounded-md bg-[rgba(224,201,122,0.08)] px-3 py-2 text-left text-xs text-[var(--exile-color-signal-warn)] ring-1 ring-[rgba(224,201,122,0.25)] transition hover:bg-[rgba(224,201,122,0.14)]" @click="goFill">
+      <button v-if="leftTotal && sel == null && moves.some((m) => m.aim)" type="button" class="flex items-start gap-2 rounded-md bg-[rgba(224,201,122,0.08)] px-3 py-2 text-left text-xs text-[var(--exile-color-signal-warn)] ring-1 ring-[rgba(224,201,122,0.25)] transition hover:bg-[rgba(224,201,122,0.14)]" title="決めないと、外れた時は回す時に新しいベースで最初から" @click="goFill">
         <Icon name="arrow-right" class="mt-px size-4 shrink-0" />
-        <span>次は外れた時の手。<b>{{ leftTotal }} 形</b>が未定 (決めないと、回した時は新しいベースで最初から)</span>
+        <span>外れた時の手を決める · <b>未定 {{ leftTotal }} 形</b></span>
       </button>
     </aside>
 
