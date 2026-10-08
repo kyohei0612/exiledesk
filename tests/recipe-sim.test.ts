@@ -373,3 +373,36 @@ describe("状況ごとの反応 (2026-10-08 オーナー「起こりうる状況
     expect(r!.bases).toBeLessThan(1.5);
   });
 });
+
+describe("流れ (2026-10-08、Craft of Exile の Simulator と同じ形)", () => {
+  it("金の指輪: 錬金 → カオスでどれか 1 つ → 偉大 + 左の完全高貴 → 外れは消去、全部消えたらカオスへ。手ごと・行き先ごとの数も返す", async () => {
+    const data = await loadPatch();
+    const ids = ["Rings/FireDamage", "Rings/ColdDamage", "Rings/LightningDamage"];
+    const T = ids.map((id) => ({ modId: id, minTierIndex: data.mods.get(id)!.tiers.length - 4 }));
+    const targets = T.map((t, i) => ({ ...t, method: "exalt" as const, alts: T.filter((_, k) => k !== i) }));
+    const L = "prefix" as const;
+    const r = await runRecipe({
+      data, base: "Gold Ring", itemLevel: 82, runs: 40, price: () => 1, seed: 21, whiteBasePrice: 0, maxSteps: 20_000, targets,
+      flow: [
+        { act: { kind: "alchemy", currency: "alchemy", omens: [] }, routes: [{ conds: [], to: 1 }], onNone: "loop" },
+        { act: { kind: "chaos", currency: "chaos", omens: [] }, routes: [{ conds: [{ k: "hits", op: ">=", n: 1 }], to: 2 }], onNone: "loop" },
+        { act: { kind: "exalt", currency: "exalt_perfect", omens: ["OmenofSinistralExaltation", "OmenofGreaterExaltation"] }, routes: [
+          { conds: [{ k: "all" }], to: "done" },
+          { conds: [{ k: "hits", op: "=", n: 0 }], to: 1 },
+          { conds: [{ k: "junk", side: L, op: ">=", n: 1 }], to: 3 },
+          { conds: [{ k: "free", side: L, op: ">=", n: 1 }], to: 4 },
+        ], onNone: "loop" },
+        { act: { kind: "annul", currency: "annul", omens: [] }, routes: [{ conds: [{ k: "hits", op: "=", n: 0 }], to: 1 }, { conds: [{ k: "free", side: L, op: ">=", n: 2 }], to: 2 }, { conds: [], to: 4 }], onNone: "loop" },
+        { act: { kind: "exalt", currency: "exalt_perfect", omens: ["OmenofSinistralExaltation"] }, routes: [
+          { conds: [{ k: "all" }], to: "done" },
+          { conds: [{ k: "hits", op: "=", n: 0 }], to: 1 },
+          { conds: [{ k: "junk", side: L, op: ">=", n: 1 }], to: 3 },
+        ], onNone: "loop" },
+      ],
+    });
+    expect(r!.pDone).toBeGreaterThan(0.5);
+    expect(r!.flowAvg?.visits.length).toBe(5);
+    expect(r!.flowAvg!.visits[1]).toBeGreaterThan(1);
+    expect(r!.flowAvg!.routes[2]!.length).toBe(5);
+  });
+});

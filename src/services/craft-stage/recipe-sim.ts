@@ -81,6 +81,26 @@ export interface CompiledStep {
    */
   restFrom?: number;
 }
+/**
+ * 流れ (2026-10-08、Craft of Exile の Simulator と同じ形。オーナー「全てが回ってる感じ、動いてる実感」「起こりうる状況を全てユーザーが選ぶ」)。
+ * 手 = 打つ物 1 つ (無しも)。打った後、行き先 (routes) を上から順に見て、条件が全部合った最初の行き先へ。どれにも合わなければ onNone。
+ * 行き先: 手の番号 / "start" (新しいベースで最初から) / "done" (完成)
+ */
+export type FlowCond =
+  | { k: "hits"; op: ">=" | "<=" | "="; n: number; ids?: string[] }
+  | { k: "has"; id: string; not?: boolean }
+  | { k: "junk"; side: StageSide | "any"; op: ">=" | "<=" | "="; n: number }
+  | { k: "free"; side: StageSide; op: ">=" | "<=" | "="; n: number }
+  | { k: "mods"; op: ">=" | "<=" | "="; n: number }
+  | { k: "rarity"; r: "normal" | "magic" | "rare" }
+  | { k: "all" };
+export interface FlowRoute { conds: FlowCond[]; to: number | "start" | "done" }
+export interface CompiledFlowStep {
+  /** 打つ物 (無ければ打たずに行き先だけ見る) */
+  act: { kind?: PatternKind; currency: string; omens: string[] } | null;
+  routes: FlowRoute[];
+  onNone: "loop" | "restart" | "end";
+}
 export interface RecipeSpec {
   /**
    * パターン (2026-10-06): あれば、フラクチャーまで (か白) の後はこの手の通りに打つ (自動の付け方は使わない)。
@@ -122,6 +142,10 @@ export interface RecipeSpec {
   /** 1 回の挑戦の手の上限 (超えたら失敗) */
   maxSteps?: number;
   seed?: number;
+  /** 流れ (あればパターン・自動の付け方より先に使う) */
+  flow?: CompiledFlowStep[];
+  /** 流れの始めの手 (無ければ 0) */
+  flowStart?: number;
 }
 export interface RecipeRun {
   done: boolean; cost: number; steps: Array<{ currency: string; omen: string | null }>; seed: number; reason?: string;
@@ -134,6 +158,9 @@ export interface RecipeRun {
   /** パターンの手ごと (並べた後の番号): その手のカレンシーを打った数と、その手にいる間にかかった費用 (外しの消去なども込み)。「この手だけ回す」用 */
   stepPresses?: number[];
   stepCost?: number[];
+  /** 流れ: 手ごとに来た回数 (fv)、行き先ごとに通った回数 (fr[手][行き先]、最後の 1 つは「どれにも合わない」) */
+  fv?: number[];
+  fr?: number[][];
 }
 export interface RecipeResult {
   runs: number;
@@ -153,6 +180,8 @@ export interface RecipeResult {
   hitRates: Array<{ modId: string; p: number }>;
   /** パターンの手ごとの平均 (全部の回で、打った数と費用)。「この手だけ回す」の結果 (2026-10-07) */
   stepAvg?: Array<{ presses: number; cost: number; p80Presses: number; p80Cost: number }>;
+  /** 流れの手ごとの 1 人あたりの来た回数と、行き先ごとの 1 人あたりの通った回数 (最後はどれにも合わない) */
+  flowAvg?: { visits: number[]; routes: number[][] };
 }
 
 const ESS = (essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys;
@@ -365,6 +394,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     }
   }
 
+  if (spec.flow) return runFlow(spec.flow);
   if (spec.pattern) return runPattern(spec.pattern);
 
   while (steps.length < max) {
@@ -424,6 +454,78 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     if (e) return fail(e);
   }
   return fail(`手が多すぎる (${max.toLocaleString()} 手を超えた)`);
+
+  /**
+   * 流れの通りに打つ (CompiledFlowStep)。打った後、行き先を上から見て条件が全部合った最初へ。どれにも合わなければ onNone
+   * (loop = この手をもう一度、restart = 新しいベースで最初から、end = 終わり。終わりと done は狙いが揃っていれば完成、揃っていなければ失敗)
+   */
+  function runFlow(flow: readonly CompiledFlowStep[]): RecipeRun {
+    const startItem = item, startCost = cost;
+    const fv: number[] = flow.map(() => 0);
+    const fr: number[][] = flow.map((s) => s.routes.map(() => 0).concat(0));
+    const done = (): RecipeRun => ({ done: true, cost, steps, seed, replayFrom, bases, hits: hitsNow(), fv, fr });
+    const stop = (reason: string): RecipeRun => ({ done: false, cost, steps, seed, reason, replayFrom, bases, hits: hitsNow(), fv, fr });
+    const restartFlow = (): void => { cost += startCost; bases++; item = startItem; replayFrom = steps.length; };
+    const cmp = (v: number, op: ">=" | "<=" | "=", n: number): boolean => (op === ">=" ? v >= n : op === "<=" ? v <= n : v === n);
+    const metCount = (ids?: string[]): number => {
+      const ts = ids?.length ? spec.targets.filter((t) => membersOf(t).some((m) => ids.includes(m.modId))) : spec.targets;
+      // 狙いの手順ごとに 1 つ (どれか N つは N まで数える)。同じ MOD を 2 つの手順で数えない
+      const used = new Set<string>();
+      let n = 0;
+      for (const t of ts) {
+        const ms = allMods(item).filter((m) => !m.unrevealed && hits(t, m) && !used.has(m.modId));
+        const take = Math.min(needOf(t), ms.length);
+        for (const m of ms.slice(0, take)) used.add(m.modId);
+        n += take;
+      }
+      return n;
+    };
+    const ok = (c: FlowCond): boolean => {
+      switch (c.k) {
+        case "all": return !unmet(item);
+        case "hits": return cmp(metCount(c.ids), c.op, c.n);
+        case "has": { const on = allMods(item).some((m) => !m.unrevealed && m.modId === c.id && spec.targets.some((t) => hits(t, m))); return c.not ? !on : on; }
+        case "junk": return cmp(c.side === "any" ? allMods(item).filter((m) => !m.fractured && !isGood(m)).length : junkOn(item, c.side).length, c.op, c.n);
+        case "free": return cmp(limitOf(item, c.side) - listOf(item, c.side).length, c.op, c.n);
+        case "mods": return cmp(allMods(item).length, c.op, c.n);
+        case "rarity": return item.rarity === c.r;
+      }
+    };
+    let i = Math.min(Math.max(0, spec.flowStart ?? 0), flow.length - 1);
+    if (!flow.length) return unmet(item) ? stop("手が無い") : done();
+    while (steps.length < max) {
+      const st = flow[i]!;
+      fv[i]!++;
+      if (st.act) {
+        let e: string | null;
+        if (st.act.kind === "essence_perfect" && !st.act.currency) { const k = cheapestPerfectEssence("prefix"); e = k ? play(k, st.act.omens) : "使えるパーフェクトエッセンスが無い"; }
+        else e = play(st.act.currency, st.act.omens.filter((o) => o !== "OmenofAbyssalEchoes"));
+        if (!e && st.act.kind === "desecrate" && unrevealedOf(item)) {
+          // 発現は狙いの中から選ぶ (無ければ反響で引き直し)
+          const want = spec.targets.find((t) => membersOf(t).some((m) => mod(m.modId).source === "desecrated" || mod(m.modId).tags.includes("breach_desecration"))) ?? spec.targets[0] ?? null;
+          e = reveal(want, st.act.omens.includes("OmenofAbyssalEchoes"));
+        }
+        // 打てない時は行き先だけ見る (枠が満杯で高貴が打てない、など。条件で消去の手へ回せる)
+        void e;
+        if (steps.length >= max) break;
+      }
+      const r = st.routes.findIndex((x) => x.conds.every(ok));
+      if (r >= 0) {
+        fr[i]![r]!++;
+        const to = st.routes[r]!.to;
+        if (to === "done") { if (!unmet(item)) return done(); return stop("完成に行ったが狙いが揃っていない"); }
+        if (to === "start") { restartFlow(); i = Math.min(Math.max(0, spec.flowStart ?? 0), flow.length - 1); continue; }
+        i = Math.min(Math.max(0, to), flow.length - 1);
+        continue;
+      }
+      fr[i]![st.routes.length]!++;
+      if (st.onNone === "end") { if (!unmet(item)) return done(); return stop(`${i + 1} 手目: どの行き先にも合わなかった`); }
+      if (st.onNone === "restart") { restartFlow(); i = Math.min(Math.max(0, spec.flowStart ?? 0), flow.length - 1); continue; }
+      // loop: この手をもう一度。打つ物の無い手で回り続けないよう、打つ物が無ければ止める
+      if (!st.act) return stop(`${i + 1} 手目: 打つ物が無いのにもう一度`);
+    }
+    return stop(`手が多すぎる (${max.toLocaleString()} 手を超えた)`);
+  }
 
   /**
    * パターンの通りに打つ。1 手打って、狙いの候補が増えた (か揃った) ら当たりで次の手へ。外れたら手ごとの決まり:
@@ -782,6 +884,18 @@ export function summarizeRuns(spec: RecipeSpec, runs: readonly RunLite[]): Recip
       const m = new Map<string, number>();
       for (const r of runs) for (const id of r.hits ?? []) m.set(id, (m.get(id) ?? 0) + 1);
       return [...m].map(([modId, n]) => ({ modId, p: n / runs.length })).sort((a, b) => b.p - a.p);
+    })(),
+    flowAvg: (() => {
+      const withF = runs.filter((r) => r.fv);
+      if (!withF.length) return undefined;
+      const n = runs.length || 1;
+      const len = Math.max(...withF.map((r) => r.fv!.length));
+      const visits = Array.from({ length: len }, (_, j) => withF.reduce((a, r) => a + (r.fv![j] ?? 0), 0) / n);
+      const routes = Array.from({ length: len }, (_, j) => {
+        const w = Math.max(...withF.map((r) => r.fr?.[j]?.length ?? 0));
+        return Array.from({ length: w }, (_, k) => withF.reduce((a, r) => a + (r.fr?.[j]?.[k] ?? 0), 0) / n);
+      });
+      return { visits, routes };
     })(),
     stepAvg: (() => {
       const len = Math.max(0, ...runs.map((r) => Math.max(r.stepPresses?.length ?? 0, r.stepCost?.length ?? 0)));
