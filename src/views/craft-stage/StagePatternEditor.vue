@@ -202,8 +202,10 @@ const rows = computed<Row[]>(() => {
       return { key: id, label: modLabel(id), why };
     });
     const missOpts = (Object.keys(MISS_JA) as MissRule[]).map((rule) => ({ rule, why: set ? checkMiss(set, rule) : null }));
-    const dbl = isDouble(set) && step.target !== ANY_TARGET;
-    const many = hasCands(set) && !!step.target && step.target !== ANY_TARGET;
+    // 「残り」を狙う手は、残りの候補がそのまま狙い (一緒に狙う MOD・ほかの候補は聞かない。2026-10-08 オーナー「ここで固まる、進めない」:
+    // 「一緒に狙う MOD を選ぶ」が裏で残っていて「この手にする」が押せなかった)
+    const dbl = isDouble(set) && step.target !== ANY_TARGET && !isRest(step.target);
+    const many = hasCands(set) && !!step.target && step.target !== ANY_TARGET && !isRest(step.target);
     const st2 = dbl ? stateBefore(c, [...pat.value.steps.slice(0, i), { ...step, target2: null, target3: null }], i + 1) : st;
     const target2Opts = !many || !set ? [] : props.order.flatMap((k, n) => {
       if (!k.startsWith("mod:")) return [];
@@ -1300,14 +1302,14 @@ defineExpose({ rows });
               -->
               <p class="mb-2 text-[13px] font-bold text-rose-100">狙いの MOD が付かなかったら、どうする？</p>
               <!-- もう一度打つ: 外れは残して同じ手を打ち直し、その側が満杯になった時だけ外れを消す (2026-10-07 靴のライフで、毎回消すより 2 割安かった) -->
-              <div class="grid max-w-3xl grid-cols-4 max-md:grid-cols-1 gap-2">
-                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'none'] as const) : (['none', 'redo', 'annul', 'chaos'] as const))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
+              <div class="grid max-w-3xl grid-cols-3 max-md:grid-cols-1 gap-2">
+                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'none'] as const) : (['none', 'annul', 'chaos'] as const))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
                   <img v-if="(k === 'annul' || k === 'chaos' || k === 'annul_next') && iconOf(k === 'annul_next' ? 'annul' : k)" :src="iconOf(k === 'annul_next' ? 'annul' : k)" alt="" class="h-8 w-8 object-contain" />
-                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "redo" ? "↺" : "→" }}</span>
+                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ "→" }}</span>
                   <span>
-                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側のハズレを消して次へ" : k === "redo" ? "もう一度打つ" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
+                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側のハズレを消して次へ" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
                     <span v-if="missWhy(rows[focusRow]!, k)" class="text-[10px] text-rose-300">{{ missWhy(rows[focusRow]!, k) }}</span>
-                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "redo" ? "満杯の時だけハズレを消す" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
+                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
                   </span>
                 </button>
               </div>
@@ -1410,6 +1412,8 @@ defineExpose({ rows });
               </template>
             </template>
           </div>
+          <!-- 「この手にする」が押せない理由は文で (ホバーだけだと押せない訳が分からず止まった。2026-10-08 オーナー「ここで固まるね進めない」) -->
+          <p v-if="rows[focusRow]?.bad" class="mt-1 rounded bg-rose-500/10 px-2 py-1 text-[12px] font-bold text-rose-200">この手にできない: {{ rows[focusRow]!.bad }}</p>
           <!-- 下のボタン (いつも同じ所。スマホはシートの下に固定) -->
           <div class="mt-1.5 flex items-center gap-2 border-t border-white/10 pt-1.5 max-md:sticky max-md:bottom-0 max-md:z-10 max-md:flex-wrap max-md:bg-[#0e0c09] max-md:py-2">
             <button type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/15 max-md:hidden" title="この手だけ消す (後の手はそのまま)" @click="removeAt(focusRow)">この手を消す</button>

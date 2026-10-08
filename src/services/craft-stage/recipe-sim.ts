@@ -527,7 +527,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       // 狙いがもう付いている手は打たない (消えた物の手に戻った後、続く手の狙いが残っていればそのまま次へ。
       // 2026-10-07 パターンで試すと、付いている MOD の手もまた打っていた)
       if (!two && p.target && p.kind !== "rune" && meets(item, p.target)) { i++; continue; }
-      if (two && count(p.target!) === 1 && p.omens.includes("OmenofGreaterExaltation")) p = { ...p, ...(p.single ? { currency: p.single.currency, omens: [...p.single.omens] } : { omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") }) };
+      // 残りが 1 つだけの時に偉大を外す (「残り」の手で 3 つ揃える時、1 つしか付いていなければ偉大で 2 つ足す。2026-10-08: 前は 1 つ付いていれば
+      // 必ず偉大を外していて、残り 2 つを 1 つずつ打っていた)
+      if (two && needOf(p.target!) - count(p.target!) === 1 && p.omens.includes("OmenofGreaterExaltation")) p = { ...p, ...(p.single ? { currency: p.single.currency, omens: [...p.single.omens] } : { omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") }) };
       const before = p.target ? count(p.target) : 0;
       let e: string | null = null;
       // 始めから差さっているルーン (固定する MOD に要る物) の手は打たずに次へ
