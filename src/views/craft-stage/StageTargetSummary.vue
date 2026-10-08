@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
+import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { ESSENCE_KIND, essenceKindOf } from "../../services/mods/essence-kind";
@@ -66,7 +66,7 @@ const rows = computed(() => {
       return {
         modId: x.modId, minTierIndex: x.minTierIndex, kind, no: alt ? null : no, alt, group: t.modId,
         side: (xm ?? m)?.type === "suffix" ? "S" : "P",
-        text: xm ? fillHashes(jaOfMod(xm), xt ? tierDisplayRanges(xt) : []).replace(/\n/g, " / ") : x.modId,
+        text: xm ? fillModText(xm, xt ? tierDisplayRanges(xt) : []).replace(/\n/g, " / ") : x.modId,
         rank: xm ? `T${xm.tiers.length - x.minTierIndex} 以上` : "",
         share: shareOf(x.modId, x.minTierIndex),
       };

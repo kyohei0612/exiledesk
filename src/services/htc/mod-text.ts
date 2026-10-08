@@ -116,6 +116,12 @@ export function jaOfPastedLine(line: string): string | null {
  */
 export function fillHashes(text: string, ranges: ReadonlyArray<ReadonlyArray<number | string>>): string {
   let i = 0;
+  // 値が全部負で「増加・速く・上昇・多く」の文は、反対の言葉にして数字を正で出す (ルーンの「呪いのアクティベーションが(-30--20)%速くなる」は
+  // ゲームでは遅くなる。2026-10-08 完成判定 2 回目)
+  const allNeg = ranges.length > 0 && ranges.every((r) => Number(r[0]) <= 0 && Number(r[1] ?? r[0]) <= 0);
+  if (allNeg && /増加|速く|上昇|多く/.test(text) && !/減少|低下|少なく|遅く/.test(text)) {
+    text = text.replace(/増加/g, "減少").replace(/速く/g, "遅く").replace(/上昇/g, "低下").replace(/多く/g, "少なく");
+  }
   // 「減少・低下・少なく」の文は数字を正で出す (データは負の数で持つので「(-60--56)%減少」と二重になっていた。2026-10-08 完成判定)
   const down = /減少|低下|少なく|短く|遅く/.test(text);
   const out = text.replace(/([+-]?)#/g, (_m, pre: string) => {
@@ -128,4 +134,20 @@ export function fillHashes(text: string, ranges: ReadonlyArray<ReadonlyArray<num
   });
   // 値を持たない MOD (ブリーチのエッセンスの品質の最大値 +20% など) は # が残る。品質の最大値だけは 20 (取引所の条件と同じ)
   return out.replace(/品質の最大値 #%/, "品質の最大値 +20%");
+}
+/**
+ * MOD 1 つの日本語に値を入れる。英語の文に字で書いてある数 (パーフェクトエッセンスの「30% increased Movement Speed」、
+ * 「Adds 1 to # Lightning Damage」の 1) は段の幅に無いので、英語の数と # を出てきた順に並べて埋める
+ * (2026-10-08 完成判定 2 回目: 「移動スピードが#%増加する」「(13-19)から#の雷ダメージ」と # が残っていた)
+ */
+export function fillModText(mod: Mod, ranges: ReadonlyArray<ReadonlyArray<number | string>>): string {
+  const ja = jaOfMod(mod);
+  const holes = (ja.match(/#/g) ?? []).length;
+  const tokens = [...(mod.text ?? "").matchAll(/#|\d+(?:\.\d+)?/g)].map((t) => t[0]);
+  if (holes && tokens.length === holes && tokens.some((t) => t !== "#")) {
+    let r = 0;
+    const vals = tokens.map((t) => (t === "#" ? ranges[r++] ?? [NaN] : [Number(t), Number(t)]));
+    if (!vals.some((v) => Number.isNaN(Number(v[0])))) return fillHashes(ja, vals);
+  }
+  return fillHashes(ja, ranges);
 }

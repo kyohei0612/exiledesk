@@ -16,7 +16,7 @@ import { craftStage, iconOf, mergeRecipesFromFile, nameOf, priceOf, readSimRecip
 import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
 import { rateOf, simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
-import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
+import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { runRecipe, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
 import { runRecipeParallel, stopParallel } from "../../services/craft-stage/recipe-parallel";
@@ -76,13 +76,13 @@ const rows = computed(() => {
       methods: methodsFor(t.modId),
       side: m?.type === "suffix" ? "サフィ" : "プレ",
       tone: m?.source === "desecrated" ? "text-lime-200/90" : m && CRAFTED_SOURCES.has(m.source) ? "text-sky-200" : "text-[#c8c8ff]",
-      text: m ? fillHashes(jaOfMod(m), tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ") : t.modId,
+      text: m ? fillModText(m, tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ") : t.modId,
       rank: m ? `T${m.tiers.length - t.minTierIndex}` : "",
       /** 「どれか」の候補 (この手順はどれか 1 つが付けば当たり) */
       alts: (t.alts ?? []).map((a) => {
         const am = d.mods.get(a.modId);
         const at = am?.tiers[a.minTierIndex];
-        return { modId: a.modId, text: am ? fillHashes(jaOfMod(am), at ? tierDisplayRanges(at) : []).replace(/\n/g, " / ") : a.modId, rank: am ? `T${am.tiers.length - a.minTierIndex}` : "" };
+        return { modId: a.modId, text: am ? fillModText(am, at ? tierDisplayRanges(at) : []).replace(/\n/g, " / ") : a.modId, rank: am ? `T${am.tiers.length - a.minTierIndex}` : "" };
       }),
       /** 候補のうちいくつ付けば当たりか (どれか N つ。候補の数まで) */
       need: 1, // グループは 1 MOD (2 つ欲しい時はコピーして並べる)

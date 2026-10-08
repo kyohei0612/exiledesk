@@ -7,7 +7,7 @@
  */
 import { ARCHITECT_DESTROY_P, INFUSER_CORRUPT_P } from "../services/craft-stage/apply-extra";
 import { GNAWED_MAX_ILVL } from "../services/craft-stage/apply-currency";
-import { fillHashes, jaOfMod } from "../services/htc/mod-text";
+import { fillModText } from "../services/htc/mod-text";
 import { tierDisplayRanges } from "../services/mods/stat-scale";
 import { essenceTarget } from "../services/craft-stage/apply-essence";
 import { essenceLevelOf } from "../vendor/poe2htc/optimizer/cost";
@@ -285,7 +285,7 @@ export function stageAdds(key: string, data: PatchData | null, item: StageItem |
     const t = essenceTarget(data, item, key);
     if (!t || t.mod.family === "EssenceAbyss") return null;
     const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
-    let text = fillHashes(jaOfMod(t.mod), tier ? tierDisplayRanges(tier) : []);
+    let text = fillModText(t.mod, tier ? tierDisplayRanges(tier) : []);
     // 値の幅が無い固定の MOD (ブリーチの「+20% to Maximum Quality」等) は # が残るので、英語の文の数字で埋める
     if (text.includes("#")) {
       const nums = [...(t.mod.text ?? "").matchAll(/\d+(?:\.\d+)?/g)].map((x) => x[0]);

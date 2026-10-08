@@ -21,7 +21,7 @@ import type { StageItem } from "../../services/craft-stage/types";
 import { iconOf } from "../../state/craft-stage";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { RUNES } from "../../services/craft-stage/stage-runes";
-import { fillHashes, jaOfMod } from "../../services/htc/mod-text";
+import { fillHashes, fillModText, jaOfMod } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 
 const props = defineProps<{
@@ -151,7 +151,7 @@ function modLabel(modId: string): string {
   // 狙いの一覧に無い MOD (選び直して外した物) も日本語で (英語の id を出さない)
   if (!t) return `${fillHashes(jaOfMod(m), []).replace(/\n/g, " / ")} (狙いに無い)`;
   const tier = m.tiers[t.minTierIndex];
-  const text = fillHashes(jaOfMod(m), tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ");
+  const text = fillModText(m, tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ");
   const alts = t.alts?.length ? ` (ほか ${t.alts.length} つのどれか)` : "";
   return `${text} T${m.tiers.length - t.minTierIndex} 以上${alts}`;
 }
@@ -774,10 +774,11 @@ function setGoto(i: number, id: string, g: number): void {
 }
 /** やり直しの札: そのまま / 消去 / カオス / ほか (パーフェクトエッセンス・骨) */
 const missMore = ref(false);
-function missKind(r: Row): "none" | "annul_next" | "redo" | "annul" | "chaos" | "other" {
+function missKind(r: Row): "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart" | "other" {
   const x = missSet(r.step);
   if (!x && r.step.onMiss === "redo") return "redo";
   if (!x && r.step.onMiss === "annul_next") return "annul_next";
+  if (!x && r.step.onMiss === "restart") return "restart";
   return !x ? "none" : x.kind === "annul" ? "annul" : x.kind === "chaos" ? "chaos" : "other";
 }
 function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: readonly string[]): void {
@@ -790,9 +791,9 @@ function setMiss(i: number, kind: "annul" | "chaos", currency: string, omens: re
   editPart.value = "miss";
 }
 /** 「付かなかったら」の札が選べない理由 (pattern.ts の checkMiss / checkRemoval。2026-10-08 レビュー B5: 骨で「もう一度打つ」を選べて、回すと止まっていた) */
-function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos"): string | null {
+function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart"): string | null {
   if (!r.set) return null;
-  const rule: MissRule = k === "none" ? "next" : k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : "annul_redo";
+  const rule: MissRule = k === "none" ? "next" : k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : k === "restart" ? "restart" : "annul_redo";
   const w = checkMiss(r.set, rule);
   if (w) return w;
   if (k === "annul" || k === "chaos") {
@@ -801,10 +802,10 @@ function missWhy(r: Row, k: "none" | "annul_next" | "redo" | "annul" | "chaos"):
   }
   return null;
 }
-function pickMissKind(i: number, k: "none" | "annul_next" | "redo" | "annul" | "chaos"): void {
+function pickMissKind(i: number, k: "none" | "annul_next" | "redo" | "annul" | "chaos" | "restart"): void {
   if (missWhy(rows.value[i]!, k)) return;
   // お告げの無い札はそのまま次の段へ (消去・カオスはお告げを続けて選ぶので留まる)
-  if (k === "none" || k === "redo" || k === "annul_next") { patch(i, { miss: null, onMiss: k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : "next" }); editPart.value = "miss"; nextPart(i); return; }
+  if (k === "none" || k === "redo" || k === "annul_next" || k === "restart") { patch(i, { miss: null, onMiss: k === "redo" ? "redo" : k === "annul_next" ? "annul_next" : k === "restart" ? "restart" : "next" }); editPart.value = "miss"; nextPart(i); return; }
   const cur = missSet(pat.value.steps[i]!);
   if (cur?.kind === k) { editPart.value = "miss"; return; }
   setMiss(i, k, k === "annul" ? "annul" : "chaos", []);
@@ -1302,14 +1303,14 @@ defineExpose({ rows });
               -->
               <p class="mb-2 text-[13px] font-bold text-rose-100">狙いの MOD が付かなかったら、どうする？</p>
               <!-- もう一度打つ: 外れは残して同じ手を打ち直し、その側が満杯になった時だけ外れを消す (2026-10-07 靴のライフで、毎回消すより 2 割安かった) -->
-              <div class="grid max-w-3xl grid-cols-3 max-md:grid-cols-1 gap-2">
-                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'none'] as const) : (['none', 'annul', 'chaos'] as const))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
+              <div class="grid max-w-3xl grid-cols-4 max-md:grid-cols-1 gap-2">
+                <button v-for="k in (rarityStep(rows[focusRow]!) ? (['annul_next', 'restart', 'none'] as const) : (['none', 'annul', 'chaos', 'restart'] as const))" :key="k" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35" :class="missKind(rows[focusRow]!) === k ? 'border-amber-400/80 bg-amber-500/15 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'border-white/10 bg-black/30 hover:border-amber-300/50'" :disabled="!!missWhy(rows[focusRow]!, k)" :title="missWhy(rows[focusRow]!, k) ?? undefined" @click="pickMissKind(focusRow!, k)">
                   <img v-if="(k === 'annul' || k === 'chaos' || k === 'annul_next') && iconOf(k === 'annul_next' ? 'annul' : k)" :src="iconOf(k === 'annul_next' ? 'annul' : k)" alt="" class="h-8 w-8 object-contain" />
-                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ "→" }}</span>
+                  <span v-else class="grid h-8 w-8 place-items-center rounded border border-white/20 text-[14px] opacity-60">{{ k === "restart" ? "⟲" : "→" }}</span>
                   <span>
-                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側のハズレを消して次へ" : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
+                    <b class="block text-[12px]">{{ k === "none" ? "そのまま次へ" : k === "annul_next" ? "狙いの側のハズレを消して次へ" : k === "restart" ? (props.start.mods ? "この状態からやり直す" : "新しいベースでもう一度") : k === "annul" ? "消去で消す" : "カオスで入れ替える" }}</b>
                     <span v-if="missWhy(rows[focusRow]!, k)" class="text-[10px] text-rose-300">{{ missWhy(rows[focusRow]!, k) }}</span>
-                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
+                    <span v-else class="text-[10px] opacity-60">{{ k === "none" ? "ハズレは残す" : k === "annul_next" ? "反対の側に付いたら残して次へ" : k === "restart" ? (props.start.mods ? "手打ちの状態を作り直して 1 手目から" : "白を買い直して 1 手目から") : k === "annul" ? "1 つ消してもう一度" : "1 つ入れ替えてもう一度" }}</span>
                   </span>
                 </button>
               </div>

@@ -9,7 +9,7 @@
  */
 import { ESSENCE_KIND, essenceKindOf } from "../mods/essence-kind";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
-import { fillHashes, jaOfMod } from "../htc/mod-text";
+import { fillModText, jaOfMod } from "../htc/mod-text";
 import type { StageItem, StageSide } from "./types";
 import { allMods, effectiveCls, stageRuneIds, takenFamilies } from "./stage-core";
 import { RUNES } from "./stage-runes";
@@ -88,7 +88,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
     const ja = jaOfMod(m);
     const n = m.tiers.length;
     // 数値は画面の単位に (1 万分率の 400 → 4%。決まりは services/mods/stat-scale.ts、2026-10-03 に生の値が出ていた)
-    const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillHashes(ja, tierDisplayRanges(t)) }));
+    const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillModText(m, tierDisplayRanges(t)) }));
     const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
     const on = onIds.has(m.id);
     return {
