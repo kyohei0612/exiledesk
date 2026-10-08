@@ -81,7 +81,7 @@ export interface CompiledStep {
   otherJunk?: "keep";
   /** 状況ごとの反応 (PatternStep.on をセットに直した物。goto は並べた後の番号) */
   /** 結果の状態ごとの行動 (PatternStep.policy をセットに直した物。キーは `${当たり}-${ハズレ}` (狙いの側)) */
-  policy?: Record<string, { act?: { kind?: PatternKind; currency: string; omens: string[] }; then?: "next" | "restart" | "goto" | "reset" | "miss"; goto?: number; keep?: number }>;
+  policy?: Record<string, { act?: { kind?: PatternKind; currency: string; omens: string[] }; pre?: Array<{ currency: string; omens: string[] }>; then?: "next" | "restart" | "goto" | "reset" | "miss"; goto?: number; keep?: number }>;
   on?: Partial<Record<"pre_full" | "partial" | "miss_t" | "miss_o" | "miss", { pre?: { kind?: PatternKind; currency: string; omens: string[] } | null; then: "repeat" | "next" | "restart" | "goto"; goto?: number; again?: { kind?: PatternKind; currency: string; omens: string[] } | null }>>;
   /**
    * 「残り」の手の元の手 (パターンの中の番号)。この手の間に候補が消えても、まだ 1 つでも付いていればこの手を続け、全部消えたら元の手へ
@@ -765,6 +765,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           const rx = p.policy[key];
           if (!rx) break;
           if (rx.act) {
+            // 先に打つ物 (触媒など)。打てない時 (品質が上限など) は飛ばす
+            for (const q of rx.pre ?? []) play(q.currency, q.omens);
             const e2 = play(rx.act.currency, rx.act.omens);
             if (e2) return fail(`${i + 1} 手目 (狙い・狙い以外 ${key} の時): ${e2}`);
             // カオスも消去も、打った後の形の行で続ける (形の表。2026-10-09)

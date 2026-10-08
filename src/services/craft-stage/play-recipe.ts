@@ -28,7 +28,7 @@ export interface PlayAim {
 /** 形での次の手 */
 export type PlayDecision =
   /** この形でこれを打つ (結果はまた形で見る) */
-  | { use: string }
+  | { use: string; pre?: string[] }
   /** 次の手へ (狙いが揃っていなくても進む) */
   | { go: "next" }
   /** 新しいベースで最初から */
@@ -106,7 +106,8 @@ export function compilePlay(recipe: PlayRecipe, sets: readonly PatternSet[]): Co
       if ("use" in d) {
         const y = setOf(sets, d.use);
         if (!y) return null;
-        policy[k] = { act: { kind: y.kind, currency: y.currency, omens: [...y.omens] } };
+        const pre = (d.pre ?? []).flatMap((u) => { const z = setOf(sets, u); return z ? [{ currency: z.currency, omens: [...z.omens] }] : []; });
+        policy[k] = { act: { kind: y.kind, currency: y.currency, omens: [...y.omens] }, ...(pre.length ? { pre } : {}) };
       } else if (d.go === "next") policy[k] = { then: "next" };
       else if (d.go === "start") policy[k] = { then: "restart" };
       else policy[k] = d.strip != null ? { then: "reset", goto: d.to, keep: d.strip } : { then: "goto", goto: d.to };

@@ -62,6 +62,8 @@ export interface ShapeCtx {
   otherFixed?: number;
   /** 高貴で 1 つ付けた時に狙いが出る確率 (通貨・今の狙いの数で)。分からなければ null */
   pHit?: (currency: string, h: number) => number | null;
+  /** 付く MOD が決まっている物 (エッセンス) の側と、それが狙いか。無ければ付く側は運 */
+  fixedAdd?: (currency: string) => { side: "prefix" | "suffix"; hit: boolean } | null;
   sets: readonly PatternSet[];
 }
 /**
@@ -87,6 +89,8 @@ export function shapeOf(c: ShapeCtx, h: number, j: number, g?: number, o?: numbe
 
 /** 付ける物 (1 つ付く) か */
 const ADDS = new Set(["transmute", "augment", "regal", "alchemy", "exalt", "essence", "essence_perfect", "desecrate"]);
+/** 形を変える物か (付ける・消す・入れ替える)。変えない物 (触媒・品質など) は次の手の「先に打つ物」にする */
+export const changesShape = (kind: string): boolean => ADDS.has(kind) || kind === "annul" || kind === "chaos";
 
 /**
  * 打つ物 x を形 s で打った時の結果 (同じ形はまとめ、確率は足す)。
@@ -143,6 +147,23 @@ export function shapeOutcomes(c: ShapeCtx, x: PatternSet, h: number | Shape, j?:
         const swapO = same && r.what === "o" && a.label.endsWith("に付いた");
         push(a.s, swapJ ? "狙い以外が入れ替わった" : swapO ? `${OTHER}の MOD が入れ替わった` : `${r.label.replace(/た$/, "て")}${a.label}`, null);
       }
+    }
+  } else if ((x.kind === "essence" || x.kind === "essence_perfect") && c.fixedAdd?.(x.currency)) {
+    // エッセンス: 付く MOD と側が決まっている。パーフェクトは先に 1 つ消える (結晶化のお告げがあればその側から)
+    const fa = c.fixedAdd(x.currency)!;
+    const onSide = fa.side === c.side;
+    const addFixed = (s: Shape): { s: Shape; label: string } | null => {
+      if (onSide) return s.h + s.j < c.limit ? { s: fa.hit ? { ...s, h: s.h + 1 } : { ...s, j: s.j + 1 }, label: fa.hit ? "狙いが付いた (エッセンス)" : "狙い以外が付いた (エッセンス)" } : null;
+      return (s.g ?? 0) + s.o + OF < OL ? { s: { ...s, o: s.o + 1 }, label: `${OTHER}に付いた (エッセンス)` } : null;
+    };
+    if (x.kind === "essence") { const a = addFixed(s0); if (a) push(a.s, a.label, 1); }
+    else {
+      const crystal = (sd: "prefix" | "suffix"): string => (sd === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation");
+      const other: "prefix" | "suffix" = c.side === "prefix" ? "suffix" : "prefix";
+      const onlySide = x.omens.includes(crystal(c.side));
+      const onlyOther = x.omens.includes(crystal(other));
+      const rs = onlyOther ? removes({ ...s0, h: 0, j: 0 }, false).map((r) => ({ ...r, s: { ...r.s, h: s0.h, j: s0.j } })) : removes(s0, onlySide);
+      for (const r of rs) { const a = addFixed(r.s); if (a) push(a.s, `${r.label.replace(/た$/, "て")}${a.label}`, r.p); }
     }
   } else if (ADDS.has(x.kind)) {
     const sideOnly = x.kind === "exalt" && x.omens.includes(sideOmenOf(c.side, "exalt"));

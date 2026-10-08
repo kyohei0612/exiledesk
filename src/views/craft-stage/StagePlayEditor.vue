@@ -21,6 +21,8 @@ import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import { applyCurrency, kindOf, omensFor } from "../../services/craft-stage/apply-currency";
 import { mulberry32 } from "../../services/htc/rng";
 import { allMods, listOf, makeStageMod, without, withMod } from "../../services/craft-stage/stage-core";
+import { revealOffers, unrevealedOf } from "../../services/craft-stage/apply-desecrate";
+import { essenceTarget } from "../../services/craft-stage/apply-essence";
 import { GREATER, hitChanceOf, setOf, shapesLeft, useKey } from "../../services/craft-stage/shape-table";
 import { moveShapeCtx, type PlayAim, type PlayDecision, type PlayMove, type PlayRecipe } from "../../services/craft-stage/play-recipe";
 
@@ -74,6 +76,37 @@ function hitMod(aim: PlayAim, modId: string, minTierIndex: number): StageMod | n
   const m = makeStageMod(md, aim.side, Math.min(md.tiers.length - 1, minTierIndex), () => 0.5);
   return aim.mods.length > 1 ? { ...m, textJa: `どれか 1 MOD (${aim.mods.map((x) => shortName(x.modId)).join(" / ")})` } : m;
 }
+const aimMet = (it: StageItem, aim: PlayAim): boolean => new Set(allMods(it).filter((s) => !s.unrevealed && aim.mods.some((a) => s.modId === a.modId && s.tierIndex >= a.minTierIndex)).map((s) => s.modId)).size >= aim.need;
+/** どれか N つの狙いの MOD は「どれか 1 MOD (…)」の文で出す (順不同) */
+function relabel(it: StageItem, aim: PlayAim): StageItem {
+  if (aim.mods.length < 2) return it;
+  const text = `どれか 1 MOD (${aim.mods.map((x) => shortName(x.modId)).join(" / ")})`;
+  const f = (ms: StageMod[]): StageMod[] => ms.map((s) => (aim.mods.some((a) => a.modId === s.modId) ? { ...s, textJa: text } : s));
+  return { ...it, prefixes: f(it.prefixes), suffixes: f(it.suffixes) };
+}
+/** 当たりの乱数が見つからない時の目安: 狙いの行を足すだけ (狙いの側が満杯なら狙い以外を外す) */
+function fakeHit(it0: StageItem, x: PatternSet, aim: PlayAim): StageItem {
+  let it = it0;
+  if (["transmute", "augment"].includes(x.kind) && it.rarity === "normal") it = { ...it, rarity: "magic" };
+  if (["regal", "alchemy", "essence"].includes(x.kind)) it = { ...it, rarity: "rare" };
+  const isMember = (s: StageMod): boolean => aim.mods.some((a) => a.modId === s.modId);
+  if (x.kind === "chaos") { const junk = allMods(it).find((s) => !s.fractured && !isMember(s)); if (junk) it = without(it, junk); }
+  for (let g = 0; g < 6; g++) {
+    const have = new Set(listOf(it, aim.side).filter(isMember).map((s) => s.modId));
+    if (have.size >= aim.need) break;
+    const next = aim.mods.find((a) => !have.has(a.modId));
+    if (!next) break;
+    if (listOf(it, aim.side).length >= limitOf(it, aim.side)) {
+      const junk = listOf(it, aim.side).find((s) => !s.fractured && !isMember(s));
+      if (!junk) break;
+      it = without(it, junk);
+    }
+    const hm = hitMod(aim, next.modId, next.minTierIndex);
+    if (!hm) break;
+    it = withMod(it, hm);
+  }
+  return it;
+}
 /** items[k] = k 手目を打つ前のアイテム (items[moves.length] = 今)。打つだけの手は本当に打ち、狙う手は当たったものとして狙いを足す */
 const items = computed<Array<StageItem | null>>(() => {
   const d = data.value;
@@ -85,28 +118,30 @@ const items = computed<Array<StageItem | null>>(() => {
     if (!m.aim) {
       const r = applyCurrency(d, it, x.currency, mulberry32(1000 + k), x.omens);
       if (r.applied) it = r.item;
+      // 骨を打つだけ: エンジンと同じく 1 番目の候補で発現
+      if (it && unrevealedOf(it)) { const rv = applyCurrency(d, it, "reveal:1", mulberry32(2000 + k)); if (rv.applied) it = rv.item; }
     } else {
-      // レアリティ: 変成・増強はマジック、王者・錬金・エッセンスはレア
-      if (["transmute", "augment"].includes(x.kind) && it.rarity === "normal") it = { ...it, rarity: "magic" };
-      if (["regal", "alchemy", "essence"].includes(x.kind)) it = { ...it, rarity: "rare" };
-      const side = m.aim.side;
-      const isMember = (s: StageMod): boolean => m.aim!.mods.some((a) => a.modId === s.modId);
-      // カオスは 1 つ消して付く (狙い以外があればそれを消す)
-      if (x.kind === "chaos") { const junk = allMods(it).find((s) => !s.fractured && !isMember(s)); if (junk) it = without(it, junk); }
-      for (let g = 0; g < 6; g++) {
-        const have = new Set(listOf(it, side).filter(isMember).map((s) => s.modId));
-        if (have.size >= m.aim.need) break;
-        const next = m.aim.mods.find((a) => !have.has(a.modId));
-        if (!next) break;
-        if (listOf(it, side).length >= limitOf(it, side)) {
-          const junk = listOf(it, side).find((s) => !s.fractured && !isMember(s));
-          if (!junk) break;
-          it = without(it, junk);
+      // 当たりで打つ: エンジンで本当に打ち、狙いが揃って前の手の狙いも残る乱数を探す (触媒の高貴で品質が消える・骨の発現・エッセンスもエンジンの通り)。
+      // 2026-10-09 オーナー「カタリスト周りと冒涜周り、エッセンスも」。見つからなければ狙いの行を足すだけの目安
+      const prev = moves.value.slice(0, k).flatMap((p) => (p.aim ? [p.aim] : []));
+      let found: StageItem | null = null;
+      for (let t = 0; t < 4000 && !found; t++) {
+        const r = applyCurrency(d, it, x.currency, mulberry32(50_000 + k * 10_000 + t), x.omens);
+        if (!r.applied) break;
+        let it2 = r.item;
+        // 骨: 発現は狙いの出た候補を選ぶ (無ければこの乱数は外れ)
+        if (unrevealedOf(it2)) {
+          const offers = revealOffers(d, it2, mulberry32(90_000 + t));
+          const idx = offers.first.findIndex((o) => m.aim!.mods.some((a) => o.modId === a.modId && o.tierIndex >= a.minTierIndex));
+          if (idx < 0) continue;
+          const rv = applyCurrency(d, it2, `reveal:${idx + 1}`, mulberry32(90_000 + t));
+          if (!rv.applied) continue;
+          it2 = rv.item;
         }
-        const hm = hitMod(m.aim, next.modId, next.minTierIndex);
-        if (!hm) break;
-        it = withMod(it, hm);
+        if (aimMet(it2, m.aim) && prev.every((p) => aimMet(it2, p))) found = it2;
       }
+      if (found) it = relabel(found, m.aim);
+      else it = fakeHit(it, x, m.aim);
     }
     out.push(it);
   }
@@ -115,8 +150,8 @@ const items = computed<Array<StageItem | null>>(() => {
 const now = computed(() => items.value[items.value.length - 1] ?? null);
 
 // ── 手の形 (② 外れを埋める) ─────────────────────────────────
-const toPolicy = (sh: Record<string, PlayDecision> | undefined): Record<string, PolicyAct> => Object.fromEntries(Object.entries(sh ?? {}).map(([k, d]) => [k, "use" in d ? { set: d.use } : d.go === "next" ? { then: "next" } : d.go === "start" ? { then: "restart" } : d.strip != null ? { then: "reset", goto: d.to } : { then: "goto", goto: d.to }]));
-const fromPolicy = (pol: Record<string, PolicyAct>): Record<string, PlayDecision> => Object.fromEntries(Object.entries(pol).flatMap(([k, a]): Array<[string, PlayDecision]> => (a.set ? [[k, { use: a.set }]] : a.then === "next" ? [[k, { go: "next" }]] : a.then === "restart" ? [[k, { go: "start" }]] : a.then === "reset" ? [[k, { go: "move", to: a.goto ?? 0, strip: 1 }]] : a.then === "goto" ? [[k, { go: "move", to: a.goto ?? 0 }]] : [])));
+const toPolicy = (sh: Record<string, PlayDecision> | undefined): Record<string, PolicyAct> => Object.fromEntries(Object.entries(sh ?? {}).map(([k, d]) => [k, "use" in d ? { set: d.use, ...(d.pre?.length ? { pre: d.pre } : {}) } : d.go === "next" ? { then: "next" } : d.go === "start" ? { then: "restart" } : d.strip != null ? { then: "reset", goto: d.to } : { then: "goto", goto: d.to }]));
+const fromPolicy = (pol: Record<string, PolicyAct>): Record<string, PlayDecision> => Object.fromEntries(Object.entries(pol).flatMap(([k, a]): Array<[string, PlayDecision]> => (a.set ? [[k, { use: a.set, ...(a.pre?.length ? { pre: a.pre } : {}) }]] : a.then === "next" ? [[k, { go: "next" }]] : a.then === "restart" ? [[k, { go: "start" }]] : a.then === "reset" ? [[k, { go: "move", to: a.goto ?? 0, strip: 1 }]] : a.then === "goto" ? [[k, { go: "move", to: a.goto ?? 0 }]] : [])));
 /** 狙う手の「打って決める」の中身 */
 function shapeOf(i: number) {
   const m = moves.value[i];
@@ -138,12 +173,14 @@ function shapeOf(i: number) {
   const otherHits = otherAimed ? listOf(it, other).filter((s) => !s.fractured && targetIds.has(s.modId)).length : undefined;
   const otherFixed = listOf(it, other).filter((s) => s.fractured).length;
   const otherLimit = limitOf(it, other);
-  const ctxMore = { ...(otherHits != null ? { otherHits } : {}), otherFixed, otherLimit };
+  // エッセンスは付く MOD と側が決まっている (エンジンの essenceTarget)
+  const fixedAdd = (cur: string): { side: "prefix" | "suffix"; hit: boolean } | null => { const t = essenceTarget(d, it, cur); return t ? { side: t.side, hit: m.aim!.mods.some((a) => a.modId === t.mod.id) } : null; };
+  const ctxMore = { ...(otherHits != null ? { otherHits } : {}), otherFixed, otherLimit, fixedAdd };
   let spam: number | null = null;
   for (let k = i - 1; k >= 0; k--) if (setOf(props.sets, moves.value[k]!.use)?.kind === "chaos") { spam = k; break; }
   const policy = toPolicy(m.shapes);
   return {
-    props: { set: x, side, limit: limitOf(it, side), need: c.ctx.need, h0: c.h0, j0, policy, pHit, otherRemovable, ...ctxMore, isTarget: (id: string) => targetIds.has(id) || /#h\d+$/.test(id), baseItem: it, backTo: spam != null ? { to: spam, label: `${spam + 1} 手目のスパムへ` } : null },
+    props: { set: x, side, limit: limitOf(it, side), need: c.ctx.need, h0: c.h0, j0, policy, pHit, otherRemovable, ...ctxMore, isTarget: (id: string) => targetIds.has(id) || /#h\d+$/.test(id), steps: moves.value.slice(0, i + 1).map((p, n) => ({ n, label: `${n + 1} 手目: ${useLabel(p.use)}` })), hitMods: m.aim.mods.flatMap((a) => { const hm = hitMod(m.aim!, a.modId, a.minTierIndex); return hm ? [hm] : []; }), baseItem: it, backTo: spam != null ? { to: spam, label: `${spam + 1} 手目のスパムへ` } : null },
     left: shapesLeft({ ...c.ctx, pHit, ...ctxMore }, x, c.h0, j0, policy),
   };
 }
