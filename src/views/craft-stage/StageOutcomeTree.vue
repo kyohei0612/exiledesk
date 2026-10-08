@@ -303,7 +303,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
         <p class="mt-1 text-[var(--exile-color-text-secondary)]">形 = 狙う側の 狙い (狙う MOD) · ほか (それ以外) · 空き (残りの枠) の数。同じ形なら同じ手を使います。</p>
       </HelpTip>
       <span class="ml-auto flex items-center gap-1">
-        <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] disabled:opacity-30" :disabled="!trail.length" title="1 つ前の形に戻る" @click="back"><Icon name="undo" class="size-4" />1 つ戻す</button>
+        <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] disabled:opacity-30" :disabled="!trail.length" title="ひとつ前に見ていた形に戻る (決めた手は消えない)" @click="back"><Icon name="corner-up-left" class="size-4" />前の形へ</button>
         <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" title="この手を打つ前の形に戻って見直す (決めた手は消えない)" @click="goStart"><Icon name="rotate" class="size-4" />この手を打つ前へ</button>
       </span>
     </div>

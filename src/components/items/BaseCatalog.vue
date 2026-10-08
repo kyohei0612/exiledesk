@@ -29,7 +29,7 @@ const list = computed(() => {
   const l = all.value.filter((b) => b.cls === cls.value);
   return cls.value === "SkillGem" ? l : [...l].sort((a, b) => a.lvl - b.lvl || a.ja.localeCompare(b.ja, "ja"));
 });
-const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60" : "border border-white/15 hover:bg-white/5");
+const chip = (on: boolean): string => (on ? "bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]" : "text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]");
 /**
  * スマホ (幅 768 CSS px 未満): 種類の札を全部並べると壁になる (手袋(str_dex) のような札が 50 個。2026-10-08 オーナー「UI カスすぎる」)。
  * 部位 (大きめのタイル) → 属性 / 元素 (日本語の札) → ベース (1 列) の 3 段にする。PC は今まで通り
@@ -101,13 +101,13 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
         <div v-if="r.cls.some(([c]) => count.get(c))" class="flex flex-wrap items-center gap-1.5">
           <span class="w-16 shrink-0 text-[11px] opacity-50">{{ r.ja }}</span>
           <template v-for="[c, ja] in r.cls" :key="c">
-            <button v-if="count.get(c)" type="button" class="rounded-lg px-2.5 py-0.5" :class="chip(cls === c)" @click="cls = c">{{ ja }}</button>
+            <button v-if="count.get(c)" type="button" class="h-7 rounded-md px-2.5 text-[13px] transition" :class="chip(cls === c)" @click="cls = c">{{ ja }}</button>
           </template>
         </div>
       </template>
     </div>
     <!-- ② ベースのカード (ゲーム内の絵・必要レベル・素の数値・固有の効果) -->
-    <p v-if="!cls && !query.trim() && !(phone && family)" class="py-2 text-[12px] opacity-60">{{ phone ? "部位を選ぶか、名前で探す" : "種類を選ぶか、名前で探す" }}</p>
+
     <div v-if="cls || query.trim()" class="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-1.5 overflow-y-auto pr-1 max-md:grid-cols-1" :style="{ maxHeight: phone ? 'none' : (height ?? '340px') }">
       <button
         v-for="b in list"

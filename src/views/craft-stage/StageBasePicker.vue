@@ -18,7 +18,8 @@ const emit = defineEmits<{ pick: [en: string] }>();
 
 const current = computed(() => (props.data ? (baseCatalog(props.data, true).find((b) => b.en === props.base) ?? null) : null));
 const open = ref(!!props.unpicked);
-watch(() => props.unpicked, (v) => { if (v) open.value = true; });
+// ベースが決まったら閉じる (レシピを呼んだ時も。2026-10-09 レビュー: 一覧が開いたままで打ち方の段が画面の下に隠れた)
+watch(() => props.unpicked, (v) => { open.value = !!v; });
 function choose(en: string): void {
   open.value = false;
   if (en !== props.base || props.unpicked) emit("pick", en);

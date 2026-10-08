@@ -37,6 +37,7 @@ import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
 import { aimTarget, compilePlay, type PlayAim, type PlayDecision } from "../../services/craft-stage/play-recipe";
 import { setOf } from "../../services/craft-stage/shape-table";
 import { drawRecipeCard, type RecipeCardData } from "../../services/craft-stage/recipe-card";
+import { baseArt } from "../../services/craft-stage/base-art";
 import StagePatternEditor from "./StagePatternEditor.vue";
 import SimStepHead from "./SimStepHead.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
@@ -1245,7 +1246,7 @@ const compare = computed(() => {
   // フラクチャーがある時: 白から作る = 4 の自作 (1 回分 × 3 + 消去 × 2) + 固定済みから先の平均
   const nb = restBases.value;
   const selfCost = fractureRow.value ? (calc.value && restCost.value != null ? calc.value.total * nb + restCost.value : null) : out ? out.r.perDone : null;
-  list.push({ key: "make", name: fractureRow.value ? "白から作る (フラクチャーまでは 4 の計算)" : "白から作る", cost: selfCost, note: "回すと出ます" });
+  list.push({ key: "make", name: fractureRow.value ? "白から作る (フラクチャーまでの手順込み)" : "白から作る", cost: selfCost, note: "回すと出ます" });
   if (fractureRow.value) {
     const rest = restCost.value;
     const c = calc.value;
@@ -1303,6 +1304,8 @@ function moneyT(x: number): string {
 }
 const fmtCount = (n: number): string => (n >= 10 ? Math.round(n).toLocaleString() : n.toFixed(1));
 /** 運の幅の印 (半分・8 割・9 割の人。合計で) */
+/** 付いていた割合の札の短い名前 (数値を外して段だけ) */
+const hitShort = (id: string): string => { const t = s.simTargets.value.find((x) => x.modId === id) ?? s.simTargets.value.find((x) => x.alts?.some((a) => a.modId === id)); const a = t?.modId === id ? t : t?.alts?.find((x) => x.modId === id); return a ? modShort(id, a.minTierIndex) : hitName(id).text; };
 /**
  * 手順の画像 (打って作るパターンを回して、完成した人がいる時。2026-10-09 オーナー「無事完走出来たら、その手順を分かりやすく画像とかにまとめて出力できるようにしたい。やさしさ」)
  */
@@ -1319,6 +1322,15 @@ function modShort(id: string, minTier: number): string {
   return `${name} T${m.tiers.length - minTier}+`;
 }
 const aimText = (a: PlayAim): string => (a.mods.length > 1 ? `どれか ${a.need} つ (${a.mods.map((x) => modShort(x.modId, x.minTierIndex)).join(" / ")})` : modShort(a.mods[0]!.modId, a.mods[0]!.minTierIndex));
+/** 前の手で同じ狙いが付いていれば「残り N つ (合わせて M つ: …)」(画面と同じ) */
+function aimTextAt(play: NonNullable<Pattern["play"]>, i: number): string {
+  const a = play.moves[i]?.aim;
+  if (!a) return "";
+  const ids = new Set(a.mods.map((m) => m.modId));
+  const before = play.moves.slice(0, i).reduce((acc, m) => (m.aim && m.aim.mods.some((x) => ids.has(x.modId)) ? Math.max(acc, m.aim.need) : acc), 0);
+  if (a.mods.length < 2 || before <= 0) return aimText(a);
+  return `残り ${a.need - before} つ (合わせて ${a.need} つ: ${a.mods.map((x) => modShort(x.modId, x.minTierIndex)).join(" / ")})`;
+}
 function useText(key: string): string {
   const it = s.item.value;
   const x = it ? setOf(patternSets(it.cls), key) : undefined;
@@ -1333,32 +1345,35 @@ function decisionText(d: PlayDecision): string {
 function shapeRule(key: string, side: "prefix" | "suffix"): string {
   const [h, j, g] = key.split("-").map(Number);
   const S = side === "prefix" ? "プレ" : "サフィ", O = side === "prefix" ? "サフィ" : "プレ";
-  return `${S}が 狙い ${h}・狙い以外 ${j}${g != null && !Number.isNaN(g) ? ` (${O}の狙い ${g})` : ""} の時`;
+  return `${S} 狙い ${h} · ほか ${j}${g != null && !Number.isNaN(g) ? ` (${O}の狙い ${g})` : ""}`;
 }
 function cardData(): RecipeCardData | null {
   const play = shownPlay.value, sm = summary.value, out = recipeOut.value;
   if (!play || !sm || !out) return null;
-  const frac = s.simTargets.value.filter((t) => t.method === "fracture").map((t) => `固定: ${modShort(t.modId, t.minTierIndex)}`);
+  const frac = s.simTargets.value.filter((t) => t.method === "fracture").map((t) => `フラクチャー: ${modShort(t.modId, t.minTierIndex)}`);
   const best = new Map<string, PlayAim>();
   for (const m of play.moves) if (m.aim) { const k = m.aim.mods.map((x) => x.modId).sort().join(","); const b = best.get(k); if (!b || b.need < m.aim.need) best.set(k, m.aim); }
   const startJa = s.simStart.value === "white" ? "白ベースから" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : s.simStart.value === "four" ? "4 MOD のレアを買う" : "手打ちの状態から";
   const it = s.item.value;
   return {
     title: `${baseJa.value} のクラフト手順`,
+    art: baseArt(s.base.value) ?? null,
     subtitle: `アイテムレベル ${s.itemLevel.value} · 始め方: ${startJa} · ${shownName.value}`,
     goals: [...frac, ...[...best.values()].map(aimText)],
-    moves: play.moves.map((m) => {
+    moves: play.moves.map((m, mi) => {
       const x = it ? setOf(patternSets(it.cls), m.use) : undefined;
       return {
         icons: x ? [x.currency, ...x.omens].map((k) => iconOf(k)).filter((u): u is string => !!u) : [],
         label: useText(m.use),
-        sub: m.aim ? `狙い: ${aimText(m.aim)} (付くまでこの手)` : "打つだけ (打って次の手へ)",
-        rules: m.aim ? Object.entries(m.shapes ?? {}).map(([k, d]) => `${shapeRule(k, m.aim!.side)} → ${decisionText(d)}`) : [],
+        sub: m.aim ? `狙い: ${aimTextAt(play, mi)} · 付くまでこの手` : "狙わない (打って次の手へ)",
+        aim: !!m.aim,
+        rules: m.aim ? Object.entries(m.shapes ?? {}).map(([k, d]) => ({ when: shapeRule(k, m.aim!.side), then: decisionText(d) })) : [],
       };
     }),
     result: {
-      total: moneyT(split.value.base + split.value.craft), base: moneyT(split.value.base), craft: moneyT(split.value.craft), done: `完成 ${pct(sm.pDone)}`,
-      luck: luck.value.filter((q) => !q.top).map((q) => ({ label: q.label, value: `${moneyT(q.v)} ${q.tail}` })),
+      total: moneyT(split.value.base + split.value.craft), base: moneyT(split.value.base), craft: moneyT(split.value.craft), done: `完成 ${pct(sm.pDone)}`, doneOk: sm.pDone >= 0.995,
+      ...(luck.value[0] ? { median: moneyT(luck.value[0].v) } : {}),
+      luck: luck.value.filter((q) => !q.top).slice(1).map((q) => ({ label: q.label, value: `${moneyT(q.v)} ${q.tail}` })),
       usage: [...out.r.usage].sort((a, b) => b.cost - a.cost).slice(0, 6).map((u) => ({ icon: iconOf(u.key) ?? null, name: nameOf(u.key), count: u.count >= 10 ? Math.round(u.count).toLocaleString() : u.count.toFixed(1), cost: moneyT(u.cost) })),
     },
     footer: `ExileDesk のシミュレーション · ${fmtDate(Date.now())} · ${sm.runs.toLocaleString()} 人が作ってみた結果 (確率は重みからの目安)`,
@@ -1676,7 +1691,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     </template>
       <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
       <div v-if="step4pre" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
-        <SimStepHead class="mb-3" :n="6" title="打ち方 (パターン)" :done="patternDone" :current="!patternDone" :redo="patternDone" :note="`${s.simStart.value === 'item' ? '手打ちの状態' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`" help="打つ物と狙う MOD を 1 手ずつ並べた物 = パターン。いくつか作って、回して費用を比べられる" @redo="patternDone = false" />
+        <SimStepHead class="mb-3" :n="6" title="打ち方" :done="patternDone" :current="!patternDone" :redo="patternDone" :note="`${s.simStart.value === 'item' ? '手打ちの状態' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`" help="打つ物と狙う MOD を 1 手ずつ並べた物 = パターン。いくつか作って、回して費用を比べられる" @redo="patternDone = false" />
         <StagePatternEditor :busy="busy" :step-run="stepRun" :step-max="maxSteps" :step-runs="STEP_ONLY_RUNS" @run-one="(k: number) => run(k)" @run-step="(k: number, i: number) => run(k, i)" @close-step="stepRun = null" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" :flow-stats="activeFlowStats" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
@@ -1685,7 +1700,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <div v-if="!patternDone" class="mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-3 text-[12px]" :class="stale && !busy ? '[&_.res]:opacity-50' : ''">
           <span class="flex items-center gap-1 text-[11px] font-medium tracking-wide text-[var(--exile-color-text-tertiary)]">まとめて回す <HelpTip text="チェックしたパターンをまとめて回し、費用を比べる。1 つだけ試す時は上の「このパターンを回す」" /></span>
           <!-- 枠のどこを押してもチェックが切り替わる (2026-10-07 オーナー「チェックボックスだけじゃなくて枠クリックで」)。金額の所だけは結果を下に出す -->
-          <span v-for="(p, i) in s.simPatterns.value" :key="i" role="checkbox" :aria-checked="hasSteps(p) && !p.off" :aria-disabled="!hasSteps(p)" tabindex="0" class="flex select-none items-center gap-1.5 rounded-md py-1 pl-2 pr-1 transition" :class="[!hasSteps(p) ? 'cursor-default opacity-40' : 'cursor-pointer hover:bg-white/5', shownName === p.name && resultOf(p.name) ? 'bg-[var(--exile-color-bg-elevated)] ring-1 ring-[var(--exile-color-border-brass)]' : '', p.off && hasSteps(p) ? 'opacity-50' : '']" :title="!hasSteps(p) ? '手が無いので回さない' : p.off ? '押すとまとめて回す時に入れる' : '押すとまとめて回す時に入れない'" @click="hasSteps(p) && togglePatternOff(i)" @keydown.space.prevent="hasSteps(p) && togglePatternOff(i)">
+          <span v-for="(p, i) in s.simPatterns.value" :key="i" role="checkbox" :aria-checked="hasSteps(p) && !p.off" :aria-disabled="!hasSteps(p)" tabindex="0" class="flex select-none items-center gap-1.5 rounded-md py-1 pl-2 pr-1 transition" :class="[!hasSteps(p) ? 'cursor-default opacity-40' : 'cursor-pointer hover:bg-white/5', shownName === p.name && resultOf(p.name) ? 'bg-[var(--exile-color-bg-elevated)]' : '', p.off && hasSteps(p) ? 'opacity-50' : '']" :title="!hasSteps(p) ? '手が無いので回さない' : p.off ? '押すとまとめて回す時に入れる' : '押すとまとめて回す時に入れない'" @click="hasSteps(p) && togglePatternOff(i)" @keydown.space.prevent="hasSteps(p) && togglePatternOff(i)">
             <span class="grid size-3.5 place-items-center rounded-sm border" :class="p.off || !hasSteps(p) ? 'border-white/30' : 'border-[var(--exile-color-accent-focus)] bg-[var(--exile-color-accent-focus)] text-black'"><Icon v-if="!p.off && hasSteps(p)" name="check" class="size-3" :stroke="3" /></span>
             <b>{{ p.name }}</b>
             <button v-if="resultOf(p.name)" type="button" class="res flex items-center gap-1 rounded-full px-1.5 hover:bg-white/10" :title="stale ? '設定が変わりました。回し直すと合う (押すと結果を下に)' : '押すと結果を下に出す'" @click.stop="showResultByName(p.name)">
@@ -1693,7 +1708,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
               <span class="text-[var(--exile-color-text-tertiary)]">完成 {{ pct(resultOf(p.name)!.out.r.pDone) }}</span>
               <span v-if="cheapestName === p.name" class="rounded bg-[rgba(126,201,148,0.15)] px-1 text-[11px] text-[var(--exile-color-signal-up)]">一番安い</span>
             </button>
-            <span v-else class="pr-1.5 text-[var(--exile-color-text-tertiary)]">{{ hasSteps(p) ? patternNote(p) : "手が無い (回さない)" }}</span>
+            <span v-else class="pr-1.5 text-[var(--exile-color-text-tertiary)]">{{ hasSteps(p) ? patternNote(p) : "手が無い · 回さない" }}</span>
           </span>
           <SimProgress v-if="busy" :box="progressBox" :phase="phase" />
           <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
@@ -1706,7 +1721,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
               <option v-for="n in MAX_STEPS_CHOICES" :key="n" :value="n">{{ n.toLocaleString() }} 手</option>
             </select>
           </label>
-          <button type="button" class="inline-flex h-9 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-4 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()"><Icon name="play" class="size-4" />回す<span v-if="runnable.length > 1" class="rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums" :title="`チェックした ${runnable.length} つのパターン`">{{ runnable.length }}</span></button>
+          <button type="button" class="inline-flex h-9 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-4 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()"><Icon name="play" class="size-4" />回す<span v-if="runnable.length > 1" class="rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums" :title="`チェックした ${runnable.length} つのパターンを回す`">{{ runnable.length }} つ</span></button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
@@ -1775,20 +1790,20 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           </div>
         </div>
       </div>
+      <!-- 付いていた割合は完成が 100% でない時だけ (組みかけのパターンでどこまで付くか。100% なら全部 100% で要らない。2026-10-07 オーナー「ここいらん、デフォで畳んでいい」) -->
+      <div v-if="summary.pDone < 0.995 && recipeOut.r.hitRates?.length" class="mt-3 flex flex-wrap items-center gap-1.5 text-[12px]">
+          <span class="text-[var(--exile-color-text-secondary)]">終わった時に付いていた割合</span>
+          <span v-for="h in recipeOut.r.hitRates" :key="h.modId" class="rounded-md bg-white/[0.05] px-2 py-0.5">
+            <span :class="hitName(h.modId).tone" :title="hitName(h.modId).text">{{ hitShort(h.modId) }}</span>
+            <b class="ml-1 tabular-nums" :class="h.p >= 0.9 ? 'text-emerald-300' : h.p >= 0.5 ? 'text-amber-200' : 'text-rose-300'">{{ pct(h.p) }}</b>
+          </span>
+        </div>
+        <p v-for="x in recipeOut.r.stops" :key="x.reason" class="mt-1.5 flex items-center gap-1.5 text-[12px] text-[var(--exile-color-signal-warn)]">{{ /手が多すぎる/.test(x.reason) ? "打ち切り" : "完成しなかった" }} {{ pct(x.p) }}<HelpTip :text="/手が多すぎる/.test(x.reason) ? `1 人の上限 (${(summary.maxSteps ?? maxSteps).toLocaleString()} 手) に届いた人。上限を上げるか、外れの手を見直す` : x.reason" /></p>
       <!-- 畳む物 -->
       <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-3 text-[13px]">
         <button type="button" class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" :aria-expanded="open.more" @click="toggle('more')"><Icon :name="open.more ? 'chevron-down' : 'chevron-right'" class="size-4" />始め方の比べ</button>
         <HelpTip text="同じ打ち方で、白から作る・レアのベースを買う・フラクチャー済みを買う・完成品を買う、のどれが安いか。買う値段は取引所で見て入れる" />
       </div>
-      <!-- 付いていた割合は完成が 100% でない時だけ (組みかけのパターンでどこまで付くか。100% なら全部 100% で要らない。2026-10-07 オーナー「ここいらん、デフォで畳んでいい」) -->
-      <div v-if="summary.pDone < 0.995 && recipeOut.r.hitRates?.length" class="mt-3 flex flex-wrap items-center gap-1.5 text-[12px]">
-          <span class="text-[var(--exile-color-text-secondary)]">終わった時に付いていた割合</span>
-          <span v-for="h in recipeOut.r.hitRates" :key="h.modId" class="rounded-md bg-white/[0.05] px-2 py-0.5">
-            <span :class="hitName(h.modId).tone">{{ hitName(h.modId).text }}</span>
-            <b class="ml-1 tabular-nums" :class="h.p >= 0.9 ? 'text-emerald-300' : h.p >= 0.5 ? 'text-amber-200' : 'text-rose-300'">{{ pct(h.p) }}</b>
-          </span>
-        </div>
-        <p v-for="x in recipeOut.r.stops" :key="x.reason" class="mt-1.5 text-[12px] text-[var(--exile-color-signal-down)]">完成しなかった回 {{ pct(x.p) }}: {{ /手が多すぎる/.test(x.reason) ? `1 人の上限 (${(summary.maxSteps ?? maxSteps).toLocaleString()} 手) で打ち切り。上限を上げるか、外れの手を見直す` : x.reason }}</p>
       <template v-if="open.more">
     <!-- 始め方の比べ (回した後) -->
     <div v-if="recipeOut" class="mt-2 rounded-lg bg-black/20 px-4 py-3 text-[13px]">
