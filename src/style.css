@@ -207,8 +207,9 @@ body {
   body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
   /* スマホあるある: 二度押しの拡大と押した時の青い光を止める、長押しの画像メニューを出さない (2026-10-08) */
   #app { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-  /* iOS Safari は 16px 未満の入力欄に触ると勝手に拡大して横が切れたままになる */
-  input, select, textarea { font-size: 16px; }
+  /* iOS Safari は 16px 未満の入力欄に触ると勝手に拡大 (12px なら 1.33 倍) して戻らず、横に送れる状態になる。
+     text-[12px] などの class に負けないよう !important (2026-10-08 オーナー iPhone「横スクロールはあるんよな」= 表示通貨の選択欄で拡大していた) */
+  input, select, textarea { font-size: 16px !important; }
   img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 }
 
