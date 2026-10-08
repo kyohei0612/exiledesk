@@ -1204,7 +1204,7 @@ defineExpose({ rows });
     <StageFlowEditor v-if="isFlow" :flow="pat.flow ?? { steps: [] }" :stats="flowStats ?? null" :locked="locked" @change="setFlow" />
     <!-- 打って作るパターン (ADR-002): 画面は手打ちと同じ。① 当たりで打つ → ② 外れを埋める -->
     <StagePlayEditor v-else-if="isPlay" :play="pat.play!" :sets="sets" :start-item="playStartItem" :name-of-mod="cardTitleOf" :locked="locked" @change="setPlay" />
-    <p v-if="!isPlay && !isFlow" class="mb-2 flex items-center gap-1.5 rounded-md bg-white/[0.03] px-3 py-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">前の作り方 (木) のパターン。新しいパターンは <Icon name="plus" class="size-3.5" /> で「打って作る」形になる</p>
+    <p v-if="!isPlay && !isFlow" class="mb-2 rounded-md bg-white/[0.03] px-3 py-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">前の作り方 (木) のパターン。新しいパターンは <Icon name="plus" class="inline size-3.5 align-[-2px]" /> で「打って作る」形になる</p>
     <!-- 左: ツリー (自分の中で送る) / 右: 押した手を決める枠 + その時点のアイテム (動かない) -->
     <div v-if="!isFlow && !isPlay" class="flex gap-3 max-md:flex-col" :style="phone ? undefined : { height: paneHeight }">
       <div ref="treeEl" class="w-[372px] shrink-0 overflow-y-auto rounded-lg bg-black/25 p-2 [overflow-anchor:none] max-md:w-full max-md:overflow-visible">
