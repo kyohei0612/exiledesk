@@ -101,7 +101,7 @@ const at = ref<{ h: number; j: number; start: boolean }>({ h: props.h0, j: props
 const editing = ref(false);
 /** 1 つ戻す用 */
 const trail = ref<Array<{ h: number; j: number; start: boolean }>>([]);
-watch(() => [props.h0, props.j0, props.set.key], () => { at.value = { h: props.h0, j: props.j0, start: true }; trail.value = []; editing.value = false; if (props.auto) void nextTick(autoNext); });
+watch(() => [props.h0, props.j0, props.set.key], () => { at.value = { h: props.h0, j: props.j0, start: true }; trail.value = []; editing.value = false; lastNote.value = null; if (props.auto) void nextTick(autoNext); });
 
 const atKey = computed(() => shapeKey(at.value.h, at.value.j));
 const done = computed(() => !at.value.start && at.value.h >= props.need);
@@ -109,7 +109,16 @@ const act = computed<PolicyAct | undefined>(() => (at.value.start ? undefined : 
 const actSet = computed<PatternSet | undefined>(() => (act.value?.set ? setOf(props.sets, act.value.set) : undefined));
 /** 今打つ物 (この手の打つ物 / この形で決めた物) */
 const firing = computed<PatternSet | undefined>(() => (at.value.start ? props.set : done.value ? undefined : actSet.value));
-const outs = computed<ShapeOut[]>(() => (firing.value ? shapeOutcomes(ctx.value, firing.value, at.value.h, at.value.j) : []));
+/** 今の形の情報 (来る道と、その時の反対の側の消せる数)。打つ前はこの手の始め */
+const here = computed(() => (at.value.start ? null : reach.value.find((r) => r.h === at.value.h && r.j === at.value.j) ?? null));
+const otherNow = computed(() => here.value?.other ?? props.otherRemovable ?? 0);
+const outs = computed<ShapeOut[]>(() => (firing.value ? shapeOutcomes({ ...ctx.value, otherRemovable: otherNow.value }, firing.value, at.value.h, at.value.j) : []));
+/** この形になる時 (一番近い道の例) */
+const viaText = computed(() => {
+  const v = here.value?.via;
+  if (!v) return "";
+  return v.from ? `${shapeText(v.from.h, v.from.j)} の時に ${labelOf(v.set)} を打って、${v.label}` : `この手の ${labelOf(v.set)} を打って、${v.label}`;
+});
 /** 決める形 (この手から来うる形) と、まだ決めていない形 */
 const reach = computed(() => reachableShapes(ctx.value, props.set, props.h0, props.j0, props.policy));
 const left = computed(() => reach.value.filter((r) => !props.policy[shapeKey(r.h, r.j)]));
@@ -167,7 +176,12 @@ const shapeItem = computed<StageItem | null>(() => {
   const hitText = /^どれか/.test(tmpl.textJa) ? tmpl.textJa : "狙いの MOD";
   const hits = Array.from({ length: Math.min(at.value.h, props.limit) }, (_, k): StageMod => ({ ...tmpl, side: props.side, modId: `${tmpl.modId}#h${k}`, textJa: hitText, fractured: false, desecrated: false }));
   const junk = Array.from({ length: Math.min(at.value.j, props.limit) }, (_, k): StageMod => ({ ...tmpl, side: props.side, modId: `junk#${k}`, textJa: "狙い以外の MOD", textEn: "", tierName: "", affix: "", tags: [], values: [], ranges: [], fractured: false, desecrated: false }));
-  return { ...b, rarity: "rare", [key]: [...list.filter((m) => m.fractured), ...hits, ...junk] };
+  // 反対の側: 固定はそのまま、消せる MOD はこの形に来た時の数だけ (カオスで消えた物は出さない)
+  const okey = key === "prefixes" ? "suffixes" : "prefixes";
+  const olist = b[okey];
+  let keep = otherNow.value;
+  const others = olist.filter((m) => m.fractured || keep-- > 0);
+  return { ...b, rarity: "rare", [key]: [...list.filter((m) => m.fractured), ...hits, ...junk], [okey]: others };
 });
 // 棚 (手打ちと同じ部品) は今の形のアイテムで「打てる物」を見る。持つ = この形で打つ物に決める
 const shelfOmens = ref<string[]>([]);
@@ -200,7 +214,8 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
 
     <!-- このパターンの時: アイテムの上に形、右でカレンシーを選ぶ (2026-10-09 オーナー「このパターンの時みたいな感じでアイテムの上にだして、そこでカレンシー選べばいい」「ほぼ画面は手で打つと変わらん」) -->
     <div class="rounded-lg border px-3 py-2" :class="done ? 'border-emerald-400/50 bg-emerald-950/20' : 'border-white/15 bg-black/30'">
-      <p class="mb-1.5 font-bold" :class="done ? 'text-emerald-100' : 'text-amber-100'">{{ at.start ? "この手を打つ前" : done ? "揃った" : "このパターンの時" }} <span class="ml-1 text-[11px] font-normal opacity-60">{{ SIDE_JA }}: {{ shapeText(at.h, at.j) }}{{ (otherRemovable ?? 0) === 0 ? ` · ${side === "prefix" ? "サフィ" : "プレ"}は固定だけ` : "" }}</span></p>
+      <p class="mb-1.5 font-bold" :class="done ? 'text-emerald-100' : 'text-amber-100'">{{ at.start ? "この手を打つ前" : done ? "揃った" : "このパターンの時" }} <span class="ml-1 text-[11px] font-normal opacity-60">{{ SIDE_JA }}: {{ shapeText(at.h, at.j) }}{{ otherNow === 0 ? ` · ${side === "prefix" ? "サフィ" : "プレ"}は固定だけ` : "" }}</span></p>
+      <p v-if="viaText" class="-mt-1 mb-1.5 text-[11px] text-sky-200/80">この形になる時: {{ viaText }}</p>
       <div class="flex gap-3 max-md:flex-col">
       <div v-if="shapeItem" class="shrink-0 max-md:mx-auto"><StageItemCard :item="shapeItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="250" compact /></div>
       <div v-else class="flex flex-wrap items-center gap-2">
@@ -263,7 +278,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
           </button>
         </div>
       </div>
-      <p v-else-if="firing" class="mt-2 text-[11px] text-rose-200">ここでは打てない ({{ whyNot(firing, at.h, at.j) }})</p>
+      <p v-else-if="firing && !outs.length" class="mt-2 text-[11px] text-rose-200">ここでは打てない ({{ whyNot(firing, at.h, at.j) }})</p>
 
       <div v-if="left.length && (done || (act && !editing && !firing))" class="mt-2">
         <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/15 px-3 py-1 font-bold text-amber-100" @click="nextLeft">まだ決めていない形へ → ({{ shapeText(left[0]!.h, left[0]!.j) }})</button>
