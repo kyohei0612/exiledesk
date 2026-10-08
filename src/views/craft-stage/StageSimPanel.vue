@@ -216,7 +216,7 @@ function patternProblem(p: Pattern): string | null {
     const tgc = isRest(tg) ? restMembers(p.steps, tg)[0] ?? tg : tg;
     const tw = tg === ANY_TARGET ? checkAny(st, x) : isRest(tg) ? (() => { const t = s.simTargets.value.find((y) => y.modId === tgc); return t ? checkTarget(ctx, { ...st, placed: new Set([...st.placed].filter((id) => !restMembers(p.steps, tg).includes(id))) }, x, t) : "残りの候補が無い"; })() : x.kind === "rune" ? checkRune(ctx, st, tg) : (() => { const t = s.simTargets.value.find((y) => y.modId === tg); return t ? checkTarget(ctx, st, x, t) : "狙う MOD に無い"; })();
     if (tw) return `${i + 1} 手目: ${tw}`;
-    if (isDouble(x) && tg !== ANY_TARGET) {
+    if (isDouble(x) && tg !== ANY_TARGET && !isRest(tg)) {
       const t2 = p.steps[i]!.target2;
       if (!t2) return `${i + 1} 手目: 一緒に狙う MOD を選ぶ`;
       const t = s.simTargets.value.find((y) => y.modId === t2);

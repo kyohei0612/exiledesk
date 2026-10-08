@@ -286,9 +286,12 @@ export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: 
     if (s.kind === "transmute") st.rarity = "magic";
     if (s.kind === "regal" || s.kind === "alchemy" || s.kind === "essence") st.rarity = "rare";
     if (isRest(p.target)) {
-      // 残りの 1 つ: 枠を 1 つ使い、元の手の候補は全部付いた物になる
+      // 残り: 元の手で付かなかった数だけ枠を使い (3 つのどれか 1 つの後なら 2 つ)、元の手の候補は全部付いた物になる
       const ms = restMembers(steps, p.target);
-      if (ms[0]) st[ctx.data.mods.get(ms[0])?.type === "suffix" ? "suffix" : "prefix"] += 1;
+      const src = steps[Number(p.target.slice(REST.length))];
+      const srcSet = src ? setByKey(ctx.sets, src.set) : undefined;
+      const left = Math.max(1, ms.length - (isDouble(srcSet) ? 2 : 1));
+      if (ms[0]) st[ctx.data.mods.get(ms[0])?.type === "suffix" ? "suffix" : "prefix"] += left;
       for (const id of ms) st.placed.add(id);
       // 骨で残りを付けた時も冒涜の数に入れる (2026-10-07 靴で骨を 2 回組めてしまい、回すと全部「冒涜の MOD は 1 つまで」で止まった)
       if (s.kind === "desecrate") st.desecrated++;

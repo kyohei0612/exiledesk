@@ -188,7 +188,8 @@ const rows = computed<Row[]>(() => {
     const restOpts = unsure.map(({ j, x }) => {
       const sides = new Set(candsOfStep(x).map((id) => (c.data.mods.get(id)?.type === "suffix" ? "サフィ" : "プレ")));
       const side = sides.size === 1 ? [...sides][0]! : "";
-      return { key: `${REST}${j}`, label: `残りの${side} MOD 1 つ (${j + 1} 手目の候補で付かなかった物)`, why: null as string | null };
+      const left = Math.max(1, candsOfStep(x).length - (isDouble(setByKey(sets.value, x.set)) ? 2 : 1));
+      return { key: `${REST}${j}`, label: `残りの${side} MOD ${left} つ (${j + 1} 手目の候補で付かなかった物)`, why: null as string | null };
     });
     const targetOpts = set?.kind === "annul" ? [] : props.order.map((k) => {
       const id = k.slice(k.indexOf(":") + 1);
@@ -643,6 +644,8 @@ function nextPart(i: number): void {
   const now = partOf(i, r);
   if (now === "target" && r.step.target) editPart.value = r.set?.kind === "rune" ? "done" : "set";
   else if (now === "set" && r.set && needs2(r)) editPart.value = "target2";
+  // 候補を足せる手 (カオス・高貴など) で、同じ側にほかの狙いがあれば「ほかの候補」も順に聞く (任意。飛ばされて気付かなかった。2026-10-08)
+  else if (now === "set" && r.set && canCands(r) && !candsOf(r).length && r.target2Opts.some((o) => !o.why && o.key !== r.step.target)) editPart.value = "target2";
   else if ((now === "set" || now === "target2") && r.set && hasMiss(r)) editPart.value = "miss";
   else if (now === "set" && r.set && !needs2(r) && presentMods(i, r).length) editPart.value = "lost";
   else if (now === "miss" && needs2(r)) editPart.value = "single";
@@ -650,7 +653,7 @@ function nextPart(i: number): void {
   else confirmStep(i);
 }
 /** 偉大 (2 つ) の手で、2 つ目の MOD を選ぶ段がある (打つだけの手は無し) */
-const needs2 = (r: Row): boolean => isDouble(r.set) && r.step.target !== ANY_TARGET;
+const needs2 = (r: Row): boolean => isDouble(r.set) && r.step.target !== ANY_TARGET && !isRest(r.step.target);
 /** 候補を足せる手 (ガチャ。偉大でなければ任意、どれか 1 つで当たり) */
 const canCands = (r: Row): boolean => hasCands(r.set) && !!r.step.target && r.step.target !== ANY_TARGET && !isRest(r.step.target);
 /** 下のボタンが「この手にする」になる段 (この後に選ぶ物が無い) */
@@ -911,6 +914,8 @@ function confirmStep(i: number): void {
   if (!r || r.bad) return;
   // 決めたら閉じるだけ。次の手は自分で「＋ 手を足す」で足す (2026-10-07 オーナー「設定が終わったら枠を勝手に増やさなくていい、手動でやる」)。スマホは閉じたらその手のカードへ
   closeSheet();
+  // PC: 決めたら左のツリーを一番下へ (次の「＋ 手を足す」が見える。2026-10-08 オーナー)
+  if (!phone.value) void nextTick(() => { const box = treeEl.value; if (box) box.scrollTop = box.scrollHeight; });
 }
 function patch(i: number, p: Partial<PatternStep>): void {
   setSteps((list) => list.map((x, k) => (k === i ? { ...x, ...p } : x)));
