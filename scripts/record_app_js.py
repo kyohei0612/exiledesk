@@ -1,7 +1,8 @@
 """record_app.py がページに入れる JavaScript (カーソルの絵・隠す物・結果の読み取り)."""
 
 # カーソルの絵 (Playwright の操作では OS のカーソルが動かない)。
-# 棚の詳細カード (0.4 秒で出る) と、画面の一番下の取得中の帯 (「自動巡回中」) は録画では隠す。
+# 録画では隠す: 棚の詳細カード (0.4 秒で出る)・一番下の取得中の帯 (「自動巡回中」)・
+# サイドバー (アプリ版だけの機能とログインの状態が出る。宣伝はウェブ版、kyohei 2026-10-08)
 # v0.1.390 まではアプリの「持っているカレンシー」の絵・波紋が拡大 (zoom) の補正抜けで右下にずれた
 # → 隠して持っている絵を自前のカーソルに付けた。v0.1.391 で直った (要望 ㊳) のでアプリの物を使う
 APP_FX_FIXED = True  # v0.1.390 以前を録る時だけ False
@@ -18,7 +19,7 @@ CURSOR_JS = r"""
   const st = document.createElement('style');
   st.textContent = (appFxFixed ? '' : 'img.fixed.z-\\[200\\], .stage-ripple, .stage-drop, ')
     + 'body > div.fixed.z-\\[500\\].w-\\[340px\\], '
-    + 'div.fixed.bottom-0.z-\\[95\\] { display: none !important; }';
+    + 'div.fixed.bottom-0.z-\\[95\\], aside { display: none !important; }';
   document.head.appendChild(st);
   const held = document.createElement('img');
   Object.assign(held.style, {position: 'absolute', left: '14px', top: '14px', width: '46px',

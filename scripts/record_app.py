@@ -131,6 +131,13 @@ def setup(page: Page) -> None:
     page.evaluate(HIDE_JS)
 
 
+def open_stage(page: Page) -> None:
+    """クラフトステージを開く。サイドバーは録画では隠すので、押すのはページの中から."""
+    page.evaluate("""() => [...document.querySelectorAll('aside nav button')]
+            .find(b => b.textContent.includes('クラフトステージ'))?.click()""")
+    page.get_by_role("button", name="手で打つ", exact=True).wait_for(timeout=20000)
+
+
 def run(page: Page, out: Path, only: list[str]) -> None:
     hand = Hand(page)
     card = (
@@ -140,7 +147,6 @@ def run(page: Page, out: Path, only: list[str]) -> None:
     )
     shelf = page.locator("section", has=page.locator("b", has_text=re.compile("^カレンシー$")))
     scroller = page.locator("div.h-full.overflow-auto.p-4").first
-    nav = page.locator("aside nav button", has_text="クラフトステージ")
 
     def steps(n: int) -> Locator:
         return page.get_by_text(re.compile(rf"· {n} 手$"))
@@ -174,15 +180,15 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         steps(0).wait_for(timeout=3000)
 
     page.keyboard.press("Escape")
+    open_stage(page)
+    page.get_by_role("button", name="手で打つ", exact=True).click()
+    page.locator("[data-shelf]").first.wait_for(timeout=20000)
     setup(page)
     page.mouse.move(hand.x, hand.y)
     if "open" in only:
+        top()
         rec = Recorder(out / "open.mp4")
-        hand.click(nav, 900, 0)
-        page.locator("[data-shelf]").first.wait_for(timeout=20000)
-        pause(0.8)
-        setup(page)
-        hand.click(page.get_by_role("button", name="手で打つ", exact=True))
+        pause(1.0)  # サイドバーは映さない → クラフトステージが開いた所から
         hand.click(page.get_by_role("button").filter(has_text=re.compile("▼ 変える")), 700, 0.8)
         cat = page.get_by_placeholder("名前で探す (例: サファイア、ルビー)").locator("xpath=../..")
         hand.click(cat.get_by_role("button", name="指輪", exact=True), 700, 0.8)
@@ -196,10 +202,6 @@ def run(page: Page, out: Path, only: list[str]) -> None:
         pause(2.0)
         rec.stop()
     else:
-        nav.click()
-        page.locator("[data-shelf]").first.wait_for(timeout=20000)
-        page.get_by_role("button", name="手で打つ", exact=True).click()
-        setup(page)
         white()
 
     if "orbs" in only:

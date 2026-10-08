@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 from playwright.sync_api import Locator, Page, sync_playwright
-from record_app import CDP, SPEED, Hand, Recorder, pause, setup
+from record_app import CDP, SPEED, Hand, Recorder, open_stage, pause, setup
 
 BASE_KIND, BASE = "手袋(dex)", "磨かれた弓籠手"
 TARGETS = [r"^最大ライフ \(120", r"^アタックスピードが"]
@@ -45,7 +45,7 @@ def run_sim(page: Page, out: Path) -> None:
 
     # 準備 (録らない): 前の途中を消して「1 ベース」の選ぶ所にしておく
     page.keyboard.press("Escape")
-    page.locator("aside nav button", has_text="クラフトステージ").click()
+    open_stage(page)
     page.get_by_role("button", name="手で打つ", exact=True).wait_for(timeout=20000)
     page.get_by_role("button", name="シミュレーション (実験)", exact=True).click()
     page.wait_for_timeout(800)

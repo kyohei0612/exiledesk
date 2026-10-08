@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from playwright.sync_api import Locator, Page, sync_playwright
-from record_app import CDP, Hand, Recorder, pause, setup
+from record_app import CDP, Hand, Recorder, open_stage, pause, setup
 from record_app_js import LAST_CHANGE_JS
 
 
@@ -78,7 +78,7 @@ def run_ch3(page: Page, out: Path, only: list[str]) -> None:
         notes.clear()
 
     page.keyboard.press("Escape")
-    page.locator("aside nav button", has_text="クラフトステージ").click()
+    open_stage(page)
     page.get_by_role("button", name="手で打つ", exact=True).click()
     page.locator("[data-shelf]").first.wait_for(timeout=20000)
     setup(page)
@@ -104,9 +104,15 @@ def run_ch3(page: Page, out: Path, only: list[str]) -> None:
         rerolled = [reveal.locator("button.w-full").nth(i).inner_text() for i in range(3)]
         pause(1.0)
         n = count()
-        hand.click(reveal.locator("button.w-full").nth(0), 800, 0)
+
+        def rank(i: int) -> tuple[int, int]:  # ティアが良い物 → 同じなら短い物 (台詞で言いやすい)
+            m = re.search(r"T(\d+)", rerolled[i])
+            return (int(m.group(1)) if m else 99, len(rerolled[i]))
+
+        pick = min(range(3), key=rank)
+        hand.click(reveal.locator("button.w-full").nth(pick), 800, 0)
         steps(n + 1).wait_for(timeout=5000)
-        notes.append({"offers": offers, "rerolled": rerolled, "picked": rerolled[0]})
+        notes.append({"offers": offers, "rerolled": rerolled, "picked": rerolled[pick]})
         notes.append({"change": page.evaluate(LAST_CHANGE_JS), "item": card.inner_text()})
         hand.glide(480, 900, 600)
         pause(2.5)
