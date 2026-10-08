@@ -12,6 +12,7 @@
  *     layout=clip で撮影用のすっきりレイアウト)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
+import { isTauriRuntime } from "../utils/isTauriRuntime";
 import type { Pattern } from "../services/craft-stage/pattern";
 import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef } from "vue";
@@ -176,6 +177,8 @@ const simStart = ref<SimStart>("white");
  * 手で打つ画面から持ってきた始めの状態 (2026-10-08 オーナー「その MOD が付いた状態以降を確認したい時があるから、手打ちからそのまま持っていくコース」)。
  * simStart = "item" の時だけ使う。simStartCost = その時点の手打ちの累計 (高貴)
  */
+/** Web 版の工程を覚える手の数 */
+export const LOG_KEEP = 50;
 const simStartItem = ref<StageItem | null>(null);
 /** ベースを選ぶ前に選んだレシピ (StageSimPanel が開いたら読み込む。2026-10-08 完成判定: レシピはベースを選ぶまで出なかった) */
 const simPendingRecipe = ref<string | null>(null);
@@ -346,7 +349,8 @@ export const craftStage = {
     const it = item.value;
     const key = held.value;
     if (!data.value || !it?.foreseen || !key || key === "hinekora") return null;
-    const index = log.value.length + 1;
+    // 手の番号は前の手の続き (Web は 50 手より前を消すので、log の長さでは数えない)
+    const index = (log.value[log.value.length - 1]?.out.index ?? 0) + 1;
     const want = omensFor(key, omens.value);
     const p = playStep(data.value, it, key, { index, seed: seed.value + index, price: () => 0, cumulative: 0, omen: want.length ? want.join("+") : null });
     return { key, applied: p.out.applied, reason: p.out.reason ?? null, added: p.added.map((m) => m.textJa), removed: p.removed.map((m) => m.textJa), after: p.after };
@@ -462,7 +466,9 @@ export const craftStage = {
     const p = playStep(data.value, item.value, key, {
       index, seed: seed.value + index, price: priceOf, cumulative: craftStage.total.value, omen: want.length ? want.join("+") : null,
     });
-    log.value = [...log.value, p];
+    // Web 版は工程を 50 手まで覚え、それより前は消す (データが長くなりすぎる。2026-10-08 オーナー「50 手まで保存でそれ以降は消そうか」)。
+    // アプリは手順 JSON (POE2Tube の再生) に全部の手が要るので消さない
+    log.value = !isTauriRuntime() && log.value.length >= LOG_KEEP ? [...log.value.slice(-(LOG_KEEP - 1)), p] : [...log.value, p];
     item.value = p.after;
     recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
     // 食ったお告げは外す

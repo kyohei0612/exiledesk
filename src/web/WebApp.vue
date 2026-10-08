@@ -57,9 +57,6 @@ function fitZoom(): void {
 }
 fitZoom();
 window.addEventListener("resize", fitZoom);
-/** 配った日時 (vite.web.config.ts の define) */
-declare const __WEB_BUILD__: string;
-const webBuild = typeof __WEB_BUILD__ === "string" ? __WEB_BUILD__ : "開発版";
 </script>
 
 <template>
@@ -69,8 +66,7 @@ const webBuild = typeof __WEB_BUILD__ === "string" ? __WEB_BUILD__ : "開発版"
       <span class="text-[15px] font-bold tracking-wide text-amber-200">ExileDesk</span>
       <span class="opacity-50">Web</span>
       <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">クラフトステージ</span>
-      <!-- 版 + 配った日時 (Web は版の番号を上げずに配るので、更新されたか分かるように。2026-10-08 オーナー) -->
-      <span class="ml-auto whitespace-nowrap opacity-40" :class="phone ? 'text-[10px]' : ''" :title="`アプリ v${pkg.version} と同じ中身 · Web 版を配った日時`">v{{ pkg.version }} · {{ webBuild }}</span>
+      <span class="ml-auto opacity-40" :class="phone ? 'text-[10px]' : ''">v{{ pkg.version }}</span>
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? 'ml-auto py-2' : ''" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? 'py-2' : ''" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">要望・バグを送る</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->

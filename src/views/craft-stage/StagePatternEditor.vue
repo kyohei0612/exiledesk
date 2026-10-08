@@ -456,6 +456,16 @@ function situationsOf(i: number, r: Row): Situation[] {
   void i;
   return out;
 }
+/** 状況の印 (見て分かるように) */
+const SIT_ICON: Record<Situation, string> = { pre_full: "🧱", partial: "◐", miss_t: "✕", miss_o: "✕", miss: "✕" };
+/** 先に打つ物のよく使う札 (無し・普通の消去・左右の消去・カオス)。ほかはプルダウン */
+const quickPre = computed(() => {
+  const pick = (kind: string, omens: string[]): { key: string; label: string; icons: string[] } | null => {
+    const x = removals.value.find((y) => y.kind === kind && y.currency === kind && y.omens.join("+") === omens.join("+"));
+    return x ? { key: x.key, label: `${kind === "annul" ? "消去" : "カオス"}${omens.length ? (omens[0]!.includes("Sinistral") ? " 左" : omens[0]!.includes("Dextral") ? " 右" : "") : ""}`, icons: [kind, ...omens] } : null;
+  };
+  return [{ key: "", label: "なし", icons: [] as string[] }, ...[pick("annul", []), pick("annul", ["OmenofSinistralAnnulment"]), pick("annul", ["OmenofDextralAnnulment"]), pick("chaos", [])].filter((x): x is { key: string; label: string; icons: string[] } => !!x)];
+});
 const rxOf = (r: Row, sit: Situation): Reaction | undefined => r.step.on?.[sit];
 function setRx(i: number, sit: Situation, rx: Reaction | null): void {
   const cur = { ...(pat.value.steps[i]?.on ?? {}) };
@@ -1436,39 +1446,52 @@ defineExpose({ rows });
               <div v-if="!rarityStep(rows[focusRow]!) && (missMore || missKind(rows[focusRow]!) === 'other')" class="mt-2">
                 <StagePatternStepPicker :key="'miss' + focusRow" :sets="removals.filter((x) => x.kind === 'essence_perfect' || x.kind === 'desecrate')" :why="whyMissAt(focusRow)" :current="rows[focusRow]!.step.miss ?? ''" inline @pick="(k) => { patch(focusRow!, { miss: k, onMiss: 'annul_redo' }); editPart = 'miss'; }" />
               </div>
-              <!-- 起こりうること: 状況ごとに反応を選ぶ (選んだ状況は上の決まりより先に使う) -->
+              <!--
+                起こりうること: 状況ごとに「先に打つ物 → 次にすること」を札で選ぶ (選んだ状況は上の決まりより先に使う)。
+                2026-10-08 オーナー「説明は分かりやすいように、感覚で分かるように」: プルダウン 3 つ並びをやめて、文になる札の並びに
+              -->
               <div v-if="situationsOf(focusRow!, rows[focusRow]!).length" class="mt-4 max-w-3xl rounded-lg border border-sky-400/30 bg-sky-950/20 p-2">
-                <p class="mb-1 text-[12px] font-bold text-sky-100">起こりうること <span class="font-normal opacity-60">(状況ごとに選ぶ。選ばなければ上の決まり)</span></p>
-                <div v-for="sit in situationsOf(focusRow!, rows[focusRow]!)" :key="sit" class="border-t border-white/5 py-1.5">
+                <p class="mb-1 text-[12px] font-bold text-sky-100">こうなったら、どうする？ <span class="font-normal opacity-60">(選ばなければ上の決まり)</span></p>
+                <div v-for="sit in situationsOf(focusRow!, rows[focusRow]!)" :key="sit" class="border-t border-white/5 py-2">
                   <div class="flex flex-wrap items-center gap-2">
-                    <span class="w-56 shrink-0 text-[12px] max-md:w-full">{{ SITUATION_JA[sit] }}</span>
-                    <span v-if="rxOf(rows[focusRow]!, sit)" class="text-[12px] font-bold text-sky-100">{{ rxText(rxOf(rows[focusRow]!, sit)!) }}</span>
-                    <span v-else class="text-[11px] opacity-50">上の決まりのまま</span>
-                    <button v-if="!rxOf(rows[focusRow]!, sit)" type="button" class="ml-auto rounded border border-sky-400/50 px-2 py-0.5 text-[11px] text-sky-100 max-md:min-h-10" @click="setRx(focusRow!, sit, { pre: null, then: 'repeat' })">選ぶ</button>
-                    <button v-else type="button" class="ml-auto rounded border border-white/20 px-2 py-0.5 text-[11px] opacity-70 max-md:min-h-10" @click="setRx(focusRow!, sit, null)">外す</button>
+                    <span class="text-[12px] font-bold">{{ SIT_ICON[sit] }} {{ SITUATION_JA[sit] }}</span>
+                    <span v-if="rxOf(rows[focusRow]!, sit)" class="text-[12px] text-sky-100">→ {{ rxText(rxOf(rows[focusRow]!, sit)!) }}</span>
+                    <span v-else class="text-[11px] opacity-50">→ 上の決まりのまま</span>
+                    <button v-if="!rxOf(rows[focusRow]!, sit)" type="button" class="ml-auto rounded-lg border border-sky-400/50 px-2 py-0.5 text-[11px] text-sky-100 max-md:min-h-10" @click="setRx(focusRow!, sit, { pre: null, then: 'repeat' })">自分で決める</button>
+                    <button v-else type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 text-[11px] opacity-70 max-md:min-h-10" @click="setRx(focusRow!, sit, null)">上の決まりに戻す</button>
                   </div>
-                  <div v-if="rxOf(rows[focusRow]!, sit)" class="mt-1 flex flex-wrap items-center gap-2 pl-2 text-[11px] max-md:pl-0">
-                    <label class="flex items-center gap-1">先に打つ
-                      <select class="max-w-[14rem] rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="rxOf(rows[focusRow]!, sit)!.pre ?? ''" @change="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, pre: ($event.target as HTMLSelectElement).value || null })">
-                        <option value="">なし</option>
+                  <template v-if="rxOf(rows[focusRow]!, sit)">
+                    <!-- ① 先に打つ (よく使う札 + ほか) -->
+                    <div class="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
+                      <span class="w-16 shrink-0 opacity-60 max-md:w-full">① 先に打つ</span>
+                      <button v-for="o in quickPre" :key="o.key || 'none'" type="button" class="flex items-center gap-1 rounded-lg border px-2 py-1 max-md:min-h-10" :class="(rxOf(rows[focusRow]!, sit)!.pre ?? '') === o.key ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, pre: o.key || null })">
+                        <img v-for="ic in o.icons" :key="ic" :src="iconOf(ic)" alt="" class="h-5 w-5 object-contain" />{{ o.label }}
+                      </button>
+                      <select class="rounded border border-white/15 bg-black/40 px-1 py-1" :value="quickPre.some((o) => o.key === (rxOf(rows[focusRow!]!, sit)!.pre ?? '')) ? '' : rxOf(rows[focusRow]!, sit)!.pre ?? ''" @change="($event.target as HTMLSelectElement).value && setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, pre: ($event.target as HTMLSelectElement).value })">
+                        <option value="">ほか…</option>
                         <option v-for="o in preChoices" :key="o.key" :value="o.key">{{ o.label }}</option>
                       </select>
-                    </label>
-                    <label class="flex items-center gap-1">次に
-                      <select class="rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="rxOf(rows[focusRow]!, sit)!.then === 'goto' ? `g${rxOf(rows[focusRow]!, sit)!.goto}` : rxOf(rows[focusRow]!, sit)!.then" @change="(ev) => { const v = (ev.target as HTMLSelectElement).value; const cur = rxOf(rows[focusRow!]!, sit)!; setRx(focusRow!, sit, v.startsWith('g') ? { ...cur, then: 'goto', goto: Number(v.slice(1)) } : { ...cur, then: v as Reaction['then'] }); }">
-                        <option value="repeat">この手をもう一度</option>
-                        <option value="next">次の手へ</option>
-                        <option value="restart">{{ props.start.mods ? "この状態から最初から" : "新しいベースで最初から" }}</option>
-                        <option v-for="g in focusRow" :key="g" :value="`g${g - 1}`">{{ g }} 手目へ ({{ cardTitle(rows[g - 1]!) }})</option>
+                    </div>
+                    <!-- ② 次に -->
+                    <div class="mt-1 flex flex-wrap items-center gap-1 text-[11px]">
+                      <span class="w-16 shrink-0 opacity-60 max-md:w-full">② 次に</span>
+                      <button v-for="o in ([['repeat', '↺ この手をもう一度'], ['next', '→ 次の手へ'], ['restart', props.start.mods ? '⟲ この状態から最初から' : '⟲ 新しいベースで最初から']] as const)" :key="o[0]" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="rxOf(rows[focusRow]!, sit)!.then === o[0] ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, then: o[0] })">{{ o[1] }}</button>
+                      <select v-if="focusRow" class="rounded border border-white/15 bg-black/40 px-1 py-1" :class="rxOf(rows[focusRow]!, sit)!.then === 'goto' ? 'border-sky-300 text-sky-50' : ''" :value="rxOf(rows[focusRow]!, sit)!.then === 'goto' ? String(rxOf(rows[focusRow]!, sit)!.goto) : ''" @change="($event.target as HTMLSelectElement).value !== '' && setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, then: 'goto', goto: Number(($event.target as HTMLSelectElement).value) })">
+                        <option value="">↑ 前の手へ…</option>
+                        <option v-for="g in focusRow" :key="g" :value="String(g - 1)">{{ g }} 手目 ({{ cardTitle(rows[g - 1]!) }})</option>
                       </select>
-                    </label>
-                    <label v-if="rxOf(rows[focusRow]!, sit)!.then === 'repeat'" class="flex items-center gap-1">打ち方
-                      <select class="max-w-[16rem] rounded border border-white/15 bg-black/40 px-1 py-0.5" :value="rxOf(rows[focusRow]!, sit)!.again ?? ''" @change="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: ($event.target as HTMLSelectElement).value || null })">
-                        <option value="">同じ</option>
+                    </div>
+                    <!-- ③ もう一度の打ち方 -->
+                    <div v-if="rxOf(rows[focusRow]!, sit)!.then === 'repeat'" class="mt-1 flex flex-wrap items-center gap-1 text-[11px]">
+                      <span class="w-16 shrink-0 opacity-60 max-md:w-full">③ 打ち方</span>
+                      <button type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="!rxOf(rows[focusRow]!, sit)!.again ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: null })">同じ手</button>
+                      <button v-if="rows[focusRow]!.set && rows[focusRow]!.set!.omens.includes('OmenofGreaterExaltation')" type="button" class="rounded-lg border px-2 py-1 max-md:min-h-10" :class="rxOf(rows[focusRow]!, sit)!.again === singleKeyOf(rows[focusRow]!.set!) ? 'border-sky-300 bg-sky-500/20 text-sky-50' : 'border-white/15 hover:border-white/40'" @click="setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: singleKeyOf(rows[focusRow]!.set!) })">偉大を外して 1 発</button>
+                      <select class="max-w-[16rem] rounded border border-white/15 bg-black/40 px-1 py-1" :value="''" @change="($event.target as HTMLSelectElement).value && setRx(focusRow!, sit, { ...rxOf(rows[focusRow]!, sit)!, again: ($event.target as HTMLSelectElement).value })">
+                        <option value="">別のカレンシーで… (錬金のハズレをカオスで振り直す など)</option>
                         <option v-for="o in againChoices(focusRow!)" :key="o.key" :value="o.key">{{ o.label }}</option>
                       </select>
-                    </label>
-                  </div>
+                    </div>
+                  </template>
                 </div>
               </div>
             </template>

@@ -10,7 +10,7 @@
 -->
 <script setup lang="ts">
 import { forceKey } from "../../services/craft-stage/apply-force";
-import { readSimRecipes, type SimRecipe } from "../../state/craft-stage";
+import { LOG_KEEP, readSimRecipes, type SimRecipe } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
@@ -85,7 +85,7 @@ const doomed = computed(() => {
 const fx = useStageFx(mouse);
 const fxCls = computed(() => (fx.value ? { hit: "stage-hit", up: "stage-up", shake: "stage-shake" }[fx.value.kind] : ""));
 /** 付いた / 消えた MOD を光らせ直すための番号 (手ごとに変わる) */
-const flashKey = computed(() => s.log.value.length);
+const flashKey = computed(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0);
 
 /** JSON をコピー (POE2Tube に渡す / CLI の --prices に使う) */
 const copied = ref("");
@@ -166,7 +166,7 @@ function useFromBar(): void {
 }
 watch(() => s.held.value, () => { barMsg.value = null; });
 // 発現 (3 つから選ぶ) で付いた物も帯に出す (帯から打った時しか出ていなかった)
-watch(() => s.log.value.length, (n, o) => {
+watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
   const last = s.last.value;
   if (!phone.value || n <= (o ?? 0) || !last || !String(last.out.currency).startsWith("reveal")) return;
   barMsg.value = { text: last.added.map((m) => `＋ ${m.textJa}`).join("  ") || "発現した", tone: "text-emerald-300" };
@@ -378,7 +378,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
           </template>
         </div>
         <div class="w-[380px] max-md:w-full rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px]">
-          <p class="mb-1 flex items-center justify-between"><b class="text-amber-100">直前の変化</b><span class="tabular-nums opacity-70">累計 {{ displayCurrency.money(s.total.value) }} · {{ s.log.value.length }} 手</span></p>
+          <p class="mb-1 flex items-center justify-between"><b class="text-amber-100">直前の変化</b><span class="tabular-nums opacity-70">累計 {{ displayCurrency.money(s.total.value) }} · {{ s.last.value?.out.index ?? 0 }} 手</span></p>
           <template v-if="s.last.value">
             <p class="opacity-80">{{ s.last.value.out.currency_ja }}<span v-if="s.last.value.out.omen_ja" class="ml-1 text-violet-300">+ {{ s.last.value.out.omen_ja }}</span><span v-if="!s.last.value.out.applied" class="ml-1 text-rose-300/80">— {{ s.last.value.out.reason }}</span></p>
             <p v-if="s.last.value.out.note" class="text-sky-200/90">{{ String(s.last.value.out.note) }}</p>
@@ -388,6 +388,11 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
             <p v-for="m in s.last.value.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ m.textJa }}</p>
           </template>
           <p v-else class="opacity-50">まだ何も使っていません</p>
+          <!-- 工程 (直前の変化の下、固定の高さで中だけ送る。2026-10-08 オーナー「工程はスクロールでいいから直前の変化の所に入れて固定枠で」) -->
+          <div v-if="s.log.value.length" class="mt-3 border-t border-white/10 pt-2">
+            <p class="mb-1 flex items-center gap-2"><b class="text-amber-100">工程</b><span class="text-[10px] opacity-50">{{ inApp ? "" : `最近 ${LOG_KEEP} 手まで` }}</span></p>
+            <div class="max-h-72 overflow-y-auto pr-1 max-md:max-h-64"><StageHistory /></div>
+          </div>
         </div>
       </div>
 
@@ -412,10 +417,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
             </template>
           </CurrencyShelf>
         </section>
-        <section class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-          <p class="mb-2 text-sm font-bold text-amber-100">工程</p>
-          <StageHistory />
-        </section>
+
       </div>
     </div>
     <!-- このベースに付く MOD (StageModList.vue、2026-09-29) -->
