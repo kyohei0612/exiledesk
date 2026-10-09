@@ -93,8 +93,7 @@ const emit = defineEmits<{
     <button
       type="button"
       :disabled="busy || !diff.changed"
-      class="px-3 py-1 rounded-lg border hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-      :class="diff.changed ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]'"
+      class="g-btn sm"
       :title="diff.changed ? `入れる ${diff.add.map(jaSkill).join(', ') || 'なし'} / 外す ${diff.drop.map(jaSkill).join(', ') || 'なし'}` : '設定と監視中の銘柄は一致しています'"
       @click="emit('sync', true)"
     >
