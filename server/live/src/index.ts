@@ -7,6 +7,7 @@
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
  *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord)。GET /feedback.json?key=… で一覧
  *   POST /event            … 操作の印 (Analytics Engine)。日報の「段階と離脱」「どこから」「端末」の元
+ *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day=&key= で取り出す
  *   GET  /report?key=…     … 日報を今すぐ (確かめ用)
  *   GET  /refresh?key=…    … 配信の見張りを今すぐ
  *   GET  /health
@@ -20,6 +21,7 @@ import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
 import { fetchYoutube, fetchYoutubeAvatars, type Latest } from "./youtube";
 import { allowIp, getFeedback, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
 import { parseBatch, writeEvents } from "./events";
+import { dayLogs, saveLog } from "./logs";
 import { alert, dailyReport, reqLog } from "./monitor";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
 
@@ -122,6 +124,13 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     const country = (req as Request & { cf?: { country?: string } }).cf?.country ?? "";
     return json({ ok: true, n: writeEvents(env, b, country) });
   }
+  // 分析用の記録 (log-sender.ts がまとめて送る。中身は解かずに D1 へ)
+  if (url.pathname === "/log" && req.method === "POST") {
+    const text = await req.text();
+    const country = (req as Request & { cf?: { country?: string } }).cf?.country ?? "";
+    const r = await saveLog(env, text, country);
+    return json(r === "ok" ? { ok: true } : { error: r }, r === "ok" ? 200 : 400);
+  }
   // 要望・バグ (Web 版の「要望・バグを送る」)
   if (url.pathname === "/feedback" && req.method === "POST") {
     let body: unknown;
@@ -151,6 +160,12 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       if (!raw) return json({ updatedAt: null, live: [], upcoming: [], channels: [], errors: ["まだ 1 回も調べていない (cron か /refresh を待つ)"] }, 200, { "cache-control": "no-store" });
       return new Response(raw, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=60", ...CORS } });
     }
+    case "/logs/day": {
+      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      const day = url.searchParams.get("day") ?? "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: "day=YYYY-MM-DD" }, 400);
+      return new Response(await dayLogs(env, day), { headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" } });
+    }
     case "/feedback.json":
       if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
       return json(await listFeedback(env.LIVE), 200, { "cache-control": "no-store" });
@@ -162,9 +177,9 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       // &today=1 で「今日のここまで」(集計が通っているかの確かめ用)
       return new Response(await dailyReport(env, fetch, new Date(), url.searchParams.get("today") === "1"), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     case "/health":
-      return json({ ok: true, channels: CHANNELS.length, events: !!env.EVENTS, analytics: !!env.CF_ANALYTICS_TOKEN });
+      return json({ ok: true, channels: CHANNELS.length, events: !!env.EVENTS, logs: !!env.LOGS, analytics: !!env.CF_ANALYTICS_TOKEN });
     default:
-      return json({ error: "not found", paths: ["/live.json", "/health", "/api/poe2scout/…", "POST /feedback", "POST /event"] }, 404);
+      return json({ error: "not found", paths: ["/live.json", "/health", "/api/poe2scout/…", "POST /feedback", "POST /event", "POST /log"] }, 404);
   }
 }
 

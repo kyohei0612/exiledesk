@@ -13,6 +13,7 @@
 -->
 <script setup lang="ts">
 import { keepPlace } from "../../utils/keep-place";
+import { AIM_MAX } from "../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Icon from "../../components/ui/Icon.vue";
@@ -156,6 +157,20 @@ function isCovered(modId: string, t: { name: string; ilvl: number }): boolean {
   const idx = tierIndexOf(modId, t);
   return idx >= 0 && s.simTargets.value.some((x) => [x, ...(x.alts ?? [])].some((y) => y.modId === modId && idx >= y.minTierIndex));
 }
+/** エミュレーターの狙う (その段以上)。もう一度押すとやめる。押したら確率の一覧へ送る */
+function isAim(modId: string, t: { name: string; ilvl: number }): boolean {
+  const idx = tierIndexOf(modId, t);
+  return s.aims.value.some((a) => a.modId === modId && a.minTierIndex === idx);
+}
+/** 同じ MOD は段を差し替え、最大 4 つ (古い物から外す) */
+function aimAt(modId: string, t: { name: string; ilvl: number; rank: string; text: string }): void {
+  if (isAim(modId, t)) { s.aims.value = s.aims.value.filter((a) => a.modId !== modId); return; }
+  const idx = tierIndexOf(modId, t);
+  if (idx < 0) return;
+  const rest = s.aims.value.filter((a) => a.modId !== modId);
+  s.aims.value = [...rest, { modId, minTierIndex: idx, label: `${t.text} (${t.rank} 以上)` }].slice(-AIM_MAX);
+  void nextTick(() => document.querySelector("[data-aim-panel]")?.scrollIntoView({ block: "start", behavior: "smooth" }));
+}
 function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
   const idx = tierIndexOf(modId, t);
   if (idx < 0) return;
@@ -279,7 +294,9 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'rune' || sec.g === 'desecrated' || sec.g === 'essence' || sec.g === 'perfect_essence')" class="w-20 py-0.5 text-right">
                       <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-10 max-md:px-3 max-md:text-[12px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? 'もう一度押すと外す' : sec.rune ? `② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める` : `② に足す (${t.rank} 以上)`" @click.stop="keepPlace($event.currentTarget as Element, () => toggleTarget(t.modId ?? r.id, t))">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
                     </td>
-                    <td v-else-if="s.mode.value !== 'sim' && !s.replay.value" class="w-44 py-0.5 text-right max-md:w-auto">
+                    <td v-else-if="s.mode.value !== 'sim' && !s.replay.value" class="w-56 py-0.5 text-right max-md:w-auto">
+                      <!-- 狙う (いつでも): 今の状態から打った時にこの段以上が付く確率を、打ち方ごとに棚の上へ (2026-10-09 オーナー) -->
+                      <button type="button" class="mr-1 rounded border px-1.5 text-[10px] max-md:min-h-9 max-md:px-2.5" :class="isAim(t.modId ?? r.id, t) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50' : 'border-amber-400/60 text-amber-200 hover:bg-amber-500/15'" :title="isAim(t.modId ?? r.id, t) ? 'もう一度押すとやめる' : `${t.rank} 以上が付く確率を打ち方ごとに出す (最大 ${AIM_MAX} つまで一緒に狙える)`" @click.stop="aimAt(t.modId ?? r.id, t)">{{ isAim(t.modId ?? r.id, t) ? "狙い中" : "狙う" }}</button>
                       <!-- 打ち始めた後 (と、始めの状態に入れられない種類) は指名の手として付ける。灰色 = 今は付けられない (理由は title) -->
                       <span v-if="!canStart || !(sec.g === 'normal' || sec.g === 'desecrated')" class="inline-flex gap-1">
                         <button type="button" class="rounded border px-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-30" :class="sec.g === 'desecrated' || sec.g === 'otherworldly' ? 'border-green-700/80 text-lime-200 hover:bg-green-800/30' : sec.g === 'essence' || sec.g === 'perfect_essence' ? 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15' : 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15'" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank).why" :title="forceOf(r.group, t.modId ?? r.id, t.rank).why ?? `${t.rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank).key)">{{ sec.g === "desecrated" || sec.g === "otherworldly" ? "冒涜で付ける" : "付ける" }}</button>

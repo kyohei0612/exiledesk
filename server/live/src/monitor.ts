@@ -7,6 +7,7 @@
  */
 import { FUNNEL_SIM, STEP_JA, summarize, type Summary } from "./events";
 import { listFeedback } from "./feedback";
+import { dayCount } from "./logs";
 import type { Env, Fetch, LiveState } from "./types";
 
 const ALERT_TTL = 6 * 3600;
@@ -155,7 +156,11 @@ export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Da
   ]);
   const day = fb.filter((x) => x.at >= since && x.at < until);
   const live = (await env.LIVE.get("state", "json")) as LiveState | null;
-  const text = reportText(label, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts);
+  const base = reportText(label, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts);
+  // 分析用の記録 (D1) の昨日の件数
+  const logDay = new Date(new Date(since).getTime() + 9 * 3600e3).toISOString().slice(0, 10);
+  const lc = await dayCount(env, logDay).catch(() => null);
+  const text = lc ? `${base}\n分析用の記録: ${lc.records.toLocaleString()} 件 (${lc.batches.toLocaleString()} まとまり)` : base;
   await postDiscord(env.DISCORD_WEBHOOK, text, fetchFn);
   return text;
 }

@@ -1,0 +1,53 @@
+/**
+ * 分析用の記録を送る側 (2026-10-09)。logRecord (utils/log-record.ts) の受け口を登録して、溜めた物を 1 分おき・画面を離れる時に
+ * POST /log (server/live、D1 に 1 まとまり 1 行) へまとめて送る。サーバーは中身を解かずに置くだけなので重くならない。
+ * 先頭に app と n を置く (サーバーはそこだけ読む)。uid = この端末の乱数 (操作の印と同じ)、名前・IP・ログインの情報は送らない
+ */
+import pkg from "../../../package.json";
+import { WEB_API_BASE } from "../../web/config";
+
+const UID_KEY = "exiledesk.web.uid";
+const FLUSH_MS = 60_000;
+const MAX_RECS = 200;
+const MAX_CHARS = 200_000;
+
+type Rec = { k: string; t: number; d: Record<string, unknown> };
+let started = false;
+
+export function startLogSender(app: "web" | "app"): void {
+  if (started) return;
+  started = true;
+  const rand = (): string => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+  let uid = "";
+  try { uid = localStorage.getItem(UID_KEY) ?? ""; if (!uid) { uid = rand(); localStorage.setItem(UID_KEY, uid); } } catch { uid = rand(); }
+  const sid = rand();
+  const dev = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "mobile" : "pc";
+  let buf: Rec[] = [];
+  let chars = 0;
+
+  const flush = (beacon = false): void => {
+    if (!buf.length) return;
+    const recs = buf;
+    buf = [];
+    chars = 0;
+    // app と n を先頭に (サーバーは頭の 200 文字だけ見る)
+    const body = `{"app":"${app}","n":${recs.length},"v":"${pkg.version}","uid":"${uid}","sid":"${sid}","dev":"${dev}","recs":${JSON.stringify(recs)}}`;
+    const url = `${WEB_API_BASE}/log`;
+    try {
+      const blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
+      if (beacon && navigator.sendBeacon?.(url, blob)) return;
+      void fetch(url, { method: "POST", body, headers: { "content-type": "text/plain;charset=UTF-8" }, keepalive: body.length < 60_000, credentials: "omit" }).catch(() => undefined);
+    } catch { /* 落としてよい */ }
+  };
+  (globalThis as { __exiledeskLog?: (k: string, d: Record<string, unknown>) => void }).__exiledeskLog = (k, d) => {
+    const r: Rec = { k, t: Date.now(), d };
+    const len = JSON.stringify(r).length;
+    if (len > 20_000) return; // 1 件が大きすぎる物は捨てる
+    buf.push(r);
+    chars += len;
+    if (buf.length >= MAX_RECS || chars >= MAX_CHARS) flush();
+  };
+  setInterval(() => flush(), FLUSH_MS);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(true); });
+  addEventListener("pagehide", () => flush(true));
+}

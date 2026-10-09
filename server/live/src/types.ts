@@ -51,6 +51,8 @@ export interface Env {
   LIVE: KVNamespace;
   /** 操作の印の置き場 (Workers Analytics Engine。無ければ印は捨てる) */
   EVENTS?: AnalyticsEngineDataset;
+  /** 分析用の記録の置き場 (D1。POST /log のまとまりを 1 行ずつ。logs.ts) */
+  LOGS?: D1Database;
   YOUTUBE_API_KEY?: string;
   TWITCH_CLIENT_ID?: string;
   TWITCH_CLIENT_SECRET?: string;

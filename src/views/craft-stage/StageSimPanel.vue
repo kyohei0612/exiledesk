@@ -10,6 +10,7 @@
   探す自動 (計算機の自動のツリー) は外した。計算機 (htc-craft) はそのまま。
 -->
 <script setup lang="ts">
+import { logRecord } from "../../utils/log-record";
 import { AFFIX_COUNT } from "../../services/htc/tree-buy";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, iconOf, mergeRecipesFromFile, nameOf, priceOf, readSimRecipes, recipesToFile, writeSimRecipes, writeSimSession, type SimRecipe, type SimSession } from "../../state/craft-stage";
@@ -735,6 +736,12 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       showResult(out.reduce((b, x, i) => (x.out.r.perDone < out[b]!.out.r.perDone ? i : b), 0));
     }
     ranFor.value = sig.value;
+    // 分析用の記録 (2026-10-09): 何を狙ってどう組んだら、いくらで何割完成したか
+    logRecord("sim_run", {
+      base: s.base.value, ilvl: s.itemLevel.value, start: s.simStart.value, runs: runs.value, maxSteps: maxSteps.value,
+      targets: s.simTargets.value.map((t) => `${t.modId}#${t.minTierIndex}${t.method ? ":" + t.method : ""}${t.alts?.length ? "+" + t.alts.length : ""}`),
+      results: out.map((x) => ({ name: x.name, moves: s.simPatterns.value.find((p) => p.name === x.name)?.play?.moves.length ?? null, perDone: Math.round(x.out.r.perDone * 100) / 100, pDone: Math.round(x.out.r.pDone * 1000) / 1000 })),
+    });
     // スマホ: 回した結果 (1 個あたりの平均) を画面の上に (2026-10-09 スナップで確認: 「回す」の所に止まったまま結果が下に隠れていた)
     if (phone.value && my === gen) void nextTick(() => document.querySelector("[data-sim-result]")?.scrollIntoView({ block: "start", behavior: "smooth" }));
   } catch (e) {

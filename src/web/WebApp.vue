@@ -90,6 +90,7 @@ window.addEventListener("resize", fitZoom);
     <footer class="flex shrink-0 items-center gap-3 border-t border-[var(--exile-color-border-subtle)] px-4 text-[10px] opacity-50" :class="phone ? 'h-auto flex-wrap py-1.5' : 'h-7'">
       <span>ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。</span>
       <span>相場は <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>、確率はゲームのデータからの推定で、結果を保証するものではありません。</span>
+      <span>使い方の記録 (打った手・回した結果など。名前や IP は含みません) を改善のために集めています。</span>
       <span class="ml-auto">協賛の枠には PR と表示します</span>
     </footer>
   </div>

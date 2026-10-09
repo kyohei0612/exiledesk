@@ -1,7 +1,7 @@
 // Cloudflare Workers の設定 (exiledesk-live)。
 // 5 分おきに channels.json のチャンネルがライブ中かを調べ、KV に 1 つの JSON で置く。
 // サイトは GET /live.json を読むだけ (YouTube / Twitch には 5 分に 1 回しか問い合わせない)。
-// ほかに: 相場の中継 (/api/poe2scout)・要望/バグ (/feedback)・操作の印 (/event → Analytics Engine)・毎朝 9 時 (JST) の日報 (0 0 * * * UTC)
+// ほかに: 相場の中継 (/api/poe2scout)・要望/バグ (/feedback)・操作の印 (/event → Analytics Engine)・分析用の記録 (/log → D1)・毎朝 9 時 (JST) の日報 (0 0 * * * UTC)
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "exiledesk-live",
@@ -19,6 +19,8 @@
   ],
   // 操作の印 (無料 10 万/日、3 か月残る)。日報は SQL API で集計する (CF_ANALYTICS_TOKEN が要る)
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "exiledesk_events" }],
+  // 分析用の記録 (POST /log、2026-10-09)。届いたまとまりを 1 行ずつ (無料 10 万行/日・5 GB)。取り出しは GET /logs/day?day=&key= か scripts/pull-logs.mjs
+  "d1_databases": [{ "binding": "LOGS", "database_name": "exiledesk-logs", "database_id": "26272a12-1dfa-4d2f-aab4-cc27f7bc0efe", "migrations_dir": "migrations" }],
   "vars": {
     // 日報の集計 (GraphQL / SQL API) に使う。秘密ではない
     "CF_ACCOUNT_ID": "b824ebc2247db353f01cabcee65b567f",

@@ -16,6 +16,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { toCss } from "../../utils/zoom";
 import StageItemCard from "./StageItemCard.vue";
 import StageItemMini from "./StageItemMini.vue";
+import StageAimPanel from "./StageAimPanel.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
 import RevealPanel from "./RevealPanel.vue";
@@ -430,6 +431,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
       <!-- カレンシー棚 + 工程履歴 -->
       <div class="min-w-0 space-y-4">
+        <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
+        <StageAimPanel v-if="!s.replay.value" />
         <section class="g-panel p-2">
           <p class="mb-2 flex items-center gap-2 text-[12px]">
             <b class="g-brush text-[20px] tracking-[0.14em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">カレンシー</b>

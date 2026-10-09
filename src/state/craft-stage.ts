@@ -23,10 +23,11 @@ import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecr
 import { freshItem, playPlan, playStep, resultOf, startFrom, type PlayedStep, type StartSpec } from "../services/craft-stage/run-plan";
 import type { Force } from "../services/craft-stage/stage-core";
 import { mulberry32 } from "../services/htc/rng";
+import { logRecord } from "../utils/log-record";
 import { marketStore } from "./market-store";
 import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey } from "./craft-stage-shelf";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
-import type { StageItem } from "../services/craft-stage/types";
+import type { StageItem, StageMod } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
 import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
 import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../services/craft-stage/defence";
@@ -195,6 +196,12 @@ const simOrder = ref<string[]>([]);
 const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }]);
 /** パターンの名前 → ハズレルート設定で決めていない形の数 (開いたパターンだけ。残っていれば回さない。2026-10-10 オーナー「ハズレ設定しないと回せない」) */
 const simPlayLeft = ref<Record<string, number>>({});
+/**
+ * エミュレーターの「狙う」(2026-10-09): 狙う MOD (その段以上)。最大 4 つ (錬金術で一度に付く数)、全部揃えば当たり。
+ * 棚の上に打ち方ごとの揃う確率を出す (StageAimPanel.vue)
+ */
+const aims = ref<Array<{ modId: string; minTierIndex: number; label: string }>>([]);
+export const AIM_MAX = 4;
 
 /**
  * シミュレーションの途中 (ベース・狙う MOD・工程の「決めた」・順番計画・パターン) を覚えて、開き直した時にそのまま出す
@@ -346,7 +353,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -486,6 +493,9 @@ export const craftStage = {
     // アプリは手順 JSON (POE2Tube の再生) に全部の手が要るので消さない
     log.value = !isTauriRuntime() && log.value.length >= LOG_KEEP ? [...log.value.slice(-(LOG_KEEP - 1)), p] : [...log.value, p];
     item.value = p.after;
+    // 分析用の記録 (2026-10-09): 打つ前の MOD・打った物・お告げ・付いた / 消えた MOD
+    const ms = (l: readonly StageMod[]): string[] => l.map((m) => `${m.modId}#${m.tierIndex}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}`);
+    logRecord("emu_use", { base: base.value, ilvl: itemLevel.value, rarity: p.before.rarity, before: ms([...p.before.prefixes, ...p.before.suffixes]), use: key, omens: want, added: ms(p.added), removed: ms(p.removed), ok: p.out.applied, cost: p.out.cost?.subtotal ?? null });
     recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
     // 食ったお告げは外す
     const ate = p.out.omen ? p.out.omen.split("+") : [];
