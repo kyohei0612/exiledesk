@@ -59,13 +59,17 @@ const aimOpts = computed<AimOpt[]>(() => {
   const step = x && x.kind === "exalt" && x.omens.includes(GREATER) ? 2 : 1;
   const onlySide: "prefix" | "suffix" | null = x?.omens.some((o) => /^OmenofSinistral/.test(o)) ? "prefix" : x?.omens.some((o) => /^OmenofDextral/.test(o)) ? "suffix" : null;
   const ts = craftStage.simTargets.value.filter((t) => t.method !== "fracture");
-  // カオスは両側に付くので、まだ揃っていない狙いを全部まとめた「どれか 1 つ (両側)」も出す (2026-10-10 MazBro の指輪)
+  // プレとサフィにまたがる「どれか」(2 の段で選んだカオススパム) は、両側のどれか 1 つ (付いた側でルートが分かれる)
   if (x?.kind === "chaos" && !onlySide) {
-    const all = ts.flatMap((t) => { const ms = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])]; return doneBefore(ms.map((m) => m.modId)) >= ms.length ? [] : ms; });
-    if (new Set(all.map((m) => sideOfId(m.modId))).size > 1) out.push({ key: "any:" + all.map((m) => m.modId).sort().join(","), label: `どれか 1 つ · 両側 (${all.map((m) => shortName(m.modId)).join(" / ")})`, mods: all, side: "any", need: 1 });
+    for (const t of ts) {
+      const ms = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
+      if (new Set(ms.map((m) => sideOfId(m.modId))).size < 2) continue;
+      out.push({ key: "any:" + ms.map((m) => m.modId).sort().join(","), label: `どれか 1 つ · プレかサフィ (${ms.map((m) => shortName(m.modId)).join(" / ")})`, mods: ms, side: "any", need: 1 });
+    }
   }
   for (const t of ts) {
     const mods = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
+    if (new Set(mods.map((m) => sideOfId(m.modId))).size > 1) continue;
     const side = sideOfId(t.modId);
     if (onlySide && side !== onlySide) continue;
     const before = doneBefore(mods.map((m) => m.modId));
@@ -425,6 +429,18 @@ const parseDest = (v: string): number | "end" | undefined => (v === "" ? undefin
 function setNext(i: number, v: string): void {
   setMoves(moves.value.map((m, k) => { if (k !== i) return m; const { next: _n, ...rest } = m; const to = parseDest(v); return to == null ? rest : { ...rest, next: to }; }));
 }
+/**
+ * 2 の段でプレとサフィにまたがる「どれか」をカオススパムにしたら、打ち方の 1 手目はそのカオス (2 つのルートに分かれる) を入れておく
+ * (2026-10-10 オーナー「その仕組み選んだ時点でツリーのタブ 2 つになる」)
+ */
+watch(() => [moves.value.length, craftStage.simTargets.value] as const, ([n]) => {
+  if (n || props.locked) return;
+  const t = craftStage.simTargets.value.find((x) => x.method === "chaos" && x.alts?.length && new Set([x.modId, ...x.alts.map((a) => a.modId)].map(sideOfId)).size > 1);
+  const ch = t ? props.sets.find((x) => x.kind === "chaos" && x.currency === "chaos" && !x.omens.length) : undefined;
+  if (!t || !ch) return;
+  setMoves([{ use: ch.key, aim: { mods: [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])], need: 1, side: "any" }, branch: { prefix: "end", suffix: "end" } }]);
+  route.value = "prefix";
+}, { immediate: true });
 // 自動の行き先を入れる (中で使う物が全部できてから。上の autoTarget の決まり)
 watch(shapes, () => {
   let changed = false;

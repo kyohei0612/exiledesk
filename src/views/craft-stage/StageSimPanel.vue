@@ -693,6 +693,9 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
         const best = new Map<string, NonNullable<NonNullable<Pattern["play"]>["moves"][number]["aim"]>>();
         // 両側の狙い (カオスの途中の狙い) は完成の条件に入れない (同じ MOD を後の手の狙いと取り合って、揃っていても未完成になっていた。2026-10-10)
         for (const m of p.play?.moves ?? []) if (m.aim && m.aim.side !== "any") { const k = m.aim.mods.map((x) => x.modId).sort().join(","); const b = best.get(k); if (!b || b.need < m.aim.need) best.set(k, m.aim); }
+        // 両側の狙いは、後の手の狙いと MOD が重ならない時だけ完成の条件に (2 の段の「プレかサフィのどれか」そのものが欲しい MOD の時)
+        const later = new Set([...best.values()].flatMap((a) => a.mods.map((x) => x.modId)));
+        for (const m of p.play?.moves ?? []) if (m.aim?.side === "any" && !m.aim.mods.some((x) => later.has(x.modId))) best.set("any:" + m.aim.mods.map((x) => x.modId).sort().join(","), m.aim);
         return [...spec.targets.filter((t) => t.method === "fracture" || onStart.has(t.modId)), ...[...best.values()].map((a) => aimTarget(a))];
       };
       const played = compilePlay(p.play!, sets);

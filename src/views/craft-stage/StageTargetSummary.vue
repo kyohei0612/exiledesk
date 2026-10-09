@@ -140,8 +140,15 @@ function canCopy(host: string): boolean {
  * 1 つの枠を争う物はグループにまとめる (フラクチャーの候補全部 / 手順の本体 + あるいは)。2 つ以上の時だけ点線の枠で「どれか 1 つ」。
  * グループは 1 MOD (1 枠)。グループの付きやすさは候補の合計
  */
+/** プレとサフィにまたがる「どれか」(カオススパム) の手順の本体 */
+const mixedHosts = computed(() => new Set(s.simTargets.value.filter((t) => t.alts?.length && new Set([t.modId, ...t.alts.map((a) => a.modId)].map((id) => s.data.value?.mods.get(id)?.type === "suffix" ? "S" : "P")).size > 1).map((t) => t.modId)));
+/** またがる「どれか」は左右の列でなく下の 1 枠に (打ち方ではプレに付いた時・サフィに付いた時の 2 つのルート) */
+const mixed = computed(() => [...mixedHosts.value].map((host) => {
+  const members = rows.value.filter((r) => r.group === host);
+  return { key: host, no: members[0]?.no ?? null, host, members };
+}));
 const columns = computed(() => (["P", "S"] as const).map((side) => {
-  const list = rows.value.filter((r) => r.side === side);
+  const list = rows.value.filter((r) => r.side === side && !mixedHosts.value.has(r.group));
   const groups: Array<{ key: string; no: number | null; kind: Kind; host: string; need: number; members: Row[]; share: number | null }> = [];
   for (const r of list) {
     const key = r.kind === "fracture" ? "fracture" : r.group;
@@ -287,6 +294,28 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
           <option v-for="p in plansOf(g.host)" :key="p" :value="p">{{ PLAN_JA[p] }}{{ p === "fracture" && g.kind !== "fracture" && !canFracture(g.host) ? " (違う側・非推奨)" : "" }}</option>
         </select>
         <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「ここからやり直す」)'">{{ PLAN_JA[planOf(g)] }}</span>
+      </div>
+    </div>
+    <!-- プレとサフィにまたがる「どれか」(カオススパム) -->
+    <div v-for="g in mixed" :key="g.key" class="min-w-0 md:col-span-2">
+      <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold opacity-70">プレかサフィのどれか <span class="font-normal">(付いた側で打ち方のルートが分かれる)</span></p>
+      <div class="flex items-start gap-1.5 py-0.5 max-md:flex-wrap">
+        <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
+        <div class="min-w-0 flex-1 rounded-md bg-[var(--exile-color-bg-elevated)]/60 px-2 py-1 ring-1 ring-white/[0.06]">
+          <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1 rounded bg-black/30 px-1">
+              <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ r.side === "P" ? "プレ" : "サフィ" }}</span>
+              <span class="truncate" :title="r.text">{{ r.text }}</span>
+              <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
+                <option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option>
+              </select>
+              <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
+              <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button>
+            </span>
+            <button v-if="props.editable" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="この枠に候補を足す (どれか 1 つ付けば当たり)" @click="s.simAltFor.value = g.host">＋</button>
+          </div>
+        </div>
+        <span class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS.chaos">カオススパム</span>
       </div>
     </div>
   </div>

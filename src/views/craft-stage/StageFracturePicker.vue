@@ -49,6 +49,9 @@ function whyBlocked(r: ListRow): string | undefined {
 }
 const blocked = (r: ListRow): boolean => (!!lockedSide.value && lockedSide.value !== r.side && !pickedOf(r)) || usedElsewhere(r);
 const lockedSide = computed(() => {
+  // カオススパムの「どれか」はプレとサフィにまたげる (2026-10-10 オーナー「カオススパムでどれかって時にプレとサフィ選択できるように」。
+  // 打ち方ではプレに付いた時・サフィに付いた時の 2 つのルートになる)
+  if (host.value?.method === "chaos") return null;
   const first = candidates.value[0];
   const m = first ? s.data.value?.mods.get(first.modId) : null;
   return m ? (m.type === "suffix" ? "suffix" : "prefix") : null;
