@@ -1,7 +1,6 @@
 // 確率表 (held-odds.ts) の総当たり (2026-10-10 オーナー「手動でデバックしたくない、全パターン持ってみて確率しっかりチェックしないと」)。
 // 部位 × 状態 (ノーマル / マジック / レア / 品質付き / 両側が埋まった) × 棚の MOD を足す手と骨の全部 × お告げ (無し・1 枚・掛けられる 2 枚) を自動で並べて、
 // 表の確率と実際に打った結果 (付いた MOD / 骨は候補 3 つに出た MOD) を突き合わせる。表で 0% の物が出たら、その場で失敗
-import { writeFileSync } from "node:fs";
 import { loadPatch } from "../helpers/patch";
 import { applyCurrency, kindOf } from "../../src/services/craft-stage/apply-currency";
 import { revealOffers } from "../../src/services/craft-stage/apply-desecrate";
@@ -104,16 +103,19 @@ function check(item: StageItem, key: string, omens: string[], bad: string[]): vo
 }
 
 /** 1 つのベースの全部を突き合わせて、合わなかった物の一覧を返す */
-export function sweepBase(base: string): string[] {
+/** ベースの状態 (ノーマル / マジック / レア / 品質 / ルーン / 両側が埋まった ...) */
+export const statesOf = states;
+
+/**
+ * 1 つの状態の全部 (棚の手 × お告げ) を突き合わせて、合わなかった物の一覧を返す。
+ * 手ごとに一度手を離す (CI の少ないコアでは、長く CPU を握ると vitest の連絡 onTaskUpdate が時間切れで落ちた。2026-10-10)
+ */
+export async function sweepState(item: StageItem): Promise<string[]> {
   const bad: string[] = [];
-  for (const [st, item] of states(base)) {
-    const keys = [...ORB_KEYS, ...BONES, ...essenceShelf(data, item).flatMap((g) => g.keys)];
-    for (const key of keys) for (const om of omenSets(key)) {
-      const before = bad.length;
-      check(item, key, om, bad);
-      for (let i = before; i < bad.length; i++) bad[i] = `${st}: ${bad[i]}`;
-    }
+  const keys = [...ORB_KEYS, ...BONES, ...essenceShelf(data, item).flatMap((g) => g.keys)];
+  for (const key of keys) {
+    for (const om of omenSets(key)) check(item, key, om, bad);
+    await new Promise((r) => setImmediate(r));
   }
-  if (process.env.ODDS_DUMP) writeFileSync(`${process.env.ODDS_DUMP}/${base}.txt`, bad.join("\n"));
   return bad;
 }

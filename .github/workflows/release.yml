@@ -73,8 +73,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # 画面側のテスト (vitest、約 10 秒)。落ちたらリリースを止める (2026-09-29 案 A。Rust のテストは tests.yml が別に回す)
+      # 確率表の総当たり (tests/held-odds-all、数分かかる) はリリースでは回さない。tests.yml が main への push ごとに回す (2026-10-10)
       - name: テスト (vitest)
-        run: pnpm test
+        run: pnpm test --exclude "tests/held-odds-all/**"
 
       # vendor の SHA + 組み立てスクリプトが前回と同じなら、PoB 同梱はまるごと飛ばす。
       # SHA は submodule の中身が無くても git ls-tree で読める
