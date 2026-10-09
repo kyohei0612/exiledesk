@@ -13,6 +13,8 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import HelpTip from "../../components/ui/HelpTip.vue";
+import Icon from "../../components/ui/Icon.vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
 import { GROUP_JA, modListFor, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import essenceKeys from "../../services/htc/essence-keys.json";
@@ -190,24 +192,24 @@ const toneOf = (sec: { g: ModGroup; rune: string | null }): { tab: string; bar: 
  * 2026-10-05 オーナー「エッセンスは水色で普通は青、冒涜は深緑、冒涜の緑はよどんでる感じでふよふよってグラデーション」)
  */
 const TONE: Record<ModGroup, { tab: string; bar: string }> = {
-  normal: { tab: "bg-rarity-magic/25 text-[#c8c8ff] ring-1 ring-rarity-magic/60", bar: "bg-rarity-magic/20" },
-  rune: { tab: "bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/60", bar: "bg-amber-500/15" },
-  essence: { tab: "bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/60", bar: "bg-sky-400/15" },
-  perfect_essence: { tab: "bg-cyan-400/20 text-cyan-100 ring-1 ring-cyan-300/60", bar: "bg-cyan-400/15" },
-  desecrated: { tab: "bg-gradient-to-r from-green-900/70 via-emerald-800/40 to-lime-900/60 text-lime-100/90 ring-1 ring-green-700/70", bar: "bg-gradient-to-r from-green-950/60 via-emerald-900/40 to-lime-900/30" },
-  otherworldly: { tab: "bg-teal-500/20 text-teal-100 ring-1 ring-teal-400/60", bar: "bg-teal-500/15" },
+  normal: { tab: "bg-rarity-magic/25 text-[#c8c8ff] ring-1 ring-rarity-magic/60", bar: "bg-rarity-magic/10" },
+  rune: { tab: "bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/60", bar: "bg-amber-500/[0.08]" },
+  essence: { tab: "bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/60", bar: "bg-sky-400/[0.08]" },
+  perfect_essence: { tab: "bg-cyan-400/20 text-cyan-100 ring-1 ring-cyan-300/60", bar: "bg-cyan-400/[0.08]" },
+  desecrated: { tab: "bg-gradient-to-r from-green-900/70 via-emerald-800/40 to-lime-900/60 text-lime-100/90 ring-1 ring-green-700/70", bar: "bg-gradient-to-r from-green-950/40 via-emerald-900/25 to-lime-900/20" },
+  otherworldly: { tab: "bg-teal-500/20 text-teal-100 ring-1 ring-teal-400/60", bar: "bg-teal-500/[0.08]" },
 };
 </script>
 
 <template>
   <section class="text-[12px]" :class="props.embedded ? '' : 'mt-4 rounded-xl border border-white/10 bg-white/[0.03]'">
     <!-- 見出し (押すと畳む) -->
-    <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left" @click="open = !open">
+    <div role="button" tabindex="0" :aria-expanded="open" class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left" @click="open = !open" @keydown.enter="open = !open">
       <b class="text-sm text-amber-100">このベースに付く MOD</b>
-      <span v-if="s.mode.value === 'sim'" class="max-md:hidden opacity-50">{{ s.item.value?.baseJa }} · 右の数: 出やすさ (同じ側の重みの割合) / 段の数 / T1 の Lv</span>
-      <span v-else class="max-md:hidden opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合<template v-if="canStart"> · ティアの表の「付ける」で始めの状態を組める</template></span>
-      <span class="ml-auto opacity-60"><span class="whitespace-nowrap">{{ open ? "▲ 畳む" : "▼ 開く" }}</span></span>
-    </button>
+      <span class="text-[var(--exile-color-text-tertiary)] max-md:hidden">{{ s.item.value?.baseJa }}</span>
+      <HelpTip :text="s.mode.value === 'sim' ? '出やすさ = 同じ側の重みの割合。段 = 段の数、Lv = T1 の MOD レベル。MOD を押すと段の表が開く' : `出やすさ = 同じ側の重みの割合 (アイテムレベルは見ない)。段 = 段の数、Lv = T1 の MOD レベル${canStart ? '。段の表の「付ける」で始めの状態を組める' : ''}`" @click.stop />
+      <span class="ml-auto inline-flex items-center gap-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ open ? "畳む" : "開く" }}<Icon :name="open ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></span>
+    </div>
 
     <div v-if="open" class="border-t border-white/10 px-3 pb-3 pt-2">
       <!-- 目次 (押すとその種類までスクロール。スクロールしても上に残る) と検索 -->
@@ -215,8 +217,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
       <input v-model="query" type="search" placeholder="文面やタグで探す (例: 耐性、ライフ)" class="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 md:hidden" />
       <!-- スマホは固定せず 1 段の横送り (固定すると 4 段で 130px 占めていた。2026-10-08 レビュー) -->
       <div class="sticky top-0 z-10 -mx-3 mb-2 flex flex-wrap items-center gap-1.5 bg-[#15130f]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
-        <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5 max-md:shrink-0 max-md:py-1.5" :class="active === sec.sid ? toneOf(sec).tab : 'border border-white/15 opacity-70 hover:opacity-100'" @click="jump(sec.sid)">
-          {{ sec.label }} <span class="opacity-60">{{ sec.count }}</span>
+        <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5 max-md:shrink-0 max-md:py-1.5" :class="active === sec.sid ? toneOf(sec).tab : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" @click="jump(sec.sid)">
+          {{ sec.label }} <span class="ml-0.5 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ sec.count }}</span>
         </button>
         <input v-model="query" type="search" placeholder="文面やタグで探す (例: 耐性、ライフ)" class="ml-auto w-60 rounded-lg border border-white/15 bg-black/30 px-2 py-0.5 max-md:hidden" />
       </div>
@@ -230,17 +232,18 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
         </h3>
         <div v-if="secShown(sec.sid)" class="grid gap-3 md:grid-cols-2">
           <div v-for="col in sec.columns" :key="col.side" class="min-w-0">
-            <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1">
-              <b :class="col.side === 'prefix' ? 'text-sky-200' : 'text-violet-200'">{{ col.title }}</b>
-              <span class="opacity-50">{{ col.items.length }} 系統</span>
+            <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2">
+              <b class="text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
+              <span class="text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} 系統</span>
+              <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-11 text-right">出やすさ</span><span class="w-6 text-right">段</span><span class="w-7 text-right">Lv</span></span>
             </p>
             <p v-if="!col.items.length" class="py-2 opacity-40">無し</p>
             <div v-for="r in col.items" :key="r.id" class="mb-1">
               <!-- 1 系統 1 行。後ろの棒が出やすさ (列の一番出やすい物を 100%) -->
               <button
                 type="button"
-                class="relative w-full overflow-hidden rounded-lg border px-2 py-1 text-left transition"
-                :class="[r.on ? 'border-emerald-400/70' : 'border-white/5 hover:border-white/25', r.blocked ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : 'bg-black/20']"
+                class="relative w-full overflow-hidden rounded-md px-2 py-1 text-left transition hover:bg-white/[0.05]"
+                :class="[r.on ? 'ring-1 ring-emerald-400/60' : '', r.blocked ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : '']"
                 :title="r.blocked ? '同じ系統の MOD が付いているので、今は付かない' : undefined"
                 @click="toggleRow(`${sec.sid}:${r.id}`, $event)"
               >
@@ -249,14 +252,14 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 <span class="relative flex items-center gap-2">
                   <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
                     <span class="mr-0.5 text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
-                    <span v-for="t in shownTags(r.tags)" :key="t" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
+                    <span v-if="shownTags(r.tags).length" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ shownTags(r.tags).map((t) => TAG_STYLE[t]!.ja).join(" · ") }}</span>
                     <span v-if="essName(r)" class="rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r) }}</span>
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
                     <span class="w-11 text-right text-[13px] font-bold text-amber-100" title="出やすさ (同じ側の重みの割合)">{{ pct(r.share) }}</span>
-                    <span class="min-w-[22px] rounded-sm bg-emerald-600/80 px-1 text-center text-[11px] font-bold leading-[18px] text-white" :title="`段の数 ${r.tiers.length}`">{{ r.tiers.length }}</span>
-                    <span class="min-w-[26px] rounded-sm bg-white/15 px-1 text-center text-[11px] font-bold leading-[18px] text-white/90" :title="`T1 の MOD レベル ${r.topLevel}`">{{ r.topLevel }}</span>
+                    <span class="w-6 text-right text-[12px] text-[var(--exile-color-text-secondary)]" :title="`段の数 ${r.tiers.length}`">{{ r.tiers.length }}</span>
+                    <span class="w-7 text-right text-[12px] text-[var(--exile-color-text-tertiary)]" :title="`T1 の MOD レベル ${r.topLevel}`">{{ r.topLevel }}</span>
                   </span>
                 </span>
               </button>
