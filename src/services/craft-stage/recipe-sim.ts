@@ -73,6 +73,12 @@ export interface CompiledStep {
   gNeed?: number;
   /** 1 MOD 残し消去の戻り先 (並べた後の番号) */
   resetTo?: number;
+  /** 両側の狙いのカオス (打って作る、side any): 打つ前に外れを 1 つまで消去で減らす */
+  spam?: boolean;
+  /** 揃った後の行き先 (無ければ次の手。pat.length = 完成の確かめ) */
+  next?: number;
+  /** 揃った後、当たった MOD の側で分ける行き先 */
+  branch?: { prefix: number; suffix: number };
   /** 外す時の打つ物 + お告げ (無ければ自動)。kind はパーフェクトエッセンス (一番安い物を選ぶ)・冒涜 (発現まで) を見分ける */
   miss?: { kind?: PatternKind; currency: string; omens: string[] };
   /** お告げ無しの消去で反対の側が消えたら、もう一度消去 (PatternStep.otherGone) */
@@ -581,6 +587,14 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       i = to;
       return null;
     };
+    /** 揃った手の次 (行き先・当たった側で分ける) */
+    const adv = (q: CompiledStep): void => {
+      if (q.branch && q.target) {
+        const hit = allMods(item).find((m) => !m.unrevealed && !m.fractured && hits(q.target!, m));
+        i = q.branch[hit?.side === "suffix" ? "suffix" : "prefix"];
+      } else if (q.next != null) i = q.next;
+      else i++;
+    };
     const restartPattern = (): void => { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); };
     /** もう一度打てる手 (レアに打てる物。変成・増強・王者・錬金はレアリティが変わるので戻れない) */
     const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
@@ -610,7 +624,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         if (goto == null && lastAt >= 0 && gone.some((id) => { const j = placedAt(id); return j >= 0 && ONCE_KINDS.has(pat[j]!.kind); })) goto = LOST_RESTART;
         // 「そのまま次へ」の高貴・カオス・骨などで付けた物が消えたら、その手へ戻ってもう一度 (画面の既定「N 手目に戻る」と同じ。
         // 2026-10-08 レビュー N2: lost の引き戻しを「そのまま次へ」で止めたので、ここで戻さないと取り直さず最後まで行って失敗していた)
-        if (goto == null && lastAt >= 0) { for (const id of gone) { const j = placedAt(id); if (j >= 0 && REDO.has(pat[j]!.kind)) { goto = j; break; } } }
+        // 2 つ以上消えたら一番前の手へ (2026-10-10 MazBro の指輪: 消去で最大マナ% とカオスで付けたサフィが続けて消えると、エッセンスの手に戻ってカオスに戻らず、最後で揃わずに作り直していた)
+        if (goto == null && lastAt >= 0) { for (const id of gone) { const j = placedAt(id); if (j >= 0 && REDO.has(pat[j]!.kind) && (goto == null || j < goto)) goto = j; } }
         lastAt = -1;
         if (goto === LOST_RESTART) { restartPattern(); continue; }
         if (goto != null && goto !== i && goto < pat.length) { i = goto; continue; }
@@ -661,10 +676,10 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       }
       // 偉大の手 (候補のどれか 2 つ) は、もう 2 つ付いていれば次へ。1 つ付いている時は偉大を外して残りの 1 つだけ狙う (2 つ足すと外れが 1 つ増える)
       const two = !!p.target && needOf(p.target) >= 2;
-      if (two && meets(item, p.target!)) { i++; continue; }
+      if (two && meets(item, p.target!)) { adv(p); continue; }
       // 狙いがもう付いている手は打たない (消えた物の手に戻った後、続く手の狙いが残っていればそのまま次へ。
       // 2026-10-07 パターンで試すと、付いている MOD の手もまた打っていた)
-      if (!two && p.target && p.kind !== "rune" && meets(item, p.target)) { i++; continue; }
+      if (!two && p.target && p.kind !== "rune" && meets(item, p.target)) { adv(p); continue; }
       // 残りが 1 つだけの時に偉大を外す (「残り」の手で 3 つ揃える時、1 つしか付いていなければ偉大で 2 つ足す。2026-10-08: 前は 1 つ付いていれば
       // 必ず偉大を外していて、残り 2 つを 1 つずつ打っていた)
       if (two && needOf(p.target!) - count(p.target!) === 1 && p.omens.includes("OmenofGreaterExaltation")) p = { ...p, ...(p.single ? { currency: p.single.currency, omens: [...p.single.omens] } : { omens: p.omens.filter((o) => o !== "OmenofGreaterExaltation") }) };
@@ -729,6 +744,11 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         }
         // カオスで外せる物がその側 (抹消のお告げの側、無ければ両側) に無い時は、先に高貴でその側に 1 つ足す
         // (2026-10-07 左の抹消のカオスでサフィが付くとプレが空になり、次のカオスが「外せる MOD が無い」で止まっていた)
+        if (p.spam && p.kind === "chaos" && allMods(item).filter((m) => !m.fractured && !m.unrevealed && !isGood(m)).length > 1) {
+          e = play("annul");
+          if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
+          continue;
+        }
         if (p.kind === "chaos") {
           const sd: StageSide | null = p.omens.includes("OmenofSinistralErasure") ? "prefix" : p.omens.includes("OmenofDextralErasure") ? "suffix" : null;
           const sds: StageSide[] = sd ? [sd] : ["prefix", "suffix"];
@@ -761,7 +781,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           // 反対の側の前の手の狙いを数える決まり (キーが h-j-g) なら、その数も (固定は消えないので数えない)
           const other: StageSide = side === "prefix" ? "suffix" : "prefix";
           const withG = Object.keys(p.policy).some((k) => k.split("-").length === 3);
-          const key = `${listOf(item, side).filter((m) => !m.unrevealed && isGood(m)).length}-${junkOn(item, side).length}${withG ? `-${listOf(item, other).filter((m) => !m.fractured && !m.unrevealed && isGood(m)).length}` : ""}`;
+          const key = `${listOf(item, side).filter((m) => !m.fractured && !m.unrevealed && isGood(m)).length}-${junkOn(item, side).length}${withG ? `-${listOf(item, other).filter((m) => !m.fractured && !m.unrevealed && isGood(m)).length}` : ""}`;
           const rx = p.policy[key];
           if (!rx) break;
           if (rx.act) {
@@ -779,9 +799,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           break;
         }
         if (moved) continue;
-        if (doneHere(p.target)) { i++; continue; }
+        if (doneHere(p.target)) { adv(p); continue; }
       }
-      if (!p.target || (two ? meets(item, p.target) : count(p.target) > before || meets(item, p.target))) { i++; continue; }
+      if (!p.target || (two ? meets(item, p.target) : count(p.target) > before || meets(item, p.target))) { adv(p); continue; }
       // 状況ごとの反応 (選んだ時だけ): 一部当たり / ハズレが狙いの側・反対の側に付いた
       if (p.on) {
         const ts0 = membersOf(p.target).length && new Set(membersOf(p.target).map((a) => sideOf(a.modId))).size === 1 ? sideOf(p.target.modId) : null;

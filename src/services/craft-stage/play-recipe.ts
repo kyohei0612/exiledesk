@@ -23,7 +23,11 @@ export interface PlayAim {
    * 計算は「この中の違う MOD が need 個付いたら揃った」
    */
   need: number;
-  side: "prefix" | "suffix";
+  /**
+   * any = プレ・サフィどちらでも (カオスで回す時だけ。2026-10-10 MazBro の指輪「T1 の最大マナ量・マナ回復・レアリティ・全耐性のどれか」)。
+   * 外れの形は決めず、消去で外れを 1 つまで減らしてカオスを続ける (動画の「annul down to one affix, chaos spam」)
+   */
+  side: "prefix" | "suffix" | "any";
 }
 /** 形での次の手 */
 export type PlayDecision =
@@ -40,11 +44,42 @@ export interface PlayMove {
   aim: PlayAim | null;
   /** 形のキー (shape-table の shapeKey) → 次の手。aim がある手だけ */
   shapes?: Record<string, PlayDecision>;
+  /** この手が揃った後の行き先 (無ければ次の手)。"end" = 完成の確かめ (揃っていなければ新しいベースで最初から) */
+  next?: number | "end";
+  /** 両側の狙い (side any) が当たった側で分ける行き先。無ければ next */
+  branch?: { prefix: number | "end"; suffix: number | "end" };
 }
 export interface PlayRecipe {
   v: 2;
   moves: PlayMove[];
 }
+
+/** k 手目が揃った後に行ける手 (行き先が無ければ次の手)。"end" は recipe.moves.length */
+export function nextsOf(recipe: PlayRecipe, k: number): Array<{ to: number; side?: "prefix" | "suffix" }> {
+  const m = recipe.moves[k];
+  const n = recipe.moves.length;
+  const at = (x: number | "end" | undefined): number => (x === "end" ? n : x ?? k + 1);
+  if (m?.branch) return [{ to: at(m.branch.prefix), side: "prefix" }, { to: at(m.branch.suffix), side: "suffix" }];
+  return [{ to: at(m?.next) }];
+}
+/**
+ * i 手目までの道 (始めから i 手目の前まで、通る手の番号と、両側の狙いが当たった側)。行き先で分かれる時は i に着く方。
+ * 着けなければ並びの通り (0..i-1)
+ */
+export function pathTo(recipe: PlayRecipe, i: number): Array<{ k: number; side?: "prefix" | "suffix" }> {
+  const seen = new Set<number>();
+  const q: Array<{ at: number; path: Array<{ k: number; side?: "prefix" | "suffix" }> }> = [{ at: 0, path: [] }];
+  while (q.length) {
+    const c = q.shift()!;
+    if (c.at === i) return c.path;
+    if (c.at >= recipe.moves.length || seen.has(c.at)) continue;
+    seen.add(c.at);
+    for (const nx of nextsOf(recipe, c.at)) q.push({ at: nx.to, path: [...c.path, { k: c.at, ...(nx.side ? { side: nx.side } : {}) }] });
+  }
+  return recipe.moves.slice(0, i).map((_, k) => ({ k }));
+}
+/** i 手目より前に道で通る手 */
+const before = (recipe: PlayRecipe, i: number): PlayMove[] => pathTo(recipe, i).map((x) => recipe.moves[x.k]!);
 
 /** 手の狙いを計算の狙いにする (どれか N つ = 本体 + alts、need) */
 export function aimTarget(aim: PlayAim, method: RecipeTarget["method"] = "exalt"): RecipeTarget {
@@ -59,11 +94,11 @@ export function aimTarget(aim: PlayAim, method: RecipeTarget["method"] = "exalt"
  */
 export function moveShapeCtx(recipe: PlayRecipe, i: number, sets: readonly PatternSet[], limit: number, otherRemovable: number, pHit?: ShapeCtx["pHit"]): { ctx: ShapeCtx; h0: number } | null {
   const m = recipe.moves[i];
-  if (!m?.aim) return null;
+  if (!m?.aim || m.aim.side === "any") return null;
   const side = m.aim.side;
   const mine = new Set(m.aim.mods.map((x) => x.modId));
   let others = 0, same = 0;
-  for (const p of recipe.moves.slice(0, i)) {
+  for (const p of before(recipe, i)) {
     if (!p.aim || p.aim.side !== side) continue;
     if (p.aim.mods.some((x) => mine.has(x.modId))) same = Math.max(same, p.aim.need);
     else others += p.aim.need;
@@ -74,7 +109,7 @@ export function moveShapeCtx(recipe: PlayRecipe, i: number, sets: readonly Patte
 /** i 手目より前に、その側で揃っているはずの狙いの数 (同じ狙いは need の一番大きい物、別の狙いは合計) */
 export function sideNeedBefore(recipe: PlayRecipe, i: number, side: "prefix" | "suffix"): number {
   const best = new Map<string, number>();
-  for (const p of recipe.moves.slice(0, i)) {
+  for (const p of before(recipe, i)) {
     if (!p.aim || p.aim.side !== side) continue;
     const k = p.aim.mods.map((x) => x.modId).sort().join(",");
     best.set(k, Math.max(best.get(k) ?? 0, p.aim.need));
@@ -97,7 +132,7 @@ export function compilePlay(recipe: PlayRecipe, sets: readonly PatternSet[]): Co
   const out: CompiledStep[] = [];
   for (const [i, m] of recipe.moves.entries()) {
     // 反対の側に前の手の狙いがあれば、その数 (減ったら揃っていても形の手で決める。画面の形のキー h-j-g と同じ)
-    const other = m.aim ? (m.aim.side === "prefix" ? "suffix" : "prefix") : null;
+    const other = m.aim && m.aim.side !== "any" ? (m.aim.side === "prefix" ? "suffix" : "prefix") : null;
     const gNeed = other ? sideNeedBefore(recipe, i, other) : 0;
     const x = setOf(sets, m.use);
     if (!x) return null;
@@ -116,9 +151,13 @@ export function compilePlay(recipe: PlayRecipe, sets: readonly PatternSet[]): Co
       kind: x.kind, currency: x.currency, omens: [...x.omens],
       target: m.aim ? aimTarget(m.aim, x.kind === "chaos" ? "chaos" : "exalt") : null,
       // 形を全部決めた手は形の手で動く。決めていない形に来たら (UI で止めるので普通は来ない) 新しいベースで最初から
-      onMiss: m.aim ? "restart" : "next",
+      // 両側のカオスは外れたらそのままもう一度 (打つ前に外れを 1 つまで消す)
+      onMiss: m.aim?.side === "any" ? "redo" : m.aim ? "restart" : "next",
       play: true,
       ...(gNeed > 0 ? { gNeed } : {}),
+      ...(m.aim?.side === "any" ? { spam: true } : {}),
+      ...(m.branch ? { branch: { prefix: m.branch.prefix === "end" ? recipe.moves.length : m.branch.prefix, suffix: m.branch.suffix === "end" ? recipe.moves.length : m.branch.suffix } } : {}),
+      ...(m.next != null ? { next: m.next === "end" ? recipe.moves.length : m.next } : {}),
       ...(Object.keys(policy).length ? { policy } : {}),
     });
   }

@@ -793,7 +793,8 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       // 打って作るパターン (ADR-002): 完成の判定は固定 + 狙う手の狙い (同じ狙いは need の一番大きい物)。決めていない外れの形は新しいベースで最初から
       const playGoal = (): RecipeSpec["targets"] => {
         const best = new Map<string, NonNullable<NonNullable<Pattern["play"]>["moves"][number]["aim"]>>();
-        for (const m of p.play?.moves ?? []) if (m.aim) { const k = m.aim.mods.map((x) => x.modId).sort().join(","); const b = best.get(k); if (!b || b.need < m.aim.need) best.set(k, m.aim); }
+        // 両側の狙い (カオスの途中の狙い) は完成の条件に入れない (同じ MOD を後の手の狙いと取り合って、揃っていても未完成になっていた。2026-10-10)
+        for (const m of p.play?.moves ?? []) if (m.aim && m.aim.side !== "any") { const k = m.aim.mods.map((x) => x.modId).sort().join(","); const b = best.get(k); if (!b || b.need < m.aim.need) best.set(k, m.aim); }
         return [...spec.targets.filter((t) => t.method === "fracture" || onStart.has(t.modId)), ...[...best.values()].map((a) => aimTarget(a))];
       };
       const played = p.play ? compilePlay(p.play, sets) : null;
@@ -1375,7 +1376,10 @@ function cardData(): RecipeCardData | null {
         label: useText(m.use),
         sub: m.aim ? `狙い: ${aimTextAt(play, mi)} · 付くまでこの手` : "狙わない (打って次の手へ)",
         aim: !!m.aim,
-        rules: m.aim ? Object.entries(m.shapes ?? {}).map(([k, d]) => ({ when: shapeRule(k, m.aim!.side), then: decisionText(d) })) : [],
+        rules: [
+          ...(m.aim && m.aim.side === "any" ? [{ when: "外れ", then: "消去で外れを 1 つまで減らしてカオス" }] : m.aim ? Object.entries(m.shapes ?? {}).map(([k, d]) => ({ when: shapeRule(k, m.aim!.side as "prefix" | "suffix"), then: decisionText(d) })) : []),
+          ...(m.branch ? (["prefix", "suffix"] as const).map((sd) => ({ when: `${sd === "prefix" ? "プレ" : "サフィ"}に当たったら`, then: m.branch![sd] === "end" ? "完成" : `${(m.branch![sd] as number) + 1} 手目へ` })) : m.next != null ? [{ when: "揃ったら", then: m.next === "end" ? "完成" : `${m.next + 1} 手目へ` }] : []),
+        ],
       };
     }),
     result: {
