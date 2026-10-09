@@ -8,7 +8,7 @@
  *
  * 中身は yt-dlp。字幕は YouTube がブラウザらしさを求めるので、なりすましの部品込みで入れる:
  *   pip install -U "yt-dlp[default,curl-cffi]"
- * 動画は落とさず字幕だけ。
+ * 動画は落とさず字幕だけ。429 で断られ続ける時は、自分のブラウザの YouTube のログインを使う: YT_COOKIES=chrome pnpm subs <URL>
  * 手で付けた字幕があればそれ、無ければ自動の字幕。言語ごとに data-cache/subs/<ID>.<言語>.txt へ
  * (30 秒ごとに [分:秒] を頭に付けた段落。data-cache/saveq-subtitles と同じ形)
  */
@@ -37,14 +37,16 @@ mkdirSync(out, { recursive: true });
 
 /** yt-dlp で字幕だけ (json3)。manual = 手で付けた字幕、そうでなければ自動の字幕 */
 function fetchSubs(manual) {
-  const args = ["--js-runtimes", "node", "--skip-download", manual ? "--write-subs" : "--write-auto-subs", "--sub-langs", langs.join(","), "--sub-format", "json3", "-o", join(tmp, `${manual ? "m" : "a"}.%(ext)s`), url];
+  // YT_COOKIES=chrome などで、そのブラウザの YouTube のログインを使う (429 で断られ続ける時。自分の PC で自分が打つ時だけ)
+  const cookies = process.env.YT_COOKIES ? ["--cookies-from-browser", process.env.YT_COOKIES] : [];
+  const args = [...cookies, "--js-runtimes", "node", "--skip-download", manual ? "--write-subs" : "--write-auto-subs", "--sub-langs", langs.join(","), "--sub-format", "json3", "-o", join(tmp, `${manual ? "m" : "a"}.%(ext)s`), url];
   try {
     execFileSync("yt-dlp", args, { stdio: ["ignore", "ignore", "pipe"] });
   } catch (e) {
     const msg = String(e.stderr ?? e.message ?? e);
     if (/ENOENT/.test(msg)) { console.error("yt-dlp が見つからない。`pip install -U yt-dlp` で入れてください"); process.exit(1); }
     // 429 = YouTube がブラウザらしさを求めて断った。なりすましの部品 (curl_cffi) を入れると通る
-    if (/429/.test(msg)) { console.error('YouTube に断られた (429)。yt-dlp になりすましの部品を入れる: pip install -U "yt-dlp[default,curl-cffi]"'); return; }
+    if (/429/.test(msg)) { console.error('YouTube に断られた (429)。何度も取った後はしばらく待つ。続く時はブラウザのログインを使う: YT_COOKIES=chrome pnpm subs <URL> (なりすましの部品が無ければ pip install -U "yt-dlp[default,curl-cffi]")'); return; }
     console.error(msg.split("\n").filter((l) => /ERROR/.test(l)).slice(0, 3).join("\n"));
   }
 }
