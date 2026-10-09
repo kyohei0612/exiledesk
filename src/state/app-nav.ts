@@ -20,12 +20,13 @@ export const activeNav = ref<string>(typeof location !== "undefined" && (new URL
 // 規格外の賭け (rare-craft) は 2026-10-09 に削除 (オーナー「使わないから削除でおｋ」)
 export type VaalScalesTab = "overquality" | "gem-corrupt" | "gem-watch";
 export const VAAL_SCALES_TABS: readonly { id: VaalScalesTab; icon: string; label: string }[] = [
-  { id: "overquality", icon: "🜛", label: "アドニアの賭け" },
+  // アドニアの賭けは一番右 (2026-10-09 オーナー「邪魔だから」)。開いた時もジェムコラプトから
   { id: "gem-corrupt", icon: "🜏", label: "ジェムコラプトの賭け" },
-  { id: "gem-watch", icon: "👁", label: "自動ジェム監視" },
+  { id: "gem-watch", icon: "◎", label: "自動ジェム監視" },
+  { id: "overquality", icon: "🜛", label: "アドニアの賭け" },
 ];
 /** ヴァールの天秤で開いているタブ。画面を離れても覚えている (keep-alive と同じ扱い) */
-export const vaalScalesTab = ref<VaalScalesTab>("overquality");
+export const vaalScalesTab = ref<VaalScalesTab>("gem-corrupt");
 
 /** ヴァールの天秤の指定のタブへ移動する */
 export function openVaalScales(tab: VaalScalesTab): void {
