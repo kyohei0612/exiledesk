@@ -12,13 +12,14 @@
  *   pip install -U "yt-dlp[default,curl-cffi]"
  * 動画は落とさず字幕だけ。429 で断られ続ける時は、自分のブラウザの YouTube のログインを使う: YT_COOKIES=chrome pnpm subs <URL>
  * 手で付けた字幕があればそれ、無ければ自動の字幕。言語ごとに data-cache/subs/<ID>.<言語>.txt へ
- * (30 秒ごとに [分:秒] を頭に付けた段落。data-cache/saveq-subtitles と同じ形)
+ * (30 秒ごとに [分:秒] を頭に付けた段落。data-cache/saveq-subtitles と同じ形)。英語の字幕は用語にゲーム内の日本語名を添える (subs-annotate.mjs)
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { annotate } from "./subs-annotate.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const [input, langArg = "en,ja"] = process.argv.slice(2);
@@ -44,7 +45,8 @@ if (/\.(srt|vtt)$/i.test(input) && existsSync(input)) {
   const dir = join(ROOT, "data-cache", "subs");
   mkdirSync(dir, { recursive: true });
   const path = join(dir, `${name}.txt`);
-  const text = toText({ events });
+  // ゲーム用語にゲーム内の日本語名を添える (subs-annotate.mjs)
+  const text = annotate(toText({ events }));
   writeFileSync(path, text);
   console.log(`${events.length.toLocaleString()} 行 → ${text.length.toLocaleString()} 字 → ${path}`);
   process.exit(0);
@@ -104,7 +106,7 @@ for (const lang of langs) {
   // 手で付けた字幕を先に。言語は ja / ja-JP / en-US などもまとめて見る
   const pick = ["m", "a"].map((k) => files.find((f) => f.startsWith(`${k}.`) && (f === `${k}.${lang}.json3` || f.startsWith(`${k}.${lang}-`)))).find(Boolean);
   if (!pick) continue;
-  const text = toText(JSON.parse(readFileSync(join(tmp, pick), "utf8")));
+  const text = lang.startsWith("en") ? annotate(toText(JSON.parse(readFileSync(join(tmp, pick), "utf8")))) : toText(JSON.parse(readFileSync(join(tmp, pick), "utf8")));
   const path = join(out, `${id}.${lang}.txt`);
   writeFileSync(path, text);
   saved.push({ lang, kind: pick.startsWith("m.") ? "手の字幕" : "自動の字幕", path, chars: text.length });
