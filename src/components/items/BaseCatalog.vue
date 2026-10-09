@@ -5,7 +5,7 @@
   selected: 今のベース (金の枠。その種類から開く)。extras: フラスコ・スキルジェムも出す。note: カードの下に足す 1 行 (計算機の付与スキルなど)
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { baseCatalog, CATALOG_CLS_JA, CATALOG_ROWS } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
@@ -81,8 +81,7 @@ const pickArea = ref<HTMLElement | null>(null);
 function pickFamily(f: Family): void {
   family.value = f;
   cls.value = f.variants.length === 1 ? f.variants[0]!.cls : null;
-  // 属性の札を画面の上へ (下にベースのカードが続く)。なめらかに送ると途中で止まっていたので、すぐ送る
-  if (!phone.value) void nextTick(() => pickArea.value?.scrollIntoView({ block: "start", behavior: "instant" as ScrollBehavior }));
+  // 押しても画面は動かさない (2026-10-09 オーナー「押したら下に移動とかっていう挙動しなくてもいい、固定でおｋ」。前は属性の札を画面の上へ送っていた)
 }
 function backToFamilies(): void { family.value = null; cls.value = null; }
 </script>

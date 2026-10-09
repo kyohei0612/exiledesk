@@ -6,7 +6,7 @@
   種類は poe2db どおり STR / DEX / INT ごと、素の数値つき、ルーンフォージ等は出さない。フラスコ・スキルジェムは 2026-10-09 から出さない。選ぶと閉じる。
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import { baseCatalog, CATALOG_CLS_JA } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
@@ -20,16 +20,33 @@ const current = computed(() => (props.data ? (baseCatalog(props.data, true).find
 const open = ref(!!props.unpicked);
 // ベースが決まったら閉じる (レシピを呼んだ時も。2026-10-09 レビュー: 一覧が開いたままで打ち方の段が画面の下に隠れた)
 watch(() => props.unpicked, (v) => { open.value = !!v; });
+const head = ref<HTMLElement | null>(null);
+/**
+ * 選んだら閉じる。閉じて一覧の分だけ縮んでも、今のベースの行は画面の同じ所に残す (2026-10-09 オーナー「選んだ瞬間予想より下にばっと移動する、
+ * 固定でおｋ」: 一覧の下の方で選ぶと、縮んだ分だけ画面が下の段へ飛んでいた)。行が画面の上に隠れていた時は、行を画面の上に出す
+ */
 function choose(en: string): void {
+  const el = head.value;
+  const before = el?.getBoundingClientRect().top ?? null;
   open.value = false;
   if (en !== props.base || props.unpicked) emit("pick", en);
+  if (!el || before == null) return;
+  void nextTick(() => {
+    if (!el.isConnected) return;
+    let box: HTMLElement | null = el.parentElement;
+    while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement;
+    const top = el.getBoundingClientRect().top;
+    const want = Math.max(before, box ? box.getBoundingClientRect().top + 8 : 8);
+    const d = top - want;
+    if (Math.abs(d) > 1) (box ?? window).scrollBy({ top: d, behavior: "instant" as ScrollBehavior });
+  });
 }
 </script>
 
 <template>
   <div class="w-full">
     <!-- 今のベース (押すと開く) -->
-    <button type="button" class="group flex h-10 items-center gap-3 rounded-md px-2 text-left transition hover:bg-white/5" :class="open ? 'bg-white/[0.04]' : ''" :aria-expanded="open" @click="open = !open">
+    <button ref="head" type="button" class="group flex h-10 items-center gap-3 rounded-md px-2 text-left transition hover:bg-white/5" :class="open ? 'bg-white/[0.04]' : ''" :aria-expanded="open" @click="open = !open">
       <template v-if="unpicked"><b class="text-[15px] text-[var(--exile-color-accent-focus)]">ベースを選ぶ</b></template>
       <template v-else>
         <img v-if="baseArt(base)" :src="baseArt(base)!" alt="" class="size-8 object-contain" draggable="false" />

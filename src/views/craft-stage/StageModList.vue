@@ -72,7 +72,9 @@ function heldTierShare(r: ListRow, t: { name: string; ilvl: number; modId?: stri
   return (h.byMod.get(id)?.tiers.find((x) => x.index === idx)?.w ?? 0) / h.total;
 }
 /** 表の % と棒: 持っている時は付く確率、それ以外は出やすさ (同じ側の重みの割合) */
-const shareOf = (r: ListRow): number => (heldCands.value ? heldShare(r) : r.share);
+/** 今は付かない行 (同じ系統が付いている・差していないルーン) は 0% (2026-10-09 オーナー「変数で現在出ないところは 0% だね基本的に」) */
+const cannow = (r: ListRow): boolean => !r.blocked && !(r.group === "rune" && !r.socketed);
+const shareOf = (r: ListRow): number => (!cannow(r) ? 0 : heldCands.value ? heldShare(r) : r.share);
 /** 棒の長さの基準 (列で一番大きい値) */
 const colTop = (items: readonly ListRow[]): number => Math.max(0.0001, ...items.map(shareOf));
 
@@ -106,8 +108,7 @@ function toggleRow(key: string, ev: MouseEvent): void {
     const shift = el.getBoundingClientRect().top - before;
     // 送る枠が無い (スマホはページごと送る) 時は window を送る
     if (shift) (box ?? window).scrollBy({ top: shift });
-    // 開いた表が下にはみ出したら、表の下まで見えるように送る (一覧の枠も画面も。はみ出していなければ動かさない)
-    el.parentElement?.querySelector("table")?.scrollIntoView({ block: "nearest" });
+    // 開いた表がはみ出しても送らない (2026-10-09 オーナー「MOD もなんか移動するときある、スクロールが勝手に。固定でおｋ」)
   });
 }
 /**
@@ -236,7 +237,7 @@ function essName(r: ListRow): string | null {
   return top ? ESS_JA.get(top) ?? top : null;
 }
 const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? (ESS_JA.get(name) ?? name) : name);
-const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "—");
+const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "0%");
 /** 節の色 (ルーンの節はルーンのアイコンの色) */
 const toneOf = (sec: { g: ModGroup; rune: string | null }): { tab: string; bar: string } => runeToneOf(sec.rune) ?? TONE[sec.g];
 /**
@@ -311,7 +312,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
-                    <span class="w-11 text-right text-[13px] font-bold" :class="heldCands ? 'text-sky-200' : 'text-amber-100'" :title="heldCands ? `持っている ${heldCands.name} で次に付く確率` : '出やすさ (同じ側の重みの割合)'">{{ heldCands && !heldShare(r) ? "—" : pct(shareOf(r)) }}</span>
+                    <span class="w-11 text-right text-[13px] font-bold" :class="heldCands ? 'text-sky-200' : 'text-amber-100'" :title="heldCands ? `持っている ${heldCands.name} で次に付く確率` : '出やすさ (同じ側の重みの割合)'">{{ pct(shareOf(r)) }}</span>
                     <span class="w-6 text-right text-[12px] text-[var(--exile-color-text-secondary)]" :title="`段の数 ${r.tiers.length}`">{{ r.tiers.length }}</span>
                     <span class="w-7 text-right text-[12px] text-[var(--exile-color-text-tertiary)]" :title="`T1 の MOD レベル ${r.topLevel}`">{{ r.topLevel }}</span>
                   </span>
@@ -326,7 +327,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
                     <td class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
-                    <td class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :class="heldCands ? 'text-sky-200' : ''" :title="t.weight ? `重み ${t.weight}` : undefined">{{ heldCands ? (heldTierShare(r, t) ? pct(heldTierShare(r, t)) : "—") : t.weight && r.weight ? pct((r.share * t.weight) / r.weight) : "" }}</td>
+                    <td class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :class="heldCands ? 'text-sky-200' : ''" :title="t.weight ? `重み ${t.weight}` : undefined">{{ !cannow(r) ? "0%" : heldCands ? pct(heldTierShare(r, t)) : t.weight && r.weight ? pct((r.share * t.weight) / r.weight) : "" }}</td>
                     <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'rune' || sec.g === 'desecrated' || sec.g === 'essence' || sec.g === 'perfect_essence')" class="w-20 py-0.5 text-right">
                       <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-10 max-md:px-3 max-md:text-[12px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? 'もう一度押すと外す' : sec.rune ? `② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める` : `② に足す (${t.rank} 以上)`" @click.stop="keepPlace($event.currentTarget as Element, () => toggleTarget(t.modId ?? r.id, t))">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
                     </td>
