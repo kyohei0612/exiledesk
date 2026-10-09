@@ -4,6 +4,7 @@
   "version": "0.1.440",
   "type": "module",
   "scripts": {
+    "subs": "node scripts/yt-subs.mjs",
     "dev": "vite",
     "build": "node scripts/asset-packs.mjs && vue-tsc --noEmit && vite build",
     "test": "vitest run",
