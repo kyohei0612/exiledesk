@@ -39,13 +39,13 @@ const emit = defineEmits<{ "update:modelValue": [id: string] }>();
 
 <template>
   <div
-    class="flex shrink-0 items-end gap-1 border-b border-[var(--exile-color-border-subtle)]"
-    :class="title ? 'px-6 pt-3' : ''"
+    class="flex shrink-0 items-center gap-1.5"
+    :class="title ? 'g-tabbar px-8' : 'pb-1'"
     role="tablist"
     :aria-label="ariaLabel ?? title"
   >
     <!-- 画面名 (h1 はここだけ) -->
-    <h1 v-if="title" class="mr-3 flex items-center gap-1.5 pb-2 font-display text-[13px] tracking-[0.08em] text-[var(--exile-color-text-primary)]">
+    <h1 v-if="title" class="g-brush mr-4 flex items-center gap-1.5 text-[20px] tracking-[0.14em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_14px_rgba(255,200,110,0.3)]">
       <span v-if="icon" class="inline-block w-5 text-center text-[var(--exile-color-accent-focus)]" aria-hidden="true">{{ icon }}</span>
       <span class="whitespace-nowrap">{{ title }}</span>
     </h1>
@@ -57,19 +57,15 @@ const emit = defineEmits<{ "update:modelValue": [id: string] }>();
       :aria-selected="modelValue === t.id"
       :title="t.hint"
       :disabled="disabled"
-      class="-mb-px flex h-8 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-[12px] tracking-[0.04em] transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-      :class="
-        modelValue === t.id
-          ? 'border-[var(--exile-color-accent-focus)] font-semibold text-[var(--exile-color-accent-focus)]'
-          : 'border-transparent text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'
-      "
+      class="g-tab !inline-flex !min-h-[32px] gap-1.5 whitespace-nowrap !text-[13px] disabled:cursor-not-allowed"
+      :class="modelValue === t.id ? 'on' : ''"
       @click="emit('update:modelValue', t.id)"
     >
       <span v-if="t.icon" class="inline-block text-center" aria-hidden="true">{{ t.icon }}</span>
       <span>{{ t.label }}</span>
     </button>
     <!-- 帯の右 (手動更新のボタンなど、画面全体の操作) -->
-    <div v-if="$slots.right" class="ml-auto flex items-center gap-2 pb-1.5">
+    <div v-if="$slots.right" class="ml-auto flex items-center gap-2">
       <slot name="right" />
     </div>
   </div>

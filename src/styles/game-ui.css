@@ -1,0 +1,251 @@
+/* ============================================================
+ * ゲームの UI の絵で組む部品 (2026-10-09)
+ *
+ * オーナー「AI で作ったなってわかる」「細い金の線」「ちゃっちくならんように」→ クライアントの UI の絵 (public/ui-art、
+ * scripts/build-ui-art-from-client.mjs) で枠・ボタン・タブを作る。見本に「めっちゃUIいいやん」。
+ *   .g-panel   面 (ロード画面の彫りの枠、9 分割)
+ *   .g-head    面の見出し (両端に像の付いた帯)。中に h2 等
+ *   .g-btn     ボタン (ゲームの 3 枚ボタン)。.g-btn-red は決める手 (打つ・完成 など 1 画面 1 つ)
+ *   .g-tab     札 (両替所のタブ)。.on が選んでいる物
+ *   .g-slot    棚の枠 (両替所の枠)。.on が持っている物
+ *   .g-item    アイテムの額 (細い金の飾り枠、9 分割)
+ *   .g-sel     選んでいる行 (左上と右下に選択の角)
+ *   .g-divider 区切り
+ * ============================================================ */
+
+.g-panel {
+  position: relative;
+  border: 18px solid transparent;
+  border-image: url("/ui-art/frame.webp") 76 / 34px / 8px round;
+  background: linear-gradient(180deg, rgba(22, 18, 14, 0.94), rgba(9, 8, 7, 0.96)) border-box;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+.g-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 64px;
+  background:
+    url("/ui-art/head-l.webp") left center / auto 100% no-repeat,
+    url("/ui-art/head-r.webp") right center / auto 100% no-repeat;
+}
+.g-head > :is(h1, h2, h3, p, span) {
+  font-family: var(--exile-font-family-brush);
+  font-weight: 400;
+  font-size: 20px;
+  letter-spacing: 0.16em;
+  color: var(--exile-color-text-title);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.9), 0 0 14px rgba(255, 200, 110, 0.25);
+}
+
+.g-btn,
+.g-btn-red {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 4px;
+  border-style: solid;
+  border-width: 0 22px;
+  border-color: transparent;
+  border-image: url("/ui-art/btn.webp") 0 40 fill / 0 22px stretch;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--exile-color-text-title);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6));
+  transition: transform 80ms, filter 120ms;
+  white-space: nowrap;
+}
+.g-btn:hover:not(:disabled) { border-image-source: url("/ui-art/btn-hover.webp"); }
+.g-btn:active:not(:disabled) { border-image-source: url("/ui-art/btn-pressed.webp"); transform: translateY(1px); }
+.g-btn-red { border-image-source: url("/ui-art/btn-red.webp"); }
+.g-btn-red:hover:not(:disabled) { border-image-source: url("/ui-art/btn-red-hover.webp"); }
+.g-btn-red:active:not(:disabled) { border-image-source: url("/ui-art/btn-red-pressed.webp"); transform: translateY(1px); }
+.g-btn:disabled,
+.g-btn-red:disabled { filter: grayscale(0.8) brightness(0.6); cursor: default; }
+/* 小さいボタン (道具の帯など) */
+.g-btn.sm,
+.g-btn-red.sm { min-height: 28px; border-width: 0 18px; border-image-width: 0 18px; font-size: 12px; }
+
+.g-tab {
+  display: inline-grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 0 22px;
+  background: url("/ui-art/tab.webp") center / 100% 100% no-repeat;
+  font-family: var(--exile-font-family-antique);
+  font-size: 14px;
+  color: var(--exile-color-text-secondary);
+  transition: color 120ms;
+}
+.g-tab:hover { background-image: url("/ui-art/tab-hover.webp"); color: var(--exile-color-text-primary); }
+.g-tab.on { background-image: url("/ui-art/tab-on.webp"); color: rgba(28, 20, 8, 1); font-weight: 700; text-shadow: 0 1px 0 rgba(255, 240, 200, 0.4); }
+.g-tab:disabled { background-image: url("/ui-art/tab-off.webp"); opacity: 0.6; }
+
+.g-slot {
+  background: url("/ui-art/slot.webp") center / 100% 100% no-repeat;
+  transition: transform 120ms;
+}
+.g-slot:hover { transform: translateY(-2px); }
+.g-slot.on { background-image: url("/ui-art/slot-on.webp"); }
+
+.g-item {
+  border: 12px solid transparent;
+  border-image: url("/ui-art/item-frame.webp") 18 / 18px / 2px stretch;
+}
+
+.g-sel { position: relative; }
+.g-sel::before,
+.g-sel::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+.g-sel::before { left: -4px; top: -4px; background: url("/ui-art/sel-tl.webp") 0 0 / 100% no-repeat; }
+.g-sel::after { right: -4px; bottom: -4px; background: url("/ui-art/sel-br.webp") 0 0 / 100% no-repeat; }
+
+.g-divider {
+  height: 4px;
+  background: url("/ui-art/divider.webp") center / 100% 100% no-repeat;
+  opacity: 0.85;
+}
+
+/* 画面の題 (窓の題の帯 + 真ん中の飾り) */
+.g-titlebar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 46px;
+  background:
+    url("/ui-art/title-l.webp") left top / auto 100% no-repeat,
+    url("/ui-art/title-r.webp") right top / auto 100% no-repeat,
+    url("/ui-art/title-m.webp") left top / auto 100% repeat-x;
+}
+.g-titlebar::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -10px;
+  width: 340px;
+  height: 84px;
+  transform: translateX(-50%);
+  background: url("/ui-art/title-c.webp") center / contain no-repeat;
+  pointer-events: none;
+}
+.g-titlebar > * {
+  position: relative;
+  font-family: var(--exile-font-family-brush);
+  font-size: 22px;
+  letter-spacing: 0.2em;
+  color: var(--exile-color-text-title);
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.9), 0 0 18px rgba(255, 200, 110, 0.35);
+}
+
+/* 名前・見出しの字 */
+.g-antique { font-family: var(--exile-font-family-antique); }
+.g-brush { font-family: var(--exile-font-family-brush); font-weight: 400; }
+
+/* ============================================================
+ * 全画面の置き換え (2026-10-09 オーナー「アプリ側も頼むわ他の場所も」)
+ * 画面ごとに書き換えなくても、よく使う形 (角の丸い枠の面・金色の決めるボタン) をゲームの絵にする。
+ * 画面で個別に .g-* を付けた所はそちらが優先 (同じ見た目)。外したい所は .g-plain を付ける
+ * ============================================================ */
+:is(div, section, aside, article, details, form):is([class*="rounded-xl"], [class*="rounded-2xl"]):is([class*="border-white/"], [class*="border-[var(--exile-color-border-"]):not(.g-plain, .g-panel, .g-item),
+:is(div, section, article):is([class~="card"]):not(.g-plain) {
+  border: 18px solid transparent;
+  border-image: url("/ui-art/frame.webp") 76 / 34px / 8px round;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: linear-gradient(180deg, rgba(22, 18, 14, 0.94), rgba(9, 8, 7, 0.96));
+  background-origin: border-box;
+  background-clip: border-box;
+}
+/* 金色の決めるボタン (bg が accent-focus のボタン) = ゲームの赤いボタン */
+button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain) {
+  border-style: solid;
+  border-width: 0 22px;
+  border-color: transparent;
+  border-image: url("/ui-art/btn-red.webp") 0 40 fill / 0 22px stretch;
+  border-radius: 0;
+  background: none;
+  padding-left: 4px;
+  padding-right: 4px;
+  color: var(--exile-color-text-title);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6));
+}
+button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain):hover:not(:disabled) { border-image-source: url("/ui-art/btn-red-hover.webp"); background: none; }
+button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain):active:not(:disabled) { border-image-source: url("/ui-art/btn-red-pressed.webp"); }
+button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain):disabled { filter: grayscale(0.8) brightness(0.6); opacity: 1; }
+
+/* 画面の地: 暗い石のざらつき + 四隅を落とす */
+body {
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 20%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.7) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5 0 0 0 0 .45 0 0 0 0 .38 0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(1200px 700px at 55% 20%, rgba(34, 27, 20, 1), rgba(8, 7, 6, 1));
+  background-attachment: fixed;
+}
+
+/* サイドバー: 暗い鉄の帯 + 右に枠の辺 */
+.g-sidebar {
+  position: relative;
+  background: linear-gradient(90deg, rgba(10, 8, 7, 0.97), rgba(20, 16, 12, 0.95));
+  border-right: 0 !important;
+}
+.g-sidebar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -10px;
+  width: 16px;
+  background: url("/ui-art/edge-v.webp") 0 0 / 16px auto repeat-y;
+  pointer-events: none;
+  z-index: 5;
+}
+.g-nav-on {
+  background: linear-gradient(90deg, rgba(163, 52, 42, 0.42), rgba(163, 52, 42, 0.05)) !important;
+  color: var(--exile-color-text-title) !important;
+  text-shadow: 0 0 10px rgba(255, 200, 110, 0.35);
+}
+
+/* 画面の上の帯 (画面名と切り替えの札。TabBar.vue) = 窓の題の帯 */
+.g-tabbar {
+  min-height: 54px;
+  background:
+    url("/ui-art/title-l.webp") left top / auto 100% no-repeat,
+    url("/ui-art/title-r.webp") right top / auto 100% no-repeat,
+    url("/ui-art/title-m.webp") left top / auto 100% repeat-x;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+}
+
+/* 細い線の枠のボタン (border-white/… や色付きの線) = ゲームの普通のボタン。大きいカードのボタン (rounded-xl) は除く */
+button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain) {
+  border-style: solid;
+  border-width: 0 16px;
+  border-color: transparent;
+  border-image: url("/ui-art/btn.webp") 0 40 fill / 0 16px stretch;
+  border-radius: 0;
+  background: none;
+  padding-left: 2px;
+  padding-right: 2px;
+  min-height: 28px;
+  color: var(--exile-color-text-title);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain):hover:not(:disabled) {
+  border-image-source: url("/ui-art/btn-hover.webp");
+  background: none;
+}
+
+/* .card の見出し (style.css) */
+.card-title { font-family: var(--exile-font-family-antique); font-weight: 400; font-size: 15px; color: var(--exile-color-text-title); }

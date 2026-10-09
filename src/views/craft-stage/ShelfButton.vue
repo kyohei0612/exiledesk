@@ -64,11 +64,8 @@ onBeforeUnmount(leave);
 <template>
   <button
     type="button"
-    class="group relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
-    :class="[
-      on ? (omen ? 'stage-omen-on border-orange-300' : 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60') : 'border-white/10 bg-black/30 hover:border-white/30',
-      reason ? 'opacity-35' : '',
-    ]"
+    class="group relative flex w-[74px] flex-col items-center px-0.5 pb-1 text-[10px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
+    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', reason ? 'opacity-35' : '']"
     :aria-label="`${nameOf(k)}${reason ? ` — ${reason}` : ''}`"
     :data-key="k"
     data-shelf
@@ -76,8 +73,11 @@ onBeforeUnmount(leave);
     @mouseenter="enter"
     @mouseleave="leave"
   >
-    <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain" draggable="false" />
-    <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
+    <!-- 枠はゲームの両替所の枠 (持っている時は光る枠、src/styles/game-ui.css) -->
+    <span class="g-slot grid size-[52px] place-items-center" :class="[on ? 'on' : '', on && omen ? 'stage-omen-on' : '']">
+      <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain" draggable="false" />
+      <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
+    </span>
     <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 text-center">{{ nameOf(k) }}</span></span>
     <span v-if="badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ badge[1] }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">有効</span>

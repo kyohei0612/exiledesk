@@ -103,7 +103,7 @@ onMounted(() => {
     <LeftSidebar
       :active="activeNav"
       @update:active="activeNav = $event"
-      class="w-52 shrink-0 border-r border-[var(--exile-color-border-subtle)]"
+      class="relative z-10 w-52 shrink-0"
     />
 
     <CenterContent :active-nav="activeNav" class="flex-1" />

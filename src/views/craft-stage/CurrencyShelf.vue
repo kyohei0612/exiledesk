@@ -112,8 +112,8 @@ const TABS = computed(() => [
         v-for="t in TABS"
         :key="t.id"
         type="button"
-        class="rounded-lg px-2.5 py-1 max-md:py-2"
-        :class="tab === t.id ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'"
+        class="g-tab !min-h-[30px] !px-4 !text-[13px] max-md:!min-h-10"
+        :class="tab === t.id ? 'on' : ''"
         @click="tab = t.id"
       >{{ t.label }}</button>
     </div>

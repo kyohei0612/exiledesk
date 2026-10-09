@@ -204,10 +204,10 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 </script>
 
 <template>
-  <section class="text-[12px]" :class="props.embedded ? '' : 'mt-4 rounded-xl border border-white/10 bg-white/[0.03]'">
+  <section class="text-[12px]" :class="props.embedded ? '' : 'g-panel mt-4'">
     <!-- 見出し (押すと畳む) -->
     <div role="button" tabindex="0" :aria-expanded="open" class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left" @click="open = !open" @keydown.enter="open = !open">
-      <b class="text-sm text-amber-100">このベースに付く MOD</b>
+      <b class="g-brush text-[20px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">このベースに付く MOD</b>
       <span class="text-[var(--exile-color-text-tertiary)] max-md:hidden">{{ s.item.value?.baseJa }}</span>
       <HelpTip :text="s.mode.value === 'sim' ? '出やすさ = 同じ側の重みの割合。段 = 段の数、Lv = T1 の MOD レベル。MOD を押すと段の表が開く' : `出やすさ = 同じ側の重みの割合 (アイテムレベルは見ない)。段 = 段の数、Lv = T1 の MOD レベル${canStart ? '。段の表の「付ける」で始めの状態を組める' : ''}`" @click.stop />
       <span class="ml-auto inline-flex items-center gap-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ open ? "畳む" : "開く" }}<Icon :name="open ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></span>
@@ -218,7 +218,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
       <!-- スマホ: 検索は目次の横送りの外 (中だと右に隠れる) -->
       <input v-model="query" type="search" placeholder="文面やタグで探す (例: 耐性、ライフ)" class="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 md:hidden" />
       <!-- スマホは固定せず 1 段の横送り (固定すると 4 段で 130px 占めていた。2026-10-08 レビュー) -->
-      <div class="sticky top-0 z-10 -mx-3 mb-2 flex flex-wrap items-center gap-1.5 bg-[#15130f]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
+      <div class="sticky top-0 z-10 -mx-3 mb-2 flex flex-wrap items-center gap-1.5 bg-[#120f0c]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
         <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5 max-md:shrink-0 max-md:py-1.5" :class="active === sec.sid ? toneOf(sec).tab : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" @click="jump(sec.sid)">
           {{ sec.label }} <span class="ml-0.5 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ sec.count }}</span>
         </button>

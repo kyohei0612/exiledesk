@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./styles/game-ui.css";
 
 /* ============================================================
  * ExileDesk Design Tokens (visual-concept.md §4 / §9.1 準拠)
@@ -39,6 +40,7 @@
     --exile-color-text-link-visited:  #7A8A95;
 
     /* ---------- 1.4 Accent ---------- */
+    --exile-color-text-title:         #F3E2B0; /* ゲームの絵の上の見出し・ボタンの字 */
     --exile-color-accent-focus:       #C9A25A;
     --exile-color-accent-focus-hover: #D4B26A; /* §5.3 ボタンホバー */
     --exile-color-accent-cold:        #4A7FB0; /* クラフト相談限定 */
@@ -54,7 +56,11 @@
     --exile-color-signal-info:    #9FB8C9;
 
     /* ---------- 2. Typography ---------- */
-    --exile-font-family-sans:    'Inter Variable', 'Yu Gothic UI', 'Meiryo', system-ui, sans-serif;
+    /* 日本語は Zen Kaku Gothic New (2026-10-09 オーナー「綺麗すぎる、日本人らしさ」。Google Fonts、読めない時は Yu Gothic UI) */
+    --exile-font-family-sans:    'Inter Variable', 'Zen Kaku Gothic New', 'Yu Gothic UI', 'Meiryo', system-ui, sans-serif;
+    /* 見出しは筆 (Yuji Syuku)、名前は古い活字 (Zen Antique)。ゲームの UI の絵と合わせる (src/styles/game-ui.css) */
+    --exile-font-family-brush:   'Yuji Syuku', 'Zen Antique', 'Yu Mincho', serif;
+    --exile-font-family-antique: 'Zen Antique', 'Yu Mincho', serif;
     --exile-font-family-display: 'Cinzel', 'Yu Gothic UI', 'Meiryo', system-ui, serif;
     --exile-font-family-mono:    'JetBrains Mono', 'Consolas', 'Yu Gothic UI', monospace;
     --exile-font-family-script:  'Cormorant Garamond', 'Yu Gothic UI', 'Meiryo', serif;

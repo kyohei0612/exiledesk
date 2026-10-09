@@ -23,7 +23,7 @@ const emit = defineEmits<{ redo: [] }>();
 <template>
   <header class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
     <span class="grid size-6 shrink-0 place-items-center rounded-full text-[12px] font-bold tabular-nums" :class="done ? 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40' : current ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-white/10 text-white/60'">{{ n }}</span>
-    <h3 class="text-[15px] font-bold" :class="current || done ? 'text-[var(--exile-color-text-primary)]' : 'text-white/60'">{{ title }}</h3>
+    <h3 class="g-brush text-[19px] tracking-[0.12em] [text-shadow:0_2px_0_#000]" :class="current || done ? 'text-[var(--exile-color-text-title)]' : 'text-white/60'">{{ title }}</h3>
     <HelpTip v-if="help" :text="help" :title="title" />
     <span v-if="note" class="min-w-0 truncate text-[12px] text-[var(--exile-color-text-secondary)]">{{ note }}</span>
     <span class="ml-auto flex items-center gap-2">

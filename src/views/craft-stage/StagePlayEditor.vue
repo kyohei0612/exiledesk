@@ -519,8 +519,9 @@ watch([leftTotal, () => props.name], ([n, name]) => { if (name) craftStage.simPl
       </p>
 
       <!-- 道 (両側の狙いの手で分かれる時): プレのどれか / サフィのどれか -->
-      <div v-if="hasRoutes" class="grid grid-cols-2 gap-1 rounded-lg bg-black/30 p-1" role="tablist" aria-label="道">
-        <button v-for="r in (['prefix', 'suffix'] as const)" :key="r" type="button" role="tab" :aria-selected="route === r" class="min-h-8 rounded-md px-2 py-1.5 text-[12px] font-semibold leading-tight transition [word-break:keep-all]" :class="route === r ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5'" @click="route = r; sel = null">{{ ROUTE_JA[r] }}</button>
+      <!-- 縦に 2 つ (横に並べると長い名前が重なった。2026-10-09 ゲームの絵の札に) -->
+      <div v-if="hasRoutes" class="flex flex-col gap-1" role="tablist" aria-label="道">
+        <button v-for="r in (['prefix', 'suffix'] as const)" :key="r" type="button" role="tab" :aria-selected="route === r" class="g-tab w-full !min-h-[32px] !text-[13px]" :class="route === r ? 'on' : ''" @click="route = r; sel = null">{{ ROUTE_JA[r] }}</button>
       </div>
       <ol class="flex flex-col gap-1">
         <li v-for="i in shownKs" :key="i">

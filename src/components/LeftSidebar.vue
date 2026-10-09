@@ -61,24 +61,24 @@ const groups = (["economy", "tools"] as const)
 </script>
 
 <template>
-  <aside class="bg-[var(--exile-color-bg-surface)] flex flex-col py-3 select-none">
+  <aside class="g-sidebar flex flex-col py-3 select-none">
     <div class="px-4 pb-3">
       <div class="flex items-baseline gap-2">
-        <h1 class="text-lg font-semibold tracking-wide text-[var(--exile-color-accent-focus)]">
+        <h1 class="font-display text-[19px] font-semibold tracking-[0.08em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_14px_rgba(255,200,110,0.3)]">
           ExileDesk
         </h1>
         <!-- ログイン状態を小さく (オーナー 2026-09-26「ExileDesk の横にちっちゃくログイン済みって出そうか」) -->
-        <span v-if="poeSession.loggedIn.value === true" class="text-[10px] text-emerald-300" title="pathofexile.com にログインしています">● ログイン済み</span>
-        <span v-else-if="poeSession.loggedIn.value === false" class="text-[10px] text-amber-300" title="pathofexile.com にログインしていません">● 未ログイン</span>
+        <span v-if="poeSession.loggedIn.value === true" class="whitespace-nowrap text-[10px] text-emerald-300" title="pathofexile.com にログインしています">● ログイン済み</span>
+        <span v-else-if="poeSession.loggedIn.value === false" class="whitespace-nowrap text-[10px] text-amber-300" title="pathofexile.com にログインしていません">● 未ログイン</span>
       </div>
       <p class="text-xs text-[var(--exile-color-text-secondary)]">POE2 Secretary</p>
     </div>
 
-    <nav class="flex-1 overflow-y-auto">
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden">
       <div v-for="group in groups" :key="group.key" class="mt-1">
         <div
           v-if="group.label"
-          class="px-4 mt-3 mb-1 text-[10px] uppercase tracking-wider text-[var(--exile-color-text-secondary)]"
+          class="g-brush px-4 mt-3 mb-1 text-[13px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]"
         >
           {{ group.label }}
         </div>
@@ -88,10 +88,10 @@ const groups = (["economy", "tools"] as const)
           type="button"
           @click="emit('update:active', item.id)"
           :class="[
-            'w-full text-left px-4 py-2 flex items-center gap-2 transition border-l-2 font-display text-[13px] tracking-[0.06em]',
+            'w-full text-left px-4 py-2 flex items-center gap-2 transition g-antique text-[14px] tracking-[0.06em]',
             active === item.id
-              ? 'bg-[var(--exile-color-bg-elevated)] border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
-              : 'border-transparent hover:bg-[var(--exile-color-bg-elevated)]',
+              ? 'g-nav-on g-sel'
+              : 'text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] hover:text-[var(--exile-color-text-primary)]',
           ]"
         >
           <!--
