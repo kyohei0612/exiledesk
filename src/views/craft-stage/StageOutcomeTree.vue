@@ -375,8 +375,8 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
             </div>
             <CurrencyShelf @hold="holdShelf">
               <template v-if="heldOmens.length" #held>
-                <div class="rounded-lg bg-[rgba(90,62,107,0.14)] p-2.5 ring-1 ring-[rgba(150,110,180,0.35)]">
-                  <p class="mb-1.5 text-xs text-[#c9b3dc]">{{ nameOf(shelfHeld ?? "") }} に掛けるお告げ</p>
+                <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
+                  <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(shelfHeld ?? "") }} に掛けられるお告げ</p>
                   <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleShelfOmen($event)" /></div>
                 </div>
               </template>

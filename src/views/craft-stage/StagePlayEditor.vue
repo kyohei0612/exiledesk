@@ -335,10 +335,6 @@ const useShort = (key: string): string => { const x = setOf(props.sets, key); if
                 <b class="text-[var(--exile-color-text-primary)]">{{ useLabel(pending!) }}</b>
                 <button type="button" class="ml-auto grid size-7 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" title="持つのをやめる" @click="held = null"><Icon name="x" class="size-4" /></button>
               </div>
-              <div v-if="heldOmens.length" class="mb-3">
-                <p class="mb-1.5 text-[11px] font-medium tracking-wide text-[var(--exile-color-text-tertiary)]">お告げ (掛けるなら先に)</p>
-                <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleOmen($event)" /></div>
-              </div>
               <p class="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-[var(--exile-color-text-tertiary)]">狙う MOD (押すと手が入る) <HelpTip text="狙う手は当たったものとして次へ進みます。外れた時の手は「外れの手」で決めます" /></p>
               <div class="flex flex-wrap gap-1.5">
                 <template v-if="adds">
@@ -348,6 +344,12 @@ const useShort = (key: string): string => { const x = setOf(props.sets, key); if
               </div>
             </section>
             <CurrencyShelf v-if="!locked" @hold="(k: string) => (held = k)">
+              <template v-if="heldOmens.length" #held>
+                <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
+                  <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(held ?? "") }} に掛けられるお告げ</p>
+                  <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleOmen($event)" /></div>
+                </div>
+              </template>
             </CurrencyShelf>
           </div>
         </div>

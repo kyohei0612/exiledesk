@@ -183,7 +183,10 @@ const groups = computed(() => {
 /** 付ける物の名前 */
 function modLabel(modId: string): string {
   const d = s.data.value;
-  const t = s.simTargets.value.find((x) => x.modId === modId);
+  // 「＋」で足した候補 (alts) も狙いの内 (2026-10-10 冷気・雷が「#から# (狙いに無い)」と出ていた)
+  const top = s.simTargets.value.find((x) => x.modId === modId);
+  const alt = top ? null : s.simTargets.value.flatMap((x) => x.alts ?? []).find((a) => a.modId === modId);
+  const t = top ?? (alt ? { ...alt, alts: undefined } : undefined);
   const m = d?.mods.get(modId);
   if (!m) return modId;
   // 狙いの一覧に無い MOD (選び直して外した物) も日本語で (英語の id を出さない)

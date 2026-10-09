@@ -80,6 +80,20 @@ const usableAll = computed(() => {
     ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
   ].filter((x) => x.keys.length);
 });
+/**
+ * 持っている物のお告げ (slot "held") は、持った物がある行のすぐ下に出す (2026-10-10 オーナー「お告げが上に出たり下に出たり。
+ * 選んだカレンシーの下でいい、次の行に使えるお告げ関係を出して」)。今のタブに持った物が無ければ今まで通りタブの下
+ */
+const heldKey = computed(() => craftStage.held.value);
+const holds = (keys: readonly string[]): boolean => !!heldKey.value && keys.includes(heldKey.value);
+const placed = computed(() => {
+  if (!heldKey.value) return false;
+  if (tab.value === "orb") return orbSplit.value.usable.some((g) => holds(g.keys)) || (unusableOpen.value && orbSplit.value.unusable.some((g) => holds(g.keys)));
+  if (tab.value === "usable") return usableAll.value.some((x) => !x.kind && holds(x.keys));
+  if (tab.value === "essence") return essences.value.some((g) => holds(g.keys));
+  if (tab.value === "catalyst") return holds(CATALYSTS);
+  return false;
+});
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
 const TABS = computed(() => [
   { id: "usable" as const, label: `使用可能 (${usableCount.value})` },
@@ -116,41 +130,52 @@ const TABS = computed(() => [
         <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:contents">
           <ShelfButton v-for="k in !sec.kind || openRunes.has(sec.kind) ? sec.keys : sec.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
         </div>
+        <div v-if="$slots.held && !sec.kind && holds(sec.keys)" class="mt-2"><slot name="held" /></div>
       </div>
       <p v-if="!usableAll.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
-      <div v-if="$slots.held" class="mt-2"><slot name="held" /></div>
+      <div v-if="$slots.held && !placed" class="mt-2"><slot name="held" /></div>
     </div>
 
     <!-- 使える物を前に、使えない物は線の下に (2026-10-05)。持っているカレンシーのお告げは使える物の直後 -->
     <div v-else-if="tab === 'orb'">
       <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
-        <div v-for="g in orbSplit.usable" :key="'u' + g.kind" class="flex flex-wrap gap-1.5 max-md:contents">
-          <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
-        </div>
+        <template v-for="g in orbSplit.usable" :key="'u' + g.kind">
+          <div class="flex flex-wrap gap-1.5 max-md:contents">
+            <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+          </div>
+          <div v-if="$slots.held && holds(g.keys)" class="basis-full"><slot name="held" /></div>
+        </template>
         <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
       </div>
-      <div v-if="$slots.held" class="mt-2"><slot name="held" /></div>
+      <div v-if="$slots.held && !placed" class="mt-2"><slot name="held" /></div>
       <template v-if="orbSplit.unusable.length">
         <button type="button" class="mb-1 mt-3 flex w-full items-center gap-2 border-t border-white/10 pt-2 text-left text-[10px] opacity-50 hover:opacity-80 max-md:min-h-10" @click="unusableOpen = !unusableOpen">
           今のアイテムには使えない物 ({{ orbSplit.unusable.reduce((a, g) => a + g.keys.length, 0) }}) {{ unusableOpen ? "▴ たたむ" : "▸ 開く" }}
         </button>
         <div v-if="unusableOpen" class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
-          <div v-for="g in orbSplit.unusable" :key="'x' + g.kind" class="flex flex-wrap gap-1.5 max-md:contents">
-            <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
-          </div>
+          <template v-for="g in orbSplit.unusable" :key="'x' + g.kind">
+            <div class="flex flex-wrap gap-1.5 max-md:contents">
+              <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+            </div>
+            <div v-if="$slots.held && holds(g.keys)" class="basis-full"><slot name="held" /></div>
+          </template>
         </div>
       </template>
     </div>
 
     <div v-else-if="tab === 'essence'" class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
-      <div v-for="g in essences" :key="g.kind" class="flex flex-wrap gap-1.5 max-md:contents">
-        <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
-      </div>
+      <template v-for="g in essences" :key="g.kind">
+        <div class="flex flex-wrap gap-1.5 max-md:contents">
+          <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+        </div>
+        <div v-if="$slots.held && holds(g.keys)" class="basis-full"><slot name="held" /></div>
+      </template>
       <p v-if="!essences.length" class="text-[12px] opacity-50">このベースに使えるエッセンスはありません</p>
     </div>
 
-    <div v-else-if="tab === 'catalyst'" class="flex flex-wrap gap-1.5 max-md:contents">
+    <div v-else-if="tab === 'catalyst'" class="flex flex-wrap gap-1.5">
       <ShelfButton v-for="k in CATALYSTS" :key="k" :k="k" @pick="emit('hold', $event)" />
+      <div v-if="$slots.held && holds(CATALYSTS)" class="basis-full"><slot name="held" /></div>
     </div>
 
     <div v-else-if="tab === 'rune'">
@@ -187,6 +212,6 @@ const TABS = computed(() => [
       </div>
     </div>
     <!-- オーブ以外のタブ (エッセンス等) で持った時は一番下 (お告げのタブは棚そのものがお告げなので出さない) -->
-    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held" class="mt-3"><slot name="held" /></div>
+    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !placed" class="mt-3"><slot name="held" /></div>
   </div>
 </template>
