@@ -1,0 +1,15 @@
+// スマホ用の開発版 (公開しない)。鍵付きの URL で開いた端末だけ見られる (dev-gate.js)。
+// 置くのはリポジトリの根で `pnpm deploy:web-dev` (scripts/deploy-web-dev.mjs)。鍵は `wrangler secret put DEV_KEY -c wrangler.dev.jsonc`
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "web-dev",
+  "main": "dev-gate.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "../../dist-web-dev",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}

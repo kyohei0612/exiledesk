@@ -9,17 +9,20 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 
+/** 出す場所。スマホ用の開発版 (scripts/deploy-web-dev.mjs) は dist-web-dev に出す */
+const OUT = process.env.WEB_OUT || "dist-web";
+
 export default defineConfig({
   plugins: [vue(), tailwindcss(), {
     name: "exiledesk-web-finish",
     apply: "build" as const,
     async closeBundle() {
       const { rm, rename } = await import("node:fs/promises");
-      await rename("dist-web/web.html", "dist-web/index.html");
-      for (const p of ["mtx-art", "dev-trade2-stub.js"]) await rm(`dist-web/${p}`, { recursive: true, force: true });
+      await rename(`${OUT}/web.html`, `${OUT}/index.html`);
+      for (const p of ["mtx-art", "dev-trade2-stub.js"]) await rm(`${OUT}/${p}`, { recursive: true, force: true });
     },
   }],
-  build: { outDir: "dist-web", emptyOutDir: true, rollupOptions: { input: "web.html" } },
+  build: { outDir: OUT, emptyOutDir: true, rollupOptions: { input: "web.html" } },
   // シミュレーションの作業場所は ES モジュールで (vite.config.ts と同じ)
   worker: { format: "es" },
   clearScreen: false,

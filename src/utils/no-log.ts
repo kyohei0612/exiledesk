@@ -8,6 +8,8 @@ import { ref } from "vue";
 export const NO_LOG_KEY = "exiledesk.noLog";
 
 function read(): boolean {
+  // スマホ用の開発版 (公開しない、scripts/deploy-web-dev.mjs) は記録しない
+  if (import.meta.env.VITE_DEV_PREVIEW === "1") return true;
   try { return localStorage.getItem(NO_LOG_KEY) === "1"; } catch { return false; }
 }
 
