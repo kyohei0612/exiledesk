@@ -3,8 +3,10 @@
  * yt-subs.mjs — YouTube の字幕を取って、読める文にして保存する (2026-10-09 オーナー「字幕ダウンローダー的な奴、簡易でいいから。これ打ったら字幕が取れるみたいなの」)
  *
  *   pnpm subs <URL か動画 ID> [言語 (既定 en,ja)]
+ *   pnpm subs <落とした .srt / .vtt>   (拡張機能 YouTube Subtitle Downloader などで落とした物を同じ形にそろえる)
  *   例: pnpm subs https://www.youtube.com/watch?v=o3Fh1DJmxBA
  *       pnpm subs o3Fh1DJmxBA ja
+ *       pnpm subs "C:/Users/kyohei/Downloads/動画名.en.srt"
  *
  * 中身は yt-dlp。字幕は YouTube がブラウザらしさを求めるので、なりすましの部品込みで入れる:
  *   pip install -U "yt-dlp[default,curl-cffi]"
@@ -13,16 +15,39 @@
  * (30 秒ごとに [分:秒] を頭に付けた段落。data-cache/saveq-subtitles と同じ形)
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const [input, langArg = "en,ja"] = process.argv.slice(2);
 if (!input) {
-  console.error("使い方: pnpm subs <URL か動画 ID> [言語 (既定 en,ja)]");
+  console.error("使い方: pnpm subs <URL か動画 ID> [言語 (既定 en,ja)]  /  pnpm subs <落とした .srt か .vtt>");
   process.exit(1);
+}
+// 落とした字幕のファイル (.srt / .vtt。ブラウザの拡張機能 YouTube Subtitle Downloader など) は、同じ形にそろえて保存するだけ
+// (2026-10-09: yt-dlp は 429 で断られたが、拡張機能では取れた)
+if (/\.(srt|vtt)$/i.test(input) && existsSync(input)) {
+  const raw = readFileSync(input, "utf8").replace(/\r/g, "");
+  const events = [];
+  for (const block of raw.split(/\n\n+/)) {
+    const lines = block.split("\n").filter((l) => l.trim() && !/^\d+$/.test(l.trim()) && !/^WEBVTT/.test(l));
+    const time = lines.find((l) => l.includes("-->"));
+    if (!time) continue;
+    const [h, m, s] = time.split("-->")[0].trim().replace(",", ".").split(":").map(Number);
+    const ms = Math.round(((h ?? 0) * 3600 + (m ?? 0) * 60 + (s ?? 0)) * 1000);
+    const text = lines.filter((l) => l !== time).join(" ").replace(/<[^>]+>/g, "");
+    events.push({ tStartMs: ms, segs: [{ utf8: text }] });
+  }
+  const name = basename(input).replace(/\.(srt|vtt)$/i, "").replace(/[^\w.-]+/g, "_").slice(0, 80);
+  const dir = join(ROOT, "data-cache", "subs");
+  mkdirSync(dir, { recursive: true });
+  const path = join(dir, `${name}.txt`);
+  const text = toText({ events });
+  writeFileSync(path, text);
+  console.log(`${events.length.toLocaleString()} 行 → ${text.length.toLocaleString()} 字 → ${path}`);
+  process.exit(0);
 }
 const id = /^[\w-]{11}$/.test(input) ? input : (/(?:v=|youtu\.be\/|shorts\/|live\/)([\w-]{11})/.exec(input)?.[1] ?? null);
 if (!id) {
