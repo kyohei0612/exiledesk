@@ -71,7 +71,7 @@ const extraLinks = computed(() => (props.r.src === "rare" && props.r.rare ? prop
         <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span
             :class="COLOR[r.item.rarity]"
-            class="cursor-help font-bold underline decoration-white/30 decoration-dotted underline-offset-4"
+            class="g-hover-name font-bold"
             @mouseenter="(ev) => hoverStack.openRoot({ kind: 'build', item: r.item }, toCss(ev.clientX), toCss(ev.clientY))"
             @mouseleave="hoverStack.leave()"
             >{{ r.nameJa }}</span

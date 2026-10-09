@@ -155,6 +155,12 @@
 
 /* 名前・見出しの字 */
 .g-antique { font-family: var(--exile-font-family-antique); }
+/*
+ * 乗せると説明のカードが出る名前 (表の名前・ジェム名など)。前は点線の下線を全部の名前に引いていたが、細かい点が何行も並び、
+ * 窓に合わせた半端な拡大で点の間隔がずれてチカチカした (2026-10-09 オーナー「チカチカして文字が見づらい」)。線は引かず、乗せた時に色で示す
+ */
+.g-hover-name { cursor: help; transition: color 120ms; }
+.g-hover-name:hover { color: var(--exile-color-accent-focus); }
 .g-brush { font-family: var(--exile-font-family-brush); font-weight: 400; }
 
 /* ============================================================

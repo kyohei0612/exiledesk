@@ -62,20 +62,24 @@ export function formatEpoch(epoch: number | null): string {
 // ---------------------------------------------------------------------------
 // トレンド (スパークライン + 変化率)
 // ---------------------------------------------------------------------------
-/** spark 配列を SVG polyline の points 文字列に変換 (古→新, 左→右)。 */
-export function sparkPoints(vals: number[], w = 72, h = 20): string {
+/**
+ * なだらかな折れ線の path (2026-10-09 オーナー「チカチカして見づらい」: 細かいギザギザが全部の行に並んでうるさかった)。
+ * 点が多い時は前後 1 つずつで均してから、点を通る曲線 (Catmull-Rom → 3 次ベジェ) でつなぐ。上下は線幅ぶん余白を空ける
+ */
+export function sparkPath(vals: number[], w = 72, h = 20): string {
   if (vals.length < 2) return "";
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
-  const range = max - min || 1;
-  const pad = 1.5; // 線幅ぶん上下に余白
-  return vals
-    .map((v, i) => {
-      const x = (i / (vals.length - 1)) * w;
-      const y = h - pad - ((v - min) / range) * (h - pad * 2);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
+  const v = vals.length > 8 ? vals.map((_, i) => { const a = vals.slice(Math.max(0, i - 1), i + 2); return a.reduce((x, y) => x + y, 0) / a.length; }) : vals;
+  const min = Math.min(...v), range = Math.max(...v) - min || 1, pad = 1.5;
+  const p = v.map((y, i) => [(i / (v.length - 1)) * w, h - pad - ((y - min) / range) * (h - pad * 2)] as const);
+  const f = (n: number): string => n.toFixed(1);
+  let d = `M${f(p[0]![0])},${f(p[0]![1])}`;
+  for (let i = 0; i < p.length - 1; i++) {
+    const p0 = p[Math.max(0, i - 1)]!, p1 = p[i]!, p2 = p[i + 1]!, p3 = p[Math.min(p.length - 1, i + 2)]!;
+    // 曲がりすぎて枠からはみ出さないよう、控えの点は上下の端で止める
+    const cy = (y: number): number => Math.min(h - pad, Math.max(pad, y));
+    d += ` C${f(p1[0] + (p2[0] - p0[0]) / 6)},${f(cy(p1[1] + (p2[1] - p0[1]) / 6))} ${f(p2[0] - (p3[0] - p1[0]) / 6)},${f(cy(p2[1] - (p3[1] - p1[1]) / 6))} ${f(p2[0])},${f(p2[1])}`;
+  }
+  return d;
 }
 
 /** 変化率の表示文字列 (+12.3% / −4.5% / 0%)。 */

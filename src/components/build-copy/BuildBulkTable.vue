@@ -49,7 +49,7 @@ const subtotal = computed(() => props.rows.reduce((s, r) => s + (r.unit ?? 0) * 
               <GemName v-if="gem" :en="r.nameEn" :label="r.nameJa" />
               <span
                 v-else
-                class="underline decoration-dotted decoration-[var(--exile-color-text-tertiary)] underline-offset-4 cursor-help"
+                class="g-hover-name"
                 @mouseenter="(ev) => openCurrency(r, ev)"
                 @mouseleave="hoverStack.leave()"
                 >{{ r.nameJa }}</span

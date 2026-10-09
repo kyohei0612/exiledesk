@@ -64,18 +64,20 @@ function iconOf(c: Cur): string {
         </tr>
       </thead>
       <tbody>
+        <!-- 行の区切りは 1 行おきの薄い地で (1px の線は窓に合わせた拡大で太さがばらついた。2026-10-09) -->
         <tr
           v-for="(p, i) in rows"
           :key="p.apiId"
-          class="border-t border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)] transition"
+          class="hover:bg-[var(--exile-color-bg-elevated)] transition"
+          :class="i % 2 ? 'bg-white/[0.025]' : ''"
         >
           <td class="px-3 py-3 text-[var(--exile-color-text-secondary)] tabular-nums whitespace-nowrap">{{ i + 1 }}</td>
           <td class="px-3 py-3 whitespace-nowrap">
             <div class="flex items-center gap-2 whitespace-nowrap">
               <img v-if="p.icon" :src="p.icon" :alt="p.text" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
-              <!-- 名前に下線。名前にカーソルでゲームと同じカード (ユニーク装備価格推移と同じ。オーナー 2026-09-26「列でホバーしちゃうね」) -->
+              <!-- 名前に乗せると色が変わる (下線の点線はチカチカするので外した、2026-10-09)。名前にカーソルでゲームと同じカード (ユニーク装備価格推移と同じ。オーナー 2026-09-26「列でホバーしちゃうね」) -->
               <span
-                class="text-[var(--exile-color-text-primary)] underline decoration-dotted decoration-[var(--exile-color-text-tertiary)] underline-offset-4 cursor-help"
+                class="g-hover-name text-[var(--exile-color-text-primary)]"
                 @mouseenter="(ev) => emit('hover', p, ev)"
                 @mousemove="(ev) => emit('move', ev)"
                 @mouseleave="emit('leave')"

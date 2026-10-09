@@ -14,5 +14,5 @@ function open(ev: MouseEvent): void {
 </script>
 
 <template>
-  <span class="underline decoration-dotted decoration-[var(--exile-color-text-tertiary)] underline-offset-4 cursor-help" @mouseenter="open" @mouseleave="hoverStack.leave()">{{ label }}</span>
+  <span class="g-hover-name" @mouseenter="open" @mouseleave="hoverStack.leave()">{{ label }}</span>
 </template>

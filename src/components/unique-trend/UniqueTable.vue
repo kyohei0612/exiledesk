@@ -98,8 +98,8 @@ function onFav(key: string): void {
       <tbody>
         <template v-for="(r, i) in list" :key="r.itemId">
           <tr
-            class="border-t border-[var(--exile-color-border-subtle)] cursor-pointer transition"
-            :class="openId === r.itemId ? 'bg-[var(--exile-color-bg-elevated)]' : 'hover:bg-[var(--exile-color-bg-elevated)]'"
+            class="cursor-pointer transition"
+            :class="openId === r.itemId ? 'bg-[var(--exile-color-bg-elevated)]' : ['hover:bg-[var(--exile-color-bg-elevated)]', i % 2 ? 'bg-white/[0.025]' : '']"
             @click="emit('toggle', r.itemId)"
           >
             <td class="px-3 py-2.5 text-[var(--exile-color-text-secondary)] tabular-nums">{{ i + 1 }}</td>
@@ -109,9 +109,9 @@ function onFav(key: string): void {
                 <img v-if="r.icon || uniqueArt(r.nameEn)" :src="r.icon || uniqueArt(r.nameEn)!" :alt="r.nameEn" class="w-9 h-9 object-contain shrink-0" loading="lazy" />
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5 min-w-0 text-[var(--exile-color-text-primary)]">
-                    <!-- 名前に下線。名前にカーソルでゲームと同じカード (オーナー 2026-09-26「列にホバーで表示されるから分かりづらい」) -->
+                    <!-- 名前に乗せると色が変わる (下線の点線はチカチカするので外した、2026-10-09)。名前にカーソルでゲームと同じカード (オーナー 2026-09-26「列にホバーで表示されるから分かりづらい」) -->
                     <span
-                      class="truncate underline decoration-dotted decoration-[var(--exile-color-text-tertiary)] underline-offset-4 cursor-help"
+                      class="g-hover-name truncate"
                       @mouseenter="(ev) => hoverAt(r, ev)"
                       @mouseleave="hoverStack.leave()"
                     >{{ r.nameJa }}</span>

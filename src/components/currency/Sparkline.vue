@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { ItemTrend } from "../../api/poe2scout";
-import { fmtPct, sparkPoints } from "../../views/currency/format";
+import { fmtPct, sparkPath } from "../../views/currency/format";
 
 const props = withDefaults(defineProps<{ trend: ItemTrend; width?: number; height?: number }>(), {
   width: 72,
@@ -17,10 +17,12 @@ const down = computed(() => props.trend.changePct < 0);
 <template>
   <div class="flex items-center justify-end gap-1" :title="`過去7日間 ${fmtPct(trend.changePct)}`">
     <svg :width="width" :height="height" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
-      <polyline
-        :points="sparkPoints(trend.spark)"
+      <!-- なだらかな線で、色は少し落とす (細かいギザギザが全部の行に並んでチカチカした。2026-10-09) -->
+      <path
+        :d="sparkPath(trend.spark)"
         fill="none"
         :stroke="down ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'"
+        stroke-opacity="0.75"
         stroke-width="1.5"
         stroke-linejoin="round"
         stroke-linecap="round"

@@ -1,6 +1,8 @@
 <!--
   CategorySidebar.vue — 左サイドバー: 検索ボックス + カテゴリ縦リスト (POE2 trade2 風)
   CurrencyRanking.vue から切り出し (2026-09-07)。
+  2026-10-09 オーナー「カテゴリも左つぶれてる、真ん中に持ってきたらアイコンで合わせて列」: 左のメインのサイドバーの縁の飾り (g-sidebar::after) が
+  10px 被ってアイコンの左が隠れ、幅も足りず名前が切れていた → 幅を広げ、検索・見出し・カテゴリを同じ幅のまとまりにして真ん中に (アイコンは縦に揃う)
 -->
 <script setup lang="ts">
 import { jaCategory } from "../../i18n/categories-ja";
@@ -10,7 +12,7 @@ defineProps<{ categories: CategoryDisplay[]; totalCount: number }>();
 const categoryFilter = defineModel<string>("categoryFilter", { required: true });
 const searchQuery = defineModel<string>("searchQuery", { required: true });
 
-const btnBase = "w-full text-left px-3 py-2 flex items-center gap-2 g-antique text-[14px] transition";
+const btnBase = "w-full text-left px-2.5 py-2 flex items-center gap-2 g-antique text-[14px] transition";
 /** 選んでいる行 (メインのサイドバーと同じ。ゲームの選択の角 + 赤の帯、src/styles/game-ui.css) */
 const btnActive = "g-nav-on g-sel";
 const btnIdle = "text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] hover:text-[var(--exile-color-text-primary)]";
@@ -18,9 +20,9 @@ const btnIdle = "text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] 
 
 <template>
   <aside
-    class="g-sidebar relative z-[1] w-44 shrink-0 overflow-y-auto overflow-x-hidden flex flex-col"
+    class="g-sidebar relative z-[1] w-60 shrink-0 overflow-y-auto overflow-x-hidden flex flex-col items-center"
   >
-    <div class="px-3 py-3">
+    <div class="w-52 py-3">
       <div class="relative">
         <input
           v-model="searchQuery"
@@ -38,8 +40,8 @@ const btnIdle = "text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] 
         </button>
       </div>
     </div>
-    <div class="g-brush px-3 py-2 text-[13px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">カテゴリ</div>
-    <nav class="flex-1">
+    <div class="g-brush w-52 px-2.5 py-2 text-[13px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">カテゴリ</div>
+    <nav class="w-52 flex-1 pb-3">
       <button @click="categoryFilter = 'all'" :class="[btnBase, categoryFilter === 'all' ? btnActive : btnIdle]">
         <span class="w-6 h-6 inline-flex items-center justify-center text-base">★</span>
         <span>すべて</span>
