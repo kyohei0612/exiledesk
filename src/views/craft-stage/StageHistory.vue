@@ -2,7 +2,7 @@
   StageHistory.vue — クラフトステージの工程履歴 (2026-09-27、ADR-001)
 
   1 手ずつ下に積み上がる (POE2Tube の「積み上げ図解」と同じ見え方)。手の番号・カレンシー・付いた / 消えた MOD・レアリティの変化・累計の費用。
-  打てなかった手は理由を薄く出す。手を押すとその手を打った直後に戻る (craftStage.goTo、この後に打てば先の手は捨てる)。
+  打てなかった手は理由を薄く出す。手を押すとその手を打った直後に戻る (craftStage.goTo、この後に打てば先の手は捨てる)。先頭の「始め」は 1 手も打っていない状態へ (goToStart)。
 -->
 <script setup lang="ts">
 import { craftStage, iconOf } from "../../state/craft-stage";
@@ -22,6 +22,21 @@ const canGo = (index: number): boolean => !craftStage.replay.value && craftStage
 
 <template>
   <ol class="space-y-1">
+    <!-- 始めの行 (押すと 1 手も打っていない状態に戻る。2026-10-09 オーナー「始めの行も足して」) -->
+    <li
+      v-if="craftStage.log.value.length"
+      class="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-[12px]"
+      :class="craftStage.replay.value ? '' : 'cursor-pointer hover:border-white/30 hover:bg-white/5'"
+      :title="craftStage.replay.value ? undefined : '1 手も打っていない状態に戻す (この後に打つと先の手は消える)'"
+      :tabindex="craftStage.replay.value ? undefined : 0"
+      @click="craftStage.goToStart()"
+      @keydown.enter="craftStage.goToStart()"
+    >
+      <span class="w-6 shrink-0 text-right tabular-nums opacity-50">0</span>
+      <b>始め</b>
+      <span :class="RARITY_CLS[craftStage.log.value[0]!.before.rarity]">{{ RARITY_JA[craftStage.log.value[0]!.before.rarity] }}</span>
+      <span v-if="craftStage.startMods.value.length" class="text-[11px] opacity-60">始めの MOD {{ craftStage.startMods.value.length }} つ</span>
+    </li>
     <li
       v-for="s in craftStage.log.value"
       :key="s.out.index"

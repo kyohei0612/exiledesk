@@ -33,4 +33,14 @@ describe("craftStage.goTo", () => {
     expect(craftStage.log.value[0]).toBe(log[0]);
     expect(craftStage.log.value[1]).not.toBe(log[1]);
   });
+
+  it("始めの行は 1 手も打っていない状態に戻し、始めの MOD は残す", async () => {
+    const { craftStage } = await import("../src/state/craft-stage");
+    craftStage.reset();
+    const start = craftStage.item.value;
+    for (const k of ["transmute", "augment", "regal"]) craftStage.use(k);
+    craftStage.goToStart();
+    expect(craftStage.log.value.length).toBe(0);
+    expect(craftStage.item.value).toBe(start);
+  });
 });

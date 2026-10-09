@@ -553,6 +553,11 @@ export const craftStage = {
     if (replay.value || !log.value.some((s) => s.out.index === index)) return;
     while (log.value.length && log.value[log.value.length - 1]!.out.index !== index) craftStage.undo();
   },
+  /** 1 手も打っていない状態に戻す (履歴の「始め」の行)。始めの MOD は外さない */
+  goToStart(): void {
+    if (replay.value) return;
+    while (log.value.length) craftStage.undo();
+  },
   hold(key: string | null): void {
     held.value = key;
   },
