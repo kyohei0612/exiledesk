@@ -53,7 +53,7 @@ const emit = defineEmits<{
         <!-- 使う / 外す (チェック) -->
         <button
           type="button"
-          class="flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] leading-none"
+          class="g-plain flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] leading-none"
           :class="gem.enabled ? (gem.support ? 'border-sky-400 bg-sky-500/60 text-white' : 'border-amber-400 bg-amber-500/70 text-black') : 'border-white/25 text-transparent'"
           :title="gem.enabled ? '使っている (押すと外す)' : '外している (押すと使う)'"
           :disabled="disabled"

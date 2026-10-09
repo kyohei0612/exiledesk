@@ -264,20 +264,23 @@ const resists = computed(() =>
   -->
   <div class="flex h-full flex-col overflow-hidden">
     <TabBar art="dps" title="火力チェック" />
-    <div class="min-h-0 flex-1 overflow-auto p-4 @container">
+    <!-- 中身は 1 つの枠に (2026-10-10 UI 見直し。他の画面と同じ形) -->
+    <div class="min-h-0 flex-1 flex p-4">
+    <div class="g-panel min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-5 py-2 @container">
     <!-- 1 ページ目: 自分・相手を取り込む → 両方そろったら「比較する」→ 試算が済んだら 2 ページ目 (2026-10-04) -->
     <!-- 入口: 自分の火力を見る / 火力を比較する -->
     <section v-if="!opened && !(selfOpen && cur) && !mode" class="mx-auto mt-8 max-w-4xl">
       <p class="mb-4 text-center text-[13px] text-[var(--exile-color-text-secondary)]">何をしますか</p>
       <div class="grid gap-4 md:grid-cols-2">
-        <button type="button" class="card p-6 text-left transition hover:border-amber-400/60 hover:bg-amber-500/[0.06]" @click="choose('self')">
-          <img src="/ui-art/nav-dps-on.webp" alt="" class="mx-auto size-10 object-contain drop-shadow-[0_1px_2px_#000]" draggable="false" />
+        <!-- 2 枚とも同じ形 (2026-10-10 UI 見直し: 片方は絵が真ん中、片方は絵文字の ⚔ だった) -->
+        <button type="button" class="g-plain rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-6 text-left transition-colors hover:border-[var(--exile-color-accent-focus)]" @click="choose('self')">
+          <img src="/ui-art/nav-dps-on.webp" alt="" class="size-10 object-contain drop-shadow-[0_1px_2px_#000]" draggable="false" />
           <p class="mt-2 text-lg font-bold text-amber-100">自分の火力を見る</p>
           <p class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">自分のビルドを取り込んで、スキルごとの DPS と火力の中身を見る。装備・ジェム・パッシブツリーを変えるとすぐ計算し直す</p>
         </button>
-        <button type="button" class="card p-6 text-left transition hover:border-sky-400/60 hover:bg-sky-500/[0.06]" @click="choose('compare')">
-          <p class="text-2xl">⚔</p>
-          <p class="mt-2 text-lg font-bold text-sky-100">火力を比較する</p>
+        <button type="button" class="g-plain rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-6 text-left transition-colors hover:border-[var(--exile-color-accent-focus)]" @click="choose('compare')">
+          <img src="/ui-art/nav-dps.webp" alt="" class="size-10 object-contain drop-shadow-[0_1px_2px_#000]" draggable="false" />
+          <p class="mt-2 text-lg font-bold text-amber-100">火力を比較する</p>
           <p class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">自分と相手 (忍者の上位の人など) を取り込んで、何を真似するとどれだけ火力が伸びるかを並べる</p>
         </button>
       </div>
@@ -575,6 +578,7 @@ const resists = computed(() =>
         数字はゲームのスキルの詳細と同じ書き方です (敵の耐性・呪い・露出は入れない。常時のバフは入れる)。「自動」のスキルは PoB が発動の頻度を計算しないので自分で撃った時の数字。計算は同梱の PoB のままです。
       </p>
     </template>
+    </div>
     </div>
   </div>
 </template>

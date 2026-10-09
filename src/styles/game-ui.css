@@ -216,6 +216,29 @@ tr:is([class*="border-[var(--exile-color-border-subtle)]"], [class*="border-whit
 tbody > tr:is([class*="border-[var(--exile-color-border-subtle)]"], [class*="border-white/"]):nth-child(even) {
   background-image: linear-gradient(rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.025));
 }
+/* 共通のボタン (style.css の .btn) もゲームの絵に (2026-10-10 UI 見直し: 火力チェックの「取り込む」などが平たい金色のままだった)。
+   主 (.btn-primary) = 赤いボタン、副 (.btn-outline) = 普通のボタン */
+.btn.btn-primary:not(.g-plain),
+.btn.btn-outline:not(.g-plain) {
+  border-style: solid;
+  border-color: transparent;
+  border-radius: 0;
+  background: none;
+  padding-left: 4px;
+  padding-right: 4px;
+  color: var(--exile-color-text-title);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+}
+.btn.btn-primary:not(.g-plain) { border-width: 0 22px; border-image: url("/ui-art/btn-red.webp") 0 40 fill / 0 22px stretch; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6)); }
+.btn.btn-primary:not(.g-plain):hover:not(:disabled) { border-image-source: url("/ui-art/btn-red-hover.webp"); background: none; }
+.btn.btn-primary:not(.g-plain):active:not(:disabled) { border-image-source: url("/ui-art/btn-red-pressed.webp"); }
+.btn.btn-outline:not(.g-plain) { border-width: 0 16px; border-image: url("/ui-art/btn.webp") 0 40 fill / 0 16px stretch; }
+.btn.btn-outline:not(.g-plain):hover:not(:disabled) { border-image-source: url("/ui-art/btn-hover.webp"); background: none; }
+.btn.btn-outline:not(.g-plain):active:not(:disabled) { border-image-source: url("/ui-art/btn-pressed.webp"); }
+.btn.btn-outline.btn-accent:not(.g-plain) { color: var(--exile-color-accent-focus); }
+.btn.btn-primary:not(.g-plain):disabled,
+.btn.btn-outline:not(.g-plain):disabled { filter: grayscale(0.8) brightness(0.6); opacity: 1; }
 /* 金色の決めるボタン (bg が accent-focus のボタン) = ゲームの赤いボタン */
 button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain) {
   border-style: solid;
@@ -290,7 +313,8 @@ body {
 }
 
 /* 細い線の枠のボタン (border-white/… や色付きの線) = ゲームの普通のボタン。大きいカードのボタン (rounded-xl) は除く */
-button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain) {
+/* 4〜5 の大きさの小さなボタン (チェックなど) は絵にしない (2026-10-10: 火力チェックのジェムのチェックに左右 16px の縁が付いて名前が切れた) */
+button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain, [class~="w-4"], [class~="w-5"], [class~="h-4"], [class~="h-5"], [class~="size-4"], [class~="size-5"]) {
   border-style: solid;
   border-width: 0 16px;
   border-color: transparent;
@@ -304,7 +328,7 @@ button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-
   color: var(--exile-color-text-title);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
-button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain):hover:not(:disabled) {
+button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain, [class~="w-4"], [class~="w-5"], [class~="h-4"], [class~="h-5"], [class~="size-4"], [class~="size-5"]):hover:not(:disabled) {
   border-image-source: url("/ui-art/btn-hover.webp");
   background: none;
 }

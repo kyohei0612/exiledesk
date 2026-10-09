@@ -469,7 +469,7 @@ const hoverInfo = computed(() => {
       </select>
       <button
         type="button"
-        class="rounded-md bg-orange-500 px-3 py-0.5 font-bold text-black disabled:opacity-40"
+        class="g-btn-red sm"
         :disabled="busy || !!powerProgress"
         @click="emit('power', powerTarget)"
       >{{ powerProgress ? `計算中… ${progressLabel}` : "取っているノードを 1 個ずつ外して計算" }}</button>
