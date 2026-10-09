@@ -1,7 +1,7 @@
 // Cloudflare Workers の設定 (exiledesk-live)。
 // 5 分おきに channels.json のチャンネルがライブ中かを調べ、KV に 1 つの JSON で置く。
 // サイトは GET /live.json を読むだけ (YouTube / Twitch には 5 分に 1 回しか問い合わせない)。
-// ほかに: 相場の中継 (/api/poe2scout)・要望/バグ (/feedback)・操作の印 (/event → Analytics Engine)・分析用の記録 (/log → D1)・毎朝 9 時 (JST) の日報 (0 0 * * * UTC)
+// ほかに: 相場の中継 (/api/poe2scout)・要望/バグ (/feedback)・操作の印 (/event → Analytics Engine)・分析用の記録 (/log → D1)・毎朝 9 時 (JST) の日報 (0 0 * * * UTC)・同じ時に昨日の記録を Discord へファイルで (secret の LOGS_WEBHOOK)
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "exiledesk-live",

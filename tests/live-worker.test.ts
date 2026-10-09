@@ -258,3 +258,33 @@ describe("操作の印と日報 (events / monitor)", () => {
     expect(await allowIp(kv, "9.9.9.9", 1_070_000)).toBeNull();
   });
 });
+
+describe("分析用の記録を Discord へ (logs.ts)", () => {
+  it("JSONL は行の切れ目で上限バイト以下に分ける (日本語は UTF-8 で数える)", async () => {
+    const { splitJsonl } = await import("../server/live/src/logs");
+    expect(splitJsonl("")).toEqual([]);
+    const lines = ["{\"a\":\"あいう\"}", "{\"b\":1}", "{\"c\":2}"];
+    const parts = splitJsonl(lines.join("\n"), 20);
+    expect(parts.join("\n")).toBe(lines.join("\n"));
+    for (const p of parts) expect(new TextEncoder().encode(p).length).toBeLessThanOrEqual(20);
+    expect(parts.length).toBe(2);
+  });
+  it("昨日の分をまとめて 1 投稿で送り、D1 には DELETE を出さない。413 なら 1 本ずつ送り直す", async () => {
+    const { sendDayLogs, FILE_MAX } = await import("../server/live/src/logs");
+    const sqls: string[] = [];
+    const big = "x".repeat(FILE_MAX / 3);
+    const rows = [0, 1, 2].map((i) => ({ at: `2026-10-08T0${i}:00:00.000Z`, country: "JP", body: `{"app":"web","n":1,"p":"${big}"}` }));
+    const LOGS = { prepare(sql: string) { sqls.push(sql); return { bind: () => ({ all: async () => ({ results: rows }) }) }; } } as unknown as D1Database;
+    const posts: number[] = [];
+    const f = (async (_u: string, init: RequestInit) => {
+      const n = [...(init.body as FormData).keys()].filter((k) => k.startsWith("files[")).length;
+      posts.push(n);
+      return new Response(null, { status: n > 1 ? 413 : 200 });
+    }) as unknown as typeof fetch;
+    const r = await sendDayLogs({ LIVE: fakeKv(), LOGS, LOGS_WEBHOOK: "https://discord/logs" }, "2026-10-08", f);
+    expect(r).toMatchObject({ ok: true, files: 2, lines: 3 });
+    expect(posts).toEqual([2, 1, 1]);
+    expect(sqls.every((s) => s.startsWith("SELECT"))).toBe(true);
+    expect((await sendDayLogs({ LIVE: fakeKv(), LOGS }, "2026-10-08", f)).ok).toBe(false);
+  });
+});
