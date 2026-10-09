@@ -93,7 +93,7 @@ const { update, phase, errorMsg, downloadedBytes, totalBytes, forced, runCheck, 
 
     <!-- ダウンロード中 -->
     <div v-else-if="phase === 'downloading'">
-      <h3 class="text-sm font-semibold mb-2">📥 ダウンロード中…</h3>
+      <h3 class="text-sm font-semibold mb-2">ダウンロード中…</h3>
       <p class="text-xs text-[var(--exile-color-text-secondary)] font-mono">
         {{ fmtBytes(downloadedBytes) }}<span v-if="totalBytes"> / {{ fmtBytes(totalBytes) }}</span>
       </p>
@@ -183,7 +183,7 @@ const { update, phase, errorMsg, downloadedBytes, totalBytes, forced, runCheck, 
         @click="(phase = 'idle'), runCheck(true)"
         class="mt-2 px-3 py-1 rounded text-xs border border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)]"
       >
-        🔄 再試行
+        再試行
       </button>
     </div>
   </div>

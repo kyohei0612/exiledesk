@@ -194,7 +194,7 @@ const fmtFlowAt = (t: number | null): string => {
                 title="このジェムの追跡記録 (売れた出品の値段・出品者・寿命、追跡中の出品) を一覧で見る"
                 @click="openSold(null)"
               >
-                📋 売れたリスト
+                売れたリスト
               </button>
               <RefreshButton
                 :label="refetch.label"

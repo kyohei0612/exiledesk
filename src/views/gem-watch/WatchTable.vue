@@ -3,6 +3,7 @@
   2026-09-19 に GemWatch.vue から切り出した。中身は変えていない。
 -->
 <script setup lang="ts">
+import Icon from "../../components/ui/Icon.vue";
 import GemName from "../../components/decor/GemName.vue";
 import { computed, ref } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
@@ -242,7 +243,7 @@ function toneClass(tone: string): string {
                     title="このジェムの売れたリスト (値段・出品者・並んでいた時間) を 3 条件まとめて見る"
                     @click="openSold(gem.name, null)"
                   >
-                    📋 売り履歴
+                    売り履歴
                   </button>
                   <!-- 上位から自動で入った分も外せる (オーナー指示 2026-09-20)。外した分は「リストを元に戻す」で戻る -->
                   <button
@@ -255,7 +256,7 @@ function toneClass(tone: string): string {
                     "
                     @click="remove(gem.name)"
                   >
-                    🗑 リストから削除
+                    <Icon name="trash" class="size-3.5 align-[-2px]" /> リストから削除
                   </button>
                 </td>
               </tr>

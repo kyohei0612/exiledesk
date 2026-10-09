@@ -27,7 +27,7 @@ const btnIdle = "text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] 
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="🔍 商品で検索…"
+          placeholder="商品で検索…"
           class="w-full px-3 py-2 pr-8 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] text-sm focus:outline-none focus:border-[var(--exile-color-accent-focus)]"
         />
         <button

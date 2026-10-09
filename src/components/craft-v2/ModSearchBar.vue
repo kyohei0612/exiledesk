@@ -73,7 +73,7 @@ const emit = defineEmits<{ clear: []; applyBulkTier: []; search: []; craft: []; 
               : 'bg-[var(--exile-color-bg-surface)] text-[var(--exile-color-text-tertiary)] cursor-not-allowed border border-[var(--exile-color-border-subtle)]',
           ]"
         >
-          {{ searching ? "検索中…" : "🔍 選択 MOD で trade2 検索" }}
+          {{ searching ? "検索中…" : "選択 MOD で trade2 検索" }}
         </button>
       </div>
 

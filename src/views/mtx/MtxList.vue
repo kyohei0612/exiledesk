@@ -58,7 +58,7 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
   <!-- 幅は窓いっぱい (2026-09-29 オーナー「縮こまってる。最大化時と縮小時を合わせて」)。列の数は窓の幅で変わる -->
   <div class="w-full text-[12px]">
     <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03) -->
-    <TabBar icon="✦" title="スキン" />
+    <TabBar art="mtx" title="スキン" />
     <div class="px-6 py-4">
     <p class="mb-3 text-[12px] text-[var(--exile-color-text-secondary)]">PoE1 で使えるスキン・エフェクト・ペットなどが PoE2 でも使えるか (ゲームのデータから。パッチで変わることがある)。カードを押すと poe2db で見た目を確かめられる。</p>
     <p v-if="error" class="text-rose-300">{{ error }}</p>

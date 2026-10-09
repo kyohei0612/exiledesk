@@ -66,7 +66,7 @@ onMounted(async () => {
 <template>
   <div class="min-h-full flex flex-col text-[var(--exile-color-text-primary)]">
     <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03。余白も他の画面と同じ px-6 py-4 に) -->
-    <TabBar icon="⚙" title="設定" />
+    <TabBar art="settings" title="設定" />
     <div class="max-w-2xl px-6 py-4">
       <p class="mb-5 text-[12px] text-[var(--exile-color-text-secondary)]">
         バックグラウンド常駐 (Discord 風) と自動再取得、トレードサイト、配布データ、更新。変えると自動で保存します。

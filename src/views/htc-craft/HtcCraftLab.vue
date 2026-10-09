@@ -172,7 +172,7 @@ const inputSummary = computed(() => {
   <!-- 窓の大きさへの合わせ込みはアプリ全体でする (App.vue の fitZoom)。ここは最小の窓の幅いっぱい -->
   <div class="h-full overflow-auto text-sm">
    <!-- タブ (2026-10-03 統合): 計算機 / 上位プレイヤーの MOD。帯の見た目は components/ui/TabBar.vue で 4 画面共通。画面名はここに 1 回だけ -->
-   <TabBar icon="🧪" title="クラフト計算機" :tabs="TABS" :model-value="htcCraftTab" @update:model-value="htcCraftTab = $event as HtcCraftTab" />
+   <TabBar art="craft" title="クラフト計算機" :tabs="TABS" :model-value="htcCraftTab" @update:model-value="htcCraftTab = $event as HtcCraftTab" />
 
    <!-- 上位プレイヤーの MOD (旧 craft-v2 の画面をそのまま)。一度開いたら v-show で保つ (選んだアセ・部位・チェックが消えないように) -->
    <CraftDiscoveryV2B v-if="topModsOpened" v-show="htcCraftTab === 'top-mods'" />

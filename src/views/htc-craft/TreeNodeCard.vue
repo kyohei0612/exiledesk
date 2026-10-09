@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "../../components/ui/Icon.vue";
 /**
  * TreeNodeCard.vue — 作り方のツリーの手 1 つ (2026-09-24)
  *
@@ -181,7 +182,7 @@ const gotoJa = (g: string | null | undefined, miss: boolean): string => {
         <span v-for="(x, i) in state.slots" :key="i" class="rounded-md border px-1"
           :class="x.fixed ? 'border-white/10 opacity-60' : x.keep ? 'border-amber-500/40 text-amber-200/80' : x.modId ? 'border-emerald-500/40' : 'border-rose-500/40 text-rose-300'"
           :title="x.keep ? '固定されていない。カオス・消去・エッセンスで消えたら終わり (その回は止める)' : undefined">
-          {{ x.fixed ? "🔒 " : x.keep ? "⚠ " : "" }}{{ x.modId ? name(x.modId) : x.label ?? (x.desecrated ? "冒涜の外れ" : "外れ") }}
+          <Icon v-if="x.fixed" name="lock" class="mr-1 size-3.5 align-[-2px]" />{{ !x.fixed && x.keep ? "⚠ " : "" }}{{ x.modId ? name(x.modId) : x.label ?? (x.desecrated ? "冒涜の外れ" : "外れ") }}
         </span>
         <span v-if="state.breach" class="rounded-md border border-sky-500/40 px-1">ブリーチの MOD</span>
       </div>

@@ -8,6 +8,7 @@
     src-tauri/src/gem_break.rs  取得 + 集計 (gem-break-progress を emit)
 -->
 <script setup lang="ts">
+import Icon from "../components/ui/Icon.vue";
 import { recordHistory } from "../services/history";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
@@ -272,7 +273,7 @@ defineExpose({ fetchNow, cancelNow, busy, waiting, needFetch, topN, spread, sele
             : 'サーバ応答エラーで再試行待機中'
         "
       >
-        <span aria-hidden="true" class="animate-pulse">🔁</span>
+        <span aria-hidden="true" class="animate-pulse"><Icon name="rotate" class="size-4" /></span>
         poe.ninja に再試行中 {{ net.active_retry_count }} 件
         <span v-if="net.last_retry_reason" class="text-orange-200/70 text-[10px]">
           ({{ net.last_retry_reason }} あと {{ waitText(net.last_retry_remaining_secs) }})

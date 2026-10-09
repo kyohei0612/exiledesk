@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "../../components/ui/Icon.vue";
 /**
  * ModBreakdown.vue — MOD 解析の結果を種類ごと・プレ / サフィごとに (2026-09-24)
  *
@@ -106,7 +107,7 @@ const tierOf = (modId: string): number => c.targets.value.find((t) => t.modId ==
         <span class="opacity-60">{{ KINDS[k].note }}</span>
       </p>
       <p v-if="rows.some((r) => r.fixed && r.kind !== 'tree')" class="flex items-start gap-2">
-        <span class="shrink-0 rounded border border-white/30 px-1">🔒 固定済み</span>
+        <span class="shrink-0 rounded border border-white/30 px-1"><Icon name="lock" class="size-3.5 align-[-2px]" /> 固定済み</span>
         <span class="opacity-60">貼ったアイテムでフラクチャーされていた MOD。消去でも消えない</span>
       </p>
     </div>
@@ -117,7 +118,7 @@ const tierOf = (modId: string): number => c.targets.value.find((t) => t.modId ==
         <p v-if="!col.list.length" class="opacity-40">なし</p>
         <div v-for="r in col.list" :key="r.key" class="flex flex-wrap items-center gap-2 py-0.5">
           <span class="shrink-0 rounded border px-1 text-[11px]" :class="KINDS[r.kind].cls">{{ KINDS[r.kind].label }}</span>
-          <span class="min-w-0 flex-1">{{ r.fixed && r.kind !== "tree" ? "🔒 " : "" }}{{ r.text }}</span>
+          <span class="min-w-0 flex-1"><Icon v-if="r.fixed && r.kind !== 'tree'" name="lock" class="mr-1 size-3.5 align-[-2px]" />{{ r.text }}</span>
           <span v-if="r.tier" class="opacity-60">{{ r.tier }}</span>
           <template v-else-if="r.modId">
             <select v-if="tiersOf(r.modId).length > 1" class="rounded border border-white/20 bg-black/30 px-1" :value="tierOf(r.modId)"

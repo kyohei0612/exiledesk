@@ -259,7 +259,7 @@ function simFromHand(): void {
 /** 手打ちの状態の MOD (1 ベースの札の下に 1 行) */
 const startItemMods = computed(() => {
   const it = s.simStartItem.value;
-  return it ? [...it.prefixes, ...it.suffixes].map((m) => `${m.fractured ? "🔒 " : ""}${m.textJa} (${m.tierName})`) : [];
+  return it ? [...it.prefixes, ...it.suffixes].map((m) => `${m.fractured ? "[固定] " : ""}${m.textJa} (${m.tierName})`) : [];
 });
 /** 始め方の札 (1 ベース)。白以外は 2 狙う MOD の最初の 1 つが固定 MOD になる */
 const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hint: string }> = [

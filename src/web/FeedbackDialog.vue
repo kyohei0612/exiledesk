@@ -91,7 +91,7 @@ function onKey(e: KeyboardEvent): void { if (e.key === "Escape") emit("close"); 
         </template>
         <template v-else>
           <div class="mb-2 flex gap-2">
-            <button v-for="k in (['request', 'bug'] as const)" :key="k" type="button" class="flex-1 rounded-lg border px-3 py-1.5 font-bold" :class="kind === k ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/15 hover:bg-white/5'" @click="kind = k">{{ k === "request" ? "💡 要望" : "🐛 バグ" }}</button>
+            <button v-for="k in (['request', 'bug'] as const)" :key="k" type="button" class="flex-1 rounded-lg border px-3 py-1.5 font-bold" :class="kind === k ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/15 hover:bg-white/5'" @click="kind = k">{{ k === "request" ? "要望" : "バグ" }}</button>
           </div>
           <textarea v-model="text" rows="6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="kind === 'bug' ? '何をしたら、何が起きたか (期待と違った所)' : 'こうなると嬉しい、を一言で'" autofocus></textarea>
           <input v-model="contact" class="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60" placeholder="連絡先 (任意: X や Discord の名前。返事が要る時だけ)" />

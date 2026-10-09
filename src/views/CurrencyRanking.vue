@@ -70,7 +70,7 @@ watch(tab, (t) => {
 <template>
   <div class="h-full flex flex-col overflow-hidden">
     <!-- タブの帯 (2026-10-03 統合)。帯の見た目は components/ui/TabBar.vue で 4 画面共通。画面名はここに 1 回だけ (本文に h1 は無い) -->
-    <TabBar icon="☉" title="カレンシーランキング" :tabs="TABS" :model-value="tab" @update:model-value="tab = $event as (typeof TABS)[number]['id']" />
+    <TabBar art="currency" title="カレンシーランキング" :tabs="TABS" :model-value="tab" @update:model-value="tab = $event as (typeof TABS)[number]['id']" />
 
     <!-- ユニーク装備価格推移 (元の画面をそのまま。状態はアプリで 1 つなので v-show で十分) -->
     <UniqueTrend v-show="tab === 'unique'" class="flex-1 min-h-0" />

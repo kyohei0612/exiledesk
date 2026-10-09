@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "../../components/ui/Icon.vue";
 import { tradeLock, tradeRefetch } from "../../state/trade-lock";
 /**
  * DiagnosisCard.vue — MOD 解析 + ベース診断 (2026-09-24)
@@ -238,7 +239,7 @@ function onSearch(): void {
           <template v-if="ss.kind.value.kind === 'fix'">
             <p class="mb-1 font-bold">固定済み (フラクチャー) にして始める MOD</p>
             <p class="opacity-80">
-              🔒 {{ fixLabel }}を固定 <span class="opacity-60">(樹 MOD は付け直せないので固定。ほかは選べない)</span>
+              <Icon name="lock" class="size-3.5 align-[-2px]" /> {{ fixLabel }}を固定 <span class="opacity-60">(樹 MOD は付け直せないので固定。ほかは選べない)</span>
             </p>
           </template>
           <template v-else>

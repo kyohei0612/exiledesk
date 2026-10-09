@@ -54,7 +54,7 @@ const curLabel = currencyJa;
 <template>
   <div class="min-h-full flex flex-col bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
   <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03) -->
-  <TabBar icon="🜨" title="取引履歴" />
+  <TabBar art="trade" title="取引履歴" />
   <section class="@container block px-6 py-4">
     <ScreenHeader>
       公式サイトのマーチャント履歴を取り込みます。ログインは ExileDesk が開く pathofexile.com の画面で本人が行い、そのログイン状態で履歴を読みます。

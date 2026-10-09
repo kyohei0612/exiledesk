@@ -12,6 +12,7 @@
       「カード固定したら名前長押して移動できるように、比較しづらいから」。全部のカードがこの枠なので全部に効く)
 -->
 <script setup lang="ts">
+import Icon from "../ui/Icon.vue";
 import { computed, onBeforeUnmount, provide, ref, watch } from "vue";
 import { hoverStack } from "../../state/hover-stack";
 import { toCss } from "../../utils/zoom";
@@ -131,7 +132,7 @@ onBeforeUnmount(onUp);
             :title="pinned ? 'ピン留めを外す' : 'ピン留め (カーソルを外しても消さない)'"
             @click.stop="hoverStack.togglePin(layerKey)"
           >
-            📌
+            <Icon name="pin" class="size-3.5" />
           </button>
           <button v-if="pinned" type="button" class="w-6 h-6 rounded text-[14px] leading-none text-[#cfc6ae] hover:text-white" title="閉じる" @click.stop="hoverStack.close(layerKey)">×</button>
         </div>

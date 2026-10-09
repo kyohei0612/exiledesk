@@ -205,7 +205,7 @@ function srcOf(host: string): Src {
   return (m && essenceKindOf(m)) ?? "normal";
 }
 type Plan = "fracture" | "exalt" | "chaos" | "desecrate" | "essence";
-const PLAN_JA: Record<Plan, string> = { fracture: "🔒 フラクチャー予定", exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス" };
+const PLAN_JA: Record<Plan, string> = { fracture: "フラクチャー予定", exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス" };
 /** 付け方の予定の色 (2026-10-05 オーナー「高貴ガチャは黄色、フラクチャーはオレンジ、冒涜は深緑」「カオスも黄色」) */
 const PLAN_CLS: Record<Plan, string> = {
   fracture: "border-orange-400/80 text-orange-200",

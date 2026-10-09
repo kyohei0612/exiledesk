@@ -29,7 +29,7 @@ const current = computed<Component>(() => views[vaalScalesTab.value]);
 <template>
   <!-- 背景は各タブの view が自分で塗る (元の画面のまま)。ここはタブの帯だけ (帯の見た目は components/ui/TabBar.vue で 4 画面共通) -->
   <div class="min-h-full flex flex-col bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <TabBar icon="⚖" title="ヴァールの天秤" :tabs="VAAL_SCALES_TABS" :model-value="vaalScalesTab" @update:model-value="vaalScalesTab = $event as VaalScalesTab" />
+    <TabBar art="vaal" title="ヴァールの天秤" :tabs="VAAL_SCALES_TABS" :model-value="vaalScalesTab" @update:model-value="vaalScalesTab = $event as VaalScalesTab" />
     <div class="flex-1">
       <KeepAlive>
         <component :is="current" />

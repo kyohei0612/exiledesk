@@ -91,6 +91,12 @@
 .g-tab:hover { background-image: url("/ui-art/tab-hover.webp"); color: var(--exile-color-text-primary); }
 .g-tab.on { background-image: url("/ui-art/tab-on.webp"); color: rgba(28, 20, 8, 1); font-weight: 700; text-shadow: 0 1px 0 rgba(255, 240, 200, 0.4); }
 .g-tab:disabled { background-image: url("/ui-art/tab-off.webp"); opacity: 0.6; }
+/*
+ * 画面の帯の中のタブは、画面名と同じ筆の字体 (2026-10-09 UI の指摘「同じ帯の中でフォントや大きさが揃っていない」: 画面名は筆、タブは
+ * antique が日本語を持たずゴシックに落ちて太く見えた)。選んでいる札も太字にしない (金の札の上の太いゴシックがプラスチックっぽく見えた)
+ */
+.g-tabbar .g-tab { font-family: var(--exile-font-family-brush); font-weight: 400; letter-spacing: 0.08em; }
+.g-tabbar .g-tab.on { font-weight: 400; font-size: 14px !important; color: #0b0702; text-shadow: 0 1px 0 rgba(255, 236, 190, 0.35); -webkit-text-stroke: 0.35px #0b0702; }
 
 .g-slot {
   background: url("/ui-art/slot.webp") center / 100% 100% no-repeat;

@@ -83,7 +83,7 @@ onActivated(() => {
 <template>
   <div class="min-h-full flex flex-col bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
   <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03)。サイドバーの名前「PoB を開く」と同じにした -->
-  <TabBar icon="🜍" title="PoB を開く" />
+  <TabBar art="pob" title="PoB を開く" />
   <section class="block px-6 py-4">
     <p class="mb-3 text-[12px] text-[var(--exile-color-text-secondary)]">
       Path of Building (PoE2) 日本語版 = 公式 PoB + PoB2-JP 日本語化パッチを ExileDesk が管理します。初回だけダウンロード (約 100 MB)、以降は 30 日ごとに更新を確認します。
