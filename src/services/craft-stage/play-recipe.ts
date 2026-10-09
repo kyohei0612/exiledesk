@@ -78,8 +78,14 @@ export function pathTo(recipe: PlayRecipe, i: number): Array<{ k: number; side?:
   }
   return recipe.moves.slice(0, i).map((_, k) => ({ k }));
 }
-/** i 手目より前に道で通る手 */
-const before = (recipe: PlayRecipe, i: number): PlayMove[] => pathTo(recipe, i).map((x) => recipe.moves[x.k]!);
+/**
+ * i 手目より前に道で通る手。両側の狙いの手は、道で当たった側の狙いとして数える
+ * (プレのどれかの道なら、カオスで付いた最大マナ量はプレの狙い 1 つ。2026-10-10 MazBro の指輪で画面の形と計算の形がずれた)
+ */
+const before = (recipe: PlayRecipe, i: number): PlayMove[] => pathTo(recipe, i).map((x) => {
+  const m = recipe.moves[x.k]!;
+  return m.aim?.side === "any" && x.side ? { ...m, aim: { ...m.aim, side: x.side } } : m;
+});
 
 /** 手の狙いを計算の狙いにする (どれか N つ = 本体 + alts、need) */
 export function aimTarget(aim: PlayAim, method: RecipeTarget["method"] = "exalt"): RecipeTarget {
@@ -109,7 +115,8 @@ export function moveShapeCtx(recipe: PlayRecipe, i: number, sets: readonly Patte
 /** i 手目より前に、その側で揃っているはずの狙いの数 (同じ狙いは need の一番大きい物、別の狙いは合計) */
 export function sideNeedBefore(recipe: PlayRecipe, i: number, side: "prefix" | "suffix"): number {
   const best = new Map<string, number>();
-  for (const p of before(recipe, i)) {
+  // 両側の狙い (カオスの途中) は数えない: 反対の側に残っているはずの数は、側を決めて付けた狙いだけ
+  for (const p of pathTo(recipe, i).map((x) => recipe.moves[x.k]!)) {
     if (!p.aim || p.aim.side !== side) continue;
     const k = p.aim.mods.map((x) => x.modId).sort().join(",");
     best.set(k, Math.max(best.get(k) ?? 0, p.aim.need));

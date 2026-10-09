@@ -26,15 +26,21 @@ describe("両側の狙いと分かれる道", () => {
   const EX_R2 = S("exalt", "exalt_perfect", ["OmenofDextralExaltation", "OmenofGreaterExaltation"]);
   const EX_R = S("exalt", "exalt_perfect", ["OmenofDextralExaltation"]);
   const AN_R = S("annul", "annul");
-  const SETS = [CH, ESS_L, ESS_R, EX_L, AN_L, EX_R2, EX_R, AN_R];
+  const MBL = { modId: R + "Otherworldly_DamageRemovedFromManaBeforeLife", minTierIndex: 0 };
+  const DES = S("desecrate", "desecrate_altered", ["OmenofSinistralNecromancy", "OmenofAbyssalEchoes"]);
+  const LIGHT = S("annul", "annul", ["OmenofLight"]);
+  const SETS = [CH, ESS_L, ESS_R, EX_L, AN_L, EX_R2, EX_R, AN_R, DES, LIGHT];
   const recipe: PlayRecipe = {
     v: 2,
     moves: [
       { use: CH.key, aim: { mods: [FLAT, REGEN, RAR, RES], need: 1, side: "any" }, branch: { prefix: 3, suffix: 1 } },
       { use: ESS_L.key, aim: { mods: [MAXP], need: 1, side: "prefix" } },
-      { use: EX_L.key, aim: { mods: [FLAT], need: 1, side: "prefix" }, shapes: { "1-1": { use: AN_L.key }, "1-0": { go: "move", to: 2 }, "0-1": { go: "move", to: 1 } }, next: "end" },
+      { use: EX_L.key, aim: { mods: [FLAT], need: 1, side: "prefix" }, shapes: { "1-1": { use: AN_L.key }, "1-0": { go: "move", to: 2 }, "0-1": { go: "move", to: 1 } }, next: 5 },
       { use: ESS_R.key, aim: { mods: [MAXP], need: 1, side: "prefix" } },
-      { use: EX_R2.key, aim: { mods: [REGEN, RAR, RES], need: 1, side: "suffix" }, shapes: { "0-2": { use: AN_R.key }, "0-1": { use: EX_R.key } }, next: "end" },
+      { use: EX_R2.key, aim: { mods: [REGEN, RAR, RES], need: 1, side: "suffix" }, shapes: { "0-2-2": { use: AN_R.key }, "0-1-2": { use: EX_R.key }, "0-2-1": { go: "move", to: 4 } }, next: 2 },
+      // (プレの道はサフィの当たりの後、サフィの道の「上級高貴 + 左」へ合流: 途中で最大マナ量が消えても取り直せる)
+      // 仕上げ: 変質した鎖骨 + 左のネクロマンシーでマナ・ビフォア・ライフ。外れは光のお告げ + 消去でもう一度
+      { use: DES.key, aim: { mods: [MBL], need: 1, side: "prefix" }, shapes: { "2-1": { use: LIGHT.key }, "2-0": { go: "move", to: 5 } } },
     ],
   };
   // 画面と同じ: フラクチャー + 手の狙い (同じ MOD の組は need の一番大きい物)
@@ -46,6 +52,8 @@ describe("両側の狙いと分かれる道", () => {
   it("道: サフィの道の手はプレの道の手を前に数えない", () => {
     expect(pathTo(recipe, 2).map((x) => x.k)).toEqual([0, 1]);
     expect(pathTo(recipe, 4).map((x) => x.k)).toEqual([0, 3]);
+    // 両方の道が仕上げの手に合流する
+    expect([2, 4]).toContain(pathTo(recipe, 5).map((x) => x.k).slice(-1)[0]);
     expect(pathTo(recipe, 2)[0]!.side).toBe("suffix");
   });
 

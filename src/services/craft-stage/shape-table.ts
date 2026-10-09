@@ -137,7 +137,10 @@ export function shapeOutcomes(c: ShapeCtx, x: PatternSet, h: number | Shape, j?:
     if (o) r.push({ s: { ...s, o: o - 1 }, label: track ? `${OTHER}の狙い以外が消えた` : `${OTHER}の MOD (フラクチャー以外) が消えた`, p: o / n, what: "o" });
     return r;
   };
-  if (x.kind === "annul") {
+  if (x.kind === "annul" && x.omens.includes("OmenofLight")) {
+    // 光のお告げ: 冒涜の MOD だけを消す (冒涜の外れを外す手。2026-10-10 MazBro の指輪の仕上げ)
+    if (s0.j) push({ ...s0, j: s0.j - 1 }, "冒涜の外れが消えた", 1);
+  } else if (x.kind === "annul") {
     for (const r of removes(s0, x.omens.includes(sideOmenOf(c.side, "annul")))) push(r.s, r.label, r.p);
   } else if (x.kind === "chaos") {
     for (const r of removes(s0, x.omens.includes(sideOmenOf(c.side, "chaos")))) {
@@ -166,7 +169,8 @@ export function shapeOutcomes(c: ShapeCtx, x: PatternSet, h: number | Shape, j?:
       for (const r of rs) { const a = addFixed(r.s); if (a) push(a.s, `${r.label.replace(/た$/, "て")}${a.label}`, r.p); }
     }
   } else if (ADDS.has(x.kind)) {
-    const sideOnly = x.kind === "exalt" && x.omens.includes(sideOmenOf(c.side, "exalt"));
+    // 側を決めるお告げ: 高貴は左右の高貴、骨は左右のネクロマンシー
+    const sideOnly = (x.kind === "exalt" && x.omens.includes(sideOmenOf(c.side, "exalt"))) || (x.kind === "desecrate" && x.omens.includes(c.side === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy"));
     const ph = (hh: number): number | null => (x.kind === "exalt" ? c.pHit?.(x.currency, hh) ?? null : null);
     const k = x.kind === "exalt" && x.omens.includes(GREATER) ? 2 : 1;
     let cur: Array<{ s: Shape; label: string; p: number | null }> = [{ s: s0, label: "", p: 1 }];

@@ -595,7 +595,9 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       } else if (q.next != null) i = q.next;
       else i++;
     };
-    const restartPattern = (): void => { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); };
+    /** この周で通った手 (付けた手を探す。道で分かれる時、並びの前の手ではなく本当に通った手。2026-10-10 MazBro の指輪: プレの道で消えた最大マナ量をサフィの道の手で取り直していた) */
+    let trail: number[] = [];
+    const restartPattern = (): void => { cost += startCost; bases++; item = startItem; i = 0; replayFrom = steps.length; preRunes = new Set(runes); regain.clear(); prevMet = metIds(); trail = []; };
     /** もう一度打てる手 (レアに打てる物。変成・増強・王者・錬金はレアリティが変わるので戻れない) */
     const REDO = new Set<PatternKind>(["exalt", "chaos", "desecrate", "essence_perfect"]);
     while (steps.length < max) {
@@ -617,7 +619,11 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         // 2026-10-07 前は新しいベースからで、指輪のライフ + 火耐性でベースを 10 個使っていた。オーナー「最初増強で 2 MOD 狙うやり方も作れる道」)
         if (goto == null && lastAt >= 0 && item.rarity === "magic" && pat[lastAt]?.kind === "augment" && pat[lastAt]!.target && gone.length && gone.every((id) => membersOf(pat[lastAt]!.target!).some((a) => a.modId === id))) goto = lastAt;
         // 付けた手 = その MOD を狙った一番後ろの手 (画面の placedAt と同じ。2026-10-08 レビュー C2: 前は一番前の手を見ていて、変成 → 高貴で取り直した物でも新しいベースにしていた)
-        const placedAt = (id: string): number => { for (let k = lastAt - 1; k >= 0; k--) { const q = pat[k]!; if (q.target && membersOf(q.target).some((a) => a.modId === id)) return k; } return -1; };
+        const placedAt = (id: string): number => {
+          // 道のある (打って作る) パターンは通った手から。無ければ並びの前の手から
+          if (pat.some((q) => q.branch || q.next != null)) { for (let t = trail.length - 1; t >= 0; t--) { const k = trail[t]!; if (k === lastAt) continue; const q = pat[k]!; if (q.target && membersOf(q.target).some((a) => a.modId === id)) return k; } return -1; }
+          for (let k = lastAt - 1; k >= 0; k--) { const q = pat[k]!; if (q.target && membersOf(q.target).some((a) => a.modId === id)) return k; } return -1;
+        };
         // 始めから付いていた狙い (手打ちの状態から) は、どの手も付けていない: 消えたらこの状態を買い直して最初から (2026-10-08 完成判定 1:
         // 戻り先が決まらず取り直さないまま最後で失敗、97% が止まっていた)
         if (goto == null && lastAt >= 0 && startHad.size && gone.some((id) => startHad.has(id) && placedAt(id) < 0)) goto = LOST_RESTART;
@@ -654,6 +660,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         continue;
       }
       let p = regain.get(i) ?? pat[i]!;
+      // 前に通った手へ戻ったら、そこから先は通っていない事にする (カオスへ戻った後、カオスで消えた最大マナ% を後の手のエッセンスで取り直しに行っていた)
+      { const at = trail.lastIndexOf(i); if (at >= 0) trail = trail.slice(0, at + 1); else trail.push(i); }
       lastAt = i;
       // 自前のフラクチャー: 狙いが固定されていれば次へ。打って違う MOD が固定されたら外れ (既定は新しいベースで最初から)
       if (p.kind === "fracture") {
