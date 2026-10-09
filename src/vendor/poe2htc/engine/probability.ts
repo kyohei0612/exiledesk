@@ -798,6 +798,8 @@ export function desecrationOfferProbability(
     let normal = 0;
     let desecratedW = 0;
     let exclusive = 0;
+    let lightest = Infinity;
+    let heaviest = 0;
     for (const id of pools.normal[k]) {
       const m = data.mods.get(id);
       if (m && familyAvailable(data, item, m)) normal += rollableWeight(m, item.level, floor);
@@ -806,9 +808,9 @@ export function desecrationOfferProbability(
       const m = data.mods.get(id);
       if (!m || !familyAvailable(data, item, m)) continue;
       const w = rollableWeight(m, item.level, floor);
-      if (w > 0) { desecratedW += w; exclusive++; }
+      if (w > 0) { desecratedW += w; exclusive++; lightest = Math.min(lightest, w); heaviest = Math.max(heaviest, w); }
     }
-    return { normal, total: normal + desecratedW, exclusive };
+    return { normal, desecratedW, total: normal + desecratedW, exclusive, uniform: heaviest === lightest };
   };
   const here = sideStats(side);
   if (!(here.total > 0)) return 0;
@@ -822,8 +824,11 @@ export function desecrationOfferProbability(
   if (!inPool) return 0;
   let pOffer = 0;
   if (mod.source === 'desecrated') {
-    if (here.exclusive === 0 || rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0) <= 0) return 0;
-    for (const c of DESECRATION_EXCLUSIVE_COUNT) pOffer += c.rate * Math.min(1, c.exclusive / here.exclusive);
+    const w = rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0);
+    if (here.exclusive === 0 || w <= 0) return 0;
+    // Equal weights: exactly k / n. Measured (unequal) weights: k picks of share s, treated as independent
+    const s = w / here.desecratedW;
+    for (const c of DESECRATION_EXCLUSIVE_COUNT) pOffer += c.rate * (here.uniform ? Math.min(1, c.exclusive / here.exclusive) : 1 - (1 - s) ** c.exclusive);
   } else {
     const share = here.normal > 0 ? rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0) / here.normal : 0;
     if (share <= 0) return 0;

@@ -16,6 +16,7 @@ import { indexPatch } from "../../vendor/poe2htc/engine/indexPatch";
 import { applyWeightOverrides } from "./weight-overrides";
 import poolFixes from "./poe2db-pool-fixes.json";
 import runeWeights from "./rune-weights.json";
+import desecratedWeights from "./desecrated-weights.json";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 // 型は 2026-09-26 に patch-types.ts へ分けた
 import type { BaseInfo, DropOnlyInfo, ExtraBases, PatchExtras, PoolAdd, ReadonlyPool } from "./patch-types";
@@ -227,7 +228,8 @@ function applyPoe2dbFixes(data: PatchData): PatchData {
   const mods = new Map(data.mods);
   for (const m of fx.mods ?? []) mods.set(m.id, m);
   // ルーン (ソウルコア) の特殊 MOD の重みは Craft of Exile (beta) の Krakenbul の実測 (scripts/build-rune-weights-coe.mjs、2026-10-09)
-  const weightTables = [fx.weights ?? {}, (runeWeights as { weights: Record<string, Record<string, number>> }).weights];
+  // 冒涜専用 MOD どうしの重みは指輪だけ実測がある (Reddit の 563 回、scripts/build-desecrated-weights.mjs)
+  const weightTables = [fx.weights ?? {}, (runeWeights as { weights: Record<string, Record<string, number>> }).weights, (desecratedWeights as { weights: Record<string, Record<string, number>> }).weights];
   for (const [id, byIlvl] of weightTables.flatMap((t) => Object.entries(t))) {
     const m = mods.get(id);
     if (m) mods.set(id, { ...m, tiers: m.tiers.map((t) => (byIlvl[t.ilvl] != null ? { ...t, weight: byIlvl[t.ilvl]! } : t)) });

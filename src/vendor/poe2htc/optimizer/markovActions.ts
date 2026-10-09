@@ -634,21 +634,24 @@ export function createActionSpace(params: ActionSpaceParams): {
         const junk = Math.max(0, normalW - claimed);
         if (junk > 0) addTo(normal, junkState, junk / normalW);
       }
-      // Exclusive part: every legal desecrated mod of the side, count-uniform
-      const legal: string[] = [];
+      // Exclusive part: every legal desecrated mod of the side, by its weight (rings carry measured weights —
+      // ExileDesk desecrated-weights.json; elsewhere every placeholder is equal, so this is count-uniform)
+      const legal: { id: string; w: number }[] = [];
       if (open) {
         for (const id of desIds) {
           const mod = data.mods.get(id)!;
-          if (excluded(mod, occ) || !mod.tiers.some((t) => t.ilvl <= level && t.weight > 0)) continue;
-          legal.push(id);
+          if (excluded(mod, occ)) continue;
+          const w = mod.tiers.reduce((a, t) => a + (t.ilvl <= level && t.weight > 0 ? t.weight : 0), 0);
+          if (w > 0) legal.push({ id, w });
         }
       }
+      const legalW = legal.reduce((a, x) => a + x.w, 0);
       const exclusive: Dist = new Map();
-      for (const id of legal) {
+      for (const { id, w } of legal) {
         const i = list.findIndex((t) => t.mods.some((m) => m.mod.id === id));
         addTo(exclusive, i >= 0 && !has(s.present, i) && !has(s.blocked, i)
           ? encodeState(s.present | bit(i), s.blocked, s.jp, s.js, flagTarget(i), s.rarity)
-          : junkState, 1 / legal.length);
+          : junkState, w / legalW);
       }
       return { total, normal, exclusive, hasNormal: normal.size > 0, hasExclusive: legal.length > 0 };
     };

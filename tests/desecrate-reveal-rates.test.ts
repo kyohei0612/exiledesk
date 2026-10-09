@@ -31,3 +31,20 @@ describe("冒涜の発現の候補", () => {
     });
   }
 });
+
+describe("指輪の冒涜専用 MOD どうしの重み (Reddit Part 2 の実測)", () => {
+  it("筋力+器用さ (11.8%) はクールダウン回復 (1.2%) よりずっと出やすい", () => {
+    let it0 = freshItem(data, "Gold Ring", 82);
+    it0 = applyCurrency(data, it0, "transmute", mulberry32(1)).item;
+    it0 = applyCurrency(data, it0, "regal", mulberry32(2)).item;
+    const seen: Record<string, number> = {};
+    for (let s = 1; s <= 6000; s++) {
+      const b = applyCurrency(data, it0, "desecrate", mulberry32(s), ["OmenofDextralNecromancy"]);
+      if (!b.applied) continue;
+      for (const m of revealOffers(data, b.item, mulberry32(s + 4242)).first) seen[m.modId] = (seen[m.modId] ?? 0) + 1;
+    }
+    const sd = seen["Rings/Desecrated_Strength_2"] ?? 0;
+    const cdr = seen["Rings/Desecrated_CooldownRecovery"] ?? 0;
+    expect(sd).toBeGreaterThan(cdr * 4);
+  });
+});

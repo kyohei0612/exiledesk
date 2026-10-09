@@ -104,8 +104,8 @@ const notClashing = (rest: Candidate[], c: Candidate): Candidate[] => {
 
 /**
  * 発現の候補 3 つ (と、深淵の残響で引き直した 3 つ)。同じ rng から順に引くので、画面で見せる候補と手順の結果が一致する。
- * 組み方 (勢力のお告げ・腐食のお告げ以外): 専用 MOD の個数を DESECRATED_COUNT_RATES で決め、その数を専用 MOD から (MOD ごとに等しく。重みは
- * 誰も割り出していない)、残りを普通の MOD から普通の重みで引いて、並びを混ぜる。専用 MOD が出せない (アイテムレベル 65 未満など) 時は 3 つとも普通
+ * 組み方 (勢力のお告げ・腐食のお告げ以外): 専用 MOD の個数を DESECRATED_COUNT_RATES で決め、その数を専用 MOD から重みで (指輪だけ実測、
+ * 他の部位は全部同じ値なので等しい)、残りを普通の MOD から普通の重みで引いて、並びを混ぜる。専用 MOD が出せない (アイテムレベル 65 未満など) 時は 3 つとも普通
  */
 export function revealOffers(data: PatchData, item: StageItem, rng: () => number): { first: StageMod[]; reroll: StageMod[] } {
   const hidden = unrevealedOf(item);
@@ -130,7 +130,8 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
     if (faction || plain) return drawOne();
     const all = pool(data, item, hidden.side, floor, altered, null, hidden);
     const isExclusive = (c: Candidate) => c.mod.source === "desecrated" || (item.cls.pools.otherworldly?.[hidden.side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(c.mod.id);
-    let ex = all.filter(isExclusive).map((c) => ({ ...c, w: 1 }));
+    // 専用 MOD どうしは重みで (指輪は実測、他の部位は仮の値が全部同じなので等しい。2026-10-09)
+    let ex = all.filter(isExclusive);
     let normal = all.filter((c) => !isExclusive(c));
     if (!ex.length) return drawOne();
     const u = rng();

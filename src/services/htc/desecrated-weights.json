@@ -1,0 +1,1602 @@
+{
+ "generated": "2026-10-09T14:49:53.364Z",
+ "source": "Reddit r/PathOfExile2 'I desecrated more than 500 rings — Part 2' (u/Civil-Bee-f): MLE draw weight (group-corrected), rings ilvl 65+, 563 reveals. Other bases: the ring ratio applied to the same mod (text, else family), others ratio 1. Side totals kept at the 2500 placeholder × count. scripts/build-desecrated-weights.mjs",
+ "weights": {
+  "Amulets/Desecrated_RemnantEffect": {
+   "65": 3277
+  },
+  "Amulets/Desecrated_IncreasedMinionDamageIfYouHitEnemy": {
+   "65": 2703
+  },
+  "Amulets/Desecrated_BodyArmourFromBodyArmour": {
+   "65": 2416
+  },
+  "Amulets/Desecrated_AllDefences": {
+   "65": 2416
+  },
+  "Amulets/Desecrated_IncreasedSpellDamageOnFullEnergyShield": {
+   "65": 2517
+  },
+  "Amulets/Desecrated_MaximumEnergyShieldFromBodyArmour": {
+   "65": 2416
+  },
+  "Amulets/Desecrated_InvocatedSpellHalfEnergyChance": {
+   "65": 2416
+  },
+  "Amulets/Desecrated_AttackDamage": {
+   "65": 2095
+  },
+  "Amulets/Desecrated_EvasionRatingFromBodyArmour": {
+   "65": 2416
+  },
+  "Amulets/Desecrated_GlobalDeflectionRating": {
+   "65": 2416
+  },
+  "Amulets/Desecrated_GloryChanceToNotConsume": {
+   "65": 2416
+  },
+  "Amulets/Desecrated_FireAndChaosDamageResistance": {
+   "65": 3136
+  },
+  "Amulets/Desecrated_Strength": {
+   "65": 2427
+  },
+  "Amulets/Desecrated_SkillEffectDuration": {
+   "65": 2950
+  },
+  "Amulets/Desecrated_RemnantPickupRadius": {
+   "65": 2950
+  },
+  "Amulets/Desecrated_GlobalItemAttributeRequirements": {
+   "65": 2487
+  },
+  "Amulets/Desecrated_AuraEffect": {
+   "65": 2487
+  },
+  "Amulets/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2576
+  },
+  "Amulets/Desecrated_Dexterity": {
+   "65": 3846
+  },
+  "Amulets/Desecrated_ExposureEffect": {
+   "65": 709
+  },
+  "Amulets/Desecrated_CooldownRecovery": {
+   "65": 448
+  },
+  "Amulets/Desecrated_ManaGainedOnKillPercentage": {
+   "65": 2203
+  },
+  "Amulets/Desecrated_MinionCooldown": {
+   "65": 2487
+  },
+  "Amulets/Desecrated_DamageRemovedFromManaBeforeLife": {
+   "65": 2487
+  },
+  "Amulets/Desecrated_GlobalSkillGemQuality": {
+   "65": 2487
+  },
+  "Amulets/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2688
+  },
+  "Amulets/Desecrated_Strength_2": {
+   "65": 4406
+  },
+  "Amulets/Desecrated_IncreasedSpeed": {
+   "65": 1680
+  },
+  "Amulets/Desecrated_RecoverPercentMaxLifeOnKill": {
+   "65": 2576
+  },
+  "Amulets/Desecrated_HeraldReservationEfficiency": {
+   "65": 2487
+  },
+  "Amulets/Desecrated_IncreaseSocketedGemLevel": {
+   "65": 2487
+  },
+  "Belts/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2767
+  },
+  "Belts/Desecrated_Strength": {
+   "65": 2141
+  },
+  "Belts/Desecrated_ReducedSelfIgniteDuration": {
+   "65": 2194
+  },
+  "Belts/Desecrated_Thorns_2": {
+   "65": 2194
+  },
+  "Belts/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2273
+  },
+  "Belts/Desecrated_Dexterity": {
+   "65": 3393
+  },
+  "Belts/Desecrated_ReducedAilmentDuration": {
+   "65": 2194
+  },
+  "Belts/Desecrated_ManaRegeneration": {
+   "65": 2194
+  },
+  "Belts/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2372
+  },
+  "Belts/Desecrated_Strength_2": {
+   "65": 3888
+  },
+  "Belts/Desecrated_ReducedAilmentDuration_2": {
+   "65": 2194
+  },
+  "Belts/Desecrated_SlowEffect": {
+   "65": 2194
+  },
+  "Body_Armours_dex/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2767
+  },
+  "Body_Armours_dex/Desecrated_Strength": {
+   "65": 2141
+  },
+  "Body_Armours_dex/Desecrated_ReducedCurseEffect": {
+   "65": 2194
+  },
+  "Body_Armours_dex/Desecrated_SpiritReservationEfficiency": {
+   "65": 2194
+  },
+  "Body_Armours_dex/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2273
+  },
+  "Body_Armours_dex/Desecrated_Dexterity": {
+   "65": 3393
+  },
+  "Body_Armours_dex/Desecrated_PercentDamageGoesToMana": {
+   "65": 2194
+  },
+  "Body_Armours_dex/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2372
+  },
+  "Body_Armours_dex/Desecrated_Strength_2": {
+   "65": 3888
+  },
+  "Body_Armours_dex/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2194
+  },
+  "Body_Armours_dex/CompanionReservationEfficiency": {
+   "65": 2194
+  },
+  "Body_Armours_dex/DeflectDamageTaken": {
+   "65": 2194
+  },
+  "Body_Armours_dex_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2794
+  },
+  "Body_Armours_dex_int/Desecrated_Strength": {
+   "65": 2162
+  },
+  "Body_Armours_dex_int/Desecrated_ReducedCurseEffect": {
+   "65": 2215
+  },
+  "Body_Armours_dex_int/Desecrated_SpiritReservationEfficiency": {
+   "65": 2215
+  },
+  "Body_Armours_dex_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2295
+  },
+  "Body_Armours_dex_int/Desecrated_Dexterity": {
+   "65": 3426
+  },
+  "Body_Armours_dex_int/Desecrated_PercentDamageGoesToMana": {
+   "65": 2215
+  },
+  "Body_Armours_dex_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2395
+  },
+  "Body_Armours_dex_int/Desecrated_Strength_2": {
+   "65": 3924
+  },
+  "Body_Armours_dex_int/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2215
+  },
+  "Body_Armours_dex_int/DamageRemovedFromManaBeforeLife": {
+   "65": 2215
+  },
+  "Body_Armours_dex_int/CompanionReservationEfficiency": {
+   "65": 2215
+  },
+  "Body_Armours_dex_int/DeflectDamageTaken": {
+   "65": 2215
+  },
+  "Body_Armours_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2737
+  },
+  "Body_Armours_int/Desecrated_Strength": {
+   "65": 2118
+  },
+  "Body_Armours_int/Desecrated_ReducedCurseEffect": {
+   "65": 2170
+  },
+  "Body_Armours_int/Desecrated_SpiritReservationEfficiency": {
+   "65": 2170
+  },
+  "Body_Armours_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2248
+  },
+  "Body_Armours_int/Desecrated_Dexterity": {
+   "65": 3356
+  },
+  "Body_Armours_int/Desecrated_PercentDamageGoesToMana": {
+   "65": 2170
+  },
+  "Body_Armours_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2346
+  },
+  "Body_Armours_int/Desecrated_Strength_2": {
+   "65": 3845
+  },
+  "Body_Armours_int/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2170
+  },
+  "Body_Armours_int/DamageRemovedFromManaBeforeLife": {
+   "65": 2170
+  },
+  "Body_Armours_str/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2701
+  },
+  "Body_Armours_str/Desecrated_Strength": {
+   "65": 2090
+  },
+  "Body_Armours_str/Desecrated_ReducedCurseEffect": {
+   "65": 2142
+  },
+  "Body_Armours_str/Desecrated_SpiritReservationEfficiency": {
+   "65": 2142
+  },
+  "Body_Armours_str/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2219
+  },
+  "Body_Armours_str/Desecrated_Dexterity": {
+   "65": 3312
+  },
+  "Body_Armours_str/Desecrated_PercentDamageGoesToMana": {
+   "65": 2142
+  },
+  "Body_Armours_str/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2315
+  },
+  "Body_Armours_str/Desecrated_Strength_2": {
+   "65": 3795
+  },
+  "Body_Armours_str/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2142
+  },
+  "Body_Armours_str_dex/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2767
+  },
+  "Body_Armours_str_dex/Desecrated_Strength": {
+   "65": 2141
+  },
+  "Body_Armours_str_dex/Desecrated_ReducedCurseEffect": {
+   "65": 2194
+  },
+  "Body_Armours_str_dex/Desecrated_SpiritReservationEfficiency": {
+   "65": 2194
+  },
+  "Body_Armours_str_dex/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2273
+  },
+  "Body_Armours_str_dex/Desecrated_Dexterity": {
+   "65": 3393
+  },
+  "Body_Armours_str_dex/Desecrated_PercentDamageGoesToMana": {
+   "65": 2194
+  },
+  "Body_Armours_str_dex/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2372
+  },
+  "Body_Armours_str_dex/Desecrated_Strength_2": {
+   "65": 3888
+  },
+  "Body_Armours_str_dex/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2194
+  },
+  "Body_Armours_str_dex/CompanionReservationEfficiency": {
+   "65": 2194
+  },
+  "Body_Armours_str_dex/DeflectDamageTaken": {
+   "65": 2194
+  },
+  "Body_Armours_str_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2737
+  },
+  "Body_Armours_str_int/Desecrated_Strength": {
+   "65": 2118
+  },
+  "Body_Armours_str_int/Desecrated_ReducedCurseEffect": {
+   "65": 2170
+  },
+  "Body_Armours_str_int/Desecrated_SpiritReservationEfficiency": {
+   "65": 2170
+  },
+  "Body_Armours_str_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2248
+  },
+  "Body_Armours_str_int/Desecrated_Dexterity": {
+   "65": 3356
+  },
+  "Body_Armours_str_int/Desecrated_PercentDamageGoesToMana": {
+   "65": 2170
+  },
+  "Body_Armours_str_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2346
+  },
+  "Body_Armours_str_int/Desecrated_Strength_2": {
+   "65": 3845
+  },
+  "Body_Armours_str_int/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2170
+  },
+  "Body_Armours_str_int/DamageRemovedFromManaBeforeLife": {
+   "65": 2170
+  },
+  "Boots_dex/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2837
+  },
+  "Boots_dex/Desecrated_Strength": {
+   "65": 2195
+  },
+  "Boots_dex/Desecrated_ReducedSelfIgniteDuration": {
+   "65": 2249
+  },
+  "Boots_dex/Desecrated_SlowPotency": {
+   "65": 2249
+  },
+  "Boots_dex/Desecrated_DodgeRoll": {
+   "65": 2249
+  },
+  "Boots_dex/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2330
+  },
+  "Boots_dex/Desecrated_Dexterity": {
+   "65": 3478
+  },
+  "Boots_dex/Desecrated_ReducedAilmentDuration": {
+   "65": 2249
+  },
+  "Boots_dex/Desecrated_ManaCostEfficiency": {
+   "65": 2249
+  },
+  "Boots_dex/Desecrated_ManaRegeneration": {
+   "65": 2249
+  },
+  "Boots_dex/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2432
+  },
+  "Boots_dex/Desecrated_Strength_2": {
+   "65": 3985
+  },
+  "Boots_dex/Desecrated_ReducedAilmentDuration_2": {
+   "65": 2249
+  },
+  "Boots_dex/Desecrated_CorruptedBlood": {
+   "65": 2249
+  },
+  "Boots_dex/Desecrated_LifeRegenerationPlusPercentWhileMoving": {
+   "65": 2249
+  },
+  "Boots_dex_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2837
+  },
+  "Boots_dex_int/Desecrated_Strength": {
+   "65": 2195
+  },
+  "Boots_dex_int/Desecrated_ReducedSelfIgniteDuration": {
+   "65": 2249
+  },
+  "Boots_dex_int/Desecrated_SlowPotency": {
+   "65": 2249
+  },
+  "Boots_dex_int/Desecrated_DodgeRoll": {
+   "65": 2249
+  },
+  "Boots_dex_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2330
+  },
+  "Boots_dex_int/Desecrated_Dexterity": {
+   "65": 3478
+  },
+  "Boots_dex_int/Desecrated_ReducedAilmentDuration": {
+   "65": 2249
+  },
+  "Boots_dex_int/Desecrated_ManaCostEfficiency": {
+   "65": 2249
+  },
+  "Boots_dex_int/Desecrated_ManaRegeneration": {
+   "65": 2249
+  },
+  "Boots_dex_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2432
+  },
+  "Boots_dex_int/Desecrated_Strength_2": {
+   "65": 3985
+  },
+  "Boots_dex_int/Desecrated_ReducedAilmentDuration_2": {
+   "65": 2249
+  },
+  "Boots_dex_int/Desecrated_CorruptedBlood": {
+   "65": 2249
+  },
+  "Boots_dex_int/Desecrated_LifeRegenerationPlusPercentWhileMoving": {
+   "65": 2249
+  },
+  "Boots_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2837
+  },
+  "Boots_int/Desecrated_Strength": {
+   "65": 2195
+  },
+  "Boots_int/Desecrated_ReducedSelfIgniteDuration": {
+   "65": 2249
+  },
+  "Boots_int/Desecrated_SlowPotency": {
+   "65": 2249
+  },
+  "Boots_int/Desecrated_DodgeRoll": {
+   "65": 2249
+  },
+  "Boots_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2330
+  },
+  "Boots_int/Desecrated_Dexterity": {
+   "65": 3478
+  },
+  "Boots_int/Desecrated_ReducedAilmentDuration": {
+   "65": 2249
+  },
+  "Boots_int/Desecrated_ManaCostEfficiency": {
+   "65": 2249
+  },
+  "Boots_int/Desecrated_ManaRegeneration": {
+   "65": 2249
+  },
+  "Boots_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2432
+  },
+  "Boots_int/Desecrated_Strength_2": {
+   "65": 3985
+  },
+  "Boots_int/Desecrated_ReducedAilmentDuration_2": {
+   "65": 2249
+  },
+  "Boots_int/Desecrated_CorruptedBlood": {
+   "65": 2249
+  },
+  "Boots_int/Desecrated_LifeRegenerationPlusPercentWhileMoving": {
+   "65": 2249
+  },
+  "Boots_str/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2837
+  },
+  "Boots_str/Desecrated_Strength": {
+   "65": 2195
+  },
+  "Boots_str/Desecrated_ReducedSelfIgniteDuration": {
+   "65": 2249
+  },
+  "Boots_str/Desecrated_SlowPotency": {
+   "65": 2249
+  },
+  "Boots_str/Desecrated_DodgeRoll": {
+   "65": 2249
+  },
+  "Boots_str/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2330
+  },
+  "Boots_str/Desecrated_Dexterity": {
+   "65": 3478
+  },
+  "Boots_str/Desecrated_ReducedAilmentDuration": {
+   "65": 2249
+  },
+  "Boots_str/Desecrated_ManaCostEfficiency": {
+   "65": 2249
+  },
+  "Boots_str/Desecrated_ManaRegeneration": {
+   "65": 2249
+  },
+  "Boots_str/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2432
+  },
+  "Boots_str/Desecrated_Strength_2": {
+   "65": 3985
+  },
+  "Boots_str/Desecrated_ReducedAilmentDuration_2": {
+   "65": 2249
+  },
+  "Boots_str/Desecrated_CorruptedBlood": {
+   "65": 2249
+  },
+  "Boots_str/Desecrated_LifeRegenerationPlusPercentWhileMoving": {
+   "65": 2249
+  },
+  "Boots_str_dex/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2837
+  },
+  "Boots_str_dex/Desecrated_Strength": {
+   "65": 2195
+  },
+  "Boots_str_dex/Desecrated_ReducedSelfIgniteDuration": {
+   "65": 2249
+  },
+  "Boots_str_dex/Desecrated_SlowPotency": {
+   "65": 2249
+  },
+  "Boots_str_dex/Desecrated_DodgeRoll": {
+   "65": 2249
+  },
+  "Boots_str_dex/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2330
+  },
+  "Boots_str_dex/Desecrated_Dexterity": {
+   "65": 3478
+  },
+  "Boots_str_dex/Desecrated_ReducedAilmentDuration": {
+   "65": 2249
+  },
+  "Boots_str_dex/Desecrated_ManaCostEfficiency": {
+   "65": 2249
+  },
+  "Boots_str_dex/Desecrated_ManaRegeneration": {
+   "65": 2249
+  },
+  "Boots_str_dex/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2432
+  },
+  "Boots_str_dex/Desecrated_Strength_2": {
+   "65": 3985
+  },
+  "Boots_str_dex/Desecrated_ReducedAilmentDuration_2": {
+   "65": 2249
+  },
+  "Boots_str_dex/Desecrated_CorruptedBlood": {
+   "65": 2249
+  },
+  "Boots_str_dex/Desecrated_LifeRegenerationPlusPercentWhileMoving": {
+   "65": 2249
+  },
+  "Boots_str_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2837
+  },
+  "Boots_str_int/Desecrated_Strength": {
+   "65": 2195
+  },
+  "Boots_str_int/Desecrated_ReducedSelfIgniteDuration": {
+   "65": 2249
+  },
+  "Boots_str_int/Desecrated_SlowPotency": {
+   "65": 2249
+  },
+  "Boots_str_int/Desecrated_DodgeRoll": {
+   "65": 2249
+  },
+  "Boots_str_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2330
+  },
+  "Boots_str_int/Desecrated_Dexterity": {
+   "65": 3478
+  },
+  "Boots_str_int/Desecrated_ReducedAilmentDuration": {
+   "65": 2249
+  },
+  "Boots_str_int/Desecrated_ManaCostEfficiency": {
+   "65": 2249
+  },
+  "Boots_str_int/Desecrated_ManaRegeneration": {
+   "65": 2249
+  },
+  "Boots_str_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2432
+  },
+  "Boots_str_int/Desecrated_Strength_2": {
+   "65": 3985
+  },
+  "Boots_str_int/Desecrated_ReducedAilmentDuration_2": {
+   "65": 2249
+  },
+  "Boots_str_int/Desecrated_CorruptedBlood": {
+   "65": 2249
+  },
+  "Boots_str_int/Desecrated_LifeRegenerationPlusPercentWhileMoving": {
+   "65": 2249
+  },
+  "Bucklers/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2817
+  },
+  "Bucklers/Desecrated_Strength": {
+   "65": 2180
+  },
+  "Bucklers/Desecrated_ReducedCurseEffect": {
+   "65": 2233
+  },
+  "Bucklers/Desecrated_MaximumResistances": {
+   "65": 2233
+  },
+  "Bucklers/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2314
+  },
+  "Bucklers/Desecrated_Dexterity": {
+   "65": 3454
+  },
+  "Bucklers/Desecrated_PercentDamageGoesToMana": {
+   "65": 2233
+  },
+  "Bucklers/Desecrated_GainManaOnBlock": {
+   "65": 2233
+  },
+  "Bucklers/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2414
+  },
+  "Bucklers/Desecrated_Strength_2": {
+   "65": 3957
+  },
+  "Bucklers/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2233
+  },
+  "Bucklers/Desecrated_MaximumBlockChance": {
+   "65": 2233
+  },
+  "Bucklers/ParriedDebuff__parry_skill_effect_duration": {
+   "65": 2233
+  },
+  "Bucklers/ParriedDebuff__parried_magnitude": {
+   "65": 2233
+  },
+  "Foci/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2767
+  },
+  "Foci/Desecrated_Strength": {
+   "65": 2141
+  },
+  "Foci/Desecrated_IncreaseSocketedGemLevel": {
+   "65": 2194
+  },
+  "Foci/Desecrated_CurseDelay": {
+   "65": 2194
+  },
+  "Foci/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2273
+  },
+  "Foci/Desecrated_Dexterity": {
+   "65": 3393
+  },
+  "Foci/Desecrated_ManaCostEfficiency": {
+   "65": 2194
+  },
+  "Foci/Desecrated_ChanceToGainAnAdditionalInfusion": {
+   "65": 2194
+  },
+  "Foci/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2372
+  },
+  "Foci/Desecrated_Strength_2": {
+   "65": 3888
+  },
+  "Foci/Desecrated_SkillLifeCost": {
+   "65": 2194
+  },
+  "Foci/Desecrated_SpellsFire2AdditionalProjectileChance": {
+   "65": 2194
+  },
+  "Gloves_dex/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2794
+  },
+  "Gloves_dex/Desecrated_Strength": {
+   "65": 2162
+  },
+  "Gloves_dex/Desecrated_DazeBuildup": {
+   "65": 2215
+  },
+  "Gloves_dex/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2295
+  },
+  "Gloves_dex/Desecrated_Dexterity": {
+   "65": 3426
+  },
+  "Gloves_dex/Desecrated_ManaCostEfficiency": {
+   "65": 2215
+  },
+  "Gloves_dex/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2395
+  },
+  "Gloves_dex/Desecrated_Strength_2": {
+   "65": 3924
+  },
+  "Gloves_dex/Desecrated_AilmentEffect": {
+   "65": 2215
+  },
+  "Gloves_dex/Desecrated_PoisonChanceIncrease": {
+   "65": 2215
+  },
+  "Gloves_dex/Desecrated_BleedChanceIncrease": {
+   "65": 2215
+  },
+  "Gloves_dex/CurseAreaOfEffect": {
+   "65": 2215
+  },
+  "Gloves_dex/Immobilise": {
+   "65": 2215
+  },
+  "Gloves_dex_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2921
+  },
+  "Gloves_dex_int/Desecrated_Strength": {
+   "65": 2261
+  },
+  "Gloves_dex_int/Desecrated_DazeBuildup": {
+   "65": 2316
+  },
+  "Gloves_dex_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2400
+  },
+  "Gloves_dex_int/Desecrated_Dexterity": {
+   "65": 3582
+  },
+  "Gloves_dex_int/Desecrated_ManaCostEfficiency": {
+   "65": 2316
+  },
+  "Gloves_dex_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2504
+  },
+  "Gloves_dex_int/Desecrated_Strength_2": {
+   "65": 4104
+  },
+  "Gloves_dex_int/Desecrated_AilmentEffect": {
+   "65": 2316
+  },
+  "Gloves_dex_int/Desecrated_PoisonChanceIncrease": {
+   "65": 2316
+  },
+  "Gloves_dex_int/Desecrated_BleedChanceIncrease": {
+   "65": 2316
+  },
+  "Gloves_dex_int/CurseAreaOfEffect": {
+   "65": 2316
+  },
+  "Gloves_dex_int/Immobilise": {
+   "65": 2316
+  },
+  "Gloves_dex_int/ArcaneSurgeOnCrit": {
+   "65": 2316
+  },
+  "Gloves_dex_int/CastSpeedOnFullLife": {
+   "65": 2316
+  },
+  "Gloves_dex_int/IncreasedSpeed": {
+   "65": 1565
+  },
+  "Gloves_dex_int/IncisionChance": {
+   "65": 2316
+  },
+  "Gloves_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2893
+  },
+  "Gloves_int/Desecrated_Strength": {
+   "65": 2239
+  },
+  "Gloves_int/Desecrated_DazeBuildup": {
+   "65": 2294
+  },
+  "Gloves_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2376
+  },
+  "Gloves_int/Desecrated_Dexterity": {
+   "65": 3547
+  },
+  "Gloves_int/Desecrated_ManaCostEfficiency": {
+   "65": 2294
+  },
+  "Gloves_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2480
+  },
+  "Gloves_int/Desecrated_Strength_2": {
+   "65": 4064
+  },
+  "Gloves_int/Desecrated_AilmentEffect": {
+   "65": 2294
+  },
+  "Gloves_int/Desecrated_PoisonChanceIncrease": {
+   "65": 2294
+  },
+  "Gloves_int/Desecrated_BleedChanceIncrease": {
+   "65": 2294
+  },
+  "Gloves_int/ArcaneSurgeOnCrit": {
+   "65": 2294
+  },
+  "Gloves_int/CastSpeedOnFullLife": {
+   "65": 2294
+  },
+  "Gloves_int/IncreasedSpeed": {
+   "65": 1550
+  },
+  "Gloves_int/IncisionChance": {
+   "65": 2294
+  },
+  "Gloves_str/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2737
+  },
+  "Gloves_str/Desecrated_Strength": {
+   "65": 2118
+  },
+  "Gloves_str/Desecrated_DazeBuildup": {
+   "65": 2170
+  },
+  "Gloves_str/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2248
+  },
+  "Gloves_str/Desecrated_Dexterity": {
+   "65": 3356
+  },
+  "Gloves_str/Desecrated_ManaCostEfficiency": {
+   "65": 2170
+  },
+  "Gloves_str/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2346
+  },
+  "Gloves_str/Desecrated_Strength_2": {
+   "65": 3845
+  },
+  "Gloves_str/Desecrated_AilmentEffect": {
+   "65": 2170
+  },
+  "Gloves_str/Desecrated_PoisonChanceIncrease": {
+   "65": 2170
+  },
+  "Gloves_str/Desecrated_BleedChanceIncrease": {
+   "65": 2170
+  },
+  "Gloves_str_dex/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2794
+  },
+  "Gloves_str_dex/Desecrated_Strength": {
+   "65": 2162
+  },
+  "Gloves_str_dex/Desecrated_DazeBuildup": {
+   "65": 2215
+  },
+  "Gloves_str_dex/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2295
+  },
+  "Gloves_str_dex/Desecrated_Dexterity": {
+   "65": 3426
+  },
+  "Gloves_str_dex/Desecrated_ManaCostEfficiency": {
+   "65": 2215
+  },
+  "Gloves_str_dex/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2395
+  },
+  "Gloves_str_dex/Desecrated_Strength_2": {
+   "65": 3924
+  },
+  "Gloves_str_dex/Desecrated_AilmentEffect": {
+   "65": 2215
+  },
+  "Gloves_str_dex/Desecrated_PoisonChanceIncrease": {
+   "65": 2215
+  },
+  "Gloves_str_dex/Desecrated_BleedChanceIncrease": {
+   "65": 2215
+  },
+  "Gloves_str_dex/CurseAreaOfEffect": {
+   "65": 2215
+  },
+  "Gloves_str_dex/Immobilise": {
+   "65": 2215
+  },
+  "Gloves_str_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2893
+  },
+  "Gloves_str_int/Desecrated_Strength": {
+   "65": 2239
+  },
+  "Gloves_str_int/Desecrated_DazeBuildup": {
+   "65": 2294
+  },
+  "Gloves_str_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2376
+  },
+  "Gloves_str_int/Desecrated_Dexterity": {
+   "65": 3547
+  },
+  "Gloves_str_int/Desecrated_ManaCostEfficiency": {
+   "65": 2294
+  },
+  "Gloves_str_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2480
+  },
+  "Gloves_str_int/Desecrated_Strength_2": {
+   "65": 4064
+  },
+  "Gloves_str_int/Desecrated_AilmentEffect": {
+   "65": 2294
+  },
+  "Gloves_str_int/Desecrated_PoisonChanceIncrease": {
+   "65": 2294
+  },
+  "Gloves_str_int/Desecrated_BleedChanceIncrease": {
+   "65": 2294
+  },
+  "Gloves_str_int/ArcaneSurgeOnCrit": {
+   "65": 2294
+  },
+  "Gloves_str_int/CastSpeedOnFullLife": {
+   "65": 2294
+  },
+  "Gloves_str_int/IncreasedSpeed": {
+   "65": 1550
+  },
+  "Gloves_str_int/IncisionChance": {
+   "65": 2294
+  },
+  "Helmets_dex/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2794
+  },
+  "Helmets_dex/Desecrated_Strength": {
+   "65": 2162
+  },
+  "Helmets_dex/Desecrated_SpiritReservationEfficiency": {
+   "65": 2215
+  },
+  "Helmets_dex/Desecrated_PresenceRadius": {
+   "65": 2215
+  },
+  "Helmets_dex/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2295
+  },
+  "Helmets_dex/Desecrated_Dexterity": {
+   "65": 3426
+  },
+  "Helmets_dex/Desecrated_ManaCostEfficiency": {
+   "65": 2215
+  },
+  "Helmets_dex/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2395
+  },
+  "Helmets_dex/Desecrated_Strength_2": {
+   "65": 3924
+  },
+  "Helmets_dex/Desecrated_LifeCostEfficiency": {
+   "65": 2215
+  },
+  "Helmets_dex/ElementalDamageTakenRecoupedAsEnergyShield": {
+   "65": 2215
+  },
+  "Helmets_dex/CriticalStrikeMultiplier": {
+   "65": 2215
+  },
+  "Helmets_dex/MarkDamage": {
+   "65": 2215
+  },
+  "Helmets_dex_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2817
+  },
+  "Helmets_dex_int/Desecrated_Strength": {
+   "65": 2180
+  },
+  "Helmets_dex_int/Desecrated_SpiritReservationEfficiency": {
+   "65": 2233
+  },
+  "Helmets_dex_int/Desecrated_PresenceRadius": {
+   "65": 2233
+  },
+  "Helmets_dex_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2314
+  },
+  "Helmets_dex_int/Desecrated_Dexterity": {
+   "65": 3454
+  },
+  "Helmets_dex_int/Desecrated_ManaCostEfficiency": {
+   "65": 2233
+  },
+  "Helmets_dex_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2414
+  },
+  "Helmets_dex_int/Desecrated_Strength_2": {
+   "65": 3957
+  },
+  "Helmets_dex_int/Desecrated_LifeCostEfficiency": {
+   "65": 2233
+  },
+  "Helmets_dex_int/ElementalDamageTakenRecoupedAsEnergyShield": {
+   "65": 2233
+  },
+  "Helmets_dex_int/ArcaneSurgeEffect": {
+   "65": 2233
+  },
+  "Helmets_dex_int/CriticalStrikeMultiplier": {
+   "65": 2233
+  },
+  "Helmets_dex_int/MarkDamage": {
+   "65": 2233
+  },
+  "Helmets_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2767
+  },
+  "Helmets_int/Desecrated_Strength": {
+   "65": 2141
+  },
+  "Helmets_int/Desecrated_SpiritReservationEfficiency": {
+   "65": 2194
+  },
+  "Helmets_int/Desecrated_PresenceRadius": {
+   "65": 2194
+  },
+  "Helmets_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2273
+  },
+  "Helmets_int/Desecrated_Dexterity": {
+   "65": 3393
+  },
+  "Helmets_int/Desecrated_ManaCostEfficiency": {
+   "65": 2194
+  },
+  "Helmets_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2372
+  },
+  "Helmets_int/Desecrated_Strength_2": {
+   "65": 3888
+  },
+  "Helmets_int/Desecrated_LifeCostEfficiency": {
+   "65": 2194
+  },
+  "Helmets_int/ElementalDamageTakenRecoupedAsEnergyShield": {
+   "65": 2194
+  },
+  "Helmets_int/ArcaneSurgeEffect": {
+   "65": 2194
+  },
+  "Helmets_str/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2817
+  },
+  "Helmets_str/Desecrated_Strength": {
+   "65": 2180
+  },
+  "Helmets_str/Desecrated_SpiritReservationEfficiency": {
+   "65": 2233
+  },
+  "Helmets_str/Desecrated_PresenceRadius": {
+   "65": 2233
+  },
+  "Helmets_str/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2314
+  },
+  "Helmets_str/Desecrated_Dexterity": {
+   "65": 3454
+  },
+  "Helmets_str/Desecrated_ManaCostEfficiency": {
+   "65": 2233
+  },
+  "Helmets_str/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2414
+  },
+  "Helmets_str/Desecrated_Strength_2": {
+   "65": 3957
+  },
+  "Helmets_str/Desecrated_LifeCostEfficiency": {
+   "65": 2233
+  },
+  "Helmets_str/DamageTakenGainedAsLife": {
+   "65": 2233
+  },
+  "Helmets_str/ArmourAppliesToChaosDamage": {
+   "65": 2233
+  },
+  "Helmets_str/ElementalDamageTakenRecoupedAsEnergyShield": {
+   "65": 2233
+  },
+  "Helmets_str/GloryGeneration": {
+   "65": 2233
+  },
+  "Helmets_str_dex/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2855
+  },
+  "Helmets_str_dex/Desecrated_Strength": {
+   "65": 2209
+  },
+  "Helmets_str_dex/Desecrated_SpiritReservationEfficiency": {
+   "65": 2263
+  },
+  "Helmets_str_dex/Desecrated_PresenceRadius": {
+   "65": 2263
+  },
+  "Helmets_str_dex/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2345
+  },
+  "Helmets_str_dex/Desecrated_Dexterity": {
+   "65": 3500
+  },
+  "Helmets_str_dex/Desecrated_ManaCostEfficiency": {
+   "65": 2263
+  },
+  "Helmets_str_dex/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2447
+  },
+  "Helmets_str_dex/Desecrated_Strength_2": {
+   "65": 4010
+  },
+  "Helmets_str_dex/Desecrated_LifeCostEfficiency": {
+   "65": 2263
+  },
+  "Helmets_str_dex/DamageTakenGainedAsLife": {
+   "65": 2263
+  },
+  "Helmets_str_dex/ArmourAppliesToChaosDamage": {
+   "65": 2263
+  },
+  "Helmets_str_dex/ElementalDamageTakenRecoupedAsEnergyShield": {
+   "65": 2263
+  },
+  "Helmets_str_dex/GloryGeneration": {
+   "65": 2263
+  },
+  "Helmets_str_dex/CriticalStrikeMultiplier": {
+   "65": 2263
+  },
+  "Helmets_str_dex/MarkDamage": {
+   "65": 2263
+  },
+  "Helmets_str_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2837
+  },
+  "Helmets_str_int/Desecrated_Strength": {
+   "65": 2195
+  },
+  "Helmets_str_int/Desecrated_SpiritReservationEfficiency": {
+   "65": 2249
+  },
+  "Helmets_str_int/Desecrated_PresenceRadius": {
+   "65": 2249
+  },
+  "Helmets_str_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2330
+  },
+  "Helmets_str_int/Desecrated_Dexterity": {
+   "65": 3478
+  },
+  "Helmets_str_int/Desecrated_ManaCostEfficiency": {
+   "65": 2249
+  },
+  "Helmets_str_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2432
+  },
+  "Helmets_str_int/Desecrated_Strength_2": {
+   "65": 3985
+  },
+  "Helmets_str_int/Desecrated_LifeCostEfficiency": {
+   "65": 2249
+  },
+  "Helmets_str_int/DamageTakenGainedAsLife": {
+   "65": 2249
+  },
+  "Helmets_str_int/ArmourAppliesToChaosDamage": {
+   "65": 2249
+  },
+  "Helmets_str_int/ElementalDamageTakenRecoupedAsEnergyShield": {
+   "65": 2249
+  },
+  "Helmets_str_int/GloryGeneration": {
+   "65": 2249
+  },
+  "Helmets_str_int/ArcaneSurgeEffect": {
+   "65": 2249
+  },
+  "Rings/Desecrated_RemnantEffect": {
+   "65": 3392
+  },
+  "Rings/Desecrated_IncreasedMinionDamageIfYouHitEnemy": {
+   "65": 2797
+  },
+  "Rings/Desecrated_ElementalAilmentEffect": {
+   "65": 1713
+  },
+  "Rings/Desecrated_IncreasedSpellDamageOnFullEnergyShield": {
+   "65": 2605
+  },
+  "Rings/Desecrated_ElementalAilmentEffect_2": {
+   "65": 2378
+  },
+  "Rings/Desecrated_AttackDamage": {
+   "65": 2168
+  },
+  "Rings/Desecrated_ElementalAilmentEffect_3": {
+   "65": 2448
+  },
+  "Rings/Desecrated_FireAndChaosDamageResistance": {
+   "65": 3153
+  },
+  "Rings/Desecrated_Strength": {
+   "65": 2440
+  },
+  "Rings/Desecrated_SkillEffectDuration": {
+   "65": 2965
+  },
+  "Rings/Desecrated_RemnantPickupRadius": {
+   "65": 2965
+  },
+  "Rings/Desecrated_LifeLeech": {
+   "65": 2327
+  },
+  "Rings/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2590
+  },
+  "Rings/Desecrated_Dexterity": {
+   "65": 3866
+  },
+  "Rings/Desecrated_ExposureEffect": {
+   "65": 713
+  },
+  "Rings/Desecrated_CooldownRecovery": {
+   "65": 450
+  },
+  "Rings/Desecrated_ManaGainedOnKillPercentage": {
+   "65": 2215
+  },
+  "Rings/Desecrated_ManaLeechAmount": {
+   "65": 2402
+  },
+  "Rings/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2703
+  },
+  "Rings/Desecrated_Strength_2": {
+   "65": 4429
+  },
+  "Rings/Desecrated_IncreasedSpeed": {
+   "65": 1689
+  },
+  "Rings/Desecrated_RecoverPercentMaxLifeOnKill": {
+   "65": 2590
+  },
+  "Shields_str/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2871
+  },
+  "Shields_str/Desecrated_Strength": {
+   "65": 2221
+  },
+  "Shields_str/Desecrated_ReducedCurseEffect": {
+   "65": 2276
+  },
+  "Shields_str/Desecrated_MaximumResistances": {
+   "65": 2276
+  },
+  "Shields_str/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2358
+  },
+  "Shields_str/Desecrated_Dexterity": {
+   "65": 3520
+  },
+  "Shields_str/Desecrated_PercentDamageGoesToMana": {
+   "65": 2276
+  },
+  "Shields_str/Desecrated_GainManaOnBlock": {
+   "65": 2276
+  },
+  "Shields_str/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2461
+  },
+  "Shields_str/Desecrated_Strength_2": {
+   "65": 4033
+  },
+  "Shields_str/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2276
+  },
+  "Shields_str/Desecrated_MaximumBlockChance": {
+   "65": 2276
+  },
+  "Shields_str/DamageTakenGainedAsLife": {
+   "65": 2276
+  },
+  "Shields_str/ArmourAppliesToChaosDamage": {
+   "65": 2276
+  },
+  "Shields_str/HeavyStunDecayRate": {
+   "65": 2276
+  },
+  "Shields_str/ShieldSkillsStunningAlsoFullyBreaksArmour": {
+   "65": 2276
+  },
+  "Shields_str/PhysicalDamageTakenAsLightningWhileActiveBlocking": {
+   "65": 2276
+  },
+  "Shields_str_dex/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2898
+  },
+  "Shields_str_dex/Desecrated_Strength": {
+   "65": 2243
+  },
+  "Shields_str_dex/Desecrated_ReducedCurseEffect": {
+   "65": 2298
+  },
+  "Shields_str_dex/Desecrated_MaximumResistances": {
+   "65": 2298
+  },
+  "Shields_str_dex/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2381
+  },
+  "Shields_str_dex/Desecrated_Dexterity": {
+   "65": 3554
+  },
+  "Shields_str_dex/Desecrated_PercentDamageGoesToMana": {
+   "65": 2298
+  },
+  "Shields_str_dex/Desecrated_GainManaOnBlock": {
+   "65": 2298
+  },
+  "Shields_str_dex/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2484
+  },
+  "Shields_str_dex/Desecrated_Strength_2": {
+   "65": 4071
+  },
+  "Shields_str_dex/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2298
+  },
+  "Shields_str_dex/Desecrated_MaximumBlockChance": {
+   "65": 2298
+  },
+  "Shields_str_dex/DamageTakenGainedAsLife": {
+   "65": 2298
+  },
+  "Shields_str_dex/ArmourAppliesToChaosDamage": {
+   "65": 2298
+  },
+  "Shields_str_dex/HeavyStunDecayRate": {
+   "65": 2298
+  },
+  "Shields_str_dex/ShieldSkillsStunningAlsoFullyBreaksArmour": {
+   "65": 2298
+  },
+  "Shields_str_dex/PhysicalDamageTakenAsLightningWhileActiveBlocking": {
+   "65": 2298
+  },
+  "Shields_str_dex/ParriedDebuff__parry_skill_effect_duration": {
+   "65": 2298
+  },
+  "Shields_str_dex/ParriedDebuff__parried_magnitude": {
+   "65": 2298
+  },
+  "Shields_str_int/Desecrated_FireAndChaosDamageResistance": {
+   "65": 2898
+  },
+  "Shields_str_int/Desecrated_Strength": {
+   "65": 2243
+  },
+  "Shields_str_int/Desecrated_ReducedCurseEffect": {
+   "65": 2298
+  },
+  "Shields_str_int/Desecrated_MaximumResistances": {
+   "65": 2298
+  },
+  "Shields_str_int/Desecrated_ColdAndChaosDamageResistance": {
+   "65": 2381
+  },
+  "Shields_str_int/Desecrated_Dexterity": {
+   "65": 3554
+  },
+  "Shields_str_int/Desecrated_PercentDamageGoesToMana": {
+   "65": 2298
+  },
+  "Shields_str_int/Desecrated_GainManaOnBlock": {
+   "65": 2298
+  },
+  "Shields_str_int/Desecrated_LightningAndChaosDamageResistance": {
+   "65": 2484
+  },
+  "Shields_str_int/Desecrated_Strength_2": {
+   "65": 4071
+  },
+  "Shields_str_int/Desecrated_ChanceToTakeCriticalStrike": {
+   "65": 2298
+  },
+  "Shields_str_int/Desecrated_MaximumBlockChance": {
+   "65": 2298
+  },
+  "Shields_str_int/DamageTakenGainedAsLife": {
+   "65": 2298
+  },
+  "Shields_str_int/ArmourAppliesToChaosDamage": {
+   "65": 2298
+  },
+  "Shields_str_int/ElementalDamageTakenRecoupedAsEnergyShield": {
+   "65": 2298
+  },
+  "Shields_str_int/HeavyStunDecayRate": {
+   "65": 2298
+  },
+  "Shields_str_int/ShieldSkillsStunningAlsoFullyBreaksArmour": {
+   "65": 2298
+  },
+  "Shields_str_int/EnergyShieldRechargeRateIfBlockedRecently": {
+   "65": 2298
+  },
+  "Shields_str_int/PhysicalDamageTakenAsLightningWhileActiveBlocking": {
+   "65": 2298
+  },
+  "Talismans/ExertedAttackDamage": {
+   "65": 2467
+  },
+  "Talismans/TotemDamage": {
+   "65": 2467
+  },
+  "Talismans/AdditionalTotems": {
+   "65": 2467
+  },
+  "Talismans/CompanionDamage": {
+   "65": 2467
+  },
+  "Talismans/FireResistancePenetration": {
+   "65": 2467
+  },
+  "Talismans/ColdResistancePenetration": {
+   "65": 2467
+  },
+  "Talismans/LightningResistancePenetration": {
+   "65": 2467
+  },
+  "Talismans/IncreasedMinionDamageIfYouHitEnemy": {
+   "65": 2761
+  },
+  "Talismans/WarcriesExertAnAdditionalAttack": {
+   "65": 2467
+  },
+  "Body_Armours_str_dex_int/FireAndChaosDamageResistance": {
+   "65": 2933
+  },
+  "Body_Armours_str_dex_int/ColdAndChaosDamageResistance": {
+   "65": 2409
+  },
+  "Body_Armours_str_dex_int/LightningAndChaosDamageResistance": {
+   "65": 2514
+  },
+  "Body_Armours_str_dex_int/SpiritReservationEfficiency": {
+   "65": 2325
+  },
+  "Body_Armours_str_dex_int/DamageRemovedFromManaBeforeLife": {
+   "65": 2325
+  },
+  "Body_Armours_str_dex_int/CompanionReservationEfficiency": {
+   "65": 2325
+  },
+  "Body_Armours_str_dex_int/DeflectDamageTaken": {
+   "65": 2325
+  },
+  "Body_Armours_str_dex_int/ReducedCurseEffect": {
+   "65": 2325
+  },
+  "Body_Armours_str_dex_int/PercentDamageGoesToMana": {
+   "65": 2325
+  },
+  "Body_Armours_str_dex_int/ChanceToTakeCriticalStrike": {
+   "65": 2325
+  },
+  "Body_Armours_str_dex_int/Desecrated_Strength": {
+   "65": 2270
+  },
+  "Body_Armours_str_dex_int/Desecrated_Dexterity": {
+   "65": 3596
+  },
+  "Helmets_str_dex_int/FireAndChaosDamageResistance": {
+   "65": 3070
+  },
+  "Helmets_str_dex_int/ColdAndChaosDamageResistance": {
+   "65": 2522
+  },
+  "Helmets_str_dex_int/LightningAndChaosDamageResistance": {
+   "65": 2632
+  },
+  "Helmets_str_dex_int/DamageTakenGainedAsLife": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/ArmourAppliesToChaosDamage": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/ElementalDamageTakenRecoupedAsEnergyShield": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/ManaCostEfficiency": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/GloryGeneration": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/PresenceRadius": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/SpiritReservationEfficiency": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/ArcaneSurgeEffect": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/CriticalStrikeMultiplier": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/LifeCostEfficiency": {
+   "65": 2434
+  },
+  "Helmets_str_dex_int/MarkDamage": {
+   "65": 2434
+  },
+  "Gloves_str_dex_int/FireAndChaosDamageResistance": {
+   "65": 3141
+  },
+  "Gloves_str_dex_int/ColdAndChaosDamageResistance": {
+   "65": 2580
+  },
+  "Gloves_str_dex_int/LightningAndChaosDamageResistance": {
+   "65": 2692
+  },
+  "Gloves_str_dex_int/ManaCostEfficiency": {
+   "65": 2490
+  },
+  "Gloves_str_dex_int/CurseAreaOfEffect": {
+   "65": 2490
+  },
+  "Gloves_str_dex_int/DazeBuildup": {
+   "65": 2490
+  },
+  "Gloves_str_dex_int/Immobilise": {
+   "65": 2490
+  },
+  "Gloves_str_dex_int/ArcaneSurgeOnCrit": {
+   "65": 2490
+  },
+  "Gloves_str_dex_int/CastSpeedOnFullLife": {
+   "65": 2490
+  },
+  "Gloves_str_dex_int/AilmentEffect": {
+   "65": 2490
+  },
+  "Gloves_str_dex_int/BleedChanceIncrease": {
+   "65": 2490
+  },
+  "Gloves_str_dex_int/IncreasedSpeed": {
+   "65": 1683
+  },
+  "Gloves_str_dex_int/IncisionChance": {
+   "65": 2490
+  },
+  "Gloves_str_dex_int/PoisonChanceIncrease": {
+   "65": 2490
+  },
+  "Boots_str_dex_int/FireAndChaosDamageResistance": {
+   "65": 3038
+  },
+  "Boots_str_dex_int/ColdAndChaosDamageResistance": {
+   "65": 2496
+  },
+  "Boots_str_dex_int/LightningAndChaosDamageResistance": {
+   "65": 2604
+  },
+  "Boots_str_dex_int/DodgeRoll": {
+   "65": 2409
+  },
+  "Boots_str_dex_int/SlowPotency": {
+   "65": 2409
+  },
+  "Boots_str_dex_int/ReducedSelfIgniteDuration": {
+   "65": 2409
+  },
+  "Boots_str_dex_int/ManaCostEfficiency": {
+   "65": 2409
+  },
+  "Boots_str_dex_int/ManaRegeneration": {
+   "65": 2409
+  },
+  "Boots_str_dex_int/CorruptedBlood": {
+   "65": 2409
+  },
+  "Boots_str_dex_int/LifeRegenerationPlusPercentWhileMoving": {
+   "65": 2409
+  }
+ }
+}
