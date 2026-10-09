@@ -298,7 +298,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
         <Icon v-if="!left.length" name="check" class="size-3.5" />{{ left.length ? `${reach.length - left.length} / ${reach.length} 形を決めた` : `全部決めた · ${reach.length} 形` }}
       </span>
       <button v-if="broken.length" type="button" class="inline-flex h-7 items-center rounded-full bg-[rgba(229,128,107,0.14)] px-2.5 text-xs font-semibold text-[var(--exile-color-signal-down)]" title="押すとその形へ" @click="go(broken[0]!)">打てない手 {{ broken.length }}</button>
-      <HelpTip v-if="useShelf" title="ハズレ複数設定" :width="300">
+      <HelpTip v-if="useShelf" title="ハズレルート設定" :width="300">
         <p>狙う手を打って外れた時の「形」ごとに、次に打つ物を棚から選びます。選ぶと次の決めていない形へ進みます。</p>
         <p class="mt-1 text-[var(--exile-color-text-secondary)]">形 = 狙う側の 狙い (狙う MOD) · ほか (それ以外) · 空き (残りの枠) の数。同じ形なら同じ手を使います。</p>
       </HelpTip>

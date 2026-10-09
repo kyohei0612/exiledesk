@@ -193,6 +193,8 @@ const simAltFor = ref<string | null>(null);
 const simOrder = ref<string[]>([]);
 /** 6 パターン (pattern.ts)。回すのはこの手の通り */
 const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }]);
+/** パターンの名前 → ハズレルート設定で決めていない形の数 (開いたパターンだけ。残っていれば回さない。2026-10-10 オーナー「ハズレ設定しないと回せない」) */
+const simPlayLeft = ref<Record<string, number>>({});
 
 /**
  * シミュレーションの途中 (ベース・狙う MOD・工程の「決めた」・順番計画・パターン) を覚えて、開き直した時にそのまま出す
@@ -344,7 +346,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
