@@ -37,17 +37,12 @@ export const ORBS: ShelfGroup[] = [
   { kind: "exalt", label: "高貴", keys: ["exalt", "exalt_greater", "exalt_perfect"] },
   { kind: "chaos", label: "カオス", keys: ["chaos", "chaos_greater", "chaos_perfect"] },
   { kind: "annul", label: "消去", keys: ["annul"] },
-  { kind: "other", label: "その他", keys: ["divine", "fracture", "artificer", "vaal"] },
-  // アクト中に落ちる物 (2026-09-28、POE2Tube 要望 ⑧)
-  { kind: "act", label: "アクト", keys: ["wisdom", "chance", "whetstone", "scrap", "bauble", "gemcutter", "jeweller_lesser", "jeweller_greater", "jeweller_perfect", "etcher"] },
-  // 2026-09-29 オーナー「全部足して」: 今の相場にあって棚に無かった物 (apply-extra.ts)
-  { kind: "vaal_extra", label: "ヴァール", keys: ["vaal_infuser_jewellery", "vaal_infuser_armour", "vaal_infuser_martial", "vaal_infuser_caster", "sacrifice_jewellery", "sacrifice_armour", "sacrifice_weapon", "architect", "cultivation", "siphoner"] },
-  { kind: "special", label: "特殊", keys: ["mirror", "hinekora", "extraction"] },
+  { kind: "other", label: "その他", keys: ["divine", "fracture", "artificer", "vaal", "chance", "hinekora"] },
   // 耐性のフラックス (2026-10-04 オーナー「カレンシーフルチェック」、apply-flux.ts)
   { kind: "flux", label: "フラックス (耐性の変換)", keys: ["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"] },
-  { kind: "shard", label: "シャード", keys: ["transmute_shard", "regal_shard", "artificer_shard", "chance_shard"] },
-  // 2026-09-29 (POE2Tube 要望 ⑰-5): 解呪・サルベージ (アイテムは無くなり、シャード・品質カレンシーになる。apply-dispose.ts)
-  { kind: "dispose", label: "解呪・サルベージ", keys: ["disenchant", "salvage"] },
+  // 2026-10-09 オーナー「カランドラとか抽出のオーブとか、クラフト要素ではあるけどエミュレーターに関係ないものは削除」で外した物:
+  // 鏡・抽出・解呪・サルベージ / シャード 4 種 / アクトの品質・ジェム系 (砥石・鎧の欠片・ガラス玉・ジェムカッター・宝石職人・エッチャー・識別) /
+  // ヴァールの道具 10 種 (インフューザー・生贄・アーキテクト・耕作・サイフォナー)。打つ処理 (apply-extra / apply-dispose) は古い手順の再生のため残す
 ];
 /**
  * ルーン (ソケットにはめる。stage-runes.ts、POE2Tube 要望 ⑰-1)。2026-09-29 オーナー「ルーン関係タブでまとめてもいいかも」で棚の別のタブに。
