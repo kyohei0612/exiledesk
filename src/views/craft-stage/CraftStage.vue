@@ -10,7 +10,8 @@
 -->
 <script setup lang="ts">
 import { forceKey } from "../../services/craft-stage/apply-force";
-import { LOG_KEEP, readSimRecipes, type SimRecipe } from "../../state/craft-stage";
+import { LOG_KEEP, type SimRecipe } from "../../state/craft-stage";
+import StageRecipeStart from "./StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
@@ -224,9 +225,10 @@ function armReset(): void {
 }
 /** 直前の手でルーンをはめた中身 (置き換えた物) */
 const augChange = computed(() => (s.last.value?.out as { augment_change?: { socket: number; put: { ja: string }; replaced: { ja: string } | null } } | undefined)?.augment_change ?? null);
-/** 保存したレシピ (ベースを選ぶ前に出す) */
-const savedRecipes = computed(() => (simNoBase.value ? readSimRecipes() : []));
+/** ベースを選ぶ前の右上の「レシピ」(シミュレーターの帯は StageSimPanel が出すが、ベースを選ぶ前はまだ無い) */
+const preRecipeOpen = ref(false);
 function startFromRecipe(r: SimRecipe): void {
+  preRecipeOpen.value = false;
   s.simPendingRecipe.value = r.id;
   pickSimBase(r.session.base);
 }
@@ -313,7 +315,21 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <button v-for="t in ([['hand', 'エミュレーター'], ['sim', 'シミュレーター']] as const)" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="g-tab min-w-[170px] gap-1.5 !inline-flex" :class="s.mode.value === t[0] ? 'on' : ''" @click="s.hold(null); s.mode.value = t[0]">{{ t[1] }}<span v-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" title="作り込み中の機能。数字は今の相場と確率の目安">β</span></button>
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
-      <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap" />
+      <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
+        <!-- ベースを選ぶ前も同じ帯を出す (2026-10-09 オーナー「ここはずっと出してていい」)。選んだ後は StageSimPanel の物に替わる -->
+        <template v-if="s.mode.value === 'sim' && simNoBase">
+          <CurrencyPicker sim />
+          <span class="relative">
+            <button type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-[13px] transition max-md:h-10" :class="preRecipeOpen ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" title="保存したレシピから始める" @click="preRecipeOpen = !preRecipeOpen">レシピ<Icon :name="preRecipeOpen ? 'chevron-up' : 'chevron-down'" class="size-4" /></button>
+            <div v-if="preRecipeOpen" class="fixed inset-0 z-30 bg-black/60 md:hidden" @click="preRecipeOpen = false"></div>
+            <div v-if="preRecipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl max-md:fixed max-md:inset-x-3 max-md:top-14 max-md:w-auto max-md:max-h-[80vh] max-md:overflow-y-auto">
+              <StageRecipeStart compact @start="startFromRecipe" />
+            </div>
+          </span>
+          <button type="button" disabled class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] opacity-30 max-md:h-10" title="ベースを選んでから"><Icon name="rotate" class="size-4" /><span class="max-md:hidden">リセット</span></button>
+          <button type="button" disabled class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] opacity-30 max-md:h-10" title="戻せる操作がまだ無い"><Icon name="undo" class="size-4" /><span class="max-md:hidden">1 つ戻す</span></button>
+        </template>
+      </div>
     </div>
 
     <!-- 再生モード -->
@@ -332,12 +348,9 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <h3 class="text-[15px] font-bold text-[var(--exile-color-text-primary)]">ベース</h3>
         <HelpTip text="作るアイテムの種類 (ベース) とアイテムレベル。ソケットと始め方 (白から作るか、フラクチャー済みを買うか) もここで" />
       </span>
+      <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
+      <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
       <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="pickSimBase" />
-      <!-- ベースを選ぶ前でも保存したレシピから始められる -->
-      <span v-if="simNoBase && savedRecipes.length" class="flex flex-wrap items-center gap-1">
-        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">保存したレシピから</span>
-        <button v-for="r in savedRecipes.slice(0, 6)" :key="r.id" type="button" class="inline-flex h-7 items-center rounded-md px-2 text-[var(--exile-color-text-link)] hover:bg-white/5 hover:underline max-md:min-h-10" :title="`${r.baseJa ?? r.session.base} · パターン ${r.session.patterns.length} つ`" @click="startFromRecipe(r)">{{ r.name }}</button>
-      </span>
       <span v-if="!simNoBase" class="flex items-center gap-1">
         <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : "アイテムレベル" }}</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.itemLevel.value === lv ? 'on' : ''" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>

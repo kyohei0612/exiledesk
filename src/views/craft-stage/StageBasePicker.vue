@@ -3,7 +3,7 @@
 
   オーナー:「ベースのプルダウンの UI があまりにも悪い。全部一緒になってるからシンプルに使いやすく再設計」。
   今のベースを 1 行で出し、押すと下に開く。中身の一覧は共通の部品 [[BaseCatalog.vue]] (クラフト計算機と同じ)。
-  種類は poe2db どおり STR / DEX / INT ごと、素の数値つき、ルーンフォージ等は出さない。フラスコ・スキルジェムも選べる。選ぶと閉じる。
+  種類は poe2db どおり STR / DEX / INT ごと、素の数値つき、ルーンフォージ等は出さない。フラスコ・スキルジェムは 2026-10-09 から出さない。選ぶと閉じる。
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
@@ -40,7 +40,8 @@ function choose(en: string): void {
     </button>
     <div v-if="open" class="mt-2 rounded-lg bg-black/30 p-4">
       <!-- 未選択の時は前のベース・種類を選んだ状態にしない (2026-10-05 オーナー「リセットの時ベース未選択から始めんかい」) -->
-      <BaseCatalog :data="data" :selected="unpicked ? '' : base" extras @pick="choose" />
+      <!-- フラスコ・スキルジェムは出さない (2026-10-09 オーナー「フラスコとスキルジェムはいらんね」) -->
+      <BaseCatalog :data="data" :selected="unpicked ? '' : base" @pick="choose" />
     </div>
   </div>
 </template>

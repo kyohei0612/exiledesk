@@ -98,11 +98,11 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           <p class="mb-0.5 text-[11px] opacity-50">{{ r.ja }}</p>
           <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
           <div :class="phone ? 'grid grid-cols-3 gap-1.5' : 'flex flex-wrap gap-1'">
-            <button v-for="f in r.fams" :key="f.name" type="button" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[76px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" @click="pickFamily(f)">
-              <span class="grid place-items-center" :class="[phone ? 'size-16' : 'size-12', family?.name === f.name && !phone ? 'g-slot on' : 'g-slot']">
-                <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="object-contain" :class="phone ? 'max-h-12 max-w-12' : 'max-h-9 max-w-9'" draggable="false" />
+            <button v-for="f in r.fams" :key="f.name" type="button" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[96px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" @click="pickFamily(f)">
+              <span class="grid size-16 place-items-center" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'">
+                <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain" draggable="false" />
               </span>
-              <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[12px]'">{{ f.name }}</span>
+              <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[14px]'">{{ f.name }}</span>
               <span v-if="f.variants.length > 1" class="text-[10px] leading-none opacity-50">{{ f.variants.length }} 種</span>
             </button>
           </div>
