@@ -2,6 +2,11 @@
 import { poeSession } from "../state/poe-session";
 
 defineProps<{ active: string }>();
+/** 画面ごとのアイコン (ゲームの絵、scripts/build-ui-art-from-client.mjs) */
+const NAV_ART: Record<string, string> = {
+  "econ-currency": "currency", "trade-history": "trade", "vaal-scales": "vaal", "htc-craft": "craft",
+  "pob-check": "dps", pob: "pob", mtx: "mtx", "craft-stage": "stage", settings: "settings",
+};
 const emit = defineEmits<{ "update:active": [value: string] }>();
 
 interface NavItem {
@@ -62,17 +67,18 @@ const groups = (["economy", "tools"] as const)
 
 <template>
   <aside class="g-sidebar flex flex-col py-3 select-none">
-    <div class="px-4 pb-3">
-      <div class="flex items-baseline gap-2">
-        <h1 class="font-display text-[19px] font-semibold tracking-[0.08em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_14px_rgba(255,200,110,0.3)]">
-          ExileDesk
-        </h1>
+    <!-- 名前: アプリのアイコン + 彫った金の字 (src/styles/game-ui.css の .g-brand-*) -->
+    <div class="flex items-center gap-2 px-3 pb-2">
+      <img src="/favicon.png" alt="" class="g-brand-icon size-11 shrink-0" draggable="false" />
+      <div class="min-w-0">
+        <h1 class="g-brand-word text-[20px] leading-none">EXILEDESK</h1>
+        <p class="g-brand-sub mt-1 uppercase">PoE2 Secretary</p>
         <!-- ログイン状態を小さく (オーナー 2026-09-26「ExileDesk の横にちっちゃくログイン済みって出そうか」) -->
-        <span v-if="poeSession.loggedIn.value === true" class="whitespace-nowrap text-[10px] text-emerald-300" title="pathofexile.com にログインしています">● ログイン済み</span>
-        <span v-else-if="poeSession.loggedIn.value === false" class="whitespace-nowrap text-[10px] text-amber-300" title="pathofexile.com にログインしていません">● 未ログイン</span>
+        <span v-if="poeSession.loggedIn.value === true" class="mt-0.5 block whitespace-nowrap text-[10px] text-emerald-300" title="pathofexile.com にログインしています">● ログイン済み</span>
+        <span v-else-if="poeSession.loggedIn.value === false" class="mt-0.5 block whitespace-nowrap text-[10px] text-amber-300" title="pathofexile.com にログインしていません">● 未ログイン</span>
       </div>
-      <p class="text-xs text-[var(--exile-color-text-secondary)]">POE2 Secretary</p>
     </div>
+    <div class="g-divider mx-3 mb-1"></div>
 
     <nav class="flex-1 overflow-y-auto overflow-x-hidden">
       <div v-for="group in groups" :key="group.key" class="mt-1">
@@ -88,7 +94,7 @@ const groups = (["economy", "tools"] as const)
           type="button"
           @click="emit('update:active', item.id)"
           :class="[
-            'w-full text-left px-4 py-2 flex items-center gap-2 transition g-antique text-[14px] tracking-[0.06em]',
+            'w-full text-left px-3 py-1.5 flex items-center gap-2 transition g-antique text-[14px] tracking-[0.06em]',
             active === item.id
               ? 'g-nav-on g-sel'
               : 'text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] hover:text-[var(--exile-color-text-primary)]',
@@ -99,7 +105,9 @@ const groups = (["economy", "tools"] as const)
             font-display 指定の影響を受けず Yu Gothic UI / 絵文字フォントに落ちる。
             ラベル日本語も同様に自動フォールバック (visual-concept §9.6)。
           -->
-          <span class="w-5 inline-block text-center" aria-hidden="true">{{ item.icon }}</span>
+          <!-- ゲームのキャラ画面の上の金のアイコン (public/ui-art/nav-*。選んでいる時は明るい方)。2026-10-09 オーナー「左のアイコンださい」 -->
+          <img v-if="NAV_ART[item.id]" :src="`/ui-art/nav-${NAV_ART[item.id]}${active === item.id ? '-on' : ''}.webp`" alt="" class="size-7 shrink-0 object-contain drop-shadow-[0_1px_2px_#000]" aria-hidden="true" draggable="false" />
+          <span v-else class="w-7 inline-block text-center" aria-hidden="true">{{ item.icon }}</span>
           <span class="whitespace-nowrap">{{ item.label }}</span>
         </button>
       </div>

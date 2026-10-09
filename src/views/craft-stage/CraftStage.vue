@@ -12,7 +12,7 @@
 import { forceKey } from "../../services/craft-stage/apply-force";
 import { LOG_KEEP, readSimRecipes, type SimRecipe } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
 import StageItemCard from "./StageItemCard.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
@@ -191,6 +191,8 @@ function pickSimBase(en: string): void {
   s.simStartItem.value = null;
   s.simPicked.value = true;
   s.reset();
+  // スマホ: 選んだ所 (下の方) から一番上の見出しまで飛ばず、ベースの欄 (次に決めるアイテムレベル・始め方) を画面の上に (2026-10-09)
+  if (phone.value) void nextTick(() => document.querySelector("[data-stage-settings]")?.scrollIntoView({ block: "start" }));
 }
 /**
  * 手で打つ画面の今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08 オーナー「その MOD が付いた状態以降を確認したい時があるから、
@@ -309,7 +311,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
     </div>
 
     <!-- 設定と操作 -->
-    <section v-if="!s.replay.value" class="g-panel mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
+    <section v-if="!s.replay.value" data-stage-settings class="g-panel mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
       <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
         <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>

@@ -72,3 +72,10 @@ for name, to in (
     im = load(name)
     save(im, to)
     print(to, im.size)
+
+# サイドバーのアイコン
+for k, to in (("HeaderIconTrade", "currency"), ("HeaderIconFriend", "trade"), ("HeaderIconAchievement", "vaal"), ("HeaderIconShop", "craft"),
+              ("HeaderIconCharacter", "dps"), ("HeaderIconPassive", "pob"), ("HeaderIconCosmetics", "mtx"), ("HeaderAltasPoint", "stage"), ("HeaderAltasMap", "settings")):
+    save(load(k), "nav-" + to)
+    save(load(k + "Hover"), "nav-" + to + "-on")
+print("nav icons")

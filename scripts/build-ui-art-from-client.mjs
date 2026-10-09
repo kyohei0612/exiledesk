@@ -29,6 +29,8 @@ const FILES = [
   `${CM}HeaderLeft`, `${CM}HeaderRight`, `${CM}CosmeticStanderItemFrame`,
   ...["available", "hovered", "selected", "unavailable"].map((k) => `${CX}tabbutton_${k}`),
   `${CX}itemslot`, `${CX}itemslot_selected`,
+  // サイドバーのアイコン (キャラ画面の上の金のアイコン。通常 / hover = 選んでいる時)
+  ...["HeaderIconTrade", "HeaderIconFriend", "HeaderIconAchievement", "HeaderIconShop", "HeaderIconCharacter", "HeaderIconPassive", "HeaderIconCosmetics", "HeaderAltasPoint", "HeaderAltasMap"].flatMap((k) => [`${CM}${k}`, `${CM}${k}Hover`]),
 ];
 const tmp = join(tmpdir(), "exiledesk-ui-art");
 rmSync(tmp, { recursive: true, force: true });

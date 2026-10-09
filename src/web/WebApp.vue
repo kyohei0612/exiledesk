@@ -64,8 +64,11 @@ window.addEventListener("resize", fitZoom);
   <!-- スマホは高さを決めず、ページ全体を縦に送る (決まり事の footer も一緒に流れる) -->
   <div class="flex flex-col" :style="phone ? { width: `${frame.w}px`, minHeight: `${frame.h}px` } : { width: `${frame.w}px`, height: `${frame.h}px` }">
     <header class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto flex-wrap gap-y-1.5 py-2 text-[13px]' : 'h-10'">
-      <span class="text-[15px] font-bold tracking-wide text-amber-200">ExileDesk</span>
-      <span class="opacity-50">Web</span>
+      <span class="flex items-center gap-2">
+        <img src="/favicon.png" alt="" class="g-brand-icon size-8 shrink-0" draggable="false" />
+        <span class="g-brand-word text-[18px] leading-none">EXILEDESK</span>
+        <span class="g-brand-sub uppercase">Web</span>
+      </span>
       <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">クラフトステージ</span>
       <span class="ml-auto opacity-40" :class="phone ? 'text-[10px]' : ''">v{{ pkg.version }}</span>
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? 'ml-auto py-2' : ''" title="何ができるか" @click="welcomeOpen = true">はじめに</button>

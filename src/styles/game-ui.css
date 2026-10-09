@@ -278,3 +278,24 @@ input[type="checkbox"], input[type="radio"] { accent-color: #b5813a; }
 }
 /* 区切りの見出し (金色の太字) */
 :is(h2, h3, h4)[class*="text-amber-100"] { font-family: var(--exile-font-family-antique); font-weight: 400; color: var(--exile-color-text-title); }
+
+/* 左上の名前 (ExileDesk): アプリのアイコン + 彫った金の字 (2026-10-09 オーナー「左上のエグザイルデスクも、フォントもダサいしアイコンないし。poe2 の雰囲気」) */
+.g-brand-word {
+  font-family: var(--exile-font-family-display);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg, #fff3cf 0%, #f0cf86 38%, #b8873c 62%, #7a5320 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 10px rgba(255, 190, 90, 0.25));
+}
+.g-brand-sub {
+  font-family: var(--exile-font-family-display);
+  font-size: 8.5px;
+  letter-spacing: 0.32em;
+  color: rgba(200, 175, 130, 0.65);
+}
+.g-brand-icon {
+  filter: drop-shadow(0 0 8px rgba(255, 180, 80, 0.35)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.9));
+}

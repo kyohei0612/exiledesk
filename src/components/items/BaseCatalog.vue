@@ -55,7 +55,21 @@ const families = computed((): Array<{ ja: string; fams: Family[] }> =>
       f.variants.push({ cls: c, label: raw ? label : "無印" });
     }
     return { ja: r.ja, fams };
-  }).filter((r) => r.fams.length));
+  }).filter((r) => r.fams.length).reduce((acc: Array<{ ja: string; fams: Family[]; names: string[]; single: boolean }>, r) => {
+    // 1 部位しかない段 (手袋・靴・鎧・兜) が続く時は 1 段にまとめる (縦 1 列に並んでいた。2026-10-09 オーナー「兜、鎧あたりの UI」)
+    const last = acc[acc.length - 1];
+    if (r.fams.length === 1 && last?.single) { last.fams.push(...r.fams); last.names.push(r.ja); }
+    else acc.push({ ja: r.ja, fams: [...r.fams], names: [r.ja], single: r.fams.length === 1 });
+    return acc;
+  }, []).map((r) => ({ ja: r.names.length > 1 ? (r.names.every((n) => ARMOUR.has(n)) ? "防具" : r.names.join("・")) : r.ja, fams: r.fams })));
+const ARMOUR = new Set(["手袋", "靴", "鎧", "兜"]);
+/** 部位のタイルの絵 = その部位の一番高いレベルのベースの絵 (ゲーム内の絵) */
+function famArt(f: Family): string | null {
+  const cs = new Set(f.variants.map((v) => v.cls));
+  const bs = all.value.filter((b) => cs.has(b.cls)).sort((a, b) => b.lvl - a.lvl);
+  for (const b of bs) { const a = baseArt(b.en); if (a) return a; }
+  return null;
+}
 /** スマホで選んだ部位 (属性の札を出す)。1 種類しかない部位はそのまま種類を選ぶ */
 const family = ref<Family | null>(null);
 function pickFamily(f: Family): void {
@@ -77,9 +91,14 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       <div v-if="!family" class="mb-3 space-y-3">
         <div v-for="r in families" :key="r.ja">
           <p class="mb-1 text-[11px] opacity-50">{{ r.ja }}</p>
-          <div class="grid grid-cols-2 gap-2">
-            <button v-for="f in r.fams" :key="f.name" type="button" class="min-h-12 rounded-xl border border-white/15 bg-white/[0.03] px-3 text-left text-[14px] font-bold active:bg-amber-500/15" @click="pickFamily(f)">
-              {{ f.name }}<span v-if="f.variants.length > 1" class="ml-1 text-[11px] font-normal opacity-50">{{ f.variants.length }} 種</span>
+          <!-- 部位のタイル: ゲームの絵 + 名前 (3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
+          <div class="grid grid-cols-3 gap-1.5">
+            <button v-for="f in r.fams" :key="f.name" type="button" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" @click="pickFamily(f)">
+              <span class="g-slot grid size-16 place-items-center">
+                <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain" draggable="false" />
+              </span>
+              <span class="g-antique text-[13px] leading-tight text-[var(--exile-color-text-primary)]">{{ f.name }}</span>
+              <span v-if="f.variants.length > 1" class="text-[10px] leading-none opacity-50">{{ f.variants.length }} 種</span>
             </button>
           </div>
         </div>
@@ -90,7 +109,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           <b class="text-[15px] text-amber-100">{{ family.name }}</b>
         </div>
         <div v-if="family.variants.length > 1" class="mb-2 flex flex-wrap gap-2">
-          <button v-for="v in family.variants" :key="v.cls" type="button" class="min-h-11 rounded-lg px-3 text-[13px]" :class="chip(cls === v.cls)" @click="cls = v.cls">{{ v.label }}</button>
+          <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ v.label }}</button>
         </div>
         <p v-if="!cls" class="py-1 text-[12px] opacity-60">属性を選ぶ</p>
       </div>
@@ -108,21 +127,21 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
     </div>
     <!-- ② ベースのカード (ゲーム内の絵・必要レベル・素の数値・固有の効果) -->
 
-    <div v-if="cls || query.trim()" class="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-1.5 overflow-y-auto pr-1 max-md:grid-cols-1" :style="{ maxHeight: phone ? 'none' : (height ?? '340px') }">
+    <div v-if="cls || query.trim()" class="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-1.5 overflow-y-auto pr-1 max-md:grid-cols-2" :style="{ maxHeight: phone ? 'none' : (height ?? '340px') }">
       <button
         v-for="b in list"
         :key="b.en"
         type="button"
-        class="flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left"
-        :class="b.en === selected ? 'border-amber-400/70 bg-amber-500/15' : 'border-white/10 bg-white/[0.03] hover:border-white/30 hover:bg-white/[0.07]'"
+        class="g-plain g-item flex items-center gap-2 bg-clip-padding px-1 py-0.5 text-left transition max-md:flex-col max-md:gap-1 max-md:text-center"
+        :class="b.en === selected ? 'bg-[rgba(163,52,42,0.35)]' : 'bg-black/50 hover:bg-white/[0.06]'"
         @click="emit('pick', b.en)"
       >
         <img v-if="baseArt(b.en)" :src="baseArt(b.en)!" alt="" loading="lazy" class="h-12 w-12 shrink-0 object-contain" draggable="false" />
         <span v-else class="h-12 w-12 shrink-0" />
-        <span class="min-w-0 flex-1">
-          <span class="flex items-baseline gap-2">
+        <span class="min-w-0 flex-1 max-md:w-full">
+          <span class="flex items-baseline gap-2 max-md:flex-col max-md:items-center max-md:gap-0">
             <b class="text-[13px]" :class="b.en === selected ? 'text-amber-100' : ''">{{ b.ja }}</b>
-            <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50">Lv {{ b.lvl }}</span>
+            <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0">Lv {{ b.lvl }}</span>
           </span>
           <span v-if="query.trim()" class="block text-[10px] opacity-50">{{ CATALOG_CLS_JA.get(b.cls) ?? b.cls }}</span>
           <span v-if="b.stats" class="block truncate text-[11px] text-rarity-magic" :title="b.stats">{{ b.stats }}</span>
