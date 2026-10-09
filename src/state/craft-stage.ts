@@ -200,8 +200,15 @@ const simPlayLeft = ref<Record<string, number>>({});
  * エミュレーターの「狙う」(2026-10-09): 狙う MOD (その段以上)。最大 4 つ (錬金術で一度に付く数)、全部揃えば当たり。
  * 棚の上に打ち方ごとの揃う確率を出す (StageAimPanel.vue)
  */
-const aims = ref<Array<{ modId: string; minTierIndex: number; label: string }>>([]);
+/** at = 押した段の印 (MOD 一覧の data-aim-at。確率の一覧の「＋ 足す」でそこへ戻る) */
+const aims = ref<Array<{ modId: string; minTierIndex: number; label: string; at?: string }>>([]);
 export const AIM_MAX = 4;
+export type AimPick = { modId: string; minTierIndex: number; label: string; at?: string };
+/**
+ * 「次の手で狙う」の選ぶ窓 (StageAimPicker.vue)。seed = 押した段 (最初からチェックが入る)。null = 閉じている
+ * (2026-10-09 オーナー「押したらチェックボックスで複数狙えるように別でポップアップ、選択しなくて単体でも進めるように」)
+ */
+const aimPicker = ref<{ seed: AimPick | null } | null>(null);
 
 /**
  * シミュレーションの途中 (ベース・狙う MOD・工程の「決めた」・順番計画・パターン) を覚えて、開き直した時にそのまま出す
@@ -353,7 +360,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims, aimPicker,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

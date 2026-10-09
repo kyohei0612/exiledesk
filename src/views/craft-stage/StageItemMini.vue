@@ -17,7 +17,7 @@ const mods = computed(() => [...props.item.prefixes.map((m) => ({ m, side: "プ"
 </script>
 
 <template>
-  <div class="g-plain fixed inset-x-0 top-0 z-[140] max-h-[34vh] overflow-y-auto border-b border-[var(--exile-color-border-brass)] bg-[#0f0c0a]/[0.97] px-3 py-1.5 text-[12px] shadow-[0_8px_18px_rgba(0,0,0,0.7)] backdrop-blur">
+  <div data-item-mini class="g-plain fixed inset-x-0 top-0 z-[140] max-h-[34vh] overflow-y-auto border-b border-[var(--exile-color-border-brass)] bg-[#0f0c0a]/[0.97] px-3 py-1.5 text-[12px] shadow-[0_8px_18px_rgba(0,0,0,0.7)] backdrop-blur">
     <p class="flex items-center gap-2">
       <img v-if="art" :src="art" alt="" class="size-7 shrink-0 object-contain" draggable="false" />
       <b class="truncate text-[13px]" :class="NAME[item.rarity]">{{ item.unique?.ja ?? item.baseJa }}</b>

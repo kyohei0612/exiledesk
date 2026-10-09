@@ -15,3 +15,15 @@ export function keepPlace(el: Element | null | undefined, change: () => void): v
     if (Math.abs(d) > 1) window.scrollBy({ top: d, behavior: "instant" as ScrollBehavior });
   });
 }
+
+/**
+ * 物を画面の上に送る。スマホで上に貼るアイテムの帯 (StageItemMini、高さは MOD の数で変わる) の下に出す
+ * (2026-10-09 エミュレーターの「狙う」: scrollIntoView だと見出しと狙いの札が帯の裏に隠れた)
+ */
+export function scrollToTop(el: Element | null | undefined, behavior: ScrollBehavior = "smooth"): void {
+  if (!el) return;
+  // PC は画面の中の枠が送られる (ページ全体は動かない) ので、ふつうに上へ
+  if (window.innerWidth >= 768) { el.scrollIntoView({ block: "start", behavior }); return; }
+  const bar = (document.querySelector("[data-item-mini]") as HTMLElement | null)?.offsetHeight ?? 0;
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - bar - 8, behavior });
+}
