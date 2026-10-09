@@ -31,7 +31,7 @@ import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
 /** 画面に出す断り書き */
 export const WEIGHT_OVERRIDE_NOTE =
-  "この MOD の重みはデータに無いので推定値です。他の部位に同じ MOD がある物はそこの重みを借り、"
+  "重みはコミュニティのデータから参照しています (この MOD の重みはゲームのデータに無い)。他の部位に同じ MOD がある物はそこの重みを借り、"
   + "無い物 (キャストスピードなど) は Craft of Exile の値を使っています。";
 
 /** MOD id → 段の出始め ilvl ごとの重み */

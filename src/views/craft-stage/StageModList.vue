@@ -14,6 +14,7 @@
 <script setup lang="ts">
 import { keepPlace } from "../../utils/keep-place";
 import { addCandidates } from "../../services/craft-stage/apply-currency";
+import { OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../services/htc/weight-overrides";
 import { allMods, effectiveCls } from "../../services/craft-stage/stage-core";
 import { ANCIENT_BONE_FLOOR, desecrationOfferProbability } from "../../vendor/poe2htc/engine/probability";
 import type { ItemState } from "../../vendor/poe2htc/engine/types";
@@ -280,6 +281,12 @@ function essName(r: ListRow): string | null {
 const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? (ESS_JA.get(name) ?? name) : name);
 const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "0%");
 /** 節の色 (ルーンの節はルーンのアイコンの色) */
+/** 重みの出どころ (乗せた時に出す)。ゲームは公開していないので、こちらが入れた重み */
+const WEIGHT_NOTE: Partial<Record<string, string>> = {
+  rune: "ルーンの特殊 MOD の重みは Craft of Exile (beta) が載せている実測 (Krakenbul / Prohibited Library、2026-09 更新)。ゲームは公開していない",
+  desecrated: "冒涜専用 MOD どうしの重みは Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)。指輪以外は、同じ MOD に指輪の比率を当てた推定。候補 3 つのうち専用が 1 個 85% / 2 個 14% / 3 個 1% も同じ実測",
+  otherworldly: "異界の MOD の重みは公開されていない。冒涜専用 MOD と同じ扱い (同じ重み) で引いている",
+};
 const toneOf = (sec: { g: ModGroup; rune: string | null }): { tab: string; bar: string } => runeToneOf(sec.rune) ?? TONE[sec.g];
 /**
  * 種類の色 (普通 = 青、エッセンス = 水色、冒涜 = 淀んだ深緑のグラデーション、異界 = 緑がかった青。
@@ -322,7 +329,9 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
         <h3 class="mb-2 flex items-center gap-2 text-[13px] font-bold max-md:min-h-11 max-md:cursor-pointer" @click="phone && toggleSec(sec.sid)">
           <span class="rounded-full px-2.5 py-0.5" :class="toneOf(sec).tab">{{ sec.label }}</span>
           <span class="font-normal opacity-50">{{ sec.count }} 系統</span>
-          <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差していないので 0% (付ければルーンも差す)" }} · 重みは Craft of Exile の実測</span>
+          <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差していないので 0% (付ければルーンも差す)" }}</span>
+          <!-- 重みが公開されていない欄は、こちらが入れた重みの出どころを短く (2026-10-09 オーナー「不明の奴全てに、コミュニティのデータから参照していますって書いとこう」) -->
+          <span v-if="WEIGHT_NOTE[sec.rune ? 'rune' : sec.g]" class="g-hover-name font-normal opacity-60" :title="WEIGHT_NOTE[sec.rune ? 'rune' : sec.g]">· 重みはコミュニティのデータから参照</span>
           <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ</span>
           <span class="ml-auto font-normal opacity-60 md:hidden">{{ secShown(sec.sid) ? "▲" : "▼ 開く" }}</span>
         </h3>
@@ -353,6 +362,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
+                    <span v-if="r.tiers.some((t) => OVERRIDDEN.has(t.modId ?? r.id))" class="g-hover-name text-[10px] opacity-60" :title="WEIGHT_OVERRIDE_NOTE">※</span>
                     <span class="w-11 text-right text-[13px] font-bold" :class="heldCands ? 'text-sky-200' : 'text-amber-100'" :title="heldCands ? ('bone' in heldCands ? `持っている ${heldCands.name} の次の発現で、候補 3 つに出る確率 (専用 MOD 1〜3 個 + 残り普通。計算機と同じ)` : `持っている ${heldCands.name} で次に付く確率`) : (r.group === 'desecrated' || r.group === 'otherworldly') ? '骨を使わないと付かない (骨を持つと候補に出る確率)' : '出やすさ (同じ側の重みの割合)'">{{ pct(shareOf(r)) }}</span>
                     <span class="w-6 text-right text-[12px] text-[var(--exile-color-text-secondary)]" :title="`段の数 ${r.tiers.length}`">{{ r.tiers.length }}</span>
                     <span class="w-7 text-right text-[12px] text-[var(--exile-color-text-tertiary)]" :title="`T1 の MOD レベル ${r.topLevel}`">{{ r.topLevel }}</span>
