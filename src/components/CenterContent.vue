@@ -3,7 +3,7 @@ import { computed, type Component } from "vue";
 import CurrencyRanking from "../views/CurrencyRanking.vue";
 import Settings from "../views/Settings.vue";
 import PobLauncher from "../views/PobLauncher.vue";
-// 2026-10-03 統合: ヴァールの天秤の 4 画面 (Overquality / GemCorrupt / GemWatch / RareCraft) は VaalScales.vue のタブ、
+// 2026-10-03 統合: ヴァールの天秤の 4 画面 (Overquality / GemCorrupt / GemWatch。RareCraft は 2026-10-09 に削除) は VaalScales.vue のタブ、
 // 上位プレイヤー MOD 一覧 (CraftDiscoveryV2B) はクラフト計算機 (HtcCraftLab) のタブ。ゲームログ診断 (ClientLog) は削除。
 // 忍者ビルドコピー (BuildCopy) は火力チェック (PobCheck) のタブ「値段」(同日)
 import VaalScales from "../views/VaalScales.vue";

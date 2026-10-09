@@ -2,7 +2,7 @@
   VaalScales.vue — ヴァールの天秤 (2026-10-03 統合)
 
   オーナー「被ってる機能・要らん機能を整理、似た物は一緒に。今は器用貧乏」の決定分。
-  それまでサイドバーの「ヴァールの天秤 ▶」の下に 4 画面 (アドニアの賭け / ジェムコラプトの賭け / 自動ジェム監視 / 規格外の賭け)
+  それまでサイドバーの「ヴァールの天秤 ▶」の下に 4 画面 (アドニアの賭け / ジェムコラプトの賭け / 自動ジェム監視 / 規格外の賭け、2026-10-09 に削除)
   が並んでいたのを、1 画面にして上のタブで切り替える。各タブの中身は元の view をそのまま置く (ロジックは触らない)。
 
   タブの中身は <KeepAlive> で保つ: 切り替えても入力や取得結果が消えないように。
@@ -17,13 +17,11 @@ import { VAAL_SCALES_TABS, vaalScalesTab, type VaalScalesTab } from "../state/ap
 import Overquality from "./Overquality.vue";
 import GemCorrupt from "./GemCorrupt.vue";
 import GemWatch from "./GemWatch.vue";
-import RareCraft from "./RareCraft.vue";
 
 const views: Record<(typeof VAAL_SCALES_TABS)[number]["id"], Component> = {
   overquality: Overquality,
   "gem-corrupt": GemCorrupt,
   "gem-watch": GemWatch,
-  "rare-craft": RareCraft,
 };
 const current = computed<Component>(() => views[vaalScalesTab.value]);
 </script>

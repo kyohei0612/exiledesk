@@ -4,8 +4,6 @@
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
 import { classOfBase } from "../src/services/htc/bridge";
-import { pageFromHtc } from "../src/views/rare-craft/htc-pages";
-import { htcFamilyStats } from "../src/services/htc/patch";
 
 const data = loadPatch();
 /** 行の MOD の名前 (id の "/" の後ろ。系統名は STR / INT で同じ「BaseLocalDefences」なので、違いは id に出る) */
@@ -41,26 +39,6 @@ describe("重み", () => {
   });
   it("指輪のキャストスピードは Craft of Exile の 1000 (仮置き 1 のままだと 1/1000 扱いになる)", () => {
     expect(data.mods.get("Rings/IncreasedCastSpeed")!.tiers.every((t) => t.weight === 1000)).toBe(true);
-  });
-});
-
-describe("規格外の賭けの重み表 (エンジンから作る)", () => {
-  it("ES 兜の行に、フラット ES・ライフ・耐性の段が stat つきで並ぶ", () => {
-    const p = pageFromHtc(data, "Helmets_int", htcFamilyStats())!;
-    const stat = (id: string) => p.normal.filter((m) => m.stats.some((s) => s.id === id));
-    expect(stat("local_energy_shield").length).toBe(8);
-    expect(stat("base_maximum_life").length).toBe(16);
-    expect(stat("base_fire_damage_resistance_%").length).toBe(8);
-  });
-  it("強化のグレーターエッセンスは ES 兜で %ES になる", () => {
-    const p = pageFromHtc(data, "Helmets_int", htcFamilyStats())!;
-    const e = p.essence.find((x) => x.essence === "Greater Essence of Enhancement");
-    expect(e?.stats.map((s) => s.id)).toContain("local_energy_shield_+%");
-  });
-  it("冒涜の MOD にも stat が付く (付かないと耐性が 0 扱いになっていた)", () => {
-    const p = pageFromHtc(data, "Helmets_int", htcFamilyStats())!;
-    const noStat = p.desecrated.filter((m) => !m.stats.length).map((m) => m.family);
-    expect(noStat).toEqual([]);
   });
 });
 

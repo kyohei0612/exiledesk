@@ -17,12 +17,12 @@ import { ref } from "vue";
 export const activeNav = ref<string>(typeof location !== "undefined" && (new URLSearchParams(location.search).has("stage-plan") || new URLSearchParams(location.search).has("view")) ? "craft-stage" : "econ-currency");
 
 // ---- ヴァールの天秤 (views/VaalScales.vue) のタブ ----
-export type VaalScalesTab = "overquality" | "gem-corrupt" | "gem-watch" | "rare-craft";
+// 規格外の賭け (rare-craft) は 2026-10-09 に削除 (オーナー「使わないから削除でおｋ」)
+export type VaalScalesTab = "overquality" | "gem-corrupt" | "gem-watch";
 export const VAAL_SCALES_TABS: readonly { id: VaalScalesTab; icon: string; label: string }[] = [
   { id: "overquality", icon: "🜛", label: "アドニアの賭け" },
   { id: "gem-corrupt", icon: "🜏", label: "ジェムコラプトの賭け" },
   { id: "gem-watch", icon: "👁", label: "自動ジェム監視" },
-  { id: "rare-craft", icon: "🜲", label: "規格外の賭け" },
 ];
 /** ヴァールの天秤で開いているタブ。画面を離れても覚えている (keep-alive と同じ扱い) */
 export const vaalScalesTab = ref<VaalScalesTab>("overquality");
