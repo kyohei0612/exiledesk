@@ -62,7 +62,8 @@ export async function bundleEntry(entryPoint) {
     platform: "neutral",
     logLevel: "error",
     loader: { ".json": "json" },
-    define: { "import.meta.env.DEV": "false" },
+    // Web 用の設定 (src/web/config.ts の VITE_WEB_API) は検算では使わない。無いと読み込みで落ちる (2026-10-09 audit-poe2db)
+    define: { "import.meta.env.DEV": "false", "import.meta.env.VITE_WEB_API": "undefined" },
   });
   const mod = await import(pathToFileURL(out).href);
   // 読み込んだら要らない (module はもうメモリにある)。消し忘れで Temp が膨らんでいた

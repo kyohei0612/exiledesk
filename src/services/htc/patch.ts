@@ -14,6 +14,7 @@
 import { splitMixedRuneMods } from "./rune-split";
 import { indexPatch } from "../../vendor/poe2htc/engine/indexPatch";
 import { applyWeightOverrides } from "./weight-overrides";
+import poolFixes from "./poe2db-pool-fixes.json";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 // 型は 2026-09-26 に patch-types.ts へ分けた
 import type { BaseInfo, DropOnlyInfo, ExtraBases, PatchExtras, PoolAdd, ReadonlyPool } from "./patch-types";
@@ -204,7 +205,26 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
   // 重みが仮置きの 1 のままの MOD を埋める (キャストスピードなど)。**ここで掛けるのは、アプリと検算が
   // 同じ applyExtras を通るから**。別の場所で掛けると片方だけ直ることになる ([[weight-overrides.ts]])
   // 特殊 MOD のルーンの、中身の違う MOD が 1 つにまとめられていた物を分ける (2026-10-05、[[rune-split.ts]])
-  return splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases }).data, extra.statTags ?? {}).data;
+  return splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases: removePoe2dbExtras(bases) }).data, extra.statTags ?? {}).data;
+}
+
+/**
+ * poe2db (今のページ) に無い系統を冒涜の置き場から外す (2026-10-09。scripts/audit-poe2db.mjs --write が poe2db-pool-fixes.json を作る)。
+ * ワンド・スタッフ・セプターに攻撃武器用の冒涜 MOD 6 つ (耐性貫通・スピリットリザーブ効率など)、クォータースタッフにキャスター用など 14 が混ざっていた
+ * (オーナー「ワンドの db、冒涜 MOD 違うでしょ」「最終確認は db」)。MOD そのものは残す (外すのは置き場だけ)
+ */
+function removePoe2dbExtras<T extends { pools: { desecrated: ReadonlyPool } }>(bases: Map<string, T>): Map<string, T> {
+  const remove = (poolFixes as { remove: Record<string, { desecrated?: string[] }> }).remove;
+  const out = new Map(bases);
+  for (const [cls, fix] of Object.entries(remove)) {
+    const b = out.get(cls);
+    if (!b || !fix.desecrated?.length) continue;
+    // 一覧は分けた後の id (rune-split が「元の id__中身」に分ける)。外すのは分ける前なので、元の id でも外す
+    const drop = new Set(fix.desecrated.flatMap((id) => [id, id.split("__")[0]!]));
+    const d = b.pools.desecrated;
+    out.set(cls, { ...b, pools: { ...b.pools, desecrated: { prefixes: d.prefixes.filter((id) => !drop.has(id)), suffixes: d.suffixes.filter((id) => !drop.has(id)) } } });
+  }
+  return out;
 }
 
 /**
