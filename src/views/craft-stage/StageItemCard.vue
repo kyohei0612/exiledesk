@@ -36,7 +36,7 @@ const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number]; remove: [modId: string] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; remove: [modId: string]; fracture: [m: StageMod] }>();
 /**
  * ルーンの入ったソケットを押した (2026-10-03): そのソケットを指して打つ (置き換え)。親が持っている物を見て決める
  * (ルーン以外を持っている時は、アイテムを押したのと同じ)。空のソケットはアイテムを押したのと同じ
@@ -164,7 +164,8 @@ const rows = computed(() =>
           :key="isNew(r.m) ? `${r.m.modId}#${flashKey}` : r.m.modId"
           class="relative rounded px-2 py-0.5"
           :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? 'stage-mod-new' : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
-          :title="isDoomed(r.m) ? (doomed!.length > 1 ? `この手で消える候補 (${doomed!.length} つのうち 1 つ)` : 'この手で消える') : undefined"
+          :title="isDoomed(r.m) ? (doomed!.length > 1 ? `この手で消える候補 (${doomed!.length} つのうち 1 つ)` : 'この手で消える') : removable && !r.m.unrevealed && !r.m.fractured ? '右クリックでフラクチャー (この MOD を固定)' : undefined"
+          @contextmenu="removable && !r.m.unrevealed && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >
           <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
           <span :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? `品質で伸びた数値 (素は ${r.m.textJa})` : undefined">{{ r.text }}</span>

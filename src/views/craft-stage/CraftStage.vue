@@ -41,6 +41,7 @@ import ShelfButton from "./ShelfButton.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Icon from "../../components/ui/Icon.vue";
 import { searchModGroups, type ModGroup } from "../../services/craft-stage/trade-search";
+import type { StageMod } from "../../services/craft-stage/types";
 
 const s = craftStage;
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
@@ -191,6 +192,14 @@ watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
   clearTimeout(barTimer);
   barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
 });
+/**
+ * アイテムの MOD を右クリックでフラクチャー (今の段のまま固定。2026-10-09 オーナー「MOD 右クリックでフラクチャー化させてあげてもいいかも」)。
+ * MOD 一覧の「フラクチャー」と同じ手 (レアだけ・1 つまで。打てない時は理由が出る)
+ */
+function fractureMod(m: StageMod): void {
+  const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0;
+  s.use(forceKey(m.modId, n ? `T${n - m.tierIndex}` : null, "f"));
+}
 /** 発現の候補が出ている時: 帯を「発現する MOD を選ぶ ↑」にしてパネルへ送る (骨 → 発現の流れ。2026-10-08 レビュー A3) */
 function scrollToReveal(): void { document.querySelector("[data-reveal-panel]")?.scrollIntoView({ block: "center", behavior: "smooth" }); }
 /**
@@ -407,6 +416,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           @use="s.use()"
           :removable="!s.replay.value"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
+          @fracture="fractureMod"
           @socket="useAtSocket"
         />
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>

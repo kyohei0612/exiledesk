@@ -128,6 +128,8 @@ export interface StageApply {
   count?: number;
   /** 指名で付けた MOD と、指名しなかったら付く確率 (要望 ⑱-1) */
   picked?: Array<{ modId: string; tierName: string; chance: number }>;
+  /** 乱数で付いた MOD と、付いた瞬間のその段の確率 (2026-10-09 オーナー「1 回 1 回に確率表示。今の MOD が確率低いのが付いたのか」) */
+  rolled?: Array<{ modId: string; tierName: string; chance: number }>;
   /** 指名が通らなかった (手順の再生はエラーで止める) */
   pickError?: boolean;
   /**

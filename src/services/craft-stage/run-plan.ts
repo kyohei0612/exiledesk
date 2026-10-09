@@ -113,6 +113,8 @@ export interface PlayedStep {
   after: StageItem;
   added: StageMod[];
   removed: StageMod[];
+  /** 付いた MOD ごとの、付いた瞬間のその段の確率 (乱数で付いた物・指名で付けた物。modId → 0〜1) */
+  chances?: Record<string, number>;
 }
 
 export const splitOmens = (omen: string | null | undefined): string[] => (omen ? omen.split("+").filter(Boolean) : []);
@@ -178,7 +180,8 @@ export function playStep(
       // アルダーのルーン: converted = { element, mods: [{ from, to }] } (要望 ㉙)
       ...(r.augment.converted ? { converted: { element: r.augment.converted.element, mods: r.augment.converted.mods.map((x) => ({ from: outMod(x.from), to: outMod(x.to) })) } } : {}) } } as object) : {}),
   };
-  return { out, before: item, after: r.item, added: r.added, removed: r.removed };
+  const ch = [...(r.rolled ?? []), ...(r.picked ?? [])];
+  return { out, before: item, after: r.item, added: r.added, removed: r.removed, ...(ch.length ? { chances: Object.fromEntries(ch.map((x) => [x.modId, x.chance])) } : {}) };
 }
 
 /** 発現の手の候補 (結果 JSON の reveal_offers)。発現の手でなければ空 */
@@ -281,10 +284,11 @@ export function playPlan(data: PatchData, plan: CraftStagePlan, prices: Readonly
       index++;
       // シャードの手は「1 個拾う」、可能性のオーブは outcome で結果を指定できる (要望 ⑧。outcome は POE2Tube の手順 JSON の追加キー)
       // pick / remove: 付く MOD・消える MOD の指名 (要望 ⑱-1)。pick は 1 つか配列
-      const x = ps as { outcome?: string; pick?: Force | Force[]; remove?: string };
+      const x = ps as { outcome?: string; pick?: Force | Force[]; remove?: string; seed?: number };
       const pick = x.pick ? (Array.isArray(x.pick) ? x.pick : [x.pick]) : undefined;
       const hint = { collect: isShard(ps.currency), oneCatalyst: true, ...(x.outcome ? { outcome: x.outcome } : {}), ...(pick ? { pick } : {}), ...(x.remove ? { remove: x.remove } : {}) };
-      const p = playStep(data, item, ps.currency, { index, seed: plan.seed + index, price: (k) => prices[k] ?? 0, cumulative, omen: ps.omen ?? null, hint });
+      // 手の乱数: 手に書いてあればそれ (エミュレーターは 2026-10-09 から手ごとに新しい乱数)、無ければ plan.seed + 手の番号 (前の手順 JSON)
+      const p = playStep(data, item, ps.currency, { index, seed: x.seed ?? plan.seed + index, price: (k) => prices[k] ?? 0, cumulative, omen: ps.omen ?? null, hint });
       // 指名が通らない手順はエラーで止める (理由を返す)。指名の無い手の「打てない」は今まで通り記録して進む
       if ((pick || x.remove) && !p.out.applied) throw new Error(`手 ${index} (${ps.currency}): ${p.out.reason}`);
       steps.push(p);

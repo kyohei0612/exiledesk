@@ -11,6 +11,8 @@ import { displayCurrency } from "../../state/display-currency";
 const RARITY_JA = { normal: "ノーマル", magic: "マジック", rare: "レア", unique: "ユニーク" } as const;
 const RARITY_CLS = { normal: "text-rarity-normal", magic: "text-rarity-magic", rare: "text-rarity-rare", unique: "text-rarity-unique" } as const;
 const money = (ex: number) => displayCurrency.money(ex);
+/** 付いた瞬間の確率の表示 (小さい物は桁を増やす) */
+const chancePct = (p: number): string => (p >= 0.1 ? `${(p * 100).toFixed(0)}%` : p >= 0.01 ? `${(p * 100).toFixed(1)}%` : p >= 0.0001 ? `${(p * 100).toFixed(2)}%` : "<0.01%");
 /** ルーンをはめた手の中身 (結果 JSON の augment_change、run-plan.ts)。置き換えた物は壊れて戻らない (augment-rules.ts) */
 type AugChange = { socket: number; put: { ja: string }; replaced: { ja: string } | null; replaced_goes: string | null };
 const augOf = (out: object): AugChange | null => (out as { augment_change?: AugChange }).augment_change ?? null;
@@ -36,7 +38,8 @@ const augOf = (out: object): AugChange | null => (out as { augment_change?: AugC
           </span>
           <span v-if="!s.out.applied" class="ml-1.5 text-rose-300/80">{{ s.out.reason }}</span>
         </p>
-        <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ m.textJa }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span></p>
+        <!-- 付いた瞬間のその段の確率 (2026-10-09 オーナー「このMODは今付けた瞬間に何％の確率で付いたのかが分かるとへーってなる」)。低い物 (1% 未満) は金色 -->
+        <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ m.textJa }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span><span v-if="s.chances?.[m.modId] != null" class="ml-1.5 text-[10px] tabular-nums" :class="s.chances[m.modId]! < 0.01 ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" title="付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)">{{ chancePct(s.chances[m.modId]!) }}</span></p>
         <p v-for="m in s.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ m.textJa }}</p>
         <p v-if="s.after.enchant && s.after.enchant !== s.before.enchant" class="text-sky-200">＋ {{ s.after.enchant.textJa }} <span class="text-[10px] opacity-60">エンチャント</span></p>
         <template v-if="augOf(s.out)">

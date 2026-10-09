@@ -50,6 +50,22 @@ const held = ref<string | null>(null);
 /** 掛けてあるお告げ */
 const omens = ref<string[]>([]);
 const seed = ref(0);
+/**
+ * 次の手の乱数 (2026-10-09 オーナー「1 戻すと次も同じ。1 戻したら次の MOD はまた新しい変数で」「ヒネコラの予見が固定値」)。
+ * 前は「最初の seed + 何手目か」で決まり、戻して打ち直すと同じ結果・予見はどのカレンシーでも同じ乱数だった。
+ * 打った後と戻した後に引き直す。カレンシーごとに混ぜる (予見で高貴・上級・完全を持ち替えると別の結果)。発現は候補を出した時と同じ乱数 (stepSeedFor)
+ */
+const rollSeed = ref(freshSeed());
+function freshSeed(): number {
+  try { return crypto.getRandomValues(new Uint32Array(1))[0]! % 2_147_483_647; } catch { return Math.floor(Math.random() * 2_147_483_647); }
+}
+/** その手の乱数 (カレンシーのキーを混ぜる。発現は混ぜない = 出した候補のまま) */
+function stepSeedFor(key: string): number {
+  if (key.startsWith("reveal")) return rollSeed.value;
+  let h = rollSeed.value ^ 0x9e3779b9;
+  for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193) >>> 0;
+  return h % 2_147_483_647;
+}
 const error = ref<string | null>(null);
 /** 再生モード (URL の手順)。手で打つ操作は止める */
 const replay = ref<{ plan: CraftStagePlan; step: number } | null>(null);
@@ -366,10 +382,10 @@ export const craftStage = {
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
   /** 直前の手 */
   last: computed(() => log.value[log.value.length - 1] ?? null),
-  /** 発現の候補 (未発現の冒涜 MOD がある時。次の手の seed で引くので、選んだ手の結果と一致する) */
+  /** 発現の候補 (未発現の冒涜 MOD がある時。次の手の乱数で引くので、選んだ手の結果と一致する) */
   offers: computed(() => {
     if (!data.value || !item.value || !unrevealedOf(item.value)) return null;
-    return revealOffers(data.value, item.value, mulberry32(seed.value + log.value.length + 1));
+    return revealOffers(data.value, item.value, mulberry32(stepSeedFor("reveal")));
   }),
 
   /**
@@ -379,10 +395,10 @@ export const craftStage = {
     const it = item.value;
     const key = held.value;
     if (!data.value || !it?.foreseen || !key || key === "hinekora") return null;
-    // 手の番号は前の手の続き (Web は 50 手より前を消すので、log の長さでは数えない)
+    // 手の番号は前の手の続き (Web は 50 手より前を消すので、log の長さでは数えない)。乱数は次の手と同じ (カレンシーごと)
     const index = (log.value[log.value.length - 1]?.out.index ?? 0) + 1;
     const want = omensFor(key, omens.value);
-    const p = playStep(data.value, it, key, { index, seed: seed.value + index, price: () => 0, cumulative: 0, omen: want.length ? want.join("+") : null });
+    const p = playStep(data.value, it, key, { index, seed: stepSeedFor(key), price: () => 0, cumulative: 0, omen: want.length ? want.join("+") : null });
     return { key, applied: p.out.applied, reason: p.out.reason ?? null, added: p.added.map((m) => m.textJa), removed: p.removed.map((m) => m.textJa), after: p.after };
   }),
 
@@ -491,11 +507,13 @@ export const craftStage = {
       miss.value = { n: (miss.value?.n ?? 0) + 1, reason: why };
       return;
     }
-    const index = log.value.length + 1;
+    // 手の番号は前の手の続き (Web は 50 手より前を消すので、log の長さで数えると 51 手目から止まり、毎回同じ乱数になっていた)
+    const index = (log.value[log.value.length - 1]?.out.index ?? 0) + 1;
     const want = omensFor(key, omens.value);
     const p = playStep(data.value, item.value, key, {
-      index, seed: seed.value + index, price: priceOf, cumulative: craftStage.total.value, omen: want.length ? want.join("+") : null,
+      index, seed: stepSeedFor(key), price: priceOf, cumulative: craftStage.total.value, omen: want.length ? want.join("+") : null,
     });
+    rollSeed.value = freshSeed();
     // Web 版は工程を 50 手まで覚え、それより前は消す (データが長くなりすぎる。2026-10-08 オーナー「50 手まで保存でそれ以降は消そうか」)。
     // アプリは手順 JSON (POE2Tube の再生) に全部の手が要るので消さない
     log.value = !isTauriRuntime() && log.value.length >= LOG_KEEP ? [...log.value.slice(-(LOG_KEEP - 1)), p] : [...log.value, p];
@@ -522,6 +540,8 @@ export const craftStage = {
     const last = l[l.length - 1]!;
     item.value = last.before;
     log.value = l.slice(0, -1);
+    // 戻したら次の手は新しい乱数で (同じ手を打ち直しても同じ結果にならない)
+    rollSeed.value = freshSeed();
     const ate = last.out.omen ? last.out.omen.split("+") : [];
     omens.value = [...new Set([...omens.value, ...ate])];
   },
@@ -544,7 +564,8 @@ export const craftStage = {
       // 始めの状態の MOD (要望 ⑱-2)。無ければ書かない
       ...(startMods.value.length ? ({ start: { mods: startMods.value } satisfies StartSpec } as object) : {}),
       seed: seed.value,
-      steps: (log.value.length ? log.value.map((s) => ({ currency: s.out.currency, omen: s.out.omen ?? null, times: 1, note: null })) : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
+      // 手ごとの乱数 (seed) も書く (2026-10-09 から手ごとに新しい乱数。再生はこれを使う。追加のキー = outcome / pick と同じ扱い)
+      steps: (log.value.length ? log.value.map((s) => ({ currency: s.out.currency, omen: s.out.omen ?? null, times: 1, note: null, ...(s.out.seed != null ? { seed: s.out.seed } : {}) })) : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
     };
   },
   /** 結果 JSON (今の相場の値段で) */

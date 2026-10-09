@@ -180,6 +180,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
     let cur = it;
     const added: StageMod[] = [];
     const picked: NonNullable<StageApply["picked"]> = [];
+    const rolled: NonNullable<StageApply["rolled"]> = [];
     if ((hint.pick?.length ?? 0) > n) return pickFail(item, `この手で付く MOD は ${n} つまで`);
     for (let i = 0; i < n; i++) {
       const f = hint.pick?.[i];
@@ -195,8 +196,9 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
       if (!r) break;
       cur = r.item;
       added.push(r.mod);
+      rolled.push({ modId: r.mod.modId, tierName: r.mod.tierName, chance: r.chance });
     }
-    return added.length ? { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}) } : skip(item, "付けられる MOD が無い");
+    return added.length ? { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}) } : skip(item, "付けられる MOD が無い");
   };
   switch (kind) {
     case "transmute":
@@ -265,7 +267,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
         return { applied: true, item: a.item, added: [a.mod], removed: [r.mod], picked: [{ modId: a.mod.modId, tierName: a.mod.tierName, chance: a.chance }] };
       }
       const a = addOne(data, r.item, floor, rng);
-      return { applied: true, item: a?.item ?? r.item, added: a ? [a.mod] : [], removed: [r.mod] };
+      return { applied: true, item: a?.item ?? r.item, added: a ? [a.mod] : [], removed: [r.mod], ...(a ? { rolled: [{ modId: a.mod.modId, tierName: a.mod.tierName, chance: a.chance }] } : {}) };
     }
     case "annul": {
       if (item.rarity === "normal") return skip(item, "マジックかレアのアイテムにだけ使える");

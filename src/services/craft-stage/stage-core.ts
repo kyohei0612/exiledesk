@@ -272,13 +272,16 @@ export function pickWeighted<T extends { w: number }>(xs: readonly T[], rng: () 
 }
 
 /** MOD を 1 つ引いて付ける (sides は足してよい側。既定は枠のある側全部。付けられなければ null) */
-export function addOne(data: PatchData, item: StageItem, floor: number, rng: () => number, o: PoolOpts & { sides?: readonly StageSide[] } = {}): { item: StageItem; mod: StageMod } | null {
+export function addOne(data: PatchData, item: StageItem, floor: number, rng: () => number, o: PoolOpts & { sides?: readonly StageSide[] } = {}): { item: StageItem; mod: StageMod; chance: number } | null {
   const sides = (o.sides ?? SIDES).filter((s) => room(item, s));
-  const c = pickWeighted(candidates(data, item, sides, floor, o), rng);
+  const cs = candidates(data, item, sides, floor, o);
+  const c = pickWeighted(cs, rng);
   if (!c) return null;
   const t = pickWeighted(c.tiers, rng)!;
   const sm = makeStageMod(c.mod, c.side, t.index, rng);
-  return { item: withMod(item, sm), mod: sm };
+  // この段が付く確率 = その段の重み ÷ この手で付きうる全部の重み (履歴に「付いた瞬間に何 % だったか」を出す。2026-10-09 オーナー)
+  const total = cs.reduce((a, x) => a + x.w, 0);
+  return { item: withMod(item, sm), mod: sm, chance: total > 0 ? t.w / total : 0 };
 }
 /**
  * 付く MOD の指名 (POE2Tube 要望 ⑱-1 kyohei「MOD を自分で選んで組み合わせる機能いるんじゃね？」)。
