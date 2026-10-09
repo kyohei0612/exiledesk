@@ -75,17 +75,19 @@ watch(tab, (t) => {
     <!-- ユニーク装備価格推移 (元の画面をそのまま。状態はアプリで 1 つなので v-show で十分) -->
     <UniqueTrend v-show="tab === 'unique'" class="flex-1 min-h-0" />
 
-   <div v-show="tab === 'currency'" class="flex-1 min-h-0 flex overflow-hidden">
+   <!-- 1 つの枠の中で、左 = 分類 / 右 = 相場 (2026-10-09 オーナー「1 枠でいい、別々で動くんかと思う、1 枠の中で左と右で区別」) -->
+   <div v-show="tab === 'currency'" class="flex-1 min-h-0 flex p-4">
+   <div class="g-panel flex min-h-0 flex-1 overflow-hidden">
     <CategorySidebar
+      class="!bg-none"
       v-model:category-filter="r.categoryFilter.value"
       v-model:search-query="r.searchQuery.value"
       :categories="r.categoryDisplayList.value"
       :total-count="r.ranking.value.length"
     />
 
-    <div class="flex-1 overflow-auto p-4">
-     <!-- 右は 1 つの枠 (説明・基準レート・表)。左の分類と 2 枠 (2026-10-09 オーナー「ズレて見えたり真ん中浮いて見える、右の枠に合体させて 2 枠で」) -->
-     <div class="g-panel px-4 py-3">
+    <div class="flex-1 overflow-auto px-5 py-2">
+     <div>
       <div class="flex items-start justify-between mb-3 gap-4 flex-wrap">
         <div class="min-w-0">
           <!-- 画面名は上の帯に出しているので、ここは説明と出どころだけ (2026-10-03) -->
@@ -179,6 +181,7 @@ watch(tab, (t) => {
       </p>
      </div>
     </div>
+   </div>
    </div>
   </div>
 </template>
