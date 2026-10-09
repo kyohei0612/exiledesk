@@ -88,11 +88,14 @@ onBeforeUnmount(() => { gen++; clearTimeout(timer); });
 const busy = computed(() => rows.value.length < total.value);
 /**
  * 費用 (2026-10-09 オーナー「かかる費用を適正価値で。確率出したらそのままトータルで分かる、どれがコスパ良いか。付きやすさと費用対効果は違うから
- * 費用対効果順でいいや表示のランキング」)。1 回 = カレンシー + お告げ (ステージの累計と同じ相場、高貴建て)。付くまでの平均 = 1 回 ÷ 確率
- * (毎回今の状態から打つとした目安)。値段が分からない物は後ろへ
+ * 費用対効果順でいいや表示のランキング」)。1 回 = カレンシー + お告げ (ステージの累計と同じ相場、高貴建て)。値段が分からない物は後ろへ。
+ * 付くまでの平均は「外れたら今の状態を作り直してやり直す」(2026-10-09 オーナー「やり直しで確率とコスト計算できる、単純な確率の話」):
+ * 外れると今の状態は崩れるので、作り直す費用 = 今の累計 (rebuild) を外れの分だけ足す。E = (1 回 + (1 − p) × 累計) ÷ p。
+ * 1 回だけの確率で並べると、何も消さない高貴がいつも上に来て参考にならなかった
  */
 const costOf = (r: AimCombo): number => (r.currency === REVEAL ? 0 : priceOf(r.currency)) + r.omens.reduce((a, o) => a + priceOf(o), 0);
-const perHit = (r: AimOdd): number => { const c = costOf(r); return r.p > 0 && c > 0 ? c / r.p : Infinity; };
+const rebuild = computed(() => Math.max(0, s.total.value));
+const perHit = (r: AimOdd): number => { const c = costOf(r); return r.p > 0 && c > 0 ? (c + (1 - r.p) * rebuild.value) / r.p : Infinity; };
 function byValue(a: AimOdd, b: AimOdd): number { return perHit(a) - perHit(b) || b.p - a.p; }
 const hitRows = computed(() => rows.value.filter((r) => r.p > 0));
 const shown = computed(() => (showAll.value ? hitRows.value : hitRows.value.slice(0, TOP)));
@@ -152,14 +155,14 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
       <HelpTip title="次の手で狙う" :width="320">
         <p>今の状態から 1 回打った時に、狙いの MOD (その段以上。最大 4 つで、全部揃って当たり) が付く確率。打ち方 (カレンシーとお告げの組み合わせ) ごとに {{ TRIALS }} 回試した目安です。</p>
         <p class="mt-1">冒涜は骨の後の発現の候補 (アビスの反響の引き直しを含む) に出れば当たり。</p>
-        <p class="mt-1">並びは付くまでの平均費用 (1 回の費用 ÷ 確率、カレンシーとお告げの相場) の安い順。毎回今の状態から打つとした目安です。</p>
+        <p class="mt-1">並びは付くまでの平均費用の安い順。外れたら今の状態を作り直してやり直すとして、(1 回の費用 + 外れる確率 × 今の累計) ÷ 確率 で出します (カレンシーとお告げの相場)。</p>
         <p class="mt-1 text-[var(--exile-color-text-secondary)]">行を押すと、そのカレンシーを持ってお告げを掛けます。打つと今の状態で出し直します。</p>
       </HelpTip>
       <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" title="狙うのをやめる" @click="s.aims.value = []"><Icon name="x" class="size-4" /></button>
     </header>
     <p v-if="done" class="text-emerald-300">もう全部付いています</p>
     <template v-else>
-      <p class="mb-0.5 pr-[76px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">安い順 · 付くまでの平均 / 確率</p>
+      <p class="mb-0.5 pr-[76px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">安い順 · 付くまでの平均 / 確率<template v-if="rebuild > 0"> (外れたら累計 {{ displayCurrency.money(rebuild) }} で作り直す)</template></p>
       <ol class="flex flex-col gap-1">
         <li v-for="(r, i) in shown" :key="r.currency + r.omens.join('+')">
           <button type="button" class="g-plain flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition" :class="isHeld(r) ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/[0.05]'" @click="keepPlace($event.currentTarget as Element, () => pick(r))">
