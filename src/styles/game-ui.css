@@ -239,6 +239,19 @@ tbody > tr:is([class*="border-[var(--exile-color-border-subtle)]"], [class*="bor
 .btn.btn-outline.btn-accent:not(.g-plain) { color: var(--exile-color-accent-focus); }
 .btn.btn-primary:not(.g-plain):disabled,
 .btn.btn-outline:not(.g-plain):disabled { filter: grayscale(0.8) brightness(0.6); opacity: 1; }
+/* 枠の中の区切り (上に区切りの絵)。1 つの枠の中で項目を分ける時に使う (2026-10-10 設定など) */
+.g-section { position: relative; padding-top: 12px; padding-bottom: 8px; }
+.g-section::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  background: url("/ui-art/divider.webp") center / 100% 100% no-repeat;
+  opacity: 0.7;
+  pointer-events: none;
+}
 /* 金色の決めるボタン (bg が accent-focus のボタン) = ゲームの赤いボタン */
 button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain) {
   border-style: solid;

@@ -37,7 +37,7 @@ async function doExportSeed(): Promise<void> {
 
 <template>
   <!-- 配布データ (2026-09-20 オーナー指示: 測った記録をビルドに同梱してサブ機に配る) -->
-  <section class="g-panel px-2 py-1">
+  <section class="g-section mb-2">
     <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">配布データ (捌き速度)</h2>
     <p class="text-xs text-[var(--exile-color-text-secondary)] mb-2 leading-relaxed">
       この PC で測った売れ行きの記録を、リポジトリの <span class="font-mono">src/data/flow-seed.json</span> に書き出します。

@@ -64,10 +64,13 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-full flex flex-col text-[var(--exile-color-text-primary)]">
+  <div class="h-full flex flex-col overflow-hidden text-[var(--exile-color-text-primary)]">
     <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03。余白も他の画面と同じ px-6 py-4 に) -->
     <TabBar art="settings" title="設定" />
-    <div class="max-w-2xl px-6 py-4">
+    <!-- 中身は 1 つの枠に (2026-10-10 UI 見直し。他の画面と同じ形。中の項目は枠を描かず区切りの絵だけ) -->
+    <div class="flex-1 min-h-0 flex p-4">
+    <div class="g-panel flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 py-2">
+    <div class="max-w-2xl">
       <p class="mb-5 text-[12px] text-[var(--exile-color-text-secondary)]">
         バックグラウンド常駐 (Discord 風) と自動再取得、トレードサイト、配布データ、更新。変えると自動で保存します。
       </p>
@@ -78,7 +81,7 @@ onMounted(async () => {
 
       <div v-else class="space-y-6">
         <!-- スタートアップ -->
-        <section class="g-panel px-2 py-1">
+        <section class="g-section mb-2">
           <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
             起動
           </h2>
@@ -111,7 +114,7 @@ onMounted(async () => {
         </section>
 
         <!-- × ボタン挙動 -->
-        <section class="g-panel px-2 py-1">
+        <section class="g-section mb-2">
           <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
             ウィンドウ
           </h2>
@@ -135,7 +138,7 @@ onMounted(async () => {
         </section>
 
         <!-- 自動再取得 -->
-        <section class="g-panel px-2 py-1">
+        <section class="g-section mb-2">
           <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
             自動再取得
           </h2>
@@ -154,7 +157,7 @@ onMounted(async () => {
         </section>
 
         <!-- トレードサイト (2026-09-12) -->
-        <section class="g-panel px-2 py-1">
+        <section class="g-section mb-2">
           <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
             トレードサイト
           </h2>
@@ -172,7 +175,7 @@ onMounted(async () => {
         </section>
 
         <!-- 使い方の記録 (2026-10-09): この PC からは送らない (no-log.ts。オーナーの PC の分を数えないため) -->
-        <section class="g-panel px-2 py-1">
+        <section class="g-section mb-2">
           <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
             使い方の記録
           </h2>
@@ -211,6 +214,8 @@ onMounted(async () => {
           </div>
         </footer>
       </div>
+    </div>
+    </div>
     </div>
   </div>
 </template>
