@@ -84,6 +84,8 @@ watch(tab, (t) => {
     />
 
     <div class="flex-1 overflow-auto p-4">
+     <!-- 右は 1 つの枠 (説明・基準レート・表)。左の分類と 2 枠 (2026-10-09 オーナー「ズレて見えたり真ん中浮いて見える、右の枠に合体させて 2 枠で」) -->
+     <div class="g-panel px-4 py-3">
       <div class="flex items-start justify-between mb-3 gap-4 flex-wrap">
         <div class="min-w-0">
           <!-- 画面名は上の帯に出しているので、ここは説明と出どころだけ (2026-10-03) -->
@@ -175,6 +177,7 @@ watch(tab, (t) => {
         / <span class="font-mono">{{ r.league.value }}</span>
         / 値段は表示通貨 (最安値 = 神、1 未満はカオス、1 カオス未満は高貴。この画面だけの設定) / 取引の推奨 = 交換の一番安い通貨 (最安値なら高貴も込み、1 個あたりの値段)
       </p>
+     </div>
     </div>
    </div>
   </div>
