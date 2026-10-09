@@ -209,8 +209,9 @@ body {
 @media (max-width: 767px) {
   html, body, #app { height: auto; min-height: 100%; max-width: 100vw; }
   /* 横は送らない (縦だけ。横は目一杯に広げる) */
-  html, body { overflow-x: hidden; }
-  body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  /* hidden だと body が送りの箱になり、position: sticky (狙う MOD の完成図を上に貼る) が効かない。clip は箱にならない (2026-10-09) */
+  html, body { overflow-x: clip; }
+  body { overflow-y: visible; -webkit-overflow-scrolling: touch; }
   /* スマホあるある: 二度押しの拡大と押した時の青い光を止める、長押しの画像メニューを出さない (2026-10-08) */
   #app { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   /* iOS Safari は 16px 未満の入力欄に触ると勝手に拡大 (12px なら 1.33 倍) して戻らず、横に送れる状態になる。

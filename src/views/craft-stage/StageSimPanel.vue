@@ -773,9 +773,6 @@ const help = computed(() => !!open.value.help);
 /** 白ベースの値段を入れて「進む」を押した */
 const whiteOk = ref(false);
 const modsDone = ref(false);
-/** スマホ: 狙う MOD の設定 (完成図) を下から開いている */
-const targetsSheet = ref(false);
-watch(modsDone, (v) => { if (v) targetsSheet.value = false; });
 const fracDone = ref(false);
 const orderDone = ref(false);
 /** 4 最安値スタートを決めた (フラクチャーがある時だけの工程) */
@@ -1437,20 +1434,17 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
         <SimStepHead class="mb-3" :n="2" title="狙う MOD" :done="modsDone" :current="!modsDone" :redo="modsDone" help="下の「このベースに付く MOD」で MOD を押すと段の表が開く。そこの「T○ 以上」で足す。「＋」は、その MOD の代わりに付いても当たりにする物 (どれか 1 つ)" @redo="goTo('mods')" />
         <p v-if="ilvlNote" class="mb-1 text-[11px] text-amber-200">{{ ilvlNote }}</p>
         <!-- 完成図 (ベースの横から移した。段・＋・×・どれか N つ・付きやすさ) -->
-        <StageTargetSummary :editable="!modsDone" />
+        <!-- スマホ: 狙う MOD を選んでいる間は完成図を画面の上に貼り付ける (2026-10-09 オーナー「上の方がいいな、絶えず表示してあげたらいい。どの MOD どういう設定か忘れがち」) -->
+        <div :class="phone && !modsDone && rows.length ? 'sticky top-0 z-[60] -mx-3 max-h-[40vh] overflow-y-auto border-b border-[var(--exile-color-border-brass)] bg-[#120f0c] px-3 pb-2 pt-1 shadow-[0_8px_18px_rgba(0,0,0,0.7)] [&_select]:max-w-full' : ''">
+          <StageTargetSummary :editable="!modsDone" />
+        </div>
         <div v-if="rows.length && !modsDone" class="mt-1 flex items-center gap-2">
           <button type="button" class="inline-flex h-8 items-center rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)]" @click="s.simTargets.value = []">全部外す</button>
           <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:hidden" title="狙う MOD を決めて、次のベースの値段へ (1 つでも進める)" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <!-- スマホ: 一覧の下で「T○ 以上」を押しても上の完成図は見えないので、狙いの数と「決めた →」を画面の下に固定 (2026-10-08 レビュー) -->
-        <!-- 2026-10-09 オーナー「わざわざ設定するのに上にいかないといけない動線はだるい」: 帯から完成図 (段・付け方・＋・×) をその場で開いて設定する -->
-        <div v-if="phone && rows.length && !modsDone && targetsSheet" class="fixed inset-0 z-[149] bg-black/60" @click="targetsSheet = false"></div>
-        <div v-if="phone && rows.length && !modsDone && targetsSheet" class="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-[150] max-h-[70vh] overflow-y-auto overflow-x-hidden border-t border-[var(--exile-color-border-brass)] [&_select]:max-w-full bg-[#120f0c] px-3 pb-3 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
-          <p class="g-brush mb-1 text-[17px] tracking-[0.12em] text-[var(--exile-color-text-title)]">狙う MOD の設定</p>
-          <StageTargetSummary editable />
-        </div>
         <div v-if="phone && rows.length && !modsDone" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-[var(--exile-color-border-subtle)] bg-[#14110d]/95 px-3 backdrop-blur py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
-          <button type="button" class="g-plain flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-left" @click="targetsSheet = !targetsSheet"><b class="shrink-0 text-amber-100">狙い {{ rows.length }} 個</b><span class="truncate text-[12px] text-[var(--exile-color-text-link)]">{{ targetsSheet ? "閉じる ▾" : "設定を開く ▴" }}</span></button>
+          <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">狙い {{ rows.length }} 個</b><span class="opacity-60"> · 足したら決める</span></span>
           <button type="button" class="min-h-11 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 px-4" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <div v-if="phone && rows.length && !modsDone" class="h-20"></div>
