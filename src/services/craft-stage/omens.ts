@@ -26,6 +26,18 @@ export const REMOVED_OMENS: readonly string[] = [
   "OmenofGreaterAnnulment",
   "OmenofCorruption",
 ];
+/**
+ * 一緒に掛けられないお告げ (2026-10-09 お告げの洗い直し): 片方しか効かないのに両方減っていた (左と右・勢力 2 枚・削減と抹消・光と左右の消去)。
+ * 同じ組のお告げを掛けると、前に掛けていた方を外す
+ */
+export const OMEN_EXCLUSIVE: readonly (readonly string[])[] = [
+  ["OmenofSinistralExaltation", "OmenofDextralExaltation"],
+  ["OmenofWhittling", "OmenofSinistralErasure", "OmenofDextralErasure"],
+  ["OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofLight"],
+  ["OmenofSinistralCrystallisation", "OmenofDextralCrystallisation"],
+  ["OmenofSinistralNecromancy", "OmenofDextralNecromancy"],
+  ["OmenoftheSovereign", "OmenoftheLiege", "OmenoftheBlackblooded"],
+];
 /** 棚に出す順 (手の種類ごと) */
 export const OMEN_SHELF: readonly string[] = Object.values(OMEN_FOR).flat();
 /** 効果の規則をまだ入れていない物 (棚には出すが打つと理由を返す)。2026-09-27 にヴァール・腐食・聖別を入れて空 */

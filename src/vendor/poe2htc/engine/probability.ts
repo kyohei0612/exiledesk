@@ -1,6 +1,6 @@
 import type { AffixType, CurrencyTier, ItemBase, ItemState, Mod, PatchData, PlacedMod } from './types.ts';
 import { CURRENCY_FLOOR } from './types.ts';
-import { CRAFTED_SOURCES, familiesOf, familyAvailable, itemFamilies, modTierWeight, poolTotalWeight, resolveMod } from './pool.ts';
+import { CRAFTED_SOURCES, familiesOf, familyAvailable, floorKeepIndex, itemFamilies, modTierWeight, poolTotalWeight, resolveMod } from './pool.ts';
 import { limitsOf, prefixCount, prefixesFull, suffixCount, suffixesFull, whiteItem } from './item.ts';
 
 export interface AddAffixOptions {
@@ -764,9 +764,45 @@ export const DESECRATION_EXCLUSIVE_COUNT: ReadonlyArray<{ readonly exclusive: 1 
 
 /** Σ weight of `mod`'s tiers that can roll at `level` with the bone's `floor`, from tier `minTierIndex` up. */
 function rollableWeight(mod: Mod, level: number, floor: number, minTierIndex = 0): number {
+  // A mod with no tier at or above the floor keeps its highest reachable tier (floorKeepIndex — the emulator's candidates do the same)
+  const keep = floorKeepIndex(mod, floor, level);
   let w = 0;
-  mod.tiers.forEach((t, i) => { if (i >= minTierIndex && t.ilvl <= level && t.ilvl >= floor) w += t.weight; });
+  mod.tiers.forEach((t, i) => { if (i >= minTierIndex && t.ilvl <= level && t.weight > 0 && (t.ilvl >= floor || i === keep)) w += t.weight; });
   return w;
+}
+
+/**
+ * P(candidate `t` is among `m` picks) when picks are drawn one at a time by weight, without replacement, and each pick also
+ * removes every candidate sharing a family with it — exactly how the emulator fills a reveal (apply-desecrate.ts notClashing).
+ * Depth ≤ 3, so the recursion is at most O(n³) for one target.
+ */
+function inPicks(ws: readonly number[], clash: readonly (readonly number[])[], t: number, m: number, dead: readonly number[] = []): number {
+  if (m <= 0) return 0;
+  const alive = new Uint8Array(ws.length).fill(1);
+  for (const d of dead) alive[d] = 0;
+  const rec = (W: number, left: number): number => {
+    if (!alive[t] || !(W > 0)) return 0;
+    let p = ws[t]! / W;
+    if (left <= 1) return p;
+    for (let j = 0; j < ws.length; j++) {
+      if (j === t || !alive[j] || !(ws[j]! > 0)) continue;
+      const pj = ws[j]! / W;
+      const off: number[] = [];
+      let removed = 0;
+      for (const k of clash[j]!) if (alive[k]) { alive[k] = 0; off.push(k); removed += ws[k]!; }
+      p += pj * rec(W - removed, left - 1);
+      for (const k of off) alive[k] = 1;
+    }
+    return p;
+  };
+  return rec(ws.reduce((a, w, i) => a + (alive[i] ? w : 0), 0), m);
+}
+/** Candidates of one pool for inPicks: weights and, per candidate, the indices sharing a family with it (itself included) */
+function pickPool(mods: readonly Mod[], weightOf: (m: Mod) => number): { ids: string[]; ws: number[]; clash: number[][] } {
+  const ws = mods.map(weightOf);
+  const fams = mods.map((m) => new Set(familiesOf(m)));
+  const clash = mods.map((_, j) => mods.flatMap((__, k) => ([...fams[j]!].some((f) => fams[k]!.has(f)) ? [k] : [])));
+  return { ids: mods.map((m) => m.id), ws, clash };
 }
 
 /**
@@ -781,11 +817,14 @@ function rollableWeight(mod: Mod, level: number, floor: number, minTierIndex = 0
  */
 export function desecrationOfferProbability(
   data: PatchData, item: ItemState, desiredModId: string,
-  opts: { floor?: number; minTierIndex?: number; constrainTo?: AffixType; rerolls?: number } = {},
+  opts: { floor?: number; minTierIndex?: number; constrainTo?: AffixType; rerolls?: number; altered?: boolean } = {},
 ): number {
   const mod = data.mods.get(desiredModId);
   if (!mod) return 0;
-  if (mod.source !== 'normal' && mod.source !== 'desecrated') return 0;
+  // An ALTERED collarbone adds the otherworldly mods to the exclusive side of the offer (ExileDesk pools.otherworldly)
+  const exclusiveIds = (k: 'prefixes' | 'suffixes'): readonly string[] => [...item.base.pools.desecrated[k], ...(opts.altered ? item.base.pools.otherworldly?.[k] ?? [] : [])];
+  const isExclusive = exclusiveIds(mod.type === 'prefix' ? 'prefixes' : 'suffixes').includes(desiredModId);
+  if (mod.source !== 'normal' && !isExclusive) return 0;
   if (!familyAvailable(data, item, mod)) return 0;
   const floor = opts.floor ?? 0;
   const side = mod.type;
@@ -804,7 +843,7 @@ export function desecrationOfferProbability(
       const m = data.mods.get(id);
       if (m && familyAvailable(data, item, m)) normal += rollableWeight(m, item.level, floor);
     }
-    for (const id of pools.desecrated[k]) {
+    for (const id of exclusiveIds(k)) {
       const m = data.mods.get(id);
       if (!m || !familyAvailable(data, item, m)) continue;
       const w = rollableWeight(m, item.level, floor);
@@ -820,21 +859,57 @@ export function desecrationOfferProbability(
     const there = open[other] ? sideStats(other).total : 0;
     pSide = here.total / (here.total + there);
   }
-  const inPool = (side === 'prefix' ? (mod.source === 'normal' ? pools.normal.prefixes : pools.desecrated.prefixes) : (mod.source === 'normal' ? pools.normal.suffixes : pools.desecrated.suffixes)).includes(desiredModId);
+  const inPool = isExclusive || (side === 'prefix' ? pools.normal.prefixes : pools.normal.suffixes).includes(desiredModId);
   if (!inPool) return 0;
+  const succ = rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0);
+  const whole = rollableWeight(mod, item.level, floor);
+  if (!(succ > 0) || !(whole > 0)) return 0;
+  // The two pools of this side, as the emulator draws them (legal, rollable at this level and floor)
+  const k = side === 'prefix' ? 'prefixes' : 'suffixes';
+  const live = (ids: readonly string[]): Mod[] => [...new Set(ids)].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && familyAvailable(data, item, m) && rollableWeight(m, item.level, floor) > 0);
+  const exclusiveMods = live(exclusiveIds(k));
+  const exclusiveSet = new Set(exclusiveMods.map((m) => m.id));
+  const normalMods = live(pools.normal[k]).filter((m) => !exclusiveSet.has(m.id));
+  const w = (m: Mod) => rollableWeight(m, item.level, floor);
   let pOffer = 0;
-  if (mod.source === 'desecrated') {
-    const w = rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0);
-    if (here.exclusive === 0 || w <= 0) return 0;
-    // Equal weights: exactly k / n. Measured (unequal) weights: k picks of share s, treated as independent
-    const s = w / here.desecratedW;
-    for (const c of DESECRATION_EXCLUSIVE_COUNT) pOffer += c.rate * (here.uniform ? Math.min(1, c.exclusive / here.exclusive) : 1 - (1 - s) ** c.exclusive);
+  if (isExclusive) {
+    const pool = pickPool(exclusiveMods, w);
+    const t = pool.ids.indexOf(desiredModId);
+    if (t < 0) return 0;
+    for (const c of DESECRATION_EXCLUSIVE_COUNT) pOffer += c.rate * inPicks(pool.ws, pool.clash, t, c.exclusive);
   } else {
-    const share = here.normal > 0 ? rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0) / here.normal : 0;
-    if (share <= 0) return 0;
-    if (here.exclusive === 0) pOffer = 1 - (1 - share) ** DESECRATION_OFFER_COUNT;
-    else for (const c of DESECRATION_EXCLUSIVE_COUNT) pOffer += c.rate * (1 - (1 - share) ** (DESECRATION_OFFER_COUNT - c.exclusive));
+    const pool = pickPool(normalMods, w);
+    const t = pool.ids.indexOf(desiredModId);
+    if (t < 0) return 0;
+    if (!exclusiveMods.length) pOffer = inPicks(pool.ws, pool.clash, t, DESECRATION_OFFER_COUNT);
+    else {
+      // The exclusive picks come first (count from DESECRATION_EXCLUSIVE_COUNT, fewer if the side has fewer), and each one also takes the
+      // normal mods sharing a family with it out of the normal picks — enumerate the exclusive sequences exactly (k ≤ 3, pools of ~15)
+      const ex = pickPool(exclusiveMods, w);
+      const famsN = normalMods.map((m) => familiesOf(m));
+      const cross = exclusiveMods.map((em) => { const f = new Set(familiesOf(em)); return famsN.flatMap((fs, i) => (fs.some((x) => f.has(x)) ? [i] : [])); });
+      const alive = new Uint8Array(ex.ws.length).fill(1);
+      for (const c of DESECRATION_EXCLUSIVE_COUNT) {
+        const dead: number[] = [];
+        const walk = (W: number, depth: number, prob: number): void => {
+          if (depth === c.exclusive || !(W > 0)) { pOffer += c.rate * prob * inPicks(pool.ws, pool.clash, t, DESECRATION_OFFER_COUNT - depth, dead); return; }
+          for (let j = 0; j < ex.ws.length; j++) {
+            if (!alive[j] || !(ex.ws[j]! > 0)) continue;
+            const off: number[] = [];
+            let removed = 0;
+            for (const k2 of ex.clash[j]!) if (alive[k2]) { alive[k2] = 0; off.push(k2); removed += ex.ws[k2]!; }
+            const n0 = dead.length;
+            dead.push(...cross[j]!);
+            walk(W - removed, depth + 1, prob * (ex.ws[j]! / W));
+            dead.length = n0;
+            for (const k2 of off) alive[k2] = 1;
+          }
+        };
+        walk(ex.ws.reduce((a2, x) => a2 + x, 0), 0, 1);
+      }
+    }
   }
+  pOffer *= succ / whole;
   const tries = 1 + (opts.rerolls ?? 0);
   return pSide * (1 - (1 - Math.min(1, pOffer)) ** tries);
 }

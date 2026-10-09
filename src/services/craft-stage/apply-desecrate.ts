@@ -27,7 +27,8 @@ function poolsFor(item: StageItem, altered: boolean, plain = false) {
     // 普通の置き場は特殊 MOD のルーン込み (要望 ㉙)
     const p = { ...item.cls.pools, normal: effectiveCls(item).pools.normal };
     if (plain) return [...p.normal[k]];
-    return [...p.normal[k], ...p.desecrated[k], ...(altered ? p.otherworldly?.[k] ?? [] : [])];
+    // 同じ MOD を 2 回数えない (置き場が重なっていると重みが倍になる)
+    return [...new Set([...p.normal[k], ...p.desecrated[k], ...(altered ? p.otherworldly?.[k] ?? [] : [])])];
   };
 }
 

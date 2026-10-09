@@ -256,6 +256,15 @@ function applyPoe2dbFixes(data: PatchData): PatchData {
     }
     bases.set(cls, { ...b, pools: { ...pools, ...(rune ? { rune } : {}) } });
   }
+  // 冒涜の置き場は冒涜の MOD だけ (2026-10-09 確率表の突き合わせで判明: 全能力値の兜・手袋・ブーツ・鎧の冒涜の置き場に普通の筋力・器用さなどが
+  // 入っていて、エミュレーターが普通の置き場と 2 回分の重みで引いていた。クライアントから自前で作った部位の名残)
+  for (const [cls, b] of bases) {
+    const keep = (ids: readonly string[]) => ids.filter((id) => mods.get(id)?.source !== "normal");
+    const d = b.pools.desecrated;
+    if (d.prefixes.some((id) => mods.get(id)?.source === "normal") || d.suffixes.some((id) => mods.get(id)?.source === "normal")) {
+      bases.set(cls, { ...b, pools: { ...b.pools, desecrated: { prefixes: keep(d.prefixes), suffixes: keep(d.suffixes) } } });
+    }
+  }
   return { ...data, mods, bases };
 }
 

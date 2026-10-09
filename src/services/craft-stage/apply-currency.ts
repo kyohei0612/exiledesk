@@ -336,10 +336,28 @@ export function addCandidates(data: PatchData, item: StageItem, currency: string
         : undefined;
       return candidates(data, item, open(item, side ? [side] : SIDES), floor, boost ? { boost } : {});
     }
-    case "chaos":
-      // 1 つ消してから足すので、どちらの側にも付きうる (消える MOD の系統は残ったまま数える目安)
+    case "chaos": {
+      // 1 つ消してから足す: 消える MOD (削減・抹消のお告げで絞る) ごとに、消えた後の候補で付く割合を足し合わせる。消えた MOD と同じ系統も付きうる
+      // (2026-10-09 確率表の突き合わせ: 前は付いている系統を全部外していて、消えた系統の付き直しが 0% と出ていた)
       if (item.rarity !== "rare") return null;
-      return candidates(data, item, SIDES, floor);
+      const side = sideOmen(used, "OmenofSinistralErasure", "OmenofDextralErasure");
+      const gone = used.includes("OmenofWhittling") ? whittleTargets(item) : allMods(item).filter((m) => !m.fractured && (!side || m.side === side));
+      if (!gone.length) return null;
+      const acc = new Map<string, Candidate>();
+      for (const r of gone) {
+        const cs = candidates(data, without(item, r), SIDES, floor);
+        const total = cs.reduce((a, c) => a + c.w, 0);
+        if (!(total > 0)) continue;
+        const k = 1 / gone.length / total;
+        for (const c of cs) {
+          const cur = acc.get(c.mod.id);
+          if (!cur) { acc.set(c.mod.id, { ...c, w: c.w * k, tiers: c.tiers.map((t) => ({ ...t, w: t.w * k })) }); continue; }
+          cur.w += c.w * k;
+          for (const t of c.tiers) { const x = cur.tiers.find((y) => y.index === t.index); if (x) x.w += t.w * k; else cur.tiers.push({ ...t, w: t.w * k }); }
+        }
+      }
+      return [...acc.values()];
+    }
     default:
       return null;
   }

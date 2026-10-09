@@ -13,6 +13,7 @@
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
 import type { Pattern } from "../services/craft-stage/pattern";
 import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef } from "vue";
@@ -561,9 +562,11 @@ export const craftStage = {
   hold(key: string | null): void {
     held.value = key;
   },
-  /** お告げを掛ける / 外す */
+  /** お告げを掛ける / 外す。一緒に掛けられない組 (OMEN_EXCLUSIVE: 左と右・勢力 2 枚など) は、前の方を外して掛け替える */
   toggleOmen(id: string): void {
-    omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id];
+    if (omens.value.includes(id)) { omens.value = omens.value.filter((o) => o !== id); return; }
+    const rivals = new Set(OMEN_EXCLUSIVE.filter((g) => g.includes(id)).flat());
+    omens.value = [...omens.value.filter((o) => !rivals.has(o)), id];
   },
   /** 今までの手を手順 JSON に (同じ seed なので CLI に流すと同じ結果) */
   plan(): CraftStagePlan {
