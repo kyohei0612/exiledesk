@@ -43,15 +43,18 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
 
 <template>
   <!-- 高さは親 (CurrencyRanking.vue のタブの下、flex-1 min-h-0) が決める。h-full だとタブの帯の分だけはみ出る -->
-  <div class="flex overflow-hidden">
+  <!-- カレンシーのタブと同じ形: 1 つの枠の中で、左 = 分類 / 右 = 相場 (2026-10-10 UI 見直し。前は分類が枠の外、表だけ別の枠) -->
+  <div class="flex p-4 overflow-hidden">
+  <div class="g-panel flex min-h-0 flex-1 overflow-hidden">
     <CategorySidebar
+      class="!bg-none"
       v-model:category-filter="u.categoryFilter.value"
       v-model:search-query="u.searchQuery.value"
       :categories="u.categories.value"
       :total-count="u.rows.value.length"
     />
 
-    <div class="flex-1 overflow-auto p-4">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden px-5 py-2">
       <div class="flex items-start justify-between mb-3 gap-4 flex-wrap">
         <div class="min-w-0">
           <!-- 画面名は上の帯 (カレンシーランキング > ユニーク) に出しているので、ここは説明と出どころだけ (2026-10-03) -->
@@ -137,5 +140,6 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
         / 値段は表示通貨 (適正 = 神、1 未満はカオス、1 カオス未満は高貴) / 相場はコラプトしていない純正品 (poe.ninja) / 7 日の推移は最初と最後の比 (倍) / 高騰率・下落率は 1 神未満と出品 3 件未満を後ろに
       </p>
     </div>
+  </div>
   </div>
 </template>

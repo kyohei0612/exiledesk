@@ -103,7 +103,8 @@ function onFav(key: string): void {
             @click="emit('toggle', r.itemId)"
           >
             <td class="px-3 py-2.5 text-[var(--exile-color-text-secondary)] tabular-nums">{{ i + 1 }}</td>
-            <td class="px-3 py-2.5">
+            <!-- 名前の列が残りの幅を取り、長い名前は切る (2026-10-10: 枠に入れたら右端の「詳細」が切れた) -->
+            <td class="px-3 py-2.5 w-full max-w-0">
               <div class="flex items-center gap-3 min-w-0">
                 <!-- poe.ninja の絵が無い時は同梱のユニークの絵 (2026-09-29) -->
                 <img v-if="r.icon || uniqueArt(r.nameEn)" :src="r.icon || uniqueArt(r.nameEn)!" :alt="r.nameEn" class="w-9 h-9 object-contain shrink-0" loading="lazy" />

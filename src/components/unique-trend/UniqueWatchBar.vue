@@ -22,8 +22,8 @@ const fmt = (t: number | null): string =>
 </script>
 
 <template>
-  <section class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-sky-400/30 bg-sky-500/[0.05] px-3 py-2 text-[12px]">
-    <b class="text-sky-200">お気に入りの最安値を記録</b>
+  <section class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 g-plain rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] px-3 py-2 text-[12px]">
+    <b class="text-[var(--exile-color-accent-focus)]">お気に入りの最安値を記録</b>
     <span class="opacity-60">♥ {{ favCount }} / {{ FAV_MAX }} 個 · 名前だけで探した取引所の即時購入の最安値を、取るたびにグラフへ</span>
     <label class="flex items-center gap-1.5">
       <span class="opacity-60">自動取得</span>
