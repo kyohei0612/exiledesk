@@ -493,15 +493,18 @@ watch([leftTotal, () => props.name], ([n, name]) => { if (name) craftStage.simPl
     -->
     <div class="col-span-full flex flex-wrap items-center gap-3 rounded-lg bg-black/30 px-4 py-3 max-md:col-span-1" :style="switched ? { boxShadow: '0 0 0 2px var(--exile-color-accent-focus), 0 0 14px rgba(201,162,90,0.45)' } : undefined">
       <span class="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--exile-color-accent-focus)] text-[13px] font-bold text-black">{{ sel == null ? 1 : 2 }}</span>
-      <div class="min-w-0">
+      <div class="min-w-0 flex-1">
         <p class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ sel == null ? "最速完成ルート" : "ハズレルート設定" }}</p>
+        <Transition enter-from-class="-translate-y-1 opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-300">
+          <p v-if="switched" role="status" class="mt-1 text-xs font-semibold text-[var(--exile-color-accent-focus)]">{{ switched }}</p>
+        </Transition>
         <p class="text-xs text-[var(--exile-color-text-secondary)]">{{ sel == null ? "狙う MOD が付いたものとして、完成までの手を並べる" : leftTotal ? `外れた時の手を形ごとに決める · 残り ${leftTotal} 形 (全部決めると回せる)` : "外れも全部決めた · 回せる" }}</p>
       </div>
-      <span class="ml-auto flex items-center gap-2 text-xs">
-        <span class="flex items-center gap-1.5" :class="sel == null ? 'text-[var(--exile-color-text-primary)]' : 'text-[var(--exile-color-text-tertiary)]'"><span class="grid size-5 place-items-center rounded-full text-[11px] font-bold" :class="sel == null ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200'">1</span>最速完成ルート</span>
-        <Icon name="chevron-right" class="size-4 text-[var(--exile-color-text-tertiary)]" />
-        <span class="flex items-center gap-1.5" :class="sel != null ? 'text-[var(--exile-color-text-primary)]' : 'text-[var(--exile-color-text-tertiary)]'"><span class="grid size-5 place-items-center rounded-full text-[11px] font-bold" :class="sel != null ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-white/10 text-white/60'">2</span>ハズレルート設定</span>
-        <button v-if="sel != null" type="button" class="ml-2 inline-flex h-8 items-center gap-1 rounded-md px-2 text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="sel = null"><Icon name="corner-up-left" class="size-4" />工程 1 に戻る</button>
+      <span class="ml-auto flex items-center gap-2 text-xs max-md:ml-0 max-md:w-full">
+        <span class="flex items-center gap-1.5 max-md:hidden" :class="sel == null ? 'text-[var(--exile-color-text-primary)]' : 'text-[var(--exile-color-text-tertiary)]'"><span class="grid size-5 place-items-center rounded-full text-[11px] font-bold" :class="sel == null ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200'">1</span>最速完成ルート</span>
+        <Icon name="chevron-right" class="size-4 text-[var(--exile-color-text-tertiary)] max-md:hidden" />
+        <span class="flex items-center gap-1.5 max-md:hidden" :class="sel != null ? 'text-[var(--exile-color-text-primary)]' : 'text-[var(--exile-color-text-tertiary)]'"><span class="grid size-5 place-items-center rounded-full text-[11px] font-bold" :class="sel != null ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-white/10 text-white/60'">2</span>ハズレルート設定</span>
+        <button v-if="sel != null" type="button" class="ml-2 inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md px-2 max-md:ml-0 text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="sel = null"><Icon name="corner-up-left" class="size-4" />工程 1 に戻る</button>
       </span>
     </div>
     <!-- 左: 手の並び -->
@@ -548,20 +551,15 @@ watch([leftTotal, () => props.name], ([n, name]) => { if (name) craftStage.simPl
 
     <!-- 右 -->
     <div class="min-w-0">
-      <Transition enter-from-class="-translate-y-1 opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-300">
-        <div v-if="switched" role="status" class="mb-3 flex items-center gap-2 rounded-md bg-[rgba(201,162,90,0.14)] px-3 py-2 text-[13px] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]">
-          <Icon name="arrow-right" class="size-4 shrink-0 text-[var(--exile-color-accent-focus)]" />{{ switched }}
-          <button type="button" class="ml-auto grid size-6 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10" title="閉じる" @click="switched = null"><Icon name="x" class="size-3.5" /></button>
-        </div>
-      </Transition>
+
       <!-- 1 当たりの手を足す -->
       <template v-if="sel == null">
         <header class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <h4 class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ shownKs.length + 1 }} 手目<span v-if="hasRoutes" class="ml-2 text-xs font-normal text-[var(--exile-color-text-secondary)]">{{ ROUTE_JA[route] }}</span></h4>
-          <span class="flex items-center gap-1.5 text-xs">
-            <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5" :class="!pendingSet ? 'bg-[rgba(201,162,90,0.16)] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-signal-up)]'"><Icon v-if="pendingSet" name="check" class="size-3.5" /><span v-else class="font-bold">①</span>棚から打つ物を持つ</span>
-            <Icon name="chevron-right" class="size-3.5 text-[var(--exile-color-text-tertiary)]" />
-            <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5" :class="pendingSet ? 'bg-[rgba(201,162,90,0.16)] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-tertiary)]'"><span class="font-bold">②</span>狙う MOD を選ぶ (無ければ狙わない)</span>
+          <span class="flex items-center gap-1.5 text-xs max-md:w-full max-md:flex-col max-md:items-start">
+            <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5" :class="!pendingSet ? 'bg-[rgba(201,162,90,0.16)] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-signal-up)]'"><Icon v-if="pendingSet" name="check" class="size-3.5" /><span v-else class="font-bold">①</span>棚から打つ物を持つ</span>
+            <Icon name="chevron-right" class="size-3.5 text-[var(--exile-color-text-tertiary)] max-md:hidden" />
+            <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5" :class="pendingSet ? 'bg-[rgba(201,162,90,0.16)] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-tertiary)]'"><span class="font-bold">②</span>狙う MOD を選ぶ (無ければ狙わない)</span>
           </span>
           <!-- 当たりの手の終わり (2026-10-10 オーナー「境目がわかりづらい。当たりで決めた時に完成ボタン」) -->
           <button v-if="!locked && moves.some((m) => m.aim)" type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)]" :title="leftTotal ? `最速完成ルートはここまで。次はハズレルート設定 (未定 ${leftTotal} 形)` : 'ハズレルート設定も全部決めてある'" @click="finishHits"><Icon name="check" class="size-4" />{{ leftTotal ? "最速完成ルートは完成 → ハズレルート設定へ" : "完成 (外れも決めた)" }}</button>

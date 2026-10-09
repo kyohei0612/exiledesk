@@ -430,9 +430,8 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
             <div class="flex flex-col gap-1">
               <button v-for="o in outs" :key="keyOfShape(o)" type="button" class="flex items-center gap-3 rounded-md bg-white/[0.03] px-3 py-1.5 text-left transition hover:bg-white/[0.07]" @click="choose(o)">
                 <span class="w-12 shrink-0 text-right text-xs tabular-nums text-[var(--exile-color-text-tertiary)]">{{ pct(o.p) }}</span>
-                <span class="font-medium">{{ o.label }}</span>
-                <span class="text-xs text-[var(--exile-color-text-secondary)]">{{ isDone(o) ? "揃う" : shapeText(o) }}</span>
-                <span v-if="!isDone(o)" class="ml-auto text-xs" :class="policy[keyOfShape(o)] ? 'text-[var(--exile-color-text-tertiary)]' : 'text-[var(--exile-color-signal-warn)]'">{{ policy[keyOfShape(o)] ? "決めた" : "未定" }}</span>
+                <span class="min-w-0 flex-1"><span class="block font-medium">{{ o.label }}</span><span class="block text-xs text-[var(--exile-color-text-secondary)]">{{ isDone(o) ? "揃う" : shapeText(o) }}</span></span>
+                <span v-if="!isDone(o)" class="ml-auto shrink-0 whitespace-nowrap text-xs" :class="policy[keyOfShape(o)] ? 'text-[var(--exile-color-text-tertiary)]' : 'text-[var(--exile-color-signal-warn)]'">{{ policy[keyOfShape(o)] ? "決めた" : "未定" }}</span>
                 <Icon v-else name="check" class="ml-auto size-4 text-[var(--exile-color-signal-up)]" />
               </button>
             </div>
