@@ -620,6 +620,17 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       } else {
         // 高貴・冒涜は狙いの側に空きが無ければ、先にその側の外れを消す (戻った手で、外れが残ったまま埋まっていることがある)
         const ts = p.target ? sideOf(p.target.modId) : null;
+        // 両側の狙い (プレかサフィのどれか) の高貴: どの側にも空きが無ければ、外れのある側を消してから打つ (外れが多い側を先に)。
+        // 片側に空きがあれば、そのまま打つ (空いている側にしか付かない)。2026-10-09 オーナー「どれか 1 つで次へ、高貴でも同じようにルートにならん？」
+        const anySides = p.target ? [...new Set(membersOf(p.target).map((a) => sideOf(a.modId)))] : [];
+        if (p.kind === "exalt" && anySides.length > 1 && !anySides.some((x) => room(item, x))) {
+          const sd = [...anySides].sort((a, b) => junkOn(item, b).length - junkOn(item, a).length).find((x) => junkOn(item, x).length);
+          if (sd) {
+            e = annulOn(sd);
+            if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
+            continue;
+          }
+        }
         // 状況「打つ前に狙いの側がハズレで埋まっている」の反応 (選んだ時だけ。下の組み込みの消去より先)
         if (p.on?.pre_full && ts && !room(item, ts) && junkOn(item, ts).length) {
           const at = i;
@@ -638,7 +649,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
           continue;
         }
         // 増強も同じ (変成の外れが狙いの側に付いた時、そのまま増強すると反対の側にしか付かない。2026-10-07 オーナー「付かなかったら消去で増強やん、1 手目から」)
-        if ((p.kind === "exalt" || p.kind === "desecrate" || (p.kind === "augment" && membersOf(p.target!).length === 1)) && ts && !room(item, ts) && junkOn(item, ts).length) {
+        if ((p.kind === "exalt" || p.kind === "desecrate" || (p.kind === "augment" && membersOf(p.target!).length === 1)) && anySides.length < 2 && ts && !room(item, ts) && junkOn(item, ts).length) {
           e = annulOn(ts);
           if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
           continue;

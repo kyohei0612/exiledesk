@@ -69,4 +69,21 @@ describe("両側の狙いと分かれる道", () => {
     // 消去でカオスの当たりが消えたらカオスへ戻る (固定済みのベースを買い直さない)
     expect(r!.bases).toBeLessThan(1.2);
   });
+
+  it("高貴でも両側のどれか 1 つで道が分かれる: 空きがある間は打ち、埋まったら外れを消して打つ (2026-10-09)", async () => {
+    const data = await loadPatch();
+    const EXP = S("exalt", "exalt_perfect");
+    const any = { mods: [{ modId: R + "IncreasedMana", minTierIndex: 0 }, { modId: R + "AllResistances", minTierIndex: 0 }], need: 1, side: "any" as const };
+    const r2: PlayRecipe = { v: 2, moves: [{ use: EXP.key, aim: any, branch: { prefix: "end", suffix: "end" } }] };
+    const pattern = compilePlay(r2, [EXP, AN_L])!;
+    expect(pattern[0]!.spam).toBeUndefined();
+    expect(pattern[0]!.onMiss).toBe("redo");
+    const t2: RecipeTarget[] = [{ modId: R + "IncreasedCastSpeed", minTierIndex: 4, method: "fracture" }, { ...any.mods[0]!, alts: [any.mods[1]!] }];
+    const spec = { data, base: "Mnemonic Ring", itemLevel: 82, runs: 40, price: () => 1, seed: 7, whiteBasePrice: 0, maxSteps: 20_000, targets: t2, pattern, fractureStart: { kind: "bought" as const, price: 1 } };
+    const r = await runRecipe(spec);
+    expect(r!.pDone).toBeGreaterThan(0.95);
+    // 当たった側はプレとサフィの両方がある
+    const sides = new Set(Array.from({ length: 30 }, (_, k) => runRecipeOnce(spec, k)).filter((o) => o.done).flatMap((o) => (o.hits ?? []).filter((id) => any.mods.some((a) => a.modId === id)).map((id) => data.mods.get(id)?.type)));
+    expect(sides.has("prefix") && sides.has("suffix")).toBe(true);
+  });
 });

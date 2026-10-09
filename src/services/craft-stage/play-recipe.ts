@@ -24,8 +24,9 @@ export interface PlayAim {
    */
   need: number;
   /**
-   * any = プレ・サフィどちらでも (カオスで回す時だけ。2026-10-10 MazBro の指輪「T1 の最大マナ量・マナ回復・レアリティ・全耐性のどれか」)。
-   * 外れの形は決めず、消去で外れを 1 つまで減らしてカオスを続ける (動画の「annul down to one affix, chaos spam」)
+   * any = プレ・サフィどちらでも (2026-10-10 MazBro の指輪「T1 の最大マナ量・マナ回復・レアリティ・全耐性のどれか」)。
+   * 外れの形は決めず、カオスは消去で外れを 1 つまで減らして続ける (動画の「annul down to one affix, chaos spam」)。
+   * 高貴 (2026-10-09 から) は空きがある間は打ち続け、どの側も埋まったら外れのある側を消してから打つ。当たった側で道が分かれる (branch)
    */
   side: "prefix" | "suffix" | "any";
 }
@@ -162,7 +163,8 @@ export function compilePlay(recipe: PlayRecipe, sets: readonly PatternSet[]): Co
       onMiss: m.aim?.side === "any" ? "redo" : m.aim ? "restart" : "next",
       play: true,
       ...(gNeed > 0 ? { gNeed } : {}),
-      ...(m.aim?.side === "any" ? { spam: true } : {}),
+      // 打つ前に外れを 1 つまで消す (annul down to one affix) のはカオスだけ。両側の高貴は空きが無くなった時だけ消す (recipe-sim)
+      ...(m.aim?.side === "any" && x.kind === "chaos" ? { spam: true } : {}),
       ...(m.branch ? { branch: { prefix: m.branch.prefix === "end" ? recipe.moves.length : m.branch.prefix, suffix: m.branch.suffix === "end" ? recipe.moves.length : m.branch.suffix } } : {}),
       ...(m.next != null ? { next: m.next === "end" ? recipe.moves.length : m.next } : {}),
       ...(Object.keys(policy).length ? { policy } : {}),

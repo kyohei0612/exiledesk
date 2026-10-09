@@ -5,7 +5,7 @@
   ティア選びたいなら MOD 名クリックして展開できる今の形。MOD は 1 か所管理だからそこから取得するように」。
   一覧は「このベースに付く MOD」と同じ modListFor ([[mod-list.ts]]) の普通の MOD。チェックで候補にする (段は届く一番上)、
   名前を押すと段の表で「この段以上」を選べる。候補は同じ側だけ (1 つ目を選ぶと反対側は選べない)。
-  あるいはの普通の MOD は反対の側も選べて、選ぶと付け方がカオススパムになる (2026-10-09)。
+  あるいはの普通の MOD は反対の側も選べる (高貴ガチャ・カオススパムは「プレかサフィのどれか」で付いた側で道が分かれる。冒涜の予定ならカオススパムに替える。2026-10-09)。
 
   altFor を渡すと ② のその手順の「あるいは」を選ぶ (2026-10-05 オーナー「選んだ MOD の所にプラスマーク付けといて、そこで選ぶと
   その MOD あるいはの扱いに」)。一覧はその MOD と同じ種類 (普通 / 冒涜) の同じ側、本体は外せない (段は変えられる)
@@ -82,9 +82,9 @@ function setCandidate(modId: string, idx: number | null): void {
     if (modId === h.modId) { if (idx != null) s.simTargets.value = s.simTargets.value.map((t) => (t === h ? { ...t, minTierIndex: idx } : t)); return; }
     const alts = (h.alts ?? []).filter((a) => a.modId !== modId);
     const at = idx;
-    // 反対の側を足す時は付け方をカオススパムに (同じ候補のまとまりのコピーも)
+    // 反対の側を足す時、両側にできない付け方 (冒涜) ならカオススパムに (同じ候補のまとまりのコピーも)。高貴ガチャ・カオススパムはそのまま
     const side = s.data.value?.mods.get(modId)?.type === "suffix" ? "suffix" : "prefix";
-    const toChaos = at != null && side !== hostSide.value && h.method !== "chaos";
+    const toChaos = at != null && side !== hostSide.value && h.method === "desecrate";
     const sameGroup = (t: typeof h): boolean => t === h || !!t.alts?.some((a) => a.modId === h.modId);
     s.simTargets.value = s.simTargets.value.map((t) => (t === h ? { ...t, alts: at == null ? alts : [...alts, { modId, minTierIndex: at }], ...(toChaos ? { method: "chaos" as const } : {}) } : toChaos && sameGroup(t) ? { ...t, method: "chaos" as const } : t));
     return;
@@ -176,14 +176,14 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
           <b v-else class="text-sm text-emerald-100">① フラクチャーの候補を選ぶ</b>
           <span v-if="host" class="flex flex-wrap items-center gap-1.5 opacity-90">元の MOD とチェックした物のうち
             <button v-for="n in Math.min(3, candidates.length)" :key="n" type="button" class="min-w-7 rounded-lg px-2 py-0.5 font-bold max-md:min-h-10" :class="wantN === n ? 'bg-amber-500/30 text-amber-50 ring-1 ring-amber-400/70' : 'border border-white/20'" @click="wantN = n">{{ n }}</button>
-            つ付けば当たり (どの順番でもいい) · {{ host.method === "chaos" ? "カオススパム (両側から選べる)" : canChaos ? "反対の側を選ぶとカオススパムになる" : "同じ側だけ" }}</span>
+            つ付けば当たり (どの順番でもいい) · {{ canChaos ? "プレかサフィのどれか (付いた側で道が分かれる)" : "同じ側だけ" }}</span>
           <span v-else class="opacity-60">{{ s.item.value?.baseJa }} · チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合</span>
           <span class="ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-emerald-100">{{ candidates.length }} 個</span>
           <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-1 font-bold text-emerald-100" @click="decide">決定</button>
         </div>
         <div class="grid min-h-0 flex-1 grid-cols-2 max-md:grid-cols-1 gap-4 overflow-auto px-4 py-3">
           <div v-for="col in columns" :key="col.side" :class="lockedSide && lockedSide !== col.side ? 'opacity-35' : ''">
-            <p class="mb-1 font-bold">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }} 系統</span><span v-if="lockedSide && lockedSide !== col.side" class="ml-2 font-normal text-amber-300">候補と違う側は選べない</span><span v-else-if="host && canChaos && host.method !== 'chaos' && col.side !== hostSide" class="ml-2 font-normal text-amber-300">選ぶとカオススパムになる</span></p>
+            <p class="mb-1 font-bold">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }} 系統</span><span v-if="lockedSide && lockedSide !== col.side" class="ml-2 font-normal text-amber-300">候補と違う側は選べない</span><span v-else-if="host && canChaos && host.method === 'desecrate' && col.side !== hostSide" class="ml-2 font-normal text-amber-300">選ぶとカオススパムになる (冒涜は片側だけ)</span></p>
             <div v-for="r in col.items" :key="r.id" class="mb-1">
               <!-- あるいはを選ぶ時は、元の MOD とほかの手順の MOD はグレー (2026-10-05 オーナー「＋を押したらその MOD はグレーアウトで、それ以外から探させる」) -->
               <div class="flex items-center gap-2 rounded px-2 py-1" :title="whyBlocked(r)" :class="isHost(r) || usedElsewhere(r) ? 'bg-white/[0.02] opacity-35' : pickedOf(r) ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.03] hover:bg-white/[0.06]'">

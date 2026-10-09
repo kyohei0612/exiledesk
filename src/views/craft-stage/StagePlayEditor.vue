@@ -61,8 +61,9 @@ const aimOpts = computed<AimOpt[]>(() => {
   const step = x && x.kind === "exalt" && x.omens.includes(GREATER) ? 2 : 1;
   const onlySide: "prefix" | "suffix" | null = x?.omens.some((o) => /^OmenofSinistral/.test(o)) ? "prefix" : x?.omens.some((o) => /^OmenofDextral/.test(o)) ? "suffix" : null;
   const ts = craftStage.simTargets.value.filter((t) => t.method !== "fracture");
-  // プレとサフィにまたがる「どれか」(2 の段で選んだカオススパム) は、両側のどれか 1 つ (付いた側でルートが分かれる)
-  if (x?.kind === "chaos" && !onlySide) {
+  // プレとサフィにまたがる「どれか」は、両側のどれか 1 つ (付いた側でルートが分かれる)。カオスと高貴 (2026-10-09 オーナー「高貴でも設定する時あるでしょ」)。
+  // 偉大 (2 つ付く) は数え方が変わるので出さない
+  if ((x?.kind === "chaos" || (x?.kind === "exalt" && step === 1)) && !onlySide) {
     for (const t of ts) {
       const ms = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
       if (new Set(ms.map((m) => sideOfId(m.modId))).size < 2) continue;
