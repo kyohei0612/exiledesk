@@ -538,7 +538,8 @@ watch([leftTotal, () => props.name], ([n, name]) => { if (name) craftStage.simPl
           </template>
         </li>
       </ol>
-      <button v-if="!locked" type="button" class="flex h-8 items-center justify-center gap-1.5 rounded-md border px-3 transition" :class="sel == null ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.08)] text-[var(--exile-color-text-primary)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" @click="sel = null"><Icon name="plus" class="size-4" />手を足す</button>
+      <div v-show="sel != null" id="play-shapes" class="border-t border-white/[0.06] pt-3"></div>
+      <button v-if="!locked && sel == null" type="button" class="flex h-8 items-center justify-center gap-1.5 rounded-md border px-3 transition" :class="sel == null ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.08)] text-[var(--exile-color-text-primary)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" @click="sel = null"><Icon name="plus" class="size-4" />手を足す</button>
       <button v-if="leftTotal && sel == null && moves.some((m) => m.aim)" type="button" class="flex items-start gap-2 rounded-md bg-[rgba(224,201,122,0.08)] px-3 py-2 text-left text-xs text-[var(--exile-color-signal-warn)] ring-1 ring-[rgba(224,201,122,0.25)] transition hover:bg-[rgba(224,201,122,0.14)]" title="決めないと、外れた時は回す時に新しいベースで最初から" @click="goFill">
         <Icon name="arrow-right" class="mt-px size-4 shrink-0" />
         <span>ハズレルート設定へ · <b>未定 {{ leftTotal }} 形</b></span>
@@ -557,7 +558,11 @@ watch([leftTotal, () => props.name], ([n, name]) => { if (name) craftStage.simPl
       <template v-if="sel == null">
         <header class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <h4 class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ shownKs.length + 1 }} 手目<span v-if="hasRoutes" class="ml-2 text-xs font-normal text-[var(--exile-color-text-secondary)]">{{ ROUTE_JA[route] }}</span></h4>
-          <span class="text-xs text-[var(--exile-color-text-secondary)]">{{ pendingSet ? "狙う MOD を選ぶ" : "棚から打つ物を選ぶ" }}</span>
+          <span class="flex items-center gap-1.5 text-xs">
+            <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5" :class="!pendingSet ? 'bg-[rgba(201,162,90,0.16)] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-signal-up)]'"><Icon v-if="pendingSet" name="check" class="size-3.5" /><span v-else class="font-bold">①</span>棚から打つ物を持つ</span>
+            <Icon name="chevron-right" class="size-3.5 text-[var(--exile-color-text-tertiary)]" />
+            <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5" :class="pendingSet ? 'bg-[rgba(201,162,90,0.16)] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-tertiary)]'"><span class="font-bold">②</span>狙う MOD を選ぶ (無ければ狙わない)</span>
+          </span>
           <!-- 当たりの手の終わり (2026-10-10 オーナー「境目がわかりづらい。当たりで決めた時に完成ボタン」) -->
           <button v-if="!locked && moves.some((m) => m.aim)" type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)]" :title="leftTotal ? `最速完成ルートはここまで。次はハズレルート設定 (未定 ${leftTotal} 形)` : 'ハズレルート設定も全部決めてある'" @click="finishHits"><Icon name="check" class="size-4" />{{ leftTotal ? "最速完成ルートは完成 → ハズレルート設定へ" : "完成 (外れも決めた)" }}</button>
         </header>
