@@ -67,13 +67,19 @@ const aimOpts = computed<AimOpt[]>(() => {
       out.push({ key: "any:" + ms.map((m) => m.modId).sort().join(","), label: `どれか 1 つ · プレかサフィ (${ms.map((m) => shortName(m.modId)).join(" / ")})`, mods: ms, side: "any", need: 1 });
     }
   }
+  const seen = new Set<string>();
   for (const t of ts) {
     const mods = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
     if (new Set(mods.map((m) => sideOfId(m.modId))).size > 1) continue;
     const side = sideOfId(t.modId);
     if (onlySide && side !== onlySide) continue;
+    // 同じ候補の写し (2 の段の「どれか N つ」) は 1 つの札に。欲しい数 = 写しの数 (3 耐性のどれか 2 つなら 2)
+    const sig = mods.map((m) => m.modId).sort().join(",");
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    const wanted = Math.min(mods.length, ts.filter((y) => [y.modId, ...(y.alts ?? []).map((a) => a.modId)].sort().join(",") === sig).length);
     const before = doneBefore(mods.map((m) => m.modId));
-    const rest = mods.length - before;
+    const rest = wanted - before;
     if (rest <= 0) continue;
     const n = Math.min(step, rest);
     const label = mods.length > 1
