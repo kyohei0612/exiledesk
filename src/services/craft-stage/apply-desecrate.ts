@@ -5,8 +5,8 @@
  *   1. 骨 (desecrate / desecrate_ancient / desecrate_altered。骨の種類は装備で決まる): **レア**に未発現の冒涜 MOD を 1 つ付ける。
  *      どちらの側に付くかは、その側で出うる MOD の重みの合計で決まる (計算機の desecrateAnyOutcomes と同じ割合)。
  *      左右のネクロマンシーのお告げで側を指せる。両側が埋まっていれば、その側の固定済み以外を 1 つ差し替える (計算機のオーナー判断)
- *   2. 発現 (reveal:N): 3 つの候補から N 番目を選ぶ。候補は普通 + 冒涜 (+ 変質した鎖骨なら異界) の置き場から、系統の被りを除き、
- *      重みで重複無しに 3 つ (計算機の sim と同じ)。深淵の残響のお告げがあれば 1 回引き直せる (reveal:N:reroll = 引き直した方)
+ *   2. 発現 (reveal:N): 3 つの候補から N 番目を選ぶ。冒涜専用 MOD (+ 変質した鎖骨なら異界) を 1〜3 個 (実測の割合、DESECRATED_COUNT_RATES)、
+ *      残りを普通の MOD から重みで、系統の被りを除いて 3 つ。深淵の残響のお告げがあれば 1 回引き直せる (reveal:N:reroll = 引き直した方)
  *   - 冒涜の MOD はアイテムに 1 つまで。古びた骨は段の下限 40 (ANCIENT_BONE_FLOOR)
  *   - 王 / 君主 / 黒血のお告げ: 候補をその勢力の冒涜の MOD だけに (MOD ごとに等しく。エンジンの desecrationBossProbability)。防具には使えない
  */
@@ -89,22 +89,73 @@ function pool(data: PatchData, item: StageItem, side: StageSide, floor: number, 
 export const unrevealedOf = (item: StageItem): StageMod | undefined => allMods(item).find((m) => m.unrevealed);
 
 /**
- * 発現の候補 3 つ (と、深淵の残響で引き直した 3 つ)。同じ rng から順に引くので、画面で見せる候補と手順の結果が一致する
+ * 発現の候補 3 つのうち、冒涜専用 MOD (勢力の MOD・異界) が何個か (2026-10-09)。
+ * 実測: Reddit r/PathOfExile2「I desecrated more than 500 rings」(u/Civil-Bee-f) — 指輪・アイテムレベル 65 以上・保存された鎖骨・お告げ無しで
+ * 563 回発現: 0 個 0 回 / 1 個 480 (85.3%) / 2 個 78 (13.9%) / 3 個 5 (0.9%)。プレとサフィで差は無く、専用 MOD の数にもよらない、並び順はばらばら。
+ * Krakenbul「0.3 の最初から知られている」。Craft of Exile は 80 / 15 / 5 (出どころの書き込み無し) なので実測の方を使う。
+ * 前は普通の MOD と専用 MOD (上流の仮の重み 2500) を混ぜて重みで引いていて、専用 0 個が 2〜3 割出ていた
+ */
+export const DESECRATED_COUNT_RATES = [0.853, 0.139, 0.009] as const;
+
+/** 系統が被る候補を外す (同じ発現に同じ系統は 2 つ出ない) */
+const famsOf = (c: Candidate): string[] => [...(c.mod.families ?? [c.mod.family])];
+const notClashing = (rest: Candidate[], c: Candidate): Candidate[] => {
+  const f = new Set(famsOf(c));
+  return rest.filter((x) => x !== c && !famsOf(x).some((y) => f.has(y)));
+};
+
+/**
+ * 発現の候補 3 つ (と、深淵の残響で引き直した 3 つ)。同じ rng から順に引くので、画面で見せる候補と手順の結果が一致する。
+ * 組み方 (勢力のお告げ・腐食のお告げ以外): 専用 MOD の個数を DESECRATED_COUNT_RATES で決め、その数を専用 MOD から (MOD ごとに等しく。重みは
+ * 誰も割り出していない)、残りを普通の MOD から普通の重みで引いて、並びを混ぜる。専用 MOD が出せない (アイテムレベル 65 未満など) 時は 3 つとも普通
  */
 export function revealOffers(data: PatchData, item: StageItem, rng: () => number): { first: StageMod[]; reroll: StageMod[] } {
   const hidden = unrevealedOf(item);
   if (!hidden?.unrevealed) return { first: [], reroll: [] };
   const { floor, altered, faction, plain } = hidden.unrevealed;
-  const draw = (): StageMod[] => {
+  const toMod = (c: Candidate): StageMod => {
+    const t = pickWeighted(c.tiers, rng)!;
+    return { ...makeStageMod(c.mod, c.side, t.index, rng), desecrated: true };
+  };
+  // 勢力のお告げ (その勢力の専用だけ) と腐食のお告げ (普通だけ) は 1 つの置き場から重みで
+  const drawOne = (): StageMod[] => {
     let rest = pool(data, item, hidden.side, floor, altered, faction, hidden, plain);
     const out: StageMod[] = [];
     for (let i = 0; i < OFFERS && rest.length; i++) {
       const c = pickWeighted(rest, rng)!;
-      rest = rest.filter((x) => x !== c);
-      const t = pickWeighted(c.tiers, rng)!;
-      out.push({ ...makeStageMod(c.mod, c.side, t.index, rng), desecrated: true });
+      rest = notClashing(rest, c);
+      out.push(toMod(c));
     }
     return out;
+  };
+  const draw = (): StageMod[] => {
+    if (faction || plain) return drawOne();
+    const all = pool(data, item, hidden.side, floor, altered, null, hidden);
+    const isExclusive = (c: Candidate) => c.mod.source === "desecrated" || (item.cls.pools.otherworldly?.[hidden.side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(c.mod.id);
+    let ex = all.filter(isExclusive).map((c) => ({ ...c, w: 1 }));
+    let normal = all.filter((c) => !isExclusive(c));
+    if (!ex.length) return drawOne();
+    const u = rng();
+    const want = u < DESECRATED_COUNT_RATES[0] ? 1 : u < DESECRATED_COUNT_RATES[0] + DESECRATED_COUNT_RATES[1] ? 2 : 3;
+    const picked: Candidate[] = [];
+    for (let i = 0; i < want && ex.length; i++) {
+      const c = pickWeighted(ex, rng)!;
+      picked.push(c);
+      ex = notClashing(ex, c);
+      normal = notClashing(normal, c);
+    }
+    while (picked.length < OFFERS && (normal.length || ex.length)) {
+      const c = normal.length ? pickWeighted(normal, rng)! : pickWeighted(ex, rng)!;
+      picked.push(c);
+      normal = notClashing(normal, c);
+      ex = notClashing(ex, c);
+    }
+    // 並びはばらばら (実測で専用 MOD の行に偏りは無い)
+    for (let i = picked.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [picked[i], picked[j]] = [picked[j]!, picked[i]!];
+    }
+    return picked.map(toMod);
   };
   const first = draw();
   return { first, reroll: draw() };
