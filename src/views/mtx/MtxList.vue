@@ -50,38 +50,39 @@ const counts = computed(() => {
   const yes = all.filter(usableInPoe2).length;
   return { all: all.length, yes, no: all.length - yes };
 });
-const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60" : "border border-white/15 hover:bg-white/5");
 const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
 </script>
 
 <template>
   <!-- 幅は窓いっぱい (2026-09-29 オーナー「縮こまってる。最大化時と縮小時を合わせて」)。列の数は窓の幅で変わる -->
-  <div class="w-full text-[12px]">
+  <div class="h-full flex flex-col overflow-hidden text-[12px]">
     <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03) -->
     <TabBar art="mtx" title="スキン" />
-    <div class="px-6 py-4">
+    <!-- 中身は 1 つの枠に (2026-10-10 UI 見直し。他の画面と同じ形) -->
+    <div class="flex-1 min-h-0 flex p-4">
+    <div class="g-panel flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 py-2">
     <p class="mb-3 text-[12px] text-[var(--exile-color-text-secondary)]">PoE1 で使えるスキン・エフェクト・ペットなどが PoE2 でも使えるか (ゲームのデータから。パッチで変わることがある)。カードを押すと poe2db で見た目を確かめられる。</p>
     <p v-if="error" class="text-rose-300">{{ error }}</p>
     <p v-else-if="!data" class="py-16 text-center opacity-50">読んでいます…</p>
     <template v-else>
-      <!-- 絞り込み (枠は共通の .card) -->
-      <section class="card mb-4 space-y-3 p-4">
+      <!-- 絞り込み。切り替えは全部ゲームのタブ (2026-10-10 UI 見直し: 緑の丸・金の丸・ボタンの絵が混ざっていた) -->
+      <section class="mb-4 space-y-3">
         <div class="flex flex-wrap items-center gap-2">
-          <button type="button" class="rounded-full px-4 py-1.5" :class="poe2 === 'yes' ? 'bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/60' : 'border border-white/15 hover:bg-white/5'" @click="poe2 = 'yes'">PoE2 でも使える <span class="ml-1 opacity-60">{{ counts.yes }}</span></button>
-          <button type="button" class="rounded-full px-4 py-1.5" :class="poe2 === 'no' ? 'bg-rose-500/20 text-rose-100 ring-1 ring-rose-400/60' : 'border border-white/15 hover:bg-white/5'" @click="poe2 = 'no'">PoE1 だけ <span class="ml-1 opacity-60">{{ counts.no }}</span></button>
-          <button type="button" class="rounded-full px-4 py-1.5" :class="chip(poe2 === 'all')" @click="poe2 = 'all'">全部 <span class="ml-1 opacity-60">{{ counts.all }}</span></button>
+          <button type="button" class="g-tab" :class="poe2 === 'yes' ? 'on' : ''" @click="poe2 = 'yes'">PoE2 でも使える <span class="ml-1 opacity-60">{{ counts.yes }}</span></button>
+          <button type="button" class="g-tab" :class="poe2 === 'no' ? 'on' : ''" @click="poe2 = 'no'">PoE1 だけ <span class="ml-1 opacity-60">{{ counts.no }}</span></button>
+          <button type="button" class="g-tab" :class="poe2 === 'all' ? 'on' : ''" @click="poe2 = 'all'">全部 <span class="ml-1 opacity-60">{{ counts.all }}</span></button>
           <span class="ml-auto flex items-center gap-2">
-            <span class="flex overflow-hidden rounded-lg border border-white/15">
-              <button type="button" class="px-3 py-1" :class="order === 'new' ? 'bg-amber-500/25 text-amber-100' : 'hover:bg-white/5'" @click="order = 'new'">新しい順</button>
-              <button type="button" class="px-3 py-1" :class="order === 'old' ? 'bg-amber-500/25 text-amber-100' : 'hover:bg-white/5'" @click="order = 'old'">古い順</button>
+            <span class="flex gap-1">
+              <button type="button" class="g-tab !min-h-[30px] !px-4 !text-[12px]" :class="order === 'new' ? 'on' : ''" @click="order = 'new'">新しい順</button>
+              <button type="button" class="g-tab !min-h-[30px] !px-4 !text-[12px]" :class="order === 'old' ? 'on' : ''" @click="order = 'old'">古い順</button>
             </span>
             <input v-model="query" type="search" placeholder="名前・シリーズで探す (例: 忘却)" class="w-64 rounded-lg border border-white/15 bg-black/30 px-3 py-1.5" />
           </span>
         </div>
         <!-- 分類 (ゲームの分け方) -->
-        <div class="flex flex-wrap gap-1.5 border-t border-white/10 pt-3">
-          <button type="button" class="rounded-lg px-3 py-1" :class="chip(cat === 'all')" @click="cat = 'all'">すべて</button>
-          <button v-for="k in cats" :key="k.c" type="button" class="rounded-lg px-3 py-1" :class="chip(cat === k.c)" @click="cat = k.c">{{ k.name }} <span class="opacity-50">{{ k.count }}</span></button>
+        <div class="flex flex-wrap gap-1">
+          <button type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="cat === 'all' ? 'on' : ''" @click="cat = 'all'">すべて</button>
+          <button v-for="k in cats" :key="k.c" type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="cat === k.c ? 'on' : ''" @click="cat = k.c">{{ k.name }} <span class="opacity-50">{{ k.count }}</span></button>
         </div>
       </section>
 
@@ -117,6 +118,7 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
         <button type="button" class="btn btn-outline" @click="shown += PAGE">もっと見る (残り {{ list.length - shown }} 件)</button>
       </div>
     </template>
+    </div>
     </div>
   </div>
 </template>
