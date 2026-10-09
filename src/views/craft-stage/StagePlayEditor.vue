@@ -563,7 +563,7 @@ watch([leftTotal, () => props.name], ([n, name]) => { if (name) craftStage.simPl
             <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5" :class="pendingSet ? 'bg-[rgba(201,162,90,0.16)] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-tertiary)]'"><span class="font-bold">②</span>狙う MOD を選ぶ (無ければ狙わない)</span>
           </span>
           <!-- 当たりの手の終わり (2026-10-10 オーナー「境目がわかりづらい。当たりで決めた時に完成ボタン」) -->
-          <button v-if="!locked && moves.some((m) => m.aim)" type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)]" :title="leftTotal ? `最速完成ルートはここまで。次はハズレルート設定 (未定 ${leftTotal} 形)` : 'ハズレルート設定も全部決めてある'" @click="finishHits"><Icon name="check" class="size-4" />{{ leftTotal ? "最速完成ルートは完成 → ハズレルート設定へ" : "完成 (外れも決めた)" }}</button>
+          <button v-if="!locked && moves.some((m) => m.aim)" type="button" class="max-md:hidden ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)]" :title="leftTotal ? `最速完成ルートはここまで。次はハズレルート設定 (未定 ${leftTotal} 形)` : 'ハズレルート設定も全部決めてある'" @click="finishHits"><Icon name="check" class="size-4" />{{ leftTotal ? "最速完成ルートは完成 → ハズレルート設定へ" : "完成 (外れも決めた)" }}</button>
         </header>
         <div class="flex items-start gap-5 max-md:flex-col">
           <div class="shrink-0 max-md:mx-auto">
@@ -595,6 +595,14 @@ watch([leftTotal, () => props.name], ([n, name]) => { if (name) craftStage.simPl
               </template>
             </CurrencyShelf>
             <div v-if="pendingSet" class="h-44 md:hidden"></div>
+            <!-- スマホ: 「完成」は見出し (上) ではなく画面の下に固定 (2026-10-09 オーナー「わざわざ設定するのに上にいかないといけない動線はだるい」) -->
+            <template v-if="!pendingSet && !locked && moves.some((m) => m.aim)">
+              <div class="h-20 md:hidden"></div>
+              <div class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-[var(--exile-color-border-subtle)] bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)] backdrop-blur md:hidden">
+                <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--exile-color-text-secondary)]"><b class="text-amber-100">{{ shownKs.length + 1 }} 手目</b> · 棚から打つ物を持つ</span>
+                <button type="button" class="inline-flex min-h-11 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-4 text-[13px] font-semibold text-black" @click="finishHits"><Icon name="check" class="size-4" />完成</button>
+              </div>
+            </template>
           </div>
         </div>
       </template>

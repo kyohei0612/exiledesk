@@ -773,6 +773,9 @@ const help = computed(() => !!open.value.help);
 /** 白ベースの値段を入れて「進む」を押した */
 const whiteOk = ref(false);
 const modsDone = ref(false);
+/** スマホ: 狙う MOD の設定 (完成図) を下から開いている */
+const targetsSheet = ref(false);
+watch(modsDone, (v) => { if (v) targetsSheet.value = false; });
 const fracDone = ref(false);
 const orderDone = ref(false);
 /** 4 最安値スタートを決めた (フラクチャーがある時だけの工程) */
@@ -1440,8 +1443,14 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:hidden" title="狙う MOD を決めて、次のベースの値段へ (1 つでも進める)" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <!-- スマホ: 一覧の下で「T○ 以上」を押しても上の完成図は見えないので、狙いの数と「決めた →」を画面の下に固定 (2026-10-08 レビュー) -->
+        <!-- 2026-10-09 オーナー「わざわざ設定するのに上にいかないといけない動線はだるい」: 帯から完成図 (段・付け方・＋・×) をその場で開いて設定する -->
+        <div v-if="phone && rows.length && !modsDone && targetsSheet" class="fixed inset-0 z-[149] bg-black/60" @click="targetsSheet = false"></div>
+        <div v-if="phone && rows.length && !modsDone && targetsSheet" class="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-[150] max-h-[70vh] overflow-y-auto overflow-x-hidden border-t border-[var(--exile-color-border-brass)] [&_select]:max-w-full bg-[#120f0c] px-3 pb-3 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+          <p class="g-brush mb-1 text-[17px] tracking-[0.12em] text-[var(--exile-color-text-title)]">狙う MOD の設定</p>
+          <StageTargetSummary editable />
+        </div>
         <div v-if="phone && rows.length && !modsDone" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-[var(--exile-color-border-subtle)] bg-[#14110d]/95 px-3 backdrop-blur py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
-          <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">狙い {{ rows.length }} 個</b><span class="opacity-60"> · 足したら決める</span></span>
+          <button type="button" class="g-plain flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-left" @click="targetsSheet = !targetsSheet"><b class="shrink-0 text-amber-100">狙い {{ rows.length }} 個</b><span class="truncate text-[12px] text-[var(--exile-color-text-link)]">{{ targetsSheet ? "閉じる ▾" : "設定を開く ▴" }}</span></button>
           <button type="button" class="min-h-11 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 px-4" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <div v-if="phone && rows.length && !modsDone" class="h-20"></div>

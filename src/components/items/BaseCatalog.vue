@@ -8,6 +8,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { baseCatalog, CATALOG_CLS_JA, CATALOG_ROWS } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
+import { gemArt } from "../../services/craft-stage/skill-art";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
 const props = defineProps<{ data: PatchData | null; selected?: string | null; extras?: boolean; note?: (en: string) => string; height?: string }>();
@@ -63,11 +64,13 @@ const families = computed((): Array<{ ja: string; fams: Family[] }> =>
     return acc;
   }, []).map((r) => ({ ja: r.names.length > 1 ? (r.names.every((n) => ARMOUR.has(n)) ? "防具" : r.names.join("・")) : r.ja, fams: r.fams })));
 const ARMOUR = new Set(["手袋", "靴", "鎧", "兜"]);
+/** ベースの絵 (スキルジェムはジェムの絵) */
+const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
 /** 部位のタイルの絵 = その部位の一番高いレベルのベースの絵 (ゲーム内の絵) */
 function famArt(f: Family): string | null {
   const cs = new Set(f.variants.map((v) => v.cls));
   const bs = all.value.filter((b) => cs.has(b.cls)).sort((a, b) => b.lvl - a.lvl);
-  for (const b of bs) { const a = baseArt(b.en); if (a) return a; }
+  for (const b of bs) { const a = artOf(b.en); if (a) return a; }
   return null;
 }
 /** スマホで選んだ部位 (属性の札を出す)。1 種類しかない部位はそのまま種類を選ぶ */
@@ -136,7 +139,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
         :class="b.en === selected ? 'bg-[rgba(163,52,42,0.35)]' : 'bg-black/50 hover:bg-white/[0.06]'"
         @click="emit('pick', b.en)"
       >
-        <img v-if="baseArt(b.en)" :src="baseArt(b.en)!" alt="" loading="lazy" class="h-12 w-12 shrink-0 object-contain" draggable="false" />
+        <img v-if="artOf(b.en)" :src="artOf(b.en)!" alt="" loading="lazy" class="h-12 w-12 shrink-0 object-contain" draggable="false" />
         <span v-else class="h-12 w-12 shrink-0" />
         <span class="min-w-0 flex-1 max-md:w-full">
           <span class="flex items-baseline gap-2 max-md:flex-col max-md:items-center max-md:gap-0">

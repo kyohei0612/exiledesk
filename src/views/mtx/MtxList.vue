@@ -93,8 +93,7 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
           :key="x.i"
           type="button"
           class="card group flex items-center gap-4 p-4 text-left transition hover:bg-white/[0.06]"
-          :class="usableInPoe2(x) ? 'border-emerald-500/25 hover:border-emerald-400/60' : 'hover:border-white/30'"
-          title="poe2db で見た目を見る"
+                    title="poe2db で見た目を見る"
           @click="open(x)"
         >
           <span class="grid h-36 w-36 shrink-0 place-items-center rounded-xl bg-black/40">
