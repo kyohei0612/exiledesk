@@ -96,7 +96,7 @@ const ledgerApi = useGemLedger(g, attempts);
 </script>
 
 <template>
-  <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="@container block px-5 py-2 text-[var(--exile-color-text-primary)]">
     <!-- 画面名は上の帯 (ヴァールの天秤 > ジェムコラプトの賭け) に出しているので title は渡さない (2026-10-03) -->
     <ScreenHeader :error="g.marketError.value ? `poe2scout 取得失敗: ${g.marketError.value}` : null">
       レベル 21 · 品質 23% のジェムを手に入れる 4 つの経路 (自作 / レベル 21 を買って賭ける / 品質 23% を買って賭ける / 完成品を買う) を「1 回あたりの期待収支」で比べます。

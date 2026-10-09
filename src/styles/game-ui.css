@@ -184,6 +184,38 @@
   background-origin: border-box;
   background-clip: border-box;
 }
+/* 1 つの枠 (.g-panel) の中のカードは枠を描かず、上にゲームの区切りの絵だけ (2026-10-10 UI 見直し: 枠の中に枠が何重にも並んでいた。
+   オーナー「1 枠でいい、別々で動くんかと思う」)。1px の線はちらつくので絵の区切り (feedback-no-flicker-lines) */
+.g-panel :is(div, section, aside, article, details, form):is([class*="rounded-xl"], [class*="rounded-2xl"]):is([class*="border-white/"], [class*="border-[var(--exile-color-border-"]):not(.g-plain, .g-panel, .g-item),
+.g-panel :is(div, section, article):is([class~="card"]):not(.g-plain) {
+  border: 0;
+  border-image: none;
+  border-radius: 0;
+  background: none;
+  position: relative;
+  padding-top: 6px;
+}
+.g-panel :is(div, section, aside, article, details, form):is([class*="rounded-xl"], [class*="rounded-2xl"]):is([class*="border-white/"], [class*="border-[var(--exile-color-border-"]):not(.g-plain, .g-panel, .g-item)::before,
+.g-panel :is(div, section, article):is([class~="card"]):not(.g-plain)::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  background: url("/ui-art/divider.webp") center / 100% 100% no-repeat;
+  opacity: 0.7;
+  pointer-events: none;
+}
+/* 表の行の 1px の区切り線 (薄い色の物) は消して 1 行おきの薄い地に (2026-10-10 全画面。拡大でちらつく: feedback-no-flicker-lines)。
+   真鍮の線 (合計・日付の見出しなど意味のある区切り) はそのまま */
+tr:is([class*="border-[var(--exile-color-border-subtle)]"], [class*="border-white/"]):is([class*="border-t"], [class*="border-b"]) {
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+tbody > tr:is([class*="border-[var(--exile-color-border-subtle)]"], [class*="border-white/"]):nth-child(even) {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.025));
+}
 /* 金色の決めるボタン (bg が accent-focus のボタン) = ゲームの赤いボタン */
 button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain) {
   border-style: solid;

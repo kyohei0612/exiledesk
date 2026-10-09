@@ -47,7 +47,7 @@ function open(seg: Seg, ev: MouseEvent): void {
     ><template v-for="(g, i) in segs" :key="i"
       ><span
         v-if="g.tag && keywordOf(g.tag)"
-        class="underline decoration-dotted underline-offset-[3px] cursor-help"
+        class="g-hover-name"
         @mouseenter="(ev) => open(g, ev)"
         @mouseleave="hoverStack.leave()"
         >{{ g.s }}</span

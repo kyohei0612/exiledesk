@@ -191,14 +191,14 @@ function toneClass(tone: string): string {
               <tr>
                 <!-- 一番左が期待値。見出しを押すとその条件で並べ替える (オーナー指示 2026-09-17) -->
                 <th class="text-left font-normal pb-1 whitespace-nowrap">
-                  <button type="button" class="underline decoration-dotted" :class="sortHead('ev')" :title="`${EV_ATTEMPTS} 回回した時の手残り (期待値) の高い順に並べる。売値は実際に売れた値段の中央値 (21 / 23% を買う経路の仕入れ値は今の最安値)、素材はジェムコラプトの賭けと同じ (相場と取引所の繰り上げ単価の安い方)、前提の確率は既定値です`" @click="sortBy = 'ev'">
+                  <button type="button" class="g-hover-name" :class="sortHead('ev')" :title="`${EV_ATTEMPTS} 回回した時の手残り (期待値) の高い順に並べる。売値は実際に売れた値段の中央値 (21 / 23% を買う経路の仕入れ値は今の最安値)、素材はジェムコラプトの賭けと同じ (相場と取引所の繰り上げ単価の安い方)、前提の確率は既定値です`" @click="sortBy = 'ev'">
                     期待値{{ sortBy === "ev" ? " ▼" : "" }}
                   </button>
                 </th>
                 <th class="text-left font-normal pb-1 pl-3">ジェム</th>
                 <th class="text-left font-normal pb-1 pl-3">使用状況</th>
                 <th v-for="k in SALE_KEYS" :key="k" class="text-left font-normal pb-1 pl-3">
-                  <button type="button" class="underline decoration-dotted" :class="sortHead(k)" :title="`${SALE_KEY_LABEL[k]} の今の最安値が高い順に並べる`" @click="sortBy = k">
+                  <button type="button" class="g-hover-name" :class="sortHead(k)" :title="`${SALE_KEY_LABEL[k]} の今の最安値が高い順に並べる`" @click="sortBy = k">
                     {{ SALE_KEY_LABEL[k] }}{{ sortBy === k ? " ▼" : "" }}
                   </button>
                 </th>

@@ -90,7 +90,7 @@ function onRefetch(): void {
 </script>
 
 <template>
-  <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="@container block px-5 py-2 text-[var(--exile-color-text-primary)]">
     <!-- 画面名は上の帯 (ヴァールの天秤 > アドニアの賭け) に出しているので title は渡さない (2026-10-03) -->
     <ScreenHeader :error="o.marketError.value ? `poe2scout 取得失敗: ${o.marketError.value}` : null">
       吸収のワンドをインフューザーで品質 20% より上 (最大 30%) に育て、可能性のお告げ + 可能性のオーブでアドニアのエゴにする収支を、完成品 1 個あたりの実質コストで判定します (20% を超えた分だけコラプトの危険があり、コラプトしたら失敗)。

@@ -110,6 +110,8 @@ export function setDisplayCurrency(c: DisplayChoice): void {
 export function fmtNum(n: number | null | undefined, digits?: number): string {
   if (n == null || !Number.isFinite(n)) return "—";
   if (digits != null) return n.toFixed(digits);
+  // ちょうど 0 は「0」(「0.000 高貴」と出ていた。2026-10-10 UI 見直し)
+  if (n === 0) return "0";
   const abs = Math.abs(n);
   return abs >= 100 ? n.toFixed(0) : abs >= 10 ? n.toFixed(1) : abs >= 1 ? n.toFixed(2) : n.toFixed(3);
 }

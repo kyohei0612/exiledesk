@@ -148,7 +148,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
 
 <template>
   <!-- 余白はヴァールの天秤の他の 3 画面と同じ (px-6 py-4。2026-10-03 にそろえた) -->
-  <section class="px-6 py-4 @container">
+  <section class="px-5 py-2 @container">
     <!-- 他の画面と同じ見出し (2026-09-21 オーナー指示「UI とか UX 周り、統一感持たせて」)。
          一括取得のボタンはこの画面の主役なので下のカードの操作に残す。画面名は上の帯に出しているので title は渡さない (2026-10-03) -->
     <ScreenHeader>
