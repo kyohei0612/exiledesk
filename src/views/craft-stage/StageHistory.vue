@@ -2,7 +2,7 @@
   StageHistory.vue — クラフトステージの工程履歴 (2026-09-27、ADR-001)
 
   1 手ずつ下に積み上がる (POE2Tube の「積み上げ図解」と同じ見え方)。手の番号・カレンシー・付いた / 消えた MOD・レアリティの変化・累計の費用。
-  打てなかった手は理由を薄く出す。
+  打てなかった手は理由を薄く出す。手を押すとその手を打った直後に戻る (craftStage.goTo、この後に打てば先の手は捨てる)。
 -->
 <script setup lang="ts">
 import { craftStage, iconOf } from "../../state/craft-stage";
@@ -16,6 +16,8 @@ const chancePct = (p: number): string => (p >= 0.1 ? `${(p * 100).toFixed(0)}%` 
 /** ルーンをはめた手の中身 (結果 JSON の augment_change、run-plan.ts)。置き換えた物は壊れて戻らない (augment-rules.ts) */
 type AugChange = { socket: number; put: { ja: string }; replaced: { ja: string } | null; replaced_goes: string | null };
 const augOf = (out: object): AugChange | null => (out as { augment_change?: AugChange }).augment_change ?? null;
+/** 押すとその手の直後に戻れるか (最後の手と再生中は戻らない) */
+const canGo = (index: number): boolean => !craftStage.replay.value && craftStage.log.value[craftStage.log.value.length - 1]?.out.index !== index;
 </script>
 
 <template>
@@ -24,7 +26,11 @@ const augOf = (out: object): AugChange | null => (out as { augment_change?: AugC
       v-for="s in craftStage.log.value"
       :key="s.out.index"
       class="flex items-start gap-2 rounded-lg border px-2 py-1.5 text-[12px]"
-      :class="s.out.applied ? 'border-white/10 bg-black/20' : 'border-white/5 bg-black/10 opacity-50'"
+      :class="[s.out.applied ? 'border-white/10 bg-black/20' : 'border-white/5 bg-black/10 opacity-50', canGo(s.out.index) ? 'cursor-pointer hover:border-white/30 hover:bg-white/5' : '']"
+      :title="canGo(s.out.index) ? 'この手を打った直後に戻す (この後に打つと先の手は消える)' : undefined"
+      :tabindex="canGo(s.out.index) ? 0 : undefined"
+      @click="canGo(s.out.index) && craftStage.goTo(s.out.index)"
+      @keydown.enter="canGo(s.out.index) && craftStage.goTo(s.out.index)"
     >
       <span class="w-6 shrink-0 text-right tabular-nums opacity-50">{{ s.out.index }}</span>
       <img v-if="iconOf(s.out.currency)" :src="iconOf(s.out.currency)" alt="" class="h-5 w-5 shrink-0 object-contain" />

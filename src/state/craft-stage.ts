@@ -545,6 +545,14 @@ export const craftStage = {
     const ate = last.out.omen ? last.out.omen.split("+") : [];
     omens.value = [...new Set([...omens.value, ...ate])];
   },
+  /**
+   * 履歴の手 (out.index) を打った直後に戻す (2026-10-09 オーナー「工程クリックしてもそこの工程に戻れない」)。
+   * 1 手戻すを後ろから繰り返すだけ (食ったお告げの掛け直し・次の乱数の引き直しも同じ)。この後に打てば、その先の手は捨てる
+   */
+  goTo(index: number): void {
+    if (replay.value || !log.value.some((s) => s.out.index === index)) return;
+    while (log.value.length && log.value[log.value.length - 1]!.out.index !== index) craftStage.undo();
+  },
   hold(key: string | null): void {
     held.value = key;
   },
