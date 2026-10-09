@@ -34,14 +34,16 @@ const CLASS_TAGS = {
   Focus: ["focus", "armour"],
   Shield: ["shield", "armour"],
   Buckler: ["shield", "armour"],
-  Wand: ["wand", "one_hand_weapon", "weapon"],
-  Sceptre: ["sceptre", "one_hand_weapon", "weapon"],
+  // ワンド・セプター・スタッフに weapon、クォータースタッフに staff を足すと、攻撃武器用 / キャスター用の冒涜が混ざる。
+  // 普通の MOD の検算は通ってしまうので、冒涜は scripts/audit-poe2db.mjs で poe2db と照らす (2026-10-09)
+  Wand: ["wand", "one_hand_weapon"],
+  Sceptre: ["sceptre", "one_hand_weapon"],
   "One Hand Mace": ["mace", "one_hand_weapon", "weapon"],
   "Two Hand Mace": ["mace", "two_hand_weapon", "weapon"],
   Bow: ["bow", "two_hand_weapon", "weapon", "ranged"],
   Crossbow: ["crossbow", "two_hand_weapon", "weapon", "ranged"],
-  Staff: ["staff", "two_hand_weapon", "weapon"],
-  Warstaff: ["warstaff", "staff", "two_hand_weapon", "weapon"],
+  Staff: ["staff", "two_hand_weapon"],
+  Warstaff: ["warstaff", "two_hand_weapon", "weapon"],
   Spear: ["spear", "one_hand_weapon", "weapon"],
   Talisman: ["talisman", "two_hand_weapon", "weapon"],
 };

@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-05",
+ "generated": "2026-10-09",
  "familyTexts": {
   "Amulets": {
    "IncreasedAccuracy": [
@@ -3238,28 +3238,15 @@
    ]
   },
   "Quarterstaves": {
-   "WeaponDamageTypePrefix": [
-    "(50-68)% increased [Chaos] Damage",
-    "(50-68)% increased [Cold] Damage",
-    "(50-68)% increased [Fire] Damage",
-    "(50-68)% increased [Lightning] Damage",
-    "(50-68)% increased [Spell] [Physical] Damage"
-   ],
-   "IncreasedMana": [
-    "+(20-28) to maximum Mana"
-   ],
    "ColdDamage": [
-    "Adds (2-3) to (4-6) [Cold|Cold] Damage",
-    "[Gain] (26-30)% of Damage as Extra [Cold] Damage"
+    "Adds (2-3) to (4-6) [Cold|Cold] Damage"
    ],
    "FireDamage": [
-    "Adds (2-4) to (5-7) [Fire|Fire] Damage",
-    "[Gain] (26-30)% of Damage as Extra [Fire] Damage"
+    "Adds (2-4) to (5-7) [Fire|Fire] Damage"
    ],
    "LightningDamage": [
     "Adds (1-19) to (310-358) [Lightning|Lightning] Damage",
-    "Adds 1 to (7-10) [Lightning|Lightning] Damage",
-    "[Gain] (26-30)% of Damage as Extra [Lightning] Damage"
+    "Adds 1 to (7-10) [Lightning|Lightning] Damage"
    ],
    "PhysicalDamage": [
     "Adds (2-3) to (5-7) [Physical|Physical] Damage"
@@ -3273,43 +3260,14 @@
    "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
     "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
-   "SpellDamageAndMana": [
-    "(30-38)% increased [Spell] Damage\n+(34-40) to maximum Mana"
-   ],
-   "WeaponCasterDamagePrefix": [
-    "(148-178)% increased [Spell] Damage with [Spell|Spells] that cost Life",
-    "(4-5)% increased [Spell] Damage per 100 maximum Mana",
-    "(4-5)% increased [Spell] Damage per 100 Maximum Life"
-   ],
    "IncreasedWeaponElementalDamagePercent": [
     "(34-47)% increased [ElementalDamage|Elemental] Damage with [Attack|Attacks]"
    ],
    "Dexterity": [
     "+(5-8) to [Dexterity|Dexterity]"
    ],
-   "FreezeDamageIncrease": [
-    "(31-40)% increased [Freeze|Freeze] Buildup"
-   ],
    "IncreaseSocketedGemLevel": [
-    "+1 to Level of all [Chaos|Chaos] [Spell|Spell] Skills",
-    "+(3-4) to Level of all [Chaos|Chaos] [Spell|Spell] Skills",
-    "+1 to Level of all [Cold|Cold] [Spell|Spell] Skills",
-    "+(3-4) to Level of all [Cold|Cold] [Spell|Spell] Skills",
-    "+1 to Level of all [Fire|Fire] [Spell|Spell] Skills",
-    "+(3-4) to Level of all [Fire|Fire] [Spell|Spell] Skills",
-    "+1 to Level of all [Lightning|Lightning] [Spell|Spell] Skills",
-    "+(3-4) to Level of all [Lightning|Lightning] [Spell|Spell] Skills",
-    "+2 to Level of all [Melee|Melee] Skills",
-    "+1 to Level of all [Physical|Physical] [Spell|Spell] Skills",
-    "+(3-4) to Level of all [Physical|Physical] [Spell|Spell] Skills",
-    "+2 to Level of all [Spell|Spell] Skills",
-    "+(5-6) to Level of all [Spell|Spell] Skills"
-   ],
-   "IgniteChanceIncrease": [
-    "(51-60)% increased [Flammability] [BuffMagnitude|Magnitude]"
-   ],
-   "IncreasedCastSpeed": [
-    "(14-19)% increased Cast Speed"
+    "+2 to Level of all [Melee|Melee] Skills"
    ],
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
@@ -3323,12 +3281,8 @@
    "LifeLeech": [
     "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
-   "LightRadiusAndManaRegeneration": [
-    "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
-   ],
    "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
+    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]"
    ],
    "CriticalStrikeChanceIncrease": [
     "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
@@ -3345,17 +3299,8 @@
    "ManaLeech": [
     "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
-   "ManaRegeneration": [
-    "(15-29)% increased Mana Regeneration Rate"
-   ],
    "LocalAttributeRequirements": [
     "15% reduced [Attributes|Attribute] Requirements"
-   ],
-   "ShockChanceIncrease": [
-    "(51-60)% increased chance to [Shock]"
-   ],
-   "SpellCriticalStrikeChanceIncrease": [
-    "(40-49)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
    "StunDamageIncrease": [
     "Causes (21-30)% increased [Stun|Stun] Buildup"
@@ -3381,18 +3326,6 @@
    "LightningDamagePercentagePrefix": [
     "(86-99)% increased [Lightning] Damage\n(14-23)% increased [BuffMagnitude|Magnitude] of [Shock|Shock] you inflict"
    ],
-   "ChaosDamage": [
-    "[Gain] (40-50)% of Damage as Extra [Chaos] Damage"
-   ],
-   "BaseSpirit": [
-    "+(35-50) to [Spirit|Spirit]"
-   ],
-   "ElementalInfusion": [
-    "+(1-2) to maximum number of [ElementalInfusion|Elemental Infusions]"
-   ],
-   "AilmentEffect": [
-    "(40-64)% increased [BuffMagnitude|Magnitude] of [DamagingAilments|Damaging Ailments] you inflict"
-   ],
    "SpiritReservationEfficiency": [
     "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
    ],
@@ -3408,27 +3341,6 @@
    "RecoverResourceOnExpendingCombo": [
     "Recover (4-6)% of Maximum Mana when you expend at least 10 [Combo]",
     "Recover (6-12)% of Maximum Life when you expend at least 10 [Combo]"
-   ],
-   "ArchonDuration": [
-    "(25-35)% increased [Archon] Buff duration"
-   ],
-   "AdditionalBlock": [
-    "+(20-25)% to [Block] chance"
-   ],
-   "SkillLifeCost": [
-    "(25-35)% of [Spell] Mana Cost [StatConversion|Converted] to Life Cost"
-   ],
-   "ArchonDelayRecovery": [
-    "[Archon] recovery period expires (25-35)% faster"
-   ],
-   "MaximumPuppeteerStacks": [
-    "+(3-4) maximum stacks of [PuppetMaster|Puppet Master]"
-   ],
-   "CastSpeedOnLowLife": [
-    "(30-40)% increased Cast Speed when on [LowLife|Low Life]"
-   ],
-   "SpellsFire2AdditionalProjectileChance": [
-    "(25-35)% chance for [Spell] Skills to fire 2 additional [Projectile|Projectiles]"
    ]
   },
   "Quivers": {
@@ -3657,15 +3569,6 @@
     "Adds (1-2) to (4-5) [Physical|Physical] Damage",
     "[Allies|Allies] in your [Presence|Presence] deal (1-2) to (3-4) added [Attack|Attack] [Physical|Physical] Damage"
    ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
-   ],
    "LocalIncreasedSpiritAndMana": [
     "(10-14)% increased [Spirit|Spirit]\n+(17-20) to maximum Mana"
    ],
@@ -3695,38 +3598,8 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
-   "LifeGainedFromEnemyDeath": [
-    "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
-   ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
-   ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "[Allies] in your [Presence] have (10-14)% increased [CriticalDamageBonus|Critical Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance",
-    "[Allies|Allies] in your [Presence|Presence] have (10-14)% increased [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed",
-    "[Allies|Allies] in your [Presence|Presence] have (5-7)% increased [Attack|Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
-   "ManaGainedFromEnemyDeath": [
-    "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(10-19)% increased Mana Regeneration Rate"
@@ -3736,6 +3609,15 @@
    ],
    "AllResistances": [
     "[Allies|Allies] in your [Presence|Presence] have +(3-5)% to all [ElementalDamage|Elemental] [Resistances|Resistances]"
+   ],
+   "CriticalStrikeMultiplier": [
+    "[Allies] in your [Presence] have (10-14)% increased [CriticalDamageBonus|Critical Damage Bonus]"
+   ],
+   "CriticalStrikeChanceIncrease": [
+    "[Allies|Allies] in your [Presence|Presence] have (10-14)% increased [Critical|Critical Hit] Chance"
+   ],
+   "IncreasedAttackSpeed": [
+    "[Allies|Allies] in your [Presence|Presence] have (5-7)% increased [Attack|Attack] Speed"
    ],
    "IncreasedCastSpeed": [
     "[Allies|Allies] in your [Presence|Presence] have (5-8)% increased Cast Speed"
@@ -3751,30 +3633,6 @@
    ],
    "Strength": [
     "+(5-8) to [Strength|Strength]"
-   ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ]
   },
   "Shields_str": {
@@ -4243,15 +4101,6 @@
    "PhysicalDamage": [
     "Adds (2-3) to (5-7) [Physical|Physical] Damage"
    ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
-   ],
    "SpellDamageAndMana": [
     "(30-38)% increased [Spell] Damage\n+(34-40) to maximum Mana"
    ],
@@ -4299,36 +4148,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(15-29)% increased Mana Regeneration Rate"
@@ -4342,20 +4169,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(40-49)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "ChaosDamage": [
     "[Gain] (40-50)% of Damage as Extra [Chaos] Damage"
@@ -4368,15 +4183,6 @@
    ],
    "AilmentEffect": [
     "(40-64)% increased [BuffMagnitude|Magnitude] of [DamagingAilments|Damaging Ailments] you inflict"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "ArchonDuration": [
     "(25-35)% increased [Archon] Buff duration"
@@ -4409,15 +4215,6 @@
    ],
    "PhysicalDamage": [
     "Adds (2-3) to (5-7) [Physical|Physical] Damage"
-   ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
    "SpellDamageAndMana": [
     "(30-38)% increased [Spell] Damage\n+(34-40) to maximum Mana"
@@ -4452,36 +4249,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(15-29)% increased Mana Regeneration Rate"
@@ -4492,20 +4267,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(40-49)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "ChaosDamage": [
     "[Gain] (40-50)% of Damage as Extra [Chaos] Damage"
@@ -4518,15 +4281,6 @@
    ],
    "AilmentEffect": [
     "(40-64)% increased [BuffMagnitude|Magnitude] of [DamagingAilments|Damaging Ailments] you inflict"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "ArchonDuration": [
     "(25-35)% increased [Archon] Buff duration"
@@ -4559,15 +4313,6 @@
    ],
    "PhysicalDamage": [
     "Adds (2-3) to (5-7) [Physical|Physical] Damage"
-   ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
    "SpellDamageAndMana": [
     "(30-38)% increased [Spell] Damage\n+(34-40) to maximum Mana"
@@ -4605,36 +4350,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(15-29)% increased Mana Regeneration Rate"
@@ -4645,20 +4368,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(40-49)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "ChaosDamage": [
     "[Gain] (40-50)% of Damage as Extra [Chaos] Damage"
@@ -4671,15 +4382,6 @@
    ],
    "AilmentEffect": [
     "(40-64)% increased [BuffMagnitude|Magnitude] of [DamagingAilments|Damaging Ailments] you inflict"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "ArchonDuration": [
     "(25-35)% increased [Archon] Buff duration"
@@ -4712,15 +4414,6 @@
    ],
    "PhysicalDamage": [
     "Adds (2-3) to (5-7) [Physical|Physical] Damage"
-   ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
    "SpellDamageAndMana": [
     "(30-38)% increased [Spell] Damage\n+(34-40) to maximum Mana"
@@ -4758,36 +4451,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(15-29)% increased Mana Regeneration Rate"
@@ -4798,20 +4469,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(40-49)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "ChaosDamage": [
     "[Gain] (40-50)% of Damage as Extra [Chaos] Damage"
@@ -4824,15 +4483,6 @@
    ],
    "AilmentEffect": [
     "(40-64)% increased [BuffMagnitude|Magnitude] of [DamagingAilments|Damaging Ailments] you inflict"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "ArchonDuration": [
     "(25-35)% increased [Archon] Buff duration"
@@ -4865,15 +4515,6 @@
    ],
    "PhysicalDamage": [
     "Adds (2-3) to (5-7) [Physical|Physical] Damage"
-   ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
    "SpellDamageAndMana": [
     "(30-38)% increased [Spell] Damage\n+(34-40) to maximum Mana"
@@ -4908,36 +4549,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(15-29)% increased Mana Regeneration Rate"
@@ -4951,20 +4570,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(40-49)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "ChaosDamage": [
     "[Gain] (40-50)% of Damage as Extra [Chaos] Damage"
@@ -4977,15 +4584,6 @@
    ],
    "AilmentEffect": [
     "(40-64)% increased [BuffMagnitude|Magnitude] of [DamagingAilments|Damaging Ailments] you inflict"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "ArchonDuration": [
     "(25-35)% increased [Archon] Buff duration"
@@ -5015,15 +4613,6 @@
    ],
    "PhysicalDamage": [
     "Adds (2-3) to (5-7) [Physical|Physical] Damage"
-   ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
    "WeaponDamageTypePrefix": [
     "(50-68)% increased [Spell] [Physical] Damage"
@@ -5061,36 +4650,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(15-29)% increased Mana Regeneration Rate"
@@ -5101,20 +4668,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(40-49)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(15-21)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "ChaosDamage": [
     "[Gain] (40-50)% of Damage as Extra [Chaos] Damage"
@@ -5127,15 +4682,6 @@
    ],
    "AilmentEffect": [
     "(40-64)% increased [BuffMagnitude|Magnitude] of [DamagingAilments|Damaging Ailments] you inflict"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "ArchonDuration": [
     "(25-35)% increased [Archon] Buff duration"
@@ -5283,15 +4829,6 @@
    "PhysicalDamage": [
     "Adds (1-2) to (4-5) [Physical|Physical] Damage"
    ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
-   ],
    "SpellDamageAndMana": [
     "(15-19)% increased [Spell] Damage\n+(17-20) to maximum Mana"
    ],
@@ -5333,36 +4870,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(10-19)% increased Mana Regeneration Rate"
@@ -5376,20 +4891,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(27-33)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "MinionDamage": [
     "[Minion|Minions] deal (55-64)% increased Damage\n(55-64)% increased [Spell] Damage"
@@ -5399,15 +4902,6 @@
    ],
    "MartialWeaponGainedDamage": [
     "[Gain] (21-25)% of Damage as Extra [Physical] Damage"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "HinderedEnemyTakeIncreasedDamage": [
     "Enemies Hindered by you take (4-7)% increased [ElementalDamage|Elemental] Damage",
@@ -5435,15 +4929,6 @@
    "PhysicalDamage": [
     "Adds (1-2) to (4-5) [Physical|Physical] Damage"
    ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
-   ],
    "SpellDamageAndMana": [
     "(15-19)% increased [Spell] Damage\n+(17-20) to maximum Mana"
    ],
@@ -5475,36 +4960,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(10-19)% increased Mana Regeneration Rate"
@@ -5515,20 +4978,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(27-33)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "MinionDamage": [
     "[Minion|Minions] deal (55-64)% increased Damage\n(55-64)% increased [Spell] Damage"
@@ -5538,15 +4989,6 @@
    ],
    "MartialWeaponGainedDamage": [
     "[Gain] (21-25)% of Damage as Extra [Physical] Damage"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "HinderedEnemyTakeIncreasedDamage": [
     "Enemies Hindered by you take (4-7)% increased [ElementalDamage|Elemental] Damage",
@@ -5573,15 +5015,6 @@
    ],
    "PhysicalDamage": [
     "Adds (1-2) to (4-5) [Physical|Physical] Damage"
-   ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
    "SpellDamageAndMana": [
     "(15-19)% increased [Spell] Damage\n+(17-20) to maximum Mana"
@@ -5617,36 +5050,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(10-19)% increased Mana Regeneration Rate"
@@ -5657,20 +5068,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(27-33)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "MinionDamage": [
     "[Minion|Minions] deal (55-64)% increased Damage\n(55-64)% increased [Spell] Damage"
@@ -5680,15 +5079,6 @@
    ],
    "MartialWeaponGainedDamage": [
     "[Gain] (21-25)% of Damage as Extra [Physical] Damage"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "HinderedEnemyTakeIncreasedDamage": [
     "Enemies Hindered by you take (4-7)% increased [ElementalDamage|Elemental] Damage",
@@ -5715,15 +5105,6 @@
    ],
    "PhysicalDamage": [
     "Adds (1-2) to (4-5) [Physical|Physical] Damage"
-   ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
    "SpellDamageAndMana": [
     "(15-19)% increased [Spell] Damage\n+(17-20) to maximum Mana"
@@ -5759,36 +5140,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(10-19)% increased Mana Regeneration Rate"
@@ -5799,20 +5158,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(27-33)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "MinionDamage": [
     "[Minion|Minions] deal (55-64)% increased Damage\n(55-64)% increased [Spell] Damage"
@@ -5822,15 +5169,6 @@
    ],
    "MartialWeaponGainedDamage": [
     "[Gain] (21-25)% of Damage as Extra [Physical] Damage"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "HinderedEnemyTakeIncreasedDamage": [
     "Enemies Hindered by you take (4-7)% increased [ElementalDamage|Elemental] Damage",
@@ -5857,15 +5195,6 @@
    ],
    "PhysicalDamage": [
     "Adds (1-2) to (4-5) [Physical|Physical] Damage"
-   ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
    "SpellDamageAndMana": [
     "(15-19)% increased [Spell] Damage\n+(17-20) to maximum Mana"
@@ -5898,36 +5227,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(10-19)% increased Mana Regeneration Rate"
@@ -5941,20 +5248,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(27-33)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "MinionDamage": [
     "[Minion|Minions] deal (55-64)% increased Damage\n(55-64)% increased [Spell] Damage"
@@ -5964,15 +5259,6 @@
    ],
    "MartialWeaponGainedDamage": [
     "[Gain] (21-25)% of Damage as Extra [Physical] Damage"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "HinderedEnemyTakeIncreasedDamage": [
     "Enemies Hindered by you take (4-7)% increased [ElementalDamage|Elemental] Damage",
@@ -5996,15 +5282,6 @@
    ],
    "PhysicalDamage": [
     "Adds (1-2) to (4-5) [Physical|Physical] Damage"
-   ],
-   "IncreasedAccuracy": [
-    "+(11-32) to [Accuracy|Accuracy] Rating"
-   ],
-   "LocalPhysicalDamagePercent": [
-    "(40-49)% increased [Physical] Damage"
-   ],
-   "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
-    "(15-19)% increased [Physical] Damage\n+(16-20) to [Accuracy|Accuracy] Rating"
    ],
    "WeaponDamageTypePrefix": [
     "(74-89)% increased [ElementalDamage|Elemental Damage]"
@@ -6040,36 +5317,14 @@
    "Intelligence": [
     "+(5-8) to [Intelligence|Intelligence]"
    ],
-   "LifeGainPerTarget": [
-    "Grants 2 Life per Enemy [Hit]"
-   ],
    "LifeGainedFromEnemyDeath": [
     "Gain (4-6) Life per enemy killed"
-   ],
-   "LifeLeech": [
-    "[LifeLeech|Leeches] (6-6.9)% of [Physical|Physical] Damage as Life"
    ],
    "LightRadiusAndManaRegeneration": [
     "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate"
    ],
-   "CriticalStrikeMultiplier": [
-    "+(10-11)% to [CriticalDamageBonus|Critical Damage Bonus]",
-    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
-   ],
-   "CriticalStrikeChanceIncrease": [
-    "+(1.01-1.5)% to [Critical|Critical Hit] Chance"
-   ],
-   "IncreasedAttackSpeed": [
-    "(5-7)% increased [Attack] Speed"
-   ],
-   "LightRadiusAndAccuracy": [
-    "5% increased [LightRadius|Light Radius]\n+(10-20) to [Accuracy|Accuracy] Rating"
-   ],
    "ManaGainedFromEnemyDeath": [
     "Gain (2-3) Mana per enemy killed"
-   ],
-   "ManaLeech": [
-    "[ManaLeech|Leeches] (5-5.9)% of [Physical|Physical] Damage as Mana"
    ],
    "ManaRegeneration": [
     "(10-19)% increased Mana Regeneration Rate"
@@ -6080,20 +5335,8 @@
    "SpellCriticalStrikeChanceIncrease": [
     "(27-33)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ],
-   "StunDamageIncrease": [
-    "Causes (21-30)% increased [Stun|Stun] Buildup"
-   ],
-   "StunDurationIncreasePercent": [
-    "(11-13)% increased [Stun|Stun] Duration"
-   ],
-   "FireResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance"
-   ],
-   "ColdResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance"
-   ],
-   "LightningResistancePenetration": [
-    "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance"
+   "CriticalStrikeMultiplier": [
+    "(10-14)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]"
    ],
    "MinionDamage": [
     "[Minion|Minions] deal (55-64)% increased Damage\n(55-64)% increased [Spell] Damage"
@@ -6103,15 +5346,6 @@
    ],
    "MartialWeaponGainedDamage": [
     "[Gain] (21-25)% of Damage as Extra [Physical] Damage"
-   ],
-   "SpiritReservationEfficiency": [
-    "(5-10)% increased [Spirit] [Reservation] [Efficiency]"
-   ],
-   "ManaCostEfficiency": [
-    "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]"
-   ],
-   "LifeCost": [
-    "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs"
    ],
    "HinderedEnemyTakeIncreasedDamage": [
     "Enemies Hindered by you take (4-7)% increased [ElementalDamage|Elemental] Damage",
@@ -67127,9 +66361,11 @@
     ],
     "suffixes": [
      "Quarterstaves/Special_genesis_tree_caster_CastSpeedDuringManaFlaskEffect",
+     "Quarterstaves/Special_genesis_tree_caster_ManaRegeneration",
      "Quarterstaves/Special_genesis_tree_caster_RemnantGrantEffectTwiceChance",
      "Quarterstaves/Special_genesis_tree_caster_RemnantPickupRadius",
      "Quarterstaves/Special_genesis_tree_caster_SpellAreaOfEffect",
+     "Quarterstaves/Special_genesis_tree_caster_SpellCriticalStrikeChanceIncrease",
      "Quarterstaves/Special_genesis_tree_minion_MinionAreaOfEffect",
      "Quarterstaves/Special_genesis_tree_minion_MinionAttackSpeedAndCastSpeed",
      "Quarterstaves/Special_genesis_tree_minion_MinionCriticalStrikeChance",
@@ -67138,24 +66374,6 @@
      "Quarterstaves/Special_genesis_tree_minion_MinionImmobilisationBuildup",
      "Quarterstaves/Special_genesis_tree_minion_MinionMovementSpeed",
      "Quarterstaves/Special_genesis_tree_minion_OfferingDuration"
-    ]
-   },
-   "desecrated": {
-    "prefixes": [
-     "Quarterstaves/ChaosDamage",
-     "Quarterstaves/BaseSpirit",
-     "Quarterstaves/WeaponCasterDamagePrefix",
-     "Quarterstaves/ElementalInfusion",
-     "Quarterstaves/AilmentEffect"
-    ],
-    "suffixes": [
-     "Quarterstaves/ArchonDuration",
-     "Quarterstaves/AdditionalBlock",
-     "Quarterstaves/SkillLifeCost",
-     "Quarterstaves/ArchonDelayRecovery",
-     "Quarterstaves/MaximumPuppeteerStacks",
-     "Quarterstaves/CastSpeedOnLowLife",
-     "Quarterstaves/SpellsFire2AdditionalProjectileChance"
     ]
    },
    "rune": {
@@ -67280,18 +66498,6 @@
      "Sceptres/Special_genesis_tree_minion_MinionImmobilisationBuildup",
      "Sceptres/Special_genesis_tree_minion_MinionMovementSpeed",
      "Sceptres/Special_genesis_tree_minion_OfferingDuration"
-    ]
-   },
-   "desecrated": {
-    "prefixes": [
-     "Sceptres/FireResistancePenetration",
-     "Sceptres/ColdResistancePenetration",
-     "Sceptres/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Sceptres/SpiritReservationEfficiency",
-     "Sceptres/ManaCostEfficiency",
-     "Sceptres/LifeCost"
     ]
    },
    "rune": {
@@ -67531,18 +66737,6 @@
      "Staves/Special_genesis_tree_minion_OfferingDuration"
     ]
    },
-   "desecrated": {
-    "prefixes": [
-     "Staves/FireResistancePenetration",
-     "Staves/ColdResistancePenetration",
-     "Staves/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Staves/SpiritReservationEfficiency",
-     "Staves/ManaCostEfficiency",
-     "Staves/LifeCost"
-    ]
-   },
    "rune": {
     "thruds-might": {
      "prefixes": [
@@ -67587,18 +66781,6 @@
      "Staves_chaos/Special_genesis_tree_minion_MinionImmobilisationBuildup",
      "Staves_chaos/Special_genesis_tree_minion_MinionMovementSpeed",
      "Staves_chaos/Special_genesis_tree_minion_OfferingDuration"
-    ]
-   },
-   "desecrated": {
-    "prefixes": [
-     "Staves_chaos/FireResistancePenetration",
-     "Staves_chaos/ColdResistancePenetration",
-     "Staves_chaos/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Staves_chaos/SpiritReservationEfficiency",
-     "Staves_chaos/ManaCostEfficiency",
-     "Staves_chaos/LifeCost"
     ]
    },
    "rune": {
@@ -67647,18 +66829,6 @@
      "Staves_cold/Special_genesis_tree_minion_OfferingDuration"
     ]
    },
-   "desecrated": {
-    "prefixes": [
-     "Staves_cold/FireResistancePenetration",
-     "Staves_cold/ColdResistancePenetration",
-     "Staves_cold/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Staves_cold/SpiritReservationEfficiency",
-     "Staves_cold/ManaCostEfficiency",
-     "Staves_cold/LifeCost"
-    ]
-   },
    "rune": {
     "thruds-might": {
      "prefixes": [
@@ -67703,18 +66873,6 @@
      "Staves_fire/Special_genesis_tree_minion_MinionImmobilisationBuildup",
      "Staves_fire/Special_genesis_tree_minion_MinionMovementSpeed",
      "Staves_fire/Special_genesis_tree_minion_OfferingDuration"
-    ]
-   },
-   "desecrated": {
-    "prefixes": [
-     "Staves_fire/FireResistancePenetration",
-     "Staves_fire/ColdResistancePenetration",
-     "Staves_fire/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Staves_fire/SpiritReservationEfficiency",
-     "Staves_fire/ManaCostEfficiency",
-     "Staves_fire/LifeCost"
     ]
    },
    "rune": {
@@ -67763,18 +66921,6 @@
      "Staves_lightning/Special_genesis_tree_minion_OfferingDuration"
     ]
    },
-   "desecrated": {
-    "prefixes": [
-     "Staves_lightning/FireResistancePenetration",
-     "Staves_lightning/ColdResistancePenetration",
-     "Staves_lightning/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Staves_lightning/SpiritReservationEfficiency",
-     "Staves_lightning/ManaCostEfficiency",
-     "Staves_lightning/LifeCost"
-    ]
-   },
    "rune": {
     "thruds-might": {
      "prefixes": [
@@ -67819,18 +66965,6 @@
      "Staves_physical/Special_genesis_tree_minion_MinionImmobilisationBuildup",
      "Staves_physical/Special_genesis_tree_minion_MinionMovementSpeed",
      "Staves_physical/Special_genesis_tree_minion_OfferingDuration"
-    ]
-   },
-   "desecrated": {
-    "prefixes": [
-     "Staves_physical/FireResistancePenetration",
-     "Staves_physical/ColdResistancePenetration",
-     "Staves_physical/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Staves_physical/SpiritReservationEfficiency",
-     "Staves_physical/ManaCostEfficiency",
-     "Staves_physical/LifeCost"
     ]
    },
    "rune": {
@@ -67926,18 +67060,6 @@
      "Wands/Special_genesis_tree_minion_OfferingDuration"
     ]
    },
-   "desecrated": {
-    "prefixes": [
-     "Wands/FireResistancePenetration",
-     "Wands/ColdResistancePenetration",
-     "Wands/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Wands/SpiritReservationEfficiency",
-     "Wands/ManaCostEfficiency",
-     "Wands/LifeCost"
-    ]
-   },
    "rune": {
     "thruds-might": {
      "prefixes": [
@@ -67982,18 +67104,6 @@
      "Wands_chaos/Special_genesis_tree_minion_MinionImmobilisationBuildup",
      "Wands_chaos/Special_genesis_tree_minion_MinionMovementSpeed",
      "Wands_chaos/Special_genesis_tree_minion_OfferingDuration"
-    ]
-   },
-   "desecrated": {
-    "prefixes": [
-     "Wands_chaos/FireResistancePenetration",
-     "Wands_chaos/ColdResistancePenetration",
-     "Wands_chaos/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Wands_chaos/SpiritReservationEfficiency",
-     "Wands_chaos/ManaCostEfficiency",
-     "Wands_chaos/LifeCost"
     ]
    },
    "rune": {
@@ -68042,18 +67152,6 @@
      "Wands_cold/Special_genesis_tree_minion_OfferingDuration"
     ]
    },
-   "desecrated": {
-    "prefixes": [
-     "Wands_cold/FireResistancePenetration",
-     "Wands_cold/ColdResistancePenetration",
-     "Wands_cold/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Wands_cold/SpiritReservationEfficiency",
-     "Wands_cold/ManaCostEfficiency",
-     "Wands_cold/LifeCost"
-    ]
-   },
    "rune": {
     "thruds-might": {
      "prefixes": [
@@ -68098,18 +67196,6 @@
      "Wands_fire/Special_genesis_tree_minion_MinionImmobilisationBuildup",
      "Wands_fire/Special_genesis_tree_minion_MinionMovementSpeed",
      "Wands_fire/Special_genesis_tree_minion_OfferingDuration"
-    ]
-   },
-   "desecrated": {
-    "prefixes": [
-     "Wands_fire/FireResistancePenetration",
-     "Wands_fire/ColdResistancePenetration",
-     "Wands_fire/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Wands_fire/SpiritReservationEfficiency",
-     "Wands_fire/ManaCostEfficiency",
-     "Wands_fire/LifeCost"
     ]
    },
    "rune": {
@@ -68158,18 +67244,6 @@
      "Wands_lightning/Special_genesis_tree_minion_OfferingDuration"
     ]
    },
-   "desecrated": {
-    "prefixes": [
-     "Wands_lightning/FireResistancePenetration",
-     "Wands_lightning/ColdResistancePenetration",
-     "Wands_lightning/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Wands_lightning/SpiritReservationEfficiency",
-     "Wands_lightning/ManaCostEfficiency",
-     "Wands_lightning/LifeCost"
-    ]
-   },
    "rune": {
     "thruds-might": {
      "prefixes": [
@@ -68214,18 +67288,6 @@
      "Wands_physical/Special_genesis_tree_minion_MinionImmobilisationBuildup",
      "Wands_physical/Special_genesis_tree_minion_MinionMovementSpeed",
      "Wands_physical/Special_genesis_tree_minion_OfferingDuration"
-    ]
-   },
-   "desecrated": {
-    "prefixes": [
-     "Wands_physical/FireResistancePenetration",
-     "Wands_physical/ColdResistancePenetration",
-     "Wands_physical/LightningResistancePenetration"
-    ],
-    "suffixes": [
-     "Wands_physical/SpiritReservationEfficiency",
-     "Wands_physical/ManaCostEfficiency",
-     "Wands_physical/LifeCost"
     ]
    },
    "rune": {
@@ -176012,430 +175074,6 @@
    ]
   },
   {
-   "id": "Quarterstaves/ChaosDamage",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ChaosDamage",
-   "tags": [
-    "staff",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "chaos_damage",
-    "amanamu_mod",
-    "damage",
-    "chaos"
-   ],
-   "text": "[Gain] (40-50)% of Damage as Extra [Chaos] Damage",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       40,
-       50
-      ]
-     ],
-     "stats": [
-      "non_skill_base_all_damage_%_to_gain_as_chaos"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/BaseSpirit",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "BaseSpirit",
-   "tags": [
-    "staff",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "+(35-50) to [Spirit|Spirit]",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 200,
-     "ranges": [
-      [
-       35,
-       50
-      ]
-     ],
-     "stats": [
-      "base_spirit_from_equipment"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/WeaponCasterDamagePrefix",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "WeaponCasterDamagePrefix",
-   "tags": [
-    "staff",
-    "amanamu_mod",
-    "kurgal_mod",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod",
-    "caster_damage",
-    "resource",
-    "kurgal_mod",
-    "mana",
-    "damage",
-    "caster",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(148-178)% increased [Spell] Damage with [Spell|Spells] that cost Life",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       148,
-       178
-      ]
-     ],
-     "stats": [
-      "spell_damage_+%_with_spells_that_cost_life"
-     ]
-    },
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       4,
-       5
-      ]
-     ],
-     "stats": [
-      "spell_damage_+%_per_100_maximum_mana"
-     ]
-    },
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       4,
-       5
-      ]
-     ],
-     "stats": [
-      "spell_damage_+%_per_100_max_life"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/ElementalInfusion",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ElementalInfusion",
-   "tags": [
-    "staff",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "elemental"
-   ],
-   "text": "+(1-2) to maximum number of [ElementalInfusion|Elemental Infusions]",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       1,
-       2
-      ]
-     ],
-     "stats": [
-      "additional_maximum_infusion_stacks"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/AilmentEffect",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "AilmentEffect",
-   "tags": [
-    "staff",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "ulaman_mod",
-    "ailment"
-   ],
-   "text": "(40-64)% increased [BuffMagnitude|Magnitude] of [DamagingAilments|Damaging Ailments] you inflict",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       40,
-       64
-      ]
-     ],
-     "stats": [
-      "base_damaging_ailment_effect_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/ArchonDuration",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ArchonDuration",
-   "tags": [
-    "staff",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(25-35)% increased [Archon] Buff duration",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       25,
-       35
-      ]
-     ],
-     "stats": [
-      "archon_duration_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/AdditionalBlock",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "AdditionalBlock",
-   "tags": [
-    "staff",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "block",
-    "amanamu_mod"
-   ],
-   "text": "+(20-25)% to [Block] chance",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       20,
-       25
-      ]
-     ],
-     "stats": [
-      "additional_block_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/SkillLifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SkillLifeCost",
-   "tags": [
-    "staff",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "amanamu_mod",
-    "life",
-    "caster"
-   ],
-   "text": "(25-35)% of [Spell] Mana Cost [StatConversion|Converted] to Life Cost",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       25,
-       35
-      ]
-     ],
-     "stats": [
-      "spells_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/ArchonDelayRecovery",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ArchonDelayRecovery",
-   "tags": [
-    "staff",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod"
-   ],
-   "text": "[Archon] recovery period expires (25-35)% faster",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       25,
-       35
-      ]
-     ],
-     "stats": [
-      "archon_delay_expires_x%_faster"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/MaximumPuppeteerStacks",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "MaximumPuppeteerStacks",
-   "tags": [
-    "staff",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "minion"
-   ],
-   "text": "+(3-4) maximum stacks of [PuppetMaster|Puppet Master]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 0,
-     "ranges": [
-      [
-       3,
-       4
-      ]
-     ],
-     "stats": [
-      "max_puppet_master_stacks_+"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/CastSpeedOnLowLife",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "CastSpeedOnLowLife",
-   "tags": [
-    "staff",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "caster_speed",
-    "ulaman_mod",
-    "caster",
-    "speed"
-   ],
-   "text": "(30-40)% increased Cast Speed when on [LowLife|Low Life]",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       30,
-       40
-      ]
-     ],
-     "stats": [
-      "cast_speed_+%_when_on_low_life"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Quarterstaves/SpellsFire2AdditionalProjectileChance",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpellsFire2AdditionalProjectileChance",
-   "tags": [
-    "staff",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "ulaman_mod",
-    "caster"
-   ],
-   "text": "(25-35)% chance for [Spell] Skills to fire 2 additional [Projectile|Projectiles]",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       25,
-       35
-      ]
-     ],
-     "stats": [
-      "spell_skills_fire_2_additional_projectiles_final_chance_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
    "id": "Quarterstaves/Rune_destruction_CriticalModifierEffect",
    "source": "normal",
    "type": "prefix",
@@ -177577,6 +176215,115 @@
    ]
   },
   {
+   "id": "Quarterstaves/Special_genesis_tree_caster_ManaRegeneration",
+   "source": "normal",
+   "type": "suffix",
+   "family": "ManaRegeneration",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "resource",
+    "mana"
+   ],
+   "text": "(10-19)% increased Mana Regeneration Rate",
+   "tiers": [
+    {
+     "name": "of Excitement",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       10,
+       19
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Joy",
+     "ilvl": 18,
+     "weight": 0,
+     "ranges": [
+      [
+       20,
+       29
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Elation",
+     "ilvl": 29,
+     "weight": 0,
+     "ranges": [
+      [
+       30,
+       39
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Bliss",
+     "ilvl": 42,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       49
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Euphoria",
+     "ilvl": 55,
+     "weight": 0,
+     "ranges": [
+      [
+       50,
+       59
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Nirvana",
+     "ilvl": 79,
+     "weight": 0,
+     "ranges": [
+      [
+       60,
+       69
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    }
+   ],
+   "weightSource": "special",
+   "special": true,
+   "altTexts": [
+    "(20-29)% increased Mana Regeneration Rate",
+    "(30-39)% increased Mana Regeneration Rate",
+    "(40-49)% increased Mana Regeneration Rate",
+    "(50-59)% increased Mana Regeneration Rate",
+    "(60-69)% increased Mana Regeneration Rate"
+   ]
+  },
+  {
    "id": "Quarterstaves/Special_genesis_tree_caster_RemnantGrantEffectTwiceChance",
    "source": "normal",
    "type": "suffix",
@@ -177819,6 +176566,116 @@
    "altTexts": [
     "[Spell|Spell] Skills have (9-11)% increased Area of Effect",
     "[Spell|Spell] Skills have (12-14)% increased Area of Effect"
+   ]
+  },
+  {
+   "id": "Quarterstaves/Special_genesis_tree_caster_SpellCriticalStrikeChanceIncrease",
+   "source": "normal",
+   "type": "suffix",
+   "family": "SpellCriticalStrikeChanceIncrease",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "caster_critical",
+    "caster",
+    "critical"
+   ],
+   "text": "(7-9)% increased [Critical|Critical Hit Chance] for [Spell|Spells]",
+   "tiers": [
+    {
+     "name": "of Menace",
+     "ilvl": 18,
+     "weight": 0,
+     "ranges": [
+      [
+       7,
+       9
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Havoc",
+     "ilvl": 32,
+     "weight": 0,
+     "ranges": [
+      [
+       10,
+       12
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Disaster",
+     "ilvl": 45,
+     "weight": 0,
+     "ranges": [
+      [
+       13,
+       15
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Calamity",
+     "ilvl": 58,
+     "weight": 0,
+     "ranges": [
+      [
+       16,
+       18
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Ruin",
+     "ilvl": 70,
+     "weight": 0,
+     "ranges": [
+      [
+       19,
+       21
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Unmaking",
+     "ilvl": 81,
+     "weight": 0,
+     "ranges": [
+      [
+       22,
+       25
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    }
+   ],
+   "weightSource": "special",
+   "special": true,
+   "altTexts": [
+    "(10-12)% increased [Critical|Critical Hit Chance] for [Spell|Spells]",
+    "(13-15)% increased [Critical|Critical Hit Chance] for [Spell|Spells]",
+    "(16-18)% increased [Critical|Critical Hit Chance] for [Spell|Spells]",
+    "(19-21)% increased [Critical|Critical Hit Chance] for [Spell|Spells]",
+    "(22-25)% increased [Critical|Critical Hit Chance] for [Spell|Spells]"
    ]
   },
   {
@@ -183653,210 +182510,6 @@
     "[Minion|Minions] have +(20-22)% to all Elemental [Resistances]",
     "[Minion|Minions] have +(23-25)% to all Elemental [Resistances]"
    ]
-  },
-  {
-   "id": "Sceptres/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Sceptres/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Sceptres/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Sceptres/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Sceptres/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Sceptres/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
   },
   {
    "id": "Sceptres/Rune_destruction_CriticalModifierEffect",
@@ -198556,210 +197209,6 @@
    ]
   },
   {
-   "id": "Staves/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
    "id": "Staves/Rune_destruction_CriticalModifierEffect",
    "source": "normal",
    "type": "prefix",
@@ -201409,210 +199858,6 @@
     "[Offering] Skills have (36-45)% increased Duration",
     "[Offering] Skills have (46-55)% increased Duration"
    ]
-  },
-  {
-   "id": "Staves_chaos/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_chaos/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_chaos/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_chaos/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_chaos/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_chaos/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
   },
   {
    "id": "Staves_chaos/Rune_destruction_CriticalModifierEffect",
@@ -204266,210 +202511,6 @@
    ]
   },
   {
-   "id": "Staves_cold/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_cold/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_cold/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_cold/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_cold/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_cold/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
    "id": "Staves_cold/Rune_destruction_CriticalModifierEffect",
    "source": "normal",
    "type": "prefix",
@@ -207119,210 +205160,6 @@
     "[Offering] Skills have (36-45)% increased Duration",
     "[Offering] Skills have (46-55)% increased Duration"
    ]
-  },
-  {
-   "id": "Staves_fire/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_fire/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_fire/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_fire/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_fire/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_fire/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
   },
   {
    "id": "Staves_fire/Rune_destruction_CriticalModifierEffect",
@@ -209976,210 +207813,6 @@
    ]
   },
   {
-   "id": "Staves_lightning/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_lightning/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_lightning/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_lightning/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_lightning/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_lightning/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
    "id": "Staves_lightning/Rune_destruction_CriticalModifierEffect",
    "source": "normal",
    "type": "prefix",
@@ -212829,210 +210462,6 @@
     "[Offering] Skills have (36-45)% increased Duration",
     "[Offering] Skills have (46-55)% increased Duration"
    ]
-  },
-  {
-   "id": "Staves_physical/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_physical/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_physical/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_physical/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_physical/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Staves_physical/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
   },
   {
    "id": "Staves_physical/Rune_destruction_CriticalModifierEffect",
@@ -218524,210 +215953,6 @@
    ]
   },
   {
-   "id": "Wands/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
    "id": "Wands/Rune_destruction_CriticalModifierEffect",
    "source": "normal",
    "type": "prefix",
@@ -221377,210 +218602,6 @@
     "[Offering] Skills have (36-45)% increased Duration",
     "[Offering] Skills have (46-55)% increased Duration"
    ]
-  },
-  {
-   "id": "Wands_chaos/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_chaos/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_chaos/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_chaos/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_chaos/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_chaos/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
   },
   {
    "id": "Wands_chaos/Rune_destruction_CriticalModifierEffect",
@@ -224234,210 +221255,6 @@
    ]
   },
   {
-   "id": "Wands_cold/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_cold/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_cold/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_cold/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_cold/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_cold/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
    "id": "Wands_cold/Rune_destruction_CriticalModifierEffect",
    "source": "normal",
    "type": "prefix",
@@ -227087,210 +223904,6 @@
     "[Offering] Skills have (36-45)% increased Duration",
     "[Offering] Skills have (46-55)% increased Duration"
    ]
-  },
-  {
-   "id": "Wands_fire/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_fire/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_fire/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_fire/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_fire/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_fire/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
   },
   {
    "id": "Wands_fire/Rune_destruction_CriticalModifierEffect",
@@ -229944,210 +226557,6 @@
    ]
   },
   {
-   "id": "Wands_lightning/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_lightning/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_lightning/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_lightning/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_lightning/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_lightning/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
    "id": "Wands_lightning/Rune_destruction_CriticalModifierEffect",
    "source": "normal",
    "type": "prefix",
@@ -232797,210 +229206,6 @@
     "[Offering] Skills have (36-45)% increased Duration",
     "[Offering] Skills have (46-55)% increased Duration"
    ]
-  },
-  {
-   "id": "Wands_physical/FireResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "FireResistancePenetration",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "amanamu_mod",
-    "damage",
-    "elemental",
-    "fire",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Fire Resistance",
-   "tiers": [
-    {
-     "name": "Amanamu's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_fire_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_physical/ColdResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "ColdResistancePenetration",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "kurgal_mod",
-    "damage",
-    "elemental",
-    "cold",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Cold Resistance",
-   "tiers": [
-    {
-     "name": "Kurgal's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_cold_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_physical/LightningResistancePenetration",
-   "source": "desecrated",
-   "type": "prefix",
-   "family": "LightningResistancePenetration",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "elemental_damage",
-    "ulaman_mod",
-    "damage",
-    "elemental",
-    "lightning",
-    "attack"
-   ],
-   "text": "[Attack|Attacks] with this Weapon Penetrate (15-25)% Lightning Resistance",
-   "tiers": [
-    {
-     "name": "Ulaman's",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       25
-      ]
-     ],
-     "stats": [
-      "local_lightning_penetration_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_physical/SpiritReservationEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "SpiritReservationEfficiency",
-   "tags": [
-    "weapon",
-    "amanamu_mod"
-   ],
-   "displayTags": [
-    "amanamu_mod"
-   ],
-   "text": "(5-10)% increased [Spirit] [Reservation] [Efficiency]",
-   "tiers": [
-    {
-     "name": "of Amanamu",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       5,
-       10
-      ]
-     ],
-     "stats": [
-      "base_spirit_reservation_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_physical/ManaCostEfficiency",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "ManaCostEfficiency",
-   "tags": [
-    "weapon",
-    "kurgal_mod"
-   ],
-   "displayTags": [
-    "kurgal_mod",
-    "attack"
-   ],
-   "text": "(8-15)% increased Cost [Efficiency] of [Attack|Attacks]",
-   "tiers": [
-    {
-     "name": "of Kurgal",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       8,
-       15
-      ]
-     ],
-     "stats": [
-      "base_attack_skill_cost_efficiency_+%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
-  },
-  {
-   "id": "Wands_physical/LifeCost",
-   "source": "desecrated",
-   "type": "suffix",
-   "family": "LifeCost",
-   "tags": [
-    "weapon",
-    "ulaman_mod"
-   ],
-   "displayTags": [
-    "resource",
-    "ulaman_mod",
-    "life"
-   ],
-   "text": "(15-20)% of Skill Mana Costs [StatConversion|Converted] to Life Costs",
-   "tiers": [
-    {
-     "name": "of Ulaman",
-     "ilvl": 65,
-     "weight": 2500,
-     "ranges": [
-      [
-       15,
-       20
-      ]
-     ],
-     "stats": [
-      "base_skill_cost_life_instead_of_mana_%"
-     ]
-    }
-   ],
-   "weightSource": "poe2htc"
   },
   {
    "id": "Wands_physical/Rune_destruction_CriticalModifierEffect",
