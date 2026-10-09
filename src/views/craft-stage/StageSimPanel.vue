@@ -18,7 +18,7 @@ import { rateOf, simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
-import { runRecipe, type CompiledFlowStep, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
+import { runRecipe, type RecipeMethod, type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
 import { runRecipeParallel, stopParallel } from "../../services/craft-stage/recipe-parallel";
 import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { track } from "../../utils/track";
@@ -32,8 +32,7 @@ import PriceInput from "../../components/PriceInput.vue";
 import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { checkSet, checkTarget, checkRune, patternSets, runeEnForId, setByKey, stateBefore, type CheckCtx, type Pattern, ANY_TARGET, checkAny, isDouble, singleKeyOf, hasCands, isRest, REST, restMembers, otherJunkOf, otherGoneOf, candsOfStep } from "../../services/craft-stage/pattern";
-import type { CompiledStep } from "../../services/craft-stage/recipe-sim";
+import { patternSets, runeEnForId, setByKey, type CheckCtx, type Pattern, ANY_TARGET, isDouble, hasCands, isRest } from "../../services/craft-stage/pattern";
 import { aimTarget, compilePlay, type PlayAim, type PlayDecision } from "../../services/craft-stage/play-recipe";
 import { setOf } from "../../services/craft-stage/shape-table";
 import { drawRecipeCard, type RecipeCardData } from "../../services/craft-stage/recipe-card";
@@ -181,7 +180,6 @@ const redoPlan = computed<RedoPlan | null>(() => {
 });
 /** 狙いごとのやり直しの見積もり (5 順番計画・6 パターンに出す) */
 const redoOf = computed(() => new Map((redoPlan.value?.rows ?? []).map((r) => [r.modId, r])));
-const redoCostMap = computed<Record<string, number>>(() => Object.fromEntries((redoPlan.value?.rows ?? []).map((r) => [r.modId, r.expected])));
 const REDO_METHOD_JA: Record<string, string> = { chaos: "カオス", exalt: "高貴", desecrate: "冒涜", essence: "エッセンス" };
 
 /** 6 パターンの始めの状態 (フラクチャー済みのレアか白) */
@@ -205,35 +203,6 @@ const patternStart = computed<CheckCtx["start"]>(() => {
     sockets: socketCount.value,
   };
 });
-/** パターンの打てない手 (回す前に止める。最初の 1 つ) */
-function patternProblem(p: Pattern): string | null {
-  const d = s.data.value, it = s.item.value;
-  if (!d || !it) return null;
-  const sets = patternSets(it.cls);
-  const ctx: CheckCtx = { data: d, cls: it.cls, targets: s.simTargets.value, sets, runeJa: (en) => RUNES[en]?.ja ?? en, start: patternStart.value };
-  for (let i = 0; i < p.steps.length; i++) {
-    const st = stateBefore(ctx, p.steps, i);
-    const x = setByKey(sets, p.steps[i]!.set);
-    if (!x) return `${i + 1} 手目: カレンシーを選ぶ`;
-    const w = checkSet(ctx, st, x);
-    if (w) return `${i + 1} 手目: ${w}`;
-    const tg = p.steps[i]!.target;
-    if (x.kind === "annul") continue;
-    if (!tg) return `${i + 1} 手目: 付ける物を選ぶ`;
-    const tgc = isRest(tg) ? restMembers(p.steps, tg)[0] ?? tg : tg;
-    const tw = tg === ANY_TARGET ? checkAny(st, x) : isRest(tg) ? (() => { const t = s.simTargets.value.find((y) => y.modId === tgc); return t ? checkTarget(ctx, { ...st, placed: new Set([...st.placed].filter((id) => !restMembers(p.steps, tg).includes(id))) }, x, t) : "残りの候補が無い"; })() : x.kind === "rune" ? checkRune(ctx, st, tg) : (() => { const t = s.simTargets.value.find((y) => y.modId === tg); return t ? checkTarget(ctx, st, x, t) : "狙う MOD に無い"; })();
-    if (tw) return `${i + 1} 手目: ${tw}`;
-    if (isDouble(x) && tg !== ANY_TARGET && !isRest(tg)) {
-      const t2 = p.steps[i]!.target2;
-      if (!t2) return `${i + 1} 手目: 一緒に狙う MOD を選ぶ`;
-      const t = s.simTargets.value.find((y) => y.modId === t2);
-      const w2 = t ? checkTarget(ctx, stateBefore(ctx, [...p.steps.slice(0, i), { ...p.steps[i]!, target2: null, target3: null }], i + 1), x, t) : "狙う MOD に無い";
-      if (w2) return `${i + 1} 手目 (2 つ目): ${w2}`;
-    }
-  }
-  return null;
-}
-
 /** フラクチャーの狙いの始め方。付いた状態のベースの値段は手で (神) */
 const fractureRows = computed(() => rows.value.filter((r) => r.method === "fracture"));
 /**
@@ -621,12 +590,6 @@ const results = ref<Array<{ name: string; out: { r: RecipeResult; spec: RecipeSp
 const shown = ref(0);
 /** パターンの名前で結果を引く (一覧はパターンの並びで出す) */
 const resultOf = (name: string) => results.value.find((x) => x.name === name) ?? null;
-/** 今のパターンの流れの回した数 (流れの図に出す) */
-const activeFlowStats = computed(() => {
-  const p = s.simPatterns.value[activePattern.value];
-  const r = p ? resultOf(p.name)?.out.r : undefined;
-  return r?.flowAvg ? { visits: r.flowAvg.visits, routes: r.flowAvg.routes, runs: r.runs } : null;
-});
 const shownName = computed(() => results.value[shown.value]?.name ?? "");
 const cheapestName = computed(() => (results.value.length > 1 ? results.value.reduce((b, y) => (y.out.r.perDone < b.out.r.perDone ? y : b)).name : ""));
 function showResultByName(name: string): void {
@@ -635,10 +598,7 @@ function showResultByName(name: string): void {
 }
 /** 回していないパターンの一言 (未完成なら最初の打てない手) */
 function patternNote(p: Pattern): string {
-  if (p.play) return p.play.moves.length ? "未実行" : "手が無い";
-  if (!p.steps.length) return "手が無い";
-  const w = patternProblem(p);
-  return w ? `未完成 (${w})` : "未実行";
+  return p.play?.moves.length ? "未実行" : "手が無い";
 }
 function togglePatternOff(i: number): void {
   s.simPatterns.value = s.simPatterns.value.map((p, k) => (k === i ? { ...p, off: !p.off } : p));
@@ -659,9 +619,9 @@ let gen = 0;
  * 全部まとめて回すパターン = 手があってチェックの入った物。組みかけでも組めている所までを完成品として回す
  * (2026-10-07 オーナー「回すパターンを選択できるように」「そこまでを完成品とする」)
  */
-/** 手があるか (流れの手か前の作り方の手) */
-const hasSteps = (p: Pattern): boolean => !!(p.play ? p.play.moves.length : p.flow?.steps.length || p.steps.length);
-const patternChecks = computed(() => s.simPatterns.value.filter(hasSteps).map((p) => ({ p, why: p.play ? null : p.flow?.steps.length ? (p.flow.steps.some((x) => !x.set) ? "打つ物が決まっていない手がある" : null) : patternProblem(p) })));
+/** 手があるか (打って作るパターンの手) */
+const hasSteps = (p: Pattern): boolean => !!p.play?.moves.length;
+const patternChecks = computed(() => s.simPatterns.value.filter(hasSteps).map((p) => ({ p, why: null as string | null })));
 const runnable = computed(() => s.simPatterns.value.filter((p) => hasSteps(p) && !p.off));
 const blocked = computed((): string | null => {
   if (!rows.value.length) return "狙いがありません";
@@ -719,77 +679,15 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
     // パターンごとに回す (2026-10-06 オーナー「パターンで回す」)。白から作る + (フラクチャーがあれば) 固定済みから残りを作る (ベース代 0) の 2 本。
     // 始め方の比べに使う
     const sets = patternSets(it.cls);
-    /**
-     * 偉大の手の候補 (2〜3 つ) を「どれか 2 つ付けば当たり」の 1 つの狙いにまとめる (2 狙う MOD の「どれか N つ」と同じ仕組み)
-     */
-    const groupOf = (st: Pattern["steps"][number], x: NonNullable<ReturnType<typeof setByKey>>): RecipeSpec["targets"][number] | null => {
-      // フラクチャーの候補はグループにしない (狙いは前の手で付けた個別の物のまま。グループにすると「どれか 1 つ」で完成になっていた。2026-10-08 レビュー N1)
-      if (!hasCands(x) || x.kind === "fracture" || !st.target || st.target === ANY_TARGET || !st.target2) return null;
-      const ms = [st.target, st.target2, st.target3].filter((id): id is string => !!id).map((id) => spec.targets.find((y) => y.modId === id)).filter((y): y is RecipeSpec["targets"][number] => !!y);
-      if (ms.length < 2) return null;
-      const [a, ...rest] = ms;
-      return { ...a!, method: "exalt", alts: [...(a!.alts ?? []), ...rest.flatMap((y) => [{ modId: y.modId, minTierIndex: y.minTierIndex }, ...(y.alts ?? [])])], need: isDouble(x) ? 2 : 1 };
-    };
-    /** 「残り」の手: 元の手の候補ぜんぶ (全部揃ったら当たり) */
-    const restOf = (steps: Pattern["steps"], st: Pattern["steps"][number]): RecipeSpec["targets"][number] | null => {
-      if (!isRest(st.target)) return null;
-      const ms = restMembers(steps, st.target).map((id) => spec.targets.find((y) => y.modId === id)).filter((y): y is RecipeSpec["targets"][number] => !!y);
-      if (!ms.length) return null;
-      const [a, ...rest] = ms;
-      return { ...a!, method: "exalt", alts: [...(a!.alts ?? []), ...rest.map((y) => ({ modId: y.modId, minTierIndex: y.minTierIndex }))], need: ms.length };
-    };
-    /** 結果の状態ごとの行動をセットに直す */
-    const compilePolicy = (pol: NonNullable<Pattern["steps"][number]["policy"]>, at: number[]): CompiledStep["policy"] => Object.fromEntries(Object.entries(pol).map(([k, a]) => {
-      const x = a.set ? setByKey(sets, a.set) : undefined;
-      return [k, { ...(x ? { act: { kind: x.kind, currency: x.currency, omens: [...x.omens] } } : {}), ...(a.then ? { then: a.then } : {}), ...(a.goto != null ? { goto: a.goto < 0 ? a.goto : at[a.goto] ?? a.goto } : {}) }];
-    }));
-    /** 状況ごとの反応をセットに直す (goto は並べた後の番号) */
-    const compileOn = (on: NonNullable<Pattern["steps"][number]["on"]>, at: number[]): CompiledStep["on"] => Object.fromEntries(Object.entries(on).filter(([, rx]) => !!rx).map(([k, rx]) => {
-      const ps = rx!.pre ? setByKey(sets, rx!.pre) : undefined;
-      const ag = rx!.again ? setByKey(sets, rx!.again) : undefined;
-      return [k, { pre: ps ? { kind: ps.kind, currency: ps.currency, omens: [...ps.omens] } : null, then: rx!.then, ...(rx!.goto != null ? { goto: rx!.goto < 0 ? rx!.goto : at[rx!.goto] ?? rx!.goto } : {}), again: ag ? { kind: ag.kind, currency: ag.currency, omens: [...ag.omens] } : null }];
-    }));
-    /** 流れ: 手の打つ物をセットに直す (無ければ打たない手) */
-    const compileFlow = (f: NonNullable<Pattern["flow"]>): CompiledFlowStep[] => f.steps.map((st) => {
-      const x = setByKey(sets, st.set);
-      return { act: x ? { kind: x.kind, currency: x.currency, omens: [...x.omens] } : null, routes: st.routes, onNone: st.onNone };
-    });
-    const compile = (p: Pattern): CompiledStep[] => {
-      // 打てる手だけ並べるので、「MOD が消えたら N 手目」の N を並べた後の番号に直す
-      const at: number[] = [];
-      let n = 0;
-      for (const st of p.steps) { at.push(n); if (setByKey(sets, st.set)) n++; }
-      return p.steps.flatMap((st) => {
-      const x = setByKey(sets, st.set);
-      const lostGoto = st.lostGoto ? Object.fromEntries(Object.entries(st.lostGoto).map(([id, g]) => [id, at[g] ?? g])) : undefined;
-      if (!x) return [];
-      const t = x.kind === "rune" || !st.target ? null : spec.targets.find((y) => y.modId === st.target) ?? null;
-      // 自前のフラクチャーの候補: 固定して良い物だけ候補に足す (完成の条件は個別の狙いのまま)
-      const tf = x.kind === "fracture" && t && candsOfStep(st).length ? { ...t, alts: [...(t.alts ?? []), ...candsOfStep(st).flatMap((id) => { const y = spec.targets.find((z) => z.modId === id); return y ? [{ modId: y.modId, minTierIndex: y.minTierIndex }] : []; })] } : t;
-      const ms = st.miss ? setByKey(sets, st.miss) : undefined;
-      const grp = groupOf(st, x) ?? restOf(p.steps, st);
-      const one = grp && isDouble(x) ? setByKey(sets, st.single ?? singleKeyOf(x)) : undefined;
-      return [{ kind: x.kind, currency: x.currency, omens: x.omens, target: grp ?? tf, ...(one ? { single: { kind: one.kind, currency: one.currency, omens: [...one.omens] } } : {}), ...(x.kind === "rune" && st.target ? { rune: st.target } : {}), ...(isRest(st.target) ? { restFrom: at[Number(st.target.slice(REST.length))] ?? 0 } : {}), ...(st.on ? { on: compileOn(st.on, at) } : {}), ...(st.policy ? { policy: compilePolicy(st.policy, at) } : {}), onMiss: st.onMiss, ...(st.resetTo != null ? { resetTo: at[st.resetTo] ?? st.resetTo } : {}), ...(ms ? { miss: { kind: ms.kind, currency: ms.currency, omens: [...ms.omens] } } : {}), ...(lostGoto ? { lostGoto } : {}), ...(otherGoneOf(x.kind, st.otherGone) === "annul" ? { otherGone: "annul" as const } : {}), ...(otherJunkOf(x.kind, st.otherJunk) === "keep" ? { otherJunk: "keep" as const } : {}) }];
-      });
-    };
     // フラクチャーがある時は、フラクチャー済みのベースを手に入れるまでは 4 最安値スタートの計算で固定し (自作は 1 回分 × 3 + 消去 × 2)、
     // 回すのはフラクチャー済みから先だけ (2026-10-06 オーナー「白ベースでもフラクチャーまでの平均はほぼ一緒、3 回に 1 回当たる予算で
     // そこまでは固定で出しておｋ、他の選択肢も」)。始め方ごとの合計 = その始め方の費用 + 固定済みから先の平均
     // この手だけ: パターンをその手までで切る (その手の狙いまでが完成)
-    const ps = only != null ? [stepOnly != null ? { ...s.simPatterns.value[only]!, steps: s.simPatterns.value[only]!.steps.slice(0, stepOnly + 1) } : s.simPatterns.value[only]!] : runnable.value;
+    const ps = (only != null ? [s.simPatterns.value[only]!] : runnable.value).filter((p) => !!p.play);
     const total = spec.runs * ps.length;
     const out: typeof results.value = [];
     for (const [k, p] of ps.entries()) {
-      // 完成の判定は、そのパターンで付ける物 + 固定する物だけ (狙い全部だと、一部だけ試すパターンが絶対に完成しなかった。2026-10-07)
-      // 偉大の手の候補は「どれか 2 つ」の 1 つの狙いとして数える (3 つ目は付かなくても当たり)
-      // 「残り」の手がある時は、元の手の「どれか N つ」は数えない (残りの手の「全部」に含まれる。両方数えると MOD が足りなくなる)
-      const restRefs = new Set(p.steps.filter((st) => isRest(st.target)).map((st) => Number(st.target!.slice(5))));
-      const groups = p.steps.flatMap((st, j) => { if (restRefs.has(j)) return []; const x = setByKey(sets, st.set); const g = x ? groupOf(st, x) ?? restOf(p.steps, st) : null; return g ? [{ g, ids: isRest(st.target) ? restMembers(p.steps, st.target) : [st.target, st.target2, st.target3] }] : []; });
-      const inGroup = new Set(groups.flatMap((x) => x.ids).filter((x): x is string => !!x));
-      // カレンシーが決まっていない手 (未完成) の MOD は数えない: 組めている所までを完成品とする (2026-10-07 オーナー「そこまでを完成品とする」)
-      const used = new Set(p.steps.filter((st) => !!setByKey(sets, st.set)).flatMap((st) => [st.target]).filter((x): x is string => !!x && !inGroup.has(x)));
       const onStart = new Set(patternStart.value.mods?.placed ?? []);
-      const goal = [...spec.targets.filter((t) => t.method === "fracture" || used.has(t.modId) || onStart.has(t.modId)), ...groups.map((x) => x.g)];
       // 打って作るパターン (ADR-002): 完成の判定は固定 + 狙う手の狙い (同じ狙いは need の一番大きい物)。決めていない外れの形は新しいベースで最初から
       const playGoal = (): RecipeSpec["targets"] => {
         const best = new Map<string, NonNullable<NonNullable<Pattern["play"]>["moves"][number]["aim"]>>();
@@ -797,8 +695,9 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
         for (const m of p.play?.moves ?? []) if (m.aim && m.aim.side !== "any") { const k = m.aim.mods.map((x) => x.modId).sort().join(","); const b = best.get(k); if (!b || b.need < m.aim.need) best.set(k, m.aim); }
         return [...spec.targets.filter((t) => t.method === "fracture" || onStart.has(t.modId)), ...[...best.values()].map((a) => aimTarget(a))];
       };
-      const played = p.play ? compilePlay(p.play, sets) : null;
-      const pspec: RecipeSpec = played ? { ...spec, targets: playGoal(), pattern: played, ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) } : p.flow?.steps.length ? { ...spec, flow: compileFlow(p.flow), ...(fractureRow.value && !spec.startItem ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) } : { ...spec, targets: goal, pattern: compile(p), ...(redoPlan.value?.annulSides ? { annulSides: redoPlan.value.annulSides } : {}), ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) };
+      const played = compilePlay(p.play!, sets);
+      if (!played) continue;
+      const pspec: RecipeSpec = { ...spec, targets: playGoal(), pattern: played, ...(fractureRow.value ? { fractureStart: { kind: "bought" as const, price: startOnce.value ?? 0 } } : {}) };
       const base = k * spec.runs;
       // PC のコアに分けて回す (同じ seed なので 1 本と同じ結果。2026-10-07 オーナー「おっそいな」)
       // 先に 40 人だけ試し、全員が手の上限で止まるなら 500 人は回さない (重い組み方で「試しています」のまま長く止まって見えた。
@@ -1017,13 +916,6 @@ onMounted(() => {
   if (r) { recipeArmed.value = `load:${r.id}`; void loadRecipe(r); }
 });
 const step4pre = computed(() => stepOrder.value && orderDone.value);
-/** 6 パターンの「付ける MOD」の行に出す物 (5 順番計画の行と同じ: 側・色・段・付け方・取り直し) */
-const orderInfo = computed(() => Object.fromEntries(orderKeys.value.map((k) => {
-  const r = orderRow(k);
-  if (!r) return [k, { side: "ルーン", tone: "text-amber-100", text: runeJa(k), rank: "", how: "", redo: "" }];
-  const rd = redoOf.value.get(r.modId);
-  return [k, { side: r.side, tone: r.tone, text: r.text, rank: r.rank, how: METHOD_JA[r.method], redo: rd ? `取り直し 約 ${money(rd.expected)}` : "" }];
-})));
 /** 段の番号: 出ない段 (始め方を 1 で決めた時の 4 など) は詰める (2026-10-09 初見レビュー「4 はどこ?」) */
 const stepNo = computed(() => {
   const start = 3 + (step3.value ? 1 : 0);
@@ -1710,7 +1602,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
       <div v-if="step4pre" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
         <SimStepHead class="mb-3" :n="stepNo.play" title="打ち方" :done="patternDone" :current="!patternDone" :redo="patternDone" :note="`${s.simStart.value === 'item' ? '手打ちの状態' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`" help="打つ物と狙う MOD を 1 手ずつ並べた物 = パターン。いくつか作って、回して費用を比べられる" @redo="patternDone = false" />
-        <StagePatternEditor :busy="busy" :step-run="stepRun" :step-max="maxSteps" :step-runs="STEP_ONLY_RUNS" @run-one="(k: number) => run(k)" @run-step="(k: number, i: number) => run(k, i)" @close-step="stepRun = null" @active="(k: number) => (activePattern = k)" :start="patternStart" :order="orderKeys" :order-info="orderInfo" :locked="patternDone" :redo="redoCostMap" :annul-sides="redoPlan?.annulSides ?? {}" :money="money" :flow-stats="activeFlowStats" />
+        <StagePatternEditor :busy="busy" :start="patternStart" :locked="patternDone" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
