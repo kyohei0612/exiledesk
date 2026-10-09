@@ -4,7 +4,7 @@ import { loadPatch } from "./helpers/patch";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
 import { forceKey } from "../src/services/craft-stage/apply-force";
 import { freshItem } from "../src/services/craft-stage/run-plan";
-import { aimCombos, aimOdds, type AimTarget } from "../src/services/craft-stage/aim-odds";
+import { aimChain, aimCombos, aimOdds, type AimTarget } from "../src/services/craft-stage/aim-odds";
 import { mulberry32 } from "../src/services/htc/rng";
 import type { PatchData } from "../src/vendor/poe2htc/engine/types";
 import type { StageItem } from "../src/services/craft-stage/types";
@@ -53,6 +53,13 @@ describe("狙う確率", () => {
     const t0 = performance.now();
     for (const c of cs) aimOdds(data, ring, t, c, 300, 5);
     expect(performance.now() - t0).toBeLessThan(8000);
+  });
+  it("当たるまで続けて回す: 今の MOD が消えたら外れ (カオスは今の 3 つのどれかを必ず消すので 0)、左の高貴は付く", () => {
+    expect(aimChain(data, ring, [t], { currency: "chaos", omens: [] }, 800, 4)).toBe(0);
+    const left = aimChain(data, ring, [t], { currency: "exalt", omens: ["OmenofSinistralExaltation"] }, 800, 4);
+    expect(left).toBeGreaterThan(0);
+    // プレの空きは 2 つ: 外れても空きが残る間は続けて打てるので、打った回数あたりでは 1 回だけの確率と同じくらい (崩れないので下がらない)
+    expect(left).toBeGreaterThan(odds("exalt", ["OmenofSinistralExaltation"]) * 0.8);
   });
   it("2 つ同時に狙うと、どちらか 1 つより揃いにくい (全部揃って当たり)", () => {
     const fire = idOf("Rings", /LightningResistance$/);
