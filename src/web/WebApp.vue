@@ -67,7 +67,6 @@ window.addEventListener("resize", fitZoom);
       <span class="flex items-center gap-2">
         <img src="/favicon.png" alt="" class="g-brand-icon size-8 shrink-0" draggable="false" />
         <span class="g-brand-word leading-none" :class="phone ? 'text-[15px]' : 'text-[18px]'">EXILEDESK</span>
-        <span class="g-brand-sub uppercase">Web</span>
       </span>
       <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">クラフトステージ</span>
       <span class="ml-auto opacity-40" :class="phone ? 'hidden' : ''">v{{ pkg.version }}</span>
