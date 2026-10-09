@@ -68,6 +68,7 @@ for name, to in (
     ("ggg_concept_currencyexchange_tabbutton_available", "tab"), ("ggg_concept_currencyexchange_tabbutton_hovered", "tab-hover"),
     ("ggg_concept_currencyexchange_tabbutton_selected", "tab-on"), ("ggg_concept_currencyexchange_tabbutton_unavailable", "tab-off"),
     ("ggg_concept_currencyexchange_itemslot", "slot"), ("ggg_concept_currencyexchange_itemslot_selected", "slot-on"),
+    ("VerticalSeparator", "sep-v"), ("sidefilter_selected", "side-on"),
 ):
     im = load(name)
     save(im, to)

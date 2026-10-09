@@ -12,9 +12,9 @@ defineProps<{ categories: CategoryDisplay[]; totalCount: number }>();
 const categoryFilter = defineModel<string>("categoryFilter", { required: true });
 const searchQuery = defineModel<string>("searchQuery", { required: true });
 
-const btnBase = "w-full text-left px-2.5 py-2 flex items-center gap-2 g-antique text-[14px] transition";
-/** 選んでいる行 (メインのサイドバーと同じ。ゲームの選択の角 + 赤の帯、src/styles/game-ui.css) */
-const btnActive = "g-nav-on g-sel";
+const btnBase = "g-side-row w-full text-left py-2 flex items-center gap-2 g-antique text-[14px] transition";
+/** 選んでいる行 (取引所の左の絞り込みの行の絵、src/styles/game-ui.css の .g-side-on。2026-10-09 オーナーが案 2 を選んだ) */
+const btnActive = "g-side-on";
 const btnIdle = "text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] hover:text-[var(--exile-color-text-primary)]";
 </script>
 
@@ -40,7 +40,7 @@ const btnIdle = "text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] 
         </button>
       </div>
     </div>
-    <div class="g-brush w-52 px-2.5 py-2 text-[13px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">カテゴリ</div>
+    <div class="g-brush w-52 px-3.5 py-2 text-[13px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">カテゴリ</div>
     <nav class="w-52 flex-1 pb-3">
       <button @click="categoryFilter = 'all'" :class="[btnBase, categoryFilter === 'all' ? btnActive : btnIdle]">
         <span class="w-6 h-6 inline-flex items-center justify-center text-base">★</span>

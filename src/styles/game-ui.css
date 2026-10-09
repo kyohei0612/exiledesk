@@ -207,7 +207,11 @@ body {
   background-attachment: fixed;
 }
 
-/* サイドバー: 暗い鉄の帯 + 右に枠の辺 */
+/*
+ * サイドバー: 暗い鉄の帯 + 右に縦の仕切り (ログイン画面の上下が消える細い金の線)。
+ * 前はロード画面の枠の左辺 (木の茶色い帯) を右へ 10px はみ出して置き、隣の列の左に被っていた (2026-10-09 オーナー「縦の枠のデザインもっとましな POE2 フレーム」→ 案 2)。
+ * 線は帯の内側に置く (スクロールする列でも切れない、隣に被らない)
+ */
 .g-sidebar {
   position: relative;
   background: linear-gradient(90deg, rgba(10, 8, 7, 0.97), rgba(20, 16, 12, 0.95));
@@ -218,11 +222,18 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
-  right: -10px;
-  width: 16px;
-  background: url("/ui-art/edge-v.webp") 0 0 / 16px auto repeat-y;
+  right: 0;
+  width: 12px;
+  background: url("/ui-art/sep-v.webp") center / 12px 100% no-repeat;
   pointer-events: none;
   z-index: 5;
+}
+/* 選んだ行 = 取引所の左の絞り込みの行の絵 (左に金の飾り・細い金の枠)。行は全部 左右 14px の透明な縁を持たせ、選んでも文字がずれない */
+.g-side-row { border: 0 solid transparent; border-width: 0 14px; }
+.g-side-on {
+  border-image: url("/ui-art/side-on.webp") 0 60 fill / 0 14px stretch;
+  color: var(--exile-color-text-title) !important;
+  text-shadow: 0 0 10px rgba(255, 200, 110, 0.35);
 }
 .g-nav-on {
   background: linear-gradient(90deg, rgba(163, 52, 42, 0.42), rgba(163, 52, 42, 0.05)) !important;

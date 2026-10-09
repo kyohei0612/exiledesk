@@ -29,6 +29,8 @@ const FILES = [
   `${CM}HeaderLeft`, `${CM}HeaderRight`, `${CM}CosmeticStanderItemFrame`,
   ...["available", "hovered", "selected", "unavailable"].map((k) => `${CX}tabbutton_${k}`),
   `${CX}itemslot`, `${CX}itemslot_selected`,
+  // 縦の仕切り (ログイン画面の上下が消える細い金の線) と、選んだ行 (取引所の左の絞り込みの行)。2026-10-09 オーナー「縦の枠のデザインもっとましな POE2 フレーム」→ 案 2
+  "Login/VerticalSeparator", "InGame/ConsoleNew/TradeMarket/sidefilter_selected",
   // サイドバーのアイコン (キャラ画面の上の金のアイコン。通常 / hover = 選んでいる時)
   ...["HeaderIconTrade", "HeaderIconFriend", "HeaderIconAchievement", "HeaderIconShop", "HeaderIconCharacter", "HeaderIconPassive", "HeaderIconCosmetics", "HeaderAltasPoint", "HeaderAltasMap"].flatMap((k) => [`${CM}${k}`, `${CM}${k}Hover`]),
 ];
