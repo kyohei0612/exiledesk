@@ -139,7 +139,7 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
         <!-- アイテムレベル (段の上限が決まるので先に) -->
         <div class="mb-2 flex flex-wrap items-center gap-1.5">
           <span class="opacity-60">アイテムレベル</span>
-          <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="pk.level.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="pk.level.value = lv">{{ lv }}</button>
+          <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="pk.level.value === lv ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="pk.level.value = lv">{{ lv }}</button>
           <input v-model.number="pk.level.value" type="number" min="1" max="100" class="w-14 rounded border border-white/15 bg-black/30 px-1 py-0.5" />
           <span class="opacity-40">(出るティアの上限が決まる)</span>
           <span class="ml-auto flex flex-wrap items-center gap-1.5">
@@ -208,8 +208,8 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
         <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
           <span class="flex items-center gap-1.5">
             <span class="opacity-60">品質の上限</span>
-            <button type="button" class="rounded-lg px-2 py-0.5" :class="zeroStart.quality === 20 ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="zeroStart = { ...zeroStart, quality: 20 }">20% (カタリストだけ)</button>
-            <button type="button" class="rounded-lg px-2 py-0.5" :class="zeroStart.quality === 40 ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="zeroStart = { ...zeroStart, quality: 40 }">40% (ブリーチのエッセンス)</button>
+            <button type="button" class="rounded-lg px-2 py-0.5" :class="zeroStart.quality === 20 ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="zeroStart = { ...zeroStart, quality: 20 }">20% (カタリストだけ)</button>
+            <button type="button" class="rounded-lg px-2 py-0.5" :class="zeroStart.quality === 40 ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="zeroStart = { ...zeroStart, quality: 40 }">40% (ブリーチのエッセンス)</button>
           </span>
           <label class="flex items-center gap-1.5">
             <span class="opacity-60">最後に入れるカタリスト</span>

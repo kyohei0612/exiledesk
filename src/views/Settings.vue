@@ -77,8 +77,8 @@ onMounted(async () => {
 
       <div v-else class="space-y-6">
         <!-- スタートアップ -->
-        <section>
-          <h2 class="text-sm font-bold text-amber-100 mb-2">
+        <section class="g-panel px-2 py-1">
+          <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
             起動
           </h2>
           <label
@@ -110,8 +110,8 @@ onMounted(async () => {
         </section>
 
         <!-- × ボタン挙動 -->
-        <section>
-          <h2 class="text-sm font-bold text-amber-100 mb-2">
+        <section class="g-panel px-2 py-1">
+          <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
             ウィンドウ
           </h2>
           <label class="flex items-start gap-3 cursor-pointer select-none">
@@ -134,8 +134,8 @@ onMounted(async () => {
         </section>
 
         <!-- 自動再取得 -->
-        <section>
-          <h2 class="text-sm font-bold text-amber-100 mb-2">
+        <section class="g-panel px-2 py-1">
+          <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
             自動再取得
           </h2>
           <label class="flex items-center gap-3">
@@ -153,8 +153,8 @@ onMounted(async () => {
         </section>
 
         <!-- トレードサイト (2026-09-12) -->
-        <section>
-          <h2 class="text-sm font-bold text-amber-100 mb-2">
+        <section class="g-panel px-2 py-1">
+          <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
             トレードサイト
           </h2>
           <label class="flex items-center gap-3">

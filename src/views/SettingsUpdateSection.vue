@@ -28,8 +28,8 @@ const updateStatusText = computed(() => {
 
 <template>
   <!-- 更新 (2026-09-16 オーナー要望: アプリを開いたまま確認したい) -->
-  <section>
-    <h2 class="text-sm font-bold text-amber-100 mb-2">
+  <section class="g-panel px-2 py-1">
+    <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
       更新
     </h2>
     <div class="flex flex-wrap items-center gap-3">

@@ -357,8 +357,8 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
    <!-- 右: アイテムの絵 (完成図 / 今の STEP の形)。上に貼り付いて、ツリーを進めても見え続ける -->
     <aside class="sticky top-2 w-[22rem] shrink-0">
      <div class="mb-1.5 flex items-center gap-1 text-xs">
-       <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'step' ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="cardMode = 'step'">STEP の時の形</button>
-       <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'target' ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="cardMode = 'target'">完成図</button>
+       <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'step' ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="cardMode = 'step'">STEP の時の形</button>
+       <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'target' ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="cardMode = 'target'">完成図</button>
        <button type="button" class="rounded-lg px-2 py-1" :class="cardDetail ? 'bg-white/15' : 'border border-white/15 hover:bg-white/5'" title="ティアとタグの小見出し (ゲームの Alt 表示)" @click="cardDetail = !cardDetail">{{ cardDetail ? "詳細を隠す" : "詳細" }}</button>
        <template v-if="cardMode === 'step' && mainLine.length">
          <button type="button" class="ml-auto rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の前の STEP" @click="stepCard(-1)">◀</button>

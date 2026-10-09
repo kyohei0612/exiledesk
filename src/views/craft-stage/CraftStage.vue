@@ -275,8 +275,9 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
       </template>
     </div>
     <div class="mb-3 flex items-start justify-between gap-4">
-      <div>
-        <h1 class="g-brush text-[24px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">クラフトステージ</h1>
+      <div class="min-w-0 flex-1">
+        <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
+        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">クラフトステージ</h1>
         <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す
           <HelpTip title="シミュレーション" :width="320">
             <p>1 ベース → 2 狙う MOD → 始め方と順番 → 打ち方 (パターン) の順に決めて「回す」。</p>

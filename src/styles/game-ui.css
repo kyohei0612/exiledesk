@@ -249,3 +249,32 @@ button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-
 
 /* .card の見出し (style.css) */
 .card-title { font-family: var(--exile-font-family-antique); font-weight: 400; font-size: 15px; color: var(--exile-color-text-title); }
+
+/* 入力欄・選択欄: 暗くくぼんだ欄 + 鈍い真鍮の縁 (全画面) */
+:is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea):not(.g-plain) {
+  border-radius: 2px !important;
+  border: 1px solid rgba(150, 120, 70, 0.45) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 220, 160, 0.06);
+}
+:is(input, select, textarea):not(.g-plain):focus {
+  outline: none;
+  border-color: rgba(224, 194, 122, 0.85) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85), 0 0 8px rgba(224, 194, 122, 0.3);
+}
+input[type="checkbox"], input[type="radio"] { accent-color: #b5813a; }
+
+/* 選ぶカード (大きいボタン。クラフト計算機の始め方・火力チェックの入口など) = 面と同じ枠 */
+:is(button, a):is([class*="rounded-xl"], [class*="rounded-2xl"]):is([class*="border-white/"], [class*="border-[var(--exile-color-border-"]):not(.g-plain) {
+  border: 16px solid transparent;
+  border-image: url("/ui-art/frame.webp") 76 / 30px / 6px round;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(26, 21, 16, 0.94), rgba(10, 9, 8, 0.96)) border-box;
+  transition: filter 150ms, transform 150ms;
+}
+:is(button, a):is([class*="rounded-xl"], [class*="rounded-2xl"]):is([class*="border-white/"], [class*="border-[var(--exile-color-border-"]):not(.g-plain):hover {
+  filter: brightness(1.18) drop-shadow(0 0 12px rgba(224, 194, 122, 0.25));
+  transform: translateY(-1px);
+}
+/* 区切りの見出し (金色の太字) */
+:is(h2, h3, h4)[class*="text-amber-100"] { font-family: var(--exile-font-family-antique); font-weight: 400; color: var(--exile-color-text-title); }

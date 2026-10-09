@@ -10,16 +10,17 @@ defineProps<{ categories: CategoryDisplay[]; totalCount: number }>();
 const categoryFilter = defineModel<string>("categoryFilter", { required: true });
 const searchQuery = defineModel<string>("searchQuery", { required: true });
 
-const btnBase = "w-full text-left px-3 py-2 flex items-center gap-2 text-sm border-l-2 transition";
-const btnActive = "bg-[var(--exile-color-bg-elevated)] border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]";
-const btnIdle = "border-transparent hover:bg-[var(--exile-color-bg-elevated)]";
+const btnBase = "w-full text-left px-3 py-2 flex items-center gap-2 g-antique text-[14px] transition";
+/** 選んでいる行 (メインのサイドバーと同じ。ゲームの選択の角 + 赤の帯、src/styles/game-ui.css) */
+const btnActive = "g-nav-on g-sel";
+const btnIdle = "text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] hover:text-[var(--exile-color-text-primary)]";
 </script>
 
 <template>
   <aside
-    class="w-44 shrink-0 border-r border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] overflow-y-auto flex flex-col"
+    class="g-sidebar relative z-[1] w-44 shrink-0 overflow-y-auto overflow-x-hidden flex flex-col"
   >
-    <div class="px-3 py-3 border-b border-[var(--exile-color-border-subtle)]">
+    <div class="px-3 py-3">
       <div class="relative">
         <input
           v-model="searchQuery"
@@ -37,7 +38,7 @@ const btnIdle = "border-transparent hover:bg-[var(--exile-color-bg-elevated)]";
         </button>
       </div>
     </div>
-    <div class="px-3 py-2 text-[10px] uppercase tracking-wider text-[var(--exile-color-text-secondary)]">カテゴリ</div>
+    <div class="g-brush px-3 py-2 text-[13px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">カテゴリ</div>
     <nav class="flex-1">
       <button @click="categoryFilter = 'all'" :class="[btnBase, categoryFilter === 'all' ? btnActive : btnIdle]">
         <span class="w-6 h-6 inline-flex items-center justify-center text-base">★</span>

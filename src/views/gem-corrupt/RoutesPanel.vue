@@ -150,8 +150,8 @@ const summary = computed(() => {
             <span class="font-bold">やった場合</span>
             <div class="flex items-center gap-3 flex-wrap text-[11px]">
               <div class="inline-flex rounded border border-[var(--exile-color-border-subtle)] overflow-hidden">
-                <button type="button" class="px-2 py-0.5" :class="compareMode === 'attempts' ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]' : 'text-[var(--exile-color-text-secondary)]'" @click="compareMode = 'attempts'">回数で比べる</button>
-                <button type="button" class="px-2 py-0.5" :class="compareMode === 'budget' ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]' : 'text-[var(--exile-color-text-secondary)]'" @click="compareMode = 'budget'">予算で比べる</button>
+                <button type="button" class="px-2 py-0.5" :class="compareMode === 'attempts' ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="compareMode = 'attempts'">回数で比べる</button>
+                <button type="button" class="px-2 py-0.5" :class="compareMode === 'budget' ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="compareMode = 'budget'">予算で比べる</button>
               </div>
               <label v-if="compareMode === 'attempts'" class="inline-flex items-center gap-2 text-[var(--exile-color-text-secondary)]">
                 回数

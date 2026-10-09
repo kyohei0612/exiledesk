@@ -59,7 +59,7 @@ const astridMissing = computed(() => !!c.slots.value?.needsAstrid && !on.value.a
         :title="n === count ? `規格外 (ルーンソケット ${n} つ)。武器・防具のクラフトはほぼこれ。素材もこの数以上で探す` : `ソケット ${n} つ以上で探す。足りない穴は熟練工のオーブで開ける`" @click="setBase(n)">{{ n }}</button>
     </template>
     <button v-for="r in rows" :key="r.key" type="button" class="rounded-lg px-2 py-0.5 disabled:cursor-not-allowed disabled:opacity-40"
-      :class="[r.on ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5', r.locked ? 'cursor-default' : '']"
+      :class="[r.on ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3', r.locked ? 'cursor-default' : '']"
       :disabled="!r.on && !!r.why" :title="r.locked ? `${r.why}。${r.effect}。${r.note}` : r.why ?? `${r.effect}。${r.note}`" @click="toggle(r.key)">
       {{ r.on ? "✓ " : "" }}{{ r.ja }} <span class="opacity-60">{{ r.effect }}</span><span v-if="r.locked" class="ml-1 text-orange-200/80">(狙いに要る)</span>
     </button>

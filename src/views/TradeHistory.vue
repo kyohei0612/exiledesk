@@ -154,7 +154,7 @@ const curLabel = currencyJa;
               :key="p.id"
               type="button"
               class="px-2 py-0.5 text-[11px]"
-              :class="period === p.id ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]' : 'text-[var(--exile-color-text-secondary)]'"
+              :class="period === p.id ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'"
               @click="period = p.id"
             >
               {{ p.label }}
