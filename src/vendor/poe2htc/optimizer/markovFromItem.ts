@@ -723,6 +723,12 @@ export function markovFromItem(
     readonly rerollCost: number;
     /** An offer's outcomes, KEPT sorted by V between calls, so re-sorting is near-linear. Empty otherwise. */
     readonly order: Int32Array;
+    /**
+     * ExileDesk 2026-10-09: an offer whose draws are NOT alike (an untargeted desecration: 1–3 exclusive mods
+     * + the rest normal, on whichever side the bone landed — ActionDef.mix). Each part's probabilities are
+     * aligned with `to`. Absent for an offer of `offer` alike draws from `prob`.
+     */
+    readonly mix?: ReadonlyArray<{ readonly weight: number; readonly parts: ReadonlyArray<{ readonly prob: Float64Array; readonly draws: number }> }>;
   }
   const compiled: CompiledAction[][] = new Array<CompiledAction[]>(N);
   const NO_ORDER = new Int32Array(0);
@@ -763,10 +769,21 @@ export function markovFromItem(
         prob.push(p);
       }
       if (to.length > widestOffer && offer > 1) widestOffer = to.length;
+      // Mixed offer: each part's probabilities aligned with `to` (built from def.dist, the marginal, so every
+      // outcome a part can reach is there).
+      let mix: CompiledAction['mix'];
+      if (def.mix && offer > 1) {
+        const keys = [...def.dist.keys()].filter((k) => !(k === key && offer === 1));
+        mix = def.mix.map((c) => ({
+          weight: c.weight,
+          parts: c.parts.map((pt) => ({ draws: pt.draws, prob: Float64Array.from(keys, (k) => pt.dist.get(k) ?? 0) })),
+        }));
+      }
       out.push({
         def, cost: def.cost, selfProb, offer, rerollCost: def.reroll?.cost ?? Infinity, isRestart: def.action.currency === 'restart',
         to: Int32Array.from(to), prob: Float64Array.from(prob),
         order: offer > 1 ? Int32Array.from(to, (_, j) => j) : NO_ORDER,
+        ...(mix ? { mix } : {}),
       });
       // The cheapest thing the craft can do, restart excluded — it sets both the default tolerance and
       // the factor that repairs the seed. Restart is left out because it is not in phase A, and because
@@ -943,17 +960,42 @@ export function markovFromItem(
       while (q >= 0 && V[a.to[order[q]!]!]! > cv) { order[q + 1] = order[q]!; q--; }
       order[q + 1] = cur;
     }
-    let tail = 0;
-    for (let j = 0; j < K; j++) tail += a.prob[j]!;
-    let tailPow = powOffer(tail, a.offer);
     let fresh = 0; // τ: what one fresh offer is worth
-    for (let j = 0; j < K; j++) {
-      const idx = order[j]!;
-      tail -= a.prob[idx]!;
-      const nextPow = tail <= 0 ? 0 : powOffer(tail, a.offer);
-      w[idx] = tailPow - nextPow;
-      fresh += V[a.to[idx]!]! * w[idx];
-      tailPow = nextPow;
+    if (a.mix) {
+      // Unlike draws (ExileDesk 2026-10-09): P(every draw lands in the tail set) = Σ_c w_c Π_parts T_part^draws,
+      // the same tail-sum identity with one tail per part.
+      const tails = a.mix.map((c) => c.parts.map((pt) => { let t = 0; for (let j = 0; j < K; j++) t += pt.prob[j]!; return t; }));
+      const allIn = (): number => {
+        let f = 0;
+        for (let ci = 0; ci < a.mix!.length; ci++) {
+          const c = a.mix![ci]!;
+          let g = c.weight;
+          for (let pi = 0; pi < c.parts.length; pi++) { const t = tails[ci]![pi]!; g *= t <= 1e-15 ? 0 : t ** c.parts[pi]!.draws; }
+          f += g;
+        }
+        return f;
+      };
+      let tailF = allIn();
+      for (let j = 0; j < K; j++) {
+        const idx = order[j]!;
+        for (let ci = 0; ci < a.mix.length; ci++) for (let pi = 0; pi < a.mix[ci]!.parts.length; pi++) tails[ci]![pi]! -= a.mix[ci]!.parts[pi]!.prob[idx]!;
+        const nextF = allIn();
+        w[idx] = tailF - nextF;
+        fresh += V[a.to[idx]!]! * w[idx];
+        tailF = nextF;
+      }
+    } else {
+      let tail = 0;
+      for (let j = 0; j < K; j++) tail += a.prob[j]!;
+      let tailPow = powOffer(tail, a.offer);
+      for (let j = 0; j < K; j++) {
+        const idx = order[j]!;
+        tail -= a.prob[idx]!;
+        const nextPow = tail <= 0 ? 0 : powOffer(tail, a.offer);
+        w[idx] = tailPow - nextPow;
+        fresh += V[a.to[idx]!]! * w[idx];
+        tailPow = nextPow;
+      }
     }
     lastThrow = 0;
     if (a.rerollCost === Infinity) return fresh;

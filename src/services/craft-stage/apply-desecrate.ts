@@ -11,7 +11,7 @@
  *   - 王 / 君主 / 黒血のお告げ: 候補をその勢力の冒涜の MOD だけに (MOD ごとに等しく。エンジンの desecrationBossProbability)。防具には使えない
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { ANCIENT_BONE_FLOOR, bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
+import { ANCIENT_BONE_FLOOR, bossOmenAllowed, DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
 import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, withMod, without, type Candidate, effectiveCls } from "./stage-core";
 import { ABYSS_MARK_FLOOR } from "../htc/omens";
 import { FACTION_TAG } from "./omens";
@@ -89,13 +89,11 @@ function pool(data: PatchData, item: StageItem, side: StageSide, floor: number, 
 export const unrevealedOf = (item: StageItem): StageMod | undefined => allMods(item).find((m) => m.unrevealed);
 
 /**
- * 発現の候補 3 つのうち、冒涜専用 MOD (勢力の MOD・異界) が何個か (2026-10-09)。
- * 実測: Reddit r/PathOfExile2「I desecrated more than 500 rings」(u/Civil-Bee-f) — 指輪・アイテムレベル 65 以上・保存された鎖骨・お告げ無しで
- * 563 回発現: 0 個 0 回 / 1 個 480 (85.3%) / 2 個 78 (13.9%) / 3 個 5 (0.9%)。プレとサフィで差は無く、専用 MOD の数にもよらない、並び順はばらばら。
- * Krakenbul「0.3 の最初から知られている」。Craft of Exile は 80 / 15 / 5 (出どころの書き込み無し) なので実測の方を使う。
- * 前は普通の MOD と専用 MOD (上流の仮の重み 2500) を混ぜて重みで引いていて、専用 0 個が 2〜3 割出ていた
+ * 発現の候補 3 つのうち、冒涜専用 MOD (勢力の MOD・異界) が何個か。決まりはエンジンの DESECRATION_EXCLUSIVE_COUNT (probability.ts) に 1 つだけ置き、
+ * 計算機 (markovActions の冒涜・plan.ts) とこのエミュレーターが同じ物を読む (2026-10-09 オーナー「参照してるエンジンは 1 つ、作り方おかしい」)。
+ * 実測: Reddit「I desecrated more than 500 rings」563 回 — 1 個 85.3% / 2 個 13.9% / 3 個 0.9%、0 個は無し
  */
-export const DESECRATED_COUNT_RATES = [0.853, 0.139, 0.009] as const;
+export const DESECRATED_COUNT_RATES = DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate);
 
 /** 系統が被る候補を外す (同じ発現に同じ系統は 2 つ出ない) */
 const famsOf = (c: Candidate): string[] => [...(c.mod.families ?? [c.mod.family])];
@@ -136,7 +134,7 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
     let normal = all.filter((c) => !isExclusive(c));
     if (!ex.length) return drawOne();
     const u = rng();
-    const want = u < DESECRATED_COUNT_RATES[0] ? 1 : u < DESECRATED_COUNT_RATES[0] + DESECRATED_COUNT_RATES[1] ? 2 : 3;
+    const want = u < DESECRATED_COUNT_RATES[0]! ? 1 : u < DESECRATED_COUNT_RATES[0]! + DESECRATED_COUNT_RATES[1]! ? 2 : 3;
     const picked: Candidate[] = [];
     for (let i = 0; i < want && ex.length; i++) {
       const c = pickWeighted(ex, rng)!;

@@ -10,7 +10,7 @@
 import { CURRENCY_FLOOR, type ItemBase, type Mod, type PatchData } from '../engine/types.ts';
 import { excluded, poolTotalWeight, type WeightBoost } from '../engine/pool.ts';
 import type { DesecrationBossOmen } from '../engine/probability.ts';
-import { ANCIENT_BONE_FLOOR, DESECRATION_OFFER_COUNT, desecrationOmenForMod } from '../engine/probability.ts';
+import { ANCIENT_BONE_FLOOR, DESECRATION_EXCLUSIVE_COUNT, DESECRATION_OFFER_COUNT, desecrationOmenForMod } from '../engine/probability.ts';
 import type { CurrencyPolicy, Prices, PricedStep } from './cost.ts';
 import { ECHOES_OMEN, allowsStep, cheapestEssenceLevel, essenceLevelOf, isStepPriced, stepCost } from './cost.ts';
 import type { Dist, FlagCode, McRarity, McState, McTarget, SideIndex, StateEncoder } from './markovState.ts';
@@ -101,6 +101,14 @@ export interface ActionDef {
    * `cost` only if they do. Absent means no reroll. Only meaningful with `offer`; see `keepWeights`.
    */
   readonly reroll?: { readonly cost: number };
+  /**
+   * ExileDesk 2026-10-09: an offer whose draws are not alike — an untargeted desecration shows 1–3 exclusive
+   * mods (count-uniform) and the rest normal (by weight), on the side the bone landed
+   * (DESECRATION_EXCLUSIVE_COUNT). Components are mutually exclusive cases with their probability; each part
+   * is `draws` alike draws from its own `dist`. `dist` above is then the marginal of one draw (signature and
+   * display only). The solver's keepWeights evaluates this exactly with one tail per part.
+   */
+  readonly mix?: ReadonlyArray<{ readonly weight: number; readonly parts: ReadonlyArray<{ readonly dist: Dist; readonly draws: number }> }>;
 }
 
 /**
@@ -586,9 +594,9 @@ export function createActionSpace(params: ActionSpaceParams): {
    * same currencies. The two used to be tracked apart — junk on jp/js, desecrated on its own axis with
    * its own slot — which double-counted the desecrated mod as an extra affix the item did not have.
    */
-  const desecrateAnyOutcomes = (s: McState, constrainTo?: 'prefix' | 'suffix', floor = 0): Dist => {
-    const out: Dist = new Map();
-    if (!desecratable || hasDesecrated(s)) return out; // an item holds at most one desecrated mod
+  const desecrateAnyOutcomes = (s: McState, constrainTo?: 'prefix' | 'suffix', floor = 0): { dist: Dist; mix: NonNullable<ActionDef['mix']> } => {
+    const empty = { dist: new Map() as Dist, mix: [] };
+    if (!desecratable || hasDesecrated(s)) return empty; // an item holds at most one desecrated mod
     const prefixOpen = constrainTo !== 'suffix' && prefixOpenIn(s);
     const suffixOpen = constrainTo !== 'prefix' && suffixOpenIn(s);
     const occ = occupiedFamilies(s.present, s.blocked, list);
@@ -597,34 +605,72 @@ export function createActionSpace(params: ActionSpaceParams): {
     // normal pool feels it. See desecrationBoneFor.
     const weigh = (ids: readonly string[], open: boolean): number =>
       (open ? poolTotalWeight(data, ids, floor, level, occ) : 0);
-    const prefNormal = weigh(pools.normal.prefixes, prefixOpen);
-    const prefDes = weigh(pools.desecrated.prefixes, prefixOpen);
-    const sufNormal = weigh(pools.normal.suffixes, suffixOpen);
-    const sufDes = weigh(pools.desecrated.suffixes, suffixOpen);
-    const grand = prefNormal + prefDes + sufNormal + sufDes;
-    if (grand <= 0) return out;
-    // Whole-family weight claimed by TARGETS, by side — the residue on each side is junk, whichever
-    // pool it came out of.
-    const claimed = { prefix: 0, suffix: 0 };
-    for (let i = 0; i < n; i++) {
-      if (has(s.present, i) || has(s.blocked, i)) continue; // family already occupied
-      const t = list[i]!;
-      const src = representative(t).source;
-      if (src !== 'normal' && src !== 'desecrated') continue; // essence-only mods are in neither pool
-      if (excluded(representative(t), occ)) continue;
-      if (!(t.type === 'prefix' ? prefixOpen : suffixOpen)) continue;
-      const succ = succWeight(t, floor);
-      const any = anyWeight(t, floor);
-      if (succ > 0) addTo(out, encodeState(s.present | bit(i), s.blocked, s.jp, s.js, flagTarget(i), s.rarity), succ / grand);
-      const below = any - succ;
-      if (below > 0) addTo(out, encodeState(s.present, s.blocked | bit(i), s.jp, s.js, flagTarget(i), s.rarity), below / grand);
-      claimed[t.type] += any;
+    // ExileDesk 2026-10-09: the bone lands on a side by everything that side could show (normal + desecrated
+    // weight, as before and as the emulator's bone does); the offer on that side is then built by
+    // DESECRATION_EXCLUSIVE_COUNT — 1–3 exclusive mods count-uniform, the rest normal by weight — instead of
+    // three draws from normal ∪ desecrated by weight.
+    const sideOf = (sd: 'prefix' | 'suffix', open: boolean) => {
+      const normalIds = sd === 'prefix' ? pools.normal.prefixes : pools.normal.suffixes;
+      const desIds = sd === 'prefix' ? pools.desecrated.prefixes : pools.desecrated.suffixes;
+      const normalW = weigh(normalIds, open);
+      const total = normalW + weigh(desIds, open);
+      const junkState = sd === 'prefix'
+        ? encodeState(s.present, s.blocked, s.jp + 1, s.js, FLAG_JUNK_PREFIX, s.rarity)
+        : encodeState(s.present, s.blocked, s.jp, s.js + 1, FLAG_JUNK_SUFFIX, s.rarity);
+      // Normal part: the old per-target split, over the normal weight only
+      const normal: Dist = new Map();
+      let claimed = 0;
+      if (open && normalW > 0) {
+        for (let i = 0; i < n; i++) {
+          if (has(s.present, i) || has(s.blocked, i)) continue;
+          const t = list[i]!;
+          if (t.type !== sd || representative(t).source !== 'normal' || excluded(representative(t), occ)) continue;
+          const succ = succWeight(t, floor);
+          const any = anyWeight(t, floor);
+          if (succ > 0) addTo(normal, encodeState(s.present | bit(i), s.blocked, s.jp, s.js, flagTarget(i), s.rarity), succ / normalW);
+          if (any - succ > 0) addTo(normal, encodeState(s.present, s.blocked | bit(i), s.jp, s.js, flagTarget(i), s.rarity), (any - succ) / normalW);
+          claimed += any;
+        }
+        const junk = Math.max(0, normalW - claimed);
+        if (junk > 0) addTo(normal, junkState, junk / normalW);
+      }
+      // Exclusive part: every legal desecrated mod of the side, count-uniform
+      const legal: string[] = [];
+      if (open) {
+        for (const id of desIds) {
+          const mod = data.mods.get(id)!;
+          if (excluded(mod, occ) || !mod.tiers.some((t) => t.ilvl <= level && t.weight > 0)) continue;
+          legal.push(id);
+        }
+      }
+      const exclusive: Dist = new Map();
+      for (const id of legal) {
+        const i = list.findIndex((t) => t.mods.some((m) => m.mod.id === id));
+        addTo(exclusive, i >= 0 && !has(s.present, i) && !has(s.blocked, i)
+          ? encodeState(s.present | bit(i), s.blocked, s.jp, s.js, flagTarget(i), s.rarity)
+          : junkState, 1 / legal.length);
+      }
+      return { total, normal, exclusive, hasNormal: normal.size > 0, hasExclusive: legal.length > 0 };
+    };
+    const sides = [sideOf('prefix', prefixOpen), sideOf('suffix', suffixOpen)];
+    const grand = sides.reduce((a, x) => a + x.total, 0);
+    if (grand <= 0) return empty;
+    const mix: { weight: number; parts: { dist: Dist; draws: number }[] }[] = [];
+    for (const x of sides) {
+      if (!(x.total > 0) || (!x.hasNormal && !x.hasExclusive)) continue;
+      const pSide = x.total / grand;
+      if (!x.hasExclusive) { mix.push({ weight: pSide, parts: [{ dist: x.normal, draws: DESECRATION_OFFER_COUNT }] }); continue; }
+      if (!x.hasNormal) { mix.push({ weight: pSide, parts: [{ dist: x.exclusive, draws: DESECRATION_OFFER_COUNT }] }); continue; }
+      for (const c of DESECRATION_EXCLUSIVE_COUNT) {
+        const parts = [{ dist: x.exclusive, draws: c.exclusive as number }];
+        if (DESECRATION_OFFER_COUNT - c.exclusive > 0) parts.push({ dist: x.normal, draws: DESECRATION_OFFER_COUNT - c.exclusive });
+        mix.push({ weight: pSide * c.rate, parts });
+      }
     }
-    const junkPref = Math.max(0, prefNormal + prefDes - claimed.prefix);
-    const junkSuf = Math.max(0, sufNormal + sufDes - claimed.suffix);
-    if (junkPref > 0) addTo(out, encodeState(s.present, s.blocked, s.jp + 1, s.js, FLAG_JUNK_PREFIX, s.rarity), junkPref / grand);
-    if (junkSuf > 0) addTo(out, encodeState(s.present, s.blocked, s.jp, s.js + 1, FLAG_JUNK_SUFFIX, s.rarity), junkSuf / grand);
-    return out;
+    // Marginal of one draw — for the action's signature and anything that only reads `dist`
+    const dist: Dist = new Map();
+    for (const c of mix) for (const pt of c.parts) for (const [k, p] of pt.dist) addTo(dist, k, c.weight * (pt.draws / DESECRATION_OFFER_COUNT) * p);
+    return { dist, mix };
   };
 
   // ── Perfect Essence ────────────────────────────────────────────────────────────────────────────
@@ -761,14 +807,14 @@ export function createActionSpace(params: ActionSpaceParams): {
   // did before the fold existed.
   const pusher = (acts: ActionDef[]) => {
     const seen = new Map<string, number>(); // outcome signature → its slot in `acts`
-    return (action: McAction, dist: Dist, offer?: number, reroll?: { readonly cost: number }): void => {
+    return (action: McAction, dist: Dist, offer?: number, reroll?: { readonly cost: number }, mix?: ActionDef['mix']): void => {
       if (dist.size === 0) return;
       if (!allowsAction(policy, action)) return;
       // Not on the currency ranking = not buyable (ExileDesk 2026-09-23, see isStepPriced).
       if (action.currency !== 'restart' && !isStepPriced(prices, pricedStepOf(action))) return;
       const cost = actionCostOf(prices, action);
       const def: ActionDef = {
-        action, cost, dist, ...(offer === undefined ? {} : { offer }), ...(reroll ? { reroll } : {}),
+        action, cost, dist, ...(offer === undefined ? {} : { offer }), ...(reroll ? { reroll } : {}), ...(mix ? { mix } : {}),
       };
       const sig = signatureOf(action, dist, offer ?? 1, reroll !== undefined);
       const at = seen.get(sig);
@@ -863,18 +909,19 @@ export function createActionSpace(params: ActionSpaceParams): {
       // worth at least the plain one in every state. Offering both would double the work for nothing.
       // Where the reroll is never worth taking, the solve publishes the step as the plain draw it then
       // is (`published` in markovFromItem.ts).
-      const offerDraw = (action: DesecrateAction, dist: Dist): void => {
-        if (echoesOk) push({ ...action, echoes: true }, dist, DESECRATION_OFFER_COUNT, { cost: 0 });
-        else push(action, dist, DESECRATION_OFFER_COUNT);
+      const offerDraw = (action: DesecrateAction, dist: Dist, mix?: ActionDef['mix']): void => {
+        if (echoesOk) push({ ...action, echoes: true }, dist, DESECRATION_OFFER_COUNT, { cost: 0 }, mix);
+        else push(action, dist, DESECRATION_OFFER_COUNT, undefined, mix);
       };
+      const offerAny = (action: DesecrateAction, o: { dist: Dist; mix: NonNullable<ActionDef['mix']> }): void => offerDraw(action, o.dist, o.mix);
       // Preserved first, then Ancient: where the floor changes nothing (every outcome of the draw already
       // at ilvl 40 or above) the two draws are identical, and the fold keeps the cheaper bone.
       for (const grade of bonesOffered) {
         const floor = grade.ancient ? ANCIENT_BONE_FLOOR : 0;
-        offerDraw({ currency: 'desecrate', ...grade }, desecrateAnyOutcomes(s, undefined, floor));
+        offerAny({ currency: 'desecrate', ...grade }, desecrateAnyOutcomes(s, undefined, floor));
         for (const sd of ['prefix', 'suffix'] as const) {
           if (necromancyOk(sd)) {
-            offerDraw({ currency: 'desecrate', ...grade, side: sd }, desecrateAnyOutcomes(s, sd, floor));
+            offerAny({ currency: 'desecrate', ...grade, side: sd }, desecrateAnyOutcomes(s, sd, floor));
           }
         }
       }

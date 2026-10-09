@@ -742,6 +742,98 @@ export function desecrationBossAnySideProbability(
   return count > 0 ? 1 / count : 0;
 }
 
+/**
+ * ExileDesk 2026-10-09: what one revealed offer of three is made of — the ONE place the rule lives (the
+ * craft stage's emulator, the MDP's untargeted desecration and the linear planner all read it).
+ *
+ * Measured, not assumed: Reddit r/PathOfExile2 "I desecrated more than 500 rings" (u/Civil-Bee-f), rings at
+ * ilvl 65+, Preserved Collarbone, no omen, 563 reveals — desecrated-only (exclusive) mods in the three:
+ * 0 → never, 1 → 480, 2 → 78, 3 → 5. Same split for prefixes and suffixes, independent of how many exclusive
+ * mods the pool holds, position random (Krakenbul: "known since the first days of 0.3"). Craft of Exile
+ * uses 80 / 15 / 5 with no stated source. The exclusive picks are count-uniform among the legal exclusive
+ * mods of the side (their real weights are unknown — CoE and poe2db both carry 1); the rest of the offer is
+ * drawn from the NORMAL pool by weight. With no legal exclusive mod (ilvl < 65, or all blocked) all three
+ * are normal. Before this the offer was three independent draws from normal ∪ desecrated by weight, with
+ * the desecrated weight a flat 2500 placeholder — which showed zero exclusive mods 23–32% of the time.
+ */
+export const DESECRATION_EXCLUSIVE_COUNT: ReadonlyArray<{ readonly exclusive: 1 | 2 | 3; readonly rate: number }> = [
+  { exclusive: 1, rate: 480 / 563 },
+  { exclusive: 2, rate: 78 / 563 },
+  { exclusive: 3, rate: 5 / 563 },
+];
+
+/** Σ weight of `mod`'s tiers that can roll at `level` with the bone's `floor`, from tier `minTierIndex` up. */
+function rollableWeight(mod: Mod, level: number, floor: number, minTierIndex = 0): number {
+  let w = 0;
+  mod.tiers.forEach((t, i) => { if (i >= minTierIndex && t.ilvl <= level && t.ilvl >= floor) w += t.weight; });
+  return w;
+}
+
+/**
+ * ExileDesk 2026-10-09: P(an untargeted desecration — no boss omen — puts `desiredModId` in front of the
+ * player), by the reveal composition above. The bone first lands on a side, weighted by everything that
+ * side could show (normal + desecrated weight — the same split the emulator's bone uses), unless a
+ * Necromancy omen fixed it. On that side an exclusive target is among the `k` exclusive picks with
+ * probability k / (legal exclusive count); a normal target among the `3 − k` normal picks with
+ * 1 − (1 − share)^(3 − k) (share of the side's normal weight — treating those picks as independent, which on a
+ * pool of hundreds moves it by far less than the unknown weights do). An Omen of Abyssal Echoes (`rerolls`)
+ * shows a fresh offer on the SAME side when the first misses.
+ */
+export function desecrationOfferProbability(
+  data: PatchData, item: ItemState, desiredModId: string,
+  opts: { floor?: number; minTierIndex?: number; constrainTo?: AffixType; rerolls?: number } = {},
+): number {
+  const mod = data.mods.get(desiredModId);
+  if (!mod) return 0;
+  if (mod.source !== 'normal' && mod.source !== 'desecrated') return 0;
+  if (!familyAvailable(data, item, mod)) return 0;
+  const floor = opts.floor ?? 0;
+  const side = mod.type;
+  if (opts.constrainTo && opts.constrainTo !== side) return 0;
+  const open = { prefix: !prefixesFull(item), suffix: !suffixesFull(item) };
+  if (!open[side]) return 0;
+  const pools = item.base.pools;
+  const sideStats = (sd: AffixType) => {
+    const k = sd === 'prefix' ? 'prefixes' : 'suffixes';
+    let normal = 0;
+    let desecratedW = 0;
+    let exclusive = 0;
+    for (const id of pools.normal[k]) {
+      const m = data.mods.get(id);
+      if (m && familyAvailable(data, item, m)) normal += rollableWeight(m, item.level, floor);
+    }
+    for (const id of pools.desecrated[k]) {
+      const m = data.mods.get(id);
+      if (!m || !familyAvailable(data, item, m)) continue;
+      const w = rollableWeight(m, item.level, floor);
+      if (w > 0) { desecratedW += w; exclusive++; }
+    }
+    return { normal, total: normal + desecratedW, exclusive };
+  };
+  const here = sideStats(side);
+  if (!(here.total > 0)) return 0;
+  let pSide = 1;
+  if (!opts.constrainTo) {
+    const other = side === 'prefix' ? 'suffix' : 'prefix';
+    const there = open[other] ? sideStats(other).total : 0;
+    pSide = here.total / (here.total + there);
+  }
+  const inPool = (side === 'prefix' ? (mod.source === 'normal' ? pools.normal.prefixes : pools.desecrated.prefixes) : (mod.source === 'normal' ? pools.normal.suffixes : pools.desecrated.suffixes)).includes(desiredModId);
+  if (!inPool) return 0;
+  let pOffer = 0;
+  if (mod.source === 'desecrated') {
+    if (here.exclusive === 0 || rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0) <= 0) return 0;
+    for (const c of DESECRATION_EXCLUSIVE_COUNT) pOffer += c.rate * Math.min(1, c.exclusive / here.exclusive);
+  } else {
+    const share = here.normal > 0 ? rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0) / here.normal : 0;
+    if (share <= 0) return 0;
+    if (here.exclusive === 0) pOffer = 1 - (1 - share) ** DESECRATION_OFFER_COUNT;
+    else for (const c of DESECRATION_EXCLUSIVE_COUNT) pOffer += c.rate * (1 - (1 - share) ** (DESECRATION_OFFER_COUNT - c.exclusive));
+  }
+  const tries = 1 + (opts.rerolls ?? 0);
+  return pSide * (1 - (1 - Math.min(1, pOffer)) ** tries);
+}
+
 export interface DesecrationOptions {
   /** Bone-strength floor ilvl (raises the tier floor). Default 0. */
   floor?: number;

@@ -12,7 +12,7 @@ import { limitsOf, prefixesFull, suffixesFull, whiteItem, withAffix } from './it
 import type { AnnulOmen, ChaosOmen, CurrencyOptions, DesecrationBossOmen, DrawTarget, EssenceOmen } from './probability.ts';
 import {
   alchemyProbability, annulProbability, augmentationProbability, chaosProbability, desecrationBossAnySideProbability,
-  desecrationBossProbability, desecrationOffered, desecrationProbability, essenceForcedProbability, exaltProbability,
+  desecrationBossProbability, desecrationOffered, desecrationOfferProbability, essenceForcedProbability, exaltProbability,
   greaterExaltProbability, perfectEssenceProbability, regalProbability, throwawayProbability, transmuteProbability,
 } from './probability.ts';
 
@@ -167,10 +167,10 @@ export function stepProbability(data: PatchData, state: ItemState, step: PlanSte
       // Every branch below is a PER-DRAW probability; a bone offers DESECRATION_OFFER_COUNT of them
       // and you take one, so the chance this step delivers `step.add` is the chance it appears at all.
       // Applied here rather than inside the primitives so the Java-ported boss numbers stay as ported.
+      // ExileDesk 2026-10-09: the untargeted offer is built by DESECRATION_EXCLUSIVE_COUNT (1–3 exclusive
+      // mods + the rest normal), the same rule as the emulator — not three independent draws.
       if (!step.boss) {
-        return desecrationOffered(
-          desecrationProbability(data, state, step.add, step.constrainTo ? { constrainTo: step.constrainTo } : {}),
-        );
+        return desecrationOfferProbability(data, state, step.add, step.constrainTo ? { constrainTo: step.constrainTo } : {});
       }
       // D8: a boss draw spans BOTH sides unless a Sinistral/Dextral Necromancy omen locks it to one.
       // With the omen the draw is the per-slot 1/N (and it must be the added mod's own side, or the
