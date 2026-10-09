@@ -57,6 +57,9 @@ export function aimCombos(data: PatchData, item: StageItem, keys: readonly strin
       // お告げが全部効く時だけ (効かないお告げは使われず、お告げ無しと同じになる)
       const r = applyCurrency(data, item, k, mulberry32(1), om);
       if (!r.applied) continue;
+      // コラプトさせる物 (ヴァールなど) は狙う手にしない。打てばその先クラフトできず、外れも当たりも狙いの役に立たない
+      // (2026-10-09 オーナー「ヴァールに関しては意味わからん」: 書き換えの目でまれに付くので 1 位に出ていた)
+      if (kind === "vaal" || (r.item.corrupted && !item.corrupted)) continue;
       out.push({ currency: k, omens: kind === "desecrate" ? [...om, ECHOES] : om });
     }
   }

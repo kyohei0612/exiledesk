@@ -43,6 +43,11 @@ describe("狙う確率", () => {
     expect(cs.some((c) => c.currency === "desecrate" && c.omens.includes("OmenofAbyssalEchoes"))).toBe(true);
     expect(cs.some((c) => c.currency === "transmute")).toBe(false);
   });
+  it("ヴァール (コラプトさせる物) は打ち方の一覧に入らない (書き換えの目でまれに付いて 1 位に出ていた)", () => {
+    const cs = aimCombos(data, ring, ["exalt", "vaal"]);
+    expect(cs.some((c) => c.currency === "exalt")).toBe(true);
+    expect(cs.some((c) => c.currency === "vaal")).toBe(false);
+  });
   it("一覧を全部 300 回ずつ試しても数秒で終わる", () => {
     const cs = aimCombos(data, ring, ["exalt", "exalt_greater", "exalt_perfect", "chaos", "chaos_greater", "chaos_perfect", "desecrate", "desecrate_ancient"]);
     const t0 = performance.now();
