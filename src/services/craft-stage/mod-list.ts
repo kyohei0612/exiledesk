@@ -19,8 +19,12 @@ import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
 import { tierDisplayRanges } from "../mods/stat-scale";
 
 /** エッセンスはパーフェクト (合金も) とそれ以外を分ける (使い道が違う、[[essence-kind.ts]]) */
-export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "desecrated" | "otherworldly";
-export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", rune: "ルーンの特殊 MOD (重みは仮定)", essence: ESSENCE_KIND.essence.label, perfect_essence: ESSENCE_KIND.perfect_essence.label, desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)" };
+export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "desecrated" | "otherworldly" | "special";
+/**
+ * special = 創生の樹・ハンドラップ専用の MOD (ベースの special の置き場、重み 0)。カレンシーでは付かないが MOD としてはあるので、手で付ける分だけ出す
+ * (2026-10-09 オーナー「創生の樹産の奴がクラフトでは付かないけど MOD としては存在する。カレンシーで出ちゃだめだけど、手動で付ける分はいる。分かりやすいように置いといて」)
+ */
+export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", rune: "ルーンの特殊 MOD (重みは仮定)", essence: ESSENCE_KIND.essence.label, perfect_essence: ESSENCE_KIND.perfect_essence.label, desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)", special: "創生の樹など (カレンシーでは付かない)" };
 
 /** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05) */
 export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string; modId?: string }
@@ -98,7 +102,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
   };
   const modsOf = (ids: readonly string[]) => ids.map((id) => data.mods.get(id)).filter((m): m is Mod => !!m);
   const groups: Array<[ModGroup, { prefixes: readonly string[]; suffixes: readonly string[] } | undefined]> = [
-    ["normal", pools.normal], ["essence", pools.essence], ["desecrated", pools.desecrated], ["otherworldly", pools.otherworldly],
+    ["normal", pools.normal], ["essence", pools.essence], ["desecrated", pools.desecrated], ["otherworldly", pools.otherworldly], ["special", pools.special],
   ];
   for (const [group, pool] of groups) {
     if (!pool) continue;

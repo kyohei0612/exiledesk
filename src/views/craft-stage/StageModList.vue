@@ -85,7 +85,7 @@ watch(open, (v) => { try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /
 watch(() => s.mode.value === "sim" && !s.simTargets.value.length && s.base.value, (v) => { if (v) open.value = true; }, { immediate: true });
 
 // エッセンスはマジック用とレア用 (パーフェクト・合金) を 1 つの節に (2026-10-10 オーナー「エッセンスね、パーフェクトとかやなくて意味わからん」)
-const GROUPS: ModGroup[] = ["normal", "rune", "essence", "desecrated", "otherworldly"];
+const GROUPS: ModGroup[] = ["normal", "rune", "essence", "desecrated", "otherworldly", "special"];
 const inGroup = (r: { group: ModGroup }, g: ModGroup): boolean => r.group === g || (g === "essence" && r.group === "perfect_essence");
 const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => inGroup(r, g)).length])) as Record<ModGroup, number>);
 
@@ -118,7 +118,7 @@ function toggleRow(key: string, ev: MouseEvent): void {
 interface Section { g: ModGroup; sid: string; label: string; rune: string | null; socketed: boolean; count: number; columns: Array<{ side: "prefix" | "suffix"; title: string; items: ListRow[]; top: number }> }
 const sections = computed((): Section[] => {
   const q = query.value.trim();
-  const parts: Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> = GROUPS.filter((g) => counts.value[g]).flatMap((g): Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> =>
+  const parts: Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> = GROUPS.filter((g) => counts.value[g] && !(g === "special" && s.mode.value === "sim")).flatMap((g): Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> =>
     g === "rune"
       ? [...new Set(rows.value.filter((r) => r.group === "rune").map((r) => r.runeJa ?? ""))].map((ja) => ({ g, sid: `rune:${ja}`, label: ja, rune: ja }))
       : [{ g, sid: g as string, label: GROUP_JA[g], rune: null as string | null }],
@@ -250,6 +250,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
   perfect_essence: { tab: "bg-cyan-400/20 text-cyan-100 ring-1 ring-cyan-300/60", bar: "bg-cyan-400/[0.08]" },
   desecrated: { tab: "bg-gradient-to-r from-green-900/70 via-emerald-800/40 to-lime-900/60 text-lime-100/90 ring-1 ring-green-700/70", bar: "bg-gradient-to-r from-green-950/40 via-emerald-900/25 to-lime-900/20" },
   otherworldly: { tab: "bg-teal-500/20 text-teal-100 ring-1 ring-teal-400/60", bar: "bg-teal-500/[0.08]" },
+  special: { tab: "bg-white/10 text-[var(--exile-color-text-secondary)] ring-1 ring-white/25", bar: "bg-white/[0.04]" },
 };
 </script>
 
@@ -280,6 +281,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
           <span class="rounded-full px-2.5 py-0.5" :class="toneOf(sec).tab">{{ sec.label }}</span>
           <span class="font-normal opacity-50">{{ sec.count }} 系統</span>
           <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差すと付く" }} · 重みは公開されていないので仮定 · 出やすさは差した時の割合</span>
+          <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ</span>
           <span class="ml-auto font-normal opacity-60 md:hidden">{{ secShown(sec.sid) ? "▲" : "▼ 開く" }}</span>
         </h3>
         <div v-if="secShown(sec.sid)" class="grid gap-3 md:grid-cols-2">
