@@ -34,7 +34,7 @@ import { RUNES } from "./stage-runes";
 import { allMods, limitOf, listOf, room } from "./stage-core";
 import type { StageItem, StageMod, StageSide } from "./types";
 import type { CraftStagePlan } from "./contract";
-import essenceKeys from "../htc/essence-keys.json";
+import { ESSENCE_KEYS } from "../htc/essence-key-table";
 
 export type RecipeMethod = "exalt" | "chaos" | "desecrate" | "essence" | "fracture";
 /**
@@ -169,7 +169,7 @@ export interface RecipeResult {
   stepAvg?: Array<{ presses: number; cost: number; p80Presses: number; p80Cost: number }>;
 }
 
-const ESS = (essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys;
+const ESS = ESSENCE_KEYS;
 /** 結晶化のお告げの側 (無ければ両側) */
 const crystalSides = (omens: readonly string[]): StageSide[] => (omens.some((o) => /SinistralCrystallisation/.test(o)) ? ["prefix"] : omens.some((o) => /DextralCrystallisation/.test(o)) ? ["suffix"] : ["prefix", "suffix"]);
 const SIDE_OMEN = {

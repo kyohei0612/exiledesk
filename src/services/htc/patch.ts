@@ -205,26 +205,53 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
   // 重みが仮置きの 1 のままの MOD を埋める (キャストスピードなど)。**ここで掛けるのは、アプリと検算が
   // 同じ applyExtras を通るから**。別の場所で掛けると片方だけ直ることになる ([[weight-overrides.ts]])
   // 特殊 MOD のルーンの、中身の違う MOD が 1 つにまとめられていた物を分ける (2026-10-05、[[rune-split.ts]])
-  return splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases: removePoe2dbExtras(bases) }).data, extra.statTags ?? {}).data;
+  // poe2db (今のページ) に合わせる直しは最後 (分けた後の id で作ってある。scripts/build-poe2db-fixes.mjs)
+  return applyPoe2dbFixes(splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases }).data, extra.statTags ?? {}).data);
 }
 
+type Poe2dbFixes = {
+  weights: Record<string, Record<string, number>>;
+  mods: Mod[];
+  pools: Record<string, Record<string, { add: { prefixes: string[]; suffixes: string[] }; remove: string[] }>>;
+};
 /**
- * poe2db (今のページ) に無い系統を冒涜の置き場から外す (2026-10-09。scripts/audit-poe2db.mjs --write が poe2db-pool-fixes.json を作る)。
- * ワンド・スタッフ・セプターに攻撃武器用の冒涜 MOD 6 つ (耐性貫通・スピリットリザーブ効率など)、クォータースタッフにキャスター用など 14 が混ざっていた
- * (オーナー「ワンドの db、冒涜 MOD 違うでしょ」「最終確認は db」)。MOD そのものは残す (外すのは置き場だけ)
+ * poe2db (今のページ) に合わせる (2026-10-09。scripts/build-poe2db-fixes.mjs が poe2db-pool-fixes.json を作る)。
+ * オーナー「最終確認は db」「食い違いの直す候補、1 から全部直して」。中身:
+ *   - mods: 他の部位の同じ MOD を写した物 (足りない段) と、余計な段を外した物。同じ id があれば置き換える
+ *   - pools: 部位ごと・置き場ごとに足す / 外す id (normal / desecrated / essence / rune:<id>)
+ *   - weights: poe2db が数字を出していて違う段の重み (MOD id → 段の ilvl → 重み)
  */
-function removePoe2dbExtras<T extends { pools: { desecrated: ReadonlyPool } }>(bases: Map<string, T>): Map<string, T> {
-  const remove = (poolFixes as { remove: Record<string, { desecrated?: string[] }> }).remove;
-  const out = new Map(bases);
-  for (const [cls, fix] of Object.entries(remove)) {
-    const b = out.get(cls);
-    if (!b || !fix.desecrated?.length) continue;
-    // 一覧は分けた後の id (rune-split が「元の id__中身」に分ける)。外すのは分ける前なので、元の id でも外す
-    const drop = new Set(fix.desecrated.flatMap((id) => [id, id.split("__")[0]!]));
-    const d = b.pools.desecrated;
-    out.set(cls, { ...b, pools: { ...b.pools, desecrated: { prefixes: d.prefixes.filter((id) => !drop.has(id)), suffixes: d.suffixes.filter((id) => !drop.has(id)) } } });
+function applyPoe2dbFixes(data: PatchData): PatchData {
+  const fx = poolFixes as unknown as Poe2dbFixes;
+  const mods = new Map(data.mods);
+  for (const m of fx.mods ?? []) mods.set(m.id, m);
+  for (const [id, byIlvl] of Object.entries(fx.weights ?? {})) {
+    const m = mods.get(id);
+    if (m) mods.set(id, { ...m, tiers: m.tiers.map((t) => (byIlvl[t.ilvl] != null ? { ...t, weight: byIlvl[t.ilvl]! } : t)) });
   }
-  return out;
+  const bases = new Map(data.bases);
+  const edit = (p: ReadonlyPool | undefined, x: { add: { prefixes: string[]; suffixes: string[] }; remove: string[] }): ReadonlyPool => {
+    const drop = new Set(x.remove);
+    const cur = p ?? { prefixes: [], suffixes: [] };
+    return {
+      prefixes: [...new Set([...cur.prefixes.filter((id) => !drop.has(id)), ...x.add.prefixes])],
+      suffixes: [...new Set([...cur.suffixes.filter((id) => !drop.has(id)), ...x.add.suffixes])],
+    };
+  };
+  for (const [cls, groups] of Object.entries(fx.pools ?? {})) {
+    const b = bases.get(cls);
+    if (!b) continue;
+    const pools: { -readonly [K in keyof typeof b.pools]: (typeof b.pools)[K] } = { ...b.pools };
+    let rune = b.pools.rune ? { ...b.pools.rune } : undefined;
+    for (const [g, x] of Object.entries(groups)) {
+      if (g.startsWith("rune:")) {
+        rune ??= {};
+        rune[g.slice(5)] = edit(rune[g.slice(5)], x);
+      } else if (g === "normal" || g === "desecrated" || g === "essence") pools[g] = edit(b.pools[g], x);
+    }
+    bases.set(cls, { ...b, pools: { ...pools, ...(rune ? { rune } : {}) } });
+  }
+  return { ...data, mods, bases };
 }
 
 /**

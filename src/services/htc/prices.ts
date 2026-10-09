@@ -34,7 +34,7 @@ import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
 import type { PricesFile } from "../../vendor/poe2htc/optimizer/cost";
 import { marketStore } from "../../state/market-store";
 import keys from "./price-keys.json";
-import essenceKeys from "./essence-keys.json";
+import { ESSENCE_KEYS as ESSENCE_TABLE } from "./essence-key-table";
 
 /** ゲーム内の名前。英語は相場の引き当て用、日本語は画面用 (どちらもクライアント由来) */
 export interface GameName {
@@ -54,7 +54,7 @@ interface PriceKeys {
 const KEYS = keys as PriceKeys;
 
 /** `essence:<level>:<modId>` → ゲーム内の名前 */
-const ESSENCE_KEYS = (essenceKeys as { keys: Record<string, GameName> }).keys;
+const ESSENCE_KEYS: Readonly<Record<string, GameName>> = ESSENCE_TABLE;
 
 /** 何が埋まって何が埋まらなかったか。画面でそのまま断るために使う */
 export interface HtcPriceCoverage {

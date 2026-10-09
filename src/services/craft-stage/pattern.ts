@@ -8,11 +8,11 @@
  */
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
-import essenceKeys from "../htc/essence-keys.json";
+import { ESSENCE_KEYS } from "../htc/essence-key-table";
 import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
 import { RUNES } from "./stage-runes";
 
-const ESS = (essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys;
+const ESS = ESSENCE_KEYS;
 /** エッセンスの MOD の id → 種類 (普通のエッセンス / パーフェクト)。patternSets が data を持たないので、キーの表から引く */
 const ESS_SOURCE = new Map<string, "essence" | "perfect_essence">(Object.keys(ESS).flatMap((k) => {
   const m = /^essence:(lesser|normal|greater|perfect):(.+)$/.exec(k);

@@ -13,6 +13,7 @@ import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { BREACH_FAMILY } from "../htc/omens";
 import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, SIDES, skip, takenRawFamilies, withMod } from "./stage-core";
 import { essenceClash } from "../mods/mod-rules";
+import { ESSENCE_KEYS } from "../htc/essence-key-table";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
 /** そのクラスのエッセンスの MOD (側つき) */
@@ -54,8 +55,22 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
   return {};
 }
 
+/**
+ * 無限のエッセンス: 筋力・器用さ・知性のどれかが付く (poe2db はどの部位にも 3 つ並べている。2026-10-09)。
+ * 同じ強さ (レッサー / 普通 / グレーター) の 3 つの鍵から、付いていない系統を等しく引く。それ以外のエッセンスは鍵の MOD そのまま
+ */
+export const isInfiniteEssence = (key: string): boolean => / of the Infinite$/.test(ESSENCE_KEYS[key]?.en ?? "");
+function pickInfinite(data: PatchData, item: StageItem, key: string, rng: () => number): { level: string; mod: Mod; side: StageSide } | null {
+  const level = /^essence:([a-z]+):/.exec(key)?.[1];
+  const en = ESSENCE_KEYS[key]?.en;
+  const taken = takenRawFamilies(data, item);
+  const list = essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !essenceClash(x.mod, taken));
+  if (!level || !list.length) return null;
+  return { level, ...list[Math.floor(rng() * list.length)]! };
+}
+
 export function applyEssence(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
-  const t = essenceTarget(data, item, key);
+  const t = isInfiniteEssence(key) ? pickInfinite(data, item, key, rng) ?? essenceTarget(data, item, key) : essenceTarget(data, item, key);
   if (!t) return skip(item, "このベースには使えないエッセンス");
   const { mod, side, level } = t;
   // 段: 普通のエッセンスは段の名前 (Lesser / Greater / 無印) で選ぶ。パーフェクトは 1 段

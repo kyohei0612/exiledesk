@@ -9,7 +9,7 @@
 import { CRAFT_RUNES_EN } from "../services/htc/sockets";
 import { isLegacyRune, LEGACY_SOURCE } from "../services/market/legacy-rune";
 import priceKeys from "../services/htc/price-keys.json";
-import essenceKeys from "../services/htc/essence-keys.json";
+import { ESSENCE_KEYS } from "../services/htc/essence-key-table";
 import essences from "../vendor/poe2htc/data/essences.json";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
 import { jaOfOmen } from "../services/htc/labels";
@@ -24,7 +24,7 @@ import { marketStore } from "./market-store";
 
 type Named = Record<string, { en: string; ja: string }>;
 const KEYS = priceKeys as unknown as { currency: Named; bones: Named; omens: Named };
-const ESS = (essenceKeys as { keys: Named }).keys;
+const ESS: Named = ESSENCE_KEYS;
 
 export interface ShelfGroup { kind: string; label: string; keys: string[] }
 
@@ -102,7 +102,9 @@ export function essenceShelf(data: PatchData | null, item: StageItem | null): Sh
   for (const e of (essences as { essences: Array<{ name: string; tiers: Record<string, string[]> }> }).essences) {
     const keys: string[] = [];
     for (const [lvl, ids] of Object.entries(e.tiers)) {
-      const id = ids.find((x) => pool.has(x));
+      // 写した MOD (poe2db に合わせて足した物、essence-key-table) は essences.json に無いので、同じ名前の鍵を持つ置き場の MOD も見る
+      const en = ids.map((x) => ESS[`essence:${lvl.toLowerCase()}:${x}`]?.en).find(Boolean);
+      const id = ids.find((x) => pool.has(x)) ?? (en ? [...pool].find((x) => ESS[`essence:${lvl.toLowerCase()}:${x}`]?.en === en) : undefined);
       const key = id ? `essence:${lvl.toLowerCase()}:${id}` : null;
       if (key && ESS[key]) keys.push(key);
     }

@@ -189,7 +189,14 @@ const ONE_OF_TEXT: Record<string, string> = {
   PercentageStrength: "#% increased Strength",
   PercentageDexterity: "#% increased Dexterity",
   PercentageIntelligence: "#% increased Intelligence",
+  // 無限のエッセンス (レッサー / 普通 / グレーター) も同じく「筋力、器用さまたは知性」の説明文 (2026-10-09)
+  Strength: "+# to Strength",
+  Dexterity: "+# to Dexterity",
+  Intelligence: "+# to Intelligence",
 };
+const ONE_OF_SOURCE = new Set(["#% increased Strength, Dexterity or Intelligence", "+# to Strength, Dexterity or Intelligence"]);
+/** 説明文のまま (「筋力、器用さまたは知性」) の MOD を、付いた 1 つの文の MOD にする。一覧で 3 行が同じ文に見えないように */
+export const oneOfMod = (mod: Mod): Mod => (ONE_OF_TEXT[mod.family] && ONE_OF_SOURCE.has(mod.text ?? "") ? { ...mod, text: ONE_OF_TEXT[mod.family]! } : mod);
 const jaOfText = (en: string): string | undefined => (modTextJa as Record<string, string>)[en];
 /**
  * 段はそのままで数値だけ転がし直す (神のオーブ)。段の範囲はデータから引き直す。
@@ -208,7 +215,7 @@ export function withValues(m: StageMod, mod: Mod, rng: () => number, fixed?: rea
   const ranges = tierDisplayRanges(tier as TierLike);
   // 無限のパーフェクトエッセンスは 3 つの MOD とも文が説明文のまま (「筋力、器用さまたは知性」)。付いた 1 つの文にする (要望 ㉕-4)
   const one = ONE_OF_TEXT[mod.family];
-  const en = one && mod.text === "#% increased Strength, Dexterity or Intelligence" ? one : mod.text ?? mod.id;
+  const en = one && ONE_OF_SOURCE.has(mod.text ?? "") ? one : mod.text ?? mod.id;
   const ja = one && en === one ? jaOfText(one) ?? jaOfMod(mod) : jaOfMod(mod);
   const textEn = fillEn(en, values);
   return { ...m, values, ranges, textJa: fillJa(ja, textEn, values, signsOf(en)), textEn, ...(stats ? { stats: [...stats] } : {}), ...(mod.tags?.length ? { tags: [...mod.tags] } : {}) };

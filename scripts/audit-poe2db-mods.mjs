@@ -47,9 +47,9 @@ const dbNums = (str) => [...plain(str).matchAll(/\d+(?:\.\d+)?/g)].map((x) => Nu
 const ourNums = (t) => t.ranges.flatMap((r) => (r[0] === r[1] ? [r[0]] : [r[0], r[1]])).map((x) => Math.abs(x)).sort((a, b) => a - b);
 /**
  * こちらの数字が poe2db の文の数字に全部入っていれば同じと見る (文には「1 体ごとに」「+1」の固定の数字も入る)。
- * 単位違い (毎分の自動回復 = 毎秒 × 60、リーチの万分率 = % × 100) も同じと見る
+ * 単位違い (毎分の自動回復 = 毎秒 × 60、リーチの万分率 = % × 100、ミリ秒、0.1 m) も同じと見る
  */
-const sameNums = (ours, db) => [1, 60, 100].some((k) => { const left = [...db]; return ours.every((x) => { const i = left.findIndex((y) => Math.abs(x - y * k) < 0.011 * k); if (i < 0) return false; left.splice(i, 1); return true; }); });
+const sameNums = (ours, db) => [1, 60, 100, 1000, 0.1].some((k) => { const left = [...db]; return ours.every((x) => { const i = left.findIndex((y) => Math.abs(x - y * k) < 0.011 * Math.max(k, 1)); if (i < 0) return false; left.splice(i, 1); return true; }); });
 const plain = (s) => String(s).replace(/<br\s*\/?>/g, " / ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 
 /** こちらの 1 部位・1 置き場の段 (side・系統・レベルで引けるように) */

@@ -21,7 +21,7 @@ import type { McAction } from "../../vendor/poe2htc/optimizer/markovActions";
 import type { PricedStep } from "../../vendor/poe2htc/optimizer/cost";
 import type { ItemBase } from "../../vendor/poe2htc/engine/types";
 import keys from "./price-keys.json";
-import essenceKeys from "./essence-keys.json";
+import { ESSENCE_KEYS as ESSENCE_TABLE } from "./essence-key-table";
 import type { GameName } from "./prices";
 
 interface PriceKeys {
@@ -30,7 +30,7 @@ interface PriceKeys {
   omens: Record<string, GameName>;
 }
 const KEYS = keys as PriceKeys;
-const ESSENCE_KEYS = (essenceKeys as { keys: Record<string, GameName> }).keys;
+const ESSENCE_KEYS: Readonly<Record<string, GameName>> = ESSENCE_TABLE;
 
 /**
  * 値段のキー → ゲーム内の日本語名。引けなければ null (キーのまま出さない)。

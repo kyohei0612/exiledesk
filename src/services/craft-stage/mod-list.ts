@@ -11,7 +11,7 @@ import { ESSENCE_KIND, essenceKindOf } from "../mods/essence-kind";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { fillModText, jaOfMod } from "../htc/mod-text";
 import type { StageItem, StageSide } from "./types";
-import { allMods, effectiveCls, stageRuneIds, takenFamilies } from "./stage-core";
+import { allMods, effectiveCls, oneOfMod, stageRuneIds, takenFamilies } from "./stage-core";
 import { RUNES } from "./stage-runes";
 import { RUNE_BY_ID } from "../../vendor/poe2htc/engine/runes";
 import { TAG_STYLE } from "../mods/tag-ja";
@@ -88,7 +88,8 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
   const taken = takenFamilies(data, item);
   const socketed = new Set(stageRuneIds(item));
   const out: ListRow[] = [];
-  const rowOf = (m: Mod, side: StageSide, group: ModGroup): ListRow => {
+  const rowOf = (raw: Mod, side: StageSide, group: ModGroup): ListRow => {
+    const m = oneOfMod(raw);
     const ja = jaOfMod(m);
     const n = m.tiers.length;
     // 数値は画面の単位に (1 万分率の 400 → 4%。決まりは services/mods/stat-scale.ts、2026-10-03 に生の値が出ていた)
