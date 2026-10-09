@@ -279,7 +279,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
-        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">クラフトステージ</h1>
+        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">クラフトステージ</h1>
         <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す
           <HelpTip title="シミュレーション" :width="320">
             <p>1 ベース → 2 狙う MOD → 始め方と順番 → 打ち方 (パターン) の順に決めて「回す」。</p>
@@ -325,7 +325,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
         <button v-for="r in savedRecipes.slice(0, 6)" :key="r.id" type="button" class="inline-flex h-7 items-center rounded-md px-2 text-[var(--exile-color-text-link)] hover:bg-white/5 hover:underline max-md:min-h-10" :title="`${r.baseJa ?? r.session.base} · パターン ${r.session.patterns.length} つ`" @click="startFromRecipe(r)">{{ r.name }}</button>
       </span>
       <span v-if="!simNoBase" class="flex items-center gap-1">
-        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">アイテムレベル</span>
+        <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : "アイテムレベル" }}</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.itemLevel.value === lv ? 'on' : ''" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>
       <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
@@ -335,9 +335,9 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
         <span v-if="s.simSockets.value == null" class="text-amber-200/80">ソケットの数を選ぶ</span>
       </span>
       <!-- 始め方 (白 / 固定済みを買う / 4 MOD を買う)。2026-10-08 オーナー「最初の段階から選択式がいい」 -->
-      <span v-if="s.mode.value === 'sim' && !simNoBase" class="flex flex-wrap items-center gap-1 max-md:w-full">
+      <span v-if="s.mode.value === 'sim' && !simNoBase" class="flex flex-wrap items-center gap-1 max-md:grid max-md:w-full max-md:grid-cols-1">
         <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">始め方</span>
-        <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="s.simStart.value === x.k ? 'on' : ''" :title="x.hint" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="mr-1 size-3.5 align-[-2px]" />{{ x.label }}</button>
+        <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="s.simStart.value === x.k ? 'on' : ''" :title="x.hint" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="size-3.5 shrink-0" />{{ x.label }}</button>
         <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? "レア" : s.simStartItem.value?.rarity === "magic" ? "マジック" : "ノーマル" }} · {{ startItemMods.length ? startItemMods.join(" / ") : "MOD なし" }}</span>
         <HelpTip v-else-if="s.simStart.value !== 'white'" text="フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物" />
       </span>

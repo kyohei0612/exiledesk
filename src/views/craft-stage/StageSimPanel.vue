@@ -1073,7 +1073,12 @@ watch(modsDone, (v) => {
 const panelEl = ref<HTMLElement | null>(null);
 watch([modsDone, whiteOk, startDone, orderDone], (now, prev) => {
   if (restoring || !now.some((v, i) => v && !prev[i])) return;
-  void nextTick(() => panelEl.value?.scrollIntoView({ block: "end", behavior: "smooth" }));
+  // スマホは画面が短いので、次に決める段 (金の枠) の頭を画面の上に (2026-10-09 スナップで確認: 一番下だと次の段が画面の下の端に出ていた)
+  void nextTick(() => {
+    const cur = phone.value ? panelEl.value?.querySelector("[data-sim-cur]") : null;
+    if (cur) cur.scrollIntoView({ block: "start", behavior: "smooth" });
+    else panelEl.value?.scrollIntoView({ block: "end", behavior: "smooth" });
+  });
 });
 /** 3 白ベース設定の「決めた」: 値段とフラクチャー予定 (無ければ「しない」) */
 function whiteDecide(): void {
@@ -1430,7 +1435,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
     <template v-if="socketsOk && !(step4pre && fold)">
       <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->
-      <div :class="!modsDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+      <div :data-sim-cur="!modsDone || undefined" :class="!modsDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
         <SimStepHead class="mb-3" :n="2" title="狙う MOD" :done="modsDone" :current="!modsDone" :redo="modsDone" help="下の「このベースに付く MOD」で MOD を押すと段の表が開く。そこの「T○ 以上」で足す。「＋」は、その MOD の代わりに付いても当たりにする物 (どれか 1 つ)" @redo="goTo('mods')" />
         <p v-if="ilvlNote" class="mb-1 text-[11px] text-amber-200">{{ ilvlNote }}</p>
         <!-- 完成図 (ベースの横から移した。段・＋・×・どれか N つ・付きやすさ) -->
@@ -1455,7 +1460,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </div>
 
       <!-- 3 白ベース設定: 白ベースの値段 + 増強・消去スパムで狙う MOD (= フラクチャー予定、2 の中から) -->
-      <div v-if="step3" :class="!whiteDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+      <div v-if="step3" :data-sim-cur="!whiteDone || undefined" :class="!whiteDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
         <SimStepHead class="mb-3" :n="3" :title="s.simStart.value === 'white' ? '白ベースの値段' : 'ベースの値段'" :done="whiteDone" :current="!whiteDone" :redo="whiteDone" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" @redo="goTo('white')" />
         <div class="flex flex-wrap items-center gap-2 text-[11px]">
           <!-- 始め方ごとに入れるベース代 (1 ベースで決めた物。2026-10-08) -->
@@ -1500,7 +1505,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </div>
 
       <!-- 4 最安値スタート: フラクチャー済みのベースを手に入れるまでの 3 ルート (回さずに計算)。入れるのは買うベースの値段だけ -->
-      <div v-if="stepStart" :class="!startDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+      <div v-if="stepStart" :data-sim-cur="!startDone || undefined" :class="!startDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
         <SimStepHead class="mb-3" :n="stepNo.start" title="フラクチャー済みまでの一番安い道" :done="startDone" :current="!startDone" :redo="startDone" help="フラクチャー済みのベースを手に入れるまでの費用を、作る・買うの道ごとに比べる。この先の打ち方はどれも同じ" @redo="goTo('start')" />
         <table class="w-full table-fixed text-[12px] max-md:table-auto">
           <colgroup><col /><col class="w-[22rem] max-md:w-auto" /><col class="w-36 max-md:w-auto" /></colgroup>
@@ -1544,7 +1549,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </div>
 
       <!-- ③ 付ける順番と付け方 (フラクチャー以外) -->
-      <div v-if="stepOrder" :class="!orderDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+      <div v-if="stepOrder" :data-sim-cur="!orderDone || undefined" :class="!orderDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
         <SimStepHead class="mb-3" :n="stepNo.order" title="付ける順番" :done="orderDone" :current="!orderDone" :redo="orderDone" help="目安の順番。打ち方で付ける MOD を選ぶ時、この順に並ぶ" @redo="goTo('order')" />
         <p v-if="!orderKeys.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
@@ -1608,7 +1613,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       </div>
     </template>
       <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
-      <div v-if="step4pre" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
+      <div v-if="step4pre" :data-sim-cur="!patternDone || undefined" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
         <SimStepHead class="mb-3" :n="stepNo.play" title="打ち方" :done="patternDone" :current="!patternDone" :redo="patternDone" :note="`${s.simStart.value === 'item' ? '手打ちの状態' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`" help="打つ物と狙う MOD を 1 手ずつ並べた物 = パターン。いくつか作って、回して費用を比べられる" @redo="patternDone = false" />
         <StagePatternEditor :busy="busy" :start="patternStart" :locked="patternDone" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
         <!--

@@ -74,8 +74,12 @@
 .g-btn-red.sm { min-height: 28px; border-width: 0 18px; border-image-width: 0 18px; font-size: 12px; }
 
 .g-tab {
-  display: inline-grid;
-  place-items: center;
+  /* 中にアイコンと字が並ぶ時も 1 行 (grid だと縦に積まれた。2026-10-09 オーナー「フラクチャー済みを買うのボタンずれてる」) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
   min-height: 34px;
   padding: 0 22px;
   background: url("/ui-art/tab.webp") center / 100% 100% no-repeat;
@@ -181,6 +185,8 @@ button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain) {
   color: var(--exile-color-text-title);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6));
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain):hover:not(:disabled) { border-image-source: url("/ui-art/btn-red-hover.webp"); background: none; }
 button[class*="bg-[var(--exile-color-accent-focus)]"]:not(.g-plain):active:not(:disabled) { border-image-source: url("/ui-art/btn-red-pressed.webp"); }
@@ -239,6 +245,7 @@ button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-
   padding-left: 2px;
   padding-right: 2px;
   min-height: 28px;
+  white-space: nowrap;
   color: var(--exile-color-text-title);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }

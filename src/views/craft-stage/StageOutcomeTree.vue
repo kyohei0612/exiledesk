@@ -325,16 +325,18 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
 
     <!-- この形の時: アイテムと、ここで打つ物 -->
     <section class="rounded-lg p-4" :class="done ? 'bg-[rgba(126,201,148,0.06)] ring-1 ring-[rgba(126,201,148,0.35)]' : 'bg-black/25'">
-      <div class="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h5 class="text-[15px] font-semibold" :class="done ? 'text-[var(--exile-color-signal-up)]' : ''">{{ at.start ? "この手を打つ前" : done ? "揃った" : "この形の時" }}</h5>
-        <span class="flex items-center gap-1.5 text-xs">
-          <span class="text-[var(--exile-color-text-tertiary)]">{{ SIDE_JA }}</span>
+      <!-- スマホ: 下の棚まで送っても今どの形を決めているかが見えるように、上に貼り付ける (2026-10-09 オーナー「絶えず表示」) -->
+      <div class="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1 max-md:sticky max-md:top-0 max-md:z-[55] max-md:-mx-4 max-md:border-b max-md:border-[var(--exile-color-border-brass)] max-md:bg-[#120f0c] max-md:px-4 max-md:py-2 max-md:shadow-[0_8px_18px_rgba(0,0,0,0.7)]">
+        <h5 class="whitespace-nowrap text-[15px] font-semibold" :class="done ? 'text-[var(--exile-color-signal-up)]' : ''">{{ at.start ? "この手を打つ前" : done ? "揃った" : "この形の時" }}</h5>
+        <span v-if="useShelf" class="whitespace-nowrap rounded-full px-1.5 text-[11px] tabular-nums md:hidden" :class="left.length ? 'bg-[rgba(224,201,122,0.14)] text-[var(--exile-color-signal-warn)]' : 'bg-[rgba(126,201,148,0.14)] text-[var(--exile-color-signal-up)]'">{{ left.length ? `残り ${left.length} 形` : "全部決めた" }}</span>
+        <span class="flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ SIDE_JA }}</span>
           <span v-for="(sl, k) in slots" :key="k" class="inline-flex h-6 min-w-11 items-center justify-center rounded px-1.5 text-[11px] font-semibold" :class="sl === 'h' ? 'bg-[rgba(136,136,255,0.2)] text-[var(--color-rarity-magic)]' : sl === 'j' ? 'bg-white/10 text-[var(--exile-color-text-secondary)]' : 'text-[var(--exile-color-text-tertiary)] ring-1 ring-inset ring-white/15'">{{ sl === "h" ? "狙い" : sl === "j" ? "ほか" : "空き" }}</span>
           <span v-if="at.g != null" class="ml-2 text-[var(--exile-color-text-secondary)]">{{ OTHER_JA }}の狙い <b class="tabular-nums text-[var(--color-rarity-magic)]">{{ at.g }}</b></span>
-          <span v-if="otherNow === 0" class="ml-1 text-[var(--exile-color-text-tertiary)]">{{ OTHER_JA }}はフラクチャーだけ</span>
+          <span v-if="otherNow === 0" class="ml-1 whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ OTHER_JA }}はフラクチャーだけ</span>
         </span>
       </div>
-      <p v-if="viaParts.length" class="mb-3 flex flex-wrap items-center gap-1 text-xs text-[var(--exile-color-text-secondary)]">
+      <p v-if="viaParts.length" class="mb-3 flex flex-wrap items-center gap-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">
         <span class="mr-1 text-[var(--exile-color-text-tertiary)]">なる時</span>
         <template v-for="(t, ti) in viaParts" :key="ti">
           <Icon v-if="ti" name="arrow-right" class="size-3.5 text-[var(--exile-color-text-tertiary)]" />
@@ -367,7 +369,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
             </div>
             <p v-if="actWhy" class="text-xs font-semibold text-[var(--exile-color-signal-down)]">この形では打てない: {{ actWhy }}。先に打つ物 (触媒など) を足すか、変える</p>
           </div>
-          <p v-else-if="!locked" class="flex items-center gap-2 rounded-md bg-[rgba(201,162,90,0.10)] px-3 py-2 text-[14px] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]"><span class="grid size-5 place-items-center rounded-full bg-[var(--exile-color-accent-focus)] text-[11px] text-black">↓</span>この形の時に打つ物を棚から選ぶ<span class="text-xs font-normal text-[var(--exile-color-text-secondary)]">(選ぶと次の未定の形へ進む)</span></p>
+          <p v-else-if="!locked" class="flex items-center gap-2 rounded-md bg-[rgba(201,162,90,0.10)] px-3 py-2 text-[14px] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]"><span class="grid size-5 place-items-center rounded-full bg-[var(--exile-color-accent-focus)] text-[11px] text-black">↓</span>この形の時に打つ物を棚から選ぶ<span class="text-xs font-normal text-[var(--exile-color-text-secondary)] max-md:hidden">(選ぶと次の未定の形へ進む)</span></p>
 
           <!-- 選ぶ: 手打ちと同じ棚 -->
           <div v-if="showPicker && useShelf" class="flex flex-col gap-2.5">

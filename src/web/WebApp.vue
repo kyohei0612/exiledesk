@@ -63,16 +63,16 @@ window.addEventListener("resize", fitZoom);
 <template>
   <!-- スマホは高さを決めず、ページ全体を縦に送る (決まり事の footer も一緒に流れる) -->
   <div class="flex flex-col" :style="phone ? { width: `${frame.w}px`, minHeight: `${frame.h}px` } : { width: `${frame.w}px`, height: `${frame.h}px` }">
-    <header class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto flex-wrap gap-y-1.5 py-2 text-[13px]' : 'h-10'">
+    <header class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto gap-2 px-3 py-1.5 text-[12px]' : 'h-10'">
       <span class="flex items-center gap-2">
         <img src="/favicon.png" alt="" class="g-brand-icon size-8 shrink-0" draggable="false" />
-        <span class="g-brand-word text-[18px] leading-none">EXILEDESK</span>
+        <span class="g-brand-word leading-none" :class="phone ? 'text-[15px]' : 'text-[18px]'">EXILEDESK</span>
         <span class="g-brand-sub uppercase">Web</span>
       </span>
       <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">クラフトステージ</span>
-      <span class="ml-auto opacity-40" :class="phone ? 'text-[10px]' : ''">v{{ pkg.version }}</span>
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? 'ml-auto py-2' : ''" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? 'py-2' : ''" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">要望・バグを送る</button>
+      <span class="ml-auto opacity-40" :class="phone ? 'hidden' : ''">v{{ pkg.version }}</span>
+      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? 'ml-auto !min-h-9 !px-0 text-[12px]' : ''" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
+      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">{{ phone ? "要望・バグ" : "要望・バグを送る" }}</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
       <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" title="相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中">アプリ版 近日公開</span>
     </header>
