@@ -160,7 +160,7 @@ const skillVisible = (list: SkillUsage[]): SkillUsage[] => visible(list);
                 <span class="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full" :class="CAT[g.cat].bar" :style="{ width: pctW(s.count) }" /></span>
                 <span class="w-12 shrink-0 text-right text-[12px] tabular-nums text-white/60">{{ s.count }}/{{ agg.sampleSize }}</span>
                 <!-- 列は全部の行で空けて棒の位置を揃える (ボタンはメインとスピリットだけ) -->
-                <span class="flex w-[8.5rem] shrink-0 justify-end gap-1">
+                <span class="flex w-[11.5rem] shrink-0 justify-end gap-1">
                   <template v-if="g.key !== 'other' && WATCHABLE.has(s.nameEn)">
                     <button
                       type="button"

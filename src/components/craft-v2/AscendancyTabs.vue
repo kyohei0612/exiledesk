@@ -21,7 +21,7 @@ function loadingOf(asc: AggregatedAscendancy): boolean {
 <template>
   <nav
     v-if="store.ascendancies.length > 0"
-    class="mb-3 flex flex-wrap gap-1.5 border-b border-white/10 pb-3"
+    class="mb-3 flex flex-wrap gap-1"
     role="tablist"
     aria-label="アセンダンシー切替"
   >
@@ -33,13 +33,14 @@ function loadingOf(asc: AggregatedAscendancy): boolean {
       :aria-selected="asc.id === activeAscendancyId"
       @click="activeAscendancyId = asc.id"
       :class="[
-        'relative overflow-hidden rounded-lg px-3 py-1.5 text-left text-[13px] font-bold transition',
-        asc.id === activeAscendancyId ? 'bg-white/15 text-white ring-2 ring-white/60' : 'bg-white/[0.03] text-white/60 ring-1 ring-white/10 hover:text-white hover:ring-white/25',
+        // ゲームのタブの絵 (2026-10-10 UI 見直し。前は白い輪の四角)
+        'g-tab relative overflow-hidden !px-3 !text-[12px]',
+        asc.id === activeAscendancyId ? 'on' : '',
       ]"
       :title="loadingOf(asc) ? `${asc.fetchProgress!.done} / ${asc.fetchProgress!.total} 人 取得中` : asc.name"
     >
       {{ asc.name }}
-      <span class="ml-1 text-[11px] font-normal tabular-nums" :class="asc.id === activeAscendancyId ? 'text-white/70' : 'text-white/40'"
+      <span class="ml-1 text-[11px] font-normal tabular-nums opacity-70"
         >{{ asc.usagePercent.toFixed(1) }}%</span
       >
       <!-- 取得中はタブの下に細い線で進み -->

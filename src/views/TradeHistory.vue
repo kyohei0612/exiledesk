@@ -62,7 +62,7 @@ const cards = () => [
   <TabBar art="trade" title="取引履歴" />
   <!-- 1 つの枠にまとめる (2026-10-10 UI 見直し。カレンシーランキングと同じ形。前はログイン・まとめ・グラフ・一覧で枠が 4 つ重なっていた) -->
   <div class="flex-1 min-h-0 flex p-4">
-  <section class="g-panel @container flex-1 min-h-0 overflow-auto px-5 py-2">
+  <section class="g-panel @container flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 py-2">
     <ScreenHeader>
       公式サイトのマーチャント履歴を取り込みます。ログインは ExileDesk が開く pathofexile.com の画面で本人が行います。
       <template #source>

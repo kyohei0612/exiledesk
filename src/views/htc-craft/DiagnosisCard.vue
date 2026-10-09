@@ -211,7 +211,7 @@ function onSearch(): void {
     <!-- 解析おｋ → ① へ (段を直したい時はここで直してから) -->
     <div v-if="c.phase.value === 'analyzed'" class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2">
       <span>MOD とティアはこれでおｋ？</span>
-      <button type="button" class="rounded-lg bg-amber-500 px-4 py-1.5 font-bold text-black shadow hover:bg-amber-400" @click="goPick()">おｋ → ① 固定する MOD を選ぶ</button>
+      <button type="button" class="g-btn-red" @click="goPick()">おｋ → ① 固定する MOD を選ぶ</button>
       <button type="button" class="rounded-lg border border-white/20 px-3 py-1.5 hover:bg-white/5" title="取引所で探さずに、貼った物のまま作り方を組む" @click="finishDiag()">探さずに作り方へ</button>
     </div>
     <div v-else class="grid gap-3 lg:grid-cols-3">
@@ -265,7 +265,7 @@ function onSearch(): void {
             </div>
           </template>
           <!-- 探している間は「中止」、止めたら「再開」、他の機能が取引所を使っていたら押せない (オーナー 2026-09-27) -->
-          <button type="button" class="mt-2 rounded-lg px-3 py-1.5 font-bold shadow disabled:opacity-40" :class="searchBtn.action === 'stop' ? 'border border-rose-400/60 text-rose-200 hover:bg-rose-500/10' : 'bg-sky-500 text-black hover:bg-sky-400'" :disabled="searchBtn.disabled || (!ss.busy.value && !ss.checked.value.length)" @click="onSearch">
+          <button type="button" class="mt-2" :class="searchBtn.action === 'stop' ? 'g-btn' : 'g-btn-red'" :disabled="searchBtn.disabled || (!ss.busy.value && !ss.checked.value.length)" @click="onSearch">
             {{ searchBtn.label }}
           </button>
           <button v-if="c.phase.value !== 'done' && !ss.busy.value" type="button" class="ml-2 mt-2 rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5" @click="finishDiag()">探さずに作り方へ</button>

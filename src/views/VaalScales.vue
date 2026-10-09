@@ -41,7 +41,7 @@ watch(vaalScalesTab, async (next, prev) => {
     <TabBar art="vaal" title="ヴァールの天秤" :tabs="VAAL_SCALES_TABS" :model-value="vaalScalesTab" @update:model-value="vaalScalesTab = $event as VaalScalesTab" />
     <!-- 中身は 1 つの枠に (2026-10-10 UI 見直し。カレンシーランキング・取引履歴と同じ形。中のカードは枠を描かずに区切りの絵だけ: game-ui.css) -->
     <div class="flex-1 min-h-0 flex p-4">
-      <div ref="scroller" class="g-panel flex-1 min-h-0 overflow-auto">
+      <div ref="scroller" class="g-panel flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <KeepAlive>
           <component :is="current" />
         </KeepAlive>

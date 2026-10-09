@@ -34,8 +34,8 @@ function topMods(slot: SlotKey): ModEntry[] {
       v-for="t in SLOT_TABS"
       :key="t.key"
       type="button"
-      class="flex flex-col rounded-lg border bg-black/25 p-2 text-left transition hover:border-white/30 hover:bg-white/[0.04]"
-      :class="activeSlot === t.key ? 'border-white/60 ring-1 ring-white/40' : 'border-white/10'"
+      class="g-plain flex flex-col rounded-lg border bg-[var(--exile-color-bg-surface)] p-2 text-left transition-colors"
+      :class="activeSlot === t.key ? 'border-[var(--exile-color-accent-focus)]' : 'border-[var(--exile-color-border-subtle)] hover:border-[var(--exile-color-border-brass)]'"
       @click="activeSlot = t.key"
     >
       <span class="text-[11px] font-bold tracking-wider text-white/55">{{ t.label }}</span>

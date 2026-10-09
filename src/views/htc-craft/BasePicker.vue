@@ -226,7 +226,7 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
               サフィ <input v-model.number="zeroStart.fixedSuffix" type="number" min="0" max="3" class="w-10 rounded border border-white/15 bg-black/30 px-1" />
             </span>
           </details>
-          <button type="button" class="ml-auto rounded-lg bg-amber-500 px-4 py-1.5 text-sm font-bold text-black shadow hover:bg-amber-400 disabled:opacity-40"
+          <button type="button" class="g-btn-red ml-auto text-sm"
             :disabled="c.loading.value || !pk.picks.value.length" @click="emit('run')">
             {{ c.loading.value ? "計算中…" : pk.picks.value.length ? `この ${pk.picks.value.length} 個で計算する →` : "狙う MOD を選んでください" }}
           </button>

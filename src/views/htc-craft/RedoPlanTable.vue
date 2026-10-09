@@ -87,7 +87,7 @@ const pctHit = (p: number): string => (p >= 1 ? "確定" : `${(p * 100).toFixed(
       </p>
       <!-- 狙いごとの行 (オーナー 2026-09-26:「境目が分かりづらくてブス」→ 縞の行 + 数字は見出し付きの小さな枠) -->
       <div class="mt-2 overflow-hidden rounded-lg border border-white/[0.08]">
-        <div v-for="(r, i) in planRows" :key="r.modId" class="grid grid-cols-[minmax(13rem,1fr)_minmax(18rem,1.6fr)_auto] items-center gap-x-4 px-3 py-2" :class="i % 2 ? 'bg-white/[0.03]' : 'bg-black/20'">
+        <div v-for="(r, i) in planRows" :key="r.modId" class="grid grid-cols-[minmax(9rem,1fr)_minmax(12rem,1.6fr)_auto] items-center gap-x-4 px-3 py-2" :class="i % 2 ? 'bg-white/[0.03]' : 'bg-black/20'">
           <!-- 狙い -->
           <div class="flex items-center gap-2">
             <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold" :class="r.side === 'prefix' ? 'bg-sky-500/20 text-sky-200' : 'bg-fuchsia-500/20 text-fuchsia-200'">{{ r.side === "prefix" ? "プレ" : "サフィ" }}</span>
@@ -104,7 +104,7 @@ const pctHit = (p: number): string => (p >= 1 ? "確定" : `${(p * 100).toFixed(
             <div class="w-[4.6rem] rounded bg-black/30 px-2 py-1 text-right"><p class="text-[10px] opacity-50">当たる</p><p class="text-emerald-300">{{ pctHit(r.p) }}</p></div>
             <div class="w-[5.4rem] rounded bg-black/30 px-2 py-1 text-right"><p class="text-[10px] opacity-50">外れのやり直し</p><p :class="r.safe ? '' : 'text-amber-300'">{{ r.perMiss > 0 ? c.money(r.perMiss) : "-" }}</p></div>
             <div class="w-[5.4rem] rounded bg-amber-500/10 px-2 py-1 text-right"><p class="text-[10px] opacity-50">見込み</p><p class="font-bold text-amber-200">{{ c.money(r.expected) }}</p></div>
-            <span class="w-[5.2rem] text-center text-[11px]" :class="r.expected > omenPrice(r.side) ? 'text-amber-200' : 'opacity-40'">{{ guardJa(r) }}</span>
+            <span class="w-[5.6rem] whitespace-nowrap text-center text-[11px]" :class="r.expected > omenPrice(r.side) ? 'text-amber-200' : 'opacity-40'">{{ guardJa(r) }}</span>
           </div>
         </div>
       </div>

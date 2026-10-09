@@ -5,7 +5,7 @@
  * オーナー指示:「マジで簡易的な計算機的な奴でいい。動きが見たい。イメージとあってるかどうか」。
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
-import { computed, ref, watch, watchEffect } from "vue";
+import { computed, nextTick, ref, watch, watchEffect } from "vue";
 import TabBar from "../../components/ui/TabBar.vue";
 import { htcCraftTab, pendingCraft, pendingCraftPaste, type HtcCraftTab } from "../../state/app-nav";
 import { PRESETS, ZERO_PRESETS } from "./presets";
@@ -32,6 +32,14 @@ const TABS: readonly { id: HtcCraftTab; label: string; hint: string }[] = [
   { id: "top-mods", label: "上位プレイヤーの MOD", hint: "poe.ninja の上位の人の装備の MOD。選んで「クラフトへ」で計算機に渡す" },
 ];
 const topModsOpened = ref(htcCraftTab.value === "top-mods");
+// 2 つのタブは 1 つの枠 (1 つのスクロール) を使うので、タブごとの位置を覚えて戻す (2026-10-10)
+const scroller = ref<HTMLElement | null>(null);
+const scrollOf = new Map<HtcCraftTab, number>();
+watch(htcCraftTab, async (next, prev) => {
+  if (scroller.value && prev) scrollOf.set(prev, scroller.value.scrollTop);
+  await nextTick();
+  if (scroller.value) scroller.value.scrollTop = scrollOf.get(next) ?? 0;
+});
 watch(htcCraftTab, (t) => {
   if (t === "top-mods") topModsOpened.value = true;
 });
@@ -170,15 +178,18 @@ const inputSummary = computed(() => {
   <!-- 中身は幅 1400px で固定 (オーナー 2026-09-26:「ウィンドウ小さくしても大きくしても変わらない感じで。ウィンドウによって崩れる」)。
        狭い窓では横にスクロール、広い窓では余白 -->
   <!-- 窓の大きさへの合わせ込みはアプリ全体でする (App.vue の fitZoom)。ここは最小の窓の幅いっぱい -->
-  <div class="h-full overflow-auto text-sm">
+  <div class="h-full flex flex-col overflow-hidden text-sm">
    <!-- タブ (2026-10-03 統合): 計算機 / 上位プレイヤーの MOD。帯の見た目は components/ui/TabBar.vue で 4 画面共通。画面名はここに 1 回だけ -->
    <TabBar art="craft" title="クラフト計算機" :tabs="TABS" :model-value="htcCraftTab" @update:model-value="htcCraftTab = $event as HtcCraftTab" />
 
+   <!-- 中身は 1 つの枠に (2026-10-10 UI 見直し。カレンシーランキング・取引履歴と同じ形)。タブごとにスクロールの位置を覚える -->
+   <div class="flex-1 min-h-0 flex p-4">
+   <div ref="scroller" class="g-panel flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
    <!-- 上位プレイヤーの MOD (旧 craft-v2 の画面をそのまま)。一度開いたら v-show で保つ (選んだアセ・部位・チェックが消えないように) -->
    <CraftDiscoveryV2B v-if="topModsOpened" v-show="htcCraftTab === 'top-mods'" />
 
    <!-- 計算機 -->
-   <div v-show="htcCraftTab === 'lab'" class="px-6 py-4">
+   <div v-show="htcCraftTab === 'lab'" class="px-5 py-2">
     <!-- 画面名は上の帯に出しているので、ここは説明だけ (2026-10-03) -->
     <p class="mb-3 text-[12px] text-[var(--exile-color-text-secondary)]">
       作りたいアイテムを貼るか、ベースと MOD を選ぶと、ベースの買い方・完成品との比べ・作り方ごとの費用と成功確率を出します。
@@ -186,11 +197,11 @@ const inputSummary = computed(() => {
 
     <!-- 入口。開いた時はここだけ。何も計算していない -->
     <div v-if="door === 'none'" class="mb-4 grid gap-3 sm:grid-cols-2">
-      <button type="button" class="card p-4 text-left hover:border-amber-400" @click="door = 'paste'">
+      <button type="button" class="g-plain rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-4 text-left transition-colors hover:border-[var(--exile-color-accent-focus)]" @click="door = 'paste'">
         <div class="mb-1 text-[13px] font-bold text-amber-300">コピーを貼る</div>
         <div class="note">poe.ninja やゲームから Ctrl+C した物をそのまま貼る。<b>既にある物を真似る</b>時。</div>
       </button>
-      <button type="button" class="card p-4 text-left hover:border-amber-400" @click="openBaseDoor()">
+      <button type="button" class="g-plain rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-4 text-left transition-colors hover:border-[var(--exile-color-accent-focus)]" @click="openBaseDoor()">
         <div class="mb-1 text-[13px] font-bold text-amber-300">ベースから選ぶ</div>
         <div class="note">ベースと狙う MOD を自分で並べる。<b>0 から決める</b>時。</div>
       </button>
@@ -286,5 +297,7 @@ const inputSummary = computed(() => {
       </details>
     </template>
      </div>
+   </div>
+   </div>
   </div>
 </template>

@@ -31,7 +31,7 @@ const emit = defineEmits<{ clear: []; applyBulkTier: []; search: []; craft: []; 
       <div class="flex-1"></div>
       <button
         type="button"
-        class="px-4 py-1.5 rounded font-bold text-[12px] transition bg-sky-500/80 text-black hover:bg-sky-400"
+        class="g-btn sm"
         @click="selecting = true"
       >
         クラフト MOD 選択

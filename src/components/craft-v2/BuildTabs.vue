@@ -46,8 +46,8 @@ const ninjaCharUrl = (m: { account: string; name: string }): string | null =>
         v-for="(b, i) in builds"
         :key="b.skillEn"
         type="button"
-        class="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-white/25"
-        :class="active === i ? 'ring-2 ring-white/60 bg-white/[0.07]' : ''"
+        class="g-plain group relative overflow-hidden rounded-lg border bg-[var(--exile-color-bg-surface)] p-3 text-left transition-colors"
+        :class="active === i ? 'border-[var(--exile-color-accent-focus)]' : 'border-[var(--exile-color-border-subtle)] hover:border-[var(--exile-color-border-brass)]'"
         @click="active = i"
       >
         <p class="flex items-center gap-1.5 text-[11px] tracking-wider text-white/55">

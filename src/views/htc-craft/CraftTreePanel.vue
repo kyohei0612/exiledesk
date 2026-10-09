@@ -259,10 +259,10 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
     </p>
     <!-- 道具の列 -->
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <button type="button" class="rounded-lg bg-amber-500 px-4 py-1.5 text-sm font-bold text-black shadow hover:bg-amber-400 disabled:opacity-40" :disabled="t.running.value || autoBusy || !!t.blocked.value" @click="t.run()">
+      <button type="button" class="g-btn-red text-sm" :disabled="t.running.value || autoBusy || !!t.blocked.value" @click="t.run()">
         ▶ シミュレーション ({{ t.runs.value.toLocaleString() }} 回)
       </button>
-      <button v-if="canAuto" type="button" class="rounded-lg border border-emerald-500/60 px-3 py-1.5 text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-40" title="狙いの MOD から組み直す (やり直しの費用から取り方を決め、候補を回して比べる)" :disabled="autoBusy" @click="loadAuto()">自動で組み直す</button>
+      <button v-if="canAuto" type="button" class="g-btn" title="狙いの MOD から組み直す (やり直しの費用から取り方を決め、候補を回して比べる)" :disabled="autoBusy" @click="loadAuto()">自動で組み直す</button>
       <button type="button" class="rounded-lg border border-white/20 px-3 py-1.5 hover:bg-white/5 disabled:opacity-40" title="ツリーを空にして、STEP 1 から自分で組む" :disabled="autoBusy" @click="startOver()">1 から組む</button>
       <button v-for="x in presets" :key="x.id" type="button" class="rounded-lg border border-sky-500/50 px-3 py-1.5 text-sky-200 hover:bg-sky-500/10" @click="loadPreset(x.id)">見本: {{ x.label }}</button>
       <button type="button" class="rounded-lg border border-white/20 px-3 py-1.5 hover:bg-white/5" :class="showSettings ? 'bg-white/10' : ''" @click="showSettings = !showSettings">設定 {{ showSettings ? "▴" : "▾" }}</button>
@@ -356,15 +356,15 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
    </div>
    <!-- 右: アイテムの絵 (完成図 / 今の STEP の形)。上に貼り付いて、ツリーを進めても見え続ける -->
     <aside class="sticky top-2 w-[22rem] shrink-0">
-     <div class="mb-1.5 flex items-center gap-1 text-xs">
-       <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'step' ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="cardMode = 'step'">STEP の時の形</button>
-       <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'target' ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="cardMode = 'target'">完成図</button>
-       <button type="button" class="rounded-lg px-2 py-1" :class="cardDetail ? 'bg-white/15' : 'border border-white/15 hover:bg-white/5'" title="ティアとタグの小見出し (ゲームの Alt 表示)" @click="cardDetail = !cardDetail">{{ cardDetail ? "詳細を隠す" : "詳細" }}</button>
-       <template v-if="cardMode === 'step' && mainLine.length">
-         <button type="button" class="ml-auto rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の前の STEP" @click="stepCard(-1)">◀</button>
-         <span class="tabular-nums opacity-70">STEP {{ shownId ? t.indexOf(shownId) + 1 : "-" }}</span>
+     <div class="mb-1.5 flex flex-wrap items-center gap-1 text-xs">
+       <button type="button" :class="cardMode === 'step' ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="cardMode = 'step'">STEP の時の形</button>
+       <button type="button" :class="cardMode === 'target' ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" @click="cardMode = 'target'">完成図</button>
+       <button type="button" :class="cardDetail ? 'g-tab on !min-h-[28px] !px-3' : 'g-tab !min-h-[28px] !px-3'" title="ティアとタグの小見出し (ゲームの Alt 表示)" @click="cardDetail = !cardDetail">{{ cardDetail ? "詳細を隠す" : "詳細" }}</button>
+       <span v-if="cardMode === 'step' && mainLine.length" class="ml-auto inline-flex items-center gap-1">
+         <button type="button" class="rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の前の STEP" @click="stepCard(-1)">◀</button>
+         <span class="whitespace-nowrap tabular-nums opacity-70">STEP {{ shownId ? t.indexOf(shownId) + 1 : "-" }}</span>
          <button type="button" class="rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の次の STEP" @click="stepCard(1)">▶</button>
-       </template>
+       </span>
      </div>
      <ItemCard :name="card.data.name" :base="card.data.base" :ilvl="card.data.ilvl" :quality="card.data.quality" :quality-label="card.data.qualityLabel" :implicits="card.data.implicits" :mods="card.data.mods" :socket="card.data.socket" :socket-effects="card.data.socketEffects" :detail="cardDetail" :footer="card.footer" />
      <p class="mt-1.5 text-[11px] opacity-40">金の帯 = 固定、青 = 狙い、赤 = 外れ、紫 = 冒涜、桃 = 樹 MOD</p>

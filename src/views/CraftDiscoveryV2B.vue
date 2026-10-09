@@ -92,7 +92,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="block px-5 py-2 text-[var(--exile-color-text-primary)]">
     <CraftV2Header
       :phase-elapsed-secs="d.phaseElapsedSecs.value"
       :progress-fraction="d.progressFraction.value"
@@ -107,15 +107,16 @@ onMounted(() => {
 
     <BuildTabs v-if="d.ascendancy.value" v-model="d.activeBuild.value" :asc="d.ascendancy.value" :league-url="store.snapshot?.league_url ?? null" />
     <!-- 見方の切り替え (2026-09-29 UI 見直し: 前は部位のマスの 1 つに紛れていた) -->
-    <div v-if="d.activeAscendancy.value" class="mb-3 inline-flex rounded-lg bg-black/30 p-1 ring-1 ring-white/10" role="tablist">
+    <!-- 見た目はゲームのタブ (2026-10-10 UI 見直し) -->
+    <div v-if="d.activeAscendancy.value" class="mb-3 inline-flex gap-1" role="tablist">
       <button
         v-for="t in VIEW_TABS"
         :key="t.key"
         type="button"
         role="tab"
         :aria-selected="d.skillsTab.value === t.skills"
-        class="rounded-md px-4 py-1.5 text-[13px] font-bold transition"
-        :class="d.skillsTab.value === t.skills ? 'bg-white/15 text-white' : 'text-white/55 hover:text-white'"
+        class="g-tab"
+        :class="d.skillsTab.value === t.skills ? 'on' : ''"
         @click="d.skillsTab.value = t.skills"
       >
         {{ t.label }}
