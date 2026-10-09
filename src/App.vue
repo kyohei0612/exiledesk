@@ -103,7 +103,7 @@ onMounted(() => {
     <LeftSidebar
       :active="activeNav"
       @update:active="activeNav = $event"
-      class="relative z-10 w-52 shrink-0"
+      class="relative z-10 w-[226px] shrink-0"
     />
 
     <CenterContent :active-nav="activeNav" class="flex-1" />

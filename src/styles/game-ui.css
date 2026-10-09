@@ -242,7 +242,7 @@ body {
   text-shadow: 0 0 10px rgba(255, 200, 110, 0.35);
 }
 .g-nav-on {
-  background: linear-gradient(90deg, rgba(163, 52, 42, 0.42), rgba(163, 52, 42, 0.05)) !important;
+  background: linear-gradient(90deg, rgba(163, 52, 42, 0.42), rgba(163, 52, 42, 0.22)) !important;
   color: var(--exile-color-text-title) !important;
   text-shadow: 0 0 10px rgba(255, 200, 110, 0.35);
 }

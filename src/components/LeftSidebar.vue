@@ -80,8 +80,8 @@ const groups = (["economy", "tools"] as const)
     </div>
     <div class="g-divider mx-3 mb-1"></div>
 
-    <!-- 右の縦の区切り (12px、.g-sidebar::after) の手前で行を止める: 選んだ行の帯が区切りの下まで伸びて、線が帯を横切っていた (2026-10-09 オーナー) -->
-    <nav class="flex-1 overflow-y-auto overflow-x-hidden pr-3">
+    <!-- 右の縦の区切り (12px、.g-sidebar::after) の手前で行を止める: 選んだ行の帯が区切りの下まで伸びて、線が帯を横切っていた。左右の空きはそろえる (左 6px = 帯の右端から線まで 6px。2026-10-09 オーナー「左の枠の幅と右の縦枠との幅均等」) -->
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden pl-1.5 pr-3">
       <div v-for="group in groups" :key="group.key" class="mt-1">
         <div
           v-if="group.label"
