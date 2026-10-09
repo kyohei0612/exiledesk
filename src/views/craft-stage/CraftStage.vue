@@ -442,7 +442,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
             <span v-else class="opacity-50">押して持つ → アイテムを押す</span>
             <span v-for="o in s.omens.value" :key="o" class="cursor-pointer rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" title="押すと外す" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
           </p>
-          <CurrencyShelf @hold="hold">
+          <CurrencyShelf initial-tab="usable" @hold="hold">
             <!-- 棚の中の「神〜ヴァールオーブ」の段の下に出る (置き場は CurrencyShelf が決める。上に出すと持っているカレンシーがずれる、オーナー 2026-10-04) -->
             <template v-if="heldOmens.length" #held>
               <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>

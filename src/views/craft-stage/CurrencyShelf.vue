@@ -15,12 +15,15 @@ import { bonesFor, CATALYSTS, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, 
 import { runeEffectFor, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
 
 const emit = defineEmits<{ hold: [key: string] }>();
+type ShelfTab = "usable" | "orb" | "essence" | "catalyst" | "rune" | "omen";
+/** 最初に開くタブ (エミュレーターは「使用可能」。2026-10-09 オーナー「エミュレーターではデフォルトで使用可能のオーブの所が良いな基本的に」) */
+const props = withDefaults(defineProps<{ initialTab?: ShelfTab }>(), { initialTab: "orb" });
 const craftStage = useShelf();
 /**
  * 持っているカレンシーに掛けられるお告げの並び (呼ぶ側の slot "held")。オーブのタブでは使える物の並びの直後 (2026-10-05 から。前は「その他」の段の直後)、
  * 他のタブは一番下
  */
-const tab = ref<"usable" | "orb" | "essence" | "catalyst" | "rune" | "omen">("orb");
+const tab = ref<ShelfTab>(props.initialTab);
 /**
  * オーブ・骨のタブ: 今のアイテムに使える (光っている) 物を前に、使えない物を後ろに (2026-10-05 オーナー「使える光ってるオーブを丸ごと前に
  * 持ってきちゃおうか。1 段目に入らなければ折り返して 2 段目に。その方がこれ使えるんだなってなる」)。まとまり (変成・増強…) の並びは保つ
