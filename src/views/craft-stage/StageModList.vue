@@ -13,6 +13,7 @@
 -->
 <script setup lang="ts">
 import { keepPlace } from "../../utils/keep-place";
+import { addCandidates } from "../../services/craft-stage/apply-currency";
 import { autoGroup } from "../../services/craft-stage/auto-group";
 import { AIM_MAX } from "../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
@@ -41,6 +42,39 @@ function forceOf(g: ModGroup, modId: string, rank: string, as?: ForceFlag): { ke
 /** 始めの状態にフラクチャー / 冒涜の MOD がもう付いているか (どちらも 1 つまで) */
 const hasStart = (k: "fractured" | "desecrated"): boolean => s.startMods.value.some((f) => f[k]);
 const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.value, s.item.value) : []));
+/**
+ * 持っているカレンシーで次に付く確率 (エミュレーターでカレンシーを持っている時だけ。2026-10-09 オーナー「持った時の挙動が UI 的に全然足りてない」)。
+ * 候補は打つ処理と同じ決まり (apply-currency の addCandidates: 側・強さの下限・お告げ・触媒・同じ系統)。null = 持っていない / MOD を足さない物
+ */
+const heldCands = computed(() => {
+  const k = s.held.value, d = s.data.value, it = s.item.value;
+  if (!k || !d || !it || s.mode.value !== "hand" || s.replay.value) return null;
+  const cs = addCandidates(d, it, k, s.omens.value);
+  if (!cs) return null;
+  const total = cs.reduce((a, c) => a + c.w, 0);
+  return { byMod: new Map(cs.map((c) => [c.mod.id, c])), total, name: nameOf(k) };
+});
+/** その行 (系統) が持っている物で付く確率。0 = 付かない */
+function heldShare(r: ListRow): number {
+  const h = heldCands.value;
+  if (!h || !(h.total > 0)) return 0;
+  const ids = new Set(r.tiers.map((t) => t.modId ?? r.id));
+  let w = 0;
+  for (const id of ids) w += h.byMod.get(id)?.w ?? 0;
+  return w / h.total;
+}
+/** その段が持っている物で付く確率 (下限より下・アイテムレベルが届かない段は 0) */
+function heldTierShare(r: ListRow, t: { name: string; ilvl: number; modId?: string }): number {
+  const h = heldCands.value;
+  if (!h || !(h.total > 0)) return 0;
+  const id = t.modId ?? r.id;
+  const idx = tierIndexOf(id, t);
+  return (h.byMod.get(id)?.tiers.find((x) => x.index === idx)?.w ?? 0) / h.total;
+}
+/** 表の % と棒: 持っている時は付く確率、それ以外は出やすさ (同じ側の重みの割合) */
+const shareOf = (r: ListRow): number => (heldCands.value ? heldShare(r) : r.share);
+/** 棒の長さの基準 (列で一番大きい値) */
+const colTop = (items: readonly ListRow[]): number => Math.max(0.0001, ...items.map(shareOf));
 
 /** 畳んだかどうか (見る人ごとの好み。保存できなくても動く) */
 const KEY = "exiledesk.craftStage.modListOpen";
@@ -253,7 +287,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
             <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2">
               <b class="text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
               <span class="text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} 系統</span>
-              <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-11 text-right">出やすさ</span><span class="w-6 text-right">段</span><span class="w-7 text-right">Lv</span></span>
+              <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-11 text-right" :class="heldCands ? 'text-sky-200' : ''">{{ heldCands ? "付く確率" : "出やすさ" }}</span><span class="w-6 text-right">段</span><span class="w-7 text-right">Lv</span></span>
             </p>
             <p v-if="!col.items.length" class="py-2 opacity-40">無し</p>
             <div v-for="r in col.items" :key="r.id" class="mb-1">
@@ -261,11 +295,11 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
               <button
                 type="button"
                 class="relative w-full overflow-hidden rounded-md px-2 py-1 text-left transition hover:bg-white/[0.05]"
-                :class="[r.on ? 'ring-1 ring-emerald-400/60' : '', r.blocked ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : '']"
-                :title="r.blocked ? '同じ系統の MOD が付いているので、今は付かない' : undefined"
+                :class="[r.on ? 'ring-1 ring-emerald-400/60' : '', r.blocked || (heldCands && !heldShare(r)) ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : '']"
+                :title="r.blocked ? '同じ系統の MOD が付いているので、今は付かない' : heldCands && !heldShare(r) ? `持っている ${heldCands.name} では付かない` : undefined"
                 @click="toggleRow(`${sec.sid}:${r.id}`, $event)"
               >
-                <span class="pointer-events-none absolute inset-y-0 left-0" :class="toneOf(sec).bar" :style="{ width: `${(r.share / col.top) * 100}%` }" />
+                <span class="pointer-events-none absolute inset-y-0 left-0" :class="toneOf(sec).bar" :style="{ width: `${(shareOf(r) / colTop(col.items)) * 100}%` }" />
                 <!-- 2026-10-04 オーナー: タグは MOD 名の横に細く (行を太らせない)、右は poe2db と同じく 出やすさ % ・ ティア数 (緑) ・ 一番上の段のレベル (灰) を数字だけ -->
                 <span class="relative flex items-center gap-2">
                   <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
@@ -275,7 +309,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
-                    <span class="w-11 text-right text-[13px] font-bold text-amber-100" title="出やすさ (同じ側の重みの割合)">{{ pct(r.share) }}</span>
+                    <span class="w-11 text-right text-[13px] font-bold" :class="heldCands ? 'text-sky-200' : 'text-amber-100'" :title="heldCands ? `持っている ${heldCands.name} で次に付く確率` : '出やすさ (同じ側の重みの割合)'">{{ heldCands && !heldShare(r) ? "—" : pct(shareOf(r)) }}</span>
                     <span class="w-6 text-right text-[12px] text-[var(--exile-color-text-secondary)]" :title="`段の数 ${r.tiers.length}`">{{ r.tiers.length }}</span>
                     <span class="w-7 text-right text-[12px] text-[var(--exile-color-text-tertiary)]" :title="`T1 の MOD レベル ${r.topLevel}`">{{ r.topLevel }}</span>
                   </span>
@@ -285,12 +319,12 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
               <table v-if="expanded === `${sec.sid}:${r.id}`" class="mt-1 w-full text-[11px]">
                 <caption v-if="s.mode.value === 'sim'" class="pb-1 text-left text-[10px] opacity-60">T1 が一番良い段。「T○ 以上」= その段か、それより良い段が付けば当たり</caption>
                 <tbody>
-                  <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5">
+                  <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5" :class="heldCands && !heldTierShare(r, t) ? 'opacity-35' : ''" :title="heldCands && !heldTierShare(r, t) ? `持っている ${heldCands.name} では付かない段 (強さの下限・アイテムレベル・同じ系統)` : undefined">
                     <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
                     <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
                     <td class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
-                    <td class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :title="t.weight ? `重み ${t.weight}` : undefined">{{ t.weight && r.weight ? pct((r.share * t.weight) / r.weight) : "" }}</td>
+                    <td class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :class="heldCands ? 'text-sky-200' : ''" :title="t.weight ? `重み ${t.weight}` : undefined">{{ heldCands ? (heldTierShare(r, t) ? pct(heldTierShare(r, t)) : "—") : t.weight && r.weight ? pct((r.share * t.weight) / r.weight) : "" }}</td>
                     <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'rune' || sec.g === 'desecrated' || sec.g === 'essence' || sec.g === 'perfect_essence')" class="w-20 py-0.5 text-right">
                       <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-10 max-md:px-3 max-md:text-[12px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? 'もう一度押すと外す' : sec.rune ? `② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める` : `② に足す (${t.rank} 以上)`" @click.stop="keepPlace($event.currentTarget as Element, () => toggleTarget(t.modId ?? r.id, t))">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
                     </td>

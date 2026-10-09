@@ -15,7 +15,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
 import { boostedBy } from "../htc/quality";
-import { addForced, addOne, allMods, removeForced, removeOne, room, SIDES, skip, without, type Force, type PoolOpts } from "./stage-core";
+import { addForced, addOne, allMods, candidates, removeForced, removeOne, room, SIDES, skip, without, type Candidate, type Force, type PoolOpts } from "./stage-core";
 import { applyEssence } from "./apply-essence";
 import { applyForce, isForce } from "./apply-force";
 import { applyBone, applyReveal } from "./apply-desecrate";
@@ -292,5 +292,54 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
     }
     default:
       return skip(item, `このアイテムはまだ使えない (${currency})`);
+  }
+}
+
+/**
+ * 持っているカレンシーで次に付く MOD の候補と重み (2026-10-09 オーナー「カレンシー持った時に MOD の確率票変化。増強の時そもそも確率票が動いてない、
+ * 完全とか使うと付かない MOD とか出てくるから確率票もだし、付かない MOD はグレーアウト」)。打つ処理 (applyCurrency) と同じ決まり:
+ * 変成はマジックにしてから・増強は空きのある側・王者は戴冠のお告げの側・錬金は空のレア・高貴は側のお告げと触媒の高貴のお告げ・カオスは消した後どちらにも。
+ * 強さの下限 (上級・完全) とアイテムレベルは candidates が見る。MOD を足さない物・確定で付く物 (エッセンスなど) は null
+ */
+export function addCandidates(data: PatchData, item: StageItem, currency: string, omens: readonly string[]): Candidate[] | null {
+  const kind = kindOf(currency);
+  const used = omensFor(currency, omens);
+  const floor = floorOf(kind, parseKey(currency).strength);
+  if (floor > 0 && item.itemLevel < floor) return [];
+  const open = (it: StageItem, sides: readonly StageSide[]): StageSide[] => sides.filter((sd) => room(it, sd));
+  switch (kind) {
+    case "transmute": {
+      if (item.rarity !== "normal") return null;
+      const it = { ...item, rarity: "magic" as const };
+      return candidates(data, it, open(it, SIDES), floor);
+    }
+    case "augment":
+      if (item.rarity !== "magic") return null;
+      return candidates(data, item, open(item, SIDES), floor);
+    case "regal": {
+      if (item.rarity !== "magic") return null;
+      const side = sideOmen(used, "OmenofSinistralCoronation", "OmenofDextralCoronation");
+      const it = { ...item, rarity: "rare" as const };
+      return candidates(data, it, open(it, side ? [side] : SIDES), floor);
+    }
+    case "alchemy": {
+      if (item.rarity !== "normal" && item.rarity !== "magic") return null;
+      const it = { ...item, rarity: "rare" as const, prefixes: [], suffixes: [] };
+      return candidates(data, it, SIDES, floor);
+    }
+    case "exalt": {
+      if (item.rarity !== "rare") return null;
+      const side = sideOmen(used, "OmenofSinistralExaltation", "OmenofDextralExaltation");
+      const boost = used.includes("OmenofCatalysingExaltation") && item.qualityTag && item.quality > 0
+        ? { test: (m: Parameters<typeof boostedBy>[0]) => boostedBy(m, item.qualityTag!), mult: catalysingMultiplier(item.quality) }
+        : undefined;
+      return candidates(data, item, open(item, side ? [side] : SIDES), floor, boost ? { boost } : {});
+    }
+    case "chaos":
+      // 1 つ消してから足すので、どちらの側にも付きうる (消える MOD の系統は残ったまま数える目安)
+      if (item.rarity !== "rare") return null;
+      return candidates(data, item, SIDES, floor);
+    default:
+      return null;
   }
 }
