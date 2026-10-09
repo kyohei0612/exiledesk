@@ -1273,7 +1273,7 @@ function cardData(): RecipeCardData | null {
         aim: !!m.aim,
         rules: [
           ...(m.aim && m.aim.side === "any" ? [{ when: "外れ", then: "消去で外れを 1 つまで減らしてカオス" }] : m.aim ? Object.entries(m.shapes ?? {}).map(([k, d]) => ({ when: shapeRule(k, m.aim!.side as "prefix" | "suffix"), then: decisionText(d) })) : []),
-          ...(m.branch ? (["prefix", "suffix"] as const).map((sd) => ({ when: `${sd === "prefix" ? "プレ" : "サフィ"}に当たったら`, then: m.branch![sd] === "end" ? "完成" : `${(m.branch![sd] as number) + 1} 手目へ` })) : m.next != null ? [{ when: "揃ったら", then: m.next === "end" ? "完成" : `${m.next + 1} 手目へ` }] : []),
+          ...(m.branch ? (["prefix", "suffix"] as const).map((sd) => ({ when: `${sd === "prefix" ? "プレフィックス" : "サフィックス"}のどれかが付いた場合`, then: m.branch![sd] === "end" ? "完成" : `${(m.branch![sd] as number) + 1} 手目へ` })) : m.next != null ? [{ when: "揃ったら", then: m.next === "end" ? "完成" : `${m.next + 1} 手目へ` }] : []),
         ],
       };
     }),

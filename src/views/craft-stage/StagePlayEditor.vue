@@ -99,7 +99,10 @@ function doneBefore(ids: string[]): number {
 /** 見ている道 (両側の狙いの手で分かれる時だけ使う) */
 const route = ref<"prefix" | "suffix">("prefix");
 const hasRoutes = computed(() => moves.value.some((m) => m.branch));
-const ROUTE_JA = { prefix: "プレのどれか", suffix: "サフィのどれか" } as const;
+// 2026-10-10 オーナー「プレフィックスのどれかが付いた場合って日本語に、サフィも」
+const ROUTE_JA = { prefix: "プレフィックスのどれかが付いた場合", suffix: "サフィックスのどれかが付いた場合" } as const;
+/** 手の並びの短い札 */
+const ROUTE_SHORT = { prefix: "プレフィックスに付いた", suffix: "サフィックスに付いた" } as const;
 /** 見ている道で通る手 (始めから行き先を辿る) */
 const routePath = computed<Array<{ k: number; side?: "prefix" | "suffix" }>>(() => {
   const out: Array<{ k: number; side?: "prefix" | "suffix" }> = [];
@@ -401,7 +404,7 @@ function aimOn(i: number): PlayAim | null {
 function aimLabelAt(i: number): string {
   const a = aimOn(i);
   if (!a) return "";
-  if (moves.value[i]?.aim?.side === "any" && hasRoutes.value) return `${ROUTE_JA[route.value]}: ${a.mods.map((m) => shortName(m.modId)).join(" / ")}`;
+  if (moves.value[i]?.aim?.side === "any" && hasRoutes.value) return `${ROUTE_SHORT[route.value]}: ${a.mods.map((m) => shortName(m.modId)).join(" / ")}`;
   const names = a.mods.map((m) => shortName(m.modId)).join(" / ");
   if (a.mods.length < 2) return props.nameOfMod(a.mods[0]!.modId);
   const before = prevNeedOf(a, i);
@@ -411,7 +414,7 @@ function aimLabelAt(i: number): string {
 function aimShortAt(i: number): string {
   const a = aimOn(i);
   if (!a) return "";
-  if (moves.value[i]?.aim?.side === "any" && hasRoutes.value) return `${ROUTE_JA[route.value]}: ${a.mods.map((m) => shortName(m.modId).replace(/\s*T\d+\+$/, "")).join("・")}`;
+  if (moves.value[i]?.aim?.side === "any" && hasRoutes.value) return `${ROUTE_SHORT[route.value]}: ${a.mods.map((m) => shortName(m.modId).replace(/\s*T\d+\+$/, "")).join("・")}`;
   if (a.mods.length < 2) return props.nameOfMod(a.mods[0]!.modId);
   const tier = /T\d+\+$/.exec(shortName(a.mods[0]!.modId))?.[0] ?? "";
   const kinds = a.mods.map((m) => shortName(m.modId).replace(/\s*T\d+\+$/, "").replace(/ダメージ$/, "")).join("・");
@@ -494,7 +497,7 @@ watch(shapes, () => {
 
       <!-- 道 (両側の狙いの手で分かれる時): プレのどれか / サフィのどれか -->
       <div v-if="hasRoutes" class="grid grid-cols-2 gap-1 rounded-lg bg-black/30 p-1" role="tablist" aria-label="道">
-        <button v-for="r in (['prefix', 'suffix'] as const)" :key="r" type="button" role="tab" :aria-selected="route === r" class="h-8 rounded-md px-2 text-[13px] font-semibold transition" :class="route === r ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5'" @click="route = r; sel = null">{{ ROUTE_JA[r] }}</button>
+        <button v-for="r in (['prefix', 'suffix'] as const)" :key="r" type="button" role="tab" :aria-selected="route === r" class="min-h-8 rounded-md px-2 py-1.5 text-[12px] font-semibold leading-tight transition [word-break:keep-all]" :class="route === r ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5'" @click="route = r; sel = null">{{ ROUTE_JA[r] }}</button>
       </div>
       <ol class="flex flex-col gap-1">
         <li v-for="i in shownKs" :key="i">
@@ -527,7 +530,7 @@ watch(shapes, () => {
       <!-- 1 当たりの手を足す -->
       <template v-if="sel == null">
         <header class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h4 class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ shownKs.length + 1 }} 手目<span v-if="hasRoutes" class="ml-2 text-xs font-normal text-[var(--exile-color-text-secondary)]">{{ ROUTE_JA[route] }}の道</span></h4>
+          <h4 class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ shownKs.length + 1 }} 手目<span v-if="hasRoutes" class="ml-2 text-xs font-normal text-[var(--exile-color-text-secondary)]">{{ ROUTE_JA[route] }}</span></h4>
           <span class="text-xs text-[var(--exile-color-text-secondary)]">{{ pendingSet ? "狙う MOD を選ぶ" : "棚から打つ物を選ぶ" }}</span>
           <!-- 当たりの手の終わり (2026-10-10 オーナー「境目がわかりづらい。当たりで決めた時に完成ボタン」) -->
           <button v-if="!locked && moves.some((m) => m.aim)" type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)]" :title="leftTotal ? `最速完成ルートはここまで。次はハズレ複数設定 (未定 ${leftTotal} 形)` : 'ハズレ複数設定も全部決めてある'" @click="finishHits"><Icon name="check" class="size-4" />{{ leftTotal ? "最速完成ルートは完成 → ハズレ複数設定へ" : "完成 (外れも決めた)" }}</button>
@@ -592,7 +595,7 @@ watch(shapes, () => {
           <StageItemCard v-if="items[sel]" :item="items[sel]!" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="240" compact />
           <div class="flex min-w-0 flex-1 flex-col gap-3 text-[13px]">
             <p class="rounded-md bg-white/[0.03] px-3 py-2 text-[var(--exile-color-text-secondary)]">外れ: 消去で外れを 1 つまで減らしてカオスを続ける (自動)</p>
-<p class="text-[var(--exile-color-text-secondary)]">当たった側の道へ進む。道は左の「プレのどれか / サフィのどれか」で切り替えて、それぞれ次の手を足す</p>
+<p class="text-[var(--exile-color-text-secondary)]">当たった側の道へ進む。道は左の「プレフィックスのどれかが付いた場合 / サフィックスのどれかが付いた場合」で切り替えて、それぞれ次の手を足す</p>
           </div>
         </div>
       </template>
