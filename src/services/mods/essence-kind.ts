@@ -10,8 +10,9 @@ import type { Mod } from "../../vendor/poe2htc/engine/types";
 
 export type EssenceKind = "essence" | "perfect_essence";
 export const ESSENCE_KIND: Record<EssenceKind, { label: string; short: string; how: string }> = {
-  essence: { label: "エッセンス (マジックに)", short: "エッセンス", how: "レッサー〜グレーター。マジックをレアにして、その MOD を 1 つ確定で付ける" },
-  perfect_essence: { label: "パーフェクトエッセンス・合金 (レアに)", short: "パーフェクト", how: "レアにクラフト MOD を確定で付ける (1 つまで。結晶化のお告げで消す側を選ぶ)" },
+  // 札は両方「エッセンス」(2026-10-10 オーナー「パーフェクトとかやなくて意味わからん」)。違いは how (乗せると出る) で
+  essence: { label: "エッセンス", short: "エッセンス", how: "レッサー〜グレーター。マジックをレアにして、その MOD を 1 つ確定で付ける" },
+  perfect_essence: { label: "エッセンス", short: "エッセンス", how: "レアにクラフト MOD を確定で付ける (1 つまで。結晶化のお告げで消す側を選ぶ)" },
 };
 /** その MOD がどちらのエッセンスか (エッセンスでなければ null) */
 export const essenceKindOf = (m: Pick<Mod, "source"> | null | undefined): EssenceKind | null =>

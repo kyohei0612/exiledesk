@@ -47,8 +47,10 @@ watch(open, (v) => { try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /
 // シミュレーションで狙いがまだ 1 つも無い時は開いておく (畳んだのを覚えていて、ベースを選んでも何をすればいいか分からなかった。2026-10-07)
 watch(() => s.mode.value === "sim" && !s.simTargets.value.length && s.base.value, (v) => { if (v) open.value = true; }, { immediate: true });
 
-const GROUPS: ModGroup[] = ["normal", "rune", "essence", "perfect_essence", "desecrated", "otherworldly"];
-const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => r.group === g).length])) as Record<ModGroup, number>);
+// エッセンスはマジック用とレア用 (パーフェクト・合金) を 1 つの節に (2026-10-10 オーナー「エッセンスね、パーフェクトとかやなくて意味わからん」)
+const GROUPS: ModGroup[] = ["normal", "rune", "essence", "desecrated", "otherworldly"];
+const inGroup = (r: { group: ModGroup }, g: ModGroup): boolean => r.group === g || (g === "essence" && r.group === "perfect_essence");
+const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => inGroup(r, g)).length])) as Record<ModGroup, number>);
 
 const query = ref("");
 /** 開いている段の表 (種類:系統) */
@@ -85,7 +87,7 @@ const sections = computed((): Section[] => {
       : [{ g, sid: g as string, label: GROUP_JA[g], rune: null as string | null }],
   );
   return parts.map(({ g, sid, label, rune }) => {
-    const all = rows.value.filter((r) => r.group === g && (rune == null || r.runeJa === rune));
+    const all = rows.value.filter((r) => inGroup(r, g) && (rune == null || r.runeJa === rune));
     const list = all.filter((r) => !q || r.text.includes(q) || r.tags.some((t) => TAG_STYLE[t]?.ja.includes(q)));
     const columns = (["prefix", "suffix"] as const).map((side) => {
       const items = list.filter((r) => r.side === side).sort((a, b) => b.share - a.share || b.topLevel - a.topLevel);
@@ -279,9 +281,9 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td v-else-if="s.mode.value !== 'sim' && !s.replay.value" class="w-44 py-0.5 text-right max-md:w-auto">
                       <!-- 打ち始めた後 (と、始めの状態に入れられない種類) は指名の手として付ける。灰色 = 今は付けられない (理由は title) -->
                       <span v-if="!canStart || !(sec.g === 'normal' || sec.g === 'desecrated')" class="inline-flex gap-1">
-                        <button type="button" class="rounded border px-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-30" :class="sec.g === 'desecrated' || sec.g === 'otherworldly' ? 'border-green-700/80 text-lime-200 hover:bg-green-800/30' : sec.g === 'essence' || sec.g === 'perfect_essence' ? 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15' : 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15'" :disabled="!!forceOf(sec.g, t.modId ?? r.id, t.rank).why" :title="forceOf(sec.g, t.modId ?? r.id, t.rank).why ?? `${t.rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`" @click.stop="s.use(forceOf(sec.g, t.modId ?? r.id, t.rank).key)">{{ sec.g === "desecrated" || sec.g === "otherworldly" ? "冒涜で付ける" : "付ける" }}</button>
+                        <button type="button" class="rounded border px-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-30" :class="sec.g === 'desecrated' || sec.g === 'otherworldly' ? 'border-green-700/80 text-lime-200 hover:bg-green-800/30' : sec.g === 'essence' || sec.g === 'perfect_essence' ? 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15' : 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15'" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank).why" :title="forceOf(r.group, t.modId ?? r.id, t.rank).why ?? `${t.rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank).key)">{{ sec.g === "desecrated" || sec.g === "otherworldly" ? "冒涜で付ける" : "付ける" }}</button>
                       <!-- 途中でもフラクチャー (普通の MOD だけ。付いていればそれを固定、無ければ固定で付ける。レアだけ・1 つまで。2026-10-08 オーナー) -->
-                        <button v-if="sec.g === 'normal'" type="button" class="rounded border border-orange-400/60 px-1.5 text-[10px] text-orange-200 hover:bg-orange-500/15 disabled:cursor-not-allowed disabled:opacity-30" :disabled="!!forceOf(sec.g, t.modId ?? r.id, t.rank, 'f').why" :title="forceOf(sec.g, t.modId ?? r.id, t.rank, 'f').why ?? `${t.rank} をフラクチャー (付いていればそれを固定、無ければ固定で付ける)`" @click.stop="s.use(forceOf(sec.g, t.modId ?? r.id, t.rank, 'f').key)">フラクチャー</button>
+                        <button v-if="sec.g === 'normal'" type="button" class="rounded border border-orange-400/60 px-1.5 text-[10px] text-orange-200 hover:bg-orange-500/15 disabled:cursor-not-allowed disabled:opacity-30" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why" :title="forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why ?? `${t.rank} をフラクチャー (付いていればそれを固定、無ければ固定で付ける)`" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank, 'f').key)">フラクチャー</button>
                       </span>
                       <span v-else class="inline-flex gap-1 max-md:flex-wrap max-md:justify-end">
                         <button v-if="sec.g === 'normal'" type="button" class="rounded border border-sky-400/50 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/15" :title="`始めの状態に ${t.rank} を付ける (付きうる物だけ)`" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">付ける</button>
