@@ -29,13 +29,30 @@ import { isTauriRuntime } from "./utils/isTauriRuntime";
 const DESIGN_WIDTH = 1660;
 /** 外枠の大きさ (拡大前の CSS ピクセル)。100vw / 100vh は拡大で窓より大きくなり、右と下が切れていたので実寸 ÷ 拡大率で持つ */
 const frame = ref({ w: DESIGN_WIDTH, h: 900 });
+/**
+ * 文字の大きさ (2026-10-10 オーナー「アプリ版文字ちっさくね」)。Ctrl + = / Ctrl + - で 1 割ずつ、Ctrl + 0 で元に戻す。
+ * 窓に合わせた拡大に掛けるだけ (覚えておく)。大きくすると 1 画面に入る量は減る
+ */
+const SCALE_KEY = "exiledesk.uiScale";
+const readScale = (): number => { try { const v = Number(localStorage.getItem(SCALE_KEY)); return v >= 0.8 && v <= 1.6 ? v : 1; } catch { return 1; } };
+let uiScale = readScale();
 function fitZoom(): void {
-  const z = Math.max(1, window.innerWidth / DESIGN_WIDTH);
+  const z = Math.max(1, window.innerWidth / DESIGN_WIDTH) * uiScale;
   document.documentElement.style.zoom = String(z);
   frame.value = { w: window.innerWidth / z, h: window.innerHeight / z };
 }
 fitZoom();
 window.addEventListener("resize", fitZoom);
+window.addEventListener("keydown", (e) => {
+  if (!e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  const next = k === "=" || k === "+" || k === ";" ? uiScale + 0.1 : k === "-" ? uiScale - 0.1 : k === "0" ? 1 : null;
+  if (next == null) return;
+  e.preventDefault();
+  uiScale = Math.round(Math.min(1.6, Math.max(0.8, next)) * 10) / 10;
+  try { localStorage.setItem(SCALE_KEY, String(uiScale)); } catch { /* 覚えられなくても効く */ }
+  fitZoom();
+});
 
 // 2026-09-14: 画面から別の画面へ飛べるよう、表示中の画面は共有状態 (state/app-nav.ts) に置く
 import { activeNav } from "./state/app-nav";

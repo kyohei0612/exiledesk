@@ -8,7 +8,7 @@
   「今まで入力していた部分 (ベース・MOD・始め方) まではそのまま」。決めていない形は回すと新しいベースで最初から (仮の数字)
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/shelf-context";
 import CurrencyShelf from "./CurrencyShelf.vue";
@@ -25,7 +25,7 @@ import { mulberry32 } from "../../services/htc/rng";
 import { allMods, listOf, makeStageMod, without, withMod } from "../../services/craft-stage/stage-core";
 import { revealOffers, unrevealedOf } from "../../services/craft-stage/apply-desecrate";
 import { essenceTarget } from "../../services/craft-stage/apply-essence";
-import { GREATER, hitChanceOf, setOf, shapesLeft, useKey } from "../../services/craft-stage/shape-table";
+import { GREATER, hitChanceOf, keyOfShape, reachableShapes, setOf, shapesLeft, useKey } from "../../services/craft-stage/shape-table";
 import { moveShapeCtx, type PlayAim, type PlayDecision, type PlayMove, type PlayRecipe } from "../../services/craft-stage/play-recipe";
 
 const props = defineProps<{
@@ -47,28 +47,36 @@ const limitOf = (it: StageItem | null, side: "prefix" | "suffix"): number => (it
 const shortName = (id: string): string => props.nameOfMod(id).replace(/をアタックに追加する/, "");
 
 // ── 狙いの候補 (今まで入力した狙いから) ─────────────────────────
-interface AimOpt { key: string; label: string; mods: Array<{ modId: string; minTierIndex: number }>; side: "prefix" | "suffix" }
+/**
+ * 持った物で狙える物。どれか N つの狙いは中身に分けず 1 つの札で、数は持った物が付ける数まで
+ * (2026-10-10 オーナー「どれか 1 つなんだから中身分解して選択させるのは意味わからん。偉大を掛けたらどれか 2 つ、無いならどれか 1 つ」)。
+ * 揃い切った狙い・前の手で狙った 1 つだけの MOD は出さない。側のお告げ (左側・右側) を掛けたらその側だけ
+ */
+interface AimOpt { key: string; label: string; mods: Array<{ modId: string; minTierIndex: number }>; side: "prefix" | "suffix"; need: number }
 const aimOpts = computed<AimOpt[]>(() => {
   const out: AimOpt[] = [];
-  const seen = new Set<string>();
-  const ts = craftStage.simTargets.value.filter((t) => t.method !== "fracture");
-  for (const t of ts) {
+  const x = pendingSet.value;
+  const step = x && x.kind === "exalt" && x.omens.includes(GREATER) ? 2 : 1;
+  const onlySide: "prefix" | "suffix" | null = x?.omens.some((o) => /^OmenofSinistral/.test(o)) ? "prefix" : x?.omens.some((o) => /^OmenofDextral/.test(o)) ? "suffix" : null;
+  for (const t of craftStage.simTargets.value.filter((t) => t.method !== "fracture")) {
     const mods = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
-    if (mods.length < 2) continue;
-    const key = mods.map((m) => m.modId).sort().join(",");
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ key, label: `どれか 1 MOD (${mods.map((m) => shortName(m.modId)).join(" / ")})`, mods, side: sideOfId(t.modId) });
-  }
-  for (const t of ts) {
-    for (const m of [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])]) {
-      if (seen.has(m.modId)) continue;
-      seen.add(m.modId);
-      out.push({ key: m.modId, label: props.nameOfMod(m.modId), mods: [m], side: sideOfId(m.modId) });
-    }
+    const side = sideOfId(t.modId);
+    if (onlySide && side !== onlySide) continue;
+    const before = doneBefore(mods.map((m) => m.modId));
+    const rest = mods.length - before;
+    if (rest <= 0) continue;
+    const n = Math.min(step, rest);
+    const label = mods.length > 1
+      ? `どれか ${n} つ (${mods.map((m) => shortName(m.modId)).join(" / ")})${before ? ` · 合わせて ${before + n} つ` : ""}`
+      : props.nameOfMod(t.modId);
+    out.push({ key: mods.map((m) => m.modId).sort().join(","), label, mods, side, need: before + n });
   }
   return out;
 });
+/** 前の手までに同じ狙いで揃えた数 */
+function doneBefore(ids: string[]): number {
+  return moves.value.reduce((a, m) => (m.aim && m.aim.mods.some((x) => ids.includes(x.modId)) ? Math.max(a, m.aim.need) : a), 0);
+}
 
 // ── アイテムの移り変わり (当たりの道) ─────────────────────────
 /** 狙いの MOD 行 (どれか N つなら「どれか 1 MOD (…)」の文に) */
@@ -152,8 +160,8 @@ const items = computed<Array<StageItem | null>>(() => {
 const now = computed(() => items.value[items.value.length - 1] ?? null);
 
 // ── 手の形 (② 外れを埋める) ─────────────────────────────────
-const toPolicy = (sh: Record<string, PlayDecision> | undefined): Record<string, PolicyAct> => Object.fromEntries(Object.entries(sh ?? {}).map(([k, d]) => [k, "use" in d ? { set: d.use, ...(d.pre?.length ? { pre: d.pre } : {}) } : d.go === "next" ? { then: "next" } : d.go === "start" ? { then: "restart" } : d.strip != null ? { then: "reset", goto: d.to } : { then: "goto", goto: d.to }]));
-const fromPolicy = (pol: Record<string, PolicyAct>): Record<string, PlayDecision> => Object.fromEntries(Object.entries(pol).flatMap(([k, a]): Array<[string, PlayDecision]> => (a.set ? [[k, { use: a.set, ...(a.pre?.length ? { pre: a.pre } : {}) }]] : a.then === "next" ? [[k, { go: "next" }]] : a.then === "restart" ? [[k, { go: "start" }]] : a.then === "reset" ? [[k, { go: "move", to: a.goto ?? 0, strip: 1 }]] : a.then === "goto" ? [[k, { go: "move", to: a.goto ?? 0 }]] : [])));
+const toPolicy = (sh: Record<string, PlayDecision> | undefined): Record<string, PolicyAct> => Object.fromEntries(Object.entries(sh ?? {}).map(([k, d]) => [k, "use" in d ? { set: d.use, ...(d.pre?.length ? { pre: d.pre } : {}) } : d.go === "next" ? { then: "next" } : d.go === "start" ? { then: "restart" } : d.strip != null ? { then: "reset", goto: d.to } : { then: "goto", goto: d.to, ...(d.auto ? { auto: true } : {}) }]));
+const fromPolicy = (pol: Record<string, PolicyAct>): Record<string, PlayDecision> => Object.fromEntries(Object.entries(pol).flatMap(([k, a]): Array<[string, PlayDecision]> => (a.set ? [[k, { use: a.set, ...(a.pre?.length ? { pre: a.pre } : {}) }]] : a.then === "next" ? [[k, { go: "next" }]] : a.then === "restart" ? [[k, { go: "start" }]] : a.then === "reset" ? [[k, { go: "move", to: a.goto ?? 0, strip: 1 }]] : a.then === "goto" ? [[k, { go: "move", to: a.goto ?? 0, ...(a.auto ? { auto: true } : {}) }]] : [])));
 /** 狙う手の「打って決める」の中身 */
 function shapeOf(i: number) {
   const m = moves.value[i];
@@ -184,10 +192,33 @@ function shapeOf(i: number) {
   return {
     props: { set: x, side, limit: limitOf(it, side), need: c.ctx.need, h0: c.h0, j0, policy, pHit, otherRemovable, ...ctxMore, isTarget: (id: string) => targetIds.has(id) || /#h\d+$/.test(id), steps: moves.value.slice(0, i + 1).map((p, n) => ({ n, label: `${n + 1} 手目: ${useLabel(p.use)}` })), hitMods: m.aim.mods.flatMap((a) => { const hm = hitMod(m.aim!, a.modId, a.minTierIndex); return hm ? [hm] : []; }), baseItem: it, backTo: spam != null ? { to: spam, label: `${spam + 1} 手目のスパムへ` } : null },
     left: shapesLeft({ ...c.ctx, pHit, ...ctxMore }, x, c.h0, j0, policy),
+    /** 来うる形のキーと、この手の始め (自動の行き先を探すのに使う) */
+    keys: reachableShapes({ ...c.ctx, pHit, ...ctxMore }, x, c.h0, j0, policy).map(keyOfShape),
+    h0: c.h0, j0, side, mods: m.aim.mods.map((a) => a.modId),
   };
 }
 const shapes = computed(() => moves.value.map((_, i) => shapeOf(i)));
 const leftTotal = computed(() => shapes.value.reduce((a, s) => a + (s?.left ?? 0), 0));
+/**
+ * 前の手 (か、この手) の始めと同じ形は、その手へ戻るのが既定 (2026-10-10 オーナー「同じ形なら同じ処理。デフォルトは自動でいい」)。
+ * 同じ側・同じ狙いの手で、狙いの数がその手の始めと同じ、狙い以外の数もその手の始めか、その手で決めてある形と同じ時。
+ * 反対の側の狙いが絡む形 (h-j-g) は自動にしない。後で別の手に変えられる (変えたら自動の印は消える)
+ */
+function autoTarget(i: number, key: string): number | null {
+  const mm = /^(\d+)-(\d+)$/.exec(key);
+  if (!mm) return null;
+  const h = Number(mm[1]), j = Number(mm[2]);
+  const me = shapes.value[i];
+  if (!me) return null;
+  for (let k = i; k >= 0; k--) {
+    const sk = shapes.value[k];
+    if (!sk || sk.side !== me.side || !sk.mods.some((id) => me.mods.includes(id))) continue;
+    if (sk.h0 !== h) continue;
+    if (sk.j0 === j || (k !== i && moves.value[k]?.shapes?.[key])) return k;
+  }
+  return null;
+}
+
 function setShapes(i: number, pol: Record<string, PolicyAct>): void {
   setMoves(moves.value.map((m, k) => (k === i ? { ...m, shapes: fromPolicy(pol) } : m)));
 }
@@ -195,6 +226,16 @@ function setShapes(i: number, pol: Record<string, PolicyAct>): void {
 // ── 選んでいる手 (null = ① 当たりで次の手を打つ) ─────────────────
 const sel = ref<number | null>(null);
 function goFill(): void { const i = shapes.value.findIndex((s) => (s?.left ?? 0) > 0); if (i >= 0) sel.value = i; }
+/** 当たりの手の完成: 決めていない外れがあればそこへ、無ければ一番後ろの狙う手の外れを見せる */
+function finishHits(): void {
+  held.value = null;
+  if (leftTotal.value) { goFill(); return; }
+  for (let i = moves.value.length - 1; i >= 0; i--) if (moves.value[i]?.aim) { sel.value = i; return; }
+}
+/** 外れを決めていって、この手の形が全部決まったら次の決めていない手へ (2026-10-10 オーナー「ハズレ決めたら次って、どんどん行こう」) */
+watch(() => (sel.value != null ? shapes.value[sel.value]?.left ?? null : null), (n, o) => {
+  if (n === 0 && (o ?? 0) > 0) goFill();
+});
 function removeMove(i: number): void {
   setMoves(moves.value.filter((_, k) => k !== i));
   if (sel.value != null && sel.value >= moves.value.length - 1) sel.value = null;
@@ -217,20 +258,12 @@ const pending = computed(() => (held.value ? useKey(held.value, omensFor(held.va
 const pendingSet = computed(() => (pending.value ? setOf(props.sets, pending.value) : undefined));
 /** 付ける物か (消去・品質・触媒などは狙えない = 打つだけ) */
 const adds = computed(() => !!pendingSet.value && ["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "essence", "essence_perfect", "desecrate", "fracture"].includes(pendingSet.value.kind));
-/** この狙いの前の手までに揃っている数 (同じ狙い) */
-function prevNeed(o: AimOpt): number {
-  const ids = new Set(o.mods.map((m) => m.modId));
-  return moves.value.reduce((a, m) => (m.aim && m.aim.mods.some((x) => ids.has(x.modId)) ? Math.max(a, m.aim.need) : a), 0);
-}
 function addMove(o: AimOpt | null): void {
   const use = pending.value;
   const x = pendingSet.value;
   if (!use || !x) return;
   let aim: PlayAim | null = null;
-  if (o) {
-    const step = x.kind === "exalt" && x.omens.includes(GREATER) ? 2 : 1;
-    aim = { mods: o.mods, need: Math.min(o.mods.length, prevNeed(o) + step), side: o.side };
-  }
+  if (o) aim = { mods: o.mods, need: o.need, side: o.side };
   setMoves([...moves.value, { use, aim }]);
   held.value = null;
   omens.value = [];
@@ -265,6 +298,24 @@ function prevNeedOf(a: PlayAim, i: number): number {
 const OMEN_SHORT: Record<string, string> = { OmenofSinistralExaltation: "左", OmenofDextralExaltation: "右", OmenofSinistralAnnulment: "左", OmenofDextralAnnulment: "右", OmenofSinistralErasure: "左", OmenofDextralErasure: "右", OmenofGreaterExaltation: "偉大", OmenofCatalysingExaltation: "触媒", OmenofWhittling: "削減", OmenofLight: "光", OmenofSinistralCrystallisation: "左", OmenofDextralCrystallisation: "右", OmenofSinistralNecromancy: "左", OmenofDextralNecromancy: "右", OmenofAbyssalEchoes: "反響" };
 const CUR_SHORT: Record<string, string> = { exalt: "高貴", exalt_greater: "上級高貴", exalt_perfect: "完全高貴", chaos: "カオス", chaos_greater: "上級カオス", chaos_perfect: "完全カオス", annul: "消去" };
 const useShort = (key: string): string => { const x = setOf(props.sets, key); if (!x) return key; return [CUR_SHORT[x.currency] ?? nameOf(x.currency), ...x.omens.map((o) => OMEN_SHORT[o] ?? nameOf(o))].join(" · "); };
+// 自動の行き先を入れる (中で使う物が全部できてから。上の autoTarget の決まり)
+watch(shapes, () => {
+  let changed = false;
+  const next = moves.value.map((m, i) => {
+    const sh = shapes.value[i];
+    if (!m.aim || !sh) return m;
+    const add: Record<string, PlayDecision> = {};
+    for (const k of sh.keys) {
+      if (m.shapes?.[k]) continue;
+      const to = autoTarget(i, k);
+      if (to != null) add[k] = { go: "move", to, auto: true };
+    }
+    if (!Object.keys(add).length) return m;
+    changed = true;
+    return { ...m, shapes: { ...(m.shapes ?? {}), ...add } };
+  });
+  if (changed && !props.locked) setMoves(next);
+}, { immediate: true });
 </script>
 
 <template>
@@ -319,9 +370,11 @@ const useShort = (key: string): string => { const x = setOf(props.sets, key); if
     <div class="min-w-0">
       <!-- 1 当たりの手を足す -->
       <template v-if="sel == null">
-        <header class="mb-3 flex flex-wrap items-baseline gap-x-3">
+        <header class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <h4 class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ moves.length + 1 }} 手目</h4>
           <span class="text-xs text-[var(--exile-color-text-secondary)]">{{ pendingSet ? "狙う MOD を選ぶ" : "棚から打つ物を選ぶ" }}</span>
+          <!-- 当たりの手の終わり (2026-10-10 オーナー「境目がわかりづらい。当たりで決めた時に完成ボタン」) -->
+          <button v-if="!locked && moves.some((m) => m.aim)" type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)]" :title="leftTotal ? `当たりの手はここまで。次は外れた時の手 (未定 ${leftTotal} 形)` : '外れの手も全部決めてある'" @click="finishHits"><Icon name="check" class="size-4" />{{ leftTotal ? "当たりの手は完成 → 外れの手へ" : "完成 (外れも決めた)" }}</button>
         </header>
         <div class="flex items-start gap-5 max-md:flex-col">
           <div class="shrink-0 max-md:mx-auto">
@@ -329,7 +382,8 @@ const useShort = (key: string): string => { const x = setOf(props.sets, key); if
           </div>
           <div class="flex min-w-0 flex-1 flex-col gap-3">
             <!-- 持った物と、狙う MOD (アイテムのすぐ横。初見レビュー「持った後に何も起きないように見える」) -->
-            <section v-if="pendingSet" class="rounded-lg bg-[var(--exile-color-bg-elevated)] p-3 ring-1 ring-[var(--exile-color-border-brass)]">
+            <!-- スマホは手打ちと同じく画面の下に固定 (2026-10-10 オーナー「スマホ版もほぼ手打ちと同じ挙動で」) -->
+            <section v-if="pendingSet" class="rounded-lg bg-[var(--exile-color-bg-elevated)] p-3 ring-1 ring-[var(--exile-color-border-brass)] max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-[150] max-md:max-h-[55vh] max-md:overflow-auto max-md:rounded-none max-md:border-t max-md:border-amber-400/40 max-md:bg-[#14110d] max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:shadow-[0_-6px_20px_rgba(0,0,0,0.6)] max-md:ring-0">
               <div class="mb-2 flex flex-wrap items-center gap-2">
                 <span class="flex items-center -space-x-1"><img v-for="ic in iconsOf(pending!)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
                 <b class="text-[var(--exile-color-text-primary)]">{{ useLabel(pending!) }}</b>
@@ -351,6 +405,7 @@ const useShort = (key: string): string => { const x = setOf(props.sets, key); if
                 </div>
               </template>
             </CurrencyShelf>
+            <div v-if="pendingSet" class="h-44 md:hidden"></div>
           </div>
         </div>
       </template>

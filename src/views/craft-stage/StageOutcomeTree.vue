@@ -185,7 +185,7 @@ const OTHER_JA = computed(() => (props.side === "prefix" ? "サフィ" : "プレ
 /** 形の文 (初見レビュー: 短く。狙い = 狙う MOD、ほか = それ以外、空き = 残りの枠) */
 const shapeText = (s: Shape): string => `狙い ${s.h} · ほか ${s.j} · 空き ${Math.max(0, props.limit - s.h - s.j)}${s.g != null ? ` (${OTHER_JA.value}の狙い ${s.g})` : ""}`;
 const pct = (p: number | null): string => (p == null ? "" : p >= 0.995 ? "100%" : p < 0.005 ? "1% 未満" : `${Math.round(p * 100)}%`);
-const thenText = (a: PolicyAct | undefined): string => (!a ? "" : a.then === "next" ? "次の手へ" : a.then === "restart" ? "新しいベースで最初から" : a.then === "miss" ? (props.fallback ?? "付かなかったらの札") : a.then === "reset" ? `1 MOD 残し消去 → ${(a.goto ?? 0) + 1} 手目へ` : a.then === "goto" ? `${(a.goto ?? 0) + 1} 手目へ` : "");
+const thenText = (a: PolicyAct | undefined): string => (!a ? "" : a.then === "next" ? "次の手へ" : a.then === "restart" ? "新しいベースで最初から" : a.then === "miss" ? (props.fallback ?? "付かなかったらの札") : a.then === "reset" ? `1 MOD 残し消去 → ${(a.goto ?? 0) + 1} 手目へ` : a.then === "goto" ? `${(a.goto ?? 0) + 1} 手目へ${a.auto ? " (自動)" : ""}` : "");
 const ruleText = (a: PolicyAct | undefined): string => { if (!a) return "未定"; const x = a.set ? setOf(props.sets, a.set) : undefined; return x ? `${preLabel(a.pre)}${labelOf(x)} を打つ` : thenText(a); };
 /**
  * 今の形のアイテム: 打つ前のアイテムの狙いの側を、狙い h 行 (どれか 1 MOD …) + 狙い以外 j 行に並べ替えた物。
@@ -366,13 +366,14 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
               <span v-for="(u, k) in preList" :key="k" class="inline-flex items-center gap-1 rounded bg-black/30 px-1.5 py-0.5"><img v-for="ic in (setOf(sets, u) ? iconsOf(setOf(sets, u)!) : [])" :key="ic" :src="iconOf(ic)" alt="" class="size-4 object-contain" />{{ setOf(sets, u) ? labelOf(setOf(sets, u)!) : u }}<button type="button" class="text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-signal-down)]" title="外す" @click="preList = preList.filter((_, n) => n !== k)"><Icon name="x" class="size-3" /></button></span>
               <span class="text-[var(--exile-color-text-tertiary)]">次に打つ物を選ぶ</span>
             </div>
-            <div v-if="heldUse" class="flex flex-wrap items-center gap-2 rounded-md bg-[var(--exile-color-bg-elevated)] px-3 py-2 ring-1 ring-[var(--exile-color-border-brass)]">
+            <div v-if="heldUse" class="flex flex-wrap items-center gap-2 rounded-md bg-[var(--exile-color-bg-elevated)] px-3 py-2 ring-1 ring-[var(--exile-color-border-brass)] max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-[150] max-md:max-h-[55vh] max-md:overflow-auto max-md:rounded-none max-md:border-t max-md:border-amber-400/40 max-md:bg-[#14110d] max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:shadow-[0_-6px_20px_rgba(0,0,0,0.6)] max-md:ring-0">
               <span v-if="preList.length" class="text-[var(--exile-color-text-secondary)]">{{ preLabel(preList) }}</span>
               <span class="flex items-center -space-x-1"><img v-for="ic in iconsOf(heldUse)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
               <b>{{ labelOf(heldUse) }}</b>
               <span class="text-xs text-[var(--exile-color-text-tertiary)]">お告げを選んで</span>
               <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)]" @click="confirmHeld">これを打つ<Icon name="arrow-right" class="size-4" /></button>
             </div>
+            <div v-if="heldUse" class="h-20 md:hidden order-last"></div>
             <CurrencyShelf @hold="holdShelf">
               <template v-if="heldOmens.length" #held>
                 <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">

@@ -51,7 +51,8 @@ const frame = ref({ w: DESIGN_WIDTH, h: 900 });
 const phone = ref(false);
 function fitZoom(): void {
   phone.value = window.innerWidth < 768;
-  const z = phone.value ? 1 : Math.min(1.6, Math.max(0.55, window.innerWidth / DESIGN_WIDTH));
+  // iPad など: 縮めると字が 7〜8 px になって読めないので、1280 未満は等倍、それより広くても 0.85 倍より小さくしない (並びは幅に合わせて折り返す。2026-10-10)
+  const z = phone.value || window.innerWidth < 1280 ? 1 : Math.min(1.6, Math.max(0.85, window.innerWidth / DESIGN_WIDTH));
   document.documentElement.style.zoom = String(z);
   frame.value = { w: window.innerWidth / z, h: window.innerHeight / z };
 }

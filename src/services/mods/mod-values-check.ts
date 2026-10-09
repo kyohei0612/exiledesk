@@ -99,11 +99,13 @@ const near = (a: number, b: number): boolean => Math.abs(a - b) < 0.0051;
 /** text_en の数字 (幅 / 裸) を全部。印は外す */
 export function textNumbers(textEn: string): Array<[number, number]> {
   const out: Array<[number, number]> = [];
-  const re = /\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)|(?<![\d.(-])(-?\d+(?:\.\d+)?)(?![\d.)-])/g;
+  const re = /\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)|(-?\d+(?:\.\d+)?)(?![\d.)-])/g;
+  // 前の文字が数字・.・(・- の裸の数は飛ばす (後ろ読み (?<!…) は古い Safari (iOS 16.3 まで) で読めずに画面ごと落ちるので使わない。2026-10-10)
   let m: RegExpExecArray | null;
   const s = stripRichTextMarkers(textEn);
   while ((m = re.exec(s))) {
     if (m[1] !== undefined) out.push([Number(m[1]), Number(m[2])]);
+    else if (m.index > 0 && /[\d.(-]/.test(s[m.index - 1]!)) continue;
     else out.push([Number(m[3]), Number(m[3])]);
   }
   return out;

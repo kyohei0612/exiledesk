@@ -34,7 +34,7 @@ export type PlayDecision =
   /** 新しいベースで最初から */
   | { go: "start" }
   /** N 手目へ (0 始まり)。strip があれば先に固定以外を strip 個まで素の消去で減らす (1 MOD 残し消去 = strip 1) */
-  | { go: "move"; to: number; strip?: number };
+  | { go: "move"; to: number; strip?: number; auto?: boolean };
 export interface PlayMove {
   use: string;
   aim: PlayAim | null;

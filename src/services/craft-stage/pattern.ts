@@ -93,7 +93,7 @@ export interface PatternStep {
  * 結果の状態での行動: 打つ物 (set) か、次の手・最初から・N 手目 (then)。
  * pre は set の前に打つ形の変わらない物 (触媒で品質を足してから触媒の高貴、など。2026-10-09 オーナー「触媒打ったら品質消えるから足す作業」)
  */
-export interface PolicyAct { set?: string; pre?: string[]; then?: "next" | "restart" | "goto" | "reset" | "miss"; goto?: number }
+export interface PolicyAct { set?: string; pre?: string[]; then?: "next" | "restart" | "goto" | "reset" | "miss"; goto?: number; /** 自動で入れた (前の手の始めと同じ形 → その手へ) */ auto?: boolean }
 /** 状態のキー (狙いの側の当たり h・狙い以外 j) */
 export const policyKey = (h: number, j: number): string => `${h}-${j}`;
 /**
