@@ -73,7 +73,12 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   if (!room(it, side)) return skip(item, it.rarity === "magic" ? `マジックは${SIDE_JA[side]} 1 つまで (同じ側の 2 つ目は王者でレアにしてから)` : `${SIDE_JA[side]}の枠が埋まっている`);
   if (p.flag === "d" && allMods(it).some((m) => m.desecrated)) return skip(item, "冒涜の MOD はアイテムに 1 つまで");
   if (p.flag === "f" && allMods(it).some((m) => m.fractured)) return skip(item, "フラクチャーは 1 つまで");
-  if (p.flag === "e") {
+  // 固定で付ける冒涜 / エッセンスの MOD は、その印も付ける (冒涜は 1 つまで・エッセンスは上限まで。2026-10-10 要望「創生の樹・冒涜もフラクチャーできるように」)
+  const otherworldly = [...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId);
+  const asDesecrated = p.flag === "d" || (p.flag === "f" && (mod.source === "desecrated" || (otherworldly && !(it.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(p.modId))));
+  const asCrafted = p.flag === "e" || (p.flag === "f" && (mod.source === "essence" || mod.source === "perfect_essence"));
+  if (p.flag === "f" && asDesecrated && allMods(it).some((m) => m.desecrated)) return skip(item, "冒涜の MOD はアイテムに 1 つまで");
+  if (asCrafted) {
     const limit = craftedLimitOf(it);
     if (allMods(it).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? "クラフト MOD はアストリッドの創造性込みで 2 つまで" : "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)");
     if (essenceClash(mod, takenCraftedFamilies(data, it))) return skip(item, "エッセンスの MOD どうしで系統が重なる");
@@ -92,7 +97,12 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   const tierIndex = mod.tiers.length - n;
   const tier = mod.tiers[tierIndex];
   if (!tier) return skip(item, `${p.rank ?? "T1"} という段が無い`);
-  if (p.flag !== "e" && tier.ilvl > it.itemLevel) return skip(item, `${p.rank ?? "T1"} はアイテムレベル ${tier.ilvl} から (今は ${it.itemLevel})`);
-  const sm = { ...makeStageMod(mod, side, tierIndex, rng), ...(p.flag === "e" ? { ...normalTierOf(data, it, mod, tier), crafted: true } : p.flag === "d" ? { desecrated: true } : p.flag === "f" ? { fractured: true } : {}) };
+  if (!asCrafted && tier.ilvl > it.itemLevel) return skip(item, `${p.rank ?? "T1"} はアイテムレベル ${tier.ilvl} から (今は ${it.itemLevel})`);
+  const sm = {
+    ...makeStageMod(mod, side, tierIndex, rng),
+    ...(asCrafted ? { ...normalTierOf(data, it, mod, tier), crafted: true } : {}),
+    ...(asDesecrated ? { desecrated: true } : {}),
+    ...(p.flag === "f" ? { fractured: true } : {}),
+  };
   return { applied: true, item: withMod(it, sm), added: [sm], removed: [], ...(socketed ? { augment: socketed } : {}) };
 }
