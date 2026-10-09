@@ -68,15 +68,18 @@ describe("指名で付ける (force:)", () => {
     expect(r2.applied).toBe(false);
     expect(r2.reason).toMatch(/1 つまで/);
   });
-  it("ルーンの MOD はそのルーンを差していないと付かない", () => {
+  it("ルーンの MOD を手で付けると、差していなければルーンも差す (ソケットが無ければ付かない、2026-10-09 オーナー)", () => {
     const kol = [...data.mods.values()].find((m) => m.id.startsWith("Gloves_dex/") && m.rune === "kolrs-hunt")!;
     const white = { ...freshItem(data, "Suede Bracers", 82), sockets: 1 };
-    const no = A(white, forceKey(kol.id, "T1", "n"));
-    expect(no.applied).toBe(false);
-    expect(no.reason).toMatch(/ルーンを先に差す/);
+    const auto = A(white, forceKey(kol.id, "T1", "n"));
+    expect(auto.applied).toBe(true);
+    expect(auto.item.augments?.[0]?.en).toBe("Kolr's Hunt");
+    const noSocket = A({ ...white, sockets: 0 }, forceKey(kol.id, "T1", "n"));
+    expect(noSocket.applied).toBe(false);
     const socketed = applyRune(white, "rune:Kolr's Hunt", data).item;
     const yes = A(socketed, forceKey(kol.id, "T1", "n"));
     expect(yes.applied).toBe(true);
+    expect(yes.item.augments).toHaveLength(1);
   });
   it("エッセンスの MOD はレアになる (パーフェクトはレアだけ)、ユニークには付かない、フラクチャーは付いている物を固定 (2026-10-08 使い倒しテスト)", () => {
     const ess = [...data.mods.values()].find((m) => m.source === "essence" && m.id.startsWith("Rings/"))!;

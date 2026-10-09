@@ -116,14 +116,14 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
       }));
     }
   }
-  // 差していないルーン: そのルーンを差した時の割合 (今の普通の置き場 + そのルーンの MOD で割る)
+  // 差していないルーン: 付かないので 0% (2026-10-09 オーナー「刺してないのに確率が出るのはおかしい、出ない奴は 0%」)。行は出す (手で付ければルーンも差す)
   for (const [id, pool] of Object.entries(item.cls.pools.rune ?? {})) {
     if (socketed.has(id)) continue;
     for (const side of ["prefix", "suffix"] as const) {
       const k = side === "prefix" ? "prefixes" : "suffixes";
       const own = new Set(pool[k]);
       const rows = modsOf([...pools.normal[k], ...pool[k]]).map((m) => rowOf(m, side, "normal"));
-      out.push(...fillShares(rows).filter((r) => own.has(r.id)).map((r) => ({ ...r, group: "rune" as const, runeJa: runeJaOf(id), socketed: false })));
+      out.push(...fillShares(rows).filter((r) => own.has(r.id)).map((r) => ({ ...r, share: 0, group: "rune" as const, runeJa: runeJaOf(id), socketed: false })));
     }
   }
   return mergeFamilies(out);

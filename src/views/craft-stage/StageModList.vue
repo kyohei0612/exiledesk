@@ -280,7 +280,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
         <h3 class="mb-2 flex items-center gap-2 text-[13px] font-bold max-md:min-h-11 max-md:cursor-pointer" @click="phone && toggleSec(sec.sid)">
           <span class="rounded-full px-2.5 py-0.5" :class="toneOf(sec).tab">{{ sec.label }}</span>
           <span class="font-normal opacity-50">{{ sec.count }} 系統</span>
-          <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差すと付く" }} · 重みは Craft of Exile の実測 · 出やすさは差した時の割合</span>
+          <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差していないので 0% (付ければルーンも差す)" }} · 重みは Craft of Exile の実測</span>
           <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ</span>
           <span class="ml-auto font-normal opacity-60 md:hidden">{{ secShown(sec.sid) ? "▲" : "▼ 開く" }}</span>
         </h3>
@@ -297,7 +297,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
               <button
                 type="button"
                 class="relative w-full overflow-hidden rounded-md px-2 py-1 text-left transition hover:bg-white/[0.05]"
-                :class="[r.on ? 'ring-1 ring-emerald-400/60' : '', r.blocked || (heldCands && !heldShare(r)) ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : '']"
+                :class="[r.on ? 'ring-1 ring-emerald-400/60' : '', r.blocked || (heldCands && !heldShare(r)) || (r.group === 'rune' && !r.socketed) ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : '']"
                 :title="r.blocked ? '同じ系統の MOD が付いているので、今は付かない' : heldCands && !heldShare(r) ? `持っている ${heldCands.name} では付かない` : undefined"
                 @click="toggleRow(`${sec.sid}:${r.id}`, $event)"
               >

@@ -239,6 +239,29 @@ export function convertElements(data: PatchData, item: StageItem, element: strin
   return { item: out, mods };
 }
 
+/**
+ * ルーンを外す (2026-10-09 オーナー「右クリックでソケットクリックしたら外せるように、ルーンの所クリックで外せるでもいい、どっちも」)。
+ * ゲームでは外せない (置き換えると壊れる) が、ここは手で組む道具なので外せる。費用 0、1 手戻すで戻る。付いている MOD はそのまま
+ */
+export const UNSOCKET_PREFIX = "unrune:";
+export const unsocketKey = (n: number): string => `${UNSOCKET_PREFIX}${n}`;
+export const isUnsocket = (key: string): boolean => key.startsWith(UNSOCKET_PREFIX);
+export function applyUnsocket(item: StageItem, key: string): StageApply {
+  const n = Number(key.slice(UNSOCKET_PREFIX.length));
+  const now = item.augments ?? [];
+  const a = now[n - 1];
+  if (!a) return skip(item, `${n} 番目のソケットにルーンが無い`);
+  return { applied: true, item: { ...item, augments: now.filter((_, i) => i !== n - 1) }, added: [], removed: [], note: `${a.ja} を外した` };
+}
+
+/** 特殊 MOD のルーンの id (kolrs-hunt など) → はめる手のキー。無ければ null */
+export function runeKeyForId(id: string): string | null {
+  const name = RUNE_BY_ID.get(id)?.name;
+  if (!name) return null;
+  const en = Object.keys(RUNES).find((k) => runeIdByName(k) === id) ?? name;
+  return `${RUNE_PREFIX}${en}`;
+}
+
 export function applyRune(item: StageItem, key: string, data?: PatchData): StageApply {
   const p = parseRuneKey(key)!;
   if (p.en === "Masterwork Rune") return applyMasterwork(item, p.socket);

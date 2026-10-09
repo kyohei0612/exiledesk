@@ -30,7 +30,7 @@ import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyFlux, isFlux } from "./apply-flux";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
-import { applyRune, isRune } from "./stage-runes";
+import { applyRune, isRune, applyUnsocket, isUnsocket } from "./stage-runes";
 
 /** 噛み切られた骨が使えるアイテムレベルの上限 (クライアントの AbyssBenchTicketTypes.MaximumItemLevel、2026-09-29) */
 export const GNAWED_MAX_ILVL = 64;
@@ -132,6 +132,7 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す
  // ルーン (要望 ⑰-1) はコラプト・聖別の後でもはめられる物がある (クライアントの CanSocketInCorruptedSanctified、applyRune で見る)
   if (isRune(currency)) return applyRune(item, currency, data);
+  if (isUnsocket(currency)) return applyUnsocket(item, currency);
   if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, "聖別したアイテムには使えない");
   if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, "コラプトしたアイテムには使えない");
   // 今のゲームに無いお告げ (相場に値段が無い) を掛けていたら打てない (2026-09-29 オーナー「錬金術のお告げとかない、王者のお告げやら」)

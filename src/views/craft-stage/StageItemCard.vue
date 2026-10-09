@@ -36,7 +36,14 @@ const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number]; remove: [modId: string]; fracture: [m: StageMod] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod] }>();
+/** ルーンを外す (2026-10-09): ソケットの右クリック、またはルーンの効き目の行のクリック。手で組んでいる時だけ (removable) */
+function onUnsocket(e: MouseEvent, n: number): void {
+  if (!props.removable || !props.item.augments?.[n - 1]) return;
+  e.preventDefault();
+  e.stopPropagation();
+  emit("unsocket", n);
+}
 /**
  * ルーンの入ったソケットを押した (2026-10-03): そのソケットを指して打つ (置き換え)。親が持っている物を見て決める
  * (ルーン以外を持っている時は、アイテムを押したのと同じ)。空のソケットはアイテムを押したのと同じ
@@ -133,12 +140,12 @@ const rows = computed(() =>
       <!-- ソケット (熟練工のオーブ) の絵 -->
       <div v-if="item.sockets" class="flex justify-center gap-1.5 py-0.5">
         <!-- はめたルーン (要望 ⑰-1) はソケットの中に絵 -->
-        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" :data-stage-socket="i" :title="item.augments?.[i - 1] ? `${i} 番目: ${item.augments[i - 1]!.ja}` : undefined" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'" @click="onSocket($event, i)">
+        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" :data-stage-socket="i" :title="item.augments?.[i - 1] ? `${i} 番目: ${item.augments[i - 1]!.ja}${removable ? ' (右クリックで外す)' : ''}` : undefined" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'" @click="onSocket($event, i)" @contextmenu="onUnsocket($event, i)">
           <img v-if="item.augments?.[i - 1] && runeArt(item.augments[i - 1]!.en)" :src="runeArt(item.augments[i - 1]!.en)!" alt="" class="h-6 w-6 object-contain" draggable="false" />
         </span>
       </div>
       <!-- ルーンの効き目 (MOD とは別の行。ゲームと同じくプロパティの下) -->
-      <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-[#8fa8ff]">{{ a.textJa }}</p>
+      <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-[#8fa8ff]" :class="removable && !holding ? 'cursor-pointer hover:line-through' : ''" :title="removable && !holding ? `${a.ja} を外す` : undefined" @click="!holding && onUnsocket($event, i + 1)" @contextmenu="onUnsocket($event, i + 1)">{{ a.textJa }}</p>
       <!-- スキルジェムのサポート枠 (宝飾職人のオーブ) -->
       <div v-if="item.gemSockets" class="flex items-center justify-center gap-1.5 py-0.5 text-[12px] text-white/50">
         サポート枠

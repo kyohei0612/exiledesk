@@ -10,6 +10,7 @@
 -->
 <script setup lang="ts">
 import { forceKey } from "../../services/craft-stage/apply-force";
+import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, type SimRecipe } from "../../state/craft-stage";
 import StageRecipeStart from "./StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
@@ -418,6 +419,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @fracture="fractureMod"
           @socket="useAtSocket"
+          @unsocket="(n: number) => s.use(unsocketKey(n))"
         />
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>

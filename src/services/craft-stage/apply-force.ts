@@ -13,6 +13,7 @@
  *   - ルーンの MOD (特殊 MOD のルーン) はそのルーンを差していないと付かない
  *   - 段のアイテムレベルがアイテムレベルを超える物は付かない (エッセンスは制限なし)
  */
+import { applyRune, runeKeyForId } from "./stage-runes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceClash, familyBlocked } from "../mods/mod-rules";
 import { craftedLimitOf, normalTierOf } from "./apply-essence";
@@ -76,8 +77,15 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
     if (allMods(it).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? "クラフト MOD はアストリッドの創造性込みで 2 つまで" : "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)");
     if (essenceClash(mod, takenRawFamilies(data, it))) return skip(item, "エッセンスと重なる系統の MOD が付いている");
   }
-  // 特殊 MOD のルーン: 差していないと付かない
-  if (mod.rune && !stageRuneIds(it).includes(mod.rune)) return skip(item, "このルーンを先に差す (差していないと付かない)");
+  // 特殊 MOD のルーン: 差していなければ先に差す (2026-10-09 オーナー「手動で付けた場合はルーン勝手にはめておｋ、セットで」)
+  let socketed: StageApply["augment"] | undefined;
+  if (mod.rune && !stageRuneIds(it).includes(mod.rune)) {
+    const key = runeKeyForId(mod.rune);
+    const r = key ? applyRune(it, key, data) : null;
+    if (!r?.applied) return skip(item, `このルーンを差せない (${r?.reason ?? "ルーンが見つからない"})`);
+    it = r.item;
+    socketed = r.augment;
+  }
   // 段 (T1 = 一番上)。指定が無ければ一番上
   const n = p.rank ? Number(/^T(\d+)$/i.exec(p.rank)?.[1]) : 1;
   const tierIndex = mod.tiers.length - n;
@@ -85,5 +93,5 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   if (!tier) return skip(item, `${p.rank ?? "T1"} という段が無い`);
   if (p.flag !== "e" && tier.ilvl > it.itemLevel) return skip(item, `${p.rank ?? "T1"} はアイテムレベル ${tier.ilvl} から (今は ${it.itemLevel})`);
   const sm = { ...makeStageMod(mod, side, tierIndex, rng), ...(p.flag === "e" ? { ...normalTierOf(data, it, mod, tier), crafted: true } : p.flag === "d" ? { desecrated: true } : p.flag === "f" ? { fractured: true } : {}) };
-  return { applied: true, item: withMod(it, sm), added: [sm], removed: [] };
+  return { applied: true, item: withMod(it, sm), added: [sm], removed: [], ...(socketed ? { augment: socketed } : {}) };
 }

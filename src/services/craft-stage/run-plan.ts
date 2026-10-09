@@ -18,7 +18,7 @@ import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
 import { addForced, boostedMod, effectiveCls, replaced, type Force } from "./stage-core";
-import { socketCapOf } from "./stage-runes";
+import { socketCapOf, isUnsocket, UNSOCKET_PREFIX } from "./stage-runes";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOfItem } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
@@ -126,6 +126,7 @@ export function stepJa(currency: string, item: StageItem): string {
   const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
   if (rv) return `発現 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
+  if (isUnsocket(currency)) return `ルーンを外す (${currency.slice(UNSOCKET_PREFIX.length)} 番目のソケット)`;
   if (isRune(currency)) {
     // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
     const n = parseRuneKey(currency)?.socket;

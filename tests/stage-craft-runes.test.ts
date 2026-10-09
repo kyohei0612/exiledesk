@@ -34,13 +34,15 @@ describe("特殊 MOD のルーン", () => {
     expect(has(r.item)).toBe(true);
     const rows = modListFor(data, r.item).filter((x) => x.group === "rune");
     expect(rows.length).toBeGreaterThan(0);
-    expect(rows.every((x) => x.share > 0)).toBe(true);
+    // 差したルーンの MOD だけ確率が出る。差していない方 (カトラの陰鬱) は 0% (2026-10-09 オーナー)
+    expect(rows.filter((x) => x.socketed).every((x) => x.share > 0)).toBe(true);
+    expect(rows.filter((x) => !x.socketed).every((x) => x.share === 0)).toBe(true);
     expect(rows.filter((x) => x.runeJa === "コルの狩り").every((x) => x.socketed)).toBe(true);
   });
-  it("差す前から付く MOD の一覧にルーンの MOD が全部出る (「○○を差すと」)", () => {
+  it("差す前から付く MOD の一覧にルーンの MOD が全部出る (差していないので 0%)", () => {
     const rows = modListFor(data, rare("Knightly Mitts")).filter((x) => x.group === "rune");
     expect(new Set(rows.map((x) => x.runeJa))).toEqual(new Set(["コルの狩り", "カトラの陰鬱"]));
-    expect(rows.every((x) => x.socketed === false && x.share > 0)).toBe(true);
+    expect(rows.every((x) => x.socketed === false && x.share === 0)).toBe(true);
   });
 });
 
