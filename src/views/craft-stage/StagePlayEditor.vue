@@ -323,8 +323,19 @@ function goFill(): void {
 /** 当たりの手の完成: 決めていない外れがあればそこへ、無ければ一番後ろの狙う手の外れを見せる */
 function finishHits(): void {
   held.value = null;
-  if (leftTotal.value) { goFill(); return; }
-  for (let i = moves.value.length - 1; i >= 0; i--) if (moves.value[i]?.aim) { sel.value = i; return; }
+  const left = leftTotal.value;
+  if (left) goFill();
+  else for (let i = moves.value.length - 1; i >= 0; i--) if (moves.value[i]?.aim) { sel.value = i; break; }
+  // 切り替わったのを見せる (2026-10-10 オーナー「完成ボタン押したらハズレルート設定にシフト。切り替わったとか UI 上わかりやすく」)
+  showSwitched(left ? `ハズレ複数設定に切り替えました · 未定 ${left} 形 (${sel.value != null ? numOf(sel.value) : 1} 手目の外れから)` : "ハズレ複数設定に切り替えました · 外れも全部決めてあります");
+}
+/** 切り替えの知らせ (数秒で消える) と、ハズレ複数設定のタブを光らせる */
+const switched = ref<string | null>(null);
+let switchedTimer: ReturnType<typeof setTimeout> | undefined;
+function showSwitched(text: string): void {
+  switched.value = text;
+  clearTimeout(switchedTimer);
+  switchedTimer = setTimeout(() => (switched.value = null), 4500);
 }
 /** 外れを決めていって、この手の形が全部決まったら次の決めていない手へ (2026-10-10 オーナー「ハズレ決めたら次って、どんどん行こう」) */
 watch(() => (sel.value != null ? shapes.value[sel.value]?.left ?? null : null), (n, o) => {
@@ -480,7 +491,7 @@ watch(shapes, () => {
           <span class="font-semibold">最速完成ルート</span>
           <span class="text-xs tabular-nums text-[var(--exile-color-text-secondary)]">{{ moves.length }} 手</span>
         </button>
-        <button type="button" role="tab" :aria-selected="sel != null" class="flex flex-col items-start rounded-md px-2.5 py-1.5 text-left transition disabled:opacity-40" :class="sel != null ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5'" :disabled="!moves.some((m) => m.aim)" title="決めないと、外れた時は回す時に新しいベースで最初から" @click="goFill">
+        <button type="button" role="tab" :aria-selected="sel != null" class="flex flex-col items-start rounded-md px-2.5 py-1.5 text-left transition disabled:opacity-40" :style="switched ? { boxShadow: '0 0 0 2px var(--exile-color-accent-focus), 0 0 14px rgba(201,162,90,0.45)' } : undefined" :class="sel != null ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5'" :disabled="!moves.some((m) => m.aim)" title="決めないと、外れた時は回す時に新しいベースで最初から" @click="goFill">
           <span class="text-[11px] tracking-wide text-[var(--exile-color-text-tertiary)]">2</span>
           <span class="flex items-center gap-1.5 font-semibold">ハズレ複数設定<span v-if="leftTotal && sel == null && moves.some((m) => m.aim)" class="rounded-sm bg-[rgba(224,201,122,0.18)] px-1 text-[10px] font-semibold text-[var(--exile-color-signal-warn)]">次はここ</span></span>
           <span class="text-xs tabular-nums" :class="!moves.some((m) => m.aim) ? 'text-[var(--exile-color-text-tertiary)]' : leftTotal ? 'text-[var(--exile-color-signal-warn)]' : 'text-[var(--exile-color-signal-up)]'">{{ !moves.some((m) => m.aim) ? "狙う手のあとで" : leftTotal ? `残り ${leftTotal} 形` : "全部決めた" }}</span>
@@ -527,6 +538,12 @@ watch(shapes, () => {
 
     <!-- 右 -->
     <div class="min-w-0">
+      <Transition enter-from-class="-translate-y-1 opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-300">
+        <div v-if="switched" role="status" class="mb-3 flex items-center gap-2 rounded-md bg-[rgba(201,162,90,0.14)] px-3 py-2 text-[13px] font-semibold text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]">
+          <Icon name="arrow-right" class="size-4 shrink-0 text-[var(--exile-color-accent-focus)]" />{{ switched }}
+          <button type="button" class="ml-auto grid size-6 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10" title="閉じる" @click="switched = null"><Icon name="x" class="size-3.5" /></button>
+        </div>
+      </Transition>
       <!-- 1 当たりの手を足す -->
       <template v-if="sel == null">
         <header class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
