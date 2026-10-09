@@ -5,7 +5,7 @@
   selected: 今のベース (金の枠。その種類から開く)。extras: フラスコ・スキルジェムも出す。note: カードの下に足す 1 行 (計算機の付与スキルなど)
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { baseCatalog, CATALOG_CLS_JA, CATALOG_ROWS } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
@@ -76,9 +76,13 @@ function famArt(f: Family): string | null {
 /** 選んだ部位 (属性の札を出す)。1 種類しかない部位はそのまま種類を選ぶ。PC は今のベースの部位から開く */
 const familyOfCls = (c: string | null): Family | null => (c ? families.value.flatMap((r) => r.fams).find((f) => f.variants.some((v) => v.cls === c)) ?? null : null);
 const family = ref<Family | null>(phone.value ? null : familyOfCls(cls.value));
+/** 属性の札とベースのカード (PC で部位を押したら、ここが見える所まで送る。札を大きくしたらカードが画面の下に隠れた) */
+const pickArea = ref<HTMLElement | null>(null);
 function pickFamily(f: Family): void {
   family.value = f;
   cls.value = f.variants.length === 1 ? f.variants[0]!.cls : null;
+  // 属性の札を画面の上へ (下にベースのカードが続く)。なめらかに送ると途中で止まっていたので、すぐ送る
+  if (!phone.value) void nextTick(() => pickArea.value?.scrollIntoView({ block: "start", behavior: "instant" as ScrollBehavior }));
 }
 function backToFamilies(): void { family.value = null; cls.value = null; }
 </script>
@@ -87,7 +91,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
   <div>
     <!-- 名前で探す (種類をまたぐ) -->
     <div class="mb-2 flex items-center gap-2">
-      <input v-model="query" type="search" placeholder="名前で探す (例: サファイア、ルビー)" class="w-72 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:w-full" />
+      <input v-model="query" type="search" placeholder="名前で探す (例: サファイア、ルビー)" class="w-72 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:w-full md:w-96 md:py-1.5 md:text-[14px]" />
       <span v-if="query.trim()" class="opacity-50">{{ list.length }} 件</span>
     </div>
     <!-- 部位 → 属性 / 元素 → ベース。スマホは 1 段ずつ、PC は部位のタイルを並べたまま -->
@@ -95,33 +99,33 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       <!-- PC は段を横に流して 2 行ほどに (縦に 1 段ずつだと、押した後の属性とベースが画面の下に押し出された) -->
       <div v-if="!phone || !family" class="mb-3" :class="phone ? 'space-y-3' : 'flex flex-wrap gap-x-5 gap-y-2'">
         <div v-for="r in families" :key="r.ja">
-          <p class="mb-0.5 text-[11px] opacity-50">{{ r.ja }}</p>
+          <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ r.ja }}</p>
           <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
           <div :class="phone ? 'grid grid-cols-3 gap-1.5' : 'flex flex-wrap gap-1'">
-            <button v-for="f in r.fams" :key="f.name" type="button" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[96px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" @click="pickFamily(f)">
-              <span class="grid size-16 place-items-center" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'">
-                <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain" draggable="false" />
+            <button v-for="f in r.fams" :key="f.name" type="button" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" @click="pickFamily(f)">
+              <span class="grid size-16 place-items-center md:size-20" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'">
+                <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" draggable="false" />
               </span>
-              <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[14px]'">{{ f.name }}</span>
-              <span v-if="f.variants.length > 1" class="text-[10px] leading-none opacity-50">{{ f.variants.length }} 種</span>
+              <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ f.name }}</span>
+              <span v-if="f.variants.length > 1" class="text-[10px] leading-none opacity-50 md:text-[11px]">{{ f.variants.length }} 種</span>
             </button>
           </div>
         </div>
       </div>
-      <div v-if="family" class="mb-3">
+      <div v-if="family" ref="pickArea" class="mb-3 scroll-mt-3">
         <div v-if="phone" class="mb-2 flex items-center gap-2">
           <button type="button" class="min-h-11 rounded-lg border border-white/20 px-3" @click="backToFamilies">← 部位</button>
           <b class="text-[15px] text-amber-100">{{ family.name }}</b>
         </div>
         <div v-if="family.variants.length > 1" class="mb-2 flex flex-wrap gap-2">
-          <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !px-4 !text-[13px]" :class="[cls === v.cls ? 'on' : '', phone ? '!min-h-10' : '!min-h-8']" @click="cls = v.cls">{{ v.label }}</button>
+          <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !px-4 !text-[13px]" :class="[cls === v.cls ? 'on' : '', phone ? '!min-h-10' : '!min-h-10 !text-[14px]']" @click="cls = v.cls">{{ v.label }}</button>
         </div>
         <p v-if="!cls" class="py-1 text-[12px] opacity-60">属性を選ぶ</p>
       </div>
     </template>
     <!-- ② ベースのカード (ゲーム内の絵・必要レベル・素の数値・固有の効果) -->
 
-    <div v-if="cls || query.trim()" class="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-1.5 overflow-y-auto pr-1 max-md:grid-cols-2" :style="{ maxHeight: phone ? 'none' : (height ?? '340px') }">
+    <div v-if="cls || query.trim()" class="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-2 overflow-y-auto pr-1 max-md:grid-cols-2 max-md:gap-1.5" :style="{ maxHeight: phone ? 'none' : (height ?? '440px') }">
       <button
         v-for="b in list"
         :key="b.en"
@@ -130,16 +134,16 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
         :class="b.en === selected ? 'bg-[rgba(163,52,42,0.35)]' : 'bg-black/50 hover:bg-white/[0.06]'"
         @click="emit('pick', b.en)"
       >
-        <img v-if="artOf(b.en)" :src="artOf(b.en)!" alt="" loading="lazy" class="h-12 w-12 shrink-0 object-contain" draggable="false" />
-        <span v-else class="h-12 w-12 shrink-0" />
+        <img v-if="artOf(b.en)" :src="artOf(b.en)!" alt="" loading="lazy" class="h-12 w-12 shrink-0 object-contain md:h-16 md:w-16" draggable="false" />
+        <span v-else class="h-12 w-12 shrink-0 md:h-16 md:w-16" />
         <span class="min-w-0 flex-1 max-md:w-full">
           <span class="flex items-baseline gap-2 max-md:flex-col max-md:items-center max-md:gap-0">
-            <b class="text-[13px]" :class="b.en === selected ? 'text-amber-100' : ''">{{ b.ja }}</b>
-            <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0">Lv {{ b.lvl }}</span>
+            <b class="text-[13px] md:text-[15px]" :class="b.en === selected ? 'text-amber-100' : ''">{{ b.ja }}</b>
+            <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0 md:text-[12px]">Lv {{ b.lvl }}</span>
           </span>
           <span v-if="query.trim()" class="block text-[10px] opacity-50">{{ CATALOG_CLS_JA.get(b.cls) ?? b.cls }}</span>
-          <span v-if="b.stats" class="block truncate text-[11px] text-rarity-magic" :title="b.stats">{{ b.stats }}</span>
-          <span v-if="b.implicit" class="block truncate text-[11px] text-rarity-magic" :title="b.implicit">{{ b.implicit }}</span>
+          <span v-if="b.stats" class="block truncate text-[11px] text-rarity-magic md:text-[13px]" :title="b.stats">{{ b.stats }}</span>
+          <span v-if="b.implicit" class="block truncate text-[11px] text-rarity-magic md:text-[13px]" :title="b.implicit">{{ b.implicit }}</span>
           <span v-if="note?.(b.en)" class="block truncate text-[10.5px] text-sky-300">{{ note(b.en) }}</span>
         </span>
       </button>

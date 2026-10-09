@@ -54,7 +54,7 @@ const shortName = (id: string): string => props.nameOfMod(id).replace(/をアタ
  * (2026-10-10 オーナー「どれか 1 つなんだから中身分解して選択させるのは意味わからん。偉大を掛けたらどれか 2 つ、無いならどれか 1 つ」)。
  * 揃い切った狙い・前の手で狙った 1 つだけの MOD は出さない。側のお告げ (左側・右側) を掛けたらその側だけ
  */
-interface AimOpt { key: string; label: string; mods: Array<{ modId: string; minTierIndex: number }>; side: "prefix" | "suffix" | "any"; need: number }
+interface AimOpt { key: string; label: string; mods: Array<{ modId: string; minTierIndex: number }>; side: "prefix" | "suffix" | "any"; need: number; /** 札に乗せた時の説明 (中の MOD) */ title?: string }
 const aimOpts = computed<AimOpt[]>(() => {
   const out: AimOpt[] = [];
   const x = pendingSet.value;
@@ -67,7 +67,7 @@ const aimOpts = computed<AimOpt[]>(() => {
     for (const t of ts) {
       const ms = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
       if (new Set(ms.map((m) => sideOfId(m.modId))).size < 2) continue;
-      out.push({ key: "any:" + ms.map((m) => m.modId).sort().join(","), label: `どれか 1 つ · プレかサフィ (${ms.map((m) => shortName(m.modId)).join(" / ")})`, mods: ms, side: "any", need: 1 });
+      out.push({ key: "any:" + ms.map((m) => m.modId).sort().join(","), label: "どれか 1 つ", title: `プレかサフィのどれか 1 つ (付いた側で道が分かれる): ${ms.map((m) => shortName(m.modId)).join(" / ")}`, mods: ms, side: "any", need: 1 });
     }
   }
   const seen = new Set<string>();
@@ -135,18 +135,22 @@ function showMove(k: number): void {
 /** 狙いの MOD 行 (どれか N つなら「どれか 1 MOD (…)」の文に) */
 /** 狙いの MOD の側 (両側の狙いは MOD の側) */
 const sideFor = (aim: PlayAim, modId: string): "prefix" | "suffix" => (aim.side === "any" ? sideOfId(modId) : aim.side);
+/**
+ * 「どれか 1 MOD (…)」の文。両側の狙いはその側の候補だけ (2026-10-09 オーナー「プレフィックスのどれか付いた場合はプレだけ表示のはず、サフィも同じ」:
+ * プレの道でもサフィの MOD まで並んでいた)
+ */
+const anyText = (aim: PlayAim, side: "prefix" | "suffix"): string => `どれか 1 MOD (${aim.mods.filter((x) => aim.side !== "any" || sideOfId(x.modId) === side).map((x) => shortName(x.modId)).join(" / ")})`;
 function hitMod(aim: PlayAim, modId: string, minTierIndex: number): StageMod | null {
   const md = data.value?.mods.get(modId);
   if (!md) return null;
   const m = makeStageMod(md, sideFor(aim, modId), Math.min(md.tiers.length - 1, minTierIndex), () => 0.5);
-  return aim.mods.length > 1 ? { ...m, textJa: `どれか 1 MOD (${aim.mods.map((x) => shortName(x.modId)).join(" / ")})` } : m;
+  return aim.mods.length > 1 ? { ...m, textJa: anyText(aim, sideFor(aim, modId)) } : m;
 }
 const aimMet = (it: StageItem, aim: PlayAim): boolean => new Set(allMods(it).filter((s) => !s.unrevealed && aim.mods.some((a) => s.modId === a.modId && s.tierIndex >= a.minTierIndex)).map((s) => s.modId)).size >= aim.need;
 /** どれか N つの狙いの MOD は「どれか 1 MOD (…)」の文で出す (順不同) */
 function relabel(it: StageItem, aim: PlayAim): StageItem {
   if (aim.mods.length < 2) return it;
-  const text = `どれか 1 MOD (${aim.mods.map((x) => shortName(x.modId)).join(" / ")})`;
-  const f = (ms: StageMod[]): StageMod[] => ms.map((s) => (aim.mods.some((a) => a.modId === s.modId) ? { ...s, textJa: text } : s));
+  const f = (ms: StageMod[]): StageMod[] => ms.map((s) => (aim.mods.some((a) => a.modId === s.modId) ? { ...s, textJa: anyText(aim, s.side) } : s));
   return { ...it, prefixes: f(it.prefixes), suffixes: f(it.suffixes) };
 }
 /** 当たりの乱数が見つからない時の目安: 狙いの行を足すだけ (狙いの側が満杯なら狙い以外を外す) */
@@ -592,9 +596,10 @@ onBeforeUnmount(() => io?.disconnect());
               <p class="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-[var(--exile-color-text-tertiary)]">狙う MOD (押すと手が入る) <HelpTip text="狙う手は当たったものとして次へ進みます。外れた時の手は「ハズレルート設定」で決めます" /></p>
               <div class="flex flex-wrap gap-1.5">
                 <template v-if="adds">
-                  <button v-for="o in aimOpts" :key="o.key" type="button" class="h-8 rounded-md border border-[var(--exile-color-border-subtle)] px-2.5 text-[var(--exile-color-text-primary)] transition hover:border-[rgba(136,136,255,0.6)] hover:bg-[rgba(136,136,255,0.1)] hover:text-[var(--color-rarity-magic)]" @click="addMove(o)">{{ o.label }}</button>
+                  <button v-for="o in aimOpts" :key="o.key" type="button" class="h-8 rounded-md border border-[var(--exile-color-border-subtle)] px-2.5 text-[var(--exile-color-text-primary)] transition hover:border-[rgba(136,136,255,0.6)] hover:bg-[rgba(136,136,255,0.1)] hover:text-[var(--color-rarity-magic)]" :title="o.title" @click="addMove(o)">{{ o.label }}</button>
                 </template>
-                <button type="button" class="h-8 rounded-md px-2.5 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="addMove(null)">狙わない</button>
+                <!-- 狙わないも同じ枠の札に (2026-10-09 オーナー「狙わないって選択肢も枠付けてあげるべき」) -->
+                <button type="button" class="h-8 rounded-md border border-[var(--exile-color-border-subtle)] px-2.5 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" title="狙わずに打って次の手へ" @click="addMove(null)">狙わない</button>
               </div>
             </section>
             <CurrencyShelf v-if="!locked" @hold="(k: string) => (held = k)">
