@@ -14,6 +14,9 @@
 <script setup lang="ts">
 import { keepPlace } from "../../utils/keep-place";
 import { addCandidates } from "../../services/craft-stage/apply-currency";
+import { allMods, effectiveCls } from "../../services/craft-stage/stage-core";
+import { ANCIENT_BONE_FLOOR, desecrationOfferProbability } from "../../vendor/poe2htc/engine/probability";
+import type { ItemState } from "../../vendor/poe2htc/engine/types";
 import { autoGroup } from "../../services/craft-stage/auto-group";
 import { AIM_MAX } from "../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
@@ -49,11 +52,47 @@ const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.va
 const heldCands = computed(() => {
   const k = s.held.value, d = s.data.value, it = s.item.value;
   if (!k || !d || !it || s.mode.value !== "hand" || s.replay.value) return null;
+  // 骨: 次の発現で候補 3 つに出る確率 (計算機と同じエンジンの desecrationOfferProbability。2026-10-09 オーナー「冒涜してないのに冒涜 MOD の確率が出てる」)
+  if (k.startsWith("desecrate") && !s.omens.value.includes("OmenofPutrefaction")) return boneOdds(k);
   const cs = addCandidates(d, it, k, s.omens.value);
   if (!cs) return null;
   const total = cs.reduce((a, c) => a + c.w, 0);
   return { byMod: new Map(cs.map((c) => [c.mod.id, c])), total, name: nameOf(k) };
 });
+/**
+ * 骨を持っている時の確率表: MOD ごとに「次の発現の候補 3 つに出る確率」、段ごとは「その段で出る確率」(その段以上 − 1 つ上の段以上)。
+ * 勢力のお告げ (専用 MOD だけになる) は扱わない = null (今まで通りの表示)。total は 1 (確率をそのまま出す)
+ */
+function boneOdds(k: string): { byMod: Map<string, { w: number; tiers: Array<{ index: number; w: number }> }>; total: number; name: string; bone: true } | null {
+  const d = s.data.value, it = s.item.value;
+  if (!d || !it || it.rarity !== "rare") return null;
+  const om = s.omens.value;
+  if (om.some((o) => /^Omenofthe(Sovereign|Liege|Blackblooded)$/.test(o))) return null;
+  const state: ItemState = {
+    base: effectiveCls(it), level: it.itemLevel, rarity: "rare",
+    prefixes: it.prefixes.filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, tierName: m.tierName })),
+    suffixes: it.suffixes.filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, tierName: m.tierName })),
+  };
+  if (allMods(it).some((m) => m.desecrated)) return { byMod: new Map(), total: 1, name: nameOf(k), bone: true };
+  const opts = {
+    floor: k === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0,
+    rerolls: om.includes("OmenofAbyssalEchoes") ? 1 : 0,
+    ...(om.includes("OmenofSinistralNecromancy") ? { constrainTo: "prefix" as const } : om.includes("OmenofDextralNecromancy") ? { constrainTo: "suffix" as const } : {}),
+  };
+  const byMod = new Map<string, { w: number; tiers: Array<{ index: number; w: number }> }>();
+  for (const r of rows.value) {
+    if (r.group !== "normal" && r.group !== "desecrated" && r.group !== "otherworldly") continue;
+    for (const id of new Set(r.tiers.map((t) => t.modId ?? r.id))) {
+      const mod = d.mods.get(id);
+      if (!mod || byMod.has(id)) continue;
+      const atLeast = mod.tiers.map((_, i) => desecrationOfferProbability(d, state, id, { ...opts, minTierIndex: i }));
+      const w = atLeast[0] ?? 0;
+      if (!(w > 0)) continue;
+      byMod.set(id, { w, tiers: atLeast.map((p, i) => ({ index: i, w: p - (atLeast[i + 1] ?? 0) })).filter((t) => t.w > 0) });
+    }
+  }
+  return { byMod, total: 1, name: nameOf(k), bone: true };
+}
 /** その行 (系統) が持っている物で付く確率。0 = 付かない */
 function heldShare(r: ListRow): number {
   const h = heldCands.value;
@@ -73,7 +112,8 @@ function heldTierShare(r: ListRow, t: { name: string; ilvl: number; modId?: stri
 }
 /** 表の % と棒: 持っている時は付く確率、それ以外は出やすさ (同じ側の重みの割合) */
 /** 今は付かない行 (同じ系統が付いている・差していないルーン) は 0% (2026-10-09 オーナー「変数で現在出ないところは 0% だね基本的に」) */
-const cannow = (r: ListRow): boolean => !r.blocked && !(r.group === "rune" && !r.socketed);
+// 冒涜・異界の MOD は骨を使わないと付かないので、骨を持っていない時は 0% (2026-10-09 オーナー)
+const cannow = (r: ListRow): boolean => !r.blocked && !(r.group === "rune" && !r.socketed) && !((r.group === "desecrated" || r.group === "otherworldly") && !(heldCands.value && "bone" in heldCands.value));
 const shareOf = (r: ListRow): number => (!cannow(r) ? 0 : heldCands.value ? heldShare(r) : r.share);
 /** 棒の長さの基準 (列で一番大きい値) */
 const colTop = (items: readonly ListRow[]): number => Math.max(0.0001, ...items.map(shareOf));
@@ -87,7 +127,8 @@ watch(open, (v) => { try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /
 watch(() => s.mode.value === "sim" && !s.simTargets.value.length && s.base.value, (v) => { if (v) open.value = true; }, { immediate: true });
 
 // エッセンスはマジック用とレア用 (パーフェクト・合金) を 1 つの節に (2026-10-10 オーナー「エッセンスね、パーフェクトとかやなくて意味わからん」)
-const GROUPS: ModGroup[] = ["normal", "rune", "essence", "desecrated", "otherworldly", "special"];
+// 並び: 普通・ルーン → 異界 (変質) → 創生の樹など → 冒涜 → エッセンス (2026-10-09 オーナー)
+const GROUPS: ModGroup[] = ["normal", "rune", "otherworldly", "special", "desecrated", "essence"];
 const inGroup = (r: { group: ModGroup }, g: ModGroup): boolean => r.group === g || (g === "essence" && r.group === "perfect_essence");
 const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => inGroup(r, g)).length])) as Record<ModGroup, number>);
 
@@ -290,7 +331,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
             <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2">
               <b class="text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
               <span class="text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} 系統</span>
-              <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-11 text-right" :class="heldCands ? 'text-sky-200' : ''">{{ heldCands ? "付く確率" : "出やすさ" }}</span><span class="w-6 text-right">段</span><span class="w-7 text-right">Lv</span></span>
+              <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-11 text-right" :class="heldCands ? 'text-sky-200' : ''">{{ heldCands ? ('bone' in heldCands ? "候補に出る" : "付く確率") : "出やすさ" }}</span><span class="w-6 text-right">段</span><span class="w-7 text-right">Lv</span></span>
             </p>
             <p v-if="!col.items.length" class="py-2 opacity-40">無し</p>
             <div v-for="r in col.items" :key="r.id" class="mb-1">
@@ -312,7 +353,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">付いている</span>
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
-                    <span class="w-11 text-right text-[13px] font-bold" :class="heldCands ? 'text-sky-200' : 'text-amber-100'" :title="heldCands ? `持っている ${heldCands.name} で次に付く確率` : '出やすさ (同じ側の重みの割合)'">{{ pct(shareOf(r)) }}</span>
+                    <span class="w-11 text-right text-[13px] font-bold" :class="heldCands ? 'text-sky-200' : 'text-amber-100'" :title="heldCands ? ('bone' in heldCands ? `持っている ${heldCands.name} の次の発現で、候補 3 つに出る確率 (専用 MOD 1〜3 個 + 残り普通。計算機と同じ)` : `持っている ${heldCands.name} で次に付く確率`) : (r.group === 'desecrated' || r.group === 'otherworldly') ? '骨を使わないと付かない (骨を持つと候補に出る確率)' : '出やすさ (同じ側の重みの割合)'">{{ pct(shareOf(r)) }}</span>
                     <span class="w-6 text-right text-[12px] text-[var(--exile-color-text-secondary)]" :title="`段の数 ${r.tiers.length}`">{{ r.tiers.length }}</span>
                     <span class="w-7 text-right text-[12px] text-[var(--exile-color-text-tertiary)]" :title="`T1 の MOD レベル ${r.topLevel}`">{{ r.topLevel }}</span>
                   </span>
