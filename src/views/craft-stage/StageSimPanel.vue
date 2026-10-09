@@ -1266,7 +1266,7 @@ function cardData(): RecipeCardData | null {
   const frac = s.simTargets.value.filter((t) => t.method === "fracture").map((t) => `フラクチャー: ${modShort(t.modId, t.minTierIndex)}`);
   const best = new Map<string, PlayAim>();
   for (const m of play.moves) if (m.aim) { const k = m.aim.mods.map((x) => x.modId).sort().join(","); const b = best.get(k); if (!b || b.need < m.aim.need) best.set(k, m.aim); }
-  const startJa = s.simStart.value === "white" ? "白ベースから" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : s.simStart.value === "four" ? "4 MOD のレアを買う" : "手打ちの状態から";
+  const startJa = s.simStart.value === "white" ? "白ベースから" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : s.simStart.value === "four" ? "4 MOD のレアを買う" : "エミュレーターの状態から";
   const it = s.item.value;
   return {
     title: `${baseJa.value} のクラフト手順`,
@@ -1359,7 +1359,7 @@ const costGroups = computed(() => {
     items = items.map((x) => ({ ...x, n: x.n * nb, cost: x.cost * nb }));
     out.push({ name: "ベース", note: `フラクチャー済みまで (${name}) × ${nb.toFixed(1)} 個`, total: split.value.base, bar: "bg-stone-400/80", items: top(items, split.value.base) });
   } else {
-    out.push({ name: "ベース", note: s.simStart.value === "item" ? "手打ちの状態" : "白のベース", total: split.value.base, bar: "bg-stone-400/80", items: top([{ name: s.simStart.value === "item" ? "この状態の作り直し (累計 + 白ベース)" : "白のベース", n: s.simStart.value === "item" ? Math.max(0, r.bases - 1) : r.bases, cost: split.value.base }], split.value.base) });
+    out.push({ name: "ベース", note: s.simStart.value === "item" ? "エミュレーターの状態" : "白のベース", total: split.value.base, bar: "bg-stone-400/80", items: top([{ name: s.simStart.value === "item" ? "この状態の作り直し (累計 + 白ベース)" : "白のベース", n: s.simStart.value === "item" ? Math.max(0, r.bases - 1) : r.bases, cost: split.value.base }], split.value.base) });
   }
   const craft = r.usage.filter((u) => u.key !== "reveal").map((u) => ({ name: usageName(u.key), n: u.count, cost: u.cost }));
   out.push({ name: "クラフト", note: fractureRow.value ? "フラクチャー済みから完成まで" : "", total: split.value.craft, bar: "bg-amber-400/80", items: top(craft, craft.reduce((a, x) => a + x.cost, 0)) });
@@ -1431,7 +1431,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     <div v-if="socketsOk && step4pre" class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-5 py-2.5 text-[13px]">
       <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-[12px] font-bold text-emerald-200 ring-1 ring-emerald-400/40">✓</span>
       <b class="shrink-0 whitespace-nowrap text-[var(--exile-color-text-primary)]">決めたこと</b>
-      <span class="min-w-0 truncate text-[var(--exile-color-text-secondary)] max-md:whitespace-normal">狙う MOD {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "手打ちの状態" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 付ける順 {{ orderKeys.length }} つ</span>
+      <span class="min-w-0 truncate text-[var(--exile-color-text-secondary)] max-md:whitespace-normal">狙う MOD {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "エミュレーターの状態" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 付ける順 {{ orderKeys.length }} つ</span>
       <button type="button" class="ml-auto inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="fold = !fold">{{ fold ? "開く" : "畳む" }}<Icon :name="fold ? 'chevron-down' : 'chevron-up'" class="size-4" /></button>
     </div>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
@@ -1469,7 +1469,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
           <template v-if="s.simStart.value === 'item'">
             <span class="opacity-70">この状態のベース代</span>
             <PriceInput v-model="itemDivine" base="exalted" unit-key="sim.item" initial-unit="exalted" placeholder="0" />
-            <span class="opacity-60">(手打ちの累計 {{ money(s.simStartCost.value) }} + 白ベース。直せる)</span>
+            <span class="opacity-60">(エミュレーターの累計 {{ money(s.simStartCost.value) }} + 白ベース。直せる)</span>
           </template>
           <template v-else-if="s.simStart.value === 'fractured'">
             <span class="inline-flex items-center gap-1 text-[var(--exile-color-text-secondary)]"><Icon name="lock" class="size-3.5" />フラクチャー済みのベース · {{ fracMembers[0]?.text ?? "フラクチャーの MOD を 2 で足す" }}</span>
@@ -1616,7 +1616,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
     </template>
       <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
       <div v-if="step4pre" :data-sim-cur="!patternDone || undefined" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
-        <SimStepHead class="mb-3" :n="stepNo.play" title="打ち方" :done="patternDone" :current="!patternDone" :redo="patternDone" :note="`${s.simStart.value === 'item' ? '手打ちの状態' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`" help="打つ物と狙う MOD を 1 手ずつ並べた物 = パターン。いくつか作って、回して費用を比べられる" @redo="patternDone = false" />
+        <SimStepHead class="mb-3" :n="stepNo.play" title="打ち方" :done="patternDone" :current="!patternDone" :redo="patternDone" :note="`${s.simStart.value === 'item' ? 'エミュレーターの状態' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`" help="打つ物と狙う MOD を 1 手ずつ並べた物 = パターン。いくつか作って、回して費用を比べられる" @redo="patternDone = false" />
         <StagePatternEditor :busy="busy" :start="patternStart" :locked="patternDone" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。

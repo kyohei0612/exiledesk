@@ -277,7 +277,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
                 <option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option>
               </select>
               <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
-              <span v-if="presentOnStart(r)" class="shrink-0 rounded-sm bg-emerald-500/25 px-1 text-[10px] font-bold text-emerald-100" title="手打ちの状態にもう付いている (この段以上)">✓ 付いている</span>
+              <span v-if="presentOnStart(r)" class="shrink-0 rounded-sm bg-emerald-500/25 px-1 text-[10px] font-bold text-emerald-100" title="エミュレーターの状態にもう付いている (この段以上)">✓ 付いている</span>
               <span v-if="r.share != null" class="shrink-0 text-[10px] tabular-nums opacity-70" title="1 回の抽選でこの段以上が出る割合 (同じ側の重み)">{{ pct(r.share) }}</span>
               <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100 max-md:min-h-9 max-md:min-w-9 max-md:text-[16px]" :title="r.alt || g.hosts.length > 1 ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r, g.hosts)">×</button>
             </span>

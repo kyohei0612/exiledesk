@@ -254,7 +254,7 @@ const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hin
   { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)" },
 ];
 /** 手打ちから持ってきた時だけ出る札 */
-const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint: "手で打つ画面の今のアイテムから先を回す" };
+const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態から", hint: "エミュレーターの今のアイテムから先を回す" };
 </script>
 
 <template>
@@ -293,7 +293,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
         <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">クラフトステージ</h1>
         <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す
-          <HelpTip title="シミュレーション" :width="320">
+          <HelpTip title="シミュレーター" :width="320">
             <p>1 ベース → 2 狙う MOD → 始め方と順番 → 打ち方 (パターン) の順に決めて「回す」。</p>
             <p class="mt-1 text-[var(--exile-color-text-secondary)]">確率はクラフト計算機と同じ規則。値段は今の相場。</p>
           </HelpTip>
@@ -308,7 +308,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
     <!-- 再生中も消さずに隠す (シミュレーションの「1 つ戻す」の置き場 #sim-tools を残す) -->
     <div v-show="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-1.5">
       <div class="inline-flex gap-1" role="tablist">
-        <button v-for="t in ([['hand', '手で打つ'], ['sim', 'シミュレーション']] as const)" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="g-tab min-w-[170px] gap-1.5 !inline-flex" :class="s.mode.value === t[0] ? 'on' : ''" @click="s.hold(null); s.mode.value = t[0]">{{ t[1] }}<span v-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" title="作り込み中の機能。数字は今の相場と確率の目安">β</span></button>
+        <button v-for="t in ([['hand', 'エミュレーター'], ['sim', 'シミュレーター']] as const)" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="g-tab min-w-[170px] gap-1.5 !inline-flex" :class="s.mode.value === t[0] ? 'on' : ''" @click="s.hold(null); s.mode.value = t[0]">{{ t[1] }}<span v-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" title="作り込み中の機能。数字は今の相場と確率の目安">β</span></button>
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
       <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap" />
@@ -319,7 +319,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
       <b class="text-sky-200">再生中</b>
       <span>{{ s.replay.value.plan.title ?? s.replay.value.plan.base }} · {{ s.log.value.length }} 手目まで (seed {{ s.replay.value.plan.seed }})</span>
       <button v-if="inApp" type="button" :class="btn" class="ml-auto max-md:hidden" @click="s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
-      <button type="button" :class="btn" @click="s.leaveReplay()">手で打つ</button>
+      <button type="button" :class="btn" @click="s.leaveReplay()">エミュレーターへ</button>
     </div>
 
     <!-- 設定と操作 -->
@@ -358,7 +358,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
       <button type="button" :class="resetArmed ? 'g-btn-red sm' : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArmed ? "もう一度押すと白に戻す" : "白に戻す" }}</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
       <!-- 今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08) -->
-      <button type="button" :class="btn" title="今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーションへ。ベース代は 手打ちの累計 + 白ベース代" @click="simFromHand">この状態からシミュレーション →</button>
+      <button type="button" :class="btn" title="今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーターへ。ベース代は エミュレーターの累計 + 白ベース代" @click="simFromHand">この状態からシミュレーター →</button>
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
       <span class="ml-auto flex flex-wrap items-center gap-1.5">
         <span v-if="copied" class="text-emerald-300">{{ copied }}</span>

@@ -27,11 +27,11 @@ function pick(mode: "hand" | "sim"): void {
         <p class="mb-4 text-[12px] opacity-60">相場は自動で入ります。取引所の検索は新しいタブで開きます。入れた物はこのブラウザに残ります。</p>
         <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <button type="button" class="group rounded-xl border border-white/15 bg-black/30 p-4 text-left hover:border-amber-400/60 hover:bg-amber-500/10" @click="pick('hand')">
-            <b class="block text-[15px] text-amber-100">手で打つ</b>
+            <b class="block text-[15px] text-amber-100">エミュレーター</b>
             <span class="mt-1 block text-[12px] opacity-70">カレンシーやお告げを押して、1 回ずつ付く MOD を見る。動画・配信の実演にも</span>
           </button>
           <button type="button" class="group rounded-xl border border-white/15 bg-black/30 p-4 text-left hover:border-amber-400/60 hover:bg-amber-500/10" @click="pick('sim')">
-            <b class="block text-[15px] text-amber-100">シミュレーション</b>
+            <b class="block text-[15px] text-amber-100">シミュレーター</b>
             <span class="mt-1 block text-[12px] opacity-70">狙う MOD と手順を決めて 1,500 人分回し、1 個あたりの費用と運の幅を出す。手順はレシピで保存</span>
           </button>
         </div>
