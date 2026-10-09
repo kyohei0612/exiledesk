@@ -5,6 +5,7 @@
  */
 import pkg from "../../../package.json";
 import { WEB_API_BASE } from "../../web/config";
+import { noLog } from "../../utils/no-log";
 
 const UID_KEY = "exiledesk.web.uid";
 const FLUSH_MS = 60_000;
@@ -26,6 +27,8 @@ export function startLogSender(app: "web" | "app"): void {
   let chars = 0;
 
   const flush = (beacon = false): void => {
+    // この端末は記録しない (no-log.ts)。溜めた物も捨てる
+    if (noLog()) { buf = []; chars = 0; return; }
     if (!buf.length) return;
     const recs = buf;
     buf = [];
@@ -40,6 +43,7 @@ export function startLogSender(app: "web" | "app"): void {
     } catch { /* 落としてよい */ }
   };
   (globalThis as { __exiledeskLog?: (k: string, d: Record<string, unknown>) => void }).__exiledeskLog = (k, d) => {
+    if (noLog()) return;
     const r: Rec = { k, t: Date.now(), d };
     const len = JSON.stringify(r).length;
     if (len > 20_000) return; // 1 件が大きすぎる物は捨てる

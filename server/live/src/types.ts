@@ -66,6 +66,11 @@ export interface Env {
   /** wrangler.jsonc の vars */
   CF_ACCOUNT_ID?: string;
   WEB_ANALYTICS_SITE?: string;
+  /**
+   * 数え始め (UTC ISO)。これより前の訪問・操作の印・分析用の記録は日報と取り出しで数えない (消さない)。
+   * 2026-10-09 オーナー「俺の PC からの訪問もおかしいことになる、一旦リセットでいいからサーバーの」: Analytics Engine と Web Analytics は消せないので線を引く
+   */
+  STATS_SINCE?: string;
 }
 
 export type Fetch = typeof fetch;

@@ -25,7 +25,9 @@
     // 日報の集計 (GraphQL / SQL API) に使う。秘密ではない
     "CF_ACCOUNT_ID": "b824ebc2247db353f01cabcee65b567f",
     // Web Analytics のサイト (web.html の beacon の token)
-    "WEB_ANALYTICS_SITE": "72192ac351aa4259ad607ec32e069cfb"
+    "WEB_ANALYTICS_SITE": "72192ac351aa4259ad607ec32e069cfb",
+    // 数え始め (UTC)。これより前は日報と記録の取り出しで数えない (消してはいない)。2026-10-09 オーナーの PC の分を外すためにリセット
+    "STATS_SINCE": "2026-10-09T11:03:50Z"
   },
   // 見本ページと枠の部品 (public/)。/ と /live-panel.js はここから、/live.json などは Worker から
   "assets": { "directory": "./public" },

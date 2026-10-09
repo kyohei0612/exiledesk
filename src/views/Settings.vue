@@ -29,6 +29,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { useAppSettings } from "./useAppSettings";
 import SettingsSeedSection from "./SettingsSeedSection.vue";
+import { noLogOn, setNoLog } from "../utils/no-log";
 import SettingsUpdateSection from "./SettingsUpdateSection.vue";
 import TabBar from "../components/ui/TabBar.vue";
 
@@ -167,6 +168,20 @@ onMounted(async () => {
           <p class="mt-2 text-xs text-[var(--exile-color-text-secondary)]">
             「トレード2へ」「鑑定」で開くサイト。日本語サイトはボット確認 (Cloudflare) を挟むことがあり、
             その後に検索条件が消えて開けない場合は英語に切り替えてください。相場の取得 (API) はこの設定に関係なく動きます。
+          </p>
+        </section>
+
+        <!-- 使い方の記録 (2026-10-09): この PC からは送らない (no-log.ts。オーナーの PC の分を数えないため) -->
+        <section class="g-panel px-2 py-1">
+          <h2 class="g-brush mb-2 text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">
+            使い方の記録
+          </h2>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" :checked="noLogOn" @change="setNoLog(($event.target as HTMLInputElement).checked)" />
+            この PC からは使い方の記録を送らない
+          </label>
+          <p class="mt-2 text-xs text-[var(--exile-color-text-secondary)]">
+            打った手・回した結果などを改善のために集めています (名前・IP・ログインの情報は含みません)。チェックを入れると、この PC からは何も送りません。
           </p>
         </section>
 

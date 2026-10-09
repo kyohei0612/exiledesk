@@ -6,6 +6,7 @@
 import { watch } from "vue";
 import { craftStage } from "../state/craft-stage";
 import { WEB_API_BASE } from "./config";
+import { noLog } from "../utils/no-log";
 
 const UID_KEY = "exiledesk.web.uid";
 const FLUSH_MS = 15_000;
@@ -70,6 +71,8 @@ export function diagNow(): { errors: Array<{ ago: number; msg: string; stack?: s
 
 let sentAny = false;
 export function flush(): void {
+  // この端末は記録しない (no-log.ts)。直前の流れ (trail) は要望・バグの添付用に残す
+  if (noLog()) { buf.length = 0; return; }
   if (!buf.length) return;
   const body = JSON.stringify({ uid, sid, first: first && !sentAny, dev, ref, ev: buf.splice(0, buf.length) });
   sentAny = true;

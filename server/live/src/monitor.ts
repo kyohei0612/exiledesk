@@ -147,7 +147,12 @@ function funnelDrop(sum: Summary, steps: readonly string[]): { from: string; to:
 
 /** 日報を組んで Discord に (無ければ文面だけ返す) */
 export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Date(), today = false): Promise<string> {
-  const { since, until, weekSince, label } = yesterdayJst(now, today);
+  const y = yesterdayJst(now, today);
+  const { until, label } = y;
+  // 数え始め (STATS_SINCE) より前は数えない (消せない Analytics Engine / Web Analytics にも線を引く)。日付が全部前なら 0 件
+  const floor = env.STATS_SINCE ?? "";
+  const since = y.since < floor ? (floor < until ? floor : until) : y.since;
+  const weekSince = y.weekSince < floor ? (floor < until ? floor : until) : y.weekSince;
   const [sum, usage, fb, alerts] = await Promise.all([
     env.CF_ANALYTICS_TOKEN ? summarize(env, since, until, weekSince, fetchFn).catch((e) => { console.warn("summarize failed", String(e)); return null; }) : Promise.resolve(null),
     fetchUsage(env, since, until, fetchFn),
@@ -158,7 +163,7 @@ export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Da
   const live = (await env.LIVE.get("state", "json")) as LiveState | null;
   const base = reportText(label, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts);
   // 分析用の記録 (D1) の昨日の件数
-  const logDay = new Date(new Date(since).getTime() + 9 * 3600e3).toISOString().slice(0, 10);
+  const logDay = new Date(new Date(y.since).getTime() + 9 * 3600e3).toISOString().slice(0, 10);
   const lc = await dayCount(env, logDay).catch(() => null);
   const text = lc ? `${base}\n分析用の記録: ${lc.records.toLocaleString()} 件 (${lc.batches.toLocaleString()} まとまり)` : base;
   await postDiscord(env.DISCORD_WEBHOOK, text, fetchFn);

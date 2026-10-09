@@ -31,14 +31,14 @@ export async function saveLog(env: Env, text: string, country: string, now = new
 /** その日のまとまりを JSONL で (1 行 1 まとまり。受け取った時刻と国を頭に足す) */
 export async function dayLogs(env: Env, day: string): Promise<string> {
   if (!env.LOGS) return "";
-  const r = await env.LOGS.prepare("SELECT at, country, body FROM logs WHERE day = ? ORDER BY id").bind(day).all<{ at: string; country: string | null; body: string }>();
+  const r = await env.LOGS.prepare("SELECT at, country, body FROM logs WHERE day = ? AND at >= ? ORDER BY id").bind(day, env.STATS_SINCE ?? "").all<{ at: string; country: string | null; body: string }>();
   return (r.results ?? []).map((x) => `{"at":"${x.at}","country":${JSON.stringify(x.country)},"b":${x.body}}`).join("\n");
 }
 
 /** その日の件数 (まとまりの数と記録の数) */
 export async function dayCount(env: Env, day: string): Promise<{ batches: number; records: number } | null> {
   if (!env.LOGS) return null;
-  const r = await env.LOGS.prepare("SELECT COUNT(*) AS b, COALESCE(SUM(n), 0) AS r FROM logs WHERE day = ?").bind(day).first<{ b: number; r: number }>();
+  const r = await env.LOGS.prepare("SELECT COUNT(*) AS b, COALESCE(SUM(n), 0) AS r FROM logs WHERE day = ? AND at >= ?").bind(day, env.STATS_SINCE ?? "").first<{ b: number; r: number }>();
   return r ? { batches: r.b, records: r.r } : null;
 }
 
