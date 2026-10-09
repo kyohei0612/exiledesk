@@ -345,7 +345,9 @@ export function addCandidates(data: PatchData, item: StageItem, currency: string
       if (!gone.length) return null;
       const acc = new Map<string, Candidate>();
       for (const r of gone) {
-        const cs = candidates(data, without(item, r), SIDES, floor);
+        // 足せるのは消えた後に空きのある側だけ (両側が埋まったレアなら消えた側だけ。2026-10-10 点検)
+        const rest = without(item, r);
+        const cs = candidates(data, rest, open(rest, SIDES), floor);
         const total = cs.reduce((a, c) => a + c.w, 0);
         if (!(total > 0)) continue;
         const k = 1 / gone.length / total;

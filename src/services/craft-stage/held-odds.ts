@@ -11,7 +11,8 @@ import type { PatchData, ItemState } from "../../vendor/poe2htc/engine/types";
 import { ANCIENT_BONE_FLOOR, desecrationBossOfferProbability, desecrationOfferProbability, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
 import { addCandidates } from "./apply-currency";
 import { allMods, effectiveCls } from "./stage-core";
-import type { StageItem } from "./types";
+import type { StageItem, StageMod } from "./types";
+import { ABYSS_MARK_FLOOR } from "../htc/omens";
 
 export interface HeldOdds {
   byMod: Map<string, { w: number; tiers: Array<{ index: number; w: number }> }>;
@@ -38,16 +39,19 @@ function boneOdds(data: PatchData, item: StageItem, key: string, omens: readonly
   const byMod: HeldOdds["byMod"] = new Map();
   if (allMods(item).some((m) => m.desecrated)) return { byMod, total: 1, bone: true };
   const cls = effectiveCls(item);
+  // 深淵の王の印: 骨は必ず印を置き換える (側は印の側、段の下限 ABYSS_MARK_FLOOR)。印は消える物として数えない (2026-10-10 点検)
+  const mark = allMods(item).find((m) => m.abyssMark);
+  const keep = (m: StageMod) => !m.unrevealed && m !== mark;
   const state: ItemState = {
     base: cls, level: item.itemLevel, rarity: "rare",
-    prefixes: item.prefixes.filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, tierName: m.tierName })),
-    suffixes: item.suffixes.filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, tierName: m.tierName })),
+    prefixes: item.prefixes.filter(keep).map((m) => ({ modId: m.modId, tierName: m.tierName })),
+    suffixes: item.suffixes.filter(keep).map((m) => ({ modId: m.modId, tierName: m.tierName })),
   };
   const boss = omens.map((o) => BOSS[o]).find(Boolean);
-  const constrainTo = omens.includes("OmenofSinistralNecromancy") ? "prefix" as const : omens.includes("OmenofDextralNecromancy") ? "suffix" as const : undefined;
+  const constrainTo = mark ? mark.side : omens.includes("OmenofSinistralNecromancy") ? "prefix" as const : omens.includes("OmenofDextralNecromancy") ? "suffix" as const : undefined;
   const rerolls = omens.includes("OmenofAbyssalEchoes") ? 1 : 0;
   const altered = key === "desecrate_altered";
-  const opts = { floor: key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, altered, rerolls, ...(constrainTo ? { constrainTo } : {}) };
+  const opts = { floor: Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0), altered, rerolls, ...(constrainTo ? { constrainTo } : {}) };
   const ids = new Set([
     ...cls.pools.normal.prefixes, ...cls.pools.normal.suffixes,
     ...cls.pools.desecrated.prefixes, ...cls.pools.desecrated.suffixes,

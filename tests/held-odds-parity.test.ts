@@ -28,6 +28,11 @@ const bodyRare = A(A(freshItem(data, "Garment", 82), "transmute", 41), "regal", 
 const ring60 = A(A(freshItem(data, "Gold Ring", 60), "transmute", 51), "regal", 52);
 const amuRare = A(A(freshItem(data, "Gold Amulet", 82), "transmute", 61), "regal", 62);
 const quiverRare = A(A(freshItem(data, "Broadhead Quiver", 82), "transmute", 71), "regal", 72);
+/** 両側が埋まった指輪 (高貴で 6 つまで) */
+let ringFull = ringRare;
+for (let i = 0; i < 6 && ringFull.prefixes.length + ringFull.suffixes.length < 6; i++) ringFull = A(ringFull, "exalt", 80 + i);
+/** 深淵の王の印が付いた指輪 (深淵のエッセンス) */
+const ringMark = A(ringRare, "essence:perfect:Rings/PerfectEssence_EssenceAbyss", 90);
 
 type Case = { name: string; item: StageItem; key: string; omens?: string[] };
 const ADD: Case[] = [
@@ -44,6 +49,7 @@ const ADD: Case[] = [
   { name: "指輪 レア カオス + 削減", item: ringRare, key: "chaos", omens: ["OmenofWhittling"] },
   { name: "指輪 レア カオス + 左の抹消", item: ringRare, key: "chaos", omens: ["OmenofSinistralErasure"] },
   { name: "指輪 レア 完全の高貴", item: ringRare, key: "exalt_perfect" },
+  { name: "指輪 両側が埋まった カオス", item: ringFull, key: "chaos" },
   { name: "矢筒 高貴", item: quiverRare, key: "exalt" },
   { name: "手袋 コル無し 高貴", item: glovesRare, key: "exalt" },
   { name: "手袋 コル 高貴", item: glovesKol, key: "exalt" },
@@ -67,6 +73,7 @@ const BONE: Case[] = [
   { name: "アミュレット 変質した鎖骨", item: amuRare, key: "desecrate_altered" },
   { name: "アミュレット 骨 + ブラックブラッド + 右のネクロマンシー", item: amuRare, key: "desecrate", omens: ["OmenoftheBlackblooded", "OmenofDextralNecromancy"] },
   { name: "矢筒 骨", item: quiverRare, key: "desecrate" },
+  { name: "指輪 深淵の王の印 + 骨", item: ringMark, key: "desecrate" },
 ];
 
 /** 表と実際の差。表の確率 p に対して許す差 (二項の 4 σ と 1.5 ポイントの大きい方) */
