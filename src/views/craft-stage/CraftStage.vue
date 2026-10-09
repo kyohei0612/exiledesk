@@ -15,6 +15,7 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
 import StageItemCard from "./StageItemCard.vue";
+import StageItemMini from "./StageItemMini.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
 import RevealPanel from "./RevealPanel.vue";
@@ -129,6 +130,17 @@ const btn = "g-btn sm";
  */
 const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
 const onResize = (): void => { phone.value = window.innerWidth < 768; };
+/** アイテムのカードが画面に見えているか (スマホで外に出たら StageItemMini を上に貼る) */
+const cardEl = ref<HTMLElement | null>(null);
+const cardOnScreen = ref(true);
+let cardIo: IntersectionObserver | null = null;
+watch(cardEl, (el) => {
+  cardIo?.disconnect();
+  if (!el || typeof IntersectionObserver === "undefined") { cardOnScreen.value = true; return; }
+  cardIo = new IntersectionObserver(([e]) => { cardOnScreen.value = !!e?.isIntersecting; }, { threshold: 0.25 });
+  cardIo.observe(el);
+});
+onBeforeUnmount(() => cardIo?.disconnect());
 onMounted(() => window.addEventListener("resize", onResize));
 onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 /** 帯から打った直後の結果 (1.8 秒だけ帯に出す。カードと直前の変化は画面の上で見えないため。2026-10-08 レビュー A1) */
@@ -359,6 +371,8 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
       </template>
     </section>
 
+    <!-- スマホ: アイテムのカードが画面の外に出たら上に要約を貼る (2026-10-09 オーナー「下にスクロールしても MOD 付いても見えん」) -->
+    <StageItemMini v-if="phone && !cardOnScreen && s.item.value && (s.mode.value === 'hand' || s.replay.value)" :item="s.item.value" :added="s.last.value?.added ?? []" :removed="s.last.value?.removed ?? []" />
     <p v-if="s.error.value" class="mb-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300">{{ s.error.value }}</p>
     <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center opacity-50">データを読んでいます…</p>
 
@@ -367,7 +381,7 @@ const ITEM_KIND = { k: "item" as const, label: "手打ちの状態から", hint:
     <div v-if="s.ready.value && (s.mode.value === 'hand' || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex flex-col items-center gap-8 max-md:items-stretch">
-        <div class="relative" :class="[fxCls, fx?.text ? 'stage-fx-on' : '']" :style="fx ? { '--fx': fx.color } : undefined">
+        <div ref="cardEl" class="relative" :class="[fxCls, fx?.text ? 'stage-fx-on' : '']" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed"
           :item="s.item.value!"

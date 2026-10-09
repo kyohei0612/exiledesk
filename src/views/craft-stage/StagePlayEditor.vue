@@ -8,7 +8,7 @@
   「今まで入力していた部分 (ベース・MOD・始め方) まではそのまま」。決めていない形は回すと新しいベースで最初から (仮の数字)
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/shelf-context";
 import CurrencyShelf from "./CurrencyShelf.vue";
@@ -483,10 +483,20 @@ watch(shapes, () => {
 }, { immediate: true });
 // ハズレルート設定の残り (残っていれば回さない)
 watch([leftTotal, () => props.name], ([n, name]) => { if (name) craftStage.simPlayLeft.value = { ...craftStage.simPlayLeft.value, [name]: n }; }, { immediate: true });
+/** スマホの下の帯 (完成) は、この打ち方の画面が見えている間だけ出す (結果を見ている時に残っていた。2026-10-09) */
+const rootEl = ref<HTMLElement | null>(null);
+const onScreen = ref(true);
+let io: IntersectionObserver | null = null;
+onMounted(() => {
+  if (!rootEl.value || typeof IntersectionObserver === "undefined") return;
+  io = new IntersectionObserver(([e]) => { onScreen.value = !!e?.isIntersecting; }, { rootMargin: "0px 0px -35% 0px" });
+  io.observe(rootEl.value);
+});
+onBeforeUnmount(() => io?.disconnect());
 </script>
 
 <template>
-  <div class="grid grid-cols-[300px_minmax(0,1fr)] items-start gap-x-6 gap-y-4 text-[13px] max-md:grid-cols-1">
+  <div ref="rootEl" class="grid grid-cols-[300px_minmax(0,1fr)] items-start gap-x-6 gap-y-4 text-[13px] max-md:grid-cols-1">
     <!--
       工程 (2026-10-10 オーナー「1 を 2 まで伸ばして。ハズレルートは 2 工程目みたいに次のページへ、工程ごと進ませよう」)。
       工程 1 = 最速完成ルート、完成ボタンで工程 2 = ハズレルート設定へ。ハズレが残っている間は回せない
@@ -596,7 +606,7 @@ watch([leftTotal, () => props.name], ([n, name]) => { if (name) craftStage.simPl
             </CurrencyShelf>
             <div v-if="pendingSet" class="h-44 md:hidden"></div>
             <!-- スマホ: 「完成」は見出し (上) ではなく画面の下に固定 (2026-10-09 オーナー「わざわざ設定するのに上にいかないといけない動線はだるい」) -->
-            <template v-if="!pendingSet && !locked && moves.some((m) => m.aim)">
+            <template v-if="!pendingSet && !locked && moves.some((m) => m.aim) && onScreen">
               <div class="h-20 md:hidden"></div>
               <div class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-[var(--exile-color-border-subtle)] bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)] backdrop-blur md:hidden">
                 <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--exile-color-text-secondary)]"><b class="text-amber-100">{{ shownKs.length + 1 }} 手目</b> · 棚から打つ物を持つ</span>

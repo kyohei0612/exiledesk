@@ -735,6 +735,8 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       showResult(out.reduce((b, x, i) => (x.out.r.perDone < out[b]!.out.r.perDone ? i : b), 0));
     }
     ranFor.value = sig.value;
+    // スマホ: 回した結果 (1 個あたりの平均) を画面の上に (2026-10-09 スナップで確認: 「回す」の所に止まったまま結果が下に隠れていた)
+    if (phone.value && my === gen) void nextTick(() => document.querySelector("[data-sim-result]")?.scrollIntoView({ block: "start", behavior: "smooth" }));
   } catch (e) {
     if (my === gen) error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -1654,7 +1656,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       結果 (2026-10-07 作り直し。オーナー「UI カスすぎない、パッと見て数字が分かりづらい」「7 回すは機能してないからいらない」
       「ベースとそれ以降のクラフト金額も、何にお金がかかったかに分けて」)。上から いくらか → 運でどれくらい振れるか → 何にお金がかかったか (ベース / クラフト)
     -->
-    <div v-if="summary && recipeOut" class="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3" :class="stale ? 'opacity-60' : ''">
+    <div v-if="summary && recipeOut" data-sim-result class="scroll-mt-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3" :class="stale ? 'opacity-60' : ''">
       <p v-if="stale" class="mb-1 text-[11px] text-amber-200">設定が変わりました。もう一度「回す」で出し直してください</p>
       <div class="flex flex-wrap items-stretch gap-x-5 gap-y-2">
         <!-- 手の上限で止まった人が多い時は、バグではなく打つ回数が足りないと分かるように (2026-10-08 オーナー「手が多すぎて止まったのかバグったのか」) -->
@@ -1702,7 +1704,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <!-- 何にお金がかかったか (ベース / クラフト) -->
       <div class="mt-5 grid max-w-4xl gap-x-10 gap-y-4 @3xl:grid-cols-2 max-md:grid-cols-1">
         <div v-for="g in costGroups" :key="g.name">
-          <p class="mb-1.5 flex items-baseline gap-2 text-[13px]"><b>{{ g.name }}</b><span class="truncate text-[12px] text-[var(--exile-color-text-tertiary)]">{{ g.note }}</span><span class="ml-auto font-semibold tabular-nums">{{ moneyT(g.total) }}</span></p>
+          <p class="mb-1.5 flex items-baseline gap-2 text-[13px]"><b class="shrink-0 whitespace-nowrap">{{ g.name }}</b><span class="min-w-0 truncate text-[12px] text-[var(--exile-color-text-tertiary)]">{{ g.note }}</span><span class="ml-auto shrink-0 whitespace-nowrap font-semibold tabular-nums">{{ moneyT(g.total) }}</span></p>
           <!-- スマホは名前を 1 行目いっぱいに (「カオスオーブ × 5,…」と切れていた) -->
           <div class="grid grid-cols-[minmax(0,1fr)_5rem_5rem_2.5rem] items-center gap-x-3 gap-y-1.5 text-[13px] max-md:grid-cols-[minmax(0,1fr)_4.5rem_2.5rem]">
             <template v-for="x in g.items" :key="x.name">
