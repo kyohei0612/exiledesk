@@ -44,3 +44,25 @@ describe("冒涜の候補に出る確率: 計算機 = エミュレーター", ()
     });
   }
 });
+
+describe("勢力のお告げ (ウラマン) の候補に出る確率: 計算機 = エミュレーター", () => {
+  it("ウラマンの MOD", async () => {
+    const { desecrationBossOfferProbability } = await import("../src/vendor/poe2htc/engine/probability");
+    let it0 = freshItem(data, "Gold Ring", 82);
+    it0 = applyCurrency(data, it0, "transmute", mulberry32(1)).item;
+    it0 = applyCurrency(data, it0, "regal", mulberry32(2)).item;
+    const p = data.bases.get("Rings")!.pools.desecrated;
+    const target = [...p.prefixes, ...p.suffixes].map((id) => data.mods.get(id)!).find((m) => m.tags.includes("ulaman_mod"))!;
+    const engine = desecrationBossOfferProbability(data, toEngine(it0), target.id, { omen: "sovereign" });
+    let hit = 0;
+    const N = 4000;
+    for (let s = 1; s <= N; s++) {
+      const b = applyCurrency(data, it0, "desecrate", mulberry32(s), ["OmenoftheSovereign"]);
+      const o = revealOffers(data, b.item, mulberry32(s + 5151)).first;
+      expect(o.every((m) => data.mods.get(m.modId)!.tags.includes("ulaman_mod"))).toBe(true);
+      if (o.some((m) => m.modId === target.id)) hit++;
+    }
+    expect(engine).toBeGreaterThan(0);
+    expect(Math.abs(engine - hit / N)).toBeLessThan(Math.max(0.02, engine * 0.1));
+  });
+});

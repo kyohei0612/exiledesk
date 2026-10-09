@@ -11,8 +11,8 @@ import { familyAvailable, resolveMod } from './pool.ts';
 import { limitsOf, prefixesFull, suffixesFull, whiteItem, withAffix } from './item.ts';
 import type { AnnulOmen, ChaosOmen, CurrencyOptions, DesecrationBossOmen, DrawTarget, EssenceOmen } from './probability.ts';
 import {
-  alchemyProbability, annulProbability, augmentationProbability, chaosProbability, desecrationBossAnySideProbability,
-  desecrationBossProbability, desecrationOffered, desecrationOfferProbability, essenceForcedProbability, exaltProbability,
+  alchemyProbability, annulProbability, augmentationProbability, chaosProbability,
+  desecrationBossOfferProbability, desecrationOfferProbability, essenceForcedProbability, exaltProbability,
   greaterExaltProbability, perfectEssenceProbability, regalProbability, throwawayProbability, transmuteProbability,
 } from './probability.ts';
 
@@ -175,12 +175,8 @@ export function stepProbability(data: PatchData, state: ItemState, step: PlanSte
       // D8: a boss draw spans BOTH sides unless a Sinistral/Dextral Necromancy omen locks it to one.
       // With the omen the draw is the per-slot 1/N (and it must be the added mod's own side, or the
       // omen is pointing away from what we want); without it, the wider both-sides denominator.
-      if (step.constrainTo) {
-        return step.constrainTo === mod.type
-          ? desecrationOffered(desecrationBossProbability(data, state, step.add, { omen: step.boss }))
-          : 0;
-      }
-      return desecrationOffered(desecrationBossAnySideProbability(data, state, step.add, { omen: step.boss }));
+      // ExileDesk 2026-10-09: all three options are the faction's (fewer if the side holds fewer), as the emulator plays
+      return desecrationBossOfferProbability(data, state, step.add, { omen: step.boss, ...(step.constrainTo ? { constrainTo: step.constrainTo } : {}) });
     }
     case 'essence': return essenceForcedProbability(data, state, step.add, step.essenceTier);
     case 'perfect-essence': {

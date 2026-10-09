@@ -547,33 +547,39 @@ export function createActionSpace(params: ActionSpaceParams): {
     }
   }
 
-  const desecrateOutcomes = (s: McState, boss: DesecrationBossOmen, constrainTo?: 'prefix' | 'suffix'): Dist => {
-    const out: Dist = new Map();
-    if (!desecratable || hasDesecrated(s)) return out; // an item holds at most one desecrated mod
+  /**
+   * A boss-omened desecration. ExileDesk 2026-10-09: every revealed option is the faction's (fewer when the side holds
+   * fewer — SaVeQ 0.5.5), on the side the bone landed (by how many faction mods each open side can show, unless a
+   * Necromancy omen fixed it): per side, min(3, n) count-uniform draws from that side's faction mods (`mix`). `dist`
+   * is the marginal of one draw.
+   */
+  const desecrateOutcomes = (s: McState, boss: DesecrationBossOmen, constrainTo?: 'prefix' | 'suffix'): { dist: Dist; mix: NonNullable<ActionDef['mix']> } => {
+    const empty = { dist: new Map() as Dist, mix: [] };
+    if (!desecratable || hasDesecrated(s)) return empty; // an item holds at most one desecrated mod
     const occ = occupiedFamilies(s.present, s.blocked, list);
     const sides = (constrainTo ? [constrainTo] : ['prefix', 'suffix'] as const).filter(
       (sd) => (sd === 'prefix' ? prefixOpenIn(s) : suffixOpenIn(s)));
-    const candidates: { id: string; sd: 'prefix' | 'suffix' }[] = [];
+    const perSide: { sd: 'prefix' | 'suffix'; dist: Dist; n: number }[] = [];
     for (const sd of sides) {
-      for (const id of bossPool[boss][sd]) {
-        const mod = data.mods.get(id)!;
-        if (excluded(mod, occ)) continue; // family exclusion shrinks the pool (all of a mod's families)
-        candidates.push({ id, sd });
+      const ids = bossPool[boss][sd].filter((id) => !excluded(data.mods.get(id)!, occ)); // family exclusion shrinks the pool
+      if (!ids.length) continue;
+      const dist: Dist = new Map();
+      for (const id of ids) {
+        // A merged position answers to any of its members' ids; whatever the bone applies becomes the flagged mod
+        const i = list.findIndex((t) => t.mods.some((m) => m.mod.id === id));
+        const to = i >= 0 ? encodeState(s.present | bit(i), s.blocked, s.jp, s.js, flagTarget(i), s.rarity)
+          : sd === 'prefix' ? encodeState(s.present, s.blocked, s.jp + 1, s.js, FLAG_JUNK_PREFIX, s.rarity)
+            : encodeState(s.present, s.blocked, s.jp, s.js + 1, FLAG_JUNK_SUFFIX, s.rarity);
+        addTo(dist, to, 1 / ids.length);
       }
+      perSide.push({ sd, dist, n: ids.length });
     }
-    if (candidates.length === 0) return out;
-    const p = 1 / candidates.length;
-    for (const { id, sd } of candidates) {
-      // A merged position answers to any of its members' ids, and two pool ids landing on one
-      // position simply sum through `addTo` — which is right: either draw fills the slot.
-      const i = list.findIndex((t) => t.mods.some((m) => m.mod.id === id));
-      // Whatever the bone applies becomes the item's flagged mod — a target it wanted just as much as
-      // junk it didn't. Landing a target you asked for still locks the item out of desecrating again.
-      if (i >= 0) addTo(out, encodeState(s.present | bit(i), s.blocked, s.jp, s.js, flagTarget(i), s.rarity), p);
-      else if (sd === 'prefix') addTo(out, encodeState(s.present, s.blocked, s.jp + 1, s.js, FLAG_JUNK_PREFIX, s.rarity), p);
-      else addTo(out, encodeState(s.present, s.blocked, s.jp, s.js + 1, FLAG_JUNK_SUFFIX, s.rarity), p);
-    }
-    return out;
+    const total = perSide.reduce((a, x) => a + x.n, 0);
+    if (!total) return empty;
+    const mix = perSide.map((x) => ({ weight: x.n / total, parts: [{ dist: x.dist, draws: Math.min(DESECRATION_OFFER_COUNT, x.n) }] }));
+    const dist: Dist = new Map();
+    for (const c of mix) for (const pt of c.parts) for (const [k, p] of pt.dist) addTo(dist, k, c.weight * p);
+    return { dist, mix };
   };
 
   /**
@@ -934,9 +940,9 @@ export function createActionSpace(params: ActionSpaceParams): {
       if (bossTargetable) {
         for (const boss of ['blackblooded', 'liege', 'sovereign'] as const) {
           if (!bossesWanted.has(boss)) continue;
-          offerDraw({ currency: 'desecrate', boss }, desecrateOutcomes(s, boss));
+          offerAny({ currency: 'desecrate', boss }, desecrateOutcomes(s, boss));
           for (const sd of ['prefix', 'suffix'] as const) {
-            if (necromancyOk(sd)) offerDraw({ currency: 'desecrate', boss, side: sd }, desecrateOutcomes(s, boss, sd));
+            if (necromancyOk(sd)) offerAny({ currency: 'desecrate', boss, side: sd }, desecrateOutcomes(s, boss, sd));
           }
         }
       }

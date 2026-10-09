@@ -839,6 +839,43 @@ export function desecrationOfferProbability(
   return pSide * (1 - (1 - Math.min(1, pOffer)) ** tries);
 }
 
+/**
+ * ExileDesk 2026-10-09: a boss omen (Sovereign / Liege / Blackblooded). Every one of the three revealed options is
+ * that faction's exclusive mod — fewer when the side holds fewer (SaVeQ 0.5.5: a ring's Ulaman prefixes are two, so
+ * the reveal shows two). Count-uniform, drawn without replacement, on the side the bone landed: the bone picks the
+ * side by how many of the faction's mods each open side can show (the emulator's bone does the same), unless a
+ * Necromancy omen fixed it. So P = P(side) · min(1, 3 / n_side); an Omen of Abyssal Echoes reshows the same side.
+ * Replaces the per-draw 1/N run through three independent draws, which was not what the emulator plays.
+ */
+export function desecrationBossOfferProbability(
+  data: PatchData, item: ItemState, desiredModId: string,
+  opts: { omen: DesecrationBossOmen; constrainTo?: AffixType; rerolls?: number },
+): number {
+  const mod = data.mods.get(desiredModId);
+  if (!mod) return 0;
+  const tag = DES_BOSS_TAG[opts.omen];
+  if (!mod.tags.includes(tag)) return 0;
+  if (opts.constrainTo && opts.constrainTo !== mod.type) return 0;
+  const open = { prefix: !prefixesFull(item), suffix: !suffixesFull(item) };
+  const countOf = (sd: AffixType): number => {
+    if (!open[sd]) return 0;
+    const ids = sd === 'prefix' ? item.base.pools.desecrated.prefixes : item.base.pools.desecrated.suffixes;
+    let n = 0;
+    for (const id of ids) {
+      const m = data.mods.get(id);
+      if (m && m.tags.includes(tag) && familyAvailable(data, item, m) && m.tiers.some((t) => t.ilvl <= item.level && t.weight > 0)) n++;
+    }
+    return n;
+  };
+  if (!familyAvailable(data, item, mod)) return 0;
+  const here = countOf(mod.type);
+  if (here === 0) return 0;
+  const other = opts.constrainTo ? 0 : countOf(mod.type === 'prefix' ? 'suffix' : 'prefix');
+  const pSide = here / (here + other);
+  const pIn = Math.min(1, DESECRATION_OFFER_COUNT / here);
+  return pSide * (1 - (1 - pIn) ** (1 + (opts.rerolls ?? 0)));
+}
+
 export interface DesecrationOptions {
   /** Bone-strength floor ilvl (raises the tier floor). Default 0. */
   floor?: number;

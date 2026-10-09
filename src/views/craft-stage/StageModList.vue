@@ -16,7 +16,7 @@ import { keepPlace } from "../../utils/keep-place";
 import { addCandidates } from "../../services/craft-stage/apply-currency";
 import { OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../services/htc/weight-overrides";
 import { allMods, effectiveCls } from "../../services/craft-stage/stage-core";
-import { ANCIENT_BONE_FLOOR, desecrationOfferProbability } from "../../vendor/poe2htc/engine/probability";
+import { ANCIENT_BONE_FLOOR, desecrationBossOfferProbability, desecrationOfferProbability, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
 import type { ItemState } from "../../vendor/poe2htc/engine/types";
 import { autoGroup } from "../../services/craft-stage/auto-group";
 import { AIM_MAX } from "../../state/craft-stage";
@@ -68,7 +68,9 @@ function boneOdds(k: string): { byMod: Map<string, { w: number; tiers: Array<{ i
   const d = s.data.value, it = s.item.value;
   if (!d || !it || it.rarity !== "rare") return null;
   const om = s.omens.value;
-  if (om.some((o) => /^Omenofthe(Sovereign|Liege|Blackblooded)$/.test(o))) return null;
+  // 勢力のお告げ: 候補 3 つは全部その勢力の MOD (足りなければ数だけ)。計算機と同じ desecrationBossOfferProbability (2026-10-09 オーナー「ウラマンとかのお告げ選んでも確率変動しない」)
+  const BOSS: Record<string, DesecrationBossOmen> = { OmenoftheSovereign: "sovereign", OmenoftheLiege: "liege", OmenoftheBlackblooded: "blackblooded" };
+  const boss = om.map((o) => BOSS[o]).find(Boolean);
   const state: ItemState = {
     base: effectiveCls(it), level: it.itemLevel, rarity: "rare",
     prefixes: it.prefixes.filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, tierName: m.tierName })),
@@ -86,7 +88,9 @@ function boneOdds(k: string): { byMod: Map<string, { w: number; tiers: Array<{ i
     for (const id of new Set(r.tiers.map((t) => t.modId ?? r.id))) {
       const mod = d.mods.get(id);
       if (!mod || byMod.has(id)) continue;
-      const atLeast = mod.tiers.map((_, i) => desecrationOfferProbability(d, state, id, { ...opts, minTierIndex: i }));
+      const atLeast = boss
+        ? mod.tiers.map((_, i) => (i === 0 ? desecrationBossOfferProbability(d, state, id, { omen: boss, rerolls: opts.rerolls, ...("constrainTo" in opts ? { constrainTo: opts.constrainTo } : {}) }) : 0))
+        : mod.tiers.map((_, i) => desecrationOfferProbability(d, state, id, { ...opts, minTierIndex: i }));
       const w = atLeast[0] ?? 0;
       if (!(w > 0)) continue;
       byMod.set(id, { w, tiers: atLeast.map((p, i) => ({ index: i, w: p - (atLeast[i + 1] ?? 0) })).filter((t) => t.w > 0) });
