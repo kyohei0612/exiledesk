@@ -30,10 +30,10 @@ const list = computed(() => {
   const l = all.value.filter((b) => b.cls === cls.value);
   return cls.value === "SkillGem" ? l : [...l].sort((a, b) => a.lvl - b.lvl || a.ja.localeCompare(b.ja, "ja"));
 });
-const chip = (on: boolean): string => (on ? "bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)] ring-1 ring-[var(--exile-color-border-brass)]" : "text-[var(--exile-color-text-secondary)] ring-1 ring-white/10 hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]");
 /**
- * スマホ (幅 768 CSS px 未満): 種類の札を全部並べると壁になる (手袋(str_dex) のような札が 50 個。2026-10-08 オーナー「UI カスすぎる」)。
- * 部位 (大きめのタイル) → 属性 / 元素 (日本語の札) → ベース (1 列) の 3 段にする。PC は今まで通り
+ * 種類の札を全部並べると壁になる (手袋(str_dex) のような札が 50 個。2026-10-08 オーナー「UI カスすぎる」)。
+ * 部位 (ゲームの絵のタイル) → 属性 / 元素 (日本語の札) → ベースの 3 段。スマホは 1 段ずつ (← 部位 で戻る)、
+ * PC は部位のタイルを並べたまま下に属性とベースを出す (2026-10-09 オーナー「シミュレーターで装備のアイコンでスマホ版との齟齬あるよね」: PC だけ文字の札だった)
  */
 const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
 const onResize = (): void => { phone.value = window.innerWidth < 768; };
@@ -73,8 +73,9 @@ function famArt(f: Family): string | null {
   for (const b of bs) { const a = artOf(b.en); if (a) return a; }
   return null;
 }
-/** スマホで選んだ部位 (属性の札を出す)。1 種類しかない部位はそのまま種類を選ぶ */
-const family = ref<Family | null>(null);
+/** 選んだ部位 (属性の札を出す)。1 種類しかない部位はそのまま種類を選ぶ。PC は今のベースの部位から開く */
+const familyOfCls = (c: string | null): Family | null => (c ? families.value.flatMap((r) => r.fams).find((f) => f.variants.some((v) => v.cls === c)) ?? null : null);
+const family = ref<Family | null>(phone.value ? null : familyOfCls(cls.value));
 function pickFamily(f: Family): void {
   family.value = f;
   cls.value = f.variants.length === 1 ? f.variants[0]!.cls : null;
@@ -89,45 +90,35 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       <input v-model="query" type="search" placeholder="名前で探す (例: サファイア、ルビー)" class="w-72 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:w-full" />
       <span v-if="query.trim()" class="opacity-50">{{ list.length }} 件</span>
     </div>
-    <!-- スマホ: 部位 → 属性 / 元素 → ベース -->
-    <template v-if="phone && !query.trim()">
-      <div v-if="!family" class="mb-3 space-y-3">
+    <!-- 部位 → 属性 / 元素 → ベース。スマホは 1 段ずつ、PC は部位のタイルを並べたまま -->
+    <template v-if="!query.trim()">
+      <!-- PC は段を横に流して 2 行ほどに (縦に 1 段ずつだと、押した後の属性とベースが画面の下に押し出された) -->
+      <div v-if="!phone || !family" class="mb-3" :class="phone ? 'space-y-3' : 'flex flex-wrap gap-x-5 gap-y-2'">
         <div v-for="r in families" :key="r.ja">
-          <p class="mb-1 text-[11px] opacity-50">{{ r.ja }}</p>
-          <!-- 部位のタイル: ゲームの絵 + 名前 (3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
-          <div class="grid grid-cols-3 gap-1.5">
-            <button v-for="f in r.fams" :key="f.name" type="button" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" @click="pickFamily(f)">
-              <span class="g-slot grid size-16 place-items-center">
-                <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain" draggable="false" />
+          <p class="mb-0.5 text-[11px] opacity-50">{{ r.ja }}</p>
+          <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
+          <div :class="phone ? 'grid grid-cols-3 gap-1.5' : 'flex flex-wrap gap-1'">
+            <button v-for="f in r.fams" :key="f.name" type="button" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[76px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" @click="pickFamily(f)">
+              <span class="grid place-items-center" :class="[phone ? 'size-16' : 'size-12', family?.name === f.name && !phone ? 'g-slot on' : 'g-slot']">
+                <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="object-contain" :class="phone ? 'max-h-12 max-w-12' : 'max-h-9 max-w-9'" draggable="false" />
               </span>
-              <span class="g-antique text-[13px] leading-tight text-[var(--exile-color-text-primary)]">{{ f.name }}</span>
+              <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[12px]'">{{ f.name }}</span>
               <span v-if="f.variants.length > 1" class="text-[10px] leading-none opacity-50">{{ f.variants.length }} 種</span>
             </button>
           </div>
         </div>
       </div>
-      <div v-else class="mb-3">
-        <div class="mb-2 flex items-center gap-2">
+      <div v-if="family" class="mb-3">
+        <div v-if="phone" class="mb-2 flex items-center gap-2">
           <button type="button" class="min-h-11 rounded-lg border border-white/20 px-3" @click="backToFamilies">← 部位</button>
           <b class="text-[15px] text-amber-100">{{ family.name }}</b>
         </div>
         <div v-if="family.variants.length > 1" class="mb-2 flex flex-wrap gap-2">
-          <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ v.label }}</button>
+          <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !px-4 !text-[13px]" :class="[cls === v.cls ? 'on' : '', phone ? '!min-h-10' : '!min-h-8']" @click="cls = v.cls">{{ v.label }}</button>
         </div>
         <p v-if="!cls" class="py-1 text-[12px] opacity-60">属性を選ぶ</p>
       </div>
     </template>
-    <!-- ① 種類 (poe2db と同じ段) -->
-    <div v-else-if="!query.trim()" class="mb-3 space-y-1.5">
-      <template v-for="r in CATALOG_ROWS" :key="r.ja">
-        <div v-if="r.cls.some(([c]) => count.get(c))" class="flex flex-wrap items-center gap-1.5">
-          <span class="w-16 shrink-0 text-[11px] opacity-50">{{ r.ja }}</span>
-          <template v-for="[c, ja] in r.cls" :key="c">
-            <button v-if="count.get(c)" type="button" class="h-7 rounded-md px-2.5 text-[13px] transition" :class="chip(cls === c)" @click="cls = c">{{ ja }}</button>
-          </template>
-        </div>
-      </template>
-    </div>
     <!-- ② ベースのカード (ゲーム内の絵・必要レベル・素の数値・固有の効果) -->
 
     <div v-if="cls || query.trim()" class="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-1.5 overflow-y-auto pr-1 max-md:grid-cols-2" :style="{ maxHeight: phone ? 'none' : (height ?? '340px') }">
