@@ -24,7 +24,7 @@ export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "dese
  * special = 創生の樹・ハンドラップ専用の MOD (ベースの special の置き場、重み 0)。カレンシーでは付かないが MOD としてはあるので、手で付ける分だけ出す
  * (2026-10-09 オーナー「創生の樹産の奴がクラフトでは付かないけど MOD としては存在する。カレンシーで出ちゃだめだけど、手動で付ける分はいる。分かりやすいように置いといて」)
  */
-export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", rune: "ルーンの特殊 MOD (重みは仮定)", essence: ESSENCE_KIND.essence.label, perfect_essence: ESSENCE_KIND.perfect_essence.label, desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)", special: "創生の樹など (カレンシーでは付かない)" };
+export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", rune: "ルーンの特殊 MOD (重みは Craft of Exile の実測)", essence: ESSENCE_KIND.essence.label, perfect_essence: ESSENCE_KIND.perfect_essence.label, desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)", special: "創生の樹など (カレンシーでは付かない)" };
 
 /** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05) */
 export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string; modId?: string }

@@ -42,7 +42,7 @@ const implicitText = (lines: readonly string[]): string =>
             <td class="w-32 text-emerald-300">{{ r.crafted ? "確定で乗せられる" : "" }}</td>
             <!-- 重みがデータに無い MOD は確率を信用できない。埋めた物は推定値と断る -->
             <td class="w-28 text-amber-300" :title="r.assumedWeight ? ASSUMED_RUNE_WEIGHT_NOTE : r.overridden ? c.weightNote : ''">
-              {{ r.unknownWeight ? "重み不明" : r.assumedWeight ? "出やすさは仮" : r.overridden ? "重みは推定値" : "" }}
+              {{ r.unknownWeight ? "重み不明" : r.assumedWeight ? "重みは CoE の実測" : r.overridden ? "重みは推定値" : "" }}
             </td>
           </tr>
         </table>

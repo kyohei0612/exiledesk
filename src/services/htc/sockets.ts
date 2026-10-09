@@ -72,8 +72,8 @@ export const NO_SOCKET: SocketPick = { astrid: false, serle: false, baseSockets:
 
 /** 特別な MOD の出やすさの断り (重みがデータに無く、エンジンの仮の値のまま) */
 export const ASSUMED_RUNE_WEIGHT_NOTE =
-  "この MOD の出やすさは仮です (特別な MOD の重みはクライアントのデータに無く、エンジンの仮の値 1 ティア 1000 のまま)。"
-  + "ルーンを差している間は全部の抽選の分母に入るので、差した時の確率・費用はみんなこの仮の値に乗っています";
+  "この MOD の重みは Craft of Exile (beta) が載せている実測 (Krakenbul、2026-09 更新) です。ゲームは公開していません。"
+  + "ルーンを差している間は全部の抽選の分母に入るので、差した時の確率・費用はこの値に乗っています";
 
 /**
  * 効果の文面はクライアントの日本語 ([[mod-text.ts]] の表 `src/i18n/mod-text-ja.json`) から引く (2026-09-26: 自前の言い回しにしない)。

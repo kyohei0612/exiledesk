@@ -1,0 +1,2099 @@
+{
+ "generated": "2026-10-09T14:00:35.971Z",
+ "source": "Craft of Exile (beta) data.json classmods — Krakenbul / Prohibited Library の実測 (CoE 2026-09-03 更新)。scripts/build-rune-weights-coe.mjs",
+ "weights": {
+  "Body_Armours_dex/Rune_soul_MaximumLifeIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_MaximumManaIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_MaximumSpiritIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_IncreasedLife": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_BaseLocalDefencesAndLife__local_evasion_rating_base_spirit_from_equipment": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_BaseLocalDefencesAndLife__local_evasion_rating_base_maximum_mana": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_ReducedAilmentDuration": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_ReducedCriticalStrikeDamageTaken": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_FireAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_ColdAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_dex/Rune_soul_LightningAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_MaximumLifeIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_MaximumManaIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_MaximumSpiritIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_IncreasedLife": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_evasion_and_energy_shield_base_spirit_from_equipment": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_evasion_and_energy_shield_base_maximum_mana": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_ReducedAilmentDuration": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_ReducedCriticalStrikeDamageTaken": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_FireAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_ColdAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_dex_int/Rune_soul_LightningAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_MaximumLifeIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_MaximumManaIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_MaximumSpiritIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_IncreasedLife": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_BaseLocalDefencesAndLife__local_energy_shield_base_spirit_from_equipment": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_BaseLocalDefencesAndLife__local_energy_shield_base_maximum_mana": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_ReducedAilmentDuration": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_ReducedCriticalStrikeDamageTaken": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_FireAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_ColdAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_int/Rune_soul_LightningAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_MaximumLifeIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_MaximumManaIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_MaximumSpiritIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_IncreasedLife": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_BaseLocalDefencesAndLife__local_physical_damage_reduction_rating_base_spirit_from_equipment": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_BaseLocalDefencesAndLife__local_physical_damage_reduction_rating_base_maximum_mana": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_ReducedAilmentDuration": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_ReducedCriticalStrikeDamageTaken": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_FireAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_ColdAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str/Rune_soul_LightningAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_MaximumLifeIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_MaximumManaIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_MaximumSpiritIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_IncreasedLife": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_BaseLocalDefencesAndLife__local_armour_and_evasion_base_spirit_from_equipment": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_BaseLocalDefencesAndLife__local_armour_and_evasion_base_maximum_mana": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_ReducedAilmentDuration": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_ReducedCriticalStrikeDamageTaken": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_FireAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_ColdAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str_dex/Rune_soul_LightningAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_MaximumLifeIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_MaximumManaIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_MaximumSpiritIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_IncreasedLife": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_BaseLocalDefencesAndLife__local_armour_and_energy_shield_base_spirit_from_equipment": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_BaseLocalDefencesAndLife__local_armour_and_energy_shield_base_maximum_mana": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_ReducedAilmentDuration": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_ReducedCriticalStrikeDamageTaken": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_FireAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_ColdAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str_int/Rune_soul_LightningAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Boots_dex/Rune_chronomancy_MovementVelocity": {
+   "65": 1000,
+   "70": 1000,
+   "78": 500
+  },
+  "Boots_dex/Rune_chronomancy_MovementVelocityWhileSprinting": {
+   "45": 1000,
+   "78": 1000
+  },
+  "Boots_dex/Rune_chronomancy_DodgeRoll": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_dex/Rune_chronomancy_SkillEffectDuration": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_dex/Rune_chronomancy_CooldownRecovery": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_dex/Rune_chronomancy_ChargeChanceToNotConsume": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_dex/Rune_chronomancy_DebuffTime": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_dex_int/Rune_chronomancy_MovementVelocity": {
+   "65": 1000,
+   "70": 1000,
+   "78": 500
+  },
+  "Boots_dex_int/Rune_chronomancy_MovementVelocityWhileSprinting": {
+   "45": 1000,
+   "78": 1000
+  },
+  "Boots_dex_int/Rune_chronomancy_DodgeRoll": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_dex_int/Rune_chronomancy_SkillEffectDuration": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_dex_int/Rune_chronomancy_CooldownRecovery": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_dex_int/Rune_chronomancy_ChargeChanceToNotConsume": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_dex_int/Rune_chronomancy_DebuffTime": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_int/Rune_chronomancy_MovementVelocity": {
+   "65": 1000,
+   "70": 1000,
+   "78": 500
+  },
+  "Boots_int/Rune_chronomancy_MovementVelocityWhileSprinting": {
+   "45": 1000,
+   "78": 1000
+  },
+  "Boots_int/Rune_chronomancy_DodgeRoll": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_int/Rune_chronomancy_SkillEffectDuration": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_int/Rune_chronomancy_CooldownRecovery": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_int/Rune_chronomancy_ChargeChanceToNotConsume": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_int/Rune_chronomancy_DebuffTime": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str/Rune_chronomancy_MovementVelocity": {
+   "65": 1000,
+   "70": 1000,
+   "78": 500
+  },
+  "Boots_str/Rune_chronomancy_MovementVelocityWhileSprinting": {
+   "45": 1000,
+   "78": 1000
+  },
+  "Boots_str/Rune_chronomancy_DodgeRoll": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str/Rune_chronomancy_SkillEffectDuration": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_str/Rune_chronomancy_CooldownRecovery": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_str/Rune_chronomancy_ChargeChanceToNotConsume": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str/Rune_chronomancy_DebuffTime": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str_dex/Rune_chronomancy_MovementVelocity": {
+   "65": 1000,
+   "70": 1000,
+   "78": 500
+  },
+  "Boots_str_dex/Rune_chronomancy_MovementVelocityWhileSprinting": {
+   "45": 1000,
+   "78": 1000
+  },
+  "Boots_str_dex/Rune_chronomancy_DodgeRoll": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str_dex/Rune_chronomancy_SkillEffectDuration": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_str_dex/Rune_chronomancy_CooldownRecovery": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_str_dex/Rune_chronomancy_ChargeChanceToNotConsume": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str_dex/Rune_chronomancy_DebuffTime": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str_int/Rune_chronomancy_MovementVelocity": {
+   "65": 1000,
+   "70": 1000,
+   "78": 500
+  },
+  "Boots_str_int/Rune_chronomancy_MovementVelocityWhileSprinting": {
+   "45": 1000,
+   "78": 1000
+  },
+  "Boots_str_int/Rune_chronomancy_DodgeRoll": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str_int/Rune_chronomancy_SkillEffectDuration": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_str_int/Rune_chronomancy_CooldownRecovery": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_str_int/Rune_chronomancy_ChargeChanceToNotConsume": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str_int/Rune_chronomancy_DebuffTime": {
+   "45": 1000,
+   "78": 500
+  },
+  "Bows/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Bows/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Bows/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Bows/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Bows/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Bows/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Bows/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Bows/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Bows/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Crossbows/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Crossbows/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Crossbows/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Crossbows/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Crossbows/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Crossbows/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Crossbows/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Crossbows/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Crossbows/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Gloves_dex/Rune_marksman_ProjectileDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_marksman_CurseEffectiveness": {
+   "45": 1000,
+   "65": 1000
+  },
+  "Gloves_dex/Rune_marksman_ProjectileSpeed": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Gloves_dex/Rune_marksman_ChanceToPierce": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_dex/Rune_marksman_AdditionalProjectileChance": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_marksman_ChainFromTerrain": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_dex/Rune_marksman_ForkingProjectiles": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_marksman_MarkDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_marksman_MarkUseSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_dex/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_dex/Rune_decay_IgniteEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_decay_BleedingDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_decay_PoisonEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_decay_AilmentEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_decay_FasterAilmentDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_decay_DamagingAilmentDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_decay_LifeLeech": {
+   "45": 1000
+  },
+  "Gloves_dex/Rune_decay_LifeLeechAmount": {
+   "45": 1000
+  },
+  "Gloves_dex/Rune_decay_WitheredEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_decay_CurseEffectiveness": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_decay_ExposureEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex/Rune_decay_BaseCurseDuration": {
+   "75": 500
+  },
+  "Gloves_dex/Rune_decay_CurseDelay": {
+   "75": 500
+  },
+  "Gloves_dex_int/Rune_marksman_ProjectileDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_marksman_CurseEffectiveness": {
+   "45": 1000,
+   "65": 1000
+  },
+  "Gloves_dex_int/Rune_marksman_ProjectileSpeed": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Gloves_dex_int/Rune_marksman_ChanceToPierce": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_dex_int/Rune_marksman_AdditionalProjectileChance": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_marksman_ChainFromTerrain": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_dex_int/Rune_marksman_ForkingProjectiles": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_marksman_MarkDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_marksman_MarkUseSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_dex_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_dex_int/Rune_decay_IgniteEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_decay_BleedingDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_decay_PoisonEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_decay_AilmentEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_decay_FasterAilmentDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_decay_DamagingAilmentDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_decay_LifeLeech": {
+   "45": 1000
+  },
+  "Gloves_dex_int/Rune_decay_LifeLeechAmount": {
+   "45": 1000
+  },
+  "Gloves_dex_int/Rune_decay_WitheredEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_decay_CurseEffectiveness": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_decay_ExposureEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_dex_int/Rune_decay_BaseCurseDuration": {
+   "75": 500
+  },
+  "Gloves_dex_int/Rune_decay_CurseDelay": {
+   "75": 500
+  },
+  "Gloves_int/Rune_marksman_ProjectileDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_marksman_CurseEffectiveness": {
+   "45": 1000,
+   "65": 1000
+  },
+  "Gloves_int/Rune_marksman_ProjectileSpeed": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Gloves_int/Rune_marksman_ChanceToPierce": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_int/Rune_marksman_AdditionalProjectileChance": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_marksman_ChainFromTerrain": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_int/Rune_marksman_ForkingProjectiles": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_marksman_MarkDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_marksman_MarkUseSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_int/Rune_decay_IgniteEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_decay_BleedingDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_decay_PoisonEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_decay_AilmentEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_decay_FasterAilmentDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_decay_DamagingAilmentDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_decay_LifeLeech": {
+   "45": 1000
+  },
+  "Gloves_int/Rune_decay_LifeLeechAmount": {
+   "45": 1000
+  },
+  "Gloves_int/Rune_decay_WitheredEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_decay_CurseEffectiveness": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_decay_ExposureEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_int/Rune_decay_BaseCurseDuration": {
+   "75": 500
+  },
+  "Gloves_int/Rune_decay_CurseDelay": {
+   "75": 500
+  },
+  "Gloves_str/Rune_marksman_ProjectileDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_marksman_CurseEffectiveness": {
+   "45": 1000,
+   "65": 1000
+  },
+  "Gloves_str/Rune_marksman_ProjectileSpeed": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Gloves_str/Rune_marksman_ChanceToPierce": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_str/Rune_marksman_AdditionalProjectileChance": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_marksman_ChainFromTerrain": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_str/Rune_marksman_ForkingProjectiles": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_marksman_MarkDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_marksman_MarkUseSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_str/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_str/Rune_decay_IgniteEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_decay_BleedingDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_decay_PoisonEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_decay_AilmentEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_decay_FasterAilmentDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_decay_DamagingAilmentDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_decay_LifeLeech": {
+   "45": 1000
+  },
+  "Gloves_str/Rune_decay_LifeLeechAmount": {
+   "45": 1000
+  },
+  "Gloves_str/Rune_decay_WitheredEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_decay_CurseEffectiveness": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_decay_ExposureEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str/Rune_decay_BaseCurseDuration": {
+   "75": 500
+  },
+  "Gloves_str/Rune_decay_CurseDelay": {
+   "75": 500
+  },
+  "Gloves_str_dex/Rune_marksman_ProjectileDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_marksman_CurseEffectiveness": {
+   "45": 1000,
+   "65": 1000
+  },
+  "Gloves_str_dex/Rune_marksman_ProjectileSpeed": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Gloves_str_dex/Rune_marksman_ChanceToPierce": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_str_dex/Rune_marksman_AdditionalProjectileChance": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_marksman_ChainFromTerrain": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_str_dex/Rune_marksman_ForkingProjectiles": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_marksman_MarkDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_marksman_MarkUseSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_str_dex/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_str_dex/Rune_decay_IgniteEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_decay_BleedingDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_decay_PoisonEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_decay_AilmentEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_decay_FasterAilmentDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_decay_DamagingAilmentDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_decay_LifeLeech": {
+   "45": 1000
+  },
+  "Gloves_str_dex/Rune_decay_LifeLeechAmount": {
+   "45": 1000
+  },
+  "Gloves_str_dex/Rune_decay_WitheredEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_decay_CurseEffectiveness": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_decay_ExposureEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex/Rune_decay_BaseCurseDuration": {
+   "75": 500
+  },
+  "Gloves_str_dex/Rune_decay_CurseDelay": {
+   "75": 500
+  },
+  "Gloves_str_int/Rune_marksman_ProjectileDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_marksman_CurseEffectiveness": {
+   "45": 1000,
+   "65": 1000
+  },
+  "Gloves_str_int/Rune_marksman_ProjectileSpeed": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Gloves_str_int/Rune_marksman_ChanceToPierce": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_str_int/Rune_marksman_AdditionalProjectileChance": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_marksman_ChainFromTerrain": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_str_int/Rune_marksman_ForkingProjectiles": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_marksman_MarkDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_marksman_MarkUseSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_str_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 500
+  },
+  "Gloves_str_int/Rune_decay_IgniteEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_decay_BleedingDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_decay_PoisonEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_decay_AilmentEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_decay_FasterAilmentDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_decay_DamagingAilmentDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_decay_LifeLeech": {
+   "45": 1000
+  },
+  "Gloves_str_int/Rune_decay_LifeLeechAmount": {
+   "45": 1000
+  },
+  "Gloves_str_int/Rune_decay_WitheredEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_decay_CurseEffectiveness": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_decay_ExposureEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_int/Rune_decay_BaseCurseDuration": {
+   "75": 500
+  },
+  "Gloves_str_int/Rune_decay_CurseDelay": {
+   "75": 500
+  },
+  "Helmets_dex/Rune_berserking_MaximumRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_WarcryDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_dex/Rune_berserking_WarcryPower": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_ArmourBreakEffect": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_dex/Rune_berserking_GloryGeneration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_RageCost": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_RageLossDelay": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_GainRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_WarcrySpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_WarcryCooldownSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_AreaOfEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_WarcryLifeRecovery": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_ArmourBreakDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex/Rune_berserking_AdditionalComboChance": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_MaximumRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_WarcryDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_dex_int/Rune_berserking_WarcryPower": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_ArmourBreakEffect": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_dex_int/Rune_berserking_GloryGeneration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_RageCost": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_RageLossDelay": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_GainRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_WarcrySpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_WarcryCooldownSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_AreaOfEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_WarcryLifeRecovery": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_ArmourBreakDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_dex_int/Rune_berserking_AdditionalComboChance": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_MaximumRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_WarcryDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_int/Rune_berserking_WarcryPower": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_ArmourBreakEffect": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_int/Rune_berserking_GloryGeneration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_RageCost": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_RageLossDelay": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_GainRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_WarcrySpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_WarcryCooldownSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_AreaOfEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_WarcryLifeRecovery": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_ArmourBreakDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_int/Rune_berserking_AdditionalComboChance": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_MaximumRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_WarcryDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_str/Rune_berserking_WarcryPower": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_ArmourBreakEffect": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_str/Rune_berserking_GloryGeneration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_RageCost": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_RageLossDelay": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_GainRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_WarcrySpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_WarcryCooldownSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_AreaOfEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_WarcryLifeRecovery": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_ArmourBreakDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str/Rune_berserking_AdditionalComboChance": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_MaximumRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_WarcryDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_str_dex/Rune_berserking_WarcryPower": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_ArmourBreakEffect": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_str_dex/Rune_berserking_GloryGeneration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_RageCost": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_RageLossDelay": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_GainRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_WarcrySpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_WarcryCooldownSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_AreaOfEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_WarcryLifeRecovery": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_ArmourBreakDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex/Rune_berserking_AdditionalComboChance": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_MaximumRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_WarcryDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_str_int/Rune_berserking_WarcryPower": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_ArmourBreakEffect": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_str_int/Rune_berserking_GloryGeneration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_RageCost": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_RageLossDelay": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_GainRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_WarcrySpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_WarcryCooldownSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_AreaOfEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_WarcryLifeRecovery": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_ArmourBreakDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_int/Rune_berserking_AdditionalComboChance": {
+   "45": 1000,
+   "75": 1000
+  },
+  "OneHand_Maces/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "OneHand_Maces/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "OneHand_Maces/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "OneHand_Maces/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "OneHand_Maces/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "OneHand_Maces/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "OneHand_Maces/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "OneHand_Maces/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "OneHand_Maces/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Quarterstaves/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Quarterstaves/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Quarterstaves/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Quarterstaves/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Quarterstaves/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Quarterstaves/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Quarterstaves/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Quarterstaves/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Quarterstaves/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Sceptres/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Sceptres/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Sceptres/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Sceptres/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Sceptres/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Sceptres/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Sceptres/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Sceptres/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Sceptres/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Spears/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Spears/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Spears/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Spears/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Spears/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Spears/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Spears/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Spears/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Spears/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Staves/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Staves/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Staves/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Staves/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Staves/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Staves/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Staves/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Staves/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Staves/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Staves_chaos/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Staves_chaos/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Staves_chaos/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Staves_chaos/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Staves_chaos/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Staves_chaos/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Staves_chaos/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Staves_chaos/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Staves_chaos/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Staves_cold/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Staves_cold/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Staves_cold/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Staves_cold/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Staves_cold/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Staves_cold/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Staves_cold/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Staves_cold/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Staves_cold/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Staves_fire/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Staves_fire/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Staves_fire/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Staves_fire/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Staves_fire/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Staves_fire/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Staves_fire/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Staves_fire/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Staves_fire/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Staves_lightning/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Staves_lightning/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Staves_lightning/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Staves_lightning/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Staves_lightning/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Staves_lightning/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Staves_lightning/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Staves_lightning/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Staves_lightning/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Staves_physical/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Staves_physical/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Staves_physical/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Staves_physical/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Staves_physical/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Staves_physical/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Staves_physical/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Staves_physical/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Staves_physical/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "TwoHand_Maces/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "TwoHand_Maces/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "TwoHand_Maces/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "TwoHand_Maces/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "TwoHand_Maces/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "TwoHand_Maces/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "TwoHand_Maces/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "TwoHand_Maces/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "TwoHand_Maces/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Wands/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Wands/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Wands/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Wands/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Wands/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Wands/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Wands/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Wands/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Wands/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Wands_chaos/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Wands_chaos/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Wands_chaos/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Wands_chaos/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Wands_chaos/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Wands_chaos/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Wands_chaos/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Wands_chaos/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Wands_chaos/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Wands_cold/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Wands_cold/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Wands_cold/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Wands_cold/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Wands_cold/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Wands_cold/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Wands_cold/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Wands_cold/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Wands_cold/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Wands_fire/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Wands_fire/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Wands_fire/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Wands_fire/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Wands_fire/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Wands_fire/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Wands_fire/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Wands_fire/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Wands_fire/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Wands_lightning/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Wands_lightning/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Wands_lightning/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Wands_lightning/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Wands_lightning/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Wands_lightning/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Wands_lightning/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Wands_lightning/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Wands_lightning/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Wands_physical/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Wands_physical/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Wands_physical/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Wands_physical/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Wands_physical/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Wands_physical/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Wands_physical/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Wands_physical/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Wands_physical/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Talismans/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Talismans/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Talismans/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Talismans/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Talismans/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  },
+  "Talismans/Rune_destruction_ManaModifierEffect": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_MaximumLifeIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_MaximumManaIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_MaximumSpiritIncreasePercent": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_evasion_rating_base_maximum_mana": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_evasion_rating_base_spirit_from_equipment": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_IncreasedLife": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_ColdAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_FireAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_LightningAndChaosDamageResistance": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_ReducedCriticalStrikeDamageTaken": {
+   "65": 500
+  },
+  "Body_Armours_str_dex_int/Rune_soul_ReducedAilmentDuration": {
+   "65": 500
+  },
+  "Helmets_str_dex_int/Rune_berserking_ArmourBreakEffect": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_str_dex_int/Rune_berserking_WarcryDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Helmets_str_dex_int/Rune_berserking_GloryGeneration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_MaximumRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_WarcryPower": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_RageCost": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_AdditionalComboChance": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_ArmourBreakDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_RageLossDelay": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_GainRage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_AreaOfEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_WarcryCooldownSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_WarcryLifeRecovery": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Helmets_str_dex_int/Rune_berserking_WarcrySpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_marksman_CurseEffectiveness": {
+   "45": 1000,
+   "65": 1000
+  },
+  "Gloves_str_dex_int/Rune_marksman_ProjectileDamage": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_marksman_ProjectileSpeed": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_marksman_ChainFromTerrain": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_str_dex_int/Rune_marksman_ForkingProjectiles": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_marksman_ChanceToPierce": {
+   "45": 1000,
+   "75": 500
+  },
+  "Gloves_str_dex_int/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 1000,
+   "75": 500
+  },
+  "Gloves_str_dex_int/Rune_marksman_MarkDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_marksman_MarkUseSpeed": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_marksman_AdditionalProjectileChance": {
+   "45": 1000,
+   "65": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_AilmentEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_BleedingDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_FasterAilmentDamage": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_IgniteEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_PoisonEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_DamagingAilmentDuration": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_CurseEffectiveness": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_ExposureEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_CurseDelay": {
+   "75": 500
+  },
+  "Gloves_str_dex_int/Rune_decay_BaseCurseDuration": {
+   "75": 500
+  },
+  "Gloves_str_dex_int/Rune_decay_LifeLeechAmount": {
+   "45": 1000
+  },
+  "Gloves_str_dex_int/Rune_decay_WitheredEffect": {
+   "45": 1000,
+   "75": 1000
+  },
+  "Boots_str_dex_int/Rune_chronomancy_DodgeRoll": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str_dex_int/Rune_chronomancy_MovementVelocityWhileSprinting": {
+   "45": 1000,
+   "78": 1000
+  },
+  "Boots_str_dex_int/Rune_chronomancy_ChargeChanceToNotConsume": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str_dex_int/Rune_chronomancy_CooldownRecovery": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Boots_str_dex_int/Rune_chronomancy_DebuffTime": {
+   "45": 1000,
+   "78": 500
+  },
+  "Boots_str_dex_int/Rune_chronomancy_SkillEffectDuration": {
+   "45": 1000,
+   "55": 1000,
+   "78": 500
+  },
+  "Crossbows_cannon/Rune_destruction_CriticalModifierEffect": {
+   "65": 500
+  },
+  "Crossbows_cannon/Rune_destruction_SpeedModifierEffect": {
+   "65": 500
+  },
+  "Crossbows_cannon/Rune_destruction_ChaosModifierEffect": {
+   "65": 500
+  },
+  "Crossbows_cannon/Rune_destruction_ElementalModifierEffect__heist_enchantment_cold_mod_effect": {
+   "65": 500
+  },
+  "Crossbows_cannon/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect": {
+   "65": 250
+  },
+  "Crossbows_cannon/Rune_destruction_ElementalModifierEffect__heist_enchantment_fire_mod_effect": {
+   "65": 500
+  },
+  "Crossbows_cannon/Rune_destruction_ElementalModifierEffect__heist_enchantment_lightning_mod_effect": {
+   "65": 500
+  },
+  "Crossbows_cannon/Rune_destruction_PhysicalModifierEffect": {
+   "65": 500
+  }
+ }
+}

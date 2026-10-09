@@ -38,7 +38,7 @@ const GROUPS: Record<ModGroup, GroupStyle> = {
   essence: { label: ESSENCE_KIND.perfect_essence.label, how: ESSENCE_KIND.perfect_essence.how, head: "text-sky-300", bar: "border-l-sky-400/70", chip: "bg-sky-500/15 text-sky-200" },
   desecrated: { label: "冒涜", how: "骨で冒涜して 3 択から (冒涜の MOD は 1 つまで)", head: "text-violet-300", bar: "border-l-violet-400/70", chip: "bg-violet-500/15 text-violet-200" },
   otherworldly: { label: "変質した鎖骨 (異界の MOD)", how: "変質した鎖骨の冒涜でだけ出る (冒涜の MOD として 1 つまで)", head: "text-teal-300", bar: "border-l-teal-400/70", chip: "bg-teal-500/15 text-teal-200" },
-  rune: { label: "オーグメント (特別な MOD)", how: "そのルーンを差したまま作ると高貴・カオスで出る (ソケットバウンド。出やすさは仮)", head: "text-orange-300", bar: "border-l-orange-400/70", chip: "bg-orange-500/15 text-orange-200" },
+  rune: { label: "オーグメント (特別な MOD)", how: "そのルーンを差したまま作ると高貴・カオスで出る (ソケットバウンド。重みは Craft of Exile の実測)", head: "text-orange-300", bar: "border-l-orange-400/70", chip: "bg-orange-500/15 text-orange-200" },
 };
 const ORDER: ModGroup[] = ["normal", "essence", "desecrated", "otherworldly", "rune"];
 
@@ -90,7 +90,7 @@ function blocked(m: ModRow): string | null {
             <span class="relative grid h-3.5 w-3.5 shrink-0 place-items-center rounded border text-[9px]" :class="pk.isPicked(m.modId) ? 'border-amber-400 bg-amber-400 text-black' : 'border-white/30'">{{ pk.isPicked(m.modId) ? "✓" : "" }}</span>
             <span class="relative min-w-0 flex-1">{{ named(m) }}</span>
             <span v-if="m.share > 0" class="relative shrink-0 text-[10.5px] tabular-nums text-amber-100/80" :title="m.rune ? `ルーンを差した時の、この側の高貴・カオスの抽選の中での出やすさ。${ASSUMED_RUNE_WEIGHT_NOTE}` : 'この種類・この側の中での出やすさ (今のアイテムレベルで出るティアの重みの割合)'">{{ pct(m.share) }}</span>
-            <span v-if="m.rune" class="relative shrink-0 rounded px-1 text-[10px]" :class="x.st.chip" :title="ASSUMED_RUNE_WEIGHT_NOTE">{{ m.runeJa }} · 仮</span>
+            <span v-if="m.rune" class="relative shrink-0 rounded px-1 text-[10px]" :class="x.st.chip" :title="ASSUMED_RUNE_WEIGHT_NOTE">{{ m.runeJa }} · 実測</span>
             <span v-if="m.alloy" class="relative shrink-0 rounded px-1 text-[10px]" :class="x.st.chip">合金</span>
             <select
               v-if="pk.isPicked(m.modId)"

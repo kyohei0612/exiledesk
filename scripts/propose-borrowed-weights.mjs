@@ -47,7 +47,7 @@ const group = (cls) => cls.replace(/_(str|dex|int|str_dex|str_int|dex_int|str_de
 const rows = new Map();
 for (const [cls, b] of data.bases) {
   const lists = [["冒涜", [...b.pools.desecrated.prefixes, ...b.pools.desecrated.suffixes]]];
-  for (const [rid, p] of Object.entries(b.pools.rune ?? {})) lists.push([`ルーン ${rid}`, [...p.prefixes, ...p.suffixes]]);
+  // ルーンの特殊 MOD は Craft of Exile の実測を当てた (scripts/build-rune-weights-coe.mjs、2026-10-09) ので、ここでは冒涜だけ
   for (const [kind, ids] of lists) for (const id of ids) {
     const m = data.mods.get(id);
     if (!m) continue;
@@ -82,9 +82,9 @@ const near = all.filter((r) => r.how === "系統だけ同じ");
 const ask = all.filter((r) => !r.borrow.size);
 const line = (r) => `| ${r.kind} | ${r.side} | ${r.text.replace(/\|/g, "/")} | ${[...r.classes].join("・")} | ${[...r.now].join("/")} | ${[...r.borrow.keys()].join("<br>").replace(/\|/g, "/") || "—"} |`;
 const head = "| 種類 | 側 | MOD | 部位 | 今の重み | 借りる案 (似た普通の MOD と段) |\n|---|---|---|---|---|---|";
-const md = `# 重みの借り先の案 (冒涜・ルーンの特殊 MOD) — 2026-10-09
+const md = `# 重みの借り先の案 (冒涜) — 2026-10-09
 
-poe2db でも重みは非公開 (1 表示)。今はどれも同じ重み (冒涜 = 等倍、ルーン = 1000) で引いている。
+poe2db でも Craft of Exile でも重みは非公開 (1 表示)。今はどれも同じ重み (等倍) で引いている。ルーンの特殊 MOD は Craft of Exile の実測を当てたので外した。
 借り方: 同じ系統・同じ文の普通の MOD (同じ部位 → 他の部位) の、レベルが一番近い段の重み。文が違う物は「要確認」、
 同じ系統がどこにも無い物は「相談」に分けた。**決めるのはオーナー** (この表は案)。
 

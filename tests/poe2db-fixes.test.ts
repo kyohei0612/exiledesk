@@ -50,4 +50,11 @@ describe("poe2db に合わせた直し", () => {
     expect(new Set(rows.map((r) => r.text)).size).toBe(3);
     expect(rows.every((r) => !/または/.test(r.text))).toBe(true);
   });
+  it("ルーンの特殊 MOD の重みは Craft of Exile の実測 (破壊の元素 250・上の段 500)", () => {
+    const tier = (id: string, ilvl: number) => data.mods.get(id)!.tiers.find((t) => t.ilvl === ilvl)!.weight;
+    expect(tier("Wands_fire/Rune_destruction_ElementalModifierEffect__local_explicit_elemental_damage_mod_effect", 65)).toBe(250);
+    expect(tier("Wands_fire/Rune_destruction_PhysicalModifierEffect", 65)).toBe(500);
+    expect(tier("Helmets_str/Rune_berserking_WarcryDamage", 45)).toBe(1000);
+    expect(tier("Helmets_str/Rune_berserking_WarcryDamage", 75)).toBe(500);
+  });
 });

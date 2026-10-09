@@ -1,75 +1,17 @@
-# 重みの借り先の案 (冒涜・ルーンの特殊 MOD) — 2026-10-09
+# 重みの借り先の案 (冒涜) — 2026-10-09
 
-poe2db でも重みは非公開 (1 表示)。今はどれも同じ重み (冒涜 = 等倍、ルーン = 1000) で引いている。
+poe2db でも Craft of Exile でも重みは非公開 (1 表示)。今はどれも同じ重み (等倍) で引いている。ルーンの特殊 MOD は Craft of Exile の実測を当てたので外した。
 借り方: 同じ系統・同じ文の普通の MOD (同じ部位 → 他の部位) の、レベルが一番近い段の重み。文が違う物は「要確認」、
 同じ系統がどこにも無い物は「相談」に分けた。**決めるのはオーナー** (この表は案)。
 
-- 借りられる (同じ文の普通の MOD がある): 22 種
-- 要確認 (系統は同じだが文が違う。例: 呪印スキルのレベル ← 近接スキルのレベル): 47 種
-- 相談 (似た普通の MOD が無い): 199 種
+- 借りられる (同じ文の普通の MOD がある): 16 種
+- 要確認 (系統は同じだが文が違う。例: 呪印スキルのレベル ← 近接スキルのレベル): 29 種
+- 相談 (似た普通の MOD が無い): 141 種
 
 ## 相談 (似た普通の MOD が無い)
 
 | 種類 | 側 | MOD | 部位 | 今の重み | 借りる案 (似た普通の MOD と段) |
 |---|---|---|---|---|---|
-| ルーン katlas-gloom | P | ダメージ性状態異常がダメージを与える速度が#%速くなる | Gloves | 1000 | — |
-| ルーン katlas-gloom | P | プレイヤーが付与した出血の強度が#%増加する | Gloves | 1000 | — |
-| ルーン katlas-gloom | P | プレイヤーが付与した状態異常の強度が#%増加する | Gloves | 1000 | — |
-| ルーン katlas-gloom | P | プレイヤーが付与した毒の強度が#%増加する | Gloves | 1000 | — |
-| ルーン katlas-gloom | S | ライフリーチ量が#%増加する | Gloves | 1000 | — |
-| ルーン katlas-gloom | S | 呪いのアクティベーションが#%速くなる | Gloves | 1000 | — |
-| ルーン katlas-gloom | S | 呪いの強度が#%増加する | Gloves | 1000 | — |
-| ルーン katlas-gloom | S | 呪いの持続時間が#%増加する | Gloves | 1000 | — |
-| ルーン katlas-gloom | S | 衰弱の強度が#%増加する | Gloves | 1000 | — |
-| ルーン katlas-gloom | S | 敵に付与したダメージ性状態異常の持続時間が#%増加する | Gloves | 1000 | — |
-| ルーン katlas-gloom | S | 曝露の効果が#%増加する | Gloves | 1000 | — |
-| ルーン katlas-gloom | P | 発火の強度が#%増加する | Gloves | 1000 | — |
-| ルーン kolrs-hunt | P | プレイヤーの呪印スキルの効果が#%増加する | Gloves | 1000 | — |
-| ルーン kolrs-hunt | S | 呪印スキルのキャストスピードが#%増加する | Gloves | 1000 | — |
-| ルーン kolrs-hunt | S | 呪印スキルのスキル効果持続時間が#%増加する | Gloves | 1000 | — |
-| ルーン kolrs-hunt | P | 投射物ダメージが#%増加する | Gloves | 1000 | — |
-| ルーン kolrs-hunt | S | 投射物は#%の確率で地形から追加で1回連鎖する | Gloves | 1000 | — |
-| ルーン kolrs-hunt | S | 投射物は分岐する時に#%の確率で追加の投射物を放つ | Gloves | 1000 | — |
-| ルーン kolrs-hunt | S | 投射物を追加で1個放つ超過可能確率 #% | Gloves | 1000 | — |
-| ルーン medveds-tending | P | スピリットが#%増加する | Body_Armours | 1000 | — |
-| ルーン medveds-tending | S | プレイヤーに対するヒットはクリティカルダメージボーナスが#%減少する | Body_Armours | 1000 | — |
-| ルーン medveds-tending | S | 火および混沌耐性 #% | Body_Armours | 1000 | — |
-| ルーン medveds-tending | S | 雷および混沌耐性 #% | Body_Armours | 1000 | — |
-| ルーン medveds-tending | S | 冷気と混沌耐性 #% | Body_Armours | 1000 | — |
-| ルーン thruds-might | S | (15-20)% increased Explicit Chaos Modifier magnitudes | Talismans・Crossbows | 1000 | — |
-| ルーン thruds-might | P | (20-30)% increased Explicit Critical Modifier magnitudes | Talismans・Crossbows | 1000 | — |
-| ルーン thruds-might | P | (25-30)% increased Explicit Speed Modifier magnitudes | Talismans・Crossbows | 1000 | — |
-| ルーン thruds-might | P | 明示クリティカルモッドの強さが#%増加する | Bows・Crossbows・OneHand_Maces・Quarterstaves・Sceptres・Spears・Staves・TwoHand_Maces・Wands | 1000 | — |
-| ルーン thruds-might | P | 明示スピードモッドの強さが#%増加する | Bows・Crossbows・OneHand_Maces・Quarterstaves・Sceptres・Spears・Staves・TwoHand_Maces・Wands | 1000 | — |
-| ルーン thruds-might | S | 明示マナモッドの強さが#%増加する | Bows・Sceptres・Staves・Wands | 1000 | — |
-| ルーン thruds-might | S | 明示火モッドの強さが#%増加する | Bows・Crossbows・OneHand_Maces・Quarterstaves・Sceptres・Spears・Staves・TwoHand_Maces・Wands・Talismans | 1000 | — |
-| ルーン thruds-might | S | 明示元素ダメージモッドの強さが#%増加する | Bows・Crossbows・OneHand_Maces・Quarterstaves・Sceptres・Spears・Staves・TwoHand_Maces・Wands・Talismans | 1000 | — |
-| ルーン thruds-might | S | 明示混沌モッドの強さが#%増加する | Bows・Crossbows・OneHand_Maces・Quarterstaves・Sceptres・Spears・Staves・TwoHand_Maces・Wands | 1000 | — |
-| ルーン thruds-might | S | 明示物理モッドの強さが#%増加する | Bows・Crossbows・OneHand_Maces・Quarterstaves・Sceptres・Spears・Staves・TwoHand_Maces・Wands・Talismans | 1000 | — |
-| ルーン thruds-might | S | 明示雷モッドの強さが#%増加する | Bows・Crossbows・OneHand_Maces・Quarterstaves・Sceptres・Spears・Staves・TwoHand_Maces・Wands・Talismans | 1000 | — |
-| ルーン thruds-might | S | 明示冷気モッドの強さが#%増加する | Bows・Crossbows・OneHand_Maces・Quarterstaves・Sceptres・Spears・Staves・TwoHand_Maces・Wands・Talismans | 1000 | — |
-| ルーン uhtreds-sidereus | P | +(0.3-0.4) metres to Dodge Roll distance | Boots | 1000 | — |
-| ルーン uhtreds-sidereus | S | スキルは#%の確率でチャージを取り除かないがそれを消費したと見なされる | Boots | 1000 | — |
-| ルーン uhtreds-sidereus | S | スキル効果持続時間が#%増加する | Boots | 1000 | — |
-| ルーン uhtreds-sidereus | P | スプリント中に移動スピードが#%増加する | Boots | 1000 | — |
-| ルーン uhtreds-sidereus | P | ドッジロールの距離 +#m | Boots | 1000 | — |
-| ルーン uhtreds-sidereus | S | プレイヤーに対するデバフは#%速く消える | Boots | 1000 | — |
-| ルーン voranas-carnage | S | Inherent [Rage/Rage] loss starts 1 second later | Helmets | 1000 | — |
-| ルーン voranas-carnage | S | Recover (2-3)% of maximum Life when you use a Warcry | Helmets | 1000 | — |
-| ルーン voranas-carnage | S | アーマー破壊の持続時間が#%増加する | Helmets | 1000 | — |
-| ルーン voranas-carnage | P | ウォークライが計算する合計パワーが#%増加する | Helmets | 1000 | — |
-| ルーン voranas-carnage | S | ウォークライクールダウン解消レートが#%増加する | Helmets | 1000 | — |
-| ルーン voranas-carnage | S | ウォークライスキルの効果範囲が#%増加する | Helmets | 1000 | — |
-| ルーン voranas-carnage | S | ウォークライスピードが#%増加する | Helmets | 1000 | — |
-| ルーン voranas-carnage | P | ウォークライのダメージが#%増加する | Helmets | 1000 | — |
-| ルーン voranas-carnage | P | グローリーの生成量が#%増加する | Helmets | 1000 | — |
-| ルーン voranas-carnage | S | ヒット時に#%の確率でコンボを追加で1構築する | Helmets | 1000 | — |
-| ルーン voranas-carnage | S | プレイヤーはウォークライ使用した時にライフの#%を回復する | Helmets | 1000 | — |
-| ルーン voranas-carnage | P | 完全アーマー破壊の効果が#%増加する | Helmets | 1000 | — |
-| ルーン voranas-carnage | S | 敵によるヒットを受けた時に憤怒を#獲得する | Helmets | 1000 | — |
-| ルーン voranas-carnage | P | 憤怒コスト効率が#%増加する | Helmets | 1000 | — |
-| ルーン voranas-carnage | S | 憤怒の固有効果による喪失が#秒遅く始まる | Helmets | 1000 | — |
-| ルーン voranas-carnage | P | 憤怒の最大数 # | Helmets | 1000 | — |
 | 冒涜 | S | (10-20)% chance to [Daze] on [Hit] | Gloves | 2500 | — |
 | 冒涜 | S | (15-25)% chance for [Attack] [Hit/Hits] to apply [Incision] | Gloves | 2500 | — |
 | 冒涜 | S | (20-12)% reduced [Slow/Slowing] Potency of [Debuff/Debuffs] on You | Boots | 2500 | — |
@@ -216,24 +158,6 @@ poe2db でも重みは非公開 (1 表示)。今はどれも同じ重み (冒涜
 
 | 種類 | 側 | MOD | 部位 | 今の重み | 借りる案 (似た普通の MOD と段) |
 |---|---|---|---|---|---|
-| ルーン katlas-gloom | S | 物理アタックダメージの#%をライフとしてリーチする / ライフリーチが#%速くなる | Gloves | 1000 | 物理アタックダメージの#%をライフとしてリーチする Lv38 = 1000 |
-| ルーン kolrs-hunt | S | 全ての呪印スキルのレベル # | Gloves | 1000 | 全ての近接スキルのレベル # Lv41 = 250 |
-| ルーン medveds-tending | P | アーマーおよびエナジーシールドが#%増加する / スピリット # | Body_Armours | 1000 | アーマーおよびエナジーシールドが#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | アーマーおよびエナジーシールドが#%増加する / 最大マナ # | Body_Armours | 1000 | アーマーおよびエナジーシールドが#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | アーマーおよび回避力が#%増加する / スピリット # | Body_Armours | 1000 | アーマーおよび回避力が#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | アーマーおよび回避力が#%増加する / 最大マナ # | Body_Armours | 1000 | アーマーおよび回避力が#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | アーマーが#%増加する / スピリット # | Body_Armours | 1000 | アーマーが#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | アーマーが#%増加する / 最大マナ # | Body_Armours | 1000 | アーマーが#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | エナジーシールドが#%増加する / スピリット # | Body_Armours | 1000 | エナジーシールドが#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | エナジーシールドが#%増加する / 最大マナ # | Body_Armours | 1000 | エナジーシールドが#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | S | プレイヤーに対する状態異常の持続時間が#%減少する | Body_Armours | 1000 | プレイヤーに対する出血の持続時間が#%減少する Lv64 = 500 |
-| ルーン medveds-tending | P | 回避力およびエナジーシールドが#%増加する / スピリット # | Body_Armours | 1000 | 回避力およびエナジーシールドが#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | 回避力およびエナジーシールドが#%増加する / 最大マナ # | Body_Armours | 1000 | 回避力およびエナジーシールドが#%増加する / 最大ライフ # Lv60 = 1000<br>回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | 回避力が#%増加する / スピリット # | Body_Armours | 1000 | 回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | 回避力が#%増加する / 最大マナ # | Body_Armours | 1000 | 回避力が#%増加する / 最大ライフ # Lv60 = 1000 |
-| ルーン medveds-tending | P | 最大ライフ # / 最大マナ # | Body_Armours | 1000 | 最大ライフ # Lv65 = 1000 |
-| ルーン uhtreds-sidereus | S | クールダウン解消レートが#%増加する | Boots | 1000 | Crossbows の グレネードスキルのクールダウン解消レートが#%増加する Lv81 = 1000 |
-| ルーン uhtreds-sidereus | P | 移動スピードが#%増加する / プレイヤーに対する減速のデバフのポテンシャルが#%減少する | Boots | 1000 | 移動スピードが#%増加する Lv82 = 1000 |
 | 冒涜 | S | アタックスピードが#%増加する / コンパニオンのアタックスピードが#%増加する | Bows・Spears | 2500 | アタックスピードが#%増加する Lv37 = 400<br>アタックスピードが#%増加する Lv60 = 200 |
 | 冒涜 | S | アタックスピードが#%増加する / プレイヤーのコンパニオンが存在下にいる間アタックスピードが#%増加する | Bows・Spears | 2500 | アタックスピードが#%増加する Lv37 = 400<br>アタックスピードが#%増加する Lv60 = 200 |
 | 冒涜 | P | インヴォケーションされるスペルのダメージが#%増加する | Foci・Wands | 2500 | スペルダメージが#%増加する Lv60 = 200 |
@@ -268,12 +192,6 @@ poe2db でも重みは非公開 (1 表示)。今はどれも同じ重み (冒涜
 
 | 種類 | 側 | MOD | 部位 | 今の重み | 借りる案 (似た普通の MOD と段) |
 |---|---|---|---|---|---|
-| ルーン kolrs-hunt | S | #%の確率で敵を貫通する | Gloves | 1000 | Quivers の #%の確率で敵を貫通する Lv77 = 500 |
-| ルーン kolrs-hunt | S | クリティカルヒット率が#%増加する | Gloves | 1000 | Amulets の クリティカルヒット率が#%増加する Lv72 = 125 |
-| ルーン kolrs-hunt | S | 全ての投射物スキルのレベル # | Gloves | 1000 | Bows の 全ての投射物スキルのレベル # Lv55 = 250 |
-| ルーン kolrs-hunt | P | 投射物スピードが#%増加する | Gloves | 1000 | Quivers の 投射物スピードが#%増加する Lv82 = 1000 |
-| ルーン medveds-tending | P | 最大マナが#%増加する | Body_Armours | 1000 | Amulets の 最大マナが#%増加する Lv60 = 300 |
-| ルーン medveds-tending | P | 最大ライフが#%増加する | Body_Armours | 1000 | Amulets の 最大ライフが#%増加する Lv60 = 300 |
 | 冒涜 | S | #%の確率で敵を貫通する | Bows・Spears | 2500 | Quivers の #%の確率で敵を貫通する Lv61 = 500 |
 | 冒涜 | S | クリティカルダメージボーナス #% | Crossbows | 1000/500/250/125 | クリティカルダメージボーナス #% Lv73 = 125 |
 | 冒涜 | S | クリティカルダメージボーナスが#%増加する | Helmets | 2500 | Amulets の クリティカルダメージボーナスが#%増加する Lv59 = 250 |
@@ -282,8 +200,8 @@ poe2db でも重みは非公開 (1 表示)。今はどれも同じ重み (冒涜
 | 冒涜 | P | スピリット # | Staves | 2500 | Amulets の スピリット # Lv54 = 400 |
 | 冒涜 | S | プレイヤーに対する出血の持続時間が#%減少する | Belts・Boots | 2500 | Body_Armours の プレイヤーに対する出血の持続時間が#%減少する Lv64 = 500 |
 | 冒涜 | S | マナ自動回復レートが#%増加する | Belts | 2500 | Amulets の マナ自動回復レートが#%増加する Lv55 = 1000 |
-| 冒涜 | S | 器用さ # | Body_Armours・Helmets・Gloves・Boots | 1000 | 器用さ # Lv74 = 1000<br>器用さ # Lv81 = 1000 |
-| 冒涜 | S | 筋力 # | Body_Armours・Helmets・Gloves・Boots | 1000 | 筋力 # Lv74 = 1000 |
+| 冒涜 | S | 器用さ # | Helmets・Gloves・Boots | 1000 | 器用さ # Lv74 = 1000<br>器用さ # Lv81 = 1000 |
+| 冒涜 | S | 筋力 # | Helmets・Gloves・Boots | 1000 | 筋力 # Lv74 = 1000 |
 | 冒涜 | S | 受けたダメージの#%をマナとして回収する | Body_Armours・Bucklers・Shields | 2500 | Amulets の 受けたダメージの#%をマナとして回収する Lv69 = 500 |
 | 冒涜 | S | 受けたダメージの#%をライフとして回収する | Helmets・Shields | 2500 | Amulets の 受けたダメージの#%をライフとして回収する Lv68 = 500 |
 | 冒涜 | S | 受ける感電の持続時間が#%減少する | Boots | 500 | 受ける感電の持続時間が#%減少する Lv75 = 500 |

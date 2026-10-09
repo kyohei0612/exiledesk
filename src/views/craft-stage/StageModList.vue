@@ -280,7 +280,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
         <h3 class="mb-2 flex items-center gap-2 text-[13px] font-bold max-md:min-h-11 max-md:cursor-pointer" @click="phone && toggleSec(sec.sid)">
           <span class="rounded-full px-2.5 py-0.5" :class="toneOf(sec).tab">{{ sec.label }}</span>
           <span class="font-normal opacity-50">{{ sec.count }} 系統</span>
-          <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差すと付く" }} · 重みは公開されていないので仮定 · 出やすさは差した時の割合</span>
+          <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? "はめている" : "差すと付く" }} · 重みは Craft of Exile の実測 · 出やすさは差した時の割合</span>
           <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ</span>
           <span class="ml-auto font-normal opacity-60 md:hidden">{{ secShown(sec.sid) ? "▲" : "▼ 開く" }}</span>
         </h3>
