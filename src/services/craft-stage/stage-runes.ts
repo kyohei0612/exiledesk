@@ -203,7 +203,8 @@ export function convertElements(data: PatchData, item: StageItem, element: strin
   const mods: Array<{ from: StageMod; to: StageMod }> = [];
   let out = item;
   for (const m of allMods(item)) {
-    if (m.unrevealed) continue;
+    // 固定 (フラクチャー) した MOD は変えない (神の聖別と同じ。2026-10-10 点検)
+    if (m.unrevealed || m.fractured) continue;
     const md = byId.get(m.modId);
     if (!md || (only && !only(md)) || !(hit.test(md.id) || hit.test(md.text ?? ""))) continue;
     let target = hit.test(md.id) ? byId.get(swap(md.id)) : undefined;
@@ -287,6 +288,8 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   if (old) {
     const why = replaceBlock(old);
     if (why) return skip(item, why);
+    // アストリッドの創造性 (クラフト MOD 2 つまで) を外すと上限が 1 に戻る。2 つ付いている間は置き換えない (2026-10-10 点検、ゲームの挙動は未確認)
+    if (old.en === "Astrid's Creativity" && allMods(item).filter((m) => m.crafted).length > 1) return skip(item, "クラフト MOD が 2 つある間はアストリッドの創造性を置き換えられない");
   }
   const lim = limitBlock(p.en, now.filter((_, i) => i !== at).map((a) => a.en));
   if (lim) return skip(item, lim);

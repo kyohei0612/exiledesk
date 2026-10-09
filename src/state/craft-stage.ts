@@ -577,11 +577,16 @@ export const craftStage = {
       item_level: itemLevel.value,
       start_rarity: "normal",
       start_paste: null,
-      // 始めの状態の MOD (要望 ⑱-2)。無ければ書かない
-      ...(startMods.value.length ? ({ start: { mods: startMods.value } satisfies StartSpec } as object) : {}),
+      // 始めの状態: MOD (要望 ⑱-2) と、手で打つ画面が始めに開けているソケット (規格外。書かないと再生でルーンが打てない、2026-10-10 点検)
+      ...(() => {
+        const sockets = data.value ? fullSockets(freshItem(data.value, base.value, itemLevel.value)).sockets ?? 0 : 0;
+        const start: StartSpec = { ...(startMods.value.length ? { mods: startMods.value } : {}), ...(sockets ? { sockets } : {}) };
+        return Object.keys(start).length ? ({ start } as object) : {};
+      })(),
       seed: seed.value,
       // 手ごとの乱数 (seed) も書く (2026-10-09 から手ごとに新しい乱数。再生はこれを使う。追加のキー = outcome / pick と同じ扱い)
-      steps: (log.value.length ? log.value.map((s) => ({ currency: s.out.currency, omen: s.out.omen ?? null, times: 1, note: null, ...(s.out.seed != null ? { seed: s.out.seed } : {}) })) : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
+      // カタリストは手で打つと 1 手で上限まで、再生は 1 手 = 1 個 (+1%)。上げた分の回数で書く (2026-10-10 点検: 再生で品質が違った)
+      steps: (log.value.length ? log.value.map((s) => ({ currency: s.out.currency, omen: s.out.omen ?? null, times: s.out.currency.startsWith("catalyst_") ? Math.max(1, (s.after.quality ?? 0) - (s.before.qualityTag === s.after.qualityTag ? s.before.quality ?? 0 : 0)) : 1, note: null, ...(s.out.seed != null ? { seed: s.out.seed } : {}) })) : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
     };
   },
   /** 結果 JSON (今の相場の値段で) */

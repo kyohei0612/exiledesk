@@ -83,6 +83,13 @@ export function takenFamilies(data: PatchData, item: StageItem, except?: StageMo
     return md ? familyKeysOf(md) : [m.family];
   }));
 }
+/** 付いているエッセンス (クラフト) の MOD の生の系統 (エッセンスを打てるかの判定用。普通の MOD とは同じ系統でも一緒に付く) */
+export function takenCraftedFamilies(data: PatchData, item: StageItem): Set<string> {
+  return new Set(allMods(item).filter((m) => m.crafted).flatMap((m) => {
+    const md = data.mods.get(m.modId);
+    return md ? rawFamiliesOf(md) : [m.family];
+  }));
+}
 /** 付いている MOD の生の系統 (エッセンスを打てるかの判定用) */
 export function takenRawFamilies(data: PatchData, item: StageItem): Set<string> {
   return new Set(allMods(item).flatMap((m) => {

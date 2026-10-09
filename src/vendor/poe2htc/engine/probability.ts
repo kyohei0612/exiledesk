@@ -270,7 +270,9 @@ export function annulProbability(data: PatchData, item: ItemState, targetModId: 
     case 'dextral': return onSuffix && sf > 0 ? 1 / sf : 0;
     case 'light': {
       const mod = data.mods.get(targetModId);
-      return item.desecrated === true && mod?.source === 'desecrated' ? 1 : 0;
+      // A bone can also reveal a NORMAL mod; it is still the item's desecrated mod (PlacedMod.desecrated), and the
+      // Omen of Light takes it all the same (ExileDesk 2026-10-10 parity: it read 0 against the emulator's 100%)
+      return item.desecrated === true && (placed?.desecrated === true || mod?.source === 'desecrated') ? 1 : 0;
     }
   }
 }
@@ -510,6 +512,16 @@ export function perfectEssenceProbability(
 
   const pf = item.prefixes.filter((p) => !p.fractured).length;
   const sf = item.suffixes.filter((p) => !p.fractured).length;
+  // ExileDesk 2026-10-10 (engine-emulator parity): when the essence's own side is full, the removal has to come
+  // from that side or the add has nowhere to go — the emulator (apply-essence.ts) removes from it, and an omen
+  // pointing at the other side cannot be used at all.
+  const full = essenceType === 'prefix' ? prefixesFull(item) : suffixesFull(item);
+  if (full) {
+    const omenSide = opts.omen === 'sinistral' ? 'prefix' : opts.omen === 'dextral' ? 'suffix' : null;
+    if (omenSide && omenSide !== essenceType) return 0;
+    const n = essenceType === 'prefix' ? pf : sf;
+    return (essenceType === 'prefix' ? onPrefix : onSuffix) && n > 0 ? 1 / n : 0;
+  }
   switch (opts.omen ?? 'none') {
     case 'none': {
       if (essenceType === 'prefix' && sf === 0 && pf !== 0) return 1 / pf;
@@ -932,22 +944,22 @@ export function desecrationBossOfferProbability(
   if (!mod.tags.includes(tag)) return 0;
   if (opts.constrainTo && opts.constrainTo !== mod.type) return 0;
   const open = { prefix: !prefixesFull(item), suffix: !suffixesFull(item) };
-  const countOf = (sd: AffixType): number => {
-    if (!open[sd]) return 0;
+  const modsOf = (sd: AffixType): Mod[] => {
+    if (!open[sd]) return [];
     const ids = sd === 'prefix' ? item.base.pools.desecrated.prefixes : item.base.pools.desecrated.suffixes;
-    let n = 0;
-    for (const id of ids) {
-      const m = data.mods.get(id);
-      if (m && m.tags.includes(tag) && familyAvailable(data, item, m) && m.tiers.some((t) => t.ilvl <= item.level && t.weight > 0)) n++;
-    }
-    return n;
+    return [...new Set(ids)].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && m.tags.includes(tag) && familyAvailable(data, item, m) && m.tiers.some((t) => t.ilvl <= item.level && t.weight > 0));
   };
   if (!familyAvailable(data, item, mod)) return 0;
-  const here = countOf(mod.type);
+  const hereMods = modsOf(mod.type);
+  const here = hereMods.length;
   if (here === 0) return 0;
-  const other = opts.constrainTo ? 0 : countOf(mod.type === 'prefix' ? 'suffix' : 'prefix');
+  const other = opts.constrainTo ? 0 : modsOf(mod.type === 'prefix' ? 'suffix' : 'prefix').length;
   const pSide = here / (here + other);
-  const pIn = Math.min(1, DESECRATION_OFFER_COUNT / here);
+  // Each faction mod is equally likely; a pick removes the others of its family (two Armour Break mods are never offered together)
+  const pool = pickPool(hereMods, () => 1);
+  const t = pool.ids.indexOf(desiredModId);
+  if (t < 0) return 0;
+  const pIn = Math.min(1, inPicks(pool.ws, pool.clash, t, DESECRATION_OFFER_COUNT));
   return pSide * (1 - (1 - pIn) ** (1 + (opts.rerolls ?? 0)));
 }
 

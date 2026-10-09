@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-09T16:00:58.202Z",
+ "generated": "2026-10-09T16:24:34.371Z",
  "note": "poe2db (今のページ) に合わせる直し。scripts/build-poe2db-fixes.mjs が作る",
  "weights": {
   "Talismans/Strength": {
@@ -8360,7 +8360,7 @@
    "text": "#% increased Attack Speed",
    "tiers": [
     {
-     "name": "Essence of Haste",
+     "name": "Lesser Essence of Haste",
      "ilvl": 22,
      "weight": 0,
      "ranges": [
@@ -9194,7 +9194,7 @@
      ]
     },
     {
-     "name": "Greater Essence of the Body",
+     "name": "Essence of the Body",
      "ilvl": 46,
      "weight": 0,
      "ranges": [

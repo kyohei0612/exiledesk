@@ -29,7 +29,11 @@ export function rawFamiliesOf(mod: Mod): string[] {
   return mod.families?.length ? [...mod.families] : mod.family ? [mod.family] : [];
 }
 
-/** エッセンスを打てないか: 付いている MOD (の生の系統) に同じ系統がある */
+/**
+ * エッセンスを打てないか: 付いている **エッセンス (クラフト) の** MOD に同じ系統がある。普通の MOD とは同じ系統でも一緒に付く
+ * (2026-10-10 オーナー確認。poe.ninja の実物に作った MOD と同じ系統の普通の MOD が並んでいる。計算機の familiesOf の crafted: と同じ)。
+ * 呼ぶ側は takenRaw にクラフトの MOD の系統だけを渡す (takenCraftedFamilies)
+ */
 export function essenceClash(essence: Mod, takenRaw: ReadonlySet<string>): boolean {
   return rawFamiliesOf(essence).some((f) => takenRaw.has(f));
 }

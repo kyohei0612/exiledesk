@@ -146,7 +146,14 @@ for (const [pg, classes] of pages) {
       }
       for (const [id, { d, tiers }] of want) {
         const exists = ours.some((o) => o.id === id);
-        cloned.set(id, { ...d.m, id, tiers: [...tiers.values()].sort((a, b) => a.ilvl - b.ilvl) });
+        let ts = [...tiers.values()].sort((a, b) => a.ilvl - b.ilvl);
+        // エッセンスの段の名前は MOD レベルの低い順にレッサー / 普通 / 上級 (段ごとに別の部位から写すと名前が被った。2026-10-10 点検:
+        // 鎧のライフが「上級」2 つ、タリスマンの攻撃速度が「普通」2 つで、レッサーのエッセンスが段無し・1 つ上が 1 つ下の段を付けていた)
+        if (g === "essence" && ts.length === 3 && new Set(ts.map((t) => t.name)).size < 3) {
+          const core = String(ts[0].name).replace(/^(Lesser|Greater|Perfect) /, "");
+          ts = ts.map((t, i) => ({ ...t, name: `${["Lesser ", "", "Greater "][i]}${core}` }));
+        }
+        cloned.set(id, { ...d.m, id, tiers: ts });
         if (!exists) fx().add[d.side === "prefix" ? "prefixes" : "suffixes"].push(id);
         // エッセンスの鍵 (どのエッセンスで付くか) も写す
         if (g === "essence") for (const lv of ["lesser", "normal", "greater", "perfect"]) {

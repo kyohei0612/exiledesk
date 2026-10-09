@@ -8,7 +8,7 @@
 // or omen with no price is NOT offered, so a missing price can't mint a free super-orb.
 
 import { CURRENCY_FLOOR, type ItemBase, type Mod, type PatchData } from '../engine/types.ts';
-import { excluded, poolTotalWeight, type WeightBoost } from '../engine/pool.ts';
+import { excluded, familiesOf, modTierWeight, poolTotalWeight, resolveMod, type WeightBoost } from '../engine/pool.ts';
 import type { DesecrationBossOmen } from '../engine/probability.ts';
 import { ANCIENT_BONE_FLOOR, DESECRATION_EXCLUSIVE_COUNT, DESECRATION_OFFER_COUNT, desecrationOmenForMod } from '../engine/probability.ts';
 import type { CurrencyPolicy, Prices, PricedStep } from './cost.ts';
@@ -280,6 +280,23 @@ export function createActionSpace(params: ActionSpaceParams): {
     limits = { prefixes: perSideCap('rare'), suffixes: perSideCap('rare') },
   } = params;
   const n = list.length;
+  /** Families of every target (junk never holds one of these) */
+  const targetFamilies = new Set(list.flatMap((t) => t.mods.flatMap((m) => familiesOf(m.mod))));
+  /** Expected weight of the family one junk mod holds on a side (see addOutcomes) */
+  const junkFamilyWeight = (ids: readonly string[], floor: number, occ: ReadonlySet<string>, boost?: WeightBoost): number => {
+    const byFam = new Map<string, number>();
+    for (const id of ids) {
+      const mod = resolveMod(data, id);
+      if (excluded(mod, occ) || familiesOf(mod).some((f) => targetFamilies.has(f))) continue;
+      const w = modTierWeight(mod, floor, level) * (boost ? boost(mod) : 1);
+      if (!(w > 0)) continue;
+      const k = familiesOf(mod).join('|');
+      byFam.set(k, (byFam.get(k) ?? 0) + w);
+    }
+    let sw = 0, sw2 = 0;
+    for (const w of byFam.values()) { sw += w; sw2 += w * w; }
+    return sw > 0 ? sw2 / sw : 0;
+  };
   // THE choke point. Every successor in this file is named through `encodeState`, so canonicalising
   // here reaches all of them at once — no call site below knows, or needs to, that two arrangements of
   // an interchangeable pair are one state. `addTo` already sums duplicates, so the collapse is free.
@@ -374,8 +391,12 @@ export function createActionSpace(params: ActionSpaceParams): {
     const prefixOpen = constrainTo !== 'suffix' && prefixOpenIn(s, into);
     const suffixOpen = constrainTo !== 'prefix' && suffixOpenIn(s, into);
     const occ = occupiedFamilies(s.present, s.blocked, list);
-    const prefTotal = prefixOpen ? poolTotalWeight(data, pools.normal.prefixes, floor, level, occ, boost) : 0;
-    const sufTotal = suffixOpen ? poolTotalWeight(data, pools.normal.suffixes, floor, level, occ, boost) : 0;
+    // Junk is a bare count, but each junk mod still holds a family the add cannot roll. ExileDesk 2026-10-10
+    // (engine-emulator parity): the denominator ignored that and a target on a 4-junk ring read 4.95% for an
+    // emulated 6.57%. Take out, per junk mod, the expected weight of the family it holds (a junk family is
+    // drawn by weight, so E[w] = Σw²/Σw over the non-target families still free).
+    const prefTotal = prefixOpen ? poolTotalWeight(data, pools.normal.prefixes, floor, level, occ, boost) - s.jp * junkFamilyWeight(pools.normal.prefixes, floor, occ, boost) : 0;
+    const sufTotal = suffixOpen ? poolTotalWeight(data, pools.normal.suffixes, floor, level, occ, boost) - s.js * junkFamilyWeight(pools.normal.suffixes, floor, occ, boost) : 0;
     const grand = prefTotal + sufTotal;
     const out: Dist = new Map();
     if (grand <= 0) return out;

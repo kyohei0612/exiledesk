@@ -17,7 +17,7 @@ import { applyRune, runeKeyForId } from "./stage-runes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceClash, familyBlocked } from "../mods/mod-rules";
 import { craftedLimitOf, normalTierOf } from "./apply-essence";
-import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, takenRawFamilies, withMod } from "./stage-core";
+import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, takenCraftedFamilies, withMod } from "./stage-core";
 import type { StageApply, StageItem, StageSide } from "./types";
 
 export type ForceFlag = "n" | "e" | "d" | "f" | "x";
@@ -61,7 +61,8 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
     if (allMods(it).some((m) => m.fractured)) return skip(item, "フラクチャーは 1 つまで");
     const have = allMods(it).find((m) => m.modId === p.modId);
     if (have) {
-      if (have.desecrated || have.crafted) return skip(item, "冒涜・エッセンスの MOD は固定できない");
+      // エッセンス・発現済みの冒涜の MOD も固定できる (オーブと同じ。2026-10-10 オーナー確認)。未発現は固定されない
+      if (have.unrevealed) return skip(item, "未発現の冒涜 MOD は固定できない");
       const fixed = { ...have, fractured: true };
       const swap = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.map((m) => (m === have ? fixed : m));
       return { applied: true, item: { ...it, prefixes: swap(it.prefixes), suffixes: swap(it.suffixes) }, added: [fixed], removed: [] };
@@ -75,7 +76,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   if (p.flag === "e") {
     const limit = craftedLimitOf(it);
     if (allMods(it).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? "クラフト MOD はアストリッドの創造性込みで 2 つまで" : "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)");
-    if (essenceClash(mod, takenRawFamilies(data, it))) return skip(item, "エッセンスと重なる系統の MOD が付いている");
+    if (essenceClash(mod, takenCraftedFamilies(data, it))) return skip(item, "エッセンスの MOD どうしで系統が重なる");
   }
   // 特殊 MOD のルーン: 差していなければ先に差す (2026-10-09 オーナー「手動で付けた場合はルーン勝手にはめておｋ、セットで」)
   let socketed: StageApply["augment"] | undefined;

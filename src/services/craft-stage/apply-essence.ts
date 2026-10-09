@@ -11,7 +11,7 @@
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { BREACH_FAMILY } from "../htc/omens";
-import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, SIDES, skip, takenRawFamilies, withMod } from "./stage-core";
+import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, SIDES, skip, takenCraftedFamilies, withMod } from "./stage-core";
 import { essenceClash } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
@@ -63,7 +63,7 @@ export const isInfiniteEssence = (key: string): boolean => / of the Infinite$/.t
 function pickInfinite(data: PatchData, item: StageItem, key: string, rng: () => number): { level: string; mod: Mod; side: StageSide } | null {
   const level = /^essence:([a-z]+):/.exec(key)?.[1];
   const en = ESSENCE_KEYS[key]?.en;
-  const taken = takenRawFamilies(data, item);
+  const taken = takenCraftedFamilies(data, item);
   const list = essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !essenceClash(x.mod, taken));
   if (!level || !list.length) return null;
   return { level, ...list[Math.floor(rng() * list.length)]! };
@@ -82,7 +82,7 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   // クラフト MOD は 1 つまで、アストリッドの創造性をはめていれば 2 つ (2026-10-03: 前はアストリッドを見ていなかった)
   const limit = craftedLimitOf(item);
   if (allMods(item).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? "クラフト MOD はアストリッドの創造性込みで 2 つまで" : "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)");
-  const clash = (it: StageItem) => essenceClash(mod, takenRawFamilies(data, it));
+  const clash = (it: StageItem) => essenceClash(mod, takenCraftedFamilies(data, it));
   const sm = { ...makeStageMod(mod, side, tierIndex, rng), ...normalTierOf(data, item, mod, tier), crafted: true };
 
   if (level !== "perfect") {

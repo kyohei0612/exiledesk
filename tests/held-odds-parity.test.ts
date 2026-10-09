@@ -45,6 +45,10 @@ const ADD: Case[] = [
   { name: "指輪 レア 高貴 + 左", item: ringRare, key: "exalt", omens: ["OmenofSinistralExaltation"] },
   { name: "指輪 レア 高貴 + 右", item: ringRare, key: "exalt", omens: ["OmenofDextralExaltation"] },
   { name: "指輪 品質 高貴 + 触媒", item: ringQual, key: "exalt", omens: ["OmenofCatalysingExaltation"] },
+  { name: "指輪 レア 大いなる高貴", item: ringRare, key: "exalt", omens: ["OmenofGreaterExaltation"] },
+  { name: "指輪 品質 (ライフ) 大いなる高貴 + 触媒", item: ringQual, key: "exalt", omens: ["OmenofGreaterExaltation", "OmenofCatalysingExaltation"] },
+  { name: "指輪 レア 大いなる高貴 + 左", item: ringRare, key: "exalt", omens: ["OmenofGreaterExaltation", "OmenofSinistralExaltation"] },
+  { name: "鎧 大いなる高貴", item: bodyRare, key: "exalt", omens: ["OmenofGreaterExaltation"] },
   { name: "指輪 レア カオス", item: ringRare, key: "chaos" },
   { name: "指輪 レア カオス + 削減", item: ringRare, key: "chaos", omens: ["OmenofWhittling"] },
   { name: "指輪 レア カオス + 左の抹消", item: ringRare, key: "chaos", omens: ["OmenofSinistralErasure"] },
@@ -88,9 +92,8 @@ describe("確率表 = 打った結果 (MOD を足す手)", () => {
       for (let s = 1; s <= N; s++) {
         const r = applyCurrency(data, c.item, c.key, mulberry32(1000 + s), c.omens ?? []);
         expect(r.applied, r.reason).toBe(true);
-        const before = new Set([...c.item.prefixes, ...c.item.suffixes].map((m) => m.modId));
-        const add = (r.added ?? []).find((m) => !before.has(m.modId) || c.key === "chaos") ?? r.added?.[0];
-        if (add) seen.set(add.modId, (seen.get(add.modId) ?? 0) + 1);
+        // 付いた MOD を全部数える (大いなる高貴は 2 つ。表は「どれかで付く確率」。前は 1 つ目だけ見ていて、大いなる高貴の抜けを見逃した)
+        for (const id of new Set((r.added ?? []).map((m) => m.modId))) seen.set(id, (seen.get(id) ?? 0) + 1);
       }
       for (const [id, n] of seen) expect(h!.byMod.has(id), `表で 0% なのに付いた: ${id}`).toBe(true);
       for (const [id, x] of h!.byMod) {
@@ -99,6 +102,12 @@ describe("確率表 = 打った結果 (MOD を足す手)", () => {
       }
     });
   }
+  it("大いなる高貴のお告げを掛けると、表の確率が上がる (2 つ付くので)", () => {
+    const one = heldOdds(data, ringQual, "exalt", ["OmenofCatalysingExaltation"])!;
+    const two = heldOdds(data, ringQual, "exalt", ["OmenofCatalysingExaltation", "OmenofGreaterExaltation"])!;
+    const life = [...two.byMod.keys()].find((id) => /Life/.test(id))!;
+    expect(two.byMod.get(life)!.w / two.total).toBeGreaterThan((one.byMod.get(life)!.w / one.total) * 1.5);
+  });
   it("コルを差すとマークスマンの MOD に確率が出る、差していなければ 0", () => {
     const rune = (h: ReturnType<typeof heldOdds>) => [...(h?.byMod.keys() ?? [])].filter((id) => data.mods.get(id)?.rune === "kolrs-hunt").length;
     expect(rune(heldOdds(data, glovesRare, "exalt", []))).toBe(0);

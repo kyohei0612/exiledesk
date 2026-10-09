@@ -246,6 +246,8 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
     // 下限はエンジンの表 (変成・増強 55 / 70、高貴 35 / 50)
     const fl = CURRENCY_FLOOR[base];
     for (const [k, floor] of [[base, fl.base], [`${base}_greater`, fl.greater], [`${base}_perfect`, fl.perfect]] as const) {
+      // アイテムレベルが下限に届かない強さは打てない (2026-10-10 点検: ilvl 60 で完全の変成を選んで 1 手目で止まっていた)
+      if (floor > spec.itemLevel) continue;
       const total = ids.reduce((a, id) => a + w(id, 0, floor), 0);
       const p = total > 0 ? membersOf(t).reduce((a, x) => a + w(x.modId, x.minTierIndex, floor), 0) / total : 0;
       const c = p > 0 ? (spec.price(k) || 1e-9) / p : Infinity;
@@ -546,7 +548,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
         // 取り直しは完全高貴 + その側のお告げ (外れは普通の消去) に替える。オーナー「完全高貴スパム、削減は消える可能性があるので使わない」
         const q = pat[lost]!;
         if (q.kind === "chaos" && q.target && !regain.has(lost)) {
-          regain.set(lost, { kind: "exalt", currency: "exalt_perfect", omens: [SIDE_OMEN.exalt[sideOf(q.target.modId)]], target: q.target, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] } });
+          regain.set(lost, { kind: "exalt", currency: spec.itemLevel >= CURRENCY_FLOOR.exalt.perfect ? "exalt_perfect" : grade("exalt", q.target), omens: [SIDE_OMEN.exalt[sideOf(q.target.modId)]], target: q.target, onMiss: "annul_redo", miss: { kind: "annul", currency: "annul", omens: [] } });
         }
       }
       if (i >= pat.length) {

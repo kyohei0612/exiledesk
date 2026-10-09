@@ -39,7 +39,8 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   const altered = key === "desecrate_altered";
   if (altered && !item.cls.pools.otherworldly) return skip(item, "変質した鎖骨はアミュレット・指輪・ベルトだけ");
   // 深淵の王の印があれば、骨は必ず印を置き換える (側は印の側)。段の下限 33 (仮)。古代の骨とは重ならない (高い方)
-  const mark = allMods(item).find((m) => m.abyssMark);
+  // 固定 (フラクチャー) した印は置き換えない (2026-10-10 点検: 骨が固定済みの印を消していた)。その時は普通の骨と同じ
+  const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
   const floor = Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0);
   // 古代の骨も最低 MOD レベルのあるカレンシー (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 3)。深淵の王の印の下限 (仮) は別
   if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR) return skip(item, `アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`);
@@ -77,6 +78,19 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
     desecrated: true, unrevealed: { floor, altered, faction },
   };
   return { applied: true, item: withMod(cur, hidden), added: [hidden], removed };
+}
+
+/**
+ * 両側が埋まったレアに骨を打つ時の、側ごとの重み (applyBone と同じ: 出うる冒涜の MOD の重みの和、勢力のお告げなら数)。
+ * 確率表 (held-odds.ts) が同じ決まりで側を混ぜるのに使う
+ */
+export function boneSideWeights(data: PatchData, item: StageItem, key: string, used: readonly string[]): Record<StageSide, number> {
+  const altered = key === "desecrate_altered";
+  const floor = key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0;
+  const factionOmen = used.find((o) => FACTION_TAG[o]);
+  const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;
+  const w = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined).reduce((a, c) => a + c.w, 0);
+  return { prefix: w("prefix"), suffix: w("suffix") };
 }
 
 /** 発現の候補の置き場 (勢力のお告げなら、その勢力の冒涜の MOD だけを MOD ごとに等しく) */
