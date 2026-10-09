@@ -44,7 +44,11 @@ withDefaults(
           <span v-if="error" class="text-amber-300">— {{ error }}</span>
         </p>
         <!-- 長い注意書き。出どころの行とは分ける -->
-        <p v-if="$slots.note" class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1"><slot name="note" /></p>
+        <!-- 長い注意書きは既定で閉じる (2026-10-10 取引履歴の見直し。オーナー「説明・内訳は既定で閉じ、要る時に開く」) -->
+        <details v-if="$slots.note" class="mt-1">
+          <summary class="text-[11px] text-[var(--exile-color-text-tertiary)] cursor-pointer select-none hover:text-[var(--exile-color-text-secondary)]">詳しく</summary>
+          <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)] mt-1"><slot name="note" /></p>
+        </details>
       </div>
       <!-- 手動更新など、この画面の操作 -->
       <div v-if="$slots.actions" class="flex items-center gap-2 flex-wrap shrink-0">

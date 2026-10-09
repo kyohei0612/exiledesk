@@ -43,10 +43,12 @@ const dayGroups = computed(() => {
 </script>
 
 <template>
-    <div class="rounded-xl border border-white/10 p-3 text-[12px] overflow-x-auto">
-      <p v-if="entries.length === 0" class="text-[var(--exile-color-text-tertiary)]">
+    <!-- 外の枠 (TradeHistory の g-panel) の中なので、ここは枠を付けずに上の線だけ (2026-10-10 UI 見直し) -->
+    <div class="border-t border-[var(--exile-color-border-subtle)] pt-1 text-[12px] overflow-x-auto">
+      <p v-if="entries.length === 0" class="py-4 text-[var(--exile-color-text-tertiary)]">
         まだ履歴がありません。ログインして「履歴を取得」を押すと、公式サイトのマーチャント履歴がここに入ります。
       </p>
+      <p v-else-if="visible.length === 0" class="py-4 text-center text-[var(--exile-color-text-tertiary)]">この期間に売れた物はありません</p>
       <table v-else class="w-full">
         <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
           <tr>
@@ -85,8 +87,5 @@ const dayGroups = computed(() => {
           </tr>
         </tbody>
       </table>
-      <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-        取った履歴はリーグごとにこの PC に残ります (公式サイトは直近の分しか返さないため、古い分も消さずに足していきます)。換算は今の相場 (カレンシーランキング) で、売れた時の相場ではありません。
-      </p>
     </div>
 </template>
