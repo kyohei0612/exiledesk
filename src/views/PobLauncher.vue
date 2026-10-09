@@ -81,10 +81,12 @@ onActivated(() => {
 </script>
 
 <template>
-  <div class="min-h-full flex flex-col bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <div class="h-full flex flex-col overflow-hidden bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
   <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03)。サイドバーの名前「PoB を開く」と同じにした -->
   <TabBar art="pob" title="PoB を開く" />
-  <section class="block px-6 py-4">
+  <!-- 中身は 1 つの枠に (2026-10-10 UI 見直し。他の画面と同じ形) -->
+  <div class="flex-1 min-h-0 flex p-4">
+  <section class="g-panel flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 py-2">
     <p class="mb-3 text-[12px] text-[var(--exile-color-text-secondary)]">
       Path of Building (PoE2) 日本語版 = 公式 PoB + PoB2-JP 日本語化パッチを ExileDesk が管理します。初回だけダウンロード (約 100 MB)、以降は 30 日ごとに更新を確認します。
     </p>
@@ -156,5 +158,6 @@ onActivated(() => {
       ビルドデータは公式 PoB と同じ場所に保存されるため、更新・削除しても消えません。
     </p>
   </section>
+  </div>
   </div>
 </template>
