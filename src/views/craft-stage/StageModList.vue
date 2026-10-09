@@ -13,6 +13,7 @@
 -->
 <script setup lang="ts">
 import { keepPlace } from "../../utils/keep-place";
+import { autoGroup } from "../../services/craft-stage/auto-group";
 import { AIM_MAX } from "../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
@@ -183,7 +184,7 @@ function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
   // (① フラクチャーの候補はシミュレーションのポップアップ [[StageFracturePicker.vue]] で選ぶ)
   if (isTarget(modId, t)) s.simTargets.value = list.filter((x) => x.modId !== modId);
   else if (list.some((x) => x.modId === modId)) s.simTargets.value = list.map((x) => (x.modId === modId ? { ...x, minTierIndex: idx } : x));
-  else s.simTargets.value = [...list, { modId, minTierIndex: idx }];
+  else s.simTargets.value = s.data.value ? autoGroup(s.data.value, [...list, { modId, minTierIndex: idx }], modId) : [...list, { modId, minTierIndex: idx }];
 }
 
 /** エッセンスの段の名前 (英語) → 日本語 */

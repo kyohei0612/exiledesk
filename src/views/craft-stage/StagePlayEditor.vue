@@ -67,7 +67,7 @@ const aimOpts = computed<AimOpt[]>(() => {
     for (const t of ts) {
       const ms = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
       if (new Set(ms.map((m) => sideOfId(m.modId))).size < 2) continue;
-      out.push({ key: "any:" + ms.map((m) => m.modId).sort().join(","), label: "どれか 1 つ", title: `プレかサフィのどれか 1 つ (付いた側で道が分かれる): ${ms.map((m) => shortName(m.modId)).join(" / ")}`, mods: ms, side: "any", need: 1 });
+      out.push({ key: "any:" + ms.map((m) => m.modId).sort().join(","), label: "指定した MOD のどれか 1 つ", title: `プレかサフィのどれか 1 つ (付いた側で道が分かれる): ${ms.map((m) => shortName(m.modId)).join(" / ")}`, mods: ms, side: "any", need: 1 });
     }
   }
   const seen = new Set<string>();

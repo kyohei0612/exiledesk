@@ -8,7 +8,7 @@
   並べる物・名前・値段は [[craft-stage-shelf.ts]]、1 つの見た目は [[ShelfButton.vue]]。
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, useSlots, watch } from "vue";
 import ShelfButton from "./ShelfButton.vue";
 import { useShelf } from "../../state/shelf-context";
 import { bonesFor, CATALYSTS, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
@@ -16,14 +16,55 @@ import { runeEffectFor, runeOf, socketCapOf } from "../../services/craft-stage/s
 
 const emit = defineEmits<{ hold: [key: string] }>();
 type ShelfTab = "usable" | "orb" | "essence" | "catalyst" | "rune" | "omen";
-/** 最初に開くタブ (エミュレーターは「使用可能」。2026-10-09 オーナー「エミュレーターではデフォルトで使用可能のオーブの所が良いな基本的に」) */
-const props = withDefaults(defineProps<{ initialTab?: ShelfTab }>(), { initialTab: "orb" });
+/** 最初に開くタブ。エミュレーターもシミュレーターも「使用可能」(2026-10-09 オーナー「エミュレーターではデフォルトで使用可能」「シミュレーターも使用可能からスタート」) */
+const props = withDefaults(defineProps<{ initialTab?: ShelfTab }>(), { initialTab: "usable" });
 const craftStage = useShelf();
 /**
  * 持っているカレンシーに掛けられるお告げの並び (呼ぶ側の slot "held")。オーブのタブでは使える物の並びの直後 (2026-10-05 から。前は「その他」の段の直後)、
  * 他のタブは一番下
  */
 const tab = ref<ShelfTab>(props.initialTab);
+/**
+ * 持った物に掛けられるお告げの欄 (slot "held") が出たら、見える所まで送る。打ち終わって欄が消えたら元の位置に戻す
+ * (途中で自分で動かしていたら戻さない)。2026-10-09 オーナー「高貴とか選んだらお告げ下に出るけど画面は動かなくて表示されたか分かんないから
+ * 下まで表示してあげて、終わったら既定の動きに戻るように」
+ */
+const slots = useSlots();
+const root = ref<HTMLElement | null>(null);
+let back: { sc: HTMLElement | null; top: number; after: number | null } | null = null;
+const scrollerOf = (el: HTMLElement): HTMLElement | null => {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const o = getComputedStyle(p).overflowY;
+    if ((o === "auto" || o === "scroll") && p.scrollHeight > p.clientHeight) return p;
+  }
+  return null; // ページごと送る (スマホ)
+};
+const topOf = (sc: HTMLElement | null): number => (sc ? sc.scrollTop : window.scrollY);
+// 持っている物が替わった時に見る (欄が出たままでも、持ち替えたら送る)
+watch(() => craftStage.held.value, (k, old) => {
+  if (k) {
+    void nextTick(() => {
+      if (!slots.held) return;
+      const box = root.value?.querySelector<HTMLElement>("[data-held-box]");
+      if (!box) return;
+      const r = box.getBoundingClientRect();
+      if (r.bottom <= window.innerHeight && r.top >= 0) return; // もう見えている
+      const sc = scrollerOf(box);
+      if (!back) back = { sc, top: topOf(sc), after: null };
+      // スマホの下に固定の帯 (持っている物 → 使う) があれば、その分だけ上に (帯の裏に隠れないように)
+      const bar = document.querySelector<HTMLElement>(".fixed.bottom-0");
+      box.style.scrollMarginBottom = `${(bar?.offsetHeight ?? 0) + 8}px`;
+      // なめらかに送る指定は環境によって動かなかったので、すぐ送る
+      box.scrollIntoView({ block: "nearest", behavior: "instant" as ScrollBehavior });
+      back.after = topOf(back.sc);
+    });
+  } else if (old && back) {
+    // 打ち終わった・離した: 元の位置へ (自分で動かしていたら戻さない)
+    const b = back;
+    back = null;
+    if (b.after == null || Math.abs(topOf(b.sc) - b.after) < 8) (b.sc ?? window).scrollTo({ top: b.top, behavior: "instant" as ScrollBehavior });
+  }
+});
 /**
  * オーブ・骨のタブ: 今のアイテムに使える (光っている) 物を前に、使えない物を後ろに (2026-10-05 オーナー「使える光ってるオーブを丸ごと前に
  * 持ってきちゃおうか。1 段目に入らなければ折り返して 2 段目に。その方がこれ使えるんだなってなる」)。まとまり (変成・増強…) の並びは保つ
@@ -109,7 +150,7 @@ const TABS = computed(() => [
 </script>
 
 <template>
-  <div>
+  <div ref="root">
     <div class="mb-2 flex flex-wrap gap-1 text-[12px]">
       <button
         v-for="t in TABS"
@@ -130,13 +171,13 @@ const TABS = computed(() => [
             {{ openRunes.has(sec.kind) ? "たたむ ▴" : `他 ${sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸` }}
           </button>
         </p>
-        <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:contents">
+        <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
           <ShelfButton v-for="k in !sec.kind || openRunes.has(sec.kind) ? sec.keys : sec.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
         </div>
-        <div v-if="$slots.held && !sec.kind && holds(sec.keys)" class="mt-2"><slot name="held" /></div>
+        <div v-if="$slots.held && !sec.kind && holds(sec.keys)" class="mt-2" data-held-box><slot name="held" /></div>
       </div>
       <p v-if="!usableAll.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
-      <div v-if="$slots.held && !placed" class="mt-2"><slot name="held" /></div>
+      <div v-if="$slots.held && !placed" class="mt-2" data-held-box><slot name="held" /></div>
     </div>
 
     <!-- 使える物を前に、使えない物は線の下に (2026-10-05)。持っているカレンシーのお告げは使える物の直後 -->
@@ -146,11 +187,11 @@ const TABS = computed(() => [
           <div class="flex flex-wrap gap-1.5 max-md:contents">
             <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
           </div>
-          <div v-if="$slots.held && holds(g.keys)" class="basis-full"><slot name="held" /></div>
+          <div v-if="$slots.held && holds(g.keys)" class="basis-full" data-held-box><slot name="held" /></div>
         </template>
         <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
       </div>
-      <div v-if="$slots.held && !placed" class="mt-2"><slot name="held" /></div>
+      <div v-if="$slots.held && !placed" class="mt-2" data-held-box><slot name="held" /></div>
       <template v-if="orbSplit.unusable.length">
         <button type="button" class="mb-1 mt-3 flex w-full items-center gap-2 border-t border-white/10 pt-2 text-left text-[10px] opacity-50 hover:opacity-80 max-md:min-h-10" @click="unusableOpen = !unusableOpen">
           今のアイテムには使えない物 ({{ orbSplit.unusable.reduce((a, g) => a + g.keys.length, 0) }}) {{ unusableOpen ? "▴ たたむ" : "▸ 開く" }}
@@ -160,7 +201,7 @@ const TABS = computed(() => [
             <div class="flex flex-wrap gap-1.5 max-md:contents">
               <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
             </div>
-            <div v-if="$slots.held && holds(g.keys)" class="basis-full"><slot name="held" /></div>
+            <div v-if="$slots.held && holds(g.keys)" class="basis-full" data-held-box><slot name="held" /></div>
           </template>
         </div>
       </template>
@@ -171,14 +212,14 @@ const TABS = computed(() => [
         <div class="flex flex-wrap gap-1.5 max-md:contents">
           <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
         </div>
-        <div v-if="$slots.held && holds(g.keys)" class="basis-full"><slot name="held" /></div>
+        <div v-if="$slots.held && holds(g.keys)" class="basis-full" data-held-box><slot name="held" /></div>
       </template>
       <p v-if="!essences.length" class="text-[12px] opacity-50">このベースに使えるエッセンスはありません</p>
     </div>
 
     <div v-else-if="tab === 'catalyst'" class="flex flex-wrap gap-1.5">
       <ShelfButton v-for="k in CATALYSTS" :key="k" :k="k" @pick="emit('hold', $event)" />
-      <div v-if="$slots.held && holds(CATALYSTS)" class="basis-full"><slot name="held" /></div>
+      <div v-if="$slots.held && holds(CATALYSTS)" class="basis-full" data-held-box><slot name="held" /></div>
     </div>
 
     <div v-else-if="tab === 'rune'">
@@ -215,6 +256,6 @@ const TABS = computed(() => [
       </div>
     </div>
     <!-- オーブ以外のタブ (エッセンス等) で持った時は一番下 (お告げのタブは棚そのものがお告げなので出さない) -->
-    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !placed" class="mt-3"><slot name="held" /></div>
+    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !placed" class="mt-3" data-held-box><slot name="held" /></div>
   </div>
 </template>
