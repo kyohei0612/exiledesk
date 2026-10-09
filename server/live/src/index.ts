@@ -2,12 +2,13 @@
  * exiledesk-live: Web 版のサーバー (Cloudflare Worker、無料枠)。
  *
  *   scheduled (5 分おき)  … YouTube / Twitch に問い合わせ → KV "state" に LiveState を書く (配信の見張り)
- *   scheduled (毎朝 9 時 JST) … 日報を Discord に (monitor.ts)
+ *   scheduled (毎朝 9 時 JST) … 日報を Discord に (monitor.ts)・昨日の分析用の記録を JSONL ファイルで LOGS_WEBHOOK に (logs.ts)
  *   GET  /live.json        … 配信の状態 (CORS 許可、60 秒キャッシュ)。サイトはこれを読むだけ
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
  *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord)。GET /feedback.json?key=… で一覧
  *   POST /event            … 操作の印 (Analytics Engine)。日報の「段階と離脱」「どこから」「端末」の元
  *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day=&key= で取り出す
+ *   GET  /logs/send?day=&key= … その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用。D1 からは消さない)
  *   GET  /report?key=…     … 日報を今すぐ (確かめ用)
  *   GET  /refresh?key=…    … 配信の見張りを今すぐ
  *   GET  /health
@@ -21,7 +22,7 @@ import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
 import { fetchYoutube, fetchYoutubeAvatars, type Latest } from "./youtube";
 import { allowIp, getFeedback, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
 import { parseBatch, writeEvents } from "./events";
-import { dayLogs, saveLog } from "./logs";
+import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, reqLog } from "./monitor";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
 
@@ -75,6 +76,18 @@ export async function refresh(env: Env, channels: readonly ChannelDef[] = CHANNE
     await alert(env, "配信の見張り", errors.join("\n").slice(0, 600), fetchFn, now);
   }
   return state;
+}
+
+/** 毎朝 9 時 (JST): 昨日 (JST) の記録を Discord へ。送れなければ異常として残す (日報に載る) */
+export async function sendYesterdayLogs(env: Env, fetchFn: Fetch = fetch, now = new Date()): Promise<void> {
+  const day = jstDay(new Date(now.getTime() - 24 * 3600e3));
+  try {
+    const r = await sendDayLogs(env, day, fetchFn);
+    console.log(JSON.stringify({ job: "logs-send", day, ...r }));
+    if (!r.ok && env.LOGS_WEBHOOK) await alert(env, "記録の送信", `${day}: ${r.error ?? "?"}`, fetchFn, now);
+  } catch (e) {
+    await alert(env, "記録の送信", `${day}: ${String(e).slice(0, 300)}`, fetchFn, now);
+  }
 }
 
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type" };
@@ -166,6 +179,14 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: "day=YYYY-MM-DD" }, 400);
       return new Response(await dayLogs(env, day), { headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" } });
     }
+    case "/logs/send": {
+      // その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用)。D1 からは消さない
+      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      const day = url.searchParams.get("day") ?? "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: "day=YYYY-MM-DD" }, 400);
+      const r = await sendDayLogs(env, day);
+      return json(r, r.ok ? 200 : 502, { "cache-control": "no-store" });
+    }
     case "/feedback.json":
       if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
       return json(await listFeedback(env.LIVE), 200, { "cache-control": "no-store" });
@@ -186,8 +207,11 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     // 5 分おきは配信の見張り、毎朝 9 時 (JST = 0:00 UTC) は日報
-    if (controller.cron === "0 0 * * *") ctx.waitUntil(dailyReport(env));
-    else ctx.waitUntil(refresh(env));
+    // 同じ時に、昨日 (JST) の分析用の記録をファイルで (日報とは別々に動かす。片方が落ちても、もう片方は送る)
+    if (controller.cron === "0 0 * * *") {
+      ctx.waitUntil(dailyReport(env));
+      ctx.waitUntil(sendYesterdayLogs(env));
+    } else ctx.waitUntil(refresh(env));
   },
 
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
