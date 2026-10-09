@@ -66,7 +66,8 @@ const rows = computed<RateRow[]>(() => [
 </script>
 
 <template>
-  <div class="mb-4 px-4 py-2.5 rounded-xl border border-amber-400/40 bg-white/[0.03]">
+  <!-- 下の表と同じゲームの枠 (2026-10-09 UI 見直し: ここだけ角丸の細い金の線だった) -->
+  <div class="g-panel mb-4 px-4 py-2.5">
     <div class="flex items-center justify-between mb-1.5">
       <span class="text-[10px] uppercase tracking-wider text-[var(--exile-color-text-secondary)] font-display">基準レート</span>
       <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">過去7日</span>

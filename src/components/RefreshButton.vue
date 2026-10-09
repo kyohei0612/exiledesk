@@ -11,6 +11,7 @@
   巡回中に押せないのは fetch-busy.ts が refetchState に渡すので、ここでは何もしない。
 -->
 <script setup lang="ts">
+import Icon from "./ui/Icon.vue";
 withDefaults(
   defineProps<{
     label: string;
@@ -36,7 +37,7 @@ withDefaults(
         : 'border-amber-400/50 text-amber-200',
     ]"
   >
-    <span aria-hidden="true">⟳</span>
+    <Icon name="rotate" class="size-3.5" />
     {{ label }}
   </button>
 </template>

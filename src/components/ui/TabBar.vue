@@ -67,7 +67,7 @@ const emit = defineEmits<{ "update:modelValue": [id: string] }>();
       :class="modelValue === t.id ? 'on' : ''"
       @click="emit('update:modelValue', t.id)"
     >
-      <span v-if="t.icon" class="inline-block text-center" aria-hidden="true">{{ t.icon }}</span>
+      <!-- タブの文字記号 (☉ 🜏 ◎ …) は出さない (2026-10-09 UI 見直し: 字体で形がばらばら。ゲームの倉庫のタブと同じく文字だけ) -->
       <span>{{ t.label }}</span>
     </button>
     <!-- 帯の右 (手動更新のボタンなど、画面全体の操作) -->
