@@ -1,0 +1,16 @@
+{
+  "name": "ExileDesk Web",
+  "short_name": "ExileDesk",
+  "description": "Path of Exile 2 のクラフトを日本語で試せるツール",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0a08",
+  "theme_color": "#0b0a08",
+  "icons": [
+    { "src": "/web/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/web/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/web/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
