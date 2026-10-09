@@ -96,7 +96,7 @@ const groups = (["economy", "tools"] as const)
           :class="[
             'w-full text-left px-3 py-1.5 flex items-center gap-2 transition g-antique text-[14px] tracking-[0.06em]',
             active === item.id
-              ? 'g-nav-on g-sel'
+              ? 'g-nav-on' /* 選択の角 (g-sel) は付けない: 右下の角がメニューの縦の枠に重なって飛び出して見えた (2026-10-09 オーナー) */
               : 'text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04] hover:text-[var(--exile-color-text-primary)]',
           ]"
         >
