@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-09T14:00:35.971Z",
+ "generated": "2026-10-09T16:00:57.482Z",
  "source": "Craft of Exile (beta) data.json classmods — Krakenbul / Prohibited Library の実測 (CoE 2026-09-03 更新)。scripts/build-rune-weights-coe.mjs",
  "weights": {
   "Body_Armours_dex/Rune_soul_MaximumLifeIncreasePercent": {
@@ -516,7 +516,10 @@
    "45": 1000,
    "75": 1000
   },
-  "Gloves_dex/Rune_decay_LifeLeech": {
+  "Gloves_dex/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate": {
+   "45": 1000
+  },
+  "Gloves_dex/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate_neg": {
    "45": 1000
   },
   "Gloves_dex/Rune_decay_LifeLeechAmount": {
@@ -616,7 +619,10 @@
    "45": 1000,
    "75": 1000
   },
-  "Gloves_dex_int/Rune_decay_LifeLeech": {
+  "Gloves_dex_int/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate": {
+   "45": 1000
+  },
+  "Gloves_dex_int/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate_neg": {
    "45": 1000
   },
   "Gloves_dex_int/Rune_decay_LifeLeechAmount": {
@@ -716,7 +722,10 @@
    "45": 1000,
    "75": 1000
   },
-  "Gloves_int/Rune_decay_LifeLeech": {
+  "Gloves_int/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate": {
+   "45": 1000
+  },
+  "Gloves_int/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate_neg": {
    "45": 1000
   },
   "Gloves_int/Rune_decay_LifeLeechAmount": {
@@ -816,7 +825,10 @@
    "45": 1000,
    "75": 1000
   },
-  "Gloves_str/Rune_decay_LifeLeech": {
+  "Gloves_str/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate": {
+   "45": 1000
+  },
+  "Gloves_str/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate_neg": {
    "45": 1000
   },
   "Gloves_str/Rune_decay_LifeLeechAmount": {
@@ -916,7 +928,10 @@
    "45": 1000,
    "75": 1000
   },
-  "Gloves_str_dex/Rune_decay_LifeLeech": {
+  "Gloves_str_dex/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate": {
+   "45": 1000
+  },
+  "Gloves_str_dex/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate_neg": {
    "45": 1000
   },
   "Gloves_str_dex/Rune_decay_LifeLeechAmount": {
@@ -1016,7 +1031,10 @@
    "45": 1000,
    "75": 1000
   },
-  "Gloves_str_int/Rune_decay_LifeLeech": {
+  "Gloves_str_int/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate": {
+   "45": 1000
+  },
+  "Gloves_str_int/Rune_decay_LifeLeech__base_life_leech_from_physical_attack_damage_permyriad_base_life_leech_rate_neg": {
    "45": 1000
   },
   "Gloves_str_int/Rune_decay_LifeLeechAmount": {

@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-09T14:49:53.364Z",
+ "generated": "2026-10-09T16:00:59.164Z",
  "source": "Reddit r/PathOfExile2 'I desecrated more than 500 rings — Part 2' (u/Civil-Bee-f): MLE draw weight (group-corrected), rings ilvl 65+, 563 reveals. Other bases: the ring ratio applied to the same mod (text, else family), others ratio 1. Side totals kept at the 2500 placeholder × count. scripts/build-desecrated-weights.mjs",
  "weights": {
   "Amulets/Desecrated_RemnantEffect": {

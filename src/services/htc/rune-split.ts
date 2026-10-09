@@ -45,6 +45,24 @@ const norm = (s: string): string => s.replace(/[+%]/g, "_").replace(/_+/g, "_");
 /** ティアの stat の組 (同梱の表は tiers[].stats を持つ。エンジンの型には無いので読むだけ) */
 const sigOf = (t: Tier): string => ((t as Tier & { stats?: readonly string[] }).stats ?? []).join(",");
 
+/**
+ * 値がマイナスの stat (腐敗のライフリーチ「ライフリーチが #% 遅くなる」= 速くなる の負) は別の MOD (2026-10-09 MOD のフルチェック: ゲームでは
+ * DecayInfluenceFasterLeech / SlowerLeech の 2 つなのに 1 つにまとまり、「(-25--15)% 速くなる」と出ていた)
+ */
+const negOf = (t: Tier): boolean => t.ranges.some((r) => (r[1] ?? 0) < 0);
+/** 言葉と値の符号: 「速くなる・増加・多い」は正の値、「遅くなる・減少・少ない」は負の値の書き方。合わない行だけ反対の言葉にする */
+const UP: Array<[RegExp, string]> = [[/\bfaster\b/, "slower"], [/\bincreased\b/, "reduced"], [/\bmore\b/, "less"]];
+const DOWN: Array<[RegExp, string]> = [[/\bslower\b/, "faster"], [/\breduced\b/, "increased"], [/\bless\b/, "more"]];
+/** 分けた MOD の文: 値の符号と言葉が合わない行だけ直す (値は正にして出す) */
+function flipText(text: string, t: Tier): string {
+  return text.split("\n").map((line, i) => {
+    const neg = (t.ranges[i]?.[1] ?? 0) < 0;
+    for (const [re, to] of neg ? UP : DOWN) if (re.test(line)) return line.replace(re, to);
+    return line;
+  }).join("\n");
+}
+const absTier = (t: Tier): Tier => ({ ...t, ranges: t.ranges.map((r) => ((r[1] ?? 0) < 0 ? [Math.abs(r[1]!), Math.abs(r[0]!)] : r)) });
+
 /** 同じ stat の組を持つ、ルーンでない MOD の文 (あれば) */
 function textIndex(mods: ReadonlyMap<string, Mod>): Map<string, string> {
   const out = new Map<string, string>();
@@ -79,21 +97,26 @@ export function splitMixedRuneMods(data: PatchData, statTags: Readonly<Record<st
   for (const m of data.mods.values()) {
     const groups = new Map<string, Tier[]>();
     for (const t of m.tiers) {
-      const s = sigOf(t);
-      if (!s) continue;
+      const s0 = sigOf(t);
+      if (!s0) continue;
+      const s = negOf(t) ? `${s0}|neg` : s0;
       groups.set(s, [...(groups.get(s) ?? []), t]);
     }
     if (groups.size < 2) continue;
     byStats ??= textIndex(data.mods);
     const ids: string[] = [];
-    for (const [sig, tiers] of groups) {
+    for (const [sigKey, tiers0] of groups) {
+      const neg = sigKey.endsWith("|neg");
+      const sig = neg ? sigKey.slice(0, -4) : sigKey;
+      const tiers = neg ? tiers0.map(absTier) : tiers0;
       // stat の組全部で名前を作る (防御 × スピリット / 最大マナ は 1 つ目の stat だけだとぶつかる)
-      const key = sig.replace(/[^A-Za-z0-9]+/g, "_").replace(/_+$/, "");
+      const key = sig.replace(/[^A-Za-z0-9]+/g, "_").replace(/_+$/, "") + (neg ? "_neg" : "");
       const id = `${m.id}__${key}`;
       // 画面用のタグは分けた行の stat の組から引き直す (元の行のは和なので別物のタグが混ざる。2026-10-05 点検: 120 件)。勢力は元の tags の物
       const own = statTags[sig];
       const displayTags = own ? [...new Set([...own, ...m.tags.filter((t) => /^(ulaman|amanamu|kurgal)_mod$/.test(t))])] : m.displayTags;
-      const next: Mod = { ...m, id, text: textFor(sig, byStats) ?? m.text, tiers: [...tiers].sort((a, b) => a.ilvl - b.ilvl), ...(displayTags ? { displayTags } : {}) };
+      const baseText = textFor(sig, byStats) ?? m.text ?? "";
+      const next: Mod = { ...m, id, text: groups.size > 1 && [...groups.keys()].some((k) => k.endsWith("|neg")) ? flipText(baseText, tiers0[0]!) : baseText, tiers: [...tiers].sort((a, b) => a.ilvl - b.ilvl), ...(displayTags ? { displayTags } : {}) };
       mods.set(id, next);
       ids.push(id);
     }

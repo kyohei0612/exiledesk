@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-09T13:48:48.769Z",
+ "generated": "2026-10-09T16:00:58.202Z",
  "note": "poe2db (今のページ) に合わせる直し。scripts/build-poe2db-fixes.mjs が作る",
  "weights": {
   "Talismans/Strength": {
@@ -2194,7 +2194,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        25,
@@ -3773,7 +3773,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        25,
@@ -3989,7 +3989,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        25,
@@ -5549,7 +5549,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        25,
@@ -6863,7 +6863,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        25,
@@ -8918,7 +8918,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        10,
@@ -8951,7 +8951,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        15,
@@ -8987,7 +8987,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        15,
@@ -9020,7 +9020,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        25,
@@ -9052,7 +9052,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        25,
@@ -9084,7 +9084,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        20,
@@ -9117,7 +9117,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 2500,
+     "weight": 2427,
      "ranges": [
       [
        9,
@@ -9152,7 +9152,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 2500,
+     "weight": 3846,
      "ranges": [
       [
        9,
@@ -10034,7 +10034,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        1,
@@ -10067,7 +10067,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        1,
@@ -10097,7 +10097,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        1,
@@ -10137,7 +10137,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        -50,
@@ -10170,7 +10170,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        10,
@@ -10208,7 +10208,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        3,
@@ -10246,7 +10246,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        3,
@@ -10284,7 +10284,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        3,
@@ -10319,7 +10319,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        19,
@@ -10358,7 +10358,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        6,
@@ -10401,7 +10401,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1000,
+     "weight": 500,
      "ranges": [
       [
        6,
@@ -11223,10 +11223,7 @@
       "Body_Armours_str_dex_int/Desecrated_Dexterity"
      ]
     },
-    "remove": [
-     "Body_Armours_str_dex_int/Strength",
-     "Body_Armours_str_dex_int/Dexterity"
-    ]
+    "remove": []
    },
    "essence": {
     "add": {
