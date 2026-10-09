@@ -96,11 +96,15 @@ const busy = computed(() => rows.value.length < total.value);
  */
 const costOf = (r: AimCombo): number => (r.currency === REVEAL ? 0 : priceOf(r.currency)) + r.omens.reduce((a, o) => a + priceOf(o), 0);
 const perHit = (r: AimOdd): number => { const c = costOf(r); return r.p > 0 && c > 0 ? c / r.p : Infinity; };
-function byValue(a: AimOdd, b: AimOdd): number { return perHit(a) - perHit(b) || b.p - a.p; }
+/**
+ * 並びは付きやすい順 (2026-10-09 オーナー「やっぱり付きやすさランキングじゃないとダメ、費用で並べると高貴が絶対上に来る。付きやすさで下に通貨書いてればおｋ」)。
+ * 同じ確率なら付くまでの平均が安い方を上に
+ */
+function byValue(a: AimOdd, b: AimOdd): number { return b.p - a.p || perHit(a) - perHit(b); }
 const hitRows = computed(() => rows.value.filter((r) => r.p > 0));
 const shown = computed(() => (showAll.value ? hitRows.value : hitRows.value.slice(0, TOP)));
-/** 棒 = 一番安い平均費用に対するこの行の割合 (長いほどお得) */
-const cheapest = computed(() => Math.min(...hitRows.value.map(perHit)));
+/** 棒 = 一番付きやすい行に対する割合 */
+const best = computed(() => hitRows.value[0]?.p ?? 0);
 
 const nameRow = (r: AimOdd): string => (r.currency === REVEAL ? "発現 (未発現の MOD)" : nameOf(r.currency));
 const omenNames = (r: AimOdd): string[] => r.omens.map((o) => nameOf(o));
@@ -156,14 +160,14 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
         <p>今の状態から同じ打ち方 (カレンシーとお告げの組み合わせ) を当たるまで続けた時に、狙いの MOD (その段以上。最大 4 つで、全部揃って当たり) が付く確率。打ち方ごとに {{ TRIALS.toLocaleString() }} 回打った目安です。</p>
         <p class="mt-1">今付いている MOD が消えたら外れで、今の状態からやり直します。外れても続けられる時 (空きがまだある など) はそのまま続けます。</p>
         <p class="mt-1">冒涜は骨の後の発現の候補 (アビスの反響の引き直しを含む) に出れば当たり。</p>
-        <p class="mt-1">並びは付くまでの平均費用 (1 回の費用 ÷ 確率、カレンシーとお告げの相場) の安い順。</p>
+        <p class="mt-1">並びは付きやすい順。行の下に 1 回の費用と付くまでの平均 (1 回の費用 ÷ 確率、カレンシーとお告げの相場) を出します。</p>
         <p class="mt-1 text-[var(--exile-color-text-secondary)]">行を押すと、そのカレンシーを持ってお告げを掛けます。打つと今の状態で出し直します。</p>
       </HelpTip>
       <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" title="狙うのをやめる" @click="s.aims.value = []"><Icon name="x" class="size-4" /></button>
     </header>
     <p v-if="done" class="text-emerald-300">もう全部付いています</p>
     <template v-else>
-      <p class="mb-0.5 pr-[76px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">安い順 · 付くまでの平均 / 確率</p>
+      <p class="mb-0.5 pr-[76px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">付きやすい順</p>
       <ol class="flex flex-col gap-1">
         <li v-for="(r, i) in shown" :key="r.currency + r.omens.join('+')">
           <button type="button" class="g-plain flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition" :class="isHeld(r) ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/[0.05]'" @click="keepPlace($event.currentTarget as Element, () => pick(r))">
@@ -175,16 +179,13 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
             <span class="min-w-0 flex-1">
               <span class="block leading-snug text-[var(--exile-color-text-primary)] md:truncate">{{ nameRow(r) }}</span>
               <span v-if="r.omens.length" class="block text-[11px] leading-snug text-violet-200/80 md:truncate">+ {{ omenNames(r).join("・") }}</span>
-              <span class="block text-[11px] text-[var(--exile-color-text-tertiary)]"><template v-if="costOf(r) > 0">1 回 {{ displayCurrency.money(costOf(r)) }} · </template>{{ every(r.p) }}<template v-if="rolled?.key === keyOf(r)"> · <b class="text-emerald-300">{{ rolled.n.toLocaleString() }} 回中 {{ rolled.hit.toLocaleString() }} 回付いた</b></template></span>
+              <span class="block text-[11px] text-[var(--exile-color-text-tertiary)]">{{ every(r.p) }}<template v-if="costOf(r) > 0"> · 1 回 {{ displayCurrency.money(costOf(r)) }} · 付くまで平均 {{ displayCurrency.money(perHit(r)) }}</template><template v-if="rolled?.key === keyOf(r)"> · <b class="text-emerald-300">{{ rolled.n.toLocaleString() }} 回中 {{ rolled.hit.toLocaleString() }} 回付いた</b></template></span>
             </span>
             <span class="w-24 shrink-0 max-md:hidden">
-              <span class="block h-1.5 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full bg-[var(--exile-color-accent-focus)]" :style="{ width: `${Number.isFinite(perHit(r)) ? (cheapest / perHit(r)) * 100 : 0}%` }"></span></span>
+              <span class="block h-1.5 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full bg-[var(--exile-color-accent-focus)]" :style="{ width: `${best ? (r.p / best) * 100 : 0}%` }"></span></span>
             </span>
-            <!-- 付くまでの平均費用 (並びの元) と、その下に確率 -->
-            <span class="w-20 shrink-0 text-right leading-tight">
-              <b class="block whitespace-nowrap tabular-nums text-[14px]" :class="i === 0 ? 'text-[var(--exile-color-text-title)]' : 'text-[var(--exile-color-text-primary)]'">{{ Number.isFinite(perHit(r)) ? displayCurrency.money(perHit(r)) : "値段なし" }}</b>
-              <span class="block whitespace-nowrap text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ pct(r.p) }}</span>
-            </span>
+            <!-- 確率 (並びの元)。費用は名前の下 -->
+            <b class="w-14 shrink-0 whitespace-nowrap text-right tabular-nums text-[14px]" :class="i === 0 ? 'text-[var(--exile-color-text-title)]' : 'text-[var(--exile-color-text-primary)]'">{{ pct(r.p) }}</b>
             <span role="button" tabindex="0" class="g-btn sm shrink-0" :title="`今の状態から ${rollN.toLocaleString()} 回続けて打って何回付くか (当たったら・今の MOD が消えたら今の状態から)`" @click.stop="roll(r)" @keydown.enter.stop="roll(r)">回す</span>
           </button>
         </li>
