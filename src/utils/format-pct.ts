@@ -25,3 +25,17 @@ export function fmtPct(p: number | null | undefined, opts: PctOpts = {}): string
   }
   return `${v.toFixed(0)}%`;
 }
+
+/**
+ * 付いた瞬間の確率 (工程・直前の変化)。珍しい物ほど細かく: 10% 以上は整数、1% 以上は小数 1 桁、それ未満は小数 2 桁 ("0.71%")、0.01% 未満は "<0.01%"
+ * (2026-10-10 オーナー「1% 未満で付いた MOD は MOD 名 プレ● ●% って黄色で」。前は StageHistory の chancePct)
+ */
+export function fmtChance(p: number): string {
+  const v = p * 100;
+  if (v >= 10) return `${v.toFixed(0)}%`;
+  if (v >= 1) return `${v.toFixed(1)}%`;
+  if (v >= 0.01) return `${v.toFixed(2)}%`;
+  return "<0.01%";
+}
+/** 珍しい (1% 未満) か */
+export const RARE_CHANCE = 0.01;

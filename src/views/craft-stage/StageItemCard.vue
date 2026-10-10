@@ -9,6 +9,7 @@
   poe2db の Quality)。ユニーク (名前と色)・未鑑定 (MOD を隠す)・壊れた・ソケットの絵・スキルジェムのサポート枠。
 -->
 <script setup lang="ts">
+import { fmtChance } from "../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { computed } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
@@ -75,6 +76,13 @@ const baseRows = computed(() => propRows(props.item));
 /** 未鑑定なら MOD を隠す */
 const hidden = computed(() => props.item.identified === false);
 // 範囲 (20-30) はゲームのように振った値で (要望 ㉝ の 5)
+/** 付いた瞬間の確率 (工程の記録から。後から付き直した物は新しい方)。右端に出す */
+const chances = computed(() => {
+  const m = new Map<string, number>();
+  for (const e of craftStage.log.value) for (const [id, c] of Object.entries(e.chances ?? {})) m.set(id, c as number);
+  return m;
+});
+const chanceOf = (m: { modId: string }): number | null => chances.value.get(m.modId) ?? null;
 const implicits = computed(() => rollLines(props.item, (htcBaseInfo()[props.item.base]?.implicits ?? []).map(nameOf), "implicit"));
 /** 絵: ユニークになったらユニークの見た目、それ以外はベースの絵 */
 const art = computed(() => (props.item.unique ? uniqueArt(props.item.unique.en) : null) ?? baseArt(props.item.base));
@@ -110,7 +118,7 @@ const rows = computed(() =>
 
 <template>
   <div
-    class="g-item relative w-[380px] max-md:w-full select-none bg-black/80 bg-clip-padding shadow-[0_0_30px_rgba(0,0,0,0.6)] transition"
+    class="g-item relative w-[480px] max-md:w-full select-none bg-black/80 bg-clip-padding shadow-[0_0_30px_rgba(0,0,0,0.6)] transition"
     :style="{ ...(minH ? { minHeight: `${minH}px` } : {}), ...(width ? { width: `${width}px` } : {}) }"
     :class="[tone.frame, holding ? 'cursor-pointer ring-2 ring-amber-400/70 hover:ring-amber-300' : '', item.destroyed ? 'stage-destroyed' : '']"
     @click="holding && emit('use')"
@@ -172,16 +180,23 @@ const rows = computed(() =>
         <p
           v-for="r in rows"
           :key="isNew(r.m) ? `${r.m.modId}#${flashKey}` : r.m.modId"
-          class="relative rounded px-2 py-0.5"
+          class="relative flex items-center gap-2 rounded px-2 py-0.5"
           :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? 'stage-mod-new' : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で消える候補 (${doomed!.length} つのうち 1 つ)`, `May be removed by this use (1 of ${doomed!.length})`) : tr('この手で消える', 'Removed by this use')) : removable && !r.m.unrevealed && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
           @contextmenu="removable && !r.m.unrevealed && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >
-          <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
-          <span :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
-          <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
-          <span class="ml-2 whitespace-nowrap align-middle text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side === "プレ" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }} {{ r.m.tierName }}</span>
-          <button v-if="removable && !r.m.unrevealed" type="button" class="ml-1.5 rounded px-1 align-middle text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
+          <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
+          <span class="w-7 shrink-0 text-left text-[12px] font-bold tabular-nums" :class="r.side === 'プレ' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレ" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
+          <span class="min-w-0 flex-1 text-center">
+            <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
+            <span :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
+            <span v-if="look(r.m).tag" class="ml-1.5 whitespace-nowrap align-middle text-[10px] opacity-80">{{ look(r.m).tag }}</span>
+            <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
+          </span>
+          <span class="flex shrink-0 items-center justify-end gap-1">
+            <span v-if="chanceOf(r.m) != null" class="text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
+            <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
+          </span>
         </p>
       </div>
       <!-- ユニークの効果 (要望 ⑨)。クライアントの表に「どのユニークがどの MOD」が無いので poe2db のページ (保存済み) から -->
