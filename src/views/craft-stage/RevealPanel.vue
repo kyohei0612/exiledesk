@@ -10,11 +10,25 @@ import { modText, tr } from "../../i18n/lang";
 import { ref, watch } from "vue";
 import { craftStage } from "../../state/craft-stage";
 import { jaOfOmen } from "../../services/htc/labels";
+import { reqOfItem } from "../../services/craft-stage/stage-bases";
+import type { StageMod } from "../../services/craft-stage/types";
 
 const rerolled = ref(false);
 watch(() => craftStage.log.value.length, () => (rerolled.value = false));
 const left = () => { const it = craftStage.item.value; return it ? [...it.prefixes, ...it.suffixes].filter((m) => m.unrevealed).length : 0; };
 const canReroll = () => craftStage.omens.value.includes("OmenofAbyssalEchoes");
+/**
+ * 選ぶと要求レベルが上がる候補は、乗せた時にその数字を出す (2026-10-10 オーナー「要求レベル出すのやっとこか」→「候補に出すのは邪魔、ホバーで」: 冒涜専用の MOD はアイテムレベルに関わらず T1 まで出て、
+ * レベル上げ中の装備が着けられなくなる。reddit「Preserved rib can roll T1 mod on lower ilvl」)。決まりはアイテムのカードと同じ reqOfItem (MOD レベル × 0.8)
+ */
+function raisesTo(m: StageMod): number | null {
+  const it = craftStage.item.value;
+  if (!it) return null;
+  const now = reqOfItem(it)?.level ?? 0;
+  const need = Math.floor(m.modLevel * 0.8);
+  return need > now ? need : null;
+}
+const nowReq = (): number => { const it = craftStage.item.value; return it ? reqOfItem(it)?.level ?? 0 : 0; };
 function pick(i: number): void {
   craftStage.use(`reveal:${i + 1}${rerolled.value ? ":reroll" : ""}`);
 }
@@ -39,6 +53,7 @@ function pick(i: number): void {
         :key="`${rerolled}-${m.modId}`"
         type="button"
         class="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-left max-md:min-h-11 hover:border-rose-300/60 hover:bg-rose-500/10"
+        :title="raisesTo(m) ? tr(`選ぶと要求 Lv ${raisesTo(m)} に上がる (今 Lv ${nowReq()})`, `Raises requirement to Level ${raisesTo(m)} (now ${nowReq()})`) : undefined"
         @click="pick(i)"
       >
         <span class="text-mod-desecrated">{{ modText(m) }}</span>

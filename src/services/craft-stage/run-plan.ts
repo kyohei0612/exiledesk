@@ -127,6 +127,7 @@ export function stepJa(currency: string, item: StageItem): string {
   if (rv) return `発現 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
   if (isUnsocket(currency)) return `ルーンを外す (${currency.slice(UNSOCKET_PREFIX.length)} 番目のソケット)`;
+  if (currency.startsWith("qset:")) return `品質を ${currency.slice(5)}% に`;
   if (isRune(currency)) {
     // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
     const n = parseRuneKey(currency)?.socket;
@@ -147,6 +148,7 @@ export function stepEn(currency: string): string | null {
   if (currency === "disenchant") return "Disenchant";
   if (currency === "salvage") return "Salvage";
   if (isUnsocket(currency)) return `Remove rune (socket ${currency.slice(UNSOCKET_PREFIX.length)})`;
+  if (currency.startsWith("qset:")) return `Set quality to ${currency.slice(5)}%`;
   const rk = isRune(currency) ? parseRuneKey(currency) : null;
   if (rk) return rk.socket ? `${rk.en} (socket ${rk.socket})` : rk.en;
   return null;
@@ -265,9 +267,9 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
     const k = (sd: StageSide) => (sd === "prefix" ? "prefixes" : "suffixes") as "prefixes" | "suffixes";
     const r = addForced(data, item, 0, rng, f, f.desecrated ? { pools: (sd) => [...(cur.cls.pools.desecrated?.[k(sd)] ?? []), ...effectiveCls(cur).pools.normal[k(sd)]] } : {});
     if ("error" in r) throw new Error(`始めの状態の MOD ${i + 1} つ目: ${r.error}`);
-    // 骨で付いた普通の MOD は固定できる (両方の印)。冒涜専用の MOD は固定されない (stage-core の unfracturable、2026-10-10)
+    // 冒涜の MOD は固定されない (stage-core の unfracturable、2026-10-10 ゲームで実測)
     const marked = { ...r.mod, ...(f.fractured ? { fractured: true } : {}), ...(f.desecrated ? { desecrated: true } : {}) };
-    if (f.fractured && unfracturable(data, r.item, { ...marked, fractured: false })) throw new Error(`始めの状態の MOD ${i + 1} つ目: 冒涜専用の MOD はフラクチャーできない`);
+    if (f.fractured && unfracturable(data, r.item, { ...marked, fractured: false })) throw new Error(`始めの状態の MOD ${i + 1} つ目: 冒涜の MOD はフラクチャーできない`);
     item = f.fractured || f.desecrated ? replaced(r.item, r.mod, marked) : r.item;
   }
   if (s.quality != null) item = { ...item, quality: s.quality };

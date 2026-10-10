@@ -62,8 +62,8 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
     if (allMods(it).some((m) => m.fractured)) return skip(item, tr("フラクチャーは 1 つまで", "Only 1 Fractured mod"));
     const have = allMods(it).find((m) => m.modId === p.modId);
     if (have) {
-      // エッセンス・骨で付いた普通の MOD は固定できる。未発現の枠と冒涜専用の MOD は固定されない (オーブと同じ unfracturable。2026-10-10)
-      if (unfracturable(data, it, have)) return skip(item, have.unrevealed ? tr("未発現の冒涜 MOD はフラクチャーできない", "Unrevealed Desecrated mods can't be Fractured") : tr("冒涜専用の MOD はフラクチャーできない", "Desecrated-only mods can't be Fractured"));
+      // エッセンスの MOD は固定できる。冒涜の MOD は発現済みでも未発現でも固定されない (オーブと同じ unfracturable。2026-10-10 ゲームで実測)
+      if (unfracturable(data, it, have)) return skip(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
       const fixed = { ...have, fractured: true };
       const swap = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.map((m) => (m === have ? fixed : m));
       return { applied: true, item: { ...it, prefixes: swap(it.prefixes), suffixes: swap(it.suffixes) }, added: [fixed], removed: [] };
@@ -79,7 +79,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   // 固定で付けるエッセンスの MOD は、その印も付ける (上限まで。2026-10-10 要望「創生の樹もフラクチャーできるように」。冒涜は固定できない)
   const otherworldly = [...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId);
   // 冒涜でしか付かない MOD (冒涜専用・異界) をフラクチャーで付ける事はできない (冒涜専用の MOD は固定されない。2026-10-10)
-  if (p.flag === "f" && (mod.source === "desecrated" || (otherworldly && !(it.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(p.modId)))) return skip(item, tr("冒涜専用の MOD はフラクチャーできない", "Desecrated-only mods can't be Fractured"));
+  if (p.flag === "f" && (mod.source === "desecrated" || (otherworldly && !(it.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(p.modId)))) return skip(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
   const asDesecrated = p.flag === "d";
   const asCrafted = p.flag === "e" || (p.flag === "f" && (mod.source === "essence" || mod.source === "perfect_essence"));
   if (asCrafted) {

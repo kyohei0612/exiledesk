@@ -23,7 +23,7 @@ import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { uniqueArt } from "../../services/assets/unique-art";
-import { boostedMod, unfracturable } from "../../services/craft-stage/stage-core";
+import { boostedMod, maxQualityOf, unfracturable } from "../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
 import { craftStage } from "../../state/craft-stage";
@@ -40,7 +40,7 @@ const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; quality: [n: number] }>();
 /** ルーンを外す (2026-10-09): ソケットの右クリック、またはルーンの効き目の行のクリック。手で組んでいる時だけ (removable) */
 function onUnsocket(e: MouseEvent, n: number): void {
   if (!props.removable || !props.item.augments?.[n - 1]) return;
@@ -90,6 +90,7 @@ const art = computed(() => (props.item.unique ? uniqueArt(props.item.unique.en) 
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
+const maxQ = computed(() => maxQualityOf(props.item));
 /** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
@@ -149,7 +150,14 @@ const rows = computed(() =>
       <p class="text-[12px] text-white/50">{{ kindJa }}<template v-if="!isGem(item.cls.category)"> · {{ tr("アイテムレベル", "Item Level") }} <span class="text-white">{{ item.itemLevel }}</span></template></p>
       <!-- 要求 (要望 ⑱-3) -->
       <p v-if="reqText(item)" class="text-[12px] text-white/50">{{ reqText(item) }}</p>
-      <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
+      <!-- 品質: 手で打つ画面は − / + で決められる (防御値などがその場で変わる。2026-10-10 要望「品質欄をつけて防御値がシミュレーションできると便利」) -->
+      <p v-if="removable && !isGem(item.cls.category)" class="flex items-center justify-center gap-1.5 text-[12px] text-white/50">
+        {{ qualityLabel }}:
+        <button type="button" class="g-plain grid size-6 place-items-center rounded border border-white/15 text-white/70 hover:bg-white/10 disabled:opacity-30" :disabled="item.quality <= 0" :title="tr('品質 −1%', 'Quality −1%')" @click.stop="emit('quality', item.quality - 1)">−</button>
+        <span class="w-10 text-center tabular-nums" :class="item.quality > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ item.quality }}%</span>
+        <button type="button" class="g-plain grid size-6 place-items-center rounded border border-white/15 text-white/70 hover:bg-white/10 disabled:opacity-30" :disabled="item.quality >= maxQ" :title="tr(`品質 +1% (上限 ${maxQ}%)`, `Quality +1% (max ${maxQ}%)`)" @click.stop="emit('quality', item.quality + 1)">+</button>
+      </p>
+      <p v-else-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
       <p v-for="r in baseRows" :key="r.key" class="text-[12px] text-white/50">{{ r.label ? `${r.label}: ` : "" }}<span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
       <!-- ソケット (熟練工のオーブ) の絵 -->

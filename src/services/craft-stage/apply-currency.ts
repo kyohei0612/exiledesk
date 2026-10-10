@@ -15,9 +15,13 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
 import { boostedBy } from "../htc/quality";
-import { addForced, addOne, allMods, candidates, removeForced, removeOne, room, SIDES, skip, without, type Candidate, type Force, type PoolOpts } from "./stage-core";
+import { addForced, addOne, allMods, candidates, maxQualityOf, removeForced, removeOne, room, SIDES, skip, without, type Candidate, type Force, type PoolOpts } from "./stage-core";
 import { applyEssence } from "./apply-essence";
 import { applyForce, isForce } from "./apply-force";
+/** 品質を手で決める手 (`qset:15` = 品質 15%) */
+export const QUALITY_SET = "qset:";
+export const qualitySetKey = (n: number): string => `${QUALITY_SET}${n}`;
+export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET);
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
@@ -134,6 +138,11 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
  // ルーン (要望 ⑰-1) はコラプト・聖別の後でもはめられる物がある (クライアントの CanSocketInCorruptedSanctified、applyRune で見る)
   if (isRune(currency)) return applyRune(item, currency, data);
   if (isUnsocket(currency)) return applyUnsocket(item, currency);
+  // 品質を手で決める (アイテムのカードの品質の欄。2026-10-10 要望「品質欄を付けて防御値がシミュレーションできると便利」)。費用 0、コラプト後も試せる
+  if (isQualitySet(currency)) {
+    const n = Math.max(0, Math.min(maxQualityOf(item), Number(currency.slice(QUALITY_SET.length)) || 0));
+    return { applied: true, item: { ...item, quality: n }, added: [], removed: [] };
+  }
   if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, tr("聖別したアイテムには使えない", "Can't modify a Sanctified item"));
   if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item"));
   // 今のゲームに無いお告げ (相場に値段が無い) を掛けていたら打てない (2026-09-29 オーナー「錬金術のお告げとかない、王者のお告げやら」)

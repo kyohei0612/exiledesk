@@ -40,7 +40,7 @@ import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
-import { kindOf, whittleTargets } from "../../services/craft-stage/apply-currency";
+import { isQualitySet, kindOf, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import ShelfButton from "./ShelfButton.vue";
@@ -204,6 +204,12 @@ watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
  * アイテムの MOD を右クリックでフラクチャー (今の段のまま固定。2026-10-09 オーナー「MOD 右クリックでフラクチャー化させてあげてもいいかも」)。
  * MOD 一覧の「フラクチャー」と同じ手 (レアだけ・1 つまで。打てない時は理由が出る)
  */
+/** 品質の欄: 続けて押した分は 1 手にまとめる (前の手も品質の手なら戻してから) */
+function setQuality(n: number): void {
+  const last = s.log.value[s.log.value.length - 1];
+  if (last && isQualitySet(last.out.currency)) s.undo();
+  s.use(qualitySetKey(n));
+}
 function fractureMod(m: StageMod): void {
   const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0;
   s.use(forceKey(m.modId, n ? `T${n - m.tierIndex}` : null, "f"));
@@ -428,6 +434,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           :removable="!s.replay.value"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @fracture="fractureMod"
+          @quality="setQuality"
           @socket="useAtSocket"
           @unsocket="(n: number) => s.use(unsocketKey(n))"
         />
