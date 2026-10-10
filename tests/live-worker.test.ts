@@ -234,21 +234,21 @@ describe("操作の印と日報 (events / monitor)", () => {
     expect(yesterdayJst(new Date("2026-10-07T03:30:00Z"), true).label).toBe("今日のここまで");
     expect(trailText({ trail: [{ n: "open", ago: 130 }, { n: "mode:sim", ago: 40 }, { n: "sim:base", ago: 3 }] })).toBe("open (2分前) → mode:sim (40秒前) → sim:base (3秒前)");
     const text = reportText("10/6", null, { visits: null, pageViews: null, liveRequests: null, liveErrors: null, why: "CF_ANALYTICS_TOKEN が無い" }, { requests: 1, bugs: 2 }, null, ["相場の中継"]);
-    expect(text).toContain("日報 10/6"); expect(text).toContain("訪問の集計は取れませんでした (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望 1 / バグ報告 2"); expect(text).toContain("異常の通知 1 回: 相場の中継");
+    expect(text).toContain("日報 10/6"); expect(text).toContain("訪問の集計は取れませんでした (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望・バグ報告 3"); expect(text).toContain("異常の通知 1 回: 相場の中継");
     // 人が来た日は見出しごとの箇条書き (2026-10-10 オーナー「報告の文章わかりづらい」)
     const byEvent = new Map([["open", 42], ["mode:sim", 25], ["mode:hand", 18], ["sim:base", 24], ["sim:targets", 20], ["sim:order", 8], ["sim:pattern", 7], ["sim:run", 6], ["sim:done", 5], ["trade:open", 3]].map(([k, v]) => [k as string, { sessions: v as number, users: v as number, count: v as number }]));
     const full = reportText("10/6", { sessions: 42, users: 40, newSessions: 30, bounce: 0.48, medianMinutes: 6.2, byEvent, refs: [["www.youtube.com", 20], ["direct", 15], ["t.co", 5]], devices: [["pc", 38], ["mobile", 4]], countries: [["JP", 41], ["US", 1]], errors: [], wau: 120, warnings: [] }, { visits: 40, pageViews: 60, liveRequests: 1200, liveErrors: 0 }, { requests: 0, bugs: 0 }, null, []);
-    expect(full).toContain("・訪問 42 回 / 40 人 (新しい人 30・前にも来た人 12)");
-    expect(full).toContain("・youtube.com 20 / 直接 (URL を直に開いた) 15 / t.co 5");
+    expect(full).toContain("・訪問 42 回");
+    expect(full).toContain("・半分の人が 6 分以上使った");
+    expect(full).toContain("・URL から直接開いた人 15 人 / youtube.com から来た人 20 人 / X から来た人 5 人");
     expect(full).toContain("・PC 90% / スマホ 10% · ほぼ日本");
-    expect(full).toContain("・シミュレーションで一番やめた所: 狙い → 順番 (20 人 → 8 人)");
-    expect(full).toContain("・何もせず閉じた 20 回 (48%)"); expect(full).toContain("・半分の人が 6 分以上使った");
-    expect(full).toContain("・この 7 日で来た人 120 人");
+    expect(full).toContain("・シミュレーションを開いた 25");
+    expect(full).not.toContain("レシピを保存した");
     // 最後のアドバイス (数字の決まりで 3 つまで、無ければ様子見)
     expect(full).toContain("**アドバイス**");
     const { adviceOf } = await import("../server/live/src/monitor");
     expect(adviceOf(null, { requests: 0, bugs: 0 }, [])).toEqual(["大きな問題は見当たりません。このまま様子見で OK です"]);
-    expect(adviceOf(null, { requests: 1, bugs: 2 }, ["x"]).length).toBe(3);
+    expect(adviceOf(null, { requests: 1, bugs: 2 }, ["x"])).toEqual(["要望・バグ報告が 3 件あります。中身を見て、バグは再現できるか、要望はすぐできる物から", "異常の通知が出ています。サーバーや相場の取得が止まっていないか確認を"]);
   });
   it("異常は控えるだけで Discord には送らない (同じ物は 6 時間に 1 回)、要望は 1 分に 1 件", async () => {
     const { alert } = await import("../server/live/src/monitor");

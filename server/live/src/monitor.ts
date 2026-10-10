@@ -86,15 +86,22 @@ export async function fetchUsage(env: Env, since: string, until: string, fetchFn
 }
 
 const n = (v: number | null | undefined): string => (v == null ? "不明" : Math.round(v).toLocaleString("ja-JP"));
-const pct = (v: number | null): string => (v == null ? "不明" : `${Math.round(v * 100)}%`);
-const refJa = (k: string): string => (k === "direct" ? "直接 (URL を直に開いた)" : k.replace(/^www\./, ""));
 
 /**
  * 日報の文面 (文章で。2026-10-07 オーナー「数字の羅列は分かりづらい、文章で教えて」)。
  * 人が 0 の日は短く、来た日は 何人・どこから・端末・何をしたか・どこで減ったか・品質・要望・配信・異常・週 を段落で
  */
+/** 使われ方に出す印の名前 (人数が 1 以上の物を全部、この順で。開いた・滞在・エラー・最初の画面は出さない) */
+const USE_JA: Array<[string, string]> = [
+  ["hand:use", "手で打った"], ["mode:sim", "シミュレーションを開いた"], ["sim:base", "シミュレーション: ベースを選んだ"], ["sim:targets", "シミュレーション: 狙いを決めた"],
+  ["sim:order", "シミュレーション: 順番を決めた"], ["sim:pattern", "シミュレーション: 手順を組んだ"], ["sim:run", "シミュレーションを回した"], ["sim:done", "シミュレーションで完成まで出た"],
+  ["trade:open", "取引所を開いた"], ["recipe:save", "レシピを保存した"], ["feedback:open", "要望・バグの窓を開いた"], ["feedback:sent", "要望・バグを送った"],
+];
+/** 来た道の名前 (t.co は X) */
+const fromJa = (k: string): string => (k === "direct" ? "URL から直接開いた人" : k === "t.co" || /(^|\.)(x|twitter)\.com$/.test(k) ? "X から来た人" : `${k.replace(/^www\./, "")} から来た人`);
+
 export function reportText(label: string, sum: Summary | null, usage: Usage, feedback: { requests: number; bugs: number }, live: LiveState | null, alerts: string[], records?: number | null): string {
-  // 2026-10-10 オーナー「報告の文章わかりづらい」: 文章をやめて、見出しごとに短い箇条書き (数字だけ追えば分かる形)
+  // 2026-10-10 オーナーの書いた形: 見出しごとの短い箇条書き。人は訪問と使った時間だけ、使われ方は 1 以上の物を全部、要望とバグはまとめて
   const out: string[] = [`📊 **ExileDesk 日報 ${label}**`];
   const sec = (title: string, lines: Array<string | null | false>): void => {
     const ls = lines.filter((x): x is string => !!x);
@@ -106,35 +113,24 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
   } else if (!sum.sessions) {
     sec("人", [today ? "今日はまだ誰も来ていません" : "誰も来ていません"]);
   } else {
-    const ret = sum.sessions - sum.newSessions;
     sec("人", [
-      `訪問 ${n(sum.sessions)} 回 / ${n(sum.users)} 人 (新しい人 ${n(sum.newSessions)}・前にも来た人 ${n(ret)})`,
-      sum.bounce == null ? null : `何もせず閉じた ${n(sum.bounce * sum.sessions)} 回 (${pct(sum.bounce)})`,
+      `訪問 ${n(sum.sessions)} 回`,
       sum.medianMinutes == null ? null : sum.medianMinutes < 1 ? "半分の人は 1 分未満で閉じた" : `半分の人が ${sum.medianMinutes.toFixed(0)} 分以上使った`,
-      sum.wau ? `この 7 日で来た人 ${n(sum.wau)} 人` : null,
     ]);
     const devMobile = sum.devices.find(([k]) => k === "mobile")?.[1] ?? 0;
     const devAll = sum.devices.reduce((a, [, v]) => a + v, 0) || 1;
     const jp = sum.countries.find(([k]) => k === "JP")?.[1] ?? 0;
-    // localhost は開発の確認 (自分) なので分けて書く (2026-10-08 オーナー「ガチで 13 人来たの？」)
-    const local = sum.refs.find(([k]) => /^localhost|127\.0\.0\.1/.test(k))?.[1] ?? 0;
+    // localhost は開発の確認 (自分) なので出さない (2026-10-08 オーナー「ガチで 13 人来たの？」)
+    const refs = sum.refs.filter(([k]) => !/^localhost|127\.0\.0\.1/.test(k)).sort((a, b) => (a[0] === "direct" ? -1 : b[0] === "direct" ? 1 : 0));
     sec("どこから", [
-      `${sum.refs.slice(0, 3).map(([k, v]) => `${refJa(k)} ${v}`).join(" / ") || "分からない"}${local ? ` (localhost ${n(local)} は開発の確認)` : ""}`,
+      refs.length ? refs.slice(0, 4).map(([k, v]) => `${fromJa(k)} ${v} 人`).join(" / ") : null,
       `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
     ]);
-    const use = (k: string): number => sum.byEvent.get(k)?.sessions ?? 0;
-    // シミュレーションの段は「開いた後」どうしで見る (最初の画面 → シミュレーションは選んだだけ)。開いた人が 0 なら出さない (Web は調整中で止めている)
-    const simOn = use("mode:sim") > 0;
-    const f = simOn ? funnelDrop(sum, FUNNEL_SIM.filter((x) => x !== "open")) : null;
-    // 「手で打った」は実際に 1 手以上打った印 (hand:use)
-    sec("使われ方 (人数)", [
-      `手で打った ${use("hand:use")}`,
-      simOn ? `シミュレーション: 開いた ${use("mode:sim")} → 回した ${use("sim:run")} → 完成まで ${use("sim:done")}` : null,
-      `取引所を開いた ${use("trade:open")} / レシピ保存 ${use("recipe:save")}`,
-      f ? `シミュレーションで一番やめた所: ${f.from} → ${f.to} (${f.before} 人 → ${f.after} 人)` : null,
-    ]);
+    const used = USE_JA.map(([k, ja]) => [ja, sum.byEvent.get(k)?.sessions ?? 0] as const).filter(([, v]) => v > 0);
+    sec("使われ方 (人数)", used.length ? used.map(([ja, v]) => `${ja} ${v}`) : ["開いただけで、何も使われていません"]);
   }
-  sec("届いた物", [`要望 ${feedback.requests} / バグ報告 ${feedback.bugs}`]);
+  // 要望とバグは仕分けしていないのでまとめて (オーナー 2026-10-10)
+  sec("届いた物", [`要望・バグ報告 ${feedback.requests + feedback.bugs}`]);
   const err = sum?.byEvent.get("error");
   sec("問題", [
     err ? `画面のエラー ${err.count} 件 (${err.sessions} 人)${sum!.errors.length ? `: ${sum!.errors[0]![0].slice(0, 60)}` : ""}` : sum ? "画面のエラー なし" : null,
@@ -154,7 +150,8 @@ export function adviceOf(sum: Summary | null, feedback: { requests: number; bugs
   const out: string[] = [];
   const err = sum?.byEvent.get("error");
   if (err) out.push(`画面のエラーが出ています。${sum!.errors.length ? `多い「${sum!.errors[0]![0].slice(0, 40)}」から` : "多い物から"}直すと良さそうです`);
-  if (feedback.bugs) out.push(`バグ報告が ${feedback.bugs} 件あります。再現できるか先に確認を`);
+  const fb = feedback.requests + feedback.bugs;
+  if (fb) out.push(`要望・バグ報告が ${fb} 件あります。中身を見て、バグは再現できるか、要望はすぐできる物から`);
   if (alerts.length) out.push("異常の通知が出ています。サーバーや相場の取得が止まっていないか確認を");
   if (sum && sum.sessions >= 5) {
     if (sum.bounce != null && sum.bounce >= 0.5) out.push("半分以上が何もせずに閉じています。最初の画面で何をすればいいか分かりにくい可能性。最初の 1 手を目立たせると良さそうです");
@@ -167,7 +164,6 @@ export function adviceOf(sum: Summary | null, feedback: { requests: number; bugs
     if (mobile / all >= 0.4) out.push(`スマホが ${Math.round((mobile / all) * 100)}% あります。スマホの使い心地を優先すると効きそうです`);
     if (sum.sessions >= 10 && (sum.sessions - sum.newSessions) / sum.sessions < 0.2) out.push("また来た人が 2 割未満です。保存・お気に入りなど、もう一度来るきっかけを作ると良さそうです");
   }
-  if (feedback.requests) out.push(`要望が ${feedback.requests} 件あります。中身を見て、すぐできる物から`);
   return out.length ? out.slice(0, 3) : ["大きな問題は見当たりません。このまま様子見で OK です"];
 }
 
