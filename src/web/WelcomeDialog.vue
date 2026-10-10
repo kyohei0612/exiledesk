@@ -3,7 +3,7 @@
  * 初めて来た人の窓 (Web 版、2026-10-07)。何ができるかを 2 枚の札で選ばせ、1 行だけ補足。文字は最低限 (オーナー「活字疲れる」)。
  * 1 回閉じたら出さない (localStorage)。上の「はじめに」で開き直せる
  */
-import { craftStage } from "../state/craft-stage";
+import { craftStage, SIM_LOCKED } from "../state/craft-stage";
 
 defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
@@ -30,8 +30,9 @@ function pick(mode: "hand" | "sim"): void {
             <b class="block text-[15px] text-amber-100">エミュレーター</b>
             <span class="mt-1 block text-[12px] opacity-70">カレンシーやお告げを押して、1 回ずつ付く MOD を見る。動画・配信の実演にも</span>
           </button>
-          <button type="button" class="group rounded-xl border border-white/15 bg-black/30 p-4 text-left hover:border-amber-400/60 hover:bg-amber-500/10" @click="pick('sim')">
-            <b class="block text-[15px] text-amber-100">シミュレーター</b>
+          <!-- Web 版のシミュレーションは調整中 (2026-10-10 オーナー) -->
+          <button type="button" class="group rounded-xl border border-white/15 bg-black/30 p-4 text-left hover:border-amber-400/60 hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-white/15 disabled:hover:bg-black/30" :disabled="SIM_LOCKED" @click="pick('sim')">
+            <b class="block text-[15px] text-amber-100">シミュレーター<span v-if="SIM_LOCKED" class="ml-1.5 text-[12px] font-normal">(調整中)</span></b>
             <span class="mt-1 block text-[12px] opacity-70">狙う MOD と手順を決めて 1,500 人分回し、1 個あたりの費用と運の幅を出す。手順はレシピで保存</span>
           </button>
         </div>
