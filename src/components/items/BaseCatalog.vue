@@ -123,7 +123,8 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       <!-- PC は段を横に流して 2 行ほどに (縦に 1 段ずつだと、押した後の属性とベースが画面の下に押し出された) -->
       <div v-if="!phone || !family" class="mb-3" :class="phone ? 'space-y-3' : 'flex flex-wrap gap-x-5 gap-y-2'">
         <template v-for="r in families" :key="r.ja">
-          <div :ref="setGroupEl(r.ja)">
+          <!-- 宝飾品は PC では最後の行に (防具・オフハンドの行に詰めない) -->
+          <div :ref="setGroupEl(r.ja)" :class="!phone && r.ja === '宝飾品' ? 'basis-full' : ''">
             <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ r.ja }}</p>
             <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
             <div :class="phone ? 'grid grid-cols-3 gap-1.5' : 'flex flex-wrap gap-1'">

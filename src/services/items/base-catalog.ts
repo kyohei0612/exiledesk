@@ -22,12 +22,13 @@ const EL = (k: string, ja: string): Array<[string, string]> => [[k, ja], ...([["
 export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> = [
   { ja: "片手武器", cls: [...EL("Wands", "ワンド"), ["OneHand_Maces", "片手メイス"], ["Sceptres", "セプター"], ["Spears", "スピア"]] },
   { ja: "両手武器", cls: [["Bows", "弓"], ...EL("Staves", "スタッフ"), ["TwoHand_Maces", "両手メイス"], ["Quarterstaves", "クォータースタッフ"], ["Crossbows", "クロスボウ"], ["Talismans", "タリスマン"]] },
-  { ja: "宝飾品", cls: [["Amulets", "アミュレット"], ["Rings", "指輪"], ["Belts", "ベルト"]] },
+  // 並び: 片手 → 両手 → 防具 → オフハンド → 宝飾品 (2026-10-10 オーナー「両手武器の後は防具、オフハンド、最後宝飾品。防具とオフハンドは同じ列、宝飾品は最後の行」)
   { ja: "手袋", cls: A("Gloves", "手袋") },
   { ja: "靴", cls: A("Boots", "靴") },
   { ja: "鎧", cls: A("Body_Armours", "鎧") },
   { ja: "兜", cls: A("Helmets", "兜") },
   { ja: "オフハンド", cls: [["Quivers", "矢筒"], ["Shields_str", "盾 (筋力)"], ["Shields_str_dex", "盾 (筋力・器用)"], ["Shields_str_int", "盾 (筋力・知性)"], ["Bucklers", "バックラー"], ["Foci", "フォーカス"]] },
+  { ja: "宝飾品", cls: [["Amulets", "アミュレット"], ["Rings", "指輪"], ["Belts", "ベルト"]] },
   { ja: "フラスコ", cls: [["LifeFlask", "ライフフラスコ"], ["ManaFlask", "マナフラスコ"]] },
   { ja: "ジェム", cls: [["SkillGem", "スキルジェム"]] },
 ];
