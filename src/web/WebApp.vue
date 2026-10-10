@@ -114,7 +114,7 @@ window.addEventListener("resize", fitZoom);
     <SupportDialog />
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
-    <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : 'items-start'">
+    <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
       <CraftStage class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <!-- 決まり事 (2026-10-07、2026-10-10 から画面に貼り付けずクラフトステージの一番下): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
@@ -126,9 +126,9 @@ window.addEventListener("resize", fitZoom);
           </footer>
         </template>
       </CraftStage>
-      <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」) -->
-      <aside class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'sticky top-0 w-[280px] self-start border-l'">
-        <LivePanel />
+      <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
+      <aside class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] border-l'">
+        <div :class="phone ? '' : 'sticky top-3'"><LivePanel /></div>
       </aside>
     </div>
   </div>

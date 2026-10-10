@@ -226,7 +226,8 @@ const TABS = computed(() => (!props.full ? [] : [
           <span class="opacity-60">{{ sec.label }} ({{ secItems(sec).length }})</span>
           <Disclosure v-if="sec.fold" :open="foldOpen.has(sec.kind ?? '')" class="text-[10px]" @update:open="toggleFold(sec.kind ?? '')" />
         </p>
-        <div v-if="!sec.fold || foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
+        <!-- PC は升目で横幅いっぱいに均等に (右に空きを残さない。2026-10-11 オーナー「間空くぐらいなら調整して」) -->
+        <div v-if="!sec.fold || foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5 md:grid md:grid-cols-[repeat(auto-fill,minmax(84px,1fr))] md:justify-items-center">
           <template v-if="isGroup(sec)">
             <template v-for="id in secItems(sec)" :key="id">
               <span v-if="groupKeys(id).length > 1" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
@@ -252,7 +253,7 @@ const TABS = computed(() => (!props.full ? [] : [
               <span class="opacity-60">{{ sec.label }} ({{ secItems(sec).length }})</span>
               <Disclosure :open="foldOpen.has(sec.kind ?? '')" class="text-[10px]" @update:open="toggleFold(sec.kind ?? '')" />
             </p>
-            <div v-if="foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
+            <div v-if="foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5 md:grid md:grid-cols-[repeat(auto-fill,minmax(84px,1fr))] md:justify-items-center">
               <template v-if="isGroup(sec)">
                 <template v-for="id in secItems(sec)" :key="id">
                   <span v-if="groupKeys(id).length > 1" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
