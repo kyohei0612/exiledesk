@@ -205,10 +205,12 @@ watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
  * MOD 一覧の「フラクチャー」と同じ手 (レアだけ・1 つまで。打てない時は理由が出る)
  */
 /** 品質の欄: 続けて押した分は 1 手にまとめる (前の手も品質の手なら戻してから) */
-function setQuality(n: number): void {
+function setQuality(n: number, tag?: string): void {
+  // 種類は戻す前に読む (前の手が種類を付けた手なら、戻すと消える)
+  const keep = tag ?? s.item.value?.qualityTag ?? null;
   const last = s.log.value[s.log.value.length - 1];
   if (last && isQualitySet(last.out.currency)) s.undo();
-  s.use(qualitySetKey(n));
+  s.use(qualitySetKey(n, keep));
 }
 function fractureMod(m: StageMod): void {
   const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0;

@@ -19,6 +19,7 @@ import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
 import { addForced, boostedMod, effectiveCls, replaced, unfracturable, type Force } from "./stage-core";
 import { socketCapOf, isUnsocket, UNSOCKET_PREFIX } from "./stage-runes";
+import { qualityLabelOf } from "../htc/quality";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOfItem } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
@@ -127,7 +128,7 @@ export function stepJa(currency: string, item: StageItem): string {
   if (rv) return `発現 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
   if (isUnsocket(currency)) return `ルーンを外す (${currency.slice(UNSOCKET_PREFIX.length)} 番目のソケット)`;
-  if (currency.startsWith("qset:")) return `品質を ${currency.slice(5)}% に`;
+  if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `品質を ${n}% に${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
   if (isRune(currency)) {
     // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
     const n = parseRuneKey(currency)?.socket;
@@ -148,7 +149,7 @@ export function stepEn(currency: string): string | null {
   if (currency === "disenchant") return "Disenchant";
   if (currency === "salvage") return "Salvage";
   if (isUnsocket(currency)) return `Remove rune (socket ${currency.slice(UNSOCKET_PREFIX.length)})`;
-  if (currency.startsWith("qset:")) return `Set quality to ${currency.slice(5)}%`;
+  if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `Set quality to ${n}%${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
   const rk = isRune(currency) ? parseRuneKey(currency) : null;
   if (rk) return rk.socket ? `${rk.en} (socket ${rk.socket})` : rk.en;
   return null;

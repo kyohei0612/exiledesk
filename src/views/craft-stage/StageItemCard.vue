@@ -14,7 +14,7 @@ import { fmtChance, RARE_CHANCE } from "../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { computed } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
-import { qualityLabelOf } from "../../services/htc/quality";
+import { CATALYSTS, qualityLabelOf } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import { isFlask, isGem, reqText } from "../../services/craft-stage/stage-bases";
 import { propRows } from "../../services/craft-stage/stage-props";
@@ -23,7 +23,8 @@ import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { uniqueArt } from "../../services/assets/unique-art";
-import { boostedMod, maxQualityOf, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
+import { boostedMod, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
+import { qualityFieldMax } from "../../services/craft-stage/apply-currency";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
 import { craftStage } from "../../state/craft-stage";
@@ -40,7 +41,7 @@ const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; quality: [n: number] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; quality: [n: number, tag?: string] }>();
 /** ルーンを外す (2026-10-09): ソケットの右クリック、またはルーンの効き目の行のクリック。手で組んでいる時だけ (removable) */
 function onUnsocket(e: MouseEvent, n: number): void {
   if (!props.removable || !props.item.augments?.[n - 1]) return;
@@ -90,7 +91,8 @@ const art = computed(() => (props.item.unique ? uniqueArt(props.item.unique.en) 
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
-const maxQ = computed(() => maxQualityOf(props.item));
+const maxQ = computed(() => qualityFieldMax(props.item));
+const jewel = computed(() => ["Rings", "Amulets", "Belts"].includes(props.item.cls.category));
 /** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
@@ -156,6 +158,11 @@ const rows = computed(() =>
         <button type="button" class="g-plain grid size-6 place-items-center rounded border border-white/15 text-white/70 hover:bg-white/10 disabled:opacity-30" :disabled="item.quality <= 0" :title="tr('品質 −1%', 'Quality −1%')" @click.stop="emit('quality', item.quality - 1)">−</button>
         <span class="w-10 text-center tabular-nums" :class="item.quality > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ item.quality }}%</span>
         <button type="button" class="g-plain grid size-6 place-items-center rounded border border-white/15 text-white/70 hover:bg-white/10 disabled:opacity-30" :disabled="item.quality >= maxQ" :title="tr(`品質 +1% (上限 ${maxQ}%)`, `Quality +1% (max ${maxQ}%)`)" @click.stop="emit('quality', item.quality + 1)">+</button>
+        <!-- 宝飾品は品質の種類 (触媒と同じ。選んだ種類のタグの MOD が伸びる。2026-10-10 オーナー「何で品質効かなくなったの」: 種類が無いと伸びなかった) -->
+        <select v-if="jewel" class="ml-1 rounded border border-white/15 bg-black/60 px-1 py-0.5 text-[11px] text-white/80" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @click.stop @change="emit('quality', Math.max(item.quality, 1), ($event.target as HTMLSelectElement).value)">
+          <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
+          <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
+        </select>
       </p>
       <p v-else-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->

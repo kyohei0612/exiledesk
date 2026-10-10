@@ -88,6 +88,11 @@ const orbSplit = computed(() => {
 // 外したルーンを打つ処理 (stage-runes.ts) は古い手順の再生のため残す
 const runes = computed(() => runesFor(craftStage.item.value).map((g) => ({ ...g, keys: g.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k)) })).filter((g) => g.keys.length));
 /**
+ * ルーンのタブの「その他のルーン」: クラフトに関わらないルーン・ソウルコア・アイドルも全部 (段ごと)。使用可能のタブには出さない
+ * (2026-10-10 オーナー「その他ルーンってとこにやっぱ表示しておくか、使用可能には表示せず、悪さできそうだし色々」: 効果の増加で数値が伸びるため)
+ */
+const otherRunes = computed(() => runesFor(craftStage.item.value).map((g) => ({ ...g, keys: g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)) })).filter((g) => g.keys.length));
+/**
  * 「今のアイテムには使えない物」は畳める (2026-10-08 オーナー「使わないカレンシー閉じてもいいしな畳む」)。
  * PC もスマホも畳んだ状態が既定 (2026-10-09 オーナー「使えないものはデフォで畳んでてくれ、これは手で打つ奴も」)
  */
@@ -229,7 +234,19 @@ const TABS = computed(() => [
           </div>
         </div>
       </div>
-      <p v-if="!runes.length" class="text-[12px] opacity-50">{{ tr("このベースに効くルーンはありません", "No runes for this base") }}</p>
+      <p v-if="!runes.length && !otherRunes.length" class="text-[12px] opacity-50">{{ tr("このベースに効くルーンはありません", "No runes for this base") }}</p>
+      <!-- その他のルーン (クラフトの決まりは変えないが、効果の増加で数値が伸びる物) -->
+      <template v-if="otherRunes.length">
+        <p class="mb-1 mt-3 border-t border-white/10 pt-2 text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("その他のルーン", "Other runes") }}</p>
+        <div class="space-y-2">
+          <div v-for="g in otherRunes" :key="'o' + g.kind">
+            <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>
+            <div class="flex flex-wrap gap-1.5 max-md:contents">
+              <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
 
     <div v-else>

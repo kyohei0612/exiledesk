@@ -18,10 +18,18 @@ import { boostedBy } from "../htc/quality";
 import { addForced, addOne, allMods, candidates, maxQualityOf, removeForced, removeOne, room, SIDES, skip, without, type Candidate, type Force, type PoolOpts } from "./stage-core";
 import { applyEssence } from "./apply-essence";
 import { applyForce, isForce } from "./apply-force";
-/** 品質を手で決める手 (`qset:15` = 品質 15%) */
+/** 品質を手で決める手 (`qset:15` = 品質 15%、`qset:34:caster` = 宝飾品の品質の種類も) */
 export const QUALITY_SET = "qset:";
-export const qualitySetKey = (n: number): string => `${QUALITY_SET}${n}`;
+export const qualitySetKey = (n: number, tag?: string | null): string => `${QUALITY_SET}${n}${tag ? `:${tag}` : ""}`;
 export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET);
+/**
+ * 品質の欄の上限 (2026-10-10 取引所で実物を確認): 防具・武器は規格外の 30%、宝飾品は 50% (ブリーチの指輪・不在のアミュレット、普通の指輪も 40% 台が多数)。
+ * ベースの上限がそれより上ならそちら
+ */
+export function qualityFieldMax(item: StageItem): number {
+  const jewel = ["Rings", "Amulets", "Belts"].includes(item.cls.category);
+  return Math.max(maxQualityOf(item), jewel ? 50 : 30);
+}
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
@@ -140,8 +148,9 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   if (isUnsocket(currency)) return applyUnsocket(item, currency);
   // 品質を手で決める (アイテムのカードの品質の欄。2026-10-10 要望「品質欄を付けて防御値がシミュレーションできると便利」)。費用 0、コラプト後も試せる
   if (isQualitySet(currency)) {
-    const n = Math.max(0, Math.min(maxQualityOf(item), Number(currency.slice(QUALITY_SET.length)) || 0));
-    return { applied: true, item: { ...item, quality: n }, added: [], removed: [] };
+    const [num, tag] = currency.slice(QUALITY_SET.length).split(":");
+    const n = Math.max(0, Math.min(qualityFieldMax(item), Number(num) || 0));
+    return { applied: true, item: { ...item, quality: n, ...(tag ? { qualityTag: tag } : {}) }, added: [], removed: [] };
   }
   if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, tr("聖別したアイテムには使えない", "Can't modify a Sanctified item"));
   if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item"));
