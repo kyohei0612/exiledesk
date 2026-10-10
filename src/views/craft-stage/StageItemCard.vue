@@ -153,8 +153,8 @@ const rows = computed(() =>
     </div>
     <!-- 解呪 / サルベージで崩れる (要望 ⑰-21) -->
     <div class="space-y-1 px-4 text-center text-[13px]" :class="[compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">
-      <!-- 種類 → アイテムレベル (英語のベース名はここに小さく)。要求レベル・能力値は出さない (2026-10-10 オーナー「邪魔、出さなくていい」) -->
-      <p class="pt-1 text-[12px] text-white/50">{{ kindJa }}<span v-if="!compact" class="ml-1.5 text-[11px] opacity-60">{{ item.base }}</span></p>
+      <!-- 種類 → アイテムレベル (英語のベース名は出さない、2026-10-10 オーナー)。要求レベル・能力値は出さない (2026-10-10 オーナー「邪魔、出さなくていい」) -->
+      <p class="pt-1 text-[12px] text-white/50">{{ kindJa }}</p>
       <p v-if="!isGem(item.cls.category)" class="text-[12px] text-white/50">{{ tr("アイテムレベル", "Item Level") }}: <span class="text-white">{{ item.itemLevel }}</span></p>
       <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
@@ -175,15 +175,20 @@ const rows = computed(() =>
       </div>
       <!-- ヴァールのエンチャント (ゲームと同じく固有の上) -->
       <template v-if="item.enchant">
-        <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
+        <div class="st-sep" :class="[`st-sep-${item.rarity}`, compact ? 'my-0.5' : 'my-1.5']" />
         <p class="text-[#b8daf2]">{{ modText(item.enchant) }}</p>
         <p v-if="item.enchant2" class="text-[#b8daf2]">{{ modText(item.enchant2) }}</p>
       </template>
       <template v-if="implicits.length">
-        <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
-        <p v-for="(t, i) in implicits" :key="'i' + i" class="text-rarity-magic">{{ t }}</p>
+        <div class="st-sep" :class="[`st-sep-${item.rarity}`, compact ? 'my-0.5' : 'my-1.5']" />
+        <!-- 暗黙の MOD は左に「暗黙」(MOD の行の P / S と同じ列。2026-10-10 オーナー) -->
+        <p v-for="(t, i) in implicits" :key="'i' + i" class="flex items-center gap-2 px-2 py-0.5">
+          <span class="w-7 shrink-0 text-left text-[11px] text-white/45">{{ tr("暗黙", "Impl.") }}</span>
+          <span class="min-w-0 flex-1 text-center text-rarity-magic">{{ t }}</span>
+          <span class="w-7 shrink-0" />
+        </p>
       </template>
-      <div v-if="!isFlask(item.cls.category) && !isGem(item.cls.category)" class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
+      <div v-if="!isFlask(item.cls.category) && !isGem(item.cls.category)" class="st-sep" :class="[`st-sep-${item.rarity}`, compact ? 'my-0.5' : 'my-1.5']" />
       <!-- 未鑑定: MOD を隠す (ゲームと同じく赤い「未鑑定」) -->
       <p v-if="hidden" class="py-1 font-bold text-[#d20000]">{{ tr("未鑑定", "Unidentified") }}</p>
       <!-- MOD (冒涜の MOD の行はゲームと同じ緑がかった暗い帯と枠。2026-10-07 オーナー「アイテムに出る時ゲーム仕様に、色だけ、冒涜 MOD のみ」。付いた物は光る。キーを手ごとに変えて光らせ直す。TransitionGroup は leave が光の animation 待ちで残るので使わない) -->
@@ -251,4 +256,10 @@ const rows = computed(() =>
 .st-rare.two { border-image-source: url("/ui-art/ihead-rare.webp"); }
 .st-unique.one { border-image-source: url("/ui-art/ihead-unique-1.webp"); }
 .st-unique.two { border-image-source: url("/ui-art/ihead-unique.webp"); }
+/* 区切りの線はゲームの絵 (ItemsSeparator*、ベース・ジェムのカードと同じ isep-*。2026-10-10 オーナー「ここの区切りだけしっかりかっこいい、うちはただの線」) */
+.st-sep { height: 8px; max-width: 364px; margin-left: auto; margin-right: auto; background: center / 100% 100% no-repeat; }
+.st-sep-normal { background-image: url("/ui-art/isep-normal.webp"); }
+.st-sep-magic { background-image: url("/ui-art/isep-magic.webp"); }
+.st-sep-rare { background-image: url("/ui-art/isep-rare.webp"); }
+.st-sep-unique { background-image: url("/ui-art/isep-unique.webp"); }
 </style>

@@ -9,6 +9,7 @@
 -->
 <script setup lang="ts">
 import { scrollBoxOf } from "../../utils/keep-place";
+import { toCss } from "../../utils/zoom";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import ShelfButton from "./ShelfButton.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
@@ -43,19 +44,22 @@ function placeAnchor(): void {
   if (!k || !r) { anchor.value = null; return; }
   const btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-box]"));
   if (!btn) { anchor.value = null; return; }
+  // 画面の座標は拡大率 (zoom) 込みなので、CSS の px に直してから使う (直さずに使って、拡大率の分だけアイコンに被っていた。2026-10-10 オーナー「座標がおかしい」)
   const rr = r.getBoundingClientRect(), b = btn.getBoundingClientRect();
-  const side: Record<string, string> = b.left - rr.left < rr.width / 2 ? { left: `${Math.max(0, Math.round(b.left - rr.left - 4))}px` } : { right: `${Math.max(0, Math.round(rr.right - b.right - 4))}px` };
-  anchor.value = { style: { top: `${Math.round(b.bottom - rr.top + 4)}px`, ...side } };
-  // 下で画面から切れるなら、アイコンの上に出す (送らない。2026-10-10 オーナー「スクロールさせたくない、なりそうなら上でも」)
-  // 測り直しはその時の位置で (切り替え前の棚の高さで計算すると、古い置き場の欄が消えて棚が縮んだ分だけ遠くに出た)。いつもアイコンを軸に
+  const px = (v: number): string => `${Math.round(toCss(v))}px`;
+  const side: Record<string, string> = b.left - rr.left < rr.width / 2 ? { left: px(Math.max(0, b.left - rr.left - 4)) } : { right: px(Math.max(0, rr.right - b.right - 4)) };
+  // ふだんはアイコンのすぐ下
+  anchor.value = { style: { top: px(b.bottom - rr.top + 4), ...side } };
+  // 下で画面から切れるなら、アイコンのすぐ上に (送らない。2026-10-10 オーナー「スクロール判定は逆の上でおｋ、1 行上とかでいい」)。測り直しはその時の位置で
   void nextTick(() => {
     const pop = r.querySelector<HTMLElement>(".held-anchor .held-pop-in");
     if (!pop) return;
     const sc = scrollBoxOf(r);
-    const viewBottom = sc ? sc.getBoundingClientRect().bottom : window.innerHeight;
-    if (pop.getBoundingClientRect().bottom <= viewBottom - 4) return;
+    const viewBottom = Math.min(sc ? sc.getBoundingClientRect().bottom : Infinity, window.innerHeight);
+    const pr = pop.getBoundingClientRect();
+    if (pr.bottom <= viewBottom - 4) return;
     const rr2 = r.getBoundingClientRect(), b2 = btn.getBoundingClientRect();
-    anchor.value = { style: { top: `${Math.round(b2.top - rr2.top - pop.offsetHeight - 4)}px`, ...side } };
+    anchor.value = { style: { top: px(b2.top - rr2.top - pr.height - 4), ...side } };
   });
 }
 let anchorRo: ResizeObserver | null = null;

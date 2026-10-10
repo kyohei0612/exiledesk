@@ -66,10 +66,11 @@ const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : sh
  */
 const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
 function enter(e: MouseEvent): void {
-  // 持っている物の説明は出さない (真下のお告げの欄に重なった。2026-10-10 オーナー「絶対こうなると思った」)
-  if (!props.omen && craftStage.held.value === props.k) return;
   if (touchOnly) return;
-  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  let r: { left: number; right: number; top: number; bottom: number } = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  // 持っている物はお告げの欄も合わせた範囲の横に出す (欄に重ならないように。2026-10-10 オーナー「被らないようにお告げと表示したらいいだけ」)
+  const pop = !props.omen && craftStage.held.value === props.k ? document.querySelector<HTMLElement>(".held-anchor .held-pop-in")?.getBoundingClientRect() : null;
+  if (pop) r = { left: Math.min(r.left, pop.left), right: Math.max(r.right, pop.right), top: Math.min(r.top, pop.top), bottom: Math.max(r.bottom, pop.bottom) };
   hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
 }
 function leave(): void { hoverStack.leave(); }
