@@ -16,6 +16,7 @@ import { toCss } from "../../utils/zoom";
 import type { CardAnchor } from "../../utils/fit-card";
 import { shelfTag } from "../../state/craft-stage-help";
 import { useShelf } from "../../state/shelf-context";
+import { omenNote } from "../../services/craft-stage/omens";
 
 const props = defineProps<{ k: string; omen?: boolean }>();
 const emit = defineEmits<{ pick: [key: string] }>();
@@ -50,6 +51,8 @@ const OMEN_TAG: Record<string, string> = {
   OmenofPutrefaction: "全部冒涜", OmenofAbyssalEchoes: "引き直し",
 };
 const omenTag = computed(() => (props.omen ? OMEN_TAG[props.k] ?? null : null));
+/** 今のアイテムでは意味が無い / 掛けると打てない (2026-10-10 オーナー「空きに勝手に入るから意味ないこと教えてあげた方がいい」) */
+const omenWarn = computed(() => (props.omen ? omenNote(props.k, shelf.item.value) : null));
 const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : shelf.held.value === props.k));
 
 /** 詳細カード: 0.4 秒乗せたら出す (すぐ出すと誤爆するので。オーナー 2026-09-27 のカードの決まりと同じ) */
@@ -98,6 +101,7 @@ onBeforeUnmount(leave);
     <span v-if="badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ badge[1] }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">有効</span>
     <span v-if="omenTag" class="mt-px block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">・{{ omenTag }}</span>
+    <span v-if="omenWarn" class="block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
     <span v-else-if="omenBlocked" class="mt-px block w-full text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-rose-300">お告げで打てない</span>
     <span v-else-if="tag" class="mt-px w-full">
       <span v-for="(t, i) in tag" :key="i" class="block truncate text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">・{{ t }}</span>
