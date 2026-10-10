@@ -153,7 +153,11 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     let body = text;
     const at = text.lastIndexOf(',"__ev":');
     if (at > 0 && text.endsWith("}")) {
-      try { const b = parseBatch(JSON.parse(text.slice(at + 8, -1))); if (b) writeEvents(env, b, country); } catch { /* 印は落としてよい */ }
+      // 1 訪問分 (前の形) か、端末に溜めた訪問ごとの配列 (2026-10-10 1 時間に 1 回まとめて送る形)
+      try {
+        const raw = JSON.parse(text.slice(at + 8, -1)) as unknown;
+        for (const one of (Array.isArray(raw) ? raw : [raw]).slice(0, 50)) { const b = parseBatch(one); if (b) writeEvents(env, b, country); }
+      } catch { /* 印は落としてよい */ }
       body = `${text.slice(0, at)}}`;
     }
     // 記録が 0 件 (印だけ) なら D1 には置かない
@@ -198,8 +202,10 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       const [live, market] = await Promise.all([env.LIVE.get(STATE_KEY, { cacheTtl: 300 }), env.LIVE.get(MARKET_KEY, { cacheTtl: 300 })]);
       let m = market;
       if (!m) { try { m = JSON.stringify(await refreshMarket(env)); } catch { m = null; } }
-      // ブラウザに 10 分覚えさせる (開き直しはサーバーに来ない)
-      return new Response(`{"live":${live ?? "null"},"market":${m ?? "null"}}`, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=600", ...CORS } });
+      // ブラウザに次の相場の取り直し (毎時 0 分の cron) の少し後まで覚えさせる。同じ人が 1 時間に何回開いてもサーバーに来るのは 1 回 (2026-10-10)
+      const now = new Date();
+      const untilNext = Math.max(60, 3600 - (now.getUTCMinutes() * 60 + now.getUTCSeconds()) + 120);
+      return new Response(`{"live":${live ?? "null"},"market":${m ?? "null"}}`, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": `public, max-age=${untilNext}`, ...CORS } });
     }
     case "/live.json": {
       const raw = await env.LIVE.get(STATE_KEY);

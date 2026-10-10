@@ -316,6 +316,9 @@ describe("問い合わせを減らす (2026-10-10)", () => {
     await post(`{"app":"web","n":0,"v":"0","uid":"uid123456","sid":"s","dev":"pc","recs":[],"__ev":${JSON.stringify(ev)}}`);
     expect(points).toHaveLength(4);
     expect(rows).toHaveLength(1);
+    // 端末に溜めた訪問ごとの配列 (1 時間に 1 回まとめて送る形)
+    await post(`{"app":"web","n":0,"v":"0","uid":"uid123456","sid":"s","dev":"pc","recs":[],"__ev":[${JSON.stringify(ev)},${JSON.stringify({ ...ev, sid: "sid999999" })}]}`);
+    expect(points).toHaveLength(8);
   });
   it("/boot.json は配信の情報と相場を 1 回で、相場が無ければその場で取ってブラウザに 10 分覚えさせる", async () => {
     const kv = fakeKv();
@@ -330,7 +333,7 @@ describe("問い合わせを減らす (2026-10-10)", () => {
       expect(j.live.updatedAt).toBe("x");
       expect(j.market.league).toBe("Rites");
       expect(j.market.items).toHaveLength(1);
-      expect(r.headers.get("cache-control")).toContain("max-age=600");
+      expect(r.headers.get("cache-control")).toMatch(/max-age=\d+/);
       expect(kv.store.has("market")).toBe(true);
     } finally { globalThis.fetch = orig; }
   });
