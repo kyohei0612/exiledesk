@@ -28,3 +28,32 @@ export function scrollToTop(el: Element | null | undefined, behavior: ScrollBeha
   const bar = (document.querySelector("[data-item-mini]") as HTMLElement | null)?.offsetHeight ?? 0;
   window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - bar - 8, behavior });
 }
+
+/** el を送っている枠 (overflow が auto / scroll の一番近い親)。無ければ null = ページ全体 */
+export function scrollBoxOf(el: Element): HTMLElement | null {
+  let box: HTMLElement | null = el.parentElement;
+  while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement;
+  return box;
+}
+
+/**
+ * 送りが要る時だけ、短く減速で滑らせる (2026-10-10 オーナー「ぱっと移動させるんじゃなくて高速でスライド」「やるのは全部じゃなくスクロールが必要な時だけ」)。
+ * ブラウザの smooth は遅くて途中で他の送りと重なるとカクつくので、自前で 1 本の rAF。動きを減らす設定の時は一気に
+ */
+let gliding = 0;
+export function glideBy(box: HTMLElement | null, d: number, ms = 200): void {
+  if (Math.abs(d) < 1) return;
+  const getY = (): number => (box ? box.scrollTop : window.scrollY);
+  const setY = (y: number): void => { if (box) box.scrollTop = y; else window.scrollTo(0, y); };
+  const y0 = getY();
+  if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) { setY(y0 + d); return; }
+  const run = ++gliding;
+  const t0 = performance.now();
+  const step = (t: number): void => {
+    if (run !== gliding) return;
+    const k = Math.min(1, (t - t0) / ms);
+    setY(y0 + d * (1 - (1 - k) ** 3));
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}

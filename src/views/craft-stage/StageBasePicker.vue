@@ -12,6 +12,7 @@ import { baseCatalog, classLabel } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
 import Icon from "../../components/ui/Icon.vue";
 import { tr } from "../../i18n/lang";
+import { glideBy, scrollBoxOf } from "../../utils/keep-place";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
 const props = defineProps<{ base: string; data: PatchData | null; /** まだ選んでいない (開いた状態で始まり、今のベースは出さない) */ unpicked?: boolean }>();
@@ -34,12 +35,12 @@ function choose(en: string): void {
   if (!el || before == null) return;
   void nextTick(() => {
     if (!el.isConnected) return;
-    let box: HTMLElement | null = el.parentElement;
-    while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement;
-    const top = el.getBoundingClientRect().top;
-    const want = Math.max(before, box ? box.getBoundingClientRect().top + 8 : 8);
-    const d = top - want;
-    if (Math.abs(d) > 1) (box ?? window).scrollBy({ top: d, behavior: "instant" as ScrollBehavior });
+    const box = scrollBoxOf(el);
+    // 縮んだ分の戻しは一気に (見た目は動かない)。行が画面の上に隠れていた時の送りだけ滑らせる (2026-10-10 オーナー「強制的に飛ぶ、スクロールが必要な時だけ高速でスライド」)
+    const keep = el.getBoundingClientRect().top - before;
+    if (Math.abs(keep) > 1) (box ?? window).scrollBy({ top: keep, behavior: "instant" as ScrollBehavior });
+    const want = box ? box.getBoundingClientRect().top + 8 : 8;
+    if (before < want) glideBy(box, before - want);
   });
 }
 </script>

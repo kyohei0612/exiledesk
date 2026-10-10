@@ -9,6 +9,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import BaseCardGrid from "./BaseCardGrid.vue";
 import { baseCatalog, CATALOG_ROWS, CATALOG_ROW_EN, classEn, VARIANT_EN } from "../../services/items/base-catalog";
 import { tr } from "../../i18n/lang";
+import { glideBy, scrollBoxOf } from "../../utils/keep-place";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
@@ -117,27 +118,23 @@ function pickFamily(f: Family): void {
   // 属性の札は先頭 (筋力・無印) を選んだ状態で開いて、すぐベースを出す。札は上で切り替える
   // (2026-10-10 オーナー「押したら選ばせるんじゃなく最初から筋力のページ開いて上のタブで切り替え、アイコンと文字が挟まれると目が滑る」)
   cls.value = f.variants.some((v) => v.cls === cls.value) ? cls.value : f.variants[0]!.cls;
-  void nextTick(() => { placeUnder(f); void nextTick(revealPanel); });
+  void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(revealPanel)); });
 }
 /**
- * 開いた一覧の下 (「もっと見る」の少し下) が画面から切れている時だけ、そこまで送る。見えている時は動かさない
- * (2026-10-10 オーナー「全体が見えるとこまでスクロールしてあげるか、下限はもっと見るのちょっとしたくらい、スクロールしないと見れない時だけ」。
- * 前は 2026-10-09「押しても画面は動かさない」で一切送っていなかった)。一覧の上が画面の上から出ない所で止める
+ * 開いた一覧の下 (「もっと見る」の少し下) が画面から切れている時だけ、そこまで滑らせて送る。見えている時は動かさない。一覧の上が画面の上から出ない所で止める
+ * (2026-10-10 オーナー「全体が見えるとこまでスクロール、スクロールしないと見れない時だけ」「高速でスライド」「やるのは全部の挙動じゃなくスクロールが必要な時だけ」)。
+ * 一覧そのものはぱっと開く。測るのは中の並び (列の数) が決まった後 (1 コマ待つ)
  */
-let panelEl: HTMLElement | null = null;
-const setPanelEl = (el: unknown): void => { panelEl = el instanceof HTMLElement ? el : null; };
 function revealPanel(): void {
-  const el = panelEl;
+  const el = document.querySelector<HTMLElement>("[data-base-panel]");
   if (!el) return;
-  let box: HTMLElement | null = el.parentElement;
-  while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement;
+  const box = scrollBoxOf(el);
   const r = el.getBoundingClientRect();
   const viewBottom = box ? box.getBoundingClientRect().bottom : window.innerHeight;
   const viewTop = box ? box.getBoundingClientRect().top : 0;
   const over = r.bottom + 16 - viewBottom;
   if (over <= 0) return;
-  const d = Math.min(over, r.top - viewTop - 8);
-  if (d > 0) (box ?? window).scrollBy({ top: d, behavior: "smooth" });
+  glideBy(box, Math.min(over, r.top - viewTop - 8));
 }
 onMounted(() => { void nextTick(() => placeUnder(family.value)); });
 function backToFamilies(): void { family.value = null; cls.value = null; }
@@ -170,7 +167,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
             </div>
           </div>
           <!-- PC: 押したタイルの行のすぐ下 (行いっぱい) -->
-          <div v-if="!phone && family && insertAfter === r.ja" :ref="setPanelEl" class="basis-full rounded-md bg-black/25 p-2 ring-1 ring-white/10">
+          <div v-if="!phone && family && insertAfter === r.ja" data-base-panel class="basis-full rounded-md bg-black/25 p-2 ring-1 ring-white/10">
             <div v-if="family.variants.length > 1" class="mb-2 flex flex-wrap gap-2">
               <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
             </div>
