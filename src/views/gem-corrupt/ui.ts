@@ -5,6 +5,7 @@ export { evClass } from "../../utils/ev-class";
  *
  * 画面を 6 つに割ったので、どの札からも使う短い書式と定数をここに集める。
  */
+import { fmtPct } from "../../utils/format-pct";
 import { displayCurrency } from "../../state/display-currency";
 
 /** 表示通貨で書く (符号付きにもできる) */
@@ -25,10 +26,8 @@ export const unit = displayCurrency.label;
  */
 export const moneyFixed = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed, fixed: true });
 
-/** 確率を % で (10% 未満は小数 1 桁) */
-export function pct(p: number): string {
-  return `${(p * 100).toFixed(p * 100 >= 10 ? 0 : 1)}%`;
-}
+/** 確率を % で (2026-10-10 動きの揃え 5: エミュレーターと同じ書き方。utils/format-pct.ts) */
+export const pct = (p: number): string => fmtPct(p);
 
 
 /** 取引所の単価 (桁に合わせて小数を減らす) */

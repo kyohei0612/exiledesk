@@ -3,6 +3,7 @@
   2026-09-19 に GemCorrupt.vue から切り出し。中身は変えていない。
 -->
 <script setup lang="ts">
+import Disclosure from "../../components/ui/Disclosure.vue";
 import AttemptsSelect from "../../components/AttemptsSelect.vue";
 import { computed, ref } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
@@ -117,7 +118,7 @@ const summary = computed(() => {
                     <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap text-[14px]" :class="evClass(r.id === 'buyFinished' ? null : per100(r))">{{ r.id === "buyFinished" ? "0 (基準)" : money(per100(r), true) }}</td>
                     <td class="py-1.5 pl-3 text-right tabular-nums">{{ pct(r.pFinished) }}</td>
                     <td class="py-1.5 pl-3 text-right whitespace-nowrap">
-                      <button type="button" class="text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="expanded[r.id] = !expanded[r.id]">{{ expanded[r.id] ? "▲ 内訳" : "▼ 内訳" }}</button>
+                      <Disclosure v-model:open="expanded[r.id]" kind="detail" class="text-[11px]" />
                     </td>
                   </template>
                   <td v-else colspan="4" class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-tertiary)]">不足: {{ r.missing.join("、") }}</td>

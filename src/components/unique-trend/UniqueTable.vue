@@ -7,8 +7,10 @@
   (2026-09-28 オーナー「お気に入りは文字通り最安値だから、コラプト等の指定はお気に入りリスト内の場合は外して。最安値指定なしの金額を表示」)。
 -->
 <script setup lang="ts">
+import { useFlash } from "../../utils/use-flash";
+import Disclosure from "../ui/Disclosure.vue";
 import Sparkline from "../currency/Sparkline.vue";
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { uniqueWatch } from "../../state/unique-watch";
 import { hoverStack } from "../../state/hover-stack";
 import { toCss } from "../../utils/zoom";
@@ -72,11 +74,11 @@ function clickChange() {
   sortKey.value = sortKey.value === "rise" ? "fall" : "rise";
 }
 /** お気に入りは 5 個まで (取引所で最安値を記録するため。オーナー 2026-09-27)。付けられなかった行に数秒だけ断りを出す */
-const favFull = ref<string | null>(null);
+const favNote = useFlash();
+const favFull = favNote.msg;
 function onFav(key: string): void {
   if (uniqueFavorites.toggle(key)) return;
-  favFull.value = key;
-  setTimeout(() => { if (favFull.value === key) favFull.value = null; }, 3000);
+  favNote.flash(key);
 }
 </script>
 
@@ -165,9 +167,7 @@ function onFav(key: string): void {
             </td>
             <!-- 詳細を開く (取引所へは名前の横の「トレード2へ」。オーナー 2026-09-26「右側は詳細って書いたら開いてくれるから、トレードへ遷移しなくていい」) -->
             <td class="px-3 py-2.5 text-right">
-              <button type="button" class="rounded border border-[var(--exile-color-border-subtle)] px-2 py-0.5 text-xs hover:border-[var(--exile-color-accent-focus)] hover:text-[var(--exile-color-accent-focus)]"
-                :class="openId === r.itemId ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : ''"
-                :title="openId === r.itemId ? '詳細を閉じる' : 'グラフと取引所へのボタンを開く'" @click.stop="emit('toggle', r.itemId)">{{ openId === r.itemId ? "詳細 ▲" : "詳細 ▼" }}</button>
+              <Disclosure :open="openId === r.itemId" kind="detail" class="text-xs" :title="openId === r.itemId ? '詳細を閉じる' : 'グラフと取引所へのボタンを開く'" @click.stop @update:open="emit('toggle', r.itemId)" />
             </td>
           </tr>
           <tr v-if="openId === r.itemId" class="border-t border-[var(--exile-color-border-subtle)]">

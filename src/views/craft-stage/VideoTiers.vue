@@ -11,6 +11,7 @@
     下限はエンジンの CURRENCY_FLOOR (王者・高貴 35 / 50、変成・増強 55 / 70)。注にどのオーブの下限かを出す
 -->
 <script setup lang="ts">
+import { fmtPct } from "../../utils/format-pct";
 import { computed } from "vue";
 import { craftStage } from "../../state/craft-stage";
 import { freshItem } from "../../services/craft-stage/run-plan";
@@ -64,7 +65,8 @@ const view = computed(() => {
     return { error: e instanceof Error ? e.message : String(e), item: null };
   }
 });
-const pct = (x: number): string => (x >= 0.1 ? `${Math.round(x * 100)}%` : x > 0 ? `${(x * 100).toFixed(1)}%` : "—");
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
+const pct = (x: number): string => fmtPct(x, { zero: "—" });
 /**
  * 段の数で行の高さを決める。612px (下 15% より上) から 上の余白 16・見出し 132・表の頭 46・下の注 26 を除いた残りを段で割る
  */
@@ -80,7 +82,7 @@ const rowFont = computed(() => Math.max(18, Math.min(30, Math.round(rowH.value *
 
 <template>
   <div class="absolute inset-x-0 top-0 flex h-[612px] flex-col items-center px-8 pt-4 text-white">
-    <p v-if="!view" class="mt-40 text-2xl opacity-60">データを読んでいます…</p>
+    <p v-if="!view" class="mt-40 text-2xl opacity-60">読み込み中…</p>
     <p v-else-if="'error' in view" class="mt-40 text-2xl text-rose-300">{{ view.error }}</p>
     <template v-else>
       <!-- 見出し: ベースと MOD -->

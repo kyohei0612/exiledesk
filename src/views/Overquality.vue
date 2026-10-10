@@ -6,6 +6,7 @@
     views/overquality/useOverquality.ts プリセット / 相場 / 入力
 -->
 <script setup lang="ts">
+import Disclosure from "../components/ui/Disclosure.vue";
 import { evClass } from "../utils/ev-class";
 import { computed, onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
@@ -266,9 +267,7 @@ function onRefetch(): void {
               <span class="text-right tabular-nums" :class="evClass(atN.revenue != null && atN.total != null ? atN.revenue - atN.total : null)">{{ atN.revenue != null && atN.total != null ? money(atN.revenue - atN.total, true) : "—" }}</span>
             </div>
           </div>
-          <button type="button" class="mt-2 text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="showLadder = !showLadder">
-            {{ showLadder ? "▲ 品質ごとの内訳を閉じる" : "▼ 品質ごとの内訳" }}
-          </button>
+          <Disclosure v-model:open="showLadder" kind="detail" class="mt-2 text-[11px]">品質ごとの内訳 ·</Disclosure>
           <table v-if="showLadder" class="mt-1 text-[11px] max-w-md w-full">
             <thead class="text-[10px] text-[var(--exile-color-text-tertiary)]">
               <tr><th class="text-left font-normal">品質</th><th class="text-right font-normal">ここに到達</th><th class="text-right font-normal">ここで壊れる</th></tr>

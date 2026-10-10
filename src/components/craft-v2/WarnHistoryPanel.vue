@@ -3,7 +3,8 @@
   CraftDiscoveryV2B.vue から切り出し (2026-09-07)。状態は craftV2Store を直接参照する。
 -->
 <script setup lang="ts">
-import { ref } from "vue";
+import { useFlash } from "../../utils/use-flash";
+import Icon from "../ui/Icon.vue";
 import {
   craftV2Store,
   clearWarns,
@@ -17,7 +18,8 @@ const emit = defineEmits<{ retry: [] }>();
 const store = craftV2Store;
 
 /** 2026-09-16: 健全性チェックは内部処理なのでボタンを廃止。代わりに履歴をそのままコピーできるように */
-const copied = ref(false);
+const copyNote = useFlash<boolean>();
+const copied = copyNote.msg;
 async function copyWarns(): Promise<void> {
   const text = store.warnHistory
     .map((w) => {
@@ -28,8 +30,7 @@ async function copyWarns(): Promise<void> {
     .join("\n");
   try {
     await navigator.clipboard.writeText(text);
-    copied.value = true;
-    setTimeout(() => (copied.value = false), 1500);
+    copyNote.flash(true);
   } catch {
     /* コピーできない環境では何もしない */
   }
@@ -80,9 +81,7 @@ async function copyWarns(): Promise<void> {
           @click="w.details && w.details.length > 0 ? toggleWarnDetail(w.timestamp) : null"
           :title="w.details && w.details.length > 0 ? 'クリックで詳細表示' : ''"
         >
-          <span v-if="w.details && w.details.length > 0" class="select-none w-3 shrink-0 text-[10px] tabular-nums" aria-hidden="true"
-            >{{ store.expandedWarnTimestamps.has(w.timestamp) ? "▼" : "▶" }}</span
-          >
+          <Icon v-if="w.details && w.details.length > 0" :name="store.expandedWarnTimestamps.has(w.timestamp) ? 'chevron-up' : 'chevron-down'" class="mt-0.5 size-3 shrink-0" />
           <div class="flex-1 min-w-0">
             <span class="tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] mr-1">[{{ formatHms(new Date(w.timestamp)) }}]</span>
             <span v-if="warnSourceLabel(w.source)" class="text-[10px] text-[var(--exile-color-text-secondary)] mr-1"

@@ -38,7 +38,7 @@ function fmtDay(t: number): string {
         <div class="flex items-baseline gap-3 mb-6">
           <span class="text-sm text-[var(--exile-color-text-secondary)]">価格の推移</span>
           <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">
-            poe.ninja の日ごとの記録 {{ d.points.value.length }} 日分<span v-if="d.loadingLong.value"> · 読込中…</span>
+            poe.ninja の日ごとの記録 {{ d.points.value.length }} 日分<span v-if="d.loadingLong.value"> · 読み込み中…</span>
           </span>
         </div>
         <LineChart :points="d.points.value" :format="money" />

@@ -78,7 +78,7 @@ const anyBusy = computed(() => mine.pricing.value || mine.auto.busy.value || oth
  */
 const tb = computed(() => {
   if (fetching(rest.value) || rest.value.auto.busy.value) return { label: `${who.value === "mine" ? "相手" : "自分"}の値段を取っています`, disabled: true, action: "start" as const };
-  if (b.value.pricing.value) return { label: "相場を読んでいます…", disabled: true, action: "start" as const };
+  if (b.value.pricing.value) return { label: "取得中…", disabled: true, action: "start" as const };
   return tradeButton("build-copy", b.value.fetched.value ? "値段を取り直す" : "値段を取る");
 });
 function onTrade(): void {

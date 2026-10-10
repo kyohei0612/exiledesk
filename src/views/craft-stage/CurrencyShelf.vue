@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useSlots, watch } from "vue";
 import ShelfButton from "./ShelfButton.vue";
+import Disclosure from "../../components/ui/Disclosure.vue";
 import { useShelf } from "../../state/shelf-context";
 import { bonesFor, CATALYSTS, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
@@ -164,9 +165,7 @@ const TABS = computed(() => [
       <div v-for="sec in usableAll" :key="sec.kind ?? sec.label">
         <p class="mb-0.5 flex items-center gap-2 text-[10px]">
           <span class="opacity-60">{{ sec.label }} ({{ sec.keys.length }})</span>
-          <button v-if="sec.kind && sec.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" type="button" class="rounded px-1 text-[10px] text-sky-300/80 hover:bg-white/10" @click="toggleRunes(sec.kind)">
-            {{ openRunes.has(sec.kind) ? tr("たたむ ▴", "Collapse ▴") : tr(`他 ${sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸`, `${sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} more ▸`) }}
-          </button>
+          <Disclosure v-if="sec.kind && sec.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" :open="openRunes.has(sec.kind)" :rest="sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length" class="text-[11px]" @update:open="toggleRunes(sec.kind!)" />
         </p>
         <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
           <ShelfButton v-for="k in !sec.kind || openRunes.has(sec.kind) ? sec.keys : sec.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" @pick="emit('hold', $event)" />
@@ -190,9 +189,10 @@ const TABS = computed(() => [
       </div>
       <div v-if="$slots.held && !placed" class="mt-2" data-held-box><slot name="held" /></div>
       <template v-if="orbSplit.unusable.length">
-        <button type="button" class="mb-1 mt-3 flex w-full items-center gap-2 border-t border-white/10 pt-2 text-left text-[10px] opacity-50 hover:opacity-80 max-md:min-h-10" @click="unusableOpen = !unusableOpen">
-          {{ tr("今のアイテムには使えない物", "Not usable on this item") }} ({{ orbSplit.unusable.reduce((a, g) => a + g.keys.length, 0) }}) {{ unusableOpen ? tr("▴ たたむ", "▴ Collapse") : tr("▸ 開く", "▸ Expand") }}
-        </button>
+        <!-- 2026-10-10 動きの揃え 3: 開く / たたむ は Disclosure に -->
+        <div class="mb-1 mt-3 border-t border-white/10 pt-2 max-md:flex max-md:min-h-10 max-md:items-center">
+          <Disclosure v-model:open="unusableOpen" :rest="orbSplit.unusable.reduce((a, g) => a + g.keys.length, 0)" class="text-[11px]">{{ tr("今のアイテムには使えない物", "Not usable on this item") }} ·</Disclosure>
+        </div>
         <div v-if="unusableOpen" class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
           <template v-for="g in orbSplit.unusable" :key="'x' + g.kind">
             <div class="flex flex-wrap gap-1.5 max-md:contents">
@@ -229,9 +229,7 @@ const TABS = computed(() => [
         <div v-for="g in runes" :key="g.kind">
           <p class="mb-0.5 flex items-center gap-2 text-[10px]">
             <span class="opacity-60">{{ g.label }}</span>
-            <button v-if="g.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" type="button" class="rounded px-1 text-[10px] text-sky-300/80 hover:bg-white/10" @click="toggleRunes(g.kind)">
-              {{ openRunes.has(g.kind) ? tr("たたむ ▴", "Collapse ▴") : tr(`他 ${g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸`, `${g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} more ▸`) }}
-            </button>
+            <Disclosure v-if="g.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" :open="openRunes.has(g.kind)" :rest="g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length" class="text-[11px]" @update:open="toggleRunes(g.kind)" />
           </p>
           <div v-if="openRunes.has(g.kind) || g.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:contents">
             <ShelfButton v-for="k in openRunes.has(g.kind) ? g.keys : g.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" @pick="emit('hold', $event)" />

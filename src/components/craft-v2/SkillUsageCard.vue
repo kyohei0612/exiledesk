@@ -6,6 +6,7 @@
   サポートの内訳だけは、装備の集計に使っている上位キャラのスキルグループから出す (poe.ninja の集計には無いため)。
 -->
 <script setup lang="ts">
+import Disclosure from "../ui/Disclosure.vue";
 import GemName from "../decor/GemName.vue";
 import { computed, ref } from "vue";
 import BaseCard from "../decor/BaseCard.vue";
@@ -115,14 +116,7 @@ const fmtCount = (n: number): string => n.toLocaleString("ja-JP");
               </li>
               <li v-if="sec.list.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)] italic">該当なし</li>
             </ul>
-            <button
-              v-if="sec.list.length > PAGE"
-              type="button"
-              class="mt-2 text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
-              @click="showAll[sec.key] = !showAll[sec.key]"
-            >
-              {{ showAll[sec.key] ? `▲ 上位 ${PAGE} 件だけ` : `▼ 残り ${sec.list.length - PAGE} 件を見る` }}
-            </button>
+            <Disclosure v-if="sec.list.length > PAGE" v-model:open="showAll[sec.key]" :rest="sec.list.length - PAGE" class="mt-2 text-[11px]" />
           </div>
         </BaseCard>
       </div>

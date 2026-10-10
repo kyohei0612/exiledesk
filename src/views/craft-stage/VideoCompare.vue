@@ -103,7 +103,7 @@ const ZOOM = 1.44;
 
 <template>
   <div class="absolute inset-x-0 top-0 h-[612px] px-3 pt-3 text-white">
-    <p v-if="!view" class="mt-40 text-center text-2xl opacity-60">データを読んでいます…</p>
+    <p v-if="!view" class="mt-40 text-center text-2xl opacity-60">読み込み中…</p>
     <p v-else-if="'error' in view" class="mt-40 text-center text-2xl text-rose-300">{{ view.error }}</p>
     <div v-else class="flex h-full items-start justify-center gap-3">
       <div class="shrink-0" :style="{ width: `${COL_W}px` }">

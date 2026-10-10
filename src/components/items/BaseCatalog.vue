@@ -7,7 +7,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import BaseCardGrid from "./BaseCardGrid.vue";
-import { baseCatalog, CATALOG_ROWS } from "../../services/items/base-catalog";
+import { baseCatalog, CATALOG_ROWS, CATALOG_ROW_EN, classEn, VARIANT_EN } from "../../services/items/base-catalog";
+import { tr } from "../../i18n/lang";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
@@ -44,9 +45,15 @@ const onResize = (): void => { phone.value = window.innerWidth < 768; };
 onMounted(() => window.addEventListener("resize", onResize));
 onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 const ATTR_JA: Record<string, string> = { str: "筋力", dex: "器用", int: "知性", str_dex: "筋力・器用", str_int: "筋力・知性", dex_int: "器用・知性" };
-/** 種類の札 (手袋(str) / ワンド(火)) を「部位」と「中の札」に分ける */
-interface Family { name: string; variants: Array<{ cls: string; label: string }> }
-const families = computed((): Array<{ ja: string; fams: Family[] }> =>
+/**
+ * 種類の札 (手袋(str) / ワンド(火)) を「部位」と「中の札」に分ける。name は日本語 (中の目印)、en は英語の画面の名前
+ * (2026-10-10 動きの揃え: 英語はクライアントの ItemClasses / ClientStrings のまま。base-catalog.ts)
+ */
+interface Family { name: string; en: string; variants: Array<{ cls: string; label: string; en: string }> }
+const famLabel = (f: Family): string => tr(f.name, f.en);
+const famLabelOf = (v: { label: string; en: string }): string => tr(v.label, v.en);
+const NO_ATTR_EN = "Plain";
+const families = computed((): Array<{ ja: string; en: string; fams: Family[] }> =>
   CATALOG_ROWS.map((r) => {
     const fams: Family[] = [];
     for (const [c, ja] of r.cls) {
@@ -55,18 +62,22 @@ const families = computed((): Array<{ ja: string; fams: Family[] }> =>
       const name = m ? m[1]! : ja;
       const raw = m ? m[2]! : "";
       const label = raw ? (ATTR_JA[raw] ?? raw) : (m ? "無印" : name);
+      const v = c.match(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/)?.[1];
       let f = fams.find((x) => x.name === name);
-      if (!f) { f = { name, variants: [] }; fams.push(f); }
-      f.variants.push({ cls: c, label: raw ? label : "無印" });
+      if (!f) { f = { name, en: classEn(c, false), variants: [] }; fams.push(f); }
+      f.variants.push({ cls: c, label: raw ? label : "無印", en: raw && v ? VARIANT_EN[v]! : NO_ATTR_EN });
     }
-    return { ja: r.ja, fams };
-  }).filter((r) => r.fams.length).reduce((acc: Array<{ ja: string; fams: Family[]; names: string[]; single: boolean }>, r) => {
+    return { ja: r.ja, en: CATALOG_ROW_EN[r.ja] ?? r.ja, fams };
+  }).filter((r) => r.fams.length).reduce((acc: Array<{ ja: string; en: string; fams: Family[]; names: string[]; ens: string[]; single: boolean }>, r) => {
     // 1 部位しかない段 (手袋・靴・鎧・兜) が続く時は 1 段にまとめる (縦 1 列に並んでいた。2026-10-09 オーナー「兜、鎧あたりの UI」)
     const last = acc[acc.length - 1];
-    if (r.fams.length === 1 && last?.single) { last.fams.push(...r.fams); last.names.push(r.ja); }
-    else acc.push({ ja: r.ja, fams: [...r.fams], names: [r.ja], single: r.fams.length === 1 });
+    if (r.fams.length === 1 && last?.single) { last.fams.push(...r.fams); last.names.push(r.ja); last.ens.push(r.en); }
+    else acc.push({ ja: r.ja, en: r.en, fams: [...r.fams], names: [r.ja], ens: [r.en], single: r.fams.length === 1 });
     return acc;
-  }, []).map((r) => ({ ja: r.names.length > 1 ? (r.names.every((n) => ARMOUR.has(n)) ? "防具" : r.names.join("・")) : r.ja, fams: r.fams })));
+  }, []).map((r) => {
+    const armour = r.names.length > 1 && r.names.every((n) => ARMOUR.has(n));
+    return { ja: r.names.length > 1 ? (armour ? "防具" : r.names.join("・")) : r.ja, en: r.names.length > 1 ? (armour ? CATALOG_ROW_EN["防具"]! : r.ens.join(" · ")) : r.en, fams: r.fams };
+  }));
 const ARMOUR = new Set(["手袋", "靴", "鎧", "兜"]);
 /** ベースの絵 (スキルジェムはジェムの絵) */
 const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
@@ -117,8 +128,8 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
   <div>
     <!-- 名前で探す (種類をまたぐ) -->
     <div class="mb-2 flex items-center gap-2">
-      <input v-model="query" type="search" placeholder="名前で探す (例: サファイア、ルビー)" class="w-72 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:w-full md:w-96 md:py-1.5 md:text-[14px]" />
-      <span v-if="query.trim()" class="opacity-50">{{ list.length }} 件</span>
+      <input v-model="query" type="search" :placeholder="tr('名前で探す (例: サファイア、ルビー)', 'Search by name (e.g. Sapphire, Ruby)')" class="w-72 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:w-full md:w-96 md:py-1.5 md:text-[14px]" />
+      <span v-if="query.trim()" class="opacity-50">{{ tr(`${list.length} 件`, `${list.length} found`) }}</span>
     </div>
     <!-- 部位 → 属性 / 元素 → ベース。スマホは 1 段ずつ、PC は部位のタイルを並べたまま、押したタイルの行の下に属性とベースを出す -->
     <template v-if="!query.trim()">
@@ -127,24 +138,24 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
         <template v-for="r in families" :key="r.ja">
           <!-- 宝飾品は PC では最後の行に (防具・オフハンドの行に詰めない) -->
           <div :ref="setGroupEl(r.ja)" :class="!phone && r.ja === '宝飾品' ? 'basis-full' : ''">
-            <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ r.ja }}</p>
+            <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ tr(r.ja, r.en) }}</p>
             <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
             <div :class="phone ? 'grid grid-cols-3 gap-1.5' : 'flex flex-wrap gap-1'">
               <button v-for="f in r.fams" :key="f.name" type="button" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
                 <span class="grid size-16 place-items-center md:size-20" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'">
                   <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" draggable="false" />
                 </span>
-                <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ f.name }}</span>
-                <span v-if="f.variants.length > 1" class="text-[10px] leading-none opacity-50 md:text-[11px]">{{ f.variants.length }} 種</span>
+                <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ famLabel(f) }}</span>
+                <span v-if="f.variants.length > 1" class="text-[10px] leading-none opacity-50 md:text-[11px]">{{ tr(`${f.variants.length} 種`, `${f.variants.length} types`) }}</span>
               </button>
             </div>
           </div>
           <!-- PC: 押したタイルの行のすぐ下 (行いっぱい) -->
           <div v-if="!phone && family && insertAfter === r.ja" class="basis-full rounded-md bg-black/25 p-2 ring-1 ring-white/10">
             <div v-if="family.variants.length > 1" class="mb-2 flex flex-wrap gap-2">
-              <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ v.label }}</button>
+              <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
             </div>
-            <p v-if="!cls" class="py-1 text-[12px] opacity-60">属性を選ぶ</p>
+            <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
             <BaseCardGrid v-else :list="list" :selected="selected" :note="note" fold @pick="(en) => emit('pick', en)" />
           </div>
         </template>
@@ -152,13 +163,13 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       <!-- スマホ: 部位 → 属性 → ベースを 1 段ずつ -->
       <div v-if="phone && family" class="mb-3">
         <div class="mb-2 flex items-center gap-2">
-          <button type="button" class="min-h-11 rounded-lg border border-white/20 px-3" @click="backToFamilies">← 部位</button>
-          <b class="text-[15px] text-amber-100">{{ family.name }}</b>
+          <button type="button" class="min-h-11 rounded-lg border border-white/20 px-3" @click="backToFamilies">{{ tr("← 部位", "← Item class") }}</button>
+          <b class="text-[15px] text-amber-100">{{ famLabel(family) }}</b>
         </div>
         <div v-if="family.variants.length > 1" class="mb-2 flex flex-wrap gap-2">
-          <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ v.label }}</button>
+          <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
         </div>
-        <p v-if="!cls" class="py-1 text-[12px] opacity-60">属性を選ぶ</p>
+        <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
       </div>
     </template>
     <!-- ② ベースのカード: スマホ (1 段ずつの最後) と名前で探す時はここ -->

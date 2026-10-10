@@ -8,6 +8,7 @@
   オーグメント (コルの狩り 等、2026-10-03) は橙。行にルーンの名前の札と「仮」(出やすさがエンジンの仮の値) を付ける。
 -->
 <script setup lang="ts">
+import { fmtPct } from "../../utils/format-pct";
 import { ESSENCE_KIND } from "../../services/mods/essence-kind";
 import { computed } from "vue";
 import type { ModGroup, ModRow, usePicker } from "./usePicker";
@@ -51,7 +52,8 @@ const groups = computed(() =>
     .filter((x) => x.rows.length),
 );
 /** 出やすさの % (重みの無い種類 = エッセンスは出さない) */
-const pct = (x: number): string => (x >= 0.1 ? `${Math.round(x * 100)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "");
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
+const pct = (x: number): string => fmtPct(x, { zero: "" });
 const full = computed(() => props.count >= props.limit);
 const isDesec = (m: ModRow): boolean => m.group === "desecrated" || m.group === "otherworldly";
 /** 押せない理由 (入れた物は外せる) */

@@ -506,13 +506,13 @@ export const craftStage = {
   },
   /** その状態で打てるか (打てないなら理由)。掛けてあるお告げ込み */
   usable(key: string): string | null {
-    if (!data.value || !item.value) return tr("準備中", "Loading");
+    if (!data.value || !item.value) return tr("読み込み中…", "Loading…");
     const r = applyCurrency(data.value, item.value, key, mulberry32(0), omens.value);
     return r.applied ? null : (r.reason ?? tr("打てない", "Can't use"));
   },
   /** お告げを抜きにして打てるか (掛けたままのお告げのせいで打てない物を棚から消さないため。2026-10-10「錬金の後に高貴が打てない」) */
   usableBare(key: string): string | null {
-    if (!data.value || !item.value) return tr("準備中", "Loading");
+    if (!data.value || !item.value) return tr("読み込み中…", "Loading…");
     const r = applyCurrency(data.value, item.value, key, mulberry32(0), []);
     return r.applied ? null : (r.reason ?? tr("打てない", "Can't use"));
   },

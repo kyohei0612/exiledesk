@@ -13,6 +13,7 @@ import { baseStatsOf, FLASK_BASES, GEM_BASES } from "../craft-stage/stage-bases"
 import { jaTypeName } from "../trade2/localize";
 import removedBases from "./removed-bases.json";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { tr } from "../../i18n/lang";
 
 /** 能力値の要求 (ゲームの言葉で。2026-10-09 初見レビュー「手袋(dex_int) が読めない」) */
 const ATTR_JA: Record<string, string> = { str: "筋力", dex: "器用", int: "知性", str_dex: "筋力・器用", str_int: "筋力・知性", dex_int: "器用・知性" };
@@ -35,6 +36,36 @@ export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> =
 ];
 export const CATALOG_CLS_JA = new Map(CATALOG_ROWS.flatMap((r) => r.cls));
 /**
+ * 英語の画面 (2026-10-10 動きの揃え): 段と種類はクライアントの英語のまま (手で訳さない)。
+ * 種類 = ItemClasses の Name (日本語の表と同じ行)、段 = ClientStrings (EssenceCategory* / CosmeticsPanel…OffhandWeapon / TutorialPanelFlasks / SkillCraftingWindow)、
+ * 能力値 = ClientStrings の Strength / Dexterity / Intelligence、元素 = CharacterPanelResistance* (物理は同じ並びの英語)
+ */
+export const CATALOG_ROW_EN: Record<string, string> = {
+  片手武器: "One Handed Weapon", 両手武器: "Two Handed Weapon", 兜: "Helmets", 鎧: "Body Armours", 手袋: "Gloves", 靴: "Boots",
+  オフハンド: "Off Hand", 宝飾品: "Jewellery", フラスコ: "Flasks", ジェム: "Skill Gems", 防具: "Armour",
+};
+const CLS_EN: Record<string, string> = {
+  OneHand_Maces: "One Hand Maces", Spears: "Spears", Wands: "Wands", Sceptres: "Sceptres",
+  TwoHand_Maces: "Two Hand Maces", Quarterstaves: "Quarterstaves", Talismans: "Talismans", Bows: "Bows", Crossbows: "Crossbows", Staves: "Staves",
+  Helmets: "Helmets", Body_Armours: "Body Armours", Gloves: "Gloves", Boots: "Boots",
+  Quivers: "Quivers", Shields: "Shields", Foci: "Foci", Bucklers: "Bucklers",
+  Amulets: "Amulets", Belts: "Belts", Rings: "Rings", LifeFlask: "Life Flasks", ManaFlask: "Mana Flasks", SkillGem: "Skill Gems",
+};
+/** 種類の札の中の英語 (str_dex → Strength/Dexterity、fire → Fire) */
+export const VARIANT_EN: Record<string, string> = {
+  str: "Strength", dex: "Dexterity", int: "Intelligence", str_dex: "Strength/Dexterity", str_int: "Strength/Intelligence", dex_int: "Dexterity/Intelligence",
+  fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos", physical: "Physical",
+};
+/** 種類の英語 (Gloves_str_dex → Gloves (Strength/Dexterity))。属性を外すなら withAttr = false */
+export function classEn(cls: string, withAttr = true): string {
+  const key = Object.keys(CLS_EN).filter((k) => cls === k || cls.startsWith(`${k}_`)).sort((a, b) => b.length - a.length)[0];
+  if (!key) return cls.replace(/_/g, " ");
+  const v = cls.slice(key.length + 1);
+  return withAttr && v ? `${CLS_EN[key]} (${VARIANT_EN[v] ?? v})` : CLS_EN[key]!;
+}
+/** 種類の名前 (画面の言語で) */
+export const classLabel = (cls: string, withAttr = true): string => tr(classJa(cls, withAttr), classEn(cls, withAttr));
+/**
  * 種類の日本語 (ゲームのアイテムクラス名。クライアントの ItemClasses と同じ = スピア・フォーカス・鎧)。
  * 行 (Gloves_str) は属性付きで、属性の無いキー (Gloves・Shields) は属性を外した名前。アプリの種類名はここから取る
  */
@@ -55,15 +86,15 @@ export function baseStatLine(en: string): string {
   const b = baseStatsOf(en);
   if (!b) return "";
   const out: string[] = [];
-  if (b.armour) out.push(`アーマー ${num(b.armour)}`);
-  if (b.evasion) out.push(`回避力 ${num(b.evasion)}`);
-  if (b.es) out.push(`エナジーシールド ${num(b.es)}`);
-  if (b.block) out.push(`ブロック ${b.block}%`);
-  if (b.phys) out.push(`物理 ${b.phys[0]}-${b.phys[1]}`);
-  if (b.aps) out.push(`${b.aps.toFixed(2)} 回/秒`);
-  if (b.crit && b.phys) out.push(`クリ ${b.crit.toFixed(2)}%`);
-  if (b.life) out.push(`ライフ ${b.life}`);
-  if (b.mana) out.push(`マナ ${b.mana}`);
+  if (b.armour) out.push(`${tr("アーマー", "Armour")} ${num(b.armour)}`);
+  if (b.evasion) out.push(`${tr("回避力", "Evasion Rating")} ${num(b.evasion)}`);
+  if (b.es) out.push(`${tr("エナジーシールド", "Energy Shield")} ${num(b.es)}`);
+  if (b.block) out.push(`${tr("ブロック", "Block chance")} ${b.block}%`);
+  if (b.phys) out.push(`${tr("物理", "Physical Damage")} ${b.phys[0]}-${b.phys[1]}`);
+  if (b.aps) out.push(tr(`${b.aps.toFixed(2)} 回/秒`, `${b.aps.toFixed(2)} Attacks per Second`));
+  if (b.crit && b.phys) out.push(`${tr("クリ", "Crit")} ${b.crit.toFixed(2)}%`);
+  if (b.life) out.push(`${tr("ライフ", "Life")} ${b.life}`);
+  if (b.mana) out.push(`${tr("マナ", "Mana")} ${b.mana}`);
   return out.join(" · ");
 }
 
@@ -73,7 +104,7 @@ export interface CatalogRow { en: string; ja: string; cls: string; lvl: number; 
 export function baseCatalog(d: PatchData, extras: boolean): CatalogRow[] {
   const out: CatalogRow[] = Object.entries(htcBaseInfo()).flatMap(([en, i]): CatalogRow[] => {
     const row = RUNE_MADE.test(en) || REMOVED.has(en) ? null : classOfBase(d, en);
-    return row ? [{ en, ja: i.ja, cls: row.id, lvl: i.lvl, implicit: (i.implicits ?? []).map((x) => x.ja).join(" / "), stats: baseStatLine(en) }] : [];
+    return row ? [{ en, ja: i.ja, cls: row.id, lvl: i.lvl, implicit: (i.implicits ?? []).map((x) => tr(x.ja, x.en || x.ja)).join(" / "), stats: baseStatLine(en) }] : [];
   });
   if (extras) {
     for (const f of FLASK_BASES) out.push({ en: f.en, ja: jaTypeName(f.en), cls: f.cls, lvl: f.lvl, implicit: "", stats: baseStatLine(f.en) });

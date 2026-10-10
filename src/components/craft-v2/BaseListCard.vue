@@ -3,6 +3,7 @@
   CraftDiscoveryV2B.vue から切り出し (2026-09-07)。人数ベース、人数降順。
 -->
 <script setup lang="ts">
+import Disclosure from "../ui/Disclosure.vue";
 import { baseArt } from "../../services/craft-stage/base-art";
 import BaseCard from "../decor/BaseCard.vue";
 import type { BaseEntry } from "../../services/craft-v2/types";
@@ -72,13 +73,7 @@ const showLowCount = defineModel<boolean>("showLowCount", { required: true });
         </li>
         <li v-if="total === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)] italic">該当ベースなし</li>
         <li v-if="lowCount > 0" class="pt-1">
-          <button
-            type="button"
-            @click.stop="showLowCount = !showLowCount"
-            class="text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
-          >
-            {{ showLowCount ? `▲ ${lowLimit} 人以下を隠す` : `▼ もっと見る (${lowLimit} 人以下 ${lowCount} 件)` }}
-          </button>
+          <Disclosure v-model:open="showLowCount" :rest="lowCount" class="text-[11px]" @click.stop>{{ lowLimit }} 人以下 ·</Disclosure>
         </li>
       </ul>
     </div>

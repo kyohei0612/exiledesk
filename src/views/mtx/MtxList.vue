@@ -9,6 +9,7 @@
   2 列の大きいカード (絵 128px)、並びは新しい順 (クライアントの表の行番号が大きいほど新しい)、札は PoE1 / PoE2 を並べる、周りに余白。
 -->
 <script setup lang="ts">
+import Disclosure from "../../components/ui/Disclosure.vue";
 import { computed, onMounted, ref, shallowRef, watch } from "vue";
 import TabBar from "../../components/ui/TabBar.vue";
 import { artOf, loadMtx, poe2dbUrl, usableInPoe2, type MtxData, type MtxItem } from "../../services/mtx/mtx";
@@ -115,7 +116,7 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
         </button>
       </div>
       <div v-if="list.length > shown" class="mt-5 text-center">
-        <button type="button" class="btn btn-outline" @click="shown += PAGE">もっと見る (残り {{ list.length - shown }} 件)</button>
+        <Disclosure :rest="list.length - shown" bar @update:open="shown += PAGE" />
       </div>
     </template>
     </div>

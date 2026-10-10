@@ -3,6 +3,7 @@
   CraftDiscoveryV2B.vue から切り出し (2026-09-07)。
 -->
 <script setup lang="ts">
+import Disclosure from "../ui/Disclosure.vue";
 import BaseCard from "../decor/BaseCard.vue";
 import type { UniqueUsage } from "../../services/craft-v2/types";
 import { uniqueArt } from "../../services/assets/unique-art";
@@ -77,13 +78,7 @@ const emit = defineEmits<{
         </li>
         <li v-if="total === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)] italic">{{ slotLabel }}にユニーク装備なし</li>
         <li v-if="lowCount > 0" class="pt-1">
-          <button
-            type="button"
-            @click.stop="showLowCount = !showLowCount"
-            class="text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
-          >
-            {{ showLowCount ? `▲ ${lowLimit} 人以下を隠す` : `▼ もっと見る (${lowLimit} 人以下 ${lowCount} 件)` }}
-          </button>
+          <Disclosure v-model:open="showLowCount" :rest="lowCount" class="text-[11px]" @click.stop>{{ lowLimit }} 人以下 ·</Disclosure>
         </li>
       </ul>
     </div>

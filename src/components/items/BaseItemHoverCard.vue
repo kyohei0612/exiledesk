@@ -15,7 +15,7 @@ import baseInfo from "../../data/base-info.json";
 import grantedSkills from "../../data/granted-skills.json";
 import { htcBaseInfo } from "../../services/htc/patch";
 import { baseStatsOf } from "../../services/craft-stage/stage-bases";
-import { classJa } from "../../services/items/base-catalog";
+import { classEn, classJa } from "../../services/items/base-catalog";
 import { jaTypeName } from "../../services/trade2/localize";
 import { gemHoverOf, loadGemHover } from "../../services/gem-hover";
 import { lang, tr } from "../../i18n/lang";
@@ -28,7 +28,7 @@ const htc = computed(() => htcBaseInfo()[props.en]);
 const st = computed(() => baseStatsOf(props.en));
 const en = computed(() => lang.value === "en");
 const name = computed(() => (en.value ? props.en : htc.value?.ja ?? jaTypeName(props.en)));
-const cls = computed(() => { const c = htc.value?.cls ?? st.value?.cls ?? ""; return !c ? "" : en.value ? (st.value?.cls ?? c).replace(/_/g, " ") : classJa(c, false); });
+const cls = computed(() => { const c = htc.value?.cls ?? st.value?.cls ?? ""; return !c ? "" : en.value ? classEn(st.value?.cls ?? c, false) : classJa(c, false); });
 /** 数字は余計な 0 を付けない (poe2db と同じ: 5%、1.6) */
 const trim = (n: number, d = 2): string => String(Number(n.toFixed(d)));
 const art = computed(() => baseArt(props.en));

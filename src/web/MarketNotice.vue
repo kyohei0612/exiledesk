@@ -15,7 +15,7 @@ const show = computed(() => !!marketStore.error.value && !marketStore.loading.va
     <span class="font-bold">{{ tr("相場が取れていません", "Could not load market prices") }}</span>
     <span class="opacity-70">{{ tr("値段は 0 のまま計算され、取引所のリーグも Standard になります", "Prices are treated as 0 and trade site searches use the Standard league") }}</span>
     <span class="truncate opacity-40" :title="marketStore.error.value ?? ''">({{ marketStore.error.value }})</span>
-    <button type="button" class="ml-auto shrink-0 rounded-lg border border-rose-300/50 px-2.5 py-0.5 font-bold hover:bg-rose-500/20" @click="marketStore.refreshMarket()">{{ tr("もう一度", "Retry") }}</button>
+    <button type="button" class="g-btn sm ml-auto shrink-0" @click="marketStore.refreshMarket()">{{ tr("もう一度", "Retry") }}</button>
   </div>
-  <div v-else-if="marketStore.loading.value && !marketStore.items.value.length" class="border-b border-white/10 px-4 py-1 text-[11px] opacity-50">{{ tr("相場を読んでいます…", "Loading market prices…") }}</div>
+  <div v-else-if="marketStore.loading.value && !marketStore.items.value.length" class="border-b border-white/10 px-4 py-1 text-[11px] opacity-50">{{ tr("相場を読み込み中…", "Loading market prices…") }}</div>
 </template>

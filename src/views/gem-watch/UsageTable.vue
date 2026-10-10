@@ -4,6 +4,7 @@
   2026-09-19 に GemBreak.vue から切り出した。中身は変えていない。
 -->
 <script setup lang="ts">
+import Disclosure from "../../components/ui/Disclosure.vue";
 import GemName from "../../components/decor/GemName.vue";
 import { computed, ref } from "vue";
 import { jaSkill } from "../../i18n/skills-ja";
@@ -155,14 +156,7 @@ const distText = (d: [number, number][] | undefined, suffix = ""): string =>
           </li>
           <li v-if="listOf(sec.key).length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)] italic">該当なし</li>
         </ul>
-        <button
-          v-if="listOf(sec.key).length > PAGE"
-          type="button"
-          class="mt-2 text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
-          @click="showAll[sec.key] = !showAll[sec.key]"
-        >
-          {{ showAll[sec.key] ? `▲ 上位 ${PAGE} 件だけ` : `▼ 残り ${listOf(sec.key).length - PAGE} 件を見る` }}
-        </button>
+        <Disclosure v-if="listOf(sec.key).length > PAGE" v-model:open="showAll[sec.key]" :rest="listOf(sec.key).length - PAGE" class="mt-2 text-[11px]" />
       </div>
     </div>
 </template>

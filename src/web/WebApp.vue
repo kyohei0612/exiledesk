@@ -92,10 +92,11 @@ window.addEventListener("resize", fitZoom);
       <!-- 版を押すと更新履歴 (2026-10-10) -->
       <button type="button" class="g-plain ml-auto opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
       <LangSwitch v-if="!phone" />
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('何ができるか', 'What you can do')" @click="welcomeOpen = true">{{ tr("はじめに", "Guide") }}</button>
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態を添付できる)', 'Send feedback or bug reports (you can attach the current screen state)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
+      <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
+      <button type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('何ができるか', 'What you can do')" @click="welcomeOpen = true">{{ tr("はじめに", "Guide") }}</button>
+      <button type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態を添付できる)', 'Send feedback or bug reports (you can attach the current screen state)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
-      <button v-if="SUPPORT_LINKS.length" type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
+      <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
       <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" :title="tr('相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中', 'A desktop app with automatic market prices, trade history, DPS check and more is in the works')">{{ tr("アプリ版 近日公開", "Desktop app coming soon") }}</span>
     </header>

@@ -9,6 +9,7 @@
  * 感覚で操作できる感じ」): 上から 道具の列 (回す / 組み直す / 1 から / 設定) → 回した結果 (大きな数字 4 つ + 手ごとの費用の棒) →
  * 取り方の表 (畳める) → ツリー。手のカードは畳んだ状態が既定 ([[TreeNodeCard.vue]])
  */
+import { fmtPct } from "../../utils/format-pct";
 import PriceInput from "../../components/PriceInput.vue";
 import { computed, nextTick, ref, watch } from "vue";
 import TreeBranch from "./TreeBranch.vue";
@@ -48,7 +49,8 @@ const finished = computed(() => {
 const quality = computed(() => c.item.value?.quality ?? zeroStart.value.quality ?? 20);
 const span = (a: number | null, b: number | null, digits = 0): string => (a == null || b == null ? "" : Math.abs(a - b) < 0.5 * 10 ** -digits ? a.toFixed(digits) : `${a.toFixed(digits)}〜${b.toFixed(digits)}`);
 const t = useCraftTree(c);
-const pct = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
+const pct = (p: number): string => fmtPct(p);
 /** 貼り付けの狙いに合う見本のツリー */
 const presets = computed(() => TREE_PRESETS.filter((x) => x.applies(c.targets.value)));
 function loadPreset(id: string): void {

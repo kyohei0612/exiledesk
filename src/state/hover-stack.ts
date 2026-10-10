@@ -93,6 +93,8 @@ export const hoverStack = {
   openRootDelayed(payload: HoverPayload, x: number, y: number): void {
     cancel();
     cancelOpen();
+    // 前のカード (ピン留め以外) はすぐ閉じる。次のカードが出るまで前のが残っていた (2026-10-10 オーナー「ホバー外にいったら即閉じておｋ」)
+    if (layers.value.some((l) => !l.pinned)) layers.value = layers.value.filter((l) => l.pinned);
     openTimer = setTimeout(() => {
       openTimer = null;
       layers.value = [...layers.value.filter((l) => l.pinned), { key: ++seq, payload, x, y, pinned: false }];

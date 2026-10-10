@@ -11,6 +11,7 @@
   その MOD あるいはの扱いに」)。一覧はその MOD と同じ種類 (普通 / 冒涜) の同じ側、本体は外せない (段は変えられる)
 -->
 <script setup lang="ts">
+import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
 import { craftStage } from "../../state/craft-stage";
 import { modListFor, shownTags, TAG_STYLE, type ListRow, type ListTier } from "../../services/craft-stage/mod-list";
@@ -167,7 +168,8 @@ function decide(): void {
   }
   emit("close");
 }
-const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "—");
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
+const pct = (x: number): string => fmtPct(x, { zero: "—" });
 </script>
 
 <template>
@@ -179,7 +181,7 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
     </template>
     <template #subheader>
       <p v-if="host" class="mt-1 flex flex-wrap items-center gap-1.5 opacity-90">{{ tr("元の MOD とチェックした物のうち", "Hit when any") }}
-        <button v-for="n in Math.min(3, candidates.length)" :key="n" type="button" class="min-w-7 rounded-lg px-2 py-0.5 font-bold max-md:min-h-10" :class="wantN === n ? 'bg-amber-500/30 text-amber-50 ring-1 ring-amber-400/70' : 'border border-white/20'" @click="wantN = n">{{ n }}</button>
+        <button v-for="n in Math.min(3, candidates.length)" :key="n" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="wantN === n ? 'on' : ''" @click="wantN = n">{{ n }}</button>
         {{ tr("つ付けば当たり (どの順番でもいい)", "of the original and checked mods are added (any order)") }} · {{ canChaos ? tr("プレかサフィのどれか (付いた側で道が分かれる)", "Prefix or suffix (path splits by the side it lands on)") : tr("同じ側だけ", "Same side only") }}</p>
       <p v-else class="mt-1 opacity-60">{{ s.item.value ? baseNameOf(s.item.value) : "" }} · {{ tr("チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合", "Check to add as a candidate (highest tier reachable at this item level or better), click the name to pick a tier · Candidates must share a side · Chance is the share of weight on that side") }}</p>
     </template>
@@ -205,7 +207,8 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
                 <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
                 <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                 <td class="w-20 py-0.5 text-right">
-                  <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30" :class="isPickedTier(r, t) ? 'border-emerald-400 bg-emerald-500/40 font-bold text-emerald-50' : isCoveredTier(r, t) ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100' : 'border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/15'" :disabled="blocked(r)" :title="whyBlocked(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ t.rank }}{{ tr(" 以上", "+") }}</button>
+                  <!-- 2026-10-10 動きの揃え 6: g-btn sm (選んだ段は赤) -->
+                  <button type="button" :class="isPickedTier(r, t) ? 'g-btn-red sm' : 'g-btn sm'" :disabled="blocked(r)" :title="whyBlocked(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ t.rank }}{{ tr(" 以上", "+") }}</button>
                 </td>
               </tr>
             </tbody>

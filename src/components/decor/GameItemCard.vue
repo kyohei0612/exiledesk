@@ -12,6 +12,7 @@
       「カード固定したら名前長押して移動できるように、比較しづらいから」。全部のカードがこの枠なので全部に効く)
 -->
 <script setup lang="ts">
+import { tr } from "../../i18n/lang";
 import Icon from "../ui/Icon.vue";
 import { computed, onBeforeUnmount, provide, ref, watch } from "vue";
 import { hoverStack } from "../../state/hover-stack";
@@ -129,17 +130,17 @@ onBeforeUnmount(onUp);
             type="button"
             class="g-plain grid h-6 w-6 place-items-center bg-transparent text-[13px] leading-none transition"
             :class="pinned ? 'text-[#ffd479] drop-shadow-[0_0_4px_rgba(255,212,121,0.6)]' : 'text-[#8a8170] hover:text-[#e6dcc2]'"
-            :title="pinned ? 'ピン留めを外す' : 'ピン留め (カーソルを外しても消さない)'"
+            :title="pinned ? tr('ピン留めを外す', 'Unpin') : tr('ピン留め (カーソルを外しても消さない)', 'Pin (keeps the card when the cursor leaves)')"
             @click.stop="hoverStack.togglePin(layerKey)"
           >
             <Icon name="pin" class="size-3.5" />
           </button>
-          <button v-if="pinned" type="button" class="g-plain h-6 w-6 bg-transparent text-[14px] leading-none text-[#cfc6ae] hover:text-white" title="閉じる" @click.stop="hoverStack.close(layerKey)">×</button>
+          <button v-if="pinned" type="button" class="g-plain h-6 w-6 bg-transparent text-[14px] leading-none text-[#cfc6ae] hover:text-white" :title="tr('閉じる', 'Close')" @click.stop="hoverStack.close(layerKey)">×</button>
         </div>
         <div
           class="g-head select-none"
           :class="[pinned ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : '', sub ? 'two' : 'one']"
-          :title="pinned ? '長押しでつかんで動かせます' : undefined"
+          :title="pinned ? tr('長押しでつかんで動かせます', 'Press and hold to drag') : undefined"
           @pointerdown="onHeadDown"
         >
           <p class="g-name">{{ name }}</p>

@@ -18,12 +18,13 @@ export function keepPlace(el: Element | null | undefined, change: () => void): v
 
 /**
  * 物を画面の上に送る。スマホで上に貼るアイテムの帯 (StageItemMini、高さは MOD の数で変わる) の下に出す
- * (2026-10-09 エミュレーターの「狙う」: scrollIntoView だと見出しと狙いの札が帯の裏に隠れた)
+ * (2026-10-09 エミュレーターの「狙う」: scrollIntoView だと見出しと狙いの札が帯の裏に隠れた)。
+ * 「見える所へ送る」はみなこれで (2026-10-10 動きの揃え 4: 生の scrollIntoView を置き換え)。pcBlock = PC の時の位置 (発現の欄は真ん中)
  */
-export function scrollToTop(el: Element | null | undefined, behavior: ScrollBehavior = "smooth"): void {
+export function scrollToTop(el: Element | null | undefined, behavior: ScrollBehavior = "smooth", pcBlock: ScrollLogicalPosition = "start"): void {
   if (!el) return;
   // PC は画面の中の枠が送られる (ページ全体は動かない) ので、ふつうに上へ
-  if (window.innerWidth >= 768) { el.scrollIntoView({ block: "start", behavior }); return; }
+  if (window.innerWidth >= 768) { el.scrollIntoView({ block: pcBlock, behavior }); return; }
   const bar = (document.querySelector("[data-item-mini]") as HTMLElement | null)?.offsetHeight ?? 0;
   window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - bar - 8, behavior });
 }

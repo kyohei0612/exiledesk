@@ -15,11 +15,19 @@ interface State { updatedAt: string | null; live: Entry[]; upcoming: Entry[]; ch
 
 const state = ref<State | null>(null);
 const failed = ref("");
+const loading = ref(false);
 
 // 配信の情報は /boot.json (相場と一緒に 1 回で読む。boot.ts、2026-10-10)
 async function load(force = false): Promise<void> {
-  const b = await loadBoot(force);
-  if (b?.live) { state.value = b.live as State; failed.value = ""; } else failed.value = "boot";
+  loading.value = true;
+  try {
+    const b = await loadBoot(force);
+    if (b?.live) { state.value = b.live as State; failed.value = ""; } else failed.value = "boot";
+  } catch {
+    failed.value = "boot";
+  } finally {
+    loading.value = false;
+  }
 }
 // 開いた時に 1 回。45 分以上放置して戻ってきた時は WebApp.vue が exiledesk:refresh を出す (読み直しは WebApp が済ませている)
 const onRefresh = (): void => { void load(); };
@@ -46,7 +54,10 @@ const cards = computed((): Card[] => (state.value?.channels ?? []).map((c) => {
 <template>
   <div class="rounded-xl border border-white/10 bg-[#15120d] p-2.5 text-[12px]">
     <div class="mb-2 text-[11px] font-bold text-amber-200">{{ tr("チャンネル", "Channels") }}</div>
-    <p v-if="failed && !state" class="py-2 text-center opacity-50">{{ tr("読めなかった", "Could not load") }}</p>
+    <!-- 読み込み中 / 読めなかった (もう一度) / 空 はエミュレーターと同じ言葉 (2026-10-10 動きの揃え 8) -->
+    <p v-if="loading && !state" class="py-2 text-center opacity-50">{{ tr("読み込み中…", "Loading…") }}</p>
+    <p v-else-if="failed && !state" class="flex flex-col items-center gap-1.5 py-2 text-center"><span class="opacity-50">{{ tr("読み込めませんでした", "Could not load") }}</span><button type="button" class="g-btn sm" @click="load(true)">{{ tr("もう一度", "Retry") }}</button></p>
+    <p v-else-if="state && !cards.length" class="py-2 text-center opacity-50">{{ tr("まだありません", "Nothing yet") }}</p>
     <ul class="flex flex-col gap-1.5">
       <li v-for="c in cards" :key="c.id" class="overflow-hidden rounded-lg border border-white/10 bg-black/25 hover:border-amber-300/50 hover:bg-black/40">
         <a :href="c.href" target="_blank" rel="noopener" :title="c.title" class="block">

@@ -14,6 +14,7 @@
   一覧の取り直しはカレンシーランキングの更新と同じ時 (useUniqueTrend.ts の refreshUniqueTrend)。
 -->
 <script setup lang="ts">
+import Disclosure from "../components/ui/Disclosure.vue";
 import { ref } from "vue";
 import RefreshButton from "../components/RefreshButton.vue";
 import CategorySidebar from "../components/currency/CategorySidebar.vue";
@@ -98,7 +99,7 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
         <p class="font-mono text-xs">{{ u.error.value }}</p>
       </div>
 
-      <div v-if="(u.loading.value || marketStore.loading.value) && !u.rows.value.length" class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm">データ取得中…</div>
+      <div v-if="(u.loading.value || marketStore.loading.value) && !u.rows.value.length" class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm">読み込み中…</div>
 
       <div
         v-else-if="!u.rows.value.length"
@@ -131,7 +132,7 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
       <!-- 一度に出すのは 100 件ずつ (数百行を一度に描かない) -->
       <div v-if="u.sorted.value.length > u.shown.value.length" class="mt-2 flex items-center justify-center gap-3 text-xs">
         <span class="text-[var(--exile-color-text-secondary)]">{{ u.shown.value.length }} 件を表示中 (全 {{ u.sorted.value.length }} 件)</span>
-        <button type="button" class="rounded-lg border border-[var(--exile-color-border-subtle)] px-3 py-1 hover:border-[var(--exile-color-accent-focus)]" @click="u.more()">もっと見る (+100)</button>
+        <Disclosure :rest="u.sorted.value.length - u.shown.value.length" @update:open="u.more()" />
       </div>
 
       <p class="mt-4 text-[10px] text-[var(--exile-color-text-secondary)] text-right">

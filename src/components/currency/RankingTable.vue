@@ -60,7 +60,7 @@ function iconOf(c: Cur): string {
           <th class="text-right px-3 py-3 whitespace-nowrap">値段</th>
           <th class="text-right px-3 py-3 whitespace-nowrap" title="取引所のペアで一番安く交換できる通貨 (カオスと神で安い方。表示通貨が最安値なら高貴も)">取引の推奨</th>
           <th class="text-right px-3 py-3 whitespace-nowrap">
-            過去7日間<span v-if="loading7d" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)] normal-case">読込中…</span>
+            過去7日間<span v-if="loading7d" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)] normal-case">読み込み中…</span>
           </th>
         </tr>
       </thead>

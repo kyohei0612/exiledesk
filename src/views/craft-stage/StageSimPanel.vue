@@ -10,6 +10,9 @@
   探す自動 (計算機の自動のツリー) は外した。計算機 (htc-craft) はそのまま。
 -->
 <script setup lang="ts">
+import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
+import { fmtPct } from "../../utils/format-pct";
+import { scrollToTop } from "../../utils/keep-place";
 import { logRecord } from "../../utils/log-record";
 import { AFFIX_COUNT } from "../../services/htc/tree-buy";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -42,6 +45,7 @@ import StagePatternEditor from "./StagePatternEditor.vue";
 import SimStepHead from "./SimStepHead.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Icon from "../../components/ui/Icon.vue";
+import Disclosure from "../../components/ui/Disclosure.vue";
 import SimProgress from "./SimProgress.vue";
 import { searchModGroups, type ModGroup, type ModPick } from "../../services/craft-stage/trade-search";
 import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
@@ -743,7 +747,7 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
       results: out.map((x) => ({ name: x.name, moves: s.simPatterns.value.find((p) => p.name === x.name)?.play?.moves.length ?? null, perDone: Math.round(x.out.r.perDone * 100) / 100, pDone: Math.round(x.out.r.pDone * 1000) / 1000 })),
     });
     // スマホ: 回した結果 (1 個あたりの平均) を画面の上に (2026-10-09 スナップで確認: 「回す」の所に止まったまま結果が下に隠れていた)
-    if (phone.value && my === gen) void nextTick(() => document.querySelector("[data-sim-result]")?.scrollIntoView({ block: "start", behavior: "smooth" }));
+    if (phone.value && my === gen) void nextTick(() => scrollToTop(document.querySelector("[data-sim-result]")));
   } catch (e) {
     if (my === gen) error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -815,14 +819,15 @@ watch(() => JSON.stringify(sessionNow()), () => { if (s.simPicked.value) writeSi
 const recipes = ref<SimRecipe[]>(readSimRecipes());
 const recipeOpen = ref(false);
 const recipeName = ref("");
-const recipeArmed = ref<string | null>(null);
+/** レシピの「呼び出す」「消す」の 2 回押し (key = load:id / del:id。2026-10-10 動きの揃え 7) */
+const recipeArm = useArmed();
 const recipeRenaming = ref<string | null>(null);
 const baseJa = computed(() => s.item.value?.baseJa ?? s.base.value);
 const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 function openRecipes(): void {
   recipeOpen.value = !recipeOpen.value;
   recipeNote.value = "";
-  recipeArmed.value = null;
+  recipeArm.clear();
   if (recipeOpen.value && !recipeName.value) recipeName.value = `${baseJa.value} ${fmtDate(Date.now())}`;
 }
 function saveRecipe(): void {
@@ -837,7 +842,7 @@ function saveRecipe(): void {
 const recipeBox = ref<HTMLElement | null>(null);
 function recipeOutside(e: Event): void {
   if (!recipeOpen.value) return;
-  if (e instanceof KeyboardEvent ? e.key === "Escape" && !recipeRenaming.value : !recipeBox.value?.contains(e.target as Node)) { recipeOpen.value = false; recipeArmed.value = null; }
+  if (e instanceof KeyboardEvent ? e.key === "Escape" && !recipeRenaming.value : !recipeBox.value?.contains(e.target as Node)) { recipeOpen.value = false; recipeArm.clear(); }
 }
 onMounted(() => { document.addEventListener("pointerdown", recipeOutside, true); document.addEventListener("keydown", recipeOutside); });
 onBeforeUnmount(() => { document.removeEventListener("pointerdown", recipeOutside, true); document.removeEventListener("keydown", recipeOutside); });
@@ -879,15 +884,13 @@ async function importRecipes(ev: Event): Promise<void> {
   recipeNote.value = r.bad && !r.added && !r.skipped ? "レシピのファイルではありません" : `${r.added} 件足しました${r.skipped ? ` (同じ物 ${r.skipped} 件は飛ばした)` : ""}${r.bad ? ` · 読めない物 ${r.bad} 件` : ""}`;
 }
 function removeRecipe(id: string): void {
-  if (recipeArmed.value !== `del:${id}`) { recipeArmed.value = `del:${id}`; return; }
-  recipeArmed.value = null;
+  if (!recipeArm.arm(`del:${id}`)) return;
   recipes.value = recipes.value.filter((x) => x.id !== id);
   writeSimRecipes(recipes.value);
 }
 /** 呼び出す: 今の状態を置き換える (2 回押し)。1 つ戻すと同じやり方で、工程の「決めた」も戻す */
 async function loadRecipe(r: SimRecipe): Promise<void> {
-  if (recipeArmed.value !== `load:${r.id}`) { recipeArmed.value = `load:${r.id}`; return; }
-  recipeArmed.value = null;
+  if (!recipeArm.arm(`load:${r.id}`)) return;
   const ses = r.session;
   restoring = true;
   // ベースが変わる時は、先にベースだけ替えて、ベースの watch (ソケットを空にする等) を済ませてから残りを入れる
@@ -927,7 +930,7 @@ onMounted(() => {
   const id = s.simPendingRecipe.value;
   s.simPendingRecipe.value = null;
   const r = id ? recipes.value.find((x) => x.id === id) : undefined;
-  if (r) { recipeArmed.value = `load:${r.id}`; void loadRecipe(r); }
+  if (r) { recipeArm.arm(`load:${r.id}`); void loadRecipe(r); }
 });
 const step4pre = computed(() => stepOrder.value && orderDone.value);
 /** 段の番号: 出ない段 (始め方を 1 で決めた時の 4 など) は詰める (2026-10-09 初見レビュー「4 はどこ?」) */
@@ -1040,16 +1043,9 @@ function goTo(st: Stage): void {
  * リセット: シミュレーションを最初 (1 ベースを選ぶ所) に戻す。選んだ MOD・工程・結果は消し、入れた値段 (ベースごとに覚えている) は残す。
  * 1 つ戻すでも戻せないので、2 回押した時だけ (2026-10-05 オーナー「シンプルにリセットボタン上に作って」)
  */
-const resetArmed = ref(false);
-let resetTimer: ReturnType<typeof setTimeout> | undefined;
+const resetArm = useArmed();
 function resetAll(): void {
-  if (!resetArmed.value) {
-    resetArmed.value = true;
-    clearTimeout(resetTimer);
-    resetTimer = setTimeout(() => { resetArmed.value = false; }, 3000);
-    return;
-  }
-  resetArmed.value = false;
+  if (!resetArm.arm()) return;
   s.simTargets.value = [];
   s.simAltFor.value = null;
   modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false;
@@ -1085,7 +1081,7 @@ watch([modsDone, whiteOk, startDone, orderDone], (now, prev) => {
   // スマホは画面が短いので、次に決める段 (金の枠) の頭を画面の上に (2026-10-09 スナップで確認: 一番下だと次の段が画面の下の端に出ていた)
   void nextTick(() => {
     const cur = phone.value ? panelEl.value?.querySelector("[data-sim-cur]") : null;
-    if (cur) cur.scrollIntoView({ block: "start", behavior: "smooth" });
+    if (cur) scrollToTop(cur);
     else panelEl.value?.scrollIntoView({ block: "end", behavior: "smooth" });
   });
 });
@@ -1149,7 +1145,8 @@ const routes = computed(() => {
 onBeforeUnmount(() => { s.simShowMods.value = false; });
 /** 合計金額はシミュレーションだけの表示通貨で (既定は適正。display-currency.ts の simCurrency) */
 const money = (x: number): string => (Number.isFinite(x) ? simCurrency.money(x) : "—");
-const pct = (x: number): string => `${(x * 100).toFixed(x < 0.1 && x > 0 ? 1 : 0)}%`;
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
+const pct = (x: number): string => fmtPct(x);
 const stale = computed(() => ranFor.value !== sig.value);
 /**
  * 始め方の比べ (2026-10-05 オーナー「作った方が安いか、ベースから作った方が安いのか、完成品の方が安いのか」)。
@@ -1397,7 +1394,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <CurrencyPicker sim />
       <!-- レシピ (名前を付けて残す・呼び出す) -->
       <span ref="recipeBox" class="relative">
-        <button type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-[13px] transition max-md:h-10" :class="recipeOpen ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" title="今の途中 (ベース・狙い・順番・パターン) を名前を付けて残す / 呼び出す" @click="openRecipes">レシピ<Icon :name="recipeOpen ? 'chevron-up' : 'chevron-down'" class="size-4" /></button>
+        <button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" :aria-expanded="recipeOpen" title="今の途中 (ベース・狙い・順番・パターン) を名前を付けて残す / 呼び出す" @click="openRecipes">レシピ<Icon :name="recipeOpen ? 'chevron-up' : 'chevron-down'" class="size-4" /></button>
         <div v-if="recipeOpen" class="fixed inset-0 z-30 bg-black/60 md:hidden" @click="recipeOpen = false"></div>
         <div v-if="recipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl max-md:fixed max-md:inset-x-3 max-md:top-14 max-md:w-auto max-md:max-h-[80vh] max-md:overflow-y-auto">
           <button type="button" class="mb-2 w-full rounded-lg border border-white/20 py-2 md:hidden" @click="recipeOpen = false">閉じる</button>
@@ -1420,14 +1417,15 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
                 <p v-else class="flex cursor-text items-center gap-1 font-bold" title="ダブルクリックで名前を変える" @dblclick="recipeRenaming = r.id"><span class="truncate">{{ r.name }}</span><button type="button" class="shrink-0 rounded px-1 text-[12px] opacity-50 hover:opacity-100" title="名前を変える" @click.stop="recipeRenaming = r.id">✎</button></p>
                 <p class="truncate text-[10px] opacity-50">{{ r.baseJa ?? r.session.base }} · パターン {{ r.session.patterns.length }} つ · {{ fmtDate(r.savedAt) }}</p>
               </div>
-              <button type="button" class="shrink-0 rounded-lg border px-2 py-0.5" :class="recipeArmed === `load:${r.id}` ? 'border-amber-400 bg-amber-500/25 text-amber-100' : 'border-sky-400/50 text-sky-200 hover:bg-sky-500/10'" :title="recipeArmed === `load:${r.id}` ? '今の状態は置き換わる。もう一度押すと呼び出す' : 'このレシピを呼び出す (今の状態は置き換わる)'" @click="loadRecipe(r)">{{ recipeArmed === `load:${r.id}` ? "置き換える?" : "呼び出す" }}</button>
-              <button type="button" class="shrink-0 rounded px-1.5 py-0.5" :class="recipeArmed === `del:${r.id}` ? 'bg-rose-600/80 text-white' : 'opacity-50 hover:bg-rose-600/40 hover:opacity-100'" :title="recipeArmed === `del:${r.id}` ? 'もう一度押すと消す' : 'このレシピを消す'" @click="removeRecipe(r.id)">{{ recipeArmed === `del:${r.id}` ? "消す?" : "×" }}</button>
+              <button type="button" class="shrink-0" :class="recipeArm.is(`load:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="recipeArm.is(`load:${r.id}`) ? '今の状態は置き換わる。もう一度押すと呼び出す' : 'このレシピを呼び出す (今の状態は置き換わる)'" @click="loadRecipe(r)">{{ recipeArm.is(`load:${r.id}`) ? "もう一度押すと呼び出す" : "呼び出す" }}</button>
+              <button type="button" class="shrink-0" :class="recipeArm.is(`del:${r.id}`) ? ARMED_CLASS : 'g-plain rounded px-1.5 py-0.5 opacity-50 hover:bg-white/10 hover:opacity-100'" :title="recipeArm.is(`del:${r.id}`) ? 'もう一度押すと消す' : 'このレシピを消す'" @click="removeRecipe(r.id)"><template v-if="recipeArm.is(`del:${r.id}`)">もう一度押すと消す</template><Icon v-else name="x" class="size-3.5" /></button>
             </div>
           </div>
         </div>
       </span>
-      <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] transition max-md:h-10" :class="resetArmed ? 'bg-[rgba(229,128,107,0.18)] text-[var(--exile-color-signal-down)] ring-1 ring-[var(--exile-color-signal-down)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)]'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll"><Icon name="rotate" class="size-4" /><span :class="resetArmed ? '' : 'max-md:hidden'">{{ resetArmed ? "もう一度押すと消える" : "リセット" }}</span></button>
-      <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] disabled:opacity-30 max-md:h-10" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo"><Icon name="undo" class="size-4" /><span class="max-md:hidden">1 つ戻す</span></button>
+      <!-- 2026-10-10 動きの揃え 6: 帯のボタンはエミュレーターの「白に戻す」「1 手戻す」と同じ g-btn sm (2 回押しの間は g-btn-red) -->
+      <button type="button" class="inline-flex items-center gap-1.5 max-md:min-h-10" :class="resetArm.is() ? ARMED_CLASS : 'g-btn sm'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll"><Icon name="rotate" class="size-4" /><span :class="resetArm.is() ? '' : 'max-md:hidden'">{{ resetArm.is() ? "もう一度押すと消える" : "リセット" }}</span></button>
+      <button type="button" class="g-btn sm inline-flex items-center gap-1.5 max-md:min-h-10" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo"><Icon name="undo" class="size-4" /><span class="max-md:hidden">1 つ戻す</span></button>
       <button type="button" class="grid size-8 place-items-center rounded-md transition max-md:size-10" :class="help ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-tertiary)] hover:bg-white/5 hover:text-[var(--exile-color-text-secondary)]'" :title="help ? '説明を閉じる' : '説明を出す (各所の説明の文を開く)'" :aria-pressed="help" @click="toggle('help')"><Icon name="help" class="size-5" /></button>
     </Teleport>
     <p v-if="help" class="mb-3 rounded-md bg-white/[0.03] px-3 py-2 text-[13px] text-[var(--exile-color-text-secondary)]">狙いは「このベースに付く MOD」の表の「T○ 以上」で選ぶ。打ち方 (パターン) を組んで「回す」と、何百人分も作った平均の費用が出る。各所の <Icon name="help" class="inline size-3.5 align-[-2px]" /> にも説明がある</p>
@@ -1439,7 +1437,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-[12px] font-bold text-emerald-200 ring-1 ring-emerald-400/40">✓</span>
       <b class="shrink-0 whitespace-nowrap text-[var(--exile-color-text-primary)]">決めたこと</b>
       <span class="min-w-0 truncate text-[var(--exile-color-text-secondary)] max-md:whitespace-normal">狙う MOD {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "エミュレーターの状態" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 付ける順 {{ orderKeys.length }} つ</span>
-      <button type="button" class="ml-auto inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="fold = !fold">{{ fold ? "開く" : "畳む" }}<Icon :name="fold ? 'chevron-down' : 'chevron-up'" class="size-4" /></button>
+      <Disclosure :open="!fold" kind="section" class="ml-auto h-7 shrink-0 rounded-md px-2 hover:bg-white/5" @update:open="fold = !$event" />
     </div>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
     <template v-if="socketsOk && !(step4pre && fold)">
@@ -1643,7 +1641,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
             <span v-else class="pr-1.5 text-[var(--exile-color-text-tertiary)]">{{ hasSteps(p) ? patternNote(p) : "手が無い · 回さない" }}</span>
           </span>
           <SimProgress v-if="busy" :box="progressBox" :phase="phase" />
-          <button v-if="busy" type="button" class="rounded-lg border border-rose-400/50 px-2 py-0.5 text-rose-200 hover:bg-rose-500/10" @click="stop">中止</button>
+          <button v-if="busy" type="button" class="g-btn-red sm" @click="stop">中止</button>
           <span v-if="error" class="text-rose-300">{{ error }}</span>
           <!-- 開いているパターンの MOD 群を取引所 (JP) で探す (2026-10-07 オーナー「回すの横、相場ボタンじゃなくてこの MOD 群をそのまま検索にかけたい」) -->
           <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[12px] text-[var(--exile-color-text-link)] hover:bg-white/5 hover:underline disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern] || !hasSteps(s.simPatterns.value[activePattern]!)" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の狙い (付ける MOD とフラクチャー) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">この狙いで取引所を見る<Icon name="external" class="size-3.5" /></button>

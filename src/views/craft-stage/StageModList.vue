@@ -12,15 +12,16 @@
   段の表の「付ける」で始めの状態にその MOD・段を足せる (付きうる物だけ。手順 JSON の start.mods に入る)。「1 手戻す」で 1 つずつ外す。
 -->
 <script setup lang="ts">
+import { fmtPct } from "../../utils/format-pct";
 import { baseNameOf, tr } from "../../i18n/lang";
-import { keepPlace } from "../../utils/keep-place";
+import { keepPlace, scrollToTop } from "../../utils/keep-place";
 import { OVERRIDDEN, weightOverrideNote } from "../../services/htc/weight-overrides";
 import { heldOdds } from "../../services/craft-stage/held-odds";
 import { autoGroup } from "../../services/craft-stage/auto-group";
 import { AIM_MAX } from "../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
-import Icon from "../../components/ui/Icon.vue";
+import Disclosure from "../../components/ui/Disclosure.vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
 import { GROUP_JA, modListFor, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
@@ -147,7 +148,7 @@ const active = ref<string>("normal");
 function jump(g: string): void {
   active.value = g;
   if (phone && !secOpen.value.has(g)) toggleSec(g);
-  void nextTick(() => sectionEls.get(g)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  void nextTick(() => scrollToTop(sectionEls.get(g)));
 }
 /**
  * スマホ: 種類の節 (普通 / エッセンス / 冒涜 / 異界…) は見出しを押して開く。普通だけ開いた状態が既定 (一覧が 5000px あって
@@ -241,7 +242,8 @@ function essName(r: ListRow): string | null {
   return top ? tr(ESS_JA.get(top) ?? top, top) : null;
 }
 const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? tr(ESS_JA.get(name) ?? name, name) : name);
-const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "0%");
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
+const pct = (x: number): string => fmtPct(x);
 /** 節の色 (ルーンの節はルーンのアイコンの色) */
 /** 重みの出どころ (乗せた時に出す)。ゲームは公開していないので、こちらが入れた重み */
 const WEIGHT_NOTE = computed((): Partial<Record<string, string>> => ({
@@ -272,7 +274,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
       <b class="g-brush text-[20px] tracking-[0.12em] max-md:text-[16px] max-md:tracking-[0.06em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">{{ tr("このベースに付く MOD", "Mods for this base") }}</b>
       <span class="text-[var(--exile-color-text-tertiary)] max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span>
       <HelpTip :text="s.mode.value === 'sim' ? tr('出やすさ = 同じ側の重みの割合。段 = 段の数、Lv = T1 の MOD レベル。MOD を押すと段の表が開く', 'Chance = share of weight on the same side. T = number of tiers, Lv = mod level of T1. Click a mod to open its tier table') : tr(`出やすさ = 同じ側の重みの割合 (アイテムレベルは見ない)。段 = 段の数、Lv = T1 の MOD レベル${canStart ? '。段の表の「付ける」で始めの状態を組める' : ''}`, `Chance = share of weight on the same side (ignores item level). T = number of tiers, Lv = mod level of T1${canStart ? '. Use “Add” in the tier table to build the starting item' : ''}`)" @click.stop />
-      <span class="ml-auto inline-flex items-center gap-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ open ? tr("畳む", "Collapse") : tr("開く", "Expand") }}<Icon :name="open ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></span>
+      <Disclosure tag="span" kind="section" :open="open" class="ml-auto" />
     </div>
 
     <div v-if="open" class="border-t border-white/10 px-3 pb-3 pt-2">
@@ -295,7 +297,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
           <!-- 重みが公開されていない欄は、こちらが入れた重みの出どころを短く (2026-10-09 オーナー「不明の奴全てに、コミュニティのデータから参照していますって書いとこう」) -->
           <span v-if="WEIGHT_NOTE[sec.rune ? 'rune' : sec.g]" class="g-hover-name font-normal opacity-60" :title="WEIGHT_NOTE[sec.rune ? 'rune' : sec.g]">{{ tr("· 重みはコミュニティのデータから参照", "· Weights from community data") }}</span>
           <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">{{ tr("創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ", "Mods exclusive to the Genesis Tree and Wraps · Cannot roll from currency · Add them manually with “Add” in the tier table") }}</span>
-          <span class="ml-auto font-normal opacity-60 md:hidden">{{ secShown(sec.sid) ? "▲" : tr("▼ 開く", "▼ Expand") }}</span>
+          <Disclosure tag="span" kind="section" :open="secShown(sec.sid)" class="ml-auto font-normal md:hidden" />
         </h3>
         <div v-if="secShown(sec.sid)" class="grid gap-3 md:grid-cols-2">
           <div v-for="col in sec.columns" :key="col.side" class="min-w-0">
@@ -345,19 +347,20 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                       <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-10 max-md:px-3 max-md:text-[12px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? tr('もう一度押すと外す', 'Click again to remove') : sec.rune ? tr(`② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める`, `Add to ② (${t.rank}+). Runs start from a Normal item with ${sec.label} socketed`) : tr(`② に足す (${t.rank} 以上)`, `Add to ② (${t.rank}+)`)" @click.stop="keepPlace($event.currentTarget as Element, () => toggleTarget(t.modId ?? r.id, t))">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
                     </td>
                     <td v-else-if="s.mode.value !== 'sim' && !s.replay.value" class="w-56 py-0.5 text-right max-md:w-auto">
+                      <!-- 段の表のボタンはみな g-btn sm (2026-10-10 動きの揃え 6: 色の線のボタンは絵になる物とならない物が混ざっていた)。狙い中は赤 -->
                       <!-- 次の手で狙う (いつでも): 今の状態から打った時にこの段以上が付く確率を、打ち方ごとに棚の上へ (2026-10-09 オーナー)。押すと選ぶ窓 -->
-                      <button type="button" :data-aim-at="`${t.modId ?? r.id}:${t.rank}`" class="mr-1 whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-9 max-md:px-2.5" :class="isAim(t.modId ?? r.id, t) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50' : 'border-amber-400/60 text-amber-200 hover:bg-amber-500/15'" :title="isAim(t.modId ?? r.id, t) ? tr('もう一度押すとやめる', 'Click again to stop') : tr(`次の 1 手で ${t.rank} 以上が付く確率を打ち方ごとに出す (ほかの MOD も ${AIM_MAX} つまで一緒に狙える)`, `Show the chance of ${t.rank}+ rolling on the next move for each method (target up to ${AIM_MAX} mods together)`)" @click.stop="aimAt(t.modId ?? r.id, t, $event.currentTarget as Element)">{{ isAim(t.modId ?? r.id, t) ? tr("狙い中", "Targeting") : tr("次の手で狙う", "Target next move") }}</button>
+                      <button type="button" :data-aim-at="`${t.modId ?? r.id}:${t.rank}`" class="mr-1 max-md:min-h-9" :class="isAim(t.modId ?? r.id, t) ? 'g-btn-red sm' : 'g-btn sm'" :title="isAim(t.modId ?? r.id, t) ? tr('もう一度押すとやめる', 'Click again to stop') : tr(`次の 1 手で ${t.rank} 以上が付く確率を打ち方ごとに出す (ほかの MOD も ${AIM_MAX} つまで一緒に狙える)`, `Show the chance of ${t.rank}+ rolling on the next move for each method (target up to ${AIM_MAX} mods together)`)" @click.stop="aimAt(t.modId ?? r.id, t, $event.currentTarget as Element)">{{ isAim(t.modId ?? r.id, t) ? tr("狙い中", "Targeting") : tr("次の手で狙う", "Target next move") }}</button>
                       <!-- 打ち始めた後 (と、始めの状態に入れられない種類) は指名の手として付ける。灰色 = 今は付けられない (理由は title) -->
                       <span v-if="!canStart || !(sec.g === 'normal' || sec.g === 'desecrated')" class="inline-flex gap-1">
-                        <button type="button" class="rounded border px-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-30" :class="sec.g === 'desecrated' || sec.g === 'otherworldly' ? 'border-green-700/80 text-lime-200 hover:bg-green-800/30' : sec.g === 'essence' || sec.g === 'perfect_essence' ? 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15' : 'border-sky-400/50 text-sky-200 hover:bg-sky-500/15'" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank).why" :title="forceOf(r.group, t.modId ?? r.id, t.rank).why ?? tr(`${t.rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`, `Add ${t.rank} as one step (no cost; Undo removes it)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank).key)">{{ sec.g === "desecrated" || sec.g === "otherworldly" ? tr("冒涜で付ける", "Add desecrated") : tr("付ける", "Add") }}</button>
+                        <button type="button" class="g-btn sm disabled:cursor-not-allowed" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank).why" :title="forceOf(r.group, t.modId ?? r.id, t.rank).why ?? tr(`${t.rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`, `Add ${t.rank} as one step (no cost; Undo removes it)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank).key)">{{ sec.g === "desecrated" || sec.g === "otherworldly" ? tr("冒涜で付ける", "Add desecrated") : tr("付ける", "Add") }}</button>
                       <!-- 途中でもフラクチャー (付いていればそれを固定、無ければ固定で付ける。レアだけ・1 つまで。2026-10-08 オーナー)。
                              2026-10-10 要望「創生の樹 (冒涜も) フラクチャーできるように」: どのグループでも (未発現の冒涜以外は固定できる、オーナー確認) -->
-                        <button type="button" class="rounded border border-orange-400/60 px-1.5 text-[10px] text-orange-200 hover:bg-orange-500/15 disabled:cursor-not-allowed disabled:opacity-30" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why" :title="forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why ?? tr(`${t.rank} をフラクチャー (付いていればそれを固定、無ければ固定で付ける)`, `Fracture ${t.rank} (fractures it if present, otherwise adds it fractured)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank, 'f').key)">{{ tr("フラクチャー", "Fracture") }}</button>
+                        <button type="button" class="g-btn sm disabled:cursor-not-allowed" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why" :title="forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why ?? tr(`${t.rank} をフラクチャー (付いていればそれを固定、無ければ固定で付ける)`, `Fracture ${t.rank} (fractures it if present, otherwise adds it fractured)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank, 'f').key)">{{ tr("フラクチャー", "Fracture") }}</button>
                       </span>
                       <span v-else class="inline-flex gap-1 max-md:flex-wrap max-md:justify-end">
-                        <button v-if="sec.g === 'normal'" type="button" class="rounded border border-sky-400/50 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/15" :title="tr(`始めの状態に ${t.rank} を付ける (付きうる物だけ)`, `Add ${t.rank} to the starting item (only mods that can roll)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">{{ tr("付ける", "Add") }}</button>
-                        <button v-if="sec.g === 'normal'" type="button" class="rounded border border-orange-400/60 px-1.5 text-[10px] text-orange-200 hover:bg-orange-500/15 disabled:cursor-not-allowed disabled:opacity-30" :disabled="hasStart('fractured')" :title="hasStart('fractured') ? tr('フラクチャーは 1 つまで (もう付いている)', 'Only one fractured mod (already added)') : tr(`始めの状態に ${t.rank} をフラクチャーで付ける (レアになる)`, `Add ${t.rank} fractured to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, fractured: true })">{{ tr("フラクチャー", "Fracture") }}</button>
-                        <button v-if="sec.g === 'desecrated'" type="button" class="rounded border border-green-700/80 px-1.5 text-[10px] text-lime-200 hover:bg-green-800/30 disabled:cursor-not-allowed disabled:opacity-30" :disabled="hasStart('desecrated')" :title="hasStart('desecrated') ? tr('冒涜の MOD はアイテムに 1 つまで (もう付いている)', 'Only one desecrated mod per item (already added)') : tr(`始めの状態に ${t.rank} を冒涜の MOD で付ける (レアになる)`, `Add ${t.rank} as a desecrated mod to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, desecrated: true })">{{ tr("冒涜", "Desecrated") }}</button>
+                        <button v-if="sec.g === 'normal'" type="button" class="g-btn sm" :title="tr(`始めの状態に ${t.rank} を付ける (付きうる物だけ)`, `Add ${t.rank} to the starting item (only mods that can roll)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">{{ tr("付ける", "Add") }}</button>
+                        <button v-if="sec.g === 'normal'" type="button" class="g-btn sm disabled:cursor-not-allowed" :disabled="hasStart('fractured')" :title="hasStart('fractured') ? tr('フラクチャーは 1 つまで (もう付いている)', 'Only one fractured mod (already added)') : tr(`始めの状態に ${t.rank} をフラクチャーで付ける (レアになる)`, `Add ${t.rank} fractured to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, fractured: true })">{{ tr("フラクチャー", "Fracture") }}</button>
+                        <button v-if="sec.g === 'desecrated'" type="button" class="g-btn sm disabled:cursor-not-allowed" :disabled="hasStart('desecrated')" :title="hasStart('desecrated') ? tr('冒涜の MOD はアイテムに 1 つまで (もう付いている)', 'Only one desecrated mod per item (already added)') : tr(`始めの状態に ${t.rank} を冒涜の MOD で付ける (レアになる)`, `Add ${t.rank} as a desecrated mod to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, desecrated: true })">{{ tr("冒涜", "Desecrated") }}</button>
                       </span>
                     </td>
                   </tr>

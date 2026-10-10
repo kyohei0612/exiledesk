@@ -10,6 +10,7 @@
   同じ系統の除外は見ない目安。エッセンスは確定なので出さない
 -->
 <script setup lang="ts">
+import { fmtPct } from "../../utils/format-pct";
 import { computed } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
 import { fillModText } from "../../services/htc/mod-text";
@@ -41,7 +42,8 @@ function shareOf(modId: string, minTierIndex: number): number | null {
   const total = ids.reduce((a, id) => a + w(id, 0), 0);
   return total > 0 ? w(modId, minTierIndex) / total : null;
 }
-const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : "<0.1%");
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
+const pct = (x: number): string => fmtPct(x);
 
 /** 段のプルダウン (このアイテムレベルで届く段、良い順) */
 function tierOptions(modId: string): Array<{ i: number; label: string }> {

@@ -8,6 +8,7 @@
   どのスキルにもある火力の数字だけを同じ名前で出す。上のバーのスキルについて 自分 → 相手 (相手は比較の時だけ)
 -->
 <script setup lang="ts">
+import Disclosure from "../../components/ui/Disclosure.vue";
 import { computed, ref } from "vue";
 import type { CoreStats } from "../../services/pob-check/api";
 import { fmtNum } from "./fmt";
@@ -193,7 +194,7 @@ const sections = computed<Section[]>(() => {
       <template v-if="!open">
         <span v-for="x in brief" :key="x.label" class="text-[12px]"><span class="text-[var(--exile-color-text-tertiary)]">{{ x.label }}</span> <b class="tabular-nums">{{ x.v }}</b></span>
       </template>
-      <button type="button" class="ml-auto rounded-md border border-white/15 px-2.5 py-0.5 text-[12px] hover:bg-white/10" @click="open = !open">{{ open ? "たたむ ▴" : "詳細 ▾" }}</button>
+      <Disclosure v-model:open="open" kind="detail" class="ml-auto" />
     </div>
     <template v-if="open">
     <p class="note mb-2 mt-1">名前と並びはゲームのスキルの詳細と同じ (スキル専用の項目は PoB に無いので出さない)</p>

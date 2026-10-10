@@ -8,6 +8,7 @@
   「今まで入力していた部分 (ベース・MOD・始め方) まではそのまま」。決めていない形は回すと新しいベースで最初から (仮の数字)
 -->
 <script setup lang="ts">
+import { useFlash } from "../../utils/use-flash";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/shelf-context";
@@ -337,13 +338,10 @@ function finishHits(): void {
   showSwitched(left ? `ハズレルート設定に切り替えました · 未定 ${left} 形 (${sel.value != null ? numOf(sel.value) : 1} 手目の外れから)` : "ハズレルート設定に切り替えました · 外れも全部決めてあります");
 }
 /** 切り替えの知らせ (数秒で消える) と、ハズレルート設定のタブを光らせる */
-const switched = ref<string | null>(null);
-let switchedTimer: ReturnType<typeof setTimeout> | undefined;
-function showSwitched(text: string): void {
-  switched.value = text;
-  clearTimeout(switchedTimer);
-  switchedTimer = setTimeout(() => (switched.value = null), 4500);
-}
+// 文が長いので 4.5 秒 (仕組みは utils/use-flash.ts。2026-10-10 動きの揃え 7)
+const switchedNote = useFlash(4500);
+const switched = switchedNote.msg;
+const showSwitched = (text: string): void => switchedNote.flash(text);
 /** 外れを決めていって、この手の形が全部決まったら次の決めていない手へ (2026-10-10 オーナー「ハズレ決めたら次って、どんどん行こう」) */
 watch(() => (sel.value != null ? shapes.value[sel.value]?.left ?? null : null), (n, o) => {
   if (n === 0 && (o ?? 0) > 0) goFill();
@@ -539,9 +537,10 @@ onBeforeUnmount(() => io?.disconnect());
         <button v-for="r in (['prefix', 'suffix'] as const)" :key="r" type="button" role="tab" :aria-selected="route === r" class="g-tab w-full !min-h-[32px] !text-[13px]" :class="route === r ? 'on' : ''" @click="route = r; sel = null">{{ ROUTE_JA[r] }}</button>
       </div>
       <ol class="flex flex-col gap-1">
-        <li v-for="i in shownKs" :key="i">
+        <li v-for="i in shownKs" :key="i" class="group relative">
           <template v-for="m in [moves[i]!]" :key="i">
-          <button type="button" class="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition" :class="sel === i ? 'bg-[var(--exile-color-bg-elevated)] shadow-[inset_2px_0_0_var(--exile-color-accent-focus)]' : 'hover:bg-white/[0.04]'" @click="sel = i">
+          <!-- 消す × は行のボタンの中に入れられない (ボタンの入れ子) ので右端に重ねる (2026-10-10 動きの揃え 6: span role=button をやめた) -->
+          <button type="button" class="flex w-full items-center gap-2 rounded-md py-1.5 pl-2 text-left transition" :class="[sel === i ? 'bg-[var(--exile-color-bg-elevated)] shadow-[inset_2px_0_0_var(--exile-color-accent-focus)]' : 'group-hover:bg-white/[0.04]', locked ? 'pr-2' : 'pr-10']" @click="sel = i">
             <span class="grid size-5 shrink-0 place-items-center rounded-full bg-white/10 text-[11px] font-semibold tabular-nums text-[var(--exile-color-text-secondary)]">{{ numOf(i) }}</span>
             <span class="flex shrink-0 items-center -space-x-2.5"><img v-for="ic in iconsOf(m.use)" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
             <span class="min-w-0 flex-1">
@@ -552,8 +551,8 @@ onBeforeUnmount(() => io?.disconnect());
             <span v-if="m.aim && shapes[i]" class="shrink-0 rounded-full px-1.5 text-[11px] tabular-nums" :class="shapes[i]!.left ? 'bg-white/[0.07] text-[var(--exile-color-text-secondary)]' : 'text-[var(--exile-color-signal-up)]'" :title="shapes[i]!.left ? `外れた時の形があと ${shapes[i]!.left} つ未定 (押すと決める)` : '外れも全部決めた'">
               <template v-if="shapes[i]!.left">外れ {{ shapes[i]!.left }}</template><Icon v-else name="check" class="size-3.5" />
             </span>
-            <span v-if="!locked" role="button" tabindex="0" class="grid size-6 shrink-0 place-items-center rounded text-[var(--exile-color-text-tertiary)] opacity-0 transition hover:bg-white/10 hover:text-[var(--exile-color-signal-down)] focus:opacity-100 group-hover:opacity-100" title="この手を消す" @click.stop="removeMove(i)" @keydown.enter.stop="removeMove(i)"><Icon name="x" class="size-3.5" /></span>
           </button>
+          <button v-if="!locked" type="button" class="g-plain absolute inset-y-0 right-2 my-auto grid size-6 place-items-center rounded text-[var(--exile-color-text-tertiary)] opacity-0 transition hover:bg-white/10 hover:text-[var(--exile-color-signal-down)] focus:opacity-100 group-hover:opacity-100" title="この手を消す" @click="removeMove(i)"><Icon name="x" class="size-3.5" /></button>
           </template>
         </li>
       </ol>

@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
-import { baseCatalog, CATALOG_CLS_JA } from "../../services/items/base-catalog";
+import { baseCatalog, classLabel } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
 import Icon from "../../components/ui/Icon.vue";
 import { tr } from "../../i18n/lang";
@@ -52,7 +52,7 @@ function choose(en: string): void {
       <template v-else>
         <img v-if="baseArt(base)" :src="baseArt(base)!" alt="" class="size-8 object-contain" draggable="false" />
         <b class="font-display text-[15px] tracking-wide text-[var(--color-rarity-rare)]">{{ tr(current?.ja ?? base, base) }}</b>
-        <span v-if="current" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr(CATALOG_CLS_JA.get(current.cls) ?? current.cls, current.cls.replace(/_/g, " ")) }}</span>
+        <span v-if="current" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ classLabel(current.cls) }}</span>
       </template>
       <span class="ml-1 inline-flex items-center gap-0.5 text-[12px] text-[var(--exile-color-text-tertiary)] group-hover:text-[var(--exile-color-text-secondary)]">{{ open ? tr("閉じる", "Close") : tr("変える", "Change") }}<Icon :name="open ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></span>
     </button>

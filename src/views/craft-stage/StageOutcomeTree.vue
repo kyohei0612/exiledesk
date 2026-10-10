@@ -7,6 +7,7 @@
   全部の形を決めるまでこの手にできない (StagePatternEditor が shapesLeft で見る)
 -->
 <script setup lang="ts">
+import { fmtPct } from "../../utils/format-pct";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { iconOf, nameOf } from "../../state/craft-stage";
 import type { PatternSet, PolicyAct } from "../../services/craft-stage/pattern";
@@ -184,7 +185,8 @@ const OTHER_JA = computed(() => (props.side === "prefix" ? "サフィ" : "プレ
 /** 形の文 (反対の側に前の手の狙いがある時は、その数も) */
 /** 形の文 (初見レビュー: 短く。狙い = 狙う MOD、ほか = それ以外、空き = 残りの枠) */
 const shapeText = (s: Shape): string => `狙い ${s.h} · ほか ${s.j} · 空き ${Math.max(0, props.limit - s.h - s.j)}${s.g != null ? ` (${OTHER_JA.value}の狙い ${s.g})` : ""}`;
-const pct = (p: number | null): string => (p == null ? "" : p >= 0.995 ? "100%" : p < 0.005 ? "1% 未満" : `${Math.round(p * 100)}%`);
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
+const pct = (p: number | null): string => fmtPct(p);
 const thenText = (a: PolicyAct | undefined): string => (!a ? "" : a.then === "next" ? "次の手へ" : a.then === "restart" ? "新しいベースで最初から" : a.then === "miss" ? (props.fallback ?? "付かなかったらの札") : a.then === "reset" ? `1 MOD 残し消去 → ${(a.goto ?? 0) + 1} 手目へ` : a.then === "goto" ? `${(a.goto ?? 0) + 1} 手目へ${a.auto ? " (自動)" : ""}` : "");
 const ruleText = (a: PolicyAct | undefined): string => { if (!a) return "未定"; const x = a.set ? setOf(props.sets, a.set) : undefined; return x ? `${preLabel(a.pre)}${labelOf(x)} を打つ` : thenText(a); };
 /**

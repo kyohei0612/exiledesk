@@ -8,6 +8,7 @@
   決めるまでは s.aims を触らない (やめるで元のまま)。
 -->
 <script setup lang="ts">
+import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { GROUP_JA, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
@@ -75,7 +76,8 @@ const isCoveredTier = (r: ListRow, t: ListTier): boolean => { const c = pickedOf
 const rankOf = (a: AimPick): string => { const n = s.data.value?.mods.get(a.modId)?.tiers.length ?? 0; return `T${n - a.minTierIndex}`; };
 /** 段の表を開いている行 (押した段の行は最初から開く) */
 const expanded = ref<string | null>(seedRow?.id ?? null);
-const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "");
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
+const pct = (x: number): string => fmtPct(x, { zero: "" });
 
 function close(): void { s.aimPicker.value = null; }
 function decide(): void {

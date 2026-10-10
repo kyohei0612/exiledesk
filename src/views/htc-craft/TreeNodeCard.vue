@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { fmtPct } from "../../utils/format-pct";
 import Icon from "../../components/ui/Icon.vue";
 /**
  * TreeNodeCard.vue — 作り方のツリーの手 1 つ (2026-09-24)
@@ -30,7 +31,8 @@ const name = (id: string): string => (id === "__breach__" ? "ブリーチの MOD
 const why = computed(() => (h.value && n.value.action ? h.value.usable(state.value, n.value.action) : null));
 const price = computed(() => (h.value && n.value.action && !why.value ? h.value.priceOf(state.value, n.value.action) : null));
 const odds = computed(() => props.t.hitOdds(n.value));
-const pct = (p: number): string => (p >= 0.995 ? "確定" : `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`);
+/** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts。99.5% 以上は「確定」のまま) */
+const pct = (p: number): string => (p >= 0.995 ? "確定" : fmtPct(p));
 
 /** お告げ・骨の名前はゲームの正式名 ([[labels.ts]])。骨はベースで変わる (武器・装飾品 = 鎖骨 / 顎骨、防具 = 肋骨) */
 const omenJa = (key: string): string => jaOfOmen(key) ?? key;

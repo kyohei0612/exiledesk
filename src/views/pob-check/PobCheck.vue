@@ -6,6 +6,7 @@
   オーナー「pob新しいやつはUIシンプルかつわかりやすく、色付きで今風で表示してくれ」
 -->
 <script setup lang="ts">
+import { useFlash } from "../../utils/use-flash";
 import { computed, nextTick, ref, watch } from "vue";
 import { gemJa, openPob } from "../../services/pob-check/api";
 import TabBar from "../../components/ui/TabBar.vue";
@@ -42,12 +43,12 @@ async function openPobApp(): Promise<void> {
 }
 
 /** 共有: 今のビルドの PoB コードをコピー */
-const shareMsg = ref("");
+const shareNote = useFlash();
+const shareMsg = shareNote.msg;
 async function onShare(): Promise<void> {
   // 失敗の理由は usePobCheck が error (上の帯) に出す
   const code = await shareCode();
-  shareMsg.value = code ? (changes.value.length ? "変えた所も込みでコピーしました" : "コピーしました") : "できませんでした";
-  setTimeout(() => (shareMsg.value = ""), 4000);
+  shareNote.flash(code ? (changes.value.length ? "変えた所も込みでコピーしました" : "コピーしました") : "できませんでした");
 }
 
 /** ゲームのビルドプランナーへの書き出し (自分 = 上のバー、相手 = 「火力の差」)。書いた後の文は 8 秒出す */

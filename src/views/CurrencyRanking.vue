@@ -143,7 +143,7 @@ watch(tab, (t) => {
         <p class="font-mono text-xs">{{ r.error.value }}</p>
       </div>
 
-      <div v-if="r.loading.value && !r.ranking.value.length" class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm">データ取得中…</div>
+      <div v-if="r.loading.value && !r.ranking.value.length" class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm">読み込み中…</div>
 
       <!-- フィルタ後 0 件案内 (元データはあるが categoryFilter / searchQuery で消えた時) -->
       <div
