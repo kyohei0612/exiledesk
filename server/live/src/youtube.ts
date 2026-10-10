@@ -100,8 +100,29 @@ export function pickLive(items: readonly VideoItem[], channels: readonly Channel
   return out;
 }
 
-/** チャンネル 1 つ分の候補の動画 ID (RSS + /live。どちらかが落ちても片方で続ける) */
-export async function candidateIds(channelId: string, fetchFn: Fetch, errors: string[], onLatest?: (l: Latest) => void): Promise<string[]> {
+/**
+ * RSS が 404 のチャンネルの代わり: アップロードの再生リスト (UU…) を playlistItems.list で (1 回 1 点)。
+ * 2026-10-10 チョコバナナch の RSS が動画があるのに 404 (playlist_id の RSS も 404) で、最新動画が出ず日報に毎回「feed 404」が出ていた
+ */
+export async function uploadsViaApi(channelId: string, apiKey: string, fetchFn: Fetch, onLatest?: (l: Latest) => void): Promise<string[]> {
+  const u = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
+  u.searchParams.set("part", "snippet");
+  u.searchParams.set("maxResults", "15");
+  u.searchParams.set("playlistId", `UU${channelId.slice(2)}`);
+  u.searchParams.set("key", apiKey);
+  const r = await fetchFn(u.toString());
+  if (!r.ok) throw new Error(`playlistItems ${r.status}`);
+  const j = (await r.json()) as { items?: Array<{ snippet?: { title?: string; publishedAt?: string; resourceId?: { videoId?: string } } }> };
+  const items = (j.items ?? []).filter((x) => /^[\w-]{11}$/.test(x.snippet?.resourceId?.videoId ?? ""));
+  // 再生リストは追加順。新しい順に並べ直す
+  items.sort((a, b) => (b.snippet?.publishedAt ?? "").localeCompare(a.snippet?.publishedAt ?? ""));
+  const top = items[0]?.snippet;
+  if (top?.resourceId?.videoId) onLatest?.({ title: top.title ?? "", thumb: thumbUrl(top.resourceId.videoId), watchUrl: watchUrl(top.resourceId.videoId), publishedAt: top.publishedAt ?? null });
+  return items.map((x) => x.snippet!.resourceId!.videoId!);
+}
+
+/** チャンネル 1 つ分の候補の動画 ID (RSS + /live。どちらかが落ちても片方で続ける。RSS が落ちたら API のアップロード一覧で) */
+export async function candidateIds(channelId: string, fetchFn: Fetch, errors: string[], onLatest?: (l: Latest) => void, apiKey?: string): Promise<string[]> {
   const ids = new Set<string>();
   const [feed, live] = await Promise.allSettled([
     fetchFn(feedUrl(channelId), { headers: { "accept": "application/atom+xml" } }).then(async (r) => {
@@ -114,7 +135,12 @@ export async function candidateIds(channelId: string, fetchFn: Fetch, errors: st
     fetchFn(livePageUrl(channelId), { headers: { "accept-language": "ja,en;q=0.5", "user-agent": "Mozilla/5.0 (compatible; exiledesk-live/0.1)" } })
       .then(async (r) => { if (!r.ok) throw new Error(`live page ${r.status}`); return parseLivePageVideoId(await readUntil(r, /<link rel="canonical"/)); }),
   ]);
-  if (feed.status === "fulfilled") feed.value.forEach((id) => ids.add(id)); else errors.push(`youtube ${channelId}: ${String(feed.reason)}`);
+  if (feed.status === "fulfilled") feed.value.forEach((id) => ids.add(id));
+  else {
+    let ok = false;
+    if (apiKey) { try { (await uploadsViaApi(channelId, apiKey, fetchFn, onLatest)).forEach((id) => ids.add(id)); ok = true; } catch (e) { errors.push(`youtube ${channelId}: ${String(feed.reason)} / ${String(e)}`); } }
+    if (!ok && !apiKey) errors.push(`youtube ${channelId}: ${String(feed.reason)}`);
+  }
   if (live.status === "fulfilled") { if (live.value) ids.add(live.value); } else errors.push(`youtube ${channelId}: ${String(live.reason)}`);
   return [...ids];
 }
@@ -141,7 +167,7 @@ export async function fetchYoutube(channels: readonly ChannelDef[], apiKey: stri
   const yt = channels.filter((c) => c.platform === "youtube" && c.youtubeChannelId);
   if (!yt.length) return new Map();
   if (!apiKey) { errors.push("youtube: YOUTUBE_API_KEY が無い"); return new Map(); }
-  const idLists = await Promise.all(yt.map((c) => candidateIds(c.youtubeChannelId!, fetchFn, errors, (l) => latest?.set(c.id, l))));
+  const idLists = await Promise.all(yt.map((c) => candidateIds(c.youtubeChannelId!, fetchFn, errors, (l) => latest?.set(c.id, l), apiKey)));
   const ids = [...new Set(idLists.flat())];
   if (!ids.length) return new Map();
   try {
