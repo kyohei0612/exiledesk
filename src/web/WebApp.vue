@@ -11,6 +11,8 @@ import CraftStage from "../views/craft-stage/CraftStage.vue";
 import LivePanel from "./LivePanel.vue";
 import FeedbackDialog from "./FeedbackDialog.vue";
 import WelcomeDialog from "./WelcomeDialog.vue";
+import ChangelogDialog from "../components/ChangelogDialog.vue";
+import { changelogOpen, initChangelog } from "../state/changelog";
 import MarketNotice from "./MarketNotice.vue";
 import pkg from "../../package.json";
 import { noLogOn, setNoLog } from "../utils/no-log";
@@ -42,6 +44,8 @@ onBeforeUnmount(() => {
 const WELCOME_KEY = "exiledesk.web.welcomed";
 const welcomeOpen = ref(false);
 try { welcomeOpen.value = !localStorage.getItem(WELCOME_KEY); } catch { welcomeOpen.value = true; }
+// 更新した後に 1 回だけ更新内容を出す。「はじめに」を出す時は出さない (2026-10-10)
+initChangelog(welcomeOpen.value);
 function closeWelcome(): void { welcomeOpen.value = false; try { localStorage.setItem(WELCOME_KEY, "1"); } catch { /* 無くてよい */ } }
 const DESIGN_WIDTH = 1660;
 const frame = ref({ w: DESIGN_WIDTH, h: 900 });
@@ -70,14 +74,16 @@ window.addEventListener("resize", fitZoom);
         <span class="g-brand-word leading-none" :class="phone ? 'text-[15px]' : 'text-[18px]'">EXILEDESK</span>
       </span>
       <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">クラフトステージ</span>
-      <span class="ml-auto opacity-40" :class="phone ? 'hidden' : ''">v{{ pkg.version }}</span>
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? 'ml-auto !min-h-9 !px-0 text-[12px]' : ''" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
+      <!-- 版を押すと更新履歴 (2026-10-10) -->
+      <button type="button" class="g-plain ml-auto opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 text-[11px]' : ''" title="更新履歴を見る" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
+      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">{{ phone ? "要望・バグ" : "要望・バグを送る" }}</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
       <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" title="相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中">アプリ版 近日公開</span>
     </header>
     <MarketNotice />
     <WelcomeDialog :open="welcomeOpen" @close="closeWelcome" />
+    <ChangelogDialog />
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
