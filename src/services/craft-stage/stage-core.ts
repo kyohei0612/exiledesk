@@ -7,6 +7,8 @@
  */
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { runeIdByName, withRunes } from "../../vendor/poe2htc/engine/runes";
+import RUNES_JSON from "./stage-runes.json";
+const RUNE_STATS = (RUNES_JSON as { runes: unknown }).runes;
 import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
 import { familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
@@ -35,7 +37,24 @@ export const stageRuneIds = (item: StageItem): string[] =>
  */
 export function effectiveCls(item: StageItem): ItemBase {
   const ids = stageRuneIds(item);
-  return ids.length ? withRunes(item.cls, ids) : item.cls;
+  return ids.length ? withRunes(item.cls, ids, runeEffectPct(item)) : item.cls;
+}
+/**
+ * ソケットのルーンの効果の増加 % (2026-10-10 オーナー「データ確かめてから入れて」、Benton の動画): ルーンシーカーの呼び声の遺産
+ * (ワンド、local_rune_effect_+% 75、stage-runes.json) と、合金の「ソケットのオーグメントの効果 #% 増加」の MOD。
+ * 100% 以上でセールの凱旋が +2 サフィ・アストリッドの創造性が +2 クラフト (切り捨て、engine の boostedPlus)
+ */
+export function runeEffectPct(item: StageItem): number {
+  let pct = 0;
+  for (const m of allMods(item)) {
+    const r = /^(\d+(?:\.\d+)?)% increased effect of Socketed (?:Augment Items|Runes)$/i.exec(m.textEn);
+    if (r) pct += Number(r[1]);
+  }
+  for (const a of item.augments ?? []) {
+    const st = (RUNE_STATS as Record<string, { effects?: Array<{ stats: Array<{ id: string; value: number }> }> }>)[a.en]?.effects?.flatMap((e) => e.stats) ?? [];
+    for (const s of st) if (s.id === "local_rune_effect_+%") pct += s.value;
+  }
+  return pct;
 }
 /** 側の枠 (マジックは 1 / 1) */
 export function limitOf(item: StageItem, side: StageSide): number {

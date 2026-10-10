@@ -11,7 +11,8 @@
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { BREACH_FAMILY } from "../htc/omens";
-import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, SIDES, skip, takenCraftedFamilies, withMod } from "./stage-core";
+import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, runeEffectPct, SIDES, skip, takenCraftedFamilies, withMod } from "./stage-core";
+import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
 import { essenceClash } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
@@ -111,7 +112,8 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
 /** 深淵のエッセンスの MOD の系統 (深淵の王の印) */
 export const ABYSS_FAMILY = "EssenceAbyss";
 /** 持てるクラフト MOD の数 (アストリッドの創造性で +1) */
-export const craftedLimitOf = (item: StageItem): number => 1 + ((item.augments ?? []).some((a) => a.en === "Astrid's Creativity") ? 1 : 0);
+/** クラフト MOD の上限: 1 + アストリッドの創造性 (ソケットの効果 100% 以上で +2。stage-core の runeEffectPct・engine の boostedPlus) */
+export const craftedLimitOf = (item: StageItem): number => 1 + (item.augments ?? []).filter((a) => a.en === "Astrid's Creativity").reduce((n) => n + boostedPlus(1, runeEffectPct(item)), 0);
 
 /**
  * 深淵のエッセンス (2026-10-03、SaVeQ 0.5.5 / poe2fun): 固定済み以外から 1 つ消し (結晶化のお告げで側を指せる)、消した側に「深淵の王の印」。

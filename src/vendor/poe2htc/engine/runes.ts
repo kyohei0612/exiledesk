@@ -109,8 +109,8 @@ export const runePriceKey = (rune: string): string => `rune:${rune}`;
  * downstream ever learns the word "rune". A rune that does not fit the base is ignored, as is an
  * unknown id — a share link carries these, and a link from a future patch must not throw.
  */
-export function withRunes(base: ItemBase, runeIds: readonly string[]): ItemBase {
-  const limits = limitsWithRunes(base.category, runeIds, base.limits);
+export function withRunes(base: ItemBase, runeIds: readonly string[], effectPct = 0): ItemBase {
+  const limits = limitsWithRunes(base.category, runeIds, base.limits, effectPct);
   const pools = poolsWithRunes(base, runeIds);
   if (limits === (base.limits ?? DEFAULT_LIMITS) && pools === base.pools) return base;
   return { ...base, limits, pools };
@@ -153,8 +153,16 @@ function poolsWithRunes(base: ItemBase, runeIds: readonly string[]): ItemBase['p
  * Returns the given limits unchanged (by identity) when no rune applies, which is what lets
  * `withRunes` hand back the very base it was given.
  */
+/**
+ * A rune's +N after "increased effect of Socketed Runes / Augment Items" (ExileDesk 2026-10-10, Benton's video
+ * "SECRET Crafting Tech REVEALED": Legacy of Runeseeker's Call 75% + the Soul Core alloy's 25-30% makes Serle's
+ * Triumph allow +2 suffixes; "you need at least 25%"). The data gives the stats (local_rune_effect_+% 75,
+ * 20-30% on weapons) but not the rounding — truncation is what the video's 25% threshold implies.
+ */
+export const boostedPlus = (plus: number, effectPct = 0): number => Math.floor(plus * (1 + effectPct / 100) + 1e-9);
+
 export function limitsWithRunes(
-  category: string, runeIds: readonly string[], from?: ItemLimits,
+  category: string, runeIds: readonly string[], from?: ItemLimits, effectPct = 0,
 ): ItemLimits {
   const base = from ?? DEFAULT_LIMITS;
   const fitted = runeIds
@@ -163,8 +171,8 @@ export function limitsWithRunes(
   if (fitted.length === 0) return base;
   const limits = { ...base };
   for (const r of fitted) {
-    if (r.effect.kind === 'crafted') limits.crafted += r.effect.plus;
-    else if (r.effect.kind === 'suffix') limits.suffixes += r.effect.plus;
+    if (r.effect.kind === 'crafted') limits.crafted += boostedPlus(r.effect.plus, effectPct);
+    else if (r.effect.kind === 'suffix') limits.suffixes += boostedPlus(r.effect.plus, effectPct);
     // 'pool' and 'convert' runes raise no limit: a pool rune adds modifiers to what the base can roll
     // (merged here once those pools are in the data), and an Aldur rune rewrites finished ones.
   }

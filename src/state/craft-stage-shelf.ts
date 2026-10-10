@@ -54,7 +54,8 @@ export const ORBS: ShelfGroup[] = [
  * クラフトに関わるルーン (クラフトの決まりを変える / 特別な MOD を足す)。棚は段ごとのまとまりのまま、初めはこれだけ出して他は畳む
  * (2026-10-04 オーナー「UI はさっきの方が好き。ルーンのとこでたたんでおけばおｋ、クラフトに関わる奴のみデフォで表示」)
  */
-export const CRAFT_RUNE_KEYS: readonly string[] = CRAFT_RUNES_EN.map((en) => `rune:${en}`).filter((k) => runeOf(k));
+// ルーンシーカーの呼び声の遺産 (ワンド、ソケットのルーンの効果 75%。合金と合わせて 100% でセールの凱旋・アストリッドが +2。2026-10-10)
+export const CRAFT_RUNE_KEYS: readonly string[] = [...CRAFT_RUNES_EN, "Legacy of Runeseeker's Call"].map((en) => `rune:${en}`).filter((k) => runeOf(k));
 export const RUNE_GROUPS: ShelfGroup[] = [
   { kind: "lesser", get label() { return tr("レッサー", "Lesser"); }, keys: runeKeys("lesser") },
   { kind: "normal", get label() { return tr("普通", "Normal"); }, keys: runeKeys("normal") },
