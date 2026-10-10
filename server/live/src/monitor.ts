@@ -114,6 +114,8 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     sec("人", [today ? "今日はまだ誰も来ていません" : "誰も来ていません"]);
   } else {
     sec("人", [
+      // 人を先に (2026-10-10 記録を 1 時間に 1 回まとめて送る形にしたので、同じ人の 1 時間以内の再訪は次の回に回る。人数はほぼ正確)
+      `来た人 ${n(sum.users)} 人 (初めて ${n(sum.newSessions)} 人)`,
       `訪問 ${n(sum.sessions)} 回`,
       sum.medianMinutes == null ? null : sum.medianMinutes < 1 ? "半分の人は 1 分未満で閉じた" : `半分の人が ${sum.medianMinutes.toFixed(0)} 分以上使った`,
     ]);
