@@ -226,6 +226,11 @@ function pickSimBase(en: string): void {
  */
 /** アプリ版だけ (Web 版は POE2Tube 用の JSON・動画モードを出さない) */
 const inApp = isTauriRuntime();
+/**
+ * Web の PC は開いたらベース選びが開いた状態から (2026-10-10 オーナー「PC はベース選びから始めよか」。
+ * 分析で 6 割の人が既定の金の指輪のまま触っていた)。スマホは覗くだけの人が多いので今まで通りすぐ打てる形
+ */
+const pickerFirst = !inApp && !phone.value && s.mode.value === "hand" && !s.log.value.length;
 /** 白に戻す (2 回押し) */
 const resetArmed = ref(false);
 let resetArmTimer: ReturnType<typeof setTimeout> | undefined;
@@ -361,7 +366,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       </span>
       <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
       <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
-      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="pickSimBase" />
+      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" :start-open="pickerFirst" @pick="pickSimBase" />
       <span v-if="!simNoBase" class="flex items-center gap-1">
         <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.itemLevel.value === lv ? 'on' : ''" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>

@@ -14,11 +14,11 @@ import Icon from "../../components/ui/Icon.vue";
 import { tr } from "../../i18n/lang";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
-const props = defineProps<{ base: string; data: PatchData | null; /** まだ選んでいない (開いた状態で始まり、今のベースは出さない) */ unpicked?: boolean }>();
+const props = defineProps<{ base: string; data: PatchData | null; /** まだ選んでいない (開いた状態で始まり、今のベースは出さない) */ unpicked?: boolean; /** 開いた状態で始める (今のベースは出したまま。Web の PC はベース選びから、2026-10-10) */ startOpen?: boolean }>();
 const emit = defineEmits<{ pick: [en: string] }>();
 
 const current = computed(() => (props.data ? (baseCatalog(props.data, true).find((b) => b.en === props.base) ?? null) : null));
-const open = ref(!!props.unpicked);
+const open = ref(!!props.unpicked || !!props.startOpen);
 // ベースが決まったら閉じる (レシピを呼んだ時も。2026-10-09 レビュー: 一覧が開いたままで打ち方の段が画面の下に隠れた)
 watch(() => props.unpicked, (v) => { open.value = !!v; });
 const head = ref<HTMLElement | null>(null);
