@@ -10,18 +10,22 @@
 import type { Env } from "./types";
 
 const KEY = "nolog:uids";
+/** 端末ごとのキー (2026-10-10: 1 つのリストを読んで足して書き戻すと、近い時間の 2 台が取り合って片方が消えた) */
+const PREFIX = "nolog:uid:";
 const MAX = 500;
 export const UID_RE = /^[A-Za-z0-9_-]{6,40}$/;
 
-/** 記録しない端末の uid (KV は 5 分まで手元に持つ。消した直後の数分は前の記録が残ることがある) */
+/** 記録しない端末の uid (前の 1 つのリストの分も読む) */
 export async function forgottenUids(env: Env): Promise<string[]> {
-  try { return ((await env.LIVE.get(KEY, { type: "json", cacheTtl: 300 })) as string[] | null) ?? []; } catch { return []; }
+  try {
+    const [old, l] = await Promise.all([env.LIVE.get(KEY, { type: "json", cacheTtl: 300 }) as Promise<string[] | null>, env.LIVE.list({ prefix: PREFIX, limit: MAX })]);
+    return [...new Set([...(old ?? []), ...l.keys.map((k) => k.name.slice(PREFIX.length))])];
+  } catch { return []; }
 }
 
 /** uid を記録しない端末に入れて、D1 の今までの記録を消す。消した行の数を返す */
 export async function forgetUid(env: Env, uid: string): Promise<number> {
-  const cur = ((await env.LIVE.get(KEY, "json")) as string[] | null) ?? [];
-  if (!cur.includes(uid)) await env.LIVE.put(KEY, JSON.stringify([...cur, uid].slice(-MAX)));
+  await env.LIVE.put(PREFIX + uid, "1");
   if (!env.LOGS) return 0;
   const r = await env.LOGS.prepare("DELETE FROM logs WHERE json_extract(body, '$.uid') = ?").bind(uid).run();
   return r.meta?.changes ?? 0;
