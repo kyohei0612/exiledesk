@@ -240,7 +240,7 @@ describe("操作の印と日報 (events / monitor)", () => {
     const full = reportText("10/6", { sessions: 42, users: 40, newSessions: 30, bounce: 0.48, medianMinutes: 6.2, byEvent, refs: [["www.youtube.com", 20], ["direct", 15], ["t.co", 5]], devices: [["pc", 38], ["mobile", 4]], countries: [["JP", 41], ["US", 1]], errors: [], wau: 120, warnings: [] }, { visits: 40, pageViews: 60, liveRequests: 1200, liveErrors: 0 }, { requests: 0, bugs: 0 }, null, []);
     expect(full).toContain("・訪問 42 回");
     expect(full).toContain("・半分の人が 6 分以上使った");
-    expect(full).toContain("・URL から直接開いた人 15 人 / youtube.com から来た人 20 人 / X から来た人 5 人");
+    expect(full).toContain("・URL から直接開いた人 15 人\n・youtube.com から来た人 20 人\n・X から来た人 5 人");
     expect(full).toContain("・PC 90% / スマホ 10% · ほぼ日本");
     expect(full).toContain("・シミュレーションを開いた 25");
     expect(full).not.toContain("レシピを保存した");

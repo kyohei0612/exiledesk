@@ -123,7 +123,8 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     // localhost は開発の確認 (自分) なので出さない (2026-10-08 オーナー「ガチで 13 人来たの？」)
     const refs = sum.refs.filter(([k]) => !/^localhost|127\.0\.0\.1/.test(k)).sort((a, b) => (a[0] === "direct" ? -1 : b[0] === "direct" ? 1 : 0));
     sec("どこから", [
-      refs.length ? refs.slice(0, 4).map(([k, v]) => `${fromJa(k)} ${v} 人`).join(" / ") : null,
+      // 1 行ずつ (2026-10-10 オーナー「訪問リストは改行してリストで表示」)
+      ...refs.slice(0, 6).map(([k, v]) => `${fromJa(k)} ${v} 人`),
       `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
     ]);
     const used = USE_JA.map(([k, ja]) => [ja, sum.byEvent.get(k)?.sessions ?? 0] as const).filter(([, v]) => v > 0);
