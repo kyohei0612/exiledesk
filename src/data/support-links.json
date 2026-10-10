@@ -1,0 +1,9 @@
+{
+ "_note": "支援のリンク (2026-10-10 オーナー「投げ銭は実装、支援するボタンで方法を選べる」)。url が空の物は出さない。全部空ならボタンも出さない",
+ "links": [
+  { "id": "kofi", "name": "Ko-fi", "kind": "1 回だけ", "note": "カード・PayPal。海外からも", "url": "" },
+  { "id": "ofuse", "name": "OFUSE", "kind": "1 回だけ", "note": "一言のメッセージと一緒に", "url": "" },
+  { "id": "fanbox", "name": "pixivFANBOX", "kind": "月額", "note": "毎月の支援", "url": "" },
+  { "id": "patreon", "name": "Patreon", "kind": "月額", "note": "海外からの毎月の支援", "url": "" }
+ ]
+}

@@ -12,6 +12,8 @@ import LivePanel from "./LivePanel.vue";
 import FeedbackDialog from "./FeedbackDialog.vue";
 import WelcomeDialog from "./WelcomeDialog.vue";
 import ChangelogDialog from "../components/ChangelogDialog.vue";
+import SupportDialog from "../components/SupportDialog.vue";
+import { SUPPORT_LINKS, supportOpen } from "../state/support";
 import { changelogOpen, initChangelog } from "../state/changelog";
 import { forgetResult } from "../utils/no-log";
 import MarketNotice from "./MarketNotice.vue";
@@ -69,8 +71,9 @@ window.addEventListener("resize", fitZoom);
 <template>
   <!-- スマホは高さを決めず、ページ全体を縦に送る (決まり事の footer も一緒に流れる) -->
   <div class="flex flex-col" :style="phone ? { width: `${frame.w}px`, minHeight: `${frame.h}px` } : { width: `${frame.w}px`, height: `${frame.h}px` }">
-    <header class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto gap-1.5 px-2 py-1.5 text-[12px]' : 'h-10'">
-      <span class="flex shrink-0 items-center" :class="phone ? 'gap-1' : 'gap-2'">
+    <header class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto flex-wrap gap-1.5 px-2 py-1.5 text-[12px]' : 'h-10'">
+      <!-- スマホは 2 段 (1 段目 = ロゴ、2 段目 = 版とボタン。2026-10-10 支援するを足して 1 段に入らなくなった) -->
+      <span class="flex shrink-0 items-center" :class="phone ? 'basis-full gap-1' : 'gap-2'">
         <img src="/favicon.png" alt="" class="g-brand-icon shrink-0" :class="phone ? 'size-6' : 'size-8'" draggable="false" />
         <span class="g-brand-word leading-none" :class="phone ? 'text-[13px]' : 'text-[18px]'">EXILEDESK</span>
       </span>
@@ -79,6 +82,8 @@ window.addEventListener("resize", fitZoom);
       <button type="button" class="g-plain ml-auto opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" title="更新履歴を見る" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
       <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">{{ phone ? "要望・バグ" : "要望・バグを送る" }}</button>
+      <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
+      <button v-if="SUPPORT_LINKS.length" type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" title="ExileDesk を支援する" @click="supportOpen = true">支援する</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
       <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" title="相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中">アプリ版 近日公開</span>
     </header>
@@ -90,6 +95,7 @@ window.addEventListener("resize", fitZoom);
     </p>
     <WelcomeDialog :open="welcomeOpen" @close="closeWelcome" />
     <ChangelogDialog />
+    <SupportDialog />
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">

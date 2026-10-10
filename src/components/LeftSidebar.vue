@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { poeSession } from "../state/poe-session";
 import { APP_VERSION, changelogOpen } from "../state/changelog";
+import { SUPPORT_LINKS, supportOpen } from "../state/support";
 
 defineProps<{ active: string }>();
 /** 画面ごとのアイコン (ゲームの絵、scripts/build-ui-art-from-client.mjs) */
@@ -115,6 +116,10 @@ const groups = (["economy", "tools"] as const)
       </div>
     </nav>
     <!-- 版。押すと更新履歴 (2026-10-10 オーナー「バージョン押したら更新履歴見れるように」) -->
-    <button type="button" class="g-plain mt-auto self-start px-4 pb-3 pt-2 text-[11px] text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" title="更新履歴を見る" @click="changelogOpen = 'all'">v{{ APP_VERSION }} · 更新履歴</button>
+    <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
+    <div class="mt-auto flex flex-col items-start">
+    <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm mx-4" title="ExileDesk を支援する" @click="supportOpen = true">支援する</button>
+    <button type="button" class="g-plain self-start px-4 pb-3 pt-2 text-[11px] text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" title="更新履歴を見る" @click="changelogOpen = 'all'">v{{ APP_VERSION }} · 更新履歴</button>
+    </div>
   </aside>
 </template>

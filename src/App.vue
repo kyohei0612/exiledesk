@@ -11,6 +11,7 @@ import HoverStack from "./components/decor/HoverStack.vue";
 import WatchReplaceDialog from "./components/WatchReplaceDialog.vue";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
 import ChangelogDialog from "./components/ChangelogDialog.vue";
+import SupportDialog from "./components/SupportDialog.vue";
 import { initChangelog } from "./state/changelog";
 import FetchBusyBar from "./components/FetchBusyBar.vue";
 import AssetPackToast from "./components/AssetPackToast.vue";
@@ -125,5 +126,6 @@ onMounted(() => {
     <FetchBusyBar />
     <AssetPackToast />
     <ChangelogDialog />
+    <SupportDialog />
   </div>
 </template>
