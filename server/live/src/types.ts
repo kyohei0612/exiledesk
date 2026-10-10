@@ -71,6 +71,10 @@ export interface Env {
    * 2026-10-09 オーナー「俺の PC からの訪問もおかしいことになる、一旦リセットでいいからサーバーの」: Analytics Engine と Web Analytics は消せないので線を引く
    */
   STATS_SINCE?: string;
+  /** 操作の印を集計する Analytics Engine の dataset 名 (無ければ exiledesk_events)。再現の確かめ (sim.ts) で別の置き場を数える時だけ */
+  EVENTS_DATASET?: string;
+  /** "1" の時だけ再現の確かめの入口 (/__sim/…) を開ける (wrangler.sim.jsonc。本番には無い) */
+  SIM?: string;
 }
 
 export type Fetch = typeof fetch;

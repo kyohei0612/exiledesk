@@ -26,6 +26,7 @@ import { parseBatch, writeEvents } from "./events";
 import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, reqLog } from "./monitor";
 import { MARKET_KEY, refreshMarket } from "./market";
+import { compare, exportSessions } from "./sim";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
 
 const STATE_KEY = "state";
@@ -229,6 +230,13 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
       // &today=1 で「今日のここまで」(集計が通っているかの確かめ用)
       return new Response(await dailyReport(env, fetch, new Date(), url.searchParams.get("today") === "1"), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
+    // 新しい送り方の再現の確かめ (sim.ts)。wrangler.sim.jsonc で動かした時だけ
+    case "/__sim/export":
+      if (env.SIM !== "1" || !keyOk(env, url)) return json({ error: "not found" }, 404);
+      return json(await exportSessions(env, url.searchParams.get("since") ?? "", url.searchParams.get("until") ?? ""));
+    case "/__sim/compare":
+      if (env.SIM !== "1" || !keyOk(env, url)) return json({ error: "not found" }, 404);
+      return json(await compare(env, url));
     case "/health":
       return json({ ok: true, channels: CHANNELS.length, events: !!env.EVENTS, logs: !!env.LOGS, analytics: !!env.CF_ANALYTICS_TOKEN });
     default:

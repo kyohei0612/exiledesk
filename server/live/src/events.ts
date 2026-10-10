@@ -39,9 +39,11 @@ export function parseBatch(body: unknown): EventBatch | null {
 /** Analytics Engine に書く (binding が無ければ何もしない) */
 export function writeEvents(env: Env, batch: EventBatch, country: string): number {
   if (!env.EVENTS) return 0;
-  for (const e of batch.ev) {
-    env.EVENTS.writeDataPoint({ blobs: [e.n, batch.sid, batch.uid, batch.dev ?? "pc", batch.ref ?? "direct", country, batch.first ? "1" : "0", e.x ?? ""], doubles: [1, e.s ?? 0], indexes: [batch.sid] });
-  }
+  // 目印 (index) は印ごとに別にする。同じ目印に一度にたくさん書くと Analytics Engine が間引いて (代表 1 件 × 重み) しまい、
+  // 「開いた」などの印が消えて見えた (2026-10-10 まとめて送る形の再現で 1,837 件中 1,516 行に間引かれた)
+  batch.ev.forEach((e, i) => {
+    env.EVENTS!.writeDataPoint({ blobs: [e.n, batch.sid, batch.uid, batch.dev ?? "pc", batch.ref ?? "direct", country, batch.first ? "1" : "0", e.x ?? ""], doubles: [1, e.s ?? 0], indexes: [`${batch.sid}.${e.s ?? 0}.${i}`] });
+  });
   return batch.ev.length;
 }
 
@@ -81,30 +83,32 @@ export interface Summary {
 export async function summarize(env: Env, since: string, until: string, weekSince: string, fetchFn: Fetch = fetch): Promise<Summary> {
   const out: Summary = { sessions: 0, users: 0, newSessions: 0, bounce: null, medianMinutes: null, byEvent: new Map(), refs: [], devices: [], countries: [], errors: [], extErrors: null, wau: null, warnings: [] };
   const q = async <T,>(query: string): Promise<T[]> => { try { return await sql<T>(env, query, fetchFn); } catch (e) { const w = String(e).slice(0, 160); console.warn("summarize:", w); if (out.warnings.length < 3) out.warnings.push(w); return []; } };
+  const D = env.EVENTS_DATASET ?? DATASET;
   // 記録しない端末は集計から除く (forget.ts。Analytics Engine は消せないので WHERE で)
-  const skip = notForgotten(await forgottenUids(env));
+  // 開発版 (localhost から開いた分) は数えない (2026-10-10: 前の送り方では開発版も本番に印を送っていて、1 日 113 訪問が混ざっていた)
+  const skip = notForgotten(await forgottenUids(env)) + ` AND blob5 != 'localhost' AND blob5 != '127.0.0.1'`;
   const w = range(since, until) + skip;
-  for (const r of await q<{ n: string; s: number; u: number; c: number }>(`SELECT blob1 AS n, count(DISTINCT blob2) AS s, count(DISTINCT blob3) AS u, SUM(_sample_interval) AS c FROM ${DATASET} WHERE ${w} GROUP BY n`)) {
+  for (const r of await q<{ n: string; s: number; u: number; c: number }>(`SELECT blob1 AS n, count(DISTINCT blob2) AS s, count(DISTINCT blob3) AS u, SUM(_sample_interval) AS c FROM ${D} WHERE ${w} GROUP BY n`)) {
     out.byEvent.set(r.n, { sessions: Number(r.s), users: Number(r.u), count: Number(r.c) });
   }
   const open = out.byEvent.get("open");
   out.sessions = open?.sessions ?? 0; out.users = open?.users ?? 0;
-  for (const r of await q<{ f: string; s: number }>(`SELECT blob7 AS f, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'open' GROUP BY f`)) if (r.f === "1") out.newSessions = Number(r.s);
-  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'error')`);
+  for (const r of await q<{ f: string; s: number }>(`SELECT blob7 AS f, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY f`)) if (r.f === "1") out.newSessions = Number(r.s);
+  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'error')`);
   if (out.sessions && engaged[0]) out.bounce = Math.max(0, 1 - Number(engaged[0].s) / out.sessions);
   // 滞在の中央値 (Analytics Engine の SQL は quantiles が無いので quantileWeighted。それも無ければ平均)
   // 滞在 = 着いた時刻の差と「開いてから何秒目か」(double2) の大きい方 (まとめて送ると着いた時刻は全部同じになる。2026-10-10)。
   // Analytics Engine の SQL は型の違う 2 つを比べられないので、訪問ごとに両方取ってここで中央値を出す
-  const per = await q<{ a: number | string; b: number | string }>(`SELECT blob2, max(double2) AS a, toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp)) AS b FROM ${DATASET} WHERE ${w} GROUP BY blob2 LIMIT 20000`);
+  const per = await q<{ a: number | string; b: number | string }>(`SELECT blob2, max(double2) AS a, toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp)) AS b FROM ${D} WHERE ${w} GROUP BY blob2 LIMIT 20000`);
   const mins = per.map((r) => Math.max(Number(r.a) || 0, Number(r.b) || 0) / 60).sort((x, y) => x - y);
   if (mins.length) out.medianMinutes = mins[Math.floor((mins.length - 1) / 2)]!;
-  const top = async (col: string): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
+  const top = async (col: string): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
   out.refs = await top("blob5"); out.devices = await top("blob4"); out.countries = await top("blob6");
   const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%')`;
-  out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'error' AND NOT (${EXT}) GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
-  const ext = await q<{ c: number; s: number }>(`SELECT SUM(_sample_interval) AS c, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'error' AND ${EXT}`);
+  out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND NOT (${EXT}) GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
+  const ext = await q<{ c: number; s: number }>(`SELECT SUM(_sample_interval) AS c, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND ${EXT}`);
   if (ext[0] && Number(ext[0].c) > 0) out.extErrors = { count: Number(ext[0].c), sessions: Number(ext[0].s) };
-  const wau = await q<{ u: number }>(`SELECT count(DISTINCT blob3) AS u FROM ${DATASET} WHERE ${range(weekSince, until)}${skip} AND blob1 = 'open'`);
+  const wau = await q<{ u: number }>(`SELECT count(DISTINCT blob3) AS u FROM ${D} WHERE ${range(weekSince, until)}${skip} AND blob1 = 'open'`);
   if (wau[0]) out.wau = Number(wau[0].u);
   return out;
 }
