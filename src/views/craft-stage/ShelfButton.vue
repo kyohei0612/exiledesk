@@ -8,12 +8,11 @@
     「カレンシー詳細カードは…細かく書いてくれ」→ 0.4 秒乗せると [[StageCurrencyCard.vue]] (公式の説明 + ステージでの動き)
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from "vue";
-import StageCurrencyCard from "./StageCurrencyCard.vue";
+import { computed, onBeforeUnmount } from "vue";
+import { hoverStack } from "../../state/hover-stack";
 import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { toCss } from "../../utils/zoom";
-import type { CardAnchor } from "../../utils/fit-card";
 import { shelfTag } from "../../state/craft-stage-help";
 import { useShelf } from "../../state/shelf-context";
 import { omenNote } from "../../services/craft-stage/omens";
@@ -59,28 +58,19 @@ const omenTag = computed(() => {
 const omenWarn = computed(() => (props.omen ? omenNote(props.k, shelf.item.value) : null));
 const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : shelf.held.value === props.k));
 
-/** 詳細カード: 0.4 秒乗せたら出す (すぐ出すと誤爆するので。オーナー 2026-09-27 のカードの決まりと同じ) */
-const card = ref<CardAnchor | null>(null);
-let timer: ReturnType<typeof setTimeout> | undefined;
 /**
- * 指の端末 (hover の無い画面 = スマホ) では乗せの説明カードを出さない。タップで mouseenter も飛んで来て、説明が被って押せなかった
+ * 詳細カード: ジェム・ベースと同じ仕組み (hover-stack + GameItemCard)。少し乗せたら出す (待ちは hover-stack の決まり)、
+ * カードに入れる・ピン留めできる・中の言葉から次のカード (2026-10-10 動きの揃え 1 番: 前は自前の 0.4 秒のカードでカードに入れなかった)
+ * 指の端末 (hover の無い画面 = スマホ) では出さない。タップで mouseenter も飛んで来て、説明が被って押せなかった
  * (2026-10-08 オーナー iPhone「付けたいカレンシーをタップしたら説明が出て、付けたい時に押せなかったり説明が邪魔」)
  */
 const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
 function enter(e: MouseEvent): void {
   if (touchOnly) return;
-  const el = e.currentTarget as HTMLElement;
-  clearTimeout(timer);
-  timer = setTimeout(() => {
-    const r = el.getBoundingClientRect();
-    // 位置は CSS ピクセル (拡大の補正)。窓に収めるのはカードの側 ([[fit-card.ts]])
-    card.value = { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top) };
-  }, 400);
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen }, toCss(r.right) - 8, toCss(r.top + r.height / 2));
 }
-function leave(): void {
-  clearTimeout(timer);
-  card.value = null;
-}
+function leave(): void { hoverStack.leave(); }
 onBeforeUnmount(leave);
 </script>
 
@@ -92,7 +82,7 @@ onBeforeUnmount(leave);
     :aria-label="`${nameOf(k)}${reason ? ` — ${reason}` : ''}`"
     :data-key="k"
     data-shelf
-    @click="emit('pick', k)"
+    @click="leave(); emit('pick', k)"
     @mouseenter="enter"
     @mouseleave="leave"
   >
@@ -112,5 +102,4 @@ onBeforeUnmount(leave);
     </span>
     <span v-else-if="priceOf(k)" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
   </button>
-  <StageCurrencyCard v-if="card" :k="k" :anchor="card" :reason="reason" :omen="omen" />
 </template>

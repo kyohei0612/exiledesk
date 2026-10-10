@@ -12,7 +12,7 @@ import { computed, nextTick, ref, useSlots, watch } from "vue";
 import ShelfButton from "./ShelfButton.vue";
 import { useShelf } from "../../state/shelf-context";
 import { bonesFor, CATALYSTS, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
-import { runeEffectFor, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
+import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import { tr } from "../../i18n/lang";
 
 const emit = defineEmits<{ hold: [key: string] }>();
@@ -101,13 +101,6 @@ const sockets = computed(() => {
   const it = craftStage.item.value;
   return it ? { cap: socketCapOf(it.base, it.cls.category), now: it.sockets ?? 0, used: it.augments?.length ?? 0 } : null;
 });
-/** ボタンの下に出すその部位での効き目 (短く) */
-const effectOf = (k: string): string => {
-  const it = craftStage.item.value;
-  const r = runeOf(k);
-  const e = it && r ? runeEffectFor(r, it.cls.category) : null;
-  return e ? tr(e.ja, e.en || e.ja) : "";
-};
 const essences = computed(() => essenceShelf(craftStage.data.value, craftStage.item.value));
 const hasCatalyst = computed(() => ["Rings", "Amulets"].includes(craftStage.item.value?.cls.category ?? ""));
 /**
@@ -176,7 +169,7 @@ const TABS = computed(() => [
           </button>
         </p>
         <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
-          <ShelfButton v-for="k in !sec.kind || openRunes.has(sec.kind) ? sec.keys : sec.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
+          <ShelfButton v-for="k in !sec.kind || openRunes.has(sec.kind) ? sec.keys : sec.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" @pick="emit('hold', $event)" />
         </div>
         <div v-if="$slots.held && !sec.kind && holds(sec.keys)" class="mt-2" data-held-box><slot name="held" /></div>
       </div>
@@ -241,7 +234,7 @@ const TABS = computed(() => [
             </button>
           </p>
           <div v-if="openRunes.has(g.kind) || g.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:contents">
-            <ShelfButton v-for="k in openRunes.has(g.kind) ? g.keys : g.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" :title="effectOf(k)" @pick="emit('hold', $event)" />
+            <ShelfButton v-for="k in openRunes.has(g.kind) ? g.keys : g.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" @pick="emit('hold', $event)" />
           </div>
         </div>
       </div>

@@ -10,6 +10,7 @@ import KeywordHoverCard from "./KeywordHoverCard.vue";
 import GemHoverCard from "./GemHoverCard.vue";
 import BuildItemHoverCard from "../build-copy/BuildItemHoverCard.vue";
 import BaseItemHoverCard from "../items/BaseItemHoverCard.vue";
+import StageCurrencyCard from "../../views/craft-stage/StageCurrencyCard.vue";
 </script>
 
 <template>
@@ -19,6 +20,7 @@ import BaseItemHoverCard from "../items/BaseItemHoverCard.vue";
     <GemHoverCard v-else-if="l.payload.kind === 'gem'" :en="l.payload.en" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
     <BuildItemHoverCard v-else-if="l.payload.kind === 'build'" :item="l.payload.item" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
     <BaseItemHoverCard v-else-if="l.payload.kind === 'base'" :en="l.payload.en" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
+    <StageCurrencyCard v-else-if="l.payload.kind === 'shelf'" :k="l.payload.k" :reason="l.payload.reason" :omen="l.payload.omen" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
     <KeywordHoverCard v-else :id="l.payload.id" :label="l.payload.label" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
   </template>
 </template>

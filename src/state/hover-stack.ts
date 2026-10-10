@@ -29,6 +29,7 @@ export type HoverPayload =
   | { kind: "gem"; en: string }
   | { kind: "build"; item: BuildItem }
   | { kind: "base"; en: string }
+  | { kind: "shelf"; k: string; reason: string | null; omen: boolean }
   | { kind: "keyword"; id: string; label: string };
 
 export interface HoverLayer {
