@@ -166,7 +166,8 @@ export async function uploadsViaApi(channelId: string, apiKey: string, fetchFn: 
 /** チャンネル 1 つ分の候補の動画 ID (RSS + /live。どちらかが落ちても片方で続ける。RSS が落ちたら API のアップロード一覧で) */
 export async function candidateIds(channelId: string, fetchFn: Fetch, errors: string[], onLatest?: (l: Latest) => void, apiKey?: string): Promise<string[]> {
   const ids = new Set<string>();
-  const [feed, live] = await Promise.allSettled([
+  // ライブ判定 (/live ページ) はやめた (2026-10-10 オーナー「ライブ判定は消して良かったはず」。YouTube は最新動画の紹介だけ)
+  const [feed] = await Promise.allSettled([
     fetchFn(feedUrl(channelId), { headers: { "accept": "application/atom+xml" } }).then(async (r) => {
       if (!r.ok) throw new Error(`feed ${r.status}`);
       const xml = await r.text();
@@ -174,8 +175,6 @@ export async function candidateIds(channelId: string, fetchFn: Fetch, errors: st
       if (l) onLatest?.(l);
       return parseFeedVideoIds(xml);
     }),
-    fetchFn(livePageUrl(channelId), { headers: { "accept-language": "ja,en;q=0.5", "user-agent": "Mozilla/5.0 (compatible; exiledesk-live/0.1)" } })
-      .then(async (r) => { if (!r.ok) throw new Error(`live page ${r.status}`); return parseLivePageVideoId(await readUntil(r, /<link rel="canonical"/)); }),
   ]);
   if (feed.status === "fulfilled") feed.value.forEach((id) => ids.add(id));
   else {
@@ -183,7 +182,6 @@ export async function candidateIds(channelId: string, fetchFn: Fetch, errors: st
     if (apiKey) { try { (await uploadsViaApi(channelId, apiKey, fetchFn, onLatest)).forEach((id) => ids.add(id)); ok = true; } catch (e) { errors.push(`youtube ${channelId}: ${String(feed.reason)} / ${String(e)}`); } }
     if (!ok && !apiKey) errors.push(`youtube ${channelId}: ${String(feed.reason)}`);
   }
-  if (live.status === "fulfilled") { if (live.value) ids.add(live.value); } else errors.push(`youtube ${channelId}: ${String(live.reason)}`);
   return [...ids];
 }
 
@@ -210,14 +208,9 @@ export async function fetchYoutube(channels: readonly ChannelDef[], apiKey: stri
   if (!yt.length) return new Map();
   if (!apiKey) { errors.push("youtube: YOUTUBE_API_KEY が無い"); return new Map(); }
   const idLists = await Promise.all(yt.map((c) => candidateIds(c.youtubeChannelId!, fetchFn, errors, (l) => latest?.set(c.id, l), apiKey)));
-  const ids = [...new Set(idLists.flat())];
-  if (!ids.length) return new Map();
-  try {
-    return pickLive(await listVideos(ids, apiKey, fetchFn), yt);
-  } catch (e) {
-    errors.push(`youtube: ${String(e)}`);
-    return new Map();
-  }
+  // ライブ中かは見ない (videos.list も呼ばない)。最新動画 (latest) だけ
+  void idLists;
+  return new Map();
 }
 
 /** チャンネルのアイコン (channels.list、50 個まで 1 回 1 点。1 日 1 回だけ呼ぶ) */

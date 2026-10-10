@@ -117,13 +117,14 @@ describe("まとめと 1 回分", () => {
       throw new Error("unexpected " + u);
     }) as unknown as typeof fetch;
     const st = await refresh(env, CH, f, new Date("2026-10-07T09:00:00Z"));
-    expect(st.live.map((x) => x.id)).toEqual(["me"]);
-    expect(st.channels.map((c) => `${c.id}:${c.status}:${c.avatar}`)).toEqual(["me:live:https://a/me.jpg", "spon:off:https://a/spon.png"]);
+    // YouTube はライブ判定をしない (2026-10-10。最新動画の紹介だけ)
+    expect(st.live.map((x) => x.id)).toEqual([]);
+    expect(st.channels.map((c) => `${c.id}:${c.status}:${c.avatar}`)).toEqual(["me:off:https://a/me.jpg", "spon:off:https://a/spon.png"]);
     expect(st.channels[0]!.latest).toMatchObject({ title: "最新", watchUrl: "https://www.youtube.com/watch?v=feedvideo01" });
     expect(st.errors.join(" ")).toMatch(/twitch: .*streams 500/);
     expect(JSON.parse(kv.store.get("state")!)).toEqual(st);
-    // videos.list は 1 回 (1 点) だけ
-    expect(seen.filter((u) => u.includes("/youtube/v3/videos"))).toHaveLength(1);
+    // videos.list も /live ページも呼ばない
+    expect(seen.filter((u) => u.includes("/youtube/v3/videos") || u.endsWith("/live"))).toHaveLength(0);
     // 2 回目はアイコンを取り直さない (1 日 1 回)
     const n = seen.length;
     await refresh(env, CH, f, new Date("2026-10-07T09:05:00Z"));
