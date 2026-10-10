@@ -13,7 +13,8 @@ const close = (): void => { changelogOpen.value = null; };
 <template>
   <Teleport to="body">
     <div v-if="changelogOpen" class="fixed inset-0 z-50 grid place-items-center bg-black/65 p-4" @click.self="close" @keydown.esc="close">
-      <div class="g-panel flex max-h-[80vh] w-[38rem] max-w-full flex-col overflow-hidden">
+      <!-- 幅は画面まで (2026-10-10 スマホで右にはみ出して「閉じる」が見えなかった) -->
+      <div class="g-panel flex max-h-[80vh] w-full max-w-[38rem] min-w-0 flex-col overflow-hidden">
         <div class="flex items-baseline gap-2 px-4 pt-2">
           <b class="g-brush text-[20px] text-[var(--exile-color-text-title)]">{{ changelogOpen === "new" ? "更新しました" : "更新履歴" }}</b>
           <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">今の版 v{{ APP_VERSION }}</span>
@@ -28,7 +29,7 @@ const close = (): void => { changelogOpen.value = null; };
             <ul class="space-y-0.5 text-[12px] leading-relaxed">
               <li v-for="(it, i) in e.items" :key="i" class="flex gap-2">
                 <span class="shrink-0 text-[var(--exile-color-text-tertiary)]">・</span>
-                <span><span v-if="it.area" class="mr-1 text-[var(--exile-color-text-secondary)]">{{ it.area }}:</span>{{ it.text }}</span>
+                <span class="min-w-0 break-words"><span v-if="it.area" class="mr-1 text-[var(--exile-color-text-secondary)]">{{ it.area }}:</span>{{ it.text }}</span>
               </li>
             </ul>
           </section>
