@@ -74,6 +74,10 @@ function enter(e: MouseEvent): void {
   // 重ねて出している欄 (お告げ・段) に重ならないよう、欄も合わせた範囲の横に出す: 欄の中のボタン、持っている物、段の欄を開いているまとめたアイコン
   // (2026-10-10 オーナー「カードにカードが重なる、その際はスクロールと同じ扱いで」)
   const rootEl = el.closest("[data-shelf-root]");
+  // 開いた選択肢 (段の欄) に自分自身が入っている時は、元のアイコンにはカードを出さない (選択肢の中の物にだけ出す)。
+  // お告げの欄のように自分が入っていない選択肢なら、元のアイコンにも出す (2026-10-10 オーナー)
+  const famWrap = el.closest<HTMLElement>("[data-ess-keys]");
+  if (famWrap && rootEl?.querySelector<HTMLElement>(".ess-anchor")?.dataset.essFor === famWrap.dataset.essKeys) return;
   const inPop = el.closest<HTMLElement>(".held-pop-in");
   const famOpen = el.closest("[data-ess-keys]") ? rootEl?.querySelector<HTMLElement>(".ess-anchor .held-pop-in") : null;
   const heldPop = !props.omen && shelf.held.value === props.k ? rootEl?.querySelector<HTMLElement>(".held-anchor:not(.ess-anchor) .held-pop-in") : null;

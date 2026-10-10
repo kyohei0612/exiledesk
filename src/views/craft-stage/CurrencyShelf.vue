@@ -9,6 +9,7 @@
 -->
 <script setup lang="ts">
 import { scrollBoxOf } from "../../utils/keep-place";
+import { hoverStack } from "../../state/hover-stack";
 import { nameOf } from "../../state/craft-stage";
 import { toCss } from "../../utils/zoom";
 import { GAP_X, GAP_Y } from "../../utils/anchor-place";
@@ -183,6 +184,7 @@ const isGroup = (sec: { kind?: string }): boolean => sec.kind === "essence-famil
 const essOpen = ref<string | null>(null);
 const essPos = ref<Record<string, string> | null>(null);
 function openEss(kind: string, ev: MouseEvent): void {
+  hoverStack.leave(); // 出ていたカードは閉じる (欄に自分が入るので、元のアイコンのカードは要らない)
   if (essOpen.value === kind) { essOpen.value = null; return; }
   essOpen.value = kind;
   // 基準は中のボタン (包みの span は行の箱で測られてずれた)
@@ -352,7 +354,7 @@ const TABS = computed(() => (!props.full ? [] : [
     <!-- 持っている物のお告げは、そのアイコンのすぐ下に重ねて出す (棚は押し下げない。2026-10-10 オーナー「アイコンの下まで持ってきていい」) -->
     <div v-if="$slots.held && anchor" class="held-anchor" :style="anchor.style" data-held-box><div class="held-pop-in"><slot name="held" /></div></div>
     <!-- エッセンスの段: 種類のアイコンを押すと、お告げの欄と同じ形で出す。使えない段は灰色と理由 (2026-10-10 オーナー) -->
-    <div v-if="essOpen && groupKeys(essOpen).length && essPos" class="ess-anchor held-anchor" :style="essPos">
+    <div v-if="essOpen && groupKeys(essOpen).length && essPos" class="ess-anchor held-anchor" :style="essPos" :data-ess-for="groupKeys(essOpen).join(' ')">
       <div class="held-pop-in p-2">
         <p class="mb-1 text-[11px] text-white/60">{{ groupLabel(essOpen) }}</p>
         <div class="flex flex-wrap gap-1.5">
