@@ -69,6 +69,8 @@ export interface Summary {
   byEvent: Map<string, { sessions: number; users: number; count: number }>;
   refs: Array<[string, number]>; devices: Array<[string, number]>; countries: Array<[string, number]>;
   errors: Array<[string, number]>;
+  /** 中身の見えないエラー (Script error. @:0)。X などのアプリ内ブラウザが足したスクリプトの物で、こちらでは直せない (2026-10-10) */
+  extErrors: { count: number; sessions: number } | null;
   wau: number | null;
   /** 集計で失敗した問い合わせ (0 が「無い」のか「取れなかった」のかを日報で分かるように) */
   warnings: string[];
@@ -76,7 +78,7 @@ export interface Summary {
 
 /** 昨日のまとめ (SQL を数本。1 本ずつ失敗しても他は続ける) */
 export async function summarize(env: Env, since: string, until: string, weekSince: string, fetchFn: Fetch = fetch): Promise<Summary> {
-  const out: Summary = { sessions: 0, users: 0, newSessions: 0, bounce: null, medianMinutes: null, byEvent: new Map(), refs: [], devices: [], countries: [], errors: [], wau: null, warnings: [] };
+  const out: Summary = { sessions: 0, users: 0, newSessions: 0, bounce: null, medianMinutes: null, byEvent: new Map(), refs: [], devices: [], countries: [], errors: [], extErrors: null, wau: null, warnings: [] };
   const q = async <T,>(query: string): Promise<T[]> => { try { return await sql<T>(env, query, fetchFn); } catch (e) { const w = String(e).slice(0, 160); console.warn("summarize:", w); if (out.warnings.length < 3) out.warnings.push(w); return []; } };
   // 記録しない端末は集計から除く (forget.ts。Analytics Engine は消せないので WHERE で)
   const skip = notForgotten(await forgottenUids(env));
@@ -96,7 +98,10 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   if (dur[0]?.m != null) out.medianMinutes = Number(dur[0].m);
   const top = async (col: string): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
   out.refs = await top("blob5"); out.devices = await top("blob4"); out.countries = await top("blob6");
-  out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'error' GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
+  const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%')`;
+  out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'error' AND NOT (${EXT}) GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
+  const ext = await q<{ c: number; s: number }>(`SELECT SUM(_sample_interval) AS c, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'error' AND ${EXT}`);
+  if (ext[0] && Number(ext[0].c) > 0) out.extErrors = { count: Number(ext[0].c), sessions: Number(ext[0].s) };
   const wau = await q<{ u: number }>(`SELECT count(DISTINCT blob3) AS u FROM ${DATASET} WHERE ${range(weekSince, until)}${skip} AND blob1 = 'open'`);
   if (wau[0]) out.wau = Number(wau[0].u);
   return out;

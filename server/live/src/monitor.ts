@@ -133,8 +133,12 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
   // 要望とバグは仕分けしていないのでまとめて (オーナー 2026-10-10)
   sec("届いた物", [`要望・バグ報告 ${feedback.requests + feedback.bugs}`]);
   const err = sum?.byEvent.get("error");
+  // 中身の見えないエラー (外のスクリプト) は分けて、直す対象から外す (2026-10-10)
+  const ext = sum?.extErrors ?? null;
+  const own = err && err.count - (ext?.count ?? 0) > 0 ? { count: err.count - (ext?.count ?? 0), sessions: Math.max(1, err.sessions - (ext?.sessions ?? 0)) } : null;
   sec("問題", [
-    err ? `画面のエラー ${err.count} 件 (${err.sessions} 人)${sum!.errors.length ? `: ${sum!.errors[0]![0].slice(0, 60)}` : ""}` : sum ? "画面のエラー なし" : null,
+    own ? `画面のエラー ${own.count} 件 (${own.sessions} 人)${sum!.errors.length ? `: ${sum!.errors[0]![0].slice(0, 60)}` : ""}` : sum ? "画面のエラー なし" : null,
+    ext ? `外のスクリプトのエラー ${ext.count} 件 (${ext.sessions} 人): X などのアプリ内ブラウザやウォレットが足した物で、ExileDesk の不具合ではない` : null,
     `サーバー: ${n(usage.liveRequests)} 回・エラー ${n(usage.liveErrors)}`,
     alerts.length ? `異常の通知 ${alerts.length} 回: ${alerts.slice(0, 5).join(" / ")}` : "異常の通知 なし",
     live ? `配信の見張り ${live.errors.length ? `気になる所 ${live.errors.length} (${live.errors[0]!.slice(0, 80)})` : "異常なし"} · ライブ中 ${live.live.length} 人` : "配信の見張り まだ動いていない",
@@ -150,7 +154,10 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
 export function adviceOf(sum: Summary | null, feedback: { requests: number; bugs: number }, alerts: string[]): string[] {
   const out: string[] = [];
   const err = sum?.byEvent.get("error");
-  if (err) out.push(`画面のエラーが出ています。${sum!.errors.length ? `多い「${sum!.errors[0]![0].slice(0, 40)}」から` : "多い物から"}直すと良さそうです`);
+  // 中身の見えないエラー (外のスクリプト) は分けて、直す対象から外す (2026-10-10)
+  const ext = sum?.extErrors ?? null;
+  const own = err && err.count - (ext?.count ?? 0) > 0 ? { count: err.count - (ext?.count ?? 0), sessions: Math.max(1, err.sessions - (ext?.sessions ?? 0)) } : null;
+  if (own) out.push(`画面のエラーが出ています。${sum!.errors.length ? `多い「${sum!.errors[0]![0].slice(0, 40)}」から` : "多い物から"}直すと良さそうです`);
   const fb = feedback.requests + feedback.bugs;
   if (fb) out.push(`要望・バグ報告が ${fb} 件あります。中身を見て、バグは再現できるか、要望はすぐできる物から`);
   if (alerts.length) out.push("異常の通知が出ています。サーバーや相場の取得が止まっていないか確認を");

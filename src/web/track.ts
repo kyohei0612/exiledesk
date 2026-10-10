@@ -95,7 +95,10 @@ export function startTracking(): void {
   watch(() => s.simOrder.value.length, (n) => { if (n > 0) trackOnce("sim:order"); });
   watch(() => s.simPatterns.value.some((p) => p.steps.length > 0), (v) => { if (v) trackOnce("sim:pattern"); });
   // ResizeObserver の「loop completed」はブラウザの害のない警告 (画面を伸び縮みさせると大量に出る) なので数えない (2026-10-08 日報で 770 件になっていた)
-  window.addEventListener("error", (e) => { if (/ResizeObserver loop/.test(String(e.message ?? ""))) return; const m = `${e.message ?? "error"} @${(e.filename ?? "").split("/").pop()}:${e.lineno ?? 0}`; track("error", m); pushError(m, (e.error as Error)?.stack); });
+  window.addEventListener("error", (e) => { if (/ResizeObserver loop/.test(String(e.message ?? ""))) return;
+    // よそのファイル (アプリ内ブラウザ・ウォレットなどが足したスクリプト) のエラーは頭に ext: を付けて、日報で直す対象から外す (2026-10-10)
+    const ext = !e.filename || !e.filename.startsWith(location.origin);
+    const m = `${ext ? "ext: " : ""}${e.message ?? "error"} @${(e.filename ?? "").split("/").pop()}:${e.lineno ?? 0}`; track("error", m); pushError(m, (e.error as Error)?.stack); });
   window.addEventListener("unhandledrejection", (e) => { const m = String((e.reason as Error)?.message ?? e.reason).slice(0, 120); track("error", m); pushError(m, (e.reason as Error)?.stack); });
   // console.error / warn も残す (画面の部品が出す「取れなかった」などの手がかり)
   for (const k of ["error", "warn"] as const) {
