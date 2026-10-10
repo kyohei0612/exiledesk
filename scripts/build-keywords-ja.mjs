@@ -5,18 +5,20 @@
 // 元: data-cache/client-export-keywords/tables/{English,Japanese}/KeywordPopups.json (npx pathofexile-dat、config.json 参照)
 // 出力: src/i18n/keywords-ja.json  { Id: { t: 見出し (日本語), d: 説明 (日本語、[Tag|表示] の印は残す = さらに奥へ辿れる) } }
 // MOD 文の [Tag|表示] の Tag が Id。画面側は使う時に読み込む。
+// --en で英語版 (src/i18n/keywords-en.json、2026-10-10 Web の英語版)。同じ形で English の表のまま
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const T = (lang) => JSON.parse(readFileSync(join(root, "data-cache/client-export-keywords/tables", lang, "KeywordPopups.json"), "utf8"));
-const E = T("English"), Jp = T("Japanese");
+const EN = process.argv.includes("--en");
+const E = T("English"), Jp = T(EN ? "English" : "Japanese");
 const out = {};
 E.forEach((e, i) => {
   const j = Jp[i];
   if (!e.Id || !j?.Definition) return;
   out[e.Id] = { t: j.Term || e.Term || e.Id, d: j.Definition.replace(/\r/g, "") };
 });
-writeFileSync(join(root, "src/i18n/keywords-ja.json"), JSON.stringify(out) + String.fromCharCode(10));
+writeFileSync(join(root, EN ? "src/i18n/keywords-en.json" : "src/i18n/keywords-ja.json"), JSON.stringify(out) + String.fromCharCode(10));
 console.log(`キーワード ${Object.keys(out).length} 件`);

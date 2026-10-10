@@ -20,6 +20,8 @@
 //         atk?: アタックタイム 秒, dmg?: アタックダメージ %, crit?: クリティカルヒット率 %,
 //         tb?: ["項目: 値"] (ゲームの表の行), stats: [効果の行], sets?: [{ l: 見出し, crit?, dmg?, tb?, stats }] }
 //   品質は 20% の時の値で書く (ゲームは今の品質で計算した値を出す。0% だと全部 0 になるため)。
+// --en で英語版 (src/i18n/gem-hover-en.json、2026-10-10 Web の英語版)。同じ形で、文言は全部クライアントの English の表と
+//   csd の English (ゲームの原文のまま、手で訳さない)。日本語の側の出力は今までと 1 バイトも変わらない
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,7 +30,10 @@ import { decodeCsd, parseStatDescriptions } from "./parse-stat-descriptions.mjs"
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const EXP = join(root, "data-cache/client-export-gems-detail");
 const T = (lang, name) => JSON.parse(readFileSync(join(EXP, "tables", lang, `${name}.json`), "utf8"));
-const both = (name) => [T("English", name), T("Japanese", name)];
+const EN = process.argv.includes("--en");
+const L = EN ? "English" : "Japanese";
+/** [英語の表, 出力の言語の表] (--en の時は両方 English) */
+const both = (name) => [T("English", name), T(L, name)];
 const NL = String.fromCharCode(10);
 const QUALITY = 20;
 
@@ -54,7 +59,7 @@ const clientString = (id) => {
   const i = csE.findIndex((r) => r.Id === id);
   return i < 0 ? null : (csJ[i]?.Text ?? "");
 };
-const SPIRIT_FMT = clientString("SkillPopupCostValueSpirit") || "{0} スピリット";
+const SPIRIT_FMT = clientString("SkillPopupCostValueSpirit") || (EN ? "{0} Spirit" : "{0} スピリット");
 const QUALITY_HEAD = (clientString("ItemDescriptionGemQualityStatDivider") || "")
   .replace(/<[^>]*>\{([^}]*)\}/g, "$1")
   .trim()
@@ -226,8 +231,8 @@ function describe(statMap, csdPath, mode = "normal", flags = new Set()) {
       continue;
     }
     const values = d.stats.map((s) => statMap.get(s) ?? 0);
-    let lang = "Japanese";
-    let all = d.langs.Japanese ?? [];
+    let lang = L;
+    let all = d.langs[L] ?? [];
     if (!all.length) {
       all = d.langs.English ?? [];
       lang = "English";
@@ -245,7 +250,7 @@ function describe(statMap, csdPath, mode = "normal", flags = new Set()) {
     if (!line) continue;
     let text = renderLine(line, values).replace(/\r/g, "");
     if (!text.trim()) continue;
-    if (lang === "English") stats.english.push(`${d.stats.join(",")}: ${text}`);
+    if (lang === "English" && !EN) stats.english.push(`${d.stats.join(",")}: ${text}`);
     if (asTable) {
       const [label, value] = text.split("@");
       table.push(value !== undefined ? `${label}: ${value}` : label);
@@ -479,7 +484,8 @@ let noSg = 0;
 for (const g of gemsClient) {
   const sg = sgByName.get(g.en.toLowerCase()) ?? sgByName.get(`${g.en} minion`.toLowerCase());
   const hit = oldDesc.get(g.en.toLowerCase()) ?? oldDesc.get(`${g.en} minion`.toLowerCase());
-  const base = { n: g.ja || (sg ? clean(bitJ[sg.BaseItemType]?.Name) : "") || hit?.n || g.en, d: "", k: g.kind, s: !!g.spirit, lv: g.minLevel ?? 0 };
+  const n = EN ? (sg ? clean(bitJ[sg.BaseItemType]?.Name) : "") || hit?.n || g.en : g.ja || (sg ? clean(bitJ[sg.BaseItemType]?.Name) : "") || hit?.n || g.en;
+  const base = { n, d: "", k: g.kind, s: !!g.spirit, lv: g.minLevel ?? 0 };
   if (!sg) {
     noSg++;
     out[g.en] = { ...base, d: hit?.d ?? "" };
@@ -516,7 +522,7 @@ for (const sg of sgE) {
 }
 
 const json = JSON.stringify(out);
-writeFileSync(join(root, "src/i18n/gem-hover-ja.json"), json + NL);
+writeFileSync(join(root, EN ? "src/i18n/gem-hover-en.json" : "src/i18n/gem-hover-ja.json"), json + NL);
 
 // ---------------------------------------------------------------------------
 // 集計
@@ -527,7 +533,8 @@ const asciiLines = [];
 const scan = (v, where) => {
   if (typeof v === "string") {
     const p = plain(v);
-    if (/[A-Za-z]{3,}/.test(p) && !/[぀-ヿ一-鿿]/.test(p)) asciiLines.push(`${where}: ${v}`);
+    // 英語版は逆に仮名漢字の混ざった行を数える
+    if (EN ? /[぀-ヿ一-鿿]/.test(p) : /[A-Za-z]{3,}/.test(p) && !/[぀-ヿ一-鿿]/.test(p)) asciiLines.push(`${where}: ${v}`);
   } else if (Array.isArray(v)) v.forEach((x, i) => scan(x, where));
   else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) if (k !== "k") scan(x, where);
 };

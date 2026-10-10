@@ -3,9 +3,10 @@
  *
  * src/i18n/gem-hover-ja.json (scripts/build-gem-hover-ja.mjs、クライアントの ActiveSkills / GemEffects / GrantedEffects…) を引く。
  * オーナー:「スキルジェム関連にも同じように名前の下に下線で詳細カード」「リネージュサポはゲーム内表記くらい詳しく」。
- * 使う時に読み込む。
+ * 使う時に読み込む。英語の画面では gem-hover-en.json (同じスクリプトの --en、ゲームの英語の原文)。
  */
 import { shallowRef } from "vue";
+import { lang, type Lang } from "../i18n/lang";
 
 /** 1 レベル分 (本体・付随するスキル・別の型で同じ形) */
 export interface GemLevelStats {
@@ -41,7 +42,7 @@ export interface GemLevelInfo extends GemLevelStats {
 }
 
 export interface GemHover {
-  /** 日本語名 */
+  /** 名前 (日本語 / 英語の画面では英語) */
   n: string;
   /** 説明 ([Tag|表示] の印つき) */
   d: string;
@@ -70,21 +71,23 @@ export interface GemHover {
   sub?: Array<{ n: string; d?: string; at?: GemLevelInfo[] }>;
 }
 
-const dict = shallowRef<Record<string, GemHover> | null>(null);
-let lower: Map<string, GemHover> | null = null;
-let loading: Promise<void> | null = null;
+type Dict = { d: Record<string, GemHover>; lower: Map<string, GemHover> };
+const dict = { ja: shallowRef<Dict | null>(null), en: shallowRef<Dict | null>(null) };
+const loading: Partial<Record<Lang, Promise<void>>> = {};
 
-export function loadGemHover(): Promise<void> {
-  loading ??= import("../i18n/gem-hover-ja.json").then((m) => {
-    dict.value = (m.default ?? m) as unknown as Record<string, GemHover>;
-    lower = new Map(Object.entries(dict.value).map(([k, v]) => [k.toLowerCase(), v]));
+/** 今の言語の辞書を読み込む (英語の画面では gem-hover-en.json、2026-10-10 英語版。アプリは日本語だけ) */
+export function loadGemHover(l: Lang = lang.value): Promise<void> {
+  loading[l] ??= (l === "en" ? import("../i18n/gem-hover-en.json") : import("../i18n/gem-hover-ja.json")).then((m) => {
+    const d = (m.default ?? m) as unknown as Record<string, GemHover>;
+    dict[l].value = { d, lower: new Map(Object.entries(d).map(([k, v]) => [k.toLowerCase(), v])) };
   });
-  return loading;
+  return loading[l]!;
 }
 
-/** 英語名から引く (大文字小文字は問わない)。読み込み前・無い物は null */
+/** 英語名から引く (大文字小文字は問わない)。読み込み前・無い物は null (言語を切り替えたらその言語の辞書を読み込む) */
 export function gemHoverOf(en: string): GemHover | null {
-  const d = dict.value;
-  if (!d) return null;
-  return d[en] ?? lower?.get(en.toLowerCase()) ?? null;
+  const l = lang.value;
+  const d = dict[l].value;
+  if (!d) { void loadGemHover(l); return null; }
+  return d.d[en] ?? d.lower.get(en.toLowerCase()) ?? null;
 }

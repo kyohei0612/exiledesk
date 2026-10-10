@@ -7,6 +7,7 @@ import { computed } from "vue";
 import GameItemCard from "./GameItemCard.vue";
 import RichText from "./RichText.vue";
 import { keywordOf } from "../../services/keywords";
+import { tr } from "../../i18n/lang";
 
 const props = defineProps<{ id: string; label: string; x: number; y: number; layerKey: number; pinned: boolean; z: number }>();
 const kw = computed(() => keywordOf(props.id));
@@ -18,7 +19,7 @@ const paras = computed(() => (kw.value?.d ?? "").split(/\n\s*\n/).map((p) => p.t
   <GameItemCard :show="true" :x="x" :y="y" :name="kw?.t ?? label" tone="keyword" :width="340" :layer-key="layerKey" :pinned="pinned" :z="z">
     <div class="text-left">
       <p v-for="(p, i) in paras" :key="i" class="g-desc text-[13px]" :class="i > 0 ? 'mt-2' : ''"><RichText :text="p" /></p>
-      <p v-if="!paras.length" class="g-dim text-[12px]">説明のデータがありません</p>
+      <p v-if="!paras.length" class="g-dim text-[12px]">{{ tr("説明のデータがありません", "No description data") }}</p>
     </div>
   </GameItemCard>
 </template>

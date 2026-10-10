@@ -15,10 +15,10 @@ import GemLevelBlock from "./GemLevelBlock.vue";
 import GemIcon from "./GemIcon.vue";
 import { gemHoverOf, loadGemHover, type GemLevelInfo } from "../../services/gem-hover";
 import grantedSkills from "../../data/granted-skills.json";
-import { lang } from "../../i18n/lang";
+import { lang, tr } from "../../i18n/lang";
 
 const props = defineProps<{ en: string; x: number; y: number; layerKey: number; pinned: boolean; z: number }>();
-onMounted(() => void loadGemHover());
+onMounted(() => void loadGemHover()); // 言語を切り替えた時は gemHoverOf がその言語の辞書を読み込む
 
 const gem = computed(() => gemHoverOf(props.en));
 const g2 = computed(() => (grantedSkills as Record<string, { ja: string; dja: string; den: string }>)[props.en] ?? null);
@@ -28,14 +28,14 @@ const granted = computed(() => (g2.value ? (lang.value === "en" ? g2.value.den :
 const kindLine = computed(() => {
   const g = gem.value;
   if (!g) return "";
-  const k = g.k === "support" ? (g.lineage ? "リネージュサポートジェム" : "サポートジェム") : g.k === "meta" ? "メタジェム" : "スキルジェム";
-  return [k, g.s ? "スピリット" : ""].filter(Boolean).join(" · ");
+  const k = g.k === "support" ? (g.lineage ? tr("リネージュサポートジェム", "Lineage Support Gem") : tr("サポートジェム", "Support Gem")) : g.k === "meta" ? tr("メタジェム", "Meta Gem") : tr("スキルジェム", "Skill Gem");
+  return [k, g.s ? tr("スピリット", "Spirit") : ""].filter(Boolean).join(" · ");
 });
 /** 能力値の配分 (「筋力 100%」) */
 const attrLine = computed(() => {
   const r = gem.value?.req;
   if (!r) return "";
-  return [r.str ? `筋力 ${r.str}%` : "", r.dex ? `器用さ ${r.dex}%` : "", r.int ? `知性 ${r.int}%` : ""].filter(Boolean).join(" · ");
+  return [r.str ? `${tr("筋力", "Strength")} ${r.str}%` : "", r.dex ? `${tr("器用さ", "Dexterity")} ${r.dex}%` : "", r.int ? `${tr("知性", "Intelligence")} ${r.int}%` : ""].filter(Boolean).join(" · ");
 });
 
 /** どのレベルを見るか (無ければ 20、それも無ければ最後) */
@@ -78,11 +78,11 @@ function paras(t: string | undefined): string[] {
           :class="current?.g === l.g ? 'border-[#1ba29b] text-[#5fd3cb] bg-[#10201f]' : 'border-[#333] text-[#8a8a8a] hover:text-[#cfcfcf]'"
           @click.stop="pick = l.g"
         >
-          レベル {{ l.g }}
+          {{ tr("レベル", "Level") }} {{ l.g }}
         </button>
       </div>
-      <p v-else-if="current" class="g-dim text-[12px]">レベル {{ current.g }}</p>
-      <p v-if="reqLv" class="g-dim mt-1">装備条件: <span class="g-white">レベル {{ reqLv }}</span><template v-if="attrLine"> · {{ attrLine }}</template></p>
+      <p v-else-if="current" class="g-dim text-[12px]">{{ tr("レベル", "Level") }} {{ current.g }}</p>
+      <p v-if="reqLv" class="g-dim mt-1">{{ tr("装備条件:", "Requires:") }} <span class="g-white">{{ tr("レベル", "Level") }} {{ reqLv }}</span><template v-if="attrLine"> · {{ attrLine }}</template></p>
       <template v-if="current">
         <div class="g-sep" />
         <GemLevelBlock :lv="current" />
@@ -105,12 +105,12 @@ function paras(t: string | undefined): string[] {
       <!-- 品質と追加の品質は分けて出す (オーナー 2026-09-26「それぞれ分けてカード内に表示」) -->
       <template v-if="gem.q?.length">
         <div class="g-sep" />
-        <p class="g-head2">{{ gem.qh || "品質による追加の効果" }}<span v-if="gem.qq" class="g-dim text-[10.5px]"> (品質 {{ gem.qq }}%)</span></p>
+        <p class="g-head2">{{ gem.qh || tr("品質による追加の効果", "Additional Effects From Quality") }}<span v-if="gem.qq" class="g-dim text-[10.5px]"> ({{ tr("品質", "Quality") }} {{ gem.qq }}%)</span></p>
         <p v-for="(q, i) in gem.q" :key="'q' + i" class="g-mod"><RichText :text="q" /></p>
       </template>
       <template v-if="gem.q2?.length">
         <div class="g-sep" />
-        <p class="g-head2">{{ gem.q2h || "追加の品質の効果" }}<span v-if="gem.qq" class="g-dim text-[10.5px]"> (品質 {{ gem.qq }}%)</span></p>
+        <p class="g-head2">{{ gem.q2h || tr("追加の品質の効果", "Additional Quality Effects") }}<span v-if="gem.qq" class="g-dim text-[10.5px]"> ({{ tr("品質", "Quality") }} {{ gem.qq }}%)</span></p>
         <p v-for="(q, i) in gem.q2" :key="'q2' + i" class="g-mod"><RichText :text="q" /></p>
       </template>
       <template v-if="gem.fl">
@@ -123,6 +123,6 @@ function paras(t: string | undefined): string[] {
       <div class="flex justify-center"><GemIcon :en="en" :size="48" class="my-1.5" /></div>
       <p class="g-white text-[13px] leading-relaxed"><RichText :text="granted" /></p>
     </template>
-    <p v-else class="g-dim text-[12px]">説明のデータがありません</p>
+    <p v-else class="g-dim text-[12px]">{{ tr("説明のデータがありません", "No description data") }}</p>
   </GameItemCard>
 </template>
