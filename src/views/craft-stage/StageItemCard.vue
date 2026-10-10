@@ -9,6 +9,7 @@
   poe2db の Quality)。ユニーク (名前と色)・未鑑定 (MOD を隠す)・壊れた・ソケットの絵・スキルジェムのサポート枠。
 -->
 <script setup lang="ts">
+import STAT_ORDER from "../../data/stat-order.json";
 import { fmtChance } from "../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { computed } from "vue";
@@ -111,8 +112,11 @@ const rows = computed(() =>
     // 画面用のタグ (クライアントの implicit_tags) を先に。r.m.tags は確率用 (カタリスト等) なので中身のタグが無い MOD がある (2026-10-05)
     const em = craftStage.data.value?.mods.get(r.m.modId);
     const tags = props.showTags ? shownTags(em?.displayTags ?? r.m.tags ?? em?.tags ?? []) : [];
-    return { ...r, text: b ? modText(b) : modText(r.m), boosted: !!b, tags };
-  }),
+    // ゲームと同じ並び: プレ / サフィで分けず、説明文の表の順 (stat-order.json)。分からない物は後ろ (プレ → サフィのまま)
+    const st = (r.m as { stats?: string[] }).stats?.[0] ?? (em?.tiers?.[0] as { stats?: string[] } | undefined)?.stats?.[0];
+    const ord = st != null ? (STAT_ORDER as Record<string, number>)[st] ?? 1e9 : 1e9;
+    return { ...r, text: b ? modText(b) : modText(r.m), boosted: !!b, tags, ord };
+  }).sort((x, y) => x.ord - y.ord),
 );
 </script>
 

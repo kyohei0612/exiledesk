@@ -12,7 +12,7 @@
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { scrollToTop } from "../../utils/keep-place";
-import { isEn, modText, tr } from "../../i18n/lang";
+import { modText, tr } from "../../i18n/lang";
 import { forceKey } from "../../services/craft-stage/apply-force";
 import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, type SimRecipe } from "../../state/craft-stage";
@@ -36,7 +36,7 @@ import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
-import { craftStage, iconOf, nameOf, stepNameOf, stepOmenOf } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
@@ -244,8 +244,6 @@ const resetArm = useArmed();
 function armReset(): void {
   if (resetArm.arm()) s.reset();
 }
-/** 直前の手でルーンをはめた中身 (置き換えた物) */
-const augChange = computed(() => (s.last.value?.out as { augment_change?: { socket: number; put: { ja: string; en?: string }; replaced: { ja: string; en?: string } | null } } | undefined)?.augment_change ?? null);
 /** ベースを選ぶ前の右上の「レシピ」(シミュレーターの帯は StageSimPanel が出すが、ベースを選ぶ前はまだ無い) */
 const preRecipeOpen = ref(false);
 function startFromRecipe(r: SimRecipe): void {
@@ -448,22 +446,10 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
             <p v-if="!s.foresight.value.added.length && !s.foresight.value.removed.length && !s.foresight.value.after.destroyed" class="opacity-60">{{ tr("MOD は変わらない", "No mod change") }}</p>
           </template>
         </div>
-        <div class="g-panel w-[380px] max-md:w-full p-2 text-[12px]">
-          <p class="mb-1 flex items-center justify-between"><b class="g-antique text-[15px] font-normal text-[var(--exile-color-text-title)]">{{ tr("直前の変化", "Last change") }}</b><span class="tabular-nums opacity-70">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
-          <template v-if="s.last.value">
-            <p class="opacity-80">{{ stepNameOf(s.last.value.out) }}<span v-if="s.last.value.out.omen" class="ml-1 text-violet-300">+ {{ stepOmenOf(s.last.value.out) }}</span><span v-if="!s.last.value.out.applied" class="ml-1 text-rose-300/80">— {{ s.last.value.out.reason }}</span></p>
-            <p v-if="s.last.value.out.note" class="text-sky-200/90">{{ String(s.last.value.out.note) }}</p>
-            <!-- ルーンを置き換えた時 (置き換えた方は壊れる。2026-10-08 完成判定: 直前の変化では分からなかった) -->
-            <p v-if="augChange?.replaced" class="text-rose-300"><template v-if="isEn">Socket {{ augChange.socket }}: replaced <span class="line-through">{{ augChange.replaced.en ?? augChange.replaced.ja }}</span> with {{ augChange.put.en ?? augChange.put.ja }} (the removed one is destroyed)</template><template v-else>{{ augChange.socket }} 番目の <span class="line-through">{{ augChange.replaced.ja }}</span> を {{ augChange.put.ja }} に置き換え (外した方は壊れる)</template></p>
-            <p v-for="m in s.last.value.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ modText(m) }}</p>
-            <p v-for="m in s.last.value.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ modText(m) }}</p>
-          </template>
-          <p v-else class="opacity-50">{{ tr("まだ何も使っていません", "Nothing used yet") }}</p>
-          <!-- 工程 (直前の変化の下、固定の高さで中だけ送る。2026-10-08 オーナー「工程はスクロールでいいから直前の変化の所に入れて固定枠で」) -->
-          <div v-if="s.log.value.length" class="mt-3 border-t border-white/10 pt-2">
-            <p class="mb-1 flex items-center gap-2"><b class="g-antique text-[15px] font-normal text-[var(--exile-color-text-title)]">{{ tr("工程", "Steps") }}</b><span class="text-[10px] opacity-50">{{ inApp ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span></p>
-            <div class="max-h-72 overflow-y-auto pr-1 max-md:max-h-64"><StageHistory /></div>
-          </div>
+        <!-- 工程 (直前の変化の欄は外して累計だけ。新しい手が上。2026-10-10 オーナー「直前の変化いらんな、累計でおｋ、並び順は上が最新」) -->
+        <div class="g-panel w-[480px] max-md:w-full p-2 text-[12px]">
+          <p class="mb-1 flex items-center gap-2"><b class="g-antique text-[15px] font-normal text-[var(--exile-color-text-title)]">{{ tr("工程", "Steps") }}</b><span class="text-[10px] opacity-50">{{ inApp ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span><span class="ml-auto tabular-nums opacity-70">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
+          <div class="max-h-72 overflow-y-auto pr-1 max-md:max-h-64"><StageHistory /></div>
         </div>
       </div>
 

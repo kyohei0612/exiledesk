@@ -5,6 +5,7 @@
   打てなかった手は理由を薄く出す。手を押すとその手を打った直後に戻る (craftStage.goTo、この後に打てば先の手は捨てる)。先頭の「始め」は 1 手も打っていない状態へ (goToStart)。
 -->
 <script setup lang="ts">
+import { computed } from "vue";
 import { modText, tr } from "../../i18n/lang";
 import { craftStage, iconOf, stepNameOf, stepOmenOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
@@ -20,28 +21,14 @@ const chancePct = (p: number): string => (p >= 0.1 ? `${(p * 100).toFixed(0)}%` 
 type AugChange = { socket: number; put: { ja: string; en?: string }; replaced: { ja: string; en?: string } | null; replaced_goes: string | null };
 const augOf = (out: object): AugChange | null => (out as { augment_change?: AugChange }).augment_change ?? null;
 /** 押すとその手の直後に戻れるか (最後の手と再生中は戻らない) */
+const newestFirst = computed(() => [...craftStage.log.value].reverse());
 const canGo = (index: number): boolean => !craftStage.replay.value && craftStage.log.value[craftStage.log.value.length - 1]?.out.index !== index;
 </script>
 
 <template>
   <ol class="space-y-1">
-    <!-- 始めの行 (押すと 1 手も打っていない状態に戻る。2026-10-09 オーナー「始めの行も足して」) -->
     <li
-      v-if="craftStage.log.value.length"
-      class="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-[12px]"
-      :class="craftStage.replay.value ? '' : 'cursor-pointer hover:border-white/30 hover:bg-white/5'"
-      :title="craftStage.replay.value ? undefined : tr('1 手も打っていない状態に戻す (この後に打つと先の手は消える)', 'Go back to the start (later steps are dropped if you craft from here)')"
-      :tabindex="craftStage.replay.value ? undefined : 0"
-      @click="craftStage.goToStart()"
-      @keydown.enter="craftStage.goToStart()"
-    >
-      <span class="w-6 shrink-0 text-right tabular-nums opacity-50">0</span>
-      <b>{{ tr("始め", "Start") }}</b>
-      <span :class="RARITY_CLS[craftStage.log.value[0]!.before.rarity]">{{ rarityName(craftStage.log.value[0]!.before.rarity) }}</span>
-      <span v-if="craftStage.startMods.value.length" class="text-[11px] opacity-60">{{ tr(`始めの MOD ${craftStage.startMods.value.length} つ`, `${craftStage.startMods.value.length} starting mods`) }}</span>
-    </li>
-    <li
-      v-for="s in craftStage.log.value"
+      v-for="s in newestFirst"
       :key="s.out.index"
       class="flex items-start gap-2 rounded-lg border px-2 py-1.5 text-[12px]"
       :class="[s.out.applied ? 'border-white/10 bg-black/20' : 'border-white/5 bg-black/10 opacity-50', canGo(s.out.index) ? 'cursor-pointer hover:border-white/30 hover:bg-white/5' : '']"
@@ -75,6 +62,22 @@ const canGo = (index: number): boolean => !craftStage.replay.value && craftStage
         <p v-if="s.after.sanctified && !s.before.sanctified" class="text-amber-200">{{ tr("聖別", "Sanctified") }}</p>
       </div>
       <span class="shrink-0 text-right tabular-nums text-[11px] opacity-70">{{ s.out.cost.cumulative ? money(s.out.cost.cumulative) : "" }}</span>
+    </li>
+    <!-- 新しい手が上、始めは一番下 (2026-10-10 オーナー「上が最新、古いのは勝手に下に行く」) -->
+    <!-- 始めの行 (押すと 1 手も打っていない状態に戻る。2026-10-09 オーナー「始めの行も足して」) -->
+    <li
+      v-if="craftStage.log.value.length"
+      class="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-[12px]"
+      :class="craftStage.replay.value ? '' : 'cursor-pointer hover:border-white/30 hover:bg-white/5'"
+      :title="craftStage.replay.value ? undefined : tr('1 手も打っていない状態に戻す (この後に打つと先の手は消える)', 'Go back to the start (later steps are dropped if you craft from here)')"
+      :tabindex="craftStage.replay.value ? undefined : 0"
+      @click="craftStage.goToStart()"
+      @keydown.enter="craftStage.goToStart()"
+    >
+      <span class="w-6 shrink-0 text-right tabular-nums opacity-50">0</span>
+      <b>{{ tr("始め", "Start") }}</b>
+      <span :class="RARITY_CLS[craftStage.log.value[0]!.before.rarity]">{{ rarityName(craftStage.log.value[0]!.before.rarity) }}</span>
+      <span v-if="craftStage.startMods.value.length" class="text-[11px] opacity-60">{{ tr(`始めの MOD ${craftStage.startMods.value.length} つ`, `${craftStage.startMods.value.length} starting mods`) }}</span>
     </li>
     <li v-if="!craftStage.log.value.length" class="rounded-lg bg-black/20 px-3 py-2 text-[12px] opacity-50">{{ tr("まだ何も使っていません。", "Nothing used yet. ") }}<span class="max-md:hidden">{{ tr("右の棚からカレンシーを選んでアイテムを押してください", "Pick a currency from the shelf on the right, then click the item") }}</span><span class="md:hidden">{{ tr("上の棚でカレンシーを押して持ち、下の帯の「使う」を押してください", "Tap a currency on the shelf above, then tap “Use” in the bar below") }}</span></li>
   </ol>
