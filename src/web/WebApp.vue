@@ -47,13 +47,17 @@ onBeforeUnmount(() => {
   for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.removeEventListener(ev, onActive, { capture: true });
   document.removeEventListener("visibilitychange", onVisible);
 });
-/** 初めて来た人の窓: 1 回閉じたら出さない (上の「はじめに」で開き直せる) */
+/**
+ * 「はじめに」の窓は上のボタンで開くだけ。初めて来た人にも勝手には出さない
+ * (2026-10-10 オーナー「初訪問のポップアップいらんな、打たせようぜ、2 回目と同じで開いたら即」。前は初回に出していた)
+ */
 const WELCOME_KEY = "exiledesk.web.welcomed";
 const welcomeOpen = ref(false);
-try { welcomeOpen.value = !localStorage.getItem(WELCOME_KEY); } catch { welcomeOpen.value = true; }
-// 更新した後に 1 回だけ更新内容を出す。「はじめに」を出す時は出さない (2026-10-10)
-initChangelog(welcomeOpen.value);
-function closeWelcome(): void { welcomeOpen.value = false; try { localStorage.setItem(WELCOME_KEY, "1"); } catch { /* 無くてよい */ } }
+let firstVisit = false;
+try { firstVisit = !localStorage.getItem(WELCOME_KEY); localStorage.setItem(WELCOME_KEY, "1"); } catch { /* 無くてよい */ }
+// 更新した後に 1 回だけ更新内容を出す。初めて来た人には出さない (2026-10-10)
+initChangelog(firstVisit);
+function closeWelcome(): void { welcomeOpen.value = false; }
 const DESIGN_WIDTH = 1660;
 const frame = ref({ w: DESIGN_WIDTH, h: 900 });
 /**
