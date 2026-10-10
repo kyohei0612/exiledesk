@@ -26,7 +26,7 @@ export async function exportSessions(env: Env, since: string, until: string): Pr
     // 間引き (_sample_interval) があれば、その数だけ並べ直す (少ない日は 1)
     for (let i = 0; i < Math.max(1, Number(r.k) || 1); i++) s.ev.push({ n: r.n, ...(r.x ? { x: r.x } : {}), s: Math.max(0, t - s.t0) });
   }
-  return [...by.values()].map(({ t0: _t0, ...s }) => s);
+  return [...by.values()];
 }
 
 const pick = (m: Summary) => ({
