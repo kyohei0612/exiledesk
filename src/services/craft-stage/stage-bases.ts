@@ -61,7 +61,7 @@ export function reqText(base: string | StageItem): string {
   if (!r) return "";
   if (lang.value === "en") {
     const en = [r.level ? `Level ${r.level}` : "", r.str ? `${r.str} Str` : "", r.dex ? `${r.dex} Dex` : "", r.int ? `${r.int} Int` : ""].filter(Boolean);
-    return en.length ? `Requires ${en.join(", ")}` : "";
+    return en.length ? `Requires: ${en.join(", ")}` : "";
   }
   const parts = [r.level ? `Lv ${r.level}` : "", r.str ? `筋力 ${r.str}` : "", r.dex ? `器用さ ${r.dex}` : "", r.int ? `知性 ${r.int}` : ""].filter(Boolean);
   return parts.length ? `要求 ${parts.join("・")}` : "";

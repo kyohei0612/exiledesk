@@ -77,9 +77,9 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
   if (sac) {
     if (!sac.cats.includes(item.cls.category)) return skip(item, tr(`${sac.ja}にだけ使える`, `${sac.en} only`));
     if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
-    if (!item.enchant) return skip(item, tr("コラプトエンチャントが無い", "No corrupted enchantment"));
+    if (!item.enchant) return skip(item, tr("コラプトエンチャントが無い", "No Corruption Enchantment"));
     const up = UPGRADES[item.enchant.id];
-    if (!up) return skip(item, tr("このエンチャントは上がらない", "This enchantment can't be upgraded"));
+    if (!up) return skip(item, tr("このエンチャントは上がらない", "This Corruption Enchantment can't be upgraded"));
     const vals = rollEnchantValues(up.stats, rng);
     const pool = allMods(item).filter((m) => !m.fractured);
     const gone = pool.length ? pool[Math.floor(rng() * pool.length)]! : null;
@@ -105,7 +105,7 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
     case "cultivation": {
       if (item.rarity !== "unique" || !item.unique) return skip(item, tr("ユニークにだけ使える", "Unique items only"));
       const list = uniquesOfSameClass(item.unique.en);
-      if (!list.length) return skip(item, tr("同じ種類の別のユニークが無い", "No other Unique of the same class"));
+      if (!list.length) return skip(item, tr("同じ種類の別のユニークが無い", "No other Unique of the same Item Class"));
       const u = list[Math.floor(rng() * list.length)]!;
       return done({ ...item, unique: u, uniqueScale: undefined });
     }

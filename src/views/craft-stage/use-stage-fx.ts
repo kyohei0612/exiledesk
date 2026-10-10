@@ -62,7 +62,7 @@ function augText(o: object): { kind: "hit" | "up"; color: string; text: string }
 function actText(before: StageItem, after: StageItem): { kind: "hit" | "up"; color: string; text: string } | null {
   if (after.quality > before.quality && !after.qualityTag) return { kind: "hit", color: COLOR.top, text: tr(`品質 +${Math.round((after.quality - before.quality) * 10) / 10}%`, `Quality +${Math.round((after.quality - before.quality) * 10) / 10}%`) };
   if (before.identified === false && after.identified !== false) return { kind: "up", color: COLOR[after.rarity], text: tr("鑑定!", "Identified!") };
-  if ((after.gemSockets ?? 0) > (before.gemSockets ?? 0)) return { kind: "up", color: "#7fb0e0", text: tr(`サポート枠 ${after.gemSockets} つ!`, `${after.gemSockets} support sockets!`) };
+  if ((after.gemSockets ?? 0) > (before.gemSockets ?? 0)) return { kind: "up", color: "#7fb0e0", text: tr(`サポート枠 ${after.gemSockets} つ!`, `${after.gemSockets} Support Gem Sockets!`) };
   const sh = Object.keys(after.shards ?? {}).find((k) => (after.shards?.[k] ?? 0) !== (before.shards?.[k] ?? 0));
   if (sh) {
     const n = after.shards![sh]!;

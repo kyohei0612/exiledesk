@@ -294,7 +294,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
           <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? tr("はめている", "Socketed") : tr("差していないので 0% (付ければルーンも差す)", "Not socketed, so 0% (adding one also sockets the rune)") }}</span>
           <!-- 重みが公開されていない欄は、こちらが入れた重みの出どころを短く (2026-10-09 オーナー「不明の奴全てに、コミュニティのデータから参照していますって書いとこう」) -->
           <span v-if="WEIGHT_NOTE[sec.rune ? 'rune' : sec.g]" class="g-hover-name font-normal opacity-60" :title="WEIGHT_NOTE[sec.rune ? 'rune' : sec.g]">{{ tr("· 重みはコミュニティのデータから参照", "· Weights from community data") }}</span>
-          <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">{{ tr("創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ", "Mods exclusive to the Genesis Tree and handwraps · Cannot roll from currency · Add them manually with “Add” in the tier table") }}</span>
+          <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">{{ tr("創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ", "Mods exclusive to the Genesis Tree and Wraps · Cannot roll from currency · Add them manually with “Add” in the tier table") }}</span>
           <span class="ml-auto font-normal opacity-60 md:hidden">{{ secShown(sec.sid) ? "▲" : tr("▼ 開く", "▼ Expand") }}</span>
         </h3>
         <div v-if="secShown(sec.sid)" class="grid gap-3 md:grid-cols-2">

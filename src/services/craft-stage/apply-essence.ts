@@ -119,7 +119,7 @@ export const craftedLimitOf = (item: StageItem): number => 1 + ((item.augments ?
  * (お告げの側を先)。冒涜の MOD がある間は打てない (先にエッセンス・合金で上書きする。計算機と同じ決まり)。次の骨は印を置き換える
  */
 function applyAbyss(item: StageItem, sm: StageMod, rng: () => number, used: readonly string[]): StageApply {
-  if (allMods(item).some((m) => m.desecrated)) return skip(item, tr("冒涜の MOD がある間は使えない (先にエッセンス・合金で上書き)", "Can't be used while a Desecrated mod is present"));
+  if (allMods(item).some((m) => m.desecrated)) return skip(item, tr("冒涜の MOD がある間は使えない (先にエッセンス・合金で上書き)", "Can't be used while a Desecrated mod is present (overwrite it first with an Essence or Alloy)"));
   if (allMods(item).some((m) => m.abyssMark)) return skip(item, tr("印はもう付いている", "Already has a Mark"));
   const omenSide: StageSide | null = used.includes("OmenofSinistralCrystallisation") ? "prefix" : used.includes("OmenofDextralCrystallisation") ? "suffix" : null;
   const r = removeOne(item, rng, omenSide ? [omenSide] : SIDES);

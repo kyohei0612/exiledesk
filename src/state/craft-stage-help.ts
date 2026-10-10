@@ -101,7 +101,7 @@ const OMEN_EN: Record<string, string[]> = {
   OmenofCorruption: ["Removes the \"no change\" outcome from the next Vaal Orb (equal among the other 3)", "The 4th jewellery outcome (no change instead of a socket) stays", "No longer obtainable since 0.5.0"],
   OmenoftheBlessed: ["The next Divine Orb rerolls **only implicit mods** (explicit mods unchanged)", "Implicit values aren't tracked here, so nothing visibly changes (only the cost of the Divine Orb and Omen is counted)"],
   OmenofChance: ["The next Orb of Chance **won't destroy the item**", "On failure the item stays Normal (the orb is still used)"],
-  OmenoftheAncients: ["The next Orb of Chance turns it into **a random Unique of the same item class**, not just this base", "The base changes to that Unique's base", "Stacked with Omen of Chance, the item isn't destroyed"],
+  OmenoftheAncients: ["The next Orb of Chance turns it into **a random Unique of the same Item Class**, not just this base", "The base changes to that Unique's base", "Stacked with Omen of Chance, the item isn't destroyed"],
   OmenofSanctification: ["The next Divine Orb on a Rare **sanctifies** it: each mod is multiplied by x0.78-1.22 (0.01 steps) and rounded", "Sanctified items can't be modified afterwards"],
 };
 
@@ -143,11 +143,11 @@ const EXTRA_HELP: Record<string, string[]> = {
 /** EXTRA_HELP の英語 (英語の画面) */
 const INFUSER_LINE_EN = (en: string) => [
   `Raises the quality of **${en}**. Can go **up to 10% over the cap**, but has a chance to **corrupt** the item when it does (game description)`,
-  `+1% per use (checked in game). The corruption chance isn't public (**unconfirmed**, assumed ${Math.round(INFUSER_CORRUPT_P * 100)}%)`,
+  `+1% per use (checked in game). The corruption chance isn't public (**unconfirmed**, assumed ${Math.round(INFUSER_CORRUPT_P * 100)}%; set it with the step outcome "corrupted" / "safe")`,
 ];
 const SACRIFICE_LINE_EN = (en: string) => [
-  `On **Corrupted Rare** ${en}: **upgrades the corrupted enchantment** and **removes 1 random mod** (game description)`,
-  "The upgrade is the matching \"CorruptionUpgrade…\" mod from the game data. Can't be used without an enchantment",
+  `On **Corrupted Rare** ${en}: **upgrades the Corruption Enchantment** and **removes 1 random mod** (game description)`,
+  "The upgrade is the \"CorruptionUpgrade…\" mod in the game's mod table (same group as the original enchantment). Can't be used without an enchantment",
 ];
 const NOT_PUBLIC_EN = "The mapping isn't public, so mods are replaced at the same tier rank and roll position (assumption)";
 const EXTRA_HELP_EN: Record<string, string[]> = {
@@ -160,11 +160,11 @@ const EXTRA_HELP_EN: Record<string, string[]> = {
   sacrifice_weapon: SACRIFICE_LINE_EN("Weapons and Quivers"),
   architect: [
     "On **Corrupted equipment** (any rarity): **adds a second enchantment or destroys the item** (game description, poe2wiki)",
-    `Destroy chance ${Math.round(ARCHITECT_DESTROY_P * 100)}%. The new enchantment can't be from the same group as the current one`,
+    `Destroy chance ${Math.round(ARCHITECT_DESTROY_P * 100)}%. The new enchantment can't be from the same group as the current one. Set it with the step outcome "destroyed" / "changed"`,
   ],
   cultivation: [
-    "Turns a **Corrupted Unique** into **another Unique of the same class** (game description)",
-    "Vaal Uniques \"replace up to 2 mods\", but Unique mod tables aren't available, so that isn't handled here",
+    "Turns a **Corrupted Unique** into **another Unique of the same Item Class** (game description)",
+    "Vaal Uniques \"replace up to 2 modifiers\", but Unique mod tables aren't available, so that isn't handled here",
   ],
   siphoner: ["Adds a kill threshold to **Corrupted Rare jewellery**. When reached it absorbs a random mod and raises the others (game description)", "Threshold and gains aren't public, so only the threshold itself is shown here"],
   mirror: ["Creates a **Mirrored copy** of the item (game description)", "Mirrored items can't be modified"],
@@ -212,7 +212,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       return [tr("**レア** で MOD が **4 つ以上**、まだフラクチャーが無い時", "On a **Rare** with **4+ mods** and no Fractured mod yet"), tr("MOD を 1 つ **固定 (フラクチャー)** する。どれになるかは等しく (未発現の冒涜 MOD は選ばれない)", "**Fractures** 1 random mod (equal chance; Unrevealed Desecrated mods are never picked)"), tr("フラクチャーした MOD は、カオス・消去・エッセンスでも消えない", "Fractured mods can't be removed by Chaos, Annulment or Essences")];
     case "artificer": {
       const n = item ? socketCapOf(item.base, item.cls.category) : 1;
-      return [tr("マーシャル武器・ワンド・スタッフ・防具に **ソケットを 1 つ** 足す", "Adds **1 socket** to Martial Weapons, Wands, Staves and Armour"), n ? tr(`このベースは ${n} つまで (胴・両手武器 2 / ほか 1。コラプトで +1)`, `Up to ${n} on this base (Body Armour / Two-Handed 2, others 1; +1 via corruption)`) : tr("このベース (アクセサリー・矢筒・フラスコ) には付けられない", "Can't be added to this base (jewellery, quivers, flasks)")];
+      return [tr("マーシャル武器・ワンド・スタッフ・防具に **ソケットを 1 つ** 足す", "Adds **1 socket** to Martial Weapons, Wands, Staves and Armour"), n ? tr(`このベースは ${n} つまで (胴・両手武器 2 / ほか 1。コラプトで +1)`, `Up to ${n} on this base (Body Armour / Two Handed Weapon 2, others 1; +1 via corruption)`) : tr("このベース (アクセサリー・矢筒・フラスコ) には付けられない", "Can't be added to this base (jewellery, quivers, flasks)")];
     }
     case "vaal": {
       const pool = item ? enchantPool(item).length : 0;
@@ -222,7 +222,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
           "One of 4 outcomes with equal chance (no public data, assumed equal):",
           "1. No change",
           "2. Rerolls 1-3 mods into new mods (Fractured mods stay)",
-          `3. Adds 1 Vaal enchantment${pool ? ` (equal among ${pool} for this base)` : ""}`,
+          `3. Adds 1 Corrupted enchantment${pool ? ` (equal among ${pool} for this base)` : ""}`,
           "4. Weapons / armour: +1 socket (can exceed the Artificer cap by 1); jewellery: no change",
         ];
       }
@@ -271,9 +271,9 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     const st = QUALITY_STEP;
     if (isEn()) {
       return [
-        `Raises the quality of **${t.en}** (max ${QUALITY_MAX}%)`,
+        `Raises the quality of **${t.en}** (max ${QUALITY_MAX}%)${key === "etcher" ? ". For wands, staves and sceptres (Blacksmith's Whetstone is for martial weapons)" : ""}${key === "whetstone" ? ". Martial weapons = bows, crossbows, maces, quarterstaves, spears, talismans (not wands, sceptres or staves)" : ""}`,
         `+${key === "gemcutter" ? st.gem : st.item}% per use (any rarity; checked in game)`,
-        key === "whetstone" ? "Each 1% quality gives 1% more Physical Damage" : key === "scrap" ? "Each 1% quality gives 1% more Armour / Evasion / Energy Shield" : key === "bauble" ? "Each 1% quality gives 1% more Life / Mana recovery" : "Quality effects differ per gem",
+        key === "whetstone" ? "Each 1% quality gives 1% more Physical Damage (Quality on poe2db)" : key === "scrap" ? "Each 1% quality gives 1% more Armour / Evasion / Energy Shield" : key === "bauble" ? "Each 1% quality gives 1% more Life / Mana recovery" : "Quality effects differ per gem",
       ];
     }
     return [
@@ -290,7 +290,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (isEn()) {
       return [
         "Turns a **Normal** item into a **Unique** or **destroys** it (game description)",
-        `The Unique chance isn't public (**unconfirmed**, assumed ${Math.round(CHANCE_UNIQUE_P * 100)}%)`,
+        `The Unique chance isn't public (**unconfirmed**, assumed ${Math.round(CHANCE_UNIQUE_P * 100)}%; set the result with the step outcome)`,
         "The Unique is picked equally from this base's Uniques (no public weights)",
       ];
     }
@@ -302,7 +302,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
   }
   if (JEWELLER_TO[key]) {
     const n = JEWELLER_TO[key];
-    if (isEn()) return [`Sets a **Skill Gem** to **${n} support sockets** (all at once)`, `Only for gems with fewer than ${n} support sockets`, "Can't be used on equipment"];
+    if (isEn()) return [`Sets a **Skill Gem** to have **${n} Support Gem Sockets** (all at once)`, `Only for gems with fewer than ${n} Support Gem Sockets`, "Can't be used on equipment"];
     return [`**スキルジェム** のサポート枠を **${n} つ** にする (1 つずつではなく一気に)`, `サポート枠が ${n} つ未満のジェムにだけ使える`, "装備には使えない"];
   }
   // ルーン・ソウルコア等 (2026-10-03): 決まり (部位・外せるか・置き換えられるか・数) は説明文から作った表 (augment-rules.ts) のまま
@@ -341,7 +341,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       return [
         "Removes 1 mod from a **Rare** and adds the **Mark of the Abyssal Lord** on that side",
         "The next Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Tier floor mod level 33 (assumed: the description only says \"higher tier\")",
-        "Can't be used while a Desecrated mod is present. The Mark is a crafted mod too (2 allowed with Astrid's Creativity)",
+        "Can't be used while a Desecrated mod is present (overwrite it first with an Essence or Alloy). The Mark is a crafted mod too (2 allowed with Astrid's Creativity)",
         "Omens: Sinistral / Dextral Crystallisation (removed side = Mark side)",
       ];
     }
@@ -534,7 +534,7 @@ const SPECIAL_ESSENCE_EN: Record<string, { short?: string; groups?: Array<{ h: s
     short: "Augment effect",
     notes: [
       "**Rare Gloves and Boots only**",
-      "Suffix \"60% increased effect of Socketed Augments\" (fixed). Socketed runes / Soul Cores become 1.6x as strong, so more sockets = more value",
+      "Suffix \"60% increased effect of Socketed Augment Items\" (fixed). Socketed runes / Soul Cores become 1.6x as strong, so more sockets = more value",
     ],
   },
   "Essence of Hysteria": {
@@ -551,7 +551,7 @@ const SPECIAL_ESSENCE_EN: Record<string, { short?: string; groups?: Array<{ h: s
     notes: ["**Rare Rings and Amulets only**", "Prefix \"+20% to Maximum Quality\". Catalysts can then push quality to 40% (catalyst mods get stronger accordingly)"],
   },
   "Essence of the Abyss": {
-    short: "Abyssal Lord's Mark",
+    short: "Mark of the Abyssal Lord",
     groups: [{ h: "Armour, jewellery, belts etc.", l: ["Mark of the Abyssal Lord. Replaced by a Desecrated mod with the next Bone"] }],
     notes: [],
   },

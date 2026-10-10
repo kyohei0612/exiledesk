@@ -53,7 +53,7 @@ export function applyJeweller(item: StageItem, key: string): StageApply {
   if (!isGem(item.cls.category)) return skip(item, tr("スキルジェムにだけ使える", "Skill Gems only"));
   const to = JEWELLER_TO[key] ?? 3;
   const now = item.gemSockets ?? 0;
-  if (now >= to) return skip(item, tr(`サポート枠がもう ${now} つある (${to} つ未満にだけ使える)`, `Already has ${now} support sockets (only usable below ${to})`));
+  if (now >= to) return skip(item, tr(`サポート枠がもう ${now} つある (${to} つ未満にだけ使える)`, `Already has ${now} Support Gem Sockets (only usable below ${to})`));
   return { applied: true, item: { ...item, gemSockets: to }, added: [], removed: [] };
 }
 
@@ -116,6 +116,6 @@ export function applyChance(item: StageItem, rng: () => number, uniques: Array<{
     return { applied: true, item: { ...item, destroyed: true }, added: [], removed: [] };
   }
   const u = uniques[Math.floor(rng() * uniques.length)]!;
-  const note = used.includes("OmenoftheAncients") ? tr(`${jaOfOmen("OmenoftheAncients") ?? "古代のお告げ"}: 同じ種類のユニーク ${uniques.length} 種類から選んだ`, `Omen of the Ancients: picked from ${uniques.length} Uniques of the same class`) : undefined;
+  const note = used.includes("OmenoftheAncients") ? tr(`${jaOfOmen("OmenoftheAncients") ?? "古代のお告げ"}: 同じ種類のユニーク ${uniques.length} 種類から選んだ`, `Omen of the Ancients: picked from ${uniques.length} Uniques of the same Item Class`) : undefined;
   return { applied: true, item: { ...item, rarity: "unique", unique: u, prefixes: [], suffixes: [] }, added: [], removed: [], ...(note ? { note } : {}) };
 }

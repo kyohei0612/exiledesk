@@ -266,7 +266,7 @@ const startItemMods = computed(() => {
 const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hint: string; labelEn: string; hintEn: string }> = [
   { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る", labelEn: "From a white base", hintEn: "Buy a white base and craft from scratch" },
   { k: "fractured", label: "フラクチャー済みを買う", hint: "フラクチャーの MOD が 1 つ付いたベースを買う。フラクチャーの MOD は 2 狙う MOD で最初に足した物", labelEn: "Buy fractured", hintEn: "Buy a base with 1 fractured mod: the first mod added in step 2 (Target mods)" },
-  { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)", labelEn: "Buy a 4-mod rare", hintEn: "Buy a rare with 3 mods + 1 target, add a bone wall, then Fracture (1/3 hit)" },
+  { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)", labelEn: "Buy a 4-mod rare", hintEn: "Buy a rare with 3 mods + 1 target, block with a Bone, then use a Fracturing Orb (1/3 hit)" },
 ];
 /** 手打ちから持ってきた時だけ出る札 */
 const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態から", hint: "エミュレーターの今のアイテムから先を回す", labelEn: "From the Emulator item", hintEn: "Continue from the current Emulator item" };
@@ -427,7 +427,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <RevealPanel />
         <!-- ヒネコラの髪束の予見: 持っているカレンシーを打った時の結果 (次の手の seed で引くので、打つとこの通りになる) -->
         <div v-if="s.foresight.value" class="w-[380px] max-md:w-full rounded-xl border border-violet-400/50 bg-violet-500/10 p-3 text-[12px]">
-          <p class="mb-1 font-bold text-violet-200">{{ tr(`予見: ${nameOf(s.foresight.value.key)} を使うと`, `Foresight: using ${nameOf(s.foresight.value.key)}`) }}</p>
+          <p class="mb-1 font-bold text-violet-200">{{ tr(`予見: ${nameOf(s.foresight.value.key)} を使うと`, `Foreseen: using ${nameOf(s.foresight.value.key)}`) }}</p>
           <p v-if="!s.foresight.value.applied" class="text-rose-300">{{ tr("使えない", "Can't use") }} — {{ s.foresight.value.reason }}</p>
           <template v-else>
             <p v-for="(t, i) in s.foresight.value.added" :key="'fa' + i" class="text-emerald-300">＋ {{ t }}</p>

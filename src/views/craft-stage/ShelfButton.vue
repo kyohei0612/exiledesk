@@ -48,7 +48,7 @@ const OMEN_TAG: Record<string, [string, string]> = {
   OmenofWhittling: ["最低を消す", "Removes lowest"], OmenofSinistralErasure: ["プレを消す", "Removes prefix"], OmenofDextralErasure: ["サフィを消す", "Removes suffix"],
   OmenofSinistralCrystallisation: ["プレを消す", "Removes prefix"], OmenofDextralCrystallisation: ["サフィを消す", "Removes suffix"],
   OmenofSinistralNecromancy: ["プレに付く", "Adds prefix"], OmenofDextralNecromancy: ["サフィに付く", "Adds suffix"],
-  OmenoftheSovereign: ["ウラマン", "Ulaman"], OmenoftheLiege: ["アマナム", "Amanam"], OmenoftheBlackblooded: ["クルガル", "Kurgal"],
+  OmenoftheSovereign: ["ウラマン", "Ulaman"], OmenoftheLiege: ["アマナム", "Amanamu"], OmenoftheBlackblooded: ["クルガル", "Kurgal"],
   OmenofPutrefaction: ["全部冒涜", "All desecrated"], OmenofAbyssalEchoes: ["引き直し", "Reroll"],
 };
 const omenTag = computed(() => {

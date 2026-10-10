@@ -60,7 +60,7 @@ export const RUNE_GROUPS: ShelfGroup[] = [
   { kind: "normal", get label() { return tr("普通", "Normal"); }, keys: runeKeys("normal") },
   { kind: "greater", get label() { return tr("グレーター", "Greater"); }, keys: runeKeys("greater") },
   { kind: "perfect", get label() { return tr("パーフェクト", "Perfect"); }, keys: runeKeys("perfect") },
-  { kind: "special", get label() { return tr("特別なルーン (古代・ウォード・人の名前の物など)", "Special runes (Ancient, Ward, named runes etc.)"); }, keys: runeKeys("special") },
+  { kind: "special", get label() { return tr("特別なルーン (古代・ウォード・人の名前の物など)", "Special runes (Ancient, Warding, named runes etc.)"); }, keys: runeKeys("special") },
   // ソウルコア・アイドルも (POE2Tube 要望 ㉘ 2026-10-04、手で打つ画面の棚に)
   { kind: "soulcore", get label() { return tr("ソウルコア", "Soul Cores"); }, keys: runeKeys(undefined, "soulcore") },
   { kind: "idol", get label() { return tr("アイドル", "Idols"); }, keys: runeKeys(undefined, "talisman") },
