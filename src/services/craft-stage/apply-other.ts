@@ -59,7 +59,10 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
       const mods = allMods(item);
       if (mods.length < FRACTURE_NEEDS) return skip(item, tr(`MOD が ${FRACTURE_NEEDS} つ以上要る`, `Needs ${FRACTURE_NEEDS}+ mods`));
       if (mods.some((m) => m.fractured)) return skip(item, tr("もう固定した MOD がある", "Already has a Fractured mod"));
-      const pool = mods.filter((m) => !m.unrevealed);
+      // 冒涜の MOD は発現済みでも未発現でも固定されない (4 つの数には入る)。2026-10-10 要望 + オーナーが取引所で確認 (冒涜専用の MOD のフラクチャー品は 0、
+      // 取引所の fractured の stat にも冒涜専用の文面はほぼ無い)。同じ日に一度「発現済みは固定できる」にしていたのは間違い
+      const pool = mods.filter((m) => !m.unrevealed && !m.desecrated);
+      if (!pool.length) return skip(item, tr("固定できる MOD が無い (冒涜の MOD は固定されない)", "No mod can be Fractured (Desecrated mods can't be)"));
       const m = pool[Math.floor(rng() * pool.length)]!;
       const next = { ...m, fractured: true };
       // 固定は消えて付いたのではない (＋ と － に同じ MOD が並んで分かりづらかった。2026-10-08 完成判定)

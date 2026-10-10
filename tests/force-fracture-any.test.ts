@@ -1,4 +1,5 @@
-// 手で付ける「フラクチャー」(f) は、未発現の冒涜以外どの MOD でも固定で付けられる (2026-10-10 要望「創生の樹 (冒涜も) フラクチャーできるように」、オーナー確認の決まり)
+// 手で付ける「フラクチャー」(f) は、冒涜以外どの MOD でも固定で付けられる (2026-10-10 要望「創生の樹フラクチャーできるように」)。
+// 冒涜の MOD は発現済みでも固定できない (2026-10-10 要望 + オーナーが取引所で確認)
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
@@ -21,11 +22,8 @@ describe("手で固定して付ける (f)", () => {
     const m = allMods(r.item).find((x) => x.modId === "Rings/Special_genesis_tree_caster_SpellDamage")!;
     expect(m.fractured).toBe(true);
   });
-  it("冒涜の MOD は冒涜の印も付く (冒涜は 1 つまで)", () => {
-    const r = fix(rare(), "Rings/Desecrated_Strength");
-    expect(r.applied, r.reason).toBe(true);
-    const m = allMods(r.item).find((x) => x.modId === "Rings/Desecrated_Strength")!;
-    expect({ f: m.fractured, d: m.desecrated }).toEqual({ f: true, d: true });
+  it("冒涜の MOD は固定で付けられない", () => {
+    expect(fix(rare(), "Rings/Desecrated_Strength").applied).toBe(false);
   });
   it("エッセンスの MOD はクラフトの印も付く", () => {
     const r = fix(rare(), "Rings/Essence_FireResistance");
