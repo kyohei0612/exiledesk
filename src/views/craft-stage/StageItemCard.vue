@@ -91,7 +91,7 @@ function look(m: StageMod): { cls: string; tag: string } {
   // 札は「ルーン」だけ (POE2Tube 要望 ㉚-3: 動画では「データサイトでは特殊 MOD の出やすさは全部同じ = 完全にランダムな抽選」と説明する。
   // 重みが仮定なのは結果 JSON の assumed_weight に残る)
   if (m.rune) return { cls: "text-rarity-magic", tag: tr("ルーン", "Rune") };
-  if (m.convertedFrom) return { cls: "text-rarity-magic", tag: tr("アルダー", "Alder") };
+  if (m.convertedFrom) return { cls: "text-rarity-magic", tag: tr("アルダー", "Aldur") };
   return { cls: "text-rarity-magic", tag: "" };
 }
 /** ユニークの効果 (poe2db のページから。値はユニークごとに決まった 1 つ。ページの無いユニークは空) */
@@ -195,7 +195,7 @@ const rows = computed(() =>
       <p v-if="item.corrupted" class="pt-1 font-bold text-[#d20000]">{{ tr("コラプト", "Corrupted") }}</p>
       <p v-if="item.sanctified" class="pt-1 font-bold text-amber-200">{{ tr("聖別", "Sanctified") }}</p>
       <!-- 2026-09-29 に足したカレンシーの印 (apply-extra.ts) -->
-      <p v-if="item.siphoner" class="text-[#d20000]">{{ tr("キル閾値 (ヴァールサイフォナー)", "Culling threshold (Vaal Siphoner)") }}</p>
+      <p v-if="item.siphoner" class="text-[#d20000]">{{ tr("キル閾値 (ヴァールサイフォナー)", "Kill threshold (Vaal Siphoner)") }}</p>
       <p v-if="item.mirrored" class="pt-1 font-bold text-sky-200">{{ tr("ミラー", "Mirrored") }}</p>
       <p v-if="item.foreseen" class="pt-1 text-violet-200">{{ tr("予見 (次の手の結果が見える)", "Foreseen (next result is shown)") }}</p>
     </div>
