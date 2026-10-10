@@ -5,6 +5,8 @@
  * 手の種類は apply-currency.ts の kindOf。1 つの手に何枚でも重ねられる (大いなる高貴 + 左の高貴 など)。
  */
 import type { StageItem, StageSide } from "./types";
+import type { PatchData } from "../../vendor/poe2htc/engine";
+import { bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
 import { limitOf, listOf, room } from "./stage-core";
 import { tr } from "../../i18n/lang";
 export const OMEN_FOR: Readonly<Record<string, readonly string[]>> = {
@@ -55,8 +57,15 @@ export const FACTION_TAG: Readonly<Record<string, string>> = {
  * 2026-10-10 オーナー「プレが埋まってる状態で左側は使えはするけど意味ないこと教えてあげた方がいい。サフィ冒涜したいけど、サフィ 1 以外全部
  * 埋まってたらお告げは付けれるけど意味ない (空きに勝手に入る)」。棚のお告げのアイコンの下に出す
  */
-export function omenNote(omen: string, item: StageItem | null): string | null {
+export function omenNote(omen: string, item: StageItem | null, data?: PatchData | null): string | null {
   if (!item) return null;
+  // 勢力のお告げ: 部位に掛けられない / その勢力の MOD がこの部位に無い (セプターなど。骨は打てるが候補は普通の 3 つ。2026-10-11 オーナー)
+  const fac = FACTION_TAG[omen];
+  if (fac) {
+    if (!bossOmenAllowed(item.cls.category)) return tr("武器・宝飾品だけ", "Weapons & jewellery only");
+    const ids = [...item.cls.pools.desecrated.prefixes, ...item.cls.pools.desecrated.suffixes];
+    if (data && !ids.some((id) => data.mods.get(id)?.tags.includes(fac))) return tr("この部位に勢力の MOD が無い (意味なし)", "No such mods on this item class (no effect)");
+  }
   const free = (s: StageSide): boolean => room(item, s);
   const removable = (s: StageSide): number => listOf(item, s).filter((m) => !m.fractured).length;
   const other = (s: StageSide): StageSide => (s === "prefix" ? "suffix" : "prefix");

@@ -56,7 +56,7 @@ const omenTag = computed(() => {
   return t ? tr(t[0], t[1]) : null;
 });
 /** 今のアイテムでは意味が無い / 掛けると打てない (2026-10-10 オーナー「空きに勝手に入るから意味ないこと教えてあげた方がいい」) */
-const omenWarn = computed(() => (props.omen ? omenNote(props.k, shelf.item.value) : null));
+const omenWarn = computed(() => (props.omen ? omenNote(props.k, shelf.item.value, shelf.data.value) : null));
 const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : shelf.held.value === props.k));
 
 /**
