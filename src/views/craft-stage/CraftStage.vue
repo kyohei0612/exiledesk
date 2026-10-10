@@ -41,7 +41,7 @@ import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
-import { isQualitySet, kindOf, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
+import { isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import ShelfButton from "./ShelfButton.vue";
@@ -212,6 +212,12 @@ function setQuality(n: number, tag?: string): void {
   const last = s.log.value[s.log.value.length - 1];
   if (last && isQualitySet(last.out.currency)) s.undo();
   s.use(qualitySetKey(n, keep));
+}
+/** 品質の上限 (プルダウン)。続けて変えた分は 1 手にまとめる */
+function setQualityCap(n: number): void {
+  const last = s.log.value[s.log.value.length - 1];
+  if (last && last.out.currency.startsWith(QUALITY_CAP)) s.undo();
+  s.use(qualityCapKey(n));
 }
 function fractureMod(m: StageMod): void {
   const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0;
@@ -429,7 +435,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex flex-col items-center gap-8 max-md:items-stretch">
         <!-- 品質を変える帯 (アイテムの説明の窓の外、すぐ上。2026-10-10) -->
-        <StageQualityBar v-if="s.item.value && !s.replay.value" :item="s.item.value" class="-mb-6 max-w-[480px]" @quality="setQuality" />
+        <StageQualityBar v-if="s.item.value && !s.replay.value" :item="s.item.value" class="-mb-6 max-w-[480px]" @quality="setQuality" @cap="setQualityCap" />
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed"

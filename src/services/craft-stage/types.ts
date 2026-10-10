@@ -61,6 +61,8 @@ export interface StageItem {
   quality: number;
   /** 品質の種類 (カタリストのタグ。指輪・アミュレットだけ) */
   qualityTag?: string | null;
+  /** 品質の上限を手で決めた値 (品質の帯のプルダウン。エッセンスを毎回打たずに上限を広げて試す。無ければ足し算の上限 qualityFieldMax) */
+  qualityCap?: number | null;
   /** ソケットの数 (アーティファサー、ヴァール) */
   sockets?: number;
   corrupted: boolean;

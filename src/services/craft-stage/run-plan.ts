@@ -129,6 +129,7 @@ export function stepJa(currency: string, item: StageItem): string {
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
   if (isUnsocket(currency)) return `ルーンを外す (${currency.slice(UNSOCKET_PREFIX.length)} 番目のソケット)`;
   if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `品質を ${n}% に${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
+  if (currency.startsWith("qcap:")) return `品質の上限を ${currency.slice(5)}% に`;
   if (isRune(currency)) {
     // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
     const n = parseRuneKey(currency)?.socket;
@@ -150,6 +151,7 @@ export function stepEn(currency: string): string | null {
   if (currency === "salvage") return "Salvage";
   if (isUnsocket(currency)) return `Remove rune (socket ${currency.slice(UNSOCKET_PREFIX.length)})`;
   if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `Set quality to ${n}%${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
+  if (currency.startsWith("qcap:")) return `Set max quality to ${currency.slice(5)}%`;
   const rk = isRune(currency) ? parseRuneKey(currency) : null;
   if (rk) return rk.socket ? `${rk.en} (socket ${rk.socket})` : rk.en;
   return null;

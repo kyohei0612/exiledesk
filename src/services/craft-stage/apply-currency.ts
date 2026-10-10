@@ -32,12 +32,12 @@ const INFUSABLE = /^(Rings|Amulets|Body_Armours|Helmets|Gloves|Boots|Shields|Buc
 export function qualityFieldMax(item: StageItem): number {
   return maxQualityOf(item) + (INFUSABLE.test(item.cls.category) ? INFUSER_OVER : 0);
 }
-/**
- * 品質の欄で手で決められる上限 (「最大」より上にも上げられるが、ゲームに実在する値まで。2026-10-10 オーナー「100% はねぇだろ」)。
- * 宝飾品 75% = 洗練されたブリーチの指輪 45 + 品質の最大値のエッセンス 20 + インフューザー 10 (取引所の指輪の上限)、ほか 30% (取引所の防具・武器の上限)
- */
-export function qualityHardMax(item: StageItem): number {
-  return Math.max(qualityFieldMax(item), ["Rings", "Amulets", "Belts"].includes(item.cls.category) ? 75 : 30);
+/** 品質の上限を手で決める手 (`qcap:40`)。品質の帯のプルダウン (2026-10-10 オーナー「エッセンス打つのが面倒な人はプルダウンで上限上げてね」) */
+export const QUALITY_CAP = "qcap:";
+export const qualityCapKey = (n: number): string => `${QUALITY_CAP}${n}`;
+/** 今の品質の上限: 手で決めた値があればそれ、無ければ足し算 (ベース + 品質の最大値の MOD + インフューザー) */
+export function qualityCapOf(item: StageItem): number {
+  return item.qualityCap ?? qualityFieldMax(item);
 }
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
@@ -156,9 +156,13 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   if (isRune(currency)) return applyRune(item, currency, data);
   if (isUnsocket(currency)) return applyUnsocket(item, currency);
   // 品質を手で決める (アイテムのカードの品質の欄。2026-10-10 要望「品質欄を付けて防御値がシミュレーションできると便利」)。費用 0、コラプト後も試せる
+  if (currency.startsWith(QUALITY_CAP)) {
+    const cap = Math.max(0, Number(currency.slice(QUALITY_CAP.length)) || 0);
+    return { applied: true, item: { ...item, qualityCap: cap, quality: Math.min(item.quality, cap) }, added: [], removed: [] };
+  }
   if (isQualitySet(currency)) {
     const [num, tag] = currency.slice(QUALITY_SET.length).split(":");
-    const n = Math.max(0, Math.min(qualityHardMax(item), Number(num) || 0));
+    const n = Math.max(0, Math.min(qualityCapOf(item), Number(num) || 0));
     return { applied: true, item: { ...item, quality: n, ...(tag ? { qualityTag: tag } : {}) }, added: [], removed: [] };
   }
   if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, tr("聖別したアイテムには使えない", "Can't modify a Sanctified item"));
