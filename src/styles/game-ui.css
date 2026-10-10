@@ -128,37 +128,6 @@
   opacity: 0.85;
 }
 
-/* 画面の題 (窓の題の帯 + 真ん中の飾り) */
-.g-titlebar {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: 46px;
-  background:
-    url("/ui-art/title-l.webp") left top / auto 100% no-repeat,
-    url("/ui-art/title-r.webp") right top / auto 100% no-repeat,
-    url("/ui-art/title-m.webp") left top / auto 100% repeat-x;
-}
-.g-titlebar::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -10px;
-  width: 340px;
-  height: 84px;
-  transform: translateX(-50%);
-  background: url("/ui-art/title-c.webp") center / contain no-repeat;
-  pointer-events: none;
-}
-.g-titlebar > * {
-  position: relative;
-  font-family: var(--exile-font-family-brush);
-  font-size: 22px;
-  letter-spacing: 0.2em;
-  color: var(--exile-color-text-title);
-  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.9), 0 0 18px rgba(255, 200, 110, 0.35);
-}
-
 /* 名前・見出しの字 */
 .g-antique { font-family: var(--exile-font-family-antique); }
 /*

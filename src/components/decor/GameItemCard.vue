@@ -75,7 +75,8 @@ const position = computed(() => {
   // 2026-10-10 オーナー「カードの位置もっと右、余裕持って空けないと被る、アイコンの右上に出してんのかな」。上に入らなければ下、右に入らなければ左
   const box = hoverStack.layers.value.find((l) => l.key === props.layerKey)?.box;
   if (box) {
-    const GAP = 14;
+    // アイコンとの間は少しだけ (隣のアイコンも押せるので近くていい。2026-10-10 オーナー「右上のカード、もっと距離近づけてもおｋ」)
+    const GAP = 4;
     let bl = box.right + GAP;
     if (bl + w + EDGE > vw) bl = Math.max(EDGE, box.left - w - GAP);
     let bt = box.top - h - 6;

@@ -6,7 +6,7 @@
   種類は poe2db どおり STR / DEX / INT ごと、素の数値つき、ルーンフォージ等は出さない。フラスコ・スキルジェムは 2026-10-09 から出さない。選ぶと閉じる。
 -->
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import { baseCatalog, classLabel } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
@@ -22,26 +22,24 @@ const current = computed(() => (props.data ? (baseCatalog(props.data, true).find
 const open = ref(!!props.unpicked);
 // ベースが決まったら閉じる (レシピを呼んだ時も。2026-10-09 レビュー: 一覧が開いたままで打ち方の段が画面の下に隠れた)
 watch(() => props.unpicked, (v) => { open.value = !!v; });
+const everOpen = ref(open.value);
+watch(open, (v) => { if (v) everOpen.value = true; });
 const head = ref<HTMLElement | null>(null);
 /**
- * 選んだら閉じる。閉じて一覧の分だけ縮んでも、今のベースの行は画面の同じ所に残す (2026-10-09 オーナー「選んだ瞬間予想より下にばっと移動する、
- * 固定でおｋ」: 一覧の下の方で選ぶと、縮んだ分だけ画面が下の段へ飛んでいた)。行が画面の上に隠れていた時は、行を画面の上に出す
+ * 選んだら閉じる。ベースの行が画面の上に隠れていたら、先にそこまでぬるっと送ってから一覧を縮める
+ * (2026-10-10 オーナー「ベース選んでから移る時がワープしてるように見える」: 縮むのと同時にページの高さが減り、スクロールの位置が切り詰められて一気に飛んでいた)。
+ * 行が見えていれば送らずに縮める (行は一覧の上にあるので動かない)
  */
-function choose(en: string): void {
+async function choose(en: string): Promise<void> {
   const el = head.value;
-  const before = el?.getBoundingClientRect().top ?? null;
+  const box = el ? scrollBoxOf(el) : null;
+  if (el) {
+    const top = el.getBoundingClientRect().top;
+    const want = box ? box.getBoundingClientRect().top + 8 : 8;
+    if (top < want) await glideBy(box, top - want, 320);
+  }
   open.value = false;
   if (en !== props.base || props.unpicked) emit("pick", en);
-  if (!el || before == null) return;
-  void nextTick(() => {
-    if (!el.isConnected) return;
-    const box = scrollBoxOf(el);
-    // 縮んだ分の戻しは一気に (見た目は動かない)。行が画面の上に隠れていた時の送りだけ滑らせる (2026-10-10 オーナー「強制的に飛ぶ、スクロールが必要な時だけ高速でスライド」)
-    const keep = el.getBoundingClientRect().top - before;
-    if (Math.abs(keep) > 1) (box ?? window).scrollBy({ top: keep, behavior: "instant" as ScrollBehavior });
-    const want = box ? box.getBoundingClientRect().top + 8 : 8;
-    if (before < want) glideBy(box, before - want);
-  });
 }
 </script>
 
@@ -55,12 +53,19 @@ function choose(en: string): void {
         <b class="font-display text-[15px] tracking-wide text-[var(--color-rarity-rare)]">{{ tr(current?.ja ?? base, base) }}</b>
         <span v-if="current" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ classLabel(current.cls) }}</span>
       </template>
-      <span class="ml-1 inline-flex items-center gap-0.5 text-[12px] text-[var(--exile-color-text-tertiary)] group-hover:text-[var(--exile-color-text-secondary)]">{{ open ? tr("閉じる", "Close") : tr("変える", "Change") }}<Icon :name="open ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></span>
+      <!-- ゲームの絵のボタンで目立たせる (2026-10-10 オーナー「ベース変更見づらいよね」: 灰色の小さい「変える」だった) -->
+      <span class="g-btn sm ml-2 inline-flex items-center gap-1">{{ open ? tr("閉じる", "Close") : tr("ベースを変える", "Change base") }}<Icon :name="open ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></span>
     </button>
-    <div v-if="open" class="mt-2 rounded-lg bg-black/30 p-4">
-      <!-- 未選択の時は前のベース・種類を選んだ状態にしない (2026-10-05 オーナー「リセットの時ベース未選択から始めんかい」) -->
-      <!-- フラスコ・スキルジェムは出さない (2026-10-09 オーナー「フラスコとスキルジェムはいらんね」) -->
-      <BaseCatalog :data="data" :selected="unpicked ? '' : base" @pick="choose" />
+    <!-- 開け閉めは高さを 0.3 秒で伸び縮み (パッと消える・出るのが「ワープみたい」。2026-10-10 オーナー「ぬるっと動かして、特にベース選択後」)。
+         一度開いたら中身は残す (閉じる動きの間も見えるように) -->
+    <div class="grid transition-[grid-template-rows,opacity] duration-300 ease-out" :class="open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'" :inert="!open">
+      <div class="min-h-0 overflow-hidden">
+        <div v-if="everOpen" class="mt-2 rounded-lg bg-black/30 p-4">
+          <!-- 未選択の時は前のベース・種類を選んだ状態にしない (2026-10-05 オーナー「リセットの時ベース未選択から始めんかい」) -->
+          <!-- フラスコ・スキルジェムは出さない (2026-10-09 オーナー「フラスコとスキルジェムはいらんね」) -->
+          <BaseCatalog :data="data" :selected="unpicked ? '' : base" @pick="choose" />
+        </div>
+      </div>
     </div>
   </div>
 </template>

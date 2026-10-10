@@ -22,6 +22,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { toCss } from "../../utils/zoom";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import StageItemCard from "./StageItemCard.vue";
+import StageQualityBar from "./StageQualityBar.vue";
 import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
 import StageAimPicker from "./StageAimPicker.vue";
@@ -289,7 +290,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 </script>
 
 <template>
-  <div class="h-full overflow-auto p-4 @container" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
+  <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
+  <div class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
     <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
       <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
@@ -421,10 +423,14 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
     <!-- 手で打つ画面と行き来しても入れた物が残るように、一度ベースを選んだら消さずに隠す (2026-10-05 オーナー「ステージと実験行き来できるように、行き来したらもっかい最初からになった」) -->
     <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
+    <!-- ベースを選んだ後に出る中身はふわっと出す (2026-10-10 オーナー「切り替えがワープみたい」) -->
+    <Transition name="stage-fade" appear>
     <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex flex-col items-center gap-8 max-md:items-stretch">
-        <div ref="cardEl" class="relative" :class="[fxCls, fx?.text ? 'stage-fx-on' : '']" :style="fx ? { '--fx': fx.color } : undefined">
+        <!-- 品質を変える帯 (アイテムの説明の窓の外、すぐ上。2026-10-10) -->
+        <StageQualityBar v-if="s.item.value && !s.replay.value" :item="s.item.value" class="-mb-6 max-w-[480px]" @quality="setQuality" />
+        <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed"
           :item="s.item.value!"
@@ -436,7 +442,6 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           :removable="!s.replay.value"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @fracture="fractureMod"
-          @quality="setQuality"
           @socket="useAtSocket"
           @unsocket="(n: number) => s.use(unsocketKey(n))"
         />
@@ -489,9 +494,10 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
       </div>
     </div>
+    </Transition>
     <!-- このベースに付く MOD (StageModList.vue、2026-09-29) -->
     <!-- シミュレーションでは ① 狙う MOD の枠の中に出す (StageSimPanel.vue) -->
-    <StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" />
+    <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" /></Transition>
 
     <!-- 押した所の波紋と、吸い込まれるアイコン -->
     <template v-if="fx && fx.kind !== 'shake'">

@@ -104,17 +104,8 @@ const expanded = ref<string | null>(null);
  * スクロールによっては見えない、下に開こう」: 上で開いていた行が閉じた分だけ押した行が上へずれ、表が見えなくなっていた)
  */
 function toggleRow(key: string, ev: MouseEvent): void {
-  const el = ev.currentTarget as HTMLElement;
-  const before = el.getBoundingClientRect().top;
-  expanded.value = expanded.value === key ? null : key;
-  void nextTick(() => {
-    // 送っている枠 (シミュレーションの 3 の中なら一覧の枠、手で打つ時は画面) を同じだけ戻す
-    const box = el.closest(".overflow-auto") as HTMLElement | null;
-    const shift = el.getBoundingClientRect().top - before;
-    // 送る枠が無い (スマホはページごと送る) 時は window を送る
-    if (shift) (box ?? window).scrollBy({ top: shift });
-    // 開いた表がはみ出しても送らない (2026-10-09 オーナー「MOD もなんか移動するときある、スクロールが勝手に。固定でおｋ」)
-  });
+  // 開いた表がはみ出しても送らない (2026-10-09 オーナー「MOD もなんか移動するときある、スクロールが勝手に。固定でおｋ」)
+  keepPlace(ev.currentTarget as HTMLElement, () => { expanded.value = expanded.value === key ? null : key; });
 }
 /**
  * 種類ごとの節 (中身のある物だけ)。各節はプレフィックス / サフィックスの 2 列。

@@ -8,7 +8,8 @@
   並べる物・名前・値段は [[craft-stage-shelf.ts]]、1 つの見た目は [[ShelfButton.vue]]。
 -->
 <script setup lang="ts">
-import { computed, nextTick, ref, useSlots, watch } from "vue";
+import { glideBy, scrollBoxOf } from "../../utils/keep-place";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useSlots, watch } from "vue";
 import ShelfButton from "./ShelfButton.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { useShelf } from "../../state/shelf-context";
@@ -33,32 +34,52 @@ const tab = ref<ShelfTab>(props.initialTab);
  */
 const slots = useSlots();
 const root = ref<HTMLElement | null>(null);
+/**
+ * お告げの欄の置き場: 持っているカレンシーのアイコン (data-key) のすぐ下。アイコンが右寄りなら右端をそろえる。
+ * 今のタブにアイコンが無ければ null (今まで通りタブの下に出す)
+ */
+const anchor = ref<{ style: Record<string, string> } | null>(null);
+function placeAnchor(): void {
+  const k = craftStage.held.value, r = root.value;
+  if (!k || !r) { anchor.value = null; return; }
+  const btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-box]"));
+  if (!btn) { anchor.value = null; return; }
+  const rr = r.getBoundingClientRect(), b = btn.getBoundingClientRect();
+  const top = `${Math.round(b.bottom - rr.top + 4)}px`;
+  anchor.value = b.left - rr.left < rr.width / 2
+    ? { style: { top, left: `${Math.max(0, Math.round(b.left - rr.left - 4))}px` } }
+    : { style: { top, right: `${Math.max(0, Math.round(rr.right - b.right - 4))}px` } };
+}
+let anchorRo: ResizeObserver | null = null;
 let back: { sc: HTMLElement | null; top: number; after: number | null } | null = null;
-const scrollerOf = (el: HTMLElement): HTMLElement | null => {
-  for (let p = el.parentElement; p; p = p.parentElement) {
-    const o = getComputedStyle(p).overflowY;
-    if ((o === "auto" || o === "scroll") && p.scrollHeight > p.clientHeight) return p;
-  }
-  return null; // ページごと送る (スマホ)
-};
 const topOf = (sc: HTMLElement | null): number => (sc ? sc.scrollTop : window.scrollY);
+watch([() => craftStage.held.value, () => tab.value, () => craftStage.item.value], () => void nextTick(placeAnchor), { immediate: true });
+onMounted(() => { if (root.value && typeof ResizeObserver === "function") { anchorRo = new ResizeObserver(() => placeAnchor()); anchorRo.observe(root.value); } });
+onBeforeUnmount(() => anchorRo?.disconnect());
 // 持っている物が替わった時に見る (欄が出たままでも、持ち替えたら送る)
 watch(() => craftStage.held.value, (k, old) => {
   if (k) {
-    void nextTick(() => {
+    // 欄の置き場 (アイコンの下) を先に決めてから測る (決まる前の一瞬だけ棚の一番下に出て、そこへ大きく送っていた)
+    void nextTick(async () => {
+      placeAnchor();
+      await nextTick();
       if (!slots.held) return;
-      const box = root.value?.querySelector<HTMLElement>("[data-held-box]");
+      // 行の下に重ねて出す欄 (held-pop) は中身で測る
+      const box = root.value?.querySelector<HTMLElement>("[data-held-box] .held-pop-in") ?? root.value?.querySelector<HTMLElement>("[data-held-box]");
       if (!box) return;
       const r = box.getBoundingClientRect();
       if (r.bottom <= window.innerHeight && r.top >= 0) return; // もう見えている
-      const sc = scrollerOf(box);
+      const sc = scrollBoxOf(box);
       if (!back) back = { sc, top: topOf(sc), after: null };
       // スマホの下に固定の帯 (持っている物 → 使う) があれば、その分だけ上に (帯の裏に隠れないように)
       const bar = document.querySelector<HTMLElement>(".fixed.bottom-0");
       box.style.scrollMarginBottom = `${(bar?.offsetHeight ?? 0) + 8}px`;
-      // なめらかに送る指定は環境によって動かなかったので、すぐ送る
-      box.scrollIntoView({ block: "nearest", behavior: "instant" as ScrollBehavior });
-      back.after = topOf(back.sc);
+      // 切れている分だけ短く滑らせて送る (一瞬で跳ぶと「画面がめっちゃ動く」。2026-10-10 オーナー。keep-place の glideBy)
+      const pad = (bar?.offsetHeight ?? 0) + 8;
+      const view = sc ? sc.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
+      const d = r.bottom + pad > view.bottom ? r.bottom + pad - view.bottom : r.top < view.top ? r.top - view.top - 8 : 0;
+      void glideBy(sc, d);
+      back.after = topOf(back.sc) + d;
     });
   } else if (old && back) {
     // 打ち終わった・離した: 元の位置へ (自分で動かしていたら戻さない)
@@ -122,20 +143,6 @@ const usableAll = computed(() => {
     ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
   ].filter((x) => x.keys.length);
 });
-/**
- * 持っている物のお告げ (slot "held") は、持った物がある行のすぐ下に出す (2026-10-10 オーナー「お告げが上に出たり下に出たり。
- * 選んだカレンシーの下でいい、次の行に使えるお告げ関係を出して」)。今のタブに持った物が無ければ今まで通りタブの下
- */
-const heldKey = computed(() => craftStage.held.value);
-const holds = (keys: readonly string[]): boolean => !!heldKey.value && keys.includes(heldKey.value);
-const placed = computed(() => {
-  if (!heldKey.value) return false;
-  if (tab.value === "orb") return orbSplit.value.usable.some((g) => holds(g.keys)) || (unusableOpen.value && orbSplit.value.unusable.some((g) => holds(g.keys)));
-  if (tab.value === "usable") return usableAll.value.some((x) => !x.kind && holds(x.keys));
-  if (tab.value === "essence") return essences.value.some((g) => holds(g.keys));
-  if (tab.value === "catalyst") return holds(CATALYSTS);
-  return false;
-});
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
 const TABS = computed(() => [
   { id: "usable" as const, label: `${tr("使用可能", "Usable")} (${usableCount.value})` },
@@ -148,7 +155,7 @@ const TABS = computed(() => [
 </script>
 
 <template>
-  <div ref="root">
+  <div ref="root" class="relative">
     <div class="mb-2 flex flex-wrap gap-1 text-[12px]">
       <button
         v-for="t in TABS"
@@ -169,10 +176,9 @@ const TABS = computed(() => [
         <div class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
           <ShelfButton v-for="k in sec.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
         </div>
-        <div v-if="$slots.held && !sec.kind && holds(sec.keys)" class="mt-2" data-held-box><slot name="held" /></div>
       </div>
       <p v-if="!usableAll.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
-      <div v-if="$slots.held && !placed" class="mt-2" data-held-box><slot name="held" /></div>
+      <div v-if="$slots.held && !anchor" class="mt-2" data-held-box><slot name="held" /></div>
     </div>
 
     <!-- 使える物を前に、使えない物は線の下に (2026-10-05)。持っているカレンシーのお告げは使える物の直後 -->
@@ -182,11 +188,10 @@ const TABS = computed(() => [
           <div class="flex flex-wrap gap-1.5 max-md:contents">
             <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
           </div>
-          <div v-if="$slots.held && holds(g.keys)" class="basis-full" data-held-box><slot name="held" /></div>
         </template>
         <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
       </div>
-      <div v-if="$slots.held && !placed" class="mt-2" data-held-box><slot name="held" /></div>
+      <div v-if="$slots.held && !anchor" class="mt-2" data-held-box><slot name="held" /></div>
       <template v-if="orbSplit.unusable.length">
         <!-- 2026-10-10 動きの揃え 3: 開く / たたむ は Disclosure に -->
         <div class="mb-1 mt-3 border-t border-white/10 pt-2 max-md:flex max-md:min-h-10 max-md:items-center">
@@ -197,7 +202,6 @@ const TABS = computed(() => [
             <div class="flex flex-wrap gap-1.5 max-md:contents">
               <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
             </div>
-            <div v-if="$slots.held && holds(g.keys)" class="basis-full" data-held-box><slot name="held" /></div>
           </template>
         </div>
       </template>
@@ -208,14 +212,12 @@ const TABS = computed(() => [
         <div class="flex flex-wrap gap-1.5 max-md:contents">
           <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
         </div>
-        <div v-if="$slots.held && holds(g.keys)" class="basis-full" data-held-box><slot name="held" /></div>
       </template>
       <p v-if="!essences.length" class="text-[12px] opacity-50">{{ tr("このベースに使えるエッセンスはありません", "No essences for this base") }}</p>
     </div>
 
     <div v-else-if="tab === 'catalyst'" class="flex flex-wrap gap-1.5">
       <ShelfButton v-for="k in CATALYSTS" :key="k" :k="k" @pick="emit('hold', $event)" />
-      <div v-if="$slots.held && holds(CATALYSTS)" class="basis-full" data-held-box><slot name="held" /></div>
     </div>
 
     <div v-else-if="tab === 'rune'">
@@ -261,6 +263,16 @@ const TABS = computed(() => [
       </div>
     </div>
     <!-- オーブ以外のタブ (エッセンス等) で持った時は一番下 (お告げのタブは棚そのものがお告げなので出さない) -->
-    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !placed" class="mt-3" data-held-box><slot name="held" /></div>
+    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !anchor" class="mt-3" data-held-box><slot name="held" /></div>
+    <!-- 持っている物のお告げは、そのアイコンのすぐ下に重ねて出す (棚は押し下げない。2026-10-10 オーナー「アイコンの下まで持ってきていい」) -->
+    <div v-if="$slots.held && anchor" class="held-anchor" :style="anchor.style" data-held-box><div class="held-pop-in"><slot name="held" /></div></div>
   </div>
 </template>
+
+<style scoped>
+/* 持っている物のお告げの欄は、そのアイコンのすぐ下に重ねて出す (下の行を押し下げない)。2026-10-10 オーナー「毎回画面がめっちゃ動く」「アイコンの下まで持ってきていい」 */
+.held-anchor { position: absolute; z-index: 30; max-width: min(640px, 100%); }
+.held-pop-in {
+  background: #0d0b10; border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(167, 139, 250, 0.35);
+}
+</style>

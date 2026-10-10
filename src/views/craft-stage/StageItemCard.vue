@@ -14,18 +14,16 @@ import { fmtChance, RARE_CHANCE } from "../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { computed } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
-import { CATALYSTS, qualityLabelOf } from "../../services/htc/quality";
+import { qualityLabelOf } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import { isFlask, isGem, reqText } from "../../services/craft-stage/stage-bases";
 import { propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
-import { baseArt } from "../../services/craft-stage/base-art";
-import { uniqueArt } from "../../services/assets/unique-art";
 import { boostedMod, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
-import { qualityFieldMax } from "../../services/craft-stage/apply-currency";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
+import { classLabel } from "../../services/items/base-catalog";
 import { tagLabel } from "../../services/mods/tag-ja";
 import { craftStage } from "../../state/craft-stage";
 
@@ -41,7 +39,7 @@ const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; quality: [n: number, tag?: string] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod] }>();
 /** ルーンを外す (2026-10-09): ソケットの右クリック、またはルーンの効き目の行のクリック。手で組んでいる時だけ (removable) */
 function onUnsocket(e: MouseEvent, n: number): void {
   if (!props.removable || !props.item.augments?.[n - 1]) return;
@@ -60,17 +58,19 @@ function onSocket(e: MouseEvent, n: number): void {
 }
 
 /** ゲームのレアリティの色 */
+// 本文のまわりはゲームと同じくレアリティの色の細い線 (外の太い飾り枠は無し。名前の枠がそのまま窓の一番上。2026-10-10 オーナー「上いらん」)
 const TONE = {
-  normal: { name: "text-rarity-normal", frame: "border-[#8a8a8a]/60", head: "from-[#3a3a3a]/60" },
-  magic: { name: "text-rarity-magic", frame: "border-rarity-magic/60", head: "from-[#22224a]/70" },
-  rare: { name: "text-rarity-rare", frame: "border-rarity-rare/60", head: "from-[#4a4020]/70" },
-  unique: { name: "text-rarity-unique", frame: "border-rarity-unique/70", head: "from-[#4a2a10]/70" },
+  normal: { name: "text-rarity-normal", frame: "border-[#6a6a6a]" },
+  magic: { name: "text-rarity-magic", frame: "border-[#3d3d8a]" },
+  rare: { name: "text-rarity-rare", frame: "border-[#7a6a35]" },
+  unique: { name: "text-rarity-unique", frame: "border-[#8a5a30]" },
 } as const;
 const tone = computed(() => TONE[props.item.rarity]);
-const RARITY_JA = { normal: "ノーマル", magic: "マジック", rare: "レア", unique: "ユニーク" } as const;
-const RARITY_EN = { normal: "Normal", magic: "Magic", rare: "Rare", unique: "Unique" } as const;
+/** 名前の枠は 1 行 (ベース名) にそろえる。ユニークだけ 2 行 (名前 + ベース)。2026-10-10 オーナー「1 行でいい、ちゃんとしたベース名で統一」 */
+const twoLine = computed(() => !!props.item.unique);
 /** 種類の言葉 (フラスコ・ジェムはレアリティの代わりに出す) */
-const kindJa = computed(() => (isGem(props.item.cls.category) ? tr("スキルジェム", "Skill Gem") : isFlask(props.item.cls.category) ? tr("フラスコ", "Flask") : tr(RARITY_JA[props.item.rarity], RARITY_EN[props.item.rarity])));
+// ゲームと同じく装備の種類 (アミュレット・鎧 …)。レアリティは名前の枠の色で分かる (2026-10-10)
+const kindJa = computed(() => (isGem(props.item.cls.category) ? tr("スキルジェム", "Skill Gem") : isFlask(props.item.cls.category) ? tr("フラスコ", "Flask") : classLabel(props.item.cls.category, false)));
 /**
  * ベースの数値 (品質・ローカル MOD・ルーンを反映、stage-props.ts)。変わった値は青 (ゲームと同じく増えた数値は青)
  */
@@ -86,13 +86,9 @@ const chances = computed(() => {
 });
 const chanceOf = (m: { modId: string }): number | null => chances.value.get(m.modId) ?? null;
 const implicits = computed(() => rollLines(props.item, (htcBaseInfo()[props.item.base]?.implicits ?? []).map(nameOf), "implicit"));
-/** 絵: ユニークになったらユニークの見た目、それ以外はベースの絵 */
-const art = computed(() => (props.item.unique ? uniqueArt(props.item.unique.en) : null) ?? baseArt(props.item.base));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
-const maxQ = computed(() => qualityFieldMax(props.item));
-const jewel = computed(() => ["Rings", "Amulets", "Belts"].includes(props.item.cls.category));
 /** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
@@ -125,7 +121,7 @@ const rows = computed(() =>
 
 <template>
   <div
-    class="g-item relative w-[480px] max-md:w-full select-none bg-black/80 bg-clip-padding shadow-[0_0_30px_rgba(0,0,0,0.6)] transition"
+    data-stage-card class="st-card relative w-[480px] max-md:w-full select-none border bg-[#050506] shadow-[0_0_30px_rgba(0,0,0,0.6)] transition"
     :style="{ ...(minH ? { minHeight: `${minH}px` } : {}), ...(width ? { width: `${width}px` } : {}) }"
     :class="[tone.frame, holding ? 'cursor-pointer ring-2 ring-amber-400/70 hover:ring-amber-300' : '', item.destroyed ? 'stage-destroyed' : '']"
     @click="holding && emit('use')"
@@ -138,33 +134,20 @@ const rows = computed(() =>
     <div v-if="item.disposed" class="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-lg bg-black/65">
       <p class="rotate-[-8deg] rounded border-2 border-amber-300/80 px-4 py-1 text-2xl font-bold tracking-[0.2em] text-amber-200">{{ item.disposed === "disenchant" ? tr("解呪した", "Disenchanted") : tr("サルベージした", "Salvaged") }}</p>
     </div>
-    <!-- 見出し -->
-    <div class="rounded-t-md bg-gradient-to-b to-transparent px-4 text-center" :class="[tone.head, compact ? 'pb-1 pt-2' : 'pb-2 pt-3', item.disposed ? 'stage-crumble' : '']">
-      <!-- ゲーム内と同じ絵 (2026-09-29 オーナー「クラフトステージ上とか」) -->
-      <img v-if="art" :src="art" alt="" class="mx-auto mb-1 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" :class="compact ? 'h-14' : 'h-20'" draggable="false" />
-      <!-- stage-item-name: 付いた瞬間の大きな文字が出ている間は薄くする (POE2Tube 要望 ㉚-1、style.css の .stage-fx-on) -->
-      <p v-if="item.unique" class="stage-item-name text-lg font-bold" :class="tone.name">{{ nameOf(item.unique) }}</p>
-      <p class="stage-item-name" :class="item.unique ? ['text-[15px]', tone.name] : ['text-lg font-bold', tone.name]">{{ baseNameOf(item) }}</p>
-      <p v-if="!compact" class="stage-item-name text-[11px] opacity-60">{{ item.base }}</p>
+    <!-- 見出し: ゲームのアイテムの説明と同じ名前の枠 (クライアントの ItemsHeader の絵、ベースのカードと同じ ihead-*)。窓の中に絵は出さない
+         (2026-10-10 オーナー「アイテムのぞいた時は上、ここにアイコンとか出てたらダメじゃね」。ユニークは 2 行 = 名前 + ベース) -->
+    <div class="st-head" :class="[`st-${item.rarity}`, twoLine ? 'two' : 'one', item.disposed ? 'stage-crumble' : '']">
+      <p v-if="item.unique" class="st-name" :class="tone.name">{{ nameOf(item.unique) }}</p>
+      <p class="st-name" :class="tone.name">{{ baseNameOf(item) }}</p>
     </div>
     <!-- 解呪 / サルベージで崩れる (要望 ⑰-21) -->
     <div class="space-y-1 px-4 text-center text-[13px]" :class="[compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">
-      <p class="text-[12px] text-white/50">{{ kindJa }}<template v-if="!isGem(item.cls.category)"> · {{ tr("アイテムレベル", "Item Level") }} <span class="text-white">{{ item.itemLevel }}</span></template></p>
+      <!-- ゲームと同じ並び: 種類 → アイテムレベル → 必要 (英語のベース名はここに小さく) -->
+      <p class="pt-1 text-[12px] text-white/50">{{ kindJa }}<span v-if="!compact" class="ml-1.5 text-[11px] opacity-60">{{ item.base }}</span></p>
+      <p v-if="!isGem(item.cls.category)" class="text-[12px] text-white/50">{{ tr("アイテムレベル", "Item Level") }}: <span class="text-white">{{ item.itemLevel }}</span></p>
       <!-- 要求 (要望 ⑱-3) -->
       <p v-if="reqText(item)" class="text-[12px] text-white/50">{{ reqText(item) }}</p>
-      <!-- 品質: 手で打つ画面は − / + で決められる。宝飾品だけ (選んだ種類の MOD が伸びる。2026-10-10 オーナー「品質は装備はいらんね、つけても意味ないから」) -->
-      <p v-if="removable && jewel" class="flex items-center justify-center gap-1.5 text-[12px] text-white/50">
-        {{ qualityLabel }}:
-        <button type="button" class="g-plain grid size-6 place-items-center rounded border border-white/15 text-white/70 hover:bg-white/10 disabled:opacity-30" :disabled="item.quality <= 0" :title="tr('品質 −1%', 'Quality −1%')" @click.stop="emit('quality', item.quality - 1)">−</button>
-        <span class="w-10 text-center tabular-nums" :class="item.quality > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ item.quality }}%</span>
-        <button type="button" class="g-plain grid size-6 place-items-center rounded border border-white/15 text-white/70 hover:bg-white/10 disabled:opacity-30" :disabled="item.quality >= maxQ" :title="tr(`品質 +1% (上限 ${maxQ}%)`, `Quality +1% (max ${maxQ}%)`)" @click.stop="emit('quality', item.quality + 1)">+</button>
-        <!-- 宝飾品は品質の種類 (触媒と同じ。選んだ種類のタグの MOD が伸びる。2026-10-10 オーナー「何で品質効かなくなったの」: 種類が無いと伸びなかった) -->
-        <select v-if="jewel" class="ml-1 rounded border border-white/15 bg-black/60 px-1 py-0.5 text-[11px] text-white/80" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @click.stop @change="emit('quality', Math.max(item.quality, 1), ($event.target as HTMLSelectElement).value)">
-          <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
-          <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
-        </select>
-      </p>
-      <p v-else-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
+      <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
       <p v-for="r in baseRows" :key="r.key" class="text-[12px] text-white/50">{{ r.label ? `${r.label}: ` : "" }}<span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
       <!-- ソケット (熟練工のオーブ) の絵 -->
@@ -200,7 +183,7 @@ const rows = computed(() =>
           v-for="r in rows"
           :key="isNew(r.m) ? `${r.m.modId}#${flashKey}` : r.m.modId"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
-          :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? 'stage-mod-new' : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
+          :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で消える候補 (${doomed!.length} つのうち 1 つ)`, `May be removed by this use (1 of ${doomed!.length})`) : tr('この手で消える', 'Removed by this use')) : removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
           @contextmenu="removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >
@@ -236,3 +219,23 @@ const rows = computed(() =>
     <p v-if="holding" class="absolute -bottom-6 left-0 right-0 text-center text-[11px] text-amber-200/90"><span class="max-md:hidden">{{ tr("押すと使う (右クリック / Esc で手放す)", "Click to use (right-click / Esc to drop)") }}</span><span class="md:hidden">{{ tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") }}</span></p>
   </div>
 </template>
+
+<style scoped>
+/* 名前の枠: ゲームの絵 (GameItemCard と同じ ihead-*、scripts/build-ui-art-from-client.mjs)。1 行は高さ 56 の絵、2 行は 88 の絵 */
+.st-head {
+  /* 絵はベース・ジェムのカード (GameItemCard) と同じ縮め方 (左右 36px)。元の大きさ (56px) だと画面の拡大で絵がぼやけて「貼った画像」に見えた
+     (2026-10-10 オーナー「この部分画像はってあるみたいでブス」) */
+  border-style: solid; border-image-slice: 0 56 fill; border-image-width: 0 36px; border-image-repeat: stretch;
+  min-height: 40px; display: flex; flex-direction: column; justify-content: center; padding: 5px 44px; text-align: center;
+}
+.st-head.two { border-image-slice: 0 80 fill; border-image-width: 0 49px; min-height: 56px; padding: 6px 56px; }
+/* 字はゲームのアイテムの説明と同じく明朝 (ベース・ジェムのカード GameItemCard と同じ) */
+.st-card { font-family: "Noto Serif JP", "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", Georgia, serif; }
+.st-name { font-weight: 700; font-size: 18px; letter-spacing: 0.04em; line-height: 1.3; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9); }
+.st-normal { border-image-source: url("/ui-art/ihead-normal.webp"); }
+.st-magic { border-image-source: url("/ui-art/ihead-magic.webp"); }
+.st-rare.one { border-image-source: url("/ui-art/ihead-rare-1.webp"); }
+.st-rare.two { border-image-source: url("/ui-art/ihead-rare.webp"); }
+.st-unique.one { border-image-source: url("/ui-art/ihead-unique-1.webp"); }
+.st-unique.two { border-image-source: url("/ui-art/ihead-unique.webp"); }
+</style>

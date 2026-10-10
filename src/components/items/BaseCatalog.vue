@@ -118,7 +118,7 @@ function pickFamily(f: Family): void {
   // 属性の札は先頭 (筋力・無印) を選んだ状態で開いて、すぐベースを出す。札は上で切り替える
   // (2026-10-10 オーナー「押したら選ばせるんじゃなく最初から筋力のページ開いて上のタブで切り替え、アイコンと文字が挟まれると目が滑る」)
   cls.value = f.variants.some((v) => v.cls === cls.value) ? cls.value : f.variants[0]!.cls;
-  void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(revealPanel)); });
+  void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(revealPanel))); });
 }
 /**
  * 開いた一覧の下 (「もっと見る」の少し下) が画面から切れている時だけ、そこまで滑らせて送る。見えている時は動かさない。一覧の上が画面の上から出ない所で止める
@@ -134,7 +134,7 @@ function revealPanel(): void {
   const viewTop = box ? box.getBoundingClientRect().top : 0;
   const over = r.bottom + 16 - viewBottom;
   if (over <= 0) return;
-  glideBy(box, Math.min(over, r.top - viewTop - 8));
+  void glideBy(box, Math.min(over, r.top - viewTop - 8));
 }
 onMounted(() => { void nextTick(() => placeUnder(family.value)); });
 function backToFamilies(): void { family.value = null; cls.value = null; }

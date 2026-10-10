@@ -18,6 +18,17 @@ def load(name):
     return im.crop((0, 0, w - 8, h - 8))
 
 
+def fill_gaps(im):
+    """左・中・右を並べた絵の、内側にある透明な列 (切り出しの余白の残り) を隣の列で埋める。
+    放っておくと名前の枠に縦の線が出る (2026-10-10 オーナー「名前のとこのデザインしょぼい」)"""
+    w, h = im.size
+    px = im.load()
+    for x in range(1, w - 1):
+        if all(px[x, y][3] == 0 for y in range(h // 4, 3 * h // 4)):
+            for y in range(h):
+                px[x, y] = px[x - 1, y]
+
+
 def save(im, name):
     im.save(os.path.join(out, name + ".webp"), "WEBP", quality=90, method=6)
 
@@ -89,6 +100,7 @@ for r, n in (("White", "normal"), ("Magic", "magic"), ("Rare", "rare"), ("Unique
     im.alpha_composite(a, (0, 0))
     im.alpha_composite(m, (a.size[0], 0))
     im.alpha_composite(z, (a.size[0] + m.size[0], 0))
+    fill_gaps(im)
     save(im, "ihead-" + n)
     print("ihead-" + n, im.size, "edge", a.size[0])
 for r, n in (("White", "normal"), ("Magic", "magic"), ("Rare", "rare"), ("Unique", "unique"), ("Gem", "gem"), ("Currency", "currency")):

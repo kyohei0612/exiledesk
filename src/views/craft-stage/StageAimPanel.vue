@@ -18,7 +18,7 @@ import Icon from "../../components/ui/Icon.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import { logRecord } from "../../utils/log-record";
-import { keepPlace, scrollToTop } from "../../utils/keep-place";
+import { keepPlace, keepTopOf, scrollToTop } from "../../utils/keep-place";
 import { tr } from "../../i18n/lang";
 
 /** 分析用の記録 (狙い・今のアイテムの MOD と一緒に) */
@@ -84,8 +84,7 @@ watch(() => s.item.value, () => {
   const el = panel.value, before = keepTop;
   keepTop = null;
   if (!el || before == null) return;
-  const d = el.getBoundingClientRect().top - before;
-  if (Math.abs(d) > 1) window.scrollBy({ top: d, behavior: "instant" as ScrollBehavior });
+  keepTopOf(el, before);
 }, { flush: "post" });
 onBeforeUnmount(() => { gen++; clearTimeout(timer); });
 
