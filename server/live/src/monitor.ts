@@ -54,8 +54,6 @@ export function yesterdayJst(now = new Date(), today = false): { since: string; 
   // 9:00 JST = 0:00 UTC。前は「昨日 0〜24 時」で、夜中〜朝の分が 1 日遅れて載っていた
   const nine = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const since = new Date(today ? nine : nine - 86400e3), until = today ? now : new Date(nine), weekSince = new Date(until.getTime() - 7 * 86400e3);
-  const md = (d: Date): string => { const j = new Date(d.getTime() + 9 * 3600e3); return `${j.getUTCMonth() + 1}/${j.getUTCDate()}`; };
-  const hm = (d: Date): string => { const j = new Date(d.getTime() + 9 * 3600e3); return `${j.getUTCHours()}:${String(j.getUTCMinutes()).padStart(2, "0")}`; };
   return { since: since.toISOString(), until: until.toISOString(), weekSince: weekSince.toISOString(), label: today ? "今日のここまで" : "この 24 時間" };
 }
 
