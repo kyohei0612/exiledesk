@@ -16,12 +16,14 @@ it("キャスターの品質 34% でスペルスキルのレベル +3 → +4 (20
   expect(boostedMod(it0, m, data)?.values[0]).toBe(4);
   expect(boostedMod({ ...it0, quality: 20 }, m, data)).toBeNull();
 });
-it("「最大」は足し算 (ベース 20 + 品質の最大値の MOD + インフューザー 10)。手ではそれより上も選べる", () => {
+it("「最大」は足し算 (ベース 20 + 品質の最大値の MOD + インフューザー 10)。手では実在する上限 (宝飾品 75 / ほか 30) まで", () => {
   const ring = startFrom(data, "Gold Ring", 82, {} as never, 1);
   expect(qualityFieldMax(ring)).toBe(30);
   const withEss = applyForce(data, { ...ring, rarity: "rare" }, forceKey("Rings/PerfectEssence_LocalMaximumQuality", null, "e"), () => 0.5).item;
   expect(qualityFieldMax(withEss)).toBe(50);
   expect(qualityFieldMax(startFrom(data, "Heavy Belt", 82, {} as never, 1))).toBe(20);
-  expect(applyCurrency(data, ring, "qset:80:caster", () => 0.5).item.quality).toBe(80);
-  expect(applyCurrency(data, ring, "qset:300", () => 0.5).item.quality).toBe(100);
+  expect(applyCurrency(data, ring, "qset:60:caster", () => 0.5).item.quality).toBe(60);
+  // 手の上限はゲームに実在する値まで (宝飾品 75、ほか 30)
+  expect(applyCurrency(data, ring, "qset:300", () => 0.5).item.quality).toBe(75);
+  expect(applyCurrency(data, startFrom(data, "Champion Cuirass", 82, {} as never, 1), "qset:300", () => 0.5).item.quality).toBe(30);
 });
