@@ -23,12 +23,17 @@ export const QUALITY_SET = "qset:";
 export const qualitySetKey = (n: number, tag?: string | null): string => `${QUALITY_SET}${n}${tag ? `:${tag}` : ""}`;
 export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET);
 /**
- * 品質の欄の上限 = ベースの上限 (普通 20%、ブリーチの指輪などはその値)。20% を超えるのはインフューザーの時だけ
- * (2026-10-10 オーナー「30% はインフューザー、初期位置は 20% 全部」)
+ * 品質の欄の「最大」= 足し算: ベースの上限 (普通 20%、ブリーチの指輪 +20 / 洗練 +25) + 「品質の最大値 +#%」の MOD + ヴァールのインフューザーの +10
+ * (指輪・アミュレット・防具・物理武器。クライアントの説明「上限を最大 10% 超えて」)。洗練されたブリーチの指輪 45 + 20 + 10 = 75 は取引所の上限と同じ。
+ * 2026-10-10 オーナー「上限を固定値にせず合計で伸びるように、マックス値を設定できるだけで、これ以上つけれないってしないで」
  */
+export const INFUSER_OVER = 10;
+const INFUSABLE = /^(Rings|Amulets|Body_Armours|Helmets|Gloves|Boots|Shields|Bucklers|Foci|OneHand_Maces|TwoHand_Maces|Spears|Quarterstaves|Bows|Crossbows|Talismans)/;
 export function qualityFieldMax(item: StageItem): number {
-  return maxQualityOf(item);
+  return maxQualityOf(item) + (INFUSABLE.test(item.cls.category) ? INFUSER_OVER : 0);
 }
+/** 品質の欄で手で決められる上限 (「最大」より上にも上げられる。0〜100) */
+export const QUALITY_HARD_MAX = 100;
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
@@ -148,7 +153,7 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // 品質を手で決める (アイテムのカードの品質の欄。2026-10-10 要望「品質欄を付けて防御値がシミュレーションできると便利」)。費用 0、コラプト後も試せる
   if (isQualitySet(currency)) {
     const [num, tag] = currency.slice(QUALITY_SET.length).split(":");
-    const n = Math.max(0, Math.min(qualityFieldMax(item), Number(num) || 0));
+    const n = Math.max(0, Math.min(QUALITY_HARD_MAX, Number(num) || 0));
     return { applied: true, item: { ...item, quality: n, ...(tag ? { qualityTag: tag } : {}) }, added: [], removed: [] };
   }
   if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, tr("聖別したアイテムには使えない", "Can't modify a Sanctified item"));
