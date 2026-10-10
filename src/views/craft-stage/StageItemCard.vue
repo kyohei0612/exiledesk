@@ -76,7 +76,7 @@ const hint = computed((): string => {
   if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補から発現する MOD を選ぶ", "Choose the mod to reveal below");
   if (hover.value === "mod") return tr("押すと MOD 一覧のその行へ · 右クリックでフラクチャー · × で外す", "Click to find it in the mod list · Right-click to fracture · × to remove");
   if (hover.value === "rune") return tr("右クリックでルーンを外す", "Right-click to remove the rune");
-  return phoneW ? "" : tr("MOD を右クリックでフラクチャー · × で外す · Ctrl+Z で 1 手戻す", "Right-click a mod to fracture · × to remove · Ctrl+Z to undo");
+  return phoneW ? "" : tr("MOD を右クリックでフラクチャー · × で外す · R で 1 手戻す", "Right-click a mod to fracture · × to remove · R to undo");
 });
 /** 名前の枠は 1 行 (ベース名) にそろえる。ユニークだけ 2 行 (名前 + ベース)。2026-10-10 オーナー「1 行でいい、ちゃんとしたベース名で統一」 */
 const twoLine = computed(() => !!props.item.unique);

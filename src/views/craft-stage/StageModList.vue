@@ -102,6 +102,8 @@ const query = ref("");
 const expanded = ref<string | null>(null);
 /** カードから飛んで来た行 (少しの間だけ光らせる) */
 const flashKey = ref<string | null>(null);
+/** この一覧の根 (窓とページの下の 2 つが同時にあるので、行は自分の中から探す) */
+const listEl = ref<HTMLElement | null>(null);
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
 /** カードの MOD を押した: その MOD の行のある節・行を探して開き、一気に送る (ワープ。2026-10-10 オーナー「MOD をクリックしたらその MOD のあるとこまでスクロール」) */
 watch(() => s.modJump.value, (j) => {
@@ -118,7 +120,7 @@ watch(() => s.modJump.value, (j) => {
     // 窓は開いたばかりで中身がまだ並んでいない事があるので 1 枚待つ。済んだら消す (次に Tab で開いた時に同じ行へ飛ばない)
     if (props.overlay) s.modJump.value = null;
     void nextTick(() => requestAnimationFrame(() => {
-      scrollToTop(document.querySelector(`[data-row-key="${CSS.escape(key)}"]`), "auto", "center");
+      scrollToTop(listEl.value?.querySelector(`[data-row-key="${CSS.escape(key)}"]`) ?? null, "auto", "center");
       flashKey.value = key;
       clearTimeout(flashTimer);
       flashTimer = setTimeout(() => (flashKey.value = null), 1400);
@@ -292,7 +294,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 </script>
 
 <template>
-  <section data-mod-list class="@container text-[12px]" :class="props.embedded || props.overlay ? '' : 'g-panel mt-4'">
+  <section ref="listEl" data-mod-list class="@container text-[12px]" :class="props.embedded || props.overlay ? '' : 'g-panel mt-4'">
     <!-- 見出し (押すと畳む) -->
     <div v-if="!props.overlay" role="button" tabindex="0" :aria-expanded="open" class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left" @click="open = !open" @keydown.enter="open = !open">
       <b class="g-sec-title">{{ tr("このベースに付く MOD", "Mods for this base") }}</b>
