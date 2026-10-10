@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import { scrollBoxOf } from "../../utils/keep-place";
 import { toCss } from "../../utils/zoom";
+import { GAP_X, GAP_Y } from "../../utils/anchor-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import ShelfButton from "./ShelfButton.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
@@ -42,9 +43,9 @@ function placeAnchor(): void {
   // 画面の座標は拡大率 (zoom) 込みなので、CSS の px に直してから使う (直さずに使って、拡大率の分だけアイコンに被っていた。2026-10-10 オーナー「座標がおかしい」)
   const rr = r.getBoundingClientRect(), b = btn.getBoundingClientRect();
   const px = (v: number): string => `${Math.round(toCss(v))}px`;
-  const side: Record<string, string> = b.left - rr.left < rr.width / 2 ? { left: px(Math.max(0, b.left - rr.left - 4)) } : { right: px(Math.max(0, rr.right - b.right - 4)) };
+  const side: Record<string, string> = b.left - rr.left < rr.width / 2 ? { left: px(Math.max(0, b.left - rr.left - GAP_X)) } : { right: px(Math.max(0, rr.right - b.right - GAP_X)) };
   // ふだんはアイコンのすぐ下
-  anchor.value = { style: { top: px(b.bottom - rr.top + 4), ...side } };
+  anchor.value = { style: { top: px(b.bottom - rr.top + GAP_Y), ...side } };
   // 下で画面から切れるなら、アイコンのすぐ上に (送らない。2026-10-10 オーナー「スクロール判定は逆の上でおｋ、1 行上とかでいい」)。測り直しはその時の位置で
   void nextTick(() => {
     const pop = r.querySelector<HTMLElement>(".held-anchor .held-pop-in");
@@ -54,9 +55,9 @@ function placeAnchor(): void {
     const bar = window.innerWidth < 768 ? document.querySelector<HTMLElement>(".fixed.bottom-0")?.getBoundingClientRect().height ?? 0 : 0;
     const viewBottom = Math.min(sc ? sc.getBoundingClientRect().bottom : Infinity, window.innerHeight) - bar;
     const pr = pop.getBoundingClientRect();
-    if (pr.bottom <= viewBottom - 4) return;
+    if (pr.bottom <= viewBottom - GAP_Y) return;
     const rr2 = r.getBoundingClientRect(), b2 = btn.getBoundingClientRect();
-    anchor.value = { style: { top: px(b2.top - rr2.top - pr.height - 4), ...side } };
+    anchor.value = { style: { top: px(b2.top - rr2.top - pr.height - GAP_Y), ...side } };
   });
 }
 let anchorRo: ResizeObserver | null = null;

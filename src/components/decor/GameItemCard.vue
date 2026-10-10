@@ -15,6 +15,7 @@
 import { tr } from "../../i18n/lang";
 import Icon from "../ui/Icon.vue";
 import { computed, onBeforeUnmount, provide, ref, watch } from "vue";
+import { sideOf, verticalOf } from "../../utils/anchor-place";
 import { hoverStack } from "../../state/hover-stack";
 import { toCss } from "../../utils/zoom";
 
@@ -73,18 +74,10 @@ const position = computed(() => {
       top: Math.min(Math.max(EDGE, moved.value.top), vh - 40),
     };
   }
-  // アイコンの右上 (カードの下の端をアイコンの上の端に、右に少し空けて)。棚・ベースの一覧のように横に並んだ物を順に見る所。
+  // アイコンの右上 (位置の決まりは anchor-place.ts でお告げの欄と共通。横 4px・縦 6px、入らない向きは同じ距離で裏返す)。棚・ベースの一覧のように横に並んだ物を順に見る所。
   // 2026-10-10 オーナー「カードの位置もっと右、余裕持って空けないと被る、アイコンの右上に出してんのかな」。上に入らなければ下、右に入らなければ左
   const box = hoverStack.layers.value.find((l) => l.key === props.layerKey)?.box;
-  if (box) {
-    // アイコンとの間は少しだけ (隣のアイコンも押せるので近くていい。2026-10-10 オーナー「右上のカード、もっと距離近づけてもおｋ」)
-    const GAP = 4;
-    let bl = box.right + GAP;
-    if (bl + w + EDGE > vw) bl = Math.max(EDGE, box.left - w - GAP);
-    let bt = box.top - h - 6;
-    if (bt < EDGE) bt = Math.min(box.bottom + 6, vh - h - EDGE);
-    return { left: bl, top: Math.max(EDGE, bt) };
-  }
+  if (box) return { left: sideOf(box, w, vw, EDGE), top: verticalOf(box, h, vh, EDGE, "above") };
   let left = props.x + 10;
   if (left + w + EDGE > vw) left = Math.max(EDGE, props.x - w - 10);
   let top = props.y - h / 2;
