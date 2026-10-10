@@ -143,7 +143,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
               <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ v.label }}</button>
             </div>
             <p v-if="!cls" class="py-1 text-[12px] opacity-60">属性を選ぶ</p>
-            <BaseCardGrid v-else :list="list" :selected="selected" :note="note" :max-height="height ?? '440px'" @pick="(en) => emit('pick', en)" />
+            <BaseCardGrid v-else :list="list" :selected="selected" :note="note" fold @pick="(en) => emit('pick', en)" />
           </div>
         </template>
       </div>
@@ -160,6 +160,6 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       </div>
     </template>
     <!-- ② ベースのカード: スマホ (1 段ずつの最後) と名前で探す時はここ -->
-    <BaseCardGrid v-if="query.trim() || (phone && cls)" :list="list" :selected="selected" :note="note" :show-cls="!!query.trim()" :max-height="phone ? 'none' : (height ?? '440px')" @pick="(en) => emit('pick', en)" />
+    <BaseCardGrid v-if="query.trim() || (phone && cls)" :list="list" :selected="selected" :note="note" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" />
   </div>
 </template>
