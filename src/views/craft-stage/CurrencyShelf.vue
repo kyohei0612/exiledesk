@@ -23,15 +23,10 @@ type ShelfTab = "usable" | "orb" | "essence" | "catalyst" | "rune" | "omen";
 /** 最初に開くタブ。エミュレーターもシミュレーターも「使用可能」(2026-10-09 オーナー「エミュレーターではデフォルトで使用可能」「シミュレーターも使用可能からスタート」) */
 const props = withDefaults(defineProps<{ initialTab?: ShelfTab }>(), { initialTab: "usable" });
 const craftStage = useShelf();
-/**
- * 持っているカレンシーに掛けられるお告げの並び (呼ぶ側の slot "held")。オーブのタブでは使える物の並びの直後 (2026-10-05 から。前は「その他」の段の直後)、
- * 他のタブは一番下
- */
 const tab = ref<ShelfTab>(props.initialTab);
 /**
- * 持った物に掛けられるお告げの欄 (slot "held") が出たら、見える所まで送る。打ち終わって欄が消えたら元の位置に戻す
- * (途中で自分で動かしていたら戻さない)。2026-10-09 オーナー「高貴とか選んだらお告げ下に出るけど画面は動かなくて表示されたか分かんないから
- * 下まで表示してあげて、終わったら既定の動きに戻るように」
+ * 持った物に掛けられるお告げの欄 (呼ぶ側の slot "held") は、持ったアイコンを軸に重ねて出す (棚は押し下げない・送らない)。
+ * 今のタブにアイコンが無い時だけ、タブの下に並べて出す
  */
 const root = ref<HTMLElement | null>(null);
 /**
@@ -55,7 +50,9 @@ function placeAnchor(): void {
     const pop = r.querySelector<HTMLElement>(".held-anchor .held-pop-in");
     if (!pop) return;
     const sc = scrollBoxOf(r);
-    const viewBottom = Math.min(sc ? sc.getBoundingClientRect().bottom : Infinity, window.innerHeight);
+    // スマホは画面の下に固定の帯 (持っている物 → 使う) があるので、その上までを見える所とする (2026-10-10 点検)
+    const bar = window.innerWidth < 768 ? document.querySelector<HTMLElement>(".fixed.bottom-0")?.getBoundingClientRect().height ?? 0 : 0;
+    const viewBottom = Math.min(sc ? sc.getBoundingClientRect().bottom : Infinity, window.innerHeight) - bar;
     const pr = pop.getBoundingClientRect();
     if (pr.bottom <= viewBottom - 4) return;
     const rr2 = r.getBoundingClientRect(), b2 = btn.getBoundingClientRect();
@@ -133,7 +130,7 @@ const TABS = computed(() => [
 </script>
 
 <template>
-  <div ref="root" class="relative">
+  <div ref="root" class="relative" data-shelf-root>
     <div class="mb-2 flex flex-wrap gap-1 text-[12px]">
       <button
         v-for="t in TABS"

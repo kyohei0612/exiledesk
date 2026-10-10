@@ -1,4 +1,5 @@
 import { nextTick } from "vue";
+import { toCss } from "./zoom";
 
 /**
  * スクロールまわりの共通の部品 (2026-10-10 オーナー「全体コード整理、スクロール周り余分な奴とか重複」で 1 か所に):
@@ -19,7 +20,8 @@ export function scrollBoxOf(el: Element): HTMLElement | null {
 /** el の画面の高さを before に戻す (枠ごとに一気に。見た目は動かない) */
 export function keepTopOf(el: Element, before: number): void {
   if (!el.isConnected) return;
-  const d = el.getBoundingClientRect().top - before;
+  // 位置の差は画面の座標 (拡大率込み)、スクロール量は CSS の px なので換算する (2026-10-10 点検: 拡大率の分だけ行き過ぎていた)
+  const d = toCss(el.getBoundingClientRect().top - before);
   if (Math.abs(d) > 1) (scrollBoxOf(el) ?? window).scrollBy({ top: d, behavior: "instant" as ScrollBehavior });
 }
 
@@ -46,13 +48,15 @@ export function scrollToTop(el: Element | null | undefined, behavior: ScrollBeha
   const r = el.getBoundingClientRect();
   const view = box ? box.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
   const bar = window.innerWidth < 768 ? (document.querySelector("[data-item-mini]") as HTMLElement | null)?.offsetHeight ?? 0 : 0;
-  const top = view.top + bar + 8;
+  // 固定の見出し (scroll-mt-*) の分は下げる (MOD 一覧の目次で飛ぶと、節の見出しが固定の目次の裏に隠れていた。2026-10-10 点検)
+  const mt = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+  const top = view.top + bar + 8 + mt;
   let d: number;
   if (window.innerWidth < 768 || pcBlock === "start") d = r.top - top;
   else if (pcBlock === "center") d = r.top + r.height / 2 - (view.top + view.bottom) / 2;
   else if (pcBlock === "end") d = r.bottom - view.bottom + 8;
   else d = r.top < top ? r.top - top : r.bottom > view.bottom ? r.bottom - view.bottom + 8 : 0; // nearest
-  if (behavior === "auto" || behavior === "instant") { if (Math.abs(d) > 1) (box ?? window).scrollBy({ top: d, behavior: "instant" as ScrollBehavior }); return; }
+  if (behavior === "auto" || behavior === "instant") { if (Math.abs(d) > 1) (box ?? window).scrollBy({ top: toCss(d), behavior: "instant" as ScrollBehavior }); return; }
   void glideBy(box, d);
 }
 
@@ -61,8 +65,9 @@ export function scrollToTop(el: Element | null | undefined, behavior: ScrollBeha
  * ブラウザの smooth は遅くて途中で他の送りと重なるとカクつくので、自前で 1 本の rAF。動きを減らす設定の時は一気に
  */
 let gliding = 0;
-/** 送り終わったら解ける (途中で別の送りに替わった時も解ける) */
-export function glideBy(box: HTMLElement | null, d: number, ms = 260): Promise<void> {
+/** 送り終わったら解ける (途中で別の送りに替わった時も解ける)。d は画面の座標の差 (拡大率込み)、中で CSS の px に換算する */
+export function glideBy(box: HTMLElement | null, dScreen: number, ms = 260): Promise<void> {
+  const d = toCss(dScreen);
   if (Math.abs(d) < 1) return Promise.resolve();
   const getY = (): number => (box ? box.scrollTop : window.scrollY);
   const setY = (y: number): void => { if (box) box.scrollTop = y; else window.scrollTo(0, y); };

@@ -42,7 +42,8 @@ const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...pro
 const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod] }>();
 /** ルーンを外す (2026-10-09): ソケットの右クリック、またはルーンの効き目の行のクリック。手で組んでいる時だけ (removable) */
 function onUnsocket(e: MouseEvent, n: number): void {
-  if (!props.removable || !props.item.augments?.[n - 1]) return;
+  // 持っている時の右クリックは「手放す」(外の CraftStage に任せる)。2026-10-10 点検: 持ったまま右クリックでルーンが外れていた
+  if (props.holding || !props.removable || !props.item.augments?.[n - 1]) return;
   e.preventDefault();
   e.stopPropagation();
   emit("unsocket", n);
@@ -201,7 +202,7 @@ const rows = computed(() =>
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
           :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で消える候補 (${doomed!.length} つのうち 1 つ)`, `May be removed by this use (1 of ${doomed!.length})`) : tr('この手で消える', 'Removed by this use')) : removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
-          @contextmenu="removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
+          @contextmenu="!holding && removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
           <span class="w-7 shrink-0 text-left text-[12px] font-bold tabular-nums" :class="r.side === 'プレ' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレ" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>

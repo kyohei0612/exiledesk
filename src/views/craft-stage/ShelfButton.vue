@@ -5,12 +5,12 @@
   カレンシー等は「持つ」(持っている物は金の枠)、お告げは「掛ける」。打てない物は灰色。
   2026-09-28 オーナー:
     「お告げとかオンにした時の挙動とかもゲーム内リスペクトで表示させて」→ 掛けたお告げはゲームの有効化と同じく赤金に脈打って「有効」
-    「カレンシー詳細カードは…細かく書いてくれ」→ 0.4 秒乗せると [[StageCurrencyCard.vue]] (公式の説明 + ステージでの動き)
+    「カレンシー詳細カードは…細かく書いてくれ」→ 0.7 秒乗せると [[StageCurrencyCard.vue]] (公式の説明 + ステージでの動き)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount } from "vue";
 import { hoverStack } from "../../state/hover-stack";
-import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
+import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { toCss } from "../../utils/zoom";
 import { shelfTag } from "../../state/craft-stage-help";
@@ -69,7 +69,8 @@ function enter(e: MouseEvent): void {
   if (touchOnly) return;
   let r: { left: number; right: number; top: number; bottom: number } = (e.currentTarget as HTMLElement).getBoundingClientRect();
   // 持っている物はお告げの欄も合わせた範囲の横に出す (欄に重ならないように。2026-10-10 オーナー「被らないようにお告げと表示したらいいだけ」)
-  const pop = !props.omen && craftStage.held.value === props.k ? document.querySelector<HTMLElement>(".held-anchor .held-pop-in")?.getBoundingClientRect() : null;
+  const el = e.currentTarget as HTMLElement;
+  const pop = !props.omen && shelf.held.value === props.k ? el.closest("[data-shelf-root]")?.querySelector<HTMLElement>(".held-anchor .held-pop-in")?.getBoundingClientRect() : null;
   if (pop) r = { left: Math.min(r.left, pop.left), right: Math.max(r.right, pop.right), top: Math.min(r.top, pop.top), bottom: Math.max(r.bottom, pop.bottom) };
   hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
 }

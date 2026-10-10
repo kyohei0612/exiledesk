@@ -41,6 +41,11 @@ export interface HoverLayer {
   pinned: boolean;
   /** 乗せたアイコンの枠 (CSS px)。あればカードをアイコンの右上に出す (同じ行の右隣にかぶらない。2026-10-10) */
   box?: { left: number; right: number; top: number; bottom: number };
+  /**
+   * 見るだけのカード (棚・ベースのアイコン、openRootDelayed)。カードにマウスは入れず (ピン留めも無し)、アイコンから外れたらすぐ消える
+   * (2026-10-10 オーナー「ピン止めいらない、ジェムと同じじゃなくて、アイコン移動したら即消える形で」)
+   */
+  passive?: boolean;
 }
 
 /** 名前 / 下線からカードへ移る間に消えないための待ち (ms) */
@@ -99,7 +104,7 @@ export const hoverStack = {
     if (layers.value.some((l) => !l.pinned)) layers.value = layers.value.filter((l) => l.pinned);
     openTimer = setTimeout(() => {
       openTimer = null;
-      layers.value = [...layers.value.filter((l) => l.pinned), { key: ++seq, payload, x, y, pinned: false, ...(box ? { box } : {}) }];
+      layers.value = [...layers.value.filter((l) => l.pinned), { key: ++seq, payload, x, y, pinned: false, passive: true, ...(box ? { box } : {}) }];
     }, CHILD_OPEN_DELAY);
   },
   /** カードの中の下線から開く (そのカードの上の段) */
@@ -123,6 +128,8 @@ export const hoverStack = {
   leave(): void {
     cancel();
     cancelOpen();
+    // 見るだけのカードはすぐ消す (カードへ移る間を待たない)
+    if (layers.value.some((l) => l.passive && !l.pinned)) { closeUnpinned(); return; }
     timer = setTimeout(closeUnpinned, CLOSE_DELAY);
   },
   /** カードから出た (すぐ閉じる。親のカードへ戻った時は enterLayer が取り消す) */

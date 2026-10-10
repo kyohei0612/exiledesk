@@ -71,7 +71,11 @@ const onMove = (e: MouseEvent) => (mouse.value = { x: toCss(e.clientX), y: toCss
 function onKey(e: KeyboardEvent): void {
   if (e.key === "Escape") s.hold(null);
   // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && (s.mode.value === "hand" || s.replay.value)) { e.preventDefault(); s.undo(); }
+  // 入力欄の中 (MOD 一覧・ベースの検索) と窓を開いている時は、文字の取り消しや窓の物に任せる (2026-10-10 点検: 文字ではなく 1 手戻っていた)
+  const t = e.target as HTMLElement | null;
+  const typing = !!t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
+  const dialog = !!document.querySelector("[role=dialog], [aria-modal=true]");
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !typing && !dialog && (s.mode.value === "hand" || s.replay.value)) { e.preventDefault(); s.undo(); }
 }
 onMounted(() => { window.addEventListener("mousemove", onMove); window.addEventListener("keydown", onKey); });
 onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.removeEventListener("keydown", onKey); s.hold(null); });
@@ -156,7 +160,7 @@ watch(cardEl, (el) => {
 onBeforeUnmount(() => cardIo?.disconnect());
 onMounted(() => window.addEventListener("resize", onResize));
 onBeforeUnmount(() => window.removeEventListener("resize", onResize));
-/** 帯から打った直後の結果 (1.8 秒だけ帯に出す。カードと直前の変化は画面の上で見えないため。2026-10-08 レビュー A1) */
+/** 帯から打った直後の結果 (次の操作か 5 秒まで帯に出す。カードと直前の変化は画面の上で見えないため。2026-10-08 レビュー A1) */
 const barMsg = ref<{ text: string; tone: string } | null>(null);
 let barTimer: ReturnType<typeof setTimeout> | undefined;
 /**
@@ -306,7 +310,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <button type="button" class="min-h-11 rounded-lg bg-rose-500/30 px-3 py-2 font-bold text-rose-50 ring-1 ring-rose-400/70" @click="scrollToReveal">{{ tr("選ぶ ↑", "Choose ↑") }}</button>
       </div>
       <template v-else>
-        <!-- 打った直後は結果を 1 行 (1.8 秒)。その後は持っている物と掛けたお告げ -->
+        <!-- 打った直後は結果 (次の操作か 5 秒まで)。その後は持っている物と掛けたお告げ -->
         <p v-if="barMsg" class="mb-1 line-clamp-2 text-[12px] font-bold leading-snug" :class="barMsg.tone">{{ barMsg.text }}</p>
         <!-- 結果を出している間も、次が打てない理由は出す (「使う」が灰色の訳が見えなかった。2026-10-08 使い倒しテスト) -->
         <p v-if="heldWhy" class="mb-1 truncate text-[12px] text-rose-300">{{ heldWhy }}</p>

@@ -5,7 +5,7 @@
   打てなかった手は理由を薄く出す。手を押すとその手を打った直後に戻る (craftStage.goTo、この後に打てば先の手は捨てる)。先頭の「始め」は 1 手も打っていない状態へ (goToStart)。
 -->
 <script setup lang="ts">
-import { RARE_CHANCE } from "../../utils/format-pct";
+import { fmtChance, RARE_CHANCE } from "../../utils/format-pct";
 import { computed } from "vue";
 import { modText, tr } from "../../i18n/lang";
 import { craftStage, iconOf, stepNameOf, stepOmenOf } from "../../state/craft-stage";
@@ -16,8 +16,6 @@ const RARITY_EN = { normal: "Normal", magic: "Magic", rare: "Rare", unique: "Uni
 const rarityName = (r: keyof typeof RARITY_JA): string => tr(RARITY_JA[r], RARITY_EN[r]);
 const RARITY_CLS = { normal: "text-rarity-normal", magic: "text-rarity-magic", rare: "text-rarity-rare", unique: "text-rarity-unique" } as const;
 const money = (ex: number) => displayCurrency.money(ex);
-/** 付いた瞬間の確率の表示 (小さい物は桁を増やす) */
-const chancePct = (p: number): string => (p >= 0.1 ? `${(p * 100).toFixed(0)}%` : p >= 0.01 ? `${(p * 100).toFixed(1)}%` : p >= 0.0001 ? `${(p * 100).toFixed(2)}%` : "<0.01%");
 /** ルーンをはめた手の中身 (結果 JSON の augment_change、run-plan.ts)。置き換えた物は壊れて戻らない (augment-rules.ts) */
 type AugChange = { socket: number; put: { ja: string; en?: string }; replaced: { ja: string; en?: string } | null; replaced_goes: string | null };
 const augOf = (out: object): AugChange | null => (out as { augment_change?: AugChange }).augment_change ?? null;
@@ -51,7 +49,7 @@ const canGo = (index: number): boolean => !craftStage.replay.value && craftStage
           <span v-if="!s.out.applied" class="ml-1.5 text-rose-300/80">{{ s.out.reason }}</span>
         </p>
         <!-- 付いた瞬間のその段の確率 (2026-10-09 オーナー「このMODは今付けた瞬間に何％の確率で付いたのかが分かるとへーってなる」)。低い物 (0.3% 未満、format-pct.ts の RARE_CHANCE) は金色 -->
-        <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">{{ tr('＋', '+') }} {{ modText(m) }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレ", "Pre") : tr("サフィ", "Suf") }} {{ m.tierName }}</span><span v-if="s.chances?.[m.modId] != null" class="ml-1.5 text-[10px] tabular-nums" :class="s.chances[m.modId]! < RARE_CHANCE ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled at that moment (tier weight ÷ total weight of everything this step could add)')">{{ chancePct(s.chances[m.modId]!) }}</span></p>
+        <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">{{ tr('＋', '+') }} {{ modText(m) }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレ", "Pre") : tr("サフィ", "Suf") }} {{ m.tierName }}</span><span v-if="s.chances?.[m.modId] != null" class="ml-1.5 text-[10px] tabular-nums" :class="s.chances[m.modId]! < RARE_CHANCE ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled at that moment (tier weight ÷ total weight of everything this step could add)')">{{ fmtChance(s.chances[m.modId]!) }}</span></p>
         <p v-for="m in s.removed" :key="'r' + m.modId" class="text-rose-300 line-through">{{ tr('－', '-') }} {{ modText(m) }}</p>
         <p v-if="s.after.enchant && s.after.enchant !== s.before.enchant" class="text-sky-200">{{ tr('＋', '+') }} {{ modText(s.after.enchant) }} <span class="text-[10px] opacity-60">{{ tr("エンチャント", "Enchantment") }}</span></p>
         <template v-if="augOf(s.out)">
