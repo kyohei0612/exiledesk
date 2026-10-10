@@ -6,6 +6,7 @@
  *   blob1 = 印の名前 (open / mode:sim / sim:base / … / error)   blob2 = sid   blob3 = uid
  *   blob4 = 端末 (pc / mobile)   blob5 = どこから (ホスト名 / direct)   blob6 = 国   blob7 = 新規なら "1"   blob8 = 補足 (error の文など)
  */
+import { forgottenUids, notForgotten } from "./forget";
 import type { Env, Fetch } from "./types";
 
 export const DATASET = "exiledesk_events";
@@ -77,7 +78,9 @@ export interface Summary {
 export async function summarize(env: Env, since: string, until: string, weekSince: string, fetchFn: Fetch = fetch): Promise<Summary> {
   const out: Summary = { sessions: 0, users: 0, newSessions: 0, bounce: null, medianMinutes: null, byEvent: new Map(), refs: [], devices: [], countries: [], errors: [], wau: null, warnings: [] };
   const q = async <T,>(query: string): Promise<T[]> => { try { return await sql<T>(env, query, fetchFn); } catch (e) { const w = String(e).slice(0, 160); console.warn("summarize:", w); if (out.warnings.length < 3) out.warnings.push(w); return []; } };
-  const w = range(since, until);
+  // 記録しない端末は集計から除く (forget.ts。Analytics Engine は消せないので WHERE で)
+  const skip = notForgotten(await forgottenUids(env));
+  const w = range(since, until) + skip;
   for (const r of await q<{ n: string; s: number; u: number; c: number }>(`SELECT blob1 AS n, count(DISTINCT blob2) AS s, count(DISTINCT blob3) AS u, SUM(_sample_interval) AS c FROM ${DATASET} WHERE ${w} GROUP BY n`)) {
     out.byEvent.set(r.n, { sessions: Number(r.s), users: Number(r.u), count: Number(r.c) });
   }
@@ -94,7 +97,7 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   const top = async (col: string): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
   out.refs = await top("blob5"); out.devices = await top("blob4"); out.countries = await top("blob6");
   out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'error' GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
-  const wau = await q<{ u: number }>(`SELECT count(DISTINCT blob3) AS u FROM ${DATASET} WHERE ${range(weekSince, until)} AND blob1 = 'open'`);
+  const wau = await q<{ u: number }>(`SELECT count(DISTINCT blob3) AS u FROM ${DATASET} WHERE ${range(weekSince, until)}${skip} AND blob1 = 'open'`);
   if (wau[0]) out.wau = Number(wau[0].u);
   return out;
 }

@@ -16,6 +16,7 @@
  * 見る人が何人いても YouTube / Twitch への問い合わせは 5 分に 1 回なので、無料枠 (Workers 10 万/日、KV 読み 10 万/日・書き 1,000/日、
  * YouTube 1 万点/日) に収まる。アイコン (アバター) は 1 日 1 回だけ取り直す。1 回ごとの記録はダッシュボードの「ログ」(reqLog)
  */
+import { forgetUid, forgottenUids, UID_RE } from "./forget";
 import channelsJson from "../channels.json";
 import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
@@ -134,15 +135,28 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     try { body = await req.json(); } catch { return json({ error: "JSON ではない" }, 400); }
     const b = parseBatch(body);
     if (!b) return json({ error: "形が違う" }, 400);
+    // 記録しない端末の分は置かない (forget.ts)
+    if ((await forgottenUids(env)).includes(b.uid)) return json({ ok: true, n: 0 });
     const country = (req as Request & { cf?: { country?: string } }).cf?.country ?? "";
     return json({ ok: true, n: writeEvents(env, b, country) });
   }
   // 分析用の記録 (log-sender.ts がまとめて送る。中身は解かずに D1 へ)
   if (url.pathname === "/log" && req.method === "POST") {
     const text = await req.text();
+    // 記録しない端末の分は置かない (forget.ts)。uid は送る側が先頭近くに置く
+    const uid = /"uid":"([A-Za-z0-9_-]{6,40})"/.exec(text.slice(0, 300))?.[1];
+    if (uid && (await forgottenUids(env)).includes(uid)) return json({ ok: true });
     const country = (req as Request & { cf?: { country?: string } }).cf?.country ?? "";
     const r = await saveLog(env, text, country);
     return json(r === "ok" ? { ok: true } : { error: r }, r === "ok" ? 200 : 400);
+  }
+  // この端末を記録しない (「記録しない」をオンにした時に送る側から。今までの記録も消す。forget.ts)
+  if (url.pathname === "/forget" && req.method === "POST") {
+    let body: unknown;
+    try { body = await req.json(); } catch { return json({ error: "JSON ではない" }, 400); }
+    const uid = (body as { uid?: unknown })?.uid;
+    if (typeof uid !== "string" || !UID_RE.test(uid)) return json({ error: "形が違う" }, 400);
+    return json({ ok: true, deleted: await forgetUid(env, uid) });
   }
   // 要望・バグ (Web 版の「要望・バグを送る」)
   if (url.pathname === "/feedback" && req.method === "POST") {

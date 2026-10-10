@@ -22,6 +22,20 @@ export const noLog = (): boolean => noLogOn.value;
 export function setNoLog(v: boolean): void {
   noLogOn.value = v;
   try { if (v) localStorage.setItem(NO_LOG_KEY, "1"); else localStorage.removeItem(NO_LOG_KEY); } catch { /* 覚えられなくても今の間は効く */ }
+  if (v) forgetThisDevice();
+}
+
+/**
+ * サーバーにこの端末を忘れてもらう (今までの記録を消し、日報の集計からも外す。server/live の forget.ts)。
+ * 2026-10-10 オーナー「使った挙動にまだ自分のやつが出る、完全に消したい」。uid は記録と同じ端末の乱数
+ */
+function forgetThisDevice(): void {
+  let uid = "";
+  try { uid = localStorage.getItem("exiledesk.web.uid") ?? ""; } catch { /* 無ければ送らない */ }
+  if (!uid) return;
+  void import("../web/config").then(({ WEB_API_BASE }) =>
+    fetch(`${WEB_API_BASE}/forget`, { method: "POST", body: JSON.stringify({ uid }), headers: { "content-type": "text/plain;charset=UTF-8" }, credentials: "omit" }).catch(() => undefined),
+  );
 }
 
 /** URL の ?nolog=1 / ?nolog=0 を読んで覚える (Web の入口で 1 回) */
