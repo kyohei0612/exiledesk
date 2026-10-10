@@ -181,8 +181,8 @@ function useFromBar(): void {
   const parts: string[] = [];
   if (last) {
     if (!last.out.applied) parts.push(tr(`打てない: ${last.out.reason ?? ""}`, `Can't use: ${last.out.reason ?? ""}`));
-    for (const m of last.added) parts.push(`＋ ${modText(m)}`);
-    for (const m of last.removed) parts.push(`－ ${modText(m)}`);
+    for (const m of last.added) parts.push(`${tr("＋", "+")} ${modText(m)}`);
+    for (const m of last.removed) parts.push(`${tr("－", "-")} ${modText(m)}`);
     if (last.out.note) parts.push(String(last.out.note));
     if (!parts.length) parts.push(tr("MOD は変わらない", "No mod change"));
   }
@@ -196,7 +196,7 @@ watch(() => s.held.value, () => { barMsg.value = null; });
 watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
   const last = s.last.value;
   if (!phone.value || n <= (o ?? 0) || !last || !String(last.out.currency).startsWith("reveal")) return;
-  barMsg.value = { text: last.added.map((m) => `＋ ${modText(m)}`).join("  ") || tr("発現した", "Revealed"), tone: "text-emerald-300" };
+  barMsg.value = { text: last.added.map((m) => `${tr("＋", "+")} ${modText(m)}`).join("  ") || tr("発現した", "Revealed"), tone: "text-emerald-300" };
   clearTimeout(barTimer);
   barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
 });
@@ -303,7 +303,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         </div>
         <div class="flex items-center gap-2">
           <img v-if="iconOf(s.held.value!)" :src="iconOf(s.held.value!)" alt="" class="h-9 w-9 object-contain" />
-          <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join("・") }}</span></span>
+          <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join(tr("・", ", ")) }}</span></span>
           <button v-if="s.log.value.length" type="button" class="g-btn sm min-h-11" :title="tr('直前の 1 手を取り消す', 'Undo the last step')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
           <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!!heldWhy" @click="useFromBar">{{ tr("使う", "Use") }}</button>
           <!-- 離す = 大きめの × (2026-10-08 オーナー「バツボタン割とデカく」) -->
@@ -439,8 +439,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           <p class="mb-1 font-bold text-violet-200">{{ tr(`予見: ${nameOf(s.foresight.value.key)} を使うと`, `Foreseen: using ${nameOf(s.foresight.value.key)}`) }}</p>
           <p v-if="!s.foresight.value.applied" class="text-rose-300">{{ tr("使えない", "Can't use") }} — {{ s.foresight.value.reason }}</p>
           <template v-else>
-            <p v-for="(t, i) in s.foresight.value.added" :key="'fa' + i" class="text-emerald-300">＋ {{ t }}</p>
-            <p v-for="(t, i) in s.foresight.value.removed" :key="'fr' + i" class="text-rose-300 line-through">－ {{ t }}</p>
+            <p v-for="(t, i) in s.foresight.value.added" :key="'fa' + i" class="text-emerald-300">{{ tr('＋', '+') }} {{ t }}</p>
+            <p v-for="(t, i) in s.foresight.value.removed" :key="'fr' + i" class="text-rose-300 line-through">{{ tr('－', '-') }} {{ t }}</p>
             <p v-if="s.foresight.value.after.destroyed" class="font-bold text-rose-400">{{ tr("壊れる", "Destroyed") }}</p>
             <p v-if="s.foresight.value.after.corrupted && !s.item.value?.corrupted" class="font-bold text-[#d20000]">{{ tr("コラプトする", "Corrupted") }}</p>
             <p v-if="!s.foresight.value.added.length && !s.foresight.value.removed.length && !s.foresight.value.after.destroyed" class="opacity-60">{{ tr("MOD は変わらない", "No mod change") }}</p>

@@ -79,6 +79,8 @@ const RUNE_TONE_EN: Record<string, { tab: string; bar: string; badge: string }> 
 const RUNE_TONE = new Map(Object.entries(RUNE_TONE_EN).map(([en, t]) => [RUNES[en]?.ja ?? en, t]));
 export const runeToneOf = (ja: string | null | undefined): { tab: string; bar: string; badge: string } | null => (ja ? RUNE_TONE.get(ja) ?? null : null);
 
+/** 特殊 MOD のルーンの英語名 (日本語名から。クライアントの英語の原文、stage-runes の表の鍵) */
+export const runeEnOf = (ja: string): string => Object.keys(RUNES).find((en) => RUNES[en]?.ja === ja) ?? ja;
 /** 特殊 MOD のルーンの日本語名 (エンジンの id → ステージの表。名前の ’ は ' に) */
 export function runeJaOf(id: string): string {
   const en = RUNE_BY_ID.get(id)?.name.replace(/’/g, "'") ?? id;

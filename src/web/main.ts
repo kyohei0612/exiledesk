@@ -1,5 +1,6 @@
 // Web 版の入口 (2026-10-07)。アプリ版の App.vue は使わず、クラフトステージだけを載せる殻 (WebApp.vue) を出す
-import { createApp } from "vue";
+import { createApp, watchEffect } from "vue";
+import { tr } from "../i18n/lang";
 import "../style.css";
 import WebApp from "./WebApp.vue";
 import { startTracking } from "./track";
@@ -19,6 +20,8 @@ setMarketLoader(async () => {
   return b?.market?.items?.length ? { leagues: b.market.leagues as League[], items: b.market.items as CurrencyItem[] } : null;
 });
 createApp(WebApp).mount("#app");
+// タブの題は言語に合わせる (web.html の題は日本語の既定。2026-10-10 英語の巡回で見つかった)
+watchEffect(() => { document.title = tr("ExileDesk Web — PoE2 クラフトステージ", "ExileDesk Web — PoE2 Craft Stage"); });
 // 分析用の記録 (開発中は送らない)
 if (!import.meta.env.DEV) startLogSender("web");
 // Web Analytics (訪問数)。記録しない端末と開発中は読み込まない (前は web.html に直に書いていて、オーナーの PC の訪問も数えていた)

@@ -45,7 +45,7 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
       <div v-if="adds" class="mt-2 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
         <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
         <p v-for="(l, i) in adds.lines" :key="'a' + i" class="flex gap-1.5 text-[13px] font-semibold text-emerald-200">
-          <span class="text-emerald-400">・</span><span>{{ l }}</span>
+          <span class="text-emerald-400">{{ tr("・", "•") }}</span><span>{{ l }}</span>
         </p>
         <p v-if="adds.tier" class="mt-0.5 text-[11px] text-emerald-100/80">{{ tr("ティア", "Tier") }}: {{ adds.tier }}</p>
       </div>
@@ -65,7 +65,7 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
         <div class="g-sep" />
         <p class="g-head2 mb-1">{{ tr("このステージでの動き", "Behavior in this emulator") }}</p>
         <p v-for="(l, i) in help" :key="'h' + i" class="flex gap-1.5 text-[#cfc6ae]">
-          <span class="text-amber-300/60">・</span>
+          <span class="text-amber-300/60">{{ tr("・", "•") }}</span>
           <span><template v-for="(p, j) in parts(l)" :key="j"><b v-if="p.b" class="text-white">{{ p.t }}</b><template v-else>{{ p.t }}</template></template></span>
         </p>
       </template>

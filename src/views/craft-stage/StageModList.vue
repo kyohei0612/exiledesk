@@ -23,7 +23,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { GROUP_JA, modListFor, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
+import { GROUP_JA, modListFor, runeEnOf, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
 import essenceKeys from "../../services/htc/essence-keys.json";
 import { forceKey, type ForceFlag } from "../../services/craft-stage/apply-force";
@@ -126,7 +126,7 @@ const sections = computed((): Section[] => {
   const q = query.value.trim();
   const parts: Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> = GROUPS.filter((g) => counts.value[g] && !(g === "special" && s.mode.value === "sim")).flatMap((g): Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> =>
     g === "rune"
-      ? [...new Set(rows.value.filter((r) => r.group === "rune").map((r) => r.runeJa ?? ""))].map((ja) => ({ g, sid: `rune:${ja}`, label: ja, rune: ja }))
+      ? [...new Set(rows.value.filter((r) => r.group === "rune").map((r) => r.runeJa ?? ""))].map((ja) => ({ g, sid: `rune:${ja}`, label: tr(ja, runeEnOf(ja)), rune: ja }))
       : [{ g, sid: g as string, label: GROUP_JA[g], rune: null as string | null }],
   );
   return parts.map(({ g, sid, label, rune }) => {
