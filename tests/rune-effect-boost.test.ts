@@ -29,3 +29,13 @@ it("アストリッドの創造性も 100% でクラフト MOD 3", () => {
   expect(craftedLimitOf(wand(25, ["Astrid's Creativity", "Legacy of Runeseeker's Call"]))).toBe(3);
   expect(allMods(wand(25, ["Astrid's Creativity"])).length).toBeGreaterThan(0);
 });
+
+it("ソウルコアの効き目も合金の効果で伸びる (切り捨て)", async () => {
+  const { scaledAugment } = await import("../src/services/craft-stage/stage-core");
+  const it0 = startFrom(data, "Champion Cuirass", 82, { rarity: "rare", sockets: 1, runes: ["Soul Core of Tacati"] } as never, 1);
+  const alloy = { modId: "x", family: "SoulCore", side: "suffix", tierIndex: 0, tierName: "T1", affix: "", modLevel: 1, values: [60], ranges: [[60, 60]], textJa: "", textEn: "60% increased effect of Socketed Augment Items", crafted: true } as never;
+  const item = { ...it0, suffixes: [alloy] };
+  const a = scaledAugment(item, item.augments![0]!);
+  expect(a.stats.find((s) => s.id === "base_chaos_damage_resistance_%")?.value).toBe(20);
+  expect(a.textEn).toContain("20%");
+});

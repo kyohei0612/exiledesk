@@ -18,7 +18,7 @@ import { maxQualityForBase } from "../htc/catalysing-setup";
 import { displayedValue } from "../htc/quality";
 import { displayValue, tierDisplayRanges, type TierLike } from "../mods/stat-scale";
 import { swapNums } from "./text-nums";
-import type { StageApply, StageItem, StageMod, StageSide } from "./types";
+import type { StageApply, StageAugment, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
 
 export const SIDES: StageSide[] = ["prefix", "suffix"];
@@ -40,21 +40,52 @@ export function effectiveCls(item: StageItem): ItemBase {
   return ids.length ? withRunes(item.cls, ids, runeEffectPct(item)) : item.cls;
 }
 /**
- * ソケットのルーンの効果の増加 % (2026-10-10 オーナー「データ確かめてから入れて」、Benton の動画): ルーンシーカーの呼び声の遺産
- * (ワンド、local_rune_effect_+% 75、stage-runes.json) と、合金の「ソケットのオーグメントの効果 #% 増加」の MOD。
- * 100% 以上でセールの凱旋が +2 サフィ・アストリッドの創造性が +2 クラフト (切り捨て、engine の boostedPlus)
+ * ソケットの効果の増加 % (2026-10-10 オーナー「データ確かめてから入れて」「固定値のものなんて存在しない」、Benton の動画)。
+ *   - ルーンだけに効く: ルーンシーカーの呼び声の遺産 (ワンド、local_rune_effect_+% 75、stage-runes.json) と「ソケットのルーンの効果 #%」の MOD
+ *   - ルーン・ソウルコア・アイドル全部に効く: 合金の「ソケットのオーグメントの効果 #%」の MOD
+ * 100% 以上でセールの凱旋が +2 サフィ・アストリッドの創造性が +2 クラフト (切り捨て、engine の boostedPlus)。効き目の値も同じく伸ばす (scaledAugment)
  */
-export function runeEffectPct(item: StageItem): number {
-  let pct = 0;
+type RuneRow = { kind?: string; effects?: Array<{ stats: Array<{ id: string; value: number }> }> };
+const runeRow = (en: string): RuneRow | undefined => (RUNE_STATS as Record<string, RuneRow>)[en];
+function effectPcts(item: StageItem): { runes: number; augments: number } {
+  let runes = 0, augments = 0;
   for (const m of allMods(item)) {
-    const r = /^(\d+(?:\.\d+)?)% increased effect of Socketed (?:Augment Items|Runes)$/i.exec(m.textEn);
-    if (r) pct += Number(r[1]);
+    const r = /^(\d+(?:\.\d+)?)% increased effect of Socketed (Augment Items|Runes)$/i.exec(m.textEn);
+    if (r) { if (/Runes/i.test(r[2]!)) runes += Number(r[1]); else augments += Number(r[1]); }
   }
-  for (const a of item.augments ?? []) {
-    const st = (RUNE_STATS as Record<string, { effects?: Array<{ stats: Array<{ id: string; value: number }> }> }>)[a.en]?.effects?.flatMap((e) => e.stats) ?? [];
-    for (const s of st) if (s.id === "local_rune_effect_+%") pct += s.value;
-  }
-  return pct;
+  for (const a of item.augments ?? []) for (const st of runeRow(a.en)?.effects?.flatMap((e) => e.stats) ?? []) if (st.id === "local_rune_effect_+%") runes += st.value;
+  return { runes, augments };
+}
+/** ルーンに掛かる効果の増加 % (ルーンの効果 + オーグメントの効果) */
+export function runeEffectPct(item: StageItem): number {
+  const p = effectPcts(item);
+  return p.runes + p.augments;
+}
+/** そのソケットの物に掛かる効果の増加 % (ルーンは両方、ソウルコア・アイドルはオーグメントの効果だけ) */
+export function augmentEffectPct(item: StageItem, a: StageAugment): number {
+  const p = effectPcts(item);
+  return p.augments + (runeRow(a.en)?.kind === "rune" ? p.runes : 0);
+}
+/**
+ * 効果の増加を掛けた効き目 (stat の値と文面)。丸めは切り捨て (品質で MOD を伸ばす時と同じ、quality.ts の displayedValue)。
+ * 文面は stat の画面の値 (stat-scale の displayValue) を探して置き換える。効果の増加そのもの (local_rune_effect_+%) は伸ばさない
+ */
+export function scaledAugment(item: StageItem, a: StageAugment): StageAugment {
+  const pct = augmentEffectPct(item, a);
+  if (!(pct > 0)) return a;
+  let textJa = a.textJa, textEn = a.textEn;
+  const stats = a.stats.map((st) => {
+    if (st.id === "local_rune_effect_+%") return st;
+    const value = displayedValue(st.value, pct);
+    const from = String(Math.abs(displayValue(st.id, st.value))), to = String(Math.abs(displayValue(st.id, value)));
+    if (from !== to) {
+      const re = new RegExp(`(?<![\\d.])${from.replace(".", "\\.")}(?![\\d.])`);
+      textJa = textJa.replace(re, to);
+      textEn = textEn.replace(re, to);
+    }
+    return { ...st, value };
+  });
+  return { ...a, stats, textJa, textEn };
 }
 /** 側の枠 (マジックは 1 / 1) */
 export function limitOf(item: StageItem, side: StageSide): number {

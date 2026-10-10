@@ -12,6 +12,7 @@
 import { baseStatsOf } from "./stage-bases";
 import { displayValue } from "../mods/stat-scale";
 import type { StageItem } from "./types";
+import { scaledAugment } from "./stage-core";
 import { lang } from "../../i18n/lang";
 
 export interface PropRow { key: string; label: string; value: string; up: boolean }
@@ -22,7 +23,8 @@ function sums(item: StageItem): Map<string, number> {
   const add = (id: string, v: number) => m.set(id, (m.get(id) ?? 0) + v);
   if (item.identified !== false) for (const md of [...item.prefixes, ...item.suffixes]) (md.stats ?? []).forEach((id, i) => add(id, md.values[i] ?? 0));
   // ルーンの stat はクライアントの生の値 (リーチ 300 = 3%)。MOD の values は画面の単位なので揃える (services/mods/stat-scale.ts)
-  for (const a of item.augments ?? []) for (const s of a.stats) add(s.id, displayValue(s.id, s.value));
+  // ソケットの効き目は効果の増加 (遺産のルーン・合金) を掛けた値 (stage-core の scaledAugment、2026-10-10)
+  for (const a0 of item.augments ?? []) for (const s of scaledAugment(item, a0).stats) add(s.id, displayValue(s.id, s.value));
   return m;
 }
 const ELEMENTS = [
