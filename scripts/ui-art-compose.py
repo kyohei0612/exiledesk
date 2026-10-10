@@ -80,3 +80,18 @@ for k, to in (("HeaderIconTrade", "currency"), ("HeaderIconFriend", "trade"), ("
     save(load(k), "nav-" + to)
     save(load(k + "Hover"), "nav-" + to + "-on")
 print("nav icons")
+
+# アイテムのカードの名前の枠: 左・中・右を横に並べた 1 枚 (border-image で左右を固定して中を伸ばす)。区切り線はそのまま (2026-10-10)
+for r, n in (("White", "normal"), ("Magic", "magic"), ("Rare", "rare"), ("Unique", "unique"), ("Gem", "gem"), ("Currency", "currency"), ("RareSingleLine", "rare-1"), ("UniqueSingleLine", "unique-1")):
+    a, m, z = (load(f"ItemsHeader{r}{p}") for p in ("Left", "Middle", "Right"))
+    h = max(a.size[1], m.size[1], z.size[1])
+    im = Image.new("RGBA", (a.size[0] + m.size[0] + z.size[0], h))
+    im.alpha_composite(a, (0, 0))
+    im.alpha_composite(m, (a.size[0], 0))
+    im.alpha_composite(z, (a.size[0] + m.size[0], 0))
+    save(im, "ihead-" + n)
+    print("ihead-" + n, im.size, "edge", a.size[0])
+for r, n in (("White", "normal"), ("Magic", "magic"), ("Rare", "rare"), ("Unique", "unique"), ("Gem", "gem"), ("Currency", "currency")):
+    im = load(f"ItemsSeparator{r}")
+    save(im, "isep-" + n)
+    print("isep-" + n, im.size)

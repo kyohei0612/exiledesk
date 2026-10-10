@@ -138,7 +138,7 @@ onBeforeUnmount(onUp);
         </div>
         <div
           class="g-head select-none"
-          :class="pinned ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : ''"
+          :class="[pinned ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : '', sub ? 'two' : 'one']"
           :title="pinned ? '長押しでつかんで動かせます' : undefined"
           @pointerdown="onHeadDown"
         >
@@ -192,6 +192,26 @@ onBeforeUnmount(onUp);
 .g-keyword { border: 1px solid #5a5a5a; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-keyword .g-head { background: linear-gradient(180deg, #2b2b2b 0%, #171717 100%); border-bottom: 1px solid #555; }
 .g-keyword .g-name { color: #e8e8e8; font-size: 15px; }
+/*
+ * 名前の枠はゲームの絵 (クライアントの ItemsHeader*。左・中・右を 1 枚にした物、scripts/build-ui-art-from-client.mjs)。
+ * 1 行 (名前だけ) は高さ 56 の絵、レア・ユニークの 2 行 (名前 + ベース) は 88 の絵。2026-10-10 オーナー「コモンの色とか名前の枠も POE2 仕様で、全部」
+ */
+.g-normal .g-head, .g-magic .g-head, .g-rare .g-head, .g-unique .g-head, .g-gem .g-head, .g-currency .g-head {
+  background: none; box-shadow: none; border-bottom: 0;
+  border-style: solid; border-image-slice: 0 56 fill; border-image-width: 0 36px; border-image-repeat: stretch;
+  min-height: 36px; display: flex; flex-direction: column; justify-content: center; padding-top: 4px; padding-bottom: 4px;
+}
+.g-normal .g-head { border-image-source: url("/ui-art/ihead-normal.webp"); }
+.g-magic .g-head { border-image-source: url("/ui-art/ihead-magic.webp"); }
+.g-gem .g-head { border-image-source: url("/ui-art/ihead-gem.webp"); }
+.g-currency .g-head { border-image-source: url("/ui-art/ihead-currency.webp"); }
+.g-rare .g-head.one { border-image-source: url("/ui-art/ihead-rare-1.webp"); }
+.g-unique .g-head.one { border-image-source: url("/ui-art/ihead-unique-1.webp"); }
+.g-rare .g-head.two, .g-unique .g-head.two { border-image-slice: 0 80 fill; border-image-width: 0 49px; min-height: 54px; }
+.g-rare .g-head.two { border-image-source: url("/ui-art/ihead-rare.webp"); }
+.g-unique .g-head.two { border-image-source: url("/ui-art/ihead-unique.webp"); }
+/* 名前の色はゲームと同じ (ノーマル白・マジック青・レア黄・ユニーク橙・ジェム青緑・カレンシーベージュ) */
+.g-normal .g-name { color: #c8c8c8; }
 </style>
 
 <style>
@@ -203,4 +223,12 @@ onBeforeUnmount(onUp);
 .g-card .g-desc { color: var(--color-rarity-normal); }
 .g-card .g-head2 { color: #aa9e82; font-size: 12px; margin-top: 4px; }
 .g-card .g-sep { height: 1px; margin: 6px 0; background: linear-gradient(90deg, transparent, #7a6538 20%, #7a6538 80%, transparent); }
+/* 区切り線もゲームの絵 (ItemsSeparator*。2026-10-10) */
+.g-card.g-normal .g-sep, .g-card.g-magic .g-sep, .g-card.g-rare .g-sep, .g-card.g-unique .g-sep, .g-card.g-gem .g-sep, .g-card.g-currency .g-sep { height: 8px; margin: 5px auto; max-width: 364px; background-position: center; background-size: 100% 100%; background-repeat: no-repeat; }
+.g-card.g-normal .g-sep { background-image: url("/ui-art/isep-normal.webp"); }
+.g-card.g-magic .g-sep { background-image: url("/ui-art/isep-magic.webp"); }
+.g-card.g-rare .g-sep { background-image: url("/ui-art/isep-rare.webp"); }
+.g-card.g-unique .g-sep { background-image: url("/ui-art/isep-unique.webp"); }
+.g-card.g-gem .g-sep { background-image: url("/ui-art/isep-gem.webp"); }
+.g-card.g-currency .g-sep { background-image: url("/ui-art/isep-currency.webp"); }
 </style>

@@ -31,6 +31,10 @@ const FILES = [
   `${CX}itemslot`, `${CX}itemslot_selected`,
   // 縦の仕切り (ログイン画面の上下が消える細い金の線) と、選んだ行 (取引所の左の絞り込みの行)。2026-10-09 オーナー「縦の枠のデザインもっとましな POE2 フレーム」→ 案 2
   "Login/VerticalSeparator", "InGame/ConsoleNew/TradeMarket/sidefilter_selected",
+  // アイテムのカードの名前の枠 (左・中・右) と区切り線。レア・ユニークは 2 行 (名前 + ベース) と 1 行がある (2026-10-10 オーナー「名前の枠も POE2 仕様で、全部」)
+  ...["White", "Magic", "Rare", "Unique", "Gem", "Currency"].flatMap((r) => ["Left", "Middle", "Right"].map((p) => `InGame/ItemsHeader${r}${p}`)),
+  ...["Rare", "Unique"].flatMap((r) => ["Left", "Middle", "Right"].map((p) => `InGame/ItemsHeader${r}SingleLine${p}`)),
+  ...["White", "Magic", "Rare", "Unique", "Gem", "Currency"].map((r) => `InGame/ItemsSeparator${r}`),
   // サイドバーのアイコン (キャラ画面の上の金のアイコン。通常 / hover = 選んでいる時)
   ...["HeaderIconTrade", "HeaderIconFriend", "HeaderIconAchievement", "HeaderIconShop", "HeaderIconCharacter", "HeaderIconPassive", "HeaderIconCosmetics", "HeaderAltasPoint", "HeaderAltasMap"].flatMap((k) => [`${CM}${k}`, `${CM}${k}Hover`]),
 ];
