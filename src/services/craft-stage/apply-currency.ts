@@ -23,12 +23,11 @@ export const QUALITY_SET = "qset:";
 export const qualitySetKey = (n: number, tag?: string | null): string => `${QUALITY_SET}${n}${tag ? `:${tag}` : ""}`;
 export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET);
 /**
- * 品質の欄の上限 (2026-10-10 取引所で実物を確認): 防具・武器は規格外の 30%、宝飾品は 50% (ブリーチの指輪・不在のアミュレット、普通の指輪も 40% 台が多数)。
- * ベースの上限がそれより上ならそちら
+ * 品質の欄の上限 = ベースの上限 (普通 20%、ブリーチの指輪などはその値)。20% を超えるのはインフューザーの時だけ
+ * (2026-10-10 オーナー「30% はインフューザー、初期位置は 20% 全部」)
  */
 export function qualityFieldMax(item: StageItem): number {
-  const jewel = ["Rings", "Amulets", "Belts"].includes(item.cls.category);
-  return Math.max(maxQualityOf(item), jewel ? 50 : 30);
+  return maxQualityOf(item);
 }
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";

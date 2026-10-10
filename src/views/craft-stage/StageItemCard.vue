@@ -152,8 +152,8 @@ const rows = computed(() =>
       <p class="text-[12px] text-white/50">{{ kindJa }}<template v-if="!isGem(item.cls.category)"> · {{ tr("アイテムレベル", "Item Level") }} <span class="text-white">{{ item.itemLevel }}</span></template></p>
       <!-- 要求 (要望 ⑱-3) -->
       <p v-if="reqText(item)" class="text-[12px] text-white/50">{{ reqText(item) }}</p>
-      <!-- 品質: 手で打つ画面は − / + で決められる (防御値などがその場で変わる。2026-10-10 要望「品質欄をつけて防御値がシミュレーションできると便利」) -->
-      <p v-if="removable && !isGem(item.cls.category)" class="flex items-center justify-center gap-1.5 text-[12px] text-white/50">
+      <!-- 品質: 手で打つ画面は − / + で決められる。宝飾品だけ (選んだ種類の MOD が伸びる。2026-10-10 オーナー「品質は装備はいらんね、つけても意味ないから」) -->
+      <p v-if="removable && jewel" class="flex items-center justify-center gap-1.5 text-[12px] text-white/50">
         {{ qualityLabel }}:
         <button type="button" class="g-plain grid size-6 place-items-center rounded border border-white/15 text-white/70 hover:bg-white/10 disabled:opacity-30" :disabled="item.quality <= 0" :title="tr('品質 −1%', 'Quality −1%')" @click.stop="emit('quality', item.quality - 1)">−</button>
         <span class="w-10 text-center tabular-nums" :class="item.quality > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ item.quality }}%</span>
