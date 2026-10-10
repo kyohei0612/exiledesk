@@ -58,6 +58,12 @@ const heldCands = computed(() => {
   const h = heldOdds(d, it, k, s.omens.value);
   return h ? { ...h, name: nameOf(k) } : null;
 });
+/** 骨を持っているが、この部位に冒涜専用の MOD (変質した鎖骨なら異界も) が無い */
+const noDesecrated = computed(() => {
+  const h = heldCands.value;
+  if (!h || !("bone" in h)) return false;
+  return !counts.value.desecrated && !(s.held.value === "desecrate_altered" && counts.value.otherworldly);
+});
 /** その行 (系統) が持っている物で付く確率。0 = 付かない */
 function heldShare(r: ListRow): number {
   const h = heldCands.value;
@@ -316,6 +322,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
         </button>
         <input v-model="query" type="search" :placeholder="tr('文面やタグで探す (例: 耐性、ライフ)', 'Search text or tags')" class="ml-auto w-60 rounded-lg border border-white/15 bg-black/30 px-2 py-0.5 max-md:hidden" />
       </div>
+      <!-- 骨を持っているのに冒涜の節が無い部位 (セプターなど): 候補が普通の MOD だけになる事を書く (2026-10-11 オーナー「ないなら注意書きいる」) -->
+      <p v-if="noDesecrated" class="-mt-2 mb-3 text-[11px] text-amber-200/80">{{ tr("この部位には冒涜専用の MOD が無いので、発現の候補 3 つは普通の MOD から選ばれる", "This item class has no Desecrated-only mods, so all 3 reveal options are normal mods") }}</p>
 
       <section v-for="sec in sections" :key="sec.sid" :ref="(el) => setSection(sec.sid, el)" class="mb-4 scroll-mt-12">
         <!-- 目次の下は少し空ける (2026-10-10 オーナー「被ってんな、もうちょい下、プレフィックス・サフィックスの表示を全体的に」) -->
