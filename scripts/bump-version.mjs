@@ -66,5 +66,9 @@ await writeFile(TAURI_CONF, JSON.stringify(tauriConf, null, 2) + "\n", "utf8");
 await updateCargoToml(CARGO_TOML, newVersion);
 await updateJson(PACKAGE_JSON, newVersion);
 
+// 更新履歴 (src/data/changelog.json) を新しい版の分まで作り直す (2026-10-10。画面の「更新内容」「更新履歴」の元)
+const { execFileSync } = await import("node:child_process");
+execFileSync(process.execPath, [resolve(HERE, "build-changelog.mjs"), newVersion], { cwd: ROOT, stdio: ["ignore", "ignore", "inherit"] });
+
 // stdout は新バージョンだけ（release.bat が `for /f` で拾う）
 process.stdout.write(newVersion);

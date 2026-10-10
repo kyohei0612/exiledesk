@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { poeSession } from "../state/poe-session";
+import { APP_VERSION, changelogOpen } from "../state/changelog";
 
 defineProps<{ active: string }>();
 /** 画面ごとのアイコン (ゲームの絵、scripts/build-ui-art-from-client.mjs) */
@@ -113,5 +114,7 @@ const groups = (["economy", "tools"] as const)
         </button>
       </div>
     </nav>
+    <!-- 版。押すと更新履歴 (2026-10-10 オーナー「バージョン押したら更新履歴見れるように」) -->
+    <button type="button" class="g-plain mt-auto self-start px-4 pb-3 pt-2 text-[11px] text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" title="更新履歴を見る" @click="changelogOpen = 'all'">v{{ APP_VERSION }} · 更新履歴</button>
   </aside>
 </template>

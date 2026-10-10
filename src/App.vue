@@ -10,6 +10,8 @@ import LoginGate from "./components/LoginGate.vue";
 import HoverStack from "./components/decor/HoverStack.vue";
 import WatchReplaceDialog from "./components/WatchReplaceDialog.vue";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
+import ChangelogDialog from "./components/ChangelogDialog.vue";
+import { initChangelog } from "./state/changelog";
 import FetchBusyBar from "./components/FetchBusyBar.vue";
 import AssetPackToast from "./components/AssetPackToast.vue";
 import { ensureAssetPacks } from "./services/assets/asset-packs";
@@ -69,6 +71,8 @@ useKeyboardShortcuts({
 });
 
 onMounted(() => {
+  // 更新した後に 1 回だけ更新内容を出す (2026-10-10)
+  initChangelog();
   // 起動の重さを調べる (2026-10-06): 各処理の時間と、画面が固まった時間を exiledesk.log に (起動から 3 分だけ)
   watchBootLongTasks();
   bootLog("画面の準備ができた (ここまでがスクリプトの読み込み)");
@@ -120,5 +124,6 @@ onMounted(() => {
     <!-- 取得中は他の取得を押せなくするので、何が走っているかを下に出す (2026-09-20) -->
     <FetchBusyBar />
     <AssetPackToast />
+    <ChangelogDialog />
   </div>
 </template>
