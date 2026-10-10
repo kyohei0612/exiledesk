@@ -15,6 +15,7 @@ import stageBases from "./stage-bases.json";
 import basesPob from "./stage-bases-pob.json";
 import gemsRaw from "../../i18n/gems-client.json";
 import vaal from "../../i18n/vaal-enchants.json";
+import { lang } from "../../i18n/lang";
 
 export interface BaseStats {
   cls: string;
@@ -58,6 +59,10 @@ export function reqOfItem(item: StageItem): BaseReq | null {
 export function reqText(base: string | StageItem): string {
   const r = typeof base === "string" ? reqOf(base) : reqOfItem(base);
   if (!r) return "";
+  if (lang.value === "en") {
+    const en = [r.level ? `Level ${r.level}` : "", r.str ? `${r.str} Str` : "", r.dex ? `${r.dex} Dex` : "", r.int ? `${r.int} Int` : ""].filter(Boolean);
+    return en.length ? `Requires ${en.join(", ")}` : "";
+  }
   const parts = [r.level ? `Lv ${r.level}` : "", r.str ? `筋力 ${r.str}` : "", r.dex ? `器用さ ${r.dex}` : "", r.int ? `知性 ${r.int}` : ""].filter(Boolean);
   return parts.length ? `要求 ${parts.join("・")}` : "";
 }

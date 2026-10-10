@@ -22,6 +22,7 @@
  * 日本語から作った `mod-text-ja-htc.json` で引きます (2026-09-26、オーナー「MOD 辞書の英語のやつ直しといて」)。
  * ここで訳を自作はしない ── クライアントの表記とズレて、[[check-ja-terms]] が見ている前提が崩れます。
  */
+import { lang } from "../../i18n/lang";
 import jaTable from "../../i18n/mod-text-ja.json";
 // 表に無い poe2htc の行 (reduced 側・大文字違い等) をクライアント原本から訳した物 (scripts/build-mod-text-ja-htc.mjs、2026-09-26)
 import jaHtc from "../../i18n/mod-text-ja-htc.json";
@@ -80,10 +81,15 @@ export function jaOfModLine(line: string): string | null {
 export function jaOfMod(mod: Mod): string {
   const text = mod.text;
   if (!text) return mod.id;
+  // 英語の画面では英語の原文 (印を外し、範囲は # に。2026-10-10 英語版)
+  if (lang.value === "en") return text.split(NL).map(enLine).join(" / ");
   const whole = jaOfModLine(text);
   if (whole) return whole;
   return text.split(NL).map((l) => jaOfModLine(l) ?? l).join(" / ");
 }
+
+/** 英語の 1 行: クライアントの印 ([Reservation] / [a|b]) を外し、範囲 (12-18) は # に */
+const enLine = (line: string): string => line.replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1").replace(/\(-?[0-9.]+--?[0-9.]+\)/g, "#");
 
 /** 日本語の文字 (かな・漢字) を含むか */
 const HAS_JA = /[぀-ヿ一-鿿]/;

@@ -9,6 +9,7 @@
   状態と操作は [[craft-stage.ts]]、1 手の中身は services/craft-stage (計算機と同じ規則)。
 -->
 <script setup lang="ts">
+import { isEn, modText, tr } from "../../i18n/lang";
 import { forceKey } from "../../services/craft-stage/apply-force";
 import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, type SimRecipe } from "../../state/craft-stage";
@@ -31,7 +32,7 @@ import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
-import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf, stepNameOf, stepOmenOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
@@ -100,9 +101,9 @@ const copied = ref("");
 async function copy(label: string, v: unknown): Promise<void> {
   try {
     await navigator.clipboard.writeText(JSON.stringify(v, null, 2));
-    copied.value = `${label}をコピーしました`;
+    copied.value = tr(`${label}をコピーしました`, `Copied ${label}`);
   } catch {
-    copied.value = "コピーできませんでした";
+    copied.value = tr("コピーできませんでした", "Copy failed");
   }
   setTimeout(() => (copied.value = ""), 2500);
 }
@@ -173,11 +174,11 @@ function useFromBar(): void {
   const last = s.last.value;
   const parts: string[] = [];
   if (last) {
-    if (!last.out.applied) parts.push(`打てない: ${last.out.reason ?? ""}`);
-    for (const m of last.added) parts.push(`＋ ${m.textJa}`);
-    for (const m of last.removed) parts.push(`－ ${m.textJa}`);
+    if (!last.out.applied) parts.push(tr(`打てない: ${last.out.reason ?? ""}`, `Can't use: ${last.out.reason ?? ""}`));
+    for (const m of last.added) parts.push(`＋ ${modText(m)}`);
+    for (const m of last.removed) parts.push(`－ ${modText(m)}`);
     if (last.out.note) parts.push(String(last.out.note));
-    if (!parts.length) parts.push("MOD は変わらない");
+    if (!parts.length) parts.push(tr("MOD は変わらない", "No mod change"));
   }
   barMsg.value = { text: parts.join("  "), tone: last && !last.out.applied ? "text-rose-300" : last?.removed.length && !last.added.length ? "text-rose-300" : "text-emerald-300" };
   clearTimeout(barTimer);
@@ -189,7 +190,7 @@ watch(() => s.held.value, () => { barMsg.value = null; });
 watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
   const last = s.last.value;
   if (!phone.value || n <= (o ?? 0) || !last || !String(last.out.currency).startsWith("reveal")) return;
-  barMsg.value = { text: last.added.map((m) => `＋ ${m.textJa}`).join("  ") || "発現した", tone: "text-emerald-300" };
+  barMsg.value = { text: last.added.map((m) => `＋ ${modText(m)}`).join("  ") || tr("発現した", "Revealed"), tone: "text-emerald-300" };
   clearTimeout(barTimer);
   barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
 });
@@ -234,7 +235,7 @@ function armReset(): void {
   s.reset();
 }
 /** 直前の手でルーンをはめた中身 (置き換えた物) */
-const augChange = computed(() => (s.last.value?.out as { augment_change?: { socket: number; put: { ja: string }; replaced: { ja: string } | null } } | undefined)?.augment_change ?? null);
+const augChange = computed(() => (s.last.value?.out as { augment_change?: { socket: number; put: { ja: string; en?: string }; replaced: { ja: string; en?: string } | null } } | undefined)?.augment_change ?? null);
 /** ベースを選ぶ前の右上の「レシピ」(シミュレーターの帯は StageSimPanel が出すが、ベースを選ぶ前はまだ無い) */
 const preRecipeOpen = ref(false);
 function startFromRecipe(r: SimRecipe): void {
@@ -259,16 +260,16 @@ function simFromHand(): void {
 /** 手打ちの状態の MOD (1 ベースの札の下に 1 行) */
 const startItemMods = computed(() => {
   const it = s.simStartItem.value;
-  return it ? [...it.prefixes, ...it.suffixes].map((m) => `${m.fractured ? "[固定] " : ""}${m.textJa} (${m.tierName})`) : [];
+  return it ? [...it.prefixes, ...it.suffixes].map((m) => `${m.fractured ? tr("[固定] ", "[Fractured] ") : ""}${modText(m)} (${m.tierName})`) : [];
 });
 /** 始め方の札 (1 ベース)。白以外は 2 狙う MOD の最初の 1 つが固定 MOD になる */
-const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hint: string }> = [
-  { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る" },
-  { k: "fractured", label: "フラクチャー済みを買う", hint: "フラクチャーの MOD が 1 つ付いたベースを買う。フラクチャーの MOD は 2 狙う MOD で最初に足した物" },
-  { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)" },
+const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hint: string; labelEn: string; hintEn: string }> = [
+  { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る", labelEn: "From a white base", hintEn: "Buy a white base and craft from scratch" },
+  { k: "fractured", label: "フラクチャー済みを買う", hint: "フラクチャーの MOD が 1 つ付いたベースを買う。フラクチャーの MOD は 2 狙う MOD で最初に足した物", labelEn: "Buy fractured", hintEn: "Buy a base with 1 fractured mod: the first mod added in step 2 (Target mods)" },
+  { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)", labelEn: "Buy a 4-mod rare", hintEn: "Buy a rare with 3 mods + 1 target, add a bone wall, then Fracture (1/3 hit)" },
 ];
 /** 手打ちから持ってきた時だけ出る札 */
-const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態から", hint: "エミュレーターの今のアイテムから先を回す" };
+const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態から", hint: "エミュレーターの今のアイテムから先を回す", labelEn: "From the Emulator item", hintEn: "Continue from the current Emulator item" };
 </script>
 
 <template>
@@ -277,8 +278,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
       <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
       <div v-if="s.offers.value" class="flex items-center gap-2">
-        <span class="min-w-0 flex-1 truncate text-rose-200">発現する MOD を 3 つから選ぶ</span>
-        <button type="button" class="min-h-11 rounded-lg bg-rose-500/30 px-3 py-2 font-bold text-rose-50 ring-1 ring-rose-400/70" @click="scrollToReveal">選ぶ ↑</button>
+        <span class="min-w-0 flex-1 truncate text-rose-200">{{ tr("発現する MOD を 3 つから選ぶ", "Choose 1 of 3 mods to reveal") }}</span>
+        <button type="button" class="min-h-11 rounded-lg bg-rose-500/30 px-3 py-2 font-bold text-rose-50 ring-1 ring-rose-400/70" @click="scrollToReveal">{{ tr("選ぶ ↑", "Choose ↑") }}</button>
       </div>
       <template v-else>
         <!-- 打った直後は結果を 1 行 (1.8 秒)。その後は持っている物と掛けたお告げ -->
@@ -290,29 +291,29 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           <ul class="min-w-0 flex-1 list-disc pl-4 text-[11px] leading-snug text-white/70" :class="helpOpen ? '' : 'max-h-[2.6em] overflow-hidden'" @click="helpOpen = !helpOpen">
             <li v-for="(l, i) in (helpOpen ? heldHelp : heldHelp.slice(0, 2))" :key="i" class="pr-1" :class="helpOpen ? '' : 'truncate'">{{ l }}</li>
           </ul>
-          <button type="button" class="shrink-0 rounded-lg border border-white/20 px-2 py-1 text-[11px] opacity-80" @click="helpOpen = !helpOpen">{{ helpOpen ? "閉じる ▴" : "説明 ▾" }}</button>
+          <button type="button" class="shrink-0 rounded-lg border border-white/20 px-2 py-1 text-[11px] opacity-80" @click="helpOpen = !helpOpen">{{ helpOpen ? tr("閉じる ▴", "Close ▴") : tr("説明 ▾", "Info ▾") }}</button>
         </div>
         <div class="flex items-center gap-2">
           <img v-if="iconOf(s.held.value!)" :src="iconOf(s.held.value!)" alt="" class="h-9 w-9 object-contain" />
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join("・") }}</span></span>
-          <button v-if="s.log.value.length" type="button" class="min-h-11 whitespace-nowrap rounded-lg border border-white/20 px-2.5 py-2 opacity-80" title="直前の 1 手を取り消す" @click="s.undo()">1 手戻す</button>
-          <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!!heldWhy" @click="useFromBar">使う</button>
+          <button v-if="s.log.value.length" type="button" class="min-h-11 whitespace-nowrap rounded-lg border border-white/20 px-2.5 py-2 opacity-80" :title="tr('直前の 1 手を取り消す', 'Undo the last step')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
+          <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!!heldWhy" @click="useFromBar">{{ tr("使う", "Use") }}</button>
           <!-- 離す = 大きめの × (2026-10-08 オーナー「バツボタン割とデカく」) -->
-          <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" title="離す" @click="s.hold(null)">×</button>
+          <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" :title="tr('離す', 'Drop')" @click="s.hold(null)">×</button>
         </div>
       </template>
     </div>
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
-        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">クラフトステージ</h1>
-        <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す
-          <HelpTip title="シミュレーター" :width="320">
-            <p>1 ベース → 2 狙う MOD → 始め方と順番 → 打ち方 (パターン) の順に決めて「回す」。</p>
-            <p class="mt-1 text-[var(--exile-color-text-secondary)]">確率はクラフト計算機と同じ規則。値段は今の相場。</p>
+        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトステージ", "Craft Stage") }}</h1>
+        <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す", "Pick a base and target mods, plan the steps, then craft hundreds of copies to get the cost per item") }}
+          <HelpTip :title="tr('シミュレーター', 'Simulator')" :width="320">
+            <p>{{ tr("1 ベース → 2 狙う MOD → 始め方と順番 → 打ち方 (パターン) の順に決めて「回す」。", "Set 1 Base → 2 Target mods → start and order → steps (pattern), then press “Run”.") }}</p>
+            <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("確率はクラフト計算機と同じ規則。値段は今の相場。", "Chances follow the craft calculator's rules. Prices are current market prices.") }}</p>
           </HelpTip>
         </p>
-        <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">カレンシー・骨・エッセンス・カタリストを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは掛けておくと次の関係する手で使われます。確率はクラフト計算機と同じ規則です。</p>
+        <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンス・カタリストを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは掛けておくと次の関係する手で使われます。確率はクラフト計算機と同じ規則です。", "Click a currency, bone, essence or catalyst to hold it, then click the item to use it once (keep clicking while holding). Active omens apply to the next matching use. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
       <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" />
@@ -322,7 +323,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <!-- 再生中も消さずに隠す (シミュレーションの「1 つ戻す」の置き場 #sim-tools を残す) -->
     <div v-show="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-1.5">
       <div class="inline-flex gap-1" role="tablist">
-        <button v-for="t in ([['hand', 'エミュレーター'], ['sim', 'シミュレーター']] as const)" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="g-tab min-w-[170px] gap-1.5 !inline-flex disabled:cursor-not-allowed disabled:opacity-50" :class="s.mode.value === t[0] ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? '調整中です。しばらくお待ちください' : undefined" @click="s.hold(null); s.mode.value = t[0]">{{ t[1] }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal">(調整中)</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" title="作り込み中の機能。数字は今の相場と確率の目安">β</span></button>
+        <button v-for="t in ([['hand', 'エミュレーター'], ['sim', 'シミュレーター']] as const)" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="g-tab min-w-[170px] gap-1.5 !inline-flex disabled:cursor-not-allowed disabled:opacity-50" :class="s.mode.value === t[0] ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); s.mode.value = t[0]">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
       <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
@@ -330,24 +331,24 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <template v-if="s.mode.value === 'sim' && simNoBase">
           <CurrencyPicker sim />
           <span class="relative">
-            <button type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-[13px] transition max-md:h-10" :class="preRecipeOpen ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" title="保存したレシピから始める" @click="preRecipeOpen = !preRecipeOpen">レシピ<Icon :name="preRecipeOpen ? 'chevron-up' : 'chevron-down'" class="size-4" /></button>
+            <button type="button" class="inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-[13px] transition max-md:h-10" :class="preRecipeOpen ? 'border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-primary)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'" :title="tr('保存したレシピから始める', 'Start from a saved recipe')" @click="preRecipeOpen = !preRecipeOpen">{{ tr("レシピ", "Recipes") }}<Icon :name="preRecipeOpen ? 'chevron-up' : 'chevron-down'" class="size-4" /></button>
             <div v-if="preRecipeOpen" class="fixed inset-0 z-30 bg-black/60 md:hidden" @click="preRecipeOpen = false"></div>
             <div v-if="preRecipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl max-md:fixed max-md:inset-x-3 max-md:top-14 max-md:w-auto max-md:max-h-[80vh] max-md:overflow-y-auto">
               <StageRecipeStart compact @start="startFromRecipe" />
             </div>
           </span>
-          <button type="button" disabled class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] opacity-30 max-md:h-10" title="ベースを選んでから"><Icon name="rotate" class="size-4" /><span class="max-md:hidden">リセット</span></button>
-          <button type="button" disabled class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] opacity-30 max-md:h-10" title="戻せる操作がまだ無い"><Icon name="undo" class="size-4" /><span class="max-md:hidden">1 つ戻す</span></button>
+          <button type="button" disabled class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] opacity-30 max-md:h-10" :title="tr('ベースを選んでから', 'Choose a base first')"><Icon name="rotate" class="size-4" /><span class="max-md:hidden">{{ tr("リセット", "Reset") }}</span></button>
+          <button type="button" disabled class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] opacity-30 max-md:h-10" :title="tr('戻せる操作がまだ無い', 'Nothing to undo yet')"><Icon name="undo" class="size-4" /><span class="max-md:hidden">{{ tr("1 つ戻す", "Undo") }}</span></button>
         </template>
       </div>
     </div>
 
     <!-- 再生モード -->
     <div v-if="s.replay.value" class="mb-3 flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
-      <b class="text-sky-200">再生中</b>
-      <span>{{ s.replay.value.plan.title ?? s.replay.value.plan.base }} · {{ s.log.value.length }} 手目まで (seed {{ s.replay.value.plan.seed }})</span>
-      <button v-if="inApp" type="button" :class="btn" class="ml-auto max-md:hidden" @click="s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
-      <button type="button" :class="btn" @click="s.leaveReplay()">エミュレーターへ</button>
+      <b class="text-sky-200">{{ tr("再生中", "Replaying") }}</b>
+      <span>{{ s.replay.value.plan.title ?? s.replay.value.plan.base }} · {{ tr(`${s.log.value.length} 手目まで`, `up to step ${s.log.value.length}`) }} (seed {{ s.replay.value.plan.seed }})</span>
+      <button v-if="inApp" type="button" :class="btn" class="ml-auto max-md:hidden" @click="s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
+      <button type="button" :class="btn" @click="s.leaveReplay()">{{ tr("エミュレーターへ", "To Emulator") }}</button>
     </div>
 
     <!-- 設定と操作 -->
@@ -355,43 +356,43 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
       <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
         <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>
-        <h3 class="text-[15px] font-bold text-[var(--exile-color-text-primary)]">ベース</h3>
-        <HelpTip text="作るアイテムの種類 (ベース) とアイテムレベル。ソケットと始め方 (白から作るか、フラクチャー済みを買うか) もここで" />
+        <h3 class="text-[15px] font-bold text-[var(--exile-color-text-primary)]">{{ tr("ベース", "Base") }}</h3>
+        <HelpTip :text="tr('作るアイテムの種類 (ベース) とアイテムレベル。ソケットと始め方 (白から作るか、フラクチャー済みを買うか) もここで', 'The item type (base) and item level to craft. Sockets and how to start (white base or bought fractured) are set here too')" />
       </span>
       <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
       <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
       <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" @pick="pickSimBase" />
       <span v-if="!simNoBase" class="flex items-center gap-1">
-        <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : "アイテムレベル" }}</span>
+        <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.itemLevel.value === lv ? 'on' : ''" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>
       <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
       <span v-if="s.mode.value === 'sim' && !simNoBase && simSocketCap > 0" class="flex items-center gap-1">
-        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">ソケット</span>
-        <button v-for="n in simSocketCap + 1" :key="n" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.simSockets.value === n - 1 ? 'on' : ''" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]" title="熟練工のオーブの上限より多い (規格外の品だけ)">規格外</span></button>
-        <span v-if="s.simSockets.value == null" class="text-amber-200/80">ソケットの数を選ぶ</span>
+        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("ソケット", "Sockets") }}</span>
+        <button v-for="n in simSocketCap + 1" :key="n" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.simSockets.value === n - 1 ? 'on' : ''" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]" :title="tr('熟練工のオーブの上限より多い (規格外の品だけ)', 'Above the Artificer’s Orb limit (special items only)')">{{ tr("規格外", "Special") }}</span></button>
+        <span v-if="s.simSockets.value == null" class="text-amber-200/80">{{ tr("ソケットの数を選ぶ", "Choose socket count") }}</span>
       </span>
       <!-- 始め方 (白 / 固定済みを買う / 4 MOD を買う)。2026-10-08 オーナー「最初の段階から選択式がいい」 -->
       <span v-if="s.mode.value === 'sim' && !simNoBase" class="flex flex-wrap items-center gap-1 max-md:grid max-md:w-full max-md:grid-cols-1">
-        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">始め方</span>
-        <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="s.simStart.value === x.k ? 'on' : ''" :title="x.hint" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="size-3.5 shrink-0" />{{ x.label }}</button>
-        <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? "レア" : s.simStartItem.value?.rarity === "magic" ? "マジック" : "ノーマル" }} · {{ startItemMods.length ? startItemMods.join(" / ") : "MOD なし" }}</span>
-        <HelpTip v-else-if="s.simStart.value !== 'white'" text="フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物" />
+        <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("始め方", "Start") }}</span>
+        <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="s.simStart.value === x.k ? 'on' : ''" :title="tr(x.hint, x.hintEn)" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="size-3.5 shrink-0" />{{ tr(x.label, x.labelEn) }}</button>
+        <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? tr("レア", "Rare") : s.simStartItem.value?.rarity === "magic" ? tr("マジック", "Magic") : tr("ノーマル", "Normal") }} · {{ startItemMods.length ? startItemMods.join(" / ") : tr("MOD なし", "No mods") }}</span>
+        <HelpTip v-else-if="s.simStart.value !== 'white'" :text="tr('フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物', 'The fractured mod is the first one added in step 2 (Target mods)')" />
       </span>
       <template v-if="s.mode.value === 'hand'">
       <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->
-      <button type="button" :class="resetArmed ? 'g-btn-red sm' : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArmed ? "もう一度押すと白に戻す" : "白に戻す" }}</button>
-      <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
+      <button type="button" :class="resetArmed ? 'g-btn-red sm' : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArmed ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
+      <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
       <!-- 今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08) -->
-      <button v-if="!SIM_LOCKED" type="button" :class="btn" title="今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーターへ。ベース代は エミュレーターの累計 + 白ベース代" @click="simFromHand">この状態からシミュレーター →</button>
-      <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
+      <button v-if="!SIM_LOCKED" type="button" :class="btn" :title="tr('今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーターへ。ベース代は エミュレーターの累計 + 白ベース代', 'Send the current item (mods, fractured, sockets) to the Simulator as the start. Base cost = Emulator total + white base cost')" @click="simFromHand">{{ tr("この状態からシミュレーター →", "Simulate from here →") }}</button>
+      <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
       <span class="ml-auto flex flex-wrap items-center gap-1.5">
         <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
-        <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)" @click="copy('手順 JSON', s.plan())">手順 JSON</button>
-        <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" title="POE2Tube に渡す結果 JSON (今の相場の値段で)" @click="copy('結果 JSON', s.result(pkg.version))">結果 JSON</button>
-        <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" title="craft-stage-run.mjs の --prices に渡す相場 (高貴建て)" @click="copy('相場 JSON', s.prices())">相場 JSON</button>
+        <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)', 'Steps so far as plan JSON (same seed, so craft-stage-run.mjs gives the same result)')" @click="copy(tr('手順 JSON', 'plan JSON'), s.plan())">{{ tr("手順 JSON", "Plan JSON") }}</button>
+        <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('POE2Tube に渡す結果 JSON (今の相場の値段で)', 'Result JSON for POE2Tube (at current market prices)')" @click="copy(tr('結果 JSON', 'result JSON'), s.result(pkg.version))">{{ tr("結果 JSON", "Result JSON") }}</button>
+        <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :title="tr('craft-stage-run.mjs の --prices に渡す相場 (高貴建て)', 'Market prices for craft-stage-run.mjs --prices (in Exalted)')" @click="copy(tr('相場 JSON', 'price JSON'), s.prices())">{{ tr("相場 JSON", "Price JSON") }}</button>
         <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
-        <button type="button" :class="btn" :disabled="!stageModGroups.length" title="今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・段の下限まで)" @click="searchStageMods">今の MOD を取引所で検索 ↗</button>
+        <button type="button" :class="btn" :disabled="!stageModGroups.length" :title="tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・段の下限まで)', 'Open the trade site with this item’s mods (base, item level, sockets and minimum tiers included)')" @click="searchStageMods">{{ tr("今の MOD を取引所で検索 ↗", "Search these mods on trade ↗") }}</button>
       </span>
       </template>
     </section>
@@ -399,7 +400,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <!-- スマホ: アイテムのカードが画面の外に出たら上に要約を貼る (2026-10-09 オーナー「下にスクロールしても MOD 付いても見えん」) -->
     <StageItemMini v-if="phone && !cardOnScreen && s.item.value && (s.mode.value === 'hand' || s.replay.value)" :item="s.item.value" :added="s.last.value?.added ?? []" :removed="s.last.value?.removed ?? []" />
     <p v-if="s.error.value" class="mb-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300">{{ s.error.value }}</p>
-    <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center opacity-50">データを読んでいます…</p>
+    <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center opacity-50">{{ tr("データを読んでいます…", "Loading data…") }}</p>
 
     <!-- 手で打つ画面と行き来しても入れた物が残るように、一度ベースを選んだら消さずに隠す (2026-10-05 オーナー「ステージと実験行き来できるように、行き来したらもっかい最初からになった」) -->
     <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
@@ -426,30 +427,30 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <RevealPanel />
         <!-- ヒネコラの髪束の予見: 持っているカレンシーを打った時の結果 (次の手の seed で引くので、打つとこの通りになる) -->
         <div v-if="s.foresight.value" class="w-[380px] max-md:w-full rounded-xl border border-violet-400/50 bg-violet-500/10 p-3 text-[12px]">
-          <p class="mb-1 font-bold text-violet-200">予見: {{ nameOf(s.foresight.value.key) }} を使うと</p>
-          <p v-if="!s.foresight.value.applied" class="text-rose-300">使えない — {{ s.foresight.value.reason }}</p>
+          <p class="mb-1 font-bold text-violet-200">{{ tr(`予見: ${nameOf(s.foresight.value.key)} を使うと`, `Foresight: using ${nameOf(s.foresight.value.key)}`) }}</p>
+          <p v-if="!s.foresight.value.applied" class="text-rose-300">{{ tr("使えない", "Can't use") }} — {{ s.foresight.value.reason }}</p>
           <template v-else>
             <p v-for="(t, i) in s.foresight.value.added" :key="'fa' + i" class="text-emerald-300">＋ {{ t }}</p>
             <p v-for="(t, i) in s.foresight.value.removed" :key="'fr' + i" class="text-rose-300 line-through">－ {{ t }}</p>
-            <p v-if="s.foresight.value.after.destroyed" class="font-bold text-rose-400">壊れる</p>
-            <p v-if="s.foresight.value.after.corrupted && !s.item.value?.corrupted" class="font-bold text-[#d20000]">コラプトする</p>
-            <p v-if="!s.foresight.value.added.length && !s.foresight.value.removed.length && !s.foresight.value.after.destroyed" class="opacity-60">MOD は変わらない</p>
+            <p v-if="s.foresight.value.after.destroyed" class="font-bold text-rose-400">{{ tr("壊れる", "Destroyed") }}</p>
+            <p v-if="s.foresight.value.after.corrupted && !s.item.value?.corrupted" class="font-bold text-[#d20000]">{{ tr("コラプトする", "Corrupted") }}</p>
+            <p v-if="!s.foresight.value.added.length && !s.foresight.value.removed.length && !s.foresight.value.after.destroyed" class="opacity-60">{{ tr("MOD は変わらない", "No mod change") }}</p>
           </template>
         </div>
         <div class="g-panel w-[380px] max-md:w-full p-2 text-[12px]">
-          <p class="mb-1 flex items-center justify-between"><b class="g-antique text-[15px] font-normal text-[var(--exile-color-text-title)]">直前の変化</b><span class="tabular-nums opacity-70">累計 {{ displayCurrency.money(s.total.value) }} · {{ s.last.value?.out.index ?? 0 }} 手</span></p>
+          <p class="mb-1 flex items-center justify-between"><b class="g-antique text-[15px] font-normal text-[var(--exile-color-text-title)]">{{ tr("直前の変化", "Last change") }}</b><span class="tabular-nums opacity-70">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
           <template v-if="s.last.value">
-            <p class="opacity-80">{{ s.last.value.out.currency_ja }}<span v-if="s.last.value.out.omen_ja" class="ml-1 text-violet-300">+ {{ s.last.value.out.omen_ja }}</span><span v-if="!s.last.value.out.applied" class="ml-1 text-rose-300/80">— {{ s.last.value.out.reason }}</span></p>
+            <p class="opacity-80">{{ stepNameOf(s.last.value.out) }}<span v-if="s.last.value.out.omen" class="ml-1 text-violet-300">+ {{ stepOmenOf(s.last.value.out) }}</span><span v-if="!s.last.value.out.applied" class="ml-1 text-rose-300/80">— {{ s.last.value.out.reason }}</span></p>
             <p v-if="s.last.value.out.note" class="text-sky-200/90">{{ String(s.last.value.out.note) }}</p>
             <!-- ルーンを置き換えた時 (置き換えた方は壊れる。2026-10-08 完成判定: 直前の変化では分からなかった) -->
-            <p v-if="augChange?.replaced" class="text-rose-300">{{ augChange.socket }} 番目の <span class="line-through">{{ augChange.replaced.ja }}</span> を {{ augChange.put.ja }} に置き換え (外した方は壊れる)</p>
-            <p v-for="m in s.last.value.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ m.textJa }}</p>
-            <p v-for="m in s.last.value.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ m.textJa }}</p>
+            <p v-if="augChange?.replaced" class="text-rose-300"><template v-if="isEn">Socket {{ augChange.socket }}: replaced <span class="line-through">{{ augChange.replaced.en ?? augChange.replaced.ja }}</span> with {{ augChange.put.en ?? augChange.put.ja }} (the removed one is destroyed)</template><template v-else>{{ augChange.socket }} 番目の <span class="line-through">{{ augChange.replaced.ja }}</span> を {{ augChange.put.ja }} に置き換え (外した方は壊れる)</template></p>
+            <p v-for="m in s.last.value.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ modText(m) }}</p>
+            <p v-for="m in s.last.value.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ modText(m) }}</p>
           </template>
-          <p v-else class="opacity-50">まだ何も使っていません</p>
+          <p v-else class="opacity-50">{{ tr("まだ何も使っていません", "Nothing used yet") }}</p>
           <!-- 工程 (直前の変化の下、固定の高さで中だけ送る。2026-10-08 オーナー「工程はスクロールでいいから直前の変化の所に入れて固定枠で」) -->
           <div v-if="s.log.value.length" class="mt-3 border-t border-white/10 pt-2">
-            <p class="mb-1 flex items-center gap-2"><b class="g-antique text-[15px] font-normal text-[var(--exile-color-text-title)]">工程</b><span class="text-[10px] opacity-50">{{ inApp ? "" : `最近 ${LOG_KEEP} 手まで` }}</span></p>
+            <p class="mb-1 flex items-center gap-2"><b class="g-antique text-[15px] font-normal text-[var(--exile-color-text-title)]">{{ tr("工程", "Steps") }}</b><span class="text-[10px] opacity-50">{{ inApp ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span></p>
             <div class="max-h-72 overflow-y-auto pr-1 max-md:max-h-64"><StageHistory /></div>
           </div>
         </div>
@@ -461,17 +462,17 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <StageAimPanel v-if="!s.replay.value" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
         <section class="g-panel p-2">
-          <p class="mb-2 flex items-center gap-2 text-[12px]">
-            <b class="g-brush text-[20px] tracking-[0.14em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">カレンシー</b>
-            <span v-if="s.held.value" class="rounded-full bg-amber-500/20 px-2 text-amber-200">持っている: {{ nameOf(s.held.value) }}</span>
-            <span v-else class="opacity-50">押して持つ → アイテムを押す</span>
-            <span v-for="o in s.omens.value" :key="o" class="cursor-pointer rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" title="押すと外す" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
+          <p class="mb-2 flex flex-wrap items-center gap-2 text-[12px]">
+            <b class="g-brush text-[20px] tracking-[0.14em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">{{ tr("カレンシー", "Currency") }}</b>
+            <span v-if="s.held.value" class="whitespace-nowrap rounded-full bg-amber-500/20 px-2 text-amber-200">{{ tr("持っている", "Holding") }}: {{ nameOf(s.held.value) }}</span>
+            <span v-else class="whitespace-nowrap opacity-50">{{ tr("押して持つ → アイテムを押す", "Click to hold → click the item") }}</span>
+            <span v-for="o in s.omens.value" :key="o" class="cursor-pointer whitespace-nowrap rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" :title="tr('押すと外す', 'Click to remove')" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
           </p>
           <CurrencyShelf @hold="hold">
             <!-- 棚の中の「神〜ヴァールオーブ」の段の下に出る (置き場は CurrencyShelf が決める。上に出すと持っているカレンシーがずれる、オーナー 2026-10-04) -->
             <template v-if="heldOmens.length" #held>
               <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
-                <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(s.held.value ?? "") }} に掛けられるお告げ</p>
+                <p class="mb-1 text-[11px] text-violet-200/80">{{ tr(`${nameOf(s.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(s.held.value ?? "")}`) }}</p>
                 <div class="flex flex-wrap gap-1.5">
                   <ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="s.toggleOmen($event)" />
                 </div>

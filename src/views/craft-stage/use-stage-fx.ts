@@ -15,6 +15,7 @@ import { ref, watch, type Ref } from "vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import type { StageItem } from "../../services/craft-stage/types";
 import type { PlayedStep } from "../../services/craft-stage/run-plan";
+import { tr } from "../../i18n/lang";
 
 export interface StageFx {
   n: number;
@@ -27,6 +28,10 @@ export interface StageFx {
 }
 
 const RARITY_TEXT = { magic: "マジックに!", rare: "レアに!", normal: "", unique: "ユニークに!" } as const;
+const RARITY_TEXT_EN = { magic: "Magic!", rare: "Rare!", normal: "", unique: "Unique!" } as const;
+/** 属性の英語 (英語の画面。2026-10-10 英語版) */
+const EL_EN: Record<string, string> = { fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos" };
+const elName = (el: string): string => tr(EL_JA[el] ?? el, EL_EN[el] ?? el);
 const COLOR = { magic: "var(--color-rarity-magic)", rare: "var(--color-rarity-rare)", normal: "var(--color-rarity-normal)", unique: "#ff9a4a", desecrated: "#f07070", fractured: "var(--color-mod-fractured)", divine: "#ffffff", miss: "#f43f5e", top: "#fbbf24", corrupt: "#ff2a2a" };
 /**
  * アクト中に落ちる物 (要望 ⑧) の結果の文字: 品質 / 鑑定 / サポート枠 / ソケット / シャード。関係なければ null
@@ -35,50 +40,55 @@ const COLOR = { magic: "var(--color-rarity-magic)", rare: "var(--color-rarity-ra
 /** 耐性のフラックスで変えた先の属性 (結果 JSON の converted.element) */
 const convertedOf = (o: object): string | null => (o as { converted?: { element: string } }).converted?.element ?? null;
 function augText(o: object): { kind: "hit" | "up"; color: string; text: string } | null {
-  const a = (o as { augment_change?: { put: { ja: string; en?: string; text_ja?: string }; replaced: { ja: string } | null; upgraded?: { from: { ja: string }; to: { ja: string; en?: string } }; converted?: { element: string } } }).augment_change;
+  const a = (o as { augment_change?: { put: { ja: string; en?: string; text_ja?: string; text_en?: string }; replaced: { ja: string; en?: string } | null; upgraded?: { from: { ja: string }; to: { ja: string; en?: string } }; converted?: { element: string } } }).augment_change;
   if (!a) return null;
   // クラフトの決まりを変えるルーン (POE2Tube 要望 ㉙): アルダー = 「火に変わった!」、セール = 「サフィックス +1!」、特殊 MOD = 「マークスマンモッドが出るように!」
-  if (a.converted) return { kind: "up", color: COLOR.top, text: `${EL_JA[a.converted.element] ?? a.converted.element}に変わった!` };
-  if (/^Serle.s Triumph$/.test(a.put.en ?? "")) return { kind: "up", color: COLOR.top, text: "サフィックス +1!" };
-  if (/^Astrid.s Creativity$/.test(a.put.en ?? "")) return { kind: "up", color: COLOR.top, text: "クラフトモッド +1!" };
+  if (a.converted) return { kind: "up", color: COLOR.top, text: tr(`${elName(a.converted.element)}に変わった!`, `Now ${elName(a.converted.element)}!`) };
+  if (/^Serle.s Triumph$/.test(a.put.en ?? "")) return { kind: "up", color: COLOR.top, text: tr("サフィックス +1!", "Suffix +1!") };
+  if (/^Astrid.s Creativity$/.test(a.put.en ?? "")) return { kind: "up", color: COLOR.top, text: tr("クラフトモッド +1!", "Crafted mod +1!") };
   const pool = /^(.+モッド)をロールできるようになる/.exec(a.put.text_ja ?? "");
-  if (pool) return { kind: "up", color: COLOR.top, text: `${pool[1]}が出るように!` };
+  if (pool) {
+    const poolEn = /roll (.+?Modifiers)/i.exec(a.put.text_en ?? "");
+    return { kind: "up", color: COLOR.top, text: tr(`${pool[1]}が出るように!`, poolEn ? `${poolEn[1]} can roll!` : "New mods can roll!") };
+  }
   if (a.upgraded) {
     const tier = /^Perfect /.test(a.upgraded.to.en ?? "") ? "パーフェクト" : /^Greater /.test(a.upgraded.to.en ?? "") ? "グレーター" : "1 段上";
-    return { kind: "up", color: COLOR.top, text: `${tier}に!` };
+    const tierEn = /^Perfect /.test(a.upgraded.to.en ?? "") ? "Perfect!" : /^Greater /.test(a.upgraded.to.en ?? "") ? "Greater!" : "Tier up!";
+    return { kind: "up", color: COLOR.top, text: tr(`${tier}に!`, tierEn) };
   }
-  if (a.replaced) return { kind: "hit", color: COLOR.miss, text: `${a.replaced.ja}はなくなった\n${a.put.ja}をはめた!` };
-  return { kind: "up", color: COLOR.fractured, text: `${a.put.ja}をはめた!` };
+  if (a.replaced) return { kind: "hit", color: COLOR.miss, text: tr(`${a.replaced.ja}はなくなった\n${a.put.ja}をはめた!`, `${a.replaced.en ?? a.replaced.ja} is gone\nSocketed ${a.put.en ?? a.put.ja}!`) };
+  return { kind: "up", color: COLOR.fractured, text: tr(`${a.put.ja}をはめた!`, `Socketed ${a.put.en ?? a.put.ja}!`) };
 }
 function actText(before: StageItem, after: StageItem): { kind: "hit" | "up"; color: string; text: string } | null {
-  if (after.quality > before.quality && !after.qualityTag) return { kind: "hit", color: COLOR.top, text: `品質 +${Math.round((after.quality - before.quality) * 10) / 10}%` };
-  if (before.identified === false && after.identified !== false) return { kind: "up", color: COLOR[after.rarity], text: "鑑定!" };
-  if ((after.gemSockets ?? 0) > (before.gemSockets ?? 0)) return { kind: "up", color: "#7fb0e0", text: `サポート枠 ${after.gemSockets} つ!` };
+  if (after.quality > before.quality && !after.qualityTag) return { kind: "hit", color: COLOR.top, text: tr(`品質 +${Math.round((after.quality - before.quality) * 10) / 10}%`, `Quality +${Math.round((after.quality - before.quality) * 10) / 10}%`) };
+  if (before.identified === false && after.identified !== false) return { kind: "up", color: COLOR[after.rarity], text: tr("鑑定!", "Identified!") };
+  if ((after.gemSockets ?? 0) > (before.gemSockets ?? 0)) return { kind: "up", color: "#7fb0e0", text: tr(`サポート枠 ${after.gemSockets} つ!`, `${after.gemSockets} support sockets!`) };
   const sh = Object.keys(after.shards ?? {}).find((k) => (after.shards?.[k] ?? 0) !== (before.shards?.[k] ?? 0));
   if (sh) {
     const n = after.shards![sh]!;
-    return n === 0 ? { kind: "up", color: COLOR.top, text: "10 個でオーブに!" } : { kind: "hit", color: COLOR.normal, text: `+1 (${n}/10)` };
+    return n === 0 ? { kind: "up", color: COLOR.top, text: tr("10 個でオーブに!", "10 shards: Orb!") } : { kind: "hit", color: COLOR.normal, text: `+1 (${n}/10)` };
   }
-  if ((after.sockets ?? 0) > (before.sockets ?? 0) && !after.corrupted) return { kind: "hit", color: COLOR.fractured, text: "ソケット +1!" };
+  if ((after.sockets ?? 0) > (before.sockets ?? 0) && !after.corrupted) return { kind: "hit", color: COLOR.fractured, text: tr("ソケット +1!", "Socket +1!") };
   return null;
 }
 /** 付いた / 消えた MOD の段 (「T3 がついた!」「T4 → T2」「T5 が消えた」)。MOD が動いていなければ "" */
 function modText(st: PlayedStep): string {
   const add = st.added.filter((m) => !m.unrevealed).map((m) => m.tierName);
   const del = st.removed.filter((m) => !m.unrevealed).map((m) => m.tierName);
-  if (add.length && del.length && st.out.currency !== "divine") return `${del.join("・")} → ${add.join("・")}`;
-  if (add.length) return `${add.join("・")} がついた!`;
-  if (del.length) return `${del.join("・")} が消えた`;
+  const sep = tr("・", ", ");
+  if (add.length && del.length && st.out.currency !== "divine") return `${del.join(sep)} → ${add.join(sep)}`;
+  if (add.length) return tr(`${add.join(sep)} がついた!`, `${add.join(sep)} added!`);
+  if (del.length) return tr(`${del.join(sep)} が消えた`, `${del.join(sep)} removed`);
   return "";
 }
 /** 2026-09-29 に足したカレンシー (apply-extra.ts) の文字 */
 function extraText(st: PlayedStep): string {
   const { before: b, after: a, out: o } = st;
-  if (a.mirrored && !b.mirrored) return "ミラー!";
-  if (a.foreseen && !b.foreseen) return "予見!";
-  if (a.siphoner && !b.siphoner) return "キル閾値!";
-  if (a.unique && b.unique && a.unique.en !== b.unique.en) return `${a.unique.ja} に!`;
-  if (a.enchant && b.enchant && a.enchant.id !== b.enchant.id) return o.currency.startsWith("sacrifice_") ? "エンチャントが上位に!" : "エンチャントが変わった!";
+  if (a.mirrored && !b.mirrored) return tr("ミラー!", "Mirrored!");
+  if (a.foreseen && !b.foreseen) return tr("予見!", "Foreseen!");
+  if (a.siphoner && !b.siphoner) return tr("キル閾値!", "Kill threshold!");
+  if (a.unique && b.unique && a.unique.en !== b.unique.en) return tr(`${a.unique.ja} に!`, `${a.unique.en}!`);
+  if (a.enchant && b.enchant && a.enchant.id !== b.enchant.id) return o.currency.startsWith("sacrifice_") ? tr("エンチャントが上位に!", "Enchant upgraded!") : tr("エンチャントが変わった!", "Enchant changed!");
   return "";
 }
 /** 解呪 / サルベージで手に入った物 (「王者のシャード +1」) */
@@ -86,20 +96,20 @@ function disposeText(before: StageItem, after: StageItem): string {
   const got: string[] = [];
   for (const k of Object.keys(after.shards ?? {})) {
     const d = (after.shards?.[k] ?? 0) - (before.shards?.[k] ?? 0);
-    if (d) got.push(d > 0 ? `${nameOf(k)} +${d}` : `${nameOf(k)} → オーブ!`);
+    if (d) got.push(d > 0 ? `${nameOf(k)} +${d}` : tr(`${nameOf(k)} → オーブ!`, `${nameOf(k)} → Orb!`));
   }
   for (const k of Object.keys(after.gained ?? {})) {
     const d = (after.gained?.[k] ?? 0) - (before.gained?.[k] ?? 0);
     if (d > 0) got.push(`${nameOf(k)} +${d}`);
   }
-  return got.join("・") || (after.disposed === "disenchant" ? "解呪!" : "サルベージ!");
+  return got.join(tr("・", ", ")) || (after.disposed === "disenchant" ? tr("解呪!", "Disenchanted!") : tr("サルベージ!", "Salvaged!"));
 }
 /** コラプトの結果の文字 */
 function vaalText(before: StageItem, after: StageItem, changed: number): string {
-  if (after.enchant !== before.enchant) return "コラプト — エンチャント!";
-  if ((after.sockets ?? 0) > (before.sockets ?? 0)) return "コラプト — ソケット +1!";
-  if (changed) return "コラプト — 振り直し!";
-  return "コラプト — 変化なし";
+  if (after.enchant !== before.enchant) return tr("コラプト — エンチャント!", "Corrupted — Enchant!");
+  if ((after.sockets ?? 0) > (before.sockets ?? 0)) return tr("コラプト — ソケット +1!", "Corrupted — Socket +1!");
+  if (changed) return tr("コラプト — 振り直し!", "Corrupted — Rerolled!");
+  return tr("コラプト — 変化なし", "Corrupted — No change");
 }
 
 /** 演出の元: 手の数 (増えた時だけ動く) と直前の手。既定は手で打つ画面 (動画モードは自分のテープを渡す) */
@@ -120,25 +130,25 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource =
     const act = actText(st.before, st.after);
     const mods = modText(st);
     const extra = extraText(st);
-    if (!o.applied) next = { kind: "shake", color: COLOR.miss, text: o.reason ?? "使えない" };
-    else if (st.after.destroyed && !st.before.destroyed) next = { kind: "shake", color: COLOR.miss, text: "壊れた…" };
+    if (!o.applied) next = { kind: "shake", color: COLOR.miss, text: o.reason ?? tr("使えない", "Can't use") };
+    else if (st.after.destroyed && !st.before.destroyed) next = { kind: "shake", color: COLOR.miss, text: tr("壊れた…", "Destroyed…") };
     else if (st.after.disposed && !st.before.disposed) next = { kind: "up", color: COLOR.top, text: disposeText(st.before, st.after) };
-    else if (act) next = st.after.corrupted && !st.before.corrupted ? { ...act, color: COLOR.corrupt, text: `${act.text} — コラプト!` } : act;
+    else if (act) next = st.after.corrupted && !st.before.corrupted ? { ...act, color: COLOR.corrupt, text: tr(`${act.text} — コラプト!`, `${act.text} — Corrupted!`) } : act;
     else if (extra) next = { kind: "up", color: COLOR.top, text: `${extra}${mods ? ` ${mods}` : ""}` };
-    else if (st.after.corrupted && !st.before.corrupted && o.currency !== "vaal") next = { kind: "up", color: COLOR.desecrated, text: "腐食!" };
+    else if (st.after.corrupted && !st.before.corrupted && o.currency !== "vaal") next = { kind: "up", color: COLOR.desecrated, text: tr("腐食!", "Putrefied!") };
     else if (st.after.corrupted && !st.before.corrupted) next = { kind: "up", color: COLOR.corrupt, text: vaalText(st.before, st.after, st.added.length + st.removed.length) };
-    else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: "聖別!" };
+    else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: tr("聖別!", "Sanctified!") };
     // オーグメント (POE2Tube 要望 ㉘): 傑作のルーンで上げた / 置き換えた / はめた (ルーン・ソウルコア・アイドルは名前で)
     else if (augText(o)) next = augText(o)!;
     // 耐性のフラックス (2026-10-04): 「火耐性に変わった!」
-    else if (convertedOf(o)) next = { kind: "up", color: COLOR.top, text: `${EL_JA[convertedOf(o)!] ?? ""}耐性に変わった!` };
-    else if (o.changed.rarity_from !== o.changed.rarity_to) next = { kind: "up", color: COLOR[o.changed.rarity_to], text: `${RARITY_TEXT[o.changed.rarity_to]}${mods ? ` ${mods}` : ""}` };
-    else if (top) next = { kind: "up", color: COLOR.top, text: mods || "T1 がついた!" };
-    else if (st.added.some((m) => m.fractured)) next = { kind: "hit", color: COLOR.fractured, text: "フラクチャー!" };
-    else if (st.added.some((m) => m.desecrated)) next = { kind: "hit", color: COLOR.desecrated, text: st.added.some((m) => m.unrevealed) ? "冒涜!" : "発現!" };
-    else if (o.currency === "divine") next = { kind: "hit", color: COLOR.divine, text: "数値を振り直し!" };
-    else if (st.after.quality !== st.before.quality) next = { kind: "hit", color: COLOR.top, text: `品質 ${st.after.quality}%` };
-    else next = { kind: "hit", color: COLOR[st.after.rarity], text: mods || "変化なし" };
+    else if (convertedOf(o)) next = { kind: "up", color: COLOR.top, text: tr(`${EL_JA[convertedOf(o)!] ?? ""}耐性に変わった!`, `Now ${EL_EN[convertedOf(o)!] ?? ""} Resistance!`) };
+    else if (o.changed.rarity_from !== o.changed.rarity_to) next = { kind: "up", color: COLOR[o.changed.rarity_to], text: `${tr(RARITY_TEXT[o.changed.rarity_to], RARITY_TEXT_EN[o.changed.rarity_to])}${mods ? ` ${mods}` : ""}` };
+    else if (top) next = { kind: "up", color: COLOR.top, text: mods || tr("T1 がついた!", "T1 added!") };
+    else if (st.added.some((m) => m.fractured)) next = { kind: "hit", color: COLOR.fractured, text: tr("フラクチャー!", "Fractured!") };
+    else if (st.added.some((m) => m.desecrated)) next = { kind: "hit", color: COLOR.desecrated, text: st.added.some((m) => m.unrevealed) ? tr("冒涜!", "Desecrated!") : tr("発現!", "Revealed!") };
+    else if (o.currency === "divine") next = { kind: "hit", color: COLOR.divine, text: tr("数値を振り直し!", "Values rerolled!") };
+    else if (st.after.quality !== st.before.quality) next = { kind: "hit", color: COLOR.top, text: tr(`品質 ${st.after.quality}%`, `Quality ${st.after.quality}%`) };
+    else next = { kind: "hit", color: COLOR[st.after.rarity], text: mods || tr("変化なし", "No change") };
     show(next, iconOf(o.currency));
   });
   watch(() => craftStage.miss.value?.n, () => {

@@ -17,6 +17,7 @@ import Icon from "../../components/ui/Icon.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import { logRecord } from "../../utils/log-record";
 import { keepPlace } from "../../utils/keep-place";
+import { tr } from "../../i18n/lang";
 
 /** 分析用の記録 (狙い・今のアイテムの MOD と一緒に) */
 function logAim(kind: string, extra: Record<string, unknown>): void {
@@ -106,7 +107,7 @@ const shown = computed(() => (showAll.value ? hitRows.value : hitRows.value.slic
 /** 棒 = 一番付きやすい行に対する割合 */
 const best = computed(() => hitRows.value[0]?.p ?? 0);
 
-const nameRow = (r: AimOdd): string => (r.currency === REVEAL ? "発現 (未発現の MOD)" : nameOf(r.currency));
+const nameRow = (r: AimOdd): string => (r.currency === REVEAL ? tr("発現 (未発現の MOD)", "Reveal (unrevealed mod)") : nameOf(r.currency));
 const omenNames = (r: AimOdd): string[] => r.omens.map((o) => nameOf(o));
 const pct = (p: number): string => (p >= 0.995 ? "100%" : p >= 0.1 ? `${(p * 100).toFixed(0)}%` : p >= 0.001 ? `${(p * 100).toFixed(1)}%` : "<0.1%");
 
@@ -140,34 +141,34 @@ function roll(r: AimOdd): void {
 }
 watch([() => s.aims.value, () => s.item.value], () => { rolled.value = null; });
 /** 平均で何回に 1 回付くか */
-const every = (p: number): string => (p <= 0 ? "" : p >= 0.995 ? "毎回" : `${Math.round(1 / p).toLocaleString()} 回に 1 回`);
+const every = (p: number): string => (p <= 0 ? "" : p >= 0.995 ? tr("毎回", "Every time") : tr(`${Math.round(1 / p).toLocaleString()} 回に 1 回`, `1 in ${Math.round(1 / p).toLocaleString()}`));
 const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.every((o) => s.omens.value.includes(o));
 </script>
 
 <template>
   <section v-if="s.aims.value.length" ref="panel" data-aim-panel class="g-panel scroll-mt-2 p-2 text-[12px]">
     <header class="mb-2 flex flex-wrap items-center gap-2">
-      <b class="g-brush text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">次の手で狙う</b>
+      <b class="g-brush text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">{{ tr("次の手で狙う", "Target next move") }}</b>
       <span class="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:w-full">
-        <span v-for="a in s.aims.value" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ a.label }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" title="この MOD を外す" @click="s.aims.value = s.aims.value.filter((x) => x.modId !== a.modId)">×</button></span>
+        <span v-for="a in s.aims.value" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ a.label }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('この MOD を外す', 'Remove this mod')" @click="s.aims.value = s.aims.value.filter((x) => x.modId !== a.modId)">×</button></span>
         <!-- 足す・変える: 選ぶ窓をもう一度 (MOD 一覧まで戻らなくていい) -->
-        <button type="button" class="g-plain inline-flex min-h-7 items-center gap-1 rounded border border-dashed border-white/25 px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5" @click="s.aimPicker.value = { seed: null }"><Icon name="plus" class="size-3.5" />{{ s.aims.value.length < AIM_MAX ? "足す・変える" : "変える" }}</button>
+        <button type="button" class="g-plain inline-flex min-h-7 items-center gap-1 rounded border border-dashed border-white/25 px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5" @click="s.aimPicker.value = { seed: null }"><Icon name="plus" class="size-3.5" />{{ s.aims.value.length < AIM_MAX ? tr("足す・変える", "Add / change") : tr("変える", "Change") }}</button>
       </span>
-      <span class="flex items-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">回す回数
+      <span class="flex items-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("回す回数", "Runs") }}
         <button v-for="n in ROLLS" :key="n" type="button" class="g-tab !min-h-[26px] !px-2 !text-[11px]" :class="rollN === n ? 'on' : ''" @click="rollN = n">{{ n.toLocaleString() }}</button>
       </span>
-      <HelpTip title="次の手で狙う" :width="320">
-        <p>今の状態から同じ打ち方 (カレンシーとお告げの組み合わせ) を当たるまで続けた時に、狙いの MOD (その段以上。最大 4 つで、全部揃って当たり) が付く確率。打ち方ごとに {{ TRIALS.toLocaleString() }} 回打った目安です。</p>
-        <p class="mt-1">今付いている MOD が消えたら外れで、今の状態からやり直します。外れても続けられる時 (空きがまだある など) はそのまま続けます。</p>
-        <p class="mt-1">冒涜は骨の後の発現の候補 (アビスの反響の引き直しを含む) に出れば当たり。</p>
-        <p class="mt-1">並びは付きやすい順。行の下に 1 回の費用と付くまでの平均 (1 回の費用 ÷ 確率、カレンシーとお告げの相場) を出します。</p>
-        <p class="mt-1 text-[var(--exile-color-text-secondary)]">行を押すと、そのカレンシーを持ってお告げを掛けます。打つと今の状態で出し直します。</p>
+      <HelpTip :title="tr('次の手で狙う', 'Target next move')" :width="320">
+        <p>{{ tr(`今の状態から同じ打ち方 (カレンシーとお告げの組み合わせ) を当たるまで続けた時に、狙いの MOD (その段以上。最大 4 つで、全部揃って当たり) が付く確率。打ち方ごとに ${TRIALS.toLocaleString()} 回打った目安です。`, `The chance that the target mods (that tier or better; up to 4, a hit when all are on) roll when you repeat the same method (currency + omen combo) from the current state until it hits. An estimate from ${TRIALS.toLocaleString()} uses per method.`) }}</p>
+        <p class="mt-1">{{ tr("今付いている MOD が消えたら外れで、今の状態からやり直します。外れても続けられる時 (空きがまだある など) はそのまま続けます。", "If a mod currently on the item is removed, it counts as a miss and restarts from the current state. If a miss still allows continuing (e.g. there is still an open slot), it keeps going.") }}</p>
+        <p class="mt-1">{{ tr("冒涜は骨の後の発現の候補 (アビスの反響の引き直しを含む) に出れば当たり。", "Desecrated mods count as a hit if they appear among the reveal options after a Bone (including Omen of Abyssal Echoes rerolls).") }}</p>
+        <p class="mt-1">{{ tr("並びは付きやすい順。行の下に 1 回の費用と付くまでの平均 (1 回の費用 ÷ 確率、カレンシーとお告げの相場) を出します。", "Sorted by chance. Each row shows the cost per use and the average cost to hit (cost per use ÷ chance, at currency and omen market prices).") }}</p>
+        <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("行を押すと、そのカレンシーを持ってお告げを掛けます。打つと今の状態で出し直します。", "Click a row to hold that currency and apply its omens. After each use the list is recalculated from the new state.") }}</p>
       </HelpTip>
-      <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" title="狙うのをやめる" @click="s.aims.value = []"><Icon name="x" class="size-4" /></button>
+      <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" :title="tr('狙うのをやめる', 'Stop targeting')" @click="s.aims.value = []"><Icon name="x" class="size-4" /></button>
     </header>
-    <p v-if="done" class="text-emerald-300">もう全部付いています</p>
+    <p v-if="done" class="text-emerald-300">{{ tr("もう全部付いています", "All targets are already on the item") }}</p>
     <template v-else>
-      <p class="mb-0.5 pr-[76px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">付きやすい順</p>
+      <p class="mb-0.5 pr-[76px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("付きやすい順", "By chance") }}</p>
       <ol class="flex flex-col gap-1">
         <li v-for="(r, i) in shown" :key="r.currency + r.omens.join('+')">
           <button type="button" class="g-plain flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition" :class="isHeld(r) ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/[0.05]'" @click="keepPlace($event.currentTarget as Element, () => pick(r))">
@@ -178,21 +179,21 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
             </span>
             <span class="min-w-0 flex-1">
               <span class="block leading-snug text-[var(--exile-color-text-primary)] md:truncate">{{ nameRow(r) }}</span>
-              <span v-if="r.omens.length" class="block text-[11px] leading-snug text-violet-200/80 md:truncate">+ {{ omenNames(r).join("・") }}</span>
-              <span class="block text-[11px] text-[var(--exile-color-text-tertiary)]">{{ every(r.p) }}<template v-if="costOf(r) > 0"> · 1 回 {{ displayCurrency.money(costOf(r)) }} · 付くまで平均 {{ displayCurrency.money(perHit(r)) }}</template><template v-if="rolled?.key === keyOf(r)"> · <b class="text-emerald-300">{{ rolled.n.toLocaleString() }} 回中 {{ rolled.hit.toLocaleString() }} 回付いた</b></template></span>
+              <span v-if="r.omens.length" class="block text-[11px] leading-snug text-violet-200/80 md:truncate">+ {{ omenNames(r).join(tr("・", ", ")) }}</span>
+              <span class="block text-[11px] text-[var(--exile-color-text-tertiary)]">{{ every(r.p) }}<template v-if="costOf(r) > 0"> · {{ tr("1 回", "Per use") }} {{ displayCurrency.money(costOf(r)) }} · {{ tr("付くまで平均", "Avg to hit") }} {{ displayCurrency.money(perHit(r)) }}</template><template v-if="rolled?.key === keyOf(r)"> · <b class="text-emerald-300">{{ tr(`${rolled.n.toLocaleString()} 回中 ${rolled.hit.toLocaleString()} 回付いた`, `Hit ${rolled.hit.toLocaleString()} of ${rolled.n.toLocaleString()}`) }}</b></template></span>
             </span>
             <span class="w-24 shrink-0 max-md:hidden">
               <span class="block h-1.5 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full bg-[var(--exile-color-accent-focus)]" :style="{ width: `${best ? (r.p / best) * 100 : 0}%` }"></span></span>
             </span>
             <!-- 確率 (並びの元)。費用は名前の下 -->
             <b class="w-14 shrink-0 whitespace-nowrap text-right tabular-nums text-[14px]" :class="i === 0 ? 'text-[var(--exile-color-text-title)]' : 'text-[var(--exile-color-text-primary)]'">{{ pct(r.p) }}</b>
-            <span role="button" tabindex="0" class="g-btn sm shrink-0" :title="`今の状態から ${rollN.toLocaleString()} 回続けて打って何回付くか (当たったら・今の MOD が消えたら今の状態から)`" @click.stop="roll(r)" @keydown.enter.stop="roll(r)">回す</span>
+            <span role="button" tabindex="0" class="g-btn sm shrink-0" :title="tr(`今の状態から ${rollN.toLocaleString()} 回続けて打って何回付くか (当たったら・今の MOD が消えたら今の状態から)`, `Use it ${rollN.toLocaleString()} times from the current state and count the hits (restarting from the current state after a hit or when a current mod is removed)`)" @click.stop="roll(r)" @keydown.enter.stop="roll(r)">{{ tr("回す", "Run") }}</span>
           </button>
         </li>
       </ol>
-      <p v-if="busy" class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">計算中… {{ rows.length }} / {{ total }}</p>
-      <p v-else-if="!hitRows.length" class="text-[var(--exile-color-text-secondary)]">今の状態ではどの打ち方でも付きません (空きが無い・同じ系統が付いている・アイテムレベルが足りない など)</p>
-      <button v-if="hitRows.length > TOP" type="button" class="g-plain mt-1 inline-flex min-h-8 items-center gap-1 text-[12px] text-[var(--exile-color-text-link)]" @click="showAll = !showAll"><Icon :name="showAll ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ showAll ? "畳む" : `ほか ${hitRows.length - TOP} 件` }}</button>
+      <p v-if="busy" class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("計算中…", "Calculating…") }} {{ rows.length }} / {{ total }}</p>
+      <p v-else-if="!hitRows.length" class="text-[var(--exile-color-text-secondary)]">{{ tr("今の状態ではどの打ち方でも付きません (空きが無い・同じ系統が付いている・アイテムレベルが足りない など)", "No method can roll this from the current state (no open slot, same group already on the item, item level too low, etc.)") }}</p>
+      <button v-if="hitRows.length > TOP" type="button" class="g-plain mt-1 inline-flex min-h-8 items-center gap-1 text-[12px] text-[var(--exile-color-text-link)]" @click="showAll = !showAll"><Icon :name="showAll ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ showAll ? tr("畳む", "Collapse") : tr(`ほか ${hitRows.length - TOP} 件`, `${hitRows.length - TOP} more`) }}</button>
     </template>
   </section>
 </template>

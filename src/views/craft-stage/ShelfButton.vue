@@ -17,18 +17,19 @@ import type { CardAnchor } from "../../utils/fit-card";
 import { shelfTag } from "../../state/craft-stage-help";
 import { useShelf } from "../../state/shelf-context";
 import { omenNote } from "../../services/craft-stage/omens";
+import { tr } from "../../i18n/lang";
 
 const props = defineProps<{ k: string; omen?: boolean }>();
 const emit = defineEmits<{ pick: [key: string] }>();
 
-const BADGE: Array<[RegExp, string, string]> = [
-  [/_greater$/, "上級", "text-sky-300"],
-  [/_perfect$/, "完全", "text-amber-300"],
-  [/^essence:lesser:/, "レッサー", "text-white/60"],
-  [/^essence:greater:/, "グレーター", "text-sky-300"],
-  [/^essence:perfect:/, "パーフェクト", "text-amber-300"],
-  [/^desecrate_ancient$/, "古びた", "text-sky-300"],
-  [/^desecrate_altered$/, "変質", "text-fuchsia-300"],
+const BADGE: Array<[RegExp, [string, string], string]> = [
+  [/_greater$/, ["上級", "Greater"], "text-sky-300"],
+  [/_perfect$/, ["完全", "Perfect"], "text-amber-300"],
+  [/^essence:lesser:/, ["レッサー", "Lesser"], "text-white/60"],
+  [/^essence:greater:/, ["グレーター", "Greater"], "text-sky-300"],
+  [/^essence:perfect:/, ["パーフェクト", "Perfect"], "text-amber-300"],
+  [/^desecrate_ancient$/, ["古びた", "Ancient"], "text-sky-300"],
+  [/^desecrate_altered$/, ["変質", "Altered"], "text-fuchsia-300"],
 ];
 const badge = computed(() => BADGE.find(([re]) => re.test(props.k)) ?? null);
 /** 値段の代わりに出す付く MOD の短い名前 (エッセンス・カタリスト、2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで」「カタリストも一緒」) */
@@ -40,17 +41,20 @@ const omenBlocked = computed(() => !!reason.value && !!shelf.usableBare && !shel
 /**
  * お告げの効き方の一言 (アイコンの下。2026-10-10 オーナー「サフィにつくのかプレにつくのかぱっと見わからない、カタリストみたいにアイコンの下に」)
  */
-const OMEN_TAG: Record<string, string> = {
-  OmenofSinistralExaltation: "プレに付く", OmenofDextralExaltation: "サフィに付く",
-  OmenofGreaterExaltation: "2 つ付く", OmenofCatalysingExaltation: "品質で重く",
-  OmenofSinistralAnnulment: "プレを消す", OmenofDextralAnnulment: "サフィを消す", OmenofLight: "冒涜を消す",
-  OmenofWhittling: "最低を消す", OmenofSinistralErasure: "プレを消す", OmenofDextralErasure: "サフィを消す",
-  OmenofSinistralCrystallisation: "プレを消す", OmenofDextralCrystallisation: "サフィを消す",
-  OmenofSinistralNecromancy: "プレに付く", OmenofDextralNecromancy: "サフィに付く",
-  OmenoftheSovereign: "ウラマン", OmenoftheLiege: "アマナム", OmenoftheBlackblooded: "クルガル",
-  OmenofPutrefaction: "全部冒涜", OmenofAbyssalEchoes: "引き直し",
+const OMEN_TAG: Record<string, [string, string]> = {
+  OmenofSinistralExaltation: ["プレに付く", "Adds prefix"], OmenofDextralExaltation: ["サフィに付く", "Adds suffix"],
+  OmenofGreaterExaltation: ["2 つ付く", "Adds 2"], OmenofCatalysingExaltation: ["品質で重く", "Quality-weighted"],
+  OmenofSinistralAnnulment: ["プレを消す", "Removes prefix"], OmenofDextralAnnulment: ["サフィを消す", "Removes suffix"], OmenofLight: ["冒涜を消す", "Removes desecrated"],
+  OmenofWhittling: ["最低を消す", "Removes lowest"], OmenofSinistralErasure: ["プレを消す", "Removes prefix"], OmenofDextralErasure: ["サフィを消す", "Removes suffix"],
+  OmenofSinistralCrystallisation: ["プレを消す", "Removes prefix"], OmenofDextralCrystallisation: ["サフィを消す", "Removes suffix"],
+  OmenofSinistralNecromancy: ["プレに付く", "Adds prefix"], OmenofDextralNecromancy: ["サフィに付く", "Adds suffix"],
+  OmenoftheSovereign: ["ウラマン", "Ulaman"], OmenoftheLiege: ["アマナム", "Amanam"], OmenoftheBlackblooded: ["クルガル", "Kurgal"],
+  OmenofPutrefaction: ["全部冒涜", "All desecrated"], OmenofAbyssalEchoes: ["引き直し", "Reroll"],
 };
-const omenTag = computed(() => (props.omen ? OMEN_TAG[props.k] ?? null : null));
+const omenTag = computed(() => {
+  const t = props.omen ? OMEN_TAG[props.k] : undefined;
+  return t ? tr(t[0], t[1]) : null;
+});
 /** 今のアイテムでは意味が無い / 掛けると打てない (2026-10-10 オーナー「空きに勝手に入るから意味ないこと教えてあげた方がいい」) */
 const omenWarn = computed(() => (props.omen ? omenNote(props.k, shelf.item.value) : null));
 const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : shelf.held.value === props.k));
@@ -98,11 +102,11 @@ onBeforeUnmount(leave);
       <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
     </span>
     <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 text-center">{{ nameOf(k) }}</span></span>
-    <span v-if="badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ badge[1] }}</span>
-    <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">有効</span>
+    <span v-if="badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
+    <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">{{ tr("有効", "Active") }}</span>
     <span v-if="omenTag" class="mt-px block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">・{{ omenTag }}</span>
     <span v-if="omenWarn" class="block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
-    <span v-else-if="omenBlocked" class="mt-px block w-full text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-rose-300">お告げで打てない</span>
+    <span v-else-if="omenBlocked" class="mt-px block w-full text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-rose-300">{{ tr("お告げで打てない", "Blocked by omen") }}</span>
     <span v-else-if="tag" class="mt-px w-full">
       <span v-for="(t, i) in tag" :key="i" class="block truncate text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">・{{ t }}</span>
     </span>

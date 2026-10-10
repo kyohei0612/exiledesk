@@ -14,6 +14,7 @@ import { GROUP_JA, modListFor, type ListRow, type ListTier, type ModGroup } from
 import { scrollToTop } from "../../utils/keep-place";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
+import { tr } from "../../i18n/lang";
 
 const seed = s.aimPicker.value?.seed ?? null;
 /** 選んでいる物 (決めるまで手元だけ) */
@@ -30,7 +31,7 @@ const groups = computed(() => GROUPS.filter((g) => rows.value.some((r) => inGrou
 const seedRow = seed ? rows.value.find((r) => r.tiers.some((t) => (t.modId ?? r.id) === seed.modId)) : undefined;
 const group = ref<ModGroup>(seedRow ? (GROUPS.find((g) => inGroup(seedRow, g)) ?? "normal") : "normal");
 const columns = computed(() => (["prefix", "suffix"] as const).map((side) => ({
-  side, title: side === "prefix" ? "プレフィックス" : "サフィックス",
+  side, title: side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix"),
   items: rows.value.filter((r) => inGroup(r, group.value) && r.side === side).sort((a, b) => b.share - a.share || b.topLevel - a.topLevel),
 })));
 
@@ -42,14 +43,14 @@ function idOf(r: ListRow, t: ListTier): { modId: string; idx: number } {
 const pickedOf = (r: ListRow): AimPick | undefined => draft.value.find((a) => r.tiers.some((t) => (t.modId ?? r.id) === a.modId));
 const pickOf = (r: ListRow, t: ListTier): AimPick | null => {
   const { modId, idx } = idOf(r, t);
-  return idx < 0 ? null : { modId, minTierIndex: idx, label: `${t.text} (${t.rank} 以上)`, at: `${modId}:${t.rank}` };
+  return idx < 0 ? null : { modId, minTierIndex: idx, label: `${t.text} (${tr(`${t.rank} 以上`, `${t.rank}+`)})`, at: `${modId}:${t.rank}` };
 };
 const full = computed(() => draft.value.length >= AIM_MAX);
 /** 選べない理由 (灰色の行の下に文で。スマホはホバーが無い) */
 function whyNot(r: ListRow): string | null {
-  if (r.on) return "付いている";
-  if (r.blocked) return "同じ系統が付いている";
-  if (full.value && !pickedOf(r)) return `${AIM_MAX} つまで`;
+  if (r.on) return tr("付いている", "On item");
+  if (r.blocked) return tr("同じ系統が付いている", "Same group on item");
+  if (full.value && !pickedOf(r)) return tr(`${AIM_MAX} つまで`, `Max ${AIM_MAX}`);
   return null;
 }
 /** チェック: どの段でも (付けば当たり) = このアイテムレベルで付く一番下の段以上 */
@@ -99,14 +100,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <!-- 見出し: 題・選んだ物 (いつも見える所に) -->
         <header class="border-b border-white/10 px-3 py-2">
           <p class="flex items-center gap-2">
-            <b class="g-brush text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">次の手で狙う</b>
-            <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ AIM_MAX }} · 全部付いて当たり</span>
-            <button type="button" class="ml-auto grid size-9 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10" title="やめる" @click="close"><Icon name="x" class="size-5" /></button>
+            <b class="g-brush text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">{{ tr("次の手で狙う", "Target next move") }}</b>
+            <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ AIM_MAX }} · {{ tr("全部付いて当たり", "Hit when all roll") }}</span>
+            <button type="button" class="ml-auto grid size-9 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10" :title="tr('やめる', 'Cancel')" @click="close"><Icon name="x" class="size-5" /></button>
           </p>
           <p v-if="draft.length" class="mt-1 flex flex-wrap gap-1">
-            <span v-for="a in draft" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ a.label }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" title="外す" @click="draft = draft.filter((x) => x !== a)">×</button></span>
+            <span v-for="a in draft" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ a.label }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="draft = draft.filter((x) => x !== a)">×</button></span>
           </p>
-          <p v-else class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">狙う MOD にチェック (名前を押すと段を選べる)</p>
+          <p v-else class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("狙う MOD にチェック (名前を押すと段を選べる)", "Check the mods to target (click a name to pick a tier)") }}</p>
           <nav v-if="groups.length > 1" class="mt-2 flex flex-wrap gap-1">
             <button v-for="g in groups" :key="g" type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="group === g ? 'on' : ''" @click="group = g">{{ GROUP_JA[g] }}</button>
           </nav>
@@ -114,17 +115,17 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <div class="grid min-h-0 flex-1 grid-cols-2 gap-4 overflow-auto px-3 py-2 max-md:grid-cols-1 max-md:gap-2">
           <div v-for="col in columns" :key="col.side">
             <p class="mb-1 font-bold text-[var(--exile-color-text-secondary)]">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }}</span></p>
-            <p v-if="!col.items.length" class="text-[11px] opacity-50">無し</p>
+            <p v-if="!col.items.length" class="text-[11px] opacity-50">{{ tr("無し", "None") }}</p>
             <div v-for="r in col.items" :key="r.id" class="mb-1">
               <div class="flex items-center gap-2 rounded px-2 py-1 max-md:py-1.5" :class="pickedOf(r) ? 'bg-[rgba(163,52,42,0.30)] ring-1 ring-[var(--exile-color-border-brass)]' : whyNot(r) ? 'opacity-40' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
                 <input type="checkbox" :checked="!!pickedOf(r)" :disabled="!pickedOf(r) && !!whyNot(r)" class="size-5 shrink-0 accent-amber-500" :aria-label="r.text" @change="toggle(r)" />
                 <button type="button" class="g-plain flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 text-left" @click="expanded = expanded === r.id ? null : r.id">
                   <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
-                  <span v-if="pickedOf(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ rankOf(pickedOf(r)!) }} 以上</span>
+                  <span v-if="pickedOf(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ tr(`${rankOf(pickedOf(r)!)} 以上`, `${rankOf(pickedOf(r)!)}+`) }}</span>
                   <span v-else-if="whyNot(r)" class="text-[10px]">{{ whyNot(r) }}</span>
                   <Icon :name="expanded === r.id ? 'chevron-up' : 'chevron-down'" class="size-3.5 opacity-50" />
                 </button>
-                <span class="w-11 shrink-0 text-right font-bold tabular-nums text-amber-100" title="出やすさ (同じ側の重みの割合)">{{ pct(r.share) }}</span>
+                <span class="w-11 shrink-0 text-right font-bold tabular-nums text-amber-100" :title="tr('出やすさ (同じ側の重みの割合)', 'Chance (share of weight on the same side)')">{{ pct(r.share) }}</span>
               </div>
               <table v-if="expanded === r.id" class="mt-0.5 w-full text-[11px]">
                 <tbody>
@@ -133,7 +134,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
                     <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-20 py-0.5 text-right">
-                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30 max-md:min-h-9 max-md:px-2.5 max-md:text-[12px]" :class="isPickedTier(r, t) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50' : isCoveredTier(r, t) ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :disabled="!pickedOf(r) && !!whyNot(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ t.rank }} 以上</button>
+                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30 max-md:min-h-9 max-md:px-2.5 max-md:text-[12px]" :class="isPickedTier(r, t) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50' : isCoveredTier(r, t) ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :disabled="!pickedOf(r) && !!whyNot(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
                     </td>
                   </tr>
                 </tbody>
@@ -143,8 +144,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         </div>
         <!-- 決める (下に固定。1 つだけでも進める) -->
         <footer class="flex items-center gap-2 border-t border-white/10 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          <button type="button" class="g-btn" @click="close">やめる</button>
-          <button type="button" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">確率を見る{{ draft.length ? ` (${draft.length})` : "" }}</button>
+          <button type="button" class="g-btn" @click="close">{{ tr("やめる", "Cancel") }}</button>
+          <button type="button" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
         </footer>
       </div>
     </div>

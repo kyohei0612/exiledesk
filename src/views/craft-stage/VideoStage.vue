@@ -13,6 +13,7 @@
   倍率は固定 (手ごとに変えると画面が揺れる)。MOD 6 つ + エンチャント + コラプトの一番長いアイテムでも下 15% に入らない高さ。
 -->
 <script setup lang="ts">
+import { modText } from "../../i18n/lang";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { PlayedStep } from "../../services/craft-stage/run-plan";
 import StageItemCard from "./StageItemCard.vue";
@@ -360,7 +361,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
             class="flex items-center justify-between gap-3 rounded-xl border px-4 py-1.5 text-[17px] transition-all duration-150"
             :class="hand.reveal.value.lit === i ? 'scale-[1.03] border-rose-300 bg-rose-500/25 text-white shadow-[0_0_18px_rgba(244,63,94,0.6)]' : 'border-white/10 bg-white/[0.03] text-mod-desecrated'"
           >
-            <span>{{ m.textJa }}</span>
+            <span>{{ modText(m) }}</span>
             <span class="shrink-0 text-[12px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>
           </div>
         </div>
@@ -421,7 +422,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
               <span class="w-6 text-right tabular-nums text-white/50">{{ st.out.index }}</span>
               <img v-if="iconOf(st.out.currency)" :src="iconOf(st.out.currency)" alt="" class="h-6 w-6 object-contain" />
               <span class="shrink-0 font-bold">{{ st.out.currency_ja }}</span>
-              <span class="truncate text-emerald-300">{{ st.added[0] ? `+ ${st.added[0].textJa}` : st.removed[0] ? "" : "" }}</span>
+              <span class="truncate text-emerald-300">{{ st.added[0] ? `+ ${modText(st.added[0])}` : st.removed[0] ? "" : "" }}</span>
             </li>
           </ol>
         </aside>

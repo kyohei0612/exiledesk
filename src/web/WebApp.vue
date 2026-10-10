@@ -19,6 +19,8 @@ import { forgetResult } from "../utils/no-log";
 import MarketNotice from "./MarketNotice.vue";
 import pkg from "../../package.json";
 import { noLogOn, setNoLog } from "../utils/no-log";
+import { tr } from "../i18n/lang";
+import LangSwitch from "../components/LangSwitch.vue";
 
 const feedbackOpen = ref(false);
 /**
@@ -76,16 +78,19 @@ window.addEventListener("resize", fitZoom);
       <span class="flex shrink-0 items-center" :class="phone ? 'basis-full gap-1' : 'gap-2'">
         <img src="/favicon.png" alt="" class="g-brand-icon shrink-0" :class="phone ? 'size-6' : 'size-8'" draggable="false" />
         <span class="g-brand-word leading-none" :class="phone ? 'text-[13px]' : 'text-[18px]'">EXILEDESK</span>
+        <!-- 言語 (2026-10-10 英語版)。スマホは 1 段目の右 -->
+        <span v-if="phone" class="ml-auto"><LangSwitch /></span>
       </span>
-      <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">クラフトステージ</span>
+      <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
       <!-- 版を押すと更新履歴 (2026-10-10) -->
-      <button type="button" class="g-plain ml-auto opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" title="更新履歴を見る" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" title="何ができるか" @click="welcomeOpen = true">はじめに</button>
-      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" title="要望やバグを送る (今の画面の状態を添付できる)" @click="feedbackOpen = true">{{ phone ? "要望・バグ" : "要望・バグを送る" }}</button>
+      <button type="button" class="g-plain ml-auto opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
+      <LangSwitch v-if="!phone" />
+      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('何ができるか', 'What you can do')" @click="welcomeOpen = true">{{ tr("はじめに", "Guide") }}</button>
+      <button type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態を添付できる)', 'Send feedback or bug reports (you can attach the current screen state)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
-      <button v-if="SUPPORT_LINKS.length" type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" title="ExileDesk を支援する" @click="supportOpen = true">支援する</button>
+      <button v-if="SUPPORT_LINKS.length" type="button" class="rounded-lg border border-white/20 px-2.5 py-0.5 hover:bg-white/10" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
-      <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" title="相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中">アプリ版 近日公開</span>
+      <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" :title="tr('相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中', 'A desktop app with automatic market prices, trade history, DPS check and more is in the works')">{{ tr("アプリ版 近日公開", "Desktop app coming soon") }}</span>
     </header>
     <MarketNotice />
     <!-- ?nolog=1 で開いた時の結果 (2026-10-10) -->
@@ -106,10 +111,10 @@ window.addEventListener("resize", fitZoom);
     </div>
     <!-- 決まり事 (2026-10-07): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
     <footer class="flex shrink-0 items-center gap-3 border-t border-[var(--exile-color-border-subtle)] px-4 text-[10px] opacity-50" :class="phone ? 'h-auto flex-wrap py-1.5' : 'h-7'">
-      <span>ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。</span>
-      <span>相場は <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>、確率はゲームのデータからの推定で、結果を保証するものではありません。</span>
-      <span>使い方の記録 (打った手・回した結果など。名前や IP は含みません) を改善のために集めています。<button type="button" class="ml-1 underline" :title="noLogOn ? 'この端末の記録を再開する' : 'この端末からは記録を送らない'" @click="setNoLog(!noLogOn)">{{ noLogOn ? "この端末は記録していません (再開する)" : "この端末は記録しない" }}</button></span>
-      <span class="ml-auto">協賛の枠には PR と表示します</span>
+      <span>{{ tr("ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。", "ExileDesk is an unofficial fan site and is not affiliated with or endorsed by Grinding Gear Games. Path of Exile 2 and all related names and images are the property of Grinding Gear Games.") }}</span>
+      <span>{{ tr("相場は", "Market prices from") }} <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>{{ tr("、確率はゲームのデータからの推定で、結果を保証するものではありません。", ". Chances are estimates from game data; results are not guaranteed.") }}</span>
+      <span>{{ tr("使い方の記録 (打った手・回した結果など。名前や IP は含みません) を改善のために集めています。", "We collect usage data (actions used, results, etc. No names or IPs) to improve the site.") }}<button type="button" class="ml-1 underline" :title="noLogOn ? tr('この端末の記録を再開する', 'Resume logging on this device') : tr('この端末からは記録を送らない', 'Stop sending usage data from this device')" @click="setNoLog(!noLogOn)">{{ noLogOn ? tr("この端末は記録していません (再開する)", "Not logging on this device (resume)") : tr("この端末は記録しない", "Don't log this device") }}</button></span>
+      <span class="ml-auto">{{ tr("協賛の枠には PR と表示します", "Sponsored slots are marked PR") }}</span>
     </footer>
   </div>
 </template>

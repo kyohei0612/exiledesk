@@ -6,6 +6,7 @@
   使い方: <HelpTip text="狙う手は当たったものとして次へ進みます" /> / 見出しの横に <HelpTip title="打って作る">…</HelpTip>
 -->
 <script setup lang="ts">
+import { tr } from "../../i18n/lang";
 import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { toCss } from "../../utils/zoom";
 import Icon from "./Icon.vue";
@@ -67,7 +68,7 @@ const style = computed(() => ({ left: `${pos.value.left}px`, top: `${pos.value.t
       type="button"
       class="helptip-btn grid shrink-0 place-items-center rounded-full leading-none transition"
       :class="[size === 'md' ? 'size-5' : 'size-4', open ? 'text-[var(--exile-color-accent-focus)]' : 'text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]']"
-      :aria-label="title || 'ヘルプ'"
+      :aria-label="title || tr('ヘルプ', 'Help')"
       :aria-expanded="open"
       @click.stop="toggle"
       @mouseenter="!touchOnly && !open && show()"

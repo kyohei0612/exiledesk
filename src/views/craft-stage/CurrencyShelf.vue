@@ -13,6 +13,7 @@ import ShelfButton from "./ShelfButton.vue";
 import { useShelf } from "../../state/shelf-context";
 import { bonesFor, CATALYSTS, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
 import { runeEffectFor, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
+import { tr } from "../../i18n/lang";
 
 const emit = defineEmits<{ hold: [key: string] }>();
 type ShelfTab = "usable" | "orb" | "essence" | "catalyst" | "rune" | "omen";
@@ -104,7 +105,8 @@ const sockets = computed(() => {
 const effectOf = (k: string): string => {
   const it = craftStage.item.value;
   const r = runeOf(k);
-  return it && r ? (runeEffectFor(r, it.cls.category)?.ja ?? "") : "";
+  const e = it && r ? runeEffectFor(r, it.cls.category) : null;
+  return e ? tr(e.ja, e.en || e.ja) : "";
 };
 const essences = computed(() => essenceShelf(craftStage.data.value, craftStage.item.value));
 const hasCatalyst = computed(() => ["Rings", "Amulets"].includes(craftStage.item.value?.cls.category ?? ""));
@@ -119,9 +121,9 @@ const usableAll = computed(() => {
   const ok = (k: string): boolean => !(craftStage.usableBare ?? craftStage.usable)(k);
   const sec = (label: string, keys: string[], kind?: string) => ({ label, keys: keys.filter((k) => ok(k) && !craftStage.hidden?.(k)), kind });
   return [
-    sec("オーブ・骨", [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
-    sec("エッセンス", essences.value.flatMap((g) => g.keys)),
-    ...(hasCatalyst.value ? [sec("カタリスト", [...CATALYSTS])] : []),
+    sec(tr("オーブ・骨", "Orbs & Bones"), [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
+    sec(tr("エッセンス", "Essences"), essences.value.flatMap((g) => g.keys)),
+    ...(hasCatalyst.value ? [sec(tr("カタリスト", "Catalysts"), [...CATALYSTS])] : []),
     // ルーンはルーンのタブと同じ段ごとのまとまりで、クラフトに関わる物以外は畳む (2026-10-05 オーナー「そこでもルーンはルーンページみたく閉じる奴は閉じちゃっておk」)
     ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
   ].filter((x) => x.keys.length);
@@ -142,12 +144,12 @@ const placed = computed(() => {
 });
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
 const TABS = computed(() => [
-  { id: "usable" as const, label: `使用可能 (${usableCount.value})` },
-  { id: "orb" as const, label: "オーブ・骨" },
-  { id: "essence" as const, label: `エッセンス (${essences.value.length})` },
-  ...(hasCatalyst.value ? [{ id: "catalyst" as const, label: "カタリスト" }] : []),
-  ...(sockets.value?.cap ? [{ id: "rune" as const, label: "ルーン" }] : []),
-  { id: "omen" as const, label: craftStage.omens.value.length ? `お告げ (${craftStage.omens.value.length} 枚掛け)` : "お告げ" },
+  { id: "usable" as const, label: `${tr("使用可能", "Usable")} (${usableCount.value})` },
+  { id: "orb" as const, label: tr("オーブ・骨", "Orbs & Bones") },
+  { id: "essence" as const, label: `${tr("エッセンス", "Essences")} (${essences.value.length})` },
+  ...(hasCatalyst.value ? [{ id: "catalyst" as const, label: tr("カタリスト", "Catalysts") }] : []),
+  ...(sockets.value?.cap ? [{ id: "rune" as const, label: tr("ルーン", "Runes") }] : []),
+  { id: "omen" as const, label: craftStage.omens.value.length ? tr(`お告げ (${craftStage.omens.value.length} 枚掛け)`, `Omens (${craftStage.omens.value.length} active)`) : tr("お告げ", "Omens") },
 ]);
 </script>
 
@@ -170,7 +172,7 @@ const TABS = computed(() => [
         <p class="mb-0.5 flex items-center gap-2 text-[10px]">
           <span class="opacity-60">{{ sec.label }} ({{ sec.keys.length }})</span>
           <button v-if="sec.kind && sec.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" type="button" class="rounded px-1 text-[10px] text-sky-300/80 hover:bg-white/10" @click="toggleRunes(sec.kind)">
-            {{ openRunes.has(sec.kind) ? "たたむ ▴" : `他 ${sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸` }}
+            {{ openRunes.has(sec.kind) ? tr("たたむ ▴", "Collapse ▴") : tr(`他 ${sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸`, `${sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} more ▸`) }}
           </button>
         </p>
         <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
@@ -178,7 +180,7 @@ const TABS = computed(() => [
         </div>
         <div v-if="$slots.held && !sec.kind && holds(sec.keys)" class="mt-2" data-held-box><slot name="held" /></div>
       </div>
-      <p v-if="!usableAll.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
+      <p v-if="!usableAll.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
       <div v-if="$slots.held && !placed" class="mt-2" data-held-box><slot name="held" /></div>
     </div>
 
@@ -191,12 +193,12 @@ const TABS = computed(() => [
           </div>
           <div v-if="$slots.held && holds(g.keys)" class="basis-full" data-held-box><slot name="held" /></div>
         </template>
-        <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">今のアイテムに使える物はありません</p>
+        <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
       </div>
       <div v-if="$slots.held && !placed" class="mt-2" data-held-box><slot name="held" /></div>
       <template v-if="orbSplit.unusable.length">
         <button type="button" class="mb-1 mt-3 flex w-full items-center gap-2 border-t border-white/10 pt-2 text-left text-[10px] opacity-50 hover:opacity-80 max-md:min-h-10" @click="unusableOpen = !unusableOpen">
-          今のアイテムには使えない物 ({{ orbSplit.unusable.reduce((a, g) => a + g.keys.length, 0) }}) {{ unusableOpen ? "▴ たたむ" : "▸ 開く" }}
+          {{ tr("今のアイテムには使えない物", "Not usable on this item") }} ({{ orbSplit.unusable.reduce((a, g) => a + g.keys.length, 0) }}) {{ unusableOpen ? tr("▴ たたむ", "▴ Collapse") : tr("▸ 開く", "▸ Expand") }}
         </button>
         <div v-if="unusableOpen" class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
           <template v-for="g in orbSplit.unusable" :key="'x' + g.kind">
@@ -216,7 +218,7 @@ const TABS = computed(() => [
         </div>
         <div v-if="$slots.held && holds(g.keys)" class="basis-full" data-held-box><slot name="held" /></div>
       </template>
-      <p v-if="!essences.length" class="text-[12px] opacity-50">このベースに使えるエッセンスはありません</p>
+      <p v-if="!essences.length" class="text-[12px] opacity-50">{{ tr("このベースに使えるエッセンスはありません", "No essences for this base") }}</p>
     </div>
 
     <div v-else-if="tab === 'catalyst'" class="flex flex-wrap gap-1.5">
@@ -226,7 +228,7 @@ const TABS = computed(() => [
 
     <div v-else-if="tab === 'rune'">
       <p v-if="sockets" class="mb-2 text-[11px] opacity-70">
-        ソケット {{ sockets.now }} / {{ sockets.cap }} (熟練工のオーブで足す、コラプトで +1)・はめたルーン {{ sockets.used }}。はめたら外せないが、他のルーンで置き換えられる (置き換えた方は壊れる。ソケットバウンドの物は置き換えも不可)。ルーンを持ってソケットの絵を押すとそのソケットを置き換える
+        {{ tr("ソケット", "Sockets") }} {{ sockets.now }} / {{ sockets.cap }} {{ tr("(熟練工のオーブで足す、コラプトで +1)・はめたルーン", "(add with Artificer's Orb, +1 from corruption) · Runes socketed") }} {{ sockets.used }}{{ tr("。はめたら外せないが、他のルーンで置き換えられる (置き換えた方は壊れる。ソケットバウンドの物は置き換えも不可)。ルーンを持ってソケットの絵を押すとそのソケットを置き換える", ". Socketed runes can't be removed, but can be replaced by another rune (the replaced one is destroyed; socket-bound ones can't be replaced). Hold a rune and click a socket to replace it.") }}
         <ShelfButton k="artificer" class="ml-2 inline-block align-middle" @pick="emit('hold', $event)" />
       </p>
       <!-- 段ごとのまとまり。初めはクラフトに関わるルーンだけ出して、他は「他 ○ 個」で畳む (2026-10-04 オーナー) -->
@@ -235,7 +237,7 @@ const TABS = computed(() => [
           <p class="mb-0.5 flex items-center gap-2 text-[10px]">
             <span class="opacity-60">{{ g.label }}</span>
             <button v-if="g.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" type="button" class="rounded px-1 text-[10px] text-sky-300/80 hover:bg-white/10" @click="toggleRunes(g.kind)">
-              {{ openRunes.has(g.kind) ? "たたむ ▴" : `他 ${g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸` }}
+              {{ openRunes.has(g.kind) ? tr("たたむ ▴", "Collapse ▴") : tr(`他 ${g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} 個 ▸`, `${g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length} more ▸`) }}
             </button>
           </p>
           <div v-if="openRunes.has(g.kind) || g.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:contents">
@@ -243,11 +245,11 @@ const TABS = computed(() => [
           </div>
         </div>
       </div>
-      <p v-if="!runes.length" class="text-[12px] opacity-50">このベースに効くルーンはありません</p>
+      <p v-if="!runes.length" class="text-[12px] opacity-50">{{ tr("このベースに効くルーンはありません", "No runes for this base") }}</p>
     </div>
 
     <div v-else>
-      <p class="mb-2 text-[11px] opacity-60">押すと掛けておきます (何枚でも)。次に打つ手に関係する物だけ使われます。</p>
+      <p class="mb-2 text-[11px] opacity-60">{{ tr("押すと掛けておきます (何枚でも)。次に打つ手に関係する物だけ使われます。", "Click to activate (any number). Only omens relevant to your next action are consumed.") }}</p>
       <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
       <div v-for="g in OMEN_GROUPS" :key="g.kind">
         <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>

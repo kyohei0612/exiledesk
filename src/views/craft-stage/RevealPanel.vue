@@ -6,6 +6,7 @@
   候補は次の手の seed で引いてあるので、見せた候補と選んだ手の結果は一致する ([[craft-stage.ts]] の offers)。
 -->
 <script setup lang="ts">
+import { modText, tr } from "../../i18n/lang";
 import { ref, watch } from "vue";
 import { craftStage } from "../../state/craft-stage";
 import { jaOfOmen } from "../../services/htc/labels";
@@ -22,15 +23,15 @@ function pick(i: number): void {
 <template>
   <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="w-[380px] max-md:w-full rounded-xl border border-rose-400/40 bg-rose-500/10 p-3 text-[12px]">
     <p class="mb-2 flex items-center justify-between">
-      <b class="text-rose-200">魂の井戸で発現 — 1 つ選ぶ<span v-if="left() > 1" class="ml-1 font-normal opacity-70">(未発現 残り {{ left() }})</span></b>
+      <b class="text-rose-200">{{ tr("魂の井戸で発現 — 1 つ選ぶ", "Well of Souls — choose 1 to reveal") }}<span v-if="left() > 1" class="ml-1 font-normal opacity-70">{{ tr(`(未発現 残り ${left()})`, `(${left()} unrevealed left)`) }}</span></b>
       <button
         v-if="canReroll() && !rerolled"
         type="button"
         class="rounded-lg border border-violet-400/60 px-2 py-0.5 text-violet-200 hover:bg-violet-500/15"
-        :title="`${jaOfOmen('OmenofAbyssalEchoes') ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`"
+        :title="tr(`${jaOfOmen('OmenofAbyssalEchoes') ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`, 'Omen of Abyssal Echoes: reroll the options once')"
         @click="rerolled = true"
-      >引き直す</button>
-      <span v-else-if="rerolled" class="text-violet-200">引き直した候補</span>
+      >{{ tr("引き直す", "Reroll") }}</button>
+      <span v-else-if="rerolled" class="text-violet-200">{{ tr("引き直した候補", "Rerolled options") }}</span>
     </p>
     <div class="space-y-1.5">
       <button
@@ -40,8 +41,8 @@ function pick(i: number): void {
         class="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-left max-md:min-h-11 hover:border-rose-300/60 hover:bg-rose-500/10"
         @click="pick(i)"
       >
-        <span class="text-mod-desecrated">{{ m.textJa }}</span>
-        <span class="shrink-0 text-[10px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>
+        <span class="text-mod-desecrated">{{ modText(m) }}</span>
+        <span class="shrink-0 text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }} {{ m.tierName }}</span>
       </button>
     </div>
   </section>

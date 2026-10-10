@@ -15,6 +15,7 @@ import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, SIDES, ski
 import { essenceClash } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
+import { tr } from "../../i18n/lang";
 
 /** そのクラスのエッセンスの MOD (側つき) */
 function essenceMods(data: PatchData, item: StageItem): Array<{ mod: Mod; side: StageSide }> {
@@ -71,39 +72,39 @@ function pickInfinite(data: PatchData, item: StageItem, key: string, rng: () => 
 
 export function applyEssence(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
   const t = isInfiniteEssence(key) ? pickInfinite(data, item, key, rng) ?? essenceTarget(data, item, key) : essenceTarget(data, item, key);
-  if (!t) return skip(item, "このベースには使えないエッセンス");
+  if (!t) return skip(item, tr("このベースには使えないエッセンス", "This Essence can't be used on this base"));
   const { mod, side, level } = t;
   // 段: 普通のエッセンスは段の名前 (Lesser / Greater / 無印) で選ぶ。パーフェクトは 1 段
   const tierIndex = level === "perfect" ? 0 : mod.tiers.findIndex((x) => essenceLevelOf(String(x.name ?? "")) === level);
   const tier = mod.tiers[tierIndex];
-  if (!tier) return skip(item, "このエッセンスのティアが無い");
+  if (!tier) return skip(item, tr("このエッセンスのティアが無い", "No tier for this Essence"));
   // アイテムレベルの制限は無い。MOD の要求レベルが高ければアイテムの要求レベルを上書きする (poe2wiki Essence、POE2Tube 要望 ㉞-4。
   // 前はアイテムレベル不足で打てなくしていた)。要求レベルは stage-bases.ts の reqOfItem
   // クラフト MOD は 1 つまで、アストリッドの創造性をはめていれば 2 つ (2026-10-03: 前はアストリッドを見ていなかった)
   const limit = craftedLimitOf(item);
-  if (allMods(item).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? "クラフト MOD はアストリッドの創造性込みで 2 つまで" : "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)");
+  if (allMods(item).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? tr("クラフト MOD はアストリッドの創造性込みで 2 つまで", "Max 2 crafted mods (with Astrid's Creativity)") : tr("エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)", "Only 1 Essence mod per item (2 with Astrid's Creativity)"));
   const clash = (it: StageItem) => essenceClash(mod, takenCraftedFamilies(data, it));
   const sm = { ...makeStageMod(mod, side, tierIndex, rng), ...normalTierOf(data, item, mod, tier), crafted: true };
 
   if (level !== "perfect") {
-    if (item.rarity !== "magic") return skip(item, "マジックのアイテムにだけ使える (レアにはパーフェクト)");
-    if (listOf(item, side).length >= rareLimitOf(item, side)) return skip(item, "足す側に空きが無い");
-    if (clash(item)) return skip(item, "同じ系統の MOD が付いている");
+    if (item.rarity !== "magic") return skip(item, tr("マジックのアイテムにだけ使える (レアにはパーフェクト)", "Magic items only (use a Perfect Essence on Rares)"));
+    if (listOf(item, side).length >= rareLimitOf(item, side)) return skip(item, tr("足す側に空きが無い", "No open slot on that side"));
+    if (clash(item)) return skip(item, tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item"));
     return { applied: true, item: withMod({ ...item, rarity: "rare" }, sm), added: [sm], removed: [] };
   }
 
-  if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
+  if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
   if (mod.family === ABYSS_FAMILY) return applyAbyss(item, sm, rng, used);
   // 結晶化のお告げ: 消す側。足す側が埋まっていれば、その側から消すしかない
   const omenSide: StageSide | null = used.includes("OmenofSinistralCrystallisation") ? "prefix" : used.includes("OmenofDextralCrystallisation") ? "suffix" : null;
   const full = !room(item, side);
-  if (full && omenSide && omenSide !== side) return skip(item, "足す側が埋まっているので、お告げの側からは消せない");
+  if (full && omenSide && omenSide !== side) return skip(item, tr("足す側が埋まっているので、お告げの側からは消せない", "The Essence's side is full, so it can't remove from the Omen's side"));
   const removeSides = omenSide ? [omenSide] : full ? [side] : SIDES;
   const r = allMods(item).length ? removeOne(item, rng, removeSides) : null;
-  if (allMods(item).length && !r) return skip(item, "外せる MOD が無い");
+  if (allMods(item).length && !r) return skip(item, tr("外せる MOD が無い", "No mod can be removed"));
   const rest = r?.item ?? item;
-  if (!room(rest, side)) return skip(item, "足す側に空きが無い");
-  if (clash(rest)) return skip(item, "同じ系統の MOD が付いている");
+  if (!room(rest, side)) return skip(item, tr("足す側に空きが無い", "No open slot on that side"));
+  if (clash(rest)) return skip(item, tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item"));
   return { applied: true, item: withMod(rest, sm), added: [sm], removed: r ? [r.mod] : [] };
 }
 
@@ -118,14 +119,14 @@ export const craftedLimitOf = (item: StageItem): number => 1 + ((item.augments ?
  * (お告げの側を先)。冒涜の MOD がある間は打てない (先にエッセンス・合金で上書きする。計算機と同じ決まり)。次の骨は印を置き換える
  */
 function applyAbyss(item: StageItem, sm: StageMod, rng: () => number, used: readonly string[]): StageApply {
-  if (allMods(item).some((m) => m.desecrated)) return skip(item, "冒涜の MOD がある間は使えない (先にエッセンス・合金で上書き)");
-  if (allMods(item).some((m) => m.abyssMark)) return skip(item, "印はもう付いている");
+  if (allMods(item).some((m) => m.desecrated)) return skip(item, tr("冒涜の MOD がある間は使えない (先にエッセンス・合金で上書き)", "Can't be used while a Desecrated mod is present"));
+  if (allMods(item).some((m) => m.abyssMark)) return skip(item, tr("印はもう付いている", "Already has a Mark"));
   const omenSide: StageSide | null = used.includes("OmenofSinistralCrystallisation") ? "prefix" : used.includes("OmenofDextralCrystallisation") ? "suffix" : null;
   const r = removeOne(item, rng, omenSide ? [omenSide] : SIDES);
-  if (omenSide && !r && !room(item, omenSide)) return skip(item, "お告げの側に外せる MOD も空きも無い");
+  if (omenSide && !r && !room(item, omenSide)) return skip(item, tr("お告げの側に外せる MOD も空きも無い", "No removable mod or open slot on the Omen's side"));
   const rest = r?.item ?? item;
   const side: StageSide | undefined = r ? r.mod.side : omenSide ?? SIDES.find((x) => room(rest, x));
-  if (!side) return skip(item, "外せる MOD も空きも無い");
+  if (!side) return skip(item, tr("外せる MOD も空きも無い", "No removable mod or open slot"));
   const mark: StageMod = { ...sm, side, abyssMark: true };
   return { applied: true, item: withMod(rest, mark), added: [mark], removed: r ? [r.mod] : [] };
 }

@@ -17,6 +17,7 @@ import { displayedValue } from "../htc/quality";
 import { displayValue, tierDisplayRanges, type TierLike } from "../mods/stat-scale";
 import { swapNums } from "./text-nums";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
+import { tr } from "../../i18n/lang";
 
 export const SIDES: StageSide[] = ["prefix", "suffix"];
 const MAGIC_LIMIT = 1;
@@ -317,34 +318,36 @@ const matchesMod = (mod: Mod, key: string): boolean => mod.id === key || mod.id.
  */
 export function addForced(data: PatchData, item: StageItem, floor: number, rng: () => number, force: Force, o: PoolOpts & { sides?: readonly StageSide[] } = {}): Forced | { error: string } {
   const sides = (o.sides ?? SIDES).filter((s) => room(item, s));
-  if (!sides.length) return { error: "足す枠が無い" };
+  if (!sides.length) return { error: tr("足す枠が無い", "No open affix slot") };
   const cands = candidates(data, item, sides, floor, o);
   const total = cands.reduce((a, c) => a + c.w, 0);
   const c = cands.find((x) => matchesMod(x.mod, force.mod));
   if (!c) {
     const any = [...data.mods.values()].find((m) => matchesMod(m, force.mod));
-    if (!any) return { error: `${force.mod} という MOD が無い` };
+    if (!any) return { error: tr(`${force.mod} という MOD が無い`, `No mod named ${force.mod}`) };
     // 理由を 1 つに絞る (中の名前は出さない。2026-10-08 使い倒しテスト)
     const side: StageSide = any.type === "suffix" ? "suffix" : "prefix";
     const sideJa = side === "prefix" ? "プレフィックス" : "サフィックス";
-    if (!sides.includes(side)) return { error: item.rarity === "magic" ? `マジックは${sideJa} 1 つまで (先にもう片方の側を付けるとレアになる)` : `${sideJa}の枠が埋まっている` };
-    if (familyBlocked(any, takenFamilies(data, item))) return { error: "同じ系統の MOD が付いている" };
-    if (!any.tiers.some((t) => t.ilvl <= item.itemLevel)) return { error: "このアイテムレベルでは付かない" };
-    return { error: "この手では付かない (強さの下限より弱い段しか無い)" };
+    if (!sides.includes(side)) return { error: item.rarity === "magic"
+      ? tr(`マジックは${sideJa} 1 つまで (先にもう片方の側を付けるとレアになる)`, `Magic: 1 ${side} max (add the other side first to make it Rare)`)
+      : tr(`${sideJa}の枠が埋まっている`, `${side === "prefix" ? "Prefixes" : "Suffixes"} are full`) };
+    if (familyBlocked(any, takenFamilies(data, item))) return { error: tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item") };
+    if (!any.tiers.some((t) => t.ilvl <= item.itemLevel)) return { error: tr("このアイテムレベルでは付かない", "Can't roll at this Item Level") };
+    return { error: tr("この手では付かない (強さの下限より弱い段しか無い)", "Can't roll with this currency (only tiers below its minimum)") };
   }
   let t: { index: number; w: number } | undefined;
   if (force.tier) {
     const n = Number(/^T(\d+)$/i.exec(force.tier)?.[1]);
     const index = c.mod.tiers.length - n;
     t = c.tiers.find((x) => x.index === index);
-    if (!t) return { error: `${force.mod} の ${force.tier} はこの手では付かない (アイテムレベル ${item.itemLevel}・強さの下限 ${floor})` };
+    if (!t) return { error: tr(`${force.mod} の ${force.tier} はこの手では付かない (アイテムレベル ${item.itemLevel}・強さの下限 ${floor})`, `${force.mod} ${force.tier} can't roll with this currency (Item Level ${item.itemLevel}, minimum level ${floor})`) };
   } else {
     t = pickWeighted(c.tiers, rng)!;
   }
   let sm = makeStageMod(c.mod, c.side, t.index, rng);
   if (force.values) {
     const bad = force.values.findIndex((v, i) => { const r = sm.ranges[i]; return !r || v < Math.min(r[0]!, r[1]!) || v > Math.max(r[0]!, r[1]!); });
-    if (bad >= 0) return { error: `${force.mod} の数値 ${force.values[bad]} がティアの範囲 (${sm.ranges[bad]?.join("〜") ?? "無し"}) の外` };
+    if (bad >= 0) return { error: tr(`${force.mod} の数値 ${force.values[bad]} がティアの範囲 (${sm.ranges[bad]?.join("〜") ?? "無し"}) の外`, `${force.mod} value ${force.values[bad]} is outside the tier range (${sm.ranges[bad]?.join("-") ?? "none"})`) };
     sm = withValues(sm, c.mod, rng, force.values);
   }
   const chance = total > 0 ? (force.tier ? t.w : c.w) / total : 0;
@@ -353,8 +356,8 @@ export function addForced(data: PatchData, item: StageItem, floor: number, rng: 
 /** 消える MOD の指名 (カオスの remove)。固定済み (フラクチャー) は消せない */
 export function removeForced(item: StageItem, key: string): { item: StageItem; mod: StageMod } | { error: string } {
   const m = allMods(item).find((x) => (x.modId === key || x.modId.endsWith(`/${key}`) || x.family === key));
-  if (!m) return { error: `${key} は付いていない` };
-  if (m.fractured) return { error: `${key} は固定済み (フラクチャー) で消せない` };
+  if (!m) return { error: tr(`${key} は付いていない`, `${key} isn't on the item`) };
+  if (m.fractured) return { error: tr(`${key} は固定済み (フラクチャー) で消せない`, `${key} is Fractured and can't be removed`) };
   return { item: without(item, m), mod: m };
 }
 

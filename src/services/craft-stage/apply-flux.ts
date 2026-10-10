@@ -11,6 +11,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageApply, StageItem } from "./types";
 import { skip } from "./stage-core";
 import { convertElements } from "./stage-runes";
+import { tr } from "../../i18n/lang";
 
 export const FLUX: Record<string, { element: string; eats: string[] }> = {
   flux_fire: { element: "fire", eats: ["cold", "lightning"] },
@@ -24,6 +25,6 @@ export const isFlux = (key: string): boolean => key in FLUX;
 export function applyFlux(data: PatchData, item: StageItem, key: string): StageApply {
   const f = FLUX[key]!;
   const c = convertElements(data, item, f.element, f.eats, (md) => /Resistance/.test(md.text ?? ""));
-  if (!c.mods.length) return skip(item, "変換できる耐性モッドが無い");
+  if (!c.mods.length) return skip(item, tr("変換できる耐性モッドが無い", "No resistance mod to convert"));
   return { applied: true, item: c.item, added: c.mods.map((x) => x.to), removed: c.mods.map((x) => x.from), converted: { element: f.element, mods: c.mods } };
 }

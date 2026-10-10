@@ -15,6 +15,7 @@ import { QUALITY_PER_CATALYST } from "../htc/catalysing-setup";
 import { socketCapOf } from "./stage-runes";
 import { allMods, maxQualityOf, replaced, skip, withValues } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
+import { tr } from "../../i18n/lang";
 
 export const OTHER_KINDS: readonly string[] = ["divine", "fracture", "artificer"];
 const FRACTURE_NEEDS = 4;
@@ -26,12 +27,12 @@ const CATALYST_CLASSES = ["Rings", "Amulets"];
  */
 export function applyOther(data: PatchData, item: StageItem, currency: string, rng: () => number, oneCatalyst = false): StageApply {
   if (currency.startsWith("catalyst_")) {
-    if (!CATALYST_CLASSES.includes(item.cls.category)) return skip(item, "カタリストは指輪・アミュレットだけ");
+    if (!CATALYST_CLASSES.includes(item.cls.category)) return skip(item, tr("カタリストは指輪・アミュレットだけ", "Catalysts: Rings and Amulets only"));
     const tag = currency.slice("catalyst_".length);
     // ブリーチのエッセンスの「品質の最大値 +20%」も足す (要望 ㉔-3)
     const max = maxQualityOf(item);
     const base = item.qualityTag === tag ? item.quality : 0;
-    if (base >= max) return skip(item, `品質が上限 (${max}%)`);
+    if (base >= max) return skip(item, tr(`品質が上限 (${max}%)`, `Quality is maxed (${max}%)`));
     if (oneCatalyst) return { applied: true, item: { ...item, quality: Math.min(max, base + QUALITY_PER_CATALYST), qualityTag: tag }, added: [], removed: [] };
     const count = Math.ceil((max - base) / QUALITY_PER_CATALYST);
     return { applied: true, item: { ...item, quality: max, qualityTag: tag }, added: [], removed: [], count };
@@ -39,9 +40,9 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
   switch (currency) {
     case "divine": {
       // ユニークは効果の値を振る種 (rollSeed) を変える (ユニークの数値も振り直せる。2026-10-08 使い倒しテスト)
-      if (item.rarity === "unique") return { applied: true, item: { ...item, rollSeed: 1 + Math.floor(rng() * 2 ** 30) }, added: [], removed: [], note: "ユニークの数値を振り直し" };
+      if (item.rarity === "unique") return { applied: true, item: { ...item, rollSeed: 1 + Math.floor(rng() * 2 ** 30) }, added: [], removed: [], note: tr("ユニークの数値を振り直し", "Rerolled Unique values") };
       const mods = allMods(item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length);
-      if (!mods.length) return skip(item, "転がし直せる MOD が無い");
+      if (!mods.length) return skip(item, tr("転がし直せる MOD が無い", "No mod to reroll"));
       let cur = item;
       const added: StageMod[] = [];
       for (const m of mods) {
@@ -54,10 +55,10 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
       return { applied: true, item: cur, added, removed: mods };
     }
     case "fracture": {
-      if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
+      if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
       const mods = allMods(item);
-      if (mods.length < FRACTURE_NEEDS) return skip(item, `MOD が ${FRACTURE_NEEDS} つ以上要る`);
-      if (mods.some((m) => m.fractured)) return skip(item, "もう固定した MOD がある");
+      if (mods.length < FRACTURE_NEEDS) return skip(item, tr(`MOD が ${FRACTURE_NEEDS} つ以上要る`, `Needs ${FRACTURE_NEEDS}+ mods`));
+      if (mods.some((m) => m.fractured)) return skip(item, tr("もう固定した MOD がある", "Already has a Fractured mod"));
       const pool = mods.filter((m) => !m.unrevealed);
       const m = pool[Math.floor(rng() * pool.length)]!;
       const next = { ...m, fractured: true };
@@ -68,12 +69,12 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
       // 上限はベースごと (PoB の socketLimit − 2、stage-runes.ts)。2026-09-29 までは全部 2 だった
       const max = socketCapOf(item.base, item.cls.category);
       // 言葉はゲームの説明文「マーシャル武器、ワンド、スタッフまたは防具にオーグメントソケットを1個追加する」
-      if (!max) return skip(item, "マーシャル武器・ワンド・スタッフ・防具にだけ使える");
+      if (!max) return skip(item, tr("マーシャル武器・ワンド・スタッフ・防具にだけ使える", "Martial Weapons, Wands, Staves and Armour only"));
       const n = item.sockets ?? 0;
-      if (n >= max) return skip(item, n > max ? `ソケットが規格外 (${n})。熟練工のオーブで足せるのは ${max} まで` : `ソケットが上限 (${max})`);
+      if (n >= max) return skip(item, n > max ? tr(`ソケットが規格外 (${n})。熟練工のオーブで足せるのは ${max} まで`, `Sockets over the limit (${n}); Artificer's Orbs add up to ${max}`) : tr(`ソケットが上限 (${max})`, `Sockets are maxed (${max})`));
       return { applied: true, item: { ...item, sockets: n + 1 }, added: [], removed: [] };
     }
     default:
-      return skip(item, `このアイテムはまだ使えない (${currency})`);
+      return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`));
   }
 }

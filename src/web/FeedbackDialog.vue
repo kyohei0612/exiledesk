@@ -10,6 +10,7 @@ import { diagNow, track, trailNow } from "./track";
 import { marketStore } from "../state/market-store";
 import { allMods } from "../services/craft-stage/stage-core";
 import pkg from "../../package.json";
+import { tr } from "../i18n/lang";
 
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
@@ -81,22 +82,22 @@ function onKey(e: KeyboardEvent): void { if (e.key === "Escape") emit("close"); 
     <div v-if="open" class="fixed inset-0 z-50 grid place-items-center bg-black/60" @click.self="emit('close')" @keydown="onKey">
       <div class="w-[30rem] max-w-[calc(100vw-2rem)] rounded-xl border border-white/15 bg-[#14110d] p-4 text-[12px] shadow-2xl">
         <div class="mb-3 flex items-center gap-2">
-          <b class="text-[14px] text-amber-200">要望・バグを送る</b>
+          <b class="text-[14px] text-amber-200">{{ tr("要望・バグを送る", "Send feedback") }}</b>
           <button type="button" class="ml-auto rounded px-2 py-0.5 opacity-60 hover:bg-white/10 hover:opacity-100" @click="emit('close')">×</button>
         </div>
         <template v-if="state === 'sent'">
-          <p class="py-6 text-center text-[13px]">届きました。ありがとうございます。</p>
-          <div class="text-right"><button type="button" class="rounded-lg border border-white/20 px-3 py-1 hover:bg-white/10" @click="emit('close')">閉じる</button></div>
+          <p class="py-6 text-center text-[13px]">{{ tr("届きました。ありがとうございます。", "Received. Thank you!") }}</p>
+          <div class="text-right"><button type="button" class="rounded-lg border border-white/20 px-3 py-1 hover:bg-white/10" @click="emit('close')">{{ tr("閉じる", "Close") }}</button></div>
         </template>
         <template v-else>
-          <textarea v-model="text" rows="6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="'こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも'" autofocus></textarea>
+          <textarea v-model="text" rows="6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="tr('こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも', 'Feature ideas, something that looks wrong (what you did and what happened), anything')" autofocus></textarea>
           <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />
-          <label class="mt-2 flex cursor-pointer items-center gap-2 opacity-80"><input v-model="attach" type="checkbox" class="accent-amber-400" /> 今の画面の状態を添付 (ベース・狙い・パターン・直前の操作の流れ。名前やログインの情報は入らない)</label>
-          <p v-if="state === 'error'" class="mt-2 text-rose-300">送れなかった: {{ errorText }}</p>
+          <label class="mt-2 flex cursor-pointer items-center gap-2 opacity-80"><input v-model="attach" type="checkbox" class="accent-amber-400" /> {{ tr("今の画面の状態を添付 (ベース・狙い・パターン・直前の操作の流れ。名前やログインの情報は入らない)", "Attach the current screen state (base, targets, patterns, recent actions. No names or login info)") }}</label>
+          <p v-if="state === 'error'" class="mt-2 text-rose-300">{{ tr("送れなかった", "Could not send") }}: {{ errorText }}</p>
           <div class="mt-3 flex items-center gap-2">
             <span class="text-[10px] opacity-40">{{ text.trim().length }} / 4000</span>
-            <button type="button" class="ml-auto rounded-lg border border-white/20 px-3 py-1 hover:bg-white/10" @click="emit('close')">やめる</button>
-            <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-4 py-1 font-bold text-amber-100 hover:bg-amber-500/30 disabled:opacity-40" :disabled="!canSend" @click="send">{{ state === "sending" ? "送っています…" : "送る" }}</button>
+            <button type="button" class="ml-auto rounded-lg border border-white/20 px-3 py-1 hover:bg-white/10" @click="emit('close')">{{ tr("やめる", "Cancel") }}</button>
+            <button type="button" class="rounded-lg border border-amber-400/60 bg-amber-500/20 px-4 py-1 font-bold text-amber-100 hover:bg-amber-500/30 disabled:opacity-40" :disabled="!canSend" @click="send">{{ state === "sending" ? tr("送っています…", "Sending…") : tr("送る", "Send") }}</button>
           </div>
         </template>
       </div>

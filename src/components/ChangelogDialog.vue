@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { APP_VERSION, CHANGELOG, changelogNew, changelogOpen } from "../state/changelog";
+import { tr, isEn } from "../i18n/lang";
 
 const list = computed(() => (changelogOpen.value === "new" ? changelogNew.value : CHANGELOG));
 const close = (): void => { changelogOpen.value = null; };
@@ -16,8 +17,9 @@ const close = (): void => { changelogOpen.value = null; };
       <!-- 幅は画面まで (2026-10-10 スマホで右にはみ出して「閉じる」が見えなかった) -->
       <div class="g-panel flex max-h-[80vh] w-full max-w-[38rem] min-w-0 flex-col overflow-hidden">
         <div class="flex items-baseline gap-2 px-4 pt-2">
-          <b class="g-brush text-[20px] text-[var(--exile-color-text-title)]">{{ changelogOpen === "new" ? "更新しました" : "更新履歴" }}</b>
-          <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">今の版 v{{ APP_VERSION }}</span>
+          <b class="g-brush text-[20px] text-[var(--exile-color-text-title)]">{{ changelogOpen === "new" ? tr("更新しました", "What's new") : tr("更新履歴", "Changelog") }}</b>
+          <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">{{ tr("今の版", "Current version") }} v{{ APP_VERSION }}</span>
+          <span v-if="isEn" class="text-[11px] text-[var(--exile-color-text-tertiary)]">(notes are in Japanese)</span>
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto px-4 py-2">
           <section v-for="(e, i) in list" :key="e.v" class="pb-2">
@@ -35,8 +37,8 @@ const close = (): void => { changelogOpen.value = null; };
           </section>
         </div>
         <div class="flex items-center gap-3 px-4 pb-2 pt-1">
-          <button v-if="changelogOpen === 'new'" type="button" class="btn-link" @click="changelogOpen = 'all'">これまでの更新履歴</button>
-          <button type="button" class="g-btn sm ml-auto" @click="close">閉じる</button>
+          <button v-if="changelogOpen === 'new'" type="button" class="btn-link" @click="changelogOpen = 'all'">{{ tr("これまでの更新履歴", "Full changelog") }}</button>
+          <button type="button" class="g-btn sm ml-auto" @click="close">{{ tr("閉じる", "Close") }}</button>
         </div>
       </div>
     </div>

@@ -17,6 +17,7 @@ import { RUNE_BY_ID } from "../../vendor/poe2htc/engine/runes";
 import { TAG_STYLE } from "../mods/tag-ja";
 import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
 import { tierDisplayRanges } from "../mods/stat-scale";
+import { tr } from "../../i18n/lang";
 
 /** エッセンスはパーフェクト (合金も) とそれ以外を分ける (使い道が違う、[[essence-kind.ts]]) */
 export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "desecrated" | "otherworldly" | "special";
@@ -24,7 +25,16 @@ export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "dese
  * special = 創生の樹・ハンドラップ専用の MOD (ベースの special の置き場、重み 0)。カレンシーでは付かないが MOD としてはあるので、手で付ける分だけ出す
  * (2026-10-09 オーナー「創生の樹産の奴がクラフトでは付かないけど MOD としては存在する。カレンシーで出ちゃだめだけど、手動で付ける分はいる。分かりやすいように置いといて」)
  */
-export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", rune: "ルーンの特殊 MOD (重みは Craft of Exile の実測)", essence: ESSENCE_KIND.essence.label, perfect_essence: ESSENCE_KIND.perfect_essence.label, desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)", special: "創生の樹など (カレンシーでは付かない)" };
+export const GROUP_JA: Record<ModGroup, string> = {
+  // 英語の画面に切り替えた時も変わるように getter (2026-10-10 英語版)
+  get normal() { return tr("普通", "Normal"); },
+  get rune() { return tr("ルーンの特殊 MOD (重みは Craft of Exile の実測)", "Rune special mods (weights measured by Craft of Exile)"); },
+  get essence() { return tr(ESSENCE_KIND.essence.label, "Essence"); },
+  get perfect_essence() { return tr(ESSENCE_KIND.perfect_essence.label, "Essence"); },
+  get desecrated() { return tr("冒涜", "Desecrated"); },
+  get otherworldly() { return tr("異界 (変質した鎖骨)", "Otherworldly (Altered Collarbone)"); },
+  get special() { return tr("創生の樹など (カレンシーでは付かない)", "Genesis Tree etc. (not from currency)"); },
+};
 
 /** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05) */
 export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string; modId?: string }

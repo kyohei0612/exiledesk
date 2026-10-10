@@ -27,12 +27,16 @@
  *    **一番小さい重み** (つきにくい側に倒す)。
  * 2. **どこにも数字が無い物 (クロスボウのグレネード 3 個) は、CoE の値をそのまま使う**。
  */
+import { tr } from "../../i18n/lang";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
-/** 画面に出す断り書き */
+/** 画面に出す断り書き (英語は weightOverrideNote()) */
 export const WEIGHT_OVERRIDE_NOTE =
   "重みはコミュニティのデータから参照しています (この MOD の重みはゲームのデータに無い)。他の部位に同じ MOD がある物はそこの重みを借り、"
   + "無い物 (キャストスピードなど) は Craft of Exile の値を使っています。";
+
+/** 断り書きを今の言語で (2026-10-10 英語版) */
+export const weightOverrideNote = (): string => tr(WEIGHT_OVERRIDE_NOTE, "This mod's weight isn't in the game data, so it comes from community data: borrowed from the same mod on other item types, or Craft of Exile's value where none exists (e.g. Cast Speed).");
 
 /** MOD id → 段の出始め ilvl ごとの重み */
 const OVERRIDES: Record<string, { source: string; byIlvl: Record<number, number> }> = {

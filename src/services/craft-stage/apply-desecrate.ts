@@ -17,6 +17,7 @@ import { ABYSS_MARK_FLOOR } from "../htc/omens";
 import { FACTION_TAG } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { jaOfOmen } from "../htc/labels";
+import { tr } from "../../i18n/lang";
 
 const OFFERS = 3;
 
@@ -33,19 +34,19 @@ function poolsFor(item: StageItem, altered: boolean, plain = false) {
 }
 
 export function applyBone(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
-  if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
+  if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
   if (used.includes("OmenofPutrefaction")) return putrefy(item, key);
-  if (allMods(item).some((m) => m.desecrated)) return skip(item, "冒涜の MOD はアイテムに 1 つまで");
+  if (allMods(item).some((m) => m.desecrated)) return skip(item, tr("冒涜の MOD はアイテムに 1 つまで", "Only 1 Desecrated mod per item"));
   const altered = key === "desecrate_altered";
-  if (altered && !item.cls.pools.otherworldly) return skip(item, "変質した鎖骨はアミュレット・指輪・ベルトだけ");
+  if (altered && !item.cls.pools.otherworldly) return skip(item, tr("変質した鎖骨はアミュレット・指輪・ベルトだけ", "Altered Collarbone: Amulets, Rings and Belts only"));
   // 深淵の王の印があれば、骨は必ず印を置き換える (側は印の側)。段の下限 33 (仮)。古代の骨とは重ならない (高い方)
   // 固定 (フラクチャー) した印は置き換えない (2026-10-10 点検: 骨が固定済みの印を消していた)。その時は普通の骨と同じ
   const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
   const floor = Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0);
   // 古代の骨も最低 MOD レベルのあるカレンシー (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 3)。深淵の王の印の下限 (仮) は別
-  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR) return skip(item, `アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`);
+  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR) return skip(item, tr(`アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`, `Requires Item Level ${ANCIENT_BONE_FLOOR}+`));
   const factionOmen = used.find((o) => FACTION_TAG[o]);
-  if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, "勢力のお告げは武器または宝飾品だけ");
+  if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, tr("勢力のお告げは武器または宝飾品だけ", "Faction Omens: weapons and jewellery only"));
   const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;
 
   // 側: お告げ → それ、無ければ出うる MOD の重みで
@@ -56,10 +57,10 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   else {
     const open = SIDES.filter((s) => room(item, s));
     const pick = pickWeighted((open.length ? open : SIDES).map((s) => ({ s, w: weightOf(s) })), rng);
-    if (!pick) return skip(item, "付けられる冒涜の MOD が無い");
+    if (!pick) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
     side = pick.s;
   }
-  if (!(weightOf(side) > 0)) return skip(item, "その側に付けられる冒涜の MOD が無い");
+  if (!(weightOf(side) > 0)) return skip(item, tr("その側に付けられる冒涜の MOD が無い", "No Desecrated mod can be added on that side"));
   let cur = item;
   const removed: StageMod[] = [];
   if (mark) {
@@ -67,7 +68,7 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
     removed.push(mark);
   } else if (!room(cur, side)) {
     const r = removeOne(cur, rng, [side]);
-    if (!r) return skip(item, "その側に空きが無い");
+    if (!r) return skip(item, tr("その側に空きが無い", "No open slot on that side"));
     cur = r.item;
     removed.push(r.mod);
   }
@@ -177,15 +178,15 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
 /** reveal:N (N は 1 から) / reveal:N:reroll */
 export function applyReveal(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
   const hidden = unrevealedOf(item);
-  if (!hidden) return skip(item, "未発現の冒涜 MOD が無い");
+  if (!hidden) return skip(item, tr("未発現の冒涜 MOD が無い", "No Unrevealed Desecrated mod"));
   const m = /^reveal:(\d)(:reroll)?$/.exec(key);
-  if (!m) return skip(item, `発現の手の形が違う (${key})`);
+  if (!m) return skip(item, tr(`発現の手の形が違う (${key})`, `Invalid reveal step (${key})`));
   const reroll = !!m[2];
-  if (reroll && !used.includes("OmenofAbyssalEchoes")) return skip(item, `引き直しには${jaOfOmen("OmenofAbyssalEchoes") ?? "アビスの反響のお告げ"}が要る`);
+  if (reroll && !used.includes("OmenofAbyssalEchoes")) return skip(item, tr(`引き直しには${jaOfOmen("OmenofAbyssalEchoes") ?? "アビスの反響のお告げ"}が要る`, "Rerolling needs Omen of Abyssal Echoes"));
   const offers = revealOffers(data, item, rng);
   const list = reroll ? offers.reroll : offers.first;
   const pick = list[Number(m[1]) - 1];
-  if (!pick) return skip(item, "その番号の候補が無い");
+  if (!pick) return skip(item, tr("その番号の候補が無い", "No option with that number"));
   return { applied: true, item: replaced(item, hidden, pick), added: [pick], removed: [hidden] };
 }
 

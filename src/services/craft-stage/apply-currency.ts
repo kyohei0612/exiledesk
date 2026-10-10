@@ -21,7 +21,7 @@ import { applyForce, isForce } from "./apply-force";
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
-import { applyChance, applyJeweller, applyQuality, applyWisdom, collectShard, isShard, QUALITY_TARGET, SHARD_REASON } from "./apply-act";
+import { applyChance, applyJeweller, applyQuality, applyWisdom, collectShard, isShard, QUALITY_TARGET, shardReason } from "./apply-act";
 import { isFlask, isGem, uniqueBaseOf, uniquesForBase, uniquesOfClassForBase } from "./stage-bases";
 import { itemBaseFor } from "../htc/bridge";
 import { jaTypeName } from "../trade2/localize";
@@ -31,6 +31,7 @@ import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyFlux, isFlux } from "./apply-flux";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
 import { applyRune, isRune, applyUnsocket, isUnsocket } from "./stage-runes";
+import { tr } from "../../i18n/lang";
 
 /** 噛み切られた骨が使えるアイテムレベルの上限 (クライアントの AbyssBenchTicketTypes.MaximumItemLevel、2026-09-29) */
 export const GNAWED_MAX_ILVL = 64;
@@ -102,7 +103,7 @@ export interface ApplyHint {
   oneCatalyst?: boolean;
 }
 /** 指名が通らなかった時 (理由つきで打てない、pickError) */
-const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, `指名できない: ${why}`), pickError: true });
+const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, tr(`指名できない: ${why}`, `Can't force: ${why}`)), pickError: true });
 
 /**
  * ユニークになった (古代のお告げの可能性・ヴァール培養) 時は、そのユニークのベースに変える (説明文「同じアイテムクラスのランダムなユニーク」
@@ -120,27 +121,27 @@ function toUniqueBase(data: PatchData, r: StageApply): StageApply {
 
 export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = [], hint: ApplyHint = {}): StageApply {
   // シャード: 手順では 1 個拾う (アイテムは変わらない)。アイテムに使おうとした時は打てない
-  if (isShard(currency)) return hint.collect ? collectShard(item, currency) : skip(item, SHARD_REASON);
-  if (item.destroyed) return skip(item, "壊れたアイテムには何も使えない");
-  if (item.disposed) return skip(item, `${DISPOSE_JA[item.disposed]}したアイテムには何も使えない`);
-  if (item.mirrored && !ANY_STATE.includes(currency)) return skip(item, "ミラーしたアイテムには使えない");
+  if (isShard(currency)) return hint.collect ? collectShard(item, currency) : skip(item, shardReason());
+  if (item.destroyed) return skip(item, tr("壊れたアイテムには何も使えない", "Item is destroyed"));
+  if (item.disposed) return skip(item, tr(`${DISPOSE_JA[item.disposed]}したアイテムには何も使えない`, `Item was ${item.disposed === "disenchant" ? "disenchanted" : "salvaged"}`));
+  if (item.mirrored && !ANY_STATE.includes(currency)) return skip(item, tr("ミラーしたアイテムには使えない", "Can't modify a Mirrored item"));
   // 未鑑定は先に鑑定の巻物 (MOD が見えないアイテムには打てない)
   // 解呪・サルベージ (要望 ⑰-5) は未鑑定・コラプトでもできる
   if (isDispose(currency)) return applyDispose(item, currency);
-  if (item.identified === false && currency !== "wisdom") return skip(item, "未鑑定 (先に鑑定の巻物で鑑定する)");
+  if (item.identified === false && currency !== "wisdom") return skip(item, tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)"));
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未発現の MOD の発現だけはできる (ゲームと同じ)
   // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す
  // ルーン (要望 ⑰-1) はコラプト・聖別の後でもはめられる物がある (クライアントの CanSocketInCorruptedSanctified、applyRune で見る)
   if (isRune(currency)) return applyRune(item, currency, data);
   if (isUnsocket(currency)) return applyUnsocket(item, currency);
-  if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, "聖別したアイテムには使えない");
-  if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, "コラプトしたアイテムには使えない");
+  if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, tr("聖別したアイテムには使えない", "Can't modify a Sanctified item"));
+  if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item"));
   // 今のゲームに無いお告げ (相場に値段が無い) を掛けていたら打てない (2026-09-29 オーナー「錬金術のお告げとかない、王者のお告げやら」)
   const gone = omens.find((o) => REMOVED_OMENS.includes(o));
-  if (gone) return skip(item, "今のゲームに無いお告げ");
+  if (gone) return skip(item, tr("今のゲームに無いお告げ", "This Omen is no longer in the game"));
   const used = omensFor(currency, omens);
   const bad = used.find((o) => UNMODELLED_OMENS.includes(o));
-  if (bad) return skip(item, "このお告げの効果はまだ入れていない");
+  if (bad) return skip(item, tr("このお告げの効果はまだ入れていない", "This Omen isn't supported yet"));
   const r = applyInner(data, item, currency, rng, used, hint);
   if (!r.applied) return r;
   // ヒネコラの予見は「アイテムを変えると消える」(説明文)
@@ -160,29 +161,29 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (isExtra(currency)) return toUniqueBase(data, applyExtra(item, currency, rng, hint.outcome));
   if (isFlux(currency)) return applyFlux(data, item, currency);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
-  if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? "スキルジェムには使えない" : "フラスコには使えない (このステージでは MOD を扱わない)");
+  if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)"));
   if (kind === "essence" || kind === "essence_perfect") return applyEssence(data, item, currency, rng, used);
   // 噛み切られた骨はアイテムレベル 64 以下だけ (クライアントの AbyssBenchTicketTypes.MaximumItemLevel)
-  if (currency === "desecrate_gnawed" && item.itemLevel > GNAWED_MAX_ILVL) return skip(item, `アイテムレベル ${GNAWED_MAX_ILVL} 以下にだけ使える`);
+  if (currency === "desecrate_gnawed" && item.itemLevel > GNAWED_MAX_ILVL) return skip(item, tr(`アイテムレベル ${GNAWED_MAX_ILVL} 以下にだけ使える`, `Item Level ${GNAWED_MAX_ILVL} or lower only`));
   if (kind === "desecrate") return applyBone(data, item, currency, rng, used);
   if (kind === "reveal") return applyReveal(data, item, currency, rng, used);
   if (kind === "vaal") return applyVaal(data, item, rng, used);
   if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(data, item, rng);
   // 祝福のお告げ: 暗黙 MOD だけを振り直す (クライアントの説明)。このステージは暗黙 MOD の数値を持たないので、明示 MOD はそのまま
-  if (kind === "divine" && used.includes("OmenoftheBlessed")) return { applied: true, item, added: [], removed: [], note: "祝福のお告げ: 暗黙 MOD だけを振り直した (明示 MOD は変わらない。このステージは暗黙の数値を持たない)" };
+  if (kind === "divine" && used.includes("OmenoftheBlessed")) return { applied: true, item, added: [], removed: [], note: tr("祝福のお告げ: 暗黙 MOD だけを振り直した (明示 MOD は変わらない。このステージは暗黙の数値を持たない)", "Omen of the Blessed: rerolled implicit values only (explicit mods unchanged; implicit values aren't tracked here)") };
   if (kind === "catalyst" || OTHER_KINDS.includes(kind)) return applyOther(data, item, currency, rng, !!hint.oneCatalyst);
 
   const { strength } = parseKey(currency);
   const floor = floorOf(kind, strength);
   // 用語集 BetterCurrencyMinimumLevel「最低 MOD レベルのあるカレンシーは、アイテムレベルがそれより低い品には使えない」(要望 ㉝ の 3)
-  if (floor > 0 && item.itemLevel < floor) return skip(item, `アイテムレベルが ${floor} 未満には使えない`);
+  if (floor > 0 && item.itemLevel < floor) return skip(item, tr(`アイテムレベルが ${floor} 未満には使えない`, `Requires Item Level ${floor}+`));
   const count = allMods(item).length;
   const add = (it: StageItem, n: number, pick: (k: number, cur: StageItem) => readonly StageSide[] = () => SIDES, boost?: PoolOpts["boost"]): StageApply => {
     let cur = it;
     const added: StageMod[] = [];
     const picked: NonNullable<StageApply["picked"]> = [];
     const rolled: NonNullable<StageApply["rolled"]> = [];
-    if ((hint.pick?.length ?? 0) > n) return pickFail(item, `この手で付く MOD は ${n} つまで`);
+    if ((hint.pick?.length ?? 0) > n) return pickFail(item, tr(`この手で付く MOD は ${n} つまで`, `this adds at most ${n} mod${n === 1 ? "" : "s"}`));
     for (let i = 0; i < n; i++) {
       const f = hint.pick?.[i];
       if (f) {
@@ -199,28 +200,28 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
       added.push(r.mod);
       rolled.push({ modId: r.mod.modId, tierName: r.mod.tierName, chance: r.chance });
     }
-    return added.length ? { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}) } : skip(item, "付けられる MOD が無い");
+    return added.length ? { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}) } : skip(item, tr("付けられる MOD が無い", "No mod can be added"));
   };
   switch (kind) {
     case "transmute":
-      if (item.rarity !== "normal") return skip(item, "ノーマルのアイテムにだけ使える");
+      if (item.rarity !== "normal") return skip(item, tr("ノーマルのアイテムにだけ使える", "Normal items only"));
       return add({ ...item, rarity: "magic" }, 1);
     case "augment":
-      if (item.rarity !== "magic") return skip(item, "マジックのアイテムにだけ使える");
-      if (count >= 2) return skip(item, "MOD が 2 つ付いている (マジックはプレ 1 / サフィ 1 まで)");
+      if (item.rarity !== "magic") return skip(item, tr("マジックのアイテムにだけ使える", "Magic items only"));
+      if (count >= 2) return skip(item, tr("MOD が 2 つ付いている (マジックはプレ 1 / サフィ 1 まで)", "Already has 2 mods (Magic: 1 prefix / 1 suffix)"));
       return add(item, 1);
     case "regal": {
-      if (item.rarity !== "magic") return skip(item, "マジックのアイテムにだけ使える");
+      if (item.rarity !== "magic") return skip(item, tr("マジックのアイテムにだけ使える", "Magic items only"));
       // 左右の戴冠のお告げ: 足すのをその側だけに
       const side = sideOmen(used, "OmenofSinistralCoronation", "OmenofDextralCoronation");
       const rare = { ...item, rarity: "rare" as const };
-      if (side && !room(rare, side)) return skip(item, "お告げの側に空きが無い");
+      if (side && !room(rare, side)) return skip(item, tr("お告げの側に空きが無い", "No open slot on the Omen's side"));
       return add(rare, 1, () => (side ? [side] : SIDES));
     }
     case "alchemy": {
       // ノーマルかマジック → MOD 4 個のレア (クライアントの説明文)。マジックに使った時は**付いている MOD は残らない**
       // (0.3.1「When used on Magic items the original modifiers are not retained」、POE2Tube 要望 ㉞-1。前は残して 4 個まで足していた)
-      if (item.rarity !== "normal" && item.rarity !== "magic") return skip(item, "ノーマルかマジックのアイテムにだけ使える");
+      if (item.rarity !== "normal" && item.rarity !== "magic") return skip(item, tr("ノーマルかマジックのアイテムにだけ使える", "Normal or Magic items only"));
       // 左右の錬金のお告げ: その側を上限まで (残りは反対側)
       const side = sideOmen(used, "OmenofSinistralAlchemy", "OmenofDextralAlchemy");
       const gone = allMods(item);
@@ -228,22 +229,22 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
       return r.applied ? { ...r, removed: [...gone, ...r.removed] } : r;
     }
     case "exalt": {
-      if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
+      if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
       const side = sideOmen(used, "OmenofSinistralExaltation", "OmenofDextralExaltation");
       const sides = side ? [side] : SIDES;
-      if (!sides.some((s) => room(item, s))) return skip(item, side ? "お告げの側に空きが無い" : "足す枠が無い");
+      if (!sides.some((s) => room(item, s))) return skip(item, side ? tr("お告げの側に空きが無い", "No open slot on the Omen's side") : tr("足す枠が無い", "No open affix slot"));
       // 大いなる高貴のお告げ: 2 つ足す (枠が 1 つなら 1 つ)。触媒の高貴のお告げ: 品質の種類の MOD を重く引いて、品質を使い切る
       const n = used.includes("OmenofGreaterExaltation") ? 2 : 1;
       if (used.includes("OmenofCatalysingExaltation")) {
         const tag = item.qualityTag;
-        if (!tag || !(item.quality > 0)) return skip(item, "触媒の高貴のお告げは品質 (カタリスト) が要る");
+        if (!tag || !(item.quality > 0)) return skip(item, tr("触媒の高貴のお告げは品質 (カタリスト) が要る", "Omen of Catalysing Exaltation needs Catalyst quality"));
         const r = add(item, n, () => sides, { test: (m) => boostedBy(m, tag), mult: catalysingMultiplier(item.quality) });
         return r.applied ? { ...r, item: { ...r.item, quality: 0 } } : r;
       }
       return add(item, n, () => sides);
     }
     case "chaos": {
-      if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
+      if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
       let r: { item: StageItem; mod: StageMod } | null;
       if (hint.remove) {
         // 消える MOD の指名 (要望 ⑱-1)
@@ -260,7 +261,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
         const side = sideOmen(used, "OmenofSinistralErasure", "OmenofDextralErasure");
         r = removeOne(item, rng, side ? [side] : SIDES);
       }
-      if (!r) return skip(item, "外せる MOD が無い");
+      if (!r) return skip(item, tr("外せる MOD が無い", "No mod can be removed"));
       const f = hint.pick?.[0];
       if (f) {
         const a = addForced(data, r.item, floor, rng, f);
@@ -271,11 +272,11 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
       return { applied: true, item: a?.item ?? r.item, added: a ? [a.mod] : [], removed: [r.mod], ...(a ? { rolled: [{ modId: a.mod.modId, tierName: a.mod.tierName, chance: a.chance }] } : {}) };
     }
     case "annul": {
-      if (item.rarity === "normal") return skip(item, "マジックかレアのアイテムにだけ使える");
+      if (item.rarity === "normal") return skip(item, tr("マジックかレアのアイテムにだけ使える", "Magic or Rare items only"));
       if (used.includes("OmenofLight")) {
         // 光のお告げ: 冒涜の MOD を消す
         const d = allMods(item).find((m) => m.desecrated && !m.fractured);
-        if (!d) return skip(item, "光のお告げ: 冒涜の MOD が無い");
+        if (!d) return skip(item, tr("光のお告げ: 冒涜の MOD が無い", "Omen of Light: no Desecrated mod"));
         return { applied: true, item: without(item, d), added: [], removed: [d] };
       }
       const side = sideOmen(used, "OmenofSinistralAnnulment", "OmenofDextralAnnulment");
@@ -288,11 +289,11 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
         cur = r.item;
         removed.push(r.mod);
       }
-      if (!removed.length) return skip(item, side ? "お告げの側に外せる MOD が無い" : "外せる MOD が無い");
+      if (!removed.length) return skip(item, side ? tr("お告げの側に外せる MOD が無い", "No removable mod on the Omen's side") : tr("外せる MOD が無い", "No mod can be removed"));
       return { applied: true, item: cur, added: [], removed };
     }
     default:
-      return skip(item, `このアイテムはまだ使えない (${currency})`);
+      return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`));
   }
 }
 

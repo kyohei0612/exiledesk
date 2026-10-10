@@ -22,6 +22,7 @@ import { addOne, allMods, replaced, retext, skip, without } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
 import { displayValue } from "../mods/stat-scale";
+import { tr } from "../../i18n/lang";
 
 interface Enchant { domain: string; group?: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }>; spawn: Array<{ t: string; w: number }> }
 export const ENCHANTS = (vaal as unknown as { mods: Record<string, Enchant> }).mods;
@@ -71,7 +72,7 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
       if (item.rarity === "unique") {
         const lines = item.unique ? uniqueLines(item.unique.en).length : 0;
         const uniqueScale = Array.from({ length: lines }, () => (78 + Math.floor(rng() * 45)) / 100);
-        return { ...done({ ...item, uniqueScale }), note: "ユニーク: 各 MOD を 0.78〜1.22 倍" };
+        return { ...done({ ...item, uniqueScale }), note: tr("ユニーク: 各 MOD を 0.78〜1.22 倍", "Unique: each mod scaled x0.78-1.22") };
       }
       // 最大 3 つ (1〜3 を等分。フラクチャー・未発現は振り直さない)。消した側に新しい MOD を 1 つずつ
       const pool = allMods(item).filter((m) => !m.fractured && !m.unrevealed);
@@ -113,7 +114,7 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
 
 /** 聖別: MOD ごとに 0.78〜1.22 倍して丸める。文は stage-core の retext (雛形の「#」の位置だけ変える。カタリストの品質と同じ道) */
 export function applySanctify(data: PatchData, item: StageItem, rng: () => number): StageApply {
-  if (item.rarity !== "rare") return skip(item, "聖別はレアのアイテムにだけ");
+  if (item.rarity !== "rare") return skip(item, tr("聖別はレアのアイテムにだけ", "Sanctification: Rare items only"));
   // フラクチャーした MOD は変えない (用語集「フラクチャーした MOD は変えられない」、2026-10-06 オーナーがゲームで確認、POE2Tube 要望 ㉞-7)
   const mods = allMods(item).filter((m) => m.values.length && !m.unrevealed && !m.fractured);
   let cur = item;

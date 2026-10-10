@@ -6,6 +6,7 @@
  * (元素 496 件 vs エレメント 6 件、アタック 1224 vs 攻撃 45。2026-09-26 オーナー「タグの日本語訳をチェック」)。
  * short = 札に出す短い名前、cls = 札の色 (無いタグは札に出さない)
  */
+import { lang } from "../../i18n/lang";
 /**
  * 札 (cls あり) に出すのは poe2db が札にしているタグだけ (2026-10-05 オーナー「poe2db が出していない物は外した方が良さそう」:
  * 出血・毒・防御・ドロップ・チャージ・ルーンワード は名前だけ残して札にしない)
@@ -75,6 +76,8 @@ const TAGS: Record<string, { ja: string; short?: string; cls?: string }> = {
 };
 
 /** タグの日本語 (無ければ英語のまま) */
+/** 画面に出すタグの名前 (英語の画面ではタグの名前そのまま。energy_shield → energy shield。2026-10-10 英語版) */
+export const tagLabel = (t: string): string => (lang.value === "en" ? t.replace(/_/g, " ") : TAGS[t]?.ja ?? t);
 export const tagJa = (t: string): string => TAGS[t]?.ja ?? t;
 
 /** 札に出すタグの名前と色 (クラフトステージの MOD 一覧・動画) */

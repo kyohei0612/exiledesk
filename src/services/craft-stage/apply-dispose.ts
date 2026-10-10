@@ -14,6 +14,7 @@ import type { StageApply, StageItem } from "./types";
 import { skip } from "./stage-core";
 import { ARMOUR, CASTER, collectShard, MARTIAL } from "./apply-act";
 import { isFlask, isGem } from "./stage-bases";
+import { tr } from "../../i18n/lang";
 
 export const DISPOSE_KEYS = ["disenchant", "salvage"] as const;
 export const isDispose = (key: string): boolean => (DISPOSE_KEYS as readonly string[]).includes(key);
@@ -40,15 +41,15 @@ function addShards(item: StageItem, key: string, n: number): StageItem {
 }
 
 export function applyDispose(item: StageItem, key: string): StageApply {
-  if (isGem(item.cls.category) || isFlask(item.cls.category)) return skip(item, `装備アイテムにだけ使える (${DISPOSE_JA[key]})`);
+  if (isGem(item.cls.category) || isFlask(item.cls.category)) return skip(item, tr(`装備アイテムにだけ使える (${DISPOSE_JA[key]})`, `Equipment only (${key === "disenchant" ? "Disenchant" : "Salvage"})`));
   if (key === "disenchant") {
     const shard = DISENCHANT_TO[item.rarity];
-    if (!shard) return skip(item, "ノーマルのアイテムは解呪できない");
+    if (!shard) return skip(item, tr("ノーマルのアイテムは解呪できない", "Normal items can't be disenchanted"));
     return { applied: true, item: { ...addShards(item, shard, DISPOSE_COUNT), disposed: "disenchant" }, added: [], removed: [] };
   }
   const q = item.quality > 0 ? qualityCurrencyOf(item.cls.category) : null;
   const s = (item.sockets ?? 0) > 0;
-  if (!q && !s) return skip(item, "品質かソケットを持っている装備にだけ使える");
+  if (!q && !s) return skip(item, tr("品質かソケットを持っている装備にだけ使える", "Only equipment with quality or sockets"));
   let cur = s ? addShards(item, "artificer_shard", DISPOSE_COUNT) : item;
   if (q) cur = { ...cur, gained: { ...cur.gained, [q]: (cur.gained?.[q] ?? 0) + DISPOSE_COUNT } };
   return { applied: true, item: { ...cur, disposed: "salvage" }, added: [], removed: [] };

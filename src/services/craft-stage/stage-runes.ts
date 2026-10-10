@@ -27,6 +27,7 @@ import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { RUNE_BY_ID, runeIdByName } from "../../vendor/poe2htc/engine/runes";
 import { allMods, makeStageMod, replaced, skip, withValues } from "./stage-core";
 import { augmentRule, limitBlock, placeBlock, replaceBlock } from "../augment-rules";
+import { tr } from "../../i18n/lang";
 
 export interface RuneEffect { cat: string; catJa: string; stats: Array<{ id: string; value: number }>; ja: string; en: string }
 export interface RuneRow {
@@ -159,19 +160,19 @@ export function upgradedRuneOf(en: string): string | null {
 function applyMasterwork(item: StageItem, socket: number | null): StageApply {
   const now = item.augments ?? [];
   const sockets = item.sockets ?? 0;
-  if (!sockets) return skip(item, "ソケットが無い (先に熟練工のオーブ)");
-  if (socket != null && (socket < 1 || socket > sockets)) return skip(item, `ソケットは ${sockets} つ (${socket} 番目は無い)`);
+  if (!sockets) return skip(item, tr("ソケットが無い (先に熟練工のオーブ)", "No sockets (use an Artificer's Orb first)"));
+  if (socket != null && (socket < 1 || socket > sockets)) return skip(item, tr(`ソケットは ${sockets} つ (${socket} 番目は無い)`, `Only ${sockets} socket${sockets === 1 ? "" : "s"} (no socket ${socket})`));
   const at = socket != null ? socket - 1 : now.findIndex((a) => !!upgradedRuneOf(a.en));
   const old = at >= 0 ? now[at] : undefined;
-  if (!old) return skip(item, socket != null ? `${socket} 番目のソケットは空 (ティアを持つルーンがはまったソケットにだけ使える)` : "ティアを持つルーンがはまったソケットが無い");
+  if (!old) return skip(item, socket != null ? tr(`${socket} 番目のソケットは空 (ティアを持つルーンがはまったソケットにだけ使える)`, `Socket ${socket} is empty (only usable on a socketed tiered rune)`) : tr("ティアを持つルーンがはまったソケットが無い", "No socketed tiered rune"));
   const oldRow = RUNES[old.en];
-  if (!oldRow || oldRow.kind !== "rune" || !oldRow.tier || oldRow.tier === "special") return skip(item, `${old.ja}はティアを持たないので上げられない (ティアを持つルーンにだけ使える)`);
-  if (oldRow.tier === "perfect") return skip(item, `${old.ja}はもうパーフェクトなので上げられない`);
+  if (!oldRow || oldRow.kind !== "rune" || !oldRow.tier || oldRow.tier === "special") return skip(item, tr(`${old.ja}はティアを持たないので上げられない (ティアを持つルーンにだけ使える)`, `${old.en} has no tier and can't be upgraded`));
+  if (oldRow.tier === "perfect") return skip(item, tr(`${old.ja}はもうパーフェクトなので上げられない`, `${old.en} is already Perfect`));
   const nextEn = upgradedRuneOf(old.en);
   const next = nextEn ? RUNES[nextEn] : null;
-  if (!nextEn || !next) return skip(item, `${old.ja}の 1 段上のルーンが表に無い`);
+  if (!nextEn || !next) return skip(item, tr(`${old.ja}の 1 段上のルーンが表に無い`, `No higher tier of ${old.en}`));
   const eff = runeEffectFor(next, item.cls.category);
-  if (!eff) return skip(item, "この部位には効き目が無い");
+  if (!eff) return skip(item, tr("この部位には効き目が無い", "No effect on this item class"));
   const aug: StageAugment = { key: `${RUNE_PREFIX}${nextEn}`, en: nextEn, ja: next.ja, cat: eff.catJa, textJa: eff.ja, textEn: eff.en, stats: eff.stats };
   return {
     applied: true,
@@ -251,8 +252,8 @@ export function applyUnsocket(item: StageItem, key: string): StageApply {
   const n = Number(key.slice(UNSOCKET_PREFIX.length));
   const now = item.augments ?? [];
   const a = now[n - 1];
-  if (!a) return skip(item, `${n} 番目のソケットにルーンが無い`);
-  return { applied: true, item: { ...item, augments: now.filter((_, i) => i !== n - 1) }, added: [], removed: [], note: `${a.ja} を外した` };
+  if (!a) return skip(item, tr(`${n} 番目のソケットにルーンが無い`, `No rune in socket ${n}`));
+  return { applied: true, item: { ...item, augments: now.filter((_, i) => i !== n - 1) }, added: [], removed: [], note: tr(`${a.ja} を外した`, `Removed ${a.en}`) };
 }
 
 /** 特殊 MOD のルーンの id (kolrs-hunt など) → はめる手のキー。無ければ null */
@@ -270,11 +271,11 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   const rule = augmentRule(p.en);
   const sockets = item.sockets ?? 0;
   const now = item.augments ?? [];
-  if (rune.available === false) return skip(item, "今のゲームには無いルーン (相場に無い)");
+  if (rune.available === false) return skip(item, tr("今のゲームには無いルーン (相場に無い)", "This rune is no longer in the game"));
   const place = placeBlock(rule, { category: item.cls.category, rarity: item.rarity, corrupted: item.corrupted, sanctified: item.sanctified }, !!runeEffectFor(rune, item.cls.category));
   if (place) return skip(item, place);
-  if (!sockets) return skip(item, "ソケットが無い (先に熟練工のオーブ)");
-  if (p.socket != null && (p.socket < 1 || p.socket > sockets)) return skip(item, `ソケットは ${sockets} つ (${p.socket} 番目は無い)`);
+  if (!sockets) return skip(item, tr("ソケットが無い (先に熟練工のオーブ)", "No sockets (use an Artificer's Orb first)"));
+  if (p.socket != null && (p.socket < 1 || p.socket > sockets)) return skip(item, tr(`ソケットは ${sockets} つ (${p.socket} 番目は無い)`, `Only ${sockets} socket${sockets === 1 ? "" : "s"} (no socket ${p.socket})`));
   // どのソケットに: 指した番号 > 空き > 左から最初の置き換えられる物
   let at: number;
   if (p.socket != null) at = Math.min(p.socket - 1, now.length);
@@ -282,19 +283,19 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   else {
     at = now.findIndex((a) => replaceBlock(a) == null);
     // 全部置き換えられない: 一番左の物の理由 (ソケットバウンドなので … ) を出す
-    if (at < 0) return skip(item, replaceBlock(now[0]!) ?? "置き換えられる物が無い");
+    if (at < 0) return skip(item, replaceBlock(now[0]!) ?? tr("置き換えられる物が無い", "Nothing can be replaced"));
   }
   const old = at < now.length ? now[at]! : null;
   if (old) {
     const why = replaceBlock(old);
     if (why) return skip(item, why);
     // アストリッドの創造性 (クラフト MOD 2 つまで) を外すと上限が 1 に戻る。2 つ付いている間は置き換えない (2026-10-10 点検、ゲームの挙動は未確認)
-    if (old.en === "Astrid's Creativity" && allMods(item).filter((m) => m.crafted).length > 1) return skip(item, "クラフト MOD が 2 つある間はアストリッドの創造性を置き換えられない");
+    if (old.en === "Astrid's Creativity" && allMods(item).filter((m) => m.crafted).length > 1) return skip(item, tr("クラフト MOD が 2 つある間はアストリッドの創造性を置き換えられない", "Can't replace Astrid's Creativity while 2 crafted mods are present"));
   }
   const lim = limitBlock(p.en, now.filter((_, i) => i !== at).map((a) => a.en));
   if (lim) return skip(item, lim);
   const eff = runeEffectFor(rune, item.cls.category);
-  if (!eff) return skip(item, "この部位には効き目が無い");
+  if (!eff) return skip(item, tr("この部位には効き目が無い", "No effect on this item class"));
   // 手順のキーは @n を外して持つ (同じルーンなら同じキー。絵・相場もこれで引く)
   const aug: StageAugment = { key: `${RUNE_PREFIX}${p.en}`, en: p.en, ja: rune.ja, cat: eff.catJa, textJa: eff.ja, textEn: eff.en, stats: eff.stats };
   const augments = old ? now.map((a, i) => (i === at ? aug : a)) : [...now, aug];
@@ -302,7 +303,7 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   const conv = RUNE_BY_ID.get(runeIdByName(p.en) ?? "")?.effect;
   if (conv?.kind === "convert" && data) {
     const c = convertElements(data, item, conv.element, conv.eats);
-    if (!c.mods.length) return skip(item, "この変換で有効なモッドが対象のアイテムにありません");
+    if (!c.mods.length) return skip(item, tr("この変換で有効なモッドが対象のアイテムにありません", "No mods on this item can be converted"));
     return {
       applied: true,
       item: { ...c.item, augments },

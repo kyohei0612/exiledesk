@@ -33,6 +33,7 @@ import type { CraftStagePlan } from "../services/craft-stage/contract";
 import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
 import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../services/craft-stage/defence";
 import { socketCapOf } from "../services/craft-stage/stage-runes";
+import { tr, lang } from "../i18n/lang";
 /**
  * 手で打つ画面の新品は、規格外のソケット数 (熟練工で付けられる数 +1) で始める (2026-10-04 オーナー「オーブ刺すのめんどいから、ソケットも初めからデフォでマックス」)。
  * 手順 JSON の再生 (動画) は手順どおりなので開けない
@@ -373,6 +374,9 @@ const miss = ref<{ n: number; reason: string } | null>(null);
 export const priceOf = (key: string): number => priceOfKey(key, item.value);
 export const iconOf = (key: string): string => iconOfKey(key, item.value);
 export const nameOf = (key: string): string => nameOfKey(key, item.value);
+/** 手順の記録のカレンシー名・お告げ名 (記録の currency_ja / omen_ja は日本語のまま残すので、英語の画面ではキーから引く。2026-10-10) */
+export const stepNameOf = (o: { currency: string; currency_ja: string }): string => (lang.value === "en" ? nameOf(o.currency) : o.currency_ja);
+export const stepOmenOf = (o: { omen?: string | null; omen_ja?: string | null }): string | null => (!o.omen ? null : lang.value === "en" ? o.omen.split("+").map(nameOf).join(" · ") : o.omen_ja ?? null);
 
 function newSeed(): number {
   return Math.floor(Date.now() % 1_000_000_000);
@@ -502,15 +506,15 @@ export const craftStage = {
   },
   /** その状態で打てるか (打てないなら理由)。掛けてあるお告げ込み */
   usable(key: string): string | null {
-    if (!data.value || !item.value) return "準備中";
+    if (!data.value || !item.value) return tr("準備中", "Loading");
     const r = applyCurrency(data.value, item.value, key, mulberry32(0), omens.value);
-    return r.applied ? null : (r.reason ?? "打てない");
+    return r.applied ? null : (r.reason ?? tr("打てない", "Can't use"));
   },
   /** お告げを抜きにして打てるか (掛けたままのお告げのせいで打てない物を棚から消さないため。2026-10-10「錬金の後に高貴が打てない」) */
   usableBare(key: string): string | null {
-    if (!data.value || !item.value) return "準備中";
+    if (!data.value || !item.value) return tr("準備中", "Loading");
     const r = applyCurrency(data.value, item.value, key, mulberry32(0), []);
-    return r.applied ? null : (r.reason ?? "打てない");
+    return r.applied ? null : (r.reason ?? tr("打てない", "Can't use"));
   },
   /** 持っている物を 1 回打つ (Craft of Exile と同じ: 持ったままなら何度でも) */
   use(key: string | null = held.value): void {

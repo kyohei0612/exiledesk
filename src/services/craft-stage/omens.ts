@@ -6,6 +6,7 @@
  */
 import type { StageItem, StageSide } from "./types";
 import { limitOf, listOf, room } from "./stage-core";
+import { tr } from "../../i18n/lang";
 export const OMEN_FOR: Readonly<Record<string, readonly string[]>> = {
   exalt: ["OmenofSinistralExaltation", "OmenofDextralExaltation", "OmenofGreaterExaltation", "OmenofCatalysingExaltation"],
   chaos: ["OmenofWhittling", "OmenofSinistralErasure", "OmenofDextralErasure"],
@@ -73,20 +74,20 @@ export function omenNote(omen: string, item: StageItem | null): string | null {
   if (item.rarity !== "rare") return null;
   const a = addSide[omen];
   if (a) {
-    if (!free(a)) return `${a === "prefix" ? "プレ" : "サフィ"}満杯で打てない`;
-    if (!free(other(a))) return "今は意味なし";
+    if (!free(a)) return a === "prefix" ? tr("プレ満杯で打てない", "Prefixes full") : tr("サフィ満杯で打てない", "Suffixes full");
+    if (!free(other(a))) return tr("今は意味なし", "No effect now");
     return null;
   }
   const r = removeSide[omen];
   if (r) {
-    if (!removable(r)) return "消せる物が無い";
-    if (!removable(other(r))) return "今は意味なし";
+    if (!removable(r)) return tr("消せる物が無い", "Nothing to remove");
+    if (!removable(other(r))) return tr("今は意味なし", "No effect now");
     return null;
   }
   if (omen === "OmenofGreaterExaltation") {
     const open = (["prefix", "suffix"] as const).reduce((n, sd) => n + Math.max(0, limitOf(item, sd) - listOf(item, sd).length), 0);
-    return open === 1 ? "1 つしか付かない" : null;
+    return open === 1 ? tr("1 つしか付かない", "Only 1 slot open") : null;
   }
-  if (omen === "OmenofCatalysingExaltation") return item.quality > 0 && item.qualityTag ? null : "品質が要る";
+  if (omen === "OmenofCatalysingExaltation") return item.quality > 0 && item.qualityTag ? null : tr("品質が要る", "Needs quality");
   return null;
 }

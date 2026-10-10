@@ -5,6 +5,7 @@
  * 前に見た版を localStorage に覚え、版が変わっていたら起動した時に 1 回だけ「その版から今の版まで」の更新内容を出す。
  * 初めて使う人 (ExileDesk の保存が何も無い) には出さない (Web は「はじめに」の窓が出る)
  */
+import { lang } from "../i18n/lang";
 import { ref } from "vue";
 import pkg from "../../package.json";
 import log from "../data/changelog.json";
@@ -35,7 +36,8 @@ export function initChangelog(skip = false): void {
     for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i) ?? ""; if (k.startsWith("exiledesk") && k !== SEEN_KEY) { used = true; break; } }
     localStorage.setItem(SEEN_KEY, APP_VERSION);
   } catch { return; }
-  if (skip || seen === APP_VERSION) return;
+  // 英語の画面には更新内容 (日本語だけ) を勝手に出さない (2026-10-10 英語版。版を押せば見られる)
+  if (skip || seen === APP_VERSION || lang.value === "en") return;
   // 前に見た版が無い = この仕組みより前から使っている人 (保存がある) には今の版の分だけ。初めての人には出さない
   if (!seen && !used) return;
   const list = seen ? CHANGELOG.filter((e) => cmp(e.v, seen!) > 0).slice(0, 5) : CHANGELOG.filter((e) => e.v === APP_VERSION);

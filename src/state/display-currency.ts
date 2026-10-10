@@ -7,6 +7,7 @@
  */
 import { computed, ref } from "vue";
 import { marketStore } from "./market-store";
+import { tr } from "../i18n/lang";
 import { ceilMoney, floorMoney, toExalted } from "../services/money";
 
 export type DisplayCurrency = "exalted" | "chaos" | "divine";
@@ -29,7 +30,12 @@ export type DisplayChoice = DisplayCurrency | "fair";
 const KEY = "exiledesk.vaal.currency";
 /** 2026-09-26 から。旧 KEY の "divine" は今の「適正」と同じ動き (神から段を下げる) だったので読み替える */
 const KEY2 = "exiledesk.displayCurrency.v2";
-const LABEL: Record<DisplayCurrency, string> = { exalted: "高貴", chaos: "カオス", divine: "神" };
+/** 通貨の名前。英語の画面は界隈の略し方 (ex / c / div、2026-10-10 英語版)。言語を替えたら変わるよう getter */
+const LABEL: Record<DisplayCurrency, string> = {
+  get exalted() { return tr("高貴", "ex"); },
+  get chaos() { return tr("カオス", "c"); },
+  get divine() { return tr("神", "div"); },
+};
 /** trade2 の通貨 id → 日本語 (画面共通。知らない通貨は id のまま) */
 export function currencyJa(c: string | null | undefined): string {
   return c ? (LABEL[c as DisplayCurrency] ?? c) : "";
@@ -155,10 +161,12 @@ export const displayCurrency = {
   cur,
   rate,
   label: computed(() => LABEL[cur.value]),
-  options: [
-    { value: "fair" as DisplayChoice, label: "適正" },
-    ...(Object.keys(LABEL) as DisplayCurrency[]).map((k) => ({ value: k as DisplayChoice, label: LABEL[k] })),
-  ],
+  get options() {
+    return [
+      { value: "fair" as DisplayChoice, label: tr("適正", "Auto") },
+      ...(Object.keys(LABEL) as DisplayCurrency[]).map((k) => ({ value: k as DisplayChoice, label: LABEL[k] })),
+    ];
+  },
   /** 選んでいる通貨から段を下げた 1 種類の通貨と数値 (アイコンを付けて出す所用) */
   unit(exalted: number): { cur: DisplayCurrency; value: number; label: string } {
     const { c, value } = pickUnit(exalted);
@@ -230,10 +238,12 @@ function loadRanking(): RankingChoice {
 const rankingChoice = ref<RankingChoice>(loadRanking());
 export const rankingCurrency = {
   choice: rankingChoice,
-  options: [
-    { value: "cheapest" as RankingChoice, label: "最安値" },
-    ...(Object.keys(LABEL) as DisplayCurrency[]).map((k) => ({ value: k as RankingChoice, label: LABEL[k] })),
-  ],
+  get options() {
+    return [
+      { value: "cheapest" as RankingChoice, label: tr("最安値", "Cheapest") },
+      ...(Object.keys(LABEL) as DisplayCurrency[]).map((k) => ({ value: k as RankingChoice, label: LABEL[k] })),
+    ];
+  },
   set(c: RankingChoice): void {
     rankingChoice.value = c;
     try {
@@ -268,7 +278,7 @@ function loadSim(): DisplayChoice {
 const simChoice = ref<DisplayChoice>(loadSim());
 export const simCurrency = {
   choice: simChoice,
-  options: displayCurrency.options,
+  get options() { return displayCurrency.options; },
   set(c: DisplayChoice): void {
     simChoice.value = c;
     try {

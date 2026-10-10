@@ -94,7 +94,7 @@ export function outItem(it: StageItem, data?: PatchData): OutItem {
     // 要望 ⑱-3: 装備に必要なレベル・能力値 (PoB の req。要求レベル = ドロップレベル)
     ...({ requirements: reqOfItem(it) } as object),
     // 要望 ⑰-2: 上の数値 (品質・ローカル MOD・ルーンを反映。up = 素の値から変わった = ゲームでは青)
-    ...({ properties: propRows(it).map((r) => ({ key: r.key, label: r.label, value: r.value, up: r.up })) } as object),
+    ...({ properties: propRows(it, true).map((r) => ({ key: r.key, label: r.label, value: r.value, up: r.up })) } as object),
     // 要望 ⑰-1: ソケットにはめたルーン (はめた順)
     ...({ augments: (it.augments ?? []).map(outAug) } as object),
     ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, enchant2: it.enchant2 ? { id: it.enchant2.id, text_ja: it.enchant2.textJa, text_en: it.enchant2.textEn } : null, sanctified: !!it.sanctified } as object),
@@ -133,6 +133,23 @@ export function stepJa(currency: string, item: StageItem): string {
     return n ? `${runeOf(currency)!.ja} (${n} 番目のソケット)` : runeOf(currency)!.ja;
   }
   return jaOfPriceKey(currency, item.cls) ?? currency;
+}
+/**
+ * 手の英語名 (英語の画面用。指名・発現・解呪・ルーンなど、カレンシーの名前で引けない手だけ。それ以外は null)。
+ * 手順の currency_ja は日本語のまま (stepJa)
+ */
+export function stepEn(currency: string): string | null {
+  const fc = parseForce(currency);
+  if (fc?.flag === "x") return "Remove (×)";
+  if (fc) return `Force (${fc.rank ?? "T1"}${fc.flag === "e" ? ", Essence" : fc.flag === "d" ? ", Desecrated" : fc.flag === "f" ? ", Fractured" : ""})`;
+  const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
+  if (rv) return `Reveal (${rv[2] ? "reroll, " : ""}#${rv[1]})`;
+  if (currency === "disenchant") return "Disenchant";
+  if (currency === "salvage") return "Salvage";
+  if (isUnsocket(currency)) return `Remove rune (socket ${currency.slice(UNSOCKET_PREFIX.length)})`;
+  const rk = isRune(currency) ? parseRuneKey(currency) : null;
+  if (rk) return rk.socket ? `${rk.en} (socket ${rk.socket})` : rk.en;
+  return null;
 }
 
 /**

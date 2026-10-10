@@ -13,6 +13,7 @@ import { enOf } from "../../state/craft-stage-shelf";
 import { specialEssence, stageAdds, stageHelp } from "../../state/craft-stage-help";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { displayCurrency } from "../../state/display-currency";
+import { tr } from "../../i18n/lang";
 
 const props = defineProps<{ k: string; anchor: CardAnchor; reason: string | null; omen?: boolean }>();
 /** 窓の中に収める (2026-10-05 オーナー「カードが表示時に枠内で収まるように」、共通の [[fit-card.ts]]) */
@@ -41,7 +42,7 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
         <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-10 w-10 shrink-0 object-contain" />
         <div>
           <p class="text-[14px] font-bold" :class="omen ? 'text-violet-200' : 'text-amber-100'">{{ nameOf(k) }}</p>
-          <p v-if="priceOf(k)" class="text-[11px] text-white/50">相場 {{ displayCurrency.money(priceOf(k)) }}</p>
+          <p v-if="priceOf(k)" class="text-[11px] text-white/50">{{ tr("相場", "Market price") }} {{ displayCurrency.money(priceOf(k)) }}</p>
         </div>
       </div>
       <div v-if="adds" class="mt-2 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
@@ -49,26 +50,26 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
         <p v-for="(l, i) in adds.lines" :key="'a' + i" class="flex gap-1.5 text-[13px] font-semibold text-emerald-200">
           <span class="text-emerald-400">・</span><span>{{ l }}</span>
         </p>
-        <p v-if="adds.tier" class="mt-0.5 text-[11px] text-emerald-100/80">ティア: {{ adds.tier }}</p>
+        <p v-if="adds.tier" class="mt-0.5 text-[11px] text-emerald-100/80">{{ tr("ティア", "Tier") }}: {{ adds.tier }}</p>
       </div>
       <div v-if="official.length" class="mt-2 border-t border-white/10 pt-2 text-[#b8c8e8]">
         <p v-for="(l, i) in official" :key="'o' + i">{{ l }}</p>
       </div>
       <div v-if="others.length" class="mt-2 border-t border-white/10 pt-2">
-        <p class="mb-1 text-[11px] font-bold text-sky-200/80">使える装備と付く MOD</p>
+        <p class="mb-1 text-[11px] font-bold text-sky-200/80">{{ tr("使える装備と付く MOD", "Usable on / mods added") }}</p>
         <div v-for="(g, i) in others" :key="'g' + i" class="mb-1 grid grid-cols-[96px_1fr] gap-2">
           <span class="text-[11px] text-white/55">{{ g.h }}</span>
           <span><span v-for="(l, j) in g.l" :key="j" class="block text-sky-100">{{ l }}</span></span>
         </div>
       </div>
       <div v-if="help.length" class="mt-2 border-t border-white/10 pt-2">
-        <p class="mb-1 text-[11px] font-bold text-amber-200/80">このステージでの動き</p>
+        <p class="mb-1 text-[11px] font-bold text-amber-200/80">{{ tr("このステージでの動き", "Behavior in this emulator") }}</p>
         <p v-for="(l, i) in help" :key="'h' + i" class="flex gap-1.5">
           <span class="text-amber-300/60">・</span>
           <span><template v-for="(p, j) in parts(l)" :key="j"><b v-if="p.b" class="text-white">{{ p.t }}</b><template v-else>{{ p.t }}</template></template></span>
         </p>
       </div>
-      <p v-if="reason" class="mt-2 rounded-lg bg-rose-500/15 px-2 py-1 text-rose-300">今は打てない: {{ reason }}</p>
+      <p v-if="reason" class="mt-2 rounded-lg bg-rose-500/15 px-2 py-1 text-rose-300">{{ tr("今は打てない", "Can't use now") }}: {{ reason }}</p>
     </div>
   </Teleport>
 </template>

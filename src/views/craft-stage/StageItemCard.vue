@@ -9,6 +9,7 @@
   poe2db の Quality)。ユニーク (名前と色)・未鑑定 (MOD を隠す)・壊れた・ソケットの絵・スキルジェムのサポート枠。
 -->
 <script setup lang="ts">
+import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { computed } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
 import { qualityLabelOf } from "../../services/htc/quality";
@@ -22,6 +23,7 @@ import { baseArt } from "../../services/craft-stage/base-art";
 import { uniqueArt } from "../../services/assets/unique-art";
 import { boostedMod } from "../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
+import { tagLabel } from "../../services/mods/tag-ja";
 import { craftStage } from "../../state/craft-stage";
 
 /**
@@ -63,8 +65,9 @@ const TONE = {
 } as const;
 const tone = computed(() => TONE[props.item.rarity]);
 const RARITY_JA = { normal: "ノーマル", magic: "マジック", rare: "レア", unique: "ユニーク" } as const;
+const RARITY_EN = { normal: "Normal", magic: "Magic", rare: "Rare", unique: "Unique" } as const;
 /** 種類の言葉 (フラスコ・ジェムはレアリティの代わりに出す) */
-const kindJa = computed(() => (isGem(props.item.cls.category) ? "スキルジェム" : isFlask(props.item.cls.category) ? "フラスコ" : RARITY_JA[props.item.rarity]));
+const kindJa = computed(() => (isGem(props.item.cls.category) ? tr("スキルジェム", "Skill Gem") : isFlask(props.item.cls.category) ? tr("フラスコ", "Flask") : tr(RARITY_JA[props.item.rarity], RARITY_EN[props.item.rarity])));
 /**
  * ベースの数値 (品質・ローカル MOD・ルーンを反映、stage-props.ts)。変わった値は青 (ゲームと同じく増えた数値は青)
  */
@@ -72,7 +75,7 @@ const baseRows = computed(() => propRows(props.item));
 /** 未鑑定なら MOD を隠す */
 const hidden = computed(() => props.item.identified === false);
 // 範囲 (20-30) はゲームのように振った値で (要望 ㉝ の 5)
-const implicits = computed(() => rollLines(props.item, (htcBaseInfo()[props.item.base]?.implicits ?? []).map((i) => i.ja), "implicit"));
+const implicits = computed(() => rollLines(props.item, (htcBaseInfo()[props.item.base]?.implicits ?? []).map(nameOf), "implicit"));
 /** 絵: ユニークになったらユニークの見た目、それ以外はベースの絵 */
 const art = computed(() => (props.item.unique ? uniqueArt(props.item.unique.en) : null) ?? baseArt(props.item.base));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
@@ -81,14 +84,14 @@ const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
 /** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
-  if (m.fractured) return { cls: "text-mod-fractured", tag: "フラクチャー" };
-  if (m.desecrated) return { cls: "text-mod-desecrated", tag: "冒涜" };
-  if (m.crafted) return { cls: "text-mod-crafted", tag: "エッセンス" };
+  if (m.fractured) return { cls: "text-mod-fractured", tag: tr("フラクチャー", "Fractured") };
+  if (m.desecrated) return { cls: "text-mod-desecrated", tag: tr("冒涜", "Desecrated") };
+  if (m.crafted) return { cls: "text-mod-crafted", tag: tr("エッセンス", "Essence") };
   // 要望 ㉙: 特殊 MOD のルーンの MOD (重みは仮定) / アルダーのルーンで属性を変えた MOD
   // 札は「ルーン」だけ (POE2Tube 要望 ㉚-3: 動画では「データサイトでは特殊 MOD の出やすさは全部同じ = 完全にランダムな抽選」と説明する。
   // 重みが仮定なのは結果 JSON の assumed_weight に残る)
-  if (m.rune) return { cls: "text-rarity-magic", tag: "ルーン" };
-  if (m.convertedFrom) return { cls: "text-rarity-magic", tag: "アルダー" };
+  if (m.rune) return { cls: "text-rarity-magic", tag: tr("ルーン", "Rune") };
+  if (m.convertedFrom) return { cls: "text-rarity-magic", tag: tr("アルダー", "Alder") };
   return { cls: "text-rarity-magic", tag: "" };
 }
 /** ユニークの効果 (poe2db のページから。値はユニークごとに決まった 1 つ。ページの無いユニークは空) */
@@ -100,7 +103,7 @@ const rows = computed(() =>
     // 画面用のタグ (クライアントの implicit_tags) を先に。r.m.tags は確率用 (カタリスト等) なので中身のタグが無い MOD がある (2026-10-05)
     const em = craftStage.data.value?.mods.get(r.m.modId);
     const tags = props.showTags ? shownTags(em?.displayTags ?? r.m.tags ?? em?.tags ?? []) : [];
-    return { ...r, text: b?.textJa ?? r.m.textJa, boosted: !!b, tags };
+    return { ...r, text: b ? modText(b) : modText(r.m), boosted: !!b, tags };
   }),
 );
 </script>
@@ -114,24 +117,24 @@ const rows = computed(() =>
   >
     <!-- 壊れた (可能性のオーブの外れ) -->
     <div v-if="item.destroyed" class="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-lg bg-black/60">
-      <p class="rotate-[-8deg] rounded border-2 border-rose-500/80 px-4 py-1 text-2xl font-bold tracking-[0.2em] text-rose-400">壊れた</p>
+      <p class="rotate-[-8deg] rounded border-2 border-rose-500/80 px-4 py-1 text-2xl font-bold tracking-[0.2em] text-rose-400">{{ tr("壊れた", "Destroyed") }}</p>
     </div>
     <!-- 解呪 / サルベージで無くなった (要望 ⑰-5) -->
     <div v-if="item.disposed" class="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-lg bg-black/65">
-      <p class="rotate-[-8deg] rounded border-2 border-amber-300/80 px-4 py-1 text-2xl font-bold tracking-[0.2em] text-amber-200">{{ item.disposed === "disenchant" ? "解呪した" : "サルベージした" }}</p>
+      <p class="rotate-[-8deg] rounded border-2 border-amber-300/80 px-4 py-1 text-2xl font-bold tracking-[0.2em] text-amber-200">{{ item.disposed === "disenchant" ? tr("解呪した", "Disenchanted") : tr("サルベージした", "Salvaged") }}</p>
     </div>
     <!-- 見出し -->
     <div class="rounded-t-md bg-gradient-to-b to-transparent px-4 text-center" :class="[tone.head, compact ? 'pb-1 pt-2' : 'pb-2 pt-3', item.disposed ? 'stage-crumble' : '']">
       <!-- ゲーム内と同じ絵 (2026-09-29 オーナー「クラフトステージ上とか」) -->
       <img v-if="art" :src="art" alt="" class="mx-auto mb-1 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" :class="compact ? 'h-14' : 'h-20'" draggable="false" />
       <!-- stage-item-name: 付いた瞬間の大きな文字が出ている間は薄くする (POE2Tube 要望 ㉚-1、style.css の .stage-fx-on) -->
-      <p v-if="item.unique" class="stage-item-name text-lg font-bold" :class="tone.name">{{ item.unique.ja }}</p>
-      <p class="stage-item-name" :class="item.unique ? ['text-[15px]', tone.name] : ['text-lg font-bold', tone.name]">{{ item.baseJa }}</p>
+      <p v-if="item.unique" class="stage-item-name text-lg font-bold" :class="tone.name">{{ nameOf(item.unique) }}</p>
+      <p class="stage-item-name" :class="item.unique ? ['text-[15px]', tone.name] : ['text-lg font-bold', tone.name]">{{ baseNameOf(item) }}</p>
       <p v-if="!compact" class="stage-item-name text-[11px] opacity-60">{{ item.base }}</p>
     </div>
     <!-- 解呪 / サルベージで崩れる (要望 ⑰-21) -->
     <div class="space-y-1 px-4 text-center text-[13px]" :class="[compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">
-      <p class="text-[12px] text-white/50">{{ kindJa }}<template v-if="!isGem(item.cls.category)"> · アイテムレベル <span class="text-white">{{ item.itemLevel }}</span></template></p>
+      <p class="text-[12px] text-white/50">{{ kindJa }}<template v-if="!isGem(item.cls.category)"> · {{ tr("アイテムレベル", "Item Level") }} <span class="text-white">{{ item.itemLevel }}</span></template></p>
       <!-- 要求 (要望 ⑱-3) -->
       <p v-if="reqText(item)" class="text-[12px] text-white/50">{{ reqText(item) }}</p>
       <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
@@ -140,22 +143,22 @@ const rows = computed(() =>
       <!-- ソケット (熟練工のオーブ) の絵 -->
       <div v-if="item.sockets" class="flex justify-center gap-1.5 py-0.5">
         <!-- はめたルーン (要望 ⑰-1) はソケットの中に絵 -->
-        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" :data-stage-socket="i" :title="item.augments?.[i - 1] ? `${i} 番目: ${item.augments[i - 1]!.ja}${removable ? ' (右クリックで外す)' : ''}` : undefined" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'" @click="onSocket($event, i)" @contextmenu="onUnsocket($event, i)">
+        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" :data-stage-socket="i" :title="item.augments?.[i - 1] ? tr(`${i} 番目: ${nameOf(item.augments[i - 1]!)}${removable ? ' (右クリックで外す)' : ''}`, `Socket ${i}: ${nameOf(item.augments[i - 1]!)}${removable ? ' (right-click to remove)' : ''}`) : undefined" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'" @click="onSocket($event, i)" @contextmenu="onUnsocket($event, i)">
           <img v-if="item.augments?.[i - 1] && runeArt(item.augments[i - 1]!.en)" :src="runeArt(item.augments[i - 1]!.en)!" alt="" class="h-6 w-6 object-contain" draggable="false" />
         </span>
       </div>
       <!-- ルーンの効き目 (MOD とは別の行。ゲームと同じくプロパティの下) -->
-      <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-[#8fa8ff]" :class="removable && !holding ? 'cursor-pointer hover:line-through' : ''" :title="removable && !holding ? `${a.ja} を外す` : undefined" @click="!holding && onUnsocket($event, i + 1)" @contextmenu="onUnsocket($event, i + 1)">{{ a.textJa }}</p>
+      <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-[#8fa8ff]" :class="removable && !holding ? 'cursor-pointer hover:line-through' : ''" :title="removable && !holding ? tr(`${nameOf(a)} を外す`, `Remove ${nameOf(a)}`) : undefined" @click="!holding && onUnsocket($event, i + 1)" @contextmenu="onUnsocket($event, i + 1)">{{ modText(a) }}</p>
       <!-- スキルジェムのサポート枠 (宝飾職人のオーブ) -->
       <div v-if="item.gemSockets" class="flex items-center justify-center gap-1.5 py-0.5 text-[12px] text-white/50">
-        サポート枠
+        {{ tr("サポート枠", "Support sockets") }}
         <span v-for="i in item.gemSockets" :key="'g' + i" class="h-3.5 w-3.5 rotate-45 border-2 border-[#7fb0e0] bg-[#101820]" />
       </div>
       <!-- ヴァールのエンチャント (ゲームと同じく固有の上) -->
       <template v-if="item.enchant">
         <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
-        <p class="text-[#b8daf2]">{{ item.enchant.textJa }}</p>
-        <p v-if="item.enchant2" class="text-[#b8daf2]">{{ item.enchant2.textJa }}</p>
+        <p class="text-[#b8daf2]">{{ modText(item.enchant) }}</p>
+        <p v-if="item.enchant2" class="text-[#b8daf2]">{{ modText(item.enchant2) }}</p>
       </template>
       <template v-if="implicits.length">
         <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
@@ -163,7 +166,7 @@ const rows = computed(() =>
       </template>
       <div v-if="!isFlask(item.cls.category) && !isGem(item.cls.category)" class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
       <!-- 未鑑定: MOD を隠す (ゲームと同じく赤い「未鑑定」) -->
-      <p v-if="hidden" class="py-1 font-bold text-[#d20000]">未鑑定</p>
+      <p v-if="hidden" class="py-1 font-bold text-[#d20000]">{{ tr("未鑑定", "Unidentified") }}</p>
       <!-- MOD (冒涜の MOD の行はゲームと同じ緑がかった暗い帯と枠。2026-10-07 オーナー「アイテムに出る時ゲーム仕様に、色だけ、冒涜 MOD のみ」。付いた物は光る。キーを手ごとに変えて光らせ直す。TransitionGroup は leave が光の animation 待ちで残るので使わない) -->
       <div v-if="!hidden" class="space-y-1">
         <p
@@ -171,14 +174,14 @@ const rows = computed(() =>
           :key="isNew(r.m) ? `${r.m.modId}#${flashKey}` : r.m.modId"
           class="relative rounded px-2 py-0.5"
           :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? 'stage-mod-new' : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
-          :title="isDoomed(r.m) ? (doomed!.length > 1 ? `この手で消える候補 (${doomed!.length} つのうち 1 つ)` : 'この手で消える') : removable && !r.m.unrevealed && !r.m.fractured ? '右クリックでフラクチャー (この MOD を固定)' : undefined"
+          :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で消える候補 (${doomed!.length} つのうち 1 つ)`, `May be removed by this use (1 of ${doomed!.length})`) : tr('この手で消える', 'Removed by this use')) : removable && !r.m.unrevealed && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
           @contextmenu="removable && !r.m.unrevealed && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >
           <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
-          <span :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? `品質で伸びた数値 (素は ${r.m.textJa})` : undefined">{{ r.text }}</span>
-          <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
-          <span class="ml-2 whitespace-nowrap align-middle text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side }} {{ r.m.tierName }}</span>
-          <button v-if="removable && !r.m.unrevealed" type="button" class="ml-1.5 rounded px-1 align-middle text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" title="この MOD を外す (費用 0、1 手戻すで戻る)" @click.stop="emit('remove', r.m.modId)">×</button>
+          <span :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
+          <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
+          <span class="ml-2 whitespace-nowrap align-middle text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side === "プレ" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }} {{ r.m.tierName }}</span>
+          <button v-if="removable && !r.m.unrevealed" type="button" class="ml-1.5 rounded px-1 align-middle text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
         </p>
       </div>
       <!-- ユニークの効果 (要望 ⑨)。クライアントの表に「どのユニークがどの MOD」が無いので poe2db のページ (保存済み) から -->
@@ -186,16 +189,16 @@ const rows = computed(() =>
         <p v-for="(t, i) in uLines" :key="'u' + i" class="px-2 py-0.5 text-rarity-magic">{{ t }}</p>
       </div>
       <!-- ページの無いユニークは名前だけ (撮影用は注記も出さない) -->
-      <p v-if="!rows.length && !uLines.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category) && !(compact && item.rarity === 'unique')" class="py-1 text-white/30">{{ item.rarity === "unique" ? (compact ? "" : "(このユニークの効果はデータに無い)") : "MOD なし" }}</p>
+      <p v-if="!rows.length && !uLines.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category) && !(compact && item.rarity === 'unique')" class="py-1 text-white/30">{{ item.rarity === "unique" ? (compact ? "" : tr("(このユニークの効果はデータに無い)", "(no data for this unique's effects)")) : tr("MOD なし", "No mods") }}</p>
       <!-- 消えた MOD (直前の手) -->
-      <p v-for="m in removed" :key="'x' + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ m.textJa }}</p>
-      <p v-if="item.corrupted" class="pt-1 font-bold text-[#d20000]">コラプト</p>
-      <p v-if="item.sanctified" class="pt-1 font-bold text-amber-200">聖別</p>
+      <p v-for="m in removed" :key="'x' + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ modText(m) }}</p>
+      <p v-if="item.corrupted" class="pt-1 font-bold text-[#d20000]">{{ tr("コラプト", "Corrupted") }}</p>
+      <p v-if="item.sanctified" class="pt-1 font-bold text-amber-200">{{ tr("聖別", "Sanctified") }}</p>
       <!-- 2026-09-29 に足したカレンシーの印 (apply-extra.ts) -->
-      <p v-if="item.siphoner" class="text-[#d20000]">キル閾値 (ヴァールサイフォナー)</p>
-      <p v-if="item.mirrored" class="pt-1 font-bold text-sky-200">ミラー</p>
-      <p v-if="item.foreseen" class="pt-1 text-violet-200">予見 (次の手の結果が見える)</p>
+      <p v-if="item.siphoner" class="text-[#d20000]">{{ tr("キル閾値 (ヴァールサイフォナー)", "Culling threshold (Vaal Siphoner)") }}</p>
+      <p v-if="item.mirrored" class="pt-1 font-bold text-sky-200">{{ tr("ミラー", "Mirrored") }}</p>
+      <p v-if="item.foreseen" class="pt-1 text-violet-200">{{ tr("予見 (次の手の結果が見える)", "Foreseen (next result is shown)") }}</p>
     </div>
-    <p v-if="holding" class="absolute -bottom-6 left-0 right-0 text-center text-[11px] text-amber-200/90"><span class="max-md:hidden">押すと使う (右クリック / Esc で手放す)</span><span class="md:hidden">押すと使う (下の帯の「使う」でも)</span></p>
+    <p v-if="holding" class="absolute -bottom-6 left-0 right-0 text-center text-[11px] text-amber-200/90"><span class="max-md:hidden">{{ tr("押すと使う (右クリック / Esc で手放す)", "Click to use (right-click / Esc to drop)") }}</span><span class="md:hidden">{{ tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") }}</span></p>
   </div>
 </template>

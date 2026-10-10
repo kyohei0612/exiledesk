@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
+import { tr } from "../../i18n/lang";
 import { displayCurrency, rankingCurrency, setDisplayCurrency, simCurrency, type DisplayChoice } from "../../state/display-currency";
 
 /**
@@ -21,7 +22,7 @@ function onChange(v: string): void {
 
 <template>
   <label class="inline-flex shrink-0 items-center gap-2 whitespace-nowrap text-[11px] text-[var(--exile-color-text-secondary)]">
-    <span class="max-md:hidden">表示通貨</span>
+    <span class="max-md:hidden">{{ tr("表示通貨", "Currency") }}</span>
     <select
       :value="value"
       class="text-[12px] px-2 py-0.5 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] focus:outline-none focus:border-[var(--exile-color-accent-focus)]"

@@ -13,6 +13,7 @@
  *   - 置き換えで外れた物は手元に戻らない (取り外せないので) = 壊れる。戻す手は抽出のオーブ (装備を壊して、ソケットバウンドでない物を取り戻す) だけ
  */
 import rulesRaw from "../i18n/augment-rules.json";
+import { lang, tr } from "../i18n/lang";
 
 /**
  * 部位のまとまり (craft-stage/apply-act.ts の MARTIAL / CASTER / ARMOUR と同じ。クラフト計算機からも読むので、
@@ -94,6 +95,17 @@ export function slotOk(rule: AugmentRule, category: string): boolean | null {
   return rule.slots.some((s) => SLOT_CLASSES[s]?.includes(category));
 }
 
+/** 部位の言葉の英語 (英語の画面用。2026-10-10 英語版) */
+const SLOT_EN: Record<string, string> = {
+  武器: "Weapon", 防具: "Armour", マーシャル武器: "Martial Weapon", キャスター武器: "Caster Weapon", 両手武器: "Two-Handed Weapon",
+  遠距離武器: "Ranged Weapon", メイス: "Mace", 片手メイス: "One-Handed Mace", 両手メイス: "Two-Handed Mace", クォータースタッフ: "Quarterstaff",
+  スピア: "Spear", 弓: "Bow", クロスボウ: "Crossbow", タリスマン: "Talisman", ワンド: "Wand", スタッフ: "Staff", セプター: "Sceptre",
+  フォーカス: "Focus", 盾: "Shield", バックラー: "Buckler", 鎧: "Body Armour", 兜: "Helmet", 手袋: "Gloves", 靴: "Boots",
+};
+/** 部位の言葉の画面用 (英語の画面では英語) */
+const slotLabelShown = (rule: AugmentRule): string => (lang.value === "en"
+  ? (!rule.slotsKnown ? "unknown" : !rule.slots ? "any equipment" : rule.slots.map((s) => SLOT_EN[s] ?? s).join(" / "))
+  : slotLabel(rule));
 /** 部位の言葉 (札・説明用。「靴」「兜またはセプター」「どの装備にも」) */
 export const slotLabel = (rule: AugmentRule): string => (!rule.slotsKnown ? "分からない" : !rule.slots ? "どの装備にも" : rule.slots.join("・"));
 
@@ -105,19 +117,19 @@ export const slotLabel = (rule: AugmentRule): string => (!rule.slotsKnown ? "分
  */
 export function placeBlock(rule: AugmentRule | null, item: { category: string; rarity: string; corrupted?: boolean; sanctified?: boolean }, effectFits?: boolean): string | null {
   if (!rule || !rule.slotsKnown || rule.removable == null) {
-    return `決まりがクライアントの説明文から読めない${rule?.extra?.length ? ` (${rule.extra.join("。")})` : ""}`;
+    return tr(`決まりがクライアントの説明文から読めない${rule?.extra?.length ? ` (${rule.extra.join("。")})` : ""}`, "Socketing rules couldn't be read from the game data");
   }
-  if ((item.corrupted || item.sanctified) && !rule.corruptOk) return "コラプト・聖別したアイテムにははめられない";
-  if (effectFits === false || (effectFits === undefined && slotOk(rule, item.category) === false)) return `${slotLabel(rule)}の空のオーグメントソケットにだけはめられる`;
-  if (rule.rarity === "rare" && item.rarity !== "rare") return "レアのアイテムにだけはめられる";
+  if ((item.corrupted || item.sanctified) && !rule.corruptOk) return tr("コラプト・聖別したアイテムにははめられない", "Can't be socketed into Corrupted or Sanctified items");
+  if (effectFits === false || (effectFits === undefined && slotOk(rule, item.category) === false)) return tr(`${slotLabel(rule)}の空のオーグメントソケットにだけはめられる`, `Only socketable into an empty augment socket on: ${slotLabelShown(rule)}`);
+  if (rule.rarity === "rare" && item.rarity !== "rare") return tr("レアのアイテムにだけはめられる", "Rare items only");
   return null;
 }
 
 /** はまっている物を置き換えられるか。置き換えられるなら null、だめなら理由 (ゲームの言葉で) */
 export function replaceBlock(occupant: { en: string; ja: string }): string | null {
   const r = augmentRule(occupant.en);
-  if (!r || r.replaceable == null) return `${occupant.ja}は置き換えられるか分からない (説明文の型が想定外)`;
-  if (!r.replaceable) return `${occupant.ja}はソケットバウンドなので置き換えられない`;
+  if (!r || r.replaceable == null) return tr(`${occupant.ja}は置き換えられるか分からない (説明文の型が想定外)`, `Unknown whether ${occupant.en} can be replaced`);
+  if (!r.replaceable) return tr(`${occupant.ja}はソケットバウンドなので置き換えられない`, `${occupant.en} is socket-bound and can't be replaced`);
   return null;
 }
 
@@ -131,22 +143,25 @@ export function limitBlock(en: string, others: readonly string[]): string | null
   if (!lim) return null;
   const same = others.filter((o) => (lim.group ? augmentRule(o)?.limit?.id === lim.id : o === en)).length;
   if (same < lim.n) return null;
-  return lim.group ? `${lim.group}は 1 つのアイテムに ${lim.n} 個まで` : `${r!.ja}は 1 つのアイテムに ${lim.n} 個まで`;
+  return lim.group
+    ? tr(`${lim.group}は 1 つのアイテムに ${lim.n} 個まで`, `Only ${lim.n} of this kind per item`)
+    : tr(`${r!.ja}は 1 つのアイテムに ${lim.n} 個まで`, `Only ${lim.n} ${en} per item`);
 }
 
 /** 棚の説明に出す決まりの行 */
 export function ruleLines(en: string): string[] {
   const r = augmentRule(en);
-  if (!r) return ["決まりの表に無い"];
-  if (r.removable == null || !r.slotsKnown) return [`決まりがクライアントの説明文から読めない: ${r.text}`];
-  const out = [`はめられる部位: ${r.rarity === "rare" ? "レアの" : ""}${slotLabel(r)}`];
+  if (!r) return [tr("決まりの表に無い", "Not in the rules table")];
+  if (r.removable == null || !r.slotsKnown) return [tr(`決まりがクライアントの説明文から読めない: ${r.text}`, "Socketing rules couldn't be read from the game data")];
+  const out = [tr(`はめられる部位: ${r.rarity === "rare" ? "レアの" : ""}${slotLabel(r)}`, `Socketable into: ${r.rarity === "rare" ? "Rare " : ""}${slotLabelShown(r)}`)];
   out.push(r.bound
-    ? "**ソケットバウンド**: 一度はめると取り外すことも置き換えることもできない"
+    ? tr("**ソケットバウンド**: 一度はめると取り外すことも置き換えることもできない", "**Socket-bound**: once socketed it can't be removed or replaced")
     : r.replaceable
-      ? "一度はめると取り外せないが、**他のオーグメントで置き換えられる** (置き換えた方は壊れて戻らない)"
-      : "一度はめると取り外せない");
-  if (r.limit) out.push(r.limit.group ? `${r.limit.group}は 1 つのアイテムに ${r.limit.n} 個まで` : `1 つのアイテムに ${r.limit.n} 個まで`);
-  if (!r.corruptOk) out.push("コラプト・聖別したアイテムにははめられない");
-  for (const x of r.extra ?? []) out.push(x);
+      ? tr("一度はめると取り外せないが、**他のオーグメントで置き換えられる** (置き換えた方は壊れて戻らない)", "Can't be removed once socketed, but **can be replaced by another augment** (the replaced one is destroyed)")
+      : tr("一度はめると取り外せない", "Can't be removed once socketed"));
+  if (r.limit) out.push(r.limit.group ? tr(`${r.limit.group}は 1 つのアイテムに ${r.limit.n} 個まで`, `Only ${r.limit.n} of this kind per item`) : tr(`1 つのアイテムに ${r.limit.n} 個まで`, `Only ${r.limit.n} per item`));
+  if (!r.corruptOk) out.push(tr("コラプト・聖別したアイテムにははめられない", "Can't be socketed into Corrupted or Sanctified items"));
+  // 説明文の補足 (日本語だけの物) は英語の画面では出さない
+  if (lang.value !== "en") for (const x of r.extra ?? []) out.push(x);
   return out;
 }

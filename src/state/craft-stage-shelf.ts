@@ -13,7 +13,7 @@ import { ESSENCE_KEYS } from "../services/htc/essence-key-table";
 import essences from "../vendor/poe2htc/data/essences.json";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
 import { jaOfOmen } from "../services/htc/labels";
-import { stepJa } from "../services/craft-stage/run-plan";
+import { stepEn, stepJa } from "../services/craft-stage/run-plan";
 import { OMEN_FOR } from "../services/craft-stage/omens";
 import { isFlask, isGem } from "../services/craft-stage/stage-bases";
 import { isRune, runeEffectFor, runeKeys, runeNameOf, runeOf } from "../services/craft-stage/stage-runes";
@@ -21,6 +21,7 @@ import { runeArt } from "../services/craft-stage/rune-art";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
 import { marketStore } from "./market-store";
+import { lang, tr } from "../i18n/lang";
 
 type Named = Record<string, { en: string; ja: string }>;
 const KEYS = priceKeys as unknown as { currency: Named; bones: Named; omens: Named };
@@ -30,16 +31,17 @@ export interface ShelfGroup { kind: string; label: string; keys: string[] }
 
 /** オーブと、MOD を足し引きしない物 */
 export const ORBS: ShelfGroup[] = [
-  { kind: "transmute", label: "変成", keys: ["transmute", "transmute_greater", "transmute_perfect"] },
-  { kind: "augment", label: "増強", keys: ["augment", "augment_greater", "augment_perfect"] },
-  { kind: "regal", label: "王者", keys: ["regal", "regal_greater", "regal_perfect"] },
-  { kind: "alchemy", label: "錬金", keys: ["alchemy"] },
-  { kind: "exalt", label: "高貴", keys: ["exalt", "exalt_greater", "exalt_perfect"] },
-  { kind: "chaos", label: "カオス", keys: ["chaos", "chaos_greater", "chaos_perfect"] },
-  { kind: "annul", label: "消去", keys: ["annul"] },
-  { kind: "other", label: "その他", keys: ["divine", "fracture", "artificer", "vaal", "chance", "hinekora"] },
+  // label は英語の画面に切り替えた時も変わるように getter (2026-10-10 英語版)
+  { kind: "transmute", get label() { return tr("変成", "Transmutation"); }, keys: ["transmute", "transmute_greater", "transmute_perfect"] },
+  { kind: "augment", get label() { return tr("増強", "Augmentation"); }, keys: ["augment", "augment_greater", "augment_perfect"] },
+  { kind: "regal", get label() { return tr("王者", "Regal"); }, keys: ["regal", "regal_greater", "regal_perfect"] },
+  { kind: "alchemy", get label() { return tr("錬金", "Alchemy"); }, keys: ["alchemy"] },
+  { kind: "exalt", get label() { return tr("高貴", "Exalted"); }, keys: ["exalt", "exalt_greater", "exalt_perfect"] },
+  { kind: "chaos", get label() { return tr("カオス", "Chaos"); }, keys: ["chaos", "chaos_greater", "chaos_perfect"] },
+  { kind: "annul", get label() { return tr("消去", "Annulment"); }, keys: ["annul"] },
+  { kind: "other", get label() { return tr("その他", "Other"); }, keys: ["divine", "fracture", "artificer", "vaal", "chance", "hinekora"] },
   // 耐性のフラックス (2026-10-04 オーナー「カレンシーフルチェック」、apply-flux.ts)
-  { kind: "flux", label: "フラックス (耐性の変換)", keys: ["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"] },
+  { kind: "flux", get label() { return tr("フラックス (耐性の変換)", "Flux (resistance conversion)"); }, keys: ["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"] },
   // 2026-10-09 オーナー「カランドラとか抽出のオーブとか、クラフト要素ではあるけどエミュレーターに関係ないものは削除」で外した物:
   // 鏡・抽出・解呪・サルベージ / シャード 4 種 / アクトの品質・ジェム系 (砥石・鎧の欠片・ガラス玉・ジェムカッター・宝石職人・エッチャー・識別) /
   // ヴァールの道具 10 種 (インフューザー・生贄・アーキテクト・耕作・サイフォナー)。打つ処理 (apply-extra / apply-dispose) は古い手順の再生のため残す
@@ -54,14 +56,14 @@ export const ORBS: ShelfGroup[] = [
  */
 export const CRAFT_RUNE_KEYS: readonly string[] = CRAFT_RUNES_EN.map((en) => `rune:${en}`).filter((k) => runeOf(k));
 export const RUNE_GROUPS: ShelfGroup[] = [
-  { kind: "lesser", label: "レッサー", keys: runeKeys("lesser") },
-  { kind: "normal", label: "普通", keys: runeKeys("normal") },
-  { kind: "greater", label: "グレーター", keys: runeKeys("greater") },
-  { kind: "perfect", label: "パーフェクト", keys: runeKeys("perfect") },
-  { kind: "special", label: "特別なルーン (古代・ウォード・人の名前の物など)", keys: runeKeys("special") },
+  { kind: "lesser", get label() { return tr("レッサー", "Lesser"); }, keys: runeKeys("lesser") },
+  { kind: "normal", get label() { return tr("普通", "Normal"); }, keys: runeKeys("normal") },
+  { kind: "greater", get label() { return tr("グレーター", "Greater"); }, keys: runeKeys("greater") },
+  { kind: "perfect", get label() { return tr("パーフェクト", "Perfect"); }, keys: runeKeys("perfect") },
+  { kind: "special", get label() { return tr("特別なルーン (古代・ウォード・人の名前の物など)", "Special runes (Ancient, Ward, named runes etc.)"); }, keys: runeKeys("special") },
   // ソウルコア・アイドルも (POE2Tube 要望 ㉘ 2026-10-04、手で打つ画面の棚に)
-  { kind: "soulcore", label: "ソウルコア", keys: runeKeys(undefined, "soulcore") },
-  { kind: "idol", label: "アイドル", keys: runeKeys(undefined, "talisman") },
+  { kind: "soulcore", get label() { return tr("ソウルコア", "Soul Cores"); }, keys: runeKeys(undefined, "soulcore") },
+  { kind: "idol", get label() { return tr("アイドル", "Idols"); }, keys: runeKeys(undefined, "talisman") },
 ];
 /**
  * 今のアイテムに効き目がある (効果のデータにこの部位の行がある) ルーンだけ
@@ -91,8 +93,12 @@ const OMEN_LABEL: Record<string, string> = {
   exalt: "高貴", regal: "王者", alchemy: "錬金", chaos: "カオス", annul: "消去", essence_perfect: "パーフェクトエッセンス",
   desecrate: "冒涜", reveal: "発現", vaal: "ヴァール", divine: "神", chance: "可能性",
 };
+const OMEN_LABEL_EN: Record<string, string> = {
+  exalt: "Exalted", regal: "Regal", alchemy: "Alchemy", chaos: "Chaos", annul: "Annulment", essence_perfect: "Perfect Essence",
+  desecrate: "Desecration", reveal: "Reveal", vaal: "Vaal", divine: "Divine", chance: "Chance",
+};
 /** お告げ (掛かる手の種類ごと) */
-export const OMEN_GROUPS: ShelfGroup[] = Object.entries(OMEN_FOR).map(([kind, keys]) => ({ kind, label: OMEN_LABEL[kind] ?? kind, keys: [...keys] }));
+export const OMEN_GROUPS: ShelfGroup[] = Object.entries(OMEN_FOR).map(([kind, keys]) => ({ kind, get label() { return tr(OMEN_LABEL[kind] ?? kind, OMEN_LABEL_EN[kind] ?? kind); }, keys: [...keys] }));
 
 /** そのベースで使えるエッセンス (名前ごとに レッサー / 普通 / グレーター / パーフェクト) */
 export function essenceShelf(data: PatchData | null, item: StageItem | null): ShelfGroup[] {
@@ -139,6 +145,8 @@ export function priceOfKey(key: string, item: StageItem | null): number {
 export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(runeNameOf(key)) : null) ?? row(key, item)?.IconUrl ?? "";
 /** 日本語名 (お告げ・発現も) */
 export function nameOfKey(key: string, item: StageItem | null): string {
+  // 英語の画面ではゲームの英語名 (無い物 = 発現などは日本語のまま。2026-10-10 英語版)
+  if (lang.value === "en") { const st = stepEn(key); if (st) return st; const en = enOf(key, item); if (en !== key) return en; }
   if (KEYS.omens[key]) return jaOfOmen(key) ?? key;
   if (!item) return KEYS.currency[key]?.ja ?? key;
   return stepJa(key, item);

@@ -35,6 +35,7 @@
  */
 import catalystData from "./catalysts.json";
 import type { Mod } from "../../vendor/poe2htc/engine/types";
+import { lang } from "../../i18n/lang";
 
 /** 装飾品のカタリスト 1 種 */
 export interface Catalyst {
@@ -184,5 +185,7 @@ export function catalystTagFromLabel(label: string): string | null {
 /** 品質の表記 (『品質 (マナモッド)』)。種類が無ければ『品質』。計算機のカードとクラフトステージの両方でこれ */
 export function qualityLabelOf(tag: string | null | undefined): string {
   const k = tag ? CATALYSTS.find((x) => x.tag === tag) : undefined;
+  // 英語の画面ではゲームの英語の表記 (Quality (Life Modifiers)。2026-10-10 英語版)
+  if (lang.value === "en") return k?.label?.en ?? "Quality";
   return k?.label?.ja ?? "品質";
 }

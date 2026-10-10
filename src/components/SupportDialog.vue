@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { SUPPORT_LINKS, supportOpen } from "../state/support";
 import { openExternal } from "../services/trade2/open-external";
+import { tr } from "../i18n/lang";
 
 const close = (): void => { supportOpen.value = false; };
 function go(url: string): void { void openExternal(url); close(); }
@@ -15,8 +16,8 @@ function go(url: string): void { void openExternal(url); close(); }
     <div v-if="supportOpen" class="fixed inset-0 z-50 grid place-items-center bg-black/65 p-4" @click.self="close">
       <div class="g-panel flex w-full max-w-[26rem] min-w-0 flex-col">
         <div class="px-4 pt-2">
-          <b class="g-brush text-[20px] text-[var(--exile-color-text-title)]">支援する</b>
-          <p class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">ExileDesk の開発を応援してもらえると嬉しいです。好きな方法を選んでください。</p>
+          <b class="g-brush text-[20px] text-[var(--exile-color-text-title)]">{{ tr("支援する", "Support") }}</b>
+          <p class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("ExileDesk の開発を応援してもらえると嬉しいです。好きな方法を選んでください。", "Your support helps ExileDesk keep growing. Pick whichever way you like.") }}</p>
         </div>
         <div class="flex flex-col gap-2 px-4 py-3">
           <button
@@ -33,7 +34,7 @@ function go(url: string): void { void openExternal(url); close(); }
             <span class="shrink-0 rounded border border-[var(--exile-color-border-brass)] px-1.5 text-[11px] text-[var(--exile-color-accent-focus)]">{{ l.kind }}</span>
           </button>
         </div>
-        <div class="flex px-4 pb-2"><button type="button" class="g-btn sm ml-auto" @click="close">閉じる</button></div>
+        <div class="flex px-4 pb-2"><button type="button" class="g-btn sm ml-auto" @click="close">{{ tr("閉じる", "Close") }}</button></div>
       </div>
     </div>
   </Teleport>

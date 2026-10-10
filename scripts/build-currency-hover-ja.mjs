@@ -16,6 +16,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// --en で英語版 (src/i18n/currency-hover-en.json、2026-10-10 Web の英語版)。表は English、MOD の文は mods.en.json
+const EN = process.argv.includes("--en");
+const L = EN ? "English" : "Japanese";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = "data-cache/client-export-currency-hover/tables";
 const T = (lang, name) => JSON.parse(readFileSync(join(root, DIR, lang, `${name}.json`), "utf8"));
@@ -26,9 +29,9 @@ const lines = (t) => strip(t).split(NL).map((x) => x.trim()).filter(Boolean);
 /** 行に分けるが [Tag|表示] の印は残す (画面でキーワードの説明のホバーにする) */
 const rich = (t) => (t ?? "").replace(/\r/g, "").split(NL).map((x) => x.trim()).filter(Boolean);
 
-const bE = T("English", "BaseItemTypes"), bJ = T("Japanese", "BaseItemTypes");
+const bE = T("English", "BaseItemTypes"), bJ = T(L, "BaseItemTypes");
 const modsE = T("English", "Mods");
-const modsJa = JSON.parse(readFileSync(join(root, "data-cache/mods.ja.json"), "utf8"));
+const modsJa = JSON.parse(readFileSync(join(root, EN ? "data-cache/mods.en.json" : "data-cache/mods.ja.json"), "utf8"));
 /** Mods の行番号 → 日本語の文 (複数行) */
 const modText = (k) => {
   const id = modsE[k]?.Id;
@@ -56,7 +59,7 @@ function group(i, h, l) {
 }
 
 // ---- 1. 通貨の説明と束ね (CurrencyItems) ----
-const ciE = T("English", "CurrencyItems"), ciJ = T("Japanese", "CurrencyItems");
+const ciE = T("English", "CurrencyItems"), ciJ = T(L, "CurrencyItems");
 ciE.forEach((c, r) => {
   const i = c.BaseItemType;
   const e = entry(i);
@@ -66,24 +69,24 @@ ciE.forEach((c, r) => {
   if (c.StackSize > 1) e.s = `1 / ${c.StackSize}`;
   // シャード: 何個で何になるか
   const full = c.FullStack_BaseItemType;
-  if (typeof full === "number" && full !== i && c.StackSize > 1) group(i, "束ねると", [`${c.StackSize}個で「${nameJa(full)}」1個になる`]);
+  if (typeof full === "number" && full !== i && c.StackSize > 1) group(i, EN ? "Stacks into" : "束ねると", [EN ? `${c.StackSize} make 1 ${nameJa(full)}` : `${c.StackSize}個で「${nameJa(full)}」1個になる`]);
 });
 
 // ---- 2. エッセンス / 合金: 装備の種類ごとに付く MOD (EssenceMods) ----
 const essE = T("English", "Essences");
 const emE = T("English", "EssenceMods");
-const tcJ = T("Japanese", "EssenceTargetItemCategories");
+const tcJ = T(L, "EssenceTargetItemCategories");
 emE.forEach((m) => {
   const ess = essE[m.Essence];
   if (!ess) return;
-  const cat = strip(tcJ[m.TargetItemCategory]?.Text) || tcJ[m.TargetItemCategory]?.Id || "装備";
+  const cat = strip(tcJ[m.TargetItemCategory]?.Text) || tcJ[m.TargetItemCategory]?.Id || (EN ? "Equipment" : "装備");
   const t = modText(m.DisplayMod ?? m.Mod);
-  group(ess.BaseItemType, `${cat}に付く`, t);
+  group(ess.BaseItemType, EN ? cat : `${cat}に付く`, t);
 });
 
 // ---- 3. リネージュサポート / サポートジェム: 説明文 (GemEffects.SupportText) ----
 const sgE = T("English", "SkillGems");
-const geJ = T("Japanese", "GemEffects");
+const geJ = T(L, "GemEffects");
 const supE = T("English", "SupportGems");
 const lineage = new Set(supE.filter((s) => s.IsLineage).map((s) => s.SkillGem));
 sgE.forEach((g, r) => {
@@ -95,24 +98,24 @@ sgE.forEach((g, r) => {
 });
 
 // ---- 4. フラグメント / 聖廟の鍵など: 付くモッド (MapFragmentMods) ----
-for (const f of T("English", "MapFragmentMods")) group(f.BaseItemType, "付くモッド", (f.Mods ?? []).flatMap(modText));
+for (const f of T("English", "MapFragmentMods")) group(f.BaseItemType, EN ? "Mods" : "付くモッド", (f.Mods ?? []).flatMap(modText));
 
 // ---- 5. 装備でない物の固有モッド (タリスマン等、Implicit_Mods) ----
 const currencyish = new Set(ciE.map((c) => c.BaseItemType));
 bE.forEach((b, i) => {
   if (!currencyish.has(i) && !/Talisman/.test(b.Name ?? "")) return;
-  group(i, "効果", (b.Implicit_Mods ?? []).flatMap(modText));
+  group(i, EN ? "Effect" : "効果", (b.Implicit_Mods ?? []).flatMap(modText));
 });
 
 // ---- 6. ヴェリシウム: 作れる物 (Expedition2VerisiumCrafts) ----
 // UniqueName は Words の行。種別 6 (ユニーク名) の時だけユニークになる。それ以外 (「Void」など) はベースの上位化で、変わった後のベース名を出す
-const wJ = T("Japanese", "Words");
+const wJ = T(L, "Words");
 for (const v of T("English", "Expedition2VerisiumCrafts")) {
   const w = wJ[v.UniqueName];
   const uniq = w?.Wordlist === 6 ? strip(w.Text2 || w.Text) : "";
   (v.CraftingItem ?? []).forEach((ci, j) => {
     const n = v.CraftingItemCount?.[j];
-    group(ci, "作れる物", [`${nameJa(v.OriginalBaseType)} → ${uniq || nameJa(v.NewBaseType)}${n ? ` (${n}個)` : ""}`]);
+    group(ci, EN ? "Crafts" : "作れる物", [`${nameJa(v.OriginalBaseType)} → ${uniq || nameJa(v.NewBaseType)}${n ? (EN ? ` (x${n})` : ` (${n}個)`) : ""}`]);
   });
 }
 
@@ -123,9 +126,9 @@ bE.forEach((b, i) => {
   if (!m) return;
   const t = tiers.find((x) => x.Tier === Number(m[1]));
   const e = entry(i);
-  if (e && t) e.e = [`マップデバイスで使うと、エリアレベル${t.Level}のマップを開く`];
+  if (e && t) e.e = [EN ? `Opens an Area Level ${t.Level} map in the Map Device` : `マップデバイスで使うと、エリアレベル${t.Level}のマップを開く`];
 });
 
-writeFileSync(join(root, "src/i18n/currency-hover-ja.json"), JSON.stringify(out) + NL);
+writeFileSync(join(root, EN ? "src/i18n/currency-hover-en.json" : "src/i18n/currency-hover-ja.json"), JSON.stringify(out) + NL);
 const withG = Object.values(out).filter((x) => x.g?.length).length;
 console.log(`書き出し ${Object.keys(out).length} 件 (見出し付き ${withG})`);

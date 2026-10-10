@@ -12,6 +12,7 @@
 import { baseStatsOf } from "./stage-bases";
 import { displayValue } from "../mods/stat-scale";
 import type { StageItem } from "./types";
+import { lang } from "../../i18n/lang";
 
 export interface PropRow { key: string; label: string; value: string; up: boolean }
 
@@ -25,22 +26,26 @@ function sums(item: StageItem): Map<string, number> {
   return m;
 }
 const ELEMENTS = [
-  { key: "fire", label: "火ダメージ" },
-  { key: "cold", label: "冷気ダメージ" },
-  { key: "lightning", label: "雷ダメージ" },
-  { key: "chaos", label: "混沌ダメージ" },
+  { key: "fire", label: "火ダメージ", en: "Fire Damage" },
+  { key: "cold", label: "冷気ダメージ", en: "Cold Damage" },
+  { key: "lightning", label: "雷ダメージ", en: "Lightning Damage" },
+  { key: "chaos", label: "混沌ダメージ", en: "Chaos Damage" },
 ] as const;
 const DEF = [
-  { key: "armour", label: "アーマー", flat: "local_base_physical_damage_reduction_rating", inc: ["local_physical_damage_reduction_rating_+%", "local_armour_and_evasion_+%", "local_armour_and_energy_shield_+%", "local_armour_and_evasion_and_energy_shield_+%"] },
-  { key: "evasion", label: "回避力", flat: "local_base_evasion_rating", inc: ["local_evasion_rating_+%", "local_armour_and_evasion_+%", "local_evasion_and_energy_shield_+%", "local_armour_and_evasion_and_energy_shield_+%"] },
-  { key: "es", label: "エナジーシールド", flat: "local_energy_shield", inc: ["local_energy_shield_+%", "local_armour_and_energy_shield_+%", "local_evasion_and_energy_shield_+%", "local_armour_and_evasion_and_energy_shield_+%"] },
+  { key: "armour", label: "アーマー", en: "Armour", flat: "local_base_physical_damage_reduction_rating", inc: ["local_physical_damage_reduction_rating_+%", "local_armour_and_evasion_+%", "local_armour_and_energy_shield_+%", "local_armour_and_evasion_and_energy_shield_+%"] },
+  { key: "evasion", label: "回避力", en: "Evasion Rating", flat: "local_base_evasion_rating", inc: ["local_evasion_rating_+%", "local_armour_and_evasion_+%", "local_evasion_and_energy_shield_+%", "local_armour_and_evasion_and_energy_shield_+%"] },
+  { key: "es", label: "エナジーシールド", en: "Energy Shield", flat: "local_energy_shield", inc: ["local_energy_shield_+%", "local_armour_and_energy_shield_+%", "local_evasion_and_energy_shield_+%", "local_armour_and_evasion_and_energy_shield_+%"] },
 ] as const;
 const lohi = (v: number | [number, number]): [number, number] => (Array.isArray(v) ? v : [v, v]);
 
-/** アイテムの上の数値 (素の数値の無いベースは空) */
-export function propRows(item: StageItem): PropRow[] {
+/** アイテムの上の数値 (素の数値の無いベースは空)。ja = 画面の言語に関係なく日本語 (手順の JSON 用) */
+export function propRows(item: StageItem, ja = false): PropRow[] {
   const b = baseStatsOf(item.base);
   if (!b) return [];
+  // 英語の画面では英語の札、範囲は 6-9 (2026-10-10 英語版)
+  const en = !ja && lang.value === "en";
+  const L = (j: string, e: string): string => (en ? e : j);
+  const R = (lo: number, hi: number): string => (en ? `${lo}-${hi}` : `${lo}〜${hi}`);
   const s = sums(item);
   const g = (id: string): number => s.get(id) ?? 0;
   const q = 1 + item.quality / 100;
@@ -50,20 +55,20 @@ export function propRows(item: StageItem): PropRow[] {
     const [a, c] = b.phys;
     const lo = Math.round((a + g("local_minimum_added_physical_damage")) * inc * q);
     const hi = Math.round((c + g("local_maximum_added_physical_damage")) * inc * q);
-    rows.push({ key: "phys", label: "物理ダメージ", value: `${lo}〜${hi}`, up: lo !== a || hi !== c });
+    rows.push({ key: "phys", label: L("物理ダメージ", "Physical Damage"), value: R(lo, hi), up: lo !== a || hi !== c });
   }
   for (const e of ELEMENTS) {
     const lo = g(`local_minimum_added_${e.key}_damage`);
     const hi = g(`local_maximum_added_${e.key}_damage`);
-    if (lo || hi) rows.push({ key: e.key, label: e.label, value: `${lo}〜${hi}`, up: true });
+    if (lo || hi) rows.push({ key: e.key, label: L(e.label, e.en), value: R(lo, hi), up: true });
   }
   if (b.crit) {
     const v = b.crit + g("local_critical_strike_chance");
-    rows.push({ key: "crit", label: "クリティカルヒット率", value: `${v.toFixed(2)}%`, up: v !== b.crit });
+    rows.push({ key: "crit", label: L("クリティカルヒット率", "Critical Hit Chance"), value: `${v.toFixed(2)}%`, up: v !== b.crit });
   }
   if (b.aps) {
     const v = b.aps * (1 + g("local_attack_speed_+%") / 100);
-    rows.push({ key: "aps", label: "アタック/秒", value: v.toFixed(2), up: Math.abs(v - b.aps) > 1e-9 });
+    rows.push({ key: "aps", label: L("アタック/秒", "Attacks per Second"), value: v.toFixed(2), up: Math.abs(v - b.aps) > 1e-9 });
   }
   for (const d of DEF) {
     const base = b[d.key];
@@ -72,13 +77,13 @@ export function propRows(item: StageItem): PropRow[] {
     const [a, c] = lohi(base);
     const lo = Math.round((a + g(d.flat)) * inc * q);
     const hi = Math.round((c + g(d.flat)) * inc * q);
-    rows.push({ key: d.key, label: d.label, value: lo === hi ? String(lo) : `${lo}〜${hi}`, up: lo !== a || hi !== c });
+    rows.push({ key: d.key, label: L(d.label, d.en), value: lo === hi ? String(lo) : R(lo, hi), up: lo !== a || hi !== c });
   }
-  if (b.block) rows.push({ key: "block", label: "ブロック率", value: `${Math.round(b.block * (1 + g("local_block_chance_+%") / 100))}%`, up: !!g("local_block_chance_+%") });
+  if (b.block) rows.push({ key: "block", label: L("ブロック率", "Block chance"), value: `${Math.round(b.block * (1 + g("local_block_chance_+%") / 100))}%`, up: !!g("local_block_chance_+%") });
   // フラスコ (品質で回復量)
-  if (b.life) rows.push({ key: "life", label: "ライフ回復", value: String(Math.round(b.life * q)), up: item.quality > 0 });
-  if (b.mana) rows.push({ key: "mana", label: "マナ回復", value: String(Math.round(b.mana * q)), up: item.quality > 0 });
-  if (b.duration && (b.life || b.mana)) rows.push({ key: "duration", label: "回復時間", value: `${(b.duration / 10).toFixed(1)} 秒`, up: false });
+  if (b.life) rows.push({ key: "life", label: L("ライフ回復", "Life Recovery"), value: String(Math.round(b.life * q)), up: item.quality > 0 });
+  if (b.mana) rows.push({ key: "mana", label: L("マナ回復", "Mana Recovery"), value: String(Math.round(b.mana * q)), up: item.quality > 0 });
+  if (b.duration && (b.life || b.mana)) rows.push({ key: "duration", label: L("回復時間", "Duration"), value: L(`${(b.duration / 10).toFixed(1)} 秒`, `${(b.duration / 10).toFixed(1)}s`), up: false });
   return rows;
 }
 
