@@ -506,6 +506,12 @@ export const craftStage = {
     const r = applyCurrency(data.value, item.value, key, mulberry32(0), omens.value);
     return r.applied ? null : (r.reason ?? "打てない");
   },
+  /** お告げを抜きにして打てるか (掛けたままのお告げのせいで打てない物を棚から消さないため。2026-10-10「錬金の後に高貴が打てない」) */
+  usableBare(key: string): string | null {
+    if (!data.value || !item.value) return "準備中";
+    const r = applyCurrency(data.value, item.value, key, mulberry32(0), []);
+    return r.applied ? null : (r.reason ?? "打てない");
+  },
   /** 持っている物を 1 回打つ (Craft of Exile と同じ: 持ったままなら何度でも) */
   use(key: string | null = held.value): void {
     if (!key || !data.value || !item.value || replay.value) return;

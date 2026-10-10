@@ -75,7 +75,8 @@ const orbSplit = computed(() => {
   const shown = (k: string): boolean => !craftStage.hidden?.(k);
   // 棚に出さない物 (シミュレーションに要らない物) は写しから外す (ORBS は共通の一覧なので書き換えない)
   const groups = [...ORBS, { kind: "bones", label: "骨", keys: bonesFor(it) }].map((g) => ({ ...g, keys: g.keys.filter(shown) }));
-  const ok = (k: string): boolean => !craftStage.usable(k);
+  // お告げを抜きにして打てる物は全部 (掛けたままのお告げのせいで打てない物も残し、ボタンに理由を出す。2026-10-10「錬金の後に高貴が打てない」)
+  const ok = (k: string): boolean => !(craftStage.usableBare ?? craftStage.usable)(k);
   return {
     usable: groups.map((g) => ({ kind: g.kind, keys: g.keys.filter(ok) })).filter((g) => g.keys.length),
     unusable: groups.map((g) => ({ kind: g.kind, keys: g.keys.filter((k) => !ok(k)) })).filter((g) => g.keys.length),
@@ -114,7 +115,8 @@ const hasCatalyst = computed(() => ["Rings", "Amulets"].includes(craftStage.item
 const usableAll = computed(() => {
   const it = craftStage.item.value;
   void craftStage.omens.value;
-  const ok = (k: string): boolean => !craftStage.usable(k);
+  // ここもお告げ抜きで (掛けたままのお告げのせいで打てない物を消さず、ボタンに理由を出す。2026-10-10)
+  const ok = (k: string): boolean => !(craftStage.usableBare ?? craftStage.usable)(k);
   const sec = (label: string, keys: string[], kind?: string) => ({ label, keys: keys.filter((k) => ok(k) && !craftStage.hidden?.(k)), kind });
   return [
     sec("オーブ・骨", [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),

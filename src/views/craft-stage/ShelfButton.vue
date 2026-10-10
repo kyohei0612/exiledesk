@@ -34,6 +34,22 @@ const badge = computed(() => BADGE.find(([re]) => re.test(props.k)) ?? null);
 const shelf = useShelf();
 const tag = computed(() => (props.omen ? null : shelfTag(props.k, shelf.data.value, shelf.item.value)));
 const reason = computed(() => (props.omen ? null : shelf.usable(props.k)));
+/** 掛けているお告げのせいで打てない (お告げを抜けば打てる)。灰色にせず、値段の代わりに理由を出す */
+const omenBlocked = computed(() => !!reason.value && !!shelf.usableBare && !shelf.usableBare(props.k));
+/**
+ * お告げの効き方の一言 (アイコンの下。2026-10-10 オーナー「サフィにつくのかプレにつくのかぱっと見わからない、カタリストみたいにアイコンの下に」)
+ */
+const OMEN_TAG: Record<string, string> = {
+  OmenofSinistralExaltation: "プレに付く", OmenofDextralExaltation: "サフィに付く",
+  OmenofGreaterExaltation: "2 つ付く", OmenofCatalysingExaltation: "品質で重く",
+  OmenofSinistralAnnulment: "プレを消す", OmenofDextralAnnulment: "サフィを消す", OmenofLight: "冒涜を消す",
+  OmenofWhittling: "最低を消す", OmenofSinistralErasure: "プレを消す", OmenofDextralErasure: "サフィを消す",
+  OmenofSinistralCrystallisation: "プレを消す", OmenofDextralCrystallisation: "サフィを消す",
+  OmenofSinistralNecromancy: "プレに付く", OmenofDextralNecromancy: "サフィに付く",
+  OmenoftheSovereign: "ウラマン", OmenoftheLiege: "アマナム", OmenoftheBlackblooded: "クルガル",
+  OmenofPutrefaction: "全部冒涜", OmenofAbyssalEchoes: "引き直し",
+};
+const omenTag = computed(() => (props.omen ? OMEN_TAG[props.k] ?? null : null));
 const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : shelf.held.value === props.k));
 
 /** 詳細カード: 0.4 秒乗せたら出す (すぐ出すと誤爆するので。オーナー 2026-09-27 のカードの決まりと同じ) */
@@ -65,7 +81,7 @@ onBeforeUnmount(leave);
   <button
     type="button"
     class="group relative flex w-[74px] flex-col items-center px-0.5 pb-1 text-[10px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
-    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', reason ? 'opacity-35' : '']"
+    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', reason && !omenBlocked ? 'opacity-35' : '']"
     :aria-label="`${nameOf(k)}${reason ? ` — ${reason}` : ''}`"
     :data-key="k"
     data-shelf
@@ -81,7 +97,9 @@ onBeforeUnmount(leave);
     <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 text-center">{{ nameOf(k) }}</span></span>
     <span v-if="badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ badge[1] }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">有効</span>
-    <span v-if="tag" class="mt-px w-full">
+    <span v-if="omenTag" class="mt-px block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">・{{ omenTag }}</span>
+    <span v-else-if="omenBlocked" class="mt-px block w-full text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-rose-300">お告げで打てない</span>
+    <span v-else-if="tag" class="mt-px w-full">
       <span v-for="(t, i) in tag" :key="i" class="block truncate text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">・{{ t }}</span>
     </span>
     <span v-else-if="priceOf(k)" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>

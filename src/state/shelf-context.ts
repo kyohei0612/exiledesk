@@ -16,6 +16,8 @@ export interface ShelfCtx {
   held: Ref<string | null>;
   /** 打てない理由 (打てるなら null) */
   usable(key: string): string | null;
+  /** お告げを抜きにした時の打てない理由 (無ければ usable と同じ扱い) */
+  usableBare?(key: string): string | null;
   toggleOmen(id: string): void;
   /** 棚に出さない物 (シミュレーションに要らない物。無ければ全部) */
   hidden?: (key: string) => boolean;
@@ -29,7 +31,7 @@ export const simHidden = (key: string): boolean => SIM_HIDDEN.has(key);
 const KEY: InjectionKey<ShelfCtx> = Symbol("shelf");
 const handCtx = (): ShelfCtx => ({
   data: craftStage.data, item: craftStage.item, omens: craftStage.omens, held: craftStage.held,
-  usable: (k) => craftStage.usable(k), toggleOmen: (id) => craftStage.toggleOmen(id),
+  usable: (k) => craftStage.usable(k), usableBare: (k) => craftStage.usableBare(k), toggleOmen: (id) => craftStage.toggleOmen(id),
 });
 export const provideShelf = (ctx: ShelfCtx): void => provide(KEY, ctx);
 export const useShelf = (): ShelfCtx => inject(KEY, handCtx, true);

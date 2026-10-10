@@ -14,9 +14,8 @@ import pkg from "../../package.json";
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
-const kind = ref<"request" | "bug">("request");
+// 要望とバグは分けない、連絡先の欄も無し (2026-10-10 オーナー「要望バグ欄統一、連絡先書かなくていい」)
 const text = ref("");
-const contact = ref("");
 const attach = ref(true);
 const website = ref(""); // bot よけ (人は見えない。入っていたらサーバーが捨てる)
 const state = ref<"idle" | "sending" | "sent" | "error">("idle");
@@ -62,7 +61,7 @@ async function send(): Promise<void> {
     const r = await fetch(`${WEB_API_BASE}/feedback`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ kind: kind.value, text: text.value.trim(), contact: contact.value.trim(), website: website.value, context: attach.value ? contextNow() : null }),
+      body: JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: attach.value ? contextNow() : null }),
     });
     const j = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string };
     if (!r.ok || !j.ok) throw new Error(j.error ?? `${r.status}`);
@@ -90,11 +89,7 @@ function onKey(e: KeyboardEvent): void { if (e.key === "Escape") emit("close"); 
           <div class="text-right"><button type="button" class="rounded-lg border border-white/20 px-3 py-1 hover:bg-white/10" @click="emit('close')">閉じる</button></div>
         </template>
         <template v-else>
-          <div class="mb-2 flex gap-2">
-            <button v-for="k in (['request', 'bug'] as const)" :key="k" type="button" class="flex-1 rounded-lg border px-3 py-1.5 font-bold" :class="kind === k ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-white/15 hover:bg-white/5'" @click="kind = k">{{ k === "request" ? "要望" : "バグ" }}</button>
-          </div>
-          <textarea v-model="text" rows="6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="kind === 'bug' ? '何をしたら、何が起きたか (期待と違った所)' : 'こうなると嬉しい、を一言で'" autofocus></textarea>
-          <input v-model="contact" class="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60" placeholder="連絡先 (任意: X や Discord の名前。返事が要る時だけ)" />
+          <textarea v-model="text" rows="6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="'こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも'" autofocus></textarea>
           <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />
           <label class="mt-2 flex cursor-pointer items-center gap-2 opacity-80"><input v-model="attach" type="checkbox" class="accent-amber-400" /> 今の画面の状態を添付 (ベース・狙い・パターン・直前の操作の流れ。名前やログインの情報は入らない)</label>
           <p v-if="state === 'error'" class="mt-2 text-rose-300">送れなかった: {{ errorText }}</p>

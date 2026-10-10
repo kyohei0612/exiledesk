@@ -114,7 +114,8 @@ export function stateLine(context: unknown): string {
  * (本人は「バグっぽい」としか書かないので、受けた側がそのまま解析・再現できる分を自動で付ける。2026-10-07 オーナー)
  */
 export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetch): Promise<boolean> {
-  const head = fb.kind === "bug" ? "🐛 バグ" : "💡 要望";
+  // 画面では要望とバグを分けない (2026-10-10)。前の版から来た「バグ」だけ印を残す
+  const head = fb.kind === "bug" ? "🐛 要望・バグ" : "💬 要望・バグ";
   const trail = trailText(fb.context);
   const state = stateLine(fb.context);
   const firstErr = (fb.context as { errors?: Array<{ msg?: string }> } | null)?.errors?.[0]?.msg;
