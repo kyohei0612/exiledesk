@@ -56,7 +56,7 @@ export function yesterdayJst(now = new Date(), today = false): { since: string; 
   const since = new Date(today ? nine : nine - 86400e3), until = today ? now : new Date(nine), weekSince = new Date(until.getTime() - 7 * 86400e3);
   const md = (d: Date): string => { const j = new Date(d.getTime() + 9 * 3600e3); return `${j.getUTCMonth() + 1}/${j.getUTCDate()}`; };
   const hm = (d: Date): string => { const j = new Date(d.getTime() + 9 * 3600e3); return `${j.getUTCHours()}:${String(j.getUTCMinutes()).padStart(2, "0")}`; };
-  return { since: since.toISOString(), until: until.toISOString(), weekSince: weekSince.toISOString(), label: today ? `今日のここまで (${md(since)} 9:00〜${hm(until)})` : `この 24 時間 (${md(since)} 9:00〜${md(until)} 9:00)` };
+  return { since: since.toISOString(), until: until.toISOString(), weekSince: weekSince.toISOString(), label: today ? "今日のここまで" : "この 24 時間" };
 }
 
 export interface Usage { visits: number | null; pageViews: number | null; liveRequests: number | null; liveErrors: number | null; why?: string }
