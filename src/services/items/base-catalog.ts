@@ -18,17 +18,18 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 const ATTR_JA: Record<string, string> = { str: "筋力", dex: "器用", int: "知性", str_dex: "筋力・器用", str_int: "筋力・知性", dex_int: "器用・知性" };
 const A = (k: string, ja: string): Array<[string, string]> => ["str", "dex", "int", "str_dex", "str_int", "dex_int"].map((x) => [`${k}_${x}`, `${ja} (${ATTR_JA[x]})`]);
 const EL = (k: string, ja: string): Array<[string, string]> => [[k, ja], ...([["fire", "火"], ["cold", "冷気"], ["lightning", "雷"], ["chaos", "混沌"], ["physical", "物理"]] as const).map(([x, j]): [string, string] => [`${k}_${x}`, `${ja} (${j})`])];
-/** 種類の段 (poe2db のモッドの一覧と同じ並び) */
+/** 種類の段 */
 export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> = [
-  { ja: "片手武器", cls: [...EL("Wands", "ワンド"), ["OneHand_Maces", "片手メイス"], ["Sceptres", "セプター"], ["Spears", "スピア"]] },
-  { ja: "両手武器", cls: [["Bows", "弓"], ...EL("Staves", "スタッフ"), ["TwoHand_Maces", "両手メイス"], ["Quarterstaves", "クォータースタッフ"], ["Crossbows", "クロスボウ"], ["Talismans", "タリスマン"]] },
-  // 並び: 片手 → 両手 → 防具 → オフハンド → 宝飾品 (2026-10-10 オーナー「両手武器の後は防具、オフハンド、最後宝飾品。防具とオフハンドは同じ列、宝飾品は最後の行」)
+  // 段の中の並びは取引所 (trade2 の「アイテムの種類」) と同じ: 近接 → 遠隔 → 魔法、兜 → 鎧 → 手袋 → 靴、アミュレット → ベルト → 指輪 (2026-10-10 オーナー「順番もあわせるか、基準あんの」)
+  // 段の並び: 片手 → 両手 → 防具 → オフハンド → 宝飾品 (2026-10-10 オーナー「両手武器の後は防具、オフハンド、最後宝飾品。防具とオフハンドは同じ列、宝飾品は最後の行」)
+  { ja: "片手武器", cls: [["OneHand_Maces", "片手メイス"], ["Spears", "スピア"], ...EL("Wands", "ワンド"), ["Sceptres", "セプター"]] },
+  { ja: "両手武器", cls: [["TwoHand_Maces", "両手メイス"], ["Quarterstaves", "クォータースタッフ"], ["Talismans", "タリスマン"], ["Bows", "弓"], ["Crossbows", "クロスボウ"], ...EL("Staves", "スタッフ")] },
+  { ja: "兜", cls: A("Helmets", "兜") },
+  { ja: "鎧", cls: A("Body_Armours", "鎧") },
   { ja: "手袋", cls: A("Gloves", "手袋") },
   { ja: "靴", cls: A("Boots", "靴") },
-  { ja: "鎧", cls: A("Body_Armours", "鎧") },
-  { ja: "兜", cls: A("Helmets", "兜") },
-  { ja: "オフハンド", cls: [["Quivers", "矢筒"], ["Shields_str", "盾 (筋力)"], ["Shields_str_dex", "盾 (筋力・器用)"], ["Shields_str_int", "盾 (筋力・知性)"], ["Bucklers", "バックラー"], ["Foci", "フォーカス"]] },
-  { ja: "宝飾品", cls: [["Amulets", "アミュレット"], ["Rings", "指輪"], ["Belts", "ベルト"]] },
+  { ja: "オフハンド", cls: [["Quivers", "矢筒"], ["Shields_str", "盾 (筋力)"], ["Shields_str_dex", "盾 (筋力・器用)"], ["Shields_str_int", "盾 (筋力・知性)"], ["Foci", "フォーカス"], ["Bucklers", "バックラー"]] },
+  { ja: "宝飾品", cls: [["Amulets", "アミュレット"], ["Belts", "ベルト"], ["Rings", "指輪"]] },
   { ja: "フラスコ", cls: [["LifeFlask", "ライフフラスコ"], ["ManaFlask", "マナフラスコ"]] },
   { ja: "ジェム", cls: [["SkillGem", "スキルジェム"]] },
 ];
