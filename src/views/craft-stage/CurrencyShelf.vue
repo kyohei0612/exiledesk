@@ -47,12 +47,15 @@ function placeAnchor(): void {
   const side: Record<string, string> = b.left - rr.left < rr.width / 2 ? { left: `${Math.max(0, Math.round(b.left - rr.left - 4))}px` } : { right: `${Math.max(0, Math.round(rr.right - b.right - 4))}px` };
   anchor.value = { style: { top: `${Math.round(b.bottom - rr.top + 4)}px`, ...side } };
   // 下で画面から切れるなら、アイコンの上に出す (送らない。2026-10-10 オーナー「スクロールさせたくない、なりそうなら上でも」)
+  // 測り直しはその時の位置で (切り替え前の棚の高さで計算すると、古い置き場の欄が消えて棚が縮んだ分だけ遠くに出た)。いつもアイコンを軸に
   void nextTick(() => {
     const pop = r.querySelector<HTMLElement>(".held-anchor .held-pop-in");
     if (!pop) return;
     const sc = scrollBoxOf(r);
     const viewBottom = sc ? sc.getBoundingClientRect().bottom : window.innerHeight;
-    if (pop.getBoundingClientRect().bottom > viewBottom - 4) anchor.value = { style: { bottom: `${Math.round(rr.bottom - b.top + 4)}px`, ...side } };
+    if (pop.getBoundingClientRect().bottom <= viewBottom - 4) return;
+    const rr2 = r.getBoundingClientRect(), b2 = btn.getBoundingClientRect();
+    anchor.value = { style: { top: `${Math.round(b2.top - rr2.top - pop.offsetHeight - 4)}px`, ...side } };
   });
 }
 let anchorRo: ResizeObserver | null = null;

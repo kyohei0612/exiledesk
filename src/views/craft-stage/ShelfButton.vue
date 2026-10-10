@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount } from "vue";
 import { hoverStack } from "../../state/hover-stack";
-import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { toCss } from "../../utils/zoom";
 import { shelfTag } from "../../state/craft-stage-help";
@@ -66,6 +66,8 @@ const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : sh
  */
 const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
 function enter(e: MouseEvent): void {
+  // 持っている物の説明は出さない (真下のお告げの欄に重なった。2026-10-10 オーナー「絶対こうなると思った」)
+  if (!props.omen && craftStage.held.value === props.k) return;
   if (touchOnly) return;
   const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
   hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
