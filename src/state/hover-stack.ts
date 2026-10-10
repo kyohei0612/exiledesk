@@ -28,6 +28,7 @@ export type HoverPayload =
   | { kind: "currency"; item: RankedItem }
   | { kind: "gem"; en: string }
   | { kind: "build"; item: BuildItem }
+  | { kind: "base"; en: string }
   | { kind: "keyword"; id: string; label: string };
 
 export interface HoverLayer {
@@ -83,6 +84,18 @@ export const hoverStack = {
     cancel();
     cancelOpen();
     layers.value = [...layers.value.filter((l) => l.pinned), { key: ++seq, payload, x, y, pinned: false }];
+  },
+  /**
+   * 少し乗せ続けたら段 0 を開く (待ちはカードの中の下線と同じ 0.5 秒。ベースの一覧のように、カーソルを動かすだけで次々に開くと邪魔な所。
+   * 2026-10-10 オーナー「ベースもジェムと同じ挙動で、少しおいてからカード」)。離れたら leave が取り消す
+   */
+  openRootDelayed(payload: HoverPayload, x: number, y: number): void {
+    cancel();
+    cancelOpen();
+    openTimer = setTimeout(() => {
+      openTimer = null;
+      layers.value = [...layers.value.filter((l) => l.pinned), { key: ++seq, payload, x, y, pinned: false }];
+    }, CHILD_OPEN_DELAY);
   },
   /** カードの中の下線から開く (そのカードの上の段) */
   openChild(parentKey: number, payload: HoverPayload, x: number, y: number): void {

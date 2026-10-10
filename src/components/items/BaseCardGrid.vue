@@ -5,8 +5,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { CATALOG_CLS_JA, type CatalogRow } from "../../services/items/base-catalog";
-import BaseHoverCard from "./BaseHoverCard.vue";
-import type { CardAnchor } from "../../utils/fit-card";
+import { hoverStack } from "../../state/hover-stack";
 import { toCss } from "../../utils/zoom";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
@@ -17,22 +16,16 @@ const emit = defineEmits<{ pick: [en: string] }>();
 const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
 
 /**
- * 乗せて 0.4 秒で詳しいカード (棚のカレンシーのカードと同じ間。すぐ出すと一覧の上でカーソルを動かすだけで誤爆する)。
+ * 乗せて少し待つとベースのカード (ジェムのカードと同じ仕組み = hover-stack + GameItemCard。待ち時間・ピン留め・重なりもそちらに合わせて変わる)。
  * 指の端末 (hover の無い画面) では出さない。押したら消す
  */
-const hover = ref<{ b: CatalogRow; anchor: CardAnchor } | null>(null);
-let timer: ReturnType<typeof setTimeout> | undefined;
 const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
 function enter(e: MouseEvent, b: CatalogRow): void {
   if (touchOnly) return;
-  const el = e.currentTarget as HTMLElement;
-  clearTimeout(timer);
-  timer = setTimeout(() => {
-    const r = el.getBoundingClientRect();
-    hover.value = { b, anchor: { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top) } };
-  }, 400);
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  hoverStack.openRootDelayed({ kind: "base", en: b.en }, toCss(r.right) - 8, toCss(r.top + r.height / 2));
 }
-function leave(): void { clearTimeout(timer); hover.value = null; }
+function leave(): void { hoverStack.leave(); }
 onBeforeUnmount(leave);
 
 /**
@@ -80,7 +73,6 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
       </span>
     </button>
     <p v-if="!list.length" class="col-span-full py-4 text-center opacity-50">見つかりません</p>
-    <BaseHoverCard v-if="hover" :b="hover.b" :anchor="hover.anchor" :art="artOf(hover.b.en)" :note="note?.(hover.b.en)" />
   </div>
   <!-- 3 行目から下 -->
   <button v-if="fold && (rest > 0 || more) && list.length > cols * 2" type="button" class="g-plain mt-2 flex w-full items-center justify-center gap-1 rounded-md py-1.5 text-[13px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" @click="more = !more">{{ more ? "たたむ ▴" : `もっと見る (あと ${rest}) ▾` }}</button>

@@ -25,7 +25,7 @@ const props = withDefaults(
     name: string;
     sub?: string | null;
     /** 名前の色: ユニーク (橙) / カレンシー (ベージュ) */
-    tone?: "unique" | "currency" | "keyword" | "gem" | "rare" | "magic";
+    tone?: "unique" | "currency" | "keyword" | "gem" | "rare" | "magic" | "normal";
     width?: number;
     /** 段の番号 (hover-stack)。中の下線がこの上に次の段を開く */
     layerKey: number;
@@ -180,6 +180,10 @@ onBeforeUnmount(onUp);
 .g-magic { border: 1px solid #3d3d6a; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-magic .g-head { background: linear-gradient(180deg, #202038 0%, #121220 100%); border-bottom: 1px solid #4a4a80; }
 .g-magic .g-name { color: var(--color-rarity-magic); }
+/* ノーマル (白): ベースのカード (2026-10-10) */
+.g-normal { border: 1px solid #4a4a4a; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
+.g-normal .g-head { background: linear-gradient(180deg, #2a2a2a 0%, #161616 55%, #0b0b0b 100%); border-bottom: 1px solid #5a5a5a; }
+.g-normal .g-name { color: #c8c8c8; }
 /* ジェム: 青緑の名前 (ゲームのジェムの色) */
 .g-gem { border: 1px solid #2f5d5a; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #10201f, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-gem .g-head { background: linear-gradient(180deg, #16302e 0%, #0d1c1b 55%, #070d0d 100%); border-bottom: 1px solid #3c6f6a; box-shadow: inset 0 1px 0 #4f8a84, inset 0 -1px 0 #16302e; }

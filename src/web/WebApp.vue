@@ -13,6 +13,7 @@ import FeedbackDialog from "./FeedbackDialog.vue";
 import WelcomeDialog from "./WelcomeDialog.vue";
 import ChangelogDialog from "../components/ChangelogDialog.vue";
 import SupportDialog from "../components/SupportDialog.vue";
+import HoverStack from "../components/decor/HoverStack.vue";
 import { SUPPORT_LINKS, supportOpen } from "../state/support";
 import { changelogOpen, initChangelog } from "../state/changelog";
 import { forgetResult } from "../utils/no-log";
@@ -105,6 +106,8 @@ window.addEventListener("resize", fitZoom);
       <button type="button" class="g-plain ml-auto opacity-60 hover:opacity-100" @click="forgetResult = null">×</button>
     </p>
     <WelcomeDialog :open="welcomeOpen" @close="closeWelcome" />
+    <!-- ジェム・ベースなどのカードの重なり (アプリの App.vue と同じ部品) -->
+    <HoverStack />
     <ChangelogDialog />
     <SupportDialog />
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />

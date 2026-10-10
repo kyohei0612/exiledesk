@@ -9,6 +9,7 @@ import CurrencyHoverCard from "../currency/CurrencyHoverCard.vue";
 import KeywordHoverCard from "./KeywordHoverCard.vue";
 import GemHoverCard from "./GemHoverCard.vue";
 import BuildItemHoverCard from "../build-copy/BuildItemHoverCard.vue";
+import BaseItemHoverCard from "../items/BaseItemHoverCard.vue";
 </script>
 
 <template>
@@ -17,6 +18,7 @@ import BuildItemHoverCard from "../build-copy/BuildItemHoverCard.vue";
     <CurrencyHoverCard v-else-if="l.payload.kind === 'currency'" :item="l.payload.item" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
     <GemHoverCard v-else-if="l.payload.kind === 'gem'" :en="l.payload.en" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
     <BuildItemHoverCard v-else-if="l.payload.kind === 'build'" :item="l.payload.item" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
+    <BaseItemHoverCard v-else-if="l.payload.kind === 'base'" :en="l.payload.en" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
     <KeywordHoverCard v-else :id="l.payload.id" :label="l.payload.label" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
   </template>
 </template>
