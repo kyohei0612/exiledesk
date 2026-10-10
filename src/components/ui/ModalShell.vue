@@ -14,6 +14,7 @@ const stack: symbol[] = [];
 // 後ろのページを止めている窓の数 (重なっても最後の 1 つが閉じた時に戻す)
 let locks = 0;
 let prevOverflow = "";
+let prevHtmlOverflow = "";
 </script>
 
 <script setup lang="ts">
@@ -63,7 +64,8 @@ function activate(): void {
   if (active) return;
   active = true;
   stack.push(id);
-  if (locks++ === 0) { prevOverflow = document.body.style.overflow; document.body.style.overflow = "hidden"; }
+  // Web 版は html が送りの箱 (web-page) なので html も止める。body だけだと窓の上で回したホイールで後ろが送られていた (2026-10-11 オーナー)
+  if (locks++ === 0) { prevOverflow = document.body.style.overflow; prevHtmlOverflow = document.documentElement.style.overflow; document.body.style.overflow = "hidden"; document.documentElement.style.overflow = "hidden"; }
   window.addEventListener("keydown", onKey, true);
   prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   // 開いたら窓に (autofocus の欄があればそこ)。Esc・Tab が窓から始まる
@@ -79,7 +81,7 @@ function deactivate(): void {
   active = false;
   const i = stack.indexOf(id);
   if (i >= 0) stack.splice(i, 1);
-  if (--locks === 0) document.body.style.overflow = prevOverflow;
+  if (--locks === 0) { document.body.style.overflow = prevOverflow; document.documentElement.style.overflow = prevHtmlOverflow; }
   window.removeEventListener("keydown", onKey, true);
   // 閉じたら前に居た所へ (消えていたらそのまま)
   const back = prevFocus;
@@ -94,18 +96,19 @@ onBeforeUnmount(deactivate);
   <Teleport to="body">
     <div
       v-if="open"
-      class="fixed inset-0 grid place-items-center bg-black/65 p-4"
-      :class="[layer === 'confirm' ? 'z-[310]' : 'z-[300]', fullOnPhone ? 'max-md:place-items-stretch max-md:p-0' : '']"
+      class="fixed inset-0 flex items-center justify-center overscroll-contain bg-black/65 p-4"
+      :class="[layer === 'confirm' ? 'z-[310]' : 'z-[300]', fullOnPhone ? 'max-md:items-stretch max-md:p-0' : '']"
       @mousedown="onDown"
       @click="onBackdrop"
     >
+      <!-- 高さは窓の内側まで (max-h-full)。88vh だと html の拡大 (zoom) の分だけ下にはみ出していた (2026-10-11 オーナー) -->
       <div
         ref="panel"
         tabindex="-1"
         role="dialog"
         aria-modal="true"
         :aria-label="title || undefined"
-        class="g-panel flex max-h-[88vh] min-w-0 flex-col text-[12px] outline-none"
+        class="g-panel flex max-h-full min-w-0 flex-col text-[12px] outline-none"
         :class="[width, fullOnPhone ? 'max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none' : '']"
       >
         <!-- 見出し: 題・× (いつも見える所に) -->
