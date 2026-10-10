@@ -121,7 +121,7 @@ const usableAll = computed(() => {
   const ok = (k: string): boolean => !(craftStage.usableBare ?? craftStage.usable)(k);
   const sec = (label: string, keys: string[], kind?: string) => ({ label, keys: keys.filter((k) => ok(k) && !craftStage.hidden?.(k)), kind });
   return [
-    sec(tr("オーブ・骨", "Orbs & Bones"), [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
+    sec(tr("オーブ・骨", "Orbs & Abyssal Bones"), [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
     sec(tr("エッセンス", "Essences"), essences.value.flatMap((g) => g.keys)),
     ...(hasCatalyst.value ? [sec(tr("カタリスト", "Catalysts"), [...CATALYSTS])] : []),
     // ルーンはルーンのタブと同じ段ごとのまとまりで、クラフトに関わる物以外は畳む (2026-10-05 オーナー「そこでもルーンはルーンページみたく閉じる奴は閉じちゃっておk」)
@@ -145,7 +145,7 @@ const placed = computed(() => {
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
 const TABS = computed(() => [
   { id: "usable" as const, label: `${tr("使用可能", "Usable")} (${usableCount.value})` },
-  { id: "orb" as const, label: tr("オーブ・骨", "Orbs & Bones") },
+  { id: "orb" as const, label: tr("オーブ・骨", "Orbs & Abyssal Bones") },
   { id: "essence" as const, label: `${tr("エッセンス", "Essences")} (${essences.value.length})` },
   ...(hasCatalyst.value ? [{ id: "catalyst" as const, label: tr("カタリスト", "Catalysts") }] : []),
   ...(sockets.value?.cap ? [{ id: "rune" as const, label: tr("ルーン", "Runes") }] : []),

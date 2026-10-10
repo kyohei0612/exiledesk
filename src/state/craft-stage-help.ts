@@ -91,12 +91,12 @@ const OMEN_EN: Record<string, string[]> = {
   OmenofLight: ["The next Orb of Annulment removes **only the Desecrated mod** (even if Unrevealed)", "Can't be used without a Desecrated mod"],
   OmenofSinistralCrystallisation: ["The next Perfect / Corrupted Essence removes **a prefix** before adding its mod", "Can't be used if the Essence's side is full and the Omen points to the other side"],
   OmenofDextralCrystallisation: ["The next Perfect / Corrupted Essence removes **a suffix** before adding its mod"],
-  OmenofSinistralNecromancy: ["The next Bone (Desecration) adds the Unrevealed mod as **a prefix**"],
-  OmenofDextralNecromancy: ["The next Bone (Desecration) adds the Unrevealed mod as **a suffix**"],
-  OmenoftheSovereign: ["The next Bone's reveal options are **Ulaman mods only** (equal per mod)", "Weapons and jewellery only (not armour)"],
-  OmenoftheLiege: ["The next Bone's reveal options are **Amanamu mods only**", "Weapons and jewellery only"],
-  OmenoftheBlackblooded: ["The next Bone's reveal options are **Kurgal mods only**", "Weapons and jewellery only"],
-  OmenofPutrefaction: ["The next Bone **removes all non-Fractured mods**, fills every slot (usually 6) with Unrevealed mods and **corrupts** the item", "Reveals only offer normal mods (no faction Desecrated mods)", "No tier floor even with an Ancient Bone"],
+  OmenofSinistralNecromancy: ["The next Abyssal Bone (Desecration) adds the Unrevealed mod as **a prefix**"],
+  OmenofDextralNecromancy: ["The next Abyssal Bone (Desecration) adds the Unrevealed mod as **a suffix**"],
+  OmenoftheSovereign: ["The next Abyssal Bone's reveal options are **Ulaman mods only** (equal per mod)", "Weapons and jewellery only (not armour)"],
+  OmenoftheLiege: ["The next Abyssal Bone's reveal options are **Amanamu mods only**", "Weapons and jewellery only"],
+  OmenoftheBlackblooded: ["The next Abyssal Bone's reveal options are **Kurgal mods only**", "Weapons and jewellery only"],
+  OmenofPutrefaction: ["The next Abyssal Bone **removes all non-Fractured mods**, fills every slot (usually 6) with Unrevealed mods and **corrupts** the item", "Reveals only offer normal mods (no faction Desecrated mods)", "No tier floor even with an Ancient Jawbone / Rib / Collarbone"],
   OmenofAbyssalEchoes: ["On the next reveal, the 3 options can be **rerolled once**", "Consumed by that reveal even if you don't reroll"],
   OmenofCorruption: ["Removes the \"no change\" outcome from the next Vaal Orb (equal among the other 3)", "The 4th jewellery outcome (no change instead of a socket) stays", "No longer obtainable since 0.5.0"],
   OmenoftheBlessed: ["The next Divine Orb rerolls **only implicit mods** (explicit mods unchanged)", "Implicit values aren't tracked here, so nothing visibly changes (only the cost of the Divine Orb and Omen is counted)"],
@@ -246,10 +246,10 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
           "Adds 1 **Unrevealed Desecrated mod** to a **Rare** (only 1 Desecrated mod per item)",
           "The side is decided by the total weight of possible mods on each side. If both sides are full, it replaces a mod on that side",
           "On reveal you **pick 1 of 3 options**. Desecrated-only mods: 1 option 85% / 2 options 14% / 3 options 1% (always at least 1); the rest are normal mods by weight (no duplicate groups)",
-          key === "desecrate_ancient" ? "Ancient Bone: options only from tiers with mod level 40+" : "",
-          key === "desecrate_gnawed" ? `Gnawed Bone: only for **Item Level ${GNAWED_MAX_ILVL} or lower** (game data). Same options as a Preserved Bone` : "",
+          key === "desecrate_ancient" ? "Ancient Jawbone / Rib / Collarbone: options only from tiers with mod level 40+" : "",
+          key === "desecrate_gnawed" ? `Gnawed Jawbone / Rib / Collarbone: only for **Item Level ${GNAWED_MAX_ILVL} or lower** (game data). Same options as Preserved ones` : "",
           key === "desecrate_altered" ? "Altered Collarbone: options also include **Otherworldly mods** (jewellery only)" : "",
-          boneEn ? `Bone used for this base: ${boneEn}` : "",
+          boneEn ? `Abyssal Bone used for this base: ${boneEn}` : "",
           "Omens: Sinistral / Dextral Necromancy (side) / Sovereign, Liege, Blackblooded (faction) / Putrefaction (works alone: replaces all mods with up to 6 Unrevealed Desecrated mods and corrupts; other Omens stay unused) / Abyssal Echoes (reroll the reveal)",
         ].filter(Boolean);
       }
@@ -340,7 +340,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (t.mod.family === "EssenceAbyss" && isEn()) {
       return [
         "Removes 1 mod from a **Rare** and adds the **Mark of the Abyssal Lord** on that side",
-        "The next Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Tier floor mod level 33 (assumed: the description only says \"higher tier\")",
+        "The next Abyssal Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Tier floor mod level 33 (assumed: the description only says \"higher tier\")",
         "Can't be used while a Desecrated mod is present (overwrite it first with an Essence or Alloy). The Mark is a crafted mod too (2 allowed with Astrid's Creativity)",
         "Omens: Sinistral / Dextral Crystallisation (removed side = Mark side)",
       ];
@@ -552,7 +552,7 @@ const SPECIAL_ESSENCE_EN: Record<string, { short?: string; groups?: Array<{ h: s
   },
   "Essence of the Abyss": {
     short: "Mark of the Abyssal Lord",
-    groups: [{ h: "Armour, jewellery, belts etc.", l: ["Mark of the Abyssal Lord. Replaced by a Desecrated mod with the next Bone"] }],
+    groups: [{ h: "Armour, jewellery, belts etc.", l: ["Mark of the Abyssal Lord. Replaced by a Desecrated mod with the next Abyssal Bone"] }],
     notes: [],
   },
 };

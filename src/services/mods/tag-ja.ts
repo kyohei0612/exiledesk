@@ -77,7 +77,10 @@ const TAGS: Record<string, { ja: string; short?: string; cls?: string }> = {
 
 /** タグの日本語 (無ければ英語のまま) */
 /** 画面に出すタグの名前 (英語の画面ではタグの名前そのまま。energy_shield → energy shield。2026-10-10 英語版) */
-export const tagLabel = (t: string): string => (lang.value === "en" ? t.replace(/_/g, " ") : TAGS[t]?.ja ?? t);
+export const tagLabel = (t: string): string => (lang.value === "en" ? tagEn(t) : TAGS[t]?.ja ?? t);
+/** 英語のタグ名は poe2db (us) の MOD 一覧の絞り込みと同じ書き方 (Energy Shield・Ulaman など)。poe2db に出ない物も同じ大文字の形に */
+const TAG_EN: Record<string, string> = { ulaman_mod: "Ulaman", amanamu_mod: "Amanamu", kurgal_mod: "Kurgal", flat_life_regen: "Life Regeneration", dot_multi: "Damage over Time" };
+const tagEn = (t: string): string => TAG_EN[t] ?? t.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 export const tagJa = (t: string): string => TAGS[t]?.ja ?? t;
 
 /** 札に出すタグの名前と色 (クラフトステージの MOD 一覧・動画) */

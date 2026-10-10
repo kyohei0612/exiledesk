@@ -81,6 +81,12 @@ export function propRows(item: StageItem, ja = false): PropRow[] {
   }
   if (b.block) rows.push({ key: "block", label: L("ブロック率", "Block chance"), value: `${Math.round(b.block * (1 + g("local_block_chance_+%") / 100))}%`, up: !!g("local_block_chance_+%") });
   // フラスコ (品質で回復量)
+  // 英語はゲーム / poe2db と同じ 1 行 (「Recovers 50 Life over 3 Seconds」、2026-10-10)。見出しは空
+  if (en && b.duration && (b.life || b.mana)) {
+    const sec = +(b.duration / 10).toFixed(1);
+    for (const [k, v, n] of [["life", b.life, "Life"], ["mana", b.mana, "Mana"]] as const) if (v) rows.push({ key: k, label: "", value: `Recovers ${Math.round(v * q)} ${n} over ${sec} Seconds`, up: item.quality > 0 });
+    return rows;
+  }
   if (b.life) rows.push({ key: "life", label: L("ライフ回復", "Life Recovery"), value: String(Math.round(b.life * q)), up: item.quality > 0 });
   if (b.mana) rows.push({ key: "mana", label: L("マナ回復", "Mana Recovery"), value: String(Math.round(b.mana * q)), up: item.quality > 0 });
   if (b.duration && (b.life || b.mana)) rows.push({ key: "duration", label: L("回復時間", "Duration"), value: L(`${(b.duration / 10).toFixed(1)} 秒`, `${(b.duration / 10).toFixed(1)}s`), up: false });
