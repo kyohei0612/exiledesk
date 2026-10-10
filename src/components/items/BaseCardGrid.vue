@@ -1,0 +1,41 @@
+<!--
+  BaseCardGrid.vue — ベースのカードの並び (ゲーム内の絵・必要レベル・素の数値・固有の効果)。BaseCatalog.vue から切り出し (2026-10-10)。
+  PC は押した部位のタイルの行のすぐ下に、スマホと名前で探す時は一覧の下に出す
+-->
+<script setup lang="ts">
+import { CATALOG_CLS_JA, type CatalogRow } from "../../services/items/base-catalog";
+import { baseArt } from "../../services/craft-stage/base-art";
+import { gemArt } from "../../services/craft-stage/skill-art";
+
+defineProps<{ list: CatalogRow[]; selected?: string | null; note?: (en: string) => string; showCls?: boolean; maxHeight: string }>();
+const emit = defineEmits<{ pick: [en: string] }>();
+/** ベースの絵 (スキルジェムはジェムの絵) */
+const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
+</script>
+
+<template>
+  <div class="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-2 overflow-y-auto pr-1 max-md:grid-cols-2 max-md:gap-1.5" :style="{ maxHeight }">
+    <button
+      v-for="b in list"
+      :key="b.en"
+      type="button"
+      class="g-plain g-item flex items-center gap-2 bg-clip-padding px-1 py-0.5 text-left transition max-md:flex-col max-md:gap-1 max-md:text-center"
+      :class="b.en === selected ? 'bg-[rgba(163,52,42,0.35)]' : 'bg-black/50 hover:bg-white/[0.06]'"
+      @click="emit('pick', b.en)"
+    >
+      <img v-if="artOf(b.en)" :src="artOf(b.en)!" alt="" loading="lazy" class="h-12 w-12 shrink-0 object-contain md:h-16 md:w-16" draggable="false" />
+      <span v-else class="h-12 w-12 shrink-0 md:h-16 md:w-16" />
+      <span class="min-w-0 flex-1 max-md:w-full">
+        <span class="flex items-baseline gap-2 max-md:flex-col max-md:items-center max-md:gap-0">
+          <b class="text-[13px] md:text-[15px]" :class="b.en === selected ? 'text-amber-100' : ''">{{ b.ja }}</b>
+          <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0 md:text-[12px]">Lv {{ b.lvl }}</span>
+        </span>
+        <span v-if="showCls" class="block text-[10px] opacity-50">{{ CATALOG_CLS_JA.get(b.cls) ?? b.cls }}</span>
+        <span v-if="b.stats" class="block truncate text-[11px] text-rarity-magic md:text-[13px]" :title="b.stats">{{ b.stats }}</span>
+        <span v-if="b.implicit" class="block truncate text-[11px] text-rarity-magic md:text-[13px]" :title="b.implicit">{{ b.implicit }}</span>
+        <span v-if="note?.(b.en)" class="block truncate text-[10.5px] text-sky-300">{{ note(b.en) }}</span>
+      </span>
+    </button>
+    <p v-if="!list.length" class="col-span-full py-4 text-center opacity-50">見つかりません</p>
+  </div>
+</template>

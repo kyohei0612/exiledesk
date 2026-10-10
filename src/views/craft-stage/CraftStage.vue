@@ -209,6 +209,7 @@ function scrollToReveal(): void { document.querySelector("[data-reveal-panel]")?
  * 2026-10-07 オーナー「腕のキャッシュで表示されてた、一回やり直したらシミュレーションの所はリセットだね」)
  */
 function pickSimBase(en: string): void {
+  handNoBase.value = false;
   s.base.value = en;
   s.simTargets.value = [];
   s.simOrder.value = [];
@@ -227,10 +228,11 @@ function pickSimBase(en: string): void {
 /** アプリ版だけ (Web 版は POE2Tube 用の JSON・動画モードを出さない) */
 const inApp = isTauriRuntime();
 /**
- * Web の PC は開いたらベース選びが開いた状態から (2026-10-10 オーナー「PC はベース選びから始めよか」。
- * 分析で 6 割の人が既定の金の指輪のまま触っていた)。スマホは覗くだけの人が多いので今まで通りすぐ打てる形
+ * Web の PC は「ベース未選択」から始める: ベース選びだけ開いて、アイテム・棚・MOD 一覧は選ぶまで出さない (シミュレーターの最初と同じ)。
+ * 2026-10-10 オーナー「PC はベース選びから」「最初から指輪の画面出てるから違う、ベースから下は非表示」。
+ * 分析で 6 割の人が既定の金の指輪のまま触っていた。スマホは覗くだけの人が多いので今まで通りすぐ打てる形
  */
-const pickerFirst = !inApp && !phone.value && s.mode.value === "hand" && !s.log.value.length;
+const handNoBase = ref(!inApp && !phone.value && s.mode.value === "hand" && !s.log.value.length);
 /** 白に戻す (2 回押し) */
 const resetArmed = ref(false);
 let resetArmTimer: ReturnType<typeof setTimeout> | undefined;
@@ -366,8 +368,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       </span>
       <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
       <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
-      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase" :start-open="pickerFirst" @pick="pickSimBase" />
-      <span v-if="!simNoBase" class="flex items-center gap-1">
+      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" @pick="pickSimBase" />
+      <span v-if="!simNoBase && !(s.mode.value === 'hand' && handNoBase)" class="flex items-center gap-1">
         <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.itemLevel.value === lv ? 'on' : ''" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>
@@ -384,7 +386,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? tr("レア", "Rare") : s.simStartItem.value?.rarity === "magic" ? tr("マジック", "Magic") : tr("ノーマル", "Normal") }} · {{ startItemMods.length ? startItemMods.join(" / ") : tr("MOD なし", "No mods") }}</span>
         <HelpTip v-else-if="s.simStart.value !== 'white'" :text="tr('フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物', 'The fractured mod is the first one added in step 2 (Target mods)')" />
       </span>
-      <template v-if="s.mode.value === 'hand'">
+      <template v-if="s.mode.value === 'hand' && !handNoBase">
       <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->
       <button type="button" :class="resetArmed ? 'g-btn-red sm' : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArmed ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
@@ -409,7 +411,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
     <!-- 手で打つ画面と行き来しても入れた物が残るように、一度ベースを選んだら消さずに隠す (2026-10-05 オーナー「ステージと実験行き来できるように、行き来したらもっかい最初からになった」) -->
     <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
-    <div v-if="s.ready.value && (s.mode.value === 'hand' || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
+    <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex flex-col items-center gap-8 max-md:items-stretch">
         <div ref="cardEl" class="relative" :class="[fxCls, fx?.text ? 'stage-fx-on' : '']" :style="fx ? { '--fx': fx.color } : undefined">
@@ -490,7 +492,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     </div>
     <!-- このベースに付く MOD (StageModList.vue、2026-09-29) -->
     <!-- シミュレーションでは ① 狙う MOD の枠の中に出す (StageSimPanel.vue) -->
-    <StageModList v-if="s.ready.value && s.item.value && (s.mode.value === 'hand' || s.replay.value)" />
+    <StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" />
 
     <!-- 押した所の波紋と、吸い込まれるアイコン -->
     <template v-if="fx && fx.kind !== 'shake'">
