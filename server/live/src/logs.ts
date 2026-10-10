@@ -42,6 +42,13 @@ export async function dayCount(env: Env, day: string): Promise<{ batches: number
   return r ? { batches: r.b, records: r.r } : null;
 }
 
+/** その時間の件数 (日報の 9:00〜9:00。at は UTC の ISO) */
+export async function countBetween(env: Env, since: string, until: string): Promise<{ batches: number; records: number } | null> {
+  if (!env.LOGS) return null;
+  const r = await env.LOGS.prepare("SELECT COUNT(*) AS b, COALESCE(SUM(n), 0) AS r FROM logs WHERE at >= ? AND at < ?").bind(since, until).first<{ b: number; r: number }>();
+  return r ? { batches: r.b, records: r.r } : null;
+}
+
 /** Discord に送る 1 ファイルの上限 (2026-10-09 オーナー指定)。行の途中では切らない */
 export const FILE_MAX = 8 * 1024 * 1024;
 /** Discord の 1 投稿に付けられる添付の数 */

@@ -7,7 +7,7 @@
  */
 import { FUNNEL_SIM, STEP_JA, summarize, type Summary } from "./events";
 import { listFeedback } from "./feedback";
-import { dayCount } from "./logs";
+import { countBetween } from "./logs";
 import type { Env, Fetch, LiveState } from "./types";
 
 const ALERT_TTL = 6 * 3600;
@@ -50,11 +50,13 @@ export function reqLog(req: Request, url: URL, status: number, ms: number, extra
 
 /** 日本時間の「昨日」の始まりと終わり (UTC の ISO)、1 週間前。today = true なら「今日のここまで」(確かめ用) */
 export function yesterdayJst(now = new Date(), today = false): { since: string; until: string; weekSince: string; label: string } {
-  const jst = new Date(now.getTime() + 9 * 3600e3);
-  const todayStart = Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate()) - 9 * 3600e3;
-  const since = new Date(today ? todayStart : todayStart - 86400e3), until = today ? now : new Date(todayStart), weekSince = new Date(until.getTime() - 7 * 86400e3);
-  const d = new Date(since.getTime() + 9 * 3600e3);
-  return { since: since.toISOString(), until: until.toISOString(), weekSince: weekSince.toISOString(), label: `${d.getUTCMonth() + 1}/${d.getUTCDate()}${today ? " (今日のここまで)" : ""}` };
+  // 日報は 9:00 (JST) が境 (2026-10-10 オーナー「9:00 報告なら 9:00 を境に。今朝の報告は昨日の 9:01 から今朝の 8:59 まで」)。
+  // 9:00 JST = 0:00 UTC。前は「昨日 0〜24 時」で、夜中〜朝の分が 1 日遅れて載っていた
+  const nine = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const since = new Date(today ? nine : nine - 86400e3), until = today ? now : new Date(nine), weekSince = new Date(until.getTime() - 7 * 86400e3);
+  const md = (d: Date): string => { const j = new Date(d.getTime() + 9 * 3600e3); return `${j.getUTCMonth() + 1}/${j.getUTCDate()}`; };
+  const hm = (d: Date): string => { const j = new Date(d.getTime() + 9 * 3600e3); return `${j.getUTCHours()}:${String(j.getUTCMinutes()).padStart(2, "0")}`; };
+  return { since: since.toISOString(), until: until.toISOString(), weekSince: weekSince.toISOString(), label: today ? `今日のここまで (${md(since)} 9:00〜${hm(until)})` : `この 24 時間 (${md(since)} 9:00〜${md(until)} 9:00)` };
 }
 
 export interface Usage { visits: number | null; pageViews: number | null; liveRequests: number | null; liveErrors: number | null; why?: string }
@@ -188,6 +190,8 @@ export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Da
   // 数え始め (STATS_SINCE) より前は数えない (消せない Analytics Engine / Web Analytics にも線を引く)。日付が全部前なら 0 件
   const floor = env.STATS_SINCE ?? "";
   const since = y.since < floor ? (floor < until ? floor : until) : y.since;
+  // 数え始めで途中から数えた時はそう書く (2026-10-10: 3 時間分だけなのに 1 日分に見えた)
+  const cut = since > y.since ? (() => { const j = new Date(new Date(since).getTime() + 9 * 3600e3); return ` (${j.getUTCMonth() + 1}/${j.getUTCDate()} ${j.getUTCHours()}:${String(j.getUTCMinutes()).padStart(2, "0")} から数えています)`; })() : "";
   const weekSince = y.weekSince < floor ? (floor < until ? floor : until) : y.weekSince;
   const [sum, usage, fb, alerts] = await Promise.all([
     env.CF_ANALYTICS_TOKEN ? summarize(env, since, until, weekSince, fetchFn).catch((e) => { console.warn("summarize failed", String(e)); return null; }) : Promise.resolve(null),
@@ -197,10 +201,9 @@ export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Da
   ]);
   const day = fb.filter((x) => x.at >= since && x.at < until);
   const live = (await env.LIVE.get("state", "json")) as LiveState | null;
-  const base = reportText(label, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts);
+  const base = reportText(label + cut, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts);
   // 分析用の記録 (D1) の昨日の件数
-  const logDay = new Date(new Date(y.since).getTime() + 9 * 3600e3).toISOString().slice(0, 10);
-  const lc = await dayCount(env, logDay).catch(() => null);
+  const lc = await countBetween(env, since, until).catch(() => null);
   const text = lc ? `${base}\n・分析用の記録 ${lc.records.toLocaleString()} 件` : base;
   await postDiscord(env.DISCORD_WEBHOOK, text, fetchFn);
   return text;

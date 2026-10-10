@@ -228,8 +228,10 @@ describe("操作の印と日報 (events / monitor)", () => {
   it("日本時間の昨日と、直前の流れの文、日報の文面", async () => {
     const { yesterdayJst, reportText } = await import("../server/live/src/monitor");
     const { trailText } = await import("../server/live/src/feedback");
-    const y = yesterdayJst(new Date("2026-10-07T00:00:00Z")); // = 10/7 09:00 JST
-    expect(y.since).toBe("2026-10-05T15:00:00.000Z"); expect(y.until).toBe("2026-10-06T15:00:00.000Z"); expect(y.label).toBe("10/6");
+    // 日報は 9:00 (JST) が境 (2026-10-10 オーナー): 10/7 9:00 の日報 = 10/6 9:00〜10/7 9:00
+    const y = yesterdayJst(new Date("2026-10-07T00:00:05Z")); // = 10/7 09:00:05 JST
+    expect(y.since).toBe("2026-10-06T00:00:00.000Z"); expect(y.until).toBe("2026-10-07T00:00:00.000Z"); expect(y.label).toBe("この 24 時間 (10/6 9:00〜10/7 9:00)");
+    expect(yesterdayJst(new Date("2026-10-07T03:30:00Z"), true).label).toBe("今日のここまで (10/7 9:00〜12:30)");
     expect(trailText({ trail: [{ n: "open", ago: 130 }, { n: "mode:sim", ago: 40 }, { n: "sim:base", ago: 3 }] })).toBe("open (2分前) → mode:sim (40秒前) → sim:base (3秒前)");
     const text = reportText("10/6", null, { visits: null, pageViews: null, liveRequests: null, liveErrors: null, why: "CF_ANALYTICS_TOKEN が無い" }, { requests: 1, bugs: 2 }, null, ["相場の中継"]);
     expect(text).toContain("日報 10/6"); expect(text).toContain("訪問の集計は取れませんでした (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望 1 / バグ報告 2"); expect(text).toContain("異常の通知 1 回: 相場の中継");
