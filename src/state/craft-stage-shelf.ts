@@ -39,7 +39,8 @@ export const ORBS: ShelfGroup[] = [
   { kind: "exalt", get label() { return tr("高貴", "Exalted"); }, keys: ["exalt", "exalt_greater", "exalt_perfect"] },
   { kind: "chaos", get label() { return tr("カオス", "Chaos"); }, keys: ["chaos", "chaos_greater", "chaos_perfect"] },
   { kind: "annul", get label() { return tr("消去", "Annulment"); }, keys: ["annul"] },
-  { kind: "other", get label() { return tr("その他", "Other"); }, keys: ["divine", "fracture", "artificer", "vaal", "chance", "hinekora"] },
+  { kind: "other", get label() { return tr("その他", "Other"); }, keys: ["divine", "fracture", "vaal", "chance", "hinekora"] },
+  // 熟練工のオーブは出さない: 新品は最初から規格外の最大のソケット (2026-10-10 オーナー)。打つ処理 (apply-other) は古い手順の再生のため残す
   // 耐性のフラックス (2026-10-04 オーナー「カレンシーフルチェック」、apply-flux.ts)
   { kind: "flux", get label() { return tr("フラックス (耐性の変換)", "Flux (resistance conversion)"); }, keys: ["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"] },
   // 2026-10-09 オーナー「カランドラとか抽出のオーブとか、クラフト要素ではあるけどエミュレーターに関係ないものは削除」で外した物:

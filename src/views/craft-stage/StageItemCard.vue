@@ -12,16 +12,16 @@
 import STAT_ORDER from "../../data/stat-order.json";
 import { fmtChance, RARE_CHANCE } from "../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
 import { qualityLabelOf } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
-import { isFlask, isGem, reqText } from "../../services/craft-stage/stage-bases";
+import { isFlask, isGem } from "../../services/craft-stage/stage-bases";
 import { propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
-import { boostedMod, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
+import { allMods, boostedMod, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { classLabel } from "../../services/items/base-catalog";
 import { tagLabel } from "../../services/mods/tag-ja";
@@ -66,6 +66,17 @@ const TONE = {
   unique: { name: "text-rarity-unique", frame: "border-[#8a5a30]" },
 } as const;
 const tone = computed(() => TONE[props.item.rarity]);
+/** カーソルが乗っている物 (今できることの帯の出し分け) */
+const hover = ref<"mod" | "rune" | null>(null);
+const phoneW = typeof window !== "undefined" && window.innerWidth < 768;
+const hint = computed((): string => {
+  if (props.holding) return phoneW ? tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") : tr("押すと使う · 右クリック / Esc で手放す", "Click to use · Right-click / Esc to drop");
+  if (!props.removable) return "";
+  if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補から発現する MOD を選ぶ", "Choose the mod to reveal below");
+  if (hover.value === "mod") return tr("右クリックでフラクチャー · × で外す", "Right-click to fracture · × to remove");
+  if (hover.value === "rune") return tr("右クリックでルーンを外す", "Right-click to remove the rune");
+  return phoneW ? "" : tr("MOD を右クリックでフラクチャー · × で外す · Ctrl+Z で 1 手戻す", "Right-click a mod to fracture · × to remove · Ctrl+Z to undo");
+});
 /** 名前の枠は 1 行 (ベース名) にそろえる。ユニークだけ 2 行 (名前 + ベース)。2026-10-10 オーナー「1 行でいい、ちゃんとしたベース名で統一」 */
 const twoLine = computed(() => !!props.item.unique);
 /** 種類の言葉 (フラスコ・ジェムはレアリティの代わりに出す) */
@@ -142,18 +153,16 @@ const rows = computed(() =>
     </div>
     <!-- 解呪 / サルベージで崩れる (要望 ⑰-21) -->
     <div class="space-y-1 px-4 text-center text-[13px]" :class="[compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">
-      <!-- ゲームと同じ並び: 種類 → アイテムレベル → 必要 (英語のベース名はここに小さく) -->
+      <!-- 種類 → アイテムレベル (英語のベース名はここに小さく)。要求レベル・能力値は出さない (2026-10-10 オーナー「邪魔、出さなくていい」) -->
       <p class="pt-1 text-[12px] text-white/50">{{ kindJa }}<span v-if="!compact" class="ml-1.5 text-[11px] opacity-60">{{ item.base }}</span></p>
       <p v-if="!isGem(item.cls.category)" class="text-[12px] text-white/50">{{ tr("アイテムレベル", "Item Level") }}: <span class="text-white">{{ item.itemLevel }}</span></p>
-      <!-- 要求 (要望 ⑱-3) -->
-      <p v-if="reqText(item)" class="text-[12px] text-white/50">{{ reqText(item) }}</p>
       <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
       <p v-for="r in baseRows" :key="r.key" class="text-[12px] text-white/50">{{ r.label ? `${r.label}: ` : "" }}<span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
       <!-- ソケット (熟練工のオーブ) の絵 -->
       <div v-if="item.sockets" class="flex justify-center gap-1.5 py-0.5">
         <!-- はめたルーン (要望 ⑰-1) はソケットの中に絵 -->
-        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" :data-stage-socket="i" :title="item.augments?.[i - 1] ? tr(`${i} 番目: ${nameOf(item.augments[i - 1]!)}${removable ? ' (右クリックで外す)' : ''}`, `Socket ${i}: ${nameOf(item.augments[i - 1]!)}${removable ? ' (right-click to remove)' : ''}`) : undefined" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'" @click="onSocket($event, i)" @contextmenu="onUnsocket($event, i)">
+        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" :data-stage-socket="i" @mouseenter="hover = item.augments?.[i - 1] ? 'rune' : null" @mouseleave="hover = null" :title="item.augments?.[i - 1] ? tr(`${i} 番目: ${nameOf(item.augments[i - 1]!)}${removable ? ' (右クリックで外す)' : ''}`, `Socket ${i}: ${nameOf(item.augments[i - 1]!)}${removable ? ' (right-click to remove)' : ''}`) : undefined" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'" @click="onSocket($event, i)" @contextmenu="onUnsocket($event, i)">
           <img v-if="item.augments?.[i - 1] && runeArt(item.augments[i - 1]!.en)" :src="runeArt(item.augments[i - 1]!.en)!" alt="" class="h-6 w-6 object-contain" draggable="false" />
         </span>
       </div>
@@ -181,6 +190,8 @@ const rows = computed(() =>
       <div v-if="!hidden" class="space-y-1">
         <p
           v-for="r in rows"
+          @mouseenter="hover = r.m.unrevealed ? null : 'mod'"
+          @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.m.modId}#${flashKey}` : r.m.modId"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
           :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
@@ -216,7 +227,9 @@ const rows = computed(() =>
       <p v-if="item.mirrored" class="pt-1 font-bold text-sky-200">{{ tr("ミラー", "Mirrored") }}</p>
       <p v-if="item.foreseen" class="pt-1 text-violet-200">{{ tr("予見 (次の手の結果が見える)", "Foreseen (next result is shown)") }}</p>
     </div>
-    <p v-if="holding" class="absolute -bottom-6 left-0 right-0 text-center text-[11px] text-amber-200/90"><span class="max-md:hidden">{{ tr("押すと使う (右クリック / Esc で手放す)", "Click to use (right-click / Esc to drop)") }}</span><span class="md:hidden">{{ tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") }}</span></p>
+    <!-- 今できることの帯 (カードのすぐ下、場所は固定)。持っている時・MOD / ルーンに乗せた時・何もしていない時で出し分ける
+         (2026-10-10 オーナー「持った時右クリで解除とか出してくれてるのめっちゃ親切、できること全部その欄に、MOD にカーソル合わしたら右クリックでフラクチャーとか」) -->
+    <p v-if="hint" class="absolute -bottom-6 left-0 right-0 truncate text-center text-[11px]" :class="holding ? 'text-amber-200/90' : 'text-white/45'">{{ hint }}</p>
   </div>
 </template>
 

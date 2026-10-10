@@ -8,8 +8,8 @@
   並べる物・名前・値段は [[craft-stage-shelf.ts]]、1 つの見た目は [[ShelfButton.vue]]。
 -->
 <script setup lang="ts">
-import { glideBy, scrollBoxOf } from "../../utils/keep-place";
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useSlots, watch } from "vue";
+import { scrollBoxOf } from "../../utils/keep-place";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import ShelfButton from "./ShelfButton.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { useShelf } from "../../state/shelf-context";
@@ -32,7 +32,6 @@ const tab = ref<ShelfTab>(props.initialTab);
  * (途中で自分で動かしていたら戻さない)。2026-10-09 オーナー「高貴とか選んだらお告げ下に出るけど画面は動かなくて表示されたか分かんないから
  * 下まで表示してあげて、終わったら既定の動きに戻るように」
  */
-const slots = useSlots();
 const root = ref<HTMLElement | null>(null);
 /**
  * お告げの欄の置き場: 持っているカレンシーのアイコン (data-key) のすぐ下。アイコンが右寄りなら右端をそろえる。
@@ -45,49 +44,21 @@ function placeAnchor(): void {
   const btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-box]"));
   if (!btn) { anchor.value = null; return; }
   const rr = r.getBoundingClientRect(), b = btn.getBoundingClientRect();
-  const top = `${Math.round(b.bottom - rr.top + 4)}px`;
-  anchor.value = b.left - rr.left < rr.width / 2
-    ? { style: { top, left: `${Math.max(0, Math.round(b.left - rr.left - 4))}px` } }
-    : { style: { top, right: `${Math.max(0, Math.round(rr.right - b.right - 4))}px` } };
+  const side: Record<string, string> = b.left - rr.left < rr.width / 2 ? { left: `${Math.max(0, Math.round(b.left - rr.left - 4))}px` } : { right: `${Math.max(0, Math.round(rr.right - b.right - 4))}px` };
+  anchor.value = { style: { top: `${Math.round(b.bottom - rr.top + 4)}px`, ...side } };
+  // 下で画面から切れるなら、アイコンの上に出す (送らない。2026-10-10 オーナー「スクロールさせたくない、なりそうなら上でも」)
+  void nextTick(() => {
+    const pop = r.querySelector<HTMLElement>(".held-anchor .held-pop-in");
+    if (!pop) return;
+    const sc = scrollBoxOf(r);
+    const viewBottom = sc ? sc.getBoundingClientRect().bottom : window.innerHeight;
+    if (pop.getBoundingClientRect().bottom > viewBottom - 4) anchor.value = { style: { bottom: `${Math.round(rr.bottom - b.top + 4)}px`, ...side } };
+  });
 }
 let anchorRo: ResizeObserver | null = null;
-let back: { sc: HTMLElement | null; top: number; after: number | null } | null = null;
-const topOf = (sc: HTMLElement | null): number => (sc ? sc.scrollTop : window.scrollY);
 watch([() => craftStage.held.value, () => tab.value, () => craftStage.item.value], () => void nextTick(placeAnchor), { immediate: true });
 onMounted(() => { if (root.value && typeof ResizeObserver === "function") { anchorRo = new ResizeObserver(() => placeAnchor()); anchorRo.observe(root.value); } });
 onBeforeUnmount(() => anchorRo?.disconnect());
-// 持っている物が替わった時に見る (欄が出たままでも、持ち替えたら送る)
-watch(() => craftStage.held.value, (k, old) => {
-  if (k) {
-    // 欄の置き場 (アイコンの下) を先に決めてから測る (決まる前の一瞬だけ棚の一番下に出て、そこへ大きく送っていた)
-    void nextTick(async () => {
-      placeAnchor();
-      await nextTick();
-      if (!slots.held) return;
-      // 行の下に重ねて出す欄 (held-pop) は中身で測る
-      const box = root.value?.querySelector<HTMLElement>("[data-held-box] .held-pop-in") ?? root.value?.querySelector<HTMLElement>("[data-held-box]");
-      if (!box) return;
-      const r = box.getBoundingClientRect();
-      if (r.bottom <= window.innerHeight && r.top >= 0) return; // もう見えている
-      const sc = scrollBoxOf(box);
-      if (!back) back = { sc, top: topOf(sc), after: null };
-      // スマホの下に固定の帯 (持っている物 → 使う) があれば、その分だけ上に (帯の裏に隠れないように)
-      const bar = document.querySelector<HTMLElement>(".fixed.bottom-0");
-      box.style.scrollMarginBottom = `${(bar?.offsetHeight ?? 0) + 8}px`;
-      // 切れている分だけ短く滑らせて送る (一瞬で跳ぶと「画面がめっちゃ動く」。2026-10-10 オーナー。keep-place の glideBy)
-      const pad = (bar?.offsetHeight ?? 0) + 8;
-      const view = sc ? sc.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
-      const d = r.bottom + pad > view.bottom ? r.bottom + pad - view.bottom : r.top < view.top ? r.top - view.top - 8 : 0;
-      void glideBy(sc, d);
-      back.after = topOf(back.sc) + d;
-    });
-  } else if (old && back) {
-    // 打ち終わった・離した: 元の位置へ (自分で動かしていたら戻さない)
-    const b = back;
-    back = null;
-    if (b.after == null || Math.abs(topOf(b.sc) - b.after) < 8) (b.sc ?? window).scrollTo({ top: b.top, behavior: "instant" as ScrollBehavior });
-  }
-});
 /**
  * オーブ・骨のタブ: 今のアイテムに使える (光っている) 物を前に、使えない物を後ろに (2026-10-05 オーナー「使える光ってるオーブを丸ごと前に
  * 持ってきちゃおうか。1 段目に入らなければ折り返して 2 段目に。その方がこれ使えるんだなってなる」)。まとまり (変成・増強…) の並びは保つ
@@ -221,10 +192,7 @@ const TABS = computed(() => [
     </div>
 
     <div v-else-if="tab === 'rune'">
-      <p v-if="sockets" class="mb-2 text-[11px] opacity-70">
-        {{ tr("ソケット", "Sockets") }} {{ sockets.now }} / {{ sockets.cap }} {{ tr("(熟練工のオーブで足す、コラプトで +1)・はめたルーン", "(add with Artificer's Orb, +1 from corruption) · Runes socketed") }} {{ sockets.used }}{{ tr("。はめたら外せないが、他のルーンで置き換えられる (置き換えた方は壊れる。ソケットバウンドの物は置き換えも不可)。ルーンを持ってソケットの絵を押すとそのソケットを置き換える", ". Socketed runes can't be removed, but can be replaced by another rune (the replaced one is destroyed; socket-bound ones can't be replaced). Hold a rune and click a socket to replace it.") }}
-        <ShelfButton k="artificer" class="ml-2 inline-block align-middle" @pick="emit('hold', $event)" />
-      </p>
+      <!-- ソケットの説明と熟練工のオーブは出さない: 新品は最初から規格外の最大のソケット、コラプトでもう 1 つ (2026-10-10 オーナー「こいつもう不必要」) -->
       <!-- 段ごとのまとまり (クラフトに関わるルーンだけ) -->
       <div class="space-y-2">
         <div v-for="g in runes" :key="g.kind">

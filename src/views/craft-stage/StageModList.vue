@@ -337,22 +337,24 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'rune' || sec.g === 'desecrated' || sec.g === 'essence' || sec.g === 'perfect_essence')" class="w-20 py-0.5 text-right">
                       <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-10 max-md:px-3 max-md:text-[12px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? tr('もう一度押すと外す', 'Click again to remove') : sec.rune ? tr(`② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める`, `Add to ② (${t.rank}+). Runs start from a Normal item with ${sec.label} socketed`) : tr(`② に足す (${t.rank} 以上)`, `Add to ② (${t.rank}+)`)" @click.stop="keepPlace($event.currentTarget as Element, () => toggleTarget(t.modId ?? r.id, t))">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
                     </td>
-                    <td v-else-if="s.mode.value !== 'sim' && !s.replay.value" class="w-56 py-0.5 text-right max-md:w-auto">
-                      <!-- 段の表のボタンはみな g-btn sm (2026-10-10 動きの揃え 6: 色の線のボタンは絵になる物とならない物が混ざっていた)。狙い中は赤 -->
+                    <td v-else-if="s.mode.value !== 'sim' && !s.replay.value" class="py-0.5 pl-2">
+                      <div class="flex flex-nowrap items-center justify-end gap-1 max-md:flex-wrap">
+                      <!-- 段の表のボタンは細い行に合う小さく平たい物 (tbtn、同じ高さ・1 行に右寄せ)。2026-10-10 オーナー「ここの UI きもい、並びが 3 つ合ってない、枠の細さに過剰」。狙い中は赤 -->
                       <!-- 次の手で狙う (いつでも): 今の状態から打った時にこの段以上が付く確率を、打ち方ごとに棚の上へ (2026-10-09 オーナー)。押すと選ぶ窓 -->
-                      <button type="button" :data-aim-at="`${t.modId ?? r.id}:${t.rank}`" class="mr-1 max-md:min-h-9" :class="isAim(t.modId ?? r.id, t) ? 'g-btn-red sm' : 'g-btn sm'" :title="isAim(t.modId ?? r.id, t) ? tr('もう一度押すとやめる', 'Click again to stop') : tr(`次の 1 手で ${t.rank} 以上が付く確率を打ち方ごとに出す (ほかの MOD も ${AIM_MAX} つまで一緒に狙える)`, `Show the chance of ${t.rank}+ rolling on the next move for each method (target up to ${AIM_MAX} mods together)`)" @click.stop="aimAt(t.modId ?? r.id, t, $event.currentTarget as Element)">{{ isAim(t.modId ?? r.id, t) ? tr("狙い中", "Targeting") : tr("次の手で狙う", "Target next move") }}</button>
+                      <button type="button" :data-aim-at="`${t.modId ?? r.id}:${t.rank}`" class="tbtn" :class="isAim(t.modId ?? r.id, t) ? 'on' : ''" :title="isAim(t.modId ?? r.id, t) ? tr('もう一度押すとやめる', 'Click again to stop') : tr(`次の 1 手で ${t.rank} 以上が付く確率を打ち方ごとに出す (ほかの MOD も ${AIM_MAX} つまで一緒に狙える)`, `Show the chance of ${t.rank}+ rolling on the next move for each method (target up to ${AIM_MAX} mods together)`)" @click.stop="aimAt(t.modId ?? r.id, t, $event.currentTarget as Element)">{{ isAim(t.modId ?? r.id, t) ? tr("狙い中", "Targeting") : tr("次の手で狙う", "Target next move") }}</button>
                       <!-- 打ち始めた後 (と、始めの状態に入れられない種類) は指名の手として付ける。灰色 = 今は付けられない (理由は title) -->
-                      <span v-if="!canStart || !(sec.g === 'normal' || sec.g === 'desecrated')" class="inline-flex gap-1">
-                        <button type="button" class="g-btn sm disabled:cursor-not-allowed" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank).why" :title="forceOf(r.group, t.modId ?? r.id, t.rank).why ?? tr(`${t.rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`, `Add ${t.rank} as one step (no cost; Undo removes it)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank).key)">{{ sec.g === "desecrated" || sec.g === "otherworldly" ? tr("冒涜で付ける", "Add desecrated") : tr("付ける", "Add") }}</button>
+                      <template v-if="!canStart || !(sec.g === 'normal' || sec.g === 'desecrated')">
+                        <button type="button" class="tbtn" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank).why" :title="forceOf(r.group, t.modId ?? r.id, t.rank).why ?? tr(`${t.rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`, `Add ${t.rank} as one step (no cost; Undo removes it)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank).key)">{{ sec.g === "desecrated" || sec.g === "otherworldly" ? tr("冒涜で付ける", "Add desecrated") : tr("付ける", "Add") }}</button>
                       <!-- 途中でもフラクチャー (付いていればそれを固定、無ければ固定で付ける。レアだけ・1 つまで。2026-10-08 オーナー)。
                              2026-10-10 要望「創生の樹フラクチャーできるように」: どのグループでも。冒涜の MOD は発現済みでも固定できない (取引所で確認、理由は title) -->
-                        <button type="button" class="g-btn sm disabled:cursor-not-allowed" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why" :title="forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why ?? tr(`${t.rank} をフラクチャー (付いていればそれを固定、無ければ固定で付ける)`, `Fracture ${t.rank} (fractures it if present, otherwise adds it fractured)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank, 'f').key)">{{ tr("フラクチャー", "Fracture") }}</button>
-                      </span>
-                      <span v-else class="inline-flex gap-1 max-md:flex-wrap max-md:justify-end">
-                        <button v-if="sec.g === 'normal'" type="button" class="g-btn sm" :title="tr(`始めの状態に ${t.rank} を付ける (付きうる物だけ)`, `Add ${t.rank} to the starting item (only mods that can roll)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">{{ tr("付ける", "Add") }}</button>
-                        <button v-if="sec.g === 'normal'" type="button" class="g-btn sm disabled:cursor-not-allowed" :disabled="hasStart('fractured')" :title="hasStart('fractured') ? tr('フラクチャーは 1 つまで (もう付いている)', 'Only one fractured mod (already added)') : tr(`始めの状態に ${t.rank} をフラクチャーで付ける (レアになる)`, `Add ${t.rank} fractured to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, fractured: true })">{{ tr("フラクチャー", "Fracture") }}</button>
-                        <button v-if="sec.g === 'desecrated'" type="button" class="g-btn sm disabled:cursor-not-allowed" :disabled="hasStart('desecrated')" :title="hasStart('desecrated') ? tr('冒涜の MOD はアイテムに 1 つまで (もう付いている)', 'Only one desecrated mod per item (already added)') : tr(`始めの状態に ${t.rank} を冒涜の MOD で付ける (レアになる)`, `Add ${t.rank} as a desecrated mod to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, desecrated: true })">{{ tr("冒涜", "Desecrated") }}</button>
-                      </span>
+                        <button type="button" class="tbtn" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why" :title="forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why ?? tr(`${t.rank} をフラクチャー (付いていればそれを固定、無ければ固定で付ける)`, `Fracture ${t.rank} (fractures it if present, otherwise adds it fractured)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank, 'f').key)">{{ tr("フラクチャー", "Fracture") }}</button>
+                      </template>
+                      <template v-else>
+                        <button v-if="sec.g === 'normal'" type="button" class="tbtn" :title="tr(`始めの状態に ${t.rank} を付ける (付きうる物だけ)`, `Add ${t.rank} to the starting item (only mods that can roll)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">{{ tr("付ける", "Add") }}</button>
+                        <button v-if="sec.g === 'normal'" type="button" class="tbtn" :disabled="hasStart('fractured')" :title="hasStart('fractured') ? tr('フラクチャーは 1 つまで (もう付いている)', 'Only one fractured mod (already added)') : tr(`始めの状態に ${t.rank} をフラクチャーで付ける (レアになる)`, `Add ${t.rank} fractured to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, fractured: true })">{{ tr("フラクチャー", "Fracture") }}</button>
+                        <button v-if="sec.g === 'desecrated'" type="button" class="tbtn" :disabled="hasStart('desecrated')" :title="hasStart('desecrated') ? tr('冒涜の MOD はアイテムに 1 つまで (もう付いている)', 'Only one desecrated mod per item (already added)') : tr(`始めの状態に ${t.rank} を冒涜の MOD で付ける (レアになる)`, `Add ${t.rank} as a desecrated mod to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, desecrated: true })">{{ tr("冒涜", "Desecrated") }}</button>
+                      </template>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -364,3 +366,16 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
     </div>
   </section>
 </template>
+
+<style scoped>
+/* 段の表のボタン: 細い行に合う小さく平たい物 (2026-10-10 オーナー「枠の細さに過剰」) */
+.tbtn {
+  display: inline-flex; align-items: center; justify-content: center; height: 24px; padding: 0 9px; white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px; background: rgba(0, 0, 0, 0.35);
+  font-size: 11px; color: rgba(255, 255, 255, 0.82); transition: background 0.12s, border-color 0.12s;
+}
+.tbtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: rgba(232, 200, 120, 0.55); color: #f3e2b8; }
+.tbtn:disabled { opacity: 0.35; cursor: not-allowed; }
+.tbtn.on { border-color: rgba(239, 90, 70, 0.75); background: rgba(160, 40, 30, 0.35); color: #ffd7cf; }
+@media (max-width: 767px) { .tbtn { height: 34px; padding: 0 12px; font-size: 12px; } }
+</style>
