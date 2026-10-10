@@ -37,5 +37,8 @@ export function fmtChance(p: number): string {
   if (v >= 0.01) return `${v.toFixed(2)}%`;
   return "<0.01%";
 }
-/** 珍しい (1% 未満) か */
-export const RARE_CHANCE = 0.01;
+/**
+ * 珍しい = 付いた瞬間の確率が 0.3% 未満 (黄色で出す)。ふつうの段は 0.64% 前後 (金の指輪 iLv82 の高貴で 203 段の半分以上) なので、その半分以下。
+ * 2026-10-10 オーナー「0.3% 未満で黄色」(1% 未満だとほとんど全部が当たった)
+ */
+export const RARE_CHANCE = 0.003;

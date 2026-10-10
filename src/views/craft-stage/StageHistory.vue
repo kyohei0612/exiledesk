@@ -5,6 +5,7 @@
   打てなかった手は理由を薄く出す。手を押すとその手を打った直後に戻る (craftStage.goTo、この後に打てば先の手は捨てる)。先頭の「始め」は 1 手も打っていない状態へ (goToStart)。
 -->
 <script setup lang="ts">
+import { RARE_CHANCE } from "../../utils/format-pct";
 import { computed } from "vue";
 import { modText, tr } from "../../i18n/lang";
 import { craftStage, iconOf, stepNameOf, stepOmenOf } from "../../state/craft-stage";
@@ -49,8 +50,8 @@ const canGo = (index: number): boolean => !craftStage.replay.value && craftStage
           </span>
           <span v-if="!s.out.applied" class="ml-1.5 text-rose-300/80">{{ s.out.reason }}</span>
         </p>
-        <!-- 付いた瞬間のその段の確率 (2026-10-09 オーナー「このMODは今付けた瞬間に何％の確率で付いたのかが分かるとへーってなる」)。低い物 (1% 未満) は金色 -->
-        <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ modText(m) }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレ", "Pre") : tr("サフィ", "Suf") }} {{ m.tierName }}</span><span v-if="s.chances?.[m.modId] != null" class="ml-1.5 text-[10px] tabular-nums" :class="s.chances[m.modId]! < 0.01 ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled at that moment (tier weight ÷ total weight of everything this step could add)')">{{ chancePct(s.chances[m.modId]!) }}</span></p>
+        <!-- 付いた瞬間のその段の確率 (2026-10-09 オーナー「このMODは今付けた瞬間に何％の確率で付いたのかが分かるとへーってなる」)。低い物 (0.3% 未満、format-pct.ts の RARE_CHANCE) は金色 -->
+        <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ modText(m) }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレ", "Pre") : tr("サフィ", "Suf") }} {{ m.tierName }}</span><span v-if="s.chances?.[m.modId] != null" class="ml-1.5 text-[10px] tabular-nums" :class="s.chances[m.modId]! < RARE_CHANCE ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled at that moment (tier weight ÷ total weight of everything this step could add)')">{{ chancePct(s.chances[m.modId]!) }}</span></p>
         <p v-for="m in s.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ modText(m) }}</p>
         <p v-if="s.after.enchant && s.after.enchant !== s.before.enchant" class="text-sky-200">＋ {{ modText(s.after.enchant) }} <span class="text-[10px] opacity-60">{{ tr("エンチャント", "Enchantment") }}</span></p>
         <template v-if="augOf(s.out)">

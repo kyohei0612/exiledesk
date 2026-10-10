@@ -10,7 +10,7 @@
 -->
 <script setup lang="ts">
 import STAT_ORDER from "../../data/stat-order.json";
-import { fmtChance } from "../../utils/format-pct";
+import { fmtChance, RARE_CHANCE } from "../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { computed } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
@@ -198,7 +198,7 @@ const rows = computed(() =>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
           </span>
           <span class="flex shrink-0 items-center justify-end gap-1">
-            <span v-if="chanceOf(r.m) != null" class="text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
+            <span v-if="chanceOf(r.m) != null" class="text-[11px] tabular-nums" :class="chanceOf(r.m)! < RARE_CHANCE ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
           </span>
         </p>
