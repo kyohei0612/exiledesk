@@ -94,41 +94,52 @@ const refJa = (k: string): string => (k === "direct" ? "直接 (URL を直に開
  * 人が 0 の日は短く、来た日は 何人・どこから・端末・何をしたか・どこで減ったか・品質・要望・配信・異常・週 を段落で
  */
 export function reportText(label: string, sum: Summary | null, usage: Usage, feedback: { requests: number; bugs: number }, live: LiveState | null, alerts: string[]): string {
+  // 2026-10-10 オーナー「報告の文章わかりづらい」: 文章をやめて、見出しごとに短い箇条書き (数字だけ追えば分かる形)
   const out: string[] = [`📊 **ExileDesk 日報 ${label}**`];
-  const fb = feedback.requests + feedback.bugs ? `要望が ${feedback.requests} 件、バグ報告が ${feedback.bugs} 件来ています。` : "要望・バグ報告はありません。";
+  const sec = (title: string, lines: Array<string | null | false>): void => {
+    const ls = lines.filter((x): x is string => !!x);
+    if (ls.length) out.push("", `**${title}**`, ...ls.map((x) => `・${x}`));
+  };
+  const today = label.includes("今日");
   if (!sum) {
-    out.push(`訪問の集計は取れませんでした (${usage.why ?? "集計の設定が無い"})。`);
+    sec("人", [`訪問の集計は取れませんでした (${usage.why ?? "集計の設定が無い"})`]);
   } else if (!sum.sessions) {
-    out.push(label.includes("今日") ? "今日はまだ誰も来ていません。" : "昨日は誰も来ていません。");
+    sec("人", [today ? "今日はまだ誰も来ていません" : "誰も来ていません"]);
   } else {
     const ret = sum.sessions - sum.newSessions;
-    const when = label.includes("今日") ? "今日はここまでで" : "昨日は";
-    const who = `${when} ${n(sum.sessions)} 回の訪問がありました (新しい人 ${n(sum.newSessions)}、前にも来た人 ${n(ret)}、人数にして ${n(sum.users)} 人)。`;
-    const stay = sum.bounce == null ? "" : sum.bounce >= 0.5 ? `半分以上 (${pct(sum.bounce)}) は何もせずに閉じています。` : `${pct(sum.bounce)} は何もせずに閉じました。`;
-    const dur = sum.medianMinutes == null ? "" : `残った人は真ん中で ${sum.medianMinutes < 1 ? "1 分未満" : `${sum.medianMinutes.toFixed(0)} 分ほど`}使っています。`;
-    out.push([who, stay, dur].filter(Boolean).join(""));
-    const refs = sum.refs.slice(0, 3).map(([k, v], i) => `${i === 0 ? "" : "次が "}${refJa(k)} ${v} 回`).join("、");
+    sec("人", [
+      `訪問 ${n(sum.sessions)} 回 / ${n(sum.users)} 人 (新しい人 ${n(sum.newSessions)}・前にも来た人 ${n(ret)})`,
+      sum.bounce == null ? null : `何もせず閉じた ${pct(sum.bounce)}${sum.medianMinutes == null ? "" : ` / 使った時間 (真ん中) ${sum.medianMinutes < 1 ? "1 分未満" : `${sum.medianMinutes.toFixed(0)} 分`}`}`,
+      sum.wau ? `この 7 日で来た人 ${n(sum.wau)} 人` : null,
+    ]);
     const devMobile = sum.devices.find(([k]) => k === "mobile")?.[1] ?? 0;
     const devAll = sum.devices.reduce((a, [, v]) => a + v, 0) || 1;
-    const dev = `端末は PC が ${Math.round(((devAll - devMobile) / devAll) * 100)}%、スマホが ${Math.round((devMobile / devAll) * 100)}%。`;
     const jp = sum.countries.find(([k]) => k === "JP")?.[1] ?? 0;
-    const country = sum.countries.length ? (jp / devAll >= 0.9 ? "ほぼ日本からです。" : `国は ${sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}。`) : "";
     // localhost は開発の確認 (自分) なので分けて書く (2026-10-08 オーナー「ガチで 13 人来たの？」)
     const local = sum.refs.find(([k]) => /^localhost|127\.0\.0\.1/.test(k))?.[1] ?? 0;
-    out.push(`来た道は ${refs || "分かりません"}${local ? ` (localhost の ${n(local)} 回は開発の確認で、よそから来た人ではありません)` : ""}。${dev}${country}`);
+    sec("どこから", [
+      `${sum.refs.slice(0, 3).map(([k, v]) => `${refJa(k)} ${v}`).join(" / ") || "分からない"}${local ? ` (localhost ${n(local)} は開発の確認)` : ""}`,
+      `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
+    ]);
     const use = (k: string): number => sum.byEvent.get(k)?.sessions ?? 0;
-    // 「手で打った」は実際に 1 手以上打った印 (hand:use)。前は開いた時の画面 (mode:hand = 最初の画面) で数えていて訪問数と同じになっていた (2026-10-08)
-    out.push(`使い方は、手で打った人が ${use("hand:use")}、シミュレーションを開いた人が ${use("mode:sim")}。そのうち実際に回したのが ${use("sim:run")}、完成まで出たのが ${use("sim:done")}、取引所を開いたのが ${use("trade:open")}、レシピを保存したのが ${use("recipe:save")} です。`);
     const f = funnelDrop(sum, FUNNEL_SIM);
-    out.push(f ? `シミュレーションの流れで一番減ったのは「${f.from} → ${f.to}」(${f.before} 人 → ${f.after} 人、-${f.pct}%) です。ここでつまずく人が多いので見直す価値があります。` : "シミュレーションの流れで目立って減る所はありません。");
-    const err = sum.byEvent.get("error");
-    out.push(`${err ? `画面の JS エラーが ${err.count} 件 (${err.sessions} 人)${sum.errors.length ? `、多いのは「${sum.errors[0]![0].slice(0, 60)}」` : ""}。` : "画面の JS エラーはありません。"}サーバーは ${n(usage.liveRequests)} 回動いてエラー ${n(usage.liveErrors)}。${fb}`);
-    if (sum.warnings.length) out.push(`集計で取れなかった所があります: ${sum.warnings.join(" / ")}`);
+    // 「手で打った」は実際に 1 手以上打った印 (hand:use)
+    sec("使われ方 (人数)", [
+      `手で打った ${use("hand:use")}`,
+      `シミュレーション: 開いた ${use("mode:sim")} → 回した ${use("sim:run")} → 完成まで ${use("sim:done")}`,
+      `取引所を開いた ${use("trade:open")} / レシピ保存 ${use("recipe:save")}`,
+      f ? `一番減った所: ${f.from} → ${f.to} (${f.before} → ${f.after} 人、-${f.pct}%)` : null,
+    ]);
   }
-  if (!sum || !sum.sessions) out.push(fb);
-  out.push(live ? `配信の見張りは${live.errors.length ? `気になる所が ${live.errors.length} つ (${live.errors[0]!.slice(0, 80)})` : "異常なし"}、今は ${live.live.length} 人がライブ中です。` : "配信の見張りはまだ動いていません。");
-  out.push(alerts.length ? `異常の通知が ${alerts.length} 回ありました: ${alerts.slice(0, 5).join(" / ")}。` : "異常の通知はありませんでした。");
-  if (sum?.wau != null && sum.wau) out.push(`この 7 日で来た人は ${n(sum.wau)} 人です。`);
+  sec("届いた物", [`要望 ${feedback.requests} / バグ報告 ${feedback.bugs}`]);
+  const err = sum?.byEvent.get("error");
+  sec("問題", [
+    err ? `画面のエラー ${err.count} 件 (${err.sessions} 人)${sum!.errors.length ? `: ${sum!.errors[0]![0].slice(0, 60)}` : ""}` : sum ? "画面のエラー なし" : null,
+    `サーバー ${n(usage.liveRequests)} 回動いてエラー ${n(usage.liveErrors)}`,
+    alerts.length ? `異常の通知 ${alerts.length} 回: ${alerts.slice(0, 5).join(" / ")}` : "異常の通知 なし",
+    live ? `配信の見張り ${live.errors.length ? `気になる所 ${live.errors.length} (${live.errors[0]!.slice(0, 80)})` : "異常なし"} · ライブ中 ${live.live.length} 人` : "配信の見張り まだ動いていない",
+    sum?.warnings.length ? `集計で取れなかった所: ${sum.warnings.join(" / ")}` : null,
+  ]);
   return out.join("\n");
 }
 
@@ -165,7 +176,7 @@ export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Da
   // 分析用の記録 (D1) の昨日の件数
   const logDay = new Date(new Date(y.since).getTime() + 9 * 3600e3).toISOString().slice(0, 10);
   const lc = await dayCount(env, logDay).catch(() => null);
-  const text = lc ? `${base}\n分析用の記録: ${lc.records.toLocaleString()} 件 (${lc.batches.toLocaleString()} まとまり)` : base;
+  const text = lc ? `${base}\n・分析用の記録 ${lc.records.toLocaleString()} 件` : base;
   await postDiscord(env.DISCORD_WEBHOOK, text, fetchFn);
   return text;
 }

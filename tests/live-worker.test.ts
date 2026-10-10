@@ -232,14 +232,15 @@ describe("操作の印と日報 (events / monitor)", () => {
     expect(y.since).toBe("2026-10-05T15:00:00.000Z"); expect(y.until).toBe("2026-10-06T15:00:00.000Z"); expect(y.label).toBe("10/6");
     expect(trailText({ trail: [{ n: "open", ago: 130 }, { n: "mode:sim", ago: 40 }, { n: "sim:base", ago: 3 }] })).toBe("open (2分前) → mode:sim (40秒前) → sim:base (3秒前)");
     const text = reportText("10/6", null, { visits: null, pageViews: null, liveRequests: null, liveErrors: null, why: "CF_ANALYTICS_TOKEN が無い" }, { requests: 1, bugs: 2 }, null, ["相場の中継"]);
-    expect(text).toContain("日報 10/6"); expect(text).toContain("訪問の集計は取れませんでした (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望が 1 件、バグ報告が 2 件"); expect(text).toContain("異常の通知が 1 回ありました: 相場の中継");
-    // 人が来た日は文章で: 何人・どこから・端末・一番減った所
+    expect(text).toContain("日報 10/6"); expect(text).toContain("訪問の集計は取れませんでした (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望 1 / バグ報告 2"); expect(text).toContain("異常の通知 1 回: 相場の中継");
+    // 人が来た日は見出しごとの箇条書き (2026-10-10 オーナー「報告の文章わかりづらい」)
     const byEvent = new Map([["open", 42], ["mode:sim", 25], ["mode:hand", 18], ["sim:base", 24], ["sim:targets", 20], ["sim:order", 8], ["sim:pattern", 7], ["sim:run", 6], ["sim:done", 5], ["trade:open", 3]].map(([k, v]) => [k as string, { sessions: v as number, users: v as number, count: v as number }]));
     const full = reportText("10/6", { sessions: 42, users: 40, newSessions: 30, bounce: 0.48, medianMinutes: 6.2, byEvent, refs: [["www.youtube.com", 20], ["direct", 15], ["t.co", 5]], devices: [["pc", 38], ["mobile", 4]], countries: [["JP", 41], ["US", 1]], errors: [], wau: 120, warnings: [] }, { visits: 40, pageViews: 60, liveRequests: 1200, liveErrors: 0 }, { requests: 0, bugs: 0 }, null, []);
-    expect(full).toContain("昨日は 42 回の訪問がありました (新しい人 30、前にも来た人 12、人数にして 40 人)");
-    expect(full).toContain("来た道は youtube.com 20 回、次が 直接 (URL を直に開いた) 15 回、次が t.co 5 回。端末は PC が 90%、スマホが 10%。ほぼ日本からです。");
-    expect(full).toContain("一番減ったのは「狙い → 順番」(20 人 → 8 人、-60%)");
-    expect(full).toContain("この 7 日で来た人は 120 人です。");
+    expect(full).toContain("・訪問 42 回 / 40 人 (新しい人 30・前にも来た人 12)");
+    expect(full).toContain("・youtube.com 20 / 直接 (URL を直に開いた) 15 / t.co 5");
+    expect(full).toContain("・PC 90% / スマホ 10% · ほぼ日本");
+    expect(full).toContain("・一番減った所: 狙い → 順番 (20 → 8 人、-60%)");
+    expect(full).toContain("・この 7 日で来た人 120 人");
   });
   it("異常は控えるだけで Discord には送らない (同じ物は 6 時間に 1 回)、要望は 1 分に 1 件", async () => {
     const { alert } = await import("../server/live/src/monitor");
