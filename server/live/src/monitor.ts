@@ -109,7 +109,8 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     const ret = sum.sessions - sum.newSessions;
     sec("人", [
       `訪問 ${n(sum.sessions)} 回 / ${n(sum.users)} 人 (新しい人 ${n(sum.newSessions)}・前にも来た人 ${n(ret)})`,
-      sum.bounce == null ? null : `何もせず閉じた ${pct(sum.bounce)}${sum.medianMinutes == null ? "" : ` / 使った時間 (真ん中) ${sum.medianMinutes < 1 ? "1 分未満" : `${sum.medianMinutes.toFixed(0)} 分`}`}`,
+      sum.bounce == null ? null : `何もせず閉じた ${n(sum.bounce * sum.sessions)} 回 (${pct(sum.bounce)})`,
+      sum.medianMinutes == null ? null : sum.medianMinutes < 1 ? "半分の人は 1 分未満で閉じた" : `半分の人が ${sum.medianMinutes.toFixed(0)} 分以上使った`,
       sum.wau ? `この 7 日で来た人 ${n(sum.wau)} 人` : null,
     ]);
     const devMobile = sum.devices.find(([k]) => k === "mobile")?.[1] ?? 0;
@@ -128,14 +129,14 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
       `手で打った ${use("hand:use")}`,
       `シミュレーション: 開いた ${use("mode:sim")} → 回した ${use("sim:run")} → 完成まで ${use("sim:done")}`,
       `取引所を開いた ${use("trade:open")} / レシピ保存 ${use("recipe:save")}`,
-      f ? `一番減った所: ${f.from} → ${f.to} (${f.before} → ${f.after} 人、-${f.pct}%)` : null,
+      f ? `シミュレーションで一番やめた所: ${f.from} → ${f.to} (${f.before} 人 → ${f.after} 人)` : null,
     ]);
   }
   sec("届いた物", [`要望 ${feedback.requests} / バグ報告 ${feedback.bugs}`]);
   const err = sum?.byEvent.get("error");
   sec("問題", [
     err ? `画面のエラー ${err.count} 件 (${err.sessions} 人)${sum!.errors.length ? `: ${sum!.errors[0]![0].slice(0, 60)}` : ""}` : sum ? "画面のエラー なし" : null,
-    `サーバー ${n(usage.liveRequests)} 回動いてエラー ${n(usage.liveErrors)}`,
+    `サーバー: ${n(usage.liveRequests)} 回・エラー ${n(usage.liveErrors)}`,
     alerts.length ? `異常の通知 ${alerts.length} 回: ${alerts.slice(0, 5).join(" / ")}` : "異常の通知 なし",
     live ? `配信の見張り ${live.errors.length ? `気になる所 ${live.errors.length} (${live.errors[0]!.slice(0, 80)})` : "異常なし"} · ライブ中 ${live.live.length} 人` : "配信の見張り まだ動いていない",
     sum?.warnings.length ? `集計で取れなかった所: ${sum.warnings.join(" / ")}` : null,
