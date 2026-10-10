@@ -204,6 +204,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
 }
+/* Web 版 (web.html の html.web-page) は PC もページ全体を送る: スクロールの棒は窓の右端の 1 本だけ、チャンネルは sticky で付いてくる
+   (2026-10-11 オーナー「スクロールは全体スクロールだけ、例外は工程の中」)。hidden だと sticky が効かないので横は clip */
+html.web-page, html.web-page body, html.web-page #app { height: auto; min-height: 100%; }
+html.web-page, html.web-page body { overflow-x: clip; }
+html.web-page body { overflow-y: visible; }
 /* スマホ (Web 版、幅 768 px 未満): ページ全体を指で縦に送る。PC は各画面の中で送るので body は固定のまま
    (2026-10-08 オーナー「スクロールができんな Web 版スマホ」: body の overflow: hidden で指の送りが効かなかった) */
 @media (max-width: 767px) {

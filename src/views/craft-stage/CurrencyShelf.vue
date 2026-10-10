@@ -205,10 +205,9 @@ const TABS = computed(() => (!props.full ? [] : [
 </script>
 
 <template>
-  <!-- 手で打つ画面の棚は高さを固定して中だけ送る (2026-10-10 オーナー「基本的に高さは固定でここまで」) -->
   <div ref="root" class="relative" data-shelf-root>
-    <!-- 中の一覧だけ高さを固定して送る (重ねて出す欄は外に。中に入れると欄のはみ出しで棚がスクロールし、欄が切れた) -->
-    <div ref="scroller" :class="full ? '' : 'max-h-[520px] overflow-y-auto pr-1 max-md:max-h-none max-md:overflow-visible'" @scroll="onInnerScroll">
+    <!-- 棚の中では送らない (2026-10-11 オーナー「カレンシーはスクロール禁止、スクロールは全体だけ、例外は工程の中」) -->
+    <div ref="scroller" @scroll="onInnerScroll">
     <div v-if="TABS.length" class="mb-2 flex flex-wrap gap-1 text-[12px]">
       <button
         v-for="t in TABS"

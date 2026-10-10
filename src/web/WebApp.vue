@@ -78,8 +78,9 @@ window.addEventListener("resize", fitZoom);
 </script>
 
 <template>
-  <!-- スマホは高さを決めず、ページ全体を縦に送る (決まり事の footer も一緒に流れる) -->
-  <div class="flex flex-col" :style="phone ? { width: `${frame.w}px`, minHeight: `${frame.h}px` } : { width: `${frame.w}px`, height: `${frame.h}px` }">
+  <!-- 高さを決めず、ページ全体を縦に送る (決まり事の footer も一緒に流れる)。PC も同じ: スクロールの棒は窓の右端の 1 本だけ
+       (2026-10-11 オーナー「スクロールはチャンネルの右側でおｋ、全体スクロールだけ」) -->
+  <div class="flex flex-col" :style="{ width: `${frame.w}px`, minHeight: `${frame.h}px` }">
     <header class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto flex-wrap gap-1.5 px-2 py-1.5 text-[12px]' : 'h-10'">
       <!-- スマホは 2 段 (1 段目 = ロゴ、2 段目 = 版とボタン。2026-10-10 支援するを足して 1 段に入らなくなった) -->
       <span class="flex shrink-0 items-center" :class="phone ? 'basis-full gap-1' : 'gap-2'">
@@ -113,8 +114,8 @@ window.addEventListener("resize", fitZoom);
     <SupportDialog />
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
-    <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
-      <CraftStage class="min-w-0 flex-1" :class="phone ? 'shrink-0 !h-auto !overflow-visible' : ''">
+    <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : 'items-start'">
+      <CraftStage class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <!-- 決まり事 (2026-10-07、2026-10-10 から画面に貼り付けずクラフトステージの一番下): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
           <footer class="-mx-4 mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--exile-color-border-subtle)] px-4 py-2 text-[10px] opacity-50">
@@ -125,7 +126,8 @@ window.addEventListener("resize", fitZoom);
           </footer>
         </template>
       </CraftStage>
-      <aside class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] overflow-y-auto border-l'">
+      <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」) -->
+      <aside class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'sticky top-0 w-[280px] self-start border-l'">
         <LivePanel />
       </aside>
     </div>
