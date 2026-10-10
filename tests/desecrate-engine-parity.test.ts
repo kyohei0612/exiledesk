@@ -59,7 +59,9 @@ describe("勢力のお告げ (ウラマン) の候補に出る確率: 計算機 
     for (let s = 1; s <= N; s++) {
       const b = applyCurrency(data, it0, "desecrate", mulberry32(s), ["OmenoftheSovereign"]);
       const o = revealOffers(data, b.item, mulberry32(s + 5151)).first;
-      expect(o.every((m) => data.mods.get(m.modId)!.tags.includes("ulaman_mod"))).toBe(true);
+      // 勢力の MOD は必ず 1 つ以上、足りない分は普通の MOD で 3 つ (2026-10-11、ゲームの文面「保証」)
+      expect(o.some((m) => data.mods.get(m.modId)!.tags.includes("ulaman_mod"))).toBe(true);
+      expect(o.length).toBe(3);
       if (o.some((m) => m.modId === target.id)) hit++;
     }
     expect(engine).toBeGreaterThan(0);

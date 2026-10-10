@@ -52,7 +52,11 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   // 側: お告げ → それ、無ければ出うる MOD の重みで
   const omenSide: StageSide | null = mark ? mark.side : used.includes("OmenofSinistralNecromancy") ? "prefix" : used.includes("OmenofDextralNecromancy") ? "suffix" : null;
   const gnawed = key === "desecrate_gnawed";
-  const weightOf = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined, false, gnawed).reduce((a, c) => a + c.w, 0);
+  const factionW = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined, false, gnawed).reduce((a, c) => a + c.w, 0);
+  // 勢力のお告げで、その勢力の MOD がどの空いた側にも出せない時は普通の重みで (発現は普通の MOD 3 つ。フォーラム 3956293)
+  const openSides = SIDES.filter((s) => room(item, s));
+  const noFaction = !!faction && !(openSides.length ? openSides : SIDES).some((s) => factionW(s) > 0);
+  const weightOf = (side: StageSide) => (noFaction ? pool(data, item, side, floor, altered, null, undefined, true, gnawed).reduce((a, c) => a + c.w, 0) : factionW(side));
   let side: StageSide;
   if (omenSide) side = omenSide;
   else {
@@ -92,8 +96,12 @@ export function boneSideWeights(data: PatchData, item: StageItem, key: string, u
   const factionOmen = used.find((o) => FACTION_TAG[o]);
   const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;
   const gnawed = key === "desecrate_gnawed";
-  const w = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined, false, gnawed).reduce((a, c) => a + c.w, 0);
-  return { prefix: w("prefix"), suffix: w("suffix") };
+  const fw = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined, false, gnawed).reduce((a, c) => a + c.w, 0);
+  if (faction && !(fw("prefix") > 0) && !(fw("suffix") > 0)) {
+    const nw = (side: StageSide) => pool(data, item, side, floor, altered, null, undefined, true, gnawed).reduce((a, c) => a + c.w, 0);
+    return { prefix: nw("prefix"), suffix: nw("suffix") };
+  }
+  return { prefix: fw("prefix"), suffix: fw("suffix") };
 }
 
 /** 冒涜専用の MOD (冒涜の置き場の物と、変質した鎖骨の異界の MOD) */
@@ -142,7 +150,26 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
     const t = pickWeighted(c.tiers, rng)!;
     return { ...makeStageMod(c.mod, c.side, t.index, rng), desecrated: true };
   };
-  // 勢力のお告げ (その勢力の専用だけ) と腐食のお告げ (普通だけ) は 1 つの置き場から重みで
+  // 勢力のお告げ: その勢力の専用 MOD を MOD ごとに等しく 3 つまで、足りなければ残りは普通の MOD を普通の重みで
+  // (ゲームの文面は「ランダムな <勢力> の MOD を保証」で「だけ」ではない。2026-10-11 オーナー「2 つしか付かない場合は一般 MOD が 1 個混じる」)
+  const drawFaction = (): StageMod[] => {
+    let fac = pool(data, item, hidden.side, floor, altered, faction, hidden, false, gnawed);
+    let normal = pool(data, item, hidden.side, floor, altered, null, hidden, true, gnawed);
+    const picked: Candidate[] = [];
+    while (picked.length < OFFERS && fac.length) {
+      const c = pickWeighted(fac, rng)!;
+      picked.push(c);
+      fac = notClashing(fac, c);
+      normal = notClashing(normal, c);
+    }
+    while (picked.length < OFFERS && normal.length) {
+      const c = pickWeighted(normal, rng)!;
+      picked.push(c);
+      normal = notClashing(normal, c);
+    }
+    return picked.map(toMod);
+  };
+  // 腐食のお告げ (普通だけ) は 1 つの置き場から重みで
   const drawOne = (): StageMod[] => {
     let rest = pool(data, item, hidden.side, floor, altered, faction, hidden, plain, gnawed);
     const out: StageMod[] = [];
@@ -154,7 +181,8 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
     return out;
   };
   const draw = (): StageMod[] => {
-    if (faction || plain) return drawOne();
+    if (faction) return drawFaction();
+    if (plain) return drawOne();
     const all = pool(data, item, hidden.side, floor, altered, null, hidden, false, gnawed);
     const exclusive = exclusiveTest(item, hidden.side);
     const isExclusive = (c: Candidate) => exclusive(c.mod);

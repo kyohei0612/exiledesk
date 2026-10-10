@@ -145,7 +145,8 @@ function addBoneRun(data: PatchData, item: StageItem, key: string, omens: readon
     const mod = data.mods.get(id);
     if (!mod) continue;
     const atLeast = boss
-      ? mod.tiers.map((_, i) => (i === 0 ? desecrationBossOfferProbability(data, state, id, { omen: boss, rerolls, ...(key === "desecrate_gnawed" ? { gnawed: true } : {}), ...(constrainTo ? { constrainTo } : {}) }) : 0))
+      // 勢力の MOD は段を分けない (先頭にまとめる)、混じる普通の MOD は段ごと
+      ? mod.tiers.map((_, i) => (i === 0 || mod.source === "normal" ? desecrationBossOfferProbability(data, state, id, { omen: boss, rerolls, floor: opts.floor, minTierIndex: i, ...(key === "desecrate_gnawed" ? { gnawed: true } : {}), ...(constrainTo ? { constrainTo } : {}) }) : 0))
       : mod.tiers.map((_, i) => desecrationOfferProbability(data, state, id, { ...opts, minTierIndex: i }));
     const w = atLeast[0] ?? 0;
     if (!(w > 0)) continue;

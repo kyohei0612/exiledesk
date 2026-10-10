@@ -931,40 +931,93 @@ export function desecrationOfferProbability(
 }
 
 /**
- * ExileDesk 2026-10-09: a boss omen (Sovereign / Liege / Blackblooded). Every one of the three revealed options is
- * that faction's exclusive mod — fewer when the side holds fewer (SaVeQ 0.5.5: a ring's Ulaman prefixes are two, so
- * the reveal shows two). Count-uniform, drawn without replacement, on the side the bone landed: the bone picks the
- * side by how many of the faction's mods each open side can show (the emulator's bone does the same), unless a
- * Necromancy omen fixed it. So P = P(side) · min(1, 3 / n_side); an Omen of Abyssal Echoes reshows the same side.
- * Replaces the per-draw 1/N run through three independent draws, which was not what the emulator plays.
+ * ExileDesk 2026-10-09 / 2026-10-11: a boss omen (Sovereign / Liege / Blackblooded). The game text is "will guarantee a random
+ * <faction> modifier" — not "only". The reveal shows that faction's exclusive mods first (count-uniform, without replacement,
+ * a pick removing the others of its family), up to three; when the side holds fewer, the rest of the three are NORMAL mods by
+ * their normal weight (owner 2026-10-11: two Amanamu mods → one normal mod mixed in; forum 3956293: a wand whose prefixes
+ * blocked every Amanamu mod showed three normal mods). The bone picks the side by how many of the faction's mods each open
+ * side can show (the emulator's bone does the same), by the normal weight when neither side can show one, unless a
+ * Necromancy omen fixed it. An Omen of Abyssal Echoes reshows the same side.
  */
 export function desecrationBossOfferProbability(
   data: PatchData, item: ItemState, desiredModId: string,
-  opts: { omen: DesecrationBossOmen; constrainTo?: AffixType; rerolls?: number; gnawed?: boolean },
+  opts: { omen: DesecrationBossOmen; constrainTo?: AffixType; rerolls?: number; gnawed?: boolean; floor?: number; minTierIndex?: number },
 ): number {
   const mod = data.mods.get(desiredModId);
   if (!mod) return 0;
   const tag = DES_BOSS_TAG[opts.omen];
-  if (!mod.tags.includes(tag)) return 0;
+  const isFaction = mod.tags.includes(tag);
+  if (!isFaction && mod.source !== 'normal') return 0;
   if (opts.constrainTo && opts.constrainTo !== mod.type) return 0;
+  if (!familyAvailable(data, item, mod)) return 0;
+  const floor = opts.floor ?? 0;
   const open = { prefix: !prefixesFull(item), suffix: !suffixesFull(item) };
-  const modsOf = (sd: AffixType): Mod[] => {
+  const factionOf = (sd: AffixType): Mod[] => {
     if (!open[sd]) return [];
     const ids = sd === 'prefix' ? item.base.pools.desecrated.prefixes : item.base.pools.desecrated.suffixes;
     return [...new Set(ids)].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && m.tags.includes(tag) && familyAvailable(data, item, m) && m.tiers.some((t) => (!opts.gnawed || t.ilvl <= item.level) && t.weight > 0)); // exclusive mods ignore item level unless Gnawed (see desecrationOfferProbability)
   };
-  if (!familyAvailable(data, item, mod)) return 0;
-  const hereMods = modsOf(mod.type);
-  const here = hereMods.length;
-  if (here === 0) return 0;
-  const other = opts.constrainTo ? 0 : modsOf(mod.type === 'prefix' ? 'suffix' : 'prefix').length;
-  const pSide = here / (here + other);
-  // Each faction mod is equally likely; a pick removes the others of its family (two Armour Break mods are never offered together)
-  const pool = pickPool(hereMods, () => 1);
-  const t = pool.ids.indexOf(desiredModId);
-  if (t < 0) return 0;
-  const pIn = Math.min(1, inPicks(pool.ws, pool.clash, t, DESECRATION_OFFER_COUNT));
-  return pSide * (1 - (1 - pIn) ** (1 + (opts.rerolls ?? 0)));
+  const exSet = new Set([...item.base.pools.desecrated.prefixes, ...item.base.pools.desecrated.suffixes]);
+  const normalOf = (sd: AffixType): Mod[] => {
+    if (!open[sd]) return [];
+    const ids = sd === 'prefix' ? item.base.pools.normal.prefixes : item.base.pools.normal.suffixes;
+    return [...new Set(ids)].filter((id) => !exSet.has(id)).map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && familyAvailable(data, item, m) && rollableWeight(m, item.level, floor) > 0);
+  };
+  const side = mod.type;
+  const hereF = factionOf(side);
+  if (!open[side]) return 0;
+  // Side: by faction count; by normal weight when neither side has one
+  let pSide = 1;
+  if (!opts.constrainTo) {
+    const other: AffixType = side === 'prefix' ? 'suffix' : 'prefix';
+    const thereF = factionOf(other).length;
+    if (hereF.length + thereF > 0) pSide = hereF.length / (hereF.length + thereF);
+    else {
+      const nw = (sd: AffixType) => normalOf(sd).reduce((a2, m) => a2 + rollableWeight(m, item.level, floor), 0);
+      const h = nw(side), t2 = nw(other);
+      pSide = h + t2 > 0 ? h / (h + t2) : 0;
+    }
+  }
+  if (!(pSide > 0)) return 0;
+  const fac = pickPool(hereF, () => 1);
+  let pIn = 0;
+  if (isFaction) {
+    const t = fac.ids.indexOf(desiredModId);
+    if (t < 0) return 0;
+    pIn = Math.min(1, inPicks(fac.ws, fac.clash, t, DESECRATION_OFFER_COUNT));
+  } else {
+    // Faction picks first (until three or the pool runs dry), each also taking the normal mods of its family out; the rest are normal
+    const normalMods = normalOf(side);
+    const w = (m: Mod) => rollableWeight(m, item.level, floor);
+    const pool = pickPool(normalMods, w);
+    const t = pool.ids.indexOf(desiredModId);
+    if (t < 0) return 0;
+    const famsN = normalMods.map((m) => familiesOf(m));
+    const cross = hereF.map((em) => { const f = new Set(familiesOf(em)); return famsN.flatMap((fs, i) => (fs.some((x) => f.has(x)) ? [i] : [])); });
+    const alive = new Uint8Array(fac.ws.length).fill(1);
+    const dead: number[] = [];
+    const walk = (W: number, depth: number, prob: number): void => {
+      if (depth === DESECRATION_OFFER_COUNT) return;
+      if (!(W > 0)) { pIn += prob * inPicks(pool.ws, pool.clash, t, DESECRATION_OFFER_COUNT - depth, dead); return; }
+      for (let j = 0; j < fac.ws.length; j++) {
+        if (!alive[j]) continue;
+        const off: number[] = [];
+        let removed = 0;
+        for (const k2 of fac.clash[j]!) if (alive[k2]) { alive[k2] = 0; off.push(k2); removed += fac.ws[k2]!; }
+        const n0 = dead.length;
+        dead.push(...cross[j]!);
+        walk(W - removed, depth + 1, prob / W);
+        dead.length = n0;
+        for (const k2 of off) alive[k2] = 1;
+      }
+    };
+    walk(fac.ws.reduce((a2, x) => a2 + x, 0), 0, 1);
+    const succ = rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0);
+    const whole = rollableWeight(mod, item.level, floor);
+    if (!(whole > 0)) return 0;
+    pIn *= succ / whole;
+  }
+  return pSide * (1 - (1 - Math.min(1, pIn)) ** (1 + (opts.rerolls ?? 0)));
 }
 
 export interface DesecrationOptions {
