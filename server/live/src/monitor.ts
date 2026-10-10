@@ -146,13 +146,15 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     records != null ? `分析用の記録 ${records.toLocaleString("ja-JP")} 件` : null,
   ]);
   // 結果を踏まえたアドバイス (2026-10-10 オーナー「最後に結果踏まえたアドバイス」)。数字の決まりで出し分け、多くて 3 つ
-  sec("アドバイス", adviceOf(sum, feedback, alerts));
+  sec("アドバイス", adviceOf(sum, feedback, alerts, usage.liveRequests ?? 0));
   return out.join("\n");
 }
 
 /** 日報の最後のアドバイス (大事な順に 3 つまで。当てはまる物が無ければ「様子見で OK」) */
-export function adviceOf(sum: Summary | null, feedback: { requests: number; bugs: number }, alerts: string[]): string[] {
+export function adviceOf(sum: Summary | null, feedback: { requests: number; bugs: number }, alerts: string[], liveRequests = 0): string[] {
   const out: string[] = [];
+  // 無料枠 (1 日 10 万回) の半分を超えたら有料 (月 5 ドル、月 1,000 万回込み) を考える時 (2026-10-10 オーナーと決めた目安)
+  if (liveRequests >= 50_000) out.push(`サーバーへの問い合わせが ${liveRequests.toLocaleString("en-US")} 回で、無料枠 (1 日 10 万回) の半分を超えました。Cloudflare の有料プラン (月 5 ドル) を考える時です`);
   const err = sum?.byEvent.get("error");
   // 中身の見えないエラー (外のスクリプト) は分けて、直す対象から外す (2026-10-10)
   const ext = sum?.extErrors ?? null;
