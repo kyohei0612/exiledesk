@@ -17,8 +17,11 @@ export const UID_RE = /^[A-Za-z0-9_-]{6,40}$/;
 
 /** 記録しない端末の uid (前の 1 つのリストの分も読む) */
 let memo: { at: number; uids: string[] } | null = null;
-/** 記録が届くたびに KV の一覧を引くと無料枠 (一覧 1 日 1,000 回) を使い切るので、サーバーの中で 5 分覚える */
-const MEMO_MS = 300_000;
+/**
+ * 記録が届くたびに KV の一覧を引くと無料枠 (一覧 1 日 1,000 回) を使い切るので、サーバーの中で 30 分覚える
+ * (2026-10-10 5 分 → 30 分。人が増えてサーバーの数が増えても 1 日 1,000 回に届かないように。記録しない端末はほぼオーナーだけ)
+ */
+const MEMO_MS = 1_800_000;
 export async function forgottenUids(env: Env, now = Date.now()): Promise<string[]> {
   if (memo && now - memo.at < MEMO_MS) return memo.uids;
   try {
