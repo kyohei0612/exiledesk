@@ -1,7 +1,7 @@
 /**
  * exiledesk-live: Web 版のサーバー (Cloudflare Worker、無料枠)。
  *
- *   scheduled (5 分おき)  … YouTube / Twitch に問い合わせ → KV "state" に LiveState を書く (配信の見張り)
+ *   scheduled (8 時間おき) … YouTube / Twitch に問い合わせ → KV "state" に LiveState を書く (配信の見張り)
  *   scheduled (毎朝 9 時 JST) … 日報を Discord に (monitor.ts)・昨日の分析用の記録を JSONL ファイルで LOGS_WEBHOOK に (logs.ts)
  *   GET  /live.json        … 配信の状態 (CORS 許可、60 秒キャッシュ)。サイトはこれを読むだけ
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
@@ -13,7 +13,7 @@
  *   GET  /refresh?key=…    … 配信の見張りを今すぐ
  *   GET  /health
  *
- * 見る人が何人いても YouTube / Twitch への問い合わせは 5 分に 1 回なので、無料枠 (Workers 10 万/日、KV 読み 10 万/日・書き 1,000/日、
+ * 見る人が何人いても YouTube / Twitch への問い合わせは 8 時間に 1 回なので、無料枠 (Workers 10 万/日、KV 読み 10 万/日・書き 1,000/日、
  * YouTube 1 万点/日) に収まる。アイコン (アバター) は 1 日 1 回だけ取り直す。1 回ごとの記録はダッシュボードの「ログ」(reqLog)
  */
 import { forgetUid, forgottenUids, UID_RE } from "./forget";
@@ -220,7 +220,7 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
 
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    // 5 分おきは配信の見張り、毎朝 9 時 (JST = 0:00 UTC) は日報
+    // 8 時間おきに配信の見張り (最新動画。2026-10-10 オーナー「5 分監視、8 時間に 1 回でええな」、前は 5 分おき)、毎朝 9 時 (JST = 0:00 UTC) は日報
     // 同じ時に、昨日 (JST) の分析用の記録をファイルで (日報とは別々に動かす。片方が落ちても、もう片方は送る)
     if (controller.cron === "0 0 * * *") {
       ctx.waitUntil(dailyReport(env));
