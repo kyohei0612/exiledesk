@@ -1,6 +1,6 @@
 [package]
 name = "exiledesk"
-version = "0.1.469"
+version = "0.1.470"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
