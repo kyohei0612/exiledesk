@@ -9,6 +9,7 @@
 -->
 <script setup lang="ts">
 import { scrollBoxOf } from "../../utils/keep-place";
+import { nameOf } from "../../state/craft-stage";
 import { toCss } from "../../utils/zoom";
 import { GAP_X, GAP_Y } from "../../utils/anchor-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -31,6 +32,9 @@ const tab = ref<ShelfTab>(props.initialTab);
  * 今のタブにアイコンが無い時だけ、タブの下に並べて出す
  */
 const root = ref<HTMLElement | null>(null);
+const scroller = ref<HTMLElement | null>(null);
+/** 中の一覧を送ったら、重ねた欄も付いて行く (お告げ) / 閉じる (エッセンスの段) */
+function onInnerScroll(): void { essOpen.value = null; placeAnchor(); }
 /**
  * お告げの欄の置き場: 持っているカレンシーのアイコン (data-key) のすぐ下。アイコンが右寄りなら右端をそろえる。
  * 今のタブにアイコンが無ければ null (今まで通りタブの下に出す)
@@ -39,27 +43,32 @@ const anchor = ref<{ style: Record<string, string> } | null>(null);
 function placeAnchor(): void {
   const k = craftStage.held.value, r = root.value;
   if (!k || !r) { anchor.value = null; return; }
-  const btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-box]"));
+  const btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"], [data-ess-keys~="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-box]") && !b.closest(".ess-anchor"));
   if (!btn) { anchor.value = null; return; }
-  // 画面の座標は拡大率 (zoom) 込みなので、CSS の px に直してから使う (直さずに使って、拡大率の分だけアイコンに被っていた。2026-10-10 オーナー「座標がおかしい」)
+  anchor.value = { style: popPlace(r, btn) };
+  void nextTick(() => {
+    const pop = r.querySelector<HTMLElement>(".held-anchor .held-pop-in");
+    if (pop && anchor.value) anchor.value = { style: popPlace(r, btn, pop) };
+  });
+}
+/**
+ * アイコンを軸に重ねて出す欄 (お告げ・エッセンスの段) の位置。ふだんはアイコンのすぐ下、下で切れる (欄の高さが分かってから) ならすぐ上。
+ * 画面の座標は拡大率 (zoom) 込みなので CSS の px に直す。棚の中の一覧が送られている時は、その枠の下端を見える所の下とする (2026-10-10)。距離は anchor-place.ts の GAP
+ */
+function popPlace(r: HTMLElement, btn: HTMLElement, pop?: HTMLElement): Record<string, string> {
   const rr = r.getBoundingClientRect(), b = btn.getBoundingClientRect();
   const px = (v: number): string => `${Math.round(toCss(v))}px`;
   const side: Record<string, string> = b.left - rr.left < rr.width / 2 ? { left: px(Math.max(0, b.left - rr.left - GAP_X)) } : { right: px(Math.max(0, rr.right - b.right - GAP_X)) };
-  // ふだんはアイコンのすぐ下
-  anchor.value = { style: { top: px(b.bottom - rr.top + GAP_Y), ...side } };
-  // 下で画面から切れるなら、アイコンのすぐ上に (送らない。2026-10-10 オーナー「スクロール判定は逆の上でおｋ、1 行上とかでいい」)。測り直しはその時の位置で
-  void nextTick(() => {
-    const pop = r.querySelector<HTMLElement>(".held-anchor .held-pop-in");
-    if (!pop) return;
-    const sc = scrollBoxOf(r);
-    // スマホは画面の下に固定の帯 (持っている物 → 使う) があるので、その上までを見える所とする (2026-10-10 点検)
-    const bar = window.innerWidth < 768 ? document.querySelector<HTMLElement>(".fixed.bottom-0")?.getBoundingClientRect().height ?? 0 : 0;
-    const viewBottom = Math.min(sc ? sc.getBoundingClientRect().bottom : Infinity, window.innerHeight) - bar;
-    const pr = pop.getBoundingClientRect();
-    if (pr.bottom <= viewBottom - GAP_Y) return;
-    const rr2 = r.getBoundingClientRect(), b2 = btn.getBoundingClientRect();
-    anchor.value = { style: { top: px(b2.top - rr2.top - pr.height - GAP_Y), ...side } };
-  });
+  const below = { top: `${Math.round(toCss(b.bottom - rr.top + GAP_Y))}px`, ...side };
+  if (!pop) return below;
+  const inner = scroller.value;
+  const sc = inner && inner.scrollHeight > inner.clientHeight ? inner : scrollBoxOf(r);
+  // スマホは画面の下に固定の帯 (持っている物 → 使う) があるので、その上までを見える所とする
+  const bar = window.innerWidth < 768 ? document.querySelector<HTMLElement>(".fixed.bottom-0")?.getBoundingClientRect().height ?? 0 : 0;
+  const viewBottom = Math.min(sc ? sc.getBoundingClientRect().bottom : Infinity, window.innerHeight) - bar;
+  const h = pop.getBoundingClientRect().height;
+  if (b.bottom + GAP_Y + h <= viewBottom) return below;
+  return { top: `${Math.round(toCss(b.top - rr.top - h - GAP_Y))}px`, ...side };
 }
 let anchorRo: ResizeObserver | null = null;
 watch([() => craftStage.held.value, () => tab.value, () => craftStage.item.value], () => void nextTick(placeAnchor), { immediate: true });
@@ -114,7 +123,8 @@ const usableAll = computed(() => {
   const sec = (label: string, keys: string[], kind?: string) => ({ label, keys: keys.filter((k) => ok(k) && !craftStage.hidden?.(k)), kind });
   return [
     sec(tr("オーブ・骨", "Orbs & Abyssal Bones"), [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
-    sec(tr("エッセンス", "Essences"), essences.value.flatMap((g) => g.keys)),
+    // エッセンスは種類ごとに 1 つ (押すと段を出す)。どれかの段が使えれば出す (2026-10-10 オーナー「レッサー・グレーター・パーフェクトは 1 つに集約」)
+    { label: tr("エッセンス", "Essences"), keys: essences.value.filter((g) => g.keys.some((k) => ok(k) && !craftStage.hidden?.(k))).map((g) => g.kind), kind: "essence-families" },
     // ルーンはルーンのタブと同じ段ごとのまとまり (クラフトに関わる物だけ)
     ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
     // 「使用可能」だけの時は、その他のルーン (ソウルコア・アイドルも) を一番下にまとめて
@@ -122,6 +132,23 @@ const usableAll = computed(() => {
   ].filter((x) => x.keys.length);
 });
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
+/** エッセンスの種類 → 段の鍵 (レッサー → パーフェクトの順) と、アイコンに使う鍵 (普通の段、無ければ最初) */
+const essFamily = (kind: string) => essences.value.find((g) => g.kind === kind) ?? null;
+const essRep = (kind: string): string => { const ks = essFamily(kind)?.keys ?? []; return ks.find((k) => k.startsWith("essence:normal:")) ?? ks[0] ?? kind; };
+/** 開いているエッセンスの種類 (段の欄) */
+const essOpen = ref<string | null>(null);
+const essPos = ref<Record<string, string> | null>(null);
+function openEss(kind: string, ev: MouseEvent): void {
+  if (essOpen.value === kind) { essOpen.value = null; return; }
+  essOpen.value = kind;
+  // 基準は中のボタン (包みの span は行の箱で測られてずれた)
+  const r = root.value, wrap = ev.currentTarget as HTMLElement, btn = wrap.querySelector<HTMLElement>("button") ?? wrap;
+  if (!r) return;
+  essPos.value = popPlace(r, btn);
+  void nextTick(() => { const pop = r.querySelector<HTMLElement>(".ess-anchor .held-pop-in"); if (pop) essPos.value = popPlace(r, btn, pop); });
+}
+function pickEss(k: string): void { essOpen.value = null; emit("hold", k); }
+watch(() => craftStage.item.value, () => (essOpen.value = null));
 const TABS = computed(() => (!props.full ? [] : [
   { id: "usable" as const, label: `${tr("使用可能", "Usable")} (${usableCount.value})` },
   { id: "orb" as const, label: tr("オーブ・骨", "Orbs & Abyssal Bones") },
@@ -132,7 +159,10 @@ const TABS = computed(() => (!props.full ? [] : [
 </script>
 
 <template>
+  <!-- 手で打つ画面の棚は高さを固定して中だけ送る (2026-10-10 オーナー「基本的に高さは固定でここまで」) -->
   <div ref="root" class="relative" data-shelf-root>
+    <!-- 中の一覧だけ高さを固定して送る (重ねて出す欄は外に。中に入れると欄のはみ出しで棚がスクロールし、欄が切れた) -->
+    <div ref="scroller" :class="full ? '' : 'max-h-[520px] overflow-y-auto pr-1 max-md:max-h-none max-md:overflow-visible'" @scroll="onInnerScroll">
     <div v-if="TABS.length" class="mb-2 flex flex-wrap gap-1 text-[12px]">
       <button
         v-for="t in TABS"
@@ -151,7 +181,14 @@ const TABS = computed(() => (!props.full ? [] : [
           <span class="opacity-60">{{ sec.label }} ({{ sec.keys.length }})</span>
         </p>
         <div class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
-          <ShelfButton v-for="k in sec.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+          <template v-if="sec.kind === 'essence-families'">
+            <span v-for="kind in sec.keys" :key="kind" :data-ess-keys="essFamily(kind)?.keys.join(' ')" @click.capture.stop="openEss(kind, $event)">
+              <ShelfButton :k="essRep(kind)" :label="nameOf(essRep(kind)).replace(/^(レッサー|グレーター|パーフェクト)/, '')" nobadge />
+            </span>
+          </template>
+          <template v-else>
+            <ShelfButton v-for="k in sec.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+          </template>
         </div>
       </div>
       <p v-if="!usableAll.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
@@ -235,8 +272,21 @@ const TABS = computed(() => (!props.full ? [] : [
     </div>
     <!-- オーブ以外のタブ (エッセンス等) で持った時は一番下 (お告げのタブは棚そのものがお告げなので出さない) -->
     <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !anchor" class="mt-3" data-held-box><slot name="held" /></div>
+    </div>
     <!-- 持っている物のお告げは、そのアイコンのすぐ下に重ねて出す (棚は押し下げない。2026-10-10 オーナー「アイコンの下まで持ってきていい」) -->
     <div v-if="$slots.held && anchor" class="held-anchor" :style="anchor.style" data-held-box><div class="held-pop-in"><slot name="held" /></div></div>
+    <!-- エッセンスの段: 種類のアイコンを押すと、お告げの欄と同じ形で出す。使えない段は灰色と理由 (2026-10-10 オーナー) -->
+    <div v-if="essOpen && essFamily(essOpen) && essPos" class="ess-anchor held-anchor" :style="essPos">
+      <div class="held-pop-in p-2">
+        <p class="mb-1 text-[11px] text-white/60">{{ nameOf(essRep(essOpen)) }}</p>
+        <div class="flex flex-wrap gap-1.5">
+          <div v-for="k in essFamily(essOpen)!.keys" :key="k" class="flex w-[86px] flex-col items-center">
+            <ShelfButton :k="k" @pick="pickEss" />
+            <span v-if="craftStage.usable(k)" class="mt-0.5 block w-full text-left text-[9.5px] leading-tight text-rose-300/90">・{{ craftStage.usable(k) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

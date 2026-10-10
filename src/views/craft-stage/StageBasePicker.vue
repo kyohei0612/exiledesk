@@ -31,12 +31,13 @@ const head = ref<HTMLElement | null>(null);
  * 行が見えていれば送らずに縮める (行は一覧の上にあるので動かない)
  */
 async function choose(en: string): Promise<void> {
-  const el = head.value;
+  // 先にクラフトの位置 (ベースの枠の外枠の少し上、data-craft-top の scroll-mt) までぬるっと送ってから縮める (2026-10-10 オーナー「ベース選択後もここでおｋ」)
+  const el = head.value?.closest<HTMLElement>("[data-craft-top]") ?? head.value;
   const box = el ? scrollBoxOf(el) : null;
   if (el) {
-    const top = el.getBoundingClientRect().top;
-    const want = box ? box.getBoundingClientRect().top + 8 : 8;
-    if (top < want) await glideBy(box, top - want, 320);
+    const mt = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+    const want = (box ? box.getBoundingClientRect().top : 0) + 8 + mt;
+    await glideBy(box, el.getBoundingClientRect().top - want, 320);
   }
   open.value = false;
   if (en !== props.base || props.unpicked) emit("pick", en);

@@ -18,7 +18,8 @@ import { useShelf } from "../../state/shelf-context";
 import { omenNote } from "../../services/craft-stage/omens";
 import { tr } from "../../i18n/lang";
 
-const props = defineProps<{ k: string; omen?: boolean }>();
+/** label: 名前の上書き (エッセンスを種類でまとめたアイコン)。nobadge: 段の札を出さない */
+const props = defineProps<{ k: string; omen?: boolean; label?: string; nobadge?: boolean }>();
 const emit = defineEmits<{ pick: [key: string] }>();
 
 const BADGE: Array<[RegExp, [string, string], string]> = [
@@ -81,7 +82,7 @@ onBeforeUnmount(leave);
 <template>
   <button
     type="button"
-    class="group relative flex w-[74px] md:w-[96px] flex-col items-center px-0.5 pb-1 text-[10px] md:text-[11.5px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
+    class="group relative flex w-[74px] md:w-[80px] flex-col items-center px-0.5 pb-1 text-[10px] md:text-[11px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
     :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', reason && !omenBlocked ? 'opacity-35' : '']"
     :aria-label="`${nameOf(k)}${reason ? ` — ${reason}` : ''}`"
     :data-key="k"
@@ -91,12 +92,13 @@ onBeforeUnmount(leave);
     @mouseleave="leave"
   >
     <!-- 枠はゲームの両替所の枠 (持っている時は光る枠、src/styles/game-ui.css) -->
-    <span class="g-slot grid size-[52px] place-items-center md:size-[68px]" :class="[on ? 'on' : '', on && omen ? 'stage-omen-on' : '']">
-      <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain md:h-[52px] md:w-[52px]" draggable="false" />
+    <!-- 2026-10-10 オーナー「サイズも小さくしておｋ、ちょっと大きい」: PC は枠 68 → 56px、絵 52 → 42px -->
+    <span class="g-slot grid size-[52px] place-items-center md:size-[56px]" :class="[on ? 'on' : '', on && omen ? 'stage-omen-on' : '']">
+      <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain md:h-[42px] md:w-[42px]" draggable="false" />
       <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
     </span>
-    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 text-center">{{ nameOf(k) }}</span></span>
-    <span v-if="badge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
+    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 text-center">{{ label ?? nameOf(k) }}</span></span>
+    <span v-if="badge && !nobadge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">{{ tr("有効", "Active") }}</span>
     <span v-if="omenTag" class="mt-px block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">{{ tr("・", "· ") }}{{ omenTag }}</span>
     <span v-if="omenWarn" class="block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
