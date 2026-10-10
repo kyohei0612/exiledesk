@@ -15,12 +15,12 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import ShelfButton from "./ShelfButton.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { useShelf } from "../../state/shelf-context";
-import { bonesFor, CATALYSTS, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
+import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import { tr } from "../../i18n/lang";
 
 const emit = defineEmits<{ hold: [key: string] }>();
-type ShelfTab = "usable" | "orb" | "essence" | "catalyst" | "rune" | "omen";
+type ShelfTab = "usable" | "orb" | "essence" | "rune" | "omen";
 /** 最初に開くタブ。エミュレーターもシミュレーターも「使用可能」(2026-10-09 オーナー「エミュレーターではデフォルトで使用可能」「シミュレーターも使用可能からスタート」) */
 const props = withDefaults(defineProps<{ initialTab?: ShelfTab }>(), { initialTab: "usable" });
 const craftStage = useShelf();
@@ -100,7 +100,7 @@ const sockets = computed(() => {
   return it ? { cap: socketCapOf(it.base, it.cls.category), now: it.sockets ?? 0, used: it.augments?.length ?? 0 } : null;
 });
 const essences = computed(() => essenceShelf(craftStage.data.value, craftStage.item.value));
-const hasCatalyst = computed(() => ["Rings", "Amulets"].includes(craftStage.item.value?.cls.category ?? ""));
+// カタリストは棚に出さない: 品質の種類は品質の帯で選ぶ (2026-10-10 オーナー「カタリストいらんわもう」)。打つ処理は古い手順の再生のため残す
 /**
  * 使用可能のタブ (実験、2026-10-05 オーナー「他のエッセンスとかも。使用可能ってタブを足して、そこに使える物だけ全部」)。
  * オーブ・骨 / エッセンス / カタリスト / ルーン (ソウルコア・アイドルも) のうち、今のアイテムに打てる物だけを種類ごとに。お告げは掛けておく物なので入れない
@@ -114,7 +114,6 @@ const usableAll = computed(() => {
   return [
     sec(tr("オーブ・骨", "Orbs & Abyssal Bones"), [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
     sec(tr("エッセンス", "Essences"), essences.value.flatMap((g) => g.keys)),
-    ...(hasCatalyst.value ? [sec(tr("カタリスト", "Catalysts"), [...CATALYSTS])] : []),
     // ルーンはルーンのタブと同じ段ごとのまとまり (クラフトに関わる物だけ)
     ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
   ].filter((x) => x.keys.length);
@@ -124,7 +123,6 @@ const TABS = computed(() => [
   { id: "usable" as const, label: `${tr("使用可能", "Usable")} (${usableCount.value})` },
   { id: "orb" as const, label: tr("オーブ・骨", "Orbs & Abyssal Bones") },
   { id: "essence" as const, label: `${tr("エッセンス", "Essences")} (${essences.value.length})` },
-  ...(hasCatalyst.value ? [{ id: "catalyst" as const, label: tr("カタリスト", "Catalysts") }] : []),
   ...(sockets.value?.cap ? [{ id: "rune" as const, label: tr("ルーン", "Runes") }] : []),
   { id: "omen" as const, label: craftStage.omens.value.length ? tr(`お告げ (${craftStage.omens.value.length} 枚掛け)`, `Omens (${craftStage.omens.value.length} active)`) : tr("お告げ", "Omens") },
 ]);
@@ -192,9 +190,6 @@ const TABS = computed(() => [
       <p v-if="!essences.length" class="text-[12px] opacity-50">{{ tr("このベースに使えるエッセンスはありません", "No essences for this base") }}</p>
     </div>
 
-    <div v-else-if="tab === 'catalyst'" class="flex flex-wrap gap-1.5">
-      <ShelfButton v-for="k in CATALYSTS" :key="k" :k="k" @pick="emit('hold', $event)" />
-    </div>
 
     <div v-else-if="tab === 'rune'">
       <!-- ソケットの説明と熟練工のオーブは出さない: 新品は最初から規格外の最大のソケット、コラプトでもう 1 つ (2026-10-10 オーナー「こいつもう不必要」) -->
