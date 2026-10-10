@@ -292,7 +292,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 </script>
 
 <template>
-  <section data-mod-list class="text-[12px]" :class="props.embedded || props.overlay ? '' : 'g-panel mt-4'">
+  <section data-mod-list class="@container text-[12px]" :class="props.embedded || props.overlay ? '' : 'g-panel mt-4'">
     <!-- 見出し (押すと畳む) -->
     <div v-if="!props.overlay" role="button" tabindex="0" :aria-expanded="open" class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left" @click="open = !open" @keydown.enter="open = !open">
       <b class="g-sec-title">{{ tr("このベースに付く MOD", "Mods for this base") }}</b>
@@ -326,7 +326,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
           <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">{{ tr("創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ", "Mods exclusive to the Genesis Tree and Wraps · Cannot roll from currency · Add them manually with “Add” in the tier table") }}</span>
           <Disclosure tag="span" kind="section" :open="secShown(sec.sid)" class="ml-auto font-normal md:hidden" />
         </h3>
-        <div v-if="secShown(sec.sid)" class="grid gap-3 md:grid-cols-2">
+        <!-- プレ・サフィの左右は一覧の幅で決める (画面ではなく。窓が狭い小さいパソコンは縦に積む。2026-10-11 オーナー) -->
+        <div v-if="secShown(sec.sid)" class="grid gap-3 @4xl:grid-cols-2">
           <div v-for="col in sec.columns" :key="col.side" class="min-w-0">
             <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2">
               <b class="text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
