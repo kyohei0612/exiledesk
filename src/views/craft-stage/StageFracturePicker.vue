@@ -16,6 +16,7 @@ import { craftStage } from "../../state/craft-stage";
 import { modListFor, shownTags, TAG_STYLE, type ListRow, type ListTier } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
 import { baseNameOf, tr } from "../../i18n/lang";
+import ModalShell from "../../components/ui/ModalShell.vue";
 
 const props = defineProps<{ /** ② の手順の本体の modId (あれば「あるいは」を選ぶ) */ altFor?: string | null }>();
 const emit = defineEmits<{ close: [] }>();
@@ -170,50 +171,51 @@ const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >=
 </script>
 
 <template>
-  <Teleport to="body">
-    <div class="fixed inset-0 z-[400] flex items-center justify-center bg-black/60 p-6" @click.self="emit('close')">
-      <div class="flex max-h-[88vh] w-[1100px] max-w-full flex-col rounded-xl border border-emerald-400/40 bg-[#14120e] text-[12px] shadow-2xl">
-        <div class="flex items-center gap-2 border-b border-white/10 px-4 py-2">
-          <b v-if="host" class="text-sm text-amber-100">{{ tr(`「${hostName}」のあるいはを選ぶ`, `Choose alternatives to "${hostName}"`) }}</b>
-          <b v-else class="text-sm text-emerald-100">{{ tr("① フラクチャーの候補を選ぶ", "① Choose fracture candidates") }}</b>
-          <span v-if="host" class="flex flex-wrap items-center gap-1.5 opacity-90">{{ tr("元の MOD とチェックした物のうち", "Hit when any") }}
-            <button v-for="n in Math.min(3, candidates.length)" :key="n" type="button" class="min-w-7 rounded-lg px-2 py-0.5 font-bold max-md:min-h-10" :class="wantN === n ? 'bg-amber-500/30 text-amber-50 ring-1 ring-amber-400/70' : 'border border-white/20'" @click="wantN = n">{{ n }}</button>
-            {{ tr("つ付けば当たり (どの順番でもいい)", "of the original and checked mods are added (any order)") }} · {{ canChaos ? tr("プレかサフィのどれか (付いた側で道が分かれる)", "Prefix or suffix (path splits by the side it lands on)") : tr("同じ側だけ", "Same side only") }}</span>
-          <span v-else class="opacity-60">{{ s.item.value ? baseNameOf(s.item.value) : "" }} · {{ tr("チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合", "Check to add as a candidate (highest tier reachable at this item level or better), click the name to pick a tier · Candidates must share a side · Chance is the share of weight on that side") }}</span>
-          <span class="ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-emerald-100">{{ candidates.length }}{{ tr(" 個", "") }}</span>
-          <button type="button" class="rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-3 py-1 font-bold text-emerald-100" @click="decide">{{ tr("決定", "Done") }}</button>
-        </div>
-        <div class="grid min-h-0 flex-1 grid-cols-2 max-md:grid-cols-1 gap-4 overflow-auto px-4 py-3">
-          <div v-for="col in columns" :key="col.side" :class="lockedSide && lockedSide !== col.side ? 'opacity-35' : ''">
-            <p class="mb-1 font-bold">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }} {{ tr("系統", "groups") }}</span><span v-if="lockedSide && lockedSide !== col.side" class="ml-2 font-normal text-amber-300">{{ tr("候補と違う側は選べない", "Can't pick the other side") }}</span><span v-else-if="host && canChaos && host.method === 'desecrate' && col.side !== hostSide" class="ml-2 font-normal text-amber-300">{{ tr("選ぶとカオススパムになる (冒涜は片側だけ)", "Picking switches to Chaos spam (Desecration targets one side only)") }}</span></p>
-            <div v-for="r in col.items" :key="r.id" class="mb-1">
-              <!-- あるいはを選ぶ時は、元の MOD とほかの手順の MOD はグレー (2026-10-05 オーナー「＋を押したらその MOD はグレーアウトで、それ以外から探させる」) -->
-              <div class="flex items-center gap-2 rounded px-2 py-1" :title="whyBlocked(r)" :class="isHost(r) || usedElsewhere(r) ? 'bg-white/[0.02] opacity-35' : pickedOf(r) ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
-                <input type="checkbox" :checked="!!pickedOf(r) && !isHost(r)" :disabled="blocked(r) || isHost(r)" class="h-4 w-4 accent-emerald-400" @change="toggle(r)" />
-                <button type="button" class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 text-left" @click="expanded = expanded === r.id ? null : r.id">
-                  <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
-                  <span v-for="t in shownTags(r.tags)" :key="t" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
-                  <span v-if="isHost(r)" class="text-[10px] opacity-80">{{ tr("(元の MOD)", "(original)") }}</span><span v-if="pickedOf(r) && !isHost(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">T{{ (s.data.value?.mods.get(pickedOf(r)!.modId)?.tiers.length ?? 0) - pickedOf(r)!.minTierIndex }}{{ tr(" 以上", "+") }}</span>
-                </button>
-                <span class="w-11 text-right font-bold tabular-nums text-amber-100">{{ pct(r.share) }}</span>
-                <span class="min-w-[22px] rounded-sm bg-emerald-600/80 px-1 text-center text-[11px] font-bold text-white">{{ r.tiers.length }}</span>
-              </div>
-              <table v-if="expanded === r.id" class="mt-0.5 w-full text-[11px]">
-                <tbody>
-                  <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5" :class="t.ilvl > s.itemLevel.value ? 'opacity-40' : ''">
-                    <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
-                    <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
-                    <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
-                    <td class="w-20 py-0.5 text-right">
-                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30" :class="isPickedTier(r, t) ? 'border-emerald-400 bg-emerald-500/40 font-bold text-emerald-50' : isCoveredTier(r, t) ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100' : 'border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/15'" :disabled="blocked(r)" :title="whyBlocked(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ t.rank }}{{ tr(" 以上", "+") }}</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+  <!-- 窓の動きはエミュレーターの窓と同じ ModalShell (2026-10-10 オーナー「動きが統一されてない所」: 緑の枠 → .g-panel、Esc・× を足した) -->
+  <ModalShell :open="true" width="w-[1100px] max-w-full" full-on-phone @close="emit('close')">
+    <template #title>{{ host ? tr(`「${hostName}」のあるいはを選ぶ`, `Choose alternatives to "${hostName}"`) : tr("① フラクチャーの候補を選ぶ", "① Choose fracture candidates") }}</template>
+    <template #header>
+      <span class="ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-emerald-100">{{ candidates.length }}{{ tr(" 個", "") }}</span>
+    </template>
+    <template #subheader>
+      <p v-if="host" class="mt-1 flex flex-wrap items-center gap-1.5 opacity-90">{{ tr("元の MOD とチェックした物のうち", "Hit when any") }}
+        <button v-for="n in Math.min(3, candidates.length)" :key="n" type="button" class="min-w-7 rounded-lg px-2 py-0.5 font-bold max-md:min-h-10" :class="wantN === n ? 'bg-amber-500/30 text-amber-50 ring-1 ring-amber-400/70' : 'border border-white/20'" @click="wantN = n">{{ n }}</button>
+        {{ tr("つ付けば当たり (どの順番でもいい)", "of the original and checked mods are added (any order)") }} · {{ canChaos ? tr("プレかサフィのどれか (付いた側で道が分かれる)", "Prefix or suffix (path splits by the side it lands on)") : tr("同じ側だけ", "Same side only") }}</p>
+      <p v-else class="mt-1 opacity-60">{{ s.item.value ? baseNameOf(s.item.value) : "" }} · {{ tr("チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合", "Check to add as a candidate (highest tier reachable at this item level or better), click the name to pick a tier · Candidates must share a side · Chance is the share of weight on that side") }}</p>
+    </template>
+    <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
+      <div v-for="col in columns" :key="col.side" :class="lockedSide && lockedSide !== col.side ? 'opacity-35' : ''">
+        <p class="mb-1 font-bold">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }} {{ tr("系統", "groups") }}</span><span v-if="lockedSide && lockedSide !== col.side" class="ml-2 font-normal text-amber-300">{{ tr("候補と違う側は選べない", "Can't pick the other side") }}</span><span v-else-if="host && canChaos && host.method === 'desecrate' && col.side !== hostSide" class="ml-2 font-normal text-amber-300">{{ tr("選ぶとカオススパムになる (冒涜は片側だけ)", "Picking switches to Chaos spam (Desecration targets one side only)") }}</span></p>
+        <div v-for="r in col.items" :key="r.id" class="mb-1">
+          <!-- あるいはを選ぶ時は、元の MOD とほかの手順の MOD はグレー (2026-10-05 オーナー「＋を押したらその MOD はグレーアウトで、それ以外から探させる」) -->
+          <div class="flex items-center gap-2 rounded px-2 py-1" :title="whyBlocked(r)" :class="isHost(r) || usedElsewhere(r) ? 'bg-white/[0.02] opacity-35' : pickedOf(r) ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
+            <input type="checkbox" :checked="!!pickedOf(r) && !isHost(r)" :disabled="blocked(r) || isHost(r)" class="h-4 w-4 accent-emerald-400" @change="toggle(r)" />
+            <button type="button" class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 text-left" @click="expanded = expanded === r.id ? null : r.id">
+              <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
+              <span v-for="t in shownTags(r.tags)" :key="t" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
+              <span v-if="isHost(r)" class="text-[10px] opacity-80">{{ tr("(元の MOD)", "(original)") }}</span><span v-if="pickedOf(r) && !isHost(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">T{{ (s.data.value?.mods.get(pickedOf(r)!.modId)?.tiers.length ?? 0) - pickedOf(r)!.minTierIndex }}{{ tr(" 以上", "+") }}</span>
+            </button>
+            <span class="w-11 text-right font-bold tabular-nums text-amber-100">{{ pct(r.share) }}</span>
+            <span class="min-w-[22px] rounded-sm bg-emerald-600/80 px-1 text-center text-[11px] font-bold text-white">{{ r.tiers.length }}</span>
           </div>
+          <table v-if="expanded === r.id" class="mt-0.5 w-full text-[11px]">
+            <tbody>
+              <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5" :class="t.ilvl > s.itemLevel.value ? 'opacity-40' : ''">
+                <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
+                <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
+                <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
+                <td class="w-20 py-0.5 text-right">
+                  <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30" :class="isPickedTier(r, t) ? 'border-emerald-400 bg-emerald-500/40 font-bold text-emerald-50' : isCoveredTier(r, t) ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100' : 'border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/15'" :disabled="blocked(r)" :title="whyBlocked(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ t.rank }}{{ tr(" 以上", "+") }}</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-  </Teleport>
+    <template #footer>
+      <button type="button" class="g-btn" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
+      <button type="button" class="g-btn-red ml-auto min-w-40" @click="decide">{{ tr("決定", "Done") }}</button>
+    </template>
+  </ModalShell>
 </template>

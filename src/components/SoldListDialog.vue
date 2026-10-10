@@ -10,6 +10,7 @@
  *   - 判定は実測そのままを書く (「速い · 3 時間で売れる」「14 件が売れました (売れるまで 3 時間)」)
  */
 import { computed, ref } from "vue";
+import ModalShell from "./ui/ModalShell.vue";
 import { fmtSellTime, verifyFlow, type FlowStore, type VerifyResult } from "../services/market-flow";
 import { currencyJa, displayCurrency, setDisplayCurrency, type DisplayChoice } from "../state/display-currency";
 import { fmtClock, fmtSpan } from "../utils/format-time";
@@ -72,179 +73,176 @@ async function verify(key: string): Promise<void> {
 </script>
 
 <template>
-  <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto bg-black/80" @click.self="emit('close')">
-    <div class="w-full max-w-4xl my-8 rounded-xl border border-amber-400/40 bg-[var(--exile-color-bg-surface)] shadow-xl">
-      <div class="flex items-baseline justify-between gap-3 p-4 pb-2">
-        <h2 class="text-sm font-bold text-amber-100">
-          売れたリスト<span class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ title }}</span>
-          <span v-if="note" class="ml-2 text-[11px] text-[var(--exile-color-text-tertiary)] tracking-normal">{{ note }}</span>
-        </h2>
-        <div class="flex items-center gap-3 text-[11px]">
-          <label class="inline-flex items-center gap-1 text-[var(--exile-color-text-tertiary)]">
-            表示通貨
-            <select
-              class="text-[11px] px-1 py-0.5 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)]"
-              :value="displayCurrency.choice.value"
-              @change="setDisplayCurrency(($event.target as HTMLSelectElement).value as DisplayChoice)"
-            >
-              <option value="exalted">高貴</option>
-              <option value="chaos">カオス</option>
-              <option value="divine">神</option>
-            </select>
-          </label>
-          <button type="button" class="text-[12px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="emit('close')">閉じる</button>
+  <!-- 窓の動き・枠は ModalShell (2026-10-10 オーナー「動きが統一されてない所」: Esc・× が無かった) -->
+  <ModalShell :open="open" title="売れたリスト" width="w-full max-w-4xl" body-class="py-2" @close="emit('close')">
+    <template #header>
+      <span class="text-[12px] text-[var(--exile-color-text-secondary)]">· {{ title }}</span>
+      <span v-if="note" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ note }}</span>
+      <label class="ml-auto inline-flex items-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">
+        表示通貨
+        <select
+          class="text-[11px] px-1 py-0.5 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)]"
+          :value="displayCurrency.choice.value"
+          @change="setDisplayCurrency(($event.target as HTMLSelectElement).value as DisplayChoice)"
+        >
+          <option value="exalted">高貴</option>
+          <option value="chaos">カオス</option>
+          <option value="divine">神</option>
+        </select>
+      </label>
+    </template>
+
+    <!-- 条件ごとの判定 -->
+    <div class="px-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <div v-for="s in summaries" :key="s.key" class="rounded-lg bg-black/20 p-2 text-[11px]">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[var(--exile-color-text-secondary)]">{{ s.label }}</span>
+          <span class="px-1.5 py-0.5 rounded border text-[10px] font-display tracking-[0.06em] leading-none whitespace-nowrap" :class="toneClass(s.tone)">
+            {{ s.verdict }}<template v-if="s.medianMin != null"> · {{ fmtSellTime(s.medianMin) }}で売れる</template>
+          </span>
         </div>
+        <p class="mt-1 text-[var(--exile-color-text-secondary)] leading-relaxed">{{ s.sentence }}</p>
+        <dl class="mt-1 space-y-0.5 tabular-nums text-[var(--exile-color-text-tertiary)]">
+          <div class="flex justify-between gap-2"><dt>売れた</dt><dd>{{ s.gone }} 件</dd></div>
+          <div v-if="s.avgSold != null" class="flex justify-between gap-2 text-[var(--exile-color-text-secondary)]"><dt>平均売値</dt><dd>{{ displayCurrency.money(s.avgSold) }}</dd></div>
+          <div class="flex justify-between gap-2"><dt>まだ並んでいる</dt><dd>{{ s.alive }} 件<span v-if="s.stale"> (うち 2 日超 {{ s.stale }})</span></dd></div>
+          <div v-if="s.olderThanMedian > 0" class="flex justify-between gap-2 text-amber-300"><dt>うち表示より長い</dt><dd>{{ s.olderThanMedian }} 件</dd></div>
+          <div v-if="s.droppedUnsold > 0" class="flex justify-between gap-2"><dt>7 日で打ち切り</dt><dd>{{ s.droppedUnsold }} 件</dd></div>
+          <div v-if="s.truncated" class="flex justify-between gap-2 text-amber-300"><dt>判定不可</dt><dd>出品 100 件超</dd></div>
+          <div class="flex justify-between gap-2"><dt>売れるまで (真ん中の値)</dt><dd>{{ s.medianMin != null ? fmtSpan(s.medianMin * 60) : "—" }}</dd></div>
+          <div class="flex justify-between gap-2"><dt>今の出品数 / 最安</dt><dd>{{ s.total ?? "—" }} 件 / {{ fmtAmount(s.cheapest) }} {{ curLabel(s.cheapestCur) }}</dd></div>
+          <div class="flex justify-between gap-2"><dt>最後に確認</dt><dd>{{ fmtClock(s.sampledAt) }}</dd></div>
+        </dl>
+        <button
+          type="button"
+          class="mt-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40"
+          :disabled="verifying !== ''"
+          title="今この条件で検索を 1 回投げ、記録している出品が今も一覧に載っているかを数えます (判定の土台の確認)"
+          @click="verify(s.key)"
+        >
+          {{ verifying === s.key ? "突き合わせ中…" : "今の検索と突き合わせる" }}
+        </button>
+        <p v-if="verified[s.key]" class="text-[10px] mt-0.5 tabular-nums" :class="verified[s.key]!.ids >= verified[s.key]!.total ? 'text-[var(--exile-color-text-secondary)]' : 'text-amber-300'">
+          今の出品 {{ verified[s.key]!.total }} 件 (ID が取れた分 {{ verified[s.key]!.ids }} 件)<br />
+          追跡中 {{ verified[s.key]!.tracked }} 件のうち、今も並んでいるのが {{ verified[s.key]!.matched }} 件 / 消えたのが {{ verified[s.key]!.missing.length }} 件<br />
+          まだ追跡していない出品 {{ verified[s.key]!.untracked }} 件
+        </p>
+        <p v-else-if="verified[s.key] === null" class="text-[10px] mt-0.5 text-amber-300">突き合わせに失敗しました (レート制限か通信)</p>
+      </div>
+    </div>
+
+    <div class="p-4 pt-3">
+      <!-- 売れた一覧 -->
+      <div class="rounded-xl border border-white/10 p-3 text-[12px] overflow-x-auto">
+        <div class="flex items-baseline gap-3 flex-wrap mb-2">
+          <h3 class="text-[13px] font-bold text-amber-100">売れた出品</h3>
+          <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ soldCount }} 件</span>
+          <span v-for="[c, amt] in grandTotal" :key="c" class="tabular-nums text-emerald-300">{{ fmtAmount(amt) }} {{ curLabel(c) }}</span>
+          <span v-if="relistedCount" class="text-[11px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ relistedCount }} 件は除外</span>
+          <span v-if="unknownCount" class="text-[11px] text-[var(--exile-color-text-tertiary)]" title="出品時刻か出品者が取れておらず、売れたとも付け替えとも言えない分">売れたか不明 {{ unknownCount }} 件は除外</span>
+        </div>
+
+        <p v-if="soldRows.length === 0" class="text-[var(--exile-color-text-tertiary)]">
+          まだ 1 件も売れていません。追跡中の出品が一覧から消えると、ここに値段つきで並びます。
+        </p>
+
+        <table v-if="aliveRows.length" class="w-full">
+          <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+            <tr>
+              <th class="text-left font-normal pb-1">条件</th>
+              <th class="text-right font-normal pb-1 pl-3">値段</th>
+              <th class="text-left font-normal pb-1 pl-3">出品者</th>
+              <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">並んでいた時間</th>
+              <th class="text-left font-normal pb-1 pl-3 whitespace-nowrap">出品時刻</th>
+            </tr>
+          </thead>
+          <tbody v-for="g in checkGroups" :key="g.at">
+            <!-- 確認 1 回ぶんの見出し。まとめて消えて見える理由をここで説明する -->
+            <tr class="border-t border-[var(--exile-color-border-brass)]">
+              <td colspan="5" class="pt-3 pb-1">
+                <div class="flex items-baseline gap-2 flex-wrap">
+                  <span class="text-[13px] font-bold text-amber-100">{{ fmtClock(g.at) }} の確認</span>
+                  <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ g.sold }} 件が売れていた</span>
+                  <!-- 「前の確認」の時刻は記録に無い (売れた物があった確認しか分からない) ので、間隔は出さない -->
+                  <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">(前の確認からこの時刻までの間に売れた)</span>
+                  <span v-if="g.topSeller" class="text-[10px] text-amber-300">同じ出品者 {{ g.topSeller.name }} が {{ g.topSeller.n }} 件</span>
+                  <span v-if="g.relisted" class="text-[10px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ g.relisted }} 件を含む (除外済み)</span>
+                  <span v-if="g.unknown" class="text-[10px] text-[var(--exile-color-text-tertiary)]">売れたか不明 {{ g.unknown }} 件を含む (除外済み)</span>
+                </div>
+              </td>
+            </tr>
+            <tr v-for="r in g.list" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="r.relisted || r.unknown ? 'text-[var(--exile-color-text-tertiary)]' : ''">
+              <td class="py-1 whitespace-nowrap">
+                {{ r.cond }}<span v-if="r.relisted" class="text-[10px]"> · 付け替え</span><span v-else-if="r.unknown" class="text-[10px]"> · 不明</span>
+              </td>
+              <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
+              <td class="py-1 pl-3 max-w-[12rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
+              <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtSpan(r.life) }}</td>
+              <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">
+                {{ fmtClock(r.listedAt ?? r.firstSeen) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2 leading-relaxed">
+          出品の一覧は自動取得の周期ごと (「再取得」や「一括取得」を押した時はその時も) に見ています。見た時に消えていれば売れたと数えるので、
+          <span class="text-[var(--exile-color-text-secondary)]">1 回の確認で何件もまとめて出てくるのが普通</span>です。
+          消えた正確な時刻は分からないので、「並んでいた時間」は出品時刻から確認時刻までの長さです (実際はもっと短い可能性があります)。
+          消えてから 15 分以内に同じ出品者が並べ直した分は、値段の付け替えとみなして売れた件数から外し、この一覧にも出していません。
+          追跡しているのは<span class="text-[var(--exile-color-text-secondary)]">その時点で最安 10 件の出品</span>なので、
+          「売れるまで ◯ 時間」は<span class="text-[var(--exile-color-text-secondary)]">最安帯に並べた場合の時間</span>です。
+          それより高い値段で並んでいる物は「まだ並んでいる出品」に残り続けます。
+        </p>
       </div>
 
-      <!-- 条件ごとの判定 -->
-      <div class="px-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <div v-for="s in summaries" :key="s.key" class="rounded-lg bg-black/20 p-2 text-[11px]">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-[var(--exile-color-text-secondary)]">{{ s.label }}</span>
-            <span class="px-1.5 py-0.5 rounded border text-[10px] font-display tracking-[0.06em] leading-none whitespace-nowrap" :class="toneClass(s.tone)">
-              {{ s.verdict }}<template v-if="s.medianMin != null"> · {{ fmtSellTime(s.medianMin) }}で売れる</template>
-            </span>
-          </div>
-          <p class="mt-1 text-[var(--exile-color-text-secondary)] leading-relaxed">{{ s.sentence }}</p>
-          <dl class="mt-1 space-y-0.5 tabular-nums text-[var(--exile-color-text-tertiary)]">
-            <div class="flex justify-between gap-2"><dt>売れた</dt><dd>{{ s.gone }} 件</dd></div>
-            <div v-if="s.avgSold != null" class="flex justify-between gap-2 text-[var(--exile-color-text-secondary)]"><dt>平均売値</dt><dd>{{ displayCurrency.money(s.avgSold) }}</dd></div>
-            <div class="flex justify-between gap-2"><dt>まだ並んでいる</dt><dd>{{ s.alive }} 件<span v-if="s.stale"> (うち 2 日超 {{ s.stale }})</span></dd></div>
-            <div v-if="s.olderThanMedian > 0" class="flex justify-between gap-2 text-amber-300"><dt>うち表示より長い</dt><dd>{{ s.olderThanMedian }} 件</dd></div>
-            <div v-if="s.droppedUnsold > 0" class="flex justify-between gap-2"><dt>7 日で打ち切り</dt><dd>{{ s.droppedUnsold }} 件</dd></div>
-            <div v-if="s.truncated" class="flex justify-between gap-2 text-amber-300"><dt>判定不可</dt><dd>出品 100 件超</dd></div>
-            <div class="flex justify-between gap-2"><dt>売れるまで (真ん中の値)</dt><dd>{{ s.medianMin != null ? fmtSpan(s.medianMin * 60) : "—" }}</dd></div>
-            <div class="flex justify-between gap-2"><dt>今の出品数 / 最安</dt><dd>{{ s.total ?? "—" }} 件 / {{ fmtAmount(s.cheapest) }} {{ curLabel(s.cheapestCur) }}</dd></div>
-            <div class="flex justify-between gap-2"><dt>最後に確認</dt><dd>{{ fmtClock(s.sampledAt) }}</dd></div>
-          </dl>
-          <button
-            type="button"
-            class="mt-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40"
-            :disabled="verifying !== ''"
-            title="今この条件で検索を 1 回投げ、記録している出品が今も一覧に載っているかを数えます (判定の土台の確認)"
-            @click="verify(s.key)"
-          >
-            {{ verifying === s.key ? "突き合わせ中…" : "今の検索と突き合わせる" }}
-          </button>
-          <p v-if="verified[s.key]" class="text-[10px] mt-0.5 tabular-nums" :class="verified[s.key]!.ids >= verified[s.key]!.total ? 'text-[var(--exile-color-text-secondary)]' : 'text-amber-300'">
-            今の出品 {{ verified[s.key]!.total }} 件 (ID が取れた分 {{ verified[s.key]!.ids }} 件)<br />
-            追跡中 {{ verified[s.key]!.tracked }} 件のうち、今も並んでいるのが {{ verified[s.key]!.matched }} 件 / 消えたのが {{ verified[s.key]!.missing.length }} 件<br />
-            まだ追跡していない出品 {{ verified[s.key]!.untracked }} 件
-          </p>
-          <p v-else-if="verified[s.key] === null" class="text-[10px] mt-0.5 text-amber-300">突き合わせに失敗しました (レート制限か通信)</p>
-        </div>
-      </div>
-
-      <div class="p-4 pt-3">
-        <!-- 売れた一覧 -->
-        <div class="rounded-xl border border-white/10 p-3 text-[12px] overflow-x-auto">
-          <div class="flex items-baseline gap-3 flex-wrap mb-2">
-            <h3 class="text-[13px] font-bold text-amber-100">売れた出品</h3>
-            <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ soldCount }} 件</span>
-            <span v-for="[c, amt] in grandTotal" :key="c" class="tabular-nums text-emerald-300">{{ fmtAmount(amt) }} {{ curLabel(c) }}</span>
-            <span v-if="relistedCount" class="text-[11px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ relistedCount }} 件は除外</span>
-            <span v-if="unknownCount" class="text-[11px] text-[var(--exile-color-text-tertiary)]" title="出品時刻か出品者が取れておらず、売れたとも付け替えとも言えない分">売れたか不明 {{ unknownCount }} 件は除外</span>
-          </div>
-
-          <p v-if="soldRows.length === 0" class="text-[var(--exile-color-text-tertiary)]">
-            まだ 1 件も売れていません。追跡中の出品が一覧から消えると、ここに値段つきで並びます。
-          </p>
-
-          <table v-if="aliveRows.length" class="w-full">
-            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
-              <tr>
-                <th class="text-left font-normal pb-1">条件</th>
-                <th class="text-right font-normal pb-1 pl-3">値段</th>
-                <th class="text-left font-normal pb-1 pl-3">出品者</th>
-                <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">並んでいた時間</th>
-                <th class="text-left font-normal pb-1 pl-3 whitespace-nowrap">出品時刻</th>
-              </tr>
-            </thead>
-            <tbody v-for="g in checkGroups" :key="g.at">
-              <!-- 確認 1 回ぶんの見出し。まとめて消えて見える理由をここで説明する -->
-              <tr class="border-t border-[var(--exile-color-border-brass)]">
-                <td colspan="5" class="pt-3 pb-1">
-                  <div class="flex items-baseline gap-2 flex-wrap">
-                    <span class="text-[13px] font-bold text-amber-100">{{ fmtClock(g.at) }} の確認</span>
-                    <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ g.sold }} 件が売れていた</span>
-                    <!-- 「前の確認」の時刻は記録に無い (売れた物があった確認しか分からない) ので、間隔は出さない -->
-                    <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">(前の確認からこの時刻までの間に売れた)</span>
-                    <span v-if="g.topSeller" class="text-[10px] text-amber-300">同じ出品者 {{ g.topSeller.name }} が {{ g.topSeller.n }} 件</span>
-                    <span v-if="g.relisted" class="text-[10px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ g.relisted }} 件を含む (除外済み)</span>
-                    <span v-if="g.unknown" class="text-[10px] text-[var(--exile-color-text-tertiary)]">売れたか不明 {{ g.unknown }} 件を含む (除外済み)</span>
-                  </div>
-                </td>
-              </tr>
-              <tr v-for="r in g.list" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="r.relisted || r.unknown ? 'text-[var(--exile-color-text-tertiary)]' : ''">
-                <td class="py-1 whitespace-nowrap">
-                  {{ r.cond }}<span v-if="r.relisted" class="text-[10px]"> · 付け替え</span><span v-else-if="r.unknown" class="text-[10px]"> · 不明</span>
-                </td>
-                <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
-                <td class="py-1 pl-3 max-w-[12rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
-                <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtSpan(r.life) }}</td>
-                <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">
-                  {{ fmtClock(r.listedAt ?? r.firstSeen) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2 leading-relaxed">
-            出品の一覧は自動取得の周期ごと (「再取得」や「一括取得」を押した時はその時も) に見ています。見た時に消えていれば売れたと数えるので、
-            <span class="text-[var(--exile-color-text-secondary)]">1 回の確認で何件もまとめて出てくるのが普通</span>です。
-            消えた正確な時刻は分からないので、「並んでいた時間」は出品時刻から確認時刻までの長さです (実際はもっと短い可能性があります)。
-            消えてから 15 分以内に同じ出品者が並べ直した分は、値段の付け替えとみなして売れた件数から外し、この一覧にも出していません。
-            追跡しているのは<span class="text-[var(--exile-color-text-secondary)]">その時点で最安 10 件の出品</span>なので、
-            「売れるまで ◯ 時間」は<span class="text-[var(--exile-color-text-secondary)]">最安帯に並べた場合の時間</span>です。
-            それより高い値段で並んでいる物は「まだ並んでいる出品」に残り続けます。
-          </p>
-        </div>
-
-        <!-- まだ並んでいる -->
-        <div class="mt-3 rounded-xl border border-white/10 p-3 text-[12px] overflow-x-auto">
-          <h3 class="text-[13px] font-bold text-amber-100 mb-1">まだ並んでいる出品 ({{ counts.total }} 件・長い順)</h3>
-          <p v-if="counts.total === 0" class="text-[var(--exile-color-text-tertiary)]">最後の取得では出品はありませんでした。</p>
-          <table v-if="aliveRows.length" class="w-full">
-            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
-              <tr>
-                <th class="text-left font-normal pb-1">条件</th>
-                <th class="text-right font-normal pb-1 pl-3">値段</th>
-                <th class="text-left font-normal pb-1 pl-3">出品者</th>
-                <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">並んでいる時間</th>
-                <th class="text-left font-normal pb-1 pl-3 whitespace-nowrap">出品時刻</th>
-              </tr>
-            </thead>
+      <!-- まだ並んでいる -->
+      <div class="mt-3 rounded-xl border border-white/10 p-3 text-[12px] overflow-x-auto">
+        <h3 class="text-[13px] font-bold text-amber-100 mb-1">まだ並んでいる出品 ({{ counts.total }} 件・長い順)</h3>
+        <p v-if="counts.total === 0" class="text-[var(--exile-color-text-tertiary)]">最後の取得では出品はありませんでした。</p>
+        <table v-if="aliveRows.length" class="w-full">
+          <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+            <tr>
+              <th class="text-left font-normal pb-1">条件</th>
+              <th class="text-right font-normal pb-1 pl-3">値段</th>
+              <th class="text-left font-normal pb-1 pl-3">出品者</th>
+              <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">並んでいる時間</th>
+              <th class="text-left font-normal pb-1 pl-3 whitespace-nowrap">出品時刻</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in aliveRows" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]">
+              <td class="py-1 whitespace-nowrap">{{ r.cond }}</td>
+              <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
+              <td class="py-1 pl-3 max-w-[12rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
+              <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap" :class="r.age >= 48 * 3600 ? 'text-rose-300' : ''">{{ fmtSpan(r.age) }}</td>
+              <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">
+                {{ fmtClock(r.listedAt) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="counts.untracked > 0" class="mt-1 text-[var(--exile-color-text-tertiary)]">ほか {{ counts.untracked }} 件 (安い順で 11 件目以降。値段と出品者は取っていません)</p>
+        <template v-if="pendingRows.length">
+          <h4 class="text-[12px] font-bold text-[var(--exile-color-text-secondary)] mt-3 mb-1">最後の取得で見えなくなった出品 ({{ pendingRows.length }} 件・出品数には入れない。次の取得でも無ければ売れた)</h4>
+          <table class="w-full text-[var(--exile-color-text-tertiary)]">
             <tbody>
-              <tr v-for="r in aliveRows" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]">
+              <tr v-for="r in pendingRows" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]">
                 <td class="py-1 whitespace-nowrap">{{ r.cond }}</td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
                 <td class="py-1 pl-3 max-w-[12rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
-                <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap" :class="r.age >= 48 * 3600 ? 'text-rose-300' : ''">{{ fmtSpan(r.age) }}</td>
-                <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">
-                  {{ fmtClock(r.listedAt) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span>
-                </td>
+                <td class="py-1 pl-3 tabular-nums whitespace-nowrap">{{ fmtClock(r.listedAt) }}</td>
               </tr>
             </tbody>
           </table>
-          <p v-if="counts.untracked > 0" class="mt-1 text-[var(--exile-color-text-tertiary)]">ほか {{ counts.untracked }} 件 (安い順で 11 件目以降。値段と出品者は取っていません)</p>
-          <template v-if="pendingRows.length">
-            <h4 class="text-[12px] font-bold text-[var(--exile-color-text-secondary)] mt-3 mb-1">最後の取得で見えなくなった出品 ({{ pendingRows.length }} 件・出品数には入れない。次の取得でも無ければ売れた)</h4>
-            <table class="w-full text-[var(--exile-color-text-tertiary)]">
-              <tbody>
-                <tr v-for="r in pendingRows" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]">
-                  <td class="py-1 whitespace-nowrap">{{ r.cond }}</td>
-                  <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
-                  <td class="py-1 pl-3 max-w-[12rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
-                  <td class="py-1 pl-3 tabular-nums whitespace-nowrap">{{ fmtClock(r.listedAt) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </template>
-          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            2 日以上並んだままの出品は赤字にしています。その値段では買い手が付いていないという目安です。
-          </p>
-        </div>
+        </template>
+        <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+          2 日以上並んだままの出品は赤字にしています。その値段では買い手が付いていないという目安です。
+        </p>
       </div>
     </div>
-  </div>
+    <template #footer>
+      <button type="button" class="g-btn sm ml-auto" @click="emit('close')">閉じる</button>
+    </template>
+  </ModalShell>
 </template>

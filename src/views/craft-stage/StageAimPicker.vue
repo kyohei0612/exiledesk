@@ -8,12 +8,13 @@
   決めるまでは s.aims を触らない (やめるで元のまま)。
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { GROUP_JA, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { scrollToTop } from "../../utils/keep-place";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
+import ModalShell from "../../components/ui/ModalShell.vue";
 import { tr } from "../../i18n/lang";
 
 const seed = s.aimPicker.value?.seed ?? null;
@@ -84,70 +85,57 @@ function decide(): void {
   // 確率の一覧の見出し (と狙いの札) が見える所へ
   void nextTick(() => scrollToTop(document.querySelector("[data-aim-panel]")));
 }
-// 窓の後ろのページは送らない (スマホで指が滑って下のページが動いていた)
-let prevOverflow = "";
-onMounted(() => { prevOverflow = document.body.style.overflow; document.body.style.overflow = "hidden"; });
-onBeforeUnmount(() => { document.body.style.overflow = prevOverflow; });
-const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") close(); };
-onMounted(() => window.addEventListener("keydown", onKey));
-onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 </script>
 
 <template>
-  <Teleport to="body">
-    <div class="fixed inset-0 z-[400] flex items-center justify-center bg-black/65 p-6 max-md:items-stretch max-md:p-0" @click.self="close">
-      <div class="g-panel flex max-h-[88vh] w-[1000px] max-w-full flex-col text-[12px] max-md:max-h-none max-md:w-full max-md:rounded-none">
-        <!-- 見出し: 題・選んだ物 (いつも見える所に) -->
-        <header class="border-b border-white/10 px-3 py-2">
-          <p class="flex items-center gap-2">
-            <b class="g-brush text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">{{ tr("次の手で狙う", "Target next move") }}</b>
-            <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ AIM_MAX }} · {{ tr("全部付いて当たり", "Hit when all roll") }}</span>
-            <button type="button" class="ml-auto grid size-9 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10" :title="tr('やめる', 'Cancel')" @click="close"><Icon name="x" class="size-5" /></button>
-          </p>
-          <p v-if="draft.length" class="mt-1 flex flex-wrap gap-1">
-            <span v-for="a in draft" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ a.label }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="draft = draft.filter((x) => x !== a)">×</button></span>
-          </p>
-          <p v-else class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("狙う MOD にチェック (名前を押すと段を選べる)", "Check the mods to target (click a name to pick a tier)") }}</p>
-          <nav v-if="groups.length > 1" class="mt-2 flex flex-wrap gap-1">
-            <button v-for="g in groups" :key="g" type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="group === g ? 'on' : ''" @click="group = g">{{ GROUP_JA[g] }}</button>
-          </nav>
-        </header>
-        <div class="grid min-h-0 flex-1 grid-cols-2 gap-4 overflow-auto px-3 py-2 max-md:grid-cols-1 max-md:gap-2">
-          <div v-for="col in columns" :key="col.side">
-            <p class="mb-1 font-bold text-[var(--exile-color-text-secondary)]">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }}</span></p>
-            <p v-if="!col.items.length" class="text-[11px] opacity-50">{{ tr("無し", "None") }}</p>
-            <div v-for="r in col.items" :key="r.id" class="mb-1">
-              <div class="flex items-center gap-2 rounded px-2 py-1 max-md:py-1.5" :class="pickedOf(r) ? 'bg-[rgba(163,52,42,0.30)] ring-1 ring-[var(--exile-color-border-brass)]' : whyNot(r) ? 'opacity-40' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
-                <input type="checkbox" :checked="!!pickedOf(r)" :disabled="!pickedOf(r) && !!whyNot(r)" class="size-5 shrink-0 accent-amber-500" :aria-label="r.text" @change="toggle(r)" />
-                <button type="button" class="g-plain flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 text-left" @click="expanded = expanded === r.id ? null : r.id">
-                  <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
-                  <span v-if="pickedOf(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ tr(`${rankOf(pickedOf(r)!)} 以上`, `${rankOf(pickedOf(r)!)}+`) }}</span>
-                  <span v-else-if="whyNot(r)" class="text-[10px]">{{ whyNot(r) }}</span>
-                  <Icon :name="expanded === r.id ? 'chevron-up' : 'chevron-down'" class="size-3.5 opacity-50" />
-                </button>
-                <span class="w-11 shrink-0 text-right font-bold tabular-nums text-amber-100" :title="tr('出やすさ (同じ側の重みの割合)', 'Chance (share of weight on the same side)')">{{ pct(r.share) }}</span>
-              </div>
-              <table v-if="expanded === r.id" class="mt-0.5 w-full text-[11px]">
-                <tbody>
-                  <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5" :class="t.ilvl > s.itemLevel.value ? 'opacity-40' : ''">
-                    <td class="w-8 py-0.5 pl-2 font-bold text-amber-200">{{ t.rank }}</td>
-                    <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
-                    <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
-                    <td class="w-20 py-0.5 text-right">
-                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30 max-md:min-h-9 max-md:px-2.5 max-md:text-[12px]" :class="isPickedTier(r, t) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50' : isCoveredTier(r, t) ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :disabled="!pickedOf(r) && !!whyNot(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+  <!-- 窓の動き (Esc・後ろを押す・×・後ろのページを止める) は ModalShell (2026-10-10 これが原点) -->
+  <ModalShell :open="true" :title="tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
+    <template #header>
+      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ AIM_MAX }} · {{ tr("全部付いて当たり", "Hit when all roll") }}</span>
+    </template>
+    <template #subheader>
+      <p v-if="draft.length" class="mt-1 flex flex-wrap gap-1">
+        <span v-for="a in draft" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ a.label }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="draft = draft.filter((x) => x !== a)">×</button></span>
+      </p>
+      <p v-else class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("狙う MOD にチェック (名前を押すと段を選べる)", "Check the mods to target (click a name to pick a tier)") }}</p>
+      <nav v-if="groups.length > 1" class="mt-2 flex flex-wrap gap-1">
+        <button v-for="g in groups" :key="g" type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="group === g ? 'on' : ''" @click="group = g">{{ GROUP_JA[g] }}</button>
+      </nav>
+    </template>
+    <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1 max-md:gap-2">
+      <div v-for="col in columns" :key="col.side">
+        <p class="mb-1 font-bold text-[var(--exile-color-text-secondary)]">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }}</span></p>
+        <p v-if="!col.items.length" class="text-[11px] opacity-50">{{ tr("無し", "None") }}</p>
+        <div v-for="r in col.items" :key="r.id" class="mb-1">
+          <div class="flex items-center gap-2 rounded px-2 py-1 max-md:py-1.5" :class="pickedOf(r) ? 'bg-[rgba(163,52,42,0.30)] ring-1 ring-[var(--exile-color-border-brass)]' : whyNot(r) ? 'opacity-40' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
+            <input type="checkbox" :checked="!!pickedOf(r)" :disabled="!pickedOf(r) && !!whyNot(r)" class="size-5 shrink-0 accent-amber-500" :aria-label="r.text" @change="toggle(r)" />
+            <button type="button" class="g-plain flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 text-left" @click="expanded = expanded === r.id ? null : r.id">
+              <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
+              <span v-if="pickedOf(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ tr(`${rankOf(pickedOf(r)!)} 以上`, `${rankOf(pickedOf(r)!)}+`) }}</span>
+              <span v-else-if="whyNot(r)" class="text-[10px]">{{ whyNot(r) }}</span>
+              <Icon :name="expanded === r.id ? 'chevron-up' : 'chevron-down'" class="size-3.5 opacity-50" />
+            </button>
+            <span class="w-11 shrink-0 text-right font-bold tabular-nums text-amber-100" :title="tr('出やすさ (同じ側の重みの割合)', 'Chance (share of weight on the same side)')">{{ pct(r.share) }}</span>
           </div>
+          <table v-if="expanded === r.id" class="mt-0.5 w-full text-[11px]">
+            <tbody>
+              <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5" :class="t.ilvl > s.itemLevel.value ? 'opacity-40' : ''">
+                <td class="w-8 py-0.5 pl-2 font-bold text-amber-200">{{ t.rank }}</td>
+                <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
+                <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
+                <td class="w-20 py-0.5 text-right">
+                  <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30 max-md:min-h-9 max-md:px-2.5 max-md:text-[12px]" :class="isPickedTier(r, t) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50' : isCoveredTier(r, t) ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :disabled="!pickedOf(r) && !!whyNot(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <!-- 決める (下に固定。1 つだけでも進める) -->
-        <footer class="flex items-center gap-2 border-t border-white/10 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          <button type="button" class="g-btn" @click="close">{{ tr("やめる", "Cancel") }}</button>
-          <button type="button" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
-        </footer>
       </div>
     </div>
-  </Teleport>
+    <!-- 決める (下に固定。1 つだけでも進める) -->
+    <template #footer>
+      <button type="button" class="g-btn" @click="close">{{ tr("やめる", "Cancel") }}</button>
+      <button type="button" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
+    </template>
+  </ModalShell>
 </template>

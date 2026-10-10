@@ -6,46 +6,45 @@
   App.vue に 1 つ置いて、どこからでも askConfirm() で呼ぶ。
 -->
 <script setup lang="ts">
-import BaseCard from "./decor/BaseCard.vue";
+import ModalShell from "./ui/ModalShell.vue";
 import { answerConfirm, confirmDialog } from "../state/confirm-dialog";
 </script>
 
 <template>
-  <div
-    v-if="confirmDialog.pending.value"
-    class="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-[1px]"
-    @click.self="answerConfirm(false)"
+  <!-- 窓の動きは ModalShell (2026-10-10 オーナー「動きが統一されてない所」)。ほかの窓の上に出す (layer="confirm")。Esc・× はキャンセル -->
+  <ModalShell
+    :open="!!confirmDialog.pending.value"
+    :title="confirmDialog.pending.value?.title ?? '確認'"
+    layer="confirm"
+    width="w-full max-w-lg"
+    body-class="px-4 py-3"
+    @close="answerConfirm(false)"
   >
-    <BaseCard solid class="max-w-lg mx-6">
-      <div class="p-5 pl-6">
-        <h2 class="text-sm font-bold text-amber-100 mb-2">
-          {{ confirmDialog.pending.value.title ?? "確認" }}
-        </h2>
-        <p class="text-[12px] text-[var(--exile-color-text-secondary)] leading-relaxed whitespace-pre-line mb-4">
-          {{ confirmDialog.pending.value.message }}
-        </p>
-        <div class="flex items-center justify-end gap-3">
-          <button
-            type="button"
-            class="text-[12px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]"
-            @click="answerConfirm(false)"
-          >
-            {{ confirmDialog.pending.value.cancelLabel ?? "キャンセル" }}
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1 rounded-lg border text-[12px] transition-colors"
-            :class="
-              confirmDialog.pending.value.danger
-                ? 'border-rose-500/70 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20'
-                : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'
-            "
-            @click="answerConfirm(true)"
-          >
-            {{ confirmDialog.pending.value.okLabel ?? "はい" }}
-          </button>
-        </div>
-      </div>
-    </BaseCard>
-  </div>
+    <p v-if="confirmDialog.pending.value" class="text-[12px] text-[var(--exile-color-text-secondary)] leading-relaxed whitespace-pre-line">
+      {{ confirmDialog.pending.value.message }}
+    </p>
+    <template #footer>
+      <template v-if="confirmDialog.pending.value">
+        <button
+          type="button"
+          class="ml-auto text-[12px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]"
+          @click="answerConfirm(false)"
+        >
+          {{ confirmDialog.pending.value.cancelLabel ?? "キャンセル" }}
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1 rounded-lg border text-[12px] transition-colors"
+          :class="
+            confirmDialog.pending.value.danger
+              ? 'border-rose-500/70 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20'
+              : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'
+          "
+          @click="answerConfirm(true)"
+        >
+          {{ confirmDialog.pending.value.okLabel ?? "はい" }}
+        </button>
+      </template>
+    </template>
+  </ModalShell>
 </template>
