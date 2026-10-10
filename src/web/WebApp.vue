@@ -13,6 +13,7 @@ import FeedbackDialog from "./FeedbackDialog.vue";
 import WelcomeDialog from "./WelcomeDialog.vue";
 import ChangelogDialog from "../components/ChangelogDialog.vue";
 import { changelogOpen, initChangelog } from "../state/changelog";
+import { forgetResult } from "../utils/no-log";
 import MarketNotice from "./MarketNotice.vue";
 import pkg from "../../package.json";
 import { noLogOn, setNoLog } from "../utils/no-log";
@@ -82,6 +83,11 @@ window.addEventListener("resize", fitZoom);
       <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" title="相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中">アプリ版 近日公開</span>
     </header>
     <MarketNotice />
+    <!-- ?nolog=1 で開いた時の結果 (2026-10-10) -->
+    <p v-if="forgetResult" class="flex items-center gap-2 px-4 py-1.5 text-[12px]" :class="forgetResult.ok ? 'bg-emerald-900/40 text-emerald-200' : 'bg-amber-900/40 text-amber-200'">
+      {{ forgetResult.text }}
+      <button type="button" class="g-plain ml-auto opacity-60 hover:opacity-100" @click="forgetResult = null">×</button>
+    </p>
     <WelcomeDialog :open="welcomeOpen" @close="closeWelcome" />
     <ChangelogDialog />
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />

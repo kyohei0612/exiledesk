@@ -29,12 +29,19 @@ export function setNoLog(v: boolean): void {
  * サーバーにこの端末を忘れてもらう (今までの記録を消し、日報の集計からも外す。server/live の forget.ts)。
  * 2026-10-10 オーナー「使った挙動にまだ自分のやつが出る、完全に消したい」。uid は記録と同じ端末の乱数
  */
+/** ?nolog=1 で開いた時の結果 (画面の上に 1 行出す。2026-10-10 スマホで届いているか分からなかった) */
+export const forgetResult = ref<{ ok: boolean; text: string } | null>(null);
 function forgetThisDevice(): void {
   let uid = "";
   try { uid = localStorage.getItem("exiledesk.web.uid") ?? ""; } catch { /* 無ければ送らない */ }
-  if (!uid) return;
+  if (!uid) { forgetResult.value = { ok: false, text: "この端末の ID が見つからず、サーバーに送れませんでした (記録しない設定にはしました)" }; return; }
   void import("../web/config").then(({ WEB_API_BASE }) =>
-    fetch(`${WEB_API_BASE}/forget`, { method: "POST", body: JSON.stringify({ uid }), headers: { "content-type": "text/plain;charset=UTF-8" }, credentials: "omit" }).catch(() => undefined),
+    fetch(`${WEB_API_BASE}/forget`, { method: "POST", body: JSON.stringify({ uid }), headers: { "content-type": "text/plain;charset=UTF-8" }, credentials: "omit" })
+      .then(async (r) => {
+        const j = (await r.json().catch(() => null)) as { ok?: boolean; deleted?: number; error?: string } | null;
+        forgetResult.value = r.ok && j?.ok ? { ok: true, text: `この端末は記録しません (今までの記録 ${j.deleted ?? 0} 件も消しました。ID ${uid})` } : { ok: false, text: `サーバーに送れませんでした (${j?.error ?? r.status})` };
+      })
+      .catch((e) => { forgetResult.value = { ok: false, text: `サーバーに送れませんでした (${String(e).slice(0, 60)})` }; }),
   );
 }
 
