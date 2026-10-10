@@ -93,7 +93,7 @@ const refJa = (k: string): string => (k === "direct" ? "直接 (URL を直に開
  * 日報の文面 (文章で。2026-10-07 オーナー「数字の羅列は分かりづらい、文章で教えて」)。
  * 人が 0 の日は短く、来た日は 何人・どこから・端末・何をしたか・どこで減ったか・品質・要望・配信・異常・週 を段落で
  */
-export function reportText(label: string, sum: Summary | null, usage: Usage, feedback: { requests: number; bugs: number }, live: LiveState | null, alerts: string[]): string {
+export function reportText(label: string, sum: Summary | null, usage: Usage, feedback: { requests: number; bugs: number }, live: LiveState | null, alerts: string[], records?: number | null): string {
   // 2026-10-10 オーナー「報告の文章わかりづらい」: 文章をやめて、見出しごとに短い箇条書き (数字だけ追えば分かる形)
   const out: string[] = [`📊 **ExileDesk 日報 ${label}**`];
   const sec = (title: string, lines: Array<string | null | false>): void => {
@@ -123,11 +123,13 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
       `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
     ]);
     const use = (k: string): number => sum.byEvent.get(k)?.sessions ?? 0;
-    const f = funnelDrop(sum, FUNNEL_SIM);
+    // シミュレーションの段は「開いた後」どうしで見る (最初の画面 → シミュレーションは選んだだけ)。開いた人が 0 なら出さない (Web は調整中で止めている)
+    const simOn = use("mode:sim") > 0;
+    const f = simOn ? funnelDrop(sum, FUNNEL_SIM.filter((x) => x !== "open")) : null;
     // 「手で打った」は実際に 1 手以上打った印 (hand:use)
     sec("使われ方 (人数)", [
       `手で打った ${use("hand:use")}`,
-      `シミュレーション: 開いた ${use("mode:sim")} → 回した ${use("sim:run")} → 完成まで ${use("sim:done")}`,
+      simOn ? `シミュレーション: 開いた ${use("mode:sim")} → 回した ${use("sim:run")} → 完成まで ${use("sim:done")}` : null,
       `取引所を開いた ${use("trade:open")} / レシピ保存 ${use("recipe:save")}`,
       f ? `シミュレーションで一番やめた所: ${f.from} → ${f.to} (${f.before} 人 → ${f.after} 人)` : null,
     ]);
@@ -140,6 +142,7 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     alerts.length ? `異常の通知 ${alerts.length} 回: ${alerts.slice(0, 5).join(" / ")}` : "異常の通知 なし",
     live ? `配信の見張り ${live.errors.length ? `気になる所 ${live.errors.length} (${live.errors[0]!.slice(0, 80)})` : "異常なし"} · ライブ中 ${live.live.length} 人` : "配信の見張り まだ動いていない",
     sum?.warnings.length ? `集計で取れなかった所: ${sum.warnings.join(" / ")}` : null,
+    records != null ? `分析用の記録 ${records.toLocaleString("ja-JP")} 件` : null,
   ]);
   // 結果を踏まえたアドバイス (2026-10-10 オーナー「最後に結果踏まえたアドバイス」)。数字の決まりで出し分け、多くて 3 つ
   sec("アドバイス", adviceOf(sum, feedback, alerts));
@@ -157,7 +160,7 @@ export function adviceOf(sum: Summary | null, feedback: { requests: number; bugs
     if (sum.bounce != null && sum.bounce >= 0.5) out.push("半分以上が何もせずに閉じています。最初の画面で何をすればいいか分かりにくい可能性。最初の 1 手を目立たせると良さそうです");
     const hand = sum.byEvent.get("hand:use")?.sessions ?? 0;
     if (hand / sum.sessions < 0.3) out.push(`開いても実際に打った人が ${Math.round((hand / sum.sessions) * 100)}% だけです。「まずこれを押す」の案内を足すと良さそうです`);
-    const f = funnelDrop(sum, FUNNEL_SIM);
+    const f = (sum.byEvent.get("mode:sim")?.sessions ?? 0) > 0 ? funnelDrop(sum, FUNNEL_SIM.filter((x) => x !== "open")) : null;
     if (f && f.pct >= 50) out.push(`シミュレーションの「${f.from} → ${f.to}」で半分以上がやめています。この段を見直す価値があります`);
     const mobile = sum.devices.find(([k]) => k === "mobile")?.[1] ?? 0;
     const all = sum.devices.reduce((a, [, v]) => a + v, 0) || 1;
@@ -199,10 +202,9 @@ export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Da
   ]);
   const day = fb.filter((x) => x.at >= since && x.at < until);
   const live = (await env.LIVE.get("state", "json")) as LiveState | null;
-  const base = reportText(label + cut, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts);
-  // 分析用の記録 (D1) の昨日の件数
   const lc = await countBetween(env, since, until).catch(() => null);
-  const text = lc ? `${base}\n・分析用の記録 ${lc.records.toLocaleString()} 件` : base;
+  const base = reportText(label + cut, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts, lc?.records ?? null);
+  const text = base;
   await postDiscord(env.DISCORD_WEBHOOK, text, fetchFn);
   return text;
 }
