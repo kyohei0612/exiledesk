@@ -49,10 +49,11 @@ const btn = "g-plain grid size-6 place-items-center rounded border border-white/
     <span class="w-10 text-center tabular-nums" :class="item.quality > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ item.quality }}%</span>
     <button type="button" :class="btn" :disabled="item.quality >= maxQ" :title="tr(`品質 +1% (上限 ${maxQ}%、長押しで続けて)`, `Quality +1% (max ${maxQ}%, hold to repeat)`)" @pointerdown.prevent="hold(1)" @pointerup="stop" @pointerleave="stop" @pointercancel="stop" @keydown.enter.prevent="step(1)">+</button>
     <button type="button" class="g-plain rounded border border-white/15 px-1.5 py-0.5 text-white/70 hover:bg-white/10 disabled:opacity-30" :disabled="item.quality >= maxQ" :title="tr(`品質を上限の ${maxQ}% に`, `Set quality to the max (${maxQ}%)`)" @click="emit('quality', maxQ)">{{ tr("最大", "Max") }}</button>
-    <span class="ml-1 opacity-70">{{ tr("上限", "Cap") }}</span>
+    <!-- 「上限」と選ぶ欄は離さない (スマホで折り返すと「上限」だけ右端に残っていた) -->
+    <span class="ml-1 inline-flex items-center gap-1 whitespace-nowrap"><span class="opacity-70">{{ tr("上限", "Cap") }}</span>
     <select class="cursor-pointer rounded border border-white/15 bg-black/60 px-1 py-0.5 tabular-nums text-white/80" :value="maxQ" :title="tr(`品質の上限 (今付けられる最大 ${natural}% = ベース + 品質の最大値の MOD + インフューザー。エッセンスを打たずに広げて試すならここで)`, `Max quality (currently ${natural}% = base + max-quality mods + infuser; raise it here to skip the essence)`)" @change="emit('cap', Number(($event.target as HTMLSelectElement).value))">
       <option v-for="q in caps" :key="q" :value="q">{{ q }}%{{ q === natural ? tr(" (今の最大)", " (current)") : "" }}</option>
-    </select>
+    </select></span>
     <select v-if="jewel" class="ml-1 w-[9.5rem] rounded border border-white/15 bg-black/60 px-1 py-0.5 text-white/80" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', Math.max(item.quality, 1), ($event.target as HTMLSelectElement).value)">
       <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
       <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
