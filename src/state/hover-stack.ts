@@ -39,6 +39,8 @@ export interface HoverLayer {
   x: number;
   y: number;
   pinned: boolean;
+  /** 乗せたアイコンの枠 (CSS px)。あればカードをアイコンの右上に出す (同じ行の右隣にかぶらない。2026-10-10) */
+  box?: { left: number; right: number; top: number; bottom: number };
 }
 
 /** 名前 / 下線からカードへ移る間に消えないための待ち (ms) */
@@ -90,14 +92,14 @@ export const hoverStack = {
    * 少し乗せ続けたら段 0 を開く (待ちはカードの中の下線と同じ 0.5 秒。ベースの一覧のように、カーソルを動かすだけで次々に開くと邪魔な所。
    * 2026-10-10 オーナー「ベースもジェムと同じ挙動で、少しおいてからカード」)。離れたら leave が取り消す
    */
-  openRootDelayed(payload: HoverPayload, x: number, y: number): void {
+  openRootDelayed(payload: HoverPayload, x: number, y: number, box?: HoverLayer["box"]): void {
     cancel();
     cancelOpen();
     // 前のカード (ピン留め以外) はすぐ閉じる。次のカードが出るまで前のが残っていた (2026-10-10 オーナー「ホバー外にいったら即閉じておｋ」)
     if (layers.value.some((l) => !l.pinned)) layers.value = layers.value.filter((l) => l.pinned);
     openTimer = setTimeout(() => {
       openTimer = null;
-      layers.value = [...layers.value.filter((l) => l.pinned), { key: ++seq, payload, x, y, pinned: false }];
+      layers.value = [...layers.value.filter((l) => l.pinned), { key: ++seq, payload, x, y, pinned: false, ...(box ? { box } : {}) }];
     }, CHILD_OPEN_DELAY);
   },
   /** カードの中の下線から開く (そのカードの上の段) */

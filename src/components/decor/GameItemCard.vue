@@ -71,6 +71,17 @@ const position = computed(() => {
       top: Math.min(Math.max(EDGE, moved.value.top), vh - 40),
     };
   }
+  // アイコンの右上 (カードの下の端をアイコンの上の端に、右に少し空けて)。棚・ベースの一覧のように横に並んだ物を順に見る所。
+  // 2026-10-10 オーナー「カードの位置もっと右、余裕持って空けないと被る、アイコンの右上に出してんのかな」。上に入らなければ下、右に入らなければ左
+  const box = hoverStack.layers.value.find((l) => l.key === props.layerKey)?.box;
+  if (box) {
+    const GAP = 14;
+    let bl = box.right + GAP;
+    if (bl + w + EDGE > vw) bl = Math.max(EDGE, box.left - w - GAP);
+    let bt = box.top - h - 6;
+    if (bt < EDGE) bt = Math.min(box.bottom + 6, vh - h - EDGE);
+    return { left: bl, top: Math.max(EDGE, bt) };
+  }
   let left = props.x + 10;
   if (left + w + EDGE > vw) left = Math.max(EDGE, props.x - w - 10);
   let top = props.y - h / 2;

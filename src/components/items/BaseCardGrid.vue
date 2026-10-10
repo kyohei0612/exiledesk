@@ -26,7 +26,7 @@ function enter(e: MouseEvent, b: CatalogRow): void {
   if (touchOnly) return;
   const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
   // 右へ少し離して出す (隣のベースの左側が見えて、そのまま右へ乗り換えられるように。2026-10-10 オーナー「カード右側、ちょっと離れててもおｋ」)
-  hoverStack.openRootDelayed({ kind: "base", en: b.en }, toCss(r.right) + 56, toCss(r.top + r.height / 2));
+  hoverStack.openRootDelayed({ kind: "base", en: b.en }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
 }
 function leave(): void { hoverStack.leave(); }
 onBeforeUnmount(leave);

@@ -68,7 +68,7 @@ const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)"
 function enter(e: MouseEvent): void {
   if (touchOnly) return;
   const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-  hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen }, toCss(r.right) - 8, toCss(r.top + r.height / 2));
+  hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
 }
 function leave(): void { hoverStack.leave(); }
 onBeforeUnmount(leave);
