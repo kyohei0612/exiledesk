@@ -265,7 +265,8 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
     const k = (sd: StageSide) => (sd === "prefix" ? "prefixes" : "suffixes") as "prefixes" | "suffixes";
     const r = addForced(data, item, 0, rng, f, f.desecrated ? { pools: (sd) => [...(cur.cls.pools.desecrated?.[k(sd)] ?? []), ...effectiveCls(cur).pools.normal[k(sd)]] } : {});
     if ("error" in r) throw new Error(`始めの状態の MOD ${i + 1} つ目: ${r.error}`);
-    item = f.fractured ? replaced(r.item, r.mod, { ...r.mod, fractured: true }) : f.desecrated ? replaced(r.item, r.mod, { ...r.mod, desecrated: true }) : r.item;
+    // 冒涜でフラクチャー済みの始まりは両方の印 (2026-10-10 オーナー「冒涜 MOD フラクチャーできない」)
+    item = f.fractured || f.desecrated ? replaced(r.item, r.mod, { ...r.mod, ...(f.fractured ? { fractured: true } : {}), ...(f.desecrated ? { desecrated: true } : {}) }) : r.item;
   }
   if (s.quality != null) item = { ...item, quality: s.quality };
   return item;

@@ -84,19 +84,14 @@ const orbSplit = computed(() => {
     unusable: groups.map((g) => ({ kind: g.kind, keys: g.keys.filter((k) => !ok(k)) })).filter((g) => g.keys.length),
   };
 });
-const runes = computed(() => runesFor(craftStage.item.value));
+// クラフトに関わるルーンだけ (他は外す。2026-10-10 オーナー「ルーンいらんくね、クラフト機能のない奴は外そう、邪魔だし」)。
+// 外したルーンを打つ処理 (stage-runes.ts) は古い手順の再生のため残す
+const runes = computed(() => runesFor(craftStage.item.value).map((g) => ({ ...g, keys: g.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k)) })).filter((g) => g.keys.length));
 /**
  * 「今のアイテムには使えない物」は畳める (2026-10-08 オーナー「使わないカレンシー閉じてもいいしな畳む」)。
  * PC もスマホも畳んだ状態が既定 (2026-10-09 オーナー「使えないものはデフォで畳んでてくれ、これは手で打つ奴も」)
  */
 const unusableOpen = ref(false);
-/** 開いたルーンのまとまり (初めは全部閉じて、クラフトに関わる物だけ出す) */
-const openRunes = ref(new Set<string>());
-function toggleRunes(kind: string): void {
-  const s = new Set(openRunes.value);
-  if (s.has(kind)) s.delete(kind); else s.add(kind);
-  openRunes.value = s;
-}
 /** ソケット: 今の数 / 熟練工の上限、はめたルーンの数 */
 const sockets = computed(() => {
   const it = craftStage.item.value;
@@ -118,7 +113,7 @@ const usableAll = computed(() => {
     sec(tr("オーブ・骨", "Orbs & Abyssal Bones"), [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
     sec(tr("エッセンス", "Essences"), essences.value.flatMap((g) => g.keys)),
     ...(hasCatalyst.value ? [sec(tr("カタリスト", "Catalysts"), [...CATALYSTS])] : []),
-    // ルーンはルーンのタブと同じ段ごとのまとまりで、クラフトに関わる物以外は畳む (2026-10-05 オーナー「そこでもルーンはルーンページみたく閉じる奴は閉じちゃっておk」)
+    // ルーンはルーンのタブと同じ段ごとのまとまり (クラフトに関わる物だけ)
     ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
   ].filter((x) => x.keys.length);
 });
@@ -165,10 +160,9 @@ const TABS = computed(() => [
       <div v-for="sec in usableAll" :key="sec.kind ?? sec.label">
         <p class="mb-0.5 flex items-center gap-2 text-[10px]">
           <span class="opacity-60">{{ sec.label }} ({{ sec.keys.length }})</span>
-          <Disclosure v-if="sec.kind && sec.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" :open="openRunes.has(sec.kind)" :rest="sec.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length" class="text-[11px]" @update:open="toggleRunes(sec.kind!)" />
         </p>
-        <div v-if="!sec.kind || openRunes.has(sec.kind) || sec.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
-          <ShelfButton v-for="k in !sec.kind || openRunes.has(sec.kind) ? sec.keys : sec.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" @pick="emit('hold', $event)" />
+        <div class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
+          <ShelfButton v-for="k in sec.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
         </div>
         <div v-if="$slots.held && !sec.kind && holds(sec.keys)" class="mt-2" data-held-box><slot name="held" /></div>
       </div>
@@ -224,15 +218,14 @@ const TABS = computed(() => [
         {{ tr("ソケット", "Sockets") }} {{ sockets.now }} / {{ sockets.cap }} {{ tr("(熟練工のオーブで足す、コラプトで +1)・はめたルーン", "(add with Artificer's Orb, +1 from corruption) · Runes socketed") }} {{ sockets.used }}{{ tr("。はめたら外せないが、他のルーンで置き換えられる (置き換えた方は壊れる。ソケットバウンドの物は置き換えも不可)。ルーンを持ってソケットの絵を押すとそのソケットを置き換える", ". Socketed runes can't be removed, but can be replaced by another rune (the replaced one is destroyed; socket-bound ones can't be replaced). Hold a rune and click a socket to replace it.") }}
         <ShelfButton k="artificer" class="ml-2 inline-block align-middle" @pick="emit('hold', $event)" />
       </p>
-      <!-- 段ごとのまとまり。初めはクラフトに関わるルーンだけ出して、他は「他 ○ 個」で畳む (2026-10-04 オーナー) -->
+      <!-- 段ごとのまとまり (クラフトに関わるルーンだけ) -->
       <div class="space-y-2">
         <div v-for="g in runes" :key="g.kind">
           <p class="mb-0.5 flex items-center gap-2 text-[10px]">
             <span class="opacity-60">{{ g.label }}</span>
-            <Disclosure v-if="g.keys.some((k) => !CRAFT_RUNE_KEYS.includes(k))" :open="openRunes.has(g.kind)" :rest="g.keys.filter((k) => !CRAFT_RUNE_KEYS.includes(k)).length" class="text-[11px]" @update:open="toggleRunes(g.kind)" />
           </p>
-          <div v-if="openRunes.has(g.kind) || g.keys.some((k) => CRAFT_RUNE_KEYS.includes(k))" class="flex flex-wrap gap-1.5 max-md:contents">
-            <ShelfButton v-for="k in openRunes.has(g.kind) ? g.keys : g.keys.filter((k) => CRAFT_RUNE_KEYS.includes(k))" :key="k" :k="k" @pick="emit('hold', $event)" />
+          <div class="flex flex-wrap gap-1.5 max-md:contents">
+            <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
           </div>
         </div>
       </div>
