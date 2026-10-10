@@ -149,8 +149,8 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
 
 <template>
   <section v-if="s.aims.value.length" ref="panel" data-aim-panel class="g-panel scroll-mt-2 p-2 text-[12px]">
-    <header class="mb-2 flex flex-wrap items-center gap-2">
-      <b class="g-brush text-[18px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">{{ tr("次の手で狙う", "Target next move") }}</b>
+    <header class="g-sec-head">
+      <b class="g-sec-title">{{ tr("次の手で狙う", "Target next move") }}</b>
       <span class="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:w-full">
         <span v-for="a in s.aims.value" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ a.label }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('この MOD を外す', 'Remove this mod')" @click="s.aims.value = s.aims.value.filter((x) => x.modId !== a.modId)">×</button></span>
         <!-- 足す・変える: 選ぶ窓をもう一度 (MOD 一覧まで戻らなくていい) -->

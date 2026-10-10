@@ -480,21 +480,22 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         </div>
         <!-- 工程 (直前の変化の欄は外して累計だけ。新しい手が上。2026-10-10 オーナー「直前の変化いらんな、累計でおｋ、並び順は上が最新」) -->
         <div class="g-panel w-[480px] max-md:w-full p-2 text-[12px]">
-          <p class="mb-1 flex items-center gap-2"><b class="g-antique text-[15px] font-normal text-[var(--exile-color-text-title)]">{{ tr("工程", "Steps") }}</b><span class="text-[10px] opacity-50">{{ inApp ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span><span class="ml-auto tabular-nums opacity-70">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
+          <p class="g-sec-head"><b class="g-sec-title">{{ tr("工程", "Steps") }}</b><span class="g-sec-sub">{{ inApp ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span><span class="ml-auto tabular-nums opacity-70">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
           <div class="max-h-72 overflow-y-auto pr-1 max-md:max-h-64"><StageHistory /></div>
         </div>
       </div>
 
-      <!-- カレンシー棚 + 工程履歴 -->
-      <div class="min-w-0 space-y-4">
+      <!-- カレンシー棚 (横並びの時は上をカードの枠に揃える: 左はカードの上に「MOD 一覧へ・品質」の帯 24px + 間 8px があり、枠の絵は外へ 8px はみ出すので 40px。
+           2026-10-11 オーナー「枠の高さが違うのが気に食わん、カレンシーの方が高く感じる」) -->
+      <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
         <StageAimPanel v-if="!s.replay.value" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
         <section class="g-panel p-2">
-          <p class="mb-2 flex flex-wrap items-center gap-2 text-[12px]">
-            <b class="g-brush text-[20px] tracking-[0.14em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">{{ tr("カレンシー", "Currency") }}</b>
+          <p class="g-sec-head">
+            <b class="g-sec-title">{{ tr("カレンシー", "Currency") }}</b>
             <span v-if="s.held.value" class="whitespace-nowrap rounded-full bg-amber-500/20 px-2 text-amber-200">{{ tr("持っている", "Holding") }}: {{ nameOf(s.held.value) }}</span>
-            <span v-else class="whitespace-nowrap opacity-50">{{ tr("押して持つ → アイテムを押す", "Click to hold → click the item") }}</span>
+            <span v-else class="g-sec-sub whitespace-nowrap">{{ tr("押して持つ → アイテムを押す", "Click to hold → click the item") }}</span>
             <span v-for="o in s.omens.value" :key="o" class="cursor-pointer whitespace-nowrap rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" :title="tr('押すと外す', 'Click to remove')" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
           </p>
           <CurrencyShelf @hold="hold">

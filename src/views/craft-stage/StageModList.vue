@@ -287,8 +287,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
   <section data-mod-list class="text-[12px]" :class="props.embedded ? '' : 'g-panel mt-4'">
     <!-- 見出し (押すと畳む) -->
     <div role="button" tabindex="0" :aria-expanded="open" class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left" @click="open = !open" @keydown.enter="open = !open">
-      <b class="g-brush text-[20px] tracking-[0.12em] max-md:text-[16px] max-md:tracking-[0.06em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">{{ tr("このベースに付く MOD", "Mods for this base") }}</b>
-      <span class="text-[var(--exile-color-text-tertiary)] max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span>
+      <b class="g-sec-title">{{ tr("このベースに付く MOD", "Mods for this base") }}</b>
+      <span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span>
       <HelpTip :text="s.mode.value === 'sim' ? tr('出やすさ = 同じ側の重みの割合。段 = 段の数、Lv = T1 の MOD レベル。MOD を押すと段の表が開く', 'Chance = share of weight on the same side. T = number of tiers, Lv = mod level of T1. Click a mod to open its tier table') : tr(`出やすさ = 同じ側の重みの割合 (アイテムレベルは見ない)。段 = 段の数、Lv = T1 の MOD レベル${canStart ? '。段の表の「付ける」で始めの状態を組める' : ''}`, `Chance = share of weight on the same side (ignores item level). T = number of tiers, Lv = mod level of T1${canStart ? '. Use “Add” in the tier table to build the starting item' : ''}`)" @click.stop />
       <Disclosure tag="span" kind="section" :open="open" class="ml-auto" />
     </div>

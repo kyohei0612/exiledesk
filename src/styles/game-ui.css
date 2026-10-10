@@ -137,6 +137,15 @@
 .g-hover-name { cursor: help; transition: color 120ms; }
 .g-hover-name:hover { color: var(--exile-color-accent-focus); }
 .g-brush { font-family: var(--exile-font-family-brush); font-weight: 400; }
+/*
+ * 枠の中の見出しの行 (カレンシー・工程・次の手で狙う・このベースに付く MOD を同じ形に。2026-10-11 オーナー
+ * 「UI がそれぞれ独立してて統一感ない、MOD 一覧は作り込んでるのにタイトル関連が浮いて見える」)。
+ * .g-sec-head = 行 (下に区切り)、.g-sec-title = 題 (筆の字)、.g-sec-sub = 題の横の説明
+ */
+.g-sec-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 32px; padding: 0 4px 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); font-size: 12px; }
+.g-sec-title { font-family: var(--exile-font-family-brush); font-weight: 400; font-size: 20px; letter-spacing: 0.12em; line-height: 1.2; color: var(--exile-color-text-title); text-shadow: 0 2px 0 #000; white-space: nowrap; }
+.g-sec-sub { font-size: 12px; color: var(--exile-color-text-tertiary); }
+@media (max-width: 767px) { .g-sec-title { font-size: 16px; letter-spacing: 0.06em; } }
 
 /* ============================================================
  * 全画面の置き換え (2026-10-09 オーナー「アプリ側も頼むわ他の場所も」)
