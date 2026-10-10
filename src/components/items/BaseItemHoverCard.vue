@@ -9,7 +9,10 @@ import { computed } from "vue";
 import GameItemCard from "../decor/GameItemCard.vue";
 import RichText from "../decor/RichText.vue";
 import GemName from "../decor/GemName.vue";
+import GemIcon from "../decor/GemIcon.vue";
+import { baseArt } from "../../services/craft-stage/base-art";
 import baseInfo from "../../data/base-info.json";
+import grantedSkills from "../../data/granted-skills.json";
 import { htcBaseInfo } from "../../services/htc/patch";
 import { baseStatsOf } from "../../services/craft-stage/stage-bases";
 import { classJa } from "../../services/items/base-catalog";
@@ -26,15 +29,19 @@ const st = computed(() => baseStatsOf(props.en));
 const en = computed(() => lang.value === "en");
 const name = computed(() => (en.value ? props.en : htc.value?.ja ?? jaTypeName(props.en)));
 const cls = computed(() => { const c = htc.value?.cls ?? st.value?.cls ?? ""; return !c ? "" : en.value ? (st.value?.cls ?? c).replace(/_/g, " ") : classJa(c, false); });
+/** 数字は余計な 0 を付けない (poe2db と同じ: 5%、1.6) */
+const trim = (n: number, d = 2): string => String(Number(n.toFixed(d)));
+const art = computed(() => baseArt(props.en));
 const num = (v: number | [number, number] | undefined): string => (v == null ? "" : Array.isArray(v) ? (v[0] === v[1] ? `${v[0]}` : `${v[0]}-${v[1]}`) : `${v}`);
 
 /** 性能の行 (ゲームの順: ダメージ → クリティカル → 秒間アタック → 再装填 → 防御 → ブロック → スピリット)。見出しはゲームの文 (ClientStrings) */
 const props2 = computed(() => {
   const s = st.value, i = info.value, out: Array<{ k: string; v: string }> = [];
   if (s?.phys) out.push({ k: tr("物理ダメージ", "Physical Damage"), v: `${s.phys[0]}-${s.phys[1]}` });
-  if (s?.crit && s.phys) out.push({ k: tr("クリティカルヒット率", "Critical Hit Chance"), v: `${s.crit.toFixed(2)}%` });
-  if (s?.aps) out.push({ k: tr("秒間アタック回数", "Attacks per Second"), v: s.aps.toFixed(2) });
-  if (i.reload) out.push({ k: tr("再装填時間", "Reload Time"), v: (i.reload / 1000).toFixed(2) });
+  if (s?.crit && s.phys) out.push({ k: tr("クリティカルヒット率", "Critical Hit Chance"), v: `${trim(s.crit)}%` });
+  if (s?.aps) out.push({ k: tr("秒間アタック回数", "Attacks per Second"), v: trim(s.aps) });
+  if (i.range && s?.phys) out.push({ k: tr("武器攻撃距離", "Weapon Range"), v: trim(i.range / 10, 1) });
+  if (i.reload) out.push({ k: tr("再装填時間", "Reload Time"), v: trim(i.reload / 1000) });
   if (s?.armour) out.push({ k: tr("アーマー", "Armour"), v: num(s.armour) });
   if (s?.evasion) out.push({ k: tr("回避力", "Evasion Rating"), v: num(s.evasion) });
   if (s?.es) out.push({ k: tr("エナジーシールド", "Energy Shield"), v: num(s.es) });
@@ -50,25 +57,34 @@ const req = computed(() => {
   return parts.join(tr("、", ", "));
 });
 const implicits = computed(() => (htc.value?.implicits ?? []).map((m) => (en.value ? (m as { en?: string }).en ?? m.ja : m.ja)));
-const skills = computed(() => (info.value.skills ?? []).map((s) => ({ en: s, label: en.value ? s : gemHoverOf(s)?.n ?? s })));
+const skills = computed(() => (info.value.skills ?? []).map((s) => ({ en: s, label: en.value ? s : gemHoverOf(s)?.n ?? (grantedSkills as Record<string, { ja: string }>)[s]?.ja ?? s })));
 </script>
 
 <template>
-  <GameItemCard :show="true" :x="x" :y="y" :name="name" tone="normal" :width="380" :layer-key="layerKey" :pinned="pinned" :z="z">
-    <p v-if="cls" class="g-dim text-[12px]">{{ cls }}</p>
-    <p v-for="p in props2" :key="p.k" class="g-dim">{{ p.k }}: <span class="g-white">{{ p.v }}</span></p>
-    <!-- 付与スキル: 名前に乗せるとジェムのカード (いくつかから 1 つの首飾りは全部並べる) -->
-    <p v-if="skills.length" class="g-dim">
-      {{ tr("スキルを付与", "Grants Skill") }}{{ skills.length > 1 ? tr(" (いずれか 1 つ)", " (one of)") : "" }}:
-      <template v-for="(s, i) in skills" :key="s.en"><span v-if="i" class="g-dim">{{ tr("、", ", ") }}</span><span class="g-white"><GemName :en="s.en" :label="s.label" /></span></template>
-    </p>
-    <template v-if="req">
-      <div class="g-sep" />
-      <p class="g-dim">{{ tr("装備条件：", "Requires: ") }}<span class="g-white">{{ req }}</span></p>
-    </template>
-    <template v-if="implicits.length">
-      <div class="g-sep" />
-      <p v-for="(m, i) in implicits" :key="i" class="g-mod"><RichText :text="m" /></p>
-    </template>
+  <GameItemCard :show="true" :x="x" :y="y" :name="name" tone="normal" :width="art ? 460 : 380" :layer-key="layerKey" :pinned="pinned" :z="z">
+    <!-- poe2db と同じ並び: 説明を左、ベースの絵を右 (2026-10-10 オーナーの見本) -->
+    <div class="flex items-start gap-2">
+      <div class="min-w-0 flex-1">
+        <p v-if="cls" class="g-dim text-[12px]">{{ cls }}</p>
+        <p v-for="p in props2" :key="p.k" class="g-dim">{{ p.k }}: <span class="g-white">{{ p.v }}</span></p>
+        <!-- 付与スキル: 左に小さなジェムのアイコン、見出しは青、名前はジェムの色。名前に乗せるとジェムのカード -->
+        <p v-for="sk in skills" :key="sk.en" class="mt-1 flex items-center justify-center gap-1">
+          <GemIcon :en="sk.en" :size="20" class="shrink-0" />
+          <span class="g-mod">{{ tr("スキルを付与", "Grants Skill") }}:</span>
+          <span class="text-[#1ba29b]"><GemName :en="sk.en" :label="sk.label" /></span>
+        </p>
+        <p v-if="skills.length > 1" class="g-dim text-[11px]">{{ tr("(いずれか 1 つ)", "(one of these)") }}</p>
+        <p v-if="!en" class="g-dim mt-0.5 text-[11px] [font-variant:small-caps]">{{ props.en }}</p>
+        <template v-if="req">
+          <div class="g-sep" />
+          <p class="g-dim">{{ tr("装備条件：", "Requires: ") }}<span class="g-white">{{ req }}</span></p>
+        </template>
+        <template v-if="implicits.length">
+          <div class="g-sep" />
+          <p v-for="(m, i) in implicits" :key="i" class="g-mod"><RichText :text="m" /></p>
+        </template>
+      </div>
+      <img v-if="art" :src="art" alt="" class="max-h-44 w-20 shrink-0 object-contain" draggable="false" />
+    </div>
   </GameItemCard>
 </template>

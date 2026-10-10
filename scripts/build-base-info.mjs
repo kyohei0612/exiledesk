@@ -39,7 +39,27 @@ for (const r of T("ItemInherentSkills")) {
   const skills = (r.SkillsGranted ?? []).map((g) => nameOf(gems[g]?.BaseItemType)).filter(Boolean);
   if (skills.length) o.skills = skills;
 }
+// 種類全体に付くスキル (スピアの「スピアスロー」など) はベースごとの表 (ItemInherentSkills) に無い。前に poe2db から集めた表で埋める
+// (data-cache/poe2db-granted-skills.json、scripts/build-granted-skills-poe2db.mjs。2026-10-10 スピア 36 件が抜けていた)
+try {
+  const g = JSON.parse(readFileSync(join(root, "data-cache/poe2db-granted-skills.json"), "utf8")).granted ?? {};
+  for (const [n, list] of Object.entries(g)) {
+    const o = out[n];
+    if (o && !o.skills?.length && list.length) o.skills = list.map((x) => x.en);
+  }
+} catch { /* 無くてもよい */ }
 // 何も足さない (装備条件も無い) 物は外す
 for (const [k, v] of Object.entries(out)) if (Object.keys(v).length <= 1 && !v.lv) delete out[k];
 writeFileSync(join(root, "src/data/base-info.json"), JSON.stringify(out) + "\n");
+// 付与スキルの名前と説明 (ジェムのカードの表に無いスキル = スピアスロー・レイズシールドなど用。GemHoverCard が引く)
+const AS = (lang) => JSON.parse(readFileSync(join(root, "data-cache/client-export/tables", lang, "ActiveSkills.json"), "utf8"));
+const asE = AS("English"), asJ = AS("Japanese");
+const want = new Set(Object.values(out).flatMap((v) => v.skills ?? []));
+const skills = {};
+asE.forEach((r, i) => {
+  if (!want.has(r.DisplayedName) || skills[r.DisplayedName]) return;
+  skills[r.DisplayedName] = { ja: asJ[i]?.DisplayedName || r.DisplayedName, dja: asJ[i]?.Description || "", den: r.Description || "" };
+});
+writeFileSync(join(root, "src/data/granted-skills.json"), JSON.stringify(skills) + "\n");
+console.log(`granted-skills: ${Object.keys(skills).length} / ${want.size}`);
 console.log(`base-info: ${Object.keys(out).length} 件 (スキル付き ${Object.values(out).filter((v) => v.skills).length}、スピリット ${Object.values(out).filter((v) => v.spirit).length})`);

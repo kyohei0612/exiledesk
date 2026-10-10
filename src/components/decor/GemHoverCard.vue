@@ -14,11 +14,16 @@ import RichText from "./RichText.vue";
 import GemLevelBlock from "./GemLevelBlock.vue";
 import GemIcon from "./GemIcon.vue";
 import { gemHoverOf, loadGemHover, type GemLevelInfo } from "../../services/gem-hover";
+import grantedSkills from "../../data/granted-skills.json";
+import { lang } from "../../i18n/lang";
 
 const props = defineProps<{ en: string; x: number; y: number; layerKey: number; pinned: boolean; z: number }>();
 onMounted(() => void loadGemHover());
 
 const gem = computed(() => gemHoverOf(props.en));
+const g2 = computed(() => (grantedSkills as Record<string, { ja: string; dja: string; den: string }>)[props.en] ?? null);
+const grantedName = computed(() => (g2.value ? (lang.value === "en" ? props.en : g2.value.ja) : null));
+const granted = computed(() => (g2.value ? (lang.value === "en" ? g2.value.den : g2.value.dja) || null : null));
 /** 種類の行 (「スキルジェム · スピリット」「リネージュサポートジェム」) */
 const kindLine = computed(() => {
   const g = gem.value;
@@ -55,7 +60,7 @@ function paras(t: string | undefined): string[] {
 </script>
 
 <template>
-  <GameItemCard :show="true" :x="x" :y="y" :name="gem?.n ?? en" tone="gem" :width="420" :layer-key="layerKey" :pinned="pinned" :z="z">
+  <GameItemCard :show="true" :x="x" :y="y" :name="gem?.n ?? grantedName ?? en" tone="gem" :width="420" :layer-key="layerKey" :pinned="pinned" :z="z">
     <template v-if="gem">
       <p class="g-dim text-[12px]">{{ kindLine }}</p>
       <p v-if="gem.tags?.length" class="g-white text-[12px]">{{ gem.tags.join(", ") }}</p>
@@ -112,6 +117,11 @@ function paras(t: string | undefined): string[] {
         <div class="g-sep" />
         <p class="g-flavour">{{ gem.fl }}</p>
       </template>
+    </template>
+    <!-- ジェムの表に無い付与スキル (スピアスロー・レイズシールドなど): ゲームのスキルの表の説明 (granted-skills.json、2026-10-10) -->
+    <template v-else-if="granted">
+      <div class="flex justify-center"><GemIcon :en="en" :size="48" class="my-1.5" /></div>
+      <p class="g-white text-[13px] leading-relaxed"><RichText :text="granted" /></p>
     </template>
     <p v-else class="g-dim text-[12px]">説明のデータがありません</p>
   </GameItemCard>
