@@ -30,13 +30,15 @@ const sid = rand();
 const dev = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "mobile" : "pc";
 const ref = (() => { try { return document.referrer ? new URL(document.referrer).hostname : "direct"; } catch { return "direct"; } })();
 
-const buf: Array<{ n: string; x?: string }> = [];
+/** 開いた時刻。印に「開いてから何秒目か」を付ける (まとめて送るとサーバーに着く時刻は全部同じになるので、滞在はこれで測る。2026-10-10) */
+const t0 = Date.now();
+const buf: Array<{ n: string; x?: string; s: number }> = [];
 /** 直前の流れ (要望・バグに添付)。印の名前と時刻 */
 const trail: Array<{ n: string; t: number }> = [];
 const once = new Set<string>();
 
 export function track(name: string, extra?: string): void {
-  buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}) });
+  buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
   if (trail.length > 40) trail.shift();
   if (buf.length >= 40) flush();

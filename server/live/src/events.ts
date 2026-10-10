@@ -5,6 +5,7 @@
  *
  *   blob1 = 印の名前 (open / mode:sim / sim:base / … / error)   blob2 = sid   blob3 = uid
  *   blob4 = 端末 (pc / mobile)   blob5 = どこから (ホスト名 / direct)   blob6 = 国   blob7 = 新規なら "1"   blob8 = 補足 (error の文など)
+ *   double1 = 1   double2 = 開いてから何秒目か (2026-10-10。印をまとめて送るようにしたので、滞在は着いた時刻ではなくこれで測る)
  */
 import { forgottenUids, notForgotten } from "./forget";
 import type { Env, Fetch } from "./types";
@@ -14,7 +15,7 @@ const ID_RE = /^[A-Za-z0-9_-]{6,40}$/;
 const NAME_RE = /^[a-z0-9:_.-]{1,40}$/;
 const MAX_EVENTS = 50;
 
-export interface EventBatch { uid: string; sid: string; first?: boolean; dev?: string; ref?: string; ev: Array<{ n: string; x?: string }> }
+export interface EventBatch { uid: string; sid: string; first?: boolean; dev?: string; ref?: string; ev: Array<{ n: string; x?: string; s?: number }> }
 
 /** 届いた物を確かめて整える (駄目なら null) */
 export function parseBatch(body: unknown): EventBatch | null {
@@ -25,9 +26,9 @@ export function parseBatch(body: unknown): EventBatch | null {
   const ev: EventBatch["ev"] = [];
   for (const e of b.ev.slice(0, MAX_EVENTS)) {
     if (!e || typeof e !== "object") continue;
-    const n = (e as { n?: unknown }).n, x = (e as { x?: unknown }).x;
+    const n = (e as { n?: unknown }).n, x = (e as { x?: unknown }).x, sec = (e as { s?: unknown }).s;
     if (typeof n !== "string" || !NAME_RE.test(n)) continue;
-    ev.push({ n, ...(typeof x === "string" && x ? { x: x.slice(0, 120) } : {}) });
+    ev.push({ n, ...(typeof x === "string" && x ? { x: x.slice(0, 120) } : {}), ...(typeof sec === "number" && sec >= 0 && sec < 86_400 * 2 ? { s: Math.round(sec) } : {}) });
   }
   if (!ev.length) return null;
   const dev = b.dev === "mobile" ? "mobile" : "pc";
@@ -39,7 +40,7 @@ export function parseBatch(body: unknown): EventBatch | null {
 export function writeEvents(env: Env, batch: EventBatch, country: string): number {
   if (!env.EVENTS) return 0;
   for (const e of batch.ev) {
-    env.EVENTS.writeDataPoint({ blobs: [e.n, batch.sid, batch.uid, batch.dev ?? "pc", batch.ref ?? "direct", country, batch.first ? "1" : "0", e.x ?? ""], doubles: [1], indexes: [batch.sid] });
+    env.EVENTS.writeDataPoint({ blobs: [e.n, batch.sid, batch.uid, batch.dev ?? "pc", batch.ref ?? "direct", country, batch.first ? "1" : "0", e.x ?? ""], doubles: [1, e.s ?? 0], indexes: [batch.sid] });
   }
   return batch.ev.length;
 }
@@ -92,10 +93,11 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'error')`);
   if (out.sessions && engaged[0]) out.bounce = Math.max(0, 1 - Number(engaged[0].s) / out.sessions);
   // 滞在の中央値 (Analytics Engine の SQL は quantiles が無いので quantileWeighted。それも無ければ平均)
-  const perSession = `(SELECT blob2, (toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp))) / 60 AS d FROM ${DATASET} WHERE ${w} GROUP BY blob2)`;
-  let dur: Array<{ m: number }> = [];
-  try { dur = await sql<{ m: number }>(env, `SELECT quantileWeighted(0.5)(d, 1) AS m FROM ${perSession}`, fetchFn); } catch { dur = await q<{ m: number }>(`SELECT avg(d) AS m FROM ${perSession}`); }
-  if (dur[0]?.m != null) out.medianMinutes = Number(dur[0].m);
+  // 滞在 = 着いた時刻の差と「開いてから何秒目か」(double2) の大きい方 (まとめて送ると着いた時刻は全部同じになる。2026-10-10)。
+  // Analytics Engine の SQL は型の違う 2 つを比べられないので、訪問ごとに両方取ってここで中央値を出す
+  const per = await q<{ a: number | string; b: number | string }>(`SELECT blob2, max(double2) AS a, toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp)) AS b FROM ${DATASET} WHERE ${w} GROUP BY blob2 LIMIT 20000`);
+  const mins = per.map((r) => Math.max(Number(r.a) || 0, Number(r.b) || 0) / 60).sort((x, y) => x - y);
+  if (mins.length) out.medianMinutes = mins[Math.floor((mins.length - 1) / 2)]!;
   const top = async (col: string): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT blob2) AS s FROM ${DATASET} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
   out.refs = await top("blob5"); out.devices = await top("blob4"); out.countries = await top("blob6");
   const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%')`;
