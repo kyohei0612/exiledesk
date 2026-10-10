@@ -23,6 +23,7 @@
  *
  * 費用まで出すと重いので、**選ばれた 1 つだけ**解いてください。
  */
+import { isRemovedBase } from "../items/base-catalog";
 import { htcBaseInfo, htcBaseLimits } from "./patch";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
@@ -88,7 +89,8 @@ export function baseChoices(
   const limits = htcBaseLimits();
   const out: BaseChoice[] = [];
   for (const [baseType, info] of Object.entries(htcBaseInfo())) {
-    if (info.cls !== cls.id) continue;
+    // 今のゲームに無いベース (取引所に無い) は出さない (2026-10-10)
+    if (info.cls !== cls.id || isRemovedBase(baseType)) continue;
     const lim = limits[baseType] ?? cls.limits ?? DEFAULT_LIMITS;
     // `[Quality|品質]` のようなリッチテキスト記号は画面に出さない
     const implicitsJa = (info.implicits ?? []).map((im) => stripMarkers(im.ja));

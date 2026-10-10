@@ -11,6 +11,7 @@ import { htcBaseInfo } from "../htc/patch";
 import { classOfBase } from "../htc/bridge";
 import { baseStatsOf, FLASK_BASES, GEM_BASES } from "../craft-stage/stage-bases";
 import { jaTypeName } from "../trade2/localize";
+import removedBases from "./removed-bases.json";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
 /** 能力値の要求 (ゲームの言葉で。2026-10-09 初見レビュー「手袋(dex_int) が読めない」) */
@@ -42,6 +43,9 @@ export function classJa(cls: string, withAttr = true): string {
 }
 /** ヴェリシウムで作る (最初から選ぶ物ではない) ベース */
 const RUNE_MADE = /^(Runeforged|Runemastered|Runefather's) /;
+/** 今のゲームに無いベース (取引所の一覧に無い物、removed-bases.json)。極寒のワンドなど (2026-10-10) */
+const REMOVED = new Set<string>(removedBases.bases);
+export const isRemovedBase = (en: string): boolean => REMOVED.has(en);
 
 const num = (v: number | [number, number] | undefined): string => (v === undefined ? "" : Array.isArray(v) ? `${v[0]}-${v[1]}` : String(v));
 /** 素の数値を 1 行に (範囲はそのまま) */
@@ -66,7 +70,7 @@ export interface CatalogRow { en: string; ja: string; cls: string; lvl: number; 
 /** 全ベース (extras: フラスコ・スキルジェムも) */
 export function baseCatalog(d: PatchData, extras: boolean): CatalogRow[] {
   const out: CatalogRow[] = Object.entries(htcBaseInfo()).flatMap(([en, i]): CatalogRow[] => {
-    const row = RUNE_MADE.test(en) ? null : classOfBase(d, en);
+    const row = RUNE_MADE.test(en) || REMOVED.has(en) ? null : classOfBase(d, en);
     return row ? [{ en, ja: i.ja, cls: row.id, lvl: i.lvl, implicit: (i.implicits ?? []).map((x) => x.ja).join(" / "), stats: baseStatLine(en) }] : [];
   });
   if (extras) {

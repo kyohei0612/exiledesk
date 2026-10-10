@@ -8,6 +8,7 @@
  * ベースと狙う MOD とティアを手で並べます。オーナー方針「手動の所は手動でいきたい」に沿って、
  * ここは一切自動で選びません ── 並べて、絞って、押せるようにするだけです。
  */
+import { isRemovedBase } from "../../services/items/base-catalog";
 import { computed, ref, shallowRef } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
 import { itemBaseFor } from "../../services/htc/bridge";
@@ -94,6 +95,8 @@ export function usePicker() {
 
   const allBases = computed<BaseRow[]>(() =>
     dataRef.value === null ? [] : Object.entries(htcBaseInfo())
+      // 今のゲームに無いベース (取引所に無い) は出さない (2026-10-10)
+      .filter(([en]) => !isRemovedBase(en))
       .map(([en, info]) => ({
         en,
         ja: info.ja,
