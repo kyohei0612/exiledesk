@@ -20,6 +20,7 @@ import MarketNotice from "./MarketNotice.vue";
 import pkg from "../../package.json";
 import { noLogOn, setNoLog } from "../utils/no-log";
 import { tr } from "../i18n/lang";
+import { loadBoot } from "./boot";
 import LangSwitch from "../components/LangSwitch.vue";
 
 const feedbackOpen = ref(false);
@@ -33,7 +34,8 @@ function onActive(): void {
   const idle = Date.now() - lastActive;
   lastActive = Date.now();
   if (idle < IDLE_MS) return;
-  void marketStore.refreshMarket();
+  // 相場と配信の情報は /boot.json を 1 回だけ読み直す (boot.ts)
+  void loadBoot(true).then(() => marketStore.refreshMarket());
   window.dispatchEvent(new Event("exiledesk:refresh"));
 }
 const onVisible = (): void => { if (document.visibilityState === "visible") onActive(); };

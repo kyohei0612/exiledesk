@@ -1,7 +1,7 @@
 /**
  * exiledesk-live: Web 版のサーバー (Cloudflare Worker、無料枠)。
  *
- *   scheduled (8 時間おき) … YouTube / Twitch に問い合わせ → KV "state" に LiveState を書く (配信の見張り)
+ *   scheduled (1 時間おき) … 相場 (poe2scout → KV "market")。8 時間おきに YouTube / Twitch に問い合わせ → KV "state" に LiveState を書く (配信の見張り)
  *   scheduled (毎朝 9 時 JST) … 日報を Discord に (monitor.ts)・昨日の分析用の記録を JSONL ファイルで LOGS_WEBHOOK に (logs.ts)
  *   GET  /live.json        … 配信の状態 (CORS 許可、60 秒キャッシュ)。サイトはこれを読むだけ
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
@@ -25,6 +25,7 @@ import { allowIp, getFeedback, listFeedback, notifyDiscord, parseFeedback, saveF
 import { parseBatch, writeEvents } from "./events";
 import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, reqLog } from "./monitor";
+import { MARKET_KEY, refreshMarket } from "./market";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
 
 const STATE_KEY = "state";
@@ -147,7 +148,16 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     const uid = /"uid":"([A-Za-z0-9_-]{6,40})"/.exec(text.slice(0, 300))?.[1];
     if (uid && (await forgottenUids(env)).includes(uid)) return json({ ok: true });
     const country = (req as Request & { cf?: { country?: string } }).cf?.country ?? "";
-    const r = await saveLog(env, text, country);
+    // 操作の印は最後の "__ev" に乗ってくる (2026-10-10 /event と 1 本に)。切り取って Analytics Engine へ、残りを D1 へ
+    let body = text;
+    const at = text.lastIndexOf(',"__ev":');
+    if (at > 0 && text.endsWith("}")) {
+      try { const b = parseBatch(JSON.parse(text.slice(at + 8, -1))); if (b) writeEvents(env, b, country); } catch { /* 印は落としてよい */ }
+      body = `${text.slice(0, at)}}`;
+    }
+    // 記録が 0 件 (印だけ) なら D1 には置かない
+    if (/"n":0[,}]/.test(body.slice(0, 200))) return json({ ok: true });
+    const r = await saveLog(env, body, country);
     return json(r === "ok" ? { ok: true } : { error: r }, r === "ok" ? 200 : 400);
   }
   // この端末を記録しない (「記録しない」をオンにした時に送る側から。今までの記録も消す。forget.ts)
@@ -182,6 +192,14 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     return fb ? json(fb, 200, { "cache-control": "no-store" }) : json({ error: "無い" }, 404);
   }
   switch (url.pathname) {
+    // 開いた時に 1 回だけ読む物をまとめて (配信の情報 + 1 時間おきにサーバーが取った相場。2026-10-10 前は live.json と相場 2 本の 3 回)
+    case "/boot.json": {
+      const [live, market] = await Promise.all([env.LIVE.get(STATE_KEY, { cacheTtl: 300 }), env.LIVE.get(MARKET_KEY, { cacheTtl: 300 })]);
+      let m = market;
+      if (!m) { try { m = JSON.stringify(await refreshMarket(env)); } catch { m = null; } }
+      // ブラウザに 10 分覚えさせる (開き直しはサーバーに来ない)
+      return new Response(`{"live":${live ?? "null"},"market":${m ?? "null"}}`, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=600", ...CORS } });
+    }
     case "/live.json": {
       const raw = await env.LIVE.get(STATE_KEY);
       if (!raw) return json({ updatedAt: null, live: [], upcoming: [], channels: [], errors: ["まだ 1 回も調べていない (cron か /refresh を待つ)"] }, 200, { "cache-control": "no-store" });
@@ -220,12 +238,16 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
 
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    // 8 時間おきに配信の見張り (最新動画。2026-10-10 オーナー「5 分監視、8 時間に 1 回でええな」、前は 5 分おき)、毎朝 9 時 (JST = 0:00 UTC) は日報
+    // 1 時間おきに相場、8 時間おきに配信の見張り (最新動画。2026-10-10 オーナー「5 分監視、8 時間に 1 回でええな」「相場も 1 時間に 1 回」)、毎朝 9 時 (JST = 0:00 UTC) は日報
     // 同じ時に、昨日 (JST) の分析用の記録をファイルで (日報とは別々に動かす。片方が落ちても、もう片方は送る)
     if (controller.cron === "0 0 * * *") {
       ctx.waitUntil(dailyReport(env));
       ctx.waitUntil(sendYesterdayLogs(env));
-    } else ctx.waitUntil(refresh(env));
+    } else {
+      // 1 時間おき: 相場を取り直す (全員に同じ物を配る、market.ts)。配信の見張りは 8 時間おき (UTC 0・8・16 時)
+      ctx.waitUntil(refreshMarket(env).catch((e) => alert(env, "相場の取得", `poe2scout から取れない: ${String(e).slice(0, 200)}`)));
+      if (new Date(controller.scheduledTime).getUTCHours() % 8 === 0) ctx.waitUntil(refresh(env));
+    }
   },
 
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
  * 自分・協賛のチャンネルの紹介 (2026-10-07 オーナー「YouTube は紹介だけ、開いた瞬間最新動画が表示されるくらいで」)。
- * server/live の /live.json を開いた時に 1 回だけ読む (読み直さない。サーバーが 5 分おきに調べた最新の動画と、配信中かどうか)。
+ * server/live の /boot.json を開いた時に 1 回だけ読む (読み直さない。サーバーが 8 時間おきに調べた最新の動画)。
  * 配信中のチャンネルはその配信を、ほかは最新の動画を出す。協賛は PR と出す (ステマ規制)
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { WEB_API_BASE } from "./config";
+import { loadBoot } from "./boot";
 import { tr } from "../i18n/lang";
 
 interface Entry { id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; status: "live" | "upcoming"; title: string; thumb: string | null; watchUrl: string; startedAt: string | null; scheduledAt: string | null; viewers: number | null }
@@ -16,17 +16,12 @@ interface State { updatedAt: string | null; live: Entry[]; upcoming: Entry[]; ch
 const state = ref<State | null>(null);
 const failed = ref("");
 
-async function load(): Promise<void> {
-  try {
-    const r = await fetch(`${WEB_API_BASE}/live.json`);
-    if (!r.ok) throw new Error(String(r.status));
-    state.value = (await r.json()) as State;
-    failed.value = "";
-  } catch (e) {
-    failed.value = String((e as Error).message ?? e);
-  }
+// 配信の情報は /boot.json (相場と一緒に 1 回で読む。boot.ts、2026-10-10)
+async function load(force = false): Promise<void> {
+  const b = await loadBoot(force);
+  if (b?.live) { state.value = b.live as State; failed.value = ""; } else failed.value = "boot";
 }
-// 開いた時に 1 回。45 分以上放置して戻ってきた時は WebApp.vue が exiledesk:refresh を出すので、もう 1 回
+// 開いた時に 1 回。45 分以上放置して戻ってきた時は WebApp.vue が exiledesk:refresh を出す (読み直しは WebApp が済ませている)
 const onRefresh = (): void => { void load(); };
 onMounted(() => { void load(); window.addEventListener("exiledesk:refresh", onRefresh); });
 onBeforeUnmount(() => window.removeEventListener("exiledesk:refresh", onRefresh));

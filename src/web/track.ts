@@ -1,15 +1,14 @@
 /**
  * 操作の印を送る側 (Web 版、2026-10-07 オーナー「どこでつまずいたか・離脱・どこから来たか・スマホか PC か」)。
  * cookie は使わない。uid = localStorage の乱数 (再訪を数える)、sid = このタブの乱数 (訪問を数える)。名前や IP は送らない。
- * 15 秒ごと・画面を離れる時に sendBeacon でまとめて POST /event。直前の流れ (trail) は要望・バグの添付にも使う
+ * 印は分析用の記録 (log-sender.ts) と同じ 1 本の POST /log に乗せて、画面を離れる時に 1 回だけ送る (2026-10-10 問い合わせを減らす、前は 15 秒おきに別の /event)。
+ * 直前の流れ (trail) は要望・バグの添付にも使う
  */
 import { watch } from "vue";
 import { craftStage } from "../state/craft-stage";
-import { WEB_API_BASE } from "./config";
 import { noLog } from "../utils/no-log";
 
 const UID_KEY = "exiledesk.web.uid";
-const FLUSH_MS = 15_000;
 /**
  * 滞在の印は 5 分おき、しかも最後に触ってから 5 分以内の時だけ (放置・裏に回したタブは何も送らない)。
  * 2026-10-07 オーナー「開きっぱなしだけ対策できるかな」(1 分おきだと開きっぱなしの 1 時間で 60 回サーバーを呼んでいた)
@@ -70,17 +69,19 @@ export function diagNow(): { errors: Array<{ ago: number; msg: string; stack?: s
 }
 
 let sentAny = false;
-export function flush(): void {
+/** 溜まった印を取り出す (log-sender.ts が送る時に呼ぶ)。無ければ null */
+function pull(): string | null {
   // この端末は記録しない (no-log.ts)。直前の流れ (trail) は要望・バグの添付用に残す
-  if (noLog()) { buf.length = 0; return; }
-  if (!buf.length) return;
+  if (noLog()) { buf.length = 0; return null; }
+  if (!buf.length) return null;
   const body = JSON.stringify({ uid, sid, first: first && !sentAny, dev, ref, ev: buf.splice(0, buf.length) });
   sentAny = true;
-  try {
-    // text/plain にするとプレフライト (OPTIONS) が要らず、sendBeacon の「資格情報あり」と `*` の組み合わせでも届く (サーバーは中身を JSON として読む)
-    const blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
-    if (!navigator.sendBeacon?.(`${WEB_API_BASE}/event`, blob)) void fetch(`${WEB_API_BASE}/event`, { method: "POST", body, headers: { "content-type": "text/plain;charset=UTF-8" }, keepalive: true, credentials: "omit" }).catch(() => undefined);
-  } catch { /* 印は落としてよい */ }
+  return body;
+}
+(globalThis as { __exiledeskEvPull?: () => string | null }).__exiledeskEvPull = pull;
+/** 今すぐ送る (印が多く溜まった時)。送るのは log-sender */
+export function flush(): void {
+  (globalThis as { __exiledeskLogFlush?: (beacon?: boolean) => void }).__exiledeskLogFlush?.(false);
 }
 
 /** 入口で 1 回。印の受け口を登録し、自動で付く印 (開いた・段階・滞在・JS エラー) を始める */
@@ -106,8 +107,6 @@ export function startTracking(): void {
     console[k] = (...args: unknown[]) => { try { recentConsole.push({ t: Date.now(), msg: `${k}: ${args.map((a) => (typeof a === "string" ? a : a instanceof Error ? a.message : JSON.stringify(a))).join(" ").slice(0, 200)}` }); if (recentConsole.length > 12) recentConsole.shift(); } catch { /* 無視 */ } orig(...args); };
   }
   for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.addEventListener(ev, () => { lastActive = Date.now(); }, { passive: true, capture: true });
-  setInterval(() => { if (document.visibilityState === "visible" && Date.now() - lastActive < PING_MS) { track("ping"); flush(); } }, PING_MS);
-  setInterval(flush, FLUSH_MS);
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
-  window.addEventListener("pagehide", flush);
+  // 滞在の印は溜めるだけ (次に送る時に一緒に)。送る間隔・離れる時は log-sender が持つ
+  setInterval(() => { if (document.visibilityState === "visible" && Date.now() - lastActive < PING_MS) track("ping"); }, PING_MS);
 }

@@ -298,3 +298,40 @@ describe("分析用の記録を Discord へ (logs.ts)", () => {
     expect((await sendDayLogs({ LIVE: fakeKv(), LOGS }, "2026-10-08", f)).ok).toBe(false);
   });
 });
+
+describe("問い合わせを減らす (2026-10-10)", () => {
+  const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
+  it("/log の最後の __ev は Analytics Engine へ、残りを D1 へ。記録 0 件 (印だけ) は D1 に置かない", async () => {
+    const points: unknown[] = [];
+    const rows: string[] = [];
+    const LOGS = { prepare: () => ({ bind: (...a: unknown[]) => ({ run: async () => { rows.push(String(a[5])); return {}; } }) }) } as unknown as D1Database;
+    const env: Env = { LIVE: fakeKv(), LOGS, EVENTS: { writeDataPoint: (p: unknown) => points.push(p) } as unknown as AnalyticsEngineDataset };
+    const ev = { uid: "uid123456", sid: "sid123456", dev: "pc", ref: "direct", ev: [{ n: "open" }, { n: "hand:use" }] };
+    const post = (body: string) => worker.fetch(new Request("https://x.workers.dev/log", { method: "POST", body }), env, ctx);
+    await post(`{"app":"web","n":1,"v":"0","uid":"uid123456","sid":"s","dev":"pc","recs":[{"k":"a","t":1,"d":{}}],"__ev":${JSON.stringify(ev)}}`);
+    expect(points).toHaveLength(2);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).not.toContain("__ev");
+    expect(JSON.parse(rows[0]!).recs).toHaveLength(1);
+    await post(`{"app":"web","n":0,"v":"0","uid":"uid123456","sid":"s","dev":"pc","recs":[],"__ev":${JSON.stringify(ev)}}`);
+    expect(points).toHaveLength(4);
+    expect(rows).toHaveLength(1);
+  });
+  it("/boot.json は配信の情報と相場を 1 回で、相場が無ければその場で取ってブラウザに 10 分覚えさせる", async () => {
+    const kv = fakeKv();
+    kv.store.set("state", JSON.stringify({ updatedAt: "x", live: [], upcoming: [], channels: [] }));
+    const orig = globalThis.fetch;
+    globalThis.fetch = (async (u: RequestInfo | URL) => String(u).endsWith("/Leagues")
+      ? new Response(JSON.stringify([{ Value: "HC Rites", IsCurrent: true }, { Value: "Rites", IsCurrent: true }]))
+      : new Response(JSON.stringify([{ ApiId: "exalted", CurrentPrice: 1 }]))) as unknown as typeof fetch;
+    try {
+      const r = await worker.fetch(new Request("https://x.workers.dev/boot.json"), { LIVE: kv } as Env, ctx);
+      const j = (await r.json()) as { live: { updatedAt: string }; market: { league: string; items: unknown[] } };
+      expect(j.live.updatedAt).toBe("x");
+      expect(j.market.league).toBe("Rites");
+      expect(j.market.items).toHaveLength(1);
+      expect(r.headers.get("cache-control")).toContain("max-age=600");
+      expect(kv.store.has("market")).toBe(true);
+    } finally { globalThis.fetch = orig; }
+  });
+});

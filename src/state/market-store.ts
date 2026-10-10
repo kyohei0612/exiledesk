@@ -26,9 +26,26 @@ function pickCurrent(list: League[]): League | null {
   return list.find((l) => l.IsCurrent && !l.Value.startsWith("HC")) ?? list[0] ?? null;
 }
 
+/**
+ * 相場をよそから受け取る仕組み (Web 版、2026-10-10): サーバーが 1 時間おきに取った物を /boot.json で配るので、ブラウザから poe2scout を引かない。
+ * null を返したら今まで通り poe2scout (中継) から取る
+ */
+type MarketLoader = () => Promise<{ leagues: League[]; items: CurrencyItem[] } | null>;
+let loader: MarketLoader | null = null;
+export function setMarketLoader(fn: MarketLoader): void { loader = fn; }
+
 async function load(): Promise<void> {
   loading.value = true;
   try {
+    const got = loader ? await loader() : null;
+    if (got && got.items.length) {
+      leagues.value = got.leagues;
+      league.value = pickCurrent(got.leagues);
+      items.value = got.items;
+      fetchedAt.value = Date.now();
+      error.value = null;
+      return;
+    }
     const list = await fetchLeagues();
     leagues.value = list;
     const cur = pickCurrent(list);
