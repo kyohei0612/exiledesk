@@ -120,21 +120,54 @@ const usableAll = computed(() => {
   void craftStage.omens.value;
   // ここもお告げ抜きで (掛けたままのお告げのせいで打てない物を消さず、ボタンに理由を出す。2026-10-10)
   const ok = (k: string): boolean => !(craftStage.usableBare ?? craftStage.usable)(k);
-  const sec = (label: string, keys: string[], kind?: string) => ({ label, keys: keys.filter((k) => ok(k) && !craftStage.hidden?.(k)), kind });
+  const sec = (label: string, keys: string[], kind?: string): { label: string; keys: string[]; kind?: string; fold?: boolean } => ({ label, keys: keys.filter((k) => ok(k) && !craftStage.hidden?.(k)), kind });
   return [
     sec(tr("オーブ・骨", "Orbs & Abyssal Bones"), [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)]),
     // エッセンスは種類ごとに 1 つ (押すと段を出す)。どれかの段が使えれば出す (2026-10-10 オーナー「レッサー・グレーター・パーフェクトは 1 つに集約」)
-    { label: tr("エッセンス", "Essences"), keys: essences.value.filter((g) => g.keys.some((k) => ok(k) && !craftStage.hidden?.(k))).map((g) => g.kind), kind: "essence-families" },
+    { label: tr("エッセンス", "Essences"), keys: essences.value.filter((g) => g.keys.some((k) => ok(k) && !craftStage.hidden?.(k))).map((g) => g.kind), kind: "essence-families" } as { label: string; keys: string[]; kind?: string; fold?: boolean },
     // ルーンはルーンのタブと同じ段ごとのまとまり (クラフトに関わる物だけ)
     ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
-    // 「使用可能」だけの時は、その他のルーン (ソウルコア・アイドルも) を一番下にまとめて
-    ...(!props.full && sockets.value?.cap ? [sec(tr("その他のルーン", "Other runes"), otherRunes.value.flatMap((g) => g.keys), "other-runes")] : []),
+    // 「使用可能」だけの時は、クラフトに関わらない物を 4 つの節に分けて一番下に (どれも最初は畳む。2026-10-10 オーナー
+    // 「ルーン (クラフトルーン以外)・遺産・ソウルコア・アイドルはたたんで」)。ルーンは段をまとめて 1 つ (押すとレッサー〜パーフェクト)
+    ...(!props.full && sockets.value?.cap ? otherSecs.value.map((x) => ({ ...sec(x.label, x.keys, x.kind), fold: true })) : []),
   ].filter((x) => x.keys.length);
 });
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
-/** エッセンスの種類 → 段の鍵 (レッサー → パーフェクトの順) と、アイコンに使う鍵 (普通の段、無ければ最初) */
-const essFamily = (kind: string) => essences.value.find((g) => g.kind === kind) ?? null;
-const essRep = (kind: string): string => { const ks = essFamily(kind)?.keys ?? []; return ks.find((k) => k.startsWith("essence:normal:")) ?? ks[0] ?? kind; };
+/** クラフトに関わらない物の 4 つの節 (ルーン・遺産・ソウルコア・アイドル) */
+const otherSecs = computed(() => {
+  const all = otherRunes.value;
+  const of = (kinds: string[]) => all.filter((g) => kinds.includes(g.kind)).flatMap((g) => g.keys);
+  const special = of(["special"]);
+  const legacy = special.filter((k) => k.startsWith("rune:Legacy of"));
+  return [
+    { label: tr("ルーン", "Runes"), keys: [...of(["lesser", "normal", "greater", "perfect"]), ...special.filter((k) => !legacy.includes(k))], kind: "rune-families" },
+    { label: tr("遺産", "Legacies"), keys: legacy, kind: "legacy" },
+    { label: tr("ソウルコア", "Soul Cores"), keys: of(["soulcore"]), kind: "soulcore" },
+    { label: tr("アイドル", "Idols"), keys: of(["idol"]), kind: "idol" },
+  ].filter((x) => x.keys.length);
+});
+/** 開いている畳んだ節 */
+const foldOpen = ref(new Set<string>());
+/** その他のルーン (外側) を開いているか */
+const otherOpen = ref(false);
+const toggleFold = (kind: string): void => { const n = new Set(foldOpen.value); if (n.has(kind)) n.delete(kind); else n.add(kind); foldOpen.value = n; };
+/** ルーンの段をまとめる: 英語名から Lesser / Greater / Perfect を外した物が同じなら同じ種類 */
+const RUNE_TIER = /^(Lesser|Greater|Perfect) /;
+const runeFam = (k: string): string => `rf:${k.slice("rune:".length).replace(RUNE_TIER, "")}`;
+const RUNE_ORDER = (k: string): number => { const m = RUNE_TIER.exec(k.slice("rune:".length))?.[1]; return m === "Lesser" ? 0 : m === "Greater" ? 2 : m === "Perfect" ? 3 : 1; };
+/** 段をまとめた物の鍵の並び (エッセンスは種類の名前、ルーンは rf:<英語名>) */
+function groupKeys(id: string): string[] {
+  if (id.startsWith("rf:")) return otherRunes.value.flatMap((g) => g.keys).filter((k) => runeFam(k) === id).sort((a, b) => RUNE_ORDER(a) - RUNE_ORDER(b));
+  return essences.value.find((g) => g.kind === id)?.keys ?? [];
+}
+/** まとめたアイコンに使う鍵 (普通の段、無ければ最初) */
+function groupRep(id: string): string {
+  const ks = groupKeys(id);
+  return (id.startsWith("rf:") ? ks.find((k) => RUNE_ORDER(k) === 1) : ks.find((k) => k.startsWith("essence:normal:"))) ?? ks[0] ?? id;
+}
+/** 節の中身 (ルーンは段をまとめた id、エッセンスは種類、ほかは鍵そのまま) */
+const secItems = (sec: { kind?: string; keys: string[] }): string[] => (sec.kind === "rune-families" ? [...new Set(sec.keys.map(runeFam))] : sec.keys);
+const isGroup = (sec: { kind?: string }): boolean => sec.kind === "essence-families" || sec.kind === "rune-families";
 /** 開いているエッセンスの種類 (段の欄) */
 const essOpen = ref<string | null>(null);
 const essPos = ref<Record<string, string> | null>(null);
@@ -176,19 +209,45 @@ const TABS = computed(() => (!props.full ? [] : [
 
     <!-- 使用可能 (実験): 今のアイテムに打てる物だけを種類ごとに -->
     <div v-if="tab === 'usable'" class="space-y-2">
-      <div v-for="sec in usableAll" :key="sec.kind ?? sec.label">
+      <div v-for="sec in usableAll.filter((x) => !x.fold)" :key="sec.kind ?? sec.label">
         <p class="mb-0.5 flex items-center gap-2 text-[10px]">
-          <span class="opacity-60">{{ sec.label }} ({{ sec.keys.length }})</span>
+          <span class="opacity-60">{{ sec.label }} ({{ secItems(sec).length }})</span>
+          <Disclosure v-if="sec.fold" :open="foldOpen.has(sec.kind ?? '')" class="text-[10px]" @update:open="toggleFold(sec.kind ?? '')" />
         </p>
-        <div class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
-          <template v-if="sec.kind === 'essence-families'">
-            <span v-for="kind in sec.keys" :key="kind" :data-ess-keys="essFamily(kind)?.keys.join(' ')" @click.capture.stop="openEss(kind, $event)">
-              <ShelfButton :k="essRep(kind)" :label="nameOf(essRep(kind)).replace(/^(レッサー|グレーター|パーフェクト)/, '')" nobadge />
+        <div v-if="!sec.fold || foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
+          <template v-if="isGroup(sec)">
+            <span v-for="id in secItems(sec)" :key="id" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
+              <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" nobadge />
             </span>
           </template>
           <template v-else>
             <ShelfButton v-for="k in sec.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
           </template>
+        </div>
+      </div>
+      <!-- その他のルーン: まず外側でまとめて畳み、開くと中にルーン・遺産・ソウルコア・アイドルの節 (それぞれも畳む)。2026-10-10 オーナー「2 重構造」 -->
+      <div v-if="usableAll.some((x) => x.fold)">
+        <p class="mb-0.5 flex items-center gap-2 text-[10px]">
+          <span class="opacity-60">{{ tr("その他のルーン", "Other runes") }} ({{ usableAll.filter((x) => x.fold).reduce((n, x) => n + secItems(x).length, 0) }})</span>
+          <Disclosure v-model:open="otherOpen" class="text-[10px]" />
+        </p>
+        <div v-if="otherOpen" class="space-y-1.5 border-l border-white/10 pl-3">
+          <div v-for="sec in usableAll.filter((x) => x.fold)" :key="sec.kind ?? sec.label">
+            <p class="mb-0.5 flex items-center gap-2 text-[10px]">
+              <span class="opacity-60">{{ sec.label }} ({{ secItems(sec).length }})</span>
+              <Disclosure :open="foldOpen.has(sec.kind ?? '')" class="text-[10px]" @update:open="toggleFold(sec.kind ?? '')" />
+            </p>
+            <div v-if="foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
+              <template v-if="isGroup(sec)">
+                <span v-for="id in secItems(sec)" :key="id" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
+                  <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" nobadge />
+                </span>
+              </template>
+              <template v-else>
+                <ShelfButton v-for="k in sec.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+              </template>
+            </div>
+          </div>
         </div>
       </div>
       <p v-if="!usableAll.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
@@ -276,11 +335,11 @@ const TABS = computed(() => (!props.full ? [] : [
     <!-- 持っている物のお告げは、そのアイコンのすぐ下に重ねて出す (棚は押し下げない。2026-10-10 オーナー「アイコンの下まで持ってきていい」) -->
     <div v-if="$slots.held && anchor" class="held-anchor" :style="anchor.style" data-held-box><div class="held-pop-in"><slot name="held" /></div></div>
     <!-- エッセンスの段: 種類のアイコンを押すと、お告げの欄と同じ形で出す。使えない段は灰色と理由 (2026-10-10 オーナー) -->
-    <div v-if="essOpen && essFamily(essOpen) && essPos" class="ess-anchor held-anchor" :style="essPos">
+    <div v-if="essOpen && groupKeys(essOpen).length && essPos" class="ess-anchor held-anchor" :style="essPos">
       <div class="held-pop-in p-2">
-        <p class="mb-1 text-[11px] text-white/60">{{ nameOf(essRep(essOpen)) }}</p>
+        <p class="mb-1 text-[11px] text-white/60">{{ nameOf(groupRep(essOpen)) }}</p>
         <div class="flex flex-wrap gap-1.5">
-          <div v-for="k in essFamily(essOpen)!.keys" :key="k" class="flex w-[86px] flex-col items-center">
+          <div v-for="k in groupKeys(essOpen)" :key="k" class="flex w-[86px] flex-col items-center">
             <ShelfButton :k="k" @pick="pickEss" />
             <span v-if="craftStage.usable(k)" class="mt-0.5 block w-full text-left text-[9.5px] leading-tight text-rose-300/90">・{{ craftStage.usable(k) }}</span>
           </div>
