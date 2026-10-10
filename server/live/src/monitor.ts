@@ -141,7 +141,31 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     live ? `配信の見張り ${live.errors.length ? `気になる所 ${live.errors.length} (${live.errors[0]!.slice(0, 80)})` : "異常なし"} · ライブ中 ${live.live.length} 人` : "配信の見張り まだ動いていない",
     sum?.warnings.length ? `集計で取れなかった所: ${sum.warnings.join(" / ")}` : null,
   ]);
+  // 結果を踏まえたアドバイス (2026-10-10 オーナー「最後に結果踏まえたアドバイス」)。数字の決まりで出し分け、多くて 3 つ
+  sec("アドバイス", adviceOf(sum, feedback, alerts));
   return out.join("\n");
+}
+
+/** 日報の最後のアドバイス (大事な順に 3 つまで。当てはまる物が無ければ「様子見で OK」) */
+export function adviceOf(sum: Summary | null, feedback: { requests: number; bugs: number }, alerts: string[]): string[] {
+  const out: string[] = [];
+  const err = sum?.byEvent.get("error");
+  if (err) out.push(`画面のエラーが出ています。${sum!.errors.length ? `多い「${sum!.errors[0]![0].slice(0, 40)}」から` : "多い物から"}直すと良さそうです`);
+  if (feedback.bugs) out.push(`バグ報告が ${feedback.bugs} 件あります。再現できるか先に確認を`);
+  if (alerts.length) out.push("異常の通知が出ています。サーバーや相場の取得が止まっていないか確認を");
+  if (sum && sum.sessions >= 5) {
+    if (sum.bounce != null && sum.bounce >= 0.5) out.push("半分以上が何もせずに閉じています。最初の画面で何をすればいいか分かりにくい可能性。最初の 1 手を目立たせると良さそうです");
+    const hand = sum.byEvent.get("hand:use")?.sessions ?? 0;
+    if (hand / sum.sessions < 0.3) out.push(`開いても実際に打った人が ${Math.round((hand / sum.sessions) * 100)}% だけです。「まずこれを押す」の案内を足すと良さそうです`);
+    const f = funnelDrop(sum, FUNNEL_SIM);
+    if (f && f.pct >= 50) out.push(`シミュレーションの「${f.from} → ${f.to}」で半分以上がやめています。この段を見直す価値があります`);
+    const mobile = sum.devices.find(([k]) => k === "mobile")?.[1] ?? 0;
+    const all = sum.devices.reduce((a, [, v]) => a + v, 0) || 1;
+    if (mobile / all >= 0.4) out.push(`スマホが ${Math.round((mobile / all) * 100)}% あります。スマホの使い心地を優先すると効きそうです`);
+    if (sum.sessions >= 10 && (sum.sessions - sum.newSessions) / sum.sessions < 0.2) out.push("また来た人が 2 割未満です。保存・お気に入りなど、もう一度来るきっかけを作ると良さそうです");
+  }
+  if (feedback.requests) out.push(`要望が ${feedback.requests} 件あります。中身を見て、すぐできる物から`);
+  return out.length ? out.slice(0, 3) : ["大きな問題は見当たりません。このまま様子見で OK です"];
 }
 
 /** 段階で一番減った所 (前の段が 5 人以上で 3 割以上減った時だけ) */

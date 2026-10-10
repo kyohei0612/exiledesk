@@ -242,6 +242,11 @@ describe("操作の印と日報 (events / monitor)", () => {
     expect(full).toContain("・シミュレーションで一番やめた所: 狙い → 順番 (20 人 → 8 人)");
     expect(full).toContain("・何もせず閉じた 20 回 (48%)"); expect(full).toContain("・半分の人が 6 分以上使った");
     expect(full).toContain("・この 7 日で来た人 120 人");
+    // 最後のアドバイス (数字の決まりで 3 つまで、無ければ様子見)
+    expect(full).toContain("**アドバイス**");
+    const { adviceOf } = await import("../server/live/src/monitor");
+    expect(adviceOf(null, { requests: 0, bugs: 0 }, [])).toEqual(["大きな問題は見当たりません。このまま様子見で OK です"]);
+    expect(adviceOf(null, { requests: 1, bugs: 2 }, ["x"]).length).toBe(3);
   });
   it("異常は控えるだけで Discord には送らない (同じ物は 6 時間に 1 回)、要望は 1 分に 1 件", async () => {
     const { alert } = await import("../server/live/src/monitor");
