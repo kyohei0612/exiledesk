@@ -160,10 +160,21 @@ function groupKeys(id: string): string[] {
   if (id.startsWith("rf:")) return otherRunes.value.flatMap((g) => g.keys).filter((k) => runeFam(k) === id).sort((a, b) => RUNE_ORDER(a) - RUNE_ORDER(b));
   return essences.value.find((g) => g.kind === id)?.keys ?? [];
 }
-/** まとめたアイコンに使う鍵 (普通の段、無ければ最初) */
+/**
+ * まとめたアイコンに使う鍵: 使える段のうち一番上 (レアならパーフェクト)。どれも使えなければ普通の段
+ * (2026-10-10 オーナー「使える奴があるならグレーアウトは間違ってる」: 普通の段を出していて、レアで灰色になっていた)
+ */
 function groupRep(id: string): string {
   const ks = groupKeys(id);
+  const usableKs = ks.filter((k) => !craftStage.usable(k));
+  if (usableKs.length) return usableKs[usableKs.length - 1]!;
   return (id.startsWith("rf:") ? ks.find((k) => RUNE_ORDER(k) === 1) : ks.find((k) => k.startsWith("essence:normal:"))) ?? ks[0] ?? id;
+}
+/** 段の欄の見出し: 種類の名前 (普通の段の名前。無ければ使う鍵の名前)。アイコンの名前は今使える一番上の段 (2026-10-10 オーナー「今使えるエッセンスの最上位を表に」) */
+function groupLabel(id: string): string {
+  const ks = groupKeys(id);
+  const base = id.startsWith("rf:") ? ks.find((k) => RUNE_ORDER(k) === 1) : ks.find((k) => k.startsWith("essence:normal:"));
+  return nameOf(base ?? groupRep(id));
 }
 /** 節の中身 (ルーンは段をまとめた id、エッセンスは種類、ほかは鍵そのまま) */
 const secItems = (sec: { kind?: string; keys: string[] }): string[] => (sec.kind === "rune-families" ? [...new Set(sec.keys.map(runeFam))] : sec.keys);
@@ -216,9 +227,12 @@ const TABS = computed(() => (!props.full ? [] : [
         </p>
         <div v-if="!sec.fold || foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
           <template v-if="isGroup(sec)">
-            <span v-for="id in secItems(sec)" :key="id" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
-              <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" nobadge />
-            </span>
+            <template v-for="id in secItems(sec)" :key="id">
+              <span v-if="groupKeys(id).length > 1" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
+                <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" :corner="tr(`全 ${groupKeys(id).length} 段`, `${groupKeys(id).length} tiers`)" />
+              </span>
+              <ShelfButton v-else :k="groupKeys(id)[0] ?? id" @pick="emit('hold', $event)" />
+            </template>
           </template>
           <template v-else>
             <ShelfButton v-for="k in sec.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
@@ -239,9 +253,12 @@ const TABS = computed(() => (!props.full ? [] : [
             </p>
             <div v-if="foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5">
               <template v-if="isGroup(sec)">
-                <span v-for="id in secItems(sec)" :key="id" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
-                  <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" nobadge />
-                </span>
+                <template v-for="id in secItems(sec)" :key="id">
+                  <span v-if="groupKeys(id).length > 1" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
+                    <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" :corner="tr(`全 ${groupKeys(id).length} 段`, `${groupKeys(id).length} tiers`)" />
+                  </span>
+                  <ShelfButton v-else :k="groupKeys(id)[0] ?? id" @pick="emit('hold', $event)" />
+                </template>
               </template>
               <template v-else>
                 <ShelfButton v-for="k in sec.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
@@ -337,7 +354,7 @@ const TABS = computed(() => (!props.full ? [] : [
     <!-- エッセンスの段: 種類のアイコンを押すと、お告げの欄と同じ形で出す。使えない段は灰色と理由 (2026-10-10 オーナー) -->
     <div v-if="essOpen && groupKeys(essOpen).length && essPos" class="ess-anchor held-anchor" :style="essPos">
       <div class="held-pop-in p-2">
-        <p class="mb-1 text-[11px] text-white/60">{{ nameOf(groupRep(essOpen)) }}</p>
+        <p class="mb-1 text-[11px] text-white/60">{{ groupLabel(essOpen) }}</p>
         <div class="flex flex-wrap gap-1.5">
           <div v-for="k in groupKeys(essOpen)" :key="k" class="flex w-[86px] flex-col items-center">
             <ShelfButton :k="k" @pick="pickEss" />

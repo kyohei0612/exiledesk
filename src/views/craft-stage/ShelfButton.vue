@@ -19,7 +19,7 @@ import { omenNote } from "../../services/craft-stage/omens";
 import { tr } from "../../i18n/lang";
 
 /** label: 名前の上書き (エッセンスを種類でまとめたアイコン)。nobadge: 段の札を出さない */
-const props = defineProps<{ k: string; omen?: boolean; label?: string; nobadge?: boolean }>();
+const props = defineProps<{ k: string; omen?: boolean; label?: string; nobadge?: boolean; corner?: string }>();
 const emit = defineEmits<{ pick: [key: string] }>();
 
 const BADGE: Array<[RegExp, [string, string], string]> = [
@@ -71,7 +71,13 @@ function enter(e: MouseEvent): void {
   let r: { left: number; right: number; top: number; bottom: number } = (e.currentTarget as HTMLElement).getBoundingClientRect();
   // 持っている物はお告げの欄も合わせた範囲の横に出す (欄に重ならないように。2026-10-10 オーナー「被らないようにお告げと表示したらいいだけ」)
   const el = e.currentTarget as HTMLElement;
-  const pop = !props.omen && shelf.held.value === props.k ? el.closest("[data-shelf-root]")?.querySelector<HTMLElement>(".held-anchor .held-pop-in")?.getBoundingClientRect() : null;
+  // 重ねて出している欄 (お告げ・段) に重ならないよう、欄も合わせた範囲の横に出す: 欄の中のボタン、持っている物、段の欄を開いているまとめたアイコン
+  // (2026-10-10 オーナー「カードにカードが重なる、その際はスクロールと同じ扱いで」)
+  const rootEl = el.closest("[data-shelf-root]");
+  const inPop = el.closest<HTMLElement>(".held-pop-in");
+  const famOpen = el.closest("[data-ess-keys]") ? rootEl?.querySelector<HTMLElement>(".ess-anchor .held-pop-in") : null;
+  const heldPop = !props.omen && shelf.held.value === props.k ? rootEl?.querySelector<HTMLElement>(".held-anchor:not(.ess-anchor) .held-pop-in") : null;
+  const pop = (inPop ?? famOpen ?? heldPop)?.getBoundingClientRect() ?? null;
   if (pop) r = { left: Math.min(r.left, pop.left), right: Math.max(r.right, pop.right), top: Math.min(r.top, pop.top), bottom: Math.max(r.bottom, pop.bottom) };
   hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
 }
@@ -98,7 +104,8 @@ onBeforeUnmount(leave);
       <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
     </span>
     <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 text-center">{{ label ?? nameOf(k) }}</span></span>
-    <span v-if="badge && !nobadge" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
+    <span v-if="corner" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-amber-200 max-md:text-[10px]">{{ corner }}</span>
+    <span v-if="badge && !nobadge && !corner" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">{{ tr("有効", "Active") }}</span>
     <span v-if="omenTag" class="mt-px block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">{{ tr("・", "· ") }}{{ omenTag }}</span>
     <span v-if="omenWarn" class="block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
