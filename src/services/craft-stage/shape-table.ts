@@ -187,7 +187,9 @@ export function shapeOutcomes(c: ShapeCtx, x: PatternSet, h: number | Shape, j?:
       if (q.s === s0) continue;
       // 偉大の 2 つが狙いの側だけなら「狙いが 2 つ / 狙い 1・狙い以外 1 / 狙い以外が 2 つ」の文に
       const dh = q.s.h - s0.h, dO = q.s.o - s0.o;
-      const label = k === 2 && dO === 0 ? (dh === 2 ? "狙いが 2 つ" : dh === 1 ? "狙い 1・狙い以外 1" : "狙い以外が 2 つ") : q.label;
+      // 2 つ付いた時だけ「2 つ」の文。空きが 1 つで 1 つしか付かない時は 1 つの文 (2026-10-10: 1 つでも「狙い以外が 2 つ」と出ていた)
+      const added = dh + (q.s.j - s0.j) + dO;
+      const label = k === 2 && added === 2 && dO === 0 ? (dh === 2 ? "狙いが 2 つ" : dh === 1 ? "狙い 1・狙い以外 1" : "狙い以外が 2 つ") : k === 2 && added === 1 ? `${q.label} (空きが 1 つなので 1 つだけ)` : q.label;
       push(q.s, label, q.p);
     }
   } else {
