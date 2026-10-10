@@ -103,7 +103,9 @@ function pickFamily(f: Family): void {
   // 行の位置は開いた物を閉じてから測る (開いた一覧の分だけ下の段がずれるので)
   insertAfter.value = null;
   family.value = f;
-  cls.value = f.variants.length === 1 ? f.variants[0]!.cls : (f.variants.some((v) => v.cls === cls.value) ? cls.value : null);
+  // 属性の札は先頭 (筋力・無印) を選んだ状態で開いて、すぐベースを出す。札は上で切り替える
+  // (2026-10-10 オーナー「押したら選ばせるんじゃなく最初から筋力のページ開いて上のタブで切り替え、アイコンと文字が挟まれると目が滑る」)
+  cls.value = f.variants.some((v) => v.cls === cls.value) ? cls.value : f.variants[0]!.cls;
   void nextTick(() => placeUnder(f));
   // 押しても画面は動かさない (2026-10-09 オーナー「押したら下に移動とかっていう挙動しなくてもいい、固定でおｋ」。前は属性の札を画面の上へ送っていた)
 }
