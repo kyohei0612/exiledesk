@@ -17,7 +17,7 @@ import { mulberry32 } from "../htc/rng";
 import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
-import { addForced, boostedMod, effectiveCls, replaced, type Force } from "./stage-core";
+import { addForced, boostedMod, effectiveCls, replaced, unfracturable, type Force } from "./stage-core";
 import { socketCapOf, isUnsocket, UNSOCKET_PREFIX } from "./stage-runes";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOfItem } from "./stage-bases";
@@ -265,9 +265,10 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
     const k = (sd: StageSide) => (sd === "prefix" ? "prefixes" : "suffixes") as "prefixes" | "suffixes";
     const r = addForced(data, item, 0, rng, f, f.desecrated ? { pools: (sd) => [...(cur.cls.pools.desecrated?.[k(sd)] ?? []), ...effectiveCls(cur).pools.normal[k(sd)]] } : {});
     if ("error" in r) throw new Error(`始めの状態の MOD ${i + 1} つ目: ${r.error}`);
-    // 冒涜の MOD は固定されない (2026-10-10 取引所で確認)
-    if (f.fractured && f.desecrated) throw new Error(`始めの状態の MOD ${i + 1} つ目: 冒涜の MOD はフラクチャーできない`);
-    item = f.fractured ? replaced(r.item, r.mod, { ...r.mod, fractured: true }) : f.desecrated ? replaced(r.item, r.mod, { ...r.mod, desecrated: true }) : r.item;
+    // 骨で付いた普通の MOD は固定できる (両方の印)。冒涜専用の MOD は固定されない (stage-core の unfracturable、2026-10-10)
+    const marked = { ...r.mod, ...(f.fractured ? { fractured: true } : {}), ...(f.desecrated ? { desecrated: true } : {}) };
+    if (f.fractured && unfracturable(data, r.item, { ...marked, fractured: false })) throw new Error(`始めの状態の MOD ${i + 1} つ目: 冒涜専用の MOD はフラクチャーできない`);
+    item = f.fractured || f.desecrated ? replaced(r.item, r.mod, marked) : r.item;
   }
   if (s.quality != null) item = { ...item, quality: s.quality };
   return item;

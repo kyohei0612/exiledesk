@@ -52,6 +52,19 @@ export function rareLimitOf(item: StageItem, side: StageSide): number {
 export const listOf = (item: StageItem, side: StageSide): StageMod[] => (side === "prefix" ? item.prefixes : item.suffixes);
 export const room = (item: StageItem, side: StageSide): boolean => listOf(item, side).length < limitOf(item, side);
 export const allMods = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
+/**
+ * フラクチャーで選べない MOD: 未発現の枠と、冒涜専用の MOD (冒涜の置き場の物・変質した鎖骨の異界の MOD で普通の置き場に無い物)。
+ * 骨で付いた普通の MOD は固定できる (2026-10-10 オーナー「冒涜で一般 MOD はフラクチャーできる、冒涜 MOD はフラクチャーで選択できない」。
+ * 取引所で冒涜専用の文面のフラクチャー品が無い、要望も同じ。CoE は発現済みなら冒涜専用も選ぶので違う)
+ */
+export function unfracturable(data: PatchData | null | undefined, item: StageItem, m: StageMod): boolean {
+  if (m.unrevealed) return true;
+  if (!m.desecrated) return false;
+  const mod = data?.mods.get(m.modId);
+  if (mod?.source === "desecrated") return true;
+  const k = m.side === "prefix" ? "prefixes" : "suffixes";
+  return (item.cls.pools.otherworldly?.[k] ?? []).includes(m.modId) && !(effectiveCls(item).pools.normal[k] ?? []).includes(m.modId);
+}
 
 /**
  * 指輪・アミュレットの品質の上限 (POE2Tube 要望 ㉔-3、2026-10-02): ベースの最大品質 + MOD の「品質の最大値 +N%」
