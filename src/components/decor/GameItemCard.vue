@@ -127,14 +127,14 @@ onBeforeUnmount(onUp);
         <div class="absolute right-1.5 top-1.5 flex items-center gap-1 z-10">
           <button
             type="button"
-            class="w-6 h-6 rounded text-[13px] leading-none transition"
-            :class="pinned ? 'bg-[#4a3a1a] text-[#ffd479]' : 'text-[#6f6a5e] hover:text-[#cfc6ae]'"
+            class="g-plain grid h-6 w-6 place-items-center bg-transparent text-[13px] leading-none transition"
+            :class="pinned ? 'text-[#ffd479] drop-shadow-[0_0_4px_rgba(255,212,121,0.6)]' : 'text-[#8a8170] hover:text-[#e6dcc2]'"
             :title="pinned ? 'ピン留めを外す' : 'ピン留め (カーソルを外しても消さない)'"
             @click.stop="hoverStack.togglePin(layerKey)"
           >
             <Icon name="pin" class="size-3.5" />
           </button>
-          <button v-if="pinned" type="button" class="w-6 h-6 rounded text-[14px] leading-none text-[#cfc6ae] hover:text-white" title="閉じる" @click.stop="hoverStack.close(layerKey)">×</button>
+          <button v-if="pinned" type="button" class="g-plain h-6 w-6 bg-transparent text-[14px] leading-none text-[#cfc6ae] hover:text-white" title="閉じる" @click.stop="hoverStack.close(layerKey)">×</button>
         </div>
         <div
           class="g-head select-none"
