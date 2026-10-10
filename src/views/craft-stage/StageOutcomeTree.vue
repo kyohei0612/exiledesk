@@ -389,7 +389,7 @@ const slots = computed(() => [...Array(Math.min(at.value.h, props.limit)).fill("
               <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)]" @click="confirmHeld">これを打つ<Icon name="arrow-right" class="size-4" /></button>
             </div>
             <div v-if="heldUse" class="h-20 md:hidden order-last"></div>
-            <CurrencyShelf @hold="holdShelf">
+            <CurrencyShelf full @hold="holdShelf">
               <template v-if="heldOmens.length" #held>
                 <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
                   <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(shelfHeld ?? "") }} に掛けられるお告げ</p>

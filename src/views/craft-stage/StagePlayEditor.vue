@@ -601,7 +601,7 @@ onBeforeUnmount(() => io?.disconnect());
                 <button type="button" class="h-8 rounded-md border border-[var(--exile-color-border-subtle)] px-2.5 text-[var(--exile-color-text-secondary)] transition hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" title="狙わずに打って次の手へ" @click="addMove(null)">狙わない</button>
               </div>
             </section>
-            <CurrencyShelf v-if="!locked" @hold="(k: string) => (held = k)">
+            <CurrencyShelf v-if="!locked" full @hold="(k: string) => (held = k)">
               <template v-if="heldOmens.length" #held>
                 <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
                   <p class="mb-1 text-[11px] text-violet-200/80">{{ nameOf(held ?? "") }} に掛けられるお告げ</p>

@@ -223,8 +223,8 @@ function setQualityCap(n: number): void {
   if (last && last.out.currency.startsWith(QUALITY_CAP)) s.undo();
   s.use(qualityCapKey(n));
 }
-/** MOD 一覧の頭へ一気に (ワープ。2026-10-10 オーナー「これに関してはワープでいい」) */
-function toModList(): void { scrollToTop(document.querySelector("[data-mod-list]"), "auto"); }
+/** MOD 一覧へ一気に (ワープ)。一覧の固定の目次が画面の一番上に来る所まで (2026-10-10 オーナー「ワープでいい」「固定バーが一番上に来るとこまで」) */
+function toModList(): void { scrollToTop(document.querySelector("[data-mod-toc]") ?? document.querySelector("[data-mod-list]"), "auto"); }
 function fractureMod(m: StageMod): void {
   const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0;
   s.use(forceKey(m.modId, n ? `T${n - m.tierIndex}` : null, "f"));

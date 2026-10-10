@@ -22,7 +22,8 @@ import { tr } from "../../i18n/lang";
 const emit = defineEmits<{ hold: [key: string] }>();
 type ShelfTab = "usable" | "orb" | "essence" | "rune" | "omen";
 /** 最初に開くタブ。エミュレーターもシミュレーターも「使用可能」(2026-10-09 オーナー「エミュレーターではデフォルトで使用可能」「シミュレーターも使用可能からスタート」) */
-const props = withDefaults(defineProps<{ initialTab?: ShelfTab }>(), { initialTab: "usable" });
+/** full: タブを全部出す (シミュレーターの編集など、お告げのタブが要る所)。手で打つ画面は「使用可能」だけ (2026-10-10 オーナー「ここはもはや使用可能だけでいい、機能してなかったらバグ」) */
+const props = withDefaults(defineProps<{ initialTab?: ShelfTab; full?: boolean }>(), { initialTab: "usable", full: false });
 const craftStage = useShelf();
 const tab = ref<ShelfTab>(props.initialTab);
 /**
@@ -116,21 +117,23 @@ const usableAll = computed(() => {
     sec(tr("エッセンス", "Essences"), essences.value.flatMap((g) => g.keys)),
     // ルーンはルーンのタブと同じ段ごとのまとまり (クラフトに関わる物だけ)
     ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
+    // 「使用可能」だけの時は、その他のルーン (ソウルコア・アイドルも) を一番下にまとめて
+    ...(!props.full && sockets.value?.cap ? [sec(tr("その他のルーン", "Other runes"), otherRunes.value.flatMap((g) => g.keys), "other-runes")] : []),
   ].filter((x) => x.keys.length);
 });
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
-const TABS = computed(() => [
+const TABS = computed(() => (!props.full ? [] : [
   { id: "usable" as const, label: `${tr("使用可能", "Usable")} (${usableCount.value})` },
   { id: "orb" as const, label: tr("オーブ・骨", "Orbs & Abyssal Bones") },
   { id: "essence" as const, label: `${tr("エッセンス", "Essences")} (${essences.value.length})` },
   ...(sockets.value?.cap ? [{ id: "rune" as const, label: tr("ルーン", "Runes") }] : []),
   { id: "omen" as const, label: craftStage.omens.value.length ? tr(`お告げ (${craftStage.omens.value.length} 枚掛け)`, `Omens (${craftStage.omens.value.length} active)`) : tr("お告げ", "Omens") },
-]);
+]));
 </script>
 
 <template>
   <div ref="root" class="relative" data-shelf-root>
-    <div class="mb-2 flex flex-wrap gap-1 text-[12px]">
+    <div v-if="TABS.length" class="mb-2 flex flex-wrap gap-1 text-[12px]">
       <button
         v-for="t in TABS"
         :key="t.id"
