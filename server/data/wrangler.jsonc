@@ -1,9 +1,0 @@
-// exiledesk-data: 開いた時に読む boot.json (配信の情報 + 相場) を静的なファイルとして配るだけの Worker (2026-10-10)。
-// 静的なファイル (assets) への問い合わせは数えられず無料・無限。中身は GitHub Actions (.github/workflows/boot-data.yml) が
-// 1 時間おきに scripts/build-boot.mjs で作り直して deploy する。プログラム (main) は持たない
-{
-  "$schema": "../live/node_modules/wrangler/config-schema.json",
-  "name": "exiledesk-data",
-  "compatibility_date": "2026-09-01",
-  "assets": { "directory": "./out" }
-}
