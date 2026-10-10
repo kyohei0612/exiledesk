@@ -45,8 +45,8 @@ export interface HoverLayer {
 
 /** 名前 / 下線からカードへ移る間に消えないための待ち (ms) */
 const CLOSE_DELAY = 140;
-/** 2 枚目以降 (カードの中の下線) を開くまでの待ち (ms) */
-const CHILD_OPEN_DELAY = 500;
+/** カードを開くまでの待ち (ms)。棚・ベースの 1 枚目 (openRootDelayed) とカードの中の下線の 2 枚目以降で共通 (2026-10-10 オーナー「もう気持ち遅く」で 500 → 700) */
+const CHILD_OPEN_DELAY = 700;
 
 const layers = ref<HoverLayer[]>([]);
 let seq = 0;
@@ -109,7 +109,7 @@ export const hoverStack = {
     // 同じ物がすぐ上に開いていれば何もしない (下線の上でカーソルが動いた時)
     const next = layers.value[i + 1];
     if (next && !next.pinned && JSON.stringify(next.payload) === JSON.stringify(payload)) return;
-    // 0.5 秒乗せ続けたら開く (その間に下線から離れれば leave が取り消す)
+    // 0.7 秒乗せ続けたら開く (その間に下線から離れれば leave が取り消す)
     cancelOpen();
     openTimer = setTimeout(() => {
       openTimer = null;
