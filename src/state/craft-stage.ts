@@ -16,7 +16,7 @@ import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
 import type { Pattern } from "../services/craft-stage/pattern";
 import { recordHistory } from "../services/history";
-import { computed, ref, shallowRef } from "vue";
+import { computed, ref, shallowRef, watch } from "vue";
 import { loadHtcPatch } from "../services/htc/patch";
 import { loadCurrencyHover } from "../services/currency/currency-hover";
 import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
@@ -174,6 +174,12 @@ const startMods = ref<Force[]>([]);
  * minTierIndex はエンジンの段の番号 (0 = 一番下、T1 = tiers.length - 1)。[[stage-sim.ts]]
  */
 const mode = ref<"hand" | "sim">("hand");
+/**
+ * Web 版はシミュレーションを閉じる (2026-10-10 オーナー「未完成すぎるからシミュレーションは調整中って出してクリックできないように、ウェブ版」)。
+ * タブは「調整中」で押せず、前に開いていた・URL・はじめの窓から入っても手で打つ方に戻す
+ */
+export const SIM_LOCKED = !isTauriRuntime();
+watch(mode, (m) => { if (SIM_LOCKED && m === "sim") mode.value = "hand"; }, { immediate: true, flush: "sync" });
 
 /** method = 付け方 (順番どおりのシミュレーション、[[recipe-sim.ts]])。省くと MOD の種類で決める (普通 = 高貴、冒涜 = 冒涜、エッセンス = エッセンス) */
 /**
