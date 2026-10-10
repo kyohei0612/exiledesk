@@ -256,6 +256,8 @@ export interface PoolOpts {
   boost?: { test: (mod: Mod) => boolean; mult: number };
   /** 系統の比較で除く MOD (発現で差し替える未発現の枠) */
   except?: StageMod;
+  /** アイテムレベルを見ない MOD (冒涜専用の MOD は保存された / 古びた / 変質した骨ならアイテムレベルに関わらず全部の段が出る。apply-desecrate.ts) */
+  anyLevel?: (mod: Mod) => boolean;
 }
 export function candidates(data: PatchData, item: StageItem, sides: readonly StageSide[], floor: number, o: PoolOpts = {}): Candidate[] {
   const taken = takenFamilies(data, item, o.except);
@@ -267,8 +269,9 @@ export function candidates(data: PatchData, item: StageItem, sides: readonly Sta
       if (!mod || familyBlocked(mod, taken)) continue;
       const k = o.boost?.test(mod) ? o.boost.mult : 1;
       // 下限 (上級・完全・古代の骨) より上の段が 1 つも無い系統は、一番上の段だけ残す (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 2)
-      const keep = floorKeepIndex(mod, floor, item.itemLevel);
-      const tiers = mod.tiers.flatMap((t, index) => (t.ilvl <= item.itemLevel && (t.ilvl >= floor || index === keep) && t.weight > 0 ? [{ index, w: t.weight * k }] : []));
+      const lv = o.anyLevel?.(mod) ? Infinity : item.itemLevel;
+      const keep = floorKeepIndex(mod, floor, lv);
+      const tiers = mod.tiers.flatMap((t, index) => (t.ilvl <= lv && (t.ilvl >= floor || index === keep) && t.weight > 0 ? [{ index, w: t.weight * k }] : []));
       const w = tiers.reduce((a, t) => a + t.w, 0);
       if (w > 0) out.push({ mod, side, tiers, w });
     }

@@ -51,7 +51,8 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
 
   // 側: お告げ → それ、無ければ出うる MOD の重みで
   const omenSide: StageSide | null = mark ? mark.side : used.includes("OmenofSinistralNecromancy") ? "prefix" : used.includes("OmenofDextralNecromancy") ? "suffix" : null;
-  const weightOf = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined).reduce((a, c) => a + c.w, 0);
+  const gnawed = key === "desecrate_gnawed";
+  const weightOf = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined, false, gnawed).reduce((a, c) => a + c.w, 0);
   let side: StageSide;
   if (omenSide) side = omenSide;
   else {
@@ -76,7 +77,7 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
     modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 1,
     values: [], ranges: [], textJa: `未発現の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
     textEn: `Unrevealed Desecrated ${side === "prefix" ? "Prefix" : "Suffix"}`,
-    desecrated: true, unrevealed: { floor, altered, faction },
+    desecrated: true, unrevealed: { floor, altered, faction, ...(gnawed ? { gnawed } : {}) },
   };
   return { applied: true, item: withMod(cur, hidden), added: [hidden], removed };
 }
@@ -90,13 +91,23 @@ export function boneSideWeights(data: PatchData, item: StageItem, key: string, u
   const floor = key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0;
   const factionOmen = used.find((o) => FACTION_TAG[o]);
   const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;
-  const w = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined).reduce((a, c) => a + c.w, 0);
+  const gnawed = key === "desecrate_gnawed";
+  const w = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined, false, gnawed).reduce((a, c) => a + c.w, 0);
   return { prefix: w("prefix"), suffix: w("suffix") };
 }
 
-/** 発現の候補の置き場 (勢力のお告げなら、その勢力の冒涜の MOD だけを MOD ごとに等しく) */
-function pool(data: PatchData, item: StageItem, side: StageSide, floor: number, altered: boolean, faction: string | null, except: StageMod | undefined, plain = false): Candidate[] {
-  const c = candidates(data, item, [side], floor, { pools: poolsFor(item, altered, plain), except });
+/** 冒涜専用の MOD (冒涜の置き場の物と、変質した鎖骨の異界の MOD) */
+const exclusiveTest = (item: StageItem, side: StageSide) => {
+  const other = new Set(item.cls.pools.otherworldly?.[side === "prefix" ? "prefixes" : "suffixes"] ?? []);
+  return (mod: { id: string; source?: string }): boolean => mod.source === "desecrated" || other.has(mod.id);
+};
+/**
+ * 発現の候補の置き場 (勢力のお告げなら、その勢力の冒涜の MOD だけを MOD ごとに等しく)。
+ * 冒涜専用の MOD はアイテムレベルを見ない (段は全部 Lv 65 だが、アクト 2 の装備でも T1 が出る。2026-10-10 要望 + reddit の動画、エッセンスと同じ例外)。
+ * 噛み切られた骨 (アイテムレベル 64 以下だけ) は例外にしない = アイテムレベルの決まりのまま (2026-10-10 オーナー)
+ */
+function pool(data: PatchData, item: StageItem, side: StageSide, floor: number, altered: boolean, faction: string | null, except: StageMod | undefined, plain = false, gnawed = false): Candidate[] {
+  const c = candidates(data, item, [side], floor, { pools: poolsFor(item, altered, plain), except, ...(gnawed ? {} : { anyLevel: exclusiveTest(item, side) }) });
   if (!faction) return c;
   return c.filter((x) => x.mod.tags.includes(faction)).map((x) => ({ ...x, w: 1 }));
 }
@@ -126,14 +137,14 @@ const notClashing = (rest: Candidate[], c: Candidate): Candidate[] => {
 export function revealOffers(data: PatchData, item: StageItem, rng: () => number): { first: StageMod[]; reroll: StageMod[] } {
   const hidden = unrevealedOf(item);
   if (!hidden?.unrevealed) return { first: [], reroll: [] };
-  const { floor, altered, faction, plain } = hidden.unrevealed;
+  const { floor, altered, faction, plain, gnawed } = hidden.unrevealed;
   const toMod = (c: Candidate): StageMod => {
     const t = pickWeighted(c.tiers, rng)!;
     return { ...makeStageMod(c.mod, c.side, t.index, rng), desecrated: true };
   };
   // 勢力のお告げ (その勢力の専用だけ) と腐食のお告げ (普通だけ) は 1 つの置き場から重みで
   const drawOne = (): StageMod[] => {
-    let rest = pool(data, item, hidden.side, floor, altered, faction, hidden, plain);
+    let rest = pool(data, item, hidden.side, floor, altered, faction, hidden, plain, gnawed);
     const out: StageMod[] = [];
     for (let i = 0; i < OFFERS && rest.length; i++) {
       const c = pickWeighted(rest, rng)!;
@@ -144,8 +155,9 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
   };
   const draw = (): StageMod[] => {
     if (faction || plain) return drawOne();
-    const all = pool(data, item, hidden.side, floor, altered, null, hidden);
-    const isExclusive = (c: Candidate) => c.mod.source === "desecrated" || (item.cls.pools.otherworldly?.[hidden.side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(c.mod.id);
+    const all = pool(data, item, hidden.side, floor, altered, null, hidden, false, gnawed);
+    const exclusive = exclusiveTest(item, hidden.side);
+    const isExclusive = (c: Candidate) => exclusive(c.mod);
     // 専用 MOD どうしは重みで (指輪は実測、他の部位は仮の値が全部同じなので等しい。2026-10-09)
     let ex = all.filter(isExclusive);
     let normal = all.filter((c) => !isExclusive(c));

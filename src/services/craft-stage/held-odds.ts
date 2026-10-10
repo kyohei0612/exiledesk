@@ -135,7 +135,7 @@ function addBoneRun(data: PatchData, item: StageItem, key: string, omens: readon
   const boss = omens.map((o) => BOSS[o]).find(Boolean);
   const rerolls = omens.includes("OmenofAbyssalEchoes") ? 1 : 0;
   const altered = key === "desecrate_altered";
-  const opts = { floor: Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0), altered, rerolls, ...(constrainTo ? { constrainTo } : {}) };
+  const opts = { floor: Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0), altered, rerolls, ...(key === "desecrate_gnawed" ? { gnawed: true } : {}), ...(constrainTo ? { constrainTo } : {}) };
   const ids = new Set([
     ...cls.pools.normal.prefixes, ...cls.pools.normal.suffixes,
     ...cls.pools.desecrated.prefixes, ...cls.pools.desecrated.suffixes,
@@ -145,7 +145,7 @@ function addBoneRun(data: PatchData, item: StageItem, key: string, omens: readon
     const mod = data.mods.get(id);
     if (!mod) continue;
     const atLeast = boss
-      ? mod.tiers.map((_, i) => (i === 0 ? desecrationBossOfferProbability(data, state, id, { omen: boss, rerolls, ...(constrainTo ? { constrainTo } : {}) }) : 0))
+      ? mod.tiers.map((_, i) => (i === 0 ? desecrationBossOfferProbability(data, state, id, { omen: boss, rerolls, ...(key === "desecrate_gnawed" ? { gnawed: true } : {}), ...(constrainTo ? { constrainTo } : {}) }) : 0))
       : mod.tiers.map((_, i) => desecrationOfferProbability(data, state, id, { ...opts, minTierIndex: i }));
     const w = atLeast[0] ?? 0;
     if (!(w > 0)) continue;

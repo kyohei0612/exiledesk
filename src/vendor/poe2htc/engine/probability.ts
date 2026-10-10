@@ -829,13 +829,17 @@ function pickPool(mods: readonly Mod[], weightOf: (m: Mod) => number): { ids: st
  */
 export function desecrationOfferProbability(
   data: PatchData, item: ItemState, desiredModId: string,
-  opts: { floor?: number; minTierIndex?: number; constrainTo?: AffixType; rerolls?: number; altered?: boolean } = {},
+  opts: { floor?: number; minTierIndex?: number; constrainTo?: AffixType; rerolls?: number; altered?: boolean; gnawed?: boolean } = {},
 ): number {
   const mod = data.mods.get(desiredModId);
   if (!mod) return 0;
   // An ALTERED collarbone adds the otherworldly mods to the exclusive side of the offer (ExileDesk pools.otherworldly)
   const exclusiveIds = (k: 'prefixes' | 'suffixes'): readonly string[] => [...item.base.pools.desecrated[k], ...(opts.altered ? item.base.pools.otherworldly?.[k] ?? [] : [])];
   const isExclusive = exclusiveIds(mod.type === 'prefix' ? 'prefixes' : 'suffixes').includes(desiredModId);
+  // Exclusive mods ignore item level (all carry ilvl 65, yet an Act 2 item rolled their T1 — ExileDesk 2026-10-10, request + reddit
+  // video, like essences). A Gnawed bone (items ilvl <= 64 only) keeps the item-level rule (owner, 2026-10-10)
+  const exSet = new Set([...exclusiveIds('prefixes'), ...exclusiveIds('suffixes')]);
+  const lvOf = (m: Mod): number => (exSet.has(m.id) && !opts.gnawed ? Infinity : item.level);
   if (mod.source !== 'normal' && !isExclusive) return 0;
   if (!familyAvailable(data, item, mod)) return 0;
   const floor = opts.floor ?? 0;
@@ -858,7 +862,7 @@ export function desecrationOfferProbability(
     for (const id of exclusiveIds(k)) {
       const m = data.mods.get(id);
       if (!m || !familyAvailable(data, item, m)) continue;
-      const w = rollableWeight(m, item.level, floor);
+      const w = rollableWeight(m, lvOf(m), floor);
       if (w > 0) { desecratedW += w; exclusive++; lightest = Math.min(lightest, w); heaviest = Math.max(heaviest, w); }
     }
     return { normal, desecratedW, total: normal + desecratedW, exclusive, uniform: heaviest === lightest };
@@ -873,16 +877,16 @@ export function desecrationOfferProbability(
   }
   const inPool = isExclusive || (side === 'prefix' ? pools.normal.prefixes : pools.normal.suffixes).includes(desiredModId);
   if (!inPool) return 0;
-  const succ = rollableWeight(mod, item.level, floor, opts.minTierIndex ?? 0);
-  const whole = rollableWeight(mod, item.level, floor);
+  const succ = rollableWeight(mod, lvOf(mod), floor, opts.minTierIndex ?? 0);
+  const whole = rollableWeight(mod, lvOf(mod), floor);
   if (!(succ > 0) || !(whole > 0)) return 0;
   // The two pools of this side, as the emulator draws them (legal, rollable at this level and floor)
   const k = side === 'prefix' ? 'prefixes' : 'suffixes';
-  const live = (ids: readonly string[]): Mod[] => [...new Set(ids)].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && familyAvailable(data, item, m) && rollableWeight(m, item.level, floor) > 0);
+  const live = (ids: readonly string[]): Mod[] => [...new Set(ids)].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && familyAvailable(data, item, m) && rollableWeight(m, lvOf(m), floor) > 0);
   const exclusiveMods = live(exclusiveIds(k));
   const exclusiveSet = new Set(exclusiveMods.map((m) => m.id));
   const normalMods = live(pools.normal[k]).filter((m) => !exclusiveSet.has(m.id));
-  const w = (m: Mod) => rollableWeight(m, item.level, floor);
+  const w = (m: Mod) => rollableWeight(m, lvOf(m), floor);
   let pOffer = 0;
   if (isExclusive) {
     const pool = pickPool(exclusiveMods, w);
@@ -936,7 +940,7 @@ export function desecrationOfferProbability(
  */
 export function desecrationBossOfferProbability(
   data: PatchData, item: ItemState, desiredModId: string,
-  opts: { omen: DesecrationBossOmen; constrainTo?: AffixType; rerolls?: number },
+  opts: { omen: DesecrationBossOmen; constrainTo?: AffixType; rerolls?: number; gnawed?: boolean },
 ): number {
   const mod = data.mods.get(desiredModId);
   if (!mod) return 0;
@@ -947,7 +951,7 @@ export function desecrationBossOfferProbability(
   const modsOf = (sd: AffixType): Mod[] => {
     if (!open[sd]) return [];
     const ids = sd === 'prefix' ? item.base.pools.desecrated.prefixes : item.base.pools.desecrated.suffixes;
-    return [...new Set(ids)].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && m.tags.includes(tag) && familyAvailable(data, item, m) && m.tiers.some((t) => t.ilvl <= item.level && t.weight > 0));
+    return [...new Set(ids)].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && m.tags.includes(tag) && familyAvailable(data, item, m) && m.tiers.some((t) => (!opts.gnawed || t.ilvl <= item.level) && t.weight > 0)); // exclusive mods ignore item level unless Gnawed (see desecrationOfferProbability)
   };
   if (!familyAvailable(data, item, mod)) return 0;
   const hereMods = modsOf(mod.type);
