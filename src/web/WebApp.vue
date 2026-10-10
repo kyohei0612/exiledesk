@@ -114,17 +114,20 @@ window.addEventListener("resize", fitZoom);
     <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
-      <CraftStage class="min-w-0 flex-1" :class="phone ? 'shrink-0 !h-auto !overflow-visible' : ''" />
+      <CraftStage class="min-w-0 flex-1" :class="phone ? 'shrink-0 !h-auto !overflow-visible' : ''">
+        <template #footer>
+          <!-- 決まり事 (2026-10-07、2026-10-10 から画面に貼り付けずクラフトステージの一番下): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
+          <footer class="-mx-4 mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--exile-color-border-subtle)] px-4 py-2 text-[10px] opacity-50">
+            <span>{{ tr("ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。", "ExileDesk is an unofficial fan site and is not affiliated with or endorsed by Grinding Gear Games. Path of Exile 2 and all related names and images are the property of Grinding Gear Games.") }}</span>
+            <span>{{ tr("相場は", "Market prices from") }} <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>{{ tr("、確率はゲームのデータからの推定で、結果を保証するものではありません。", ". Chances are estimates from game data; results are not guaranteed.") }}</span>
+            <span>{{ tr("使い方の記録 (打った手・回した結果など。名前や IP は含みません) を改善のために集めています。", "We collect usage data (actions used, results, etc. No names or IPs) to improve the site.") }}<button type="button" class="ml-1 underline" :title="noLogOn ? tr('この端末の記録を再開する', 'Resume logging on this device') : tr('この端末からは記録を送らない', 'Stop sending usage data from this device')" @click="setNoLog(!noLogOn)">{{ noLogOn ? tr("この端末は記録していません (再開する)", "Not logging on this device (resume)") : tr("この端末は記録しない", "Don't log this device") }}</button></span>
+            <span class="ml-auto">{{ tr("協賛の枠には PR と表示します", "Sponsored slots are marked PR") }}</span>
+          </footer>
+        </template>
+      </CraftStage>
       <aside class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] overflow-y-auto border-l'">
         <LivePanel />
       </aside>
     </div>
-    <!-- 決まり事 (2026-10-07): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
-    <footer class="flex shrink-0 items-center gap-3 border-t border-[var(--exile-color-border-subtle)] px-4 text-[10px] opacity-50" :class="phone ? 'h-auto flex-wrap py-1.5' : 'h-7'">
-      <span>{{ tr("ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。", "ExileDesk is an unofficial fan site and is not affiliated with or endorsed by Grinding Gear Games. Path of Exile 2 and all related names and images are the property of Grinding Gear Games.") }}</span>
-      <span>{{ tr("相場は", "Market prices from") }} <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>{{ tr("、確率はゲームのデータからの推定で、結果を保証するものではありません。", ". Chances are estimates from game data; results are not guaranteed.") }}</span>
-      <span>{{ tr("使い方の記録 (打った手・回した結果など。名前や IP は含みません) を改善のために集めています。", "We collect usage data (actions used, results, etc. No names or IPs) to improve the site.") }}<button type="button" class="ml-1 underline" :title="noLogOn ? tr('この端末の記録を再開する', 'Resume logging on this device') : tr('この端末からは記録を送らない', 'Stop sending usage data from this device')" @click="setNoLog(!noLogOn)">{{ noLogOn ? tr("この端末は記録していません (再開する)", "Not logging on this device (resume)") : tr("この端末は記録しない", "Don't log this device") }}</button></span>
-      <span class="ml-auto">{{ tr("協賛の枠には PR と表示します", "Sponsored slots are marked PR") }}</span>
-    </footer>
   </div>
 </template>

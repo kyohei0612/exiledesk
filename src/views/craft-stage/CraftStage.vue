@@ -223,6 +223,8 @@ function setQualityCap(n: number): void {
   if (last && last.out.currency.startsWith(QUALITY_CAP)) s.undo();
   s.use(qualityCapKey(n));
 }
+/** MOD 一覧の頭へ一気に (ワープ。2026-10-10 オーナー「これに関してはワープでいい」) */
+function toModList(): void { scrollToTop(document.querySelector("[data-mod-list]"), "auto"); }
 function fractureMod(m: StageMod): void {
   const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0;
   s.use(forceKey(m.modId, n ? `T${n - m.tierIndex}` : null, "f"));
@@ -435,11 +437,15 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
     <!-- ベースを選んだ後に出る中身はふわっと出す (2026-10-10 オーナー「切り替えがワープみたい」) -->
     <Transition name="stage-fade" appear>
-    <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
+    <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" data-craft-top class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex flex-col items-center gap-8 max-md:items-stretch">
         <!-- 品質を変える帯 (アイテムの説明の窓の外、すぐ上。2026-10-10) -->
-        <StageQualityBar v-if="s.item.value && !s.replay.value" :item="s.item.value" class="-mb-6 max-w-[480px]" @quality="setQuality" @cap="setQualityCap" />
+        <!-- カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
+        <div class="-mb-6 flex w-full max-w-[480px] items-start gap-2">
+          <button type="button" class="tbtn-top" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click="toModList">{{ tr("MOD 一覧へ ↓", "Mod list ↓") }}</button>
+          <StageQualityBar v-if="s.item.value && !s.replay.value" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" />
+        </div>
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed"
@@ -452,6 +458,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           :removable="!s.replay.value"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @fracture="fractureMod"
+          @jump="(id: string) => (s.modJump.value = { modId: id, n: (s.modJump.value?.n ?? 0) + 1 })"
           @socket="useAtSocket"
           @unsocket="(n: number) => s.use(unsocketKey(n))"
         />
@@ -525,5 +532,13 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <VideoStage v-if="s.video.value && s.ready.value" />
     <!-- 動画用の別の画面 (URL の view=、要望 ⑪) -->
     <VideoExtra v-if="s.extra.value && s.ready.value" />
+    <!-- ページの一番下に置く物 (Web の決まり事の footer。2026-10-10 オーナー「固定バーは許されん、一番下に動かさず」) -->
+    <slot name="footer" />
   </div>
 </template>
+
+<style scoped>
+/* 行き来のボタン (MOD 一覧へ / クラフトへ): 小さく平たい (段表の tbtn と同じ見た目) */
+.tbtn-top { display: inline-flex; align-items: center; height: 24px; padding: 0 9px; white-space: nowrap; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px; background: rgba(0, 0, 0, 0.35); font-size: 11px; color: rgba(255, 255, 255, 0.82); }
+.tbtn-top:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(232, 200, 120, 0.55); color: #f3e2b8; }
+</style>

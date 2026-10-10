@@ -99,6 +99,31 @@ const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.valu
 const query = ref("");
 /** 開いている段の表 (種類:系統) */
 const expanded = ref<string | null>(null);
+/** カードから飛んで来た行 (少しの間だけ光らせる) */
+const flashKey = ref<string | null>(null);
+let flashTimer: ReturnType<typeof setTimeout> | undefined;
+/** カードの MOD を押した: その MOD の行のある節・行を探して開き、一気に送る (ワープ。2026-10-10 オーナー「MOD をクリックしたらその MOD のあるとこまでスクロール」) */
+watch(() => s.modJump.value, (j) => {
+  if (!j) return;
+  open.value = true;
+  query.value = "";
+  void nextTick(() => {
+    const hit = sections.value.flatMap((sec) => sec.columns.flatMap((c) => c.items.map((r) => ({ sec, r })))).find(({ r }) => r.id === j.modId || r.tiers.some((t) => (t.modId ?? r.id) === j.modId));
+    if (!hit) return;
+    const key = `${hit.sec.sid}:${hit.r.id}`;
+    if (phone && !secOpen.value.has(hit.sec.sid)) toggleSec(hit.sec.sid);
+    active.value = hit.sec.sid;
+    expanded.value = key;
+    void nextTick(() => {
+      scrollToTop(document.querySelector(`[data-row-key="${CSS.escape(key)}"]`), "auto", "center");
+      flashKey.value = key;
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => (flashKey.value = null), 1400);
+    });
+  });
+});
+/** クラフトへ: カードの頭 (ベースの枠の下) が画面の上に来るまで一気に戻る */
+function toCraft(): void { scrollToTop(document.querySelector("[data-craft-top]"), "auto"); }
 /**
  * 行を押して段の表を開く / 閉じる。押した行は画面の同じ所に残し、表はその下に開く (2026-10-05 オーナー「展開だけど上に開くから
  * スクロールによっては見えない、下に開こう」: 上で開いていた行が閉じた分だけ押した行が上へずれ、表が見えなくなっていた)
@@ -274,6 +299,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
       <input v-model="query" type="search" :placeholder="tr('文面やタグで探す (例: 耐性、ライフ)', 'Search text or tags')" class="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 md:hidden" />
       <!-- スマホは固定せず 1 段の横送り (固定すると 4 段で 130px 占めていた。2026-10-08 レビュー) -->
       <div class="sticky top-0 z-10 -mx-3 mb-2 flex flex-wrap items-center gap-1.5 bg-[#120f0c]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
+        <!-- クラフトへ: ベースの枠の下 (カードの頭) が画面の上に来るまで一気に戻る (2026-10-10 オーナー「行ったり来たりできるでしょ」) -->
+        <button v-if="!props.embedded" type="button" class="tbtn mr-1 max-md:shrink-0" :title="tr('アイテムのカードへ戻る', 'Back to the item')" @click="toCraft">{{ tr("↑ クラフトへ", "↑ Craft") }}</button>
         <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5 max-md:shrink-0 max-md:py-1.5" :class="active === sec.sid ? toneOf(sec).tab : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" @click="jump(sec.sid)">
           {{ sec.label }} <span class="ml-0.5 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ sec.count }}</span>
         </button>
@@ -298,7 +325,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
               <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-11 text-right" :class="heldCands ? 'text-sky-200' : ''">{{ heldCands ? ('bone' in heldCands ? tr("候補に出る", "Offered") : tr("付く確率", "Chance")) : tr("出やすさ", "Weight") }}</span><span class="w-6 text-right">{{ tr("段", "T") }}</span><span class="w-7 text-right">Lv</span></span>
             </p>
             <p v-if="!col.items.length" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
-            <div v-for="r in col.items" :key="r.id" class="mb-1">
+            <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : ''">
               <!-- 1 系統 1 行。後ろの棒が出やすさ (列の一番出やすい物を 100%) -->
               <button
                 type="button"
@@ -378,4 +405,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 .tbtn:disabled { opacity: 0.35; cursor: not-allowed; }
 .tbtn.on { border-color: rgba(239, 90, 70, 0.75); background: rgba(160, 40, 30, 0.35); color: #ffd7cf; }
 @media (max-width: 767px) { .tbtn { height: 34px; padding: 0 12px; font-size: 12px; } }
+/* カードから飛んで来た行: ふわっと金に (付いた瞬間の光り方と同じ色) */
+.row-jump { animation: row-jump 1.4s ease-out; border-radius: 6px; }
+@keyframes row-jump { 0% { background: rgba(250, 204, 21, 0); } 15% { background: rgba(250, 204, 21, 0.18); } 100% { background: rgba(250, 204, 21, 0); } }
 </style>

@@ -39,7 +39,7 @@ const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; jump: [modId: string] }>();
 /** ルーンを外す (2026-10-09): ソケットの右クリック、またはルーンの効き目の行のクリック。手で組んでいる時だけ (removable) */
 function onUnsocket(e: MouseEvent, n: number): void {
   // 持っている時の右クリックは「手放す」(外の CraftStage に任せる)。2026-10-10 点検: 持ったまま右クリックでルーンが外れていた
@@ -74,7 +74,7 @@ const hint = computed((): string => {
   if (props.holding) return phoneW ? tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") : tr("押すと使う · 右クリック / Esc で手放す", "Click to use · Right-click / Esc to drop");
   if (!props.removable) return "";
   if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補から発現する MOD を選ぶ", "Choose the mod to reveal below");
-  if (hover.value === "mod") return tr("右クリックでフラクチャー · × で外す", "Right-click to fracture · × to remove");
+  if (hover.value === "mod") return tr("押すと MOD 一覧のその行へ · 右クリックでフラクチャー · × で外す", "Click to find it in the mod list · Right-click to fracture · × to remove");
   if (hover.value === "rune") return tr("右クリックでルーンを外す", "Right-click to remove the rune");
   return phoneW ? "" : tr("MOD を右クリックでフラクチャー · × で外す · Ctrl+Z で 1 手戻す", "Right-click a mod to fracture · × to remove · Ctrl+Z to undo");
 });
@@ -196,6 +196,7 @@ const rows = computed(() =>
       <div v-if="!hidden" class="space-y-1">
         <p
           v-for="r in rows"
+          @click="!holding && !r.m.unrevealed && (($event as MouseEvent).stopPropagation(), emit('jump', r.m.modId))"
           @mouseenter="hover = r.m.unrevealed ? null : 'mod'"
           @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.m.modId}#${flashKey}` : r.m.modId"

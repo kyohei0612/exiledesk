@@ -233,6 +233,8 @@ export type AimPick = { modId: string; minTierIndex: number; label: string; at?:
  * (2026-10-09 オーナー「押したらチェックボックスで複数狙えるように別でポップアップ、選択しなくて単体でも進めるように」)
  */
 const aimPicker = ref<{ seed: AimPick | null } | null>(null);
+/** カードの MOD を押した: MOD の一覧のその行まで飛ぶ (StageModList が見る。n は同じ MOD を続けて押しても動くように) */
+const modJump = ref<{ modId: string; n: number } | null>(null);
 
 /**
  * シミュレーションの途中 (ベース・狙う MOD・工程の「決めた」・順番計画・パターン) を覚えて、開き直した時にそのまま出す
@@ -387,7 +389,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims, aimPicker,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims, aimPicker, modJump,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
