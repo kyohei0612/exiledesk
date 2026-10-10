@@ -11,7 +11,7 @@
     "data:client": "node scripts/refresh-client-data.mjs",
     "preview": "vite preview",
     "dev:web": "vite --config vite.web.config.ts",
-    "build:web": "vue-tsc --noEmit && vite build --config vite.web.config.ts",
+    "build:web": "vue-tsc --noEmit && vite build --config vite.web.config.ts && node scripts/build-market-fallback.mjs",
     "deploy:web": "pnpm build:web && pnpm --dir server/web run deploy",
     "deploy:web-dev": "node scripts/deploy-web-dev.mjs",
     "tauri": "tauri",

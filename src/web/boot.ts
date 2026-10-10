@@ -15,6 +15,11 @@ export function loadBoot(force = false): Promise<Boot | null> {
   return inFlight;
 }
 
+const get = <T,>(u: string): Promise<T | null> => fetch(u, { credentials: "omit" }).then((r) => (r.ok ? (r.json() as Promise<T>) : null)).catch(() => null);
 async function load(): Promise<Boot | null> {
-  return fetch(`${WEB_API_BASE}/boot.json`, { credentials: "omit" }).then((r) => (r.ok ? (r.json() as Promise<Boot>) : null)).catch(() => null);
+  const b = await get<Boot>(`${WEB_API_BASE}/boot.json`);
+  if (b?.market?.items?.length) return b;
+  // サーバーに繋がらない (無料枠を使い切った・落ちた) 時は、画面と一緒に置いた相場の控え (出した時点の値段、上限の無い置き場)。2026-10-10
+  const fb = await get<Boot["market"]>("/market-fallback.json");
+  return fb?.items?.length ? { live: b?.live ?? null, market: fb } : b;
 }
