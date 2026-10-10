@@ -29,7 +29,8 @@ import essenceKeys from "../../services/htc/essence-keys.json";
 import { forceKey, type ForceFlag } from "../../services/craft-stage/apply-force";
 
 /** シミュレーションの ① の枠の中に置く時 (外の枠を付けない) */
-const props = defineProps<{ embedded?: boolean }>();
+/** overlay: 手で打つ画面の重ね (MOD 一覧のボタン・Tab) の中。枠は重ねの側、見出しの右に閉じる */
+const props = defineProps<{ embedded?: boolean; overlay?: boolean }>();
 const s = craftStage;
 /** 始めの状態を組める (まだ打っていない・再生でない) */
 const canStart = computed(() => !s.log.value.length && !s.replay.value);
@@ -104,7 +105,7 @@ const flashKey = ref<string | null>(null);
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
 /** カードの MOD を押した: その MOD の行のある節・行を探して開き、一気に送る (ワープ。2026-10-10 オーナー「MOD をクリックしたらその MOD のあるとこまでスクロール」) */
 watch(() => s.modJump.value, (j) => {
-  if (!j) return;
+  if (!j || (!props.overlay && !props.embedded)) return;
   open.value = true;
   query.value = "";
   void nextTick(() => {
@@ -114,14 +115,16 @@ watch(() => s.modJump.value, (j) => {
     if (phone && !secOpen.value.has(hit.sec.sid)) toggleSec(hit.sec.sid);
     active.value = hit.sec.sid;
     expanded.value = key;
-    void nextTick(() => {
+    // 窓は開いたばかりで中身がまだ並んでいない事があるので 1 枚待つ。済んだら消す (次に Tab で開いた時に同じ行へ飛ばない)
+    if (props.overlay) s.modJump.value = null;
+    void nextTick(() => requestAnimationFrame(() => {
       scrollToTop(document.querySelector(`[data-row-key="${CSS.escape(key)}"]`), "auto", "center");
       flashKey.value = key;
       clearTimeout(flashTimer);
       flashTimer = setTimeout(() => (flashKey.value = null), 1400);
-    });
+    }));
   });
-});
+}, { immediate: true });
 /** クラフトへ: カードの頭 (ベースの枠の下) が画面の上に来るまで一気に戻る */
 function toCraft(): void { scrollToTop(document.querySelector("[data-craft-top]"), "auto"); }
 /**
@@ -145,7 +148,7 @@ const sections = computed((): Section[] => {
       ? [...new Set(rows.value.filter((r) => r.group === "rune").map((r) => r.runeJa ?? ""))].map((ja) => ({ g, sid: `rune:${ja}`, label: tr(ja, runeEnOf(ja)), rune: ja }))
       : [{ g, sid: g as string, label: GROUP_JA[g], rune: null as string | null }],
   );
-  return parts.map(({ g, sid, label, rune }) => {
+  return parts.map(({ g, sid, label, rune }): Section => {
     const all = rows.value.filter((r) => inGroup(r, g) && (rune == null || r.runeJa === rune));
     const list = all.filter((r) => !q || r.text.toLowerCase().includes(q.toLowerCase()) || r.tags.some((t) => TAG_STYLE[t]?.ja.includes(q) || t.replace(/_/g, " ").includes(q.toLowerCase())));
     const columns = (["prefix", "suffix"] as const).map((side) => {
@@ -155,7 +158,12 @@ const sections = computed((): Section[] => {
     // 差しているか (ルーンの節の見出しに「はめている」/「差すと付く」)
     const socketed = rune != null && all.some((r) => r.socketed);
     return { g, sid, label, rune, socketed, count: all.length, columns };
-  });
+  })
+    // 今は付かない節 (差していないルーン・カレンシーでは付かない物・どの行も今は付かない) は並びに関係なく一番下へ
+    // (2026-10-11 オーナー「普通の MOD の下にグレーアウトが邪魔」)
+    .map((sec, i) => ({ sec, i, off: sec.g === "special" || (sec.rune != null && !sec.socketed) || !sec.columns.some((c) => c.items.some(cannow)) }))
+    .sort((a, b) => Number(a.off) - Number(b.off) || a.i - b.i)
+    .map((x) => x.sec);
 });
 
 /** 目次: タブを押すとその節へスクロール。スクロールに合わせて今見ている節のタブを光らせる */
@@ -284,23 +292,23 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 </script>
 
 <template>
-  <section data-mod-list class="text-[12px]" :class="props.embedded ? '' : 'g-panel mt-4'">
+  <section data-mod-list class="text-[12px]" :class="props.embedded || props.overlay ? '' : 'g-panel mt-4'">
     <!-- 見出し (押すと畳む) -->
-    <div role="button" tabindex="0" :aria-expanded="open" class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left" @click="open = !open" @keydown.enter="open = !open">
+    <div v-if="!props.overlay" role="button" tabindex="0" :aria-expanded="open" class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left" @click="open = !open" @keydown.enter="open = !open">
       <b class="g-sec-title">{{ tr("このベースに付く MOD", "Mods for this base") }}</b>
       <span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span>
       <HelpTip :text="s.mode.value === 'sim' ? tr('出やすさ = 同じ側の重みの割合。段 = 段の数、Lv = T1 の MOD レベル。MOD を押すと段の表が開く', 'Chance = share of weight on the same side. T = number of tiers, Lv = mod level of T1. Click a mod to open its tier table') : tr(`出やすさ = 同じ側の重みの割合 (アイテムレベルは見ない)。段 = 段の数、Lv = T1 の MOD レベル${canStart ? '。段の表の「付ける」で始めの状態を組める' : ''}`, `Chance = share of weight on the same side (ignores item level). T = number of tiers, Lv = mod level of T1${canStart ? '. Use “Add” in the tier table to build the starting item' : ''}`)" @click.stop />
       <Disclosure tag="span" kind="section" :open="open" class="ml-auto" />
     </div>
 
-    <div v-if="open" class="border-t border-white/10 px-3 pb-3 pt-2">
+    <div v-if="open" :class="props.overlay ? '' : 'border-t border-white/10 px-3 pb-3 pt-2'">
       <!-- 目次 (押すとその種類までスクロール。スクロールしても上に残る) と検索 -->
       <!-- スマホ: 検索は目次の横送りの外 (中だと右に隠れる) -->
       <input v-model="query" type="search" :placeholder="tr('文面やタグで探す (例: 耐性、ライフ)', 'Search text or tags')" class="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 md:hidden" />
       <!-- スマホは固定せず 1 段の横送り (固定すると 4 段で 130px 占めていた。2026-10-08 レビュー) -->
       <div data-mod-toc class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-[#120f0c]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
         <!-- クラフトへ: ベースの枠の下 (カードの頭) が画面の上に来るまで一気に戻る (2026-10-10 オーナー「行ったり来たりできるでしょ」) -->
-        <button v-if="!props.embedded" type="button" class="tbtn mr-1 max-md:shrink-0" :title="tr('アイテムのカードへ戻る', 'Back to the item')" @click="toCraft">{{ tr("↑ クラフトへ", "↑ Craft") }}</button>
+        <button v-if="!props.embedded && !props.overlay" type="button" class="tbtn mr-1 max-md:shrink-0" :title="tr('アイテムのカードへ戻る', 'Back to the item')" @click="toCraft">{{ tr("↑ クラフトへ", "↑ Craft") }}</button>
         <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5 max-md:shrink-0 max-md:py-1.5" :class="active === sec.sid ? toneOf(sec).tab : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" @click="jump(sec.sid)">
           {{ sec.label }} <span class="ml-0.5 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ sec.count }}</span>
         </button>

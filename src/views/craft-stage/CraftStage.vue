@@ -12,7 +12,7 @@
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { scrollToTop } from "../../utils/keep-place";
-import { modText, tr } from "../../i18n/lang";
+import { baseNameOf, modText, tr } from "../../i18n/lang";
 import { forceKey } from "../../services/craft-stage/apply-force";
 import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, type SimRecipe } from "../../state/craft-stage";
@@ -46,6 +46,7 @@ import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import ShelfButton from "./ShelfButton.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
+import ModalShell from "../../components/ui/ModalShell.vue";
 import Icon from "../../components/ui/Icon.vue";
 import { searchModGroups, type ModGroup } from "../../services/craft-stage/trade-search";
 import type { StageMod } from "../../services/craft-stage/types";
@@ -75,6 +76,9 @@ function onKey(e: KeyboardEvent): void {
   const t = e.target as HTMLElement | null;
   const typing = !!t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
   const dialog = !!document.querySelector("[role=dialog], [aria-modal=true]");
+  // MOD 一覧の窓: Tab でいつでも開け閉め (2026-10-11 オーナー)。Esc は ModalShell が窓だけ閉じる (持っている物は離さない)
+  const otherDialog = document.querySelectorAll("[role=dialog], [aria-modal=true]").length > (s.modOverlay.value ? 1 : 0);
+  if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.metaKey && !typing && !otherDialog && s.item.value && (s.mode.value === "hand" || s.replay.value) && !phone.value) { e.preventDefault(); s.modOverlay.value = !s.modOverlay.value; return; }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !typing && !dialog && (s.mode.value === "hand" || s.replay.value)) { e.preventDefault(); s.undo(); }
 }
 onMounted(() => { window.addEventListener("mousemove", onMove); window.addEventListener("keydown", onKey); });
@@ -223,8 +227,9 @@ function setQualityCap(n: number): void {
   if (last && last.out.currency.startsWith(QUALITY_CAP)) s.undo();
   s.use(qualityCapKey(n));
 }
-/** MOD 一覧へ一気に (ワープ)。一覧の固定の目次が画面の一番上に来る所まで (2026-10-10 オーナー「ワープでいい」「固定バーが一番上に来るとこまで」) */
-function toModList(): void { scrollToTop(document.querySelector("[data-mod-toc]") ?? document.querySelector("[data-mod-list]"), "auto"); }
+/** MOD 一覧を重ねて開く (飛ばない。2026-10-11 オーナー「ジャンプしなくていいから MOD 一覧が全て画面に出て」) */
+function toModList(): void { s.modOverlay.value = true; }
+watch(() => s.item.value, (it) => { if (!it) s.modOverlay.value = false; });
 function fractureMod(m: StageMod): void {
   const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0;
   s.use(forceKey(m.modId, n ? `T${n - m.tierIndex}` : null, "f"));
@@ -444,7 +449,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <!-- 品質を変える帯 (アイテムの説明の窓の外、すぐ上。2026-10-10) -->
         <!-- カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
         <div class="-mb-6 flex w-full max-w-[480px] items-start gap-2">
-          <button type="button" class="tbtn-top" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click="toModList">{{ tr("MOD 一覧へ ↓", "Mod list ↓") }}</button>
+          <button type="button" class="tbtn-top" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd">Tab</kbd></button>
           <StageQualityBar v-if="s.item.value && !s.replay.value" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" />
         </div>
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
@@ -459,7 +464,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           :removable="!s.replay.value"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @fracture="fractureMod"
-          @jump="(id: string) => (s.modJump.value = { modId: id, n: (s.modJump.value?.n ?? 0) + 1 })"
+          @jump="(id: string) => { s.modOverlay.value = true; s.modJump.value = { modId: id, n: (s.modJump.value?.n ?? 0) + 1 }; }"
           @socket="useAtSocket"
           @unsocket="(n: number) => s.use(unsocketKey(n))"
         />
@@ -504,7 +509,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
             <template v-if="heldOmens.length" #held>
               <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
                 <!-- 横に「MOD 一覧へ」(お告げを選びながら付く MOD を見に行ける。2026-10-11 オーナー「お告げの横にも MOD 一覧へ、楽だ」) -->
-                <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOf(s.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(s.held.value ?? "")}`) }}<button type="button" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="toModList">{{ tr("MOD 一覧へ ↓", "Mod list ↓") }}</button></p>
+                <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOf(s.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(s.held.value ?? "")}`) }}<button type="button" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd">Tab</kbd></button></p>
                 <div class="flex flex-wrap gap-1.5">
                   <ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="s.toggleOmen($event)" />
                 </div>
@@ -518,7 +523,12 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     </Transition>
     <!-- このベースに付く MOD (StageModList.vue、2026-09-29) -->
     <!-- シミュレーションでは ① 狙う MOD の枠の中に出す (StageSimPanel.vue) -->
-    <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" /></Transition>
+    <!-- 手で打つ画面は重ね (後ろを暗く) で出す。枠の外を押す・閉じる・Esc・Tab で閉じる。持っている物はそのまま (2026-10-11 オーナー) -->
+    <!-- 窓の動きは ModalShell (Esc・後ろを押す・× で閉じる、後ろのページは止める)。Tab でも開け閉め -->
+    <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-full max-w-[1400px]" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
+      <template #header><span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span></template>
+      <StageModList overlay />
+    </ModalShell>
 
     <!-- 押した所の波紋と、吸い込まれるアイコン -->
     <template v-if="fx && fx.kind !== 'shake'">
@@ -544,5 +554,6 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 <style scoped>
 /* 行き来のボタン (MOD 一覧へ / クラフトへ): 小さく平たい (段表の tbtn と同じ見た目) */
 .tbtn-top { display: inline-flex; align-items: center; height: 24px; padding: 0 9px; white-space: nowrap; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px; background: rgba(0, 0, 0, 0.35); font-size: 11px; color: rgba(255, 255, 255, 0.82); }
+.tbtn-top .kbd { margin-left: 6px; padding: 0 4px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 3px; font-size: 9.5px; line-height: 14px; opacity: 0.6; }
 .tbtn-top:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(232, 200, 120, 0.55); color: #f3e2b8; }
 </style>
