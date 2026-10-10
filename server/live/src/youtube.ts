@@ -23,6 +23,47 @@ export function parseFeedVideoIds(xml: string): string[] {
 /** 最新の動画 (RSS の 1 つ目の entry)。サイトを開いた時に紹介として出す (2026-10-07 オーナー「YouTube は紹介だけ、開いた瞬間最新動画が出るくらい」) */
 export interface Latest { title: string; thumb: string; watchUrl: string; publishedAt: string | null }
 const unxml = (s: string): string => s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+/** RSS の entry を全部 (新しい順) */
+export function parseFeedEntries(xml: string): Array<Latest & { id: string }> {
+  const out: Array<Latest & { id: string }> = [];
+  for (const m of xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)) {
+    const e = m[1]!;
+    const id = e.match(/<yt:videoId>([\w-]{11})<\/yt:videoId>/)?.[1];
+    if (!id) continue;
+    out.push({ id, title: unxml(e.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() ?? ""), thumb: thumbUrl(id), watchUrl: watchUrl(id), publishedAt: e.match(/<published>([^<]+)<\/published>/)?.[1] ?? null });
+  }
+  return out;
+}
+
+/**
+ * ショートか: タイトルに #shorts、または /shorts/ID がそのまま開く (普通の動画は watch へ 303 で飛ぶ)。
+ * 2026-10-10 オーナー「ショートより動画がいいな、サムネのインパクトもあるし最新動画のみ表示」
+ */
+const shortMemo = new Map<string, boolean>();
+export async function isShort(c: { id: string; title: string }, fetchFn: Fetch): Promise<boolean> {
+  // 同じ動画は 1 回だけ確かめる (5 分おきに毎回 YouTube を叩かない)
+  const hit = shortMemo.get(c.id);
+  if (hit != null) return hit;
+  const v = await checkShort(c, fetchFn);
+  if (shortMemo.size > 200) shortMemo.clear();
+  shortMemo.set(c.id, v);
+  return v;
+}
+async function checkShort(c: { id: string; title: string }, fetchFn: Fetch): Promise<boolean> {
+  if (/#shorts?\b/i.test(c.title)) return true;
+  try {
+    const r = await fetchFn(`https://www.youtube.com/shorts/${c.id}`, { method: "HEAD", redirect: "manual" });
+    return r.status === 200;
+  } catch { return false; }
+}
+
+/** 最新の普通の動画 (ショートを飛ばす。新しい順に 6 本まで見る。全部ショートなら一番新しい物) */
+export async function pickLatestVideo(cands: ReadonlyArray<Latest & { id: string }>, fetchFn: Fetch): Promise<Latest | null> {
+  for (const c of cands.slice(0, 6)) if (!(await isShort(c, fetchFn))) return strip(c);
+  return cands[0] ? strip(cands[0]) : null;
+}
+const strip = ({ id: _id, ...l }: Latest & { id: string }): Latest => l;
+
 export function parseFeedLatest(xml: string): Latest | null {
   const e = xml.match(/<entry>([\s\S]*?)<\/entry>/)?.[1];
   if (!e) return null;
@@ -116,9 +157,10 @@ export async function uploadsViaApi(channelId: string, apiKey: string, fetchFn: 
   const items = (j.items ?? []).filter((x) => /^[\w-]{11}$/.test(x.snippet?.resourceId?.videoId ?? ""));
   // 再生リストは追加順。新しい順に並べ直す
   items.sort((a, b) => (b.snippet?.publishedAt ?? "").localeCompare(a.snippet?.publishedAt ?? ""));
-  const top = items[0]?.snippet;
-  if (top?.resourceId?.videoId) onLatest?.({ title: top.title ?? "", thumb: thumbUrl(top.resourceId.videoId), watchUrl: watchUrl(top.resourceId.videoId), publishedAt: top.publishedAt ?? null });
-  return items.map((x) => x.snippet!.resourceId!.videoId!);
+  const cands = items.map((x) => { const id = x.snippet!.resourceId!.videoId!; return { id, title: x.snippet?.title ?? "", thumb: thumbUrl(id), watchUrl: watchUrl(id), publishedAt: x.snippet?.publishedAt ?? null }; });
+  const l = await pickLatestVideo(cands, fetchFn);
+  if (l) onLatest?.(l);
+  return cands.map((c) => c.id);
 }
 
 /** チャンネル 1 つ分の候補の動画 ID (RSS + /live。どちらかが落ちても片方で続ける。RSS が落ちたら API のアップロード一覧で) */
@@ -128,7 +170,7 @@ export async function candidateIds(channelId: string, fetchFn: Fetch, errors: st
     fetchFn(feedUrl(channelId), { headers: { "accept": "application/atom+xml" } }).then(async (r) => {
       if (!r.ok) throw new Error(`feed ${r.status}`);
       const xml = await r.text();
-      const l = parseFeedLatest(xml);
+      const l = await pickLatestVideo(parseFeedEntries(xml), fetchFn);
       if (l) onLatest?.(l);
       return parseFeedVideoIds(xml);
     }),
