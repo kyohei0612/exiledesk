@@ -1,0 +1,710 @@
+{
+ "source": "GGG クライアント Expedition2ElementalModConversions (耐性の行)",
+ "rows": [
+  {
+   "id": "Resist1",
+   "fire": {
+    "id": "FireResist1",
+    "name": "of the Whelpling",
+    "level": 1,
+    "ranges": [
+     [
+      6,
+      10
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist1",
+    "name": "of the Seal",
+    "level": 1,
+    "ranges": [
+     [
+      6,
+      10
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist1",
+    "name": "of the Cloud",
+    "level": 1,
+    "ranges": [
+     [
+      6,
+      10
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist1",
+    "name": "of the Lost",
+    "level": 16,
+    "ranges": [
+     [
+      4,
+      7
+     ]
+    ]
+   }
+  },
+  {
+   "id": "Resist2",
+   "fire": {
+    "id": "FireResist2",
+    "name": "of the Salamander",
+    "level": 12,
+    "ranges": [
+     [
+      11,
+      15
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist2",
+    "name": "of the Penguin",
+    "level": 14,
+    "ranges": [
+     [
+      11,
+      15
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist2",
+    "name": "of the Squall",
+    "level": 13,
+    "ranges": [
+     [
+      11,
+      15
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist2",
+    "name": "of Banishment",
+    "level": 30,
+    "ranges": [
+     [
+      8,
+      11
+     ]
+    ]
+   }
+  },
+  {
+   "id": "Resist3",
+   "fire": {
+    "id": "FireResist3",
+    "name": "of the Drake",
+    "level": 24,
+    "ranges": [
+     [
+      16,
+      20
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist3",
+    "name": "of the Narwhal",
+    "level": 26,
+    "ranges": [
+     [
+      16,
+      20
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist3",
+    "name": "of the Storm",
+    "level": 25,
+    "ranges": [
+     [
+      16,
+      20
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist3",
+    "name": "of Eviction",
+    "level": 44,
+    "ranges": [
+     [
+      12,
+      15
+     ]
+    ]
+   }
+  },
+  {
+   "id": "Resist4",
+   "fire": {
+    "id": "FireResist4",
+    "name": "of the Kiln",
+    "level": 36,
+    "ranges": [
+     [
+      21,
+      25
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist4",
+    "name": "of the Yeti",
+    "level": 38,
+    "ranges": [
+     [
+      21,
+      25
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist4",
+    "name": "of the Thunderhead",
+    "level": 37,
+    "ranges": [
+     [
+      21,
+      25
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist4",
+    "name": "of Expulsion",
+    "level": 56,
+    "ranges": [
+     [
+      16,
+      19
+     ]
+    ]
+   }
+  },
+  {
+   "id": "Resist5",
+   "fire": {
+    "id": "FireResist5",
+    "name": "of the Furnace",
+    "level": 48,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist5",
+    "name": "of the Walrus",
+    "level": 50,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist5",
+    "name": "of the Tempest",
+    "level": 49,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist4",
+    "name": "of Expulsion",
+    "level": 56,
+    "ranges": [
+     [
+      16,
+      19
+     ]
+    ]
+   }
+  },
+  {
+   "id": "Resist6",
+   "fire": {
+    "id": "FireResist6",
+    "name": "of the Volcano",
+    "level": 60,
+    "ranges": [
+     [
+      31,
+      35
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist6",
+    "name": "of the Polar Bear",
+    "level": 60,
+    "ranges": [
+     [
+      31,
+      35
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist6",
+    "name": "of the Maelstrom",
+    "level": 60,
+    "ranges": [
+     [
+      31,
+      35
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist5",
+    "name": "of Exile",
+    "level": 68,
+    "ranges": [
+     [
+      20,
+      23
+     ]
+    ]
+   }
+  },
+  {
+   "id": "Resist7",
+   "fire": {
+    "id": "FireResist7",
+    "name": "of Magma",
+    "level": 71,
+    "ranges": [
+     [
+      36,
+      40
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist7",
+    "name": "of the Ice",
+    "level": 71,
+    "ranges": [
+     [
+      36,
+      40
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist7",
+    "name": "of the Lightning",
+    "level": 71,
+    "ranges": [
+     [
+      36,
+      40
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist5",
+    "name": "of Exile",
+    "level": 68,
+    "ranges": [
+     [
+      20,
+      23
+     ]
+    ]
+   }
+  },
+  {
+   "id": "Resist8",
+   "fire": {
+    "id": "FireResist8",
+    "name": "of Tzteosh",
+    "level": 82,
+    "ranges": [
+     [
+      41,
+      45
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist8",
+    "name": "of Haast",
+    "level": 82,
+    "ranges": [
+     [
+      41,
+      45
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist8",
+    "name": "of Ephij",
+    "level": 82,
+    "ranges": [
+     [
+      41,
+      45
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist6",
+    "name": "of Bameth",
+    "level": 81,
+    "ranges": [
+     [
+      24,
+      27
+     ]
+    ]
+   }
+  },
+  {
+   "id": "DesecratedHybridChaosResistance1",
+   "fire": {
+    "id": "AbyssModArmourJewelleryAmanamuSuffixFireChaosResistance",
+    "name": "of Amanamu",
+    "level": 65,
+    "ranges": [
+     [
+      13,
+      17
+     ]
+    ]
+   },
+   "cold": {
+    "id": "AbyssModArmourJewelleryKurgalSuffixColdChaosResistance",
+    "name": "of Kurgal",
+    "level": 65,
+    "ranges": [
+     [
+      13,
+      17
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "AbyssModArmourJewelleryUlamanSuffixLightningChaosResistance",
+    "name": "of Ulaman",
+    "level": 65,
+    "ranges": [
+     [
+      13,
+      17
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist6",
+    "name": "of Bameth",
+    "level": 81,
+    "ranges": [
+     [
+      24,
+      27
+     ]
+    ]
+   }
+  },
+  {
+   "id": "MaximumResistance1",
+   "fire": {
+    "id": "MaximumFireResist1",
+    "name": "of the Bushfire",
+    "level": 68,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "cold": {
+    "id": "MaximumColdResist1",
+    "name": "of Furs",
+    "level": 68,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "MaximumLightningResist1",
+    "name": "of Impedance",
+    "level": 68,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "MaximumChaosResist1",
+    "name": "of Regularity",
+    "level": 68,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   }
+  },
+  {
+   "id": "MaximumResistance2",
+   "fire": {
+    "id": "MaximumFireResist2_",
+    "name": "of the Molten Core",
+    "level": 75,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "cold": {
+    "id": "MaximumColdResist2",
+    "name": "of the Tundra",
+    "level": 75,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "MaximumLightningResist2___",
+    "name": "of Shockproofing",
+    "level": 75,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "MaximumChaosResist2_",
+    "name": "of Concord",
+    "level": 75,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   }
+  },
+  {
+   "id": "MaximumResistance3",
+   "fire": {
+    "id": "MaximumFireResist3",
+    "name": "of the Solar Storm",
+    "level": 81,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "cold": {
+    "id": "MaximumColdResist3",
+    "name": "of the Mammoth",
+    "level": 81,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "MaximumLightningResist3",
+    "name": "of the Lightning Rod",
+    "level": 81,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "MaximumChaosResist3",
+    "name": "of Harmony",
+    "level": 81,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   }
+  },
+  {
+   "id": "SoulInfluenceHybridChaosResistance1",
+   "fire": {
+    "id": "SoulInfluenceFireAndChaosResistance",
+    "name": "of the Soul",
+    "level": 65,
+    "ranges": [
+     [
+      3,
+      31
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SoulInfluenceColdAndChaosResistance",
+    "name": "of the Soul",
+    "level": 65,
+    "ranges": [
+     [
+      3,
+      31
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SoulInfluenceLightningAndChaosResistance",
+    "name": "of the Soul",
+    "level": 65,
+    "ranges": [
+     [
+      3,
+      31
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSoulHybridResistance1",
+    "name": "of the Soul",
+    "level": 65,
+    "ranges": [
+     [
+      3,
+      41
+     ]
+    ]
+   }
+  },
+  {
+   "id": "JewelRadiusCraftedMod",
+   "fire": {
+    "id": "CraftedJewelRadiusFireResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      5,
+      7
+     ]
+    ]
+   },
+   "cold": {
+    "id": "CraftedJewelRadiusColdResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      5,
+      7
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "CraftedJewelRadiusLightningResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      5,
+      7
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "CraftedJewelRadiusChaosResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      4,
+      5
+     ]
+    ]
+   }
+  },
+  {
+   "id": "JewelMaximumResistance",
+   "fire": {
+    "id": "JewelMaximumFireResistance",
+    "name": "of the Phoenix",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "cold": {
+    "id": "JewelMaximumColdResistance",
+    "name": "of the Kraken",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "JewelMaximumLightningResistance",
+    "name": "of the Leviathan",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "CraftedJewelMaximumChaosResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   }
+  }
+ ]
+}
