@@ -10,10 +10,21 @@ import { noLog } from "../utils/no-log";
 
 const UID_KEY = "exiledesk.web.uid";
 /**
- * 滞在の印は 5 分おき、しかも最後に触ってから 5 分以内の時だけ (放置・裏に回したタブは何も送らない)。
- * 2026-10-07 オーナー「開きっぱなしだけ対策できるかな」(1 分おきだと開きっぱなしの 1 時間で 60 回サーバーを呼んでいた)
+ * 滞在時間 (2026-10-12 オーナー「表示中の印で本当の滞在時間」「人数が増えても誤差みたいな計測なら」)。
+ * 画面が見えていて、最後に触ってから 5 分以内の秒数を端末の中で数え (放置・裏に回したタブは数えない)、送る時に「stay」の印 1 つに合計を載せる。
+ * 前は 5 分おきの「表示中」の印 (ping) で、印の数が滞在の長さに比例して増えていた。今は送る回数 (1 時間に 1 回まで) と同じだけ
  */
-const PING_MS = 300_000;
+const TICK_MS = 5_000;
+const IDLE_MS = 300_000;
+let activeMs = 0;
+let staySent = 0;
+/**
+ * エミュレーターで打った手の数え (日報のベース・カレンシーの順位・一番打った人、2026-10-12 オーナー)。端末の中で数えて、送る時に名前ごと 1 つの印にまとめる
+ * (手ごとに印を送らない = 打つ数が増えてもサーバーの記録は増えない)。手で付けた物・発現は数えない
+ */
+const useTally = new Map<string, number>();
+const baseTally = new Map<string, number>();
+let stepTally = 0;
 let lastActive = Date.now();
 
 const rand = (): string => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
@@ -75,6 +86,13 @@ let sentAny = false;
 function pull(): string | null {
   // この端末は記録しない (no-log.ts)。直前の流れ (trail) は要望・バグの添付用に残す
   if (noLog()) { buf.length = 0; return null; }
+  // 見ていた秒数の合計 (増えていれば)。開いてから何秒目かではなく、見ていた秒数そのもの
+  const stay = Math.round(activeMs / 1000);
+  if (stay > staySent) { buf.push({ n: "stay", s: stay }); staySent = stay; }
+  for (const [k, v] of baseTally) buf.push({ n: "base", x: k.slice(0, 80), s: v });
+  for (const [k, v] of useTally) buf.push({ n: "cur", x: k.slice(0, 80), s: v });
+  if (stepTally) buf.push({ n: "steps", s: stepTally });
+  baseTally.clear(); useTally.clear(); stepTally = 0;
   if (!buf.length) return null;
   const body = JSON.stringify({ uid, sid, first: first && !sentAny, dev, ref, ev: buf.splice(0, buf.length) });
   sentAny = true;
@@ -94,6 +112,19 @@ export function startTracking(): void {
   // シミュレーターを閉じている間は数えない (前に開いていた人が一瞬 sim になって数えられていた)
   watch(s.mode, (m) => { if (m === "sim" && SIM_LOCKED) return; trackOnce(`mode:${m}`); }, { immediate: true });
   watch(() => s.log.value.length, (n) => { if (n > 0) trackOnce("hand:use"); });
+  // 打った手を数える (戻した時は数え直さない。新しく足された最後の手だけ)
+  let lastStep: unknown = null;
+  watch(s.log, (l) => {
+    const p = l[l.length - 1];
+    if (!p || p === lastStep || !p.out.applied) { lastStep = p ?? null; return; }
+    lastStep = p;
+    const cur = p.out.currency;
+    if (cur.startsWith("force:") || cur.startsWith("reveal")) return;
+    stepTally++;
+    const b = p.before.baseJa || p.before.base;
+    baseTally.set(b, (baseTally.get(b) ?? 0) + 1);
+    useTally.set(p.out.currency_ja, (useTally.get(p.out.currency_ja) ?? 0) + 1);
+  });
   // ベースを選ぶと手で打つ方でも simPicked が立つので、シミュレーターの時だけ (2026-10-11 日報でシミュレーション: ベースを選んだ 227 になっていた)
   watch(s.simPicked, (v) => { if (v && s.mode.value === "sim") trackOnce("sim:base"); });
   watch(s.base, () => { if (s.mode.value === "hand") trackOnce("hand:base"); });
@@ -115,5 +146,5 @@ export function startTracking(): void {
   }
   for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.addEventListener(ev, () => { lastActive = Date.now(); }, { passive: true, capture: true });
   // 滞在の印は溜めるだけ (次に送る時に一緒に)。送る間隔・離れる時は log-sender が持つ
-  setInterval(() => { if (document.visibilityState === "visible" && Date.now() - lastActive < PING_MS) track("ping"); }, PING_MS);
+  setInterval(() => { if (document.visibilityState === "visible" && Date.now() - lastActive < IDLE_MS) activeMs += TICK_MS; }, TICK_MS);
 }

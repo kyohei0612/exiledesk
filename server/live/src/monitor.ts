@@ -5,7 +5,7 @@
  *   - reqLog():      1 回ごとの記録 (ダッシュボードの「ログ」で見る。path・status・ms・国)
  * 訪問数などは Analytics Engine (events.ts) と Cloudflare の GraphQL (Web Analytics / Workers)。CF_ANALYTICS_TOKEN (Account Analytics: Read) が要る
  */
-import { FUNNEL_SIM, STEP_JA, summarize, type Summary } from "./events";
+import { FUNNEL_SIM, STEP_JA, summarize, type Dwell, type Summary } from "./events";
 import { listFeedback } from "./feedback";
 import { countBetween } from "./logs";
 import type { Env, Fetch, LiveState } from "./types";
@@ -98,8 +98,16 @@ const USE_JA: Array<[string, string]> = [
   ["sim:order", "シミュレーション: 順番を決めた"], ["sim:pattern", "シミュレーション: 手順を組んだ"], ["sim:run", "シミュレーションを回した"], ["sim:done", "シミュレーションで完成まで出た"],
   ["trade:open", "取引所を開いた"], ["recipe:save", "レシピを保存した"], ["feedback:open", "要望・バグの窓を開いた"], ["feedback:sent", "要望・バグを送った"],
 ];
+/** 分 → 「4 分」「1 時間 20 分」 */
+export const dur = (min: number): string => {
+  const m = Math.round(min);
+  if (m < 1) return "1 分未満";
+  if (m < 60) return `${m} 分`;
+  return `${Math.floor(m / 60)} 時間${m % 60 ? ` ${m % 60} 分` : ""}`;
+};
 /** 来た道の名前 (t.co は X) */
-const fromJa = (k: string): string => (k === "direct" ? "URL から直接開いた人" : k === "t.co" || /(^|\.)(x|twitter)\.com$/.test(k) ? "X から来た人" : `${k.replace(/^www\./, "")} から来た人`);
+// 前のアドレス (web.exiledesk.workers.dev) から来た = 古いリンク (X の投稿など) を押して exiledesk.com に移ってきた人 (2026-10-12 オーナー)
+const fromJa = (k: string): string => (k === "direct" ? "URL から直接開いた人" : k === "t.co" || /(^|\.)(x|twitter)\.com$/.test(k) ? "X から来た人" : k === "web.exiledesk.workers.dev" ? "前の URL (X のリンクなど) から移ってきた人" : `${k.replace(/^www\./, "")} から来た人`);
 
 export function reportText(label: string, sum: Summary | null, usage: Usage, feedback: { requests: number; bugs: number }, live: LiveState | null, alerts: string[], records?: number | null): string {
   // 2026-10-10 オーナーの書いた形: 見出しごとの短い箇条書き。人は訪問と使った時間だけ、使われ方は 1 以上の物を全部、要望とバグはまとめて
@@ -118,8 +126,20 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
       // 人を先に (2026-10-10 記録を 1 時間に 1 回まとめて送る形にしたので、同じ人の 1 時間以内の再訪は次の回に回る。人数はほぼ正確)
       `来た人 ${n(sum.users)} 人 (初めて ${n(sum.newSessions)} 人)`,
       `訪問 ${n(sum.sessions)} 回`,
-      sum.medianMinutes == null ? null : sum.medianMinutes < 1 ? "半分の人は 1 分未満で閉じた" : `半分の人が ${sum.medianMinutes.toFixed(0)} 分以上使った`,
+      sum.dwell ? null : sum.medianMinutes == null ? null : sum.medianMinutes < 1 ? "半分の人は 1 分未満で閉じた" : `半分の人が ${sum.medianMinutes.toFixed(0)} 分以上使った`,
     ]);
+    // 滞在時間 (2026-10-12 オーナー): 1 人ずつ、開いてから最後の操作か「表示中」(画面が見えていて 5 分以内に触った時に 1 分おき) まで。広告の見込みの元にもなる
+    if (sum.dwell && (sum.dwell.pc || sum.dwell.mobile)) {
+      const d = sum.dwell;
+      const one = (name: string, x: Dwell | null): string | null => (x ? `${name}: 1 分未満 ${n(x.under1)} 人 · 5 分以上 ${n(x.over5)} 人 · 30 分以上 ${n(x.over30)} 人` : null);
+      const pct = (x: Dwell): number => Math.round(((x.people - x.under1) / x.people) * 100);
+      sec("滞在時間 (画面を見ていた時間)", [
+        one("PC", d.pc),
+        one("スマホ", d.mobile),
+        `1 分以上使ってくれた人: ${[d.pc ? `PC ${pct(d.pc)}%` : "", d.mobile ? `スマホ ${pct(d.mobile)}%` : ""].filter(Boolean).join(" / ")}`,
+        `合計: ${[d.pc ? `PC ${dur(d.pc.totalMin)}` : "", d.mobile ? `スマホ ${dur(d.mobile.totalMin)}` : ""].filter(Boolean).join(" / ")}`,
+      ]);
+    }
     const devMobile = sum.devices.find(([k]) => k === "mobile")?.[1] ?? 0;
     const devAll = sum.devices.reduce((a, [, v]) => a + v, 0) || 1;
     const jp = sum.countries.find(([k]) => k === "JP")?.[1] ?? 0;
@@ -130,8 +150,18 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
       ...refs.slice(0, 6).map(([k, v]) => `${fromJa(k)} ${v} 人`),
       `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
     ]);
-    const used = USE_JA.map(([k, ja]) => [ja, sum.byEvent.get(k)?.sessions ?? 0] as const).filter(([, v]) => v > 0);
-    sec("使われ方 (人数)", used.length ? used.map(([ja, v]) => `${ja} ${v}`) : ["開いただけで、何も使われていません"]);
+    // エミュレーターはベースを選ぶのが当たり前なので、打った人・順位・最大の手数・一番長くいた人で (2026-10-12 オーナー)
+    const used = USE_JA.filter(([k]) => !k.startsWith("hand:")).map(([k, ja]) => [ja, sum.byEvent.get(k)?.sessions ?? 0] as const).filter(([, v]) => v > 0);
+    const emu = sum.emu;
+    const maxMin = Math.max(sum.dwell?.pc?.maxMin ?? 0, sum.dwell?.mobile?.maxMin ?? 0);
+    sec("使われ方", [
+      `エミュレーターで 1 手以上打った人 ${n(sum.byEvent.get("hand:use")?.users ?? 0)} 人`,
+      emu?.maxSteps ? `一番たくさん打った人: ${n(emu.maxSteps)} 手` : null,
+      maxMin >= 1 ? `一番長くいた人: ${dur(maxMin)}` : null,
+      ...used.map(([ja, v]) => `${ja} ${v} 人`),
+    ]);
+    if (emu?.bases.length) sec("よく使われたベース (人数)", emu.bases.map(([k, v], i) => `${i + 1}. ${k} ${v} 人`));
+    if (emu?.currencies.length) sec("よく使われたカレンシー (回数)", emu.currencies.map(([k, v], i) => `${i + 1}. ${k} ${n(v)} 回`));
   }
   // 要望とバグは仕分けしていないのでまとめて (オーナー 2026-10-10)
   sec("届いた物", [`要望・バグ報告 ${feedback.requests + feedback.bugs}`]);

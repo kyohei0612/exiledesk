@@ -67,8 +67,21 @@ export const STEP_JA: Record<string, string> = {
   "sim:run": "回した", "sim:done": "完成", "trade:open": "取引所", "hand:use": "打った", "recipe:save": "レシピ保存", "feedback:open": "要望を開いた", "feedback:sent": "要望を送った", "error": "JS エラー", "ping": "滞在",
 };
 
+/**
+ * PC / スマホの 1 人ずつの滞在時間 (分、その日の訪問の合計)。滞在 = 開いてから最後の印 (操作・1 分おきの「表示中」) まで。
+ * 2026-10-12 オーナー「1 分未満 ● 人・5 分以上 ● 人・30 分以上 ● 人、1 分以上使ってくれた人の割合、最後に合計」
+ */
+export interface Dwell { people: number; under1: number; over5: number; over30: number; totalMin: number; maxMin: number }
+export function dwellOf(mins: readonly number[]): Dwell | null {
+  if (!mins.length) return null;
+  return { people: mins.length, under1: mins.filter((x) => x < 1).length, over5: mins.filter((x) => x >= 5).length, over30: mins.filter((x) => x >= 30).length, totalMin: mins.reduce((x, y) => x + y, 0), maxMin: Math.max(...mins) };
+}
 export interface Summary {
   sessions: number; users: number; newSessions: number; bounce: number | null; medianMinutes: number | null;
+  /** PC / スマホの滞在時間 (2026-10-12 オーナー「日報に滞在時間、表示中の印で本当の滞在時間」) */
+  dwell?: { pc: Dwell | null; mobile: Dwell | null };
+  /** エミュレーターのベース (人数)・カレンシー (回数) の順位と、1 人で一番打った手数 (端末で数えた印 base / cur / steps、2026-10-12 から) */
+  emu?: { bases: Array<[string, number]>; currencies: Array<[string, number]>; maxSteps: number };
   byEvent: Map<string, { sessions: number; users: number; count: number }>;
   refs: Array<[string, number]>; devices: Array<[string, number]>; countries: Array<[string, number]>;
   errors: Array<[string, number]>;
@@ -94,14 +107,27 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   const open = out.byEvent.get("open");
   out.sessions = open?.sessions ?? 0; out.users = open?.users ?? 0;
   for (const r of await q<{ f: string; s: number }>(`SELECT blob7 AS f, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY f`)) if (r.f === "1") out.newSessions = Number(r.s);
-  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'error')`);
+  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'stay', 'base', 'cur', 'steps', 'error')`);
   if (out.sessions && engaged[0]) out.bounce = Math.max(0, 1 - Number(engaged[0].s) / out.sessions);
   // 滞在の中央値 (Analytics Engine の SQL は quantiles が無いので quantileWeighted。それも無ければ平均)
   // 滞在 = 着いた時刻の差と「開いてから何秒目か」(double2) の大きい方 (まとめて送ると着いた時刻は全部同じになる。2026-10-10)。
   // Analytics Engine の SQL は型の違う 2 つを比べられないので、訪問ごとに両方取ってここで中央値を出す
-  const per = await q<{ a: number | string; b: number | string }>(`SELECT blob2, max(double2) AS a, toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp)) AS b FROM ${D} WHERE ${w} GROUP BY blob2 LIMIT 20000`);
-  const mins = per.map((r) => Math.max(Number(r.a) || 0, Number(r.b) || 0) / 60).sort((x, y) => x - y);
+  const per = await q<{ blob2: string; u: string; d: string; a: number | string; b: number | string }>(`SELECT blob2, blob3 AS u, blob4 AS d, max(double2) AS a, toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp)) AS b FROM ${D} WHERE ${w} GROUP BY blob2, blob3, blob4 LIMIT 20000`);
+  const minOf = (r: { a: number | string; b: number | string }): number => Math.max(Number(r.a) || 0, Number(r.b) || 0) / 60;
+  const mins = per.map(minOf).sort((x, y) => x - y);
   if (mins.length) out.medianMinutes = mins[Math.floor((mins.length - 1) / 2)]!;
+  // 見ていた秒数の印 (stay、2026-10-12 から) がある訪問はそれを使う。無い訪問 (前の版) は開いてから最後の印まで
+  const stay = new Map((await q<{ sid: string; s: number | string }>(`SELECT blob2 AS sid, max(double2) AS s FROM ${D} WHERE ${w} AND blob1 = 'stay' GROUP BY sid LIMIT 20000`)).map((r) => [r.sid, Number(r.s) / 60]));
+  const minOfVisit = (r: { blob2?: string; a: number | string; b: number | string }): number => stay.get(String(r.blob2)) ?? minOf(r);
+  // 1 人ずつ (端末の番号 × PC / スマホ) にその日の訪問を足す
+  const person = new Map<string, { d: string; m: number }>();
+  for (const r of per) { const k = `${r.u}|${r.d}`; const m = minOfVisit(r); const x = person.get(k); if (x) x.m += m; else person.set(k, { d: r.d, m }); }
+  const ps = [...person.values()];
+  const bases = (await q<{ k: string; n: number }>(`SELECT blob8 AS k, count(DISTINCT blob3) AS n FROM ${D} WHERE ${w} AND blob1 = 'base' GROUP BY k ORDER BY n DESC LIMIT 5`)).map((r): [string, number] => [r.k, Number(r.n)]);
+  const curs = (await q<{ k: string; n: number }>(`SELECT blob8 AS k, SUM(double2 * _sample_interval) AS n FROM ${D} WHERE ${w} AND blob1 = 'cur' GROUP BY k ORDER BY n DESC LIMIT 5`)).map((r): [string, number] => [r.k, Number(r.n)]);
+  const mx = await q<{ n: number }>(`SELECT SUM(double2) AS n FROM ${D} WHERE ${w} AND blob1 = 'steps' GROUP BY blob3 ORDER BY n DESC LIMIT 1`);
+  if (bases.length || curs.length || mx.length) out.emu = { bases, currencies: curs, maxSteps: Number(mx[0]?.n ?? 0) };
+  out.dwell = { pc: dwellOf(ps.filter((x) => x.d !== "mobile").map((x) => x.m)), mobile: dwellOf(ps.filter((x) => x.d === "mobile").map((x) => x.m)) };
   const top = async (col: string): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
   out.refs = await top("blob5"); out.devices = await top("blob4"); out.countries = await top("blob6");
   // よその物: 中身の見えないエラー・ext: の印・ウォレット・ユーザースクリプト (2026-10-11)

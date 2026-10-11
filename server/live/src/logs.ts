@@ -105,3 +105,4 @@ export async function sendDayLogs(env: Env, day: string, fetchFn: typeof fetch =
   }
   return { ok: true, files: parts.length, bytes, lines };
 }
+
