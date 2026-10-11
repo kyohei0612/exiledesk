@@ -8,6 +8,7 @@ import { computed, ref, watch } from "vue";
 import { craftStage, readSimSession } from "../state/craft-stage";
 import { WEB_API_BASE } from "./config";
 import { diagNow, track, trailNow } from "./track";
+import { feedbackSummaryJa } from "./feedback-summary";
 import { marketStore } from "../state/market-store";
 import { allMods } from "../services/craft-stage/stage-core";
 import pkg from "../../package.json";
@@ -41,6 +42,8 @@ function contextNow(): unknown {
   return {
     version: pkg.version,
     url: location.href,
+    // 受けた側が読む日本語のまとめ (何を作っていて、どこまで打ったか。Discord の本文に出る)
+    summaryJa: (() => { try { return feedbackSummaryJa(); } catch { return []; } })(),
     mode: s.mode.value,
     base: s.base.value,
     itemLevel: s.itemLevel.value,

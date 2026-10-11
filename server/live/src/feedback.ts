@@ -62,11 +62,21 @@ export async function allowIp(kv: KVNamespace, ip: string, now = Date.now()): Pr
 }
 
 /** 添付の「直前の流れ」(Web 版が付ける: 印の名前と何秒前か) を 1 行に */
+/** 流れの記録の名前 → 日本語 (2026-10-12 オーナー「普通に日本語で報告して欲しい」)。無い物はそのまま */
+const TRAIL_JA: Record<string, string> = {
+  open: "開いた", "mode:hand": "エミュレーターに切り替え", "mode:sim": "シミュレーターに切り替え",
+  "hand:base": "ベースを選んだ", "hand:use": "最初の 1 手を打った",
+  "sim:base": "ベースを選んだ (シミュレーター)", "sim:targets": "狙いを選んだ", "sim:order": "順番を決めた", "sim:pattern": "パターンを作った",
+  "sim:run": "シミュレーションを回した", "sim:run:step": "1 手だけ回した", "sim:run:one": "1 本だけ回した", "sim:done": "シミュレーションが終わった",
+  "recipe:save": "レシピを保存", "trade:open": "取引所を開いた", error: "エラー", ping: "表示中",
+  "feedback:open": "要望の窓を開いた", "feedback:sent": "要望を送った",
+};
 export function trailText(context: unknown, max = 14): string {
   const trail = (context as { trail?: unknown })?.trail;
   if (!Array.isArray(trail) || !trail.length) return "";
   return trail.slice(-max).map((e) => {
-    const n = String((e as { n?: unknown })?.n ?? "?");
+    const raw = String((e as { n?: unknown })?.n ?? "?");
+    const n = TRAIL_JA[raw] ?? raw;
     const ago = Number((e as { ago?: unknown })?.ago);
     return Number.isFinite(ago) ? `${n} (${ago >= 60 ? `${Math.round(ago / 60)}分` : `${Math.round(ago)}秒`}前)` : n;
   }).join(" → ");
@@ -117,12 +127,13 @@ export async function listFeedback(kv: KVNamespace, limit = 100): Promise<Feedba
 /** 添付から「今の状態」を 1 行に (手で打つ / シミュレーション・ベース・手数・狙いとパターンの数・エラーの数) */
 export function stateLine(context: unknown): string {
   if (!context || typeof context !== "object") return "";
+  const hasSummary = Array.isArray((context as { summaryJa?: unknown }).summaryJa) && ((context as { summaryJa: unknown[] }).summaryJa.length > 0);
   const c = context as { version?: string; mode?: string; base?: string; itemLevel?: number; hand?: { steps?: number } | null; sim?: { targets?: unknown[]; patterns?: unknown[] } | null; errors?: unknown[]; market?: { error?: string | null } };
   const parts = [
     c.version ? `v${c.version}` : "",
-    c.mode === "sim" ? "シミュレーション" : c.mode === "hand" ? "手で打つ" : "",
-    c.base ? `${c.base}${c.itemLevel ? ` ilvl${c.itemLevel}` : ""}` : "",
-    c.hand?.steps ? `手で ${c.hand.steps} 手` : "",
+    c.mode === "sim" ? "シミュレーター" : c.mode === "hand" ? "エミュレーター" : "",
+    c.base && !hasSummary ? `${c.base}${c.itemLevel ? ` ilvl${c.itemLevel}` : ""}` : "",
+    c.hand?.steps && !hasSummary ? `${c.hand.steps} 手` : "",
     c.sim ? `狙い ${c.sim.targets?.length ?? 0} · パターン ${c.sim.patterns?.length ?? 0}` : "",
     c.errors?.length ? `JS エラー ${c.errors.length}` : "",
     c.market?.error ? "相場が取れていない" : "",
@@ -143,13 +154,18 @@ export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetc
   const firstErr = (fb.context as { errors?: Array<{ msg?: string }> } | null)?.errors?.[0]?.msg;
   // 日本時間で (Discord は文字列をそのまま出すので、ここで +9 時間)
   const jst = new Date(Date.parse(fb.at) + 9 * 3600e3).toISOString().slice(0, 16).replace("T", " ");
+  // 画面が付けた日本語のまとめ (何を作っていて、どこまで打ったか)。前の版から来た物には無いので、その時は今まで通り
+  const summary = (fb.context as { summaryJa?: unknown } | null)?.summaryJa;
+  const sumLines = Array.isArray(summary) ? summary.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 600)) : [];
   const content = [
     `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST · id ${fb.id}`,
     fb.text.slice(0, 1200),
+    "",
+    ...sumLines,
     state ? `状態: ${state}` : "",
     trail ? `流れ: ${trail}` : "",
     firstErr ? `直近のエラー: ${String(firstErr).slice(0, 160)}` : "",
-    fb.context ? "添付の JSON に 手順 (同じ seed で再生できる plan)・レシピ・エラーの詳細が入っています" : "",
+    fb.context ? "-# 添付の JSON: 同じ乱数で再生できる手順・レシピ・エラーの詳細" : "",
   ].filter(Boolean).join("\n").slice(0, 1950);
   try {
     const form = new FormData();
