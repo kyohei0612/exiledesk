@@ -32,12 +32,13 @@ export const REMOVED_OMENS: readonly string[] = [
   "OmenofCorruption",
 ];
 /**
- * 一緒に掛けられないお告げ (2026-10-09 お告げの洗い直し): 片方しか効かないのに両方減っていた (左と右・勢力 2 枚・削減と抹消・光と左右の消去)。
+ * 一緒に掛けられないお告げ (2026-10-09 お告げの洗い直し): 片方しか効かないのに両方減っていた (左と右・勢力 2 枚・光と左右の消去)。
  * 同じ組のお告げを掛けると、前に掛けていた方を外す
  */
 export const OMEN_EXCLUSIVE: readonly (readonly string[])[] = [
   ["OmenofSinistralExaltation", "OmenofDextralExaltation"],
-  ["OmenofWhittling", "OmenofSinistralErasure", "OmenofDextralErasure"],
+  // 削減は左右の抹消と一緒に掛けられる (その側の一番 MOD レベルの低い物を消す。2026-10-11 要望 aa132a4a、timesaver.gg の解説・公式フォーラム 3754679 で併用の例)
+  ["OmenofSinistralErasure", "OmenofDextralErasure"],
   ["OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofLight"],
   ["OmenofSinistralCrystallisation", "OmenofDextralCrystallisation"],
   ["OmenofSinistralNecromancy", "OmenofDextralNecromancy"],

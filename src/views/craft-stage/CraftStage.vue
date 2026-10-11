@@ -105,7 +105,8 @@ const heldOmens = computed(() => {
 const doomed = computed(() => {
   const it = s.item.value;
   if (!it || !s.held.value || kindOf(s.held.value) !== "chaos" || it.rarity !== "rare" || !s.omens.value.includes("OmenofWhittling")) return [];
-  return whittleTargets(it).map((m) => m.modId);
+  const o = s.omens.value;
+  return whittleTargets(it, o.includes("OmenofSinistralErasure") ? "prefix" : o.includes("OmenofDextralErasure") ? "suffix" : null).map((m) => m.modId);
 });
 /** 打った瞬間の演出 (波紋・枠の光・「レアに!」など) */
 const fx = useStageFx(mouse);
