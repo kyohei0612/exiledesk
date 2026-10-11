@@ -109,6 +109,23 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND NOT (${EXT}) GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
   const ext = await q<{ c: number; s: number }>(`SELECT SUM(_sample_interval) AS c, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND ${EXT}`);
   if (ext[0] && Number(ext[0].c) > 0) out.extErrors = { count: Number(ext[0].c), sessions: Number(ext[0].s) };
+  // シミュレーションの印は、その訪問でシミュレーターを開いていた時だけ数える。前の Web 版はエミュレーターでベースを選んでも sim:base を立てていたので、
+  // シミュレーターを開いていない訪問の sim:base はエミュレーターのベース選び (hand:base) に回す (2026-10-11 オーナー「正しい日報に」)
+  const sids = async (n: string): Promise<Set<string>> => new Set((await q<{ s: string }>(`SELECT blob2 AS s FROM ${D} WHERE ${w} AND blob1 = '${n}' GROUP BY s LIMIT 20000`)).map((r) => r.s));
+  const simOpen = await sids("mode:sim");
+  const simBase = await sids("sim:base");
+  if (simBase.size) {
+    const handBase = await sids("hand:base");
+    for (const x of simBase) if (!simOpen.has(x)) handBase.add(x);
+    out.byEvent.set("hand:base", { sessions: handBase.size, users: handBase.size, count: handBase.size });
+  }
+  // Web 版はシミュレーターを閉じているので、開いた印だけでベースまで行った訪問が無ければ一瞬開いた扱い (前に開いていた人) として数えない
+  if (![...simBase].some((x) => simOpen.has(x))) out.byEvent.delete("mode:sim");
+  for (const n of ["sim:base", "sim:targets", "sim:order", "sim:pattern", "sim:run", "sim:done"]) {
+    if (!out.byEvent.has(n)) continue;
+    const real = [...(n === "sim:base" ? simBase : await sids(n))].filter((x) => simOpen.has(x)).length;
+    if (real) out.byEvent.set(n, { ...out.byEvent.get(n)!, sessions: real }); else out.byEvent.delete(n);
+  }
   const wau = await q<{ u: number }>(`SELECT count(DISTINCT blob3) AS u FROM ${D} WHERE ${range(weekSince, until)}${skip} AND blob1 = 'open'`);
   if (wau[0]) out.wau = Number(wau[0].u);
   return out;

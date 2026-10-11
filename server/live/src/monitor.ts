@@ -39,7 +39,8 @@ export async function alert(env: Env, key: string, text: string, _fetchFn: Fetch
 /** 昨日 (since〜until) に出た異常の一覧 */
 export async function alertsBetween(env: Env, since: string, until: string): Promise<string[]> {
   const l = await env.LIVE.list({ prefix: "alertlog:", limit: 200 });
-  return l.keys.map((k) => k.name).filter((n) => { const t = n.slice("alertlog:".length, "alertlog:".length + 24); return t >= since && t < until; }).map((n) => n.split(":").slice(4).join(":"));
+  // 配信の見張りはもう通知しない (2026-10-11)。前に残った分も出さない
+  return l.keys.map((k) => k.name).filter((n) => { const t = n.slice("alertlog:".length, "alertlog:".length + 24); return t >= since && t < until; }).map((n) => n.split(":").slice(4).join(":")).filter((x) => !x.startsWith("配信の見張り"));
 }
 
 /** 1 回ごとの記録 (JSON 1 行。ダッシュボードのログで絞り込める) */
