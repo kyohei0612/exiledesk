@@ -238,7 +238,7 @@ describe("操作の印と日報 (events / monitor)", () => {
     expect(yesterdayJst(new Date("2026-10-07T03:30:00Z"), true).label).toBe("今日のここまで");
     expect(trailText({ trail: [{ n: "open", ago: 130 }, { n: "mode:sim", ago: 40 }, { n: "sim:base", ago: 3 }] })).toBe("開いた (2分前) → シミュレーターに切り替え (40秒前) → ベースを選んだ (シミュレーター) (3秒前)");
     const text = reportText("10/6", null, { visits: null, pageViews: null, liveRequests: null, liveErrors: null, why: "CF_ANALYTICS_TOKEN が無い" }, { requests: 1, bugs: 2 }, null, ["相場の中継"]);
-    expect(text).toContain("日報 10/6"); expect(text).toContain("訪問の集計は取れませんでした (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望・バグ報告 3"); expect(text).toContain("異常の通知 1 回: 相場の中継");
+    expect(text).toContain("日報 10/6"); expect(text).toContain("訪問の集計は取れませんでした (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望・バグを送った 3 件"); expect(text).not.toContain("届いた物"); expect(text).toContain("異常の通知 1 回: 相場の中継");
     // 人が来た日は見出しごとの箇条書き (2026-10-10 オーナー「報告の文章わかりづらい」)
     const byEvent = new Map([["open", 42], ["mode:sim", 25], ["mode:hand", 18], ["sim:base", 24], ["sim:targets", 20], ["sim:order", 8], ["sim:pattern", 7], ["sim:run", 6], ["sim:done", 5], ["trade:open", 3]].map(([k, v]) => [k as string, { sessions: v as number, users: v as number, count: v as number }]));
     const full = reportText("10/6", { sessions: 42, users: 40, newSessions: 30, bounce: 0.48, medianMinutes: 6.2, byEvent, refs: [["www.youtube.com", 20], ["direct", 15], ["t.co", 5]], devices: [["pc", 38], ["mobile", 4]], countries: [["JP", 41], ["US", 1]], errors: [], wau: 120, warnings: [] }, { visits: 40, pageViews: 60, liveRequests: 1200, liveErrors: 0 }, { requests: 0, bugs: 0 }, null, []);

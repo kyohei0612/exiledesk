@@ -117,6 +117,8 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     if (ls.length) out.push("", `**${title}**`, ...ls.map((x) => `・${x}`));
   };
   const today = label.includes("今日");
+  // 要望とバグは仕分けしていないのでまとめて (オーナー 2026-10-10)
+  const fbCount = feedback.requests + feedback.bugs;
   if (!sum) {
     sec("人数", [`訪問の集計は取れませんでした (${usage.why ?? "集計の設定が無い"})`]);
   } else if (!sum.sessions) {
@@ -151,7 +153,8 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
       `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
     ]);
     // エミュレーターはベースを選ぶのが当たり前なので、打った人・順位・最大の手数・一番長くいた人で (2026-10-12 オーナー)
-    // 要望・バグは「届いた物」の 1 本だけ (届いた数はサーバーに残った実物で数えるので正確。印の方は 1 時間に 1 回まとめて送るので遅れ・漏れがあり、数が合わなかった。2026-10-12 オーナー)
+    // 要望・バグは「送った」の 1 行だけで、数はサーバーに届いた実物 (正確)。印の方は 1 時間に 1 回まとめて送るので遅れ・漏れがあり、数が合わなかった。
+    // 「届いた物」の節もやめた (2026-10-12 オーナー「正確にできるなら送ったの数字だけで分かる」)
     const used = USE_JA.filter(([k]) => !k.startsWith("hand:") && !k.startsWith("feedback:")).map(([k, ja]) => [ja, sum.byEvent.get(k)?.sessions ?? 0] as const).filter(([, v]) => v > 0);
     const emu = sum.emu;
     const maxMin = Math.max(sum.dwell?.pc?.maxMin ?? 0, sum.dwell?.mobile?.maxMin ?? 0);
@@ -160,12 +163,13 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
       emu?.maxSteps ? `一番たくさん打った人: ${n(emu.maxSteps)} 手` : null,
       maxMin >= 1 ? `一番長くいた人: ${dur(maxMin)}` : null,
       ...used.map(([ja, v]) => `${ja} ${v} 人`),
+      fbCount ? `要望・バグを送った ${fbCount} 件` : null,
     ]);
     if (emu?.bases.length) sec("よく使われたベース (人数)", emu.bases.map(([k, v], i) => `${i + 1}. ${k} ${v} 人`));
     if (emu?.currencies.length) sec("よく使われたカレンシー (回数)", emu.currencies.map(([k, v], i) => `${i + 1}. ${k} ${n(v)} 回`));
   }
-  // 要望とバグは仕分けしていないのでまとめて (オーナー 2026-10-10)
-  sec("届いた物", [`要望・バグ報告 ${feedback.requests + feedback.bugs}`]);
+  // 誰も来ていない日でも要望が届いていれば出す
+  if ((!sum || !sum.sessions) && fbCount) sec("使われ方", [`要望・バグを送った ${fbCount} 件`]);
   const err = sum?.byEvent.get("error");
   // 中身の見えないエラー (外のスクリプト) は分けて、直す対象から外す (2026-10-10)
   const ext = sum?.extErrors ?? null;
