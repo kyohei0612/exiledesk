@@ -183,21 +183,18 @@ describe("バグ: 追加分 (乱数の打ち回し・データの点検で見つ
   });
 });
 
-// 2026-10-10 オーナーが決めた: エッセンスは同じ系統の普通の MOD と一緒に付く / フラクチャーは未発現の冒涜以外なんでも固定できる / フラックスで系統が被るのはあり
+// 2026-10-10 オーナーが決めた: エッセンスは同じ系統の普通の MOD と一緒に付く (2026-10-11: 普通の後にエッセンスだけ。エッセンスの後に普通は付かない) / フラクチャーは未発現の冒涜以外なんでも固定できる / フラックスで系統が被るのはあり
 describe("決まり (オーナー確認済み)", () => {
-  it("エッセンスと普通の MOD の同じ系統: エッセンスは打てないのに、エッセンスの後の高貴では同じ系統の普通の MOD が付く (順番で結果が違う)", () => {
-    // 先に普通の火耐性 → エッセンス (火耐性) は打てない
+  it("エッセンスと普通の MOD の同じ系統: 普通の後のエッセンスは付く、エッセンスの後の普通の MOD は付かない (2026-10-11 オーナー「同じやつやろ、つくわけないやん」)", () => {
+    // 先に普通の火耐性 → エッセンス (火耐性) は付く (poe.ninja の実物)
     const magic = force(freshItem(data, "Gold Ring", 82), "Rings/FireResistance");
     const e1 = applyCurrency(data, magic, "essence:greater:Rings/Essence_FireResistance", mulberry32(1), []);
-    // 先にエッセンスの火耐性 → 高貴の指名で普通の火耐性が付く
+    // 先にエッセンスの火耐性 → 高貴の指名でも普通の火耐性は付かない
     let ring = A(freshItem(data, "Gold Ring", 82), "transmute", 2);
     ring = A(ring, "essence:greater:Rings/Essence_FireResistance", 3);
     const e2 = applyCurrency(data, ring, "exalt", mulberry32(4), [], { pick: [{ mod: "Rings/FireResistance" }] });
     const fams = allMods(e2.item).filter((m) => m.family === "FireResistance").length;
-    // どちらかに揃うべき (両方 OK か、両方 NG)
-    expect({ essenceAfterNormal: e1.applied, normalAfterEssence: e2.applied, fireResCount: fams }).toEqual(
-      e1.applied ? { essenceAfterNormal: true, normalAfterEssence: true, fireResCount: 2 } : { essenceAfterNormal: false, normalAfterEssence: false, fireResCount: 0 },
-    );
+    expect({ essenceAfterNormal: e1.applied, normalAfterEssence: e2.applied && fams > 0 }).toEqual({ essenceAfterNormal: true, normalAfterEssence: false });
   });
 
   it("普通の火耐性が付いた指輪にも、エッセンスの火耐性は付く (一覧も付けられる扱い)", () => {

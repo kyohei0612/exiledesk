@@ -1,0 +1,336 @@
+{
+ "schema": "craft-stage-plan/1",
+ "title": null,
+ "base": "Akoyan Spear",
+ "item_level": 86,
+ "start_rarity": "normal",
+ "start_paste": null,
+ "start": {
+  "sockets": 2
+ },
+ "seed": 677072491,
+ "steps": [
+  {
+   "currency": "transmute_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 152387928
+  },
+  {
+   "currency": "augment_greater",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 871233147
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1159705989
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1899969932
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 821243407
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1703375676
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 2572289
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1046584707
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1011330368
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1407430793
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 7561661
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 228968265
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 939697772
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 987583621
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1306567980
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1709982887
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 16258577
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1084603193
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 2072423359
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1695782173
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1942686747
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1242592541
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 142337063
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1348896436
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 953448638
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1683426839
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1609710121
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 111231518
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 765793286
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 157782590
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1908714460
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 418720227
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1118806937
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 635439386
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1818893803
+  },
+  {
+   "currency": "augment_perfect",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 2108208694
+  },
+  {
+   "currency": "annul",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 453580632
+  },
+  {
+   "currency": "essence:greater:Spears/Essence_CriticalStrikeChanceIncrease",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1466583560
+  },
+  {
+   "currency": "exalt",
+   "omen": "OmenofSinistralExaltation",
+   "times": 1,
+   "note": null,
+   "seed": 362536377
+  },
+  {
+   "currency": "force:Spears/LocalFireDamage|T1|f",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 156576550
+  },
+  {
+   "currency": "rune:Astrid's Creativity",
+   "omen": null,
+   "times": 1,
+   "note": null,
+   "seed": 1022548738
+  },
+  {
+   "currency": "essence:perfect:Spears/PerfectEssence_IncreaseSocketedGemLevel",
+   "omen": "OmenofSinistralCrystallisation",
+   "times": 1,
+   "note": null,
+   "seed": 510009983
+  },
+  {
+   "currency": "desecrate",
+   "omen": "OmenofDextralNecromancy",
+   "times": 1,
+   "note": null,
+   "seed": 1164203398
+  },
+  {
+   "currency": "reveal:2:reroll",
+   "omen": "OmenofAbyssalEchoes",
+   "times": 1,
+   "note": null,
+   "seed": 1341171356
+  },
+  {
+   "currency": "annul",
+   "omen": "OmenofLight",
+   "times": 1,
+   "note": null,
+   "seed": 46657163
+  },
+  {
+   "currency": "desecrate",
+   "omen": "OmenofDextralNecromancy",
+   "times": 1,
+   "note": null,
+   "seed": 298401940
+  }
+ ]
+}

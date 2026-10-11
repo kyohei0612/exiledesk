@@ -8,7 +8,7 @@
  * 中身は計算機のエンジン (src/vendor/poe2htc/engine/pool.ts) の式を使い、エンジンに無い決まりだけここに足す。
  */
 import type { Mod } from "../../vendor/poe2htc/engine/types";
-import { excluded, familiesOf, modTierWeight } from "../../vendor/poe2htc/engine/pool";
+import { excluded, familiesOf, modTierWeight, occupiedFamiliesOf } from "../../vendor/poe2htc/engine/pool";
 
 /**
  * MOD の系統の鍵 (同じ鍵は 1 つのアイテムに 1 つまで)。エンジンの familiesOf そのまま:
@@ -17,6 +17,10 @@ import { excluded, familiesOf, modTierWeight } from "../../vendor/poe2htc/engine
  */
 export function familyKeysOf(mod: Mod): string[] {
   return [...familiesOf(mod)];
+}
+/** 付いている MOD が塞ぐ系統 (エッセンスの MOD は同じ系統の普通の MOD も後から付けさせない。エンジンの occupiedFamiliesOf、2026-10-11) */
+export function occupiedKeysOf(mod: Mod): string[] {
+  return [...occupiedFamiliesOf(mod)];
 }
 
 /** その MOD が、もう付いている系統 (familyKeysOf を集めた物) とぶつかるか (エンジンの excluded) */

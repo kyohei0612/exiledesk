@@ -21,7 +21,7 @@ import { CATALYSTS, catalystsFor } from "./quality";
 import { jaOfOmen, jaOfPriceKey } from "./labels";
 import { OMEN, FACTION_OMEN, FACTION_TAG } from "./omens";
 import { bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
-import { familyBlocked, familyKeysOf, tierWeight } from "../mods/mod-rules";
+import { familyBlocked, occupiedKeysOf, tierWeight } from "../mods/mod-rules";
 
 export type Side = "prefix" | "suffix";
 
@@ -111,7 +111,7 @@ export function stepHelpers(ctx: StepCtx) {
     new Set(s.slots.flatMap((x, i) => {
       if (i === skip) return [];
       const m = x.modId ? mod(x.modId) : undefined;
-      return m ? familyKeysOf(m) : x.family ? [x.family] : [];
+      return m ? occupiedKeysOf(m) : x.family ? [x.family] : [];
     }));
   /** その側で付きうる普通の MOD の重み (付いている系統を除く)。tag のカタリストが効く物は mult 倍 */
   const poolW = (side: Side, occ: Set<string>, floor: number, tag: string | null, mult: number): number =>

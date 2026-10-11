@@ -100,6 +100,19 @@ export function familiesOf(mod: Mod): readonly string[] {
 }
 
 /**
+ * The groups a mod OCCUPIES once it sits on the item. A crafted mod occupies its own namespaced groups AND
+ * the plain ones: nothing rolled of that family can join it afterwards (ExileDesk 2026-10-11, owner: "the
+ * same mod, of course it can't roll" — a bone reveal offered Critical Hit Chance beside an essence's). The
+ * other order stays legal (a crafted mod onto a rolled one of its family — the poe.ninja items above).
+ */
+export function occupiedFamiliesOf(mod: Mod): readonly string[] {
+  const own = familiesOf(mod);
+  if (!CRAFTED_SOURCES.has(mod.source)) return own;
+  const plain = mod.families && mod.families.length > 0 ? mod.families : mod.family ? [mod.family] : [];
+  return [...own, ...plain];
+}
+
+/**
  * Does `mod` collide with a set of already-occupied families? True if ANY of its groups is taken.
  * This is the single place exclusion is decided — call it rather than testing `.family` directly,
  * or multi-family mods silently lose the groups beyond the first.
@@ -116,7 +129,7 @@ export function itemFamilies(data: PatchData, item: ItemState): Set<string> {
     // A throwaway names no mod, so it has no family to contribute — and none is needed: the only step
     // that ever sees one adds a CRAFTED mod, whose groups no rolled family can share (see `Throwaway`).
     if (p.throwaway) continue;
-    for (const f of familiesOf(resolveMod(data, p.modId))) fams.add(f);
+    for (const f of occupiedFamiliesOf(resolveMod(data, p.modId))) fams.add(f);
   }
   return fams;
 }

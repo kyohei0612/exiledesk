@@ -10,7 +10,7 @@ import { runeIdByName, withRunes } from "../../vendor/poe2htc/engine/runes";
 import RUNES_JSON from "./stage-runes.json";
 const RUNE_STATS = (RUNES_JSON as { runes: unknown }).runes;
 import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
-import { familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
+import { familyBlocked, familyKeysOf, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfMod } from "../htc/mod-text";
 import modTextJa from "../../i18n/mod-text-ja.json";
@@ -139,7 +139,7 @@ export const familyKeys = familyKeysOf;
 export function takenFamilies(data: PatchData, item: StageItem, except?: StageMod): Set<string> {
   return new Set(allMods(item).filter((m) => m !== except).flatMap((m) => {
     const md = data.mods.get(m.modId);
-    return md ? familyKeysOf(md) : [m.family];
+    return md ? occupiedKeysOf(md) : [m.family];
   }));
 }
 /** 付いているエッセンス (クラフト) の MOD の生の系統 (エッセンスを打てるかの判定用。普通の MOD とは同じ系統でも一緒に付く) */

@@ -5,7 +5,7 @@ import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./cata
 import { catalystsFor } from "./quality";
 import { type Side } from "./step-odds";
 import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG, ABYSS_MARK_FLOOR } from "./omens";
-import { essenceClash, familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
+import { essenceClash, familyBlocked, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import type { RollOutcome, SimAction, SimCtx, SimNode, SimSlot, SimState } from "./sim-route-types";
 
 const FLOOR: Record<string, number> = {
@@ -36,7 +36,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
   /** 付いている系統 (狙いの MOD も外れも。系統が分からない物は数えない) */
   const keysOf = (x: SimSlot, raw = false): string[] => {
     const m = x.modId ? mod(x.modId) : undefined;
-    return m ? (raw ? rawFamiliesOf(m) : familyKeysOf(m)) : x.family ? [x.family] : [];
+    return m ? (raw ? rawFamiliesOf(m) : occupiedKeysOf(m)) : x.family ? [x.family] : [];
   };
   const families = (s: SimState): Set<string> => new Set(s.slots.flatMap((x) => keysOf(x)));
   /** ブリーチの MOD のレベル (削減のお告げで比べる。データの段のレベル、無ければ 1) */
