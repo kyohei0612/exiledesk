@@ -151,7 +151,8 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
       `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
     ]);
     // エミュレーターはベースを選ぶのが当たり前なので、打った人・順位・最大の手数・一番長くいた人で (2026-10-12 オーナー)
-    const used = USE_JA.filter(([k]) => !k.startsWith("hand:")).map(([k, ja]) => [ja, sum.byEvent.get(k)?.sessions ?? 0] as const).filter(([, v]) => v > 0);
+    // 要望・バグは「届いた物」の 1 本だけ (届いた数はサーバーに残った実物で数えるので正確。印の方は 1 時間に 1 回まとめて送るので遅れ・漏れがあり、数が合わなかった。2026-10-12 オーナー)
+    const used = USE_JA.filter(([k]) => !k.startsWith("hand:") && !k.startsWith("feedback:")).map(([k, ja]) => [ja, sum.byEvent.get(k)?.sessions ?? 0] as const).filter(([, v]) => v > 0);
     const emu = sum.emu;
     const maxMin = Math.max(sum.dwell?.pc?.maxMin ?? 0, sum.dwell?.mobile?.maxMin ?? 0);
     sec("使われ方", [
