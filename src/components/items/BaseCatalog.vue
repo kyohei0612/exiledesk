@@ -132,9 +132,31 @@ function placeUnder(f: Family | null): void {
   for (const r of families.value) { const t = groupEls.get(r.ja)?.offsetTop; if (t != null && Math.abs(t - top) < 4) last = r.ja; }
   insertAfter.value = last;
 }
+/** 開いた時に送った量 (畳んだらその分だけ戻す)。0 = 送らずに開いた */
+let revealed = 0;
+/** 送り終わった時の位置 (その後に自分で動かしていたら、畳んでも戻さない) */
+let revealedAt: number | null = null;
+const scrollTopOf = (box: HTMLElement | null): number => (box ? box.scrollTop : window.scrollY);
+const rootEl = ref<HTMLElement | null>(null);
+/**
+ * 畳む: 開いた時に送っていなければ今の位置のまま、送っていたらその分だけ戻す
+ * (2026-10-12 オーナー「スクロール関係ない所で開いて、戻る時は今の位置でおｋ。アイコンもっかいクリックしたら今置いてある位置からズレる」)。
+ * 一覧が消えてページが短くなると下の端に押し戻されて画面がずれるので、高さはそのまま残す (次に開く時に戻す)
+ */
+function fold(): void {
+  const el = rootEl.value;
+  if (el) el.style.minHeight = `${el.offsetHeight}px`;
+  family.value = null; insertAfter.value = null;
+  const back = revealed, at = revealedAt;
+  revealed = 0; revealedAt = null;
+  const box = el ? scrollBoxOf(el) : null;
+  if (back > 0 && at != null && Math.abs(scrollTopOf(box) - at) < 2) void nextTick(() => glideBy(box, -back));
+}
 function pickFamily(f: Family): void {
   // PC で開いている部位をもう一度押したら畳む
-  if (!phone.value && family.value?.name === f.name) { family.value = null; insertAfter.value = null; return; }
+  if (!phone.value && family.value?.name === f.name) { fold(); return; }
+  if (rootEl.value) rootEl.value.style.minHeight = "";
+  revealed = 0;
   // 行の位置は開いた物を閉じてから測る (開いた一覧の分だけ下の段がずれるので)
   insertAfter.value = null;
   family.value = f;
@@ -157,14 +179,16 @@ function revealPanel(): void {
   const viewTop = box ? box.getBoundingClientRect().top : 0;
   const over = r.bottom + 16 - viewBottom;
   if (over <= 0) return;
-  void glideBy(box, Math.min(over, r.top - viewTop - 8));
+  revealed = Math.max(0, Math.min(over, r.top - viewTop - 8));
+  revealedAt = null;
+  void glideBy(box, revealed).then(() => { revealedAt = scrollTopOf(box); });
 }
 onMounted(() => { void nextTick(() => placeUnder(family.value)); });
 function backToFamilies(): void { family.value = null; cls.value = null; }
 </script>
 
 <template>
-  <div>
+  <div ref="rootEl">
     <!-- 名前で探す (種類をまたぐ) -->
     <div class="mb-2 flex items-center gap-2">
       <input v-model="query" type="search" :placeholder="tr('名前で探す (例: サファイア、ルビー)', 'Search by name (e.g. Sapphire, Ruby)')" class="w-72 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:w-full md:w-96 md:py-1.5 md:text-[14px]" />
