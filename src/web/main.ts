@@ -21,7 +21,7 @@ setMarketLoader(async () => {
 });
 createApp(WebApp).mount("#app");
 // タブの題は言語に合わせる (web.html の題は日本語の既定。2026-10-10 英語の巡回で見つかった)
-watchEffect(() => { document.title = tr("ExileDesk Web — PoE2 クラフトステージ", "ExileDesk Web — PoE2 Craft Stage"); });
+watchEffect(() => { document.title = tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator"); });
 // 分析用の記録 (開発中は送らない)
 if (!import.meta.env.DEV) startLogSender("web");
 // Web Analytics (訪問数)。記録しない端末と開発中は読み込まない (前は web.html に直に書いていて、オーナーの PC の訪問も数えていた)
