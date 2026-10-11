@@ -52,6 +52,7 @@ const ADD: Case[] = [
   { name: "指輪 レア カオス", item: ringRare, key: "chaos" },
   { name: "指輪 レア カオス + 削減", item: ringRare, key: "chaos", omens: ["OmenofWhittling"] },
   { name: "指輪 レア カオス + 左の抹消", item: ringRare, key: "chaos", omens: ["OmenofSinistralErasure"] },
+  { name: "指輪 レア カオス + 削減 + 左の抹消 (併用、2026-10-11)", item: ringRare, key: "chaos", omens: ["OmenofWhittling", "OmenofSinistralErasure"] },
   { name: "指輪 レア 完全の高貴", item: ringRare, key: "exalt_perfect" },
   { name: "指輪 両側が埋まった カオス", item: ringFull, key: "chaos" },
   { name: "矢筒 高貴", item: quiverRare, key: "exalt" },

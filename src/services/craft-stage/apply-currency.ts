@@ -79,10 +79,11 @@ export function kindOf(currency: string): string {
 }
 /**
  * 削減のお告げでカオスを打った時に消える候補: フラクチャー以外で MOD レベルが一番低い物 (同じなら全部、等しい確率)。
+ * 左右の抹消のお告げも掛けていれば、その側の中で一番低い物 (side。2026-10-11 要望 aa132a4a: 併用できる)。
  * 打つ前に画面で色を付ける (ゲームと同じ、オーナー 2026-10-04) のにも使う
  */
-export function whittleTargets(item: StageItem): StageMod[] {
-  const rem = allMods(item).filter((m) => !m.fractured);
+export function whittleTargets(item: StageItem, side?: StageSide | null): StageMod[] {
+  const rem = allMods(item).filter((m) => !m.fractured && (!side || m.side === side));
   if (!rem.length) return [];
   // 未発現の冒涜 MOD は MOD レベル 1 として数える (poe2wiki Omen of Whittling・0.3.1、POE2Tube 要望 ㉞-6。modLevel も 1、要望 ㉟-3)
   const lv = (m: StageMod): number => (m.unrevealed ? 1 : m.modLevel);
@@ -283,8 +284,8 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
         if ("error" in f) return pickFail(item, f.error);
         r = f;
       } else if (used.includes("OmenofWhittling")) {
-        // 削りのお告げ: 一番 MOD レベルの低い物を消す (同じなら等しく)
-        const lows = whittleTargets(item);
+        // 削りのお告げ: 一番 MOD レベルの低い物を消す (同じなら等しく)。左右の抹消も掛けていればその側の中で
+        const lows = whittleTargets(item, sideOmen(used, "OmenofSinistralErasure", "OmenofDextralErasure"));
         const mod = lows[Math.floor(rng() * lows.length)];
         r = mod ? { item: without(item, mod), mod } : null;
       } else {
@@ -373,7 +374,7 @@ export function addCandidates(data: PatchData, item: StageItem, currency: string
       // (2026-10-09 確率表の突き合わせ: 前は付いている系統を全部外していて、消えた系統の付き直しが 0% と出ていた)
       if (item.rarity !== "rare") return null;
       const side = sideOmen(used, "OmenofSinistralErasure", "OmenofDextralErasure");
-      const gone = used.includes("OmenofWhittling") ? whittleTargets(item) : allMods(item).filter((m) => !m.fractured && (!side || m.side === side));
+      const gone = used.includes("OmenofWhittling") ? whittleTargets(item, side) : allMods(item).filter((m) => !m.fractured && (!side || m.side === side));
       if (!gone.length) return null;
       const acc = new Map<string, Candidate>();
       for (const r of gone) {
