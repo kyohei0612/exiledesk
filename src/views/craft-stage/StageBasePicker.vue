@@ -23,7 +23,9 @@ const open = ref(!!props.unpicked);
 // ベースが決まったら閉じる (レシピを呼んだ時も。2026-10-09 レビュー: 一覧が開いたままで打ち方の段が画面の下に隠れた)
 watch(() => props.unpicked, (v) => { open.value = !!v; });
 const everOpen = ref(open.value);
-watch(open, (v) => { if (v) everOpen.value = true; });
+const catalog = ref<InstanceType<typeof BaseCatalog> | null>(null);
+// 開き直したら、伸び切ってから (0.3 秒) 今のベースの一覧の全体が見えるまで送る (2026-10-12 オーナー「今のベースが埋まる」)
+watch(open, (v) => { if (v) { const again = everOpen.value; everOpen.value = true; if (again) setTimeout(() => catalog.value?.reveal(), 320); } });
 const head = ref<HTMLElement | null>(null);
 /**
  * 選んだら閉じる。ベースの行が画面の上に隠れていたら、先にそこまでぬるっと送ってから一覧を縮める
@@ -64,7 +66,7 @@ async function choose(en: string): Promise<void> {
         <div v-if="everOpen" class="mt-2 rounded-lg bg-black/30 p-4">
           <!-- 未選択の時は前のベース・種類を選んだ状態にしない (2026-10-05 オーナー「リセットの時ベース未選択から始めんかい」) -->
           <!-- フラスコ・スキルジェムは出さない (2026-10-09 オーナー「フラスコとスキルジェムはいらんね」) -->
-          <BaseCatalog :data="data" :selected="unpicked ? '' : base" :popular="unpicked" @pick="choose" />
+          <BaseCatalog ref="catalog" :data="data" :selected="unpicked ? '' : base" :popular="unpicked" @pick="choose" />
         </div>
       </div>
     </div>

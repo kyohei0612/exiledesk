@@ -128,7 +128,7 @@ const setGroupEl = (ja: string) => (el: unknown): void => { if (el instanceof HT
 const insertAfter = ref<string | null>(null);
 function placeUnder(f: Family | null): void {
   if (!f || phone.value) { insertAfter.value = null; return; }
-  const own = families.value.find((r) => r.fams.includes(f))?.ja;
+  const own = families.value.find((r) => r.fams.some((x) => x.name === f.name))?.ja;
   const top = own ? groupEls.get(own)?.offsetTop : undefined;
   if (own == null || top == null) { insertAfter.value = own ?? null; return; }
   let last = own;
@@ -180,13 +180,24 @@ function revealPanel(): void {
   const r = el.getBoundingClientRect();
   const viewBottom = box ? box.getBoundingClientRect().bottom : window.innerHeight;
   const viewTop = box ? box.getBoundingClientRect().top : 0;
-  const over = r.bottom + 16 - viewBottom;
+  const over = r.bottom + 24 - viewBottom;
   if (over <= 0) return;
   revealed = Math.max(0, Math.min(over, r.top - viewTop - 8));
   revealedAt = null;
   void glideBy(box, revealed).then(() => { revealedAt = scrollTopOf(box); });
 }
 onMounted(() => { void nextTick(() => placeUnder(family.value)); });
+/**
+ * 開き直した時 (親が畳んだ一覧をもう一度開いた時) に呼ぶ: 今のベースの部位が開いているので、その一覧の全体が見えるまで送る (見えていれば動かさない)
+ * (2026-10-12 オーナー「ベースを変えるを改めて押したら今のベースが埋まる、全体を表示させた方が良い」)
+ */
+function reveal(): void {
+  if (rootEl.value) rootEl.value.style.minHeight = "";
+  revealed = 0; revealedAt = null;
+  placeUnder(family.value);
+  if (family.value) void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(revealPanel)));
+}
+defineExpose({ reveal });
 function backToFamilies(): void { family.value = null; cls.value = null; }
 </script>
 
