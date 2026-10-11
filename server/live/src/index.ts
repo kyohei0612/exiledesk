@@ -238,6 +238,16 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       const rows = await sql(env, `SELECT blob8 AS msg, blob4 AS dev, blob5 AS ref, count(DISTINCT blob2) AS sessions, SUM(_sample_interval) AS n FROM ${D} WHERE timestamp > NOW() - INTERVAL '${h}' HOUR AND blob1 = 'error' GROUP BY msg, dev, ref ORDER BY n DESC LIMIT 50`);
       return json(rows, 200, { "cache-control": "no-store" });
     }
+    // KV の使い方 (読み・書き・一覧・消す の回数を日ごと)。無料枠に近づいた時に何が多いか見る (2026-10-11)
+    case "/kv-usage.json": {
+      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      const days = Math.min(7, Math.max(1, Number(url.searchParams.get("days")) || 2));
+      const since = new Date(Date.now() - days * 86400e3).toISOString().slice(0, 10);
+      const query = `query($acc: String!, $since: Date!) { viewer { accounts(filter: { accountTag: $acc }) {
+        kvOperationsAdaptiveGroups(limit: 200, filter: { date_geq: $since }) { sum { requests } dimensions { date actionType namespaceId } } } } }`;
+      const r = await fetch("https://api.cloudflare.com/client/v4/graphql", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${env.CF_ANALYTICS_TOKEN ?? ""}` }, body: JSON.stringify({ query, variables: { acc: env.CF_ACCOUNT_ID, since } }) });
+      return json(await r.json(), 200, { "cache-control": "no-store" });
+    }
     case "/report":
       if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
       // &today=1 で「今日のここまで」(集計が通っているかの確かめ用)
