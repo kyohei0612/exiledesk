@@ -85,6 +85,28 @@ export async function getFeedback(kv: KVNamespace, id: string): Promise<Feedback
   return k ? ((await kv.get(k.name, "json")) as Feedback | null) : null;
 }
 
+/**
+ * 要望・バグへの返事 (2026-10-11 オーナー「直しましたの返信、次に開いた時に教えたい」)。キーは fbr:<要望の id>、180 日残す。
+ * 書くのはオーナー側だけ (POST /feedback/reply?key=)。読むのは送った本人の画面で、自分の覚えている id だけを聞く (GET /feedback/replies?ids=)
+ */
+export interface FeedbackReply { text: string; en?: string; version?: string; at: string }
+const REPLY_PREFIX = "fbr:";
+const REPLY_DAYS = 180;
+export const FEEDBACK_ID_RE = /^[A-Za-z0-9-]{4,16}$/;
+export async function saveReply(kv: KVNamespace, id: string, r: Omit<FeedbackReply, "at">): Promise<FeedbackReply> {
+  const v: FeedbackReply = { ...r, at: new Date().toISOString() };
+  await kv.put(REPLY_PREFIX + id, JSON.stringify(v), { expirationTtl: REPLY_DAYS * 86400 });
+  return v;
+}
+export async function getReplies(kv: KVNamespace, ids: readonly string[]): Promise<Record<string, FeedbackReply>> {
+  const out: Record<string, FeedbackReply> = {};
+  await Promise.all(ids.filter((x) => FEEDBACK_ID_RE.test(x)).slice(0, 10).map(async (id) => {
+    const v = (await kv.get(REPLY_PREFIX + id, "json")) as FeedbackReply | null;
+    if (v) out[id] = v;
+  }));
+  return out;
+}
+
 export async function listFeedback(kv: KVNamespace, limit = 100): Promise<Feedback[]> {
   const l = await kv.list({ prefix: PREFIX, limit });
   const out: Feedback[] = [];

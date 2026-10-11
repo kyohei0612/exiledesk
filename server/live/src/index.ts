@@ -21,7 +21,7 @@ import channelsJson from "../channels.json";
 import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
 import { fetchYoutube, fetchYoutubeAvatars, type Latest } from "./youtube";
-import { allowIp, getFeedback, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
+import { allowIp, FEEDBACK_ID_RE, getFeedback, getReplies, listFeedback, notifyDiscord, parseFeedback, saveFeedback, saveReply, type Feedback } from "./feedback";
 import { DATASET, parseBatch, sql, usersBetween, writeEvents } from "./events";
 import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
@@ -185,7 +185,20 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     if (env.DISCORD_WEBHOOK) ctx.waitUntil(notifyDiscord(env.DISCORD_WEBHOOK, fb, fetch));
     return json({ ok: true, id: fb.id });
   }
+  // 要望への返事を書く (オーナー側だけ): { id, text, en?, version? }
+  if (url.pathname === "/feedback/reply" && req.method === "POST") {
+    if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+    let b: { id?: string; text?: string; en?: string; version?: string };
+    try { b = await req.json(); } catch { return json({ error: "JSON ではない" }, 400); }
+    if (!b.id || !FEEDBACK_ID_RE.test(b.id) || !b.text?.trim()) return json({ error: "id と text が要る" }, 400);
+    return json({ ok: true, reply: await saveReply(env.LIVE, b.id, { text: b.text.trim().slice(0, 500), ...(b.en ? { en: b.en.slice(0, 500) } : {}), ...(b.version ? { version: b.version.slice(0, 20) } : {}) }) });
+  }
   if (req.method !== "GET") return json({ error: "GET だけ" }, 405);
+  // 送った本人が、自分の覚えている要望の id の返事を聞く (送ったことのある人だけが来る)
+  if (url.pathname === "/feedback/replies") {
+    const ids = (url.searchParams.get("ids") ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+    return json({ replies: await getReplies(env.LIVE, ids) }, 200, { "cache-control": "no-store", ...CORS });
+  }
   if (url.pathname.startsWith("/api/poe2scout/")) return proxyScout(url, ctx, fetch, env);
   // 要望 1 件 (添付ごと)。Discord に付いたファイルと同じ物
   const one = url.pathname.match(/^\/feedback\/([A-Za-z0-9-]{4,16})\.json$/);

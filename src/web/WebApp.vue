@@ -15,7 +15,8 @@ import ChangelogDialog from "../components/ChangelogDialog.vue";
 import SupportDialog from "../components/SupportDialog.vue";
 import HoverStack from "../components/decor/HoverStack.vue";
 import { SUPPORT_LINKS, supportOpen } from "../state/support";
-import { changelogOpen, initChangelog } from "../state/changelog";
+import { changelogNew, changelogOpen, initChangelog } from "../state/changelog";
+import { checkReplies } from "../state/feedback-replies";
 import { forgetResult } from "../utils/no-log";
 import MarketNotice from "./MarketNotice.vue";
 import pkg from "../../package.json";
@@ -38,6 +39,8 @@ function onActive(): void {
   // 相場と配信の情報は /boot.json を 1 回だけ読み直す (boot.ts)
   void loadBoot(true).then((b) => { visitors.value = b?.visitors ?? visitors.value; marketStore.refreshMarket(); });
   window.dispatchEvent(new Event("exiledesk:refresh"));
+  // 開きっぱなしの人にも、要望への返事を届ける
+  void checkReplies().then((got) => { if (got && !changelogOpen.value) { changelogNew.value = []; changelogOpen.value = "new"; } });
 }
 const onVisible = (): void => { if (document.visibilityState === "visible") onActive(); };
 onMounted(() => {
@@ -58,6 +61,8 @@ let firstVisit = false;
 try { firstVisit = !localStorage.getItem(WELCOME_KEY); localStorage.setItem(WELCOME_KEY, "1"); } catch { /* 無くてよい */ }
 // 更新した後に 1 回だけ更新内容を出す。初めて来た人には出さない (2026-10-10)
 initChangelog(firstVisit);
+// 送った要望・バグへの返事があれば、更新の窓 (無ければ返事だけの窓) で知らせる (state/feedback-replies.ts、2026-10-11)
+void checkReplies().then((got) => { if (got && !changelogOpen.value) { changelogNew.value = []; changelogOpen.value = "new"; } });
 function closeWelcome(): void { welcomeOpen.value = false; }
 /** 本日の訪問者 (/boot.json の visitors) */
 const visitors = ref<NonNullable<Boot["visitors"]> | null>(null);

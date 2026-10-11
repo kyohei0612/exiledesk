@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { rememberSent } from "../state/feedback-replies";
 /**
  * 要望・バグを送る窓 (Web 版、2026-10-07 オーナー「要望バグの送信もできるようにしたい」)。
  * server/live の POST /feedback に送る。「今の画面の状態を添付」で ベース・狙い・パターン (シミュレーションの途中) が一緒に届くので再現できる
@@ -65,8 +66,10 @@ async function send(): Promise<void> {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: attach.value ? contextNow() : null }),
     });
-    const j = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+    const j = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string; id?: string };
     if (!r.ok || !j.ok) throw new Error(j.error ?? `${r.status}`);
+    // 直した時に返事を届けられるよう、この要望の id を覚える (state/feedback-replies.ts)
+    if (j.id) rememberSent(j.id, text.value.trim());
     state.value = "sent";
     text.value = "";
     track("feedback:sent");
@@ -80,7 +83,7 @@ async function send(): Promise<void> {
 <template>
   <!-- 窓の動き・枠は ModalShell (2026-10-10 オーナー「動きが統一されてない所」: Esc は欄の中だけでなくどこでも効く、自前の地 → .g-panel) -->
   <ModalShell :open="open" :title="tr('要望・バグを送る', 'Send feedback')" width="w-[30rem] max-w-full" body-class="px-4 py-3" @close="emit('close')">
-    <p v-if="state === 'sent'" class="py-6 text-center text-[13px]">{{ tr("届きました。ありがとうございます。", "Received. Thank you!") }}</p>
+    <p v-if="state === 'sent'" class="py-6 text-center text-[13px]">{{ tr("届きました。ありがとうございます。", "Received. Thank you!") }}<span class="mt-1 block text-[11px] opacity-60">{{ tr("直した時は、次に開いた時にお知らせします (このブラウザで)", "When it is fixed, you will be told the next time you open this page (in this browser)") }}</span></p>
     <template v-else>
       <textarea v-model="text" rows="6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="tr('こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも', 'Feature ideas, something that looks wrong (what you did and what happened), anything')" autofocus></textarea>
       <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />
