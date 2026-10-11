@@ -34,7 +34,8 @@ const query = ref("");
  */
 const POP: Readonly<Record<string, number>> = (popularData as { users: Record<string, number> }).users;
 const HOT_MIN = 2;
-const hot = computed(() => new Set(all.value.filter((b) => (POP[b.en] ?? 0) >= HOT_MIN).map((b) => b.en)));
+// スマホだけ (PC はヘビーな人向けなので出さない。2026-10-11 オーナー)。並び替え・札・一番上の段の全部
+const hot = computed(() => new Set(phone.value ? all.value.filter((b) => (POP[b.en] ?? 0) >= HOT_MIN).map((b) => b.en) : []));
 const popularTop = computed(() => [...all.value].filter((b) => hot.value.has(b.en)).sort((a, b) => (POP[b.en] ?? 0) - (POP[a.en] ?? 0)).slice(0, 8));
 /**
  * 並べるベース: 検索中は全種類から名前で、そうでなければ選んだ種類を必要レベルの高い順 (ジェムは名前順)。
