@@ -3939,6 +3939,387 @@
    "weightSource": "poe2db-equal"
   },
   {
+   "id": "Jewels_str/Emotion_JewelArmour",
+   "source": "essence",
+   "type": "prefix",
+   "family": "IncreasedPhysicalDamageReductionRatingPercent",
+   "tags": [],
+   "displayTags": [
+    "defences",
+    "armour"
+   ],
+   "text": "(10-20)% increased Armour",
+   "textJa": "アーマーが(10-20)%増加する",
+   "tiers": [
+    {
+     "name": "Diluted Liquid Ire",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       10,
+       20
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_JewelFireDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "FireDamagePercentage",
+   "tags": [],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "fire"
+   ],
+   "text": "(5-15)% increased Fire Damage",
+   "textJa": "火ダメージが(5-15)%増加する",
+   "tiers": [
+    {
+     "name": "Diluted Liquid Guilt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_JewelPhysicalDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "PhysicalDamagePercent",
+   "tags": [],
+   "displayTags": [
+    "physical_damage",
+    "damage",
+    "physical"
+   ],
+   "text": "(5-15)% increased Global Physical Damage",
+   "textJa": "グローバル物理ダメージが(5-15)%増加する",
+   "tiers": [
+    {
+     "name": "Diluted Liquid Greed",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_JewelAttackDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "AttackDamage",
+   "tags": [],
+   "displayTags": [
+    "damage",
+    "attack"
+   ],
+   "text": "(5-15)% increased Attack Damage",
+   "textJa": "アタックダメージが(5-15)%増加する",
+   "tiers": [
+    {
+     "name": "Liquid Paranoia",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_JewelLifeCost",
+   "source": "essence",
+   "type": "suffix",
+   "family": "LifeCost",
+   "tags": [],
+   "displayTags": [
+    "resource",
+    "life"
+   ],
+   "text": "(4-6)% of Skill Mana Costs Converted to Life Costs",
+   "textJa": "スキルのマナコストの(4-6)%がライフコストに変換される",
+   "tiers": [
+    {
+     "name": "Liquid Envy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       4,
+       6
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_JewelLifeRegeneration",
+   "source": "essence",
+   "type": "suffix",
+   "family": "LifeRegenerationRate",
+   "tags": [],
+   "displayTags": [
+    "resource",
+    "life"
+   ],
+   "text": "(5-10)% increased Life Regeneration rate",
+   "textJa": "ライフ自動回復レートが(5-10)%増加する",
+   "tiers": [
+    {
+     "name": "Liquid Disgust",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       10
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_JewelRageonHit",
+   "source": "essence",
+   "type": "suffix",
+   "family": "RageOnHit",
+   "tags": [],
+   "displayTags": [
+    "attack"
+   ],
+   "text": "Gain 1 Rage on Melee Hit",
+   "textJa": "近接ヒット時に憤怒を1獲得する",
+   "tiers": [
+    {
+     "name": "Liquid Despair",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_JewelWarcrySpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "WarcrySpeed",
+   "tags": [],
+   "displayTags": [
+    "speed"
+   ],
+   "text": "(10-20)% increased Warcry Speed",
+   "textJa": "ウォークライスピードが(10-20)%増加する",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Fear",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       10,
+       20
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_JewelMaximumRage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaximumRage",
+   "tags": [],
+   "displayTags": [],
+   "text": "+(1-2) to Maximum Rage",
+   "textJa": "憤怒の最大数 +(1-2)",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Suffering",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_JewelMaximumFireResistance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaximumFireResist",
+   "tags": [],
+   "displayTags": [
+    "elemental_resistance",
+    "fire_resistance",
+    "elemental",
+    "fire",
+    "resistance"
+   ],
+   "text": "+1% to Maximum Fire Resistance",
+   "textJa": "火耐性の最大値 +1%",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Isolation",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_CraftedJewelDebilitateOnHitWhileEmeraldSapphireSocketed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "JewelStatusOnHitWhileSocketed",
+   "tags": [],
+   "displayTags": [],
+   "text": "Debilitate Enemies on Hit while you have an Emerald and a Sapphire socketed in your tree",
+   "textJa": "エメラルドおよびサファイアをソケットしていればヒット時に敵を弱体化する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Melancholy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_CraftedJewelSuffixEffect",
+   "source": "essence",
+   "type": "prefix",
+   "family": "LocalPrefixSuffixEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "(40-60)% increased Effect of Suffixes",
+   "textJa": "サフィックスの効果が(40-60)%増加する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       60
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_CraftedJewelPrefixEffect",
+   "source": "essence",
+   "type": "suffix",
+   "family": "LocalPrefixSuffixEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "(40-60)% increased Effect of Prefixes",
+   "textJa": "プレフィックスの効果が(40-60)%増加する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       60
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_CraftedJewelAdditionalSuffixAllowed",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Suffix Modifier allowed",
+   "textJa": "サフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_str/Emotion_CraftedJewelAdditionalPrefixAllowed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Prefix Modifier allowed",
+   "textJa": "プレフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
    "id": "Jewels_dex/JewelAccuracy",
    "source": "normal",
    "type": "prefix",
@@ -7527,6 +7908,401 @@
    "weightSource": "poe2db-equal"
   },
   {
+   "id": "Jewels_dex/Emotion_JewelEvasion",
+   "source": "essence",
+   "type": "prefix",
+   "family": "EvasionRatingPercent",
+   "tags": [],
+   "displayTags": [
+    "defences",
+    "evasion"
+   ],
+   "text": "(10-20)% increased Evasion Rating",
+   "textJa": "回避力が(10-20)%増加する",
+   "tiers": [
+    {
+     "name": "Diluted Liquid Ire",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       10,
+       20
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_JewelLightningDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "LightningDamagePercentage",
+   "tags": [],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "lightning"
+   ],
+   "text": "(5-15)% increased Lightning Damage",
+   "textJa": "雷ダメージが(5-15)%増加する",
+   "tiers": [
+    {
+     "name": "Diluted Liquid Guilt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_JewelElementalDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "ElementalDamagePercent",
+   "tags": [],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "fire",
+    "cold",
+    "lightning"
+   ],
+   "text": "(5-15)% increased Elemental Damage",
+   "textJa": "元素ダメージが(5-15)%増加する",
+   "tiers": [
+    {
+     "name": "Diluted Liquid Greed",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_JewelAttackSpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "IncreasedAttackSpeed",
+   "tags": [],
+   "displayTags": [
+    "attack",
+    "speed"
+   ],
+   "text": "(2-4)% increased Attack Speed",
+   "textJa": "アタックスピードが(2-4)%増加する",
+   "tiers": [
+    {
+     "name": "Liquid Paranoia",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       2,
+       4
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_JewelCooldownSpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "CooldownRecovery",
+   "tags": [],
+   "displayTags": [],
+   "text": "(3-5)% increased Cooldown Recovery Rate",
+   "textJa": "クールダウン解消レートが(3-5)%増加する",
+   "tiers": [
+    {
+     "name": "Liquid Envy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       3,
+       5
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_JewelLifeonKill",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaximumLifeOnKillPercent",
+   "tags": [],
+   "displayTags": [
+    "resource",
+    "life"
+   ],
+   "text": "Recover (1-2)% of maximum Life on Kill",
+   "textJa": "敵を倒した時にライフの(1-2)%を回復する",
+   "tiers": [
+    {
+     "name": "Liquid Disgust",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_JewelAttackCriticalChance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "CriticalStrikeChanceIncrease",
+   "tags": [],
+   "displayTags": [
+    "attack",
+    "critical"
+   ],
+   "text": "(6-16)% increased Critical Hit Chance for Attacks",
+   "textJa": "アタックのクリティカルヒット率が(6-16)%増加する",
+   "tiers": [
+    {
+     "name": "Liquid Despair",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       6,
+       16
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_JewelAttackCriticalDamage",
+   "source": "essence",
+   "type": "suffix",
+   "family": "CriticalStrikeMultiplier",
+   "tags": [],
+   "displayTags": [
+    "damage",
+    "attack",
+    "critical"
+   ],
+   "text": "(10-20)% increased Critical Damage Bonus for Attack Damage",
+   "textJa": "アタックダメージのクリティカルダメージボーナスが(10-20)%増加する",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Fear",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       10,
+       20
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_JewelMovementSpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MovementVelocity",
+   "tags": [],
+   "displayTags": [
+    "speed"
+   ],
+   "text": "(1-2)% increased Movement Speed",
+   "textJa": "移動スピードが(1-2)%増加する",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Suffering",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_JewelMaximumLightningResistance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaximumLightningResistance",
+   "tags": [],
+   "displayTags": [
+    "elemental_resistance",
+    "lightning_resistance",
+    "elemental",
+    "lightning",
+    "resistance"
+   ],
+   "text": "+1% to Maximum Lightning Resistance",
+   "textJa": "雷耐性の最大値 +1%",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Isolation",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_CraftedJewelBlindOnHitWhileRubySapphireSocketed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "JewelStatusOnHitWhileSocketed",
+   "families": [
+    "JewelStatusOnHitWhileSocketed",
+    "BlindOnHit"
+   ],
+   "tags": [],
+   "displayTags": [],
+   "text": "Blind Enemies on Hit while you have a Ruby and a Sapphire socketed in your tree",
+   "textJa": "ルビーおよびサファイアをソケットしていればヒット時に敵を盲目にする",
+   "tiers": [
+    {
+     "name": "Potent Liquid Melancholy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_CraftedJewelSuffixEffect",
+   "source": "essence",
+   "type": "prefix",
+   "family": "LocalPrefixSuffixEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "(40-60)% increased Effect of Suffixes",
+   "textJa": "サフィックスの効果が(40-60)%増加する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       60
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_CraftedJewelPrefixEffect",
+   "source": "essence",
+   "type": "suffix",
+   "family": "LocalPrefixSuffixEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "(40-60)% increased Effect of Prefixes",
+   "textJa": "プレフィックスの効果が(40-60)%増加する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       60
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_CraftedJewelAdditionalSuffixAllowed",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Suffix Modifier allowed",
+   "textJa": "サフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_dex/Emotion_CraftedJewelAdditionalPrefixAllowed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Prefix Modifier allowed",
+   "textJa": "プレフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
    "id": "Jewels_int/JewelAilmentChance",
    "source": "normal",
    "type": "suffix",
@@ -10667,6 +11443,402 @@
      "stats": [
       "intelligence_+%"
      ]
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelEnergyShield",
+   "source": "essence",
+   "type": "prefix",
+   "family": "EnergyShieldPercent",
+   "tags": [],
+   "displayTags": [
+    "defences",
+    "energy_shield"
+   ],
+   "text": "(10-20)% increased maximum Energy Shield",
+   "textJa": "最大エナジーシールドが(10-20)%増加する",
+   "tiers": [
+    {
+     "name": "Diluted Liquid Ire",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       10,
+       20
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelColdDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "ColdDamagePercentage",
+   "tags": [],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "cold"
+   ],
+   "text": "(5-15)% increased Cold Damage",
+   "textJa": "冷気ダメージが(5-15)%増加する",
+   "tiers": [
+    {
+     "name": "Diluted Liquid Guilt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelChaosDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "IncreasedChaosDamage",
+   "tags": [],
+   "displayTags": [
+    "chaos_damage",
+    "damage",
+    "chaos"
+   ],
+   "text": "(7-13)% increased Chaos Damage",
+   "textJa": "混沌ダメージが(7-13)%増加する",
+   "tiers": [
+    {
+     "name": "Diluted Liquid Greed",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       7,
+       13
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelCastSpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "IncreasedCastSpeed",
+   "tags": [],
+   "displayTags": [
+    "caster_speed",
+    "caster",
+    "speed"
+   ],
+   "text": "(2-4)% increased Cast Speed",
+   "textJa": "キャストスピードが(2-4)%増加する",
+   "tiers": [
+    {
+     "name": "Liquid Paranoia",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       2,
+       4
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelSpellDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "WeaponCasterDamagePrefix",
+   "tags": [],
+   "displayTags": [
+    "caster_damage",
+    "damage",
+    "caster"
+   ],
+   "text": "(5-15)% increased Spell Damage",
+   "textJa": "スペルダメージが(5-15)%増加する",
+   "tiers": [
+    {
+     "name": "Liquid Envy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelManaonKill",
+   "source": "essence",
+   "type": "suffix",
+   "family": "ManaGainedOnKillPercentage",
+   "tags": [],
+   "displayTags": [
+    "resource",
+    "mana"
+   ],
+   "text": "Recover (1-2)% of maximum Mana on Kill",
+   "textJa": "敵を倒した時にマナの(1-2)%を回復する",
+   "tiers": [
+    {
+     "name": "Liquid Disgust",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelSpellCriticalChance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "SpellCriticalStrikeChanceIncrease",
+   "tags": [],
+   "displayTags": [
+    "caster_critical",
+    "caster",
+    "critical"
+   ],
+   "text": "(5-15)% increased Critical Hit Chance for Spells",
+   "textJa": "スペルのクリティカルヒット率が(5-15)%増加する",
+   "tiers": [
+    {
+     "name": "Liquid Despair",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelSpellCriticalDamage",
+   "source": "essence",
+   "type": "suffix",
+   "family": "FormCritMultiplier",
+   "tags": [],
+   "displayTags": [
+    "caster_critical",
+    "caster_damage",
+    "damage",
+    "caster",
+    "critical"
+   ],
+   "text": "(10-20)% increased Critical Spell Damage Bonus",
+   "textJa": "スペルクリティカルダメージボーナスが(10-20)%増加する",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Fear",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       10,
+       20
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelAreaofEffect",
+   "source": "essence",
+   "type": "prefix",
+   "family": "AreaOfEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "(4-6)% increased Area of Effect",
+   "textJa": "効果範囲が(4-6)%増加する",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Suffering",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       4,
+       6
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_JewelMaximumColdResistance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaximumColdResist",
+   "tags": [],
+   "displayTags": [
+    "cold_resistance",
+    "elemental_resistance",
+    "elemental",
+    "cold",
+    "resistance"
+   ],
+   "text": "+1% to Maximum Cold Resistance",
+   "textJa": "冷気耐性の最大値 +1%",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Isolation",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_CraftedJewelExposureOnHitWhileRubyEmeraldSocketed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "JewelStatusOnHitWhileSocketed",
+   "tags": [],
+   "displayTags": [
+    "elemental"
+   ],
+   "text": "Inflict Elemental Exposure on Hit while you have a Ruby and an Emerald socketed in your tree",
+   "textJa": "ルビーおよびエメラルドをソケットしていればヒット時に敵に元素の曝露を付与する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Melancholy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_CraftedJewelSuffixEffect",
+   "source": "essence",
+   "type": "prefix",
+   "family": "LocalPrefixSuffixEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "(40-60)% increased Effect of Suffixes",
+   "textJa": "サフィックスの効果が(40-60)%増加する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       60
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_CraftedJewelPrefixEffect",
+   "source": "essence",
+   "type": "suffix",
+   "family": "LocalPrefixSuffixEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "(40-60)% increased Effect of Prefixes",
+   "textJa": "プレフィックスの効果が(40-60)%増加する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       60
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Suffix Modifier allowed",
+   "textJa": "サフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_int/Emotion_CraftedJewelAdditionalPrefixAllowed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Prefix Modifier allowed",
+   "textJa": "プレフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
     }
    ],
    "weightSource": "poe2db-equal"
@@ -16994,6 +18166,120 @@
    "weightSource": "poe2db-equal"
   },
   {
+   "id": "Jewels_diamond/Emotion_CraftedJewelMaximumChaosResistance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaximumChaosResistance",
+   "tags": [],
+   "displayTags": [
+    "chaos_resistance",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+1% to Maximum Chaos Resistance",
+   "textJa": "混沌耐性の最大値 +1%",
+   "tiers": [
+    {
+     "name": "Concentrated Liquid Isolation",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_diamond/Emotion_CraftedJewelSuffixEffect",
+   "source": "essence",
+   "type": "prefix",
+   "family": "LocalPrefixSuffixEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "(40-60)% increased Effect of Suffixes",
+   "textJa": "サフィックスの効果が(40-60)%増加する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       60
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_diamond/Emotion_CraftedJewelPrefixEffect",
+   "source": "essence",
+   "type": "suffix",
+   "family": "LocalPrefixSuffixEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "(40-60)% increased Effect of Prefixes",
+   "textJa": "プレフィックスの効果が(40-60)%増加する",
+   "tiers": [
+    {
+     "name": "Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       60
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_diamond/Emotion_CraftedJewelAdditionalSuffixAllowed",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Suffix Modifier allowed",
+   "textJa": "サフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_diamond/Emotion_CraftedJewelAdditionalPrefixAllowed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Prefix Modifier allowed",
+   "textJa": "プレフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
    "id": "Jewels_radius_str/JewelRadiusMediumSize",
    "source": "normal",
    "type": "prefix",
@@ -18867,6 +20153,362 @@
        0.07
       ]
      ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusArmour",
+   "source": "essence",
+   "type": "prefix",
+   "family": "IncreasedPhysicalDamageReductionRatingPercent",
+   "tags": [],
+   "displayTags": [
+    "defences",
+    "armour"
+   ],
+   "text": "Small Passive Skills in Radius also grant (2-3)% increased Armour",
+   "textJa": "範囲内のスモールパッシブスキルはアーマーが(2-3)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Diluted Liquid Ire",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusFireDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "FireDamagePercentage",
+   "tags": [],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "fire"
+   ],
+   "text": "Small Passive Skills in Radius also grant (1-2)% increased Fire Damage",
+   "textJa": "範囲内のスモールパッシブスキルは火ダメージが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Diluted Liquid Guilt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusPhysicalDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "PhysicalDamagePercent",
+   "tags": [],
+   "displayTags": [
+    "physical_damage",
+    "damage",
+    "physical"
+   ],
+   "text": "Small Passive Skills in Radius also grant (1-2)% increased Global Physical Damage",
+   "textJa": "範囲内のスモールパッシブスキルはグローバル物理ダメージが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Diluted Liquid Greed",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusAttackDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "AttackDamage",
+   "tags": [],
+   "displayTags": [
+    "damage",
+    "attack"
+   ],
+   "text": "Small Passive Skills in Radius also grant (1-2)% increased Attack Damage",
+   "textJa": "範囲内のスモールパッシブスキルはアタックダメージが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Paranoia",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusLifeCost",
+   "source": "essence",
+   "type": "suffix",
+   "family": "LifeCost",
+   "tags": [],
+   "displayTags": [
+    "resource",
+    "life"
+   ],
+   "text": "Notable Passive Skills in Radius also grant (2-3)% of Skill Mana Costs Converted to Life Costs",
+   "textJa": "範囲内のノータブルパッシブスキルはスキルのマナコストの(2-3)%がライフコストに変換されるも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Envy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusLifeRegeneration",
+   "source": "essence",
+   "type": "suffix",
+   "family": "LifeRegenerationRate",
+   "tags": [],
+   "displayTags": [
+    "resource",
+    "life"
+   ],
+   "text": "Notable Passive Skills in Radius also grant (3-5)% increased Life Regeneration rate",
+   "textJa": "範囲内のノータブルパッシブスキルはライフ自動回復レートが(3-5)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Disgust",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       3,
+       5
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusRageonHit",
+   "source": "essence",
+   "type": "suffix",
+   "family": "RageOnHit",
+   "tags": [],
+   "displayTags": [
+    "attack"
+   ],
+   "text": "Notable Passive Skills in Radius also grant Gain 1 Rage on Melee Hit",
+   "textJa": "範囲内のノータブルパッシブスキルは近接ヒット時に憤怒を1獲得するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Despair",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusWarcrySpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "WarcrySpeed",
+   "tags": [],
+   "displayTags": [
+    "speed"
+   ],
+   "text": "Small Passive Skills in Radius also grant (2-3)% increased Warcry Speed",
+   "textJa": "範囲内のスモールパッシブスキルはウォークライスピードが(2-3)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Concentrated Liquid Fear",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusMaximumRage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaximumRage",
+   "tags": [],
+   "displayTags": [],
+   "text": "Notable Passive Skills in Radius also grant +1 to Maximum Rage",
+   "textJa": "範囲内のノータブルパッシブスキルは憤怒の最大数 +1も付与する",
+   "tiers": [
+    {
+     "name": "Ancient Concentrated Liquid Suffering",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_JewelRadiusIncLightningColdToFire",
+   "source": "essence",
+   "type": "prefix",
+   "family": "TransformIncreasedDamageInRadius",
+   "tags": [],
+   "displayTags": [
+    "elemental",
+    "fire",
+    "cold",
+    "lightning"
+   ],
+   "text": "Increases and Reductions to\n Cold and Lightning Damage in Radius are transformed to apply to Fire Damage",
+   "textJa": "範囲内の冷気および雷ダメージの増減のモッドは火ダメージに適用するよう変化する",
+   "tiers": [
+    {
+     "name": "Ancient Concentrated Liquid Isolation",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_CraftedJewelRadiusExtraLargeSize",
+   "source": "essence",
+   "type": "prefix",
+   "family": "JewelRadiusLargerRadius",
+   "tags": [],
+   "displayTags": [],
+   "text": "Upgrades Radius to Very Large",
+   "textJa": "半径を特大範囲にアップグレードする",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Melancholy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_CraftedJewelRadiusFireResistance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "FireResistance",
+   "tags": [],
+   "displayTags": [
+    "elemental_resistance",
+    "fire_resistance",
+    "elemental",
+    "fire",
+    "resistance"
+   ],
+   "text": "Notable Passive Skills in Radius also grant +(5-7)% to Fire Resistance",
+   "textJa": "範囲内のノータブルパッシブスキルは火耐性 +(5-7)%も付与する",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       7
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_CraftedJewelAdditionalSuffixAllowed",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Suffix Modifier allowed",
+   "textJa": "サフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_str/Emotion_CraftedJewelAdditionalPrefixAllowed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Prefix Modifier allowed",
+   "textJa": "プレフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
      "stats": []
     }
    ],
@@ -21462,6 +23104,367 @@
    "weightSource": "poe2db-equal"
   },
   {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusEvasion",
+   "source": "essence",
+   "type": "prefix",
+   "family": "EvasionRatingPercent",
+   "tags": [],
+   "displayTags": [
+    "defences",
+    "evasion"
+   ],
+   "text": "Small Passive Skills in Radius also grant (2-3)% increased Evasion Rating",
+   "textJa": "範囲内のスモールパッシブスキルは回避力が(2-3)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Diluted Liquid Ire",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusLightningDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "LightningDamagePercentage",
+   "tags": [],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "lightning"
+   ],
+   "text": "Small Passive Skills in Radius also grant (1-2)% increased Lightning Damage",
+   "textJa": "範囲内のスモールパッシブスキルは雷ダメージが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Diluted Liquid Guilt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusElementalDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "ElementalDamagePercent",
+   "tags": [],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "fire",
+    "cold",
+    "lightning"
+   ],
+   "text": "Small Passive Skills in Radius also grant (1-2)% increased Elemental Damage",
+   "textJa": "範囲内のスモールパッシブスキルは元素ダメージが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Diluted Liquid Greed",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusAttackSpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "IncreasedAttackSpeed",
+   "tags": [],
+   "displayTags": [
+    "attack",
+    "speed"
+   ],
+   "text": "Notable Passive Skills in Radius also grant (1-2)% increased Attack Speed",
+   "textJa": "範囲内のノータブルパッシブスキルはアタックスピードが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Paranoia",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusCooldownSpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "CooldownRecovery",
+   "tags": [],
+   "displayTags": [],
+   "text": "Notable Passive Skills in Radius also grant (1-3)% increased Cooldown Recovery Rate",
+   "textJa": "範囲内のノータブルパッシブスキルはクールダウン解消レートが(1-3)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Envy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       3
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusLifeonKill",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaximumLifeOnKillPercent",
+   "tags": [],
+   "displayTags": [
+    "resource",
+    "life"
+   ],
+   "text": "Notable Passive Skills in Radius also grant Recover 1% of maximum Life on Kill",
+   "textJa": "範囲内のノータブルパッシブスキルは敵を倒した時にライフの1%を回復するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Disgust",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusAttackCriticalChance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "CriticalStrikeChanceIncrease",
+   "tags": [],
+   "displayTags": [
+    "attack",
+    "critical"
+   ],
+   "text": "Notable Passive Skills in Radius also grant (3-7)% increased Critical Hit Chance for Attacks",
+   "textJa": "範囲内のノータブルパッシブスキルはアタックのクリティカルヒット率が(3-7)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Despair",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       3,
+       7
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusAttackCriticalDamage",
+   "source": "essence",
+   "type": "suffix",
+   "family": "CriticalStrikeMultiplier",
+   "tags": [],
+   "displayTags": [
+    "damage",
+    "attack",
+    "critical"
+   ],
+   "text": "Notable Passive Skills in Radius also grant (5-10)% increased Critical Damage Bonus for Attack Damage",
+   "textJa": "範囲内のノータブルパッシブスキルはアタックダメージのクリティカルダメージボーナスが(5-10)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Concentrated Liquid Fear",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       10
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusMovementSpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MovementVelocity",
+   "tags": [],
+   "displayTags": [
+    "speed"
+   ],
+   "text": "Notable Passive Skills in Radius also grant 1% increased Movement Speed",
+   "textJa": "範囲内のノータブルパッシブスキルは移動スピードが1%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Concentrated Liquid Suffering",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_JewelRadiusIncColdFreToLightning",
+   "source": "essence",
+   "type": "prefix",
+   "family": "TransformIncreasedDamageInRadius",
+   "tags": [],
+   "displayTags": [
+    "elemental",
+    "fire",
+    "cold",
+    "lightning"
+   ],
+   "text": "Increases and Reductions to\n Cold and Fire Damage in Radius are transformed to apply to Lightning Damage",
+   "textJa": "範囲内の冷気および火ダメージの増減のモッドは雷ダメージに適用するよう変化する",
+   "tiers": [
+    {
+     "name": "Ancient Concentrated Liquid Isolation",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_CraftedJewelRadiusExtraLargeSize",
+   "source": "essence",
+   "type": "prefix",
+   "family": "JewelRadiusLargerRadius",
+   "tags": [],
+   "displayTags": [],
+   "text": "Upgrades Radius to Very Large",
+   "textJa": "半径を特大範囲にアップグレードする",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Melancholy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_CraftedJewelRadiusLightningResistance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "LightningResistance",
+   "tags": [],
+   "displayTags": [
+    "elemental_resistance",
+    "lightning_resistance",
+    "elemental",
+    "lightning",
+    "resistance"
+   ],
+   "text": "Notable Passive Skills in Radius also grant +(5-7)% to Lightning Resistance",
+   "textJa": "範囲内のノータブルパッシブスキルは雷耐性 +(5-7)%も付与する",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       7
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_CraftedJewelAdditionalSuffixAllowed",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Suffix Modifier allowed",
+   "textJa": "サフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_dex/Emotion_CraftedJewelAdditionalPrefixAllowed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Prefix Modifier allowed",
+   "textJa": "プレフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
    "id": "Jewels_radius_int/JewelRadiusMediumSize",
    "source": "normal",
    "type": "prefix",
@@ -23599,6 +25602,375 @@
        0.07
       ]
      ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusEnergyShield",
+   "source": "essence",
+   "type": "prefix",
+   "family": "EnergyShieldPercent",
+   "tags": [],
+   "displayTags": [
+    "defences",
+    "energy_shield"
+   ],
+   "text": "Small Passive Skills in Radius also grant (2-3)% increased maximum Energy Shield",
+   "textJa": "範囲内のスモールパッシブスキルは最大エナジーシールドが(2-3)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Diluted Liquid Ire",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusColdDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "ColdDamagePercentage",
+   "tags": [],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "cold"
+   ],
+   "text": "Small Passive Skills in Radius also grant (1-2)% increased Cold Damage",
+   "textJa": "範囲内のスモールパッシブスキルは冷気ダメージが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Diluted Liquid Guilt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusChaosDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "IncreasedChaosDamage",
+   "tags": [],
+   "displayTags": [
+    "chaos_damage",
+    "damage",
+    "chaos"
+   ],
+   "text": "Small Passive Skills in Radius also grant (1-2)% increased Chaos Damage",
+   "textJa": "範囲内のスモールパッシブスキルは混沌ダメージが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Diluted Liquid Greed",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusCastSpeed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "IncreasedCastSpeed",
+   "tags": [],
+   "displayTags": [
+    "caster_speed",
+    "caster",
+    "speed"
+   ],
+   "text": "Notable Passive Skills in Radius also grant (1-2)% increased Cast Speed",
+   "textJa": "範囲内のノータブルパッシブスキルはキャストスピードが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Paranoia",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusSpellDamage",
+   "source": "essence",
+   "type": "prefix",
+   "family": "WeaponCasterDamagePrefix",
+   "tags": [],
+   "displayTags": [
+    "caster_damage",
+    "damage",
+    "caster"
+   ],
+   "text": "Small Passive Skills in Radius also grant (1-2)% increased Spell Damage",
+   "textJa": "範囲内のスモールパッシブスキルはスペルダメージが(1-2)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Envy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       1,
+       2
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusManaonKill",
+   "source": "essence",
+   "type": "suffix",
+   "family": "ManaGainedOnKillPercentage",
+   "tags": [],
+   "displayTags": [
+    "resource",
+    "mana"
+   ],
+   "text": "Notable Passive Skills in Radius also grant Recover 1% of maximum Mana on Kill",
+   "textJa": "範囲内のノータブルパッシブスキルは敵を倒した時にマナの1%を回復するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Disgust",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusSpellCriticalChance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "SpellCriticalStrikeChanceIncrease",
+   "tags": [],
+   "displayTags": [
+    "caster_critical",
+    "caster",
+    "critical"
+   ],
+   "text": "Notable Passive Skills in Radius also grant (3-7)% increased Critical Hit Chance for Spells",
+   "textJa": "範囲内のノータブルパッシブスキルはスペルのクリティカルヒット率が(3-7)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Liquid Despair",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       3,
+       7
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusSpellCriticalDamage",
+   "source": "essence",
+   "type": "suffix",
+   "family": "FormCritMultiplier",
+   "tags": [],
+   "displayTags": [
+    "caster_critical",
+    "caster_damage",
+    "damage",
+    "caster",
+    "critical"
+   ],
+   "text": "Notable Passive Skills in Radius also grant (5-10)% increased Critical Spell Damage Bonus",
+   "textJa": "範囲内のノータブルパッシブスキルはスペルクリティカルダメージボーナスが(5-10)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Concentrated Liquid Fear",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       10
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusAreaofEffect",
+   "source": "essence",
+   "type": "prefix",
+   "family": "AreaOfEffect",
+   "tags": [],
+   "displayTags": [],
+   "text": "Notable Passive Skills in Radius also grant (2-3)% increased Area of Effect",
+   "textJa": "範囲内のノータブルパッシブスキルは効果範囲が(2-3)%増加するも付与する",
+   "tiers": [
+    {
+     "name": "Ancient Concentrated Liquid Suffering",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_JewelRadiusIncLightningFireToCold",
+   "source": "essence",
+   "type": "prefix",
+   "family": "TransformIncreasedDamageInRadius",
+   "tags": [],
+   "displayTags": [
+    "elemental",
+    "fire",
+    "cold",
+    "lightning"
+   ],
+   "text": "Increases and Reductions to\n Fire and Lightning Damage in Radius are transformed to apply to Cold Damage",
+   "textJa": "範囲内の火および雷ダメージの増減のモッドは冷気ダメージに適用するよう変化する",
+   "tiers": [
+    {
+     "name": "Ancient Concentrated Liquid Isolation",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_CraftedJewelRadiusExtraLargeSize",
+   "source": "essence",
+   "type": "prefix",
+   "family": "JewelRadiusLargerRadius",
+   "tags": [],
+   "displayTags": [],
+   "text": "Upgrades Radius to Very Large",
+   "textJa": "半径を特大範囲にアップグレードする",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Melancholy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_CraftedJewelRadiusColdResistance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "ColdResistance",
+   "tags": [],
+   "displayTags": [
+    "cold_resistance",
+    "elemental_resistance",
+    "elemental",
+    "cold",
+    "resistance"
+   ],
+   "text": "Notable Passive Skills in Radius also grant +(5-7)% to Cold Resistance",
+   "textJa": "範囲内のノータブルパッシブスキルは冷気耐性 +(5-7)%も付与する",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       5,
+       7
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_CraftedJewelAdditionalSuffixAllowed",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Suffix Modifier allowed",
+   "textJa": "サフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_int/Emotion_CraftedJewelAdditionalPrefixAllowed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Prefix Modifier allowed",
+   "textJa": "プレフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
      "stats": []
     }
    ],
@@ -28639,6 +31011,95 @@
     }
    ],
    "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_diamond/Emotion_CraftedJewelRadiusExtraLargeSize",
+   "source": "essence",
+   "type": "prefix",
+   "family": "JewelRadiusLargerRadius",
+   "tags": [],
+   "displayTags": [],
+   "text": "Upgrades Radius to Very Large",
+   "textJa": "半径を特大範囲にアップグレードする",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Melancholy",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_diamond/Emotion_CraftedJewelRadiusChaosResistance",
+   "source": "essence",
+   "type": "suffix",
+   "family": "ChaosResistance",
+   "tags": [],
+   "displayTags": [
+    "chaos_resistance",
+    "chaos",
+    "resistance"
+   ],
+   "text": "Notable Passive Skills in Radius also grant +(4-5)% to Chaos Resistance",
+   "textJa": "範囲内のノータブルパッシブスキルは混沌耐性 +(4-5)%も付与する",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Ferocity",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [
+      [
+       4,
+       5
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_diamond/Emotion_CraftedJewelAdditionalSuffixAllowed",
+   "source": "essence",
+   "type": "prefix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Suffix Modifier allowed",
+   "textJa": "サフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
+  },
+  {
+   "id": "Jewels_radius_diamond/Emotion_CraftedJewelAdditionalPrefixAllowed",
+   "source": "essence",
+   "type": "suffix",
+   "family": "MaxPrefixMaxSuffix",
+   "tags": [],
+   "displayTags": [],
+   "text": "+1 Prefix Modifier allowed",
+   "textJa": "プレフィックスモッド +1個",
+   "tiers": [
+    {
+     "name": "Ancient Potent Liquid Contempt",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ],
+   "weightSource": "poe2db-equal"
   }
  ],
  "baseInfo": {
@@ -28700,7 +31161,8 @@
     "families": [
      "IncreasedPhysicalDamageReductionRatingPercent"
     ],
-    "text": "(10-20)% increased Armour"
+    "text": "(10-20)% increased Armour",
+    "modId": "Jewels_str/Emotion_JewelArmour"
    },
    {
     "item": "Diluted Liquid Guilt",
@@ -28709,7 +31171,8 @@
     "families": [
      "FireDamagePercentage"
     ],
-    "text": "(5-15)% increased Fire Damage"
+    "text": "(5-15)% increased Fire Damage",
+    "modId": "Jewels_str/Emotion_JewelFireDamage"
    },
    {
     "item": "Diluted Liquid Greed",
@@ -28718,7 +31181,8 @@
     "families": [
      "PhysicalDamagePercent"
     ],
-    "text": "(5-15)% increased Global Physical Damage"
+    "text": "(5-15)% increased Global Physical Damage",
+    "modId": "Jewels_str/Emotion_JewelPhysicalDamage"
    },
    {
     "item": "Liquid Paranoia",
@@ -28727,7 +31191,8 @@
     "families": [
      "AttackDamage"
     ],
-    "text": "(5-15)% increased Attack Damage"
+    "text": "(5-15)% increased Attack Damage",
+    "modId": "Jewels_str/Emotion_JewelAttackDamage"
    },
    {
     "item": "Liquid Envy",
@@ -28736,7 +31201,8 @@
     "families": [
      "LifeCost"
     ],
-    "text": "(4-6)% of Skill Mana Costs Converted to Life Costs"
+    "text": "(4-6)% of Skill Mana Costs Converted to Life Costs",
+    "modId": "Jewels_str/Emotion_JewelLifeCost"
    },
    {
     "item": "Liquid Disgust",
@@ -28745,7 +31211,8 @@
     "families": [
      "LifeRegenerationRate"
     ],
-    "text": "(5-10)% increased Life Regeneration rate"
+    "text": "(5-10)% increased Life Regeneration rate",
+    "modId": "Jewels_str/Emotion_JewelLifeRegeneration"
    },
    {
     "item": "Liquid Despair",
@@ -28754,7 +31221,8 @@
     "families": [
      "RageOnHit"
     ],
-    "text": "Gain 1 Rage on Melee Hit"
+    "text": "Gain 1 Rage on Melee Hit",
+    "modId": "Jewels_str/Emotion_JewelRageonHit"
    },
    {
     "item": "Concentrated Liquid Fear",
@@ -28763,7 +31231,8 @@
     "families": [
      "WarcrySpeed"
     ],
-    "text": "(10-20)% increased Warcry Speed"
+    "text": "(10-20)% increased Warcry Speed",
+    "modId": "Jewels_str/Emotion_JewelWarcrySpeed"
    },
    {
     "item": "Concentrated Liquid Suffering",
@@ -28772,7 +31241,8 @@
     "families": [
      "MaximumRage"
     ],
-    "text": "+(1-2) to Maximum Rage"
+    "text": "+(1-2) to Maximum Rage",
+    "modId": "Jewels_str/Emotion_JewelMaximumRage"
    },
    {
     "item": "Concentrated Liquid Isolation",
@@ -28781,7 +31251,8 @@
     "families": [
      "MaximumFireResist"
     ],
-    "text": "+1% to Maximum Fire Resistance"
+    "text": "+1% to Maximum Fire Resistance",
+    "modId": "Jewels_str/Emotion_JewelMaximumFireResistance"
    },
    {
     "item": "Potent Liquid Melancholy",
@@ -28790,7 +31261,8 @@
     "families": [
      "JewelStatusOnHitWhileSocketed"
     ],
-    "text": "Debilitate Enemies on Hit while you have an Emerald and a Sapphire socketed in your tree"
+    "text": "Debilitate Enemies on Hit while you have an Emerald and a Sapphire socketed in your tree",
+    "modId": "Jewels_str/Emotion_CraftedJewelDebilitateOnHitWhileEmeraldSapphireSocketed"
    },
    {
     "item": "Potent Liquid Ferocity",
@@ -28799,7 +31271,8 @@
     "families": [
      "LocalPrefixSuffixEffect"
     ],
-    "text": "(40-60)% increased Effect of Suffixes"
+    "text": "(40-60)% increased Effect of Suffixes",
+    "modId": "Jewels_str/Emotion_CraftedJewelSuffixEffect"
    },
    {
     "item": "Potent Liquid Ferocity",
@@ -28808,7 +31281,8 @@
     "families": [
      "LocalPrefixSuffixEffect"
     ],
-    "text": "(40-60)% increased Effect of Prefixes"
+    "text": "(40-60)% increased Effect of Prefixes",
+    "modId": "Jewels_str/Emotion_CraftedJewelPrefixEffect"
    },
    {
     "item": "Potent Liquid Contempt",
@@ -28817,7 +31291,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Suffix Modifier allowed"
+    "text": "+1 Suffix Modifier allowed",
+    "modId": "Jewels_str/Emotion_CraftedJewelAdditionalSuffixAllowed"
    },
    {
     "item": "Potent Liquid Contempt",
@@ -28826,7 +31301,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Prefix Modifier allowed"
+    "text": "+1 Prefix Modifier allowed",
+    "modId": "Jewels_str/Emotion_CraftedJewelAdditionalPrefixAllowed"
    }
   ],
   "Jewels_dex": [
@@ -28837,7 +31313,8 @@
     "families": [
      "EvasionRatingPercent"
     ],
-    "text": "(10-20)% increased Evasion Rating"
+    "text": "(10-20)% increased Evasion Rating",
+    "modId": "Jewels_dex/Emotion_JewelEvasion"
    },
    {
     "item": "Diluted Liquid Guilt",
@@ -28846,7 +31323,8 @@
     "families": [
      "LightningDamagePercentage"
     ],
-    "text": "(5-15)% increased Lightning Damage"
+    "text": "(5-15)% increased Lightning Damage",
+    "modId": "Jewels_dex/Emotion_JewelLightningDamage"
    },
    {
     "item": "Diluted Liquid Greed",
@@ -28855,7 +31333,8 @@
     "families": [
      "ElementalDamagePercent"
     ],
-    "text": "(5-15)% increased Elemental Damage"
+    "text": "(5-15)% increased Elemental Damage",
+    "modId": "Jewels_dex/Emotion_JewelElementalDamage"
    },
    {
     "item": "Liquid Paranoia",
@@ -28864,7 +31343,8 @@
     "families": [
      "IncreasedAttackSpeed"
     ],
-    "text": "(2-4)% increased Attack Speed"
+    "text": "(2-4)% increased Attack Speed",
+    "modId": "Jewels_dex/Emotion_JewelAttackSpeed"
    },
    {
     "item": "Liquid Envy",
@@ -28873,7 +31353,8 @@
     "families": [
      "CooldownRecovery"
     ],
-    "text": "(3-5)% increased Cooldown Recovery Rate"
+    "text": "(3-5)% increased Cooldown Recovery Rate",
+    "modId": "Jewels_dex/Emotion_JewelCooldownSpeed"
    },
    {
     "item": "Liquid Disgust",
@@ -28882,7 +31363,8 @@
     "families": [
      "MaximumLifeOnKillPercent"
     ],
-    "text": "Recover (1-2)% of maximum Life on Kill"
+    "text": "Recover (1-2)% of maximum Life on Kill",
+    "modId": "Jewels_dex/Emotion_JewelLifeonKill"
    },
    {
     "item": "Liquid Despair",
@@ -28891,7 +31373,8 @@
     "families": [
      "CriticalStrikeChanceIncrease"
     ],
-    "text": "(6-16)% increased Critical Hit Chance for Attacks"
+    "text": "(6-16)% increased Critical Hit Chance for Attacks",
+    "modId": "Jewels_dex/Emotion_JewelAttackCriticalChance"
    },
    {
     "item": "Concentrated Liquid Fear",
@@ -28900,7 +31383,8 @@
     "families": [
      "CriticalStrikeMultiplier"
     ],
-    "text": "(10-20)% increased Critical Damage Bonus for Attack Damage"
+    "text": "(10-20)% increased Critical Damage Bonus for Attack Damage",
+    "modId": "Jewels_dex/Emotion_JewelAttackCriticalDamage"
    },
    {
     "item": "Concentrated Liquid Suffering",
@@ -28909,7 +31393,8 @@
     "families": [
      "MovementVelocity"
     ],
-    "text": "(1-2)% increased Movement Speed"
+    "text": "(1-2)% increased Movement Speed",
+    "modId": "Jewels_dex/Emotion_JewelMovementSpeed"
    },
    {
     "item": "Concentrated Liquid Isolation",
@@ -28918,7 +31403,8 @@
     "families": [
      "MaximumLightningResistance"
     ],
-    "text": "+1% to Maximum Lightning Resistance"
+    "text": "+1% to Maximum Lightning Resistance",
+    "modId": "Jewels_dex/Emotion_JewelMaximumLightningResistance"
    },
    {
     "item": "Potent Liquid Melancholy",
@@ -28928,7 +31414,8 @@
      "JewelStatusOnHitWhileSocketed",
      "BlindOnHit"
     ],
-    "text": "Blind Enemies on Hit while you have a Ruby and a Sapphire socketed in your tree"
+    "text": "Blind Enemies on Hit while you have a Ruby and a Sapphire socketed in your tree",
+    "modId": "Jewels_dex/Emotion_CraftedJewelBlindOnHitWhileRubySapphireSocketed"
    },
    {
     "item": "Potent Liquid Ferocity",
@@ -28937,7 +31424,8 @@
     "families": [
      "LocalPrefixSuffixEffect"
     ],
-    "text": "(40-60)% increased Effect of Suffixes"
+    "text": "(40-60)% increased Effect of Suffixes",
+    "modId": "Jewels_dex/Emotion_CraftedJewelSuffixEffect"
    },
    {
     "item": "Potent Liquid Ferocity",
@@ -28946,7 +31434,8 @@
     "families": [
      "LocalPrefixSuffixEffect"
     ],
-    "text": "(40-60)% increased Effect of Prefixes"
+    "text": "(40-60)% increased Effect of Prefixes",
+    "modId": "Jewels_dex/Emotion_CraftedJewelPrefixEffect"
    },
    {
     "item": "Potent Liquid Contempt",
@@ -28955,7 +31444,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Suffix Modifier allowed"
+    "text": "+1 Suffix Modifier allowed",
+    "modId": "Jewels_dex/Emotion_CraftedJewelAdditionalSuffixAllowed"
    },
    {
     "item": "Potent Liquid Contempt",
@@ -28964,7 +31454,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Prefix Modifier allowed"
+    "text": "+1 Prefix Modifier allowed",
+    "modId": "Jewels_dex/Emotion_CraftedJewelAdditionalPrefixAllowed"
    }
   ],
   "Jewels_int": [
@@ -28975,7 +31466,8 @@
     "families": [
      "EnergyShieldPercent"
     ],
-    "text": "(10-20)% increased maximum Energy Shield"
+    "text": "(10-20)% increased maximum Energy Shield",
+    "modId": "Jewels_int/Emotion_JewelEnergyShield"
    },
    {
     "item": "Diluted Liquid Guilt",
@@ -28984,7 +31476,8 @@
     "families": [
      "ColdDamagePercentage"
     ],
-    "text": "(5-15)% increased Cold Damage"
+    "text": "(5-15)% increased Cold Damage",
+    "modId": "Jewels_int/Emotion_JewelColdDamage"
    },
    {
     "item": "Diluted Liquid Greed",
@@ -28993,7 +31486,8 @@
     "families": [
      "IncreasedChaosDamage"
     ],
-    "text": "(7-13)% increased Chaos Damage"
+    "text": "(7-13)% increased Chaos Damage",
+    "modId": "Jewels_int/Emotion_JewelChaosDamage"
    },
    {
     "item": "Liquid Paranoia",
@@ -29002,7 +31496,8 @@
     "families": [
      "IncreasedCastSpeed"
     ],
-    "text": "(2-4)% increased Cast Speed"
+    "text": "(2-4)% increased Cast Speed",
+    "modId": "Jewels_int/Emotion_JewelCastSpeed"
    },
    {
     "item": "Liquid Envy",
@@ -29011,7 +31506,8 @@
     "families": [
      "WeaponCasterDamagePrefix"
     ],
-    "text": "(5-15)% increased Spell Damage"
+    "text": "(5-15)% increased Spell Damage",
+    "modId": "Jewels_int/Emotion_JewelSpellDamage"
    },
    {
     "item": "Liquid Disgust",
@@ -29020,7 +31516,8 @@
     "families": [
      "ManaGainedOnKillPercentage"
     ],
-    "text": "Recover (1-2)% of maximum Mana on Kill"
+    "text": "Recover (1-2)% of maximum Mana on Kill",
+    "modId": "Jewels_int/Emotion_JewelManaonKill"
    },
    {
     "item": "Liquid Despair",
@@ -29029,7 +31526,8 @@
     "families": [
      "SpellCriticalStrikeChanceIncrease"
     ],
-    "text": "(5-15)% increased Critical Hit Chance for Spells"
+    "text": "(5-15)% increased Critical Hit Chance for Spells",
+    "modId": "Jewels_int/Emotion_JewelSpellCriticalChance"
    },
    {
     "item": "Concentrated Liquid Fear",
@@ -29038,7 +31536,8 @@
     "families": [
      "FormCritMultiplier"
     ],
-    "text": "(10-20)% increased Critical Spell Damage Bonus"
+    "text": "(10-20)% increased Critical Spell Damage Bonus",
+    "modId": "Jewels_int/Emotion_JewelSpellCriticalDamage"
    },
    {
     "item": "Concentrated Liquid Suffering",
@@ -29047,7 +31546,8 @@
     "families": [
      "AreaOfEffect"
     ],
-    "text": "(4-6)% increased Area of Effect"
+    "text": "(4-6)% increased Area of Effect",
+    "modId": "Jewels_int/Emotion_JewelAreaofEffect"
    },
    {
     "item": "Concentrated Liquid Isolation",
@@ -29056,7 +31556,8 @@
     "families": [
      "MaximumColdResist"
     ],
-    "text": "+1% to Maximum Cold Resistance"
+    "text": "+1% to Maximum Cold Resistance",
+    "modId": "Jewels_int/Emotion_JewelMaximumColdResistance"
    },
    {
     "item": "Potent Liquid Melancholy",
@@ -29065,7 +31566,8 @@
     "families": [
      "JewelStatusOnHitWhileSocketed"
     ],
-    "text": "Inflict Elemental Exposure on Hit while you have a Ruby and an Emerald socketed in your tree"
+    "text": "Inflict Elemental Exposure on Hit while you have a Ruby and an Emerald socketed in your tree",
+    "modId": "Jewels_int/Emotion_CraftedJewelExposureOnHitWhileRubyEmeraldSocketed"
    },
    {
     "item": "Potent Liquid Ferocity",
@@ -29074,7 +31576,8 @@
     "families": [
      "LocalPrefixSuffixEffect"
     ],
-    "text": "(40-60)% increased Effect of Suffixes"
+    "text": "(40-60)% increased Effect of Suffixes",
+    "modId": "Jewels_int/Emotion_CraftedJewelSuffixEffect"
    },
    {
     "item": "Potent Liquid Ferocity",
@@ -29083,7 +31586,8 @@
     "families": [
      "LocalPrefixSuffixEffect"
     ],
-    "text": "(40-60)% increased Effect of Prefixes"
+    "text": "(40-60)% increased Effect of Prefixes",
+    "modId": "Jewels_int/Emotion_CraftedJewelPrefixEffect"
    },
    {
     "item": "Potent Liquid Contempt",
@@ -29092,7 +31596,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Suffix Modifier allowed"
+    "text": "+1 Suffix Modifier allowed",
+    "modId": "Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed"
    },
    {
     "item": "Potent Liquid Contempt",
@@ -29101,7 +31606,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Prefix Modifier allowed"
+    "text": "+1 Prefix Modifier allowed",
+    "modId": "Jewels_int/Emotion_CraftedJewelAdditionalPrefixAllowed"
    }
   ],
   "Jewels_diamond": [
@@ -29112,7 +31618,8 @@
     "families": [
      "MaximumChaosResistance"
     ],
-    "text": "+1% to Maximum Chaos Resistance"
+    "text": "+1% to Maximum Chaos Resistance",
+    "modId": "Jewels_diamond/Emotion_CraftedJewelMaximumChaosResistance"
    },
    {
     "item": "Potent Liquid Ferocity",
@@ -29121,7 +31628,8 @@
     "families": [
      "LocalPrefixSuffixEffect"
     ],
-    "text": "(40-60)% increased Effect of Suffixes"
+    "text": "(40-60)% increased Effect of Suffixes",
+    "modId": "Jewels_diamond/Emotion_CraftedJewelSuffixEffect"
    },
    {
     "item": "Potent Liquid Ferocity",
@@ -29130,7 +31638,8 @@
     "families": [
      "LocalPrefixSuffixEffect"
     ],
-    "text": "(40-60)% increased Effect of Prefixes"
+    "text": "(40-60)% increased Effect of Prefixes",
+    "modId": "Jewels_diamond/Emotion_CraftedJewelPrefixEffect"
    },
    {
     "item": "Potent Liquid Contempt",
@@ -29139,7 +31648,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Suffix Modifier allowed"
+    "text": "+1 Suffix Modifier allowed",
+    "modId": "Jewels_diamond/Emotion_CraftedJewelAdditionalSuffixAllowed"
    },
    {
     "item": "Potent Liquid Contempt",
@@ -29148,7 +31658,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Prefix Modifier allowed"
+    "text": "+1 Prefix Modifier allowed",
+    "modId": "Jewels_diamond/Emotion_CraftedJewelAdditionalPrefixAllowed"
    }
   ],
   "Jewels_radius_str": [
@@ -29159,7 +31670,8 @@
     "families": [
      "IncreasedPhysicalDamageReductionRatingPercent"
     ],
-    "text": "Small Passive Skills in Radius also grant (2-3)% increased Armour"
+    "text": "Small Passive Skills in Radius also grant (2-3)% increased Armour",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusArmour"
    },
    {
     "item": "Ancient Diluted Liquid Guilt",
@@ -29168,7 +31680,8 @@
     "families": [
      "FireDamagePercentage"
     ],
-    "text": "Small Passive Skills in Radius also grant (1-2)% increased Fire Damage"
+    "text": "Small Passive Skills in Radius also grant (1-2)% increased Fire Damage",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusFireDamage"
    },
    {
     "item": "Ancient Diluted Liquid Greed",
@@ -29177,7 +31690,8 @@
     "families": [
      "PhysicalDamagePercent"
     ],
-    "text": "Small Passive Skills in Radius also grant (1-2)% increased Global Physical Damage"
+    "text": "Small Passive Skills in Radius also grant (1-2)% increased Global Physical Damage",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusPhysicalDamage"
    },
    {
     "item": "Ancient Liquid Paranoia",
@@ -29186,7 +31700,8 @@
     "families": [
      "AttackDamage"
     ],
-    "text": "Small Passive Skills in Radius also grant (1-2)% increased Attack Damage"
+    "text": "Small Passive Skills in Radius also grant (1-2)% increased Attack Damage",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusAttackDamage"
    },
    {
     "item": "Ancient Liquid Envy",
@@ -29195,7 +31710,8 @@
     "families": [
      "LifeCost"
     ],
-    "text": "Notable Passive Skills in Radius also grant (2-3)% of Skill Mana Costs Converted to Life Costs"
+    "text": "Notable Passive Skills in Radius also grant (2-3)% of Skill Mana Costs Converted to Life Costs",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusLifeCost"
    },
    {
     "item": "Ancient Liquid Disgust",
@@ -29204,7 +31720,8 @@
     "families": [
      "LifeRegenerationRate"
     ],
-    "text": "Notable Passive Skills in Radius also grant (3-5)% increased Life Regeneration rate"
+    "text": "Notable Passive Skills in Radius also grant (3-5)% increased Life Regeneration rate",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusLifeRegeneration"
    },
    {
     "item": "Ancient Liquid Despair",
@@ -29213,7 +31730,8 @@
     "families": [
      "RageOnHit"
     ],
-    "text": "Notable Passive Skills in Radius also grant Gain 1 Rage on Melee Hit"
+    "text": "Notable Passive Skills in Radius also grant Gain 1 Rage on Melee Hit",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusRageonHit"
    },
    {
     "item": "Ancient Concentrated Liquid Fear",
@@ -29222,7 +31740,8 @@
     "families": [
      "WarcrySpeed"
     ],
-    "text": "Small Passive Skills in Radius also grant (2-3)% increased Warcry Speed"
+    "text": "Small Passive Skills in Radius also grant (2-3)% increased Warcry Speed",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusWarcrySpeed"
    },
    {
     "item": "Ancient Concentrated Liquid Suffering",
@@ -29231,7 +31750,8 @@
     "families": [
      "MaximumRage"
     ],
-    "text": "Notable Passive Skills in Radius also grant +1 to Maximum Rage"
+    "text": "Notable Passive Skills in Radius also grant +1 to Maximum Rage",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusMaximumRage"
    },
    {
     "item": "Ancient Concentrated Liquid Isolation",
@@ -29240,7 +31760,8 @@
     "families": [
      "TransformIncreasedDamageInRadius"
     ],
-    "text": "Increases and Reductions to\n Cold and Lightning Damage in Radius are transformed to apply to Fire Damage"
+    "text": "Increases and Reductions to\n Cold and Lightning Damage in Radius are transformed to apply to Fire Damage",
+    "modId": "Jewels_radius_str/Emotion_JewelRadiusIncLightningColdToFire"
    },
    {
     "item": "Ancient Potent Liquid Melancholy",
@@ -29249,7 +31770,8 @@
     "families": [
      "JewelRadiusLargerRadius"
     ],
-    "text": "Upgrades Radius to Very Large\nlocal jewel effect base radius [500]"
+    "text": "Upgrades Radius to Very Large",
+    "modId": "Jewels_radius_str/Emotion_CraftedJewelRadiusExtraLargeSize"
    },
    {
     "item": "Ancient Potent Liquid Ferocity",
@@ -29258,7 +31780,8 @@
     "families": [
      "FireResistance"
     ],
-    "text": "Notable Passive Skills in Radius also grant +(5-7)% to Fire Resistance"
+    "text": "Notable Passive Skills in Radius also grant +(5-7)% to Fire Resistance",
+    "modId": "Jewels_radius_str/Emotion_CraftedJewelRadiusFireResistance"
    },
    {
     "item": "Ancient Potent Liquid Contempt",
@@ -29267,7 +31790,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Suffix Modifier allowed"
+    "text": "+1 Suffix Modifier allowed",
+    "modId": "Jewels_radius_str/Emotion_CraftedJewelAdditionalSuffixAllowed"
    },
    {
     "item": "Ancient Potent Liquid Contempt",
@@ -29276,7 +31800,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Prefix Modifier allowed"
+    "text": "+1 Prefix Modifier allowed",
+    "modId": "Jewels_radius_str/Emotion_CraftedJewelAdditionalPrefixAllowed"
    }
   ],
   "Jewels_radius_dex": [
@@ -29287,7 +31812,8 @@
     "families": [
      "EvasionRatingPercent"
     ],
-    "text": "Small Passive Skills in Radius also grant (2-3)% increased Evasion Rating"
+    "text": "Small Passive Skills in Radius also grant (2-3)% increased Evasion Rating",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusEvasion"
    },
    {
     "item": "Ancient Diluted Liquid Guilt",
@@ -29296,7 +31822,8 @@
     "families": [
      "LightningDamagePercentage"
     ],
-    "text": "Small Passive Skills in Radius also grant (1-2)% increased Lightning Damage"
+    "text": "Small Passive Skills in Radius also grant (1-2)% increased Lightning Damage",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusLightningDamage"
    },
    {
     "item": "Ancient Diluted Liquid Greed",
@@ -29305,7 +31832,8 @@
     "families": [
      "ElementalDamagePercent"
     ],
-    "text": "Small Passive Skills in Radius also grant (1-2)% increased Elemental Damage"
+    "text": "Small Passive Skills in Radius also grant (1-2)% increased Elemental Damage",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusElementalDamage"
    },
    {
     "item": "Ancient Liquid Paranoia",
@@ -29314,7 +31842,8 @@
     "families": [
      "IncreasedAttackSpeed"
     ],
-    "text": "Notable Passive Skills in Radius also grant (1-2)% increased Attack Speed"
+    "text": "Notable Passive Skills in Radius also grant (1-2)% increased Attack Speed",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusAttackSpeed"
    },
    {
     "item": "Ancient Liquid Envy",
@@ -29323,7 +31852,8 @@
     "families": [
      "CooldownRecovery"
     ],
-    "text": "Notable Passive Skills in Radius also grant (1-3)% increased Cooldown Recovery Rate"
+    "text": "Notable Passive Skills in Radius also grant (1-3)% increased Cooldown Recovery Rate",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusCooldownSpeed"
    },
    {
     "item": "Ancient Liquid Disgust",
@@ -29332,7 +31862,8 @@
     "families": [
      "MaximumLifeOnKillPercent"
     ],
-    "text": "Notable Passive Skills in Radius also grant Recover 1% of maximum Life on Kill"
+    "text": "Notable Passive Skills in Radius also grant Recover 1% of maximum Life on Kill",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusLifeonKill"
    },
    {
     "item": "Ancient Liquid Despair",
@@ -29341,7 +31872,8 @@
     "families": [
      "CriticalStrikeChanceIncrease"
     ],
-    "text": "Notable Passive Skills in Radius also grant (3-7)% increased Critical Hit Chance for Attacks"
+    "text": "Notable Passive Skills in Radius also grant (3-7)% increased Critical Hit Chance for Attacks",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusAttackCriticalChance"
    },
    {
     "item": "Ancient Concentrated Liquid Fear",
@@ -29350,7 +31882,8 @@
     "families": [
      "CriticalStrikeMultiplier"
     ],
-    "text": "Notable Passive Skills in Radius also grant (5-10)% increased Critical Damage Bonus for Attack Damage"
+    "text": "Notable Passive Skills in Radius also grant (5-10)% increased Critical Damage Bonus for Attack Damage",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusAttackCriticalDamage"
    },
    {
     "item": "Ancient Concentrated Liquid Suffering",
@@ -29359,7 +31892,8 @@
     "families": [
      "MovementVelocity"
     ],
-    "text": "Notable Passive Skills in Radius also grant 1% increased Movement Speed"
+    "text": "Notable Passive Skills in Radius also grant 1% increased Movement Speed",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusMovementSpeed"
    },
    {
     "item": "Ancient Concentrated Liquid Isolation",
@@ -29368,7 +31902,8 @@
     "families": [
      "TransformIncreasedDamageInRadius"
     ],
-    "text": "Increases and Reductions to\n Cold and Fire Damage in Radius are transformed to apply to Lightning Damage"
+    "text": "Increases and Reductions to\n Cold and Fire Damage in Radius are transformed to apply to Lightning Damage",
+    "modId": "Jewels_radius_dex/Emotion_JewelRadiusIncColdFreToLightning"
    },
    {
     "item": "Ancient Potent Liquid Melancholy",
@@ -29377,7 +31912,8 @@
     "families": [
      "JewelRadiusLargerRadius"
     ],
-    "text": "Upgrades Radius to Very Large\nlocal jewel effect base radius [500]"
+    "text": "Upgrades Radius to Very Large",
+    "modId": "Jewels_radius_dex/Emotion_CraftedJewelRadiusExtraLargeSize"
    },
    {
     "item": "Ancient Potent Liquid Ferocity",
@@ -29386,7 +31922,8 @@
     "families": [
      "LightningResistance"
     ],
-    "text": "Notable Passive Skills in Radius also grant +(5-7)% to Lightning Resistance"
+    "text": "Notable Passive Skills in Radius also grant +(5-7)% to Lightning Resistance",
+    "modId": "Jewels_radius_dex/Emotion_CraftedJewelRadiusLightningResistance"
    },
    {
     "item": "Ancient Potent Liquid Contempt",
@@ -29395,7 +31932,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Suffix Modifier allowed"
+    "text": "+1 Suffix Modifier allowed",
+    "modId": "Jewels_radius_dex/Emotion_CraftedJewelAdditionalSuffixAllowed"
    },
    {
     "item": "Ancient Potent Liquid Contempt",
@@ -29404,7 +31942,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Prefix Modifier allowed"
+    "text": "+1 Prefix Modifier allowed",
+    "modId": "Jewels_radius_dex/Emotion_CraftedJewelAdditionalPrefixAllowed"
    }
   ],
   "Jewels_radius_int": [
@@ -29415,7 +31954,8 @@
     "families": [
      "EnergyShieldPercent"
     ],
-    "text": "Small Passive Skills in Radius also grant (2-3)% increased maximum Energy Shield"
+    "text": "Small Passive Skills in Radius also grant (2-3)% increased maximum Energy Shield",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusEnergyShield"
    },
    {
     "item": "Ancient Diluted Liquid Guilt",
@@ -29424,7 +31964,8 @@
     "families": [
      "ColdDamagePercentage"
     ],
-    "text": "Small Passive Skills in Radius also grant (1-2)% increased Cold Damage"
+    "text": "Small Passive Skills in Radius also grant (1-2)% increased Cold Damage",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusColdDamage"
    },
    {
     "item": "Ancient Diluted Liquid Greed",
@@ -29433,7 +31974,8 @@
     "families": [
      "IncreasedChaosDamage"
     ],
-    "text": "Small Passive Skills in Radius also grant (1-2)% increased Chaos Damage"
+    "text": "Small Passive Skills in Radius also grant (1-2)% increased Chaos Damage",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusChaosDamage"
    },
    {
     "item": "Ancient Liquid Paranoia",
@@ -29442,7 +31984,8 @@
     "families": [
      "IncreasedCastSpeed"
     ],
-    "text": "Notable Passive Skills in Radius also grant (1-2)% increased Cast Speed"
+    "text": "Notable Passive Skills in Radius also grant (1-2)% increased Cast Speed",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusCastSpeed"
    },
    {
     "item": "Ancient Liquid Envy",
@@ -29451,7 +31994,8 @@
     "families": [
      "WeaponCasterDamagePrefix"
     ],
-    "text": "Small Passive Skills in Radius also grant (1-2)% increased Spell Damage"
+    "text": "Small Passive Skills in Radius also grant (1-2)% increased Spell Damage",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusSpellDamage"
    },
    {
     "item": "Ancient Liquid Disgust",
@@ -29460,7 +32004,8 @@
     "families": [
      "ManaGainedOnKillPercentage"
     ],
-    "text": "Notable Passive Skills in Radius also grant Recover 1% of maximum Mana on Kill"
+    "text": "Notable Passive Skills in Radius also grant Recover 1% of maximum Mana on Kill",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusManaonKill"
    },
    {
     "item": "Ancient Liquid Despair",
@@ -29469,7 +32014,8 @@
     "families": [
      "SpellCriticalStrikeChanceIncrease"
     ],
-    "text": "Notable Passive Skills in Radius also grant (3-7)% increased Critical Hit Chance for Spells"
+    "text": "Notable Passive Skills in Radius also grant (3-7)% increased Critical Hit Chance for Spells",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusSpellCriticalChance"
    },
    {
     "item": "Ancient Concentrated Liquid Fear",
@@ -29478,7 +32024,8 @@
     "families": [
      "FormCritMultiplier"
     ],
-    "text": "Notable Passive Skills in Radius also grant (5-10)% increased Critical Spell Damage Bonus"
+    "text": "Notable Passive Skills in Radius also grant (5-10)% increased Critical Spell Damage Bonus",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusSpellCriticalDamage"
    },
    {
     "item": "Ancient Concentrated Liquid Suffering",
@@ -29487,7 +32034,8 @@
     "families": [
      "AreaOfEffect"
     ],
-    "text": "Notable Passive Skills in Radius also grant (2-3)% increased Area of Effect"
+    "text": "Notable Passive Skills in Radius also grant (2-3)% increased Area of Effect",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusAreaofEffect"
    },
    {
     "item": "Ancient Concentrated Liquid Isolation",
@@ -29496,7 +32044,8 @@
     "families": [
      "TransformIncreasedDamageInRadius"
     ],
-    "text": "Increases and Reductions to\n Fire and Lightning Damage in Radius are transformed to apply to Cold Damage"
+    "text": "Increases and Reductions to\n Fire and Lightning Damage in Radius are transformed to apply to Cold Damage",
+    "modId": "Jewels_radius_int/Emotion_JewelRadiusIncLightningFireToCold"
    },
    {
     "item": "Ancient Potent Liquid Melancholy",
@@ -29505,7 +32054,8 @@
     "families": [
      "JewelRadiusLargerRadius"
     ],
-    "text": "Upgrades Radius to Very Large\nlocal jewel effect base radius [500]"
+    "text": "Upgrades Radius to Very Large",
+    "modId": "Jewels_radius_int/Emotion_CraftedJewelRadiusExtraLargeSize"
    },
    {
     "item": "Ancient Potent Liquid Ferocity",
@@ -29514,7 +32064,8 @@
     "families": [
      "ColdResistance"
     ],
-    "text": "Notable Passive Skills in Radius also grant +(5-7)% to Cold Resistance"
+    "text": "Notable Passive Skills in Radius also grant +(5-7)% to Cold Resistance",
+    "modId": "Jewels_radius_int/Emotion_CraftedJewelRadiusColdResistance"
    },
    {
     "item": "Ancient Potent Liquid Contempt",
@@ -29523,7 +32074,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Suffix Modifier allowed"
+    "text": "+1 Suffix Modifier allowed",
+    "modId": "Jewels_radius_int/Emotion_CraftedJewelAdditionalSuffixAllowed"
    },
    {
     "item": "Ancient Potent Liquid Contempt",
@@ -29532,7 +32084,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Prefix Modifier allowed"
+    "text": "+1 Prefix Modifier allowed",
+    "modId": "Jewels_radius_int/Emotion_CraftedJewelAdditionalPrefixAllowed"
    }
   ],
   "Jewels_radius_diamond": [
@@ -29543,7 +32096,8 @@
     "families": [
      "JewelRadiusLargerRadius"
     ],
-    "text": "Upgrades Radius to Very Large\nlocal jewel effect base radius [500]"
+    "text": "Upgrades Radius to Very Large",
+    "modId": "Jewels_radius_diamond/Emotion_CraftedJewelRadiusExtraLargeSize"
    },
    {
     "item": "Ancient Potent Liquid Ferocity",
@@ -29552,7 +32106,8 @@
     "families": [
      "ChaosResistance"
     ],
-    "text": "Notable Passive Skills in Radius also grant +(4-5)% to Chaos Resistance"
+    "text": "Notable Passive Skills in Radius also grant +(4-5)% to Chaos Resistance",
+    "modId": "Jewels_radius_diamond/Emotion_CraftedJewelRadiusChaosResistance"
    },
    {
     "item": "Ancient Potent Liquid Contempt",
@@ -29561,7 +32116,8 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Suffix Modifier allowed"
+    "text": "+1 Suffix Modifier allowed",
+    "modId": "Jewels_radius_diamond/Emotion_CraftedJewelAdditionalSuffixAllowed"
    },
    {
     "item": "Ancient Potent Liquid Contempt",
@@ -29570,9 +32126,38 @@
     "families": [
      "MaxPrefixMaxSuffix"
     ],
-    "text": "+1 Prefix Modifier allowed"
+    "text": "+1 Prefix Modifier allowed",
+    "modId": "Jewels_radius_diamond/Emotion_CraftedJewelAdditionalPrefixAllowed"
    }
   ]
+ },
+ "emotionNames": {
+  "Diluted Liquid Ire": "希釈された液化した怒り",
+  "Diluted Liquid Guilt": "希釈された液化した罪悪感",
+  "Diluted Liquid Greed": "希釈された液化した貪欲",
+  "Liquid Paranoia": "液化した偏執症",
+  "Liquid Envy": "液化した嫉妬",
+  "Liquid Disgust": "液化した嫌悪",
+  "Liquid Despair": "液化した絶望",
+  "Concentrated Liquid Fear": "濃縮された液化した恐怖",
+  "Concentrated Liquid Suffering": "濃縮された液化した苦悩",
+  "Concentrated Liquid Isolation": "濃縮された液化した孤立感",
+  "Potent Liquid Melancholy": "強力な液化した憂鬱",
+  "Potent Liquid Ferocity": "強力な液化した獰猛",
+  "Potent Liquid Contempt": "強力な液化した軽蔑",
+  "Ancient Diluted Liquid Ire": "古代の希釈された液化した怒り",
+  "Ancient Diluted Liquid Guilt": "古代の希釈された液化した罪悪感",
+  "Ancient Diluted Liquid Greed": "古代の希釈された液化した貪欲",
+  "Ancient Liquid Paranoia": "古代の液化した偏執症",
+  "Ancient Liquid Envy": "古代の液化した嫉妬",
+  "Ancient Liquid Disgust": "古代の液化した嫌悪",
+  "Ancient Liquid Despair": "古代の液化した絶望",
+  "Ancient Concentrated Liquid Fear": "古代の濃縮された液化した恐怖",
+  "Ancient Concentrated Liquid Suffering": "古代の濃縮された液化した苦悩",
+  "Ancient Concentrated Liquid Isolation": "古代の濃縮された液化した孤立感",
+  "Ancient Potent Liquid Melancholy": "古代の強力な液化した憂鬱",
+  "Ancient Potent Liquid Ferocity": "古代の強力な液化した獰猛",
+  "Ancient Potent Liquid Contempt": "古代の強力な液化した軽蔑"
  },
  "corrupted": {
   "Jewels_str": {

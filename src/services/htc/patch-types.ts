@@ -67,7 +67,9 @@ export interface JewelBases {
   items: ItemBase[];
   mods: Mod[];
   baseInfo: Record<string, BaseInfo>;
-  emotions: Record<string, Array<{ item: string; code: string | null; side: string; families: string[]; text: string }>>;
+  emotions: Record<string, Array<{ item: string; code: string | null; side: string; families: string[]; text: string; modId: string }>>;
+  /** 液化した感情の英語名 → 日本語名 (クライアント) */
+  emotionNames: Record<string, string>;
   corrupted: Record<string, { enchants: Array<{ name: string; families: string[]; text: string; ja: string }>; upgrades: Array<{ name: string; families: string[]; text: string; ja: string }> }>;
 }
 

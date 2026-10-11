@@ -146,6 +146,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
  * 同じグループ内では共存できないから」)。poe2db と同じく行の文は「呪印スキルのレベル # / 投射物スキルのレベル #」、重み・出やすさは合計、
  * 段の表に全部の段 (段ごとの MOD の id つき = 「付ける」はその段の MOD)。抽選は段ごとの重みのまま (rune-split.ts で分けた物もここで見た目だけ戻す)
  */
+const short = (xs: string[]): string => (xs.length > 4 ? `${xs.slice(0, 2).join(" / ")} / ${tr(`ほか ${xs.length - 2} 種`, `and ${xs.length - 2} more`)}` : xs.join(" / "));
 function mergeFamilies(rows: ListRow[]): ListRow[] {
   const groups = new Map<string, ListRow[]>();
   for (const r of rows) {
@@ -158,8 +159,9 @@ function mergeFamilies(rows: ListRow[]): ListRow[] {
     const first = g[0]!;
     out.push({
       ...first,
-      template: g.map((r) => r.template).join(" / "),
-      text: g.map((r) => r.text).join(" / "),
+      // 多い時 (ジュエルの冒涜は 29 個が 1 つの系統) は頭の 2 つ + 「ほか N 種」。全部は段の表に出る (2026-10-11)
+      template: short(g.map((r) => r.template)),
+      text: short(g.map((r) => r.text)),
       tags: [...new Set(g.flatMap((r) => r.tags))],
       tiers: g.flatMap((r) => r.tiers.map((t) => ({ ...t, modId: r.id }))),
       weight: g.reduce((a, r) => a + r.weight, 0),

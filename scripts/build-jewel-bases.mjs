@@ -59,6 +59,8 @@ const items = [];
 const mods = new Map();
 const baseInfo = {};
 const emotions = {};
+/** 液化した感情の英語名 → 日本語名 (クライアントの同じ行) */
+const emotionNames = {};
 const corrupted = {};
 const misses = [];
 /** 画面に出さない中の行 ("local jewel effect base radius [150]") を外す */
@@ -103,7 +105,23 @@ for (const [page, cls] of Object.entries(CLASSES)) {
   baseInfo[b.name_en] = { cls, ja: jaName ?? b.name_ja, lvl: 20, implicits: [] };
   items.push({ id: cls, name: b.name_en, bases: [b.name_en], category: "Jewels", pools, limits: { prefixes: 2, suffixes: 2, crafted: 1 } });
   // 液化した感情 (デリリウム): 感情の名前 → 付く MOD (作った MOD)。中身はデリリウムの手 (後で) が読む
-  emotions[cls] = (b.pools.liquid ?? []).map((e) => ({ item: e.name, code: e.code, side: e.gen, families: e.families, text: e.text }));
+  // 感情で付く MOD は「作った MOD」(エッセンスと同じ扱い: 系統は crafted: で別、1 つまで)。置き場には入れず、感情の手だけが付ける
+  emotions[cls] = (b.pools.liquid ?? []).map((e) => {
+    const modId = `${cls}/Emotion_${e.code ?? hashOf(e.text)}`;
+    const text = clean(e.text);
+    if (!JA_TEXT[e.text]) misses.push(`${page}: 感情の日本語の文が無い "${e.text}"`);
+    if (!mods.has(modId)) mods.set(modId, {
+      id: modId, source: "essence", type: e.gen, family: (e.families ?? [])[0], ...((e.families ?? []).length > 1 ? { families: e.families } : {}),
+      tags: [], displayTags: cleanDisplayTags(e.mod_tags ?? []), text, textJa: clean(JA_TEXT[e.text] ?? ""),
+      tiers: [{ name: e.name, ilvl: 1, weight: 0, ranges: rangesOf(text), stats: [] }], weightSource: "poe2db-equal",
+    });
+    return { item: e.name, code: e.code, side: e.gen, families: e.families, text, modId };
+  });
+  for (const e of b.pools.liquid ?? []) {
+    const i = rowsOf(en).findIndex((r) => r.Name === e.name && /DistilledEmotion/.test(r.Id ?? ""));
+    if (i >= 0) emotionNames[e.name] = rowsOf(ja)[i].Name;
+    else misses.push(`${page}: 感情の日本語名が無い ${e.name}`);
+  }
   const cj = (e) => ({ name: e.name, families: e.families, text: clean(e.text), ja: clean(JA_TEXT[e.text] ?? "") });
   corrupted[cls] = { enchants: (b.pools.corrupted ?? []).map(cj), upgrades: (b.pools.corruption_upgrade ?? []).map(cj) };
 }
@@ -115,7 +133,7 @@ if (misses.length) {
 const out = {
   generated: new Date().toISOString().slice(0, 10),
   source: "poe2db (2026-10-11 の今のページ) + クライアントの stat / 日本語名",
-  items, mods: [...mods.values()], baseInfo, emotions, corrupted,
+  items, mods: [...mods.values()], baseInfo, emotions, emotionNames, corrupted,
 };
 writeFileSync(resolve(ROOT, "src/services/htc/jewel-bases.json"), JSON.stringify(out, null, 1) + "\n");
 console.log(`ジュエル: 部位 ${items.length}・MOD ${mods.size}`);

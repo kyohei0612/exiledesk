@@ -6,6 +6,7 @@
  * カタリスト (指輪・アミュレット)、お告げ。キーは計算機と同じ price-keys.json / essence-keys.json の物。
  * 値段とアイコンは相場 (market-store) の行を英語名で引く (計算機の buildHtcPrices と同じ引き方)。
  */
+import { emotionNameOf, isEmotion } from "../services/craft-stage/apply-emotion";
 import { baseArt } from "../services/craft-stage/base-art";
 import { CRAFT_RUNES_EN } from "../services/htc/sockets";
 import { isLegacyRune, LEGACY_SOURCE } from "../services/market/legacy-rune";
@@ -128,6 +129,7 @@ export function essenceShelf(data: PatchData | null, item: StageItem | null): Sh
 /** キーの英語名 (相場の行を引く鍵)。骨は装備で種類が決まる */
 export function enOf(key: string, item: StageItem | null): string {
   if (key.startsWith("essence:") && ESS[key]) return ESS[key].en;
+  if (isEmotion(key)) return emotionNameOf(key);
   if (isRune(key)) return runeNameOf(key);
   if (BONES.includes(key) && item) {
     const bone = desecrationBoneFor(item.cls.category);

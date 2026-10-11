@@ -11,6 +11,7 @@
  *   - 消す (カオス・消去) のは固定済み (フラクチャー) 以外から等しく 1 つ
  * お告げは持っている物を渡し、その手に関係する物だけ食う (omensUsed)。
  */
+import { applyEmotion, isEmotion } from "./apply-emotion";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
@@ -75,6 +76,7 @@ export function kindOf(currency: string): string {
   if (currency.startsWith("desecrate")) return "desecrate";
   if (currency.startsWith("reveal")) return "reveal";
   if (currency.startsWith("catalyst_")) return "catalyst";
+  if (isEmotion(currency)) return "emotion";
   return parseKey(currency).kind;
 }
 /**
@@ -155,6 +157,8 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す
  // ルーン (要望 ⑰-1) はコラプト・聖別の後でもはめられる物がある (クライアントの CanSocketInCorruptedSanctified、applyRune で見る)
   if (isRune(currency)) return applyRune(item, currency, data);
+  // 液化した感情 (デリリウム、ジュエル。2026-10-11)
+  if (isEmotion(currency)) return applyEmotion(data, item, currency, rng);
   if (isUnsocket(currency)) return applyUnsocket(item, currency);
   // 品質を手で決める (アイテムのカードの品質の欄。2026-10-10 要望「品質欄を付けて防御値がシミュレーションできると便利」)。費用 0、コラプト後も試せる
   if (currency.startsWith(QUALITY_CAP)) {

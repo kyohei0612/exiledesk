@@ -10,6 +10,8 @@
  * お告げは 1 手に何枚でも重ねられるので、omen は id を「+」でつなぐ (例 "OmenofGreaterExaltation+OmenofSinistralExaltation")。
  * 結果の omen はその手で実際に食った物 (関係の無いお告げは食わない)。費用はカレンシー + 食ったお告げ。
  */
+import { emotionNameOf, isEmotion } from "./apply-emotion";
+import { jewelEmotionJa } from "../htc/patch";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { itemBaseFor } from "../htc/bridge";
 import { jaOfOmen, jaOfPriceKey } from "../htc/labels";
@@ -130,6 +132,7 @@ export function stepJa(currency: string, item: StageItem): string {
   if (isUnsocket(currency)) return `ルーンを外す (${currency.slice(UNSOCKET_PREFIX.length)} 番目のソケット)`;
   if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `品質を ${n}% に${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
   if (currency.startsWith("qcap:")) return `品質の上限を ${currency.slice(5)}% に`;
+  if (isEmotion(currency)) return jewelEmotionJa(emotionNameOf(currency)) ?? emotionNameOf(currency);
   if (isRune(currency)) {
     // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
     const n = parseRuneKey(currency)?.socket;
