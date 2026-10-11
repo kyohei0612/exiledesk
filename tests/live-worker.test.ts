@@ -200,8 +200,8 @@ describe("要望・バグ (/feedback)", () => {
     expect(ok).toBe(true);
     expect(sent!.content).toContain("🐛 要望・バグ");
     expect(sent!.content).toContain("壊れた");
-    expect(sent!.content).toContain("状態: v0.1.385 · シミュレーション · Polished Bracers ilvl82 · 狙い 3 · パターン 1 · JS エラー 1");
-    expect(sent!.content).toContain("流れ: open (9秒前)");
+    expect(sent!.content).toContain("状態: v0.1.385 · シミュレーター · Polished Bracers ilvl82 · 狙い 3 · パターン 1 · JS エラー 1");
+    expect(sent!.content).toContain("流れ: 開いた (9秒前)");
     expect(sent!.content).toContain("直近のエラー: TypeError: x is undefined");
     expect(file!.name).toBe("feedback-a1b2.json");
     expect(JSON.parse(file!.text).context.sim.targets).toEqual([1, 2, 3]);
@@ -233,7 +233,7 @@ describe("操作の印と日報 (events / monitor)", () => {
     const y = yesterdayJst(new Date("2026-10-07T00:00:05Z")); // = 10/7 09:00:05 JST
     expect(y.since).toBe("2026-10-06T00:00:00.000Z"); expect(y.until).toBe("2026-10-07T00:00:00.000Z"); expect(y.label).toBe("この 24 時間");
     expect(yesterdayJst(new Date("2026-10-07T03:30:00Z"), true).label).toBe("今日のここまで");
-    expect(trailText({ trail: [{ n: "open", ago: 130 }, { n: "mode:sim", ago: 40 }, { n: "sim:base", ago: 3 }] })).toBe("open (2分前) → mode:sim (40秒前) → sim:base (3秒前)");
+    expect(trailText({ trail: [{ n: "open", ago: 130 }, { n: "mode:sim", ago: 40 }, { n: "sim:base", ago: 3 }] })).toBe("開いた (2分前) → シミュレーターに切り替え (40秒前) → ベースを選んだ (シミュレーター) (3秒前)");
     const text = reportText("10/6", null, { visits: null, pageViews: null, liveRequests: null, liveErrors: null, why: "CF_ANALYTICS_TOKEN が無い" }, { requests: 1, bugs: 2 }, null, ["相場の中継"]);
     expect(text).toContain("日報 10/6"); expect(text).toContain("訪問の集計は取れませんでした (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望・バグ報告 3"); expect(text).toContain("異常の通知 1 回: 相場の中継");
     // 人が来た日は見出しごとの箇条書き (2026-10-10 オーナー「報告の文章わかりづらい」)
