@@ -179,7 +179,8 @@ const mode = ref<"hand" | "sim">("hand");
  * Web 版はシミュレーションを閉じる (2026-10-10 オーナー「未完成すぎるからシミュレーションは調整中って出してクリックできないように、ウェブ版」)。
  * タブは「調整中」で押せず、前に開いていた・URL・はじめの窓から入っても手で打つ方に戻す
  */
-export const SIM_LOCKED = !isTauriRuntime();
+// 2026-10-11 アプリ版も閉じる (オーナー「この状態からシミュレーターで入れるじゃん、だめだよ、そこも調整中って」)
+export const SIM_LOCKED = true;
 watch(mode, (m) => { if (SIM_LOCKED && m === "sim") mode.value = "hand"; }, { immediate: true, flush: "sync" });
 
 /** method = 付け方 (順番どおりのシミュレーション、[[recipe-sim.ts]])。省くと MOD の種類で決める (普通 = 高貴、冒涜 = 冒涜、エッセンス = エッセンス) */

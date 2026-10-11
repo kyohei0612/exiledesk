@@ -285,6 +285,7 @@ function startFromRecipe(r: SimRecipe): void {
   pickSimBase(r.session.base);
 }
 function simFromHand(): void {
+  if (SIM_LOCKED) return;
   const it = s.item.value;
   if (!it) return;
   s.simStartItem.value = { ...it, prefixes: it.prefixes.map((m) => ({ ...m })), suffixes: it.suffixes.map((m) => ({ ...m })) };
@@ -427,7 +428,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       <button type="button" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('R / Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'R / Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
       <!-- 今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08) -->
-      <button v-if="!SIM_LOCKED" type="button" :class="btn" :title="tr('今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーターへ。ベース代は エミュレーターの累計 + 白ベース代', 'Send the current item (mods, fractured, sockets) to the Simulator as the start. Base cost = Emulator total + white base cost')" @click="simFromHand">{{ tr("この状態からシミュレーター →", "Simulate from here →") }}</button>
+      <!-- シミュレーターを閉じている間は押せない「調整中」(2026-10-11 オーナー) -->
+      <button type="button" :class="btn" class="disabled:cursor-not-allowed disabled:opacity-50" :disabled="SIM_LOCKED" :title="SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : tr('今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーターへ。ベース代は エミュレーターの累計 + 白ベース代', 'Send the current item (mods, fractured, sockets) to the Simulator as the start. Base cost = Emulator total + white base cost')" @click="simFromHand">{{ tr("この状態からシミュレーター →", "Simulate from here →") }}<span v-if="SIM_LOCKED" class="ml-1 text-[11px] font-normal">{{ tr("(調整中)", "(WIP)") }}</span></button>
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
       <span class="ml-auto flex flex-wrap items-center gap-1.5">
         <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
