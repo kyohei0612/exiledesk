@@ -64,7 +64,7 @@ async function choose(en: string): Promise<void> {
         <div v-if="everOpen" class="mt-2 rounded-lg bg-black/30 p-4">
           <!-- 未選択の時は前のベース・種類を選んだ状態にしない (2026-10-05 オーナー「リセットの時ベース未選択から始めんかい」) -->
           <!-- フラスコ・スキルジェムは出さない (2026-10-09 オーナー「フラスコとスキルジェムはいらんね」) -->
-          <BaseCatalog :data="data" :selected="unpicked ? '' : base" @pick="choose" />
+          <BaseCatalog :data="data" :selected="unpicked ? '' : base" :popular="unpicked" @pick="choose" />
         </div>
       </div>
     </div>

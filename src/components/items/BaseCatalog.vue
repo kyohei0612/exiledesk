@@ -7,14 +7,16 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import BaseCardGrid from "./BaseCardGrid.vue";
-import { baseCatalog, CATALOG_ROWS, CATALOG_ROW_EN, classEn, VARIANT_EN } from "../../services/items/base-catalog";
+import { baseCatalog, CATALOG_ROWS, CATALOG_ROW_EN, classEn, VARIANT_EN, type CatalogRow as CatalogRowT } from "../../services/items/base-catalog";
 import { tr } from "../../i18n/lang";
 import { glideBy, scrollBoxOf } from "../../utils/keep-place";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import popularData from "../../data/popular-bases.json";
 
-const props = defineProps<{ data: PatchData | null; selected?: string | null; extras?: boolean; note?: (en: string) => string; height?: string }>();
+/** popular: 一番上に「人気のベース」の段を出す (初めての人のベース選び。2026-10-11 オーナー「解析で人気のベースをそのまま選択させる」) */
+const props = defineProps<{ data: PatchData | null; selected?: string | null; extras?: boolean; note?: (en: string) => string; height?: string; popular?: boolean }>();
 const emit = defineEmits<{ pick: [en: string] }>();
 
 const all = computed(() => (props.data ? baseCatalog(props.data, !!props.extras) : []));
@@ -27,6 +29,14 @@ const count = computed(() => {
 const cls = ref<string | null>(all.value.find((b) => b.en === props.selected)?.cls ?? (props.selected === "" ? null : "Rings"));
 const query = ref("");
 /**
+ * 人気のベース: 分析の記録でそのベースで 5 手以上打った人の数 (scripts/build-popular-bases.mjs)。部位の中では人気の物を先に、札を付ける。
+ * 一番上の段は部位をまたいだ上位 (2 人以上)
+ */
+const POP: Readonly<Record<string, number>> = (popularData as { users: Record<string, number> }).users;
+const HOT_MIN = 2;
+const hot = computed(() => new Set(all.value.filter((b) => (POP[b.en] ?? 0) >= HOT_MIN).map((b) => b.en)));
+const popularTop = computed(() => [...all.value].filter((b) => hot.value.has(b.en)).sort((a, b) => (POP[b.en] ?? 0) - (POP[a.en] ?? 0)).slice(0, 8));
+/**
  * 並べるベース: 検索中は全種類から名前で、そうでなければ選んだ種類を必要レベルの高い順 (ジェムは名前順)。
  * 高い方を押したアイコンの近くに (2026-10-10 オーナー「アイコンに近い方をレベルが高い順で、近くて即押しやすい方がいい」。前は低い順)
  */
@@ -34,7 +44,8 @@ const list = computed(() => {
   const q = query.value.trim().toLowerCase();
   if (q) return all.value.filter((b) => b.ja.toLowerCase().includes(q) || b.en.toLowerCase().includes(q)).slice(0, 80);
   const l = all.value.filter((b) => b.cls === cls.value);
-  return cls.value === "SkillGem" ? l : [...l].sort((a, b) => b.lvl - a.lvl || a.ja.localeCompare(b.ja, "ja"));
+  const pop = (b: CatalogRowT): number => (hot.value.has(b.en) ? POP[b.en] ?? 0 : 0);
+  return cls.value === "SkillGem" ? l : [...l].sort((a, b) => pop(b) - pop(a) || b.lvl - a.lvl || a.ja.localeCompare(b.ja, "ja"));
 });
 /**
  * 種類の札を全部並べると壁になる (手袋(str_dex) のような札が 50 個。2026-10-08 オーナー「UI カスすぎる」)。
@@ -147,6 +158,11 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       <input v-model="query" type="search" :placeholder="tr('名前で探す (例: サファイア、ルビー)', 'Search by name (e.g. Sapphire, Ruby)')" class="w-72 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:w-full md:w-96 md:py-1.5 md:text-[14px]" />
       <span v-if="query.trim()" class="opacity-50">{{ tr(`${list.length} 件`, `${list.length} found`) }}</span>
     </div>
+    <!-- 人気のベース (初めての人のベース選び): 部位をまたいだ上位。押せばそのまま始まる -->
+    <div v-if="popular && !query.trim() && popularTop.length && (!phone || !family)" class="mb-4">
+      <p class="mb-1 text-[12px] text-amber-200/90 md:text-[13px]">{{ tr("人気のベース", "Popular bases") }}<span class="ml-2 text-[11px] opacity-60">{{ tr("みんながよく作っているベース", "What people craft most") }}</span></p>
+      <BaseCardGrid :list="popularTop" :selected="selected" :note="note" show-cls fold @pick="(en) => emit('pick', en)" />
+    </div>
     <!-- 部位 → 属性 / 元素 → ベース。スマホは 1 段ずつ、PC は部位のタイルを並べたまま、押したタイルの行の下に属性とベースを出す -->
     <template v-if="!query.trim()">
       <!-- PC は段を横に流して 2 行ほどに (縦に 1 段ずつだと、押した後の属性とベースが画面の下に押し出された) -->
@@ -172,7 +188,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
               <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
             </div>
             <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
-            <BaseCardGrid v-else :list="list" :selected="selected" :note="note" fold @pick="(en) => emit('pick', en)" />
+            <BaseCardGrid v-else :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="(en) => emit('pick', en)" />
           </div>
         </template>
       </div>
@@ -189,6 +205,6 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       </div>
     </template>
     <!-- ② ベースのカード: スマホ (1 段ずつの最後) と名前で探す時はここ -->
-    <BaseCardGrid v-if="query.trim() || (phone && cls)" :list="list" :selected="selected" :note="note" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" />
+    <BaseCardGrid v-if="query.trim() || (phone && cls)" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" />
   </div>
 </template>

@@ -12,7 +12,7 @@ import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
 import Disclosure from "../ui/Disclosure.vue";
 
-const props = defineProps<{ list: CatalogRow[]; selected?: string | null; note?: (en: string) => string; showCls?: boolean; /** 最初は 2 行だけ出して「もっと見る」で全部 (名前で探す時は全部) */ fold?: boolean }>();
+const props = defineProps<{ list: CatalogRow[]; selected?: string | null; note?: (en: string) => string; showCls?: boolean; /** 最初は 2 行だけ出して「もっと見る」で全部 (名前で探す時は全部) */ fold?: boolean; /** 人気の札を付けるベース (popular-bases.json) */ hot?: ReadonlySet<string> }>();
 const emit = defineEmits<{ pick: [en: string] }>();
 /** ベースの絵 (スキルジェムはジェムの絵) */
 const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
@@ -67,6 +67,7 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
       <span class="min-w-0 flex-1 max-md:w-full">
         <span class="flex items-baseline gap-2 max-md:flex-col max-md:items-center max-md:gap-0">
           <b class="text-[13px] md:text-[15px]" :class="b.en === selected ? 'text-amber-100' : ''">{{ nameOf(b) }}</b>
+          <span v-if="hot?.has(b.en)" class="shrink-0 rounded bg-amber-500/25 px-1 text-[9.5px] font-bold leading-[14px] text-amber-200 md:text-[10.5px]">{{ tr("人気", "Popular") }}</span>
           <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0 md:text-[12px]">Lv {{ b.lvl }}</span>
         </span>
         <span v-if="showCls" class="block text-[10px] opacity-50">{{ classLabel(b.cls) }}</span>

@@ -244,6 +244,7 @@ function scrollToReveal(): void { scrollToTop(document.querySelector("[data-reve
  */
 function pickSimBase(en: string): void {
   handNoBase.value = false;
+  try { localStorage.setItem(FIRST_BASE_KEY, "1"); } catch { /* 無くてよい */ }
   s.base.value = en;
   s.simTargets.value = [];
   s.simOrder.value = [];
@@ -266,7 +267,11 @@ const inApp = isTauriRuntime();
  * 2026-10-10 オーナー「PC はベース選びから」「最初から指輪の画面出てるから違う、ベースから下は非表示」。
  * 分析で 6 割の人が既定の金の指輪のまま触っていた。スマホは覗くだけの人が多いので今まで通りすぐ打てる形
  */
-const handNoBase = ref(!inApp && !phone.value && s.mode.value === "hand" && !s.log.value.length);
+// 初めての人はスマホでもベース選びから (人気のベースを一番上に。2026-10-11 オーナー「スマホも初手金の指輪じゃなくて、初めての人には人気のベースを選択させる」)
+const FIRST_BASE_KEY = "exiledesk.stage.basePicked";
+let firstTime = false;
+try { firstTime = !localStorage.getItem(FIRST_BASE_KEY); } catch { /* 覚えられない時は今まで通り */ }
+const handNoBase = ref(!inApp && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
 /** 白に戻す (2 回押し。2026-10-10 動きの揃え 7: utils/use-armed.ts) */
 const resetArm = useArmed();
 function armReset(): void {
