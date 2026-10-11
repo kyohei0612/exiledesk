@@ -22,9 +22,9 @@ import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
 import { fetchYoutube, fetchYoutubeAvatars, type Latest } from "./youtube";
 import { allowIp, getFeedback, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
-import { DATASET, parseBatch, sql, writeEvents } from "./events";
+import { DATASET, parseBatch, sql, usersBetween, writeEvents } from "./events";
 import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
-import { alert, dailyReport, lastPosted, reqLog } from "./monitor";
+import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
@@ -197,13 +197,13 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
   switch (url.pathname) {
     // 開いた時に 1 回だけ読む物をまとめて (配信の情報 + 1 時間おきにサーバーが取った相場。2026-10-10 前は live.json と相場 2 本の 3 回)
     case "/boot.json": {
-      const [live, market] = await Promise.all([env.LIVE.get(STATE_KEY, { cacheTtl: 300 }), env.LIVE.get(MARKET_KEY, { cacheTtl: 300 })]);
+      const [live, market, visitors] = await Promise.all([env.LIVE.get(STATE_KEY, { cacheTtl: 300 }), env.LIVE.get(MARKET_KEY, { cacheTtl: 300 }), env.LIVE.get(VISITORS_KEY, { cacheTtl: 300 })]);
       let m = market;
       if (!m) { try { m = JSON.stringify(await refreshMarket(env)); } catch { m = null; } }
       // ブラウザに次の相場の取り直し (毎時 0 分の cron) の少し後まで覚えさせる。同じ人が 1 時間に何回開いてもサーバーに来るのは 1 回 (2026-10-10)
       const now = new Date();
       const untilNext = Math.max(60, 3600 - (now.getUTCMinutes() * 60 + now.getUTCSeconds()) + 120);
-      return new Response(`{"live":${live ?? "null"},"market":${m ?? "null"}}`, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": `public, max-age=${untilNext}`, ...CORS } });
+      return new Response(`{"live":${live ?? "null"},"market":${m ?? "null"},"visitors":${visitors ?? "null"}}`, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": `public, max-age=${untilNext}`, ...CORS } });
     }
     case "/live.json": {
       const raw = await env.LIVE.get(STATE_KEY);
@@ -257,6 +257,28 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
   }
 }
 
+/**
+ * 訪問者の数 (画面の「本日の訪問者」。2026-10-11 オーナー「1 時間ごとに 9 時からの累積」)。1 時間おきの cron で 1 回だけ数えて KV に置き、
+ * 画面は /boot.json に乗せて受け取る (来た人ごとにサーバーへ聞かない)。昨日の分は日が変わった時に 1 回だけ数える。書くのは 1 時間に 1 回
+ */
+const VISITORS_KEY = "visitors";
+interface Visitors { today: number; since: string; at: string; yesterday: number | null; yesterdayFor: string | null }
+async function updateVisitors(env: Env, now = new Date()): Promise<void> {
+  if (!env.CF_ANALYTICS_TOKEN) return;
+  const y = yesterdayJst(now, true);
+  const floor = env.STATS_SINCE ?? "";
+  const since = y.since < floor ? floor : y.since;
+  const prev = (await env.LIVE.get(VISITORS_KEY, "json")) as Visitors | null;
+  const today = await usersBetween(env, since, now.toISOString());
+  if (today == null) return;
+  let yesterday = prev?.yesterdayFor === y.since ? prev.yesterday : null;
+  if (yesterday == null) {
+    const ys = new Date(new Date(y.since).getTime() - 86400e3).toISOString();
+    yesterday = await usersBetween(env, ys < floor ? floor : ys, y.since);
+  }
+  await env.LIVE.put(VISITORS_KEY, JSON.stringify({ today, since: y.since, at: now.toISOString(), yesterday, yesterdayFor: y.since } satisfies Visitors));
+}
+
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     // 1 時間おきに相場、8 時間おきに配信の見張り (最新動画。2026-10-10 オーナー「5 分監視、8 時間に 1 回でええな」「相場も 1 時間に 1 回」)、毎朝 9 時 (JST = 0:00 UTC) は日報
@@ -268,6 +290,7 @@ export default {
       // 1 時間おき: 相場を取り直す (全員に同じ物を配る、market.ts)。配信の見張りは 8 時間おき (UTC 0・8・16 時)
       ctx.waitUntil(refreshMarket(env).catch((e) => alert(env, "相場の取得", `poe2scout から取れない: ${String(e).slice(0, 200)}`)));
       if (new Date(controller.scheduledTime).getUTCHours() % 8 === 0) ctx.waitUntil(refresh(env));
+      ctx.waitUntil(updateVisitors(env, new Date(controller.scheduledTime)).catch((e) => console.warn("visitors:", String(e).slice(0, 160))));
     }
   },
 

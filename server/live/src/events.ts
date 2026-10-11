@@ -131,6 +131,16 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   return out;
 }
 
+/** その間に来た人 (開いた印の端末の数。記録しない端末と開発版は除く)。取れなければ null。訪問者の表示 (1 時間おき) 用 (2026-10-11) */
+export async function usersBetween(env: Env, since: string, until: string, fetchFn: Fetch = fetch): Promise<number | null> {
+  try {
+    const D = env.EVENTS_DATASET ?? DATASET;
+    const skip = notForgotten(await forgottenUids(env)) + ` AND blob5 != 'localhost' AND blob5 != '127.0.0.1'`;
+    const r = await sql<{ u: number }>(env, `SELECT count(DISTINCT blob3) AS u FROM ${D} WHERE ${range(since, until)}${skip} AND blob1 = 'open'`, fetchFn);
+    return r[0] ? Number(r[0].u) : 0;
+  } catch (e) { console.warn("usersBetween:", String(e).slice(0, 160)); return null; }
+}
+
 /** 段階の文: 開いた 50 → ベース 30 → … と、一番減った所 */
 export function funnelText(sum: Summary, steps: readonly string[]): string {
   const n = steps.map((s) => sum.byEvent.get(s)?.sessions ?? 0);
