@@ -36,6 +36,10 @@ export const GROUP_JA: Record<ModGroup, string> = {
   get special() { return tr("創生の樹など (カレンシーでは付かない)", "Genesis Tree etc. (not from currency)"); },
 };
 
+/** 種類の見出し。ジュエルの「エッセンス」の置き場は液化した感情の MOD なので「デリリウム」(2026-10-11 オーナー「デリリウムに変えて」) */
+export const groupLabelOf = (g: ModGroup, item: StageItem | null | undefined): string =>
+  (g === "essence" || g === "perfect_essence") && item?.cls.category === "Jewels" ? tr("デリリウム", "Delirium") : GROUP_JA[g];
+
 /** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05) */
 export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string; modId?: string }
 export interface ListRow {

@@ -23,7 +23,8 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { GROUP_JA, modListFor, runeEnOf, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
+import { jewelEmotionJa } from "../../services/htc/patch";
+import { groupLabelOf, modListFor, runeEnOf, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
 import essenceKeys from "../../services/htc/essence-keys.json";
 import { forceKey, type ForceFlag } from "../../services/craft-stage/apply-force";
@@ -155,7 +156,7 @@ const sections = computed((): Section[] => {
   const parts: Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> = GROUPS.filter((g) => counts.value[g] && !(g === "special" && s.mode.value === "sim")).flatMap((g): Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> =>
     g === "rune"
       ? [...new Set(rows.value.filter((r) => r.group === "rune").map((r) => r.runeJa ?? ""))].map((ja) => ({ g, sid: `rune:${ja}`, label: tr(ja, runeEnOf(ja)), rune: ja }))
-      : [{ g, sid: g as string, label: GROUP_JA[g], rune: null as string | null }],
+      : [{ g, sid: g as string, label: groupLabelOf(g, s.item.value), rune: null as string | null }],
   );
   return parts.map(({ g, sid, label, rune }): Section => {
     const all = rows.value.filter((r) => inGroup(r, g) && (rune == null || r.runeJa === rune));
@@ -272,9 +273,9 @@ function essName(r: ListRow): string | null {
   const n = nameOf(key);
   if (n && n !== key) return n;
   const top = r.tiers[0]?.name;
-  return top ? tr(ESS_JA.get(top) ?? top, top) : null;
+  return top ? tr(ESS_JA.get(top) ?? jewelEmotionJa(top) ?? top, top) : null;
 }
-const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? tr(ESS_JA.get(name) ?? name, name) : name);
+const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? tr(ESS_JA.get(name) ?? jewelEmotionJa(name) ?? name, name) : name);
 /** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
 const pct = (x: number): string => fmtPct(x);
 /** 節の色 (ルーンの節はルーンのアイコンの色) */

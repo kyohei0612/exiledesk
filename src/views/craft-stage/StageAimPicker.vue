@@ -11,7 +11,7 @@
 import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
-import { GROUP_JA, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
+import { groupLabelOf, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { scrollToTop } from "../../utils/keep-place";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
@@ -101,7 +101,7 @@ function decide(): void {
       </p>
       <p v-else class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("狙う MOD にチェック (名前を押すと段を選べる)", "Check the mods to target (click a name to pick a tier)") }}</p>
       <nav v-if="groups.length > 1" class="mt-2 flex flex-wrap gap-1">
-        <button v-for="g in groups" :key="g" type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="group === g ? 'on' : ''" @click="group = g">{{ GROUP_JA[g] }}</button>
+        <button v-for="g in groups" :key="g" type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="group === g ? 'on' : ''" @click="group = g">{{ groupLabelOf(g, s.item.value) }}</button>
       </nav>
     </template>
     <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1 max-md:gap-2">

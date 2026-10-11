@@ -106,7 +106,8 @@ function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
   if (m.fractured) return { cls: "text-mod-fractured", tag: tr("フラクチャー", "Fractured") };
   if (m.desecrated) return { cls: "text-mod-desecrated", tag: tr("冒涜", "Desecrated") };
-  if (m.crafted) return { cls: "text-mod-crafted", tag: tr("エッセンス", "Essence") };
+  // 液化した感情 (ジュエル) で付いた物はデリリウム (2026-10-11 オーナー「デリリウムに変えて」)
+  if (m.crafted) return { cls: "text-mod-crafted", tag: m.modId.includes("/Emotion_") ? tr("デリリウム", "Delirium") : tr("エッセンス", "Essence") };
   // 要望 ㉙: 特殊 MOD のルーンの MOD (重みは仮定) / アルダーのルーンで属性を変えた MOD
   // 札は「ルーン」だけ (POE2Tube 要望 ㉚-3: 動画では「データサイトでは特殊 MOD の出やすさは全部同じ = 完全にランダムな抽選」と説明する。
   // 重みが仮定なのは結果 JSON の assumed_weight に残る)
