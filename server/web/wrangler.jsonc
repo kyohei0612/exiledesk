@@ -1,8 +1,10 @@
-// Web 版の置き場 (静的ファイルだけの Worker。無料、リクエスト数の上限なし)。
+// Web 版の置き場 (中身は静的ファイル。ページ (HTML) だけ move-gate.js を通す、2026-10-11)。
 // 中身は pnpm build:web が作る dist-web/。置くのはリポジトリの根で `pnpm deploy:web` (ビルド → ここで wrangler deploy)
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "web",
+  // 旧 URL を開いたクローラーにだけ 301 (move-gate.js)。人は web.html の script でデータごと移る
+  "main": "move-gate.js",
   "compatibility_date": "2026-09-01",
   // 独自ドメイン (2026-10-11 Porkbun で取得、ネームサーバーは Cloudflare)。www も同じ所へ。web.exiledesk.workers.dev も残る
   // routes を書くと workers.dev が既定で切れる (2026-10-11 一度 404 になった)。今の URL (X のリンク) を生かすので必ず true
@@ -13,6 +15,9 @@
   ],
   "assets": {
     "directory": "../../dist-web",
+    "binding": "ASSETS",
+    // Worker を通すのはページ (HTML) だけ。絵・JS・CSS は今まで通り直接 (無料の問い合わせの数を食わない)
+    "run_worker_first": ["/", "/index.html", "/web.html"],
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   }
