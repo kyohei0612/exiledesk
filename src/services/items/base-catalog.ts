@@ -30,9 +30,10 @@ export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> =
   { ja: "手袋", cls: A("Gloves", "手袋") },
   { ja: "靴", cls: A("Boots", "靴") },
   { ja: "オフハンド", cls: [["Quivers", "矢筒"], ["Shields_str", "盾 (筋力)"], ["Shields_str_dex", "盾 (筋力・器用)"], ["Shields_str_int", "盾 (筋力・知性)"], ["Foci", "フォーカス"], ["Bucklers", "バックラー"]] },
-  { ja: "宝飾品", cls: [["Amulets", "アミュレット"], ["Belts", "ベルト"], ["Rings", "指輪"]] },
-  // ジュエル (2026-10-11): 色ごとに付く MOD が違うので部位は 8 つ。ベース選びでは「ジュエル」1 つを押すと全部並ぶ (BaseCatalog の JOINED)
-  { ja: "ジュエル", cls: [["Jewels_str", "ジュエル (ルビー)"], ["Jewels_dex", "ジュエル (エメラルド)"], ["Jewels_int", "ジュエル (サファイア)"], ["Jewels_diamond", "ジュエル (ダイヤモンド)"],
+  // ジュエル (2026-10-11): 色ごとに付く MOD が違うので部位は 8 つ。ベース選びでは「ジュエル」1 つを押すと全部並ぶ (BaseCatalog の JOINED)。
+  // 段は宝飾品と一緒 (2026-10-11 オーナー「宝飾品・その他でいこうか、そこにジュエル」)
+  { ja: "宝飾品・その他", cls: [["Amulets", "アミュレット"], ["Belts", "ベルト"], ["Rings", "指輪"],
+    ["Jewels_str", "ジュエル (ルビー)"], ["Jewels_dex", "ジュエル (エメラルド)"], ["Jewels_int", "ジュエル (サファイア)"], ["Jewels_diamond", "ジュエル (ダイヤモンド)"],
     ["Jewels_radius_str", "ジュエル (タイムロストルビー)"], ["Jewels_radius_dex", "ジュエル (タイムロストエメラルド)"], ["Jewels_radius_int", "ジュエル (タイムロストサファイア)"], ["Jewels_radius_diamond", "ジュエル (タイムロストダイヤモンド)"]] },
   { ja: "フラスコ", cls: [["LifeFlask", "ライフフラスコ"], ["ManaFlask", "マナフラスコ"]] },
   { ja: "ジェム", cls: [["SkillGem", "スキルジェム"]] },
@@ -45,7 +46,7 @@ export const CATALOG_CLS_JA = new Map(CATALOG_ROWS.flatMap((r) => r.cls));
  */
 export const CATALOG_ROW_EN: Record<string, string> = {
   片手武器: "One Handed Weapon", 両手武器: "Two Handed Weapon", 兜: "Helmets", 鎧: "Body Armours", 手袋: "Gloves", 靴: "Boots",
-  オフハンド: "Off Hand", 宝飾品: "Jewellery", ジュエル: "Jewels", フラスコ: "Flasks", ジェム: "Skill Gems", 防具: "Armour",
+  オフハンド: "Off Hand", 宝飾品: "Jewellery", "宝飾品・その他": "Jewellery · Jewels", ジュエル: "Jewels", フラスコ: "Flasks", ジェム: "Skill Gems", 防具: "Armour",
 };
 const CLS_EN: Record<string, string> = {
   OneHand_Maces: "One Hand Maces", Spears: "Spears", Wands: "Wands", Sceptres: "Sceptres",
