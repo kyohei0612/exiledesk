@@ -53,7 +53,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 画面側のテスト (vitest)
-        run: pnpm test
+        run: pnpm test --exclude "tests/held-odds-all/**"
+
+      # 確率表の総当たり (重い) は別の段で、ワーカーを 2 つまでに。全部いっぺんに回すと CI の小さい機械で親の返事が詰まり、
+      # vitest の「Timeout calling onTaskUpdate」で落ちていた (テスト自体は全部通っていた。2026-10-11)
+      - name: 確率表の総当たり (vitest)
+        run: pnpm vitest run tests/held-odds-all --maxWorkers=2 --minWorkers=1
 
       # テスト用の Rust のキャッシュはリリース用 (release プロファイル) と別。版の行を除いた Cargo.lock でキーを作る
       - name: Cache key (自分の版を除いた Cargo.lock)
