@@ -4,6 +4,13 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "web",
   "compatibility_date": "2026-09-01",
+  // 独自ドメイン (2026-10-11 Porkbun で取得、ネームサーバーは Cloudflare)。www も同じ所へ。web.exiledesk.workers.dev も残る
+  // routes を書くと workers.dev が既定で切れる (2026-10-11 一度 404 になった)。今の URL (X のリンク) を生かすので必ず true
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "exiledesk.com", "custom_domain": true },
+    { "pattern": "www.exiledesk.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": "../../dist-web",
     "html_handling": "auto-trailing-slash",
