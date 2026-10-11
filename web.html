@@ -2,6 +2,41 @@
 <html lang="ja" class="web-page">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      旧 URL (web.exiledesk.workers.dev) から独自ドメイン (exiledesk.com) へ (2026-10-11)。
+      localStorage はドメインごとで、そのまま飛ばすと作業中のアイテム・レシピ・記録しない印などが消えて見えるので、
+      中身を URL の # に乗せて持っていき、新しい方で「まだ無い物だけ」入れる。# はサーバーに送られない。大きすぎる時は飛ばさず旧 URL のまま
+    -->
+    <script>
+      (function () {
+        var NEW = "exiledesk.com";
+        var host = location.hostname;
+        try {
+          if (host === "web.exiledesk.workers.dev") {
+            var all = {};
+            for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k) all[k] = localStorage.getItem(k); }
+            var bytes = new TextEncoder().encode(JSON.stringify(all)), bin = "";
+            for (var j = 0; j < bytes.length; j += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(j, j + 8192));
+            var enc = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+            var dest = "https://" + NEW + location.pathname + location.search;
+            if (!Object.keys(all).length) location.replace(dest + location.hash);
+            else if (enc.length < 1500000) location.replace(dest + "#migrate=" + enc);
+            return;
+          }
+          if (host === NEW || host === "www." + NEW) {
+            var m = /^#migrate=([A-Za-z0-9_-]+)$/.exec(location.hash);
+            if (m) {
+              var raw = atob(m[1].replace(/-/g, "+").replace(/_/g, "/")), u8 = new Uint8Array(raw.length);
+              for (var x = 0; x < raw.length; x++) u8[x] = raw.charCodeAt(x);
+              var got = JSON.parse(new TextDecoder().decode(u8));
+              for (var key in got) if (localStorage.getItem(key) === null) localStorage.setItem(key, got[key]);
+              history.replaceState(null, "", location.pathname + location.search);
+            }
+          }
+        } catch (e) { /* 持っていけなくても開く */ }
+      })();
+    </script>
+    <link rel="canonical" href="https://exiledesk.com/" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Antique&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -18,8 +53,8 @@
     <meta property="og:site_name" content="ExileDesk" />
     <meta property="og:title" content="ExileDesk Web — PoE2 クラフトステージ" />
     <meta property="og:description" content="Path of Exile 2 のクラフトを日本語のまま試す。手順を組んで 1,500 人分回し、1 個あたりの費用と運の幅を出す。" />
-    <meta property="og:url" content="https://web.exiledesk.workers.dev/" />
-    <meta property="og:image" content="https://web.exiledesk.workers.dev/web/og.png" />
+    <meta property="og:url" content="https://exiledesk.com/" />
+    <meta property="og:image" content="https://exiledesk.com/web/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="ja_JP" />
