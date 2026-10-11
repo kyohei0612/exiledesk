@@ -102,8 +102,11 @@ const ARMOUR = new Set(["手袋", "靴", "鎧", "兜"]);
 /** ベースの絵 (スキルジェムはジェムの絵) */
 const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
 /** 部位のタイルの絵 = その部位の一番高いレベルのベースの絵 (ゲーム内の絵) */
-/** 部位のタイルの絵を決めて出すベース (2026-10-12 オーナー「ジュエルのサムネはダイヤモンド」「指輪はブリーチリング」) */
-const FAM_ART: Record<string, string> = { ジュエル: "Diamond", 指輪: "Breach Ring" };
+/** 部位のタイルの絵を決めて出すベース (2026-10-12 オーナーが選んだ: ジュエル = ダイヤモンド、指輪 = ブリーチリング、ベルト = 招来、アミュレット = コロナ、バックラー = ブレードガード、フォーカス = カルト信者、盾 = 貴族のタワーシールド、スタッフ = 鐘鳴、タリスマン = 雷、セプター = ラトリング、片手メイス = フランジ) */
+const FAM_ART: Record<string, string> = {
+  ジュエル: "Diamond", 指輪: "Breach Ring", ベルト: "Invoking Belt", アミュレット: "Corona Amulet", バックラー: "Bladeguard Buckler", フォーカス: "Cultist Focus",
+  盾: "Noble Tower Shield", スタッフ: "Chiming Staff", タリスマン: "Thunder Talisman", セプター: "Rattling Sceptre", 片手メイス: "Flanged Mace",
+};
 function famArt(f: Family): string | null {
   const pin = FAM_ART[f.name] && artOf(FAM_ART[f.name]!);
   if (pin) return pin;
