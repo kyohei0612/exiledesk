@@ -92,8 +92,18 @@ export function limitOf(item: StageItem, side: StageSide): number {
   if (item.rarity === "magic") return MAGIC_LIMIT;
   if (item.rarity === "normal") return 0;
   const lim = effectiveCls(item).limits ?? DEFAULT_LIMITS;
-  return side === "prefix" ? lim.prefixes : lim.suffixes;
+  return (side === "prefix" ? lim.prefixes : lim.suffixes) + extraAllowed(item, side);
 }
+/**
+ * 侮蔑 (液化した感情) の「プレフィックス / サフィックス +1 個まで」が付いている間は、その側の枠が 1 つ増える
+ * (2026-10-11 オーナーの参考動画 2 本: 付けるとサフィ 3 つになり、外してもサフィ 3 つは残る = 上限を超えた状態。その側は付け直せない)
+ */
+export function extraAllowed(item: StageItem, side: StageSide): number {
+  const id = side === "prefix" ? "AdditionalPrefixAllowed" : "AdditionalSuffixAllowed";
+  return allMods(item).filter((m) => m.modId.endsWith(id)).length;
+}
+/** その側が上限を超えている (侮蔑を外した後の 3 つ目)。消してもそこへは付け直せない */
+export const overLimit = (item: StageItem, side: StageSide): boolean => item.rarity === "rare" && listOf(item, side).length > limitOf(item, side);
 /** レアにした時の枠 (マジック → レアになる手で見る) */
 export function rareLimitOf(item: StageItem, side: StageSide): number {
   const lim = effectiveCls(item).limits ?? DEFAULT_LIMITS;

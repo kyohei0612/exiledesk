@@ -49,6 +49,7 @@ import { itemBaseFor } from "../htc/bridge";
 import { jaTypeName } from "../trade2/localize";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
+import { overLimit } from "./stage-core";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyFlux, isFlux } from "./apply-flux";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
@@ -298,6 +299,8 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
         r = removeOne(item, rng, side ? [side] : SIDES);
       }
       if (!r) return skip(item, tr("外せる MOD が無い", "No mod can be removed"));
+      // 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) が当たると付け直せずに弾かれる (参考動画: 「追加できません」)
+      if (overLimit(item, r.mod.side)) return skip(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
       const f = hint.pick?.[0];
       if (f) {
         const a = addForced(data, r.item, floor, rng, f);
@@ -378,7 +381,8 @@ export function addCandidates(data: PatchData, item: StageItem, currency: string
       // (2026-10-09 確率表の突き合わせ: 前は付いている系統を全部外していて、消えた系統の付き直しが 0% と出ていた)
       if (item.rarity !== "rare") return null;
       const side = sideOmen(used, "OmenofSinistralErasure", "OmenofDextralErasure");
-      const gone = used.includes("OmenofWhittling") ? whittleTargets(item, side) : allMods(item).filter((m) => !m.fractured && (!side || m.side === side));
+      // 上限を超えている側 (侮蔑を外した後) は当たっても弾かれるので、付く候補には数えない
+      const gone = (used.includes("OmenofWhittling") ? whittleTargets(item, side) : allMods(item).filter((m) => !m.fractured && (!side || m.side === side))).filter((m) => !overLimit(item, m.side));
       if (!gone.length) return null;
       const acc = new Map<string, Candidate>();
       for (const r of gone) {
