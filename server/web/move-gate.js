@@ -4,12 +4,15 @@
 // ここを通るのは HTML のページだけ (wrangler.jsonc の run_worker_first)。絵や JS は通さないので、問い合わせは増えない
 const OLD_HOST = "web.exiledesk.workers.dev";
 const NEW_ORIGIN = "https://exiledesk.com";
-const BOT = /bot|crawl|spider|slurp|googlebot|bingbot|duckduckbot|yandex|baidu|facebookexternalhit|twitterbot|discordbot|linkedinbot|embedly|preview/i;
+// Search Console の確かめは Googlebot 以外の名前 (Google-InspectionTool / Google-Site-Verification / GoogleOther) で来るので google も (2026-10-11 アドレス変更が「取得できません」で落ちた)
+const BOT = /google|bot|crawl|spider|slurp|bingbot|duckduckbot|yandex|baidu|facebookexternalhit|twitterbot|discordbot|linkedinbot|embedly|preview/i;
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.hostname === OLD_HOST && BOT.test(request.headers.get("user-agent") ?? "")) {
+    // 今のブラウザはページを開く時に必ず Sec-Fetch-Mode を付ける。付いていない = プログラムからの取得 (名前を名乗らないクローラーも) なので 301
+    const program = !request.headers.get("sec-fetch-mode");
+    if (url.hostname === OLD_HOST && (program || BOT.test(request.headers.get("user-agent") ?? ""))) {
       return Response.redirect(NEW_ORIGIN + url.pathname + url.search, 301);
     }
     return env.ASSETS.fetch(request);
