@@ -115,6 +115,8 @@ const BONES = {
   collarbone_gnawed: "Metadata/Items/Currency/AbyssalBenchTicketJewelleryLow",
   // 変質した鎖骨: 冒涜に「異界の MOD」も混ざる (2026-09-27)。装飾品だけ
   collarbone_altered: "Metadata/Items/Currency/AbyssalBenchTicketBreach",
+  // 保存された頭蓋骨: ジュエルだけ (2026-10-11)。噛み切られた・古代の頭蓋骨はクライアントに無い
+  cranium: "Metadata/Items/Currency/AbyssalBenchTicketJewel",
 };
 
 /**

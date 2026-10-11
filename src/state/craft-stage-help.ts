@@ -239,9 +239,9 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     case "desecrate_ancient":
     case "desecrate_altered":
     case "desecrate_gnawed": {
-      const bone = item ? { jawbone: "顎の骨 (武器・矢筒)", rib: "肋骨 (防具)", collarbone: "鎖骨 (アクセサリー)" }[desecrationBoneFor(item.cls.category)] : "";
+      const bone = item ? { jawbone: "顎の骨 (武器・矢筒)", rib: "肋骨 (防具)", collarbone: "鎖骨 (アクセサリー)", cranium: "頭蓋骨 (ジュエル)" }[desecrationBoneFor(item.cls.category)] : "";
       if (isEn()) {
-        const boneEn = item ? { jawbone: "Jawbone (weapons, quivers)", rib: "Rib (armour)", collarbone: "Collarbone (jewellery)" }[desecrationBoneFor(item.cls.category)] : "";
+        const boneEn = item ? { jawbone: "Jawbone (weapons, quivers)", rib: "Rib (armour)", collarbone: "Collarbone (jewellery)", cranium: "Cranium (jewels)" }[desecrationBoneFor(item.cls.category)] : "";
         return [
           "Adds 1 **Unrevealed Desecrated mod** to a **Rare** (only 1 Desecrated mod per item)",
           "The side is decided by the total weight of possible mods on each side. If both sides are full, it replaces a mod on that side",

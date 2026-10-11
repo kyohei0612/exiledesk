@@ -6,6 +6,7 @@
  * カタリスト (指輪・アミュレット)、お告げ。キーは計算機と同じ price-keys.json / essence-keys.json の物。
  * 値段とアイコンは相場 (market-store) の行を英語名で引く (計算機の buildHtcPrices と同じ引き方)。
  */
+import { baseArt } from "../services/craft-stage/base-art";
 import { CRAFT_RUNES_EN } from "../services/htc/sockets";
 import { isLegacyRune, LEGACY_SOURCE } from "../services/market/legacy-rune";
 import priceKeys from "../services/htc/price-keys.json";
@@ -88,6 +89,8 @@ export const BONES = ["desecrate_gnawed", "desecrate", "desecrate_ancient", "des
  */
 export function bonesFor(item: StageItem | null): string[] {
   if (!item || isFlask(item.cls.category) || isGem(item.cls.category)) return [];
+  // ジュエルは保存された頭蓋骨だけ (噛み切られた・古代の頭蓋骨は無い。2026-10-11 poe2db とクライアント)
+  if (desecrationBoneFor(item.cls.category) === "cranium") return ["desecrate"];
   return desecrationBoneFor(item.cls.category) === "collarbone" ? BONES : BONES.filter((k) => k !== "desecrate_altered");
 }
 export const CATALYSTS = Object.keys(KEYS.currency).filter((k) => k.startsWith("catalyst_"));
@@ -144,7 +147,8 @@ export function priceOfKey(key: string, item: StageItem | null): number {
   return p;
 }
 /** アイコン: 相場の行の絵。ルーンは相場に無い物もあるのでクライアントから書き出した絵 (rune-art) を先に */
-export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(runeNameOf(key)) : null) ?? row(key, item)?.IconUrl ?? "";
+/** アイコン: ルーンはルーンの絵、クライアントから取り出した 128px の絵があればそれ (頭蓋骨・液化した感情、2026-10-11)、無ければ相場の 64px */
+export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(runeNameOf(key)) : null) ?? baseArt(enOf(key, item)) ?? row(key, item)?.IconUrl ?? "";
 /** 日本語名 (お告げ・発現も) */
 export function nameOfKey(key: string, item: StageItem | null): string {
   // 英語の画面ではゲームの英語名 (無い物 = 発現などは日本語のまま。2026-10-10 英語版)

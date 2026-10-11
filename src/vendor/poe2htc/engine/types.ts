@@ -61,6 +61,8 @@ export interface Mod {
    */
   readonly rune?: string;
   readonly text: string | null;
+  /** ExileDesk 2026-10-11: the Japanese line straight from poe2db's JP page (jewels), used before the translation tables */
+  readonly textJa?: string;
   /** Ascending by ilvl: tiers[0] = lowest ilvl (worst), tiers[last] = highest ilvl (best). */
   readonly tiers: readonly Tier[];
 }

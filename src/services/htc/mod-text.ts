@@ -83,6 +83,8 @@ export function jaOfMod(mod: Mod): string {
   if (!text) return mod.id;
   // 英語の画面では英語の原文 (印を外し、範囲は # に。2026-10-10 英語版)
   if (lang.value === "en") return text.split(NL).map(enLine).join(" / ");
+  // ジュエル: poe2db の日本語のページの文をそのまま (範囲は #)。訳の表より先 (時を失ったジュエルの「範囲内の…」は表に無い。2026-10-11)
+  if (mod.textJa) return mod.textJa.split(NL).map((l) => l.replace(/\(-?[0-9.]+--?[0-9.]+\)/g, "#")).join(" / ");
   const whole = jaOfModLine(text);
   if (whole) return whole;
   return text.split(NL).map((l) => jaOfModLine(l) ?? l).join(" / ");

@@ -57,6 +57,20 @@ export interface ExtraBases {
   mods: Mod[];
 }
 
+/**
+ * ジュエルの部位と MOD (`scripts/build-jewel-bases.mjs` の出力、src/services/htc/jewel-bases.json。2026-10-11)。
+ * 正は poe2db。MOD の text / textJa は poe2db の英語 / 日本語のページの文面、emotions は液化した感情 (デリリウム) で付く物
+ */
+export interface JewelBases {
+  generated: string;
+  source: string;
+  items: ItemBase[];
+  mods: Mod[];
+  baseInfo: Record<string, BaseInfo>;
+  emotions: Record<string, Array<{ item: string; code: string | null; side: string; families: string[]; text: string }>>;
+  corrupted: Record<string, { enchants: Array<{ name: string; families: string[]; text: string; ja: string }>; upgrades: Array<{ name: string; families: string[]; text: string; ja: string }> }>;
+}
+
 /** 足した内訳。画面で「クライアントから補った分」を断るために使う */
 export interface PatchExtras {
   generated: string;

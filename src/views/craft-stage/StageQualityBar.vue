@@ -21,7 +21,7 @@ const maxQ = computed(() => qualityCapOf(props.item));
 /** 足し算の上限 (ベース + 品質の最大値の MOD + インフューザー)。プルダウンの「今付けられる最大」 */
 const natural = computed(() => qualityFieldMax(props.item));
 const jewel = computed(() => ["Rings", "Amulets", "Belts"].includes(props.item.cls.category));
-const shown = computed(() => !isGem(props.item.cls.category) && !["Wands", "Staves", "Sceptres"].includes(props.item.cls.category));
+const shown = computed(() => !isGem(props.item.cls.category) && !["Wands", "Staves", "Sceptres", "Jewels"].includes(props.item.cls.category));
 
 let rep: ReturnType<typeof setTimeout> | null = null;
 function step(d: number): void {

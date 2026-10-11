@@ -36,6 +36,8 @@ const want = new Set([
   ...Object.entries(stage).filter(([, v]) => v.cls === "LifeFlask" || v.cls === "ManaFlask").map(([n]) => n),
   // ジュエル (2026-10-04 オーナー「ジュエル系のアイコンもほしいね」: 火力チェックの試算・装備の欄で絵が無かった)
   ...B.filter((b) => /^Metadata\/Items\/Jewels\//.test(b.Id ?? "")).map((b) => b.Name),
+  // ジュエルのクラフトで使うカレンシー (2026-10-11 オーナー「アイコンも取りに行って」): 相場のアイコンは 64px しか無いので、液化した感情と頭蓋骨は 128px をここから
+  ...B.filter((b) => /^Metadata\/Items\/Currency\/(DistilledEmotion|EndgameDistilledEmotion|AbyssalBenchTicketJewel$)/.test(b.Id ?? "")).map((b) => b.Name),
 ]);
 // 同じ名前の行が複数ある (旧版・イベント品) ので、先に見つけた絵のある行を使う
 const dds = new Map();

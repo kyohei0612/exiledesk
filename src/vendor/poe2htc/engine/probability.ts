@@ -577,7 +577,7 @@ const DES_BOSS_TAG: Record<DesecrationBossOmen, string> = {
  *   Jawbone    — "Desecrates a Rare Weapon or Quiver"
  *   Rib        — "Desecrates a Rare Armour"
  *   Collarbone — "Desecrates a Rare Amulet, Ring or Belt"
- *   Cranium    — "Desecrates a Rare Jewel"        (no Jewel bases exist in this app)
+ *   Cranium    — "Desecrates a Rare Jewel"        (ExileDesk 2026-10-11: jewels added; only the Preserved one exists)
  *
  * A game MECHANIC rather than extracted data, so it lives here beside DES_BOSS_TAG and CURRENCY_FLOOR
  * rather than in data/patches — those hold what the poe2db extraction produces, and this is neither
@@ -587,7 +587,7 @@ const DES_BOSS_TAG: Record<DesecrationBossOmen, string> = {
  * drives: a mid-priced bone, and NO boss targeting (see below). Claiming a plan works when it can't is
  * the worse failure.
  */
-export type DesecrationBone = 'jawbone' | 'rib' | 'collarbone';
+export type DesecrationBone = 'jawbone' | 'rib' | 'collarbone' | 'cranium';
 
 const BONE_BY_CATEGORY: Record<string, DesecrationBone> = {
   // "Weapon or Quiver"
@@ -603,6 +603,8 @@ const BONE_BY_CATEGORY: Record<string, DesecrationBone> = {
   // collarbone's 4.69ex on the 2026-09-02 sheet, ~11x under) and, because `bossOmenAllowed` is
   // defined as "not rib", silently refused the boss omens the game does allow on a belt.
   Amulets: 'collarbone', Rings: 'collarbone', Belts: 'collarbone',
+  // "Jewel" (ExileDesk 2026-10-11)
+  Jewels: 'cranium',
 };
 
 export function desecrationBoneFor(category: string): DesecrationBone {
@@ -621,7 +623,9 @@ export function desecrationBoneFor(category: string): DesecrationBone {
  * Weapon-or-Jewellery is exactly "not armour", i.e. the jawbone and collarbone groups.
  */
 export function bossOmenAllowed(category: string): boolean {
-  return desecrationBoneFor(category) !== 'rib';
+  const b = desecrationBoneFor(category);
+  // A jewel is not Jewellery (Amulet / Ring / Belt), and jewels have no faction mods (poe2db, 2026-10-11)
+  return b === 'jawbone' || b === 'collarbone';
 }
 
 /**

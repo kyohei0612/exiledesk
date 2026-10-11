@@ -23,6 +23,7 @@ import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
 import { displayValue } from "../mods/stat-scale";
 import { tr } from "../../i18n/lang";
+import { jewelCorruptedOf } from "../htc/patch";
 
 interface Enchant { domain: string; group?: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }>; spawn: Array<{ t: string; w: number }> }
 export const ENCHANTS = (vaal as unknown as { mods: Record<string, Enchant> }).mods;
@@ -92,6 +93,13 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
     }
     case "enchant": {
       if (item.enchant) return done(item);
+      // ジュエル: poe2db のジュエルのコラプトの付与 (11 種、重みは全部同じ)。文は poe2db の英語 / 日本語のページ (2026-10-11)
+      const jw = jewelCorruptedOf(item.cls.id);
+      if (jw?.enchants.length) {
+        const e = jw.enchants[Math.floor(rng() * jw.enchants.length)]!;
+        const vals = [...e.text.matchAll(/\((-?\d+)-(-?\d+)\)/g)].map((m) => { const a = Number(m[1]), b = Number(m[2]); return Math.min(a, b) + Math.floor(rng() * (Math.abs(b - a) + 1)); });
+        return done({ ...item, enchant: { id: `jewel:${e.name}`, textJa: rollText(e.ja || e.text, vals), textEn: rollText(e.text, vals) } });
+      }
       const pool = enchantPool(item);
       const id = pool[Math.floor(rng() * pool.length)];
       const e = id ? ENCHANTS[id] : undefined;

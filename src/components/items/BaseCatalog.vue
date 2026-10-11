@@ -41,9 +41,16 @@ const popularTop = computed(() => [...all.value].filter((b) => hot.value.has(b.e
  * 並べるベース: 検索中は全種類から名前で、そうでなければ選んだ種類を必要レベルの高い順 (ジェムは名前順)。
  * 高い方を押したアイコンの近くに (2026-10-10 オーナー「アイコンに近い方をレベルが高い順で、近くて即押しやすい方がいい」。前は低い順)
  */
+/** 札で分けずに、押したら中のベースを全部並べる部位 (2026-10-11 オーナー「ジュエル押したら全部出しておけ」)。並びは札の順 */
+const JOINED = new Set(["ジュエル"]);
+const joined = computed(() => !!family.value && JOINED.has(family.value.name));
 const list = computed(() => {
   const q = query.value.trim().toLowerCase();
   if (q) return all.value.filter((b) => b.ja.toLowerCase().includes(q) || b.en.toLowerCase().includes(q)).slice(0, 80);
+  if (joined.value) {
+    const order = family.value!.variants.map((v) => v.cls);
+    return all.value.filter((b) => order.includes(b.cls)).sort((a, b) => order.indexOf(a.cls) - order.indexOf(b.cls));
+  }
   const l = all.value.filter((b) => b.cls === cls.value);
   const pop = (b: CatalogRowT): number => (hot.value.has(b.en) ? POP[b.en] ?? 0 : 0);
   return cls.value === "SkillGem" ? l : [...l].sort((a, b) => pop(b) - pop(a) || b.lvl - a.lvl || a.ja.localeCompare(b.ja, "ja"));
@@ -179,13 +186,13 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
                   <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" draggable="false" />
                 </span>
                 <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ famLabel(f) }}</span>
-                <span v-if="f.variants.length > 1" class="text-[10px] leading-none opacity-50 md:text-[11px]">{{ tr(`${f.variants.length} 種`, `${f.variants.length} types`) }}</span>
+                <span v-if="f.variants.length > 1 && !JOINED.has(f.name)" class="text-[10px] leading-none opacity-50 md:text-[11px]">{{ tr(`${f.variants.length} 種`, `${f.variants.length} types`) }}</span>
               </button>
             </div>
           </div>
           <!-- PC: 押したタイルの行のすぐ下 (行いっぱい) -->
           <div v-if="!phone && family && insertAfter === r.ja" data-base-panel class="basis-full rounded-md bg-black/25 p-2 ring-1 ring-white/10">
-            <div v-if="family.variants.length > 1" class="mb-2 flex flex-wrap gap-2">
+            <div v-if="family.variants.length > 1 && !joined" class="mb-2 flex flex-wrap gap-2">
               <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
             </div>
             <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
@@ -199,7 +206,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           <button type="button" class="min-h-11 rounded-lg border border-white/20 px-3" @click="backToFamilies">{{ tr("← 部位", "← Item class") }}</button>
           <b class="text-[15px] text-amber-100">{{ famLabel(family) }}</b>
         </div>
-        <div v-if="family.variants.length > 1" class="mb-2 flex flex-wrap gap-2">
+        <div v-if="family.variants.length > 1 && !joined" class="mb-2 flex flex-wrap gap-2">
           <button v-for="v in family.variants" :key="v.cls" type="button" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
         </div>
         <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>

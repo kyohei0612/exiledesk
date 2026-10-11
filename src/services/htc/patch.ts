@@ -19,7 +19,7 @@ import runeWeights from "./rune-weights.json";
 import desecratedWeights from "./desecrated-weights.json";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 // 型は 2026-09-26 に patch-types.ts へ分けた
-import type { BaseInfo, DropOnlyInfo, ExtraBases, PatchExtras, PoolAdd, ReadonlyPool } from "./patch-types";
+import type { BaseInfo, DropOnlyInfo, ExtraBases, JewelBases, PatchExtras, PoolAdd, ReadonlyPool } from "./patch-types";
 export type { BaseInfo, DropOnlyInfo, DropOnlyTier, PatchExtras } from "./patch-types";
 
 let cached: Promise<PatchData> | null = null;
@@ -99,10 +99,11 @@ export function htcFamilyTexts(): Record<string, Record<string, string[]>> {
 export function loadHtcPatch(): Promise<PatchData> {
   if (!cached) {
     cached = (async () => {
-      const [mods, bases, extraRaw] = await Promise.all([
+      const [mods, bases, extraRaw, jewelRaw] = await Promise.all([
         import("../../vendor/poe2htc/data/mods.json"),
         import("../../vendor/poe2htc/data/base_items.json"),
         import("./extra-bases.json"),
+        import("./jewel-bases.json"),
       ]);
       // JSON は上流の ModsFile / BasesFile の形。indexPatch がそのまま受ける
       const data = indexPatch(
@@ -110,7 +111,7 @@ export function loadHtcPatch(): Promise<PatchData> {
         (bases.default ?? bases) as unknown as Parameters<typeof indexPatch>[1],
       );
       const extra = (extraRaw.default ?? extraRaw) as unknown as ExtraBases;
-      const out = applyExtras(data, extra);
+      const out = applyExtras(data, extra, (jewelRaw.default ?? jewelRaw) as unknown as JewelBases);
       for (const cb of loadedCbs.splice(0)) cb(out);
       loadedNow = out;
       return out;
@@ -133,9 +134,18 @@ export function onHtcPatchLoaded(cb: (d: PatchData) => void): void {
  * 追加分を PatchData に重ねる。同梱側の id とぶつかった時は**同梱を残す** (上流が正)。
  * 検算 (`scripts/_htc-bridge-entry.ts`) も同じ関数を通す。重ね方を 2 か所に書かないため。
  */
-export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
+/** ジュエルの部位 → 液化した感情 (デリリウム) で付く物 / コラプトの付与 (jewel-bases.json) */
+let jewelEmotions: JewelBases["emotions"] = {};
+let jewelCorrupted: JewelBases["corrupted"] = {};
+export const jewelEmotionsOf = (cls: string): JewelBases["emotions"][string] => jewelEmotions[cls] ?? [];
+export const jewelCorruptedOf = (cls: string): JewelBases["corrupted"][string] | null => jewelCorrupted[cls] ?? null;
+
+export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBases): PatchData {
   const mods = new Map(data.mods);
   const bases = new Map(data.bases);
+  // ジュエル (2026-10-11、poe2db が正。build-jewel-bases.mjs)。部位も MOD も同梱・クライアントの追加分とは別の id なので、そのまま足す
+  for (const m of jewels?.mods ?? []) if (!mods.has(m.id)) mods.set(m.id, m);
+  for (const it of jewels?.items ?? []) if (!bases.has(it.id)) bases.set(it.id, it);
   const placeholder: string[] = [];
 
   for (const m of extra.mods) {
@@ -190,7 +200,9 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
   dropOnly = (extra as { dropOnly?: typeof dropOnly }).dropOnly ?? {};
   familyStats = extra.familyStats ?? {};
   baseLimits = extra.baseLimits ?? {};
-  baseInfo = extra.baseInfo ?? {};
+  baseInfo = { ...(extra.baseInfo ?? {}), ...(jewels?.baseInfo ?? {}) };
+  jewelEmotions = jewels?.emotions ?? {};
+  jewelCorrupted = jewels?.corrupted ?? {};
   extras = {
     generated: extra.generated,
     addedBases: added,

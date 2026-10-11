@@ -31,6 +31,9 @@ export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> =
   { ja: "靴", cls: A("Boots", "靴") },
   { ja: "オフハンド", cls: [["Quivers", "矢筒"], ["Shields_str", "盾 (筋力)"], ["Shields_str_dex", "盾 (筋力・器用)"], ["Shields_str_int", "盾 (筋力・知性)"], ["Foci", "フォーカス"], ["Bucklers", "バックラー"]] },
   { ja: "宝飾品", cls: [["Amulets", "アミュレット"], ["Belts", "ベルト"], ["Rings", "指輪"]] },
+  // ジュエル (2026-10-11): 色ごとに付く MOD が違うので部位は 8 つ。ベース選びでは「ジュエル」1 つを押すと全部並ぶ (BaseCatalog の JOINED)
+  { ja: "ジュエル", cls: [["Jewels_str", "ジュエル (ルビー)"], ["Jewels_dex", "ジュエル (エメラルド)"], ["Jewels_int", "ジュエル (サファイア)"], ["Jewels_diamond", "ジュエル (ダイヤモンド)"],
+    ["Jewels_radius_str", "ジュエル (タイムロストルビー)"], ["Jewels_radius_dex", "ジュエル (タイムロストエメラルド)"], ["Jewels_radius_int", "ジュエル (タイムロストサファイア)"], ["Jewels_radius_diamond", "ジュエル (タイムロストダイヤモンド)"]] },
   { ja: "フラスコ", cls: [["LifeFlask", "ライフフラスコ"], ["ManaFlask", "マナフラスコ"]] },
   { ja: "ジェム", cls: [["SkillGem", "スキルジェム"]] },
 ];
@@ -42,14 +45,14 @@ export const CATALOG_CLS_JA = new Map(CATALOG_ROWS.flatMap((r) => r.cls));
  */
 export const CATALOG_ROW_EN: Record<string, string> = {
   片手武器: "One Handed Weapon", 両手武器: "Two Handed Weapon", 兜: "Helmets", 鎧: "Body Armours", 手袋: "Gloves", 靴: "Boots",
-  オフハンド: "Off Hand", 宝飾品: "Jewellery", フラスコ: "Flasks", ジェム: "Skill Gems", 防具: "Armour",
+  オフハンド: "Off Hand", 宝飾品: "Jewellery", ジュエル: "Jewels", フラスコ: "Flasks", ジェム: "Skill Gems", 防具: "Armour",
 };
 const CLS_EN: Record<string, string> = {
   OneHand_Maces: "One Hand Maces", Spears: "Spears", Wands: "Wands", Sceptres: "Sceptres",
   TwoHand_Maces: "Two Hand Maces", Quarterstaves: "Quarterstaves", Talismans: "Talismans", Bows: "Bows", Crossbows: "Crossbows", Staves: "Staves",
   Helmets: "Helmets", Body_Armours: "Body Armours", Gloves: "Gloves", Boots: "Boots",
   Quivers: "Quivers", Shields: "Shields", Foci: "Foci", Bucklers: "Bucklers",
-  Amulets: "Amulets", Belts: "Belts", Rings: "Rings", LifeFlask: "Life Flasks", ManaFlask: "Mana Flasks", SkillGem: "Skill Gems",
+  Amulets: "Amulets", Belts: "Belts", Rings: "Rings", Jewels: "Jewels", LifeFlask: "Life Flasks", ManaFlask: "Mana Flasks", SkillGem: "Skill Gems",
 };
 /** 種類の札の中の英語 (str_dex → Strength/Dexterity、fire → Fire) */
 export const VARIANT_EN: Record<string, string> = {
