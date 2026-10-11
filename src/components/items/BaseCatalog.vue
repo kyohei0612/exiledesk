@@ -102,7 +102,11 @@ const ARMOUR = new Set(["手袋", "靴", "鎧", "兜"]);
 /** ベースの絵 (スキルジェムはジェムの絵) */
 const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
 /** 部位のタイルの絵 = その部位の一番高いレベルのベースの絵 (ゲーム内の絵) */
+/** 部位のタイルの絵を決めて出すベース (2026-10-12 オーナー「ジュエルのサムネはダイヤモンド」「指輪はブリーチリング」) */
+const FAM_ART: Record<string, string> = { ジュエル: "Diamond", 指輪: "Breach Ring" };
 function famArt(f: Family): string | null {
+  const pin = FAM_ART[f.name] && artOf(FAM_ART[f.name]!);
+  if (pin) return pin;
   const cs = new Set(f.variants.map((v) => v.cls));
   const bs = all.value.filter((b) => cs.has(b.cls)).sort((a, b) => b.lvl - a.lvl);
   for (const b of bs) { const a = artOf(b.en); if (a) return a; }

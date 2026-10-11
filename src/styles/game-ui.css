@@ -376,3 +376,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: #b5813a; }
 .g-brand-icon {
   filter: drop-shadow(0 0 8px rgba(255, 180, 80, 0.35)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.9));
 }
+
+/*
+ * 一覧の終わりの余白 (2026-10-12 オーナーの決まり: 一覧の下は「もっと見る」の帯くらい空ける。帯が無い時もぎりぎりで切らない)。
+ * 帯 (Disclosure の bar) は mt-2 + py-1.5 + 文字 ≒ 40px と、その下に mb-3
+ */
+.g-list-end { height: 2.5rem; }

@@ -80,5 +80,7 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
   </div>
   <!-- 3 行目から下 -->
   <Disclosure v-if="fold && (rest > 0 || more) && list.length > cols * 2" v-model:open="more" :rest="rest" bar />
+  <!-- 「もっと見る」が無い時も、その分は下を空ける (ぎりぎりで切らない、2026-10-12 オーナーの決まり) -->
+  <div v-else class="g-list-end" aria-hidden="true" />
   </div>
 </template>

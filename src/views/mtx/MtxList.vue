@@ -118,6 +118,7 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
       <div v-if="list.length > shown" class="mt-5 text-center">
         <Disclosure :rest="list.length - shown" bar @update:open="shown += PAGE" />
       </div>
+      <div v-else class="g-list-end" aria-hidden="true" />
     </template>
     </div>
     </div>

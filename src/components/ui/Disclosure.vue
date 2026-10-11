@@ -56,7 +56,7 @@ function toggle(): void { if (props.tag === "button") open.value = !open.value; 
     :type="tag === 'button' ? 'button' : undefined"
     :aria-expanded="tag === 'button' ? open : undefined"
     class="g-plain items-center gap-1 text-[12px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]"
-    :class="bar ? 'mt-2 flex w-full justify-center rounded-md py-1.5 text-[13px] hover:bg-white/5' : 'inline-flex'"
+    :class="bar ? 'mt-2 mb-3 flex w-full justify-center rounded-md py-1.5 text-[13px] hover:bg-white/5' : 'inline-flex'"
     @click="toggle"
   >
     <slot />
