@@ -99,7 +99,8 @@ watch(() => s.mode.value === "sim" && !s.simTargets.value.length && s.base.value
 
 // エッセンスはマジック用とレア用 (パーフェクト・合金) を 1 つの節に (2026-10-10 オーナー「エッセンスね、パーフェクトとかやなくて意味わからん」)
 // 並び: 普通・ルーン → 異界 (変質) → 創生の樹など → 冒涜 → エッセンス (2026-10-09 オーナー)
-const GROUPS: ModGroup[] = ["normal", "rune", "otherworldly", "special", "desecrated", "essence"];
+/** 節の並び (既定)。普通 → ルーン → 冒涜 → 創生の樹など → 異界 → エッセンス (2026-10-11 オーナー) */
+const GROUPS: ModGroup[] = ["normal", "rune", "desecrated", "special", "otherworldly", "essence"];
 const inGroup = (r: { group: ModGroup }, g: ModGroup): boolean => r.group === g || (g === "essence" && r.group === "perfect_essence");
 const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => inGroup(r, g)).length])) as Record<ModGroup, number>);
 
@@ -167,9 +168,9 @@ const sections = computed((): Section[] => {
     const socketed = rune != null && all.some((r) => r.socketed);
     return { g, sid, label, rune, socketed, count: all.length, columns };
   })
-    // 今は付かない節 (差していないルーン・カレンシーでは付かない物・どの行も今は付かない) は並びに関係なく一番下へ
-    // (2026-10-11 オーナー「普通の MOD の下にグレーアウトが邪魔」)
-    .map((sec, i) => ({ sec, i, off: sec.g === "special" || (sec.rune != null && !sec.socketed) || !sec.columns.some((c) => c.items.some(cannow)) }))
+    // 既定は GROUPS の並び (差していないルーンだけ一番下)。カレンシーを持っている時は、それで付く節を上に、付かない節を下に
+    // (2026-10-11 オーナー「冒涜 → 創生の樹 → 異界 → エッセンス、付けれる奴になったら順番が変わるけどデフォではね」)
+    .map((sec, i) => ({ sec, i, off: heldCands.value ? !sec.columns.some((c) => c.items.some((r) => heldShare(r) > 0)) : sec.rune != null && !sec.socketed }))
     .sort((a, b) => Number(a.off) - Number(b.off) || a.i - b.i)
     .map((x) => x.sec);
 });
