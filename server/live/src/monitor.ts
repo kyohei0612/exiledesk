@@ -93,7 +93,7 @@ const n = (v: number | null | undefined): string => (v == null ? "不明" : Math
  */
 /** 使われ方に出す印の名前 (人数が 1 以上の物を全部、この順で。開いた・滞在・エラー・最初の画面は出さない) */
 const USE_JA: Array<[string, string]> = [
-  ["hand:use", "手で打った"], ["mode:sim", "シミュレーションを開いた"], ["sim:base", "シミュレーション: ベースを選んだ"], ["sim:targets", "シミュレーション: 狙いを決めた"],
+  ["hand:base", "エミュレーター: ベースを選んだ"], ["hand:use", "エミュレーター"], ["mode:sim", "シミュレーションを開いた"], ["sim:base", "シミュレーション: ベースを選んだ"], ["sim:targets", "シミュレーション: 狙いを決めた"],
   ["sim:order", "シミュレーション: 順番を決めた"], ["sim:pattern", "シミュレーション: 手順を組んだ"], ["sim:run", "シミュレーションを回した"], ["sim:done", "シミュレーションで完成まで出た"],
   ["trade:open", "取引所を開いた"], ["recipe:save", "レシピを保存した"], ["feedback:open", "要望・バグの窓を開いた"], ["feedback:sent", "要望・バグを送った"],
 ];
@@ -109,11 +109,11 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
   };
   const today = label.includes("今日");
   if (!sum) {
-    sec("人", [`訪問の集計は取れませんでした (${usage.why ?? "集計の設定が無い"})`]);
+    sec("人数", [`訪問の集計は取れませんでした (${usage.why ?? "集計の設定が無い"})`]);
   } else if (!sum.sessions) {
-    sec("人", [today ? "今日はまだ誰も来ていません" : "誰も来ていません"]);
+    sec("人数", [today ? "今日はまだ誰も来ていません" : "誰も来ていません"]);
   } else {
-    sec("人", [
+    sec("人数", [
       // 人を先に (2026-10-10 記録を 1 時間に 1 回まとめて送る形にしたので、同じ人の 1 時間以内の再訪は次の回に回る。人数はほぼ正確)
       `来た人 ${n(sum.users)} 人 (初めて ${n(sum.newSessions)} 人)`,
       `訪問 ${n(sum.sessions)} 回`,
@@ -138,14 +138,14 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
   // 中身の見えないエラー (外のスクリプト) は分けて、直す対象から外す (2026-10-10)
   const ext = sum?.extErrors ?? null;
   const own = err && err.count - (ext?.count ?? 0) > 0 ? { count: err.count - (ext?.count ?? 0), sessions: Math.max(1, err.sessions - (ext?.sessions ?? 0)) } : null;
+  // 問題は本当にある物だけ (無ければ節ごと出さない)。外のスクリプトのエラー・配信の見張り・「なし」の行・記録の件数は出さない
+  // (2026-10-11 オーナー「無駄な報告は削ぎ落して、不具合じゃないのに不具合と出るのはおかしい、無かったら不具合報告いらん、配信はもう取ってない」)
+  void live; void records; void ext;
   sec("問題", [
-    own ? `画面のエラー ${own.count} 件 (${own.sessions} 人)${sum!.errors.length ? `: ${sum!.errors[0]![0].slice(0, 60)}` : ""}` : sum ? "画面のエラー なし" : null,
-    ext ? `外のスクリプトのエラー ${ext.count} 件 (${ext.sessions} 人): X などのアプリ内ブラウザやウォレットが足した物で、ExileDesk の不具合ではない` : null,
-    `サーバー: ${n(usage.liveRequests)} 回・エラー ${n(usage.liveErrors)}`,
-    alerts.length ? `異常の通知 ${alerts.length} 回: ${alerts.slice(0, 5).join(" / ")}` : "異常の通知 なし",
-    live ? `配信の見張り ${live.errors.length ? `気になる所 ${live.errors.length} (${live.errors[0]!.slice(0, 80)})` : "異常なし"} · ライブ中 ${live.live.length} 人` : "配信の見張り まだ動いていない",
+    own ? `画面のエラー ${own.count} 件 (${own.sessions} 人)${sum!.errors.length ? `: ${sum!.errors[0]![0].slice(0, 80)}` : ""}` : null,
+    usage.liveErrors ? `サーバーのエラー ${n(usage.liveErrors)} 回 (${n(usage.liveRequests)} 回のうち)` : null,
+    alerts.length ? `異常の通知 ${alerts.length} 回: ${alerts.slice(0, 5).join(" / ")}` : null,
     sum?.warnings.length ? `集計で取れなかった所: ${sum.warnings.join(" / ")}` : null,
-    records != null ? `分析用の記録 ${records.toLocaleString("ja-JP")} 件` : null,
   ]);
   // 結果を踏まえたアドバイス (2026-10-10 オーナー「最後に結果踏まえたアドバイス」)。数字の決まりで出し分け、多くて 3 つ
   sec("アドバイス", adviceOf(sum, feedback, alerts, usage.liveRequests ?? 0));

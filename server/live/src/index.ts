@@ -22,7 +22,7 @@ import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
 import { fetchYoutube, fetchYoutubeAvatars, type Latest } from "./youtube";
 import { allowIp, getFeedback, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
-import { parseBatch, writeEvents } from "./events";
+import { DATASET, parseBatch, sql, writeEvents } from "./events";
 import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, reqLog } from "./monitor";
 import { MARKET_KEY, refreshMarket } from "./market";
@@ -74,10 +74,8 @@ export async function refresh(env: Env, channels: readonly ChannelDef[] = CHANNE
   const state = buildState(channels, new Map([...yt, ...tw]), avatars, errors, now, latest);
   await env.LIVE.put(STATE_KEY, JSON.stringify(state));
   console.log(JSON.stringify({ job: "refresh", live: state.live.length, upcoming: state.upcoming.length, errors: errors.length, ms: Date.now() - t0 }));
-  if (errors.length) {
-    console.warn("exiledesk-live:", errors.join(" | "));
-    await alert(env, "配信の見張り", errors.join("\n").slice(0, 600), fetchFn, now);
-  }
+  // 配信 (ライブ) はもう見ていない (最新動画だけ)。取れなかった時はログだけで、異常の通知・日報には出さない (2026-10-11 オーナー)
+  if (errors.length) console.warn("exiledesk-live:", errors.join(" | "));
   return state;
 }
 
@@ -232,6 +230,14 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     case "/refresh":
       if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
       return json(await refresh(env), 200, { "cache-control": "no-store" });
+    // 画面のエラーの全文 (日報は頭の 80 字だけ)。直す時に読む (2026-10-11)。hours = 何時間前から (既定 48)
+    case "/errors.json": {
+      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      const h = Math.min(24 * 14, Math.max(1, Number(url.searchParams.get("hours")) || 48));
+      const D = env.EVENTS_DATASET ?? DATASET;
+      const rows = await sql(env, `SELECT blob8 AS msg, blob4 AS dev, blob5 AS ref, count(DISTINCT blob2) AS sessions, SUM(_sample_interval) AS n FROM ${D} WHERE timestamp > NOW() - INTERVAL '${h}' HOUR AND blob1 = 'error' GROUP BY msg, dev, ref ORDER BY n DESC LIMIT 50`);
+      return json(rows, 200, { "cache-control": "no-store" });
+    }
     case "/report":
       if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
       // &today=1 で「今日のここまで」(集計が通っているかの確かめ用)

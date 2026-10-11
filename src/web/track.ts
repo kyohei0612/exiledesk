@@ -5,7 +5,7 @@
  * 直前の流れ (trail) は要望・バグの添付にも使う
  */
 import { watch } from "vue";
-import { craftStage } from "../state/craft-stage";
+import { craftStage, SIM_LOCKED } from "../state/craft-stage";
 import { noLog } from "../utils/no-log";
 
 const UID_KEY = "exiledesk.web.uid";
@@ -91,18 +91,23 @@ export function startTracking(): void {
   (globalThis as { __exiledeskTrack?: (n: string, x?: string) => void }).__exiledeskTrack = track;
   trackOnce("open");
   const s = craftStage;
-  watch(s.mode, (m) => trackOnce(`mode:${m}`), { immediate: true });
+  // シミュレーターを閉じている間は数えない (前に開いていた人が一瞬 sim になって数えられていた)
+  watch(s.mode, (m) => { if (m === "sim" && SIM_LOCKED) return; trackOnce(`mode:${m}`); }, { immediate: true });
   watch(() => s.log.value.length, (n) => { if (n > 0) trackOnce("hand:use"); });
-  watch(s.simPicked, (v) => { if (v) trackOnce("sim:base"); });
+  // ベースを選ぶと手で打つ方でも simPicked が立つので、シミュレーターの時だけ (2026-10-11 日報でシミュレーション: ベースを選んだ 227 になっていた)
+  watch(s.simPicked, (v) => { if (v && s.mode.value === "sim") trackOnce("sim:base"); });
+  watch(s.base, () => { if (s.mode.value === "hand") trackOnce("hand:base"); });
   watch(() => s.simTargets.value.length, (n) => { if (n > 0) trackOnce("sim:targets"); });
   watch(() => s.simOrder.value.length, (n) => { if (n > 0) trackOnce("sim:order"); });
   watch(() => s.simPatterns.value.some((p) => p.steps.length > 0), (v) => { if (v) trackOnce("sim:pattern"); });
   // ResizeObserver の「loop completed」はブラウザの害のない警告 (画面を伸び縮みさせると大量に出る) なので数えない (2026-10-08 日報で 770 件になっていた)
   window.addEventListener("error", (e) => { if (/ResizeObserver loop/.test(String(e.message ?? ""))) return;
     // よそのファイル (アプリ内ブラウザ・ウォレットなどが足したスクリプト) のエラーは頭に ext: を付けて、日報で直す対象から外す (2026-10-10)
-    const ext = !e.filename || !e.filename.startsWith(location.origin);
+    // ユーザースクリプト (Tampermonkey など) は同じオリジンの userscript.html から動くので名前で分ける (2026-10-11 日報の「画面のエラー」は Affiliate-killer.user.js だった)
+    const ext = !e.filename || !e.filename.startsWith(location.origin) || /userscript|\.user\.js/i.test(e.filename);
     const m = `${ext ? "ext: " : ""}${e.message ?? "error"} @${(e.filename ?? "").split("/").pop()}:${e.lineno ?? 0}`; track("error", m); pushError(m, (e.error as Error)?.stack); });
-  window.addEventListener("unhandledrejection", (e) => { const m = String((e.reason as Error)?.message ?? e.reason).slice(0, 120); track("error", m); pushError(m, (e.reason as Error)?.stack); });
+  // 約束の失敗は、呼び出しの跡にこのサイトのファイルが無ければよそ (アプリ内ブラウザが足した物など。2026-10-11 「response.msg」は ExileDesk に無い)
+  window.addEventListener("unhandledrejection", (e) => { const st = (e.reason as Error)?.stack ?? ""; const ext = !st.includes(location.origin) || /userscript|\.user\.js/i.test(st); const m = `${ext ? "ext: " : ""}${String((e.reason as Error)?.message ?? e.reason).slice(0, 120)}`; track("error", m); pushError(m, st || undefined); });
   // console.error / warn も残す (画面の部品が出す「取れなかった」などの手がかり)
   for (const k of ["error", "warn"] as const) {
     const orig = console[k].bind(console);

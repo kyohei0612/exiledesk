@@ -104,7 +104,8 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   if (mins.length) out.medianMinutes = mins[Math.floor((mins.length - 1) / 2)]!;
   const top = async (col: string): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
   out.refs = await top("blob5"); out.devices = await top("blob4"); out.countries = await top("blob6");
-  const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%')`;
+  // よその物: 中身の見えないエラー・ext: の印・ウォレット・ユーザースクリプト (2026-10-11)
+  const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%' OR blob8 LIKE '%userscript%' OR blob8 LIKE '%.user.js%' OR blob8 LIKE '%response.msg%')`;
   out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND NOT (${EXT}) GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
   const ext = await q<{ c: number; s: number }>(`SELECT SUM(_sample_interval) AS c, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND ${EXT}`);
   if (ext[0] && Number(ext[0].c) > 0) out.extErrors = { count: Number(ext[0].c), sessions: Number(ext[0].s) };
