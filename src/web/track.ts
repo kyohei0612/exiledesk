@@ -7,6 +7,7 @@
 import { watch } from "vue";
 import { craftStage, SIM_LOCKED } from "../state/craft-stage";
 import { noLog } from "../utils/no-log";
+import { lang } from "../i18n/lang";
 
 const UID_KEY = "exiledesk.web.uid";
 /**
@@ -108,6 +109,8 @@ export function flush(): void {
 export function startTracking(): void {
   (globalThis as { __exiledeskTrack?: (n: string, x?: string) => void }).__exiledeskTrack = track;
   trackOnce("open");
+  // 画面の言語 (英語版の需要を見る。訪問ごとに 1 回、切り替えたらその言語も 1 回。2026-10-12)
+  watch(lang, (l) => trackOnce(`lang:${l}`), { immediate: true });
   const s = craftStage;
   // シミュレーターを閉じている間は数えない (前に開いていた人が一瞬 sim になって数えられていた)
   watch(s.mode, (m) => { if (m === "sim" && SIM_LOCKED) return; trackOnce(`mode:${m}`); }, { immediate: true });

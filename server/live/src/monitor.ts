@@ -126,7 +126,7 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
   } else {
     sec("人数", [
       // 人を先に (2026-10-10 記録を 1 時間に 1 回まとめて送る形にしたので、同じ人の 1 時間以内の再訪は次の回に回る。人数はほぼ正確)
-      `来た人 ${n(sum.users)} 人 (初めて ${n(sum.newSessions)} 人)`,
+      `来た人 ${n(sum.users)} 人 (初めて ${n(sum.newSessions)} 人 · また来てくれた人 ${n(Math.max(0, sum.users - sum.newSessions))} 人)`,
       `訪問 ${n(sum.sessions)} 回`,
       sum.dwell ? null : sum.medianMinutes == null ? null : sum.medianMinutes < 1 ? "半分の人は 1 分未満で閉じた" : `半分の人が ${sum.medianMinutes.toFixed(0)} 分以上使った`,
     ]);
@@ -150,6 +150,7 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     sec("どこから", [
       // 1 行ずつ (2026-10-10 オーナー「訪問リストは改行してリストで表示」)
       ...refs.slice(0, 6).map(([k, v]) => `${fromJa(k)} ${v} 人`),
+      sum.peakHours?.length ? `人が多かった時間: ${sum.peakHours.map(([h, v]) => `${h} 時台 ${v} 回`).join(" · ")}` : null,
       `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
     ]);
     // エミュレーターはベースを選ぶのが当たり前なので、打った人・順位・最大の手数・一番長くいた人で (2026-10-12 オーナー)
@@ -161,8 +162,11 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     sec("使われ方", [
       `エミュレーターで 1 手以上打った人 ${n(sum.byEvent.get("hand:use")?.users ?? 0)} 人`,
       emu?.maxSteps ? `一番たくさん打った人: ${n(emu.maxSteps)} 手` : null,
+      sum.steps ? `1 人の手数: 半分の人が ${n(sum.steps.median)} 手まで · 4 人に 1 人 ${n(sum.steps.p75)} 手以上` : null,
+      sum.steps && (sum.steps.pc != null || sum.steps.mobile != null) ? `1 人あたり: ${[sum.steps.pc != null ? `PC ${n(sum.steps.pc)} 手` : "", sum.steps.mobile != null ? `スマホ ${n(sum.steps.mobile)} 手` : ""].filter(Boolean).join(" / ")}` : null,
       maxMin >= 1 ? `一番長くいた人: ${dur(maxMin)}` : null,
       ...used.map(([ja, v]) => `${ja} ${v} 人`),
+      (sum.byEvent.get("lang:en")?.users ?? 0) > 0 ? `英語の画面で使った人 ${n(sum.byEvent.get("lang:en")!.users)} 人` : null,
       fbCount ? `要望・バグを送った ${fbCount} 件` : null,
     ]);
     if (emu?.bases.length) sec("よく使われたベース (人数)", emu.bases.map(([k, v], i) => `${i + 1}. ${k} ${v} 人`));
