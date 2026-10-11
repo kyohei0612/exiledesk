@@ -214,8 +214,12 @@ export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Da
   const lc = await countBetween(env, since, until).catch(() => null);
   const base = reportText(label + cut, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts, lc?.records ?? null);
   const text = base;
-  await postDiscord(env.DISCORD_WEBHOOK, text, fetchFn);
+  const posted = await postDiscord(env.DISCORD_WEBHOOK, text, fetchFn);
+  if (!posted) console.warn("dailyReport: Discord に送れなかった", env.DISCORD_WEBHOOK ? "(送り先あり)" : "(送り先なし)");
+  lastPosted = posted;
   return text;
 }
+/** 直前の日報を Discord に送れたか (/report の x-discord に出す。手で送った時の確かめ用、2026-10-11) */
+export let lastPosted = false;
 
 export { STEP_JA };

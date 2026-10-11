@@ -24,7 +24,7 @@ import { fetchYoutube, fetchYoutubeAvatars, type Latest } from "./youtube";
 import { allowIp, getFeedback, listFeedback, notifyDiscord, parseFeedback, saveFeedback, type Feedback } from "./feedback";
 import { DATASET, parseBatch, sql, writeEvents } from "./events";
 import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
-import { alert, dailyReport, reqLog } from "./monitor";
+import { alert, dailyReport, lastPosted, reqLog } from "./monitor";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
@@ -241,7 +241,8 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     case "/report":
       if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
       // &today=1 で「今日のここまで」(集計が通っているかの確かめ用)
-      return new Response(await dailyReport(env, fetch, new Date(), url.searchParams.get("today") === "1"), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
+      { const text = await dailyReport(env, fetch, new Date(), url.searchParams.get("today") === "1");
+        return new Response(text, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store", "x-discord": lastPosted ? "ok" : "ng" } }); }
     // 新しい送り方の再現の確かめ (sim.ts)。wrangler.sim.jsonc で動かした時だけ
     case "/__sim/export":
       if (env.SIM !== "1" || !keyOk(env, url)) return json({ error: "not found" }, 404);
