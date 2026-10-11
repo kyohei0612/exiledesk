@@ -217,14 +217,29 @@ function fillEn(text: string, values: readonly number[]): string {
  * タグは MOD に持たせた物 (無い古い物は data から引く)
  */
 export function boostedMod(item: StageItem, m: StageMod, data?: PatchData): { values: number[]; textJa: string; textEn: string } | null {
-  const tag = item.qualityTag;
-  if (!tag || !(item.quality > 0) || !/^(Rings|Amulets)\//.test(m.modId)) return null;
-  const tags = m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
-  if (!tags.includes(tag) || !m.values.length) return null;
+  if (!m.values.length) return null;
+  const pct = qualityPctOf(item, m, data) + sideEffectPct(item, m.side);
+  if (!(pct > 0)) return null;
   // 小数の値は 2 桁に丸める (6.45 × 1.2 = 7.739999… のような誤差を values に入れない。文と同じ丸め)。整数は displayedValue が切り捨て済み
-  const values = m.values.map((v) => { const b = displayedValue(v, item.quality); return Number.isInteger(v) ? b : Math.round(b * 100) / 100; });
+  const values = m.values.map((v) => { const b = displayedValue(v, pct); return Number.isInteger(v) ? b : Math.round(b * 100) / 100; });
   if (values.every((v, i) => v === m.values[i])) return null;
   return { values, ...retext(m, values, data) };
+}
+
+/** カタリストの品質で伸びる % (指輪・アミュレットで、品質の種類のタグを MOD 自身が持つ時だけ) */
+function qualityPctOf(item: StageItem, m: StageMod, data?: PatchData): number {
+  const tag = item.qualityTag;
+  if (!tag || !(item.quality > 0) || !/^(Rings|Amulets)\//.test(m.modId)) return 0;
+  const tags = m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
+  return tags.includes(tag) ? item.quality : 0;
+}
+/**
+ * 獰猛 (液化した感情) の「サフィックス / プレフィックスの効果が N% 増加する」がその側の MOD に掛ける % (2026-10-11 オーナーの参考動画 2 本の仕上げの手)。
+ * 獰猛は反対側に付くので自分は伸ばさない。丸めは品質と同じ切り捨て (確かめていない)
+ */
+export function sideEffectPct(item: StageItem, side: StageSide): number {
+  const id = side === "prefix" ? "PrefixEffect" : "SuffixEffect";
+  return allMods(item).filter((m) => m.side !== side && m.modId.endsWith(id)).reduce((a, m) => a + (m.values[0] ?? 0), 0);
 }
 
 /**

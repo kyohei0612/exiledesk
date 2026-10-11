@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
 import { freshItem } from "../src/services/craft-stage/run-plan";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
-import { allMods } from "../src/services/craft-stage/stage-core";
+import { allMods, boostedMod, sideEffectPct } from "../src/services/craft-stage/stage-core";
 import { emotionKeysFor } from "../src/services/craft-stage/apply-emotion";
 import { mulberry32 } from "../src/services/htc/rng";
 import type { StageItem } from "../src/services/craft-stage/types";
@@ -79,5 +79,16 @@ describe("液化した感情", () => {
       const r = applyCurrency(data, it, "emotion:Potent Liquid Ferocity", mulberry32(s), []);
       if (r.applied) { expect(r.added![0]!.side).toBe("prefix"); expect(r.added![0]!.textEn).toMatch(/Effect of Suffixes/); }
     }
+    // 獰猛の効果: サフィの数値が N% 伸びる (切り捨て)、プレと獰猛自身は伸びない
+    let f: StageItem | null = null;
+    for (let s = 1; s <= 60 && !f; s++) { const r = applyCurrency(data, it, "emotion:Potent Liquid Ferocity", mulberry32(s), []); if (r.applied) f = r.item; }
+    const fero = f!.prefixes.find((m) => m.modId.endsWith("SuffixEffect"))!;
+    expect(sideEffectPct(f!, "suffix")).toBe(fero.values[0]);
+    expect(sideEffectPct(f!, "prefix")).toBe(0);
+    for (const sm of f!.suffixes.filter((m) => m.values.length && Number.isInteger(m.values[0]))) {
+      const want = Math.floor(sm.values[0]! * (1 + fero.values[0]! / 100) + 1e-9);
+      expect(boostedMod(f!, sm, data)?.values[0] ?? sm.values[0]).toBe(want);
+    }
+    expect(boostedMod(f!, fero, data)).toBeNull();
   });
 });
