@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ExileDesk について — PoE2 クラフトシミュレーター</title>
+<meta name="description" content="ExileDesk は Path of Exile 2 のクラフトを日本語で 1 手ずつ試せる無料のファンツールです。できること・確率の考え方・使い方。" />
+<link rel="canonical" href="https://exiledesk.com/about" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg: #0e0c09; --panel: #17130e; --line: #3a3024; --fg: #e8dfcf; --sub: #a99b84; --accent: #e0b062; --link: #f0c878; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.85 "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif; }
+  header { border-bottom: 1px solid var(--line); background: #0a0907; }
+  header .in, main, footer .in { max-width: 820px; margin: 0 auto; padding: 0 16px; }
+  header .in { display: flex; align-items: center; gap: 12px; height: 52px; }
+  header a { color: var(--fg); text-decoration: none; font-weight: 700; letter-spacing: .04em; }
+  header nav { margin-left: auto; display: flex; gap: 16px; font-size: 13px; }
+  header nav a { color: var(--sub); font-weight: 400; }
+  main { padding-top: 28px; padding-bottom: 48px; }
+  h1 { font-size: 24px; margin: 0 0 16px; color: var(--accent); }
+  h2 { font-size: 17px; margin: 30px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); color: var(--accent); }
+  ul { padding-left: 1.3em; margin: 6px 0 12px; }
+  li { margin: 3px 0; }
+  .note { color: var(--sub); font-size: 13px; }
+  a { color: var(--link); }
+  .cta { display: inline-block; margin: 6px 0 4px; padding: 8px 18px; border: 1px solid #8a6a32; border-radius: 6px; background: #2a1f12; color: var(--accent); text-decoration: none; font-weight: 700; }
+  .en { margin-top: 48px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .en h2 { margin-top: 18px; }
+  footer { border-top: 1px solid var(--line); color: var(--sub); font-size: 12px; }
+  footer .in { padding-top: 14px; padding-bottom: 20px; }
+</style>
+</head>
+<body>
+<header><div class="in"><a href="/">ExileDesk</a><nav><a href="/">シミュレーターへ</a><a href="/privacy.html">プライバシーポリシー</a></nav></div></header>
+<main>
+<h1>ExileDesk について</h1>
+<p>ExileDesk は、Path of Exile 2 のクラフトを日本語のまま試せる無料のファンツールです。高いカレンシーを実際に使う前に、何が起きるかをブラウザの中で何度でも試せます。</p>
+<p><a class="cta" href="/">シミュレーターを開く</a></p>
+
+<h2>できること</h2>
+<ul>
+  <li><b>エミュレーター</b>: カレンシー・骨・お告げ・エッセンス・液化した感情 (デリリウム) を押して持ち、アイテムを押すと 1 回ずつ使えます。付いた MOD、外れた MOD、その時の確率が出ます。1 手戻す (R キー) もできます。</li>
+  <li><b>シミュレーター</b>: 狙う MOD と手順を決めて大勢分回し、完成 1 個あたりの費用と運の幅 (運が良い時・悪い時) を出します。手順はレシピとして保存できます。</li>
+  <li><b>MOD 一覧</b>: そのベースに付く MOD と段、持っているカレンシーで次に付く確率を並べます。</li>
+  <li><b>相場</b>: カレンシーの値段を自動で入れて、打った手の費用を合計します。取引所の検索は新しいタブで開きます。</li>
+  <li>武器・防具・宝飾品に加えて、ジュエル (ルビー・エメラルド・サファイア・ダイヤモンド・タイムロスト) にも対応しています。</li>
+</ul>
+
+<h2>確率と決まりについて</h2>
+<ul>
+  <li>付く MOD・段・重みは、ゲームのデータと poe2db の情報を元にしています。日本語の名前と文はゲームのクライアントの日本語のままです。</li>
+  <li>確率はそのデータからの推定です。ゲームの公式の値ではないので、結果を保証するものではありません。</li>
+  <li>決まりが分からない所は、実際に試した人の報告・動画で確かめてから入れています。違っている所があれば「要望・バグを送る」から教えてください。</li>
+</ul>
+
+<h2>使い方のヒント</h2>
+<ul>
+  <li>入れた物 (作業中のアイテム・設定) はこのブラウザに残るので、閉じても続きから始められます。</li>
+  <li>スマホでも使えます。PC の方が MOD 一覧と工程を並べて見られます。</li>
+  <li>Windows のアプリ版 (取引履歴・火力チェック・取引所の自動取得つき) を近日公開します。</li>
+</ul>
+
+<h2>運営</h2>
+<ul>
+  <li>個人で作っている非公式のファンサイトです。Grinding Gear Games とは関係ありません。</li>
+  <li>サイトの維持のために広告を表示します。協賛の枠には「PR」と表示します。</li>
+  <li>情報の扱いは <a href="/privacy.html">プライバシーポリシー</a> をご覧ください。</li>
+  <li>問い合わせ・要望・不具合の報告は、サイトの右上の「要望・バグを送る」からどうぞ。直した時は、送った端末で次に開いた時にお知らせします。</li>
+</ul>
+
+<section class="en" lang="en">
+  <h2 style="margin-top:0">About ExileDesk (English)</h2>
+  <p>ExileDesk is a free fan-made tool for trying Path of Exile 2 crafting in your browser before spending real currency.</p>
+  <ul>
+    <li><b>Emulator</b>: hold a currency, bone, omen, essence or Liquid Emotion and click the item to use it one step at a time. See which mods were added or removed and the chance at that moment. Undo with the R key.</li>
+    <li><b>Simulator</b>: choose the target mods and steps, run many attempts, and get the cost per finished item and the range of luck. Save the steps as a recipe.</li>
+    <li><b>Mod list</b>: every mod and tier for the base, with the chance to roll next using the currency you are holding.</li>
+    <li><b>Market prices</b>: currency prices are filled in automatically to total the cost of your steps.</li>
+    <li>Weapons, armour, jewellery and jewels (Ruby, Emerald, Sapphire, Diamond and Time-Lost) are supported.</li>
+  </ul>
+  <p>Mods, tiers and weights come from game data and poe2db. Chances are estimates, not official values, and results are not guaranteed.</p>
+  <p>ExileDesk is an unofficial fan site and is not affiliated with or endorsed by Grinding Gear Games. The site shows ads to cover its costs; sponsored slots are marked "PR". See the <a href="/privacy.html">Privacy Policy</a>. For questions or bug reports, use "Send feedback" at the top right of the site.</p>
+</section>
+</main>
+<footer><div class="in">ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。 · <a href="/about.html">ExileDesk について</a> · <a href="/privacy.html">プライバシーポリシー</a></div></footer>
+</body>
+</html>

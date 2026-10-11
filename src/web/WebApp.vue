@@ -133,6 +133,9 @@ window.addEventListener("resize", fitZoom);
             <span>{{ tr("相場は", "Market prices from") }} <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>{{ tr("、確率はゲームのデータからの推定で、結果を保証するものではありません。", ". Chances are estimates from game data; results are not guaranteed.") }}</span>
             <span>{{ tr("使い方の記録 (打った手・回した結果など。名前や IP は含みません) を改善のために集めています。", "We collect usage data (actions used, results, etc. No names or IPs) to improve the site.") }}<button type="button" class="ml-1 underline" :title="noLogOn ? tr('この端末の記録を再開する', 'Resume logging on this device') : tr('この端末からは記録を送らない', 'Stop sending usage data from this device')" @click="setNoLog(!noLogOn)">{{ noLogOn ? tr("この端末は記録していません (再開する)", "Not logging on this device (resume)") : tr("この端末は記録しない", "Don't log this device") }}</button></span>
             <span class="ml-auto">{{ tr("協賛の枠には PR と表示します", "Sponsored slots are marked PR") }}</span>
+            <!-- よくある一番下のリンク (2026-10-12 広告の審査の前に。中身は public/about.html・privacy.html の単独のページ) -->
+            <a href="/about.html" class="underline">{{ tr("ExileDesk について", "About") }}</a>
+            <a href="/privacy.html" class="underline">{{ tr("プライバシーポリシー", "Privacy Policy") }}</a>
           </footer>
         </template>
       </CraftStage>
