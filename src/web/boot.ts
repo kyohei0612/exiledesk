@@ -6,7 +6,8 @@
  */
 import { WEB_API_BASE } from "./config";
 
-export interface Boot { live: unknown; market: { at: string; leagues: unknown[]; league: string | null; items: unknown[] } | null }
+/** visitors: 本日 (9:00 から、1 時間おきに数え直す) と昨日の訪問者 (server/live の updateVisitors) */
+export interface Boot { live: unknown; market: { at: string; leagues: unknown[]; league: string | null; items: unknown[] } | null; visitors?: { today: number; at: string; yesterday: number | null } | null }
 let inFlight: Promise<Boot | null> | null = null;
 
 /** 読む (同時に呼ばれても 1 回)。force なら読み直す (45 分放置で戻った時) */
@@ -21,5 +22,5 @@ async function load(): Promise<Boot | null> {
   if (b?.market?.items?.length) return b;
   // サーバーに繋がらない (無料枠を使い切った・落ちた) 時は、画面と一緒に置いた相場の控え (出した時点の値段、上限の無い置き場)。2026-10-10
   const fb = await get<Boot["market"]>("/market-fallback.json");
-  return fb?.items?.length ? { live: b?.live ?? null, market: fb } : b;
+  return fb?.items?.length ? { live: b?.live ?? null, market: fb, visitors: b?.visitors ?? null } : b;
 }

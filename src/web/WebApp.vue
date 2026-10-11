@@ -21,7 +21,7 @@ import MarketNotice from "./MarketNotice.vue";
 import pkg from "../../package.json";
 import { noLogOn, setNoLog } from "../utils/no-log";
 import { tr } from "../i18n/lang";
-import { loadBoot } from "./boot";
+import { loadBoot, type Boot } from "./boot";
 import LangSwitch from "../components/LangSwitch.vue";
 
 const feedbackOpen = ref(false);
@@ -36,7 +36,7 @@ function onActive(): void {
   lastActive = Date.now();
   if (idle < IDLE_MS) return;
   // 相場と配信の情報は /boot.json を 1 回だけ読み直す (boot.ts)
-  void loadBoot(true).then(() => marketStore.refreshMarket());
+  void loadBoot(true).then((b) => { visitors.value = b?.visitors ?? visitors.value; marketStore.refreshMarket(); });
   window.dispatchEvent(new Event("exiledesk:refresh"));
 }
 const onVisible = (): void => { if (document.visibilityState === "visible") onActive(); };
@@ -59,6 +59,9 @@ try { firstVisit = !localStorage.getItem(WELCOME_KEY); localStorage.setItem(WELC
 // 更新した後に 1 回だけ更新内容を出す。初めて来た人には出さない (2026-10-10)
 initChangelog(firstVisit);
 function closeWelcome(): void { welcomeOpen.value = false; }
+/** 本日の訪問者 (/boot.json の visitors) */
+const visitors = ref<NonNullable<Boot["visitors"]> | null>(null);
+void loadBoot().then((b) => { visitors.value = b?.visitors ?? null; });
 const DESIGN_WIDTH = 1660;
 const frame = ref({ w: DESIGN_WIDTH, h: 900 });
 /**
@@ -90,8 +93,10 @@ window.addEventListener("resize", fitZoom);
         <span v-if="phone" class="ml-auto"><LangSwitch /></span>
       </span>
       <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
+      <!-- 本日の訪問者 (9:00 から、1 時間ごとに数え直す。2026-10-11 オーナー)。数えられていない時は出さない -->
+      <span v-if="visitors" class="ml-auto whitespace-nowrap opacity-60" :class="phone ? 'text-[10px]' : ''" :title="visitors.yesterday != null ? tr(`9:00 から (1 時間ごとに更新) · 昨日 ${visitors.yesterday.toLocaleString()} 人`, `Since 9:00 JST (updated hourly) · Yesterday ${visitors.yesterday.toLocaleString()}`) : tr('9:00 から (1 時間ごとに更新)', 'Since 9:00 JST (updated hourly)')">{{ tr(`本日の訪問者 ${visitors.today.toLocaleString()} 人`, `Today's visitors ${visitors.today.toLocaleString()}`) }}</span>
       <!-- 版を押すと更新履歴 (2026-10-10) -->
-      <button type="button" class="g-plain ml-auto opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
+      <button type="button" class="g-plain opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
       <LangSwitch v-if="!phone" />
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
       <button type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('何ができるか', 'What you can do')" @click="welcomeOpen = true">{{ tr("はじめに", "Guide") }}</button>
