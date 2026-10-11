@@ -125,12 +125,22 @@ export async function listFeedback(kv: KVNamespace, limit = 100): Promise<Feedba
 }
 
 /** 添付から「今の状態」を 1 行に (手で打つ / シミュレーション・ベース・手数・狙いとパターンの数・エラーの数) */
+/**
+ * PC かスマホか (2026-10-12 オーナー「PC かスマホかも出して欲しい」)。画面の幅 (768 px 未満 = スマホの並び、web-phone-layout) で。
+ * 前の版の要望にも viewport は入っている
+ */
+export function deviceJa(context: unknown): string {
+  const vp = (context as { viewport?: unknown })?.viewport;
+  const w = typeof vp === "string" ? Number(vp.split("x")[0]) : NaN;
+  return Number.isFinite(w) ? (w < 768 ? "スマホ" : "PC") : "";
+}
 export function stateLine(context: unknown): string {
   if (!context || typeof context !== "object") return "";
   const hasSummary = Array.isArray((context as { summaryJa?: unknown }).summaryJa) && ((context as { summaryJa: unknown[] }).summaryJa.length > 0);
   const c = context as { version?: string; mode?: string; base?: string; itemLevel?: number; hand?: { steps?: number } | null; sim?: { targets?: unknown[]; patterns?: unknown[] } | null; errors?: unknown[]; market?: { error?: string | null } };
   const parts = [
     c.version ? `v${c.version}` : "",
+    deviceJa(context),
     c.mode === "sim" ? "シミュレーター" : c.mode === "hand" ? "エミュレーター" : "",
     c.base && !hasSummary ? `${c.base}${c.itemLevel ? ` ilvl${c.itemLevel}` : ""}` : "",
     c.hand?.steps && !hasSummary ? `${c.hand.steps} 手` : "",

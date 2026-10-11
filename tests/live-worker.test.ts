@@ -228,7 +228,10 @@ describe("操作の印と日報 (events / monitor)", () => {
   });
   it("日本時間の昨日と、直前の流れの文、日報の文面", async () => {
     const { yesterdayJst, reportText } = await import("../server/live/src/monitor");
-    const { trailText } = await import("../server/live/src/feedback");
+    const { trailText, deviceJa, stateLine } = await import("../server/live/src/feedback");
+    expect(deviceJa({ viewport: "1707x807" })).toBe("PC");
+    expect(deviceJa({ viewport: "390x844" })).toBe("スマホ");
+    expect(stateLine({ version: "0.1.489", viewport: "390x844", mode: "hand", summaryJa: ["x"] })).toBe("v0.1.489 · スマホ · エミュレーター");
     // 日報は 9:00 (JST) が境 (2026-10-10 オーナー): 10/7 9:00 の日報 = 10/6 9:00〜10/7 9:00
     const y = yesterdayJst(new Date("2026-10-07T00:00:05Z")); // = 10/7 09:00:05 JST
     expect(y.since).toBe("2026-10-06T00:00:00.000Z"); expect(y.until).toBe("2026-10-07T00:00:00.000Z"); expect(y.label).toBe("この 24 時間");
