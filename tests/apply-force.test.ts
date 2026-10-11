@@ -34,30 +34,38 @@ describe("指名で付ける (force:)", () => {
     r = A(it, forceKey(cold, "T1", "n"));
     expect(r.applied || /同じ系統|埋まって/.test(r.reason ?? "")).toBe(true);
   });
-  it("同じ系統が付いていれば付かない、段のアイテムレベルも見る", () => {
+  it("同じ系統が付いていれば入れ替える (固定した物は外さない)、段のアイテムレベルも見る (2026-10-11 オーナー「手で付けるのはゆるく、ルールは順守」)", () => {
     const life = idOf("Rings", /IncreasedLife$/);
     const it = A(freshItem(data, "Gold Ring", 82), forceKey(life, "T3", "n")).item;
     const again = A(it, forceKey(life, "T1", "n"));
-    expect(again.applied).toBe(false);
-    expect(again.reason).toMatch(/同じ系統/);
+    expect(again.applied).toBe(true);
+    expect(allMods(again.item).filter((m) => m.family === "IncreasedLife")).toHaveLength(1);
+    expect(again.removed).toHaveLength(1);
+    const rare = A(again.item, "regal").item;
+    const fixed = A(rare, forceKey(life, null, "f")).item;
+    const blocked = A(fixed, forceKey(life, "T3", "n"));
+    expect(blocked.applied).toBe(false);
+    expect(blocked.reason).toMatch(/固定/);
     const low = A(freshItem(data, "Gold Ring", 5), forceKey(life, "T1", "n"));
     expect(low.applied).toBe(false);
     expect(low.reason).toMatch(/アイテムレベル/);
   });
-  it("冒涜はレアにだけ、1 つまで", () => {
+  it("冒涜はレアにして付ける、1 つまで (付いている冒涜は入れ替える)", () => {
     const d = data.bases.get("Rings")!.pools.desecrated!;
     const [d1, d2] = [d.prefixes[0]!, d.prefixes[1] ?? d.suffixes[0]!];
     const magic = A(freshItem(data, "Gold Ring", 82), forceKey(idOf("Rings", /IncreasedLife$/), "T2", "n")).item;
-    expect(A(magic, forceKey(d1, "T1", "d")).reason).toMatch(/レアにだけ/);
+    const toRare = A(magic, forceKey(d1, "T1", "d"));
+    expect(toRare.applied).toBe(true);
+    expect(toRare.item.rarity).toBe("rare");
     const rare = A(magic, "regal").item;
     const one = A(rare, forceKey(d1, "T1", "d"));
     expect(one.applied).toBe(true);
     expect(allMods(one.item).some((m) => m.desecrated)).toBe(true);
     const two = A(one.item, forceKey(d2, "T1", "d"));
-    expect(two.applied || /1 つまで|同じ系統|埋まって/.test(two.reason ?? "")).toBe(true);
-    if (two.applied) expect(allMods(two.item).filter((m) => m.desecrated).length).toBe(1);
+    expect(two.applied || /埋まって/.test(two.reason ?? "")).toBe(true);
+    if (two.applied) { expect(allMods(two.item).filter((m) => m.desecrated).map((m) => m.modId)).toEqual([d2]); expect(two.removed?.some((m) => m.modId === d1)).toBe(true); }
   });
-  it("エッセンスの MOD はクラフト MOD として付く (1 つまで)", () => {
+  it("エッセンスの MOD はクラフト MOD として付く (1 つまで、付いている物は入れ替える)", () => {
     const e = data.bases.get("Rings")!.pools.essence;
     const e1 = e.prefixes[0]!;
     const r = A(freshItem(data, "Gold Ring", 82), forceKey(e1, "T1", "e"));
@@ -65,8 +73,8 @@ describe("指名で付ける (force:)", () => {
     expect(allMods(r.item).some((m) => m.crafted)).toBe(true);
     const e2 = e.suffixes[0]!;
     const r2 = A(r.item, forceKey(e2, "T1", "e"));
-    expect(r2.applied).toBe(false);
-    expect(r2.reason).toMatch(/1 つまで/);
+    expect(r2.applied).toBe(true);
+    expect(allMods(r2.item).filter((m) => m.crafted).map((m) => m.modId)).toEqual([e2]);
   });
   it("ルーンの MOD を手で付けると、差していなければルーンも差す (ソケットが無ければ付かない、2026-10-09 オーナー)", () => {
     const kol = [...data.mods.values()].find((m) => m.id.startsWith("Gloves_dex/") && m.rune === "kolrs-hunt")!;
@@ -81,14 +89,16 @@ describe("指名で付ける (force:)", () => {
     expect(yes.applied).toBe(true);
     expect(yes.item.augments).toHaveLength(1);
   });
-  it("エッセンスの MOD はレアになる (パーフェクトはレアだけ)、ユニークには付かない、フラクチャーは付いている物を固定 (2026-10-08 使い倒しテスト)", () => {
+  it("エッセンスの MOD はレアになる (パーフェクトもレアにして付ける)、ユニークには付かない、フラクチャーは付いている物を固定 (2026-10-08 使い倒しテスト)", () => {
     const ess = [...data.mods.values()].find((m) => m.source === "essence" && m.id.startsWith("Rings/"))!;
     const perf = [...data.mods.values()].find((m) => m.source === "perfect_essence" && m.id.startsWith("Rings/"))!;
     const white = freshItem(data, "Gold Ring", 82);
     const r = A(white, forceKey(ess.id, null, "e"));
     expect(r.applied).toBe(true);
     expect(r.item.rarity).toBe("rare");
-    expect(A(white, forceKey(perf.id, null, "e")).reason).toMatch(/レアにだけ/);
+    const p2 = A(white, forceKey(perf.id, null, "e"));
+    expect(p2.applied).toBe(true);
+    expect(p2.item.rarity).toBe("rare");
     expect(A({ ...white, rarity: "unique" }, forceKey(idOf("Rings", /IncreasedLife$/), "T2", "n")).reason).toMatch(/ユニーク/);
     // 普通の MOD は冒涜で付かない
     const life = idOf("Rings", /IncreasedLife$/);

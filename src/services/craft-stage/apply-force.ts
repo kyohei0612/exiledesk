@@ -5,6 +5,10 @@
  * 鍵: `force:<modId>|<段 (T2 など、空なら一番上)>|<種類>`。種類は n = 普通 / e = エッセンス (クラフト MOD) / d = 冒涜 / f = フラクチャー。
  * 1 手として log に入り (1 手戻す・再生・手順 JSON の currency にそのまま入る)、費用は 0。
  *
+ * 手で付けるのはゆるく (2026-10-11 オーナー「付けれないけど付けた時の挙動に、レアでしか使えないならレアにして付ける、シミュレーターだから親切に、ただルールは順守」)。
+ * 付けられない時は、決まりを守ったまま付けられる形に寄せてから付ける: レアにする・冒涜 / エッセンスは入れ替える・同じ系統の MOD は外す (固定した物は外さない)。
+ * 外した物は removed に入る (カードの打ち消し線・1 手戻すで戻る)。側の枠が埋まっている時だけは、どれを外すか決められないので止める
+ *
  * 守る決まり (ゲームと同じ):
  *   - ノーマルに付けたらマジック。マジックはプレ 1・サフィ 1 (3 つ目は王者でレアにしてから)。レアは側ごとの枠 (ベースの limits)
  *   - 同じ系統の MOD が付いていれば付かない
@@ -15,10 +19,10 @@
  */
 import { applyRune, runeKeyForId } from "./stage-runes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { essenceClash, familyBlocked } from "../mods/mod-rules";
+import { essenceClash, familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
 import { craftedLimitOf, normalTierOf } from "./apply-essence";
 import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, takenCraftedFamilies, unfracturable, withMod } from "./stage-core";
-import type { StageApply, StageItem, StageSide } from "./types";
+import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
 
 export type ForceFlag = "n" | "e" | "d" | "f" | "x";
@@ -48,13 +52,18 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   }
   // ユニークには足せない (2026-10-08 使い倒しテスト)
   if (item.rarity === "unique") return skip(item, tr("ユニークには MOD を足せない", "Can't add mods to a Unique"));
-  // ノーマルに付けたらマジック。エッセンスの MOD は必ずレア (普通のエッセンス = ノーマル / マジック → レア、パーフェクト = レアだけ)
-  const perfect = mod.source === "perfect_essence";
-  if (p.flag === "e" && perfect && item.rarity !== "rare") return skip(item, tr("パーフェクトエッセンスはレアにだけ (先に王者か錬金でレアに)", "Perfect Essences: Rares only (Regal or Alchemy first)"));
-  let it: StageItem = p.flag === "e" ? (item.rarity === "rare" ? item : { ...item, rarity: "rare" }) : item.rarity === "normal" ? { ...item, rarity: "magic" } : item;
+  // ノーマルに付けたらマジック。エッセンス・冒涜・フラクチャーはレアにだけなので、レアにしてから付ける (パーフェクトエッセンスも)
+  const needsRare = p.flag === "e" || p.flag === "d" || p.flag === "f";
+  let it: StageItem = needsRare ? (item.rarity === "rare" ? item : { ...item, rarity: "rare" }) : item.rarity === "normal" ? { ...item, rarity: "magic" } : item;
   // マジックで同じ側が埋まっていたら、王者を打った事にしてレアに (1 つずつ止まらない。2026-10-08 オーナー)
   if (it.rarity === "magic" && p.flag === "n" && !room(it, side)) it = { ...it, rarity: "rare" };
-  if ((p.flag === "d" || p.flag === "f") && it.rarity !== "rare") return skip(item, tr(`${p.flag === "d" ? "冒涜" : "フラクチャー"}の MOD はレアにだけ (先に王者か錬金でレアに)`, `${p.flag === "d" ? "Desecrated" : "Fractured"} mods: Rares only (Regal or Alchemy first)`));
+  /** 付けるために外した物 (固定した物は外さない) */
+  const removed: StageMod[] = [];
+  const drop = (m: StageMod): void => {
+    const f = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.filter((x) => x !== m);
+    it = { ...it, prefixes: f(it.prefixes), suffixes: f(it.suffixes) };
+    removed.push(m);
+  };
   // 冒涜で付けられるのは冒涜の MOD だけ (2026-10-08 オーナー「冒涜 MOD しか冒涜は付けれない」)
   if (p.flag === "d" && mod.source !== "desecrated" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skip(item, tr("冒涜で付くのは冒涜の MOD だけ", "Only Desecrated mods can be added by Desecration"));
   // フラクチャー: 同じ MOD が付いていればそれを固定する (付け直さない)
@@ -69,12 +78,14 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
       return { applied: true, item: { ...it, prefixes: swap(it.prefixes), suffixes: swap(it.suffixes) }, added: [fixed], removed: [] };
     }
   }
-  // 同じ系統が先 (枠より分かりやすい理由)
-  if (familyBlocked(mod, takenFamilies(data, it))) return skip(item, tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item"));
-  if (!room(it, side)) return skip(item, it.rarity === "magic"
-    ? tr(`マジックは${SIDE_JA[side]} 1 つまで (同じ側の 2 つ目は王者でレアにしてから)`, `Magic: 1 ${side} max (Regal it to Rare for a second)`)
-    : tr(`${SIDE_JA[side]}の枠が埋まっている`, `${side === "prefix" ? "Prefixes" : "Suffixes"} are full`));
-  if (p.flag === "d" && allMods(it).some((m) => m.desecrated)) return skip(item, tr("冒涜の MOD はアイテムに 1 つまで", "Only 1 Desecrated mod per item"));
+  // 冒涜は 1 つまで: 付いている冒涜 (未発現も) は入れ替える
+  if (p.flag === "d") for (const m of allMods(it).filter((x) => x.desecrated)) drop(m);
+  // 同じ系統の MOD は外して入れ替える (固定した物が塞いでいる時だけ止める)。理由は枠より先
+  if (familyBlocked(mod, takenFamilies(data, it))) {
+    const blockers = allMods(it).filter((m) => { const md = data.mods.get(m.modId); return !!md && familyBlocked(mod, new Set(occupiedKeysOf(md))); });
+    if (blockers.some((m) => m.fractured)) return skip(item, tr("同じ系統の MOD が固定されている", "A fractured mod of the same group is on the item"));
+    for (const m of blockers) drop(m);
+  }
   if (p.flag === "f" && allMods(it).some((m) => m.fractured)) return skip(item, tr("フラクチャーは 1 つまで", "Only 1 Fractured mod"));
   // 固定で付けるエッセンスの MOD は、その印も付ける (上限まで。2026-10-10 要望「創生の樹もフラクチャーできるように」。冒涜は固定できない)
   const otherworldly = [...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId);
@@ -83,10 +94,20 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   const asDesecrated = p.flag === "d";
   const asCrafted = p.flag === "e" || (p.flag === "f" && (mod.source === "essence" || mod.source === "perfect_essence"));
   if (asCrafted) {
+    // エッセンスの MOD どうしで系統が重なる物、上限 (1 つ、アストリッドの創造性で 2 つ) を超える分は入れ替える (固定した物は外さない)
+    for (const m of allMods(it).filter((x) => x.crafted && !x.fractured)) { const md = data.mods.get(m.modId); if (md && essenceClash(mod, new Set([md.family, ...(md.families ?? [])]))) drop(m); }
+    if (essenceClash(mod, takenCraftedFamilies(data, it))) return skip(item, tr("エッセンスの MOD どうしで系統が重なる (固定されている)", "A fractured Essence mod shares the same group"));
     const limit = craftedLimitOf(it);
-    if (allMods(it).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? tr("クラフト MOD はアストリッドの創造性込みで 2 つまで", "Max 2 crafted mods (with Astrid's Creativity)") : tr("エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)", "Only 1 Essence mod per item (2 with Astrid's Creativity)"));
-    if (essenceClash(mod, takenCraftedFamilies(data, it))) return skip(item, tr("エッセンスの MOD どうしで系統が重なる", "Essence mods share the same group"));
+    const crafted = allMods(it).filter((m) => m.crafted);
+    if (crafted.length >= limit) {
+      const swap = crafted.find((m) => !m.fractured && m.side === side) ?? crafted.find((m) => !m.fractured);
+      if (!swap) return skip(item, tr("エッセンスの MOD が固定されていて入れ替えられない", "The Essence mod is fractured and can't be replaced"));
+      drop(swap);
+    }
   }
+  if (!room(it, side)) return skip(item, it.rarity === "magic"
+    ? tr(`マジックは${SIDE_JA[side]} 1 つまで (同じ側の 2 つ目は王者でレアにしてから)`, `Magic: 1 ${side} max (Regal it to Rare for a second)`)
+    : tr(`${SIDE_JA[side]}の枠が埋まっている`, `${side === "prefix" ? "Prefixes" : "Suffixes"} are full`));
   // 特殊 MOD のルーン: 差していなければ先に差す (2026-10-09 オーナー「手動で付けた場合はルーン勝手にはめておｋ、セットで」)
   let socketed: StageApply["augment"] | undefined;
   if (mod.rune && !stageRuneIds(it).includes(mod.rune)) {
@@ -108,5 +129,5 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
     ...(asDesecrated ? { desecrated: true } : {}),
     ...(p.flag === "f" ? { fractured: true } : {}),
   };
-  return { applied: true, item: withMod(it, sm), added: [sm], removed: [], ...(socketed ? { augment: socketed } : {}) };
+  return { applied: true, item: withMod(it, sm), added: [sm], removed, ...(socketed ? { augment: socketed } : {}) };
 }
