@@ -1,15 +1,12 @@
 {
   "schema": "poe2tube-script/1",
-  "title": "【PoE2】無料のクラフトシミュレーター ExileDesk を作りました: テスター募集",
-  "target_seconds": 330,
+  "title": "【PoE2】無料のクラフトエミュレーター ExileDesk を作りました: 使い方とテスター募集",
+  "target_seconds": 420,
   "result_file": "data/results/exiledesk_promo.json",
   "final_step": 6,
   "layout": "wide",
-  "planned_sections": 6,
-  "demos": {
-    "reveal": "data/results/exiledesk_promo__reveal.json",
-    "serle": "data/results/exiledesk_promo__serle.json"
-  },
+  "planned_sections": 8,
+  "demos": {},
   "sections": [
     {
       "name": "導入",
@@ -17,142 +14,118 @@
       "lines": [
         {
           "speaker": "zundamon",
-          "emotion": "normal",
-          "text": "今までの動画のクラフトの画面、あれってAIで作った絵なのだ？",
-          "scene": {
-            "kind": "stage",
-            "step": 9,
-            "demo": "serle",
-            "still": true
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "実は違うの。今まで見せた画面は全部、生成AIの絵じゃないの。アプリを実際に動かして撮っていたのよ。",
-          "scene": {
-            "kind": "stage",
-            "step": 9,
-            "demo": "serle",
-            "still": true
-          }
-        },
-        {
-          "speaker": "zundamon",
           "emotion": "surprised",
-          "text": "えっ、全部本物なのだ！？",
+          "text": "すごい指輪なのだ！オーブをいくつ使ったのだ？",
           "scene": {
-            "kind": "stage",
-            "step": 9,
-            "demo": "serle",
-            "still": true
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "そう。オーブを打った結果も、MODの数字も、アプリが出した物をそのまま見せていたの。",
+          "text": "実は、本物のオーブは1個も使っていないの。ブラウザの中で打った指輪よ。",
           "scene": {
-            "kind": "stage",
-            "step": 3,
-            "demo": "reveal",
-            "still": true
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
           }
         },
         {
           "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "1個も使ってないのだ？ブラウザでクラフトなのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。ExileDeskっていう、クラフトを試せる道具を作ったの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_craft",
+            "at": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ゲームと同じ決まりで、オーブや骨を打って、何が付くかを試せるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_craft",
+            "at": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "失敗しても、やり直せるのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_craft",
+            "at": 8
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "何回でも、好きなだけ打てるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_craft",
+            "at": 10
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "高いカレンシーを使う前の練習や、どれくらい当たるかの確認にちょうどいいわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_craft",
+            "at": 13
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "お値段はいくらなのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "metan",
           "emotion": "happy",
-          "text": "だから数字がちゃんとしてたのだ。",
+          "text": "無料よ。ブラウザで開くだけで、スマホでも使えるわ。リンクは説明欄に貼っておくわね。",
           "scene": {
-            "kind": "stage",
-            "step": 3,
-            "demo": "reveal",
-            "still": true
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "そのアプリがExileDesk。PoE2のクラフトを、実際に打って試せるツールよ。",
+          "text": "個人で作っている非公式の道具だから、まだ試してくれる人が全然足りないの。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "例えば、白い指輪にオーブを打っていくと……。",
-          "scene": {
-            "kind": "stage",
-            "step": 0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "付くMODは、打つたびにその場の抽選で決まるわ。",
-          "scene": {
-            "kind": "stage",
-            "step": 1
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "troubled",
-          "text": "動画のために、都合よく作った結果じゃないのだ？",
-          "scene": {
-            "kind": "stage",
-            "step": 1
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "違うわ。打ったら本当にこうなった、っていう結果をそのまま見せているの。",
-          "scene": {
-            "kind": "stage",
-            "step": 1
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "ガチの結果なのだ！",
-          "scene": {
-            "kind": "stage",
-            "step": 1
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "そのExileDeskのウェブ版を、無料で公開したの。ブラウザで開くだけで、誰でも使えるわ。",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "surprised",
-          "text": "タダなのだ！？",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "ただ、試してくれる人が全然足りないの。",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
           }
         },
         {
@@ -160,79 +133,122 @@
           "emotion": "normal",
           "text": "テスターを探してるのだ？",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "そう。今日はできることを紹介するから、使ってみて、感想をコメント欄に書いてね。",
+          "text": "そう。今日は使い方を紹介するから、触ってみて、感想をコメント欄に書いてね。",
           "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
           }
         }
       ]
     },
     {
-      "name": "手で打つ",
-      "target_seconds": 60,
+      "name": "ベースを選んで打つ",
+      "target_seconds": 80,
       "lines": [
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "ここからは使い方。まずは「手で打つ」画面から。",
+          "text": "ここからは使い方。まずはベースを選ぶわ。",
           "scene": {
             "kind": "footage",
             "clip": "open",
             "at": 0,
-            "hold": 1.0
+            "hold": 1
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "左にアイテム、右にカレンシーの棚。棚のオーブを押して持って、アイテムを押すと1回使えるわ。",
+          "text": "「ベースを変える」を押すと、部位の絵が並ぶの。",
           "scene": {
             "kind": "footage",
             "clip": "open",
-            "at": 1.0,
-            "hold": 1.8
+            "at": 1
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "ベースは1000種類から選べて、アイテムレベルも変えられるの。",
+          "text": "指輪を押して、金の指輪を選ぶわね。武器や防具は、筋力や器用さの札でさらに分かれるわ。",
           "scene": {
             "kind": "footage",
             "clip": "open",
-            "at": 1.8
+            "at": 3
           }
         },
         {
           "speaker": "zundamon",
-          "emotion": "troubled",
-          "text": "1回ずつ持ち直さないとダメなのだ？",
+          "emotion": "normal",
+          "text": "探すのが大変そうなのだ。",
           "scene": {
             "kind": "footage",
-            "clip": "orbs",
-            "at": 0,
-            "hold": 1.8
+            "clip": "open",
+            "at": 6
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "持ったまま、アイテムを何回も押せるわ。カオスオーブを何回も打つ時に便利よ。",
+          "text": "名前で探す欄もあるわ。アイテムレベルは、横の札で変えられるの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "open",
+            "at": 7
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "右がカレンシーの棚。今のアイテムに使える物だけが並ぶの。",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 1.8,
-            "hold": 2.9
+            "at": 0,
+            "hold": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "使えない物は出てこないのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 1,
+            "hold": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。アイコンを押して持って、アイテムを押すと1回使えるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 1,
+            "hold": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "持ったまま押せば、何回でも続けて打てるの。手放すのはEscか右クリックよ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 2,
+            "hold": 2
           }
         },
         {
@@ -242,19 +258,17 @@
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 2.9,
-            "hold": 4.0
+            "at": 2
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "物理ダメージを4から10追加、T6。",
+          "text": "〔結果: 変成〕",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 4.0,
-            "hold": 5.6
+            "at": 4
           }
         },
         {
@@ -264,30 +278,17 @@
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 5.6,
-            "hold": 6.55
+            "at": 5
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "全ての元素耐性+16%。T1よ。",
+          "text": "〔結果: 増強〕",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 6.55,
-            "hold": 8.1
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "surprised",
-          "text": "いきなりT1なのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "orbs",
-            "at": 8.1,
-            "hold": 8.1
+            "at": 6
           }
         },
         {
@@ -297,19 +298,17 @@
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 8.1,
-            "hold": 9.1
+            "at": 7
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "冷気耐性+40%、T2。",
+          "text": "〔結果: 王者〕",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 9.1,
-            "hold": 10.7
+            "at": 8
           }
         },
         {
@@ -319,648 +318,92 @@
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 10.7,
-            "hold": 11.65
+            "at": 9
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "混沌耐性+12%、T4。",
+          "text": "〔結果: 高貴 1回目〕",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 11.65,
-            "hold": 13.3
+            "at": 10
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "冷気ダメージ5%増加、T6。",
+          "text": "〔結果: 高貴 2回目〕",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 13.3,
-            "hold": 15.0
+            "at": 11
           }
         },
         {
-          "speaker": "zundamon",
-          "emotion": "sad",
-          "text": "しょぼいのが付いたのだ……。",
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "〔結果: 高貴 3回目〕これで6つ埋まったわ。",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 15.0,
-            "hold": 15.0
+            "at": 12
           }
         },
         {
-          "speaker": "metan",
+          "speaker": "zundamon",
           "emotion": "normal",
-          "text": "それも抽選の結果ね。最後の1回。",
+          "text": "MODの横の小さい字は何なのだ？",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 15.0,
-            "hold": 15.2
+            "at": 13,
+            "hold": 13
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "最大マナ+40、T9。これで6つ埋まったわ。",
+          "text": "PとSはプレフィックスとサフィックス。横の数字はティアよ。",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 15.2
+            "at": 13,
+            "hold": 13
           }
         },
         {
-          "speaker": "zundamon",
-          "emotion": "troubled",
-          "text": "失敗したら、戻せるのだ？",
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "右の%は、そのMODが付いた瞬間の確率。すごく低い時は、黄色の太字で出るわ。",
           "scene": {
             "kind": "footage",
             "clip": "orbs",
-            "at": 18.0,
-            "hold": 18.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "「1手戻す」を押せば、1つ前に戻せるわ。Ctrl+Zでもいいの。",
-          "scene": {
-            "kind": "footage",
-            "clip": "undo",
-            "at": 0,
-            "hold": 3.5
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "surprised",
-          "text": "ゲームじゃできないのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "undo",
-            "at": 3.5,
-            "hold": 3.5
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "何度でも試せるから、本番の前の練習にちょうどいいわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "undo",
-            "at": 3.5,
-            "hold": 3.5
-          }
-        }
-      ]
-    },
-    {
-      "name": "骨・お告げ・ルーン",
-      "target_seconds": 50,
-      "lines": [
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "骨やお告げも打てるわ。後編で見せた冒涜と発現も、そのままよ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "reveal",
-            "at": 0,
-            "hold": 6.5
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "surprised",
-          "text": "未発現の冒涜MODなのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "reveal",
-            "at": 6.5,
-            "hold": 8.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "魂の井戸で発現すると、候補が3つ出るの。",
-          "scene": {
-            "kind": "footage",
-            "clip": "reveal",
-            "at": 8.0,
-            "hold": 9.6
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "アビスの反響のお告げを使っておけば、引き直しもできるわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "reveal",
-            "at": 9.6,
-            "hold": 11.6
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "引き直した中から、ライフリーチ量13%増加を選ぶわね。T1よ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "reveal",
-            "at": 11.6,
-            "hold": 13.6
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "カーソルで選んで、ちゃんと付いたのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "reveal",
-            "at": 13.6,
-            "hold": 13.6
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "ルーンも差せるわ。6つで埋まった胴に、セールの凱旋を差すわね。",
-          "scene": {
-            "kind": "footage",
-            "clip": "rune",
-            "at": 0,
-            "hold": 5.2
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "サフィックスモッド+1個。",
-          "scene": {
-            "kind": "footage",
-            "clip": "rune",
-            "at": 5.2,
-            "hold": 7.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "高貴なオーブを使うわね。",
-          "scene": {
-            "kind": "footage",
-            "clip": "rune",
-            "at": 7.0,
-            "hold": 9.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "筋力+21が、4つ目のサフィックスに付いたわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "rune",
-            "at": 9.0
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "7つ目のMODなのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "rune",
-            "at": 12.0,
-            "hold": 12.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "お告げは23種類、ルーンやソウルコアは300種類以上。クラフトに使う物は、ほとんど打てるわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "rune",
-            "at": 12.0,
-            "hold": 12.0
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "全部試せるのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "rune",
-            "at": 12.0,
-            "hold": 12.0
-          }
-        }
-      ]
-    },
-    {
-      "name": "MOD一覧とティア表",
-      "target_seconds": 45,
-      "lines": [
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "画面の下には、このベースに付くMODの一覧も出るわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 0,
-            "hold": 4.4
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "行を押すとティアの表が開いて、数値の幅と、ティアごとの出やすさが見られるの。",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 4.4,
-            "hold": 6.6
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "surprised",
-          "text": "T1がどれくらい出にくいか、分かるのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 6.6,
-            "hold": 6.6
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "出やすさは、データサイトのpoe2dbの推定を使っているわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 6.6,
-            "hold": 6.6
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "troubled",
-          "text": "公式の数字じゃないのだ？",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 6.6,
-            "hold": 6.6
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "公式は出やすさを公開していないの。だから目安として見てね。",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 6.6,
-            "hold": 6.6
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "それと、好きなMODを選んで、その状態から始めることもできるわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 6.6,
-            "hold": 9.0
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "surprised",
-          "text": "狙いのMODが付いた所から、試せるのだ？",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 9.0,
-            "hold": 11.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "そう。フラクチャーや冒涜のMODも選べるから、作りたい装備の途中から練習できるわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 11.0,
-            "rate": 2.0
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "便利なのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "modlist",
-            "at": 23.0,
-            "hold": 23.0
-          }
-        }
-      ]
-    },
-    {
-      "name": "シミュレーション",
-      "target_seconds": 70,
-      "lines": [
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "最後に、実験中の機能も紹介するわ。シミュレーションよ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 0,
-            "hold": 2.0
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "troubled",
-          "text": "何をシミュレーションするのだ？",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 2.0,
-            "hold": 2.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "狙うMODを選ぶと、作り方ごとに、1個作るのにいくらかかるかを見積もってくれるの。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 2.0,
-            "hold": 5.5
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "今回は手袋で、最大ライフとアタックスピードを狙うわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 5.5,
-            "hold": 13.0,
-            "rate": 1.5
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "ライフはフラクチャーで固定、アタックスピードはカオススパムで付けるの。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 13.0,
-            "hold": 17.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "フラクチャーしたベースを買うか、自分で作るか。一番安い始め方も比べられるわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 17.0,
-            "hold": 21.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "ベースの値段は自分で入れるの。この例だと、フラクチャー済みを買うのが一番安いって出たわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 21.0,
-            "hold": 25.0
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "surprised",
-          "text": "お金のことまで分かるのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 25.0,
-            "hold": 25.0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "次に打ち方を組むの。高貴で3つ埋めてから、アタックスピードが付くまでカオスで入れ替える。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 25.0,
-            "hold": 43.5,
-            "rate": 3.0
+            "at": 13,
+            "hold": 13
           }
         },
         {
           "speaker": "zundamon",
           "emotion": "normal",
-          "text": "それを何回も試すのだ？",
+          "text": "運が良かったか、すぐ分かるのだ！",
           "scene": {
             "kind": "footage",
-            "clip": "sim",
-            "at": 43.5,
-            "hold": 43.5
+            "clip": "orbs",
+            "at": 13,
+            "hold": 13
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "「回す」を押すと、500人分を一気に試してくれるわ。",
+          "text": "打った手は、下の工程に新しい順で並ぶの。使った分の値段の合計も出るわ。",
           "scene": {
             "kind": "footage",
-            "clip": "sim",
-            "at": 43.5
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "何回も作った時の結果をまとめて、運が良い時と悪い時の幅も出してくれるわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 48.5,
-            "hold": 48.5
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "この手袋だと1個あたり41.0神。10人に9人は、56.1神までに完成するわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 48.5,
-            "hold": 48.5
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "運が悪い時の目安も分かるのだ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 48.5,
-            "hold": 48.5
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "まだ実験中で、作りも変わっていく所だから、使った感想を特に聞きたいわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "sim",
-            "at": 48.5,
-            "hold": 48.5
-          }
-        }
-      ]
-    },
-    {
-      "name": "テスター募集",
-      "target_seconds": 40,
-      "lines": [
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "改めてお願い。ExileDeskは、試してくれる人が全然足りないの。",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "troubled",
-          "text": "どんな感想を書けばいいのだ？",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "使いにくい所、ゲームと違う所、欲しい機能。良かった所も、悪かった所も歓迎よ。",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "normal",
-          "text": "「ここ間違ってる」でもいいのだ？",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "もちろん。ゲームで試して合わせているから、違う所を教えてもらえるのが一番助かるわ。",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "troubled",
-          "text": "ウェブ版は、どこから入れるのだ？",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "説明欄にリンクを貼っておくわ。無料で、ブラウザで開くだけよ。",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "使い倒して、コメント欄に書くのだ！",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "happy",
-          "text": "このチャンネルでは、PoE2の基礎を初心者向けにまとめていくわ。チャンネル登録もよろしくね。",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "よろしくなのだ！",
-          "scene": {
-            "kind": "stage",
-            "step": 0,
-            "still": true
+            "clip": "orbs",
+            "at": 13,
+            "hold": 13
           }
         }
       ]
