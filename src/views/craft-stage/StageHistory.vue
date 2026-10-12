@@ -21,7 +21,12 @@ type AugChange = { socket: number; put: { ja: string; en?: string }; replaced: {
 const augOf = (out: object): AugChange | null => (out as { augment_change?: AugChange }).augment_change ?? null;
 /** 押すとその手の直後に戻れるか (最後の手と再生中は戻らない) */
 const newestFirst = computed(() => [...craftStage.log.value].reverse());
-const canGo = (index: number): boolean => !craftStage.replay.value && craftStage.log.value[craftStage.log.value.length - 1]?.out.index !== index;
+/** 共有の手順の再生 (2026-10-12) は押すとその手まで送る (先の手は上の ▶ で戻せる) */
+const sharedReplay = computed(() => !!craftStage.replay.value?.shared);
+const canGo = (index: number): boolean => (!craftStage.replay.value || sharedReplay.value) && craftStage.log.value[craftStage.log.value.length - 1]?.out.index !== index;
+const go = (index: number): void => { if (!canGo(index)) return; if (sharedReplay.value) craftStage.replayTo(index); else craftStage.goTo(index); };
+const goStart = (): void => { if (sharedReplay.value) craftStage.replayTo(0); else craftStage.goToStart(); };
+const goTitle = computed(() => (sharedReplay.value ? tr("この手まで送る (▶ で先へ)", "Jump to this step (▶ to go forward)") : tr("この手を打った直後に戻す (この後に打つと先の手は消える)", "Go back to right after this step (later steps are dropped if you craft from here)")));
 </script>
 
 <template>
@@ -31,10 +36,10 @@ const canGo = (index: number): boolean => !craftStage.replay.value && craftStage
       :key="s.out.index"
       class="flex items-start gap-2 rounded-lg border px-2 py-1.5 text-[12px]"
       :class="[s.out.applied ? 'border-white/10 bg-black/20' : 'border-white/5 bg-black/10 opacity-50', canGo(s.out.index) ? 'cursor-pointer hover:border-white/30 hover:bg-white/5' : '']"
-      :title="canGo(s.out.index) ? tr('この手を打った直後に戻す (この後に打つと先の手は消える)', 'Go back to right after this step (later steps are dropped if you craft from here)') : undefined"
+      :title="canGo(s.out.index) ? goTitle : undefined"
       :tabindex="canGo(s.out.index) ? 0 : undefined"
-      @click="canGo(s.out.index) && craftStage.goTo(s.out.index)"
-      @keydown.enter="canGo(s.out.index) && craftStage.goTo(s.out.index)"
+      @click="go(s.out.index)"
+      @keydown.enter="go(s.out.index)"
     >
       <span class="w-6 shrink-0 text-right tabular-nums opacity-50">{{ s.out.index }}</span>
       <img v-if="iconOf(s.out.currency)" :src="iconOf(s.out.currency)" alt="" class="h-5 w-5 shrink-0 object-contain" />
@@ -67,11 +72,11 @@ const canGo = (index: number): boolean => !craftStage.replay.value && craftStage
     <li
       v-if="craftStage.log.value.length"
       class="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-[12px]"
-      :class="craftStage.replay.value ? '' : 'cursor-pointer hover:border-white/30 hover:bg-white/5'"
-      :title="craftStage.replay.value ? undefined : tr('1 手も打っていない状態に戻す (この後に打つと先の手は消える)', 'Go back to the start (later steps are dropped if you craft from here)')"
-      :tabindex="craftStage.replay.value ? undefined : 0"
-      @click="craftStage.goToStart()"
-      @keydown.enter="craftStage.goToStart()"
+      :class="craftStage.replay.value && !sharedReplay ? '' : 'cursor-pointer hover:border-white/30 hover:bg-white/5'"
+      :title="craftStage.replay.value && !sharedReplay ? undefined : sharedReplay ? tr('始めへ送る', 'Jump to the start') : tr('1 手も打っていない状態に戻す (この後に打つと先の手は消える)', 'Go back to the start (later steps are dropped if you craft from here)')"
+      :tabindex="craftStage.replay.value && !sharedReplay ? undefined : 0"
+      @click="goStart()"
+      @keydown.enter="goStart()"
     >
       <span class="w-6 shrink-0 text-right tabular-nums opacity-50">0</span>
       <b>{{ tr("始め", "Start") }}</b>

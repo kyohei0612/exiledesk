@@ -97,6 +97,8 @@ const USE_JA: Array<[string, string]> = [
   ["hand:base", "エミュレーター: ベースを選んだ"], ["hand:use", "エミュレーター"], ["mode:sim", "シミュレーションを開いた"], ["sim:base", "シミュレーション: ベースを選んだ"], ["sim:targets", "シミュレーション: 狙いを決めた"],
   ["sim:order", "シミュレーション: 順番を決めた"], ["sim:pattern", "シミュレーション: 手順を組んだ"], ["sim:run", "シミュレーションを回した"], ["sim:done", "シミュレーションで完成まで出た"],
   ["trade:open", "取引所を開いた"], ["recipe:save", "レシピを保存した"], ["feedback:open", "要望・バグの窓を開いた"], ["feedback:sent", "要望・バグを送った"],
+  // 手順の共有 (2026-10-12)。URL の # に全部入れるのでサーバーは数えない。押した・共有のリンクから開いたを印で数える
+  ["share:copy", "手順を共有した"], ["share:open", "共有の手順から来た人"],
 ];
 /** 分 → 「4 分」「1 時間 20 分」 */
 export const dur = (min: number): string => {

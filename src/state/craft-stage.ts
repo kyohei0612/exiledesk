@@ -34,6 +34,8 @@ import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
 import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../services/craft-stage/defence";
 import { socketCapOf } from "../services/craft-stage/stage-runes";
 import { tr, lang } from "../i18n/lang";
+import { decodeShare, shareBlock, shareCodeOf } from "../services/craft-stage/share";
+import { trackOnce } from "../utils/track";
 /**
  * 手で打つ画面の新品は、規格外のソケット数 (熟練工で付けられる数 +1) で始める (2026-10-04 オーナー「オーブ刺すのめんどいから、ソケットも初めからデフォでマックス」)。
  * 手順 JSON の再生 (動画) は手順どおりなので開けない
@@ -70,7 +72,8 @@ function stepSeedFor(key: string): number {
 }
 const error = ref<string | null>(null);
 /** 再生モード (URL の手順)。手で打つ操作は止める */
-const replay = ref<{ plan: CraftStagePlan; step: number } | null>(null);
+/** shared = 共有の URL (#share=) から開いた ([[share.ts]])。手を前後に送れて、「ここから打つ」で手で打つ方へ続けられる */
+const replay = ref<{ plan: CraftStagePlan; step: number; shared?: boolean } | null>(null);
 const base = ref("Gold Ring");
 const itemLevel = ref(82);
 /** 動画モード (開始の手・自動再生・操作欄) */
@@ -470,8 +473,21 @@ export const craftStage = {
       const step = Number(q.get("step") ?? "9999");
       const wantVideo = q.get("video") === "1";
       // 動画モードは手順を最後まで打っておき、step の手から見せる (前後に動かせるように)
+      // 共有の URL (#share=…、2026-10-12)。# は読んだら消す (打ち始めた後に読み直して共有の手順に戻らないように)
+      const shared = raw ? null : shareCodeOf(location.hash);
       if (raw) craftStage.loadReplay(JSON.parse(raw) as CraftStagePlan, wantVideo ? 9999 : step);
-      else craftStage.reset();
+      else if (shared) {
+        try { history.replaceState(null, "", location.pathname + location.search); } catch { /* 消せなくても開く */ }
+        craftStage.reset();
+        try {
+          const plan = await decodeShare(shared);
+          await market;
+          craftStage.loadReplay(plan, 9999, true);
+          trackOnce("share:open");
+        } catch (e) {
+          error.value = tr(`共有の手順が読めませんでした (${e instanceof Error ? e.message : String(e)})`, `Couldn't open the shared steps (${e instanceof Error ? e.message : String(e)})`);
+        }
+      } else craftStage.reset();
       if (raw && wantVideo) {
         const at = q.get("anim_t");
         // &offers=1 (発現の 3 択の静止画) は、同じ手つきを 3 択が出そろった瞬間 (pick_ms) で止めた絵 (POE2Tube 要望 ㉗: 静止画と手つきの
@@ -512,10 +528,11 @@ export const craftStage = {
     if (!data.value) return;
     try {
       startMods.value = [];
-      item.value = { ...fullSockets(freshItem(data.value, base.value, itemLevel.value)), rollSeed: seed.value };
       log.value = [];
       omens.value = [];
       seed.value = newSeed();
+      // 値を振る種は再生 (手順 JSON・共有) と同じ seed − 1 (前は前の seed のままで、再生とユニークの数値がずれた)
+      item.value = { ...fullSockets(freshItem(data.value, base.value, itemLevel.value)), rollSeed: seed.value - 1 };
       error.value = null;
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
@@ -629,8 +646,38 @@ export const craftStage = {
   prices(): Record<string, number> {
     return Object.fromEntries(priceKeysAll().map((k) => [k, priceOf(k)]).filter(([, v]) => (v as number) > 0));
   },
+  /**
+   * 共有できない理由 (できるなら null)。最初のカレンシーの後に手で MOD を足していたら共有できない ([[share.ts]])。
+   * 再生中 (共有の URL から開いた時も) はその手順をそのまま渡せる
+   */
+  shareWhy: computed((): string | null => (replay.value ? null : shareBlock(log.value.map((s) => ({ currency: s.out.currency, index: s.out.index }))))),
+  /** 共有する手順 (再生中はその手順を全部) */
+  sharePlan(): CraftStagePlan {
+    return replay.value?.plan ?? craftStage.plan();
+  },
+  /** 再生の手を送る (0 = 始め、手順の手の数まで) */
+  replayTo(step: number): void {
+    const r = replay.value;
+    if (!r) return;
+    const all = r.plan.steps.reduce((n, s) => n + (s.times ?? 1), 0);
+    craftStage.loadReplay(r.plan, Math.max(0, Math.min(all, step)), r.shared);
+  },
+  /** 再生の手の数 (times 込み) */
+  replayLength: computed(() => replay.value?.plan.steps.reduce((n, s) => n + (s.times ?? 1), 0) ?? 0),
+  /**
+   * 再生している今の手から、手で打つ方へ続ける (共有の手順の続きを自分で打つ)。工程はそのまま残るので 1 手戻す・工程を押して戻るもそのまま使える
+   */
+  continueFromReplay(): void {
+    const r = replay.value;
+    if (!r) return;
+    startMods.value = (r.plan as { start?: StartSpec }).start?.mods ?? [];
+    omens.value = [];
+    held.value = null;
+    rollSeed.value = freshSeed();
+    replay.value = null;
+  },
   /** 再生: 手順 JSON を step 手目まで打った状態 */
-  loadReplay(plan: CraftStagePlan, step: number): void {
+  loadReplay(plan: CraftStagePlan, step: number, shared = false): void {
     if (!data.value) return;
     try {
       base.value = plan.base;
@@ -639,7 +686,7 @@ export const craftStage = {
       const keys = [...new Set([...plan.steps.flatMap((s) => [s.currency, ...(s.omen ? s.omen.split("+") : [])]), ...priceKeysAll()])];
       const prices = Object.fromEntries(keys.map((k) => [k, priceOf(k)]));
       const { steps, final } = playPlan(data.value, plan, prices, step);
-      replay.value = { plan, step };
+      replay.value = { plan, step, ...(shared ? { shared } : {}) };
       seed.value = plan.seed;
       log.value = steps;
       item.value = final;

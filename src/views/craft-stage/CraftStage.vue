@@ -49,6 +49,9 @@ import HelpTip from "../../components/ui/HelpTip.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import Icon from "../../components/ui/Icon.vue";
 import { searchModGroups, type ModGroup } from "../../services/craft-stage/trade-search";
+import { encodeShare, shareUrl, xIntentUrl } from "../../services/craft-stage/share";
+import { openExternal } from "../../services/trade2/open-external";
+import { track } from "../../utils/track";
 import type { StageMod } from "../../services/craft-stage/types";
 
 const s = craftStage;
@@ -125,6 +128,34 @@ async function copy(label: string, v: unknown): Promise<void> {
     copyNote.flash(tr("コピーできませんでした", "Copy failed"));
   }
 }
+/**
+ * 手順の共有 (2026-10-12)。手順を全部 URL の # に縮めて入れる (サーバー・KV は使わない、[[share.ts]])。
+ * 押すと URL をコピーして、X に投稿するボタンも出す。最初のカレンシーの後に手で MOD を足していたら押せない (理由を出す)
+ */
+const shareOpen = ref<{ url: string; copied: boolean } | null>(null);
+async function openShare(): Promise<void> {
+  if (s.shareWhy.value) return;
+  try {
+    const url = shareUrl(await encodeShare(s.sharePlan()), inApp);
+    let ok = true;
+    try { await navigator.clipboard.writeText(url); } catch { ok = false; }
+    shareOpen.value = { url, copied: ok };
+    track("share:copy");
+  } catch {
+    copyNote.flash(tr("共有の URL を作れませんでした", "Couldn't make the share URL"));
+  }
+}
+async function copyShare(): Promise<void> {
+  const o = shareOpen.value;
+  if (!o) return;
+  try { await navigator.clipboard.writeText(o.url); o.copied = true; } catch { o.copied = false; }
+}
+function postToX(e: MouseEvent, url: string): void {
+  if (!inApp) return;
+  e.preventDefault();
+  void openExternal(xIntentUrl(url));
+}
+watch(() => s.log.value, () => { shareOpen.value = null; });
 /** シミュレーションでまだベースを選んでいない (ベース選びだけを出す) */
 /**
  * シミュレーションは開くたびにまっさら (ベースを選ぶ所) から。前回閉じた途中は戻さない
@@ -273,6 +304,8 @@ const FIRST_BASE_KEY = "exiledesk.stage.basePicked";
 let firstTime = false;
 try { firstTime = !localStorage.getItem(FIRST_BASE_KEY); } catch { /* 覚えられない時は今まで通り */ }
 const handNoBase = ref(!inApp && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
+// 共有の URL から開いた時はベースが決まっている (ここから打つ・白から打つで、ベース選びに戻さない)
+watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
 /** 白に戻す (2 回押し。2026-10-10 動きの揃え 7: utils/use-armed.ts) */
 const resetArm = useArmed();
 function armReset(): void {
@@ -387,7 +420,21 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     </div>
 
     <!-- 再生モード -->
-    <div v-if="s.replay.value" class="mb-3 flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
+    <div v-if="s.replay.value?.shared" class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
+      <b class="text-sky-200">{{ tr("共有された手順", "Shared steps") }}</b>
+      <span class="tabular-nums">{{ s.item.value ? baseNameOf(s.item.value) : s.replay.value.plan.base }} · {{ tr(`${s.log.value.length} / ${s.replayLength.value} 手目`, `step ${s.log.value.length} / ${s.replayLength.value}`) }}</span>
+      <span class="flex items-center gap-1">
+        <button type="button" :class="btn" class="max-md:min-h-10" :disabled="!s.log.value.length" :title="tr('始めへ', 'To the start')" @click="s.replayTo(0)">|◀</button>
+        <button type="button" :class="btn" class="max-md:min-h-10" :disabled="!s.log.value.length" :title="tr('1 手戻す', 'Back 1 step')" @click="s.replayTo(s.log.value.length - 1)">◀</button>
+        <button type="button" :class="btn" class="max-md:min-h-10" :disabled="s.log.value.length >= s.replayLength.value" :title="tr('1 手進める', 'Forward 1 step')" @click="s.replayTo(s.log.value.length + 1)">▶</button>
+        <button type="button" :class="btn" class="max-md:min-h-10" :disabled="s.log.value.length >= s.replayLength.value" :title="tr('最後へ', 'To the end')" @click="s.replayTo(s.replayLength.value)">▶|</button>
+      </span>
+      <span class="ml-auto flex items-center gap-1.5 max-md:ml-0">
+        <button type="button" :class="btn" class="max-md:min-h-10" :title="tr('今の手から自分で打つ (工程はそのまま)', 'Craft on from this step (steps are kept)')" @click="s.continueFromReplay()">{{ tr("ここから打つ", "Craft from here") }}</button>
+        <button type="button" :class="btn" class="max-md:min-h-10" @click="s.leaveReplay()">{{ tr("白から打つ", "Start fresh") }}</button>
+      </span>
+    </div>
+    <div v-else-if="s.replay.value" class="mb-3 flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
       <b class="text-sky-200">{{ tr("再生中", "Replaying") }}</b>
       <span>{{ s.replay.value.plan.title ?? s.replay.value.plan.base }} · {{ tr(`${s.log.value.length} 手目まで`, `up to step ${s.log.value.length}`) }} (seed {{ s.replay.value.plan.seed }})</span>
       <button v-if="inApp" type="button" :class="btn" class="ml-auto max-md:hidden" @click="s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
@@ -494,7 +541,19 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <!-- 工程 (直前の変化の欄は外して累計だけ。新しい手が上。2026-10-10 オーナー「直前の変化いらんな、累計でおｋ、並び順は上が最新」) -->
         <!-- 上の説明の行との間をカードとの間と同じに (mt-2)、中身は枠に少し近く (p-1)。2026-10-11 オーナー -->
         <div class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
-          <p class="g-sec-head"><b class="g-sec-title">{{ tr("工程", "Steps") }}</b><span class="g-sec-sub">{{ inApp ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span><span class="ml-auto tabular-nums opacity-70">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
+          <p class="g-sec-head"><b class="g-sec-title">{{ tr("工程", "Steps") }}</b><span class="g-sec-sub">{{ inApp || s.replay.value ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span>
+            <!-- 手順の共有 (2026-10-12)。押せない時は理由を title に (打ち始めた後の手で足した MOD は下にも 1 行) -->
+            <span :title="s.shareWhy.value ?? tr('この手順を URL で共有 (受け取った人は同じベースから同じ結果を再生できる)', 'Share these steps as a URL (others can replay them with the same results)')"><button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-9" :disabled="!!s.shareWhy.value" :aria-expanded="!!shareOpen" @click="shareOpen ? (shareOpen = null) : openShare()"><Icon name="link" class="size-3.5" />{{ tr("共有", "Share") }}</button></span>
+            <span class="ml-auto tabular-nums opacity-70">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
+          <p v-if="s.shareWhy.value && s.log.value.length && !shareOpen" class="-mt-1 mb-1 px-1 text-[11px] text-amber-200/80">{{ tr("共有できない", "Can't share") }}: {{ s.shareWhy.value }}</p>
+          <div v-if="shareOpen" class="mb-2 rounded-lg border border-white/10 bg-black/30 p-2">
+            <p class="mb-1.5 flex items-center gap-2"><span :class="shareOpen.copied ? 'text-emerald-300' : 'text-amber-200'">{{ shareOpen.copied ? tr("URL をコピーしました", "URL copied") : tr("下の URL をコピーしてください", "Copy the URL below") }}</span><button type="button" class="g-plain ml-auto px-1 opacity-60 hover:opacity-100" :title="tr('閉じる', 'Close')" @click="shareOpen = null">×</button></p>
+            <input :value="shareOpen.url" readonly class="mb-1.5 w-full truncate rounded border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-[var(--exile-color-text-secondary)]" @focus="($event.target as HTMLInputElement).select()" />
+            <span class="flex gap-1.5">
+              <button type="button" class="g-btn sm max-md:min-h-10" @click="copyShare">{{ tr("URL をコピー", "Copy URL") }}</button>
+              <a :href="xIntentUrl(shareOpen.url)" target="_blank" rel="noopener" class="g-btn sm max-md:min-h-10" @click="postToX($event, shareOpen.url)">{{ tr("X に投稿", "Post on X") }}</a>
+            </span>
+          </div>
           <!-- 中で送るのはここだけ。伸びるのは 3 手ぶんくらいまで (2026-10-11 オーナー「工程はでかくなる必要ない、ここで固定値」) -->
           <div class="max-h-[200px] overflow-y-auto pr-1"><StageHistory /></div>
         </div>

@@ -7,3 +7,10 @@ export function track(name: string, extra?: string): void {
     (globalThis as { __exiledeskTrack?: (n: string, x?: string) => void }).__exiledeskTrack?.(name, extra);
   } catch { /* 印は落としてよい */ }
 }
+const once = new Set<string>();
+/** 同じ訪問で 1 回だけ数える印 */
+export function trackOnce(name: string): void {
+  if (once.has(name)) return;
+  once.add(name);
+  track(name);
+}

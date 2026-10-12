@@ -70,6 +70,7 @@ const TRAIL_JA: Record<string, string> = {
   "sim:run": "シミュレーションを回した", "sim:run:step": "1 手だけ回した", "sim:run:one": "1 本だけ回した", "sim:done": "シミュレーションが終わった",
   "recipe:save": "レシピを保存", "trade:open": "取引所を開いた", error: "エラー", ping: "表示中",
   "feedback:open": "要望の窓を開いた", "feedback:sent": "要望を送った",
+  "share:copy": "手順を共有した", "share:open": "共有の手順から開いた",
 };
 export function trailText(context: unknown, max = 14): string {
   const trail = (context as { trail?: unknown })?.trail;
