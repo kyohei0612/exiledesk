@@ -204,7 +204,9 @@ def stage_coverage(
         if ln.scene.kind == "stage" and ln.scene.step:
             by_demo.setdefault(ln.scene.demo, set()).add(ln.scene.step)
     if not by_demo:
-        return [] if not script.practice else ["実践 (stage) の行が無い"]
+        # アプリを操作した録画 (footage) で実践を見せる回は、録画が実践 (宣伝の回、2026-10-12)
+        filmed = any(ln.scene.kind == "footage" for ln in script.lines)
+        return [] if not script.practice or filmed else ["実践 (stage) の行が無い"]
     wanted: dict[str | None, int | None] = {None: n_steps}
     wanted.update((k, v) for k, v in (demo_steps or {}).items())
     problems: list[str] = []

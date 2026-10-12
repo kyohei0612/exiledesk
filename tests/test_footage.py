@@ -34,3 +34,24 @@ def test_scene_footage_needs_clip_and_at() -> None:
 
 def test_footage_frames_missing_clip(tmp_path: Path) -> None:
     assert footage_frames("nothing", 24, tmp_path) == []
+
+
+def test_lint_counts_footage_as_practice() -> None:
+    from poe2tube.script.lint import stage_coverage
+    from poe2tube.script.model import VideoScript
+
+    line = {"speaker": "metan", "emotion": "normal", "text": "打つわね。"}
+    base = {
+        "schema": "poe2tube-script/1",
+        "title": "t",
+        "target_seconds": 60,
+        "result_file": "data/results/x.json",
+        "sections": [
+            {
+                "name": "a",
+                "target_seconds": 60,
+                "lines": [{**line, "scene": {"kind": "footage", "clip": "orbs", "at": 0}}],
+            }
+        ],
+    }
+    assert stage_coverage(VideoScript.model_validate(base), None) == []
