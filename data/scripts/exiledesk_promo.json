@@ -1052,7 +1052,7 @@
           "text": "ウェブ版の上にある「要望・バグを送る」からも、直接送れるわ。",
           "scene": {
             "kind": "footage",
-            "clip": "intro_done",
+            "clip": "web_feedback",
             "at": 0,
             "hold": 0
           }
@@ -1063,7 +1063,7 @@
           "text": "コメント欄に書きにくい事も、送れるのだ。",
           "scene": {
             "kind": "footage",
-            "clip": "intro_done",
+            "clip": "web_feedback",
             "at": 0,
             "hold": 0
           }
