@@ -84,6 +84,8 @@ function decide(): void {
   if (!draft.value.length) return;
   s.aims.value = draft.value;
   close();
+  // 決めたら後ろの MOD 一覧の窓も閉じて、確率の一覧を見せる (やめる時は残す。POE2Tube 要望 ㊴)
+  s.modOverlay.value = false;
   // 確率の一覧の見出し (と狙いの札) が見える所へ
   void nextTick(() => scrollToTop(document.querySelector("[data-aim-panel]")));
 }
