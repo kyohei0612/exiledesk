@@ -5,7 +5,7 @@
   "result_file": "data/results/exiledesk_promo.json",
   "final_step": 6,
   "layout": "wide",
-  "planned_sections": 8,
+  "planned_sections": 7,
   "demos": {},
   "sections": [
     {
@@ -960,100 +960,6 @@
             "clip": "rune",
             "at": 8.5,
             "hold": 8.5
-          }
-        }
-      ]
-    },
-    {
-      "name": "好きな状態から・共有",
-      "target_seconds": 45,
-      "lines": [
-        {
-          "speaker": "zundamon",
-          "emotion": "normal",
-          "text": "途中まで作った装備から、試したいのだ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "force",
-            "at": 0,
-            "hold": 0
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "それもできるわ。ティアの表の「付ける」で、好きなMODを付けられるの。",
-          "scene": {
-            "kind": "footage",
-            "clip": "force",
-            "at": 0,
-            "hold": 4
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "フラクチャーや冒涜のMODも選べるし、クラフトの途中でも付けられるわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "force",
-            "at": 4,
-            "hold": 8
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "カードのMODを右クリックすればフラクチャー、横のバツで外せるの。",
-          "scene": {
-            "kind": "footage",
-            "clip": "force",
-            "at": 8,
-            "hold": 11
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "持っている装備を、そのまま作れるのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "force",
-            "at": 11,
-            "hold": 11
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "作った手順は、工程の「共有」でURLにできるわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "share",
-            "at": 0,
-            "hold": 3
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "開いた人は、同じ結果を1手ずつ再生できるの。Xにもそのまま投稿できるわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "share",
-            "at": 3,
-            "hold": 5
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "emotion": "happy",
-          "text": "神引きを自慢できるのだ！",
-          "scene": {
-            "kind": "footage",
-            "clip": "share",
-            "at": 5,
-            "hold": 5
           }
         }
       ]
