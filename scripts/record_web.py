@@ -160,10 +160,12 @@ def still(src: Path, at: float, dest: Path) -> None:
 # 録画ごとの始まり (ExileDesk 要望 ㊷: 種で結果が決まる、最初の状態は URL で)。
 # 同じ種・同じ操作なら毎回同じ結果 → 撮り直しても台詞の〔結果〕はそのまま
 RING = "base=Gold Ring&ilvl=82"
+SIX = "transmute,augment,regal,exalt,exalt,exalt"
 START = {
     "open": "seed=1",
     "orbs": f"seed=2&{RING}",
-    "undo": f"seed=2&{RING}&hands=transmute,augment,regal,exalt,exalt,exalt",  # orbs と同じ指輪
+    # orbs と同じ指輪。工程の一番下の「始め」まで画面に入るよう、題・タブ・品質の帯を隠す (㊸)
+    "undo": f"seed=2&{RING}&hands={SIX}&hide=title,tabs,quality",
     "modlist": f"seed=3&{RING}&hands=transmute",
     "aim": f"seed=4&{RING}&hands=transmute",
     "reveal": f"seed=5&{RING}&hands=transmute,augment,regal,exalt",
@@ -202,10 +204,36 @@ def record(w: Web, url: str, only: list[str]) -> None:
     del h
 
 
-def c_open(w: Web) -> None:  # 開いた所 (ベース選び) → 金の指輪
-    pause(0.5)
-    w.pick_base("Gold Ring")
-    w.hand.glide(500, 520, 700)
+def c_open(w: Web) -> None:
+    """ベース選び: 部位のタイル「指輪」→ 金の指輪 → もう一度開いて名前で探す欄 → アイテムレベル.
+
+    台詞の順 (指輪を押して金の指輪を選ぶ → 名前で探す欄もある → アイテムレベルは横の札) に合わせる。
+    ページは送らない (上に貼り付いた設定の段の下にタイルが潜ると押せない)。
+    """
+    h = w.hand
+    w.page.evaluate("window.scrollTo(0, 0)")
+    pause(1.0)
+    h.click(w.rec("base-toggle"), 700, 1.2, scroll=False)  # 「ベースを変える」→ 部位の絵が並ぶ
+    mark("ベース選びを開いた")
+    tile = w.rec("family:Rings")
+    if tile.get_attribute("aria-expanded") != "true":
+        h.click(tile, 800, 1.0, scroll=False)
+    else:
+        h.glide_to(tile, 800)
+        pause(1.0)
+    h.click(w.rec("base:Gold Ring"), 800, 1.5, scroll=False)
+    mark("ベースを選んだ")
+    pause(1.0)
+    w.page.evaluate("window.scrollTo(0, 0)")
+    h.click(w.rec("base-toggle"), 700, 0.6, scroll=False)  # もう一度開いて
+    h.glide_to(w.rec("base-search"), 700)  # 名前で探す欄を指す
+    mark("名前で探す欄")
+    pause(2.0)
+    w.page.evaluate("window.scrollTo(0, 0)")
+    h.click(w.rec("base-toggle"), 700, 0.6, scroll=False)  # 閉じる
+    level = w.page.locator("[data-stage-settings] .g-tab", has_text="82").first
+    h.glide_to(level, 700)  # アイテムレベルの札を指す
+    mark("アイテムレベル")
     pause(2.0)
 
 
@@ -221,8 +249,15 @@ def c_orbs(w: Web) -> None:  # 変成 → 増強 → 王者 → 高貴 ×3
     pause(2.0)
 
 
-def c_undo(w: Web) -> None:  # 1 手戻す → 工程の行で戻る → 始め
+def c_undo(w: Web) -> None:
+    """1 手戻す → 工程の行で戻る → 始め。工程の一番下 (始め) が画面に入るよう、上の題などを隠す."""
     h = w.hand
+    hist = w.page.locator("div.g-panel", has=w.page.locator("b.g-sec-title", has_text="工程"))
+    # 工程を画面の上の方 (y 380) に送る (下はテロップに隠れる。footage.CONTENT["history"])
+    top = hist.first.bounding_box()
+    w.page.mouse.wheel(0, (top["y"] - 380) if top else 0)
+    pause(1.0)
+    w.notes.append({"history_box": hist.first.bounding_box()})
     h.click(w.rec("undo"), 700, 1.5)
     h.click(w.rec("step:3"), 700, 1.8)
     h.click(w.rec("step:start"), 700, 1.8)

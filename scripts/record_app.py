@@ -65,8 +65,14 @@ class Hand:
             wait(ms / 1000 / n)
         self.x, self.y = x, y
 
-    def click(self, loc: Locator, ms: int = 650, after: float = 0.35) -> None:
-        loc.scroll_into_view_if_needed()
+    def glide_to(self, loc: Locator, ms: int = 650) -> None:
+        """押さずにその物の上へ動かす (指して見せる)。ページは送らない."""
+        bb: Any = loc.bounding_box()
+        self.glide(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2, ms)
+
+    def click(self, loc: Locator, ms: int = 650, after: float = 0.35, scroll: bool = True) -> None:
+        if scroll:  # scroll=False: 上に貼り付いた段の下に潜らないよう、ページを送らずに押す
+            loc.scroll_into_view_if_needed()
         bb: Any = loc.bounding_box()
         what = (loc.inner_text(timeout=2000) or "").strip().splitlines()[:1]
         what = what[0][:40] if what else ""

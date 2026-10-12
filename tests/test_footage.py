@@ -67,3 +67,12 @@ def test_zoom_box_eases_from_prev_to_cur() -> None:
     assert FULL[1] < mid[1] < card[1]
     for x0, y0, x1, y1 in ZOOM_BOX.values():  # どれも 16:9 (歪まない)
         assert abs((x1 - x0) / (y1 - y0) - 16 / 9) < 0.02
+
+
+def test_reading_fuda() -> None:
+    from poe2tube.script.reading import normalize_speech
+
+    assert normalize_speech("横の札で変えられるの。") == "横のふだで変えられるの。"
+    assert normalize_speech("右の%は、14%増加") == "右のパーセントは、14%増加"
+    assert normalize_speech("Escか右クリック") == "エスケープか右クリック"
+    assert normalize_speech("工程の行を押せば") == "工程のぎょうを押せば"

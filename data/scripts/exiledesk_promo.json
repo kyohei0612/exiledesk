@@ -667,8 +667,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 6.3,
-            "hold": 9.5,
-            "zoom": "modlist"
+            "hold": 9.5
           }
         },
         {
@@ -768,8 +767,7 @@
             "kind": "footage",
             "clip": "aim",
             "at": 4.8,
-            "hold": 6.6,
-            "zoom": "tiers"
+            "hold": 6.6
           }
         },
         {
