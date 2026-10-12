@@ -285,7 +285,7 @@ export function summarizeQuiz(runs: readonly QuizRun[], price: (key: string) => 
   return {
     runs: runs.length,
     pDone: done.length / (runs.length || 1),
-    perDone: runs.reduce((a, r) => a + r.cost, 0) / per,
+    perDone: done.length ? runs.reduce((a, r) => a + r.cost, 0) / done.length : Infinity,
     p50: q(0.5), p80: q(0.8), p90: q(0.9),
     usage: [...use].map(([key, n]) => ({ key, count: n / per, cost: (n * price(key)) / per })).sort((a, b) => b.cost - a.cost),
     bases: runs.reduce((a, r) => a + r.bases, 0) / per,

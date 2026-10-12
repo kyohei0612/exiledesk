@@ -39,6 +39,9 @@ import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/st
 import { patternSets, runeEnForId, setByKey, type CheckCtx, type Pattern, ANY_TARGET, isDouble, hasCands, isRest } from "../../services/craft-stage/pattern";
 import { aimTarget, compilePlay, type PlayAim, type PlayDecision } from "../../services/craft-stage/play-recipe";
 import { setOf } from "../../services/craft-stage/shape-table";
+import { runQuizOnce, summarizeQuiz, type QuizResult, type QuizRun } from "../../services/craft-stage/quiz-recipe";
+import { methodsFor as methodsForData, quizFromSim, type QuizSimIn } from "../../services/craft-stage/quiz-build";
+import { tr } from "../../i18n/lang";
 import { drawRecipeCard, type RecipeCardData } from "../../services/craft-stage/recipe-card";
 import { baseArt } from "../../services/craft-stage/base-art";
 import StagePatternEditor from "./StagePatternEditor.vue";
@@ -66,11 +69,8 @@ watch(maxSteps, (v) => { try { localStorage.setItem(MAX_STEPS_KEY, String(v)); }
 const METHOD_JA: Record<RecipeMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス", fracture: "フラクチャー" };
 /** その MOD に使える付け方 (最初が既定) */
 function methodsFor(modId: string): RecipeMethod[] {
-  const m = s.data.value?.mods.get(modId);
-  if (!m) return ["exalt"];
-  if (m.source === "desecrated") return ["desecrate"];
-  if (CRAFTED_SOURCES.has(m.source)) return ["essence"];
-  return ["exalt", "chaos", "desecrate"];
+  const d = s.data.value;
+  return d ? methodsForData(d, modId) : ["exalt"];
 }
 const methodOf = (t: { modId: string; method?: RecipeMethod }): RecipeMethod => (t.method === "fracture" ? "fracture" : t.method && methodsFor(t.modId).includes(t.method) ? t.method : methodsFor(t.modId)[0]!);
 
@@ -591,7 +591,7 @@ const startOnce = computed((): number | null => {
 });
 /** フラクチャー済みのベースを手に入れる一番安い始め方 (4 最安値スタート、値段の有る物だけ) */
 /** パターンごとの結果 (回した後)。見ている物を recipeOut / restCost に出す */
-const results = ref<Array<{ name: string; out: { r: RecipeResult; spec: RecipeSpec }; rest: number | null; bases: number }>>([]);
+const results = ref<Array<{ name: string; out: { r: RecipeResult; spec: RecipeSpec }; rest: number | null; bases: number; /** クイズのレシピの始め 1 個の値段 (ベース代の内訳) */ startPrice?: number }>>([]);
 const shown = ref(0);
 /** パターンの名前で結果を引く (一覧はパターンの並びで出す) */
 const resultOf = (name: string) => results.value.find((x) => x.name === name) ?? null;
@@ -604,6 +604,7 @@ function showResultByName(name: string): void {
 /** 回していないパターンの一言 (未完成なら最初の打てない手) */
 function patternNote(p: Pattern): string {
   const left = s.simPlayLeft.value[p.name] ?? 0;
+  if (p.quiz) return !hasSteps(p) ? tr("答えが無い", "No answers") : left ? tr(`クイズ 残り ${left} · 回さない`, `${left} questions left · not run`) : tr("未実行", "Not run");
   return !p.play?.moves.length ? "手が無い" : left ? `ハズレルート設定 残り ${left} 形 · 回さない` : "未実行";
 }
 function togglePatternOff(i: number): void {
@@ -626,7 +627,27 @@ let gen = 0;
  * (2026-10-07 オーナー「回すパターンを選択できるように」「そこまでを完成品とする」)
  */
 /** 手があるか (打って作るパターンの手) */
-const hasSteps = (p: Pattern): boolean => !!p.play?.moves.length;
+const hasSteps = (p: Pattern): boolean => !!p.play?.moves.length || (!!p.quiz && Object.values(p.quiz.rules).some((r) => r.length > 0));
+/** クイズのレシピの入力 (狙う MOD・始め方・値段。答えはパターンに持つ。ADR-003) */
+const quizBase = computed<QuizSimIn | null>(() => {
+  const d = s.data.value;
+  if (!d || !s.base.value) return null;
+  const st = s.simStart.value;
+  const startPrice = st === "item" ? num(itemDivine.value) ?? 0 : st === "fractured" ? startOnce.value ?? 0 : st === "four" ? num(fourDivine.value) ?? 0 : num(whiteDivine.value) ?? 0;
+  return {
+    data: d, base: s.base.value, itemLevel: s.itemLevel.value, start: st, startPrice, sockets: socketCount.value, startItem: s.simStartItem.value,
+    targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}), ...(t.need ? { need: t.need } : {}) })),
+  };
+});
+/** クイズの結果を今の結果の形に (結果の表示をそのまま使う) */
+function quizToRecipe(q: QuizResult): RecipeResult {
+  const stops = [
+    ...(q.capped ? [{ reason: "手が多すぎる", p: q.capped / q.runs }] : []),
+    ...q.open.map((o) => ({ reason: tr("答えの無い状況に来た", "Reached a situation with no answer"), p: o.n / q.runs })),
+    ...q.blocked.map((o) => ({ reason: tr(`打てない手: ${o.reason}`, `Unusable answer: ${o.reason}`), p: o.n / q.runs })),
+  ];
+  return { runs: q.runs, pDone: q.pDone, perDone: q.perDone, p50: q.p50, p80: q.p80, p90: q.p90, usage: q.usage, stops, sample: null, bases: q.bases, hitRates: [] };
+}
 const patternChecks = computed(() => s.simPatterns.value.filter(hasSteps).map((p) => ({ p, why: null as string | null })));
 const runnable = computed(() => s.simPatterns.value.filter((p) => hasSteps(p) && !p.off && !(s.simPlayLeft.value[p.name] ?? 0)));
 const blocked = computed((): string | null => {
@@ -690,10 +711,24 @@ async function run(only?: number, stepOnly?: number): Promise<void> {
     // 回すのはフラクチャー済みから先だけ (2026-10-06 オーナー「白ベースでもフラクチャーまでの平均はほぼ一緒、3 回に 1 回当たる予算で
     // そこまでは固定で出しておｋ、他の選択肢も」)。始め方ごとの合計 = その始め方の費用 + 固定済みから先の平均
     // この手だけ: パターンをその手までで切る (その手の狙いまでが完成)
-    const ps = (only != null ? [s.simPatterns.value[only]!] : runnable.value).filter((p) => !!p.play);
+    const ps = (only != null ? [s.simPatterns.value[only]!] : runnable.value).filter((p) => !!p.play || !!p.quiz);
     const total = spec.runs * ps.length;
     const out: typeof results.value = [];
     for (const [k, p] of ps.entries()) {
+      if (p.quiz) {
+        // クイズのレシピ (ADR-003): 答えのとおりに 1 人ずつ最後まで。答えの無い状況・打てない手に来た人は未完成
+        const qb = quizBase.value;
+        if (!qb) continue;
+        const { recipe } = quizFromSim(qb, p.quiz);
+        const qruns: QuizRun[] = [];
+        for (let i = 0; i < spec.runs; i++) {
+          qruns.push(runQuizOnce(d, recipe, runSeed + i * 7919, { price, maxSteps: maxSteps.value }));
+          if (i % 10 === 9) { progress.value = [k * spec.runs + i + 1, total]; await new Promise((r) => setTimeout(r)); if (my !== gen) return; }
+        }
+        const r = quizToRecipe(summarizeQuiz(qruns, price));
+        out.push({ name: p.name, out: { r, spec }, rest: null, bases: r.bases, startPrice: recipe.start.price });
+        continue;
+      }
       const onStart = new Set(patternStart.value.mods?.placed ?? []);
       // 打って作るパターン (ADR-002): 完成の判定は固定 + 狙う手の狙い (同じ狙いは need の一番大きい物)。決めていない外れの形は新しいベースで最初から
       const playGoal = (): RecipeSpec["targets"] => {
@@ -904,8 +939,8 @@ async function loadRecipe(r: SimRecipe): Promise<void> {
   s.simStartCost.value = ses.startCost ?? 0;
   s.simOrder.value = ses.order;
   // 前の作り方 (木・流れ) のパターンは読まない (2026-10-10 オーナー「前の作り方リセット」。打って作る形だけ)
-  const plays = ses.patterns.filter((p) => p.play);
-  s.simPatterns.value = plays.length ? plays : [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
+  const plays = ses.patterns.filter((p) => p.play || p.quiz);
+  s.simPatterns.value = plays.length ? plays : [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
   s.reset();
   whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
   startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;
@@ -960,7 +995,7 @@ function resetStalePatterns(): void {
 function resetPatterns(): void {
   if (!s.simPatterns.value.some(hasSteps)) return;
   lastSnap = { ...lastSnap, patterns: JSON.stringify(s.simPatterns.value) };
-  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
   results.value = [];
   // 結果のブロックも消す (残すとパターン名の無い「の 1 個あたり」と前の内訳が出て、ベース代がクラフトに化けて見えた。2026-10-08 使い倒しテスト 1)
   recipeOut.value = null;
@@ -1053,7 +1088,7 @@ function resetAll(): void {
   restCost.value = null;
   results.value = [];
   s.simOrder.value = [];
-  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
   s.simSockets.value = null;
   s.simStart.value = "white";
   s.simStartItem.value = null;
@@ -1195,6 +1230,8 @@ const split = computed(() => {
   if (!r) return { base: 0, craft: 0, baseAdd: 0, baseNote: "" };
   // 1 人も完成していない時は 1 個あたりが出ないので、内訳も出さない (40 人分の出費が「ベース」に積まれて見えた)
   if (!Number.isFinite(r.perDone)) return { base: NaN, craft: NaN, baseAdd: 0, baseNote: "" };
+  const qp = results.value[shown.value]?.startPrice;
+  if (qp != null) { const b = qp * r.bases; return { base: b, craft: r.perDone - b, baseAdd: 0, baseNote: tr(`始めのベース × ${r.bases.toFixed(1)} 個`, `Starting base × ${r.bases.toFixed(1)}`) }; }
   if (s.simStart.value === "item") {
     // 1 個目は手元にあるので費用はこの状態から先 (作り直した分だけベース)。2026-10-08 オーナー「費用もそこから表示」
     const price = num(itemDivine.value) ?? 0;
@@ -1622,7 +1659,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
       <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
       <div v-if="step4pre" :data-sim-cur="!patternDone || undefined" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
         <SimStepHead class="mb-3" :n="stepNo.play" title="打ち方" :done="patternDone" :current="!patternDone" :redo="patternDone" :note="`${s.simStart.value === 'item' ? 'エミュレーターの状態' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`" help="打つ物と狙う MOD を 1 手ずつ並べた物 = パターン。いくつか作って、回して費用を比べられる" @redo="patternDone = false" />
-        <StagePatternEditor :busy="busy" :start="patternStart" :locked="patternDone" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
+        <StagePatternEditor :busy="busy" :start="patternStart" :locked="patternDone" :quiz-base="quizBase" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
@@ -1638,7 +1675,7 @@ const usageName = (k: string): string => (k === "reveal" ? "発現 (選ぶだけ
               <span class="text-[var(--exile-color-text-tertiary)]">完成 {{ pct(resultOf(p.name)!.out.r.pDone) }}</span>
               <span v-if="cheapestName === p.name" class="rounded bg-[rgba(126,201,148,0.15)] px-1 text-[11px] text-[var(--exile-color-signal-up)]">一番安い</span>
             </button>
-            <span v-else class="pr-1.5 text-[var(--exile-color-text-tertiary)]">{{ hasSteps(p) ? patternNote(p) : "手が無い · 回さない" }}</span>
+            <span v-else class="pr-1.5 text-[var(--exile-color-text-tertiary)]">{{ hasSteps(p) ? patternNote(p) : p.quiz ? tr("答えが無い · 回さない", "No answers · not run") : "手が無い · 回さない" }}</span>
           </span>
           <SimProgress v-if="busy" :box="progressBox" :phase="phase" />
           <button v-if="busy" type="button" class="g-btn-red sm" @click="stop">中止</button>

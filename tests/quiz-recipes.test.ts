@@ -64,3 +64,23 @@ describe("両側のどれか = プレの道とサフィの道", () => {
     expect(routeOf(recipe, one.item).id).toBe(one.route);
   });
 });
+
+describe("シミュレーターの入力から組む (quizFromSim)", () => {
+  it("両側のどれかはプレの工程とサフィの工程に分かれ、入口の札が付く。どれか 2 つは札 2 つ", async () => {
+    const { quizFromSim } = await import("../src/services/craft-stage/quiz-build");
+    const { recipe, error } = quizFromSim({
+      data, base: "Amethyst Ring", itemLevel: 82, start: "white", startPrice: 2,
+      targets: [
+        { modId: "Rings/PhysicalDamage", minTierIndex: 0, method: "chaos", alts: [{ modId: "Rings/AllResistances", minTierIndex: 0 }] },
+        { modId: "Rings/IncreasedLife", minTierIndex: 0, method: "exalt", alts: [{ modId: "Rings/IncreasedMana", minTierIndex: 0 }], need: 2 },
+      ],
+    }, { v: 3, rules: { suffix: [{ when: { r: "n" }, do: { use: "alchemy" } }] } });
+    expect(error).toBeNull();
+    expect(recipe.routes.map((r) => [r.id, r.entry, r.goal.map((g) => `${g.id}${g.side[0]}`).join(",")])).toEqual([
+      ["prefix", ["A"], "Bp,Cp,Ap"],
+      ["suffix", ["A"], "Bp,Cp,As"],
+    ]);
+    expect(recipe.routes[1]!.rules).toHaveLength(1);
+    expect(recipe.start).toEqual({ kind: "white", price: 2 });
+  });
+});

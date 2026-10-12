@@ -8,6 +8,10 @@ import { computed, ref, watch } from "vue";
 import { craftStage } from "../../state/craft-stage";
 import { patternSets, setsForStart, type CheckCtx, type Pattern, type PatternSet } from "../../services/craft-stage/pattern";
 import StagePlayEditor from "./StagePlayEditor.vue";
+import StageQuizEditor from "./StageQuizEditor.vue";
+import { quizFromSim, type QuizSimIn } from "../../services/craft-stage/quiz-build";
+import type { QuizRule } from "../../services/craft-stage/quiz-recipe";
+import { tr } from "../../i18n/lang";
 import Icon from "../../components/ui/Icon.vue";
 import type { PlayRecipe } from "../../services/craft-stage/play-recipe";
 import { freshItem } from "../../services/craft-stage/run-plan";
@@ -23,6 +27,8 @@ const props = defineProps<{
   locked: boolean;
   /** 回している途中 */
   busy?: boolean;
+  /** クイズのレシピの入力 (狙う MOD・始め方・値段、ADR-003) */
+  quizBase?: QuizSimIn | null;
 }>();
 const emit = defineEmits<{ "run-one": [index: number]; active: [index: number] }>();
 const s = craftStage;
@@ -34,6 +40,14 @@ function setPlay(play: PlayRecipe): void {
   const k = Math.min(active.value, s.simPatterns.value.length - 1);
   s.simPatterns.value = s.simPatterns.value.map((p, i) => (i === k ? { ...p, play } : p));
 }
+/** クイズのレシピ (答えはパターンの quiz に工程ごと) */
+const quiz = computed(() => (props.quizBase && pat.value.quiz ? quizFromSim(props.quizBase, pat.value.quiz) : null));
+function setQuiz(route: string, rules: QuizRule[]): void {
+  const k = Math.min(active.value, s.simPatterns.value.length - 1);
+  s.simPatterns.value = s.simPatterns.value.map((p, i) => (i === k ? { ...p, quiz: { v: 3, rules: { ...(p.quiz?.rules ?? {}), [route]: rules } } } : p));
+}
+const answers = (p: Pattern): number => Object.values(p.quiz?.rules ?? {}).reduce((a, r) => a + r.length, 0);
+const ready = (p: Pattern): boolean => (p.quiz ? answers(p) > 0 : !!p.play?.moves.length);
 /** 打って作るパターンの始めのアイテム (ベース + 固定済み、手打ちから持ってきた物) */
 const playStartItem = computed<StageItem | null>(() => {
   const d = s.data.value;
@@ -49,6 +63,8 @@ const playStartItem = computed<StageItem | null>(() => {
 });
 // 開いているパターンを親に伝える (下の行の「取引所で探す」がこのパターンで探す)
 watch(active, (v) => emit("active", v), { immediate: true });
+// エミュレーターの「レシピで 1 手」は開いているパターンのクイズで打つ
+watch(() => pat.value?.name, (n) => { s.simQuizActive.value = n ?? null; }, { immediate: true });
 /**
  * 1 つ戻す (パターンの操作。2026-10-07 オーナー「1 つ戻すボタンがない、パターン①の横らへんに」)。
  * パターンが変わるたびに前の形を積み、押すと 1 つ前に戻す (戻した時は積まない)
@@ -101,7 +117,9 @@ function uniqueName(base: string, skip: number | null = null): string {
 }
 function addPattern(copy: boolean): void {
   // パターンは打って作る形だけ (ADR-002)
-  s.simPatterns.value = [...s.simPatterns.value, { name: uniqueName(`パターン ${s.simPatterns.value.length + 1}`), steps: [], play: copy && pat.value.play ? (JSON.parse(JSON.stringify(pat.value.play)) as PlayRecipe) : { v: 2, moves: [] } }];
+  // 新しいパターンはクイズのレシピ (ADR-003)。写す時は前の形 (打って作る) もそのまま写す
+  const src = copy ? (JSON.parse(JSON.stringify(pat.value)) as Pattern) : null;
+  s.simPatterns.value = [...s.simPatterns.value, { name: uniqueName(`パターン ${s.simPatterns.value.length + 1}`), steps: [], ...(src?.play ? { play: src.play } : { quiz: src?.quiz ?? { v: 3, rules: {} } }) }];
   active.value = s.simPatterns.value.length - 1;
 }
 /** 名前を付け替えているタブ */
@@ -128,18 +146,19 @@ function removePattern(): void {
       <!-- タブはダブルクリックで名前を付け替える (2026-10-07 オーナー「名前も自分で変えて」。番号だけだと 10 個並ぶと取り違える) -->
       <template v-for="(p, i) in s.simPatterns.value" :key="i">
         <input v-if="renaming === i" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="p.name" class="w-40 rounded-full border border-amber-400/60 bg-black/50 px-2.5 py-0.5 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="renaming = null" @blur="rename(i, ($event.target as HTMLInputElement).value)" />
-        <button v-else type="button" class="g-tab !inline-flex !min-h-[34px] shrink-0 gap-1.5 whitespace-nowrap !px-5 max-md:!min-h-10" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'on' : ''" title="ダブルクリックで名前を変える" @click="active = i" @dblclick="locked || (renaming = i)">{{ p.name }}<span class="rounded-full bg-white/[0.07] px-1.5 text-[11px] font-normal tabular-nums text-[var(--exile-color-text-tertiary)]">{{ p.play?.moves.length ?? 0 }} 手</span></button><button v-if="!locked && renaming !== i && i === Math.min(active, s.simPatterns.value.length - 1)" type="button" class="rounded px-1 text-[12px] opacity-50 hover:opacity-100" title="名前を変える" @click.stop="renaming = i">✎</button>
+        <button v-else type="button" class="g-tab !inline-flex !min-h-[34px] shrink-0 gap-1.5 whitespace-nowrap !px-5 max-md:!min-h-10" :class="i === Math.min(active, s.simPatterns.value.length - 1) ? 'on' : ''" :title="tr('ダブルクリックで名前を変える', 'Double-click to rename')" @click="active = i" @dblclick="locked || (renaming = i)">{{ p.name }}<span class="rounded-full bg-white/[0.07] px-1.5 text-[11px] font-normal tabular-nums text-[var(--exile-color-text-tertiary)]">{{ p.quiz ? tr(`答え ${answers(p)}`, `${answers(p)} answers`) : `${p.play?.moves.length ?? 0} 手` }}</span></button><button v-if="!locked && renaming !== i && i === Math.min(active, s.simPatterns.value.length - 1)" type="button" class="rounded px-1 text-[12px] opacity-50 hover:opacity-100" :title="tr('名前を変える', 'Rename')" @click.stop="renaming = i">✎</button>
       </template>
       <template v-if="!locked">
-        <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] max-md:min-h-10 max-md:min-w-10" title="空のパターンを足す" @click="addPattern(false)"><Icon name="plus" class="size-4" /></button>
-        <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] max-md:min-h-10 max-md:min-w-10" title="このパターンを写して足す (少しだけ変えて比べる時に)" @click="addPattern(true)"><Icon name="copy" class="size-4" /></button>
-        <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)] disabled:opacity-30 max-md:min-h-10 max-md:min-w-10" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? 'パターンが 1 つの時は消せない' : 'このパターンを消す'" @click="removePattern"><Icon name="trash" class="size-4" /></button>
-        <button type="button" class="ml-2 inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--exile-color-border-brass)] px-3 text-[var(--exile-color-text-primary)] transition hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-30 max-md:hidden" :disabled="busy || !pat.play?.moves.length || (s.simPlayLeft.value[pat.name] ?? 0) > 0" :title="(s.simPlayLeft.value[pat.name] ?? 0) > 0 ? `ハズレルート設定が ${s.simPlayLeft.value[pat.name]} 形残っている (全部決めると回せる)` : pat.play?.moves.length ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))"><Icon name="play" class="size-3.5" />このパターンを回す</button>
+        <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] max-md:min-h-10 max-md:min-w-10" :title="tr('空のパターンを足す', 'Add an empty pattern')" @click="addPattern(false)"><Icon name="plus" class="size-4" /></button>
+        <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] max-md:min-h-10 max-md:min-w-10" :title="tr('このパターンを写して足す (少しだけ変えて比べる時に)', 'Duplicate this pattern (to compare small changes)')" @click="addPattern(true)"><Icon name="copy" class="size-4" /></button>
+        <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)] disabled:opacity-30 max-md:min-h-10 max-md:min-w-10" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? tr('パターンが 1 つの時は消せない', 'Cannot remove the only pattern') : tr('このパターンを消す', 'Remove this pattern')" @click="removePattern"><Icon name="trash" class="size-4" /></button>
+        <button type="button" class="ml-2 inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--exile-color-border-brass)] px-3 text-[var(--exile-color-text-primary)] transition hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-30 max-md:hidden" :disabled="busy || !ready(pat) || (s.simPlayLeft.value[pat.name] ?? 0) > 0" :title="(s.simPlayLeft.value[pat.name] ?? 0) > 0 ? (pat.quiz ? tr(`クイズが ${s.simPlayLeft.value[pat.name]} 問残っている (全部答えると回せる)`, `${s.simPlayLeft.value[pat.name]} questions left (answer all to run)`) : `ハズレルート設定が ${s.simPlayLeft.value[pat.name]} 形残っている (全部決めると回せる)`) : ready(pat) ? 'このパターンで 1,500 人がそれぞれ完成まで作った場合を試す (未完成でも組めている所まで)。結果は下に' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))"><Icon name="play" class="size-3.5" />{{ tr("このパターンを回す", "Run this pattern") }}</button>
         <!-- 操作の取り消しは「1 つ戻す」、打った手の取り消しは「1 手戻す」(2026-10-10 動きの揃え 7) -->
-        <button type="button" class="g-btn sm inline-flex items-center gap-1.5 max-md:min-h-10" :disabled="!history.length" :title="history.length ? 'パターンの直前の操作を 1 つ取り消す' : '戻せる操作がまだ無い'" @click="undoPattern"><Icon name="undo" class="size-4" />1 つ戻す</button>
+        <button type="button" class="g-btn sm inline-flex items-center gap-1.5 max-md:min-h-10" :disabled="!history.length" :title="history.length ? tr('パターンの直前の操作を 1 つ取り消す', 'Undo the last change to the pattern') : tr('戻せる操作がまだ無い', 'Nothing to undo yet')" @click="undoPattern"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
       </template>
     </div>
 
-    <StagePlayEditor v-if="pat.play" :play="pat.play" :sets="sets" :start-item="playStartItem" :name-of-mod="cardTitleOf" :locked="locked" :name="pat.name" @change="setPlay" />
+    <StageQuizEditor v-if="pat.quiz && quiz" :recipe="quiz.recipe" :error="quiz.error" :name-of-mod="cardTitleOf" :locked="locked" :name="pat.name" @change="setQuiz" />
+    <StagePlayEditor v-else-if="pat.play" :play="pat.play" :sets="sets" :start-item="playStartItem" :name-of-mod="cardTitleOf" :locked="locked" :name="pat.name" @change="setPlay" />
   </div>
 </template>

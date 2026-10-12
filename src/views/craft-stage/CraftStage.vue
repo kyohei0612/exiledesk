@@ -280,7 +280,7 @@ function pickSimBase(en: string): void {
   s.base.value = en;
   s.simTargets.value = [];
   s.simOrder.value = [];
-  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
   s.simStart.value = "white";
   s.simStartItem.value = null;
   s.simPicked.value = true;
@@ -318,6 +318,14 @@ function startFromRecipe(r: SimRecipe): void {
   s.simPendingRecipe.value = r.id;
   pickSimBase(r.session.base);
 }
+/** クイズのレシピの再生 (n 手まで。完成・答え無し・打てない手で止まる) */
+const quizNote = ref("");
+function quizStep(n: number): void {
+  s.hold(null);
+  let r = { done: false, stop: false, text: "" }, k = 0;
+  for (; k < n && !r.stop; k++) r = s.recipeStep();
+  quizNote.value = n > 1 && !r.done ? `${r.text} (${tr(`${k} 手`, `${k} steps`)})` : r.text;
+}
 function simFromHand(): void {
   const it = s.item.value;
   if (!it) return;
@@ -326,7 +334,7 @@ function simFromHand(): void {
   // 付いている MOD は狙いに入れておく (その段以上。消えたら取り直す)。足したい MOD を 2 で足して決めたら、そのままツリー (3〜5 は飛ばす)
   s.simTargets.value = [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, minTierIndex: m.tierIndex, ...(m.fractured ? { method: "fracture" as const } : m.desecrated ? { method: "desecrate" as const } : {}) }));
   s.simOrder.value = [];
-  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
   s.simSockets.value = it.sockets ?? 0;
   s.simStart.value = "item";
   s.simPicked.value = true;
@@ -474,6 +482,12 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->
       <button type="button" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('R / Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'R / Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
+      <!-- クイズのレシピを 1 手ずつ / 最後まで再生 (ADR-003)。打ち方はシミュレーターと同じ答え -->
+      <template v-if="s.handQuiz.value && !SIM_LOCKED">
+        <button type="button" :class="btn" :title="tr('シミュレーターのクイズの答えで、今のアイテムに 1 手打つ', 'Use one step from the Simulator quiz answers on the current item')" @click="quizStep(1)">{{ tr("レシピで 1 手", "Recipe: 1 step") }}</button>
+        <button type="button" :class="btn" :title="tr('完成か、答えの無い状態まで打つ (500 手まで)', 'Use steps until done or no answer (up to 500)')" @click="quizStep(500)">{{ tr("最後まで", "To the end") }}</button>
+        <span v-if="quizNote" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ quizNote }}</span>
+      </template>
       <!-- 今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08) -->
       <button v-if="!SIM_LOCKED" type="button" :class="btn" :title="tr('今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーターへ。ベース代は エミュレーターの累計 + 白ベース代', 'Send the current item (mods, fractured, sockets) to the Simulator as the start. Base cost = Emulator total + white base cost')" @click="simFromHand">{{ tr("この状態からシミュレーター →", "Simulate from here →") }}</button>
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>

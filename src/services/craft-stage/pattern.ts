@@ -128,7 +128,8 @@ export const otherJunkOf = (kind: PatternKind | undefined, v: "keep" | "annul" |
  * パターン。play = 打って作った手 (ADR-002)。steps は前の作り方の名残 (読み込まない、2026-10-10 に画面も消した。空で持つ)。
  * 流れ (flow) は 2026-10-10 に消した
  */
-export interface Pattern { name: string; steps: PatternStep[]; off?: boolean; play?: import("./play-recipe").PlayRecipe }
+/** play = 前の打って作る形 (ADR-002、前の保存データ)。quiz = クイズのレシピの答え (ADR-003、新しいパターンはこちら) */
+export interface Pattern { name: string; steps: PatternStep[]; off?: boolean; play?: import("./play-recipe").PlayRecipe; quiz?: import("./quiz-build").QuizRules }
 
 export interface PatternSet {
   key: string;

@@ -36,6 +36,8 @@ import { socketCapOf } from "../services/craft-stage/stage-runes";
 import { tr, lang } from "../i18n/lang";
 import { decodeShare, shareBlock, shareCodeOf } from "../services/craft-stage/share";
 import { trackOnce } from "../utils/track";
+import { methodOfTarget, quizFromSim } from "../services/craft-stage/quiz-build";
+import { nextMove, type QuizRecipe } from "../services/craft-stage/quiz-recipe";
 /**
  * 手で打つ画面の新品は、規格外のソケット数 (熟練工で付けられる数 +1) で始める (2026-10-04 オーナー「オーブ刺すのめんどいから、ソケットも初めからデフォでマックス」)。
  * 手順 JSON の再生 (動画) は手順どおりなので開けない
@@ -182,7 +184,8 @@ const mode = ref<"hand" | "sim">("hand");
  * Web 版はシミュレーションを閉じる (2026-10-10 オーナー「未完成すぎるからシミュレーションは調整中って出してクリックできないように、ウェブ版」)。
  * タブは「調整中」で押せず、前に開いていた・URL・はじめの窓から入っても手で打つ方に戻す
  */
-export const SIM_LOCKED = !isTauriRuntime();
+// 開発版 (pnpm dev:web) では開ける (クイズのレシピをオーナーに触ってもらう。リリースはオーナーの OK まで閉じたまま、2026-10-12)
+export const SIM_LOCKED = !isTauriRuntime() && !import.meta.env.DEV;
 watch(mode, (m) => { if (SIM_LOCKED && m === "sim") mode.value = "hand"; }, { immediate: true, flush: "sync" });
 
 /** method = 付け方 (順番どおりのシミュレーション、[[recipe-sim.ts]])。省くと MOD の種類で決める (普通 = 高貴、冒涜 = 冒涜、エッセンス = エッセンス) */
@@ -220,9 +223,20 @@ const simAltFor = ref<string | null>(null);
  */
 const simOrder = ref<string[]>([]);
 /** 6 パターン (pattern.ts)。回すのはこの手の通り */
-const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }]);
+const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }]);
 /** パターンの名前 → ハズレルート設定で決めていない形の数 (開いたパターンだけ。残っていれば回さない。2026-10-10 オーナー「ハズレ設定しないと回せない」) */
 const simPlayLeft = ref<Record<string, number>>({});
+/** シミュレーターで開いているパターンの名前 (エミュレーターの「レシピで 1 手」が使うクイズのレシピ) */
+const simQuizActive = ref<string | null>(null);
+/** エミュレーターで再生するクイズのレシピ (開いているパターン、無ければ答えのある最初のパターン)。今のベースと狙う MOD で組む */
+const handQuiz = computed<QuizRecipe | null>(() => {
+  const d = data.value;
+  if (!d || !simTargets.value.length) return null;
+  const has = (p: Pattern): boolean => !!p.quiz && Object.values(p.quiz.rules).some((r) => r.length > 0);
+  const p = simPatterns.value.find((x) => x.name === simQuizActive.value && has(x)) ?? simPatterns.value.find(has);
+  if (!p?.quiz) return null;
+  return quizFromSim({ data: d, base: base.value, itemLevel: itemLevel.value, start: "white", startPrice: 0, targets: simTargets.value.map((t) => ({ ...t, method: methodOfTarget(d, t) })) }, p.quiz).recipe;
+});
 /**
  * エミュレーターの「狙う」(2026-10-09): 狙う MOD (その段以上)。最大 4 つ (錬金術で一度に付く数)、全部揃えば当たり。
  * 棚の上に打ち方ごとの揃う確率を出す (StageAimPanel.vue)
@@ -405,7 +419,7 @@ function usableWith(key: string, om: readonly string[]): string | null {
   return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
 }
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims, aimPicker, modJump, modOverlay,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -570,6 +584,24 @@ export const craftStage = {
     // 食ったお告げは外す
     const ate = p.out.omen ? p.out.omen.split("+") : [];
     if (ate.length) omens.value = omens.value.filter((o) => !ate.includes(o));
+  },
+  /**
+   * クイズのレシピで 1 手 (ADR-003): 今のアイテムに当たる答えを打つ (お告げは答えの物に掛け替える)。
+   * 返り値 = 画面に出す一言 (完成 / 答えが無い / 打った答え)。null = 打った
+   */
+  recipeStep(): { done: boolean; stop: boolean; text: string } {
+    const d = data.value, it = item.value, recipe = handQuiz.value;
+    if (!d || !it || !recipe || replay.value) return { done: false, stop: true, text: tr("レシピが無い", "No recipe") };
+    const mv = nextMove(d, recipe, it, stepSeedFor("reveal"));
+    if (mv.done) return { done: true, stop: true, text: tr("完成", "Done") };
+    if (!mv.key) return { done: false, stop: true, text: tr("この状態の答えが無い (シミュレーターのクイズで答える)", "No answer for this state (answer it in the Simulator quiz)") };
+    if (mv.key === "restart") { craftStage.reset(); return { done: false, stop: false, text: tr("買い直して最初から", "Started over with a new base") }; }
+    // Web は工程を 50 手で切るので、数ではなく最後の手が変わったかで見る
+    const before = log.value[log.value.length - 1];
+    omens.value = [...mv.omens];
+    craftStage.use(mv.key);
+    if (log.value[log.value.length - 1] === before) { omens.value = []; return { done: false, stop: true, text: miss.value?.reason ?? tr("打てない", "Can't use") }; }
+    return { done: false, stop: false, text: [nameOf(mv.key), ...mv.omens.map((o) => nameOf(o))].join(" + ") };
   },
   /** 1 手戻す (その手で食ったお告げは掛け直す) */
   undo(): void {
