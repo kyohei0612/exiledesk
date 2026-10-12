@@ -35,8 +35,10 @@ function poolsFor(item: StageItem, altered: boolean, plain = false) {
 
 export function applyBone(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
   if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
-  if (used.includes("OmenofPutrefaction")) return putrefy(item, key);
+  // 冒涜の MOD が付いていたら骨は使えない。腐食のお告げを掛けていても同じ (お告げは骨の効果を変えるだけで、骨を使う前提は変わらない)。
+  // 前はお告げの分かれ道が先にあって素通りしていた (2026-10-12 動画 mgylemFtDzM「冒涜の MOD が付いていたら使えない」)
   if (allMods(item).some((m) => m.desecrated)) return skip(item, tr("冒涜の MOD はアイテムに 1 つまで", "Only 1 Desecrated mod per item"));
+  if (used.includes("OmenofPutrefaction")) return putrefy(item, key);
   const altered = key === "desecrate_altered";
   if (altered && !item.cls.pools.otherworldly) return skip(item, tr("変質した鎖骨はアミュレット・指輪・ベルトだけ", "Altered Collarbone: Amulets, Rings and Belts only"));
   // 深淵の王の印があれば、骨は必ず印を置き換える (側は印の側)。段の下限 33 (仮)。古代の骨とは重ならない (高い方)

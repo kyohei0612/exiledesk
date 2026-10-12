@@ -278,3 +278,17 @@ describe("確認: 決まりどおりの物 (通る)", () => {
     }
   });
 });
+
+// 2026-10-12 動画 mgylemFtDzM: 冒涜の MOD が付いていたら腐食のお告げを掛けても骨は使えない (前はお告げの分かれ道が先で素通りしていた)
+describe("腐食のお告げ", () => {
+  it("冒涜の MOD が付いているレアには使えない、付いていなければ 6 つ未発現にしてコラプト", () => {
+    let r = A(A(freshItem(data, "Ancestral Tiara", 82), "transmute", 1), "regal", 2);
+    const ok = applyCurrency(data, r, "desecrate", mulberry32(3), ["OmenofPutrefaction"]);
+    expect(ok.applied).toBe(true);
+    expect(ok.item.corrupted).toBe(true);
+    r = A(r, "desecrate", 4);
+    const ng = applyCurrency(data, r, "desecrate", mulberry32(5), ["OmenofPutrefaction"]);
+    expect(ng.applied).toBe(false);
+    expect(ng.random).toBeFalsy();
+  });
+});
