@@ -18,6 +18,8 @@ import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, type SimRecipe } from "../../state/craft-stage";
 import StageRecipeStart from "./StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
+import AdSlot from "../../components/ui/AdSlot.vue";
+import { AD_PREVIEW, adTicks } from "../../utils/ad-preview";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
 import Disclosure from "../../components/ui/Disclosure.vue";
@@ -78,6 +80,8 @@ const mouse = ref({ x: 0, y: 0 });
 // カーソルに付く絵と波紋が右下にずれていた (2026-10-08 POE2Tube 要望 ㊳。clientX は実ピクセル、fixed の left は CSS ピクセル)
 const onMove = (e: MouseEvent) => (mouse.value = { x: toCss(e.clientX), y: toCss(e.clientY) });
 function onKey(e: KeyboardEvent): void {
+  // MOD 一覧の画面 (広告のお試し) は Esc で戻る。持っている物は離さない (窓の時と同じ)
+  if (e.key === "Escape" && modPage.value) { s.modOverlay.value = false; return; }
   if (e.key === "Escape") s.hold(null);
   // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
   // 入力欄の中 (MOD 一覧・ベースの検索) と窓を開いている時は、文字の取り消しや窓の物に任せる (2026-10-10 点検: 文字ではなく 1 手戻っていた)
@@ -314,6 +318,18 @@ const inApp = isTauriRuntime();
 const FIRST_BASE_KEY = "exiledesk.stage.basePicked";
 let firstTime = false;
 try { firstTime = !localStorage.getItem(FIRST_BASE_KEY); } catch { /* 覚えられない時は今まで通り */ }
+/**
+ * 広告の置き場のお試し (?adpreview=1、utils/ad-preview.ts): MOD 一覧を重ねる窓ではなく別の画面にして、両脇に 160×600 を 2 つ。
+ * 戻ったら前の位置へ。右の列の枠は、ベースを変えた・エミュレーター / シミュレーターの切り替え・MOD 一覧から戻った時に出し直す (60 秒以内は見送り)
+ */
+const modPage = computed(() => AD_PREVIEW && !phone.value && s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === "hand" && !handNoBase.value) || !!s.replay.value));
+let modPageScroll = 0;
+watch(modPage, (on) => {
+  if (on) { modPageScroll = window.scrollY; window.scrollTo(0, 0); return; }
+  void nextTick(() => window.scrollTo(0, modPageScroll));
+  adTicks.side++;
+});
+watch([() => s.base.value, () => s.mode.value], () => { if (AD_PREVIEW) adTicks.side++; });
 const handNoBase = ref(!inApp && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
 // 共有の URL から開いた時はベースが決まっている (ここから打つ・白から打つで、ベース選びに戻さない)
 watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
@@ -392,6 +408,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         </div>
       </template>
     </div>
+    <!-- 広告のお試しで MOD 一覧の画面を出している間は、クラフトの中身を隠す (消さないので戻ると元のまま) -->
+    <div v-show="!modPage">
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
@@ -609,8 +627,22 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <!-- 大きさは後ろの画面の 75% (縦横とも。2026-10-11 オーナー「MOD 枠は後ろのウィンドウの大きさで決まる、75%」) -->
     <!-- ページの下にも同じ一覧 (同じ部品 = 同じエンジン。窓はすぐ見るための便利機能。2026-10-11 オーナー「スクロールした下に配置してていい」) -->
     <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" data-rec-part="mod-list-bottom" /></Transition>
+    </div>
+    <!-- MOD 一覧の画面 (広告のお試し、?adpreview=1)。両脇に 160×600、真ん中に一覧。戻る = Tab / Esc / 上のボタン -->
+    <section v-if="modPage" class="flex items-start gap-4">
+      <div class="sticky top-3 shrink-0"><AdSlot id="mods-left" :w="160" :h="600" /></div>
+      <div class="min-w-0 flex-1">
+        <div class="mb-3 flex items-center gap-3">
+          <button type="button" class="g-btn sm" @click="s.modOverlay.value = false">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
+          <span class="text-[12px] opacity-60">{{ tr("Tab / Esc でも戻る", "Tab / Esc also go back") }}</span>
+          <b class="ml-auto">{{ tr("このベースに付く MOD", "Mods for this base") }} · {{ s.item.value ? baseNameOf(s.item.value) : "" }}</b>
+        </div>
+        <StageModList overlay />
+      </div>
+      <div class="sticky top-3 shrink-0"><AdSlot id="mods-right" :w="160" :h="600" /></div>
+    </section>
     <!-- 窓の動きは ModalShell (Esc・後ろを押す・× で閉じる、後ろのページは止める)。Tab でも開け閉め -->
-    <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
+    <ModalShell :open="!modPage && s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
       <template #header><span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span></template>
       <StageModList overlay />
     </ModalShell>

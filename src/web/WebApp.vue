@@ -24,6 +24,8 @@ import { noLogOn, setNoLog } from "../utils/no-log";
 import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import LangSwitch from "../components/LangSwitch.vue";
+import AdSlot from "../components/ui/AdSlot.vue";
+import { AD_PREVIEW, adTicks } from "../utils/ad-preview";
 
 const feedbackOpen = ref(false);
 /**
@@ -147,8 +149,15 @@ window.addEventListener("resize", fitZoom);
         </template>
       </CraftStage>
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
-      <aside data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] border-l'">
-        <div :class="phone ? '' : 'sticky top-3'"><LivePanel /></div>
+      <aside data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : AD_PREVIEW ? 'w-[324px] border-l' : 'w-[280px] border-l'">
+        <div :class="phone ? '' : 'sticky top-3'">
+          <LivePanel />
+          <!-- 広告の置き場のお試し (?adpreview=1、utils/ad-preview.ts): チャンネルの下に 300×250 を 2 つ。中身が大きく変わった時だけ出し直す -->
+          <div v-if="AD_PREVIEW && !phone" class="mt-3 flex flex-col gap-3">
+            <AdSlot id="side-1" :w="300" :h="250" :tick="adTicks.side" />
+            <AdSlot id="side-2" :w="300" :h="250" :tick="adTicks.side" />
+          </div>
+        </div>
       </aside>
     </div>
   </div>
