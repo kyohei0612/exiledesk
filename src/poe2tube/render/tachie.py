@@ -5,6 +5,7 @@ PSD の描画は 1 枚 2〜3 秒かかるので、(キャラ, 感情, 口) ご�
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -103,7 +104,10 @@ def render_tachie(speaker: Speaker, emotion: Emotion, mouth: int, height: int) -
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     cache = CACHE_DIR / f"{speaker}_{emotion}_m{mouth}_h{height}.png"
     if cache.exists():
-        return Image.open(cache).convert("RGBA")
+        try:
+            return Image.open(cache).convert("RGBA")
+        except OSError:  # 書きかけ (並べて作る別のプロセスが書いている途中) → 自分で描く
+            pass
     spec = SPECS[speaker]
     psd = PSDImage.open(spec.psd)
     _apply(psd, spec.fixed)
@@ -114,7 +118,13 @@ def render_tachie(speaker: Speaker, emotion: Emotion, mouth: int, height: int) -
     _select(psd, spec.mouth_group, mouth_layer)
     img = psd.composite(force=True).convert("RGBA")
     img = img.resize((int(img.width * height / img.height), height), Image.Resampling.LANCZOS)
-    img.save(cache)
+    # 並べて作るとほかのプロセスが同じ絵を読むので、別の名前で書き切ってから付け替える
+    tmp = cache.with_name(f"{cache.stem}.{os.getpid()}.tmp.png")
+    img.save(tmp)
+    try:
+        os.replace(tmp, cache)
+    except OSError:  # Windows: ほかのプロセスが開いている (もう出来ている) → 自分の分は捨てる
+        tmp.unlink(missing_ok=True)
     return img
 
 

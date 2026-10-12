@@ -22,6 +22,8 @@ from poe2tube.capture.footage import footage_frames, footage_path
 from poe2tube.capture.stage import cache_ver
 from poe2tube.config.settings import get_settings
 from poe2tube.names import NameBook
+from poe2tube.render.frame import BUST_CROP, BUST_H
+from poe2tube.render.tachie import warm_cache
 from poe2tube.script.model import VideoScript
 from poe2tube.video.encode import encode_stream
 from poe2tube.video.frames import cue_frames, make_context
@@ -124,6 +126,8 @@ def build_chapter(
     ctx = make_context(cues, rs, book, script.final_step, short, script.short_title, n_sections)
     for clip in {ln.scene.clip for ln in sec.lines if ln.scene.clip}:
         footage_frames(clip, s.fps)  # 並べて作る前に 1 回だけ切り出す (同時に切り出さない)
+    if any(ln.scene.kind == "footage" for ln in sec.lines):
+        warm_cache(int(BUST_H / BUST_CROP))  # テロップの顔の立ち絵も先に描いておく
     audio = cut_audio(full_audio, cues, i0, i1, out.with_suffix(".wav"))
     workers = s.render_workers or default_workers()
     if pool is not None:
