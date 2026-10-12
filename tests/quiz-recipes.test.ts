@@ -84,3 +84,28 @@ describe("シミュレーターの入力から組む (quizFromSim)", () => {
     expect(recipe.start).toEqual({ kind: "white", price: 2 });
   });
 });
+
+describe("マジックを買う始め方", () => {
+  it("狙う MOD (普通の付け方) の最初のプレ 1 つ・サフィ 1 つが下限の段で付いたマジックから始まる", async () => {
+    const { quizFromSim } = await import("../src/services/craft-stage/quiz-build");
+    const S = "Spears/";
+    const { recipe } = quizFromSim({
+      data, base: "Steelhead Spear", itemLevel: 82, start: "magic", startPrice: 5,
+      targets: [
+        { modId: S + "LocalPhysicalDamagePercent", minTierIndex: 5, method: "exalt" },
+        { modId: S + "Essence_PhysicalDamage", minTierIndex: 0, method: "essence" },
+        { modId: S + "GlobalIncreaseMeleeSkillGemLevel", minTierIndex: 2, method: "exalt" },
+        { modId: S + "LocalIncreasedPhysicalDamagePercentAndAccuracyRating", minTierIndex: 0, method: "desecrate" },
+      ],
+    }, { v: 3, rules: { main: [
+      { when: { r: "m", A: 2, C: 2 }, do: { use: "essence:greater:" + S + "Essence_PhysicalDamage" } },
+      { when: { r: "r", A: 2, B: 2, C: 2, D: 0, "p.hid": 0, "p.bad": 0, "p.n": 2 }, do: { use: "desecrate", omens: ["OmenofSinistralNecromancy"] } },
+      { when: { "p.hid": 1 }, do: { reveal: { echoes: true } } },
+      { when: { "p.bad": 1 }, do: { use: "annul", omens: ["OmenofLight"] } },
+    ] } });
+    expect(recipe.start).toMatchObject({ kind: "bought", rarity: "magic", price: 5, mods: [{ mod: S + "LocalPhysicalDamagePercent", tier: "T3" }, { mod: S + "GlobalIncreaseMeleeSkillGemLevel", tier: "T2" }] });
+    const res = runQuiz(data, recipe, 40, { price, seed: 5 });
+    expect(res.open.map((o) => o.key)).toEqual([]);
+    expect(res.pDone).toBe(1);
+  });
+});

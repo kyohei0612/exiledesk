@@ -22,6 +22,7 @@ import { applyCurrency, kindOf, omensFor } from "../../services/craft-stage/appl
 import { mulberry32 } from "../../services/htc/rng";
 import { ruleFor, runQuizOnce, summarizeQuiz, type QuizAction, type QuizRecipe, type QuizResult, type QuizRule, type QuizRun, type QuizSlot, type When } from "../../services/craft-stage/quiz-recipe";
 import { ROUTE_NAME } from "../../services/craft-stage/quiz-build";
+import { actionText, chipText as chipTextOf, whenText as whenTextOf } from "./quiz-text";
 import type { StageItem } from "../../services/craft-stage/types";
 
 const props = defineProps<{
@@ -85,25 +86,7 @@ const answered = computed(() => props.recipe.routes.reduce((a, r) => a + r.rules
 const MAIN = (k: string): boolean => k === "r" || k === "p.n" || k === "s.n";
 const SUB = ["p.hid", "s.hid", "p.bad", "s.bad", "fx", "aug"];
 const slotOf = (id: string): QuizSlot | undefined => routeOfQ.value.goal.find((s) => s.id === id);
-const STATE: Array<[string, string]> = [["無い", "none"], ["段が低い", "low tier"], ["付いている", "on"], ["固定", "fractured"]];
-const RARITY: Record<string, [string, string]> = { n: ["ノーマル", "Normal"], m: ["マジック", "Magic"], r: ["レア", "Rare"], u: ["ユニーク", "Unique"] };
-function slotName(s: QuizSlot): string {
-  if (!s.mods.length) return tr(s.side === "prefix" ? "プレ (何でも)" : "サフィ (何でも)", s.side === "prefix" ? "Prefix (any)" : "Suffix (any)");
-  const n = props.nameOfMod(s.mods[0]!.modId);
-  return s.mods.length > 1 ? `${n} ${tr(`ほか ${s.mods.length - 1}`, `+${s.mods.length - 1}`)}` : n;
-}
-function chipText(k: string, v: string | number): string {
-  const s = slotOf(k);
-  if (s) return `${k} ${slotName(s)}: ${tr(STATE[Number(v)]?.[0] ?? "", STATE[Number(v)]?.[1] ?? "")}`;
-  if (k === "r") return tr(RARITY[String(v)]?.[0] ?? String(v), RARITY[String(v)]?.[1] ?? String(v));
-  const side = k.startsWith("p.") ? tr("プレ", "Prefix") : tr("サフィ", "Suffix");
-  if (k.endsWith(".n")) return tr(`${side} ${v} つ`, `${side} ${v}`);
-  if (k.endsWith(".hid")) return tr(`未発現 (${side}) ${v}`, `Unrevealed (${side}) ${v}`);
-  if (k.endsWith(".bad")) return tr(`冒涜の外れ (${side}) ${v}`, `Unwanted desecrated (${side}) ${v}`);
-  if (k === "fx") return tr(`固定 ${v}`, `Fractured ${v}`);
-  if (k === "aug") return tr(`ルーン ${v}`, `Runes ${v}`);
-  return `${k} ${v}`;
-}
+const chipText = (k: string, v: string | number): string => chipTextOf(routeOfQ.value.goal, k, v, props.nameOfMod);
 /** 今の問題の条件 (押して外した項目は何でも) */
 const off = ref<Set<string>>(new Set());
 watch(() => q.value?.key, () => { off.value = new Set(); held.value = null; omens.value = []; });
@@ -162,22 +145,8 @@ function useHeld(): void { if (held.value) answer({ use: held.value, omens: omen
 
 // ── 答えた一覧 ─────────────────────────
 const listOpen = ref(false);
-function actionText(a: QuizAction): string {
-  if ("restart" in a) return tr("買い直して最初から", "Buy a new base and start over");
-  if ("reveal" in a) return tr(`発現 (狙いの札を取る${a.reveal.echoes ? "・反響で引き直し" : ""})`, `Reveal (take a target${a.reveal.echoes ? ", reroll with Echoes" : ""})`);
-  return [nameOf(a.use), ...(a.omens ?? []).map((o) => nameOf(o))].join(" + ");
-}
 function whenText(route: string, w: When): string {
-  const r = props.recipe.routes.find((x) => x.id === route);
-  const keys = Object.keys(w);
-  if (!keys.length) return tr("いつでも", "Always");
-  return keys.map((k) => {
-    const v = w[k]!;
-    const vs = Array.isArray(v) ? v : [v];
-    const s = r?.goal.find((g) => g.id === k);
-    if (s) return `${k}: ${vs.map((x) => tr(STATE[Number(x)]?.[0] ?? "", STATE[Number(x)]?.[1] ?? "")).join("/")}`;
-    return vs.map((x) => chipText(k, x)).join(" / ");
-  }).join(" · ");
+  return whenTextOf(props.recipe.routes.find((x) => x.id === route)?.goal ?? [], w, props.nameOfMod);
 }
 function removeRule(route: string, i: number): void {
   const r = props.recipe.routes.find((x) => x.id === route);

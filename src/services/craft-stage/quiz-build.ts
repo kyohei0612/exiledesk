@@ -8,6 +8,7 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageItem, StageSide } from "./types";
+import type { Force } from "./stage-core";
 import type { QuizRecipe, QuizRoute, QuizRule, QuizSlot, QuizStart, SlotKind } from "./quiz-recipe";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 
@@ -19,7 +20,7 @@ export interface QuizSimIn {
   base: string;
   itemLevel: number;
   targets: readonly SimTargetIn[];
-  start: "white" | "fractured" | "four" | "item";
+  start: "white" | "fractured" | "four" | "item" | "magic";
   /** 始め 1 個の値段 (高貴建て) */
   startPrice: number;
   sockets?: number;
@@ -39,6 +40,24 @@ export const methodOfTarget = (data: PatchData, t: { modId: string; method?: Sim
 
 const KIND: Record<SimMethod, SlotKind> = { exalt: "normal", chaos: "normal", desecrate: "desecrated", essence: "essence", fracture: "fractured" };
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+/**
+ * マジックを買う始め方で付いている MOD: 狙う MOD (普通の付け方) の最初のプレ 1 つ・サフィ 1 つ。段は狙いの下限 (2026-10-12 オーナー
+ * 「マジックを買う始め方も足して」)。冒涜・エッセンス・フラクチャーの狙いはマジックに付いていないので入れない
+ */
+export function magicStartMods(data: PatchData, targets: readonly SimTargetIn[]): Force[] {
+  const out: Force[] = [];
+  const sides = new Set<StageSide>();
+  for (const t of targets) {
+    if (t.method !== "exalt" && t.method !== "chaos") continue;
+    const m = data.mods.get(t.modId);
+    const side: StageSide = m?.type === "suffix" ? "suffix" : "prefix";
+    if (!m || sides.has(side)) continue;
+    sides.add(side);
+    out.push({ mod: t.modId, tier: `T${m.tiers.length - t.minTierIndex}` });
+  }
+  return out;
+}
 
 export interface QuizBuilt { recipe: QuizRecipe; error: string | null }
 
@@ -71,6 +90,7 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
   let start: QuizStart;
   if (x.start === "item" && x.startItem) start = { kind: "item", item: x.startItem, price: x.startPrice };
   else if (x.start === "fractured" && frac) start = { kind: "bought", mods: [{ mod: frac.modId, fractured: true }], price: x.startPrice };
+  else if (x.start === "magic") start = { kind: "bought", mods: magicStartMods(x.data, x.targets), rarity: "magic", price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}) };
   else if (x.start === "four" && frac) start = { kind: "bought", mods: [{ mod: frac.modId }], fill: { prefix: 2, suffix: 2 }, price: x.startPrice };
   else start = { kind: "white", price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}) };
   return { recipe: { v: 3, base: x.base, itemLevel: x.itemLevel, start, routes }, error };

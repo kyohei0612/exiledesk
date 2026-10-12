@@ -202,7 +202,7 @@ const simSockets = ref<number | null>(null);
  * white = 白のベースから / fractured = 固定済みのベースを買う (固定 MOD は 2 狙う MOD の最初の 1 つ) / four = 4 MOD のレア (3 MOD + 狙い 1) を買って自分で固定。
  * 4 最安値スタートの 3 ルートを前に出した物。white 以外は 4 を飛ばし、始めのベース代は 3 で入れた値段
  */
-export type SimStart = "white" | "fractured" | "four" | "item";
+export type SimStart = "white" | "fractured" | "four" | "item" | "magic";
 const simStart = ref<SimStart>("white");
 /**
  * 手で打つ画面から持ってきた始めの状態 (2026-10-08 オーナー「その MOD が付いた状態以降を確認したい時があるから、手打ちからそのまま持っていくコース」)。
@@ -267,7 +267,7 @@ export interface SimSession {
   startItem?: StageItem | null;
   startCost?: number;
   /** 入れたベース代 (高貴建て)。呼び出した時に、そのベースの覚えた値段が無ければこれを入れる */
-  prices?: { white?: number | null; four?: number | null; bought?: number | null; item?: number | null };
+  prices?: { white?: number | null; four?: number | null; bought?: number | null; item?: number | null; magic?: number | null };
   flags: Record<string, boolean>;
 }
 export function readSimSession(): SimSession | null {

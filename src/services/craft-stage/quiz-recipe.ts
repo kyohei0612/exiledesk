@@ -55,7 +55,7 @@ export type QuizStart =
   /** 白を買う (sockets・runes = 規格外のソケットと始めから差すルーン) */
   | { kind: "white"; price: number; sockets?: number; runes?: string[] }
   /** 付いた状態を買う。fill = 側ごとに MOD の数まで残りを乱数で埋める (相場で買うベースの代わり) */
-  | { kind: "bought"; mods: Force[]; fill?: Partial<Record<StageSide, number>>; price: number }
+  | { kind: "bought"; mods: Force[]; fill?: Partial<Record<StageSide, number>>; price: number; rarity?: "magic" | "rare"; sockets?: number }
   /** エミュレーターの今のアイテムから */
   | { kind: "item"; item: StageItem; price: number };
 export interface QuizRecipe {
@@ -187,7 +187,7 @@ function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): Sta
   if (st.kind === "item") return st.item;
   if (st.kind === "white") return st.sockets != null || st.runes?.length ? startFrom(data, recipe.base, recipe.itemLevel, { ...(st.sockets != null ? { sockets: st.sockets } : {}), runes: st.runes ?? [] }, Math.floor(rng() * 2 ** 31)) : freshItem(data, recipe.base, recipe.itemLevel);
   const seed = Math.floor(rng() * 2 ** 31);
-  let it = startFrom(data, recipe.base, recipe.itemLevel, { mods: st.mods, ...(st.fill ? { rarity: "rare" as const } : {}) }, seed);
+  let it = startFrom(data, recipe.base, recipe.itemLevel, { mods: st.mods, ...(st.rarity ? { rarity: st.rarity } : st.fill ? { rarity: "rare" as const } : {}), ...(st.sockets ? { sockets: st.sockets } : {}) }, seed);
   // 残りを乱数で埋める (側のお告げ付きの高貴。相場で買えるベースの代わり)
   for (const side of SIDES) {
     const want = st.fill?.[side] ?? 0;
