@@ -151,6 +151,25 @@ function tintGlow(e: Event): void {
     (img.parentElement ?? img).style.setProperty("--glow", `${Math.round(R)}, ${Math.round(G)}, ${Math.round(B)}`);
   } catch { /* 読めない絵 (よそのドメイン) は既定の色 */ }
 }
+/**
+ * ホタルの粒 (2026-10-13 オーナー「F だね、蛍はアイコンによってランダムに、今統一してるように見えるから」)。
+ * 部位の名前から決まる乱数で、粒の数 (3〜5)・位置・漂う向きと距離・速さ・大きさ・始まりをタイルごとにばらばらに (描き直しても同じ)
+ */
+function fireflies(name: string): Array<Record<string, string>> {
+  let h = 2166136261;
+  for (let i = 0; i < name.length; i++) h = Math.imul(h ^ name.charCodeAt(i), 16777619);
+  const rnd = (): number => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
+  const n = 3 + Math.floor(rnd() * 3);
+  return Array.from({ length: n }, () => ({
+    top: `${10 + rnd() * 75}%`,
+    left: `${8 + rnd() * 80}%`,
+    "--dx": `${(rnd() - 0.5) * 22}px`,
+    "--dy": `${(rnd() - 0.5) * 22}px`,
+    "--sz": `${2 + rnd() * 2.2}px`,
+    animationDuration: `${3.5 + rnd() * 4}s`,
+    animationDelay: `${-rnd() * 7}s`,
+  }));
+}
 function famArt(f: Family): string | null {
   const u = FAM_UNIQUE[f.name] && uniqueArt(FAM_UNIQUE[f.name]!);
   if (u) return u;
@@ -292,7 +311,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
                 <!-- ユニークの絵はゆっくり光る (脈打つ光 + 乗せると光が走る。2026-10-13 オーナー「光らせることできる？動きのある感じで」)。タイルごとに少しずらして一斉に光らない -->
                 <span class="fam-slot grid size-16 place-items-center md:size-20" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'" :style="{ '--d': `${-(fi * 1.3) % 9}s` }">
                   <span class="fam-aura" aria-hidden="true" />
-                  <span v-for="k in 3" :key="k" class="fam-mote" :style="{ '--k': k }" aria-hidden="true" />
+                  <span v-for="(m, k) in fireflies(f.name)" :key="k" class="fam-fly" :style="m" aria-hidden="true" />
                   <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="fam-art max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" draggable="false" @load="tintGlow" />
                 </span>
                 <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ famLabel(f) }}</span>
@@ -330,7 +349,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
 <style scoped>
 /*
  * 部位のタイルの絵: その絵の色 (--glow、tintGlow が枠に入れる) の光が動き続ける (2026-10-13 オーナー「脈打たなくていい、動いてる感じで」「アイコンに合った」)。
- * 後ろにその色のぼやっとした光 (fam-aura、動かさない)、小さな光の粒が下から立ちのぼる (fam-mote)。絵は同じ色でうっすら光ったまま。乗せると少し大きく明るく
+ * 後ろにその色のぼやっとした光 (fam-aura、動かさない)、その色のホタルの粒が漂う (fam-fly、タイルごとにばらばら)。絵は同じ色でうっすら光ったまま。乗せると少し大きく明るく
  */
 .fam-slot { --glow: 255, 176, 80; position: relative; overflow: hidden; }
 .fam-art { position: relative; z-index: 1; filter: drop-shadow(0 0 5px rgba(var(--glow), 0.6)); transition: transform 0.25s ease-out, filter 0.25s ease-out; }
@@ -343,31 +362,27 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
   filter: blur(4px);
   pointer-events: none;
 }
-.fam-mote {
+.fam-fly {
   position: absolute;
-  bottom: 10%;
-  left: calc(22% + var(--k) * 16%);
-  width: 3px;
-  height: 3px;
+  width: var(--sz, 3px);
+  height: var(--sz, 3px);
   border-radius: 50%;
   background: rgba(var(--glow), 0.95);
   box-shadow: 0 0 6px 1px rgba(var(--glow), 0.8);
-  opacity: 0;
-  animation: fam-rise 3.4s ease-out infinite;
-  animation-delay: calc(var(--d, 0s) + var(--k) * 1.1s);
+  animation: fam-drift 5s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 2;
 }
-@keyframes fam-rise {
-  0% { transform: translateY(0); opacity: 0; }
-  15% { opacity: 1; }
-  100% { transform: translateY(-48px) translateX(4px); opacity: 0; }
+/* ホタル: ふわふわ漂いながら明るさが変わる (向き・距離・速さは粒ごと) */
+@keyframes fam-drift {
+  0% { transform: translate(0, 0); opacity: 0.15; }
+  45% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)); opacity: 0.25; }
 }
 button:hover .fam-art { transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(var(--glow), 0.95)) drop-shadow(0 0 16px rgba(var(--glow), 0.45)) brightness(1.12); }
 button:hover .fam-aura { background: radial-gradient(circle, rgba(var(--glow), 0.45) 0%, rgba(var(--glow), 0.18) 45%, transparent 70%); }
 /* 動きを減らす設定の人には動かさない (光だけ) */
 @media (prefers-reduced-motion: reduce) {
-  .fam-mote { animation: none; }
-  .fam-mote { display: none; }
+  .fam-fly { animation: none; display: none; }
 }
 </style>
