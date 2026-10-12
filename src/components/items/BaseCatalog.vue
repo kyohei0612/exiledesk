@@ -153,19 +153,18 @@ function tintGlow(e: Event): void {
 }
 /**
  * ホタルの粒 (2026-10-13 オーナー「F だね、蛍はアイコンによってランダムに、今統一してるように見えるから」)。
- * 部位の名前から決まる乱数で、粒の数 (3〜5)・位置・漂う向きと距離・速さ・大きさ・始まりをタイルごとにばらばらに (描き直しても同じ)
+ * 粒は見比べの F と同じ小さな 4 つ (3px) のまま、動き (位置・漂う向きと距離・速さ・始まり) だけを部位の名前から決まる乱数でタイルごとにばらばらに
+ * (描き直しても同じ。オーナー「ちっさくていいよ、さっきので動きだけランダム」)
  */
 function fireflies(name: string): Array<Record<string, string>> {
   let h = 2166136261;
   for (let i = 0; i < name.length; i++) h = Math.imul(h ^ name.charCodeAt(i), 16777619);
   const rnd = (): number => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
-  const n = 3 + Math.floor(rnd() * 3);
-  return Array.from({ length: n }, () => ({
+  return Array.from({ length: 4 }, () => ({
     top: `${10 + rnd() * 75}%`,
     left: `${8 + rnd() * 80}%`,
     "--dx": `${(rnd() - 0.5) * 22}px`,
     "--dy": `${(rnd() - 0.5) * 22}px`,
-    "--sz": `${2 + rnd() * 2.2}px`,
     animationDuration: `${3.5 + rnd() * 4}s`,
     animationDelay: `${-rnd() * 7}s`,
   }));
