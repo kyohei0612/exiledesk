@@ -46,6 +46,7 @@ from poe2tube.video.results import ResultSet, as_set
 from poe2tube.video.timeline import Cue, scene_changed
 
 log = structlog.get_logger()
+FOOTAGE_FADE = 0.3  # 同じ章の中で録画が替わる時のふわっと替える秒
 
 
 @dataclass(frozen=True)
@@ -152,6 +153,14 @@ def cue_frames(
     static = with_panel(base, panel, 0, 1.0)
     sc = c.line.scene
     foot = footage_frames(sc.clip, round(fps)) if sc.kind == "footage" and sc.clip else []
+    # 同じ章の中で別の録画に替わる時は、前の行の最後の絵から FOOTAGE_FADE 秒でふわっと替える
+    # (章の頭は章名のカードの裏で替わるので要らない。kyohei 2026-10-12「違和感ないように」)
+    fade_from: Path | None = None
+    if foot and prev is not None and prev_section == c.section:
+        ps = prev.scene
+        if ps.kind == "footage" and ps.clip and ps.clip != sc.clip:
+            pf = footage_frames(ps.clip, round(fps))
+            fade_from = shot_at(pf, fps, ps.at or 0.0, ps.hold, cues[i - 1].duration, ps.rate)
     hit_step = res.steps[hp.step - 1] if hp else None
     land = hp.land_at if hp else 0.0  # 結果の文字は付いた瞬間から数える
     new_chapter = prev_section is not None and prev_section != c.section
@@ -170,6 +179,10 @@ def cue_frames(
             shot = shot_at(foot, fps, sc.at or 0.0, sc.hold, tl, sc.rate)
             layer = render_panel_layer(c.line, res, stage_shot=shot, final_step=fin)
             frame_static = with_panel(base, layer, 0, 1.0)
+            if fade_from is not None and tl < FOOTAGE_FADE:
+                old_layer = render_panel_layer(c.line, res, stage_shot=fade_from, final_step=fin)
+                before = with_panel(base, old_layer, 0, 1.0)
+                frame_static = Image.blend(before, frame_static, max(0.0, tl) / FOOTAGE_FADE)
         elif pre and k >= pre_from:
             layer = render_panel_layer(c.line, res, stage_shot=pre[k - pre_from], final_step=fin)
             frame_static = with_panel(base, layer, 0, 1.0)

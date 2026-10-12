@@ -862,11 +862,22 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "ルーンは、アイテムを押すとソケットに差せるわ。外す時は、ソケットを右クリックよ。",
+          "text": "ルーンは、MODが6つ埋まった胴で見せるわね。",
           "scene": {
             "kind": "footage",
             "clip": "rune",
             "at": 0,
+            "hold": 1.5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ルーンは、アイテムを押すとソケットに差せるわ。外す時は、ソケットを右クリックよ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "rune",
+            "at": 1.5,
             "hold": 5
           }
         },
