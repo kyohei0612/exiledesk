@@ -131,7 +131,12 @@ window.addEventListener("resize", fitZoom);
           <footer class="-mx-4 mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--exile-color-border-subtle)] px-4 py-2 text-[10px] opacity-50">
             <span>{{ tr("ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。", "ExileDesk is an unofficial fan site and is not affiliated with or endorsed by Grinding Gear Games. Path of Exile 2 and all related names and images are the property of Grinding Gear Games.") }}</span>
             <span>{{ tr("相場は", "Market prices from") }} <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>{{ tr("、確率はゲームのデータからの推定で、結果を保証するものではありません。", ". Chances are estimates from game data; results are not guaranteed.") }}</span>
-            <span>{{ tr("使い方の記録 (打った手・回した結果など。名前や IP は含みません) を改善のために集めています。", "We collect usage data (actions used, results, etc. No names or IPs) to improve the site.") }}<button type="button" class="ml-1 underline" :title="noLogOn ? tr('この端末の記録を再開する', 'Resume logging on this device') : tr('この端末からは記録を送らない', 'Stop sending usage data from this device')" @click="setNoLog(!noLogOn)">{{ noLogOn ? tr("この端末は記録していません (再開する)", "Not logging on this device (resume)") : tr("この端末は記録しない", "Don't log this device") }}</button></span>
+            <span>{{ tr("使い方の記録 (打った手・回した結果など。名前や IP は含みません) を改善のために集めています。", "We collect usage data (actions used, results, etc. No names or IPs) to improve the site.") }}</span>
+            <!-- 今の状態と押した時の動きを分ける (2026-10-12 オーナー「再開するって分かりづらい」: 前は「この端末は記録していません (再開する)」の 1 つの文だった) -->
+            <span class="inline-flex items-center gap-1.5">
+              <span>{{ noLogOn ? tr("記録: 止めています", "Logging: off") : tr("記録: しています", "Logging: on") }}</span>
+              <button type="button" class="rounded border border-white/40 px-1.5 leading-[16px] hover:bg-white/10" @click="setNoLog(!noLogOn)">{{ noLogOn ? tr("記録を再開する", "Resume logging") : tr("この端末は記録しない", "Don't log this device") }}</button>
+            </span>
             <span class="ml-auto">{{ tr("協賛の枠には PR と表示します", "Sponsored slots are marked PR") }}</span>
             <!-- よくある一番下のリンク (2026-10-12 広告の審査の前に。中身は public/about.html・privacy.html の単独のページ) -->
             <a href="/about.html" class="underline">{{ tr("ExileDesk について", "About") }}</a>
