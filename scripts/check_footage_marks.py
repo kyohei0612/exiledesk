@@ -1,7 +1,7 @@
 """録画 (footage) の行のうち、寄る (zoom) か印 (mark) がある行のコマを書き出して確かめる.
 
 kyohei 2026-10-12「スナップで確認してこのざまか」: 縮めた一覧だけで確かめて印のずれを見落とした。
-行ごとに「始まって 0.6 秒」と「終わる 0.2 秒前」のコマを 960x540 で並べ、台詞と寄り・印を札で付ける。
+行ごとに「始まって 0.6 秒」と「終わる 0.2 秒前」のコマを並べ、台詞と寄り・印を札で付ける。
 
     python scripts/check_footage_marks.py data/scripts/<name>.json
     → output/work/<name>/check_marks/NN_<章>_<行>.jpg (章の動画 section_NN.mp4 から)

@@ -629,8 +629,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 4.1,
-            "hold": 6.3,
-            "mark": "tiers"
+            "hold": 6.3
           }
         },
         {
@@ -641,8 +640,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 6.3,
-            "hold": 6.3,
-            "mark": "tiers"
+            "hold": 6.3
           }
         },
         {
@@ -769,8 +767,7 @@
             "kind": "footage",
             "clip": "aim",
             "at": 9.3,
-            "hold": 9.3,
-            "mark": "aim"
+            "hold": 9.3
           }
         },
         {
@@ -781,8 +778,7 @@
             "kind": "footage",
             "clip": "aim",
             "at": 9.3,
-            "hold": 9.3,
-            "mark": "aim"
+            "hold": 9.3
           }
         },
         {
@@ -793,8 +789,7 @@
             "kind": "footage",
             "clip": "aim",
             "at": 9.3,
-            "hold": 11.5,
-            "mark": "aim"
+            "hold": 11.5
           }
         },
         {
@@ -805,8 +800,7 @@
             "kind": "footage",
             "clip": "aim",
             "at": 11.5,
-            "hold": 13.2,
-            "mark": "aim"
+            "hold": 13.2
           }
         },
         {
@@ -817,8 +811,7 @@
             "kind": "footage",
             "clip": "aim",
             "at": 13.2,
-            "hold": 16.0,
-            "mark": "aim"
+            "hold": 16.0
           }
         },
         {
@@ -829,8 +822,7 @@
             "kind": "footage",
             "clip": "aim",
             "at": 16.0,
-            "hold": 16.0,
-            "mark": "aim"
+            "hold": 16.0
           }
         }
       ]
@@ -902,8 +894,7 @@
             "kind": "footage",
             "clip": "reveal",
             "at": 6.9,
-            "hold": 9.8,
-            "mark": "offers"
+            "hold": 9.8
           }
         },
         {
@@ -914,8 +905,7 @@
             "kind": "footage",
             "clip": "reveal",
             "at": 9.8,
-            "hold": 9.85,
-            "mark": "offers"
+            "hold": 9.85
           }
         },
         {
@@ -959,8 +949,7 @@
             "kind": "footage",
             "clip": "rune",
             "at": 4.0,
-            "hold": 8.5,
-            "mark": "card_rune"
+            "hold": 8.5
           }
         },
         {
@@ -971,8 +960,7 @@
             "kind": "footage",
             "clip": "rune",
             "at": 8.5,
-            "hold": 8.5,
-            "mark": "card_rune"
+            "hold": 8.5
           }
         }
       ]
@@ -1138,8 +1126,7 @@
             "kind": "footage",
             "clip": "web_feedback",
             "at": 0,
-            "hold": 0,
-            "mark": "header"
+            "hold": 0
           }
         },
         {
@@ -1150,8 +1137,7 @@
             "kind": "footage",
             "clip": "web_feedback",
             "at": 0,
-            "hold": 0,
-            "mark": "header"
+            "hold": 0
           }
         },
         {
