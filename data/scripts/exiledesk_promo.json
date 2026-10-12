@@ -407,6 +407,100 @@
           }
         }
       ]
+    },
+    {
+      "name": "戻す",
+      "target_seconds": 35,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "失敗したら、戻せるのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "undo",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "「1手戻す」を押すか、Rキーで1つ前に戻せるわ。Ctrl+Zでもいいの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "undo",
+            "at": 0,
+            "hold": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "戻してから打ち直すと、また別の抽選になるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "undo",
+            "at": 2,
+            "hold": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "何手も前に戻りたい時は、どうするのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "undo",
+            "at": 3,
+            "hold": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "工程の行を押せば、その手を打った直後に戻れるの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "undo",
+            "at": 3,
+            "hold": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "一番下の「始め」を押すと、1手も打っていない姿に戻るわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "undo",
+            "at": 5,
+            "hold": 7
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ゲームじゃできないのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "undo",
+            "at": 7,
+            "hold": 7
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "何度でも試せるから、本番の前の練習にちょうどいいわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "undo",
+            "at": 7,
+            "hold": 7
+          }
+        }
+      ]
     }
   ]
 }
