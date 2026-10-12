@@ -53,6 +53,7 @@ const head = (title, desc, path) => `<!doctype html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" />
 <style>${CSS}</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
 </head>
 <body>
 <header><div class="in"><a href="/">ExileDesk</a><nav><a href="/">エミュレーター</a><a href="/bases/">ベース一覧</a><a href="/guide">使い方</a><a href="/about">ExileDesk について</a><a href="/contact">お問い合わせ</a></nav></div></header>
