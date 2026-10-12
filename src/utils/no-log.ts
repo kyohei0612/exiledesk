@@ -4,12 +4,15 @@
  * 端末ごと (localStorage)。Web は ?nolog=1 / ?nolog=0 でも切り替えられる。画面には Web の下の行とアプリの設定に切り替えを置く
  */
 import { ref } from "vue";
+import { REC } from "./rec-mode";
 
 export const NO_LOG_KEY = "exiledesk.noLog";
 
 function read(): boolean {
   // スマホ用の開発版 (公開しない、scripts/deploy-web-dev.mjs) は記録しない
   if (import.meta.env.VITE_DEV_PREVIEW === "1") return true;
+  // 録画モード (?rec=1) は送らない (POE2Tube 要望 ㊶。端末の印は書き換えない)
+  if (REC) return true;
   try { return localStorage.getItem(NO_LOG_KEY) === "1"; } catch { return false; }
 }
 

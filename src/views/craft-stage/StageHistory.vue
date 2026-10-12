@@ -34,6 +34,7 @@ const goTitle = computed(() => (sharedReplay.value ? tr("この手まで送る (
     <li
       v-for="s in newestFirst"
       :key="s.out.index"
+      :data-rec="`step:${s.out.index}`"
       class="flex items-start gap-2 rounded-lg border px-2 py-1.5 text-[12px]"
       :class="[s.out.applied ? 'border-white/10 bg-black/20' : 'border-white/5 bg-black/10 opacity-50', canGo(s.out.index) ? 'cursor-pointer hover:border-white/30 hover:bg-white/5' : '']"
       :title="canGo(s.out.index) ? goTitle : undefined"
@@ -71,6 +72,7 @@ const goTitle = computed(() => (sharedReplay.value ? tr("この手まで送る (
     <!-- 始めの行 (押すと 1 手も打っていない状態に戻る。2026-10-09 オーナー「始めの行も足して」) -->
     <li
       v-if="craftStage.log.value.length"
+      data-rec="step:start"
       class="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-[12px]"
       :class="craftStage.replay.value && !sharedReplay ? '' : 'cursor-pointer hover:border-white/30 hover:bg-white/5'"
       :title="craftStage.replay.value && !sharedReplay ? undefined : sharedReplay ? tr('始めへ送る', 'Jump to the start') : tr('1 手も打っていない状態に戻す (この後に打つと先の手は消える)', 'Go back to the start (later steps are dropped if you craft from here)')"

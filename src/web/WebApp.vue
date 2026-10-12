@@ -17,6 +17,7 @@ import HoverStack from "../components/decor/HoverStack.vue";
 import { SUPPORT_LINKS, supportOpen } from "../state/support";
 import { changelogNew, changelogOpen, initChangelog } from "../state/changelog";
 import { checkReplies } from "../state/feedback-replies";
+import { REC } from "../utils/rec-mode";
 import { forgetResult } from "../utils/no-log";
 import MarketNotice from "./MarketNotice.vue";
 import pkg from "../../package.json";
@@ -40,7 +41,7 @@ function onActive(): void {
   void loadBoot(true).then((b) => { visitors.value = b?.visitors ?? visitors.value; marketStore.refreshMarket(); });
   window.dispatchEvent(new Event("exiledesk:refresh"));
   // 開きっぱなしの人にも、要望への返事を届ける
-  void checkReplies().then((got) => { if (got && !changelogOpen.value) { changelogNew.value = []; changelogOpen.value = "new"; } });
+  if (!REC) void checkReplies().then((got) => { if (got && !changelogOpen.value) { changelogNew.value = []; changelogOpen.value = "new"; } });
 }
 const onVisible = (): void => { if (document.visibilityState === "visible") onActive(); };
 onMounted(() => {
@@ -60,9 +61,10 @@ const welcomeOpen = ref(false);
 let firstVisit = false;
 try { firstVisit = !localStorage.getItem(WELCOME_KEY); localStorage.setItem(WELCOME_KEY, "1"); } catch { /* 無くてよい */ }
 // 更新した後に 1 回だけ更新内容を出す。初めて来た人には出さない (2026-10-10)
-initChangelog(firstVisit);
+// 録画モード (?rec=1) では起動直後の窓を出さない (POE2Tube 要望 ㊶)
+if (!REC) initChangelog(firstVisit);
 // 送った要望・バグへの返事があれば、更新の窓 (無ければ返事だけの窓) で知らせる (state/feedback-replies.ts、2026-10-11)
-void checkReplies().then((got) => { if (got && !changelogOpen.value) { changelogNew.value = []; changelogOpen.value = "new"; } });
+if (!REC) void checkReplies().then((got) => { if (got && !changelogOpen.value) { changelogNew.value = []; changelogOpen.value = "new"; } });
 function closeWelcome(): void { welcomeOpen.value = false; }
 /** 本日の訪問者 (/boot.json の visitors) */
 const visitors = ref<NonNullable<Boot["visitors"]> | null>(null);
@@ -99,7 +101,9 @@ window.addEventListener("resize", fitZoom);
       </span>
       <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
       <!-- 本日の訪問者 (9:00 から、1 時間ごとに数え直す。2026-10-11 オーナー)。数えられていない時は出さない -->
-      <span v-if="visitors" class="ml-auto whitespace-nowrap opacity-60" :class="phone ? 'text-[10px]' : ''" :title="visitors.yesterday != null ? tr(`9:00 から (1 時間ごとに更新) · 昨日 ${visitors.yesterday.toLocaleString()} 人`, `Since 9:00 JST (updated hourly) · Yesterday ${visitors.yesterday.toLocaleString()}`) : tr('9:00 から (1 時間ごとに更新)', 'Since 9:00 JST (updated hourly)')">{{ tr(`本日の訪問者 ${visitors.today.toLocaleString()} 人`, `Today's visitors ${visitors.today.toLocaleString()}`) }}</span>
+      <!-- 録画モードは訪問者を隠すので、右寄せの押さえだけ置く -->
+      <span v-if="REC && !phone" class="ml-auto" />
+      <span v-if="visitors && !REC" class="ml-auto whitespace-nowrap opacity-60" :class="phone ? 'text-[10px]' : ''" :title="visitors.yesterday != null ? tr(`9:00 から (1 時間ごとに更新) · 昨日 ${visitors.yesterday.toLocaleString()} 人`, `Since 9:00 JST (updated hourly) · Yesterday ${visitors.yesterday.toLocaleString()}`) : tr('9:00 から (1 時間ごとに更新)', 'Since 9:00 JST (updated hourly)')">{{ tr(`本日の訪問者 ${visitors.today.toLocaleString()} 人`, `Today's visitors ${visitors.today.toLocaleString()}`) }}</span>
       <!-- 版を押すと更新履歴 (2026-10-10) -->
       <button type="button" class="g-plain opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
       <LangSwitch v-if="!phone" />
@@ -109,7 +113,7 @@ window.addEventListener("resize", fitZoom);
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
       <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
-      <span class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" :title="tr('相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中', 'A desktop app with automatic market prices, trade history, DPS check and more is in the works')">{{ tr("アプリ版 近日公開", "Desktop app coming soon") }}</span>
+      <span v-if="!REC" class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" :title="tr('相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中', 'A desktop app with automatic market prices, trade history, DPS check and more is in the works')">{{ tr("アプリ版 近日公開", "Desktop app coming soon") }}</span>
     </header>
     <MarketNotice />
     <!-- ?nolog=1 で開いた時の結果 (2026-10-10) -->
@@ -128,7 +132,7 @@ window.addEventListener("resize", fitZoom);
       <CraftStage class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <!-- 決まり事 (2026-10-07、2026-10-10 から画面に貼り付けずクラフトステージの一番下): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
-          <footer class="-mx-4 mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--exile-color-border-subtle)] px-4 py-2 text-[10px] opacity-50">
+          <footer v-if="!REC" class="-mx-4 mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--exile-color-border-subtle)] px-4 py-2 text-[10px] opacity-50">
             <span>{{ tr("ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。", "ExileDesk is an unofficial fan site and is not affiliated with or endorsed by Grinding Gear Games. Path of Exile 2 and all related names and images are the property of Grinding Gear Games.") }}</span>
             <span>{{ tr("相場は", "Market prices from") }} <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>{{ tr("、確率はゲームのデータからの推定で、結果を保証するものではありません。", ". Chances are estimates from game data; results are not guaranteed.") }}</span>
             <span>{{ tr("使い方の記録 (打った手・回した結果など。名前や IP は含みません) を改善のために集めています。", "We collect usage data (actions used, results, etc. No names or IPs) to improve the site.") }}</span>
@@ -145,7 +149,7 @@ window.addEventListener("resize", fitZoom);
         </template>
       </CraftStage>
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
-      <aside class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] border-l'">
+      <aside v-if="!REC" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] border-l'">
         <div :class="phone ? '' : 'sticky top-3'"><LivePanel /></div>
       </aside>
     </div>

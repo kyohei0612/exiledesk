@@ -55,6 +55,7 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
     <button
       v-for="b in shown"
       :key="b.en"
+      :data-rec="`base:${b.en}`"
       type="button"
       class="g-plain g-item flex items-center gap-2 bg-clip-padding px-1 py-0.5 text-left transition max-md:flex-col max-md:gap-1 max-md:text-center"
       :class="b.en === selected ? 'bg-[rgba(163,52,42,0.35)]' : 'bg-black/50 hover:bg-white/[0.06]'"

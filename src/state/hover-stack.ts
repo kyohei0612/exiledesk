@@ -18,6 +18,7 @@
  *   - ピン留めした段は、外へ出ても残る。× で閉じる
  * 画面は [[HoverStack.vue]] (App.vue に 1 つ) が描く。
  */
+import { REC } from "../utils/rec-mode";
 import { ref } from "vue";
 import type { RankedItem } from "../api/poe2scout";
 import type { UniqueRow } from "../views/unique-trend/useUniqueTrend";
@@ -98,6 +99,8 @@ export const hoverStack = {
    * 2026-10-10 オーナー「ベースもジェムと同じ挙動で、少しおいてからカード」)。離れたら leave が取り消す
    */
   openRootDelayed(payload: HoverPayload, x: number, y: number, box?: HoverLayer["box"]): void {
+    // 録画モード (?rec=1) では棚・ベースの詳しいカードを出さない (POE2Tube 要望 ㊶)
+    if (REC && (payload.kind === "shelf" || payload.kind === "base")) return;
     cancel();
     cancelOpen();
     // 前のカード (ピン留め以外) はすぐ閉じる。次のカードが出るまで前のが残っていた (2026-10-10 オーナー「ホバー外にいったら即閉じておｋ」)

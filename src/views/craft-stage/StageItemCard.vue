@@ -151,7 +151,7 @@ const rows = computed(() =>
          (2026-10-10 オーナー「アイテムのぞいた時は上、ここにアイコンとか出てたらダメじゃね」。ユニークは 2 行 = 名前 + ベース) -->
     <div class="st-head" :class="[`st-${item.rarity}`, twoLine ? 'two' : 'one', item.disposed ? 'stage-crumble' : '']">
       <p v-if="item.unique" class="st-name" :class="tone.name">{{ nameOf(item.unique) }}</p>
-      <p class="st-name" :class="tone.name">{{ baseNameOf(item) }}</p>
+      <p class="st-name" :class="tone.name" data-rec="item-name">{{ baseNameOf(item) }}</p>
     </div>
     <!-- 解呪 / サルベージで崩れる (要望 ⑰-21) -->
     <div class="space-y-1 px-4 text-center text-[13px]" :class="[compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">

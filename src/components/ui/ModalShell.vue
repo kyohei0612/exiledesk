@@ -33,6 +33,8 @@ const props = withDefaults(defineProps<{
   closable?: boolean;
   /** × の説明 (既定「閉じる」) */
   closeTitle?: string;
+  /** 録画用の固定の目印 (POE2Tube 要望 ㊶、data-rec) */
+  rec?: string;
   /** 確認の窓は他の窓の上 */
   layer?: "modal" | "confirm";
   /** スマホ (768 px 未満) は画面いっぱい (エミュレーターの一覧の窓) */
@@ -106,6 +108,7 @@ onBeforeUnmount(deactivate);
         ref="panel"
         tabindex="-1"
         role="dialog"
+        :data-rec="rec || undefined"
         aria-modal="true"
         :aria-label="title || undefined"
         class="g-panel flex max-h-full min-w-0 flex-col text-[12px] outline-none"

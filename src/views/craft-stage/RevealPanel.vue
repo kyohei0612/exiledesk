@@ -41,6 +41,7 @@ function pick(i: number): void {
       <button
         v-if="canReroll() && !rerolled"
         type="button"
+        data-rec="reveal-reroll"
         class="rounded-lg border border-violet-400/60 px-2 py-0.5 text-violet-200 hover:bg-violet-500/15"
         :title="tr(`${jaOfOmen('OmenofAbyssalEchoes') ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`, 'Omen of Abyssal Echoes: reroll the options once')"
         @click="rerolled = true"
@@ -52,6 +53,7 @@ function pick(i: number): void {
         v-for="(m, i) in rerolled ? craftStage.offers.value.reroll : craftStage.offers.value.first"
         :key="`${rerolled}-${m.modId}`"
         type="button"
+        :data-rec="`reveal:${i + 1}`"
         class="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-left max-md:min-h-11 hover:border-rose-300/60 hover:bg-rose-500/10"
         :title="raisesTo(m) ? tr(`選ぶと要求 Lv ${raisesTo(m)} に上がる (今 Lv ${nowReq()})`, `Raises requirement to Level ${raisesTo(m)} (now ${nowReq()})`) : undefined"
         @click="pick(i)"

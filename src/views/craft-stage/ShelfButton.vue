@@ -96,6 +96,7 @@ onBeforeUnmount(leave);
     :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', reason && !omenBlocked ? 'opacity-35' : '']"
     :aria-label="`${nameOf(k)}${reason ? ` — ${reason}` : ''}`"
     :data-key="k"
+    :data-rec="`shelf:${k}`"
     data-shelf
     @click="leave(); emit('pick', k)"
     @mouseenter="enter"
