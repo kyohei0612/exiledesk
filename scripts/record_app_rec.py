@@ -32,7 +32,7 @@ def focus_app() -> None:
         rect = wintypes.RECT()
         user32.GetWindowRect(hwnd, ctypes.byref(rect))
         full = (rect.left, rect.top, rect.right, rect.bottom) == (0, 0, 1920, 1080)
-        if buf.value == "ExileDesk" and user32.IsWindowVisible(hwnd) and full:
+        if buf.value.startswith("ExileDesk") and user32.IsWindowVisible(hwnd) and full:
             found.append(hwnd)
         return True
 
