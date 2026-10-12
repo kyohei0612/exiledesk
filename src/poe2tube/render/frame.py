@@ -35,6 +35,12 @@ ICON_DIR = REPO_ROOT / "assets" / "icons"
 TELOP_H = 170
 CHAR_H_TALK = 760
 CHAR_H_PANEL = 520
+# footage (アプリを操作した録画) は画面いっぱい。2 人は右下に肩から上、テロップは低く小さく
+# (kyohei 2026-10-12「B で右下に 2 人」「テロップの枠ももう少し縦幅とフォント狭く、小さく」)
+FOOT_TELOP_H = 112
+FOOT_FONT = 46
+BUST_H = 270
+BUST_CROP = 0.42  # 立ち絵の上から何割を肩から上として切るか
 Box = tuple[int, int, int, int]
 
 
@@ -59,6 +65,10 @@ def render_panel_layer(
     s = get_settings()
     w, h = s.width, s.height
     layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    if line.scene.kind == "footage":  # 録画は枠なしで画面いっぱい
+        if stage_shot is not None and stage_shot.exists():
+            layer.paste(Image.open(stage_shot).convert("RGBA").resize((w, h)), (0, 0))
+        return layer
     wide = line.scene.kind in ("stage", "footage") or line.scene.kind in VIEW_TAGS
     if wide and USE_CLIP_LAYOUT:
         panel, inner = STAGE_PANEL, stage_inner()
@@ -103,12 +113,33 @@ def compose_frame(
     telop=False: テロップを描かない (章名カードの間。先の話が見えないように、kyohei 2026-09-30)。
     """
     img = static.copy()
+    if line.scene.kind == "footage":
+        _busts(img, line, mouth)
+        if telop:
+            _telop(img, line, compact=True)
+        return img
     panel_mode = line.scene.kind != "talk"
     _characters(img, line, panel_mode, mouth)
     _props(img, props or [], line.speaker, panel_mode, prop_scale)
     if telop:
         _telop(img, line)
     return img
+
+
+def _busts(img: Image.Image, line: Line, mouth: int) -> None:
+    """footage: 2 人を右下に肩から上で並べる (右端がずんだもん、その左にめたん)."""
+    w, h = img.size
+    x = w - 10
+    for speaker in ("zundamon", "metan"):
+        speaking = speaker == line.speaker
+        emotion: Emotion = line.emotion if speaking else "normal"
+        full = render_tachie(speaker, emotion, mouth if speaking else 0, int(BUST_H / BUST_CROP))
+        bust = full.crop((0, 0, full.width, BUST_H))
+        if not speaking:
+            bust.putalpha(bust.getchannel("A").point(lambda a: int(a * 0.85)))
+        x -= bust.width
+        img.alpha_composite(bust, (x, h - FOOT_TELOP_H - BUST_H + 20))
+        x += 40
 
 
 def render_frame(
@@ -186,13 +217,15 @@ def _props(
         img.alpha_composite(ic, (bx, by))
 
 
-def _telop(img: Image.Image, line: Line) -> None:
+def _telop(img: Image.Image, line: Line, compact: bool = False) -> None:
     w, h = img.size
     d = ImageDraw.Draw(img)
-    y0 = h - TELOP_H - 10
+    th, size, bottom = (FOOT_TELOP_H, FOOT_FONT, 18) if compact else (TELOP_H, 62, 30)
+    y0 = h - th - (bottom - 20)
     color = (46, 160, 67) if line.speaker == "zundamon" else (214, 90, 160)
-    d.rounded_rectangle((60, y0, w - 60, h - 30), 28, fill=WHITE, outline=color, width=5)
+    d.rounded_rectangle((60, y0, w - 60, h - bottom), 24, fill=WHITE, outline=color, width=5)
     name = "ずんだもん" if line.speaker == "zundamon" else "四国めたん"
-    pill(img, (90, y0 - 26), name, color, size=26)
+    pill(img, (90, y0 - 24), name, color, size=24 if compact else 26)
     # 数字・ティア・個数だけ GiftCut スタイルで強調 (overlay_fx)
-    draw_emphasis_text(img, tight_spaces(line.text), (w // 2, y0 + TELOP_H // 2 - 4), w - 240)
+    center = (w // 2, y0 + (h - bottom - y0) // 2 - 2)
+    draw_emphasis_text(img, tight_spaces(line.text), center, w - 240, size)

@@ -202,11 +202,12 @@ def tight_spaces(text: str) -> str:
     return _SPACES.sub(keep, text)
 
 
-def draw_emphasis_text(img: Image.Image, text: str, center: tuple[int, int], max_w: int) -> None:
+def draw_emphasis_text(
+    img: Image.Image, text: str, center: tuple[int, int], max_w: int, size: int = 62
+) -> None:
     """テロップ本文: 強調語 (数字・ティア・個数) だけ GiftCut スタイル、他は普通の文字で並べる."""
     parts = [p for p in EMPHASIS.split(text) if p]
     d = ImageDraw.Draw(img)
-    size = 62
     while True:
         f = font(size)
         pieces: list[tuple[str, Image.Image | None, int]] = []
