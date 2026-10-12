@@ -13,6 +13,7 @@
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { fmtPct } from "../../utils/format-pct";
 import { scrollToTop } from "../../utils/keep-place";
+import { htcBaseInfo } from "../../services/htc/patch";
 import { logRecord } from "../../utils/log-record";
 import { AFFIX_COUNT } from "../../services/htc/tree-buy";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -318,8 +319,10 @@ onMounted(() => void market.ensureMarket(MARKET_MAX_AGE_MS));
  * (2026-10-06 オーナー「最安値スタートは狙ってる MOD の最大値のアイテムレベルで探しておｋ」)。前は 1 で選んだアイテムレベルそのまま (82 など)。
  * 狙いが無ければ選んだアイテムレベル
  */
-const searchIlvl = computed(() => {
+// ジュエルはアイテムレベルを見ないので、取引所の検索にも入れない (2026-10-12 オーナー「ジュエルはアイテムレベル廃止」)
+const searchIlvl = computed((): number | undefined => {
   const d = s.data.value;
+  if (/^Jewels/.test(htcBaseInfo()[s.base.value ?? ""]?.cls ?? "")) return undefined;
   // エッセンスの MOD はアイテムレベルに関係なく付くので数えない (2026-10-07)
   const need = s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]).map((x) => {
     const m = d?.mods.get(x.modId);

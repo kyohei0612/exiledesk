@@ -176,7 +176,7 @@ async function searchStageMods(): Promise<void> {
   const d = s.data.value, it = s.item.value;
   // 今のアイテムそのものを探すので、ベース・アイテムレベル・ソケット・各 MOD の段の下限まで入れる
   // (2026-10-08 オーナー「今の MOD で検索なんだからベースからベースレベルからなにから。ティアだけは下限でおｋ」)
-  if (d && it && stageModGroups.value.length) await searchModGroups(d, { groups: stageModGroups.value, exact: { baseType: it.base, ilvlMin: it.itemLevel, socketsMin: it.sockets ?? 0 } });
+  if (d && it && stageModGroups.value.length) await searchModGroups(d, { groups: stageModGroups.value, exact: { baseType: it.base, ...(jewelBase.value ? {} : { ilvlMin: it.itemLevel }), socketsMin: it.sockets ?? 0 } });
 }
 const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);
 /** シミュレーションのソケットの上限 (熟練工の上限と、その + 1 = 規格外) */
