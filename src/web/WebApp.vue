@@ -25,7 +25,7 @@ import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import LangSwitch from "../components/LangSwitch.vue";
 import AdSlot from "../components/ui/AdSlot.vue";
-import { AD_PREVIEW, adTicks } from "../utils/ad-preview";
+import { AD_PREVIEW, adPages, adTicks, sideAdW } from "../utils/ad-preview";
 
 const feedbackOpen = ref(false);
 /**
@@ -81,9 +81,9 @@ const phone = ref(false);
 const feedbackPage = computed(() => AD_PREVIEW && !phone.value && feedbackOpen.value);
 let fbScroll = 0;
 watch(feedbackPage, (on) => {
+  adTicks.side++;
   if (on) { fbScroll = window.scrollY; window.scrollTo(0, 0); return; }
   void nextTick(() => window.scrollTo(0, fbScroll));
-  adTicks.side++;
 });
 function fitZoom(): void {
   phone.value = window.innerWidth < 768;
@@ -139,12 +139,11 @@ window.addEventListener("resize", fitZoom);
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
       <!-- 要望・バグの画面 (広告のお試し、?adpreview=1): 重ねる窓ではなく別の画面。両脇に 160×600 -->
       <section v-if="feedbackPage" class="flex min-w-0 flex-1 items-start justify-center gap-4 p-4">
-        <div class="sticky top-3 shrink-0"><AdSlot id="fb-left" :w="160" :h="600" /></div>
+        <div class="sticky top-3 shrink-0"><AdSlot id="fb-left" :w="sideAdW()" :h="600" /></div>
         <div class="min-w-0 max-w-[40rem] flex-1">
           <button type="button" class="g-btn sm mb-3" @click="feedbackOpen = false">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
           <FeedbackDialog page :open="true" @close="feedbackOpen = false" />
         </div>
-        <div class="sticky top-3 shrink-0"><AdSlot id="fb-right" :w="160" :h="600" /></div>
       </section>
       <CraftStage v-show="!feedbackPage" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
@@ -166,7 +165,8 @@ window.addEventListener("resize", fitZoom);
         </template>
       </CraftStage>
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
-      <aside data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : AD_PREVIEW ? 'w-[324px] border-l' : 'w-[280px] border-l'">
+      <!-- ベースを選ぶ画面 (広告のお試し) の間は右の列を外して、画面いっぱいに -->
+      <aside v-show="!adPages.base" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : AD_PREVIEW ? 'w-[324px] border-l' : 'w-[280px] border-l'">
         <div :class="phone ? '' : 'sticky top-3'">
           <LivePanel />
           <!-- 広告の置き場のお試し (?adpreview=1、utils/ad-preview.ts): チャンネルの下に 300×250 を 2 つ。中身が大きく変わった時だけ出し直す -->

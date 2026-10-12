@@ -42,5 +42,12 @@ export function adShow(id: string): boolean {
   return true;
 }
 
-/** 右の列の枠を出し直すきっかけ (中身が大きく変わった時に増やす) */
+/** 右の列の枠を出し直すきっかけ (別の画面へ移った時・戻った時に増やす) */
 export const adTicks = reactive({ side: 0 });
+/** 今出している別の画面 (ベースを選ぶ画面は右の列も使って画面いっぱい。2026-10-12 オーナー「ベース選択の時は右側の固定バーも突っ切っていい」) */
+export const adPages = reactive({ base: false });
+/**
+ * 両脇の縦長の枠の幅。真ん中をできるだけ広く (オーナー「横幅めっちゃ大事、限界まで真ん中広く」) するので、ふだんは 160×600、
+ * 画面がとても広い時 (1800 px 以上) だけ 300×600 (単価の高い大きさ)
+ */
+export const sideAdW = (): number => (typeof window !== "undefined" && window.innerWidth >= 1800 ? 300 : 160);
