@@ -18,8 +18,6 @@ import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, type SimRecipe } from "../../state/craft-stage";
 import StageRecipeStart from "./StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
-import AdSlot from "../../components/ui/AdSlot.vue";
-import { AD_PREVIEW, adPages, adTicks, sideAdW } from "../../utils/ad-preview";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
 import Disclosure from "../../components/ui/Disclosure.vue";
@@ -35,7 +33,6 @@ import { useStageFx } from "./use-stage-fx";
 import { stageAdds, stageHelp } from "../../state/craft-stage-help";
 import VideoStage from "./VideoStage.vue";
 import StageBasePicker from "./StageBasePicker.vue";
-import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
 import VideoExtra from "./VideoExtra.vue";
@@ -81,8 +78,6 @@ const mouse = ref({ x: 0, y: 0 });
 // カーソルに付く絵と波紋が右下にずれていた (2026-10-08 POE2Tube 要望 ㊳。clientX は実ピクセル、fixed の left は CSS ピクセル)
 const onMove = (e: MouseEvent) => (mouse.value = { x: toCss(e.clientX), y: toCss(e.clientY) });
 function onKey(e: KeyboardEvent): void {
-  // MOD 一覧の画面 (広告のお試し) は Esc で戻る。持っている物は離さない (窓の時と同じ)
-  if (e.key === "Escape" && basePage.value && !baseUnpicked.value) { basePage.value = false; return; }
   if (e.key === "Escape") s.hold(null);
   // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
   // 入力欄の中 (MOD 一覧・ベースの検索) と窓を開いている時は、文字の取り消しや窓の物に任せる (2026-10-10 点検: 文字ではなく 1 手戻っていた)
@@ -320,27 +315,6 @@ const FIRST_BASE_KEY = "exiledesk.stage.basePicked";
 let firstTime = false;
 try { firstTime = !localStorage.getItem(FIRST_BASE_KEY); } catch { /* 覚えられない時は今まで通り */ }
 const handNoBase = ref(!inApp && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
-// 広告の置き場のお試し (?adpreview=1、utils/ad-preview.ts)。MOD 一覧は重ねる窓のまま (2026-10-12 オーナー「MOD 一覧は今のままで」):
-// 窓に広告は付けず、開け閉めで右の列も出し直さない (窓は別の画面に移った扱いにならない)
-/** ベースを選ぶ画面 (お試し)。「ベースを変える」で開き、選んだらクラフトへ戻る (2026-10-12 オーナー「固定バーは変化してないからアウト、MOD と一緒で別ページ扱いで」) */
-const basePage = computed({ get: () => adPages.base, set: (v: boolean) => { adPages.base = v; } });
-const subPage = computed(() => basePage.value);
-let subPageScroll = 0;
-// 別の画面へ移る時は上へ、戻ったら前の位置へ。右の列の枠は戻った時だけ出し直す (ベース・モードの切り替えは同じ画面のままなので、きっかけにしない)
-// 右の列の枠は、別の画面へ移った時と戻った時に出し直す (どちらもページが変わった扱い。60 秒以内は見送り)
-watch(subPage, (on) => {
-  adTicks.side++;
-  if (on) { subPageScroll = window.scrollY; window.scrollTo(0, 0); return; }
-  void nextTick(() => window.scrollTo(0, subPageScroll));
-});
-/** まだベースを選んでいない (初めて・白に戻した後)。お試しではこの時もベースを選ぶ画面 (右の列も外して画面いっぱい。2026-10-12 オーナー「ベース初手選ぶときも右側の固定無くしておk」) */
-const baseUnpicked = computed(() => simNoBase.value || (s.mode.value === "hand" && handNoBase.value));
-watch(baseUnpicked, (u) => { if (AD_PREVIEW && !phone.value && u) basePage.value = true; }, { immediate: true });
-function pickFromBasePage(en: string): void {
-  const first = baseUnpicked.value;
-  basePage.value = false;
-  if (first || en !== s.base.value) pickSimBase(en);
-}
 // 共有の URL から開いた時はベースが決まっている (ここから打つ・白から打つで、ベース選びに戻さない)
 watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
 // 録画モードで URL の最初の状態を入れた時もベースは決まっている (POE2Tube 要望 ㊷)
@@ -418,8 +392,6 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         </div>
       </template>
     </div>
-    <!-- 広告のお試しで MOD 一覧の画面を出している間は、クラフトの中身を隠す (消さないので戻ると元のまま) -->
-    <div v-show="!subPage">
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
@@ -493,7 +465,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       </span>
       <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
       <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
-      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" :page="AD_PREVIEW && !phone" @pick="pickSimBase" @open-page="basePage = true" />
+      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" @pick="pickSimBase" />
       <span v-if="!simNoBase && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1">
         <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.itemLevel.value === lv ? 'on' : ''" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
@@ -637,22 +609,6 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <!-- 大きさは後ろの画面の 75% (縦横とも。2026-10-11 オーナー「MOD 枠は後ろのウィンドウの大きさで決まる、75%」) -->
     <!-- ページの下にも同じ一覧 (同じ部品 = 同じエンジン。窓はすぐ見るための便利機能。2026-10-11 オーナー「スクロールした下に配置してていい」) -->
     <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" data-rec-part="mod-list-bottom" /></Transition>
-    </div>
-    <!-- ベースを選ぶ画面 (広告のお試し、?adpreview=1)。両脇に 160×600、選んだらクラフトへ戻る -->
-    <section v-if="basePage" class="flex items-start gap-4">
-      <div class="sticky top-3 shrink-0"><AdSlot id="base-left" :w="sideAdW()" :h="600" /></div>
-      <div class="min-w-0 flex-1">
-        <div class="mb-3 flex items-center gap-3">
-          <template v-if="!baseUnpicked">
-            <button type="button" class="g-btn sm" @click="basePage = false">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
-            <span class="text-[12px] opacity-60">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
-          </template>
-          <b class="ml-auto">{{ tr("ベースを選ぶ", "Choose a base") }}</b>
-        </div>
-        <div class="rounded-lg bg-black/30 p-4"><BaseCatalog :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" @pick="pickFromBasePage" /></div>
-      </div>
-      <div class="sticky top-3 shrink-0"><AdSlot id="base-right" :w="sideAdW()" :h="600" /></div>
-    </section>
     <!-- 窓の動きは ModalShell (Esc・後ろを押す・× で閉じる、後ろのページは止める)。Tab でも開け閉め -->
     <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
       <template #header><span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span></template>
