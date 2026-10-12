@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import shutil
 import subprocess
@@ -54,7 +55,7 @@ EVENTS: list[dict[str, Any]] = []
 
 def mark(what: str) -> None:
     """今の時刻に印を付ける (押した・付いた・出た など)."""
-    EVENTS.append({"clock": time.perf_counter(), "what": what})
+    EVENTS.append({"clock": time.perf_counter(), "epoch": time.time(), "what": what})
 
 
 class Recorder:
@@ -92,3 +93,54 @@ def clip_seconds(path: Path) -> float:
     cmd = [probe, "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)]
     out = subprocess.run(cmd, capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
     return float(out.stdout.strip() or 0)
+
+
+class Screencast:
+    """ページの中身だけを録る (CDP の screencast)。窓の前に何が来ても写らない、URL も写らない.
+
+    kyohei 2026-10-12「画面録画じゃなくアプリ録画で、前に何か移っても大丈夫なように」。
+    Chromium は絵が変わった時だけコマを送るので、受け取った時刻どおりに並べて 30fps にそろえる。
+    待つ間も Playwright の出来事を回す必要がある (record_app.PAGE に page を入れておく)。
+    """
+
+    def __init__(self, page: Any, path: Path) -> None:
+        self.page, self.path = page, path
+        self.frames: list[tuple[float, bytes]] = []
+        EVENTS.clear()
+        self.cdp = page.context.new_cdp_session(page)
+        self.cdp.on("Page.screencastFrame", self._frame)
+        opts = {"format": "jpeg", "quality": 92, "maxWidth": 1920, "maxHeight": 1080}
+        self.cdp.send("Page.startScreencast", {**opts, "everyNthFrame": 1})
+        page.wait_for_timeout(600)
+
+    def _frame(self, ev: dict[str, Any]) -> None:
+        self.frames.append((float(ev["metadata"]["timestamp"]), base64.b64decode(ev["data"])))
+        self.cdp.send("Page.screencastFrameAck", {"sessionId": ev["sessionId"]})
+
+    def stop(self) -> None:
+        self.page.wait_for_timeout(1000)
+        self.cdp.send("Page.stopScreencast")
+        if not self.frames:
+            raise RuntimeError("コマが 1 枚も来なかった")
+        tmp = self.path.with_suffix(".frames")
+        shutil.rmtree(tmp, ignore_errors=True)
+        tmp.mkdir(parents=True)
+        lines = []
+        for i, (ts, data) in enumerate(self.frames):
+            (tmp / f"f{i:05d}.jpg").write_bytes(data)
+            nxt = self.frames[i + 1][0] if i + 1 < len(self.frames) else ts + 1.0
+            lines += [f"file 'f{i:05d}.jpg'", f"duration {max(0.001, nxt - ts):.4f}"]
+        lines.append(f"file 'f{len(self.frames) - 1:05d}.jpg'")
+        (tmp / "list.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        ff = shutil.which("ffmpeg") or "ffmpeg"
+        cmd = [ff, "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(tmp / "list.txt")]
+        cmd += ["-vf", "fps=30,scale=1920:1080:force_original_aspect_ratio=decrease,"]
+        cmd[-1] += "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,format=yuv420p"
+        cmd += ["-c:v", "h264_nvenc", "-preset", "p4", "-cq", "21", str(self.path)]
+        subprocess.run(cmd, check=True, creationflags=CREATE_NO_WINDOW)
+        shutil.rmtree(tmp, ignore_errors=True)
+        start = self.frames[0][0]
+        events = [{"t": round(e["epoch"] - start, 2), "what": e["what"]} for e in EVENTS]
+        dest = self.path.with_suffix(".events.json")
+        dest.write_text(json.dumps(events, ensure_ascii=False, indent=1), encoding="utf-8")
+        log.info("recorded (screencast)", file=str(self.path), frames=len(self.frames))

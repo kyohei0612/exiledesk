@@ -21,36 +21,15 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+import structlog
 from playwright.sync_api import Locator, Page, sync_playwright
-from record_app import Hand, mark, pause, setup
-from record_app_rec import CREATE_NO_WINDOW, Recorder
+from record_app import PAGE, Hand, mark, pause, setup
+from record_app_rec import CREATE_NO_WINDOW, Screencast
 
-URL = "https://exiledesk.com/"
+log = structlog.get_logger()
+URL = "https://exiledesk.com/?rec=1"  # 録画モード (ExileDesk 要望 ㊶): 隠す物・記録は向こうが持つ
 ALL = ["open", "orbs", "undo", "modlist", "aim", "reveal", "rune"]
-SEARCH = "名前で探す (例: サファイア、ルビー)"
-# ウェブ版だけの物を隠す (アプリ版の札・訪問者・チャンネルの欄・一番下)。
-# 要望の札は 8 章で使うので残す
-WEB_HIDE_JS = r"""
-() => {
-  const st = document.createElement('style');
-  st.textContent = 'aside, footer { display: none !important; }';
-  document.head.appendChild(st);
-  for (const el of document.querySelectorAll('button, a, span')) {
-    const t = (el.textContent || '').trim();
-    if (/^アプリ版/.test(t) || /^本日の訪問者/.test(t)) el.style.visibility = 'hidden';
-  }
-}
-"""
-# 使い方の記録を止める (録画で開いた分を数えない)
-NO_LOG_JS = r"""
-() => {
-  const b = [...document.querySelectorAll('button')].find(
-    e => /^記録: しています/.test(e.textContent.trim())
-      || e.textContent.trim() === 'この端末は記録しない');
-  if (b) b.click();
-  return b ? b.textContent.trim() : '';
-}
-"""
+BASE_JA = {"Gold Ring": "金の指輪", "Warlord Cuirass": "ウォーロード"}
 HIST_JS = r"""
 () => { const p = [...document.querySelectorAll('div.g-panel')].find(e => e.offsetParent
   && e.querySelector('b.g-sec-title')?.textContent.trim() === '工程');
@@ -72,7 +51,7 @@ class Web:
         return self.page.locator("[data-stage-card]").filter(visible=True).first
 
     def key(self, k: str) -> Locator:
-        return self.page.locator(f'[data-shelf][data-key="{k}"]').filter(visible=True).first
+        return self.rec(f"shelf:{k}")
 
     def count(self) -> int:
         n: int = self.page.evaluate(HIST_JS)[0]
@@ -83,25 +62,46 @@ class Web:
 
     def prepare(self) -> None:
         setup(self.page)
-        self.page.evaluate(WEB_HIDE_JS)
+
+    def rec(self, v: str) -> Locator:
+        """録画用の固定の目印 data-rec (ExileDesk 要望 ㊶)."""
+        return self.page.locator(f'[data-rec="{v}"]').filter(visible=True).first
 
     def pick_base(self, name: str, slow: bool = True) -> None:
-        """ベース選び: 開いていなければ「ベースを変える」→ 名前で探す → カード."""
+        """ベース選び: 開いていなければ「ベースを変える」→ 名前で探す → カード (name は英語名)."""
+        jp = BASE_JA.get(name, name)
         p = self.page
-        box = p.get_by_placeholder(SEARCH)
-        if not box.is_visible():
-            opener = p.locator("[data-stage-settings] > div.w-full > button[aria-expanded]")
-            self.hand.click(opener, 700, 0.8) if slow else opener.click()
+        box = self.rec("base-search")
+        opener = self.rec("base-toggle")  # 検索欄が残っていても一覧は閉じている事がある
+        if opener.get_attribute("aria-expanded") != "true":
+            if slow:
+                self.hand.click(opener, 700, 0.8)
+            else:  # 録らない準備: 上に重なる帯にクリックを取られないよう、ページの中から押す
+                opener.evaluate("e => e.click()")
+                p.wait_for_timeout(600)
         if slow:
             self.hand.click(box, 600, 0.2)
-            p.keyboard.type(name, delay=60)
+            p.keyboard.type(jp, delay=60)
             pause(0.8)
         else:
-            box.fill(name)
+            box.fill(jp)
             p.wait_for_timeout(500)
-        b = p.locator("b", has_text=re.compile(rf"^{name}$"))
-        card = p.locator("button.g-item").filter(has=b).first
-        self.hand.click(card, 800, 1.2) if slow else card.click()
+        card = self.rec(f"base:{name}")
+        if not card.is_visible():  # 開いた直後で一覧がまだ無い時は、もう一度探し直す
+            p.wait_for_timeout(800)
+            box.fill("")
+            box.fill(jp)
+            p.wait_for_timeout(800)
+        log.info(
+            "base cards",
+            seen=p.locator('[data-rec^="base:"]').evaluate_all(
+                "els => els.filter(e => e.offsetParent).map(e => e.dataset.rec)"
+            )[:5],
+        )
+        if slow:
+            self.hand.click(card, 800, 1.2)
+        else:
+            card.evaluate("e => e.click()")
         p.wait_for_timeout(900)
 
     def quick(self, keys: list[str]) -> None:
@@ -112,7 +112,7 @@ class Web:
                 self.key(k).click()
                 held = k
             n = self.count()
-            self.card.locator("p.st-name").first.click()
+            self.rec("item-name").click()
             self.steps(n + 1).wait_for(timeout=5000)
         self.page.keyboard.press("Escape")
 
@@ -122,7 +122,7 @@ class Web:
 
     def use(self) -> None:
         n = self.count()
-        self.hand.click(self.card.locator("p.st-name").first, 700, 0)
+        self.hand.click(self.rec("item-name"), 700, 0)
         self.steps(n + 1).wait_for(timeout=5000)
         mark(f"付いた: {n + 1} 手目")
         self.notes.append({"step": n + 1, "last": self.page.evaluate(HIST_JS)[1]})
@@ -135,10 +135,10 @@ class Web:
         self.notes = []
 
     def modlist(self) -> Locator:
-        return self.page.get_by_role("dialog", name="このベースに付く MOD")
+        return self.rec("mod-list")
 
     def open_modlist(self) -> Locator:
-        btn = self.page.locator("button.tbtn-top", has_text="MOD 一覧").filter(visible=True).first
+        btn = self.rec("mod-list-open")
         self.hand.click(btn, 700, 0.8)
         return self.modlist()
 
@@ -160,19 +160,19 @@ def still(src: Path, at: float, dest: Path) -> None:
 def record(w: Web, only: list[str]) -> None:
     p, h = w.page, w.hand
     if "open" in only:  # 開いた所 (ベース選び) → 金の指輪
-        rec = Recorder(w.out / "open.mp4")
+        rec = Screencast(w.page, w.out / "open.mp4")
         pause(1.5)
-        w.pick_base("金の指輪")
+        w.pick_base("Gold Ring")
         h.glide(500, 520, 700)
         pause(2.0)
         rec.stop()
         w.dump("open")
     else:
-        w.pick_base("金の指輪", slow=False)
+        w.pick_base("Gold Ring", slow=False)
     w.prepare()
 
     if "orbs" in only:  # 変成 → 増強 → 王者 → 高貴 ×3
-        rec = Recorder(w.out / "orbs.mp4")
+        rec = Screencast(w.page, w.out / "orbs.mp4")
         pause(1.0)
         for k in ("transmute", "augment", "regal"):
             w.hold(k)
@@ -189,21 +189,18 @@ def record(w: Web, only: list[str]) -> None:
         still(w.out / "orbs.mp4", end, w.out / "intro_done.mp4")
 
     if "undo" in only:  # 1 手戻す → 工程の行で戻る → 始め
-        rec = Recorder(w.out / "undo.mp4")
+        rec = Screencast(w.page, w.out / "undo.mp4")
         pause(1.0)
-        h.click(p.get_by_role("button", name="1 手戻す", exact=True), 700, 1.5)
-        title = p.locator("b.g-sec-title", has_text=re.compile("^工程$"))
-        hist = p.locator("div.g-panel", has=title)
-        rows = hist.locator("ol > li")
-        h.click(rows.nth(2), 700, 1.8)  # 新しい順の 3 つ目 = 3 手目の直後へ
-        h.click(rows.last, 700, 1.8)  # 一番下の「始め」
+        h.click(w.rec("undo"), 700, 1.5)
+        h.click(w.rec("step:3"), 700, 1.8)  # 3 手目の直後へ
+        h.click(w.rec("step:start"), 700, 1.8)  # 一番下の「始め」
         pause(1.5)
         rec.stop()
         w.dump("undo")
 
     if "modlist" in only:  # MOD 一覧 (Tab) → 行 → ティアの表 → 閉じる → 持って開く (付く確率)
         w.quick(["transmute"])  # マジックにしておく (増強が棚に出る)
-        rec = Recorder(w.out / "modlist.mp4")
+        rec = Screencast(w.page, w.out / "modlist.mp4")
         pause(1.0)
         dlg = w.open_modlist()
         pause(2.0)
@@ -221,26 +218,24 @@ def record(w: Web, only: list[str]) -> None:
         w.dump("modlist")
 
     if "aim" in only:  # 次の手で狙う: 火耐性 T2 → 確率を見る → 一番上の行 → 100 回まわす
-        rec = Recorder(w.out / "aim.mp4")
+        rec = Screencast(w.page, w.out / "aim.mp4")
         pause(1.0)
         dlg = w.open_modlist()
         r = w.row(dlg, r"^火耐性")
         h.click(r, 800, 1.2)
         tbl = r.locator("xpath=following-sibling::table[1]")
-        t2 = p.locator("td:first-child", has_text=re.compile("^T2$"))
-        aim_btn = tbl.locator("tr").filter(has=t2).first.get_by_role("button", name="次の手で狙う")
+        aim_btn = tbl.locator('[data-rec^="aim:"][data-rec$=":T2"]').first
         h.click(aim_btn, 800, 1.2)
-        win = p.get_by_role("dialog", name="次の手で狙う")
-        h.click(win.get_by_role("button", name=re.compile(r"^確率を見る")), 800, 0.5)
+        h.click(w.rec("aim-decide"), 800, 0.5)
         p.get_by_text(re.compile("^計算中…")).first.wait_for(state="hidden", timeout=60000)
         mark("確率が出た")
-        panel = p.locator("section[data-aim-panel]")
+        panel = w.rec("aim-panel")
         pause(3.0)
-        top = panel.locator("ol > li").first
+        top = panel.locator('[data-rec^="aim-row:"]').first
         w.notes.append({"aim": panel.inner_text()})
-        h.click(top.locator("button").first, 700, 1.5)
-        h.click(panel.get_by_role("button", name="100", exact=True), 600, 0.6)
-        h.click(top.get_by_role("button", name="回す", exact=True), 700, 0)
+        h.click(top, 700, 1.5)
+        h.click(w.rec("aim-n:100"), 600, 0.6)
+        h.click(panel.locator('[data-rec^="aim-roll:"]').first, 700, 0)
         p.get_by_text(re.compile("回中")).first.wait_for(timeout=30000)
         mark("回した")
         w.notes.append({"spun": panel.inner_text()})
@@ -250,22 +245,21 @@ def record(w: Web, only: list[str]) -> None:
         w.dump("aim")
 
     if "reveal" in only:  # レアの指輪に骨 → お告げ (アビスの反響) → 発現 → 引き直し → 選ぶ
-        w.pick_base("金の指輪", slow=False)
-        _white(p)
+        _white(p)  # ここまでの金の指輪を白に戻して使う (同じベースは選び直せない)
         w.quick(["transmute", "augment", "regal", "exalt"])
-        rec = Recorder(w.out / "reveal.mp4")
+        rec = Screencast(w.page, w.out / "reveal.mp4")
         pause(1.0)
         w.hold("desecrate")
         pause(1.5)  # 持つと下にお告げが出る
-        echo = p.locator('[data-held-omens] [data-key="OmenofAbyssalEchoes"]').first
+        echo = w.rec("shelf:OmenofAbyssalEchoes")
         h.click(echo, 700, 1.5)
         w.use()
         p.keyboard.press("Escape")
-        panel = p.locator("[data-reveal-panel]")
-        offers = [t.replace("\n", " ") for t in panel.locator("button.w-full").all_inner_texts()]
+        cand = [w.rec(f"reveal:{i}") for i in (1, 2, 3)]
+        offers = [c.inner_text().replace("\n", " ") for c in cand]
         pause(2.0)
-        h.click(panel.get_by_role("button", name="引き直す", exact=True), 700, 1.8)
-        again = [t.replace("\n", " ") for t in panel.locator("button.w-full").all_inner_texts()]
+        h.click(w.rec("reveal-reroll"), 700, 1.8)
+        again = [c.inner_text().replace("\n", " ") for c in cand]
 
         def rank(i: int) -> tuple[int, int]:  # ティアが良い物 → 短い物
             m = re.search(r"T(\d+)", again[i])
@@ -273,7 +267,7 @@ def record(w: Web, only: list[str]) -> None:
 
         pick = min(range(len(again)), key=rank)
         n = w.count()
-        h.click(panel.locator("button.w-full").nth(pick), 800, 0)
+        h.click(cand[pick], 800, 0)
         w.steps(n + 1).wait_for(timeout=5000)
         mark("発現した")
         w.notes.append({"offers": offers, "rerolled": again, "picked": again[pick]})
@@ -282,9 +276,9 @@ def record(w: Web, only: list[str]) -> None:
         w.dump("reveal")
 
     if "rune" in only:  # 6 つ埋まった胴にセールの凱旋 → 高貴で 4 つ目のサフィックス
-        w.pick_base("ウォーロードの胴鎧", slow=False)
+        w.pick_base("Warlord Cuirass", slow=False)
         w.quick(["transmute", "augment", "regal", "exalt", "exalt", "exalt"])
-        rec = Recorder(w.out / "rune.mp4")
+        rec = Screencast(w.page, w.out / "rune.mp4")
         h.glide(500, 600, 600)
         pause(1.5)
         w.hold("rune:Serle's Triumph")
@@ -301,10 +295,10 @@ def record(w: Web, only: list[str]) -> None:
 
 def _white(page: Page) -> None:
     """白に戻す (2 回押し)。手も始めの MOD も無い時は押せないので飛ばす."""
-    btn = page.get_by_role("button", name="白に戻す", exact=True)
+    btn = page.locator('[data-rec="reset"]').filter(visible=True).first
     if btn.is_enabled():
         btn.click()
-        page.get_by_role("button", name="もう一度押すと白に戻す", exact=True).click()
+        btn.click()  # 2 回押し (1 回目で「もう一度押すと白に戻す」に変わる)
         page.wait_for_timeout(500)
 
 
@@ -323,17 +317,15 @@ def main() -> None:
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
-        args = ["--start-fullscreen", "--window-position=0,0", "--window-size=1920,1080"]
-        browser = pw.chromium.launch(headless=False, args=args)
-        page = browser.new_page(no_viewport=True)
+        # 画面に出さない (headless)。ページの中身だけを screencast で録る
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1920, "height": 1080}, device_scale_factor=1)
+        PAGE.append(page)
         page.goto(a.url, wait_until="networkidle", timeout=60000)
         page.wait_for_timeout(2000)
-        page.evaluate(NO_LOG_JS)
-        page.wait_for_timeout(500)
         w = Web(page, a.out)
         w.prepare()
         page.mouse.move(w.hand.x, w.hand.y)
-        page.bring_to_front()
         record(w, a.only)
         browser.close()
 

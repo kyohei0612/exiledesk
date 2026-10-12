@@ -31,9 +31,20 @@ CREATE_NO_WINDOW = 0x08000000
 SPEED = 2.0
 
 
+# screencast で録る時は、待つ間も Playwright の出来事 (届いたコマ) を回す (record_app_rec)
+PAGE: list[Any] = []
+
+
+def wait(seconds: float) -> None:
+    if PAGE:
+        PAGE[0].wait_for_timeout(seconds * 1000)
+    else:
+        time.sleep(seconds)
+
+
 def pause(seconds: float) -> None:
     """操作の間の待ち (SPEED で縮める)."""
-    time.sleep(seconds / SPEED)
+    wait(seconds / SPEED)
 
 
 class Hand:
@@ -51,7 +62,7 @@ class Hand:
             t = i / n
             e = t * t * (3 - 2 * t)
             self.page.mouse.move(x0 + (x - x0) * e, y0 + (y - y0) * e)
-            time.sleep(ms / 1000 / n)
+            wait(ms / 1000 / n)
         self.x, self.y = x, y
 
     def click(self, loc: Locator, ms: int = 650, after: float = 0.35) -> None:
