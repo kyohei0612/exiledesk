@@ -152,21 +152,19 @@ function tintGlow(e: Event): void {
   } catch { /* 読めない絵 (よそのドメイン) は既定の色 */ }
 }
 /**
- * ホタルの粒 (2026-10-13 オーナー「F だね、蛍はアイコンによってランダムに、今統一してるように見えるから」)。
- * 粒は見比べの F と同じ小さな 4 つ (3px) のまま、動き (位置・漂う向きと距離・速さ・始まり) だけを部位の名前から決まる乱数でタイルごとにばらばらに
- * (描き直しても同じ。オーナー「ちっさくていいよ、さっきので動きだけランダム」)
+ * 光の粒が下から立ちのぼる (2026-10-13 オーナー「A の小だな、ランダムで行こう、アイコンごとに」: 見比べの A、粒は 2px)。
+ * 粒の数は 3 つで揃え、動き (横の位置・上る高さ・横へ流れる量・速さ・始まり) だけを部位の名前から決まる乱数でタイルごとにばらばらに (描き直しても同じ)
  */
-function fireflies(name: string): Array<Record<string, string>> {
+function risers(name: string): Array<Record<string, string>> {
   let h = 2166136261;
   for (let i = 0; i < name.length; i++) h = Math.imul(h ^ name.charCodeAt(i), 16777619);
   const rnd = (): number => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
-  return Array.from({ length: 4 }, () => ({
-    top: `${10 + rnd() * 75}%`,
-    left: `${8 + rnd() * 80}%`,
-    "--dx": `${(rnd() - 0.5) * 22}px`,
-    "--dy": `${(rnd() - 0.5) * 22}px`,
-    animationDuration: `${3.5 + rnd() * 4}s`,
-    animationDelay: `${-rnd() * 7}s`,
+  return Array.from({ length: 3 }, () => ({
+    left: `${15 + rnd() * 70}%`,
+    "--up": `${-(36 + rnd() * 20)}px`,
+    "--dx": `${(rnd() - 0.5) * 12}px`,
+    animationDuration: `${2.8 + rnd() * 1.8}s`,
+    animationDelay: `${-rnd() * 4.5}s`,
   }));
 }
 function famArt(f: Family): string | null {
@@ -310,7 +308,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
                 <!-- ユニークの絵はゆっくり光る (脈打つ光 + 乗せると光が走る。2026-10-13 オーナー「光らせることできる？動きのある感じで」)。タイルごとに少しずらして一斉に光らない -->
                 <span class="fam-slot grid size-16 place-items-center md:size-20" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'" :style="{ '--d': `${-(fi * 1.3) % 9}s` }">
                   <span class="fam-aura" aria-hidden="true" />
-                  <span v-for="(m, k) in fireflies(f.name)" :key="k" class="fam-fly" :style="m" aria-hidden="true" />
+                  <span v-for="(m, k) in risers(f.name)" :key="k" class="fam-rise" :style="m" aria-hidden="true" />
                   <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="fam-art max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" draggable="false" @load="tintGlow" />
                 </span>
                 <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ famLabel(f) }}</span>
@@ -348,7 +346,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
 <style scoped>
 /*
  * 部位のタイルの絵: その絵の色 (--glow、tintGlow が枠に入れる) の光が動き続ける (2026-10-13 オーナー「脈打たなくていい、動いてる感じで」「アイコンに合った」)。
- * 後ろにその色のぼやっとした光 (fam-aura、動かさない)、その色のホタルの粒が漂う (fam-fly、タイルごとにばらばら)。絵は同じ色でうっすら光ったまま。乗せると少し大きく明るく
+ * 後ろにその色のぼやっとした光 (fam-aura、動かさない)、その色の小さな光の粒が下から立ちのぼる (fam-rise、タイルごとにばらばら)。絵は同じ色でうっすら光ったまま。乗せると少し大きく明るく
  */
 .fam-slot { --glow: 255, 176, 80; position: relative; overflow: hidden; }
 .fam-art { position: relative; z-index: 1; filter: drop-shadow(0 0 5px rgba(var(--glow), 0.6)); transition: transform 0.25s ease-out, filter 0.25s ease-out; }
@@ -361,27 +359,29 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
   filter: blur(4px);
   pointer-events: none;
 }
-.fam-fly {
+.fam-rise {
   position: absolute;
-  width: var(--sz, 3px);
-  height: var(--sz, 3px);
+  bottom: 10%;
+  width: 2px;
+  height: 2px;
   border-radius: 50%;
   background: rgba(var(--glow), 0.95);
   box-shadow: 0 0 6px 1px rgba(var(--glow), 0.8);
-  animation: fam-drift 5s ease-in-out infinite alternate;
+  opacity: 0;
+  animation: fam-rise 3.4s ease-out infinite;
   pointer-events: none;
   z-index: 2;
 }
-/* ホタル: ふわふわ漂いながら明るさが変わる (向き・距離・速さは粒ごと) */
-@keyframes fam-drift {
-  0% { transform: translate(0, 0); opacity: 0.15; }
-  45% { opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)); opacity: 0.25; }
+/* 光の粒: 下から立ちのぼって消える (高さ・流れ・速さは粒ごと) */
+@keyframes fam-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--up)); opacity: 0; }
 }
 button:hover .fam-art { transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(var(--glow), 0.95)) drop-shadow(0 0 16px rgba(var(--glow), 0.45)) brightness(1.12); }
 button:hover .fam-aura { background: radial-gradient(circle, rgba(var(--glow), 0.45) 0%, rgba(var(--glow), 0.18) 45%, transparent 70%); }
 /* 動きを減らす設定の人には動かさない (光だけ) */
 @media (prefers-reduced-motion: reduce) {
-  .fam-fly { animation: none; display: none; }
+  .fam-rise { animation: none; display: none; }
 }
 </style>
