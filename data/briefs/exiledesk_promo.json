@@ -129,7 +129,7 @@
     "推し: ゲームの公式日本語、Craft of Exile と同じ操作、クラフトに使う物がほぼ全部打てる、ゲームのデータどおりの細かい決まり",
     "一言添える: 確率は推定。重みが公開されていない所 (冒涜・異界・ルーンなど) は「コミュニティのデータから参照」(ExileDesk v0.1.443 の表示)、公開値の無い確率 (ヴァールなど) は仮",
     "非公式・個人で作っている、と言う。GGG の公式ツールに見える言い方をしない。未リリースの機能は紹介しない",
-    "ウェブ版は公開済み (2026-10-07 夜): https://web.exiledesk.workers.dev。説明欄の一番上 (data/publish/exiledesk_promo.json の summary) に「▼ExileDesk ウェブ版 (無料)」として貼る",
+    "ウェブ版の URL は https://exiledesk.com (kyohei 2026-10-12。旧 web.exiledesk.workers.dev から移った)。説明欄の一番上 (data/publish/exiledesk_promo.json の summary) に「▼ExileDesk ウェブ版 (無料)」として貼る",
     "操作の画面はアプリを録画モードで動かして録る (scripts/record_app*.py、サイドバーは隠す)。台詞は録画の <name>.json の結果に合わせる"
   ],
   "sources": []
