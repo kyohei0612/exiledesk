@@ -39,7 +39,7 @@ for (const m of M) if (m.Name) (byName.get(m.Name) ?? byName.set(m.Name, []).get
 // 前回の mod-stats.json で文を差し替える前の MOD を見たいので、空にしてから束ねる (2 回回しても同じ答えになるように)
 await writeFile(resolve(ROOT, "src/services/htc/mod-stats.json"), "{}");
 const { bundleEntry } = await import("./_bundle-ts.mjs");
-const { loadPatchSync } = await bundleEntry("scripts/_htc-bridge-entry.ts");
+const { loadPatchSync, htcBaseInfo } = await bundleEntry("scripts/_htc-bridge-entry.ts");
 const mods = [...loadPatchSync().mods.values()];
 
 const cls = (id) => id.split("/")[0];
@@ -171,5 +171,29 @@ for (const m of mods) {
   out[m.id] = o;
 }
 await writeFile(resolve(ROOT, "src/services/htc/mod-stats.json"), JSON.stringify(out));
+
+// ---- 暗黙の MOD (2026-10-12 オーナー「暗黙のタグは？」「カタリストで上がるよ、普通は」) ----
+// extra-bases の baseInfo.implicits は文だけ。同じ並び (build-htc-bases-from-client.mjs と同じく、文のある行だけ) で stat の幅と中身のタグを出す
+const rowsOf = (j) => (Array.isArray(j) ? j : j.rows);
+const IDIR = resolve(ROOT, "data-cache/client-export-implicits/tables/English");
+const [IB, IM, MEN] = await Promise.all([json(`${IDIR}/BaseItemTypes.json`), json(`${IDIR}/Mods.json`), json(resolve(ROOT, "data-cache/mods.en.json"))]).then(([a, b, c]) => [rowsOf(a), rowsOf(b), c]);
+const info = htcBaseInfo();
+const implicitOut = {};
+let implicitMismatch = 0;
+for (const r of IB) {
+  const want = info[r.Name]?.implicits;
+  if (!want?.length) continue;
+  const list = [];
+  for (const k of r.Implicit_Mods || []) {
+    const m = MEN[(IM[k] || {}).Id];
+    if (!m?.text) continue;
+    list.push({ stats: (m.stats ?? []).map((st) => [st.id, st.min, st.max]), tags: (m.implicit_tags ?? []).filter((t) => !/_mod$/.test(t)) });
+  }
+  // 同じ名前の行が複数ある (Runeforged・Runemastered) 時は、数の合う行を使う
+  if (list.length !== want.length) { if (!implicitOut[r.Name]) implicitMismatch++; continue; }
+  implicitOut[r.Name] = list;
+}
+await writeFile(resolve(ROOT, "src/services/htc/implicit-stats.json"), JSON.stringify(implicitOut));
+console.log(`暗黙: ベース ${Object.keys(implicitOut).length} (数が合わない ${implicitMismatch})`);
 await writeFile(resolve(ROOT, "data-cache/mod-stats-unresolved.txt"), unresolved.join("\n"));
 console.log(`mods ${Object.keys(out).length} / 段: エッセンスの code ${n.code}, 冒涜 ${n.abyss}, 文 ${n.text}, 値の幅 ${n.range}, 決まらない ${n.none} (data-cache/mod-stats-unresolved.txt)`);

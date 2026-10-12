@@ -145,13 +145,25 @@ const notClashing = (rest: Candidate[], c: Candidate): Candidate[] => {
  * 組み方 (勢力のお告げ・腐食のお告げ以外): 専用 MOD の個数を DESECRATED_COUNT_RATES で決め、その数を専用 MOD から重みで (指輪だけ実測、
  * 他の部位は全部同じ値なので等しい)、残りを普通の MOD から普通の重みで引いて、並びを混ぜる。専用 MOD が出せない (アイテムレベル 65 未満など) 時は 3 つとも普通
  */
-export function revealOffers(data: PatchData, item: StageItem, rng: () => number): { first: StageMod[]; reroll: StageMod[] } {
+export function revealOffers(data: PatchData, item: StageItem, rng: () => number): { first: StageMod[]; reroll: StageMod[]; chances: Map<StageMod, number> } {
   const hidden = unrevealedOf(item);
-  if (!hidden?.unrevealed) return { first: [], reroll: [] };
+  if (!hidden?.unrevealed) return { first: [], reroll: [], chances: new Map() };
   const { floor, altered, faction, plain, gnawed } = hidden.unrevealed;
+  // 候補に出た瞬間の確率 = その段の重み ÷ 引いた置き場の全部の重み (ほかの手の「付いた瞬間の確率」と同じ決まり。
+  // 2026-10-12 オーナー「冒涜で引いた時に確率が出てるはずなのにアイテムには出ない」)。和を取るだけで rng は使わないので、引く物は前と同じ
+  const chances = new Map<StageMod, number>();
+  const shareOf = new Map<Candidate, number>();
+  const sumW = (xs: readonly { w: number }[]): number => xs.reduce((a, x) => a + x.w, 0);
+  const take = (from: Candidate[]): Candidate => {
+    const c = pickWeighted(from, rng)!;
+    shareOf.set(c, c.w / (sumW(from) || 1));
+    return c;
+  };
   const toMod = (c: Candidate): StageMod => {
     const t = pickWeighted(c.tiers, rng)!;
-    return { ...makeStageMod(c.mod, c.side, t.index, rng), desecrated: true };
+    const m: StageMod = { ...makeStageMod(c.mod, c.side, t.index, rng), desecrated: true };
+    chances.set(m, (shareOf.get(c) ?? 0) * (t.w / (sumW(c.tiers) || 1)));
+    return m;
   };
   // 勢力のお告げ: その勢力の専用 MOD を MOD ごとに等しく 3 つまで、足りなければ残りは普通の MOD を普通の重みで
   // (ゲームの文面は「ランダムな <勢力> の MOD を保証」で「だけ」ではない。2026-10-11 オーナー「2 つしか付かない場合は一般 MOD が 1 個混じる」)
@@ -160,13 +172,13 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
     let normal = pool(data, item, hidden.side, floor, altered, null, hidden, true, gnawed);
     const picked: Candidate[] = [];
     while (picked.length < OFFERS && fac.length) {
-      const c = pickWeighted(fac, rng)!;
+      const c = take(fac);
       picked.push(c);
       fac = notClashing(fac, c);
       normal = notClashing(normal, c);
     }
     while (picked.length < OFFERS && normal.length) {
-      const c = pickWeighted(normal, rng)!;
+      const c = take(normal);
       picked.push(c);
       normal = notClashing(normal, c);
     }
@@ -177,7 +189,7 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
     let rest = pool(data, item, hidden.side, floor, altered, faction, hidden, plain, gnawed);
     const out: StageMod[] = [];
     for (let i = 0; i < OFFERS && rest.length; i++) {
-      const c = pickWeighted(rest, rng)!;
+      const c = take(rest);
       rest = notClashing(rest, c);
       out.push(toMod(c));
     }
@@ -197,13 +209,13 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
     const want = u < DESECRATED_COUNT_RATES[0]! ? 1 : u < DESECRATED_COUNT_RATES[0]! + DESECRATED_COUNT_RATES[1]! ? 2 : 3;
     const picked: Candidate[] = [];
     for (let i = 0; i < want && ex.length; i++) {
-      const c = pickWeighted(ex, rng)!;
+      const c = take(ex);
       picked.push(c);
       ex = notClashing(ex, c);
       normal = notClashing(normal, c);
     }
     while (picked.length < OFFERS && (normal.length || ex.length)) {
-      const c = normal.length ? pickWeighted(normal, rng)! : pickWeighted(ex, rng)!;
+      const c = normal.length ? take(normal) : take(ex);
       picked.push(c);
       normal = notClashing(normal, c);
       ex = notClashing(ex, c);
@@ -216,7 +228,7 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
     return picked.map(toMod);
   };
   const first = draw();
-  return { first, reroll: draw() };
+  return { first, reroll: draw(), chances };
 }
 /** reveal:N (N は 1 から) / reveal:N:reroll */
 export function applyReveal(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
@@ -230,7 +242,8 @@ export function applyReveal(data: PatchData, item: StageItem, key: string, rng: 
   const list = reroll ? offers.reroll : offers.first;
   const pick = list[Number(m[1]) - 1];
   if (!pick) return skipRandom(item, tr("その番号の候補が無い", "No option with that number"));
-  return { applied: true, item: replaced(item, hidden, pick), added: [pick], removed: [hidden] };
+  const chance = offers.chances.get(pick);
+  return { applied: true, item: replaced(item, hidden, pick), added: [pick], removed: [hidden], ...(chance != null ? { rolled: [{ modId: pick.modId, tierName: pick.tierName, chance }] } : {}) };
 }
 
 const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>): StageMod => ({

@@ -7,6 +7,7 @@
  */
 import { mulberry32 } from "../htc/rng";
 import type { StageItem } from "./types";
+import { displayedValue } from "../htc/quality";
 
 const RANGE = /\((-?\d+(?:\.\d+)?)\s*[-—–]\s*(-?\d+(?:\.\d+)?)\)/g;
 const decimals = (s: string): number => (s.includes(".") ? s.split(".")[1]!.length : 0);
@@ -30,4 +31,28 @@ export function rollLines(item: StageItem, lines: readonly string[], salt: strin
       return (Math.round(v * k * p) / p).toFixed(d);
     }),
   );
+}
+
+/**
+ * 暗黙の MOD の行 (2026-10-12 オーナー「暗黙のタグは？」「カタリストで上がるよ、普通は」)。rollLines と同じ乱数で振り、
+ * pct[行] (カタリストの品質 %) があれば素の値 × (1 + 品質) を切り捨て (MOD と同じ displayedValue)。values は行の中の振った値 (伸びた後)
+ */
+export function rollImplicitLines(item: StageItem, lines: readonly string[], pct: readonly number[] = []): Array<{ text: string; values: number[]; boosted: boolean }> {
+  const rng = mulberry32(((item.rollSeed ?? 0) ^ hashOf(`${item.base}|implicit`)) >>> 0);
+  return lines.map((line, li) => {
+    const values: number[] = [];
+    let boosted = false;
+    const text = line.replace(RANGE, (_all, a: string, b: string) => {
+      const lo = Number(a), hi = Number(b), d = Math.max(decimals(a), decimals(b));
+      const p = 10 ** d;
+      const steps = Math.round(Math.abs(hi - lo) * p);
+      const v = Math.min(lo, hi) + Math.floor(rng() * (steps + 1)) / p;
+      const q = pct[li] ?? 0;
+      const shown = q > 0 ? (d === 0 ? displayedValue(v, q) : Math.round(v * (1 + q / 100) * p) / p) : v;
+      if (shown !== v) boosted = true;
+      values.push(shown);
+      return shown.toFixed(d);
+    });
+    return { text, values, boosted };
+  });
 }

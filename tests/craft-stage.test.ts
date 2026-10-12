@@ -161,6 +161,24 @@ describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
     expect(boostedMod({ ...ring, qualityTag: "resistance" }, m, data)?.values[0]).toBe(Math.floor(m.values[0]! * 1.2));
     expect(boostedMod({ ...ring, qualityTag: "life" }, m, data)).toBeNull();
   });
+  it("暗黙の MOD にも中身のタグがあり、カタリストの品質で伸びる (2026-10-12 オーナー「カタリストで上がるよ、普通は」)", async () => {
+    const { implicitRows } = await import("../src/services/craft-stage/stage-props");
+    const ring = freshItem(data, "Amethyst Ring", 82);
+    const [plain] = implicitRows(ring, true);
+    expect(plain!.tags).toContain("resistance");
+    const v = plain!.stats[0]![1];
+    expect(implicitRows({ ...ring, quality: 20, qualityTag: "resistance" }, true)[0]).toMatchObject({ boosted: true, stats: [["base_chaos_damage_resistance_%", Math.floor(v * 1.2)]] });
+    expect(implicitRows({ ...ring, quality: 20, qualityTag: "life" }, true)[0]!.boosted).toBe(false);
+  });
+  it("発現で付いた MOD にも付いた瞬間の確率が付く (2026-10-12 オーナー「確率が出てるはずなのにアイテムには出ない」)", () => {
+    const d = A(rare("Gold Ring", 82), "desecrate_ancient", 4);
+    expect(d.applied).toBe(true);
+    const r = A(d.item, "reveal:1", 5);
+    expect(r.applied).toBe(true);
+    expect(r.rolled?.[0]).toMatchObject({ modId: r.added[0]!.modId });
+    expect(r.rolled![0]!.chance).toBeGreaterThan(0);
+    expect(r.rolled![0]!.chance).toBeLessThan(1);
+  });
   it("エッセンス・冒涜のローカル MOD は、どの部位でも上の数値を変える", async () => {
     const { propRows } = await import("../src/services/craft-stage/stage-props");
     const { makeStageMod } = await import("../src/services/craft-stage/stage-core");

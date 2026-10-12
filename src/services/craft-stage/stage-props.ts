@@ -14,11 +14,35 @@ import { displayValue } from "../mods/stat-scale";
 import type { StageItem } from "./types";
 import { scaledAugment } from "./stage-core";
 import { lang } from "../../i18n/lang";
-import { filledStatsOf } from "../htc/patch";
+import { filledStatsOf, htcBaseInfo, implicitStatsOf } from "../htc/patch";
+import { rollImplicitLines } from "./roll-text";
+import { nameOf } from "../../i18n/lang";
 
 export interface PropRow { key: string; label: string; value: string; up: boolean }
 
-/** アイテムに付いている stat の合計 (MOD とルーン) */
+/**
+ * 暗黙の MOD の行: 振った文・中身のタグ・カタリストで伸びたか・stat の値 (画面の単位)。2026-10-12 オーナー「暗黙のタグは？」「カタリストで上がるよ、普通は」。
+ * カタリストは MOD と同じく指輪・アミュレットで、品質の種類のタグを持つ行だけ (stage-core の qualityPctOf と同じ決まり)
+ */
+export interface ImplicitRow { text: string; tags: string[]; boosted: boolean; stats: Array<[string, number]> }
+export function implicitRows(item: StageItem, ja = false): ImplicitRow[] {
+  const lines = htcBaseInfo()[item.base]?.implicits ?? [];
+  if (!lines.length) return [];
+  const info = implicitStatsOf(item.base);
+  const jewel = item.cls.category === "Rings" || item.cls.category === "Amulets";
+  const pct = lines.map((_, i) => (jewel && item.qualityTag && item.quality > 0 && info[i]?.tags.includes(item.qualityTag) ? item.quality : 0));
+  const rolled = rollImplicitLines(item, lines.map((l) => (ja ? l.ja : nameOf(l))), pct);
+  return rolled.map((r, i) => {
+    const st = info[i]?.stats ?? [];
+    const vary = st.filter(([, lo, hi]) => lo !== hi);
+    const stats: Array<[string, number]> = vary.length === r.values.length
+      ? [...vary.map(([id], k): [string, number] => [id, r.values[k]!]), ...st.filter(([, lo, hi]) => lo === hi).map(([id, v]): [string, number] => [id, displayValue(id, v)])]
+      : [];
+    return { text: r.text, tags: info[i]?.tags ?? [], boosted: r.boosted, stats };
+  });
+}
+
+/** アイテムに付いている stat の合計 (MOD・暗黙の MOD・ルーン) */
 function sums(item: StageItem): Map<string, number> {
   const m = new Map<string, number>();
   const add = (id: string, v: number) => m.set(id, (m.get(id) ?? 0) + v);
@@ -29,6 +53,7 @@ function sums(item: StageItem): Map<string, number> {
     (md.stats?.length ? md.stats : fill?.stats ?? []).forEach((id, i) => add(id, md.values[i] ?? 0));
     for (const [id, v] of fill?.fixed ?? []) add(id, displayValue(id, v));
   }
+  for (const r of implicitRows(item, true)) for (const [id, v] of r.stats) add(id, v);
   // ルーンの stat はクライアントの生の値 (リーチ 300 = 3%)。MOD の values は画面の単位なので揃える (services/mods/stat-scale.ts)
   // ソケットの効き目は効果の増加 (遺産のルーン・合金) を掛けた値 (stage-core の scaledAugment、2026-10-10)
   for (const a0 of item.augments ?? []) for (const s of scaledAugment(item, a0).stats) add(s.id, displayValue(s.id, s.value));

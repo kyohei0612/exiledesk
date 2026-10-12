@@ -13,11 +13,10 @@ import STAT_ORDER from "../../data/stat-order.json";
 import { fmtChance, isRareChance } from "../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { computed, ref } from "vue";
-import { htcBaseInfo } from "../../services/htc/patch";
 import { qualityLabelOf } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import { isFlask, isGem } from "../../services/craft-stage/stage-bases";
-import { propRows } from "../../services/craft-stage/stage-props";
+import { implicitRows, propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
@@ -97,7 +96,8 @@ const chances = computed(() => {
   return m;
 });
 const chanceOf = (m: { modId: string }): number | null => chances.value.get(m.modId) ?? null;
-const implicits = computed(() => rollLines(props.item, (htcBaseInfo()[props.item.base]?.implicits ?? []).map(nameOf), "implicit"));
+// 暗黙の MOD: 振った値・中身のタグ・カタリストの品質で伸びた値 (stage-props の implicitRows、2026-10-12)
+const implicits = computed(() => implicitRows(props.item).map((r) => ({ ...r, tags: props.showTags ? shownTags(r.tags) : [] })));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
@@ -186,7 +186,10 @@ const rows = computed(() =>
         <!-- 暗黙の MOD は左に「暗黙」(MOD の行の P / S と同じ列。2026-10-10 オーナー) -->
         <p v-for="(t, i) in implicits" :key="'i' + i" class="flex items-center gap-2 px-2 py-0.5">
           <span class="w-7 shrink-0 text-left text-[11px] text-white/45">{{ tr("暗黙", "Impl.") }}</span>
-          <span class="min-w-0 flex-1 text-center text-rarity-magic">{{ t }}</span>
+          <span class="min-w-0 flex-1 text-center text-rarity-magic">
+            <span :class="t.boosted ? 'text-[#7ee8ff]' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
+            <span v-for="g in t.tags" :key="g" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[g]!.cls">{{ tagLabel(g) }}</span>
+          </span>
           <span class="w-7 shrink-0" />
         </p>
       </template>

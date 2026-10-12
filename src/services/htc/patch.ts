@@ -18,6 +18,7 @@ import poolFixes from "./poe2db-pool-fixes.json";
 import runeWeights from "./rune-weights.json";
 import desecratedWeights from "./desecrated-weights.json";
 import modStats from "./mod-stats.json";
+import implicitStats from "./implicit-stats.json";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 // 型は 2026-09-26 に patch-types.ts へ分けた
 import type { BaseInfo, DropOnlyInfo, ExtraBases, JewelBases, PatchExtras, PoolAdd, ReadonlyPool } from "./patch-types";
@@ -157,6 +158,13 @@ export function filledStatsOf(modId: string, tierIndex: number): { stats: string
   const stats = f?.stats[tierIndex];
   return stats?.length ? { stats, fixed: f!.fixed?.[tierIndex] ?? [] } : null;
 }
+
+/**
+ * 暗黙の MOD の stat ([id, 最小, 最大] の生の値) と中身のタグ。baseInfo.implicits と同じ並び (scripts/build-mod-stats-from-client.mjs、2026-10-12)。
+ * カタリストの品質で伸びる相手と、上の数値に足す stat を決める
+ */
+export type ImplicitStat = { stats: Array<[string, number, number]>; tags: string[] };
+export const implicitStatsOf = (base: string): ImplicitStat[] => (implicitStats as unknown as Record<string, ImplicitStat[]>)[base] ?? [];
 
 export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBases): PatchData {
   const mods = new Map(data.mods);
