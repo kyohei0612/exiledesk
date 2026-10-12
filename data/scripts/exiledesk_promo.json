@@ -501,6 +501,155 @@
           }
         }
       ]
+    },
+    {
+      "name": "付く確率を見る",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次は、どのMODがどれくらい付くかを見るわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 0,
+            "hold": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "「MOD一覧」を押すか、Tabキーで、このベースに付くMODの一覧が開くの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 1,
+            "hold": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "閉じる時は、もう一度TabかEscよ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 3,
+            "hold": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "数字が並んでいるのだ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 3,
+            "hold": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "右の数字は出やすさ。同じ側のMODの中で、どれくらい選ばれやすいかよ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 3,
+            "hold": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "行を押すとティアの表が開いて、数値の幅とティアごとの出やすさが見られるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 5,
+            "hold": 8
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "T1がどれくらい出にくいか、分かるのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 8,
+            "hold": 8
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それと、カレンシーを持ったまま開くと、数字が「付く確率」に変わるの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 8,
+            "hold": 10
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そのカレンシーで付かないMODは、灰色になるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 10,
+            "hold": 12
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "打つ前に、当たる確率が分かるのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 12,
+            "hold": 12
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "確率は、ゲームのデータからの推定よ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 12,
+            "hold": 12
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "冒涜やルーンのように、重みが公開されていない物は、コミュニティのデータを参考にしているわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 12,
+            "hold": 12
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "だから目安として見てね。",
+          "scene": {
+            "kind": "footage",
+            "clip": "modlist",
+            "at": 12,
+            "hold": 12
+          }
+        }
+      ]
     }
   ]
 }
