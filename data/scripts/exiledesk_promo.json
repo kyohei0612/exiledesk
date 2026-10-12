@@ -650,6 +650,122 @@
           }
         }
       ]
+    },
+    {
+      "name": "次の手で狙う",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "欲しいMODがある時は、何を打てばいいのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そんな時は「次の手で狙う」を使うの。ティアの表の横にあるボタンよ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 0,
+            "hold": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "欲しいMODを4つまで選んで、「確率を見る」を押すわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 3,
+            "hold": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "すると、打ち方ごとに、付く確率が高い順に並ぶの。お告げとの組み合わせも全部試してくれるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 6,
+            "hold": 9
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "〔結果: 一番上の打ち方と、何回に1回・付くまでの平均の費用〕",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 9,
+            "hold": 9
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "費用まで出るのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 9,
+            "hold": 9
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "行を押せば、そのカレンシーを持って、お告げも掛けてくれるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 9,
+            "hold": 11
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "「回す」を押すと、本当に何回も打って、何回付いたかを数えてくれるの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 11,
+            "hold": 13
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "〔結果: 100回中何回付いたか〕",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 13,
+            "hold": 13
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "打つ前に、どれを使うか決められるのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 13,
+            "hold": 13
+          }
+        }
+      ]
     }
   ]
 }
