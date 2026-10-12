@@ -116,7 +116,7 @@ const FAM_UNIQUE: Record<string, string> = {
   片手メイス: "Mjölner", スピア: "The Ordained", セプター: "Sacred Flame", ワンド: "Adonia's Ego", 弓: "Splinterheart", クロスボウ: "Redemption",
   スタッフ: "The Whispering Ice", 両手メイス: "Chober Chaber", クォータースタッフ: "Pillar of the Caged God", タリスマン: "Amor Mandragora",
   盾: "Svalinn", フォーカス: "Rathpith Globe", 矢筒: "Cadiro's Gambit",
-  兜: "Corona of the Red Sun", 鎧: "Kaom's Heart", 手袋: "Aerisvane's Wings", 靴: "The Infinite Pursuit", ベルト: "Mageblood",
+  兜: "Corona of the Red Sun", 鎧: "Kaom's Heart", 手袋: "Aerisvane's Wings", 靴: "The Infinite Pursuit", ベルト: "Mageblood", アミュレット: "Eventide Petals", 指輪: "The Taming", ジュエル: "Split Personality",
 };
 function famArt(f: Family): string | null {
   const u = FAM_UNIQUE[f.name] && uniqueArt(FAM_UNIQUE[f.name]!);
