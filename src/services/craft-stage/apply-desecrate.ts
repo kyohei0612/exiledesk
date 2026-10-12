@@ -46,7 +46,7 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
   const floor = Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0);
   // 古代の骨も最低 MOD レベルのあるカレンシー (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 3)。深淵の王の印の下限 (仮) は別
-  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR) return skip(item, tr(`アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`, `Requires Item Level ${ANCIENT_BONE_FLOOR}+`));
+  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR && item.cls.category !== "Jewels") return skip(item, tr(`アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`, `Requires Item Level ${ANCIENT_BONE_FLOOR}+`));
   const factionOmen = used.find((o) => FACTION_TAG[o]);
   if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, tr("勢力のお告げは武器または宝飾品だけ", "Faction Omens: weapons and jewellery only"));
   const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;

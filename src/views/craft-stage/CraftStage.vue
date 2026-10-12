@@ -66,6 +66,11 @@ onMounted(() => void s.init());
 function retryInit(): void { s.error.value = null; void s.init(); }
 
 const ILVLS = [45, 65, 75, 82, 86];
+/**
+ * ジュエルはアイテムレベルの欄を出さない (2026-10-12 オーナー「ジュエルにアイテムレベルって意味あるんか、なかったら表示しなくていい」:
+ * MOD は全部レベル 1・重みは全部同じで、付く物はアイテムレベルで変わらない)。カレンシー・骨の制限も掛けない (apply-currency の noIlvl)
+ */
+const jewelBase = computed(() => s.item.value?.cls.category === "Jewels");
 
 /** 持っているカレンシーのアイコンをカーソルに付ける */
 const mouse = ref({ x: 0, y: 0 });
@@ -461,7 +466,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
       <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
       <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" @pick="pickSimBase" />
-      <span v-if="!simNoBase && !(s.mode.value === 'hand' && handNoBase)" class="flex items-center gap-1">
+      <span v-if="!simNoBase && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1">
         <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.itemLevel.value === lv ? 'on' : ''" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>

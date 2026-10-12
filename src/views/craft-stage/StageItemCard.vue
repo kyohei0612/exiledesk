@@ -168,7 +168,8 @@ const rows = computed(() =>
     <div class="space-y-1 px-4 text-center text-[13px]" :class="[compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">
       <!-- 種類 → アイテムレベル (英語のベース名は出さない、2026-10-10 オーナー)。要求レベル・能力値は出さない (2026-10-10 オーナー「邪魔、出さなくていい」) -->
       <p class="pt-1 text-[12px] text-white/50">{{ kindJa }}</p>
-      <p v-if="!isGem(item.cls.category)" class="text-[12px] text-white/50">{{ tr("アイテムレベル", "Item Level") }}: <span class="text-white">{{ item.itemLevel }}</span></p>
+      <!-- ジュエルはアイテムレベルで付く物が変わらない (MOD は全部レベル 1・重みは全部同じ) ので出さない (2026-10-12 オーナー) -->
+      <p v-if="!isGem(item.cls.category) && item.cls.category !== 'Jewels'" class="text-[12px] text-white/50">{{ tr("アイテムレベル", "Item Level") }}: <span class="text-white">{{ item.itemLevel }}</span></p>
       <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
       <p v-for="r in baseRows" :key="r.key" class="text-[12px] text-white/50">{{ r.label ? `${r.label}: ` : "" }}<span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>

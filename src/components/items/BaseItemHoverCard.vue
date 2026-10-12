@@ -52,7 +52,8 @@ const props2 = computed(() => {
 });
 /** 装備条件 (ゲーム: 「装備条件：レベル 16、知性 31」) */
 const req = computed(() => {
-  const i = info.value, lv = htc.value?.lvl ?? i.lv ?? 0;
+  // ジュエルはレベルを出さない (2026-10-12 オーナー)
+  const i = info.value, lv = /^Jewels/.test(htc.value?.cls ?? "") ? 0 : htc.value?.lvl ?? i.lv ?? 0;
   const parts = [lv ? tr(`レベル ${lv}`, `Level ${lv}`) : "", i.str ? tr(`筋力 ${i.str}`, `${i.str} Str`) : "", i.dex ? tr(`器用さ ${i.dex}`, `${i.dex} Dex`) : "", i.int ? tr(`知性 ${i.int}`, `${i.int} Int`) : ""].filter(Boolean);
   return parts.join(tr("、", ", "));
 });

@@ -36,6 +36,11 @@ export function qualityFieldMax(item: StageItem): number {
 /** 暗黙の MOD の値を手で決める手 (`iset:0:5` = 1 行目を 5、範囲が 2 つなら `iset:0:2,4`)。暗黙の行の上下のボタン (2026-10-12 オーナー「暗黙はティアとかないから上下できるボタン」)。費用 0 */
 export const IMPLICIT_SET = "iset:";
 export const implicitSetKey = (line: number, values: readonly number[]): string => `${IMPLICIT_SET}${line}:${values.join(",")}`;
+/**
+ * ジュエルはアイテムレベルを見ない (MOD は全部レベル 1・重みは全部同じで、画面にもアイテムレベルを出さない。2026-10-12 オーナー
+ * 「ジュエルにアイテムレベルって意味あるんか」)。カレンシー・骨のアイテムレベルの制限も掛けない
+ */
+export const noIlvl = (item: StageItem): boolean => item.cls.category === "Jewels";
 /** 品質の上限を手で決める手 (`qcap:40`)。品質の帯のプルダウン (2026-10-10 オーナー「エッセンス打つのが面倒な人はプルダウンで上限上げてね」) */
 export const QUALITY_CAP = "qcap:";
 export const qualityCapKey = (n: number): string => `${QUALITY_CAP}${n}`;
@@ -211,7 +216,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)"));
   if (kind === "essence" || kind === "essence_perfect") return applyEssence(data, item, currency, rng, used);
   // 噛み切られた骨はアイテムレベル 64 以下だけ (クライアントの AbyssBenchTicketTypes.MaximumItemLevel)
-  if (currency === "desecrate_gnawed" && item.itemLevel > GNAWED_MAX_ILVL) return skip(item, tr(`アイテムレベル ${GNAWED_MAX_ILVL} 以下にだけ使える`, `Item Level ${GNAWED_MAX_ILVL} or lower only`));
+  if (currency === "desecrate_gnawed" && item.itemLevel > GNAWED_MAX_ILVL && !noIlvl(item)) return skip(item, tr(`アイテムレベル ${GNAWED_MAX_ILVL} 以下にだけ使える`, `Item Level ${GNAWED_MAX_ILVL} or lower only`));
   if (kind === "desecrate") return applyBone(data, item, currency, rng, used);
   if (kind === "reveal") return applyReveal(data, item, currency, rng, used);
   if (kind === "vaal") return applyVaal(data, item, rng, used);
@@ -226,7 +231,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   const { strength } = parseKey(currency);
   const floor = floorOf(kind, strength);
   // 用語集 BetterCurrencyMinimumLevel「最低 MOD レベルのあるカレンシーは、アイテムレベルがそれより低い品には使えない」(要望 ㉝ の 3)
-  if (floor > 0 && item.itemLevel < floor) return skip(item, tr(`アイテムレベルが ${floor} 未満には使えない`, `Requires Item Level ${floor}+`));
+  if (floor > 0 && item.itemLevel < floor && !noIlvl(item)) return skip(item, tr(`アイテムレベルが ${floor} 未満には使えない`, `Requires Item Level ${floor}+`));
   const count = allMods(item).length;
   const add = (it: StageItem, n: number, pick: (k: number, cur: StageItem) => readonly StageSide[] = () => SIDES, boost?: PoolOpts["boost"]): StageApply => {
     let cur = it;
@@ -359,7 +364,7 @@ export function addCandidates(data: PatchData, item: StageItem, currency: string
   const kind = kindOf(currency);
   const used = omensFor(currency, omens);
   const floor = floorOf(kind, parseKey(currency).strength);
-  if (floor > 0 && item.itemLevel < floor) return [];
+  if (floor > 0 && item.itemLevel < floor && !noIlvl(item)) return [];
   const open = (it: StageItem, sides: readonly StageSide[]): StageSide[] => sides.filter((sd) => room(it, sd));
   switch (kind) {
     case "transmute": {

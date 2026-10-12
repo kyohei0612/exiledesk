@@ -191,6 +191,11 @@ describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
     expect(implicitRows(A(ring, "iset:0:99").item, true)[0]!.stats[0]![1]).toBe(13);
     expect(A(set, "divine", 3).item.implicitFixed).toBeUndefined();
   });
+  it("ジュエルはアイテムレベルを見ない (完全のカレンシー・骨の制限も無し。2026-10-12 オーナー)", () => {
+    const low = A(A(freshItem(data, "Emerald", 20), "transmute").item, "regal").item;
+    expect(A(low, "exalt_perfect").applied).toBe(true);
+    expect(A(low, "desecrate_ancient").applied).toBe(true);
+  });
   it("ジュエルもカタリストで伸びる (中身のタグ = displayTags。2026-10-12 オーナー「ジュエルにもカタリストであがる」)", async () => {
     const { makeStageMod, boostedMod } = await import("../src/services/craft-stage/stage-core");
     const mod = data.mods.get("Jewels_dex/JewelAttackCriticalChance")!;
