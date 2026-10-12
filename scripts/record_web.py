@@ -367,6 +367,20 @@ def c_multi(w: Web) -> None:
         if key == "LightningResistance":
             pause(2.0)  # 3 つ選んだ所で少し止める
     pause(2.0)
+    # ティアごとにも選べる: 外してから、冷気耐性の段の表で T2 (= T1〜T2) だけ
+    h.click(band.first.locator("xpath=..").get_by_role("button", name="×"), 700, 1.0)
+    mark("外した")
+    row = dlg.locator('[data-row-key="normal:Rings/ColdResistance"]').first
+    h.click(row.locator('[data-rec="mod:Rings/ColdResistance"]'), 800, 1.2)
+    t2 = row.locator("tr").filter(has=p.locator("td", has_text=re.compile("^T2$"))).first
+    h.click(t2.locator("input[type=checkbox]").first, 700, 0.8)
+    mark("T2 を選んだ")
+    band.first.wait_for(timeout=10000)
+    pause(0.6)
+    w.notes.append({"after": "Cold T2", "band": band.first.locator("xpath=..").inner_text()})
+    pause(2.5)
+    # 表を閉じる (選んだまま)
+    h.click(row.locator('[data-rec="mod:Rings/ColdResistance"]'), 700, 0.6)
     p.keyboard.press("Escape")
     pause(0.8)
     w.use()

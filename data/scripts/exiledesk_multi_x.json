@@ -1,14 +1,14 @@
 {
   "schema": "poe2tube-script/1",
   "title": "ExileDesk 新機能: どれかが付く確率",
-  "target_seconds": 30,
+  "target_seconds": 40,
   "result_file": "data/results/exiledesk_promo.json",
   "layout": "wide",
   "demos": {},
   "sections": [
     {
       "name": "どれかが付く確率",
-      "target_seconds": 30,
+      "target_seconds": 40,
       "lines": [
         {
           "speaker": "zundamon",
@@ -29,7 +29,7 @@
             "kind": "footage",
             "clip": "multi",
             "at": 1.8,
-            "hold": 5.0
+            "hold": 5.1
           }
         },
         {
@@ -39,8 +39,8 @@
           "scene": {
             "kind": "footage",
             "clip": "multi",
-            "at": 5.0,
-            "hold": 7.6
+            "at": 5.1,
+            "hold": 7.8
           }
         },
         {
@@ -50,8 +50,8 @@
           "scene": {
             "kind": "footage",
             "clip": "multi",
-            "at": 7.6,
-            "hold": 12.4
+            "at": 7.8,
+            "hold": 12.6
           }
         },
         {
@@ -61,8 +61,41 @@
           "scene": {
             "kind": "footage",
             "clip": "multi",
-            "at": 12.4,
-            "hold": 12.4
+            "at": 12.6,
+            "hold": 12.6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ティアごとにも選べるわ。冷気耐性の表でT2にチェックすると、T1とT2が入るの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 12.6,
+            "hold": 17.6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "T2以上の冷気耐性は、1.4%ね。",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 17.6,
+            "hold": 17.6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "低いのだ……。",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 17.6,
+            "hold": 19.6
           }
         },
         {
@@ -72,20 +105,20 @@
           "scene": {
             "kind": "footage",
             "clip": "multi",
-            "at": 12.4,
-            "hold": 15.5,
+            "at": 19.6,
+            "hold": 22.5,
             "zoom": "card"
           }
         },
         {
           "speaker": "zundamon",
           "emotion": "happy",
-          "text": "サイトはexiledesk.comで、無料なのだ！",
+          "text": "1.4%を引いたのだ！サイトはexiledesk.comで、無料なのだ！",
           "scene": {
             "kind": "footage",
             "clip": "multi",
-            "at": 15.5,
-            "hold": 15.5,
+            "at": 22.5,
+            "hold": 22.5,
             "zoom": "card"
           }
         }
