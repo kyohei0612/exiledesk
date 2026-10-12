@@ -1047,6 +1047,28 @@
           }
         },
         {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ウェブ版の上にある「要望・バグを送る」からも、直接送れるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "コメント欄に書きにくい事も、送れるのだ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
           "speaker": "zundamon",
           "emotion": "normal",
           "text": "どこから使えるのだ？",
