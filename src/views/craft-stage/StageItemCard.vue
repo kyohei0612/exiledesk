@@ -39,6 +39,8 @@ const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
 const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; jump: [modId: string]; implicit: [line: number, values: number[]] }>();
+/** 暗黙の値の幅 (「6–9 から 11–15」、英語は「6–9 to 11–15」) */
+const rangeLabel = (rs: Array<[number, number, number]>): string => rs.map(([lo, hi, d]) => (lo === hi ? lo.toFixed(d) : `${lo.toFixed(d)}–${hi.toFixed(d)}`)).join(tr(" から ", " to "));
 /** 暗黙の値を 1 刻み上下した値 (範囲の中だけ。範囲が 2 つ以上なら全部を同じ向きに)。動かせなければ null */
 function stepImplicit(r: { raw: number[]; ranges: Array<[number, number, number]> }, dir: 1 | -1): number[] | null {
   const next = r.raw.map((v, k) => {
@@ -194,7 +196,8 @@ const rows = computed(() =>
         <div class="st-sep" :class="[`st-sep-${item.rarity}`, compact ? 'my-0.5' : 'my-1.5']" />
         <!-- 暗黙の MOD は左に「暗黙」(MOD の行の P / S と同じ列。2026-10-10 オーナー) -->
         <p v-for="(t, i) in implicits" :key="'i' + i" class="flex items-center gap-2 px-2 py-0.5">
-          <span class="w-7 shrink-0 text-left text-[11px] text-white/45">{{ tr("暗黙", "Impl.") }}</span>
+          <!-- 下に値の幅 (トレードサイトの「[6–9 から 11–15]」と同じ。暗黙はティアが無いので下限・上限が分かるように。2026-10-12 オーナー) -->
+          <span class="shrink-0 text-left text-[11px] leading-tight text-white/45" :class="t.ranges.length ? 'min-w-7' : 'w-7'">{{ tr("暗黙", "Impl.") }}<span v-if="t.ranges.length" class="block whitespace-nowrap text-[10px] tabular-nums text-white/40">[{{ rangeLabel(t.ranges) }}]</span></span>
           <span class="min-w-0 flex-1 text-center text-rarity-magic">
             <span :class="t.boosted ? 'text-[#7ee8ff]' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
             <span v-for="g in t.tags" :key="g" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[g]!.cls">{{ tagLabel(g) }}</span>
