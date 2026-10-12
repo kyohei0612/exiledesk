@@ -330,21 +330,19 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
 <style scoped>
 /*
  * 部位のタイルの絵: その絵の色 (--glow、tintGlow が枠に入れる) の光が動き続ける (2026-10-13 オーナー「脈打たなくていい、動いてる感じで」「アイコンに合った」)。
- * 後ろで光の帯がゆっくり回り (fam-aura)、小さな光の粒が下から立ちのぼる (fam-mote)。絵は同じ色でうっすら光ったまま。乗せると少し大きく明るく
+ * 後ろにその色のぼやっとした光 (fam-aura、動かさない)、小さな光の粒が下から立ちのぼる (fam-mote)。絵は同じ色でうっすら光ったまま。乗せると少し大きく明るく
  */
 .fam-slot { --glow: 255, 176, 80; position: relative; overflow: hidden; }
 .fam-art { position: relative; z-index: 1; filter: drop-shadow(0 0 5px rgba(var(--glow), 0.6)); transition: transform 0.25s ease-out, filter 0.25s ease-out; }
 .fam-aura {
   position: absolute;
-  inset: 8%;
+  inset: 10%;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0deg, rgba(var(--glow), 0.38) 50deg, transparent 110deg, transparent 180deg, rgba(var(--glow), 0.28) 230deg, transparent 290deg);
-  filter: blur(6px);
-  animation: fam-spin 9s linear infinite;
-  animation-delay: var(--d, 0s);
+  /* 後ろのぼやっとした光は動かさない (2026-10-13 オーナー「動かんくていいな、うしろのぼやっと光は」) */
+  background: radial-gradient(circle, rgba(var(--glow), 0.32) 0%, rgba(var(--glow), 0.12) 45%, transparent 70%);
+  filter: blur(4px);
   pointer-events: none;
 }
-@keyframes fam-spin { to { transform: rotate(360deg); } }
 .fam-mote {
   position: absolute;
   bottom: 10%;
@@ -366,10 +364,10 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
   100% { transform: translateY(-48px) translateX(4px); opacity: 0; }
 }
 button:hover .fam-art { transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(var(--glow), 0.95)) drop-shadow(0 0 16px rgba(var(--glow), 0.45)) brightness(1.12); }
-button:hover .fam-aura { animation-duration: 3.5s; }
+button:hover .fam-aura { background: radial-gradient(circle, rgba(var(--glow), 0.45) 0%, rgba(var(--glow), 0.18) 45%, transparent 70%); }
 /* 動きを減らす設定の人には動かさない (光だけ) */
 @media (prefers-reduced-motion: reduce) {
-  .fam-aura, .fam-mote { animation: none; }
+  .fam-mote { animation: none; }
   .fam-mote { display: none; }
 }
 </style>
