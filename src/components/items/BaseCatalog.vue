@@ -144,16 +144,30 @@ const rootEl = ref<HTMLElement | null>(null);
 /**
  * 畳む: 開いた時に送っていなければ今の位置のまま、送っていたらその分だけ戻す
  * (2026-10-12 オーナー「スクロール関係ない所で開いて、戻る時は今の位置でおｋ。アイコンもっかいクリックしたら今置いてある位置からズレる」)。
- * 一覧が消えてページが短くなると下の端に押し戻されて画面がずれるので、高さはそのまま残す (次に開く時に戻す)
+ * 一覧が消えてページが短くなると下の端に押し戻されて画面が飛ぶので、一瞬だけ高さを残し、届かなくなる分だけぬるっと上へ送ってから外す
+ * (高さを残したままにすると空きが残った。2026-10-12 オーナー「謎の空きが表示されたまま、たたむ際に必ず元の状態に戻す」)
  */
 function fold(): void {
   const el = rootEl.value;
-  if (el) el.style.minHeight = `${el.offsetHeight}px`;
+  const box = el ? scrollBoxOf(el) : null;
+  const before = el?.offsetHeight ?? 0;
+  if (el) el.style.minHeight = `${before}px`;
   family.value = null; insertAfter.value = null;
   const back = revealed, at = revealedAt;
   revealed = 0; revealedAt = null;
-  const box = el ? scrollBoxOf(el) : null;
-  if (back > 0 && at != null && Math.abs(scrollTopOf(box) - at) < 2) void nextTick(() => glideBy(box, -back));
+  if (!el) return;
+  void nextTick(async () => {
+    // 高さを残さなかった時の高さ = 消えた一覧の分だけ短い
+    el.style.minHeight = "";
+    const lost = Math.max(0, before - el.offsetHeight);
+    el.style.minHeight = `${before}px`;
+    const top = scrollTopOf(box);
+    const max = (box ? box.scrollHeight - box.clientHeight : document.documentElement.scrollHeight - innerHeight) - lost;
+    // 開く時に送っていた分を戻す (その後に自分で動かしていなければ)。それとは別に、短くなって届かなくなる分は必ず上へ
+    const want = Math.max(back > 0 && at != null && Math.abs(top - at) < 2 ? back : 0, top - max);
+    if (want > 0) await glideBy(box, -want);
+    el.style.minHeight = "";
+  });
 }
 function pickFamily(f: Family): void {
   // PC で開いている部位をもう一度押したら畳む
@@ -197,7 +211,12 @@ function reveal(): void {
   placeUnder(family.value);
   if (family.value) void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(revealPanel)));
 }
-defineExpose({ reveal });
+/** 親がベース選びを畳んだ・ベースを選んだ時: 残した高さを必ず外して元の状態に (2026-10-12 オーナー「たたむ際に必ず元の状態に戻す」) */
+function release(): void {
+  if (rootEl.value) rootEl.value.style.minHeight = "";
+  revealed = 0; revealedAt = null;
+}
+defineExpose({ reveal, release });
 function backToFamilies(): void { family.value = null; cls.value = null; }
 </script>
 

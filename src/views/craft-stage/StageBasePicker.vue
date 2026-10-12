@@ -25,7 +25,10 @@ watch(() => props.unpicked, (v) => { open.value = !!v; });
 const everOpen = ref(open.value);
 const catalog = ref<InstanceType<typeof BaseCatalog> | null>(null);
 // 開き直したら、伸び切ってから (0.3 秒) 今のベースの一覧の全体が見えるまで送る (2026-10-12 オーナー「今のベースが埋まる」)
-watch(open, (v) => { if (v) { const again = everOpen.value; everOpen.value = true; if (again) setTimeout(() => catalog.value?.reveal(), 320); } });
+watch(open, (v) => {
+  if (v) { const again = everOpen.value; everOpen.value = true; if (again) setTimeout(() => catalog.value?.reveal(), 320); }
+  else catalog.value?.release();
+});
 const head = ref<HTMLElement | null>(null);
 /**
  * 選んだら閉じる。ベースの行が画面の上に隠れていたら、先にそこまでぬるっと送ってから一覧を縮める
