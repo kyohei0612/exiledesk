@@ -69,6 +69,8 @@ def build_description(
             "▼参考にした記事・サイト\n" + "\n".join(f"・{s.title}\n{s.url}" for s in sources)
         )
     v = profile.video
+    if v.links:  # X の ID など (kyohei 2026-10-12「これから概要欄に記載」)
+        parts.append("▼X (旧Twitter)\n" + "\n".join(v.links))
     if v.credits:
         parts.append("▼クレジット\n" + "\n".join(v.credits))
     if v.disclaimer:

@@ -46,8 +46,15 @@
       "クラフト画面：ExileDesk（自作ツール）"
     ],
     "disclaimer": "※ 本チャンネルは Grinding Gear Games とは関係のない、非公式のファン解説チャンネルです。\n※ ゲームの仕様や数値は動画を作った時点のものです。",
-    "hashtags": ["PoE2", "PathofExile2", "ずんだもん"],
+    "hashtags": [
+      "PoE2",
+      "PathofExile2",
+      "ずんだもん"
+    ],
     "privacy": "private",
-    "playlist_key": "basics"
+    "playlist_key": "basics",
+    "links": [
+      "@chocobanana_HS https://x.com/chocobanana_HS"
+    ]
   }
 }

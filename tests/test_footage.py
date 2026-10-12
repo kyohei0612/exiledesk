@@ -77,3 +77,15 @@ def test_reading_fuda() -> None:
     assert normalize_speech("Escか右クリック") == "エスケープか右クリック"
     assert normalize_speech("工程の行を押せば") == "工程のぎょうを押せば"
     assert normalize_speech("黄色の太字") == "きいろの太字"
+
+
+def test_description_has_x_link() -> None:
+    import json
+    from pathlib import Path
+
+    from poe2tube.publish.meta import build_description
+    from poe2tube.publish.models import ChannelProfile
+
+    raw = json.loads(Path("data/channel/chocobanana.json").read_text(encoding="utf-8"))
+    text = build_description("概要", [], ChannelProfile.model_validate(raw))
+    assert "▼X (旧Twitter)\n@chocobanana_HS https://x.com/chocobanana_HS" in text

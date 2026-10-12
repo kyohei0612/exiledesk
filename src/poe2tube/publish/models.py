@@ -33,6 +33,9 @@ class VideoDefaults(BaseModel):
     category_id: str = Field(default="20", description="20 = ゲーム")
     default_language: str = "ja"
     tags: list[str] = Field(default_factory=list)
+    links: list[str] = Field(
+        default_factory=list, description="説明文の「▼チャンネル・SNS」(X の ID など)"
+    )
     credits: list[str] = Field(default_factory=list, description="説明文の末尾に入れる")
     disclaimer: str = ""
     hashtags: list[str] = Field(default_factory=list, description="説明文の最後の行 (#付き)")
