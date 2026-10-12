@@ -16,6 +16,8 @@ import { socketCapOf } from "./stage-runes";
 import { allMods, maxQualityOf, replaced, skip, unfracturable, withValues } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { tr } from "../../i18n/lang";
+import { htcBaseInfo } from "../htc/patch";
+import { hasImplicitRange } from "./roll-text";
 
 export const OTHER_KINDS: readonly string[] = ["divine", "fracture", "artificer"];
 const FRACTURE_NEEDS = 4;
@@ -42,8 +44,10 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
       // ユニークは効果の値を振る種 (rollSeed) を変える (ユニークの数値も振り直せる。2026-10-08 使い倒しテスト)
       if (item.rarity === "unique") return { applied: true, item: { ...item, rollSeed: 1 + Math.floor(rng() * 2 ** 30) }, added: [], removed: [], note: tr("ユニークの数値を振り直し", "Rerolled Unique values") };
       const mods = allMods(item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length);
-      if (!mods.length) return skip(item, tr("転がし直せる MOD が無い", "No mod to reroll"));
-      let cur = item;
+      // 暗黙の MOD の数値も振り直す (poe2db「Randomises the numeric values of modifiers on an item」、2026-10-12 オーナー「暗黙も数値の変動はある」)
+      const implicit = hasImplicitRange((htcBaseInfo()[item.base]?.implicits ?? []).map((l) => l.en));
+      if (!mods.length && !implicit) return skip(item, tr("転がし直せる MOD が無い", "No mod to reroll"));
+      let cur: StageItem = implicit ? { ...item, implicitRoll: (item.implicitRoll ?? 0) + 1, implicitFixed: undefined } : item;
       const added: StageMod[] = [];
       for (const m of mods) {
         const mod = data.mods.get(m.modId);

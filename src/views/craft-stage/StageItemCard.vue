@@ -38,7 +38,16 @@ const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; jump: [modId: string] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; jump: [modId: string]; implicit: [line: number, values: number[]] }>();
+/** 暗黙の値を 1 刻み上下した値 (範囲の中だけ。範囲が 2 つ以上なら全部を同じ向きに)。動かせなければ null */
+function stepImplicit(r: { raw: number[]; ranges: Array<[number, number, number]> }, dir: 1 | -1): number[] | null {
+  const next = r.raw.map((v, k) => {
+    const [lo, hi, d] = r.ranges[k]!;
+    const p = 10 ** d;
+    return Math.min(hi, Math.max(lo, Math.round((v + dir / p) * p) / p));
+  });
+  return next.some((v, k) => v !== r.raw[k]) ? next : null;
+}
 /** ルーンを外す (2026-10-09): ソケットの右クリック、またはルーンの効き目の行のクリック。手で組んでいる時だけ (removable) */
 function onUnsocket(e: MouseEvent, n: number): void {
   // 持っている時の右クリックは「手放す」(外の CraftStage に任せる)。2026-10-10 点検: 持ったまま右クリックでルーンが外れていた
@@ -190,7 +199,12 @@ const rows = computed(() =>
             <span :class="t.boosted ? 'text-[#7ee8ff]' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
             <span v-for="g in t.tags" :key="g" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[g]!.cls">{{ tagLabel(g) }}</span>
           </span>
-          <span class="w-7 shrink-0" />
+          <!-- 暗黙はティアが無いので、値を範囲の中で上下するボタン (MOD の行の ↓ の位置。2026-10-12 オーナー) -->
+          <span v-if="removable && t.ranges.length" class="flex shrink-0 items-center gap-0.5">
+            <button type="button" class="rounded px-1 text-[11px] leading-none text-white/45 hover:bg-white/10 hover:text-white/85 disabled:opacity-20 max-md:px-2 max-md:py-1" :disabled="!stepImplicit(t, -1)" :title="tr('値を 1 下げる', 'Lower by 1')" @click.stop="emit('implicit', i, stepImplicit(t, -1)!)">▼</button>
+            <button type="button" class="rounded px-1 text-[11px] leading-none text-white/45 hover:bg-white/10 hover:text-white/85 disabled:opacity-20 max-md:px-2 max-md:py-1" :disabled="!stepImplicit(t, 1)" :title="tr('値を 1 上げる', 'Raise by 1')" @click.stop="emit('implicit', i, stepImplicit(t, 1)!)">▲</button>
+          </span>
+          <span v-else class="w-7 shrink-0" />
         </p>
       </template>
       <div v-if="!isFlask(item.cls.category) && !isGem(item.cls.category)" class="st-sep" :class="[`st-sep-${item.rarity}`, compact ? 'my-0.5' : 'my-1.5']" />

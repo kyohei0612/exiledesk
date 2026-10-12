@@ -37,22 +37,45 @@ export function rollLines(item: StageItem, lines: readonly string[], salt: strin
  * 暗黙の MOD の行 (2026-10-12 オーナー「暗黙のタグは？」「カタリストで上がるよ、普通は」)。rollLines と同じ乱数で振り、
  * pct[行] (カタリストの品質 %) があれば素の値 × (1 + 品質) を切り捨て (MOD と同じ displayedValue)。values は行の中の振った値 (伸びた後)
  */
-export function rollImplicitLines(item: StageItem, lines: readonly string[], pct: readonly number[] = []): Array<{ text: string; values: number[]; boosted: boolean }> {
-  const rng = mulberry32(((item.rollSeed ?? 0) ^ hashOf(`${item.base}|implicit`)) >>> 0);
+export interface ImplicitLine {
+  text: string;
+  /** 行の中の値 (カタリストで伸びた後) */
+  values: number[];
+  /** 伸びる前の値 (上下のボタンの基準) */
+  raw: number[];
+  /** 範囲 [下, 上, 小数の桁] */
+  ranges: Array<[number, number, number]>;
+  boosted: boolean;
+}
+export function rollImplicitLines(item: StageItem, lines: readonly string[], pct: readonly number[] = []): ImplicitLine[] {
+  // 神のオーブ・祝福のお告げで振り直した回数を種に混ぜる (0 回は前と同じ値)
+  const n = item.implicitRoll ?? 0;
+  const rng = mulberry32(((item.rollSeed ?? 0) ^ hashOf(`${item.base}|implicit${n ? `#${n}` : ""}`)) >>> 0);
   return lines.map((line, li) => {
     const values: number[] = [];
+    const raw: number[] = [];
+    const ranges: Array<[number, number, number]> = [];
     let boosted = false;
+    // 手で決めた値 (暗黙の行の上下のボタン、iset の手)。乱数は同じだけ進める (ほかの行の値が変わらないように)
+    const fixed = item.implicitFixed?.[li];
     const text = line.replace(RANGE, (_all, a: string, b: string) => {
       const lo = Number(a), hi = Number(b), d = Math.max(decimals(a), decimals(b));
       const p = 10 ** d;
       const steps = Math.round(Math.abs(hi - lo) * p);
-      const v = Math.min(lo, hi) + Math.floor(rng() * (steps + 1)) / p;
+      const rolled = Math.min(lo, hi) + Math.floor(rng() * (steps + 1)) / p;
+      const k = ranges.length;
+      ranges.push([Math.min(lo, hi), Math.max(lo, hi), d]);
+      const v = fixed?.[k] != null ? Math.min(Math.max(lo, hi), Math.max(Math.min(lo, hi), fixed[k]!)) : rolled;
+      raw.push(v);
       const q = pct[li] ?? 0;
       const shown = q > 0 ? (d === 0 ? displayedValue(v, q) : Math.round(v * (1 + q / 100) * p) / p) : v;
       if (shown !== v) boosted = true;
       values.push(shown);
       return shown.toFixed(d);
     });
-    return { text, values, boosted };
+    return { text, values, raw, ranges, boosted };
   });
 }
+
+/** 暗黙の MOD に振れる幅があるか (神のオーブ・祝福のお告げで振り直せるか) */
+export const hasImplicitRange = (lines: readonly string[]): boolean => lines.some((l) => new RegExp(RANGE.source).test(l));

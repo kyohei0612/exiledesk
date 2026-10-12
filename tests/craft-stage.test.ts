@@ -170,6 +170,27 @@ describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
     expect(implicitRows({ ...ring, quality: 20, qualityTag: "resistance" }, true)[0]).toMatchObject({ boosted: true, stats: [["base_chaos_damage_resistance_%", Math.floor(v * 1.2)]] });
     expect(implicitRows({ ...ring, quality: 20, qualityTag: "life" }, true)[0]!.boosted).toBe(false);
   });
+  it("神のオーブ・祝福のお告げで暗黙の数値も振り直す (2026-10-12 オーナー「暗黙も数値の変動はある」)", async () => {
+    const { implicitRows } = await import("../src/services/craft-stage/stage-props");
+    const ring = rare("Amethyst Ring", 82);
+    const v0 = implicitRows(ring, true)[0]!.stats[0]![1];
+    const seen = new Set<number>([v0]);
+    let cur = ring;
+    for (let s = 1; s <= 12; s++) { cur = A(cur, "divine", s).item; seen.add(implicitRows(cur, true)[0]!.stats[0]![1]); }
+    expect(seen.size).toBeGreaterThan(1);
+    const b = applyCurrency(data, ring, "divine", mulberry32(1), ["OmenoftheBlessed"]);
+    expect(b.applied).toBe(true);
+    expect(b.item.prefixes).toEqual(ring.prefixes);
+    expect(b.item.implicitRoll).toBe(1);
+  });
+  it("暗黙の値を手で決められる (iset、範囲の中だけ)。神のオーブで振り直すと手の値は消える", async () => {
+    const { implicitRows } = await import("../src/services/craft-stage/stage-props");
+    const ring = freshItem(data, "Amethyst Ring", 82);
+    const set = A(ring, "iset:0:13").item;
+    expect(implicitRows(set, true)[0]!.stats[0]![1]).toBe(13);
+    expect(implicitRows(A(ring, "iset:0:99").item, true)[0]!.stats[0]![1]).toBe(13);
+    expect(A(set, "divine", 3).item.implicitFixed).toBeUndefined();
+  });
   it("発現で付いた MOD にも付いた瞬間の確率が付く (2026-10-12 オーナー「確率が出てるはずなのにアイテムには出ない」)", () => {
     const d = A(rare("Gold Ring", 82), "desecrate_ancient", 4);
     expect(d.applied).toBe(true);

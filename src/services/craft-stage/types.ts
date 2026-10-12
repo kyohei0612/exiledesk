@@ -94,6 +94,10 @@ export interface StageItem {
   uniqueScale?: number[];
   /** 固有 MOD・ユニークの効果の値を振る種 (手順の seed。roll-text.ts、要望 ㉝ の 5) */
   rollSeed?: number;
+  /** 暗黙の MOD の数値を振り直した回数 (神のオーブ・祝福のお告げ。roll-text.ts の rollImplicitLines が種に混ぜる。2026-10-12) */
+  implicitRoll?: number;
+  /** 暗黙の MOD の値を手で決めた物 (行の番号 → 範囲ごとの値、伸びる前)。暗黙の行の上下のボタン (iset の手)。振り直すと消える */
+  implicitFixed?: Record<number, number[]>;
   /** 解呪 / サルベージで無くなった (POE2Tube 要望 ⑰-5)。以後何も打てない */
   disposed?: "disenchant" | "salvage";
   /** 解呪 / サルベージで手に入った品質カレンシー (キー → 個数)。シャードは shards の方 */

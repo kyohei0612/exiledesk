@@ -33,6 +33,9 @@ const INFUSABLE = /^(Rings|Amulets|Body_Armours|Helmets|Gloves|Boots|Shields|Buc
 export function qualityFieldMax(item: StageItem): number {
   return maxQualityOf(item) + (INFUSABLE.test(item.cls.category) ? INFUSER_OVER : 0);
 }
+/** 暗黙の MOD の値を手で決める手 (`iset:0:5` = 1 行目を 5、範囲が 2 つなら `iset:0:2,4`)。暗黙の行の上下のボタン (2026-10-12 オーナー「暗黙はティアとかないから上下できるボタン」)。費用 0 */
+export const IMPLICIT_SET = "iset:";
+export const implicitSetKey = (line: number, values: readonly number[]): string => `${IMPLICIT_SET}${line}:${values.join(",")}`;
 /** 品質の上限を手で決める手 (`qcap:40`)。品質の帯のプルダウン (2026-10-10 オーナー「エッセンス打つのが面倒な人はプルダウンで上限上げてね」) */
 export const QUALITY_CAP = "qcap:";
 export const qualityCapKey = (n: number): string => `${QUALITY_CAP}${n}`;
@@ -54,6 +57,8 @@ import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyFlux, isFlux } from "./apply-flux";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
 import { applyRune, isRune, applyUnsocket, isUnsocket } from "./stage-runes";
+import { hasImplicitRange } from "./roll-text";
+import { htcBaseInfo } from "../htc/patch";
 import { tr } from "../../i18n/lang";
 
 /** 噛み切られた骨が使えるアイテムレベルの上限 (クライアントの AbyssBenchTicketTypes.MaximumItemLevel、2026-09-29) */
@@ -166,6 +171,11 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
     const cap = Math.max(0, Number(currency.slice(QUALITY_CAP.length)) || 0);
     return { applied: true, item: { ...item, qualityCap: cap, quality: Math.min(item.quality, cap) }, added: [], removed: [] };
   }
+  if (currency.startsWith(IMPLICIT_SET)) {
+    const [line, vals] = currency.slice(IMPLICIT_SET.length).split(":");
+    const values = (vals ?? "").split(",").map(Number).filter((v) => Number.isFinite(v));
+    return { applied: true, item: { ...item, implicitFixed: { ...(item.implicitFixed ?? {}), [Number(line)]: values } }, added: [], removed: [] };
+  }
   if (isQualitySet(currency)) {
     const [num, tag] = currency.slice(QUALITY_SET.length).split(":");
     const n = Math.max(0, Math.min(qualityCapOf(item), Number(num) || 0));
@@ -206,8 +216,11 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (kind === "reveal") return applyReveal(data, item, currency, rng, used);
   if (kind === "vaal") return applyVaal(data, item, rng, used);
   if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(data, item, rng);
-  // 祝福のお告げ: 暗黙 MOD だけを振り直す (クライアントの説明)。このステージは暗黙 MOD の数値を持たないので、明示 MOD はそのまま
-  if (kind === "divine" && used.includes("OmenoftheBlessed")) return { applied: true, item, added: [], removed: [], note: tr("祝福のお告げ: 暗黙 MOD だけを振り直した (明示 MOD は変わらない。このステージは暗黙の数値を持たない)", "Omen of the Blessed: rerolled implicit values only (explicit mods unchanged; implicit values aren't tracked here)") };
+  // 祝福のお告げ: 暗黙 MOD だけを振り直す (クライアントの説明)。明示 MOD はそのまま (2026-10-12 から暗黙の数値を持つ: roll-text.ts の implicitRoll)
+  if (kind === "divine" && used.includes("OmenoftheBlessed")) {
+    if (!hasImplicitRange((htcBaseInfo()[item.base]?.implicits ?? []).map((l) => l.en))) return skip(item, tr("振り直せる暗黙 MOD が無い", "No implicit mod to reroll"));
+    return { applied: true, item: { ...item, implicitRoll: (item.implicitRoll ?? 0) + 1, implicitFixed: undefined }, added: [], removed: [], note: tr("祝福のお告げ: 暗黙 MOD だけを振り直した", "Omen of the Blessed: rerolled implicit values only") };
+  }
   if (kind === "catalyst" || OTHER_KINDS.includes(kind)) return applyOther(data, item, currency, rng, !!hint.oneCatalyst);
 
   const { strength } = parseKey(currency);

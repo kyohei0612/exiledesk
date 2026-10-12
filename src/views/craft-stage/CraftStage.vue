@@ -41,7 +41,7 @@ import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
-import { isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
+import { IMPLICIT_SET, implicitSetKey, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import ShelfButton from "./ShelfButton.vue";
@@ -254,6 +254,12 @@ function setQuality(n: number, tag?: string): void {
   const last = s.log.value[s.log.value.length - 1];
   if (last && isQualitySet(last.out.currency)) s.undo();
   s.use(qualitySetKey(n, keep));
+}
+/** 暗黙の値を手で上下 (カードの ▲▼)。同じ行を続けて変えた分は 1 手にまとめる (品質と同じ) */
+function setImplicit(line: number, values: number[]): void {
+  const last = s.log.value[s.log.value.length - 1];
+  if (last && last.out.currency.startsWith(`${IMPLICIT_SET}${line}:`)) s.undo();
+  s.use(implicitSetKey(line, values));
 }
 /** 品質の上限 (プルダウン)。続けて変えた分は 1 手にまとめる */
 function setQualityCap(n: number): void {
@@ -524,6 +530,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           @jump="(id: string) => { s.modOverlay.value = true; s.modJump.value = { modId: id, n: (s.modJump.value?.n ?? 0) + 1 }; }"
           @socket="useAtSocket"
           @unsocket="(n: number) => s.use(unsocketKey(n))"
+          @implicit="setImplicit"
         />
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>

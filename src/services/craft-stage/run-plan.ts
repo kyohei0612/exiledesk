@@ -132,6 +132,7 @@ export function stepJa(currency: string, item: StageItem): string {
   if (isUnsocket(currency)) return `ルーンを外す (${currency.slice(UNSOCKET_PREFIX.length)} 番目のソケット)`;
   if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `品質を ${n}% に${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
   if (currency.startsWith("qcap:")) return `品質の上限を ${currency.slice(5)}% に`;
+  if (currency.startsWith("iset:")) return `暗黙 MOD の値を ${currency.split(":")[2]} に`;
   if (isEmotion(currency)) return jewelEmotionJa(emotionNameOf(currency)) ?? emotionNameOf(currency);
   if (isRune(currency)) {
     // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
@@ -155,6 +156,7 @@ export function stepEn(currency: string): string | null {
   if (isUnsocket(currency)) return `Remove rune (socket ${currency.slice(UNSOCKET_PREFIX.length)})`;
   if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `Set quality to ${n}%${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
   if (currency.startsWith("qcap:")) return `Set max quality to ${currency.slice(5)}%`;
+  if (currency.startsWith("iset:")) return `Set implicit value to ${currency.split(":")[2]}`;
   const rk = isRune(currency) ? parseRuneKey(currency) : null;
   if (rk) return rk.socket ? `${rk.en} (socket ${rk.socket})` : rk.en;
   return null;
