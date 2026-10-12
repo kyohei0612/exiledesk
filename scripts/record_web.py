@@ -305,6 +305,8 @@ def c_aim(w: Web) -> None:  # 次の手で狙う: 火耐性 T2 → 確率を見�
 
 def c_reveal(w: Web) -> None:  # 骨を持つ → お告げ (アビスの反響) → 発現 → 引き直し → 選ぶ
     p, h = w.page, w.hand
+    p.mouse.wheel(0, 280)  # 発現の候補がテロップに隠れないよう、ページを送っておく
+    pause(1.0)
     w.hold("desecrate")
     pause(1.5)  # 持つと下にお告げが出る
     h.click(w.rec("shelf:OmenofAbyssalEchoes"), 700, 1.5)
@@ -312,6 +314,8 @@ def c_reveal(w: Web) -> None:  # 骨を持つ → お告げ (アビスの反響)
     p.keyboard.press("Escape")
     cand = [w.rec(f"reveal:{i}") for i in (1, 2, 3)]
     offers = [c.inner_text().replace("\n", " ") for c in cand]
+    boxes = {"card": w.card.bounding_box(), "offers": [c.bounding_box() for c in cand]}
+    w.notes.append({"boxes": boxes})
     pause(2.0)
     h.click(w.rec("reveal-reroll"), 700, 1.8)
     again = [c.inner_text().replace("\n", " ") for c in cand]

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.contracts.craft_stage import CraftStageResult
@@ -60,6 +60,7 @@ def render_panel_layer(
     final_step: int | None = None,
     zoom: float = 0.0,
     crop: tuple[float, float, float, float] | None = None,
+    mark: tuple[float, float, float, float] | None = None,
 ) -> Image.Image | None:
     """シーンパネルだけの透明レイヤー (talk なら None)。スライドイン演出のため下地と分ける."""
     if line.scene.kind == "talk":
@@ -76,6 +77,8 @@ def render_panel_layer(
             else:
                 im = im.resize((w, h))
             layer.paste(im, (0, 0))
+            if mark is not None:
+                _mark(layer, mark, crop or (0, 0, 1920, 1080))
         return layer
     wide = line.scene.kind in ("stage", "footage") or line.scene.kind in VIEW_TAGS
     if wide and USE_CLIP_LAYOUT:
@@ -106,6 +109,21 @@ def render_static(
     if layer is not None:
         img.alpha_composite(layer)
     return img
+
+
+MARK_RED = (255, 64, 64)
+
+
+def _mark(img: Image.Image, rect: tuple[float, ...], box: tuple[float, ...]) -> None:
+    """録画の中の rect を赤い枠で囲む (寄らずに示す。kyohei 2026-10-12「マークで分かりやすく」)."""
+    w, h = img.size
+    sx, sy = w / (box[2] - box[0]), h / (box[3] - box[1])
+    x0, y0 = (rect[0] - box[0]) * sx - 10, (rect[1] - box[1]) * sy - 10
+    x1, y1 = (rect[2] - box[0]) * sx + 10, (rect[3] - box[1]) * sy + 10
+    glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(glow).rounded_rectangle((x0, y0, x1, y1), 18, outline=(*MARK_RED, 160), width=16)
+    img.alpha_composite(glow.filter(ImageFilter.GaussianBlur(8)))
+    ImageDraw.Draw(img).rounded_rectangle((x0, y0, x1, y1), 18, outline=(*MARK_RED, 255), width=6)
 
 
 def compose_frame(

@@ -173,7 +173,7 @@
             "kind": "footage",
             "clip": "open",
             "at": 0,
-            "hold": 1.5
+            "hold": 2.2
           }
         },
         {
@@ -183,8 +183,8 @@
           "scene": {
             "kind": "footage",
             "clip": "open",
-            "at": 1.5,
-            "hold": 2.1
+            "at": 2.2,
+            "hold": 3.6
           }
         },
         {
@@ -194,8 +194,8 @@
           "scene": {
             "kind": "footage",
             "clip": "open",
-            "at": 2.1,
-            "hold": 3.2
+            "at": 3.6,
+            "hold": 6.6
           }
         },
         {
@@ -205,8 +205,8 @@
           "scene": {
             "kind": "footage",
             "clip": "open",
-            "at": 3.2,
-            "hold": 3.2
+            "at": 6.6,
+            "hold": 7.0
           }
         },
         {
@@ -216,7 +216,8 @@
           "scene": {
             "kind": "footage",
             "clip": "open",
-            "at": 3.2
+            "at": 7.0,
+            "rate": 1.2
           }
         },
         {
@@ -489,7 +490,7 @@
             "kind": "footage",
             "clip": "undo",
             "at": 0,
-            "hold": 1.6
+            "hold": 2.1
           }
         },
         {
@@ -499,8 +500,8 @@
           "scene": {
             "kind": "footage",
             "clip": "undo",
-            "at": 1.6,
-            "hold": 3.2
+            "at": 2.1,
+            "hold": 3.7
           }
         },
         {
@@ -510,8 +511,8 @@
           "scene": {
             "kind": "footage",
             "clip": "undo",
-            "at": 3.2,
-            "hold": 3.2
+            "at": 3.7,
+            "hold": 3.7
           }
         },
         {
@@ -521,8 +522,8 @@
           "scene": {
             "kind": "footage",
             "clip": "undo",
-            "at": 3.2,
-            "hold": 3.2
+            "at": 3.7,
+            "hold": 3.7
           }
         },
         {
@@ -532,8 +533,8 @@
           "scene": {
             "kind": "footage",
             "clip": "undo",
-            "at": 3.2,
-            "hold": 5.0,
+            "at": 3.7,
+            "hold": 5.5,
             "zoom": "history"
           }
         },
@@ -544,7 +545,7 @@
           "scene": {
             "kind": "footage",
             "clip": "undo",
-            "at": 5.0,
+            "at": 5.5,
             "zoom": "history"
           }
         },
@@ -555,8 +556,8 @@
           "scene": {
             "kind": "footage",
             "clip": "undo",
-            "at": 7.4,
-            "hold": 7.4
+            "at": 8.0,
+            "hold": 8.0
           }
         },
         {
@@ -566,8 +567,8 @@
           "scene": {
             "kind": "footage",
             "clip": "undo",
-            "at": 7.4,
-            "hold": 7.4
+            "at": 8.0,
+            "hold": 8.0
           }
         }
       ]
@@ -595,8 +596,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 1.8,
-            "hold": 3.5,
-            "zoom": "modlist"
+            "hold": 3.5
           }
         },
         {
@@ -607,8 +607,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 3.5,
-            "hold": 3.5,
-            "zoom": "modlist"
+            "hold": 3.5
           }
         },
         {
@@ -619,8 +618,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 3.5,
-            "hold": 3.5,
-            "zoom": "modlist"
+            "hold": 3.5
           }
         },
         {
@@ -631,8 +629,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 3.5,
-            "hold": 4.1,
-            "zoom": "modlist"
+            "hold": 4.1
           }
         },
         {
@@ -644,7 +641,7 @@
             "clip": "modlist",
             "at": 4.1,
             "hold": 6.3,
-            "zoom": "tiers"
+            "mark": "tiers"
           }
         },
         {
@@ -656,7 +653,7 @@
             "clip": "modlist",
             "at": 6.3,
             "hold": 6.3,
-            "zoom": "tiers"
+            "mark": "tiers"
           }
         },
         {
@@ -678,8 +675,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 9.5,
-            "hold": 9.5,
-            "zoom": "modlist"
+            "hold": 9.5
           }
         },
         {
@@ -690,8 +686,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 9.5,
-            "hold": 9.5,
-            "zoom": "modlist"
+            "hold": 9.5
           }
         },
         {
@@ -702,8 +697,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 9.5,
-            "hold": 9.5,
-            "zoom": "modlist"
+            "hold": 9.5
           }
         },
         {
@@ -714,8 +708,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 9.5,
-            "hold": 9.5,
-            "zoom": "modlist"
+            "hold": 9.5
           }
         },
         {
@@ -726,8 +719,7 @@
             "kind": "footage",
             "clip": "modlist",
             "at": 9.5,
-            "hold": 9.5,
-            "zoom": "modlist"
+            "hold": 9.5
           }
         }
       ]
@@ -755,8 +747,7 @@
             "kind": "footage",
             "clip": "aim",
             "at": 1.8,
-            "hold": 4.8,
-            "zoom": "modlist"
+            "hold": 4.8
           }
         },
         {
@@ -779,7 +770,7 @@
             "clip": "aim",
             "at": 6.6,
             "hold": 9.0,
-            "zoom": "aim"
+            "mark": "aim"
           }
         },
         {
@@ -791,7 +782,7 @@
             "clip": "aim",
             "at": 9.0,
             "hold": 9.0,
-            "zoom": "aim"
+            "mark": "aim"
           }
         },
         {
@@ -803,7 +794,7 @@
             "clip": "aim",
             "at": 9.0,
             "hold": 9.0,
-            "zoom": "aim"
+            "mark": "aim"
           }
         },
         {
@@ -815,7 +806,7 @@
             "clip": "aim",
             "at": 9.0,
             "hold": 11.5,
-            "zoom": "aim"
+            "mark": "aim"
           }
         },
         {
@@ -827,7 +818,7 @@
             "clip": "aim",
             "at": 11.5,
             "hold": 13.2,
-            "zoom": "aim"
+            "mark": "aim"
           }
         },
         {
@@ -839,7 +830,7 @@
             "clip": "aim",
             "at": 13.2,
             "hold": 16.0,
-            "zoom": "aim"
+            "mark": "aim"
           }
         },
         {
@@ -851,7 +842,7 @@
             "clip": "aim",
             "at": 16.0,
             "hold": 16.0,
-            "zoom": "aim"
+            "mark": "aim"
           }
         }
       ]
@@ -868,7 +859,7 @@
             "kind": "footage",
             "clip": "reveal",
             "at": 0,
-            "hold": 1.85
+            "hold": 2.2
           }
         },
         {
@@ -878,8 +869,8 @@
           "scene": {
             "kind": "footage",
             "clip": "reveal",
-            "at": 1.85,
-            "hold": 3.4
+            "at": 2.2,
+            "hold": 3.8
           }
         },
         {
@@ -889,8 +880,8 @@
           "scene": {
             "kind": "footage",
             "clip": "reveal",
-            "at": 3.4,
-            "hold": 3.4
+            "at": 3.8,
+            "hold": 3.8
           }
         },
         {
@@ -900,8 +891,8 @@
           "scene": {
             "kind": "footage",
             "clip": "reveal",
-            "at": 3.4,
-            "hold": 3.6
+            "at": 3.8,
+            "hold": 4.0
           }
         },
         {
@@ -911,9 +902,8 @@
           "scene": {
             "kind": "footage",
             "clip": "reveal",
-            "at": 3.6,
-            "hold": 6.5,
-            "zoom": "card"
+            "at": 4.0,
+            "hold": 6.9
           }
         },
         {
@@ -923,9 +913,9 @@
           "scene": {
             "kind": "footage",
             "clip": "reveal",
-            "at": 6.5,
-            "hold": 9.9,
-            "zoom": "reveal"
+            "at": 6.9,
+            "hold": 9.8,
+            "mark": "offers"
           }
         },
         {
@@ -935,9 +925,9 @@
           "scene": {
             "kind": "footage",
             "clip": "reveal",
-            "at": 9.9,
-            "hold": 12.0,
-            "zoom": "reveal"
+            "at": 9.8,
+            "hold": 12.4,
+            "mark": "offers"
           }
         },
         {
@@ -947,9 +937,8 @@
           "scene": {
             "kind": "footage",
             "clip": "reveal",
-            "at": 12.0,
-            "hold": 12.0,
-            "zoom": "reveal"
+            "at": 12.4,
+            "hold": 12.4
           }
         },
         {
@@ -960,8 +949,7 @@
             "kind": "footage",
             "clip": "rune",
             "at": 0,
-            "hold": 1.5,
-            "zoom": "card"
+            "hold": 1.5
           }
         },
         {
@@ -984,7 +972,7 @@
             "clip": "rune",
             "at": 4.0,
             "hold": 8.5,
-            "zoom": "card"
+            "mark": "card_rune"
           }
         },
         {
@@ -996,7 +984,7 @@
             "clip": "rune",
             "at": 8.5,
             "hold": 8.5,
-            "zoom": "card"
+            "mark": "card_rune"
           }
         }
       ]
@@ -1163,7 +1151,7 @@
             "clip": "web_feedback",
             "at": 0,
             "hold": 0,
-            "zoom": "header"
+            "mark": "header"
           }
         },
         {
@@ -1175,7 +1163,7 @@
             "clip": "web_feedback",
             "at": 0,
             "hold": 0,
-            "zoom": "header"
+            "mark": "header"
           }
         },
         {

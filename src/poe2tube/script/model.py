@@ -49,7 +49,9 @@ MAIN = "main"  # compare_with でメインの実演を指す (demo の省略 = �
 Element = Literal["fire", "cold", "lightning", "chaos"]
 Highlight = Literal["added", "rarity", "name", "cost", "step"]
 # 録画の寄る所 (capture/footage.py の ZOOM_BOX、kyohei 2026-10-12「拡大させたりして親切心」)
-FootageZoom = Literal["card", "history", "modlist", "tiers", "aim", "reveal", "header"]
+FootageZoom = Literal[
+    "card", "history", "modlist", "tiers", "aim", "reveal", "header", "offers", "card_rune"
+]
 
 CHARS_PER_MINUTE = 400  # 実測 (2026-09-28): 1.2 倍速 + 話速正規化で 2,502 字 → 370 秒 ≈ 405 字/分
 
@@ -158,6 +160,9 @@ class Scene(BaseModel):
         default=None,
         description="footage: 寄る所 (card / history / modlist / tiers / aim / reveal)",
     )
+    mark: FootageZoom | None = Field(
+        default=None, description="footage: 寄らずに赤い枠で囲って示す所 (zoom と同じ名前)"
+    )
 
     def key(self) -> tuple[object, ...]:
         """見た目が同じ場面かを比べる鍵 (実演・クイズの答えと札の違いも別の画面とみなす)."""
@@ -192,6 +197,7 @@ class Scene(BaseModel):
             self.hold,
             self.rate,
             self.zoom,
+            self.mark,
         )
 
     @model_validator(mode="before")
@@ -221,8 +227,8 @@ class Scene(BaseModel):
             raise ValueError("choices / answer / badges / countdown は quiz 専用")
         if (self.kind == "footage") != (self.clip is not None and self.at is not None):
             raise ValueError("footage には clip と at が必要 (clip / at / hold は footage 専用)")
-        if self.zoom is not None and self.kind != "footage":
-            raise ValueError("zoom は footage 専用")
+        if (self.zoom is not None or self.mark is not None) and self.kind != "footage":
+            raise ValueError("zoom / mark は footage 専用")
         if self.hold is not None and (self.at is None or self.hold < self.at):
             raise ValueError("footage の hold は at より後")
         if (self.kind == "tiers") != (self.mod is not None):

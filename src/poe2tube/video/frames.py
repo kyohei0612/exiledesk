@@ -16,7 +16,7 @@ import structlog
 from PIL import Image
 
 from poe2tube.capture.anim import anim_frames, anim_query, holds_first
-from poe2tube.capture.footage import FULL, ZOOM_BOX, footage_frames, shot_at, zoom_box
+from poe2tube.capture.footage import CONTENT, FULL, ZOOM_BOX, footage_frames, shot_at, zoom_box
 from poe2tube.capture.views import shot_for
 from poe2tube.config.settings import get_settings
 from poe2tube.contracts.craft_stage import CraftStageResult
@@ -182,7 +182,10 @@ def cue_frames(
         elif foot:  # 録画: at 秒目から流し、hold 秒目で止める (説明している間は出したまま)
             shot = shot_at(foot, fps, sc.at or 0.0, sc.hold, tl, sc.rate)
             box = zoom_box(box_from, box_to, tl)
-            layer = render_panel_layer(c.line, res, stage_shot=shot, final_step=fin, crop=box)
+            mk = CONTENT.get(sc.mark) if sc.mark else None
+            layer = render_panel_layer(
+                c.line, res, stage_shot=shot, final_step=fin, crop=box, mark=mk
+            )
             frame_static = with_panel(base, layer, 0, 1.0)
             if fade_from is not None and tl < FOOTAGE_FADE:
                 old_layer = render_panel_layer(

@@ -23,7 +23,7 @@ def test_shot_at_plays_from_at_and_holds() -> None:
 
 def test_scene_footage_needs_clip_and_at() -> None:
     scene = Scene(kind="footage", clip="orbs", at=1.5, hold=3.0)
-    assert scene.key()[-5:] == ("orbs", 1.5, 3.0, 1.0, None)
+    assert scene.key()[-6:] == ("orbs", 1.5, 3.0, 1.0, None, None)
     with pytest.raises(ValidationError):
         Scene(kind="footage", clip="orbs")
     with pytest.raises(ValidationError):
