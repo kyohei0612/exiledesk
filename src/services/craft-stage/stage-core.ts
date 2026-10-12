@@ -232,8 +232,9 @@ export function boostedMod(item: StageItem, m: StageMod, data?: PatchData): { va
 /** カタリストの品質で伸びる % (指輪・アミュレットで、品質の種類のタグを MOD 自身が持つ時だけ) */
 function qualityPctOf(item: StageItem, m: StageMod, data?: PatchData): number {
   const tag = item.qualityTag;
-  if (!tag || !(item.quality > 0) || !/^(Rings|Amulets)\//.test(m.modId)) return 0;
-  const tags = m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
+  if (!tag || !(item.quality > 0) || !/^(Rings|Amulets|Jewels)/.test(m.modId)) return 0;
+  // ジュエルの MOD の tags は出る場所の札 (strjewel など) なので、中身のタグ (displayTags = implicit_tags と poe2db の Crafting Tag) で見る (2026-10-12)
+  const tags = /^Jewels/.test(m.modId) ? data?.mods.get(m.modId)?.displayTags ?? [] : m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
   return tags.includes(tag) ? item.quality : 0;
 }
 /**

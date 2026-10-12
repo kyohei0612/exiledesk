@@ -36,7 +36,7 @@
  */
 import { buildSpecQuery } from "../trade2/query";
 import { currencyJa, displayCurrency } from "../../state/display-currency";
-import { htcFamilyStats } from "./patch";
+import { filledStatsOf, htcFamilyStats } from "./patch";
 import { tierDisplayRanges } from "../mods/stat-scale";
 import statMapping from "../../i18n/trade2-stat-mapping.json";
 import statText from "../../i18n/trade2-stat-text.json";
@@ -44,13 +44,25 @@ import statText from "../../i18n/trade2-stat-text.json";
  * MOD の英語の文から取引所の stat を引く (行ごと)。全部の行が引けなければ null。
  * negative: 「reduced / less」を「increased / more」で引いた (取引所の値はマイナス)
  */
+/**
+ * 取引所の表の形の 1 行 (小文字、数は #、「+#」の + は外す)。クライアントから足した MOD (ジュエル・冒涜など) の文は
+ * 「(40-60)% increased [Effect] of Suffixes」の形なので、印と幅を先に外す (2026-10-12 要望: 獰猛の「サフィックスの効果」が
+ * 引けずに同じ系統の「プレフィックスの効果」の stat を借りて検索していた)
+ */
+export function normStatLine(line: string): string {
+  return line
+    .replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1")
+    .replace(/\(-?\d+(?:\.\d+)?\s*[-—–]\s*-?\d+(?:\.\d+)?\)/g, "#")
+    .toLowerCase().replace(/[+-]?\d+(?:\.\d+)?/g, "#").replace(/\+#/g, "#").replace(/\s+/g, " ").trim();
+}
 function statsByText(text: string, modId = ""): Array<{ id: string; line: string; negative: boolean }> | null {
   const out: Array<{ id: string; line: string; negative: boolean }> = [];
   for (const line of text.split(/\n/).map((x) => x.trim()).filter(Boolean)) {
-    let key = line.toLowerCase().replace(/[+-]?\d+(?:\.\d+)?/g, "#").replace(/\+#/g, "#").replace(/\s+/g, " ").trim();
+    let key = normStatLine(line);
     // 「筋力・器用さ・知性のどれか」は付く物が MOD で決まる (Essence_Dexterity なら器用さ)。取引所は単独の stat
     const attr = /strength, dexterity or intelligence/.test(key) ? /Strength|Dexterity|Intelligence/.exec(modId)?.[0] : undefined;
     if (attr) key = key.replace("strength, dexterity or intelligence", attr.toLowerCase());
+    key = STAT_ALIAS[key] ?? key;
     const pick = (k: string): string | undefined => STAT_TEXT[k]?.find((x) => x.startsWith("explicit."));
     const flip = key.replace(/\breduced\b/g, "increased").replace(/\bless\b/g, "more");
     const id = pick(key);
@@ -63,6 +75,50 @@ function statsByText(text: string, modId = ""): Array<{ id: string; line: string
 }
 /** 取引所の stat の英語の文 (小文字、数は #) → id */
 const STAT_TEXT = statText as unknown as Record<string, string[]>;
+/** id → 文 (借りた stat が MOD の文と合うかを見る) */
+let TEXT_OF: Map<string, string[]> | null = null;
+function borrowedMatchesText(statIds: readonly string[], text: string): boolean {
+  if (!TEXT_OF) {
+    TEXT_OF = new Map();
+    for (const [k, ids] of Object.entries(STAT_TEXT)) for (const id of ids) (TEXT_OF.get(id) ?? TEXT_OF.set(id, []).get(id)!).push(k.replace(/ \(local\)$/, ""));
+  }
+  const lines = text.split(/\n/).map(normStatLine).map((l) => STAT_ALIAS[l] ?? l);
+  const flip = (k: string) => k.replace(/\breduced\b/g, "increased").replace(/\bless\b/g, "more");
+  return statIds.every((sid) => {
+    const id = STAT_MAP[sid];
+    if (!id) return true;
+    const texts = TEXT_OF!.get(id) ?? [];
+    return texts.some((t) => lines.some((l) => l === t || flip(l) === t));
+  });
+}
+/**
+ * 取引所はジュエルだけ別の stat を持つ物がある (「Recover #% of maximum Mana on Kill (Jewel)」。2026-10-12 オーナー「一般 MOD とジュエルだと
+ * 検索の仕方が違う」)。表の「… (jewel)」の行から、普通の id ⇔ ジュエルの id の対を作る (種類の頭 explicit. / desecrated. … は揃える)
+ */
+let JEWEL_PAIRS: { toJewel: Map<string, string>; toNormal: Map<string, string> } | null = null;
+function jewelPairs(): { toJewel: Map<string, string>; toNormal: Map<string, string> } {
+  if (JEWEL_PAIRS) return JEWEL_PAIRS;
+  const toJewel = new Map<string, string>(), toNormal = new Map<string, string>();
+  for (const [k, ids] of Object.entries(STAT_TEXT)) {
+    if (!k.endsWith(" (jewel)")) continue;
+    const base = STAT_TEXT[k.slice(0, -" (jewel)".length)] ?? [];
+    for (const j of ids) {
+      const kind = j.split(".")[0];
+      const n = base.find((x) => x.split(".")[0] === kind);
+      if (n) { toJewel.set(n, j); toNormal.set(j, n); }
+    }
+  }
+  return (JEWEL_PAIRS = { toJewel, toNormal });
+}
+/** ジュエルの MOD ならジュエルの stat、それ以外は普通の stat に */
+export function jewelAwareStat(id: string, modId: string): string {
+  const p = jewelPairs();
+  return /^Jewels/.test(modId) ? p.toJewel.get(id) ?? id : p.toNormal.get(id) ?? id;
+}
+/** 取引所の文の言い方が違う物 (MOD の文 → 取引所の文。2026-10-12 フルチェック) */
+const STAT_ALIAS: Record<string, string> = {
+  "#% chance for attack hits to apply incision": "attack hits apply incision",
+};
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 
@@ -238,7 +294,8 @@ export function tradeFiltersFor(
     // 文で引く: 数値は #、「+#」の + は外す (取引所の表は「# to strength」)、2 行の文は行ごと、「reduced / less」は取引所が
     // 「increased / more」のマイナスで持つので引き直す (その時は下限を付けない)。全部の行が引けた時だけ使う
     // (2026-10-07 オーナー「エッセンス系、トレードと相違あったら面倒だからフルチェック」: 引けずに family の別の MOD から借りて違う MOD で探していた)
-    const byText = !ownStats.length && mod.text ? statsByText(mod.text, mod.id) : null;
+    // 段の stat が取引所の表に無い時 (ジュエルの「切開」など) も文で引く
+    const byText = (!ownStats.length || ownStats.some((x) => !STAT_MAP[x])) && mod.text ? statsByText(mod.text, mod.id) : null;
     if (byText) {
       const shown0 = tierDisplayRanges(tier);
       byText.forEach((x, i) => {
@@ -247,7 +304,14 @@ export function tradeFiltersFor(
       });
       continue;
     }
-    const statIds = statsOf(mod, tier);
+    // stat の id: 段の物 → クライアントの表から引いた物 (エッセンス・冒涜、mod-stats.json) → 同じ系統の普通の MOD から借りる。
+    // 借りた物は文が合う時だけ使う (合わない物で探すより、探さない方がいい。2026-10-12 フルチェック: ジュエルのミニオンの MOD が「深淵の消耗」で探されていた)
+    const filled = ownStats.length ? null : filledStatsOf(mod.id, mod.tiers.indexOf(tier));
+    const statIds = filled && filled.stats.length === tier.ranges.length ? [...filled.stats] : statsOf(mod, tier);
+    if (statIds.length && !ownStats.length && !filled && mod.text && !borrowedMatchesText(statIds, mod.text)) {
+      unmatched.push(`${t.modId} (同じ系統から借りた stat が文と合わない)`);
+      continue;
+    }
     if (statIds.length === 0) {
       unmatched.push(`${t.modId} (取引所の条件にできる stat が見つからない)`);
       continue;
@@ -268,7 +332,7 @@ export function tradeFiltersFor(
     // 同じ取引所 stat に落ちた物はここで 1 本にする
     for (const f of collapseDuplicates(entries, t.modId)) filters.push(f);
   }
-  return { filters, unmatched };
+  return { filters: filters.map((f) => ({ ...f, id: jewelAwareStat(f.id, f.modId) })), unmatched };
 }
 
 /** 完成品を引く検索。カテゴリが未確認のクラスは null */

@@ -67,6 +67,12 @@ const misses = [];
 const clean = (t) => String(t ?? "").split("\n").filter((l) => !/^local .*\[/.test(l)).join("\n");
 /** 文面の (a-b) を順に数値の幅に */
 const rangesOf = (t) => [...String(t).matchAll(/\((-?[\d.]+)-(-?[\d.]+)\)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+/**
+ * poe2db の文で、行が stat の id のまま出ている物 (「minion area of effect +% [3,6]」)。取引所の検索がこの行を引けず、同じ系統の別の
+ * stat (深淵の消耗) を借りていた (2026-10-12 フルチェック)。英語と日本語はクライアントの文 (mod-text-ja の「Minions have #% increased Area of Effect」)
+ */
+const RAW_LINES = { "minion area of effect +% [3,6]": ["Minions have (3-6)% increased Area of Effect", "ミニオンの効果範囲が(3-6)%増加する"] };
+const fixText = (t, ja = false) => t.split("\n").map((l) => RAW_LINES[l]?.[ja ? 1 : 0] ?? l).join("\n");
 for (const [page, cls] of Object.entries(CLASSES)) {
   const b = P2[page];
   if (!b) { misses.push(`${page}: poe2db の行が無い`); continue; }
@@ -76,7 +82,7 @@ for (const [page, cls] of Object.entries(CLASSES)) {
       if (e.gen !== "prefix" && e.gen !== "suffix") continue;
       // 文面・数値の幅は poe2db。クライアントは stat の id を借りるだけ (時を失ったジュエルの「範囲内の…」はクライアントの文が違うので、合わなければ id 無し)
       const c = matchClient(e, pool);
-      const text = clean(e.text);
+      const text = fixText(clean(e.text));
       const ranges = rangesOf(text);
       const stats = c && (c.stats ?? []).length === ranges.length ? c.stats.map((x) => x.id) : [];
       const key = c?.id ?? `${(e.families ?? [])[0] ?? "Mod"}_${hashOf(e.text)}`;
@@ -88,7 +94,7 @@ for (const [page, cls] of Object.entries(CLASSES)) {
         id, source: pool, type: e.gen, family: families[0], ...(families.length > 1 ? { families } : {}),
         tags: (e.spawn_tags ?? []).filter((t) => t !== "default"),
         displayTags: cleanDisplayTags([...(c?.implicit_tags ?? []), ...(e.mod_tags ?? [])]),
-        text, textJa: clean(JA_TEXT[e.text] ?? ""),
+        text, textJa: fixText(clean(JA_TEXT[e.text] ?? ""), true),
         tiers: [{ name: e.name || c?.name || "", ilvl: e.level || 1, weight: WEIGHT[pool], ranges, stats }],
         weightSource: "poe2db-equal",
       });

@@ -21,7 +21,8 @@ import { hasImplicitRange } from "./roll-text";
 
 export const OTHER_KINDS: readonly string[] = ["divine", "fracture", "artificer"];
 const FRACTURE_NEEDS = 4;
-const CATALYST_CLASSES = ["Rings", "Amulets"];
+// ジュエルもカタリストで上がる (2026-10-12 オーナー「ジュエルにもカタリストであがるからね、タグも存在する」。poe2db のジュエルの MOD に Crafting Tag)
+const CATALYST_CLASSES = ["Rings", "Amulets", "Jewels"];
 
 /**
  * oneCatalyst = 手順 (craft-stage-plan) の再生: カタリストは 1 手 = 1 個 (品質 +QUALITY_PER_CATALYST)。上限まで打つ時は手順の times で
@@ -29,7 +30,7 @@ const CATALYST_CLASSES = ["Rings", "Amulets"];
  */
 export function applyOther(data: PatchData, item: StageItem, currency: string, rng: () => number, oneCatalyst = false): StageApply {
   if (currency.startsWith("catalyst_")) {
-    if (!CATALYST_CLASSES.includes(item.cls.category)) return skip(item, tr("カタリストは指輪・アミュレットだけ", "Catalysts: Rings and Amulets only"));
+    if (!CATALYST_CLASSES.includes(item.cls.category)) return skip(item, tr("カタリストは指輪・アミュレット・ジュエルだけ", "Catalysts: Rings, Amulets and Jewels only"));
     const tag = currency.slice("catalyst_".length);
     // ブリーチのエッセンスの「品質の最大値 +20%」も足す (要望 ㉔-3)
     const max = maxQualityOf(item);

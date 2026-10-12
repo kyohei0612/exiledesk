@@ -191,6 +191,16 @@ describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
     expect(implicitRows(A(ring, "iset:0:99").item, true)[0]!.stats[0]![1]).toBe(13);
     expect(A(set, "divine", 3).item.implicitFixed).toBeUndefined();
   });
+  it("ジュエルもカタリストで伸びる (中身のタグ = displayTags。2026-10-12 オーナー「ジュエルにもカタリストであがる」)", async () => {
+    const { makeStageMod, boostedMod } = await import("../src/services/craft-stage/stage-core");
+    const mod = data.mods.get("Jewels_dex/JewelAttackCriticalChance")!;
+    const m = makeStageMod(mod, mod.type === "suffix" ? "suffix" : "prefix", 0, mulberry32(1));
+    const jewel = { ...freshItem(data, "Emerald", 82), rarity: "rare" as const, quality: 20, prefixes: m.side === "prefix" ? [m] : [], suffixes: m.side === "suffix" ? [m] : [] };
+    expect(boostedMod({ ...jewel, qualityTag: "attack" }, m, data)?.values[0]).toBe(Math.floor(m.values[0]! * 1.2));
+    expect(boostedMod({ ...jewel, qualityTag: "life" }, m, data)).toBeNull();
+    // カタリストもジュエルに打てる
+    expect(A(freshItem(data, "Emerald", 82), "catalyst_attack").applied).toBe(true);
+  });
   it("発現で付いた MOD にも付いた瞬間の確率が付く (2026-10-12 オーナー「確率が出てるはずなのにアイテムには出ない」)", () => {
     const d = A(rare("Gold Ring", 82), "desecrate_ancient", 4);
     expect(d.applied).toBe(true);

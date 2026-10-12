@@ -29,7 +29,7 @@ export function implicitRows(item: StageItem, ja = false): ImplicitRow[] {
   const lines = htcBaseInfo()[item.base]?.implicits ?? [];
   if (!lines.length) return [];
   const info = implicitStatsOf(item.base);
-  const jewel = item.cls.category === "Rings" || item.cls.category === "Amulets";
+  const jewel = ["Rings", "Amulets", "Jewels"].includes(item.cls.category);
   const pct = lines.map((_, i) => (jewel && item.qualityTag && item.quality > 0 && info[i]?.tags.includes(item.qualityTag) ? item.quality : 0));
   const rolled = rollImplicitLines(item, lines.map((l) => (ja ? l.ja : nameOf(l))), pct);
   return rolled.map((r, i) => {

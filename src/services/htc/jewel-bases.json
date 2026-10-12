@@ -3341,8 +3341,8 @@
     "life",
     "minion"
    ],
-   "text": "Minions have (4-8)% increased maximum Life\nminion area of effect +% [3,6]",
-   "textJa": "ミニオンの最大ライフが(4-8)%増加する\nminion area of effect +% [3,6]",
+   "text": "Minions have (4-8)% increased maximum Life\nMinions have (3-6)% increased Area of Effect",
+   "textJa": "ミニオンの最大ライフが(4-8)%増加する\nミニオンの効果範囲が(3-6)%増加する",
    "tiers": [
     {
      "name": "Lightless",
@@ -3352,6 +3352,10 @@
       [
        4,
        8
+      ],
+      [
+       3,
+       6
       ]
      ],
      "stats": []
@@ -7310,8 +7314,8 @@
     "life",
     "minion"
    ],
-   "text": "Minions have (4-8)% increased maximum Life\nminion area of effect +% [3,6]",
-   "textJa": "ミニオンの最大ライフが(4-8)%増加する\nminion area of effect +% [3,6]",
+   "text": "Minions have (4-8)% increased maximum Life\nMinions have (3-6)% increased Area of Effect",
+   "textJa": "ミニオンの最大ライフが(4-8)%増加する\nミニオンの効果範囲が(3-6)%増加する",
    "tiers": [
     {
      "name": "Lightless",
@@ -7321,6 +7325,10 @@
       [
        4,
        8
+      ],
+      [
+       3,
+       6
       ]
      ],
      "stats": []
@@ -10850,8 +10858,8 @@
     "life",
     "minion"
    ],
-   "text": "Minions have (4-8)% increased maximum Life\nminion area of effect +% [3,6]",
-   "textJa": "ミニオンの最大ライフが(4-8)%増加する\nminion area of effect +% [3,6]",
+   "text": "Minions have (4-8)% increased maximum Life\nMinions have (3-6)% increased Area of Effect",
+   "textJa": "ミニオンの最大ライフが(4-8)%増加する\nミニオンの効果範囲が(3-6)%増加する",
    "tiers": [
     {
      "name": "Lightless",
@@ -10861,6 +10869,10 @@
       [
        4,
        8
+      ],
+      [
+       3,
+       6
       ]
      ],
      "stats": []
@@ -17568,8 +17580,8 @@
     "life",
     "minion"
    ],
-   "text": "Minions have (4-8)% increased maximum Life\nminion area of effect +% [3,6]",
-   "textJa": "ミニオンの最大ライフが(4-8)%増加する\nminion area of effect +% [3,6]",
+   "text": "Minions have (4-8)% increased maximum Life\nMinions have (3-6)% increased Area of Effect",
+   "textJa": "ミニオンの最大ライフが(4-8)%増加する\nミニオンの効果範囲が(3-6)%増加する",
    "tiers": [
     {
      "name": "Lightless",
@@ -17579,6 +17591,10 @@
       [
        4,
        8
+      ],
+      [
+       3,
+       6
       ]
      ],
      "stats": []
