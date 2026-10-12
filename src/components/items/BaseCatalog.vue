@@ -109,13 +109,14 @@ const FAM_ART: Record<string, string> = {
   盾: "Noble Tower Shield", スタッフ: "Chiming Staff", タリスマン: "Thunder Talisman", セプター: "Rattling Sceptre", 片手メイス: "Flanged Mace",
 };
 /**
- * 武器・オフハンドの部位のタイルはユニークの絵 (かっこよさで。2026-10-12 オーナーが選んだ。部位を選ぶボタンなのでベースと紛れない)。
+ * 武器・オフハンド・防具の部位のタイルはユニークの絵 (かっこよさで。2026-10-12 オーナーが選んだ。部位を選ぶボタンなのでベースと紛れない)。
  * バックラーはユニークの絵がデータに無いのでベースの絵のまま
  */
 const FAM_UNIQUE: Record<string, string> = {
-  片手メイス: "Mjölner", スピア: "Atziri's Contempt", セプター: "Sacred Flame", ワンド: "Adonia's Ego", 弓: "Splinterheart", クロスボウ: "Redemption",
+  片手メイス: "Mjölner", スピア: "The Ordained", セプター: "Sacred Flame", ワンド: "Adonia's Ego", 弓: "Splinterheart", クロスボウ: "Redemption",
   スタッフ: "The Whispering Ice", 両手メイス: "Chober Chaber", クォータースタッフ: "Pillar of the Caged God", タリスマン: "Amor Mandragora",
   盾: "Svalinn", フォーカス: "Rathpith Globe", 矢筒: "Cadiro's Gambit",
+  兜: "Corona of the Red Sun", 鎧: "Kaom's Heart", 手袋: "Aerisvane's Wings", 靴: "The Infinite Pursuit",
 };
 function famArt(f: Family): string | null {
   const u = FAM_UNIQUE[f.name] && uniqueArt(FAM_UNIQUE[f.name]!);
