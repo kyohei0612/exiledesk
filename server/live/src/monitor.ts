@@ -256,8 +256,11 @@ export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Da
   const base = reportText(label + cut, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts, lc?.records ?? null);
   const text = base;
   // 日報は専用のチャンネル (REPORT_WEBHOOK) があればそこへ。要望・異常の通知は今まで通り DISCORD_WEBHOOK
-  const hook = env.REPORT_WEBHOOK || env.DISCORD_WEBHOOK;
-  const posted = await postDiscord(hook, text, fetchFn);
+  // 専用の送り先が URL の形でない (登録で貼り損ねた等) か、送れなかった時は今までの送り先へ (2026-10-12: 1 文字だけ登録されて送れなかった)
+  const report = (env.REPORT_WEBHOOK ?? "").trim();
+  const hook = /^https:\/\//.test(report) ? report : env.DISCORD_WEBHOOK;
+  let posted = await postDiscord(hook, text, fetchFn);
+  if (!posted && hook !== env.DISCORD_WEBHOOK) posted = await postDiscord(env.DISCORD_WEBHOOK, text, fetchFn);
   if (!posted) console.warn("dailyReport: Discord に送れなかった", hook ? "(送り先あり)" : "(送り先なし)");
   lastPosted = posted;
   return text;
