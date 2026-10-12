@@ -156,6 +156,16 @@ export function stateLine(context: unknown): string {
  * 本文の下に「状態」と「流れ」を 1 行ずつ、全部の添付 (手順の plan・レシピ・エラー) は JSON ファイルで付ける
  * (本人は「バグっぽい」としか書かないので、受けた側がそのまま解析・再現できる分を自動で付ける。2026-10-07 オーナー)
  */
+/**
+ * 送った人の短い印 (2026-10-12 オーナー「ID が違うのに同じ人？ 同じ人だと分かるように」)。要望の id は 1 件ごとなので、人ごとの印を別に出す。
+ * 新しい版は端末の乱数の番号 (context.uid) の頭 6 文字、無い前の版は IP とブラウザの種類から作った短い印 (元には戻せない)。KV は使わない
+ */
+export async function senderTag(fb: Pick<Feedback, "context" | "ip" | "ua">): Promise<string> {
+  const uid = (fb.context as { uid?: unknown } | null)?.uid;
+  if (typeof uid === "string" && /^[a-z0-9]{6,40}$/i.test(uid)) return uid.slice(0, 6);
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${fb.ip}|${fb.ua}`));
+  return "~" + [...new Uint8Array(d).slice(0, 3)].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
 export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetch): Promise<boolean> {
   // 画面では要望とバグを分けない (2026-10-10)。前の版から来た「バグ」だけ印を残す
   const head = fb.kind === "bug" ? "🐛 要望・バグ" : "💬 要望・バグ";
@@ -167,7 +177,7 @@ export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetc
   const summary = (fb.context as { summaryJa?: unknown } | null)?.summaryJa;
   const sumLines = Array.isArray(summary) ? summary.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 600)) : [];
   const content = [
-    `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST · id ${fb.id}`,
+    `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST · 送った人 ${await senderTag(fb)} · id ${fb.id}`,
     fb.text.slice(0, 1200),
     "",
     // 短く (2026-10-12 オーナー「長くなるから打った手・最後の手・状態・流れはいらない、JSON だけでいい」): 作っている物と今の MOD・PC かスマホか・エラーだけ。手順と流れは添付の JSON に

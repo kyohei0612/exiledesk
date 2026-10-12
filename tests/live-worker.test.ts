@@ -341,3 +341,15 @@ describe("問い合わせを減らす (2026-10-10)", () => {
     } finally { globalThis.fetch = orig; }
   });
 });
+
+describe("要望の送った人の印 (senderTag)", () => {
+  it("端末の番号があれば頭 6 文字、無ければ IP とブラウザから同じ印", async () => {
+    const { senderTag } = await import("../server/live/src/feedback");
+    expect(await senderTag({ context: { uid: "up79kylxtbr5" }, ip: "1.2.3.4", ua: "x" })).toBe("up79ky");
+    const a = await senderTag({ context: null, ip: "1.2.3.4", ua: "x" });
+    expect(await senderTag({ context: {}, ip: "1.2.3.4", ua: "x" })).toBe(a);
+    expect(await senderTag({ context: null, ip: "5.6.7.8", ua: "x" })).not.toBe(a);
+    expect(a).toMatch(/^~[0-9a-f]{6}$/);
+  });
+});
+

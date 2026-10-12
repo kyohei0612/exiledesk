@@ -42,6 +42,8 @@ function contextNow(): unknown {
   return {
     version: pkg.version,
     url: location.href,
+    // 端末の乱数の番号 (使い方の記録と同じ。名前とは結び付かない)。同じ人の要望だと知らせで分かるように (2026-10-12 オーナー)
+    uid: (() => { try { return localStorage.getItem("exiledesk.web.uid") ?? null; } catch { return null; } })(),
     // 受けた側が読む日本語のまとめ (何を作っていて、どこまで打ったか。Discord の本文に出る)
     summaryJa: (() => { try { return feedbackSummaryJa(); } catch { return []; } })(),
     mode: s.mode.value,
