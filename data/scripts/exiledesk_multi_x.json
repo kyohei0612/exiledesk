@@ -1,0 +1,95 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "ExileDesk 新機能: どれかが付く確率",
+  "target_seconds": 30,
+  "result_file": "data/results/exiledesk_promo.json",
+  "layout": "wide",
+  "demos": {},
+  "sections": [
+    {
+      "name": "どれかが付く確率",
+      "target_seconds": 30,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "耐性のどれかでいい時、付く確率って分かるのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 0,
+            "hold": 1.8
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ExileDeskの新しい機能よ。高貴なオーブを持って、MOD一覧を開くの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 1.8,
+            "hold": 5.0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "火耐性にチェックで5.7%。冷気耐性も足すと11%。",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 5.0,
+            "hold": 7.6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "雷耐性で17%、全ての元素耐性まで入れると20%よ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 7.6,
+            "hold": 12.4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "選んだどれかが付く確率が、まとめて出るのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 12.4,
+            "hold": 12.4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "実際に打ってみると、冷気耐性+36%、T2が付いたわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 12.4,
+            "hold": 15.5,
+            "zoom": "card"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "サイトはexiledesk.comで、無料なのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "multi",
+            "at": 15.5,
+            "hold": 15.5,
+            "zoom": "card"
+          }
+        }
+      ]
+    }
+  ]
+}
