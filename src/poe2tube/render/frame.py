@@ -37,10 +37,11 @@ CHAR_H_TALK = 760
 CHAR_H_PANEL = 520
 # footage (アプリを操作した録画) は画面いっぱい。2 人は右下に肩から上、テロップは低く小さく
 # (kyohei 2026-10-12「B で右下に 2 人」「テロップの枠ももう少し縦幅とフォント狭く、小さく」)
-FOOT_TELOP_H = 112
-FOOT_FONT = 46
-BUST_H = 270
-BUST_CROP = 0.42  # 立ち絵の上から何割を肩から上として切るか
+# kyohei 2026-10-12「もはや邪魔、テロップに付け足して顔で」→ 話す人の顔をテロップの左端に重ねる
+FOOT_TELOP_H = 132
+FOOT_FONT = 52
+BUST_H = 230
+BUST_CROP = 0.40  # 立ち絵の上から何割を顔 (肩から上) として切るか
 Box = tuple[int, int, int, int]
 
 
@@ -114,9 +115,9 @@ def compose_frame(
     """
     img = static.copy()
     if line.scene.kind == "footage":
-        _busts(img, line, mouth)
         if telop:
             _telop(img, line, compact=True)
+            _busts(img, line, mouth)
         return img
     panel_mode = line.scene.kind != "talk"
     _characters(img, line, panel_mode, mouth)
@@ -127,19 +128,13 @@ def compose_frame(
 
 
 def _busts(img: Image.Image, line: Line, mouth: int) -> None:
-    """footage: 2 人を右下に肩から上で並べる (右端がずんだもん、その左にめたん)."""
-    w, h = img.size
-    x = w - 10
-    for speaker in ("zundamon", "metan"):
-        speaking = speaker == line.speaker
-        emotion: Emotion = line.emotion if speaking else "normal"
-        full = render_tachie(speaker, emotion, mouth if speaking else 0, int(BUST_H / BUST_CROP))
-        bust = full.crop((0, 0, full.width, BUST_H))
-        if not speaking:
-            bust.putalpha(bust.getchannel("A").point(lambda a: int(a * 0.85)))
-        x -= bust.width
-        img.alpha_composite(bust, (x, h - FOOT_TELOP_H - BUST_H + 20))
-        x += 40
+    """footage: 話す人の顔 (肩から上) をテロップの左端に重ねる。録画の上には人を出さない."""
+    _, h = img.size
+    full = render_tachie(line.speaker, line.emotion, mouth, int(BUST_H / BUST_CROP))
+    face = full.crop((0, 0, full.width, BUST_H))
+    if line.speaker == "zundamon":  # ずんだもんは左を向く絵なので反す (帯の内側を向く)
+        face = face.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    img.alpha_composite(face, (40, h - BUST_H - 8))
 
 
 def render_frame(
@@ -225,7 +220,9 @@ def _telop(img: Image.Image, line: Line, compact: bool = False) -> None:
     color = (46, 160, 67) if line.speaker == "zundamon" else (214, 90, 160)
     d.rounded_rectangle((60, y0, w - 60, h - bottom), 24, fill=WHITE, outline=color, width=5)
     name = "ずんだもん" if line.speaker == "zundamon" else "四国めたん"
-    pill(img, (90, y0 - 24), name, color, size=24 if compact else 26)
+    left = 360 if compact else 90  # compact: 左端に顔を重ねるので名前と文は右へ
+    pill(img, (left, y0 - 24), name, color, size=24 if compact else 26)
     # 数字・ティア・個数だけ GiftCut スタイルで強調 (overlay_fx)
-    center = (w // 2, y0 + (h - bottom - y0) // 2 - 2)
-    draw_emphasis_text(img, tight_spaces(line.text), center, w - 240, size)
+    cx = (left + 40 + w - 60) // 2 if compact else w // 2
+    center = (cx, y0 + (h - bottom - y0) // 2 - 2)
+    draw_emphasis_text(img, tight_spaces(line.text), center, w - 240 - (left - 90), size)
