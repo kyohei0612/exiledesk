@@ -7,7 +7,7 @@
  * 決まり (オーナーと決めた / 確かめていない所):
  *   - 消える候補は固定 (フラクチャー) 以外の全部。前の感情で付けた作った MOD も入る (2026-10-11 オーナー「おけ」)
  *   - MOD が 4 つ揃っていないレアにも使える。1 つ消してから付ける (2026-10-11 オーナー「つける」)
- *   - 作った MOD は 1 つまで: 消えずに残った作った MOD があれば、新しい物と入れ替える (確かめていない)
+ *   - 前の作った MOD は確定では消さない (ランダムに当たった時だけ消える)。作った MOD の数の上限は決めない (2026-10-12 オーナー)
  *   - 消すのは固定以外から等しく。獰猛・侮蔑 (プレの版とサフィの版がある物) は、消えた MOD の側の版が付く
  *     (2026-10-11 オーナーの参考動画 2 本: 侮蔑は 2/2 で 50/50、サフィが上限を超えている時はプレしか当たらない)
  *   - 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) が当たると弾かれる。片方の版しか無い物で、付ける側に空きが無い所が消えた時も弾かれる
@@ -51,10 +51,10 @@ export function applyEmotion(data: PatchData, item: StageItem, key: string, rng:
   const mod = data.mods.get(e.modId);
   if (!mod) return skip(item, tr("感情の MOD のデータが無い", "No data for this emotion's mod"));
   const side = e.side as StageSide;
-  let it = without(item, gone);
+  const it = without(item, gone);
   const removed: StageMod[] = [gone];
-  // 作った MOD は 1 つまで: 残っている作った MOD は入れ替える
-  for (const c of allMods(it).filter((m) => m.crafted && !m.fractured)) { it = without(it, c); removed.push(c); }
+  // 前の作った MOD は確定では消さない (消えるのはランダムに選ばれた 1 つだけ。2026-10-12 オーナー「確定で消える MOD なんて削減以外で選ぶシステムはない」)。
+  // 作った MOD の数の上限はゲームの文に無いので決めない ([[feedback-game-rules-as-written]])
   if (listOf(it, side).length >= limitOf(it, side)) return skipRandom(item, tr("付ける側に空きが無い所が消えたので追加できない (もう一度)", "The removed mod was on the other side and this side is full, so nothing can be added (try again)"));
   const added: StageMod = { ...makeStageMod(mod, side, 0, rng), crafted: true };
   return { applied: true, item: withMod(it, added), added: [added], removed };
