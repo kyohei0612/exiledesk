@@ -44,7 +44,7 @@ const INFUSER: Record<string, { cats: string[]; ja: string; en: string }> = {
   vaal_infuser_martial: { cats: MARTIAL, ja: "マーシャル武器", en: "Martial Weapons" },
   vaal_infuser_caster: { cats: CASTER, ja: "ワンド・スタッフ・セプター", en: "Wands, Staves and Sceptres" },
 };
-/** インフューザーで上限を超えた時にコラプトする確率。**公開値なし (未確定)**、仮に 25% */
+/** 上限を超えた時にコラプトする確率。公式の値は無く、コミュニティの報告の約 25% (2026-10-12 オーナー「25% と言われてる、説明でコミュニティの確率参照で」) */
 export const INFUSER_CORRUPT_P = 0.25;
 /** アーキテクトオーブで壊れる確率。説明文・poe2wiki の「50%」(有力、要望 ㉞-3) */
 export const ARCHITECT_DESTROY_P = 0.5;

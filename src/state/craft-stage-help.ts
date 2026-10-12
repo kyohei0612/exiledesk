@@ -111,7 +111,7 @@ const OMEN_EN: Record<string, string[]> = {
 /** apply-extra.ts の物の説明 (クライアントの説明文 + 仮の値) */
 const INFUSER_LINE = (ja: string) => [
   `**${ja}** の品質を上げる。上限を **最大 10% 超えられる** が、超えた時に一定確率で **コラプト** する (クライアントの説明文)`,
-  `1 回で +1% (ゲームで確認)。コラプトする確率は公開されていない (**未確定**、仮に ${Math.round(INFUSER_CORRUPT_P * 100)}%。手順の outcome "corrupted" / "safe" で指定できる)`,
+  `1 回で +1% (ゲームで確認)。上限を超えた時にコラプトする確率は **${Math.round(INFUSER_CORRUPT_P * 100)}%** (公式の値は出ていない。コミュニティの報告で約 ${Math.round(INFUSER_CORRUPT_P * 100)}%)`,
 ];
 const SACRIFICE_LINE = (ja: string) => [
   `**コラプトしたレア** の ${ja} の **コラプトエンチャントを上位版に上げ**、ランダムな MOD を **1 つ消す** (クライアントの説明文)`,
@@ -145,7 +145,7 @@ const EXTRA_HELP: Record<string, string[]> = {
 /** EXTRA_HELP の英語 (英語の画面) */
 const INFUSER_LINE_EN = (en: string) => [
   `Raises the quality of **${en}**. Can go **up to 10% over the cap**, but has a chance to **corrupt** the item when it does (game description)`,
-  `+1% per use (checked in game). The corruption chance isn't public (**unconfirmed**, assumed ${Math.round(INFUSER_CORRUPT_P * 100)}%; set it with the step outcome "corrupted" / "safe")`,
+  `+1% per use (checked in game). Chance to corrupt when going over the cap: **${Math.round(INFUSER_CORRUPT_P * 100)}%** (no official value; about ${Math.round(INFUSER_CORRUPT_P * 100)}% per community reports)`,
 ];
 const SACRIFICE_LINE_EN = (en: string) => [
   `On **Corrupted Rare** ${en}: **upgrades the Corruption Enchantment** and **removes 1 random mod** (game description)`,
