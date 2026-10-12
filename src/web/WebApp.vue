@@ -141,7 +141,10 @@ window.addEventListener("resize", fitZoom);
             </span>
             <span class="ml-auto">{{ tr("協賛の枠には PR と表示します", "Sponsored slots are marked PR") }}</span>
             <!-- よくある一番下のリンク (2026-10-12 広告の審査の前に。中身は public/about.html・privacy.html の単独のページ) -->
+            <a href="/guide" class="underline">{{ tr("使い方", "Guide") }}</a>
+            <a href="/bases/" class="underline">{{ tr("ベース一覧", "Bases") }}</a>
             <a href="/about.html" class="underline">{{ tr("ExileDesk について", "About") }}</a>
+            <a href="/contact" class="underline">{{ tr("お問い合わせ", "Contact") }}</a>
             <a href="/privacy.html" class="underline">{{ tr("プライバシーポリシー", "Privacy Policy") }}</a>
           </footer>
         </template>

@@ -19,6 +19,8 @@ import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef, watch } from "vue";
 import { htcBaseInfo, loadHtcPatch } from "../services/htc/patch";
 import { REC_START, recNext } from "../utils/rec-mode";
+/** ?base=<英語名> (ベースの読み物のページから来た時)。録画モードの base= とは別 */
+export const URL_BASE: string | null = (() => { try { return new URLSearchParams(location.search).get("base"); } catch { return null; } })();
 import { loadCurrencyHover } from "../services/currency/currency-hover";
 import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
 import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
@@ -494,6 +496,14 @@ export const craftStage = {
           error.value = tr(`共有の手順が読めませんでした (${e instanceof Error ? e.message : String(e)})`, `Couldn't open the shared steps (${e instanceof Error ? e.message : String(e)})`);
         }
       } else craftStage.reset();
+      // ベースの読み物のページ (/bases/…) の「エミュレーターで試す」(?base=<英語名>、2026-10-13): そのベースの白から始める
+      if (!raw && !shared && !REC_START && URL_BASE && data.value && htcBaseInfo()[URL_BASE]) {
+        base.value = URL_BASE;
+        mode.value = "hand";
+        craftStage.reset();
+        // 開いた後は URL から外す (読み直すたびに白に戻らないように)
+        try { const u = new URL(location.href); u.searchParams.delete("base"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch { /* 外せなくても開く */ }
+      }
       // 録画モードの最初の状態 (?rec=1&base=&ilvl=&hands=、POE2Tube 要望 ㊷): 準備の手まで URL で済ませる
       if (!raw && !shared && REC_START && data.value) {
         if (REC_START.base && htcBaseInfo()[REC_START.base]) base.value = REC_START.base;

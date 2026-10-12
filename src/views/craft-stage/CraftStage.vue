@@ -15,7 +15,7 @@ import { scrollToTop } from "../../utils/keep-place";
 import { baseNameOf, modText, tr } from "../../i18n/lang";
 import { forceKey } from "../../services/craft-stage/apply-force";
 import { unsocketKey } from "../../services/craft-stage/stage-runes";
-import { LOG_KEEP, SIM_LOCKED, type SimRecipe } from "../../state/craft-stage";
+import { LOG_KEEP, SIM_LOCKED, URL_BASE, type SimRecipe } from "../../state/craft-stage";
 import StageRecipeStart from "./StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -314,7 +314,8 @@ const inApp = isTauriRuntime();
 const FIRST_BASE_KEY = "exiledesk.stage.basePicked";
 let firstTime = false;
 try { firstTime = !localStorage.getItem(FIRST_BASE_KEY); } catch { /* 覚えられない時は今まで通り */ }
-const handNoBase = ref(!inApp && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
+// ベースの読み物のページから ?base= で来た時は、選ぶ所を飛ばしてそのベースから
+const handNoBase = ref(!inApp && !URL_BASE && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
 // 共有の URL から開いた時はベースが決まっている (ここから打つ・白から打つで、ベース選びに戻さない)
 watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
 // 録画モードで URL の最初の状態を入れた時もベースは決まっている (POE2Tube 要望 ㊷)
