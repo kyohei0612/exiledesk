@@ -394,17 +394,15 @@ function priceKeysAll(): string[] {
 }
 
 /**
- * 打てるかを 1 回試して決める。ただし「当たり所で弾かれた (もう一度)」は運の話なので、別の乱数で何度か試して 1 回でも通れば打てる扱い
- * (2026-10-12 要望 541d2ae1 / 1b901ac5: 侮蔑を外してプレが 3 つのルビーで、カオスと液化した感情が「使用可能」から消えていた。1 つの乱数で上限を超えた側に当たっていた)
+ * 打てるか = ゲームが右クリックを受け付けるか。打つ前に分かる条件 (部位・レア度・コラプト・空き枠・お告げの前提など) だけで決め、
+ * 当たり所で弾かれる物 (skipRandom、apply の random) は打てる扱い。結果は押した時に決まる
+ * (2026-10-12 オーナーの方針「結果をリークしない、ゲームと同じく自由に」[[feedback-game-rules-as-written]]。
+ * 要望 541d2ae1 / 1b901ac5: 軽蔑を外してプレが 3 つのルビーで、カオスと液化した感情が「使用可能」から消えていた)
  */
 function usableWith(key: string, om: readonly string[]): string | null {
   if (!data.value || !item.value) return tr("読み込み中…", "Loading…");
   const r = applyCurrency(data.value, item.value, key, mulberry32(0), om);
-  if (r.applied) return null;
-  const why = r.reason ?? tr("打てない", "Can't use");
-  if (!/\(もう一度\)|\(try again\)/.test(why)) return why;
-  for (let s = 1; s <= 24; s++) if (applyCurrency(data.value, item.value, key, mulberry32(s), om).applied) return null;
-  return why;
+  return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
 }
 export const craftStage = {
   data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims, aimPicker, modJump, modOverlay,

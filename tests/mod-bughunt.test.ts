@@ -171,15 +171,19 @@ describe("バグ: 追加分 (乱数の打ち回し・データの点検で見つ
     expect(r.reason ?? "完成", `止まった理由: ${r.reason}`).not.toMatch(/アイテムレベルが \d+ 未満/);
   });
 
-  it("アストリッドの創造性を置き換えると、エッセンスの MOD が 2 つのまま上限 1 を超える", () => {
+  // 2026-10-12 オーナーの方針「書いてある通りに、こっちで決めない」: 置き換えは止めない。付いているクラフト MOD はそのまま (上限を超えた状態) で、次のエッセンスが付かないだけ
+  it("アストリッドの創造性を置き換えても、付いているエッセンスの MOD はそのまま (上限を超えた状態)・次のエッセンスは付かない", () => {
     let body = { ...freshItem(data, "Garment", 82), sockets: 1 };
     body = A(body, "rune:Astrid's Creativity", 1);
     body = A(body, "force:Body_Armours_str_dex_int/Essence_IncreasedLife||e", 2);
     body = A(body, "force:Body_Armours_str_dex_int/Essence_ColdResistance||e", 3);
     expect(allMods(body).filter((m) => m.crafted).length).toBe(2);
     const r = applyCurrency(data, body, "rune:Lesser Desert Rune@1", mulberry32(4), []);
-    // 置き換えられないか、置き換えるならエッセンスの MOD が 1 つまでに戻るべき
-    if (r.applied) expect(allMods(r.item).filter((m) => m.crafted).length, "エッセンスの MOD 2 つでアストリッド無し").toBeLessThanOrEqual(1);
+    expect(r.applied).toBe(true);
+    expect(allMods(r.item).filter((m) => m.crafted).length).toBe(2);
+    const e = applyCurrency(data, r.item, "essence:normal:Body_Armours_str_dex_int/Essence_ChaosResistance", mulberry32(5), []);
+    expect(e.applied).toBe(false);
+    expect(e.reason).toMatch(/クラフト MOD|エッセンスの MOD/);
   });
 });
 

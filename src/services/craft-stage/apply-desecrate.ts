@@ -12,7 +12,7 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { ANCIENT_BONE_FLOOR, bossOmenAllowed, DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
-import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, withMod, without, type Candidate, effectiveCls } from "./stage-core";
+import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate, effectiveCls } from "./stage-core";
 import { ABYSS_MARK_FLOOR } from "../htc/omens";
 import { FACTION_TAG } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
@@ -73,7 +73,8 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
     removed.push(mark);
   } else if (!room(cur, side)) {
     const r = removeOne(cur, rng, [side]);
-    if (!r) return skip(item, tr("その側に空きが無い", "No open slot on that side"));
+    // 側を重みで選んだ時は、選ばれた側が固定の MOD だけかは当たり所 (お告げで決めた側なら打つ前に分かる)
+    if (!r) return (omenSide ? skip : skipRandom)(item, tr("その側に空きが無い", "No open slot on that side"));
     cur = r.item;
     removed.push(r.mod);
   }
@@ -226,7 +227,7 @@ export function applyReveal(data: PatchData, item: StageItem, key: string, rng: 
   const offers = revealOffers(data, item, rng);
   const list = reroll ? offers.reroll : offers.first;
   const pick = list[Number(m[1]) - 1];
-  if (!pick) return skip(item, tr("その番号の候補が無い", "No option with that number"));
+  if (!pick) return skipRandom(item, tr("その番号の候補が無い", "No option with that number"));
   return { applied: true, item: replaced(item, hidden, pick), added: [pick], removed: [hidden] };
 }
 

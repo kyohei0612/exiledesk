@@ -49,7 +49,7 @@ import { itemBaseFor } from "../htc/bridge";
 import { jaTypeName } from "../trade2/localize";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
-import { overLimit } from "./stage-core";
+import { overLimit, skipRandom } from "./stage-core";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyFlux, isFlux } from "./apply-flux";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
@@ -300,7 +300,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
       }
       if (!r) return skip(item, tr("外せる MOD が無い", "No mod can be removed"));
       // 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) が当たると付け直せずに弾かれる (参考動画: 「追加できません」)
-      if (overLimit(item, r.mod.side)) return skip(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
+      if (overLimit(item, r.mod.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
       const f = hint.pick?.[0];
       if (f) {
         const a = addForced(data, r.item, floor, rng, f);

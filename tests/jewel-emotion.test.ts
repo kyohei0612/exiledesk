@@ -73,11 +73,14 @@ describe("液化した感情", () => {
     for (let s = 1; s <= 60; s++) {
       const r = applyCurrency(data, it, "chaos", mulberry32(s), []);
       if (r.applied) { expect(r.removed![0]!.side).toBe("prefix"); expect(r.item.suffixes.length).toBe(3); }
+      // 弾かれたのは当たり所 (棚からは消さない、押して初めて弾かれる。2026-10-12 方針)
+      else expect(r.random).toBe(true);
     }
     // 獰猛: サフィは弾かれるので、付くのはプレの版 (サフィの効果が増加)
     for (let s = 1; s <= 60; s++) {
       const r = applyCurrency(data, it, "emotion:Potent Liquid Ferocity", mulberry32(s), []);
       if (r.applied) { expect(r.added![0]!.side).toBe("prefix"); expect(r.added![0]!.textEn).toMatch(/Effect of Suffixes/); }
+      else expect(r.random).toBe(true);
     }
     // 獰猛の効果: サフィの数値が N% 伸びる (切り捨て)、プレと獰猛自身は伸びない
     let f: StageItem | null = null;

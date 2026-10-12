@@ -142,6 +142,8 @@ export const replaced = (item: StageItem, mod: StageMod, next: StageMod): StageI
   ({ ...item, prefixes: item.prefixes.map((m) => (m === mod ? next : m)), suffixes: item.suffixes.map((m) => (m === mod ? next : m)) });
 
 export const skip = (item: StageItem, reason: string): StageApply => ({ applied: false, reason, item, added: [], removed: [] });
+/** 当たり所で弾かれた (打つ前には分からない)。棚の判定では打てる扱い ([[feedback-game-rules-as-written]]) */
+export const skipRandom = (item: StageItem, reason: string): StageApply => ({ ...skip(item, reason), random: true });
 
 /** MOD の系統の鍵 (決まりは services/mods/mod-rules.ts に 1 つ) */
 export const familyKeys = familyKeysOf;

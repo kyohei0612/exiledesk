@@ -42,7 +42,8 @@ function sampled(data: PatchData, item: StageItem, key: string, omens: readonly 
   let ok = 0;
   for (let s = 1; s <= SAMPLES; s++) {
     const r = applyCurrency(data, item, key, mulberry32(7919 * s), [...omens]);
-    if (!r.applied) { if (s === 1) return null; continue; }
+    // 打つ前に分かる理由で打てない時だけ出さない。当たり所で弾かれた回は数えずに続ける ([[feedback-game-rules-as-written]])
+    if (!r.applied) { if (s === 1 && !r.random) return null; continue; }
     ok++;
     const seen = new Set<string>();
     for (const m of r.added ?? []) {

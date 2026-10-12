@@ -16,7 +16,7 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { jewelEmotionsOf } from "../htc/patch";
-import { allMods, limitOf, listOf, makeStageMod, overLimit, skip, withMod, without } from "./stage-core";
+import { allMods, limitOf, listOf, makeStageMod, overLimit, skip, skipRandom, withMod, without } from "./stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
 
@@ -45,7 +45,7 @@ export function applyEmotion(data: PatchData, item: StageItem, key: string, rng:
   const pool = allMods(item).filter((m) => !m.fractured);
   if (!pool.length) return skip(item, tr("消せる MOD が無い (固定だけ)", "No mod can be removed (only fractured ones)"));
   const gone = pool[Math.floor(rng() * pool.length)]!;
-  if (overLimit(item, gone.side)) return skip(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
+  if (overLimit(item, gone.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
   // 2 つの版がある物 (獰猛・侮蔑) は消えた側の版、1 つの物はその版
   const e = entries.length > 1 ? entries.find((x) => x.side === gone.side) ?? entries[0]! : entries[0]!;
   const mod = data.mods.get(e.modId);
@@ -55,7 +55,7 @@ export function applyEmotion(data: PatchData, item: StageItem, key: string, rng:
   const removed: StageMod[] = [gone];
   // 作った MOD は 1 つまで: 残っている作った MOD は入れ替える
   for (const c of allMods(it).filter((m) => m.crafted && !m.fractured)) { it = without(it, c); removed.push(c); }
-  if (listOf(it, side).length >= limitOf(it, side)) return skip(item, tr("付ける側に空きが無い所が消えたので追加できない (もう一度)", "The removed mod was on the other side and this side is full, so nothing can be added (try again)"));
+  if (listOf(it, side).length >= limitOf(it, side)) return skipRandom(item, tr("付ける側に空きが無い所が消えたので追加できない (もう一度)", "The removed mod was on the other side and this side is full, so nothing can be added (try again)"));
   const added: StageMod = { ...makeStageMod(mod, side, 0, rng), crafted: true };
   return { applied: true, item: withMod(it, added), added: [added], removed };
 }

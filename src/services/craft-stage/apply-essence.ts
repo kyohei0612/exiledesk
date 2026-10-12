@@ -11,7 +11,7 @@
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { BREACH_FAMILY } from "../htc/omens";
-import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, runeEffectPct, SIDES, skip, takenCraftedFamilies, withMod } from "./stage-core";
+import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, runeEffectPct, SIDES, skip, skipRandom, takenCraftedFamilies, withMod } from "./stage-core";
 import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
 import { essenceClash } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
@@ -83,7 +83,7 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   // 前はアイテムレベル不足で打てなくしていた)。要求レベルは stage-bases.ts の reqOfItem
   // クラフト MOD は 1 つまで、アストリッドの創造性をはめていれば 2 つ (2026-10-03: 前はアストリッドを見ていなかった)
   const limit = craftedLimitOf(item);
-  if (allMods(item).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? tr("クラフト MOD はアストリッドの創造性込みで 2 つまで", "Max 2 crafted mods (with Astrid's Creativity)") : tr("エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)", "Only 1 Essence mod per item (2 with Astrid's Creativity)"));
+  if (allMods(item).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? tr(`クラフト MOD はアストリッドの創造性込みで ${limit} つまで`, `Max ${limit} crafted mods (with Astrid's Creativity)`) : tr("エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で増える)", "Only 1 Essence mod per item (more with Astrid's Creativity)"));
   const clash = (it: StageItem) => essenceClash(mod, takenCraftedFamilies(data, it));
   const sm = { ...makeStageMod(mod, side, tierIndex, rng), ...normalTierOf(data, item, mod, tier), crafted: true };
 
@@ -105,7 +105,8 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   if (allMods(item).length && !r) return skip(item, tr("外せる MOD が無い", "No mod can be removed"));
   const rest = r?.item ?? item;
   if (!room(rest, side)) return skip(item, tr("足す側に空きが無い", "No open slot on that side"));
-  if (clash(rest)) return skip(item, tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item"));
+  // 消えたのがぶつかる MOD でなかった時だけ (アストリッドで作った MOD が 2 つ以上ある時に当たり所で決まる)
+  if (clash(rest)) return (r ? skipRandom : skip)(item, tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item"));
   return { applied: true, item: withMod(rest, sm), added: [sm], removed: r ? [r.mod] : [] };
 }
 

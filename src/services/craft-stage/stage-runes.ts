@@ -289,8 +289,8 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   if (old) {
     const why = replaceBlock(old);
     if (why) return skip(item, why);
-    // アストリッドの創造性 (クラフト MOD 2 つまで) を外すと上限が 1 に戻る。2 つ付いている間は置き換えない (2026-10-10 点検、ゲームの挙動は未確認)
-    if (old.en === "Astrid's Creativity" && allMods(item).filter((m) => m.crafted).length > 1) return skip(item, tr("クラフト MOD が 2 つある間はアストリッドの創造性を置き換えられない", "Can't replace Astrid's Creativity while 2 crafted mods are present"));
+    // アストリッドの創造性を外しても、付いているクラフト MOD はそのまま (上限を超えた状態になるだけ)。前は 2 つある間は置き換えさせなかったが、
+    // ゲームの文に無いこちらの決まりだったのでやめた (2026-10-12 オーナー「書いてある通りに、こっちで決めない」)
   }
   const lim = limitBlock(p.en, now.filter((_, i) => i !== at).map((a) => a.en));
   if (lim) return skip(item, lim);
