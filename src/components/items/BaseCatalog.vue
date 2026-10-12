@@ -12,6 +12,7 @@ import { tr } from "../../i18n/lang";
 import { glideBy, scrollBoxOf } from "../../utils/keep-place";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
+import { uniqueArt } from "../../services/assets/unique-art";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import popularData from "../../data/popular-bases.json";
 
@@ -107,7 +108,18 @@ const FAM_ART: Record<string, string> = {
   ジュエル: "Diamond", 指輪: "Breach Ring", ベルト: "Invoking Belt", アミュレット: "Absent Amulet", バックラー: "Bladeguard Buckler", フォーカス: "Cultist Focus",
   盾: "Noble Tower Shield", スタッフ: "Chiming Staff", タリスマン: "Thunder Talisman", セプター: "Rattling Sceptre", 片手メイス: "Flanged Mace",
 };
+/**
+ * 武器・オフハンドの部位のタイルはユニークの絵 (かっこよさで。2026-10-12 オーナーが選んだ。部位を選ぶボタンなのでベースと紛れない)。
+ * バックラーはユニークの絵がデータに無いのでベースの絵のまま
+ */
+const FAM_UNIQUE: Record<string, string> = {
+  片手メイス: "Mjölner", スピア: "Atziri's Contempt", セプター: "Sacred Flame", ワンド: "Adonia's Ego", 弓: "Splinterheart", クロスボウ: "Redemption",
+  スタッフ: "The Whispering Ice", 両手メイス: "Chober Chaber", クォータースタッフ: "Pillar of the Caged God", タリスマン: "Amor Mandragora",
+  盾: "Svalinn", フォーカス: "Rathpith Globe", 矢筒: "Cadiro's Gambit",
+};
 function famArt(f: Family): string | null {
+  const u = FAM_UNIQUE[f.name] && uniqueArt(FAM_UNIQUE[f.name]!);
+  if (u) return u;
   const pin = FAM_ART[f.name] && artOf(FAM_ART[f.name]!);
   if (pin) return pin;
   const cs = new Set(f.variants.map((v) => v.cls));
