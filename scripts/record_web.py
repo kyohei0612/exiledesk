@@ -258,9 +258,10 @@ def c_undo(w: Web) -> None:
     w.page.mouse.wheel(0, (top["y"] - 380) if top else 0)
     pause(1.0)
     w.notes.append({"history_box": hist.first.bounding_box()})
-    h.click(w.rec("undo"), 700, 1.5)
-    h.click(w.rec("step:3"), 700, 1.8)
-    h.click(w.rec("step:start"), 700, 1.8)
+    # 押す時にページを送らない (送ると工程が下に戻ってテロップに隠れる)
+    h.click(w.rec("undo"), 700, 1.5, scroll=False)
+    h.click(w.rec("step:3"), 700, 1.8, scroll=False)
+    h.click(w.rec("step:start"), 700, 1.8, scroll=False)
     pause(1.5)
 
 

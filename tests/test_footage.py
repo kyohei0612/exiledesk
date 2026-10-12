@@ -76,3 +76,4 @@ def test_reading_fuda() -> None:
     assert normalize_speech("右の%は、14%増加") == "右のパーセントは、14%増加"
     assert normalize_speech("Escか右クリック") == "エスケープか右クリック"
     assert normalize_speech("工程の行を押せば") == "工程のぎょうを押せば"
+    assert normalize_speech("黄色の太字") == "きいろの太字"

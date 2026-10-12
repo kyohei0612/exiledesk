@@ -472,8 +472,7 @@
             "kind": "footage",
             "clip": "orbs",
             "at": 17.0,
-            "hold": 17.0,
-            "zoom": "history"
+            "hold": 17.0
           }
         }
       ]
