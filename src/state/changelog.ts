@@ -40,7 +40,8 @@ export function initChangelog(skip = false): void {
   if (skip || seen === APP_VERSION || lang.value === "en") return;
   // 前に見た版が無い = この仕組みより前から使っている人 (保存がある) には今の版の分だけ。初めての人には出さない
   if (!seen && !used) return;
-  const list = seen ? CHANGELOG.filter((e) => cmp(e.v, seen!) > 0).slice(0, 5) : CHANGELOG.filter((e) => e.v === APP_VERSION);
+  // 書く事の無い版 (裏方だけの版、更新内容を空にした物) は数えない (2026-10-12 オーナー「裏だから更新通知はいらん」)
+  const list = (seen ? CHANGELOG.filter((e) => cmp(e.v, seen!) > 0) : CHANGELOG.filter((e) => e.v === APP_VERSION)).filter((e) => e.items.length).slice(0, 5);
   if (!list.length) return;
   changelogNew.value = list;
   changelogOpen.value = "new";

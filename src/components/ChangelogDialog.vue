@@ -9,7 +9,7 @@ import { tr, isEn } from "../i18n/lang";
 import ModalShell from "./ui/ModalShell.vue";
 import { feedbackReplies, markRepliesSeen } from "../state/feedback-replies";
 
-const list = computed(() => (changelogOpen.value === "new" ? changelogNew.value : CHANGELOG));
+const list = computed(() => (changelogOpen.value === "new" ? changelogNew.value : CHANGELOG.filter((e) => e.items.length)));
 /** 要望・バグへの返事 (今回の更新の窓の一番上。2026-10-11) */
 const replies = computed(() => (changelogOpen.value === "new" ? feedbackReplies.value : []));
 const close = (): void => { if (changelogOpen.value === "new") markRepliesSeen(); changelogOpen.value = null; };
