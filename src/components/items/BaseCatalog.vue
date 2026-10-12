@@ -5,7 +5,7 @@
   selected: 今のベース (金の枠。その種類から開く)。extras: フラスコ・スキルジェムも出す。note: カードの下に足す 1 行 (計算機の付与スキルなど)
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import BaseCardGrid from "./BaseCardGrid.vue";
 import { baseCatalog, CATALOG_ROWS, CATALOG_ROW_EN, classEn, VARIANT_EN, type CatalogRow as CatalogRowT } from "../../services/items/base-catalog";
 import { tr } from "../../i18n/lang";
@@ -29,6 +29,10 @@ const count = computed(() => {
 /** 今の種類。selected が空文字 = 未選択の時は種類も選ばない (クラフトステージのシミュレーションのリセット後・最初。2026-10-05) */
 const cls = ref<string | null>(all.value.find((b) => b.en === props.selected)?.cls ?? (props.selected === "" ? null : "Rings"));
 const query = ref("");
+/** 部位のタイルを元のベースの絵に・光と粒なし (チェック。このブラウザに覚える) */
+const PLAIN_KEY = "exiledesk.baseTiles.plain";
+const plainArt = ref((() => { try { return localStorage.getItem(PLAIN_KEY) === "1"; } catch { return false; } })());
+watch(plainArt, (v) => { try { localStorage.setItem(PLAIN_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても動く */ } });
 /**
  * 人気のベース: 分析の記録でそのベースで 5 手以上打った人の数 (scripts/build-popular-bases.mjs)。部位の中では人気の物を先に、札を付ける。
  * 一番上の段は部位をまたいだ上位 (2 人以上)
@@ -168,7 +172,7 @@ function risers(name: string): Array<Record<string, string>> {
   }));
 }
 function famArt(f: Family): string | null {
-  const u = FAM_UNIQUE[f.name] && uniqueArt(FAM_UNIQUE[f.name]!);
+  const u = !plainArt.value && FAM_UNIQUE[f.name] && uniqueArt(FAM_UNIQUE[f.name]!);
   if (u) return u;
   const pin = FAM_ART[f.name] && artOf(FAM_ART[f.name]!);
   if (pin) return pin;
@@ -286,8 +290,13 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
   <div ref="rootEl">
     <!-- 名前で探す (種類をまたぐ) -->
     <div class="mb-2 flex items-center gap-2">
-      <input v-model="query" type="search" data-rec="base-search" :placeholder="tr('名前で探す (例: サファイア、ルビー)', 'Search by name (e.g. Sapphire, Ruby)')" class="w-72 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:w-full md:w-96 md:py-1.5 md:text-[14px]" />
+      <!-- 欄は例の文が入るだけの幅 (2026-10-13 オーナー「検索バー長いから例に合わせて小さく」) -->
+      <input v-model="query" type="search" data-rec="base-search" :placeholder="tr('名前で探す (例: サファイア、ルビー)', 'Search by name (e.g. Sapphire, Ruby)')" class="min-w-0 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:flex-1 md:w-[19rem] md:py-1.5 md:text-[14px]" />
       <span v-if="query.trim()" class="opacity-50">{{ tr(`${list.length} 件`, `${list.length} found`) }}</span>
+      <!-- 装備 (ユニークの絵)・エフェクトを切る: タイルを元のベースの絵にして、光と粒も出さない。このブラウザに覚える (2026-10-13 オーナー) -->
+      <label class="ml-1 flex shrink-0 cursor-pointer items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)] md:text-[13px]" :title="tr('部位のタイルを元のベースの絵にして、光と動きを止める', 'Show the plain base art on the category tiles, without glow or motion')">
+        <input v-model="plainArt" type="checkbox" class="accent-amber-400" />{{ tr("装備・エフェクトオフ", "Plain art, no effects") }}
+      </label>
     </div>
     <!-- 人気のベース (初めての人のベース選び): 部位をまたいだ上位。押せばそのまま始まる -->
     <div v-if="popular && !query.trim() && popularTop.length && (!phone || !family)" class="mb-4">
@@ -304,12 +313,14 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
             <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ tr(r.ja, r.en) }}</p>
             <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
             <div :class="phone ? 'grid grid-cols-3 gap-1.5' : 'flex flex-wrap gap-1'">
-              <button v-for="(f, fi) in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
+              <button v-for="f in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
                 <!-- ユニークの絵はゆっくり光る (脈打つ光 + 乗せると光が走る。2026-10-13 オーナー「光らせることできる？動きのある感じで」)。タイルごとに少しずらして一斉に光らない -->
-                <span class="fam-slot grid size-16 place-items-center md:size-20" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'" :style="{ '--d': `${-(fi * 1.3) % 9}s` }">
-                  <span class="fam-aura" aria-hidden="true" />
-                  <span v-for="(m, k) in risers(f.name)" :key="k" class="fam-rise" :style="m" aria-hidden="true" />
-                  <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="fam-art max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" draggable="false" @load="tintGlow" />
+                <span class="grid size-16 place-items-center md:size-20" :class="[family?.name === f.name && !phone ? 'g-slot on' : 'g-slot', plainArt ? '' : 'fam-slot']">
+                  <template v-if="!plainArt">
+                    <span class="fam-aura" aria-hidden="true" />
+                    <span v-for="(m, k) in risers(f.name)" :key="k" class="fam-rise" :style="m" aria-hidden="true" />
+                  </template>
+                  <img v-if="famArt(f)" :key="famArt(f)!" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" :class="plainArt ? '' : 'fam-art'" draggable="false" @load="tintGlow" />
                 </span>
                 <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ famLabel(f) }}</span>
                 <span v-if="f.variants.length > 1 && !JOINED.has(f.name)" class="text-[10px] leading-none opacity-50 md:text-[11px]">{{ tr(`${f.variants.length} 種`, `${f.variants.length} types`) }}</span>
