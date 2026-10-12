@@ -34,7 +34,7 @@ import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
 import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../services/craft-stage/defence";
 import { socketCapOf } from "../services/craft-stage/stage-runes";
 import { tr, lang } from "../i18n/lang";
-import { decodeShare, shareBlock, shareCodeOf } from "../services/craft-stage/share";
+import { decodeShare, SHARE_ENABLED, shareBlock, shareCodeOf } from "../services/craft-stage/share";
 import { trackOnce } from "../utils/track";
 /**
  * 手で打つ画面の新品は、規格外のソケット数 (熟練工で付けられる数 +1) で始める (2026-10-04 オーナー「オーブ刺すのめんどいから、ソケットも初めからデフォでマックス」)。
@@ -472,7 +472,7 @@ export const craftStage = {
       const wantVideo = q.get("video") === "1";
       // 動画モードは手順を最後まで打っておき、step の手から見せる (前後に動かせるように)
       // 共有の URL (#share=…、2026-10-12)。# は読んだら消す (打ち始めた後に読み直して共有の手順に戻らないように)
-      const shared = raw ? null : shareCodeOf(location.hash);
+      const shared = raw || !SHARE_ENABLED ? null : shareCodeOf(location.hash);
       if (raw) craftStage.loadReplay(JSON.parse(raw) as CraftStagePlan, wantVideo ? 9999 : step);
       else if (shared) {
         try { history.replaceState(null, "", location.pathname + location.search); } catch { /* 消せなくても開く */ }

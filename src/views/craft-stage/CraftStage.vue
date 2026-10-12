@@ -49,7 +49,7 @@ import HelpTip from "../../components/ui/HelpTip.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import Icon from "../../components/ui/Icon.vue";
 import { searchModGroups, type ModGroup } from "../../services/craft-stage/trade-search";
-import { encodeShare, shareUrl, xIntentUrl } from "../../services/craft-stage/share";
+import { encodeShare, SHARE_ENABLED, shareUrl, xIntentUrl } from "../../services/craft-stage/share";
 import { openExternal } from "../../services/trade2/open-external";
 import { track } from "../../utils/track";
 import type { StageMod } from "../../services/craft-stage/types";
@@ -543,10 +543,10 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <div class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
           <p class="g-sec-head"><b class="g-sec-title">{{ tr("工程", "Steps") }}</b><span class="g-sec-sub">{{ inApp || s.replay.value ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span>
             <!-- 手順の共有 (2026-10-12)。押せない時は理由を title に (打ち始めた後の手で足した MOD は下にも 1 行) -->
-            <span :title="s.shareWhy.value ?? tr('この手順を URL で共有 (受け取った人は同じベースから同じ結果を再生できる)', 'Share these steps as a URL (others can replay them with the same results)')"><button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-9" :disabled="!!s.shareWhy.value" :aria-expanded="!!shareOpen" @click="shareOpen ? (shareOpen = null) : openShare()"><Icon name="link" class="size-3.5" />{{ tr("共有", "Share") }}</button></span>
+            <span v-if="SHARE_ENABLED" :title="s.shareWhy.value ?? tr('この手順を URL で共有 (受け取った人は同じベースから同じ結果を再生できる)', 'Share these steps as a URL (others can replay them with the same results)')"><button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-9" :disabled="!!s.shareWhy.value" :aria-expanded="!!shareOpen" @click="shareOpen ? (shareOpen = null) : openShare()"><Icon name="link" class="size-3.5" />{{ tr("共有", "Share") }}</button></span>
             <span class="ml-auto tabular-nums opacity-70">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
-          <p v-if="s.shareWhy.value && s.log.value.length && !shareOpen" class="-mt-1 mb-1 px-1 text-[11px] text-amber-200/80">{{ tr("共有できない", "Can't share") }}: {{ s.shareWhy.value }}</p>
-          <div v-if="shareOpen" class="mb-2 rounded-lg border border-white/10 bg-black/30 p-2">
+          <p v-if="SHARE_ENABLED && s.shareWhy.value && s.log.value.length && !shareOpen" class="-mt-1 mb-1 px-1 text-[11px] text-amber-200/80">{{ tr("共有できない", "Can't share") }}: {{ s.shareWhy.value }}</p>
+          <div v-if="SHARE_ENABLED && shareOpen" class="mb-2 rounded-lg border border-white/10 bg-black/30 p-2">
             <p class="mb-1.5 flex items-center gap-2"><span :class="shareOpen.copied ? 'text-emerald-300' : 'text-amber-200'">{{ shareOpen.copied ? tr("URL をコピーしました", "URL copied") : tr("下の URL をコピーしてください", "Copy the URL below") }}</span><button type="button" class="g-plain ml-auto px-1 opacity-60 hover:opacity-100" :title="tr('閉じる', 'Close')" @click="shareOpen = null">×</button></p>
             <input :value="shareOpen.url" readonly class="mb-1.5 w-full truncate rounded border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-[var(--exile-color-text-secondary)]" @focus="($event.target as HTMLInputElement).select()" />
             <span class="flex gap-1.5">
