@@ -390,6 +390,19 @@ function priceKeysAll(): string[] {
   return [...ORBS.flatMap((g) => g.keys), ...BONES, ...CATALYSTS, ...OMEN_GROUPS.flatMap((g) => g.keys), ...log.value.map((s) => s.out.currency)];
 }
 
+/**
+ * 打てるかを 1 回試して決める。ただし「当たり所で弾かれた (もう一度)」は運の話なので、別の乱数で何度か試して 1 回でも通れば打てる扱い
+ * (2026-10-12 要望 541d2ae1 / 1b901ac5: 侮蔑を外してプレが 3 つのルビーで、カオスと液化した感情が「使用可能」から消えていた。1 つの乱数で上限を超えた側に当たっていた)
+ */
+function usableWith(key: string, om: readonly string[]): string | null {
+  if (!data.value || !item.value) return tr("読み込み中…", "Loading…");
+  const r = applyCurrency(data.value, item.value, key, mulberry32(0), om);
+  if (r.applied) return null;
+  const why = r.reason ?? tr("打てない", "Can't use");
+  if (!/\(もう一度\)|\(try again\)/.test(why)) return why;
+  for (let s = 1; s <= 24; s++) if (applyCurrency(data.value, item.value, key, mulberry32(s), om).applied) return null;
+  return why;
+}
 export const craftStage = {
   data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
@@ -510,15 +523,11 @@ export const craftStage = {
   },
   /** その状態で打てるか (打てないなら理由)。掛けてあるお告げ込み */
   usable(key: string): string | null {
-    if (!data.value || !item.value) return tr("読み込み中…", "Loading…");
-    const r = applyCurrency(data.value, item.value, key, mulberry32(0), omens.value);
-    return r.applied ? null : (r.reason ?? tr("打てない", "Can't use"));
+    return usableWith(key, omens.value);
   },
   /** お告げを抜きにして打てるか (掛けたままのお告げのせいで打てない物を棚から消さないため。2026-10-10「錬金の後に高貴が打てない」) */
   usableBare(key: string): string | null {
-    if (!data.value || !item.value) return tr("読み込み中…", "Loading…");
-    const r = applyCurrency(data.value, item.value, key, mulberry32(0), []);
-    return r.applied ? null : (r.reason ?? tr("打てない", "Can't use"));
+    return usableWith(key, []);
   },
   /** 持っている物を 1 回打つ (Craft of Exile と同じ: 持ったままなら何度でも) */
   use(key: string | null = held.value): void {

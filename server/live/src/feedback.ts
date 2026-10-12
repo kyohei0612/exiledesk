@@ -159,7 +159,6 @@ export function stateLine(context: unknown): string {
 export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetch): Promise<boolean> {
   // 画面では要望とバグを分けない (2026-10-10)。前の版から来た「バグ」だけ印を残す
   const head = fb.kind === "bug" ? "🐛 要望・バグ" : "💬 要望・バグ";
-  const trail = trailText(fb.context);
   const state = stateLine(fb.context);
   const firstErr = (fb.context as { errors?: Array<{ msg?: string }> } | null)?.errors?.[0]?.msg;
   // 日本時間で (Discord は文字列をそのまま出すので、ここで +9 時間)
@@ -171,11 +170,10 @@ export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetc
     `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST · id ${fb.id}`,
     fb.text.slice(0, 1200),
     "",
-    ...sumLines,
-    state ? `状態: ${state}` : "",
-    trail ? `流れ: ${trail}` : "",
+    // 短く (2026-10-12 オーナー「長くなるから打った手・最後の手・状態・流れはいらない、JSON だけでいい」): 作っている物と今の MOD・PC かスマホか・エラーだけ。手順と流れは添付の JSON に
+    ...sumLines.filter((l) => !/^(打った手|最後の手)/.test(l)),
+    sumLines.length ? deviceJa(fb.context) : state ? `状態: ${state}` : "",
     firstErr ? `直近のエラー: ${String(firstErr).slice(0, 160)}` : "",
-    fb.context ? "-# 添付の JSON: 同じ乱数で再生できる手順・レシピ・エラーの詳細" : "",
   ].filter(Boolean).join("\n").slice(0, 1950);
   try {
     const form = new FormData();

@@ -22,6 +22,8 @@ import { CATALYSTS as HTC_CATALYSTS } from "../services/htc/quality";
 import { enOf } from "./craft-stage-shelf";
 import type { StageItem } from "../services/craft-stage/types";
 import { lang, tr } from "../i18n/lang";
+import { emotionNameOf, isEmotion } from "../services/craft-stage/apply-emotion";
+import { jewelEmotionsOf } from "../services/htc/patch";
 
 /** 英語の画面か (2026-10-10 英語版) */
 const isEn = (): boolean => lang.value === "en";
@@ -182,6 +184,17 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
 }
 
 function stageHelpBase(key: string, data: PatchData | null, item: StageItem | null): string[] {
+  // 液化した感情 (ジュエル。2026-10-12 要望 1b901ac5「マウスオーバーで効果を表示」)。決まりは apply-emotion.ts の頭の注
+  if (isEmotion(key)) {
+    const two = !!item && jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(key)).length > 1;
+    return [
+      tr("**レアのジュエル**にだけ使える。固定 (フラクチャー) 以外から**ランダムに 1 つ消して**、決まった作った MOD を付ける", "**Rare jewels** only. **Removes a random mod** (not fractured) and adds a fixed crafted mod"),
+      two ? tr("付くのは**消えた MOD の側の版** (プレが消えればプレの版、サフィが消えればサフィの版)", "Adds the version for **the side of the removed mod** (prefix removed → prefix version)") : "",
+      tr("作った MOD は 1 つまで (前の作った MOD は入れ替わる)。MOD が 4 つ揃っていなくても使える", "Only 1 crafted mod (replaces the previous one). Works with fewer than 4 mods"),
+      tr("上限を超えている側 (軽蔑を外した後の 3 つ目) が消える候補に当たると**弾かれる** (何も変わらない、もう一度)", "If it hits the side that is over its limit (after removing Contempt), it is **rejected** (no change, try again)"),
+      tr("古代の版は時を失ったジュエル用", "Ancient versions are for Time-Lost Jewels"),
+    ].filter(Boolean);
+  }
   if (OMEN[key]) return [...((isEn() ? OMEN_EN[key] : null) ?? OMEN[key]!), tr("押すと掛けておく (何枚でも)。次に打つ、関係する手でだけ使われる", "Click to apply (stackable). Only consumed by the next currency it affects")];
   const s = strengthOf(key);
   const kind = key.replace(/_(greater|perfect)$/, "");
@@ -425,6 +438,20 @@ function essenceTierSpan(data: PatchData, item: StageItem, mod: { family: string
 
 export function stageAdds(key: string, data: PatchData | null, item: StageItem | null): { head: string; lines: string[]; tier?: string | null } | null {
   if (!item) return null;
+  // 液化した感情: このジュエルに付く MOD (2 つの版がある物は側ごと)
+  if (isEmotion(key) && data) {
+    const es = jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(key));
+    const lines = es.flatMap((e) => {
+      const m = data.mods.get(e.modId);
+      if (!m) return [];
+      const t = m.tiers[0];
+      const text = (isEn() ? m.text : fillModText(m, t ? tierDisplayRanges(t) : [])) ?? "";
+      const side = e.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix");
+      return [`${es.length > 1 ? `${side}${tr("が消えた時", " removed")}: ` : ""}${text.replace(/\n/g, " / ")}`];
+    });
+    if (!lines.length) return null;
+    return { head: es.length > 1 ? tr("付く MOD (消えた MOD の側の版)", "Adds (version for the removed mod's side)") : tr(`付く MOD (${es[0]!.side === "prefix" ? "プレフィックス" : "サフィックス"})`, `Adds (${es[0]!.side === "prefix" ? "Prefix" : "Suffix"})`), lines };
+  }
   if (isRune(key)) {
     const eff = runeEffectFor(runeOf(key)!, item.cls.category);
     return eff ? { head: tr(`付く MOD (${eff.catJa})`, `Adds (${eff.cat})`), lines: (isEn() ? eff.en : eff.ja).split("\n").map((x) => x.trim()).filter(Boolean) } : null;

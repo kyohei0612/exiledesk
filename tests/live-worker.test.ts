@@ -201,7 +201,7 @@ describe("要望・バグ (/feedback)", () => {
     expect(sent!.content).toContain("🐛 要望・バグ");
     expect(sent!.content).toContain("壊れた");
     expect(sent!.content).toContain("状態: v0.1.385 · シミュレーター · Polished Bracers ilvl82 · 狙い 3 · パターン 1 · JS エラー 1");
-    expect(sent!.content).toContain("流れ: 開いた (9秒前)");
+    expect(sent!.content).not.toContain("流れ:");
     expect(sent!.content).toContain("直近のエラー: TypeError: x is undefined");
     expect(file!.name).toBe("feedback-a1b2.json");
     expect(JSON.parse(file!.text).context.sim.targets).toEqual([1, 2, 3]);
