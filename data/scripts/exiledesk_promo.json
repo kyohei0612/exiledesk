@@ -529,23 +529,12 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "工程の行を押せば、その手を打った直後に戻れるの。",
+          "text": "工程の行を押せば、その手まで戻れるわ。",
           "scene": {
             "kind": "footage",
             "clip": "undo",
             "at": 3.7,
-            "hold": 5.5,
-            "zoom": "history"
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "一番下の「始め」を押すと、1手も打っていない姿に戻るわ。",
-          "scene": {
-            "kind": "footage",
-            "clip": "undo",
-            "at": 5.5,
+            "hold": 5.4,
             "zoom": "history"
           }
         },
@@ -556,8 +545,8 @@
           "scene": {
             "kind": "footage",
             "clip": "undo",
-            "at": 8.0,
-            "hold": 8.0
+            "at": 5.4,
+            "hold": 5.4
           }
         },
         {
@@ -567,8 +556,8 @@
           "scene": {
             "kind": "footage",
             "clip": "undo",
-            "at": 8.0,
-            "hold": 8.0
+            "at": 5.4,
+            "hold": 5.4
           }
         }
       ]
@@ -769,8 +758,7 @@
             "kind": "footage",
             "clip": "aim",
             "at": 6.6,
-            "hold": 9.0,
-            "mark": "aim"
+            "hold": 9.3
           }
         },
         {
@@ -780,8 +768,8 @@
           "scene": {
             "kind": "footage",
             "clip": "aim",
-            "at": 9.0,
-            "hold": 9.0,
+            "at": 9.3,
+            "hold": 9.3,
             "mark": "aim"
           }
         },
@@ -792,8 +780,8 @@
           "scene": {
             "kind": "footage",
             "clip": "aim",
-            "at": 9.0,
-            "hold": 9.0,
+            "at": 9.3,
+            "hold": 9.3,
             "mark": "aim"
           }
         },
@@ -804,7 +792,7 @@
           "scene": {
             "kind": "footage",
             "clip": "aim",
-            "at": 9.0,
+            "at": 9.3,
             "hold": 11.5,
             "mark": "aim"
           }
