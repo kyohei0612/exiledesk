@@ -766,6 +766,132 @@
           }
         }
       ]
+    },
+    {
+      "name": "骨・お告げ・ルーン",
+      "target_seconds": 50,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "骨やお告げ、ルーンも打てるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 0,
+            "hold": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "カレンシーを持つと、その下に、一緒に掛けられるお告げが出るの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 1,
+            "hold": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "お告げの下には、効き方が一言で書いてあるわ。今のアイテムで意味が無い時は、黄色で教えてくれるの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 3,
+            "hold": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "使い道が分からないお告げも、迷わないのだ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 4,
+            "hold": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "骨を打つと、未発現の冒涜MODが付くわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 4,
+            "hold": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "魂の井戸で発現すると、候補が3つ出るの。アビスの反響のお告げを掛けておけば、引き直しもできるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 6,
+            "hold": 9
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "〔結果: 発現で選んだ MOD〕",
+          "scene": {
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 9,
+            "hold": 11
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "ちゃんと3つから選べるのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 11,
+            "hold": 11
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ルーンは、アイテムを押すとソケットに差せるわ。外す時は、ソケットを右クリックよ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "rune",
+            "at": 0,
+            "hold": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "〔結果: ルーンと、その後の高貴〕",
+          "scene": {
+            "kind": "footage",
+            "clip": "rune",
+            "at": 5
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "クラフトに使う物は、ほとんど試せるのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "rune",
+            "at": 9,
+            "hold": 9
+          }
+        }
+      ]
     }
   ]
 }
