@@ -150,3 +150,21 @@ def use_once(n):
 | 直前の変化 | 枠の中に工程も入った (LAST_CHANGE_JS は全部の手まで読む) |
 | 映さない物 | 「この状態からシミュレーター →」が増えた (HIDE_JS に足す) |
 | 邪魔な窓 | 版が上がった後の最初の起動で「更新内容」の窓 (`div.fixed.inset-0.z-50`、「閉じる」)。localStorage `exiledesk.changelog.seen` に今の版を入れると出ない |
+
+## 9. v0.1.495 (2026-10-12) で変わった所 (8 章より優先)
+
+| 物 | 今のセレクタ・注意 |
+|---|---|
+| zoom | `max(1, innerWidth/1660) * uiScale`。localStorage `exiledesk.uiScale` が 1 の時だけ 1.157 → 撮る前に消すか Ctrl+0 |
+| キー | R = 1 手戻す、Tab = MOD 一覧の開け閉め。入力欄の外で文字キーを押さない |
+| アイテム枠 | `page.locator("[data-stage-card]").filter(visible=True).first`、名前は `card.locator("p.st-name").first` (MOD の行を押すと一覧の窓が開く) |
+| ベース一覧 | `[data-stage-settings] > div.w-full > button[aria-expanded]`。今のベースの部位は最初から開いている (押すと畳む → aria-expanded が true でない時だけ押す)。属性は `[data-base-panel] .g-tab` has_text `^筋力$`。2 行より下は「もっと見る」か検索 |
+| 棚 | タブは無い。打てない物は DOM に無い。エッセンスは `[data-ess-keys~="essence:<段>:<種類>/<modId>"]` → `.ess-anchor [data-shelf]`。「その他のルーン」は開くボタンの中 |
+| お告げ | カレンシーを持っている間だけ `[data-held-omens] [data-key=…]` |
+| 工程 | `hist = page.locator("div.g-panel", has=page.locator("b.g-sec-title", has_text=re.compile("^工程$")))`、最新の手は `hist.locator("ol > li").first`、「共有」ボタン |
+| 直前の変化 | 欄は無い → 工程の最新の手を読む JS (`b.g-sec-title` が「工程」の `div.g-panel` の `ol > li` の先頭、手の数は `.g-sec-head` の「· N 手」) |
+| MOD 一覧の窓 | `button.tbtn-top` has_text「MOD 一覧」か Tab → `page.get_by_role("dialog", name="このベースに付く MOD")`。閉じるは Escape。目次は `[data-mod-toc] button`、検索欄は visible で絞る |
+| 次の手で狙う | `button[data-aim-at="<modId>:T1"]` → `page.get_by_role("dialog", name="次の手で狙う")` (z-[300]) → 「確率を見る」→ `section[data-aim-panel]`、`^計算中…` が消えるまで待つ。MOD 一覧の窓は残るので Escape |
+| 右クリック | 持っている時はどこでも手放す。持っていない時は MOD の行でフラクチャー、ルーンの穴で外す |
+| 隠す | 詳細カードは `body > div[data-hover-layer]` (旧 z-[500] は無効)。ボタンは title で: `button[title^="打った手を 16:9"]` `button[title^="今までの手を手順 JSON"]` `button[title^="POE2Tube に渡す結果 JSON"]` `button[title^="craft-stage-run.mjs"]` `button[title^="今のアイテムに付いている MOD の組み合わせ"]` `button[title^="今のアイテム (付いている MOD"]` |
+| 起動直後の窓 | 「更新しました」(ModalShell、Escape で閉じる)。出さないなら localStorage `exiledesk.changelog.seen` = 今の版 |
