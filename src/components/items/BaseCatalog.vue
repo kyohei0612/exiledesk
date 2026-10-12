@@ -118,6 +118,39 @@ const FAM_UNIQUE: Record<string, string> = {
   盾: "Svalinn", フォーカス: "Rathpith Globe", 矢筒: "Cadiro's Gambit",
   兜: "Corona of the Red Sun", 鎧: "Kaom's Heart", 手袋: "Aerisvane's Wings", 靴: "The Infinite Pursuit", ベルト: "Mageblood", アミュレット: "Eventide Petals", 指輪: "The Taming", ジュエル: "Split Personality",
 };
+/**
+ * 絵の主な色で光らせる (2026-10-13 オーナー「アイコンに合った感じの」: 一律の琥珀色ではなく、青いミョルナーは青く、赤い物は赤く)。
+ * 読み込んだ絵を小さく描いて、色の濃い (彩度の高い) 画素の平均を取り、--glow に入れる。読めなければ CSS の既定 (琥珀色) のまま
+ */
+function tintGlow(e: Event): void {
+  const img = e.target as HTMLImageElement;
+  try {
+    const c = document.createElement("canvas");
+    c.width = c.height = 24;
+    const g = c.getContext("2d", { willReadFrequently: true });
+    if (!g) return;
+    g.drawImage(img, 0, 0, 24, 24);
+    const d = g.getImageData(0, 0, 24, 24).data;
+    let r = 0, gr = 0, b = 0, w = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      const R = d[i]!, G = d[i + 1]!, B = d[i + 2]!, A = d[i + 3]!;
+      if (A < 128) continue;
+      const mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+      const sat = mx ? (mx - mn) / mx : 0;
+      // 暗い所・灰色は数えない (光の色にならない)。明るく色の濃い画素ほど重く
+      if (mx < 60 || sat < 0.25) continue;
+      const k = sat * (mx / 255);
+      r += R * k; gr += G * k; b += B * k; w += k;
+    }
+    if (w < 1) return;
+    // 光らせるので明るめに (一番明るい成分を 255 近くまで持ち上げる)
+    let R = r / w, G = gr / w, B = b / w;
+    const up = 235 / Math.max(R, G, B, 1);
+    R = Math.min(255, R * up); G = Math.min(255, G * up); B = Math.min(255, B * up);
+    // 枠 (オーラ・光の粒) と絵の両方が使うので、枠に入れる
+    (img.parentElement ?? img).style.setProperty("--glow", `${Math.round(R)}, ${Math.round(G)}, ${Math.round(B)}`);
+  } catch { /* 読めない絵 (よそのドメイン) は既定の色 */ }
+}
 function famArt(f: Family): string | null {
   const u = FAM_UNIQUE[f.name] && uniqueArt(FAM_UNIQUE[f.name]!);
   if (u) return u;
@@ -255,9 +288,12 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
             <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ tr(r.ja, r.en) }}</p>
             <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
             <div :class="phone ? 'grid grid-cols-3 gap-1.5' : 'flex flex-wrap gap-1'">
-              <button v-for="f in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
-                <span class="grid size-16 place-items-center md:size-20" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'">
-                  <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" draggable="false" />
+              <button v-for="(f, fi) in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
+                <!-- ユニークの絵はゆっくり光る (脈打つ光 + 乗せると光が走る。2026-10-13 オーナー「光らせることできる？動きのある感じで」)。タイルごとに少しずらして一斉に光らない -->
+                <span class="fam-slot grid size-16 place-items-center md:size-20" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'" :style="{ '--d': `${-(fi * 1.3) % 9}s` }">
+                  <span class="fam-aura" aria-hidden="true" />
+                  <span v-for="k in 3" :key="k" class="fam-mote" :style="{ '--k': k }" aria-hidden="true" />
+                  <img v-if="famArt(f)" :src="famArt(f)!" alt="" loading="lazy" class="fam-art max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" draggable="false" @load="tintGlow" />
                 </span>
                 <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ famLabel(f) }}</span>
                 <span v-if="f.variants.length > 1 && !JOINED.has(f.name)" class="text-[10px] leading-none opacity-50 md:text-[11px]">{{ tr(`${f.variants.length} 種`, `${f.variants.length} types`) }}</span>
@@ -290,3 +326,50 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
     <BaseCardGrid v-if="query.trim() || (phone && cls)" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" />
   </div>
 </template>
+
+<style scoped>
+/*
+ * 部位のタイルの絵: その絵の色 (--glow、tintGlow が枠に入れる) の光が動き続ける (2026-10-13 オーナー「脈打たなくていい、動いてる感じで」「アイコンに合った」)。
+ * 後ろで光の帯がゆっくり回り (fam-aura)、小さな光の粒が下から立ちのぼる (fam-mote)。絵は同じ色でうっすら光ったまま。乗せると少し大きく明るく
+ */
+.fam-slot { --glow: 255, 176, 80; position: relative; overflow: hidden; }
+.fam-art { position: relative; z-index: 1; filter: drop-shadow(0 0 5px rgba(var(--glow), 0.6)); transition: transform 0.25s ease-out, filter 0.25s ease-out; }
+.fam-aura {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(var(--glow), 0.38) 50deg, transparent 110deg, transparent 180deg, rgba(var(--glow), 0.28) 230deg, transparent 290deg);
+  filter: blur(6px);
+  animation: fam-spin 9s linear infinite;
+  animation-delay: var(--d, 0s);
+  pointer-events: none;
+}
+@keyframes fam-spin { to { transform: rotate(360deg); } }
+.fam-mote {
+  position: absolute;
+  bottom: 10%;
+  left: calc(22% + var(--k) * 16%);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(var(--glow), 0.95);
+  box-shadow: 0 0 6px 1px rgba(var(--glow), 0.8);
+  opacity: 0;
+  animation: fam-rise 3.4s ease-out infinite;
+  animation-delay: calc(var(--d, 0s) + var(--k) * 1.1s);
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes fam-rise {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(-48px) translateX(4px); opacity: 0; }
+}
+button:hover .fam-art { transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(var(--glow), 0.95)) drop-shadow(0 0 16px rgba(var(--glow), 0.45)) brightness(1.12); }
+button:hover .fam-aura { animation-duration: 3.5s; }
+/* 動きを減らす設定の人には動かさない (光だけ) */
+@media (prefers-reduced-motion: reduce) {
+  .fam-aura, .fam-mote { animation: none; }
+  .fam-mote { display: none; }
+}
+</style>
