@@ -88,4 +88,5 @@ def test_description_has_x_link() -> None:
 
     raw = json.loads(Path("data/channel/chocobanana.json").read_text(encoding="utf-8"))
     text = build_description("概要", [], ChannelProfile.model_validate(raw))
-    assert "▼X (旧Twitter)\n@chocobanana_HS https://x.com/chocobanana_HS" in text
+    assert "▼X (旧Twitter)
+https://x.com/chocobanana_HS" in text

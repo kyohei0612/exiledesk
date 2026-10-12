@@ -170,6 +170,8 @@ START = {
     "aim": f"seed=4&{RING}&hands=transmute",
     "reveal": f"seed=5&{RING}&hands=transmute,augment,regal,exalt",
     "rune": "seed=6&base=Warlord Cuirass&ilvl=82&hands=transmute,augment,regal,exalt,exalt,exalt",
+    # 狙いを複数選んで「どれかが付く確率」(ExileDesk 要望 c9dee700、X 用の 30 秒)
+    "multi": f"seed=32&{RING}&hands=transmute,augment,regal",
 }
 
 
@@ -347,6 +349,31 @@ def c_rune(w: Web) -> None:  # 6 つ埋まった胴にセールの凱旋 → 高
     pause(2.5)
 
 
+def c_multi(w: Web) -> None:
+    """高貴を持って MOD 一覧 → 3 つの耐性にチェック → 全ての元素耐性も足す → 閉じて 1 回打つ."""
+    p, h = w.page, w.hand
+    w.hold("exalt")
+    pause(0.8)
+    dlg = w.open_modlist()
+    pause(1.5)
+    band = p.get_by_text(re.compile(r"^選んだ \d+ 個のどれかが付く"))
+    for key in ("FireResistance", "ColdResistance", "LightningResistance", "AllResistances"):
+        row = dlg.locator(f'[data-row-key="normal:Rings/{key}"]').first
+        h.click(row.locator("input[type=checkbox]").first, 700, 0.8)
+        mark(f"選んだ: {key}")
+        band.first.wait_for(timeout=10000)
+        pause(0.6)
+        w.notes.append({"after": key, "band": band.first.locator("xpath=..").inner_text()})
+        if key == "LightningResistance":
+            pause(2.0)  # 3 つ選んだ所で少し止める
+    pause(2.0)
+    p.keyboard.press("Escape")
+    pause(0.8)
+    w.use()
+    p.keyboard.press("Escape")
+    pause(2.0)
+
+
 CLIPS = {
     "open": c_open,
     "orbs": c_orbs,
@@ -355,6 +382,7 @@ CLIPS = {
     "aim": c_aim,
     "reveal": c_reveal,
     "rune": c_rune,
+    "multi": c_multi,
 }
 # 8 章の静止画: 「要望・バグを送る」に黄色の枠
 FEEDBACK_JS = r"""
