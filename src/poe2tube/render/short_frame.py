@@ -129,7 +129,9 @@ def compose_short(
     img = Image.new("RGBA", (SW, SH), (255, 255, 255, 255))
     _header(img, title)
     if line.scene.kind != "talk":
-        panel = static.crop(PANEL_SRC)
+        # 録画 (footage) は画面いっぱいに出しているので全部を、他は横長フレームのパネルの範囲を
+        src = (0, 0, static.width, static.height) if line.scene.kind == "footage" else PANEL_SRC
+        panel = static.crop(src)
         k = SW / panel.width
         panel = panel.resize((SW, int(panel.height * k)), Image.Resampling.LANCZOS)
         img.alpha_composite(panel, (0, PANEL_Y))

@@ -1,0 +1,111 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】無料のクラフトエミュレーター ExileDesk をリリースしました #Shorts",
+  "target_seconds": 32,
+  "result_file": "data/results/exiledesk_promo.json",
+  "layout": "short",
+  "short_title": "オーブ使い放題！？",
+  "demos": {},
+  "sections": [
+    {
+      "name": "オーブ使い放題！？",
+      "target_seconds": 32,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "本物のオーブを使わずに、クラフトを試せたら嬉しくない？",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0,
+            "zoom": "card"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "そんなことできるのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0,
+            "zoom": "card"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "無料のクラフトエミュレーター、ExileDeskをリリースしたの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "open",
+            "at": 0,
+            "rate": 1.5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ゲームと同じ決まりで、オーブを何回でも打てるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "orbs",
+            "at": 1.5,
+            "zoom": "card",
+            "rate": 1.6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "付く確率まで出るのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "aim",
+            "at": 8.2,
+            "hold": 9.3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1手戻すのも、骨やお告げも試せるわ。ブラウザで開くだけで、スマホでも使えるの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "reveal",
+            "at": 3.8,
+            "zoom": "reveal",
+            "rate": 1.5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "使い方は本編で全部紹介しているから、関連動画から見てね。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0,
+            "zoom": "card"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "サイトのURLは、関連動画の説明欄に貼ってあるのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0,
+            "zoom": "card"
+          }
+        }
+      ]
+    }
+  ]
+}
