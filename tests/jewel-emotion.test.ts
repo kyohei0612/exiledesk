@@ -19,23 +19,17 @@ describe("液化した感情", () => {
     expect(emotionKeysFor(rare("Diamond"))).toEqual(["emotion:Concentrated Liquid Isolation", "emotion:Potent Liquid Ferocity", "emotion:Potent Liquid Contempt"]);
     expect(emotionKeysFor(freshItem(data, "Gold Ring", 82))).toEqual([]);
   });
-  it("1 つ消して決まった作った MOD を付ける、前の作った MOD は当たった時だけ消える、レアだけ、古代は時を失ったジュエルだけ", () => {
+  it("1 つ消して決まった作った MOD を付ける、作った MOD が付いている間は使えない、レアだけ、古代は時を失ったジュエルだけ", () => {
     const r = rare("Ruby");
     const a = applyCurrency(data, r, "emotion:Diluted Liquid Ire", mulberry32(5), []);
     expect(a.applied).toBe(true);
     expect(a.added?.[0]?.crafted).toBe(true);
     expect(a.added?.[0]?.modId).toBe("Jewels_str/Emotion_JewelArmour");
     expect(a.removed?.length).toBeGreaterThanOrEqual(1);
-    // 前の作った MOD は確定では消さない (2026-10-12 オーナー): 消えたのが別の MOD なら作った MOD が 2 つ、当たれば 1 つ
-    let two = 0, one = 0;
-    for (let s = 1; s <= 80; s++) {
-      const x = applyCurrency(data, a.item, "emotion:Liquid Envy", mulberry32(s), []);
-      if (!x.applied) continue;
-      const n = allMods(x.item).filter((m) => m.crafted).length;
-      if (x.removed!.some((m) => m.crafted)) { expect(n).toBe(1); one++; } else { expect(n).toBe(2); two++; }
-    }
-    expect(two).toBeGreaterThan(0);
-    expect(one).toBeGreaterThan(0);
+    // 作った MOD が付いている間は使えない (打つ前に分かる = 棚から外れる。2026-10-12 オーナー)
+    const again = applyCurrency(data, a.item, "emotion:Liquid Envy", mulberry32(6), []);
+    expect(again.applied).toBe(false);
+    expect(again.random).toBeFalsy();
     expect(applyCurrency(data, A(freshItem(data, "Ruby", 82), "transmute", 1), "emotion:Liquid Envy", mulberry32(1), []).applied).toBe(false);
     expect(applyCurrency(data, r, "emotion:Ancient Liquid Envy", mulberry32(1), []).applied).toBe(false);
     expect(applyCurrency(data, rare("Time-Lost Ruby"), "emotion:Ancient Liquid Envy", mulberry32(1), []).applied).toBe(true);

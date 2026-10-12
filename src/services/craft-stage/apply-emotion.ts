@@ -7,7 +7,7 @@
  * 決まり (オーナーと決めた / 確かめていない所):
  *   - 消える候補は固定 (フラクチャー) 以外の全部。前の感情で付けた作った MOD も入る (2026-10-11 オーナー「おけ」)
  *   - MOD が 4 つ揃っていないレアにも使える。1 つ消してから付ける (2026-10-11 オーナー「つける」)
- *   - 前の作った MOD は確定では消さない (ランダムに当たった時だけ消える)。作った MOD の数の上限は決めない (2026-10-12 オーナー)
+ *   - 作った MOD (前の感情で付いた物) が付いている間は使えない (2026-10-12 オーナー)
  *   - 消すのは固定以外から等しく。獰猛・侮蔑 (プレの版とサフィの版がある物) は、消えた MOD の側の版が付く
  *     (2026-10-11 オーナーの参考動画 2 本: 侮蔑は 2/2 で 50/50、サフィが上限を超えている時はプレしか当たらない)
  *   - 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) が当たると弾かれる。片方の版しか無い物で、付ける側に空きが無い所が消えた時も弾かれる
@@ -41,6 +41,8 @@ export function applyEmotion(data: PatchData, item: StageItem, key: string, rng:
   }
   if (item.rarity !== "rare") return skip(item, tr("レアのジュエルにだけ使える", "Rare jewels only"));
   if (item.corrupted) return skip(item, tr("コラプトしたアイテムには使えない", "Can't be used on a Corrupted item"));
+  // 作った MOD (前の感情で付いた物) が付いている間は使えない (2026-10-12 オーナー「クラフト MOD が見えてる状態なら付けれない」)
+  if (allMods(item).some((m) => m.crafted)) return skip(item, tr("作った MOD が付いているジュエルには使えない", "Can't be used while the jewel has a crafted mod"));
   // 消す: 固定以外から等しく
   const pool = allMods(item).filter((m) => !m.fractured);
   if (!pool.length) return skip(item, tr("消せる MOD が無い (固定だけ)", "No mod can be removed (only fractured ones)"));
@@ -53,8 +55,6 @@ export function applyEmotion(data: PatchData, item: StageItem, key: string, rng:
   const side = e.side as StageSide;
   const it = without(item, gone);
   const removed: StageMod[] = [gone];
-  // 前の作った MOD は確定では消さない (消えるのはランダムに選ばれた 1 つだけ。2026-10-12 オーナー「確定で消える MOD なんて削減以外で選ぶシステムはない」)。
-  // 作った MOD の数の上限はゲームの文に無いので決めない ([[feedback-game-rules-as-written]])
   if (listOf(it, side).length >= limitOf(it, side)) return skipRandom(item, tr("付ける側に空きが無い所が消えたので追加できない (もう一度)", "The removed mod was on the other side and this side is full, so nothing can be added (try again)"));
   const added: StageMod = { ...makeStageMod(mod, side, 0, rng), crafted: true };
   return { applied: true, item: withMod(it, added), added: [added], removed };

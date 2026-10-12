@@ -190,7 +190,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     return [
       tr("**レアのジュエル**にだけ使える。固定 (フラクチャー) 以外から**ランダムに 1 つ消して**、決まった作った MOD を付ける", "**Rare jewels** only. **Removes a random mod** (not fractured) and adds a fixed crafted mod"),
       two ? tr("付くのは**消えた MOD の側の版** (プレが消えればプレの版、サフィが消えればサフィの版)", "Adds the version for **the side of the removed mod** (prefix removed → prefix version)") : "",
-      tr("前の作った MOD も消える候補の 1 つ (当たった時だけ消える)。MOD が 4 つ揃っていなくても使える", "A previous crafted mod is just one of the removal candidates (removed only if hit). Works with fewer than 4 mods"),
+      tr("**作った MOD が付いている間は使えない** (前の感情の MOD を外してから)。MOD が 4 つ揃っていなくても使える", "**Can't be used while a crafted mod is on the jewel** (remove the previous one first). Works with fewer than 4 mods"),
       tr("上限を超えている側 (軽蔑を外した後の 3 つ目) が消える候補に当たると**弾かれる** (何も変わらない、もう一度)", "If it hits the side that is over its limit (after removing Contempt), it is **rejected** (no change, try again)"),
       tr("古代の版は時を失ったジュエル用", "Ancient versions are for Time-Lost Jewels"),
     ].filter(Boolean);

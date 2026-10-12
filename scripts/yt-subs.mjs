@@ -2,7 +2,7 @@
 /**
  * yt-subs.mjs — YouTube の字幕を取って、読める文にして保存する (2026-10-09 オーナー「字幕ダウンローダー的な奴、簡易でいいから。これ打ったら字幕が取れるみたいなの」)
  *
- *   pnpm subs <URL か動画 ID> [言語 (既定 en,ja)]
+ *   pnpm subs <URL か動画 ID> [<URL か動画 ID> ...] [言語 (既定 en,ja)]   (何本でも。1 本ずつ間を空けて取る)
  *   pnpm subs <落とした .srt / .vtt>   (拡張機能 YouTube Subtitle Downloader などで落とした物を同じ形にそろえる)
  *   例: pnpm subs https://www.youtube.com/watch?v=o3Fh1DJmxBA
  *       pnpm subs o3Fh1DJmxBA ja
@@ -22,7 +22,11 @@ import { fileURLToPath } from "node:url";
 import { annotate } from "./subs-annotate.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const [input, langArg = "en,ja"] = process.argv.slice(2);
+const argv = process.argv.slice(2);
+const isVideo = (a) => /^[\w-]{11}$/.test(a) || /(?:v=|youtu\.be\/|shorts\/|live\/)([\w-]{11})/.test(a);
+// 最後の引数が URL でも動画 ID でもファイルでもなければ言語 (en,ja など)
+const langArg = argv.length > 1 && !isVideo(argv[argv.length - 1]) && !/\.(srt|vtt)$/i.test(argv[argv.length - 1]) ? argv.pop() : "en,ja";
+const input = argv[0];
 if (!input) {
   console.error("使い方: pnpm subs <URL か動画 ID> [言語 (既定 en,ja)]  /  pnpm subs <落とした .srt か .vtt>");
   process.exit(1);
@@ -51,35 +55,7 @@ if (/\.(srt|vtt)$/i.test(input) && existsSync(input)) {
   console.log(`${events.length.toLocaleString()} 行 → ${text.length.toLocaleString()} 字 → ${path}`);
   process.exit(0);
 }
-const id = /^[\w-]{11}$/.test(input) ? input : (/(?:v=|youtu\.be\/|shorts\/|live\/)([\w-]{11})/.exec(input)?.[1] ?? null);
-if (!id) {
-  console.error(`動画 ID が読めない: ${input}`);
-  process.exit(1);
-}
 const langs = langArg.split(",").map((s) => s.trim()).filter(Boolean);
-const url = `https://www.youtube.com/watch?v=${id}`;
-const tmp = mkdtempSync(join(tmpdir(), "yt-subs-"));
-const out = join(ROOT, "data-cache", "subs");
-mkdirSync(out, { recursive: true });
-
-/** yt-dlp で字幕だけ (json3)。manual = 手で付けた字幕、そうでなければ自動の字幕 */
-function fetchSubs(manual) {
-  // YT_COOKIES=chrome などで、そのブラウザの YouTube のログインを使う (429 で断られ続ける時。自分の PC で自分が打つ時だけ)
-  const cookies = process.env.YT_COOKIES ? ["--cookies-from-browser", process.env.YT_COOKIES] : [];
-  const args = [...cookies, "--js-runtimes", "node", "--skip-download", manual ? "--write-subs" : "--write-auto-subs", "--sub-langs", langs.join(","), "--sub-format", "json3", "-o", join(tmp, `${manual ? "m" : "a"}.%(ext)s`), url];
-  try {
-    execFileSync("yt-dlp", args, { stdio: ["ignore", "ignore", "pipe"] });
-  } catch (e) {
-    const msg = String(e.stderr ?? e.message ?? e);
-    if (/ENOENT/.test(msg)) { console.error("yt-dlp が見つからない。`pip install -U yt-dlp` で入れてください"); process.exit(1); }
-    // 429 = YouTube がブラウザらしさを求めて断った。なりすましの部品 (curl_cffi) を入れると通る
-    if (/429/.test(msg)) { console.error('YouTube に断られた (429)。何度も取った後はしばらく待つ。続く時はブラウザのログインを使う: YT_COOKIES=chrome pnpm subs <URL> (なりすましの部品が無ければ pip install -U "yt-dlp[default,curl-cffi]")'); return; }
-    console.error(msg.split("\n").filter((l) => /ERROR/.test(l)).slice(0, 3).join("\n"));
-  }
-}
-fetchSubs(true);
-fetchSubs(false);
-
 /** json3 → 30 秒ごとの段落 ([分:秒] 本文) */
 function toText(json) {
   const parts = [];
@@ -100,21 +76,58 @@ function toText(json) {
   return lines.join("\n\n") + "\n";
 }
 
-const files = readdirSync(tmp).filter((f) => f.endsWith(".json3"));
-const saved = [];
-for (const lang of langs) {
-  // 手で付けた字幕を先に。言語は ja / ja-JP / en-US などもまとめて見る
-  const pick = ["m", "a"].map((k) => files.find((f) => f.startsWith(`${k}.`) && (f === `${k}.${lang}.json3` || f.startsWith(`${k}.${lang}-`)))).find(Boolean);
-  if (!pick) continue;
-  const text = lang.startsWith("en") ? annotate(toText(JSON.parse(readFileSync(join(tmp, pick), "utf8")))) : toText(JSON.parse(readFileSync(join(tmp, pick), "utf8")));
-  const path = join(out, `${id}.${lang}.txt`);
-  writeFileSync(path, text);
-  saved.push({ lang, kind: pick.startsWith("m.") ? "手の字幕" : "自動の字幕", path, chars: text.length });
-}
-rmSync(tmp, { recursive: true, force: true });
+/** 1 本分 (字幕を取って data-cache/subs へ)。取れたら true */
+function run(input) {
+  const id = /^[\w-]{11}$/.test(input) ? input : (/(?:v=|youtu\.be\/|shorts\/|live\/)([\w-]{11})/.exec(input)?.[1] ?? null);
+  if (!id) { console.error(`動画 ID が読めない: ${input}`); return false; }
+  const url = `https://www.youtube.com/watch?v=${id}`;
+  const tmp = mkdtempSync(join(tmpdir(), "yt-subs-"));
+  const out = join(ROOT, "data-cache", "subs");
+  mkdirSync(out, { recursive: true });
 
-if (!saved.length) {
-  console.error(`字幕が見つからない (${langs.join(", ")})。言語を変えて試す: pnpm subs ${id} en`);
-  process.exit(1);
+  /**
+   * yt-dlp で字幕だけ (json3)。manual = 手で付けた字幕、そうでなければ自動の字幕。
+   * 自動の字幕は「話している言葉そのまま」(<言語>-orig) だけを取る。訳した自動字幕 (en・ja) を頼むと 429 で断られる (2026-10-12 実測: en-orig は取れて en は 429)
+   */
+  function fetchSubs(manual) {
+    // YT_COOKIES=chrome などで、そのブラウザの YouTube のログインを使う (429 で断られ続ける時。自分の PC で自分が打つ時だけ)
+    const cookies = process.env.YT_COOKIES ? ["--cookies-from-browser", process.env.YT_COOKIES] : [];
+    const args = [...cookies, "--js-runtimes", "node", "--skip-download", manual ? "--write-subs" : "--write-auto-subs", "--sub-langs", (manual ? langs : langs.map((l) => `${l}-orig`)).join(","), "--sub-format", "json3", "-o", join(tmp, `${manual ? "m" : "a"}.%(ext)s`), url];
+    try {
+      execFileSync("yt-dlp", args, { stdio: ["ignore", "ignore", "pipe"] });
+    } catch (e) {
+      const msg = String(e.stderr ?? e.message ?? e);
+      if (/ENOENT/.test(msg)) { console.error("yt-dlp が見つからない。`pip install -U yt-dlp` で入れてください"); process.exit(1); }
+      // 429 = YouTube がブラウザらしさを求めて断った。なりすましの部品 (curl_cffi) を入れると通る
+      if (/429/.test(msg)) { console.error('YouTube に断られた (429)。何度も取った後はしばらく待つ。続く時はブラウザのログインを使う: YT_COOKIES=chrome pnpm subs <URL> (なりすましの部品が無ければ pip install -U "yt-dlp[default,curl-cffi]")'); return; }
+      console.error(msg.split("\n").filter((l) => /ERROR/.test(l)).slice(0, 3).join("\n"));
+    }
+  }
+  fetchSubs(true);
+  fetchSubs(false);
+
+  const files = readdirSync(tmp).filter((f) => f.endsWith(".json3"));
+  const saved = [];
+  for (const lang of langs) {
+    // 手で付けた字幕を先に。言語は ja / ja-JP / en-US などもまとめて見る
+    const pick = ["m", "a"].map((k) => files.find((f) => f.startsWith(`${k}.`) && (f === `${k}.${lang}.json3` || f.startsWith(`${k}.${lang}-`)))).find(Boolean);
+    if (!pick) continue;
+    const text = lang.startsWith("en") ? annotate(toText(JSON.parse(readFileSync(join(tmp, pick), "utf8")))) : toText(JSON.parse(readFileSync(join(tmp, pick), "utf8")));
+    const path = join(out, `${id}.${lang}.txt`);
+    writeFileSync(path, text);
+    saved.push({ lang, kind: pick.startsWith("m.") ? "手の字幕" : "自動の字幕", path, chars: text.length });
+  }
+  rmSync(tmp, { recursive: true, force: true });
+
+  if (!saved.length) { console.error(`${id}: 字幕が見つからない (${langs.join(", ")})。言語を変えて試す: pnpm subs ${id} en`); return false; }
+  for (const s of saved) console.log(`${id} ${s.lang} (${s.kind}) ${s.chars.toLocaleString()} 字 → ${s.path}`);
+  return true;
 }
-for (const s of saved) console.log(`${s.lang} (${s.kind}) ${s.chars.toLocaleString()} 字 → ${s.path}`);
+
+// 何本でも。続けて取ると 429 で断られやすいので 1 本ごとに 8 秒あける
+let ok = 0;
+for (const [i, v] of argv.entries()) {
+  if (i) execFileSync(process.execPath, ["-e", "setTimeout(() => {}, 8000)"]);
+  if (run(v)) ok++;
+}
+if (!ok) process.exit(1);
