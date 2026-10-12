@@ -86,7 +86,7 @@ export interface AutoTreeInput {
   craftedLimit?: number;
   /** 勢力のお告げ (黒血・リージュ・君主) を使うか。省くと使える時は使う (武器・装飾品の勢力の冒涜 MOD)。false = 使わない (比べる用) */
   faction?: boolean;
-  /** 冒涜に深淵の反響のお告げを付けるか。省くと付ける。false = 付けない (反響が高い時。比べる用) */
+  /** 冒涜にアビスの反響のお告げを付けるか。省くと付ける。false = 付けない (反響が高い時。比べる用) */
   echoes?: boolean;
   /** カオスで引く狙い (やり直しの費用から決めた指定。null = カオスは使わない、省くと一番出にくい物) */
   chaosPick?: string | null;

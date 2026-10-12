@@ -28,7 +28,7 @@ export interface MethodEstimate {
   noSideOmen?: boolean;
   /** 冒涜に勢力のお告げを付ける (代は perTry に入っている) */
   faction?: boolean;
-  /** 冒涜に深淵の反響のお告げを付けない (false の時だけ入る) */
+  /** 冒涜にアビスの反響のお告げを付けない (false の時だけ入る) */
   echoes?: boolean;
   /** カオスに抹消のお告げを付ける (触らない MOD がある側を消させない)。代は perTry に入っている */
   erasure?: boolean;
