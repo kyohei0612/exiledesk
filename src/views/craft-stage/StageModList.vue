@@ -16,7 +16,7 @@ import { fmtPct } from "../../utils/format-pct";
 import { baseNameOf, tr } from "../../i18n/lang";
 import { keepPlace, scrollToTop } from "../../utils/keep-place";
 import { OVERRIDDEN, weightOverrideNote } from "../../services/htc/weight-overrides";
-import { heldOdds } from "../../services/craft-stage/held-odds";
+import { aimTierKey, heldAnyOf, heldOdds } from "../../services/craft-stage/held-odds";
 import { autoGroup } from "../../services/craft-stage/auto-group";
 import { AIM_MAX } from "../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
@@ -58,6 +58,47 @@ const heldCands = computed(() => {
   // 計算は services/craft-stage/held-odds.ts (打つ処理・計算機と同じ決まり。tests/held-odds-parity.test.ts で突き合わせ)
   const h = heldOdds(d, it, k, s.omens.value);
   return h ? { ...h, name: nameOf(k) } : null;
+});
+/**
+ * 狙う MOD を幾つか選んで「どれか 1 つでも付く確率」(2026-10-12 要望 c9dee700、オーナー「カレンシー持ったら MOD の横にチェック欄、
+ * キャンセルや付けたらリセット」)。行の id (系統) で持つ。持つ物を変えた・離した・打った・ベースを変えた時は空に戻す
+ */
+const aimSel = ref<Set<string>>(new Set());
+watch([() => s.held.value, () => s.log.value.length, () => s.base.value], () => { if (aimSel.value.size) aimSel.value = new Set(); });
+/** 行の付きうる段の狙いのキー */
+const rowAimKeys = (r: ListRow): string[] => r.tiers.filter((t) => heldTierShare(r, t) > 0).map((t) => aimTierKey(t.modId ?? r.id, tierIndexOf(t.modId ?? r.id, t)));
+const rowAimState = (r: ListRow): "all" | "some" | "none" => {
+  const ks = rowAimKeys(r);
+  const n = ks.filter((k) => aimSel.value.has(k)).length;
+  return n && n === ks.length ? "all" : n ? "some" : "none";
+};
+/** 行のチェック: 付きうる段を全部入れる / 全部外す */
+function toggleAimRow(r: ListRow): void {
+  const next = new Set(aimSel.value);
+  const ks = rowAimKeys(r);
+  if (rowAimState(r) === "all") for (const k of ks) next.delete(k); else for (const k of ks) next.add(k);
+  aimSel.value = next;
+}
+const rankNum = (rank: string): number => Number(String(rank).replace(/^T/, "")) || 0;
+/** 段のチェック: 入れる時はその段以上 (T4 なら T1〜T4) も入れる、外す時はその段だけ (2026-10-12 オーナー) */
+function toggleAimTier(r: ListRow, t: ListRow["tiers"][number]): void {
+  const next = new Set(aimSel.value);
+  const k = aimTierKey(t.modId ?? r.id, tierIndexOf(t.modId ?? r.id, t));
+  if (next.has(k)) next.delete(k);
+  else for (const u of r.tiers) if (rankNum(u.rank) <= rankNum(t.rank) && heldTierShare(r, u) > 0) next.add(aimTierKey(u.modId ?? r.id, tierIndexOf(u.modId ?? r.id, u)));
+  aimSel.value = next;
+}
+const isAimTier = (r: ListRow, t: ListRow["tiers"][number]): boolean => aimSel.value.has(aimTierKey(t.modId ?? r.id, tierIndexOf(t.modId ?? r.id, t)));
+/** 選んだ系統の数 (帯の「選んだ N 個」) */
+const aimRows = computed(() => {
+  let n = 0;
+  for (const sec of sections.value) for (const col of sec.columns) for (const r of col.items) if (rowAimState(r) !== "none") n++;
+  return n;
+});
+const aimAny = computed(() => {
+  const h = heldCands.value, d = s.data.value, it = s.item.value, k = s.held.value;
+  if (!h || !d || !it || !k || !aimSel.value.size) return null;
+  return heldAnyOf(d, it, k, s.omens.value, aimSel.value, h);
 });
 /** 骨を持っているが、この部位に冒涜専用の MOD (変質した鎖骨なら異界も) が無い */
 const noDesecrated = computed(() => {
@@ -322,6 +363,12 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
         <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5 max-md:shrink-0 max-md:py-1.5" :class="active === sec.sid ? toneOf(sec).tab : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" @click="jump(sec.sid)">
           {{ sec.label }} <span class="ml-0.5 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ sec.count }}</span>
         </button>
+        <!-- 狙いに選んだ MOD のどれかが付く確率 (チェック欄、要望 c9dee700) -->
+        <span v-if="aimAny != null" class="ml-2 flex items-center gap-1.5 rounded-full border border-sky-400/40 bg-sky-500/10 px-2.5 py-0.5 text-sky-100 max-md:shrink-0">
+          {{ heldCands && "bone" in heldCands ? tr(`選んだ ${aimRows} 個のどれかが候補に出る`, `Any of ${aimRows} offered`) : tr(`選んだ ${aimRows} 個のどれかが付く`, `Any of ${aimRows} rolls`) }}
+          <b class="tabular-nums">{{ pct(aimAny) }}</b>
+          <button type="button" class="rounded px-1 text-[11px] text-white/50 hover:bg-white/10 hover:text-white/85" :title="tr('選んだ狙いを外す', 'Clear the selection')" @click="aimSel = new Set()">×</button>
+        </span>
         <input v-model="query" type="search" :placeholder="tr('文面やタグで探す (例: 耐性、ライフ)', 'Search text or tags')" class="ml-auto w-60 rounded-lg border border-white/15 bg-black/30 px-2 py-0.5 max-md:hidden" />
       </div>
       <!-- 骨を持っているのに冒涜の節が無い部位 (セプターなど): 候補が普通の MOD だけになる事を書く (2026-10-11 オーナー「ないなら注意書きいる」) -->
@@ -342,17 +389,23 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
         <div v-if="secShown(sec.sid)" class="grid gap-3 @4xl:grid-cols-2">
           <div v-for="col in sec.columns" :key="col.side" class="min-w-0">
             <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2">
+              <!-- チェック欄の上の ? (狙いは複数選べる。要望 c9dee700) -->
+              <span v-if="heldCands" class="flex w-5 shrink-0 justify-center self-center"><HelpTip :text="tr('狙う MOD は複数選べます (段の表で「その段以上」も)。選んだどれか 1 つでも付く確率を上に出します (打つ・持つ物を変えると外れます)', 'You can tick several target mods (or a tier and better in the tier table). The chance that any one of them rolls is shown at the top (cleared when you use or change the held item)')" /></span>
               <b class="text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
               <span class="text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
               <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap text-right" :class="heldCands ? 'text-sky-200' : ''">{{ heldCands ? ('bone' in heldCands ? tr("候補に出る", "Offered") : tr("付く確率", "Chance")) : tr("出やすさ", "Weight") }}</span><span class="w-6 text-right">{{ tr("段", "T") }}</span><span class="w-7 text-right">Lv</span></span>
             </p>
             <p v-if="!col.items.length" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
             <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : ''">
-              <!-- 1 系統 1 行。後ろの棒が出やすさ (列の一番出やすい物を 100%) -->
+              <!-- 1 系統 1 行。後ろの棒が出やすさ (列の一番出やすい物を 100%)。カレンシーを持っている時は左に狙いのチェック欄 -->
+              <div class="flex items-center gap-0">
+              <label v-if="heldCands" class="flex w-5 shrink-0 cursor-pointer justify-center self-stretch" :class="heldShare(r) ? '' : 'pointer-events-none opacity-25'" :title="tr('狙いに入れる (付きうる段を全部。段の表で段ごとにも選べる)', 'Add to targets (all tiers that can roll; pick tiers in the tier table)')">
+                <input type="checkbox" class="accent-sky-400" :checked="rowAimState(r) === 'all'" :indeterminate="rowAimState(r) === 'some'" :disabled="!heldShare(r)" @change="toggleAimRow(r)" />
+              </label>
               <button
                 type="button"
                 :data-rec="`mod:${r.id}`"
-                class="relative w-full overflow-hidden rounded-md px-2 py-1 text-left transition hover:bg-white/[0.05]"
+                class="relative min-w-0 flex-1 overflow-hidden rounded-md px-2 py-1 text-left transition hover:bg-white/[0.05]"
                 :class="[r.on ? 'ring-1 ring-emerald-400/60' : '', r.blocked || (heldCands && !heldShare(r)) || (r.group === 'rune' && !r.socketed) ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : '']"
                 :title="r.blocked ? tr('同じ系統の MOD が付いているので、今は付かない', 'A mod from the same group is already on the item, so this cannot roll now') : heldCands && !heldShare(r) ? tr(`持っている ${heldCands.name} では付かない`, `Cannot roll with the held ${heldCands.name}`) : undefined"
                 @click="toggleRow(`${sec.sid}:${r.id}`, $event)"
@@ -374,11 +427,14 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                   </span>
                 </span>
               </button>
+              </div>
               <!-- 段の表 -->
               <table v-if="expanded === `${sec.sid}:${r.id}`" class="mt-1 w-full text-[11px]">
                 <caption v-if="s.mode.value === 'sim'" class="pb-1 text-left text-[10px] opacity-60">{{ tr("T1 が一番良い段。「T○ 以上」= その段か、それより良い段が付けば当たり", "T1 is the best tier. “T○+” = a hit if that tier or better rolls") }}</caption>
                 <tbody>
                   <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5" :class="heldCands && !heldTierShare(r, t) ? 'opacity-35' : ''" :title="heldCands && !heldTierShare(r, t) ? tr(`持っている ${heldCands.name} では付かない段 (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.name} (minimum tier, item level, or same group)`) : undefined">
+                    <!-- 段のチェック: その段以上を狙いに (外す時はその段だけ) -->
+                    <td v-if="heldCands" class="w-5 py-0.5 text-center"><input type="checkbox" class="accent-sky-400 align-middle" :checked="isAimTier(r, t)" :disabled="!heldTierShare(r, t)" :title="tr(`${t.rank} 以上を狙いに入れる`, `Target ${t.rank} or better`)" @click.stop @change="toggleAimTier(r, t)" /></td>
                     <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
                     <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
                     <td class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>

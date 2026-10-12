@@ -12,7 +12,7 @@ import { ANCIENT_BONE_FLOOR, desecrationBossOfferProbability, desecrationOfferPr
 import { addCandidates, applyCurrency, kindOf } from "./apply-currency";
 import { mulberry32 } from "../htc/rng";
 import { allMods, effectiveCls, makeStageMod, room, SIDES, withMod, without } from "./stage-core";
-import { boneSideWeights } from "./apply-desecrate";
+import { boneSideWeights, revealOffers } from "./apply-desecrate";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { ABYSS_MARK_FLOOR } from "../htc/omens";
 
@@ -21,6 +21,8 @@ export interface HeldOdds {
   total: number;
   /** 骨 (候補 3 つに出る確率) */
   bone?: true;
+  /** 1 回で 1 つだけ足す手 (w / total がそのまま付く確率で、MOD どうしは同時に付かない) */
+  single?: true;
 }
 
 const BOSS: Record<string, DesecrationBossOmen> = { OmenoftheSovereign: "sovereign", OmenoftheLiege: "liege", OmenoftheBlackblooded: "blackblooded" };
@@ -31,7 +33,38 @@ export function heldOdds(data: PatchData, item: StageItem, key: string, omens: r
   if (MANY.has(kindOf(key))) return sampled(data, item, key, omens);
   const cs = addCandidates(data, item, key, omens);
   if (!cs) return null;
-  return { byMod: new Map(cs.map((c) => [c.mod.id, { w: c.w, tiers: c.tiers }])), total: cs.reduce((a, c) => a + c.w, 0) };
+  return { byMod: new Map(cs.map((c) => [c.mod.id, { w: c.w, tiers: c.tiers }])), total: cs.reduce((a, c) => a + c.w, 0), single: true };
+}
+
+/**
+ * 選んだ MOD のどれか 1 つでも付く (骨なら候補に出る) 確率 (2026-10-12 要望 c9dee700「次の一手で複数 MOD のどれかひとつでも付く確率」)。
+ * 1 つだけ足す手は確率の和 (同時には付かない)。幾つも足す手 (錬金・大いなる高貴・エッセンス) と骨 (候補 3 つ、アビスの反響なら引き直しの 3 つも) は
+ * 打つ処理そのものを決まった種で回して数える (和では重なりを二重に数える)
+ */
+/** 狙いの 1 つ = MOD の id と段 (`<modId>#<tierIndex>`)。MOD 一覧の行のチェックは付きうる段を全部、段の表のチェックはその段以上 */
+export const aimTierKey = (modId: string, tierIndex: number): string => `${modId}#${tierIndex}`;
+export function heldAnyOf(data: PatchData, item: StageItem, key: string, omens: readonly string[], keys: ReadonlySet<string>, h: HeldOdds): number {
+  if (!keys.size) return 0;
+  if (h.single) {
+    if (!(h.total > 0)) return 0;
+    let w = 0;
+    for (const [id, x] of h.byMod) for (const t of x.tiers) if (keys.has(aimTierKey(id, t.index))) w += t.w;
+    return w / h.total;
+  }
+  const echoes = omens.includes("OmenofAbyssalEchoes");
+  let ok = 0, hit = 0;
+  for (let s = 1; s <= SAMPLES; s++) {
+    const r = applyCurrency(data, item, key, mulberry32(7919 * s), [...omens]);
+    if (!r.applied) { if (s === 1 && !r.random) return 0; continue; }
+    ok++;
+    let got: readonly StageMod[] = r.added ?? [];
+    if (h.bone) {
+      const off = revealOffers(data, r.item, mulberry32(104729 * s));
+      got = echoes ? [...off.first, ...off.reroll] : off.first;
+    }
+    if (got.some((m) => keys.has(aimTierKey(m.modId, m.tierIndex)))) hit++;
+  }
+  return ok ? hit / ok : 0;
 }
 
 /** 1 回で MOD を幾つも足す・決まった MOD を足す手 (錬金 4 つ、エッセンス)。候補の式が無いので、打つ処理そのものを決まった種で回して数える */
