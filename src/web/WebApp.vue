@@ -5,7 +5,7 @@
  * アプリ版の App.vue にある起動の処理 (更新・PoB・画像パック・ログイン・見回り) は Web では要らないので載せない。
  * 画面は 1660 幅で組んだ絵を窓に合わせて拡大縮小する (アプリと同じ。狭い時は縮める)
  */
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { marketStore } from "../state/market-store";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import LivePanel from "./LivePanel.vue";
@@ -77,6 +77,14 @@ const frame = ref({ w: DESIGN_WIDTH, h: 900 });
  * 前は 0.55 倍まで縮めていて、字が 6 px ほどで読めなかった
  */
 const phone = ref(false);
+/** 要望・バグを別の画面で出す (広告のお試しだけ)。戻ったら前の位置と右の列の枠の出し直し */
+const feedbackPage = computed(() => AD_PREVIEW && !phone.value && feedbackOpen.value);
+let fbScroll = 0;
+watch(feedbackPage, (on) => {
+  if (on) { fbScroll = window.scrollY; window.scrollTo(0, 0); return; }
+  void nextTick(() => window.scrollTo(0, fbScroll));
+  adTicks.side++;
+});
 function fitZoom(): void {
   phone.value = window.innerWidth < 768;
   // iPad など: 縮めると字が 7〜8 px になって読めないので、1280 未満は等倍、それより広くても 0.85 倍より小さくしない (並びは幅に合わせて折り返す。2026-10-10)
@@ -126,10 +134,19 @@ window.addEventListener("resize", fitZoom);
     <HoverStack />
     <ChangelogDialog />
     <SupportDialog />
-    <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
+    <FeedbackDialog v-if="!feedbackPage" :open="feedbackOpen" @close="feedbackOpen = false" />
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
-      <CraftStage class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
+      <!-- 要望・バグの画面 (広告のお試し、?adpreview=1): 重ねる窓ではなく別の画面。両脇に 160×600 -->
+      <section v-if="feedbackPage" class="flex min-w-0 flex-1 items-start justify-center gap-4 p-4">
+        <div class="sticky top-3 shrink-0"><AdSlot id="fb-left" :w="160" :h="600" /></div>
+        <div class="min-w-0 max-w-[40rem] flex-1">
+          <button type="button" class="g-btn sm mb-3" @click="feedbackOpen = false">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
+          <FeedbackDialog page :open="true" @close="feedbackOpen = false" />
+        </div>
+        <div class="sticky top-3 shrink-0"><AdSlot id="fb-right" :w="160" :h="600" /></div>
+      </section>
+      <CraftStage v-show="!feedbackPage" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <!-- 決まり事 (2026-10-07、2026-10-10 から画面に貼り付けずクラフトステージの一番下): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
           <footer data-rec-part="footer" class="-mx-4 mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--exile-color-border-subtle)] px-4 py-2 text-[10px] opacity-50">

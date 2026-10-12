@@ -35,6 +35,7 @@ import { useStageFx } from "./use-stage-fx";
 import { stageAdds, stageHelp } from "../../state/craft-stage-help";
 import VideoStage from "./VideoStage.vue";
 import StageBasePicker from "./StageBasePicker.vue";
+import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
 import VideoExtra from "./VideoExtra.vue";
@@ -82,6 +83,7 @@ const onMove = (e: MouseEvent) => (mouse.value = { x: toCss(e.clientX), y: toCss
 function onKey(e: KeyboardEvent): void {
   // MOD 一覧の画面 (広告のお試し) は Esc で戻る。持っている物は離さない (窓の時と同じ)
   if (e.key === "Escape" && modPage.value) { s.modOverlay.value = false; return; }
+  if (e.key === "Escape" && basePage.value) { basePage.value = false; return; }
   if (e.key === "Escape") s.hold(null);
   // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
   // 入力欄の中 (MOD 一覧・ベースの検索) と窓を開いている時は、文字の取り消しや窓の物に任せる (2026-10-10 点検: 文字ではなく 1 手戻っていた)
@@ -320,16 +322,23 @@ let firstTime = false;
 try { firstTime = !localStorage.getItem(FIRST_BASE_KEY); } catch { /* 覚えられない時は今まで通り */ }
 /**
  * 広告の置き場のお試し (?adpreview=1、utils/ad-preview.ts): MOD 一覧を重ねる窓ではなく別の画面にして、両脇に 160×600 を 2 つ。
- * 戻ったら前の位置へ。右の列の枠は、ベースを変えた・エミュレーター / シミュレーターの切り替え・MOD 一覧から戻った時に出し直す (60 秒以内は見送り)
+ * 戻ったら前の位置へ。右の列の枠は別の画面から戻った時だけ出し直す (60 秒以内は見送り)
  */
 const modPage = computed(() => AD_PREVIEW && !phone.value && s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === "hand" && !handNoBase.value) || !!s.replay.value));
-let modPageScroll = 0;
-watch(modPage, (on) => {
-  if (on) { modPageScroll = window.scrollY; window.scrollTo(0, 0); return; }
-  void nextTick(() => window.scrollTo(0, modPageScroll));
+/** ベースを選ぶ画面 (お試し)。「ベースを変える」で開き、選んだらクラフトへ戻る (2026-10-12 オーナー「固定バーは変化してないからアウト、MOD と一緒で別ページ扱いで」) */
+const basePage = ref(false);
+const subPage = computed(() => modPage.value || basePage.value);
+let subPageScroll = 0;
+// 別の画面へ移る時は上へ、戻ったら前の位置へ。右の列の枠は戻った時だけ出し直す (ベース・モードの切り替えは同じ画面のままなので、きっかけにしない)
+watch(subPage, (on) => {
+  if (on) { subPageScroll = window.scrollY; window.scrollTo(0, 0); return; }
+  void nextTick(() => window.scrollTo(0, subPageScroll));
   adTicks.side++;
 });
-watch([() => s.base.value, () => s.mode.value], () => { if (AD_PREVIEW) adTicks.side++; });
+function pickFromBasePage(en: string): void {
+  basePage.value = false;
+  if (en !== s.base.value) pickSimBase(en);
+}
 const handNoBase = ref(!inApp && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
 // 共有の URL から開いた時はベースが決まっている (ここから打つ・白から打つで、ベース選びに戻さない)
 watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
@@ -409,7 +418,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       </template>
     </div>
     <!-- 広告のお試しで MOD 一覧の画面を出している間は、クラフトの中身を隠す (消さないので戻ると元のまま) -->
-    <div v-show="!modPage">
+    <div v-show="!subPage">
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
@@ -483,7 +492,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       </span>
       <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
       <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
-      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" @pick="pickSimBase" />
+      <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" :page="AD_PREVIEW && !phone" @pick="pickSimBase" @open-page="basePage = true" />
       <span v-if="!simNoBase && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1">
         <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.itemLevel.value === lv ? 'on' : ''" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
@@ -628,6 +637,19 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <!-- ページの下にも同じ一覧 (同じ部品 = 同じエンジン。窓はすぐ見るための便利機能。2026-10-11 オーナー「スクロールした下に配置してていい」) -->
     <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" data-rec-part="mod-list-bottom" /></Transition>
     </div>
+    <!-- ベースを選ぶ画面 (広告のお試し、?adpreview=1)。両脇に 160×600、選んだらクラフトへ戻る -->
+    <section v-if="basePage" class="flex items-start gap-4">
+      <div class="sticky top-3 shrink-0"><AdSlot id="base-left" :w="160" :h="600" /></div>
+      <div class="min-w-0 flex-1">
+        <div class="mb-3 flex items-center gap-3">
+          <button type="button" class="g-btn sm" @click="basePage = false">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
+          <span class="text-[12px] opacity-60">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
+          <b class="ml-auto">{{ tr("ベースを選ぶ", "Choose a base") }}</b>
+        </div>
+        <div class="rounded-lg bg-black/30 p-4"><BaseCatalog :data="s.data.value" :selected="s.base.value" @pick="pickFromBasePage" /></div>
+      </div>
+      <div class="sticky top-3 shrink-0"><AdSlot id="base-right" :w="160" :h="600" /></div>
+    </section>
     <!-- MOD 一覧の画面 (広告のお試し、?adpreview=1)。両脇に 160×600、真ん中に一覧。戻る = Tab / Esc / 上のボタン -->
     <section v-if="modPage" class="flex items-start gap-4">
       <div class="sticky top-3 shrink-0"><AdSlot id="mods-left" :w="160" :h="600" /></div>
