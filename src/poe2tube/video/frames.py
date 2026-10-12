@@ -16,7 +16,7 @@ import structlog
 from PIL import Image
 
 from poe2tube.capture.anim import anim_frames, anim_query, holds_first
-from poe2tube.capture.footage import footage_frames, shot_at
+from poe2tube.capture.footage import FULL, ZOOM_BOX, footage_frames, shot_at, zoom_box
 from poe2tube.capture.views import shot_for
 from poe2tube.config.settings import get_settings
 from poe2tube.contracts.craft_stage import CraftStageResult
@@ -156,6 +156,10 @@ def cue_frames(
     # 同じ章の中で別の録画に替わる時は、前の行の最後の絵から FOOTAGE_FADE 秒でふわっと替える
     # (章の頭は章名のカードの裏で替わるので要らない。kyohei 2026-10-12「違和感ないように」)
     fade_from: Path | None = None
+    box_to = ZOOM_BOX.get(sc.zoom or "", FULL)
+    box_from = box_to if foot else FULL
+    if foot and prev is not None and prev_section == c.section and prev.scene.kind == "footage":
+        box_from = ZOOM_BOX.get(prev.scene.zoom or "", FULL)
     if foot and prev is not None and prev_section == c.section:
         ps = prev.scene
         if ps.kind == "footage" and ps.clip and ps.clip != sc.clip:
@@ -177,10 +181,13 @@ def cue_frames(
             frame_static = base  # 章カードの間はパネルを出さない (被せない)
         elif foot:  # 録画: at 秒目から流し、hold 秒目で止める (説明している間は出したまま)
             shot = shot_at(foot, fps, sc.at or 0.0, sc.hold, tl, sc.rate)
-            layer = render_panel_layer(c.line, res, stage_shot=shot, final_step=fin)
+            box = zoom_box(box_from, box_to, tl)
+            layer = render_panel_layer(c.line, res, stage_shot=shot, final_step=fin, crop=box)
             frame_static = with_panel(base, layer, 0, 1.0)
             if fade_from is not None and tl < FOOTAGE_FADE:
-                old_layer = render_panel_layer(c.line, res, stage_shot=fade_from, final_step=fin)
+                old_layer = render_panel_layer(
+                    c.line, res, stage_shot=fade_from, final_step=fin, crop=box_from
+                )
                 before = with_panel(base, old_layer, 0, 1.0)
                 frame_static = Image.blend(before, frame_static, max(0.0, tl) / FOOTAGE_FADE)
         elif pre and k >= pre_from:

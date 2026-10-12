@@ -23,7 +23,7 @@ def test_shot_at_plays_from_at_and_holds() -> None:
 
 def test_scene_footage_needs_clip_and_at() -> None:
     scene = Scene(kind="footage", clip="orbs", at=1.5, hold=3.0)
-    assert scene.key()[-4:] == ("orbs", 1.5, 3.0, 1.0)
+    assert scene.key()[-5:] == ("orbs", 1.5, 3.0, 1.0, None)
     with pytest.raises(ValidationError):
         Scene(kind="footage", clip="orbs")
     with pytest.raises(ValidationError):
@@ -55,3 +55,15 @@ def test_lint_counts_footage_as_practice() -> None:
         ],
     }
     assert stage_coverage(VideoScript.model_validate(base), None) == []
+
+
+def test_zoom_box_eases_from_prev_to_cur() -> None:
+    from poe2tube.capture.footage import FULL, ZOOM_BOX, ZOOM_SECONDS, zoom_box
+
+    card = ZOOM_BOX["card"]
+    assert zoom_box(FULL, card, 0.0) == FULL
+    assert zoom_box(FULL, card, ZOOM_SECONDS) == card
+    mid = zoom_box(FULL, card, ZOOM_SECONDS / 2)
+    assert FULL[1] < mid[1] < card[1]
+    for x0, y0, x1, y1 in ZOOM_BOX.values():  # どれも 16:9 (歪まない)
+        assert abs((x1 - x0) / (y1 - y0) - 16 / 9) < 0.02

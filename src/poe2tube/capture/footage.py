@@ -54,3 +54,28 @@ def shot_at(
         return None
     last = len(frames) - 1 if hold is None else min(len(frames) - 1, round(hold * fps))
     return frames[max(0, min(last, round((at + max(0.0, t) * rate) * fps)))]
+
+
+Box = tuple[float, float, float, float]
+FULL: Box = (0, 0, 1920, 1080)
+# 録画 (ウェブ版 1920x1080) の中の寄る枠。どれも 16:9 (歪まないように)
+ZOOM_BOX: dict[str, Box] = {
+    "card": (0, 400, 960, 940),  # 左のアイテムのカード (付いた MOD・確率)
+    "history": (0, 619, 820, 1080),  # 左下の工程
+    "modlist": (240, 130, 1680, 940),  # MOD 一覧の窓
+    "tiers": (900, 300, 1700, 750),  # MOD 一覧の窓の右 (ティアの表)
+    "aim": (560, 0, 1900, 754),  # 次の手で狙うのパネル
+    "reveal": (0, 430, 960, 970),  # カードと発現の候補
+    "header": (1100, 0, 1920, 461),  # 右上の帯 (要望・バグを送る)
+}
+ZOOM_SECONDS = 0.5
+
+
+def zoom_box(prev: Box, cur: Box, t: float) -> Box:
+    """前の行の枠から今の行の枠へ ZOOM_SECONDS 秒でなめらかに (smoothstep)."""
+    if t >= ZOOM_SECONDS or prev == cur:
+        return cur
+    e = max(0.0, t) / ZOOM_SECONDS
+    e = e * e * (3 - 2 * e)
+    a, b, c, d = (p + (q - p) * e for p, q in zip(prev, cur, strict=True))
+    return (a, b, c, d)

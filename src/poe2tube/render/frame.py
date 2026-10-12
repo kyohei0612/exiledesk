@@ -59,6 +59,7 @@ def render_panel_layer(
     stage_shot: Path | None = None,
     final_step: int | None = None,
     zoom: float = 0.0,
+    crop: tuple[float, float, float, float] | None = None,
 ) -> Image.Image | None:
     """シーンパネルだけの透明レイヤー (talk なら None)。スライドイン演出のため下地と分ける."""
     if line.scene.kind == "talk":
@@ -68,7 +69,13 @@ def render_panel_layer(
     layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     if line.scene.kind == "footage":  # 録画は枠なしで画面いっぱい
         if stage_shot is not None and stage_shot.exists():
-            layer.paste(Image.open(stage_shot).convert("RGBA").resize((w, h)), (0, 0))
+            im = Image.open(stage_shot).convert("RGBA")
+            if crop is not None and crop != (0, 0, im.width, im.height):  # 寄る (拡大)
+                return_box = (crop[0], crop[1], crop[2], crop[3])
+                im = im.resize((w, h), Image.Resampling.LANCZOS, box=return_box)
+            else:
+                im = im.resize((w, h))
+            layer.paste(im, (0, 0))
         return layer
     wide = line.scene.kind in ("stage", "footage") or line.scene.kind in VIEW_TAGS
     if wide and USE_CLIP_LAYOUT:
