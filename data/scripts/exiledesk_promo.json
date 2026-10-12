@@ -90,6 +90,7 @@
             "kind": "footage",
             "clip": "orbs",
             "at": 12.4,
+            "hold": 12.4,
             "zoom": "card"
           }
         },
