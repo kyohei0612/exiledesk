@@ -17,6 +17,7 @@ import { applyWeightOverrides } from "./weight-overrides";
 import poolFixes from "./poe2db-pool-fixes.json";
 import runeWeights from "./rune-weights.json";
 import desecratedWeights from "./desecrated-weights.json";
+import modStats from "./mod-stats.json";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 // 型は 2026-09-26 に patch-types.ts へ分けた
 import type { BaseInfo, DropOnlyInfo, ExtraBases, JewelBases, PatchExtras, PoolAdd, ReadonlyPool } from "./patch-types";
@@ -143,6 +144,20 @@ export const jewelEmotionJa = (en: string): string | null => jewelEmotionNames[e
 export const jewelEmotionsOf = (cls: string): JewelBases["emotions"][string] => jewelEmotions[cls] ?? [];
 export const jewelCorruptedOf = (cls: string): JewelBases["corrupted"][string] | null => jewelCorrupted[cls] ?? null;
 
+/**
+ * stat の id を持たない MOD (エッセンス・パーフェクトエッセンス・冒涜) の stat (2026-10-12、要望 6646644d
+ * 「強化のエッセンス系を打ってもアーマー・回避・エナジーシールドの値が変化しない」)。scripts/build-mod-stats-from-client.mjs が
+ * クライアントの Mods 表から作る。段の `stats` には入れない (その段の ranges は poe2db 由来の画面の値で、stats があると換算されてしまう。
+ * services/mods/stat-scale.ts)。アイテムの上の数値 (stage-props.ts) と MOD の並び順に使う。fixed は幅の無い stat (生の値)
+ */
+type ModStatFill = { stats: string[][]; fixed?: Array<Array<[string, number]>>; text?: string; tags?: string[] };
+const MOD_STATS = modStats as unknown as Record<string, ModStatFill>;
+export function filledStatsOf(modId: string, tierIndex: number): { stats: string[]; fixed: Array<[string, number]> } | null {
+  const f = MOD_STATS[modId];
+  const stats = f?.stats[tierIndex];
+  return stats?.length ? { stats, fixed: f!.fixed?.[tierIndex] ?? [] } : null;
+}
+
 export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBases): PatchData {
   const mods = new Map(data.mods);
   const bases = new Map(data.bases);
@@ -215,6 +230,20 @@ export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBa
     placeholderWeightMods: placeholder,
   };
   fillJewelleryTags(mods);
+  // エッセンスの文は説明文 (「アーマー、回避力およびエナジーシールド」) のままなので、実際に付く MOD の文にする
+  // (胴 (筋力/器用さ) に付くのは「アーマーと回避力」。ゲームのアイテムの表示と同じ)
+  for (const [id, f] of Object.entries(MOD_STATS)) {
+    const m = mods.get(id);
+    if (m && f.text && m.text !== f.text) mods.set(id, { ...m, text: f.text });
+  }
+  // 中身のタグ (implicit_tags) も無かったので、カタリストの品質で伸びず、カードにタグも出なかった (2026-10-12 オーナー「MOD にもタグないんじゃね」)。
+  // 元のタグ (冒涜の主の札) は抽選に使うので残して足す
+  for (const [id, f] of Object.entries(MOD_STATS)) {
+    const m = mods.get(id);
+    if (!m || !f.tags?.length) continue;
+    const tags = [...new Set([...(m.tags ?? []), ...f.tags])];
+    if (tags.length !== (m.tags ?? []).length || !m.displayTags) mods.set(id, { ...m, tags, displayTags: m.displayTags ?? f.tags });
+  }
   // 画面用のタグ (中身のタグ) を同梱の MOD に付ける。足した MOD は自分で displayTags を持っている (2026-10-05)
   for (const [id, m] of mods) {
     const t = extra.modDisplayTags?.[id];

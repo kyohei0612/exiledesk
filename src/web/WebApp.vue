@@ -10,7 +10,6 @@ import { marketStore } from "../state/market-store";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import LivePanel from "./LivePanel.vue";
 import FeedbackDialog from "./FeedbackDialog.vue";
-import WelcomeDialog from "./WelcomeDialog.vue";
 import ChangelogDialog from "../components/ChangelogDialog.vue";
 import SupportDialog from "../components/SupportDialog.vue";
 import HoverStack from "../components/decor/HoverStack.vue";
@@ -53,11 +52,12 @@ onBeforeUnmount(() => {
   document.removeEventListener("visibilitychange", onVisible);
 });
 /**
- * 「はじめに」の窓は上のボタンで開くだけ。初めて来た人にも勝手には出さない
- * (2026-10-10 オーナー「初訪問のポップアップいらんな、打たせようぜ、2 回目と同じで開いたら即」。前は初回に出していた)
+ * 上の「使い方」は使い方の動画 (POE2Tube の本編) を必ず別タブで開く。2026-10-12 オーナー「はじめにのところを使い方ってボタンに変えちゃう」
+ * (前は「はじめに」の窓。初めて来た人にも勝手には出さない 2026-10-10)。スマホは youtu.be なので YouTube のアプリがあればアプリで開く。
+ * WELCOME_KEY は初めて来た人の判定 (更新内容を出さない) にだけ使う
  */
+const HOWTO_URL = "https://youtu.be/L_2lhU8Hy_U";
 const WELCOME_KEY = "exiledesk.web.welcomed";
-const welcomeOpen = ref(false);
 let firstVisit = false;
 try { firstVisit = !localStorage.getItem(WELCOME_KEY); localStorage.setItem(WELCOME_KEY, "1"); } catch { /* 無くてよい */ }
 // 更新した後に 1 回だけ更新内容を出す。初めて来た人には出さない (2026-10-10)
@@ -65,7 +65,6 @@ try { firstVisit = !localStorage.getItem(WELCOME_KEY); localStorage.setItem(WELC
 if (!REC) initChangelog(firstVisit);
 // 送った要望・バグへの返事があれば、更新の窓 (無ければ返事だけの窓) で知らせる (state/feedback-replies.ts、2026-10-11)
 if (!REC) void checkReplies().then((got) => { if (got && !changelogOpen.value) { changelogNew.value = []; changelogOpen.value = "new"; } });
-function closeWelcome(): void { welcomeOpen.value = false; }
 /** 本日の訪問者 (/boot.json の visitors) */
 const visitors = ref<NonNullable<Boot["visitors"]> | null>(null);
 void loadBoot().then((b) => { visitors.value = b?.visitors ?? null; });
@@ -108,7 +107,7 @@ window.addEventListener("resize", fitZoom);
       <button type="button" data-rec-part="header-version" class="g-plain opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
       <span v-if="!phone" data-rec-part="header-lang"><LangSwitch /></span>
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
-      <button type="button" data-rec-part="header-help" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('何ができるか', 'What you can do')" @click="welcomeOpen = true">{{ tr("はじめに", "Guide") }}</button>
+      <a data-rec-part="header-help" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :href="HOWTO_URL" target="_blank" rel="noopener noreferrer" :title="tr('使い方の動画 (YouTube)', 'How-to video (YouTube, Japanese)')">{{ tr("使い方", "How to use") }}</a>
       <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態を添付できる)', 'Send feedback or bug reports (you can attach the current screen state)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
       <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
@@ -121,7 +120,6 @@ window.addEventListener("resize", fitZoom);
       {{ forgetResult.text }}
       <button type="button" class="g-plain ml-auto opacity-60 hover:opacity-100" @click="forgetResult = null">×</button>
     </p>
-    <WelcomeDialog :open="welcomeOpen" @close="closeWelcome" />
     <!-- ジェム・ベースなどのカードの重なり (アプリの App.vue と同じ部品) -->
     <HoverStack />
     <ChangelogDialog />

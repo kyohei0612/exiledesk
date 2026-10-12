@@ -13,6 +13,7 @@ import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
 import { familyBlocked, familyKeysOf, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfMod } from "../htc/mod-text";
+import { filledStatsOf } from "../htc/patch";
 import modTextJa from "../../i18n/mod-text-ja.json";
 import { maxQualityForBase } from "../htc/catalysing-setup";
 import { displayedValue } from "../htc/quality";
@@ -311,7 +312,7 @@ export function withValues(m: StageMod, mod: Mod, rng: () => number, fixed?: rea
   const en = one && ONE_OF_SOURCE.has(mod.text ?? "") ? one : mod.text ?? mod.id;
   const ja = one && en === one ? jaOfText(one) ?? jaOfMod(mod) : jaOfMod(mod);
   const textEn = fillEn(en, values);
-  return { ...m, values, ranges, textJa: fillJa(ja, textEn, values, signsOf(en)), textEn, ...(stats ? { stats: [...stats] } : {}), ...(mod.tags?.length ? { tags: [...mod.tags] } : {}) };
+  return { ...m, values, ranges, textJa: fillJa(ja, textEn, values, signsOf(en)), textEn, ...(stats?.length ? { stats: [...stats] } : filledStatsOf(mod.id, m.tierIndex) ? { stats: [...filledStatsOf(mod.id, m.tierIndex)!.stats] } : {}), ...(mod.tags?.length ? { tags: [...mod.tags] } : {}) };
 }
 /**
  * 日本語文に値を入れる。値の範囲の無い MOD (固定の「+1 to Level of all Minion Skills」、2 行目が固定の物) は日本語だけ「#」なので、

@@ -625,8 +625,11 @@ table th,
     position: absolute;
     left: 50%;
     top: -10px;
-    /* 改行だけで折る。長い文 (置き換えの「○○はなくなった / △△をはめた!」) は 2 行に (POE2Tube 要望 ㉘ の確認) */
-    white-space: pre;
+    /* 改行で折る。長い文 (置き換えの「○○はなくなった / △△をはめた!」) は 2 行に (POE2Tube 要望 ㉘ の確認)。
+       カードの幅 (固定) を超える物 (冒涜の長い MOD 名の「発現」) も折り返す (2026-10-12 オーナー「飛び出ちゃってる、2 行にしようか」) */
+    white-space: pre-line;
+    width: max-content;
+    max-width: 100%;
     text-align: center;
     line-height: 1.25;
     pointer-events: none;

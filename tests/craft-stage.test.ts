@@ -141,6 +141,47 @@ describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
     const k = 1 + inc.values[0]! / 100;
     expect(propRows(it).find((x) => x.key === "phys")).toMatchObject({ value: `${Math.round(6 * k)}〜${Math.round(9 * k)}`, up: true });
   });
+  it("エッセンスの MOD も上の数値に乗る (要望 6646644d: 英雄の鎧 + 強化のエッセンスでアーマー・回避力が変わらなかった)", async () => {
+    const { propRows } = await import("../src/services/craft-stage/stage-props");
+    const magic = A(freshItem(data, "Heroic Armour", 82), "transmute", 5).item;
+    expect(propRows(magic).map((x) => x.value)).toEqual(["273", "248"]);
+    const r = A(magic, "essence:lesser:Body_Armours_str_dex/Essence_DefencesPercent", 3).item;
+    const ess = r.prefixes.find((m) => m.modId === "Body_Armours_str_dex/Essence_DefencesPercent")!;
+    // 胴 (筋力/器用さ) に付くのは「アーマーと回避力」(poe2db の普通の段 Lv16 の 27-42% と同じ)
+    expect(ess.textEn).toMatch(/increased Armour and Evasion$/);
+    const k = 1 + ess.values[0]! / 100;
+    expect(propRows(r).map((x) => x.value)).toEqual([String(Math.round(273 * k)), String(Math.round(248 * k))]);
+  });
+  it("冒涜の MOD も中身のタグでカタリストの品質が乗る (2026-10-12 オーナー「MOD にもタグないんじゃね」)", async () => {
+    const { makeStageMod, boostedMod } = await import("../src/services/craft-stage/stage-core");
+    const mod = data.mods.get("Rings/Desecrated_ColdAndChaosDamageResistance")!;
+    expect(mod.tags).toEqual(expect.arrayContaining(["kurgal_mod", "resistance"]));
+    const m = makeStageMod(mod, "suffix", 0, mulberry32(1));
+    const ring = { ...freshItem(data, "Gold Ring", 82), rarity: "rare" as const, quality: 20, prefixes: [], suffixes: [m] };
+    expect(boostedMod({ ...ring, qualityTag: "resistance" }, m, data)?.values[0]).toBe(Math.floor(m.values[0]! * 1.2));
+    expect(boostedMod({ ...ring, qualityTag: "life" }, m, data)).toBeNull();
+  });
+  it("エッセンス・冒涜のローカル MOD は、どの部位でも上の数値を変える", async () => {
+    const { propRows } = await import("../src/services/craft-stage/stage-props");
+    const { makeStageMod } = await import("../src/services/craft-stage/stage-core");
+    const LOCAL = /(increased|reduced) (Armour|Evasion Rating|Energy Shield|Armour and Evasion|Armour and Energy Shield|Evasion and Energy Shield)$|^\+# to (Armour|Evasion Rating|maximum Energy Shield)$|increased Physical Damage$|^Adds .* Damage$|to Critical Hit Chance$/m;
+    const bad: string[] = [];
+    for (const [cid, cls] of data.bases) {
+      const base = cls.bases?.[0];
+      if (!base || /^Gloves/.test(cid)) continue;
+      const item = freshItem(data, base, 82);
+      const before = JSON.stringify(propRows(item));
+      if (before === "[]") continue;
+      for (const mod of data.mods.values()) {
+        if (!mod.id.startsWith(`${cid}/`) || mod.source === "normal" || !LOCAL.test(mod.text ?? "") || /Global|Minion|Companion|Totem|Spell|while|from Equipped|Thorns/.test(mod.text ?? "")) continue;
+        const side = mod.type === "suffix" ? "suffix" : "prefix";
+        const m = makeStageMod(mod, side, 0, mulberry32(1));
+        const it2 = { ...item, rarity: "rare" as const, prefixes: side === "prefix" ? [m] : [], suffixes: side === "suffix" ? [m] : [] };
+        if (JSON.stringify(propRows(it2)) === before) bad.push(mod.id);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
 });
 
 describe("今のゲームの決まり (2026-09-29 見直し、クライアントの表と相場)", () => {

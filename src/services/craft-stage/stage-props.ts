@@ -14,6 +14,7 @@ import { displayValue } from "../mods/stat-scale";
 import type { StageItem } from "./types";
 import { scaledAugment } from "./stage-core";
 import { lang } from "../../i18n/lang";
+import { filledStatsOf } from "../htc/patch";
 
 export interface PropRow { key: string; label: string; value: string; up: boolean }
 
@@ -21,7 +22,13 @@ export interface PropRow { key: string; label: string; value: string; up: boolea
 function sums(item: StageItem): Map<string, number> {
   const m = new Map<string, number>();
   const add = (id: string, v: number) => m.set(id, (m.get(id) ?? 0) + v);
-  if (item.identified !== false) for (const md of [...item.prefixes, ...item.suffixes]) (md.stats ?? []).forEach((id, i) => add(id, md.values[i] ?? 0));
+  // エッセンス・冒涜の MOD は段に stat が無いので、クライアントの表から引いた物を使う (htc/patch.ts の filledStatsOf、2026-10-12 要望 6646644d)。
+  // 幅の無い stat (「Adds 1 to #」の 1、「15% reduced Attack Speed」) は fixed に生の値で入っている
+  if (item.identified !== false) for (const md of [...item.prefixes, ...item.suffixes]) {
+    const fill = md.stats?.length ? null : filledStatsOf(md.modId, md.tierIndex);
+    (md.stats?.length ? md.stats : fill?.stats ?? []).forEach((id, i) => add(id, md.values[i] ?? 0));
+    for (const [id, v] of fill?.fixed ?? []) add(id, displayValue(id, v));
+  }
   // ルーンの stat はクライアントの生の値 (リーチ 300 = 3%)。MOD の values は画面の単位なので揃える (services/mods/stat-scale.ts)
   // ソケットの効き目は効果の増加 (遺産のルーン・合金) を掛けた値 (stage-core の scaledAugment、2026-10-10)
   for (const a0 of item.augments ?? []) for (const s of scaledAugment(item, a0).stats) add(s.id, displayValue(s.id, s.value));

@@ -10,7 +10,7 @@
 -->
 <script setup lang="ts">
 import STAT_ORDER from "../../data/stat-order.json";
-import { fmtChance, RARE_CHANCE } from "../../utils/format-pct";
+import { fmtChance, isRareChance } from "../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { computed, ref } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
@@ -217,7 +217,7 @@ const rows = computed(() =>
           <span class="flex shrink-0 items-center justify-end gap-1">
             <!-- MOD 一覧のこの行へ (持ったままでも押せる。持っている時は行を押すと「使う」なので、飛ぶのはこの ↓。2026-10-10 オーナー「持ちながらできるように」) -->
             <button v-if="!r.m.unrevealed" type="button" class="rounded px-1 text-[11px] leading-none text-white/35 hover:bg-white/10 hover:text-white/80 max-md:px-2 max-md:py-1" :title="tr('MOD 一覧のこの行へ', 'Find in the mod list')" @click.stop="emit('jump', r.m.modId)">↓</button>
-            <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="text-[11px] tabular-nums" :class="chanceOf(r.m)! < RARE_CHANCE ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
+            <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
           </span>
         </p>
