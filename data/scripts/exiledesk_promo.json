@@ -986,6 +986,122 @@
           }
         }
       ]
+    },
+    {
+      "name": "テスター募集",
+      "target_seconds": 40,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "改めてお願い。ExileDeskは、試してくれる人が全然足りないの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "どんな感想を書けばいいのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "使いにくい所、ゲームと違う所、欲しい機能。良かった所も、悪かった所も歓迎よ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "「ここ間違ってる」でもいいのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もちろん。ゲームと合わせているから、違う所を教えてもらえるのが一番助かるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "どこから使えるのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "happy",
+          "text": "説明欄にリンクを貼っておくわ。無料で、ブラウザで開くだけ。スマホでも使えるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "使い倒して、コメント欄に書くのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "このチャンネルでは、PoE2の基礎を初心者向けにまとめていくわ。チャンネル登録もよろしくね。",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "よろしくなのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "intro_done",
+            "at": 0,
+            "hold": 0
+          }
+        }
+      ]
     }
   ]
 }
