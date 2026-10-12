@@ -82,7 +82,6 @@ const mouse = ref({ x: 0, y: 0 });
 const onMove = (e: MouseEvent) => (mouse.value = { x: toCss(e.clientX), y: toCss(e.clientY) });
 function onKey(e: KeyboardEvent): void {
   // MOD 一覧の画面 (広告のお試し) は Esc で戻る。持っている物は離さない (窓の時と同じ)
-  if (e.key === "Escape" && modPage.value) { s.modOverlay.value = false; return; }
   if (e.key === "Escape" && basePage.value && !baseUnpicked.value) { basePage.value = false; return; }
   if (e.key === "Escape") s.hold(null);
   // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
@@ -321,14 +320,11 @@ const FIRST_BASE_KEY = "exiledesk.stage.basePicked";
 let firstTime = false;
 try { firstTime = !localStorage.getItem(FIRST_BASE_KEY); } catch { /* 覚えられない時は今まで通り */ }
 const handNoBase = ref(!inApp && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
-/**
- * 広告の置き場のお試し (?adpreview=1、utils/ad-preview.ts): MOD 一覧を重ねる窓ではなく別の画面にして、両脇に 160×600 を 2 つ。
- * 戻ったら前の位置へ。右の列の枠は別の画面から戻った時だけ出し直す (60 秒以内は見送り)
- */
-const modPage = computed(() => AD_PREVIEW && !phone.value && s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === "hand" && !handNoBase.value) || !!s.replay.value));
+// 広告の置き場のお試し (?adpreview=1、utils/ad-preview.ts)。MOD 一覧は重ねる窓のまま (2026-10-12 オーナー「MOD 一覧は今のままで」):
+// 窓に広告は付けず、開け閉めで右の列も出し直さない (窓は別の画面に移った扱いにならない)
 /** ベースを選ぶ画面 (お試し)。「ベースを変える」で開き、選んだらクラフトへ戻る (2026-10-12 オーナー「固定バーは変化してないからアウト、MOD と一緒で別ページ扱いで」) */
 const basePage = computed({ get: () => adPages.base, set: (v: boolean) => { adPages.base = v; } });
-const subPage = computed(() => modPage.value || basePage.value);
+const subPage = computed(() => basePage.value);
 let subPageScroll = 0;
 // 別の画面へ移る時は上へ、戻ったら前の位置へ。右の列の枠は戻った時だけ出し直す (ベース・モードの切り替えは同じ画面のままなので、きっかけにしない)
 // 右の列の枠は、別の画面へ移った時と戻った時に出し直す (どちらもページが変わった扱い。60 秒以内は見送り)
@@ -657,21 +653,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       </div>
       <div class="sticky top-3 shrink-0"><AdSlot id="base-right" :w="sideAdW()" :h="600" /></div>
     </section>
-    <!-- MOD 一覧の画面 (広告のお試し、?adpreview=1)。両脇に 160×600、真ん中に一覧。戻る = Tab / Esc / 上のボタン -->
-    <section v-if="modPage" class="flex items-start gap-4">
-      <!-- 右は右の列 (チャンネルの下の 2 つ) が受け持つので、左だけ (真ん中を広く) -->
-      <div class="sticky top-3 shrink-0"><AdSlot id="mods-left" :w="sideAdW()" :h="600" /></div>
-      <div class="min-w-0 flex-1">
-        <div class="mb-3 flex items-center gap-3">
-          <button type="button" class="g-btn sm" @click="s.modOverlay.value = false">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
-          <span class="text-[12px] opacity-60">{{ tr("Tab / Esc でも戻る", "Tab / Esc also go back") }}</span>
-          <b class="ml-auto">{{ tr("このベースに付く MOD", "Mods for this base") }} · {{ s.item.value ? baseNameOf(s.item.value) : "" }}</b>
-        </div>
-        <StageModList overlay />
-      </div>
-    </section>
     <!-- 窓の動きは ModalShell (Esc・後ろを押す・× で閉じる、後ろのページは止める)。Tab でも開け閉め -->
-    <ModalShell :open="!modPage && s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
+    <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
       <template #header><span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span></template>
       <StageModList overlay />
     </ModalShell>
