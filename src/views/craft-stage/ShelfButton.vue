@@ -118,6 +118,6 @@ onBeforeUnmount(leave);
     <span v-else-if="tag" class="mt-px w-full">
       <span v-for="(t, i) in tag" :key="i" class="block truncate text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">{{ tr("・", "· ") }}{{ t }}</span>
     </span>
-    <span v-else-if="priceOf(k)" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
+    <span v-else-if="priceOf(k)" data-rec-part="shelf-price" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
   </button>
 </template>

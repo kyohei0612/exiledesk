@@ -306,6 +306,8 @@ try { firstTime = !localStorage.getItem(FIRST_BASE_KEY); } catch { /* 覚えら�
 const handNoBase = ref(!inApp && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
 // 共有の URL から開いた時はベースが決まっている (ここから打つ・白から打つで、ベース選びに戻さない)
 watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
+// 録画モードで URL の最初の状態を入れた時もベースは決まっている (POE2Tube 要望 ㊷)
+watch(() => s.recPreset.value, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
 /** 白に戻す (2 回押し。2026-10-10 動きの揃え 7: utils/use-armed.ts) */
 const resetArm = useArmed();
 function armReset(): void {
@@ -380,7 +382,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       </template>
     </div>
     <div class="mb-3 flex items-start justify-between gap-4">
-      <div class="min-w-0 flex-1">
+      <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
         <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトステージ", "Craft Stage") }}</h1>
         <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す", "Pick a base and target mods, plan the steps, then craft hundreds of copies to get the cost per item") }}
@@ -392,12 +394,12 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
-      <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" />
+      <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" data-rec-part="display-currency" />
     </div>
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
     <!-- 再生中も消さずに隠す (シミュレーションの「1 つ戻す」の置き場 #sim-tools を残す) -->
-    <div v-show="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-1.5">
+    <div v-show="!s.replay.value" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
       <div class="inline-flex gap-1" role="tablist">
         <button v-for="t in ([['hand', 'エミュレーター'], ['sim', 'シミュレーター']] as const)" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="g-tab min-w-[170px] gap-1.5 !inline-flex disabled:cursor-not-allowed disabled:opacity-50" :class="s.mode.value === t[0] ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); s.mode.value = t[0]">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
       </div>
@@ -443,7 +445,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
     <!-- 設定と操作 -->
     <!-- data-craft-top: クラフトの位置 (「クラフトへ」とベースを選んだ後はここの外枠の少し上。2026-10-10 オーナー「ベースの上枠の外枠から少し上空けた位置が心地いい」) -->
-    <section v-if="!s.replay.value" data-stage-settings data-craft-top class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
+    <section v-if="!s.replay.value" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
       <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
         <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>
@@ -483,7 +485,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('POE2Tube に渡す結果 JSON (今の相場の値段で)', 'Result JSON for POE2Tube (at current market prices)')" @click="copy(tr('結果 JSON', 'result JSON'), s.result(pkg.version))">{{ tr("結果 JSON", "Result JSON") }}</button>
         <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :title="tr('craft-stage-run.mjs の --prices に渡す相場 (高貴建て)', 'Market prices for craft-stage-run.mjs --prices (in Exalted)')" @click="copy(tr('相場 JSON', 'price JSON'), s.prices())">{{ tr("相場 JSON", "Price JSON") }}</button>
         <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
-        <button type="button" :class="btn" :disabled="!stageModGroups.length" :title="tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・段の下限まで)', 'Open the trade site with this item’s mods (base, item level, sockets and minimum tiers included)')" @click="searchStageMods">{{ tr("今の MOD を取引所で検索 ↗", "Search these mods on trade ↗") }}</button>
+        <button type="button" data-rec-part="trade-search" :class="btn" :disabled="!stageModGroups.length" :title="tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・段の下限まで)', 'Open the trade site with this item’s mods (base, item level, sockets and minimum tiers included)')" @click="searchStageMods">{{ tr("今の MOD を取引所で検索 ↗", "Search these mods on trade ↗") }}</button>
       </span>
       </template>
     </section>
@@ -504,8 +506,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <!-- 品質を変える帯 (アイテムの説明の窓の外、すぐ上。2026-10-10) -->
         <!-- カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
         <div class="-mb-6 flex w-full max-w-[480px] items-start gap-2">
-          <button type="button" data-rec="mod-list-open" class="tbtn-top" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button>
-          <StageQualityBar v-if="s.item.value && !s.replay.value" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" />
+          <button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button>
+          <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" />
         </div>
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
@@ -540,11 +542,11 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         </div>
         <!-- 工程 (直前の変化の欄は外して累計だけ。新しい手が上。2026-10-10 オーナー「直前の変化いらんな、累計でおｋ、並び順は上が最新」) -->
         <!-- 上の説明の行との間をカードとの間と同じに (mt-2)、中身は枠に少し近く (p-1)。2026-10-11 オーナー -->
-        <div class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
+        <div data-rec-part="history" class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
           <p class="g-sec-head"><b class="g-sec-title">{{ tr("工程", "Steps") }}</b><span class="g-sec-sub">{{ inApp || s.replay.value ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span>
             <!-- 手順の共有 (2026-10-12)。押せない時は理由を title に (打ち始めた後の手で足した MOD は下にも 1 行) -->
             <span v-if="SHARE_ENABLED" :title="s.shareWhy.value ?? tr('この手順を URL で共有 (受け取った人は同じベースから同じ結果を再生できる)', 'Share these steps as a URL (others can replay them with the same results)')"><button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-9" :disabled="!!s.shareWhy.value" :aria-expanded="!!shareOpen" @click="shareOpen ? (shareOpen = null) : openShare()"><Icon name="link" class="size-3.5" />{{ tr("共有", "Share") }}</button></span>
-            <span class="ml-auto tabular-nums opacity-70">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
+            <span class="ml-auto tabular-nums opacity-70" data-rec-part="history-cost">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
           <p v-if="SHARE_ENABLED && s.shareWhy.value && s.log.value.length && !shareOpen" class="-mt-1 mb-1 px-1 text-[11px] text-amber-200/80">{{ tr("共有できない", "Can't share") }}: {{ s.shareWhy.value }}</p>
           <div v-if="SHARE_ENABLED && shareOpen" class="mb-2 rounded-lg border border-white/10 bg-black/30 p-2">
             <p class="mb-1.5 flex items-center gap-2"><span :class="shareOpen.copied ? 'text-emerald-300' : 'text-amber-200'">{{ shareOpen.copied ? tr("URL をコピーしました", "URL copied") : tr("下の URL をコピーしてください", "Copy the URL below") }}</span><button type="button" class="g-plain ml-auto px-1 opacity-60 hover:opacity-100" :title="tr('閉じる', 'Close')" @click="shareOpen = null">×</button></p>
@@ -563,7 +565,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
            2026-10-11 オーナー「枠の高さが違うのが気に食わん、カレンシーの方が高く感じる」) -->
       <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
-        <StageAimPanel v-if="!s.replay.value" />
+        <StageAimPanel v-if="!s.replay.value" data-rec-part="aim-panel" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
         <section class="g-panel p-2">
           <p class="g-sec-head">
@@ -577,7 +579,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
             <template v-if="heldOmens.length" #held>
               <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
                 <!-- 横に「MOD 一覧へ」(お告げを選びながら付く MOD を見に行ける。2026-10-11 オーナー「お告げの横にも MOD 一覧へ、楽だ」) -->
-                <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOf(s.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(s.held.value ?? "")}`) }}<button type="button" data-rec="mod-list-open" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button></p>
+                <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOf(s.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(s.held.value ?? "")}`) }}<button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button></p>
                 <div class="flex flex-wrap gap-1.5">
                   <ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="s.toggleOmen($event)" />
                 </div>
@@ -594,7 +596,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <!-- 手で打つ画面は重ね (後ろを暗く) で出す。枠の外を押す・閉じる・Esc・Tab で閉じる。持っている物はそのまま (2026-10-11 オーナー) -->
     <!-- 大きさは後ろの画面の 75% (縦横とも。2026-10-11 オーナー「MOD 枠は後ろのウィンドウの大きさで決まる、75%」) -->
     <!-- ページの下にも同じ一覧 (同じ部品 = 同じエンジン。窓はすぐ見るための便利機能。2026-10-11 オーナー「スクロールした下に配置してていい」) -->
-    <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" /></Transition>
+    <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" data-rec-part="mod-list-bottom" /></Transition>
     <!-- 窓の動きは ModalShell (Esc・後ろを押す・× で閉じる、後ろのページは止める)。Tab でも開け閉め -->
     <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
       <template #header><span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span></template>
@@ -611,6 +613,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       v-if="s.held.value && iconOf(s.held.value) && !phone"
       :src="iconOf(s.held.value)"
       alt=""
+      data-rec-part="held-icon"
       class="pointer-events-none fixed z-[200] h-10 w-10 object-contain drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]"
       :style="{ left: `${mouse.x + 8}px`, top: `${mouse.y + 8}px` }"
     />

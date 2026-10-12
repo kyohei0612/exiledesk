@@ -55,7 +55,7 @@ const goTitle = computed(() => (sharedReplay.value ? tr("この手まで送る (
           <span v-if="!s.out.applied" class="ml-1.5 text-rose-300/80">{{ s.out.reason }}</span>
         </p>
         <!-- 付いた瞬間のその段の確率 (2026-10-09 オーナー「このMODは今付けた瞬間に何％の確率で付いたのかが分かるとへーってなる」)。低い物 (0.3% 未満、format-pct.ts の RARE_CHANCE) は金色 -->
-        <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">{{ tr('＋', '+') }} {{ modText(m) }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレ", "Pre") : tr("サフィ", "Suf") }} {{ m.tierName }}</span><span v-if="s.chances?.[m.modId] != null" class="ml-1.5 text-[10px] tabular-nums" :class="s.chances[m.modId]! < RARE_CHANCE ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled at that moment (tier weight ÷ total weight of everything this step could add)')">{{ fmtChance(s.chances[m.modId]!) }}</span></p>
+        <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">{{ tr('＋', '+') }} {{ modText(m) }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレ", "Pre") : tr("サフィ", "Suf") }} {{ m.tierName }}</span><span v-if="s.chances?.[m.modId] != null" data-rec-part="odds" class="ml-1.5 text-[10px] tabular-nums" :class="s.chances[m.modId]! < RARE_CHANCE ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled at that moment (tier weight ÷ total weight of everything this step could add)')">{{ fmtChance(s.chances[m.modId]!) }}</span></p>
         <p v-for="m in s.removed" :key="'r' + m.modId" class="text-rose-300 line-through">{{ tr('－', '-') }} {{ modText(m) }}</p>
         <p v-if="s.after.enchant && s.after.enchant !== s.before.enchant" class="text-sky-200">{{ tr('＋', '+') }} {{ modText(s.after.enchant) }} <span class="text-[10px] opacity-60">{{ tr("エンチャント", "Enchantment") }}</span></p>
         <template v-if="augOf(s.out)">
@@ -66,7 +66,7 @@ const goTitle = computed(() => (sharedReplay.value ? tr("この手まで送る (
         <p v-if="s.after.corrupted && !s.before.corrupted" class="text-[#ff5050]">{{ tr("コラプト", "Corrupted") }}<span v-if="!s.added.length && !s.removed.length && s.after.enchant === s.before.enchant && s.after.sockets === s.before.sockets">{{ tr(" (変化なし)", " (no change)") }}</span></p>
         <p v-if="s.after.sanctified && !s.before.sanctified" class="text-amber-200">{{ tr("聖別", "Sanctified") }}</p>
       </div>
-      <span class="shrink-0 text-right tabular-nums text-[11px] opacity-70">{{ s.out.cost.cumulative ? money(s.out.cost.cumulative) : "" }}</span>
+      <span data-rec-part="history-cost" class="shrink-0 text-right tabular-nums text-[11px] opacity-70">{{ s.out.cost.cumulative ? money(s.out.cost.cumulative) : "" }}</span>
     </li>
     <!-- 新しい手が上、始めは一番下 (2026-10-10 オーナー「上が最新、古いのは勝手に下に行く」) -->
     <!-- 始めの行 (押すと 1 手も打っていない状態に戻る。2026-10-09 オーナー「始めの行も足して」) -->

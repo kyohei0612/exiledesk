@@ -17,7 +17,8 @@ import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
 import type { Pattern } from "../services/craft-stage/pattern";
 import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef, watch } from "vue";
-import { loadHtcPatch } from "../services/htc/patch";
+import { htcBaseInfo, loadHtcPatch } from "../services/htc/patch";
+import { REC_START, recNext } from "../utils/rec-mode";
 import { loadCurrencyHover } from "../services/currency/currency-hover";
 import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
 import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
@@ -61,6 +62,9 @@ const seed = ref(0);
  */
 const rollSeed = ref(freshSeed());
 function freshSeed(): number {
+  // 録画モードの種 (?rec=1&seed=) があれば種から決める (POE2Tube 要望 ㊷)
+  const r = recNext();
+  if (r != null) return r;
   try { return crypto.getRandomValues(new Uint32Array(1))[0]! % 2_147_483_647; } catch { return Math.floor(Math.random() * 2_147_483_647); }
 }
 /** その手の乱数 (カレンシーのキーを混ぜる。発現は混ぜない = 出した候補のまま) */
@@ -74,6 +78,8 @@ const error = ref<string | null>(null);
 /** 再生モード (URL の手順)。手で打つ操作は止める */
 /** shared = 共有の URL (#share=) から開いた ([[share.ts]])。手を前後に送れて、「ここから打つ」で手で打つ方へ続けられる */
 const replay = ref<{ plan: CraftStagePlan; step: number; shared?: boolean } | null>(null);
+/** 録画モードで URL の最初の状態 (base / ilvl / hands) を入れた (画面はベース選びを開かずに始める。POE2Tube 要望 ㊷) */
+const recPreset = ref(false);
 const base = ref("Gold Ring");
 const itemLevel = ref(82);
 /** 動画モード (開始の手・自動再生・操作欄) */
@@ -386,6 +392,8 @@ export const stepNameOf = (o: { currency: string; currency_ja: string }): string
 export const stepOmenOf = (o: { omen?: string | null; omen_ja?: string | null }): string | null => (!o.omen ? null : lang.value === "en" ? o.omen.split("+").map(nameOf).join(" · ") : o.omen_ja ?? null);
 
 function newSeed(): number {
+  const r = recNext();
+  if (r != null) return r;
   return Math.floor(Date.now() % 1_000_000_000);
 }
 /** 手順・再生で値段を引くキー全部 (相場 JSON 用) */
@@ -405,7 +413,7 @@ function usableWith(key: string, om: readonly string[]): string | null {
   return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
 }
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims, aimPicker, modJump, modOverlay,
+  data, item, log, held, omens, seed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -486,6 +494,15 @@ export const craftStage = {
           error.value = tr(`共有の手順が読めませんでした (${e instanceof Error ? e.message : String(e)})`, `Couldn't open the shared steps (${e instanceof Error ? e.message : String(e)})`);
         }
       } else craftStage.reset();
+      // 録画モードの最初の状態 (?rec=1&base=&ilvl=&hands=、POE2Tube 要望 ㊷): 準備の手まで URL で済ませる
+      if (!raw && !shared && REC_START && data.value) {
+        if (REC_START.base && htcBaseInfo()[REC_START.base]) base.value = REC_START.base;
+        if (REC_START.ilvl) itemLevel.value = REC_START.ilvl;
+        craftStage.reset();
+        recPreset.value = true;
+        for (const k of REC_START.hands) craftStage.use(k);
+        held.value = null;
+      }
       if (raw && wantVideo) {
         const at = q.get("anim_t");
         // &offers=1 (発現の 3 択の静止画) は、同じ手つきを 3 択が出そろった瞬間 (pick_ms) で止めた絵 (POE2Tube 要望 ㉗: 静止画と手つきの

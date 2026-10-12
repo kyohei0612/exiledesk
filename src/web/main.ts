@@ -6,12 +6,15 @@ import WebApp from "./WebApp.vue";
 import { startTracking } from "./track";
 import { startLogSender } from "../services/telemetry/log-sender";
 import { applyNoLogParam, noLog } from "../utils/no-log";
+import { initRecParts } from "../utils/rec-mode";
 import { setMarketLoader } from "../state/market-store";
 import { loadBoot } from "./boot";
 import type { CurrencyItem, League } from "../api/poe2scout";
 
 // この端末は記録しない (?nolog=1 / 0 で切り替え、no-log.ts)。印を読んでから記録を始める
 applyNoLogParam();
+// 録画モード (?rec=1) の部分ごとの見せる / 隠す (POE2Tube 要望 ㊸)
+initRecParts();
 // 操作の印 (段階・滞在・エラー) を始めてから画面を出す (cookie なし)
 startTracking();
 // 相場はサーバーが 1 時間おきに取った物を /boot.json で受け取る (ブラウザから poe2scout を引かない。boot.ts)

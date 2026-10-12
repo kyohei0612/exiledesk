@@ -6,6 +6,7 @@
   計算は aim-odds.ts (ステージで打つのと同じ処理を何百回も試す)。行を押すとそのカレンシーを持ってお告げを掛ける。打ったら今の状態で出し直す。
 -->
 <script setup lang="ts">
+import { recNext } from "../../utils/rec-mode";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { AIM_MAX, craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
@@ -136,7 +137,7 @@ const keyOf = (r: AimOdd): string => r.currency + "|" + r.omens.join("+");
 function roll(r: AimOdd): void {
   const d = s.data.value, it = s.item.value, t = s.aims.value;
   if (!d || !it || !t.length) return;
-  const p = aimChain(d, it, t, r, rollN.value, Math.floor(Math.random() * 1e9));
+  const p = aimChain(d, it, t, r, rollN.value, (recNext() ?? Math.floor(Math.random() * 1e9)));
   const hit = Math.round(p * rollN.value);
   rolled.value = { key: keyOf(r), n: rollN.value, hit };
   logAim("aim_roll", { combo: keyOf(r), n: rollN.value, hit, odds: r.p });
