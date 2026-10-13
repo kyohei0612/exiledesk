@@ -18,7 +18,7 @@ import { jaOfOmen } from "../services/htc/labels";
 import { stepEn, stepJa } from "../services/craft-stage/run-plan";
 import { OMEN_FOR } from "../services/craft-stage/omens";
 import { isFlask, isGem } from "../services/craft-stage/stage-bases";
-import { isRune, runeEffectFor, runeKeys, runeNameOf, runeOf } from "../services/craft-stage/stage-runes";
+import { isRune, runeCategoryOf, runeEffectFor, runeKeys, runeNameOf, runeOf } from "../services/craft-stage/stage-runes";
 import { runeArt } from "../services/craft-stage/rune-art";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
@@ -81,7 +81,7 @@ export function runesFor(item: StageItem | null): ShelfGroup[] {
     const r = runeOf(k);
     // 部位は効果のデータ (この部位に効果の行があるか) を正にする。説明文の部位とは 5 件食い違う (augment-rules.ts の placeBlock)
     // 傑作のルーンは自分の効き目を持たない (はまっているルーンを上げる) ので出しておく
-    return !!r && (runeNameOf(k) === "Masterwork Rune" || !!runeEffectFor(r, item.cls.category));
+    return !!r && (runeNameOf(k) === "Masterwork Rune" || !!runeEffectFor(r, runeCategoryOf(item)));
   };
   return RUNE_GROUPS.map((g) => ({ ...g, keys: g.keys.filter(fits) })).filter((g) => g.keys.length);
 }

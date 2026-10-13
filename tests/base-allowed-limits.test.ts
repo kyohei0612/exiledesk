@@ -35,3 +35,25 @@ describe("暗黙の枠の増減", () => {
     expect([limitOf(magic("Emerald"), "prefix"), limitOf(magic("Emerald"), "suffix")]).toEqual([1, 1]);
   });
 });
+
+import { applyRune, baseSocketsOf, runeCategoryOf, runeEffectFor, runeKeys, runeOf } from "../src/services/craft-stage/stage-runes";
+
+describe("ソケットの物の効果を兜 / 手袋 / 靴として得るベース (2026-10-13 オーナー「ソケット系はデフォで必ず 1 個以上あいてる」)", () => {
+  it("コロナのアミュレット = 兜、グラスピングリング = 手袋、ストーキングベルト = 靴。白の時からソケット 1", () => {
+    const cases: Array<[string, string, string]> = [["Corona Amulet", "Amulets", "Helmets"], ["Grasping Ring", "Rings", "Gloves"], ["Stalking Belt", "Belts", "Boots"]];
+    for (const [base, cat, as] of cases) {
+      const it = freshItem(data, base, 82);
+      expect(baseSocketsOf(base, cat), base).toBe(1);
+      expect(runeCategoryOf(it), base).toBe(as);
+      // その部位に効くルーンをはめると、その部位の効き目になる
+      const key = runeKeys("normal").find((k) => runeEffectFor(runeOf(k)!, as));
+      expect(key, base).toBeTruthy();
+      const r = applyRune({ ...it, sockets: 1 }, key!, data);
+      expect(r.applied, `${base} ${key} ${r.reason ?? ""}`).toBe(true);
+      expect(r.item.augments?.[0]?.textEn).toBe(runeEffectFor(runeOf(key!)!, as)!.en);
+    }
+    // 普通の宝飾品は 0 のまま
+    expect(baseSocketsOf("Gold Ring", "Rings")).toBe(0);
+    expect(runeCategoryOf(freshItem(data, "Gold Ring", 82))).toBe("Rings");
+  });
+});
