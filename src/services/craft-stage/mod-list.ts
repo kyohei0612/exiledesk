@@ -7,6 +7,7 @@
  *   - 種類: 普通 / エッセンス / 冒涜 / 異界 (変質した鎖骨)
  *   - 1 行 = 1 系統の MOD。重みは全段の合計、出やすさは同じ種類・同じ側の合計に対する割合
  */
+import { inGroup } from "../mods/item-classes";
 import { ESSENCE_KIND, essenceKindOf } from "../mods/essence-kind";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { fillModText, jaOfMod } from "../htc/mod-text";
@@ -38,7 +39,7 @@ export const GROUP_JA: Record<ModGroup, string> = {
 
 /** 種類の見出し。ジュエルの「エッセンス」の置き場は液化した感情の MOD なので「デリリウム」(2026-10-11 オーナー「デリリウムに変えて」) */
 export const groupLabelOf = (g: ModGroup, item: StageItem | null | undefined): string =>
-  (g === "essence" || g === "perfect_essence") && item?.cls.category === "Jewels" ? tr("デリリウム", "Delirium") : GROUP_JA[g];
+  (g === "essence" || g === "perfect_essence") && !!item && inGroup(item.cls.category, "jewel") ? tr("デリリウム", "Delirium") : GROUP_JA[g];
 
 /** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05) */
 export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string; modId?: string }

@@ -14,6 +14,7 @@
  *
  * 鍵: `emotion:<英語名>` (例 emotion:Liquid Envy / emotion:Ancient Liquid Envy)。1 手として log に入る
  */
+import { inGroup } from "../mods/item-classes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { jewelEmotionsOf } from "../htc/patch";
 import { allMods, limitOf, listOf, makeStageMod, overLimit, skip, skipRandom, withMod, without } from "./stage-core";
@@ -36,7 +37,7 @@ export function applyEmotion(data: PatchData, item: StageItem, key: string, rng:
   if (!entries.length) {
     const ancient = name.startsWith("Ancient ");
     return skip(item, ancient ? tr("古代の液化した感情は時を失ったジュエルにだけ使える", "Ancient Liquid Emotions: Time-Lost Jewels only")
-      : item.cls.category === "Jewels" ? tr("このジュエルには使えない (古代の版は時を失ったジュエル用)", "Not usable on this jewel (Ancient versions are for Time-Lost Jewels)")
+      : inGroup(item.cls.category, "jewel") ? tr("このジュエルには使えない (古代の版は時を失ったジュエル用)", "Not usable on this jewel (Ancient versions are for Time-Lost Jewels)")
       : tr("ジュエルにだけ使える", "Jewels only"));
   }
   if (item.rarity !== "rare") return skip(item, tr("レアのジュエルにだけ使える", "Rare jewels only"));

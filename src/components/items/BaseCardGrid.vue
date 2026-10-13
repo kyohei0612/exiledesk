@@ -3,6 +3,7 @@
   PC は押した部位のタイルの行のすぐ下に、スマホと名前で探す時は一覧の下に出す
 -->
 <script setup lang="ts">
+import { inGroup } from "../../services/mods/item-classes";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { classLabel, type CatalogRow } from "../../services/items/base-catalog";
 import { nameOf, tr } from "../../i18n/lang";
@@ -70,7 +71,7 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
           <b class="text-[13px] md:text-[15px]" :class="b.en === selected ? 'text-amber-100' : ''">{{ nameOf(b) }}</b>
           <span v-if="hot?.has(b.en)" class="shrink-0 rounded bg-amber-500/25 px-1 text-[9.5px] font-bold leading-[14px] text-amber-200 md:text-[10.5px]">{{ tr("人気", "Popular") }}</span>
           <!-- ジュエルはレベルを出さない (付く物がアイテムレベルで変わらない。2026-10-12 オーナー「ジュエルはベースからも」) -->
-          <span v-if="b.lvl && !/^Jewels/.test(b.cls)" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0 md:text-[12px]">Lv {{ b.lvl }}</span>
+          <span v-if="b.lvl && !inGroup(b.cls, 'jewel')" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0 md:text-[12px]">Lv {{ b.lvl }}</span>
         </span>
         <span v-if="showCls" class="block text-[10px] opacity-50">{{ classLabel(b.cls) }}</span>
         <span v-if="b.stats" class="block truncate text-[11px] text-rarity-magic md:text-[13px]">{{ b.stats }}</span>

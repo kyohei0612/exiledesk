@@ -21,7 +21,7 @@
  */
 import runesRaw from "./stage-runes.json";
 import basesPob from "./stage-bases-pob.json";
-import { ARMOUR, CASTER, MARTIAL } from "./apply-act";
+import { handsOf, inAny, inGroup, soulCoreFits, soulCoreSize } from "../mods/item-classes";
 import type { StageApply, StageItem, StageAugment, StageMod } from "./types";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { RUNE_BY_ID, runeIdByName } from "../../vendor/poe2htc/engine/runes";
@@ -68,62 +68,27 @@ export const runeNameOf = (key: string): string => parseRuneKey(key)?.en ?? key;
 export const isRune = (key: string): boolean => { const p = parseRuneKey(key); return !!p && !!RUNES[p.en]; };
 export const runeOf = (key: string): RuneRow | null => { const p = parseRuneKey(key); return p ? RUNES[p.en] ?? null : null; };
 
-const WANDSTAFF = ["Wands", "Staves"];
-const TWO_HAND = ["TwoHand_Maces", "Quarterstaves", "Bows", "Crossbows", "Staves", "Talismans"];
-/** SoulCoreStatCategories.Id → 計算機の部位 (ItemBase.category) */
-const CAT_TO_CLASSES: Record<string, string[] | "all"> = {
-  All: "all",
-  "Martial Weapon": MARTIAL,
-  "Caster Weapon": CASTER,
-  "Wand or Staff": WANDSTAFF,
-  Armour: ARMOUR,
-  "Body Armour": ["Body_Armours"],
-  Boots: ["Boots"],
-  Bow: ["Bows"],
-  Focus: ["Foci"],
-  Gloves: ["Gloves"],
-  Helmet: ["Helmets"],
-  Sceptre: ["Sceptres"],
-  Shield: ["Shields"],
-  Buckler: ["Bucklers"],
-  "Shield or Buckler": ["Shields", "Bucklers"],
-  "Two Hand Mace": ["TwoHand_Maces"],
-  "One Hand Mace": ["OneHand_Maces"],
-  Crossbow: ["Crossbows"],
-  Spear: ["Spears"],
-  Quarterstaff: ["Quarterstaves"],
-  Wand: ["Wands"],
-  Staff: ["Staves"],
-  Talisman: ["Talismans"],
-  "Martial Or Caster Weapon": [...MARTIAL, ...CASTER],
-  "Martial Weapon Wand or Staff": [...MARTIAL, ...WANDSTAFF],
-  "Quarterstaff or Spear": ["Quarterstaves", "Spears"],
-  "Two Handed Weapon": TWO_HAND,
-  "Maces or Talisman": ["OneHand_Maces", "TwoHand_Maces", "Talismans"],
-  "Crossbow Bow or Spear": ["Crossbows", "Bows", "Spears"],
-  "One Hand Mace or Quarterstaff": ["OneHand_Maces", "Quarterstaves"],
-};
-const EQUIP = [...MARTIAL, ...CASTER, ...ARMOUR];
-const BIG = [...TWO_HAND, "Body_Armours"];
+/**
+ * 部位は手で並べず、クライアントの表で引く (services/mods/item-classes.ts、2026-10-13 総点検)。
+ * ソケットが付く部位 = 武器・防具。2 つ付く大きい部位 = 両手武器・ボディアーマー
+ */
+const isEquip = (category: string): boolean => inAny(category, ["weapon", "armour"]);
+const isBig = (category: string): boolean => (inGroup(category, "weapon") && handsOf(category) === 2) || inGroup(category, "bodyArmour");
 
 /**
  * 熟練工のオーブで付けられるソケットの数 (0 = 付けられない部位)。PoB の socketLimit − 2 (胴・両手 2 / ほか 1)。
  * PoB に無いベースは部位で (胴・両手 4 / ほか 3 の − 2)
  */
 export function socketCapOf(base: string, category: string): number {
-  if (!EQUIP.includes(category)) return 0;
-  const lim = SOCKET_LIMITS[base] ?? (BIG.includes(category) ? 4 : 3);
+  if (!isEquip(category)) return 0;
+  const lim = SOCKET_LIMITS[base] ?? (isBig(category) ? 4 : 3);
   return Math.max(0, lim - 2);
 }
-const sizeOf = (c: string[] | "all" | undefined): number => (c === "all" ? 1000 : c?.length ?? 1e9);
 
 /** そのルーンがその部位で持つ効き目 (当てはまる部位が一番狭い行)。無ければ null */
 export function runeEffectFor(rune: RuneRow, category: string): RuneEffect | null {
-  const hits = rune.effects.filter((e) => {
-    const c = CAT_TO_CLASSES[e.cat];
-    return c === "all" ? EQUIP.includes(category) : !!c?.includes(category);
-  });
-  return hits.sort((a, b) => sizeOf(CAT_TO_CLASSES[a.cat]) - sizeOf(CAT_TO_CLASSES[b.cat]))[0] ?? null;
+  const hits = rune.effects.filter((e) => soulCoreFits(e.cat, category));
+  return hits.sort((a, b) => soulCoreSize(a.cat) - soulCoreSize(b.cat))[0] ?? null;
 }
 
 /** 棚に並べるルーン (ルーンだけ、段 → ドロップレベル順)。tier を渡すとその段だけ。kind でソウルコア / アイドル (talisman) も */

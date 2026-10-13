@@ -11,6 +11,7 @@
  *   パッシブ・他の装備は無し (素のキャラ) で、手ごとのアイテムだけ入れ替える。gem_level が無ければキャラのレベルで使える一番高いジェムレベル。
  * 結果 JSON の `pob`: { version, character, config (実際に使った設定を全部), config_ja, steps: [手 0 (白) … 最後] ごとの { dps, hit, aps, crit, armour, evasion, es, resists } }
  */
+import { clientClassOf, inAny, inGroup } from "../mods/item-classes";
 import type { StageItem } from "./types";
 import { htcBaseInfo } from "../htc/patch";
 
@@ -95,15 +96,17 @@ export function pobConfigOf(p: PobPlan): { config: Record<string, number | strin
 
 /** PoB の装備の枠 (計算機の部位 → PoB の Slot 名) */
 export function pobSlotOf(category: string): string | null {
-  if (/^(Bows|Crossbows|OneHand_|TwoHand_|Quarterstaves|Spears|Talismans|Wands|Staves|Sceptres)/.test(category)) return "Weapon 1";
-  if (/^(Shields|Bucklers|Foci|Quivers)/.test(category)) return "Weapon 2";
-  if (category.startsWith("Body_Armours")) return "Body Armour";
-  if (category.startsWith("Helmets")) return "Helmet";
-  if (category.startsWith("Gloves")) return "Gloves";
-  if (category.startsWith("Boots")) return "Boots";
-  if (category === "Rings") return "Ring 1";
-  if (category === "Amulets") return "Amulet";
-  if (category === "Belts") return "Belt";
+  // 部位はクライアントの表から (services/mods/item-classes.ts、2026-10-13 総点検)
+  if (inGroup(category, "weapon")) return "Weapon 1";
+  if (inAny(category, ["shieldLike", "quiver"])) return "Weapon 2";
+  const c = clientClassOf(category);
+  if (c === "Body Armour") return "Body Armour";
+  if (c === "Helmet") return "Helmet";
+  if (c === "Gloves") return "Gloves";
+  if (c === "Boots") return "Boots";
+  if (c === "Ring") return "Ring 1";
+  if (c === "Amulet") return "Amulet";
+  if (c === "Belt") return "Belt";
   return null;
 }
 

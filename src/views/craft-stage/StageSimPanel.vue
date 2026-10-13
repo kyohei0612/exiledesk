@@ -10,6 +10,7 @@
   探す自動 (計算機の自動のツリー) は外した。計算機 (htc-craft) はそのまま。
 -->
 <script setup lang="ts">
+import { inGroup } from "../../services/mods/item-classes";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { fmtPct } from "../../utils/format-pct";
 import { scrollToTop } from "../../utils/keep-place";
@@ -322,7 +323,7 @@ onMounted(() => void market.ensureMarket(MARKET_MAX_AGE_MS));
 // ジュエルはアイテムレベルを見ないので、取引所の検索にも入れない (2026-10-12 オーナー「ジュエルはアイテムレベル廃止」)
 const searchIlvl = computed((): number | undefined => {
   const d = s.data.value;
-  if (/^Jewels/.test(htcBaseInfo()[s.base.value ?? ""]?.cls ?? "")) return undefined;
+  if (inGroup(htcBaseInfo()[s.base.value ?? ""]?.cls ?? "", "jewel")) return undefined;
   // エッセンスの MOD はアイテムレベルに関係なく付くので数えない (2026-10-07)
   const need = s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]).map((x) => {
     const m = d?.mods.get(x.modId);

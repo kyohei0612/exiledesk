@@ -9,6 +9,7 @@
   状態と操作は [[craft-stage.ts]]、1 手の中身は services/craft-stage (計算機と同じ規則)。
 -->
 <script setup lang="ts">
+import { inGroup } from "../../services/mods/item-classes";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { scrollToTop } from "../../utils/keep-place";
@@ -70,7 +71,7 @@ const ILVLS = [45, 65, 75, 82, 86];
  * ジュエルはアイテムレベルの欄を出さない (2026-10-12 オーナー「ジュエルにアイテムレベルって意味あるんか、なかったら表示しなくていい」:
  * MOD は全部レベル 1・重みは全部同じで、付く物はアイテムレベルで変わらない)。カレンシー・骨の制限も掛けない (apply-currency の noIlvl)
  */
-const jewelBase = computed(() => s.item.value?.cls.category === "Jewels");
+const jewelBase = computed(() => !!s.item.value && inGroup(s.item.value.cls.category, "jewel"));
 
 /** 持っているカレンシーのアイコンをカーソルに付ける */
 const mouse = ref({ x: 0, y: 0 });

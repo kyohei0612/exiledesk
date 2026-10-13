@@ -14,6 +14,7 @@
  *
  * 同期で引く (集計は同期)。先に prepareEngineMods() で読んでおく (上位 MOD 一覧は取得・キャッシュ表示の前に読む)
  */
+import { categoriesIn } from "./item-classes";
 import { loadHtcPatch, onHtcPatchLoaded } from "../htc/patch";
 import { classOfBase } from "../htc/bridge";
 import { matchKey, modIndexOf } from "../htc/bridge-index";
@@ -38,8 +39,9 @@ const NL = String.fromCharCode(10);
 /** スロット → エンジンの種類 (ベースが取れていない古いキャッシュの時の既定) */
 const SLOT_CATEGORIES: Record<SlotKey, readonly string[]> = {
   ring: ["Rings"], amulet: ["Amulets"], helm: ["Helmets"], gloves: ["Gloves"], body: ["Body_Armours"], boots: ["Boots"],
-  weapon: ["Bows", "Crossbows", "Wands", "Sceptres", "Staves", "Quarterstaves", "Spears", "OneHand_Maces", "TwoHand_Maces", "Talismans"],
-  weapon2: ["Bows", "Crossbows", "Wands", "Sceptres", "Staves", "Quarterstaves", "Spears", "OneHand_Maces", "TwoHand_Maces", "Talismans", "Shields", "Bucklers", "Foci", "Quivers"],
+  // 武器・左手の部位はクライアントの表から (2026-10-13 総点検)
+  weapon: categoriesIn("weapon"),
+  weapon2: [...categoriesIn("weapon"), ...categoriesIn("shieldLike"), ...categoriesIn("quiver")],
 };
 
 /** そのスロットで使われていたベースのエンジンの行。1 つも引けなければスロットの既定の種類の行全部 */

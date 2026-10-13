@@ -34,6 +34,7 @@
  * このファイルは**取引所を叩きません**。問い合わせの中身を組み立てて返すだけで、実際の取得と
  * レート制限 ([[trade2-rate-limit-testing]]) は呼び出し側の役目です。
  */
+import { clientClassOf, inGroup } from "../mods/item-classes";
 import { buildSpecQuery } from "../trade2/query";
 import { currencyJa, displayCurrency } from "../../state/display-currency";
 import { filledStatsOf, htcFamilyStats } from "./patch";
@@ -113,7 +114,7 @@ function jewelPairs(): { toJewel: Map<string, string>; toNormal: Map<string, str
 /** ジュエルの MOD ならジュエルの stat、それ以外は普通の stat に */
 export function jewelAwareStat(id: string, modId: string): string {
   const p = jewelPairs();
-  return /^Jewels/.test(modId) ? p.toJewel.get(id) ?? id : p.toNormal.get(id) ?? id;
+  return inGroup(modId.split("/")[0] ?? "", "jewel") ? p.toJewel.get(id) ?? id : p.toNormal.get(id) ?? id;
 }
 /** 取引所の文の言い方が違う物 (MOD の文 → 取引所の文。2026-10-12 フルチェック) */
 const STAT_ALIAS: Record<string, string> = {
@@ -139,33 +140,20 @@ const STAT_MAP = statMapping as Record<string, string>;
  * `buildFinishedQuery` はベース名 (`type`) で引きます ── カテゴリより厳しい。
  * ここは、ベース名が分からない呼び出し向けの保険です。
  */
+// 取引所の種類の名前 (取引所の言葉なのでここだけは表)。キーはクライアントの部位 Id (2026-10-13 総点検: 前はエンジンの部位の名前で、ジュエルが無かった)
 const TRADE_CATEGORY: Record<string, string> = {
-  Amulets: "accessory.amulet",
-  Rings: "accessory.ring",
-  Belts: "accessory.belt",
-  Helmets: "armour.helmet",
-  Gloves: "armour.gloves",
-  Boots: "armour.boots",
-  Body_Armours: "armour.chest",
-  Shields: "armour.shield",
-  Bucklers: "armour.buckler",
-  Foci: "armour.focus",
-  Quivers: "armour.quiver",
-  Bows: "weapon.bow",
-  Crossbows: "weapon.crossbow",
-  OneHand_Maces: "weapon.onemace",
-  TwoHand_Maces: "weapon.twomace",
-  Quarterstaves: "weapon.warstaff",
-  Spears: "weapon.spear",
-  Talismans: "weapon.talisman",
-  Wands: "weapon.wand",
-  Sceptres: "weapon.sceptre",
-  Staves: "weapon.staff",
+  Amulet: "accessory.amulet", Ring: "accessory.ring", Belt: "accessory.belt",
+  Helmet: "armour.helmet", Gloves: "armour.gloves", Boots: "armour.boots", "Body Armour": "armour.chest",
+  Shield: "armour.shield", Buckler: "armour.buckler", Focus: "armour.focus", Quiver: "armour.quiver",
+  Bow: "weapon.bow", Crossbow: "weapon.crossbow", "One Hand Mace": "weapon.onemace", "Two Hand Mace": "weapon.twomace",
+  Warstaff: "weapon.warstaff", Spear: "weapon.spear", Talisman: "weapon.talisman", Wand: "weapon.wand", Sceptre: "weapon.sceptre", Staff: "weapon.staff",
+  Jewel: "jewel",
+  // 新しい武器 (剣・斧・短剣・爪・フレイル) は取引所の名前を確かめてから足す (推測で書かない)。無い時は null = ベース名で引く
 };
 
 /** そのクラスを取引所で引けるか。引けなければ null (理由は `tradeCategoryNote`) */
 export function tradeCategoryOf(cls: ItemBase): string | null {
-  return TRADE_CATEGORY[cls.category] ?? null;
+  return TRADE_CATEGORY[clientClassOf(cls.category) ?? ""] ?? null;
 }
 export const tradeCategoryNote = (cls: ItemBase): string =>
   `「${cls.category}」は取引所のカテゴリが未確認です。間違った値段を出さないよう、検索を組みません。`;

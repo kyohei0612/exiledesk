@@ -10,6 +10,7 @@
  *   - 冒涜の MOD はアイテムに 1 つまで。古びた骨は段の下限 40 (ANCIENT_BONE_FLOOR)
  *   - 王 / 君主 / 黒血のお告げ: 候補をその勢力の冒涜の MOD だけに (MOD ごとに等しく。エンジンの desecrationBossProbability)。防具には使えない
  */
+import { inGroup } from "../mods/item-classes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { ANCIENT_BONE_FLOOR, bossOmenAllowed, DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
 import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate, effectiveCls } from "./stage-core";
@@ -46,7 +47,7 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
   const floor = Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0);
   // 古代の骨も最低 MOD レベルのあるカレンシー (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 3)。深淵の王の印の下限 (仮) は別
-  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR && item.cls.category !== "Jewels") return skip(item, tr(`アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`, `Requires Item Level ${ANCIENT_BONE_FLOOR}+`));
+  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR && !inGroup(item.cls.category, "jewel")) return skip(item, tr(`アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`, `Requires Item Level ${ANCIENT_BONE_FLOOR}+`));
   const factionOmen = used.find((o) => FACTION_TAG[o]);
   if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, tr("勢力のお告げは武器または宝飾品だけ", "Faction Omens: weapons and jewellery only"));
   const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;

@@ -11,6 +11,7 @@
  * `extra-bases.json` (クライアントから生成、`scripts/build-htc-bases-from-client.mjs`) を
  * ここで重ねて埋めます。上流の `data/` は触りません。
  */
+import { inGroup } from "../mods/item-classes";
 import { splitMixedRuneMods } from "./rune-split";
 import { indexPatch } from "../../vendor/poe2htc/engine/indexPatch";
 import { applyWeightOverrides } from "./weight-overrides";
@@ -335,11 +336,11 @@ function fillJewelleryTags(mods: Map<string, Mod>): void {
   const normalTags = new Map<string, readonly string[]>();
   for (const m of mods.values()) {
     const cls = m.id.split("/")[0];
-    if ((cls === "Rings" || cls === "Amulets") && m.source === "normal") normalTags.set(`${cls}|${m.family}`, m.tags ?? []);
+    if (inGroup(cls, "ringAmulet") && m.source === "normal") normalTags.set(`${cls}|${m.family}`, m.tags ?? []);
   }
   for (const [id, m] of mods) {
     const cls = id.split("/")[0];
-    if ((cls !== "Rings" && cls !== "Amulets") || m.source === "normal" || (m.tags ?? []).length) continue;
+    if (!inGroup(cls, "ringAmulet") || m.source === "normal" || (m.tags ?? []).length) continue;
     const tags = normalTags.get(`${cls}|${m.family}`) ?? modTags[m.family] ?? [];
     if (tags.length) mods.set(id, { ...m, tags: [...tags] });
   }

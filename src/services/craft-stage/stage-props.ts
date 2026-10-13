@@ -9,6 +9,7 @@
  *     (ES の式は規格外の賭けの ladder.ts がゲーム内の実測で確かめた形と同じ)
  * 足し方の細かい丸め (ゲームは切り捨てか四捨五入か) は出典が無いので四捨五入。数値の正は PoB (要望 ⑰-3 の DPS は PoB で計算する)。
  */
+import { inAny } from "../mods/item-classes";
 import { baseStatsOf } from "./stage-bases";
 import { displayValue } from "../mods/stat-scale";
 import type { StageItem } from "./types";
@@ -29,7 +30,7 @@ export function implicitRows(item: StageItem, ja = false): ImplicitRow[] {
   const lines = htcBaseInfo()[item.base]?.implicits ?? [];
   if (!lines.length) return [];
   const info = implicitStatsOf(item.base);
-  const jewel = ["Rings", "Amulets", "Jewels"].includes(item.cls.category);
+  const jewel = inAny(item.cls.category, ["ringAmulet", "jewel"]);
   const pct = lines.map((_, i) => (jewel && item.qualityTag && item.quality > 0 && info[i]?.tags.includes(item.qualityTag) ? item.quality : 0));
   const rolled = rollImplicitLines(item, lines.map((l) => (ja ? l.ja : nameOf(l))), pct);
   return rolled.map((r, i) => {

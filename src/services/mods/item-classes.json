@@ -1,0 +1,898 @@
+{
+ "generated": "2026-10-13",
+ "source": "client ItemClasses / CraftingItemClassCategories / EssenceTargetItemCategories / SoulCoreStatCategories / Chanceableitemclasses / BaseItemTypes",
+ "classes": {
+  "Active Skill Gem": {
+   "kind": "gem",
+   "crafting": [
+    "ActiveSkillGem"
+   ],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": false,
+   "corrupt": true,
+   "rarity": false
+  },
+  "Amulet": {
+   "kind": "jewellery",
+   "crafting": [
+    "Amulet"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Jewellery",
+    "HelmetRingAmulet",
+    "Amulet",
+    "ArmourJewellery",
+    "AmuletRing",
+    "AmuletBootsGlovesRing",
+    "AmuletBootsGloves",
+    "AmuletHelmet",
+    "BeltBootsGlovesHelmetJewellery",
+    "FocusSceptreWandRingAmulet"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Belt": {
+   "kind": "jewellery",
+   "crafting": [
+    "Belt"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Jewellery",
+    "Belt",
+    "ArmourJewellery",
+    "ArmourBelt",
+    "ShieldBeltHelmetBody",
+    "BeltHelmetShield",
+    "BeltBootsGlovesHelmet",
+    "BeltBootsGlovesHelmetJewellery"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Body Armour": {
+   "kind": "armour",
+   "crafting": [
+    "BodyArmour"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Armour",
+    "BodyArmour",
+    "ArmourJewellery",
+    "ArmourBelt",
+    "ShieldBeltHelmetBody"
+   ],
+   "soulCore": [
+    "Body Armour"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Boots": {
+   "kind": "armour",
+   "crafting": [
+    "Boots"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Armour",
+    "HelmetRingAmulet",
+    "GlovesBoots",
+    "ArmourJewellery",
+    "ArmourBelt",
+    "AmuletBootsGlovesRing",
+    "AmuletBootsGloves",
+    "BeltBootsGlovesHelmet",
+    "Boots",
+    "BeltBootsGlovesHelmetJewellery"
+   ],
+   "soulCore": [
+    "Boots"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Bow": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [
+    "TwoHandRanged",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "OneHandMartialBow",
+    "BowCrossbow",
+    "GlovesQuiver",
+    "AllWeapons",
+    "Bow"
+   ],
+   "soulCore": [
+    "Bow",
+    "Two Handed Weapon",
+    "Crossbow Bow or Spear"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Buckler": {
+   "kind": "armour",
+   "crafting": [
+    "Shield",
+    "Buckler"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Armour",
+    "ArmourJewellery",
+    "ArmourBelt",
+    "ShieldBeltHelmetBody",
+    "BeltHelmetShield",
+    "Shield",
+    "ShieldFocus"
+   ],
+   "soulCore": [
+    "Buckler",
+    "Shield or Buckler"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Claw": {
+   "kind": "weapon",
+   "hands": 1,
+   "crafting": [
+    "OneHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Crossbow": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [
+    "TwoHandRanged",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "TwoHandMartialCrossBow",
+    "BowCrossbow",
+    "GlovesQuiver",
+    "AllWeapons",
+    "Crossbow"
+   ],
+   "soulCore": [
+    "Crossbow",
+    "Two Handed Weapon",
+    "Crossbow Bow or Spear"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Dagger": {
+   "kind": "weapon",
+   "hands": 1,
+   "crafting": [
+    "OneHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "OneHandMartialBow",
+    "OneHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "FishingRod": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [
+    "TwoHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Flail": {
+   "kind": "weapon",
+   "hands": 1,
+   "crafting": [
+    "TwoHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "OneHandMartialBow",
+    "OneHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Focus": {
+   "kind": "armour",
+   "crafting": [
+    "Shield",
+    "Focus"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Armour",
+    "ArmourJewellery",
+    "ArmourBelt",
+    "FocusSceptreWand",
+    "FocusWand",
+    "StaffWand",
+    "FocusSceptreWandRingAmulet",
+    "Focus",
+    "ShieldFocus"
+   ],
+   "soulCore": [
+    "Focus"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Gloves": {
+   "kind": "armour",
+   "crafting": [
+    "Gloves"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Armour",
+    "HelmetRingAmulet",
+    "GlovesBoots",
+    "ArmourJewellery",
+    "ArmourBelt",
+    "AmuletBootsGlovesRing",
+    "AmuletBootsGloves",
+    "BeltBootsGlovesHelmet",
+    "GlovesQuiver",
+    "BeltBootsGlovesHelmetJewellery",
+    "Gloves"
+   ],
+   "soulCore": [
+    "Gloves"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Helmet": {
+   "kind": "armour",
+   "crafting": [
+    "Helmet"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Armour",
+    "HelmetRingAmulet",
+    "ArmourJewellery",
+    "ArmourBelt",
+    "ShieldBeltHelmetBody",
+    "BeltHelmetShield",
+    "BeltBootsGlovesHelmet",
+    "Helmet",
+    "AmuletHelmet",
+    "BeltBootsGlovesHelmetJewellery"
+   ],
+   "soulCore": [
+    "Helmet"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Jewel": {
+   "kind": "jewel",
+   "crafting": [
+    "Jewel"
+   ],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": false
+  },
+  "LifeFlask": {
+   "kind": "flask",
+   "crafting": [
+    "Flask"
+   ],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": false
+  },
+  "ManaFlask": {
+   "kind": "flask",
+   "crafting": [
+    "Flask"
+   ],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": false
+  },
+  "Meta Skill Gem": {
+   "kind": "gem",
+   "crafting": [],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": false,
+   "corrupt": true,
+   "rarity": false
+  },
+  "One Hand Axe": {
+   "kind": "weapon",
+   "hands": 1,
+   "crafting": [
+    "OneHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "OneHandMartialBow",
+    "OneHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "One Hand Mace": {
+   "kind": "weapon",
+   "hands": 1,
+   "crafting": [
+    "OneHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "OneHandMartialBow",
+    "OneHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons",
+    "Maces"
+   ],
+   "soulCore": [
+    "One Hand Mace",
+    "Maces or Talisman",
+    "One Hand Mace or Quarterstaff"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "One Hand Sword": {
+   "kind": "weapon",
+   "hands": 1,
+   "crafting": [
+    "OneHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "OneHandMartialBow",
+    "OneHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Quiver": {
+   "kind": "quiver",
+   "crafting": [
+    "Quiver"
+   ],
+   "essence": [
+    "AllEquipment",
+    "GlovesQuiver",
+    "Quiver"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Ring": {
+   "kind": "jewellery",
+   "crafting": [
+    "Ring"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Jewellery",
+    "HelmetRingAmulet",
+    "ArmourJewellery",
+    "AmuletRing",
+    "AmuletBootsGlovesRing",
+    "BeltBootsGlovesHelmetJewellery",
+    "FocusSceptreWandRingAmulet",
+    "Ring"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Sceptre": {
+   "kind": "weapon",
+   "hands": 1,
+   "crafting": [
+    "OneHandMelee",
+    "Weapon",
+    "Sceptre"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Caster",
+    "FocusSceptreWand",
+    "FocusSceptreWandRingAmulet",
+    "Sceptre",
+    "AllWeapons"
+   ],
+   "soulCore": [
+    "Caster Weapon",
+    "Sceptre",
+    "Martial Or Caster Weapon"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Shield": {
+   "kind": "armour",
+   "crafting": [
+    "Shield"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Armour",
+    "ArmourJewellery",
+    "ArmourBelt",
+    "ShieldBeltHelmetBody",
+    "BeltHelmetShield",
+    "Shield",
+    "ShieldFocus"
+   ],
+   "soulCore": [
+    "Shield",
+    "Shield or Buckler"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Spear": {
+   "kind": "weapon",
+   "hands": 1,
+   "crafting": [
+    "TwoHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "OneHandMartialBow",
+    "OneHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons",
+    "Spear"
+   ],
+   "soulCore": [
+    "Spear",
+    "Quarterstaff or Spear",
+    "Crossbow Bow or Spear"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Staff": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [
+    "TwoHandMelee",
+    "Weapon",
+    "CasterWeapon",
+    "Staff"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Caster",
+    "Staff",
+    "StaffWand",
+    "StaffWandNoFocus",
+    "AllWeapons"
+   ],
+   "soulCore": [
+    "Caster Weapon",
+    "Wand or Staff",
+    "Staff",
+    "Martial Or Caster Weapon",
+    "Martial Weapon Wand or Staff",
+    "Two Handed Weapon"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Support Skill Gem": {
+   "kind": "gem",
+   "crafting": [],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": false,
+   "corrupt": false,
+   "rarity": false
+  },
+  "Talisman": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [
+    "TwoHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "TwoHandMartialCrossBow",
+    "TwoHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons",
+    "Talisman"
+   ],
+   "soulCore": [
+    "Talisman",
+    "Two Handed Weapon",
+    "Maces or Talisman"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "TrapTool": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Two Hand Axe": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [
+    "TwoHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "TwoHandMartialCrossBow",
+    "TwoHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Two Hand Mace": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [
+    "TwoHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "TwoHandMartialCrossBow",
+    "TwoHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons",
+    "Maces"
+   ],
+   "soulCore": [
+    "Two Hand Mace",
+    "Two Handed Weapon",
+    "Maces or Talisman"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Two Hand Sword": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [
+    "TwoHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "TwoHandMartialCrossBow",
+    "TwoHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons"
+   ],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "UncutReservationGem_OLD": {
+   "kind": "gem",
+   "crafting": [],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": false,
+   "corrupt": false,
+   "rarity": false
+  },
+  "UncutReservationGemStackable": {
+   "kind": "gem",
+   "crafting": [
+    "UncutReservationGem"
+   ],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": false,
+   "corrupt": false,
+   "rarity": false
+  },
+  "UncutSkillGem_OLD": {
+   "kind": "gem",
+   "crafting": [],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": false,
+   "corrupt": false,
+   "rarity": false
+  },
+  "UncutSkillGemStackable": {
+   "kind": "gem",
+   "crafting": [
+    "UncutSkillGem"
+   ],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": false,
+   "corrupt": false,
+   "rarity": false
+  },
+  "UncutSupportGem_OLD": {
+   "kind": "gem",
+   "crafting": [],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": false,
+   "corrupt": false,
+   "rarity": false
+  },
+  "UncutSupportGemStackable": {
+   "kind": "gem",
+   "crafting": [],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": false,
+   "fracture": false,
+   "corrupt": false,
+   "rarity": false
+  },
+  "UtilityFlask": {
+   "kind": "charm",
+   "crafting": [
+    "Flask"
+   ],
+   "essence": [],
+   "soulCore": [],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": false
+  },
+  "Wand": {
+   "kind": "weapon",
+   "hands": 1,
+   "crafting": [
+    "OneHandRanged",
+    "Weapon",
+    "CasterWeapon",
+    "Wand"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Caster",
+    "FocusSceptreWand",
+    "FocusWand",
+    "StaffWand",
+    "FocusSceptreWandRingAmulet",
+    "Wand",
+    "StaffWandNoFocus",
+    "AllWeapons"
+   ],
+   "soulCore": [
+    "Caster Weapon",
+    "Wand or Staff",
+    "Wand",
+    "Martial Or Caster Weapon",
+    "Martial Weapon Wand or Staff"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  },
+  "Warstaff": {
+   "kind": "weapon",
+   "hands": 2,
+   "crafting": [
+    "TwoHandMelee",
+    "Weapon",
+    "MartialWeapon"
+   ],
+   "essence": [
+    "AllEquipment",
+    "Weapons",
+    "MeleeMartialWeapons",
+    "TwoHandMartialCrossBow",
+    "TwoHandMeleeMartial",
+    "GlovesQuiver",
+    "AllWeapons",
+    "Quarterstaff"
+   ],
+   "soulCore": [
+    "Quarterstaff",
+    "Quarterstaff or Spear",
+    "Two Handed Weapon",
+    "One Hand Mace or Quarterstaff"
+   ],
+   "chanceable": true,
+   "fracture": true,
+   "corrupt": true,
+   "rarity": true
+  }
+ },
+ "engine": {
+  "TwoHand_Maces": "Two Hand Mace",
+  "Amulets": "Amulet",
+  "Body_Armours": "Body Armour",
+  "Rings": "Ring",
+  "Wands": "Wand",
+  "Bows": "Bow",
+  "Gloves": "Gloves",
+  "Boots": "Boots",
+  "Bucklers": "Buckler",
+  "Quarterstaves": "Warstaff",
+  "Shields": "Shield",
+  "OneHand_Maces": "One Hand Mace",
+  "Spears": "Spear",
+  "Crossbows": "Crossbow",
+  "Talismans": "Talisman",
+  "Helmets": "Helmet",
+  "Foci": "Focus",
+  "Sceptres": "Sceptre",
+  "Staves": "Staff",
+  "Quivers": "Quiver",
+  "Belts": "Belt",
+  "Jewels": "Jewel",
+  "LifeFlask": "LifeFlask",
+  "ManaFlask": "ManaFlask",
+  "SkillGem": "Active Skill Gem"
+ }
+}

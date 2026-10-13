@@ -9,6 +9,7 @@
 import { computed, onBeforeUnmount } from "vue";
 import { tr } from "../../i18n/lang";
 import { CATALYSTS } from "../../services/htc/quality";
+import { inAny } from "../../services/mods/item-classes";
 import { qualityCapOf, qualityFieldMax } from "../../services/craft-stage/apply-currency";
 import { isGem } from "../../services/craft-stage/stage-bases";
 import type { StageItem } from "../../services/craft-stage/types";
@@ -20,8 +21,8 @@ const emit = defineEmits<{ quality: [n: number, tag?: string]; cap: [n: number] 
 const maxQ = computed(() => qualityCapOf(props.item));
 /** 足し算の上限 (ベース + 品質の最大値の MOD + インフューザー)。プルダウンの「今付けられる最大」 */
 const natural = computed(() => qualityFieldMax(props.item));
-// ジュエルもカタリストの種類を選べる (2026-10-12 オーナー「ジュエルにもカタリストであがる」)
-const jewel = computed(() => ["Rings", "Amulets", "Belts", "Jewels"].includes(props.item.cls.category));
+// カタリストの種類を選べるのは指輪・アミュレット (普通の物) とジュエル (精製された物)。ベルトには無い (2026-10-13 総点検: 前はベルトにも出て、打つと弾かれた)
+const jewel = computed(() => inAny(props.item.cls.category, ["ringAmulet", "jewel"]));
 const shown = computed(() => !isGem(props.item.cls.category) && !["Wands", "Staves", "Sceptres"].includes(props.item.cls.category));
 
 let rep: ReturnType<typeof setTimeout> | null = null;

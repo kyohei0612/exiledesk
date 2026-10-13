@@ -16,6 +16,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
 import { boostedBy } from "../htc/quality";
+import { inAny, inGroup, type ItemGroup } from "../mods/item-classes";
 import { addForced, addOne, allMods, candidates, maxQualityOf, removeForced, removeOne, room, SIDES, skip, without, type Candidate, type Force, type PoolOpts } from "./stage-core";
 import { applyEssence } from "./apply-essence";
 import { applyForce, isForce } from "./apply-force";
@@ -29,9 +30,10 @@ export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET
  * 2026-10-10 オーナー「上限を固定値にせず合計で伸びるように、マックス値を設定できるだけで、これ以上つけれないってしないで」
  */
 export const INFUSER_OVER = 10;
-const INFUSABLE = /^(Rings|Amulets|Body_Armours|Helmets|Gloves|Boots|Shields|Bucklers|Foci|OneHand_Maces|TwoHand_Maces|Spears|Quarterstaves|Bows|Crossbows|Talismans)/;
+/** インフューザーがある部位 (指輪・アミュレット・防具・マーシャル武器・ワンド・スタッフ・セプター)。前の一覧はキャスターが漏れていた (2026-10-13 総点検) */
+const INFUSABLE: readonly ItemGroup[] = ["ringAmulet", "armour", "martial", "caster"];
 export function qualityFieldMax(item: StageItem): number {
-  return maxQualityOf(item) + (INFUSABLE.test(item.cls.category) ? INFUSER_OVER : 0);
+  return maxQualityOf(item) + (inAny(item.cls.category, INFUSABLE) ? INFUSER_OVER : 0);
 }
 /** 暗黙の MOD の値を手で決める手 (`iset:0:5` = 1 行目を 5、範囲が 2 つなら `iset:0:2,4`)。暗黙の行の上下のボタン (2026-10-12 オーナー「暗黙はティアとかないから上下できるボタン」)。費用 0 */
 export const IMPLICIT_SET = "iset:";
@@ -40,7 +42,7 @@ export const implicitSetKey = (line: number, values: readonly number[]): string 
  * ジュエルはアイテムレベルを見ない (MOD は全部レベル 1・重みは全部同じで、画面にもアイテムレベルを出さない。2026-10-12 オーナー
  * 「ジュエルにアイテムレベルって意味あるんか」)。カレンシー・骨のアイテムレベルの制限も掛けない
  */
-export const noIlvl = (item: StageItem): boolean => item.cls.category === "Jewels";
+export const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel");
 /** 品質の上限を手で決める手 (`qcap:40`)。品質の帯のプルダウン (2026-10-10 オーナー「エッセンス打つのが面倒な人はプルダウンで上限上げてね」) */
 export const QUALITY_CAP = "qcap:";
 export const qualityCapKey = (n: number): string => `${QUALITY_CAP}${n}`;
@@ -86,7 +88,7 @@ export function kindOf(currency: string): string {
   if (currency.startsWith("essence:")) return currency === "essence:breach" || currency.startsWith("essence:perfect:") ? "essence_perfect" : "essence";
   if (currency.startsWith("desecrate")) return "desecrate";
   if (currency.startsWith("reveal")) return "reveal";
-  if (currency.startsWith("catalyst_")) return "catalyst";
+  if (currency.startsWith("catalyst_") || currency.startsWith("jcatalyst_")) return "catalyst";
   if (isEmotion(currency)) return "emotion";
   return parseKey(currency).kind;
 }

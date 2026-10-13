@@ -16,15 +16,14 @@
 import { augmentRule } from "../augment-rules";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { allMods, maxQualityOf, skip, without } from "./stage-core";
-import { ARMOUR, CASTER, MARTIAL, QUALITY_MAX, QUALITY_STEP } from "./apply-act";
+import { QUALITY_MAX, QUALITY_STEP } from "./apply-act";
+import { inAny, inGroup, type ItemGroup } from "../mods/item-classes";
 import { enchantPool, ENCHANTS, rollEnchantValues, rollText } from "./apply-vaal";
 import { uniquesOfSameClass } from "./stage-bases";
 import upgradesRaw from "./vaal-upgrades.json";
 import { tr } from "../../i18n/lang";
 
 const UPGRADES = upgradesRaw as Record<string, { id: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }> }>;
-const JEWELLERY = ["Rings", "Amulets", "Belts"];
-const WEAPONS = [...MARTIAL, ...CASTER, "Quivers"];
 
 export const EXTRA_KEYS = [
   "vaal_infuser_jewellery", "vaal_infuser_armour", "vaal_infuser_martial", "vaal_infuser_caster",
@@ -37,12 +36,12 @@ export const FOR_CORRUPTED = ["sacrifice_jewellery", "sacrifice_armour", "sacrif
 /** コラプト・聖別・ミラーの後でも打てる物 (アイテムを変えない / 壊すだけ) */
 export const ANY_STATE = ["mirror", "extraction"];
 
-/** インフューザーの対象 (説明文の言葉) */
-const INFUSER: Record<string, { cats: string[]; ja: string; en: string }> = {
-  vaal_infuser_jewellery: { cats: ["Rings", "Amulets"], ja: "指輪・アミュレット", en: "Rings and Amulets" },
-  vaal_infuser_armour: { cats: ARMOUR, ja: "防具", en: "Armour" },
-  vaal_infuser_martial: { cats: MARTIAL, ja: "マーシャル武器", en: "Martial Weapons" },
-  vaal_infuser_caster: { cats: CASTER, ja: "ワンド・スタッフ・セプター", en: "Wands, Staves and Sceptres" },
+/** インフューザーの対象 (説明文の言葉のまとまり、services/mods/item-classes.ts) */
+const INFUSER: Record<string, { groups: ItemGroup[]; ja: string; en: string }> = {
+  vaal_infuser_jewellery: { groups: ["ringAmulet"], ja: "指輪・アミュレット", en: "Rings and Amulets" },
+  vaal_infuser_armour: { groups: ["armour"], ja: "防具", en: "Armour" },
+  vaal_infuser_martial: { groups: ["martial"], ja: "マーシャル武器", en: "Martial Weapons" },
+  vaal_infuser_caster: { groups: ["caster"], ja: "ワンド・スタッフ・セプター", en: "Wands, Staves and Sceptres" },
 };
 /** 上限を超えた時にコラプトする確率。公式の値は無く、コミュニティの報告の約 25% (2026-10-12 オーナー「25% と言われてる、説明でコミュニティの確率参照で」) */
 export const INFUSER_CORRUPT_P = 0.25;
@@ -51,10 +50,10 @@ export const ARCHITECT_DESTROY_P = 0.5;
 export const EXTRA_P_CONFIRMED = false;
 
 /** 生贄のオーブの対象 */
-const SACRIFICE: Record<string, { cats: string[]; ja: string; en: string }> = {
-  sacrifice_jewellery: { cats: JEWELLERY, ja: "アミュレット・指輪・ベルト", en: "Amulets, Rings and Belts" },
-  sacrifice_armour: { cats: ARMOUR, ja: "防具", en: "Armour" },
-  sacrifice_weapon: { cats: WEAPONS, ja: "武器・矢筒", en: "Weapons and Quivers" },
+const SACRIFICE: Record<string, { groups: ItemGroup[]; ja: string; en: string }> = {
+  sacrifice_jewellery: { groups: ["jewellery"], ja: "アミュレット・指輪・ベルト", en: "Amulets, Rings and Belts" },
+  sacrifice_armour: { groups: ["armour"], ja: "防具", en: "Armour" },
+  sacrifice_weapon: { groups: ["weapon", "quiver"], ja: "武器・矢筒", en: "Weapons and Quivers" },
 };
 
 const done = (item: StageItem, added: StageMod[] = [], removed: StageMod[] = []): StageApply => ({ applied: true, item, added, removed });
@@ -63,8 +62,8 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
   if (FOR_CORRUPTED.includes(key) && !item.corrupted) return skip(item, tr("コラプトしたアイテムにだけ使える", "Corrupted items only"));
   const inf = INFUSER[key];
   if (inf) {
-    if (!inf.cats.includes(item.cls.category)) return skip(item, tr(`${inf.ja}にだけ使える`, `${inf.en} only`));
-    const base = JEWELLERY.includes(item.cls.category) ? maxQualityOf(item) : QUALITY_MAX;
+    if (!inAny(item.cls.category, inf.groups)) return skip(item, tr(`${inf.ja}にだけ使える`, `${inf.en} only`));
+    const base = inGroup(item.cls.category, "jewellery") ? maxQualityOf(item) : QUALITY_MAX;
     const cap = base + 10;
     if (item.quality >= cap) return skip(item, tr(`品質が上限 (${cap}%)`, `Quality is maxed (${cap}%)`));
     const quality = Math.min(cap, item.quality + QUALITY_STEP.item);
@@ -75,7 +74,7 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
   }
   const sac = SACRIFICE[key];
   if (sac) {
-    if (!sac.cats.includes(item.cls.category)) return skip(item, tr(`${sac.ja}にだけ使える`, `${sac.en} only`));
+    if (!inAny(item.cls.category, sac.groups)) return skip(item, tr(`${sac.ja}にだけ使える`, `${sac.en} only`));
     if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
     if (!item.enchant) return skip(item, tr("コラプトエンチャントが無い", "No Corruption Enchantment"));
     const up = UPGRADES[item.enchant.id];
@@ -110,7 +109,7 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
       return done({ ...item, unique: u, uniqueScale: undefined });
     }
     case "siphoner":
-      if (item.rarity !== "rare" || !JEWELLERY.includes(item.cls.category)) return skip(item, tr("レアの宝飾品にだけ使える", "Rare jewellery only"));
+      if (item.rarity !== "rare" || !inGroup(item.cls.category, "jewellery")) return skip(item, tr("レアの宝飾品にだけ使える", "Rare jewellery only"));
       if (item.siphoner) return skip(item, tr("もうキル閾値が付いている", "Already has a kill threshold"));
       return done({ ...item, siphoner: true });
     case "mirror":

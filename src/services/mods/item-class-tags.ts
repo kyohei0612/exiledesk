@@ -6,6 +6,7 @@
  * src/services/htc/base-rows.json) から属性を引いて絞る (2026-09-29 オーナー「ベースの能力値によってつく MOD 違う」。
  * 前は種別単位で全属性を含めていて、STR の手袋しか使われていなくてもエナジーシールドの段が出ていた)。
  */
+import { clientClassOf } from "./item-classes";
 
 
 /**
@@ -64,20 +65,14 @@ const CLASS_TAG_SETS: Record<string, string[][]> = {
  * 計算機のエンジンの種類 (category) → GGG の ItemClasses.Id。種類 → タグの表は上の CLASS_TAG_SETS だけ
  * (2026-09-29 統一: クラフトステージのヴァールの付加が別の表を持っていて、弓・クロスボウの ranged が抜けていた)
  */
-const ENGINE_CLASS: Record<string, string> = {
-  Rings: "Ring", Amulets: "Amulet", Belts: "Belt", Quivers: "Quiver", Talismans: "Talisman",
-  Helmets: "Helmet", Gloves: "Gloves", Boots: "Boots", Body_Armours: "Body Armour",
-  Shields: "Shield", Bucklers: "Buckler", Foci: "Focus",
-  Bows: "Bow", Crossbows: "Crossbow", Wands: "Wand", Sceptres: "Sceptre", Staves: "Staff", Quarterstaves: "Warstaff",
-  Spears: "Spear", OneHand_Maces: "One Hand Mace", TwoHand_Maces: "Two Hand Mace",
-};
+// 2026-10-13 総点検: 手で並べた対応表をやめ、クライアントの表から (services/mods/item-classes.ts)。前はジュエルが無く、タグが引けなかった
 /** バックラーの行は属性が付かない (全部 DEX) */
 const ROW_ATTR_DEFAULT: Record<string, string> = { Bucklers: "dex", Foci: "int" };
 /**
  * エンジンの行 1 つのタグ (1 集合)。防具・盾は行の属性で絞る (Gloves_str → gloves / armour / str_armour)
  */
 export function tagsOfEngineRow(category: string, rowId: string): Set<string> {
-  const sets = CLASS_TAG_SETS[ENGINE_CLASS[category] ?? ""] ?? [];
+  const sets = CLASS_TAG_SETS[clientClassOf(category) ?? ""] ?? [];
   if (sets.length <= 1) return new Set(sets[0] ?? []);
   const attr = /_((?:str|dex|int)(?:_(?:str|dex|int))*)$/.exec(rowId)?.[1] ?? ROW_ATTR_DEFAULT[category];
   const hit = attr ? sets.find((s) => s.includes(`${attr}_armour`)) : undefined;

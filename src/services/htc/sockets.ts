@@ -35,6 +35,7 @@
  * 相場に無ければ Infinity (0 で埋めるとタダに見えるので、作れない扱いで断る)。
  */
 import { ASTRID_RUNE } from "./craft-slots";
+import { inAny } from "../mods/item-classes";
 import { RUNE_BY_ID, runePriceKey } from "../../vendor/poe2htc/engine/runes";
 import { jaOfPastedLine } from "./mod-text";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
@@ -192,8 +193,6 @@ export const usesAssumedWeight = (pick: SocketPick): boolean => SOCKET_RUNES.som
 /** 熟練工のオーブの価格キー ([[price-keys.json]]) */
 export const ARTIFICER_KEY = "artificer";
 
-/** ソケットを付けられない種類 (装飾品と矢筒) */
-const NO_SOCKET_CATEGORIES = new Set(["Rings", "Amulets", "Belts", "Quivers"]);
 
 /**
  * その種類が持てるソケットの数 (0 = 付けられない)。ヴァール抜きの一番多い数 = 規格外 = 熟練工の上限 + 1
@@ -201,7 +200,8 @@ const NO_SOCKET_CATEGORIES = new Set(["Rings", "Amulets", "Belts", "Quivers"]);
  * ステージの部位の表に無い種類は 2
  */
 export function socketCountFor(category: string | null | undefined): number {
-  if (!category || NO_SOCKET_CATEGORIES.has(category)) return 0;
+  // ソケットが付くのは武器・防具だけ (宝飾品・矢筒・ジュエルは 0。2026-10-13 総点検: 前はジュエルに 2 付いていた)
+  if (!category || !inAny(category, ["weapon", "armour"])) return 0;
   const cap = socketCapOf("", category);
   return cap > 0 ? cap + 1 : 2;
 }

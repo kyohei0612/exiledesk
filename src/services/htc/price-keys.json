@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-11",
+ "generated": "2026-10-13",
  "source": "GGG クライアント BaseItemTypes (data-cache/client-export)。キーは poe2htc の optimizer/cost.ts",
  "currency": {
   "transmute": {
@@ -265,6 +265,58 @@
   "catalyst_minion": {
    "en": "Necrotic Catalyst",
    "ja": "死霊術のカタリスト"
+  },
+  "jcatalyst_life": {
+   "en": "Refined Flesh Catalyst",
+   "ja": "精製された肉体のカタリスト"
+  },
+  "jcatalyst_mana": {
+   "en": "Refined Neural Catalyst",
+   "ja": "精製された神経のカタリスト"
+  },
+  "jcatalyst_defences": {
+   "en": "Refined Carapace Catalyst",
+   "ja": "精製された甲羅のカタリスト"
+  },
+  "jcatalyst_physical": {
+   "en": "Refined Uul-Netol's Catalyst",
+   "ja": "精製されたウール・ネトルのカタリスト"
+  },
+  "jcatalyst_fire": {
+   "en": "Refined Xoph's Catalyst",
+   "ja": "精製されたゾフのカタリスト"
+  },
+  "jcatalyst_cold": {
+   "en": "Refined Tul's Catalyst",
+   "ja": "精製されたトゥルのカタリスト"
+  },
+  "jcatalyst_lightning": {
+   "en": "Refined Esh's Catalyst",
+   "ja": "精製されたエシュのカタリスト"
+  },
+  "jcatalyst_chaos": {
+   "en": "Refined Chayula's Catalyst",
+   "ja": "精製されたチャユラのカタリスト"
+  },
+  "jcatalyst_attack": {
+   "en": "Refined Reaver Catalyst",
+   "ja": "精製された強奪者のカタリスト"
+  },
+  "jcatalyst_caster": {
+   "en": "Refined Sibilant Catalyst",
+   "ja": "精製された歯擦音のカタリスト"
+  },
+  "jcatalyst_speed": {
+   "en": "Refined Skittering Catalyst",
+   "ja": "精製された軽快のカタリスト"
+  },
+  "jcatalyst_attribute": {
+   "en": "Refined Adaptive Catalyst",
+   "ja": "精製された適応のカタリスト"
+  },
+  "jcatalyst_minion": {
+   "en": "Refined Necrotic Catalyst",
+   "ja": "精製された死霊術のカタリスト"
   }
  },
  "bones": {

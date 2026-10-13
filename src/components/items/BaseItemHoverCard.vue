@@ -5,6 +5,7 @@
   並びはゲームのアイテム画面: 種類 → 性能 (ダメージ・防御・スピリット・付与スキル) → 装備条件 → 暗黙。中身は [[base-info.json]] (scripts/build-base-info.mjs)
 -->
 <script setup lang="ts">
+import { inGroup } from "../../services/mods/item-classes";
 import { computed } from "vue";
 import GameItemCard from "../decor/GameItemCard.vue";
 import RichText from "../decor/RichText.vue";
@@ -53,7 +54,7 @@ const props2 = computed(() => {
 /** 装備条件 (ゲーム: 「装備条件：レベル 16、知性 31」) */
 const req = computed(() => {
   // ジュエルはレベルを出さない (2026-10-12 オーナー)
-  const i = info.value, lv = /^Jewels/.test(htc.value?.cls ?? "") ? 0 : htc.value?.lvl ?? i.lv ?? 0;
+  const i = info.value, lv = inGroup(htc.value?.cls ?? "", "jewel") ? 0 : htc.value?.lvl ?? i.lv ?? 0;
   const parts = [lv ? tr(`レベル ${lv}`, `Level ${lv}`) : "", i.str ? tr(`筋力 ${i.str}`, `${i.str} Str`) : "", i.dex ? tr(`器用さ ${i.dex}`, `${i.dex} Dex`) : "", i.int ? tr(`知性 ${i.int}`, `${i.int} Int`) : ""].filter(Boolean);
   return parts.join(tr("、", ", "));
 });

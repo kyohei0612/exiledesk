@@ -92,6 +92,9 @@ export const BONES = ["desecrate_gnawed", "desecrate", "desecrate_ancient", "des
  */
 export function bonesFor(item: StageItem | null): string[] {
   if (!item || isFlask(item.cls.category) || isGem(item.cls.category)) return [];
+  // 冒涜の MOD が無い部位には出さない (セプターは 0 個、poe2db にも欄が無い。2026-10-13 総点検)
+  const des = item.cls.pools.desecrated;
+  if (!des || (!des.prefixes.length && !des.suffixes.length)) return [];
   // ジュエルは保存された頭蓋骨だけ (噛み切られた・古代の頭蓋骨は無い。2026-10-11 poe2db とクライアント)
   if (desecrationBoneFor(item.cls.category) === "cranium") return ["desecrate"];
   return desecrationBoneFor(item.cls.category) === "collarbone" ? BONES : BONES.filter((k) => k !== "desecrate_altered");
