@@ -39,6 +39,7 @@ import { socketCapOf } from "../services/craft-stage/stage-runes";
 import { tr, lang } from "../i18n/lang";
 import { decodeShare, SHARE_ENABLED, shareBlock, shareCodeOf } from "../services/craft-stage/share";
 import { trackOnce } from "../utils/track";
+import { stepSeedOf } from "../services/challenge/daily";
 /**
  * 手で打つ画面の新品は、規格外のソケット数 (熟練工で付けられる数 +1) で始める (2026-10-04 オーナー「オーブ刺すのめんどいから、ソケットも初めからデフォでマックス」)。
  * 手順 JSON の再生 (動画) は手順どおりなので開けない
@@ -62,8 +63,14 @@ const seed = ref(0);
  * 前は「最初の seed + 何手目か」で決まり、戻して打ち直すと同じ結果・予見はどのカレンシーでも同じ乱数だった。
  * 打った後と戻した後に引き直す。カレンシーごとに混ぜる (予見で高貴・上級・完全を持ち替えると別の結果)。発現は候補を出した時と同じ乱数 (stepSeedFor)
  */
+/**
+ * 今日のお題の種 (null = 普段。2026-10-13 challenge)。ある時は始めの種と手ごとの乱数を日付から決める
+ * (n 手目の乱数は誰でも同じ = 同じ手を打てば同じ結果)。1 手戻すは使えない (戻すのは 0 手目へのリセットだけ)
+ */
+const challengeSeed = ref<number | null>(null);
 const rollSeed = ref(freshSeed());
 function freshSeed(): number {
+  if (challengeSeed.value != null) return stepSeedOf(challengeSeed.value, log.value[log.value.length - 1]?.out.index ?? 0);
   // 録画モードの種 (?rec=1&seed=) があれば種から決める (POE2Tube 要望 ㊷)
   const r = recNext();
   if (r != null) return r;
@@ -394,6 +401,7 @@ export const stepNameOf = (o: { currency: string; currency_ja: string }): string
 export const stepOmenOf = (o: { omen?: string | null; omen_ja?: string | null }): string | null => (!o.omen ? null : lang.value === "en" ? o.omen.split("+").map(nameOf).join(" · ") : o.omen_ja ?? null);
 
 function newSeed(): number {
+  if (challengeSeed.value != null) return challengeSeed.value;
   const r = recNext();
   if (r != null) return r;
   return Math.floor(Date.now() % 1_000_000_000);
@@ -411,11 +419,14 @@ function priceKeysAll(): string[] {
  */
 function usableWith(key: string, om: readonly string[]): string | null {
   if (!data.value || !item.value) return tr("読み込み中…", "Loading…");
+  // 今日のお題: MOD を指名して付ける・外す、暗黙の数値を決めるのは無し (打った手だけで作る)
+  if (challengeSeed.value != null && (key.startsWith("force:") || key.startsWith("iset:"))) return tr("今日のお題では使えない", "Not allowed in the Daily Challenge");
   const r = applyCurrency(data.value, item.value, key, mulberry32(0), om);
   return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
 }
 export const craftStage = {
   data, item, log, held, omens, seed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, aims, aimPicker, modJump, modOverlay,
+  challenge: challengeSeed,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -538,8 +549,10 @@ export const craftStage = {
    * 始めの状態に MOD を 1 つ足す (まだ 1 手も打っていない間だけ)。付きうる物だけ (付かなければ理由を震えで出す)。
    * 3 つ目からはレア、それまではマジック
    */
-  addStartMod(f: Force): void {
+  addStartMod(f: Force, fromChallenge = false): void {
     if (!data.value || log.value.length || replay.value) return;
+    // 今日のお題は初手のフラクチャー (state/challenge.ts) だけ
+    if (challengeSeed.value != null && (!fromChallenge || startMods.value.length)) return;
     const next = [...startMods.value, f];
     try {
       item.value = fullSockets(startFrom(data.value, base.value, itemLevel.value, { mods: next }, seed.value - 1));
@@ -547,6 +560,12 @@ export const craftStage = {
     } catch (e) {
       miss.value = { n: (miss.value?.n ?? 0) + 1, reason: e instanceof Error ? e.message.replace(/^始めの状態の MOD \d+ つ目: /, "") : String(e) };
     }
+  },
+  /** 今日のお題を始める (null で普段に戻す): ベース・アイテムレベル・種を決めて白の新品から (state/challenge.ts) */
+  startChallenge(c: { base: string; itemLevel: number; seed: number } | null): void {
+    challengeSeed.value = c?.seed ?? null;
+    if (c) { base.value = c.base; itemLevel.value = c.itemLevel; mode.value = "hand"; held.value = null; }
+    craftStage.reset();
   },
   /** 白の新品から (ベース・アイテムレベルを変えた時も)。始めの MOD も外す */
   reset(): void {
@@ -558,6 +577,7 @@ export const craftStage = {
       seed.value = newSeed();
       // 値を振る種は再生 (手順 JSON・共有) と同じ seed − 1 (前は前の seed のままで、再生とユニークの数値がずれた)
       item.value = { ...fullSockets(freshItem(data.value, base.value, itemLevel.value)), rollSeed: seed.value - 1 };
+      rollSeed.value = freshSeed();
       error.value = null;
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
@@ -585,11 +605,13 @@ export const craftStage = {
     const p = playStep(data.value, item.value, key, {
       index, seed: stepSeedFor(key), price: priceOf, cumulative: craftStage.total.value, omen: want.length ? want.join("+") : null,
     });
-    rollSeed.value = freshSeed();
     // Web 版は工程を 50 手まで覚え、それより前は消す (データが長くなりすぎる。2026-10-08 オーナー「50 手まで保存でそれ以降は消そうか」)。
     // アプリは手順 JSON (POE2Tube の再生) に全部の手が要るので消さない
-    log.value = !isTauriRuntime() && log.value.length >= LOG_KEEP ? [...log.value.slice(-(LOG_KEEP - 1)), p] : [...log.value, p];
+    // 今日のお題は手数を数えて手順を送るので消さない
+    log.value = !isTauriRuntime() && challengeSeed.value == null && log.value.length >= LOG_KEEP ? [...log.value.slice(-(LOG_KEEP - 1)), p] : [...log.value, p];
     item.value = p.after;
+    // 次の手の乱数 (工程に足した後に引く: お題は「何手目か」で決まる)
+    rollSeed.value = freshSeed();
     // 分析用の記録 (2026-10-09): 打つ前の MOD・打った物・お告げ・付いた / 消えた MOD
     const ms = (l: readonly StageMod[]): string[] => l.map((m) => `${m.modId}#${m.tierIndex}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}`);
     logRecord("emu_use", { base: base.value, ilvl: itemLevel.value, rarity: p.before.rarity, before: ms([...p.before.prefixes, ...p.before.suffixes]), use: key, omens: want, added: ms(p.added), removed: ms(p.removed), ok: p.out.applied, cost: p.out.cost?.subtotal ?? null, baseJa: p.before.baseJa, useJa: p.out.currency_ja });
@@ -600,6 +622,8 @@ export const craftStage = {
   },
   /** 1 手戻す (その手で食ったお告げは掛け直す) */
   undo(): void {
+    // 今日のお題は 1 手戻すを使わない (0 手目へのリセットだけ。state/challenge.ts)
+    if (challengeSeed.value != null) return;
     const l = log.value;
     // まだ打っていない時は、始めの MOD を 1 つ外す
     if (!l.length && startMods.value.length && data.value && !replay.value) {
@@ -725,5 +749,14 @@ export const craftStage = {
   leaveReplay(): void {
     replay.value = null;
     craftStage.reset();
+  },
+  /** 今の打ちかけを覚える / 戻す (今日のお題で上位の手順を見た後に、自分の続きへ戻る。2026-10-13) */
+  snapshot(): { item: StageItem | null; log: PlayedStep[]; startMods: Force[]; omens: string[]; seed: number } {
+    return { item: item.value, log: log.value, startMods: startMods.value, omens: omens.value, seed: seed.value };
+  },
+  restore(v: { item: StageItem | null; log: PlayedStep[]; startMods: Force[]; omens: string[]; seed: number }): void {
+    replay.value = null;
+    item.value = v.item; log.value = v.log; startMods.value = v.startMods; omens.value = v.omens; seed.value = v.seed;
+    rollSeed.value = freshSeed();
   },
 };

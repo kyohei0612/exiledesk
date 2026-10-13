@@ -55,6 +55,12 @@ import { track } from "../../utils/track";
 import type { StageMod } from "../../services/craft-stage/types";
 
 const s = craftStage;
+/**
+ * challenge: 今日のお題のページ (2026-10-13、web/ChallengePanel.vue)。ベース選び・アイテムレベル・白に戻す・1 手戻す・シミュレーターを隠し、
+ * 上にお題の札 (slot "challenge") を出す。上位の手順の再生は「閉じる」で自分の続きへ戻る (emit leave-replay)
+ */
+const props = defineProps<{ challenge?: boolean }>();
+const emit = defineEmits<{ "leave-replay": [] }>();
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
 function useAtSocket(n: number): void {
   const k = s.held.value;
@@ -315,7 +321,7 @@ const FIRST_BASE_KEY = "exiledesk.stage.basePicked";
 let firstTime = false;
 try { firstTime = !localStorage.getItem(FIRST_BASE_KEY); } catch { /* 覚えられない時は今まで通り */ }
 // ベースの読み物のページから ?base= で来た時は、選ぶ所を飛ばしてそのベースから
-const handNoBase = ref(!inApp && !URL_BASE && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
+const handNoBase = ref(!props.challenge && !inApp && !URL_BASE && (!phone.value || firstTime) && s.mode.value === "hand" && !s.log.value.length);
 // 共有の URL から開いた時はベースが決まっている (ここから打つ・白から打つで、ベース選びに戻さない)
 watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
 // 録画モードで URL の最初の状態を入れた時もベースは決まっている (POE2Tube 要望 ㊷)
@@ -386,7 +392,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <div class="flex items-center gap-2">
           <img v-if="iconOf(s.held.value!)" :src="iconOf(s.held.value!)" alt="" class="h-9 w-9 object-contain" />
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join(tr("・", ", ")) }}</span></span>
-          <button v-if="s.log.value.length" type="button" class="g-btn sm min-h-11" :title="tr('直前の 1 手を取り消す', 'Undo the last step')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
+          <button v-if="s.log.value.length && !challenge" type="button" class="g-btn sm min-h-11" :title="tr('直前の 1 手を取り消す', 'Undo the last step')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
           <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!!heldWhy" @click="useFromBar">{{ tr("使う", "Use") }}</button>
           <!-- 離す = 大きめの × (2026-10-08 オーナー「バツボタン割とデカく」) -->
           <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" :title="tr('離す', 'Drop')" @click="s.hold(null)">×</button>
@@ -396,14 +402,14 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
-        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトステージ", "Craft Stage") }}</h1>
+        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ challenge ? tr("今日のお題", "Daily Challenge") : tr("クラフトステージ", "Craft Stage") }}</h1>
         <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す", "Pick a base and target mods, plan the steps, then craft hundreds of copies to get the cost per item") }}
           <HelpTip :title="tr('シミュレーター', 'Simulator')" :width="320">
             <p>{{ tr("1 ベース → 2 狙う MOD → 始め方と順番 → 打ち方 (パターン) の順に決めて「回す」。", "Set 1 Base → 2 Target mods → start and order → steps (pattern), then press “Run”.") }}</p>
             <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("確率はクラフト計算機と同じ規則。値段は今の相場。", "Chances follow the craft calculator's rules. Prices are current market prices.") }}</p>
           </HelpTip>
         </p>
-        <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
+        <p v-else-if="!challenge" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
       <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" data-rec-part="display-currency" />
@@ -411,7 +417,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
     <!-- 再生中も消さずに隠す (シミュレーションの「1 つ戻す」の置き場 #sim-tools を残す) -->
-    <div v-show="!s.replay.value" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
+    <div v-show="!s.replay.value && !challenge" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
       <!-- スマホは 2 つで横幅を分ける (170px ずつだと 375px の画面からはみ出した。2026-10-13) -->
       <div class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
         <button v-for="t in ([['hand', 'エミュレーター'], ['sim', 'シミュレーター']] as const)" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50" :class="s.mode.value === t[0] ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); s.mode.value = t[0]">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
@@ -435,7 +441,19 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     </div>
 
     <!-- 再生モード -->
-    <div v-if="s.replay.value?.shared" class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
+    <!-- 今日のお題: 上位の手順を見ている時は「閉じる」で自分の続きへ -->
+    <div v-if="challenge && s.replay.value" class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
+      <slot name="replay-title" />
+      <span class="tabular-nums">{{ tr(`${s.log.value.length} / ${s.replayLength.value} 手目`, `step ${s.log.value.length} / ${s.replayLength.value}`) }}</span>
+      <span class="flex items-center gap-1">
+        <button type="button" :class="btn" class="max-md:min-h-10" :disabled="!s.log.value.length" :title="tr('始めへ', 'To the start')" @click="s.replayTo(0)">|◀</button>
+        <button type="button" :class="btn" class="max-md:min-h-10" :disabled="!s.log.value.length" :title="tr('1 手戻す', 'Back 1 step')" @click="s.replayTo(s.log.value.length - 1)">◀</button>
+        <button type="button" :class="btn" class="max-md:min-h-10" :disabled="s.log.value.length >= s.replayLength.value" :title="tr('1 手進める', 'Forward 1 step')" @click="s.replayTo(s.log.value.length + 1)">▶</button>
+        <button type="button" :class="btn" class="max-md:min-h-10" :disabled="s.log.value.length >= s.replayLength.value" :title="tr('最後へ', 'To the end')" @click="s.replayTo(s.replayLength.value)">▶|</button>
+      </span>
+      <button type="button" :class="btn" class="ml-auto max-md:ml-0 max-md:min-h-10" @click="emit('leave-replay')">{{ tr("閉じる (自分の続きへ)", "Close (back to your run)") }}</button>
+    </div>
+    <div v-else-if="s.replay.value?.shared" class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
       <b class="text-sky-200">{{ tr("共有された手順", "Shared steps") }}</b>
       <span class="tabular-nums">{{ s.item.value ? baseNameOf(s.item.value) : s.replay.value.plan.base }} · {{ tr(`${s.log.value.length} / ${s.replayLength.value} 手目`, `step ${s.log.value.length} / ${s.replayLength.value}`) }}</span>
       <span class="flex items-center gap-1">
@@ -458,7 +476,9 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
     <!-- 設定と操作 -->
     <!-- data-craft-top: クラフトの位置 (「クラフトへ」とベースを選んだ後はここの外枠の少し上。2026-10-10 オーナー「ベースの上枠の外枠から少し上空けた位置が心地いい」) -->
-    <section v-if="!s.replay.value" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
+    <!-- 今日のお題の札 (ベース・狙い・時間・リセット。web/ChallengePanel.vue) -->
+    <slot v-if="challenge && !s.replay.value" name="challenge" />
+    <section v-if="!s.replay.value && !challenge" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
       <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
         <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>

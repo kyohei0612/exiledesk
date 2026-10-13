@@ -17,6 +17,7 @@
  * YouTube 1 万点/日) に収まる。アイコン (アバター) は 1 日 1 回だけ取り直す。1 回ごとの記録はダッシュボードの「ログ」(reqLog)
  */
 import { forgetUid, forgottenUids, UID_RE } from "./forget";
+import { board as challengeBoard, finishRun, planAt, startRun, sweepRuns } from "./challenge";
 import channelsJson from "../channels.json";
 import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
@@ -171,6 +172,13 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     if (typeof uid !== "string" || !UID_RE.test(uid)) return json({ error: "形が違う" }, 400);
     return json({ ok: true, deleted: await forgetUid(env, uid) });
   }
+  // 今日のお題 (challenge.ts、2026-10-13): 始める (時間を測り始める) / 達成した (記録を載せる)
+  if ((url.pathname === "/challenge/start" || url.pathname === "/challenge/finish") && req.method === "POST") {
+    let body: unknown;
+    try { body = await req.json(); } catch { return json({ error: "JSON ではない" }, 400); }
+    const r = url.pathname === "/challenge/start" ? await startRun(env, body) : await finishRun(env, body);
+    return json(r, "error" in r ? 400 : 200, { "cache-control": "no-store", ...CORS });
+  }
   // 要望・バグ (Web 版の「要望・バグを送る」)
   if (url.pathname === "/feedback" && req.method === "POST") {
     let body: unknown;
@@ -198,6 +206,14 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
   if (url.pathname === "/feedback/replies") {
     const ids = (url.searchParams.get("ids") ?? "").split(",").map((x) => x.trim()).filter(Boolean);
     return json({ replies: await getReplies(env.LIVE, ids) }, 200, { "cache-control": "no-store", ...CORS });
+  }
+  // 今日のお題の順位 (上位 20 人ずつ・手順つき・自分の順位)
+  if (url.pathname === "/challenge/board") {
+    return json(await challengeBoard(env, url.searchParams.get("day") ?? jstDay(), url.searchParams.get("uid")), 200, { "cache-control": "no-store", ...CORS });
+  }
+  if (url.pathname === "/challenge/plan") {
+    const r = await planAt(env, url.searchParams.get("day") ?? "", url.searchParams.get("board") ?? "", Number(url.searchParams.get("rank")));
+    return json(r, "error" in r ? 404 : 200, { "cache-control": "public, max-age=60", ...CORS });
   }
   if (url.pathname.startsWith("/api/poe2scout/")) return proxyScout(url, ctx, fetch, env);
   // 要望 1 件 (添付ごと)。Discord に付いたファイルと同じ物
@@ -309,6 +325,7 @@ export default {
     if (controller.cron === "0 0 * * *") {
       ctx.waitUntil(dailyReport(env));
       ctx.waitUntil(sendYesterdayLogs(env));
+      ctx.waitUntil(sweepRuns(env));
     } else {
       // 1 時間おき: 相場を取り直す (全員に同じ物を配る、market.ts)。配信の見張りは 8 時間おき (UTC 0・8・16 時)
       ctx.waitUntil(refreshMarket(env).catch((e) => alert(env, "相場の取得", `poe2scout から取れない: ${String(e).slice(0, 200)}`)));
