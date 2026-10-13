@@ -42,7 +42,8 @@ export const ORBS: ShelfGroup[] = [
   { kind: "chaos", get label() { return tr("カオス", "Chaos"); }, keys: ["chaos", "chaos_greater", "chaos_perfect"] },
   { kind: "annul", get label() { return tr("消去", "Annulment"); }, keys: ["annul"] },
   // 可能性のオーブ (と可能性・古代のお告げ) は外した (2026-10-13 オーナー「可能性のオーブ周り実装やめようか、ランダム性がありすぎる」)。打つ処理は apply-act.ts に残す
-  { kind: "other", get label() { return tr("その他", "Other"); }, keys: ["divine", "fracture", "vaal", "hinekora"] },
+  // ヴァールのオーブも外した (2026-10-13 オーナー「ヴァール MOD も確率分からへん」)。打つ処理は apply-vaal.ts に残す (古い手順の再生)
+  { kind: "other", get label() { return tr("その他", "Other"); }, keys: ["divine", "fracture", "hinekora"] },
   // 熟練工のオーブは出さない: 新品は最初から規格外の最大のソケット (2026-10-10 オーナー)。打つ処理 (apply-other) は古い手順の再生のため残す
   // 耐性のフラックス (2026-10-04 オーナー「カレンシーフルチェック」、apply-flux.ts)
   { kind: "flux", get label() { return tr("フラックス (耐性の変換)", "Flux (resistance conversion)"); }, keys: ["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"] },
@@ -105,7 +106,9 @@ const OMEN_LABEL_EN: Record<string, string> = {
   desecrate: "Desecration", reveal: "Reveal", vaal: "Vaal", divine: "Divine", chance: "Chance",
 };
 /** お告げ (掛かる手の種類ごと) */
-export const OMEN_GROUPS: ShelfGroup[] = Object.entries(OMEN_FOR).map(([kind, keys]) => ({ kind, get label() { return tr(OMEN_LABEL[kind] ?? kind, OMEN_LABEL_EN[kind] ?? kind); }, keys: [...keys] }));
+// 可能性のオーブを外したので、可能性・古代のお告げも棚に出さない (2026-10-13)
+const OMEN_HIDDEN = new Set(["chance"]);
+export const OMEN_GROUPS: ShelfGroup[] = Object.entries(OMEN_FOR).filter(([kind]) => !OMEN_HIDDEN.has(kind)).map(([kind, keys]) => ({ kind, get label() { return tr(OMEN_LABEL[kind] ?? kind, OMEN_LABEL_EN[kind] ?? kind); }, keys: [...keys] }));
 
 /** そのベースで使えるエッセンス (名前ごとに レッサー / 普通 / グレーター / パーフェクト) */
 export function essenceShelf(data: PatchData | null, item: StageItem | null): ShelfGroup[] {
