@@ -8,6 +8,7 @@
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { marketStore } from "../state/market-store";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
+import { craftStage } from "../state/craft-stage";
 import LivePanel from "./LivePanel.vue";
 import FeedbackDialog from "./FeedbackDialog.vue";
 import ChangelogDialog from "../components/ChangelogDialog.vue";
@@ -150,7 +151,8 @@ window.addEventListener("resize", fitZoom);
         </template>
       </CraftStage>
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
-      <aside data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] border-l'">
+      <!-- 右クリックは真ん中 (CraftStage.vue) と同じく「持っている物を手放す」。ブラウザのメニュー (コピーなど) は出さない (2026-10-13 オーナー) -->
+      <aside data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
         <div :class="phone ? '' : 'sticky top-3'"><LivePanel /></div>
       </aside>
     </div>
