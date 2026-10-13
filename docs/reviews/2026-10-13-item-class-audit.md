@@ -46,14 +46,14 @@
 | 鎖骨 (変質も) | Rare Amulet, Ring or Belt | 宝飾品 | 手書き | 種別で引く |
 | 保存された頭蓋骨 | Rare Jewel | ジュエル | 手書き | 種別で引く |
 | 骨を棚に出す | (冒涜の MOD がある部位だけ) | | セプターでも出る | **直す**: セプターは冒涜の MOD が 0 (poe2db でも欄が無い) |
-| 君主 / 臣従 / 黒血のお告げ (勢力) | Weapon or Jewellery Desecration | 武器・宝飾品 | 顎骨 / 鎖骨の部位 = 矢筒も可 | **要確認**: 説明文に矢筒が無い。矢筒の冒涜の MOD に 3 勢力の物はある (poe2db) |
+| 君主 / 臣従 / 黒血のお告げ (勢力) | Weapon or Jewellery Desecration | 武器・宝飾品 | 顎骨 / 鎖骨の部位 = 矢筒も可 | **矢筒も可で確定**: 説明文に矢筒は無いが、Craft of Exile (beta、data 4.5.5.3) は冒涜の手のお告げに部位の縛りが無く矢筒にも使える。矢筒の冒涜の MOD に 3 勢力の物もある (poe2db) |
 | 鍛冶の砥石 | martial weapon | マーシャル武器 | 手書き (MARTIAL) | まとまりで引く |
 | 秘術のエッチャー | wand, staff or sceptre | ワンド・スタッフ・セプター | 手書き (CASTER) | まとまりで引く |
 | 防具職人のスクラップ | armour | 防具 | 手書き (ARMOUR) | 種別で引く |
 | ガラス職人の玉 | flask | フラスコ | 手書き | 種別で引く |
 | ヴァールの鍛冶 / 防具職人 / 秘術 / 触媒のインフューザー | Martial Weapon / Armour / wand, staff or sceptre / ring or amulet | 同上 | 手書き | まとまりで引く |
 | 品質の上限 +10 (インフューザーで上がる分) | | | **キャスター・矢筒・ベルト・ジュエルが漏れ** | 直す |
-| アーティフィサーのオーブ (ソケット) | Martial Weapon, wand, staff or Armour | マーシャル武器・ワンド・スタッフ・防具 | 手書き (EQUIP = セプターも) | **直す**: セプターは説明文に無い |
+| アーティフィサーのオーブ (ソケット) | Martial Weapon, wand, staff or Armour | マーシャル武器・ワンド・スタッフ・防具 | 武器・防具 (セプターも) | **セプターも可で確定**: 説明文にセプターは無いが、Craft of Exile はセプターのベースにソケット 1 があり「ソケットを付けられるベース」扱い |
 | 触媒 (普通) | ring or amulet | 指輪・アミュレット | 指輪・アミュレット・**ジュエル** | **直す**: ジュエルは「精錬された触媒 (Refined …)」という別のカレンシー (poe2db: jewel_catalyst) |
 | 精錬された触媒 | on a jewel | ジュエル | 無い | **足す** |
 | ヤオマック / コペック / カマサ / ユグルの生贄 | Weapon or Quiver / Armour / Amulet, Ring or Belt / Jewel | 同上 | 手書き (ユグル無し) | まとまりで引く |
