@@ -13,6 +13,7 @@ import { glideBy, scrollBoxOf } from "../../utils/keep-place";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
 import { uniqueArt } from "../../services/assets/unique-art";
+import FAM_GLOW from "./fam-glow.json";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import popularData from "../../data/popular-bases.json";
 
@@ -128,6 +129,11 @@ const FAM_UNIQUE: Record<string, string> = {
  */
 function tintGlow(e: Event): void {
   const img = e.target as HTMLImageElement;
+  // アプリは絵を画像パック (よそのオリジン) から読むので canvas で色を読めない → 前もって計算した色 (scripts/build-fam-glow.py、2026-10-13 オーナー「アプリだと全部黄色」)
+  // アプリの URL は http://asset.localhost/C%3A%5C…%5C名前.webp (区切りが \ で符号化されている) ので、戻してから / と \ の両方で切る
+  const stem = (decodeURIComponent(img.src.split(/[?#]/)[0]!).split(/[\\/]/).pop() ?? "").replace(/\.webp$/, "");
+  const pre = (FAM_GLOW as Record<string, string>)[stem];
+  if (pre) { (img.parentElement ?? img).style.setProperty("--glow", pre); return; }
   try {
     const c = document.createElement("canvas");
     c.width = c.height = 24;
