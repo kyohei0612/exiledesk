@@ -24,9 +24,11 @@ const open = ref(!!props.unpicked);
 watch(() => props.unpicked, (v) => { open.value = !!v; });
 const everOpen = ref(open.value);
 const catalog = ref<InstanceType<typeof BaseCatalog> | null>(null);
-// 開き直したら、伸び切ってから (0.3 秒) 今のベースの一覧の全体が見えるまで送る (2026-10-12 オーナー「今のベースが埋まる」)
+// 開いたら (初めての時も)、伸び切ってから (0.3 秒) 今のベースの一覧の下 (もっと見る / たたむの帯 + 少し) が見えるまで送る
+// (2026-10-12 オーナー「今のベースが埋まる」、2026-10-13「ベースの選び直しならもっと見るは一番下に来るでしょ」: 前は開き直しの 2 回目からだけ送っていた)。
+// ベースが未選択で開いている時 (初めての人) は送らない
 watch(open, (v) => {
-  if (v) { const again = everOpen.value; everOpen.value = true; if (again) setTimeout(() => catalog.value?.reveal(), 320); }
+  if (v) { everOpen.value = true; if (!props.unpicked) setTimeout(() => catalog.value?.reveal(), 320); }
   else catalog.value?.release();
 });
 const head = ref<HTMLElement | null>(null);

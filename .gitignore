@@ -44,3 +44,4 @@ dist-web
 server/web/.wrangler/
 dist-web-dev
 .dev-web-key
+shots/

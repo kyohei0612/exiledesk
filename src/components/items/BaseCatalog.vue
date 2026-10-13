@@ -241,11 +241,14 @@ function fold(): void {
     el.style.minHeight = "";
   });
 }
+/** 一覧を開き直した回数 (BaseCardGrid の key。変えると「もっと見る」が畳んだ状態に戻る) */
+const openSeq = ref(0);
 function pickFamily(f: Family): void {
   // PC で開いている部位をもう一度押したら畳む
   if (!phone.value && family.value?.name === f.name) { fold(); return; }
   if (rootEl.value) rootEl.value.style.minHeight = "";
   revealed = 0;
+  openSeq.value++;
   // 行の位置は開いた物を閉じてから測る (開いた一覧の分だけ下の段がずれるので)
   insertAfter.value = null;
   family.value = f;
@@ -280,6 +283,7 @@ onMounted(() => { void nextTick(() => placeUnder(family.value)); });
 function reveal(): void {
   if (rootEl.value) rootEl.value.style.minHeight = "";
   revealed = 0; revealedAt = null;
+  openSeq.value++;
   placeUnder(family.value);
   if (family.value) void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(revealPanel)));
 }
@@ -339,7 +343,8 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
               <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
             </div>
             <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
-            <BaseCardGrid v-else :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="(en) => emit('pick', en)" />
+            <!-- 開き直す・部位を選び直すたびに畳んだ状態 (2 行 + もっと見る) から (2026-10-13 オーナー「もっと見るは一番下に来るでしょ」: 前に広げたまま開いていた) -->
+            <BaseCardGrid v-else :key="openSeq" :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="(en) => emit('pick', en)" />
           </div>
         </template>
       </div>
