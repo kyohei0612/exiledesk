@@ -21,6 +21,7 @@ const emit = defineEmits<{ quality: [n: number, tag?: string]; cap: [n: number] 
 const maxQ = computed(() => qualityCapOf(props.item));
 /** 足し算の上限 (ベース + 品質の最大値の MOD + インフューザー)。プルダウンの「今付けられる最大」 */
 const natural = computed(() => qualityFieldMax(props.item));
+// 種類を選んだら、その時点の上限 (MOD・品質の種類で変わる) まで上げる。そこから − / + で手で変えられる (2026-10-13 オーナー)
 // カタリストの種類を選べるのは指輪・アミュレット (普通の物) とジュエル (精製された物)。ベルトには無い (2026-10-13 総点検: 前はベルトにも出て、打つと弾かれた)
 const jewel = computed(() => inAny(props.item.cls.category, ["ringAmulet", "jewel"]));
 const shown = computed(() => !isGem(props.item.cls.category) && !["Wands", "Staves", "Sceptres"].includes(props.item.cls.category));
@@ -56,7 +57,7 @@ const btn = "g-plain grid size-6 place-items-center rounded border border-white/
     <select class="cursor-pointer rounded border border-white/15 bg-black/60 px-1 py-0.5 tabular-nums text-white/80" :value="maxQ" :title="tr(`品質の上限 (今付けられる最大 ${natural}% = ベース + 品質の最大値の MOD + インフューザー。エッセンスを打たずに広げて試すならここで)`, `Max quality (currently ${natural}% = base + max-quality mods + infuser; raise it here to skip the essence)`)" @change="emit('cap', Number(($event.target as HTMLSelectElement).value))">
       <option v-for="q in caps" :key="q" :value="q">{{ q }}%{{ q === natural ? tr(" (今の最大)", " (current)") : "" }}</option>
     </select></span>
-    <select v-if="jewel" class="ml-1 w-[9.5rem] rounded border border-white/15 bg-black/60 px-1 py-0.5 text-white/80" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', Math.max(item.quality, 1), ($event.target as HTMLSelectElement).value)">
+    <select v-if="jewel" class="ml-1 w-[9.5rem] rounded border border-white/15 bg-black/60 px-1 py-0.5 text-white/80" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', maxQ, ($event.target as HTMLSelectElement).value)">
       <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
       <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
     </select>
