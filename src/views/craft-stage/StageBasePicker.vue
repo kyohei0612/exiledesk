@@ -52,15 +52,16 @@ async function choose(en: string): Promise<void> {
 <template>
   <div class="w-full">
     <!-- 今のベース (押すと開く) -->
-    <button ref="head" type="button" data-rec="base-toggle" class="group flex h-10 items-center gap-3 rounded-md px-2 text-left transition hover:bg-white/5" :class="open ? 'bg-white/[0.04]' : ''" :aria-expanded="open" @click="open = !open">
+    <button ref="head" type="button" data-rec="base-toggle" class="group flex h-10 max-w-full items-center gap-3 rounded-md max-md:w-full max-md:gap-2 max-md:px-0 px-2 text-left transition hover:bg-white/5" :class="open ? 'bg-white/[0.04]' : ''" :aria-expanded="open" @click="open = !open">
       <template v-if="unpicked"><b class="text-[15px] text-[var(--exile-color-accent-focus)]">{{ tr("ベースを選ぶ", "Choose a base") }}</b></template>
       <template v-else>
-        <img v-if="baseArt(base)" :src="baseArt(base)!" alt="" class="size-8 object-contain" draggable="false" />
-        <b class="font-display text-[15px] tracking-wide text-[var(--color-rarity-rare)]">{{ tr(current?.ja ?? base, base) }}</b>
-        <span v-if="current" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ classLabel(current.cls) }}</span>
+        <img v-if="baseArt(base)" :src="baseArt(base)!" alt="" class="size-8 shrink-0 object-contain" draggable="false" />
+        <!-- 狭い時は名前を 1 行で切り、種類の字は出さない (2026-10-13 スマホで名前が 1 字ずつ縦に折れていた) -->
+        <b class="min-w-0 truncate font-display text-[15px] tracking-wide max-md:tracking-normal text-[var(--color-rarity-rare)]">{{ tr(current?.ja ?? base, base) }}</b>
+        <span v-if="current" class="min-w-0 truncate text-[12px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ classLabel(current.cls) }}</span>
       </template>
       <!-- ゲームの絵のボタンで目立たせる (2026-10-10 オーナー「ベース変更見づらいよね」: 灰色の小さい「変える」だった) -->
-      <span class="g-btn sm ml-2 inline-flex items-center gap-1">{{ open ? tr("閉じる", "Close") : tr("ベースを変える", "Change base") }}<Icon :name="open ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></span>
+      <span class="g-btn sm ml-2 inline-flex shrink-0 items-center gap-1 max-md:ml-0">{{ open ? tr("閉じる", "Close") : tr("ベースを変える", "Change base") }}<Icon :name="open ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></span>
     </button>
     <!-- 開け閉めは高さを 0.3 秒で伸び縮み (パッと消える・出るのが「ワープみたい」。2026-10-10 オーナー「ぬるっと動かして、特にベース選択後」)。
          一度開いたら中身は残す (閉じる動きの間も見えるように) -->

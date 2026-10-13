@@ -14,6 +14,7 @@ import { displayCurrency } from "../../state/display-currency";
 import { bonesFor, essenceShelf, ORBS } from "../../state/craft-stage-shelf";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { kindOf } from "../../services/craft-stage/apply-currency";
+import { aimLabel } from "../../services/craft-stage/mod-list";
 import { aimChain, aimCombos, aimDone, REVEAL, type AimCombo, type AimOdd } from "../../services/craft-stage/aim-odds";
 import Icon from "../../components/ui/Icon.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
@@ -153,7 +154,7 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
     <header class="g-sec-head">
       <b class="g-sec-title">{{ tr("次の手で狙う", "Target next move") }}</b>
       <span class="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:w-full">
-        <span v-for="a in s.aims.value" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ a.label }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('この MOD を外す', 'Remove this mod')" @click="s.aims.value = s.aims.value.filter((x) => x.modId !== a.modId)">×</button></span>
+        <span v-for="a in s.aims.value" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ aimLabel(s.data.value, a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('この MOD を外す', 'Remove this mod')" @click="s.aims.value = s.aims.value.filter((x) => x.modId !== a.modId)">×</button></span>
         <!-- 足す・変える: 選ぶ窓をもう一度 (MOD 一覧まで戻らなくていい) -->
         <button type="button" class="g-plain inline-flex min-h-7 items-center gap-1 rounded border border-dashed border-white/25 px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5" @click="s.aimPicker.value = { seed: null }"><Icon name="plus" class="size-3.5" />{{ s.aims.value.length < AIM_MAX ? tr("足す・変える", "Add / change") : tr("変える", "Change") }}</button>
       </span>

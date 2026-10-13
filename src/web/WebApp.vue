@@ -81,16 +81,20 @@ function fitZoom(): void {
   // iPad など: 縮めると字が 7〜8 px になって読めないので、1280 未満は等倍、それより広くても 0.85 倍より小さくしない (並びは幅に合わせて折り返す。2026-10-10)
   const z = phone.value || window.innerWidth < 1280 ? 1 : Math.min(1.6, Math.max(0.85, window.innerWidth / DESIGN_WIDTH));
   document.documentElement.style.zoom = String(z);
-  frame.value = { w: window.innerWidth / z, h: window.innerHeight / z };
+  // 等倍の時は幅を決め打ちしない (innerWidth は縦のスクロールバーの分も入っていて、768〜1279 px で 10 px 横にはみ出した。2026-10-13 ランダム操作の確かめ)
+  frame.value = { w: z === 1 ? 0 : window.innerWidth / z, h: window.innerHeight / z };
 }
 fitZoom();
 window.addEventListener("resize", fitZoom);
+// 向きを変えた時・幅が変わったのに resize が来ない時もある (2026-10-13 確かめで外枠が 1024px のまま残った)
+window.addEventListener("orientationchange", fitZoom);
+window.visualViewport?.addEventListener("resize", fitZoom);
 </script>
 
 <template>
   <!-- 高さを決めず、ページ全体を縦に送る (決まり事の footer も一緒に流れる)。PC も同じ: スクロールの棒は窓の右端の 1 本だけ
        (2026-10-11 オーナー「スクロールはチャンネルの右側でおｋ、全体スクロールだけ」) -->
-  <div class="flex flex-col" :style="{ width: `${frame.w}px`, minHeight: `${frame.h}px` }">
+  <div class="flex flex-col" :style="{ width: phone || !frame.w ? '100%' : `${frame.w}px`, minHeight: `${frame.h}px` }">
     <header data-rec-part="header" class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto flex-wrap gap-1.5 px-2 py-1.5 text-[12px]' : 'h-10'">
       <!-- スマホは 2 段 (1 段目 = ロゴ、2 段目 = 版とボタン。2026-10-10 支援するを足して 1 段に入らなくなった) -->
       <span class="flex shrink-0 items-center" :class="phone ? 'basis-full gap-1' : 'gap-2'">
@@ -99,21 +103,22 @@ window.addEventListener("resize", fitZoom);
         <!-- 言語 (2026-10-10 英語版)。スマホは 1 段目の右 -->
         <span v-if="phone" class="ml-auto" data-rec-part="header-lang"><LangSwitch /></span>
       </span>
-      <span class="rounded border border-white/15 px-1.5 py-0.5 opacity-70" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
+      <!-- 1024 px 未満は飾りの札 (画面名・アプリ版) を出さない (768 px で帯が詰まって「日本語」が縦に折れた。2026-10-13) -->
+      <span class="whitespace-nowrap rounded border border-white/15 px-1.5 py-0.5 opacity-70 max-lg:hidden" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
       <!-- 本日の訪問者 (9:00 から、1 時間ごとに数え直す。2026-10-11 オーナー)。数えられていない時は出さない -->
       <!-- 録画モードは訪問者を隠すので、右寄せの押さえだけ置く -->
       <span v-if="REC && !phone" class="ml-auto" />
-      <span v-if="visitors" data-rec-part="header-visitors" class="ml-auto whitespace-nowrap opacity-60" :class="phone ? 'text-[10px]' : ''" :title="visitors.yesterday != null ? tr(`9:00 から (1 時間ごとに更新) · 昨日 ${visitors.yesterday.toLocaleString()} 人`, `Since 9:00 JST (updated hourly) · Yesterday ${visitors.yesterday.toLocaleString()}`) : tr('9:00 から (1 時間ごとに更新)', 'Since 9:00 JST (updated hourly)')">{{ tr(`本日の訪問者 ${visitors.today.toLocaleString()} 人`, `Today's visitors ${visitors.today.toLocaleString()}`) }}</span>
+      <span v-if="visitors" data-rec-part="header-visitors" class="ml-auto whitespace-nowrap opacity-60" :class="phone ? 'text-[10px]' : ''" :title="visitors.yesterday != null ? tr(`9:00 から (1 時間ごとに更新) · 昨日 ${visitors.yesterday.toLocaleString()} 人`, `Since 9:00 JST (updated hourly) · Yesterday ${visitors.yesterday.toLocaleString()}`) : tr('9:00 から (1 時間ごとに更新)', 'Since 9:00 JST (updated hourly)')">{{ phone ? tr(`本日 ${visitors.today.toLocaleString()} 人`, `${visitors.today.toLocaleString()} today`) : tr(`本日の訪問者 ${visitors.today.toLocaleString()} 人`, `Today's visitors ${visitors.today.toLocaleString()}`) }}</span>
       <!-- 版を押すと更新履歴 (2026-10-10) -->
       <button type="button" data-rec-part="header-version" class="g-plain opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
-      <span v-if="!phone" data-rec-part="header-lang"><LangSwitch /></span>
+      <span v-if="!phone" data-rec-part="header-lang" class="shrink-0 whitespace-nowrap"><LangSwitch /></span>
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
       <a data-rec-part="header-help" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :href="HOWTO_URL" target="_blank" rel="noopener noreferrer" :title="tr('使い方の動画 (YouTube)', 'How-to video (YouTube, Japanese)')">{{ tr("使い方", "How to use") }}</a>
-      <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態を添付できる)', 'Send feedback or bug reports (you can attach the current screen state)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
+      <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
       <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
-      <span data-rec-part="header-app" class="rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" :title="tr('相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中', 'A desktop app with automatic market prices, trade history, DPS check and more is in the works')">{{ tr("アプリ版 近日公開", "Desktop app coming soon") }}</span>
+      <span data-rec-part="header-app" class="whitespace-nowrap rounded-lg border border-amber-400/40 max-lg:hidden bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" :title="tr('相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中', 'A desktop app with automatic market prices, trade history, DPS check and more is in the works')">{{ tr("アプリ版 近日公開", "Desktop app coming soon") }}</span>
     </header>
     <MarketNotice />
     <!-- ?nolog=1 で開いた時の結果 (2026-10-10) -->

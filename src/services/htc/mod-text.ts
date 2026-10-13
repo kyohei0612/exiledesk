@@ -79,10 +79,18 @@ export function jaOfModLine(line: string): string | null {
  * 実際に乗る行が食い違います。
  */
 export function jaOfMod(mod: Mod): string {
+  // 英語の画面では英語の原文 (印を外し、範囲は # に。2026-10-10 英語版)
+  if (mod.text && lang.value === "en") return mod.text.split(NL).map(enLine).join(" / ");
+  return jaOfModAlways(mod);
+}
+
+/**
+ * 画面の言語によらず日本語 (付いた MOD の textJa に入れる・日本語の文で引く時はこちら)。
+ * 2026-10-13: 付いた MOD の textJa を jaOfMod で作っていたので、英語の画面で打った MOD は日本語に戻しても英語のままだった
+ */
+export function jaOfModAlways(mod: Mod): string {
   const text = mod.text;
   if (!text) return mod.id;
-  // 英語の画面では英語の原文 (印を外し、範囲は # に。2026-10-10 英語版)
-  if (lang.value === "en") return text.split(NL).map(enLine).join(" / ");
   // ジュエル: poe2db の日本語のページの文をそのまま (範囲は #)。訳の表より先 (時を失ったジュエルの「範囲内の…」は表に無い。2026-10-11)
   if (mod.textJa) return mod.textJa.split(NL).map((l) => l.replace(/\(-?[0-9.]+--?[0-9.]+\)/g, "#")).join(" / ");
   const whole = jaOfModLine(text);

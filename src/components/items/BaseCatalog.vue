@@ -295,9 +295,9 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
 <template>
   <div ref="rootEl">
     <!-- 名前で探す (種類をまたぐ) -->
-    <div class="mb-2 flex items-center gap-2">
+    <div class="mb-2 flex flex-wrap items-center gap-2">
       <!-- 欄は例の文が入るだけの幅 (2026-10-13 オーナー「検索バー長いから例に合わせて小さく」) -->
-      <input v-model="query" type="search" data-rec="base-search" :placeholder="tr('名前で探す (例: サファイア、ルビー)', 'Search by name (e.g. Sapphire, Ruby)')" class="min-w-0 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:flex-1 md:w-[19rem] md:py-1.5 md:text-[14px]" />
+      <input v-model="query" type="search" data-rec="base-search" :placeholder="tr('名前で探す (例: サファイア、ルビー)', 'Search by name (e.g. Sapphire, Ruby)')" class="min-w-0 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:basis-full md:w-[19rem] md:py-1.5 md:text-[14px]" />
       <span v-if="query.trim()" class="opacity-50">{{ tr(`${list.length} 件`, `${list.length} found`) }}</span>
       <!-- 装備 (ユニークの絵)・エフェクトを切る: タイルを元のベースの絵にして、光と粒も出さない。このブラウザに覚える (2026-10-13 オーナー) -->
       <label class="ml-1 flex shrink-0 cursor-pointer items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)] md:text-[13px]" :title="tr('部位のタイルを元のベースの絵にして、光と動きを止める', 'Show the plain base art on the category tiles, without glow or motion')">

@@ -376,7 +376,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 
       <section v-for="sec in sections" :key="sec.sid" :ref="(el) => setSection(sec.sid, el)" class="mb-4 scroll-mt-12">
         <!-- 目次の下は少し空ける (2026-10-10 オーナー「被ってんな、もうちょい下、プレフィックス・サフィックスの表示を全体的に」) -->
-        <h3 class="mb-3 mt-1 flex items-center gap-2 text-[13px] font-bold max-md:min-h-11 max-md:cursor-pointer" @click="phone && toggleSec(sec.sid)">
+        <h3 class="mb-3 mt-1 flex flex-wrap items-center gap-2 text-[13px] font-bold max-md:min-h-11 max-md:cursor-pointer" @click="phone && toggleSec(sec.sid)">
           <span class="rounded-full px-2.5 py-0.5" :class="toneOf(sec).tab">{{ sec.label }}</span>
           <span class="font-normal opacity-50">{{ sec.count }} {{ tr("系統", "groups") }}</span>
           <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? tr("はめている", "Socketed") : tr("差していないので 0% (付ければルーンも差す)", "Not socketed, so 0% (adding one also sockets the rune)") }}</span>

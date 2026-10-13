@@ -182,3 +182,15 @@ function mergeFamilies(rows: ListRow[]): ListRow[] {
 export { TAG_STYLE };
 /** 出すタグ (細かすぎる物・重なる物は省く) */
 export const shownTags = (tags: readonly string[]): string[] => tags.filter((t) => TAG_STYLE[t]);
+
+/**
+ * 狙う MOD の札の文 (段の文 + 「T3 以上」)。選んだ時に文を固めず、出すたびに今の言語で作る
+ * (2026-10-13 ランダム操作の確かめ: 英語の画面で選んだ狙いが、日本語に戻しても英語のままだった)。引けない時は覚えていた文
+ */
+export function aimLabel(data: PatchData | null, a: { modId: string; minTierIndex: number; label: string }): string {
+  const raw = data?.mods.get(a.modId);
+  const tier = raw?.tiers[a.minTierIndex];
+  if (!raw || !tier) return a.label;
+  const rank = `T${raw.tiers.length - a.minTierIndex}`;
+  return `${fillModText(oneOfMod(raw), tierDisplayRanges(tier))} (${tr(`${rank} 以上`, `${rank}+`)})`;
+}

@@ -304,8 +304,9 @@ body {
 }
 
 /* 細い線の枠のボタン (border-white/… や色付きの線) = ゲームの普通のボタン。大きいカードのボタン (rounded-xl) は除く */
+/* 左寄せの字のボタン (text-left) は一覧の行なので絵にしない (長い文が 1 行になって画面の外へはみ出した。2026-10-13 発現の候補) */
 /* 4〜5 の大きさの小さなボタン (チェックなど) は絵にしない (2026-10-10: 火力チェックのジェムのチェックに左右 16px の縁が付いて名前が切れた) */
-button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain, [class~="w-4"], [class~="w-5"], [class~="h-4"], [class~="h-5"], [class~="size-4"], [class~="size-5"]) {
+button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain, [class~="text-left"], [class~="w-4"], [class~="w-5"], [class~="h-4"], [class~="h-5"], [class~="size-4"], [class~="size-5"]) {
   border-style: solid;
   border-width: 0 16px;
   border-color: transparent;
@@ -316,10 +317,15 @@ button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-
   padding-right: 2px;
   min-height: 28px;
   white-space: nowrap;
+  /* 崩れない決まり (2026-10-13 オーナー「崩れない設計に」): 1 行のボタンは親より広がらず、入らない字は … で切る。
+     overflow を見せないと並びの中で縮めるようになる (flex・grid の min-width: auto が 0 になる) */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--exile-color-text-title);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
-button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain, [class~="w-4"], [class~="w-5"], [class~="h-4"], [class~="h-5"], [class~="size-4"], [class~="size-5"]):hover:not(:disabled) {
+button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-white/3"], [class*="border-amber-"], [class*="border-sky-"], [class*="border-[var(--exile-color-border-"]):is([class~="border"], [class*=" border "]):not([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-full"], .g-btn, .g-btn-red, .g-tab, .g-plain, [class~="text-left"], [class~="w-4"], [class~="w-5"], [class~="h-4"], [class~="h-5"], [class~="size-4"], [class~="size-5"]):hover:not(:disabled) {
   border-image-source: url("/ui-art/btn-hover.webp");
   background: none;
 }

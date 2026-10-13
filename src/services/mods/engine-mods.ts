@@ -17,7 +17,7 @@
 import { loadHtcPatch, onHtcPatchLoaded } from "../htc/patch";
 import { classOfBase } from "../htc/bridge";
 import { matchKey, modIndexOf } from "../htc/bridge-index";
-import { jaOfMod } from "../htc/mod-text";
+import { jaOfModAlways } from "../htc/mod-text";
 import { familyKeysOf } from "./mod-rules";
 import { tierDisplayRanges } from "./stat-scale";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -156,7 +156,7 @@ export function engineSide(template: string, rows: readonly ItemBase[] = everyRo
 export function engineJaTemplate(template: string): string | null {
   const m = engineModsFor(template, everyRow(), { exactOnly: true })[0];
   if (!m?.text || m.text.includes(NL)) return null;
-  const ja = jaOfMod(m);
+  const ja = jaOfModAlways(m); // 画面の言語によらず日本語 (2026-10-13)
   return ja && !ja.includes(NL) ? ja : null;
 }
 

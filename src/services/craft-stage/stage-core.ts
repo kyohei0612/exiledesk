@@ -12,7 +12,7 @@ const RUNE_STATS = (RUNES_JSON as { runes: unknown }).runes;
 import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
 import { familyBlocked, familyKeysOf, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
-import { jaOfMod } from "../htc/mod-text";
+import { jaOfModAlways } from "../htc/mod-text";
 import { filledStatsOf } from "../htc/patch";
 import modTextJa from "../../i18n/mod-text-ja.json";
 import { maxQualityForBase } from "../htc/catalysing-setup";
@@ -311,7 +311,7 @@ export function withValues(m: StageMod, mod: Mod, rng: () => number, fixed?: rea
   // 無限のパーフェクトエッセンスは 3 つの MOD とも文が説明文のまま (「筋力、器用さまたは知性」)。付いた 1 つの文にする (要望 ㉕-4)
   const one = ONE_OF_TEXT[mod.family];
   const en = one && ONE_OF_SOURCE.has(mod.text ?? "") ? one : mod.text ?? mod.id;
-  const ja = one && en === one ? jaOfText(one) ?? jaOfMod(mod) : jaOfMod(mod);
+  const ja = one && en === one ? jaOfText(one) ?? jaOfModAlways(mod) : jaOfModAlways(mod);
   const textEn = fillEn(en, values);
   return { ...m, values, ranges, textJa: fillJa(ja, textEn, values, signsOf(en)), textEn, ...(stats?.length ? { stats: [...stats] } : filledStatsOf(mod.id, m.tierIndex) ? { stats: [...filledStatsOf(mod.id, m.tierIndex)!.stats] } : {}), ...(mod.tags?.length ? { tags: [...mod.tags] } : {}) };
 }
