@@ -355,7 +355,8 @@ const TABS = computed(() => (!props.full ? [] : [
     <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !anchor" class="mt-3" data-held-box><slot name="held" /></div>
     </div>
     <!-- 持っている物のお告げは、そのアイコンのすぐ下に重ねて出す (棚は押し下げない。2026-10-10 オーナー「アイコンの下まで持ってきていい」) -->
-    <div v-if="$slots.held && anchor" class="held-anchor" :style="anchor.style" data-held-box><div class="held-pop-in"><slot name="held" /></div></div>
+    <!-- エッセンスの段を選ぶ窓を開いている間は出さない (2 つが重なった。2026-10-13 ランダム操作の確かめ) -->
+    <div v-if="$slots.held && anchor && !essOpen" class="held-anchor" :style="anchor.style" data-held-box><div class="held-pop-in"><slot name="held" /></div></div>
     <!-- エッセンスの段: 種類のアイコンを押すと、お告げの欄と同じ形で出す。使えない段は灰色と理由 (2026-10-10 オーナー) -->
     <div v-if="essOpen && groupKeys(essOpen).length && essPos" class="ess-anchor held-anchor" :style="essPos" :data-ess-for="groupKeys(essOpen).join(' ')">
       <div class="held-pop-in p-2">

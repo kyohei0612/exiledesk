@@ -209,6 +209,10 @@ body {
 html.web-page, html.web-page body, html.web-page #app { height: auto; min-height: 100%; }
 html.web-page, html.web-page body { overflow-x: clip; }
 html.web-page body { overflow-y: visible; }
+/* 崩れない決まり (2026-10-13 オーナー「崩れない設計に」): 決め打ちの幅 (w-[480px] など) は置き場より広くならない。
+   横は clip で切っているので、はみ出すと見切れて気付けない (要望 ea383d1e の発現の候補、768 px のアイテムのカード)。
+   浮いている窓 (absolute・fixed) は親が小さいと縮んでしまうので除く */
+#app :is([class^="w-["], [class*=" w-["]):not(.absolute, .fixed) { max-width: 100%; }
 /* スマホ (Web 版、幅 768 px 未満): ページ全体を指で縦に送る。PC は各画面の中で送るので body は固定のまま
    (2026-10-08 オーナー「スクロールができんな Web 版スマホ」: body の overflow: hidden で指の送りが効かなかった) */
 @media (max-width: 767px) {
@@ -217,9 +221,6 @@ html.web-page body { overflow-y: visible; }
   /* hidden だと body が送りの箱になり、position: sticky (狙う MOD の完成図を上に貼る) が効かない。clip は箱にならない (2026-10-09) */
   html, body { overflow-x: clip; }
   body { overflow-y: visible; -webkit-overflow-scrolling: touch; }
-  /* 崩れない決まり (2026-10-13 オーナー「崩れない設計に」): 決め打ちの幅 (w-[480px] など) は画面より広くならない。
-     横は clip で切っているので、はみ出すと見切れて気付けない (要望 ea383d1e の発現の候補) */
-  #app :is([class^="w-["], [class*=" w-["]) { max-width: 100%; }
   /* スマホあるある: 二度押しの拡大と押した時の青い光を止める、長押しの画像メニューを出さない (2026-10-08) */
   #app { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   /* iOS Safari は 16px 未満の入力欄に触ると勝手に拡大 (12px なら 1.33 倍) して戻らず、横に送れる状態になる。

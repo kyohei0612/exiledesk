@@ -363,7 +363,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
 <template>
   <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
-  <div class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
+  <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
     <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
       <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
