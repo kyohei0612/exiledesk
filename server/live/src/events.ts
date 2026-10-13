@@ -116,16 +116,28 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   // 滞在の中央値 (Analytics Engine の SQL は quantiles が無いので quantileWeighted。それも無ければ平均)
   // 滞在 = 着いた時刻の差と「開いてから何秒目か」(double2) の大きい方 (まとめて送ると着いた時刻は全部同じになる。2026-10-10)。
   // Analytics Engine の SQL は型の違う 2 つを比べられないので、訪問ごとに両方取ってここで中央値を出す
-  const per = await q<{ blob2: string; u: string; d: string; a: number | string; b: number | string }>(`SELECT blob2, blob3 AS u, blob4 AS d, max(double2) AS a, toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp)) AS b FROM ${D} WHERE ${w} GROUP BY blob2, blob3, blob4 LIMIT 20000`);
-  const minOf = (r: { a: number | string; b: number | string }): number => Math.max(Number(r.a) || 0, Number(r.b) || 0) / 60;
+  // 滞在は「数える時間 (since〜until) の中の分」だけ (2026-10-13 オーナー「日報、計測ミスない？」: 日をまたいで開きっぱなしのタブが、
+  // 開いた時からの通算 (開いてから何秒目か・見ていた秒数の合計) で数えられ「一番長くいた人 45 時間」になっていた)。
+  //  - 開いてから何秒目か (double2) は、数え物の印 (base / cur / steps は手の数、stay は見ていた秒数) を除き、時間の中の最大 − 最小
+  //  - 見ていた秒数 (stay) は、時間の中の最大 − 時間の前の最大 (1 週間まで遡る)
+  //  - どちらも数える時間の長さを超えない (1 人に何タブあっても、その人の合計も同じく超えない)
+  const COUNTS = `'base', 'cur', 'steps', 'stay'`;
+  const winMin = Math.max(1, (new Date(until).getTime() - new Date(since).getTime()) / 60000);
+  const per = await q<{ blob2: string; u: string; d: string; a: number | string; a0: number | string; b: number | string }>(`SELECT blob2, blob3 AS u, blob4 AS d, max(double2) AS a, min(double2) AS a0, toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp)) AS b FROM ${D} WHERE ${w} AND blob1 NOT IN (${COUNTS}) GROUP BY blob2, blob3, blob4 LIMIT 20000`);
+  const minOf = (r: { a: number | string; a0: number | string; b: number | string }): number => Math.min(winMin, Math.max((Number(r.a) || 0) - (Number(r.a0) || 0), Number(r.b) || 0) / 60);
   const mins = per.map(minOf).sort((x, y) => x - y);
   if (mins.length) out.medianMinutes = mins[Math.floor((mins.length - 1) / 2)]!;
-  // 見ていた秒数の印 (stay、2026-10-12 から) がある訪問はそれを使う。無い訪問 (前の版) は開いてから最後の印まで
-  const stay = new Map((await q<{ sid: string; s: number | string }>(`SELECT blob2 AS sid, max(double2) AS s FROM ${D} WHERE ${w} AND blob1 = 'stay' GROUP BY sid LIMIT 20000`)).map((r) => [r.sid, Number(r.s) / 60]));
-  const minOfVisit = (r: { blob2?: string; a: number | string; b: number | string }): number => stay.get(String(r.blob2)) ?? minOf(r);
-  // 1 人ずつ (端末の番号 × PC / スマホ) にその日の訪問を足す
+  const stayIn = await q<{ sid: string; u: string; d: string; s: number | string }>(`SELECT blob2 AS sid, blob3 AS u, blob4 AS d, max(double2) AS s FROM ${D} WHERE ${w} AND blob1 = 'stay' GROUP BY sid, u, d LIMIT 20000`);
+  const weekBefore = new Date(new Date(since).getTime() - 7 * 86400e3).toISOString();
+  const stayBefore = new Map((await q<{ sid: string; s: number | string }>(`SELECT blob2 AS sid, max(double2) AS s FROM ${D} WHERE ${range(weekBefore, since)}${skip} AND blob1 = 'stay' GROUP BY sid LIMIT 20000`)).map((r) => [r.sid, Number(r.s)]));
+  const stay = new Map(stayIn.map((r) => [r.sid, Math.min(winMin, Math.max(0, Number(r.s) - (stayBefore.get(r.sid) ?? 0)) / 60)]));
+  const minOfVisit = (r: { blob2?: string; a: number | string; a0: number | string; b: number | string }): number => stay.get(String(r.blob2)) ?? minOf(r);
+  // 1 人ずつ (端末の番号 × PC / スマホ) にその日の訪問を足す。stay だけ送ってきた訪問 (他の印が無い) も入れる
   const person = new Map<string, { d: string; m: number }>();
-  for (const r of per) { const k = `${r.u}|${r.d}`; const m = minOfVisit(r); const x = person.get(k); if (x) x.m += m; else person.set(k, { d: r.d, m }); }
+  const seen = new Set<string>();
+  const addP = (u: string, d: string, m: number): void => { const k = `${u}|${d}`; const x = person.get(k); if (x) x.m = Math.min(winMin, x.m + m); else person.set(k, { d, m }); };
+  for (const r of per) { seen.add(r.blob2); addP(r.u, r.d, minOfVisit(r)); }
+  for (const r of stayIn) if (!seen.has(r.sid)) addP(r.u, r.d, stay.get(r.sid) ?? 0);
   const ps = [...person.values()];
   const bases = (await q<{ k: string; n: number }>(`SELECT blob8 AS k, count(DISTINCT blob3) AS n FROM ${D} WHERE ${w} AND blob1 = 'base' GROUP BY k ORDER BY n DESC LIMIT 5`)).map((r): [string, number] => [r.k, Number(r.n)]);
   const curs = (await q<{ k: string; n: number }>(`SELECT blob8 AS k, SUM(double2 * _sample_interval) AS n FROM ${D} WHERE ${w} AND blob1 = 'cur' GROUP BY k ORDER BY n DESC LIMIT 5`)).map((r): [string, number] => [r.k, Number(r.n)]);
@@ -146,8 +158,9 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
     out.peakHours = h.map((v, i): [number, number] => [i, v]).filter(([, v]) => v > 0).sort((x, y) => y[1] - x[1]).slice(0, 3);
   }
   out.dwell = { pc: dwellOf(ps.filter((x) => x.d !== "mobile").map((x) => x.m)), mobile: dwellOf(ps.filter((x) => x.d === "mobile").map((x) => x.m)) };
-  const top = async (col: string): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
-  out.refs = await top("blob5"); out.devices = await top("blob4"); out.countries = await top("blob6");
+  // by = 数える物 (blob2 = 訪問、blob3 = 人)。どこから来たかは日報で「〜人」と書くので人で数える (2026-10-13: 訪問で数えていて、足すと訪問の数になっていた)
+  const top = async (col: string, by = "blob2"): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT ${by}) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
+  out.refs = await top("blob5", "blob3"); out.devices = await top("blob4"); out.countries = await top("blob6");
   // よその物: 中身の見えないエラー・ext: の印・ウォレット・ユーザースクリプト (2026-10-11)
   const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%' OR blob8 LIKE '%userscript%' OR blob8 LIKE '%.user.js%' OR blob8 LIKE '%response.msg%')`;
   out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND NOT (${EXT}) GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
