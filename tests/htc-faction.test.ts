@@ -50,5 +50,7 @@ describe("勢力のお告げ", () => {
     expect(bossOmenAllowed("Gloves")).toBe(false);
     expect(bossOmenAllowed("Amulets")).toBe(true);
     expect(bossOmenAllowed("Spears")).toBe(true);
+    // タリスマンも武器 (2026-10-13 要望 2d38f482: 表に無くて防具扱いだった)
+    expect(bossOmenAllowed("Talismans")).toBe(true);
   });
 });

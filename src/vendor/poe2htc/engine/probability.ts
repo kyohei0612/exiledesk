@@ -594,6 +594,8 @@ const BONE_BY_CATEGORY: Record<string, DesecrationBone> = {
   Bows: 'jawbone', Crossbows: 'jawbone', OneHand_Maces: 'jawbone', Quarterstaves: 'jawbone',
   Sceptres: 'jawbone', Spears: 'jawbone', Staves: 'jawbone', TwoHand_Maces: 'jawbone',
   Wands: 'jawbone', Quivers: 'jawbone',
+  // タリスマンは両手の武器 (表に無くて防具の肋骨に落ち、勢力のお告げが弾かれていた。2026-10-13 要望 2d38f482。データの冒涜の置き場に 3 勢力とも有る)
+  Talismans: 'jawbone',
   // "Armour" — shields, bucklers and foci included: all carry armour/evasion/energy-shield.
   Body_Armours: 'rib', Boots: 'rib', Gloves: 'rib', Helmets: 'rib',
   Shields: 'rib', Bucklers: 'rib', Foci: 'rib',
