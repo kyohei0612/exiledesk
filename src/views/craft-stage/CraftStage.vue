@@ -514,7 +514,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <Transition name="stage-fade" appear>
     <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
-      <div class="flex flex-col items-center gap-8 max-md:items-stretch">
+      <div class="flex min-w-0 flex-col items-center gap-8 max-md:items-stretch">
         <!-- 品質を変える帯 (アイテムの説明の窓の外、すぐ上。2026-10-10) -->
         <!-- カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
         <div class="-mb-6 flex w-full max-w-[480px] items-start gap-2">

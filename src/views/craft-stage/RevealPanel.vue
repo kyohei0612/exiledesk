@@ -54,11 +54,12 @@ function pick(i: number): void {
         :key="`${rerolled}-${m.modId}`"
         type="button"
         :data-rec="`reveal:${i + 1}`"
-        class="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-left max-md:min-h-11 hover:border-rose-300/60 hover:bg-rose-500/10"
+        class="g-plain flex w-full items-center justify-between gap-2 whitespace-normal rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-left max-md:min-h-11 hover:border-rose-300/60 hover:bg-rose-500/10"
         :title="raisesTo(m) ? tr(`選ぶと要求 Lv ${raisesTo(m)} に上がる (今 Lv ${nowReq()})`, `Raises requirement to Level ${raisesTo(m)} (now ${nowReq()})`) : undefined"
         @click="pick(i)"
       >
-        <span class="text-mod-desecrated">{{ modText(m) }}</span>
+        <!-- 長い MOD は折り返す (ゲームのボタンの絵が自動で付いて 1 行になり、スマホで候補の欄が画面の右へはみ出していた。2026-10-13 要望 ea383d1e) -->
+        <span class="min-w-0 text-mod-desecrated">{{ modText(m) }}</span>
         <span class="shrink-0 text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }} {{ m.tierName }}</span>
       </button>
     </div>
