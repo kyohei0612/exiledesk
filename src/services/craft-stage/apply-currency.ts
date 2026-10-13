@@ -32,8 +32,10 @@ export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET
 export const INFUSER_OVER = 10;
 /** インフューザーがある部位 (指輪・アミュレット・防具・マーシャル武器・ワンド・スタッフ・セプター)。前の一覧はキャスターが漏れていた (2026-10-13 総点検) */
 const INFUSABLE: readonly ItemGroup[] = ["ringAmulet", "armour", "martial", "caster"];
+/** インフューザーを棚に出しているか (2026-10-09 にヴァールの道具と一緒に外した)。外している間は「今の最大」に +10 を足さない (2026-10-13 オーナー「インフューザー非表示じゃなかったっけ」) */
+export const INFUSERS_ON_SHELF = false;
 export function qualityFieldMax(item: StageItem): number {
-  return maxQualityOf(item) + (inAny(item.cls.category, INFUSABLE) ? INFUSER_OVER : 0);
+  return maxQualityOf(item) + (INFUSERS_ON_SHELF && inAny(item.cls.category, INFUSABLE) ? INFUSER_OVER : 0);
 }
 /** 暗黙の MOD の値を手で決める手 (`iset:0:5` = 1 行目を 5、範囲が 2 つなら `iset:0:2,4`)。暗黙の行の上下のボタン (2026-10-12 オーナー「暗黙はティアとかないから上下できるボタン」)。費用 0 */
 export const IMPLICIT_SET = "iset:";
