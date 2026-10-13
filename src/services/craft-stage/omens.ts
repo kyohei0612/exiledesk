@@ -63,18 +63,19 @@ export function omenNote(omen: string, item: StageItem | null, data?: PatchData 
   // 勢力のお告げ: 部位に掛けられない / その勢力の MOD がこの部位に無い (セプターなど。骨は打てるが候補は普通の 3 つ。2026-10-11 オーナー)
   const fac = FACTION_TAG[omen];
   if (fac) {
-    if (!bossOmenAllowed(item.cls.category)) return tr("武器・宝飾品だけ", "Weapons & jewellery only");
+    if (!bossOmenAllowed(item.cls.category)) return tr("武器・宝飾品・矢筒だけ", "Weapons, jewellery & quivers only");
     const ids = [...item.cls.pools.desecrated.prefixes, ...item.cls.pools.desecrated.suffixes];
     if (data && !ids.some((id) => data.mods.get(id)?.tags.includes(fac))) return tr("この部位に勢力の MOD が無い (意味なし)", "No such mods on this item class (no effect)");
   }
   const free = (s: StageSide): boolean => room(item, s);
   const removable = (s: StageSide): number => listOf(item, s).filter((m) => !m.fractured).length;
   const other = (s: StageSide): StageSide => (s === "prefix" ? "suffix" : "prefix");
-  // 付ける側を決めるお告げ (高貴・骨)
+  // 付ける側を決めるお告げ (高貴・骨)。骨は側が満杯でもその側の MOD を 1 つ置き換えて打てる (apply-desecrate.ts、2026-10-14 総点検で一言を直した)
   const addSide: Record<string, StageSide> = {
     OmenofSinistralExaltation: "prefix", OmenofDextralExaltation: "suffix",
     OmenofSinistralNecromancy: "prefix", OmenofDextralNecromancy: "suffix",
   };
+  const replacesWhenFull = (o: string): boolean => o === "OmenofSinistralNecromancy" || o === "OmenofDextralNecromancy";
   // 消す側を決めるお告げ (消去・カオス・パーフェクトエッセンス)
   const removeSide: Record<string, StageSide> = {
     OmenofSinistralAnnulment: "prefix", OmenofDextralAnnulment: "suffix",
@@ -84,7 +85,7 @@ export function omenNote(omen: string, item: StageItem | null, data?: PatchData 
   if (item.rarity !== "rare") return null;
   const a = addSide[omen];
   if (a) {
-    if (!free(a)) return a === "prefix" ? tr("プレ満杯で打てない", "Prefixes full") : tr("サフィ満杯で打てない", "Suffixes full");
+    if (!free(a)) return replacesWhenFull(omen) ? (a === "prefix" ? tr("プレ満杯: プレを 1 つ置き換える", "Prefixes full: replaces a prefix") : tr("サフィ満杯: サフィを 1 つ置き換える", "Suffixes full: replaces a suffix")) : a === "prefix" ? tr("プレ満杯で打てない", "Prefixes full") : tr("サフィ満杯で打てない", "Suffixes full");
     if (!free(other(a))) return tr("今は意味なし", "No effect now");
     return null;
   }

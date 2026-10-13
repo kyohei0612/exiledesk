@@ -226,7 +226,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   /** 狙いの段以上で一番高い段のレベル (等級の下限が届くか) */
   const reach = (t: RecipeTarget): number => Math.max(0, ...membersOf(t).flatMap((y) => mod(y.modId).tiers.filter((x, i) => i >= y.minTierIndex && x.ilvl <= spec.itemLevel).map((x) => x.ilvl)));
   /**
-   * 等級 (無印 / 上級 / 完全) は「1 個の値段 ÷ 狙いが出る確率」が一番安い物 (2026-10-05)。下限 (高貴 35 / 50、変成・増強 55 / 70) が上がると低い段が
+   * 等級 (無印 / 上級 / 完全) は「1 個の値段 ÷ 狙いが出る確率」が一番安い物 (2026-10-05)。下限 (高貴 35 / 50、変成・増強 44 / 70) が上がると低い段が
    * 出なくなるが、狙いの段も下限より下は出なくなる (ライフ T5 以上を完全で狙うと T1 しか出ず、変成・増強ガチャが回り続けた)。
    * 確率は普通の置き場の重み (その側、変成は両側) で、同じ系統の除外は見ない目安
    */
@@ -243,7 +243,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
       return m ? modTierWeight(m, floor, spec.itemLevel, minIdx) : 0;
     };
     let best = base as string, bestCost = Infinity;
-    // 下限はエンジンの表 (変成・増強 55 / 70、高貴 35 / 50)
+    // 下限はエンジンの表 (変成・増強 44 / 70、高貴 35 / 50。poe2db で確認)
     const fl = CURRENCY_FLOOR[base];
     for (const [k, floor] of [[base, fl.base], [`${base}_greater`, fl.greater], [`${base}_perfect`, fl.perfect]] as const) {
       // アイテムレベルが下限に届かない強さは打てない (2026-10-10 点検: ilvl 60 で完全の変成を選んで 1 手目で止まっていた)

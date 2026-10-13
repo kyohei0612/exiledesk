@@ -11,7 +11,7 @@ it("プレ 1 / サフィ 3 (サフィ満杯)", () => {
   const it = ring(["Rings/FireDamage", "Rings/Intelligence", "Rings/LifeRegeneration", "Rings/ChaosResistance"]);
   expect(omenNote("OmenofDextralExaltation", it)).toBe("サフィ満杯で打てない");
   expect(omenNote("OmenofSinistralExaltation", it)).toBe("今は意味なし");
-  expect(omenNote("OmenofDextralNecromancy", it)).toBe("サフィ満杯で打てない");
+  expect(omenNote("OmenofDextralNecromancy", it)).toBe("サフィ満杯: サフィを 1 つ置き換える"); // 骨は満杯でもその側の MOD を置き換えて打てる (2026-10-14)
   expect(omenNote("OmenofDextralAnnulment", it)).toBeNull();
   expect(omenNote("OmenofCatalysingExaltation", it)).toBe("品質が要る");
 });

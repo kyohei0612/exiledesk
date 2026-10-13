@@ -87,8 +87,9 @@ export function applyQuality(item: StageItem, key: string, rng: () => number = M
   const t = QUALITY_TARGET[key]!;
   if (!inGroup(item.cls.category, t.group)) return skip(item, tr(`${t.ja}にだけ使える`, `${t.en} only`));
   if (item.quality >= QUALITY_MAX) return skip(item, tr(`品質が上限 (${QUALITY_MAX}%)`, `Quality is maxed (${QUALITY_MAX}%)`));
-  // フラスコの飾り玉は 1 固定 (QUALITY_TARGET に無いのでここは装備かジェム)。装備は 1 か 2 を等分で引く (同じ seed なら再生でも同じ)
-  const step = isGem(item.cls.category) ? QUALITY_STEP.gem : QUALITY_STEP_ITEM_ROLLS[Math.min(QUALITY_STEP_ITEM_ROLLS.length - 1, Math.floor(rng() * QUALITY_STEP_ITEM_ROLLS.length))]!;
+  // ジェムは 5、フラスコの飾り玉は 1 固定 (オーナーがゲームで確認)。装備は 1 か 2 を等分で引く (同じ seed なら再生でも同じ)。
+  // 2026-10-14 総点検: 前は飾り玉も 1 / 2 の抽選に入っていた
+  const step = isGem(item.cls.category) ? QUALITY_STEP.gem : key === "bauble" ? QUALITY_STEP.item : QUALITY_STEP_ITEM_ROLLS[Math.min(QUALITY_STEP_ITEM_ROLLS.length - 1, Math.floor(rng() * QUALITY_STEP_ITEM_ROLLS.length))]!;
   return { applied: true, item: { ...item, quality: Math.min(QUALITY_MAX, item.quality + step) }, added: [], removed: [] };
 }
 

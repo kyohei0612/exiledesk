@@ -8,9 +8,11 @@ import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG, ABYSS_MARK_FLOOR } from
 import { essenceClash, familyBlocked, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import type { RollOutcome, SimAction, SimCtx, SimNode, SimSlot, SimState } from "./sim-route-types";
 
+// 上級・完全の段の下限 (poe2db の各カレンシーの Minimum Modifier Level、2026-10-14 確認): 変成・増強 44 / 70、王者・高貴・カオス 35 / 50。
+// 前は変成・増強も 35 / 50 で、エンジン (CURRENCY_FLOOR) と食い違っていた
 const FLOOR: Record<string, number> = {
   chaos: 0, chaos_greater: 35, chaos_perfect: 50, exalt: 0, exalt_greater: 35, exalt_perfect: 50,
-  transmute: 0, transmute_greater: 35, transmute_perfect: 50, augment: 0, augment_greater: 35, augment_perfect: 50, regal: 0, regal_greater: 35, regal_perfect: 50,
+  transmute: 0, transmute_greater: 44, transmute_perfect: 70, augment: 0, augment_greater: 44, augment_perfect: 70, regal: 0, regal_greater: 35, regal_perfect: 50,
 };
 const SIDES: Side[] = ["prefix", "suffix"];
 
