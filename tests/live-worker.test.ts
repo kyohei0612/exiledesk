@@ -285,21 +285,17 @@ describe("分析用の記録を Discord へ (logs.ts)", () => {
     for (const p of parts) expect(new TextEncoder().encode(p).length).toBeLessThanOrEqual(20);
     expect(parts.length).toBe(2);
   });
-  it("昨日の分をまとめて 1 投稿で送り、D1 には DELETE を出さない。413 なら 1 本ずつ送り直す", async () => {
-    const { sendDayLogs, FILE_MAX } = await import("../server/live/src/logs");
+  it("昨日の分は 1 通のお知らせだけ (ファイルは付けない。2026-10-13 多重に来ていた)、D1 には DELETE を出さない", async () => {
+    const { sendDayLogs } = await import("../server/live/src/logs");
     const sqls: string[] = [];
-    const big = "x".repeat(FILE_MAX / 3);
-    const rows = [0, 1, 2].map((i) => ({ at: `2026-10-08T0${i}:00:00.000Z`, country: "JP", body: `{"app":"web","n":1,"p":"${big}"}` }));
+    const rows = [0, 1, 2].map((i) => ({ at: `2026-10-08T0${i}:00:00.000Z`, country: "JP", body: `{"app":"web","n":1}` }));
     const LOGS = { prepare(sql: string) { sqls.push(sql); return { bind: () => ({ all: async () => ({ results: rows }) }) }; } } as unknown as D1Database;
-    const posts: number[] = [];
-    const f = (async (_u: string, init: RequestInit) => {
-      const n = [...(init.body as FormData).keys()].filter((k) => k.startsWith("files[")).length;
-      posts.push(n);
-      return new Response(null, { status: n > 1 ? 413 : 200 });
-    }) as unknown as typeof fetch;
+    const posts: string[] = [];
+    const f = (async (_u: string, init: RequestInit) => { posts.push(String(init.body)); return new Response(null, { status: 200 }); }) as unknown as typeof fetch;
     const r = await sendDayLogs({ LIVE: fakeKv(), LOGS, LOGS_WEBHOOK: "https://discord/logs" }, "2026-10-08", f);
-    expect(r).toMatchObject({ ok: true, files: 2, lines: 3 });
-    expect(posts).toEqual([2, 1, 1]);
+    expect(r).toMatchObject({ ok: true, files: 0, lines: 3 });
+    expect(posts).toHaveLength(1);
+    expect(posts[0]).toContain("3 行");
     expect(sqls.every((s) => s.startsWith("SELECT"))).toBe(true);
     expect((await sendDayLogs({ LIVE: fakeKv(), LOGS }, "2026-10-08", f)).ok).toBe(false);
   });

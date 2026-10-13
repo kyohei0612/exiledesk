@@ -51,8 +51,6 @@ export async function countBetween(env: Env, since: string, until: string): Prom
 
 /** Discord に送る 1 ファイルの上限 (2026-10-09 オーナー指定)。行の途中では切らない */
 export const FILE_MAX = 8 * 1024 * 1024;
-/** Discord の 1 投稿に付けられる添付の数 */
-const FILES_PER_POST = 10;
 
 /** JSONL を行の切れ目で FILE_MAX バイト (UTF-8) 以下ずつに分ける。1 行で超える物はその行だけで 1 本 */
 export function splitJsonl(text: string, max = FILE_MAX): string[] {
@@ -72,37 +70,17 @@ export function splitJsonl(text: string, max = FILE_MAX): string[] {
 }
 
 /**
- * その日の記録を Discord (LOGS_WEBHOOK) へファイルで送る (毎朝 9 時の cron と GET /logs/send)。D1 からは消さない。
- * 1 投稿にまとめて付ける (オーナー指定の B 案)。添付は 1 投稿 10 個まで。合計が大きすぎて 413 なら 1 本ずつ送り直す
+ * その日の記録のお知らせを Discord (LOGS_WEBHOOK) へ 1 通だけ (毎朝 9 時の cron と GET /logs/send)。D1 からは消さない。
+ * 2026-10-13 オーナー「日報の送信が変、めちゃくちゃ多重でくる、整理して」: 前はファイルを付けて送り、大きすぎて 413 の時に 1 本ずつ送り直していたので、
+ * ファイルの数だけ投稿が来ていた。記録は D1 にあり取り出しは GET /logs/day か scripts/pull-logs.mjs なので、ファイルは付けず行数と大きさの 1 行だけ
  */
 export async function sendDayLogs(env: Env, day: string, fetchFn: typeof fetch = fetch): Promise<{ ok: boolean; files: number; bytes: number; lines: number; error?: string }> {
   if (!env.LOGS_WEBHOOK) return { ok: false, files: 0, bytes: 0, lines: 0, error: "LOGS_WEBHOOK が無い" };
   const text = await dayLogs(env, day);
-  const parts = splitJsonl(text);
   const lines = text ? text.split("\n").length : 0;
   const bytes = new TextEncoder().encode(text).length;
-  const post = async (idx: number[], content: string): Promise<Response> => {
-    const form = new FormData();
-    form.append("payload_json", JSON.stringify({ content, allowed_mentions: { parse: [] } }));
-    idx.forEach((i, k) => form.append(`files[${k}]`, new Blob([parts[i]!], { type: "application/x-ndjson" }), `logs-${day}-${i + 1}of${parts.length}.jsonl`));
-    return fetchFn(env.LOGS_WEBHOOK!, { method: "POST", body: form });
-  };
-  const head = `**分析用の記録 ${day}** ${lines} 行 · ${(bytes / 1024 / 1024).toFixed(2)} MB · ${parts.length} ファイル`;
-  if (!parts.length) {
-    const r = await post([], `${head} (記録なし)`);
-    return { ok: r.ok, files: 0, bytes, lines, ...(r.ok ? {} : { error: `Discord ${r.status}` }) };
-  }
-  for (let s = 0; s < parts.length; s += FILES_PER_POST) {
-    const idx = parts.map((_, i) => i).slice(s, s + FILES_PER_POST);
-    let r = await post(idx, s === 0 ? head : `${head} (続き)`);
-    if (r.status === 413 && idx.length > 1) {
-      for (const i of idx) {
-        r = await post([i], `${head} (${i + 1}/${parts.length})`);
-        if (!r.ok) break;
-      }
-    }
-    if (!r.ok) return { ok: false, files: parts.length, bytes, lines, error: `Discord ${r.status}: ${(await r.text().catch(() => "")).slice(0, 200)}` };
-  }
-  return { ok: true, files: parts.length, bytes, lines };
+  const content = `**分析用の記録 ${day}** ${lines} 行 · ${(bytes / 1024 / 1024).toFixed(2)} MB (取り出しは scripts/pull-logs.mjs)`;
+  const r = await fetchFn(env.LOGS_WEBHOOK, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content, allowed_mentions: { parse: [] } }) });
+  return { ok: r.ok, files: 0, bytes, lines, ...(r.ok ? {} : { error: `Discord ${r.status}` }) };
 }
 
