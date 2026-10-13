@@ -236,7 +236,6 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   const floor = floorOf(kind, strength);
   // 用語集 BetterCurrencyMinimumLevel「最低 MOD レベルのあるカレンシーは、アイテムレベルがそれより低い品には使えない」(要望 ㉝ の 3)
   if (floor > 0 && item.itemLevel < floor && !noIlvl(item)) return skip(item, tr(`アイテムレベルが ${floor} 未満には使えない`, `Requires Item Level ${floor}+`));
-  const count = allMods(item).length;
   const add = (it: StageItem, n: number, pick: (k: number, cur: StageItem) => readonly StageSide[] = () => SIDES, boost?: PoolOpts["boost"]): StageApply => {
     let cur = it;
     const added: StageMod[] = [];
@@ -262,12 +261,17 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
     return added.length ? { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}) } : skip(item, tr("付けられる MOD が無い", "No mod can be added"));
   };
   switch (kind) {
-    case "transmute":
+    case "transmute": {
       if (item.rarity !== "normal") return skip(item, tr("ノーマルのアイテムにだけ使える", "Normal items only"));
-      return add({ ...item, rarity: "magic" }, 1);
+      // マジックの枠が 0 のベース (不在のアミュレット = プレ -1 / サフィ -1) は MOD 無しのマジックになる (ゲームで確認、要望 19c7d2de)
+      const magic = { ...item, rarity: "magic" as const };
+      if (!SIDES.some((sd) => room(magic, sd))) return { applied: true, item: magic, added: [], removed: [] };
+      return add(magic, 1);
+    }
     case "augment":
       if (item.rarity !== "magic") return skip(item, tr("マジックのアイテムにだけ使える", "Magic items only"));
-      if (count >= 2) return skip(item, tr("MOD が 2 つ付いている (マジックはプレ 1 / サフィ 1 まで)", "Already has 2 mods (Magic: 1 prefix / 1 suffix)"));
+      // 枠はベースの暗黙で増減する (黄昏の指輪はプレ 2 / サフィ 0)。決め打ちの「2 つまで」をやめた
+      if (!SIDES.some((sd) => room(item, sd))) return skip(item, tr("マジックの枠が埋まっている", "No room for another mod on this Magic item"));
       return add(item, 1);
     case "regal": {
       if (item.rarity !== "magic") return skip(item, tr("マジックのアイテムにだけ使える", "Magic items only"));

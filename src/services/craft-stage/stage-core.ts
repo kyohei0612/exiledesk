@@ -14,7 +14,7 @@ import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
 import { familyBlocked, familyKeysOf, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfModAlways } from "../htc/mod-text";
-import { filledStatsOf } from "../htc/patch";
+import { filledStatsOf, htcBaseLimits } from "../htc/patch";
 import modTextJa from "../../i18n/mod-text-ja.json";
 import { maxQualityForBase } from "../htc/catalysing-setup";
 import { displayedValue } from "../htc/quality";
@@ -89,9 +89,20 @@ export function scaledAugment(item: StageItem, a: StageAugment): StageAugment {
   });
   return { ...a, stats, textJa, textEn };
 }
-/** 側の枠 (マジックは 1 / 1) */
+/**
+ * ベースの暗黙の「プレ / サフィ ±N 個」(local_maximum_prefixes_allowed_+ など。不在のアミュレットは -1 / -1、黄昏の指輪は +1 / -1)。
+ * htcBaseLimits はその暗黙があるベースだけ 3 ± N で持つ
+ */
+export function baseAllowedDelta(item: StageItem, side: StageSide): number {
+  const l = htcBaseLimits()[item.base];
+  return l ? (side === "prefix" ? l.prefixes : l.suffixes) - 3 : 0;
+}
+/**
+ * 側の枠 (マジックは 1 / 1)。ベースの暗黙の増減はマジックにも効く
+ * (2026-10-13 要望 19c7d2de: 不在のアミュレットに変成を打つとゲームでは MOD 無しのマジック。前はマジックを 1 / 1 で決め打ちして MOD が付いた)
+ */
 export function limitOf(item: StageItem, side: StageSide): number {
-  if (item.rarity === "magic") return MAGIC_LIMIT;
+  if (item.rarity === "magic") return Math.max(0, MAGIC_LIMIT + baseAllowedDelta(item, side));
   if (item.rarity === "normal") return 0;
   const lim = effectiveCls(item).limits ?? DEFAULT_LIMITS;
   return (side === "prefix" ? lim.prefixes : lim.suffixes) + extraAllowed(item, side);
