@@ -71,7 +71,7 @@ const OMEN: Record<string, string[]> = {
   OmenofCorruption: ["次のヴァールオーブの「変化なし」を外す (残り 3 つから等しく)", "アクセサリーの 4 つ目 (ソケットの代わりの変化なし) は外れない", "0.5.0 で入手できなくなった"],
   OmenoftheBlessed: ["次の神のオーブは **暗黙 MOD だけ** を振り直す (明示 MOD は変わらない)"],
   OmenofChance: ["次の可能性のオーブは **アイテムを壊さない**", "外れた時はノーマルのまま残る (オーブは使う)"],
-  OmenoftheAncients: ["次の可能性のオーブは、そのベースのユニークではなく **同じアイテムクラスのランダムなユニーク** になる", "ベースもそのユニークのベースに変わる", "可能性のお告げと重ねると壊れない"],
+  OmenoftheAncients: ["次の可能性のオーブは、**必ず** 同じアイテムクラスのランダムなユニークになる (外れない)", "ベースもそのユニークのベースに変わる"],
   OmenofSanctification: ["次の神のオーブをレアに使うと **聖別** する: MOD ごとに 0.78〜1.22 倍 (0.01 刻み) を掛けて丸める", "聖別したアイテムは、以後手を加えられない"],
 };
 /** お告げの動き (英語の画面) */
@@ -103,7 +103,7 @@ const OMEN_EN: Record<string, string[]> = {
   OmenofCorruption: ["Removes the \"no change\" outcome from the next Vaal Orb (equal among the other 3)", "The 4th jewellery outcome (no change instead of a socket) stays", "No longer obtainable since 0.5.0"],
   OmenoftheBlessed: ["The next Divine Orb rerolls **only implicit mods** (explicit mods unchanged)"],
   OmenofChance: ["The next Orb of Chance **won't destroy the item**", "On failure the item stays Normal (the orb is still used)"],
-  OmenoftheAncients: ["The next Orb of Chance turns it into **a random Unique of the same Item Class**, not just this base", "The base changes to that Unique's base", "Stacked with Omen of Chance, the item isn't destroyed"],
+  OmenoftheAncients: ["The next Orb of Chance **always** upgrades it to a random Unique of the same Item Class (no failure)", "The base changes to that Unique's base"],
   OmenofSanctification: ["The next Divine Orb on a Rare **sanctifies** it: each mod is multiplied by x0.78-1.22 (0.01 steps) and rounded", "Sanctified items can't be modified afterwards"],
 };
 

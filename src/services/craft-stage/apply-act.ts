@@ -110,7 +110,10 @@ export const CHANCE_P_CONFIRMED = false;
 export function applyChance(item: StageItem, rng: () => number, uniques: Array<{ en: string; ja: string }>, outcome?: string, used: readonly string[] = []): StageApply {
   if (item.rarity !== "normal") return skip(item, tr("ノーマルのアイテムにだけ使える", "Normal items only"));
   if (!uniques.length) return skip(item, tr("このベースのユニークが無い", "No Unique for this base"));
-  const win = outcome === "unique" ? true : outcome === "destroyed" ? false : rng() < CHANCE_UNIQUE_P;
+  // 古代のお告げは「次の可能性のオーブはアイテムを同じアイテムクラスのランダムなユニークにアップグレードする」(説明文のまま、外れは無い。
+  // 2026-10-13 要望 bfe2e1e5「各種お告げを使っても変化無しや壊れる事がある」: 前は普通の可能性のオーブと同じく 1 割で、外れると壊れていた)
+  const ancients = used.includes("OmenoftheAncients");
+  const win = ancients || outcome === "unique" ? true : outcome === "destroyed" ? false : rng() < CHANCE_UNIQUE_P;
   if (!win) {
     if (used.includes("OmenofChance")) return { applied: true, item, added: [], removed: [], note: tr("可能性のお告げ: ユニークにはならなかったが、壊れずにノーマルのまま残った", "Omen of Chance: no Unique, but the item stayed Normal instead of being destroyed") };
     return { applied: true, item: { ...item, destroyed: true }, added: [], removed: [] };

@@ -20,7 +20,6 @@ const emit = defineEmits<{ close: [] }>();
 
 // 要望とバグは分けない、連絡先の欄も無し (2026-10-10 オーナー「要望バグ欄統一、連絡先書かなくていい」)
 const text = ref("");
-const attach = ref(true);
 const website = ref(""); // bot よけ (人は見えない。入っていたらサーバーが捨てる)
 const state = ref<"idle" | "sending" | "sent" | "error">("idle");
 const errorText = ref("");
@@ -69,7 +68,7 @@ async function send(): Promise<void> {
     const r = await fetch(`${WEB_API_BASE}/feedback`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: attach.value ? contextNow() : null }),
+      body: JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: contextNow() }),
     });
     const j = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string; id?: string };
     if (!r.ok || !j.ok) throw new Error(j.error ?? `${r.status}`);
@@ -92,7 +91,8 @@ async function send(): Promise<void> {
     <template v-else>
       <textarea v-model="text" rows="6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="tr('こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも', 'Feature ideas, something that looks wrong (what you did and what happened), anything')" autofocus></textarea>
       <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />
-      <label class="mt-2 flex cursor-pointer items-center gap-2 opacity-80"><input v-model="attach" type="checkbox" class="accent-amber-400" /> {{ tr("今の画面の状態を添付 (ベース・狙い・パターン・直前の操作の流れ。名前やログインの情報は入らない)", "Attach the current screen state (base, targets, patterns, recent actions. No names or login info)") }}</label>
+      <!-- 画面の状態はいつも添付 (チェックの欄は外した。2026-10-13 オーナー「その欄いらんわ、送ってほしいから」: 外して送られ、再現できなかった) -->
+      <p class="mt-2 text-[11px] opacity-60">{{ tr("今の画面の状態 (ベース・付いている MOD・直前の操作の流れ) も一緒に届きます。名前やログインの情報は入りません", "The current screen state (base, mods, recent actions) is sent along. No names or login info") }}</p>
       <p v-if="state === 'error'" class="mt-2 text-rose-300">{{ tr("送れなかった", "Could not send") }}: {{ errorText }}</p>
     </template>
     <template #footer>
