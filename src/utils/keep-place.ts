@@ -1,5 +1,5 @@
 import { nextTick } from "vue";
-import { toCss } from "./zoom";
+import { pageZoom, toCss } from "./zoom";
 
 /**
  * スクロールまわりの共通の部品 (2026-10-10 オーナー「全体コード整理、スクロール周り余分な奴とか重複」で 1 か所に):
@@ -67,7 +67,26 @@ export function scrollToTop(el: Element | null | undefined, behavior: ScrollBeha
 let gliding = 0;
 /** 送り終わったら解ける (途中で別の送りに替わった時も解ける)。d は画面の座標の差 (拡大率込み)、中で CSS の px に換算する */
 export function glideBy(box: HTMLElement | null, dScreen: number, ms = 260): Promise<void> {
-  const d = toCss(dScreen);
+  return glideCss(box, toCss(dScreen), ms);
+}
+/**
+ * el の位置の差 (getBoundingClientRect の単位) だけ送る。スクロール量との比をその場で測ってから 1 回で滑らせる
+ * (拡大率の掛かった画面では、位置の差とスクロール量の単位の関係がブラウザで違う: 1920 幅 (拡大 1.16) の Chrome で toCss の換算だと足りず、
+ * 途中で止まってから残りを送る 2 段の動きになっていた。2026-10-14 オーナー「いっかいたたむのまえでとまって」)。測る時の送り戻しは同じコマの中なので見えない
+ */
+export function glideRect(box: HTMLElement | null, el: Element, dRect: number, ms = 260): Promise<void> {
+  const getY = (): number => (box ? box.scrollTop : window.scrollY);
+  const setY = (y: number): void => { if (box) box.scrollTop = y; else window.scrollTo(0, y); };
+  const y = getY(), t = el.getBoundingClientRect().top;
+  const probe = dRect > 0 ? 40 : -40;
+  setY(y + probe);
+  const moved = getY() - y, shifted = t - el.getBoundingClientRect().top;
+  setY(y);
+  // 動けなかった時 (端) は今まで通りの換算
+  const k = moved !== 0 && shifted !== 0 ? shifted / moved : pageZoom();
+  return glideCss(box, dRect / k, ms);
+}
+function glideCss(box: HTMLElement | null, d: number, ms: number): Promise<void> {
   if (Math.abs(d) < 1) return Promise.resolve();
   const getY = (): number => (box ? box.scrollTop : window.scrollY);
   const setY = (y: number): void => { if (box) box.scrollTop = y; else window.scrollTo(0, y); };

@@ -14,7 +14,8 @@ import { gemArt } from "../../services/craft-stage/skill-art";
 import Disclosure from "../ui/Disclosure.vue";
 
 const props = defineProps<{ list: CatalogRow[]; selected?: string | null; note?: (en: string) => string; showCls?: boolean; /** 最初は 2 行だけ出して「もっと見る」で全部 (名前で探す時は全部) */ fold?: boolean; /** 人気の札を付けるベース (popular-bases.json) */ hot?: ReadonlySet<string> }>();
-const emit = defineEmits<{ pick: [en: string] }>();
+/** expand / collapse: 「もっと見る」で広げた・「たたむ」で畳んだ時 (親が伸びた一覧の下まで送る / 元の位置に戻す。2026-10-14) */
+const emit = defineEmits<{ pick: [en: string]; expand: []; collapse: [] }>();
 /** ベースの絵 (スキルジェムはジェムの絵) */
 const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
 
@@ -82,7 +83,7 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
     <p v-if="!list.length" class="col-span-full py-4 text-center opacity-50">{{ tr("見つかりません", "No matches") }}</p>
   </div>
   <!-- 3 行目から下 -->
-  <Disclosure v-if="fold && (rest > 0 || more) && list.length > cols * 2" v-model:open="more" :rest="rest" bar />
+  <Disclosure v-if="fold && (rest > 0 || more) && list.length > cols * 2" :open="more" @update:open="(v: boolean) => { more = v; if (v) emit('expand'); else emit('collapse'); }" :rest="rest" bar />
   <!-- 「もっと見る」が無い時も、その分は下を空ける (ぎりぎりで切らない、2026-10-12 オーナーの決まり) -->
   <div v-else class="g-list-end" aria-hidden="true" />
   </div>
