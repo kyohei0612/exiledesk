@@ -318,7 +318,7 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
 }
 
 /**
- * 訪問者の数 (画面の「本日の訪問者」。2026-10-11 オーナー「1 時間ごとに 9 時からの累積」)。1 時間おきの cron で 1 回だけ数えて KV に置き、
+ * 訪問者の数 (画面の「本日の訪問者」。2026-10-11 オーナー「1 時間ごとに 9 時からの累積」、10-15 から訪問の回数 = 同じ人の 2 回目も数える)。1 時間おきの cron で 1 回だけ数えて KV に置き、
  * 画面は /boot.json に乗せて受け取る (来た人ごとにサーバーへ聞かない)。昨日の分は日が変わった時に 1 回だけ数える。書くのは 1 時間に 1 回
  */
 const VISITORS_KEY = "visitors";
@@ -329,12 +329,12 @@ async function updateVisitors(env: Env, now = new Date()): Promise<void> {
   const floor = env.STATS_SINCE ?? "";
   const since = y.since < floor ? floor : y.since;
   const prev = (await env.LIVE.get(VISITORS_KEY, "json")) as Visitors | null;
-  const today = await usersBetween(env, since, now.toISOString());
+  const today = await usersBetween(env, since, now.toISOString(), fetch, "visits");
   if (today == null) return;
   let yesterday = prev?.yesterdayFor === y.since ? prev.yesterday : null;
   if (yesterday == null) {
     const ys = new Date(new Date(y.since).getTime() - 86400e3).toISOString();
-    yesterday = await usersBetween(env, ys < floor ? floor : ys, y.since);
+    yesterday = await usersBetween(env, ys < floor ? floor : ys, y.since, fetch, "visits");
   }
   await env.LIVE.put(VISITORS_KEY, JSON.stringify({ today, since: y.since, at: now.toISOString(), yesterday, yesterdayFor: y.since } satisfies Visitors));
 }
