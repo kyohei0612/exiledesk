@@ -37,6 +37,8 @@ export interface StageMod {
   rune?: string;
   /** アルダーのルーンで属性を変えた MOD = 変える前の文 (要望 ㉙) */
   convertedFrom?: string;
+  /** フラックスで変えた MOD (札を「アルダー」にしない。ゲームでは普通の MOD) */
+  convertedBy?: "flux";
   /** エッセンスの MOD (普通・パーフェクトとも。1 つのアイテムに 1 つまで、アストリッドの創造性で 2 つ) */
   crafted?: boolean;
   /** 深淵の王の印 (深淵のエッセンス、crafted も立つ)。次の骨はこれを置き換え、段の下限 MOD レベル 33 (仮、2026-10-03) */

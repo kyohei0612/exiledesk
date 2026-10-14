@@ -24,11 +24,11 @@ const mods = computed(() => [...props.item.prefixes.map((m) => ({ m, side: tr("�
       <b class="truncate text-[13px]" :class="NAME[item.rarity]">{{ item.unique ? nameOf(item.unique) : baseNameOf(item) }}</b>
       <span class="ml-auto shrink-0 text-[10px] text-[var(--exile-color-text-tertiary)]">iLv {{ item.itemLevel }}</span>
     </p>
-    <p v-for="r in mods" :key="r.m.modId" class="flex items-baseline gap-1.5 leading-snug" :class="addedIds.has(r.m.modId) ? 'stage-row-in font-semibold text-emerald-300' : r.m.fractured ? 'text-[#c8b896]' : 'text-rarity-magic'">
+    <p v-for="(r, i) in mods" :key="i + r.m.modId" class="flex items-baseline gap-1.5 leading-snug" :class="addedIds.has(r.m.modId) ? 'stage-row-in font-semibold text-emerald-300' : r.m.fractured ? 'text-[#c8b896]' : 'text-rarity-magic'">
       <span class="shrink-0 text-[9px] text-[var(--exile-color-text-tertiary)]">{{ r.side }}</span>
       <span class="min-w-0">{{ r.m.unrevealed ? tr("未発現の MOD", "Unrevealed mod") : modText(r.m) }}</span>
     </p>
-    <p v-for="m in removed" :key="'x' + m.modId" class="text-rose-300/80 line-through">{{ modText(m) }}</p>
+    <p v-for="(m, i) in removed" :key="'x' + i + m.modId" class="text-rose-300/80 line-through">{{ modText(m) }}</p>
     <p v-if="!mods.length && !removed.length" class="text-[var(--exile-color-text-tertiary)]">{{ tr("MOD なし", "No mods") }}</p>
   </div>
 </template>
