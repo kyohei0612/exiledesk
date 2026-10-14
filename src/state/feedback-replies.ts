@@ -12,9 +12,11 @@ import { WEB_API_BASE } from "../web/config";
 const SENT_KEY = "exiledesk.feedback.sent";
 const SEEN_KEY = "exiledesk.feedback.replySeen";
 interface Sent { id: string; at: string; text: string }
-export interface ShownReply { id: string; asked: string; reply: string; en?: string; version?: string }
+export interface ShownReply { id: string; asked: string; reply: string; en?: string; version?: string; askImage?: boolean }
 /** 出す返事 (まだ見ていない物) */
 export const feedbackReplies = ref<ShownReply[]>([]);
+/** 返事で「画像を下さい」と頼まれた要望の id (押すと画像を送る窓が開く。WebApp の FeedbackDialog、2026-10-14) */
+export const imageAskFor = ref<string | null>(null);
 
 const read = <T,>(k: string, d: T): T => { try { return (JSON.parse(localStorage.getItem(k) ?? "null") as T) ?? d; } catch { return d; } };
 const write = (k: string, v: unknown): void => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* 覚えられなくても送れる */ } };
@@ -35,8 +37,8 @@ export async function checkReplies(): Promise<boolean> {
   try {
     const r = await fetch(`${WEB_API_BASE}/feedback/replies?ids=${ask.map((x) => encodeURIComponent(x.id)).join(",")}`, { credentials: "omit" });
     if (!r.ok) return false;
-    const j = (await r.json()) as { replies?: Record<string, { text: string; en?: string; version?: string }> };
-    const got = ask.flatMap((x) => { const v = j.replies?.[x.id]; return v ? [{ id: x.id, asked: x.text, reply: v.text, ...(v.en ? { en: v.en } : {}), ...(v.version ? { version: v.version } : {}) }] : []; });
+    const j = (await r.json()) as { replies?: Record<string, { text: string; en?: string; version?: string; askImage?: boolean }> };
+    const got = ask.flatMap((x) => { const v = j.replies?.[x.id]; return v ? [{ id: x.id, asked: x.text, reply: v.text, ...(v.en ? { en: v.en } : {}), ...(v.version ? { version: v.version } : {}), ...(v.askImage ? { askImage: true } : {}) }] : []; });
     const have = new Set(feedbackReplies.value.map((x) => x.id));
     feedbackReplies.value = [...feedbackReplies.value, ...got.filter((x) => !have.has(x.id))];
     return got.length > 0;

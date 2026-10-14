@@ -5,7 +5,8 @@
  *   scheduled (毎朝 9 時 JST) … 日報を Discord に (monitor.ts)・昨日の分析用の記録を JSONL ファイルで LOGS_WEBHOOK に (logs.ts)
  *   GET  /live.json        … 配信の状態 (CORS 許可、60 秒キャッシュ)。サイトはこれを読むだけ
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
- *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord)。GET /feedback.json?key=… で一覧
+ *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord、画像は D1)。GET /feedback.json?key=… で一覧
+ *   POST /feedback/<id>/images … 後から画像を足す (送った端末だけ)。GET /feedback/image/<画像 id>?key=… で見る
  *   POST /event            … 操作の印 (Analytics Engine)。日報の「段階と離脱」「どこから」「端末」の元
  *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day=&key= で取り出す
  *   GET  /logs/send?day=&key= … その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用。D1 からは消さない)
@@ -21,6 +22,7 @@ import channelsJson from "../channels.json";
 import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
 import { fetchYoutube, fetchYoutubeAvatars, type Latest } from "./youtube";
+import { getImage, MAX_IMAGES, notifyImagesDiscord, parseImages, pruneImages, saveImages } from "./feedback-images";
 import { allowIp, FEEDBACK_ID_RE, getFeedback, getReplies, listFeedback, notifyDiscord, parseFeedback, saveFeedback, saveReply, type Feedback } from "./feedback";
 import { DATASET, parseBatch, sql, usersBetween, writeEvents } from "./events";
 import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
@@ -180,18 +182,46 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     const ip = req.headers.get("cf-connecting-ip") ?? "?";
     const limited = await allowIp(env.LIVE, ip);
     if (limited) return json({ error: limited }, 429);
+    const im = parseImages((body as { images?: unknown }).images);
+    if (!im.ok) return json({ error: im.why }, 400);
     const fb: Feedback = { id: crypto.randomUUID().slice(0, 8), at: new Date().toISOString(), kind: p.kind, text: p.text, contact: p.contact, context: p.context, ua: req.headers.get("user-agent") ?? "", ip };
+    if (im.images.length && env.LOGS) fb.images = await saveImages(env.LOGS, fb.id, im.images);
     await saveFeedback(env.LIVE, fb);
-    if (env.DISCORD_WEBHOOK) ctx.waitUntil(notifyDiscord(env.DISCORD_WEBHOOK, fb, fetch));
+    if (env.DISCORD_WEBHOOK) ctx.waitUntil(notifyDiscord(env.DISCORD_WEBHOOK, fb, fetch, im.images));
     return json({ ok: true, id: fb.id });
+  }
+  // 後から画像を足す (返事で「画像を下さい」と頼んだ時)。送った端末 (同じ uid) だけ: { uid, images, text? }
+  const addImg = url.pathname.match(/^\/feedback\/([A-Za-z0-9-]{4,16})\/images$/);
+  if (addImg && req.method === "POST") {
+    let body: unknown;
+    try { body = await req.json(); } catch { return json({ error: "JSON ではない" }, 400, CORS); }
+    const im = parseImages((body as { images?: unknown }).images);
+    if (!im.ok || !im.images.length) return json({ error: im.ok ? "画像が無い" : im.why }, 400, CORS);
+    const ip = req.headers.get("cf-connecting-ip") ?? "?";
+    const limited = await allowIp(env.LIVE, ip);
+    if (limited) return json({ error: limited }, 429, CORS);
+    const fb = await getFeedback(env.LIVE, addImg[1]!);
+    const uid = (body as { uid?: unknown }).uid;
+    const owner = (fb?.context as { uid?: unknown } | null)?.uid;
+    if (!fb || typeof uid !== "string" || !uid || uid !== owner) return json({ error: "送った端末からだけ足せる" }, 403, CORS);
+    if (!env.LOGS) return json({ error: "置き場が無い" }, 500, CORS);
+    if ((fb.images?.length ?? 0) + im.images.length > MAX_IMAGES * 3) return json({ error: "画像が多すぎる" }, 400, CORS);
+    const text = typeof (body as { text?: unknown }).text === "string" ? ((body as { text: string }).text.trim().slice(0, 1000)) : "";
+    fb.images = [...(fb.images ?? []), ...(await saveImages(env.LOGS, fb.id, im.images))];
+    if (text) fb.text = `${fb.text}
+
+(画像と一緒に) ${text}`;
+    await saveFeedback(env.LIVE, fb);
+    if (env.DISCORD_WEBHOOK) ctx.waitUntil(notifyImagesDiscord(env.DISCORD_WEBHOOK, fb.id, text, im.images, fetch));
+    return json({ ok: true }, 200, CORS);
   }
   // 要望への返事を書く (オーナー側だけ): { id, text, en?, version? }
   if (url.pathname === "/feedback/reply" && req.method === "POST") {
     if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
-    let b: { id?: string; text?: string; en?: string; version?: string };
+    let b: { id?: string; text?: string; en?: string; version?: string; askImage?: boolean };
     try { b = await req.json(); } catch { return json({ error: "JSON ではない" }, 400); }
     if (!b.id || !FEEDBACK_ID_RE.test(b.id) || !b.text?.trim()) return json({ error: "id と text が要る" }, 400);
-    return json({ ok: true, reply: await saveReply(env.LIVE, b.id, { text: b.text.trim().slice(0, 500), ...(b.en ? { en: b.en.slice(0, 500) } : {}), ...(b.version ? { version: b.version.slice(0, 20) } : {}) }) });
+    return json({ ok: true, reply: await saveReply(env.LIVE, b.id, { text: b.text.trim().slice(0, 500), ...(b.en ? { en: b.en.slice(0, 500) } : {}), ...(b.version ? { version: b.version.slice(0, 20) } : {}), ...(b.askImage ? { askImage: true } : {}) }) });
   }
   if (req.method !== "GET") return json({ error: "GET だけ" }, 405);
   // 送った本人が、自分の覚えている要望の id の返事を聞く (送ったことのある人だけが来る)
@@ -200,6 +230,13 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     return json({ replies: await getReplies(env.LIVE, ids) }, 200, { "cache-control": "no-store", ...CORS });
   }
   if (url.pathname.startsWith("/api/poe2scout/")) return proxyScout(url, ctx, fetch, env);
+  // 要望に付いた画像 (オーナー用)
+  const img = url.pathname.match(/^\/feedback\/image\/([a-f0-9]{12})$/);
+  if (img) {
+    if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+    const r = env.LOGS ? await getImage(env.LOGS, img[1]!) : null;
+    return r ? new Response(r.data, { headers: { "content-type": r.mime, "cache-control": "no-store" } }) : json({ error: "無い" }, 404);
+  }
   // 要望 1 件 (添付ごと)。Discord に付いたファイルと同じ物
   const one = url.pathname.match(/^\/feedback\/([A-Za-z0-9-]{4,16})\.json$/);
   if (one) {
@@ -309,6 +346,7 @@ export default {
     if (controller.cron === "0 0 * * *") {
       ctx.waitUntil(dailyReport(env));
       ctx.waitUntil(sendYesterdayLogs(env));
+      if (env.LOGS) ctx.waitUntil(pruneImages(env.LOGS).catch((e) => console.warn("fb images:", String(e).slice(0, 160))));
     } else {
       // 1 時間おき: 相場を取り直す (全員に同じ物を配る、market.ts)。配信の見張りは 8 時間おき (UTC 0・8・16 時)
       ctx.waitUntil(refreshMarket(env).catch((e) => alert(env, "相場の取得", `poe2scout から取れない: ${String(e).slice(0, 200)}`)));
