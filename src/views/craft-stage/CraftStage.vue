@@ -509,6 +509,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
         <label class="flex cursor-pointer items-center gap-1 text-[12px] text-[var(--exile-color-text-secondary)]" :title="tr('取引所の検索にベース・アイテムレベル・ソケットも入れる (外すと MOD だけで探す)', 'Also match base, item level and sockets on trade (off = mods only)')"><input v-model="tradeWithBase" type="checkbox" />{{ tr("ベース検索含め", "Include base") }}</label>
         <button type="button" data-rec-part="trade-search" :class="btn" :disabled="!stageModGroups.length" :title="tradeWithBase ? tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・段の下限まで)', 'Open the trade site with this item’s mods (base, item level, sockets and minimum tiers included)') : tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (段の下限まで、ベースは問わない)', 'Open the trade site with this item’s mods (minimum tiers, any base)')" @click="searchStageMods">{{ tr("今の MOD を取引所で検索 ↗", "Search these mods on trade ↗") }}</button>
+        <!-- 検索の仕組みのヒント (2026-10-14 要望 0ce15a82 の返事と同じ中身。オーナー「? でヒント出しておくか取引所の横とかに」) -->
+        <HelpTip :text="tr('同じ MOD なら普通・冒涜・フラクチャーどの付き方でも引っかかります。全部の MOD が揃った物はほぼ無いので、取引所で MOD の行のチェックを外して似た物を探すと相場が見やすいです', 'Each mod matches whether it is normal, desecrated or fractured. Items with every mod rarely exist, so untick some mod lines on the trade site to find similar items and see prices')" />
       </span>
       </template>
     </section>
