@@ -160,7 +160,8 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   out.dwell = { pc: dwellOf(ps.filter((x) => x.d !== "mobile").map((x) => x.m)), mobile: dwellOf(ps.filter((x) => x.d === "mobile").map((x) => x.m)) };
   // by = 数える物 (blob2 = 訪問、blob3 = 人)。どこから来たかは日報で「〜人」と書くので人で数える (2026-10-13: 訪問で数えていて、足すと訪問の数になっていた)
   const top = async (col: string, by = "blob2"): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT ${by}) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
-  out.refs = await top("blob5", "blob3"); out.devices = await top("blob4"); out.countries = await top("blob6");
+  // 端末・国も人で数える (2026-10-14 オーナー「これは正しい数字か」: 端末だけ訪問の回数で、滞在の行 (人) と混ざって読みにくかった)
+  out.refs = await top("blob5", "blob3"); out.devices = await top("blob4", "blob3"); out.countries = await top("blob6", "blob3");
   // よその物: 中身の見えないエラー・ext: の印・ウォレット・ユーザースクリプト (2026-10-11)
   const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%' OR blob8 LIKE '%userscript%' OR blob8 LIKE '%.user.js%' OR blob8 LIKE '%response.msg%')`;
   out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND NOT (${EXT}) GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
