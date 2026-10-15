@@ -6,12 +6,14 @@
    {
     "kind": "",
     "area": "",
-    "text": "グラスピングメイルに指輪の MOD (全ての元素耐性・アイテムレアリティなど) が付くように。カタリストも使えるように (ベースの品質とは別に、品質の帯の「カタリスト」で選べます)"
+    "text": "グラスピングメイルに指輪の MOD (全ての元素耐性・アイテムレアリティなど) が付くように。カタリストも使えるように (ベースの品質とは別に、品質の帯の「カタリスト」で選べます)",
+    "en": "Grasping Mail now rolls Ring Modifiers (All Elemental Resistances, Rarity of Items found and more) and accepts Catalysts (separate from base quality; pick it under \"Catalyst\" in the quality bar)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "3 属性の兜・手袋・靴・鎧とタリスマンで、一部の段の確率が 0 になっていた MOD (最大ライフ・耐性・アイテムレアリティなど) を直しました"
+    "text": "3 属性の兜・手袋・靴・鎧とタリスマンで、一部の段の確率が 0 になっていた MOD (最大ライフ・耐性・アイテムレアリティなど) を直しました",
+    "en": "Fixed some tiers of mods (maximum Life, resistances, Rarity of Items found…) having a 0% chance on Strength/Dexterity/Intelligence Helmets, Gloves, Boots, Body Armours and on Talismans"
    }
   ]
  },
@@ -22,32 +24,38 @@
    {
     "kind": "",
     "area": "",
-    "text": "「次の手で狙う」: 効かないお告げ (プレが埋まっている時の右手のネクロマンシーなど) は出さないように。お告げの有る無しで数字がずれていたのも直しました"
+    "text": "「次の手で狙う」: 効かないお告げ (プレが埋まっている時の右手のネクロマンシーなど) は出さないように。お告げの有る無しで数字がずれていたのも直しました",
+    "en": "\"Target next move\": Omens that don't change the result (e.g. Omen of Dextral Necromancy when prefixes are full) are no longer listed. Fixed the numbers drifting between with and without the Omen"
    },
    {
     "kind": "",
     "area": "",
-    "text": "「次の手で狙う」: 各行の ▾ で、その数字をどう回して数えたかを見られるように"
+    "text": "「次の手で狙う」: 各行の ▾ で、その数字をどう回して数えたかを見られるように",
+    "en": "\"Target next move\": the ▾ on each row shows how that number was counted"
    },
    {
     "kind": "",
     "area": "",
-    "text": "「次の手で狙う」: カオスオーブも候補に (カオススパム: 今の MOD が消えても狙いが揃えば当たり)"
+    "text": "「次の手で狙う」: カオスオーブも候補に (カオススパム: 今の MOD が消えても狙いが揃えば当たり)",
+    "en": "\"Target next move\": Chaos Orb is now a candidate too (Chaos spam: a hit if the targets line up, even if current mods are removed)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "上級・完全のカレンシーのカードの頭に「MOD レベル ◯ 以上だけ付く」を大きく出すように"
+    "text": "上級・完全のカレンシーのカードの頭に「MOD レベル ◯ 以上だけ付く」を大きく出すように",
+    "en": "Greater / Perfect currency cards now show \"Only mod level ◯+ tiers\" at the top"
    },
    {
     "kind": "",
     "area": "",
-    "text": "50 手を超えると、アビスの反響の引き直しボタンが出なくなることがあったのを直しました"
+    "text": "50 手を超えると、アビスの反響の引き直しボタンが出なくなることがあったのを直しました",
+    "en": "Fixed the Abyssal Echoes reroll button sometimes missing after 50+ steps"
    },
    {
     "kind": "",
     "area": "",
-    "text": "50 手を超えた手順を送ると、頭の手が抜けて再生しても同じアイテムにならなかったのを直しました"
+    "text": "50 手を超えた手順を送ると、頭の手が抜けて再生しても同じアイテムにならなかったのを直しました",
+    "en": "Fixed shared recipes over 50 steps losing their first steps (replays didn't recreate the same item)"
    }
   ]
  },
@@ -58,7 +66,8 @@
    {
     "kind": "",
     "area": "",
-    "text": "ベース選び: 「もっと見る」で広げた時は「たたむ」が見える所まで送り、たたむと元の位置に戻るように (幅の広い画面で送りが足りなかったのも直しました)"
+    "text": "ベース選び: 「もっと見る」で広げた時は「たたむ」が見える所まで送り、たたむと元の位置に戻るように (幅の広い画面で送りが足りなかったのも直しました)",
+    "en": "Base picker: \"Show more\" scrolls so \"Collapse\" stays visible, and collapsing returns to where you were (also fixed short scrolling on wide screens)"
    }
   ]
  },
@@ -69,7 +78,8 @@
    {
     "kind": "",
     "area": "",
-    "text": "「今の MOD を取引所で検索」の横に、検索の仕組みのヒント (?) を足しました"
+    "text": "「今の MOD を取引所で検索」の横に、検索の仕組みのヒント (?) を足しました",
+    "en": "Added a hint (?) next to \"Search these mods on trade\" explaining how the search is built"
    }
   ]
  },
@@ -80,22 +90,26 @@
    {
     "kind": "",
     "area": "",
-    "text": "同じ MOD が 2 つ並んだ時 (フラックスで変えた耐性とフラクチャーの耐性など) に、行が増えて見えることがあったのを直しました"
+    "text": "同じ MOD が 2 つ並んだ時 (フラックスで変えた耐性とフラクチャーの耐性など) に、行が増えて見えることがあったのを直しました",
+    "en": "Fixed duplicated rows when the same mod appears twice (e.g. a fluxed resistance and a fractured resistance)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "フラックスで変えた MOD に「アルダー」の札が付いていたのを外しました"
+    "text": "フラックスで変えた MOD に「アルダー」の札が付いていたのを外しました",
+    "en": "Removed the \"Aldur\" tag shown on fluxed mods"
    },
    {
     "kind": "",
     "area": "",
-    "text": "「今の MOD を取引所で検索」の横に「ベース検索含め」を足しました (既定はオフ: ベース・アイテムレベル・ソケットは入れず MOD だけで探します)"
+    "text": "「今の MOD を取引所で検索」の横に「ベース検索含め」を足しました (既定はオフ: ベース・アイテムレベル・ソケットは入れず MOD だけで探します)",
+    "en": "Added \"Include base\" next to \"Search these mods on trade\" (off by default: searches mods only, without base, Item Level or sockets)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "要望・バグに画像を付けられるように (3 枚まで、貼り付けでも)"
+    "text": "要望・バグに画像を付けられるように (3 枚まで、貼り付けでも)",
+    "en": "Feedback can now include up to 3 images (paste works too)"
    }
   ]
  },

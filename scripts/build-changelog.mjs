@@ -16,6 +16,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = resolve(ROOT, "src/data/changelog.json");
 const NOTES = resolve(ROOT, "src/data/changelog-notes.json");
+/** 英語の画面の更新内容 ({ "0.1.516": ["…"] }、changelog-notes.json と同じ並び)。無い版は日本語だけ (2026-10-16 英語版の仕上げ) */
+const NOTES_EN = resolve(ROOT, "src/data/changelog-notes-en.json");
 /** 残す版の数 (古い物は落とす。JSON を小さく) */
 const KEEP = 40;
 const next = process.argv[2] ?? null;
@@ -23,6 +25,7 @@ const next = process.argv[2] ?? null;
 const git = (...args) => execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim();
 const tags = git("tag", "--list", "v*", "--sort=-v:refname").split("\n").filter(Boolean);
 const notes = existsSync(NOTES) ? JSON.parse(readFileSync(NOTES, "utf8")) : {};
+const notesEn = existsSync(NOTES_EN) ? JSON.parse(readFileSync(NOTES_EN, "utf8")) : {};
 
 const SHOW = new Set(["feat", "fix", "style", "perf"]);
 const KIND_JA = { feat: "追加", fix: "修正", style: "見た目", perf: "速さ" };
@@ -38,7 +41,8 @@ function itemOf(subject) {
 }
 function entry(v, range, date) {
   const subjects = range ? git("log", range, "--no-merges", "--format=%s").split("\n").filter(Boolean) : [];
-  const items = notes[v] ? notes[v].map((text) => ({ kind: "", area: "", text })) : subjects.map(itemOf).filter(Boolean).reverse();
+  const en = notesEn[v] ?? [];
+  const items = notes[v] ? notes[v].map((text, i) => ({ kind: "", area: "", text, ...(en[i] ? { en: en[i] } : {}) })) : subjects.map(itemOf).filter(Boolean).reverse();
   return { v, date, items };
 }
 

@@ -1,0 +1,26 @@
+{
+ "0.1.516": [
+  "Grasping Mail now rolls Ring Modifiers (All Elemental Resistances, Rarity of Items found and more) and accepts Catalysts (separate from base quality; pick it under \"Catalyst\" in the quality bar)",
+  "Fixed some tiers of mods (maximum Life, resistances, Rarity of Items found…) having a 0% chance on Strength/Dexterity/Intelligence Helmets, Gloves, Boots, Body Armours and on Talismans"
+ ],
+ "0.1.515": [
+  "\"Target next move\": Omens that don't change the result (e.g. Omen of Dextral Necromancy when prefixes are full) are no longer listed. Fixed the numbers drifting between with and without the Omen",
+  "\"Target next move\": the ▾ on each row shows how that number was counted",
+  "\"Target next move\": Chaos Orb is now a candidate too (Chaos spam: a hit if the targets line up, even if current mods are removed)",
+  "Greater / Perfect currency cards now show \"Only mod level ◯+ tiers\" at the top",
+  "Fixed the Abyssal Echoes reroll button sometimes missing after 50+ steps",
+  "Fixed shared recipes over 50 steps losing their first steps (replays didn't recreate the same item)"
+ ],
+ "0.1.514": [
+  "Base picker: \"Show more\" scrolls so \"Collapse\" stays visible, and collapsing returns to where you were (also fixed short scrolling on wide screens)"
+ ],
+ "0.1.513": [
+  "Added a hint (?) next to \"Search these mods on trade\" explaining how the search is built"
+ ],
+ "0.1.512": [
+  "Fixed duplicated rows when the same mod appears twice (e.g. a fluxed resistance and a fractured resistance)",
+  "Removed the \"Aldur\" tag shown on fluxed mods",
+  "Added \"Include base\" next to \"Search these mods on trade\" (off by default: searches mods only, without base, Item Level or sockets)",
+  "Feedback can now include up to 3 images (paste works too)"
+ ]
+}

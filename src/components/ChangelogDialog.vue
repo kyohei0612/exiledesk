@@ -4,7 +4,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { APP_VERSION, CHANGELOG, changelogNew, changelogOpen } from "../state/changelog";
+import { APP_VERSION, CHANGELOG, changelogNew, changelogOpen, hasEn } from "../state/changelog";
 import { tr, isEn } from "../i18n/lang";
 import ModalShell from "./ui/ModalShell.vue";
 import { feedbackReplies, imageAskFor, markRepliesSeen } from "../state/feedback-replies";
@@ -24,7 +24,7 @@ const sendImage = (id: string): void => { close(); imageAskFor.value = id; };
     <template #title>{{ changelogOpen === "new" ? (changelogNew.length ? tr("更新しました", "What's new") : tr("お知らせ", "Notice")) : tr("更新履歴", "Changelog") }}</template>
     <template #header>
       <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">{{ tr("今の版", "Current version") }} v{{ APP_VERSION }}</span>
-      <span v-if="isEn" class="text-[11px] text-[var(--exile-color-text-tertiary)]">(notes are in Japanese)</span>
+      <span v-if="isEn && list.some((e) => !hasEn(e))" class="text-[11px] text-[var(--exile-color-text-tertiary)]">(older notes are in Japanese)</span>
     </template>
     <!-- 送ってくれた要望・バグへの返事 -->
     <section v-if="replies.length" class="mb-2 rounded-md bg-emerald-500/10 px-3 py-2 ring-1 ring-emerald-400/30">
@@ -44,8 +44,8 @@ const sendImage = (id: string): void => { close(); imageAskFor.value = id; };
       </p>
       <ul class="space-y-0.5 text-[12px] leading-relaxed">
         <li v-for="(it, i) in e.items" :key="i" class="flex gap-2">
-          <span class="shrink-0 text-[var(--exile-color-text-tertiary)]">・</span>
-          <span class="min-w-0 break-words"><span v-if="it.area" class="mr-1 text-[var(--exile-color-text-secondary)]">{{ it.area }}:</span>{{ it.text }}</span>
+          <span class="shrink-0 text-[var(--exile-color-text-tertiary)]">{{ tr("・", "•") }}</span>
+          <span class="min-w-0 break-words"><span v-if="it.area" class="mr-1 text-[var(--exile-color-text-secondary)]">{{ it.area }}:</span>{{ isEn && it.en ? it.en : it.text }}</span>
         </li>
       </ul>
     </section>
