@@ -6,98 +6,23 @@
  * 今の関数と違う所は、どちらが正しいかを決めるまで「分かっている違い」として下に並べる (docs/reviews/2026-10-16-adr-004-desecrate-rules.md)
  */
 import { describe, expect, it } from "vitest";
-import { loadPatch } from "./helpers/patch";
+import { BASES, compare, data, RARE_BASES, show, statesOf, type Diff } from "./helpers/spec-parity";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
 import { freshItem, splitOmens, startItem } from "../src/services/craft-stage/run-plan";
 import { bonesFor } from "../src/state/craft-stage-shelf";
 import { mulberry32 } from "../src/services/htc/rng";
-import { itemBaseFor } from "../src/services/htc/bridge";
 import { applyBySpec, resolveSpec, specCovers } from "../src/services/craft-stage/spec/run-spec";
 import { BONE_SPECS, CURRENCY_SPECS, OMEN_SPECS } from "../src/services/craft-stage/spec/desecrate-specs";
 import { bossOmenAllowed, desecrationBoneFor } from "../src/vendor/poe2htc/engine/probability";
 import { categoriesIn, clientClassOf, ENGINE_CATEGORIES } from "../src/services/mods/item-classes";
 import { OMEN_FOR } from "../src/services/craft-stage/omens";
-import STAGE_BASES from "../src/services/craft-stage/stage-bases.json";
 import HOVER_EN from "../src/i18n/currency-hover-en.json";
 import HOVER_JA from "../src/i18n/currency-hover-ja.json";
 import KW_EN from "../src/i18n/keywords-en.json";
 import KW_JA from "../src/i18n/keywords-ja.json";
 import FIXTURE_PLAN from "./fixtures/plan-essence-crit-spear.json";
-import type { StageApply, StageItem } from "../src/services/craft-stage/types";
+import type { StageItem } from "../src/services/craft-stage/types";
 import type { CraftStagePlan } from "../src/services/craft-stage/contract";
-
-const data = loadPatch();
-
-/** キーの並びに依らない文字列 (中身の比べ用) */
-function canon(x: unknown): string {
-  return JSON.stringify(x, (_k, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, (v as Record<string, unknown>)[k]])) : v));
-}
-interface Diff { where: string; field: string; old: string; next: string }
-/** 1 手の比べ。結果 (打てたか・当たり所か・アイテム・足し引き・食ったお告げ・付いた確率) と一言 */
-function compare(where: string, a: StageApply, b: StageApply, out: Diff[]): void {
-  const fields: Array<[string, unknown, unknown]> = [
-    ["applied", a.applied, b.applied],
-    ["random", !!a.random, !!b.random],
-    ["item", a.item, b.item],
-    ["added", a.added, b.added],
-    ["removed", a.removed, b.removed],
-    ["omensUsed", a.omensUsed ?? [], b.omensUsed ?? []],
-    ["rolled", a.rolled ?? [], b.rolled ?? []],
-    ["reason", a.reason ?? "", b.reason ?? ""],
-  ];
-  for (const [field, x, y] of fields) {
-    const cx = canon(x), cy = canon(y);
-    if (cx !== cy) out.push({ where, field, old: cx.slice(0, 200), next: cy.slice(0, 200) });
-  }
-}
-const show = (d: Diff[]): string => d.slice(0, 8).map((x) => `${x.where} [${x.field}]\n  今: ${x.old}\n  新: ${x.next}`).join("\n");
-
-/** 部位ごとに 1 つ (ステージのベースの最後 = 高いレベルの物) と、枠の暗黙のあるベース・ジュエル */
-const BASES: string[] = (() => {
-  const byCls = new Map<string, string>();
-  for (const [name, v] of Object.entries((STAGE_BASES as { bases: Record<string, { cls: string }> }).bases)) byCls.set(v.cls, name);
-  const names = [...byCls.values(), "Gold Ring", "Dusk Ring", "Absent Amulet", "Amber Amulet", "Akoyan Spear", "Ruby", "Emerald", "Sapphire"];
-  return [...new Set(names)].filter((n) => itemBaseFor(data, n));
-})();
-const RARE_BASES = BASES.filter((n) => !/Flask$/.test(n));
-
-/** 打つ前の状態 (今の applyCurrency で作る。同じ物を両方に渡す) */
-function statesOf(base: string, ilvl: number): Array<[string, StageItem]> {
-  const out: Array<[string, StageItem]> = [];
-  let k = 0;
-  const step = (it: StageItem, key: string, omens: string[] = []): StageItem => applyCurrency(data, it, key, mulberry32(ilvl * 1000 + ++k), omens).item;
-  const white = freshItem(data, base, ilvl);
-  out.push(["ノーマル", white]);
-  if (/Flask$/.test(base)) return out;
-  const magic = step(white, "transmute");
-  out.push(["マジック", magic]);
-  const rare1 = step(magic, "regal");
-  out.push(["レア 2 つ", rare1]);
-  const rare4 = step(white, "alchemy");
-  out.push(["レア 4 つ", rare4]);
-  const rare5 = step(rare4, "exalt");
-  out.push(["レア 5 つ", rare5]);
-  const full = step(rare5, "exalt");
-  out.push(["レア 満杯", full]);
-  let pre = rare4;
-  for (let i = 0; i < 3; i++) pre = step(pre, "exalt", ["OmenofSinistralExaltation"]);
-  out.push(["プレ満杯", pre]);
-  const frac = step(full, "fracture");
-  out.push(["フラクチャー済み", frac]);
-  const hidden = step(rare4, "desecrate");
-  out.push(["未発現", hidden]);
-  const hiddenFull = step(full, "desecrate");
-  out.push(["満杯から未発現", hiddenFull]);
-  out.push(["発現済み", step(hidden, "reveal:1")]);
-  const mark = step(rare4, `essence:perfect:${rare4.cls.id}/PerfectEssence_EssenceAbyss`);
-  out.push(["深淵の王の印", mark]);
-  out.push(["腐食", step(rare4, "desecrate", ["OmenofPutrefaction"])]);
-  out.push(["コラプト", { ...rare4, corrupted: true }]);
-  out.push(["ミラー", { ...rare4, mirrored: true }]);
-  out.push(["未鑑定", { ...rare4, identified: false }]);
-  out.push(["予見", { ...rare4, foreseen: true }]);
-  return out;
-}
 
 const BONE_OMENS: string[][] = [
   [], ["OmenofSinistralNecromancy"], ["OmenofDextralNecromancy"],

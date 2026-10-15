@@ -7,7 +7,14 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
-import { allMods, candidates, effectiveCls, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate } from "../stage-core";
+import { addOne, allMods, candidates, effectiveCls, makeStageMod, maxQualityOf, overLimit, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without, type Candidate } from "../stage-core";
+import { whittleTargets } from "../apply-currency";
+import { boostedBy } from "../../htc/quality";
+import { catalysingMultiplier } from "../../htc/catalysing-multiplier";
+import { QUALITY_PER_CATALYST } from "../../htc/catalysing-setup";
+import { htcBaseInfo } from "../../htc/patch";
+import { hasImplicitRange } from "../roll-text";
+import { applyRune } from "../stage-runes";
 import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action, ModPool } from "./types";
 import { MARK_FLOOR } from "./desecrate-specs";
@@ -16,13 +23,25 @@ import { tr } from "../../../i18n/lang";
 
 /** お告げで変わった分 (掛かっていなければ null / 0 / false) */
 export interface Mods {
+  /** 付ける側 (高貴・骨)。付けない手 (消去) では消す側 */
   side: StageSide | null;
+  /** 消す側だけ (抹消・結晶化) */
+  removeSide: StageSide | null;
   guaranteeTag: string | null;
   rerolls: number;
   pick: "desecrated" | null;
   /** 発現は普通の MOD だけ (腐食のお告げ) */
   plain: boolean;
+  /** 足す数 (大いなる高貴) */
+  addCount: number | null;
+  /** MOD レベルの一番低い物を消す (削り) */
+  pickLowest: boolean;
+  /** 品質の種類の MOD を重く引いて品質を使い切る (触媒の高貴) */
+  catalysing: boolean;
+  /** 暗黙の MOD だけ振り直す (祝福) */
+  implicitOnly: boolean;
 }
+export const NO_MODS: Mods = { side: null, removeSide: null, guaranteeTag: null, rerolls: 0, pick: null, plain: false, addCount: null, pickLowest: false, catalysing: false, implicitOnly: false };
 export interface PartCtx {
   data: PatchData;
   rng: () => number;
@@ -31,6 +50,16 @@ export interface PartCtx {
   altered: boolean;
   /** 発現の手の指定 (reveal:N / reveal:N:reroll) */
   reveal: { index: number; reroll: boolean } | { invalid: string } | null;
+  /** エッセンスの MOD (打つ前に作る。値は今の関数と同じく消す前に振る) */
+  essence?: { mod: StageMod; side: StageSide; clash: (it: StageItem) => boolean } | null;
+  /** 触媒の品質の種類 (タグ) */
+  catalystTag?: string | null;
+  /** 手順の再生: 触媒は 1 手 = 1 個 (手で打つ画面は 1 手で上限まで) */
+  oneCatalyst?: boolean;
+  /** ルーンの手の鍵 (rune:<英語名>@n) */
+  runeKey?: string;
+  /** この手で前の部品が消した MOD (深淵の王の印は消した側に付く) */
+  removedSoFar: StageMod[];
 }
 
 const POOL_ORDER: readonly ModPool[] = ["normal", "desecrated", "otherworldly"];
@@ -238,7 +267,11 @@ function reveal(ctx: PartCtx, item: StageItem, a: { offers: number }): StageAppl
 }
 
 type Remove = Extract<Action, { remove: unknown }>["remove"];
-/** 固定以外から消す。冒涜だけ (光のお告げ) の時は側のお告げを見ない (今の作り、オーナー確認待ち) */
+/**
+ * 固定以外から消す。冒涜だけ (光のお告げ) の時は側のお告げを見ない (今の作り、オーナー確認待ち)。
+ * 側: お告げ (抹消・結晶化・左右の消去) → それ。付ける側が埋まっている完全エッセンスは、その側から (sideWhenFull)。
+ * 削りのお告げは MOD レベルの一番低い物から (未発現の枠は 1 として数える、apply-currency.ts の whittleTargets)
+ */
 function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
   if (a.n === "all") {
     const removed = allMods(item).filter((m) => !m.fractured);
@@ -252,17 +285,140 @@ function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
     const d = ds.length === 1 ? ds[0]! : ds[Math.floor(ctx.rng() * ds.length)]!;
     return { applied: true, item: without(item, d), added: [], removed: [d] };
   }
-  const side = ctx.mods.side;
+  const nothing: StageApply = { applied: true, item, added: [], removed: [] };
+  if (a.ifAny && !allMods(item).length) return nothing;
+  const side = ctx.mods.removeSide ?? ctx.mods.side;
+  let sides: readonly StageSide[] = side ? [side] : SIDES;
+  const e = ctx.essence;
+  if (a.sideWhenFull && e && !room(item, e.side)) {
+    if (side && side !== e.side) return skip(item, tr("足す側が埋まっているので、お告げの側からは消せない", "The Essence's side is full, so it can't remove from the Omen's side"));
+    sides = [e.side];
+  }
   let cur = item;
   const removed: StageMod[] = [];
   for (let i = 0; i < a.n; i++) {
-    const r = removeOne(cur, ctx.rng, side ? [side] : SIDES);
+    let r: { item: StageItem; mod: StageMod } | null;
+    if (ctx.mods.pickLowest) {
+      const lows = whittleTargets(cur, side);
+      const mod = lows[Math.floor(ctx.rng() * lows.length)];
+      r = mod ? { item: without(cur, mod), mod } : null;
+    } else r = removeOne(cur, ctx.rng, sides);
     if (!r) break;
+    // 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) に当たると付け直せずに弾かれる (2026-10-14 オーナーがゲームで確認、プレに空きがあっても同じ)
+    if (a.overLimitVoids && overLimit(cur, r.mod.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
     cur = r.item;
     removed.push(r.mod);
   }
-  if (!removed.length) return skip(item, side ? tr("お告げの側に外せる MOD が無い", "No removable mod on the Omen's side") : tr("外せる MOD が無い", "No mod can be removed"));
+  if (!removed.length) {
+    if (a.optional) return nothing;
+    return skip(item, side ? tr("お告げの側に外せる MOD が無い", "No removable mod on the Omen's side") : tr("外せる MOD が無い", "No mod can be removed"));
+  }
   return { applied: true, item: cur, added: [], removed };
+}
+
+type Add = Extract<Action, { add: unknown }>["add"];
+/**
+ * 普通の MOD の置き場から n 個 (大いなる高貴のお告げで 2 個)。側はお告げの側か両側、空きの無い側には付かない。
+ * 候補は付いている系統を除き、アイテムレベル以下・段の下限以上の段の重み (stage-core の addOne = 計算機と同じ)。
+ * 触媒の高貴のお告げは品質の種類の MOD を重く引き (catalysingMultiplier)、品質を使い切る
+ */
+function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
+  const ok = (it: StageItem): StageApply => ({ applied: true, item: it, added: [], removed: [] });
+  if (a.emptyOk && !SIDES.some((s) => room(item, s))) return ok(item);
+  const n = ctx.mods.addCount ?? a.n;
+  const sides = ctx.mods.side ? [ctx.mods.side] : SIDES;
+  const tag = item.qualityTag;
+  const boost = ctx.mods.catalysing && tag ? { test: (m: Parameters<typeof boostedBy>[0]) => boostedBy(m, tag), mult: catalysingMultiplier(item.quality) } : undefined;
+  let cur = item;
+  const added: StageMod[] = [];
+  const rolled: NonNullable<StageApply["rolled"]> = [];
+  for (let i = 0; i < n; i++) {
+    const r = addOne(ctx.data, cur, a.floor, ctx.rng, { sides, boost });
+    if (!r) break;
+    cur = r.item;
+    added.push(r.mod);
+    rolled.push({ modId: r.mod.modId, tierName: r.mod.tierName, chance: r.chance });
+  }
+  if (!added.length) return a.optional ? ok(item) : skip(item, tr("付けられる MOD が無い", "No mod can be added"));
+  if (ctx.mods.catalysing) cur = { ...cur, quality: 0 };
+  return { applied: true, item: cur, added, removed: [], rolled };
+}
+
+/**
+ * 数値を振り直す (神のオーブ)。固定・未発現の枠は変わらない。暗黙の MOD の数値も振り直す (poe2db、2026-10-12 オーナー「暗黙も数値の変動はある」)。
+ * ユニークは効果の値を振る種 (rollSeed) を変える。祝福のお告げは暗黙だけ
+ */
+function reroll(ctx: PartCtx, item: StageItem): StageApply {
+  const implicit = hasImplicitRange((htcBaseInfo()[item.base]?.implicits ?? []).map((l) => l.en));
+  if (ctx.mods.implicitOnly) {
+    if (!implicit) return skip(item, tr("振り直せる暗黙 MOD が無い", "No implicit mod to reroll"));
+    return { applied: true, item: { ...item, implicitRoll: (item.implicitRoll ?? 0) + 1, implicitFixed: undefined }, added: [], removed: [], note: tr("祝福のお告げ: 暗黙 MOD だけを振り直した", "Omen of the Blessed: rerolled implicit values only") };
+  }
+  if (item.rarity === "unique") return { applied: true, item: { ...item, rollSeed: 1 + Math.floor(ctx.rng() * 2 ** 30) }, added: [], removed: [], note: tr("ユニークの数値を振り直し", "Rerolled Unique values") };
+  const mods = allMods(item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length);
+  if (!mods.length && !implicit) return skip(item, tr("転がし直せる MOD が無い", "No mod to reroll"));
+  let cur: StageItem = implicit ? { ...item, implicitRoll: (item.implicitRoll ?? 0) + 1, implicitFixed: undefined } : item;
+  const added: StageMod[] = [];
+  for (const m of mods) {
+    const mod = ctx.data.mods.get(m.modId);
+    if (!mod) continue;
+    const next = withValues(m, mod, ctx.rng);
+    cur = replaced(cur, m, next);
+    added.push(next);
+  }
+  return { applied: true, item: cur, added, removed: mods };
+}
+
+/** 固定以外の 1 つを等しく固定する。未発現の枠と冒涜の MOD は選ばれない (stage-core の unfracturable、2026-10-10 オーナーが実測) */
+function fracture(ctx: PartCtx, item: StageItem): StageApply {
+  const pool = allMods(item).filter((m) => !unfracturable(ctx.data, item, m));
+  if (!pool.length) return skip(item, tr("固定できる MOD が無い (冒涜の MOD は固定されない)", "No mod can be Fractured (Desecrated mods can't be)"));
+  const m = pool[Math.floor(ctx.rng() * pool.length)]!;
+  const next = { ...m, fractured: true };
+  // 固定は消えて付いたのではない (＋ と － に同じ MOD が並んで分かりづらかった。2026-10-08 完成判定)
+  return { applied: true, item: replaced(item, m, next), added: [next], removed: [] };
+}
+
+type AddEssence = Extract<Action, { addEssence: unknown }>["addEssence"];
+/**
+ * エッセンスの MOD を付ける。ofMod: その MOD の側 (空きが無ければ弾く、クラフト MOD どうしの系統がぶつかれば弾く)。
+ * removedSide: 深淵の王の印 = 消した側、消していなければお告げの側か空いている側 (2026-10-03 SaVeQ 0.5.5 / poe2fun)
+ */
+function addEssence(ctx: PartCtx, item: StageItem, a: AddEssence): StageApply {
+  const e = ctx.essence!;
+  const gone = ctx.removedSoFar[0];
+  if (a.side === "removedSide") {
+    const omen = ctx.mods.removeSide;
+    if (omen && !gone && !room(item, omen)) return skip(item, tr("お告げの側に外せる MOD も空きも無い", "No removable mod or open slot on the Omen's side"));
+    const side: StageSide | undefined = gone ? gone.side : omen ?? SIDES.find((x) => room(item, x));
+    if (!side) return skip(item, tr("外せる MOD も空きも無い", "No removable mod or open slot"));
+    const mark: StageMod = { ...e.mod, side, abyssMark: true };
+    return { applied: true, item: withMod(item, mark), added: [mark], removed: [] };
+  }
+  if (!room(item, e.side)) return skip(item, tr("足す側に空きが無い", "No open slot on that side"));
+  // 消えたのがぶつかる MOD でなかった時だけ (アストリッドで作った MOD が 2 つ以上ある時に当たり所で決まる)
+  if (e.clash(item)) return (gone ? skipRandom : skip)(item, tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item"));
+  return { applied: true, item: withMod(item, e.mod), added: [e.mod], removed: [] };
+}
+
+type Quality = Extract<Action, { quality: unknown }>["quality"];
+/** 品質を上げる。上がる量は候補から等分で引く (候補が 1 つなら乱数を使わない)。上限は超えない */
+function quality(ctx: PartCtx, item: StageItem, a: Quality): StageApply {
+  const step = a.steps.length === 1 ? a.steps[0]! : a.steps[Math.min(a.steps.length - 1, Math.floor(ctx.rng() * a.steps.length))]!;
+  return { applied: true, item: { ...item, quality: Math.min(a.max, item.quality + step) }, added: [], removed: [] };
+}
+
+/**
+ * 触媒の品質: 種類を変えると 0 から (「Replaces other quality types」)。手で打つ画面は 1 手で上限まで (使った数は count)、
+ * 手順の再生は 1 手 = 1 個 (2026-10-05 オーナー・要望 ㉜ の 2)。上限はベースの最大品質 + 「品質の最大値 +N%」の MOD
+ */
+function catalyst(ctx: PartCtx, item: StageItem): StageApply {
+  const tag = ctx.catalystTag!;
+  const max = maxQualityOf(item);
+  const base = item.qualityTag === tag ? item.quality : 0;
+  if (ctx.oneCatalyst) return { applied: true, item: { ...item, quality: Math.min(max, base + QUALITY_PER_CATALYST), qualityTag: tag }, added: [], removed: [] };
+  const count = Math.ceil((max - base) / QUALITY_PER_CATALYST);
+  return { applied: true, item: { ...item, quality: max, qualityTag: tag }, added: [], removed: [], count };
 }
 
 /** 部品を 1 つ打つ */
@@ -270,5 +426,15 @@ export function runPart(ctx: PartCtx, item: StageItem, a: Action): StageApply {
   if ("addUnrevealed" in a) return addUnrevealed(ctx, item, a.addUnrevealed);
   if ("reveal" in a) return reveal(ctx, item, a.reveal);
   if ("remove" in a) return remove(ctx, item, a.remove);
+  if ("setRarity" in a) return { applied: true, item: { ...item, rarity: a.setRarity }, added: [], removed: [] };
+  if ("add" in a) return add(ctx, item, a.add);
+  if ("reroll" in a) return reroll(ctx, item);
+  if ("fracture" in a) return fracture(ctx, item);
+  if ("addEssence" in a) return addEssence(ctx, item, a.addEssence);
+  if ("quality" in a) return quality(ctx, item, a.quality);
+  if ("catalyst" in a) return catalyst(ctx, item);
+  if ("addSocket" in a) return { applied: true, item: { ...item, sockets: (item.sockets ?? 0) + 1 }, added: [], removed: [] };
+  // ルーンのはめ方は説明文から作った表 (augment-rules.json) に通す今の関数そのまま (部位・数・置き換え・コラプト後も表で決まる)
+  if ("socketAugment" in a) return applyRune(item, ctx.runeKey!, ctx.data);
   return { applied: true, item: { ...item, corrupted: true }, added: [], removed: [] };
 }

@@ -9,10 +9,12 @@ import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { skip } from "../stage-core";
 import type { StageApply, StageItem } from "../types";
 import type { CurrencySpec, OmenSpec } from "./types";
-import { ANNUL_SPEC, BONE_SPECS, OMEN_SPECS, OMEN_SPEC_BY_KEY, REVEAL_SPEC } from "./desecrate-specs";
+import { ANNUL_SPEC, BONE_SPECS, OMEN_SPECS, REVEAL_SPEC } from "./desecrate-specs";
+import { ORB_OMEN_SPECS, ORB_SPEC_BY_KEY, UNPORTED_OMENS } from "./orb-specs";
 import { groupsFit, limitBlock, stateBlock, targetBlock } from "./judge";
-import { runPart, type Mods, type PartCtx } from "./parts";
+import { NO_MODS, runPart, type Mods, type PartCtx } from "./parts";
 import { tr } from "../../../i18n/lang";
+import { OMEN_FOR } from "../omens";
 
 type Resolved = { spec: CurrencySpec; reveal: PartCtx["reveal"]; reason?: string };
 
@@ -22,6 +24,8 @@ type Resolved = { spec: CurrencySpec; reveal: PartCtx["reveal"]; reason?: string
  */
 export function resolveSpec(key: string, item: StageItem): Resolved | null {
   if (key === ANNUL_SPEC.stageKey) return { spec: ANNUL_SPEC, reveal: null };
+  const orb = ORB_SPEC_BY_KEY.get(key);
+  if (orb) return { spec: orb, reveal: null };
   if (key.startsWith("reveal")) {
     const m = /^reveal:(\d)(:reroll)?$/.exec(key);
     return { spec: REVEAL_SPEC, reveal: m ? { index: Number(m[1]), reroll: !!m[2] } : { invalid: key } };
@@ -34,13 +38,19 @@ export function resolveSpec(key: string, item: StageItem): Resolved | null {
   const reason = bones.length === 1 ? targetBlock(bones[0]!.target, item) ?? "" : tr("この部位に使える骨が無い", "No bone of this kind for this item class");
   return { spec: bones[0]!, reveal: null, reason };
 }
+/** そのお告げがその手の種類に掛かるか (今の棚の OMEN_FOR) */
+const OMEN_FOR_KIND = (kind: string, omen: string): boolean => (OMEN_FOR[kind] ?? []).includes(omen);
 /** この鍵を新しい作りで打てるか (移し終えた手) */
 export const specCovers = (key: string): boolean =>
-  key === ANNUL_SPEC.stageKey || /^reveal/.test(key) || BONE_SPECS.some((s) => s.stageKey === key);
+  key === ANNUL_SPEC.stageKey || /^reveal/.test(key) || BONE_SPECS.some((s) => s.stageKey === key) || ORB_SPEC_BY_KEY.has(key);
+
+/** 全部のお告げ (冒涜まわり + オーブ)。並びは左右を両方掛けた時に先に効く方 */
+export const ALL_OMEN_SPECS: readonly OmenSpec[] = [...OMEN_SPECS, ...ORB_OMEN_SPECS];
+const OMEN_BY_KEY: ReadonlyMap<string, OmenSpec> = new Map(ALL_OMEN_SPECS.map((o) => [o.key, o]));
 
 /** その手に掛かるお告げ (持っている中から)。単体で効く物 (腐食) があればそれだけ */
 export function omensOf(spec: CurrencySpec, held: readonly string[]): OmenSpec[] {
-  const used = held.flatMap((k) => { const o = OMEN_SPEC_BY_KEY.get(k); return o && o.appliesTo === spec.kind ? [o] : []; });
+  const used = held.flatMap((k) => { const o = OMEN_BY_KEY.get(k); return o && o.appliesTo === spec.kind ? [o] : []; });
   const alone = used.find((o) => o.alone);
   return alone ? [alone] : used;
 }
@@ -49,14 +59,22 @@ export function omensOf(spec: CurrencySpec, held: readonly string[]): OmenSpec[]
  * (どちらも画面では一緒に掛けられない: omens.ts の OMEN_EXCLUSIVE。今の関数と同じ選び方)
  */
 function modsOf(used: readonly OmenSpec[]): Mods {
-  const m: Mods = { side: null, guaranteeTag: null, rerolls: 0, pick: null, plain: false };
-  for (const o of OMEN_SPECS) if (used.includes(o) && "side" in o.effect && !m.side) m.side = o.effect.side;
+  const m: Mods = { ...NO_MODS };
+  for (const o of ALL_OMEN_SPECS) {
+    if (!used.includes(o)) continue;
+    if ("side" in o.effect && !m.side) m.side = o.effect.side;
+    if ("removeSide" in o.effect && !m.removeSide) m.removeSide = o.effect.removeSide;
+  }
   for (const o of used) {
     const e = o.effect;
     if ("guaranteeTag" in e) m.guaranteeTag ??= e.guaranteeTag;
     else if ("rerolls" in e) m.rerolls += e.rerolls;
     else if ("pick" in e) m.pick = e.pick;
     else if ("replace" in e) m.plain = e.plain;
+    else if ("addCount" in e) m.addCount = e.addCount;
+    else if ("pickLowest" in e) m.pickLowest = true;
+    else if ("catalysing" in e) m.catalysing = true;
+    else if ("implicitOnly" in e) m.implicitOnly = true;
   }
   return m;
 }
@@ -66,41 +84,48 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
   const r = resolveSpec(key, item);
   if (!r) return null;
   const { spec } = r;
+  // 移していないお告げ (聖別) が掛かる手は今の関数で
+  if (omens.some((o) => UNPORTED_OMENS.includes(o) && OMEN_FOR_KIND(spec.kind, o))) return null;
   const st = stateBlock(spec, item, omens);
   if (st) return skip(item, st);
   if (r.reason) return skip(item, r.reason);
   const t = targetBlock(spec.target, item);
   if (t) return skip(item, t);
-  for (const l of spec.limits) {
-    const why = limitBlock(l, item);
-    if (why) return skip(item, why);
-  }
   const used = omensOf(spec, omens);
-  for (const o of used) {
-    const why = o.target ? targetBlock(o.target, item) : null;
+  const mods = modsOf(used);
+  for (const l of spec.limits) {
+    const why = limitBlock(l, item, mods);
     if (why) return skip(item, why);
   }
-  const mods = modsOf(used);
+  for (const o of used) {
+    const why = (o.target ? targetBlock(o.target, item) : null) ?? (o.limits ?? []).map((l) => limitBlock(l, item, mods)).find((x) => x) ?? null;
+    if (why) return skip(item, why);
+  }
   const replace = used.map((o) => o.effect).find((e) => "replace" in e);
   const actions = replace && "replace" in replace ? replace.replace : spec.actions;
   const ctx: PartCtx = {
-    data, rng, mods, reveal: r.reveal,
+    data, rng, mods, reveal: r.reveal, removedSoFar: [],
     altered: spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly")),
   };
   let cur = item;
   const added: StageApply["added"] = [];
   const removed: StageApply["removed"] = [];
   const rolled: NonNullable<StageApply["rolled"]> = [];
+  const parts: StageApply[] = [];
   for (const a of actions) {
     const p = runPart(ctx, cur, a);
+    parts.push(p);
     // 途中で弾かれたら、打つ前のアイテムのまま (カレンシーも減らない)
     if (!p.applied) return { ...skip(item, p.reason ?? ""), ...(p.random ? { random: true } : {}) };
     cur = p.item;
     added.push(...p.added);
     removed.push(...p.removed);
+    ctx.removedSoFar.push(...p.removed);
     rolled.push(...(p.rolled ?? []));
   }
   // ヒネコラの予見は「アイテムを変えると消える」(説明文)
   if (cur.foreseen) cur = { ...cur, foreseen: false };
-  return { applied: true, item: cur, added, removed, ...(rolled.length ? { rolled } : {}), omensUsed: used.map((o) => o.key) };
+  const note = parts.map((p) => p.note).find((x) => x);
+  const count = parts.map((p) => p.count).find((x) => x != null);
+  return { applied: true, item: cur, added, removed, ...(rolled.length ? { rolled } : {}), ...(note ? { note } : {}), ...(count != null ? { count } : {}), omensUsed: used.map((o) => o.key) };
 }
