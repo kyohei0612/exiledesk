@@ -182,14 +182,16 @@ export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetc
   const summary = (fb.context as { summaryJa?: unknown } | null)?.summaryJa;
   const sumLines = Array.isArray(summary) ? summary.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 600)) : [];
   const content = [
-    `**${head}** ${images.length ? `🖼${images.length} ` : ""}${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST · 送った人 ${await senderTag(fb)} · id ${fb.id}`,
+    // 送った人 (ブラウザの番号 context.uid の頭) を目立つ所に、要望の id は最後の行に小さく (返事を置く時に使う)。
+    // 前は「送った人 ◯ · id ◯」と並んで、1 件ごとに変わる id が送った人の印に見えた (2026-10-16 要望 cd3cf0e3「同じ人なのに ID が違う」)
+    `**${head}** 👤 **${await senderTag(fb)}** ${images.length ? `🖼${images.length} ` : ""}${fb.contact ? `(${fb.contact}) ` : ""}· ${jst} JST`,
     fb.text.slice(0, 1200),
     "",
     // 短く (2026-10-12 オーナー「長くなるから打った手・最後の手・状態・流れはいらない、JSON だけでいい」): 作っている物と今の MOD・PC かスマホか・エラーだけ。手順と流れは添付の JSON に
     ...sumLines.filter((l) => !/^(打った手|最後の手)/.test(l)),
     sumLines.length ? deviceJa(fb.context) : state ? `状態: ${state}` : "",
     firstErr ? `直近のエラー: ${String(firstErr).slice(0, 160)}` : "",
-  ].filter(Boolean).join("\n").slice(0, 1950);
+  ].filter(Boolean).join("\n").slice(0, 1900) + `\n-# 要望の id ${fb.id}`;
   try {
     const form = new FormData();
     form.append("payload_json", JSON.stringify({ content, allowed_mentions: { parse: [] } }));
