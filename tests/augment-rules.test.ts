@@ -7,7 +7,9 @@ import { loadPatch } from "./helpers/patch";
 import { AUGMENT_RULES, AUGMENT_RULES_UNEXPECTED, augmentRule, limitBlock, SLOT_FITS, slotOk } from "../src/services/augment-rules";
 import { inAny } from "../src/services/mods/item-classes";
 /** 武器・防具の部位 (クライアントの表から。手で並べない) */
-const EQUIP_CATS = Object.keys((itemClasses as { engine: Record<string, string> }).engine).filter((c) => inAny(c, ["weapon", "armour"]));
+// 部位の行の頭 (Body_Armours_ring = グラスピングメイルの行の MOD の id の頭) は部位ではないので除く (別の部位の名前 + _ で始まる物)
+const ENGINE_KEYS = Object.keys((itemClasses as { engine: Record<string, string> }).engine);
+const EQUIP_CATS = ENGINE_KEYS.filter((c) => inAny(c, ["weapon", "armour"]) && !ENGINE_KEYS.some((o) => c.startsWith(`${o}_`)));
 import itemClasses from "../src/services/mods/item-classes.json";
 import { freshItem, runPlan } from "../src/services/craft-stage/run-plan";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";

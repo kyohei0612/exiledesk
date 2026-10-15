@@ -25,7 +25,9 @@ export function makeModBuilder(hmods) {
   for (const m of hmods.values())
     for (const t of m.tiers || []) {
       const k = `${m.family}@${t.ilvl}`;
-      if (!borrow.has(k)) borrow.set(k, t.weight);
+      // 重み 0 の段 (そのクラスでは出ない) より、出るクラスの重みを採る。タグで出ると決まった行に 0 を借りると出ない扱いになる
+      // (2026-10-16 グラスピングメイルの「アイテムレアリティ」が 0 になっていた)
+      if (!borrow.has(k) || (borrow.get(k) === 0 && t.weight > 0)) borrow.set(k, t.weight);
     }
   let borrowed = 0;
   let placeholder = 0;
