@@ -43,10 +43,10 @@
 | ADR-004 の続き (オーブ類 → エッセンス・品質・触媒・ルーン) | wip/adr-004 | 作業中 | | |
 | クイズのチュートリアル 4 本 | wip/quiz-tutorials | 作業中 | | |
 | ジェムコラプト計算機の Web 版 | wip/gem-corrupt-web | 作業中 | | |
-| クラフトチャレンジ | wip/craft-challenge | 未着手 | | |
+| クラフトチャレンジ | wip/craft-challenge | 作業中 | | |
 | 英語版の仕上げ | wip/english | 未着手 | | |
 | シミュレーターの Web 版 | wip/sim-web | 未着手 | | |
-| 広告の並び | wip/ads | 未着手 | | |
+| 広告の並び | wip/ads | 作業中 | | |
 | 支援のサブスクの土台 | wip/support | 未着手 | | |
 
 ### オーナーに決めてほしいこと
