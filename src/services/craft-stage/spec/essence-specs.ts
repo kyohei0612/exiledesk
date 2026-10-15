@@ -100,7 +100,7 @@ export function resolveEssence(data: PatchData, item: StageItem, key: string): E
   return { spec: t.mod.family === ABYSS_FAMILY ? ABYSS_ESSENCE_SPEC : spec };
 }
 /** 段: 普通のエッセンスは段の名前 (Lesser / Greater / 無印) で選ぶ。パーフェクトは 1 段 */
-const tierIndexOf = (level: string, mod: { tiers: Array<{ name?: unknown }> }): number =>
+const tierIndexOf = (level: string, mod: { tiers: ReadonlyArray<{ name?: unknown }> }): number =>
   level === "perfect" ? 0 : mod.tiers.findIndex((x) => essenceLevelOf(String(x.name ?? "")) === level);
 
 /**
