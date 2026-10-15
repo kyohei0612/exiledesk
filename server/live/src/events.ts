@@ -84,6 +84,11 @@ export interface Summary {
   emu?: { bases: Array<[string, number]>; currencies: Array<[string, number]>; maxSteps: number };
   /** 1 人の手数 (半分・4 人に 1 人) と、PC / スマホの 1 人あたりの手数 (端末で数えた steps の印) */
   steps?: { median: number; p75: number; pc: number | null; mobile: number | null };
+  /**
+   * 広告の枠が出た回数 (端末で数えた印 ad、2026-10-16 から)。total = 合計、pc / mobile = 端末ごと、slots = 枠ごと (多い順)、people = 1 回でも出た人。
+   * AdSense の審査中は仮の枠なので、開発版で出た分だけ (本番は運営者 ID が入るまで枠を出さない)
+   */
+  ads?: { total: number; pc: number; mobile: number; people: number; slots: Array<[string, number]> };
   /** 人が来た時間 (日本時間の時、訪問の数の多い順に 3 つ) */
   peakHours?: Array<[number, number]>;
   byEvent: Map<string, { sessions: number; users: number; count: number }>;
@@ -111,7 +116,7 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   const open = out.byEvent.get("open");
   out.sessions = open?.sessions ?? 0; out.users = open?.users ?? 0;
   for (const r of await q<{ f: string; s: number }>(`SELECT blob7 AS f, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY f`)) if (r.f === "1") out.newSessions = Number(r.s);
-  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'stay', 'base', 'cur', 'steps', 'error') AND blob1 NOT LIKE 'lang:%'`);
+  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'stay', 'base', 'cur', 'steps', 'ad', 'error') AND blob1 NOT LIKE 'lang:%'`);
   if (out.sessions && engaged[0]) out.bounce = Math.max(0, 1 - Number(engaged[0].s) / out.sessions);
   // 滞在の中央値 (Analytics Engine の SQL は quantiles が無いので quantileWeighted。それも無ければ平均)
   // 滞在 = 着いた時刻の差と「開いてから何秒目か」(double2) の大きい方 (まとめて送ると着いた時刻は全部同じになる。2026-10-10)。
@@ -121,7 +126,7 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   //  - 開いてから何秒目か (double2) は、数え物の印 (base / cur / steps は手の数、stay は見ていた秒数) を除き、時間の中の最大 − 最小
   //  - 見ていた秒数 (stay) は、時間の中の最大 − 時間の前の最大 (1 週間まで遡る)
   //  - どちらも数える時間の長さを超えない (1 人に何タブあっても、その人の合計も同じく超えない)
-  const COUNTS = `'base', 'cur', 'steps', 'stay'`;
+  const COUNTS = `'base', 'cur', 'steps', 'stay', 'ad'`;
   const winMin = Math.max(1, (new Date(until).getTime() - new Date(since).getTime()) / 60000);
   const per = await q<{ blob2: string; u: string; d: string; a: number | string; a0: number | string; b: number | string }>(`SELECT blob2, blob3 AS u, blob4 AS d, max(double2) AS a, min(double2) AS a0, toUnixTimestamp(max(timestamp)) - toUnixTimestamp(min(timestamp)) AS b FROM ${D} WHERE ${w} AND blob1 NOT IN (${COUNTS}) GROUP BY blob2, blob3, blob4 LIMIT 20000`);
   const minOf = (r: { a: number | string; a0: number | string; b: number | string }): number => Math.min(winMin, Math.max((Number(r.a) || 0) - (Number(r.a0) || 0), Number(r.b) || 0) / 60);
@@ -150,6 +155,9 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
     const avg = (d: string): number | null => { const x = st.filter((r) => (d === "mobile" ? r.d === "mobile" : r.d !== "mobile")); return x.length ? Math.round(x.reduce((s, r) => s + r.n, 0) / x.length) : null; };
     out.steps = { median: at(0.5), p75: at(0.75), pc: avg("pc"), mobile: avg("mobile") };
   }
+  // 広告の表示 (枠 × 端末ごとの回数の合計。印 1 つに回数が載っているので double2 を足す)
+  const adRows = await q<{ k: string; d: string; n: number | string; u: number | string }>(`SELECT blob8 AS k, blob4 AS d, SUM(double2 * _sample_interval) AS n, count(DISTINCT blob3) AS u FROM ${D} WHERE ${w} AND blob1 = 'ad' GROUP BY k, d LIMIT 200`);
+  if (adRows.length) out.ads = adsOf(adRows, (await q<{ u: number | string }>(`SELECT count(DISTINCT blob3) AS u FROM ${D} WHERE ${w} AND blob1 = 'ad'`))[0]?.u);
   // 来た時間 (訪問の最初の時刻を日本時間の時に)。SQL の関数の違いを避けて、時刻だけ取ってここで数える
   const opens = await q<{ t: number | string }>(`SELECT blob2, toUnixTimestamp(min(timestamp)) AS t FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY blob2 LIMIT 20000`);
   if (opens.length) {
@@ -198,6 +206,19 @@ export async function usersBetween(env: Env, since: string, until: string, fetch
     const r = await sql<{ u: number }>(env, `SELECT count(DISTINCT ${by === "visits" ? "blob2" : "blob3"}) AS u FROM ${D} WHERE ${range(since, until)}${skip} AND blob1 = 'open'`, fetchFn);
     return r[0] ? Number(r[0].u) : 0;
   } catch (e) { console.warn("usersBetween:", String(e).slice(0, 160)); return null; }
+}
+
+/** 広告の表示の行 (枠 × 端末) をまとめる。people が取れなければ枠 × 端末ごとの人の数の最大 */
+export function adsOf(rows: ReadonlyArray<{ k: string; d: string; n: number | string; u?: number | string }>, people?: number | string): NonNullable<Summary["ads"]> {
+  const slot = new Map<string, number>();
+  let pc = 0, mobile = 0;
+  for (const r of rows) {
+    const n = Number(r.n) || 0;
+    slot.set(r.k || "—", (slot.get(r.k || "—") ?? 0) + n);
+    if (r.d === "mobile") mobile += n; else pc += n;
+  }
+  const ppl = people != null ? Number(people) : rows.reduce((a, r) => Math.max(a, Number(r.u) || 0), 0);
+  return { total: pc + mobile, pc, mobile, people: ppl, slots: [...slot].sort((a, b) => b[1] - a[1]) };
 }
 
 /** 段階の文: 開いた 50 → ベース 30 → … と、一番減った所 */

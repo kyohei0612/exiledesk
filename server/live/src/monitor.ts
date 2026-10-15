@@ -111,6 +111,11 @@ export const dur = (min: number): string => {
 // 前のアドレス (web.exiledesk.workers.dev) から来た = 古いリンク (X の投稿など) を押して exiledesk.com に移ってきた人 (2026-10-12 オーナー)
 const fromJa = (k: string): string => (k === "direct" ? "URL から直接開いた人" : k === "t.co" || /(^|\.)(x|twitter)\.com$/.test(k) ? "X から来た人" : k === "web.exiledesk.workers.dev" ? "前の URL (X のリンクなど) から移ってきた人" : `${k.replace(/^www\./, "")} から来た人`);
 
+/** 広告の枠の名前 (src/utils/ads.ts の adLayout の id) */
+export const AD_SLOT_JA: Record<string, string> = {
+  "side-1": "右の列 (上)", "side-2": "右の列 (下)", "base-left": "ベースを選ぶ (左)", "base-right": "ベースを選ぶ (右)", "fb-left": "要望・バグ (左)", "phone-top": "スマホ (上の帯の下)",
+};
+
 export function reportText(label: string, sum: Summary | null, usage: Usage, feedback: { requests: number; bugs: number }, live: LiveState | null, alerts: string[], records?: number | null): string {
   // 2026-10-10 オーナーの書いた形: 見出しごとの短い箇条書き。人は訪問と使った時間だけ、使われ方は 1 以上の物を全部、要望とバグはまとめて
   const out: string[] = [`📊 **ExileDesk 日報 ${label}**`];
@@ -173,6 +178,12 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     ]);
     if (emu?.bases.length) sec("よく使われたベース (人数)", emu.bases.map(([k, v], i) => `${i + 1}. ${k} ${v} 人`));
     if (emu?.currencies.length) sec("よく使われたカレンシー (回数)", emu.currencies.map(([k, v], i) => `${i + 1}. ${k} ${n(v)} 回`));
+    // 広告の枠が出た回数 (2026-10-16。入れ替えは画面を移った時だけ・同じ枠は 60 秒に 1 回まで)
+    const ad = sum.ads;
+    if (ad?.total) sec("広告の表示 (枠が出た回数)", [
+      `合計 ${n(ad.total)} 回 (PC ${n(ad.pc)} · スマホ ${n(ad.mobile)})${ad.people ? ` · ${n(ad.people)} 人 · 1 人あたり ${(ad.total / ad.people).toFixed(1)} 回` : ""}`,
+      ...ad.slots.slice(0, 6).map(([k, v]) => `${AD_SLOT_JA[k] ?? k} ${n(v)} 回`),
+    ]);
   }
   // 誰も来ていない日でも要望が届いていれば出す
   if ((!sum || !sum.sessions) && fbCount) sec("使われ方", [`要望・バグを送った ${fbCount} 件`]);

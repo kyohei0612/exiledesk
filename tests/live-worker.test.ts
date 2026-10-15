@@ -280,6 +280,39 @@ describe("操作の印と日報 (events / monitor)", () => {
   });
 });
 
+describe("広告の表示の回数 (2026-10-16、印 ad)", () => {
+  it("枠 × 端末の行をまとめる", async () => {
+    const { adsOf } = await import("../server/live/src/events");
+    const a = adsOf([{ k: "side-1", d: "pc", n: 30, u: 9 }, { k: "side-2", d: "pc", n: 28, u: 9 }, { k: "phone-top", d: "mobile", n: "12", u: 11 }], 20);
+    expect(a).toEqual({ total: 70, pc: 58, mobile: 12, people: 20, slots: [["side-1", 30], ["side-2", 28], ["phone-top", 12]] });
+  });
+  it("集計 (Analytics Engine の SQL) から日報の節まで。滞在・跳ね返りの数え物から外す", async () => {
+    const { summarize } = await import("../server/live/src/events");
+    const { reportText } = await import("../server/live/src/monitor");
+    const queries: string[] = [];
+    const f = (async (_u: string, init?: RequestInit) => {
+      const q = String(init?.body ?? "");
+      queries.push(q);
+      let data: unknown[] = [];
+      if (q.includes("blob1 = 'ad' GROUP BY k, d")) data = [{ k: "side-1", d: "pc", n: 40, u: 10 }, { k: "side-2", d: "pc", n: 38, u: 10 }, { k: "phone-top", d: "mobile", n: 22, u: 15 }];
+      else if (q.includes("blob1 = 'ad'")) data = [{ u: 25 }];
+      else if (q.startsWith("SELECT blob1 AS n")) data = [{ n: "open", s: 30, u: 25, c: 30 }];
+      return new Response(JSON.stringify({ data }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const env = { LIVE: fakeKv(), CF_ANALYTICS_TOKEN: "t", CF_ACCOUNT_ID: "a" } as unknown as Env;
+    const sum = await summarize(env, "2026-10-15T00:00:00Z", "2026-10-16T00:00:00Z", "2026-10-09T00:00:00Z", f);
+    expect(sum.ads).toEqual({ total: 100, pc: 78, mobile: 22, people: 25, slots: [["side-1", 40], ["side-2", 38], ["phone-top", 22]] });
+    // 印 ad は回数の印なので、滞在 (開いてから何秒目か) と「何か触った」の数えに入れない
+    expect(queries.find((q) => q.includes("max(double2) AS a"))).toContain("'ad'");
+    expect(queries.find((q) => q.includes("NOT LIKE 'lang:%'"))).toContain("'ad'");
+    const text = reportText("10/15", sum, { visits: 30, pageViews: 40, liveRequests: 100, liveErrors: 0 }, { requests: 0, bugs: 0 }, null, []);
+    expect(text).toContain("**広告の表示 (枠が出た回数)**");
+    expect(text).toContain("・合計 100 回 (PC 78 · スマホ 22) · 25 人 · 1 人あたり 4.0 回");
+    expect(text).toContain("・右の列 (上) 40 回");
+    expect(text).toContain("・スマホ (上の帯の下) 22 回");
+  });
+});
+
 describe("分析用の記録を Discord へ (logs.ts)", () => {
   it("JSONL は行の切れ目で上限バイト以下に分ける (日本語は UTF-8 で数える)", async () => {
     const { splitJsonl } = await import("../server/live/src/logs");
