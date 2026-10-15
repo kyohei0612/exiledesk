@@ -157,6 +157,8 @@ function howOf(r: AimOdd): string {
   switch (kindOf(r.currency)) {
     case "desecrate":
       return tr(`${n} → 発現 (アビスの反響で 1 回引き直し)。候補に出れば当たり。毎回今の状態に戻して打ち直す。${om}`, `${n} → reveal (one reroll with Omen of Abyssal Echoes). A hit if the target is offered. Restarts from the current state every time. ${om}`);
+    case "chaos":
+      return tr(`${n} を続けて打つ (カオススパム)。今の MOD が消えても狙いが揃えば当たり。外れたらその結果に続けて打つ。${om}`, `${n} is used repeatedly (Chaos spam). A hit when all targets are on, even if current mods were removed. A miss keeps going from the result. ${om}`);
     case "exalt":
       return tr(`${n} を空きがあるうちは続けて打つ。狙いが揃えば当たり。今の MOD が消えた・空きが無くなったら今の状態に戻す。${om}`, `${n} is used repeatedly while there is an open slot. A hit when all targets are on. Restarts from the current state when a current mod is removed or no slot is left. ${om}`);
     default:

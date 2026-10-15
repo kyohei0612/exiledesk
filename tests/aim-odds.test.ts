@@ -54,8 +54,8 @@ describe("狙う確率", () => {
     for (const c of cs) aimOdds(data, ring, t, c, 300, 5);
     expect(performance.now() - t0).toBeLessThan(8000);
   });
-  it("当たるまで続けて回す: 今の MOD が消えたら外れ (カオスは今の 3 つのどれかを必ず消すので 0)、左の高貴は付く", () => {
-    expect(aimChain(data, ring, [t], { currency: "chaos", omens: [] }, 800, 4)).toBe(0);
+  it("当たるまで続けて回す: 今の MOD が消えたら外れ (カオスだけはカオススパムで、消えても揃えば当たり)、左の高貴は付く", () => {
+    expect(aimChain(data, ring, [t], { currency: "chaos", omens: [] }, 800, 4)).toBeGreaterThan(0);
     const left = aimChain(data, ring, [t], { currency: "exalt", omens: ["OmenofSinistralExaltation"] }, 800, 4);
     expect(left).toBeGreaterThan(0);
     // プレの空きは 2 つ: 外れても空きが残る間は続けて打てるので、打った回数あたりでは 1 回だけの確率と同じくらい (崩れないので下がらない)
@@ -92,5 +92,22 @@ describe("効かないお告げは狙う一覧に出さない (要望 0c542dae)"
       const b = applyCurrency(data, full, "desecrate", mulberry32(seed), ["OmenofDextralNecromancy"]);
       expect(JSON.stringify(b.item.suffixes)).toBe(JSON.stringify(a.item.suffixes));
     }
+  });
+});
+
+describe("カオスも狙う一覧に出す (要望 63f6d901)", () => {
+  // 要望の不在のアミュレット: レアでサフィに「毎秒のライフ自動回復」だけ。カオスは必ずその MOD を消す
+  const regen = idOf("Amulets", /LifeRegeneration$/);
+  let amu = freshItem(data, "Absent Amulet", 82);
+  amu = force(amu, regen, "T5");
+  amu = force(amu, idOf("Amulets", /Strength$/), "T1");
+  amu = applyCurrency(data, amu, "annul", mulberry32(3)).item;
+  it("MOD が 1 つのレアでも、カオスは今の MOD が消えても狙いが付けば当たりとして数える", () => {
+    const rest = [...amu.prefixes, ...amu.suffixes];
+    expect(amu.rarity).toBe("rare");
+    expect(rest.length).toBe(1);
+    const target: AimTarget = { modId: idOf("Amulets", /Dexterity$/), minTierIndex: 0 };
+    expect(aimCombos(data, amu, ["chaos"]).some((c) => c.currency === "chaos")).toBe(true);
+    expect(aimChain(data, amu, [target], { currency: "chaos", omens: [] }, 1500, 5)).toBeGreaterThan(0);
   });
 });

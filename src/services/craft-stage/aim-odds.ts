@@ -126,6 +126,8 @@ export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readon
  * - 今の MOD が消えた・コラプトした・もう打てない時は、今の状態からやり直し (費用は足さない、打った回数だけ数える)
  * - 外れても続けられる時 (カオスで新しく付いた物だけ入れ替わった、高貴で空きがまだある) は、その状態から続ける
  * - 冒涜は骨 → 発現の候補に出れば当たり、外れたら今の状態から (次の骨はもう打てないため)
+ * - カオスはカオススパム: 今の MOD が消えても狙いが揃えば当たり、外れたらその結果に続けて打つ (2026-10-16 要望 63f6d901
+ *   「カオススパムも候補に」: MOD が 1 つのレアはカオスで必ずその MOD が消え、消えたら外れの決まりでいつも 0% になって一覧に出なかった)
  * 返すのは 打った回数あたりの当たりの割合 (1 回の費用 ÷ これ = 付くまでの平均費用)
  */
 export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarget[], c: AimCombo, n: number, seed: number): number {
@@ -135,6 +137,7 @@ export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarg
   const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!)));
   const rng = mulberry32(seed);
   const used = c.omens.filter((o) => o !== ECHOES);
+  const spam = c.currency !== REVEAL && kindOf(c.currency) === "chaos";
   let item = start, tries = 0, hit = 0, stuck = 0;
   while (tries < n) {
     if (c.currency === REVEAL) {
@@ -153,6 +156,12 @@ export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarg
     if (kindOf(c.currency) === "desecrate") {
       if (keeps(r.item) && offered(revealOffers(data, r.item, rng), missing(r.item))) hit++;
       item = start;
+      continue;
+    }
+    if (spam) {
+      if (r.item.corrupted) { item = start; continue; }
+      if (!missing(r.item).length) { hit++; item = start; continue; }
+      item = r.item;
       continue;
     }
     if (!keeps(r.item)) { item = start; continue; }
