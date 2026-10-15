@@ -26,6 +26,11 @@ let staySent = 0;
 const useTally = new Map<string, number>();
 const baseTally = new Map<string, number>();
 let stepTally = 0;
+/**
+ * 広告の枠が出た回数 (枠ごと。utils/ads.ts の adShow が track("ad", 枠) を呼ぶ)。手と同じく端末で数えて、送る時に枠ごと 1 つの印 "ad" にまとめる
+ * (出るたびに印を送らない。日報の「広告の表示」、2026-10-16)
+ */
+const adTally = new Map<string, number>();
 let lastActive = Date.now();
 
 const rand = (): string => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
@@ -50,6 +55,7 @@ const trail: Array<{ n: string; t: number }> = [];
 const once = new Set<string>();
 
 export function track(name: string, extra?: string): void {
+  if (name === "ad") { const k = (extra ?? "").slice(0, 40); adTally.set(k, (adTally.get(k) ?? 0) + 1); return; }
   buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
   if (trail.length > 40) trail.shift();
@@ -93,7 +99,8 @@ function pull(): string | null {
   for (const [k, v] of baseTally) buf.push({ n: "base", x: k.slice(0, 80), s: v });
   for (const [k, v] of useTally) buf.push({ n: "cur", x: k.slice(0, 80), s: v });
   if (stepTally) buf.push({ n: "steps", s: stepTally });
-  baseTally.clear(); useTally.clear(); stepTally = 0;
+  for (const [k, v] of adTally) buf.push({ n: "ad", x: k, s: v });
+  baseTally.clear(); useTally.clear(); stepTally = 0; adTally.clear();
   if (!buf.length) return null;
   const body = JSON.stringify({ uid, sid, first: first && !sentAny, dev, ref, ev: buf.splice(0, buf.length) });
   sentAny = true;

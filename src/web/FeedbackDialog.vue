@@ -17,7 +17,7 @@ import { tr } from "../i18n/lang";
 import ModalShell from "../components/ui/ModalShell.vue";
 
 /** forId: 返事で「画像を下さい」と頼んだ要望の id (その要望に画像を足す。2026-10-14) */
-const props = defineProps<{ open: boolean; forId?: string | null }>();
+const props = defineProps<{ open: boolean; forId?: string | null; /** Web の広告の並び: 重ねる窓ではなく別の画面として出す (utils/ads.ts) */ page?: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
 // 要望とバグは分けない、連絡先の欄も無し (2026-10-10 オーナー「要望バグ欄統一、連絡先書かなくていい」)
@@ -120,7 +120,7 @@ async function send(): Promise<void> {
 
 <template>
   <!-- 窓の動き・枠は ModalShell (2026-10-10 オーナー「動きが統一されてない所」: Esc は欄の中だけでなくどこでも効く、自前の地 → .g-panel) -->
-  <ModalShell :open="open" :title="forId ? tr('画像を送る', 'Send images') : tr('要望・バグを送る', 'Send feedback')" width="w-[30rem] max-w-full" body-class="px-4 py-3" @close="emit('close')">
+  <ModalShell :open="open" :inline="page" :title="forId ? tr('画像を送る', 'Send images') : tr('要望・バグを送る', 'Send feedback')" width="w-[30rem] max-w-full" body-class="px-4 py-3" @close="emit('close')">
     <p v-if="state === 'sent'" class="py-6 text-center text-[13px]">{{ tr("届きました。ありがとうございます。", "Received. Thank you!") }}<span v-if="!forId" class="mt-1 block text-[11px] opacity-60">{{ tr("直した時は、次に開いた時にお知らせします (このブラウザで)", "When it is fixed, you will be told the next time you open this page (in this browser)") }}</span></p>
     <div v-else @dragover.prevent @drop="onDrop">
       <textarea v-model="text" :rows="forId ? 3 : 6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="forId ? tr('ひとこと (無くてもよい)', 'A note (optional)') : tr('こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも', 'Feature ideas, something that looks wrong (what you did and what happened), anything')" autofocus @paste="onPaste"></textarea>

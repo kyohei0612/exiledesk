@@ -6,9 +6,11 @@ import WebApp from "./WebApp.vue";
 import { startTracking } from "./track";
 import { startLogSender } from "../services/telemetry/log-sender";
 import { applyNoLogParam, noLog } from "../utils/no-log";
-import { initRecParts } from "../utils/rec-mode";
+import { initRecParts, REC } from "../utils/rec-mode";
 import { setMarketLoader } from "../state/market-store";
 import { loadBoot } from "./boot";
+import { enableAds } from "../utils/ads";
+import { adsWanted } from "./ads-config";
 import type { CurrencyItem, League } from "../api/poe2scout";
 
 // この端末は記録しない (?nolog=1 / 0 で切り替え、no-log.ts)。印を読んでから記録を始める
@@ -22,6 +24,8 @@ setMarketLoader(async () => {
   const b = await loadBoot();
   return b?.market?.items?.length ? { leagues: b.market.leagues as League[], items: b.market.items as CurrencyItem[] } : null;
 });
+// 広告の枠 (本番は AdSense の運営者 ID が入った時だけ、開発版は仮の枠。録画モードは出さない。utils/ads.ts・ads-config.ts)。アプリ (Tauri) はこの入口を通らないので出ない
+enableAds(adsWanted() && !REC);
 createApp(WebApp).mount("#app");
 // タブの題は言語に合わせる (web.html の題は日本語の既定。2026-10-10 英語の巡回で見つかった)
 watchEffect(() => { document.title = tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator"); });

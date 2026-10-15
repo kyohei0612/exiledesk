@@ -5,7 +5,7 @@
  * アプリ版の App.vue にある起動の処理 (更新・PoB・画像パック・ログイン・見回り) は Web では要らないので載せない。
  * 画面は 1660 幅で組んだ絵を窓に合わせて拡大縮小する (アプリと同じ。狭い時は縮める)
  */
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { marketStore } from "../state/market-store";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import { craftStage } from "../state/craft-stage";
@@ -25,6 +25,8 @@ import { noLogOn, setNoLog } from "../utils/no-log";
 import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import LangSwitch from "../components/LangSwitch.vue";
+import AdSlot from "../components/ui/AdSlot.vue";
+import { adNavigate, adPageOf, ads, adSlotsAt } from "../utils/ads";
 
 const feedbackOpen = ref(false);
 /**
@@ -76,8 +78,23 @@ const frame = ref({ w: DESIGN_WIDTH, h: 900 });
  * 前は 0.55 倍まで縮めていて、字が 6 px ほどで読めなかった
  */
 const phone = ref(false);
+/**
+ * 広告の並び (utils/ads.ts、広告を出す時だけ): 要望・バグは重ねる窓ではなく別の画面 (左に縦長、右は右の列)。
+ * 画面を移った時 (ベースを選ぶ・要望へ / クラフトへ戻る) だけ枠を出し直す。別の画面へ移る時は上へ、戻ったら前の位置へ
+ */
+const feedbackPage = computed(() => ads.on && !phone.value && feedbackOpen.value && !imageAskFor.value);
+watch(feedbackPage, (v) => { ads.feedbackPage = v; }, { immediate: true });
+let craftScroll = 0;
+watch(() => adPageOf({ basePage: ads.basePage && !ads.phone, feedbackPage: ads.feedbackPage }), (to, from) => {
+  if (!ads.on) return;
+  adNavigate(to);
+  if (from === "craft") { craftScroll = window.scrollY; window.scrollTo(0, 0); }
+  else if (to === "craft") void nextTick(() => window.scrollTo(0, craftScroll));
+}, { immediate: true });
 function fitZoom(): void {
   phone.value = window.innerWidth < 768;
+  ads.phone = phone.value;
+  ads.width = window.innerWidth;
   // iPad など: 縮めると字が 7〜8 px になって読めないので、1280 未満は等倍、それより広くても 0.85 倍より小さくしない (並びは幅に合わせて折り返す。2026-10-10)
   const z = phone.value || window.innerWidth < 1280 ? 1 : Math.min(1.6, Math.max(0.85, window.innerWidth / DESIGN_WIDTH));
   document.documentElement.style.zoom = String(z);
@@ -130,10 +147,20 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <HoverStack />
     <ChangelogDialog />
     <SupportDialog />
-    <FeedbackDialog :open="feedbackOpen || !!imageAskFor" :for-id="feedbackOpen ? null : imageAskFor" @close="feedbackOpen = false; imageAskFor = null" />
+    <FeedbackDialog v-if="!feedbackPage" :open="feedbackOpen || !!imageAskFor" :for-id="feedbackOpen ? null : imageAskFor" @close="feedbackOpen = false; imageAskFor = null" />
+    <!-- スマホの広告は上の帯の下に 1 つ (棚から離す。広告を出す時だけ) -->
+    <div v-for="a in adSlotsAt('top')" :key="a.id" class="flex justify-center py-2"><AdSlot :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" /></div>
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
-      <CraftStage class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
+      <!-- 要望・バグの画面 (広告を出す時の PC): 左に縦長の広告、右は右の列 -->
+      <section v-if="feedbackPage" class="flex min-w-0 flex-1 items-start justify-center gap-4 p-4">
+        <div v-for="a in adSlotsAt('left')" :key="a.id" class="sticky top-3 shrink-0"><AdSlot :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" /></div>
+        <div class="min-w-0 max-w-[40rem] flex-1">
+          <button type="button" class="g-btn sm mb-3" @click="feedbackOpen = false">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
+          <FeedbackDialog page :open="true" @close="feedbackOpen = false" />
+        </div>
+      </section>
+      <CraftStage v-show="!feedbackPage" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <!-- 決まり事 (2026-10-07、2026-10-10 から画面に貼り付けずクラフトステージの一番下): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
           <footer data-rec-part="footer" class="-mx-4 mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--exile-color-border-subtle)] px-4 py-2 text-[10px] opacity-50">
@@ -157,8 +184,14 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       </CraftStage>
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
       <!-- 右クリックは真ん中 (CraftStage.vue) と同じく「持っている物を手放す」。ブラウザのメニュー (コピーなど) は出さない (2026-10-13 オーナー) -->
-      <aside data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
-        <div :class="phone ? '' : 'sticky top-3'"><LivePanel /></div>
+      <!-- 広告を出す時: 右の列はチャンネルの下に 300×250 を 2 つ (幅は広告の分だけ広げる)。ベースを選ぶ画面の間は右の列を外して画面いっぱいに -->
+      <aside v-show="ads.page !== 'base'" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : adSlotsAt('right').length ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
+        <div :class="phone ? '' : 'sticky top-3'">
+          <LivePanel />
+          <div v-if="ads.page !== 'base' && adSlotsAt('right').length" class="mt-3 flex flex-col gap-3">
+            <AdSlot v-for="a in adSlotsAt('right')" :key="a.id" :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" />
+          </div>
+        </div>
       </aside>
     </div>
   </div>
