@@ -12,7 +12,7 @@
  * 守る決まり (ゲームと同じ):
  *   - ノーマルに付けたらマジック。マジックはプレ 1・サフィ 1 (3 つ目は王者でレアにしてから)。レアは側ごとの枠 (ベースの limits)
  *   - 同じ系統の MOD が付いていれば付かない
- *   - 冒涜の MOD はアイテムに 1 つまで、フラクチャーは 1 つまで。どちらもレアにだけ
+ *   - 冒涜の MOD はアイテムに 1 つまで、フラクチャーは 1 つまで。どちらもレアにだけ。冒涜で付くのは骨の発現に出る物 (冒涜・異界・普通の MOD)
  *   - エッセンス (クラフト MOD) は 1 つまで (アストリッドの創造性で 2 つ)、同じ系統との重なりはエッセンスの決まり
  *   - ルーンの MOD (特殊 MOD のルーン) はそのルーンを差していないと付かない
  *   - 段のアイテムレベルがアイテムレベルを超える物は付かない (エッセンスは制限なし)
@@ -21,7 +21,7 @@ import { applyRune, runeKeyForId } from "./stage-runes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceClash, familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
 import { craftedLimitOf, normalTierOf } from "./apply-essence";
-import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, takenCraftedFamilies, unfracturable, withMod } from "./stage-core";
+import { allMods, effectiveCls, makeStageMod, room, skip, stageRuneIds, takenFamilies, takenCraftedFamilies, unfracturable, withMod } from "./stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
 
@@ -64,8 +64,9 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
     it = { ...it, prefixes: f(it.prefixes), suffixes: f(it.suffixes) };
     removed.push(m);
   };
-  // 冒涜で付けられるのは冒涜の MOD だけ (2026-10-08 オーナー「冒涜 MOD しか冒涜は付けれない」)
-  if (p.flag === "d" && mod.source !== "desecrated" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skip(item, tr("冒涜で付くのは冒涜の MOD だけ", "Only Desecrated mods can be added by Desecration"));
+  // 冒涜で付けられるのは骨の発現に出る物だけ: 冒涜の MOD・異界・普通の MOD (ルーンの特殊 MOD 込み)。始めの状態 (run-plan の startFrom) と同じ置き場
+  // (2026-10-15 オーナー「MOD 一覧の付けるで 普通 / フラクチャー / 冒涜 を選べるように、途中でも冒涜で付けられるように」。10-08 の「冒涜の MOD だけ」は置き換え)
+  if (p.flag === "d" && mod.source !== "desecrated" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? []), ...effectiveCls(it).pools.normal[side === "prefix" ? "prefixes" : "suffixes"]].includes(p.modId)) return skip(item, tr("冒涜では付かない MOD", "This mod can't be added by Desecration"));
   // フラクチャー: 同じ MOD が付いていればそれを固定する (付け直さない)
   if (p.flag === "f") {
     if (allMods(it).some((m) => m.fractured)) return skip(item, tr("フラクチャーは 1 つまで", "Only 1 Fractured mod"));
@@ -122,7 +123,8 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   const tierIndex = mod.tiers.length - n;
   const tier = mod.tiers[tierIndex];
   if (!tier) return skip(item, tr(`${p.rank ?? "T1"} という段が無い`, `No tier ${p.rank ?? "T1"}`));
-  if (!asCrafted && tier.ilvl > it.itemLevel) return skip(item, tr(`${p.rank ?? "T1"} はアイテムレベル ${tier.ilvl} から (今は ${it.itemLevel})`, `${p.rank ?? "T1"} needs Item Level ${tier.ilvl} (now ${it.itemLevel})`));
+  // 冒涜専用の MOD はアイテムレベルを見ない (2026-10-10 確定。骨で出る普通の MOD はアイテムレベルの決まりのまま)
+  if (!asCrafted && !(asDesecrated && mod.source === "desecrated") && tier.ilvl > it.itemLevel) return skip(item, tr(`${p.rank ?? "T1"} はアイテムレベル ${tier.ilvl} から (今は ${it.itemLevel})`, `${p.rank ?? "T1"} needs Item Level ${tier.ilvl} (now ${it.itemLevel})`));
   const sm = {
     ...makeStageMod(mod, side, tierIndex, rng),
     ...(asCrafted ? { ...normalTierOf(data, it, mod, tier), crafted: true } : {}),

@@ -10,7 +10,14 @@
   行を押すと段ごと (T1〜) の表。今付いている系統は緑、同じ系統が付いていて付かない物は薄く。中身は [[mod-list.ts]]。
   2026-09-29 (要望 ⑱-2、オーナー「指定 MOD 選んでからそこからクラフトできるように、動画用として」): まだ 1 手も打っていない間は、
   段の表の「付ける」で始めの状態にその MOD・段を足せる (付きうる物だけ。手順 JSON の start.mods に入る)。「1 手戻す」で 1 つずつ外す。
+  2026-10-15: 「付ける」の付け方 (普通 / フラクチャー / 冒涜) を段の表の上で選ぶ。もう付いているフラクチャー・冒涜 (どちらも 1 つまで) は選択肢に出さない。
 -->
+<script lang="ts">
+import { ref as moduleRef } from "vue";
+type AttachMode = "n" | "f" | "d";
+/** 付け方 (窓とページの下の 2 つの一覧で同じ物を使う) */
+const attachMode = moduleRef<AttachMode>("n");
+</script>
 <script setup lang="ts">
 import { fmtPct } from "../../utils/format-pct";
 import { baseNameOf, tr } from "../../i18n/lang";
@@ -28,6 +35,7 @@ import { groupLabelOf, modListFor, runeEnOf, runeToneOf, shownTags, TAG_STYLE, t
 import { tagLabel } from "../../services/mods/tag-ja";
 import essenceKeys from "../../services/htc/essence-keys.json";
 import { forceKey, type ForceFlag } from "../../services/craft-stage/apply-force";
+import { allMods } from "../../services/craft-stage/stage-core";
 
 /** シミュレーションの ① の枠の中に置く時 (外の枠を付けない) */
 /** overlay: 手で打つ画面の重ね (MOD 一覧のボタン・Tab) の中。枠は重ねの側、見出しの右に閉じる */
@@ -45,8 +53,44 @@ function forceOf(g: ModGroup, modId: string, rank: string, as?: ForceFlag): { ke
   const key = forceKey(modId, rank, flag);
   return { key, why: s.replay.value ? tr("再生中は打てない", "Cannot use during replay") : s.usable(key) };
 }
-/** 始めの状態にフラクチャー / 冒涜の MOD がもう付いているか (どちらも 1 つまで) */
-const hasStart = (k: "fractured" | "desecrated"): boolean => s.startMods.value.some((f) => f[k]);
+/**
+ * 付け方 (2026-10-15 オーナー「MOD 一覧の付けるで 普通 / フラクチャー / 冒涜 を、高貴・カオスの段と同じ形で選ぶ。途中でも冒涜で付けられるように。
+ * アイテムにもうフラクチャー (冒涜) がある時は、その選択肢を出さない」)。フラクチャー・冒涜はどちらもアイテムに 1 つまで (apply-force / apply-desecrate)
+ */
+const itemHas = (k: "fractured" | "desecrated"): boolean => !!s.item.value && allMods(s.item.value).some((m) => m[k]);
+/** その節で選べる付け方。冒涜・異界の MOD は冒涜でしか付かない。冒涜で付く普通の MOD は骨の発現に出る物 (普通・ルーン) */
+function attachOpts(g: ModGroup): AttachMode[] {
+  if (g === "desecrated" || g === "otherworldly") return itemHas("desecrated") ? [] : ["d"];
+  const o: AttachMode[] = ["n"];
+  if (!itemHas("fractured")) o.push("f");
+  if ((g === "normal" || g === "rune") && !itemHas("desecrated")) o.push("d");
+  return o;
+}
+/** その節で今使う付け方 (選んだ物がその節に無ければ先頭) */
+function modeOf(g: ModGroup): AttachMode | null {
+  const o = attachOpts(g);
+  return o.includes(attachMode.value) ? attachMode.value : o[0] ?? null;
+}
+const MODE_LABEL: Record<AttachMode, () => string> = { n: () => tr("普通", "Normal"), f: () => tr("フラクチャー", "Fractured"), d: () => tr("冒涜", "Desecrated") };
+const REC: Record<AttachMode, string> = { n: "mod-add", f: "mod-fracture", d: "mod-desecrate" };
+/** まだ打っていない間の普通・冒涜の MOD は始めの状態 (手順 JSON の start.mods) に入れる */
+const toStart = (g: ModGroup): boolean => canStart.value && (g === "normal" || g === "desecrated");
+function attachWhy(g: ModGroup, modId: string, rank: string): string | null {
+  const m = modeOf(g);
+  if (!m || toStart(g)) return null;
+  return forceOf(g, modId, rank, m === "n" ? undefined : m).why;
+}
+function attachTitle(g: ModGroup, rank: string): string {
+  const m = modeOf(g);
+  if (toStart(g)) return m === "f" ? tr(`始めの状態に ${rank} をフラクチャーで付ける (レアになる)`, `Add ${rank} fractured to the starting item (becomes Rare)`) : m === "d" ? tr(`始めの状態に ${rank} を冒涜の MOD で付ける (レアになる)`, `Add ${rank} as a desecrated mod to the starting item (becomes Rare)`) : tr(`始めの状態に ${rank} を付ける (付きうる物だけ)`, `Add ${rank} to the starting item (only mods that can roll)`);
+  return m === "f" ? tr(`${rank} をフラクチャー (付いていればそれを固定、無ければ固定で付ける)`, `Fracture ${rank} (fractures it if present, otherwise adds it fractured)`) : m === "d" ? tr(`${rank} を冒涜の MOD として 1 手で付ける (費用 0。1 手戻すで外せる)`, `Add ${rank} as a desecrated mod in one step (no cost; Undo removes it)`) : tr(`${rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`, `Add ${rank} as one step (no cost; Undo removes it)`);
+}
+function attach(g: ModGroup, modId: string, rank: string): void {
+  const m = modeOf(g);
+  if (!m) return;
+  if (toStart(g)) { s.addStartMod({ mod: modId, tier: rank, ...(m === "f" ? { fractured: true } : m === "d" ? { desecrated: true } : {}) }); return; }
+  s.use(forceOf(g, modId, rank, m === "n" ? undefined : m).key);
+}
 const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.value, s.item.value) : []));
 /**
  * 持っているカレンシーで次に付く確率 (エミュレーターでカレンシーを持っている時だけ。2026-10-09 オーナー「持った時の挙動が UI 的に全然足りてない」)。
@@ -428,6 +472,11 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 </span>
               </button>
               </div>
+              <!-- 付け方 (段の表の「付ける」の種類。棚の高貴の 普通 / 上級 / 完全 と同じく選んでから押す。選んだ物は全部の行で同じ。2026-10-15 オーナー) -->
+              <div v-if="expanded === `${sec.sid}:${r.id}` && s.mode.value !== 'sim' && !s.replay.value && attachOpts(sec.g).length > 1" data-attach-mode class="mt-1 flex flex-wrap items-center justify-end gap-1">
+                <span class="mr-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("付け方", "Add as") }}</span>
+                <button v-for="m in attachOpts(sec.g)" :key="m" type="button" :data-rec="`attach-mode:${m}`" class="g-tab !min-h-[26px] !px-3 !text-[11px] max-md:!min-h-9" :class="modeOf(sec.g) === m ? 'on' : ''" @click.stop="attachMode = m">{{ MODE_LABEL[m]() }}</button>
+              </div>
               <!-- 段の表 -->
               <table v-if="expanded === `${sec.sid}:${r.id}`" class="mt-1 w-full text-[11px]">
                 <caption v-if="s.mode.value === 'sim'" class="pb-1 text-left text-[10px] opacity-60">{{ tr("T1 が一番良い段。「T○ 以上」= その段か、それより良い段が付けば当たり", "T1 is the best tier. “T○+” = a hit if that tier or better rolls") }}</caption>
@@ -448,18 +497,9 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                       <!-- 段の表のボタンは細い行に合う小さく平たい物 (tbtn、同じ高さ・1 行に右寄せ)。2026-10-10 オーナー「ここの UI きもい、並びが 3 つ合ってない、枠の細さに過剰」。狙い中は赤 -->
                       <!-- 次の手で狙う (いつでも): 今の状態から打った時にこの段以上が付く確率を、打ち方ごとに棚の上へ (2026-10-09 オーナー)。押すと選ぶ窓 -->
                       <button type="button" :data-aim-at="`${t.modId ?? r.id}:${t.rank}`" :data-rec="`aim:${t.modId ?? r.id}:${t.rank}`" class="tbtn" :class="isAim(t.modId ?? r.id, t) ? 'on' : ''" :title="isAim(t.modId ?? r.id, t) ? tr('もう一度押すとやめる', 'Click again to stop') : tr(`次の 1 手で ${t.rank} 以上が付く確率を打ち方ごとに出す (ほかの MOD も ${AIM_MAX} つまで一緒に狙える)`, `Show the chance of ${t.rank}+ rolling on the next move for each method (target up to ${AIM_MAX} mods together)`)" @click.stop="aimAt(t.modId ?? r.id, t, $event.currentTarget as Element)">{{ isAim(t.modId ?? r.id, t) ? tr("狙い中", "Targeting") : tr("次の手で狙う", "Target next move") }}</button>
-                      <!-- 打ち始めた後 (と、始めの状態に入れられない種類) は指名の手として付ける。灰色 = 今は付けられない (理由は title) -->
-                      <template v-if="!canStart || !(sec.g === 'normal' || sec.g === 'desecrated')">
-                        <button type="button" :data-rec="`${sec.g === 'desecrated' || sec.g === 'otherworldly' ? 'mod-desecrate' : 'mod-add'}:${t.modId ?? r.id}:${t.rank}`" class="tbtn" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank).why" :title="forceOf(r.group, t.modId ?? r.id, t.rank).why ?? tr(`${t.rank} を 1 手として付ける (費用 0。1 手戻すで外せる)`, `Add ${t.rank} as one step (no cost; Undo removes it)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank).key)">{{ sec.g === "desecrated" || sec.g === "otherworldly" ? tr("冒涜で付ける", "Add desecrated") : tr("付ける", "Add") }}</button>
-                      <!-- 途中でもフラクチャー (付いていればそれを固定、無ければ固定で付ける。レアだけ・1 つまで。2026-10-08 オーナー)。
-                             2026-10-10 要望「創生の樹フラクチャーできるように」: どのグループでも。冒涜の MOD は発現済みでも固定できない (取引所で確認、理由は title) -->
-                        <button type="button" :data-rec="`mod-fracture:${t.modId ?? r.id}:${t.rank}`" class="tbtn" :disabled="!!forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why" :title="forceOf(r.group, t.modId ?? r.id, t.rank, 'f').why ?? tr(`${t.rank} をフラクチャー (付いていればそれを固定、無ければ固定で付ける)`, `Fracture ${t.rank} (fractures it if present, otherwise adds it fractured)`)" @click.stop="s.use(forceOf(r.group, t.modId ?? r.id, t.rank, 'f').key)">{{ tr("フラクチャー", "Fracture") }}</button>
-                      </template>
-                      <template v-else>
-                        <button v-if="sec.g === 'normal'" type="button" class="tbtn" :title="tr(`始めの状態に ${t.rank} を付ける (付きうる物だけ)`, `Add ${t.rank} to the starting item (only mods that can roll)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank })">{{ tr("付ける", "Add") }}</button>
-                        <button v-if="sec.g === 'normal'" type="button" class="tbtn" :disabled="hasStart('fractured')" :title="hasStart('fractured') ? tr('フラクチャーは 1 つまで (もう付いている)', 'Only one fractured mod (already added)') : tr(`始めの状態に ${t.rank} をフラクチャーで付ける (レアになる)`, `Add ${t.rank} fractured to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, fractured: true })">{{ tr("フラクチャー", "Fracture") }}</button>
-                        <button v-if="sec.g === 'desecrated'" type="button" class="tbtn" :disabled="hasStart('desecrated')" :title="hasStart('desecrated') ? tr('冒涜の MOD はアイテムに 1 つまで (もう付いている)', 'Only one desecrated mod per item (already added)') : tr(`始めの状態に ${t.rank} を冒涜の MOD で付ける (レアになる)`, `Add ${t.rank} as a desecrated mod to the starting item (becomes Rare)`)" @click.stop="s.addStartMod({ mod: t.modId ?? r.id, tier: t.rank, desecrated: true })">{{ tr("冒涜", "Desecrated") }}</button>
-                      </template>
+                      <!-- 付ける: 付け方 (表の上の 普通 / フラクチャー / 冒涜) で付ける。打ち始めた後 (と、始めの状態に入れられない種類) は指名の手、
+                             まだ打っていない普通・冒涜の MOD は始めの状態に。灰色 = 今は付けられない (理由は title) -->
+                      <button v-if="modeOf(sec.g)" type="button" :data-rec="`${REC[modeOf(sec.g)!]}:${t.modId ?? r.id}:${t.rank}`" class="tbtn" :disabled="!!attachWhy(sec.g, t.modId ?? r.id, t.rank)" :title="attachWhy(sec.g, t.modId ?? r.id, t.rank) ?? attachTitle(sec.g, t.rank)" @click.stop="attach(sec.g, t.modId ?? r.id, t.rank)">{{ attachOpts(sec.g).length === 1 && modeOf(sec.g) === "d" ? tr("冒涜で付ける", "Add desecrated") : tr("付ける", "Add") }}</button>
                       </div>
                     </td>
                   </tr>

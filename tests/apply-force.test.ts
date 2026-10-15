@@ -100,11 +100,11 @@ describe("指名で付ける (force:)", () => {
     expect(p2.applied).toBe(true);
     expect(p2.item.rarity).toBe("rare");
     expect(A({ ...white, rarity: "unique" }, forceKey(idOf("Rings", /IncreasedLife$/), "T2", "n")).reason).toMatch(/ユニーク/);
-    // 普通の MOD は冒涜で付かない
+    // 普通の MOD も冒涜で付く (骨の発現に出る物。2026-10-15 オーナー、tests/attach-mode.test.ts)
     const life = idOf("Rings", /IncreasedLife$/);
     let it = A(white, forceKey(life, "T2", "n")).item;
     it = A(it, "regal").item;
-    expect(A(it, forceKey(life, "T2", "d")).reason).toMatch(/冒涜の MOD だけ/);
+    expect(allMods(A(it, forceKey(life, "T2", "d")).item).find((m) => m.modId === life)?.desecrated).toBe(true);
     const f = A(it, forceKey(life, "T2", "f"));
     expect(f.applied).toBe(true);
     expect(allMods(f.item).filter((m) => m.modId === life)).toHaveLength(1);
