@@ -28,6 +28,7 @@ export function chipText(goal: readonly QuizSlot[], k: string, v: string | numbe
   if (k.endsWith(".fx")) return tr(`狙い以外の固定 (${side}) ${v}`, `Other fractured (${side}) ${v}`);
   if (k === "fx") return tr(`固定 ${v}`, `Fractured ${v}`);
   if (k === "aug") return tr(`ルーン ${v}`, `Runes ${v}`);
+  if (k === "des") return tr(`冒涜 ${v}`, `Desecrated ${v}`);
   if (k === "n") return tr(`MOD ${v} つ`, `${v} mods`);
   return `${k} ${v}`;
 }

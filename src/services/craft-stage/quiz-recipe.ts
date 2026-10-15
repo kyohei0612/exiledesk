@@ -31,7 +31,8 @@ export interface QuizSlot {
 /**
  * 状況の項目 (平らなキー → 値)。札は札の id → 0 無い / 1 段が低い / 2 付いている / 3 付いていて固定。
  * 側は "p." / "s." + junk (狙い以外、固定以外) / fx (狙い以外の固定) / bad (発現済みの冒涜で狙い以外) / hid (未発現) / free (空き。侮蔑などで増えた枠込み、超えたら負)。
- * n (側ごと "p.n" / "s.n" と合計 "n") = 付いている MOD の数 (未発現込み)。fx = 固定の MOD の数 (札の物も込み)。aug = はめたルーンの数。r = レアリティ (n / m / r / u)
+ * n (側ごと "p.n" / "s.n" と合計 "n") = 付いている MOD の数 (未発現込み)。fx = 固定の MOD の数 (札の物も込み)。des = 冒涜の MOD の数 (未発現・札の物も込み)。
+ * aug = はめたルーンの数。r = レアリティ (n / m / r / u)
  */
 export type Situation = Record<string, string | number>;
 /** 答えの条件: 項目 → 値 (配列はどれか)。書かない項目は何でも */
@@ -55,7 +56,7 @@ export type QuizStart =
   /** 白を買う (sockets・runes = 規格外のソケットと始めから差すルーン) */
   | { kind: "white"; price: number; sockets?: number; runes?: string[] }
   /** 付いた状態を買う。fill = 側ごとに MOD の数まで残りを乱数で埋める (相場で買うベースの代わり) */
-  | { kind: "bought"; mods: Force[]; fill?: Partial<Record<StageSide, number>>; price: number; rarity?: "magic" | "rare"; sockets?: number }
+  | { kind: "bought"; mods: Force[]; fill?: Partial<Record<StageSide, number>>; price: number; rarity?: "magic" | "rare"; sockets?: number; runes?: string[] }
   /** エミュレーターの今のアイテムから */
   | { kind: "item"; item: StageItem; price: number };
 export interface QuizRecipe {
@@ -144,6 +145,8 @@ export function situationOf(item: StageItem, goal: readonly QuizSlot[]): Situati
   sit.n = item.prefixes.length + item.suffixes.length;
   sit.aug = item.augments?.length ?? 0;
   sit.fx = [...item.prefixes, ...item.suffixes].filter((m) => m.fractured).length;
+  // 冒涜の MOD の数 (未発現込み、札の物も込み)。冒涜はアイテムに 1 つまでなので、札に普通の MOD が冒涜で付いた時に骨が打てない (2026-10-16 指輪のチュートリアル)
+  sit.des = [...item.prefixes, ...item.suffixes].filter((m) => m.desecrated || m.unrevealed).length;
   return sit;
 }
 export const situationKey = (s: Situation): string => Object.keys(s).sort().map((k) => `${k}=${s[k]}`).join(";");
@@ -187,7 +190,7 @@ function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): Sta
   if (st.kind === "item") return st.item;
   if (st.kind === "white") return st.sockets != null || st.runes?.length ? startFrom(data, recipe.base, recipe.itemLevel, { ...(st.sockets != null ? { sockets: st.sockets } : {}), runes: st.runes ?? [] }, Math.floor(rng() * 2 ** 31)) : freshItem(data, recipe.base, recipe.itemLevel);
   const seed = Math.floor(rng() * 2 ** 31);
-  let it = startFrom(data, recipe.base, recipe.itemLevel, { mods: st.mods, ...(st.rarity ? { rarity: st.rarity } : st.fill ? { rarity: "rare" as const } : {}), ...(st.sockets ? { sockets: st.sockets } : {}) }, seed);
+  let it = startFrom(data, recipe.base, recipe.itemLevel, { mods: st.mods, ...(st.rarity ? { rarity: st.rarity } : st.fill ? { rarity: "rare" as const } : {}), ...(st.sockets ? { sockets: st.sockets } : {}), ...(st.runes?.length ? { runes: st.runes } : {}) }, seed);
   // 残りを乱数で埋める (側のお告げ付きの高貴。相場で買えるベースの代わり)
   for (const side of SIDES) {
     const want = st.fill?.[side] ?? 0;
@@ -210,6 +213,31 @@ function revealKey(data: PatchData, item: StageItem, goal: readonly QuizSlot[], 
   return i2 >= 0 ? `reveal:${i2 + 1}:reroll` : "reveal:1:reroll";
 }
 
+/** 1 手の結果: restart = 買い直す、blocked = 当たり所に関係なく打てない、random = 当たり所で弾かれた (減らずにもう一度)、それ以外は打った */
+export type QuizStepOut =
+  | { kind: "restart" }
+  | { kind: "blocked"; reason?: string }
+  | { kind: "random" }
+  | { kind: "used"; key: string; omens: string[]; spent: string[]; item: StageItem; added: StageMod[]; removed: StageMod[] };
+
+/**
+ * 答え 1 つを今のアイテムに打つ (runQuizOnce とチュートリアルで同じ打ち方)。g は回し全体の乱数 (発現の番号を決める種もここから引く)
+ */
+export function applyQuizAction(data: PatchData, route: QuizRoute, it: StageItem, a: QuizAction, g: () => number): QuizStepOut {
+  if ("restart" in a) return { kind: "restart" };
+  let key: string, omens: string[];
+  const rs = Math.floor(g() * 2 ** 31);
+  if ("reveal" in a) {
+    key = revealKey(data, it, route.goal, a.reveal.echoes, rs);
+    omens = a.reveal.echoes ? ["OmenofAbyssalEchoes"] : [];
+  } else { key = a.use; omens = a.omens ?? []; }
+  const x = applyCurrency(data, it, key, "reveal" in a ? mulberry32(rs) : g, omens);
+  if (!x.applied) return x.random ? { kind: "random" } : { kind: "blocked", reason: x.reason };
+  // 数えるのは打った物とお告げ (発現は数えない)
+  const spent = [...(key.startsWith("reveal") ? [] : [key]), ...(x.omensUsed ?? omens)];
+  return { kind: "used", key, omens, spent, item: x.item, added: x.added, removed: x.removed };
+}
+
 export function runQuizOnce(data: PatchData, recipe: QuizRecipe, seed: number, o: QuizOpts): QuizRun {
   const g = mulberry32(seed);
   const cap = o.maxSteps ?? 20000;
@@ -224,28 +252,21 @@ export function runQuizOnce(data: PatchData, recipe: QuizRecipe, seed: number, o
     if (routeDone(route, sit)) { r.done = true; break; }
     const rule = ruleFor(route.rules, sit);
     if (!rule) { r.stop = { kind: "unanswered", route: route.id, situation: sit, item: it }; break; }
-    const a = rule.do;
-    if ("restart" in a) { if (o.log) r.log.push("restart"); it = buy(); continue; }
-    let key: string, omens: string[], rs = Math.floor(g() * 2 ** 31);
-    if ("reveal" in a) {
-      key = revealKey(data, it, route.goal, a.reveal.echoes, rs);
-      omens = a.reveal.echoes ? ["OmenofAbyssalEchoes"] : [];
-    } else { key = a.use; omens = a.omens ?? []; }
-    const x = applyCurrency(data, it, key, "reveal" in a ? mulberry32(rs) : g, omens);
-    if (!x.applied) {
-      if (x.random) continue; // 当たり所で弾かれた: 減らずにもう一度
-      r.stop = { kind: "blocked", route: route.id, situation: sit, item: it, reason: x.reason };
-      break;
-    }
-    if (!key.startsWith("reveal")) count(key);
-    for (const om of x.omensUsed ?? omens) count(om);
-    if (o.log) r.log.push(`${key}${omens.length ? ` [${omens.join(",")}]` : ""}: -${x.removed.map((m) => m.textEn).join(" / ")} +${x.added.map((m) => m.textEn).join(" / ")}`);
+    const x = applyQuizAction(data, route, it, rule.do, g);
+    if (x.kind === "restart") { if (o.log) r.log.push("restart"); it = buy(); continue; }
+    if (x.kind === "random") continue; // 当たり所で弾かれた: 減らずにもう一度
+    if (x.kind === "blocked") { r.stop = { kind: "blocked", route: route.id, situation: sit, item: it, reason: x.reason }; break; }
+    for (const k of x.spent) count(k);
+    if (o.log) r.log.push(`${x.key}${x.omens.length ? ` [${x.omens.join(",")}]` : ""}: -${x.removed.map((m) => m.textEn).join(" / ")} +${x.added.map((m) => m.textEn).join(" / ")}`);
     it = x.item;
   }
   if (!r.done && !r.stop) r.stop = { kind: "cap", route: r.route, situation: situationOf(it, routeOf(recipe, it).goal), item: it };
   r.item = it;
   return r;
 }
+
+/** 始めのアイテムを買う (チュートリアルの「買い直す」も同じ) */
+export const buyStart = (data: PatchData, recipe: QuizRecipe, g: () => number): StageItem => buildStart(data, recipe, g);
 
 export interface QuizResult {
   runs: number;
