@@ -5,13 +5,13 @@
  *   scheduled (毎朝 9 時 JST) … 日報を Discord に (monitor.ts)・昨日の分析用の記録を JSONL ファイルで LOGS_WEBHOOK に (logs.ts)
  *   GET  /live.json        … 配信の状態 (CORS 許可、60 秒キャッシュ)。サイトはこれを読むだけ
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
- *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord、画像は D1)。GET /feedback.json?key=… で一覧
- *   POST /feedback/<id>/images … 後から画像を足す (送った端末だけ)。GET /feedback/image/<画像 id>?key=… で見る
+ *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord、画像は D1)。GET /feedback.json(ヘッダー x-exiledesk-key) で一覧
+ *   POST /feedback/<id>/images … 後から画像を足す (送った端末だけ)。GET /feedback/image/<画像 id>(ヘッダー x-exiledesk-key) で見る
  *   POST /event            … 操作の印 (Analytics Engine)。日報の「段階と離脱」「どこから」「端末」の元
- *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day=&key= で取り出す
- *   GET  /logs/send?day=&key= … その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用。D1 からは消さない)
- *   GET  /report?key=…     … 日報を今すぐ (確かめ用)
- *   GET  /refresh?key=…    … 配信の見張りを今すぐ
+ *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day= (ヘッダー x-exiledesk-key) で取り出す
+ *   GET  /logs/send?day= (ヘッダー x-exiledesk-key) … その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用。D1 からは消さない)
+ *   GET  /report(ヘッダー x-exiledesk-key)     … 日報を今すぐ (確かめ用)
+ *   GET  /refresh(ヘッダー x-exiledesk-key)    … 配信の見張りを今すぐ
  *   GET  /health
  *
  * 見る人が何人いても YouTube / Twitch への問い合わせは 8 時間に 1 回なので、無料枠 (Workers 10 万/日、KV 読み 10 万/日・書き 1,000/日、
@@ -127,7 +127,17 @@ export async function proxyScout(url: URL, ctx: ExecutionContext, fetchFn: Fetch
 const json = (body: unknown, status = 200, extra: Record<string, string> = {}): Response =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8", ...CORS, ...extra } });
 
-const keyOk = (env: Env, url: URL): boolean => !!env.REFRESH_KEY && url.searchParams.get("key") === env.REFRESH_KEY;
+/**
+ * オーナー用の合言葉は ヘッダー x-exiledesk-key で受ける (2026-10-15 セキュリティの点検: 前の ?key= は URL ごと Cloudflare のログに残るおそれがあった)。
+ * 長さの違いや途中の一致で時間が変わらないよう、全部の文字を比べる
+ */
+const keyOk = (env: Env, req: Request): boolean => {
+  const want = env.REFRESH_KEY ?? "", got = req.headers.get("x-exiledesk-key") ?? "";
+  if (!want || got.length !== want.length) return false;
+  let d = 0;
+  for (let i = 0; i < want.length; i++) d |= want.charCodeAt(i) ^ got.charCodeAt(i);
+  return d === 0;
+};
 
 async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -217,7 +227,7 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
   }
   // 要望への返事を書く (オーナー側だけ): { id, text, en?, version? }
   if (url.pathname === "/feedback/reply" && req.method === "POST") {
-    if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+    if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
     let b: { id?: string; text?: string; en?: string; version?: string; askImage?: boolean };
     try { b = await req.json(); } catch { return json({ error: "JSON ではない" }, 400); }
     if (!b.id || !FEEDBACK_ID_RE.test(b.id) || !b.text?.trim()) return json({ error: "id と text が要る" }, 400);
@@ -233,14 +243,14 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
   // 要望に付いた画像 (オーナー用)
   const img = url.pathname.match(/^\/feedback\/image\/([a-f0-9]{12})$/);
   if (img) {
-    if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+    if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
     const r = env.LOGS ? await getImage(env.LOGS, img[1]!) : null;
     return r ? new Response(r.data, { headers: { "content-type": r.mime, "cache-control": "no-store" } }) : json({ error: "無い" }, 404);
   }
   // 要望 1 件 (添付ごと)。Discord に付いたファイルと同じ物
   const one = url.pathname.match(/^\/feedback\/([A-Za-z0-9-]{4,16})\.json$/);
   if (one) {
-    if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+    if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
     const fb = await getFeedback(env.LIVE, one[1]!);
     return fb ? json(fb, 200, { "cache-control": "no-store" }) : json({ error: "無い" }, 404);
   }
@@ -261,28 +271,28 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       return new Response(raw, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=60", ...CORS } });
     }
     case "/logs/day": {
-      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
       const day = url.searchParams.get("day") ?? "";
       if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: "day=YYYY-MM-DD" }, 400);
       return new Response(await dayLogs(env, day), { headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" } });
     }
     case "/logs/send": {
       // その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用)。D1 からは消さない
-      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
       const day = url.searchParams.get("day") ?? "";
       if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: "day=YYYY-MM-DD" }, 400);
       const r = await sendDayLogs(env, day);
       return json(r, r.ok ? 200 : 502, { "cache-control": "no-store" });
     }
     case "/feedback.json":
-      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
       return json(await listFeedback(env.LIVE), 200, { "cache-control": "no-store" });
     case "/refresh":
-      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
       return json(await refresh(env), 200, { "cache-control": "no-store" });
     // 画面のエラーの全文 (日報は頭の 80 字だけ)。直す時に読む (2026-10-11)。hours = 何時間前から (既定 48)
     case "/errors.json": {
-      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
       const h = Math.min(24 * 14, Math.max(1, Number(url.searchParams.get("hours")) || 48));
       const D = env.EVENTS_DATASET ?? DATASET;
       const rows = await sql(env, `SELECT blob8 AS msg, blob4 AS dev, blob5 AS ref, count(DISTINCT blob2) AS sessions, SUM(_sample_interval) AS n FROM ${D} WHERE timestamp > NOW() - INTERVAL '${h}' HOUR AND blob1 = 'error' GROUP BY msg, dev, ref ORDER BY n DESC LIMIT 50`);
@@ -290,7 +300,7 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     }
     // KV の使い方 (読み・書き・一覧・消す の回数を日ごと)。無料枠に近づいた時に何が多いか見る (2026-10-11)
     case "/kv-usage.json": {
-      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
       const days = Math.min(7, Math.max(1, Number(url.searchParams.get("days")) || 2));
       const since = new Date(Date.now() - days * 86400e3).toISOString().slice(0, 10);
       const query = `query($acc: String!, $since: Date!) { viewer { accounts(filter: { accountTag: $acc }) {
@@ -299,16 +309,16 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       return json(await r.json(), 200, { "cache-control": "no-store" });
     }
     case "/report":
-      if (!keyOk(env, url)) return json({ error: "key が違う" }, 403);
+      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
       // &today=1 で「今日のここまで」(集計が通っているかの確かめ用)
       { const text = await dailyReport(env, fetch, new Date(), url.searchParams.get("today") === "1");
         return new Response(text, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store", "x-discord": lastPosted ? "ok" : "ng" } }); }
     // 新しい送り方の再現の確かめ (sim.ts)。wrangler.sim.jsonc で動かした時だけ
     case "/__sim/export":
-      if (env.SIM !== "1" || !keyOk(env, url)) return json({ error: "not found" }, 404);
+      if (env.SIM !== "1" || !keyOk(env, req)) return json({ error: "not found" }, 404);
       return json(await exportSessions(env, url.searchParams.get("since") ?? "", url.searchParams.get("until") ?? ""));
     case "/__sim/compare":
-      if (env.SIM !== "1" || !keyOk(env, url)) return json({ error: "not found" }, 404);
+      if (env.SIM !== "1" || !keyOk(env, req)) return json({ error: "not found" }, 404);
       return json(await compare(env, url));
     case "/health":
       return json({ ok: true, channels: CHANNELS.length, events: !!env.EVENTS, logs: !!env.LOGS, analytics: !!env.CF_ANALYTICS_TOKEN });

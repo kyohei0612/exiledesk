@@ -34,14 +34,14 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
 ## 要望・バグ (Web 版の「要望・バグを送る」)
 
 - `POST /feedback` に届いた物を KV に 90 日残す (同じ IP から 1 時間 10 件まで、bot よけの欄あり)
-- `GET /feedback.json?key=<REFRESH_KEY>` で新しい順の一覧 (添付 = 送った人の画面の状態: ベース・狙い・パターン)
+- `GET /feedback.json (ヘッダー x-exiledesk-key: <REFRESH_KEY>)` で新しい順の一覧 (添付 = 送った人の画面の状態: ベース・狙い・パターン)
 - Discord にも流すなら: Discord のサーバー設定 → 連携サービス → ウェブフック → 新しいウェブフック → 「ウェブフック URL をコピー」→ `npx wrangler secret put DISCORD_WEBHOOK` に貼る → `pnpm run deploy`
 
 ## 見張りと日報 (2026-10-07)
 
 - **操作の印** (`POST /event`): Web 版が「開いた → 手で打つ / シミュレーション → ベース → 狙い → 順番 → 手順 → 回した → 完成 → 取引所」などの印を送る (cookie なし、名前や IP は無い)。Analytics Engine に 3 か月残る (無料 10 万/日)。ダッシュボードの Workers → Analytics Engine で「有効にする」が 1 回要る
 - **日報**: 毎朝 9 時 (JST) に Discord へ。昨日の 訪問 (新規 / 再訪)・ユーザー・直帰・滞在の中央・どこから・端末 (PC / スマホ)・国・使い方・段階と一番減った所・JS エラー・サーバーの回数とエラー・要望 / バグ・配信の見張り・異常・7 日のユーザー。
-  訪問数などは `CF_ANALYTICS_TOKEN` (Cloudflare の API トークン、権限は Account Analytics: Read だけ) が要る。`GET /report?key=<REFRESH_KEY>` で今すぐ見られる
+  訪問数などは `CF_ANALYTICS_TOKEN` (Cloudflare の API トークン、権限は Account Analytics: Read だけ) が要る。`GET /report (ヘッダー x-exiledesk-key: <REFRESH_KEY>)` で今すぐ見られる
 - **異常の通知**: 相場の中継が落ちた・配信の見張りが失敗した・サーバーのエラー、を Discord にすぐ (同じ物は 6 時間に 1 回)
 - **ログ**: ダッシュボードの Workers → exiledesk-live → ログ に 1 回ごとの記録 (path・status・ms・国。無料は 3 日分)。手元で見るなら `pnpm tail`
 
@@ -72,7 +72,7 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
    pnpm run deploy
    ```
    `https://exiledesk-live.<名前>.workers.dev` が出る。`…/health` を開いて `{"ok":true}` が出れば動いている。
-   最初の 1 回は `…/refresh?key=<REFRESH_KEY>` を開くとすぐ調べる (あとは 5 分おきに勝手に)。`…/live.json` が結果
+   最初の 1 回は `…/refresh (ヘッダー x-exiledesk-key: <REFRESH_KEY>)` を開くとすぐ調べる (あとは 5 分おきに勝手に)。`…/live.json` が結果
 
 チャンネルを足す・外す時は `channels.json` を直して `pnpm run deploy` だけ。
 

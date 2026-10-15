@@ -2,7 +2,7 @@
  * 要望・バグに付いた画像 (2026-10-14 オーナー「画像送れるようにもしようか、一応指示できるし、こっちからその画像下さいみたいな」)。
  *   POST /feedback の images: [{ mime, b64 }] (送る時に一緒に)
  *   POST /feedback/<id>/images { uid, images, text? } … 後から足す (返事で「画像を下さい」と頼んだ時)。送った端末 (context.uid が同じ) だけ
- *   GET  /feedback/image/<画像の id>?key= … オーナー用
+ *   GET  /feedback/image/<画像の id> (ヘッダー x-exiledesk-key) … オーナー用
  * 中身は D1 の fb_images (KV は増やさない)。端末で縮めてから送る (長い辺 1600px の JPEG)。90 日で消す
  */
 import type { Fetch } from "./types";
