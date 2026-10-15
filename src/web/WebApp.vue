@@ -25,6 +25,20 @@ import { noLogOn, setNoLog } from "../utils/no-log";
 import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import LangSwitch from "../components/LangSwitch.vue";
+import ChallengePanel from "./ChallengePanel.vue";
+
+/**
+ * 今日のお題のページ (docs/craft-challenge.md、2026-10-16 土台)。/challenge か ?challenge で開く。
+ * 本番の /challenge は server/web の振り分けがまだ無いので、今は ?challenge (開発版は http://localhost:<port>/web.html?challenge)
+ */
+const challengeOn = ref(location.pathname.startsWith("/challenge") || new URLSearchParams(location.search).has("challenge"));
+function setChallenge(v: boolean): void {
+  challengeOn.value = v;
+  const u = new URL(location.href);
+  if (v) u.searchParams.set("challenge", ""); else u.searchParams.delete("challenge");
+  history.replaceState(null, "", u.toString().replace("challenge=", "challenge").replace(/\?$/, ""));
+  window.scrollTo(0, 0);
+}
 
 const feedbackOpen = ref(false);
 /**
@@ -109,6 +123,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- 録画モードは訪問者を隠すので、右寄せの押さえだけ置く -->
       <span v-if="REC && !phone" class="ml-auto" />
       <span v-if="visitors" data-rec-part="header-visitors" class="ml-auto whitespace-nowrap opacity-60" :class="phone ? 'text-[10px]' : ''" :title="visitors.yesterday != null ? tr(`9:00 から (1 時間ごとに更新) · 昨日 ${visitors.yesterday.toLocaleString()} 人`, `Since 9:00 JST (updated hourly) · Yesterday ${visitors.yesterday.toLocaleString()}`) : tr('9:00 から (1 時間ごとに更新)', 'Since 9:00 JST (updated hourly)')">{{ phone ? tr(`本日 ${visitors.today.toLocaleString()} 人`, `${visitors.today.toLocaleString()} today`) : tr(`本日の訪問者 ${visitors.today.toLocaleString()} 人`, `Today's visitors ${visitors.today.toLocaleString()}`) }}</span>
+      <!-- 今日のお題 (別のページ) とクラフトステージの行き来 -->
+      <button type="button" data-rec-part="header-challenge" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" @click="setChallenge(!challengeOn)">{{ challengeOn ? tr("クラフトステージ", "Craft Stage") : tr("今日のお題", "Daily Challenge") }}</button>
       <!-- 版を押すと更新履歴 (2026-10-10) -->
       <button type="button" data-rec-part="header-version" class="g-plain opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
       <span v-if="!phone" data-rec-part="header-lang" class="shrink-0 whitespace-nowrap"><LangSwitch /></span>
@@ -133,7 +149,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <FeedbackDialog :open="feedbackOpen || !!imageAskFor" :for-id="feedbackOpen ? null : imageAskFor" @close="feedbackOpen = false; imageAskFor = null" />
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
-      <CraftStage class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
+      <ChallengePanel v-if="challengeOn" :class="phone ? 'shrink-0' : ''" @close="setChallenge(false)" />
+      <CraftStage v-else class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <!-- 決まり事 (2026-10-07、2026-10-10 から画面に貼り付けずクラフトステージの一番下): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
           <footer data-rec-part="footer" class="-mx-4 mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--exile-color-border-subtle)] px-4 py-2 text-[10px] opacity-50">

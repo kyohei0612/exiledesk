@@ -611,7 +611,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
            2026-10-11 オーナー「枠の高さが違うのが気に食わん、カレンシーの方が高く感じる」) -->
       <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
-        <StageAimPanel v-if="!s.replay.value" data-rec-part="aim-panel" />
+        <!-- 今日のお題は「次の手で狙う」(確率の答え) を出さない (判断を競うので。仮) -->
+        <StageAimPanel v-if="!s.replay.value && !challenge" data-rec-part="aim-panel" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
         <section class="g-panel p-2">
           <p class="g-sec-head">
