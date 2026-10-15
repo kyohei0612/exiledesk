@@ -33,7 +33,9 @@ if (typeof document !== "undefined") document.documentElement.lang = lang.value;
 /** 画面の言葉: 日本語と英語を並べて書く */
 export const tr = (ja: string, en: string): string => (lang.value === "en" ? en : ja);
 /** 付いている MOD の文 (日本語 / 英語の両方を持っている物) */
-export const modText = (m: { textJa: string; textEn: string }): string => (lang.value === "en" && m.textEn ? m.textEn : m.textJa);
+/** クライアントの文の印 ([Resistances|Fire Resistance] → Fire Resistance、[Hit] → Hit) を外す。英語の MOD の文はクライアントの原文のままなので画面に出す前に */
+const plainEn = (t: string): string => t.replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
+export const modText = (m: { textJa: string; textEn: string }): string => (lang.value === "en" && m.textEn ? plainEn(m.textEn) : m.textJa);
 /** 英語名と日本語名を持つ物 (ユニーク・ルーン・暗黙の効果) */
 export const nameOf = (o: { en: string; ja: string }): string => (lang.value === "en" ? o.en : o.ja);
 /** アイテムのベース名 (base は英語の名前) */
