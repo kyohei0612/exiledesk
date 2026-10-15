@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>掲示板の決まり・削除の依頼 — ExileDesk</title>
+<!-- 掲示板は検索に載せない (2026-10-16 ロードマップ「AdSense の審査が終わるまでは掲示板に広告を置かず、検索にも載せない」)。広告の読み込みも置かない -->
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg: #0e0c09; --panel: #17130e; --line: #3a3024; --fg: #e8dfcf; --sub: #a99b84; --accent: #e0b062; --link: #f0c878; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.85 "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif; }
+  header { border-bottom: 1px solid var(--line); background: #0a0907; }
+  header .in, main, footer .in { max-width: 820px; margin: 0 auto; padding: 0 16px; }
+  header .in { display: flex; align-items: center; gap: 12px; height: 52px; flex-wrap: wrap; }
+  header a { color: var(--fg); text-decoration: none; font-weight: 700; letter-spacing: .04em; }
+  header nav { margin-left: auto; display: flex; gap: 14px; font-size: 13px; flex-wrap: wrap; }
+  header nav a { color: var(--sub); font-weight: 400; }
+  main { padding-top: 28px; padding-bottom: 48px; }
+  h1 { font-size: 24px; margin: 0 0 16px; color: var(--accent); }
+  h2 { font-size: 17px; margin: 30px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); color: var(--accent); }
+  ul { padding-left: 1.3em; margin: 6px 0 12px; }
+  li { margin: 2px 0; }
+  a { color: var(--link); }
+  .note { color: var(--sub); font-size: 13px; }
+  form { padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  label { display: block; margin: 10px 0 4px; font-size: 13px; color: var(--sub); }
+  input[type=text], textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #0a0907; color: var(--fg); font: inherit; }
+  textarea { min-height: 120px; resize: vertical; }
+  button { margin-top: 14px; padding: 8px 22px; border: 1px solid #8a6a32; border-radius: 6px; background: #2a1f12; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  #msg { margin-top: 12px; }
+  .en { margin-top: 48px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .en h2 { margin-top: 18px; }
+  footer { border-top: 1px solid var(--line); color: var(--sub); font-size: 12px; }
+  footer .in { padding-top: 14px; padding-bottom: 20px; }
+</style>
+</head>
+<body>
+<header><div class="in"><a href="/">ExileDesk</a><nav><a href="/">エミュレーター</a><a href="/contact">お問い合わせ</a><a href="/privacy">プライバシーポリシー</a></nav></div></header>
+<main>
+<h1>掲示板の決まり</h1>
+<p>ExileDesk の掲示板は、Path of Exile 2 のクラフトの相談・自慢・意見交換の場所です。ログインは要りません。名前を空けると「名無しのエグザイル」になります。</p>
+
+<h2>書かないでほしいこと</h2>
+<ul>
+  <li>人を傷つける言葉・差別・脅し・しつこい書き込み (荒らし)</li>
+  <li>個人情報 (自分や他人の本名・住所・メールアドレス・電話番号など)</li>
+  <li>リアルマネートレード (RMT)・代行・売り買いの勧誘、ほかのサイトへのリンク</li>
+  <li>性的な内容・法律に触れる内容</li>
+</ul>
+<p>決まりに合わない書き込みは、知らせなく消すことがあります。続く時は、その端末から書けなくします。</p>
+
+<h2>通報</h2>
+<p>書き込みの右の「通報」を押してください。何人かから通報があった書き込みは、自動で隠します。</p>
+
+<h2>当たりの速報</h2>
+<p>エミュレーターでとても珍しい MOD (T1) を引くと、名前を出さずに「誰かが ◯◯ に ◯◯ を引きました」とタイムラインに流れます。流したくない時は、掲示板の上の「自分の当たりを流す」を外してください (下の「この端末は記録しない」にしている時も流れません)。</p>
+
+<h2>書き込みの扱い</h2>
+<ul>
+  <li>書き込みは誰でも読めます。時刻や書いた人の印は画面に出しません。</li>
+  <li>荒らしの対策のため、サーバーには端末の番号 (使い方の記録と同じ乱数) と、IP アドレスから作った短い印 (元の IP には戻せない) を一緒に置きます。詳しくは <a href="/privacy">プライバシーポリシー</a>。</li>
+</ul>
+
+<h2 id="remove">消してほしい時</h2>
+<p>自分の書き込み、または自分に関わる書き込みを消してほしい時は、下のフォームからお送りください。書き込みの文 (一部でよい) と理由を書いてください。確かめて消します。</p>
+<form id="f">
+  <label for="post">消してほしい書き込みの文 (一部でよい)</label>
+  <textarea id="post" maxlength="1000" required></textarea>
+  <label for="why">理由</label>
+  <input id="why" type="text" maxlength="300" />
+  <label for="contact">返信先 (任意)</label>
+  <input id="contact" type="text" maxlength="200" placeholder="メールアドレス・X のアカウントなど" />
+  <input id="website" class="hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" />
+  <button id="send" type="submit">送信する</button>
+  <p id="msg" class="note" role="status"></p>
+</form>
+
+<section class="en" lang="en">
+  <h2 style="margin-top:0">Board rules (English)</h2>
+  <p>The ExileDesk board is a place to ask about, show off and discuss Path of Exile 2 crafting. No login is needed; if you leave the name empty you post as "Nameless Exile".</p>
+  <h2>Please don't post</h2>
+  <ul>
+    <li>Insults, discrimination, threats or spam</li>
+    <li>Personal information (real names, addresses, emails, phone numbers, etc.)</li>
+    <li>Real-money trading, services for sale, or links to other sites</li>
+    <li>Sexual or illegal content</li>
+  </ul>
+  <p>Posts that break these rules may be removed without notice, and repeat offenders may be blocked from posting.</p>
+  <h2>Reporting</h2>
+  <p>Press "Report" next to a post. Posts reported by several people are hidden automatically.</p>
+  <h2>Rare hits</h2>
+  <p>When you hit a very rare mod (T1) in the Emulator, an anonymous card ("Someone hit …") is posted to the timeline. To turn this off, untick "Share my rare hits" at the top of the board (nothing is posted while "Don't log this device" is on).</p>
+  <h2>Your data</h2>
+  <p>Posts are public. Times and author IDs are not shown. To fight spam, the server keeps a random device ID (the same one used for usage data) and a short hash made from your IP address (the IP itself is not stored). See the <a href="/privacy">Privacy Policy</a>.</p>
+  <h2>Removal requests</h2>
+  <p>To have a post removed, use the form above: paste (part of) the post and the reason. We will check and remove it.</p>
+</section>
+</main>
+<footer><div class="in">ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。 · <a href="/about">ExileDesk について</a> · <a href="/privacy">プライバシーポリシー</a></div></footer>
+<script>
+  // 送り先は要望・バグと同じ (server/live の POST /feedback)。頭に [掲示板の削除依頼] を付けて Discord で見分ける
+  const API = "https://exiledesk-live.exiledesk.workers.dev/feedback";
+  const f = document.getElementById("f"), msg = document.getElementById("msg"), btn = document.getElementById("send");
+  const en = (navigator.language || "").slice(0, 2) !== "ja";
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const post = document.getElementById("post").value.trim();
+    if (!post) return;
+    const why = document.getElementById("why").value.trim();
+    btn.disabled = true; msg.textContent = en ? "Sending…" : "送っています…";
+    try {
+      const text = "[掲示板の削除依頼]\n書き込み: " + post + (why ? "\n理由: " + why : "");
+      const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: "request", text, contact: document.getElementById("contact").value.trim(), website: document.getElementById("website").value, context: { page: "board-rules" } }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.error || String(r.status));
+      f.reset(); msg.textContent = en ? "Sent. Thank you." : "送信しました。確かめて対応します。";
+    } catch (err) {
+      msg.textContent = (en ? "Could not send (" : "送れませんでした (") + (err && err.message ? err.message : err) + (en ? "). Please try again later." : ")。時間をおいてもう一度お試しください。");
+    } finally { btn.disabled = false; }
+  });
+</script>
+</body>
+</html>

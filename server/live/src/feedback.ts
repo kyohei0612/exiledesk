@@ -67,7 +67,7 @@ export async function allowIp(kv: KVNamespace, ip: string, now = Date.now()): Pr
 /** 添付の「直前の流れ」(Web 版が付ける: 印の名前と何秒前か) を 1 行に */
 /** 流れの記録の名前 → 日本語 (2026-10-12 オーナー「普通に日本語で報告して欲しい」)。無い物はそのまま */
 const TRAIL_JA: Record<string, string> = {
-  open: "開いた", "mode:hand": "エミュレーターに切り替え", "mode:sim": "シミュレーターに切り替え",
+  open: "開いた", "mode:hand": "エミュレーターに切り替え", "mode:sim": "シミュレーターに切り替え", "mode:board": "掲示板を開いた",
   "hand:base": "ベースを選んだ", "hand:use": "最初の 1 手を打った",
   "sim:base": "ベースを選んだ (シミュレーター)", "sim:targets": "狙いを選んだ", "sim:order": "順番を決めた", "sim:pattern": "パターンを作った",
   "sim:run": "シミュレーションを回した", "sim:run:step": "1 手だけ回した", "sim:run:one": "1 本だけ回した", "sim:done": "シミュレーションが終わった",
