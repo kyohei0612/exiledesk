@@ -42,7 +42,7 @@ import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
-import { IMPLICIT_SET, implicitSetKey, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
+import { catalystSetKey, IMPLICIT_SET, implicitSetKey, isCatalystSet, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import ShelfButton from "./ShelfButton.vue";
@@ -268,6 +268,12 @@ function setQuality(n: number, tag?: string): void {
   const last = s.log.value[s.log.value.length - 1];
   if (last && isQualitySet(last.out.currency)) s.undo();
   s.use(qualitySetKey(n, keep));
+}
+/** カタリストの品質の欄 (ベースの品質とは別に持つグラスピングメイル)。続けて押した分は 1 手にまとめる (品質と同じ) */
+function setCatalyst(n: number, tag: string): void {
+  const last = s.log.value[s.log.value.length - 1];
+  if (last && isCatalystSet(last.out.currency)) s.undo();
+  s.use(catalystSetKey(n, tag));
 }
 /** 暗黙の値を手で上下 (カードの ▲▼)。同じ行を続けて変えた分は 1 手にまとめる (品質と同じ) */
 function setImplicit(line: number, values: number[]): void {
@@ -547,7 +553,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <!-- カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
         <div class="-mb-6 flex w-full max-w-[480px] items-start gap-2">
           <button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button>
-          <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" />
+          <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" @catalyst="setCatalyst" />
         </div>
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard

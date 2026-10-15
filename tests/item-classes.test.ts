@@ -86,9 +86,11 @@ describe("部位の種別 (クライアントの表)", () => {
     }
   });
 
-  it("触媒: 普通の物は指輪かアミュレット、精製された物はジュエル", () => {
+  it("触媒: 普通の物は指輪かアミュレット (とグラスピングメイル)、精製された物はジュエル", () => {
     for (const cat of SAMPLE.keys()) {
-      expect(ok(applyOther(data, item(cat), "catalyst_life", () => 0)), `catalyst ${cat}`).toBe(has(["Ring", "Amulet"])(cat));
+      // グラスピングメイルの行は鎧でもカタリストを使える (poe2db「Catalysts can be applied to this item」、2026-10-16 要望 a286ced8)
+      const grasping = /^Grasping Mail$|Grasping Mail$/.test(SAMPLE.get(cat)!);
+      expect(ok(applyOther(data, item(cat), "catalyst_life", () => 0)), `catalyst ${cat}`).toBe(has(["Ring", "Amulet"])(cat) || grasping);
       expect(ok(applyOther(data, item(cat), "jcatalyst_life", () => 0)), `jcatalyst ${cat}`).toBe(has(["Jewel"])(cat));
     }
   });

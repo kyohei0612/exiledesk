@@ -57,7 +57,7 @@ function outcomeOf(data: PatchData, item: StageItem, key: string, omens: string[
   const it = r.item;
   const ms = [...it.prefixes, ...it.suffixes].map((m) => `${m.side}:${m.modId}#${m.tierIndex}:${JSON.stringify(m.values ?? null)}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}${m.unrevealed ? JSON.stringify(m.unrevealed) : ""}`);
   const offers = kindOf(key) === "desecrate" && unrevealedOf(it) ? (({ first, reroll }) => [...first, ...reroll].map((m) => `${m.modId}#${m.tierIndex}`))(revealOffers(data, it, rng)) : [];
-  return JSON.stringify([it.rarity, it.quality ?? 0, it.qualityTag ?? null, !!it.corrupted, ms, offers]);
+  return JSON.stringify([it.rarity, it.quality ?? 0, it.qualityTag ?? null, it.catalystQuality ?? 0, !!it.corrupted, ms, offers]);
 }
 
 /**

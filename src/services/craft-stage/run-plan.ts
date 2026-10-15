@@ -100,7 +100,7 @@ export function outItem(it: StageItem, data?: PatchData): OutItem {
     ...({ properties: propRows(it, true).map((r) => ({ key: r.key, label: r.label, value: r.value, up: r.up })) } as object),
     // 要望 ⑰-1: ソケットにはめたルーン (はめた順)
     ...({ augments: (it.augments ?? []).map(outAug) } as object),
-    ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, enchant2: it.enchant2 ? { id: it.enchant2.id, text_ja: it.enchant2.textJa, text_en: it.enchant2.textEn } : null, sanctified: !!it.sanctified } as object),
+    ...({ quality_tag: it.qualityTag ?? null, ...(it.catalystQuality ? { catalyst_quality: it.catalystQuality } : {}), sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, enchant2: it.enchant2 ? { id: it.enchant2.id, text_ja: it.enchant2.textJa, text_en: it.enchant2.textEn } : null, sanctified: !!it.sanctified } as object),
     prefixes: it.prefixes.map((m) => outModIn(it, m, data)) as OutItem["prefixes"],
     suffixes: it.suffixes.map((m) => outModIn(it, m, data)) as OutItem["suffixes"],
   };
@@ -131,6 +131,7 @@ export function stepJa(currency: string, item: StageItem): string {
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
   if (isUnsocket(currency)) return `ルーンを外す (${currency.slice(UNSOCKET_PREFIX.length)} 番目のソケット)`;
   if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `品質を ${n}% に${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
+  if (currency.startsWith("cqset:")) { const [n, tag] = currency.slice(6).split(":"); return `カタリストの品質を ${n}% に (${qualityLabelOf(tag)})`; }
   if (currency.startsWith("qcap:")) return `品質の上限を ${currency.slice(5)}% に`;
   if (currency.startsWith("iset:")) return `暗黙 MOD の値を ${currency.split(":")[2]} に`;
   if (isEmotion(currency)) return jewelEmotionJa(emotionNameOf(currency)) ?? emotionNameOf(currency);
@@ -155,6 +156,7 @@ export function stepEn(currency: string): string | null {
   if (currency === "salvage") return "Salvage";
   if (isUnsocket(currency)) return `Remove rune (socket ${currency.slice(UNSOCKET_PREFIX.length)})`;
   if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `Set quality to ${n}%${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
+  if (currency.startsWith("cqset:")) { const [n, tag] = currency.slice(6).split(":"); return `Set Catalyst quality to ${n}% (${qualityLabelOf(tag)})`; }
   if (currency.startsWith("qcap:")) return `Set max quality to ${currency.slice(5)}%`;
   if (currency.startsWith("iset:")) return `Set implicit value to ${currency.split(":")[2]}`;
   const rk = isRune(currency) ? parseRuneKey(currency) : null;
