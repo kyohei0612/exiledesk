@@ -1,7 +1,7 @@
 /**
  * 要望・バグの受け取り (2026-10-07 オーナー「要望バグの送信もできるようにしたい」)。
  *   POST /feedback  { kind: "request" | "bug", text, contact?, context?, website? (bot よけ、空でないと捨てる) }
- *   GET  /feedback.json?key=<REFRESH_KEY>  … 新しい順の一覧 (オーナー用)
+ *   GET  /feedback.json (ヘッダー x-exiledesk-key: <REFRESH_KEY>)  … 新しい順の一覧 (オーナー用)
  * KV に 90 日残し、DISCORD_WEBHOOK があれば Discord にも流す。同じ IP から 1 時間 10 件まで
  */
 import type { Fetch } from "./types";
@@ -101,7 +101,7 @@ export async function getFeedback(kv: KVNamespace, id: string): Promise<Feedback
 
 /**
  * 要望・バグへの返事 (2026-10-11 オーナー「直しましたの返信、次に開いた時に教えたい」)。キーは fbr:<要望の id>、180 日残す。
- * 書くのはオーナー側だけ (POST /feedback/reply?key=)。読むのは送った本人の画面で、自分の覚えている id だけを聞く (GET /feedback/replies?ids=)
+ * 書くのはオーナー側だけ (POST /feedback/reply + ヘッダー x-exiledesk-key)。読むのは送った本人の画面で、自分の覚えている id だけを聞く (GET /feedback/replies?ids=)
  */
 /** askImage: 「画像を下さい」(返事の窓に画像を送るボタンを出す。2026-10-14) */
 export interface FeedbackReply { text: string; en?: string; version?: string; askImage?: boolean; at: string }

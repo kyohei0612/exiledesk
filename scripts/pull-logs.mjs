@@ -18,7 +18,7 @@ const days = process.argv.slice(2).length ? process.argv.slice(2) : [yesterday];
 const out = resolve(ROOT, "data-cache/logs");
 mkdirSync(out, { recursive: true });
 for (const day of days) {
-  const r = await fetch(`${BASE}/logs/day?day=${day}&key=${encodeURIComponent(KEY)}`);
+  const r = await fetch(`${BASE}/logs/day?day=${day}`, { headers: { "x-exiledesk-key": KEY } });
   if (!r.ok) { console.error(day, r.status, await r.text()); continue; }
   const text = await r.text();
   writeFileSync(resolve(out, `${day}.jsonl`), text);
