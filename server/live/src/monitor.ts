@@ -152,6 +152,8 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     sec("どこから", [
       // 1 行ずつ (2026-10-10 オーナー「訪問リストは改行してリストで表示」)
       ...refs.slice(0, 6).map(([k, v]) => `${fromJa(k)} ${v} 人`),
+      // 流入元の印 (utm、宣伝のリンクに付けた物。source / medium / campaign)
+      sum.utms?.length ? `宣伝の印: ${sum.utms.map(([k, v]) => `${k.split("|").filter(Boolean).join(" / ")} ${v} 人`).join(" · ")}` : null,
       sum.peakHours?.length ? `人が多かった時間: ${sum.peakHours.map(([h, v]) => `${h} 時台 ${v} 回`).join(" · ")}` : null,
       `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
     ]);

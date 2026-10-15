@@ -109,6 +109,12 @@ export function flush(): void {
 export function startTracking(): void {
   (globalThis as { __exiledeskTrack?: (n: string, x?: string) => void }).__exiledeskTrack = track;
   trackOnce("open");
+  // 流入元の印 (?utm_source=reddit&utm_medium=post&utm_campaign=…、英語の宣伝の効き目を見る。2026-10-16)。訪問ごとに 1 回、source|medium|campaign
+  try {
+    const q = new URLSearchParams(location.search);
+    const utm = ["utm_source", "utm_medium", "utm_campaign"].map((k) => (q.get(k) ?? "").toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 30));
+    if (utm[0]) track("utm", utm.join("|"));
+  } catch { /* 無くてよい */ }
   // 画面の言語 (英語版の需要を見る。訪問ごとに 1 回、切り替えたらその言語も 1 回。2026-10-12)
   watch(lang, (l) => trackOnce(`lang:${l}`), { immediate: true });
   const s = craftStage;

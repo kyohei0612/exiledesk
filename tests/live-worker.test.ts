@@ -251,6 +251,10 @@ describe("操作の印と日報 (events / monitor)", () => {
     expect(full).toContain("・半分の人が 6 分以上使った");
     expect(full).toContain("・URL から直接開いた人 15 人\n・youtube.com から来た人 20 人\n・X から来た人 5 人");
     expect(full).toContain("・PC 90% / スマホ 10% · ほぼ日本");
+    expect(full).not.toContain("宣伝の印");
+    // 流入元の印 (utm、2026-10-16)
+    const withUtm = reportText("10/6", { sessions: 42, users: 40, newSessions: 30, bounce: 0.48, medianMinutes: 6.2, byEvent, refs: [["direct", 15]], devices: [["pc", 38]], countries: [["JP", 41]], utms: [["reddit|post|launch", 7], ["twitch||", 2]], errors: [], wau: 120, warnings: [] }, { visits: 40, pageViews: 60, liveRequests: 1200, liveErrors: 0 }, { requests: 0, bugs: 0 }, null, []);
+    expect(withUtm).toContain("・宣伝の印: reddit / post / launch 7 人 · twitch 2 人");
     expect(full).toContain("・シミュレーションを開いた 25");
     expect(full).not.toContain("レシピを保存した");
     // 手順の共有 (2026-10-12、URL の # で渡すのでサーバーは使わず、印だけで数える)

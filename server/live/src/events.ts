@@ -88,6 +88,8 @@ export interface Summary {
   peakHours?: Array<[number, number]>;
   byEvent: Map<string, { sessions: number; users: number; count: number }>;
   refs: Array<[string, number]>; devices: Array<[string, number]>; countries: Array<[string, number]>;
+  /** 流入元の印 (utm の source|medium|campaign、人の数の多い順に 6 つ。2026-10-16) */
+  utms?: Array<[string, number]>;
   errors: Array<[string, number]>;
   /** 中身の見えないエラー (Script error. @:0)。X などのアプリ内ブラウザが足したスクリプトの物で、こちらでは直せない (2026-10-10) */
   extErrors: { count: number; sessions: number } | null;
@@ -111,7 +113,7 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   const open = out.byEvent.get("open");
   out.sessions = open?.sessions ?? 0; out.users = open?.users ?? 0;
   for (const r of await q<{ f: string; s: number }>(`SELECT blob7 AS f, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY f`)) if (r.f === "1") out.newSessions = Number(r.s);
-  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'stay', 'base', 'cur', 'steps', 'error') AND blob1 NOT LIKE 'lang:%'`);
+  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'stay', 'base', 'cur', 'steps', 'error', 'utm') AND blob1 NOT LIKE 'lang:%'`);
   if (out.sessions && engaged[0]) out.bounce = Math.max(0, 1 - Number(engaged[0].s) / out.sessions);
   // 滞在の中央値 (Analytics Engine の SQL は quantiles が無いので quantileWeighted。それも無ければ平均)
   // 滞在 = 着いた時刻の差と「開いてから何秒目か」(double2) の大きい方 (まとめて送ると着いた時刻は全部同じになる。2026-10-10)。
@@ -162,6 +164,7 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   const top = async (col: string, by = "blob2"): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT ${by}) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
   // 端末・国も人で数える (2026-10-14 オーナー「これは正しい数字か」: 端末だけ訪問の回数で、滞在の行 (人) と混ざって読みにくかった)
   out.refs = await top("blob5", "blob3"); out.devices = await top("blob4", "blob3"); out.countries = await top("blob6", "blob3");
+  out.utms = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob3) AS s FROM ${D} WHERE ${w} AND blob1 = 'utm' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r): [string, number] => [r.k, Number(r.s)]);
   // よその物: 中身の見えないエラー・ext: の印・ウォレット・ユーザースクリプト (2026-10-11)・拡張機能が差し込んだスクリプト (injectedScript、2026-10-14)
   const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%' OR blob8 LIKE '%userscript%' OR blob8 LIKE '%.user.js%' OR blob8 LIKE '%response.msg%' OR blob8 LIKE '%injectedScr%')`;
   out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND NOT (${EXT}) GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
