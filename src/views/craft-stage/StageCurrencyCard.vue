@@ -12,7 +12,7 @@ import GameItemCard from "../../components/decor/GameItemCard.vue";
 import RichText from "../../components/decor/RichText.vue";
 import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { enOf } from "../../state/craft-stage-shelf";
-import { specialEssence, stageAdds, stageHelp } from "../../state/craft-stage-help";
+import { specialEssence, stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
@@ -28,6 +28,8 @@ const official = computed(() => hover.value?.e ?? []);
  * 2026-10-05 オーナー「違う武器とかでも付けれたり他のでも付けれるから、その説明は欲しい。分かりやすく教えて欲しいカード」
  */
 const others = computed(() => specialEssence(props.k, craftStage.item.value)?.groups ?? (hover.value?.g ?? []).map((g) => ({ h: plain(g.h).replace(/に付く$/, ""), l: g.l.map(plain) })));
+/** 上級・完全: 付く MOD の MOD レベルの下限 (カードの頭に大きく。要望 9c8a5f99) */
+const floor = computed(() => (props.omen ? null : stageFloor(props.k)));
 const help = computed(() => stageHelp(props.k, craftStage.data.value, craftStage.item.value));
 /** 付く MOD (エッセンス・ルーン等)。アイコンの下に色を変えて箇条書き (2026-10-05 オーナー「説明欄が見づらいから、特定の MOD が付く奴はそこだけ分かりやすい色に」) */
 const adds = computed(() => (props.omen ? null : stageAdds(props.k, craftStage.data.value, craftStage.item.value)));
@@ -42,6 +44,9 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
         <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-12 w-12 shrink-0 object-contain" />
         <p v-if="priceOf(k)" class="g-dim text-[12px]">{{ tr("相場", "Market price") }} <span class="g-white">{{ displayCurrency.money(priceOf(k)) }}</span></p>
       </div>
+      <p v-if="floor" data-floor class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">
+        {{ tr(`MOD レベル ${floor} 以上だけ付く`, `Only mod level ${floor}+ tiers`) }}
+      </p>
       <div v-if="adds" class="mt-2 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
         <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
         <p v-for="(l, i) in adds.lines" :key="'a' + i" class="flex gap-1.5 text-[13px] font-semibold text-emerald-200">

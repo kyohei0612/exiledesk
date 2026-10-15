@@ -37,6 +37,20 @@ const FLOOR = (kind: "transmute" | "regal", s: string): string => {
   const tail = "(上の段が無い系統は一番上の段。アイテムレベルが下限未満の品には使えない)";
   return s === "greater" ? `上級: 付く MOD は MOD レベル ${f.greater} 以上のティアだけ ${tail}` : s === "perfect" ? `完全: 付く MOD は MOD レベル ${f.perfect} 以上のティアだけ ${tail}` : "";
 };
+/** カオスの上級 / 完全の下限 (足す MOD の MOD レベル。説明の行と同じ数) */
+const CHAOS_FLOOR = { greater: 35, perfect: 50 } as const;
+/**
+ * 上級・完全のカレンシーで付く MOD の MOD レベルの下限 (それ以外は null)。カードの頭に大きく出す
+ * (2026-10-16 要望 9c8a5f99「付く下限の MOD レベルが小さく表示してるから一番最初の説明文に大きく分かりやすく。上級・完全とつくやつ全て」)
+ */
+export function stageFloor(key: string): number | null {
+  const s = strengthOf(key);
+  if (s !== "greater" && s !== "perfect") return null;
+  const kind = key.replace(/_(greater|perfect)$/, "");
+  if (kind === "chaos") return CHAOS_FLOOR[s];
+  const k = kind === "augment" ? "augment" : kind === "transmute" ? "transmute" : kind === "regal" ? "regal" : kind === "exalt" ? "exalt" : null;
+  return k ? CURRENCY_FLOOR[k][s] : null;
+}
 const strengthOf = (key: string): string => (key.endsWith("_greater") ? "greater" : key.endsWith("_perfect") ? "perfect" : "base");
 const ADD = "付く MOD は、その側の普通の MOD の置き場から、付いている系統を除き、アイテムレベル以下のティアの重みで引く (計算機と同じ)";
 const add = (): string => tr(ADD, "New mods are rolled by weight from that side's normal mod pool, excluding groups already on the item and tiers above the Item Level");
@@ -214,7 +228,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
         tr("**レア** の MOD を 1 つ消して、1 つ足す", "Removes 1 mod from a **Rare** and adds 1"),
         tr("消すのはフラクチャー (固定) 以外から等しく 1 つ", "The removed mod is picked equally from non-Fractured mods"),
         add(),
-        s === "greater" ? tr("上級: 足す MOD は MOD レベル 35 以上のティアだけ", "Greater: added mod only from tiers with mod level 35+") : s === "perfect" ? tr("完全: 足す MOD は MOD レベル 50 以上のティアだけ", "Perfect: added mod only from tiers with mod level 50+") : "",
+        s === "greater" ? tr(`上級: 足す MOD は MOD レベル ${CHAOS_FLOOR.greater} 以上のティアだけ`, `Greater: added mod only from tiers with mod level ${CHAOS_FLOOR.greater}+`) : s === "perfect" ? tr(`完全: 足す MOD は MOD レベル ${CHAOS_FLOOR.perfect} 以上のティアだけ`, `Perfect: added mod only from tiers with mod level ${CHAOS_FLOOR.perfect}+`) : "",
         tr("お告げ: 削減 (一番低い MOD を消す) / 左右の抹消 (消す側)", "Omens: Whittling (removes the lowest mod) / Sinistral / Dextral Erasure (side)"),
       ].filter(Boolean);
     case "annul":
