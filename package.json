@@ -1,7 +1,7 @@
 {
   "name": "exiledesk",
   "private": true,
-  "version": "0.1.507",
+  "version": "0.1.515",
   "type": "module",
   "scripts": {
     "subs": "node scripts/yt-subs.mjs",
@@ -39,18 +39,18 @@
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-process": "^2",
     "@tauri-apps/plugin-updater": "^2",
-    "vue": "^3.5.13"
+    "vue": "^3.5.44"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.2.4",
+    "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/cli": "^2",
     "@vitejs/plugin-vue": "^5.2.1",
     "pathofexile-dat": "^15.2.0",
-    "tailwindcss": "^4.2.4",
+    "tailwindcss": "^4.3.3",
     "typescript": "~5.6.2",
-    "vite": "^6.0.3",
+    "vite": "^6.4.4",
     "vitest": "^3.2.7",
-    "vue-tsc": "^2.1.10"
+    "vue-tsc": "^2.2.12"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

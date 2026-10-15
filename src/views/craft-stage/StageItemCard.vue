@@ -109,7 +109,7 @@ const chances = computed(() => {
 const chanceOf = (m: { modId: string }): number | null => chances.value.get(m.modId) ?? null;
 // 暗黙の MOD: 振った値・中身のタグ・カタリストの品質で伸びた値 (stage-props の implicitRows、2026-10-12)
 const implicits = computed(() => implicitRows(props.item).map((r) => ({ ...r, tags: props.showTags ? shownTags(r.tags) : [] })));
-const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
+const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId && !!a.fractured === !!m.fractured);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
 /** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
@@ -123,13 +123,17 @@ function look(m: StageMod): { cls: string; tag: string } {
   // 札は「ルーン」だけ (POE2Tube 要望 ㉚-3: 動画では「データサイトでは特殊 MOD の出やすさは全部同じ = 完全にランダムな抽選」と説明する。
   // 重みが仮定なのは結果 JSON の assumed_weight に残る)
   if (m.rune) return { cls: "text-rarity-magic", tag: tr("ルーン", "Rune") };
-  if (m.convertedFrom) return { cls: "text-rarity-magic", tag: tr("アルダー", "Aldur") };
+  if (m.convertedFrom && m.convertedBy !== "flux") return { cls: "text-rarity-magic", tag: tr("アルダー", "Aldur") };
   return { cls: "text-rarity-magic", tag: "" };
 }
 /** ユニークの効果 (poe2db のページから。値はユニークごとに決まった 1 つ。ページの無いユニークは空) */
 const uLines = computed(() => (props.item.rarity === "unique" && props.item.unique ? rollLines(props.item, uniqueLines(props.item.unique.en), props.item.unique.en, props.item.uniqueScale) : []));
-const rows = computed(() =>
-  [...props.item.prefixes.map((m) => ({ m, side: "プレ" })), ...props.item.suffixes.map((m) => ({ m, side: "サフィ" }))].map((r) => {
+const rows = computed(() => {
+  // 行のキー: フラックスで変えた MOD はフラクチャーの物と同じ modId になりうる (火耐性 F + 冷気 → 火)。同じキーの行は Vue が取り違えて
+  // 消えずに残り、「アルダーの MOD が増える」に見えていた (要望 28a9398d)。同じ modId は出てきた順の番号で分ける
+  const seen = new Map<string, number>();
+  const keyOf = (m: StageMod): string => { const n = seen.get(m.modId) ?? 0; seen.set(m.modId, n + 1); return n ? `${m.modId}~${n}` : m.modId; };
+  return [...props.item.prefixes.map((m) => ({ m, side: "プレ", key: keyOf(m) })), ...props.item.suffixes.map((m) => ({ m, side: "サフィ", key: keyOf(m) }))].map((r) => {
     // カタリストの品質で伸びた数値 (伸びない MOD は null)
     const b = boostedMod(props.item, r.m, craftStage.data.value ?? undefined);
     // 画面用のタグ (クライアントの implicit_tags) を先に。r.m.tags は確率用 (カタリスト等) なので中身のタグが無い MOD がある (2026-10-05)
@@ -139,8 +143,8 @@ const rows = computed(() =>
     const st = (r.m as { stats?: string[] }).stats?.[0] ?? (em?.tiers?.[0] as { stats?: string[] } | undefined)?.stats?.[0];
     const ord = st != null ? (STAT_ORDER as Record<string, number>)[st] ?? 1e9 : 1e9;
     return { ...r, text: b ? modText(b) : modText(r.m), boosted: !!b, tags, ord };
-  }).sort((x, y) => x.ord - y.ord),
-);
+  }).sort((x, y) => x.ord - y.ord);
+});
 </script>
 
 <template>
@@ -221,7 +225,7 @@ const rows = computed(() =>
           @click="!holding && !r.m.unrevealed && (($event as MouseEvent).stopPropagation(), emit('jump', r.m.modId))"
           @mouseenter="hover = r.m.unrevealed ? null : 'mod'"
           @mouseleave="hover = null"
-          :key="isNew(r.m) ? `${r.m.modId}#${flashKey}` : r.m.modId"
+          :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
           :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で消える候補 (${doomed!.length} つのうち 1 つ)`, `May be removed by this use (1 of ${doomed!.length})`) : tr('この手で消える', 'Removed by this use')) : removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
@@ -250,7 +254,7 @@ const rows = computed(() =>
       <!-- ページの無いユニークは名前だけ (撮影用は注記も出さない) -->
       <p v-if="!rows.length && !uLines.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category) && !(compact && item.rarity === 'unique')" class="py-1 text-white/30">{{ item.rarity === "unique" ? (compact ? "" : tr("(このユニークの効果はデータに無い)", "(no data for this unique's effects)")) : tr("MOD なし", "No mods") }}</p>
       <!-- 消えた MOD (直前の手) -->
-      <p v-for="m in removed" :key="'x' + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ modText(m) }}</p>
+      <p v-for="(m, i) in removed" :key="'x' + i + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ modText(m) }}</p>
       <p v-if="item.corrupted" class="pt-1 font-bold text-[#d20000]">{{ tr("コラプト", "Corrupted") }}</p>
       <p v-if="item.sanctified" class="pt-1 font-bold text-amber-200">{{ tr("聖別", "Sanctified") }}</p>
       <!-- 2026-09-29 に足したカレンシーの印 (apply-extra.ts) -->

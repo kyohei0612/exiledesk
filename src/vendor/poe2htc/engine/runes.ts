@@ -1,4 +1,5 @@
 import type { ItemBase, ItemLimits } from './types.ts';
+import { categoriesIn } from '../../../services/mods/item-classes';
 import { DEFAULT_LIMITS } from './item.ts';
 
 /**
@@ -47,10 +48,8 @@ export interface Rune {
  * "Martial Or Caster Weapon" as this data spells it. Foci, Quivers, Bucklers and Shields are
  * off-hands rather than weapons and are not in it.
  */
-const WEAPONS = [
-  'Wands', 'Sceptres', 'Staves', 'Bows', 'Crossbows', 'Quarterstaves', 'Spears',
-  'OneHand_Maces', 'TwoHand_Maces',
-] as const;
+// 武器の部位はクライアントの表から (services/mods/item-classes.ts、2026-10-13 総点検: 前の一覧はタリスマンが漏れていた)
+const WEAPONS: readonly string[] = categoriesIn('weapon');
 
 export const RUNES: readonly Rune[] = [
   { id: 'astrids-creativity', name: 'Astrid’s Creativity', categories: [], effect: { kind: 'crafted', plus: 1 } },

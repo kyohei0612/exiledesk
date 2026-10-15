@@ -18,20 +18,26 @@ import type { StageApply, StageItem, StageMod } from "./types";
 import { tr } from "../../i18n/lang";
 import { htcBaseInfo } from "../htc/patch";
 import { hasImplicitRange } from "./roll-text";
+import { inGroup } from "../mods/item-classes";
 
 export const OTHER_KINDS: readonly string[] = ["divine", "fracture", "artificer"];
 const FRACTURE_NEEDS = 4;
-// ジュエルもカタリストで上がる (2026-10-12 オーナー「ジュエルにもカタリストであがるからね、タグも存在する」。poe2db のジュエルの MOD に Crafting Tag)
-const CATALYST_CLASSES = ["Rings", "Amulets", "Jewels"];
+/**
+ * カタリスト: 普通の物 (catalyst_<タグ>) は指輪・アミュレット、精製された物 (jcatalyst_<タグ>) はジュエル (説明文「on a ring or amulet」「on a jewel」。
+ * 2026-10-13 総点検: 前は普通の物をジュエルにも使えていた。poe2db の精製された物は jewel_catalyst)
+ */
+export const isCatalystKey = (key: string): boolean => key.startsWith("catalyst_") || key.startsWith("jcatalyst_");
 
 /**
  * oneCatalyst = 手順 (craft-stage-plan) の再生: カタリストは 1 手 = 1 個 (品質 +QUALITY_PER_CATALYST)。上限まで打つ時は手順の times で
  * (2026-10-06 POE2Tube 要望 ㉜ の 2「動画で 1 個で上限までに見えてしまう」)。手で打つ画面は今まで通り 1 手で上限まで
  */
 export function applyOther(data: PatchData, item: StageItem, currency: string, rng: () => number, oneCatalyst = false): StageApply {
-  if (currency.startsWith("catalyst_")) {
-    if (!CATALYST_CLASSES.includes(item.cls.category)) return skip(item, tr("カタリストは指輪・アミュレット・ジュエルだけ", "Catalysts: Rings, Amulets and Jewels only"));
-    const tag = currency.slice("catalyst_".length);
+  if (isCatalystKey(currency)) {
+    const jewel = currency.startsWith("jcatalyst_");
+    if (jewel && !inGroup(item.cls.category, "jewel")) return skip(item, tr("精製されたカタリストはジュエルだけ", "Refined Catalysts: Jewels only"));
+    if (!jewel && !inGroup(item.cls.category, "ringAmulet")) return skip(item, tr("カタリストは指輪・アミュレットだけ (ジュエルは精製されたカタリスト)", "Catalysts: Rings and Amulets only (Jewels use Refined Catalysts)"));
+    const tag = currency.slice(currency.indexOf("_") + 1);
     // ブリーチのエッセンスの「品質の最大値 +20%」も足す (要望 ㉔-3)
     const max = maxQualityOf(item);
     const base = item.qualityTag === tag ? item.quality : 0;

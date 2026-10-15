@@ -16,7 +16,7 @@ import SupportDialog from "../components/SupportDialog.vue";
 import HoverStack from "../components/decor/HoverStack.vue";
 import { SUPPORT_LINKS, supportOpen } from "../state/support";
 import { changelogNew, changelogOpen, initChangelog } from "../state/changelog";
-import { checkReplies } from "../state/feedback-replies";
+import { checkReplies, imageAskFor } from "../state/feedback-replies";
 import { REC } from "../utils/rec-mode";
 import { forgetResult } from "../utils/no-log";
 import MarketNotice from "./MarketNotice.vue";
@@ -130,7 +130,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <HoverStack />
     <ChangelogDialog />
     <SupportDialog />
-    <FeedbackDialog :open="feedbackOpen" @close="feedbackOpen = false" />
+    <FeedbackDialog :open="feedbackOpen || !!imageAskFor" :for-id="feedbackOpen ? null : imageAskFor" @close="feedbackOpen = false; imageAskFor = null" />
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
       <CraftStage class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">

@@ -7,7 +7,7 @@
  *   ヴァールと聖別 → [[apply-vaal.ts]]
  * 規則は計算機 (sim-route-helpers.ts の roll / usable / apply、エンジンの probability.ts) と同じ:
  *   - 足す MOD は、その側の普通の MOD の置き場から、**付いている系統を除き**、アイテムレベル以下 (上級・完全は段の下限以上) の段の重みで引く
- *   - 上級・完全の段の下限はエンジンの CURRENCY_FLOOR (変成・増強 55 / 70、王者・高貴 35 / 50)。カオスは計算機と同じ 35 / 50
+ *   - 上級・完全の段の下限はエンジンの CURRENCY_FLOOR (変成・増強 44 / 70、王者・高貴 35 / 50)。カオスも 35 / 50 (どれも poe2db の Minimum Modifier Level で確認、2026-10-14)
  *   - 消す (カオス・消去) のは固定済み (フラクチャー) 以外から等しく 1 つ
  * お告げは持っている物を渡し、その手に関係する物だけ食う (omensUsed)。
  */
@@ -16,6 +16,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
 import { boostedBy } from "../htc/quality";
+import { inAny, inGroup, type ItemGroup } from "../mods/item-classes";
 import { addForced, addOne, allMods, candidates, maxQualityOf, removeForced, removeOne, room, SIDES, skip, without, type Candidate, type Force, type PoolOpts } from "./stage-core";
 import { applyEssence } from "./apply-essence";
 import { applyForce, isForce } from "./apply-force";
@@ -29,9 +30,12 @@ export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET
  * 2026-10-10 オーナー「上限を固定値にせず合計で伸びるように、マックス値を設定できるだけで、これ以上つけれないってしないで」
  */
 export const INFUSER_OVER = 10;
-const INFUSABLE = /^(Rings|Amulets|Body_Armours|Helmets|Gloves|Boots|Shields|Bucklers|Foci|OneHand_Maces|TwoHand_Maces|Spears|Quarterstaves|Bows|Crossbows|Talismans)/;
+/** インフューザーがある部位 (指輪・アミュレット・防具・マーシャル武器・ワンド・スタッフ・セプター)。前の一覧はキャスターが漏れていた (2026-10-13 総点検) */
+const INFUSABLE: readonly ItemGroup[] = ["ringAmulet", "armour", "martial", "caster"];
+/** インフューザーを棚に出しているか (2026-10-09 にヴァールの道具と一緒に外した)。外している間は「今の最大」に +10 を足さない (2026-10-13 オーナー「インフューザー非表示じゃなかったっけ」) */
+export const INFUSERS_ON_SHELF = false;
 export function qualityFieldMax(item: StageItem): number {
-  return maxQualityOf(item) + (INFUSABLE.test(item.cls.category) ? INFUSER_OVER : 0);
+  return maxQualityOf(item) + (INFUSERS_ON_SHELF && inAny(item.cls.category, INFUSABLE) ? INFUSER_OVER : 0);
 }
 /** 暗黙の MOD の値を手で決める手 (`iset:0:5` = 1 行目を 5、範囲が 2 つなら `iset:0:2,4`)。暗黙の行の上下のボタン (2026-10-12 オーナー「暗黙はティアとかないから上下できるボタン」)。費用 0 */
 export const IMPLICIT_SET = "iset:";
@@ -40,7 +44,7 @@ export const implicitSetKey = (line: number, values: readonly number[]): string 
  * ジュエルはアイテムレベルを見ない (MOD は全部レベル 1・重みは全部同じで、画面にもアイテムレベルを出さない。2026-10-12 オーナー
  * 「ジュエルにアイテムレベルって意味あるんか」)。カレンシー・骨のアイテムレベルの制限も掛けない
  */
-export const noIlvl = (item: StageItem): boolean => item.cls.category === "Jewels";
+export const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel");
 /** 品質の上限を手で決める手 (`qcap:40`)。品質の帯のプルダウン (2026-10-10 オーナー「エッセンス打つのが面倒な人はプルダウンで上限上げてね」) */
 export const QUALITY_CAP = "qcap:";
 export const qualityCapKey = (n: number): string => `${QUALITY_CAP}${n}`;
@@ -86,7 +90,7 @@ export function kindOf(currency: string): string {
   if (currency.startsWith("essence:")) return currency === "essence:breach" || currency.startsWith("essence:perfect:") ? "essence_perfect" : "essence";
   if (currency.startsWith("desecrate")) return "desecrate";
   if (currency.startsWith("reveal")) return "reveal";
-  if (currency.startsWith("catalyst_")) return "catalyst";
+  if (currency.startsWith("catalyst_") || currency.startsWith("jcatalyst_")) return "catalyst";
   if (isEmotion(currency)) return "emotion";
   return parseKey(currency).kind;
 }
@@ -232,7 +236,6 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   const floor = floorOf(kind, strength);
   // 用語集 BetterCurrencyMinimumLevel「最低 MOD レベルのあるカレンシーは、アイテムレベルがそれより低い品には使えない」(要望 ㉝ の 3)
   if (floor > 0 && item.itemLevel < floor && !noIlvl(item)) return skip(item, tr(`アイテムレベルが ${floor} 未満には使えない`, `Requires Item Level ${floor}+`));
-  const count = allMods(item).length;
   const add = (it: StageItem, n: number, pick: (k: number, cur: StageItem) => readonly StageSide[] = () => SIDES, boost?: PoolOpts["boost"]): StageApply => {
     let cur = it;
     const added: StageMod[] = [];
@@ -258,12 +261,17 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
     return added.length ? { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}) } : skip(item, tr("付けられる MOD が無い", "No mod can be added"));
   };
   switch (kind) {
-    case "transmute":
+    case "transmute": {
       if (item.rarity !== "normal") return skip(item, tr("ノーマルのアイテムにだけ使える", "Normal items only"));
-      return add({ ...item, rarity: "magic" }, 1);
+      // マジックの枠が 0 のベース (不在のアミュレット = プレ -1 / サフィ -1) は MOD 無しのマジックになる (ゲームで確認、要望 19c7d2de)
+      const magic = { ...item, rarity: "magic" as const };
+      if (!SIDES.some((sd) => room(magic, sd))) return { applied: true, item: magic, added: [], removed: [] };
+      return add(magic, 1);
+    }
     case "augment":
       if (item.rarity !== "magic") return skip(item, tr("マジックのアイテムにだけ使える", "Magic items only"));
-      if (count >= 2) return skip(item, tr("MOD が 2 つ付いている (マジックはプレ 1 / サフィ 1 まで)", "Already has 2 mods (Magic: 1 prefix / 1 suffix)"));
+      // 枠はベースの暗黙で増減する (黄昏の指輪はプレ 2 / サフィ 0)。決め打ちの「2 つまで」をやめた
+      if (!SIDES.some((sd) => room(item, sd))) return skip(item, tr("マジックの枠が埋まっている", "No room for another mod on this Magic item"));
       return add(item, 1);
     case "regal": {
       if (item.rarity !== "magic") return skip(item, tr("マジックのアイテムにだけ使える", "Magic items only"));

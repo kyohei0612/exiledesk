@@ -20,7 +20,7 @@ import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
 import { addForced, boostedMod, effectiveCls, replaced, unfracturable, type Force } from "./stage-core";
-import { socketCapOf, isUnsocket, UNSOCKET_PREFIX } from "./stage-runes";
+import { baseSocketsOf, isUnsocket, UNSOCKET_PREFIX } from "./stage-runes";
 import { qualityLabelOf } from "../htc/quality";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOfItem } from "./stage-bases";
@@ -260,8 +260,8 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
   let item: StageItem = { ...freshItem(data, base, itemLevel), rarity, rollSeed: seed };
   const rng = mulberry32(seed);
   if (s.sockets != null) {
-    const cap = socketCapOf(item.base, item.cls.category);
-    if (s.sockets > cap + 1) throw new Error(`始めの状態のソケット ${s.sockets} は上限 (${cap}、コラプトで +1) を超える`);
+    const most = baseSocketsOf(item.base, item.cls.category);
+    if (s.sockets > most) throw new Error(`始めの状態のソケット ${s.sockets} は上限 (${most}) を超える`);
     item = { ...item, sockets: s.sockets };
   }
   for (const en of s.runes ?? []) {

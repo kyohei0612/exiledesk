@@ -175,10 +175,10 @@ describe("要望・バグ (/feedback)", () => {
     expect((await worker.fetch(post({ kind: "bug", text: "x", website: "http://spam" }), env, ctx)).status).toBe(200); // bot には成功したふり
     expect((await worker.fetch(post({ kind: "bug", text: "   " }), env, ctx)).status).toBe(400);
     expect((await worker.fetch(post({ kind: "nope", text: "x" }), env, ctx)).status).toBe(400);
-    const list = await (await worker.fetch(new Request("https://x.workers.dev/feedback.json?key=k"), env, ctx)).json() as Array<{ text: string; kind: string; contact: string; context: unknown }>;
+    const list = await (await worker.fetch(new Request("https://x.workers.dev/feedback.json", { headers: { "x-exiledesk-key": "k" } }), env, ctx)).json() as Array<{ text: string; kind: string; contact: string; context: unknown }>;
     expect(list.map((x) => x.kind)).toEqual(["request", "bug"]);
     expect(list[1]).toMatchObject({ contact: "@me", context: { base: "Polished Bracers" } });
-    expect((await worker.fetch(new Request("https://x.workers.dev/feedback.json?key=wrong"), env, ctx)).status).toBe(403);
+    expect((await worker.fetch(new Request("https://x.workers.dev/feedback.json?key=k", { headers: { "x-exiledesk-key": "wrong" } }), env, ctx)).status).toBe(403);
     for (let i = 0; i < 8; i++) { tick(); await worker.fetch(post({ kind: "request", text: `n${i}` }), env, ctx); }
     tick();
     expect((await worker.fetch(post({ kind: "request", text: "11 件目" }), env, ctx)).status).toBe(429);
@@ -203,6 +203,11 @@ describe("要望・バグ (/feedback)", () => {
     expect(sent!.content).toContain("状態: v0.1.385 · シミュレーター · Polished Bracers ilvl82 · 狙い 3 · パターン 1 · JS エラー 1");
     expect(sent!.content).not.toContain("流れ:");
     expect(sent!.content).toContain("直近のエラー: TypeError: x is undefined");
+    // 送った人は頭に目立たせ、要望の id は最後に小さく (2026-10-16 要望 cd3cf0e3)
+    const lines = sent!.content.split("\n");
+    expect(lines[0]).toMatch(/👤 \*\*~[0-9a-f]{6}\*\*/);
+    expect(lines[0]).not.toContain("a1b2");
+    expect(lines.at(-1)).toBe("-# 要望の id a1b2");
     expect(file!.name).toBe("feedback-a1b2.json");
     expect(JSON.parse(file!.text).context.sim.targets).toEqual([1, 2, 3]);
   });

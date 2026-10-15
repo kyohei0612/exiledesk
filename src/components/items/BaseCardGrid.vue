@@ -3,6 +3,7 @@
   PC は押した部位のタイルの行のすぐ下に、スマホと名前で探す時は一覧の下に出す
 -->
 <script setup lang="ts">
+import { inGroup } from "../../services/mods/item-classes";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { classLabel, type CatalogRow } from "../../services/items/base-catalog";
 import { nameOf, tr } from "../../i18n/lang";
@@ -13,7 +14,8 @@ import { gemArt } from "../../services/craft-stage/skill-art";
 import Disclosure from "../ui/Disclosure.vue";
 
 const props = defineProps<{ list: CatalogRow[]; selected?: string | null; note?: (en: string) => string; showCls?: boolean; /** 最初は 2 行だけ出して「もっと見る」で全部 (名前で探す時は全部) */ fold?: boolean; /** 人気の札を付けるベース (popular-bases.json) */ hot?: ReadonlySet<string> }>();
-const emit = defineEmits<{ pick: [en: string] }>();
+/** expand / collapse: 「もっと見る」で広げた・「たたむ」で畳んだ時 (親が伸びた一覧の下まで送る / 元の位置に戻す。2026-10-14) */
+const emit = defineEmits<{ pick: [en: string]; expand: []; collapse: [] }>();
 /** ベースの絵 (スキルジェムはジェムの絵) */
 const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
 
@@ -70,7 +72,7 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
           <b class="text-[13px] md:text-[15px]" :class="b.en === selected ? 'text-amber-100' : ''">{{ nameOf(b) }}</b>
           <span v-if="hot?.has(b.en)" class="shrink-0 rounded bg-amber-500/25 px-1 text-[9.5px] font-bold leading-[14px] text-amber-200 md:text-[10.5px]">{{ tr("人気", "Popular") }}</span>
           <!-- ジュエルはレベルを出さない (付く物がアイテムレベルで変わらない。2026-10-12 オーナー「ジュエルはベースからも」) -->
-          <span v-if="b.lvl && !/^Jewels/.test(b.cls)" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0 md:text-[12px]">Lv {{ b.lvl }}</span>
+          <span v-if="b.lvl && !inGroup(b.cls, 'jewel')" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0 md:text-[12px]">Lv {{ b.lvl }}</span>
         </span>
         <span v-if="showCls" class="block text-[10px] opacity-50">{{ classLabel(b.cls) }}</span>
         <span v-if="b.stats" class="block truncate text-[11px] text-rarity-magic md:text-[13px]">{{ b.stats }}</span>
@@ -81,7 +83,7 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
     <p v-if="!list.length" class="col-span-full py-4 text-center opacity-50">{{ tr("見つかりません", "No matches") }}</p>
   </div>
   <!-- 3 行目から下 -->
-  <Disclosure v-if="fold && (rest > 0 || more) && list.length > cols * 2" v-model:open="more" :rest="rest" bar />
+  <Disclosure v-if="fold && (rest > 0 || more) && list.length > cols * 2" :open="more" @update:open="(v: boolean) => { more = v; if (v) emit('expand'); else emit('collapse'); }" :rest="rest" bar />
   <!-- 「もっと見る」が無い時も、その分は下を空ける (ぎりぎりで切らない、2026-10-12 オーナーの決まり) -->
   <div v-else class="g-list-end" aria-hidden="true" />
   </div>

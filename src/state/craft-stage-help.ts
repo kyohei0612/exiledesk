@@ -37,6 +37,20 @@ const FLOOR = (kind: "transmute" | "regal", s: string): string => {
   const tail = "(上の段が無い系統は一番上の段。アイテムレベルが下限未満の品には使えない)";
   return s === "greater" ? `上級: 付く MOD は MOD レベル ${f.greater} 以上のティアだけ ${tail}` : s === "perfect" ? `完全: 付く MOD は MOD レベル ${f.perfect} 以上のティアだけ ${tail}` : "";
 };
+/** カオスの上級 / 完全の下限 (足す MOD の MOD レベル。説明の行と同じ数) */
+const CHAOS_FLOOR = { greater: 35, perfect: 50 } as const;
+/**
+ * 上級・完全のカレンシーで付く MOD の MOD レベルの下限 (それ以外は null)。カードの頭に大きく出す
+ * (2026-10-16 要望 9c8a5f99「付く下限の MOD レベルが小さく表示してるから一番最初の説明文に大きく分かりやすく。上級・完全とつくやつ全て」)
+ */
+export function stageFloor(key: string): number | null {
+  const s = strengthOf(key);
+  if (s !== "greater" && s !== "perfect") return null;
+  const kind = key.replace(/_(greater|perfect)$/, "");
+  if (kind === "chaos") return CHAOS_FLOOR[s];
+  const k = kind === "augment" ? "augment" : kind === "transmute" ? "transmute" : kind === "regal" ? "regal" : kind === "exalt" ? "exalt" : null;
+  return k ? CURRENCY_FLOOR[k][s] : null;
+}
 const strengthOf = (key: string): string => (key.endsWith("_greater") ? "greater" : key.endsWith("_perfect") ? "perfect" : "base");
 const ADD = "付く MOD は、その側の普通の MOD の置き場から、付いている系統を除き、アイテムレベル以下のティアの重みで引く (計算機と同じ)";
 const add = (): string => tr(ADD, "New mods are rolled by weight from that side's normal mod pool, excluding groups already on the item and tiers above the Item Level");
@@ -63,9 +77,9 @@ const OMEN: Record<string, string[]> = {
   OmenofDextralCrystallisation: ["次のパーフェクト / コラプトのエッセンスは **サフィックスから** 消してから付ける"],
   OmenofSinistralNecromancy: ["次の骨 (冒涜) は未発現の MOD を **プレフィックス** に付ける"],
   OmenofDextralNecromancy: ["次の骨 (冒涜) は未発現の MOD を **サフィックス** に付ける"],
-  OmenoftheSovereign: ["次の骨の発現の候補を **ウラマンの MOD だけ** にする (MOD ごとに等しく)", "武器または宝飾品だけ (防具には使えない)"],
-  OmenoftheLiege: ["次の骨の発現の候補を **アマナムの MOD だけ** にする", "武器または宝飾品だけ"],
-  OmenoftheBlackblooded: ["次の骨の発現の候補を **クルガルの MOD だけ** にする", "武器または宝飾品だけ"],
+  OmenoftheSovereign: ["次の骨の発現の候補を **ウラマンの MOD だけ** にする (MOD ごとに等しく)", "武器・宝飾品・矢筒 (防具・ジュエルには使えない。矢筒は説明文に無いが Craft of Exile でも使える)"],
+  OmenoftheLiege: ["次の骨の発現の候補を **アマナムの MOD だけ** にする", "武器・宝飾品・矢筒"],
+  OmenoftheBlackblooded: ["次の骨の発現の候補を **クルガルの MOD だけ** にする", "武器・宝飾品・矢筒"],
   OmenofPutrefaction: ["次の骨は **フラクチャー以外の MOD を全部外し**、枠いっぱい (普通 6 つ) を未発現の MOD にして **コラプト** する", "発現で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)", "古びた骨でもティアの下限は掛からない"],
   OmenofAbyssalEchoes: ["次の発現で、候補 3 つを **1 回だけ引き直せる**", "引き直さなくても、その発現で使い切る"],
   OmenofCorruption: ["次のヴァールオーブの「変化なし」を外す (残り 3 つから等しく)", "アクセサリーの 4 つ目 (ソケットの代わりの変化なし) は外れない", "0.5.0 で入手できなくなった"],
@@ -95,9 +109,9 @@ const OMEN_EN: Record<string, string[]> = {
   OmenofDextralCrystallisation: ["The next Perfect / Corrupted Essence removes **a suffix** before adding its mod"],
   OmenofSinistralNecromancy: ["The next Abyssal Bone (Desecration) adds the Unrevealed mod as **a prefix**"],
   OmenofDextralNecromancy: ["The next Abyssal Bone (Desecration) adds the Unrevealed mod as **a suffix**"],
-  OmenoftheSovereign: ["The next Abyssal Bone's reveal options are **Ulaman mods only** (equal per mod)", "Weapons and jewellery only (not armour)"],
-  OmenoftheLiege: ["The next Abyssal Bone's reveal options are **Amanamu mods only**", "Weapons and jewellery only"],
-  OmenoftheBlackblooded: ["The next Abyssal Bone's reveal options are **Kurgal mods only**", "Weapons and jewellery only"],
+  OmenoftheSovereign: ["The next Abyssal Bone's reveal options are **Ulaman mods only** (equal per mod)", "Weapons, jewellery and quivers (not armour or jewels)"],
+  OmenoftheLiege: ["The next Abyssal Bone's reveal options are **Amanamu mods only**", "Weapons, jewellery and quivers"],
+  OmenoftheBlackblooded: ["The next Abyssal Bone's reveal options are **Kurgal mods only**", "Weapons, jewellery and quivers"],
   OmenofPutrefaction: ["The next Abyssal Bone **removes all non-Fractured mods**, fills every slot (usually 6) with Unrevealed mods and **corrupts** the item", "Reveals only offer normal mods (no faction Desecrated mods)", "No tier floor even with an Ancient Jawbone / Rib / Collarbone"],
   OmenofAbyssalEchoes: ["On the next reveal, the 3 options can be **rerolled once**", "Consumed by that reveal even if you don't reroll"],
   OmenofCorruption: ["Removes the \"no change\" outcome from the next Vaal Orb (equal among the other 3)", "The 4th jewellery outcome (no change instead of a socket) stays", "No longer obtainable since 0.5.0"],
@@ -214,7 +228,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
         tr("**レア** の MOD を 1 つ消して、1 つ足す", "Removes 1 mod from a **Rare** and adds 1"),
         tr("消すのはフラクチャー (固定) 以外から等しく 1 つ", "The removed mod is picked equally from non-Fractured mods"),
         add(),
-        s === "greater" ? tr("上級: 足す MOD は MOD レベル 35 以上のティアだけ", "Greater: added mod only from tiers with mod level 35+") : s === "perfect" ? tr("完全: 足す MOD は MOD レベル 50 以上のティアだけ", "Perfect: added mod only from tiers with mod level 50+") : "",
+        s === "greater" ? tr(`上級: 足す MOD は MOD レベル ${CHAOS_FLOOR.greater} 以上のティアだけ`, `Greater: added mod only from tiers with mod level ${CHAOS_FLOOR.greater}+`) : s === "perfect" ? tr(`完全: 足す MOD は MOD レベル ${CHAOS_FLOOR.perfect} 以上のティアだけ`, `Perfect: added mod only from tiers with mod level ${CHAOS_FLOOR.perfect}+`) : "",
         tr("お告げ: 削減 (一番低い MOD を消す) / 左右の抹消 (消す側)", "Omens: Whittling (removes the lowest mod) / Sinistral / Dextral Erasure (side)"),
       ].filter(Boolean);
     case "annul":

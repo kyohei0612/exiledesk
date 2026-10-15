@@ -17,14 +17,14 @@ it("キャスターの品質 34% でスペルスキルのレベル +3 → +4 (20
   expect(boostedMod(it0, m, data)?.values[0]).toBe(4);
   expect(boostedMod({ ...it0, quality: 20 }, m, data)).toBeNull();
 });
-it("上限は足し算 (ベース 20 + 品質の最大値の MOD + インフューザー 10)、プルダウン (qcap) で広げられる", () => {
+it("上限は足し算 (ベース 20 + 品質の最大値の MOD。インフューザーは棚に無い間は足さない)、プルダウン (qcap) で広げられる", () => {
   const ring = startFrom(data, "Gold Ring", 82, {} as never, 1);
-  expect(qualityFieldMax(ring)).toBe(30);
+  expect(qualityFieldMax(ring)).toBe(20);
   const withEss = applyForce(data, { ...ring, rarity: "rare" }, forceKey("Rings/PerfectEssence_LocalMaximumQuality", null, "e"), () => 0.5).item;
-  expect(qualityFieldMax(withEss)).toBe(50);
+  expect(qualityFieldMax(withEss)).toBe(40);
   expect(qualityFieldMax(startFrom(data, "Heavy Belt", 82, {} as never, 1))).toBe(20);
   // 品質は上限まで。上限はプルダウン (qcap) で広げられる
-  expect(applyCurrency(data, ring, "qset:60:caster", () => 0.5).item.quality).toBe(30);
+  expect(applyCurrency(data, ring, "qset:60:caster", () => 0.5).item.quality).toBe(20);
   const wide = applyCurrency(data, ring, "qcap:60", () => 0.5).item;
   expect(applyCurrency(data, wide, "qset:60:caster", () => 0.5).item.quality).toBe(60);
   // 上限を下げたら品質も下がる

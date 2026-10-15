@@ -9,6 +9,7 @@
   状態と操作は [[craft-stage.ts]]、1 手の中身は services/craft-stage (計算機と同じ規則)。
 -->
 <script setup lang="ts">
+import { inGroup } from "../../services/mods/item-classes";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { scrollToTop } from "../../utils/keep-place";
@@ -76,7 +77,7 @@ const ILVLS = [45, 65, 75, 82, 86];
  * ジュエルはアイテムレベルの欄を出さない (2026-10-12 オーナー「ジュエルにアイテムレベルって意味あるんか、なかったら表示しなくていい」:
  * MOD は全部レベル 1・重みは全部同じで、付く物はアイテムレベルで変わらない)。カレンシー・骨の制限も掛けない (apply-currency の noIlvl)
  */
-const jewelBase = computed(() => s.item.value?.cls.category === "Jewels");
+const jewelBase = computed(() => !!s.item.value && inGroup(s.item.value.cls.category, "jewel"));
 
 /** 持っているカレンシーのアイコンをカーソルに付ける */
 const mouse = ref({ x: 0, y: 0 });
@@ -178,11 +179,19 @@ const stageModGroups = computed<ModGroup[]>(() => {
   if (!it) return [];
   return [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed).map((m) => ({ picks: [{ modId: m.modId, minTierIndex: m.tierIndex }] }));
 });
+/**
+ * ベース・アイテムレベル・ソケットも合わせるか (取引所の左の欄。既定はオフ、前の選択を覚える)。
+ * 2026-10-14 要望 0ce15a82「条件指定がうまくいっていない、価格を調べるのが難しい」→ オーナー「取引所の横にチェックボックス付けとくか」
+ */
+const TRADE_BASE_KEY = "exiledesk.stage.tradeWithBase";
+const tradeWithBase = ref((() => { try { return localStorage.getItem(TRADE_BASE_KEY) === "1"; } catch { return false; } })());
+watch(tradeWithBase, (v) => { try { localStorage.setItem(TRADE_BASE_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても動く */ } });
 async function searchStageMods(): Promise<void> {
   const d = s.data.value, it = s.item.value;
-  // 今のアイテムそのものを探すので、ベース・アイテムレベル・ソケット・各 MOD の段の下限まで入れる
-  // (2026-10-08 オーナー「今の MOD で検索なんだからベースからベースレベルからなにから。ティアだけは下限でおｋ」)
-  if (d && it && stageModGroups.value.length) await searchModGroups(d, { groups: stageModGroups.value, exact: { baseType: it.base, ...(jewelBase.value ? {} : { ilvlMin: it.itemLevel }), socketsMin: it.sockets ?? 0 } });
+  // MOD は各 MOD の段の下限まで、普通 / フラクチャー / 冒涜のどれでも (2026-10-08 オーナー「ティアだけは下限でおｋ」)。
+  // ベース・アイテムレベル・ソケットはチェックを入れた時だけ (2026-10-08「ベースからベースレベルからなにから」→ 10-14 選べるように)
+  if (!d || !it || !stageModGroups.value.length) return;
+  await searchModGroups(d, { groups: stageModGroups.value, minValues: true, ...(tradeWithBase.value ? { exact: { baseType: it.base, ...(jewelBase.value ? {} : { ilvlMin: it.itemLevel }), socketsMin: it.sockets ?? 0 } } : {}) });
 }
 const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);
 /** シミュレーションのソケットの上限 (熟練工の上限と、その + 1 = 規格外) */
@@ -518,7 +527,10 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('POE2Tube に渡す結果 JSON (今の相場の値段で)', 'Result JSON for POE2Tube (at current market prices)')" @click="copy(tr('結果 JSON', 'result JSON'), s.result(pkg.version))">{{ tr("結果 JSON", "Result JSON") }}</button>
         <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :title="tr('craft-stage-run.mjs の --prices に渡す相場 (高貴建て)', 'Market prices for craft-stage-run.mjs --prices (in Exalted)')" @click="copy(tr('相場 JSON', 'price JSON'), s.prices())">{{ tr("相場 JSON", "Price JSON") }}</button>
         <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
-        <button type="button" data-rec-part="trade-search" :class="btn" :disabled="!stageModGroups.length" :title="tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・段の下限まで)', 'Open the trade site with this item’s mods (base, item level, sockets and minimum tiers included)')" @click="searchStageMods">{{ tr("今の MOD を取引所で検索 ↗", "Search these mods on trade ↗") }}</button>
+        <label class="flex cursor-pointer items-center gap-1 text-[12px] text-[var(--exile-color-text-secondary)]" :title="tr('取引所の検索にベース・アイテムレベル・ソケットも入れる (外すと MOD だけで探す)', 'Also match base, item level and sockets on trade (off = mods only)')"><input v-model="tradeWithBase" type="checkbox" />{{ tr("ベース検索含め", "Include base") }}</label>
+        <button type="button" data-rec-part="trade-search" :class="btn" :disabled="!stageModGroups.length" :title="tradeWithBase ? tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・段の下限まで)', 'Open the trade site with this item’s mods (base, item level, sockets and minimum tiers included)') : tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (段の下限まで、ベースは問わない)', 'Open the trade site with this item’s mods (minimum tiers, any base)')" @click="searchStageMods">{{ tr("今の MOD を取引所で検索 ↗", "Search these mods on trade ↗") }}</button>
+        <!-- 検索の仕組みのヒント (2026-10-14 要望 0ce15a82 の返事と同じ中身。オーナー「? でヒント出しておくか取引所の横とかに」) -->
+        <HelpTip :text="tr('同じ MOD なら普通・冒涜・フラクチャーどの付き方でも引っかかります。全部の MOD が揃った物はほぼ無いので、取引所で MOD の行のチェックを外して似た物を探すと相場が見やすいです', 'Each mod matches whether it is normal, desecrated or fractured. Items with every mod rarely exist, so untick some mod lines on the trade site to find similar items and see prices')" />
       </span>
       </template>
     </section>

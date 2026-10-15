@@ -3,7 +3,7 @@
  * サーバー重くならない仕組みで」「重くならないならサーバーで保管」)。
  *
  * 送る側 (src/services/telemetry/log-sender.ts) が 1 分おき・画面を離れる時にまとめて POST /log。サーバーは中身を解かずに
- * (CPU を使わない) D1 に 1 行ずつ置く (無料 10 万行/日・5 GB)。取り出しは GET /logs/day?day=YYYY-MM-DD&key= (1 行 1 まとまりの JSONL)、
+ * (CPU を使わない) D1 に 1 行ずつ置く (無料 10 万行/日・5 GB)。取り出しは GET /logs/day?day=YYYY-MM-DD + ヘッダー x-exiledesk-key (1 行 1 まとまりの JSONL)、
  * 手元には scripts/pull-logs.mjs。日報に昨日の件数を載せる。
  */
 import type { Env } from "./types";

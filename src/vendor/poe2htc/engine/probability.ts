@@ -2,6 +2,7 @@ import type { AffixType, CurrencyTier, ItemBase, ItemState, Mod, PatchData, Plac
 import { CURRENCY_FLOOR } from './types.ts';
 import { CRAFTED_SOURCES, familiesOf, familyAvailable, floorKeepIndex, itemFamilies, modTierWeight, poolTotalWeight, resolveMod } from './pool.ts';
 import { limitsOf, prefixCount, prefixesFull, suffixCount, suffixesFull, whiteItem } from './item.ts';
+import { inAny, kindOf } from '../../../services/mods/item-classes';
 
 export interface AddAffixOptions {
   /** Currency-strength floor ilvl. Default 0 (base). */
@@ -589,26 +590,17 @@ const DES_BOSS_TAG: Record<DesecrationBossOmen, string> = {
  */
 export type DesecrationBone = 'jawbone' | 'rib' | 'collarbone' | 'cranium';
 
-const BONE_BY_CATEGORY: Record<string, DesecrationBone> = {
-  // "Weapon or Quiver"
-  Bows: 'jawbone', Crossbows: 'jawbone', OneHand_Maces: 'jawbone', Quarterstaves: 'jawbone',
-  Sceptres: 'jawbone', Spears: 'jawbone', Staves: 'jawbone', TwoHand_Maces: 'jawbone',
-  Wands: 'jawbone', Quivers: 'jawbone',
-  // "Armour" — shields, bucklers and foci included: all carry armour/evasion/energy-shield.
-  Body_Armours: 'rib', Boots: 'rib', Gloves: 'rib', Helmets: 'rib',
-  Shields: 'rib', Bucklers: 'rib', Foci: 'rib',
-  // "Amulet, Ring or Belt"
-  // Belts were listed in this comment for weeks before the category existed, and the fallthrough was
-  // NOT harmless: `?? 'rib'` would have charged a belt the armour bone (0.41ex against the
-  // collarbone's 4.69ex on the 2026-09-02 sheet, ~11x under) and, because `bossOmenAllowed` is
-  // defined as "not rib", silently refused the boss omens the game does allow on a belt.
-  Amulets: 'collarbone', Rings: 'collarbone', Belts: 'collarbone',
-  // "Jewel" (ExileDesk 2026-10-11)
-  Jewels: 'cranium',
-};
-
+/**
+ * 骨は部位の種別で決まる (骨の説明文: 顎骨「Weapon or Quiver」・肋骨「Armour」・鎖骨「Amulet, Ring or Belt」・頭蓋骨「Jewel」)。
+ * 2026-10-13 総点検: 前は部位の名前の表で、表に無いタリスマンが防具 (肋骨) に落ちて勢力のお告げが弾かれた (要望 2d38f482)。
+ * 種別はクライアントの表から (services/mods/item-classes.ts)。新しい武器が入っても書き足さなくてよい
+ */
 export function desecrationBoneFor(category: string): DesecrationBone {
-  return BONE_BY_CATEGORY[category] ?? 'rib';
+  const k = kindOf(category);
+  if (k === 'weapon' || k === 'quiver') return 'jawbone';
+  if (k === 'jewellery') return 'collarbone';
+  if (k === 'jewel') return 'cranium';
+  return 'rib';
 }
 
 /**
@@ -623,9 +615,9 @@ export function desecrationBoneFor(category: string): DesecrationBone {
  * Weapon-or-Jewellery is exactly "not armour", i.e. the jawbone and collarbone groups.
  */
 export function bossOmenAllowed(category: string): boolean {
-  const b = desecrationBoneFor(category);
-  // A jewel is not Jewellery (Amulet / Ring / Belt), and jewels have no faction mods (poe2db, 2026-10-11)
-  return b === 'jawbone' || b === 'collarbone';
+  // 説明文「Weapon or Jewellery」。ジュエルは宝飾品ではない (勢力の MOD も無い、poe2db 2026-10-11)。
+  // 矢筒は説明文に無いが、冒涜の MOD に 3 勢力の物があり今までも使えた。ゲームで確かめるまで今のまま (docs/reviews/2026-10-13-item-class-audit.md)
+  return inAny(category, ['weapon', 'jewellery', 'quiver']);
 }
 
 /**

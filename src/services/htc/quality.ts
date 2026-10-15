@@ -34,6 +34,7 @@
  * (カタリストは指輪とアミュレットにしか存在しない)。
  */
 import catalystData from "./catalysts.json";
+import { inGroup } from "../mods/item-classes";
 import type { Mod } from "../../vendor/poe2htc/engine/types";
 import { lang } from "../../i18n/lang";
 
@@ -85,14 +86,13 @@ export const ABSOLUTE_MAX_QUALITY = RAISED_MAX_QUALITY + INFUSER_OVER_QUALITY;
  * カタリストが存在するクラス。ゲームの文面が「指輪またはアミュレットに追加する」なので、
  * 防具や武器には**そもそも種類つきの品質が無い**。
  */
-const CATALYST_CLASSES = ["Rings", "Amulets"];
 
 /** その MOD のクラス (id の頭。`Amulets/IncreasedMana` → `Amulets`) */
 const classOf = (mod: Mod): string => mod.id.split("/")[0] ?? "";
 
 /** そのクラスにカタリストがあるか */
 export function hasCatalysts(mod: Mod): boolean {
-  return CATALYST_CLASSES.includes(classOf(mod));
+  return inGroup(classOf(mod), "ringAmulet");
 }
 
 /**

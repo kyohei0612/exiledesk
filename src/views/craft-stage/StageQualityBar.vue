@@ -2,13 +2,14 @@
   StageQualityBar.vue — アイテムの品質を手で決める小さい帯 (アイテムの説明の窓の外、すぐ上)。
   2026-10-10 要望「品質欄で防御値をシミュレーション」→ オーナー「今の仕組みを装備にも、最大もつけて」「長押しでも」
   「アイテムのぞいた時の窓の中にゲームに無い物を出すのはおかしい」で窓の外へ。
-  − / + は長押しで続けて動く (押した時に 1 つ、0.4 秒後から 0.06 秒ごと)。最小は 0%、最大は上限まで。上限はふだん足し算 (ベース + 「品質の最大値」の MOD + インフューザー、qualityFieldMax)、プルダウンで広げられる (qcap の手)。
+  − / + は長押しで続けて動く (押した時に 1 つ、0.4 秒後から 0.06 秒ごと)。最小は 0%、最大は上限まで。上限はふだん足し算 (ベース + 「品質の最大値」の MOD、qualityFieldMax。インフューザーは棚に無い間は足さない)、プルダウンで広げられる (qcap の手)。
   宝飾品は品質の種類 (触媒と同じ。選んだ種類のタグの MOD が伸びる)。ワンド・スタッフ・セプター (品質は付与スキルの品質で数字は変わらない) とスキルジェムには出さない
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount } from "vue";
 import { tr } from "../../i18n/lang";
 import { CATALYSTS } from "../../services/htc/quality";
+import { inAny } from "../../services/mods/item-classes";
 import { qualityCapOf, qualityFieldMax } from "../../services/craft-stage/apply-currency";
 import { isGem } from "../../services/craft-stage/stage-bases";
 import type { StageItem } from "../../services/craft-stage/types";
@@ -20,8 +21,9 @@ const emit = defineEmits<{ quality: [n: number, tag?: string]; cap: [n: number] 
 const maxQ = computed(() => qualityCapOf(props.item));
 /** 足し算の上限 (ベース + 品質の最大値の MOD + インフューザー)。プルダウンの「今付けられる最大」 */
 const natural = computed(() => qualityFieldMax(props.item));
-// ジュエルもカタリストの種類を選べる (2026-10-12 オーナー「ジュエルにもカタリストであがる」)
-const jewel = computed(() => ["Rings", "Amulets", "Belts", "Jewels"].includes(props.item.cls.category));
+// 種類を選んだら、その時点の上限 (MOD・品質の種類で変わる) まで上げる。そこから − / + で手で変えられる (2026-10-13 オーナー)
+// カタリストの種類を選べるのは指輪・アミュレット (普通の物) とジュエル (精製された物)。ベルトには無い (2026-10-13 総点検: 前はベルトにも出て、打つと弾かれた)
+const jewel = computed(() => inAny(props.item.cls.category, ["ringAmulet", "jewel"]));
 const shown = computed(() => !isGem(props.item.cls.category) && !["Wands", "Staves", "Sceptres"].includes(props.item.cls.category));
 
 let rep: ReturnType<typeof setTimeout> | null = null;
@@ -55,7 +57,7 @@ const btn = "g-plain grid size-6 place-items-center rounded border border-white/
     <select class="cursor-pointer rounded border border-white/15 bg-black/60 px-1 py-0.5 tabular-nums text-white/80" :value="maxQ" :title="tr(`品質の上限 (今付けられる最大 ${natural}% = ベース + 品質の最大値の MOD + インフューザー。エッセンスを打たずに広げて試すならここで)`, `Max quality (currently ${natural}% = base + max-quality mods + infuser; raise it here to skip the essence)`)" @change="emit('cap', Number(($event.target as HTMLSelectElement).value))">
       <option v-for="q in caps" :key="q" :value="q">{{ q }}%{{ q === natural ? tr(" (今の最大)", " (current)") : "" }}</option>
     </select></span>
-    <select v-if="jewel" class="ml-1 w-[9.5rem] rounded border border-white/15 bg-black/60 px-1 py-0.5 text-white/80" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', Math.max(item.quality, 1), ($event.target as HTMLSelectElement).value)">
+    <select v-if="jewel" class="ml-1 w-[9.5rem] rounded border border-white/15 bg-black/60 px-1 py-0.5 text-white/80" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', maxQ, ($event.target as HTMLSelectElement).value)">
       <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
       <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
     </select>

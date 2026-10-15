@@ -12,6 +12,7 @@
 import type { StageApply, StageItem } from "./types";
 import { skip } from "./stage-core";
 import { isGem } from "./stage-bases";
+import { inGroup, type ItemGroup } from "../mods/item-classes";
 import { jaOfOmen } from "../htc/labels";
 import { tr } from "../../i18n/lang";
 
@@ -60,17 +61,15 @@ export function applyJeweller(item: StageItem, key: string): StageApply {
 // ---- 品質 (砥石 / 端材 / 飾り玉 / プリズム) ----------------------------------------------------------------------
 // 対象 (クライアントの説明文): 砥石「martial weapon」/ 端材「armour」/ 飾り玉「flask」/ プリズム「Skill Gem」
 // 効果 (poe2db の Quality): 武器は品質 1% ごとに物理ダメージ 1% more、防具は防御力 1% more、フラスコは回復量 1% more。上限 20%
-export const MARTIAL = ["Bows", "Crossbows", "OneHand_Maces", "TwoHand_Maces", "Quarterstaves", "Spears", "Talismans"];
-export const CASTER = ["Wands", "Staves", "Sceptres"];
-export const ARMOUR = ["Body_Armours", "Helmets", "Gloves", "Boots", "Shields", "Bucklers", "Foci"];
-export const QUALITY_TARGET: Record<string, { cats: string[]; ja: string; en: string }> = {
+// 部位は手で並べず、説明文の言葉のまとまりで引く (services/mods/item-classes.ts、2026-10-13 総点検。前は部位の名前の一覧で、新しい部位が漏れた)
+export const QUALITY_TARGET: Record<string, { group: ItemGroup; ja: string; en: string }> = {
   // ja は打てない時の短い理由にも使う。言葉はゲームの説明文 (currency-hover-ja.json) と同じ (POE2Tube 要望 ⑨「マーシャル武器」)
-  whetstone: { cats: MARTIAL, ja: "マーシャル武器", en: "Martial Weapons" },
-  scrap: { cats: ARMOUR, ja: "防具", en: "Armour" },
-  bauble: { cats: ["LifeFlask", "ManaFlask"], ja: "フラスコ", en: "Flasks" },
-  gemcutter: { cats: ["SkillGem"], ja: "スキルジェム", en: "Skill Gems" },
+  whetstone: { group: "martial", ja: "マーシャル武器", en: "Martial Weapons" },
+  scrap: { group: "armour", ja: "防具", en: "Armour" },
+  bauble: { group: "flask", ja: "フラスコ", en: "Flasks" },
+  gemcutter: { group: "gem", ja: "スキルジェム", en: "Skill Gems" },
   // 2026-09-29: 秘術師の彫刻針「ワンド、スタッフまたはセプターの品質を向上させる」
-  etcher: { cats: CASTER, ja: "ワンド・スタッフ・セプター", en: "Wands, Staves and Sceptres" },
+  etcher: { group: "caster", ja: "ワンド・スタッフ・セプター", en: "Wands, Staves and Sceptres" },
 };
 export const QUALITY_MAX = 20;
 /**
@@ -86,10 +85,11 @@ export const QUALITY_STEP_CONFIRMED = true;
 
 export function applyQuality(item: StageItem, key: string, rng: () => number = Math.random): StageApply {
   const t = QUALITY_TARGET[key]!;
-  if (!t.cats.includes(item.cls.category)) return skip(item, tr(`${t.ja}にだけ使える`, `${t.en} only`));
+  if (!inGroup(item.cls.category, t.group)) return skip(item, tr(`${t.ja}にだけ使える`, `${t.en} only`));
   if (item.quality >= QUALITY_MAX) return skip(item, tr(`品質が上限 (${QUALITY_MAX}%)`, `Quality is maxed (${QUALITY_MAX}%)`));
-  // フラスコの飾り玉は 1 固定 (QUALITY_TARGET に無いのでここは装備かジェム)。装備は 1 か 2 を等分で引く (同じ seed なら再生でも同じ)
-  const step = isGem(item.cls.category) ? QUALITY_STEP.gem : QUALITY_STEP_ITEM_ROLLS[Math.min(QUALITY_STEP_ITEM_ROLLS.length - 1, Math.floor(rng() * QUALITY_STEP_ITEM_ROLLS.length))]!;
+  // ジェムは 5、フラスコの飾り玉は 1 固定 (オーナーがゲームで確認)。装備は 1 か 2 を等分で引く (同じ seed なら再生でも同じ)。
+  // 2026-10-14 総点検: 前は飾り玉も 1 / 2 の抽選に入っていた
+  const step = isGem(item.cls.category) ? QUALITY_STEP.gem : key === "bauble" ? QUALITY_STEP.item : QUALITY_STEP_ITEM_ROLLS[Math.min(QUALITY_STEP_ITEM_ROLLS.length - 1, Math.floor(rng() * QUALITY_STEP_ITEM_ROLLS.length))]!;
   return { applied: true, item: { ...item, quality: Math.min(QUALITY_MAX, item.quality + step) }, added: [], removed: [] };
 }
 

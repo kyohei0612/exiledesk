@@ -14,14 +14,7 @@
  */
 import rulesRaw from "../i18n/augment-rules.json";
 import { lang, tr } from "../i18n/lang";
-
-/**
- * 部位のまとまり (craft-stage/apply-act.ts の MARTIAL / CASTER / ARMOUR と同じ。クラフト計算機からも読むので、
- * クラフトステージの重い部分を引き込まないようここに写す。同じであることは tests/augment-rules.test.ts で見る)
- */
-const MARTIAL = ["Bows", "Crossbows", "OneHand_Maces", "TwoHand_Maces", "Quarterstaves", "Spears", "Talismans"];
-const CASTER = ["Wands", "Staves", "Sceptres"];
-const ARMOUR = ["Body_Armours", "Helmets", "Gloves", "Boots", "Shields", "Bucklers", "Foci"];
+import { clientClassOf, handsOf, inAny, inGroup } from "./mods/item-classes";
 
 export interface AugmentRule {
   ja: string;
@@ -58,41 +51,44 @@ export const AUGMENT_RULES_UNEXPECTED = RAW.unexpected;
 
 export const augmentRule = (en: string): AugmentRule | null => AUGMENT_RULES[en] ?? null;
 
-const TWO_HAND = ["TwoHand_Maces", "Quarterstaves", "Bows", "Crossbows", "Staves", "Talismans"];
-/** 説明文の部位の言葉 → 計算機の部位 (ItemBase.category) */
-export const SLOT_CLASSES: Record<string, string[]> = {
-  武器: [...MARTIAL, ...CASTER],
-  防具: ARMOUR,
-  マーシャル武器: MARTIAL,
-  キャスター武器: CASTER,
-  両手武器: TWO_HAND,
-  遠距離武器: ["Bows", "Crossbows"],
-  メイス: ["OneHand_Maces", "TwoHand_Maces"],
-  片手メイス: ["OneHand_Maces"],
-  両手メイス: ["TwoHand_Maces"],
-  クォータースタッフ: ["Quarterstaves"],
-  スピア: ["Spears"],
-  弓: ["Bows"],
-  クロスボウ: ["Crossbows"],
-  タリスマン: ["Talismans"],
-  ワンド: ["Wands"],
-  スタッフ: ["Staves"],
-  セプター: ["Sceptres"],
-  フォーカス: ["Foci"],
-  盾: ["Shields"],
-  バックラー: ["Bucklers"],
-  鎧: ["Body_Armours"],
-  兜: ["Helmets"],
-  手袋: ["Gloves"],
-  靴: ["Boots"],
+/**
+ * 説明文の部位の言葉 → 部位の判定 (2026-10-13 総点検: 部位の名前の一覧をやめ、クライアントの表のまとまりで引く。services/mods/item-classes.ts)。
+ * 1 つの部位の言葉はクライアントの部位 Id (Talisman・Body Armour など) で見る
+ */
+const isClass = (...ids: string[]) => (category: string): boolean => ids.includes(clientClassOf(category) ?? "");
+export const SLOT_FITS: Record<string, (category: string) => boolean> = {
+  武器: (c) => inGroup(c, "weapon"),
+  防具: (c) => inGroup(c, "armour"),
+  マーシャル武器: (c) => inGroup(c, "martial"),
+  キャスター武器: (c) => inGroup(c, "caster"),
+  両手武器: (c) => inGroup(c, "weapon") && handsOf(c) === 2,
+  遠距離武器: isClass("Bow", "Crossbow"),
+  メイス: isClass("One Hand Mace", "Two Hand Mace"),
+  片手メイス: isClass("One Hand Mace"),
+  両手メイス: isClass("Two Hand Mace"),
+  クォータースタッフ: isClass("Warstaff"),
+  スピア: isClass("Spear"),
+  弓: isClass("Bow"),
+  クロスボウ: isClass("Crossbow"),
+  タリスマン: isClass("Talisman"),
+  ワンド: isClass("Wand"),
+  スタッフ: isClass("Staff"),
+  セプター: isClass("Sceptre"),
+  フォーカス: isClass("Focus"),
+  盾: isClass("Shield"),
+  バックラー: isClass("Buckler"),
+  鎧: isClass("Body Armour"),
+  兜: isClass("Helmet"),
+  手袋: isClass("Gloves"),
+  靴: isClass("Boots"),
 };
-const EQUIP = [...MARTIAL, ...CASTER, ...ARMOUR];
+const isEquip = (category: string): boolean => inAny(category, ["weapon", "armour"]);
 
 /** その部位にはめられるか (null = 説明文から部位が読めず分からない) */
 export function slotOk(rule: AugmentRule, category: string): boolean | null {
   if (!rule.slotsKnown) return null;
-  if (!rule.slots) return EQUIP.includes(category);
-  return rule.slots.some((s) => SLOT_CLASSES[s]?.includes(category));
+  if (!rule.slots) return isEquip(category);
+  return rule.slots.some((s) => SLOT_FITS[s]?.(category) ?? false);
 }
 
 /** 部位の言葉の英語 (英語の画面用。2026-10-10 英語版) */

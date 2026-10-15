@@ -19,9 +19,10 @@
  *   - ソケットの上限はベースごと (PoB の Data/Bases の socketLimit、胴・両手武器 4 / ほか 3)。熟練工で付けられるのは socketLimit − 2
  *     (胴・両手 2 / ほか 1)、規格外のベースは +1、コラプト (ヴァール) で +1 の読み。規格外はこのステージでは扱わない
  */
+import { htcBaseInfo } from "../htc/patch";
 import runesRaw from "./stage-runes.json";
 import basesPob from "./stage-bases-pob.json";
-import { ARMOUR, CASTER, MARTIAL } from "./apply-act";
+import { handsOf, inAny, inGroup, soulCoreFits, soulCoreSize } from "../mods/item-classes";
 import type { StageApply, StageItem, StageAugment, StageMod } from "./types";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { RUNE_BY_ID, runeIdByName } from "../../vendor/poe2htc/engine/runes";
@@ -68,62 +69,48 @@ export const runeNameOf = (key: string): string => parseRuneKey(key)?.en ?? key;
 export const isRune = (key: string): boolean => { const p = parseRuneKey(key); return !!p && !!RUNES[p.en]; };
 export const runeOf = (key: string): RuneRow | null => { const p = parseRuneKey(key); return p ? RUNES[p.en] ?? null : null; };
 
-const WANDSTAFF = ["Wands", "Staves"];
-const TWO_HAND = ["TwoHand_Maces", "Quarterstaves", "Bows", "Crossbows", "Staves", "Talismans"];
-/** SoulCoreStatCategories.Id → 計算機の部位 (ItemBase.category) */
-const CAT_TO_CLASSES: Record<string, string[] | "all"> = {
-  All: "all",
-  "Martial Weapon": MARTIAL,
-  "Caster Weapon": CASTER,
-  "Wand or Staff": WANDSTAFF,
-  Armour: ARMOUR,
-  "Body Armour": ["Body_Armours"],
-  Boots: ["Boots"],
-  Bow: ["Bows"],
-  Focus: ["Foci"],
-  Gloves: ["Gloves"],
-  Helmet: ["Helmets"],
-  Sceptre: ["Sceptres"],
-  Shield: ["Shields"],
-  Buckler: ["Bucklers"],
-  "Shield or Buckler": ["Shields", "Bucklers"],
-  "Two Hand Mace": ["TwoHand_Maces"],
-  "One Hand Mace": ["OneHand_Maces"],
-  Crossbow: ["Crossbows"],
-  Spear: ["Spears"],
-  Quarterstaff: ["Quarterstaves"],
-  Wand: ["Wands"],
-  Staff: ["Staves"],
-  Talisman: ["Talismans"],
-  "Martial Or Caster Weapon": [...MARTIAL, ...CASTER],
-  "Martial Weapon Wand or Staff": [...MARTIAL, ...WANDSTAFF],
-  "Quarterstaff or Spear": ["Quarterstaves", "Spears"],
-  "Two Handed Weapon": TWO_HAND,
-  "Maces or Talisman": ["OneHand_Maces", "TwoHand_Maces", "Talismans"],
-  "Crossbow Bow or Spear": ["Crossbows", "Bows", "Spears"],
-  "One Hand Mace or Quarterstaff": ["OneHand_Maces", "Quarterstaves"],
-};
-const EQUIP = [...MARTIAL, ...CASTER, ...ARMOUR];
-const BIG = [...TWO_HAND, "Body_Armours"];
+/**
+ * 部位は手で並べず、クライアントの表で引く (services/mods/item-classes.ts、2026-10-13 総点検)。
+ * ソケットが付く部位 = 武器・防具。2 つ付く大きい部位 = 両手武器・ボディアーマー
+ */
+const isEquip = (category: string): boolean => inAny(category, ["weapon", "armour"]);
+const isBig = (category: string): boolean => (inGroup(category, "weapon") && handsOf(category) === 2) || inGroup(category, "bodyArmour");
+
+/**
+ * 「ソケットの物の効果を兜 / 手袋 / 靴として得る」暗黙を持つベース (コロナのアミュレット・グラスピングリング・ストーキングベルト)。
+ * 名前は書かず、ベースの暗黙の文 (クライアント、htcBaseInfo) から読む。2026-10-13 オーナー「ソケット系はデフォで必ず 1 個以上あいてる」
+ */
+const AS_THOUGH: Record<string, string> = { Helmet: "Helmets", Gloves: "Gloves", Boots: "Boots", "Body Armour": "Body_Armours", Shield: "Shields" };
+export function socketAsOf(base: string): string | null {
+  for (const l of htcBaseInfo()[base]?.implicits ?? []) {
+    const m = /gains bonuses from Socketed Items as though it was (?:an? )?(.+?)\s*$/i.exec(l.en);
+    if (m && AS_THOUGH[m[1]!]) return AS_THOUGH[m[1]!]!;
+  }
+  return null;
+}
+/** ルーンの効き目・はめられるかを見る部位 (「兜として得る」ベースはその部位) */
+export const runeCategoryOf = (item: { base: string; cls: { category: string } }): string => socketAsOf(item.base) ?? item.cls.category;
+/** 白の時からあるソケットの数 (規格外 = 熟練工の上限 + 1。「兜として得る」ベースは 1、熟練工は宝飾品に使えないので増やせない) */
+export function baseSocketsOf(base: string, category: string): number {
+  if (socketAsOf(base)) return 1;
+  const cap = socketCapOf(base, category);
+  return cap > 0 ? cap + 1 : 0;
+}
 
 /**
  * 熟練工のオーブで付けられるソケットの数 (0 = 付けられない部位)。PoB の socketLimit − 2 (胴・両手 2 / ほか 1)。
  * PoB に無いベースは部位で (胴・両手 4 / ほか 3 の − 2)
  */
 export function socketCapOf(base: string, category: string): number {
-  if (!EQUIP.includes(category)) return 0;
-  const lim = SOCKET_LIMITS[base] ?? (BIG.includes(category) ? 4 : 3);
+  if (!isEquip(category)) return 0;
+  const lim = SOCKET_LIMITS[base] ?? (isBig(category) ? 4 : 3);
   return Math.max(0, lim - 2);
 }
-const sizeOf = (c: string[] | "all" | undefined): number => (c === "all" ? 1000 : c?.length ?? 1e9);
 
 /** そのルーンがその部位で持つ効き目 (当てはまる部位が一番狭い行)。無ければ null */
 export function runeEffectFor(rune: RuneRow, category: string): RuneEffect | null {
-  const hits = rune.effects.filter((e) => {
-    const c = CAT_TO_CLASSES[e.cat];
-    return c === "all" ? EQUIP.includes(category) : !!c?.includes(category);
-  });
-  return hits.sort((a, b) => sizeOf(CAT_TO_CLASSES[a.cat]) - sizeOf(CAT_TO_CLASSES[b.cat]))[0] ?? null;
+  const hits = rune.effects.filter((e) => soulCoreFits(e.cat, category));
+  return hits.sort((a, b) => soulCoreSize(a.cat) - soulCoreSize(b.cat))[0] ?? null;
 }
 
 /** 棚に並べるルーン (ルーンだけ、段 → ドロップレベル順)。tier を渡すとその段だけ。kind でソウルコア / アイドル (talisman) も */
@@ -171,7 +158,7 @@ function applyMasterwork(item: StageItem, socket: number | null): StageApply {
   const nextEn = upgradedRuneOf(old.en);
   const next = nextEn ? RUNES[nextEn] : null;
   if (!nextEn || !next) return skip(item, tr(`${old.ja}の 1 段上のルーンが表に無い`, `No higher tier of ${old.en}`));
-  const eff = runeEffectFor(next, item.cls.category);
+  const eff = runeEffectFor(next, runeCategoryOf(item));
   if (!eff) return skip(item, tr("この部位には効き目が無い", "No effect on this item class"));
   const aug: StageAugment = { key: `${RUNE_PREFIX}${nextEn}`, en: nextEn, ja: next.ja, cat: eff.catJa, textJa: eff.ja, textEn: eff.en, stats: eff.stats };
   return {
@@ -272,7 +259,7 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   const sockets = item.sockets ?? 0;
   const now = item.augments ?? [];
   if (rune.available === false) return skip(item, tr("今のゲームには無いルーン (相場に無い)", "This rune is no longer in the game"));
-  const place = placeBlock(rule, { category: item.cls.category, rarity: item.rarity, corrupted: item.corrupted, sanctified: item.sanctified }, !!runeEffectFor(rune, item.cls.category));
+  const place = placeBlock(rule, { category: runeCategoryOf(item), rarity: item.rarity, corrupted: item.corrupted, sanctified: item.sanctified }, !!runeEffectFor(rune, runeCategoryOf(item)));
   if (place) return skip(item, place);
   if (!sockets) return skip(item, tr("ソケットが無い (先に熟練工のオーブ)", "No sockets (use an Artificer's Orb first)"));
   if (p.socket != null && (p.socket < 1 || p.socket > sockets)) return skip(item, tr(`ソケットは ${sockets} つ (${p.socket} 番目は無い)`, `Only ${sockets} socket${sockets === 1 ? "" : "s"} (no socket ${p.socket})`));
@@ -294,7 +281,7 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   }
   const lim = limitBlock(p.en, now.filter((_, i) => i !== at).map((a) => a.en));
   if (lim) return skip(item, lim);
-  const eff = runeEffectFor(rune, item.cls.category);
+  const eff = runeEffectFor(rune, runeCategoryOf(item));
   if (!eff) return skip(item, tr("この部位には効き目が無い", "No effect on this item class"));
   // 手順のキーは @n を外して持つ (同じルーンなら同じキー。絵・相場もこれで引く)
   const aug: StageAugment = { key: `${RUNE_PREFIX}${p.en}`, en: p.en, ja: rune.ja, cat: eff.catJa, textJa: eff.ja, textEn: eff.en, stats: eff.stats };

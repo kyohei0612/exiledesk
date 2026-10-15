@@ -10,6 +10,7 @@
  *   - 冒涜の MOD はアイテムに 1 つまで。古びた骨は段の下限 40 (ANCIENT_BONE_FLOOR)
  *   - 王 / 君主 / 黒血のお告げ: 候補をその勢力の冒涜の MOD だけに (MOD ごとに等しく。エンジンの desecrationBossProbability)。防具には使えない
  */
+import { inGroup } from "../mods/item-classes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { ANCIENT_BONE_FLOOR, bossOmenAllowed, DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
 import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate, effectiveCls } from "./stage-core";
@@ -46,9 +47,9 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
   const floor = Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0);
   // 古代の骨も最低 MOD レベルのあるカレンシー (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 3)。深淵の王の印の下限 (仮) は別
-  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR && item.cls.category !== "Jewels") return skip(item, tr(`アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`, `Requires Item Level ${ANCIENT_BONE_FLOOR}+`));
+  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR && !inGroup(item.cls.category, "jewel")) return skip(item, tr(`アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`, `Requires Item Level ${ANCIENT_BONE_FLOOR}+`));
   const factionOmen = used.find((o) => FACTION_TAG[o]);
-  if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, tr("勢力のお告げは武器または宝飾品だけ", "Faction Omens: weapons and jewellery only"));
+  if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, tr("勢力のお告げは武器・宝飾品・矢筒だけ", "Faction Omens: weapons, jewellery and quivers only"));
   const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;
 
   // 側: お告げ → それ、無ければ出うる MOD の重みで
@@ -63,9 +64,16 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   if (omenSide) side = omenSide;
   else {
     const open = SIDES.filter((s) => room(item, s));
-    const pick = pickWeighted((open.length ? open : SIDES).map((s) => ({ s, w: weightOf(s) })), rng);
-    if (!pick) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
-    side = pick.s;
+    // 空いている側が 1 つなら抽選しない (乱数を使わない)。使うと同じ種でも後の候補の乱数がずれ、お告げで側を決めた時と
+    // 結果が食い違って「効かないお告げで確率が変わる」ように見えた (2026-10-16 要望 0c542dae)
+    if (open.length === 1) {
+      if (!(weightOf(open[0]!) > 0)) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
+      side = open[0]!;
+    } else {
+      const pick = pickWeighted((open.length ? open : SIDES).map((s) => ({ s, w: weightOf(s) })), rng);
+      if (!pick) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
+      side = pick.s;
+    }
   }
   if (!(weightOf(side) > 0)) return skip(item, tr("その側に付けられる冒涜の MOD が無い", "No Desecrated mod can be added on that side"));
   let cur = item;

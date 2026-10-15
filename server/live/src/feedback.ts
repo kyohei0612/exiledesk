@@ -1,10 +1,11 @@
 /**
  * 要望・バグの受け取り (2026-10-07 オーナー「要望バグの送信もできるようにしたい」)。
  *   POST /feedback  { kind: "request" | "bug", text, contact?, context?, website? (bot よけ、空でないと捨てる) }
- *   GET  /feedback.json?key=<REFRESH_KEY>  … 新しい順の一覧 (オーナー用)
+ *   GET  /feedback.json (ヘッダー x-exiledesk-key: <REFRESH_KEY>)  … 新しい順の一覧 (オーナー用)
  * KV に 90 日残し、DISCORD_WEBHOOK があれば Discord にも流す。同じ IP から 1 時間 10 件まで
  */
 import type { Fetch } from "./types";
+import { appendImages, type ImageIn } from "./feedback-images";
 
 export interface Feedback {
   id: string;
@@ -16,6 +17,8 @@ export interface Feedback {
   context: unknown;
   ua: string;
   ip: string;
+  /** 付いた画像の id (D1 の fb_images、feedback-images.ts)。後から足した物も入る */
+  images?: string[];
 }
 
 const MAX_TEXT = 4000;
@@ -98,9 +101,10 @@ export async function getFeedback(kv: KVNamespace, id: string): Promise<Feedback
 
 /**
  * 要望・バグへの返事 (2026-10-11 オーナー「直しましたの返信、次に開いた時に教えたい」)。キーは fbr:<要望の id>、180 日残す。
- * 書くのはオーナー側だけ (POST /feedback/reply?key=)。読むのは送った本人の画面で、自分の覚えている id だけを聞く (GET /feedback/replies?ids=)
+ * 書くのはオーナー側だけ (POST /feedback/reply + ヘッダー x-exiledesk-key)。読むのは送った本人の画面で、自分の覚えている id だけを聞く (GET /feedback/replies?ids=)
  */
-export interface FeedbackReply { text: string; en?: string; version?: string; at: string }
+/** askImage: 「画像を下さい」(返事の窓に画像を送るボタンを出す。2026-10-14) */
+export interface FeedbackReply { text: string; en?: string; version?: string; askImage?: boolean; at: string }
 const REPLY_PREFIX = "fbr:";
 const REPLY_DAYS = 180;
 export const FEEDBACK_ID_RE = /^[A-Za-z0-9-]{4,16}$/;
@@ -167,7 +171,7 @@ export async function senderTag(fb: Pick<Feedback, "context" | "ip" | "ua">): Pr
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${fb.ip}|${fb.ua}`));
   return "~" + [...new Uint8Array(d).slice(0, 3)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
-export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetch): Promise<boolean> {
+export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetch, images: readonly ImageIn[] = []): Promise<boolean> {
   // 画面では要望とバグを分けない (2026-10-10)。前の版から来た「バグ」だけ印を残す
   const head = fb.kind === "bug" ? "🐛 要望・バグ" : "💬 要望・バグ";
   const state = stateLine(fb.context);
@@ -178,18 +182,21 @@ export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetc
   const summary = (fb.context as { summaryJa?: unknown } | null)?.summaryJa;
   const sumLines = Array.isArray(summary) ? summary.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 600)) : [];
   const content = [
-    `**${head}** ${fb.contact ? `(${fb.contact}) ` : ""}${jst} JST · 送った人 ${await senderTag(fb)} · id ${fb.id}`,
+    // 送った人 (ブラウザの番号 context.uid の頭) を目立つ所に、要望の id は最後の行に小さく (返事を置く時に使う)。
+    // 前は「送った人 ◯ · id ◯」と並んで、1 件ごとに変わる id が送った人の印に見えた (2026-10-16 要望 cd3cf0e3「同じ人なのに ID が違う」)
+    `**${head}** 👤 **${await senderTag(fb)}** ${images.length ? `🖼${images.length} ` : ""}${fb.contact ? `(${fb.contact}) ` : ""}· ${jst} JST`,
     fb.text.slice(0, 1200),
     "",
     // 短く (2026-10-12 オーナー「長くなるから打った手・最後の手・状態・流れはいらない、JSON だけでいい」): 作っている物と今の MOD・PC かスマホか・エラーだけ。手順と流れは添付の JSON に
     ...sumLines.filter((l) => !/^(打った手|最後の手)/.test(l)),
     sumLines.length ? deviceJa(fb.context) : state ? `状態: ${state}` : "",
     firstErr ? `直近のエラー: ${String(firstErr).slice(0, 160)}` : "",
-  ].filter(Boolean).join("\n").slice(0, 1950);
+  ].filter(Boolean).join("\n").slice(0, 1900) + `\n-# 要望の id ${fb.id}`;
   try {
     const form = new FormData();
     form.append("payload_json", JSON.stringify({ content, allowed_mentions: { parse: [] } }));
     if (fb.context) form.append("files[0]", new Blob([JSON.stringify(fb, null, 1)], { type: "application/json" }), `feedback-${fb.id}.json`);
+    appendImages(form, images, fb.id);
     const r = await fetchFn(webhook, { method: "POST", body: form });
     return r.ok;
   } catch { return false; }

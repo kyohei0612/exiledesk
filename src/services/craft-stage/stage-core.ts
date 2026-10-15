@@ -5,6 +5,7 @@
  * [[apply-currency.ts]] (オーブ) / [[apply-essence.ts]] / [[apply-desecrate.ts]] / [[apply-other.ts]] に置く。
  * 候補の規則は計算機 (sim-route-helpers.ts の roll) と同じ: 付いている系統を除き、アイテムレベル以下・段の下限以上の段の重みで引く。
  */
+import { inAny, inGroup } from "../mods/item-classes";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { runeIdByName, withRunes } from "../../vendor/poe2htc/engine/runes";
 import RUNES_JSON from "./stage-runes.json";
@@ -13,7 +14,7 @@ import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
 import { familyBlocked, familyKeysOf, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfModAlways } from "../htc/mod-text";
-import { filledStatsOf } from "../htc/patch";
+import { filledStatsOf, htcBaseLimits } from "../htc/patch";
 import modTextJa from "../../i18n/mod-text-ja.json";
 import { maxQualityForBase } from "../htc/catalysing-setup";
 import { displayedValue } from "../htc/quality";
@@ -88,9 +89,20 @@ export function scaledAugment(item: StageItem, a: StageAugment): StageAugment {
   });
   return { ...a, stats, textJa, textEn };
 }
-/** 側の枠 (マジックは 1 / 1) */
+/**
+ * ベースの暗黙の「プレ / サフィ ±N 個」(local_maximum_prefixes_allowed_+ など。不在のアミュレットは -1 / -1、黄昏の指輪は +1 / -1)。
+ * htcBaseLimits はその暗黙があるベースだけ 3 ± N で持つ
+ */
+export function baseAllowedDelta(item: StageItem, side: StageSide): number {
+  const l = htcBaseLimits()[item.base];
+  return l ? (side === "prefix" ? l.prefixes : l.suffixes) - 3 : 0;
+}
+/**
+ * 側の枠 (マジックは 1 / 1)。ベースの暗黙の増減はマジックにも効く
+ * (2026-10-13 要望 19c7d2de: 不在のアミュレットに変成を打つとゲームでは MOD 無しのマジック。前はマジックを 1 / 1 で決め打ちして MOD が付いた)
+ */
 export function limitOf(item: StageItem, side: StageSide): number {
-  if (item.rarity === "magic") return MAGIC_LIMIT;
+  if (item.rarity === "magic") return Math.max(0, MAGIC_LIMIT + baseAllowedDelta(item, side));
   if (item.rarity === "normal") return 0;
   const lim = effectiveCls(item).limits ?? DEFAULT_LIMITS;
   return (side === "prefix" ? lim.prefixes : lim.suffixes) + extraAllowed(item, side);
@@ -232,9 +244,11 @@ export function boostedMod(item: StageItem, m: StageMod, data?: PatchData): { va
 /** カタリストの品質で伸びる % (指輪・アミュレットで、品質の種類のタグを MOD 自身が持つ時だけ) */
 function qualityPctOf(item: StageItem, m: StageMod, data?: PatchData): number {
   const tag = item.qualityTag;
-  if (!tag || !(item.quality > 0) || !/^(Rings|Amulets|Jewels)/.test(m.modId)) return 0;
+  // 触媒の品質が乗るのは指輪・アミュレット (普通の触媒) とジュエル (精製された触媒) の MOD。MOD の id の頭が部位 (2026-10-13 総点検)
+  const modCls = m.modId.split("/")[0] ?? "";
+  if (!tag || !(item.quality > 0) || !inAny(modCls, ["ringAmulet", "jewel"])) return 0;
   // ジュエルの MOD の tags は出る場所の札 (strjewel など) なので、中身のタグ (displayTags = implicit_tags と poe2db の Crafting Tag) で見る (2026-10-12)
-  const tags = /^Jewels/.test(m.modId) ? data?.mods.get(m.modId)?.displayTags ?? [] : m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
+  const tags = inGroup(modCls, "jewel") ? data?.mods.get(m.modId)?.displayTags ?? [] : m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
   return tags.includes(tag) ? item.quality : 0;
 }
 /**

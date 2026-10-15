@@ -42,22 +42,23 @@ export function statGroupsOfMod(data: PatchData, t: ModPick, withMin = false): A
  */
 export async function searchModGroups(
   data: PatchData,
-  opts: { groups: readonly ModGroup[]; exact?: { baseType: string; ilvlMin?: number; socketsMin: number } },
+  opts: { groups: readonly ModGroup[]; exact?: { baseType: string; ilvlMin?: number; socketsMin: number }; minValues?: boolean },
 ): Promise<void> {
   const stats: Array<{ id: string; min?: number }> = [];
   const anyOf: Array<{ filters: Array<{ id: string; min?: number }>; count?: number }> = [];
+  // 段の下限の値: 既定は exact の時だけ。手で打つ画面はベースを合わせない時も入れる (minValues、2026-10-14)
+  const withMin = opts.minValues ?? !!opts.exact;
   for (const g of opts.groups) {
-    // exact (手で打つ画面の今のアイテム): 段の下限の値も入れる
     const count = g.count ?? 1;
     // 1 つの MOD だけの条件は、値ごとに「どれかの種類」で (2 つの値の MOD は両方要る)
     if (g.picks.length === 1 && count <= 1) {
-      for (const vg of statGroupsOfMod(data, g.picks[0]!, !!opts.exact)) {
+      for (const vg of statGroupsOfMod(data, g.picks[0]!, withMin)) {
         if (vg.length === 1) stats.push(vg[0]!);
         else anyOf.push({ filters: vg });
       }
       continue;
     }
-    const fs = g.picks.flatMap((p) => statsOfMod(data, p, !!opts.exact));
+    const fs = g.picks.flatMap((p) => statsOfMod(data, p, withMin));
     if (fs.length === 1 && count <= 1) stats.push(fs[0]!);
     else if (fs.length) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) });
   }

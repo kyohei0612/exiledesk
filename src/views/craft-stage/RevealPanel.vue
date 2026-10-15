@@ -14,7 +14,9 @@ import { reqOfItem } from "../../services/craft-stage/stage-bases";
 import type { StageMod } from "../../services/craft-stage/types";
 
 const rerolled = ref(false);
-watch(() => craftStage.log.value.length, () => (rerolled.value = false));
+// 打つたびに戻す。log の長さでは見ない (Web は 50 手で古い手を消すので長さが変わらず、一度引き直すと以後ずっと「引き直した候補」のまま
+// ボタンが出なかった。2026-10-16 要望 eb671189「反響を掛けていても引き直しができない時がある」)
+watch(() => craftStage.log.value[craftStage.log.value.length - 1]?.out.index ?? 0, () => (rerolled.value = false));
 const left = () => { const it = craftStage.item.value; return it ? [...it.prefixes, ...it.suffixes].filter((m) => m.unrevealed).length : 0; };
 const canReroll = () => craftStage.omens.value.includes("OmenofAbyssalEchoes");
 /**

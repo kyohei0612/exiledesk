@@ -9,7 +9,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import BaseCardGrid from "./BaseCardGrid.vue";
 import { baseCatalog, CATALOG_ROWS, CATALOG_ROW_EN, classEn, VARIANT_EN, type CatalogRow as CatalogRowT } from "../../services/items/base-catalog";
 import { tr } from "../../i18n/lang";
-import { glideBy, scrollBoxOf } from "../../utils/keep-place";
+import { glideBy, glideRect, scrollBoxOf } from "../../utils/keep-place";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
 import { uniqueArt } from "../../services/assets/unique-art";
@@ -241,38 +241,65 @@ function fold(): void {
     el.style.minHeight = "";
   });
 }
+/** 一覧を開き直した回数 (BaseCardGrid の key。変えると「もっと見る」が畳んだ状態に戻る) */
+const openSeq = ref(0);
 function pickFamily(f: Family): void {
   // PC で開いている部位をもう一度押したら畳む
   if (!phone.value && family.value?.name === f.name) { fold(); return; }
   if (rootEl.value) rootEl.value.style.minHeight = "";
   revealed = 0;
+  openSeq.value++;
   // 行の位置は開いた物を閉じてから測る (開いた一覧の分だけ下の段がずれるので)
   insertAfter.value = null;
   family.value = f;
   // 属性の札は先頭 (筋力・無印) を選んだ状態で開いて、すぐベースを出す。札は上で切り替える
   // (2026-10-10 オーナー「押したら選ばせるんじゃなく最初から筋力のページ開いて上のタブで切り替え、アイコンと文字が挟まれると目が滑る」)
   cls.value = f.variants.some((v) => v.cls === cls.value) ? cls.value : f.variants[0]!.cls;
-  void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(revealPanel))); });
+  void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => revealPanel()))); });
 }
 /**
  * 開いた一覧の下 (「もっと見る」の少し下) が画面から切れている時だけ、そこまで滑らせて送る。見えている時は動かさない。一覧の上が画面の上から出ない所で止める
  * (2026-10-10 オーナー「全体が見えるとこまでスクロール、スクロールしないと見れない時だけ」「高速でスライド」「やるのは全部の挙動じゃなくスクロールが必要な時だけ」)。
  * 一覧そのものはぱっと開く。測るのは中の並び (列の数) が決まった後 (1 コマ待つ)
  */
-function revealPanel(): void {
+/** bottomFirst: 一覧が画面より高い時も下 (帯 + 24px) を見せる (「もっと見る」で広げた時。2026-10-14 オーナー「下 24px あけるんじゃねえの」) */
+function revealPanel(bottomFirst = false): void {
   const el = document.querySelector<HTMLElement>("[data-base-panel]");
   if (!el) return;
   const box = scrollBoxOf(el);
   const r = el.getBoundingClientRect();
   const viewBottom = box ? box.getBoundingClientRect().bottom : window.innerHeight;
   const viewTop = box ? box.getBoundingClientRect().top : 0;
-  const over = r.bottom + 24 - viewBottom;
+  // 広げた時は「たたむ」の帯の下 + 24px を見せる (2026-10-14 オーナー「たたむ見えて + 24px ね」)
+  const bars = bottomFirst ? el.querySelectorAll<HTMLElement>('button[aria-expanded="true"]') : null;
+  const bar = bars?.length ? bars[bars.length - 1]! : null;
+  const over = (bar ? bar.getBoundingClientRect().bottom : r.bottom) + 24 - viewBottom;
   if (over <= 0) return;
-  revealed = Math.max(0, Math.min(over, r.top - viewTop - 8));
+  revealed = bottomFirst ? over : Math.max(0, Math.min(over, r.top - viewTop - 8));
   revealedAt = null;
-  void glideBy(box, revealed).then(() => { revealedAt = scrollTopOf(box); });
+  // 位置の差とスクロール量の比はその場で測って 1 回で送る (glideRect。1920 幅 (拡大 1.16) で帯が 50px ほど切れていた、2026-10-14)
+  void glideRect(box, el, revealed).then(() => { revealedAt = scrollTopOf(box); });
 }
 onMounted(() => { void nextTick(() => placeUnder(family.value)); });
+/**
+ * 「もっと見る」で広げた時: 伸びた一覧の下 (たたむの帯 + 少し) が切れていれば、そこまで送る (一覧の上は画面から出さない)。
+ * 2026-10-14 オーナー「もっと見る押したら全体表示しないの？」(10-10 は「開いてもスクロールはいらない」だったのを変えた)
+ */
+let moreFrom: number | null = null;
+function revealMore(): void {
+  const el = document.querySelector<HTMLElement>("[data-base-panel]");
+  moreFrom = el ? scrollTopOf(scrollBoxOf(el)) : null;
+  void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => revealPanel(true))));
+}
+/** 「たたむ」: 広げる前の位置に戻す (2026-10-14 オーナー「畳むのときも元の画面に戻ろうか」) */
+function foldMore(): void {
+  const el = document.querySelector<HTMLElement>("[data-base-panel]");
+  const top = moreFrom;
+  moreFrom = null;
+  if (!el || top == null) return;
+  const box = scrollBoxOf(el);
+  void nextTick(() => (box ?? window).scrollTo({ top, behavior: "smooth" }));
+}
 /**
  * 開き直した時 (親が畳んだ一覧をもう一度開いた時) に呼ぶ: 今のベースの部位が開いているので、その一覧の全体が見えるまで送る (見えていれば動かさない)
  * (2026-10-12 オーナー「ベースを変えるを改めて押したら今のベースが埋まる、全体を表示させた方が良い」)
@@ -280,8 +307,9 @@ onMounted(() => { void nextTick(() => placeUnder(family.value)); });
 function reveal(): void {
   if (rootEl.value) rootEl.value.style.minHeight = "";
   revealed = 0; revealedAt = null;
+  openSeq.value++;
   placeUnder(family.value);
-  if (family.value) void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(revealPanel)));
+  if (family.value) void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => revealPanel())));
 }
 /** 親がベース選びを畳んだ・ベースを選んだ時: 残した高さを必ず外して元の状態に (2026-10-12 オーナー「たたむ際に必ず元の状態に戻す」) */
 function release(): void {
@@ -339,7 +367,8 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
               <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
             </div>
             <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
-            <BaseCardGrid v-else :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="(en) => emit('pick', en)" />
+            <!-- 開き直す・部位を選び直すたびに畳んだ状態 (2 行 + もっと見る) から (2026-10-13 オーナー「もっと見るは一番下に来るでしょ」: 前に広げたまま開いていた) -->
+            <BaseCardGrid v-else :key="openSeq" :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="(en) => emit('pick', en)" @expand="revealMore" @collapse="foldMore" />
           </div>
         </template>
       </div>

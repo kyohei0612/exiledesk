@@ -82,7 +82,7 @@ export function applyFlux(data: PatchData, item: StageItem, key: string): StageA
       const x = lo + Math.min(1, Math.max(0, p)) * (hi - lo);
       return Number.isInteger(lo) && Number.isInteger(hi) ? Math.round(x) : Math.round(x * 100) / 100;
     });
-    const next: StageMod = { ...withValues(fresh, hit.mod, () => 0.5, fixed), ...(m.desecrated ? { desecrated: true } : {}), ...(m.crafted ? { crafted: true } : {}), convertedFrom: m.textJa };
+    const next: StageMod = { ...withValues(fresh, hit.mod, () => 0.5, fixed), ...(m.desecrated ? { desecrated: true } : {}), ...(m.crafted ? { crafted: true } : {}), convertedFrom: m.textJa, convertedBy: "flux" };
     out = replaced(out, m, next);
     done.push({ from: m, to: next });
   }

@@ -4,8 +4,11 @@
  */
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
-import { AUGMENT_RULES, AUGMENT_RULES_UNEXPECTED, augmentRule, limitBlock, SLOT_CLASSES, slotOk } from "../src/services/augment-rules";
-import { ARMOUR, CASTER, MARTIAL } from "../src/services/craft-stage/apply-act";
+import { AUGMENT_RULES, AUGMENT_RULES_UNEXPECTED, augmentRule, limitBlock, SLOT_FITS, slotOk } from "../src/services/augment-rules";
+import { inAny } from "../src/services/mods/item-classes";
+/** 武器・防具の部位 (クライアントの表から。手で並べない) */
+const EQUIP_CATS = Object.keys((itemClasses as { engine: Record<string, string> }).engine).filter((c) => inAny(c, ["weapon", "armour"]));
+import itemClasses from "../src/services/mods/item-classes.json";
 import { freshItem, runPlan } from "../src/services/craft-stage/run-plan";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
 import { mulberry32 } from "../src/services/htc/rng";
@@ -47,17 +50,19 @@ describe("説明文から作った表", () => {
     expect(augmentRule("Masterwork Rune")).toMatchObject({ removable: null, replaceable: null, bound: null });
   });
   it("部位の言葉は全部計算機の部位に引ける、部位のまとまりはクラフトステージと同じ", () => {
-    for (const r of Object.values(AUGMENT_RULES)) for (const s of r.slots ?? []) expect(SLOT_CLASSES[s], s).toBeTruthy();
-    expect(SLOT_CLASSES["マーシャル武器"]).toEqual(MARTIAL);
-    expect(SLOT_CLASSES["防具"]).toEqual(ARMOUR);
-    expect(SLOT_CLASSES["武器"]).toEqual([...MARTIAL, ...CASTER]);
+    for (const r of Object.values(AUGMENT_RULES)) for (const s of r.slots ?? []) expect(SLOT_FITS[s], s).toBeTruthy();
+    const fits = (w: string): string[] => EQUIP_CATS.filter((c) => SLOT_FITS[w]!(c)).sort();
+    expect(fits("マーシャル武器")).toEqual(["Bows", "Crossbows", "OneHand_Maces", "Quarterstaves", "Spears", "Talismans", "TwoHand_Maces"]);
+    expect(fits("防具")).toEqual(["Body_Armours", "Boots", "Bucklers", "Foci", "Gloves", "Helmets", "Shields"]);
+    expect(fits("武器")).toEqual(["Bows", "Crossbows", "OneHand_Maces", "Quarterstaves", "Sceptres", "Spears", "Staves", "Talismans", "TwoHand_Maces", "Wands"]);
+    expect(fits("両手武器")).toEqual(["Bows", "Crossbows", "Quarterstaves", "Staves", "Talismans", "TwoHand_Maces"]);
   });
   /**
    * 説明文の部位と SoulCoreStats の効き目の部位が食い違う物 (2026-10-03 時点のクライアント)。クラフトステージは**効果のデータを正**にする
    * (グロルドは取引所の出品で 靴 883 / 手袋 0 を確認)。増えたらここで気づく
    */
   it("効き目のある部位は説明文の部位の中 (食い違いは分かっている 5 件だけ)", () => {
-    const cats = [...MARTIAL, ...CASTER, ...ARMOUR];
+    const cats = EQUIP_CATS;
     const bad: string[] = [];
     for (const [en, row] of Object.entries(RUNES)) {
       const rule = augmentRule(en);

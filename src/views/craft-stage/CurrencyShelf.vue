@@ -111,6 +111,8 @@ const sockets = computed(() => {
   const it = craftStage.item.value;
   return it ? { cap: socketCapOf(it.base, it.cls.category), now: it.sockets ?? 0, used: it.augments?.length ?? 0 } : null;
 });
+/** ルーンのタブを出すか: ソケットがある (「兜として得る」ベースは元から 1) か、熟練工で足せる部位 (2026-10-13) */
+const hasSockets = computed(() => !!sockets.value && (sockets.value.cap > 0 || sockets.value.now > 0));
 const essences = computed(() => essenceShelf(craftStage.data.value, craftStage.item.value));
 // カタリストは棚に出さない: 品質の種類は品質の帯で選ぶ (2026-10-10 オーナー「カタリストいらんわもう」)。打つ処理は古い手順の再生のため残す
 /**
@@ -130,10 +132,10 @@ const usableAll = computed(() => {
     // 液化した感情 (デリリウム、ジュエル。2026-10-11): そのジュエルで使える物だけ (古代の版は時を失ったジュエル)
     sec(tr("液化した感情 (デリリウム)", "Liquid Emotions (Delirium)"), emotionKeysFor(it)),
     // ルーンはルーンのタブと同じ段ごとのまとまり (クラフトに関わる物だけ)
-    ...(sockets.value?.cap ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
+    ...(hasSockets.value ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
     // 「使用可能」だけの時は、クラフトに関わらない物を 4 つの節に分けて一番下に (どれも最初は畳む。2026-10-10 オーナー
     // 「ルーン (クラフトルーン以外)・遺産・ソウルコア・アイドルはたたんで」)。ルーンは段をまとめて 1 つ (押すとレッサー〜パーフェクト)
-    ...(!props.full && sockets.value?.cap ? otherSecs.value.map((x) => ({ ...sec(x.label, x.keys, x.kind), fold: true })) : []),
+    ...(!props.full && hasSockets.value ? otherSecs.value.map((x) => ({ ...sec(x.label, x.keys, x.kind), fold: true })) : []),
   ].filter((x) => x.keys.length);
 });
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
@@ -202,7 +204,7 @@ const TABS = computed(() => (!props.full ? [] : [
   { id: "usable" as const, label: `${tr("使用可能", "Usable")} (${usableCount.value})` },
   { id: "orb" as const, label: tr("オーブ・骨", "Orbs & Abyssal Bones") },
   { id: "essence" as const, label: `${tr("エッセンス", "Essences")} (${essences.value.length})` },
-  ...(sockets.value?.cap ? [{ id: "rune" as const, label: tr("ルーン", "Runes") }] : []),
+  ...(hasSockets.value ? [{ id: "rune" as const, label: tr("ルーン", "Runes") }] : []),
   { id: "omen" as const, label: craftStage.omens.value.length ? tr(`お告げ (${craftStage.omens.value.length} 枚掛け)`, `Omens (${craftStage.omens.value.length} active)`) : tr("お告げ", "Omens") },
 ]));
 </script>

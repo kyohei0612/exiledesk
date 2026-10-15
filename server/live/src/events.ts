@@ -160,9 +160,10 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   out.dwell = { pc: dwellOf(ps.filter((x) => x.d !== "mobile").map((x) => x.m)), mobile: dwellOf(ps.filter((x) => x.d === "mobile").map((x) => x.m)) };
   // by = 数える物 (blob2 = 訪問、blob3 = 人)。どこから来たかは日報で「〜人」と書くので人で数える (2026-10-13: 訪問で数えていて、足すと訪問の数になっていた)
   const top = async (col: string, by = "blob2"): Promise<Array<[string, number]>> => (await q<{ k: string; s: number }>(`SELECT ${col} AS k, count(DISTINCT ${by}) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY k ORDER BY s DESC LIMIT 6`)).map((r) => [r.k || "—", Number(r.s)]);
-  out.refs = await top("blob5", "blob3"); out.devices = await top("blob4"); out.countries = await top("blob6");
-  // よその物: 中身の見えないエラー・ext: の印・ウォレット・ユーザースクリプト (2026-10-11)
-  const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%' OR blob8 LIKE '%userscript%' OR blob8 LIKE '%.user.js%' OR blob8 LIKE '%response.msg%')`;
+  // 端末・国も人で数える (2026-10-14 オーナー「これは正しい数字か」: 端末だけ訪問の回数で、滞在の行 (人) と混ざって読みにくかった)
+  out.refs = await top("blob5", "blob3"); out.devices = await top("blob4", "blob3"); out.countries = await top("blob6", "blob3");
+  // よその物: 中身の見えないエラー・ext: の印・ウォレット・ユーザースクリプト (2026-10-11)・拡張機能が差し込んだスクリプト (injectedScript、2026-10-14)
+  const EXT = `(blob8 LIKE 'Script error%@:0' OR blob8 LIKE 'ext:%' OR blob8 LIKE '%window.ethereum%' OR blob8 LIKE '%userscript%' OR blob8 LIKE '%.user.js%' OR blob8 LIKE '%response.msg%' OR blob8 LIKE '%injectedScr%')`;
   out.errors = (await q<{ k: string; s: number }>(`SELECT blob8 AS k, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND NOT (${EXT}) GROUP BY k ORDER BY s DESC LIMIT 3`)).map((r) => [r.k, Number(r.s)]);
   const ext = await q<{ c: number; s: number }>(`SELECT SUM(_sample_interval) AS c, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'error' AND ${EXT}`);
   if (ext[0] && Number(ext[0].c) > 0) out.extErrors = { count: Number(ext[0].c), sessions: Number(ext[0].s) };
@@ -189,11 +190,12 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
 }
 
 /** その間に来た人 (開いた印の端末の数。記録しない端末と開発版は除く)。取れなければ null。訪問者の表示 (1 時間おき) 用 (2026-10-11) */
-export async function usersBetween(env: Env, since: string, until: string, fetchFn: Fetch = fetch): Promise<number | null> {
+/** by: "users" = 人 (端末ごと 1 人)、"visits" = 訪問 (同じ人の 2 回目も数える。画面の「本日の訪問者」、2026-10-15 オーナー「同じ人も数えていいのに」) */
+export async function usersBetween(env: Env, since: string, until: string, fetchFn: Fetch = fetch, by: "users" | "visits" = "users"): Promise<number | null> {
   try {
     const D = env.EVENTS_DATASET ?? DATASET;
     const skip = notForgotten(await forgottenUids(env)) + ` AND blob5 != 'localhost' AND blob5 != '127.0.0.1'`;
-    const r = await sql<{ u: number }>(env, `SELECT count(DISTINCT blob3) AS u FROM ${D} WHERE ${range(since, until)}${skip} AND blob1 = 'open'`, fetchFn);
+    const r = await sql<{ u: number }>(env, `SELECT count(DISTINCT ${by === "visits" ? "blob2" : "blob3"}) AS u FROM ${D} WHERE ${range(since, until)}${skip} AND blob1 = 'open'`, fetchFn);
     return r[0] ? Number(r[0].u) : 0;
   } catch (e) { console.warn("usersBetween:", String(e).slice(0, 160)); return null; }
 }

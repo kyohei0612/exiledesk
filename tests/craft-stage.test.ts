@@ -203,8 +203,11 @@ describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
     const jewel = { ...freshItem(data, "Emerald", 82), rarity: "rare" as const, quality: 20, prefixes: m.side === "prefix" ? [m] : [], suffixes: m.side === "suffix" ? [m] : [] };
     expect(boostedMod({ ...jewel, qualityTag: "attack" }, m, data)?.values[0]).toBe(Math.floor(m.values[0]! * 1.2));
     expect(boostedMod({ ...jewel, qualityTag: "life" }, m, data)).toBeNull();
-    // カタリストもジュエルに打てる
-    expect(A(freshItem(data, "Emerald", 82), "catalyst_attack").applied).toBe(true);
+    // ジュエルは精製されたカタリスト (jcatalyst_) だけ。普通の物は指輪・アミュレット (2026-10-13 総点検、説明文と poe2db の jewel_catalyst)
+    expect(A(freshItem(data, "Emerald", 82), "jcatalyst_attack").applied).toBe(true);
+    expect(A(freshItem(data, "Emerald", 82), "catalyst_attack").applied).toBe(false);
+    expect(A(freshItem(data, "Gold Ring", 82), "jcatalyst_attack").applied).toBe(false);
+    expect(A(freshItem(data, "Utility Belt", 82), "catalyst_attack").applied).toBe(false);
   });
   it("発現で付いた MOD にも付いた瞬間の確率が付く (2026-10-12 オーナー「確率が出てるはずなのにアイテムには出ない」)", () => {
     const d = A(rare("Gold Ring", 82), "desecrate_ancient", 4);

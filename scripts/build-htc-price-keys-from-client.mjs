@@ -141,6 +141,23 @@ const catalystKeys = (B, catalysts) => {
   return { out, unmatched };
 };
 
+/**
+ * ジュエル用の触媒 (精錬された…のカタリスト、`CurrencyJewelQuality*`。説明文「on a jewel」)。キーは `jcatalyst_<タグ>`。
+ * タグは「Refined 」を外した名前で指輪用の触媒と突き合わせる (2026-10-13 総点検: 普通の触媒はジュエルに使えない、poe2db の jewel_catalyst)
+ */
+const jewelCatalystKeys = (B, catalysts) => {
+  const byName = new Map(catalysts.map((c) => [c.en, c.tag]));
+  const out = {};
+  const unmatched = [];
+  for (const r of B) {
+    if (!/^Metadata\/Items\/Currency\/CurrencyJewelQuality/.test(String(r.Id || "")) || !r.Name) continue;
+    const tag = byName.get(String(r.Name).replace(/^Refined /, ""));
+    if (!tag) { unmatched.push(r.Name); continue; }
+    out[`jcatalyst_${tag}`] = r.Id;
+  }
+  return { out, unmatched };
+};
+
 /** 最大品質を上げるエッセンス。指輪 / アミュレット専用 */
 const EXTRA = {
   "essence:breach": "Metadata/Items/Currency/CurrencyCorruptedEssenceBreach",
@@ -176,7 +193,13 @@ const main = async () => {
     for (const u of unmatched) console.log(`   ${u}`);
     process.exit(1);
   }
-  const currency = resolveAll({ ...CURRENCY, ...EXTRA, ...CATALYSTS });
+  const { out: JEWEL_CATALYSTS, unmatched: jUnmatched } = jewelCatalystKeys(B, catalystsJson.catalysts);
+  if (jUnmatched.length) {
+    console.log(`NG: ジュエルのカタリスト ${jUnmatched.length} 件がタグに結べない`);
+    for (const u of jUnmatched) console.log(`   ${u}`);
+    process.exit(1);
+  }
+  const currency = resolveAll({ ...CURRENCY, ...EXTRA, ...CATALYSTS, ...JEWEL_CATALYSTS });
   const bones = resolveAll(BONES);
 
   // オーメンは規則で作る: id = 英語名から空白を抜いた物

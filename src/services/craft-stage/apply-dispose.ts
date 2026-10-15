@@ -12,7 +12,8 @@
  */
 import type { StageApply, StageItem } from "./types";
 import { skip } from "./stage-core";
-import { ARMOUR, CASTER, collectShard, MARTIAL } from "./apply-act";
+import { collectShard } from "./apply-act";
+import { inGroup } from "../mods/item-classes";
 import { isFlask, isGem } from "./stage-bases";
 import { tr } from "../../i18n/lang";
 
@@ -27,9 +28,9 @@ export const DISPOSE_COUNT_CONFIRMED = false;
 const DISENCHANT_TO: Record<string, string> = { magic: "transmute_shard", rare: "regal_shard", unique: "chance_shard" };
 /** サルベージで出る品質カレンシー (装備の種類ごと) */
 function qualityCurrencyOf(category: string): string | null {
-  if (MARTIAL.includes(category)) return "whetstone";
-  if (CASTER.includes(category)) return "etcher";
-  if (ARMOUR.includes(category)) return "scrap";
+  if (inGroup(category, "martial")) return "whetstone";
+  if (inGroup(category, "caster")) return "etcher";
+  if (inGroup(category, "armour")) return "scrap";
   return null;
 }
 

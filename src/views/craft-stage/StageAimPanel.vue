@@ -146,6 +146,25 @@ function roll(r: AimOdd): void {
 watch([() => s.aims.value, () => s.item.value], () => { rolled.value = null; });
 /** 平均で何回に 1 回付くか */
 const every = (p: number): string => (p <= 0 ? "" : p >= 0.995 ? tr("毎回", "Every time") : tr(`${Math.round(1 / p).toLocaleString()} 回に 1 回`, `1 in ${Math.round(1 / p).toLocaleString()}`));
+/**
+ * 数えた回し方を 1 行で (2026-10-16 要望 007801cc「何をどう回した数字か」)。aimChain の決まりそのまま。開いた時だけ出す (文字は最低限)
+ */
+const howOpen = ref<string | null>(null);
+function howOf(r: AimOdd): string {
+  const n = nameRow(r);
+  const om = r.omens.some((o) => o !== "OmenofAbyssalEchoes") ? tr("お告げは毎回掛け直し。", "Omens are reapplied every time. ") : "";
+  if (r.currency === REVEAL) return tr("発現 (アビスの反響で 1 回引き直し) を、今の状態から繰り返す。候補に出れば当たり。", "Reveal (one reroll with Omen of Abyssal Echoes), repeated from the current state. A hit if the target is offered.");
+  switch (kindOf(r.currency)) {
+    case "desecrate":
+      return tr(`${n} → 発現 (アビスの反響で 1 回引き直し)。候補に出れば当たり。毎回今の状態に戻して打ち直す。${om}`, `${n} → reveal (one reroll with Omen of Abyssal Echoes). A hit if the target is offered. Restarts from the current state every time. ${om}`);
+    case "chaos":
+      return tr(`${n} を続けて打つ (カオススパム)。今の MOD が消えても狙いが揃えば当たり。外れたらその結果に続けて打つ。${om}`, `${n} is used repeatedly (Chaos spam). A hit when all targets are on, even if current mods were removed. A miss keeps going from the result. ${om}`);
+    case "exalt":
+      return tr(`${n} を空きがあるうちは続けて打つ。狙いが揃えば当たり。今の MOD が消えた・空きが無くなったら今の状態に戻す。${om}`, `${n} is used repeatedly while there is an open slot. A hit when all targets are on. Restarts from the current state when a current mod is removed or no slot is left. ${om}`);
+    default:
+      return tr(`${n} を続けて打つ (外れても今の MOD が残っていればそのまま)。狙いが揃えば当たり。今の MOD が消えたら今の状態に戻す。${om}`, `${n} is used repeatedly (a miss keeps going while the current mods stay). A hit when all targets are on. Restarts from the current state when a current mod is removed. ${om}`);
+  }
+}
 const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.every((o) => s.omens.value.includes(o));
 </script>
 
@@ -172,11 +191,11 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
     </header>
     <p v-if="done" class="text-emerald-300">{{ tr("もう全部付いています", "All targets are already on the item") }}</p>
     <template v-else>
-      <p class="mb-0.5 pr-[76px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("付きやすい順", "By chance") }}</p>
+      <p class="mb-0.5 pr-[108px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("付きやすい順", "By chance") }}</p>
       <ol class="flex flex-col gap-1">
         <!-- 「回す」は行のボタンの中に入れられない (ボタンの入れ子) ので、行の右端に重ねる (2026-10-10 動きの揃え 6: span role=button をやめた) -->
-        <li v-for="(r, i) in shown" :key="r.currency + r.omens.join('+')" class="group relative">
-          <button type="button" :data-rec="`aim-row:${r.currency}${r.omens.length ? '+' + r.omens.join('+') : ''}`" class="g-plain flex w-full items-center gap-2 rounded py-1.5 pl-2 pr-[76px] text-left transition" :class="isHeld(r) ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'group-hover:bg-white/[0.05]'" @click="keepPlace($event.currentTarget as Element, () => pick(r))">
+        <li v-for="(r, i) in shown" :key="r.currency + r.omens.join('+')" class="group">
+          <div class="relative"><button type="button" :data-rec="`aim-row:${r.currency}${r.omens.length ? '+' + r.omens.join('+') : ''}`" class="g-plain flex w-full items-center gap-2 rounded py-1.5 pl-2 pr-[108px] text-left transition" :class="isHeld(r) ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'group-hover:bg-white/[0.05]'" @click="keepPlace($event.currentTarget as Element, () => pick(r))">
             <span class="w-5 shrink-0 text-right tabular-nums text-[var(--exile-color-text-tertiary)] max-md:hidden">{{ i + 1 }}</span>
             <span class="flex shrink-0 items-center -space-x-1.5">
               <img v-if="r.currency !== REVEAL && iconOf(r.currency)" :src="iconOf(r.currency)" alt="" class="size-7 object-contain" />
@@ -193,7 +212,8 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
             <!-- 確率 (並びの元)。費用は名前の下 -->
             <b class="w-14 shrink-0 whitespace-nowrap text-right tabular-nums text-[14px]" :class="i === 0 ? 'text-[var(--exile-color-text-title)]' : 'text-[var(--exile-color-text-primary)]'">{{ pct(r.p) }}</b>
           </button>
-          <span class="absolute inset-y-0 right-2 flex items-center"><button type="button" :data-rec="`aim-roll:${r.currency}${r.omens.length ? '+' + r.omens.join('+') : ''}`" class="g-btn sm" :title="tr(`今の状態から ${rollN.toLocaleString()} 回続けて打って何回付くか (当たったら・今の MOD が消えたら今の状態から)`, `Use it ${rollN.toLocaleString()} times from the current state and count the hits (restarting from the current state after a hit or when a current mod is removed)`)" @click="roll(r)">{{ tr("回す", "Run") }}</button></span>
+          <span class="absolute inset-y-0 right-2 flex items-center gap-1"><button type="button" class="g-plain grid size-7 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" :title="tr('数えた回し方', 'How this was counted')" :aria-expanded="howOpen === keyOf(r)" @click="howOpen = howOpen === keyOf(r) ? null : keyOf(r)"><Icon :name="howOpen === keyOf(r) ? 'chevron-up' : 'chevron-down'" class="size-4" /></button><button type="button" :data-rec="`aim-roll:${r.currency}${r.omens.length ? '+' + r.omens.join('+') : ''}`" class="g-btn sm" :title="tr(`今の状態から ${rollN.toLocaleString()} 回続けて打って何回付くか (当たったら・今の MOD が消えたら今の状態から)`, `Use it ${rollN.toLocaleString()} times from the current state and count the hits (restarting from the current state after a hit or when a current mod is removed)`)" @click="roll(r)">{{ tr("回す", "Run") }}</button></span></div>
+          <p v-if="howOpen === keyOf(r)" class="px-2 pb-1 text-[11px] leading-snug text-[var(--exile-color-text-secondary)] md:pl-9">{{ howOf(r) }}</p>
         </li>
       </ol>
       <p v-if="busy" class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("計算中…", "Calculating…") }} {{ rows.length }} / {{ total }}</p>
