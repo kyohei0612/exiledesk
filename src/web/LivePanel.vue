@@ -6,12 +6,15 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { loadBoot } from "./boot";
-import { tr } from "../i18n/lang";
+import { lang, tr } from "../i18n/lang";
+import Disclosure from "../components/ui/Disclosure.vue";
 
 interface Entry { id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; status: "live" | "upcoming"; title: string; thumb: string | null; watchUrl: string; startedAt: string | null; scheduledAt: string | null; viewers: number | null }
 interface Latest { title: string; thumb: string; watchUrl: string; publishedAt: string | null }
-interface Ch { id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; status: "live" | "upcoming" | "off"; avatar: string | null; latest?: Latest | null }
-interface State { updatedAt: string | null; live: Entry[]; upcoming: Entry[]; channels: Ch[] }
+interface Ch { id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; lang?: "ja" | "en" | null; status: "live" | "upcoming" | "off"; avatar: string | null; latest?: Latest | null }
+/** クラフト動画 (サーバーが RSS の題名で選んだ物、新しい順。ch = チャンネルの id) */
+interface Video { ch: string; title: string; thumb: string; watchUrl: string; publishedAt: string | null }
+interface State { updatedAt: string | null; live: Entry[]; upcoming: Entry[]; channels: Ch[]; videos?: Video[] }
 
 const state = ref<State | null>(null);
 const failed = ref("");
@@ -49,6 +52,21 @@ const cards = computed((): Card[] => (state.value?.channels ?? []).map((c) => {
   const l = c.latest;
   return { id: c.id, name: c.name, platform: c.platform, pr: c.pr, avatar: c.avatar, live: false, title: l?.title ?? "", thumb: l?.thumb ?? null, href: l?.watchUrl ?? c.url, when: l ? ago(l.publishedAt) : "" };
 }));
+/**
+ * クラフト動画 (2026-10-15 オーナー「オフシーズンでもクラフト動画のチャンネル載せてあげてもええよな」)。
+ * 画面の言葉と同じチャンネルを先に、その中は新しい順。上のカードに出ている動画は出さない。最初は 4 本、残りは「もっと見る」
+ */
+const VIDEOS_FIRST = 4;
+const videosOpen = ref(false);
+const videos = computed(() => {
+  const chs = new Map((state.value?.channels ?? []).map((c) => [c.id, c] as const));
+  const shown = new Set(cards.value.map((c) => c.href));
+  const mine = (v: Video): number => (chs.get(v.ch)?.lang === lang.value ? 0 : 1);
+  return (state.value?.videos ?? [])
+    .filter((v) => chs.has(v.ch) && !shown.has(v.watchUrl))
+    .sort((a, b) => mine(a) - mine(b) || (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""))
+    .map((v) => ({ ...v, name: chs.get(v.ch)!.name, pr: chs.get(v.ch)!.pr, when: ago(v.publishedAt) }));
+});
 </script>
 
 <template>
@@ -77,5 +95,21 @@ const cards = computed((): Card[] => (state.value?.channels ?? []).map((c) => {
         </a>
       </li>
     </ul>
+    <template v-if="videos.length">
+      <div class="mb-1.5 mt-3 text-[11px] font-bold text-amber-200">{{ tr("クラフト動画", "Crafting videos") }}</div>
+      <!-- 動画は新しいタブで (ExileDesk のタブが残る) -->
+      <ul class="flex flex-col gap-1">
+        <li v-for="v in (videosOpen ? videos : videos.slice(0, VIDEOS_FIRST))" :key="v.watchUrl">
+          <a :href="v.watchUrl" target="_blank" rel="noopener" :title="v.title" class="flex min-w-0 gap-2 rounded-md p-1 text-left hover:bg-black/40">
+            <img :src="v.thumb" alt="" loading="lazy" class="aspect-video w-20 shrink-0 rounded bg-[#2a2219] object-cover" />
+            <span class="min-w-0 flex-1">
+              <span class="line-clamp-2 leading-snug">{{ v.title }}</span>
+              <span class="flex items-center gap-1 truncate text-[10px] opacity-50"><span class="truncate">{{ v.name }}</span><span v-if="v.pr" class="shrink-0 rounded border border-white/40 px-1 text-[9px]" :title="tr('協賛', 'Sponsored')">PR</span><span v-if="v.when" class="shrink-0">· {{ v.when }}</span></span>
+            </span>
+          </a>
+        </li>
+      </ul>
+      <Disclosure v-if="videos.length > VIDEOS_FIRST" v-model:open="videosOpen" bar :rest="videos.length - VIDEOS_FIRST" />
+    </template>
   </div>
 </template>
