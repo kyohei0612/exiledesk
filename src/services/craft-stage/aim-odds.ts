@@ -47,13 +47,40 @@ function omenSets(kind: string): string[][] {
 export const hits = (m: StageMod, t: AimTarget): boolean => !m.unrevealed && m.modId === t.modId && m.tierIndex >= t.minTierIndex;
 const has = (item: StageItem, t: AimTarget): boolean => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t));
 
-/** 試す打ち方の一覧 (今のアイテムに打てる物だけ。keys = 棚の使える物) */
+/** お告げが効いているかを見る種の数 (同じ種でお告げ無しと全部同じ結果なら、そのお告げは効いていない) */
+const SAME_SEEDS = 8;
+/** 1 回打った結果の印 (付いた MOD・値・側・レア度・品質。冒涜は発現の候補も) */
+function outcomeOf(data: PatchData, item: StageItem, key: string, omens: string[], seed: number): string {
+  const rng = mulberry32(seed);
+  const r = applyCurrency(data, item, key, rng, omens);
+  if (!r.applied) return `x:${r.reason ?? ""}`;
+  const it = r.item;
+  const ms = [...it.prefixes, ...it.suffixes].map((m) => `${m.side}:${m.modId}#${m.tierIndex}:${JSON.stringify(m.values ?? null)}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}${m.unrevealed ? JSON.stringify(m.unrevealed) : ""}`);
+  const offers = kindOf(key) === "desecrate" && unrevealedOf(it) ? (({ first, reroll }) => [...first, ...reroll].map((m) => `${m.modId}#${m.tierIndex}`))(revealOffers(data, it, rng)) : [];
+  return JSON.stringify([it.rarity, it.quality ?? 0, it.qualityTag ?? null, !!it.corrupted, ms, offers]);
+}
+
+/**
+ * 試す打ち方の一覧 (今のアイテムに打てる物だけ。keys = 棚の使える物)。
+ * 効かないお告げの組み合わせは出さない (2026-10-16 要望 0c542dae「プレが埋まっていれば右手のネクロマンシーがあっても無くても同じはず」):
+ * 同じ種で何回か打って、お告げを 1 枚減らした組み合わせと結果が全部同じなら、その組み合わせは外す (全カレンシー)
+ */
 export function aimCombos(data: PatchData, item: StageItem, keys: readonly string[]): AimCombo[] {
   const out: AimCombo[] = [];
   if (unrevealedOf(item)) out.push({ currency: REVEAL, omens: [ECHOES] });
   for (const k of keys) {
     const kind = kindOf(k);
+    const seen = new Map<string, string[]>();
+    const outcomes = (om: string[]): string[] => {
+      const id = [...om].sort().join("+");
+      let v = seen.get(id);
+      if (!v) seen.set(id, (v = Array.from({ length: SAME_SEEDS }, (_, i) => outcomeOf(data, item, k, om, 1000 + i * 7919))));
+      return v;
+    };
+    const same = (a: string[], b: string[]): boolean => { const x = outcomes(a), y = outcomes(b); return x.every((v, i) => v === y[i]); };
     for (const om of omenSets(kind)) {
+      // どれか 1 枚を外しても結果が全部同じなら、その 1 枚は効いていない (その組み合わせはお告げの少ない方で出る)
+      if (om.length && om.some((o) => same(om, om.filter((x) => x !== o)))) continue;
       // お告げが全部効く時だけ (効かないお告げは使われず、お告げ無しと同じになる)
       const r = applyCurrency(data, item, k, mulberry32(1), om);
       // 当たり所で弾かれた (打つ前には分からない) 物は打てる手として残す。確率は aimOdds が弾かれた回も数えて出す

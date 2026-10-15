@@ -69,3 +69,28 @@ describe("狙う確率", () => {
     expect(two).toBeGreaterThan(0);
   });
 });
+
+describe("効かないお告げは狙う一覧に出さない (要望 0c542dae)", () => {
+  // プレが 3 つ埋まった指輪: 骨はお告げ無しでもサフィにしか付かない
+  let full = freshItem(data, "Sapphire Ring", 82);
+  full = force(full, idOf("Rings", /IncreasedLife$/), "T2");
+  full = force(full, idOf("Rings", /IncreasedMana$/), "T2");
+  const fams = new Set(full.prefixes.map((m) => data.mods.get(m.modId)!.family));
+  const third = [...data.mods.values()].find((m) => m.id.startsWith("Rings/") && m.source === "normal" && m.type === "prefix" && !fams.has(m.family) && m.tiers.length > 1)!;
+  full = force(full, third.id, "T1");
+
+  it("プレが埋まっていれば、右手のネクロマンシー (サフィ) と右の高揚は出ない", () => {
+    expect(full.prefixes.length).toBe(3);
+    const cs = aimCombos(data, full, ["exalt", "desecrate"]);
+    expect(cs.some((c) => c.currency === "desecrate" && c.omens.includes("OmenofDextralNecromancy"))).toBe(false);
+    expect(cs.some((c) => c.currency === "exalt" && c.omens.includes("OmenofDextralExaltation"))).toBe(false);
+    expect(cs.some((c) => c.currency === "desecrate" && c.omens.length === 1)).toBe(true);
+  });
+  it("空いている側が 1 つなら側の抽選をしない: 同じ種でお告げ無しの骨と右手のネクロマンシーの骨は同じ結果", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const a = applyCurrency(data, full, "desecrate", mulberry32(seed), []);
+      const b = applyCurrency(data, full, "desecrate", mulberry32(seed), ["OmenofDextralNecromancy"]);
+      expect(JSON.stringify(b.item.suffixes)).toBe(JSON.stringify(a.item.suffixes));
+    }
+  });
+});

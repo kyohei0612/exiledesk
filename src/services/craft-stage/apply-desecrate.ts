@@ -64,9 +64,16 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   if (omenSide) side = omenSide;
   else {
     const open = SIDES.filter((s) => room(item, s));
-    const pick = pickWeighted((open.length ? open : SIDES).map((s) => ({ s, w: weightOf(s) })), rng);
-    if (!pick) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
-    side = pick.s;
+    // 空いている側が 1 つなら抽選しない (乱数を使わない)。使うと同じ種でも後の候補の乱数がずれ、お告げで側を決めた時と
+    // 結果が食い違って「効かないお告げで確率が変わる」ように見えた (2026-10-16 要望 0c542dae)
+    if (open.length === 1) {
+      if (!(weightOf(open[0]!) > 0)) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
+      side = open[0]!;
+    } else {
+      const pick = pickWeighted((open.length ? open : SIDES).map((s) => ({ s, w: weightOf(s) })), rng);
+      if (!pick) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
+      side = pick.s;
+    }
   }
   if (!(weightOf(side) > 0)) return skip(item, tr("その側に付けられる冒涜の MOD が無い", "No Desecrated mod can be added on that side"));
   let cur = item;
