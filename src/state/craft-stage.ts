@@ -214,6 +214,18 @@ const simStart = ref<SimStart>("white");
  */
 /** Web 版の工程を覚える手の数 */
 export const LOG_KEEP = 50;
+/** 手順 JSON の 1 手 (plan の steps の 1 つ) */
+type PlanStep = CraftStagePlan["steps"][number];
+/**
+ * 50 手より前に消した手の、手順 JSON に書く分だけ (重い打つ前 / 後のアイテムは持たない)。
+ * 消した手も手順に要る (無いと再生で始めの方の手が抜け、送った人のアイテムにならなかった。2026-10-16 要望 0ce15a82 の決闘のワンド)
+ */
+const dropped = shallowRef<Array<{ step: PlanStep; index: number }>>([]);
+/** 打った手 1 つを手順 JSON の 1 手に。カタリストは手で打つと 1 手で上限まで、再生は 1 手 = 1 個 (+1%)。上げた分の回数で書く (2026-10-10 点検: 再生で品質が違った) */
+function planStepOf(s: PlayedStep): PlanStep {
+  const times = s.out.currency.startsWith("catalyst_") || s.out.currency.startsWith("jcatalyst_") ? Math.max(1, (s.after.quality ?? 0) - (s.before.qualityTag === s.after.qualityTag ? s.before.quality ?? 0 : 0)) : 1;
+  return { currency: s.out.currency, omen: s.out.omen ?? null, times, note: null, ...(s.out.seed != null ? { seed: s.out.seed } : {}) } as PlanStep;
+}
 const simStartItem = ref<StageItem | null>(null);
 /** ベースを選ぶ前に選んだレシピ (StageSimPanel が開いたら読み込む。2026-10-08 完成判定: レシピはベースを選ぶまで出なかった) */
 const simPendingRecipe = ref<string | null>(null);
@@ -553,6 +565,7 @@ export const craftStage = {
     try {
       startMods.value = [];
       log.value = [];
+      dropped.value = [];
       omens.value = [];
       seed.value = newSeed();
       // 値を振る種は再生 (手順 JSON・共有) と同じ seed − 1 (前は前の seed のままで、再生とユニークの数値がずれた)
@@ -587,7 +600,11 @@ export const craftStage = {
     rollSeed.value = freshSeed();
     // Web 版は工程を 50 手まで覚え、それより前は消す (データが長くなりすぎる。2026-10-08 オーナー「50 手まで保存でそれ以降は消そうか」)。
     // アプリは手順 JSON (POE2Tube の再生) に全部の手が要るので消さない
-    log.value = !isTauriRuntime() && log.value.length >= LOG_KEEP ? [...log.value.slice(-(LOG_KEEP - 1)), p] : [...log.value, p];
+    if (!isTauriRuntime() && log.value.length >= LOG_KEEP) {
+      const cut = log.value.slice(0, log.value.length - (LOG_KEEP - 1));
+      dropped.value = [...dropped.value, ...cut.map((s) => ({ step: planStepOf(s), index: s.out.index }))];
+      log.value = [...log.value.slice(-(LOG_KEEP - 1)), p];
+    } else log.value = [...log.value, p];
     item.value = p.after;
     // 分析用の記録 (2026-10-09): 打つ前の MOD・打った物・お告げ・付いた / 消えた MOD
     const ms = (l: readonly StageMod[]): string[] => l.map((m) => `${m.modId}#${m.tierIndex}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}`);
@@ -656,7 +673,8 @@ export const craftStage = {
       seed: seed.value,
       // 手ごとの乱数 (seed) も書く (2026-10-09 から手ごとに新しい乱数。再生はこれを使う。追加のキー = outcome / pick と同じ扱い)
       // カタリストは手で打つと 1 手で上限まで、再生は 1 手 = 1 個 (+1%)。上げた分の回数で書く (2026-10-10 点検: 再生で品質が違った)
-      steps: (log.value.length ? log.value.map((s) => ({ currency: s.out.currency, omen: s.out.omen ?? null, times: s.out.currency.startsWith("catalyst_") || s.out.currency.startsWith("jcatalyst_") ? Math.max(1, (s.after.quality ?? 0) - (s.before.qualityTag === s.after.qualityTag ? s.before.quality ?? 0 : 0)) : 1, note: null, ...(s.out.seed != null ? { seed: s.out.seed } : {}) })) : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
+      // Web で 50 手より前に消した手も頭に付ける (dropped)
+      steps: (log.value.length || dropped.value.length ? [...dropped.value.map((d) => d.step), ...log.value.map(planStepOf)] : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
     };
   },
   /** 結果 JSON (今の相場の値段で) */
@@ -674,7 +692,7 @@ export const craftStage = {
    * 共有できない理由 (できるなら null)。最初のカレンシーの後に手で MOD を足していたら共有できない ([[share.ts]])。
    * 再生中 (共有の URL から開いた時も) はその手順をそのまま渡せる
    */
-  shareWhy: computed((): string | null => (replay.value ? null : shareBlock(log.value.map((s) => ({ currency: s.out.currency, index: s.out.index }))))),
+  shareWhy: computed((): string | null => (replay.value ? null : shareBlock([...dropped.value.map((d) => ({ currency: d.step.currency, index: d.index })), ...log.value.map((s) => ({ currency: s.out.currency, index: s.out.index }))]))),
   /** 共有する手順 (再生中はその手順を全部) */
   sharePlan(): CraftStagePlan {
     return replay.value?.plan ?? craftStage.plan();
@@ -713,6 +731,7 @@ export const craftStage = {
       replay.value = { plan, step, ...(shared ? { shared } : {}) };
       seed.value = plan.seed;
       log.value = steps;
+      dropped.value = [];
       item.value = final;
       error.value = null;
       recordHistory("craft-stage", "replay", { plan, step, final, steps: steps.map((s) => s.out) });
