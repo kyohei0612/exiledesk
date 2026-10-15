@@ -12,8 +12,13 @@ export interface ChannelDef {
   url: string;
   /** 協賛 (画面に PR と出す) */
   pr?: boolean;
+  /** 動画の言葉 (日本語のチャンネルは ja、海外は en)。画面の言葉と同じ物を先に並べる。無ければ後ろ */
+  lang?: "ja" | "en";
   note?: string;
 }
+
+/** クラフト動画 1 本 (RSS の題名に「クラフト」/ craft がある物。ch = channels.json の id) */
+export interface CraftVideo { ch: string; title: string; thumb: string; watchUrl: string; publishedAt: string | null }
 
 export type LiveStatus = "live" | "upcoming" | "off";
 
@@ -42,7 +47,9 @@ export interface LiveState {
   live: LiveEntry[];
   upcoming: LiveEntry[];
   /** 全チャンネル (配信していなくても出す。並びは channels.json のまま) */
-  channels: Array<{ id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; status: LiveStatus; avatar: string | null; latest?: { title: string; thumb: string; watchUrl: string; publishedAt: string | null } | null }>;
+  channels: Array<{ id: string; name: string; platform: "youtube" | "twitch"; url: string; pr: boolean; lang: "ja" | "en" | null; status: LiveStatus; avatar: string | null; latest?: { title: string; thumb: string; watchUrl: string; publishedAt: string | null } | null }>;
+  /** クラフト動画 (全チャンネル、新しい順。並べ替え (言葉) は画面で) */
+  videos?: CraftVideo[];
   /** 調べられなかった時の理由 (画面には出さない。wrangler tail で見る) */
   errors: string[];
 }

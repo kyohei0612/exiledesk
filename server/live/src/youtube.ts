@@ -6,7 +6,7 @@
  *
  * search.list (1 回 100 点) は使わない。5 分おきで 1 日 288 点 (無料枠 1 万点)。
  */
-import type { ChannelDef, Fetch, LiveEntry } from "./types";
+import type { ChannelDef, CraftVideo, Fetch, LiveEntry } from "./types";
 
 export const feedUrl = (channelId: string): string => `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`;
 export const livePageUrl = (channelId: string): string => `https://www.youtube.com/channel/${encodeURIComponent(channelId)}/live`;
@@ -63,6 +63,24 @@ export async function pickLatestVideo(cands: ReadonlyArray<Latest & { id: string
   return cands[0] ? strip(cands[0]) : null;
 }
 const strip = ({ id: _id, ...l }: Latest & { id: string }): Latest => l;
+
+/**
+ * クラフト動画: 題名に「クラフト」か craft (大文字小文字を見ない。crafting も) がある物 (2026-10-15 オーナー「クラフト動画のチャンネル載せてあげてもええよな」)。
+ * ショートは飛ばす (題名の #shorts と、まだ確かめていない物は checks 本まで /shorts/ を確かめる。Workers の 1 回の問い合わせの数を守る)
+ */
+export const CRAFT_TITLE_RE = /クラフト|craft/i;
+export async function pickCraftVideos(chId: string, cands: ReadonlyArray<Latest & { id: string }>, fetchFn: Fetch, budget: { checks: number }, max = 5): Promise<CraftVideo[]> {
+  const out: CraftVideo[] = [];
+  for (const c of cands) {
+    if (out.length >= max) break;
+    if (!CRAFT_TITLE_RE.test(c.title) || /#shorts?\b/i.test(c.title)) continue;
+    const known = shortMemo.get(c.id);
+    if (known == null && budget.checks > 0) { budget.checks--; if (await isShort(c, fetchFn)) continue; }
+    else if (known) continue;
+    out.push({ ch: chId, title: c.title, thumb: c.thumb, watchUrl: c.watchUrl, publishedAt: c.publishedAt });
+  }
+  return out;
+}
 
 export function parseFeedLatest(xml: string): Latest | null {
   const e = xml.match(/<entry>([\s\S]*?)<\/entry>/)?.[1];
@@ -145,7 +163,7 @@ export function pickLive(items: readonly VideoItem[], channels: readonly Channel
  * RSS が 404 のチャンネルの代わり: アップロードの再生リスト (UU…) を playlistItems.list で (1 回 1 点)。
  * 2026-10-10 チョコバナナch の RSS が動画があるのに 404 (playlist_id の RSS も 404) で、最新動画が出ず日報に毎回「feed 404」が出ていた
  */
-export async function uploadsViaApi(channelId: string, apiKey: string, fetchFn: Fetch, onLatest?: (l: Latest) => void): Promise<string[]> {
+export async function uploadsViaApi(channelId: string, apiKey: string, fetchFn: Fetch, onLatest?: (l: Latest) => void, onCands?: (cands: Array<Latest & { id: string }>) => Promise<void>): Promise<string[]> {
   const u = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
   u.searchParams.set("part", "snippet");
   u.searchParams.set("maxResults", "15");
@@ -160,26 +178,29 @@ export async function uploadsViaApi(channelId: string, apiKey: string, fetchFn: 
   const cands = items.map((x) => { const id = x.snippet!.resourceId!.videoId!; return { id, title: x.snippet?.title ?? "", thumb: thumbUrl(id), watchUrl: watchUrl(id), publishedAt: x.snippet?.publishedAt ?? null }; });
   const l = await pickLatestVideo(cands, fetchFn);
   if (l) onLatest?.(l);
+  await onCands?.(cands);
   return cands.map((c) => c.id);
 }
 
 /** チャンネル 1 つ分の候補の動画 ID (RSS + /live。どちらかが落ちても片方で続ける。RSS が落ちたら API のアップロード一覧で) */
-export async function candidateIds(channelId: string, fetchFn: Fetch, errors: string[], onLatest?: (l: Latest) => void, apiKey?: string): Promise<string[]> {
+export async function candidateIds(channelId: string, fetchFn: Fetch, errors: string[], onLatest?: (l: Latest) => void, apiKey?: string, onCands?: (cands: Array<Latest & { id: string }>) => Promise<void>): Promise<string[]> {
   const ids = new Set<string>();
   // ライブ判定 (/live ページ) はやめた (2026-10-10 オーナー「ライブ判定は消して良かったはず」。YouTube は最新動画の紹介だけ)
   const [feed] = await Promise.allSettled([
     fetchFn(feedUrl(channelId), { headers: { "accept": "application/atom+xml" } }).then(async (r) => {
       if (!r.ok) throw new Error(`feed ${r.status}`);
       const xml = await r.text();
-      const l = await pickLatestVideo(parseFeedEntries(xml), fetchFn);
+      const entries = parseFeedEntries(xml);
+      const l = await pickLatestVideo(entries, fetchFn);
       if (l) onLatest?.(l);
+      await onCands?.(entries);
       return parseFeedVideoIds(xml);
     }),
   ]);
   if (feed.status === "fulfilled") feed.value.forEach((id) => ids.add(id));
   else {
     let ok = false;
-    if (apiKey) { try { (await uploadsViaApi(channelId, apiKey, fetchFn, onLatest)).forEach((id) => ids.add(id)); ok = true; } catch (e) { errors.push(`youtube ${channelId}: ${String(feed.reason)} / ${String(e)}`); } }
+    if (apiKey) { try { (await uploadsViaApi(channelId, apiKey, fetchFn, onLatest, onCands)).forEach((id) => ids.add(id)); ok = true; } catch (e) { errors.push(`youtube ${channelId}: ${String(feed.reason)} / ${String(e)}`); } }
     if (!ok && !apiKey) errors.push(`youtube ${channelId}: ${String(feed.reason)}`);
   }
   return [...ids];
@@ -202,12 +223,17 @@ export async function listVideos(ids: readonly string[], apiKey: string, fetchFn
   return out;
 }
 
-/** 全チャンネルの、今ライブ中・予定の配信 (チャンネル id → 1 本) */
-export async function fetchYoutube(channels: readonly ChannelDef[], apiKey: string | undefined, fetchFn: Fetch, errors: string[], latest?: Map<string, Latest>): Promise<Map<string, LiveEntry>> {
+/** クラフト動画のショートの確かめ (/shorts/ の HEAD) を 1 回の見張りで何本まで (Workers 無料枠の 1 回 50 の問い合わせを守る) */
+export const SHORT_CHECKS_PER_REFRESH = 15;
+
+/** 全チャンネルの、今ライブ中・予定の配信 (チャンネル id → 1 本)。latest = 最新の動画、videos = クラフト動画 (チャンネル id → 新しい順) */
+export async function fetchYoutube(channels: readonly ChannelDef[], apiKey: string | undefined, fetchFn: Fetch, errors: string[], latest?: Map<string, Latest>, videos?: Map<string, CraftVideo[]>): Promise<Map<string, LiveEntry>> {
   const yt = channels.filter((c) => c.platform === "youtube" && c.youtubeChannelId);
   if (!yt.length) return new Map();
   if (!apiKey) { errors.push("youtube: YOUTUBE_API_KEY が無い"); return new Map(); }
-  const idLists = await Promise.all(yt.map((c) => candidateIds(c.youtubeChannelId!, fetchFn, errors, (l) => latest?.set(c.id, l), apiKey)));
+  const budget = { checks: SHORT_CHECKS_PER_REFRESH };
+  const onCands = (chId: string) => videos ? async (cands: Array<Latest & { id: string }>) => { videos.set(chId, await pickCraftVideos(chId, cands, fetchFn, budget)); } : undefined;
+  const idLists = await Promise.all(yt.map((c) => candidateIds(c.youtubeChannelId!, fetchFn, errors, (l) => latest?.set(c.id, l), apiKey, onCands(c.id))));
   // ライブ中かは見ない (videos.list も呼ばない)。最新動画 (latest) だけ
   void idLists;
   return new Map();

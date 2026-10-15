@@ -1,5 +1,8 @@
 // server/live (ライブ中のチャンネルを配る Worker) の、外に繋がずに確かめられる所 (2026-10-07)
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseFeedVideoIds, parseLivePageVideoId, pickLive, readUntil, type VideoItem } from "../server/live/src/youtube";
 import { pickStreams, thumbOf, getAppToken } from "../server/live/src/twitch";
 import { buildState } from "../server/live/src/state";
@@ -354,6 +357,90 @@ describe("要望の送った人の印 (senderTag)", () => {
     expect(await senderTag({ context: {}, ip: "1.2.3.4", ua: "x" })).toBe(a);
     expect(await senderTag({ context: null, ip: "5.6.7.8", ua: "x" })).not.toBe(a);
     expect(a).toMatch(/^~[0-9a-f]{6}$/);
+  });
+});
+
+describe("クラフト動画 (RSS、2026-10-15)", () => {
+  const sample = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "fixtures/youtube-feed-sample.xml"), "utf8");
+  /** /shorts/<id> がそのまま開く (200) = ショート。ほかは watch へ飛ぶ (303) */
+  const shortsFetch = (shorts: string[], seen: string[] = []) => (async (input: RequestInfo | URL) => {
+    const u = String(input);
+    seen.push(u);
+    const id = u.match(/\/shorts\/([\w-]{11})$/)?.[1];
+    if (id) return new Response(null, { status: shorts.includes(id) ? 200 : 303 });
+    throw new Error("unexpected " + u);
+  }) as unknown as typeof fetch;
+
+  it("題名に「クラフト」/ craft がある動画だけ、新しい順。#shorts とショートは外す、文字の実体参照は戻す", async () => {
+    const { parseFeedEntries, pickCraftVideos } = await import("../server/live/src/youtube");
+    const got = await pickCraftVideos("me", parseFeedEntries(sample), shortsFetch(["vid00000005"]), { checks: 10 });
+    expect(got.map((v) => v.title)).toEqual(["手袋のクラフト & 冒涜の骨で 600 神 #PoE2", "Crafting a Mirror-tier Bow in Path of Exile 2", 'CRAFT "ガイド" 総まとめ']);
+    expect(got[0]).toEqual({ ch: "me", title: "手袋のクラフト & 冒涜の骨で 600 神 #PoE2", thumb: "https://i.ytimg.com/vi/vid00000002/mqdefault.jpg", watchUrl: "https://www.youtube.com/watch?v=vid00000002", publishedAt: "2026-10-13T09:30:00+00:00" });
+  });
+
+  it("ショートの確かめは budget の本数まで (使い切ったら確かめずに載せる)、max 本で止める", async () => {
+    const { parseFeedEntries, pickCraftVideos } = await import("../server/live/src/youtube");
+    const xml = sample.replace(/vid0000000/g, "vix0000000");
+    const seen: string[] = [];
+    const budget = { checks: 1 };
+    const got = await pickCraftVideos("me", parseFeedEntries(xml), shortsFetch(["vix00000005"], seen), budget);
+    expect(seen).toHaveLength(1);
+    expect(budget.checks).toBe(0);
+    expect(got.map((v) => v.watchUrl.slice(-11))).toEqual(["vix00000002", "vix00000003", "vix00000005", "vix00000006"]);
+    expect(await pickCraftVideos("me", parseFeedEntries(xml), shortsFetch([]), { checks: 0 }, 2)).toHaveLength(2);
+  });
+
+  it("mergeVideos: チャンネルごとに 5 本まで、全体は新しい順、同じ動画は 1 回", async () => {
+    const { mergeVideos, VIDEOS_PER_CHANNEL } = await import("../server/live/src/state");
+    const v = (ch: string, n: number, day: number) => ({ ch, title: `${ch}${n}`, thumb: "", watchUrl: `https://w/${ch}${n}`, publishedAt: `2026-10-${String(day).padStart(2, "0")}T00:00:00Z` });
+    const got = mergeVideos(CH, new Map([
+      ["me", [1, 2, 3, 4, 5, 6, 7].map((n) => v("me", n, 20 - n))],
+      ["spon", [v("spon", 1, 18), v("me", 1, 19)]],
+    ]));
+    expect(got.filter((x) => x.ch === "me")).toHaveLength(VIDEOS_PER_CHANNEL);
+    expect(got.map((x) => x.title)).toEqual(["me1", "me2", "spon1", "me3", "me4", "me5"]);
+  });
+
+  it("refresh: RSS のクラフト動画を state.videos に (KV のキーは state のまま増えない)。チャンネルの言葉も載る", async () => {
+    const kv = fakeKv();
+    const env: Env = { LIVE: kv, YOUTUBE_API_KEY: "yt" };
+    const chs: ChannelDef[] = [{ id: "me", name: "自分", platform: "youtube", youtubeChannelId: "UCaaaaaaaaaaaaaaaaaaaaaa", url: "https://www.youtube.com/@me", lang: "ja" }];
+    const f = (async (input: RequestInfo | URL) => {
+      const u = String(input);
+      if (u.includes("feeds/videos.xml")) return new Response(sample.replace(/vid0000000/g, "vir0000000"));
+      if (u.includes("/shorts/")) return new Response(null, { status: u.endsWith("vir00000005") ? 200 : 303 });
+      if (u.includes("/youtube/v3/channels")) return new Response(JSON.stringify({ items: [] }));
+      throw new Error("unexpected " + u);
+    }) as unknown as typeof fetch;
+    const st = await refresh(env, chs, f, new Date("2026-10-15T00:00:00Z"));
+    expect(st.channels[0]!.lang).toBe("ja");
+    expect(st.videos!.map((x) => `${x.ch}:${x.watchUrl.slice(-11)}`)).toEqual(["me:vir00000002", "me:vir00000003", "me:vir00000006"]);
+    expect([...kv.store.keys()].sort()).toEqual(["avatars", "state"]);
+    expect(JSON.parse(kv.store.get("state")!).videos).toHaveLength(3);
+  });
+
+  it("RSS が 404 のチャンネルは、最新の動画と同じアップロード一覧 (API 1 点) からクラフト動画を拾う (点数は増やさない)", async () => {
+    const env: Env = { LIVE: fakeKv(), YOUTUBE_API_KEY: "yt" };
+    const chs: ChannelDef[] = [{ id: "me", name: "自分", platform: "youtube", youtubeChannelId: "UCaaaaaaaaaaaaaaaaaaaaaa", url: "https://www.youtube.com/@me" }];
+    let api = 0;
+    const f = (async (input: RequestInfo | URL) => {
+      const u = String(input);
+      if (u.includes("feeds/videos.xml")) return new Response("", { status: 404 });
+      if (u.includes("/shorts/")) return new Response(null, { status: 303 });
+      if (u.includes("/youtube/v3/playlistItems")) {
+        api++;
+        return new Response(JSON.stringify({ items: [
+          { snippet: { title: "雑談", publishedAt: "2026-10-14T00:00:00Z", resourceId: { videoId: "api00000001" } } },
+          { snippet: { title: "杖のクラフト", publishedAt: "2026-10-13T00:00:00Z", resourceId: { videoId: "api00000002" } } },
+        ] }));
+      }
+      if (u.includes("/youtube/v3/channels")) return new Response(JSON.stringify({ items: [] }));
+      throw new Error("unexpected " + u);
+    }) as unknown as typeof fetch;
+    const st = await refresh(env, chs, f, new Date("2026-10-15T00:00:00Z"));
+    expect(api).toBe(1);
+    expect(st.channels[0]!.lang).toBeNull();
+    expect(st.videos!.map((x) => x.title)).toEqual(["杖のクラフト"]);
   });
 });
 

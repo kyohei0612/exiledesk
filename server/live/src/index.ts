@@ -1,7 +1,7 @@
 /**
  * exiledesk-live: Web 版のサーバー (Cloudflare Worker、無料枠)。
  *
- *   scheduled (1 時間おき) … 相場 (poe2scout → KV "market")。8 時間おきに YouTube / Twitch に問い合わせ → KV "state" に LiveState を書く (配信の見張り)
+ *   scheduled (1 時間おき) … 相場 (poe2scout → KV "market")。8 時間おきに YouTube / Twitch に問い合わせ → KV "state" に LiveState を書く (配信の見張り・最新の動画・クラフト動画の一覧)
  *   scheduled (毎朝 9 時 JST) … 日報を Discord に (monitor.ts)・昨日の分析用の記録を JSONL ファイルで LOGS_WEBHOOK に (logs.ts)
  *   GET  /live.json        … 配信の状態 (CORS 許可、60 秒キャッシュ)。サイトはこれを読むだけ
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
@@ -29,7 +29,7 @@ import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
-import type { ChannelDef, Env, Fetch, LiveState } from "./types";
+import type { ChannelDef, CraftVideo, Env, Fetch, LiveState } from "./types";
 
 const STATE_KEY = "state";
 const AVATARS_KEY = "avatars";
@@ -68,12 +68,13 @@ export async function refresh(env: Env, channels: readonly ChannelDef[] = CHANNE
   const t0 = Date.now();
   const errors: string[] = [];
   const latest = new Map<string, Latest>();
+  const videos = new Map<string, CraftVideo[]>();
   const [yt, tw, avatars] = await Promise.all([
-    fetchYoutube(channels, env.YOUTUBE_API_KEY, fetchFn, errors, latest),
+    fetchYoutube(channels, env.YOUTUBE_API_KEY, fetchFn, errors, latest, videos),
     fetchTwitch(channels, env, env.LIVE, fetchFn, errors),
     avatarsOf(env, channels, fetchFn, errors, now.getTime()),
   ]);
-  const state = buildState(channels, new Map([...yt, ...tw]), avatars, errors, now, latest);
+  const state = buildState(channels, new Map([...yt, ...tw]), avatars, errors, now, latest, videos);
   await env.LIVE.put(STATE_KEY, JSON.stringify(state));
   console.log(JSON.stringify({ job: "refresh", live: state.live.length, upcoming: state.upcoming.length, errors: errors.length, ms: Date.now() - t0 }));
   // 配信 (ライブ) はもう見ていない (最新動画だけ)。取れなかった時はログだけで、異常の通知・日報には出さない (2026-10-11 オーナー)
