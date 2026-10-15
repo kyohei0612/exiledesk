@@ -20,6 +20,8 @@ const run = (cmd, opts = {}) => execSync(cmd, { cwd: ROOT, stdio: "inherit", ...
 
 run("npx vue-tsc --noEmit");
 run("npx vite build --config vite.web.config.ts", { env: { ...process.env, WEB_OUT: "dist-web-dev", VITE_DEV_PREVIEW: "1" } });
+// オフラインで動かす service worker (PWA、2026-10-15)
+run("node scripts/build-sw.mjs dist-web-dev");
 
 let key = existsSync(KEY_FILE) ? readFileSync(KEY_FILE, "utf8").trim() : "";
 const fresh = !key;

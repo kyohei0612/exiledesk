@@ -53,6 +53,8 @@ export function startLogSender(app: "web" | "app"): void {
     const size = JSON.stringify(pend).length;
     // 1 時間たっていない・溜めすぎていない・端末に置ける → 溜めるだけ
     if (Date.now() - lastSent() < MIN_GAP_MS && size < MAX_CHARS && savePending(pend)) return;
+    // 電波が無い → 置いておき、戻った時に送る (2026-10-15 PWA。戻って送れなければ捨てる)
+    if (navigator.onLine === false && savePending({ recs: pend.recs.slice(-MAX_RECS), ev: pend.ev.slice(-50) })) return;
     const recs = pend.recs.slice(-MAX_RECS);
     // app と n を先頭に (サーバーは頭の 200 文字だけ見る)
     const body = `{"app":"${app}","n":${recs.length},"v":"${pkg.version}","uid":"${uid}","sid":"${sid}","dev":"${dev}","recs":${JSON.stringify(recs)}${pend.ev.length ? `,"__ev":[${pend.ev.join(",")}]` : ""}}`;
@@ -76,4 +78,5 @@ export function startLogSender(app: "web" | "app"): void {
   (globalThis as { __exiledeskLogFlush?: (beacon?: boolean) => void }).__exiledeskLogFlush = flush;
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(true); });
   addEventListener("pagehide", () => flush(true));
+  addEventListener("online", () => flush());
 }

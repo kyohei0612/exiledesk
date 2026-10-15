@@ -9,6 +9,8 @@ import { applyNoLogParam, noLog } from "../utils/no-log";
 import { initRecParts } from "../utils/rec-mode";
 import { setMarketLoader } from "../state/market-store";
 import { loadBoot } from "./boot";
+import { startPwa } from "./pwa";
+import { startOutbox } from "./outbox";
 import type { CurrencyItem, League } from "../api/poe2scout";
 
 // この端末は記録しない (?nolog=1 / 0 で切り替え、no-log.ts)。印を読んでから記録を始める
@@ -23,6 +25,9 @@ setMarketLoader(async () => {
   return b?.market?.items?.length ? { leagues: b.market.leagues as League[], items: b.market.items as CurrencyItem[] } : null;
 });
 createApp(WebApp).mount("#app");
+// オフラインでも動く・ホーム画面に追加・新しい版の知らせ (pwa.ts、2026-10-15)
+startPwa();
+startOutbox();
 // タブの題は言語に合わせる (web.html の題は日本語の既定。2026-10-10 英語の巡回で見つかった)
 watchEffect(() => { document.title = tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator"); });
 // 分析用の記録 (開発中は送らない)

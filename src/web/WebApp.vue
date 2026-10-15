@@ -25,6 +25,9 @@ import { noLogOn, setNoLog } from "../utils/no-log";
 import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import LangSwitch from "../components/LangSwitch.vue";
+import PwaNotice from "./PwaNotice.vue";
+import InstallButton from "./InstallButton.vue";
+import { onOnline } from "./pwa";
 
 const feedbackOpen = ref(false);
 /**
@@ -44,6 +47,8 @@ function onActive(): void {
   if (!REC) void checkReplies().then((got) => { if (got && !changelogOpen.value) { changelogNew.value = []; changelogOpen.value = "new"; } });
 }
 const onVisible = (): void => { if (document.visibilityState === "visible") onActive(); };
+// 電波が戻った時も、相場とチャンネルを取り直す (オフラインの間は最後の値段のまま。2026-10-15 PWA)
+onOnline(() => { lastActive = 0; onActive(); });
 onMounted(() => {
   for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.addEventListener(ev, onActive, { passive: true, capture: true });
   document.addEventListener("visibilitychange", onVisible);
@@ -101,7 +106,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
         <img src="/favicon.png" alt="" class="g-brand-icon shrink-0" :class="phone ? 'size-6' : 'size-8'" draggable="false" />
         <span class="g-brand-word leading-none" :class="phone ? 'text-[13px]' : 'text-[18px]'">EXILEDESK</span>
         <!-- 言語 (2026-10-10 英語版)。スマホは 1 段目の右 -->
-        <span v-if="phone" class="ml-auto" data-rec-part="header-lang"><LangSwitch /></span>
+        <!-- スマホのホーム画面に追加は 1 段目 (2 段目に入らず 3 段になった。2026-10-15) -->
+        <span v-if="phone" class="ml-auto flex items-center gap-1.5"><InstallButton phone /><span data-rec-part="header-lang"><LangSwitch /></span></span>
       </span>
       <!-- 1024 px 未満は飾りの札 (画面名・アプリ版) を出さない (768 px で帯が詰まって「日本語」が縦に折れた。2026-10-13) -->
       <span class="whitespace-nowrap rounded border border-white/15 px-1.5 py-0.5 opacity-70 max-lg:hidden" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
@@ -115,12 +121,15 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
       <a data-rec-part="header-help" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :href="HOWTO_URL" target="_blank" rel="noopener noreferrer" :title="tr('使い方の動画 (YouTube)', 'How-to video (YouTube, Japanese)')">{{ tr("使い方", "How to use") }}</a>
       <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
+      <!-- ホーム画面に追加 (PWA、2026-10-15)。入れられない時・入れた後は出ない -->
+      <InstallButton v-if="!phone" />
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
       <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
       <!-- アプリ版はサブスク限定で配る予定なので、今は近日公開の表示だけ (2026-10-07 オーナー「カミングスーンでおｋ」) -->
       <span data-rec-part="header-app" class="whitespace-nowrap rounded-lg border border-amber-400/40 max-lg:hidden bg-amber-500/10 px-2.5 py-0.5 font-bold text-amber-100/80" :class="phone ? 'hidden' : ''" :title="tr('相場の自動取得・取引履歴・火力チェックなどが入ったアプリ版を準備中', 'A desktop app with automatic market prices, trade history, DPS check and more is in the works')">{{ tr("アプリ版 近日公開", "Desktop app coming soon") }}</span>
     </header>
     <MarketNotice />
+    <PwaNotice />
     <!-- ?nolog=1 で開いた時の結果 (2026-10-10) -->
     <p v-if="forgetResult" class="flex items-center gap-2 px-4 py-1.5 text-[12px]" :class="forgetResult.ok ? 'bg-emerald-900/40 text-emerald-200' : 'bg-amber-900/40 text-amber-200'">
       {{ forgetResult.text }}

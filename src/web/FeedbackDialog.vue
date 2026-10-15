@@ -15,6 +15,8 @@ import { allMods } from "../services/craft-stage/stage-core";
 import pkg from "../../package.json";
 import { tr } from "../i18n/lang";
 import ModalShell from "../components/ui/ModalShell.vue";
+import { offline } from "./pwa";
+import { queueSend } from "./outbox";
 
 /** forId: 返事で「画像を下さい」と頼んだ要望の id (その要望に画像を足す。2026-10-14) */
 const props = defineProps<{ open: boolean; forId?: string | null }>();
@@ -23,7 +25,7 @@ const emit = defineEmits<{ close: [] }>();
 // 要望とバグは分けない、連絡先の欄も無し (2026-10-10 オーナー「要望バグ欄統一、連絡先書かなくていい」)
 const text = ref("");
 const website = ref(""); // bot よけ (人は見えない。入っていたらサーバーが捨てる)
-const state = ref<"idle" | "sending" | "sent" | "error">("idle");
+const state = ref<"idle" | "sending" | "sent" | "queued" | "error">("idle");
 const errorText = ref("");
 /**
  * 付ける画像 (2026-10-14 オーナー「画像送れるようにもしようか」)。ボタンで選ぶ・貼り付け (Ctrl+V)・落とす、の 3 通り。端末で縮めてから送る
@@ -91,18 +93,20 @@ async function send(): Promise<void> {
   state.value = "sending";
   try {
     const imgs = images.value.map((x) => ({ mime: x.mime, b64: x.b64 }));
-    const r = props.forId
-      // 頼まれた画像を、その要望に足す (送った端末の uid で本人と確かめる)
-      ? await fetch(`${WEB_API_BASE}/feedback/${encodeURIComponent(props.forId)}/images`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ uid: (() => { try { return localStorage.getItem("exiledesk.web.uid") ?? ""; } catch { return ""; } })(), text: text.value.trim(), images: imgs }),
-      })
-      : await fetch(`${WEB_API_BASE}/feedback`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: contextNow(), ...(imgs.length ? { images: imgs } : {}) }),
-      });
+    // 頼まれた画像は、その要望に足す (送った端末の uid で本人と確かめる)
+    const url = props.forId ? `${WEB_API_BASE}/feedback/${encodeURIComponent(props.forId)}/images` : `${WEB_API_BASE}/feedback`;
+    const body = props.forId
+      ? JSON.stringify({ uid: (() => { try { return localStorage.getItem("exiledesk.web.uid") ?? ""; } catch { return ""; } })(), text: text.value.trim(), images: imgs })
+      : JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: contextNow(), ...(imgs.length ? { images: imgs } : {}) });
+    // 電波が無い時は置いておき、戻ったら送る (送れなければ捨てる。outbox.ts、2026-10-15 PWA)
+    if (offline.value) {
+      if (!queueSend(url, body, text.value.trim())) throw new Error(tr("置いておけなかった (画像が大きすぎるかも)", "Could not keep it for later (images may be too large)"));
+      state.value = "queued";
+      text.value = "";
+      clearImages();
+      return;
+    }
+    const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body });
     const j = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string; id?: string };
     if (!r.ok || !j.ok) throw new Error(j.error ?? `${r.status}`);
     // 直した時に返事を届けられるよう、この要望の id を覚える (state/feedback-replies.ts)
@@ -122,6 +126,7 @@ async function send(): Promise<void> {
   <!-- 窓の動き・枠は ModalShell (2026-10-10 オーナー「動きが統一されてない所」: Esc は欄の中だけでなくどこでも効く、自前の地 → .g-panel) -->
   <ModalShell :open="open" :title="forId ? tr('画像を送る', 'Send images') : tr('要望・バグを送る', 'Send feedback')" width="w-[30rem] max-w-full" body-class="px-4 py-3" @close="emit('close')">
     <p v-if="state === 'sent'" class="py-6 text-center text-[13px]">{{ tr("届きました。ありがとうございます。", "Received. Thank you!") }}<span v-if="!forId" class="mt-1 block text-[11px] opacity-60">{{ tr("直した時は、次に開いた時にお知らせします (このブラウザで)", "When it is fixed, you will be told the next time you open this page (in this browser)") }}</span></p>
+    <p v-else-if="state === 'queued'" class="py-6 text-center text-[13px]">{{ tr("電波が戻ったら送ります", "It will be sent when you're back online") }}</p>
     <div v-else @dragover.prevent @drop="onDrop">
       <textarea v-model="text" :rows="forId ? 3 : 6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="forId ? tr('ひとこと (無くてもよい)', 'A note (optional)') : tr('こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも', 'Feature ideas, something that looks wrong (what you did and what happened), anything')" autofocus @paste="onPaste"></textarea>
       <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />
@@ -140,7 +145,7 @@ async function send(): Promise<void> {
       <p v-if="state === 'error'" class="mt-2 text-rose-300">{{ tr("送れなかった", "Could not send") }}: {{ errorText }}</p>
     </div>
     <template #footer>
-      <button v-if="state === 'sent'" type="button" class="g-btn sm ml-auto" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
+      <button v-if="state === 'sent' || state === 'queued'" type="button" class="g-btn sm ml-auto" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
       <template v-else>
         <span v-if="!forId" class="text-[10px] opacity-40">{{ text.trim().length }} / 4000</span>
         <button type="button" class="g-btn sm ml-auto" @click="emit('close')">{{ tr("やめる", "Cancel") }}</button>
