@@ -11,6 +11,7 @@ import type { StageApply, StageItem } from "../types";
 import type { CurrencySpec, OmenSpec } from "./types";
 import { ANNUL_SPEC, BONE_SPECS, OMEN_SPECS, REVEAL_SPEC } from "./desecrate-specs";
 import { ORB_OMEN_SPECS, ORB_SPEC_BY_KEY, UNPORTED_OMENS } from "./orb-specs";
+import { ESSENCE_OMEN_SPECS, prepareEssence, resolveEssence } from "./essence-specs";
 import { groupsFit, limitBlock, stateBlock, targetBlock } from "./judge";
 import { NO_MODS, runPart, type Mods, type PartCtx } from "./parts";
 import { tr } from "../../../i18n/lang";
@@ -22,7 +23,11 @@ type Resolved = { spec: CurrencySpec; reveal: PartCtx["reveal"]; reason?: string
  * 手順の鍵 → カレンシー。骨はアイテムの部位に合う種類 (顎骨・肋骨 …) を対象から選ぶ。合う物が無ければ reason
  * (例: 古代の頭蓋骨はクライアントに無い)。移していない鍵は null
  */
-export function resolveSpec(key: string, item: StageItem): Resolved | null {
+export function resolveSpec(key: string, item: StageItem, data?: PatchData): Resolved | null {
+  if (key.startsWith("essence:")) {
+    const e = data ? resolveEssence(data, item, key) : null;
+    return e ? { spec: e.spec, reveal: null, ...(e.reason ? { reason: e.reason } : {}) } : null;
+  }
   if (key === ANNUL_SPEC.stageKey) return { spec: ANNUL_SPEC, reveal: null };
   const orb = ORB_SPEC_BY_KEY.get(key);
   if (orb) return { spec: orb, reveal: null };
@@ -42,10 +47,11 @@ export function resolveSpec(key: string, item: StageItem): Resolved | null {
 const OMEN_FOR_KIND = (kind: string, omen: string): boolean => (OMEN_FOR[kind] ?? []).includes(omen);
 /** この鍵を新しい作りで打てるか (移し終えた手) */
 export const specCovers = (key: string): boolean =>
-  key === ANNUL_SPEC.stageKey || /^reveal/.test(key) || BONE_SPECS.some((s) => s.stageKey === key) || ORB_SPEC_BY_KEY.has(key);
+  key === ANNUL_SPEC.stageKey || /^reveal/.test(key) || BONE_SPECS.some((s) => s.stageKey === key) || ORB_SPEC_BY_KEY.has(key) ||
+  /^essence:(breach$|(lesser|normal|greater|perfect):)/.test(key);
 
 /** 全部のお告げ (冒涜まわり + オーブ)。並びは左右を両方掛けた時に先に効く方 */
-export const ALL_OMEN_SPECS: readonly OmenSpec[] = [...OMEN_SPECS, ...ORB_OMEN_SPECS];
+export const ALL_OMEN_SPECS: readonly OmenSpec[] = [...OMEN_SPECS, ...ORB_OMEN_SPECS, ...ESSENCE_OMEN_SPECS];
 const OMEN_BY_KEY: ReadonlyMap<string, OmenSpec> = new Map(ALL_OMEN_SPECS.map((o) => [o.key, o]));
 
 /** その手に掛かるお告げ (持っている中から)。単体で効く物 (腐食) があればそれだけ */
@@ -81,7 +87,7 @@ function modsOf(used: readonly OmenSpec[]): Mods {
 
 /** 1 手打つ (applyCurrency と同じ形)。移していない手は null */
 export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: () => number, omens: readonly string[] = []): StageApply | null {
-  const r = resolveSpec(key, item);
+  const r = resolveSpec(key, item, data);
   if (!r) return null;
   const { spec } = r;
   // 移していないお告げ (聖別) が掛かる手は今の関数で
@@ -103,8 +109,11 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
   }
   const replace = used.map((o) => o.effect).find((e) => "replace" in e);
   const actions = replace && "replace" in replace ? replace.replace : spec.actions;
+  // エッセンスの MOD は打つ前に作る (値の乱数は今の関数と同じく消す前)
+  const essence = spec.actions.some((a) => "addEssence" in a) ? prepareEssence(data, item, key, rng) : null;
+  if (spec.actions.some((a) => "addEssence" in a) && !essence) return skip(item, tr("このエッセンスのティアが無い", "No tier for this Essence"));
   const ctx: PartCtx = {
-    data, rng, mods, reveal: r.reveal, removedSoFar: [],
+    data, rng, mods, reveal: r.reveal, removedSoFar: [], essence,
     altered: spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly")),
   };
   let cur = item;

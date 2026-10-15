@@ -34,7 +34,7 @@ export const groupsFit = (t: Target, item: StageItem): boolean => !t.groups || i
 /** 対象の判定: 部位 → レアリティの順 */
 export function targetBlock(t: Target, item: StageItem): string | null {
   if (!groupsFit(t, item)) return t.groupsReason ? tr(t.groupsReason.ja, t.groupsReason.en) : tr("この部位には使えない", "Can't be used on this item class");
-  if (t.rarity && !t.rarity.includes(item.rarity as StageRarity)) return rarityReason(t.rarity);
+  if (t.rarity && !t.rarity.includes(item.rarity as StageRarity)) return t.rarityReason ? tr(t.rarityReason.ja, t.rarityReason.en) : rarityReason(t.rarity);
   return null;
 }
 

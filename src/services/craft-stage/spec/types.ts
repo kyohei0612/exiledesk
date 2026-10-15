@@ -35,6 +35,8 @@ export interface Target {
   groups?: ItemGroup[];
   /** 部位が合わない時の一言 (無ければ共通の文) */
   groupsReason?: Words;
+  /** レアリティが合わない時の一言 (無ければレアリティから作る) */
+  rarityReason?: Words;
 }
 
 /** MOD の置き場 (ItemBase.pools)。並びは引く順 (重なった MOD は先の置き場で 1 回だけ数える) */

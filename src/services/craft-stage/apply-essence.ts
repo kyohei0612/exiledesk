@@ -62,7 +62,7 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
  * 同じ強さ (レッサー / 普通 / グレーター) の 3 つの鍵から、付いていない系統を等しく引く。それ以外のエッセンスは鍵の MOD そのまま
  */
 export const isInfiniteEssence = (key: string): boolean => / of the Infinite$/.test(ESSENCE_KEYS[key]?.en ?? "");
-function pickInfinite(data: PatchData, item: StageItem, key: string, rng: () => number): { level: string; mod: Mod; side: StageSide } | null {
+export function pickInfinite(data: PatchData, item: StageItem, key: string, rng: () => number): { level: string; mod: Mod; side: StageSide } | null {
   const level = /^essence:([a-z]+):/.exec(key)?.[1];
   const en = ESSENCE_KEYS[key]?.en;
   const taken = takenCraftedFamilies(data, item);
