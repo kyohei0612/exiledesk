@@ -109,8 +109,9 @@ function gloves(): QuizTutorial {
     assumed: [
       ["コルの狩りはソケットバウンドで置き換えられない (クライアントの説明文)。なのでソケット 2 つ (規格外) の 2 つ目にアストリッドを足す形にした", "Kolr's Hunt is socket-bound and can't be replaced (client text), so Astrid's Creativity goes into a 2nd socket (Exceptional base)"],
       ["フラクチャーする MOD はコルの狩りの「全ての投射物スキルのレベル」(動画は近接のレベル)。コルの狩りの MOD の重みは公開データに無く仮", "The fractured mod is Kolr's Hunt's Projectile Skills level (the video uses Melee). Kolr's Hunt mod weights are not public (assumed)"],
-      ["動画は深淵の印でアーケインサージを冒涜するが、ここでは冒涜を使わず 2 つ目のエッセンス (攻撃速度) にした", "The video desecrates Arcane Surge via the Abyssal mark; here a 2nd essence (Attack Speed) is used instead"],
+      ["動画は深淵の印でアーケインサージを冒涜するが、ここでは冒涜を使わず 2 つ目を適応の合金 (ルーンワードが最大値未満の間アタックスピード) にした。動画も「エッセンスか合金ならどれでも良い」と言っている", "The video desecrates Arcane Surge via the Abyssal mark; here the 2nd one is Adaptive Alloy (Attack Speed while missing Runic Ward). The video also says any essence or alloy works"],
       ["フラットダメージは段を問わない (動画は T2 以上)", "Flat damage of any tier (the video wants T2+)"],
+      ["動画 (字幕で確認) はコルの狩りを使わず、アストリッドの創造性を途中で差して、仕上げの後に別のルーン (アイドル) へ差し替えている。「コルの狩り入りで途中でアストリッドに交換」はコルの狩りが外せないので、この形で良いかオーナー確認", "The video (checked in its subtitles) uses no Kolr's Hunt: it sockets Astrid's Creativity mid-craft and swaps it for an Idol at the end. Kolr's Hunt can't be replaced, so this layout is pending the owner's check"],
     ],
     recipe: {
       v: 3, name: "Secured Wraps", base: "Secured Wraps", itemLevel: 82,
@@ -137,8 +138,8 @@ function gloves(): QuizTutorial {
           rule({ A: 3, B: 2, C: 2, D: 2, aug: 2, E: 0, "s.junk": [1, 2] }, { use: CRIT, omens: ["OmenofDextralCrystallisation"] },
             ["右側の結晶化のお告げで、エッセンスが消す MOD をサフィに絞る (固定は消えない)", "Omen of Dextral Crystallisation makes the essence remove a suffix (the fractured one stays)"]),
           rule({ A: 3, B: 2, C: 2, D: 2, aug: 2, E: 2, F: 0, "s.junk": 1 }, { use: SPEED, omens: ["OmenofDextralCrystallisation"] },
-            ["2 つ目のエッセンスも右の結晶化で。消えるのは外れかクリダメのどちらか (半々)", "Second essence with Dextral Crystallisation too: it removes either the junk suffix or Critical Damage (50/50)"],
-            ["2 つ目のエッセンスは攻撃速度 (パーフェクト) にした。動画は印からの冒涜", "The 2nd essence is Attack Speed (Perfect); the video desecrates via the mark instead"]),
+            ["合金もエッセンスと同じく右の結晶化で。消えるのは外れかクリダメのどちらか (半々)", "The alloy works like an essence: with Dextral Crystallisation it removes either the junk suffix or Critical Damage (50/50)"],
+            ["2 つ目は適応の合金にした。動画は印からの冒涜", "The 2nd one is Adaptive Alloy; the video desecrates via the mark instead"]),
           rule({ A: 3, B: 2, C: 2, D: 2, aug: 2, "s.junk": 0, "s.free": [1, 2] }, { use: "exalt", omens: ["OmenofDextralExaltation"] },
             ["結晶化はサフィを 1 つ消す前提。消す物が無ければ右の高貴で 1 つ足しておく", "Crystallisation needs a suffix to remove: add one with Dextral Exaltation first"],
             ["動画には無い手 (結晶化で消す物を用意する)", "Not in the video (prepares a suffix for Crystallisation to remove)"]),

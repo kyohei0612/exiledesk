@@ -7,7 +7,9 @@
   開発版だけ開く (シミュレーターと同じ SIM_LOCKED)
 -->
 <script setup lang="ts">
-import { computed, ref, shallowRef } from "vue";
+import { computed, onBeforeUnmount, ref, shallowRef } from "vue";
+import { hoverStack } from "../../state/hover-stack";
+import { toCss } from "../../utils/zoom";
 import { craftStage } from "../../state/craft-stage";
 import { iconOfKey, nameOfKey } from "../../state/craft-stage-shelf";
 import { baseNameOf, tr } from "../../i18n/lang";
@@ -19,7 +21,7 @@ import Icon from "../../components/ui/Icon.vue";
 import { QUIZ_TUTORIALS, type JaEn, type QuizTutorial, type TutorialRule } from "../../services/craft-stage/quiz-tutorials";
 import { autoAdvance, playRule, questionOf, startTutorial, type TutorialQuestion, type TutorialState } from "../../services/craft-stage/quiz-tutorial-run";
 import type { QuizAction, QuizSlot } from "../../services/craft-stage/quiz-recipe";
-import { SLOT_STATE } from "./quiz-text";
+import { SLOT_STATE, whenText } from "./quiz-text";
 
 const s = craftStage;
 const t2 = (x: JaEn): string => tr(x[0], x[1]);
@@ -54,6 +56,7 @@ function open(t: QuizTutorial, seed = t.seed): void {
 function choose(i: number): void {
   const d = s.data.value, x = st.value, cur = q.value;
   if (!d || !x || !cur) return;
+  hoverStack.clear();
   if (i !== cur.rule) { if (!wrong.value.includes(i)) wrong.value = [...wrong.value, i]; return; }
   playRule(d, x, i, false);
   const n = autoAdvance(d, x);
@@ -76,10 +79,27 @@ function actionLabel(a: QuizAction): string {
   if ("reveal" in a) return a.reveal.echoes ? tr(`発現 (${keyName("OmenofAbyssalEchoes")}で引き直し)`, `Reveal (reroll with ${keyName("OmenofAbyssalEchoes")})`) : tr("発現 (狙いを取る)", "Reveal (take the target)");
   return [keyName(a.use), ...(a.omens ?? []).map(keyName)].join(" + ");
 }
-function actionIcons(a: QuizAction): string[] {
+/** 答えの手で使う物 (カレンシー + お告げ) のキーと絵 */
+function actionKeys(a: QuizAction): Array<{ k: string; icon: string; omen: boolean }> {
   if (!("use" in a)) return [];
-  return [a.use, ...(a.omens ?? [])].map((k) => iconOfKey(k, item.value)).filter((x) => !!x);
+  return [a.use, ...(a.omens ?? [])].map((k) => ({ k, icon: iconOfKey(k, item.value), omen: k.startsWith("Omen") })).filter((x) => !!x.icon);
 }
+/**
+ * 選択肢の絵に乗せると棚と同じ詳しいカード (StageCurrencyCard、hover-stack)。説明はチュートリアルのアイテムで出す。
+ * 指の端末 (hover の無い画面) は絵を押すと出す (選ぶのは名前の所。2026-10-16 オーナー「棚と同じホバーのカード、スマホは押すと出る」)
+ */
+const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
+function cardAt(e: Event, x: { k: string; omen: boolean }, now: boolean): void {
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  const payload = { kind: "shelf" as const, k: x.k, reason: null, omen: x.omen, item: item.value };
+  const box = { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) };
+  // 指の端末はピン留めで出す (× で閉じる。乗せる / 外すが無いので、留めないと消せない)
+  if (now) { hoverStack.openRoot(payload, box.right, box.top); const l = hoverStack.layers.value.at(-1); if (l) hoverStack.togglePin(l.key); }
+  else hoverStack.openRootDelayed(payload, box.right, box.top, box);
+}
+function iconEnter(e: MouseEvent, x: { k: string; omen: boolean }): void { if (!touchOnly) cardAt(e, x, false); }
+function iconTap(e: MouseEvent, x: { k: string; omen: boolean }): void { if (touchOnly) { e.stopPropagation(); cardAt(e, x, true); } }
+onBeforeUnmount(() => hoverStack.leave());
 
 /** 完成の札 (名前・付け方・今の状態) */
 const KIND: Record<QuizSlot["kind"], JaEn | null> = { normal: null, desecrated: ["冒涜", "Desecrated"], fractured: ["固定", "Fractured"], essence: ["エッセンス", "Essence"], crafted: ["作った", "Crafted"] };
@@ -100,8 +120,22 @@ const slots = computed(() => {
     return { sl, v, state: tr(SLOT_STATE[v]?.[0] ?? "", SLOT_STATE[v]?.[1] ?? "") };
   });
 });
+/** 進み具合: 完成の形のうち付いた札の数 */
+const progress = computed(() => { const xs = slots.value; return { done: xs.filter((x) => x.v >= 2).length, all: xs.length }; });
+/** 外れた答えの「なぜ」: その手はどんな時に使うか (答えの条件) */
+const modName = (id: string): string => { const m = s.data.value?.mods.get(id); return m ? jaOfMod(m) : id; };
+function wrongWhy(i: number): string {
+  const t = tut.value;
+  if (!t) return "";
+  return tr(`この手は「${whenText(t.recipe.routes[0]!.goal, rules.value[i]!.when, modName)}」の時に使う`, `Use this when: ${whenText(t.recipe.routes[0]!.goal, rules.value[i]!.when, modName)}`);
+}
+/** 最後のまとめ: 答えた手と理由 (既定で畳む) */
+const learned = computed(() => { void tick.value; return [...(st.value?.answered ?? [])].sort((a, b) => a - b).map((i) => rules.value[i]!).filter(Boolean); });
+const learnedOpen = ref(false);
 const usesList = computed(() => { void tick.value; return Object.entries(st.value?.uses ?? {}).sort((a, b) => b[1] - a[1]); });
 const logOpen = ref(false);
+/** 打った手の数 (Disclosure の題は tick で描き直す) */
+const logCount = computed(() => { void tick.value; return st.value?.log.length ?? 0; });
 const assumedOpen = ref(false);
 const stopText = computed(() => {
   void tick.value;
@@ -148,7 +182,10 @@ const stopText = computed(() => {
           <StageItemCard :item="item" :added="lastEntry?.added ?? []" :removed="lastEntry?.removed ?? []" :holding="false" :flash-key="tick" :width="300" compact />
           <!-- 完成の形 -->
           <div class="flex flex-col gap-1">
-            <p class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("完成の形", "Goal") }}</p>
+            <p class="flex items-center gap-2 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("完成の形", "Goal") }}
+              <span class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full bg-emerald-400/70 transition-[width]" :style="{ width: `${(progress.done / Math.max(1, progress.all)) * 100}%` }" /></span>
+              <span class="tabular-nums">{{ progress.done }}/{{ progress.all }}</span>
+            </p>
             <div v-for="x in slots" :key="x.sl.id" class="flex min-w-0 items-baseline gap-2 text-[12px]">
               <span class="w-4 shrink-0 font-bold text-[var(--exile-color-text-tertiary)]">{{ x.sl.id }}</span>
               <span class="min-w-0 flex-1 truncate" :title="slotName(x.sl)">{{ slotName(x.sl) }}<span v-if="KIND[x.sl.kind]" class="ml-1 text-[11px] opacity-60">({{ t2(KIND[x.sl.kind]!) }})</span></span>
@@ -168,12 +205,17 @@ const stopText = computed(() => {
 
           <!-- 問題 -->
           <template v-if="q">
-            <h4 class="text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ tr("この時は?", "What now?") }}</h4>
-            <div class="flex flex-col gap-1.5">
-              <button v-for="i in q.choices" :key="i" type="button" class="g-plain flex min-h-11 w-full min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-left transition" :class="wrong.includes(i) ? 'border-[rgba(224,108,108,0.5)] bg-[rgba(224,108,108,0.08)] text-[var(--exile-color-text-tertiary)] line-through' : 'border-white/15 bg-white/[0.03] hover:border-[var(--exile-color-accent-focus)] hover:bg-white/[0.06]'" :disabled="wrong.includes(i)" @click="choose(i)">
-                <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in actionIcons(rules[i]!.do)" :key="ic" :src="ic" alt="" class="size-7 object-contain" /></span>
+            <h4 class="flex items-baseline gap-2 text-[15px] font-semibold text-[var(--exile-color-text-primary)]">{{ tr("この時は?", "What now?") }}<span class="text-[11px] font-normal text-[var(--exile-color-text-tertiary)]">{{ tr(`${st.answered.size + 1} 問目 · ${st.steps} 手`, `Question ${st.answered.size + 1} · ${st.steps} steps`) }}</span></h4>
+            <div class="flex max-w-2xl flex-col gap-1.5">
+              <template v-for="i in q.choices" :key="i">
+              <button type="button" class="g-plain flex min-h-11 w-full min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-left transition" :class="wrong.includes(i) ? 'border-[rgba(224,108,108,0.5)] bg-[rgba(224,108,108,0.08)] text-[var(--exile-color-text-tertiary)] line-through' : 'border-white/15 bg-white/[0.03] hover:border-[var(--exile-color-accent-focus)] hover:bg-white/[0.06]'" :disabled="wrong.includes(i)" @click="choose(i)">
+                <span class="flex shrink-0 items-center gap-0.5">
+                  <span v-for="x in actionKeys(rules[i]!.do)" :key="x.k" class="g-slot grid size-9 place-items-center" :data-key="x.k" @mouseenter="iconEnter($event, x)" @mouseleave="hoverStack.leave()" @click="iconTap($event, x)"><img :src="x.icon" alt="" class="size-7 object-contain" draggable="false" /></span>
+                </span>
                 <span class="min-w-0 flex-1 truncate">{{ actionLabel(rules[i]!.do) }}</span>
               </button>
+              <p v-if="wrong.includes(i)" class="-mt-1 px-3 text-[12px] text-[var(--exile-color-text-secondary)]">{{ wrongWhy(i) }}</p>
+              </template>
             </div>
             <p v-if="wrong.length" class="text-[12px] text-[var(--exile-color-signal-down)]">{{ tr("違う。完成の形と、今のアイテムに足りない物を見てもう一度", "Not this one. Compare the goal with what the item is missing, then try again") }}</p>
           </template>
@@ -183,12 +225,16 @@ const stopText = computed(() => {
             <ul class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
               <li v-for="[k, n] in usesList" :key="k" class="inline-flex items-center gap-1"><img v-if="iconOfKey(k, item)" :src="iconOfKey(k, item)" alt="" class="size-5 object-contain" />{{ keyName(k) }} ×{{ n }}</li>
             </ul>
+            <Disclosure v-if="learned.length" v-model:open="learnedOpen" kind="detail" class="mt-1 h-7 rounded-md px-2 text-[12px] hover:bg-white/5">{{ tr(`覚えた手 (${learned.length})`, `What you learned (${learned.length})`) }}</Disclosure>
+            <ol v-if="learnedOpen" class="mt-1 flex flex-col gap-1.5 text-[12px]">
+              <li v-for="(r, i) in learned" :key="i" class="px-2"><b class="text-[var(--exile-color-text-primary)]">{{ actionLabel(r.do) }}</b><span v-if="r.assumed" class="ml-1 rounded bg-amber-500/15 px-1 text-[10px] font-semibold text-amber-200">{{ tr("仮", "Assumed") }}</span><br /><span class="text-[var(--exile-color-text-secondary)]">{{ t2(r.why) }}</span></li>
+            </ol>
           </div>
           <p v-else-if="stopText" class="text-[12px] text-[var(--exile-color-signal-down)]">{{ stopText }}</p>
 
           <!-- 打った手 (既定で畳む) -->
-          <div v-if="st.log.length" class="border-t border-white/[0.06] pt-2">
-            <Disclosure v-model:open="logOpen" kind="detail" class="h-7 rounded-md px-2 text-[12px] hover:bg-white/5">{{ tr(`打った手 (${st.log.length})`, `Steps used (${st.log.length})`) }}</Disclosure>
+          <div v-if="logCount" class="border-t border-white/[0.06] pt-2">
+            <Disclosure v-model:open="logOpen" kind="detail" class="h-7 rounded-md px-2 text-[12px] hover:bg-white/5">{{ tr(`打った手 (${logCount})`, `Steps used (${logCount})`) }}</Disclosure>
             <ol v-if="logOpen" class="mt-1 flex max-h-64 flex-col gap-0.5 overflow-y-auto text-[12px]">
               <li v-for="(e, i) in st.log" :key="i" class="flex min-w-0 gap-2 px-2" :class="e.auto ? 'text-[var(--exile-color-text-tertiary)]' : 'text-[var(--exile-color-text-primary)]'">
                 <span class="w-8 shrink-0 text-right tabular-nums">{{ i + 1 }}</span>
