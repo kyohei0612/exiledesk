@@ -77,9 +77,8 @@ export function createAdRotation(now: () => number = Date.now) {
  */
 export const ads = reactive({ on: false, page: "craft" as AdPage, tick: 0, basePage: false, feedbackPage: false, phone: false, width: 1660 });
 export const adRotation = createAdRotation();
-/** 今の画面の枠 (広告を出さない時は空) */
-export const currentAdSlots = (): AdSlotDef[] => (ads.on ? adLayout(ads.page, { phone: ads.phone, width: ads.width }) : []);
-export const adSlotsAt = (place: AdPlace): AdSlotDef[] => currentAdSlots().filter((x) => x.place === place);
+/** その画面の枠のうち、置き場が place の物 (広告を出さない時は空)。別の画面の枠は隠して残すので、page を決めて引く */
+export const adSlotsAt = (place: AdPlace, page: AdPage = ads.page): AdSlotDef[] => (ads.on ? adLayout(page, { phone: ads.phone, width: ads.width }) : []).filter((x) => x.place === place);
 
 /** Web の入口で 1 回。アプリでは呼ばない (広告を出さない) */
 export function enableAds(on = true): void { ads.on = on; }

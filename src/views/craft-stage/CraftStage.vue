@@ -344,6 +344,8 @@ watch(() => s.recPreset.value, (v) => { if (v) handNoBase.value = false; }, { im
 const basePageOn = computed(() => ads.on && !phone.value);
 const basePage = computed({ get: () => basePageOn.value && ads.basePage, set: (v: boolean) => { ads.basePage = v; } });
 const baseUnpicked = computed(() => simNoBase.value || (s.mode.value === "hand" && handNoBase.value));
+const baseEver = ref(false);
+watch(basePage, (v) => { if (v) baseEver.value = true; }, { immediate: true });
 watch([baseUnpicked, basePageOn], ([u, on]) => { if (on && u) basePage.value = true; }, { immediate: true });
 function pickFromBasePage(en: string): void {
   const first = baseUnpicked.value;
@@ -648,8 +650,9 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" data-rec-part="mod-list-bottom" /></Transition>
     </div>
     <!-- ベースを選ぶ画面 (Web の PC で広告を出す時)。両脇に縦長の広告、選んだらクラフトへ戻る -->
-    <section v-if="basePage" class="flex items-start gap-4">
-      <div v-for="a in adSlotsAt('left')" :key="a.id" class="sticky top-3 shrink-0"><AdSlot :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" /></div>
+    <!-- 一度開いたら残して隠すだけ (枠を作り直さない = 60 秒以内に開き直しても前の広告のまま) -->
+    <section v-if="baseEver" v-show="basePage" class="flex items-start gap-4">
+      <div v-for="a in adSlotsAt('left', 'base')" :key="a.id" class="sticky top-3 shrink-0"><AdSlot :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" /></div>
       <div class="g-panel min-w-0 flex-1 p-4">
         <div class="mb-3 flex items-center gap-3">
           <template v-if="!baseUnpicked">
@@ -661,7 +664,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-3 border-b border-white/10 pb-3" @start="startFromRecipe" />
         <BaseCatalog :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" @pick="pickFromBasePage" />
       </div>
-      <div v-for="a in adSlotsAt('right')" :key="a.id" class="sticky top-3 shrink-0"><AdSlot :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" /></div>
+      <div v-for="a in adSlotsAt('right', 'base')" :key="a.id" class="sticky top-3 shrink-0"><AdSlot :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" /></div>
     </section>
     <!-- 窓の動きは ModalShell (Esc・後ろを押す・× で閉じる、後ろのページは止める)。Tab でも開け閉め -->
     <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">

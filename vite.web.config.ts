@@ -8,6 +8,7 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
+import { securityHeaders } from "./server/web/security-headers.js";
 
 /** 出す場所。スマホ用の開発版 (scripts/deploy-web-dev.mjs) は dist-web-dev に出す */
 const OUT = process.env.WEB_OUT || "dist-web";
@@ -29,6 +30,8 @@ export default defineConfig({
   server: {
     port: 1440,
     strictPort: true,
+    // 本番と同じセキュリティのヘッダー (CSP など) を開発版でも付けて、壊れる物をコンソールの CSP 違反で先に見つける (server/web/security-headers.js)
+    headers: securityHeaders({ dev: true }),
     open: "/web.html",
     watch: { ignored: ["**/src-tauri/**", "**/data-cache/**", "**/scripts/**"] },
     proxy: {

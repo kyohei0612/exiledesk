@@ -17,17 +17,22 @@ const shown = ref(0);
 const dev = !!import.meta.env.DEV;
 const st = computed(() => adRotation.slots.get(props.id));
 
+const box = ref<HTMLElement | null>(null);
+/** 画面に出ている時だけ出す・数える (隠した右の列や、付いた直後に別の画面へ移って外れる枠は数えない) */
 function show(): void {
+  const el = box.value;
+  if (!el || !el.isConnected || !el.getClientRects().length) return;
   if (!adShow(props.id)) return;
   shown.value++;
   if (unit.value) void nextTick(() => { try { ((window as unknown as { adsbygoogle?: unknown[] }).adsbygoogle ??= []).push({}); } catch { /* 読めない時は空の枠 */ } });
 }
-onMounted(show);
-watch(() => props.tick, show);
+// 付いた直後は 1 コマ待つ (同じ時に画面が切り替わると、すぐ外れる枠がある)
+onMounted(() => requestAnimationFrame(show));
+watch(() => props.tick, show, { flush: "post" });
 </script>
 
 <template>
-  <div class="shrink-0 overflow-hidden" :style="{ width: `${w}px`, height: `${h}px` }" :data-ad-slot-id="id">
+  <div ref="box" class="shrink-0 overflow-hidden" :style="{ width: `${w}px`, height: `${h}px` }" :data-ad-slot-id="id">
     <ins
       v-if="unit"
       :key="shown"

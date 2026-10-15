@@ -2,6 +2,8 @@
 // 人は web.html の頭の script で、作業中のデータごと exiledesk.com へ移る (localStorage はページを開かないと読めないので 301 にはできない)。
 // 検索エンジンのクローラーにだけ 301 を返して「住所が変わった」と伝える (行き先は人と同じ)。
 // ここを通るのは HTML のページだけ (wrangler.jsonc の run_worker_first)。絵や JS は通さないので、問い合わせは増えない
+import { withSecurityHeaders } from "./security-headers.js";
+
 const OLD_HOST = "web.exiledesk.workers.dev";
 const NEW_ORIGIN = "https://exiledesk.com";
 // Search Console の確かめは Googlebot 以外の名前 (Google-InspectionTool / Google-Site-Verification / GoogleOther) で来るので google も (2026-10-11 アドレス変更が「取得できません」で落ちた)
@@ -15,6 +17,7 @@ export default {
     if (url.hostname === OLD_HOST && (program || BOT.test(request.headers.get("user-agent") ?? ""))) {
       return Response.redirect(NEW_ORIGIN + url.pathname + url.search, 301);
     }
-    return env.ASSETS.fetch(request);
+    // ページにはセキュリティのヘッダー (CSP・埋め込みを止める物など、security-headers.js)。Worker を通した応答には public/_headers が効かないので、ここで付ける
+    return withSecurityHeaders(await env.ASSETS.fetch(request));
   },
 };

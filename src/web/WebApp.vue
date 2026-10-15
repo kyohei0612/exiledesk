@@ -83,7 +83,8 @@ const phone = ref(false);
  * 画面を移った時 (ベースを選ぶ・要望へ / クラフトへ戻る) だけ枠を出し直す。別の画面へ移る時は上へ、戻ったら前の位置へ
  */
 const feedbackPage = computed(() => ads.on && !phone.value && feedbackOpen.value && !imageAskFor.value);
-watch(feedbackPage, (v) => { ads.feedbackPage = v; }, { immediate: true });
+const feedbackEver = ref(false);
+watch(feedbackPage, (v) => { ads.feedbackPage = v; if (v) feedbackEver.value = true; }, { immediate: true });
 let craftScroll = 0;
 watch(() => adPageOf({ basePage: ads.basePage && !ads.phone, feedbackPage: ads.feedbackPage }), (to, from) => {
   if (!ads.on) return;
@@ -153,11 +154,12 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
       <!-- 要望・バグの画面 (広告を出す時の PC): 左に縦長の広告、右は右の列 -->
-      <section v-if="feedbackPage" class="flex min-w-0 flex-1 items-start justify-center gap-4 p-4">
-        <div v-for="a in adSlotsAt('left')" :key="a.id" class="sticky top-3 shrink-0"><AdSlot :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" /></div>
+      <!-- 一度開いたら残して隠すだけ (枠を作り直さない = 60 秒以内に戻っても前の広告のまま) -->
+      <section v-if="feedbackEver" v-show="feedbackPage" class="flex min-w-0 flex-1 items-start justify-center gap-4 p-4">
+        <div v-for="a in adSlotsAt('left', 'feedback')" :key="a.id" class="sticky top-3 shrink-0"><AdSlot :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" /></div>
         <div class="min-w-0 max-w-[40rem] flex-1">
           <button type="button" class="g-btn sm mb-3" @click="feedbackOpen = false">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
-          <FeedbackDialog page :open="true" @close="feedbackOpen = false" />
+          <FeedbackDialog page :open="feedbackPage" @close="feedbackOpen = false" />
         </div>
       </section>
       <CraftStage v-show="!feedbackPage" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
@@ -185,11 +187,12 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
       <!-- 右クリックは真ん中 (CraftStage.vue) と同じく「持っている物を手放す」。ブラウザのメニュー (コピーなど) は出さない (2026-10-13 オーナー) -->
       <!-- 広告を出す時: 右の列はチャンネルの下に 300×250 を 2 つ (幅は広告の分だけ広げる)。ベースを選ぶ画面の間は右の列を外して画面いっぱいに -->
-      <aside v-show="ads.page !== 'base'" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : adSlotsAt('right').length ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
+      <aside v-show="ads.page !== 'base'" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : adSlotsAt('right', 'craft').length ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
         <div :class="phone ? '' : 'sticky top-3'">
           <LivePanel />
-          <div v-if="ads.page !== 'base' && adSlotsAt('right').length" class="mt-3 flex flex-col gap-3">
-            <AdSlot v-for="a in adSlotsAt('right')" :key="a.id" :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" />
+          <!-- 右の列の枠は隠しても残す (ベースを選ぶ画面の間は見えないので数えない・出し直さない) -->
+          <div v-if="adSlotsAt('right', 'craft').length" class="mt-3 flex flex-col gap-3">
+            <AdSlot v-for="a in adSlotsAt('right', 'craft')" :key="a.id" :id="a.id" :w="a.w" :h="a.h" :tick="ads.tick" />
           </div>
         </div>
       </aside>
