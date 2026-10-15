@@ -64,7 +64,7 @@ const heldCands = computed(() => {
  * キャンセルや付けたらリセット」)。行の id (系統) で持つ。持つ物を変えた・離した・打った・ベースを変えた時は空に戻す
  */
 const aimSel = ref<Set<string>>(new Set());
-watch([() => s.held.value, () => s.log.value.length, () => s.base.value], () => { if (aimSel.value.size) aimSel.value = new Set(); });
+watch([() => s.held.value, () => s.log.value[s.log.value.length - 1]?.out.index ?? 0, () => s.base.value], () => { if (aimSel.value.size) aimSel.value = new Set(); });
 /** 行の付きうる段の狙いのキー */
 const rowAimKeys = (r: ListRow): string[] => r.tiers.filter((t) => heldTierShare(r, t) > 0).map((t) => aimTierKey(t.modId ?? r.id, tierIndexOf(t.modId ?? r.id, t)));
 const rowAimState = (r: ListRow): "all" | "some" | "none" => {
