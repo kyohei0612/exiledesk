@@ -300,7 +300,7 @@ function pickSimBase(en: string): void {
   s.base.value = en;
   s.simTargets.value = [];
   s.simOrder.value = [];
-  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
   s.simStart.value = "white";
   s.simStartItem.value = null;
   s.simPicked.value = true;
@@ -341,6 +341,14 @@ function startFromRecipe(r: SimRecipe): void {
   s.simPendingRecipe.value = r.id;
   pickSimBase(r.session.base);
 }
+/** クイズのレシピの再生 (n 手まで。完成・答え無し・打てない手で止まる) */
+const quizNote = ref("");
+function quizStep(n: number): void {
+  s.hold(null);
+  let r = { done: false, stop: false, text: "" }, k = 0;
+  for (; k < n && !r.stop; k++) r = s.recipeStep();
+  quizNote.value = n > 1 && !r.done ? `${r.text} (${tr(`${k} 手`, `${k} steps`)})` : r.text;
+}
 function simFromHand(): void {
   const it = s.item.value;
   if (!it) return;
@@ -349,7 +357,7 @@ function simFromHand(): void {
   // 付いている MOD は狙いに入れておく (その段以上。消えたら取り直す)。足したい MOD を 2 で足して決めたら、そのままツリー (3〜5 は飛ばす)
   s.simTargets.value = [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, minTierIndex: m.tierIndex, ...(m.fractured ? { method: "fracture" as const } : m.desecrated ? { method: "desecrate" as const } : {}) }));
   s.simOrder.value = [];
-  s.simPatterns.value = [{ name: "パターン 1", steps: [], play: { v: 2, moves: [] } }];
+  s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
   s.simSockets.value = it.sockets ?? 0;
   s.simStart.value = "item";
   s.simPicked.value = true;
@@ -361,9 +369,10 @@ const startItemMods = computed(() => {
   return it ? [...it.prefixes, ...it.suffixes].map((m) => `${m.fractured ? tr("[固定] ", "[Fractured] ") : ""}${modText(m)} (${m.tierName})`) : [];
 });
 /** 始め方の札 (1 ベース)。白以外は 2 狙う MOD の最初の 1 つが固定 MOD になる */
-const START_KINDS: Array<{ k: "white" | "fractured" | "four"; label: string; hint: string; labelEn: string; hintEn: string }> = [
+const START_KINDS: Array<{ k: "white" | "fractured" | "four" | "magic"; label: string; hint: string; labelEn: string; hintEn: string }> = [
   { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る", labelEn: "From a white base", hintEn: "Buy a white base and craft from scratch" },
   { k: "fractured", label: "フラクチャー済みを買う", hint: "フラクチャーの MOD が 1 つ付いたベースを買う。フラクチャーの MOD は 2 狙う MOD で最初に足した物", labelEn: "Buy fractured", hintEn: "Buy a base with 1 fractured mod: the first mod added in step 2 (Target mods)" },
+  { k: "magic", label: "マジックを買う", hint: "狙う MOD の最初のプレ 1 つ・サフィ 1 つが付いたマジックを買う (段は狙いの下限)", labelEn: "Buy a magic", hintEn: "Buy a magic item with the first target prefix and suffix (at their minimum tier)" },
   { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)", labelEn: "Buy a 4-mod rare", hintEn: "Buy a rare with 3 mods + 1 target, block with an Abyssal Bone, then use a Fracturing Orb (1/3 hit)" },
 ];
 /** 手打ちから持ってきた時だけ出る札 */
@@ -492,12 +501,18 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("始め方", "Start") }}</span>
         <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="s.simStart.value === x.k ? 'on' : ''" :title="tr(x.hint, x.hintEn)" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="size-3.5 shrink-0" />{{ tr(x.label, x.labelEn) }}</button>
         <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? tr("レア", "Rare") : s.simStartItem.value?.rarity === "magic" ? tr("マジック", "Magic") : tr("ノーマル", "Normal") }} · {{ startItemMods.length ? startItemMods.join(" / ") : tr("MOD なし", "No mods") }}</span>
-        <HelpTip v-else-if="s.simStart.value !== 'white'" :text="tr('フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物', 'The fractured mod is the first one added in step 2 (Target mods)')" />
+        <HelpTip v-else-if="s.simStart.value !== 'white' && s.simStart.value !== 'magic'" :text="tr('フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物', 'The fractured mod is the first one added in step 2 (Target mods)')" />
       </span>
       <template v-if="s.mode.value === 'hand' && !handNoBase">
       <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->
       <button type="button" data-rec="reset" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
       <button type="button" data-rec="undo" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('R / Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'R / Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
+      <!-- クイズのレシピを 1 手ずつ / 最後まで再生 (ADR-003)。打ち方はシミュレーターと同じ答え -->
+      <template v-if="s.handQuiz.value && !SIM_LOCKED">
+        <button type="button" :class="btn" :title="tr('シミュレーターのクイズの答えで、今のアイテムに 1 手打つ', 'Use one step from the Simulator quiz answers on the current item')" @click="quizStep(1)">{{ tr("レシピで 1 手", "Recipe: 1 step") }}</button>
+        <button type="button" :class="btn" :title="tr('完成か、答えの無い状態まで打つ (500 手まで)', 'Use steps until done or no answer (up to 500)')" @click="quizStep(500)">{{ tr("最後まで", "To the end") }}</button>
+        <span v-if="quizNote" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ quizNote }}</span>
+      </template>
       <!-- 今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08) -->
       <button v-if="!SIM_LOCKED" type="button" :class="btn" :title="tr('今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーターへ。ベース代は エミュレーターの累計 + 白ベース代', 'Send the current item (mods, fractured, sockets) to the Simulator as the start. Base cost = Emulator total + white base cost')" @click="simFromHand">{{ tr("この状態からシミュレーター →", "Simulate from here →") }}</button>
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
