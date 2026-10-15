@@ -36,6 +36,7 @@ import VideoStage from "./VideoStage.vue";
 import StageBasePicker from "./StageBasePicker.vue";
 import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
+import StageTutorial from "./StageTutorial.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
@@ -421,6 +422,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
             <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("確率はクラフト計算機と同じ規則。値段は今の相場。", "Chances follow the craft calculator's rules. Prices are current market prices.") }}</p>
           </HelpTip>
         </p>
+        <p v-else-if="s.mode.value === 'tutorial' && !s.replay.value" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("見本のクラフトを 1 手ずつ、次に打つ物を選んで進めます", "Walk through a sample craft, choosing what to use at each step") }}</p>
         <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
@@ -433,6 +435,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       <!-- スマホは 2 つで横幅を分ける (170px ずつだと 375px の画面からはみ出した。2026-10-13) -->
       <div class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
         <button v-for="t in ([['hand', 'エミュレーター'], ['sim', 'シミュレーター']] as const)" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50" :class="s.mode.value === t[0] ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); s.mode.value = t[0]">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
+        <!-- クイズのチュートリアル (2026-10-16)。開発版だけ (本番はシミュレーターと同じく閉じたまま出さない) -->
+        <button v-if="!SIM_LOCKED" type="button" role="tab" :aria-selected="s.mode.value === 'tutorial'" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3" :class="s.mode.value === 'tutorial' ? 'on' : ''" @click="s.hold(null); s.mode.value = 'tutorial'">{{ tr("チュートリアル", "Tutorial") }}<span class="text-[10px] font-normal opacity-70" :title="tr('開発版だけの画面', 'Dev build only')">β</span></button>
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
       <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
@@ -476,7 +480,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
     <!-- 設定と操作 -->
     <!-- data-craft-top: クラフトの位置 (「クラフトへ」とベースを選んだ後はここの外枠の少し上。2026-10-10 オーナー「ベースの上枠の外枠から少し上空けた位置が心地いい」) -->
-    <section v-if="!s.replay.value" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
+    <section v-if="!s.replay.value && s.mode.value !== 'tutorial'" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
       <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
       <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
         <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>
@@ -538,6 +542,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
     <!-- 手で打つ画面と行き来しても入れた物が残るように、一度ベースを選んだら消さずに隠す (2026-10-05 オーナー「ステージと実験行き来できるように、行き来したらもっかい最初からになった」) -->
     <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
+    <!-- クイズのチュートリアル (見本のレシピを 1 手ずつ。StageTutorial.vue) -->
+    <StageTutorial v-if="s.ready.value && s.mode.value === 'tutorial' && !s.replay.value && !SIM_LOCKED" class="mb-4" />
     <!-- ベースを選んだ後に出る中身はふわっと出す (2026-10-10 オーナー「切り替えがワープみたい」) -->
     <Transition name="stage-fade" appear>
     <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">

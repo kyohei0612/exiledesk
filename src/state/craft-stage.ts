@@ -186,14 +186,15 @@ const startMods = ref<Force[]>([]);
  * シミュレーションのタブ (2026-10-05、実験): 画面の切り替えと、狙いの MOD (MOD の一覧の段の表の「狙う」で足す)。
  * minTierIndex はエンジンの段の番号 (0 = 一番下、T1 = tiers.length - 1)。[[stage-sim.ts]]
  */
-const mode = ref<"hand" | "sim">("hand");
+/** hand = エミュレーター、sim = シミュレーター、tutorial = クイズのチュートリアル (2026-10-16、開発版だけ) */
+const mode = ref<"hand" | "sim" | "tutorial">("hand");
 /**
  * Web 版はシミュレーションを閉じる (2026-10-10 オーナー「未完成すぎるからシミュレーションは調整中って出してクリックできないように、ウェブ版」)。
  * タブは「調整中」で押せず、前に開いていた・URL・はじめの窓から入っても手で打つ方に戻す
  */
 // 開発版 (pnpm dev:web) では開ける (クイズのレシピをオーナーに触ってもらう。リリースはオーナーの OK まで閉じたまま、2026-10-12)
 export const SIM_LOCKED = !isTauriRuntime() && !import.meta.env.DEV;
-watch(mode, (m) => { if (SIM_LOCKED && m === "sim") mode.value = "hand"; }, { immediate: true, flush: "sync" });
+watch(mode, (m) => { if (SIM_LOCKED && (m === "sim" || m === "tutorial")) mode.value = "hand"; }, { immediate: true, flush: "sync" });
 
 /** method = 付け方 (順番どおりのシミュレーション、[[recipe-sim.ts]])。省くと MOD の種類で決める (普通 = 高貴、冒涜 = 冒涜、エッセンス = エッセンス) */
 /**
