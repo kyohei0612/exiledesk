@@ -18,7 +18,7 @@
  * YouTube 1 万点/日) に収まる。アイコン (アバター) は 1 日 1 回だけ取り直す。1 回ごとの記録はダッシュボードの「ログ」(reqLog)
  */
 import { forgetUid, forgottenUids, UID_RE } from "./forget";
-import { board as challengeBoard, finishRun, planAt, startRun, sweepRuns } from "./challenge";
+import { board as challengeBoard, finishRun, jstDay as challengeDay, planOf, startRun, sweepRuns } from "./challenge";
 import channelsJson from "../channels.json";
 import { buildState } from "./state";
 import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
@@ -247,13 +247,14 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     const ids = (url.searchParams.get("ids") ?? "").split(",").map((x) => x.trim()).filter(Boolean);
     return json({ replies: await getReplies(env.LIVE, ids) }, 200, { "cache-control": "no-store", ...CORS });
   }
-  // 今日のお題の順位 (上位 20 人ずつ・手順つき・自分の順位)
+  // 今日のお題の順位 (上位 20 人・沼ランキング・自分の順位。手順は入れない)
   if (url.pathname === "/challenge/board") {
-    return json(await challengeBoard(env, url.searchParams.get("day") ?? jstDay(), url.searchParams.get("uid")), 200, { "cache-control": "no-store", ...CORS });
+    return json(await challengeBoard(env, url.searchParams.get("day") ?? challengeDay(), url.searchParams.get("uid")), 200, { "cache-control": "no-store", ...CORS });
   }
+  // 1 人分の手順 (今日の分は自分が 1 回達成してから)
   if (url.pathname === "/challenge/plan") {
-    const r = await planAt(env, url.searchParams.get("day") ?? "", url.searchParams.get("board") ?? "", Number(url.searchParams.get("rank")));
-    return json(r, "error" in r ? 404 : 200, { "cache-control": "public, max-age=60", ...CORS });
+    const r = await planOf(env, url.searchParams.get("day") ?? "", url.searchParams.get("id") ?? "", url.searchParams.get("uid"));
+    return json(r, "error" in r ? 404 : 200, { "cache-control": "no-store", ...CORS });
   }
   if (url.pathname.startsWith("/api/poe2scout/")) return proxyScout(url, ctx, fetch, env);
   // 要望に付いた画像 (オーナー用)
