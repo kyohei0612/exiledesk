@@ -17,13 +17,17 @@ import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
 import { boostedBy } from "../htc/quality";
 import { inAny, inGroup, type ItemGroup } from "../mods/item-classes";
-import { addForced, addOne, allMods, candidates, maxQualityOf, removeForced, removeOne, room, SIDES, skip, without, type Candidate, type Force, type PoolOpts } from "./stage-core";
+import { addForced, addOne, allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, maxQualityOf, removeForced, removeOne, room, SIDES, skip, without, type Candidate, type Force, type PoolOpts } from "./stage-core";
 import { applyEssence } from "./apply-essence";
 import { applyForce, isForce } from "./apply-force";
 /** 品質を手で決める手 (`qset:15` = 品質 15%、`qset:34:caster` = 宝飾品の品質の種類も) */
 export const QUALITY_SET = "qset:";
 export const qualitySetKey = (n: number, tag?: string | null): string => `${QUALITY_SET}${n}${tag ? `:${tag}` : ""}`;
 export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET);
+/** カタリストの品質を手で決める手 (ベースの品質とは別に持つグラスピングメイル。指輪・アミュレットは qset のまま) */
+export const CATALYST_SET = "cqset:";
+export const catalystSetKey = (n: number, tag: string): string => `${CATALYST_SET}${n}:${tag}`;
+export const isCatalystSet = (key: string): boolean => key.startsWith(CATALYST_SET);
 /**
  * 品質の欄の「最大」= 足し算: ベースの上限 (普通 20%、ブリーチの指輪 +20 / 洗練 +25) + 「品質の最大値 +#%」の MOD + ヴァールのインフューザーの +10
  * (指輪・アミュレット・防具・物理武器。クライアントの説明「上限を最大 10% 超えて」)。洗練されたブリーチの指輪 45 + 20 + 10 = 75 は取引所の上限と同じ。
@@ -185,6 +189,12 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
     const values = (vals ?? "").split(",").map(Number).filter((v) => Number.isFinite(v));
     return { applied: true, item: { ...item, implicitFixed: { ...(item.implicitFixed ?? {}), [Number(line)]: values } }, added: [], removed: [] };
   }
+  if (isCatalystSet(currency)) {
+    const [num, tag] = currency.slice(CATALYST_SET.length).split(":");
+    if (!hasExtraCatalyst(item.base) || !tag) return skip(item, tr("カタリストの品質を別に持てないベース", "This base has no separate Catalyst quality"));
+    const n = Math.max(0, Math.min(maxQualityOf(item), Number(num) || 0));
+    return { applied: true, item: { ...item, catalystQuality: n, qualityTag: tag }, added: [], removed: [] };
+  }
   if (isQualitySet(currency)) {
     const [num, tag] = currency.slice(QUALITY_SET.length).split(":");
     const n = Math.max(0, Math.min(qualityCapOf(item), Number(num) || 0));
@@ -299,10 +309,11 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
       // 大いなる高貴のお告げ: 2 つ足す (枠が 1 つなら 1 つ)。触媒の高貴のお告げ: 品質の種類の MOD を重く引いて、品質を使い切る
       const n = used.includes("OmenofGreaterExaltation") ? 2 : 1;
       if (used.includes("OmenofCatalysingExaltation")) {
-        const tag = item.qualityTag;
-        if (!tag || !(item.quality > 0)) return skip(item, tr("触媒の高貴のお告げは品質 (カタリスト) が要る", "Omen of Catalysing Exaltation needs Catalyst quality"));
-        const r = add(item, n, () => sides, { test: (m) => boostedBy(m, tag), mult: catalysingMultiplier(item.quality) });
-        return r.applied ? { ...r, item: { ...r.item, quality: 0 } } : r;
+        const { tag, pct } = catalystOf(item);
+        if (!tag || !(pct > 0)) return skip(item, tr("触媒の高貴のお告げは品質 (カタリスト) が要る", "Omen of Catalysing Exaltation needs Catalyst quality"));
+        const r = add(item, n, () => sides, { test: (m) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, data), mult: catalysingMultiplier(pct) });
+        // 品質を使い切る (グラスピングメイルはカタリストの欄だけ)
+        return r.applied ? { ...r, item: hasExtraCatalyst(item.base) ? { ...r.item, catalystQuality: 0 } : { ...r.item, quality: 0 } } : r;
       }
       return add(item, n, () => sides);
     }
@@ -397,8 +408,9 @@ export function addCandidates(data: PatchData, item: StageItem, currency: string
     case "exalt": {
       if (item.rarity !== "rare") return null;
       const side = sideOmen(used, "OmenofSinistralExaltation", "OmenofDextralExaltation");
-      const boost = used.includes("OmenofCatalysingExaltation") && item.qualityTag && item.quality > 0
-        ? { test: (m: Parameters<typeof boostedBy>[0]) => boostedBy(m, item.qualityTag!), mult: catalysingMultiplier(item.quality) }
+      const cat = catalystOf(item);
+      const boost = used.includes("OmenofCatalysingExaltation") && cat.tag && cat.pct > 0
+        ? { test: (m: Parameters<typeof boostedBy>[0]) => catalystBoosts(item, { modId: m.id, tags: m.tags }, cat.tag!, data), mult: catalysingMultiplier(cat.pct) }
         : undefined;
       return candidates(data, item, open(item, side ? [side] : SIDES), floor, boost ? { boost } : {});
     }

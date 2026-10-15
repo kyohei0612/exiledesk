@@ -45,6 +45,31 @@ const VERIFY = process.argv.includes("--verify");
 /** 変質した鎖骨が使える (鎖骨で冒涜できる) クラス = アミュレット・指輪・ベルト */
 const OTHERWORLDLY_CLASSES = new Set(["Amulet", "Ring", "Belt"]);
 
+/** ベース名 -> 暗黙 MOD が足すタグ (genesis_tree_* を除く)。書き出し (data-cache/client-export-implicits) が無ければ空 */
+async function readImplicitTags(MODS) {
+  const out = new Map();
+  const dir = resolve(ROOT, "data-cache/client-export-implicits/tables/English");
+  let BI, MI;
+  try {
+    const rd = async (n) => { const j = JSON.parse(await readFile(resolve(dir, `${n}.json`), "utf8")); return Array.isArray(j) ? j : j.rows; };
+    [BI, MI] = await Promise.all([rd("BaseItemTypes"), rd("Mods")]);
+  } catch {
+    console.log("暗黙 MOD の書き出し (data-cache/client-export-implicits) がありません。暗黙が足すタグは見ません。");
+    return out;
+  }
+  for (const r of BI) {
+    if (!r.Name) continue;
+    for (const i of r.Implicit_Mods || []) {
+      const add = ((MODS[(MI[i] || {}).Id] || {}).adds_tags || []).filter((t) => !t.startsWith("genesis_tree"));
+      if (!add.length) continue;
+      const set = out.get(r.Name) ?? new Set();
+      for (const t of add) set.add(t);
+      out.set(r.Name, set);
+    }
+  }
+  return out;
+}
+
 const main = async () => {
   const [B, T, C, MODS, htcBases, htcMods] = await Promise.all([
     rows("BaseItemTypes"),
@@ -55,7 +80,13 @@ const main = async () => {
     rj(resolve(ROOT, "src/vendor/poe2htc/data/mods.json")),
   ]);
   const tagIds = T.map((t) => t.Id);
-  const ownTags = (r) => (r.Tags || []).map((i) => tagIds[i]).filter(Boolean);
+  /**
+   * ベースの暗黙 MOD が足すタグ (Mods の adds_tags)。グラスピングメイルの「Can roll Ring Modifiers」(ItemCanAlsoRollRingMods)
+   * は ring を足す = 指輪の MOD も引ける (2026-10-16 要望 a286ced8、poe2db「Can roll Ring Modifiers」)。
+   * genesis_tree_* は創生の樹の印 (通貨では付かない、special の置き場の話) なので足さない
+   */
+  const implicitTags = await readImplicitTags(MODS);
+  const ownTags = (r) => [...(r.Tags || []).map((i) => tagIds[i]).filter(Boolean), ...(implicitTags.get(r.Name) || [])];
   const classIdOf = (r) => (C[r.ItemClass] || {}).Id;
   const byName = new Map(B.map((r) => [r.Name, r]));
   const hmods = new Map((htcMods.mods || htcMods.items || []).map((m) => [m.id, m]));

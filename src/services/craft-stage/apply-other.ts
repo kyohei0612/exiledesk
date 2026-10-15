@@ -13,7 +13,7 @@
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { QUALITY_PER_CATALYST } from "../htc/catalysing-setup";
 import { socketCapOf } from "./stage-runes";
-import { allMods, maxQualityOf, replaced, skip, unfracturable, withValues } from "./stage-core";
+import { allMods, hasExtraCatalyst, maxQualityOf, replaced, skip, takesCatalyst, unfracturable, withValues } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { tr } from "../../i18n/lang";
 import { htcBaseInfo } from "../htc/patch";
@@ -36,15 +36,19 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
   if (isCatalystKey(currency)) {
     const jewel = currency.startsWith("jcatalyst_");
     if (jewel && !inGroup(item.cls.category, "jewel")) return skip(item, tr("精製されたカタリストはジュエルだけ", "Refined Catalysts: Jewels only"));
-    if (!jewel && !inGroup(item.cls.category, "ringAmulet")) return skip(item, tr("カタリストは指輪・アミュレットだけ (ジュエルは精製されたカタリスト)", "Catalysts: Rings and Amulets only (Jewels use Refined Catalysts)"));
+    if (!jewel && !takesCatalyst(item)) return skip(item, tr("カタリストは指輪・アミュレットだけ (ジュエルは精製されたカタリスト)", "Catalysts: Rings and Amulets only (Jewels use Refined Catalysts)"));
     const tag = currency.slice(currency.indexOf("_") + 1);
     // ブリーチのエッセンスの「品質の最大値 +20%」も足す (要望 ㉔-3)
     const max = maxQualityOf(item);
-    const base = item.qualityTag === tag ? item.quality : 0;
+    // グラスピングメイルはベースの品質とは別の欄 (catalystQuality) に入る。上限はベースの品質と同じ (仮)
+    const extra = hasExtraCatalyst(item.base);
+    const cur = extra ? item.catalystQuality ?? 0 : item.quality;
+    const base = item.qualityTag === tag ? cur : 0;
+    const put = (n: number): StageItem => (extra ? { ...item, catalystQuality: n, qualityTag: tag } : { ...item, quality: n, qualityTag: tag });
     if (base >= max) return skip(item, tr(`品質が上限 (${max}%)`, `Quality is maxed (${max}%)`));
-    if (oneCatalyst) return { applied: true, item: { ...item, quality: Math.min(max, base + QUALITY_PER_CATALYST), qualityTag: tag }, added: [], removed: [] };
+    if (oneCatalyst) return { applied: true, item: put(Math.min(max, base + QUALITY_PER_CATALYST)), added: [], removed: [] };
     const count = Math.ceil((max - base) / QUALITY_PER_CATALYST);
-    return { applied: true, item: { ...item, quality: max, qualityTag: tag }, added: [], removed: [], count };
+    return { applied: true, item: put(max), added: [], removed: [], count };
   }
   switch (currency) {
     case "divine": {

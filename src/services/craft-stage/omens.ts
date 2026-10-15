@@ -7,7 +7,7 @@
 import type { StageItem, StageSide } from "./types";
 import type { PatchData } from "../../vendor/poe2htc/engine";
 import { bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
-import { limitOf, listOf, room } from "./stage-core";
+import { catalystOf, limitOf, listOf, room } from "./stage-core";
 import { tr } from "../../i18n/lang";
 export const OMEN_FOR: Readonly<Record<string, readonly string[]>> = {
   exalt: ["OmenofSinistralExaltation", "OmenofDextralExaltation", "OmenofGreaterExaltation", "OmenofCatalysingExaltation"],
@@ -99,6 +99,6 @@ export function omenNote(omen: string, item: StageItem | null, data?: PatchData 
     const open = (["prefix", "suffix"] as const).reduce((n, sd) => n + Math.max(0, limitOf(item, sd) - listOf(item, sd).length), 0);
     return open === 1 ? tr("1 つしか付かない", "Only 1 slot open") : null;
   }
-  if (omen === "OmenofCatalysingExaltation") return item.quality > 0 && item.qualityTag ? null : tr("品質が要る", "Needs quality");
+  if (omen === "OmenofCatalysingExaltation") { const c = catalystOf(item); return c.pct > 0 && c.tag ? null : tr("品質が要る", "Needs quality"); }
   return null;
 }
