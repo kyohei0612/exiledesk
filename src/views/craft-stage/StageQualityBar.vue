@@ -11,11 +11,12 @@ import { tr } from "../../i18n/lang";
 import { CATALYSTS } from "../../services/htc/quality";
 import { inAny } from "../../services/mods/item-classes";
 import { qualityCapOf, qualityFieldMax } from "../../services/craft-stage/apply-currency";
+import { hasExtraCatalyst, maxQualityOf } from "../../services/craft-stage/stage-core";
 import { isGem } from "../../services/craft-stage/stage-bases";
 import type { StageItem } from "../../services/craft-stage/types";
 
 const props = defineProps<{ item: StageItem }>();
-const emit = defineEmits<{ quality: [n: number, tag?: string]; cap: [n: number] }>();
+const emit = defineEmits<{ quality: [n: number, tag?: string]; cap: [n: number]; catalyst: [n: number, tag: string] }>();
 
 /** 品質の上限 (手で決めた値 or 足し算)。品質の − / + / 最大はここまで */
 const maxQ = computed(() => qualityCapOf(props.item));
@@ -24,6 +25,10 @@ const natural = computed(() => qualityFieldMax(props.item));
 // 種類を選んだら、その時点の上限 (MOD・品質の種類で変わる) まで上げる。そこから − / + で手で変えられる (2026-10-13 オーナー)
 // カタリストの種類を選べるのは指輪・アミュレット (普通の物) とジュエル (精製された物)。ベルトには無い (2026-10-13 総点検: 前はベルトにも出て、打つと弾かれた)
 const jewel = computed(() => inAny(props.item.cls.category, ["ringAmulet", "jewel"]));
+/** ベースの品質とは別にカタリストの品質を持つベース (グラスピングメイル)。種類と % を別の欄で */
+const extraCat = computed(() => hasExtraCatalyst(props.item.base));
+const catMax = computed(() => maxQualityOf(props.item));
+const catQ = computed(() => props.item.catalystQuality ?? 0);
 const shown = computed(() => !isGem(props.item.cls.category) && !["Wands", "Staves", "Sceptres"].includes(props.item.cls.category));
 
 let rep: ReturnType<typeof setTimeout> | null = null;
@@ -57,6 +62,14 @@ const btn = "g-plain grid size-6 place-items-center rounded border border-white/
     <select class="cursor-pointer rounded border border-white/15 bg-black/60 px-1 py-0.5 tabular-nums text-white/80" :value="maxQ" :title="tr(`品質の上限 (今付けられる最大 ${natural}% = ベース + 品質の最大値の MOD + インフューザー。エッセンスを打たずに広げて試すならここで)`, `Max quality (currently ${natural}% = base + max-quality mods + infuser; raise it here to skip the essence)`)" @change="emit('cap', Number(($event.target as HTMLSelectElement).value))">
       <option v-for="q in caps" :key="q" :value="q">{{ q }}%{{ q === natural ? tr(" (今の最大)", " (current)") : "" }}</option>
     </select></span>
+    <span v-if="extraCat" class="ml-1 inline-flex items-center gap-1 whitespace-nowrap">{{ tr("カタリスト", "Catalyst") }}
+      <select class="w-[9.5rem] rounded border border-white/15 bg-black/60 px-1 py-0.5 text-white/80" :value="item.qualityTag ?? ''" :title="tr('カタリストの種類 (この種類の MOD が伸びる。ベースの品質とは別)', 'Catalyst type (boosts mods of this type; separate from base quality)')" @change="emit('catalyst', catMax, ($event.target as HTMLSelectElement).value)">
+        <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
+        <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
+      </select>
+      <span v-if="item.qualityTag" class="w-10 text-center tabular-nums" :class="catQ > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ catQ }}%</span>
+      <button v-if="item.qualityTag" type="button" class="g-plain rounded border border-white/15 px-1.5 py-0.5 text-white/70 hover:bg-white/10 disabled:opacity-30" :disabled="catQ <= 0" :title="tr('カタリストの品質を 0% に', 'Set Catalyst quality to 0%')" @click="emit('catalyst', 0, item.qualityTag!)">{{ tr("最小", "Min") }}</button>
+    </span>
     <select v-if="jewel" class="ml-1 w-[9.5rem] rounded border border-white/15 bg-black/60 px-1 py-0.5 text-white/80" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', maxQ, ($event.target as HTMLSelectElement).value)">
       <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
       <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>

@@ -20,7 +20,7 @@ import { implicitRows, propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
-import { allMods, boostedMod, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
+import { allMods, boostedMod, hasExtraCatalyst, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { classLabel } from "../../services/items/base-catalog";
 import { tagLabel } from "../../services/mods/tag-ja";
@@ -112,6 +112,8 @@ const implicits = computed(() => implicitRows(props.item).map((r) => ({ ...r, ta
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId && !!a.fractured === !!m.fractured);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
+/** ベースの品質とは別にカタリストの品質を持つベース (グラスピングメイル)。品質の行を 2 つに分ける */
+const extraCat = computed(() => hasExtraCatalyst(props.item.base));
 /** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
@@ -174,7 +176,8 @@ const rows = computed(() => {
       <p class="pt-1 text-[12px] text-white/50">{{ kindJa }}</p>
       <!-- ジュエルはアイテムレベルで付く物が変わらない (MOD は全部レベル 1・重みは全部同じ) ので出さない (2026-10-12 オーナー) -->
       <p v-if="!isGem(item.cls.category) && item.cls.category !== 'Jewels'" class="text-[12px] text-white/50">{{ tr("アイテムレベル", "Item Level") }}: <span class="text-white">{{ item.itemLevel }}</span></p>
-      <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
+      <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ extraCat ? qualityLabelOf(null) : qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
+      <p v-if="extraCat && (item.catalystQuality ?? 0) > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.catalystQuality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
       <p v-for="r in baseRows" :key="r.key" class="text-[12px] text-white/50">{{ r.label ? `${r.label}: ` : "" }}<span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
       <!-- ソケット (熟練工のオーブ) の絵 -->

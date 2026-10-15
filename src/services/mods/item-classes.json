@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-13",
+ "generated": "2026-10-15",
  "source": "client ItemClasses / CraftingItemClassCategories / EssenceTargetItemCategories / SoulCoreStatCategories / Chanceableitemclasses / BaseItemTypes",
  "classes": {
   "Active Skill Gem": {
@@ -890,6 +890,7 @@
   "Staves": "Staff",
   "Quivers": "Quiver",
   "Belts": "Belt",
+  "Body_Armours_ring": "Body Armour",
   "Jewels": "Jewel",
   "LifeFlask": "LifeFlask",
   "ManaFlask": "ManaFlask",

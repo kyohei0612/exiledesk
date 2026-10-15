@@ -61,8 +61,10 @@ export interface StageItem {
   prefixes: StageMod[];
   suffixes: StageMod[];
   quality: number;
-  /** 品質の種類 (カタリストのタグ。指輪・アミュレットだけ) */
+  /** 品質の種類 (カタリストのタグ。指輪・アミュレット・ジュエルと、カタリストも使えるベース) */
   qualityTag?: string | null;
+  /** ベースの品質とは別のカタリストの品質 (グラスピングメイル「Catalysts can be applied to this item」。指輪・アミュレットは quality がそのままカタリストの品質) */
+  catalystQuality?: number;
   /** 品質の上限を手で決めた値 (品質の帯のプルダウン。エッセンスを毎回打たずに上限を広げて試す。無ければ足し算の上限 qualityFieldMax) */
   qualityCap?: number | null;
   /** ソケットの数 (アーティファサー、ヴァール) */

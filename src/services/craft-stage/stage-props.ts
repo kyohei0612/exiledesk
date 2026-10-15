@@ -9,11 +9,11 @@
  *     (ES の式は規格外の賭けの ladder.ts がゲーム内の実測で確かめた形と同じ)
  * 足し方の細かい丸め (ゲームは切り捨てか四捨五入か) は出典が無いので四捨五入。数値の正は PoB (要望 ⑰-3 の DPS は PoB で計算する)。
  */
-import { inAny } from "../mods/item-classes";
 import { baseStatsOf } from "./stage-bases";
 import { displayValue } from "../mods/stat-scale";
 import type { StageItem } from "./types";
-import { scaledAugment } from "./stage-core";
+import { catalystOf, hasExtraCatalyst, scaledAugment } from "./stage-core";
+import { inAny } from "../mods/item-classes";
 import { lang } from "../../i18n/lang";
 import { filledStatsOf, htcBaseInfo, implicitStatsOf } from "../htc/patch";
 import { rollImplicitLines } from "./roll-text";
@@ -30,8 +30,9 @@ export function implicitRows(item: StageItem, ja = false): ImplicitRow[] {
   const lines = htcBaseInfo()[item.base]?.implicits ?? [];
   if (!lines.length) return [];
   const info = implicitStatsOf(item.base);
-  const jewel = inAny(item.cls.category, ["ringAmulet", "jewel"]);
-  const pct = lines.map((_, i) => (jewel && item.qualityTag && item.quality > 0 && info[i]?.tags.includes(item.qualityTag) ? item.quality : 0));
+  const jewel = inAny(item.cls.category, ["ringAmulet", "jewel"]) || hasExtraCatalyst(item.base);
+  const cat = catalystOf(item);
+  const pct = lines.map((_, i) => (jewel && cat.tag && cat.pct > 0 && info[i]?.tags.includes(cat.tag) ? cat.pct : 0));
   const rolled = rollImplicitLines(item, lines.map((l) => (ja ? l.ja : nameOf(l))), pct);
   return rolled.map((r, i) => {
     const st = info[i]?.stats ?? [];

@@ -38,6 +38,9 @@ const STAT_TEXT: Record<string, string> = {
   spell_damage_with_spells_that_cost_life: "#% increased Spell Damage with Spells that cost Life",
   local_reload_speed_: "#% increased Reload Speed",
   _chance_for_crossbow_reload_to_be_instant: "#% chance when you Reload a Crossbow to be immediate",
+  // 指輪の冒涜の同居 (2026-10-16 グラスピングメイルの行に入った時。クライアントの文 AbyssModRingKurgalPrefixFreezeBuildupIfConsumedPowerCharge / …UlamanPrefixShockMagnitude…)
+  hit_damage_freeze_multiplier_if_consumed_power_charge_recently: "#% increased [Freeze] Buildup if you've consumed an [Charges|Power Charge] [Recently]",
+  shock_effect_if_consumed_frenzy_charge_recently: "#% increased [BuffMagnitude|Magnitude] of [Shock] if you've consumed a [Charges|Frenzy Charge] [Recently]",
 };
 /** stat id の + と % を _ にして、続いた _ を 1 つに (表の鍵) */
 const norm = (s: string): string => s.replace(/[+%]/g, "_").replace(/_+/g, "_");

@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-09",
+ "generated": "2026-10-15",
  "familyTexts": {
   "Amulets": {
    "IncreasedAccuracy": [
@@ -67424,24 +67424,14 @@
    "bases": [
     "Garment",
     "Grand Regalia",
-    "Grasping Mail",
-    "Runefather's Grasping Mail",
     "Runeforged Garment",
     "Runeforged Grand Regalia",
-    "Runeforged Grasping Mail",
-    "Runeforged Grasping Mail",
-    "Runeforged Grasping Mail",
-    "Runeforged Grasping Mail",
     "Runeforged Sacrificial Regalia",
     "Runeforged Sacrificial Regalia",
     "Runeforged Sacrificial Regalia",
     "Runeforged Sacrificial Regalia",
     "Runemastered Garment",
     "Runemastered Grand Regalia",
-    "Runemastered Grasping Mail",
-    "Runemastered Grasping Mail",
-    "Runemastered Grasping Mail",
-    "Runemastered Grasping Mail",
     "Runemastered Sacrificial Regalia",
     "Sacrificial Regalia"
    ],
@@ -67507,6 +67497,124 @@
        "Body_Armours_str_dex_int/Rune_soul_FireAndChaosDamageResistance",
        "Body_Armours_str_dex_int/Rune_soul_LightningAndChaosDamageResistance",
        "Body_Armours_str_dex_int/Rune_soul_ReducedCriticalStrikeDamageTaken"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int",
+   "name": "Body_Armours_ring_str_dex_int",
+   "bases": [
+    "Grasping Mail",
+    "Runefather's Grasping Mail",
+    "Runeforged Grasping Mail",
+    "Runeforged Grasping Mail",
+    "Runeforged Grasping Mail",
+    "Runeforged Grasping Mail",
+    "Runemastered Grasping Mail",
+    "Runemastered Grasping Mail",
+    "Runemastered Grasping Mail",
+    "Runemastered Grasping Mail"
+   ],
+   "category": "Body_Armours",
+   "class": "Body Armours",
+   "pools": {
+    "normal": {
+     "prefixes": [
+      "Body_Armours_ring_str_dex_int/ColdDamage",
+      "Body_Armours_ring_str_dex_int/FireDamage",
+      "Body_Armours_ring_str_dex_int/LightningDamage",
+      "Body_Armours_ring_str_dex_int/PhysicalDamage",
+      "Body_Armours_ring_str_dex_int/Thorns",
+      "Body_Armours_ring_str_dex_int/IncreasedChaosDamage",
+      "Body_Armours_ring_str_dex_int/ColdDamagePercentage",
+      "Body_Armours_ring_str_dex_int/FireDamagePercentage",
+      "Body_Armours_ring_str_dex_int/IncreasedAccuracy",
+      "Body_Armours_ring_str_dex_int/IncreasedLife",
+      "Body_Armours_ring_str_dex_int/IncreasedMana",
+      "Body_Armours_ring_str_dex_int/BaseSpirit",
+      "Body_Armours_ring_str_dex_int/ItemFoundRarityIncreasePrefix",
+      "Body_Armours_ring_str_dex_int/LightningDamagePercentage",
+      "Body_Armours_ring_str_dex_int/BaseLocalDefences",
+      "Body_Armours_ring_str_dex_int/DefencesPercent"
+     ],
+     "suffixes": [
+      "Body_Armours_ring_str_dex_int/AllAttributes",
+      "Body_Armours_ring_str_dex_int/AllResistances",
+      "Body_Armours_ring_str_dex_int/ArmourAppliesToElementalDamage",
+      "Body_Armours_ring_str_dex_int/IncreasedCastSpeed",
+      "Body_Armours_ring_str_dex_int/ChaosResistance",
+      "Body_Armours_ring_str_dex_int/ColdResistance",
+      "Body_Armours_ring_str_dex_int/Dexterity",
+      "Body_Armours_ring_str_dex_int/EnergyShieldRegeneration",
+      "Body_Armours_ring_str_dex_int/EvasionAppliesToDeflection",
+      "Body_Armours_ring_str_dex_int/FireResistance",
+      "Body_Armours_ring_str_dex_int/Intelligence",
+      "Body_Armours_ring_str_dex_int/ItemFoundRarityIncrease",
+      "Body_Armours_ring_str_dex_int/LifeGainedFromEnemyDeath",
+      "Body_Armours_ring_str_dex_int/LifeLeech",
+      "Body_Armours_ring_str_dex_int/LifeRegeneration",
+      "Body_Armours_ring_str_dex_int/LightRadiusAndManaRegeneration",
+      "Body_Armours_ring_str_dex_int/LightningResistance",
+      "Body_Armours_ring_str_dex_int/ManaGainedFromEnemyDeath",
+      "Body_Armours_ring_str_dex_int/ManaLeech",
+      "Body_Armours_ring_str_dex_int/ManaRegeneration",
+      "Body_Armours_ring_str_dex_int/ReducedAilmentDuration",
+      "Body_Armours_ring_str_dex_int/LocalAttributeRequirements",
+      "Body_Armours_ring_str_dex_int/Strength",
+      "Body_Armours_ring_str_dex_int/StunThreshold"
+     ]
+    },
+    "desecrated": {
+     "prefixes": [
+      "Body_Armours_ring_str_dex_int/ElementalAilmentEffect",
+      "Body_Armours_ring_str_dex_int/IncreasedMinionDamageIfYouHitEnemy",
+      "Body_Armours_ring_str_dex_int/RemnantEffect",
+      "Body_Armours_ring_str_dex_int/IncreasedSpellDamageOnFullEnergyShield",
+      "Body_Armours_ring_str_dex_int/AttackDamage"
+     ],
+     "suffixes": [
+      "Body_Armours_ring_str_dex_int/FireAndChaosDamageResistance",
+      "Body_Armours_ring_str_dex_int/Strength",
+      "Body_Armours_ring_str_dex_int/ColdAndChaosDamageResistance",
+      "Body_Armours_ring_str_dex_int/Dexterity",
+      "Body_Armours_ring_str_dex_int/LightningAndChaosDamageResistance",
+      "Body_Armours_ring_str_dex_int/SpiritReservationEfficiency",
+      "Body_Armours_ring_str_dex_int/DamageRemovedFromManaBeforeLife",
+      "Body_Armours_ring_str_dex_int/CompanionReservationEfficiency",
+      "Body_Armours_ring_str_dex_int/DeflectDamageTaken",
+      "Body_Armours_ring_str_dex_int/ReducedCurseEffect",
+      "Body_Armours_ring_str_dex_int/PercentDamageGoesToMana",
+      "Body_Armours_ring_str_dex_int/ChanceToTakeCriticalStrike",
+      "Body_Armours_ring_str_dex_int/LifeLeech",
+      "Body_Armours_ring_str_dex_int/RemnantPickupRadius",
+      "Body_Armours_ring_str_dex_int/SkillEffectDuration",
+      "Body_Armours_ring_str_dex_int/CooldownRecovery",
+      "Body_Armours_ring_str_dex_int/ExposureEffect",
+      "Body_Armours_ring_str_dex_int/ManaGainedOnKillPercentage",
+      "Body_Armours_ring_str_dex_int/RecoverPercentMaxLifeOnKill",
+      "Body_Armours_ring_str_dex_int/IncreasedSpeed",
+      "Body_Armours_ring_str_dex_int/ManaLeechAmount"
+     ]
+    },
+    "essence": {
+     "prefixes": [],
+     "suffixes": []
+    },
+    "rune": {
+     "medveds-tending": {
+      "prefixes": [
+       "Body_Armours_ring_str_dex_int/Rune_soul_MaximumLifeIncreasePercent",
+       "Body_Armours_ring_str_dex_int/Rune_soul_MaximumManaIncreasePercent",
+       "Body_Armours_ring_str_dex_int/Rune_soul_MaximumSpiritIncreasePercent",
+       "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife"
+      ],
+      "suffixes": [
+       "Body_Armours_ring_str_dex_int/Rune_soul_ColdAndChaosDamageResistance",
+       "Body_Armours_ring_str_dex_int/Rune_soul_FireAndChaosDamageResistance",
+       "Body_Armours_ring_str_dex_int/Rune_soul_LightningAndChaosDamageResistance",
+       "Body_Armours_ring_str_dex_int/Rune_soul_ReducedCriticalStrikeDamageTaken"
       ]
      }
     }
@@ -231897,7 +232005,7 @@
     {
      "name": "Chilled",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        5,
@@ -231954,7 +232062,7 @@
     {
      "name": "Freezing",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        25,
@@ -231992,7 +232100,7 @@
     {
      "name": "Glaciated",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 480,
      "ranges": [
       [
        46,
@@ -232107,7 +232215,7 @@
     {
      "name": "Smouldering",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        6,
@@ -232164,7 +232272,7 @@
     {
      "name": "Flaming",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        30,
@@ -232202,7 +232310,7 @@
     {
      "name": "Incinerating",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 480,
      "ranges": [
       [
        56,
@@ -232317,7 +232425,7 @@
     {
      "name": "Buzzing",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 1200,
      "ranges": [
       [
        1,
@@ -232374,7 +232482,7 @@
     {
      "name": "Sparking",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1200,
      "ranges": [
       [
        1,
@@ -232412,7 +232520,7 @@
     {
      "name": "Shocking",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 720,
      "ranges": [
       [
        1,
@@ -232526,7 +232634,7 @@
     {
      "name": "Burnished",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        5,
@@ -232583,7 +232691,7 @@
     {
      "name": "Gleaming",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        14,
@@ -232621,7 +232729,7 @@
     {
      "name": "Razor-sharp",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 400,
      "ranges": [
       [
        23,
@@ -233939,7 +234047,7 @@
     {
      "name": "of Ease",
      "ilvl": 11,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -233953,7 +234061,7 @@
     {
      "name": "of Mastery",
      "ilvl": 22,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -233967,7 +234075,7 @@
     {
      "name": "of Renown",
      "ilvl": 30,
-     "weight": 0,
+     "weight": 500,
      "ranges": [
       [
        14,
@@ -235701,7 +235809,7 @@
     {
      "name": "Healthy",
      "ilvl": 6,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -235757,7 +235865,7 @@
     {
      "name": "Robust",
      "ilvl": 38,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -235771,7 +235879,7 @@
     {
      "name": "Rotund",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        85,
@@ -236965,7 +237073,7 @@
     {
      "name": "Ethereal",
      "ilvl": 16,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        27,
@@ -236993,7 +237101,7 @@
     {
      "name": "Ephemeral",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        56,
@@ -237007,7 +237115,7 @@
     {
      "name": "Evanescent",
      "ilvl": 54,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        68,
@@ -237721,7 +237829,7 @@
     {
      "name": "of the Salamander",
      "ilvl": 12,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -237749,7 +237857,7 @@
     {
      "name": "of the Kiln",
      "ilvl": 36,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -237777,7 +237885,7 @@
     {
      "name": "of the Volcano",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -238153,7 +238261,7 @@
     {
      "name": "of the Squall",
      "ilvl": 13,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -238181,7 +238289,7 @@
     {
      "name": "of the Thunderhead",
      "ilvl": 37,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -238209,7 +238317,7 @@
     {
      "name": "of the Maelstrom",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -238835,7 +238943,7 @@
     {
      "name": "of Obsidian Skin",
      "ilvl": 72,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        254,
@@ -239756,6 +239864,7073 @@
    "rune": "medveds-tending"
   },
   {
+   "id": "Body_Armours_ring_str_dex_int/ColdDamage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "ColdDamage",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "cold",
+    "attack"
+   ],
+   "text": "Adds 1 to (2-3) [Cold] damage to [Attack|Attacks]",
+   "tiers": [
+    {
+     "name": "Frosted",
+     "ilvl": 1,
+     "weight": 800,
+     "ranges": [
+      [
+       1,
+       1
+      ],
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_cold_damage",
+      "attack_maximum_added_cold_damage"
+     ]
+    },
+    {
+     "name": "Chilled",
+     "ilvl": 8,
+     "weight": 800,
+     "ranges": [
+      [
+       3,
+       4
+      ],
+      [
+       5,
+       8
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_cold_damage",
+      "attack_maximum_added_cold_damage"
+     ]
+    },
+    {
+     "name": "Icy",
+     "ilvl": 16,
+     "weight": 800,
+     "ranges": [
+      [
+       5,
+       6
+      ],
+      [
+       9,
+       11
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_cold_damage",
+      "attack_maximum_added_cold_damage"
+     ]
+    },
+    {
+     "name": "Frigid",
+     "ilvl": 33,
+     "weight": 800,
+     "ranges": [
+      [
+       7,
+       8
+      ],
+      [
+       12,
+       14
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_cold_damage",
+      "attack_maximum_added_cold_damage"
+     ]
+    },
+    {
+     "name": "Freezing",
+     "ilvl": 46,
+     "weight": 800,
+     "ranges": [
+      [
+       9,
+       10
+      ],
+      [
+       15,
+       17
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_cold_damage",
+      "attack_maximum_added_cold_damage"
+     ]
+    },
+    {
+     "name": "Frozen",
+     "ilvl": 54,
+     "weight": 800,
+     "ranges": [
+      [
+       11,
+       13
+      ],
+      [
+       18,
+       21
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_cold_damage",
+      "attack_maximum_added_cold_damage"
+     ]
+    },
+    {
+     "name": "Glaciated",
+     "ilvl": 60,
+     "weight": 480,
+     "ranges": [
+      [
+       14,
+       15
+      ],
+      [
+       22,
+       24
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_cold_damage",
+      "attack_maximum_added_cold_damage"
+     ]
+    },
+    {
+     "name": "Polar",
+     "ilvl": 65,
+     "weight": 320,
+     "ranges": [
+      [
+       16,
+       20
+      ],
+      [
+       25,
+       31
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_cold_damage",
+      "attack_maximum_added_cold_damage"
+     ]
+    },
+    {
+     "name": "Entombing",
+     "ilvl": 75,
+     "weight": 200,
+     "ranges": [
+      [
+       21,
+       24
+      ],
+      [
+       32,
+       37
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_cold_damage",
+      "attack_maximum_added_cold_damage"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/FireDamage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "FireDamage",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "fire",
+    "attack"
+   ],
+   "text": "Adds (1-2) to 3 [Fire] damage to [Attack|Attacks]",
+   "tiers": [
+    {
+     "name": "Heated",
+     "ilvl": 1,
+     "weight": 800,
+     "ranges": [
+      [
+       1,
+       2
+      ],
+      [
+       3,
+       3
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_fire_damage",
+      "attack_maximum_added_fire_damage"
+     ]
+    },
+    {
+     "name": "Smouldering",
+     "ilvl": 8,
+     "weight": 800,
+     "ranges": [
+      [
+       3,
+       5
+      ],
+      [
+       6,
+       9
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_fire_damage",
+      "attack_maximum_added_fire_damage"
+     ]
+    },
+    {
+     "name": "Smoking",
+     "ilvl": 16,
+     "weight": 800,
+     "ranges": [
+      [
+       6,
+       8
+      ],
+      [
+       10,
+       13
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_fire_damage",
+      "attack_maximum_added_fire_damage"
+     ]
+    },
+    {
+     "name": "Burning",
+     "ilvl": 33,
+     "weight": 800,
+     "ranges": [
+      [
+       9,
+       11
+      ],
+      [
+       14,
+       17
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_fire_damage",
+      "attack_maximum_added_fire_damage"
+     ]
+    },
+    {
+     "name": "Flaming",
+     "ilvl": 46,
+     "weight": 800,
+     "ranges": [
+      [
+       12,
+       13
+      ],
+      [
+       18,
+       20
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_fire_damage",
+      "attack_maximum_added_fire_damage"
+     ]
+    },
+    {
+     "name": "Scorching",
+     "ilvl": 54,
+     "weight": 800,
+     "ranges": [
+      [
+       11,
+       16
+      ],
+      [
+       21,
+       26
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_fire_damage",
+      "attack_maximum_added_fire_damage"
+     ]
+    },
+    {
+     "name": "Incinerating",
+     "ilvl": 60,
+     "weight": 480,
+     "ranges": [
+      [
+       13,
+       19
+      ],
+      [
+       27,
+       32
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_fire_damage",
+      "attack_maximum_added_fire_damage"
+     ]
+    },
+    {
+     "name": "Blasting",
+     "ilvl": 65,
+     "weight": 320,
+     "ranges": [
+      [
+       20,
+       24
+      ],
+      [
+       33,
+       36
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_fire_damage",
+      "attack_maximum_added_fire_damage"
+     ]
+    },
+    {
+     "name": "Cremating",
+     "ilvl": 75,
+     "weight": 200,
+     "ranges": [
+      [
+       25,
+       29
+      ],
+      [
+       37,
+       45
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_fire_damage",
+      "attack_maximum_added_fire_damage"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LightningDamage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "LightningDamage",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "lightning",
+    "attack"
+   ],
+   "text": "Adds 1 to (4-6) [Lightning] damage to [Attack|Attacks]",
+   "tiers": [
+    {
+     "name": "Humming",
+     "ilvl": 1,
+     "weight": 1200,
+     "ranges": [
+      [
+       1,
+       1
+      ],
+      [
+       4,
+       6
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_lightning_damage",
+      "attack_maximum_added_lightning_damage"
+     ]
+    },
+    {
+     "name": "Buzzing",
+     "ilvl": 8,
+     "weight": 1200,
+     "ranges": [
+      [
+       1,
+       1
+      ],
+      [
+       10,
+       15
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_lightning_damage",
+      "attack_maximum_added_lightning_damage"
+     ]
+    },
+    {
+     "name": "Snapping",
+     "ilvl": 16,
+     "weight": 1200,
+     "ranges": [
+      [
+       1,
+       1
+      ],
+      [
+       16,
+       22
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_lightning_damage",
+      "attack_maximum_added_lightning_damage"
+     ]
+    },
+    {
+     "name": "Crackling",
+     "ilvl": 33,
+     "weight": 1200,
+     "ranges": [
+      [
+       1,
+       1
+      ],
+      [
+       23,
+       27
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_lightning_damage",
+      "attack_maximum_added_lightning_damage"
+     ]
+    },
+    {
+     "name": "Sparking",
+     "ilvl": 46,
+     "weight": 1200,
+     "ranges": [
+      [
+       1,
+       1
+      ],
+      [
+       28,
+       32
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_lightning_damage",
+      "attack_maximum_added_lightning_damage"
+     ]
+    },
+    {
+     "name": "Arcing",
+     "ilvl": 54,
+     "weight": 1200,
+     "ranges": [
+      [
+       1,
+       2
+      ],
+      [
+       33,
+       40
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_lightning_damage",
+      "attack_maximum_added_lightning_damage"
+     ]
+    },
+    {
+     "name": "Shocking",
+     "ilvl": 60,
+     "weight": 720,
+     "ranges": [
+      [
+       1,
+       2
+      ],
+      [
+       41,
+       47
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_lightning_damage",
+      "attack_maximum_added_lightning_damage"
+     ]
+    },
+    {
+     "name": "Discharging",
+     "ilvl": 65,
+     "weight": 480,
+     "ranges": [
+      [
+       1,
+       3
+      ],
+      [
+       48,
+       59
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_lightning_damage",
+      "attack_maximum_added_lightning_damage"
+     ]
+    },
+    {
+     "name": "Electrocuting",
+     "ilvl": 75,
+     "weight": 300,
+     "ranges": [
+      [
+       1,
+       4
+      ],
+      [
+       60,
+       71
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_lightning_damage",
+      "attack_maximum_added_lightning_damage"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PhysicalDamage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "PhysicalDamage",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "physical_damage",
+    "damage",
+    "physical",
+    "attack"
+   ],
+   "text": "Adds (1-2) to 3 [Physical|Physical] Damage to [Attack|Attacks]",
+   "tiers": [
+    {
+     "name": "Glinting",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       1,
+       2
+      ],
+      [
+       3,
+       3
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_physical_damage",
+      "attack_maximum_added_physical_damage"
+     ]
+    },
+    {
+     "name": "Burnished",
+     "ilvl": 8,
+     "weight": 1000,
+     "ranges": [
+      [
+       2,
+       3
+      ],
+      [
+       4,
+       6
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_physical_damage",
+      "attack_maximum_added_physical_damage"
+     ]
+    },
+    {
+     "name": "Polished",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       2,
+       4
+      ],
+      [
+       5,
+       8
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_physical_damage",
+      "attack_maximum_added_physical_damage"
+     ]
+    },
+    {
+     "name": "Honed",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       4,
+       6
+      ],
+      [
+       8,
+       11
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_physical_damage",
+      "attack_maximum_added_physical_damage"
+     ]
+    },
+    {
+     "name": "Gleaming",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       5,
+       7
+      ],
+      [
+       9,
+       13
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_physical_damage",
+      "attack_maximum_added_physical_damage"
+     ]
+    },
+    {
+     "name": "Annealed",
+     "ilvl": 54,
+     "weight": 600,
+     "ranges": [
+      [
+       6,
+       10
+      ],
+      [
+       12,
+       17
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_physical_damage",
+      "attack_maximum_added_physical_damage"
+     ]
+    },
+    {
+     "name": "Razor-sharp",
+     "ilvl": 60,
+     "weight": 400,
+     "ranges": [
+      [
+       7,
+       11
+      ],
+      [
+       14,
+       20
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_physical_damage",
+      "attack_maximum_added_physical_damage"
+     ]
+    },
+    {
+     "name": "Tempered",
+     "ilvl": 65,
+     "weight": 200,
+     "ranges": [
+      [
+       10,
+       15
+      ],
+      [
+       18,
+       26
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_physical_damage",
+      "attack_maximum_added_physical_damage"
+     ]
+    },
+    {
+     "name": "Flaring",
+     "ilvl": 75,
+     "weight": 100,
+     "ranges": [
+      [
+       12,
+       19
+      ],
+      [
+       22,
+       32
+      ]
+     ],
+     "stats": [
+      "attack_minimum_added_physical_damage",
+      "attack_maximum_added_physical_damage"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Thorns",
+   "source": "normal",
+   "type": "prefix",
+   "family": "Thorns",
+   "tags": [
+    "body_armour"
+   ],
+   "displayTags": [
+    "physical_damage",
+    "damage",
+    "physical"
+   ],
+   "text": "(1-2) to (3-4) [Physical|Physical] [Thorns|Thorns] damage",
+   "tiers": [
+    {
+     "name": "Thorny",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       1,
+       2
+      ],
+      [
+       3,
+       4
+      ]
+     ],
+     "stats": [
+      "thorns_minimum_base_physical_damage",
+      "thorns_maximum_base_physical_damage"
+     ]
+    },
+    {
+     "name": "Spiny",
+     "ilvl": 10,
+     "weight": 1000,
+     "ranges": [
+      [
+       5,
+       7
+      ],
+      [
+       7,
+       10
+      ]
+     ],
+     "stats": [
+      "thorns_minimum_base_physical_damage",
+      "thorns_maximum_base_physical_damage"
+     ]
+    },
+    {
+     "name": "Barbed",
+     "ilvl": 19,
+     "weight": 1000,
+     "ranges": [
+      [
+       11,
+       16
+      ],
+      [
+       17,
+       23
+      ]
+     ],
+     "stats": [
+      "thorns_minimum_base_physical_damage",
+      "thorns_maximum_base_physical_damage"
+     ]
+    },
+    {
+     "name": "Pointed",
+     "ilvl": 38,
+     "weight": 1000,
+     "ranges": [
+      [
+       24,
+       35
+      ],
+      [
+       36,
+       53
+      ]
+     ],
+     "stats": [
+      "thorns_minimum_base_physical_damage",
+      "thorns_maximum_base_physical_damage"
+     ]
+    },
+    {
+     "name": "Spiked",
+     "ilvl": 48,
+     "weight": 1000,
+     "ranges": [
+      [
+       40,
+       60
+      ],
+      [
+       61,
+       92
+      ]
+     ],
+     "stats": [
+      "thorns_minimum_base_physical_damage",
+      "thorns_maximum_base_physical_damage"
+     ]
+    },
+    {
+     "name": "Edged",
+     "ilvl": 63,
+     "weight": 1000,
+     "ranges": [
+      [
+       64,
+       97
+      ],
+      [
+       98,
+       145
+      ]
+     ],
+     "stats": [
+      "thorns_minimum_base_physical_damage",
+      "thorns_maximum_base_physical_damage"
+     ]
+    },
+    {
+     "name": "Jagged",
+     "ilvl": 74,
+     "weight": 1000,
+     "ranges": [
+      [
+       101,
+       151
+      ],
+      [
+       152,
+       220
+      ]
+     ],
+     "stats": [
+      "thorns_minimum_base_physical_damage",
+      "thorns_maximum_base_physical_damage"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/IncreasedChaosDamage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "IncreasedChaosDamage",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "chaos_damage",
+    "damage",
+    "chaos"
+   ],
+   "text": "(3-7)% increased [Chaos] Damage",
+   "tiers": [
+    {
+     "name": "Impure",
+     "ilvl": 8,
+     "weight": 500,
+     "ranges": [
+      [
+       3,
+       7
+      ]
+     ],
+     "stats": [
+      "chaos_damage_+%"
+     ]
+    },
+    {
+     "name": "Tainted",
+     "ilvl": 16,
+     "weight": 500,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "chaos_damage_+%"
+     ]
+    },
+    {
+     "name": "Clouded",
+     "ilvl": 33,
+     "weight": 500,
+     "ranges": [
+      [
+       13,
+       17
+      ]
+     ],
+     "stats": [
+      "chaos_damage_+%"
+     ]
+    },
+    {
+     "name": "Darkened",
+     "ilvl": 46,
+     "weight": 500,
+     "ranges": [
+      [
+       18,
+       22
+      ]
+     ],
+     "stats": [
+      "chaos_damage_+%"
+     ]
+    },
+    {
+     "name": "Malignant",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       23,
+       26
+      ]
+     ],
+     "stats": [
+      "chaos_damage_+%"
+     ]
+    },
+    {
+     "name": "Vile",
+     "ilvl": 75,
+     "weight": 500,
+     "ranges": [
+      [
+       27,
+       30
+      ]
+     ],
+     "stats": [
+      "chaos_damage_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ColdDamagePercentage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "ColdDamagePercentage",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "cold"
+   ],
+   "text": "(3-7)% increased [Cold] Damage",
+   "tiers": [
+    {
+     "name": "Bitter",
+     "ilvl": 8,
+     "weight": 500,
+     "ranges": [
+      [
+       3,
+       7
+      ]
+     ],
+     "stats": [
+      "cold_damage_+%"
+     ]
+    },
+    {
+     "name": "Biting",
+     "ilvl": 16,
+     "weight": 500,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "cold_damage_+%"
+     ]
+    },
+    {
+     "name": "Alpine",
+     "ilvl": 33,
+     "weight": 500,
+     "ranges": [
+      [
+       13,
+       17
+      ]
+     ],
+     "stats": [
+      "cold_damage_+%"
+     ]
+    },
+    {
+     "name": "Snowy",
+     "ilvl": 46,
+     "weight": 500,
+     "ranges": [
+      [
+       18,
+       22
+      ]
+     ],
+     "stats": [
+      "cold_damage_+%"
+     ]
+    },
+    {
+     "name": "Hailing",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       23,
+       26
+      ]
+     ],
+     "stats": [
+      "cold_damage_+%"
+     ]
+    },
+    {
+     "name": "Crystalline",
+     "ilvl": 75,
+     "weight": 500,
+     "ranges": [
+      [
+       27,
+       30
+      ]
+     ],
+     "stats": [
+      "cold_damage_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/FireDamagePercentage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "FireDamagePercentage",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "fire"
+   ],
+   "text": "(3-7)% increased [Fire] Damage",
+   "tiers": [
+    {
+     "name": "Searing",
+     "ilvl": 8,
+     "weight": 500,
+     "ranges": [
+      [
+       3,
+       7
+      ]
+     ],
+     "stats": [
+      "fire_damage_+%"
+     ]
+    },
+    {
+     "name": "Sizzling",
+     "ilvl": 16,
+     "weight": 500,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "fire_damage_+%"
+     ]
+    },
+    {
+     "name": "Blistering",
+     "ilvl": 33,
+     "weight": 500,
+     "ranges": [
+      [
+       13,
+       17
+      ]
+     ],
+     "stats": [
+      "fire_damage_+%"
+     ]
+    },
+    {
+     "name": "Cauterising",
+     "ilvl": 46,
+     "weight": 500,
+     "ranges": [
+      [
+       18,
+       22
+      ]
+     ],
+     "stats": [
+      "fire_damage_+%"
+     ]
+    },
+    {
+     "name": "Volcanic",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       23,
+       26
+      ]
+     ],
+     "stats": [
+      "fire_damage_+%"
+     ]
+    },
+    {
+     "name": "Magmatic",
+     "ilvl": 75,
+     "weight": 500,
+     "ranges": [
+      [
+       27,
+       30
+      ]
+     ],
+     "stats": [
+      "fire_damage_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/IncreasedAccuracy",
+   "source": "normal",
+   "type": "prefix",
+   "family": "IncreasedAccuracy",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "attack"
+   ],
+   "text": "+(11-32) to [Accuracy|Accuracy] Rating",
+   "tiers": [
+    {
+     "name": "Precise",
+     "ilvl": 1,
+     "weight": 800,
+     "ranges": [
+      [
+       11,
+       32
+      ]
+     ],
+     "stats": [
+      "accuracy_rating"
+     ]
+    },
+    {
+     "name": "Reliable",
+     "ilvl": 11,
+     "weight": 800,
+     "ranges": [
+      [
+       33,
+       60
+      ]
+     ],
+     "stats": [
+      "accuracy_rating"
+     ]
+    },
+    {
+     "name": "Focused",
+     "ilvl": 18,
+     "weight": 800,
+     "ranges": [
+      [
+       61,
+       84
+      ]
+     ],
+     "stats": [
+      "accuracy_rating"
+     ]
+    },
+    {
+     "name": "Deliberate",
+     "ilvl": 26,
+     "weight": 800,
+     "ranges": [
+      [
+       85,
+       123
+      ]
+     ],
+     "stats": [
+      "accuracy_rating"
+     ]
+    },
+    {
+     "name": "Consistent",
+     "ilvl": 36,
+     "weight": 800,
+     "ranges": [
+      [
+       124,
+       167
+      ]
+     ],
+     "stats": [
+      "accuracy_rating"
+     ]
+    },
+    {
+     "name": "Steady",
+     "ilvl": 48,
+     "weight": 800,
+     "ranges": [
+      [
+       168,
+       236
+      ]
+     ],
+     "stats": [
+      "accuracy_rating"
+     ]
+    },
+    {
+     "name": "Hunter's",
+     "ilvl": 58,
+     "weight": 800,
+     "ranges": [
+      [
+       237,
+       346
+      ]
+     ],
+     "stats": [
+      "accuracy_rating"
+     ]
+    },
+    {
+     "name": "Ranger's",
+     "ilvl": 67,
+     "weight": 400,
+     "ranges": [
+      [
+       347,
+       450
+      ]
+     ],
+     "stats": [
+      "accuracy_rating"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/IncreasedLife",
+   "source": "normal",
+   "type": "prefix",
+   "family": "IncreasedLife",
+   "tags": [
+    "body_armour",
+    "ring"
+   ],
+   "displayTags": [
+    "resource",
+    "life"
+   ],
+   "text": "+(10-19) to maximum Life",
+   "tiers": [
+    {
+     "name": "Hale",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       10,
+       19
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Healthy",
+     "ilvl": 6,
+     "weight": 1000,
+     "ranges": [
+      [
+       20,
+       29
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Sanguine",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       30,
+       39
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Stalwart",
+     "ilvl": 24,
+     "weight": 1000,
+     "ranges": [
+      [
+       40,
+       59
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Stout",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       60,
+       69
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Robust",
+     "ilvl": 38,
+     "weight": 1000,
+     "ranges": [
+      [
+       70,
+       84
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Rotund",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       85,
+       99
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Virile",
+     "ilvl": 54,
+     "weight": 1000,
+     "ranges": [
+      [
+       100,
+       119
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Athlete's",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       120,
+       149
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Fecund",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       150,
+       174
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Vigorous",
+     "ilvl": 70,
+     "weight": 1000,
+     "ranges": [
+      [
+       175,
+       189
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Rapturous",
+     "ilvl": 75,
+     "weight": 1000,
+     "ranges": [
+      [
+       190,
+       199
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    },
+    {
+     "name": "Prime",
+     "ilvl": 80,
+     "weight": 1000,
+     "ranges": [
+      [
+       200,
+       214
+      ]
+     ],
+     "stats": [
+      "base_maximum_life"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/IncreasedMana",
+   "source": "normal",
+   "type": "prefix",
+   "family": "IncreasedMana",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "resource",
+    "mana"
+   ],
+   "text": "+(10-14) to maximum Mana",
+   "tiers": [
+    {
+     "name": "Beryl",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       10,
+       14
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Cobalt",
+     "ilvl": 6,
+     "weight": 1000,
+     "ranges": [
+      [
+       15,
+       24
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Azure",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       25,
+       34
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Teal",
+     "ilvl": 25,
+     "weight": 1000,
+     "ranges": [
+      [
+       35,
+       54
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Cerulean",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       55,
+       64
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Aqua",
+     "ilvl": 38,
+     "weight": 1000,
+     "ranges": [
+      [
+       65,
+       79
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Opalescent",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       80,
+       89
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Gentian",
+     "ilvl": 54,
+     "weight": 1000,
+     "ranges": [
+      [
+       90,
+       104
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Chalybeous",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       105,
+       124
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Mazarine",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       125,
+       149
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Blue",
+     "ilvl": 70,
+     "weight": 1000,
+     "ranges": [
+      [
+       150,
+       164
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Zaffre",
+     "ilvl": 75,
+     "weight": 1000,
+     "ranges": [
+      [
+       165,
+       179
+      ]
+     ],
+     "stats": [
+      "base_maximum_mana"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/BaseSpirit",
+   "source": "normal",
+   "type": "prefix",
+   "family": "BaseSpirit",
+   "tags": [
+    "body_armour"
+   ],
+   "displayTags": [],
+   "text": "+(30-33) to [Spirit|Spirit]",
+   "tiers": [
+    {
+     "name": "Lady's",
+     "ilvl": 16,
+     "weight": 500,
+     "ranges": [
+      [
+       30,
+       33
+      ]
+     ],
+     "stats": [
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Baronness'",
+     "ilvl": 25,
+     "weight": 500,
+     "ranges": [
+      [
+       34,
+       37
+      ]
+     ],
+     "stats": [
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Viscountess'",
+     "ilvl": 33,
+     "weight": 500,
+     "ranges": [
+      [
+       38,
+       42
+      ]
+     ],
+     "stats": [
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Marchioness'",
+     "ilvl": 46,
+     "weight": 500,
+     "ranges": [
+      [
+       43,
+       46
+      ]
+     ],
+     "stats": [
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Countess'",
+     "ilvl": 54,
+     "weight": 400,
+     "ranges": [
+      [
+       47,
+       50
+      ]
+     ],
+     "stats": [
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Duchess'",
+     "ilvl": 60,
+     "weight": 300,
+     "ranges": [
+      [
+       51,
+       53
+      ]
+     ],
+     "stats": [
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Princess'",
+     "ilvl": 65,
+     "weight": 200,
+     "ranges": [
+      [
+       54,
+       56
+      ]
+     ],
+     "stats": [
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Queen's",
+     "ilvl": 78,
+     "weight": 100,
+     "ranges": [
+      [
+       57,
+       61
+      ]
+     ],
+     "stats": [
+      "base_spirit_from_equipment"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ItemFoundRarityIncreasePrefix",
+   "source": "normal",
+   "type": "prefix",
+   "family": "ItemFoundRarityIncreasePrefix",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "drop"
+   ],
+   "text": "(8-11)% increased [ItemRarity|Rarity of Items] found",
+   "tiers": [
+    {
+     "name": "Magpie's",
+     "ilvl": 10,
+     "weight": 1000,
+     "ranges": [
+      [
+       8,
+       11
+      ]
+     ],
+     "stats": [
+      "base_item_found_rarity_+%"
+     ]
+    },
+    {
+     "name": "Collector's",
+     "ilvl": 29,
+     "weight": 1000,
+     "ranges": [
+      [
+       12,
+       15
+      ]
+     ],
+     "stats": [
+      "base_item_found_rarity_+%"
+     ]
+    },
+    {
+     "name": "Hoarder's",
+     "ilvl": 47,
+     "weight": 1000,
+     "ranges": [
+      [
+       16,
+       19
+      ]
+     ],
+     "stats": [
+      "base_item_found_rarity_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LightningDamagePercentage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "LightningDamagePercentage",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "elemental_damage",
+    "damage",
+    "elemental",
+    "lightning"
+   ],
+   "text": "(3-7)% increased [Lightning] Damage",
+   "tiers": [
+    {
+     "name": "Charged",
+     "ilvl": 8,
+     "weight": 500,
+     "ranges": [
+      [
+       3,
+       7
+      ]
+     ],
+     "stats": [
+      "lightning_damage_+%"
+     ]
+    },
+    {
+     "name": "Hissing",
+     "ilvl": 16,
+     "weight": 500,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "lightning_damage_+%"
+     ]
+    },
+    {
+     "name": "Bolting",
+     "ilvl": 33,
+     "weight": 500,
+     "ranges": [
+      [
+       13,
+       17
+      ]
+     ],
+     "stats": [
+      "lightning_damage_+%"
+     ]
+    },
+    {
+     "name": "Coursing",
+     "ilvl": 46,
+     "weight": 500,
+     "ranges": [
+      [
+       18,
+       22
+      ]
+     ],
+     "stats": [
+      "lightning_damage_+%"
+     ]
+    },
+    {
+     "name": "Striking",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       23,
+       26
+      ]
+     ],
+     "stats": [
+      "lightning_damage_+%"
+     ]
+    },
+    {
+     "name": "Smiting",
+     "ilvl": 75,
+     "weight": 500,
+     "ranges": [
+      [
+       27,
+       30
+      ]
+     ],
+     "stats": [
+      "lightning_damage_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/BaseLocalDefences",
+   "source": "normal",
+   "type": "prefix",
+   "family": "BaseLocalDefences",
+   "tags": [
+    "str_dex_int_armour"
+   ],
+   "displayTags": [
+    "defences",
+    "armour",
+    "energy_shield",
+    "evasion"
+   ],
+   "text": "+(9-16) to [Armour|Armour]\n+(5-8) to maximum [EnergyShield|Energy Shield]",
+   "tiers": [
+    {
+     "name": "Blessed",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       9,
+       16
+      ],
+      [
+       5,
+       8
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Supple",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       9,
+       16
+      ],
+      [
+       6,
+       10
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Will-o-wisp's",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       10
+      ],
+      [
+       5,
+       8
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Shining",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       10,
+       17
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Agile",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       11,
+       18
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Lacquered",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       16,
+       27
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Glimmering",
+     "ilvl": 8,
+     "weight": 1000,
+     "ranges": [
+      [
+       18,
+       24
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Dancer's",
+     "ilvl": 8,
+     "weight": 1000,
+     "ranges": [
+      [
+       19,
+       46
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Studded",
+     "ilvl": 8,
+     "weight": 1000,
+     "ranges": [
+      [
+       28,
+       56
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Anointed",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       17,
+       46
+      ],
+      [
+       9,
+       15
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Pliant",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       17,
+       46
+      ],
+      [
+       11,
+       41
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Nymph's",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       11,
+       41
+      ],
+      [
+       9,
+       15
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Glittering",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       25,
+       30
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Acrobat's",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       47,
+       66
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Ribbed",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       57,
+       77
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Glowing",
+     "ilvl": 25,
+     "weight": 1000,
+     "ranges": [
+      [
+       31,
+       35
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Fleet",
+     "ilvl": 25,
+     "weight": 1000,
+     "ranges": [
+      [
+       67,
+       87
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Fortified",
+     "ilvl": 25,
+     "weight": 1000,
+     "ranges": [
+      [
+       78,
+       98
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Sanctified",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       47,
+       71
+      ],
+      [
+       16,
+       21
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Flexible",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       47,
+       71
+      ],
+      [
+       42,
+       64
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Sylph's",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       42,
+       64
+      ],
+      [
+       16,
+       21
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Radiating",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       36,
+       41
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Blurred",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       88,
+       116
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Plated",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       99,
+       127
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Hallowed",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       72,
+       85
+      ],
+      [
+       22,
+       25
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Durable",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       72,
+       85
+      ],
+      [
+       65,
+       78
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Cherub's",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       65,
+       78
+      ],
+      [
+       22,
+       25
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Pulsing",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       42,
+       47
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Phased",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       117,
+       146
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Carapaced",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       128,
+       159
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Beatified",
+     "ilvl": 54,
+     "weight": 1000,
+     "ranges": [
+      [
+       86,
+       102
+      ],
+      [
+       26,
+       29
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Sturdy",
+     "ilvl": 54,
+     "weight": 1000,
+     "ranges": [
+      [
+       86,
+       102
+      ],
+      [
+       79,
+       94
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Spirit's",
+     "ilvl": 54,
+     "weight": 1000,
+     "ranges": [
+      [
+       79,
+       94
+      ],
+      [
+       26,
+       29
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Blazing",
+     "ilvl": 54,
+     "weight": 1000,
+     "ranges": [
+      [
+       48,
+       60
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Vaporous",
+     "ilvl": 54,
+     "weight": 1000,
+     "ranges": [
+      [
+       147,
+       176
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Encased",
+     "ilvl": 54,
+     "weight": 1000,
+     "ranges": [
+      [
+       160,
+       190
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Consecrated",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       103,
+       127
+      ],
+      [
+       30,
+       36
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Resilient",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       103,
+       127
+      ],
+      [
+       95,
+       119
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Eidolon's",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       95,
+       119
+      ],
+      [
+       30,
+       36
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Dazzling",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       61,
+       73
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Elusory",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       177,
+       207
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Enveloped",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       191,
+       221
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Saintly",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       128,
+       149
+      ],
+      [
+       37,
+       42
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Adaptable",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       128,
+       149
+      ],
+      [
+       120,
+       141
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Apparition's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       120,
+       141
+      ],
+      [
+       37,
+       42
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Scintillating",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       74,
+       80
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Adroit",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       208,
+       234
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Abating",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       222,
+       248
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Incandescent",
+     "ilvl": 70,
+     "weight": 1000,
+     "ranges": [
+      [
+       81,
+       90
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Godly",
+     "ilvl": 75,
+     "weight": 1000,
+     "ranges": [
+      [
+       150,
+       170
+      ],
+      [
+       43,
+       48
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Versatile",
+     "ilvl": 75,
+     "weight": 1000,
+     "ranges": [
+      [
+       150,
+       170
+      ],
+      [
+       142,
+       161
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating",
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Banshee's",
+     "ilvl": 75,
+     "weight": 1000,
+     "ranges": [
+      [
+       142,
+       161
+      ],
+      [
+       43,
+       48
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating",
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Lissome",
+     "ilvl": 75,
+     "weight": 1000,
+     "ranges": [
+      [
+       235,
+       261
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Unmoving",
+     "ilvl": 75,
+     "weight": 1000,
+     "ranges": [
+      [
+       249,
+       277
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    },
+    {
+     "name": "Resplendent",
+     "ilvl": 79,
+     "weight": 1000,
+     "ranges": [
+      [
+       91,
+       96
+      ]
+     ],
+     "stats": [
+      "local_energy_shield"
+     ]
+    },
+    {
+     "name": "Fugitive",
+     "ilvl": 79,
+     "weight": 1000,
+     "ranges": [
+      [
+       262,
+       300
+      ]
+     ],
+     "stats": [
+      "local_base_evasion_rating"
+     ]
+    },
+    {
+     "name": "Impervious",
+     "ilvl": 79,
+     "weight": 1000,
+     "ranges": [
+      [
+       278,
+       310
+      ]
+     ],
+     "stats": [
+      "local_base_physical_damage_reduction_rating"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/DefencesPercent",
+   "source": "normal",
+   "type": "prefix",
+   "family": "DefencesPercent",
+   "tags": [
+    "str_dex_int_armour"
+   ],
+   "displayTags": [
+    "defences",
+    "armour",
+    "evasion",
+    "energy_shield"
+   ],
+   "text": "(15-26)% increased [Armour|Armour], [Evasion|Evasion] and [EnergyShield|Energy Shield]",
+   "tiers": [
+    {
+     "name": "Shadowy",
+     "ilvl": 2,
+     "weight": 1000,
+     "ranges": [
+      [
+       15,
+       26
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_and_energy_shield_+%"
+     ]
+    },
+    {
+     "name": "Ethereal",
+     "ilvl": 16,
+     "weight": 1000,
+     "ranges": [
+      [
+       27,
+       42
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_and_energy_shield_+%"
+     ]
+    },
+    {
+     "name": "Unworldly",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       43,
+       55
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_and_energy_shield_+%"
+     ]
+    },
+    {
+     "name": "Ephemeral",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       56,
+       67
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_and_energy_shield_+%"
+     ]
+    },
+    {
+     "name": "Evanescent",
+     "ilvl": 54,
+     "weight": 1000,
+     "ranges": [
+      [
+       68,
+       79
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_and_energy_shield_+%"
+     ]
+    },
+    {
+     "name": "Unreal",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       80,
+       91
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_and_energy_shield_+%"
+     ]
+    },
+    {
+     "name": "Incorporeal",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       92,
+       100
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_and_energy_shield_+%"
+     ]
+    },
+    {
+     "name": "Ascendant",
+     "ilvl": 75,
+     "weight": 1000,
+     "ranges": [
+      [
+       101,
+       110
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_and_energy_shield_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/AllAttributes",
+   "source": "normal",
+   "type": "suffix",
+   "family": "AllAttributes",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "attribute"
+   ],
+   "text": "+(2-4) to all [Attributes|Attributes]",
+   "tiers": [
+    {
+     "name": "of the Clouds",
+     "ilvl": 1,
+     "weight": 800,
+     "ranges": [
+      [
+       2,
+       4
+      ]
+     ],
+     "stats": [
+      "additional_all_attributes"
+     ]
+    },
+    {
+     "name": "of the Sky",
+     "ilvl": 11,
+     "weight": 800,
+     "ranges": [
+      [
+       5,
+       7
+      ]
+     ],
+     "stats": [
+      "additional_all_attributes"
+     ]
+    },
+    {
+     "name": "of the Meteor",
+     "ilvl": 22,
+     "weight": 800,
+     "ranges": [
+      [
+       8,
+       10
+      ]
+     ],
+     "stats": [
+      "additional_all_attributes"
+     ]
+    },
+    {
+     "name": "of the Comet",
+     "ilvl": 33,
+     "weight": 800,
+     "ranges": [
+      [
+       11,
+       13
+      ]
+     ],
+     "stats": [
+      "additional_all_attributes"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/AllResistances",
+   "source": "normal",
+   "type": "suffix",
+   "family": "AllResistances",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "cold_resistance",
+    "elemental_resistance",
+    "fire_resistance",
+    "lightning_resistance",
+    "elemental",
+    "fire",
+    "cold",
+    "lightning",
+    "resistance"
+   ],
+   "text": "+(3-5)% to all [ElementalDamage|Elemental] [Resistances]",
+   "tiers": [
+    {
+     "name": "of the Crystal",
+     "ilvl": 12,
+     "weight": 800,
+     "ranges": [
+      [
+       3,
+       5
+      ]
+     ],
+     "stats": [
+      "base_resist_all_elements_%"
+     ]
+    },
+    {
+     "name": "of the Prism",
+     "ilvl": 26,
+     "weight": 800,
+     "ranges": [
+      [
+       6,
+       8
+      ]
+     ],
+     "stats": [
+      "base_resist_all_elements_%"
+     ]
+    },
+    {
+     "name": "of the Kaleidoscope",
+     "ilvl": 40,
+     "weight": 800,
+     "ranges": [
+      [
+       9,
+       11
+      ]
+     ],
+     "stats": [
+      "base_resist_all_elements_%"
+     ]
+    },
+    {
+     "name": "of Variegation",
+     "ilvl": 54,
+     "weight": 800,
+     "ranges": [
+      [
+       12,
+       14
+      ]
+     ],
+     "stats": [
+      "base_resist_all_elements_%"
+     ]
+    },
+    {
+     "name": "of the Rainbow",
+     "ilvl": 68,
+     "weight": 800,
+     "ranges": [
+      [
+       15,
+       16
+      ]
+     ],
+     "stats": [
+      "base_resist_all_elements_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ArmourAppliesToElementalDamage",
+   "source": "normal",
+   "type": "suffix",
+   "family": "ArmourAppliesToElementalDamage",
+   "tags": [
+    "str_dex_int_armour"
+   ],
+   "displayTags": [
+    "defences",
+    "armour",
+    "elemental"
+   ],
+   "text": "+(14-19)% of [Armour|Armour] also applies to [ElementalDamage|Elemental Damage]",
+   "tiers": [
+    {
+     "name": "of Covering",
+     "ilvl": 1,
+     "weight": 500,
+     "ranges": [
+      [
+       14,
+       19
+      ]
+     ],
+     "stats": [
+      "armour_%_applies_to_fire_cold_lightning_damage"
+     ]
+    },
+    {
+     "name": "of Sheathing",
+     "ilvl": 16,
+     "weight": 500,
+     "ranges": [
+      [
+       20,
+       25
+      ]
+     ],
+     "stats": [
+      "armour_%_applies_to_fire_cold_lightning_damage"
+     ]
+    },
+    {
+     "name": "of Lining",
+     "ilvl": 36,
+     "weight": 500,
+     "ranges": [
+      [
+       26,
+       31
+      ]
+     ],
+     "stats": [
+      "armour_%_applies_to_fire_cold_lightning_damage"
+     ]
+    },
+    {
+     "name": "of Padding",
+     "ilvl": 48,
+     "weight": 500,
+     "ranges": [
+      [
+       32,
+       37
+      ]
+     ],
+     "stats": [
+      "armour_%_applies_to_fire_cold_lightning_damage"
+     ]
+    },
+    {
+     "name": "of Furring",
+     "ilvl": 66,
+     "weight": 500,
+     "ranges": [
+      [
+       38,
+       43
+      ]
+     ],
+     "stats": [
+      "armour_%_applies_to_fire_cold_lightning_damage"
+     ]
+    },
+    {
+     "name": "of Thermokryptance",
+     "ilvl": 81,
+     "weight": 500,
+     "ranges": [
+      [
+       44,
+       50
+      ]
+     ],
+     "stats": [
+      "armour_%_applies_to_fire_cold_lightning_damage"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/IncreasedCastSpeed",
+   "source": "normal",
+   "type": "suffix",
+   "family": "IncreasedCastSpeed",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "caster_speed",
+    "caster",
+    "speed"
+   ],
+   "text": "(9-12)% increased Cast Speed",
+   "tiers": [
+    {
+     "name": "of Talent",
+     "ilvl": 1,
+     "weight": 1,
+     "ranges": [
+      [
+       9,
+       12
+      ]
+     ],
+     "stats": [
+      "base_cast_speed_+%"
+     ]
+    },
+    {
+     "name": "of Nimbleness",
+     "ilvl": 18,
+     "weight": 1,
+     "ranges": [
+      [
+       13,
+       15
+      ]
+     ],
+     "stats": [
+      "base_cast_speed_+%"
+     ]
+    },
+    {
+     "name": "of Expertise",
+     "ilvl": 35,
+     "weight": 1,
+     "ranges": [
+      [
+       16,
+       18
+      ]
+     ],
+     "stats": [
+      "base_cast_speed_+%"
+     ]
+    },
+    {
+     "name": "of Sortilege",
+     "ilvl": 51,
+     "weight": 1,
+     "ranges": [
+      [
+       19,
+       21
+      ]
+     ],
+     "stats": [
+      "base_cast_speed_+%"
+     ]
+    },
+    {
+     "name": "of Legerdemain",
+     "ilvl": 60,
+     "weight": 1,
+     "ranges": [
+      [
+       22,
+       24
+      ]
+     ],
+     "stats": [
+      "base_cast_speed_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ChaosResistance",
+   "source": "normal",
+   "type": "suffix",
+   "family": "ChaosResistance",
+   "tags": [
+    "armour",
+    "ring"
+   ],
+   "displayTags": [
+    "chaos_resistance",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+(4-7)% to [Resistances|Chaos Resistance]",
+   "tiers": [
+    {
+     "name": "of the Lost",
+     "ilvl": 16,
+     "weight": 250,
+     "ranges": [
+      [
+       4,
+       7
+      ]
+     ],
+     "stats": [
+      "base_chaos_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of Banishment",
+     "ilvl": 30,
+     "weight": 250,
+     "ranges": [
+      [
+       8,
+       11
+      ]
+     ],
+     "stats": [
+      "base_chaos_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of Eviction",
+     "ilvl": 44,
+     "weight": 250,
+     "ranges": [
+      [
+       12,
+       15
+      ]
+     ],
+     "stats": [
+      "base_chaos_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of Expulsion",
+     "ilvl": 56,
+     "weight": 250,
+     "ranges": [
+      [
+       16,
+       19
+      ]
+     ],
+     "stats": [
+      "base_chaos_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of Exile",
+     "ilvl": 68,
+     "weight": 250,
+     "ranges": [
+      [
+       20,
+       23
+      ]
+     ],
+     "stats": [
+      "base_chaos_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of Bameth",
+     "ilvl": 81,
+     "weight": 250,
+     "ranges": [
+      [
+       24,
+       27
+      ]
+     ],
+     "stats": [
+      "base_chaos_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ColdResistance",
+   "source": "normal",
+   "type": "suffix",
+   "family": "ColdResistance",
+   "tags": [
+    "armour",
+    "ring"
+   ],
+   "displayTags": [
+    "cold_resistance",
+    "elemental_resistance",
+    "elemental",
+    "cold",
+    "resistance"
+   ],
+   "text": "+(6-10)% to [Resistances|Cold Resistance]",
+   "tiers": [
+    {
+     "name": "of the Seal",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       10
+      ]
+     ],
+     "stats": [
+      "base_cold_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Penguin",
+     "ilvl": 14,
+     "weight": 1000,
+     "ranges": [
+      [
+       11,
+       15
+      ]
+     ],
+     "stats": [
+      "base_cold_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Narwhal",
+     "ilvl": 26,
+     "weight": 1000,
+     "ranges": [
+      [
+       16,
+       20
+      ]
+     ],
+     "stats": [
+      "base_cold_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Yeti",
+     "ilvl": 38,
+     "weight": 1000,
+     "ranges": [
+      [
+       21,
+       25
+      ]
+     ],
+     "stats": [
+      "base_cold_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Walrus",
+     "ilvl": 50,
+     "weight": 1000,
+     "ranges": [
+      [
+       26,
+       30
+      ]
+     ],
+     "stats": [
+      "base_cold_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Polar Bear",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       31,
+       35
+      ]
+     ],
+     "stats": [
+      "base_cold_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Ice",
+     "ilvl": 71,
+     "weight": 1000,
+     "ranges": [
+      [
+       36,
+       40
+      ]
+     ],
+     "stats": [
+      "base_cold_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of Haast",
+     "ilvl": 82,
+     "weight": 1000,
+     "ranges": [
+      [
+       41,
+       45
+      ]
+     ],
+     "stats": [
+      "base_cold_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Dexterity",
+   "source": "normal",
+   "type": "suffix",
+   "family": "Dexterity",
+   "tags": [
+    "ring",
+    "str_dex_int_armour"
+   ],
+   "displayTags": [
+    "attribute"
+   ],
+   "text": "+(5-8) to [Dexterity|Dexterity]",
+   "tiers": [
+    {
+     "name": "of the Mongoose",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       5,
+       8
+      ]
+     ],
+     "stats": [
+      "additional_dexterity"
+     ]
+    },
+    {
+     "name": "of the Lynx",
+     "ilvl": 11,
+     "weight": 1000,
+     "ranges": [
+      [
+       9,
+       12
+      ]
+     ],
+     "stats": [
+      "additional_dexterity"
+     ]
+    },
+    {
+     "name": "of the Fox",
+     "ilvl": 22,
+     "weight": 1000,
+     "ranges": [
+      [
+       13,
+       16
+      ]
+     ],
+     "stats": [
+      "additional_dexterity"
+     ]
+    },
+    {
+     "name": "of the Falcon",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       17,
+       20
+      ]
+     ],
+     "stats": [
+      "additional_dexterity"
+     ]
+    },
+    {
+     "name": "of the Panther",
+     "ilvl": 44,
+     "weight": 1000,
+     "ranges": [
+      [
+       21,
+       24
+      ]
+     ],
+     "stats": [
+      "additional_dexterity"
+     ]
+    },
+    {
+     "name": "of the Leopard",
+     "ilvl": 55,
+     "weight": 1000,
+     "ranges": [
+      [
+       25,
+       27
+      ]
+     ],
+     "stats": [
+      "additional_dexterity"
+     ]
+    },
+    {
+     "name": "of the Jaguar",
+     "ilvl": 66,
+     "weight": 1000,
+     "ranges": [
+      [
+       28,
+       30
+      ]
+     ],
+     "stats": [
+      "additional_dexterity"
+     ]
+    },
+    {
+     "name": "of the Phantom",
+     "ilvl": 74,
+     "weight": 1000,
+     "ranges": [
+      [
+       31,
+       33
+      ]
+     ],
+     "stats": [
+      "additional_dexterity"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/EnergyShieldRegeneration",
+   "source": "normal",
+   "type": "suffix",
+   "family": "EnergyShieldRegeneration",
+   "tags": [
+    "str_dex_int_armour"
+   ],
+   "displayTags": [
+    "defences",
+    "energy_shield"
+   ],
+   "text": "(16-19)% increased [ESRechargeRate|Energy Shield Recharge Rate]",
+   "tiers": [
+    {
+     "name": "of Buffering",
+     "ilvl": 48,
+     "weight": 1,
+     "ranges": [
+      [
+       16,
+       19
+      ]
+     ],
+     "stats": [
+      "energy_shield_recharge_rate_+%"
+     ]
+    },
+    {
+     "name": "of Ardour",
+     "ilvl": 66,
+     "weight": 1,
+     "ranges": [
+      [
+       20,
+       23
+      ]
+     ],
+     "stats": [
+      "energy_shield_recharge_rate_+%"
+     ]
+    },
+    {
+     "name": "of Suffusion",
+     "ilvl": 81,
+     "weight": 1,
+     "ranges": [
+      [
+       24,
+       27
+      ]
+     ],
+     "stats": [
+      "energy_shield_recharge_rate_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/EvasionAppliesToDeflection",
+   "source": "normal",
+   "type": "suffix",
+   "family": "EvasionAppliesToDeflection",
+   "tags": [
+    "str_dex_int_armour"
+   ],
+   "displayTags": [
+    "defences",
+    "evasion"
+   ],
+   "text": "Gain [Deflect|Deflection Rating] equal to (8-11)% of [Evasion|Evasion Rating]",
+   "tiers": [
+    {
+     "name": "of Deflecting",
+     "ilvl": 1,
+     "weight": 500,
+     "ranges": [
+      [
+       8,
+       11
+      ]
+     ],
+     "stats": [
+      "base_deflection_rating_%_of_evasion_rating"
+     ]
+    },
+    {
+     "name": "of Bending",
+     "ilvl": 16,
+     "weight": 500,
+     "ranges": [
+      [
+       12,
+       14
+      ]
+     ],
+     "stats": [
+      "base_deflection_rating_%_of_evasion_rating"
+     ]
+    },
+    {
+     "name": "of Curvation",
+     "ilvl": 36,
+     "weight": 500,
+     "ranges": [
+      [
+       15,
+       17
+      ]
+     ],
+     "stats": [
+      "base_deflection_rating_%_of_evasion_rating"
+     ]
+    },
+    {
+     "name": "of Diversion",
+     "ilvl": 48,
+     "weight": 500,
+     "ranges": [
+      [
+       18,
+       20
+      ]
+     ],
+     "stats": [
+      "base_deflection_rating_%_of_evasion_rating"
+     ]
+    },
+    {
+     "name": "of Flexure",
+     "ilvl": 66,
+     "weight": 500,
+     "ranges": [
+      [
+       21,
+       23
+      ]
+     ],
+     "stats": [
+      "base_deflection_rating_%_of_evasion_rating"
+     ]
+    },
+    {
+     "name": "of Warping",
+     "ilvl": 81,
+     "weight": 500,
+     "ranges": [
+      [
+       24,
+       26
+      ]
+     ],
+     "stats": [
+      "base_deflection_rating_%_of_evasion_rating"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/FireResistance",
+   "source": "normal",
+   "type": "suffix",
+   "family": "FireResistance",
+   "tags": [
+    "armour",
+    "ring"
+   ],
+   "displayTags": [
+    "elemental_resistance",
+    "fire_resistance",
+    "elemental",
+    "fire",
+    "resistance"
+   ],
+   "text": "+(6-10)% to [Resistances|Fire Resistance]",
+   "tiers": [
+    {
+     "name": "of the Whelpling",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       10
+      ]
+     ],
+     "stats": [
+      "base_fire_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Salamander",
+     "ilvl": 12,
+     "weight": 1000,
+     "ranges": [
+      [
+       11,
+       15
+      ]
+     ],
+     "stats": [
+      "base_fire_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Drake",
+     "ilvl": 24,
+     "weight": 1000,
+     "ranges": [
+      [
+       16,
+       20
+      ]
+     ],
+     "stats": [
+      "base_fire_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Kiln",
+     "ilvl": 36,
+     "weight": 1000,
+     "ranges": [
+      [
+       21,
+       25
+      ]
+     ],
+     "stats": [
+      "base_fire_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Furnace",
+     "ilvl": 48,
+     "weight": 1000,
+     "ranges": [
+      [
+       26,
+       30
+      ]
+     ],
+     "stats": [
+      "base_fire_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Volcano",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       31,
+       35
+      ]
+     ],
+     "stats": [
+      "base_fire_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of Magma",
+     "ilvl": 71,
+     "weight": 1000,
+     "ranges": [
+      [
+       36,
+       40
+      ]
+     ],
+     "stats": [
+      "base_fire_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of Tzteosh",
+     "ilvl": 82,
+     "weight": 1000,
+     "ranges": [
+      [
+       41,
+       45
+      ]
+     ],
+     "stats": [
+      "base_fire_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Intelligence",
+   "source": "normal",
+   "type": "suffix",
+   "family": "Intelligence",
+   "tags": [
+    "ring",
+    "str_dex_int_armour"
+   ],
+   "displayTags": [
+    "attribute"
+   ],
+   "text": "+(5-8) to [Intelligence|Intelligence]",
+   "tiers": [
+    {
+     "name": "of the Pupil",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       5,
+       8
+      ]
+     ],
+     "stats": [
+      "additional_intelligence"
+     ]
+    },
+    {
+     "name": "of the Student",
+     "ilvl": 11,
+     "weight": 1000,
+     "ranges": [
+      [
+       9,
+       12
+      ]
+     ],
+     "stats": [
+      "additional_intelligence"
+     ]
+    },
+    {
+     "name": "of the Prodigy",
+     "ilvl": 22,
+     "weight": 1000,
+     "ranges": [
+      [
+       13,
+       16
+      ]
+     ],
+     "stats": [
+      "additional_intelligence"
+     ]
+    },
+    {
+     "name": "of the Augur",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       17,
+       20
+      ]
+     ],
+     "stats": [
+      "additional_intelligence"
+     ]
+    },
+    {
+     "name": "of the Philosopher",
+     "ilvl": 44,
+     "weight": 1000,
+     "ranges": [
+      [
+       21,
+       24
+      ]
+     ],
+     "stats": [
+      "additional_intelligence"
+     ]
+    },
+    {
+     "name": "of the Sage",
+     "ilvl": 55,
+     "weight": 1000,
+     "ranges": [
+      [
+       25,
+       27
+      ]
+     ],
+     "stats": [
+      "additional_intelligence"
+     ]
+    },
+    {
+     "name": "of the Savant",
+     "ilvl": 66,
+     "weight": 1000,
+     "ranges": [
+      [
+       28,
+       30
+      ]
+     ],
+     "stats": [
+      "additional_intelligence"
+     ]
+    },
+    {
+     "name": "of the Virtuoso",
+     "ilvl": 74,
+     "weight": 1000,
+     "ranges": [
+      [
+       31,
+       33
+      ]
+     ],
+     "stats": [
+      "additional_intelligence"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ItemFoundRarityIncrease",
+   "source": "normal",
+   "type": "suffix",
+   "family": "ItemFoundRarityIncrease",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "drop"
+   ],
+   "text": "(6-10)% increased [ItemRarity|Rarity of Items] found",
+   "tiers": [
+    {
+     "name": "of Plunder",
+     "ilvl": 3,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       10
+      ]
+     ],
+     "stats": [
+      "base_item_found_rarity_+%"
+     ]
+    },
+    {
+     "name": "of Raiding",
+     "ilvl": 24,
+     "weight": 1000,
+     "ranges": [
+      [
+       11,
+       14
+      ]
+     ],
+     "stats": [
+      "base_item_found_rarity_+%"
+     ]
+    },
+    {
+     "name": "of Archaeology",
+     "ilvl": 40,
+     "weight": 1000,
+     "ranges": [
+      [
+       15,
+       18
+      ]
+     ],
+     "stats": [
+      "base_item_found_rarity_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LifeGainedFromEnemyDeath",
+   "source": "normal",
+   "type": "suffix",
+   "family": "LifeGainedFromEnemyDeath",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "resource",
+    "life"
+   ],
+   "text": "Gain (4-6) Life per enemy killed",
+   "tiers": [
+    {
+     "name": "of Success",
+     "ilvl": 1,
+     "weight": 750,
+     "ranges": [
+      [
+       4,
+       6
+      ]
+     ],
+     "stats": [
+      "base_life_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Victory",
+     "ilvl": 11,
+     "weight": 750,
+     "ranges": [
+      [
+       7,
+       9
+      ]
+     ],
+     "stats": [
+      "base_life_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Triumph",
+     "ilvl": 22,
+     "weight": 750,
+     "ranges": [
+      [
+       10,
+       18
+      ]
+     ],
+     "stats": [
+      "base_life_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Conquest",
+     "ilvl": 33,
+     "weight": 750,
+     "ranges": [
+      [
+       19,
+       28
+      ]
+     ],
+     "stats": [
+      "base_life_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Vanquishing",
+     "ilvl": 44,
+     "weight": 750,
+     "ranges": [
+      [
+       29,
+       40
+      ]
+     ],
+     "stats": [
+      "base_life_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Valour",
+     "ilvl": 55,
+     "weight": 750,
+     "ranges": [
+      [
+       41,
+       53
+      ]
+     ],
+     "stats": [
+      "base_life_gained_on_enemy_death"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LifeLeech",
+   "source": "normal",
+   "type": "suffix",
+   "family": "LifeLeech",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "resource",
+    "life",
+    "physical",
+    "attack"
+   ],
+   "text": "[LifeLeech|Leech] (6-6.9)% of [Physical] [Attack] Damage as Life",
+   "tiers": [
+    {
+     "name": "of the Locust",
+     "ilvl": 21,
+     "weight": 1000,
+     "ranges": [
+      [
+       600,
+       690
+      ]
+     ],
+     "stats": [
+      "base_life_leech_from_physical_attack_damage_permyriad"
+     ]
+    },
+    {
+     "name": "of the Remora",
+     "ilvl": 38,
+     "weight": 1000,
+     "ranges": [
+      [
+       700,
+       790
+      ]
+     ],
+     "stats": [
+      "base_life_leech_from_physical_attack_damage_permyriad"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LifeRegeneration",
+   "source": "normal",
+   "type": "suffix",
+   "family": "LifeRegeneration",
+   "tags": [
+    "body_armour",
+    "ring"
+   ],
+   "displayTags": [
+    "flat_life_regen",
+    "resource",
+    "life"
+   ],
+   "text": "(1-2) Life Regeneration per second",
+   "tiers": [
+    {
+     "name": "of the Newt",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       60,
+       120
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of the Lizard",
+     "ilvl": 5,
+     "weight": 1000,
+     "ranges": [
+      [
+       126,
+       180
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of the Flatworm",
+     "ilvl": 11,
+     "weight": 1000,
+     "ranges": [
+      [
+       186,
+       240
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of the Starfish",
+     "ilvl": 17,
+     "weight": 1000,
+     "ranges": [
+      [
+       246,
+       360
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of the Hydra",
+     "ilvl": 26,
+     "weight": 1000,
+     "ranges": [
+      [
+       366,
+       540
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of the Troll",
+     "ilvl": 35,
+     "weight": 1000,
+     "ranges": [
+      [
+       546,
+       780
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of Convalescence",
+     "ilvl": 47,
+     "weight": 1000,
+     "ranges": [
+      [
+       786,
+       1080
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of Recuperation",
+     "ilvl": 58,
+     "weight": 1000,
+     "ranges": [
+      [
+       1086,
+       1380
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of Resurgence",
+     "ilvl": 68,
+     "weight": 1000,
+     "ranges": [
+      [
+       1386,
+       1740
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of Immortality",
+     "ilvl": 75,
+     "weight": 1000,
+     "ranges": [
+      [
+       1746,
+       1980
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    },
+    {
+     "name": "of the Phoenix",
+     "ilvl": 81,
+     "weight": 1000,
+     "ranges": [
+      [
+       1986,
+       2160
+      ]
+     ],
+     "stats": [
+      "base_life_regeneration_rate_per_minute"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LightRadiusAndManaRegeneration",
+   "source": "normal",
+   "type": "suffix",
+   "family": "LightRadiusAndManaRegeneration",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "resource",
+    "mana"
+   ],
+   "text": "5% increased [LightRadius|Light Radius]\n(8-12)% increased Mana Regeneration Rate",
+   "tiers": [
+    {
+     "name": "of Warmth",
+     "ilvl": 8,
+     "weight": 1000,
+     "ranges": [
+      [
+       5,
+       5
+      ],
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "light_radius_+%",
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Kindling",
+     "ilvl": 15,
+     "weight": 1000,
+     "ranges": [
+      [
+       10,
+       10
+      ],
+      [
+       13,
+       17
+      ]
+     ],
+     "stats": [
+      "light_radius_+%",
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of the Hearth",
+     "ilvl": 30,
+     "weight": 1000,
+     "ranges": [
+      [
+       15,
+       15
+      ],
+      [
+       18,
+       22
+      ]
+     ],
+     "stats": [
+      "light_radius_+%",
+      "mana_regeneration_rate_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LightningResistance",
+   "source": "normal",
+   "type": "suffix",
+   "family": "LightningResistance",
+   "tags": [
+    "armour",
+    "ring"
+   ],
+   "displayTags": [
+    "elemental_resistance",
+    "lightning_resistance",
+    "elemental",
+    "lightning",
+    "resistance"
+   ],
+   "text": "+(6-10)% to [Resistances|Lightning Resistance]",
+   "tiers": [
+    {
+     "name": "of the Cloud",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       10
+      ]
+     ],
+     "stats": [
+      "base_lightning_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Squall",
+     "ilvl": 13,
+     "weight": 1000,
+     "ranges": [
+      [
+       11,
+       15
+      ]
+     ],
+     "stats": [
+      "base_lightning_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Storm",
+     "ilvl": 25,
+     "weight": 1000,
+     "ranges": [
+      [
+       16,
+       20
+      ]
+     ],
+     "stats": [
+      "base_lightning_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Thunderhead",
+     "ilvl": 37,
+     "weight": 1000,
+     "ranges": [
+      [
+       21,
+       25
+      ]
+     ],
+     "stats": [
+      "base_lightning_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Tempest",
+     "ilvl": 49,
+     "weight": 1000,
+     "ranges": [
+      [
+       26,
+       30
+      ]
+     ],
+     "stats": [
+      "base_lightning_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Maelstrom",
+     "ilvl": 60,
+     "weight": 1000,
+     "ranges": [
+      [
+       31,
+       35
+      ]
+     ],
+     "stats": [
+      "base_lightning_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of the Lightning",
+     "ilvl": 71,
+     "weight": 1000,
+     "ranges": [
+      [
+       36,
+       40
+      ]
+     ],
+     "stats": [
+      "base_lightning_damage_resistance_%"
+     ]
+    },
+    {
+     "name": "of Ephij",
+     "ilvl": 82,
+     "weight": 1000,
+     "ranges": [
+      [
+       41,
+       45
+      ]
+     ],
+     "stats": [
+      "base_lightning_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ManaGainedFromEnemyDeath",
+   "source": "normal",
+   "type": "suffix",
+   "family": "ManaGainedFromEnemyDeath",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "resource",
+    "mana"
+   ],
+   "text": "Gain (2-3) Mana per enemy killed",
+   "tiers": [
+    {
+     "name": "of Absorption",
+     "ilvl": 1,
+     "weight": 750,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": [
+      "base_mana_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Osmosis",
+     "ilvl": 12,
+     "weight": 750,
+     "ranges": [
+      [
+       4,
+       5
+      ]
+     ],
+     "stats": [
+      "base_mana_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Infusion",
+     "ilvl": 23,
+     "weight": 750,
+     "ranges": [
+      [
+       6,
+       9
+      ]
+     ],
+     "stats": [
+      "base_mana_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Enveloping",
+     "ilvl": 34,
+     "weight": 750,
+     "ranges": [
+      [
+       10,
+       14
+      ]
+     ],
+     "stats": [
+      "base_mana_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Consumption",
+     "ilvl": 45,
+     "weight": 750,
+     "ranges": [
+      [
+       15,
+       20
+      ]
+     ],
+     "stats": [
+      "base_mana_gained_on_enemy_death"
+     ]
+    },
+    {
+     "name": "of Siphoning",
+     "ilvl": 56,
+     "weight": 750,
+     "ranges": [
+      [
+       21,
+       27
+      ]
+     ],
+     "stats": [
+      "base_mana_gained_on_enemy_death"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ManaLeech",
+   "source": "normal",
+   "type": "suffix",
+   "family": "ManaLeech",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "resource",
+    "mana",
+    "physical",
+    "attack"
+   ],
+   "text": "[ManaLeech|Leech] (5-5.9)% of [Physical] [Attack] Damage as Mana",
+   "tiers": [
+    {
+     "name": "of the Parched",
+     "ilvl": 21,
+     "weight": 1000,
+     "ranges": [
+      [
+       500,
+       590
+      ]
+     ],
+     "stats": [
+      "base_mana_leech_from_physical_attack_damage_permyriad"
+     ]
+    },
+    {
+     "name": "of the Arid",
+     "ilvl": 38,
+     "weight": 1000,
+     "ranges": [
+      [
+       600,
+       690
+      ]
+     ],
+     "stats": [
+      "base_mana_leech_from_physical_attack_damage_permyriad"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ManaRegeneration",
+   "source": "normal",
+   "type": "suffix",
+   "family": "ManaRegeneration",
+   "tags": [
+    "ring"
+   ],
+   "displayTags": [
+    "resource",
+    "mana"
+   ],
+   "text": "(10-19)% increased Mana Regeneration Rate",
+   "tiers": [
+    {
+     "name": "of Excitement",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       10,
+       19
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Joy",
+     "ilvl": 18,
+     "weight": 1000,
+     "ranges": [
+      [
+       20,
+       29
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Elation",
+     "ilvl": 29,
+     "weight": 1000,
+     "ranges": [
+      [
+       30,
+       39
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Bliss",
+     "ilvl": 42,
+     "weight": 1000,
+     "ranges": [
+      [
+       40,
+       49
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Euphoria",
+     "ilvl": 55,
+     "weight": 1000,
+     "ranges": [
+      [
+       50,
+       59
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    },
+    {
+     "name": "of Nirvana",
+     "ilvl": 79,
+     "weight": 1000,
+     "ranges": [
+      [
+       60,
+       69
+      ]
+     ],
+     "stats": [
+      "mana_regeneration_rate_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ReducedAilmentDuration",
+   "source": "normal",
+   "type": "suffix",
+   "family": "ReducedAilmentDuration",
+   "tags": [
+    "body_armour"
+   ],
+   "displayTags": [
+    "bleed",
+    "physical",
+    "ailment",
+    "elemental",
+    "fire",
+    "poison",
+    "chaos"
+   ],
+   "text": "(40-36)% reduced Duration of [Bleeding] on You",
+   "tiers": [
+    {
+     "name": "of Sealing",
+     "ilvl": 21,
+     "weight": 500,
+     "ranges": [
+      [
+       -40,
+       -36
+      ]
+     ],
+     "stats": [
+      "self_bleed_duration_+%"
+     ]
+    },
+    {
+     "name": "of Damping",
+     "ilvl": 21,
+     "weight": 500,
+     "ranges": [
+      [
+       36,
+       40
+      ]
+     ],
+     "stats": [
+      "base_self_ignite_duration_-%"
+     ]
+    },
+    {
+     "name": "of the Antitoxin",
+     "ilvl": 21,
+     "weight": 500,
+     "ranges": [
+      [
+       -40,
+       -36
+      ]
+     ],
+     "stats": [
+      "self_poison_duration_+%"
+     ]
+    },
+    {
+     "name": "of Alleviation",
+     "ilvl": 37,
+     "weight": 500,
+     "ranges": [
+      [
+       -45,
+       -41
+      ]
+     ],
+     "stats": [
+      "self_bleed_duration_+%"
+     ]
+    },
+    {
+     "name": "of Quashing",
+     "ilvl": 37,
+     "weight": 500,
+     "ranges": [
+      [
+       41,
+       45
+      ]
+     ],
+     "stats": [
+      "base_self_ignite_duration_-%"
+     ]
+    },
+    {
+     "name": "of the Remedy",
+     "ilvl": 37,
+     "weight": 500,
+     "ranges": [
+      [
+       -45,
+       -41
+      ]
+     ],
+     "stats": [
+      "self_poison_duration_+%"
+     ]
+    },
+    {
+     "name": "of Allaying",
+     "ilvl": 50,
+     "weight": 500,
+     "ranges": [
+      [
+       -50,
+       -46
+      ]
+     ],
+     "stats": [
+      "self_bleed_duration_+%"
+     ]
+    },
+    {
+     "name": "of Quelling",
+     "ilvl": 50,
+     "weight": 500,
+     "ranges": [
+      [
+       46,
+       50
+      ]
+     ],
+     "stats": [
+      "base_self_ignite_duration_-%"
+     ]
+    },
+    {
+     "name": "of the Cure",
+     "ilvl": 50,
+     "weight": 500,
+     "ranges": [
+      [
+       -50,
+       -46
+      ]
+     ],
+     "stats": [
+      "self_poison_duration_+%"
+     ]
+    },
+    {
+     "name": "of Assuaging",
+     "ilvl": 64,
+     "weight": 500,
+     "ranges": [
+      [
+       -55,
+       -51
+      ]
+     ],
+     "stats": [
+      "self_bleed_duration_+%"
+     ]
+    },
+    {
+     "name": "of Quenching",
+     "ilvl": 64,
+     "weight": 500,
+     "ranges": [
+      [
+       51,
+       55
+      ]
+     ],
+     "stats": [
+      "base_self_ignite_duration_-%"
+     ]
+    },
+    {
+     "name": "of the Panacea",
+     "ilvl": 64,
+     "weight": 500,
+     "ranges": [
+      [
+       -55,
+       -51
+      ]
+     ],
+     "stats": [
+      "self_poison_duration_+%"
+     ]
+    },
+    {
+     "name": "of Staunching",
+     "ilvl": 76,
+     "weight": 500,
+     "ranges": [
+      [
+       -60,
+       -56
+      ]
+     ],
+     "stats": [
+      "self_bleed_duration_+%"
+     ]
+    },
+    {
+     "name": "of Dousing",
+     "ilvl": 76,
+     "weight": 500,
+     "ranges": [
+      [
+       56,
+       60
+      ]
+     ],
+     "stats": [
+      "base_self_ignite_duration_-%"
+     ]
+    },
+    {
+     "name": "of the Antidote",
+     "ilvl": 76,
+     "weight": 500,
+     "ranges": [
+      [
+       -60,
+       -56
+      ]
+     ],
+     "stats": [
+      "self_poison_duration_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LocalAttributeRequirements",
+   "source": "normal",
+   "type": "suffix",
+   "family": "LocalAttributeRequirements",
+   "tags": [
+    "body_armour"
+   ],
+   "displayTags": [],
+   "text": "15% reduced [Attributes|Attribute] Requirements",
+   "tiers": [
+    {
+     "name": "of the Worthy",
+     "ilvl": 24,
+     "weight": 900,
+     "ranges": [
+      [
+       -15,
+       -15
+      ]
+     ],
+     "stats": [
+      "local_attribute_requirements_+%"
+     ]
+    },
+    {
+     "name": "of the Apt",
+     "ilvl": 32,
+     "weight": 900,
+     "ranges": [
+      [
+       -20,
+       -20
+      ]
+     ],
+     "stats": [
+      "local_attribute_requirements_+%"
+     ]
+    },
+    {
+     "name": "of the Talented",
+     "ilvl": 40,
+     "weight": 900,
+     "ranges": [
+      [
+       -25,
+       -25
+      ]
+     ],
+     "stats": [
+      "local_attribute_requirements_+%"
+     ]
+    },
+    {
+     "name": "of the Skilled",
+     "ilvl": 52,
+     "weight": 900,
+     "ranges": [
+      [
+       -30,
+       -30
+      ]
+     ],
+     "stats": [
+      "local_attribute_requirements_+%"
+     ]
+    },
+    {
+     "name": "of the Proficient",
+     "ilvl": 60,
+     "weight": 900,
+     "ranges": [
+      [
+       -35,
+       -35
+      ]
+     ],
+     "stats": [
+      "local_attribute_requirements_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Strength",
+   "source": "normal",
+   "type": "suffix",
+   "family": "Strength",
+   "tags": [
+    "ring",
+    "str_dex_int_armour"
+   ],
+   "displayTags": [
+    "attribute"
+   ],
+   "text": "+(5-8) to [Strength|Strength]",
+   "tiers": [
+    {
+     "name": "of the Brute",
+     "ilvl": 1,
+     "weight": 1000,
+     "ranges": [
+      [
+       5,
+       8
+      ]
+     ],
+     "stats": [
+      "additional_strength"
+     ]
+    },
+    {
+     "name": "of the Wrestler",
+     "ilvl": 11,
+     "weight": 1000,
+     "ranges": [
+      [
+       9,
+       12
+      ]
+     ],
+     "stats": [
+      "additional_strength"
+     ]
+    },
+    {
+     "name": "of the Bear",
+     "ilvl": 22,
+     "weight": 1000,
+     "ranges": [
+      [
+       13,
+       16
+      ]
+     ],
+     "stats": [
+      "additional_strength"
+     ]
+    },
+    {
+     "name": "of the Lion",
+     "ilvl": 33,
+     "weight": 1000,
+     "ranges": [
+      [
+       17,
+       20
+      ]
+     ],
+     "stats": [
+      "additional_strength"
+     ]
+    },
+    {
+     "name": "of the Gorilla",
+     "ilvl": 44,
+     "weight": 1000,
+     "ranges": [
+      [
+       21,
+       24
+      ]
+     ],
+     "stats": [
+      "additional_strength"
+     ]
+    },
+    {
+     "name": "of the Goliath",
+     "ilvl": 55,
+     "weight": 1000,
+     "ranges": [
+      [
+       25,
+       27
+      ]
+     ],
+     "stats": [
+      "additional_strength"
+     ]
+    },
+    {
+     "name": "of the Leviathan",
+     "ilvl": 66,
+     "weight": 1000,
+     "ranges": [
+      [
+       28,
+       30
+      ]
+     ],
+     "stats": [
+      "additional_strength"
+     ]
+    },
+    {
+     "name": "of the Titan",
+     "ilvl": 74,
+     "weight": 1000,
+     "ranges": [
+      [
+       31,
+       33
+      ]
+     ],
+     "stats": [
+      "additional_strength"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/StunThreshold",
+   "source": "normal",
+   "type": "suffix",
+   "family": "StunThreshold",
+   "tags": [
+    "body_armour"
+   ],
+   "displayTags": [],
+   "text": "+(6-11) to [StunThreshold|Stun Threshold]",
+   "tiers": [
+    {
+     "name": "of Thick Skin",
+     "ilvl": 1,
+     "weight": 800,
+     "ranges": [
+      [
+       6,
+       11
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    },
+    {
+     "name": "of Reinforced Skin",
+     "ilvl": 8,
+     "weight": 800,
+     "ranges": [
+      [
+       12,
+       29
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    },
+    {
+     "name": "of Stone Skin",
+     "ilvl": 15,
+     "weight": 800,
+     "ranges": [
+      [
+       30,
+       49
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    },
+    {
+     "name": "of Iron Skin",
+     "ilvl": 22,
+     "weight": 800,
+     "ranges": [
+      [
+       50,
+       72
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    },
+    {
+     "name": "of Steel Skin",
+     "ilvl": 29,
+     "weight": 800,
+     "ranges": [
+      [
+       73,
+       97
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    },
+    {
+     "name": "of Granite Skin",
+     "ilvl": 36,
+     "weight": 800,
+     "ranges": [
+      [
+       98,
+       124
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    },
+    {
+     "name": "of Platinum Skin",
+     "ilvl": 45,
+     "weight": 800,
+     "ranges": [
+      [
+       125,
+       163
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    },
+    {
+     "name": "of Adamantite Skin",
+     "ilvl": 54,
+     "weight": 800,
+     "ranges": [
+      [
+       164,
+       206
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    },
+    {
+     "name": "of Corundum Skin",
+     "ilvl": 63,
+     "weight": 800,
+     "ranges": [
+      [
+       207,
+       253
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    },
+    {
+     "name": "of Obsidian Skin",
+     "ilvl": 72,
+     "weight": 800,
+     "ranges": [
+      [
+       254,
+       304
+      ]
+     ],
+     "stats": [
+      "stun_threshold_+"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ElementalAilmentEffect",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "ElementalAilmentEffect",
+   "tags": [
+    "ring",
+    "amanamu_mod",
+    "kurgal_mod",
+    "ulaman_mod"
+   ],
+   "displayTags": [
+    "endurance_charge",
+    "amanamu_mod",
+    "ailment",
+    "power_charge",
+    "kurgal_mod",
+    "frenzy_charge",
+    "ulaman_mod"
+   ],
+   "text": "(20-30)% increased [BuffMagnitude|Magnitude] of [Ignite] if you've consumed an [Charges|Endurance Charge] [Recently]",
+   "tiers": [
+    {
+     "name": "Amanamu's",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       20,
+       30
+      ]
+     ],
+     "stats": [
+      "ignite_effect_+%_if_consumed_endurance_charge_recently"
+     ]
+    },
+    {
+     "name": "Kurgal's",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       20,
+       30
+      ]
+     ],
+     "stats": [
+      "hit_damage_freeze_multiplier_+%_if_consumed_power_charge_recently"
+     ]
+    },
+    {
+     "name": "Ulaman's",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       20,
+       30
+      ]
+     ],
+     "stats": [
+      "shock_effect_+%_if_consumed_frenzy_charge_recently"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/IncreasedMinionDamageIfYouHitEnemy",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "IncreasedMinionDamageIfYouHitEnemy",
+   "tags": [
+    "ring",
+    "amanamu_mod"
+   ],
+   "displayTags": [
+    "minion_damage",
+    "amanamu_mod",
+    "damage",
+    "minion"
+   ],
+   "text": "[Minion|Minions] deal (15-25)% increased Damage if you've [Hit] [Recently]",
+   "tiers": [
+    {
+     "name": "Amanamu's",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       15,
+       25
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%_if_enemy_hit_recently"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/RemnantEffect",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "RemnantEffect",
+   "tags": [
+    "ring",
+    "amanamu_mod"
+   ],
+   "displayTags": [
+    "amanamu_mod"
+   ],
+   "text": "[Remnant|Remnants] you create have (8-15)% increased effect",
+   "tiers": [
+    {
+     "name": "Amanamu's",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       8,
+       15
+      ]
+     ],
+     "stats": [
+      "remnant_effect_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/IncreasedSpellDamageOnFullEnergyShield",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "IncreasedSpellDamageOnFullEnergyShield",
+   "tags": [
+    "ring",
+    "kurgal_mod"
+   ],
+   "displayTags": [
+    "caster_damage",
+    "kurgal_mod",
+    "damage",
+    "caster"
+   ],
+   "text": "(15-25)% increased [Spell] Damage while on Full [EnergyShield|Energy Shield]",
+   "tiers": [
+    {
+     "name": "Kurgal's",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       15,
+       25
+      ]
+     ],
+     "stats": [
+      "spell_damage_+%_while_es_full"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/AttackDamage",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "AttackDamage",
+   "tags": [
+    "ring",
+    "ulaman_mod"
+   ],
+   "displayTags": [
+    "ulaman_mod"
+   ],
+   "text": "(15-25)% increased [Attack|Attack] Damage while on [LowLife|Low Life]",
+   "tiers": [
+    {
+     "name": "Ulaman's",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       15,
+       25
+      ]
+     ],
+     "stats": [
+      "attack_damage_+%_when_on_low_life"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/FireAndChaosDamageResistance",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "FireAndChaosDamageResistance",
+   "tags": [
+    "armour",
+    "ring",
+    "amanamu_mod"
+   ],
+   "displayTags": [
+    "chaos_resistance",
+    "elemental_resistance",
+    "fire_resistance",
+    "amanamu_mod",
+    "elemental",
+    "fire",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+(13-17)% to Fire and Chaos Resistances",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       13,
+       17
+      ]
+     ],
+     "stats": [
+      "fire_and_chaos_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Strength",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "Strength",
+   "tags": [
+    "armour",
+    "ring",
+    "amanamu_mod",
+    "ulaman_mod"
+   ],
+   "displayTags": [
+    "amanamu_mod",
+    "attribute",
+    "ulaman_mod"
+   ],
+   "text": "+(9-15) to [Strength|Strength] and [Intelligence|Intelligence]",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       9,
+       15
+      ]
+     ],
+     "stats": [
+      "additional_strength_and_intelligence"
+     ]
+    },
+    {
+     "name": "of Ulaman",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       9,
+       15
+      ]
+     ],
+     "stats": [
+      "additional_strength_and_dexterity"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ColdAndChaosDamageResistance",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ColdAndChaosDamageResistance",
+   "tags": [
+    "armour",
+    "ring",
+    "kurgal_mod"
+   ],
+   "displayTags": [
+    "chaos_resistance",
+    "cold_resistance",
+    "elemental_resistance",
+    "kurgal_mod",
+    "elemental",
+    "cold",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+(13-17)% to Cold and Chaos Resistances",
+   "tiers": [
+    {
+     "name": "of Kurgal",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       13,
+       17
+      ]
+     ],
+     "stats": [
+      "cold_and_chaos_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Dexterity",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "Dexterity",
+   "tags": [
+    "armour",
+    "ring",
+    "kurgal_mod"
+   ],
+   "displayTags": [
+    "kurgal_mod",
+    "attribute"
+   ],
+   "text": "+(9-15) to [Dexterity|Dexterity] and [Intelligence|Intelligence]",
+   "tiers": [
+    {
+     "name": "of Kurgal",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       9,
+       15
+      ]
+     ],
+     "stats": [
+      "additional_dexterity_and_intelligence"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LightningAndChaosDamageResistance",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "LightningAndChaosDamageResistance",
+   "tags": [
+    "armour",
+    "ring",
+    "ulaman_mod"
+   ],
+   "displayTags": [
+    "chaos_resistance",
+    "elemental_resistance",
+    "lightning_resistance",
+    "ulaman_mod",
+    "elemental",
+    "lightning",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+(13-17)% to Lightning and Chaos Resistances",
+   "tiers": [
+    {
+     "name": "of Ulaman",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       13,
+       17
+      ]
+     ],
+     "stats": [
+      "lightning_and_chaos_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/SpiritReservationEfficiency",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "SpiritReservationEfficiency",
+   "tags": [
+    "body_armour",
+    "amanamu_mod"
+   ],
+   "displayTags": [
+    "amanamu_mod"
+   ],
+   "text": "(6-12)% increased [Spirit] [Reservation] [Efficiency]",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       6,
+       12
+      ]
+     ],
+     "stats": [
+      "base_spirit_reservation_efficiency_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/DamageRemovedFromManaBeforeLife",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "DamageRemovedFromManaBeforeLife",
+   "tags": [
+    "body_armour",
+    "kurgal_mod"
+   ],
+   "displayTags": [
+    "resource",
+    "kurgal_mod",
+    "life",
+    "mana"
+   ],
+   "text": "(10-20)% of Damage is taken from Mana before Life",
+   "tiers": [
+    {
+     "name": "of Kurgal",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       10,
+       20
+      ]
+     ],
+     "stats": [
+      "base_damage_removed_from_mana_before_life_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/CompanionReservationEfficiency",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "CompanionReservationEfficiency",
+   "tags": [
+    "body_armour",
+    "ulaman_mod"
+   ],
+   "displayTags": [
+    "ulaman_mod"
+   ],
+   "text": "(12-18)% increased [Reservation] [Efficiency] of [Companion] Skills",
+   "tiers": [
+    {
+     "name": "of Ulaman",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       12,
+       18
+      ]
+     ],
+     "stats": [
+      "reservation_efficiency_+%_of_companion_skills"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/DeflectDamageTaken",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "DeflectDamageTaken",
+   "tags": [
+    "body_armour",
+    "ulaman_mod"
+   ],
+   "displayTags": [
+    "ulaman_mod"
+   ],
+   "text": "Prevent +(3-5)% of Damage from [Deflect|Deflected] [Hit|Hits]",
+   "tiers": [
+    {
+     "name": "of Ulaman",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       3,
+       5
+      ]
+     ],
+     "stats": [
+      "base_damage_%_deflected"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ReducedCurseEffect",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ReducedCurseEffect",
+   "tags": [
+    "body_armour",
+    "amanamu_mod"
+   ],
+   "displayTags": [
+    "amanamu_mod",
+    "caster",
+    "curse"
+   ],
+   "text": "(35-25)% reduced [BuffEffect|effect] of [Curse|Curses] on you",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       -35,
+       -25
+      ]
+     ],
+     "stats": [
+      "curse_effect_on_self_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PercentDamageGoesToMana",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "PercentDamageGoesToMana",
+   "tags": [
+    "body_armour",
+    "kurgal_mod"
+   ],
+   "displayTags": [
+    "resource",
+    "kurgal_mod",
+    "life",
+    "mana"
+   ],
+   "text": "(10-20)% of Damage taken [Recoup|Recouped] as Mana",
+   "tiers": [
+    {
+     "name": "of Kurgal",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       10,
+       20
+      ]
+     ],
+     "stats": [
+      "damage_taken_goes_to_mana_%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ChanceToTakeCriticalStrike",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ChanceToTakeCriticalStrike",
+   "tags": [
+    "body_armour",
+    "ulaman_mod"
+   ],
+   "displayTags": [
+    "ulaman_mod",
+    "critical"
+   ],
+   "text": "[Hit|Hits] have (25-17)% reduced [Critical|Critical Hit] Chance against you",
+   "tiers": [
+    {
+     "name": "of Ulaman",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       -25,
+       -17
+      ]
+     ],
+     "stats": [
+      "base_enemy_critical_strike_chance_+%_against_self"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/LifeLeech",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "LifeLeech",
+   "tags": [
+    "ring",
+    "amanamu_mod"
+   ],
+   "displayTags": [
+    "resource",
+    "amanamu_mod",
+    "life"
+   ],
+   "text": "(12-20)% increased amount of Life [LifeLeech|Leeched]",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 1,
+     "ranges": [
+      [
+       12,
+       20
+      ]
+     ],
+     "stats": [
+      "base_life_leech_amount_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/RemnantPickupRadius",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "RemnantPickupRadius",
+   "tags": [
+    "ring",
+    "amanamu_mod"
+   ],
+   "displayTags": [
+    "amanamu_mod"
+   ],
+   "text": "[Remnant|Remnants] can be collected from (20-30)% further away",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       20,
+       30
+      ]
+     ],
+     "stats": [
+      "remnant_pickup_range_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/SkillEffectDuration",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "SkillEffectDuration",
+   "tags": [
+    "ring",
+    "amanamu_mod"
+   ],
+   "displayTags": [
+    "amanamu_mod"
+   ],
+   "text": "(8-12)% increased Skill Effect Duration",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "skill_effect_duration_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/CooldownRecovery",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "CooldownRecovery",
+   "tags": [
+    "ring",
+    "kurgal_mod"
+   ],
+   "displayTags": [
+    "kurgal_mod"
+   ],
+   "text": "(8-12)% increased [CooldownRecovery|Cooldown Recovery Rate]",
+   "tiers": [
+    {
+     "name": "of Kurgal",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "base_cooldown_speed_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ExposureEffect",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ExposureEffect",
+   "tags": [
+    "ring",
+    "kurgal_mod"
+   ],
+   "displayTags": [
+    "kurgal_mod",
+    "elemental",
+    "fire",
+    "cold",
+    "lightning"
+   ],
+   "text": "(10-15)% increased [Exposure] Effect",
+   "tiers": [
+    {
+     "name": "of Kurgal",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       10,
+       15
+      ]
+     ],
+     "stats": [
+      "exposure_effect_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ManaGainedOnKillPercentage",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ManaGainedOnKillPercentage",
+   "tags": [
+    "ring",
+    "kurgal_mod"
+   ],
+   "displayTags": [
+    "resource",
+    "kurgal_mod",
+    "mana"
+   ],
+   "text": "Recover (2-3)% of maximum Mana on Kill",
+   "tiers": [
+    {
+     "name": "of Kurgal",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": [
+      "maximum_mana_%_gained_on_kill"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/RecoverPercentMaxLifeOnKill",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "RecoverPercentMaxLifeOnKill",
+   "tags": [
+    "ring",
+    "ulaman_mod"
+   ],
+   "displayTags": [
+    "resource",
+    "ulaman_mod",
+    "life"
+   ],
+   "text": "Recover (2-3)% of maximum Life on Kill",
+   "tiers": [
+    {
+     "name": "of Ulaman",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": [
+      "recover_%_maximum_life_on_kill"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/IncreasedSpeed",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "IncreasedSpeed",
+   "tags": [
+    "ring",
+    "ulaman_mod"
+   ],
+   "displayTags": [
+    "ulaman_mod",
+    "speed"
+   ],
+   "text": "(3-6)% increased [SkillSpeed|Skill Speed]",
+   "tiers": [
+    {
+     "name": "of Ulaman",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       3,
+       6
+      ]
+     ],
+     "stats": [
+      "skill_speed_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/ManaLeechAmount",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ManaLeechAmount",
+   "tags": [
+    "ring",
+    "kurgal_mod"
+   ],
+   "displayTags": [
+    "resource",
+    "kurgal_mod",
+    "mana"
+   ],
+   "text": "(12-20)% increased amount of Mana [ManaLeech|Leeched]",
+   "tiers": [
+    {
+     "name": "of Kurgal",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       12,
+       20
+      ]
+     ],
+     "stats": [
+      "base_mana_leech_amount_+%"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_MaximumLifeIncreasePercent",
+   "source": "normal",
+   "type": "prefix",
+   "family": "Rune_soul_MaximumLifeIncreasePercent",
+   "tags": [
+    "soul"
+   ],
+   "displayTags": [
+    "resource",
+    "life"
+   ],
+   "text": "(1-20)% increased maximum Life",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       1,
+       20
+      ]
+     ],
+     "stats": [
+      "maximum_life_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "rune": "medveds-tending"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_MaximumManaIncreasePercent",
+   "source": "normal",
+   "type": "prefix",
+   "family": "Rune_soul_MaximumManaIncreasePercent",
+   "tags": [
+    "soul"
+   ],
+   "displayTags": [
+    "resource",
+    "mana"
+   ],
+   "text": "(1-20)% increased maximum Mana",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       1,
+       20
+      ]
+     ],
+     "stats": [
+      "maximum_mana_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "rune": "medveds-tending"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_MaximumSpiritIncreasePercent",
+   "source": "normal",
+   "type": "prefix",
+   "family": "Rune_soul_MaximumSpiritIncreasePercent",
+   "tags": [
+    "soul"
+   ],
+   "displayTags": [],
+   "text": "(1-20)% increased [Spirit]",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       1,
+       20
+      ]
+     ],
+     "stats": [
+      "spirit_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "rune": "medveds-tending"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife",
+   "source": "normal",
+   "type": "prefix",
+   "family": "Rune_soul_BaseLocalDefencesAndLife",
+   "tags": [
+    "soul"
+   ],
+   "displayTags": [
+    "defences",
+    "resource",
+    "mana",
+    "armour",
+    "energy_shield",
+    "evasion"
+   ],
+   "text": "(6-52)% increased [Armour|Armour]\n+(7-57) to maximum Mana",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       7,
+       57
+      ]
+     ],
+     "stats": [
+      "local_physical_damage_reduction_rating_+%",
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       7,
+       57
+      ]
+     ],
+     "stats": [
+      "local_armour_and_energy_shield_+%",
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       7,
+       57
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_+%",
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       7,
+       57
+      ]
+     ],
+     "stats": [
+      "local_energy_shield_+%",
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       7,
+       57
+      ]
+     ],
+     "stats": [
+      "local_evasion_rating_+%",
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       7,
+       57
+      ]
+     ],
+     "stats": [
+      "local_evasion_and_energy_shield_+%",
+      "base_maximum_mana"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       1,
+       24
+      ]
+     ],
+     "stats": [
+      "local_physical_damage_reduction_rating_+%",
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       1,
+       24
+      ]
+     ],
+     "stats": [
+      "local_armour_and_energy_shield_+%",
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       1,
+       24
+      ]
+     ],
+     "stats": [
+      "local_armour_and_evasion_+%",
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       1,
+       24
+      ]
+     ],
+     "stats": [
+      "local_energy_shield_+%",
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       1,
+       24
+      ]
+     ],
+     "stats": [
+      "local_evasion_rating_+%",
+      "base_spirit_from_equipment"
+     ]
+    },
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       1,
+       24
+      ]
+     ],
+     "stats": [
+      "local_evasion_and_energy_shield_+%",
+      "base_spirit_from_equipment"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "rune": "medveds-tending"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_ColdAndChaosDamageResistance",
+   "source": "normal",
+   "type": "suffix",
+   "family": "Rune_soul_ColdAndChaosDamageResistance",
+   "tags": [
+    "soul"
+   ],
+   "displayTags": [
+    "chaos_resistance",
+    "cold_resistance",
+    "elemental_resistance",
+    "elemental",
+    "cold",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+(3-31)% to Cold and Chaos Resistances",
+   "tiers": [
+    {
+     "name": "of the Soul",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       3,
+       31
+      ]
+     ],
+     "stats": [
+      "cold_and_chaos_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "rune": "medveds-tending"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_FireAndChaosDamageResistance",
+   "source": "normal",
+   "type": "suffix",
+   "family": "Rune_soul_FireAndChaosDamageResistance",
+   "tags": [
+    "soul"
+   ],
+   "displayTags": [
+    "chaos_resistance",
+    "elemental_resistance",
+    "fire_resistance",
+    "elemental",
+    "fire",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+(3-31)% to Fire and Chaos Resistances",
+   "tiers": [
+    {
+     "name": "of the Soul",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       3,
+       31
+      ]
+     ],
+     "stats": [
+      "fire_and_chaos_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "rune": "medveds-tending"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_LightningAndChaosDamageResistance",
+   "source": "normal",
+   "type": "suffix",
+   "family": "Rune_soul_LightningAndChaosDamageResistance",
+   "tags": [
+    "soul"
+   ],
+   "displayTags": [
+    "chaos_resistance",
+    "elemental_resistance",
+    "lightning_resistance",
+    "elemental",
+    "lightning",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+(3-31)% to Lightning and Chaos Resistances",
+   "tiers": [
+    {
+     "name": "of the Soul",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       3,
+       31
+      ]
+     ],
+     "stats": [
+      "lightning_and_chaos_damage_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "rune": "medveds-tending"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_ReducedCriticalStrikeDamageTaken",
+   "source": "normal",
+   "type": "suffix",
+   "family": "Rune_soul_ReducedCriticalStrikeDamageTaken",
+   "tags": [
+    "soul"
+   ],
+   "displayTags": [
+    "damage",
+    "critical"
+   ],
+   "text": "[Hit|Hits] against you have (10-99)% reduced [CriticalDamageBonus|Critical Damage Bonus]",
+   "tiers": [
+    {
+     "name": "of the Soul",
+     "ilvl": 65,
+     "weight": 1000,
+     "ranges": [
+      [
+       10,
+       99
+      ]
+     ],
+     "stats": [
+      "base_self_critical_strike_multiplier_-%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "rune": "medveds-tending"
+  },
+  {
    "id": "Helmets_str_dex_int/IncreasedAccuracy",
    "source": "normal",
    "type": "prefix",
@@ -239928,7 +247103,7 @@
     {
      "name": "Healthy",
      "ilvl": 6,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -239984,7 +247159,7 @@
     {
      "name": "Robust",
      "ilvl": 38,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -239998,7 +247173,7 @@
     {
      "name": "Rotund",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        85,
@@ -240099,7 +247274,7 @@
     {
      "name": "Azure",
      "ilvl": 16,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -240155,7 +247330,7 @@
     {
      "name": "Opalescent",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        80,
@@ -240169,7 +247344,7 @@
     {
      "name": "Gentian",
      "ilvl": 54,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        90,
@@ -240942,7 +248117,7 @@
     {
      "name": "Ethereal",
      "ilvl": 16,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        27,
@@ -240970,7 +248145,7 @@
     {
      "name": "Ephemeral",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        56,
@@ -240984,7 +248159,7 @@
     {
      "name": "Evanescent",
      "ilvl": 54,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        68,
@@ -241728,7 +248903,7 @@
     {
      "name": "of the Salamander",
      "ilvl": 12,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -241756,7 +248931,7 @@
     {
      "name": "of the Kiln",
      "ilvl": 36,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -241784,7 +248959,7 @@
     {
      "name": "of the Volcano",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -242030,7 +249205,7 @@
     {
      "name": "of Plunder",
      "ilvl": 3,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -242044,7 +249219,7 @@
     {
      "name": "of Raiding",
      "ilvl": 24,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -242058,7 +249233,7 @@
     {
      "name": "of Archaeology",
      "ilvl": 40,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -242309,7 +249484,7 @@
     {
      "name": "of the Squall",
      "ilvl": 13,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -242337,7 +249512,7 @@
     {
      "name": "of the Thunderhead",
      "ilvl": 37,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -242365,7 +249540,7 @@
     {
      "name": "of the Maelstrom",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -243841,7 +251016,7 @@
     {
      "name": "Chilled",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        3,
@@ -243898,7 +251073,7 @@
     {
      "name": "Freezing",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        9,
@@ -243936,7 +251111,7 @@
     {
      "name": "Glaciated",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 480,
      "ranges": [
       [
        14,
@@ -244032,7 +251207,7 @@
     {
      "name": "Smouldering",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        3,
@@ -244089,7 +251264,7 @@
     {
      "name": "Flaming",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        12,
@@ -244127,7 +251302,7 @@
     {
      "name": "Incinerating",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 480,
      "ranges": [
       [
        13,
@@ -244223,7 +251398,7 @@
     {
      "name": "Buzzing",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 1200,
      "ranges": [
       [
        1,
@@ -244280,7 +251455,7 @@
     {
      "name": "Sparking",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1200,
      "ranges": [
       [
        1,
@@ -244318,7 +251493,7 @@
     {
      "name": "Shocking",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 720,
      "ranges": [
       [
        1,
@@ -244413,7 +251588,7 @@
     {
      "name": "Burnished",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        2,
@@ -244470,7 +251645,7 @@
     {
      "name": "Gleaming",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        5,
@@ -244508,7 +251683,7 @@
     {
      "name": "Razor-sharp",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 400,
      "ranges": [
       [
        7,
@@ -244738,7 +251913,7 @@
     {
      "name": "Healthy",
      "ilvl": 6,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -244794,7 +251969,7 @@
     {
      "name": "Robust",
      "ilvl": 38,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -244808,7 +251983,7 @@
     {
      "name": "Rotund",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        85,
@@ -244895,7 +252070,7 @@
     {
      "name": "Azure",
      "ilvl": 16,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -244951,7 +252126,7 @@
     {
      "name": "Opalescent",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        80,
@@ -244965,7 +252140,7 @@
     {
      "name": "Gentian",
      "ilvl": 54,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        90,
@@ -245567,7 +252742,7 @@
     {
      "name": "Ethereal",
      "ilvl": 16,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        27,
@@ -245595,7 +252770,7 @@
     {
      "name": "Ephemeral",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        56,
@@ -245609,7 +252784,7 @@
     {
      "name": "Evanescent",
      "ilvl": 54,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        68,
@@ -246369,7 +253544,7 @@
     {
      "name": "of the Salamander",
      "ilvl": 12,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -246397,7 +253572,7 @@
     {
      "name": "of the Kiln",
      "ilvl": 36,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -246425,7 +253600,7 @@
     {
      "name": "of the Volcano",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -246542,7 +253717,7 @@
     {
      "name": "of Ease",
      "ilvl": 22,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -246728,7 +253903,7 @@
     {
      "name": "of Plunder",
      "ilvl": 3,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -246742,7 +253917,7 @@
     {
      "name": "of Raiding",
      "ilvl": 24,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -246756,7 +253931,7 @@
     {
      "name": "of Archaeology",
      "ilvl": 40,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -247082,7 +254257,7 @@
     {
      "name": "of the Squall",
      "ilvl": 13,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -247110,7 +254285,7 @@
     {
      "name": "of the Thunderhead",
      "ilvl": 37,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -247138,7 +254313,7 @@
     {
      "name": "of the Maelstrom",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -249182,7 +256357,7 @@
     {
      "name": "Healthy",
      "ilvl": 6,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -249238,7 +256413,7 @@
     {
      "name": "Robust",
      "ilvl": 38,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -249252,7 +256427,7 @@
     {
      "name": "Rotund",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        85,
@@ -249339,7 +256514,7 @@
     {
      "name": "Azure",
      "ilvl": 16,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -249395,7 +256570,7 @@
     {
      "name": "Opalescent",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        80,
@@ -249409,7 +256584,7 @@
     {
      "name": "Gentian",
      "ilvl": 54,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        90,
@@ -250011,7 +257186,7 @@
     {
      "name": "Ethereal",
      "ilvl": 16,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        27,
@@ -250039,7 +257214,7 @@
     {
      "name": "Ephemeral",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        56,
@@ -250053,7 +257228,7 @@
     {
      "name": "Evanescent",
      "ilvl": 54,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        68,
@@ -250811,7 +257986,7 @@
     {
      "name": "of the Salamander",
      "ilvl": 12,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -250839,7 +258014,7 @@
     {
      "name": "of the Kiln",
      "ilvl": 36,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -250867,7 +258042,7 @@
     {
      "name": "of the Volcano",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -251053,7 +258228,7 @@
     {
      "name": "of Plunder",
      "ilvl": 3,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -251067,7 +258242,7 @@
     {
      "name": "of Raiding",
      "ilvl": 24,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -251081,7 +258256,7 @@
     {
      "name": "of Archaeology",
      "ilvl": 40,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -251259,7 +258434,7 @@
     {
      "name": "of the Squall",
      "ilvl": 13,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -251287,7 +258462,7 @@
     {
      "name": "of the Thunderhead",
      "ilvl": 37,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -251315,7 +258490,7 @@
     {
      "name": "of the Maelstrom",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -251938,7 +259113,7 @@
     {
      "name": "of Obsidian Skin",
      "ilvl": 72,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        254,
@@ -252768,7 +259943,7 @@
     {
      "name": "Chilled",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        5,
@@ -252825,7 +260000,7 @@
     {
      "name": "Freezing",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        25,
@@ -252863,7 +260038,7 @@
     {
      "name": "Glaciated",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 480,
      "ranges": [
       [
        46,
@@ -252978,7 +260153,7 @@
     {
      "name": "Smouldering",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        6,
@@ -253035,7 +260210,7 @@
     {
      "name": "Flaming",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 800,
      "ranges": [
       [
        30,
@@ -253073,7 +260248,7 @@
     {
      "name": "Incinerating",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 480,
      "ranges": [
       [
        56,
@@ -253188,7 +260363,7 @@
     {
      "name": "Buzzing",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 1200,
      "ranges": [
       [
        1,
@@ -253245,7 +260420,7 @@
     {
      "name": "Sparking",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1200,
      "ranges": [
       [
        1,
@@ -253283,7 +260458,7 @@
     {
      "name": "Shocking",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 720,
      "ranges": [
       [
        1,
@@ -253397,7 +260572,7 @@
     {
      "name": "Burnished",
      "ilvl": 8,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        5,
@@ -253454,7 +260629,7 @@
     {
      "name": "Gleaming",
      "ilvl": 46,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        14,
@@ -253492,7 +260667,7 @@
     {
      "name": "Razor-sharp",
      "ilvl": 60,
-     "weight": 0,
+     "weight": 400,
      "ranges": [
       [
        23,
@@ -255006,7 +262181,7 @@
     {
      "name": "of Ease",
      "ilvl": 11,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -255020,7 +262195,7 @@
     {
      "name": "of Mastery",
      "ilvl": 22,
-     "weight": 0,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -255034,7 +262209,7 @@
     {
      "name": "of Renown",
      "ilvl": 30,
-     "weight": 0,
+     "weight": 500,
      "ranges": [
       [
        14,

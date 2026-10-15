@@ -7,7 +7,7 @@
  * 打つ前に手で足した MOD は「始めのベース」として手順に入れたまま渡す (再生でも同じ seed で同じ MOD・同じ値になる)
  */
 import { isForce } from "./apply-force";
-import { IMPLICIT_SET, isQualitySet, QUALITY_CAP } from "./apply-currency";
+import { IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP } from "./apply-currency";
 import type { CraftStagePlan } from "./contract";
 import type { StartSpec } from "./run-plan";
 import { tr } from "../../i18n/lang";
@@ -21,7 +21,7 @@ export const SHARE_PREFIX = "#share=";
 export const SHARE_ENABLED = false;
 
 /** 品質を手で合わせる手は「打った」に数えない (始めのベースの側) */
-const isSetting = (key: string): boolean => isQualitySet(key) || key.startsWith(QUALITY_CAP) || key.startsWith(IMPLICIT_SET);
+const isSetting = (key: string): boolean => isQualitySet(key) || isCatalystSet(key) || key.startsWith(QUALITY_CAP) || key.startsWith(IMPLICIT_SET);
 
 /** 共有できない理由 (できるなら null)。steps = 打った手の currency と手の番号 */
 export function shareBlock(steps: ReadonlyArray<{ currency: string; index: number }>): string | null {
