@@ -12,6 +12,8 @@ import type { CurrencySpec, OmenSpec } from "./types";
 import { ANNUL_SPEC, BONE_SPECS, OMEN_SPECS, REVEAL_SPEC } from "./desecrate-specs";
 import { ORB_OMEN_SPECS, ORB_SPEC_BY_KEY, UNPORTED_OMENS } from "./orb-specs";
 import { ESSENCE_OMEN_SPECS, prepareEssence, resolveEssence } from "./essence-specs";
+import { ARTIFICER_SPEC, CATALYST_SPEC_BY_KEY, QUALITY_SPECS, RUNE_SPEC } from "./other-specs";
+import { isRune } from "../stage-runes";
 import { groupsFit, limitBlock, stateBlock, targetBlock } from "./judge";
 import { NO_MODS, runPart, type Mods, type PartCtx } from "./parts";
 import { tr } from "../../../i18n/lang";
@@ -29,8 +31,9 @@ export function resolveSpec(key: string, item: StageItem, data?: PatchData): Res
     return e ? { spec: e.spec, reveal: null, ...(e.reason ? { reason: e.reason } : {}) } : null;
   }
   if (key === ANNUL_SPEC.stageKey) return { spec: ANNUL_SPEC, reveal: null };
-  const orb = ORB_SPEC_BY_KEY.get(key);
+  const orb = ORB_SPEC_BY_KEY.get(key) ?? CATALYST_SPEC_BY_KEY.get(key) ?? QUALITY_SPECS.find((s) => s.stageKey === key) ?? (key === ARTIFICER_SPEC.stageKey ? ARTIFICER_SPEC : null);
   if (orb) return { spec: orb, reveal: null };
+  if (isRune(key)) return { spec: RUNE_SPEC, reveal: null };
   if (key.startsWith("reveal")) {
     const m = /^reveal:(\d)(:reroll)?$/.exec(key);
     return { spec: REVEAL_SPEC, reveal: m ? { index: Number(m[1]), reroll: !!m[2] } : { invalid: key } };
@@ -48,6 +51,7 @@ const OMEN_FOR_KIND = (kind: string, omen: string): boolean => (OMEN_FOR[kind] ?
 /** この鍵を新しい作りで打てるか (移し終えた手) */
 export const specCovers = (key: string): boolean =>
   key === ANNUL_SPEC.stageKey || /^reveal/.test(key) || BONE_SPECS.some((s) => s.stageKey === key) || ORB_SPEC_BY_KEY.has(key) ||
+  CATALYST_SPEC_BY_KEY.has(key) || QUALITY_SPECS.some((s) => s.stageKey === key) || key === ARTIFICER_SPEC.stageKey || isRune(key) ||
   /^essence:(breach$|(lesser|normal|greater|perfect):)/.test(key);
 
 /** 全部のお告げ (冒涜まわり + オーブ)。並びは左右を両方掛けた時に先に効く方 */
@@ -85,8 +89,8 @@ function modsOf(used: readonly OmenSpec[]): Mods {
   return m;
 }
 
-/** 1 手打つ (applyCurrency と同じ形)。移していない手は null */
-export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: () => number, omens: readonly string[] = []): StageApply | null {
+/** 1 手打つ (applyCurrency と同じ形)。移していない手は null。oneCatalyst: 手順の再生 (触媒は 1 手 = 1 個。applyCurrency の hint.oneCatalyst と同じ) */
+export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: () => number, omens: readonly string[] = [], opts: { oneCatalyst?: boolean } = {}): StageApply | null {
   const r = resolveSpec(key, item, data);
   if (!r) return null;
   const { spec } = r;
@@ -99,8 +103,9 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
   if (t) return skip(item, t);
   const used = omensOf(spec, omens);
   const mods = modsOf(used);
+  const catalystTag = spec.kind === "catalyst" ? key.slice(key.indexOf("_") + 1) : null;
   for (const l of spec.limits) {
-    const why = limitBlock(l, item, mods);
+    const why = limitBlock(l, item, mods, catalystTag);
     if (why) return skip(item, why);
   }
   for (const o of used) {
@@ -114,6 +119,7 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
   if (spec.actions.some((a) => "addEssence" in a) && !essence) return skip(item, tr("このエッセンスのティアが無い", "No tier for this Essence"));
   const ctx: PartCtx = {
     data, rng, mods, reveal: r.reveal, removedSoFar: [], essence,
+    catalystTag, oneCatalyst: !!opts.oneCatalyst, runeKey: key,
     altered: spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly")),
   };
   let cur = item;
@@ -136,5 +142,10 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
   if (cur.foreseen) cur = { ...cur, foreseen: false };
   const note = parts.map((p) => p.note).find((x) => x);
   const count = parts.map((p) => p.count).find((x) => x != null);
-  return { applied: true, item: cur, added, removed, ...(rolled.length ? { rolled } : {}), ...(note ? { note } : {}), ...(count != null ? { count } : {}), omensUsed: used.map((o) => o.key) };
+  const augment = parts.map((p) => p.augment).find((x) => x);
+  return {
+    applied: true, item: cur, added, removed,
+    ...(rolled.length ? { rolled } : {}), ...(note ? { note } : {}), ...(count != null ? { count } : {}), ...(augment ? { augment } : {}),
+    omensUsed: used.map((o) => o.key),
+  };
 }

@@ -104,7 +104,7 @@ export function moreStatesOf(base: string, ilvl: number): Array<[string, StageIt
   let k = 500;
   const step = (it: StageItem, key: string, omens: string[] = []): StageItem => applyCurrency(data, it, key, mulberry32(ilvl * 1000 + ++k), omens).item;
   const white = freshItem(data, base, ilvl);
-  if (/Flask$/.test(base)) return out;
+  if (/Flask$/.test(base)) return [["品質 19 のフラスコ", { ...white, quality: 19 }], ["品質 20 のフラスコ", { ...white, quality: 20 }]];
   const magic = step(white, "transmute");
   out.push(["マジック 2 つ", step(magic, "augment")]);
   const rare4 = step(white, "alchemy");
@@ -119,6 +119,9 @@ export function moreStatesOf(base: string, ilvl: number): Array<[string, StageIt
   if (extra) out.push(["サフィが上限超え", { ...full, suffixes: [...full.suffixes, { ...extra }] }]);
   out.push(["ソケット 1", { ...rare4, sockets: 1 }]);
   out.push(["ソケット 3", { ...rare4, sockets: 3 }]);
+  out.push(["予見 + ソケット 1", { ...rare4, sockets: 1, foreseen: true }]);
+  out.push(["コラプト + ソケット 1", { ...rare4, sockets: 1, corrupted: true }]);
+  out.push(["品質 19 のノーマル + ソケット 2", { ...white, quality: 19, sockets: 2 }]);
   const crafted = step(magic, `essence:normal:${Object.values(white.cls.pools.essence).flat()[0] ?? "x"}`);
   out.push(["エッセンス済み", crafted]);
   return out;
