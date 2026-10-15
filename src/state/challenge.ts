@@ -13,7 +13,7 @@ import { craftStage } from "./craft-stage";
 import { CHALLENGE_RESETS, dailyChallenge, jstDay, type ChallengeTarget, type DailyChallenge } from "../services/challenge/daily";
 import { countSwamp, doneCount, type Swamp } from "../services/challenge/swamp";
 import { aimDone } from "../services/craft-stage/aim-odds";
-import { WEB_API_BASE } from "../web/config";
+import { CHALLENGE_API_BASE } from "../web/config";
 import { rememberName, webName, webUid } from "../services/web/identity";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
 import { lang } from "../i18n/lang";
@@ -65,7 +65,7 @@ const daily = computed<DailyChallenge | null>(() => {
 });
 
 async function post<T>(path: string, body: unknown): Promise<T> {
-  const r = await fetch(`${WEB_API_BASE}${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), credentials: "omit" });
+  const r = await fetch(`${CHALLENGE_API_BASE}${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), credentials: "omit" });
   const j = (await r.json().catch(() => ({}))) as T & { error?: string };
   if (!r.ok || j.error) throw new Error(j.error ?? String(r.status));
   return j;
@@ -73,7 +73,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 const prevDay = (d: string): string => new Date(Date.parse(`${d}T00:00:00Z`) - 86400e3).toISOString().slice(0, 10);
 async function fetchBoard(d: string): Promise<Board | null> {
   try {
-    const r = await fetch(`${WEB_API_BASE}/challenge/board?day=${d}&uid=${encodeURIComponent(webUid())}`, { credentials: "omit" });
+    const r = await fetch(`${CHALLENGE_API_BASE}/challenge/board?day=${d}&uid=${encodeURIComponent(webUid())}`, { credentials: "omit" });
     return r.ok ? ((await r.json()) as Board) : null;
   } catch { return null; }
 }
@@ -193,7 +193,7 @@ export const challenge = {
   async watch(d: string, row: BoardRow): Promise<void> {
     if (d === day.value && doneDay.value !== day.value) return;
     try {
-      const r = await fetch(`${WEB_API_BASE}/challenge/plan?day=${d}&id=${row.id}&uid=${encodeURIComponent(webUid())}`, { credentials: "omit" });
+      const r = await fetch(`${CHALLENGE_API_BASE}/challenge/plan?day=${d}&id=${row.id}&uid=${encodeURIComponent(webUid())}`, { credentials: "omit" });
       const j = (await r.json()) as { plan?: CraftStagePlan; error?: string };
       if (!j.plan) { error.value = j.error ?? String(r.status); return; }
       if (!watching.value) mine = craftStage.snapshot();

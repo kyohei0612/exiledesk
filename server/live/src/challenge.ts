@@ -27,7 +27,7 @@ export function daySeed(day: string): number {
 /** 仮 (md の論点 2): true にすると順位に入るのはその日の最初の挑戦だけ */
 export const RANK_FIRST_ONLY = false;
 export const NICK_MAX = 12;
-export const MAX_STEPS = 500;
+export const MAX_STEPS = 1000;
 export const MAX_RESETS = 3;
 const MAX_COST = 1e7;
 const RUN_DAYS = 2;
@@ -66,7 +66,7 @@ export function parseFinish(body: unknown): FinishIn | { error: string } {
   const mods = plan.start?.mods;
   if (mods !== undefined && (!Array.isArray(mods) || mods.length > 1 || mods.some((m) => !m || (m as { fractured?: unknown }).fractured !== true))) return { error: "始めの状態が違う" };
   const planJson = JSON.stringify(plan);
-  if (planJson.length > 60_000) return { error: "手順が長すぎる" };
+  if (planJson.length > 150_000) return { error: "手順が長すぎる" };
   const sw = (b.swamp ?? {}) as Record<string, unknown>;
   const cnt = (x: unknown, hi: number): number | null => (x === undefined ? 0 : typeof x === "number" && Number.isInteger(x) && x >= 0 && x <= hi ? x : null);
   const swamp = { chaos: cnt(sw.chaos, steps), whittle: cnt(sw.whittle, steps), annul: cnt(sw.annul, steps), resets: cnt(sw.resets, MAX_RESETS) };

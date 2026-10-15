@@ -5,7 +5,7 @@
  * → 打つ (上の帯に時間・手数・費用・リセットの残り・狙いのチェック、下はいつものエミュレーター) → 達成 (すぐ送って順位)。
  * 打つ所はクラフトステージ (CraftStage.vue の challenge モード) をそのまま使う
  */
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import { craftStage } from "../state/craft-stage";
 import { challenge as c, NICK_MAX, nickProblem, type Board, type BoardRow } from "../state/challenge";
@@ -20,10 +20,14 @@ defineEmits<{ close: [] }>();
 /** 画面の時計 (1 秒ごと。順位の時間はサーバーが測る) */
 const now = ref(Date.now());
 let tick = 0;
-onMounted(() => { tick = window.setInterval(() => { now.value = Date.now(); }, 1000); void c.loadBoard(); });
+// お題を作るのに MOD の表が要る (普段はクラフトステージが開いた時に読む)
+onMounted(() => { tick = window.setInterval(() => { now.value = Date.now(); }, 1000); void craftStage.init(); void c.loadBoard(); });
 onBeforeUnmount(() => { window.clearInterval(tick); c.leave(); });
 const clock = (ms: number): string => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
-const elapsed = computed(() => (c.startedAt.value ? now.value - c.startedAt.value : 0));
+/** 達成したら時計を止める (送った後はサーバーが測った時間) */
+const doneAt = ref<number | null>(null);
+watch(() => c.phase.value, (p) => { doneAt.value = p === "done" ? Date.now() : null; });
+const elapsed = computed(() => (c.result.value?.ms != null ? c.result.value.ms : c.startedAt.value ? (doneAt.value ?? now.value) - c.startedAt.value : 0));
 
 const nickWhy = computed(() => {
   const p = nickProblem(c.nick.value);

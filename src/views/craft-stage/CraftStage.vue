@@ -563,7 +563,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
           :holding="!!s.held.value && !s.replay.value"
           :flash-key="flashKey"
           @use="s.use()"
-          :removable="!s.replay.value"
+          :removable="!s.replay.value && !challenge"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @fracture="fractureMod"
           @jump="(id: string) => { s.modOverlay.value = true; s.modJump.value = { modId: id, n: (s.modJump.value?.n ?? 0) + 1 }; }"

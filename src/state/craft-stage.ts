@@ -662,12 +662,14 @@ export const craftStage = {
    * 1 手戻すを後ろから繰り返すだけ (食ったお告げの掛け直し・次の乱数の引き直しも同じ)。この後に打てば、その先の手は捨てる
    */
   goTo(index: number): void {
+    // 今日のお題は戻せない (undo が何もしないので、ここで止めないと回り続ける)
+    if (challengeSeed.value != null) return;
     if (replay.value || !log.value.some((s) => s.out.index === index)) return;
     while (log.value.length && log.value[log.value.length - 1]!.out.index !== index) craftStage.undo();
   },
   /** 1 手も打っていない状態に戻す (履歴の「始め」の行)。始めの MOD は外さない */
   goToStart(): void {
-    if (replay.value) return;
+    if (replay.value || challengeSeed.value != null) return;
     while (log.value.length) craftStage.undo();
   },
   hold(key: string | null): void {
