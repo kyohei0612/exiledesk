@@ -130,10 +130,14 @@ function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ?
 const echoes = ref(true);
 const hasHidden = computed(() => (item.value ? [...item.value.prefixes, ...item.value.suffixes].some((m) => m.unrevealed) : false));
 
-function answer(a: QuizAction): void {
+/**
+ * anySlot: 札 (狙いの MOD) の状態は問わない答え (2026-10-16 シミュレーターの通し確認: カオススパムを札の組み合わせごとに何十回も聞かれた)。
+ * 札の状態まで入れた答えがあればそちらが先に使われる (ruleFor は項目の多い答えが先) ので、「いつもはこの手」の受け皿になる
+ */
+function answer(a: QuizAction, anySlot = false): void {
   if (props.locked || !q.value) return;
   const route = routeOfQ.value;
-  const when = whenNow.value;
+  const when: When = anySlot ? Object.fromEntries(Object.entries(whenNow.value).filter(([k]) => !slotOf(k))) : whenNow.value;
   // 同じ条件の答えは置き換える (打てなかった答えを直す時も)
   const same = (r: QuizRule): boolean => JSON.stringify(Object.entries(r.when).sort()) === JSON.stringify(Object.entries(when).sort());
   // 打てなかった答えは外して入れ替える
@@ -141,7 +145,7 @@ function answer(a: QuizAction): void {
   emit("change", route.id, [...route.rules.filter((r) => !same(r) && r !== bad), { when, do: a }]);
   held.value = null; omens.value = [];
 }
-function useHeld(): void { if (held.value) answer({ use: held.value, omens: omensFor(held.value, omens.value) }); }
+function useHeld(anySlot = false): void { if (held.value) answer({ use: held.value, omens: omensFor(held.value, omens.value) }, anySlot); }
 
 // ── 答えた一覧 ─────────────────────────
 const listOpen = ref(false);
@@ -195,7 +199,8 @@ const multi = computed(() => props.recipe.routes.length > 1);
           <div v-if="held" class="flex flex-wrap items-center gap-2 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-[150] max-md:border-t max-md:border-amber-400/40 max-md:bg-[#14110d] max-md:px-3 max-md:py-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))] max-md:shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
             <span class="flex items-center -space-x-1"><img v-for="ic in [held, ...omensFor(held, omens)].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
             <b class="text-[var(--exile-color-text-primary)]">{{ actionText({ use: held, omens: omensFor(held, omens) }) }}</b>
-            <button type="button" class="g-btn-red sm" @click="useHeld">{{ tr("この手にする", "Use this") }}</button>
+            <button type="button" class="g-btn-red sm" @click="useHeld()">{{ tr("この手にする", "Use this") }}</button>
+            <button type="button" class="g-btn sm" :title="tr('狙いの MOD が付いている・無いに関係なく、この形 (レア・枠の数など) の時はいつもこの手。細かい答えがある時はそちらが先', 'Use this whenever the item has this shape (rarity, affix counts), whatever the targets look like. More specific answers still win')" @click="useHeld(true)">{{ tr("狙いの状態を問わずこの手", "Use this regardless of targets") }}</button>
             <button type="button" class="g-btn sm" @click="held = null; omens = []">{{ tr("やめる", "Cancel") }}</button>
           </div>
           <template v-else>
