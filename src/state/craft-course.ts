@@ -11,6 +11,7 @@ import { startFrom } from "../services/craft-stage/run-plan";
 import { mulberry32 } from "../services/htc/rng";
 import { courseMove, courseSlots, courseState, type CraftCourse } from "../services/craft-stage/craft-courses";
 import type { Force } from "../services/craft-stage/stage-core";
+import { endTopic } from "./craft-topic";
 
 export const course = ref<CraftCourse | null>(null);
 /** 使ったベースの数 (次のベースを買って作り直した回数 + 1) */
@@ -36,6 +37,7 @@ function placeStart(c: CraftCourse): void {
 
 /** コースを始める: ベースとアイテムレベルを決めて、動画と同じ始めの状態から */
 export function startCourse(c: CraftCourse): void {
+  endTopic();
   course.value = c;
   courseBases.value = 1;
   s.base.value = c.recipe.base;

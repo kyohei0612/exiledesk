@@ -11,6 +11,8 @@ import { aimLabel } from "../../services/craft-stage/mod-list";
 import { tr } from "../../i18n/lang";
 import { displayCurrency } from "../../state/display-currency";
 import Icon from "../../components/ui/Icon.vue";
+import StageTopicGuide from "./StageTopicGuide.vue";
+import { topic } from "../../state/craft-topic";
 import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
 import type { QuizSlot } from "../../services/craft-stage/quiz-recipe";
 
@@ -62,6 +64,7 @@ const cost = computed(() => s.log.value[s.log.value.length - 1]?.out.cost.cumula
 </script>
 
 <template>
+  <StageTopicGuide v-if="topic" />
   <section v-if="course && courseView" data-course-guide class="g-panel p-3 text-[12px]">
     <header class="flex flex-wrap items-center gap-2">
       <span class="rounded px-2 py-0.5 text-[11px] font-bold" :class="LEVEL[course.level]!.chip">{{ t2(LEVEL[course.level]!.label) }}</span>
