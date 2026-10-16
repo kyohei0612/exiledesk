@@ -63,6 +63,7 @@ function descOf(c) {
 
 /** X などが読むページ。人は JS でそのベースのエミュレーターへ (クローラーは JS を動かさないので OGP だけ読む) */
 function sharePage(url, c, img) {
+  // 押した人はそのベースのエミュレーターへ (2026-10-16 オーナー「開いたらデスクに飛ぶでいい」)
   const to = `/?base=${encodeURIComponent(c.base || "Gold Ring")}`;
   const t = esc(titleOf(c)), d = esc(descOf(c));
   return new Response(`<!doctype html><html lang="${c.en ? "en" : "ja"}"><head><meta charset="utf-8">
@@ -113,6 +114,7 @@ async function dataUrl(env, url, path) {
   }
 }
 
+/** X は大きいカードの下 (約 80px) に題を重ねて出すので、字は 500px より上に置く (2026-10-16 オーナーのスマホで「半分の人」の行が隠れた) */
 async function cardImage(url, env, c) {
   // satori は WebP を読めないので、カード用の PNG (public/og-art、base-art から作った物) を使う
   const art = c.art ? await dataUrl(env, url, `/og-art/${c.art}.png`) : null;
@@ -120,7 +122,7 @@ async function cardImage(url, env, c) {
   const size = c.art ? await pngSize(env, url, `/og-art/${c.art}.png`) : null;
   const k = size ? Math.min(2.4, 380 / size.w, 440 / size.h) : 1;
   const aw = size ? Math.round(size.w * k) : 300, ah = size ? Math.round(size.h * k) : 300;
-  const ax = 930 - aw / 2, ay = 300 - ah / 2;
+  const ax = 930 - aw / 2, ay = 290 - ah / 2;
   const orb = await dataUrl(env, CHAOS_ICON);
   const r = c.rank;
   const head = T(c, "カオススパム確率機", "Chaos spam calculator");
@@ -136,33 +138,35 @@ async function cardImage(url, env, c) {
   const lucky = r != null && r <= 50;
   const allText = ["ExileDesk", head, c.baseName, c.mods, hit, hitTail, luckLine, luckWord, stats, T(c, "強運", "Lucky"), T(c, "沼", "Unlucky"), "exiledesk.com", "0123456789%·,!?"].join("");
   const [bold, regular] = await Promise.all([font(allText, 800), font(allText, 500)]);
-  const markLeft = r != null ? Math.round(620 * (r / 100)) - 15 : 0;
+  const markLeft = r != null ? Math.max(0, Math.min(590, Math.round(620 * (r / 100)) - 15)) : 0;
   const html = `
 <div style="display:flex;width:1200px;height:630px;position:relative;background-image:radial-gradient(ellipse at 78% 45%, #4a3410 0%, #1c140a 38%, #050403 75%);font-family:'Noto Sans JP';color:#efe6d2">
-  <div style="display:flex;position:absolute;left:730px;top:90px;width:400px;height:420px;border-radius:210px;background-image:radial-gradient(circle, rgba(255,190,90,0.28) 0%, rgba(255,150,40,0.10) 45%, rgba(0,0,0,0) 70%)"></div>
+  <div style="display:flex;position:absolute;left:730px;top:80px;width:400px;height:420px;border-radius:210px;background-image:radial-gradient(circle, rgba(255,190,90,0.28) 0%, rgba(255,150,40,0.10) 45%, rgba(0,0,0,0) 70%)"></div>
   ${art ? `<img src="${art}" width="${aw}" height="${ah}" style="position:absolute;left:${ax}px;top:${ay}px" />` : ""}
-  ${orb ? `<img src="${orb}" width="96" height="96" style="position:absolute;left:1030px;top:400px" />` : ""}
-  <div style="display:flex;position:absolute;left:70px;top:48px;align-items:flex-end">
-    <span style="font-size:46px;font-weight:800;color:#f2c96b">ExileDesk</span>
-    <span style="font-size:28px;font-weight:500;color:#b9a98a;margin-left:16px;margin-bottom:6px">${esc(head)}</span>
+  ${orb ? `<img src="${orb}" width="96" height="96" style="position:absolute;left:1030px;top:390px" />` : ""}
+  <div style="display:flex;position:absolute;right:48px;top:44px;font-size:26px;font-weight:800;color:#f2c96b">exiledesk.com</div>
+  <div style="display:flex;flex-direction:column;position:absolute;left:70px;top:36px;width:650px">
+    <div style="display:flex;align-items:flex-end">
+      <span style="font-size:46px;font-weight:800;color:#f2c96b">ExileDesk</span>
+      <span style="font-size:28px;font-weight:500;color:#b9a98a;margin-left:16px;margin-bottom:6px">${esc(head)}</span>
+    </div>
+    <span style="font-size:30px;font-weight:800;color:#f3e3b5;margin-top:14px">${esc(c.baseName)}</span>
+    <span style="font-size:${c.mods.length > 26 ? 24 : 28}px;font-weight:800;color:#8f8fff;margin-top:4px;line-height:1.3">${esc(c.mods)}</span>
+    <div style="display:flex;align-items:flex-end;margin-top:12px">
+      <span style="font-size:84px;font-weight:800;color:#6ee7b7;line-height:1">${esc(hit)}</span>
+      <span style="font-size:42px;font-weight:800;color:#d9f5e8;margin-left:8px;margin-bottom:6px">${esc(hitTail)}</span>
+    </div>
+    ${r != null ? `
+    <div style="display:flex;margin-top:18px;font-size:32px;font-weight:800">
+      <span>${esc(luckLine)}</span><span style="margin-left:16px;color:${lucky ? "#6ee7b7" : "#fda4af"}">${esc(luckWord)}</span>
+    </div>
+    <div style="display:flex;position:relative;margin-top:16px;width:620px;height:30px">
+      <div style="display:flex;position:absolute;left:0;top:7px;width:620px;height:16px;border-radius:8px;background-image:linear-gradient(90deg,#10b981,#f59e0b,#f43f5e)"></div>
+      <div style="display:flex;position:absolute;left:${markLeft}px;top:0;width:30px;height:30px;border-radius:15px;background:#14110d;border:4px solid #ffffff"></div>
+    </div>
+    <div style="display:flex;width:620px;justify-content:space-between;font-size:20px;font-weight:500;color:#a99d86"><span>${esc(T(c, "強運", "Lucky"))}</span><span>${esc(T(c, "沼", "Unlucky"))}</span></div>` : ""}
+    <span style="font-size:23px;font-weight:500;color:#cfc3aa;margin-top:12px">${esc(stats)}</span>
   </div>
-  <div style="display:flex;flex-direction:column;position:absolute;left:70px;top:132px;width:660px">
-    <span style="font-size:32px;font-weight:800;color:#f3e3b5">${esc(c.baseName)}</span>
-    <span style="font-size:28px;font-weight:800;color:#8f8fff;margin-top:6px">${esc(c.mods)}</span>
-  </div>
-  <div style="display:flex;position:absolute;left:70px;top:248px;align-items:flex-end">
-    <span style="font-size:88px;font-weight:800;color:#6ee7b7;line-height:1">${esc(hit)}</span>
-    <span style="font-size:44px;font-weight:800;color:#d9f5e8;margin-left:8px;margin-bottom:8px">${esc(hitTail)}</span>
-  </div>
-  ${r != null ? `
-  <div style="display:flex;position:absolute;left:70px;top:364px;font-size:34px;font-weight:800">
-    <span>${esc(luckLine)}</span><span style="margin-left:16px;color:${lucky ? "#6ee7b7" : "#fda4af"}">${esc(luckWord)}</span>
-  </div>
-  <div style="display:flex;position:absolute;left:70px;top:432px;width:620px;height:16px;border-radius:8px;background-image:linear-gradient(90deg,#10b981,#f59e0b,#f43f5e)"></div>
-  <div style="display:flex;position:absolute;left:${70 + markLeft}px;top:425px;width:30px;height:30px;border-radius:15px;background:#14110d;border:4px solid #ffffff"></div>
-  <div style="display:flex;position:absolute;left:70px;top:460px;width:620px;justify-content:space-between;font-size:20px;font-weight:500;color:#a99d86"><span>${esc(T(c, "強運", "Lucky"))}</span><span>${esc(T(c, "沼", "Unlucky"))}</span></div>` : ""}
-  <div style="display:flex;position:absolute;left:70px;top:512px;font-size:24px;font-weight:500;color:#cfc3aa">${esc(stats)}</div>
-  <div style="display:flex;position:absolute;right:48px;bottom:30px;font-size:26px;font-weight:800;color:#f2c96b">exiledesk.com</div>
 </div>`;
   // 最後まで読んで、作れなかった時は例外にする (ストリームの途中で失敗すると空の 200 になる)
   return new ImageResponse(html, {
