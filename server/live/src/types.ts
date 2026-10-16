@@ -75,8 +75,6 @@ export interface Env {
   STATS_SINCE?: string;
   /** 操作の印を集計する Analytics Engine の dataset 名 (無ければ exiledesk_events)。再現の確かめ (sim.ts) で別の置き場を数える時だけ */
   EVENTS_DATASET?: string;
-  /** "0" で掲示板の当たりの速報 (POST /board/hit) を止める (board.ts) */
-  BOARD_HITS?: string;
   /** "1" の時だけ再現の確かめの入口 (/__sim/…) を開ける (wrangler.sim.jsonc。本番には無い) */
   SIM?: string;
 }

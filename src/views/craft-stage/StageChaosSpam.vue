@@ -27,7 +27,6 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { openExternal } from "../../services/trade2/open-external";
 import { baseArtFile } from "../../services/craft-stage/base-art";
 import { playSfx } from "../../utils/sfx";
-import { boardOn } from "../../services/board/board-api";
 
 const targets = computed<AimTarget[]>(() => spamAims.value.map((a) => ({ modId: a.modId, minTierIndex: a.minTierIndex })));
 /** 今打てるカオス (普通・上級・完全。アイテムレベルが足りない物などは出さない) */
@@ -241,7 +240,7 @@ const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
 const onResize = (): void => { phone.value = window.innerWidth < 768; };
 onMounted(() => window.addEventListener("resize", onResize));
 onBeforeUnmount(() => window.removeEventListener("resize", onResize));
-const barShown = computed(() => phone.value && !boardOn.value && !s.held.value && keys.value.length > 0 && (!!spamKey.value || spamming.value || !!result.value));
+const barShown = computed(() => phone.value && !s.held.value && keys.value.length > 0 && (!!spamKey.value || spamming.value || !!result.value));
 const canSpam = computed(() => keys.value.length > 0 && targets.value.length > 0 && !!s.item.value && !aimDone(s.item.value, targets.value));
 /** 運の言葉 (PC の欄とスマホの帯で同じ) */
 const luck = (r: number): string => (r <= 10 ? tr("かなりの強運", "very lucky") : r <= 50 ? tr("運がいい方", "lucky") : r <= 90 ? tr("運が悪い方", "unlucky") : tr("かなりの沼", "very unlucky"));

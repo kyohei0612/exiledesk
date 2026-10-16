@@ -8,7 +8,6 @@
  *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord、画像は D1)。GET /feedback.json(ヘッダー x-exiledesk-key) で一覧
  *   POST /feedback/<id>/images … 後から画像を足す (送った端末だけ)。GET /feedback/image/<画像 id>(ヘッダー x-exiledesk-key) で見る
  *   POST /event            … 操作の印 (Analytics Engine)。日報の「段階と離脱」「どこから」「端末」の元
- *   GET  /board.json       … 掲示板のタイムライン (D1、45 秒キャッシュ)。POST /board/post・like・hit・report・delete (board.ts)
  *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day= (ヘッダー x-exiledesk-key) で取り出す
  *   GET  /logs/send?day= (ヘッダー x-exiledesk-key) … その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用。D1 からは消さない)
  *   GET  /report(ヘッダー x-exiledesk-key)     … 日報を今すぐ (確かめ用)
@@ -30,7 +29,6 @@ import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
-import { allowHit, allowPost, banned, BOARD_ID_RE, replyTarget, toggleLike, BOARD_TAGS, iphOf, LIST_TTL, listAll, listBoard, listCacheKey, notifyBoardDiscord, parseHit, parsePost, purgeLists, removePost, reportPost, saveHit, savePost, type BoardTag } from "./board";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
 
 const STATE_KEY = "state";
@@ -227,8 +225,6 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     if (env.DISCORD_WEBHOOK) ctx.waitUntil(notifyImagesDiscord(env.DISCORD_WEBHOOK, fb.id, text, im.images, fetch));
     return json({ ok: true }, 200, CORS);
   }
-  // 掲示板 (board.ts)。書き込み・当たりの速報・通報・オーナーが消す
-  if (url.pathname.startsWith("/board/") && req.method === "POST") return boardPost(req, env, ctx, url);
   // 要望への返事を書く (オーナー側だけ): { id, text, en?, version? }
   if (url.pathname === "/feedback/reply" && req.method === "POST") {
     if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
@@ -259,22 +255,6 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     return fb ? json(fb, 200, { "cache-control": "no-store" }) : json({ error: "無い" }, 404);
   }
   switch (url.pathname) {
-    // 掲示板のタイムライン (Cloudflare のキャッシュに 45 秒。書いた・消した時は消す)
-    case "/board.json": {
-      if (!env.LOGS) return json({ items: [], more: false });
-      const tag = url.searchParams.get("tag") || null, before = url.searchParams.get("before") || null;
-      if ((tag && !BOARD_TAGS.includes(tag as BoardTag)) || (before && !BOARD_ID_RE.test(before))) return json({ error: "形が違う" }, 400);
-      const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
-      const key = listCacheKey(tag, before);
-      const hit = cache ? await cache.match(key) : undefined;
-      if (hit) { const out = new Response(hit.body, hit); for (const [k, v] of Object.entries(CORS)) out.headers.set(k, v); return out; }
-      const res = json(await listBoard(env.LOGS, tag, before), 200, { "cache-control": `public, max-age=${LIST_TTL}` });
-      if (cache) ctx.waitUntil(cache.put(key, res.clone()));
-      return res;
-    }
-    case "/board/all.json":
-      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
-      return json(env.LOGS ? await listAll(env.LOGS) : [], 200, { "cache-control": "no-store" });
     // 開いた時に 1 回だけ読む物をまとめて (配信の情報 + 1 時間おきにサーバーが取った相場。2026-10-10 前は live.json と相場 2 本の 3 回)
     case "/boot.json": {
       const [live, market, visitors] = await Promise.all([env.LIVE.get(STATE_KEY, { cacheTtl: 300 }), env.LIVE.get(MARKET_KEY, { cacheTtl: 300 }), env.LIVE.get(VISITORS_KEY, { cacheTtl: 300 })]);
@@ -345,67 +325,6 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     default:
       return json({ error: "not found", paths: ["/live.json", "/health", "/api/poe2scout/…", "POST /feedback", "POST /event", "POST /log"] }, 404);
   }
-}
-
-/** 掲示板の POST (/board/post・/board/hit・/board/report・/board/delete)。置き場は D1 (board.ts) */
-async function boardPost(req: Request, env: Env, ctx: ExecutionContext, url: URL): Promise<Response> {
-  const db = env.LOGS;
-  if (!db) return json({ error: "置き場が無い" }, 500);
-  let body: unknown;
-  try { body = await req.json(); } catch { return json({ error: "JSON ではない" }, 400); }
-  const iph = await iphOf(req.headers.get("cf-connecting-ip") ?? "?");
-  switch (url.pathname) {
-    case "/board/post": {
-      const p = parsePost(body);
-      if (!p.ok) return json({ error: p.why }, p.why === "bot" ? 200 : 400);
-      const limited = await allowPost(db, p.uid, iph, Date.now(), !!p.parent);
-      if (limited) return json({ error: limited }, 429);
-      if (p.parent) { const no = await replyTarget(db, p.parent); if (no) return json({ error: no }, 400); }
-      const item = await savePost(db, { ...p, iph });
-      ctx.waitUntil(purgeLists());
-      // 新しい書き込みの Discord 通知は止めた (2026-10-16 オーナー「掲示板の通知はいらん」)。通報で隠した時だけ知らせる
-      return json({ ok: true, item });
-    }
-    case "/board/hit": {
-      // 設定で止める (wrangler.jsonc の vars か secret の BOARD_HITS = "0")
-      if (env.BOARD_HITS === "0") return json({ ok: false, why: "止めています" });
-      const h = parseHit(body);
-      if (!h.ok) return json({ error: h.why }, 400);
-      // 数の決まりに当たった時も 200 (端末は黙って捨てる。乱数は端末なので、断られたことを知らせても意味が無い)
-      const no = await allowHit(db, h.uid, iph, h.hit);
-      if (no) return json({ ok: false, why: no });
-      const item = await saveHit(db, h.uid, iph, h.hit);
-      ctx.waitUntil(purgeLists());
-      return json({ ok: true, item });
-    }
-    case "/board/like": {
-      const b = body as { uid?: unknown; id?: unknown };
-      if (typeof b?.uid !== "string" || !UID_RE.test(b.uid) || typeof b.id !== "string" || !BOARD_ID_RE.test(b.id)) return json({ error: "形が違う" }, 400);
-      if (await banned(db, b.uid, iph)) return json({ error: "この端末からは書き込めません" }, 403);
-      const r = await toggleLike(db, b.id, b.uid);
-      // 一覧のキャッシュは消さない (いいねの数は 45 秒遅れてよい。押した端末は手元で数える)
-      return json(r, r.ok ? 200 : r.why === "多すぎ" ? 429 : 404);
-    }
-    case "/board/report": {
-      const b = body as { uid?: unknown; id?: unknown };
-      if (typeof b?.uid !== "string" || !UID_RE.test(b.uid) || typeof b.id !== "string" || !BOARD_ID_RE.test(b.id)) return json({ error: "形が違う" }, 400);
-      const r = await reportPost(db, b.id, b.uid);
-      if (r.hidden) {
-        ctx.waitUntil(purgeLists());
-        if (env.DISCORD_WEBHOOK) ctx.waitUntil(notifyBoardDiscord(env.DISCORD_WEBHOOK, { kind: "hidden", id: b.id }, fetch));
-      }
-      return json({ ok: r.ok }, r.ok ? 200 : 404);
-    }
-    case "/board/delete": {
-      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
-      const b = body as { id?: unknown; ban?: unknown };
-      if (typeof b?.id !== "string" || !BOARD_ID_RE.test(b.id)) return json({ error: "id が要る" }, 400);
-      const ok = await removePost(db, b.id, b.ban === true);
-      if (ok) ctx.waitUntil(purgeLists());
-      return json({ ok }, ok ? 200 : 404);
-    }
-  }
-  return json({ error: "not found" }, 404);
 }
 
 /**

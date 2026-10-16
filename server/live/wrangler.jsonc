@@ -22,8 +22,6 @@
   // 分析用の記録 (POST /log、2026-10-09)。届いたまとまりを 1 行ずつ (無料 10 万行/日・5 GB)。取り出しは GET /logs/day?day=&key= か scripts/pull-logs.mjs
   "d1_databases": [{ "binding": "LOGS", "database_name": "exiledesk-logs", "database_id": "26272a12-1dfa-4d2f-aab4-cc27f7bc0efe", "migrations_dir": "migrations" }],
   "vars": {
-    // 掲示板の当たりの速報を受け付けない (2026-10-16 オーナー「当たりは流さんくてええか」。戻す時は消す)
-    "BOARD_HITS": "0",
     // 日報の集計 (GraphQL / SQL API) に使う。秘密ではない
     "CF_ACCOUNT_ID": "b824ebc2247db353f01cabcee65b567f",
     // Web Analytics のサイト (web.html の beacon の token)

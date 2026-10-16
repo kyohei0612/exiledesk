@@ -12,7 +12,6 @@
  *     layout=clip で撮影用のすっきりレイアウト)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
-import { BOARD_HITS_ENABLED } from "../services/board/board-api";
 import { playUseSfx } from "../utils/sfx";
 import { isRareChance } from "../utils/format-pct";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
@@ -611,12 +610,6 @@ export const craftStage = {
       log.value = [...log.value.slice(-(LOG_KEEP - 1)), p];
     } else log.value = [...log.value, p];
     item.value = p.after;
-    // 掲示板の当たりの速報 (Web 版だけ、services/board/rare-hit.ts): クソレアの線より下の T1 を引いた時だけ名前を出さずに札を送る。n = このカレンシーの何回目か
-    if (BOARD_HITS_ENABLED && !isTauriRuntime() && p.out.applied && p.chances) {
-      const n = log.value.filter((x) => x.out.currency === key).length + dropped.value.filter((d) => d.step.currency === key).length;
-      const d = data.value;
-      void import("../services/board/rare-hit").then((m) => m.maybeSendHit(d, p, n));
-    }
     // 分析用の記録 (2026-10-09): 打つ前の MOD・打った物・お告げ・付いた / 消えた MOD
     const ms = (l: readonly StageMod[]): string[] => l.map((m) => `${m.modId}#${m.tierIndex}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}`);
     // カオススパム (chaos-spam.ts) は 1 回ごとには送らない (何千回にもなる。スパムの終わりに 1 件だけ送る)
