@@ -114,7 +114,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
     const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
     const on = onIds.has(m.id);
     return {
-      id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...(m.displayTags ?? m.tags)], tiers, weight,
+      id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...new Set([...(m.displayTags ?? m.tags), ...m.tags.filter((t) => FACTION_TAGS.includes(t))])], tiers, weight,
       topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked: !on && familyBlocked(m, taken),
     };
   };
@@ -181,8 +181,11 @@ function mergeFamilies(rows: ListRow[]): ListRow[] {
 
 /** タグの日本語と色 (表は services/mods/tag-ja.ts に 1 つ) */
 export { TAG_STYLE };
-/** 出すタグ (細かすぎる物・重なる物は省く) */
-export const shownTags = (tags: readonly string[]): string[] => tags.filter((t) => TAG_STYLE[t]);
+/** 冒涜の勢力のタグ (アマナム・クルガル・ウラマン)。行の頭に札で出す (2026-10-16 オーナー「全ての MOD に、1 ページ目に。開かんと分からん」) */
+export const FACTION_TAGS: readonly string[] = ["amanamu_mod", "kurgal_mod", "ulaman_mod"];
+export const factionOf = (tags: readonly string[]): string | null => tags.find((t) => FACTION_TAGS.includes(t)) ?? null;
+/** 出すタグ (細かすぎる物・重なる物は省く。勢力は別に札で出すので外す) */
+export const shownTags = (tags: readonly string[]): string[] => tags.filter((t) => TAG_STYLE[t] && !FACTION_TAGS.includes(t));
 
 /**
  * 狙う MOD の札の文 (段の文 + 「T3 以上」)。選んだ時に文を固めず、出すたびに今の言語で作る

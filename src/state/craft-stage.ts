@@ -12,7 +12,7 @@
  *     layout=clip で撮影用のすっきりレイアウト)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
-import { playUseSfx } from "../utils/sfx";
+import { playSfx, playUseSfx } from "../utils/sfx";
 import { isRareChance } from "../utils/format-pct";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
@@ -681,6 +681,8 @@ export const craftStage = {
     if (omens.value.includes(id)) { omens.value = omens.value.filter((o) => o !== id); return; }
     const rivals = new Set(OMEN_EXCLUSIVE.filter((g) => g.includes(id)).flat());
     omens.value = [...omens.value.filter((o) => !rivals.has(o)), id];
+    // 掛けた時の音 (ゲームのお告げを使った時の Item_Omen_Use_01。2026-10-16)
+    playSfx("omen");
   },
   /** 今までの手を手順 JSON に (同じ seed なので CLI に流すと同じ結果) */
   plan(): CraftStagePlan {

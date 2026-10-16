@@ -24,7 +24,7 @@ import HelpTip from "../../components/ui/HelpTip.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
 import { jewelEmotionJa } from "../../services/htc/patch";
-import { groupLabelOf, modListFor, runeEnOf, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
+import { factionOf, groupLabelOf, modListFor, runeEnOf, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
 import essenceKeys from "../../services/htc/essence-keys.json";
 import { forceKey, type ForceFlag } from "../../services/craft-stage/apply-force";
@@ -414,7 +414,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 <!-- 2026-10-04 オーナー: タグは MOD 名の横に細く (行を太らせない)、右は poe2db と同じく 出やすさ % ・ ティア数 (緑) ・ 一番上の段のレベル (灰) を数字だけ -->
                 <span class="relative flex items-center gap-2">
                   <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
-                    <span class="mr-0.5 text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
+                    <!-- 勢力 (アマナム・クルガル・ウラマン) は文の頭に札で (2026-10-16 オーナー「開かんと分からん」)。文の中に置いて、長い文でも札だけの行にしない -->
+                    <span class="mr-0.5 text-[13px] text-[#c8c8ff]"><span v-if="factionOf(r.tags)" class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[factionOf(r.tags)!]?.cls">{{ tagLabel(factionOf(r.tags)!) }}</span>{{ r.text }}</span>
                     <span v-if="shownTags(r.tags).length" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ shownTags(r.tags).map(tagLabel).join(" · ") }}</span>
                     <span v-if="essName(r)" class="rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r) }}</span>
                     <span v-if="r.on" class="rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">{{ tr("付いている", "On item") }}</span>

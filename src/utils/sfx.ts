@@ -23,7 +23,13 @@ export function setSfxOff(v: boolean): void {
   try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /* 覚えられなくてよい */ }
 }
 
-/** カレンシーのキー → 音のファイル (ゲームの OrbUse_* と同じ物。専用の音が無い物は OrbUse_01) */
+/**
+ * カレンシーのキー → 音のファイル。ゲームの FMOD/Desktop/ItemDrops.bank の使う音 (OrbUse_* など) をそのまま (2026-10-16 取り直し、オーナー
+ * 「クライアントで SE もっかい出した方が良いかも」: 前は 7 種類だけ割り当てて、砥石・端材・彫刻針・飾り玉・熟練工・お告げ・ルーンなども共通の OrbUse_01 だった)。
+ * 骨はゲームと同じく Abyss_UI_CurrencyUse_01〜05 から毎回ランダム、発現は Abyss_UI_UnveilLayer_01、ヒネコラは Currency_Use.bank の TotA_UI_HinekorasUse。
+ * 専用の音が無い物 (増強・神・熟練工のオーブ・エッセンス・触媒など) は OrbUse_01
+ */
+const BONES = 5;
 export function sfxOf(key: string): string {
   if (key.startsWith("transmute")) return "transmute";
   if (key.startsWith("alchemy")) return "alchemy";
@@ -32,14 +38,27 @@ export function sfxOf(key: string): string {
   if (key.startsWith("chaos")) return "chaos";
   if (key.startsWith("annul")) return "annul";
   if (key.startsWith("fracture")) return "fracture";
+  if (key === "whetstone") return "whetstone";
+  if (key === "scrap") return "scrap";
+  if (key === "etcher") return "etcher";
+  if (key === "bauble") return "bauble";
+  if (key === "gemcutter") return "gemcutter";
+  if (key === "jeweller_lesser") return "jeweller-lesser";
+  if (key === "jeweller_greater") return "jeweller-greater";
+  if (key.startsWith("jeweller")) return "jeweller";
+  if (key === "hinekora") return "hinekora";
   if (key.startsWith("vaal_infuser")) return "vaal-infuser";
-  // 骨と発現 (アビスの UI の音)
-  if (key.startsWith("desecrate") || key.startsWith("reveal:")) return "abyss";
+  if (key.startsWith("rune:")) return /Soul Core/i.test(key) ? "soulcore" : "rune";
+  // 骨 (5 通りからランダム) と発現 (アビスの UI の音)
+  if (key.startsWith("desecrate")) return `bone-${1 + Math.floor(Math.random() * BONES)}`;
+  if (key.startsWith("reveal:")) return "reveal";
   return "orb";
 }
 
 let ctx: AudioContext | null = null;
-const ALL = ["orb", "transmute", "alchemy", "regal", "exalt", "chaos", "annul", "fracture", "vaal-infuser", "abyss", "rare"];
+const ALL = ["orb", "transmute", "alchemy", "regal", "exalt", "chaos", "annul", "fracture", "vaal-infuser", "rare",
+  "whetstone", "scrap", "etcher", "bauble", "gemcutter", "jeweller-lesser", "jeweller", "jeweller-greater", "hinekora", "rune", "soulcore", "reveal", "omen",
+  ...Array.from({ length: BONES }, (_, i) => `bone-${i + 1}`)];
 function context(): AudioContext | null {
   if (ctx) return ctx;
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -62,6 +81,27 @@ export function preloadSfx(): void {
   for (const ev of ["pointerdown", "touchend", "click", "keydown"]) window.addEventListener(ev, wake, { capture: true, passive: true });
 }
 const buffers = new Map<string, Promise<AudioBuffer | null>>();
+/**
+ * 聞き心地 (2026-10-16 オーナー「音が不快、見直した方が良い」)。ゲームの音はファイルごとに大きさが 6 dB ほど違い、ほとんどが 0 dB まで振れていて、
+ * 1 個 1.7〜3.1 秒あるので続けて打つと前の音に重なって濁っていた。
+ *   - 大きさをそろえる: 読んだ時に音の平均の大きさ (RMS) を測り、TARGET_DB にそろえる倍率を掛ける (ピークは 0.9 を超えない)
+ *   - 重ねない: 次の音を鳴らす時、前の音は FADE_PREV 秒で消す (1 つだけ鳴る)
+ *   - 短く: TAIL_AT 秒から TAIL_LEN 秒で消す (残響の尾を切る)
+ */
+const TARGET_DB = -24;
+const FADE_PREV = 0.06;
+const TAIL_AT = 0.9;
+const TAIL_LEN = 0.35;
+const levels = new Map<string, number>();
+function levelOf(buf: AudioBuffer): number {
+  const d = buf.getChannelData(0);
+  let sum = 0, peak = 0;
+  for (let i = 0; i < d.length; i++) { const v = d[i]!; sum += v * v; const a = Math.abs(v); if (a > peak) peak = a; }
+  const rmsDb = 20 * Math.log10(Math.sqrt(sum / Math.max(1, d.length)) || 1e-6);
+  const k = 10 ** ((TARGET_DB - rmsDb) / 20);
+  return peak > 0 ? Math.min(k, 0.9 / peak) : 1;
+}
+let voice: { src: AudioBufferSourceNode; gain: GainNode; name: string } | null = null;
 const decoded = new Map<string, AudioBuffer>();
 function load(name: string): Promise<AudioBuffer | null> {
   let p = buffers.get(name);
@@ -69,7 +109,7 @@ function load(name: string): Promise<AudioBuffer | null> {
     p = fetch(`/sfx/${name}.mp3`)
       .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
       .then((b) => ctx!.decodeAudioData(b))
-      .then((buf) => { decoded.set(name, buf); return buf; })
+      .then((buf) => { decoded.set(name, buf); levels.set(name, levelOf(buf)); return buf; })
       .catch(() => null);
     buffers.set(name, p);
   }
@@ -86,12 +126,31 @@ export function playSfx(name: string, loud = 1): void {
     if (c.state !== "running" && c.state !== "closed") void c.resume();
     const play = (buf: AudioBuffer | null): void => {
       if (!buf) return;
+      const now = c.currentTime;
+      // 前の音は短く消す (重ねない)
+      // 神の音は次の手で切らない
+      if (voice && voice.name !== "rare") {
+        const old = voice;
+        try { old.gain.gain.cancelScheduledValues(now); old.gain.gain.setValueAtTime(old.gain.gain.value, now); old.gain.gain.linearRampToValueAtTime(0, now + FADE_PREV); old.src.stop(now + FADE_PREV + 0.01); } catch { /* 止まっていてよい */ }
+      }
       const src = c.createBufferSource();
       const gain = c.createGain();
-      gain.gain.value = VOLUME * loud;
+      // 珍しい段の音 (神) は前のまま (2026-10-16 オーナー「神は 100 点」)。大きさのそろえ・尾の切りは打った時の音だけ
+      const v = VOLUME * loud * (name === "rare" ? 1 : levels.get(name) ?? 1);
+      gain.gain.setValueAtTime(v, now);
+      // 尾を切る
+      // 珍しい段の音 (しゃきぃん → ぽーん) は最後まで鳴らす
+      const cut = name !== "rare" && buf.duration > TAIL_AT + TAIL_LEN;
+      if (cut) {
+        gain.gain.setValueAtTime(v, now + TAIL_AT);
+        gain.gain.linearRampToValueAtTime(0, now + TAIL_AT + TAIL_LEN);
+      }
       src.buffer = buf;
       src.connect(gain).connect(c.destination);
-      src.start();
+      src.start(now);
+      if (cut) src.stop(now + TAIL_AT + TAIL_LEN + 0.02);
+      voice = { src, gain, name };
+      src.onended = () => { if (voice?.src === src) voice = null; };
     };
     // 読み終わっていれば待たずにその場で (Promise を挟むと 1 拍遅れる)
     const ready = decoded.get(name);

@@ -55,9 +55,10 @@ const TAGS: Record<string, { ja: string; short?: string; cls?: string }> = {
   elemental_resistance: { ja: "元素耐性" },
   chaos_resistance: { ja: "混沌耐性" },
   flat_life_regen: { ja: "ライフ再生" },
-  ulaman_mod: { ja: "ウラマン", cls: "bg-rose-700/30 text-rose-200" },
+  // 勢力は色を分ける (2026-10-16 MOD 一覧の行の頭に札。アマナム = 火と混沌、クルガル = 冷気、ウラマン = 雷の耐性に合わせる)
+  ulaman_mod: { ja: "ウラマン", cls: "bg-amber-600/30 text-amber-100" },
   amanamu_mod: { ja: "アマナム", cls: "bg-rose-700/30 text-rose-200" },
-  kurgal_mod: { ja: "クルガル", cls: "bg-rose-700/30 text-rose-200" },
+  kurgal_mod: { ja: "クルガル", cls: "bg-sky-700/35 text-sky-100" },
   // 2026-10-05 タグの点検で足した物 (クライアントの implicit_tags に出てくるのに無かった物)
   skill: { ja: "スキル", cls: "bg-sky-600/20 text-sky-100" },
   dot_multi: { ja: "継続ダメージ", cls: "bg-orange-700/25 text-orange-200" },
