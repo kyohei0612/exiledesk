@@ -555,6 +555,9 @@ export const craftStage = {
    */
   addStartMod(f: Force): void {
     if (!data.value || log.value.length || replay.value) return;
+    // 50 手より前に消した手 (dropped) が残っている時は、工程を全部戻しても「打つ前」ではない。始めの MOD を足すと、手順 (始めの MOD + 消した手) と
+    // 今のアイテム (始めの MOD だけ) が食い違う (2026-10-16 要望 0ce15a82 の調べで見つけた)
+    if (dropped.value.length) { miss.value = { n: (miss.value?.n ?? 0) + 1, reason: tr("50 手より前の手が残っているので、始めの MOD は足せません (白に戻してから)", "Earlier steps (before the last 50) remain, so starting mods can't be added (reset first)") }; return; }
     const next = [...startMods.value, f];
     try {
       item.value = fullSockets(startFrom(data.value, base.value, itemLevel.value, { mods: next }, seed.value - 1));
@@ -624,7 +627,9 @@ export const craftStage = {
   /** 1 手戻す (その手で食ったお告げは掛け直す) */
   undo(): void {
     const l = log.value;
-    // まだ打っていない時は、始めの MOD を 1 つ外す
+    // まだ打っていない時は、始めの MOD を 1 つ外す。50 手より前に消した手 (dropped) が残っている時は打った後なので外さない
+    // (外すとアイテムは白 + 始めの MOD に戻るのに、手順には消した手が残り、再生すると別物になった。2026-10-16 要望 0ce15a82 の調べ)
+    if (!l.length && dropped.value.length) return;
     if (!l.length && startMods.value.length && data.value && !replay.value) {
       startMods.value = startMods.value.slice(0, -1);
       // ソケットも付ける時と同じに (外すと規格外のソケットが消えていた。2026-10-08 使い倒しテスト)
