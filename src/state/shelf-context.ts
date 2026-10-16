@@ -1,6 +1,6 @@
 /**
  * shelf-context.ts — 棚 (CurrencyShelf / ShelfButton) が見るアイテム・お告げ・持っている物 (2026-10-09)。
- * 既定は手で打つ画面 (craftStage)。シミュレーションの「打って作る」(StagePlayEditor) は自分のアイテムで provide して、
+ * 既定は手で打つ画面 (craftStage)。シミュレーションのクイズ (StageQuizEditor) は自分のアイテムで provide して、
  * 手打ちと同じ棚 (今のアイテムに打てる物を前に、使えない物は畳む) をそのまま使う
  * (2026-10-09 オーナー「イメージは完全に手打ちの UI」「クラフトに使えるカレンシーは全部出さんとあかん」)
  */

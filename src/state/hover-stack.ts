@@ -23,6 +23,7 @@ import { ref } from "vue";
 import type { RankedItem } from "../api/poe2scout";
 import type { UniqueRow } from "../views/unique-trend/useUniqueTrend";
 import type { BuildItem } from "../services/build-copy/pob";
+import type { StageItem } from "../services/craft-stage/types";
 
 export type HoverPayload =
   | { kind: "unique"; row: UniqueRow }
@@ -30,7 +31,8 @@ export type HoverPayload =
   | { kind: "gem"; en: string }
   | { kind: "build"; item: BuildItem }
   | { kind: "base"; en: string }
-  | { kind: "shelf"; k: string; reason: string | null; omen: boolean }
+  /** item: カードの説明をこのアイテムで出す (チュートリアルなど手打ち以外のアイテム。無ければ手打ちのアイテム) */
+  | { kind: "shelf"; k: string; reason: string | null; omen: boolean; item?: StageItem | null }
   | { kind: "keyword"; id: string; label: string };
 
 export interface HoverLayer {

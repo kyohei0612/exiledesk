@@ -10,38 +10,43 @@
 import { computed } from "vue";
 import GameItemCard from "../../components/decor/GameItemCard.vue";
 import RichText from "../../components/decor/RichText.vue";
-import { craftStage, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { enOf } from "../../state/craft-stage-shelf";
+import { craftStage, priceOf } from "../../state/craft-stage";
+import { enOf, iconOfKey, nameOfKey } from "../../state/craft-stage-shelf";
 import { specialEssence, stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
+import type { StageItem } from "../../services/craft-stage/types";
 
-const props = defineProps<{ k: string; reason: string | null; omen?: boolean; x: number; y: number; layerKey: number; pinned: boolean; z: number }>();
+const props = defineProps<{ k: string; reason: string | null; omen?: boolean; item?: StageItem | null; x: number; y: number; layerKey: number; pinned: boolean; z: number }>();
 /** ゲームの書式記号 ([Corrupted|コラプト] → コラプト、[Hit] → Hit) を外す */
 const plain = (s: string): string => s.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
-const hover = computed(() => currencyHoverOf(enOf(props.k, craftStage.item.value)));
+/** 説明に使うアイテム (チュートリアルは自分のアイテムを渡す。無ければ手打ちのアイテム) */
+const cur = computed(() => props.item ?? craftStage.item.value);
+/** カードの幅 (スマホは画面に収める。チュートリアルは指の端末でもカードを出す) */
+const cardWidth = typeof window === "undefined" ? 380 : Math.min(380, window.innerWidth - 16);
+const hover = computed(() => currencyHoverOf(enOf(props.k, cur.value)));
 /** 公式の説明は印を残して RichText で (中の言葉に乗せると説明のカード) */
 const official = computed(() => hover.value?.e ?? []);
 /**
  * 他の装備に使った時に付く物 (エッセンス・合金: クライアントの説明の部位ごとの一覧)。
  * 2026-10-05 オーナー「違う武器とかでも付けれたり他のでも付けれるから、その説明は欲しい。分かりやすく教えて欲しいカード」
  */
-const others = computed(() => specialEssence(props.k, craftStage.item.value)?.groups ?? (hover.value?.g ?? []).map((g) => ({ h: plain(g.h).replace(/に付く$/, ""), l: g.l.map(plain) })));
+const others = computed(() => specialEssence(props.k, cur.value)?.groups ?? (hover.value?.g ?? []).map((g) => ({ h: plain(g.h).replace(/に付く$/, ""), l: g.l.map(plain) })));
 /** 上級・完全: 付く MOD の MOD レベルの下限 (カードの頭に大きく。要望 9c8a5f99) */
 const floor = computed(() => (props.omen ? null : stageFloor(props.k)));
-const help = computed(() => stageHelp(props.k, craftStage.data.value, craftStage.item.value));
+const help = computed(() => stageHelp(props.k, craftStage.data.value, cur.value));
 /** 付く MOD (エッセンス・ルーン等)。アイコンの下に色を変えて箇条書き (2026-10-05 オーナー「説明欄が見づらいから、特定の MOD が付く奴はそこだけ分かりやすい色に」) */
-const adds = computed(() => (props.omen ? null : stageAdds(props.k, craftStage.data.value, craftStage.item.value)));
+const adds = computed(() => (props.omen ? null : stageAdds(props.k, craftStage.data.value, cur.value)));
 /** 「**強調**」を太字の区切りにする */
 const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**").map((t, i) => ({ t, b: i % 2 === 1 }));
 </script>
 
 <template>
-  <GameItemCard :show="true" :x="x" :y="y" :name="nameOf(k)" tone="currency" :width="380" :layer-key="layerKey" :pinned="pinned" :z="z">
+  <GameItemCard :show="true" :x="x" :y="y" :name="nameOfKey(k, cur)" tone="currency" :width="cardWidth" :layer-key="layerKey" :pinned="pinned" :z="z">
     <div class="text-left text-[12.5px]">
       <div class="flex items-center justify-center gap-2">
-        <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-12 w-12 shrink-0 object-contain" />
+        <img v-if="iconOfKey(k, cur)" :src="iconOfKey(k, cur)" alt="" class="h-12 w-12 shrink-0 object-contain" />
         <p v-if="priceOf(k)" class="g-dim text-[12px]">{{ tr("相場", "Market price") }} <span class="g-white">{{ displayCurrency.money(priceOf(k)) }}</span></p>
       </div>
       <p v-if="floor" data-floor class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">
