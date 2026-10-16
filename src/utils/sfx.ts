@@ -58,9 +58,10 @@ export function preloadSfx(): void {
   if (preloaded || typeof window === "undefined" || !context()) return;
   preloaded = true;
   for (const n of ALL) void load(n);
-  const wake = (): void => { if (ctx?.state === "suspended") void ctx.resume(); };
-  window.addEventListener("pointerdown", wake, { capture: true, passive: true });
-  window.addEventListener("keydown", wake, { capture: true, passive: true });
+  // 寝ている (suspended)・電話などで止められた (Safari の interrupted) 時は、次に触った時に起こし直す
+  const wake = (): void => { if (ctx && ctx.state !== "running" && ctx.state !== "closed") void ctx.resume(); };
+  // iPhone の Safari は pointerdown では音の出口を起こさせてくれない (touchend・click が要る。2026-10-16 オーナー「音が出ない」)
+  for (const ev of ["pointerdown", "touchend", "click", "keydown"]) window.addEventListener(ev, wake, { capture: true, passive: true });
 }
 const buffers = new Map<string, Promise<AudioBuffer | null>>();
 const decoded = new Map<string, AudioBuffer>();
@@ -83,7 +84,8 @@ export function playSfx(name: string, loud = 1): void {
   try {
     const c = context();
     if (!c) return;
-    if (c.state === "suspended") void c.resume();
+    // 電話の後などは Safari が interrupted のまま止めるので、running でなければ起こし直す
+    if (c.state !== "running" && c.state !== "closed") void c.resume();
     const play = (buf: AudioBuffer | null): void => {
       if (!buf) return;
       const src = c.createBufferSource();

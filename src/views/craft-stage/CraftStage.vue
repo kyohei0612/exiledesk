@@ -213,7 +213,9 @@ function openChaosSpam(): void {
   if (!s.aims.value.length) s.aimPicker.value = { seed: null };
 }
 // 選ぶ窓を狙い無しで閉じた時は、送る予約を消す
-watch(() => s.aimPicker.value, (v) => { if (!v && !s.aims.value.length) spamPending.value = false; });
+watch(() => s.aimPicker.value, (v) => { if (!v && !s.aims.value.length) { spamPending.value = false; spamKey.value = null; } });
+// 狙いが空になったら確率機の印も外す (狙いの欄の × で閉じた後、普段の「狙う」が確率機の形で開いていた。2026-10-16)
+watch(() => s.aims.value.length, (n) => { if (!n && !s.aimPicker.value) spamKey.value = null; });
 /**
  * スマホ (幅 768 CSS px 未満): 棚からアイテムまで縦に遠いので、何か持っている間は画面の下に「持っている物 → アイテムに使う」の帯を出す
  * (2026-10-08 オーナー「タップして使う時はアイテムに再度付けるような動作で。押した瞬間付けるだとお告げが使えない」。お告げは掛けてから「アイテムに使う」)

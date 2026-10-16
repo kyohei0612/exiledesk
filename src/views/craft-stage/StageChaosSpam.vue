@@ -122,15 +122,22 @@ watch([key, ilvl, targets, () => s.item.value], () => {
   snap = null;
   simulate();
 }, { immediate: true });
-/** ベースを変えたら確率機を閉じる (狙いの MOD はそのベースのもの。付かない物は外す) */
-watch(() => s.base.value, () => {
+/**
+ * 確率機を閉じる (× ・ベースを変えた時)。狙いも外す: 残すと普段の「次の手で狙う」の一覧が出てしまう
+ * (2026-10-16 オーナー「また次の手で狙うが表示されてる」)
+ */
+function closeSpam(): void {
   stopSpam();
   result.value = null;
   snap = null;
   spamKey.value = null;
-  const d = s.data.value;
+  s.aims.value = [];
+}
+/** ベースを変えたら確率機を閉じる。確率機でない時 (普段の「次の手で狙う」) は、そのベースに付かない狙いだけ外す */
+watch(() => s.base.value, () => {
+  if (spamKey.value || result.value) { closeSpam(); return; }
   const it = s.item.value;
-  if (d && it) s.aims.value = s.aims.value.filter((a) => [...it.cls.pools.normal.prefixes, ...it.cls.pools.normal.suffixes].includes(a.modId));
+  if (s.data.value && it) s.aims.value = s.aims.value.filter((a) => [...it.cls.pools.normal.prefixes, ...it.cls.pools.normal.suffixes].includes(a.modId));
 });
 onBeforeUnmount(() => { gen++; clearTimeout(timer); stopSpam(); });
 
@@ -422,7 +429,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
           <img v-if="iconOf(key)" :src="iconOf(key)" alt="" class="h-9 w-9 object-contain" />
           <b class="min-w-0 flex-1 line-clamp-2 text-[12px] leading-tight text-amber-100">{{ nameOf(key) }}</b>
           <button type="button" data-chaos-spam-hold class="g-btn-red min-h-11 shrink-0 whitespace-nowrap select-none touch-none px-1 text-[13px]" :disabled="!canSpam && !spamming" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ spamming ? tr("スパム中…", "Spamming…") : result && !result.hit && result.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押しっぱなしで使う", "Hold to use") }}</button>
-          <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" :title="tr('閉じる', 'Close')" @click="spamKey = null; result = null">×</button>
+          <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" :title="tr('閉じる', 'Close')" @click="closeSpam">×</button>
         </div>
       </div>
     </Teleport>
