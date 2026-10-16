@@ -48,7 +48,7 @@ describe("液化した感情", () => {
     let base = A(A(freshItem(data, "Sapphire", 82), "transmute", 2), "regal", 3);
     for (let i = 0; i < 6 && allMods(base).length < 4; i++) base = A(base, "exalt", 30 + i);
     expect([base.prefixes.length, base.suffixes.length]).toEqual([2, 2]);
-    // 侮蔑は消えた側の版: 2/2 なら半々
+    // 侮蔑の版は付けられる側から等しく (説明文に決め方が無いのでランダム、2026-10-16)。2/2 の満杯なら空くのは消えた側だけなので、その側の版で半々
     let pre = 0, suf = 0, hit: StageItem | null = null;
     for (let s = 1; s <= 400; s++) {
       const r = applyCurrency(data, base, "emotion:Potent Liquid Contempt", mulberry32(s), []);
