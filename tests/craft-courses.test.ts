@@ -1,62 +1,30 @@
-// クラフトのコース (craft-courses.ts): 「これで狙う」の手だけで白から打って完成する・段ごとの済みの判定
-import { beforeAll, describe, expect, it } from "vitest";
-import { loadHtcPatch } from "../src/services/htc/patch";
-import { freshItem } from "../src/services/craft-stage/run-plan";
-import { applyCurrency } from "../src/services/craft-stage/apply-currency";
-import { revealOffers } from "../src/services/craft-stage/apply-desecrate";
-import { mulberry32 } from "../src/services/htc/rng";
-import { CRAFT_COURSES, courseProgress, type CraftCourse } from "../src/services/craft-stage/craft-courses";
-import { revealWanted } from "../src/services/craft-stage/quiz-recipe";
-import type { PatchData } from "../src/vendor/poe2htc/engine/types";
-import type { StageItem } from "../src/services/craft-stage/types";
+// クラフトのコース (craft-courses.ts): 元のレシピの手 (今やる手) だけで最後まで完成する。難しさ順に並ぶ
+import { describe, expect, it } from "vitest";
+import { loadPatch } from "./helpers/patch";
+import { runQuiz, runQuizOnce } from "../src/services/craft-stage/quiz-recipe";
+import { CRAFT_COURSES, courseSlots } from "../src/services/craft-stage/craft-courses";
 
-let data: PatchData;
-beforeAll(async () => { data = await loadHtcPatch(); });
-
-/** 今の段の「これで狙う」を順に打つ (発現は狙いの候補を選ぶ、無ければ 1 つ目)。外れて先へ進めない時は外れた時の道、無ければ光のお告げで消す */
-function play(c: CraftCourse, seed: number, cap = 400): { done: boolean; tries: number[]; it: StageItem } {
-  const g = mulberry32(seed);
-  let it = freshItem(data, c.base, c.itemLevel);
-  const tries = c.steps.map(() => 0);
-  for (let n = 0; n < cap; n++) {
-    const done = courseProgress(c, it);
-    const cur = done.findIndex((d) => !d);
-    if (cur < 0) return { done: true, tries, it };
-    const st = c.steps[cur]!;
-    tries[cur]!++;
-    for (const u of st.how) {
-      if (u.key === "reveal") {
-        if (!it.prefixes.concat(it.suffixes).some((m) => m.unrevealed)) continue;
-        const rs = Math.floor(g() * 2 ** 31);
-        const o = revealOffers(data, it, mulberry32(rs));
-        const want = revealWanted(it, c.steps.flatMap((x) => x.slots ?? []));
-        const i = Math.max(0, o.first.findIndex(want));
-        it = applyCurrency(data, it, `reveal:${i + 1}`, mulberry32(rs)).item;
-        continue;
-      }
-      const r = applyCurrency(data, it, u.key, g, u.omens ?? []);
-      if (r.applied) it = r.item;
-    }
-    // 進めない時は案内の「外れたら」の道
-    if (!courseProgress(c, it)[cur] && st.miss) for (const u of st.miss.how) { const r = applyCurrency(data, it, u.key, g, u.omens ?? []); if (r.applied) it = r.item; }
-    // 冒涜の外れ (狙い以外の冒涜が付いた) は光のお告げで消す
-    if (!courseProgress(c, it)[cur] && it.prefixes.concat(it.suffixes).some((m) => m.desecrated && !m.unrevealed)) {
-      const r = applyCurrency(data, it, "annul", g, ["OmenofLight"]);
-      if (r.applied) it = r.item;
-    }
-  }
-  return { done: false, tries, it };
-}
-
+const data = loadPatch();
 describe("クラフトのコース", () => {
+  it("難しさ順に並ぶ・どれも完成の形がある・説明はレシピの手と同じ数まで", () => {
+    expect(CRAFT_COURSES.map((c) => c.level)).toEqual([...CRAFT_COURSES.map((c) => c.level)].sort((a, b) => a - b));
+    for (const c of CRAFT_COURSES) {
+      expect(courseSlots(c).length).toBeGreaterThan(0);
+      expect(c.why.length).toBeLessThanOrEqual(c.recipe.routes[0]!.rules.length);
+    }
+  });
   for (const c of CRAFT_COURSES) {
-    it(`${c.id}: 案内の手だけで 100 個とも完成する`, () => {
-      const per = c.steps.map(() => [] as number[]);
-      let ok = 0;
-      for (let s = 1; s <= 100; s++) { const r = play(c, s); if (r.done) ok++; r.tries.forEach((t, i) => per[i]!.push(t)); }
-      const avg = per.map((xs) => (xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(2));
-      console.log(`${c.id}: 完成 ${ok}/100 · 段ごとの平均の回数 ${avg.join(" / ")}`);
-      expect(ok).toBe(100);
+    it(`${c.id}: 今やる手だけで 200 人とも完成する`, () => {
+      const r = runQuiz(data, c.recipe, 200, { price: () => 1, seed: 17 });
+      expect(r.open.map((o) => o.key)).toEqual([]);
+      expect(r.blocked.map((o) => o.reason)).toEqual([]);
+      expect(r.pDone).toBe(1);
+      // 入門〜中級は必ず付く手だけ: 200 人ともベース 1 個・同じ手数 (運で外れて打ち直す手が無い)
+      if (c.level <= 3) {
+        const runs = Array.from({ length: 200 }, (_, i) => runQuizOnce(data, c.recipe, 1000 + i, { price: () => 1 }));
+        expect(runs.every((x) => x.done && x.bases === 1)).toBe(true);
+        expect([...new Set(runs.map((x) => x.steps))]).toHaveLength(1);
+      }
     }, 120000);
   }
 });
