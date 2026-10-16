@@ -64,7 +64,8 @@ function descOf(c) {
 /** X などが読むページ。人は JS でそのベースのエミュレーターへ (クローラーは JS を動かさないので OGP だけ読む) */
 function sharePage(url, c, img) {
   // 押した人はそのベースのエミュレーターへ (2026-10-16 オーナー「開いたらデスクに飛ぶでいい」)
-  const to = `/?base=${encodeURIComponent(c.base || "Gold Ring")}`;
+  // via=share と、カードを開く前の referrer のホスト (r) を本体に渡す (本体の referrer はこのページになるので。2026-10-16 どの投稿から来たか分からなかった)
+  const to = `/?base=${encodeURIComponent(c.base || "Gold Ring")}&via=share`;
   const t = esc(titleOf(c)), d = esc(descOf(c));
   return new Response(`<!doctype html><html lang="${c.en ? "en" : "ja"}"><head><meta charset="utf-8">
 <title>${t}</title><meta name="description" content="${d}">
@@ -73,8 +74,8 @@ function sharePage(url, c, img) {
 <meta property="og:url" content="${esc(url.href)}"><meta property="og:image" content="${esc(img)}">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${t}"><meta name="twitter:description" content="${d}"><meta name="twitter:image" content="${esc(img)}">
-<meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=${esc(to)}">
-</head><body><script>location.replace(${JSON.stringify(to)})</script><a href="${esc(to)}">ExileDesk</a></body></html>`, {
+<meta name="robots" content="noindex"><script>var r="";try{r=document.referrer?new URL(document.referrer).hostname:""}catch(e){}location.replace(${JSON.stringify(to)}+(r?"&r="+encodeURIComponent(r):""))</script><meta http-equiv="refresh" content="1;url=${esc(to)}">
+</head><body><a href="${esc(to)}">ExileDesk</a></body></html>`, {
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=3600" },
   });
 }

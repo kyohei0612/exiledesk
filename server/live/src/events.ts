@@ -111,7 +111,7 @@ export async function summarize(env: Env, since: string, until: string, weekSinc
   const open = out.byEvent.get("open");
   out.sessions = open?.sessions ?? 0; out.users = open?.users ?? 0;
   for (const r of await q<{ f: string; s: number }>(`SELECT blob7 AS f, count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 = 'open' GROUP BY f`)) if (r.f === "1") out.newSessions = Number(r.s);
-  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'stay', 'base', 'cur', 'steps', 'error') AND blob1 NOT LIKE 'lang:%'`);
+  const engaged = await q<{ s: number }>(`SELECT count(DISTINCT blob2) AS s FROM ${D} WHERE ${w} AND blob1 NOT IN ('open', 'ping', 'stay', 'base', 'cur', 'steps', 'error') AND blob1 NOT LIKE 'lang:%' AND blob1 NOT LIKE 'entry:%'`);
   if (out.sessions && engaged[0]) out.bounce = Math.max(0, 1 - Number(engaged[0].s) / out.sessions);
   // 滞在の中央値 (Analytics Engine の SQL は quantiles が無いので quantileWeighted。それも無ければ平均)
   // 滞在 = 着いた時刻の差と「開いてから何秒目か」(double2) の大きい方 (まとめて送ると着いた時刻は全部同じになる。2026-10-10)。

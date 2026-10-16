@@ -109,7 +109,7 @@ export const dur = (min: number): string => {
 };
 /** 来た道の名前 (t.co は X) */
 // 前のアドレス (web.exiledesk.workers.dev) から来た = 古いリンク (X の投稿など) を押して exiledesk.com に移ってきた人 (2026-10-12 オーナー)
-const fromJa = (k: string): string => (k === "direct" ? "URL から直接開いた人" : k === "t.co" || /(^|\.)(x|twitter)\.com$/.test(k) ? "X から来た人" : k === "web.exiledesk.workers.dev" ? "前の URL (X のリンクなど) から移ってきた人" : `${k.replace(/^www\./, "")} から来た人`);
+const fromJa = (k: string): string => (k === "direct" ? "URL から直接開いた人" : k === "share" ? "シェアのカードから来た人 (元の場所は不明)" : k === "t.co" || /(^|\.)(x|twitter)\.com$/.test(k) ? "X から来た人" : k === "web.exiledesk.workers.dev" ? "前の URL (X のリンクなど) から移ってきた人" : `${k.replace(/^www\./, "")} から来た人`);
 
 export function reportText(label: string, sum: Summary | null, usage: Usage, feedback: { requests: number; bugs: number }, live: LiveState | null, alerts: string[], records?: number | null): string {
   // 2026-10-10 オーナーの書いた形: 見出しごとの短い箇条書き。人は訪問と使った時間だけ、使われ方は 1 以上の物を全部、要望とバグはまとめて
@@ -152,6 +152,9 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     sec("どこから", [
       // 1 行ずつ (2026-10-10 オーナー「訪問リストは改行してリストで表示」)
       ...refs.slice(0, 6).map(([k, v]) => `${fromJa(k)} ${v} 人`),
+      // 入口 (src/web/track.ts の entry:<…>、2026-10-16)。シェアのカード・utm・?base= のリンク
+      ...[...sum.byEvent].filter(([k]) => k.startsWith("entry:") && k !== "entry:top").sort((a, b) => b[1].users - a[1].users).slice(0, 5)
+        .map(([k, v]) => `入口 ${k === "entry:share" ? "シェアのカード" : k === "entry:base" ? "ベースを指定したリンク" : k.slice(6)}: ${n(v.users)} 人`),
       sum.peakHours?.length ? `人が多かった時間: ${sum.peakHours.map(([h, v]) => `${h} 時台 ${v} 回`).join(" · ")}` : null,
       `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
     ]);

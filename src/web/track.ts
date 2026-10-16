@@ -8,6 +8,7 @@ import { watch } from "vue";
 import { craftStage, SIM_LOCKED } from "../state/craft-stage";
 import { noLog } from "../utils/no-log";
 import { lang } from "../i18n/lang";
+import { logRecord } from "../utils/log-record";
 
 const UID_KEY = "exiledesk.web.uid";
 /**
@@ -40,7 +41,19 @@ function uidOf(): { uid: string; first: boolean } {
 const { uid, first } = uidOf();
 const sid = rand();
 const dev = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "mobile" : "pc";
-const ref = (() => { try { return document.referrer ? new URL(document.referrer).hostname : "direct"; } catch { return "direct"; } })();
+/**
+ * どこから来たか (2026-10-16 オーナー「今ざっくりだもんね」: 10-16 夕方に X から 1 時間で 58 人来たのに、どの投稿からか分からなかった)。
+ *   - X などのシェアのカード (/s/…、server/web/og-card.js) は自分で本体へ飛ばすので、referrer が exiledesk.com になる。
+ *     カードが ?via=share&r=<カードを開く前の referrer のホスト> を付けて来るので、そちらを使う
+ *   - 入口 (entry): share (シェアのカード) / utm:<utm_source> / base (?base= のリンク) / path:<パス> / top
+ * 読んだら via・r・utm_* は URL から外す (再読み込みで 2 回数えない、共有された URL に残さない)。?base= は画面が使うので残す
+ */
+const landing = (() => { try { return new URLSearchParams(location.search); } catch { return new URLSearchParams(); } })();
+const via = landing.get("via");
+const refHost = (() => { try { return document.referrer ? new URL(document.referrer).hostname : ""; } catch { return ""; } })();
+const ref = via === "share" ? (landing.get("r") || "share") : refHost || "direct";
+const utm = Object.fromEntries([...landing].filter(([k]) => k.startsWith("utm_")).map(([k, v]) => [k.slice(4), v.slice(0, 60)]));
+const entry = via === "share" ? "share" : utm.source ? `utm:${utm.source}` : landing.get("base") ? "base" : location.pathname !== "/" ? `path:${location.pathname.slice(0, 40)}` : "top";
 
 /** 開いた時刻。印に「開いてから何秒目か」を付ける (まとめて送るとサーバーに着く時刻は全部同じになるので、滞在はこれで測る。2026-10-10) */
 const t0 = Date.now();
@@ -109,6 +122,16 @@ export function flush(): void {
 export function startTracking(): void {
   (globalThis as { __exiledeskTrack?: (n: string, x?: string) => void }).__exiledeskTrack = track;
   trackOnce("open");
+  trackOnce(`entry:${entry}`);
+  // 私 (Claude) が手元から読める記録 (D1) にも入口を残す。印 (Analytics Engine) はサーバーの鍵が無いと読めない (2026-10-16)
+  if (!noLog()) logRecord("visit", { ref, entry, path: location.pathname, ...(landing.get("base") ? { base: landing.get("base") } : {}), ...(Object.keys(utm).length ? { utm } : {}), dev, first });
+  try {
+    if (via || [...landing.keys()].some((k) => k === "r" || k.startsWith("utm_"))) {
+      const u = new URL(location.href);
+      for (const k of [...u.searchParams.keys()]) if (k === "via" || k === "r" || k.startsWith("utm_")) u.searchParams.delete(k);
+      history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+    }
+  } catch { /* 外せなくてよい */ }
   // 画面の言語 (英語版の需要を見る。訪問ごとに 1 回、切り替えたらその言語も 1 回。2026-10-12)
   watch(lang, (l) => trackOnce(`lang:${l}`), { immediate: true });
   const s = craftStage;
