@@ -26,6 +26,8 @@ import StageItemCard from "./StageItemCard.vue";
 import StageQualityBar from "./StageQualityBar.vue";
 import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
+import { SPAM_KEYS } from "../../services/craft-stage/chaos-spam";
+import { spamKey, spamPending } from "../../state/chaos-spam";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -193,6 +195,17 @@ const simCraftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.i
 const simSocketCap = computed(() => (simCraftCap.value > 0 ? simCraftCap.value + 1 : 0));
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
+/** カオス (普通・上級・完全) を持っているか (アイテムの下の「カオススパム確率機へ」) */
+const heldChaos = computed(() => !s.replay.value && !!s.held.value && (SPAM_KEYS as readonly string[]).includes(s.held.value));
+/** 狙いがまだ無ければ MOD を選ぶ窓から。あればカオススパムの欄へ */
+function openChaosSpam(): void {
+  spamKey.value = s.held.value;
+  spamPending.value = true;
+  if (!s.aims.value.length) s.aimPicker.value = { seed: null };
+  else void nextTick(() => scrollToTop(document.querySelector("[data-chaos-spam]"), "smooth", "center"));
+}
+// 選ぶ窓を狙い無しで閉じた時は、送る予約を消す
+watch(() => s.aimPicker.value, (v) => { if (!v && !s.aims.value.length) spamPending.value = false; });
 /**
  * スマホ (幅 768 CSS px 未満): 棚からアイテムまで縦に遠いので、何か持っている間は画面の下に「持っている物 → アイテムに使う」の帯を出す
  * (2026-10-08 オーナー「タップして使う時はアイテムに再度付けるような動作で。押した瞬間付けるだとお告げが使えない」。お告げは掛けてから「アイテムに使う」)
@@ -559,6 +572,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         />
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>
+        <!-- カオス (普通・上級・完全) を持っている時: カオススパム確率機へ (2026-10-16 オーナー「カオス持った時にアイテムの下にボタン、押したら MOD 選択から」) -->
+        <button v-if="heldChaos" type="button" data-chaos-spam-open class="g-btn sm max-md:min-h-10" @click="openChaosSpam">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
         <RevealPanel />
         <!-- ヒネコラの髪束の予見: 持っているカレンシーを打った時の結果 (次の手の seed で引くので、打つとこの通りになる) -->
         <div v-if="s.foresight.value" class="w-[380px] max-md:w-full rounded-xl border border-violet-400/50 bg-violet-500/10 p-3 text-[12px]">

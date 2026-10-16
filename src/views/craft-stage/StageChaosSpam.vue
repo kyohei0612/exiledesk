@@ -10,9 +10,10 @@
   分析の記録は 1 回ごとには送らず、スパムの終わりに 1 件だけ (emu_spam)
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { spamming } from "../../state/chaos-spam";
+import { spamKey, spamPending, spamming } from "../../state/chaos-spam";
+import { scrollToTop } from "../../utils/keep-place";
 import { displayCurrency } from "../../state/display-currency";
 import { aimDone, type AimTarget } from "../../services/craft-stage/aim-odds";
 import { medianOf, rankOf, spamOne, unluckyOf, SPAM_KEYS, SPAM_PEOPLE, type SpamStats } from "../../services/craft-stage/chaos-spam";
@@ -26,6 +27,17 @@ const targets = computed<AimTarget[]>(() => s.aims.value.map((a) => ({ modId: a.
 const keys = computed(() => (s.item.value ? SPAM_KEYS.filter((k) => s.usableBare(k) == null) : []));
 const key = ref<string>("chaos");
 watch(keys, (ks) => { if (ks.length && !ks.includes(key.value as (typeof SPAM_KEYS)[number])) key.value = ks[0]!; }, { immediate: true });
+/** アイテムの下の「カオススパム確率機へ」で持っていたカオスの種類で開く */
+watch(spamKey, (k) => { if (k && SPAM_KEYS.includes(k as (typeof SPAM_KEYS)[number])) key.value = k; }, { immediate: true });
+/** そのボタンから来た時: 狙いが決まったら、この欄を画面の真ん中へ */
+const root = ref<HTMLElement | null>(null);
+function arrive(): void {
+  if (!spamPending.value || !s.aims.value.length) return;
+  spamPending.value = false;
+  void nextTick(() => scrollToTop(root.value, "smooth", "center"));
+}
+onMounted(arrive);
+watch([spamPending, () => s.aims.value], arrive);
 
 /** 自分のスパムの結果 (④ の運試し)。sig = 狙いとカオスの種類 (変わったら別のスパム) */
 interface SpamResult { sig: string; uses: number; applied: number; hit: boolean; reason: string | null; rank: number | null }
@@ -148,7 +160,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
 </script>
 
 <template>
-  <div v-if="s.aims.value.length" data-chaos-spam class="rounded-md bg-black/25 p-2 ring-1 ring-white/10">
+  <div v-if="s.aims.value.length" ref="root" data-chaos-spam class="rounded-md bg-black/25 p-2 ring-1 ring-white/10">
     <div class="flex flex-wrap items-center gap-2">
       <b class="text-[13px] text-[var(--exile-color-text-title)]">{{ tr("カオススパム", "Chaos spam") }}</b>
       <!-- ② カオス・上級・完全 -->
