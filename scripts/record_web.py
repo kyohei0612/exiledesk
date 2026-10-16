@@ -172,6 +172,9 @@ START = {
     "rune": "seed=6&base=Warlord Cuirass&ilvl=82&hands=transmute,augment,regal,exalt,exalt,exalt",
     # 狙いを複数選んで「どれかが付く確率」(ExileDesk 要望 c9dee700、X 用の 30 秒)
     "multi": f"seed=32&{RING}&hands=transmute,augment,regal",
+    # カオススパム確率機 (ExileDesk v0.1.517、X とショート用)
+    # 種 57 = 半分の人 839 回のところ 129 回で上位 10%
+    "spam": f"seed=57&{RING}&hands=transmute,augment,regal",
 }
 
 
@@ -388,6 +391,45 @@ def c_multi(w: Web) -> None:
     pause(2.0)
 
 
+# X 用「カオススパム確率機」: 金の指輪で耐性 2 つ、どちらも T2 以上
+SPAM_AIMS = ("火耐性", "冷気耐性")
+
+
+def c_spam(w: Web) -> None:
+    """カオスを持つ → 確率機へ → 火・冷気の T2 以上 → 100 人の結果 → 押しっぱなしで当たるまで."""
+    p, h = w.page, w.hand
+    w.hold("chaos")
+    pause(0.6)
+    h.click(p.locator("[data-chaos-spam-open]").filter(visible=True).first, 700, 1.0)
+    dlg = w.rec("aim-dialog")
+    for name in SPAM_AIMS:
+        row = dlg.locator("div.mb-1").filter(has=p.locator(f'input[aria-label^="{name}"]')).first
+        h.click(row.locator("button.g-plain").first, 700, 0.8)
+        h.click(row.get_by_role("button", name=re.compile("T2 以上")).first, 700, 0.8)
+        mark(f"選んだ: {name} T2")
+    pause(0.8)
+    h.click(w.rec("aim-decide"), 700, 0.5)
+    p.get_by_text(re.compile("計算中…")).first.wait_for(state="hidden", timeout=60000)
+    mark("100 人の結果")
+    box = p.locator("[data-chaos-spam-hold]").filter(visible=True).first
+    box.scroll_into_view_if_needed()
+    panel = p.locator("div.g-section").filter(has_text="半分の人").filter(visible=True).last
+    w.notes.append({"stats": panel.inner_text()})
+    pause(3.5)
+    h.glide_to(box, 700)
+    pause(0.3)
+    mark("押す: スパム")
+    p.mouse.down()
+    box.wait_for(state="hidden", timeout=120000)  # 付くと押すボタンが運の欄に替わる
+    p.mouse.up()
+    mark("付いた")
+    p.get_by_text(re.compile("運を計算中")).first.wait_for(state="hidden", timeout=60000)
+    pause(0.5)
+    w.notes.append({"result": panel.inner_text()})
+    h.glide(1800, 640, 600)  # 運の欄からどける
+    pause(4.0)
+
+
 CLIPS = {
     "open": c_open,
     "orbs": c_orbs,
@@ -397,6 +439,7 @@ CLIPS = {
     "reveal": c_reveal,
     "rune": c_rune,
     "multi": c_multi,
+    "spam": c_spam,
 }
 # 8 章の静止画: 「要望・バグを送る」に黄色の枠
 FEEDBACK_JS = r"""

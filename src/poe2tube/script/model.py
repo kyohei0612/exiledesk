@@ -50,7 +50,18 @@ Element = Literal["fire", "cold", "lightning", "chaos"]
 Highlight = Literal["added", "rarity", "name", "cost", "step"]
 # 録画の寄る所 (capture/footage.py の ZOOM_BOX、kyohei 2026-10-12「拡大させたりして親切心」)
 FootageZoom = Literal[
-    "card", "history", "modlist", "tiers", "aim", "reveal", "header", "offers", "card_rune"
+    "card",
+    "history",
+    "modlist",
+    "tiers",
+    "aim",
+    "reveal",
+    "header",
+    "offers",
+    "card_rune",
+    "spam_open",
+    "spam_stats",
+    "spam_luck",
 ]
 
 CHARS_PER_MINUTE = 400  # 実測 (2026-09-28): 1.2 倍速 + 話速正規化で 2,502 字 → 370 秒 ≈ 405 字/分

@@ -1,0 +1,113 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】カオスオーブ連打、何回で付く？ ExileDesk のカオススパム確率機 #Shorts",
+  "target_seconds": 32,
+  "result_file": "data/results/exiledesk_promo.json",
+  "layout": "short",
+  "short_title": "カオス連打 何回で付く？",
+  "demos": {},
+  "sections": [
+    {
+      "name": "カオス連打 何回で付く？",
+      "target_seconds": 32,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "カオスオーブ連打って、何回で狙いが付くのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "spam",
+            "at": 0,
+            "hold": 1.8,
+            "zoom": "spam_open"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ExileDeskのカオススパム確率機よ。カオスを持って、ボタンを押すの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "spam",
+            "at": 0.5,
+            "hold": 3.6,
+            "zoom": "spam_open"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "狙いは火耐性と冷気耐性。どっちもT2以上ね。",
+          "scene": {
+            "kind": "footage",
+            "clip": "spam",
+            "at": 3.6,
+            "hold": 9.3,
+            "rate": 1.6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "100人が付くまでスパムすると、半分の人で839回かかるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "spam",
+            "at": 11.4,
+            "hold": 11.8,
+            "zoom": "spam_stats"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "多すぎるのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "spam",
+            "at": 11.8,
+            "hold": 13.9,
+            "zoom": "spam_stats"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "自分でも押しっぱなしでスパム。付いたら自動で止まるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "spam",
+            "at": 13.9,
+            "hold": 17.4,
+            "zoom": "spam_stats"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "129回で付いたのだ！100人中、上位10%の強運なのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "spam",
+            "at": 17.4,
+            "hold": 20.5,
+            "zoom": "spam_luck"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "結果はXでシェアもできるわ。サイトのURLは、関連動画の説明欄よ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "spam",
+            "at": 20.5,
+            "hold": 20.5,
+            "zoom": "spam_luck"
+          }
+        }
+      ]
+    }
+  ]
+}
