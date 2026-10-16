@@ -21,6 +21,14 @@ import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef, watch } from "vue";
 import { htcBaseInfo, loadHtcPatch } from "../services/htc/patch";
 import { REC_START, recNext } from "../utils/rec-mode";
+import { extraFromUrl, videoFromUrl, type StageExtra } from "./stage-extra";
+export type { ResistsBlock, StageExtra } from "./stage-extra";
+import { simPicked, simShowMods, simSockets, simStart, simStartItem, simPendingRecipe, simStartCost, simTargets, simAltFor, simOrder, simPatterns, simPlayLeft, simQuizActive } from "./sim-state";
+export type { SimStart, SimTargets } from "./sim-state";
+import { aims, aimPicker, modJump, modOverlay } from "./aim-state";
+export { AIM_MAX, type AimPick } from "./aim-state";
+import { fullSockets, planStepOf, type PlanStep } from "./stage-steps";
+export * from "./sim-recipes";
 /** ?base=<英語名> (ベースの読み物のページから来た時)。録画モードの base= とは別 */
 export const URL_BASE: string | null = (() => { try { return new URLSearchParams(location.search).get("base"); } catch { return null; } })();
 import { loadCurrencyHover } from "../services/currency/currency-hover";
@@ -35,23 +43,12 @@ import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey }
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem, StageMod } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
-import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
-import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../services/craft-stage/defence";
-import { baseSocketsOf } from "../services/craft-stage/stage-runes";
+import type { PobBlock } from "../services/craft-stage/stage-pob";
 import { tr, lang } from "../i18n/lang";
 import { decodeShare, SHARE_ENABLED, shareBlock, shareCodeOf } from "../services/craft-stage/share";
 import { trackOnce } from "../utils/track";
 import { methodOfTarget, quizFromSim } from "../services/craft-stage/quiz-build";
 import { nextMove, type QuizRecipe } from "../services/craft-stage/quiz-recipe";
-/**
- * 手で打つ画面の新品は、規格外のソケット数 (熟練工で付けられる数 +1) で始める (2026-10-04 オーナー「オーブ刺すのめんどいから、ソケットも初めからデフォでマックス」)。
- * 手順 JSON の再生 (動画) は手順どおりなので開けない
- */
-const fullSockets = (it: StageItem): StageItem => {
-  // 規格外 (ドロップで熟練工の上限 +1。胴・両手 3 / ほか 2) で始める (2026-10-05 オーナー「デフォでもう規格外でソケットしていい、ドロップで落ちるソケットをデフォで 2 個以上」)
-  const want = baseSocketsOf(it.base, it.cls.category);
-  return want > (it.sockets ?? 0) ? { ...it, sockets: want } : it;
-};
 
 const data = shallowRef<PatchData | null>(null);
 const item = shallowRef<StageItem | null>(null);
@@ -98,81 +95,8 @@ const itemLevel = ref(82);
  * 時刻の情報は window.__stageAnim ([[anim-clock.ts]])
  */
 const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?: "default" | "clip"; offers?: boolean; animT?: number | "end" | "pick" | null } | null>(null);
-/**
- * 動画用の別の画面 (POE2Tube 要望 ⑪、2026-09-29)。URL の view= で開く (手順は要らない):
- *   view=tiers&base=<英語のベース名>&mod=<MOD の id か系統>&ilvl=N … 段の表
- *   view=compare&a=<手順 JSON>&b=<手順 JSON>[&a_step=N&b_step=N] … 2 つのアイテムを並べて違いを出す
- */
-export type StageExtra =
-  // hl = false: 答えの金の段を出さない (&hl=0、POE2Tube 要望 ⑯「ネタバレは避けたい」)
-  | { kind: "tiers"; base: string; mod: string; ilvl: number | null; hl: boolean; floor: number | null }
-  // aPob / bPob: 結果 JSON の pob (要望 ⑰-3、&a_pob= / &b_pob=)。あれば真ん中の差に DPS の差も出す
-  | { kind: "compare"; a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number; aPob: PobBlock | null; bPob: PobBlock | null }
-  // 耐性の画面 (要望 ⑰-4): r = craft-stage-run.mjs --resists の結果、act = どのペナルティを出すか、penalty = false でペナルティ後を出さない
-  | { kind: "resists"; r: ResistsBlock; act: number | null; penalty: boolean }
-  // 倒すまでの時間 (要望 ⑰-15): a / b = 結果 JSON の pob、step = どの手の武器か、label = 左右の札
-  | { kind: "ttk"; a: PobBlock; aStep: number; aLabel: string; b: PobBlock | null; bStep: number; bLabel: string }
-  // 受けるダメージ (要望 ⑰-16): pob のその手のキャラのライフ、elem の一撃、res = 左右の耐性 (%)、dmg = 一撃の指定 (無ければ PoB の既定)
-  | { kind: "hit"; pob: PobBlock; step: number; elem: string; res: number[]; dmg: number | null }
-  // DPS の内訳 (要望 ⑰-5)
-  | { kind: "dps"; pob: PobBlock; step: number }
-  // 防御の仕組み (要望 ㉒-B): ダメージが減る順番 / アーマーのグラフ / 回避と受け流し / ES とライフ / 防具のベース
-  | { kind: "layers"; d: Defender; hit: number; dmgKind: DamageKind; acc: number; outcome: Outcome; red: boolean; lvl: number | null }
-  | { kind: "armour"; ar: number[]; labels: string[]; max: number | null; hit: number | null }
-  | { kind: "evasion"; ev: number; deflect: number; acc: number; lvl: number | null; n: number; red: boolean }
-  | { kind: "es"; life: number; es: number; dmg: number; hits: number[]; esKind: "phys" | "chaos" | "bleed"; until: number }
-  | { kind: "bases"; slot: string; early: number; late: number }
-  // エッセンスの強さの比べ (要望 ㉔-6): name = Essence of ○○ の ○○、part = 強調する部位の言葉
-  | { kind: "essence"; name: string; part: string | null };
-/** craft-stage-run.mjs --resists の結果 (耐性の画面に URL で渡す) */
-export interface ResistsBlock {
-  version: string;
-  items: Array<{ name: string; base: string; rarity: string }>;
-  /** 装備だけの耐性の合計 (アイテム無しとの差) */
-  equip?: Record<"fire" | "cold" | "lightning" | "chaos", number>;
-  rows: Array<{
-    penalty: number;
-    label: string;
-    resists: PobStat["resists"];
-    /** 内訳 (要望 ⑳): 元の値 (ペナルティ) / クエストの報酬 / 装備 (どれも PoB の値) */
-    parts?: Record<"fire" | "cold" | "lightning" | "chaos", { base: number; quests: number; equip: number }>;
-  }>;
-  /** 使った前提 (要望 ⑳): 設定の言葉と入れたクエストの報酬 */
-  config_ja?: string;
-  quests?: Array<{ act: number; area: string; stat: string; on: boolean }>;
-}
 const extra = ref<StageExtra | null>(null);
 
-/**
- * 防御の画面 (要望 ㉒-B) の URL → 中身。キャラは &pob=<結果 JSON の pob>&step=N (ライフ・ES・アーマー・回避力・耐性) を元に、
- * &life= &es= &armour= &evasion= &deflect= &block= &res= で上書き。敵は &lvl= (命中力・一撃の表)、&acc= / &dmg= で上書き
- */
-function defenceView(view: string, q: URLSearchParams): StageExtra {
-  const num = (k: string): number | null => (q.get(k) != null && q.get(k) !== "" && Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : null);
-  const list = (k: string): number[] => (q.get(k) ? q.get(k)!.split(",").filter((x) => x.trim() !== "").map(Number).filter((x) => Number.isFinite(x)) : []);
-  const pobBlock = q.get("pob") ? (JSON.parse(q.get("pob")!) as PobBlock) : null;
-  const st = pobBlock?.steps?.[Math.min(num("step") ?? 9999, (pobBlock.steps?.length ?? 1) - 1)] ?? null;
-  const lvl = num("lvl") ?? pobBlock?.enemy?.level ?? null;
-  const acc = num("acc") ?? (lvl ? monsterAccuracy(lvl) : 0);
-  if (view === "armour") return { kind: "armour", ar: list("ar").length ? list("ar") : [st?.armour ?? 1000], labels: (q.get("labels") ?? "").split(",").filter(Boolean), max: num("max"), hit: num("hit") };
-  if (view === "evasion") return { kind: "evasion", ev: num("ev") ?? st?.evasion ?? 0, deflect: num("deflect") ?? 0, acc, lvl, n: num("n") ?? 10, red: q.get("red") !== "0" };
-  if (view === "bases") return { kind: "bases", slot: q.get("slot") ?? "body", early: num("early") ?? 1, late: num("late") ?? 80 };
-  const life = num("life") ?? Math.round(st?.life ?? 1000);
-  const es = num("es") ?? Math.round(st?.es ?? 0);
-  if (view === "es") {
-    const hits = list("hits");
-    const kind = q.get("kind");
-    return { kind: "es", life, es, dmg: num("dmg") ?? 200, hits: hits.length ? hits : [0.8, 1.6, 2.4], esKind: kind === "chaos" || kind === "bleed" ? kind : "phys", until: num("until") ?? 12 };
-  }
-  const kinds: DamageKind[] = ["physical", "fire", "cold", "lightning", "chaos"];
-  const dmgKind = (kinds.includes(q.get("kind") as DamageKind) ? q.get("kind") : "physical") as DamageKind;
-  const outcomes: Outcome[] = ["hit", "evade", "deflect", "block"];
-  const outcome = (outcomes.includes(q.get("outcome") as Outcome) ? q.get("outcome") : "hit") as Outcome;
-  const resist = num("res") ?? (dmgKind === "physical" ? 0 : (st?.resists?.[dmgKind]?.value ?? 0));
-  const d: Defender = { life, es, armour: num("armour") ?? Math.round(st?.armour ?? 0), evasion: num("evasion") ?? Math.round(st?.evasion ?? 0), deflection: num("deflect") ?? 0, block: num("block") ?? 0, resist };
-  const hit = num("dmg") ?? pobBlock?.enemy?.hit ?? (lvl ? Math.round((DEF.monsterDamage[lvl - 1] ?? 0) * 1.5) : 500);
-  return { kind: "layers", d, hit, dmgKind, acc, outcome, red: q.get("red") === "1", lvl };
-}
 /** スポットライト (URL の focus=<MOD の id か系統>)。動画モードのアイテム枠でその行だけ光らせる */
 const focus = ref<string | null>(null);
 /** MOD の横にタグの札を出す (URL の tags=1、POE2Tube 要望 ㉔-5)。ゲームの中では見えないので動画で「データサイトで確認」と言う用 */
@@ -198,58 +122,13 @@ const mode = ref<"hand" | "sim" | "tutorial">("hand");
 export const SIM_LOCKED = !isTauriRuntime() && !import.meta.env.DEV;
 watch(mode, (m) => { if (SIM_LOCKED && (m === "sim" || m === "tutorial")) mode.value = "hand"; }, { immediate: true, flush: "sync" });
 
-/** method = 付け方 (順番どおりのシミュレーション、[[recipe-sim.ts]])。省くと MOD の種類で決める (普通 = 高貴、冒涜 = 冒涜、エッセンス = エッセンス) */
-/**
- * シミュレーションはベース選びから (2026-10-05 オーナー「実験開いたらベース決めからでしょ、ベースはデフォは選択なしでスタート」)。
- * simPicked = このタブでベースを選んだ。simShowMods = 下の MOD 一覧を出す段まで来た (② 付ける順番から)
- */
-const simPicked = ref(false);
-const simShowMods = ref(false);
-/** シミュレーションの白のベースのソケットの数 (1 ベースの枠で選ぶ。null = まだ) */
-const simSockets = ref<number | null>(null);
-/**
- * 始め方 (1 ベースの枠で選ぶ。2026-10-08 オーナー「フラクチャー MOD を選んでそこからシミュレーターしたい場合は最初の段階から選択式がいい」)。
- * white = 白のベースから / fractured = 固定済みのベースを買う (固定 MOD は 2 狙う MOD の最初の 1 つ) / four = 4 MOD のレア (3 MOD + 狙い 1) を買って自分で固定。
- * 4 最安値スタートの 3 ルートを前に出した物。white 以外は 4 を飛ばし、始めのベース代は 3 で入れた値段
- */
-export type SimStart = "white" | "fractured" | "four" | "item" | "magic";
-const simStart = ref<SimStart>("white");
-/**
- * 手で打つ画面から持ってきた始めの状態 (2026-10-08 オーナー「その MOD が付いた状態以降を確認したい時があるから、手打ちからそのまま持っていくコース」)。
- * simStart = "item" の時だけ使う。simStartCost = その時点の手打ちの累計 (高貴)
- */
 /** Web 版の工程を覚える手の数 */
 export const LOG_KEEP = 50;
-/** 手順 JSON の 1 手 (plan の steps の 1 つ) */
-type PlanStep = CraftStagePlan["steps"][number];
 /**
  * 50 手より前に消した手の、手順 JSON に書く分だけ (重い打つ前 / 後のアイテムは持たない)。
  * 消した手も手順に要る (無いと再生で始めの方の手が抜け、送った人のアイテムにならなかった。2026-10-16 要望 0ce15a82 の決闘のワンド)
  */
 const dropped = shallowRef<Array<{ step: PlanStep; index: number }>>([]);
-/** 打った手 1 つを手順 JSON の 1 手に。カタリストは手で打つと 1 手で上限まで、再生は 1 手 = 1 個 (+1%)。上げた分の回数で書く (2026-10-10 点検: 再生で品質が違った) */
-function planStepOf(s: PlayedStep): PlanStep {
-  const times = s.out.currency.startsWith("catalyst_") || s.out.currency.startsWith("jcatalyst_") ? Math.max(1, (s.after.quality ?? 0) - (s.before.qualityTag === s.after.qualityTag ? s.before.quality ?? 0 : 0)) : 1;
-  return { currency: s.out.currency, omen: s.out.omen ?? null, times, note: null, ...(s.out.seed != null ? { seed: s.out.seed } : {}) } as PlanStep;
-}
-const simStartItem = ref<StageItem | null>(null);
-/** ベースを選ぶ前に選んだレシピ (StageSimPanel が開いたら読み込む。2026-10-08 完成判定: レシピはベースを選ぶまで出なかった) */
-const simPendingRecipe = ref<string | null>(null);
-const simStartCost = ref(0);
-const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }>>([]);
-/** ② のこの手順 (本体の modId) の「あるいは」を選ぶポップアップを開いている ([[StageFracturePicker.vue]] の altFor) */
-const simAltFor = ref<string | null>(null);
-/**
- * 5 順番計画 (2026-10-06 オーナー「5 番は指標、順番計画みたいな欄のタイトルで今後には影響しない。付ける MOD を選ぶ時のプルダウンの順番をこれどおりに」
- * 「ルーンとかも付けていく順番を考えないといけないから順に表示」)。並びのキー: "mod:<modId>" / "rune:<英語名>"
- */
-const simOrder = ref<string[]>([]);
-/** 6 パターン (pattern.ts)。回すのはこの手の通り */
-const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }]);
-/** パターンの名前 → ハズレルート設定で決めていない形の数 (開いたパターンだけ。残っていれば回さない。2026-10-10 オーナー「ハズレ設定しないと回せない」) */
-const simPlayLeft = ref<Record<string, number>>({});
-/** シミュレーターで開いているパターンの名前 (エミュレーターの「レシピで 1 手」が使うクイズのレシピ) */
-const simQuizActive = ref<string | null>(null);
 /** エミュレーターで再生するクイズのレシピ (開いているパターン、無ければ答えのある最初のパターン)。今のベースと狙う MOD で組む */
 const handQuiz = computed<QuizRecipe | null>(() => {
   const d = data.value;
@@ -259,160 +138,7 @@ const handQuiz = computed<QuizRecipe | null>(() => {
   if (!p?.quiz) return null;
   return quizFromSim({ data: d, base: base.value, itemLevel: itemLevel.value, start: "white", startPrice: 0, targets: simTargets.value.map((t) => ({ ...t, method: methodOfTarget(d, t) })) }, p.quiz).recipe;
 });
-/**
- * エミュレーターの「狙う」(2026-10-09): 狙う MOD (その段以上)。最大 6 つ (2026-10-16 にカオススパムに合わせて 4 → 6)、全部揃えば当たり。
- * 棚の上に打ち方ごとの揃う確率を出す (StageAimPanel.vue)
- */
-/** at = 押した段の印 (MOD 一覧の data-aim-at。確率の一覧の「＋ 足す」でそこへ戻る) */
-const aims = ref<Array<{ modId: string; minTierIndex: number; label: string; at?: string }>>([]);
-/** 狙いの数 (2026-10-16 カオススパムモードに合わせて 4 → 6。オーナーのメモ「MOD を選ぶ (複数でも可) 最高 6 MOD」) */
-export const AIM_MAX = 6;
-export type AimPick = { modId: string; minTierIndex: number; label: string; at?: string };
-/**
- * 「次の手で狙う」の選ぶ窓 (StageAimPicker.vue)。seed = 押した段 (最初からチェックが入る)。null = 閉じている
- * (2026-10-09 オーナー「押したらチェックボックスで複数狙えるように別でポップアップ、選択しなくて単体でも進めるように」)
- */
-/** 狙う MOD を選ぶ窓。spam = カオススパム確率機の狙い (spamAims) を選ぶ */
-const aimPicker = ref<{ seed: AimPick | null; spam?: boolean } | null>(null);
-/** カードの MOD を押した: MOD の一覧のその行まで飛ぶ (StageModList が見る。n は同じ MOD を続けて押しても動くように) */
-const modJump = ref<{ modId: string; n: number } | null>(null);
-/** MOD 一覧を画面いっぱいの重ね (後ろを暗く) で開いている (2026-10-11 オーナー「MOD 一覧は飛ばずに全部画面に出して、閉じる・Tab でいつでも」) */
-const modOverlay = ref(false);
 
-/**
- * シミュレーションの途中 (ベース・狙う MOD・工程の「決めた」・順番計画・パターン) を覚えて、開き直した時にそのまま出す
- * (2026-10-07 オーナー「変わってない所はキャッシュでパッと表示させろ」)。工程の「決めた」は StageSimPanel が持つので flags に入れてもらう
- */
-export const SIM_SESSION_KEY = "exiledesk.craftStageSim.session";
-export interface SimSession {
-  base: string; itemLevel: number; targets: typeof simTargets.value; sockets: number | null; order: string[]; patterns: Pattern[];
-  /** 始め方 (無ければ白から) と、手打ちから持ってきた始めの状態 */
-  start?: SimStart;
-  startItem?: StageItem | null;
-  startCost?: number;
-  /** 入れたベース代 (高貴建て)。呼び出した時に、そのベースの覚えた値段が無ければこれを入れる */
-  prices?: { white?: number | null; four?: number | null; bought?: number | null; item?: number | null; magic?: number | null };
-  flags: Record<string, boolean>;
-}
-export function readSimSession(): SimSession | null {
-  try { const v = JSON.parse(localStorage.getItem(SIM_SESSION_KEY) ?? "null") as SimSession | null; return v && v.base ? v : null; } catch { return null; }
-}
-export function writeSimSession(v: SimSession | null): void {
-  try { if (v) localStorage.setItem(SIM_SESSION_KEY, JSON.stringify(v)); else localStorage.removeItem(SIM_SESSION_KEY); } catch { /* 覚えられなくても動く */ }
-}
-
-/**
- * レシピ: シミュレーションの途中 (ベース・狙い・順番・パターン・工程の「決めた」) を名前を付けて残す
- * (2026-10-07 オーナー「このガチャの仕組みシミュレーターで保管しときたい」「レシピ保存ボタンで管理、名前も自分で変えて」)
- */
-export const SIM_RECIPES_KEY = "exiledesk.craftStageSim.recipes";
-/** 直前の一覧の控え (保存・名前替え・削除の前に置く。本体が読めなかった時はここから戻す) */
-const SIM_RECIPES_BAK = "exiledesk.craftStageSim.recipes.bak";
-/** 読み替えられなかった物 (捨てずにここへ。いつか読める版で拾い直せるように) */
-const SIM_RECIPES_UNREAD = "exiledesk.craftStageSim.recipes.unread";
-/**
- * レシピの形の版。形を変えたら上げて、normalizeRecipe で古い形を読み替える (2026-10-07 オーナー「更新でレシピがなくならないように」)。
- * キー (SIM_RECIPES_KEY) は変えない
- */
-export const RECIPE_FORMAT = 1;
-export interface SimRecipe { id: string; name: string; savedAt: number; session: SimSession; /** 一覧に出すベースの日本語名 */ baseJa?: string; /** 形の版 */ v?: number }
-
-/** 古い形・欠けた所のあるレシピを今の形に。ベースが無い物は読めない (null) */
-export function normalizeRecipe(x: unknown): SimRecipe | null {
-  if (!x || typeof x !== "object") return null;
-  const r = x as Partial<SimRecipe> & Record<string, unknown>;
-  const ses = (r.session ?? {}) as Partial<SimSession> & Record<string, unknown>;
-  if (typeof ses.base !== "string" || !ses.base) return null;
-  const patterns = Array.isArray(ses.patterns) ? ses.patterns.filter((p) => p && typeof p === "object").map((p) => ({ ...p, name: String((p as Pattern).name ?? "パターン"), steps: Array.isArray((p as Pattern).steps) ? (p as Pattern).steps : [] })) as Pattern[] : [];
-  return {
-    ...r,
-    id: typeof r.id === "string" && r.id ? r.id : `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    name: typeof r.name === "string" && r.name ? r.name : ses.base,
-    savedAt: typeof r.savedAt === "number" ? r.savedAt : Date.now(),
-    v: RECIPE_FORMAT,
-    session: {
-      ...ses,
-      base: ses.base,
-      itemLevel: typeof ses.itemLevel === "number" ? ses.itemLevel : 82,
-      targets: Array.isArray(ses.targets) ? ses.targets : [],
-      sockets: typeof ses.sockets === "number" ? ses.sockets : null,
-      order: Array.isArray(ses.order) ? ses.order : [],
-      patterns,
-      flags: ses.flags && typeof ses.flags === "object" ? ses.flags : {},
-    } as SimSession,
-  };
-}
-
-function parseList(raw: string | null): unknown[] | null {
-  if (raw == null) return null;
-  try { const v = JSON.parse(raw) as unknown; return Array.isArray(v) ? v : null; } catch { return null; }
-}
-/** 読めない物は捨てずに控えに足す (同じ物は重ねない) */
-function keepUnread(xs: unknown[]): void {
-  if (!xs.length) return;
-  try {
-    const cur = parseList(localStorage.getItem(SIM_RECIPES_UNREAD)) ?? [];
-    const seen = new Set(cur.map((x) => JSON.stringify(x)));
-    localStorage.setItem(SIM_RECIPES_UNREAD, JSON.stringify([...cur, ...xs.filter((x) => !seen.has(JSON.stringify(x)))]));
-  } catch { /* 無くてよい */ }
-}
-/**
- * 2026-10-10 オーナー「レシピリセット」: 試しで作ったレシピを 1 回だけ空にする (アプリだけ。Web の人のレシピは触らない)。
- * 消す前の一覧は before-reset に残す (戻す時用)
- */
-const SIM_RECIPES_RESET = "exiledesk.craftStageSim.recipes.reset-2026-10-10";
-function resetRecipesOnce(): void {
-  if (!isTauriRuntime() || localStorage.getItem(SIM_RECIPES_RESET)) return;
-  const prev = localStorage.getItem(SIM_RECIPES_KEY);
-  if (prev) localStorage.setItem("exiledesk.craftStageSim.recipes.before-reset", prev);
-  localStorage.setItem(SIM_RECIPES_KEY, "[]");
-  localStorage.removeItem(SIM_RECIPES_BAK);
-  localStorage.setItem(SIM_RECIPES_RESET, "1");
-}
-export function readSimRecipes(): SimRecipe[] {
-  try {
-    resetRecipesOnce();
-    // 本体が読めなければ控えから
-    const main = parseList(localStorage.getItem(SIM_RECIPES_KEY));
-    const list = main ?? parseList(localStorage.getItem(SIM_RECIPES_BAK)) ?? [];
-    const ok: SimRecipe[] = [], bad: unknown[] = [];
-    for (const x of list) { const r = normalizeRecipe(x); if (r) ok.push(r); else bad.push(x); }
-    keepUnread(bad);
-    return ok;
-  } catch { return []; }
-}
-export function writeSimRecipes(v: SimRecipe[]): void {
-  try {
-    // 書き換える前の一覧を控えに (読める時だけ。壊れた物で控えを上書きしない)
-    const prev = localStorage.getItem(SIM_RECIPES_KEY);
-    if (parseList(prev)) localStorage.setItem(SIM_RECIPES_BAK, prev!);
-    localStorage.setItem(SIM_RECIPES_KEY, JSON.stringify(v.map((r) => ({ ...r, v: RECIPE_FORMAT }))));
-  } catch { /* 覚えられなくても動く */ }
-}
-
-/** 書き出し (ファイル 1 つ。URL を移す時・PC を替える時に持っていく) */
-export const RECIPE_FILE_KIND = "exiledesk-recipes";
-export function recipesToFile(v: readonly SimRecipe[]): string {
-  return JSON.stringify({ kind: RECIPE_FILE_KIND, v: RECIPE_FORMAT, exportedAt: new Date().toISOString(), recipes: v }, null, 1);
-}
-/** 読み込み: 書き出したファイル (か、レシピの配列) から。今の一覧に無い物だけ足す (同じ id・同じ時刻は重ねない、id だけ同じなら新しい id で) */
-export function mergeRecipesFromFile(text: string, cur: readonly SimRecipe[]): { list: SimRecipe[]; added: number; skipped: number; bad: number } {
-  let raw: unknown;
-  try { raw = JSON.parse(text); } catch { return { list: [...cur], added: 0, skipped: 0, bad: 1 }; }
-  const arr = Array.isArray(raw) ? raw : raw && typeof raw === "object" && Array.isArray((raw as { recipes?: unknown }).recipes) ? (raw as { recipes: unknown[] }).recipes : [];
-  const list = [...cur];
-  let added = 0, skipped = 0, bad = 0;
-  for (const x of arr) {
-    const r = normalizeRecipe(x);
-    if (!r) { bad++; continue; }
-    const same = list.find((y) => y.id === r.id);
-    if (same && same.savedAt === r.savedAt) { skipped++; continue; }
-    list.push(same ? { ...r, id: `${r.id}-${Math.random().toString(36).slice(2, 6)}` } : r);
-    added++;
-  }
-  list.sort((a, b) => b.savedAt - a.savedAt);
-  return { list, added, skipped, bad };
-}
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
@@ -481,30 +207,7 @@ export const craftStage = {
       const raw = q.get("stage-plan");
       focus.value = q.get("focus");
       showTags.value = q.get("tags") === "1";
-      const view = q.get("view");
-      if (view === "tiers") {
-        const ilvl = Number(q.get("ilvl"));
-        extra.value = { kind: "tiers", base: q.get("base") ?? "", mod: q.get("mod") ?? "", ilvl: Number.isFinite(ilvl) && ilvl > 0 ? ilvl : null, hl: q.get("hl") !== "0", floor: Number(q.get("floor")) > 0 ? Number(q.get("floor")) : null };
-      } else if (view === "compare") {
-        const num = (k: string) => (q.get(k) != null ? Number(q.get(k)) : 9999);
-        const pj = (k: string) => (q.get(k) ? (JSON.parse(q.get(k)!) as PobBlock) : null);
-        extra.value = { kind: "compare", a: JSON.parse(q.get("a") ?? "{}") as CraftStagePlan, b: JSON.parse(q.get("b") ?? "{}") as CraftStagePlan, aStep: num("a_step"), bStep: num("b_step"), aPob: pj("a_pob"), bPob: pj("b_pob") };
-      } else if (view === "ttk") {
-        const num = (k: string) => (q.get(k) != null ? Number(q.get(k)) : 9999);
-        extra.value = { kind: "ttk", a: JSON.parse(q.get("a_pob") ?? "{}") as PobBlock, aStep: num("a_step"), aLabel: q.get("a_label") ?? "A", b: q.get("b_pob") ? (JSON.parse(q.get("b_pob")!) as PobBlock) : null, bStep: num("b_step"), bLabel: q.get("b_label") ?? "B" };
-      } else if (view === "hit") {
-        const res = (q.get("res") ?? "50,75").split(",").map(Number).filter((x) => Number.isFinite(x));
-        extra.value = { kind: "hit", pob: JSON.parse(q.get("pob") ?? "{}") as PobBlock, step: q.get("step") != null ? Number(q.get("step")) : 9999, elem: q.get("elem") ?? "fire", res, dmg: q.get("dmg") != null ? Number(q.get("dmg")) : null };
-      } else if (view === "dps") {
-        extra.value = { kind: "dps", pob: JSON.parse(q.get("pob") ?? "{}") as PobBlock, step: q.get("step") != null ? Number(q.get("step")) : 9999 };
-      } else if (view === "layers" || view === "armour" || view === "evasion" || view === "es" || view === "bases") {
-        extra.value = defenceView(view, q);
-      } else if (view === "essence") {
-        extra.value = { kind: "essence", name: q.get("name") ?? "body", part: q.get("part") };
-      } else if (view === "resists") {
-        const act = q.get("act");
-        extra.value = { kind: "resists", r: JSON.parse(q.get("r") ?? "{}") as ResistsBlock, act: act != null ? Number(act) : null, penalty: q.get("penalty") !== "0" };
-      }
+      extra.value = extraFromUrl(q);
       if (q.get("stage-pob")) pob.value = JSON.parse(q.get("stage-pob")!) as PobBlock;
       // 再生は費用も出すので相場を待つ (手で打つ時は待たない。値段は打った時に引く)
       if (raw) await market;
@@ -543,23 +246,7 @@ export const craftStage = {
         for (const k of REC_START.hands) craftStage.use(k);
         held.value = null;
       }
-      if (raw && wantVideo) {
-        const at = q.get("anim_t");
-        // &offers=1 (発現の 3 択の静止画) は、同じ手つきを 3 択が出そろった瞬間 (pick_ms) で止めた絵 (POE2Tube 要望 ㉗: 静止画と手つきの
-        // 切り替わりで絵が飛ばないように)
-        const animT: number | "end" | "pick" | null = at != null
-          ? at === "end" ? "end" : Number.isFinite(Number(at)) ? Math.max(0, Number(at)) : null
-          : q.get("offers") === "1" ? "pick" : null;
-        video.value = {
-          // 手つきを時刻で止める時は 1 つ前の手から始めて、step 手目を打つ
-          from: Math.max(0, Math.min(step, log.value.length) - (animT != null ? 1 : 0)),
-          animT,
-          autoplay: q.get("autoplay") === "1",
-          controls: q.get("controls") !== "0",
-          layout: q.get("layout") === "clip" ? "clip" : "default",
-          offers: q.get("offers") === "1",
-        };
-      }
+      if (raw && wantVideo) video.value = videoFromUrl(q, step, log.value.length);
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     }
