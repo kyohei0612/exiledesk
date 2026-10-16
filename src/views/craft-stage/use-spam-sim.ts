@@ -4,7 +4,10 @@
  * 「計算中は重いから、自分でスパムできるのは計算後」)。
  *
  * 1 種類ずつ 100 人を少しずつ (画面を止めない)。おすすめ = 半分の人が付くまでの費用 (回数 × 1 個の値段) が一番安い物。
- * 値段の無いカオスは比べない (全部無ければおすすめは無し)。半分の人が付かない物 (付かない人が多い) も外す
+ * 値段の無いカオスは比べない (全部無ければおすすめは無し)。半分の人が付かない物 (付かない人が多い) も外す。
+ * 一度計算した組み合わせ (同じ始めのアイテム・狙い・アイテムレベル) は覚えておいて使い回す。消すのは clear (狙いの足す・変える・閉じた時)
+ * (2026-10-16 オーナー「その枠での作業内なら同じ動作したことあるならキャッシュでおｋ」「アイテムレベルとかは再計算」)。
+ * 自分でスパムする方は毎回ちがう乱数 (ステージの 1 手と同じ。オーナー「連続でカオス打ちたい人もいるから毎回乱数で」)
  */
 import { computed, ref } from "vue";
 import { medianOf, spamOne, SPAM_PEOPLE, type SpamStats } from "../../services/craft-stage/chaos-spam";
@@ -21,25 +24,26 @@ export function useSpamSim(o: { price: (key: string) => number }) {
   const total = ref(0);
   /** 計算中 (この間は自分でスパムできない) */
   const busy = computed(() => total.value > 0 && done.value < total.value);
-  /** 何について計算したか (狙い・アイテムレベル。カオスの種類は入れない) と、始めのアイテム */
+  /** 何について計算したか (狙い・アイテムレベル。カオスの種類は入れない) */
   const simFor = ref("");
-  let simItem: StageItem | null = null;
   let gen = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  /** 覚えている計算: 始めのアイテム → 印 → 種類ごとの結果 */
+  let cache = new WeakMap<object, Map<string, Record<string, SpamStats>>>();
+  function clear(): void { cache = new WeakMap(); }
 
-  /** 同じ始めのアイテム・同じ狙いで計算済み (か計算中) なら true */
-  const same = (start: StageItem | null, sig: string): boolean => start === simItem && sig === simFor.value && (busy.value || Object.keys(all.value).length > 0);
-
-  /** start から、keys の種類を順に 100 人ずつ。終わったら onDone */
-  function simulate(data: PatchData | null, start: StageItem | null, ts: readonly AimTarget[], keys: readonly string[], sig: string, onDone?: () => void): void {
+  /** start から、keys の種類を順に 100 人ずつ。終わったら onDone。src = 覚える時の鍵 (アイテムレベルを替える前の、計算機の外のアイテム) */
+  function simulate(data: PatchData | null, start: StageItem | null, ts: readonly AimTarget[], keys: readonly string[], sig: string, onDone?: () => void, src: StageItem | null = start): void {
     const my = ++gen;
     clearTimeout(timer);
     all.value = {};
     done.value = 0;
-    simItem = start;
     simFor.value = sig;
     total.value = data && start && ts.length ? keys.length * SPAM_PEOPLE : 0;
     if (!total.value) return;
+    // 同じ組み合わせを計算したことがあれば、それを使う
+    const hit = src ? cache.get(src)?.get(sig) : undefined;
+    if (hit && keys.every((k) => hit[k])) { all.value = { ...hit }; done.value = total.value; onDone?.(); return; }
     let ki = 0, i = 0, failed = 0;
     let tries: number[] = [];
     const step = (): void => {
@@ -57,6 +61,7 @@ export function useSpamSim(o: { price: (key: string) => number }) {
         }
       }
       if (ki < keys.length) { timer = setTimeout(step, 0); return; }
+      if (src) { const m = cache.get(src) ?? new Map<string, Record<string, SpamStats>>(); m.set(sig, all.value); cache.set(src, m); }
       onDone?.();
     };
     timer = setTimeout(step, 0);
@@ -76,5 +81,5 @@ export function useSpamSim(o: { price: (key: string) => number }) {
     for (const k of Object.keys(all.value)) { const c = costOf(k); if (c != null && c < bc) { bc = c; b = k; } }
     return b;
   });
-  return { all, done, total, busy, simFor, same, simulate, stop, costOf, best };
+  return { all, done, total, busy, simFor, simulate, stop, clear, costOf, best };
 }

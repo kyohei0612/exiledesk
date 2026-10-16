@@ -85,15 +85,17 @@ const sig = (): string => `${key.value}|${simSig()}`;
 const statsFresh = (): boolean => sim.simFor.value === simSig();
 /** 手で選んだカオス (計算が済んでもおすすめに替えない)。狙いが変わったら外す */
 let picked = false;
-watch(targets, () => { picked = false; });
+// 狙いを足す・変えたら、覚えている計算も消す (2026-10-16 オーナー)
+watch(targets, () => { picked = false; sim.clear(); });
 function pickKey(k: string): void { picked = true; key.value = k; }
 /** 計算した時のアイテム (同じアイテム・同じ印なら、カオスの種類を替えても計算し直さない) */
 let simSrc: StageItem | null = null;
 /** start のアイテムから、打てるカオス全部を 100 人ずつ。auto = 済んだらおすすめを選ぶ */
-function simulate(start = atIlvl(s.item.value), auto = true): void {
+/** src = 覚える鍵 (計算機の外のアイテム。アイテムレベルを替えた写しは毎回別物になるので) */
+function simulate(start = atIlvl(s.item.value), auto = true, src: StageItem | null = s.item.value): void {
   sim.simulate(s.data.value, start, targets.value, keys.value, simSig(), () => {
     if (auto && !picked && !spamming.value && sim.best.value && sim.best.value !== key.value) key.value = sim.best.value;
-  });
+  }, src);
 }
 /**
  * カオスの種類を替えた時: 計算は全部の種類で済んでいるので、覚えている物を使う。スパムの後なら、スパムの前の状態に戻して
@@ -128,6 +130,7 @@ watch([ilvl, targets, () => s.item.value], ([lv, ts], [lv0, ts0]) => {
  */
 function closeSpam(): void {
   stopSpam();
+  sim.clear();
   result.value = null;
   snap = null;
   spamKey.value = null;
@@ -223,7 +226,7 @@ function finish(hit: boolean, reason: string | null): void {
   result.value = { sig: sig(), uses: l.uses, applied: l.applied, hit, reason, rank: hit && st ? rankOf(st, l.uses) : null };
   // 100 人の結果がまだ無ければ、スパムの前の状態から出して運を比べる
   if (hit && !st && startItem) {
-    simulate(startItem, false);
+    simulate(startItem, false, startItem);
     const stop = watch(stats, (v) => { if (v && result.value?.hit) { result.value = { ...result.value, rank: rankOf(v, result.value.uses) }; stop(); } });
   }
   // 使われ方は「計算機を何回回したか」だけ (中で打ったカオスは手数に数えない、2026-10-16 オーナー)
