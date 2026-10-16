@@ -14,7 +14,10 @@ import { craftStage } from "../../state/craft-stage";
 import { iconOfKey, nameOfKey } from "../../state/craft-stage-shelf";
 import { baseNameOf, tr } from "../../i18n/lang";
 import { jaTypeName } from "../../services/trade2/localize";
-import { jaOfMod } from "../../services/htc/mod-text";
+import { aimLabel } from "../../services/craft-stage/mod-list";
+import { fillModText } from "../../services/htc/mod-text";
+import { oneOfMod } from "../../services/craft-stage/stage-core";
+import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import StageItemCard from "./StageItemCard.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import Icon from "../../components/ui/Icon.vue";
@@ -105,9 +108,8 @@ onBeforeUnmount(() => hoverStack.leave());
 const KIND: Record<QuizSlot["kind"], JaEn | null> = { normal: null, desecrated: ["冒涜", "Desecrated"], fractured: ["固定", "Fractured"], essence: ["エッセンス", "Essence"], crafted: ["作った", "Crafted"] };
 function slotName(sl: QuizSlot): string {
   if (!sl.mods.length) return tr(sl.side === "prefix" ? "プレ (何でも)" : "サフィ (何でも)", sl.side === "prefix" ? "Prefix (any)" : "Suffix (any)");
-  const d = s.data.value;
-  const m = d?.mods.get(sl.mods[0]!.modId);
-  const n = m ? jaOfMod(m) : sl.mods[0]!.modId;
+  // 段の数値を入れた文 + 「T○ 以上」(狙う MOD の札と同じ。前は jaOfMod の雛形のままで「#から#の物理ダメージ」と出ていた、2026-10-16)
+  const n = aimLabel(s.data.value, { ...sl.mods[0]!, label: sl.mods[0]!.modId });
   return sl.mods.length > 1 ? `${n} ${tr(`ほか ${sl.mods.length - 1}`, `+${sl.mods.length - 1}`)}` : n;
 }
 const TONE = ["text-[var(--exile-color-text-secondary)]", "text-amber-200", "text-emerald-200", "text-[var(--exile-color-accent-focus)]"];
@@ -123,7 +125,8 @@ const slots = computed(() => {
 /** 進み具合: 完成の形のうち付いた札の数 */
 const progress = computed(() => { const xs = slots.value; return { done: xs.filter((x) => x.v >= 2).length, all: xs.length }; });
 /** 外れた答えの「なぜ」: その手はどんな時に使うか (答えの条件) */
-const modName = (id: string): string => { const m = s.data.value?.mods.get(id); return m ? jaOfMod(m) : id; };
+// 数値は一番上の段の幅で入れる (雛形のままだと「#から#の物理ダメージ」になる、2026-10-16)
+const modName = (id: string): string => { const m = s.data.value?.mods.get(id); return m ? fillModText(oneOfMod(m), tierDisplayRanges(m.tiers[m.tiers.length - 1]!)) : id; };
 function wrongWhy(i: number): string {
   const t = tut.value;
   if (!t) return "";
