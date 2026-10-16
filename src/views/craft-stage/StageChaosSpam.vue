@@ -21,7 +21,10 @@ import { medianOf, rankOf, spamOne, unluckyOf, SPAM_KEYS, SPAM_PEOPLE, type Spam
 import { mulberry32 } from "../../services/htc/rng";
 import { logRecord } from "../../utils/log-record";
 import HelpTip from "../../components/ui/HelpTip.vue";
-import { tr } from "../../i18n/lang";
+import { isEn, tr } from "../../i18n/lang";
+import { aimLabel } from "../../services/craft-stage/mod-list";
+import { isTauriRuntime } from "../../utils/isTauriRuntime";
+import { openExternal } from "../../services/trade2/open-external";
 
 const targets = computed<AimTarget[]>(() => s.aims.value.map((a) => ({ modId: a.modId, minTierIndex: a.minTierIndex })));
 /** 今打てるカオス (普通・上級・完全。アイテムレベルが足りない物などは出さない) */
@@ -210,6 +213,46 @@ const luck = (r: number): string => (r <= 10 ? tr("かなりの強運", "very lu
 const rankWord = (r: number): string => (r <= 50 ? tr(`上位 ${r}%`, `top ${r}%`) : tr(`下位 ${Math.max(1, 100 - r)}%`, `bottom ${Math.max(1, 100 - r)}%`));
 /** 押すボタンの文字 (PC の欄とスマホの帯で同じ。離した後は「押して続ける」) */
 const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : result.value && !result.value.hit && result.value.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
+/**
+ * シェア (2026-10-16 オーナー「確率機はシェア機能追加。自慢目的、URL と共に宣伝が目的」)。
+ * 付いた後に X へ (アプリは外のブラウザで)、スマホは端末のシェア (LINE など)、それ以外はコピー。URL はそのベースで開く Web 版 (?base=)
+ */
+const inApp = isTauriRuntime();
+const shareUrl = computed(() => `${inApp ? "https://exiledesk.com/" : `${location.origin}${location.pathname}`}?base=${encodeURIComponent(s.base.value)}`);
+const shareText = computed(() => {
+  const r = result.value;
+  if (!r?.hit) return "";
+  const base = isEn.value ? s.base.value : (s.item.value?.baseJa ?? s.base.value);
+  const mods = s.aims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", "));
+  const luckLine = r.rank != null ? tr(`${SPAM_PEOPLE} 人中 ${rankWord(r.rank)} の運 (${luck(r.rank)})`, `${rankWord(r.rank)} luck among ${SPAM_PEOPLE} people (${luck(r.rank)})`) : "";
+  return tr(
+    `カオススパムで ${base} に ${mods} を ${nameOf(key.value)} ${r.uses.toLocaleString()} 回で付けた！ ${luckLine}\n#PoE2 #ExileDesk`,
+    `Chaos spammed ${mods} onto ${base} in ${r.uses.toLocaleString()} ${nameOf(key.value)} uses! ${luckLine}\n#PoE2 #ExileDesk`,
+  );
+});
+const xUrl = computed(() => `https://x.com/intent/post?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`);
+const canNative = typeof navigator !== "undefined" && typeof navigator.share === "function";
+const shareNote = ref("");
+function shareX(e: MouseEvent): void {
+  logRecord("emu_spam_share", { to: "x", base: s.base.value });
+  if (!inApp) return;
+  e.preventDefault();
+  void openExternal(xUrl.value);
+}
+async function shareOther(): Promise<void> {
+  logRecord("emu_spam_share", { to: canNative ? "native" : "copy", base: s.base.value });
+  if (canNative) {
+    try { await navigator.share({ text: shareText.value, url: shareUrl.value }); } catch { /* 閉じただけ */ }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(`${shareText.value}\n${shareUrl.value}`);
+    shareNote.value = tr("コピーしました", "Copied");
+  } catch {
+    shareNote.value = tr("コピーできませんでした", "Copy failed");
+  }
+  setTimeout(() => { shareNote.value = ""; }, 2000);
+}
 const shownUses = computed(() => live.value?.uses ?? result.value?.uses ?? 0);
 const shownApplied = computed(() => live.value?.applied ?? result.value?.applied ?? 0);
 </script>
@@ -270,6 +313,12 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
           <p v-if="spamming || result" class="mt-1.5 tabular-nums text-[14px]"><b>{{ tr(`${shownUses.toLocaleString()} 回`, `${shownUses.toLocaleString()} uses`) }}</b><span v-if="cost(shownApplied)" class="text-[var(--exile-color-text-secondary)]"> · {{ cost(shownApplied) }}</span></p>
           <p v-if="result && !spamming" class="mt-0.5 text-[var(--exile-color-text-secondary)]">{{ result.reason ?? tr("まだ付いていません。もう一度押すと続きから", "Not hit yet. Hold again to continue") }}</p>
         </template>
+        <!-- 自慢 (付いた時だけ) -->
+        <div v-if="result?.hit && !spamming" data-chaos-spam-share class="mt-2 flex flex-wrap items-center gap-2">
+          <a :href="xUrl" target="_blank" rel="noopener" class="g-btn-red sm inline-flex items-center !no-underline" @click="shareX">{{ tr("X で自慢する", "Brag on X") }}</a>
+          <button type="button" class="g-btn sm" @click="shareOther">{{ canNative ? tr("ほかで共有", "Share…") : tr("文をコピー", "Copy text") }}</button>
+          <span v-if="shareNote" class="text-[11px] text-emerald-300">{{ shareNote }}</span>
+        </div>
         <div v-if="result && !spamming && !barShown" class="mt-2 flex flex-wrap gap-2">
           <button type="button" class="g-btn sm" @click="undoSpam">{{ tr("スパムの前に戻す", "Undo the spam") }}</button>
           <button type="button" data-chaos-spam-start class="g-btn sm" :title="tr('工程と費用 (スパムの前の手も) はそのままで、普段のエミュレーターに戻ります', 'Back to the emulator with the steps and cost (including before the spam) kept')" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
