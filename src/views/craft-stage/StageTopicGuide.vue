@@ -8,6 +8,7 @@ import { computed, ref } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { endTopic, goTopic, topic, topicAt, topicDone, topicReset, topicStep } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
+import { modListFor } from "../../services/craft-stage/mod-list";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { modText, tr } from "../../i18n/lang";
 import Icon from "../../components/ui/Icon.vue";
@@ -38,6 +39,22 @@ const help = computed(() => {
 /** カードの頭と同じ: 上級・完全の MOD レベルの下限と、付く MOD (エッセンス・ルーン・感情) */
 const floor = computed(() => { const k = topicStep.value?.key; return k && topicStep.value?.step.use !== "reveal" ? stageFloor(k) : null; });
 const adds = computed(() => { const k = topicStep.value?.key; return k && topicStep.value?.step.use !== "reveal" ? stageAdds(k, s.data.value, s.item.value) : null; });
+/**
+ * 上級・完全の例: このアイテムに出やすい MOD 1 つで、下限ぎりぎりで付く段と、すぐ下の付かない段 (エミュレーターの MOD 一覧の行から)。
+ * 2026-10-17 オーナー「例も簡単に欲しい、これは付くけどこれは付かないみたいな」
+ */
+const example = computed(() => {
+  const f = floor.value, d = s.data.value, it = s.item.value;
+  if (!f || !d || !it) return null;
+  const rows = modListFor(d, it).filter((r) => r.group === "normal" && !r.on && !r.blocked).sort((a, b) => b.weight - a.weight);
+  // 行は同じ系統の MOD をまとめているので、MOD (modId) ごとの段で比べる
+  for (const r of rows) for (const id of new Set(r.tiers.map((t) => t.modId))) {
+    const ts = r.tiers.filter((t) => t.modId === id && t.ilvl <= s.itemLevel.value);
+    const ok = [...ts].reverse().find((t) => t.ilvl >= f), ng = ts.find((t) => t.ilvl < f);
+    if (ok && ng) return { ok, ng };
+  }
+  return null;
+});
 /** 細かい説明 (カードの「このステージでの動き」) は既定で閉じる */
 const more = ref(false);
 const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**").map((t, i) => ({ t, b: i % 2 === 1 }));
@@ -48,6 +65,8 @@ function holdIt(): void {
   if (cur.step.use !== "reveal" && cur.key) s.hold(cur.key);
   for (const o of cur.step.omens ?? []) if (!s.omens.value.includes(o)) s.toggleOmen(o);
 }
+/** MOD 一覧の窓を開いて、その MOD の行へ (確認用。2026-10-17 オーナー「MOD 一覧もそこで出せるように」) */
+function jump(modId: string): void { s.modOverlay.value = true; s.modJump.value = { modId, n: (s.modJump.value?.n ?? 0) + 1 }; }
 const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
 </script>
 
@@ -57,7 +76,8 @@ const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
       <span class="rounded px-2 py-0.5 text-[11px] font-bold" :class="LEVEL[topic.level]!.chip">{{ t2(LEVEL[topic.level]!.label) }}</span>
       <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ t2(topic.title) }}</b>
       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-tertiary)]">{{ Math.min(topicAt, topic.steps.length) }} / {{ topic.steps.length }}</span>
-      <button type="button" class="g-btn sm ml-auto" @click="endTopic">{{ tr("コースをやめる", "Quit course") }}</button>
+      <button type="button" data-topic-mods class="g-btn sm ml-auto" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
+      <button type="button" class="g-btn sm" @click="endTopic">{{ tr("コースをやめる", "Quit course") }}</button>
     </header>
     <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300 transition-[width] duration-500" :style="{ width: `${(topicAt / topic.steps.length) * 100}%` }" /></div>
 
@@ -77,6 +97,11 @@ const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
       <!-- 要点はエミュレーターのカードの頭と同じ大きな枠で (2026-10-17 オーナー「入門は要点でっかく表示のみ、文章長くてだるい」) -->
       <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>
       <p v-if="floor" class="mt-1.5 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ tr(`MOD レベル ${floor} 以上だけ付く`, `Only mod level ${floor}+ tiers`) }}</p>
+      <div v-if="example" data-topic-example class="mt-1.5 grid gap-0.5 rounded-lg bg-black/25 px-2.5 py-1.5 text-[12px]">
+        <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("例", "Example") }}</p>
+        <p class="text-emerald-200"><b>{{ tr("付く", "Can roll") }}</b> {{ example.ok.text }} <span class="text-[11px] text-emerald-200/70">({{ example.ok.rank }} · {{ tr(`MOD レベル ${example.ok.ilvl}`, `mod level ${example.ok.ilvl}`) }})</span></p>
+        <p class="text-rose-300"><b>{{ tr("付かない", "Can't roll") }}</b> <span class="line-through">{{ example.ng.text }}</span> <span class="text-[11px] text-rose-300/70">({{ example.ng.rank }} · {{ tr(`MOD レベル ${example.ng.ilvl}`, `mod level ${example.ng.ilvl}`) }})</span></p>
+      </div>
       <div v-if="adds" class="mt-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
         <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
         <p v-for="(l, i) in adds.lines" :key="i" class="text-[13px] font-semibold text-emerald-200">・{{ l }}</p>
@@ -99,7 +124,7 @@ const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
     <!-- 前の手で起きたこと -->
     <div v-if="last && topicAt > 0" class="mt-2 rounded-md bg-black/25 px-2.5 py-1.5">
       <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ tr("前の手で起きたこと", "What the last move did") }}: {{ nameOf(last.out.currency) }}</p>
-      <p v-for="(m, i) in last.added" :key="'a' + i" class="text-[12px] text-emerald-300">＋ {{ modText(m) }}</p>
+      <button v-for="(m, i) in last.added" :key="'a' + i" type="button" class="g-plain block text-left text-[12px] text-emerald-300 hover:underline" :title="tr('MOD 一覧のこの行へ', 'Show in the mod list')" @click="jump(m.modId)">＋ {{ modText(m) }}</button>
       <p v-for="(m, i) in last.removed" :key="'r' + i" class="text-[12px] text-rose-300 line-through">－ {{ modText(m) }}</p>
       <p v-if="!last.added.length && !last.removed.length" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("MOD の出入りは無し (数値・品質・レアリティなどが変わる手)", "No mod added or removed (values, quality, rarity and so on changed)") }}</p>
     </div>
