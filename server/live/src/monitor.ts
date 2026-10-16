@@ -166,6 +166,8 @@ export function reportText(label: string, sum: Summary | null, usage: Usage, fee
     const maxMin = Math.max(sum.dwell?.pc?.maxMin ?? 0, sum.dwell?.mobile?.maxMin ?? 0);
     sec("使われ方", [
       `エミュレーターで 1 手以上打った人 ${n(sum.byEvent.get("hand:use")?.users ?? 0)} 人`,
+      // カオススパム確率機は回した回数で (中で打ったカオスは手数に数えない、2026-10-16 オーナー)
+      sum.byEvent.get("spam:run") ? `カオススパム確率機: ${n(sum.byEvent.get("spam:run")!.users)} 人が ${n(sum.byEvent.get("spam:run")!.count)} 回` : null,
       emu?.maxSteps ? `一番たくさん打った人: ${n(emu.maxSteps)} 手` : null,
       sum.steps ? `1 人の手数: 半分の人が ${n(sum.steps.median)} 手まで · 4 人に 1 人 ${n(sum.steps.p75)} 手以上` : null,
       sum.steps && (sum.steps.pc != null || sum.steps.mobile != null) ? `1 人あたり: ${[sum.steps.pc != null ? `PC ${n(sum.steps.pc)} 手` : "", sum.steps.mobile != null ? `スマホ ${n(sum.steps.mobile)} 手` : ""].filter(Boolean).join(" / ")}` : null,

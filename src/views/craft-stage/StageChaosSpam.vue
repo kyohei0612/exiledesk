@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { spamAims, spamKey, spamPending, spamming } from "../../state/chaos-spam";
+import { spamAims, spamKey, spamPending, spamming, spamSteps } from "../../state/chaos-spam";
 import { centerOnScreen, scrollToTop } from "../../utils/keep-place";
 import { displayCurrency } from "../../state/display-currency";
 import { aimDone, type AimTarget } from "../../services/craft-stage/aim-odds";
@@ -20,6 +20,7 @@ import type { StageItem } from "../../services/craft-stage/types";
 import { medianOf, rankOf, spamOne, unluckyOf, SPAM_KEYS, SPAM_PEOPLE, type SpamStats } from "../../services/craft-stage/chaos-spam";
 import { mulberry32 } from "../../services/htc/rng";
 import { logRecord } from "../../utils/log-record";
+import { track } from "../../utils/track";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import { isEn, tr } from "../../i18n/lang";
 import { aimLabel } from "../../services/craft-stage/mod-list";
@@ -187,6 +188,7 @@ function startSpam(e: PointerEvent): void {
       const after = s.log.value[s.log.value.length - 1];
       // 打てなかった (棚の決まりで打てない) 時は止める
       if (after === before) { finish(false, s.miss.value?.reason ?? null); return; }
+      if (after) spamSteps.add(after);
       live.value.uses++;
       if (after?.out.applied) live.value.applied++;
       if (aimDone(s.item.value!, targets.value)) { finish(true, null); return; }
@@ -214,6 +216,8 @@ function finish(hit: boolean, reason: string | null): void {
     simulate(startItem);
     const stop = watch(stats, (v) => { if (v && result.value?.hit) { result.value = { ...result.value, rank: rankOf(v, result.value.uses) }; stop(); } });
   }
+  // 使われ方は「確率機を何回回したか」だけ (中で打ったカオスは手数に数えない、2026-10-16 オーナー)
+  track("spam:run", hit ? "hit" : "stop");
   if (hit || !reason) logRecord("emu_spam", { base: s.item.value?.base, key: key.value, aims: targets.value.map((t) => `${t.modId}#${t.minTierIndex}`), uses: l.uses, hit });
 }
 /** スパムの前の状態に丸ごと戻す (工程・お告げも) */

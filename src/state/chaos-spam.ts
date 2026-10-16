@@ -8,6 +8,11 @@
 import { ref } from "vue";
 
 export const spamming = ref(false);
+/**
+ * 確率機が打った手 (工程の 1 手ずつ)。使われ方の数え (src/web/track.ts の手数・ベース・カレンシー) に入れない
+ * (2026-10-16 オーナー「確率機のカオススパムの回数はカウントしちゃだめ、確率機オンリーで何回使用みたいな感じで」)。確率機は回した回数 (spam:run) で別に数える
+ */
+export const spamSteps = new WeakSet<object>();
 export const spamKey = ref<string | null>(null);
 export const spamPending = ref(false);
 /** 確率機の狙う MOD (「次の手で狙う」とは別) */
