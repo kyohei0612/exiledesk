@@ -1,12 +1,14 @@
 /**
  * 掲示板 (2026-10-16 最初の段、docs/roadmap-2026-10.md「掲示板の作り」。オーナー「クラフトの相談や自慢系、意見交換の場所にしたい」)。
  *   GET  /board.json?tag=&before=   … 1 つのタイムライン (新しい順、30 件ずつ)。Cloudflare のキャッシュに 45 秒 (読みの負荷はほぼ 0)
- *   POST /board/post   { uid, name, text, tag? (今は使わない), website? (bot よけ) } … 書き込み。1 端末 1 分 1 件・1 時間 10 件、禁止の言葉は弾く
+ *   POST /board/post   { uid, name, text, tag?, parent? (返信先), att? (貼ったアイテム), website? (bot よけ) } … 書き込み・返信。1 端末 1 分 1 件・1 時間 10 件、禁止の言葉は弾く
+ *   POST /board/like   { uid, id } … いいね (もう一度で外す)。1 端末 1 時間 120 回まで
  *   POST /board/hit    { uid, base, ilvl, cur, n, modId, ti, v, p } … 当たりの速報の札 (エミュレーターがクソレアの線より下を引いた時。名前は出さない。1 端末 1 時間に 1 件)
  *   POST /board/report { uid, id } … 通報 (同じ端末は 1 回)。REPORT_HIDE 件で自動で隠す
  *   POST /board/delete { id, ban? } (ヘッダー x-exiledesk-key) … オーナーが消す。ban で書いた端末を書けなくする
  *   GET  /board/all.json (ヘッダー x-exiledesk-key) … 隠した物・端末の印も込みの一覧 (オーナー用)
- * 置き場は D1 (binding LOGS、表は migrations/0004_board.sql)。KV は増やさない。
+ * 置き場は D1 (binding LOGS、表は migrations/0004_board.sql・0006_board_replies.sql)。KV は増やさない。
+ * 2 段目 (2026-10-16 オーナー「掲示板強化」): 返信 (1 段だけ。返信が付くと書き込みが上に上がる)・いいね・エミュレーターのアイテムを貼る
  * 画面には時刻・件数・閲覧数・人ごとの印を出さない (オーナー「過疎ってるって思われたくない」「連投しても別の人が投稿してる感じ」)。
  * 中では端末の番号 (uid) と IP の短いハッシュを持つので、通報・消す・書けなくするはできる
  */
@@ -67,7 +69,34 @@ export function ngReason(text: string): string | null {
 /** 文字の掃除 (見えない制御文字を外す。改行は 2 つまで続けてよい) */
 const clean = (s: string): string => s.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f‪-‮⁦-⁩]/g, "").replace(/\n{3,}/g, "\n\n").trim();
 
-export type PostIn = { ok: true; uid: string; name: string; tag: BoardTag | ""; text: string } | { ok: false; why: string };
+/**
+ * 貼ったアイテム (エミュレーターの今のアイテムを縮めた物)。b = ベースの英語名、i = アイテムレベル、r = レア度、
+ * m = MOD [modId, 段の添字, 値, "p" | "s", 印 ("f" = フラクチャー・"d" = 冒涜)]、c = コラプト。文は見る側の画面が自分のデータで作る
+ */
+export interface BoardAtt { b: string; i: number; r: "normal" | "magic" | "rare" | "unique"; m: Array<[string, number, number[], "p" | "s", string]>; c?: 1 }
+export function parseAtt(x: unknown): BoardAtt | null | false {
+  if (x == null) return null;
+  if (typeof x !== "object" || JSON.stringify(x).length > 3000) return false;
+  const a = x as Record<string, unknown>;
+  const b = typeof a.b === "string" && /^[A-Za-z][A-Za-z' ,-]{1,60}$/.test(a.b) ? a.b : null;
+  const i = typeof a.i === "number" && Number.isInteger(a.i) && a.i >= 1 && a.i <= 100 ? a.i : null;
+  const r = ["normal", "magic", "rare", "unique"].includes(a.r as string) ? (a.r as BoardAtt["r"]) : null;
+  if (!b || i == null || !r || !Array.isArray(a.m) || a.m.length > 12) return false;
+  const m: BoardAtt["m"] = [];
+  for (const e of a.m) {
+    if (!Array.isArray(e) || e.length !== 5) return false;
+    const [id, ti, v, side, fl] = e;
+    if (typeof id !== "string" || !/^[A-Za-z0-9_/]{2,100}$/.test(id)) return false;
+    if (typeof ti !== "number" || !Number.isInteger(ti) || ti < 0 || ti > 60) return false;
+    if (!Array.isArray(v) || v.length > 6 || !v.every((n) => typeof n === "number" && Number.isFinite(n) && Math.abs(n) < 1e7)) return false;
+    if (side !== "p" && side !== "s") return false;
+    if (typeof fl !== "string" || !/^[fd]{0,2}$/.test(fl)) return false;
+    m.push([id, ti, v as number[], side, fl]);
+  }
+  return { b, i, r, m, ...(a.c === 1 ? { c: 1 as const } : {}) };
+}
+
+export type PostIn = { ok: true; uid: string; name: string; tag: BoardTag | ""; text: string; parent: string | null; att: BoardAtt | null } | { ok: false; why: string };
 export function parsePost(body: unknown): PostIn {
   if (!body || typeof body !== "object") return { ok: false, why: "JSON ではない" };
   const b = body as Record<string, unknown>;
@@ -82,7 +111,11 @@ export function parsePost(body: unknown): PostIn {
   if ([...name].length > MAX_NAME) return { ok: false, why: `名前は ${MAX_NAME} 字まで` };
   const ng = ngReason(`${name}\n${text}`);
   if (ng) return { ok: false, why: ng };
-  return { ok: true, uid: b.uid, name, tag: (b.tag as BoardTag | undefined) || "", text };
+  const parent = b.parent == null || b.parent === "" ? null : typeof b.parent === "string" && BOARD_ID_RE.test(b.parent) ? b.parent : false;
+  if (parent === false) return { ok: false, why: "返信先が違う" };
+  const att = parseAtt(b.att);
+  if (att === false) return { ok: false, why: "貼ったアイテムの形が違う" };
+  return { ok: true, uid: b.uid, name, tag: (b.tag as BoardTag | undefined) || "", text, parent, att };
 }
 
 /** 当たりの速報の中身 (画面が自分のデータで文にする。サーバーは形だけ確かめる = 好きな文字は載らない) */
@@ -135,37 +168,79 @@ export async function allowHit(db: D1Database, uid: string, iph: string, h: Boar
   return null;
 }
 
-export interface BoardRow { id: string; at: number; kind: "post" | "hit"; uid: string; iph: string; name: string; tag: string; body: string; reports: number; hidden: number }
-/** 画面に出す 1 件 (時刻・端末の印は出さない) */
-export type BoardItem = { id: string; kind: "post"; name: string; tag: string; text: string } | { id: string; kind: "hit"; hit: BoardHit };
+export interface BoardRow { id: string; at: number; kind: "post" | "hit"; uid: string; iph: string; name: string; tag: string; body: string; reports: number; hidden: number; parent: string | null; bump: number | null; likes: number; att: string | null }
+/** 画面に出す 1 件 (時刻・端末の印は出さない)。返信は replies に古い順 */
+export type BoardPostItem = { id: string; kind: "post"; name: string; tag: string; text: string; likes: number; att?: BoardAtt; parent?: string; replies?: BoardPostItem[] };
+export type BoardItem = BoardPostItem | { id: string; kind: "hit"; hit: BoardHit };
 
 const newId = (): string => crypto.randomUUID().replace(/-/g, "").slice(0, 10);
 
-export async function savePost(db: D1Database, p: { uid: string; iph: string; name: string; tag: BoardTag | ""; text: string }, now = Date.now()): Promise<BoardItem> {
+/** 返信先が書けるか (ある・隠していない・返信ではない)。通れば null */
+export async function replyTarget(db: D1Database, parent: string): Promise<string | null> {
+  const r = await db.prepare("SELECT parent, hidden, kind FROM board_posts WHERE id = ?").bind(parent).first<Pick<BoardRow, "parent" | "hidden" | "kind">>();
+  if (!r || r.hidden !== 0) return "返信先がありません";
+  if (r.parent || r.kind !== "post") return "返信には返信できません";
+  return null;
+}
+export async function savePost(db: D1Database, p: { uid: string; iph: string; name: string; tag: BoardTag | ""; text: string; parent?: string | null; att?: BoardAtt | null }, now = Date.now()): Promise<BoardPostItem> {
   const id = newId();
-  await db.prepare("INSERT INTO board_posts (id, at, kind, uid, iph, name, tag, body) VALUES (?, ?, 'post', ?, ?, ?, ?, ?)").bind(id, now, p.uid, p.iph, p.name, p.tag, p.text).run();
-  return { id, kind: "post", name: p.name, tag: p.tag, text: p.text };
+  const att = p.att ? JSON.stringify(p.att) : null;
+  await db.prepare("INSERT INTO board_posts (id, at, kind, uid, iph, name, tag, body, parent, bump, att) VALUES (?, ?, 'post', ?, ?, ?, ?, ?, ?, ?, ?)").bind(id, now, p.uid, p.iph, p.name, p.tag, p.text, p.parent ?? null, now, att).run();
+  // 返信が付いたら書き込みを上に (タイムラインは bump の新しい順)
+  if (p.parent) await db.prepare("UPDATE board_posts SET bump = ? WHERE id = ?").bind(now, p.parent).run();
+  return { id, kind: "post", name: p.name, tag: p.tag, text: p.text, likes: 0, ...(p.att ? { att: p.att } : {}), ...(p.parent ? { parent: p.parent } : {}) };
 }
 export async function saveHit(db: D1Database, uid: string, iph: string, h: BoardHit, now = Date.now()): Promise<BoardItem> {
   const id = newId();
-  await db.prepare("INSERT INTO board_posts (id, at, kind, uid, iph, name, tag, body) VALUES (?, ?, 'hit', ?, ?, '', ?, ?)").bind(id, now, uid, iph, hitKey(h), JSON.stringify(h)).run();
+  await db.prepare("INSERT INTO board_posts (id, at, kind, uid, iph, name, tag, body, bump) VALUES (?, ?, 'hit', ?, ?, '', ?, ?, ?)").bind(id, now, uid, iph, hitKey(h), JSON.stringify(h), now).run();
   return { id, kind: "hit", hit: h };
 }
 
-const itemOf = (r: Pick<BoardRow, "id" | "kind" | "name" | "tag" | "body">): BoardItem | null => {
-  if (r.kind === "post") return { id: r.id, kind: "post", name: r.name, tag: r.tag, text: r.body };
+const postOf = (r: Pick<BoardRow, "id" | "name" | "tag" | "body" | "likes" | "att" | "parent">): BoardPostItem => {
+  let att: BoardAtt | undefined;
+  try { att = r.att ? (JSON.parse(r.att) as BoardAtt) : undefined; } catch { att = undefined; }
+  return { id: r.id, kind: "post", name: r.name, tag: r.tag, text: r.body, likes: r.likes ?? 0, ...(att ? { att } : {}), ...(r.parent ? { parent: r.parent } : {}) };
+};
+const itemOf = (r: Pick<BoardRow, "id" | "kind" | "name" | "tag" | "body" | "likes" | "att" | "parent">): BoardItem | null => {
+  if (r.kind === "post") return postOf(r);
   try { return { id: r.id, kind: "hit", hit: JSON.parse(r.body) as BoardHit }; } catch { return null; }
 };
 
-/** タイムライン (新しい順)。tag で絞ると書き込みだけ (札はタグを持たない)。before = その id より前 */
+/** 1 つの書き込みに付ける返信の数の上限 (それ以上は古い方から) */
+const REPLIES_MAX = 50;
+/**
+ * タイムライン (返信は書き込みの中に。並びは bump = 最後に返信が付いた時刻の新しい順)。tag で絞ると書き込みだけ。before = その id より前
+ */
 export async function listBoard(db: D1Database, tag: string | null, before: string | null): Promise<{ items: BoardItem[]; more: boolean }> {
-  const where = ["hidden = 0"];
+  const where = ["hidden = 0", "parent IS NULL"];
   const args: unknown[] = [];
   if (tag) { where.push("tag = ?"); args.push(tag); }
-  if (before) { where.push("at < (SELECT at FROM board_posts WHERE id = ?)"); args.push(before); }
-  const r = await db.prepare(`SELECT id, kind, name, tag, body FROM board_posts WHERE ${where.join(" AND ")} ORDER BY at DESC LIMIT ?`).bind(...args, PAGE + 1).all<BoardRow>();
-  const rows = r.results ?? [];
-  return { items: rows.slice(0, PAGE).map(itemOf).filter((x): x is BoardItem => !!x), more: rows.length > PAGE };
+  if (before) { where.push("coalesce(bump, at) < (SELECT coalesce(bump, at) FROM board_posts WHERE id = ?)"); args.push(before); }
+  const r = await db.prepare(`SELECT id, kind, name, tag, body, likes, att, parent FROM board_posts WHERE ${where.join(" AND ")} ORDER BY coalesce(bump, at) DESC LIMIT ?`).bind(...args, PAGE + 1).all<BoardRow>();
+  const rows = (r.results ?? []).slice(0, PAGE);
+  const items = rows.map(itemOf).filter((x): x is BoardItem => !!x);
+  const ids = items.filter((x) => x.kind === "post").map((x) => x.id);
+  if (ids.length) {
+    const rr = await db.prepare(`SELECT id, kind, name, tag, body, likes, att, parent FROM board_posts WHERE hidden = 0 AND parent IN (${ids.map(() => "?").join(",")}) ORDER BY at ASC`).bind(...ids).all<BoardRow>();
+    const by = new Map<string, BoardPostItem[]>();
+    for (const x of rr.results ?? []) { const l = by.get(x.parent!) ?? []; l.push(postOf(x)); by.set(x.parent!, l); }
+    for (const it of items) if (it.kind === "post" && by.has(it.id)) it.replies = by.get(it.id)!.slice(-REPLIES_MAX);
+  }
+  return { items, more: (r.results ?? []).length > PAGE };
+}
+
+/** いいね (同じ端末は 1 件に 1 回。もう一度押すと外す)。今の数と押した状態を返す */
+const LIKES_PER_HOUR = 120;
+export async function toggleLike(db: D1Database, id: string, uid: string, now = Date.now()): Promise<{ ok: boolean; likes: number; liked: boolean; why?: string }> {
+  const row = await db.prepare("SELECT likes, hidden, kind FROM board_posts WHERE id = ?").bind(id).first<Pick<BoardRow, "likes" | "hidden" | "kind">>();
+  if (!row || row.hidden !== 0 || row.kind !== "post") return { ok: false, likes: 0, liked: false, why: "無い" };
+  if ((await count(db, "SELECT count(*) AS n FROM board_likes WHERE uid = ? AND at > ?", uid, now - 3600e3)) >= LIKES_PER_HOUR) return { ok: false, likes: row.likes, liked: false, why: "多すぎ" };
+  const ins = await db.prepare("INSERT OR IGNORE INTO board_likes (post_id, uid, at) VALUES (?, ?, ?)").bind(id, uid, now).run();
+  const liked = (ins.meta?.changes ?? 0) > 0;
+  if (!liked) await db.prepare("DELETE FROM board_likes WHERE post_id = ? AND uid = ?").bind(id, uid).run();
+  const likes = Math.max(0, row.likes + (liked ? 1 : -1));
+  await db.prepare("UPDATE board_posts SET likes = ? WHERE id = ?").bind(likes, id).run();
+  return { ok: true, likes, liked };
 }
 
 /** オーナー用の一覧 (隠した物・通報の数・端末の印の頭 6 文字も) */
@@ -210,10 +285,10 @@ export async function purgeLists(): Promise<void> {
  * 新しい書き込み・自動で隠した物を Discord に (要望と同じウェブフック。失敗しても保存は済んでいるので投げない)。
  * 端末の印 (uid の頭 6 文字) と書き込みの id は消す時に使う
  */
-export async function notifyBoardDiscord(webhook: string, ev: { kind: "post"; item: Extract<BoardItem, { kind: "post" }>; uid: string } | { kind: "hidden"; id: string }, fetchFn: Fetch, now = Date.now()): Promise<boolean> {
+export async function notifyBoardDiscord(webhook: string, ev: { kind: "post"; item: BoardPostItem; uid: string } | { kind: "hidden"; id: string }, fetchFn: Fetch, now = Date.now()): Promise<boolean> {
   const jst = new Date(now + 9 * 3600e3).toISOString().slice(0, 16).replace("T", " ");
   const content = ev.kind === "post"
-    ? `**🗨 掲示板** ${ev.item.tag ? `[${TAG_JA[ev.item.tag as BoardTag] ?? ev.item.tag}] ` : ""}${ev.item.name || "名無しのエグザイル"} 👤 **${ev.uid.slice(0, 6)}** · ${jst} JST\n${ev.item.text.slice(0, 1500)}\n-# 書き込みの id ${ev.item.id}`
+    ? `**🗨 掲示板${ev.item.parent ? ` (返信 → ${ev.item.parent})` : ""}** ${ev.item.tag ? `[${TAG_JA[ev.item.tag as BoardTag] ?? ev.item.tag}] ` : ""}${ev.item.name || "名無しのエグザイル"} 👤 **${ev.uid.slice(0, 6)}** · ${jst} JST\n${ev.item.text.slice(0, 1500)}${ev.item.att ? `\n📎 ${ev.item.att.b} (iLv ${ev.item.att.i}, MOD ${ev.item.att.m.length})` : ""}\n-# 書き込みの id ${ev.item.id}`
     : `**🚫 掲示板** 通報が ${REPORT_HIDE} 件で隠しました · ${jst} JST\n-# 書き込みの id ${ev.id}`;
   try {
     const r = await fetchFn(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content, allowed_mentions: { parse: [] } }) });

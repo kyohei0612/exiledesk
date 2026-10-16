@@ -8,7 +8,7 @@
  *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord、画像は D1)。GET /feedback.json(ヘッダー x-exiledesk-key) で一覧
  *   POST /feedback/<id>/images … 後から画像を足す (送った端末だけ)。GET /feedback/image/<画像 id>(ヘッダー x-exiledesk-key) で見る
  *   POST /event            … 操作の印 (Analytics Engine)。日報の「段階と離脱」「どこから」「端末」の元
- *   GET  /board.json       … 掲示板のタイムライン (D1、45 秒キャッシュ)。POST /board/post・hit・report・delete (board.ts)
+ *   GET  /board.json       … 掲示板のタイムライン (D1、45 秒キャッシュ)。POST /board/post・like・hit・report・delete (board.ts)
  *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day= (ヘッダー x-exiledesk-key) で取り出す
  *   GET  /logs/send?day= (ヘッダー x-exiledesk-key) … その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用。D1 からは消さない)
  *   GET  /report(ヘッダー x-exiledesk-key)     … 日報を今すぐ (確かめ用)
@@ -30,7 +30,7 @@ import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
-import { allowHit, allowPost, BOARD_ID_RE, BOARD_TAGS, iphOf, LIST_TTL, listAll, listBoard, listCacheKey, notifyBoardDiscord, parseHit, parsePost, purgeLists, removePost, reportPost, saveHit, savePost, type BoardTag } from "./board";
+import { allowHit, allowPost, banned, BOARD_ID_RE, replyTarget, toggleLike, BOARD_TAGS, iphOf, LIST_TTL, listAll, listBoard, listCacheKey, notifyBoardDiscord, parseHit, parsePost, purgeLists, removePost, reportPost, saveHit, savePost, type BoardTag } from "./board";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
 
 const STATE_KEY = "state";
@@ -360,6 +360,7 @@ async function boardPost(req: Request, env: Env, ctx: ExecutionContext, url: URL
       if (!p.ok) return json({ error: p.why }, p.why === "bot" ? 200 : 400);
       const limited = await allowPost(db, p.uid, iph);
       if (limited) return json({ error: limited }, 429);
+      if (p.parent) { const no = await replyTarget(db, p.parent); if (no) return json({ error: no }, 400); }
       const item = await savePost(db, { ...p, iph });
       ctx.waitUntil(purgeLists());
       if (env.DISCORD_WEBHOOK && item.kind === "post") ctx.waitUntil(notifyBoardDiscord(env.DISCORD_WEBHOOK, { kind: "post", item, uid: p.uid }, fetch));
@@ -376,6 +377,14 @@ async function boardPost(req: Request, env: Env, ctx: ExecutionContext, url: URL
       const item = await saveHit(db, h.uid, iph, h.hit);
       ctx.waitUntil(purgeLists());
       return json({ ok: true, item });
+    }
+    case "/board/like": {
+      const b = body as { uid?: unknown; id?: unknown };
+      if (typeof b?.uid !== "string" || !UID_RE.test(b.uid) || typeof b.id !== "string" || !BOARD_ID_RE.test(b.id)) return json({ error: "形が違う" }, 400);
+      if (await banned(db, b.uid, iph)) return json({ error: "この端末からは書き込めません" }, 403);
+      const r = await toggleLike(db, b.id, b.uid);
+      // 一覧のキャッシュは消さない (いいねの数は 45 秒遅れてよい。押した端末は手元で数える)
+      return json(r, r.ok ? 200 : r.why === "多すぎ" ? 429 : 404);
     }
     case "/board/report": {
       const b = body as { uid?: unknown; id?: unknown };

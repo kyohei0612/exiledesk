@@ -9,7 +9,7 @@ import type { Env } from "../server/live/src/types";
 /** D1 の代わり (prepare → bind → first / all / run だけ) */
 function fakeD1(): D1Database {
   const db = new DatabaseSync(":memory:");
-  for (const f of ["0001_logs.sql", "0002_nolog.sql", "0003_feedback_images.sql", "0004_board.sql"]) db.exec(readFileSync(`server/live/migrations/${f}`, "utf8"));
+  for (const f of ["0001_logs.sql", "0002_nolog.sql", "0003_feedback_images.sql", "0004_board.sql", "0006_board_replies.sql"]) db.exec(readFileSync(`server/live/migrations/${f}`, "utf8"));
   const stmt = (sql: string, args: unknown[] = []) => ({
     bind: (...a: unknown[]) => stmt(sql, a),
     first: async <T,>() => (db.prepare(sql).get(...(args as never[])) ?? null) as T | null,
@@ -32,7 +32,7 @@ function setup(extra: Partial<Env> = {}) {
   };
   return { env, call };
 }
-const post = (o: Partial<{ uid: string; name: string; tag: string; text: string; website: string }> = {}) => ({ uid: UID, name: "", tag: "advice", text: "手袋の作り方を教えて", ...o });
+const post = (o: Partial<{ uid: string; name: string; tag: string; text: string; website: string; parent: string; att: unknown }> = {}) => ({ uid: UID, name: "", tag: "advice", text: "手袋の作り方を教えて", ...o });
 const hit = (o: Record<string, unknown> = {}) => ({ uid: UID, base: "Gold Ring", ilvl: 82, cur: "chaos", n: 12, modId: "Rings/AddedColdDamage", ti: 8, v: [10, 20], p: 0.0012, ...o });
 
 describe("掲示板の書き込み", () => {
@@ -42,7 +42,7 @@ describe("掲示板の書き込み", () => {
     expect((await call("/board/post", post({ uid: "zzzzzz999999", text: "2 つ目", tag: "show", name: "テスト" }), { ip: "5.6.7.8" })).status).toBe(200);
     const { j } = await call("/board.json");
     expect(j.items!.map((x) => x.text)).toEqual(["2 つ目", "1 つ目"]);
-    expect(j.items![0]).toEqual({ id: expect.any(String), kind: "post", name: "テスト", tag: "show", text: "2 つ目" });
+    expect(j.items![0]).toEqual({ id: expect.any(String), kind: "post", name: "テスト", tag: "show", text: "2 つ目", likes: 0 });
     expect(JSON.stringify(j)).not.toContain(UID);
   });
   it("タグで絞れる (札はタグを持たないので出ない)", async () => {
@@ -134,5 +134,38 @@ describe("通報とオーナーが消す", () => {
     const b = (await call(`/board.json?before=${a.items![29]!.id}`)).j;
     expect(b.items!.map((x) => x.text)).toEqual(["#4", "#3", "#2", "#1", "#0"]);
     expect(b.more).toBe(false);
+  });
+});
+
+describe("返信・いいね・貼ったアイテム (2 段目)", () => {
+  const att = { b: "Gold Ring", i: 82, r: "rare", m: [["Rings/FireResistance", 7, [42], "s", ""], ["Rings/IncreasedLife", 5, [80], "p", "f"]] };
+  it("返信は書き込みの中に古い順。返信が付いた書き込みは上に上がる。返信に返信はできない", async () => {
+    const { call } = setup();
+    const a = (await call("/board/post", post({ text: "A" }))).j.item as { id: string };
+    const b = (await call("/board/post", post({ uid: "bbbbbbbbbbbb", text: "B" }, ), { ip: "5.5.5.5" })).j.item as { id: string };
+    const r1 = await call("/board/post", post({ uid: "cccccccccccc", text: "A への返信", parent: a.id }), { ip: "6.6.6.6" });
+    expect(r1.j.ok).toBe(true);
+    const items = (await call("/board.json")).j.items!;
+    expect(items.map((x) => x.id)).toEqual([a.id, b.id]);
+    expect((items[0]!.replies as Array<{ text: string }>).map((x) => x.text)).toEqual(["A への返信"]);
+    const rid = (r1.j.item as { id: string }).id;
+    expect((await call("/board/post", post({ uid: "dddddddddddd", text: "x", parent: rid }), { ip: "7.7.7.7" })).j.error).toBe("返信には返信できません");
+    expect((await call("/board/post", post({ uid: "eeeeeeeeeeee", text: "x", parent: "0123456789" }), { ip: "8.8.8.8" })).j.error).toBe("返信先がありません");
+  });
+  it("いいねはもう一度押すと外れる・同じ端末は 1 回", async () => {
+    const { call } = setup();
+    const a = (await call("/board/post", post())).j.item as { id: string };
+    expect((await call("/board/like", { uid: "llllllllllll", id: a.id })).j).toMatchObject({ ok: true, likes: 1, liked: true });
+    expect((await call("/board/like", { uid: "mmmmmmmmmmmm", id: a.id })).j).toMatchObject({ ok: true, likes: 2, liked: true });
+    expect((await call("/board/like", { uid: "llllllllllll", id: a.id })).j).toMatchObject({ ok: true, likes: 1, liked: false });
+    expect((await call("/board.json")).j.items![0]!.likes).toBe(1);
+  });
+  it("貼ったアイテムは形を確かめて残す。変な物は弾く", async () => {
+    const { call } = setup();
+    expect((await call("/board/post", post({ att }))).j.ok).toBe(true);
+    expect((await call("/board.json")).j.items![0]!.att).toEqual(att);
+    expect(parsePost(post({ att: { ...att, b: "<script>" } }))).toMatchObject({ ok: false });
+    expect(parsePost(post({ att: { ...att, m: [["x", 1, [1], "q", ""]] } }))).toMatchObject({ ok: false });
+    expect(parsePost(post({ att: { ...att, m: Array(13).fill(att.m[0]) } }))).toMatchObject({ ok: false });
   });
 });
