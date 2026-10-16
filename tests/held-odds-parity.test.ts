@@ -140,6 +140,28 @@ describe("確率表 = 打った結果 (骨: 候補 3 つに出る確率)", () =>
   }
 });
 
+// 打てない時は確率を出さない (2026-10-16 ADR-004: 前は打てないのに確率が出ていた)。対象 (レアリティ) で打てない時は表そのものを出さない
+describe("確率表: 打てない時は全部 0%", () => {
+  const BLOCKED: Case[] = [
+    { name: "コラプトした指輪 高貴", item: { ...ringRare, corrupted: true }, key: "exalt" },
+    { name: "コラプトした指輪 カオス", item: { ...ringRare, corrupted: true }, key: "chaos" },
+    { name: "コラプトした指輪 骨", item: { ...ringRare, corrupted: true }, key: "desecrate" },
+    { name: "品質の無い指輪 高貴 + 触媒の高貴", item: ringRare, key: "exalt", omens: ["OmenofCatalysingExaltation"] },
+    { name: "両側が埋まった指輪 高貴", item: ringFull, key: "exalt" },
+  ];
+  for (const c of BLOCKED) {
+    it(c.name, () => {
+      expect(applyCurrency(data, c.item, c.key, mulberry32(1), c.omens ?? []).applied).toBe(false);
+      const h = heldOdds(data, c.item, c.key, c.omens ?? []);
+      expect(h, "表が出ない").not.toBeNull();
+      expect([...h!.byMod.values()].reduce((a, x) => a + x.w, 0)).toBe(0);
+    });
+  }
+  it("レアリティが合わない (マジックに高貴) 時は表を出さない", () => {
+    expect(heldOdds(data, ringMagic, "exalt", [])).toBeNull();
+  });
+});
+
 describe("確率表の計算の速さ", () => {
   it("骨の表は 1 回 300ms 以内 (持ち替えるたびに作る)", () => {
     const t0 = performance.now();

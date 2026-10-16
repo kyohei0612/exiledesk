@@ -3,18 +3,24 @@
  *
  * StageModList.vue から切り出した。表に出す数と打った結果が同じ決まりで出るかを tests/held-odds-parity.test.ts で全部突き合わせる
  * (オーナー「お告げ系全部、異界も 0%、コルとか特殊モッド含め全部確認せえ」)。
- *   - MOD を足す手 (変成・増強・王者・錬金・高貴・カオス): apply-currency の addCandidates (打つ処理と同じ候補・重み・お告げ・触媒・ルーン)
- *   - 骨: 次の発現で候補 3 つに出る確率。エンジンの desecrationOfferProbability / desecrationBossOfferProbability (計算機と同じ)
+ * どの式で数えるかは、打つ処理と同じ説明文の分解 (spec/run-spec.ts の planSpec: 動作の部品・お告げの効き目) から決める (2026-10-16、ADR-004):
+ *   - add で 1 つ付ける手 (変成・増強・王者・高貴・カオス): spec/odds.ts の addOddsBySpec (打つ処理と同じ候補・重み・お告げ・触媒・ルーン)
+ *   - add で 2 つ (大いなる高貴): 1 つ目の後の候補で 2 つ目 (twoAdds)。3 つ以上 (錬金)・エッセンス: 打つ処理を決まった種で回して数える
+ *   - 骨 (addUnrevealed): 次の発現で候補 3 つに出る確率。側は打つ処理と同じ unrevealedPlan、確率はエンジンの desecrationOfferProbability /
+ *     desecrationBossOfferProbability (計算機と同じ)
  * byMod の w は、足す手なら重み (total で割ると確率)、骨なら確率そのもの (total = 1)
  */
 import type { PatchData, ItemState } from "../../vendor/poe2htc/engine/types";
-import { ANCIENT_BONE_FLOOR, desecrationBossOfferProbability, desecrationOfferProbability, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
-import { addCandidates, applyCurrency, kindOf } from "./apply-currency";
+import { DES_BOSS_TAG, desecrationBossOfferProbability, desecrationOfferProbability, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
+import { applyCurrency } from "./apply-currency";
 import { mulberry32 } from "../htc/rng";
-import { allMods, effectiveCls, makeStageMod, room, SIDES, withMod, without } from "./stage-core";
-import { boneSideWeights, revealOffers } from "./apply-desecrate";
+import { allMods, effectiveCls, makeStageMod, room, SIDES, withMod, without, type Candidate } from "./stage-core";
+import { revealOffers } from "./apply-desecrate";
 import type { StageItem, StageMod, StageSide } from "./types";
-import { ABYSS_MARK_FLOOR } from "../htc/omens";
+import { modsOf, omensOf, planSpec, type SpecPlan } from "./spec/run-spec";
+import { REVEAL_SPEC } from "./spec/desecrate-specs";
+import { unrevealedPlan, type AddUnrevealed } from "./spec/parts";
+import { addCands, addOddsBySpec } from "./spec/odds";
 
 export interface HeldOdds {
   byMod: Map<string, { w: number; tiers: Array<{ index: number; w: number }> }>;
@@ -25,14 +31,22 @@ export interface HeldOdds {
   single?: true;
 }
 
-const BOSS: Record<string, DesecrationBossOmen> = { OmenoftheSovereign: "sovereign", OmenoftheLiege: "liege", OmenoftheBlackblooded: "blackblooded" };
+/** 勢力の保証のタグ → エンジンの勢力のお告げ */
+const BOSS_OF_TAG: ReadonlyMap<string, DesecrationBossOmen> = new Map(Object.entries(DES_BOSS_TAG).map(([o, t]) => [t, o as DesecrationBossOmen]));
+/** 発現でアビスの反響の引き直しが使える回数 (発現の手に掛かるお告げの効き目から) */
+const rerollsOf = (omens: readonly string[]): number => modsOf(omensOf(REVEAL_SPEC, omens)).rerolls;
 
 export function heldOdds(data: PatchData, item: StageItem, key: string, omens: readonly string[]): HeldOdds | null {
-  if (key.startsWith("desecrate") && !omens.includes("OmenofPutrefaction")) return boneOdds(data, item, key, omens);
-  if (kindOf(key) === "exalt" && omens.includes("OmenofGreaterExaltation")) return twoAdds(data, item, key, omens);
-  if (MANY.has(kindOf(key))) return sampled(data, item, key, omens);
-  const cs = addCandidates(data, item, key, omens);
-  if (!cs) return null;
+  const plan = planSpec(data, item, key, omens);
+  if (!plan) return null;
+  const bone = plan.actions.find((a) => "addUnrevealed" in a);
+  if (bone && "addUnrevealed" in bone) return bone.addUnrevealed.fill ? null : boneOdds(data, item, plan, bone.addUnrevealed, omens);
+  if (plan.actions.some((a) => "addEssence" in a)) return sampled(data, item, key, omens);
+  const odds = addOddsBySpec(data, item, key, omens, plan);
+  if (!odds) return null;
+  if (odds.n > 2) return sampled(data, item, key, omens);
+  if (odds.n === 2) return twoAdds(data, item, plan, odds.cands);
+  const cs = odds.cands;
   return { byMod: new Map(cs.map((c) => [c.mod.id, { w: c.w, tiers: c.tiers }])), total: cs.reduce((a, c) => a + c.w, 0), single: true };
 }
 
@@ -51,7 +65,7 @@ export function heldAnyOf(data: PatchData, item: StageItem, key: string, omens: 
     for (const [id, x] of h.byMod) for (const t of x.tiers) if (keys.has(aimTierKey(id, t.index))) w += t.w;
     return w / h.total;
   }
-  const echoes = omens.includes("OmenofAbyssalEchoes");
+  const echoes = rerollsOf(omens) > 0;
   let ok = 0, hit = 0;
   for (let s = 1; s <= SAMPLES; s++) {
     const r = applyCurrency(data, item, key, mulberry32(7919 * s), [...omens]);
@@ -68,7 +82,6 @@ export function heldAnyOf(data: PatchData, item: StageItem, key: string, omens: 
 }
 
 /** 1 回で MOD を幾つも足す・決まった MOD を足す手 (錬金 4 つ、エッセンス)。候補の式が無いので、打つ処理そのものを決まった種で回して数える */
-const MANY = new Set(["alchemy", "essence", "essence_perfect"]);
 const SAMPLES = 1500;
 function sampled(data: PatchData, item: StageItem, key: string, omens: readonly string[]): HeldOdds | null {
   const byMod: HeldOdds["byMod"] = new Map();
@@ -99,11 +112,11 @@ function sampled(data: PatchData, item: StageItem, key: string, omens: readonly 
  * 2 つ目は 1 つ目が付いた後の候補 (側の空き・同じ系統・触媒の重みも同じ) で引く (2026-10-10 オーナー「偉大の高貴のお告げで確率が上がらない」:
  * 前は 1 つ足す時の割合のままで、お告げのオン / オフで表が変わらなかった)。total = 1 (確率そのもの)
  */
-function twoAdds(data: PatchData, item: StageItem, key: string, omens: readonly string[]): HeldOdds | null {
-  const first = addCandidates(data, item, key, omens);
-  if (!first) return null;
+function twoAdds(data: PatchData, item: StageItem, plan: SpecPlan, first: readonly Candidate[]): HeldOdds | null {
+  const last = plan.actions[plan.actions.length - 1]!;
+  if (!("add" in last)) return null;
   const W = first.reduce((a, c) => a + c.w, 0);
-  if (!(W > 0)) return null;
+  if (!(W > 0)) return { byMod: new Map(), total: 1 };
   const byMod: HeldOdds["byMod"] = new Map();
   const add = (id: string, p: number, tiers: ReadonlyArray<{ index: number; w: number }>, tw: number): void => {
     const cur = byMod.get(id) ?? { w: 0, tiers: [] };
@@ -117,10 +130,11 @@ function twoAdds(data: PatchData, item: StageItem, key: string, omens: readonly 
   for (const c1 of first) {
     const p1 = c1.w / W;
     add(c1.mod.id, p1, c1.tiers, c1.w);
+    // 2 つ目は打つ処理 (parts.ts の add) と同じく、1 つ目が付いた後の状態から同じ側・同じ重みで
     const it2 = withMod(item, makeStageMod(c1.mod, c1.side, c1.tiers[0]!.index, () => 0.5));
-    const second = addCandidates(data, it2, key, omens);
-    const W2 = second?.reduce((a, c) => a + c.w, 0) ?? 0;
-    if (!second || !(W2 > 0)) continue;
+    const second = addCands(data, it2, last.add, plan.mods);
+    const W2 = second.reduce((a, c) => a + c.w, 0);
+    if (!(W2 > 0)) continue;
     for (const c2 of second) add(c2.mod.id, p1 * (c2.w / W2), c2.tiers, c2.w);
   }
   return { byMod, total: 1 };
@@ -130,35 +144,36 @@ function twoAdds(data: PatchData, item: StageItem, key: string, omens: readonly 
  * 骨: MOD ごとに「次の発現の候補 3 つに出る確率」、段ごとは「その段で出る確率」(その段以上 − 1 つ上の段以上)。
  * 勢力のお告げは候補 3 つが全部その勢力 (足りなければ数だけ)。変質した鎖骨は異界の MOD も専用の側に入る。差したルーンの MOD は普通の置き場に入る
  */
-function boneOdds(data: PatchData, item: StageItem, key: string, omens: readonly string[]): HeldOdds | null {
-  if (item.rarity !== "rare") return null;
+function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnrevealed, omens: readonly string[]): HeldOdds | null {
   const byMod: HeldOdds["byMod"] = new Map();
-  if (allMods(item).some((m) => m.desecrated)) return { byMod, total: 1, bone: true };
-  // 深淵の王の印: 骨は必ず印を置き換える (側は印の側、段の下限 ABYSS_MARK_FLOOR)。印は消える物として数えない (2026-10-10 点検)
-  const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
-  const omenSide: StageSide | undefined = omens.includes("OmenofSinistralNecromancy") ? "prefix" : omens.includes("OmenofDextralNecromancy") ? "suffix" : undefined;
-  // 側が埋まっていたら、骨はその側の (固定していない) MOD を 1 つ等しい確率で消してから付く (applyBone の removeOne)。
-  // 側を選ぶ重みは applyBone と同じ boneSideWeights (2026-10-10 総当たり: 両側が埋まったレアで表が全部 0% だった)
+  // 対象で打てない時は表を出さない、それ以外 (冒涜の MOD は 1 つまで・アイテムレベル・コラプト) で打てない時は全部 0%
+  if (plan.block) return plan.offTarget ? null : { byMod, total: 1, bone: true };
+  // 側は打つ処理と同じ unrevealedPlan: 深淵の王の印は必ず置き換える (印は消える物として数えない)、お告げの側、空きがあればその中から、
+  // 両側が埋まっていれば側を重みで選んで、その側の (固定していない) MOD を 1 つ等しい確率で消してから付く
+  const sp = unrevealedPlan(data, item, a, plan.mods);
   const runs: Array<{ p: number; it: StageItem; side?: StageSide }> = [];
   const removal = (side: StageSide, p: number): void => {
     const rem = allMods(item).filter((m) => !m.fractured && m.side === side);
     for (const r of rem) runs.push({ p: p / rem.length, it: without(item, r), side });
   };
-  if (mark) runs.push({ p: 1, it: without(item, mark), side: mark.side });
-  else if (omenSide) { if (room(item, omenSide)) runs.push({ p: 1, it: item, side: omenSide }); else removal(omenSide, 1); }
+  if (sp.mark) runs.push({ p: 1, it: without(item, sp.mark), side: sp.mark.side });
+  else if (sp.fixed) { if (room(item, sp.fixed)) runs.push({ p: 1, it: item, side: sp.fixed }); else removal(sp.fixed, 1); }
+  // 空きがある時の側の選び方は、エンジンの確率の式が同じ重みで持っている
   else if (SIDES.some((sd) => room(item, sd))) runs.push({ p: 1, it: item });
   else {
-    const sw = boneSideWeights(data, item, key, omens);
-    const W = sw.prefix + sw.suffix;
+    const W = sp.weights.reduce((x, y) => x + y.w, 0);
     if (!(W > 0)) return { byMod, total: 1, bone: true };
-    for (const sd of SIDES) if (sw[sd] > 0) removal(sd, sw[sd] / W);
+    for (const { s, w } of sp.weights) if (w > 0) removal(s, w / W);
   }
-  for (const run of runs) addBoneRun(data, run.it, key, omens, run.side, !!mark, run.p, byMod);
+  const boss = plan.mods.guaranteeTag ? BOSS_OF_TAG.get(plan.mods.guaranteeTag) : undefined;
+  const opts: BoneOpts = { floor: sp.floor, altered: a.pools.includes("otherworldly"), gnawed: !a.exclusiveAnyLevel, boss, rerolls: rerollsOf(omens) };
+  for (const run of runs) addBoneRun(data, run.it, opts, run.side, run.p, byMod);
   return { byMod, total: 1, bone: true };
 }
 
 /** 骨の 1 通り (消した後の状態・側) の確率を p 倍して byMod に足す */
-function addBoneRun(data: PatchData, item: StageItem, key: string, omens: readonly string[], constrainTo: StageSide | undefined, mark: boolean, p: number, byMod: HeldOdds["byMod"]): void {
+interface BoneOpts { floor: number; altered: boolean; gnawed: boolean; boss: DesecrationBossOmen | undefined; rerolls: number }
+function addBoneRun(data: PatchData, item: StageItem, o: BoneOpts, constrainTo: StageSide | undefined, p: number, byMod: HeldOdds["byMod"]): void {
   const cls = effectiveCls(item);
   const keep = (m: StageMod) => !m.unrevealed;
   const state: ItemState = {
@@ -166,10 +181,8 @@ function addBoneRun(data: PatchData, item: StageItem, key: string, omens: readon
     prefixes: item.prefixes.filter(keep).map((m) => ({ modId: m.modId, tierName: m.tierName })),
     suffixes: item.suffixes.filter(keep).map((m) => ({ modId: m.modId, tierName: m.tierName })),
   };
-  const boss = omens.map((o) => BOSS[o]).find(Boolean);
-  const rerolls = omens.includes("OmenofAbyssalEchoes") ? 1 : 0;
-  const altered = key === "desecrate_altered";
-  const opts = { floor: Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0), altered, rerolls, ...(key === "desecrate_gnawed" ? { gnawed: true } : {}), ...(constrainTo ? { constrainTo } : {}) };
+  const { boss, rerolls, altered } = o;
+  const opts = { floor: o.floor, altered, rerolls, ...(o.gnawed ? { gnawed: true } : {}), ...(constrainTo ? { constrainTo } : {}) };
   const ids = new Set([
     ...cls.pools.normal.prefixes, ...cls.pools.normal.suffixes,
     ...cls.pools.desecrated.prefixes, ...cls.pools.desecrated.suffixes,
@@ -180,7 +193,7 @@ function addBoneRun(data: PatchData, item: StageItem, key: string, omens: readon
     if (!mod) continue;
     const atLeast = boss
       // 勢力の MOD は段を分けない (先頭にまとめる)、混じる普通の MOD は段ごと
-      ? mod.tiers.map((_, i) => (i === 0 || mod.source === "normal" ? desecrationBossOfferProbability(data, state, id, { omen: boss, rerolls, floor: opts.floor, minTierIndex: i, ...(key === "desecrate_gnawed" ? { gnawed: true } : {}), ...(constrainTo ? { constrainTo } : {}) }) : 0))
+      ? mod.tiers.map((_, i) => (i === 0 || mod.source === "normal" ? desecrationBossOfferProbability(data, state, id, { omen: boss, rerolls, floor: opts.floor, minTierIndex: i, ...(o.gnawed ? { gnawed: true } : {}), ...(constrainTo ? { constrainTo } : {}) }) : 0))
       : mod.tiers.map((_, i) => desecrationOfferProbability(data, state, id, { ...opts, minTierIndex: i }));
     const w = atLeast[0] ?? 0;
     if (!(w > 0)) continue;

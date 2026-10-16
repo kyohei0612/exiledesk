@@ -1,12 +1,14 @@
-// 持っているカレンシーで次に付く候補 (addCandidates、2026-10-09): 確率表が持った物・お告げ・触媒で変わる
+// 持っているカレンシーで次に付く候補 (2026-10-09。2026-10-16 から説明文の分解 spec/odds.ts の addOddsBySpec): 確率表が持った物・お告げ・触媒で変わる
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
-import { addCandidates, applyCurrency } from "../src/services/craft-stage/apply-currency";
+import { applyCurrency } from "../src/services/craft-stage/apply-currency";
+import { addOddsBySpec } from "../src/services/craft-stage/spec/odds";
 import { freshItem } from "../src/services/craft-stage/run-plan";
 import { mulberry32 } from "../src/services/htc/rng";
 import type { StageItem } from "../src/services/craft-stage/types";
 
 const data = loadPatch();
+const addCandidates = (...a: Parameters<typeof addOddsBySpec>) => addOddsBySpec(...a)?.cands ?? null;
 const shareOf = (cs: ReturnType<typeof addCandidates>, id: string): number => {
   if (!cs) return 0;
   const total = cs.reduce((a, c) => a + c.w, 0);

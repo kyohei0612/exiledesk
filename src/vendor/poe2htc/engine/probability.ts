@@ -562,7 +562,7 @@ export function essenceForcedProbability(
 
 /** Desecration boss omen: Blackblooded=Kurgal, Liege=Amanamu, Sovereign=Ulaman. */
 export type DesecrationBossOmen = 'blackblooded' | 'liege' | 'sovereign';
-const DES_BOSS_TAG: Record<DesecrationBossOmen, string> = {
+export const DES_BOSS_TAG: Record<DesecrationBossOmen, string> = {
   blackblooded: 'kurgal_mod', liege: 'amanamu_mod', sovereign: 'ulaman_mod',
 };
 

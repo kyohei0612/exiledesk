@@ -50,7 +50,7 @@ const hasStart = (k: "fractured" | "desecrated"): boolean => s.startMods.value.s
 const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.value, s.item.value) : []));
 /**
  * 持っているカレンシーで次に付く確率 (エミュレーターでカレンシーを持っている時だけ。2026-10-09 オーナー「持った時の挙動が UI 的に全然足りてない」)。
- * 候補は打つ処理と同じ決まり (apply-currency の addCandidates: 側・強さの下限・お告げ・触媒・同じ系統)。null = 持っていない / MOD を足さない物
+ * 候補は打つ処理と同じ説明文の分解 (spec/odds.ts の addOddsBySpec: 側・強さの下限・お告げ・触媒・同じ系統)。null = 持っていない / MOD を足さない物
  */
 const heldCands = computed(() => {
   const k = s.held.value, d = s.data.value, it = s.item.value;

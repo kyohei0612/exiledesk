@@ -102,36 +102,48 @@ const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>):
   desecrated: true, unrevealed: u,
 });
 
-type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnrevealed"];
+export type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnrevealed"];
 /**
- * 未発現の冒涜 MOD を 1 つ足す。
+ * 未発現の冒涜 MOD をどの側に付けるか (打つ処理と確率表 held-odds.ts の骨が同じ物を使う)。
  *   - 深淵の王の印 (固定していない物) があれば、必ず印を置き換える。側は印の側、段の下限は MARK_FLOOR (用語集 MarkofAbyssalLord)
- *   - 側: お告げ → それ。無ければ空いている側から、その側で出うる MOD の重みの和で選ぶ (空きが 1 つなら抽選しない)。両側が埋まっていれば両側から
+ *   - 側: お告げ → それ (fixed)。無ければ空いている側から、その側で出うる MOD の重みの和で選ぶ (空きが 1 つなら抽選しない)。両側が埋まっていれば両側から
  *   - 勢力の保証で、その勢力の MOD がどの空いた側にも無ければ、普通の MOD の重みで選ぶ (発現は普通の MOD 3 つ。フォーラム 3956293)
- *   - 選んだ側が満杯なら、その側の固定以外を等しく 1 つ消してから付ける
  */
-function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): StageApply {
-  if (a.fill) return fillUnrevealed(ctx, item, a);
-  const { data, rng, mods } = ctx;
+export interface UnrevealedPlan {
+  mark: StageMod | undefined;
+  floor: number;
+  fixed: StageSide | null;
+  /** 側ごとの重み (fixed ならその側だけ) */
+  weights: Array<{ s: StageSide; w: number }>;
+}
+export function unrevealedPlan(data: PatchData, item: StageItem, a: AddUnrevealed, mods: Mods): UnrevealedPlan {
   const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
   const floor = Math.max(a.floor, mark ? MARK_FLOOR : 0);
-  const omenSide: StageSide | null = mark ? mark.side : mods.side;
+  const fixed: StageSide | null = mark ? mark.side : mods.side;
   const args = (tag: string | null, plain: boolean): PoolArgs => ({ pools: plain ? ["normal"] : a.pools, floor, exclusiveAnyLevel: a.exclusiveAnyLevel, tag });
   const tagW = (side: StageSide) => sumW(pool(data, item, side, args(mods.guaranteeTag, false)));
   const open = SIDES.filter((s) => room(item, s));
   const noTag = !!mods.guaranteeTag && !(open.length ? open : SIDES).some((s) => tagW(s) > 0);
   const weightOf = (side: StageSide) => (noTag ? sumW(pool(data, item, side, args(null, true))) : tagW(side));
+  const sides = fixed ? [fixed] : open.length ? open : SIDES;
+  return { mark, floor, fixed, weights: sides.map((s) => ({ s, w: weightOf(s) })) };
+}
+/** 未発現の冒涜 MOD を 1 つ足す (側は unrevealedPlan)。選んだ側が満杯なら、その側の固定以外を等しく 1 つ消してから付ける */
+function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): StageApply {
+  if (a.fill) return fillUnrevealed(ctx, item, a);
+  const { data, rng, mods } = ctx;
+  const { mark, floor, fixed, weights } = unrevealedPlan(data, item, a, mods);
   let side: StageSide;
-  if (omenSide) side = omenSide;
-  else if (open.length === 1) {
-    if (!(weightOf(open[0]!) > 0)) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
-    side = open[0]!;
+  if (fixed) side = fixed;
+  else if (weights.length === 1) {
+    if (!(weights[0]!.w > 0)) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
+    side = weights[0]!.s;
   } else {
-    const pick = pickWeighted((open.length ? open : SIDES).map((s) => ({ s, w: weightOf(s) })), rng);
+    const pick = pickWeighted(weights, rng);
     if (!pick) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
     side = pick.s;
   }
-  if (!(weightOf(side) > 0)) return skip(item, tr("その側に付けられる冒涜の MOD が無い", "No Desecrated mod can be added on that side"));
+  if (!(weights.find((x) => x.s === side)!.w > 0)) return skip(item, tr("その側に付けられる冒涜の MOD が無い", "No Desecrated mod can be added on that side"));
   let cur = item;
   const removed: StageMod[] = [];
   if (mark) {
@@ -140,7 +152,7 @@ function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): StageAp
   } else if (!room(cur, side)) {
     const r = removeOne(cur, rng, [side]);
     // 側を重みで選んだ時は、選ばれた側が固定の MOD だけかは当たり所 (お告げで決めた側なら打つ前に分かる)
-    if (!r) return (omenSide ? skip : skipRandom)(item, tr("その側に空きが無い", "No open slot on that side"));
+    if (!r) return (fixed ? skip : skipRandom)(item, tr("その側に空きが無い", "No open slot on that side"));
     cur = r.item;
     removed.push(r.mod);
   }

@@ -8,7 +8,7 @@
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { skip, type Force } from "../stage-core";
 import type { StageApply, StageItem } from "../types";
-import type { CurrencySpec, OmenSpec } from "./types";
+import type { Action, CurrencySpec, OmenSpec } from "./types";
 import { ANNUL_SPEC, BONE_SPECS, OMEN_SPECS, REVEAL_SPEC } from "./desecrate-specs";
 import { ORB_OMEN_SPECS, ORB_SPEC_BY_KEY, UNPORTED_OMENS } from "./orb-specs";
 import { ESSENCE_OMEN_SPECS, prepareEssence, resolveEssence } from "./essence-specs";
@@ -68,7 +68,7 @@ export function omensOf(spec: CurrencySpec, held: readonly string[]): OmenSpec[]
  * お告げの効き目をまとめる。左右を両方掛けた時は左 (OMEN_SPECS の順)、勢力を 2 つ掛けた時は先に掛けた方
  * (どちらも画面では一緒に掛けられない: omens.ts の OMEN_EXCLUSIVE。今の関数と同じ選び方)
  */
-function modsOf(used: readonly OmenSpec[]): Mods {
+export function modsOf(used: readonly OmenSpec[]): Mods {
   const m: Mods = { ...NO_MODS };
   for (const o of ALL_OMEN_SPECS) {
     if (!used.includes(o)) continue;
@@ -93,38 +93,64 @@ function modsOf(used: readonly OmenSpec[]): Mods {
 const PICK_KINDS: readonly string[] = ["transmute", "augment", "regal", "alchemy", "exalt", "chaos"];
 
 /**
- * 1 手打つ (applyCurrency と同じ形)。移していない手は null。oneCatalyst: 手順の再生 (触媒は 1 手 = 1 個。applyCurrency の hint.oneCatalyst と同じ)。
- * pick / remove: 付く MOD・消える MOD の指名 (手順の再生、要望 ⑱-1。applyCurrency の hint と同じ)
+ * 打つ前の判定とお告げの効き目 (打つ処理 applyBySpec と確率表 spec/odds.ts が同じ物を使う)。移していない手は null。
+ * block: 打てない一言。stage = state (アイテムの状態・骨が部位に合わない)・target (対象)・limit (制約・お告げの前提)。
+ * actions: 打つ部品 (腐食のお告げなら置き換えた物)
  */
-export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: () => number, omens: readonly string[] = [], opts: { oneCatalyst?: boolean; pick?: readonly Force[]; remove?: string } = {}): StageApply | null {
+export interface SpecPlan {
+  spec: CurrencySpec;
+  reveal: PartCtx["reveal"];
+  used: OmenSpec[];
+  mods: Mods;
+  actions: readonly Action[];
+  catalystTag: string | null;
+  block: { stage: "state" | "target" | "limit"; reason: string } | null;
+  /** 対象 (レアリティ・部位) が合わない (アイテムの状態より先に見る時に使う: 確率表は対象が合わなければ表を出さない) */
+  offTarget: boolean;
+}
+export function planSpec(data: PatchData, item: StageItem, key: string, omens: readonly string[]): SpecPlan | null {
   const r = resolveSpec(key, item, data);
   if (!r) return null;
   const { spec } = r;
   // 移していないお告げ (聖別) が掛かる手は今の関数で
   if (omens.some((o) => UNPORTED_OMENS.includes(o) && OMEN_FOR_KIND(spec.kind, o))) return null;
-  const st = stateBlock(spec, item, omens);
-  if (st) return skip(item, st);
-  if (r.reason) return skip(item, r.reason);
-  const t = targetBlock(spec.target, item);
-  if (t) return skip(item, t);
   const used = omensOf(spec, omens);
   const mods = modsOf(used);
   const catalystTag = spec.kind === "catalyst" ? key.slice(key.indexOf("_") + 1) : null;
+  const replace = used.map((o) => o.effect).find((e) => "replace" in e);
+  const actions = replace && "replace" in replace ? replace.replace : spec.actions;
+  const plan = { spec, reveal: r.reveal, used, mods, actions, catalystTag, offTarget: !!r.reason || !!targetBlock(spec.target, item) };
+  const block = (stage: "state" | "target" | "limit", reason: string): SpecPlan => ({ ...plan, block: { stage, reason } });
+  const st = stateBlock(spec, item, omens);
+  if (st) return block("state", st);
+  if (r.reason) return block("state", r.reason);
+  const t = targetBlock(spec.target, item);
+  if (t) return block("target", t);
   for (const l of spec.limits) {
     const why = limitBlock(l, item, mods, catalystTag);
-    if (why) return skip(item, why);
+    if (why) return block("limit", why);
   }
   for (const o of used) {
     const why = (o.target ? targetBlock(o.target, item) : null) ?? (o.limits ?? []).map((l) => limitBlock(l, item, mods)).find((x) => x) ?? null;
-    if (why) return skip(item, why);
+    if (why) return block("limit", why);
   }
-  const replace = used.map((o) => o.effect).find((e) => "replace" in e);
-  const actions = replace && "replace" in replace ? replace.replace : spec.actions;
+  return { ...plan, block: null };
+}
+
+/**
+ * 1 手打つ (applyCurrency と同じ形)。移していない手は null。oneCatalyst: 手順の再生 (触媒は 1 手 = 1 個。applyCurrency の hint.oneCatalyst と同じ)。
+ * pick / remove: 付く MOD・消える MOD の指名 (手順の再生、要望 ⑱-1。applyCurrency の hint と同じ)
+ */
+export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: () => number, omens: readonly string[] = [], opts: { oneCatalyst?: boolean; pick?: readonly Force[]; remove?: string } = {}): StageApply | null {
+  const plan = planSpec(data, item, key, omens);
+  if (!plan) return null;
+  if (plan.block) return skip(item, plan.block.reason);
+  const { spec, used, mods, actions, catalystTag } = plan;
   // エッセンスの MOD は打つ前に作る (値の乱数は今の関数と同じく消す前)
   const essence = spec.actions.some((a) => "addEssence" in a) ? prepareEssence(data, item, key, rng) : null;
   if (spec.actions.some((a) => "addEssence" in a) && !essence) return skip(item, tr("このエッセンスのティアが無い", "No tier for this Essence"));
   const ctx: PartCtx = {
-    data, rng, mods, reveal: r.reveal, removedSoFar: [], essence,
+    data, rng, mods, reveal: plan.reveal, removedSoFar: [], essence,
     catalystTag, oneCatalyst: !!opts.oneCatalyst, runeKey: key,
     altered: spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly")),
     // カオスは指名の 1 つ目だけ見る (今の関数と同じ。余った指名は無視)

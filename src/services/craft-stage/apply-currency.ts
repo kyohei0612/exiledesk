@@ -10,11 +10,8 @@
  */
 import { applyEmotion, isEmotion } from "./apply-emotion";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
-import { catalysingMultiplier } from "../htc/catalysing-multiplier";
-import { boostedBy } from "../htc/quality";
 import { inAny, inGroup, type ItemGroup } from "../mods/item-classes";
-import { allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, maxQualityOf, room, SIDES, skip, without, type Candidate, type Force } from "./stage-core";
+import { allMods, hasExtraCatalyst, maxQualityOf, skip, type Force } from "./stage-core";
 import { applyForce, isForce } from "./apply-force";
 /** 品質を手で決める手 (`qset:15` = 品質 15%、`qset:34:caster` = 宝飾品の品質の種類も) */
 export const QUALITY_SET = "qset:";
@@ -59,7 +56,6 @@ import { itemBaseFor } from "../htc/bridge";
 import { jaTypeName } from "../trade2/localize";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
-import { overLimit } from "./stage-core";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyFlux, isFlux } from "./apply-flux";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
@@ -73,12 +69,6 @@ import { applyBySpec } from "./spec/run-spec";
 function parseKey(key: string): { kind: string; strength: "base" | "greater" | "perfect" } {
   const m = /^(.*)_(greater|perfect)$/.exec(key);
   return m ? { kind: m[1]!, strength: m[2] as "greater" | "perfect" } : { kind: key, strength: "base" };
-}
-/** 強さの段の下限 */
-function floorOf(kind: string, strength: "base" | "greater" | "perfect"): number {
-  if (kind === "chaos") return { base: 0, greater: 35, perfect: 50 }[strength];
-  const t = CURRENCY_FLOOR[kind as keyof typeof CURRENCY_FLOOR];
-  return t ? t[strength] : 0;
 }
 
 /** その手の種類 (お告げの対応を引く鍵) */
@@ -112,12 +102,6 @@ export function omensFor(currency: string, held: readonly string[]): string[] {
   return used.includes("OmenofPutrefaction") ? ["OmenofPutrefaction"] : used;
 }
 
-/** お告げの側 (左 = プレ / 右 = サフィ) */
-function sideOmen(used: readonly string[], left: string, right: string): StageSide | null {
-  if (used.includes(left)) return "prefix";
-  if (used.includes(right)) return "suffix";
-  return null;
-}
 
 /**
  * 1 個打つ。打てない状態なら applied:false と理由 (item はそのまま)。
@@ -223,75 +207,4 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(data, item, rng);
   // オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーンは説明文の分解 (spec/) で打つ (ADR-004、2026-10-16 に今の関数から外した)
   return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`));
-}
-
-/**
- * 持っているカレンシーで次に付く MOD の候補と重み (2026-10-09 オーナー「カレンシー持った時に MOD の確率票変化。増強の時そもそも確率票が動いてない、
- * 完全とか使うと付かない MOD とか出てくるから確率票もだし、付かない MOD はグレーアウト」)。打つ処理 (applyCurrency) と同じ決まり:
- * 変成はマジックにしてから・増強は空きのある側・王者は戴冠のお告げの側・錬金は空のレア・高貴は側のお告げと触媒の高貴のお告げ・カオスは消した後どちらにも。
- * 強さの下限 (上級・完全) とアイテムレベルは candidates が見る。MOD を足さない物・確定で付く物 (エッセンスなど) は null
- */
-export function addCandidates(data: PatchData, item: StageItem, currency: string, omens: readonly string[]): Candidate[] | null {
-  const kind = kindOf(currency);
-  const used = omensFor(currency, omens);
-  const floor = floorOf(kind, parseKey(currency).strength);
-  if (floor > 0 && item.itemLevel < floor && !noIlvl(item)) return [];
-  const open = (it: StageItem, sides: readonly StageSide[]): StageSide[] => sides.filter((sd) => room(it, sd));
-  switch (kind) {
-    case "transmute": {
-      if (item.rarity !== "normal") return null;
-      const it = { ...item, rarity: "magic" as const };
-      return candidates(data, it, open(it, SIDES), floor);
-    }
-    case "augment":
-      if (item.rarity !== "magic") return null;
-      return candidates(data, item, open(item, SIDES), floor);
-    case "regal": {
-      if (item.rarity !== "magic") return null;
-      const side = sideOmen(used, "OmenofSinistralCoronation", "OmenofDextralCoronation");
-      const it = { ...item, rarity: "rare" as const };
-      return candidates(data, it, open(it, side ? [side] : SIDES), floor);
-    }
-    case "alchemy": {
-      if (item.rarity !== "normal" && item.rarity !== "magic") return null;
-      const it = { ...item, rarity: "rare" as const, prefixes: [], suffixes: [] };
-      return candidates(data, it, SIDES, floor);
-    }
-    case "exalt": {
-      if (item.rarity !== "rare") return null;
-      const side = sideOmen(used, "OmenofSinistralExaltation", "OmenofDextralExaltation");
-      const cat = catalystOf(item);
-      const boost = used.includes("OmenofCatalysingExaltation") && cat.tag && cat.pct > 0
-        ? { test: (m: Parameters<typeof boostedBy>[0]) => catalystBoosts(item, { modId: m.id, tags: m.tags }, cat.tag!, data), mult: catalysingMultiplier(cat.pct) }
-        : undefined;
-      return candidates(data, item, open(item, side ? [side] : SIDES), floor, boost ? { boost } : {});
-    }
-    case "chaos": {
-      // 1 つ消してから足す: 消える MOD (削減・抹消のお告げで絞る) ごとに、消えた後の候補で付く割合を足し合わせる。消えた MOD と同じ系統も付きうる
-      // (2026-10-09 確率表の突き合わせ: 前は付いている系統を全部外していて、消えた系統の付き直しが 0% と出ていた)
-      if (item.rarity !== "rare") return null;
-      const side = sideOmen(used, "OmenofSinistralErasure", "OmenofDextralErasure");
-      // 上限を超えている側 (侮蔑を外した後) は当たっても弾かれるので、付く候補には数えない
-      const gone = (used.includes("OmenofWhittling") ? whittleTargets(item, side) : allMods(item).filter((m) => !m.fractured && (!side || m.side === side))).filter((m) => !overLimit(item, m.side));
-      if (!gone.length) return null;
-      const acc = new Map<string, Candidate>();
-      for (const r of gone) {
-        // 足せるのは消えた後に空きのある側だけ (両側が埋まったレアなら消えた側だけ。2026-10-10 点検)
-        const rest = without(item, r);
-        const cs = candidates(data, rest, open(rest, SIDES), floor);
-        const total = cs.reduce((a, c) => a + c.w, 0);
-        if (!(total > 0)) continue;
-        const k = 1 / gone.length / total;
-        for (const c of cs) {
-          const cur = acc.get(c.mod.id);
-          if (!cur) { acc.set(c.mod.id, { ...c, w: c.w * k, tiers: c.tiers.map((t) => ({ ...t, w: t.w * k })) }); continue; }
-          cur.w += c.w * k;
-          for (const t of c.tiers) { const x = cur.tiers.find((y) => y.index === t.index); if (x) x.w += t.w * k; else cur.tiers.push({ ...t, w: t.w * k }); }
-        }
-      }
-      return [...acc.values()];
-    }
-    default:
-      return null;
-  }
 }
