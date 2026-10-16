@@ -4,8 +4,8 @@
  *
  * 音はゲームのクライアント (FMOD/Desktop/ItemDrops.bank の OrbUse_* と OrbDrop_Divine_01) から取り出して mp3 にした物 (public/sfx)。
  * 珍しい段 (付いた瞬間の確率が isRareChance = 工程で黄色に出る物) が付いた時は、カレンシーの音の代わりに神のオーブが落ちた時の音
- * (ゲームと同じく、高いカレンシーが落ちた時の派手な音 Item_Drop_HighTier_Rare_Currency_01 と神のオーブの音 OrbDrop_Divine_01 を重ねた物。
- * 2026-10-16 オーナー「神のオーブしょぼくね、ドロップした時のクソ派手演出」で重ねた。少し大きめに鳴らす)。
+ * (高いカレンシーのレア度の音 Item_Drop_HighTier_Rare_Currency_01 の 0.45 秒後に、神が地面に落ちた音 OrbDrop_Divine_01。
+ * 2026-10-16 オーナー「神のオーブしょぼくね、ドロップした時のクソ派手演出」「じゃきーん、ぽーん」。少し大きめに鳴らす)。
  * iPhone の Safari は <audio> の音量を無視するので Web Audio の GainNode で絞る。オフは端末に覚える (sfx-off)
  */
 import { ref } from "vue";
