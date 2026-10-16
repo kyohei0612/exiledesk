@@ -149,7 +149,7 @@ function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnreve
   // 対象で打てない時は表を出さない、それ以外 (冒涜の MOD は 1 つまで・アイテムレベル・コラプト) で打てない時は全部 0%
   if (plan.block) return plan.offTarget ? null : { byMod, total: 1, bone: true };
   // 側は打つ処理と同じ unrevealedPlan: 深淵の王の印は必ず置き換える (印は消える物として数えない)、お告げの側、空きがあればその中から、
-  // 両側が埋まっていれば側を重みで選んで、その側の (固定していない) MOD を 1 つ等しい確率で消してから付く
+  // 両側が埋まっていれば固定していない MOD を全部から等しく 1 つ消して、その側に付く
   const sp = unrevealedPlan(data, item, a, plan.mods);
   const runs: Array<{ p: number; it: StageItem; side?: StageSide }> = [];
   const removal = (side: StageSide, p: number): void => {
@@ -158,9 +158,12 @@ function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnreve
   };
   if (sp.mark) runs.push({ p: 1, it: without(item, sp.mark), side: sp.mark.side });
   else if (sp.fixed) { if (room(item, sp.fixed)) runs.push({ p: 1, it: item, side: sp.fixed }); else removal(sp.fixed, 1); }
-  // 空きがある時の側の選び方は、エンジンの確率の式が同じ重みで持っている
-  else if (SIDES.some((sd) => room(item, sd))) runs.push({ p: 1, it: item });
-  else {
+  // 空きがある時は空いた側から等しく (両側なら半々、2026-10-16 Craft of Exile と同じ)
+  else if (SIDES.some((sd) => room(item, sd))) {
+    const W = sp.weights.reduce((x, y) => x + y.w, 0);
+    if (!(W > 0)) return { byMod, total: 1, bone: true };
+    for (const { s, w } of sp.weights) if (w > 0) runs.push({ p: w / W, it: item, side: s });
+  } else {
     const W = sp.weights.reduce((x, y) => x + y.w, 0);
     if (!(W > 0)) return { byMod, total: 1, bone: true };
     for (const { s, w } of sp.weights) if (w > 0) removal(s, w / W);

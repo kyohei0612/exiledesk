@@ -815,9 +815,8 @@ function pickPool(mods: readonly Mod[], weightOf: (m: Mod) => number): { ids: st
 
 /**
  * ExileDesk 2026-10-09: P(an untargeted desecration — no boss omen — puts `desiredModId` in front of the
- * player), by the reveal composition above. The bone first lands on a side, weighted by everything that
- * side could show (normal + desecrated weight — the same split the emulator's bone uses), unless a
- * Necromancy omen fixed it. On that side an exclusive target is among the `k` exclusive picks with
+ * player), by the reveal composition above. The bone first lands on a side, half and half when both are open
+ * (ExileDesk 2026-10-16, Craft of Exile — the emulator's bone does the same), unless a Necromancy omen fixed it. On that side an exclusive target is among the `k` exclusive picks with
  * probability k / (legal exclusive count); a normal target among the `3 − k` normal picks with
  * 1 − (1 − share)^(3 − k) (share of the side's normal weight — treating those picks as independent, which on a
  * pool of hundreds moves it by far less than the unknown weights do). An Omen of Abyssal Echoes (`rerolls`)
@@ -869,7 +868,8 @@ export function desecrationOfferProbability(
   if (!opts.constrainTo) {
     const other = side === 'prefix' ? 'suffix' : 'prefix';
     const there = open[other] ? sideStats(other).total : 0;
-    pSide = here.total / (here.total + there);
+    // ExileDesk 2026-10-16: both open → half and half (Craft of Exile poe2_desecrate, randomNumber(0,2)); a side that can show nothing isn't picked
+    pSide = there > 0 ? 0.5 : 1;
   }
   const inPool = isExclusive || (side === 'prefix' ? pools.normal.prefixes : pools.normal.suffixes).includes(desiredModId);
   if (!inPool) return 0;
@@ -931,9 +931,8 @@ export function desecrationOfferProbability(
  * <faction> modifier" — not "only". The reveal shows that faction's exclusive mods first (count-uniform, without replacement,
  * a pick removing the others of its family), up to three; when the side holds fewer, the rest of the three are NORMAL mods by
  * their normal weight (owner 2026-10-11: two Amanamu mods → one normal mod mixed in; forum 3956293: a wand whose prefixes
- * blocked every Amanamu mod showed three normal mods). The bone picks the side by how many of the faction's mods each open
- * side can show (the emulator's bone does the same), by the normal weight when neither side can show one, unless a
- * Necromancy omen fixed it. An Omen of Abyssal Echoes reshows the same side.
+ * blocked every Amanamu mod showed three normal mods). The bone picks half and half between the open sides that can show a
+ * faction mod (any mod when neither can; the emulator's bone does the same, 2026-10-16), unless a Necromancy omen fixed it. An Omen of Abyssal Echoes reshows the same side.
  */
 export function desecrationBossOfferProbability(
   data: PatchData, item: ItemState, desiredModId: string,
@@ -967,11 +966,12 @@ export function desecrationBossOfferProbability(
   if (!opts.constrainTo) {
     const other: AffixType = side === 'prefix' ? 'suffix' : 'prefix';
     const thereF = factionOf(other).length;
-    if (hereF.length + thereF > 0) pSide = hereF.length / (hereF.length + thereF);
+    // ExileDesk 2026-10-16: half and half between the sides that can show something (Craft of Exile poe2_desecrate)
+    const half = (h: number, t2: number): number => (h > 0 ? (t2 > 0 ? 0.5 : 1) : 0);
+    if (hereF.length + thereF > 0) pSide = half(hereF.length, thereF);
     else {
       const nw = (sd: AffixType) => normalOf(sd).reduce((a2, m) => a2 + rollableWeight(m, item.level, floor), 0);
-      const h = nw(side), t2 = nw(other);
-      pSide = h + t2 > 0 ? h / (h + t2) : 0;
+      pSide = half(nw(side), nw(other));
     }
   }
   if (!(pSide > 0)) return 0;

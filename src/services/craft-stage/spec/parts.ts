@@ -106,14 +106,16 @@ export type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnre
 /**
  * 未発現の冒涜 MOD をどの側に付けるか (打つ処理と確率表 held-odds.ts の骨が同じ物を使う)。
  *   - 深淵の王の印 (固定していない物) があれば、必ず印を置き換える。側は印の側、段の下限は MARK_FLOOR (用語集 MarkofAbyssalLord)
- *   - 側: お告げ → それ (fixed)。無ければ空いている側から、その側で出うる MOD の重みの和で選ぶ (空きが 1 つなら抽選しない)。両側が埋まっていれば両側から
+ *   - 側: お告げ → それ (fixed)。無ければ両側が空いていれば半々 (空きが 1 つなら抽選しない)。両側が埋まっていれば、固定以外の MOD を全部から等しく 1 つ消して、
+ *     その側 (= 側ごとの重みは消せる MOD の数)。2026-10-16 Craft of Exile の poe2_desecrate に合わせる (オーナー「書いていない所はランダム」)
+ *   - その側で出うる MOD が無い側は選ばない (重み 0)
  *   - 勢力の保証で、その勢力の MOD がどの空いた側にも無ければ、普通の MOD の重みで選ぶ (発現は普通の MOD 3 つ。フォーラム 3956293)
  */
 export interface UnrevealedPlan {
   mark: StageMod | undefined;
   floor: number;
   fixed: StageSide | null;
-  /** 側ごとの重み (fixed ならその側だけ) */
+  /** 側ごとの選ばれ方 (fixed ならその側だけ)。w = 0 はその側に付けられる MOD が無い */
   weights: Array<{ s: StageSide; w: number }>;
 }
 export function unrevealedPlan(data: PatchData, item: StageItem, a: AddUnrevealed, mods: Mods): UnrevealedPlan {
@@ -126,7 +128,8 @@ export function unrevealedPlan(data: PatchData, item: StageItem, a: AddUnreveale
   const noTag = !!mods.guaranteeTag && !(open.length ? open : SIDES).some((s) => tagW(s) > 0);
   const weightOf = (side: StageSide) => (noTag ? sumW(pool(data, item, side, args(null, true))) : tagW(side));
   const sides = fixed ? [fixed] : open.length ? open : SIDES;
-  return { mark, floor, fixed, weights: sides.map((s) => ({ s, w: weightOf(s) })) };
+  const share = (s: StageSide): number => (fixed || open.length ? 1 : allMods(item).filter((m) => !m.fractured && m.side === s).length);
+  return { mark, floor, fixed, weights: sides.map((s) => ({ s, w: weightOf(s) > 0 ? share(s) : 0 })) };
 }
 /** 未発現の冒涜 MOD を 1 つ足す (側は unrevealedPlan)。選んだ側が満杯なら、その側の固定以外を等しく 1 つ消してから付ける */
 function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): StageApply {
@@ -286,7 +289,7 @@ function reveal(ctx: PartCtx, item: StageItem, a: { offers: number }): StageAppl
 
 type Remove = Extract<Action, { remove: unknown }>["remove"];
 /**
- * 固定以外から消す。冒涜だけ (光のお告げ) の時は側のお告げを見ない (今の作り、オーナー確認待ち)。
+ * 固定以外から消す。冒涜だけ (光のお告げ) で左右の消去も掛けていれば、その側の冒涜の MOD だけ (2026-10-16 Craft of Exile と同じ)。
  * 側: お告げ (抹消・結晶化・左右の消去) → それ。付ける側が埋まっている完全エッセンスは、その側から (sideWhenFull)。
  * 削りのお告げは MOD レベルの一番低い物から (未発現の枠は 1 として数える、apply-currency.ts の whittleTargets)
  */
@@ -297,8 +300,9 @@ function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
   }
   const pick = ctx.mods.pick ?? a.pick;
   if (pick === "desecrated") {
-    const ds = allMods(item).filter((m) => m.desecrated && !m.fractured);
-    if (!ds.length) return skip(item, tr("光のお告げ: 冒涜の MOD が無い", "Omen of Light: no Desecrated mod"));
+    const only = ctx.mods.removeSide ?? ctx.mods.side;
+    const ds = allMods(item).filter((m) => m.desecrated && !m.fractured && (!only || m.side === only));
+    if (!ds.length) return skip(item, only ? tr("光のお告げ: その側に冒涜の MOD が無い", "Omen of Light: no Desecrated mod on that side") : tr("光のお告げ: 冒涜の MOD が無い", "Omen of Light: no Desecrated mod"));
     // 冒涜の MOD は 1 つまでなので、ふつうは 1 つから選ぶ (乱数を使わない)
     const d = ds.length === 1 ? ds[0]! : ds[Math.floor(ctx.rng() * ds.length)]!;
     return { applied: true, item: without(item, d), added: [], removed: [d] };

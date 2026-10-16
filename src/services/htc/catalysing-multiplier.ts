@@ -1,4 +1,4 @@
-/** catalysing.ts から切り出し (2026-09-26): 実測の 2 点と、品質 → 倍率の当てはめ (catalysingMultiplier / catalysingBand) */
+/** catalysing.ts から切り出し (2026-09-26): 品質 → 倍率 (catalysingMultiplier、2026-10-16 から Craft of Exile の式) と実測の 2 点の区間 (catalysingBand) */
 import { ABSOLUTE_MAX_QUALITY } from "./quality";
 
 /** 実測 1 点。`quality` は %、`multiplier` はタグ付き MOD の重みに掛かる倍率。 */
@@ -20,27 +20,32 @@ export const CATALYSING_SAMPLES: readonly CatalysingSample[] = [
 /** 画面に出す但し書き。`LINGERING_CAVEAT` と同じ扱いで、必ず倍率と一緒に見せる。 */
 export const CATALYSING_CAVEAT =
   "触媒の高貴のお告げの倍率はゲーム内にもクライアントにも数字が無く、" +
-  "コミュニティの実測 200 個 (各 100 個) から引いた推定です。" +
-  "40% 側の 95% 区間は 5 - 13 倍と広く、2 群のベースが同じとは書かれていないため " +
-  "品質が低い側ほど当てになりません。" +
+  "Craft of Exile の式 (1 + 0.2 × 品質、20% を超えた分は 1% ごとに +0.12) を使っています。" +
+  "幅はコミュニティの実測 200 個 (各 100 個) の 95% 区間です。" +
   "大いなる高貴のお告げと重ねた時は、足す 2 つとも重く引きます (公開の確認は無く、クラフト配信者の説明に合わせています)。";
 
-/** 2 点を通る直線。`q` は % 。 */
+/**
+ * Craft of Exile の作り (package_poe2.js の exaltedParams、OmenOnExaltConsumeQuality。2026-10-16 オーナー「CoE に合わせて」):
+ * 1 + 0.2 × 品質 (20% で 5 倍)。標準の上限 20% を超えた分は 1% ごとに +0.12 (40% で 7.4 倍)。reddit の実測 2 点 (上の表) の区間の中に入る
+ */
+const DEFAULT_MAX = 20;
+function coeMultiplier(q: number): number {
+  return q <= DEFAULT_MAX ? 1 + 0.2 * q : 1 + 0.2 * DEFAULT_MAX + 0.12 * (q - DEFAULT_MAX);
+}
+/** 区間は reddit の実測 2 点 (各 100 個) の 95% 区間を結んだ物 (画面の幅だけに使う) */
 function lineThrough(loSample: number, hiSample: number): (q: number) => number {
   const [a, b] = CATALYSING_SAMPLES as readonly [CatalysingSample, CatalysingSample];
   const slope = (hiSample - loSample) / (b.quality - a.quality);
   const intercept = loSample - slope * a.quality;
   return (q) => intercept + slope * q;
 }
-
-const CENTRAL = lineThrough(CATALYSING_SAMPLES[0]!.multiplier, CATALYSING_SAMPLES[1]!.multiplier);
 const LOWER = lineThrough(CATALYSING_SAMPLES[0]!.lo, CATALYSING_SAMPLES[1]!.lo);
 const UPPER = lineThrough(CATALYSING_SAMPLES[0]!.hi, CATALYSING_SAMPLES[1]!.hi);
 
 /** 品質 (%) → タグ付き MOD の重みに掛かる倍率。品質 0 ではお告げを使う意味が無いので 1。 */
 export function catalysingMultiplier(qualityPct: number): number {
   if (!(qualityPct > 0)) return 1;
-  return Math.max(1, CENTRAL(Math.min(qualityPct, ABSOLUTE_MAX_QUALITY)));
+  return coeMultiplier(Math.min(qualityPct, ABSOLUTE_MAX_QUALITY));
 }
 
 /** 同じ品質での 95% 区間。画面には幅ごと出す。 */
