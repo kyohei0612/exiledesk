@@ -31,7 +31,7 @@ export const handsOf = (category: string): number | null => rowOf(category)?.han
 
 /** 説明文の言葉 → 部位のまとまり (クライアントの CraftingItemClassCategories と種別) */
 export type ItemGroup =
-  | "weapon" | "martial" | "caster" | "armour" | "jewellery" | "ringAmulet" | "quiver" | "jewel" | "flask" | "charm" | "gem"
+  | "weapon" | "martial" | "caster" | "wandStaff" | "armour" | "jewellery" | "ringAmulet" | "quiver" | "jewel" | "flask" | "charm" | "gem"
   | "bodyArmour" | "shieldLike" | "shield" | "equipment";
 export function inGroup(category: string, g: ItemGroup): boolean {
   const r = rowOf(category);
@@ -43,6 +43,8 @@ export function inGroup(category: string, g: ItemGroup): boolean {
     case "martial": return r.crafting.includes("MartialWeapon");
     // 「ワンド・スタッフ・セプター」(エッチャー・秘術のインフューザー。説明文が部位の名前で書いてある)
     case "caster": return c === "Wand" || c === "Staff" || c === "Sceptre";
+    // 「ワンド、スタッフ」(アーティフィサー「Martial Weapon, wand, staff or Armour」。セプターは書いていない)
+    case "wandStaff": return c === "Wand" || c === "Staff";
     case "armour": return r.kind === "armour";
     // 「アミュレット・指輪・ベルト」(鎖骨・カマサの生贄・勢力のお告げの Jewellery)
     case "jewellery": return r.kind === "jewellery";
