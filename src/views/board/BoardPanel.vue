@@ -4,7 +4,8 @@
   1 つのタイムライン (新しい順、スレッド無し)。書き込み = 名前 (空なら名無しのエグザイル) + タグ 1 つ + 文字。
   当たりの速報 (エミュレーターでクソレアの線より下の T1 を引いた札、services/board/rare-hit.ts) は書き込みと別の見た目。
   時刻・「◯分前」・件数・閲覧数・人ごとの印は出さない (オーナー「過疎ってるって思われたくない」)。サーバーは server/live の board.ts
-  2 段目 (2026-10-16 オーナー「掲示板強化」): 返信 (1 段だけ、書き込みの下に古い順)・いいね・エミュレーターの今のアイテムを貼る (BoardAttCard)
+  2 段目 (2026-10-16 オーナー「掲示板強化」): エミュレーターの今のアイテムを貼る (BoardAttCard)。
+  返信・いいねは作ったが外した (オーナー「Twitter くらいシンプルでいい、いいねとかリプとかリツイートはいらん」。サーバーの /board/like と parent は残してある)
 -->
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
@@ -18,7 +19,7 @@ import Disclosure from "../../components/ui/Disclosure.vue";
 import Icon from "../../components/ui/Icon.vue";
 import BoardAttCard from "./BoardAttCard.vue";
 import type { StageItem } from "../../services/craft-stage/types";
-import { BOARD_HITS_ENABLED, BOARD_TAGS, boardHitsOn, boardName, errText, fetchBoard, likedIds, MAX_NAME, MAX_TEXT, NAMELESS, rememberName, reportItem, sendPost, setBoardHits, tagLabel, toggleLike, type BoardAtt, type BoardHit, type BoardItem, type BoardPostItem, type BoardTag } from "../../services/board/board-api";
+import { BOARD_HITS_ENABLED, BOARD_TAGS, boardHitsOn, boardName, errText, fetchBoard, MAX_NAME, MAX_TEXT, NAMELESS, rememberName, reportItem, sendPost, setBoardHits, tagLabel, type BoardAtt, type BoardHit, type BoardItem, type BoardTag } from "../../services/board/board-api";
 
 /** 一覧の絞り込み (null = すべて) */
 const items = ref<BoardItem[]>([]);
@@ -80,42 +81,6 @@ function attOf(it: StageItem): BoardAtt {
 const canAttach = computed(() => !!craftStage.item.value);
 function attachNow(): void { const it = craftStage.item.value; if (it) attach.value = attOf(it); }
 
-// ---- 返信 (1 段だけ。書き込みの下に開く) ----
-const replyTo = ref<string | null>(null);
-const replyText = ref("");
-const replySending = ref(false);
-const replyError = ref("");
-function openReply(id: string): void { replyTo.value = replyTo.value === id ? null : id; replyText.value = ""; replyError.value = ""; }
-async function sendReply(parent: BoardPostItem): Promise<void> {
-  const t = replyText.value.trim();
-  if (!t || [...t].length > MAX_TEXT || replySending.value) return;
-  replySending.value = true;
-  replyError.value = "";
-  const nm = name.value.trim();
-  const r = await sendPost({ name: nm, text: t, website: website.value, parent: parent.id });
-  replySending.value = false;
-  if (!r.item) { replyError.value = errText(r.error ?? "?"); return; }
-  boardName.value = nm;
-  rememberName(nm);
-  parent.replies = [...(parent.replies ?? []), r.item];
-  // 返信が付いた書き込みは上へ (サーバーの並びと同じ)
-  items.value = [parent, ...items.value.filter((x) => x.id !== parent.id)];
-  replyTo.value = null;
-  replyText.value = "";
-}
-
-// ---- いいね (押し直しで外す。数は手元で足し引き) ----
-/** 一覧は 45 秒ためるので、自分が押した物は最低 1 にする (押したのに数が出ないのを防ぐ) */
-const likeCount = (p: BoardPostItem): number => Math.max(p.likes ?? 0, likedIds.value.has(p.id) ? 1 : 0);
-const liking = ref<Set<string>>(new Set());
-async function like(p: BoardPostItem): Promise<void> {
-  if (liking.value.has(p.id)) return;
-  liking.value = new Set([...liking.value, p.id]);
-  const r = await toggleLike(p.id);
-  if (r) p.likes = r.likes;
-  const next = new Set(liking.value); next.delete(p.id); liking.value = next;
-}
-
 // ---- 通報 (押すと確かめの 2 つのボタン) ----
 const asking = ref<string | null>(null);
 const reported = ref<Set<string>>(new Set());
@@ -169,9 +134,9 @@ const shown = computed(() => items.value.filter((it) => it.kind === "post" || (B
         <BoardAttCard :att="attach" class="!mt-0 min-w-0 flex-1" />
         <button type="button" class="g-plain grid size-8 shrink-0 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10" :title="tr('貼ったアイテムを外す', 'Remove the attached item')" @click="attach = null"><Icon name="x" class="size-4" /></button>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <span v-if="error" class="min-w-0 flex-1 truncate text-rose-300" :title="error">{{ error }}</span>
-        <button v-else-if="!attach && canAttach" type="button" data-board-attach class="g-btn sm shrink-0 max-md:min-h-10" :title="tr('エミュレーターの今のアイテムを書き込みに貼る', 'Attach the current Emulator item to your post')" @click="attachNow">{{ tr("今のアイテムを貼る", "Attach item") }}</button>
+        <button v-else-if="!attach && canAttach" type="button" data-board-attach class="g-btn sm shrink-0 max-md:min-h-10" :title="tr('エミュレーターの今のアイテムを書き込みに貼る', 'Attach the current Emulator item to your post')" @click="attachNow"><span class="max-md:hidden">{{ tr("今のアイテムを貼る", "Attach item") }}</span><span class="md:hidden">{{ tr("アイテムを貼る", "Attach") }}</span></button>
         <span v-if="!error" class="flex-1" />
         <span class="shrink-0 text-[10px] tabular-nums" :class="textLen > MAX_TEXT ? 'text-rose-300' : 'opacity-40'">{{ textLen }} / {{ MAX_TEXT }}</span>
         <button type="submit" class="g-btn-red sm shrink-0 disabled:opacity-40 max-md:min-h-10" :disabled="!canSend">{{ sending ? tr("書き込んでいます…", "Posting…") : tr("書き込む", "Post") }}</button>
@@ -207,40 +172,6 @@ const shown = computed(() => items.value.filter((it) => it.kind === "post" || (B
           </div>
           <p class="mt-0.5 whitespace-pre-wrap break-words text-left leading-relaxed">{{ it.text }}</p>
           <BoardAttCard v-if="it.att" :att="it.att" />
-          <!-- いいね・返信 -->
-          <div class="mt-1 flex items-center gap-3 text-[12px]">
-            <button type="button" class="g-plain inline-flex min-h-8 items-center gap-1 rounded px-1 hover:bg-white/5" :class="likedIds.has(it.id) ? 'text-rose-300' : 'text-[var(--exile-color-text-tertiary)]'" :aria-pressed="likedIds.has(it.id)" :title="tr('いいね', 'Like')" @click="like(it)">{{ likedIds.has(it.id) ? "♥" : "♡" }}<span v-if="likeCount(it)" class="tabular-nums">{{ likeCount(it) }}</span></button>
-            <button type="button" class="g-plain min-h-8 rounded px-1 text-[var(--exile-color-text-tertiary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" :aria-expanded="replyTo === it.id" @click="openReply(it.id)">{{ tr("返信", "Reply") }}</button>
-          </div>
-          <!-- 返信 (古い順) -->
-          <ul v-if="it.replies?.length" class="mt-1 ml-2 flex flex-col gap-1.5 border-l-2 border-white/10 pl-3">
-            <li v-for="rp in it.replies" :key="rp.id" class="min-w-0">
-              <div class="flex min-w-0 items-center gap-2">
-                <b class="min-w-0 truncate text-[12px] text-amber-200/90">{{ rp.name || NAMELESS() }}</b>
-                <span class="ml-auto shrink-0 text-[11px]">
-                  <template v-if="reported.has(rp.id)"><span class="opacity-40">{{ tr("通報しました", "Reported") }}</span></template>
-                  <template v-else-if="asking === rp.id">
-                    <button type="button" class="g-plain text-rose-300 hover:text-rose-100 max-md:min-h-9 max-md:px-1" @click="report(rp.id)">{{ tr("通報する", "Report") }}</button>
-                    <button type="button" class="g-plain ml-2 opacity-60 hover:opacity-100 max-md:min-h-9 max-md:px-1" @click="asking = null">{{ tr("やめる", "Cancel") }}</button>
-                  </template>
-                  <button v-else type="button" class="g-plain opacity-30 hover:opacity-80 max-md:min-h-9 max-md:px-1" @click="asking = rp.id">{{ tr("通報", "Report") }}</button>
-                </span>
-              </div>
-              <p class="whitespace-pre-wrap break-words text-left text-[12.5px] leading-relaxed">{{ rp.text }}</p>
-              <BoardAttCard v-if="rp.att" :att="rp.att" />
-              <button type="button" class="g-plain inline-flex min-h-7 items-center gap-1 rounded px-1 text-[12px] hover:bg-white/5" :class="likedIds.has(rp.id) ? 'text-rose-300' : 'text-[var(--exile-color-text-tertiary)]'" :aria-pressed="likedIds.has(rp.id)" :title="tr('いいね', 'Like')" @click="like(rp)">{{ likedIds.has(rp.id) ? "♥" : "♡" }}<span v-if="likeCount(rp)" class="tabular-nums">{{ likeCount(rp) }}</span></button>
-            </li>
-          </ul>
-          <!-- 返信を書く -->
-          <form v-if="replyTo === it.id" class="mt-1.5 ml-2 flex flex-col gap-1.5 pl-3" @submit.prevent="sendReply(it)">
-            <textarea v-model="replyText" rows="2" class="w-full resize-y rounded-md border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="tr(`${it.name || NAMELESS()} さんへ返信`, `Reply to ${it.name || NAMELESS()}`)" :aria-label="tr('返信', 'Reply')"></textarea>
-            <div class="flex items-center gap-2">
-              <span v-if="replyError" class="min-w-0 flex-1 truncate text-rose-300" :title="replyError">{{ replyError }}</span>
-              <span v-else class="flex-1" />
-              <button type="button" class="g-btn sm shrink-0 max-md:min-h-10" @click="replyTo = null">{{ tr("やめる", "Cancel") }}</button>
-              <button type="submit" class="g-btn-red sm shrink-0 disabled:opacity-40 max-md:min-h-10" :disabled="!replyText.trim() || replySending">{{ replySending ? tr("送っています…", "Sending…") : tr("返信する", "Reply") }}</button>
-            </div>
-          </form>
         </template>
       </li>
     </ul>
