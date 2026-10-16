@@ -20,7 +20,7 @@ import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, URL_BASE, type SimRecipe } from "../../state/craft-stage";
 import StageRecipeStart from "./StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import StageItemCard from "./StageItemCard.vue";
@@ -86,6 +86,8 @@ const mouse = ref({ x: 0, y: 0 });
 const onMove = (e: MouseEvent) => (mouse.value = { x: toCss(e.clientX), y: toCss(e.clientY) });
 function onKey(e: KeyboardEvent): void {
   if (e.key === "Escape") s.hold(null);
+  // ジェムコラプトを開いている時は、隠れているエミュレーターの手 (R で 1 手戻す・Tab で MOD 一覧) を動かさない
+  if (gemCorrupt.value) return;
   // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
   // 入力欄の中 (MOD 一覧・ベースの検索) と窓を開いている時は、文字の取り消しや窓の物に任せる (2026-10-10 点検: 文字ではなく 1 手戻っていた)
   const t = e.target as HTMLElement | null;
@@ -346,6 +348,14 @@ const inApp = isTauriRuntime();
 /** モードのタブ。Web はシミュレーターを作っている途中なのでタブごと出さない (2026-10-16 オーナー「まだシミュレーター開発してないから出さなくておけ、エミュレーターと掲示板のみ」) */
 const MODE_TABS = SIM_LOCKED ? ([["hand", "エミュレーター"]] as const) : ([["hand", "エミュレーター"], ["sim", "シミュレーター"]] as const);
 /**
+ * ジェムコラプト (Web 版だけ、2026-10-16 ロードマップの土台)。エミュレーター・シミュレーターのタブの並びに置く。開いた時に読む。
+ * 計算はアプリのヴァールの天秤と同じ関数 (views/gem-corrupt/model.ts)、入力は売値 3 つの手入力
+ */
+const GemCorruptWebPanel = defineAsyncComponent(() => import("../gem-corrupt/GemCorruptWebPanel.vue"));
+const gemCorruptOn = ref(false);
+const gemCorrupt = computed(() => !inApp && gemCorruptOn.value && !s.replay.value);
+function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("mode:gem-corrupt"); gemCorruptOn.value = v; }
+/**
  * Web の PC は「ベース未選択」から始める: ベース選びだけ開いて、アイテム・棚・MOD 一覧は選ぶまで出さない (シミュレーターの最初と同じ)。
  * 2026-10-10 オーナー「PC はベース選びから」「最初から指輪の画面出てるから違う、ベースから下は非表示」。
  * 分析で 6 割の人が既定の金の指輪のまま触っていた。スマホは覗くだけの人が多いので今まで通りすぐ打てる形
@@ -405,7 +415,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
   <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
   <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? (heldChaos && !s.offers.value ? 'pb-44' : 'pb-32') : phone && spamKey ? 'pb-48' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
-    <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" data-bottom-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+    <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value && !gemCorrupt" data-bottom-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
       <!-- カオスを持っている時: 確率機へのボタンは帯の上 (スマホはアイテムの下ではなくここ。2026-10-16 オーナー) -->
       <div v-if="heldChaos && !s.offers.value" class="mb-1.5 flex justify-end">
         <button type="button" data-chaos-spam-open class="g-btn sm min-h-10" @click="openChaosSpam">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
@@ -441,7 +451,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
         <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトステージ", "Craft Stage") }}</h1>
-        <p v-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す", "Pick a base and target mods, plan the steps, then craft hundreds of copies to get the cost per item") }}
+        <p v-if="gemCorrupt" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ジェムをコラプトして レベル 21 · 品質 23% を狙う時の収支。売値 3 つを入れるだけ (素材はカレンシーの相場)", "Profit of corrupting a gem for level 21 / 23% quality. Just enter 3 sell prices (materials use currency market prices)") }}</p>
+        <p v-else-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す", "Pick a base and target mods, plan the steps, then craft hundreds of copies to get the cost per item") }}
           <HelpTip :title="tr('シミュレーター', 'Simulator')" :width="320">
             <p>{{ tr("1 ベース → 2 狙う MOD → 始め方と順番 → 打ち方 (パターン) の順に決めて「回す」。", "Set 1 Base → 2 Target mods → start and order → steps (pattern), then press “Run”.") }}</p>
             <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("確率はクラフト計算機と同じ規則。値段は今の相場。", "Chances follow the craft calculator's rules. Prices are current market prices.") }}</p>
@@ -451,7 +462,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
       <!-- スマホは縦に積む (横に並べると題が 2 行に折れる) -->
-      <div class="flex shrink-0 items-center gap-2 max-md:flex-col-reverse max-md:items-end">
+      <div v-show="!gemCorrupt" class="flex shrink-0 items-center gap-2 max-md:flex-col-reverse max-md:items-end">
         <!-- 使った時の音のオン / オフ (2026-10-16 ゲームと同じ音。端末に覚える) -->
         <button v-show="s.mode.value === 'hand' && !s.replay.value" type="button" data-sfx-toggle class="g-btn sm shrink-0 !px-1 max-md:min-h-10" :aria-pressed="!sfxOff" :aria-label="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" :title="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" @click="setSfxOff(!sfxOff)"><Icon :name="sfxOff ? 'volume-x' : 'volume'" class="size-4" :class="sfxOff ? 'opacity-50' : ''" /></button>
         <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" data-rec-part="display-currency" />
@@ -463,10 +474,12 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <div v-show="!s.replay.value" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
       <!-- スマホは 2 つで横幅を分ける (170px ずつだと 375px の画面からはみ出した。2026-10-13) -->
       <div class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
-        <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0]" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); s.mode.value = t[0]">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
+        <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0] && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] && !gemCorrupt ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); s.mode.value = t[0]; setGemCorrupt(false)">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
+        <!-- ジェムコラプト (Web 版だけ、2026-10-16) -->
+        <button v-if="!inApp" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
-      <div id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
+      <div v-show="!gemCorrupt" id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
         <!-- ベースを選ぶ前も同じ帯を出す (2026-10-09 オーナー「ここはずっと出してていい」)。選んだ後は StageSimPanel の物に替わる -->
         <template v-if="s.mode.value === 'sim' && simNoBase">
           <CurrencyPicker sim />
@@ -483,7 +496,9 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       </div>
     </div>
 
-    <div>
+    <!-- ジェムコラプト (Web 版だけ)。エミュレーター・シミュレーターの中身は消さずに隠す (戻った時に打っていた物が残る) -->
+    <GemCorruptWebPanel v-if="gemCorrupt" class="mb-4" />
+    <div v-show="!gemCorrupt">
     <!-- 再生モード -->
     <div v-if="s.replay.value?.shared" class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
       <b class="text-sky-200">{{ tr("共有された手順", "Shared steps") }}</b>

@@ -14,6 +14,8 @@ import {
   type StageProbs,
 } from "./model-types";
 import { clamp01, crystalHitLevel, crystalHitQuality, normalizedVaal } from "./model-probs";
+// 文言は日英 (Web の英語版、2026-10-16)。アプリは常に日本語なので今まで通り
+import { tr } from "../../i18n/lang";
 
 /** 売らない結果 (破壊など) */
 function lostLine(label: string, p: number, crystal = 0): OutcomeLine {
@@ -74,17 +76,17 @@ function finish(
  */
 function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams, plain = false): RouteResult {
   const missing: string[] = [];
-  if (m.baseGem == null) missing.push("低レベルジェム");
-  if (m.gcp == null) missing.push("宝石細工師のプリズム");
-  if (m.perfectJeweller == null) missing.push("宝飾職人のオーブ (完全)");
-  if (m.vaal == null) missing.push("ヴァールオーブ");
-  if (m.uncut20 == null) missing.push("原石 (レベル 20)");
-  if (s.level21 == null) missing.push("売値: レベル 21");
-  if (s.quality23 == null) missing.push("売値: 品質 23%");
-  if (s.finished == null) missing.push("売値: 完成品");
+  if (m.baseGem == null) missing.push(tr("低レベルジェム", "Low-level gem"));
+  if (m.gcp == null) missing.push(tr("宝石細工師のプリズム", "Gemcutter's Prism"));
+  if (m.perfectJeweller == null) missing.push(tr("宝飾職人のオーブ (完全)", "Perfect Jeweller's Orb"));
+  if (m.vaal == null) missing.push(tr("ヴァールオーブ", "Vaal Orb"));
+  if (m.uncut20 == null) missing.push(tr("原石 (レベル 20)", "Uncut Gem (Level 20)"));
+  if (s.level21 == null) missing.push(tr("売値: レベル 21", "Sell price: Level 21"));
+  if (s.quality23 == null) missing.push(tr("売値: 品質 23%", "Sell price: 23% quality"));
+  if (s.finished == null) missing.push(tr("売値: 完成品", "Sell price: finished"));
   const base: RouteResult = {
     id: plain ? "craftPlain" : "craft",
-    label: plain ? "自作 (賭けずにそのまま売る)" : "自作 (ヴァール → 結晶)",
+    label: plain ? tr("自作 (賭けずにそのまま売る)", "Self-craft (sell without gambling)") : tr("自作 (ヴァール → 結晶)", "Self-craft (Vaal → Crystallised Corruption)"),
     ok: false,
     upfront: 0,
     ev: 0,
@@ -129,20 +131,20 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams, plain = 
 
   const outcomes: OutcomeLine[] = [];
   if (gambleAfterLevel) {
-    outcomes.push(leveledSaleLine("レベル +1 → 結晶で品質 23% 当たり (完成品)", pLevelUp * hitQ, sF, "finished", uncut, 1));
-    outcomes.push(leveledSaleLine("レベル +1 → 結晶で外れ (レベル 21 のまま、品質は崩れる)", pLevelUp * (survive - hitQ), lf * s21, "other", uncut, 1));
-    outcomes.push(lostLine("レベル +1 → 結晶で破壊", pLevelUp * (1 - survive), 1));
+    outcomes.push(leveledSaleLine(tr("レベル +1 → 結晶で品質 23% 当たり (完成品)", "Level +1 → Crystallised Corruption hits 23% quality (finished)"), pLevelUp * hitQ, sF, "finished", uncut, 1));
+    outcomes.push(leveledSaleLine(tr("レベル +1 → 結晶で外れ (レベル 21 のまま、品質は崩れる)", "Level +1 → Crystallised Corruption misses (stays level 21, quality changes)"), pLevelUp * (survive - hitQ), lf * s21, "other", uncut, 1));
+    outcomes.push(lostLine(tr("レベル +1 → 結晶で破壊", "Level +1 → destroyed by Crystallised Corruption"), pLevelUp * (1 - survive), 1));
   } else {
-    outcomes.push(leveledSaleLine("レベル +1 → そのまま売る", pLevelUp, s21, "level21", uncut));
+    outcomes.push(leveledSaleLine(tr("レベル +1 → そのまま売る", "Level +1 → sell as is"), pLevelUp, s21, "level21", uncut));
   }
   if (gambleAfterQuality) {
-    outcomes.push(leveledSaleLine("品質 23% → 結晶でレベル +1 当たり (完成品)", pQualityTop * hitL, sF, "finished", uncut, 1));
-    outcomes.push(leveledSaleLine("品質 23% → 結晶で外れ (レベル −1)", pQualityTop * (survive - hitL), lf * s23, "other", uncut, 1));
-    outcomes.push(lostLine("品質 23% → 結晶で破壊", pQualityTop * (1 - survive), 1));
+    outcomes.push(leveledSaleLine(tr("品質 23% → 結晶でレベル +1 当たり (完成品)", "23% quality → Crystallised Corruption hits level +1 (finished)"), pQualityTop * hitL, sF, "finished", uncut, 1));
+    outcomes.push(leveledSaleLine(tr("品質 23% → 結晶で外れ (レベル −1)", "23% quality → Crystallised Corruption misses (level −1)"), pQualityTop * (survive - hitL), lf * s23, "other", uncut, 1));
+    outcomes.push(lostLine(tr("品質 23% → 結晶で破壊", "23% quality → destroyed by Crystallised Corruption"), pQualityTop * (1 - survive), 1));
   } else {
-    outcomes.push(leveledSaleLine("品質 23% → そのまま売る", pQualityTop, s23, "quality23", uncut));
+    outcomes.push(leveledSaleLine(tr("品質 23% → そのまま売る", "23% quality → sell as is"), pQualityTop, s23, "quality23", uncut));
   }
-  outcomes.push(leveledSaleLine("外れ (変化なし / レベル −1 / 品質 22% 以下 / ソケット増減)", pJunk, lf * baseGem, "other", uncut));
+  outcomes.push(leveledSaleLine(tr("外れ (変化なし / レベル −1 / 品質 22% 以下 / ソケット増減)", "Miss (no change / level −1 / quality 22% or less / socket change)"), pJunk, lf * baseGem, "other", uncut));
 
   const stage: StageProbs = {
     pLevel21: pLevelUp,
@@ -174,20 +176,20 @@ function buyPriceOf(key: keyof SalePrices, s: SalePrices, buy?: SalePrices): num
 function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams, buy?: SalePrices): RouteResult {
   const missing: string[] = [];
   const cost21 = buyPriceOf("level21", s, buy);
-  if (s.level21 == null) missing.push("売値: レベル 21");
-  if (cost21 == null) missing.push("買値: レベル 21");
-  if (s.finished == null) missing.push("売値: 完成品");
-  if (m.crystal == null) missing.push("コラプトの結晶");
-  const base: RouteResult = { id: "buy21", label: "レベル 21 を買って結晶", ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
+  if (s.level21 == null) missing.push(tr("売値: レベル 21", "Sell price: Level 21"));
+  if (cost21 == null) missing.push(tr("買値: レベル 21", "Buy price: Level 21"));
+  if (s.finished == null) missing.push(tr("売値: 完成品", "Sell price: finished"));
+  if (m.crystal == null) missing.push(tr("コラプトの結晶", "Crystallised Corruption"));
+  const base: RouteResult = { id: "buy21", label: tr("レベル 21 を買って結晶", "Buy level 21 + Crystallised Corruption"), ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
   const s21 = s.level21!;
   const lf = clamp01(p.leftoverFraction);
   const survive = 1 - clamp01(p.crystalDestroy);
   const hit = crystalHitQuality(p);
   const outcomes: OutcomeLine[] = [
-    saleLine("品質 23% 当たり (完成品)", hit, s.finished!, "finished"),
-    saleLine("外れ (レベル 21 のまま、品質は崩れる)", survive - hit, lf * s21, "other"),
-    lostLine("破壊", 1 - survive),
+    saleLine(tr("品質 23% 当たり (完成品)", "Hits 23% quality (finished)"), hit, s.finished!, "finished"),
+    saleLine(tr("外れ (レベル 21 のまま、品質は崩れる)", "Miss (stays level 21, quality changes)"), survive - hit, lf * s21, "other"),
+    lostLine(tr("破壊", "Destroyed"), 1 - survive),
   ];
   const stage: StageProbs = {
     pLevel21: 1, pQuality23: 0, pJunk: 0,
@@ -206,12 +208,12 @@ function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams, buy?: Sa
 function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams, buy?: SalePrices): RouteResult {
   const missing: string[] = [];
   const cost23 = buyPriceOf("quality23", s, buy);
-  if (s.quality23 == null) missing.push("売値: 品質 23%");
-  if (cost23 == null) missing.push("買値: 品質 23%");
-  if (s.finished == null) missing.push("売値: 完成品");
-  if (m.crystal == null) missing.push("コラプトの結晶");
-  if (m.uncut20 == null) missing.push("原石 (レベル 20)");
-  const base: RouteResult = { id: "buy23", label: "品質 23% を買って結晶", ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
+  if (s.quality23 == null) missing.push(tr("売値: 品質 23%", "Sell price: 23% quality"));
+  if (cost23 == null) missing.push(tr("買値: 品質 23%", "Buy price: 23% quality"));
+  if (s.finished == null) missing.push(tr("売値: 完成品", "Sell price: finished"));
+  if (m.crystal == null) missing.push(tr("コラプトの結晶", "Crystallised Corruption"));
+  if (m.uncut20 == null) missing.push(tr("原石 (レベル 20)", "Uncut Gem (Level 20)"));
+  const base: RouteResult = { id: "buy23", label: tr("品質 23% を買って結晶", "Buy 23% quality + Crystallised Corruption"), ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
   const s23 = s.quality23!;
   const uncut = m.uncut20!;
@@ -219,9 +221,9 @@ function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams, buy?: Sa
   const survive = 1 - clamp01(p.crystalDestroy);
   const hit = crystalHitLevel(p);
   const outcomes: OutcomeLine[] = [
-    leveledSaleLine("レベル +1 当たり (完成品)", hit, s.finished!, "finished", uncut),
-    leveledSaleLine("外れ (レベル −1)", survive - hit, lf * s23, "other", uncut),
-    lostLine("破壊", 1 - survive),
+    leveledSaleLine(tr("レベル +1 当たり (完成品)", "Hits level +1 (finished)"), hit, s.finished!, "finished", uncut),
+    leveledSaleLine(tr("外れ (レベル −1)", "Miss (level −1)"), survive - hit, lf * s23, "other", uncut),
+    lostLine(tr("破壊", "Destroyed"), 1 - survive),
   ];
   const stage: StageProbs = {
     pLevel21: 0, pQuality23: 1, pJunk: 0,
@@ -233,8 +235,8 @@ function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams, buy?: Sa
 }
 
 function buyFinishedRoute(s: SalePrices): RouteResult {
-  const missing = s.finished == null ? ["売値: 完成品"] : [];
-  const base: RouteResult = { id: "buyFinished", label: "完成品を買う (基準)", ok: false, upfront: 0, ev: 0, pFinished: 1, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
+  const missing = s.finished == null ? [tr("売値: 完成品", "Sell price: finished")] : [];
+  const base: RouteResult = { id: "buyFinished", label: tr("完成品を買う (基準)", "Buy finished (baseline)"), ok: false, upfront: 0, ev: 0, pFinished: 1, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
   const stage: StageProbs = {
     pLevel21: 0, pQuality23: 0, pJunk: 0,
@@ -243,7 +245,7 @@ function buyFinishedRoute(s: SalePrices): RouteResult {
     survive: 1, uncutForFinished: false, uncutForLevel21: false, uncutForQuality23: false,
   };
   // 完成品を買う経路は「1 回 = 完成品 1 個」。段の確率では表せないので個数だけ後で足す
-  return finish(base, s.finished!, 0, 0, [saleLine("完成品", 1, s.finished!, "finished")], { expectedCrystals: 0, stage });
+  return finish(base, s.finished!, 0, 0, [saleLine(tr("完成品", "Finished"), 1, s.finished!, "finished")], { expectedCrystals: 0, stage });
 }
 
 /**

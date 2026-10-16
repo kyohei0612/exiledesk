@@ -8,7 +8,7 @@
  *   - 正規表現として読めるならそれで (大文字小文字は区別しない)、駄目なら普通の部分一致
  *   - 先頭一致を上に、あとは日本語名順。最大 12 件
  */
-import { GEMS, type GemInfo } from "./useGemCorrupt";
+import { GEMS, type GemInfo } from "./gem-list";
 
 export interface GemSearch {
   hits: GemInfo[];
