@@ -13,7 +13,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { spamKey, spamPending, spamming } from "../../state/chaos-spam";
-import { scrollToTop } from "../../utils/keep-place";
+import { centerOnScreen, scrollToTop } from "../../utils/keep-place";
 import { displayCurrency } from "../../state/display-currency";
 import { aimDone, type AimTarget } from "../../services/craft-stage/aim-odds";
 import type { StageItem } from "../../services/craft-stage/types";
@@ -46,7 +46,11 @@ const root = ref<HTMLElement | null>(null);
 function arrive(): void {
   if (!spamPending.value || !s.aims.value.length) return;
   spamPending.value = false;
-  void nextTick(() => scrollToTop(root.value, "smooth", "center"));
+  // 帯 (スマホ) が出てから測る。100 人の計算が済むと欄が伸びるので、済んだらもう一度
+  void nextTick(() => requestAnimationFrame(() => centerOnScreen(root.value)));
+  // 計算が出直さない時 (同じ狙い) に後から急に送らないよう、待つのは少しの間だけ
+  recenter = true;
+  setTimeout(() => { recenter = false; }, 3000);
 }
 onMounted(arrive);
 watch([spamPending, () => s.aims.value], arrive);
@@ -58,6 +62,8 @@ const result = ref<SpamResult | null>(null);
 // ---- ③ 100 人の結果 (今の状態から。回している間は出し直さない) ----
 const stats = ref<SpamStats | null>(null);
 const statsFor = ref<string>("");
+let recenter = false;
+watch(() => stats.value, (v) => { if (v && recenter) { recenter = false; void nextTick(() => centerOnScreen(root.value)); } });
 const progress = ref(0);
 let gen = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -260,7 +266,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
     </template>
     <!-- スマホ: 画面の下の帯 (「使う」の帯と同じ場所と見た目)。押しっぱなしでスパム -->
     <Teleport to="body">
-      <div v-if="barShown" data-chaos-spam-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+      <div v-if="barShown" data-chaos-spam-bar data-bottom-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
         <p v-if="spamming || result" class="mb-1 truncate text-[12px] font-bold" :class="result?.hit ? 'text-emerald-300' : 'text-white/80'">
           <template v-if="result?.hit && !spamming">{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}<template v-if="result.rank != null"> {{ rankWord(result.rank) }} ({{ luck(result.rank) }})</template></template>
           <template v-else>{{ tr(`${shownUses.toLocaleString()} 回`, `${shownUses.toLocaleString()} uses`) }}<template v-if="cost(shownApplied)"> · {{ cost(shownApplied) }}</template><template v-if="!spamming && result?.reason"> · {{ result.reason }}</template></template>

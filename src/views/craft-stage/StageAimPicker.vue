@@ -13,6 +13,7 @@ import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { aimLabel, groupLabelOf, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { scrollToTop } from "../../utils/keep-place";
+import { spamKey } from "../../state/chaos-spam";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
@@ -87,7 +88,8 @@ function decide(): void {
   // 決めたら後ろの MOD 一覧の窓も閉じて、確率の一覧を見せる (やめる時は残す。POE2Tube 要望 ㊴)
   s.modOverlay.value = false;
   // 確率の一覧の見出し (と狙いの札) が見える所へ
-  void nextTick(() => scrollToTop(document.querySelector("[data-aim-panel]")));
+  // カオススパムの確率機から来た時は送らない (StageChaosSpam の arrive が欄を画面の真ん中へ送る)
+  if (!spamKey.value) void nextTick(() => scrollToTop(document.querySelector("[data-aim-panel]")));
 }
 </script>
 

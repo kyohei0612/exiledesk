@@ -61,6 +61,26 @@ export function scrollToTop(el: Element | null | undefined, behavior: ScrollBeha
 }
 
 /**
+ * 物を画面の真ん中へ送る (スマホも。上に貼るアイテムの帯と下に貼る帯 [data-bottom-bar] の間の真ん中)。
+ * 2026-10-16 オーナー「確率機ボタン押したら、その位置を画面の真ん中に。今は目の前がカレンシー」
+ */
+export function centerOnScreen(el: Element | null | undefined, again = true): void {
+  if (!el) return;
+  const box = scrollBoxOf(el);
+  const r = el.getBoundingClientRect();
+  const view = box ? box.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
+  const phone = window.innerWidth < 768;
+  const top = view.top + (phone ? (document.querySelector("[data-item-mini]") as HTMLElement | null)?.offsetHeight ?? 0 : 0);
+  const bottom = Math.min(view.bottom, ...[...document.querySelectorAll<HTMLElement>("[data-bottom-bar]")].map((b) => b.getBoundingClientRect().top));
+  // 入り切らない時は頭を上に揃える
+  const d = r.height > bottom - top - 16 ? r.top - top - 8 : r.top + r.height / 2 - (top + bottom) / 2;
+  // スマホの上のアイテムの帯は送った後で出てくる (一番上にいる間は無い) ので、送り終わったらもう一度測って直す
+  // (途中で別の送りに替わった時は直さない)
+  const p = glideBy(box, d), mine = gliding;
+  void p.then(() => { if (again && Math.abs(d) > 1 && mine === gliding) centerOnScreen(el, false); });
+}
+
+/**
  * 送りが要る時だけ、短く減速で滑らせる (2026-10-10 オーナー「ぱっと移動させるんじゃなくて高速でスライド」「やるのは全部じゃなくスクロールが必要な時だけ」)。
  * ブラウザの smooth は遅くて途中で他の送りと重なるとカクつくので、自前で 1 本の rAF。動きを減らす設定の時は一気に
  */

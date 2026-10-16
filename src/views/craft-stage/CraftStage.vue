@@ -203,8 +203,8 @@ function openChaosSpam(): void {
   spamPending.value = true;
   // 手に持っている物は離す (スマホの「使う」の帯と、カオススパムの帯がぶつからないように。2026-10-16 オーナー)
   s.hold(null);
+  // 狙いがあれば欄を真ん中へ (StageChaosSpam の arrive が spamPending を見て送る)
   if (!s.aims.value.length) s.aimPicker.value = { seed: null };
-  else void nextTick(() => scrollToTop(document.querySelector("[data-chaos-spam]"), "smooth", "center"));
 }
 // 選ぶ窓を狙い無しで閉じた時は、送る予約を消す
 watch(() => s.aimPicker.value, (v) => { if (!v && !s.aims.value.length) spamPending.value = false; });
@@ -395,7 +395,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
   <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
   <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? (heldChaos && !s.offers.value ? 'pb-44' : 'pb-32') : phone && spamKey ? 'pb-48' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
-    <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+    <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" data-bottom-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
       <!-- カオスを持っている時: 確率機へのボタンは帯の上 (スマホはアイテムの下ではなくここ。2026-10-16 オーナー) -->
       <div v-if="heldChaos && !s.offers.value" class="mb-1.5 flex justify-end">
         <button type="button" data-chaos-spam-open class="g-btn sm min-h-10" @click="openChaosSpam">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
