@@ -42,6 +42,11 @@ const NAME_KEY = "exiledesk.board.name";
 export const boardName = ref((() => { try { return localStorage.getItem(NAME_KEY) ?? ""; } catch { return ""; } })());
 export function rememberName(v: string): void { try { if (v) localStorage.setItem(NAME_KEY, v); else localStorage.removeItem(NAME_KEY); } catch { /* 覚えられなくてよい */ } }
 
+/**
+ * 当たりの速報を使うか (2026-10-16 オーナー「当たりは流さんくてええか、書き込み残るからまぁなんとかなる」で止めた)。
+ * 作り (rare-hit.ts・サーバーの /board/hit) は残す。戻す時は true に (サーバーの BOARD_HITS も外す)
+ */
+export const BOARD_HITS_ENABLED = false;
 /** 当たりを掲示板に流すか (既定は流す。オーナー「流したくない人は設定で止められる」) */
 const HITS_KEY = "exiledesk.board.hits";
 export const boardHitsOn = ref((() => { try { return localStorage.getItem(HITS_KEY) !== "0"; } catch { return true; } })());

@@ -6,7 +6,7 @@
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { PlayedStep } from "../craft-stage/run-plan";
 import { belowLine, rareLineOf } from "./rare-line";
-import { boardHitsOn, sendHit, type BoardHit } from "./board-api";
+import { BOARD_HITS_ENABLED, boardHitsOn, sendHit, type BoardHit } from "./board-api";
 import { noLog } from "../../utils/no-log";
 
 export const HIT_CUR_RE = /^(transmute|augment|regal|alchemy|exalt|chaos)(_greater|_perfect)?$/;
@@ -31,7 +31,7 @@ export function rareHitOf(data: PatchData, step: PlayedStep, n: number): BoardHi
  * 送らない: 設定で止めた端末・記録しない端末と録画モード (no-log)・開発版で本番のサーバーを向いている時 (VITE_WEB_API を手元の wrangler dev に向けた時だけ送る)
  */
 export function maybeSendHit(data: PatchData, step: PlayedStep, n: number): void {
-  if (!boardHitsOn.value || noLog()) return;
+  if (!BOARD_HITS_ENABLED || !boardHitsOn.value || noLog()) return;
   if (import.meta.env.DEV && !import.meta.env.VITE_WEB_API) return;
   const h = rareHitOf(data, step, n);
   if (h) void sendHit(h);

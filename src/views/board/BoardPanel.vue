@@ -14,7 +14,7 @@ import { freshItem } from "../../services/craft-stage/run-plan";
 import { makeStageMod, withValues } from "../../services/craft-stage/stage-core";
 import { fmtChance } from "../../utils/format-pct";
 import Disclosure from "../../components/ui/Disclosure.vue";
-import { BOARD_TAGS, boardHitsOn, boardName, errText, fetchBoard, MAX_NAME, MAX_TEXT, NAMELESS, rememberName, reportItem, sendPost, setBoardHits, tagLabel, type BoardHit, type BoardItem, type BoardTag } from "../../services/board/board-api";
+import { BOARD_HITS_ENABLED, BOARD_TAGS, boardHitsOn, boardName, errText, fetchBoard, MAX_NAME, MAX_TEXT, NAMELESS, rememberName, reportItem, sendPost, setBoardHits, tagLabel, type BoardHit, type BoardItem, type BoardTag } from "../../services/board/board-api";
 
 /** 一覧の絞り込み (null = すべて) */
 const filter = ref<BoardTag | null>(null);
@@ -85,7 +85,7 @@ function hitView(h: BoardHit): HitView | null {
 }
 /** 札ごとの文 (言語・データが変わった時だけ作り直す)。文にできない札 (データが読めていない・今のデータに無い MOD) は出さない */
 const hits = computed(() => new Map(items.value.flatMap((it) => (it.kind === "hit" ? [[it.id, hitView(it.hit)] as const] : []))));
-const shown = computed(() => items.value.filter((it) => it.kind === "post" || hits.value.get(it.id)));
+const shown = computed(() => items.value.filter((it) => it.kind === "post" || (BOARD_HITS_ENABLED && hits.value.get(it.id))));
 </script>
 
 <template>
@@ -95,7 +95,7 @@ const shown = computed(() => items.value.filter((it) => it.kind === "post" || hi
       <button type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="filter === null ? 'on' : ''" @click="filter = null">{{ tr("すべて", "All") }}</button>
       <button v-for="t in BOARD_TAGS" :key="t.k" type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="filter === t.k ? 'on' : ''" @click="filter = t.k">{{ tr(t.ja, t.en) }}</button>
       <span class="ml-auto flex items-center gap-3 text-[11px] text-[var(--exile-color-text-tertiary)] max-md:ml-0 max-md:w-full max-md:justify-end">
-        <label class="inline-flex cursor-pointer items-center gap-1.5" :title="tr('エミュレーターでとても珍しい T1 を引いた時、名前を出さずにここへ流す', 'When you hit a very rare T1 in the Emulator, post it here anonymously')">
+        <label v-if="BOARD_HITS_ENABLED" class="inline-flex cursor-pointer items-center gap-1.5" :title="tr('エミュレーターでとても珍しい T1 を引いた時、名前を出さずにここへ流す', 'When you hit a very rare T1 in the Emulator, post it here anonymously')">
           <input type="checkbox" class="size-4 accent-amber-500" :checked="boardHitsOn" @change="setBoardHits(($event.target as HTMLInputElement).checked)" />{{ tr("自分の当たりを流す", "Share my rare hits") }}
         </label>
         <a href="/board-rules" target="_blank" rel="noopener" class="underline hover:text-[var(--exile-color-text-primary)]">{{ tr("決まり・削除の依頼", "Rules / removal requests") }}</a>
