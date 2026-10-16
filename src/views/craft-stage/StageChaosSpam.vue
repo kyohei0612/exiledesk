@@ -17,10 +17,10 @@ import { centerOnScreen, scrollToTop } from "../../utils/keep-place";
 import { displayCurrency } from "../../state/display-currency";
 import { aimDone, type AimTarget } from "../../services/craft-stage/aim-odds";
 import type { StageItem } from "../../services/craft-stage/types";
-import { medianOf, rankOf, spamOne, unluckyOf, SPAM_KEYS, SPAM_PEOPLE, type SpamStats } from "../../services/craft-stage/chaos-spam";
-import { mulberry32 } from "../../services/htc/rng";
+import { medianOf, rankOf, unluckyOf, SPAM_KEYS, SPAM_PEOPLE } from "../../services/craft-stage/chaos-spam";
 import { logRecord } from "../../utils/log-record";
 import { luck, rankWord, useSpamShare, type SpamResult } from "./use-spam-share";
+import { useSpamSim } from "./use-spam-sim";
 import { track } from "../../utils/track";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import { tr } from "../../i18n/lang";
@@ -73,40 +73,27 @@ const result = ref<SpamResult | null>(null);
 let snap: ReturnType<typeof s.snapshot> | null = null;
 /** スパムが終わった時のアイテム (これから変わったら結果は古い) */
 let resultItem: typeof s.item.value = null;
-// ---- ③ 100 人の結果 (今の状態から。回している間は出し直さない) ----
-const stats = ref<SpamStats | null>(null);
-const statsFor = ref<string>("");
+// ---- ③ 100 人の結果 (今の状態から、打てるカオス全部。回している間は出し直さない。計算は use-spam-sim.ts) ----
+const sim = useSpamSim({ price: priceOf });
+/** 選んでいるカオスの 100 人の結果 */
+const stats = computed(() => sim.all.value[key.value] ?? null);
 let recenter = false;
 watch(() => stats.value, (v) => { if (v && recenter) { recenter = false; void nextTick(() => centerOnScreen(root.value)); } });
-const progress = ref(0);
-let gen = 0;
-let timer: ReturnType<typeof setTimeout> | undefined;
-const sig = (): string => `${key.value}|${ilvl.value}|${targets.value.map((t) => `${t.modId}#${t.minTierIndex}`).join(",")}`;
-/** start のアイテムから 100 人分を少しずつ (画面を止めない) */
-function simulate(start = atIlvl(s.item.value)): void {
-  const my = ++gen;
-  clearTimeout(timer);
-  stats.value = null;
-  progress.value = 0;
-  const d = s.data.value, ts = targets.value, k = key.value;
-  if (!d || !start || !ts.length || !keys.value.includes(k as (typeof SPAM_KEYS)[number])) return;
-  const tries: number[] = [];
-  let failed = 0, i = 0;
-  const step = (): void => {
-    if (my !== gen) return;
-    const t0 = performance.now();
-    while (i < SPAM_PEOPLE && performance.now() - t0 < 25) {
-      const n = spamOne(d, start, ts, k, mulberry32(9001 + i * 7919));
-      if (n == null) failed++; else tries.push(n);
-      i++;
-    }
-    progress.value = i;
-    if (i < SPAM_PEOPLE) { timer = setTimeout(step, 0); return; }
-    tries.sort((a, b) => a - b);
-    stats.value = { tries, failed, people: SPAM_PEOPLE };
-    statsFor.value = sig();
-  };
-  timer = setTimeout(step, 0);
+/** 計算の印 (狙い・アイテムレベル) と、自分のスパムの印 (+ カオスの種類) */
+const simSig = (): string => `${ilvl.value}|${targets.value.map((t) => `${t.modId}#${t.minTierIndex}`).join(",")}`;
+const sig = (): string => `${key.value}|${simSig()}`;
+const statsFresh = (): boolean => sim.simFor.value === simSig();
+/** 手で選んだカオス (計算が済んでもおすすめに替えない)。狙いが変わったら外す */
+let picked = false;
+watch(targets, () => { picked = false; });
+function pickKey(k: string): void { picked = true; key.value = k; }
+/** 計算した時のアイテム (同じアイテム・同じ印なら、カオスの種類を替えても計算し直さない) */
+let simSrc: StageItem | null = null;
+/** start のアイテムから、打てるカオス全部を 100 人ずつ。auto = 済んだらおすすめを選ぶ */
+function simulate(start = atIlvl(s.item.value), auto = true): void {
+  sim.simulate(s.data.value, start, targets.value, keys.value, simSig(), () => {
+    if (auto && !picked && !spamming.value && sim.best.value && sim.best.value !== key.value) key.value = sim.best.value;
+  });
 }
 // 狙いがもう揃っている時 (スパムで付いた直後) は出し直さない (今の状態から数えると全員 0 回になる)。比べた 100 人の結果と運試しをそのまま残す
 watch([key, ilvl, targets, () => s.item.value], () => {
@@ -117,6 +104,9 @@ watch([key, ilvl, targets, () => s.item.value], () => {
   // (2026-10-16 オーナー「確率機の後、別のベースに変えたら確率機の前の結果のまま表示される」)
   result.value = null;
   snap = null;
+  // カオスの種類を替えただけなら計算は済んでいる (全部の種類を計算するので)
+  if (simSrc === s.item.value && statsFresh() && (sim.busy.value || Object.keys(sim.all.value).length)) return;
+  simSrc = s.item.value;
   simulate();
 }, { immediate: true });
 /**
@@ -138,11 +128,21 @@ watch(() => s.base.value, () => {
 });
 /** 確率機の印が外れたら (狙うを開いた・閉じた) 前のスパムの結果と狙いも消す。次に開く時はまっさらから */
 watch(spamKey, (k) => { if (!k && !spamming.value) { result.value = null; snap = null; spamAims.value = []; } });
-onBeforeUnmount(() => { gen++; clearTimeout(timer); stopSpam(); });
+onBeforeUnmount(() => { sim.stop(); stopSpam(); });
 
 const cost = (n: number): string => (priceOf(key.value) > 0 ? displayCurrency.money(n * priceOf(key.value)) : "");
 const fmt = (n: number | null): string => (n == null ? tr("付かない人が多い", "Most never hit") : tr(`${n.toLocaleString()} 回`, `${n.toLocaleString()} uses`));
 const median = computed(() => (stats.value ? medianOf(stats.value) : null));
+const gradeJa = (k: string): string => (k === "chaos" ? tr("普通", "Normal") : k === "chaos_greater" ? tr("上級", "Greater") : tr("完全", "Perfect"));
+/** 比べの 1 行: 半分の人の回数 · 費用 (計算中・付かない人が多い時はそう出す) */
+function compareText(k: string): string {
+  const st = sim.all.value[k];
+  if (!st) return tr("計算中…", "Calculating…");
+  const m = medianOf(st);
+  if (m == null) return tr("半分の人が付かない", "Half never hit");
+  const c = sim.costOf(k);
+  return `${tr("半分の人", "Half")} ${fmt(m)}${c != null ? ` · ${displayCurrency.money(c)}` : tr(" · 値段なし", " · no price")}`;
+}
 const unlucky = computed(() => (stats.value ? unluckyOf(stats.value) : null));
 
 // ---- ③ 自分でスパム (押している間) ----
@@ -205,12 +205,12 @@ function finish(hit: boolean, reason: string | null): void {
   live.value = null;
   spamming.value = false;
   if (!l) return;
-  const st = stats.value && statsFor.value === sig() ? stats.value : null;
+  const st = stats.value && statsFresh() ? stats.value : null;
   resultItem = s.item.value;
   result.value = { sig: sig(), uses: l.uses, applied: l.applied, hit, reason, rank: hit && st ? rankOf(st, l.uses) : null };
   // 100 人の結果がまだ無ければ、スパムの前の状態から出して運を比べる
   if (hit && !st && startItem) {
-    simulate(startItem);
+    simulate(startItem, false);
     const stop = watch(stats, (v) => { if (v && result.value?.hit) { result.value = { ...result.value, rank: rankOf(v, result.value.uses) }; stop(); } });
   }
   // 使われ方は「確率機を何回回したか」だけ (中で打ったカオスは手数に数えない、2026-10-16 オーナー)
@@ -246,11 +246,11 @@ const onResize = (): void => { phone.value = window.innerWidth < 768; };
 onMounted(() => window.addEventListener("resize", onResize));
 onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 const barShown = computed(() => phone.value && !s.held.value && keys.value.length > 0 && (!!spamKey.value || spamming.value || !!result.value));
-const canSpam = computed(() => keys.value.length > 0 && targets.value.length > 0 && !!s.item.value && !aimDone(s.item.value, targets.value));
+const canSpam = computed(() => !sim.busy.value && keys.value.length > 0 && targets.value.length > 0 && !!s.item.value && !aimDone(s.item.value, targets.value));
 /** 押すボタンの文字 (PC の欄とスマホの帯で同じ。離した後は「押して続ける」) */
-const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : result.value && !result.value.hit && result.value.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
+const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : sim.busy.value ? tr(`計算中… ${Math.floor((sim.done.value / sim.total.value) * 100)}%`, `Calculating… ${Math.floor((sim.done.value / sim.total.value) * 100)}%`) : result.value && !result.value.hit && result.value.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
 // シェア (X に結果のカード) は use-spam-share.ts
-const { xUrl, shareX } = useSpamShare({ result, stats, statsFresh: () => statsFor.value === sig(), key, cost });
+const { xUrl, shareX } = useSpamShare({ result, stats, statsFresh, key, cost });
 /**
  * かなりの強運 (100 人中 上位 10% 以内) で付いた時は、珍しい段と同じ音 (フィルターの通知音 6) と光 (2026-10-16 オーナー
  * 「確率機で運がめっちゃいい人にはちゃんと音出してあげてね、あの例の神演出で」)。運は 100 人の計算が済んでから出るので、出た時に 1 回だけ
@@ -290,7 +290,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
     <!-- ② カオスの種類・アイテムレベル -->
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
       <span v-if="keys.length" class="flex items-center gap-1">
-        <button v-for="k in keys" :key="k" type="button" class="g-tab !min-h-[30px] !gap-1 !px-2 !text-[12px]" :class="key === k ? 'on' : ''" :disabled="spamming" :title="nameOf(k)" @click="key = k"><img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="size-5 object-contain" />{{ k === "chaos" ? tr("普通", "Normal") : k === "chaos_greater" ? tr("上級", "Greater") : tr("完全", "Perfect") }}</button>
+        <button v-for="k in keys" :key="k" type="button" class="g-tab !min-h-[30px] !gap-1 !px-2 !text-[12px]" :class="key === k ? 'on' : ''" :disabled="spamming" :title="nameOf(k)" @click="pickKey(k)"><img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="size-5 object-contain" />{{ gradeJa(k) }}<span v-if="sim.best.value === k" class="rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">{{ tr("おすすめ", "Best") }}</span></button>
       </span>
       <span class="flex items-center gap-1">
         <span class="mr-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("アイテムレベル", "Item level") }}</span>
@@ -307,7 +307,18 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
     <div v-else class="g-section mt-2 grid gap-x-6 gap-y-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <!-- ③ 100 人の結果 -->
       <div class="min-w-0">
-        <p class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ result ? tr(`${SPAM_PEOPLE} 人がスパムの前の状態からスパムしたら`, `If ${SPAM_PEOPLE} people spammed from before your spam`) : tr(`${SPAM_PEOPLE} 人が今の状態からスパムしたら`, `If ${SPAM_PEOPLE} people spammed from here`) }}<template v-if="!stats"> · {{ tr("計算中…", "Calculating…") }} {{ progress }} / {{ SPAM_PEOPLE }}</template></p>
+        <p class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ result ? tr(`${SPAM_PEOPLE} 人がスパムの前の状態からスパムしたら`, `If ${SPAM_PEOPLE} people spammed from before your spam`) : tr(`${SPAM_PEOPLE} 人が今の状態からスパムしたら`, `If ${SPAM_PEOPLE} people spammed from here`) }}<template v-if="sim.busy.value"> · {{ tr("計算中…", "Calculating…") }} {{ sim.done.value }} / {{ sim.total.value }}</template></p>
+        <!-- 打てるカオスの比べ (半分の人の回数と費用)。一番安い物がおすすめ。押すとその種類に (2026-10-16 YouTube の要望) -->
+        <ul v-if="keys.length > 1" data-chaos-spam-compare class="mt-1 flex flex-col gap-0.5 text-[12px]">
+          <li v-for="k in keys" :key="'c' + k">
+            <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1 py-0.5 text-left tabular-nums hover:bg-white/5" :class="key === k ? 'bg-white/[0.07] text-[var(--exile-color-text-primary)]' : 'text-[var(--exile-color-text-secondary)]'" :disabled="spamming" @click="pickKey(k)">
+              <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="size-4 shrink-0 object-contain" />
+              <span class="w-9 shrink-0">{{ gradeJa(k) }}</span>
+              <span class="min-w-0 flex-1 truncate">{{ compareText(k) }}</span>
+              <span v-if="sim.best.value === k" class="shrink-0 rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">{{ tr("おすすめ", "Best") }}</span>
+            </button>
+          </li>
+        </ul>
         <dl v-if="stats" class="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
           <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half of them") }}</dt>
           <dd class="tabular-nums"><b>{{ fmt(median) }}</b><span v-if="median != null && cost(median)" class="text-[var(--exile-color-text-secondary)]"> · {{ cost(median) }}</span></dd>
