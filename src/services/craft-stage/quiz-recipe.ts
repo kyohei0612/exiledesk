@@ -14,7 +14,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { applyCurrency } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
-import { limitOf, listOf, SIDES, type Force } from "./stage-core";
+import { catalystOf, limitOf, listOf, maxQualityOf, SIDES, type Force } from "./stage-core";
 import { freshItem, startFrom } from "./run-plan";
 import { mulberry32 } from "../htc/rng";
 
@@ -147,6 +147,9 @@ export function situationOf(item: StageItem, goal: readonly QuizSlot[]): Situati
   sit.fx = [...item.prefixes, ...item.suffixes].filter((m) => m.fractured).length;
   // 冒涜の MOD の数 (未発現込み、札の物も込み)。冒涜はアイテムに 1 つまでなので、札に普通の MOD が冒涜で付いた時に骨が打てない (2026-10-16 指輪のチュートリアル)
   sit.des = [...item.prefixes, ...item.suffixes].filter((m) => m.desecrated || m.unrevealed).length;
+  // 触媒の品質が上限まで溜まっていればその種類 (fire・cold …)、溜まっていなければ "-" (2026-10-16 指輪のチュートリアル: 触媒の高貴を打つ前に品質を溜める)
+  const c = catalystOf(item);
+  sit.cat = c.tag && c.pct >= maxQualityOf(item) ? c.tag : "-";
   return sit;
 }
 export const situationKey = (s: Situation): string => Object.keys(s).sort().map((k) => `${k}=${s[k]}`).join(";");

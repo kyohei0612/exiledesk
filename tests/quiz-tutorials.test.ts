@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
 import { runQuiz } from "../src/services/craft-stage/quiz-recipe";
-import { QUIZ_TUTORIALS } from "../src/services/craft-stage/quiz-tutorials";
+import { QUIZ_TUTORIALS, type TutorialRule } from "../src/services/craft-stage/quiz-tutorials";
 import { autoAdvance, playRule, questionOf, startTutorial } from "../src/services/craft-stage/quiz-tutorial-run";
 import { nameOfKey } from "../src/state/craft-stage-shelf";
 import itemsJa from "../src/i18n/items-ja-client.json";
@@ -33,10 +33,10 @@ describe("画面の進め方: 正解を選ぶと、同じ答えは自動で進�
           const q = questionOf(st);
           if (!q) break;
           asked++;
-          expect(q.choices).toContain(q.rule);
-          expect(new Set(q.choices).size).toBe(q.choices.length);
-          expect(q.choices.length).toBeGreaterThanOrEqual(2);
-          expect(q.choices.length).toBeLessThanOrEqual(4);
+          // 3 択で正解は 1 つ (2026-10-16 オーナー「○○をするには? の 3 択で明確に ○×」)
+          expect(q.choices.length).toBe(3);
+          expect(q.choices.filter((c) => c.right).length).toBe(1);
+          expect(q.choices.filter((c) => !c.right).every((c) => !!c.why)).toBe(true);
           expect(st.answered.has(q.rule)).toBe(false);
           playRule(data, st, q.rule, false);
         }
@@ -52,7 +52,7 @@ describe("画面の進め方: 正解を選ぶと、同じ答えは自動で進�
 describe("名前はクライアントのデータから", () => {
   const ja = itemsJa as Record<string, string>;
   it("ベースの日本語名がクライアントの表にある", () => {
-    expect(QUIZ_TUTORIALS.map((t) => ja[t.recipe.base])).toEqual(["決闘のワンド", ja["Secured Wraps"], "洗練されたブリーチリング", "不在のアミュレット"]);
+    expect(QUIZ_TUTORIALS.map((t) => ja[t.recipe.base])).toEqual(["決闘のワンド", ja["Secured Wraps"], "洗練されたブリーチリング", "不在のアミュレット", "エメラルド"]);
     for (const t of QUIZ_TUTORIALS) expect(ja[t.recipe.base], t.recipe.base).toBeTruthy();
     expect(ja["Kolr's Hunt"]).toBe("コルの狩り");
     expect(ja["Astrid's Creativity"]).toBe("アストリッドの創造性");
@@ -60,9 +60,11 @@ describe("名前はクライアントのデータから", () => {
   it("答えに出るカレンシー・お告げ・エッセンス・ルーンは全部名前が引ける", () => {
     for (const t of QUIZ_TUTORIALS) {
       const st = startTutorial(data, t);
-      for (const r of t.recipe.routes[0]!.rules) {
-        if (!("use" in r.do)) continue;
-        for (const k of [r.do.use, ...(r.do.omens ?? [])]) expect(nameOfKey(k, st.item), `${t.id} ${k}`).not.toBe(k);
+      for (const r of t.recipe.routes[0]!.rules as TutorialRule[]) {
+        for (const a of [r.do, ...r.decoys.map((x) => x.do)]) {
+          if (!("use" in a)) continue;
+          for (const k of [a.use, ...(a.omens ?? [])]) expect(nameOfKey(k, st.item), `${t.id} ${k}`).not.toBe(k);
+        }
       }
     }
   });

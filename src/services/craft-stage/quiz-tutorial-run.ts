@@ -1,14 +1,14 @@
 /**
  * quiz-tutorial-run.ts — チュートリアル (quiz-tutorials.ts) を 1 手ずつ進める (2026-10-16)。
  *
- * 今のアイテムに当たる答え (ruleFor) が正解。選択肢は正解 + 同じレシピのほかの答え (最大 4 つ、種で並べ替え)。
+ * 今のアイテムに当たる答え (ruleFor) が正解。選択肢は正解 + その答えの外れ 2 つ (decoys) の 3 択 (2026-10-16 オーナー「○○をするには? の 3 択で明確に ○×」)。
  * 一度正解した答えと同じ答えになる状況は聞かずに自動で打つ (カオスや消去の繰り返しを何十回も聞かない)。
  * 打ち方はシミュレーターと同じ applyQuizAction・乱数も 1 本 (同じ種なら同じ結果)。画面の状態は持たない (StageTutorial.vue が持つ)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageItem, StageMod } from "./types";
 import { applyQuizAction, buyStart, routeDone, routeOf, ruleFor, situationOf, type QuizAction, type Situation } from "./quiz-recipe";
-import type { QuizTutorial, TutorialRule } from "./quiz-tutorials";
+import type { JaEn, QuizTutorial, TutorialRule } from "./quiz-tutorials";
 import { mulberry32 } from "../htc/rng";
 
 export interface TutorialEntry {
@@ -39,16 +39,16 @@ export interface TutorialState {
   /** 止まった理由 (答えが無い・打てない・手の上限) */
   stop: string | null;
 }
+/** 選択肢 1 つ (正解か、外れとその理由) */
+export interface TutorialChoice { do: QuizAction; right: boolean; why?: JaEn }
 export interface TutorialQuestion {
   rule: number;
   situation: Situation;
-  /** 選択肢 (答えの番号)。正解は rule */
-  choices: number[];
+  /** 3 択 (並びは種で混ぜる)。right が 1 つ */
+  choices: TutorialChoice[];
 }
 
 const rulesOf = (t: QuizTutorial): TutorialRule[] => t.recipe.routes[0]!.rules as TutorialRule[];
-/** 答えの手の中身 (同じ手の答えは選択肢で 1 つにまとめる) */
-const actionKey = (a: QuizAction): string => ("restart" in a ? "restart" : "reveal" in a ? `reveal:${a.reveal.echoes}` : `${a.use}+${[...(a.omens ?? [])].sort().join(",")}`);
 
 export function startTutorial(data: PatchData, tut: QuizTutorial, seed = tut.seed): TutorialState {
   const g = mulberry32(seed);
@@ -65,13 +65,10 @@ export function questionOf(st: TutorialState): TutorialQuestion | null {
   const r = ruleFor(rules, sit);
   if (!r) { st.stop = "unanswered"; return null; }
   const right = rules.indexOf(r as TutorialRule);
-  // ほかの答え (手の中身が正解と違う物、同じ手は 1 つ)。種と手の数で並べ替えて 3 つまで
-  const seen = new Set([actionKey(r.do)]);
-  const others: number[] = [];
-  rules.forEach((x, i) => { const k = actionKey(x.do); if (!seen.has(k)) { seen.add(k); others.push(i); } });
+  const tr = r as TutorialRule;
+  const opts: TutorialChoice[] = [{ do: tr.do, right: true }, ...tr.decoys.map((x) => ({ do: x.do, right: false, why: x.why }))];
   const pick = mulberry32(st.seed * 31 + st.steps);
-  const shuffled = others.map((i) => [pick(), i] as const).sort((a, b) => a[0] - b[0]).slice(0, 3).map((x) => x[1]);
-  const choices = [...shuffled, right].map((i) => [pick(), i] as const).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+  const choices = opts.map((o) => [pick(), o] as const).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
   return { rule: right, situation: sit, choices };
 }
 
