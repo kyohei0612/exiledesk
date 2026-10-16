@@ -4,7 +4,7 @@
   ① 狙う MOD は「次の手で狙う」と同じ (最大 6 つ、全部揃って当たり)
   ② カオス・上級・完全のどれかを選ぶ
   ③ 100 人が当たるまでスパムした時の回数 (半分の人・運が悪い 10 人に 1 人・一番良い / 悪い人) + 自分でもスパム (押している間打ち続け、狙いが出たら自動で止まる)
-  ④ 止まったら、100 人の結果と比べて今回の運を出す (「今回は 100 人中 上位 ◯%」)
+  ④ 止まったら、100 人の結果と比べて今回の運を出す (「今回は 100 人中 上位 ◯%」、半分より遅ければ「下位 ◯%」)
 
   打つのはステージと同じ s.use (1 回ずつ工程に入る)。工程は 50 手で古い方が消えるので、戻す時は「スパムの前に戻す」で丸ごと戻す (snapshot / restore)。
   分析の記録は 1 回ごとには送らず、スパムの終わりに 1 件だけ (emu_spam)
@@ -199,6 +199,8 @@ const barShown = computed(() => phone.value && !s.held.value && keys.value.lengt
 const canSpam = computed(() => keys.value.length > 0 && targets.value.length > 0 && !!s.item.value && !aimDone(s.item.value, targets.value));
 /** 運の言葉 (PC の欄とスマホの帯で同じ) */
 const luck = (r: number): string => (r <= 10 ? tr("かなりの強運", "very lucky") : r <= 50 ? tr("運がいい方", "lucky") : r <= 90 ? tr("運が悪い方", "unlucky") : tr("かなりの沼", "very unlucky"));
+/** 順位の言葉: 半分より早ければ「上位」、遅ければ「下位」(85% → 下位 15%。2026-10-16 オーナー「運悪いのに上位はおかしい」) */
+const rankWord = (r: number): string => (r <= 50 ? tr(`上位 ${r}%`, `top ${r}%`) : tr(`下位 ${Math.max(1, 100 - r)}%`, `bottom ${Math.max(1, 100 - r)}%`));
 /** 押すボタンの文字 (PC の欄とスマホの帯で同じ。離した後は「押して続ける」) */
 const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : result.value && !result.value.hit && result.value.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
 const shownUses = computed(() => live.value?.uses ?? result.value?.uses ?? 0);
@@ -243,14 +245,14 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
       <div class="mt-2 flex flex-wrap items-center gap-2">
         <button v-if="!barShown" type="button" data-chaos-spam-hold class="g-btn-red sm select-none touch-none" :disabled="!canSpam" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ holdLabel }}</button>
         <span v-if="spamming || result" class="tabular-nums text-[12px]">{{ tr(`${shownUses.toLocaleString()} 回`, `${shownUses.toLocaleString()} uses`) }}<template v-if="cost(shownApplied)"> · {{ cost(shownApplied) }}</template></span>
-        <button v-if="result && !spamming" type="button" class="g-btn sm ml-auto" @click="undoSpam">{{ tr("スパムの前に戻す", "Undo the spam") }}</button>
-        <button v-if="result && !spamming" type="button" data-chaos-spam-start class="g-btn sm" :title="tr('工程と費用 (スパムの前の手も) はそのままで、普段のエミュレーターに戻ります', 'Back to the emulator with the steps and cost (including before the spam) kept')" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
+        <button v-if="result && !spamming && !barShown" type="button" class="g-btn sm ml-auto" @click="undoSpam">{{ tr("スパムの前に戻す", "Undo the spam") }}</button>
+        <button v-if="result && !spamming && !barShown" type="button" data-chaos-spam-start class="g-btn sm" :title="tr('工程と費用 (スパムの前の手も) はそのままで、普段のエミュレーターに戻ります', 'Back to the emulator with the steps and cost (including before the spam) kept')" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
       </div>
       <!-- ④ 運試し -->
       <p v-if="result && !spamming" class="mt-1.5 text-[13px]">
         <template v-if="result.hit">
           <b class="text-emerald-300">{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}</b>
-          <template v-if="result.rank != null"> {{ tr(`今回は ${SPAM_PEOPLE} 人中 上位 ${result.rank}% の運でした`, `That's top ${result.rank}% luck among ${SPAM_PEOPLE} people`) }}<span class="ml-1 text-[12px]" :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">({{ luck(result.rank) }})</span></template>
+          <template v-if="result.rank != null"> {{ tr(`今回は ${SPAM_PEOPLE} 人中 ${rankWord(result.rank)} の運でした`, `That's ${rankWord(result.rank)} luck among ${SPAM_PEOPLE} people`) }}<span class="ml-1 text-[12px]" :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">({{ luck(result.rank) }})</span></template>
           <template v-else> {{ tr("運を計算中…", "Comparing your luck…") }}</template>
         </template>
         <template v-else>{{ result.reason ?? tr(`${result.uses.toLocaleString()} 回打って、まだ付いていません`, `${result.uses.toLocaleString()} uses, not hit yet`) }}</template>
@@ -260,15 +262,18 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
     <Teleport to="body">
       <div v-if="barShown" data-chaos-spam-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
         <p v-if="spamming || result" class="mb-1 truncate text-[12px] font-bold" :class="result?.hit ? 'text-emerald-300' : 'text-white/80'">
-          <template v-if="result?.hit && !spamming">{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}<template v-if="result.rank != null"> {{ tr(`上位 ${result.rank}%`, `Top ${result.rank}%`) }} ({{ luck(result.rank) }})</template></template>
+          <template v-if="result?.hit && !spamming">{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}<template v-if="result.rank != null"> {{ rankWord(result.rank) }} ({{ luck(result.rank) }})</template></template>
           <template v-else>{{ tr(`${shownUses.toLocaleString()} 回`, `${shownUses.toLocaleString()} uses`) }}<template v-if="cost(shownApplied)"> · {{ cost(shownApplied) }}</template><template v-if="!spamming && result?.reason"> · {{ result.reason }}</template></template>
         </p>
+        <!-- 止まった後の 戻す / ここから開始 は 1 段上に (横に並べると押すボタンが 3 行に潰れる) -->
+        <div v-if="result && !spamming" class="mb-1.5 flex justify-end gap-2">
+          <button type="button" class="g-btn sm min-h-10" @click="undoSpam">{{ tr("スパムの前に戻す", "Undo the spam") }}</button>
+          <button type="button" class="g-btn sm min-h-10" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
+        </div>
         <div class="flex items-center gap-2">
           <img v-if="iconOf(key)" :src="iconOf(key)" alt="" class="h-9 w-9 object-contain" />
           <b class="min-w-0 flex-1 line-clamp-2 text-[12px] leading-tight text-amber-100">{{ nameOf(key) }}</b>
-          <button v-if="result && !spamming" type="button" class="g-btn sm min-h-11" @click="undoSpam">{{ tr("戻す", "Undo") }}</button>
-          <button v-if="result && !spamming" type="button" class="g-btn sm min-h-11" @click="startHere">{{ tr("ここから開始", "Continue") }}</button>
-          <button type="button" data-chaos-spam-hold class="min-h-11 select-none touch-none rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!canSpam && !spamming" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ spamming ? tr("スパム中…", "Spamming…") : result && !result.hit && result.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押しっぱなしで使う", "Hold to use") }}</button>
+          <button type="button" data-chaos-spam-hold class="shrink-0 whitespace-nowrap min-h-11 select-none touch-none rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!canSpam && !spamming" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ spamming ? tr("スパム中…", "Spamming…") : result && !result.hit && result.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押しっぱなしで使う", "Hold to use") }}</button>
           <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" :title="tr('閉じる', 'Close')" @click="spamKey = null; result = null">×</button>
         </div>
       </div>
