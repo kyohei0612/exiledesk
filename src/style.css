@@ -573,6 +573,70 @@ table th,
       box-shadow: 0 0 0 rgba(250, 204, 21, 0);
     }
   }
+  /* 珍しい段 (付いた瞬間の確率 ≤ 0.2%): 神のオーブのフィルターのような枠 (オレンジの縁・白い字) が光って、2 秒ほどで消える。
+     枠は残さない (2026-10-10「ずっと残る枠はいらない」)。光の柱は .stage-rare-beam、文字を走る光は .stage-mod-new-rare::after
+     (2026-10-16 オーナー「神のフィルターでエフェクト付きで」「一瞬文字光的なやつ」) */
+  .stage-mod-new-rare {
+    animation: stage-mod-flash-rare 2.2s ease-out forwards;
+  }
+  @keyframes stage-mod-flash-rare {
+    0% {
+      background: rgba(120, 30, 10, 0);
+      box-shadow: inset 0 0 0 2px rgba(255, 150, 50, 0), 0 0 0 rgba(255, 120, 30, 0);
+    }
+    8% {
+      background: rgba(120, 30, 10, 0.75);
+      box-shadow: inset 0 0 0 2px rgba(255, 150, 50, 1), 0 0 22px rgba(255, 120, 30, 0.8);
+      color: #fff;
+      text-shadow: 0 0 8px rgba(255, 200, 120, 1);
+    }
+    60% {
+      background: rgba(120, 30, 10, 0.55);
+      box-shadow: inset 0 0 0 2px rgba(255, 150, 50, 0.85), 0 0 12px rgba(255, 120, 30, 0.45);
+      color: #fff;
+      text-shadow: 0 0 6px rgba(255, 200, 120, 0.8);
+    }
+    100% {
+      background: rgba(120, 30, 10, 0);
+      box-shadow: inset 0 0 0 2px rgba(255, 150, 50, 0), 0 0 0 rgba(255, 120, 30, 0);
+    }
+  }
+  /* 行の上を白い光が 2 回走る (文字が光って見える)。足し算の合成で文字は隠さない */
+  .stage-mod-new-rare::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 245, 220, 0.85) 50%, transparent 65%) no-repeat;
+    background-size: 300% 100%;
+    background-position: 150% 0;
+    mix-blend-mode: screen;
+    animation: stage-rare-sweep 0.75s ease-in-out 0.1s 2 both;
+  }
+  @keyframes stage-rare-sweep {
+    0% { background-position: 150% 0; opacity: 1; }
+    100% { background-position: -50% 0; opacity: 1; }
+  }
+  /* 光の柱 (ドロップの光の柱のように、行から上へ伸びて消える)。足し算の合成で上の行の字は隠さない */
+  .stage-rare-beam {
+    height: 240px;
+    transform-origin: bottom;
+    background: linear-gradient(to top, rgba(255, 190, 90, 1), rgba(255, 130, 40, 0.6) 40%, rgba(255, 120, 30, 0));
+    filter: blur(4px);
+    border-radius: 999px;
+    mix-blend-mode: screen;
+    animation: stage-rare-beam 1.4s ease-out forwards;
+  }
+  @keyframes stage-rare-beam {
+    0% { opacity: 0; transform: translateX(-50%) scaleY(0) scaleX(0.6); }
+    14% { opacity: 1; transform: translateX(-50%) scaleY(1) scaleX(1); }
+    100% { opacity: 0; transform: translateX(-50%) scaleY(1) scaleX(0.3); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stage-rare-beam { display: none; }
+    .stage-mod-new-rare::after { animation: none; display: none; }
+  }
   .stage-mod-gone {
     animation: stage-mod-fade 1.6s ease-out forwards;
   }

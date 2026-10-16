@@ -16,7 +16,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { tr } from "../../i18n/lang";
 
 /** 能力値の要求 (ゲームの言葉で。2026-10-09 初見レビュー「手袋(dex_int) が読めない」) */
-const ATTR_JA: Record<string, string> = { str: "筋力", dex: "器用", int: "知性", str_dex: "筋力・器用", str_int: "筋力・知性", dex_int: "器用・知性" };
+const ATTR_JA: Record<string, string> = { str: "筋力", dex: "器用", int: "知性", str_dex: "筋力・器用", str_int: "筋力・知性", dex_int: "器用・知性", str_dex_int: "筋力・器用・知性" };
 const A = (k: string, ja: string): Array<[string, string]> => ["str", "dex", "int", "str_dex", "str_int", "dex_int"].map((x) => [`${k}_${x}`, `${ja} (${ATTR_JA[x]})`]);
 const EL = (k: string, ja: string): Array<[string, string]> => [[k, ja], ...([["fire", "火"], ["cold", "冷気"], ["lightning", "雷"], ["chaos", "混沌"], ["physical", "物理"]] as const).map(([x, j]): [string, string] => [`${k}_${x}`, `${ja} (${j})`])];
 /** 種類の段 */
@@ -57,14 +57,15 @@ const CLS_EN: Record<string, string> = {
 };
 /** 種類の札の中の英語 (str_dex → Strength/Dexterity、fire → Fire) */
 export const VARIANT_EN: Record<string, string> = {
-  str: "Strength", dex: "Dexterity", int: "Intelligence", str_dex: "Strength/Dexterity", str_int: "Strength/Intelligence", dex_int: "Dexterity/Intelligence",
+  str: "Strength", dex: "Dexterity", int: "Intelligence", str_dex: "Strength/Dexterity", str_int: "Strength/Intelligence", dex_int: "Dexterity/Intelligence", str_dex_int: "Strength/Dexterity/Intelligence",
   fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos", physical: "Physical",
 };
 /** 種類の英語 (Gloves_str_dex → Gloves (Strength/Dexterity))。属性を外すなら withAttr = false */
 export function classEn(cls: string, withAttr = true): string {
   const key = Object.keys(CLS_EN).filter((k) => cls === k || cls.startsWith(`${k}_`)).sort((a, b) => b.length - a.length)[0];
   if (!key) return cls.replace(/_/g, " ");
-  const v = cls.slice(key.length + 1);
+  // ring_ = グラスピングメイルの行 (指輪の MOD も付く鎧、Body_Armours_ring_str_dex_int)。部位の名前は鎧のまま
+  const v = cls.slice(key.length + 1).replace(/^ring_/, "");
   return withAttr && v ? `${CLS_EN[key]} (${VARIANT_EN[v] ?? v})` : CLS_EN[key]!;
 }
 /** 種類の名前 (画面の言語で) */
@@ -75,7 +76,13 @@ export const classLabel = (cls: string, withAttr = true): string => tr(classJa(c
  */
 export function classJa(cls: string, withAttr = true): string {
   const hit = CATALOG_CLS_JA.get(cls) ?? [...CATALOG_CLS_JA].find(([k]) => k.startsWith(`${cls}_`))?.[1];
-  if (!hit) return cls.replace(/_/g, " ");
+  if (!hit) {
+    // 一覧に無い行 (3 属性の Body_Armours_str_dex_int、グラスピングメイルの Body_Armours_ring_str_dex_int): 部位の名前 + 属性
+    const key = Object.keys(CLS_EN).filter((k) => cls.startsWith(`${k}_`)).sort((a, b) => b.length - a.length)[0];
+    if (!key) return cls.replace(/_/g, " ");
+    const v = ATTR_JA[cls.slice(key.length + 1).replace(/^ring_/, "")];
+    return withAttr && v ? `${classJa(key, false)} (${v})` : classJa(key, false);
+  }
   return withAttr && CATALOG_CLS_JA.has(cls) ? hit : hit.replace(/\s*\(.*\)$/, "");
 }
 /** ヴェリシウムで作る (最初から選ぶ物ではない) ベース */

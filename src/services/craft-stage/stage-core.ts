@@ -14,7 +14,7 @@ import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
 import { familyBlocked, familyKeysOf, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfModAlways } from "../htc/mod-text";
-import { filledStatsOf, htcBaseLimits } from "../htc/patch";
+import { filledStatsOf, htcBaseLimits, implicitStatsOf } from "../htc/patch";
 import modTextJa from "../../i18n/mod-text-ja.json";
 import { maxQualityForBase } from "../htc/catalysing-setup";
 import { displayedValue } from "../htc/quality";
@@ -241,15 +241,37 @@ export function boostedMod(item: StageItem, m: StageMod, data?: PatchData): { va
   return { values, ...retext(m, values, data) };
 }
 
-/** カタリストの品質で伸びる % (指輪・アミュレットで、品質の種類のタグを MOD 自身が持つ時だけ) */
-function qualityPctOf(item: StageItem, m: StageMod, data?: PatchData): number {
-  const tag = item.qualityTag;
-  // 触媒の品質が乗るのは指輪・アミュレット (普通の触媒) とジュエル (精製された触媒) の MOD。MOD の id の頭が部位 (2026-10-13 総点検)
+/**
+ * ベースの品質とは別にカタリストの品質を持てるベース (グラスピングメイル。暗黙「Catalysts can be applied to this item」=
+ * item_can_have_catalyst_quality_in_addition_to_base_quality、2026-10-16 要望 a286ced8)。クライアントの暗黙の stat で見る
+ */
+export const hasExtraCatalyst = (base: string): boolean =>
+  implicitStatsOf(base).some((l) => l.stats.some(([id]) => id === "item_can_have_catalyst_quality_in_addition_to_base_quality"));
+/** 普通のカタリストを打てるか (指輪・アミュレットと、上のベース) */
+export const takesCatalyst = (item: StageItem): boolean => inGroup(item.cls.category, "ringAmulet") || hasExtraCatalyst(item.base);
+/** カタリストの品質 (種類と %)。指輪・アミュレット・ジュエルは品質そのもの (種類が付くのはそこだけ)、上のベースは別の欄 (catalystQuality) */
+export function catalystOf(item: StageItem): { tag: string | null; pct: number } {
+  if (hasExtraCatalyst(item.base)) return { tag: item.qualityTag ?? null, pct: item.catalystQuality ?? 0 };
+  return { tag: item.qualityTag ?? null, pct: item.quality };
+}
+/**
+ * その MOD がカタリストの種類 tag で伸びるか。指輪・アミュレットは MOD 自身の tags、ジュエルと上のベースは中身のタグ (displayTags)。
+ * 上のベースの MOD の tags は出る場所の札 (ring など) なので中身のタグで見る。どの MOD にも乗るか (指輪の MOD だけか) は確かめていない (仮)
+ */
+export function catalystBoosts(item: StageItem, m: { modId: string; tags?: readonly string[] }, tag: string, data?: PatchData): boolean {
   const modCls = m.modId.split("/")[0] ?? "";
-  if (!tag || !(item.quality > 0) || !inAny(modCls, ["ringAmulet", "jewel"])) return 0;
+  const extra = hasExtraCatalyst(item.base);
+  // 触媒の品質が乗るのは指輪・アミュレット (普通の触媒) とジュエル (精製された触媒) の MOD。MOD の id の頭が部位 (2026-10-13 総点検)
+  if (!extra && !inAny(modCls, ["ringAmulet", "jewel"])) return false;
   // ジュエルの MOD の tags は出る場所の札 (strjewel など) なので、中身のタグ (displayTags = implicit_tags と poe2db の Crafting Tag) で見る (2026-10-12)
-  const tags = inGroup(modCls, "jewel") ? data?.mods.get(m.modId)?.displayTags ?? [] : m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
-  return tags.includes(tag) ? item.quality : 0;
+  const tags = extra || inGroup(modCls, "jewel") ? data?.mods.get(m.modId)?.displayTags ?? [] : m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
+  return tags.includes(tag);
+}
+/** カタリストの品質で伸びる % (品質の種類のタグを MOD が持つ時だけ) */
+function qualityPctOf(item: StageItem, m: StageMod, data?: PatchData): number {
+  const { tag, pct } = catalystOf(item);
+  if (!tag || !(pct > 0)) return 0;
+  return catalystBoosts(item, m, tag, data) ? pct : 0;
 }
 /**
  * 獰猛 (液化した感情) の「サフィックス / プレフィックスの効果が N% 増加する」がその側の MOD に掛ける % (2026-10-11 オーナーの参考動画 2 本の仕上げの手)。

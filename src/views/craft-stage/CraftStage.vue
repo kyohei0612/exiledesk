@@ -12,6 +12,7 @@
 import { inGroup } from "../../services/mods/item-classes";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
+import { preloadSfx, setSfxOff, sfxOff } from "../../utils/sfx";
 import { scrollToTop } from "../../utils/keep-place";
 import { baseNameOf, modText, tr } from "../../i18n/lang";
 import { forceKey } from "../../services/craft-stage/apply-force";
@@ -27,6 +28,8 @@ import StageItemCard from "./StageItemCard.vue";
 import StageQualityBar from "./StageQualityBar.vue";
 import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
+import { SPAM_KEYS } from "../../services/craft-stage/chaos-spam";
+import { spamKey, spamPending } from "../../state/chaos-spam";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -43,7 +46,7 @@ import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
-import { IMPLICIT_SET, implicitSetKey, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
+import { catalystSetKey, IMPLICIT_SET, implicitSetKey, isCatalystSet, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import ShelfButton from "./ShelfButton.vue";
@@ -64,6 +67,8 @@ function useAtSocket(n: number): void {
   else s.use();
 }
 onMounted(() => void s.init());
+// 使った時の音を先に読んでおく (初めて使うカレンシーで遅れないように)
+onMounted(preloadSfx);
 /** 読めなかった時の「もう一度」 */
 function retryInit(): void { s.error.value = null; void s.init(); }
 
@@ -196,6 +201,19 @@ const simCraftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.i
 const simSocketCap = computed(() => (simCraftCap.value > 0 ? simCraftCap.value + 1 : 0));
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
+/** カオス (普通・上級・完全) を持っているか (アイテムの下の「カオススパム確率機へ」) */
+const heldChaos = computed(() => !s.replay.value && !!s.held.value && (SPAM_KEYS as readonly string[]).includes(s.held.value));
+/** 狙いがまだ無ければ MOD を選ぶ窓から。あればカオススパムの欄へ */
+function openChaosSpam(): void {
+  spamKey.value = s.held.value;
+  spamPending.value = true;
+  // 手に持っている物は離す (スマホの「使う」の帯と、カオススパムの帯がぶつからないように。2026-10-16 オーナー)
+  s.hold(null);
+  // 狙いがあれば欄を真ん中へ (StageChaosSpam の arrive が spamPending を見て送る)
+  if (!s.aims.value.length) s.aimPicker.value = { seed: null };
+}
+// 選ぶ窓を狙い無しで閉じた時は、送る予約を消す
+watch(() => s.aimPicker.value, (v) => { if (!v && !s.aims.value.length) spamPending.value = false; });
 /**
  * スマホ (幅 768 CSS px 未満): 棚からアイテムまで縦に遠いので、何か持っている間は画面の下に「持っている物 → アイテムに使う」の帯を出す
  * (2026-10-08 オーナー「タップして使う時はアイテムに再度付けるような動作で。押した瞬間付けるだとお告げが使えない」。お告げは掛けてから「アイテムに使う」)
@@ -271,6 +289,12 @@ function setQuality(n: number, tag?: string): void {
   const last = s.log.value[s.log.value.length - 1];
   if (last && isQualitySet(last.out.currency)) s.undo();
   s.use(qualitySetKey(n, keep));
+}
+/** カタリストの品質の欄 (ベースの品質とは別に持つグラスピングメイル)。続けて押した分は 1 手にまとめる (品質と同じ) */
+function setCatalyst(n: number, tag: string): void {
+  const last = s.log.value[s.log.value.length - 1];
+  if (last && isCatalystSet(last.out.currency)) s.undo();
+  s.use(catalystSetKey(n, tag));
 }
 /** 暗黙の値を手で上下 (カードの ▲▼)。同じ行を続けて変えた分は 1 手にまとめる (品質と同じ) */
 function setImplicit(line: number, values: number[]): void {
@@ -379,9 +403,13 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
 <template>
   <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
-  <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
+  <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? (heldChaos && !s.offers.value ? 'pb-44' : 'pb-32') : phone && spamKey ? 'pb-48' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
-    <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value && !board" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+    <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value && !board" data-bottom-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+      <!-- カオスを持っている時: 確率機へのボタンは帯の上 (スマホはアイテムの下ではなくここ。2026-10-16 オーナー) -->
+      <div v-if="heldChaos && !s.offers.value" class="mb-1.5 flex justify-end">
+        <button type="button" data-chaos-spam-open class="g-btn sm min-h-10" @click="openChaosSpam">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
+      </div>
       <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
       <div v-if="s.offers.value" class="flex items-center gap-2">
         <span class="min-w-0 flex-1 truncate text-rose-200">{{ tr("発現する MOD を 3 つから選ぶ", "Choose 1 of 3 mods to reveal") }}</span>
@@ -401,9 +429,9 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         </div>
         <div class="flex items-center gap-2">
           <img v-if="iconOf(s.held.value!)" :src="iconOf(s.held.value!)" alt="" class="h-9 w-9 object-contain" />
-          <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join(tr("・", ", ")) }}</span></span>
-          <button v-if="s.log.value.length" type="button" class="g-btn sm min-h-11" :title="tr('直前の 1 手を取り消す', 'Undo the last step')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
-          <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!!heldWhy" @click="useFromBar">{{ tr("使う", "Use") }}</button>
+          <span class="min-w-0 flex-1 line-clamp-2 text-[12px] leading-tight"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join(tr("・", ", ")) }}</span></span>
+          <button v-if="s.log.value.length" type="button" class="g-btn sm min-h-11 shrink-0 whitespace-nowrap" :title="tr('直前の 1 手を取り消す', 'Undo the last step')" @click="s.undo()">{{ tr("戻す", "Undo") }}</button>
+          <button type="button" class="g-btn-red min-h-11 shrink-0 whitespace-nowrap px-2 text-[14px]" :disabled="!!heldWhy" @click="useFromBar">{{ tr("使う", "Use") }}</button>
           <!-- 離す = 大きめの × (2026-10-08 オーナー「バツボタン割とデカく」) -->
           <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" :title="tr('離す', 'Drop')" @click="s.hold(null)">×</button>
         </div>
@@ -423,7 +451,12 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
-      <CurrencyPicker v-show="(s.mode.value === 'hand' || !!s.replay.value) && !board" data-rec-part="display-currency" />
+      <!-- スマホは縦に積む (横に並べると題が 2 行に折れる) -->
+      <div v-show="!board" class="flex shrink-0 items-center gap-2 max-md:flex-col-reverse max-md:items-end">
+        <!-- 使った時の音のオン / オフ (2026-10-16 ゲームと同じ音。端末に覚える) -->
+        <button v-show="s.mode.value === 'hand' && !s.replay.value" type="button" data-sfx-toggle class="g-btn sm shrink-0 !px-1 max-md:min-h-10" :aria-pressed="!sfxOff" :aria-label="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" :title="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" @click="setSfxOff(!sfxOff)"><Icon :name="sfxOff ? 'volume-x' : 'volume'" class="size-4" :class="sfxOff ? 'opacity-50' : ''" /></button>
+        <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" data-rec-part="display-currency" />
+      </div>
     </div>
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
@@ -545,7 +578,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <!-- カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
         <div class="-mb-6 flex w-full max-w-[480px] items-start gap-2">
           <button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button>
-          <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" />
+          <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" @catalyst="setCatalyst" />
         </div>
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
@@ -566,6 +599,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         />
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>
+        <!-- カオス (普通・上級・完全) を持っている時: カオススパム確率機へ (2026-10-16 オーナー「カオス持った時にアイテムの下にボタン、押したら MOD 選択から」) -->
+        <button v-if="heldChaos && !phone" type="button" data-chaos-spam-open class="g-btn sm" @click="openChaosSpam">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
         <RevealPanel />
         <!-- ヒネコラの髪束の予見: 持っているカレンシーを打った時の結果 (次の手の seed で引くので、打つとこの通りになる) -->
         <div v-if="s.foresight.value" class="w-[380px] max-md:w-full rounded-xl border border-violet-400/50 bg-violet-500/10 p-3 text-[12px]">

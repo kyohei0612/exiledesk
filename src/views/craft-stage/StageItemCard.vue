@@ -20,7 +20,7 @@ import { implicitRows, propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
-import { allMods, boostedMod, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
+import { allMods, boostedMod, hasExtraCatalyst, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { classLabel } from "../../services/items/base-catalog";
 import { tagLabel } from "../../services/mods/tag-ja";
@@ -110,8 +110,12 @@ const chanceOf = (m: { modId: string }): number | null => chances.value.get(m.mo
 // 暗黙の MOD: 振った値・中身のタグ・カタリストの品質で伸びた値 (stage-props の implicitRows、2026-10-12)
 const implicits = computed(() => implicitRows(props.item).map((r) => ({ ...r, tags: props.showTags ? shownTags(r.tags) : [] })));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId && !!a.fractured === !!m.fractured);
+/** 今付いた珍しい段 (付いた瞬間の確率 ≤ 0.2%)。神のオーブのフィルターのような枠・光の柱・文字の光を一瞬 (2026-10-16 オーナー「神のフィルターでエフェクト付きで」「一瞬文字光的なやつ」) */
+const isRareNew = (m: StageMod): boolean => isNew(m) && chanceOf(m) != null && isRareChance(chanceOf(m)!);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
+/** ベースの品質とは別にカタリストの品質を持つベース (グラスピングメイル)。品質の行を 2 つに分ける */
+const extraCat = computed(() => hasExtraCatalyst(props.item.base));
 /** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
@@ -174,7 +178,8 @@ const rows = computed(() => {
       <p class="pt-1 text-[12px] text-white/50">{{ kindJa }}</p>
       <!-- ジュエルはアイテムレベルで付く物が変わらない (MOD は全部レベル 1・重みは全部同じ) ので出さない (2026-10-12 オーナー) -->
       <p v-if="!isGem(item.cls.category) && item.cls.category !== 'Jewels'" class="text-[12px] text-white/50">{{ tr("アイテムレベル", "Item Level") }}: <span class="text-white">{{ item.itemLevel }}</span></p>
-      <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
+      <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ extraCat ? qualityLabelOf(null) : qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
+      <p v-if="extraCat && (item.catalystQuality ?? 0) > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.catalystQuality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
       <p v-for="r in baseRows" :key="r.key" class="text-[12px] text-white/50">{{ r.label ? `${r.label}: ` : "" }}<span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
       <!-- ソケット (熟練工のオーブ) の絵 -->
@@ -227,15 +232,17 @@ const rows = computed(() => {
           @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
-          :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
+          :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で消える候補 (${doomed!.length} つのうち 1 つ)`, `May be removed by this use (1 of ${doomed!.length})`) : tr('この手で消える', 'Removed by this use')) : removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
           @contextmenu="!holding && removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >
+          <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
+          <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
           <span class="w-7 shrink-0 text-left text-[12px] font-bold tabular-nums" :class="r.side === 'プレ' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレ" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
           <span class="min-w-0 flex-1 text-center">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
-            <span :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
+            <span :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
             <span v-if="look(r.m).tag" class="ml-1.5 whitespace-nowrap align-middle text-[10px] opacity-80">{{ look(r.m).tag }}</span>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
           </span>

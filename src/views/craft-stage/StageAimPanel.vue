@@ -22,6 +22,8 @@ import HelpTip from "../../components/ui/HelpTip.vue";
 import { logRecord } from "../../utils/log-record";
 import { keepPlace, keepTopOf, scrollToTop } from "../../utils/keep-place";
 import { tr } from "../../i18n/lang";
+import { spamKey, spamming } from "../../state/chaos-spam";
+import StageChaosSpam from "./StageChaosSpam.vue";
 
 /** 分析用の記録 (狙い・今のアイテムの MOD と一緒に) */
 function logAim(kind: string, extra: Record<string, unknown>): void {
@@ -69,7 +71,11 @@ function recompute(): void {
   };
   timer = setTimeout(step, 0);
 }
-watch([() => s.aims.value, () => s.item.value], recompute, { immediate: true });
+// カオススパムで回している間は出し直さない (1 手ごとに数千回試すと重い)。止まった時に 1 回出し直す
+watch([() => s.aims.value, () => s.item.value], () => { if (!spamming.value && !spamKey.value) recompute(); }, { immediate: true });
+watch(spamming, (v) => { if (!v) recompute(); });
+// 確率機を閉じたら一覧を出し直す
+watch(spamKey, (k) => { if (!k) recompute(); });
 /**
  * スマホ: 打った時に上 (工程・アイテムのカード) が伸びても、この一覧を画面の同じ高さに残す (打つたびに一覧が下へ流れて探し直していた)。
  * 画面に見えている時だけ。PC は棚の横なので動かない
@@ -143,7 +149,7 @@ function roll(r: AimOdd): void {
   rolled.value = { key: keyOf(r), n: rollN.value, hit };
   logAim("aim_roll", { combo: keyOf(r), n: rollN.value, hit, odds: r.p });
 }
-watch([() => s.aims.value, () => s.item.value], () => { rolled.value = null; });
+watch([() => s.aims.value, () => s.item.value], () => { if (!spamming.value) rolled.value = null; });
 /** 平均で何回に 1 回付くか */
 const every = (p: number): string => (p <= 0 ? "" : p >= 0.995 ? tr("毎回", "Every time") : tr(`${Math.round(1 / p).toLocaleString()} 回に 1 回`, `1 in ${Math.round(1 / p).toLocaleString()}`));
 /**
@@ -171,17 +177,17 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
 <template>
   <section v-if="s.aims.value.length" ref="panel" data-aim-panel data-rec="aim-panel" class="g-panel scroll-mt-2 p-2 text-[12px]">
     <header class="g-sec-head">
-      <b class="g-sec-title">{{ tr("次の手で狙う", "Target next move") }}</b>
+      <b class="g-sec-title">{{ spamKey ? tr("カオススパム", "Chaos spam") : tr("次の手で狙う", "Target next move") }}</b>
       <span class="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:w-full">
         <span v-for="a in s.aims.value" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ aimLabel(s.data.value, a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('この MOD を外す', 'Remove this mod')" @click="s.aims.value = s.aims.value.filter((x) => x.modId !== a.modId)">×</button></span>
         <!-- 足す・変える: 選ぶ窓をもう一度 (MOD 一覧まで戻らなくていい) -->
         <button type="button" class="g-plain inline-flex min-h-7 items-center gap-1 rounded border border-dashed border-white/25 px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5" @click="s.aimPicker.value = { seed: null }"><Icon name="plus" class="size-3.5" />{{ s.aims.value.length < AIM_MAX ? tr("足す・変える", "Add / change") : tr("変える", "Change") }}</button>
       </span>
-      <span class="flex items-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("回す回数", "Runs") }}
+      <span v-if="!spamKey" class="flex items-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("回す回数", "Runs") }}
         <button v-for="n in ROLLS" :key="n" type="button" :data-rec="`aim-n:${n}`" class="g-tab !min-h-[26px] !px-2 !text-[11px]" :class="rollN === n ? 'on' : ''" @click="rollN = n">{{ n.toLocaleString() }}</button>
       </span>
-      <HelpTip :title="tr('次の手で狙う', 'Target next move')" :width="320">
-        <p>{{ tr(`今の状態から同じ打ち方 (カレンシーとお告げの組み合わせ) を当たるまで続けた時に、狙いの MOD (その段以上。最大 4 つで、全部揃って当たり) が付く確率。打ち方ごとに ${TRIALS.toLocaleString()} 回打った目安です。`, `The chance that the target mods (that tier or better; up to 4, a hit when all are on) roll when you repeat the same method (currency + omen combo) from the current state until it hits. An estimate from ${TRIALS.toLocaleString()} uses per method.`) }}</p>
+      <HelpTip v-if="!spamKey" :title="tr('次の手で狙う', 'Target next move')" :width="320">
+        <p>{{ tr(`今の状態から同じ打ち方 (カレンシーとお告げの組み合わせ) を当たるまで続けた時に、狙いの MOD (その段以上。最大 6 つで、全部揃って当たり) が付く確率。打ち方ごとに ${TRIALS.toLocaleString()} 回打った目安です。`, `The chance that the target mods (that tier or better; up to 6, a hit when all are on) roll when you repeat the same method (currency + omen combo) from the current state until it hits. An estimate from ${TRIALS.toLocaleString()} uses per method.`) }}</p>
         <p class="mt-1">{{ tr("今付いている MOD が消えたら外れで、今の状態からやり直します。外れても続けられる時 (空きがまだある など) はそのまま続けます。", "If a mod currently on the item is removed, it counts as a miss and restarts from the current state. If a miss still allows continuing (e.g. there is still an open slot), it keeps going.") }}</p>
         <p class="mt-1">{{ tr("冒涜は骨の後の発現の候補 (アビスの反響の引き直しを含む) に出れば当たり。", "Desecrated mods count as a hit if they appear among the reveal options after an Abyssal Bone (including Omen of Abyssal Echoes rerolls).") }}</p>
         <p class="mt-1">{{ tr("並びは付きやすい順。行の下に 1 回の費用と付くまでの平均 (1 回の費用 ÷ 確率、カレンシーとお告げの相場) を出します。", "Sorted by chance. Each row shows the cost per use and the average cost to hit (cost per use ÷ chance, at currency and omen market prices).") }}</p>
@@ -189,8 +195,11 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
       </HelpTip>
       <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" :title="tr('狙うのをやめる', 'Stop targeting')" @click="s.aims.value = []"><Icon name="x" class="size-4" /></button>
     </header>
-    <p v-if="done" class="text-emerald-300">{{ tr("もう全部付いています", "All targets are already on the item") }}</p>
-    <template v-else>
+    <p v-if="done && !spamKey" class="text-emerald-300">{{ tr("もう全部付いています", "All targets are already on the item") }}</p>
+    <!-- カオススパムモード (2026-10-16): 狙いが揃うまで同じカオスを打ち続ける。100 人の結果と自分の運を比べる -->
+    <StageChaosSpam class="mb-2" />
+    <!-- 確率機から来た時 (spamKey) は次の手の一覧を出さない (2026-10-16 オーナー「狙い一覧が出る」) -->
+    <template v-if="!done && !spamKey && !spamming">
       <p class="mb-0.5 pr-[108px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("付きやすい順", "By chance") }}</p>
       <ol class="flex flex-col gap-1">
         <!-- 「回す」は行のボタンの中に入れられない (ボタンの入れ子) ので、行の右端に重ねる (2026-10-10 動きの揃え 6: span role=button をやめた) -->
