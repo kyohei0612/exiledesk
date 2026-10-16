@@ -4,13 +4,17 @@
 import { ARCHITECT_DESTROY_P, INFUSER_CORRUPT_P } from "../services/craft-stage/apply-extra";
 
 
+/** 結晶化のお告げが効く物 (説明文の「コラプトのエッセンス」が何か分からない、2026-10-16 初心者の目での点検)。合金はオーナーがゲームで確認済み */
+const CRYSTAL_ALSO = "コラプトのエッセンス = **ヒステリー・狂気・戦慄・錯乱のエッセンス**。**合金** (適応の合金など) にも効く";
+const CRYSTAL_ALSO_EN = "Corrupted Essences = **Hysteria, Insanity, Horror and Delirium**. Also works with **Alloys** (Adaptive Alloy and so on)";
+
 /** お告げの動き */
 export const OMEN: Record<string, string[]> = {
   OmenofSinistralExaltation: ["次の高貴なオーブは **プレフィックスだけ** に足す", "プレフィックスが埋まっていると打てない"],
   OmenofDextralExaltation: ["次の高貴なオーブは **サフィックスだけ** に足す", "サフィックスが埋まっていると打てない"],
   OmenofGreaterExaltation: ["次の高貴なオーブは MOD を **2 つ** 足す (空きが 1 つなら 1 つ)", "左右の高貴のお告げと重ねられる"],
   // 大いなる高貴と重ねた時は 2 つとも重く引く (クラフト配信者 (やマン先生) の説明、2026-10-09 オーナーが確認済みの決まり)
-  OmenofCatalysingExaltation: ["次の高貴なオーブは、品質 (カタリスト) の種類に合う MOD を **重く** 引く (品質が高いほど重い。品質 1.5% で約 1.7 倍・40% で約 7.6 倍、指輪 200 個の実測から)", "**大いなる高貴のお告げと重ねると、足す 2 つとも重く引く**", "打つと品質を全部使い切って 0 に戻る", "品質が無いと打てない (指輪・アミュレットだけ)"],
+  OmenofCatalysingExaltation: ["次の高貴なオーブは、品質 (カタリスト) の種類に合う MOD を **重く** 引く。倍率は 1 + 0.2 × 品質 (**20% で 5 倍**)、20% を超えた分は 1% ごとに +0.12 (45% で 8 倍。Craft of Exile の式)", "**大いなる高貴のお告げと重ねると、足す 2 つとも重く引く**", "打つと品質を全部使い切って 0 に戻る", "品質が無いと打てない (指輪・アミュレットだけ)"],
   OmenofSinistralCoronation: ["次の王者のオーブは **プレフィックスだけ** に足す"],
   OmenofDextralCoronation: ["次の王者のオーブは **サフィックスだけ** に足す"],
   OmenofSinistralAlchemy: ["次の錬金術のオーブは **プレフィックスを上限まで** (3 つ) 付け、残りをサフィックスに"],
@@ -22,8 +26,8 @@ export const OMEN: Record<string, string[]> = {
   OmenofDextralAnnulment: ["次の消去のオーブは **サフィックスから** 消す"],
   OmenofGreaterAnnulment: ["次の消去のオーブは MOD を **2 つ** 消す", "左右の消去のお告げと重ねられる"],
   OmenofLight: ["次の消去のオーブは **冒涜の MOD だけ** を消す (未発現でも)", "冒涜の MOD が無いと打てない"],
-  OmenofSinistralCrystallisation: ["次のパーフェクト / コラプトのエッセンスは **プレフィックスから** 消してから付ける", "足す側が埋まっていて、お告げが反対側を指すと打てない"],
-  OmenofDextralCrystallisation: ["次のパーフェクト / コラプトのエッセンスは **サフィックスから** 消してから付ける"],
+  OmenofSinistralCrystallisation: ["次のパーフェクト / コラプトのエッセンスは **プレフィックスから** 消してから付ける", CRYSTAL_ALSO, "足す側が埋まっていて、お告げが反対側を指すと打てない"],
+  OmenofDextralCrystallisation: ["次のパーフェクト / コラプトのエッセンスは **サフィックスから** 消してから付ける", CRYSTAL_ALSO],
   OmenofSinistralNecromancy: ["次の骨 (冒涜) は未発現の MOD を **プレフィックス** に付ける"],
   OmenofDextralNecromancy: ["次の骨 (冒涜) は未発現の MOD を **サフィックス** に付ける"],
   OmenoftheSovereign: ["次の骨の発現の候補を **ウラマンの MOD だけ** にする (MOD ごとに等しく)", "武器・宝飾品・矢筒 (防具・ジュエルには使えない。矢筒は説明文に無いが Craft of Exile でも使える)"],
@@ -39,7 +43,7 @@ export const OMEN_EN: Record<string, string[]> = {
   OmenofSinistralExaltation: ["The next Exalted Orb adds **only a prefix**", "Can't be used when prefixes are full"],
   OmenofDextralExaltation: ["The next Exalted Orb adds **only a suffix**", "Can't be used when suffixes are full"],
   OmenofGreaterExaltation: ["The next Exalted Orb adds **2 mods** (1 if only 1 slot is open)", "Stacks with Sinistral / Dextral Exaltation"],
-  OmenofCatalysingExaltation: ["The next Exalted Orb rolls mods matching the Catalyst quality type **with higher weight** (more quality = heavier; ~1.7x at 1.5%, ~7.6x at 40%, measured from 200 rings)", "**Stacked with Greater Exaltation, both added mods are weighted**", "Consumes all quality (back to 0)", "Needs quality (Rings and Amulets only)"],
+  OmenofCatalysingExaltation: ["The next Exalted Orb rolls mods matching the Catalyst quality type **with higher weight**: 1 + 0.2 × quality (**5x at 20%**), +0.12 per 1% above 20% (8x at 45%; the Craft of Exile formula)", "**Stacked with Greater Exaltation, both added mods are weighted**", "Consumes all quality (back to 0)", "Needs quality (Rings and Amulets only)"],
   OmenofSinistralCoronation: ["The next Regal Orb adds **only a prefix**"],
   OmenofDextralCoronation: ["The next Regal Orb adds **only a suffix**"],
   OmenofSinistralAlchemy: ["The next Orb of Alchemy fills **prefixes to the max** (3), the rest as suffixes"],
@@ -51,8 +55,8 @@ export const OMEN_EN: Record<string, string[]> = {
   OmenofDextralAnnulment: ["The next Orb of Annulment removes **a suffix**"],
   OmenofGreaterAnnulment: ["The next Orb of Annulment removes **2 mods**", "Stacks with Sinistral / Dextral Annulment"],
   OmenofLight: ["The next Orb of Annulment removes **only the Desecrated mod** (even if Unrevealed)", "Can't be used without a Desecrated mod"],
-  OmenofSinistralCrystallisation: ["The next Perfect / Corrupted Essence removes **a prefix** before adding its mod", "Can't be used if the Essence's side is full and the Omen points to the other side"],
-  OmenofDextralCrystallisation: ["The next Perfect / Corrupted Essence removes **a suffix** before adding its mod"],
+  OmenofSinistralCrystallisation: ["The next Perfect / Corrupted Essence removes **a prefix** before adding its mod", CRYSTAL_ALSO_EN, "Can't be used if the Essence's side is full and the Omen points to the other side"],
+  OmenofDextralCrystallisation: ["The next Perfect / Corrupted Essence removes **a suffix** before adding its mod", CRYSTAL_ALSO_EN],
   OmenofSinistralNecromancy: ["The next Abyssal Bone (Desecration) adds the Unrevealed mod as **a prefix**"],
   OmenofDextralNecromancy: ["The next Abyssal Bone (Desecration) adds the Unrevealed mod as **a suffix**"],
   OmenoftheSovereign: ["The next Abyssal Bone's reveal options are **Ulaman mods only** (equal per mod)", "Weapons, jewellery and quivers (not armour or jewels)"],

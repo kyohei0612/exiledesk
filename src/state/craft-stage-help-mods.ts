@@ -62,10 +62,10 @@ export function stageAdds(key: string, data: PatchData | null, item: StageItem |
       const t = m.tiers[0];
       const text = (isEn() ? m.text : fillModText(m, t ? tierDisplayRanges(t) : [])) ?? "";
       const side = e.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix");
-      return [`${es.length > 1 ? `${side}${tr("が消えた時", " removed")}: ` : ""}${text.replace(/\n/g, " / ")}`];
+      return [`${es.length > 1 ? `${side}${tr("の版", " version")}:` : ""}${text.replace(/\n/g, " / ")}`];
     });
     if (!lines.length) return null;
-    return { head: es.length > 1 ? tr("付く MOD (消えた MOD の側の版)", "Adds (version for the removed mod's side)") : tr(`付く MOD (${es[0]!.side === "prefix" ? "プレフィックス" : "サフィックス"})`, `Adds (${es[0]!.side === "prefix" ? "Prefix" : "Suffix"})`), lines };
+    return { head: es.length > 1 ? tr("付く MOD (プレの版かサフィの版がランダム)", "Adds (prefix or suffix version, random)") : tr(`付く MOD (${es[0]!.side === "prefix" ? "プレフィックス" : "サフィックス"})`, `Adds (${es[0]!.side === "prefix" ? "Prefix" : "Suffix"})`), lines };
   }
   if (isRune(key)) {
     const eff = runeEffectFor(runeOf(key)!, item.cls.category);

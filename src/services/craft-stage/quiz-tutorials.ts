@@ -255,12 +255,12 @@ function ring(): QuizTutorial {
             [d(use("annul", "OmenofSinistralAnnulment"), "左の消去はプレを消す", "Sinistral Annulment removes a prefix"), CHAOS_ANY]),
           rule({ A: 3, B: 0, "s.junk": 0 }, use("catalyst_fire"),
             ["火耐性を付きやすくする準備は?", "Prepare to make Fire Resistance more likely?"],
-            ["ゾフのカタリストで火の品質を 20% まで溜める。火のタグの MOD (火耐性) が重く引かれるようになる", "Fill fire quality to 20% with Xoph's Catalysts: fire-tagged mods (Fire Resistance) get weighted up"],
+            ["ゾフのカタリストで火の品質を上限まで溜める (この指輪は暗黙の「品質の最大値 +25%」で 45%)。火のタグの MOD (火耐性) が重く引かれるようになる", "Fill fire quality to the cap with Xoph's Catalysts (45% on this ring thanks to its +25% maximum quality implicit): fire-tagged mods (Fire Resistance) get weighted up"],
             [d(use("catalyst_cold"), "トゥルのカタリストは冷気の MOD を重くする", "Tul's Catalyst boosts cold mods"),
               d(use("exalt", "OmenofDextralExaltation"), "品質が無いと、火耐性も他のサフィと同じ確率", "Without quality, Fire Resistance is as likely as any other suffix")]),
           rule({ A: 3, B: 0, "s.junk": 0, cat: "fire" }, CAT_DEXTRAL,
             ["火の品質を使って、サフィに火耐性を狙うには?", "Use the fire quality to aim Fire Resistance on a suffix?"],
-            ["触媒の高貴のお告げで品質の分だけ火の MOD を重く (20% で 5 倍)、右の高貴のお告げでサフィに。品質は使い切る", "Catalysing Exaltation weights fire mods by the quality (5x at 20%), Dextral Exaltation puts it on a suffix. The quality is used up"],
+            ["触媒の高貴のお告げで品質の分だけ火の MOD を重く (品質 45% で 8 倍)、右の高貴のお告げでサフィに。品質は使い切る", "Catalysing Exaltation weights fire mods by the quality (8x at 45% quality), Dextral Exaltation puts it on a suffix. The quality is used up"],
             [d(use("exalt", "OmenofCatalysingExaltation"), "側のお告げが無いとプレに付くこともある", "Without a side omen it may land on a prefix"),
               d(use("exalt", "OmenofDextralExaltation"), "触媒の高貴のお告げが無いと品質は効かない", "Without Catalysing Exaltation the quality does nothing")]),
           rule({ A: 3, B: 2, C: 0, "s.junk": 0 }, use("catalyst_cold"),
@@ -322,7 +322,7 @@ function amulet(): QuizTutorial {
         ],
         rules: [
           rule({ A: 2, fx: 0, des: 0 }, use("desecrate"),
-            ["3 MOD のうちにフラクチャーの当たりを 3 分の 1 にする小テクは?", "The trick to make the Fracture odds 1 in 3 with 3 mods?"],
+            ["フラクチャーは冒涜の MOD を選ばない。3 MOD のうちにフラクチャーの当たりを 3 分の 1 にする小テクは?", "Fracture never picks a Desecrated mod. The trick to make the Fracture odds 1 in 3 with 3 mods?"],
             ["空いたサフィに冒涜で未発現の MOD を足して 4 MOD にする。未発現は 4 つの数に入るのにフラクチャーでは選ばれない (壁)", "Desecrate the open suffix: the unrevealed mod counts toward the 4 but is never fractured (a wall)"],
             [d(use("exalt"), "普通の MOD を足すと 4 分の 1 になる", "A normal mod makes it 1 in 4"), DIVINE_LOCK]),
           rule({ A: 2, fx: 0, des: 1 }, use("fracture"),
@@ -369,7 +369,7 @@ function amulet(): QuizTutorial {
 
 /**
  * ジュエル: 5 MOD のエメラルド (2026-10-16 オーナー「一応ジュエルね、5 MOD の」)。日本語のジュエル動画 (1svgFNDsOXM、quiz-samples.ts の jewelJp) の流れ:
- * クリ率をフラクチャー → クリダメ → 侮蔑 (サフィの枠 +1) → 右手のネクロマンシーで冒涜 (反響) → 左の消去で侮蔑を外す (サフィ 3 つは残る) →
+ * クリ率をフラクチャー → クリダメ → 軽蔑 (サフィの枠 +1) → 右手のネクロマンシーで冒涜 (反響) → 左の消去で軽蔑を外す (サフィ 3 つは残る) →
  * 高貴でプレ → カオスでアタックダメージ (上限を超えたサフィに当たると弾かれる) → 獰猛
  */
 function jewel(): QuizTutorial {
@@ -378,12 +378,12 @@ function jewel(): QuizTutorial {
   const FEROCITY = "emotion:Potent Liquid Ferocity";
   return {
     id: "jewel", part: ["ジュエル", "Jewel"],
-    learn: ["侮蔑でサフィの枠を増やす・冒涜で 3 つ目・侮蔑を外してもサフィ 3 つは残る (5 MOD)・獰猛", "Contempt for an extra suffix, desecrate the 3rd, remove Contempt and keep 3 suffixes (5 mods), Ferocity"],
+    learn: ["軽蔑でサフィの枠を増やす・冒涜で 3 つ目・軽蔑を外してもサフィ 3 つは残る (5 MOD)・獰猛", "Contempt for an extra suffix, desecrate the 3rd, remove Contempt and keep 3 suffixes (5 mods), Ferocity"],
     source: "日本語のジュエル動画 1svgFNDsOXM (quiz-samples.ts の jewelJp)",
     seed: 5,
     assumed: [
       ["冒涜のサフィは攻撃速度・移動速度など動画で狙っていた物のどれか", "The desecrated suffix is any of the ones the video aims for (Attack Speed, Movement Speed and so on)"],
-      ["液化した感情 (侮蔑・獰猛) のプレの版とサフィの版は、説明文に決め方が無いのでランダム (付けられる側から等しく)", "Which version (prefix or suffix) a Liquid Emotion gives is not in its text, so it is random among the sides with room"],
+      ["液化した感情 (軽蔑・獰猛) のプレの版とサフィの版は、説明文に決め方が無いのでランダム (付けられる側から等しく)", "Which version (prefix or suffix) a Liquid Emotion gives is not in its text, so it is random among the sides with room"],
     ],
     recipe: {
       v: 3, name: "Emerald", base: "Emerald", itemLevel: 82,
@@ -409,7 +409,7 @@ function jewel(): QuizTutorial {
             ["次のジュエルを買う", "Buy the next jewel"],
             [ANNUL_FRACTURED, FRACTURE_TWICE]),
           rule({ A: 3, X: 2, B: [0, 2] }, use("annul"),
-            ["侮蔑で外れの版 (プレフィックス +1 個まで) が付いた。どうする?", "Contempt gave the wrong version (+1 prefix allowed). What now?"],
+            ["軽蔑で外れの版 (プレフィックス +1 個まで) が付いた。どうする?", "Contempt gave the wrong version (+1 prefix allowed). What now?"],
             ["消去で消して、もう一度。どちらの版になるかはランダム", "Annul it and try again; which version you get is random"],
             [CHAOS_ANY, DIVINE_LOCK]),
           rule({ A: 3, B: 0, n: 1 }, use("exalt"),
@@ -425,15 +425,15 @@ function jewel(): QuizTutorial {
             ["消去で減らしてから、カオスで狙う", "Annul it down, then aim with Chaos"],
             [d(use("exalt"), "増やすと余計に外れる", "Adding more only adds junk"), DIVINE_LOCK]),
           rule({ A: 3, B: 2, T: 0, X: 0, "s.free": 0, "p.n": 0 }, use("exalt"),
-            ["侮蔑の前に、消される用のプレを 1 つ用意するには?", "Before Contempt, prepare one prefix to be removed?"],
-            ["侮蔑は MOD を 1 つ消してから「+1 個まで」を作る。プレが無いと必ずクリダメが消されるので、消されてもいいプレを高貴で 1 つ足しておく (サフィは満杯なのでプレに付く)", "Contempt removes a mod before adding its +1 allowed mod. With no prefix it always removes Critical Damage, so exalt one expendable prefix first (suffixes are full, so it lands on a prefix)"],
-            [d(use("chaos"), "カオスは揃ったサフィを消すことがある", "Chaos may remove a finished suffix"), d(use(CONTEMPT), "プレが無いと侮蔑は必ずクリダメを消す", "With no prefix, Contempt always removes Critical Damage")]),
+            ["次は軽蔑 (MOD を 1 つ消して、枠を 1 つ増やす MOD を付ける) を使う。その前に、消される用のプレを 1 つ用意するには?", "Next comes Contempt (removes 1 mod and adds a mod that allows 1 more slot). Before that, prepare one prefix to be removed?"],
+            ["軽蔑は MOD を 1 つ消してから「+1 個まで」を作る。プレが無いと必ずクリダメが消されるので、消されてもいいプレを高貴で 1 つ足しておく (サフィは満杯なのでプレに付く)", "Contempt removes a mod before adding its +1 allowed mod. With no prefix it always removes Critical Damage, so exalt one expendable prefix first (suffixes are full, so it lands on a prefix)"],
+            [d(use("chaos"), "カオスは揃ったサフィを消すことがある", "Chaos may remove a finished suffix"), d(use(CONTEMPT), "プレが無いと軽蔑は必ずクリダメを消す", "With no prefix, Contempt always removes Critical Damage")]),
           rule({ A: 3, B: 2, T: 0, X: 0, "s.free": 0, "p.n": 1 }, use(CONTEMPT),
             ["ジュエルのサフィの枠を 1 つ増やすには?", "Add one more suffix slot to the jewel?"],
-            ["強力な液化した侮蔑。プレ用の「サフィックス +1 個まで」とサフィ用の「プレフィックス +1 個まで」のどちらかがランダムに付く。サフィ +1 なら当たり", "Potent Liquid Contempt adds either +1 suffix allowed (prefix version) or +1 prefix allowed (suffix version) at random; +1 suffix is the hit"],
+            ["強力な液化した軽蔑。プレ用の「サフィックス +1 個まで」とサフィ用の「プレフィックス +1 個まで」のどちらかがランダムに付く。サフィ +1 なら当たり", "Potent Liquid Contempt adds either +1 suffix allowed (prefix version) or +1 prefix allowed (suffix version) at random; +1 suffix is the hit"],
             [d(use(FEROCITY), "獰猛は反対側の MOD の効果を上げる物。枠は増えない", "Ferocity boosts the other side's mods; no extra slot"), d(use("exalt"), "高貴で枠は増えない", "Exalting adds no slot")]),
           rule({ A: 3, B: 2, T: 0, X: 0, "s.free": 0, "p.n": 2 }, use("annul", "OmenofSinistralAnnulment"),
-            ["プレが 2 つある。侮蔑の前に 1 つにするには?", "There are 2 prefixes. Cut to 1 before Contempt?"],
+            ["プレが 2 つある。軽蔑の前に 1 つにするには?", "There are 2 prefixes. Cut to 1 before Contempt?"],
             ["左の消去のお告げでプレだけ消す", "Omen of Sinistral Annulment removes a prefix only"],
             [d(use("annul", "OmenofDextralAnnulment"), "右の消去はクリダメなどのサフィを消す", "Dextral Annulment removes a suffix such as Critical Damage"), CHAOS_ANY]),
           rule({ T: 2, "s.n": 2, "s.hid": 0 }, use("desecrate", "OmenofDextralNecromancy"),
@@ -449,9 +449,9 @@ function jewel(): QuizTutorial {
             ["光のお告げ + 消去で冒涜だけ消して、もう一度骨から", "Omen of Light + Annulment removes only the desecrated mod; then desecrate again"],
             [d(use("annul", "OmenofDextralAnnulment"), "右の消去はクリダメが消えることがある", "Dextral Annulment may remove Critical Damage"), CHAOS_ANY]),
           rule({ T: 2, C: 2, "s.n": 3 }, use("annul", "OmenofSinistralAnnulment"),
-            ["サフィが 3 つ揃った。もう要らない侮蔑はどうする?", "3 suffixes are done. What about the Contempt mod?"],
-            ["左の消去で侮蔑 (プレ) を消す。消してもサフィ 3 つは残る (上限を超えた分は消えない、これで 5 MOD のジュエルになる)", "Remove Contempt (a prefix) with Sinistral Annulment. The 3 suffixes stay even over the limit; this is how the jewel gets 5 mods"],
-            [d(use("annul", "OmenofDextralAnnulment"), "右の消去はサフィを消す。せっかくの 3 つ目が消える", "Dextral Annulment removes a suffix, losing the 3rd one"), d(use(FEROCITY), "獰猛はまだ。侮蔑を外してプレの枠を空けてから", "Not Ferocity yet; free the prefix first")]),
+            ["サフィが 3 つ揃った。もう要らない軽蔑はどうする?", "3 suffixes are done. What about the Contempt mod?"],
+            ["左の消去で軽蔑 (プレ) を消す。消してもサフィ 3 つは残る (上限を超えた分は消えない、これで 5 MOD のジュエルになる)", "Remove Contempt (a prefix) with Sinistral Annulment. The 3 suffixes stay even over the limit; this is how the jewel gets 5 mods"],
+            [d(use("annul", "OmenofDextralAnnulment"), "右の消去はサフィを消す。せっかくの 3 つ目が消える", "Dextral Annulment removes a suffix, losing the 3rd one"), d(use(FEROCITY), "獰猛はまだ。軽蔑を外してプレの枠を空けてから", "Not Ferocity yet; free the prefix first")]),
           rule({ "s.free": -1, "p.n": [0, 1] }, use("exalt"),
             ["プレを埋めるには?", "Fill the prefixes?"],
             ["サフィは上限を超えているので、高貴はプレに付く", "Suffixes are over the limit, so Exalted goes to a prefix"],
@@ -463,7 +463,7 @@ function jewel(): QuizTutorial {
           rule({ "s.free": -1, "p.n": 2, D: 2, E: 0 }, use(FEROCITY),
             ["最後に、サフィの効果をまとめて上げるには?", "Finally, boost the suffixes all at once?"],
             ["強力な液化した獰猛。サフィは上限を超えているので、消えるのはプレで、空いたプレに「サフィの効果が増加する」が付く (アタックダメージが消えたらカオスからやり直し)", "Potent Liquid Ferocity: suffixes are over the limit, so it removes a prefix and adds increased Suffix effect there (if Attack Damage goes, chaos again)"],
-            [d(use(CONTEMPT), "侮蔑は枠を増やす物。もう要らない", "Contempt adds a slot; not needed anymore"), DIVINE_LOCK]),
+            [d(use(CONTEMPT), "軽蔑は枠を増やす物。もう要らない", "Contempt adds a slot; not needed anymore"), DIVINE_LOCK]),
         ],
       }],
     },

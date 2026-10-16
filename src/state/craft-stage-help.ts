@@ -49,7 +49,7 @@ export function stageFloor(key: string): number | null {
   return k ? CURRENCY_FLOOR[k][s] : null;
 }
 const strengthOf = (key: string): string => (key.endsWith("_greater") ? "greater" : key.endsWith("_perfect") ? "perfect" : "base");
-const ADD = "付く MOD は、その側の普通の MOD の置き場から、付いている系統を除き、アイテムレベル以下のティアの重みで引く (計算機と同じ)";
+const ADD = "付く MOD は、その側の普通の MOD の置き場から、付いている系統を除き、アイテムレベル以下のティアの重みで引く";
 const add = (): string => tr(ADD, "New mods are rolled by weight from that side's normal mod pool, excluding groups already on the item and tiers above the Item Level");
 
 export function stageHelp(key: string, data: PatchData | null, item: StageItem | null): string[] {
@@ -63,11 +63,18 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     const two = !!item && jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(key)).length > 1;
     return [
       tr("**レアのジュエル**にだけ使える。固定 (フラクチャー) 以外から**ランダムに 1 つ消して**、決まった作った MOD を付ける", "**Rare jewels** only. **Removes a random mod** (not fractured) and adds a fixed crafted mod"),
-      two ? tr("付くのは**消えた MOD の側の版** (プレが消えればプレの版、サフィが消えればサフィの版)", "Adds the version for **the side of the removed mod** (prefix removed → prefix version)") : "",
+      two ? tr("付くのは**プレの版かサフィの版のどちらか** (消した後に付けられる側から等しく。説明文に決め方が無いのでランダム)", "Adds **either the prefix or the suffix version** (equally among the sides with room after the removal; the text doesn't say, so it's random)") : "",
       tr("**作った MOD が付いている間は使えない** (前の感情の MOD を外してから)。MOD が 4 つ揃っていなくても使える", "**Can't be used while a crafted mod is on the jewel** (remove the previous one first). Works with fewer than 4 mods"),
       tr("上限を超えている側 (軽蔑を外した後の 3 つ目) が消える候補に当たると**弾かれる** (何も変わらない、もう一度)", "If it hits the side that is over its limit (after removing Contempt), it is **rejected** (no change, try again)"),
       tr("古代の版は時を失ったジュエル用", "Ancient versions are for Time-Lost Jewels"),
     ].filter(Boolean);
+  }
+  // 発現 (チュートリアルの選択肢の絵。2026-10-16 初心者の目での点検: 発現にだけカードが無かった)
+  if (key === "reveal") {
+    return [
+      tr("骨 (冒涜) で付いた**未発現の MOD** を見て、候補 **3 つから 1 つ選ぶ** (カレンシーは要らない)", "Look at the **Unrevealed mod** from a Bone (Desecration) and **pick 1 of 3** options (no currency needed)"),
+      tr("候補は勢力のお告げを掛けていればその勢力の MOD だけ。アビスの反響のお告げを掛けると、3 つを 1 回だけ引き直せる", "With a faction Omen the options are that faction's mods only. Omen of Abyssal Echoes lets you reroll the 3 once"),
+    ];
   }
   if (OMEN[key]) return [...((isEn() ? OMEN_EN[key] : null) ?? OMEN[key]!), tr("押すと掛けておく (何枚でも)。次に打つ、関係する手でだけ使われる", "Click to apply (stackable). Only consumed by the next currency it affects")];
   const s = strengthOf(key);
@@ -163,6 +170,8 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     return [
       ...(eff ? [] : item ? [tr("この部位には効き目が無い", "No effect on this item class")] : []),
       ...ruleLines(runeNameOf(key)),
+      // アストリッドの「クラフトモッド」が何か (2026-10-16 初心者の目での点検: エッセンスが 2 つになると分からなかった)
+      ...(/Astrid/.test(runeNameOf(key)) ? [tr("クラフトモッド = **エッセンス・合金・深淵の印**などで付く MOD。普通は 1 つまでで、はめると **2 つ** 持てる", "Crafted mods = mods from **Essences, Alloys, the Abyssal Mark** and so on. Normally 1; with this rune you can have **2**")] : []),
       tr("空きソケットが無い時は、はまっている物と置き換える (ソケットの絵を押すとそのソケット、アイテムを押すと左から最初の置き換えられる物)", "With no empty socket it replaces a socketed one (click a socket to target it, or the item for the first replaceable one from the left)"),
     ];
   }
@@ -172,14 +181,14 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     const max = item ? maxQualityOf(item) : 20;
     if (isEn()) {
       return [
-        `Raises the quality of **Rings and Amulets** **to the cap in one go (${max}% on this item)**. Counted as +1% per Catalyst (same as the calculator; in game 1-2% each, mostly 1%)`,
+        `Raises the quality of **Rings and Amulets** **to the cap in one go (${max}% on this item)**. Counted as +1% per Catalyst (in game 1-2% each, mostly 1%)`,
         "The quality type comes from the Catalyst. **Using a different type restarts quality from 0**",
         "With Omen of Catalysing Exaltation, mods of that type become more likely (quality is consumed). Stacked with Greater Exaltation, both mods are weighted",
       ];
     }
     return [
       // 上限はベースの最大品質 + MOD の「品質の最大値 +N%」(ブリーチのエッセンス) なので「このベースで」ではなく「今のアイテムで」
-      `**指輪・アミュレット** の品質を **1 回で上限 (今のアイテムで ${max}%) まで** 上げる。使う数は 1 個 +1% で数える (計算機と同じ。ゲームは 1 個で 1〜2%、ほとんど 1%)`,
+      `**指輪・アミュレット** の品質を **1 回で上限 (今のアイテムで ${max}%) まで** 上げる。使う数は 1 個 +1% で数える (ゲームは 1 個で 1〜2%、ほとんど 1%)`,
       "品質の種類はカタリストで決まる。**別の種類を使うと品質は 0 からやり直し**",
       "触媒の高貴のお告げと組むと、その種類の MOD が付きやすくなる (品質は使い切る)。大いなる高貴のお告げも重ねると 2 つとも付きやすくなる",
     ];
@@ -211,7 +220,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
         "The removed mod is picked equally from non-Fractured mods. If this mod's side is full, it removes from that side",
         "Only 1 Essence mod per item (2 with Astrid's Creativity). Can't be used if the same group is already present",
         `Required Item Level: ${tier?.ilvl ?? "?"}`,
-        "Omens: Sinistral / Dextral Crystallisation (removed side)",
+        "Omens: Sinistral / Dextral Crystallisation (removed side). Corrupted Essences (Hysteria and so on) and Alloys work the same way",
       ];
     }
     if (isEn()) {
@@ -228,7 +237,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
         "消すのはフラクチャー以外から等しく 1 つ。付ける側が埋まっていれば、その側から消す",
         "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)。同じ系統が付いていると打てない",
         `必要なアイテムレベル: ${tier?.ilvl ?? "?"}`,
-        "お告げ: 左右の結晶化 (消す側)",
+        "お告げ: 左右の結晶化 (消す側)。ヒステリーなどのコラプトのエッセンス・合金も同じ扱い",
       ];
     }
     return [

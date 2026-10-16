@@ -156,6 +156,8 @@ export function priceOfKey(key: string, item: StageItem | null): number {
 export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(runeNameOf(key)) : null) ?? baseArt(enOf(key, item)) ?? row(key, item)?.IconUrl ?? "";
 /** 日本語名 (お告げ・発現も) */
 export function nameOfKey(key: string, item: StageItem | null): string {
+  // 発現は棚に無い手 (チュートリアルの選択肢のカードの見出し。2026-10-16)
+  if (key === "reveal") return tr("発現", "Reveal");
   // 英語の画面ではゲームの英語名 (無い物 = 発現などは日本語のまま。2026-10-10 英語版)
   if (lang.value === "en") { const st = stepEn(key); if (st) return st; const en = enOf(key, item); if (en !== key) return en; }
   if (KEYS.omens[key]) return jaOfOmen(key) ?? key;

@@ -92,7 +92,8 @@ function actionLabel(a: QuizAction): string {
 }
 /** 答えの手で使う物 (カレンシー + お告げ) のキーと絵 */
 function actionKeys(a: QuizAction): Array<{ k: string; icon: string; omen: boolean }> {
-  if ("reveal" in a) return a.reveal.echoes ? [{ k: "OmenofAbyssalEchoes", icon: iconOfKey("OmenofAbyssalEchoes", item.value), omen: true }].filter((x) => !!x.icon) : [];
+  // 発現は棚の絵が無いので、きらめきの印で出してカードは「reveal」の説明 (2026-10-16 初心者の目での点検: 発現にだけカードが無かった)
+  if ("reveal" in a) return [{ k: "reveal", icon: "", omen: false }, ...(a.reveal.echoes ? [{ k: "OmenofAbyssalEchoes", icon: iconOfKey("OmenofAbyssalEchoes", item.value), omen: true }] : [])];
   if (!("use" in a)) return [];
   return [a.use, ...(a.omens ?? [])].map((k) => ({ k, icon: iconOfKey(k, item.value), omen: k.startsWith("Omen") })).filter((x) => !!x.icon);
 }
@@ -115,13 +116,14 @@ onBeforeUnmount(() => hoverStack.leave());
 /** 完成の形の札 */
 const KIND: Record<QuizSlot["kind"], JaEn | null> = { normal: null, desecrated: ["冒涜", "Desecrated"], fractured: ["固定", "Fractured"], essence: ["エッセンス", "Essence"], crafted: ["作った", "Crafted"] };
 const SIDE: Record<QuizSlot["side"], JaEn> = { prefix: ["プレ", "Prefix"], suffix: ["サフィ", "Suffix"] };
-function slotName(sl: QuizSlot): string {
-  if (!sl.mods.length) return tr("何でも良い", "Anything");
-  // 段の数値を入れた文 + 「T○ 以上」(狙う MOD の札と同じ。前は雛形のままで「#から#の物理ダメージ」と出ていた、2026-10-16)
-  // 段を問わない札 (一番下の段から) は「T5 以上」ではなく「段は問わない」(初めての人に分かりにくい、2026-10-16)
-  const m0 = sl.mods[0]!;
-  const n = m0.minTierIndex === 0 ? aimLabel(s.data.value, { ...m0, label: m0.modId }).replace(/ \((T\d+ 以上|T\d+\+)\)$/, "") + tr(" (段は問わない)", " (any tier)") : aimLabel(s.data.value, { ...m0, label: m0.modId });
-  return sl.mods.length > 1 ? `${n} ${tr(`ほか ${sl.mods.length - 1}`, `+${sl.mods.length - 1}`)}` : n;
+function modName(m0: QuizSlot["mods"][number]): string {
+  return m0.minTierIndex === 0 ? aimLabel(s.data.value, { ...m0, label: m0.modId }).replace(/ \((T\d+ 以上|T\d+\+)\)$/, "") + tr(" (段は問わない)", " (any tier)") : aimLabel(s.data.value, { ...m0, label: m0.modId });
+}
+/** 行の見出し: 候補が 1 つならその名前、複数なら「次のどれか」(数は × N) */
+function rowName(g: { sl: QuizSlot; n: number }): string {
+  if (!g.sl.mods.length) return g.n > 1 ? tr(`何でも良い (${g.n} つ)`, `Anything (${g.n})`) : tr("何でも良い", "Anything");
+  if (g.sl.mods.length > 1) return g.n > 1 ? tr(`次のどれか ${g.n} つ`, `Any ${g.n} of these`) : tr("次のどれか 1 つ", "Any 1 of these");
+  return g.n > 1 ? `${modName(g.sl.mods[0]!)} × ${g.n}` : modName(g.sl.mods[0]!);
 }
 /** 札の状態: 0 無い / 1 段が低い / 2 付いている / 3 固定 */
 const slots = computed(() => {
@@ -135,9 +137,26 @@ const slots = computed(() => {
     return { sl, v, ok };
   });
 });
-const progress = computed(() => { const xs = slots.value; return { done: xs.filter((x) => x.ok).length, all: xs.length }; });
+const progress = computed(() => { const xs = slots.value.filter((x) => !x.sl.temp); return { done: xs.filter((x) => x.ok).length, all: xs.length }; });
+/**
+ * 完成の形の行: 同じ中身の札は 1 行にまとめて「次のどれか 3 つ」、途中だけ使う札 (軽蔑など) は別に
+ * (2026-10-16 初心者の目での点検: 手袋はプレの 3 行が同じ文、ジュエルは外す物まで「全部そろえる」に入っていた)
+ */
+const slotRows = computed(() => {
+  const out: Array<{ key: string; sl: QuizSlot; n: number; okN: number; fixed: boolean }> = [];
+  for (const x of slots.value) {
+    const key = `${x.sl.side}|${x.sl.kind}|${x.sl.temp ? 1 : 0}|${x.sl.mods.map((m) => `${m.modId}:${m.minTierIndex}`).sort().join(",")}`;
+    const g = out.find((o) => o.key === key);
+    if (g) { g.n++; if (x.ok) g.okN++; }
+    else out.push({ key, sl: x.sl, n: 1, okN: x.ok ? 1 : 0, fixed: x.sl.kind === "fractured" });
+  }
+  return out.map((g) => ({ ...g, ok: g.okN === g.n }));
+});
+const goalRows = computed(() => slotRows.value.filter((g) => !g.sl.temp));
+const tempRows = computed(() => slotRows.value.filter((g) => g.sl.temp));
 /** 問題の番号 (答えた数 + 1) と、このコースの問題の数 (答えの数) */
 const qNo = computed(() => { void tick.value; return (st.value?.answered.size ?? 0) + 1; });
+/** 問いの数は運で減る (同じ状況に来ない答えもある) ので「多くて」(2026-10-16 点検: 「全 16 問くらい」で 11 問だった) */
 const qAll = computed(() => rules.value.length);
 const LETTER = ["A", "B", "C"];
 
@@ -207,11 +226,26 @@ const stopText = computed(() => {
           <StageItemCard class="max-md:mx-auto" :item="item" :added="lastEntry?.added ?? []" :removed="lastEntry?.removed ?? []" :holding="false" :flash-key="tick" :width="300" compact />
           <div class="flex flex-col gap-1.5">
             <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ tr("完成の形 (これを全部そろえる)", "Goal (get all of these)") }}</p>
-            <div v-for="x in slots" :key="x.sl.id" class="flex min-w-0 items-center gap-2 rounded-lg border px-2 py-1.5 text-[12px] transition-colors" :class="x.ok ? (x.sl.kind === 'fractured' ? 'border-sky-400/40 bg-sky-500/10' : 'border-emerald-400/40 bg-emerald-500/10') : 'border-amber-400/25 bg-amber-500/[0.05]'">
-              <span class="grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold" :class="x.ok ? (x.sl.kind === 'fractured' ? 'bg-sky-400 text-black' : 'bg-emerald-400 text-black') : 'border border-amber-300/60 text-amber-200'">{{ x.ok ? (x.sl.kind === "fractured" ? "🔒" : "✓") : "" }}</span>
-              <span class="shrink-0 rounded px-1 text-[10px] text-[var(--exile-color-text-tertiary)] ring-1 ring-white/15">{{ t2(SIDE[x.sl.side]) }}</span>
-              <span class="min-w-0 flex-1 truncate" :class="x.ok ? 'text-[var(--exile-color-text-primary)]' : 'text-[var(--exile-color-text-secondary)]'" :title="slotName(x.sl)">{{ slotName(x.sl) }}</span>
-              <span v-if="KIND[x.sl.kind]" class="shrink-0 rounded px-1 text-[10px]" :class="x.sl.kind === 'desecrated' ? 'bg-rose-500/20 text-rose-200' : x.sl.kind === 'fractured' ? 'bg-sky-500/20 text-sky-200' : 'bg-violet-500/20 text-violet-200'">{{ t2(KIND[x.sl.kind]!) }}</span>
+            <div v-for="g in goalRows" :key="g.key" class="flex min-w-0 flex-col gap-0.5 rounded-lg border px-2 py-1.5 text-[12px] transition-colors" :class="g.ok ? (g.fixed ? 'border-sky-400/40 bg-sky-500/10' : 'border-emerald-400/40 bg-emerald-500/10') : 'border-amber-400/25 bg-amber-500/[0.05]'">
+              <div class="flex min-w-0 items-center gap-2">
+                <span class="grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold" :class="g.ok ? (g.fixed ? 'bg-sky-400 text-black' : 'bg-emerald-400 text-black') : 'border border-amber-300/60 text-amber-200'">{{ g.ok ? (g.fixed ? "🔒" : "✓") : g.n > 1 && g.okN ? g.okN : "" }}</span>
+                <span class="shrink-0 rounded px-1 text-[10px] text-[var(--exile-color-text-tertiary)] ring-1 ring-white/15">{{ t2(SIDE[g.sl.side]) }}</span>
+                <span class="min-w-0 flex-1 truncate" :class="g.ok ? 'text-[var(--exile-color-text-primary)]' : 'text-[var(--exile-color-text-secondary)]'" :title="rowName(g)">{{ rowName(g) }}</span>
+                <span v-if="KIND[g.sl.kind]" class="shrink-0 rounded px-1 text-[10px]" :class="g.sl.kind === 'desecrated' ? 'bg-rose-500/20 text-rose-200' : g.sl.kind === 'fractured' ? 'bg-sky-500/20 text-sky-200' : 'bg-violet-500/20 text-violet-200'">{{ t2(KIND[g.sl.kind]!) }}</span>
+              </div>
+              <!-- 候補が複数の札は名前を並べる (前は「ほか 3」で中身が見えなかった) -->
+              <ul v-if="g.sl.mods.length > 1" class="ml-7 flex min-w-0 flex-col text-[11px] text-[var(--exile-color-text-secondary)]">
+                <li v-for="m in g.sl.mods" :key="m.modId" class="truncate" :title="modName(m)">・{{ modName(m) }}</li>
+              </ul>
+            </div>
+          </div>
+          <!-- 途中だけ使う札 (ジュエルの軽蔑など)。完成には要らない -->
+          <div v-if="tempRows.length" class="flex flex-col gap-1.5">
+            <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ tr("途中で使う (完成の時は無くて良い)", "Used along the way (not needed at the end)") }}</p>
+            <div v-for="g in tempRows" :key="g.key" class="flex min-w-0 items-center gap-2 rounded-lg border border-dashed border-white/15 px-2 py-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">
+              <span class="shrink-0 rounded px-1 text-[10px] text-[var(--exile-color-text-tertiary)] ring-1 ring-white/15">{{ t2(SIDE[g.sl.side]) }}</span>
+              <span class="min-w-0 flex-1 truncate" :title="rowName(g)">{{ rowName(g) }}</span>
+              <span v-if="KIND[g.sl.kind]" class="shrink-0 rounded bg-violet-500/20 px-1 text-[10px] text-violet-200">{{ t2(KIND[g.sl.kind]!) }}</span>
             </div>
           </div>
         </div>
@@ -229,7 +263,7 @@ const stopText = computed(() => {
           <div v-if="q" class="rounded-xl border-2 border-amber-300/50 bg-gradient-to-b from-amber-500/[0.10] to-transparent px-4 py-3">
             <p class="flex items-center gap-2">
               <span class="rounded-md bg-amber-400 px-2 py-0.5 text-[13px] font-black text-black">Q{{ qNo }}</span>
-              <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`全 ${qAll} 問くらい · ここまで ${st.steps} 手`, `about ${qAll} questions · ${st.steps} steps so far`) }}</span>
+              <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`多くて ${qAll} 問 · ここまで ${st.steps} 手`, `up to ${qAll} questions · ${st.steps} steps so far`) }}</span>
             </p>
             <h4 class="mt-2 text-[18px] font-bold leading-snug text-amber-50 max-md:text-[16px]">{{ t2(rules[q.rule]!.ask) }}</h4>
             <p class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("「今のアイテム」と「完成の形」を見て、3 つから選んでください。絵に乗せる (スマホは押す) と説明が出ます。", "Check “Your item” and the “Goal”, then pick 1 of 3. Hover (or tap) an icon for its details.") }}</p>
@@ -238,9 +272,10 @@ const stopText = computed(() => {
                 <button type="button" class="g-plain flex min-h-12 w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border-2 px-3 py-2 text-left transition" :class="wrong.includes(i) ? 'border-rose-500/60 bg-rose-500/10 text-[var(--exile-color-text-tertiary)]' : 'border-white/15 bg-black/20 hover:border-amber-300 hover:bg-amber-500/10'" :disabled="wrong.includes(i)" @click="choose(i)">
                   <span class="grid size-7 shrink-0 place-items-center rounded-md text-[13px] font-black" :class="wrong.includes(i) ? 'bg-rose-500 text-white' : 'bg-white/10 text-amber-100'">{{ wrong.includes(i) ? "✕" : LETTER[i] }}</span>
                   <span class="flex shrink-0 items-center gap-0.5">
-                    <span v-for="x in actionKeys(c.do)" :key="x.k" class="g-slot grid size-9 place-items-center" :data-key="x.k" @mouseenter="iconEnter($event, x)" @mouseleave="hoverStack.leave()" @click="iconTap($event, x)"><img :src="x.icon" alt="" class="size-7 object-contain" draggable="false" /></span>
+                    <span v-for="x in actionKeys(c.do)" :key="x.k" class="g-slot grid size-9 place-items-center" :data-key="x.k" @mouseenter="iconEnter($event, x)" @mouseleave="hoverStack.leave()" @click="iconTap($event, x)"><img v-if="x.icon" :src="x.icon" alt="" class="size-7 object-contain" draggable="false" /><Icon v-else name="sparkles" class="size-6 text-violet-200" /></span>
                   </span>
-                  <span class="min-w-[10rem] flex-1 text-[13px]" :class="wrong.includes(i) ? 'line-through' : 'text-[var(--exile-color-text-primary)]'">{{ actionLabel(c.do) }}</span>
+                  <!-- 名前に乗せても 1 つ目の物のカード (PC だけ。2026-10-16 点検: 小さな絵に乗せないと出なかった) -->
+                  <span class="min-w-[10rem] flex-1 text-[13px]" :class="wrong.includes(i) ? 'line-through' : 'text-[var(--exile-color-text-primary)]'" @mouseenter="actionKeys(c.do)[0] && iconEnter($event, actionKeys(c.do)[0]!)" @mouseleave="hoverStack.leave()">{{ actionLabel(c.do) }}</span>
                 </button>
                 <p v-if="wrong.includes(i) && c.why" class="-mt-1 flex items-start gap-1.5 rounded-md bg-rose-500/[0.08] px-3 py-1.5 text-[12px] text-rose-100"><span class="font-bold text-rose-300">{{ tr("違う理由", "Why not") }}:</span>{{ t2(c.why) }}</p>
               </template>
