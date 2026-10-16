@@ -17,3 +17,9 @@ export const spamKey = ref<string | null>(null);
 export const spamPending = ref(false);
 /** 計算機の狙う MOD (「次の手で狙う」とは別) */
 export const spamAims = ref<Array<{ modId: string; minTierIndex: number; label: string }>>([]);
+/** 計算機を外から閉じる (棚の覆いの「計算機を閉じる」)。印と狙いを外すと StageChaosSpam が結果・戻す所を片付ける */
+export function closeChaosSpam(): void {
+  if (spamming.value) return;
+  spamKey.value = null;
+  spamAims.value = [];
+}

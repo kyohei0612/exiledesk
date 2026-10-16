@@ -299,7 +299,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
         <span v-for="a in spamAims" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ aimLabel(s.data.value, a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :disabled="spamming" :title="tr('この MOD を外す', 'Remove this mod')" @click="spamAims = spamAims.filter((x) => x.modId !== a.modId)">×</button></span>
         <button type="button" class="g-plain inline-flex min-h-7 items-center gap-1 rounded border border-dashed border-white/25 px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5" :disabled="spamming" @click="s.aimPicker.value = { seed: null, spam: true }">+ {{ spamAims.length ? tr("足す・変える", "Add / change") : tr("狙う MOD を選ぶ", "Choose mods") }}</button>
       </span>
-      <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" :disabled="spamming" :title="tr('計算機を閉じる', 'Close the calculator')" @click="closeSpam">×</button>
+      <button type="button" data-chaos-spam-close class="g-btn sm ml-auto shrink-0" :disabled="spamming" :title="tr('計算機を閉じる', 'Close the calculator')" @click="closeSpam">{{ tr("閉じる", "Close") }}</button>
     </header>
     <p v-if="!spamAims.length" class="py-2 text-[var(--exile-color-text-secondary)]">{{ tr("狙う MOD を選ぶと、100 人がスパムした時の回数が出ます", "Choose target mods to see how many uses 100 people needed") }}</p>
     <div v-else>

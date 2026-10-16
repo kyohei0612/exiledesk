@@ -28,7 +28,7 @@ import StageQualityBar from "./StageQualityBar.vue";
 import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
 import { SPAM_KEYS } from "../../services/craft-stage/chaos-spam";
-import { spamAims, spamKey, spamPending } from "../../state/chaos-spam";
+import { closeChaosSpam, spamAims, spamKey, spamPending, spamming } from "../../state/chaos-spam";
 import StageChaosSpam from "./StageChaosSpam.vue";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
@@ -96,9 +96,7 @@ function onKey(e: KeyboardEvent): void {
 }
 onMounted(() => { window.addEventListener("mousemove", onMove); window.addEventListener("keydown", onKey); });
 onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.removeEventListener("keydown", onKey); s.hold(null); });
-function hold(k: string): void {
-  s.hold(s.held.value === k ? null : k);
-}
+function hold(k: string): void { if (!spamOpen.value) s.hold(s.held.value === k ? null : k); }
 /**
  * 持っているカレンシーに掛けられるお告げ (オーナー 2026-10-04「オーブ使う時、下に使えるお告げを出して、持ったまま使えるように」)。
  * 押すと持ったまま掛ける / 外す (お告げのタブに切り替えなくてよい)
@@ -175,6 +173,9 @@ function openChaosSpam(): void {
   // 狙いがあれば欄を真ん中へ (StageChaosSpam の arrive が spamPending を見て送る)
   if (!spamAims.value.length) s.aimPicker.value = { seed: null, spam: true };
 }
+// カオススパム計算機を開いている間は棚を触らせない (2026-10-16 オーナー「計算機触ってる時カレンシー触らせないように、閉じるボタンしっかり」)
+const spamOpen = computed(() => !s.replay.value && (!!spamKey.value || spamming.value));
+watch([spamOpen, () => s.held.value], ([o, k]) => { if (o && k) s.hold(null); }); // 開いている間に持った物は離す (どの経路でも。2026-10-16 ランダム操作で見つけた)
 // 選ぶ窓を狙い無しで閉じた時は、送る予約を消す
 watch(() => s.aimPicker.value, (v, old) => { if (!v && old?.spam && !spamAims.value.length) { spamPending.value = false; spamKey.value = null; } });
 // 狙いが空になったら計算機の印も外す (狙いの欄の × で閉じた後、普段の「狙う」が計算機の形で開いていた。2026-10-16)
@@ -425,17 +426,20 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
         <StageAimPanel v-if="!s.replay.value" data-rec-part="aim-panel" />
-        <!-- カオススパム計算機 (「次の手で狙う」とは別の欄・別の狙い。2026-10-16 オーナー「別ルートとして扱って」) -->
-        <StageChaosSpam v-if="!s.replay.value" />
+        <StageChaosSpam v-if="!s.replay.value" /><!-- 「次の手で狙う」とは別の欄・別の狙い (2026-10-16 オーナー「別ルートとして扱って」) -->
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
-        <section class="g-panel p-2">
+        <section class="g-panel relative p-2">
+          <div v-if="spamOpen" data-spam-shelf-lock class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-lg bg-black/75 p-4 text-center">
+            <p class="text-[13px] text-[var(--exile-color-text-primary)]">{{ tr("カオススパム計算機を使っている間は、カレンシーは使えません", "Currency is locked while the Chaos spam calculator is open") }}</p>
+            <button type="button" class="g-btn" :disabled="spamming" @click="closeChaosSpam">{{ tr("計算機を閉じる", "Close the calculator") }}</button>
+          </div>
           <p class="g-sec-head">
             <b class="g-sec-title">{{ tr("カレンシー", "Currency") }}</b>
             <span v-if="s.held.value" class="whitespace-nowrap rounded-full bg-amber-500/20 px-2 text-amber-200">{{ tr("持っている", "Holding") }}: {{ nameOf(s.held.value) }}</span>
             <span v-else class="g-sec-sub whitespace-nowrap">{{ tr("押して持つ → アイテムを押す", "Click to hold → click the item") }}</span>
             <span v-for="o in s.omens.value" :key="o" class="cursor-pointer whitespace-nowrap rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" :title="tr('押すと外す', 'Click to remove')" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
           </p>
-          <CurrencyShelf @hold="hold">
+          <CurrencyShelf :inert="spamOpen" @hold="hold">
             <!-- 棚の中の「神〜ヴァールオーブ」の段の下に出る (置き場は CurrencyShelf が決める。上に出すと持っているカレンシーがずれる、オーナー 2026-10-04) -->
             <template v-if="heldOmens.length" #held>
               <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>

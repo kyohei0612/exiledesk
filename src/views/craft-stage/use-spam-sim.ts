@@ -16,6 +16,9 @@ import type { AimTarget } from "../../services/craft-stage/aim-odds";
 import type { StageItem } from "../../services/craft-stage/types";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
+/** この人数が全員付かなければ、その種類は打ち切る */
+const GIVE_UP_AFTER = 10;
+
 export function useSpamSim(o: { price: (key: string) => number }) {
   /** カオスの種類 → 100 人の結果 */
   const all = ref<Record<string, SpamStats>>({});
@@ -54,6 +57,9 @@ export function useSpamSim(o: { price: (key: string) => number }) {
         if (n == null) failed++; else tries.push(n);
         i++;
         done.value++;
+        // 最初の 10 人が全員付かなければ、残りも「付かない」として打ち切る (1 人ずつ上限まで打つと何分もかかる。2026-10-16 10 人のランダム操作で、
+        // 付きにくい狙いを 4 つ選ぶと 3 種類で数分止まっていた)
+        if (i === GIVE_UP_AFTER && !tries.length) { failed += SPAM_PEOPLE - i; done.value += SPAM_PEOPLE - i; i = SPAM_PEOPLE; }
         if (i >= SPAM_PEOPLE) {
           tries.sort((a, b) => a - b);
           all.value = { ...all.value, [keys[ki]!]: { tries, failed, people: SPAM_PEOPLE } };
