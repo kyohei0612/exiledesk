@@ -162,7 +162,7 @@ watch(() => s.log.value, () => { shareOpen.value = null; });
  */
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
-/** カオス (普通・上級・完全) を持っているか (アイテムの下の「カオススパム確率機へ」) */
+/** カオス (普通・上級・完全) を持っているか (アイテムの下の「カオススパム計算機へ」) */
 const heldChaos = computed(() => !s.replay.value && !!s.held.value && (SPAM_KEYS as readonly string[]).includes(s.held.value));
 /** 狙いがまだ無ければ MOD を選ぶ窓から。あればカオススパムの欄へ */
 function openChaosSpam(): void {
@@ -170,14 +170,14 @@ function openChaosSpam(): void {
   spamPending.value = true;
   // 手に持っている物は離す (スマホの「使う」の帯と、カオススパムの帯がぶつからないように。2026-10-16 オーナー)
   s.hold(null);
-  // 「次の手で狙う」は閉じる (確率機と狙うは別ルート、同時には出さない。2026-10-16 オーナー「狙いボタンを押さない限り出なければおけ、逆もまた然り」)
+  // 「次の手で狙う」は閉じる (計算機と狙うは別ルート、同時には出さない。2026-10-16 オーナー「狙いボタンを押さない限り出なければおけ、逆もまた然り」)
   s.aims.value = [];
   // 狙いがあれば欄を真ん中へ (StageChaosSpam の arrive が spamPending を見て送る)
   if (!spamAims.value.length) s.aimPicker.value = { seed: null, spam: true };
 }
 // 選ぶ窓を狙い無しで閉じた時は、送る予約を消す
 watch(() => s.aimPicker.value, (v, old) => { if (!v && old?.spam && !spamAims.value.length) { spamPending.value = false; spamKey.value = null; } });
-// 狙いが空になったら確率機の印も外す (狙いの欄の × で閉じた後、普段の「狙う」が確率機の形で開いていた。2026-10-16)
+// 狙いが空になったら計算機の印も外す (狙いの欄の × で閉じた後、普段の「狙う」が計算機の形で開いていた。2026-10-16)
 watch(() => spamAims.value.length, (n) => { if (!n && !s.aimPicker.value) spamKey.value = null; });
 /**
  * スマホ (幅 768 CSS px 未満): 棚からアイテムまで縦に遠いので、何か持っている間は画面の下に「持っている物 → アイテムに使う」の帯を出す
@@ -384,8 +384,8 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         />
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>
-        <!-- カオス (普通・上級・完全) を持っている時: カオススパム確率機へ (2026-10-16 オーナー「カオス持った時にアイテムの下にボタン、押したら MOD 選択から」) -->
-        <button v-if="heldChaos && !phone" type="button" data-chaos-spam-open class="g-btn sm" @click="openChaosSpam">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
+        <!-- カオス (普通・上級・完全) を持っている時: カオススパム計算機へ (2026-10-16 オーナー「カオス持った時にアイテムの下にボタン、押したら MOD 選択から」) -->
+        <button v-if="heldChaos && !phone" type="button" data-chaos-spam-open class="g-btn sm" @click="openChaosSpam">{{ tr("カオススパム計算機へ", "Chaos spam calculator") }}</button>
         <RevealPanel />
         <!-- ヒネコラの髪束の予見: 持っているカレンシーを打った時の結果 (次の手の seed で引くので、打つとこの通りになる) -->
         <div v-if="s.foresight.value" class="w-[380px] max-md:w-full rounded-xl border border-violet-400/50 bg-violet-500/10 p-3 text-[12px]">
@@ -425,7 +425,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
         <StageAimPanel v-if="!s.replay.value" data-rec-part="aim-panel" />
-        <!-- カオススパム確率機 (「次の手で狙う」とは別の欄・別の狙い。2026-10-16 オーナー「別ルートとして扱って」) -->
+        <!-- カオススパム計算機 (「次の手で狙う」とは別の欄・別の狙い。2026-10-16 オーナー「別ルートとして扱って」) -->
         <StageChaosSpam v-if="!s.replay.value" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
         <section class="g-panel p-2">

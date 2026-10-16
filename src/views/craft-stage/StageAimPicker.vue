@@ -21,7 +21,7 @@ import { tr } from "../../i18n/lang";
 
 const seed = s.aimPicker.value?.seed ?? null;
 /** 選んでいる物 (決めるまで手元だけ) */
-/** カオススパム確率機の狙いを選ぶ時 (「次の手で狙う」とは別の狙い) */
+/** カオススパム計算機の狙いを選ぶ時 (「次の手で狙う」とは別の狙い) */
 const forSpam = !!s.aimPicker.value?.spam;
 const draft = ref<AimPick[]>([...(forSpam ? spamAims.value : s.aims.value)]);
 if (seed && !draft.value.some((a) => a.modId === seed.modId)) draft.value = [...draft.value, seed].slice(-AIM_MAX);
@@ -59,10 +59,13 @@ function whyNot(r: ListRow): string | null {
   return null;
 }
 /** チェック: どの段でも (付けば当たり) = このアイテムレベルで付く一番下の段以上 */
-function toggle(r: ListRow): void {
+function toggle(r: ListRow, e?: Event): void {
   const cur = pickedOf(r);
   if (cur) { draft.value = draft.value.filter((a) => a !== cur); return; }
   if (whyNot(r)) return;
+  // 同じ系統をまとめた行 (スペル / ミニオン / 近接 / 投射物のスキルのレベルなど) は、どれを狙うか段の表で選んでもらう
+  // (2026-10-16 アミュレットのスペルスキル +3 の確かめ: 前は並びの最後の投射物 +1 が狙いになっていた)
+  if (new Set(r.tiers.map((t) => t.modId ?? r.id)).size > 1) { expanded.value = r.id; if (e?.target instanceof HTMLInputElement) e.target.checked = false; return; }
   const t = [...r.tiers].reverse().find((x) => x.ilvl <= s.itemLevel.value) ?? r.tiers[r.tiers.length - 1];
   const p = t ? pickOf(r, t) : null;
   if (p) draft.value = [...draft.value, p];
@@ -88,14 +91,14 @@ function decide(): void {
   if (forSpam) spamAims.value = draft.value;
   else {
     s.aims.value = draft.value;
-    // 「次の手で狙う」を開いたら確率機は閉じる (同時には出さない。2026-10-16 オーナー)
+    // 「次の手で狙う」を開いたら計算機は閉じる (同時には出さない。2026-10-16 オーナー)
     spamKey.value = null;
   }
   close();
   // 決めたら後ろの MOD 一覧の窓も閉じて、確率の一覧を見せる (やめる時は残す。POE2Tube 要望 ㊴)
   s.modOverlay.value = false;
   // 確率の一覧の見出し (と狙いの札) が見える所へ
-  // カオススパムの確率機から来た時は送らない (StageChaosSpam の arrive が欄を画面の真ん中へ送る)
+  // カオススパムの計算機から来た時は送らない (StageChaosSpam の arrive が欄を画面の真ん中へ送る)
   if (!forSpam) void nextTick(() => scrollToTop(document.querySelector("[data-aim-panel]")));
 }
 </script>
@@ -121,7 +124,7 @@ function decide(): void {
         <p v-if="!col.items.length" class="text-[11px] opacity-50">{{ tr("無し", "None") }}</p>
         <div v-for="r in col.items" :key="r.id" class="mb-1">
           <div class="flex items-center gap-2 rounded px-2 py-1 max-md:py-1.5" :class="pickedOf(r) ? 'bg-[rgba(163,52,42,0.30)] ring-1 ring-[var(--exile-color-border-brass)]' : whyNot(r) ? 'opacity-40' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
-            <input type="checkbox" :checked="!!pickedOf(r)" :disabled="!pickedOf(r) && !!whyNot(r)" class="size-5 shrink-0 accent-amber-500" :aria-label="r.text" @change="toggle(r)" />
+            <input type="checkbox" :checked="!!pickedOf(r)" :disabled="!pickedOf(r) && !!whyNot(r)" class="size-5 shrink-0 accent-amber-500" :aria-label="r.text" @change="toggle(r, $event)" />
             <button type="button" class="g-plain flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 text-left" @click="expanded = expanded === r.id ? null : r.id">
               <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
               <span v-if="pickedOf(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ tr(`${rankOf(pickedOf(r)!)} 以上`, `${rankOf(pickedOf(r)!)}+`) }}</span>

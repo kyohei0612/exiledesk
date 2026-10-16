@@ -61,9 +61,9 @@ watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
 
 <template>
   <div data-bottom-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
-    <!-- カオスを持っている時: 確率機へのボタンは帯の上 (スマホはアイテムの下ではなくここ。2026-10-16 オーナー) -->
+    <!-- カオスを持っている時: 計算機へのボタンは帯の上 (スマホはアイテムの下ではなくここ。2026-10-16 オーナー) -->
     <div v-if="heldChaos && !s.offers.value" class="mb-1.5 flex justify-end">
-      <button type="button" data-chaos-spam-open class="g-btn sm min-h-10" @click="emit('openChaosSpam')">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
+      <button type="button" data-chaos-spam-open class="g-btn sm min-h-10" @click="emit('openChaosSpam')">{{ tr("カオススパム計算機へ", "Chaos spam calculator") }}</button>
     </div>
     <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
     <div v-if="s.offers.value" class="flex items-center gap-2">

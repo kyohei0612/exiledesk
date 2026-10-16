@@ -43,14 +43,14 @@ const ILVLS = [45, 65, 75, 82, 86];
 const floor = computed(() => Math.max(1, ...targets.value.map((t) => s.data.value?.mods.get(t.modId)?.tiers[t.minTierIndex]?.ilvl ?? 1)));
 const ilvl = ref(82);
 // 既定は今のアイテムのアイテムレベル (エミュレーターで選んでいる物)。それが下限より低い時だけ、下限以上で一番近い段に上げる
-// (2026-10-16 オーナー「導線的におかしくないように」: エミュレーターが 65 なのに確率機が 45 で開き、回すと 45 に下がっていた)
+// (2026-10-16 オーナー「導線的におかしくないように」: エミュレーターが 65 なのに計算機が 45 で開き、回すと 45 に下がっていた)
 watch([floor, () => s.item.value?.itemLevel ?? s.itemLevel.value], ([f, now]) => {
   if (spamming.value) return;
   ilvl.value = ILVLS.includes(now) && now >= f ? now : ILVLS.find((x) => x >= Math.max(f, now)) ?? ILVLS[ILVLS.length - 1]!;
 }, { immediate: true });
 /** そのアイテムレベルにした今のアイテム (計算と自分のスパムの始まり) */
 const atIlvl = (it: StageItem | null): StageItem | null => (it && it.itemLevel !== ilvl.value ? { ...it, itemLevel: ilvl.value } : it);
-/** アイテムの下の「カオススパム確率機へ」で持っていたカオスの種類で開く */
+/** アイテムの下の「カオススパム計算機へ」で持っていたカオスの種類で開く */
 watch(spamKey, (k) => { if (k && SPAM_KEYS.includes(k as (typeof SPAM_KEYS)[number])) key.value = k; }, { immediate: true });
 /** そのボタンから来た時: 狙いが決まったら、この欄を画面の真ん中へ */
 const root = ref<HTMLElement | null>(null);
@@ -101,7 +101,7 @@ watch([key, ilvl, targets, () => s.item.value], () => {
   // スパムの後にアイテムが変わっていなければ結果をそのまま (付いた直後・途中で離した時。続けて押すと回数を足すので、比べるのはスパムを始めた時の 100 人のまま)
   if (result.value?.sig === sig() && s.item.value === resultItem) return;
   // 別の手を打った・1 手戻した・白に戻した・ベースを変えた時は、前のスパムの結果は消す
-  // (2026-10-16 オーナー「確率機の後、別のベースに変えたら確率機の前の結果のまま表示される」)
+  // (2026-10-16 オーナー「計算機の後、別のベースに変えたら計算機の前の結果のまま表示される」)
   result.value = null;
   snap = null;
   // カオスの種類を替えただけなら計算は済んでいる (全部の種類を計算するので)
@@ -110,7 +110,7 @@ watch([key, ilvl, targets, () => s.item.value], () => {
   simulate();
 }, { immediate: true });
 /**
- * 確率機を閉じる (× ・ベースを変えた時)。狙いも外す: 残すと普段の「次の手で狙う」の一覧が出てしまう
+ * 計算機を閉じる (× ・ベースを変えた時)。狙いも外す: 残すと普段の「次の手で狙う」の一覧が出てしまう
  * (2026-10-16 オーナー「また次の手で狙うが表示されてる」)
  */
 function closeSpam(): void {
@@ -120,13 +120,13 @@ function closeSpam(): void {
   spamKey.value = null;
   spamAims.value = [];
 }
-/** ベースを変えたら確率機を閉じる (狙いはそのベースの MOD) */
+/** ベースを変えたら計算機を閉じる (狙いはそのベースの MOD) */
 watch(() => s.base.value, () => {
   if (spamKey.value || result.value || spamAims.value.length) closeSpam();
   // 「次の手で狙う」もベースを変えたら閉じる (前のベースの狙いや結果は残さない。2026-10-16 オーナー「一度閉じたら前回の結果も出なくていい」)
   s.aims.value = [];
 });
-/** 確率機の印が外れたら (狙うを開いた・閉じた) 前のスパムの結果と狙いも消す。次に開く時はまっさらから */
+/** 計算機の印が外れたら (狙うを開いた・閉じた) 前のスパムの結果と狙いも消す。次に開く時はまっさらから */
 watch(spamKey, (k) => { if (!k && !spamming.value) { result.value = null; snap = null; spamAims.value = []; } });
 onBeforeUnmount(() => { sim.stop(); stopSpam(); });
 
@@ -213,7 +213,7 @@ function finish(hit: boolean, reason: string | null): void {
     simulate(startItem, false);
     const stop = watch(stats, (v) => { if (v && result.value?.hit) { result.value = { ...result.value, rank: rankOf(v, result.value.uses) }; stop(); } });
   }
-  // 使われ方は「確率機を何回回したか」だけ (中で打ったカオスは手数に数えない、2026-10-16 オーナー)
+  // 使われ方は「計算機を何回回したか」だけ (中で打ったカオスは手数に数えない、2026-10-16 オーナー)
   track("spam:run", hit ? "hit" : "stop");
   if (hit || !reason) logRecord("emu_spam", { base: s.item.value?.base, key: key.value, aims: targets.value.map((t) => `${t.modId}#${t.minTierIndex}`), uses: l.uses, hit });
 }
@@ -226,8 +226,8 @@ function undoSpam(): void {
   result.value = null;
 }
 /**
- * ここから開始 (2026-10-16 オーナー「確率機の後、ここから開始ボタンでその状態からエミュレーター開始。工程や費用は引き継ぎで、スパムの前の分も」)。
- * スパムはステージで 1 回ずつ打っているので、工程・費用 (スパムの前の手も) はもう入っている。確率機を閉じて、狙いも外して普段の画面へ
+ * ここから開始 (2026-10-16 オーナー「計算機の後、ここから開始ボタンでその状態からエミュレーター開始。工程や費用は引き継ぎで、スパムの前の分も」)。
+ * スパムはステージで 1 回ずつ打っているので、工程・費用 (スパムの前の手も) はもう入っている。計算機を閉じて、狙いも外して普段の画面へ
  */
 function startHere(): void {
   snap = null;
@@ -239,7 +239,7 @@ function startHere(): void {
 }
 /**
  * スマホ: 押している間スパムのボタンは、いつもの「使う」と同じ画面の下の帯に出す (2026-10-16 オーナー「いつものつける時の動作で、
- * つけるボタン押しっぱなしで反応」)。確率機から来た時 (spamKey) か、回している・結果がある時だけ。何か持っている時は「使う」の帯を優先
+ * つけるボタン押しっぱなしで反応」)。計算機から来た時 (spamKey) か、回している・結果がある時だけ。何か持っている時は「使う」の帯を優先
  */
 const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
 const onResize = (): void => { phone.value = window.innerWidth < 768; };
@@ -253,7 +253,7 @@ const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離す�
 const { xUrl, shareX } = useSpamShare({ result, stats, statsFresh, key, cost });
 /**
  * かなりの強運 (100 人中 上位 10% 以内) で付いた時は、珍しい段と同じ音 (フィルターの通知音 6) と光 (2026-10-16 オーナー
- * 「確率機で運がめっちゃいい人にはちゃんと音出してあげてね、あの例の神演出で」)。運は 100 人の計算が済んでから出るので、出た時に 1 回だけ
+ * 「計算機で運がめっちゃいい人にはちゃんと音出してあげてね、あの例の神演出で」)。運は 100 人の計算が済んでから出るので、出た時に 1 回だけ
  */
 const lucky = ref(0);
 let luckyFor: unknown = null;
@@ -271,19 +271,19 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
 </script>
 
 <template>
-  <!-- 「次の手で狙う」を押しただけの時は出さない。アイテムの下の「カオススパム確率機へ」から来た時 (spamKey) と、回している・結果がある時だけ (2026-10-16 オーナー) -->
+  <!-- 「次の手で狙う」を押しただけの時は出さない。アイテムの下の「カオススパム計算機へ」から来た時 (spamKey) と、回している・結果がある時だけ (2026-10-16 オーナー) -->
   <!--
-    確率機は「次の手で狙う」とは別の欄・別の狙い (spamAims。2026-10-16 オーナー「カオススパム確率機と狙うは別ルートとして扱って」)。
+    計算機は「次の手で狙う」とは別の欄・別の狙い (spamAims。2026-10-16 オーナー「カオススパム計算機と狙うは別ルートとして扱って」)。
     PC: 左に 100 人の結果、右に押すボタンと自分の結果。スマホは縦に積み、押すボタンは下の帯
   -->
   <section v-if="spamKey || spamming || result" ref="root" data-chaos-spam class="g-panel scroll-mt-2 p-2 text-[12px]">
     <header class="g-sec-head">
-      <b class="g-sec-title">{{ tr("カオススパム", "Chaos spam") }}</b>
+      <b class="g-sec-title">{{ tr("カオススパム計算機", "Chaos spam calculator") }}</b>
       <span class="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:w-full">
         <span v-for="a in spamAims" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ aimLabel(s.data.value, a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :disabled="spamming" :title="tr('この MOD を外す', 'Remove this mod')" @click="spamAims = spamAims.filter((x) => x.modId !== a.modId)">×</button></span>
         <button type="button" class="g-plain inline-flex min-h-7 items-center gap-1 rounded border border-dashed border-white/25 px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5" :disabled="spamming" @click="s.aimPicker.value = { seed: null, spam: true }">+ {{ spamAims.length ? tr("足す・変える", "Add / change") : tr("狙う MOD を選ぶ", "Choose mods") }}</button>
       </span>
-      <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" :disabled="spamming" :title="tr('確率機を閉じる', 'Close the calculator')" @click="closeSpam">×</button>
+      <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" :disabled="spamming" :title="tr('計算機を閉じる', 'Close the calculator')" @click="closeSpam">×</button>
     </header>
     <p v-if="!spamAims.length" class="py-2 text-[var(--exile-color-text-secondary)]">{{ tr("狙う MOD を選ぶと、100 人がスパムした時の回数が出ます", "Choose target mods to see how many uses 100 people needed") }}</p>
     <div v-else>

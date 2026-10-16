@@ -1,4 +1,4 @@
-// カオススパムの自慢のカード (2026-10-16 オーナー「確率機はシェア機能追加。自慢目的、URL と共に宣伝」「画像付きが望ましい」)。
+// カオススパムの自慢のカード (2026-10-16 オーナー「計算機はシェア機能追加。自慢目的、URL と共に宣伝」「画像付きが望ましい」)。
 //   GET /s/spam?…      X・Discord・LINE が読む OGP のページ。人はそのベースのエミュレーター (/?base=) へ送る
 //   GET /og/spam.png?… そのカードの絵 (1200×630)。結果は全部 URL に入っているので何も保存しない (KV・D1 は使わない)。
 //                       一度作った絵は Cloudflare のキャッシュに置いて使い回す (同じ URL は作り直さない)
@@ -57,7 +57,7 @@ function titleOf(c) {
 function descOf(c) {
   const parts = [];
   if (c.rank != null) parts.push(T(c, `${PEOPLE} 人中 ${rankWord(c, c.rank)} の運 (${luck(c, c.rank)})`, `${rankWord(c, c.rank)} luck among ${PEOPLE} people (${luck(c, c.rank)})`));
-  parts.push(T(c, "ExileDesk のカオススパム確率機 — PoE2 のクラフトを試せる", "ExileDesk Chaos spam calculator — try PoE2 crafting"));
+  parts.push(T(c, "ExileDesk のカオススパム計算機 — PoE2 のクラフトを試せる", "ExileDesk Chaos spam calculator — try PoE2 crafting"));
   return parts.join(" · ");
 }
 
@@ -115,7 +115,7 @@ async function dataUrl(env, url, path) {
   }
 }
 
-/** かなりの強運 (上位 10% 以内) は確率機の中と同じ銅色の特別仕様 (二重の細い枠・線・「かなりの強運 / TOP n%」、2026-10-16 オーナー「銅色の光って大人っぽい」「Twitter にもその特別仕様で」)。
+/** かなりの強運 (上位 10% 以内) は計算機の中と同じ銅色の特別仕様 (二重の細い枠・線・「かなりの強運 / TOP n%」、2026-10-16 オーナー「銅色の光って大人っぽい」「Twitter にもその特別仕様で」)。
  * X は大きいカードの下 (約 80px) に題を重ねて出すので、字は 500px より上に置く (2026-10-16 オーナーのスマホで「半分の人」の行が隠れた) */
 async function cardImage(url, env, c) {
   // satori は WebP を読めないので、カード用の PNG (public/og-art、base-art から作った物) を使う
@@ -127,7 +127,7 @@ async function cardImage(url, env, c) {
   const ax = 930 - aw / 2, ay = 290 - ah / 2;
   const orb = await dataUrl(env, CHAOS_ICON);
   const r = c.rank;
-  const head = T(c, "カオススパム確率機", "Chaos spam calculator");
+  const head = T(c, "カオススパム計算機", "Chaos spam calculator");
   const hit = c.uses != null ? fmt(c.uses) : "?";
   const hitTail = T(c, " 回目で付いた！", " uses to hit!");
   const luckLine = r != null ? T(c, `${PEOPLE} 人中 ${rankWord(c, r)} の運`, `${rankWord(c, r)} luck of ${PEOPLE}`) : "";
@@ -144,7 +144,7 @@ async function cardImage(url, env, c) {
   const [bold, regular, antique] = await Promise.all([
     font(allText, 800),
     font(allText, 500),
-    // かなりの強運の字は確率機の中と同じ明朝寄りの字 (Zen Antique)
+    // かなりの強運の字は計算機の中と同じ明朝寄りの字 (Zen Antique)
     top ? font(`${kicker}TOP0123456789%`, 0, "Zen+Antique") : Promise.resolve(null),
   ]);
   const markLeft = r != null ? Math.max(0, Math.min(590, Math.round(620 * (r / 100)) - 15)) : 0;

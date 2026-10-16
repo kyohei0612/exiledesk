@@ -1,5 +1,5 @@
 /**
- * use-spam-share.ts — カオススパム確率機の結果を X でシェア (StageChaosSpam.vue から分けた、2026-10-16、500 行の決まり)。
+ * use-spam-share.ts — カオススパム計算機の結果を X でシェア (StageChaosSpam.vue から分けた、2026-10-16、500 行の決まり)。
  * 運の言葉 (luck・rankWord) も PC の欄・スマホの帯・シェアの文で同じ物を使う
  */
 import { computed, ref, watch, type Ref } from "vue";
@@ -25,7 +25,7 @@ export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<Spa
   const { result, stats, key, cost } = o;
   const inApp = isTauriRuntime();
   /**
-   * シェア (2026-10-16 オーナー「確率機はシェア機能追加。自慢目的、URL と共に宣伝」「押したらそのまま X に」「画像付き」)。
+   * シェア (2026-10-16 オーナー「計算機はシェア機能追加。自慢目的、URL と共に宣伝」「押したらそのまま X に」「画像付き」)。
    * 押すと X の投稿画面へ (アプリは外のブラウザで)。URL は /s/spam (server/web/og-card.js): X はそこから結果のカードの絵を出し、
    * 押した人はそのベースのエミュレーターへ。結果は全部 URL に入れる (サーバーは何も保存しない)
    */
