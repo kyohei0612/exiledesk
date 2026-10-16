@@ -27,6 +27,8 @@ export function compare(where: string, a: StageApply, b: StageApply, out: Diff[]
     ["removed", a.removed, b.removed],
     ["omensUsed", a.omensUsed ?? [], b.omensUsed ?? []],
     ["rolled", a.rolled ?? [], b.rolled ?? []],
+    ["picked", a.picked ?? [], b.picked ?? []],
+    ["pickError", !!a.pickError, !!b.pickError],
     ["note", a.note ?? "", b.note ?? ""],
     ["count", a.count ?? 1, b.count ?? 1],
     ["augment", a.augment ?? null, b.augment ?? null],

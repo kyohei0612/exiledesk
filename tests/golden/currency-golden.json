@@ -1,0 +1,26 @@
+{
+ "orbs": {
+  "hash": "f4142195184cf1d37756781c93dfb3ca961fb00048bc9a964fe2b67f8bc20d22",
+  "n": 51840
+ },
+ "bones": {
+  "hash": "6d4a472a46563ad4e56699fa2f94c7927f3eb503b3c612588dc4048c2606eeda",
+  "n": 36288
+ },
+ "reveal": {
+  "hash": "38f311d92591e4c8fb2a196d3a9164ee9755afaf8322d75bb5e86205373a1b5e",
+  "n": 12960
+ },
+ "annul": {
+  "hash": "f75fac542605d4ffaaf9d6227cd9575e57131ff0e318fe7fedc9b9b30bfc3731",
+  "n": 5184
+ },
+ "essence": {
+  "hash": "420eabaebbfb4fd21313de32dc191fa07cd4eb983717c655417377d626edbe02",
+  "n": 58560
+ },
+ "other": {
+  "hash": "fede990668c22f0a962e99f62bff6eb7d5a38445eb9e6be7e7962d18e906cff4",
+  "n": 242352
+ }
+}

@@ -176,8 +176,8 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   if (isDispose(currency)) return applyDispose(item, currency);
   if (item.identified === false && currency !== "wisdom") return skip(item, tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)"));
   // ADR-004 (2026-10-16): 移し終えた手は説明文の分解 (spec/) で打つ。指名・結果の指定・まだ移していない手は今の関数で。
-  if (!hint.legacy && !hint.pick && !hint.remove && !hint.outcome && !hint.collect) {
-    const s = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst });
+  if (!hint.legacy && !hint.outcome && !hint.collect) {
+    const s = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst, ...(hint.pick ? { pick: hint.pick } : {}), ...(hint.remove ? { remove: hint.remove } : {}) });
     if (s) return s;
   }
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未発現の MOD の発現だけはできる (ゲームと同じ)

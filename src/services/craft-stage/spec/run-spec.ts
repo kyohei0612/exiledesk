@@ -6,7 +6,7 @@
  * まだ移していない手は null を返す (呼ぶ側は今の applyCurrency を使う)。画面はまだ今の関数のまま (切り替えない)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { skip } from "../stage-core";
+import { skip, type Force } from "../stage-core";
 import type { StageApply, StageItem } from "../types";
 import type { CurrencySpec, OmenSpec } from "./types";
 import { ANNUL_SPEC, BONE_SPECS, OMEN_SPECS, REVEAL_SPEC } from "./desecrate-specs";
@@ -89,8 +89,14 @@ function modsOf(used: readonly OmenSpec[]): Mods {
   return m;
 }
 
-/** 1 手打つ (applyCurrency と同じ形)。移していない手は null。oneCatalyst: 手順の再生 (触媒は 1 手 = 1 個。applyCurrency の hint.oneCatalyst と同じ) */
-export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: () => number, omens: readonly string[] = [], opts: { oneCatalyst?: boolean } = {}): StageApply | null {
+/** 指名 (付く MOD・消える MOD) が効く手の種類。ほかの手は指名を見ない (今の関数と同じ) */
+const PICK_KINDS: readonly string[] = ["transmute", "augment", "regal", "alchemy", "exalt", "chaos"];
+
+/**
+ * 1 手打つ (applyCurrency と同じ形)。移していない手は null。oneCatalyst: 手順の再生 (触媒は 1 手 = 1 個。applyCurrency の hint.oneCatalyst と同じ)。
+ * pick / remove: 付く MOD・消える MOD の指名 (手順の再生、要望 ⑱-1。applyCurrency の hint と同じ)
+ */
+export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: () => number, omens: readonly string[] = [], opts: { oneCatalyst?: boolean; pick?: readonly Force[]; remove?: string } = {}): StageApply | null {
   const r = resolveSpec(key, item, data);
   if (!r) return null;
   const { spec } = r;
@@ -121,22 +127,27 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
     data, rng, mods, reveal: r.reveal, removedSoFar: [], essence,
     catalystTag, oneCatalyst: !!opts.oneCatalyst, runeKey: key,
     altered: spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly")),
+    // カオスは指名の 1 つ目だけ見る (今の関数と同じ。余った指名は無視)
+    ...(PICK_KINDS.includes(spec.kind) && opts.pick?.length ? { pick: spec.kind === "chaos" ? opts.pick.slice(0, 1) : opts.pick } : {}),
+    ...(spec.kind === "chaos" && opts.remove ? { removeForce: opts.remove } : {}),
   };
   let cur = item;
   const added: StageApply["added"] = [];
   const removed: StageApply["removed"] = [];
   const rolled: NonNullable<StageApply["rolled"]> = [];
+  const picked: NonNullable<StageApply["picked"]> = [];
   const parts: StageApply[] = [];
   for (const a of actions) {
     const p = runPart(ctx, cur, a);
     parts.push(p);
     // 途中で弾かれたら、打つ前のアイテムのまま (カレンシーも減らない)
-    if (!p.applied) return { ...skip(item, p.reason ?? ""), ...(p.random ? { random: true } : {}) };
+    if (!p.applied) return { ...skip(item, p.reason ?? ""), ...(p.random ? { random: true } : {}), ...(p.pickError ? { pickError: true } : {}) };
     cur = p.item;
     added.push(...p.added);
     removed.push(...p.removed);
     ctx.removedSoFar.push(...p.removed);
     rolled.push(...(p.rolled ?? []));
+    picked.push(...(p.picked ?? []));
   }
   // ヒネコラの予見は「アイテムを変えると消える」(説明文)
   if (cur.foreseen) cur = { ...cur, foreseen: false };
@@ -145,7 +156,7 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
   const augment = parts.map((p) => p.augment).find((x) => x);
   return {
     applied: true, item: cur, added, removed,
-    ...(rolled.length ? { rolled } : {}), ...(note ? { note } : {}), ...(count != null ? { count } : {}), ...(augment ? { augment } : {}),
+    ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}), ...(note ? { note } : {}), ...(count != null ? { count } : {}), ...(augment ? { augment } : {}),
     omensUsed: used.map((o) => o.key),
   };
 }

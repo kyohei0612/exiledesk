@@ -119,6 +119,43 @@ describe("打ち比べ: オーブ類の新しい作り = applyCurrency", () => {
   }
 });
 
+/**
+ * 指名 (手順の再生の pick / remove、要望 ⑱-1) も新旧で同じか。付く MOD はその部位の置き場から 2 つ (付きうる物・付かない物が混ざる)、
+ * 消える MOD は付いている物の頭と、付いていない物。大いなる高貴は 2 つ指名・3 つ指名 (多過ぎ) も
+ */
+describe("打ち比べ: 指名 (pick / remove)", () => {
+  it("オーブ類 × 指名", () => {
+    const diffs: Diff[] = [];
+    let n = 0, hit = 0, picked = 0;
+    const keys = ORB_SPECS.filter((s) => ["transmute", "augment", "regal", "alchemy", "exalt", "chaos"].includes(s.kind)).map((s) => s.stageKey);
+    for (const base of BASES) for (const ilvl of ILVLS) for (const [label, item] of statesOf(base, ilvl)) {
+      const pre = item.cls.pools.normal.prefixes, suf = item.cls.pools.normal.suffixes;
+      const cands = [pre[0], suf[0], pre[pre.length - 1], suf[suf.length - 1]].filter((x): x is string => !!x).map((mod) => ({ mod }));
+      const on = [...item.prefixes, ...item.suffixes][0]?.modId;
+      const hints = [
+        ...cands.map((c) => ({ pick: [c] })),
+        { pick: cands.slice(0, 2) },
+        { pick: cands.slice(0, 3) },
+        ...(on ? [{ remove: on }, { remove: on, pick: cands.slice(0, 1) }] : []),
+        { remove: "NotAMod" },
+      ];
+      for (const key of keys) for (const omens of [[], ["OmenofGreaterExaltation"], ["OmenofDextralErasure"]]) for (const h of hints) {
+        const a = applyCurrency(data, item, key, mulberry32(7), omens, { ...h, legacy: true });
+        const b = applyCurrency(data, item, key, mulberry32(7), omens, h);
+        n++;
+        if (a.applied) hit++;
+        if (a.picked?.length) picked++;
+        const d: Diff[] = [];
+        compare(`${base} Lv${ilvl} ${label} ${key} [${omens.join("+")}] ${JSON.stringify(h)}`, a, b, d);
+        if (d.length && !reasonOnly(d)) diffs.push(...d);
+      }
+    }
+    console.log(`指名: ${n} 通り (打てた ${hit}、指名が通った ${picked})`);
+    expect(picked).toBeGreaterThan(100);
+    expect(diffs.length, show(diffs)).toBe(0);
+  });
+});
+
 describe("聖別のお告げが掛かる神は移していない (今の関数で打つ)", () => {
   it("applyBySpec は null", () => {
     const item = statesOf("Gold Ring", 82)[3]![1];

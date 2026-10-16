@@ -7,9 +7,8 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
-import { addOne, allMods, candidates, catalystOf, hasExtraCatalyst, effectiveCls, makeStageMod, maxQualityOf, overLimit, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without, type Candidate } from "../stage-core";
+import { addForced, addOne, allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, removeForced, type Force, effectiveCls, makeStageMod, maxQualityOf, overLimit, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without, type Candidate } from "../stage-core";
 import { whittleTargets } from "../apply-currency";
-import { boostedBy } from "../../htc/quality";
 import { catalysingMultiplier } from "../../htc/catalysing-multiplier";
 import { QUALITY_PER_CATALYST } from "../../htc/catalysing-setup";
 import { htcBaseInfo } from "../../htc/patch";
@@ -60,7 +59,14 @@ export interface PartCtx {
   runeKey?: string;
   /** この手で前の部品が消した MOD (深淵の王の印は消した側に付く) */
   removedSoFar: StageMod[];
+  /** 付く MOD の指名 (手順の再生、要望 ⑱-1)。足す順。足りない分は乱数。使った数は pickUsed */
+  pick?: readonly Force[];
+  pickUsed?: number;
+  /** 消える MOD の指名 (カオス) */
+  removeForce?: string;
 }
+/** 指名が通らなかった時 (理由つきで打てない、pickError。今の関数と同じ文) */
+const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, tr(`指名できない: ${why}`, `Can't force: ${why}`)), pickError: true });
 
 const POOL_ORDER: readonly ModPool[] = ["normal", "desecrated", "otherworldly"];
 /** 置き場の MOD の id (同じ MOD を 2 回数えない: 置き場が重なっていると重みが倍になる)。普通の置き場は特殊 MOD のルーン込み (要望 ㉙) */
@@ -298,7 +304,12 @@ function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
   const removed: StageMod[] = [];
   for (let i = 0; i < a.n; i++) {
     let r: { item: StageItem; mod: StageMod } | null;
-    if (ctx.mods.pickLowest) {
+    if (ctx.removeForce) {
+      // 消える MOD の指名 (要望 ⑱-1)。お告げより先
+      const f = removeForced(cur, ctx.removeForce);
+      if ("error" in f) return pickFail(item, f.error);
+      r = f;
+    } else if (ctx.mods.pickLowest) {
       const lows = whittleTargets(cur, side);
       const mod = lows[Math.floor(ctx.rng() * lows.length)];
       r = mod ? { item: without(cur, mod), mod } : null;
@@ -327,12 +338,25 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
   if (a.emptyOk && !SIDES.some((s) => room(item, s))) return ok(item);
   const n = ctx.mods.addCount ?? a.n;
   const sides = ctx.mods.side ? [ctx.mods.side] : SIDES;
-  const tag = item.qualityTag;
-  const boost = ctx.mods.catalysing && tag ? { test: (m: Parameters<typeof boostedBy>[0]) => boostedBy(m, tag), mult: catalysingMultiplier(item.quality) } : undefined;
+  const { tag, pct } = catalystOf(item);
+  const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: catalysingMultiplier(pct) } : undefined;
+  const pick = ctx.pick?.slice(ctx.pickUsed ?? 0) ?? [];
+  if (pick.length > n) return pickFail(item, tr(`この手で付く MOD は ${n} つまで`, `this adds at most ${n} mod${n === 1 ? "" : "s"}`));
   let cur = item;
   const added: StageMod[] = [];
   const rolled: NonNullable<StageApply["rolled"]> = [];
+  const picked: NonNullable<StageApply["picked"]> = [];
   for (let i = 0; i < n; i++) {
+    const f = pick[i];
+    if (f) {
+      const r = addForced(ctx.data, cur, a.floor, ctx.rng, f, { sides, boost });
+      if ("error" in r) return pickFail(item, r.error);
+      ctx.pickUsed = (ctx.pickUsed ?? 0) + 1;
+      cur = r.item;
+      added.push(r.mod);
+      picked.push({ modId: r.mod.modId, tierName: r.mod.tierName, chance: r.chance });
+      continue;
+    }
     const r = addOne(ctx.data, cur, a.floor, ctx.rng, { sides, boost });
     if (!r) break;
     cur = r.item;
@@ -340,8 +364,9 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
     rolled.push({ modId: r.mod.modId, tierName: r.mod.tierName, chance: r.chance });
   }
   if (!added.length) return a.optional ? ok(item) : skip(item, tr("付けられる MOD が無い", "No mod can be added"));
-  if (ctx.mods.catalysing) cur = { ...cur, quality: 0 };
-  return { applied: true, item: cur, added, removed: [], rolled };
+  // 触媒の高貴は品質を使い切る (グラスピングメイルはカタリストの欄だけ)
+  if (ctx.mods.catalysing) cur = hasExtraCatalyst(item.base) ? { ...cur, catalystQuality: 0 } : { ...cur, quality: 0 };
+  return { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}) };
 }
 
 /**
