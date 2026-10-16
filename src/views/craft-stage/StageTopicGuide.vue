@@ -1,17 +1,18 @@
 <!--
   StageTopicGuide.vue — 動作を学ぶコースの案内 (2026-10-17、[[topic-courses.ts]] / [[craft-topic.ts]])。
-  並べた手を 1 つずつ。今の手のアイコンを押すと持つ (お告げも掛ける)。説明は手の一言 + エミュレーターのカードの「このステージでの動き」、
+  並べた手を 1 つずつ。今の手のアイコンを押すと持つ (お告げも掛ける)。要点 1 行をカードの頭と同じ大きな枠で (下限・付く MOD も)、カードの「このステージでの動き」は「詳しく」に畳む。
   前の手で何が起きたか (付いた / 消えた MOD) も出す。名前・説明はエミュレーターの物 (nameOf / stageHelp)
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { endTopic, goTopic, topic, topicAt, topicDone, topicReset, topicStep } from "../../state/craft-topic";
-import { stageHelp } from "../../state/craft-stage-help";
+import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
+import Disclosure from "../../components/ui/Disclosure.vue";
 import { modText, tr } from "../../i18n/lang";
 import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
-import type { TopicStep } from "../../services/craft-stage/topic-courses";
+import { topicKey, type TopicStep } from "../../services/craft-stage/topic-courses";
 
 const t2 = (x: JaEn): string => tr(x[0], x[1]);
 const LEVEL: Record<number, { label: JaEn; chip: string }> = {
@@ -19,12 +20,14 @@ const LEVEL: Record<number, { label: JaEn; chip: string }> = {
   2: { label: ["初級", "Easy"], chip: "bg-sky-500/25 text-sky-100" },
   3: { label: ["中級", "Medium"], chip: "bg-amber-500/25 text-amber-100" },
 };
+/** エッセンスの手の実際のキー (今のアイテムの棚から。一覧の先の手も日本語の名前で出す) */
+const essKey = (st: TopicStep): string | null => (s.item.value && s.data.value ? topicKey(st, s.data.value, s.item.value) : null);
 /** 手の名前 (エミュレーターの名前。白に戻す・発現は言葉で) */
 function stepName(st: TopicStep): string {
-  const main = st.use === "reset" ? tr("白に戻す", "Reset to white") : st.use === "reveal" ? tr("発現", "Reveal") : st.use.startsWith("ess:") ? (s.item.value && topicStep.value?.step === st && topicStep.value.key ? nameOf(topicStep.value.key) : st.use.split(":")[1]!) : nameOf(st.use);
+  const main = st.use === "reset" ? tr("白に戻す", "Reset to white") : st.use === "reveal" ? tr("発現", "Reveal") : st.use.startsWith("ess:") ? (essKey(st) ? nameOf(essKey(st)!) : st.use.split(":")[1]!) : nameOf(st.use);
   return [main, ...(st.omens ?? []).map(nameOf)].join(" + ");
 }
-const iconOfStep = (st: TopicStep): string => (st.use === "reset" || st.use === "reveal" ? "" : st.use.startsWith("ess:") ? (topicStep.value?.step === st && topicStep.value.key ? iconOf(topicStep.value.key) : "") : iconOf(st.use));
+const iconOfStep = (st: TopicStep): string => (st.use === "reset" || st.use === "reveal" ? "" : st.use.startsWith("ess:") ? (essKey(st) ? iconOf(essKey(st)!) : "") : iconOf(st.use));
 /** 今の手のカレンシーとお告げのカードの「このステージでの動き」 */
 const help = computed(() => {
   const cur = topicStep.value;
@@ -32,6 +35,11 @@ const help = computed(() => {
   const keys = [...(cur.key && cur.step.use !== "reveal" ? [cur.key] : []), ...(cur.step.omens ?? [])];
   return keys.map((k) => ({ k, lines: stageHelp(k, s.data.value, s.item.value) })).filter((x) => x.lines.length);
 });
+/** カードの頭と同じ: 上級・完全の MOD レベルの下限と、付く MOD (エッセンス・ルーン・感情) */
+const floor = computed(() => { const k = topicStep.value?.key; return k && topicStep.value?.step.use !== "reveal" ? stageFloor(k) : null; });
+const adds = computed(() => { const k = topicStep.value?.key; return k && topicStep.value?.step.use !== "reveal" ? stageAdds(k, s.data.value, s.item.value) : null; });
+/** 細かい説明 (カードの「このステージでの動き」) は既定で閉じる */
+const more = ref(false);
 const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**").map((t, i) => ({ t, b: i % 2 === 1 }));
 /** 押すと持つ (お告げも掛ける)。発現の反響は掛けるだけ */
 function holdIt(): void {
@@ -66,11 +74,22 @@ const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
         </button>
         <span v-if="topicStep.step.use === 'reveal'" class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムの下の候補から 1 つ選ぶ", "Pick one of the options under the item") }}</span>
       </div>
-      <p class="mt-1.5 text-[13px] leading-relaxed text-[var(--exile-color-text-primary)]">{{ t2(topicStep.step.note) }}</p>
-      <div v-for="h in help" :key="h.k" class="mt-1.5 rounded-md bg-black/25 px-2.5 py-1.5">
-        <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ nameOf(h.k) }}</p>
-        <p v-for="(l, i) in h.lines" :key="i" class="flex gap-1.5 text-[12px] text-[#cfc6ae]"><span class="text-amber-300/60">・</span><span><template v-for="(p, j) in parts(l)" :key="j"><b v-if="p.b" class="text-white">{{ p.t }}</b><template v-else>{{ p.t }}</template></template></span></p>
+      <!-- 要点はエミュレーターのカードの頭と同じ大きな枠で (2026-10-17 オーナー「入門は要点でっかく表示のみ、文章長くてだるい」) -->
+      <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>
+      <p v-if="floor" class="mt-1.5 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ tr(`MOD レベル ${floor} 以上だけ付く`, `Only mod level ${floor}+ tiers`) }}</p>
+      <div v-if="adds" class="mt-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
+        <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
+        <p v-for="(l, i) in adds.lines" :key="i" class="text-[13px] font-semibold text-emerald-200">・{{ l }}</p>
       </div>
+      <template v-if="help.length">
+        <Disclosure v-model:open="more" kind="detail" class="mt-1.5" />
+        <div v-if="more">
+          <div v-for="h in help" :key="h.k" class="mt-1.5 rounded-md bg-black/25 px-2.5 py-1.5">
+            <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ nameOf(h.k) }}</p>
+            <p v-for="(l, i) in h.lines" :key="i" class="flex gap-1.5 text-[12px] text-[#cfc6ae]"><span class="text-amber-300/60">・</span><span><template v-for="(p, j) in parts(l)" :key="j"><b v-if="p.b" class="text-white">{{ p.t }}</b><template v-else>{{ p.t }}</template></template></span></p>
+          </div>
+        </div>
+      </template>
     </div>
     <div v-else-if="topicDone" data-topic-done class="mt-3 rounded-xl border-2 border-amber-300/70 bg-gradient-to-b from-amber-400/[0.18] to-transparent px-4 py-3">
       <p class="text-[18px] font-black text-amber-100">{{ tr("全部使ってみた! おつかれさま", "You tried them all!") }}</p>
