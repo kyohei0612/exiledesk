@@ -254,11 +254,28 @@ const shareText = computed(() => {
 });
 /** X の投稿画面 (文の最後に URL が付く) */
 const xUrl = computed(() => `https://x.com/intent/post?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`);
+/** スマホ (iPhone・Android) */
+const mobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 function shareX(e: MouseEvent): void {
-  logRecord("emu_spam_share", { to: "x", base: s.base.value, rank: result.value?.rank ?? null });
-  if (!inApp) return;
+  logRecord("emu_spam_share", { to: mobile ? "x-app" : "x", base: s.base.value, rank: result.value?.rank ?? null });
+  if (inApp) {
+    e.preventDefault();
+    void openExternal(xUrl.value);
+    return;
+  }
+  if (!mobile) return;
+  // スマホは X のアプリを直接開く (2026-10-16 オーナー「スマホ版はそのままアプリに飛ばそうか、これウェブに飛ぶね」)。
+  // アプリが無くて開けなかった時 (1.5 秒たってもページが見えたまま) は Web の投稿画面へ
   e.preventDefault();
-  void openExternal(xUrl.value);
+  const web = xUrl.value;
+  let left = false;
+  const onHide = (): void => { if (document.visibilityState === "hidden") left = true; };
+  document.addEventListener("visibilitychange", onHide);
+  setTimeout(() => {
+    document.removeEventListener("visibilitychange", onHide);
+    if (!left && document.visibilityState === "visible") location.href = web;
+  }, 1500);
+  location.href = `twitter://post?message=${encodeURIComponent(`${shareText.value}\n${shareUrl.value}`)}`;
 }
 /**
  * かなりの強運 (100 人中 上位 10% 以内) で付いた時は、珍しい段と同じ音 (フィルターの通知音 6) と光 (2026-10-16 オーナー
