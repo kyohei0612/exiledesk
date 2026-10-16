@@ -14,7 +14,7 @@ const t2 = (x: JaEn): string => tr(x[0], x[1]);
 const LEVELS: Array<{ n: 1 | 2 | 3 | 4; label: JaEn; note: JaEn; chip: string; ring: string }> = [
   { n: 1, label: ["入門", "Intro"], note: ["はじめての人はここから", "Start here"], chip: "bg-emerald-500/25 text-emerald-100", ring: "border-emerald-400/50 hover:border-emerald-300" },
   { n: 2, label: ["初級", "Easy"], note: ["エッセンス・冒涜・お告げ", "Essences, desecration, omens"], chip: "bg-sky-500/25 text-sky-100", ring: "border-sky-400/50 hover:border-sky-300" },
-  { n: 3, label: ["中級", "Medium"], note: ["触媒・液化した感情・フラクチャー", "Catalysts, liquid emotions, fracture"], chip: "bg-amber-500/25 text-amber-100", ring: "border-amber-400/50 hover:border-amber-300" },
+  { n: 3, label: ["中級", "Medium"], note: ["パーフェクトエッセンス・合金・アストリッド・結晶化", "Perfect essences, alloys, Astrid, crystallisation"], chip: "bg-amber-500/25 text-amber-100", ring: "border-amber-400/50 hover:border-amber-300" },
   { n: 4, label: ["上級", "Hard"], note: ["フラクチャーの作り直し・アストリッド・結晶化", "Fracture retries, Astrid, crystallisation"], chip: "bg-rose-500/25 text-rose-100", ring: "border-rose-400/50 hover:border-rose-300" },
 ];
 const baseName = (b: string): string => baseNameOf({ base: b, baseJa: jaTypeName(b) });
