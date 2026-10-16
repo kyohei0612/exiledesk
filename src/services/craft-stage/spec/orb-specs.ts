@@ -116,7 +116,7 @@ const ORBS: readonly OrbDef[] = [
       target: { rarity: ["rare"] },
       actions: [{ fracture: true }],
       limits: [{ kind: "fracturableClass" }, { kind: "modsAtLeast", n: 4 }, { kind: "noFractured" }],
-      source: { client: "currency-hover の説明文、ItemClasses の CanBeFractured", owner: "固定は 1 つ・冒涜の MOD は選ばれない (2026-10-08・10-10 実測)" },
+      source: { client: "currency-hover の説明文、ItemClasses の CanBeFractured", owner: "固定は 1 つ・冒涜の MOD は選ばれない (2026-10-08・10-10 実測)", coe: "対象から等しく 1 つ (package_poe2.js EmulatorManager.fracture、2026-10-16)" },
     }),
   },
 ];
@@ -147,7 +147,7 @@ const CLIENT: Source = { client: "currency-hover の説明文" };
 export const ORB_OMEN_SPECS: readonly OmenSpec[] = [
   { key: "OmenofSinistralExaltation", hover: "omenofsinistralexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add only prefix modifiers", "次に使用する高貴なオーブはプレフィックスモッドをのみを追加する。"), effect: { side: "prefix" }, source: CLIENT },
   { key: "OmenofDextralExaltation", hover: "omenofdextralexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add only suffix modifiers", "次に使用する高貴なオーブはサフィックスモッドをのみを追加する。"), effect: { side: "suffix" }, source: CLIENT },
-  { key: "OmenofGreaterExaltation", hover: "omenofgreaterexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add two random modifiers", "次に使用する高貴なオーブはモッドを2個追加する。"), effect: { addCount: 2 }, source: { client: "currency-hover の説明文", owner: "空きが 1 つなら 1 つ" } },
+  { key: "OmenofGreaterExaltation", hover: "omenofgreaterexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add two random modifiers", "次に使用する高貴なオーブはモッドを2個追加する。"), effect: { addCount: 2 }, source: { client: "currency-hover の説明文", owner: "空きが 1 つなら 1 つ", coe: "付かなくなったら止まる (package_poe2.js rollAffixes、2026-10-16)" } },
   {
     key: "OmenofCatalysingExaltation", hover: "omenofcatalysingexaltation", appliesTo: "exalt",
     text: {
@@ -158,7 +158,7 @@ export const ORB_OMEN_SPECS: readonly OmenSpec[] = [
     limits: [{ kind: "hasCatalystQuality" }],
     source: { client: "currency-hover の説明文", community: "重く引く倍率は catalysing-multiplier.ts (品質から)" },
   },
-  { key: "OmenofWhittling", hover: "omenofwhittling", appliesTo: "chaos", text: omenText("Chaos Orb will remove the lowest level modifier", "次に使用する混沌のオーブは最もレベルの低いモッドを取り除く。"), effect: { pickLowest: true }, source: { client: "currency-hover の説明文", poe2wiki: "未発現の枠は MOD レベル 1 (0.3.1、要望 ㉞-6)" } },
+  { key: "OmenofWhittling", hover: "omenofwhittling", appliesTo: "chaos", text: omenText("Chaos Orb will remove the lowest level modifier", "次に使用する混沌のオーブは最もレベルの低いモッドを取り除く。"), effect: { pickLowest: true }, source: { client: "currency-hover の説明文", poe2wiki: "未発現の枠は MOD レベル 1 (0.3.1、要望 ㉞-6)", coe: "同じ MOD レベルが並んだら等しく (package_poe2.js poe2_chaos の OmenOnChaosLowestLevelMod、2026-10-16)" } },
   { key: "OmenofSinistralErasure", hover: "omenofsinistralerasure", appliesTo: "chaos", text: omenText("Chaos Orb will remove only prefix modifiers", "次に使用する混沌のオーブはプレフィックスモッドをのみを取り除く。"), effect: { removeSide: "prefix" }, source: CLIENT },
   { key: "OmenofDextralErasure", hover: "omenofdextralerasure", appliesTo: "chaos", text: omenText("Chaos Orb will remove only suffix modifiers", "次に使用する混沌のオーブはサフィックスモッドをのみを取り除く。"), effect: { removeSide: "suffix" }, source: CLIENT },
   {

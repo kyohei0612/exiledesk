@@ -125,7 +125,7 @@ export const ANNUL_SPEC: CurrencySpec = {
   target: { rarity: ["magic", "rare", "unique"] },
   actions: [{ remove: { n: 1, pick: "equal" } }],
   limits: [],
-  source: { client: "currency-hover の説明文", assumed: "ノーマルに打てない一言 (説明文に無い。MOD が無いので結果は同じ)" },
+  source: { client: "currency-hover の説明文", assumed: "ユニークに打てる (CoE はユニークを扱わない)", coe: "ノーマルには打てない (rarity_not_normal)・固定以外から等しく 1 つ (package_poe2.js annul、2026-10-16)" },
 };
 
 export const CURRENCY_SPECS: readonly CurrencySpec[] = [...BONE_SPECS, REVEAL_SPEC, ANNUL_SPEC];
@@ -143,7 +143,7 @@ const faction = (key: string, hover: string, tag: string, name: { en: string; ja
   },
   target: FACTION_TARGET,
   effect: { guaranteeTag: tag },
-  source: { client: "currency-hover の説明文、MOD のタグ", owner: "勢力の MOD は等しい確率・足りない分は普通の MOD (2026-10-10・10-11)", coe: "矢筒 (2026-10-14)" },
+  source: { client: "currency-hover の説明文、MOD のタグ", owner: "勢力の MOD は等しい確率・足りない分は普通の MOD (2026-10-10・10-11)", coe: "矢筒 (2026-10-14)・お告げに部位の縛り無し・冒涜の MOD の重みは全部 1 = 等しい (data.json 4.5.5.3、2026-10-16)" },
 });
 
 /** 腐食のお告げの動作: 固定以外を全部消し、枠いっぱいまで未発現 (発現は普通の MOD だけ)、コラプト */
@@ -184,13 +184,13 @@ export const OMEN_SPECS: readonly OmenSpec[] = [
     key: "OmenofAbyssalEchoes", hover: "omenofabyssalechoes", appliesTo: "reveal",
     text: { en: ["While this item is active in your inventory the next time you", "reveal [Abyssalify|Desecrated] modifiers you can reroll the options once"], ja: ["インベントリ内でアクティブ状態の時", "次回行う[Abyssalify|冒涜]モッドの発現はオプションをもう一度リロールできるようになる"] },
     effect: { rerolls: 1 },
-    source: { client: "currency-hover の説明文" },
+    source: { client: "currency-hover の説明文", coe: "候補をもう 1 組引く (package_poe2.js reveal の params.reroll、2026-10-16)" },
   },
   {
     key: "OmenofLight", hover: "omenoflight", appliesTo: "annul",
     text: { en: ["While this item is active in your inventory your next", "Orb of Annulment will remove only [Abyssalify|Desecrated] modifiers"], ja: ["インベントリ内でアクティブな時", "次に使用する消去のオーブは[Abyssalify|冒涜]モッドのみを取り除く"] },
     effect: { pick: "desecrated" },
-    source: { client: "currency-hover の説明文", owner: "骨で付いた普通の MOD も消す (2026-10-10)" },
+    source: { client: "currency-hover の説明文", owner: "骨で付いた普通の MOD も消す (2026-10-10)", coe: "冒涜で付いた物 (未発現・発現済み) だけ (package_poe2.js getRemovableModifiers の OmenOnAnnulRemoveAbyssMod、2026-10-16)" },
   },
   {
     key: "OmenofSinistralAnnulment", hover: "omenofsinistralannulment", appliesTo: "annul",

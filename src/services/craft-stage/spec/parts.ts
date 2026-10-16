@@ -165,7 +165,7 @@ function fillUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): StageA
 
 /** 発現の候補の数の割合 (冒涜専用の MOD が 1 / 2 / 3 個) */
 const EXCLUSIVE_RATES = DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate);
-/** 同じ発現に同じ系統は 2 つ出ない (仮、2026-10-14 総点検の 14) */
+/** 同じ発現に同じ系統は 2 つ出ない (Craft of Exile の getRevealPicks も同じ MOD グループを候補から外す: filterRollablePoolForModTiers、2026-10-16) */
 const famsOf = (c: Candidate): string[] => [...(c.mod.families ?? [c.mod.family])];
 const notClashing = (rest: Candidate[], c: Candidate): Candidate[] => {
   const f = new Set(famsOf(c));

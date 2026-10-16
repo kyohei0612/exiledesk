@@ -29,6 +29,7 @@ const PERFECT_TEXT = {
 const ESSENCE_SOURCE: Source = {
   client: "currency-hover の説明文、EssenceMods (エンジンのエッセンスの置き場)、用語集 Crafted (クラフト MOD は 1 つ)",
   owner: "アイテムレベルの制限は無い (poe2wiki Essence、要望 ㉞-4)・クラフト MOD どうしの系統はぶつかる (2026-10-11)",
+  coe: "付けられる候補が複数 (無限のエッセンス) なら等しく 1 つ (package_poe2.js poe2_essence、2026-10-16)",
 };
 
 /** レッサー / 普通 / グレーター */
