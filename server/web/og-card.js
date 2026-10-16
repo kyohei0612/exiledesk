@@ -165,7 +165,7 @@ async function cardImage(url, env, c) {
       <div style="display:flex;position:absolute;left:${markLeft}px;top:0;width:30px;height:30px;border-radius:15px;background:#14110d;border:4px solid #ffffff"></div>
     </div>
     <div style="display:flex;width:620px;justify-content:space-between;font-size:20px;font-weight:500;color:#a99d86"><span>${esc(T(c, "強運", "Lucky"))}</span><span>${esc(T(c, "沼", "Unlucky"))}</span></div>` : ""}
-    <span style="font-size:23px;font-weight:500;color:#cfc3aa;margin-top:12px">${esc(stats)}</span>
+    <span style="font-size:21px;font-weight:500;color:#cfc3aa;margin-top:12px;white-space:nowrap">${esc(stats)}</span>
   </div>
 </div>`;
   // 最後まで読んで、作れなかった時は例外にする (ストリームの途中で失敗すると空の 200 になる)
