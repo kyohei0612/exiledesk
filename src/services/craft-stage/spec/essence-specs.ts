@@ -66,13 +66,14 @@ export const ABYSS_ESSENCE_SPEC: CurrencySpec = {
   source: { ...ESSENCE_SOURCE, community: "印は消した側に付く・冒涜の MOD がある間は使えない (SaVeQ 0.5.5 / poe2fun、計算機と同じ。外の正解は無い)" },
 };
 /**
- * 合金 (Adaptive Alloy など 13 種): 英語の説明文はパーフェクトエッセンスと同じ、日本語は別の文。エッセンスではないので、
- * 結晶化のお告げ (「Perfect or Corrupted Essence」) は掛からない (今の関数は掛けている。docs/reviews/2026-10-16-adr-004-orbs-diff.md)
+ * 合金 (Adaptive Alloy など 13 種): 英語の説明文はパーフェクトエッセンスと同じ、日本語は別の文。
+ * 結晶化のお告げの説明文は「Perfect or Corrupted Essence」だが、合金にも掛かってお告げが減る (2026-10-16 オーナーがゲームで確認「減るね」)
+ * → パーフェクトエッセンスと同じ手の種類 (essence_perfect) にする
  */
 export const ALLOY_SPEC: CurrencySpec = {
   ...PERFECT_ESSENCE_SPEC,
   key: "alloy",
-  kind: "alloy",
+  kind: "essence_perfect",
   text: { en: PERFECT_TEXT.en, ja: ["ランダムなモッドを1個取り除き、[Rarity|レア]アイテムに確定で新しいモッドを追加する"] },
 };
 export const ESSENCE_SPECS: readonly CurrencySpec[] = [ESSENCE_SPEC, PERFECT_ESSENCE_SPEC, ABYSS_ESSENCE_SPEC, ALLOY_SPEC];

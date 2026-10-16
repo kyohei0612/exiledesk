@@ -55,10 +55,8 @@ const KNOWN_REASONS: readonly string[] = [
   // 2. 結晶化のお告げの側に消せる物が無い: 今は共通の文、新しい作りは消去・カオスと同じくお告げの側と言う
   "外せる MOD が無い → お告げの側に外せる MOD が無い",
 ];
-/** 分かっている違い (一言以外も違う)。オーナーの確認待ち */
-function knownDiff(key: string, omens: readonly string[]): string | null {
-  // 合金に結晶化のお告げ: 今は掛かる (お告げを食って側を絞る)、新しい作りは掛からない (説明文「Perfect or Corrupted Essence」)
-  if (isAlloyKey(key) && omens.some((o) => /Crystallisation$/.test(o))) return "合金 + 結晶化のお告げ";
+/** 分かっている違い (一言以外も違う)。今は無し (合金 + 結晶化は 2026-10-16 オーナーがゲームで確認して今の関数と同じに) */
+function knownDiff(_key: string, _omens: readonly string[]): string | null {
   return null;
 }
 
@@ -100,17 +98,15 @@ describe("打ち比べ: エッセンスの新しい作り = applyCurrency", () =
   }
 });
 
-describe("分かっている違い (オーナーの確認待ち)", () => {
-  it("合金に結晶化のお告げ: 今は掛かって食う、新しい作りは掛からない (説明文「Perfect or Corrupted Essence」)", () => {
+describe("合金に結晶化のお告げ (2026-10-16 オーナーがゲームで確認: お告げは減る)", () => {
+  it("新しい作りでも掛かって食う", () => {
     let seen = 0;
     for (const base of BASES) {
       const item = statesOf(base, 82).find(([l]) => l === "レア 満杯")?.[1];
       if (!item) continue;
       for (const key of essenceShelf(data, item).flatMap((g) => g.keys).filter(isAlloyKey)) {
-        const a = applyCurrency(data, item, key, mulberry32(1), ["OmenofSinistralCrystallisation"], { legacy: true });
         const b = applyBySpec(data, item, key, mulberry32(1), ["OmenofSinistralCrystallisation"])!;
-        if (a.applied) expect(a.omensUsed).toEqual(["OmenofSinistralCrystallisation"]);
-        if (b.applied) expect(b.omensUsed).toEqual([]);
+        if (b.applied) expect(b.omensUsed).toEqual(["OmenofSinistralCrystallisation"]);
         seen++;
       }
     }

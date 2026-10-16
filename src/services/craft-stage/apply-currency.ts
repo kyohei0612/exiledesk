@@ -77,7 +77,6 @@ import { tr } from "../../i18n/lang";
 export { GNAWED_MAX_ILVL } from "./stage-core";
 import { GNAWED_MAX_ILVL } from "./stage-core";
 import { applyBySpec } from "./spec/run-spec";
-import { isAlloyKey } from "./spec/essence-specs";
 
 /** カレンシーのキー (price-keys.json) → 種類と強さ */
 function parseKey(key: string): { kind: string; strength: "base" | "greater" | "perfect" } {
@@ -177,8 +176,7 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   if (isDispose(currency)) return applyDispose(item, currency);
   if (item.identified === false && currency !== "wisdom") return skip(item, tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)"));
   // ADR-004 (2026-10-16): 移し終えた手は説明文の分解 (spec/) で打つ。指名・結果の指定・まだ移していない手は今の関数で。
-  // 合金 + 結晶化のお告げは今の関数のまま (説明文ではお告げが効かないが、ゲームで未確認。docs/reviews/2026-10-16-adr-004-orbs-diff.md の A)
-  if (!hint.legacy && !hint.pick && !hint.remove && !hint.outcome && !hint.collect && !(isAlloyKey(currency) && omens.some((o) => /Crystallisation$/.test(o)))) {
+  if (!hint.legacy && !hint.pick && !hint.remove && !hint.outcome && !hint.collect) {
     const s = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst });
     if (s) return s;
   }
