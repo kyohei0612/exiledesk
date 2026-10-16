@@ -221,26 +221,32 @@ const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離す�
  * 押した人はそのベースのエミュレーターへ。結果は全部 URL に入れる (サーバーは何も保存しない)
  */
 const inApp = isTauriRuntime();
-const shareUrl = computed(() => {
+/** 中身を縮めて URL に (server/web/og-card.js の PACK と同じ並び: [l, b, bn, m, n, a, r, md, u, c] を deflate → base64url) */
+async function packCard(v: Array<string | number | null>): Promise<string> {
+  const bytes = new Uint8Array(await new Response(new Blob([JSON.stringify(v)]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+  let bin = "";
+  for (const x of bytes) bin += String.fromCharCode(x);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+const shareUrl = ref("");
+watch([result, () => stats.value, isEn], async () => {
   const r = result.value;
-  if (!r?.hit) return "";
+  if (!r?.hit) { shareUrl.value = ""; return; }
   const st = stats.value && statsFor.value === sig() ? stats.value : null;
-  const q = new URLSearchParams({
-    l: isEn.value ? "en" : "ja",
-    b: s.base.value,
-    bn: isEn.value ? s.base.value : (s.item.value?.baseJa ?? s.base.value),
-    m: s.aims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", ")),
-    k: nameOf(key.value),
-    n: String(r.uses),
-  });
-  const art = baseArtFile(s.base.value);
-  if (art) q.set("a", art);
-  if (r.rank != null) q.set("r", String(r.rank));
-  if (st && medianOf(st) != null) q.set("md", String(medianOf(st)));
-  if (st && unluckyOf(st) != null) q.set("u", String(unluckyOf(st)));
-  if (cost(r.applied)) q.set("c", cost(r.applied));
-  return `${inApp ? "https://exiledesk.com" : location.origin}/s/spam?${q.toString()}`;
-});
+  const code = await packCard([
+    isEn.value ? "en" : "ja",
+    s.base.value,
+    isEn.value ? s.base.value : (s.item.value?.baseJa ?? s.base.value),
+    s.aims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", ")),
+    r.uses,
+    baseArtFile(s.base.value),
+    r.rank,
+    st ? medianOf(st) : null,
+    st ? unluckyOf(st) : null,
+    cost(r.applied) || null,
+  ]);
+  shareUrl.value = `${inApp ? "https://exiledesk.com" : location.origin}/s/${code}`;
+}, { immediate: true });
 const shareText = computed(() => {
   const r = result.value;
   if (!r?.hit) return "";

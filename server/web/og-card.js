@@ -14,23 +14,33 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const num = (v, max = 1e7) => { if (v == null || v === "") return null; const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 && n <= max ? n : null; };
 const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
 
-/** URL の ? から中身を読む (変な値は捨てる) */
-function readCard(url) {
-  const q = url.searchParams;
-  const en = q.get("l") === "en";
-  const rank = num(q.get("r"), 100);
+/**
+ * 中身を読む (変な値は捨てる)。get(名前) で 1 つずつ。
+ * 短い形 (/s/<code>): 中身の JSON の配列 [l, b, bn, m, n, a, r, md, u, c] を deflate して base64url にした物 (日本語をそのまま URL に入れると長すぎた。2026-10-16 オーナーのスマホで)
+ */
+const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c"];
+async function unpack(code) {
+  const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
+  const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
+  const json = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+  const arr = JSON.parse(json);
+  if (!Array.isArray(arr)) throw new Error("pack");
+  const m = new Map(PACK.map((k, i) => [k, arr[i] == null ? null : String(arr[i])]));
+  return (k) => m.get(k) ?? null;
+}
+function readCard(get) {
+  const rank = num(get("r"), 100);
   return {
-    en,
-    base: cut(q.get("b"), 60),
-    baseName: cut(q.get("bn") || q.get("b"), 40),
-    art: /^[A-Za-z0-9_]{1,80}$/.test(q.get("a") ?? "") ? q.get("a") : null,
-    mods: cut(q.get("m"), 120),
-    orb: cut(q.get("k"), 30),
-    uses: num(q.get("n")),
+    en: get("l") === "en",
+    base: cut(get("b"), 60),
+    baseName: cut(get("bn") || get("b"), 40),
+    art: /^[A-Za-z0-9_]{1,80}$/.test(get("a") ?? "") ? get("a") : null,
+    mods: cut(get("m"), 120),
+    uses: num(get("n")),
     rank: rank && rank >= 1 ? rank : null,
-    median: num(q.get("md")),
-    unlucky: num(q.get("u")),
-    cost: cut(q.get("c"), 20),
+    median: num(get("md")),
+    unlucky: num(get("u")),
+    cost: cut(get("c"), 20),
   };
 }
 
@@ -52,8 +62,7 @@ function descOf(c) {
 }
 
 /** X などが読むページ。人は JS でそのベースのエミュレーターへ (クローラーは JS を動かさないので OGP だけ読む) */
-function sharePage(url, c) {
-  const img = `${url.origin}/og/spam.png${url.search}`;
+function sharePage(url, c, img) {
   const to = `/?base=${encodeURIComponent(c.base || "Gold Ring")}`;
   const t = esc(titleOf(c)), d = esc(descOf(c));
   return new Response(`<!doctype html><html lang="${c.en ? "en" : "ja"}"><head><meta charset="utf-8">
@@ -166,18 +175,26 @@ async function cardImage(url, env, c) {
   }).arrayBuffer();
 }
 
-/** /s/spam と /og/spam.png だけ受ける。違えば null (呼んだ側が今まで通りに続ける) */
+/** /s/<code> (と古い形の /s/spam?…) と /og/<code>.png (/og/spam.png?…) だけ受ける。違えば null (呼んだ側が今まで通りに続ける) */
 export async function ogCard(request, env, ctx) {
   const url = new URL(request.url);
-  if (url.pathname === "/s/spam") return sharePage(url, readCard(url));
-  if (url.pathname !== "/og/spam.png") return null;
+  const page = /^\/s\/([A-Za-z0-9_-]{8,1500})$/.exec(url.pathname);
+  const pic = /^\/og\/([A-Za-z0-9_-]{8,1500})\.png$/.exec(url.pathname);
+  if (url.pathname === "/s/spam") return sharePage(url, readCard((k) => url.searchParams.get(k)), `${url.origin}/og/spam.png${url.search}`);
+  if (page) {
+    let get;
+    try { get = await unpack(page[1]); } catch { return Response.redirect(`${url.origin}/`, 302); }
+    return sharePage(url, readCard(get), `${url.origin}/og/${page[1]}.png`);
+  }
+  if (url.pathname !== "/og/spam.png" && !pic) return null;
   const cache = caches.default;
   const key = new Request(url.toString(), { method: "GET" });
   const hit = await cache.match(key);
   if (hit) return hit;
   let res;
   try {
-    const png = await cardImage(url, env, readCard(url));
+    const get = pic ? await unpack(pic[1]) : (k) => url.searchParams.get(k);
+    const png = await cardImage(url, env, readCard(get));
     res = new Response(png, { headers: { "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" } });
   } catch {
     // 作れなかった時はサイトの共通の絵
