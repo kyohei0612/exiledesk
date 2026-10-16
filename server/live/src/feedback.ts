@@ -195,7 +195,9 @@ export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetc
   try {
     const form = new FormData();
     form.append("payload_json", JSON.stringify({ content, allowed_mentions: { parse: [] } }));
-    if (fb.context) form.append("files[0]", new Blob([JSON.stringify(fb, null, 1)], { type: "application/json" }), `feedback-${fb.id}.json`);
+    // IP は Discord に送らない (2026-10-16 オーナー。Discord では 90 日で消えない。IP は KV の要望にだけ残る)
+    const { ip: _ip, ...shared } = fb;
+    if (fb.context) form.append("files[0]", new Blob([JSON.stringify(shared, null, 1)], { type: "application/json" }), `feedback-${fb.id}.json`);
     appendImages(form, images, fb.id);
     const r = await fetchFn(webhook, { method: "POST", body: form });
     return r.ok;

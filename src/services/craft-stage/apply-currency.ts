@@ -45,6 +45,12 @@ export const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "
 /** 品質の上限を手で決める手 (`qcap:40`)。品質の帯のプルダウン (2026-10-10 オーナー「エッセンス打つのが面倒な人はプルダウンで上限上げてね」) */
 export const QUALITY_CAP = "qcap:";
 export const qualityCapKey = (n: number): string => `${QUALITY_CAP}${n}`;
+/**
+ * アイテムレベルを変える手 (`ilvl:84`)。カオススパム確率機で狙いごとにアイテムレベルを選んで回した時に、手順にこの手を入れる
+ * (2026-10-16 オーナー「MOD 決めた時点で再度レベル変わるからそこ都度都度」。前は手順の始めのアイテムレベルを書き換えていて、前の手まで別物になった)。費用 0
+ */
+export const ITEM_LEVEL_SET = "ilvl:";
+export const itemLevelKey = (n: number): string => `${ITEM_LEVEL_SET}${n}`;
 /** 今の品質の上限: 手で決めた値があればそれ、無ければ足し算 (ベース + 品質の最大値の MOD + インフューザー) */
 export function qualityCapOf(item: StageItem): number {
   return item.qualityCap ?? qualityFieldMax(item);
@@ -156,6 +162,10 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   if (isEmotion(currency)) return applyEmotion(data, item, currency, rng);
   if (isUnsocket(currency)) return applyUnsocket(item, currency);
   // 品質を手で決める (アイテムのカードの品質の欄。2026-10-10 要望「品質欄を付けて防御値がシミュレーションできると便利」)。費用 0、コラプト後も試せる
+  if (currency.startsWith(ITEM_LEVEL_SET)) {
+    const lv = Math.max(1, Math.min(100, Number(currency.slice(ITEM_LEVEL_SET.length)) || 0));
+    return { applied: true, item: { ...item, itemLevel: lv }, added: [], removed: [] };
+  }
   if (currency.startsWith(QUALITY_CAP)) {
     const cap = Math.max(0, Number(currency.slice(QUALITY_CAP.length)) || 0);
     return { applied: true, item: { ...item, qualityCap: cap, quality: Math.min(item.quality, cap) }, added: [], removed: [] };

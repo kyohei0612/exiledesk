@@ -27,6 +27,7 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { openExternal } from "../../services/trade2/open-external";
 import { baseArtFile } from "../../services/craft-stage/base-art";
 import { playSfx } from "../../utils/sfx";
+import { itemLevelKey } from "../../services/craft-stage/apply-currency";
 
 const targets = computed<AimTarget[]>(() => spamAims.value.map((a) => ({ modId: a.modId, minTierIndex: a.minTierIndex })));
 /** 今打てるカオス (普通・上級・完全。アイテムレベルが足りない物などは出さない) */
@@ -44,9 +45,8 @@ const floor = computed(() => Math.max(1, ...targets.value.map((t) => s.data.valu
 const ilvl = ref(82);
 // 既定は今のアイテムのアイテムレベル (エミュレーターで選んでいる物)。それが下限より低い時だけ、下限以上で一番近い段に上げる
 // (2026-10-16 オーナー「導線的におかしくないように」: エミュレーターが 65 なのに確率機が 45 で開き、回すと 45 に下がっていた)
-watch([floor, () => s.itemLevel.value], ([f]) => {
+watch([floor, () => s.item.value?.itemLevel ?? s.itemLevel.value], ([f, now]) => {
   if (spamming.value) return;
-  const now = s.itemLevel.value;
   ilvl.value = ILVLS.includes(now) && now >= f ? now : ILVLS.find((x) => x >= Math.max(f, now)) ?? ILVLS[ILVLS.length - 1]!;
 }, { immediate: true });
 /** そのアイテムレベルにした今のアイテム (計算と自分のスパムの始まり) */
@@ -163,8 +163,12 @@ function startSpam(e: PointerEvent): void {
   if (!cont) {
     snap = s.snapshot();
     snapIlvl = s.itemLevel.value;
-    // 選んだアイテムレベルにしてから回す (スパムの前に戻すと元のアイテムレベルに戻る)
-    if (s.item.value && s.item.value.itemLevel !== ilvl.value) { s.restore({ ...snap, item: atIlvl(s.item.value) }); s.itemLevel.value = ilvl.value; }
+    // 選んだアイテムレベルにしてから回す (スパムの前に戻すと元のアイテムレベルに戻る)。もう手を打っていれば「アイテムレベルを変える手」を手順に入れる
+    // (2026-10-16 オーナー「MOD 決めた時点で再度レベル変わるから都度都度」。始めのアイテムレベルを書き換えると前の手まで別物で再生されていた)
+    if (s.item.value && s.item.value.itemLevel !== ilvl.value) {
+      if (s.log.value.length || snap.dropped.length) s.use(itemLevelKey(ilvl.value), { quiet: true });
+      else { s.restore({ ...snap, item: atIlvl(s.item.value) }); s.itemLevel.value = ilvl.value; }
+    }
     startItem = s.item.value;
     result.value = null;
   }

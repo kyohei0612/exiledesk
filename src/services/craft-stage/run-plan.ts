@@ -133,6 +133,7 @@ export function stepJa(currency: string, item: StageItem): string {
   if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `品質を ${n}% に${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
   if (currency.startsWith("cqset:")) { const [n, tag] = currency.slice(6).split(":"); return `カタリストの品質を ${n}% に (${qualityLabelOf(tag)})`; }
   if (currency.startsWith("qcap:")) return `品質の上限を ${currency.slice(5)}% に`;
+  if (currency.startsWith("ilvl:")) return `アイテムレベルを ${currency.slice(5)} に`;
   if (currency.startsWith("iset:")) return `暗黙 MOD の値を ${currency.split(":")[2]} に`;
   if (isEmotion(currency)) return jewelEmotionJa(emotionNameOf(currency)) ?? emotionNameOf(currency);
   if (isRune(currency)) {
@@ -158,6 +159,7 @@ export function stepEn(currency: string): string | null {
   if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `Set quality to ${n}%${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
   if (currency.startsWith("cqset:")) { const [n, tag] = currency.slice(6).split(":"); return `Set Catalyst quality to ${n}% (${qualityLabelOf(tag)})`; }
   if (currency.startsWith("qcap:")) return `Set max quality to ${currency.slice(5)}%`;
+  if (currency.startsWith("ilvl:")) return `Set item level to ${currency.slice(5)}`;
   if (currency.startsWith("iset:")) return `Set implicit value to ${currency.split(":")[2]}`;
   const rk = isRune(currency) ? parseRuneKey(currency) : null;
   if (rk) return rk.socket ? `${rk.en} (socket ${rk.socket})` : rk.en;
