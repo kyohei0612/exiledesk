@@ -898,7 +898,7 @@ export const seedsOf = (spec: Pick<RecipeSpec, "seed" | "runs" | "maxSteps">): n
   return Array.from({ length: spec.runs }, (_, i) => seed0 + i * gap);
 };
 
-/** 何百回も回してまとめる (画面に手を返しながら。1 本で回す。並列は recipe-parallel.ts) */
+/** 何百回も回してまとめる (画面に手を返しながら) */
 export async function runRecipe(spec: RecipeSpec, onProgress?: (done: number, total: number) => void, stopped?: () => boolean): Promise<RecipeResult | null> {
   const seeds = seedsOf(spec);
   const runs: RunLite[] = [];

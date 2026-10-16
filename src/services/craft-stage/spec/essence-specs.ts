@@ -78,7 +78,6 @@ export const ALLOY_SPEC: CurrencySpec = {
   kind: "essence_perfect",
   text: { en: PERFECT_TEXT.en, ja: ["ランダムなモッドを1個取り除き、[Rarity|レア]アイテムに確定で新しいモッドを追加する"] },
 };
-export const ESSENCE_SPECS: readonly CurrencySpec[] = [ESSENCE_SPEC, PERFECT_ESSENCE_SPEC, ABYSS_ESSENCE_SPEC, ALLOY_SPEC];
 /** 合金か (クライアントの名前の「Alloy」。エッセンスの鍵の表に一緒に入っている) */
 export const isAlloyKey = (key: string): boolean => / Alloy$/.test(ESSENCE_KEYS[key]?.en ?? "");
 

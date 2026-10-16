@@ -43,8 +43,6 @@ export const OMEN_EXCLUSIVE: readonly (readonly string[])[] = [
   ["OmenofSinistralNecromancy", "OmenofDextralNecromancy"],
   ["OmenoftheSovereign", "OmenoftheLiege", "OmenoftheBlackblooded"],
 ];
-/** 棚に出す順 (手の種類ごと) */
-export const OMEN_SHELF: readonly string[] = Object.values(OMEN_FOR).flat();
 /** 効果の規則をまだ入れていない物 (棚には出すが打つと理由を返す)。2026-09-27 にヴァール・腐食・聖別を入れて空 */
 export const UNMODELLED_OMENS: readonly string[] = [];
 /** 勢力のお告げ → 冒涜の MOD のタグ (エンジンの DES_BOSS_TAG と同じ) */

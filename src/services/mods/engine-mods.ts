@@ -31,8 +31,6 @@ onHtcPatchLoaded((d) => { data ??= d; });
 export async function prepareEngineMods(): Promise<void> {
   data ??= await loadHtcPatch();
 }
-/** 読んであれば返す (テスト・確かめ用) */
-export const engineData = (): PatchData | null => data;
 
 const NL = String.fromCharCode(10);
 

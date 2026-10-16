@@ -68,11 +68,8 @@ export const inAny = (category: string, gs: readonly ItemGroup[]): boolean => gs
 
 /** フラクチャー / コラプト / レアにできるか (クライアントの ItemClasses) */
 export const canFracture = (category: string): boolean => rowOf(category)?.fracture ?? false;
-export const canCorrupt = (category: string): boolean => rowOf(category)?.corrupt ?? false;
 /** 可能性のオーブが使えるか (Chanceableitemclasses) */
 export const chanceable = (category: string): boolean => rowOf(category)?.chanceable ?? false;
-/** エッセンス・ルーン (ソウルコア) の部位の区分 (クライアントの EssenceTargetItemCategories / SoulCoreStatCategories の Id) */
-export const essenceGroupsOf = (category: string): readonly string[] => rowOf(category)?.essence ?? [];
 export const soulCoreGroupsOf = (category: string): readonly string[] => rowOf(category)?.soulCore ?? [];
 
 /**

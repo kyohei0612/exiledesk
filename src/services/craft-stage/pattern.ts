@@ -6,7 +6,7 @@
  * 打てない物を理由つきで選べなくする (オーナー「ルーン嵌めてないのにコルの MOD とか、エッセンス 2 回目とか、選択できずにグレーアウト、理由も」)。
  * 状態は「狙いが当たった」として前の手から積む (外れは見ない。並べる時の目安)。回すのは recipe-sim.ts の pattern
  */
-import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
 import { bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
 import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
@@ -22,11 +22,6 @@ const ESS_SOURCE = new Map<string, "essence" | "perfect_essence">(Object.keys(ES
 export type PatternKind = "transmute" | "augment" | "regal" | "alchemy" | "exalt" | "chaos" | "desecrate" | "essence" | "essence_perfect" | "annul" | "rune" | "fracture";
 /** 外れた時: そのまま次へ / 同じ手をもう一度 / 外れを消去してもう一度 / 最初から (フラクチャー済みのベースから) */
 export type MissRule = "next" | "annul_next" | "redo" | "annul_redo" | "restart" | "reset";
-/**
- * annul_next: 外れが狙いの側に付いて埋まっていたら消去してから次へ (反対の側なら残して次へ)。レアリティが変わる手 (変成など) 用。
- * 2026-10-08 オーナー「1 手目から消去の下りの選択肢ないと 2 手目から表示も変。順番に案内して設定させてあげないと中途半端」
- */
-export const MISS_JA: Record<MissRule, string> = { next: "そのまま次へ", annul_next: "狙いの側の狙い以外を消して次へ", redo: "同じ手をもう一度", annul_redo: "外してもう一度", restart: "最初からやり直す", reset: "1 MOD 残し消去 (スパムまでリセット)" };
 
 export interface PatternStep {
   /** セットのキー (PatternSet.key) */
@@ -93,8 +88,6 @@ export interface PatternStep {
  * pre は set の前に打つ形の変わらない物 (触媒で品質を足してから触媒の高貴、など。2026-10-09 オーナー「触媒打ったら品質消えるから足す作業」)
  */
 export interface PolicyAct { set?: string; pre?: string[]; then?: "next" | "restart" | "goto" | "reset" | "miss"; goto?: number; /** 自動で入れた (前の手の始めと同じ形 → その手へ) */ auto?: boolean }
-/** 状態のキー (狙いの側の当たり h・狙い以外 j) */
-export const policyKey = (h: number, j: number): string => `${h}-${j}`;
 /**
  * 1 つの手で起こりうる状況。
  *   pre_full … 打つ前に狙いの側が狙い以外で埋まっている (6 MOD・ルーンで 7 MOD の時も)
@@ -102,14 +95,6 @@ export const policyKey = (h: number, j: number): string => `${h}-${j}`;
  *   miss_t   … 狙い以外が狙いの側に付いた / miss_o … 狙い以外が反対の側に付いた / miss … 狙い以外 (側が決まらない手)
  */
 export type Situation = "pre_full" | "partial" | "miss_t" | "miss_o" | "miss";
-// 短く (2026-10-08 オーナー「日本語シンプルに、ややこしい」)
-export const SITUATION_JA: Record<Situation, string> = {
-  pre_full: "打つ前に狙う側が狙い以外で満杯",
-  partial: "一部だけ付いた",
-  miss_t: "狙い以外 (狙う側)",
-  miss_o: "狙い以外 (反対側)",
-  miss: "狙い以外",
-};
 /**
  * 状況への反応: 先に打つ物 (消去・カオス・パーフェクトエッセンス・骨。セットのキー、無ければ打たない) → 次にすること。
  * repeat はこの手をもう一度 (again があればその打ち方で: 偉大を外した 1 発など)、next は次の手、restart は新しいベースで最初から、goto は N 手目 (0 始まり)
@@ -188,8 +173,6 @@ export function patternSets(cls: ItemBase): PatternSet[] {
   out.push(set("rune", "", [], "ルーン"));
   return out;
 }
-/** レアリティが変わる手 (外れても外してやり直せない) */
-export const RARITY_CHANGE = new Set<PatternKind>(["transmute", "regal", "alchemy", "essence"]);
 /**
  * 付ける物「何が付いてもいい (打つだけ)」(2026-10-07 オーナー「高貴だけ適当に打って、それを犠牲にエッセンスを選んだりする、打つってだけの選択肢も欲しい」)。
  * 外れが無い手。回す時は付ける物無し (打って次へ)。使えるのはランダムに MOD が付く物だけ
@@ -213,66 +196,6 @@ export const LOST_RESTART = -1;
 /** 打ち直せない手 (マジックにしか打てない・レアリティが変わる)。ここで付けた物が消えたら最初から */
 export const ONCE_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "essence"]);
 export const isRest = (t: string | null | undefined): t is string => !!t && t.startsWith(REST);
-/** その手の候補 (target・target2・target3) */
-export const candsOfStep = (st: PatternStep | undefined): string[] => (st ? [st.target, st.target2, st.target3].filter((x): x is string => !!x && x !== ANY_TARGET && !isRest(x)) : []);
-/** 候補が付く数より多い (どれが付くか分からない) 手か */
-export function uncertainStep(sets: readonly PatternSet[], st: PatternStep | undefined): boolean {
-  const s = st ? setByKey(sets, st.set) : undefined;
-  // フラクチャーの候補は前の手でもう付いている物なので、「残り」の手は要らない (2026-10-08 オーナー「候補、足せるようにして」)
-  return !!s && hasCands(s) && s.kind !== "fracture" && candsOfStep(st).length > (isDouble(s) ? 2 : 1);
-}
-/** 「残り」の手が狙う候補 (元の手の候補ぜんぶ。全部揃ったら当たり) */
-export const restMembers = (steps: readonly PatternStep[], target: string): string[] => candsOfStep(steps[Number(target.slice(REST.length))]);
-/** 偉大の手の既定の 1 発 (同じカレンシーで偉大だけ外す) のセットのキー */
-export const singleKeyOf = (s: PatternSet): string => `${s.kind}|${s.currency}|${s.omens.filter((o) => o !== "OmenofGreaterExaltation").join("+")}`;
-/**
- * 「打つだけ」で選べる物: ルーン以外の全部 (消去・エッセンスも。手で打つ画面の棚と同じ。打てるかは checkSet が見る)。
- * 2026-10-07 オーナー「白ベースから始める時、途中でカオススパムの仕組みを自分で実験しようと思ったら消去とかが打てない。打つだけを選んだら今使えるカレンシーを全部出して」
- */
-export const ANY_KINDS = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "desecrate", "essence", "essence_perfect", "annul"]);
-/** 打つだけの手で増える MOD の数 (側は分からない。錬金は 4 つ、カオスとパーフェクトエッセンスは入れ替え、消去は 1 つ減る) */
-const ANY_ADDS: Partial<Record<PatternKind, number>> = { transmute: 1, augment: 1, regal: 1, alchemy: 4, exalt: 1, desecrate: 1, essence: 1, annul: -1 };
-const sideOf = (omens: readonly string[]): "prefix" | "suffix" | null =>
-  omens.some((o) => PREFIX_OMENS.has(o)) ? "prefix" : omens.some((o) => SUFFIX_OMENS.has(o)) ? "suffix" : null;
-const SIDE_JA = { prefix: "プレフィックス", suffix: "サフィックス" } as const;
-/**
- * やり直しのカレンシーで、外れた MOD を消せない理由 (消せれば null)。2026-10-07 オーナー「やり直せない奴は選択させない、
- * そのMODが消えない奴は選択できない」。外れが付く側は、付ける手の側のお告げで決まる (無ければどちらか分からないので、側の決め打ちは止めない)
- */
-export function checkRemoval(add: PatternSet, rm: PatternSet): string | null {
-  if (RARITY_CHANGE.has(add.kind)) return "この手はレアリティが変わるので、外してやり直せない";
-  if (rm.kind === "chaos" && add.kind === "augment") return "カオスはレアだけ (この手はマジック)";
-  if (rm.omens.includes("OmenofLight") && add.kind !== "desecrate") return "光のお告げは冒涜の MOD だけ消す (外れは普通の MOD)";
-  if ((rm.kind === "essence_perfect" || rm.kind === "desecrate") && add.kind === "augment") return "レアだけ (この手はマジック)";
-  if (rm.kind === "desecrate" && add.kind === "desecrate") return "冒涜の MOD は 1 つまで (外れの冒涜は光か消去で外す)";
-  const junk = add.kind === "exalt" || add.kind === "desecrate" ? sideOf(add.omens) : null;
-  const only = sideOf(rm.omens);
-  if (junk && only && junk !== only) return `外れは${SIDE_JA[junk]}に付くので、${SIDE_JA[only]}だけを消すお告げでは消えない`;
-  return null;
-}
-/** 外す時に使えるセット (消去・カオス) */
-/**
- * 外す時に使えるセット: 消去・カオス・パーフェクトエッセンス (結晶化で外れの側を上書き)・冒涜 (骨 + 側のネクロマンシーで外れの側を置き換え)。
- * 2026-10-07 オーナー「やり直し効く奴沢山あるでしょ、エッセンスとか冒涜系」
- */
-export const removalSets = (sets: readonly PatternSet[]): PatternSet[] =>
-  sets.filter((x) => x.kind === "annul" || x.kind === "chaos" || x.kind === "essence_perfect" || (x.kind === "desecrate" && !x.omens.some((o) => FACTION_OMEN[o])));
-/**
- * シミュレーションの基本情報 (始めのレアリティ・ソケット・部位) で、そもそも使わない物を外す (灰色で並べない)。
- * 2026-10-07 オーナー「フラクチャー品だし、フラクチャー後なんだからレアだろ、基本情報連携してくれ、一括管理なんだからわかるだろ」。
- * フラクチャー済み (レア) から始めるなら変成・増強・王者・錬金・マジックのエッセンスは出さない。ソケットが 0 ならルーン、勢力のお告げが効かない部位なら勢力、
- * 触媒の高貴はパターンにカタリストの手が無いので出さない
- */
-export function setsForStart(sets: readonly PatternSet[], cls: ItemBase, start: CheckCtx["start"]): PatternSet[] {
-  const magicOnly = new Set<PatternKind>(["transmute", "augment", "regal", "alchemy", "essence"]);
-  // 手打ちの状態 (mods) から始める時は、固定が無ければレアでも自前のフラクチャーを出す
-  const noFracture = start.mods ? !!start.mods.fractured : start.rarity === "rare";
-  return sets.filter((x) =>
-    !(start.rarity === "rare" && magicOnly.has(x.kind)) && !(x.kind === "fracture" && noFracture)
-    && !(x.kind === "rune" && start.sockets <= 0)
-    && !(x.omens.some((o) => FACTION_OMEN[o]) && !bossOmenAllowed(cls.category))
-    && !x.omens.includes("OmenofCatalysingExaltation"));
-}
 export const setByKey = (sets: readonly PatternSet[], key: string): PatternSet | undefined => sets.find((x) => x.key === key);
 
 /** 狙う MOD の手順 (simTargets の 1 つ) */
@@ -314,64 +237,6 @@ export interface CheckCtx {
   };
 }
 
-export function stateBefore(ctx: CheckCtx, steps: readonly PatternStep[], upTo: number): PatternState {
-  const st: PatternState = {
-    rarity: ctx.start.rarity,
-    prefix: ctx.start.mods?.prefix ?? (ctx.start.fracturedSide === "prefix" ? 1 : 0),
-    suffix: ctx.start.mods?.suffix ?? (ctx.start.fracturedSide === "suffix" ? 1 : 0),
-    limits: { prefix: ctx.cls.limits?.prefixes ?? 3, suffix: ctx.cls.limits?.suffixes ?? 3 },
-    runes: new Set(), socketsLeft: ctx.start.sockets, essences: ctx.start.mods?.essences ?? 0, essenceLimit: 1, desecrated: ctx.start.mods?.desecrated ?? 0,
-    placed: new Set(ctx.start.mods?.placed ?? []), maybe: new Set(), fractured: ctx.start.mods?.fractured ?? null, junk: 0,
-  };
-  for (let i = 0; i < upTo && i < steps.length; i++) {
-    const p = steps[i]!;
-    const s = setByKey(ctx.sets, p.set);
-    if (!s) continue;
-    if (s.kind === "rune") {
-      if (p.target) { st.runes.add(p.target); st.socketsLeft--; if (p.target === "Astrid's Creativity") st.essenceLimit = 2; }
-      continue;
-    }
-    if (s.kind === "fracture") { if (p.target) st.fractured = p.target; continue; }
-    if (s.kind === "transmute") st.rarity = "magic";
-    if (s.kind === "regal" || s.kind === "alchemy" || s.kind === "essence") st.rarity = "rare";
-    if (isRest(p.target)) {
-      // 残り: 元の手で付かなかった数だけ枠を使い (3 つのどれか 1 つの後なら 2 つ)、元の手の候補は全部付いた物になる
-      const ms = restMembers(steps, p.target);
-      const src = steps[Number(p.target.slice(REST.length))];
-      const srcSet = src ? setByKey(ctx.sets, src.set) : undefined;
-      const left = Math.max(1, ms.length - (isDouble(srcSet) ? 2 : 1));
-      if (ms[0]) st[ctx.data.mods.get(ms[0])?.type === "suffix" ? "suffix" : "prefix"] += left;
-      for (const id of ms) st.placed.add(id);
-      // 骨で残りを付けた時も冒涜の数に入れる (2026-10-07 靴で骨を 2 回組めてしまい、回すと全部「冒涜の MOD は 1 つまで」で止まった)
-      if (s.kind === "desecrate") st.desecrated++;
-      continue;
-    }
-    if (p.target === ANY_TARGET) {
-      st.junk = Math.max(0, st.junk + (ANY_ADDS[s.kind] ?? 0));
-      if (s.kind === "desecrate") st.desecrated++;
-      // 光のお告げの消去は冒涜の MOD を消すので、その後にまた骨を打てる (2026-10-08 レビュー E4: 減らしていなくて、フラクチャー後の骨が組めなかった)
-      if (s.kind === "annul" && s.omens.includes("OmenofLight")) st.desecrated = Math.max(0, st.desecrated - 1);
-      if (s.kind === "essence" || s.kind === "essence_perfect") st.essences++;
-      continue;
-    }
-    const t = ctx.targets.find((x) => x.modId === p.target);
-    if (!t) continue;
-    // 前の手で狙って外れたかもしれない物をもう一度狙う手: 枠はもう数えてある。外れても次へ進まない手なら、ここで確かに付く
-    if (st.maybe.has(p.target!)) {
-      if (p.onMiss !== "next" && p.onMiss !== "annul_next") st.maybe.delete(p.target!);
-      continue;
-    }
-    // 候補のどれか (偉大は 2 つ) が付く。どれが付くか分からない時は、付いた物 (placed) には入れず枠だけ数える
-    const cands = [t, ...(hasCands(s) ? ctx.targets.filter((y) => y.modId === p.target2 || y.modId === p.target3) : [])];
-    const need = isDouble(s) ? 2 : 1;
-    for (const x of cands.slice(0, need)) st[ctx.data.mods.get(x.modId)?.type === "suffix" ? "suffix" : "prefix"] += 1;
-    if (cands.length <= need) for (const x of cands) { st.placed.add(x.modId); if ((p.onMiss === "next" || p.onMiss === "annul_next") && need === 1) st.maybe.add(x.modId); }
-    if (s.kind === "essence" || s.kind === "essence_perfect") st.essences++;
-    if (s.kind === "desecrate") st.desecrated++;
-  }
-  return st;
-}
-
 /** セットを打てない理由 (打てれば null) */
 export function checkSet(ctx: CheckCtx, st: PatternState, s: PatternSet): string | null {
   const need = (r: PatternState["rarity"], ja: string): string | null => (st.rarity === r ? null : `${ja}にだけ使える (この時点で${st.rarity === "normal" ? "ノーマル" : st.rarity === "magic" ? "マジック" : "レア"})`);
@@ -410,64 +275,6 @@ export function checkSet(ctx: CheckCtx, st: PatternState, s: PatternSet): string
   return null;
 }
 
-/** そのセットで付ける物 (狙う MOD) を選べない理由 (選べれば null) */
-export function checkTarget(ctx: CheckCtx, st: PatternState, s: PatternSet, t: PlanTarget): string | null {
-  const m = ctx.data.mods.get(t.modId);
-  if (!m) return "MOD が見つからない";
-  if (t.method === "fracture") return "フラクチャーで固定する MOD";
-  // フラクチャーは前の手で付けた物を固定する (付けるのではない)
-  if (s.kind === "fracture") return !st.placed.has(t.modId) ? "まだ付いていない (固定するのは前の手で付けた MOD)" : st.maybe.has(t.modId) ? "付いていないかもしれない (外れても次へ進む手で狙った物)" : null;
-  const again = st.maybe.has(t.modId);
-  if (st.placed.has(t.modId) && !again) return "前の手で付けた";
-  const side = m.type === "suffix" ? "suffix" : "prefix";
-  const sideJa = side === "prefix" ? "プレフィックス" : "サフィックス";
-  // もう一度狙う物の枠は前の手で数えてある。マジック (増強で付ける時) はプレ・サフィ 1 つずつ
-  // (2026-10-07 オーナー「そこでプレ 2 個 MOD は選べないからな」)
-  const lim = st.rarity === "magic" && s.kind === "augment" ? 1 : st.limits[side];
-  if (!again && st[side] >= lim) return st.rarity === "magic" && s.kind === "augment" ? `マジックは${sideJa} 1 つまで (もう付いている)` : `${sideJa}の枠が埋まる`;
-  if (!again && st.prefix + st.suffix + st.junk >= st.limits.prefix + st.limits.suffix && s.kind !== "chaos" && s.kind !== "essence_perfect") return "枠が全部埋まる (打つだけの手で付いた物も数える)";
-  if (s.omens.some((o) => PREFIX_OMENS.has(o)) && side !== "prefix") return "左 (シニスター) のお告げはプレフィックスだけ";
-  if (s.omens.some((o) => SUFFIX_OMENS.has(o)) && side !== "suffix") return "右 (デクストラル) のお告げはサフィックスだけ";
-  const members = [m, ...(t.alts ?? []).map((a) => ctx.data.mods.get(a.modId)).filter((x): x is Mod => !!x)];
-  switch (s.kind) {
-    case "transmute": case "augment": case "regal": case "alchemy": case "exalt": case "chaos": {
-      if (m.source === "desecrated") return "冒涜の MOD (骨で付ける)";
-      if (m.source === "essence" || m.source === "perfect_essence") return "エッセンスの MOD (エッセンスで付ける)";
-      if (m.rune && !st.runes.has(runeEnOf(ctx, m.rune) ?? "")) return `先に${ctx.runeJa(runeEnOf(ctx, m.rune) ?? m.rune)}を差す (差すと付く MOD)`;
-      return null;
-    }
-    case "desecrate": {
-      // 発現の候補には普通の MOD も入る (apply-desecrate.ts の poolsFor: 普通 + 冒涜 (+ 変質))。エッセンスの MOD は出ない
-      // (2026-10-07: 「冒涜の MOD ではない」で普通の MOD を骨で狙う手が組めなかった)
-      if (m.source === "essence" || m.source === "perfect_essence") return "エッセンスの MOD (エッセンスで付ける)";
-      if (m.rune && !st.runes.has(runeEnOf(ctx, m.rune) ?? "")) return `先に${ctx.runeJa(runeEnOf(ctx, m.rune) ?? m.rune)}を差す (差すと付く MOD)`;
-      const f = s.omens.map((o) => FACTION_OMEN[o]).find(Boolean);
-      if (f && !members.some((x) => x.tags.includes(f))) return "このお告げの勢力の MOD ではない";
-      if (s.currency === "desecrate_altered" && !members.some((x) => x.tags.includes("breach_desecration") || x.source === "desecrated")) return "変質した鎖骨で出ない MOD";
-      return null;
-    }
-    case "essence": case "essence_perfect":
-      // セットのエッセンスで付く MOD だけ (エッセンスごとに MOD が決まっている)
-      if (s.currency) return s.currency.endsWith(`:${t.modId}`) ? null : "このエッセンスで付く MOD ではない";
-      return s.kind === "essence" ? (["lesser", "normal", "greater"].some((lv) => ESS[`essence:${lv}:${t.modId}`]) ? null : "マジックに使うエッセンスが無い MOD") : ESS[`essence:perfect:${t.modId}`] ? null : "パーフェクトエッセンスが無い MOD";
-    default: return null;
-  }
-}
-
-/** 打つだけの手に使えない理由 */
-export function checkAny(st: PatternState, s: PatternSet): string | null {
-  if (!ANY_KINDS.has(s.kind)) return "打つだけには使えない (ルーンは付ける物で選ぶ)";
-  if (s.kind === "exalt" && st.prefix + st.suffix + st.junk >= st.limits.prefix + st.limits.suffix) return "枠が全部埋まっている";
-  return null;
-}
-
-/** ルーンを差す手で選べない理由 */
-export function checkRune(_ctx: CheckCtx, st: PatternState, en: string): string | null {
-  if (st.runes.has(en)) return "前の手で差した";
-  if (st.socketsLeft <= 0) return "ソケットが空いていない";
-  return null;
-}
-
 /** エンジンのルーンの id (kolrs-hunt) → ステージのルーンの英語名 (Kolr's Hunt) */
 let runeEnById: Map<string, string> | null = null;
 function runeEnOf(_ctx: CheckCtx, runeId: string): string | null {
@@ -475,14 +282,3 @@ function runeEnOf(_ctx: CheckCtx, runeId: string): string | null {
   return runeEnById.get(runeId) ?? null;
 }
 export const runeEnForId = (runeId: string): string | null => runeEnOf(null as unknown as CheckCtx, runeId);
-
-/** 外れた時の決まりを選べない理由 (選べれば null) */
-export function checkMiss(s: PatternSet, rule: MissRule): string | null {
-  if (s.kind === "fracture" && rule !== "restart" && rule !== "next") return "フラクチャーはやり直せない (外れたら新しいベースで最初から)";
-  if (rule === "redo" && s.kind === "desecrate") return "冒涜の MOD は 1 つまで (消さないともう一度打てない)";
-  if ((rule === "redo" || rule === "annul_redo") && (s.kind === "transmute" || s.kind === "regal" || s.kind === "alchemy")) return "レアリティが変わるのでもう一度は打てない (次の手で直す)";
-  if (rule === "annul_next" && s.kind !== "transmute") return "変成の手だけ (マジックは側 1 つ。王者・錬金の後は枠が空くので消す必要が無い)";
-  return null;
-}
-/** 外れが無い手 (付ける物が必ず付く / 付ける物が無い) */
-export const noMiss = (s: PatternSet | undefined): boolean => !s || s.kind === "rune" || s.kind === "annul" || s.kind === "essence" || s.kind === "essence_perfect";

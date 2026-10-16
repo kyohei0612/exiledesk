@@ -47,7 +47,6 @@ const INFUSER: Record<string, { groups: ItemGroup[]; ja: string; en: string }> =
 export const INFUSER_CORRUPT_P = 0.25;
 /** アーキテクトオーブで壊れる確率。説明文・poe2wiki の「50%」(有力、要望 ㉞-3) */
 export const ARCHITECT_DESTROY_P = 0.5;
-export const EXTRA_P_CONFIRMED = false;
 
 /** 生贄のオーブの対象 */
 const SACRIFICE: Record<string, { groups: ItemGroup[]; ja: string; en: string }> = {

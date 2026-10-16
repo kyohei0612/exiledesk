@@ -81,6 +81,5 @@ export const QUALITY_MAX = 20;
 export const QUALITY_STEP = { item: 1, gem: 5 } as const;
 /** 装備の品質カレンシーで上がる量の候補 (等分で引く) */
 export const QUALITY_STEP_ITEM_ROLLS: readonly number[] = [1];
-export const QUALITY_STEP_CONFIRMED = true;
 
 

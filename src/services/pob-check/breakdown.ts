@@ -666,9 +666,6 @@ export function modCondText(m: ModRow): string[] {
   return out;
 }
 
-/** 出所の見出しの種類 (画面の札の色・ボタン) */
-export const srcKindJa = (k: ModSrc["kind"]): string => ({ item: "装備", tree: "ノード", gem: "ジェム", config: "設定", base: "基本", other: "その他" })[k];
-
 /** 一覧の並び: 効きの大きい順 (増加・増しは値の絶対値、追加は平均) */
 export const sortMods = (rows: ModRow[]): ModRow[] =>
   [...rows].sort((a, b) => Math.abs(b.min != null && b.max != null ? (b.min + b.max) / 2 : b.value) - Math.abs(a.min != null && a.max != null ? (a.min + a.max) / 2 : a.value));

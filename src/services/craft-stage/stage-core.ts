@@ -11,7 +11,7 @@ import { runeIdByName, withRunes } from "../../vendor/poe2htc/engine/runes";
 import RUNES_JSON from "./stage-runes.json";
 const RUNE_STATS = (RUNES_JSON as { runes: unknown }).runes;
 import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
-import { familyBlocked, familyKeysOf, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
+import { familyBlocked, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfModAlways } from "../htc/mod-text";
 import { filledStatsOf, htcBaseLimits, implicitStatsOf } from "../htc/patch";
@@ -119,11 +119,6 @@ export function extraAllowed(item: StageItem, side: StageSide): number {
 }
 /** その側が上限を超えている (侮蔑を外した後の 3 つ目)。消してもそこへは付け直せない */
 export const overLimit = (item: StageItem, side: StageSide): boolean => item.rarity === "rare" && listOf(item, side).length > limitOf(item, side);
-/** レアにした時の枠 (マジック → レアになる手で見る) */
-export function rareLimitOf(item: StageItem, side: StageSide): number {
-  const lim = effectiveCls(item).limits ?? DEFAULT_LIMITS;
-  return side === "prefix" ? lim.prefixes : lim.suffixes;
-}
 export const listOf = (item: StageItem, side: StageSide): StageMod[] => (side === "prefix" ? item.prefixes : item.suffixes);
 export const room = (item: StageItem, side: StageSide): boolean => listOf(item, side).length < limitOf(item, side);
 export const allMods = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
@@ -159,9 +154,6 @@ export const replaced = (item: StageItem, mod: StageMod, next: StageMod): StageI
 export const skip = (item: StageItem, reason: string): StageApply => ({ applied: false, reason, item, added: [], removed: [] });
 /** 当たり所で弾かれた (打つ前には分からない)。棚の判定では打てる扱い ([[feedback-game-rules-as-written]]) */
 export const skipRandom = (item: StageItem, reason: string): StageApply => ({ ...skip(item, reason), random: true });
-
-/** MOD の系統の鍵 (決まりは services/mods/mod-rules.ts に 1 つ) */
-export const familyKeys = familyKeysOf;
 /** 付いている MOD の系統 (except は除く。発現の時の未発現の枠など) */
 export function takenFamilies(data: PatchData, item: StageItem, except?: StageMod): Set<string> {
   return new Set(allMods(item).filter((m) => m !== except).flatMap((m) => {
@@ -172,13 +164,6 @@ export function takenFamilies(data: PatchData, item: StageItem, except?: StageMo
 /** 付いているエッセンス (クラフト) の MOD の生の系統 (エッセンスを打てるかの判定用。普通の MOD とは同じ系統でも一緒に付く) */
 export function takenCraftedFamilies(data: PatchData, item: StageItem): Set<string> {
   return new Set(allMods(item).filter((m) => m.crafted).flatMap((m) => {
-    const md = data.mods.get(m.modId);
-    return md ? rawFamiliesOf(md) : [m.family];
-  }));
-}
-/** 付いている MOD の生の系統 (エッセンスを打てるかの判定用) */
-export function takenRawFamilies(data: PatchData, item: StageItem): Set<string> {
-  return new Set(allMods(item).flatMap((m) => {
     const md = data.mods.get(m.modId);
     return md ? rawFamiliesOf(md) : [m.family];
   }));
@@ -249,8 +234,6 @@ export function boostedMod(item: StageItem, m: StageMod, data?: PatchData): { va
  */
 export const hasExtraCatalyst = (base: string): boolean =>
   implicitStatsOf(base).some((l) => l.stats.some(([id]) => id === "item_can_have_catalyst_quality_in_addition_to_base_quality"));
-/** 普通のカタリストを打てるか (指輪・アミュレットと、上のベース) */
-export const takesCatalyst = (item: StageItem): boolean => inGroup(item.cls.category, "ringAmulet") || hasExtraCatalyst(item.base);
 /** カタリストの品質 (種類と %)。指輪・アミュレット・ジュエルは品質そのもの (種類が付くのはそこだけ)、上のベースは別の欄 (catalystQuality) */
 export function catalystOf(item: StageItem): { tag: string | null; pct: number } {
   if (hasExtraCatalyst(item.base)) return { tag: item.qualityTag ?? null, pct: item.catalystQuality ?? 0 };

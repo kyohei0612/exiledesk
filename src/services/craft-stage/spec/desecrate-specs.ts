@@ -207,4 +207,3 @@ export const OMEN_SPECS: readonly OmenSpec[] = [
     source: { client: "currency-hover の説明文" },
   },
 ];
-export const OMEN_SPEC_BY_KEY: ReadonlyMap<string, OmenSpec> = new Map(OMEN_SPECS.map((o) => [o.key, o]));

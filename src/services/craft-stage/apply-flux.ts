@@ -21,7 +21,6 @@ export const FLUX: Record<string, { element: string; eats: string[] }> = {
   flux_lightning: { element: "lightning", eats: ["fire", "cold"] },
   flux_chaos: { element: "chaos", eats: ["fire", "cold", "lightning"] },
 };
-export const FLUX_KEYS = Object.keys(FLUX);
 export const isFlux = (key: string): boolean => key in FLUX;
 
 export function applyFlux(data: PatchData, item: StageItem, key: string): StageApply {

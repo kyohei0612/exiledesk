@@ -15,7 +15,6 @@ import stageBases from "./stage-bases.json";
 import basesPob from "./stage-bases-pob.json";
 import gemsRaw from "../../i18n/gems-client.json";
 import vaal from "../../i18n/vaal-enchants.json";
-import { lang } from "../../i18n/lang";
 
 export interface BaseStats {
   cls: string;
@@ -54,17 +53,6 @@ export function reqOfItem(item: StageItem): BaseReq | null {
   const need = Math.max(0, ...mods, ...runes);
   if (!need || (r?.level ?? 0) >= need) return r;
   return { ...(r ?? {}), level: need } as BaseReq;
-}
-/** 要求の言葉 (「要求 Lv 20・器用さ 30・知性 14」)。無ければ "" */
-export function reqText(base: string | StageItem): string {
-  const r = typeof base === "string" ? reqOf(base) : reqOfItem(base);
-  if (!r) return "";
-  if (lang.value === "en") {
-    const en = [r.level ? `Level ${r.level}` : "", r.str ? `${r.str} Str` : "", r.dex ? `${r.dex} Dex` : "", r.int ? `${r.int} Int` : ""].filter(Boolean);
-    return en.length ? `Requires: ${en.join(", ")}` : "";
-  }
-  const parts = [r.level ? `Lv ${r.level}` : "", r.str ? `筋力 ${r.str}` : "", r.dex ? `器用さ ${r.dex}` : "", r.int ? `知性 ${r.int}` : ""].filter(Boolean);
-  return parts.length ? `要求 ${parts.join("・")}` : "";
 }
 
 /** ベースの数値 (無ければ null) */
@@ -111,14 +99,5 @@ export function uniquesOfSameClass(en: string): Array<{ en: string; ja: string }
   if (!cls) return [];
   return Object.entries(UNIQUES).filter(([n, u]) => n !== en && (u as { cls?: string }).cls === cls).map(([n, u]) => ({ en: n, ja: u.ja }));
 }
-/** そのベースと同じ種類 (trade2 のクラス) のユニーク全部 (古代人のお告げ:「同じアイテムクラスのランダムなユニーク」) */
-export function uniquesOfClassForBase(base: string): Array<{ en: string; ja: string }> {
-  const cls = Object.values(UNIQUES).find((u) => u.base === base && (u as { cls?: string }).cls) as { cls?: string } | undefined;
-  if (!cls?.cls) return uniquesForBase(base);
-  return Object.entries(UNIQUES).filter(([, u]) => (u as { cls?: string }).cls === cls.cls).map(([en, u]) => ({ en, ja: u.ja }));
-}
 /** そのユニークのベース (英語名)。無ければ null */
 export const uniqueBaseOf = (en: string): string | null => UNIQUES[en]?.base ?? null;
-export function uniquesForBase(base: string): Array<{ en: string; ja: string }> {
-  return Object.entries(UNIQUES).filter(([, u]) => u.base === base).map(([en, u]) => ({ en, ja: u.ja }));
-}

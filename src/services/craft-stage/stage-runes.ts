@@ -130,7 +130,6 @@ export function runeKeys(tier?: string, kind: RuneRow["kind"] = "rune"): string[
 /** 段の順 (傑作のルーンで 1 つ上へ) */
 const TIER_UP: Record<string, string> = { lesser: "normal", normal: "greater", greater: "perfect" };
 const TIER_PREFIX: Record<string, string> = { lesser: "Lesser ", normal: "", greater: "Greater ", perfect: "Perfect " };
-export const TIER_JA: Record<string, string> = { lesser: "レッサー", normal: "無印", greater: "グレーター", perfect: "パーフェクト" };
 /** そのルーンの 1 段上の英語名 (砂漠のグレータールーン → 砂漠のパーフェクトルーン)。段の無い物・最上段は null */
 export function upgradedRuneOf(en: string): string | null {
   const r = RUNES[en];
