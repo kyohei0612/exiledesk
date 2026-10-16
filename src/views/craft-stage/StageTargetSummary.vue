@@ -300,13 +300,13 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
     </div>
     <!-- プレとサフィにまたがる「どれか」(カオススパム) -->
     <div v-for="g in mixed" :key="g.key" class="min-w-0 md:col-span-2">
-      <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold opacity-70">プレかサフィのどれか <span class="font-normal">(付いた側で打ち方のルートが分かれる)</span></p>
+      <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold opacity-70">プレフィックスかサフィックスのどれか <span class="font-normal">(付いた側で打ち方のルートが分かれる)</span></p>
       <div class="flex items-start gap-1.5 py-0.5 max-md:flex-wrap">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <div class="min-w-0 flex-1 rounded-md bg-[var(--exile-color-bg-elevated)]/60 px-2 py-1 ring-1 ring-white/[0.06]">
           <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
             <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1 rounded bg-black/30 px-1">
-              <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ r.side === "P" ? "プレ" : "サフィ" }}</span>
+              <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ r.side === "P" ? "プレフィックス" : "サフィックス" }}</span>
               <span class="truncate" :title="r.text">{{ r.text }}</span>
               <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
                 <option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option>

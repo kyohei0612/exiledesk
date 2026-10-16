@@ -11,7 +11,7 @@ import type { StageItem, StageMod } from "../services/craft-stage/types";
 const RARITY_JA: Record<string, string> = { normal: "ノーマル", magic: "マジック", rare: "レア", unique: "ユニーク" };
 
 const modLine = (m: StageMod): string =>
-  `${m.side === "prefix" ? "プレ" : "サフィ"}: ${m.textJa.replace(/\n/g, " / ")}${m.fractured ? " (固定)" : ""}${m.desecrated ? " (冒涜)" : ""}${m.crafted ? (m.modId.includes("/Emotion_") ? " (デリリウム)" : " (エッセンス)") : ""}`;
+  `${m.side === "prefix" ? "プレフィックス" : "サフィックス"}: ${m.textJa.replace(/\n/g, " / ")}${m.fractured ? " (固定)" : ""}${m.desecrated ? " (冒涜)" : ""}${m.crafted ? (m.modId.includes("/Emotion_") ? " (デリリウム)" : " (エッセンス)") : ""}`;
 
 /** 打った手を続けて同じ物はまとめて (「カオスオーブ ×21 → 完全なカオスオーブ ×33」)。長い時は最後の方だけ */
 export function stepsJa(log: readonly PlayedStep[], max = 14): string {

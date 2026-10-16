@@ -362,7 +362,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
             :class="hand.reveal.value.lit === i ? 'scale-[1.03] border-rose-300 bg-rose-500/25 text-white shadow-[0_0_18px_rgba(244,63,94,0.6)]' : 'border-white/10 bg-white/[0.03] text-mod-desecrated'"
           >
             <span>{{ modText(m) }}</span>
-            <span class="shrink-0 text-[12px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>
+            <span class="shrink-0 text-[12px] opacity-60">{{ m.side === "prefix" ? "プレフィックス" : "サフィックス" }} {{ m.tierName }}</span>
           </div>
         </div>
 

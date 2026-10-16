@@ -7,7 +7,9 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageItem, StageMod } from "./types";
-import { applyQuizAction, buyStart, routeDone, routeOf, ruleFor, situationOf, type QuizAction, type Situation } from "./quiz-recipe";
+import { applyQuizAction, buyStart, revealWanted, routeDone, routeOf, ruleFor, situationOf, type QuizAction, type Situation } from "./quiz-recipe";
+import { applyCurrency } from "./apply-currency";
+import { revealOffers } from "./apply-desecrate";
 import type { JaEn, QuizTutorial, TutorialRule } from "./quiz-tutorials";
 import { mulberry32 } from "../htc/rng";
 
@@ -24,6 +26,9 @@ export interface TutorialEntry {
 }
 export interface TutorialState {
   tut: QuizTutorial;
+  data: PatchData;
+  /** 発現の問いを出している間の候補 (同じ問いを描き直しても乱数を引き直さない) */
+  pending: { rule: number; rs: number } | null;
   item: StageItem;
   g: () => number;
   seed: number;
@@ -39,20 +44,23 @@ export interface TutorialState {
   /** 止まった理由 (答えが無い・打てない・手の上限) */
   stop: string | null;
 }
-/** 選択肢 1 つ (正解か、外れとその理由) */
-export interface TutorialChoice { do: QuizAction; right: boolean; why?: JaEn }
+/** 選択肢 1 つ (正解か、外れとその理由)。pick = 発現の候補 (key は reveal:n / reveal:n:reroll) */
+export interface TutorialChoice { do: QuizAction; right: boolean; why?: JaEn; pick?: { key: string; mod: StageMod } }
 export interface TutorialQuestion {
   rule: number;
   situation: Situation;
-  /** 3 択 (並びは種で混ぜる)。right が 1 つ */
+  /** 3 択 (並びは種で混ぜる)。right が 1 つ (発現の「どれを選ぶ?」は当たる候補が全部 right) */
   choices: TutorialChoice[];
+  /** 発現の「どれを選ぶ?」(2026-10-17 オーナー「未発現の MOD をクイズに出さなくていい、どれを選ぶ? で選ばせたら」)。
+   * rerolled = 最初の 3 つに狙いが無く、アビスの反響で引き直した 3 つ。none = どれも狙いではない (どれを選んでも後で消す) */
+  reveal?: { rerolled: boolean; none: boolean };
 }
 
 const rulesOf = (t: QuizTutorial): TutorialRule[] => t.recipe.routes[0]!.rules as TutorialRule[];
 
 export function startTutorial(data: PatchData, tut: QuizTutorial, seed = tut.seed): TutorialState {
   const g = mulberry32(seed);
-  return { tut, item: buyStart(data, tut.recipe, g), g, seed, steps: 0, bases: 1, uses: {}, answered: new Set(), log: [], done: false, stop: null };
+  return { tut, data, pending: null, item: buyStart(data, tut.recipe, g), g, seed, steps: 0, bases: 1, uses: {}, answered: new Set(), log: [], done: false, stop: null };
 }
 
 /** 今の状況の問題 (完成・止まった時は null) */
@@ -66,10 +74,48 @@ export function questionOf(st: TutorialState): TutorialQuestion | null {
   if (!r) { st.stop = "unanswered"; return null; }
   const right = rules.indexOf(r as TutorialRule);
   const tr = r as TutorialRule;
+  if ("reveal" in tr.do) return revealQuestion(st, right, sit, tr.do.reveal.echoes);
   const opts: TutorialChoice[] = [{ do: tr.do, right: true }, ...tr.decoys.map((x) => ({ do: x.do, right: false, why: x.why }))];
   const pick = mulberry32(st.seed * 31 + st.steps);
   const choices = opts.map((o) => [pick(), o] as const).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
   return { rule: right, situation: sit, choices };
+}
+
+/** 発現の「どれを選ぶ?」: 出た候補をそのまま選択肢に。最初の 3 つに狙いが無く反響のお告げがあれば、引き直した 3 つ */
+function revealQuestion(st: TutorialState, rule: number, sit: Situation, echoes: boolean): TutorialQuestion {
+  if (st.pending?.rule !== rule) st.pending = { rule, rs: Math.floor(st.g() * 2 ** 31) };
+  const route = routeOf(st.tut.recipe, st.item);
+  const offers = revealOffers(st.data, st.item, mulberry32(st.pending.rs));
+  const ok = revealWanted(st.item, route.goal);
+  const rerolled = echoes && !offers.first.some(ok) && offers.reroll.length > 0;
+  const list = rerolled ? offers.reroll : offers.first;
+  const none = !list.some(ok);
+  const choices: TutorialChoice[] = list.map((m, i) => ({
+    do: { reveal: { echoes } }, right: none || ok(m),
+    ...(none || ok(m) ? {} : { why: ["完成の形に無い MOD。狙いの MOD を選ぶ", "Not in the Goal. Pick the target mod"] as JaEn }),
+    pick: { key: `reveal:${i + 1}${rerolled ? ":reroll" : ""}`, mod: m },
+  }));
+  return { rule, situation: sit, choices, reveal: { rerolled, none } };
+}
+
+/** 発現の候補を選んで打つ (問いを出した時の種で) */
+export function playPick(st: TutorialState, rule: number, key: string): TutorialEntry | null {
+  const rs = st.pending?.rule === rule ? st.pending.rs : Math.floor(st.g() * 2 ** 31);
+  const omens = key.endsWith(":reroll") ? ["OmenofAbyssalEchoes"] : [];
+  const x = applyCurrency(st.data, st.item, key, mulberry32(rs), omens);
+  st.pending = null;
+  if (!x.applied) { st.stop = x.reason ?? "blocked"; return null; }
+  st.steps++;
+  st.answered.add(rule);
+  for (const o of x.omensUsed ?? omens) st.uses[o] = (st.uses[o] ?? 0) + 1;
+  st.item = x.item;
+  const e: TutorialEntry = { rule, key, omens, auto: false, added: x.added, removed: x.removed };
+  st.log.push(e);
+  return e;
+}
+/** 選んだ選択肢を打つ (正解の時だけ呼ぶ) */
+export function playChoice(data: PatchData, st: TutorialState, q: TutorialQuestion, c: TutorialChoice): TutorialEntry | null {
+  return c.pick ? playPick(st, q.rule, c.pick.key) : playRule(data, st, q.rule, false);
 }
 
 /** 正解の手を 1 つ打つ (当たり所で弾かれた手は数えずに打ち直す)。打てなければ stop に理由 */
@@ -105,7 +151,7 @@ export function autoAdvance(data: PatchData, st: TutorialState, max = 3000): num
   let n = 0;
   for (; n < max; n++) {
     const q = questionOf(st);
-    if (!q || !st.answered.has(q.rule)) break;
+    if (!q || !st.answered.has(q.rule) || q.reveal) break;
     if (!playRule(data, st, q.rule, true)) break;
   }
   if (n >= max && !st.done) st.stop = "cap";

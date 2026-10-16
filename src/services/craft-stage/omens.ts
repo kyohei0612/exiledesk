@@ -82,7 +82,7 @@ export function omenNote(omen: string, item: StageItem | null, data?: PatchData 
   if (item.rarity !== "rare") return null;
   const a = addSide[omen];
   if (a) {
-    if (!free(a)) return replacesWhenFull(omen) ? (a === "prefix" ? tr("プレ満杯: プレを 1 つ置き換える", "Prefixes full: replaces a prefix") : tr("サフィ満杯: サフィを 1 つ置き換える", "Suffixes full: replaces a suffix")) : a === "prefix" ? tr("プレ満杯で打てない", "Prefixes full") : tr("サフィ満杯で打てない", "Suffixes full");
+    if (!free(a)) return replacesWhenFull(omen) ? (a === "prefix" ? tr("プレフィックス満杯: プレフィックスを 1 つ置き換える", "Prefixes full: replaces a prefix") : tr("サフィックス満杯: サフィックスを 1 つ置き換える", "Suffixes full: replaces a suffix")) : a === "prefix" ? tr("プレフィックス満杯で打てない", "Prefixes full") : tr("サフィックス満杯で打てない", "Suffixes full");
     if (!free(other(a))) return tr("今は意味なし", "No effect now");
     return null;
   }

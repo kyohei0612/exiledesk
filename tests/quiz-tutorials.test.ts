@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
 import { runQuiz } from "../src/services/craft-stage/quiz-recipe";
 import { QUIZ_TUTORIALS, type TutorialRule } from "../src/services/craft-stage/quiz-tutorials";
-import { autoAdvance, playRule, questionOf, startTutorial } from "../src/services/craft-stage/quiz-tutorial-run";
+import { autoAdvance, playChoice, questionOf, startTutorial } from "../src/services/craft-stage/quiz-tutorial-run";
 import { nameOfKey } from "../src/state/craft-stage-shelf";
 import itemsJa from "../src/i18n/items-ja-client.json";
 
@@ -32,13 +32,20 @@ describe("画面の進め方: 正解を選ぶと、同じ答えは自動で進�
           autoAdvance(data, st);
           const q = questionOf(st);
           if (!q) break;
-          asked++;
-          // 3 択で正解は 1 つ (2026-10-16 オーナー「○○をするには? の 3 択で明確に ○×」)
-          expect(q.choices.length).toBe(3);
-          expect(q.choices.filter((c) => c.right).length).toBe(1);
+          // 発現は「どれを選ぶ?」で毎回聞く (候補が毎回違う。2026-10-17)。当たる候補は全部正解
+          if (q.reveal) {
+            expect(q.choices.length).toBeGreaterThan(0);
+            expect(q.choices.filter((c) => c.right).length).toBeGreaterThan(0);
+            expect(q.choices.every((c) => !!c.pick)).toBe(true);
+          } else {
+            asked++;
+            // 3 択で正解は 1 つ (2026-10-16 オーナー「○○をするには? の 3 択で明確に ○×」)
+            expect(q.choices.length).toBe(3);
+            expect(q.choices.filter((c) => c.right).length).toBe(1);
+            expect(st.answered.has(q.rule)).toBe(false);
+          }
           expect(q.choices.filter((c) => !c.right).every((c) => !!c.why)).toBe(true);
-          expect(st.answered.has(q.rule)).toBe(false);
-          playRule(data, st, q.rule, false);
+          playChoice(data, st, q, q.choices.find((c) => c.right)!);
         }
         expect(st.stop).toBeNull();
         expect(st.done).toBe(true);

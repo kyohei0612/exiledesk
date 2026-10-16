@@ -96,7 +96,7 @@ const ORBS: readonly OrbDef[] = [
       target: { rarity: ["rare"] },
       actions: [{ remove: { n: 1, pick: "equal", overLimitVoids: true } }, { add: { n: 1, floor, optional: true } }],
       limits: floorLimits(floor),
-      source: { ...ORB_SOURCE, owner: "上限を超えている側に当たったら不成立 (2026-10-14 ゲームで確認)・付けるのはプレとサフィの両方から (2026-10-14)" },
+      source: { ...ORB_SOURCE, owner: "上限を超えている側に当たったら不成立 (2026-10-14 ゲームで確認)・付けるのはプレフィックスとサフィックスの両方から (2026-10-14)" },
     }),
   },
   {

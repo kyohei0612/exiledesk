@@ -203,12 +203,16 @@ function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): Sta
   return it;
 }
 
+/** 発現の候補が、まだ埋まっていない札に当たるか (チュートリアルの「どれを選ぶ?」の正解にも使う) */
+export function revealWanted(item: StageItem, goal: readonly QuizSlot[]): (m: StageMod) => boolean {
+  const { state } = assignSlots(item, goal);
+  const open = goal.filter((s) => (state[s.id] ?? 0) < 2);
+  return (m) => open.some((s) => s.side === m.side && fits(m, s) >= 2);
+}
 /** 発現の番号: 3 つ (と反響の 3 つ) から、埋まっていない札の MOD を取る */
 function revealKey(data: PatchData, item: StageItem, goal: readonly QuizSlot[], echoes: boolean, seed: number): string {
   const offers = revealOffers(data, item, mulberry32(seed));
-  const { state } = assignSlots(item, goal);
-  const open = goal.filter((s) => (state[s.id] ?? 0) < 2);
-  const ok = (m: StageMod): boolean => open.some((s) => s.side === m.side && fits(m, s) >= 2);
+  const ok = revealWanted(item, goal);
   const i1 = offers.first.findIndex(ok);
   if (i1 >= 0) return `reveal:${i1 + 1}`;
   if (!echoes) return "reveal:1";

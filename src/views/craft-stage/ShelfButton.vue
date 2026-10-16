@@ -42,12 +42,12 @@ const omenBlocked = computed(() => !!reason.value && !!shelf.usableBare && !shel
  * お告げの効き方の一言 (アイコンの下。2026-10-10 オーナー「サフィにつくのかプレにつくのかぱっと見わからない、カタリストみたいにアイコンの下に」)
  */
 const OMEN_TAG: Record<string, [string, string]> = {
-  OmenofSinistralExaltation: ["プレに付く", "Adds prefix"], OmenofDextralExaltation: ["サフィに付く", "Adds suffix"],
+  OmenofSinistralExaltation: ["プレフィックスに付く", "Adds prefix"], OmenofDextralExaltation: ["サフィックスに付く", "Adds suffix"],
   OmenofGreaterExaltation: ["2 つ付く", "Adds 2"], OmenofCatalysingExaltation: ["品質で重く", "Quality-weighted"],
-  OmenofSinistralAnnulment: ["プレを消す", "Removes prefix"], OmenofDextralAnnulment: ["サフィを消す", "Removes suffix"], OmenofLight: ["冒涜を消す", "Removes desecrated"],
-  OmenofWhittling: ["最低を消す", "Removes lowest"], OmenofSinistralErasure: ["プレを消す", "Removes prefix"], OmenofDextralErasure: ["サフィを消す", "Removes suffix"],
-  OmenofSinistralCrystallisation: ["プレを消す", "Removes prefix"], OmenofDextralCrystallisation: ["サフィを消す", "Removes suffix"],
-  OmenofSinistralNecromancy: ["プレに付く", "Adds prefix"], OmenofDextralNecromancy: ["サフィに付く", "Adds suffix"],
+  OmenofSinistralAnnulment: ["プレフィックスを消す", "Removes prefix"], OmenofDextralAnnulment: ["サフィックスを消す", "Removes suffix"], OmenofLight: ["冒涜を消す", "Removes desecrated"],
+  OmenofWhittling: ["最低を消す", "Removes lowest"], OmenofSinistralErasure: ["プレフィックスを消す", "Removes prefix"], OmenofDextralErasure: ["サフィックスを消す", "Removes suffix"],
+  OmenofSinistralCrystallisation: ["プレフィックスを消す", "Removes prefix"], OmenofDextralCrystallisation: ["サフィックスを消す", "Removes suffix"],
+  OmenofSinistralNecromancy: ["プレフィックスに付く", "Adds prefix"], OmenofDextralNecromancy: ["サフィックスに付く", "Adds suffix"],
   OmenoftheSovereign: ["ウラマン", "Ulaman"], OmenoftheLiege: ["アマナム", "Amanamu"], OmenoftheBlackblooded: ["クルガル", "Kurgal"],
   OmenofPutrefaction: ["全部冒涜", "All desecrated"], OmenofAbyssalEchoes: ["引き直し", "Reroll"],
 };

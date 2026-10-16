@@ -137,7 +137,7 @@ const rows = computed(() => {
   // 消えずに残り、「アルダーの MOD が増える」に見えていた (要望 28a9398d)。同じ modId は出てきた順の番号で分ける
   const seen = new Map<string, number>();
   const keyOf = (m: StageMod): string => { const n = seen.get(m.modId) ?? 0; seen.set(m.modId, n + 1); return n ? `${m.modId}~${n}` : m.modId; };
-  return [...props.item.prefixes.map((m) => ({ m, side: "プレ", key: keyOf(m) })), ...props.item.suffixes.map((m) => ({ m, side: "サフィ", key: keyOf(m) }))].map((r) => {
+  return [...props.item.prefixes.map((m) => ({ m, side: "プレフィックス", key: keyOf(m) })), ...props.item.suffixes.map((m) => ({ m, side: "サフィックス", key: keyOf(m) }))].map((r) => {
     // カタリストの品質で伸びた数値 (伸びない MOD は null)
     const b = boostedMod(props.item, r.m, craftStage.data.value ?? undefined);
     // 画面用のタグ (クライアントの implicit_tags) を先に。r.m.tags は確率用 (カタリスト等) なので中身のタグが無い MOD がある (2026-10-05)
@@ -239,7 +239,7 @@ const rows = computed(() => {
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
-          <span class="w-7 shrink-0 text-left text-[12px] font-bold tabular-nums" :class="r.side === 'プレ' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレ" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
+          <span class="w-7 shrink-0 text-left text-[12px] font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
           <span class="min-w-0 flex-1 text-center">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <span :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>

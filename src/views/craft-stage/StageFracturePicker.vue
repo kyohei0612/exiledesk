@@ -182,7 +182,7 @@ const pct = (x: number): string => fmtPct(x, { zero: "—" });
     <template #subheader>
       <p v-if="host" class="mt-1 flex flex-wrap items-center gap-1.5 opacity-90">{{ tr("元の MOD とチェックした物のうち", "Hit when any") }}
         <button v-for="n in Math.min(3, candidates.length)" :key="n" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="wantN === n ? 'on' : ''" @click="wantN = n">{{ n }}</button>
-        {{ tr("つ付けば当たり (どの順番でもいい)", "of the original and checked mods are added (any order)") }} · {{ canChaos ? tr("プレかサフィのどれか (付いた側で道が分かれる)", "Prefix or suffix (path splits by the side it lands on)") : tr("同じ側だけ", "Same side only") }}</p>
+        {{ tr("つ付けば当たり (どの順番でもいい)", "of the original and checked mods are added (any order)") }} · {{ canChaos ? tr("プレフィックスかサフィックスのどれか (付いた側で道が分かれる)", "Prefix or suffix (path splits by the side it lands on)") : tr("同じ側だけ", "Same side only") }}</p>
       <p v-else class="mt-1 opacity-60">{{ s.item.value ? baseNameOf(s.item.value) : "" }} · {{ tr("チェックで候補 (このアイテムレベルで届く一番上の段以上)、名前を押すと段を選べる · 候補は同じ側だけ · 出やすさは同じ側の重みの割合", "Check to add as a candidate (highest tier reachable at this item level or better), click the name to pick a tier · Candidates must share a side · Chance is the share of weight on that side") }}</p>
     </template>
     <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">

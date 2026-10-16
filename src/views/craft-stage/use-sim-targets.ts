@@ -61,7 +61,7 @@ export function useSimTargets() {
         ...t,
         method: methodOf(t),
         methods: methodsFor(t.modId),
-        side: m?.type === "suffix" ? "サフィ" : "プレ",
+        side: m?.type === "suffix" ? "サフィックス" : "プレフィックス",
         tone: m?.source === "desecrated" ? "text-lime-200/90" : m && CRAFTED_SOURCES.has(m.source) ? "text-sky-200" : "text-[#c8c8ff]",
         text: m ? fillModText(m, tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ") : t.modId,
         rank: m ? `T${m.tiers.length - t.minTierIndex}` : "",
@@ -146,7 +146,7 @@ export function useSimTargets() {
     // 計算機の値段の表の形 (無い物は undefined = 使えない)。値段はステージと同じ相場 (高貴建て)
     const px = new Proxy({} as Record<string, number>, { get: (_t, k) => { if (typeof k !== "string") return undefined; const v = priceOf(k); return v > 0 ? v : undefined; } });
     const fixedIds = fractureRows.value.map((r) => r.modId);
-    const fside = fractureRow.value ? (fractureRow.value.side === "サフィ" ? "suffix" : "prefix") : null;
+    const fside = fractureRow.value ? (fractureRow.value.side === "サフィックス" ? "suffix" : "prefix") : null;
     try {
       return planByRedoCost({
         data: d, prices: { currency: px, omens: px, bones: px },
@@ -180,7 +180,7 @@ export function useSimTargets() {
     }
     return {
       rarity: fractureRow.value ? "rare" : "normal",
-      fracturedSide: fractureRow.value ? (fractureRow.value.side === "サフィ" ? "suffix" : "prefix") : null,
+      fracturedSide: fractureRow.value ? (fractureRow.value.side === "サフィックス" ? "suffix" : "prefix") : null,
       sockets: socketCount.value,
     };
   });

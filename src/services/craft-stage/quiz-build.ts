@@ -97,4 +97,4 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
 }
 
 /** 工程の名前 */
-export const ROUTE_NAME: Record<string, [string, string]> = { main: ["", ""], prefix: ["プレに付いた工程", "Prefix route"], suffix: ["サフィに付いた工程", "Suffix route"] };
+export const ROUTE_NAME: Record<string, [string, string]> = { main: ["", ""], prefix: ["プレフィックスに付いた工程", "Prefix route"], suffix: ["サフィックスに付いた工程", "Suffix route"] };

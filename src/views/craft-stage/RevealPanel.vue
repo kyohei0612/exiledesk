@@ -62,7 +62,7 @@ function pick(i: number): void {
       >
         <!-- 長い MOD は折り返す (ゲームのボタンの絵が自動で付いて 1 行になり、スマホで候補の欄が画面の右へはみ出していた。2026-10-13 要望 ea383d1e) -->
         <span class="min-w-0 text-mod-desecrated">{{ modText(m) }}</span>
-        <span class="shrink-0 text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }} {{ m.tierName }}</span>
+        <span class="shrink-0 text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix") }} {{ m.tierName }}</span>
       </button>
     </div>
   </section>

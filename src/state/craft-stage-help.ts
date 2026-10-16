@@ -63,7 +63,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     const two = !!item && jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(key)).length > 1;
     return [
       tr("**レアのジュエル**にだけ使える。固定 (フラクチャー) 以外から**ランダムに 1 つ消して**、決まった作った MOD を付ける", "**Rare jewels** only. **Removes a random mod** (not fractured) and adds a fixed crafted mod"),
-      two ? tr("付くのは**プレの版かサフィの版のどちらか** (消した後に付けられる側から等しく。説明文に決め方が無いのでランダム)", "Adds **either the prefix or the suffix version** (equally among the sides with room after the removal; the text doesn't say, so it's random)") : "",
+      two ? tr("付くのは**プレフィックスの版かサフィックスの版のどちらか** (消した後に付けられる側から等しく。説明文に決め方が無いのでランダム)", "Adds **either the prefix or the suffix version** (equally among the sides with room after the removal; the text doesn't say, so it's random)") : "",
       tr("**作った MOD が付いている間は使えない** (前の感情の MOD を外してから)。MOD が 4 つ揃っていなくても使える", "**Can't be used while a crafted mod is on the jewel** (remove the previous one first). Works with fewer than 4 mods"),
       tr("上限を超えている側 (軽蔑を外した後の 3 つ目) が消える候補に当たると**弾かれる** (何も変わらない、もう一度)", "If it hits the side that is over its limit (after removing Contempt), it is **rejected** (no change, try again)"),
       tr("古代の版は時を失ったジュエル用", "Ancient versions are for Time-Lost Jewels"),
@@ -83,13 +83,13 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     case "transmute":
       return [tr("**ノーマル → マジック** にして MOD を 1 つ付ける", "**Normal → Magic**, adds 1 mod"), add(), FLOOR("transmute", s)].filter(Boolean);
     case "augment":
-      return [tr("**マジック** で MOD が 1 つの時、空いている側に 1 つ足す (マジックはプレ 1 / サフィ 1 まで)", "On a **Magic** item with 1 mod, adds 1 mod to the open side (Magic: 1 prefix / 1 suffix)"), add(), FLOOR("transmute", s)].filter(Boolean);
+      return [tr("**マジック** で MOD が 1 つの時、空いている側に 1 つ足す (マジックはプレフィックス 1 / サフィックス 1 まで)", "On a **Magic** item with 1 mod, adds 1 mod to the open side (Magic: 1 prefix / 1 suffix)"), add(), FLOOR("transmute", s)].filter(Boolean);
     case "regal":
       return [tr("**マジック → レア** にして MOD を 1 つ足す (付いている MOD は残る)", "**Magic → Rare**, adds 1 mod (existing mods stay)"), add(), FLOOR("regal", s)].filter(Boolean);
     case "alchemy":
       return [tr("**ノーマルかマジック → レア** にして MOD を **4 つ** 付ける (マジックの MOD は付け直し)", "**Normal or Magic → Rare** with **4 mods** (Magic mods are rerolled)"), add()];
     case "exalt":
-      return [tr("**レア** に MOD を 1 つ足す (プレ・サフィ合わせて空きがある時)", "Adds 1 mod to a **Rare** (needs an open prefix or suffix)"), add(), FLOOR("regal", s), tr("お告げ: 左右の高貴 (足す側) / 偉大なる高貴 (2 つ) / 触媒の高貴 (品質の種類を重く)", "Omens: Sinistral / Dextral Exaltation (side) / Greater Exaltation (2 mods) / Catalysing Exaltation (weights the quality type)")].filter(Boolean);
+      return [tr("**レア** に MOD を 1 つ足す (プレフィックス・サフィックス合わせて空きがある時)", "Adds 1 mod to a **Rare** (needs an open prefix or suffix)"), add(), FLOOR("regal", s), tr("お告げ: 左右の高貴 (足す側) / 偉大なる高貴 (2 つ) / 触媒の高貴 (品質の種類を重く)", "Omens: Sinistral / Dextral Exaltation (side) / Greater Exaltation (2 mods) / Catalysing Exaltation (weights the quality type)")].filter(Boolean);
     case "chaos":
       return [
         tr("**レア** の MOD を 1 つ消して、1 つ足す", "Removes 1 mod from a **Rare** and adds 1"),

@@ -10,7 +10,7 @@ const RARITY: Record<string, [string, string]> = { n: ["ノーマル", "Normal"]
 const stateText = (v: string | number): string => tr(SLOT_STATE[Number(v)]?.[0] ?? "", SLOT_STATE[Number(v)]?.[1] ?? "");
 
 export function slotName(s: QuizSlot, nameOfMod: (id: string) => string): string {
-  if (!s.mods.length) return tr(s.side === "prefix" ? "プレ (何でも)" : "サフィ (何でも)", s.side === "prefix" ? "Prefix (any)" : "Suffix (any)");
+  if (!s.mods.length) return tr(s.side === "prefix" ? "プレフィックス (何でも)" : "サフィックス (何でも)", s.side === "prefix" ? "Prefix (any)" : "Suffix (any)");
   const n = nameOfMod(s.mods[0]!.modId);
   return s.mods.length > 1 ? `${n} ${tr(`ほか ${s.mods.length - 1}`, `+${s.mods.length - 1}`)}` : n;
 }
@@ -19,7 +19,7 @@ export function chipText(goal: readonly QuizSlot[], k: string, v: string | numbe
   const s = goal.find((g) => g.id === k);
   if (s) return `${k} ${slotName(s, nameOfMod)}: ${stateText(v)}`;
   if (k === "r") return tr(RARITY[String(v)]?.[0] ?? String(v), RARITY[String(v)]?.[1] ?? String(v));
-  const side = k.startsWith("p.") ? tr("プレ", "Prefix") : tr("サフィ", "Suffix");
+  const side = k.startsWith("p.") ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix");
   if (k.endsWith(".n")) return tr(`${side} ${v} つ`, `${side} ${v}`);
   if (k.endsWith(".hid")) return tr(`未発現 (${side}) ${v}`, `Unrevealed (${side}) ${v}`);
   if (k.endsWith(".bad")) return tr(`冒涜の外れ (${side}) ${v}`, `Unwanted desecrated (${side}) ${v}`);
