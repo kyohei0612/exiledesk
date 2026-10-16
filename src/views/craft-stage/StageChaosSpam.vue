@@ -25,6 +25,8 @@ import { isEn, tr } from "../../i18n/lang";
 import { aimLabel } from "../../services/craft-stage/mod-list";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { openExternal } from "../../services/trade2/open-external";
+import { baseArtFile } from "../../services/craft-stage/base-art";
+import { playSfx } from "../../utils/sfx";
 
 const targets = computed<AimTarget[]>(() => s.aims.value.map((a) => ({ modId: a.modId, minTierIndex: a.minTierIndex })));
 /** 今打てるカオス (普通・上級・完全。アイテムレベルが足りない物などは出さない) */
@@ -214,11 +216,31 @@ const rankWord = (r: number): string => (r <= 50 ? tr(`上位 ${r}%`, `top ${r}%
 /** 押すボタンの文字 (PC の欄とスマホの帯で同じ。離した後は「押して続ける」) */
 const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : result.value && !result.value.hit && result.value.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
 /**
- * シェア (2026-10-16 オーナー「確率機はシェア機能追加。自慢目的、URL と共に宣伝が目的」)。
- * 付いた後に X へ (アプリは外のブラウザで)、スマホは端末のシェア (LINE など)、それ以外はコピー。URL はそのベースで開く Web 版 (?base=)
+ * シェア (2026-10-16 オーナー「確率機はシェア機能追加。自慢目的、URL と共に宣伝」「押したらそのまま X に」「画像付き」)。
+ * 押すと X の投稿画面へ (アプリは外のブラウザで)。URL は /s/spam (server/web/og-card.js): X はそこから結果のカードの絵を出し、
+ * 押した人はそのベースのエミュレーターへ。結果は全部 URL に入れる (サーバーは何も保存しない)
  */
 const inApp = isTauriRuntime();
-const shareUrl = computed(() => `${inApp ? "https://exiledesk.com/" : `${location.origin}${location.pathname}`}?base=${encodeURIComponent(s.base.value)}`);
+const shareUrl = computed(() => {
+  const r = result.value;
+  if (!r?.hit) return "";
+  const st = stats.value && statsFor.value === sig() ? stats.value : null;
+  const q = new URLSearchParams({
+    l: isEn.value ? "en" : "ja",
+    b: s.base.value,
+    bn: isEn.value ? s.base.value : (s.item.value?.baseJa ?? s.base.value),
+    m: s.aims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", ")),
+    k: nameOf(key.value),
+    n: String(r.uses),
+  });
+  const art = baseArtFile(s.base.value);
+  if (art) q.set("a", art);
+  if (r.rank != null) q.set("r", String(r.rank));
+  if (st && medianOf(st) != null) q.set("md", String(medianOf(st)));
+  if (st && unluckyOf(st) != null) q.set("u", String(unluckyOf(st)));
+  if (cost(r.applied)) q.set("c", cost(r.applied));
+  return `${inApp ? "https://exiledesk.com" : location.origin}/s/spam?${q.toString()}`;
+});
 const shareText = computed(() => {
   const r = result.value;
   if (!r?.hit) return "";
@@ -230,29 +252,27 @@ const shareText = computed(() => {
     `Chaos spammed ${mods} onto ${base} in ${r.uses.toLocaleString()} ${nameOf(key.value)} uses! ${luckLine}\n#PoE2 #ExileDesk`,
   );
 });
+/** X の投稿画面 (文の最後に URL が付く) */
 const xUrl = computed(() => `https://x.com/intent/post?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`);
-const canNative = typeof navigator !== "undefined" && typeof navigator.share === "function";
-const shareNote = ref("");
 function shareX(e: MouseEvent): void {
-  logRecord("emu_spam_share", { to: "x", base: s.base.value });
+  logRecord("emu_spam_share", { to: "x", base: s.base.value, rank: result.value?.rank ?? null });
   if (!inApp) return;
   e.preventDefault();
   void openExternal(xUrl.value);
 }
-async function shareOther(): Promise<void> {
-  logRecord("emu_spam_share", { to: canNative ? "native" : "copy", base: s.base.value });
-  if (canNative) {
-    try { await navigator.share({ text: shareText.value, url: shareUrl.value }); } catch { /* 閉じただけ */ }
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(`${shareText.value}\n${shareUrl.value}`);
-    shareNote.value = tr("コピーしました", "Copied");
-  } catch {
-    shareNote.value = tr("コピーできませんでした", "Copy failed");
-  }
-  setTimeout(() => { shareNote.value = ""; }, 2000);
-}
+/**
+ * かなりの強運 (100 人中 上位 10% 以内) で付いた時は、珍しい段と同じ音 (フィルターの通知音 6) と光 (2026-10-16 オーナー
+ * 「確率機で運がめっちゃいい人にはちゃんと音出してあげてね、あの例の神演出で」)。運は 100 人の計算が済んでから出るので、出た時に 1 回だけ
+ */
+const lucky = ref(0);
+let luckyFor: unknown = null;
+watch(() => result.value?.rank, (r) => {
+  const res = result.value;
+  if (!res?.hit || r == null || r > 10 || luckyFor === res) return;
+  luckyFor = res;
+  playSfx("rare", 1.5);
+  lucky.value++;
+});
 const shownUses = computed(() => live.value?.uses ?? result.value?.uses ?? 0);
 const shownApplied = computed(() => live.value?.applied ?? result.value?.applied ?? 0);
 </script>
@@ -297,7 +317,8 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
       <!-- ③ 自分でスパム・④ 運試し -->
       <div class="min-w-0">
         <template v-if="result?.hit && !spamming">
-          <p class="text-[16px] font-bold text-emerald-300">{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}</p>
+          <!-- かなりの強運の時は珍しい段と同じ光 (枠・走る光・光の柱)。key を変えて毎回動かす -->
+          <p :key="`hit-${lucky}`" class="relative -mx-2 rounded px-2 text-[16px] font-bold text-emerald-300" :class="lucky && result.rank != null && result.rank <= 10 ? 'stage-mod-new-rare' : ''"><span v-if="lucky && result.rank != null && result.rank <= 10" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}</p>
           <template v-if="result.rank != null">
             <p class="mt-0.5 text-[13px]">{{ tr(`${SPAM_PEOPLE} 人中 ${rankWord(result.rank)} の運`, `${rankWord(result.rank)} luck among ${SPAM_PEOPLE} people`) }} <b :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">{{ luck(result.rank) }}</b></p>
             <!-- 100 人の中の位置 (左が早い) -->
@@ -313,11 +334,9 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
           <p v-if="spamming || result" class="mt-1.5 tabular-nums text-[14px]"><b>{{ tr(`${shownUses.toLocaleString()} 回`, `${shownUses.toLocaleString()} uses`) }}</b><span v-if="cost(shownApplied)" class="text-[var(--exile-color-text-secondary)]"> · {{ cost(shownApplied) }}</span></p>
           <p v-if="result && !spamming" class="mt-0.5 text-[var(--exile-color-text-secondary)]">{{ result.reason ?? tr("まだ付いていません。もう一度押すと続きから", "Not hit yet. Hold again to continue") }}</p>
         </template>
-        <!-- 自慢 (付いた時だけ) -->
-        <div v-if="result?.hit && !spamming" data-chaos-spam-share class="mt-2 flex flex-wrap items-center gap-2">
-          <a :href="xUrl" target="_blank" rel="noopener" class="g-btn-red sm inline-flex items-center !no-underline" @click="shareX">{{ tr("X で自慢する", "Brag on X") }}</a>
-          <button type="button" class="g-btn sm" @click="shareOther">{{ canNative ? tr("ほかで共有", "Share…") : tr("文をコピー", "Copy text") }}</button>
-          <span v-if="shareNote" class="text-[11px] text-emerald-300">{{ shareNote }}</span>
+        <!-- 自慢 (付いた時だけ。押すとそのまま X へ) -->
+        <div v-if="result?.hit && !spamming" data-chaos-spam-share class="mt-2">
+          <a :href="xUrl" target="_blank" rel="noopener" class="g-btn-red sm inline-flex items-center !no-underline" @click="shareX">{{ tr("X でシェア", "Share on X") }}</a>
         </div>
         <div v-if="result && !spamming && !barShown" class="mt-2 flex flex-wrap gap-2">
           <button type="button" class="g-btn sm" @click="undoSpam">{{ tr("スパムの前に戻す", "Undo the spam") }}</button>
