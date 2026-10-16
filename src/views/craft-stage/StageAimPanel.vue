@@ -177,7 +177,7 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
 <template>
   <section v-if="s.aims.value.length" ref="panel" data-aim-panel data-rec="aim-panel" class="g-panel scroll-mt-2 p-2 text-[12px]">
     <header class="g-sec-head">
-      <b class="g-sec-title">{{ spamKey ? tr("狙う MOD", "Target mods") : tr("次の手で狙う", "Target next move") }}</b>
+      <b class="g-sec-title">{{ spamKey ? tr("カオススパム", "Chaos spam") : tr("次の手で狙う", "Target next move") }}</b>
       <span class="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:w-full">
         <span v-for="a in s.aims.value" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ aimLabel(s.data.value, a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('この MOD を外す', 'Remove this mod')" @click="s.aims.value = s.aims.value.filter((x) => x.modId !== a.modId)">×</button></span>
         <!-- 足す・変える: 選ぶ窓をもう一度 (MOD 一覧まで戻らなくていい) -->
@@ -195,7 +195,7 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
       </HelpTip>
       <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" :title="tr('狙うのをやめる', 'Stop targeting')" @click="s.aims.value = []"><Icon name="x" class="size-4" /></button>
     </header>
-    <p v-if="done" class="text-emerald-300">{{ tr("もう全部付いています", "All targets are already on the item") }}</p>
+    <p v-if="done && !spamKey" class="text-emerald-300">{{ tr("もう全部付いています", "All targets are already on the item") }}</p>
     <!-- カオススパムモード (2026-10-16): 狙いが揃うまで同じカオスを打ち続ける。100 人の結果と自分の運を比べる -->
     <StageChaosSpam class="mb-2" />
     <!-- 確率機から来た時 (spamKey) は次の手の一覧を出さない (2026-10-16 オーナー「狙い一覧が出る」) -->

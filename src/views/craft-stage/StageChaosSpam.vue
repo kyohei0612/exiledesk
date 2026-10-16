@@ -97,7 +97,8 @@ function simulate(start = atIlvl(s.item.value)): void {
 // 狙いがもう揃っている時 (スパムで付いた直後) は出し直さない (今の状態から数えると全員 0 回になる)。比べた 100 人の結果と運試しをそのまま残す
 watch([key, ilvl, targets, () => s.item.value], () => {
   if (spamming.value) return;
-  if (s.item.value && aimDone(s.item.value, targets.value) && result.value?.sig === sig()) return;
+  // 途中で離した時も同じ (続けて押すと回数を足すので、比べるのはスパムを始めた時の 100 人のまま)
+  if (result.value?.sig === sig()) return;
   result.value = result.value && sig() === result.value.sig ? result.value : null;
   simulate();
 }, { immediate: true });
@@ -191,7 +192,7 @@ function startHere(): void {
   spamKey.value = null;
   s.aims.value = [];
   s.aimPicker.value = null;
-  void nextTick(() => scrollToTop(document.querySelector("[data-stage-card]") as HTMLElement | null, "smooth"));
+  void nextTick(() => scrollToTop(document.querySelector("[data-stage-card]") as HTMLElement | null, "smooth", "nearest"));
 }
 /**
  * スマホ: 押している間スパムのボタンは、いつもの「使う」と同じ画面の下の帯に出す (2026-10-16 オーナー「いつものつける時の動作で、
@@ -215,16 +216,19 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
 
 <template>
   <!-- 「次の手で狙う」を押しただけの時は出さない。アイテムの下の「カオススパム確率機へ」から来た時 (spamKey) と、回している・結果がある時だけ (2026-10-16 オーナー) -->
-  <div v-if="s.aims.value.length && (spamKey || spamming || result)" ref="root" data-chaos-spam class="rounded-md bg-black/25 p-2 ring-1 ring-white/10">
-    <div class="flex flex-wrap items-center gap-2">
-      <b class="text-[13px] text-[var(--exile-color-text-title)]">{{ tr("カオススパム", "Chaos spam") }}</b>
-      <!-- ② カオス・上級・完全 -->
-      <span v-if="keys.length" class="flex gap-1">
-        <button v-for="k in keys" :key="k" type="button" class="g-tab !min-h-[28px] !gap-1 !px-2 !text-[12px]" :class="key === k ? 'on' : ''" :disabled="spamming" :title="nameOf(k)" @click="key = k"><img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="size-5 object-contain" />{{ k === "chaos" ? tr("普通", "Normal") : k === "chaos_greater" ? tr("上級", "Greater") : tr("完全", "Perfect") }}</button>
+  <!--
+    枠は描かない (狙いの欄の 1 つの枠の中。題は欄の見出しが「カオススパム」になる。2026-10-16 UI の見直し: 枠の中に枠・小さいボタン・結果が細い字だった)
+    PC: 左に 100 人の結果、右に押すボタンと自分の結果。スマホは縦に積み、押すボタンは下の帯
+  -->
+  <div v-if="s.aims.value.length && (spamKey || spamming || result)" ref="root" data-chaos-spam class="text-[12px]">
+    <!-- ② カオスの種類・アイテムレベル -->
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <span v-if="keys.length" class="flex items-center gap-1">
+        <button v-for="k in keys" :key="k" type="button" class="g-tab !min-h-[30px] !gap-1 !px-2 !text-[12px]" :class="key === k ? 'on' : ''" :disabled="spamming" :title="nameOf(k)" @click="key = k"><img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="size-5 object-contain" />{{ k === "chaos" ? tr("普通", "Normal") : k === "chaos_greater" ? tr("上級", "Greater") : tr("完全", "Perfect") }}</button>
       </span>
-      <!-- アイテムレベル (狙いの段が付く一番低い物から) -->
-      <span class="flex items-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("アイテムレベル", "Item level") }}
-        <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[28px] !px-2 !text-[12px] tabular-nums" :class="ilvl === lv ? 'on' : ''" :disabled="spamming || lv < floor" :title="lv < floor ? tr(`狙いの段はアイテムレベル ${floor} から`, `The target tier needs item level ${floor}`) : undefined" @click="ilvl = lv">{{ lv }}</button>
+      <span class="flex items-center gap-1">
+        <span class="mr-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("アイテムレベル", "Item level") }}</span>
+        <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-2 !text-[12px] tabular-nums" :class="ilvl === lv ? 'on' : ''" :disabled="spamming || lv < floor" :title="lv < floor ? tr(`狙いの段はアイテムレベル ${floor} から`, `The target tier needs item level ${floor}`) : undefined" @click="ilvl = lv">{{ lv }}</button>
       </span>
       <HelpTip :title="tr('カオススパム', 'Chaos spam')" :width="320">
         <p>{{ tr("狙いの MOD が全部揃うまで、同じカオスを打ち続けます。外れても、その結果に続けて打ちます (今の MOD が消えても、狙いが揃えば当たり)。", "Keeps using the same Chaos Orb until all target mods are on. A miss keeps going from the result (a hit even if current mods were removed).") }}</p>
@@ -233,37 +237,45 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
         <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("ボタンを押している間だけ打ちます。押し続けると速くなり、狙いが出たら自動で止まります。戻す時は「スパムの前に戻す」。", "Uses only while the button is held, faster the longer you hold, and stops automatically on a hit. Use “Undo the spam” to go back.") }}</p>
       </HelpTip>
     </div>
-    <p v-if="!keys.length" class="mt-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("今の状態ではカオスを打てません (レアのアイテムに使えます)", "Chaos Orbs can't be used on the item right now (Rare items only)") }}</p>
-    <template v-else>
+    <p v-if="!keys.length" class="mt-2 text-[var(--exile-color-text-secondary)]">{{ tr("今の状態ではカオスを打てません (レアのアイテムに使えます)", "Chaos Orbs can't be used on the item right now (Rare items only)") }}</p>
+    <div v-else class="g-section mt-2 grid gap-x-6 gap-y-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <!-- ③ 100 人の結果 -->
-      <div class="mt-1.5 text-[12px]">
-        <p class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ result?.hit ? tr(`${SPAM_PEOPLE} 人がスパムの前の状態からスパムしたら`, `If ${SPAM_PEOPLE} people spammed from before your spam`) : tr(`${SPAM_PEOPLE} 人が今の状態からスパムしたら`, `If ${SPAM_PEOPLE} people spammed from here`) }}<template v-if="!stats"> · {{ tr("計算中…", "Calculating…") }} {{ progress }} / {{ SPAM_PEOPLE }}</template></p>
-        <dl v-if="stats" class="mt-0.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+      <div class="min-w-0">
+        <p class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ result ? tr(`${SPAM_PEOPLE} 人がスパムの前の状態からスパムしたら`, `If ${SPAM_PEOPLE} people spammed from before your spam`) : tr(`${SPAM_PEOPLE} 人が今の状態からスパムしたら`, `If ${SPAM_PEOPLE} people spammed from here`) }}<template v-if="!stats"> · {{ tr("計算中…", "Calculating…") }} {{ progress }} / {{ SPAM_PEOPLE }}</template></p>
+        <dl v-if="stats" class="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
           <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half of them") }}</dt>
-          <dd class="tabular-nums">{{ fmt(median) }}<template v-if="median != null && cost(median)"> · {{ cost(median) }}</template></dd>
+          <dd class="tabular-nums"><b>{{ fmt(median) }}</b><span v-if="median != null && cost(median)" class="text-[var(--exile-color-text-secondary)]"> · {{ cost(median) }}</span></dd>
           <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }}</dt>
-          <dd class="tabular-nums">{{ fmt(unlucky) }}<template v-if="unlucky != null && cost(unlucky)"> · {{ cost(unlucky) }}</template></dd>
+          <dd class="tabular-nums"><b>{{ fmt(unlucky) }}</b><span v-if="unlucky != null && cost(unlucky)" class="text-[var(--exile-color-text-secondary)]"> · {{ cost(unlucky) }}</span></dd>
           <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("一番早い / 遅い", "Fastest / slowest") }}</dt>
           <dd class="tabular-nums">{{ stats.tries.length ? `${fmt(stats.tries[0]!)} / ${fmt(stats.tries[stats.tries.length - 1]!)}` : "—" }}<template v-if="stats.failed"> · {{ tr(`${stats.failed} 人は付かなかった`, `${stats.failed} never hit`) }}</template></dd>
         </dl>
       </div>
-      <!-- ③ 自分でスパム (押している間) -->
-      <div class="mt-2 flex flex-wrap items-center gap-2">
-        <button v-if="!barShown" type="button" data-chaos-spam-hold class="g-btn-red sm select-none touch-none" :disabled="!canSpam" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ holdLabel }}</button>
-        <span v-if="spamming || result" class="tabular-nums text-[12px]">{{ tr(`${shownUses.toLocaleString()} 回`, `${shownUses.toLocaleString()} uses`) }}<template v-if="cost(shownApplied)"> · {{ cost(shownApplied) }}</template></span>
-        <button v-if="result && !spamming && !barShown" type="button" class="g-btn sm ml-auto" @click="undoSpam">{{ tr("スパムの前に戻す", "Undo the spam") }}</button>
-        <button v-if="result && !spamming && !barShown" type="button" data-chaos-spam-start class="g-btn sm" :title="tr('工程と費用 (スパムの前の手も) はそのままで、普段のエミュレーターに戻ります', 'Back to the emulator with the steps and cost (including before the spam) kept')" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
-      </div>
-      <!-- ④ 運試し -->
-      <p v-if="result && !spamming" class="mt-1.5 text-[13px]">
-        <template v-if="result.hit">
-          <b class="text-emerald-300">{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}</b>
-          <template v-if="result.rank != null"> {{ tr(`今回は ${SPAM_PEOPLE} 人中 ${rankWord(result.rank)} の運でした`, `That's ${rankWord(result.rank)} luck among ${SPAM_PEOPLE} people`) }}<span class="ml-1 text-[12px]" :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">({{ luck(result.rank) }})</span></template>
-          <template v-else> {{ tr("運を計算中…", "Comparing your luck…") }}</template>
+      <!-- ③ 自分でスパム・④ 運試し -->
+      <div class="min-w-0">
+        <template v-if="result?.hit && !spamming">
+          <p class="text-[16px] font-bold text-emerald-300">{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}</p>
+          <template v-if="result.rank != null">
+            <p class="mt-0.5 text-[13px]">{{ tr(`${SPAM_PEOPLE} 人中 ${rankWord(result.rank)} の運`, `${rankWord(result.rank)} luck among ${SPAM_PEOPLE} people`) }} <b :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">{{ luck(result.rank) }}</b></p>
+            <!-- 100 人の中の位置 (左が早い) -->
+            <div class="relative mt-1.5 h-2 max-w-[320px] rounded-full bg-gradient-to-r from-emerald-500/60 via-amber-400/50 to-rose-500/60">
+              <span class="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#14110d]" :style="{ left: `${result.rank}%` }" />
+            </div>
+          </template>
+          <p v-else class="mt-0.5 text-[var(--exile-color-text-secondary)]">{{ tr("運を計算中…", "Comparing your luck…") }}</p>
+          <p class="mt-1 tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr(`${result.uses.toLocaleString()} 回`, `${result.uses.toLocaleString()} uses`) }}<template v-if="cost(result.applied)"> · {{ cost(result.applied) }}</template></p>
         </template>
-        <template v-else>{{ result.reason ?? tr(`${result.uses.toLocaleString()} 回打って、まだ付いていません`, `${result.uses.toLocaleString()} uses, not hit yet`) }}</template>
-      </p>
-    </template>
+        <template v-else>
+          <button v-if="!barShown" type="button" data-chaos-spam-hold class="g-btn-red min-h-11 select-none touch-none px-2 text-[14px]" :disabled="!canSpam" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ holdLabel }}</button>
+          <p v-if="spamming || result" class="mt-1.5 tabular-nums text-[14px]"><b>{{ tr(`${shownUses.toLocaleString()} 回`, `${shownUses.toLocaleString()} uses`) }}</b><span v-if="cost(shownApplied)" class="text-[var(--exile-color-text-secondary)]"> · {{ cost(shownApplied) }}</span></p>
+          <p v-if="result && !spamming" class="mt-0.5 text-[var(--exile-color-text-secondary)]">{{ result.reason ?? tr("まだ付いていません。もう一度押すと続きから", "Not hit yet. Hold again to continue") }}</p>
+        </template>
+        <div v-if="result && !spamming && !barShown" class="mt-2 flex flex-wrap gap-2">
+          <button type="button" class="g-btn sm" @click="undoSpam">{{ tr("スパムの前に戻す", "Undo the spam") }}</button>
+          <button type="button" data-chaos-spam-start class="g-btn sm" :title="tr('工程と費用 (スパムの前の手も) はそのままで、普段のエミュレーターに戻ります', 'Back to the emulator with the steps and cost (including before the spam) kept')" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
+        </div>
+      </div>
+    </div>
     <!-- スマホ: 画面の下の帯 (「使う」の帯と同じ場所と見た目)。押しっぱなしでスパム -->
     <Teleport to="body">
       <div v-if="barShown" data-chaos-spam-bar data-bottom-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
