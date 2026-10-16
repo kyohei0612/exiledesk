@@ -3,9 +3,8 @@
  * カオスの確率機では出しちゃダメ」「レア MOD 時は神のオーブの音」)。
  *
  * 音はゲームのクライアント (FMOD/Desktop/ItemDrops.bank の OrbUse_* と OrbDrop_Divine_01) から取り出して mp3 にした物 (public/sfx)。
- * 珍しい段 (付いた瞬間の確率が isRareChance = 工程で黄色に出る物) が付いた時は、カレンシーの音の代わりに神のオーブが落ちた時の音
- * (高いカレンシーのレア度の音 Item_Drop_HighTier_Rare_Currency_01 の 0.45 秒後に、神が地面に落ちた音 OrbDrop_Divine_01。
- * 2026-10-16 オーナー「神のオーブしょぼくね、ドロップした時のクソ派手演出」「じゃきーん、ぽーん」。少し大きめに鳴らす)。
+ * 珍しい段 (付いた瞬間の確率が isRareChance = 工程で黄色に出る物) が付いた時は、カレンシーの音の代わりにアイテムフィルターの通知音 6
+ * (Four_ItemFilter.bank の AlertSound_06。フィルターの PlayAlertSound 6 の「しゃきぃん → ぽーん」。2026-10-16 オーナー「これこれ 6 のやつ」)。少し大きめに鳴らす。
  * iPhone の Safari は <audio> の音量を無視するので Web Audio の GainNode で絞る。オフは端末に覚える (sfx-off)
  */
 import { ref } from "vue";
@@ -42,7 +41,7 @@ export function sfxOf(key: string): string {
 }
 
 let ctx: AudioContext | null = null;
-const ALL = ["orb", "transmute", "alchemy", "regal", "exalt", "chaos", "annul", "chance", "fracture", "vaal", "vaal-infuser", "abyss", "divine-drop"];
+const ALL = ["orb", "transmute", "alchemy", "regal", "exalt", "chaos", "annul", "chance", "fracture", "vaal", "vaal-infuser", "abyss", "rare"];
 function context(): AudioContext | null {
   if (ctx) return ctx;
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -101,8 +100,8 @@ export function playSfx(name: string, loud = 1): void {
   } catch { /* 音が出せなくても動きは変えない */ }
 }
 
-/** 使った時: 珍しい段が付いたら神のオーブの音、それ以外はそのカレンシーの音 */
+/** 使った時: 珍しい段が付いたらフィルターの通知音 6、それ以外はそのカレンシーの音 */
 export function playUseSfx(key: string, rare: boolean): void {
-  if (rare) playSfx("divine-drop", 1.5);
+  if (rare) playSfx("rare", 1.5);
   else playSfx(sfxOf(key));
 }
