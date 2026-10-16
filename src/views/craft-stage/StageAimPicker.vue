@@ -13,7 +13,7 @@ import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { aimLabel, groupLabelOf, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { scrollToTop } from "../../utils/keep-place";
-import { spamAims } from "../../state/chaos-spam";
+import { spamAims, spamKey } from "../../state/chaos-spam";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
@@ -86,7 +86,11 @@ function close(): void { s.aimPicker.value = null; }
 function decide(): void {
   if (!draft.value.length) return;
   if (forSpam) spamAims.value = draft.value;
-  else s.aims.value = draft.value;
+  else {
+    s.aims.value = draft.value;
+    // 「次の手で狙う」を開いたら確率機は閉じる (同時には出さない。2026-10-16 オーナー)
+    spamKey.value = null;
+  }
   close();
   // 決めたら後ろの MOD 一覧の窓も閉じて、確率の一覧を見せる (やめる時は残す。POE2Tube 要望 ㊴)
   s.modOverlay.value = false;

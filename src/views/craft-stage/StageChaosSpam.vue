@@ -134,7 +134,13 @@ function closeSpam(): void {
   spamAims.value = [];
 }
 /** ベースを変えたら確率機を閉じる (狙いはそのベースの MOD) */
-watch(() => s.base.value, () => { if (spamKey.value || result.value || spamAims.value.length) closeSpam(); });
+watch(() => s.base.value, () => {
+  if (spamKey.value || result.value || spamAims.value.length) closeSpam();
+  // 「次の手で狙う」もベースを変えたら閉じる (前のベースの狙いや結果は残さない。2026-10-16 オーナー「一度閉じたら前回の結果も出なくていい」)
+  s.aims.value = [];
+});
+/** 確率機の印が外れたら (狙うを開いた・閉じた) 前のスパムの結果と狙いも消す。次に開く時はまっさらから */
+watch(spamKey, (k) => { if (!k && !spamming.value) { result.value = null; snap = null; spamAims.value = []; } });
 onBeforeUnmount(() => { gen++; clearTimeout(timer); stopSpam(); });
 
 const cost = (n: number): string => (priceOf(key.value) > 0 ? displayCurrency.money(n * priceOf(key.value)) : "");

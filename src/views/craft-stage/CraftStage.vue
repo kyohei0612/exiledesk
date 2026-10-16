@@ -210,6 +210,8 @@ function openChaosSpam(): void {
   spamPending.value = true;
   // 手に持っている物は離す (スマホの「使う」の帯と、カオススパムの帯がぶつからないように。2026-10-16 オーナー)
   s.hold(null);
+  // 「次の手で狙う」は閉じる (確率機と狙うは別ルート、同時には出さない。2026-10-16 オーナー「狙いボタンを押さない限り出なければおけ、逆もまた然り」)
+  s.aims.value = [];
   // 狙いがあれば欄を真ん中へ (StageChaosSpam の arrive が spamPending を見て送る)
   if (!spamAims.value.length) s.aimPicker.value = { seed: null, spam: true };
 }
