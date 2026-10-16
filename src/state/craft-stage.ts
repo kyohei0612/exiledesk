@@ -243,12 +243,13 @@ const simPatterns = ref<Pattern[]>([{ name: "パターン 1", steps: [], play: {
 /** パターンの名前 → ハズレルート設定で決めていない形の数 (開いたパターンだけ。残っていれば回さない。2026-10-10 オーナー「ハズレ設定しないと回せない」) */
 const simPlayLeft = ref<Record<string, number>>({});
 /**
- * エミュレーターの「狙う」(2026-10-09): 狙う MOD (その段以上)。最大 4 つ (錬金術で一度に付く数)、全部揃えば当たり。
+ * エミュレーターの「狙う」(2026-10-09): 狙う MOD (その段以上)。最大 6 つ (2026-10-16 にカオススパムに合わせて 4 → 6)、全部揃えば当たり。
  * 棚の上に打ち方ごとの揃う確率を出す (StageAimPanel.vue)
  */
 /** at = 押した段の印 (MOD 一覧の data-aim-at。確率の一覧の「＋ 足す」でそこへ戻る) */
 const aims = ref<Array<{ modId: string; minTierIndex: number; label: string; at?: string }>>([]);
-export const AIM_MAX = 4;
+/** 狙いの数 (2026-10-16 カオススパムモードに合わせて 4 → 6。オーナーのメモ「MOD を選ぶ (複数でも可) 最高 6 MOD」) */
+export const AIM_MAX = 6;
 export type AimPick = { modId: string; minTierIndex: number; label: string; at?: string };
 /**
  * 「次の手で狙う」の選ぶ窓 (StageAimPicker.vue)。seed = 押した段 (最初からチェックが入る)。null = 閉じている
@@ -584,7 +585,7 @@ export const craftStage = {
     return usableWith(key, []);
   },
   /** 持っている物を 1 回打つ (Craft of Exile と同じ: 持ったままなら何度でも) */
-  use(key: string | null = held.value): void {
+  use(key: string | null = held.value, opts: { quiet?: boolean } = {}): void {
     if (!key || !data.value || !item.value || replay.value) return;
     const why = craftStage.usable(key);
     if (why) {
@@ -608,8 +609,9 @@ export const craftStage = {
     item.value = p.after;
     // 分析用の記録 (2026-10-09): 打つ前の MOD・打った物・お告げ・付いた / 消えた MOD
     const ms = (l: readonly StageMod[]): string[] => l.map((m) => `${m.modId}#${m.tierIndex}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}`);
-    logRecord("emu_use", { base: base.value, ilvl: itemLevel.value, rarity: p.before.rarity, before: ms([...p.before.prefixes, ...p.before.suffixes]), use: key, omens: want, added: ms(p.added), removed: ms(p.removed), ok: p.out.applied, cost: p.out.cost?.subtotal ?? null, baseJa: p.before.baseJa, useJa: p.out.currency_ja });
-    recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
+    // カオススパム (chaos-spam.ts) は 1 回ごとには送らない (何千回にもなる。スパムの終わりに 1 件だけ送る)
+    if (!opts.quiet) logRecord("emu_use", { base: base.value, ilvl: itemLevel.value, rarity: p.before.rarity, before: ms([...p.before.prefixes, ...p.before.suffixes]), use: key, omens: want, added: ms(p.added), removed: ms(p.removed), ok: p.out.applied, cost: p.out.cost?.subtotal ?? null, baseJa: p.before.baseJa, useJa: p.out.currency_ja });
+    if (!opts.quiet) recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
     // 食ったお告げは外す
     const ate = p.out.omen ? p.out.omen.split("+") : [];
     if (ate.length) omens.value = omens.value.filter((o) => !ate.includes(o));
@@ -648,6 +650,21 @@ export const craftStage = {
   },
   hold(key: string | null): void {
     held.value = key;
+  },
+  /**
+   * カオススパムの前の状態を控える / 戻す (2026-10-16 カオススパムモード)。スパムは何百手にもなり、工程は 50 手で古い方が消えるので、
+   * 1 手戻すではなく「スパムの前に戻す」で丸ごと戻す (アイテム・工程・消えた工程・お告げ)
+   */
+  snapshot(): { item: StageItem | null; log: typeof log.value; dropped: typeof dropped.value; omens: string[] } {
+    return { item: item.value, log: log.value, dropped: dropped.value, omens: omens.value };
+  },
+  restore(snap: { item: StageItem | null; log: typeof log.value; dropped: typeof dropped.value; omens: string[] }): void {
+    if (replay.value) return;
+    item.value = snap.item;
+    log.value = snap.log;
+    dropped.value = snap.dropped;
+    omens.value = snap.omens;
+    rollSeed.value = freshSeed();
   },
   /** お告げを掛ける / 外す。一緒に掛けられない組 (OMEN_EXCLUSIVE: 左と右・勢力 2 枚など) は、前の方を外して掛け替える */
   toggleOmen(id: string): void {
