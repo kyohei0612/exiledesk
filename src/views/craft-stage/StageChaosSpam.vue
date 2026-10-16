@@ -246,6 +246,8 @@ watch([result, () => stats.value, isEn], async () => {
     cost(r.applied) || null,
   ]);
   shareUrl.value = `${inApp ? "https://exiledesk.com" : location.origin}/s/${code}`;
+  // カードの絵を先に作らせておく (X が読みに来た時に作り始めると、出るまで待たされた。2026-10-16)
+  try { void fetch(`${inApp ? "https://exiledesk.com" : location.origin}/og/${code}.png`, { mode: "no-cors" }); } catch { /* 作れなくても X が来た時に作る */ }
 }, { immediate: true });
 const shareText = computed(() => {
   const r = result.value;
