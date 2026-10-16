@@ -14,7 +14,7 @@ import type { CurrencySpec, Source, Words } from "./types";
 
 const QUALITY_SOURCE: Source = {
   client: "currency-hover の説明文、用語集 Quality (既定の上限 20%)",
-  owner: "1 回で上がる量: 装備は 1 か 2 (等分、2026-10-07)・フラスコ 1・ジェム 5 (2026-10-06 ゲームで確認)",
+  owner: "1 回で上がる量: 装備は 1 (2026-10-16、前は 1 か 2 の等分)・フラスコ 1・ジェム 5 (2026-10-06 ゲームで確認)",
 };
 interface QualityDef { stageKey: string; hover: string; text: { en: string[]; ja: string[] }; steps: number[] }
 const QUALITY_DEFS: readonly QualityDef[] = [
