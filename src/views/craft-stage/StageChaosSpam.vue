@@ -171,11 +171,11 @@ function finish(hit: boolean, reason: string | null): void {
   spamming.value = false;
   if (!l) return;
   const st = stats.value && statsFor.value === sig() ? stats.value : null;
-  result.value = { sig: sig(), uses: l.uses, applied: l.applied, hit, reason, rank: hit && st ? rankOf(st, l.uses) : null };
+  result.value = { sig: sig(), uses: l.uses, applied: l.applied, hit, reason, rank: hit && st ? rankFor(st, l.uses) : null };
   // 100 人の結果がまだ無ければ、スパムの前の状態から出して運を比べる
   if (hit && !st && startItem) {
     simulate(startItem);
-    const stop = watch(stats, (v) => { if (v && result.value?.hit) { result.value = { ...result.value, rank: rankOf(v, result.value.uses) }; stop(); } });
+    const stop = watch(stats, (v) => { if (v && result.value?.hit) { result.value = { ...result.value, rank: rankFor(v, result.value.uses) }; stop(); } });
   }
   if (hit || !reason) logRecord("emu_spam", { base: s.item.value?.base, key: key.value, aims: targets.value.map((t) => `${t.modId}#${t.minTierIndex}`), uses: l.uses, hit });
 }
@@ -298,6 +298,14 @@ watch(() => result.value?.rank, (r) => {
   playSfx("rare", 1.5);
   lucky.value++;
 });
+/**
+ * 開発版 (スマホ用の web-dev、VITE_DEV_PREVIEW) だけ、運を毎回「上位 1〜9%」にする (2026-10-16 オーナー「試しにやってみたいから開発版で一瞬乱数いじって 10% になるように」)。
+ * 本番のビルドには効かない。強運の演出を確かめ終わったら外す
+ */
+const DEV_LUCKY = import.meta.env.VITE_DEV_PREVIEW === "1";
+const rankFor = (st: SpamStats, uses: number): number => (DEV_LUCKY ? 1 + Math.floor(Math.random() * 9) : rankOf(st, uses));
+/** かなりの強運 (上位 10% 以内) */
+const isLucky = computed(() => !!result.value?.hit && result.value.rank != null && result.value.rank <= 10);
 const shownUses = computed(() => live.value?.uses ?? result.value?.uses ?? 0);
 const shownApplied = computed(() => live.value?.applied ?? result.value?.applied ?? 0);
 </script>
@@ -342,10 +350,20 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
       <!-- ③ 自分でスパム・④ 運試し -->
       <div class="min-w-0">
         <template v-if="result?.hit && !spamming">
-          <!-- かなりの強運の時は珍しい段と同じ光 (枠・走る光・光の柱)。key を変えて毎回動かす -->
-          <p :key="`hit-${lucky}`" class="relative -mx-2 rounded px-2 text-[16px] font-bold text-emerald-300" :class="lucky && result.rank != null && result.rank <= 10 ? 'stage-mod-new-rare' : ''"><span v-if="lucky && result.rank != null && result.rank <= 10" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}</p>
+          <!--
+            かなりの強運 (上位 10% 以内): 落ち着いた銅色の演出 (2026-10-16 オーナー「少し見た目オシャレな感じで、かつ大人の感じで」)。
+            細い銅色の線が中央から伸び、TOP の数字が銅色の字で浮かび上がって光が 1 回だけ走る。派手な色や柱は使わない。key を変えて毎回動かす
+          -->
+          <div v-if="isLucky" :key="`lucky-${lucky}`" data-chaos-spam-lucky class="spam-lucky">
+            <span class="spam-lucky-line" aria-hidden="true" />
+            <p class="spam-lucky-kicker">{{ tr("かなりの強運", "Exceptional luck") }}</p>
+            <p class="spam-lucky-rank"><span class="spam-lucky-top">TOP</span><span class="spam-lucky-num">{{ result.rank }}</span><span class="spam-lucky-pct">%</span></p>
+            <p class="spam-lucky-sub">{{ tr(`${SPAM_PEOPLE} 人の中で ${result.uses.toLocaleString()} 回目に付いた`, `Hit on use ${result.uses.toLocaleString()} among ${SPAM_PEOPLE} people`) }}</p>
+            <span class="spam-lucky-line" aria-hidden="true" />
+          </div>
+          <p v-else class="text-[16px] font-bold text-emerald-300">{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}</p>
           <template v-if="result.rank != null">
-            <p class="mt-0.5 text-[13px]">{{ tr(`${SPAM_PEOPLE} 人中 ${rankWord(result.rank)} の運`, `${rankWord(result.rank)} luck among ${SPAM_PEOPLE} people`) }} <b :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">{{ luck(result.rank) }}</b></p>
+            <p v-if="!isLucky" class="mt-0.5 text-[13px]">{{ tr(`${SPAM_PEOPLE} 人中 ${rankWord(result.rank)} の運`, `${rankWord(result.rank)} luck among ${SPAM_PEOPLE} people`) }} <b :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">{{ luck(result.rank) }}</b></p>
             <!-- 100 人の中の位置 (左が早い) -->
             <div class="relative mt-1.5 h-2 max-w-[320px] rounded-full bg-gradient-to-r from-emerald-500/60 via-amber-400/50 to-rose-500/60">
               <span class="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#14110d]" :style="{ left: `${result.rank}%` }" />
@@ -391,3 +409,78 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
     </Teleport>
   </div>
 </template>
+
+<style scoped>
+/* かなりの強運 (上位 10% 以内) の演出。銅色 1 色 (#b87333) と、字の中だけ銅の光のグラデーション (2026-10-16 オーナー「やっぱオレンジかな、全体的に暗めの」「銅色の光って大人っぽい」) */
+.spam-lucky {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 320px;
+  padding: 10px 12px 12px;
+  background: radial-gradient(ellipse at 50% 55%, rgba(150, 82, 40, 0.22), rgba(150, 82, 40, 0) 70%);
+  animation: spam-lucky-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.spam-lucky-line {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(184, 115, 51, 0), rgba(184, 115, 51, 0.9) 50%, rgba(184, 115, 51, 0));
+  transform: scaleX(0);
+  animation: spam-lucky-line 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s forwards;
+}
+.spam-lucky-kicker {
+  margin-top: 8px;
+  font-family: var(--exile-font-family-antique);
+  font-size: 12px;
+  letter-spacing: 0.5em;
+  padding-left: 0.5em;
+  color: #b87333;
+  opacity: 0;
+  animation: spam-lucky-fade 0.8s ease-out 0.45s forwards;
+}
+.spam-lucky-rank {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  line-height: 1;
+  margin-top: 2px;
+}
+.spam-lucky-top {
+  font-family: var(--exile-font-family-antique);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: #9c7a62;
+}
+.spam-lucky-num,
+.spam-lucky-pct {
+  font-family: var(--exile-font-family-antique);
+  background: linear-gradient(105deg, #5e2f16 0%, #c4814a 35%, #f6d2b0 50%, #c4814a 65%, #5e2f16 100%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: spam-lucky-shine 1.6s ease-in-out 0.5s forwards;
+}
+.spam-lucky-num { font-size: 52px; }
+.spam-lucky-pct { font-size: 26px; }
+.spam-lucky-sub {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  color: #9c7a62;
+  opacity: 0;
+  animation: spam-lucky-fade 0.8s ease-out 0.8s forwards;
+}
+@keyframes spam-lucky-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes spam-lucky-line { to { transform: scaleX(1); } }
+@keyframes spam-lucky-fade { to { opacity: 1; } }
+@keyframes spam-lucky-shine { to { background-position: 0% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .spam-lucky, .spam-lucky-line, .spam-lucky-kicker, .spam-lucky-sub, .spam-lucky-num, .spam-lucky-pct { animation: none; opacity: 1; transform: none; }
+}
+</style>

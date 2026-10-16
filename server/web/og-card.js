@@ -114,7 +114,8 @@ async function dataUrl(env, url, path) {
   }
 }
 
-/** X は大きいカードの下 (約 80px) に題を重ねて出すので、字は 500px より上に置く (2026-10-16 オーナーのスマホで「半分の人」の行が隠れた) */
+/** かなりの強運 (上位 10% 以内) は銅色の二重の細い枠 (2026-10-16 オーナー「銅色の光って大人っぽい」)。
+ * X は大きいカードの下 (約 80px) に題を重ねて出すので、字は 500px より上に置く (2026-10-16 オーナーのスマホで「半分の人」の行が隠れた) */
 async function cardImage(url, env, c) {
   // satori は WebP を読めないので、カード用の PNG (public/og-art、base-art から作った物) を使う
   const art = c.art ? await dataUrl(env, url, `/og-art/${c.art}.png`) : null;
@@ -145,6 +146,7 @@ async function cardImage(url, env, c) {
   ${art ? `<img src="${art}" width="${aw}" height="${ah}" style="position:absolute;left:${ax}px;top:${ay}px" />` : ""}
   ${orb ? `<img src="${orb}" width="96" height="96" style="position:absolute;left:1030px;top:390px" />` : ""}
   <div style="display:flex;position:absolute;right:48px;top:44px;font-size:26px;font-weight:800;color:#f2c96b">exiledesk.com</div>
+  ${r != null && r <= 10 ? `<div style="display:flex;position:absolute;left:18px;top:18px;width:1164px;height:594px;border:2px solid rgba(184,115,51,0.75)"></div><div style="display:flex;position:absolute;left:26px;top:26px;width:1148px;height:578px;border:1px solid rgba(184,115,51,0.35)"></div>` : ""}
   <div style="display:flex;flex-direction:column;position:absolute;left:70px;top:36px;width:650px">
     <div style="display:flex;align-items:flex-end">
       <span style="font-size:46px;font-weight:800;color:#f2c96b">ExileDesk</span>
@@ -158,7 +160,7 @@ async function cardImage(url, env, c) {
     </div>
     ${r != null ? `
     <div style="display:flex;margin-top:18px;font-size:32px;font-weight:800">
-      <span>${esc(luckLine)}</span><span style="margin-left:16px;color:${lucky ? "#6ee7b7" : "#fda4af"}">${esc(luckWord)}</span>
+      <span>${esc(luckLine)}</span><span style="margin-left:16px;color:${r <= 10 ? "#d9965f" : lucky ? "#6ee7b7" : "#fda4af"}">${esc(luckWord)}</span>
     </div>
     <div style="display:flex;position:relative;margin-top:16px;width:620px;height:30px">
       <div style="display:flex;position:absolute;left:0;top:7px;width:620px;height:16px;border-radius:8px;background-image:linear-gradient(90deg,#10b981,#f59e0b,#f43f5e)"></div>
