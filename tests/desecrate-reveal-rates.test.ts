@@ -32,8 +32,8 @@ describe("冒涜の発現の候補", () => {
   }
 });
 
-describe("指輪の冒涜専用 MOD どうしの重み (Reddit Part 2 の実測)", () => {
-  it("筋力+器用さ (11.8%) はクールダウン回復 (1.2%) よりずっと出やすい", () => {
+describe("冒涜専用 MOD どうしの重みは均一 (2026-10-16 オーナー「不明につき全て均一」、poe2db・CoE も全部 1)", () => {
+  it("指輪の筋力+器用さとクールダウン回復は同じくらい出る (前の Reddit の実測 11.8% / 1.2% は使わない)", () => {
     let it0 = freshItem(data, "Gold Ring", 82);
     it0 = applyCurrency(data, it0, "transmute", mulberry32(1)).item;
     it0 = applyCurrency(data, it0, "regal", mulberry32(2)).item;
@@ -45,6 +45,7 @@ describe("指輪の冒涜専用 MOD どうしの重み (Reddit Part 2 の実測)
     }
     const sd = seen["Rings/Desecrated_Strength_2"] ?? 0;
     const cdr = seen["Rings/Desecrated_CooldownRecovery"] ?? 0;
-    expect(sd).toBeGreaterThan(cdr * 4);
+    expect(sd).toBeGreaterThan(0);
+    expect(Math.abs(sd - cdr) / Math.max(sd, cdr)).toBeLessThan(0.25);
   });
 });

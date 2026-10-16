@@ -661,8 +661,8 @@ export function createActionSpace(params: ActionSpaceParams): {
         const junk = Math.max(0, normalW - claimed);
         if (junk > 0) addTo(normal, junkState, junk / normalW);
       }
-      // Exclusive part: every legal desecrated mod of the side, by its weight (rings carry measured weights —
-      // ExileDesk desecrated-weights.json; elsewhere every placeholder is equal, so this is count-uniform)
+      // Exclusive part: every legal desecrated mod of the side, by its weight (all placeholders are equal since 2026-10-16 —
+      // the weights are not published, so this is count-uniform)
       const legal: { id: string; w: number }[] = [];
       if (open) {
         for (const id of desIds) {

@@ -323,7 +323,7 @@ const pct = (x: number): string => fmtPct(x);
 /** 重みの出どころ (乗せた時に出す)。ゲームは公開していないので、こちらが入れた重み */
 const WEIGHT_NOTE = computed((): Partial<Record<string, string>> => ({
   rune: tr("ルーンの特殊 MOD の重みは Craft of Exile (beta) が載せている実測 (Krakenbul / Prohibited Library、2026-09 更新)。ゲームは公開していない", "Rune special mod weights are community measurements published by Craft of Exile (beta) (Krakenbul / Prohibited Library, updated 2026-09). The game does not publish them"),
-  desecrated: tr("冒涜専用 MOD どうしの重みは Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)。指輪以外は、同じ MOD に指輪の比率を当てた推定。候補 3 つのうち専用が 1 個 85% / 2 個 14% / 3 個 1% も同じ実測", "Weights among desecrated-only mods are measured on Reddit (u/Civil-Bee-f, 563 ring reveals). Other bases are estimated by applying the ring ratios to the same mods. The 85% / 14% / 1% chance of 1 / 2 / 3 desecrated-only mods among the 3 options comes from the same data"),
+  desecrated: tr("冒涜専用 MOD どうしの重みは公開されていないので、全部等しく (均一) で引いている。候補 3 つのうち専用が 1 個 85% / 2 個 14% / 3 個 1% は Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)", "Weights among desecrated-only mods are not published, so they are all rolled equally (uniform). The share of desecrated-only mods among the 3 options (1: 85% / 2: 14% / 3: 1%) is measured on Reddit (u/Civil-Bee-f, 563 ring reveals)"),
   otherworldly: tr("異界の MOD の重みは公開されていない。冒涜専用 MOD と同じ扱い (同じ重み) で引いている", "Otherworldly mod weights are not published. They are rolled the same way (same weights) as desecrated-only mods"),
 }));
 const toneOf = (sec: { g: ModGroup; rune: string | null }): { tab: string; bar: string } => runeToneOf(sec.rune) ?? TONE[sec.g];

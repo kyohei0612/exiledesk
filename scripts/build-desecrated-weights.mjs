@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
  * build-desecrated-weights.mjs — 冒涜専用 MOD どうしの重みの実測を表にする (2026-10-09)
+ * **2026-10-16 から使っていない** (オーナー「不明につき MOD は全て均一」。指輪も含めて全部等しい)。実測の控えとして残す
  *
  * 元: Reddit r/PathOfExile2「I desecrated more than 500 rings — Part 2」(u/Civil-Bee-f、craftgaz.com の作者)。
  * 指輪・アイテムレベル 65 以上・保存された鎖骨で発現 563 回。表の「MLE draw weight (R_group-corrected)」= 能力値の冒涜 MOD が
  * まとめて出なくなる分を補正した、1 回引いた時の出やすさの推定 (%)。オーナーが表の画像を渡してくれた。
- * 実測があるのは指輪だけ。他の部位はざっくり推定 (2026-10-09 オーナー「これを参考に他の MOD の冒涜 MOD も決めれんかな、ざっくり」):
- *   指輪で「均等なら」の何倍出たか (比率 = 実測 % ÷ (100 / 指輪のその側の数)) を、同じ MOD (系統と文が同じ。無ければ系統が同じ) に当てる。
- *   指輪に無い MOD は比率 1 (平均)。部位・側ごとに合計を仮の値の合計にそろえる。
+ * 実測があるのは指輪だけ。他の部位は全部等しい (仮の値のまま、表に書かない)。2026-10-16 オーナー「指輪以外全部 1 でおｋ、しょうがない」
+ * (poe2db のクラフト・Craft of Exile も冒涜専用の重みは全部 1。前の 10-09〜10-16 は指輪の比率を同じ MOD に当てた推定だった)。
  *
  * 重みにする時は、側 (プレ / サフィ) の合計を今の仮の値 (1 個 2500) の合計と同じにする。骨がどちらの側に付くかは
  * その側の重みの合計で決めているので、そこを変えない (実測はその側の中の割合だけ)。
@@ -87,6 +87,7 @@ for (const [cls, b] of data.bases) {
     const mods = b.pools.desecrated[k].map((id) => data.mods.get(id)).filter((m) => m && m.tiers.length === 1 && m.tiers[0].weight > 0);
     if (!mods.length) continue;
     const exact = cls in MEASURED;
+    if (!exact) continue;
     const rs = mods.map((m) => (exact ? (MEASURED[cls][k === "prefixes" ? "prefix" : "suffix"][m.id] ?? null) : ratioOf(m)));
     if (rs.every((r) => r == null)) continue;
     const vals = rs.map((r) => r ?? (exact ? 100 / mods.length : 1));
@@ -101,7 +102,7 @@ for (const [cls, b] of data.bases) {
 console.log(`実測 ${measured} / 指輪から推定 ${estimated} (同じ側の他の MOD は比率 1)`);
 writeFileSync(resolve(ROOT, "src/services/htc/desecrated-weights.json"), JSON.stringify({
   generated: new Date().toISOString(),
-  source: "Reddit r/PathOfExile2 'I desecrated more than 500 rings — Part 2' (u/Civil-Bee-f): MLE draw weight (group-corrected), rings ilvl 65+, 563 reveals. Other bases: the ring ratio applied to the same mod (text, else family), others ratio 1. Side totals kept at the 2500 placeholder × count. scripts/build-desecrated-weights.mjs",
+  source: "Reddit r/PathOfExile2 'I desecrated more than 500 rings — Part 2' (u/Civil-Bee-f): MLE draw weight (group-corrected), rings ilvl 65+, 563 reveals. Other bases: no entry (all equal, 2026-10-16). Side totals kept at the 2500 placeholder × count. scripts/build-desecrated-weights.mjs",
   weights,
 }, null, 1));
 console.log(`${Object.keys(weights).length} MOD → src/services/htc/desecrated-weights.json`);
