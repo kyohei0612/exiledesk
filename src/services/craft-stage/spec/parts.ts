@@ -7,7 +7,7 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
-import { addOne, allMods, candidates, effectiveCls, makeStageMod, maxQualityOf, overLimit, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without, type Candidate } from "../stage-core";
+import { addOne, allMods, candidates, catalystOf, hasExtraCatalyst, effectiveCls, makeStageMod, maxQualityOf, overLimit, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without, type Candidate } from "../stage-core";
 import { whittleTargets } from "../apply-currency";
 import { boostedBy } from "../../htc/quality";
 import { catalysingMultiplier } from "../../htc/catalysing-multiplier";
@@ -415,10 +415,13 @@ function quality(ctx: PartCtx, item: StageItem, a: Quality): StageApply {
 function catalyst(ctx: PartCtx, item: StageItem): StageApply {
   const tag = ctx.catalystTag!;
   const max = maxQualityOf(item);
-  const base = item.qualityTag === tag ? item.quality : 0;
-  if (ctx.oneCatalyst) return { applied: true, item: { ...item, quality: Math.min(max, base + QUALITY_PER_CATALYST), qualityTag: tag }, added: [], removed: [] };
+  // 暗黙でカタリストを許すベース (グラスピングメイル) はベースの品質とは別の欄 (catalystQuality) に入る
+  const extra = hasExtraCatalyst(item.base);
+  const base = item.qualityTag === tag ? catalystOf(item).pct : 0;
+  const put = (n: number): StageItem => (extra ? { ...item, catalystQuality: n, qualityTag: tag } : { ...item, quality: n, qualityTag: tag });
+  if (ctx.oneCatalyst) return { applied: true, item: put(Math.min(max, base + QUALITY_PER_CATALYST)), added: [], removed: [] };
   const count = Math.ceil((max - base) / QUALITY_PER_CATALYST);
-  return { applied: true, item: { ...item, quality: max, qualityTag: tag }, added: [], removed: [], count };
+  return { applied: true, item: put(max), added: [], removed: [], count };
 }
 
 /** 部品を 1 つ打つ */

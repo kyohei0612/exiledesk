@@ -114,7 +114,7 @@ describe("打ち比べ: 新しい作り = applyCurrency", () => {
     let n = 0, hit = 0;
     for (const base of BASES) for (const ilvl of ILVLS) for (const [label, item] of statesOf(base, ilvl)) {
       for (const key of bonesFor(item)) for (const omens of BONE_OMENS) for (const seed of SEEDS) {
-        const a = applyCurrency(data, item, key, mulberry32(seed), omens);
+        const a = applyCurrency(data, item, key, mulberry32(seed), omens, { legacy: true });
         const b = applyBySpec(data, item, key, mulberry32(seed), omens)!;
         n++;
         if (a.applied) hit++;
@@ -135,7 +135,7 @@ describe("打ち比べ: 新しい作り = applyCurrency", () => {
     let n = 0, hit = 0;
     for (const base of RARE_BASES) for (const ilvl of ILVLS) for (const [label, item] of statesOf(base, ilvl)) {
       for (const key of REVEAL_KEYS) for (const omens of REVEAL_OMENS) for (const seed of SEEDS) {
-        const a = applyCurrency(data, item, key, mulberry32(seed), omens);
+        const a = applyCurrency(data, item, key, mulberry32(seed), omens, { legacy: true });
         const b = applyBySpec(data, item, key, mulberry32(seed), omens)!;
         n++;
         if (a.applied) hit++;
@@ -151,7 +151,7 @@ describe("打ち比べ: 新しい作り = applyCurrency", () => {
     let n = 0, hit = 0;
     for (const base of BASES) for (const ilvl of [82]) for (const [label, item] of statesOf(base, ilvl)) {
       for (const omens of ANNUL_OMENS) for (const seed of SEEDS) {
-        const a = applyCurrency(data, item, "annul", mulberry32(seed), omens);
+        const a = applyCurrency(data, item, "annul", mulberry32(seed), omens, { legacy: true });
         const b = applyBySpec(data, item, "annul", mulberry32(seed), omens)!;
         n++;
         if (a.applied) hit++;
@@ -171,7 +171,7 @@ function replay(name: string, start: StageItem, steps: Array<{ key: string; omen
   let item = start;
   let n = 0;
   steps.forEach((s, i) => {
-    const a = applyCurrency(data, item, s.key, mulberry32(s.seed), s.omens);
+    const a = applyCurrency(data, item, s.key, mulberry32(s.seed), s.omens, { legacy: true });
     const offShelf = s.key.startsWith("desecrate") && !bonesFor(item).includes(s.key);
     if (specCovers(s.key) && !offShelf) {
       const b = applyBySpec(data, item, s.key, mulberry32(s.seed), s.omens)!;
@@ -235,16 +235,16 @@ describe("手順の再生: 毎手同じ", () => {
   });
 });
 
-describe("分かっている違い (オーナーの確認待ち)", () => {
+describe("分かっている違い (新しい作り = 説明文・クライアントの方に切り替えた。2026-10-16)", () => {
   it("古代の骨 + 腐食のお告げ、アイテムレベル 40 未満: 今は打てる、新しい作りは古代の骨の制約で打てない", () => {
     const item = applyCurrency(data, freshItem(data, "Gold Ring", 35), "alchemy", mulberry32(3)).item;
-    expect(applyCurrency(data, item, "desecrate_ancient", mulberry32(1), ["OmenofPutrefaction"]).applied).toBe(true);
+    expect(applyCurrency(data, item, "desecrate_ancient", mulberry32(1), ["OmenofPutrefaction"], { legacy: true }).applied).toBe(true);
     expect(applyBySpec(data, item, "desecrate_ancient", mulberry32(1), ["OmenofPutrefaction"])!.applied).toBe(false);
   });
   it("棚に無い骨 (古代の頭蓋骨・武器の変質した骨): 今の関数は打ててしまう物がある、新しい作りはクライアントにある骨だけ", () => {
     const jewel = applyCurrency(data, freshItem(data, "Ruby", 82), "alchemy", mulberry32(3)).item;
     expect(bonesFor(jewel)).toEqual(["desecrate"]);
-    expect(applyCurrency(data, jewel, "desecrate_ancient", mulberry32(1)).applied).toBe(true);
+    expect(applyCurrency(data, jewel, "desecrate_ancient", mulberry32(1), [], { legacy: true }).applied).toBe(true);
     expect(applyBySpec(data, jewel, "desecrate_ancient", mulberry32(1))!.applied).toBe(false);
     const wand = applyCurrency(data, freshItem(data, "Withered Wand", 82), "alchemy", mulberry32(3)).item;
     expect(applyCurrency(data, wand, "desecrate_altered", mulberry32(1)).applied).toBe(false);

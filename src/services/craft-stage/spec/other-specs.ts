@@ -75,7 +75,7 @@ export const CATALYST_SPECS: readonly CurrencySpec[] = CATALYSTS.flatMap((c) => 
     },
     target: refined
       ? { groups: ["jewel"], groupsReason: { ja: "精製されたカタリストはジュエルだけ", en: "Refined Catalysts: Jewels only" } }
-      : { groups: ["ringAmulet"], groupsReason: { ja: "カタリストは指輪・アミュレットだけ (ジュエルは精製されたカタリスト)", en: "Catalysts: Rings and Amulets only (Jewels use Refined Catalysts)" } },
+      : { groups: ["ringAmulet"], orImplicitCatalyst: true, groupsReason: { ja: "カタリストは指輪・アミュレットだけ (ジュエルは精製されたカタリスト)", en: "Catalysts: Rings and Amulets only (Jewels use Refined Catalysts)" } },
     actions: [{ catalyst: true }],
     limits: [{ kind: "qualityBelow", max: "catalyst" }],
     source: CATALYST_SOURCE,

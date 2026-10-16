@@ -91,7 +91,7 @@ function sweep(kind: string): { n: number; hit: number; diffs: Diff[]; reasons: 
   const keys = ORB_SPECS.filter((s) => s.kind === kind).map((s) => s.stageKey);
   for (const base of BASES) for (const ilvl of ILVLS) for (const [label, item] of [...statesOf(base, ilvl), ...moreStatesOf(base, ilvl)]) {
     for (const key of keys) for (const omens of OMENS_FOR[kind]!) for (const seed of SEEDS) {
-      const a = applyCurrency(data, item, key, mulberry32(seed), omens);
+      const a = applyCurrency(data, item, key, mulberry32(seed), omens, { legacy: true });
       const b = applyBySpec(data, item, key, mulberry32(seed), omens)!;
       n++;
       if (a.applied) hit++;

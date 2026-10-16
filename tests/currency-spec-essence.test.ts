@@ -79,7 +79,7 @@ describe("打ち比べ: エッセンスの新しい作り = applyCurrency", () =
         const keys = [...new Set([...essenceShelf(data, item).flatMap((g) => g.keys), ...OTHER_KEYS])]
           .filter((k) => (essenceLevelOfKey(k) === "perfect") === (group === "パーフェクト"));
         for (const key of keys) for (const omens of group === "パーフェクト" ? PERFECT_OMENS : NORMAL_OMENS) for (const seed of SEEDS) {
-          const a = applyCurrency(data, item, key, mulberry32(seed), omens);
+          const a = applyCurrency(data, item, key, mulberry32(seed), omens, { legacy: true });
           const b = applyBySpec(data, item, key, mulberry32(seed), omens)!;
           n++;
           if (a.applied) hit++;
@@ -107,7 +107,7 @@ describe("分かっている違い (オーナーの確認待ち)", () => {
       const item = statesOf(base, 82).find(([l]) => l === "レア 満杯")?.[1];
       if (!item) continue;
       for (const key of essenceShelf(data, item).flatMap((g) => g.keys).filter(isAlloyKey)) {
-        const a = applyCurrency(data, item, key, mulberry32(1), ["OmenofSinistralCrystallisation"]);
+        const a = applyCurrency(data, item, key, mulberry32(1), ["OmenofSinistralCrystallisation"], { legacy: true });
         const b = applyBySpec(data, item, key, mulberry32(1), ["OmenofSinistralCrystallisation"])!;
         if (a.applied) expect(a.omensUsed).toEqual(["OmenofSinistralCrystallisation"]);
         if (b.applied) expect(b.omensUsed).toEqual([]);

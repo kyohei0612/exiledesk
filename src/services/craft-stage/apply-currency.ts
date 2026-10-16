@@ -74,8 +74,10 @@ import { hasImplicitRange } from "./roll-text";
 import { htcBaseInfo } from "../htc/patch";
 import { tr } from "../../i18n/lang";
 
-/** 噛み切られた骨が使えるアイテムレベルの上限 (クライアントの AbyssBenchTicketTypes.MaximumItemLevel、2026-09-29) */
-export const GNAWED_MAX_ILVL = 64;
+export { GNAWED_MAX_ILVL } from "./stage-core";
+import { GNAWED_MAX_ILVL } from "./stage-core";
+import { applyBySpec } from "./spec/run-spec";
+import { isAlloyKey } from "./spec/essence-specs";
 
 /** カレンシーのキー (price-keys.json) → 種類と強さ */
 function parseKey(key: string): { kind: string; strength: "base" | "greater" | "perfect" } {
@@ -144,6 +146,8 @@ export interface ApplyHint {
   remove?: string;
   /** 手順の再生: カタリストは 1 手 = 1 個 (手で打つ画面は 1 手で上限まで。要望 ㉜ の 2) */
   oneCatalyst?: boolean;
+  /** 今の関数 (例外を書き足した作り) で打つ。新しい作りとの打ち比べのテスト用 (ADR-004) */
+  legacy?: boolean;
 }
 /** 指名が通らなかった時 (理由つきで打てない、pickError) */
 const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, tr(`指名できない: ${why}`, `Can't force: ${why}`)), pickError: true });
@@ -172,6 +176,12 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // 解呪・サルベージ (要望 ⑰-5) は未鑑定・コラプトでもできる
   if (isDispose(currency)) return applyDispose(item, currency);
   if (item.identified === false && currency !== "wisdom") return skip(item, tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)"));
+  // ADR-004 (2026-10-16): 移し終えた手は説明文の分解 (spec/) で打つ。指名・結果の指定・まだ移していない手は今の関数で。
+  // 合金 + 結晶化のお告げは今の関数のまま (説明文ではお告げが効かないが、ゲームで未確認。docs/reviews/2026-10-16-adr-004-orbs-diff.md の A)
+  if (!hint.legacy && !hint.pick && !hint.remove && !hint.outcome && !hint.collect && !(isAlloyKey(currency) && omens.some((o) => /Crystallisation$/.test(o)))) {
+    const s = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst });
+    if (s) return s;
+  }
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未発現の MOD の発現だけはできる (ゲームと同じ)
   // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す
  // ルーン (要望 ⑰-1) はコラプト・聖別の後でもはめられる物がある (クライアントの CanSocketInCorruptedSanctified、applyRune で見る)

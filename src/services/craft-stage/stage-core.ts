@@ -24,6 +24,8 @@ import type { StageApply, StageAugment, StageItem, StageMod, StageSide } from ".
 import { tr } from "../../i18n/lang";
 
 export const SIDES: StageSide[] = ["prefix", "suffix"];
+/** 噛み切られた骨が使えるアイテムレベルの上限 (クライアントの AbyssBenchTicketTypes.MaximumItemLevel、2026-09-29) */
+export const GNAWED_MAX_ILVL = 64;
 const MAGIC_LIMIT = 1;
 export const SIDE_JA = { prefix: "プレフィックス", suffix: "サフィックス" } as const;
 

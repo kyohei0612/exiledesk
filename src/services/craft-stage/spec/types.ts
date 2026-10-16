@@ -37,6 +37,8 @@ export interface Target {
   groupsReason?: Words;
   /** レアリティが合わない時の一言 (無ければレアリティから作る) */
   rarityReason?: Words;
+  /** 部位が合わなくても、暗黙「Catalysts can be applied to this item」のベース (グラスピングメイル) は対象 */
+  orImplicitCatalyst?: boolean;
 }
 
 /** MOD の置き場 (ItemBase.pools)。並びは引く順 (重なった MOD は先の置き場で 1 回だけ数える) */

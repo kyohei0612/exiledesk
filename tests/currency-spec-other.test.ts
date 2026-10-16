@@ -66,7 +66,7 @@ function sweep(keys: readonly string[], oneCatalyst = false): { n: number; hit: 
     // ルーンはソケットの無い状態ではどれも同じ理由で弾かれるので、ソケットのある状態と 1 つだけ
     if (runes && !item.sockets && label !== "レア 4 つ") continue;
     for (const key of keys) for (const seed of SEEDS) {
-      const a = applyCurrency(data, item, key, mulberry32(seed), [], { oneCatalyst });
+      const a = applyCurrency(data, item, key, mulberry32(seed), [], { oneCatalyst, legacy: true });
       const b = applyBySpec(data, item, key, mulberry32(seed), [], { oneCatalyst })!;
       n++;
       if (a.applied) hit++;
@@ -101,18 +101,20 @@ describe("打ち比べ: 新しい作り = applyCurrency (品質・触媒・ア�
   }
 });
 
-describe("分かっている違い (オーナーの確認待ち)", () => {
+describe("分かっている違い (新しい作り = 説明文の方に切り替えた。2026-10-16)", () => {
   it("アーティフィサーをセプターに: 今は使える、新しい作りは説明文どおり使えない", () => {
     const sceptre = BASES.find((b) => statesOf(b, 82)[0]![1].cls.category.startsWith("Sceptre"))!;
     const item = statesOf(sceptre, 82)[3]![1];
-    expect(applyCurrency(data, item, "artificer", mulberry32(1)).applied).toBe(true);
+    expect(applyCurrency(data, item, "artificer", mulberry32(1), [], { legacy: true }).applied).toBe(true);
+    expect(applyCurrency(data, item, "artificer", mulberry32(1)).applied).toBe(false);
     expect(applyBySpec(data, item, "artificer", mulberry32(1))!.applied).toBe(false);
   });
   it("ルーンを予見 (ヒネコラの髪束) のアイテムに: 今は予見が残る、新しい作りは消える", () => {
     const item = { ...statesOf("Gold Ring", 82)[3]![1], foreseen: true };
     const wand = moreStatesOf(BASES.find((b) => statesOf(b, 82)[0]![1].cls.category.startsWith("Wand"))!, 82).find(([l]) => l === "予見 + ソケット 1")![1];
-    const key = runeKeys("lesser").find((k) => applyCurrency(data, wand, k, mulberry32(1)).applied)!;
-    expect(applyCurrency(data, wand, key, mulberry32(1)).item.foreseen).toBe(true);
+    const key = runeKeys("lesser").find((k) => applyCurrency(data, wand, k, mulberry32(1), [], { legacy: true }).applied)!;
+    expect(applyCurrency(data, wand, key, mulberry32(1), [], { legacy: true }).item.foreseen).toBe(true);
+    expect(applyCurrency(data, wand, key, mulberry32(1)).item.foreseen).toBe(false);
     expect(applyBySpec(data, wand, key, mulberry32(1))!.item.foreseen).toBe(false);
     void item;
   });

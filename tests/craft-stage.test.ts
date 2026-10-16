@@ -194,7 +194,8 @@ describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
   it("ジュエルはアイテムレベルを見ない (完全のカレンシー・骨の制限も無し。2026-10-12 オーナー)", () => {
     const low = A(A(freshItem(data, "Emerald", 20), "transmute").item, "regal").item;
     expect(A(low, "exalt_perfect").applied).toBe(true);
-    expect(A(low, "desecrate_ancient").applied).toBe(true);
+    // ジュエルの骨は保存された頭蓋骨だけ (古代の頭蓋骨はクライアントに無い。ADR-004)
+    expect(A(low, "desecrate").applied).toBe(true);
   });
   it("ジュエルもカタリストで伸びる (中身のタグ = displayTags。2026-10-12 オーナー「ジュエルにもカタリストであがる」)", async () => {
     const { makeStageMod, boostedMod } = await import("../src/services/craft-stage/stage-core");

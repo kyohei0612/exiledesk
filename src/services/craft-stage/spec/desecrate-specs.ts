@@ -8,7 +8,7 @@
  */
 import { ANCIENT_BONE_FLOOR } from "../../../vendor/poe2htc/engine/probability";
 import { ABYSS_MARK_FLOOR } from "../../htc/omens";
-import { GNAWED_MAX_ILVL } from "../apply-currency";
+import { GNAWED_MAX_ILVL } from "../stage-core";
 import type { Action, CurrencySpec, Limit, ModPool, OmenSpec, Source, Target } from "./types";
 
 /** 深淵の王の印から打つ骨の段の下限 (用語集 MarkofAbyssalLord「a higher tier」。値 33 は poe2fun の 1 件だけ = 仮、2026-10-10 オーナーが仮のまま確定) */

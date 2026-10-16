@@ -4,7 +4,7 @@
  * 一言は今の関数 (apply-desecrate.ts など) と同じ文にしている (手順の再生の突き合わせで同じ結果になるように)
  */
 import { inAny, inGroup } from "../../mods/item-classes";
-import { allMods, maxQualityOf, room, SIDES } from "../stage-core";
+import { allMods, catalystOf, hasExtraCatalyst, maxQualityOf, room, SIDES } from "../stage-core";
 import { craftedLimitOf } from "../apply-essence";
 import { socketCapOf } from "../stage-runes";
 import { canFracture } from "../../mods/item-classes";
@@ -29,7 +29,7 @@ function rarityReason(rs: readonly StageRarity[]): string {
 }
 
 /** 部位だけ (骨の種類を選ぶのに使う) */
-export const groupsFit = (t: Target, item: StageItem): boolean => !t.groups || inAny(item.cls.category, t.groups);
+export const groupsFit = (t: Target, item: StageItem): boolean => !t.groups || inAny(item.cls.category, t.groups) || (!!t.orImplicitCatalyst && hasExtraCatalyst(item.base));
 
 /** 対象の判定: 部位 → レアリティの順 */
 export function targetBlock(t: Target, item: StageItem): string | null {
@@ -73,7 +73,7 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
     }
     case "qualityBelow": {
       const max = l.max === "catalyst" ? maxQualityOf(item) : l.max;
-      const now = l.max === "catalyst" ? (item.qualityTag === tag ? item.quality : 0) : item.quality;
+      const now = l.max === "catalyst" ? (item.qualityTag === tag ? catalystOf(item).pct : 0) : item.quality;
       return now >= max ? tr(`品質が上限 (${max}%)`, `Quality is maxed (${max}%)`) : null;
     }
     case "hasCatalystQuality":

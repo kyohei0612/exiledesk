@@ -183,7 +183,8 @@ describe("バグ: 追加分 (乱数の打ち回し・データの点検で見つ
     expect(allMods(r.item).filter((m) => m.crafted).length).toBe(2);
     const e = applyCurrency(data, r.item, "essence:normal:Body_Armours_str_dex_int/Essence_ChaosResistance", mulberry32(5), []);
     expect(e.applied).toBe(false);
-    expect(e.reason).toMatch(/クラフト MOD|エッセンスの MOD/);
+    // 普通のエッセンスはマジックにだけ (ADR-004 は対象を先に見る)
+    expect(e.reason).toMatch(/クラフト MOD|エッセンスの MOD|マジックのアイテムにだけ/);
   });
 });
 
