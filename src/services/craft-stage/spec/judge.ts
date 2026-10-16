@@ -62,6 +62,8 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
       return allMods(item).length >= l.n ? null : tr(`MOD が ${l.n} つ以上要る`, `Needs ${l.n}+ mods`);
     case "noFractured":
       return allMods(item).some((m) => m.fractured) ? tr("もう固定した MOD がある", "Already has a Fractured mod") : null;
+    case "noRevealedDesecrated":
+      return allMods(item).some((m) => m.desecrated && !m.unrevealed) ? tr("発現済みの冒涜 MOD があると使えない (未発現なら使える)", "Can't be used while a revealed Desecrated mod is present (unrevealed is fine)") : null;
     case "noAbyssMark":
       return allMods(item).some((m) => m.abyssMark) ? tr("印はもう付いている", "Already has a Mark") : null;
     case "craftedSlot": {

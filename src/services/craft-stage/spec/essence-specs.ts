@@ -62,10 +62,10 @@ export const ABYSS_ESSENCE_SPEC: CurrencySpec = {
   kind: "essence_perfect",
   text: PERFECT_TEXT,
   target: { rarity: ["rare"] },
-  actions: [{ remove: { n: 1, pick: "equal", optional: true } }, { addEssence: { side: "removedSide" } }],
-  // 冒涜の MOD があっても打てる (2026-10-16 オーナー「トレードであったけどどっちが先でも打てそうだな普通に」、Craft of Exile も他のエッセンスと同じ条件)
-  limits: [{ kind: "craftedSlot" }, { kind: "noAbyssMark" }],
-  source: { ...ESSENCE_SOURCE, community: "印は消した側に付く (SaVeQ 0.5.5 / poe2fun)", owner: "冒涜の MOD があっても打てる (2026-10-16、取引所に印と冒涜の MOD が両方ある物)" },
+  actions: [{ remove: { n: 1, pick: "equal", optional: true, unrevealedFirst: true } }, { addEssence: { side: "removedSide" } }],
+  // 未発現の冒涜 MOD があれば打てて、印はその未発現に入れ替わる。発現済みの冒涜 MOD があると打てない (2026-10-16 オーナーがゲームで確認)
+  limits: [{ kind: "craftedSlot" }, { kind: "noRevealedDesecrated" }, { kind: "noAbyssMark" }],
+  source: { ...ESSENCE_SOURCE, community: "印は消した側に付く (SaVeQ 0.5.5 / poe2fun)", owner: "未発現の冒涜 MOD があれば打てて印に入れ替わる・発現済みがあると打てない (2026-10-16 ゲームで確認)" },
 };
 /**
  * 合金 (Adaptive Alloy など 13 種): 英語の説明文はパーフェクトエッセンスと同じ、日本語は別の文。

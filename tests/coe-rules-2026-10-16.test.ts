@@ -100,7 +100,7 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(rawValue(4, 34)).toBe(3);
   });
 
-  it("15. 深淵のエッセンスは冒涜の MOD があっても打てる", async () => {
+  it("15. 深淵のエッセンスは未発現の冒涜 MOD があれば打てて印に入れ替わり、発現済みだと打てない (2026-10-16 オーナーがゲームで確認)", async () => {
     const { essenceShelf } = await import("../src/state/craft-stage-shelf");
     const { resolveEssence, ABYSS_ESSENCE_SPEC } = await import("../src/services/craft-stage/spec/essence-specs");
     const it = rareWhere((x) => room(x, "suffix"));
@@ -108,7 +108,13 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(key).toBeTruthy();
     const bone = applyCurrency(data, it, "desecrate", mulberry32(1), ["OmenofDextralNecromancy"]);
     expect(allMods(bone.item).some((m) => m.desecrated)).toBe(true);
-    expect(applyCurrency(data, bone.item, key!, mulberry32(3)).applied).toBe(true);
+    const ess = applyCurrency(data, bone.item, key!, mulberry32(3));
+    expect(ess.applied).toBe(true);
+    expect(ess.removed.map((m) => m.modId)).toEqual(["unrevealed"]);
+    expect(ess.added[0]!.side).toBe("suffix");
+    const revealed = applyCurrency(data, bone.item, "reveal:1", mulberry32(4)).item;
+    expect(allMods(revealed).some((m) => m.desecrated && !m.unrevealed)).toBe(true);
+    expect(applyCurrency(data, revealed, key!, mulberry32(3)).applied).toBe(false);
   });
 
   it("10. 触媒の高貴の倍率は 1 + 0.2 × 品質、20% を超えた分は 1% ごとに +0.12", () => {

@@ -86,7 +86,7 @@ describe("深淵の印 (クラフトステージ)", async () => {
     expect(hidden.unrevealed!.floor).toBe(32);
     expect(b.item.suffixes.length).toBe(3);
   });
-  it("冒涜の MOD があっても深淵のエッセンスを打てる (2026-10-16 オーナー、取引所に両方ある物)", () => {
+  it("未発現の冒涜 MOD があれば深淵のエッセンスを打てる (印がそれに入れ替わる。2026-10-16 オーナーがゲームで確認)", () => {
     const it = rareBoots();
     const b = A(it, "desecrate", ["OmenofSinistralNecromancy"]);
     expect(A(b.item, ABYSS, ["OmenofSinistralCrystallisation"]).applied).toBe(true);

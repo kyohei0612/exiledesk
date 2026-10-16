@@ -326,7 +326,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       return [
         "Removes 1 mod from a **Rare** and adds the **Mark of the Abyssal Lord** on that side",
         "The next Abyssal Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Tier floor mod level = item level × 0.4 rounded down (the description only says \"higher tier\"; same as Craft of Exile)",
-        "Can be used even with a Desecrated mod on the item. The Mark is a crafted mod too (2 allowed with Astrid's Creativity)",
+        "With an **Unrevealed** Desecrated mod it can be used and the Mark **replaces that Unrevealed mod**. Can't be used once the Desecrated mod is revealed. The Mark is a crafted mod too (2 allowed with Astrid's Creativity)",
         "Omens: Sinistral / Dextral Crystallisation (removed side = Mark side)",
       ];
     }
@@ -334,7 +334,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       return [
         "**レア** の MOD を 1 つ消して、消した側に **深淵の王の印** を付ける",
         "次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。段の下限 MOD レベル = アイテムレベル × 0.4 の切り捨て (説明文は「より高い段」だけ。Craft of Exile と同じ式)",
-        "冒涜の MOD があっても打てる。印もクラフト MOD (アストリッドの創造性で 2 つまで持てる)",
+        "**未発現** の冒涜 MOD があれば打てて、印は **その未発現に入れ替わる**。発現済みの冒涜 MOD があると打てない。印もクラフト MOD (アストリッドの創造性で 2 つまで持てる)",
         "お告げ: 左右の結晶化 (消す側 = 印の付く側)",
       ];
     }

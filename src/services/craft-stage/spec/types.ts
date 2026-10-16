@@ -66,6 +66,8 @@ export type Limit =
   /** 冒涜の MOD が無い (深淵のエッセンス。計算機と同じ決まり、外の正解は無い) */
   /** 深淵の王の印がまだ無い (深淵のエッセンス) */
   | { kind: "noAbyssMark" }
+  /** 発現済みの冒涜 MOD があると使えない (未発現なら使える。深淵のエッセンス、2026-10-16 オーナーがゲームで確認) */
+  | { kind: "noRevealedDesecrated" }
   /** クラフト MOD の空き (用語集 Crafted「An item can only have one Crafted Modifier」。アストリッドの創造性で増える) */
   | { kind: "craftedSlot" }
   /** 品質が上限より下 (用語集 Quality「up to a default maximum of 20%」= max。catalyst = ベースの最大品質、種類が変わる時は 0 から) */
@@ -97,8 +99,9 @@ export type Action =
    * sideWhenFull: 付ける側 (エッセンスの MOD の側) が埋まっている時はその側から消す (2026-10-14 オーナーがゲームで確認)。
    * overLimitVoids: 上限を超えている側の MOD に当たったら手ごと不成立 (カオス、2026-10-14 オーナーがゲームで確認)。
    * optional: 消せる物が無ければ消さずに通す (深淵のエッセンスは空きに印を付ける)
+   * unrevealedFirst: 未発現の冒涜 MOD があればそれを消す (深淵のエッセンスは未発現に入れ替わる。2026-10-16 オーナーがゲームで確認)
    */
-  | { remove: { n: number | "all"; pick: "equal" | "desecrated"; ifAny?: boolean; sideWhenFull?: boolean; overLimitVoids?: boolean; optional?: boolean } }
+  | { remove: { n: number | "all"; pick: "equal" | "desecrated"; ifAny?: boolean; sideWhenFull?: boolean; overLimitVoids?: boolean; optional?: boolean; unrevealedFirst?: boolean } }
   /** コラプトにする (腐食のお告げ) */
   | { corrupt: true }
   /** レアリティを変える (変成・王者・錬金・普通のエッセンス) */

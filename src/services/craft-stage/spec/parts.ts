@@ -310,6 +310,14 @@ function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
   const nothing: StageApply = { applied: true, item, added: [], removed: [] };
   if (a.ifAny && !allMods(item).length) return nothing;
   const side = ctx.mods.removeSide ?? ctx.mods.side;
+  // 未発現の冒涜 MOD があればそれを消す (深淵のエッセンスは未発現に入れ替わる、2026-10-16 オーナーがゲームで確認)
+  if (a.unrevealedFirst && !ctx.removeForce) {
+    const us = allMods(item).filter((m) => m.unrevealed && !m.fractured && (!side || m.side === side));
+    if (us.length) {
+      const u = us.length === 1 ? us[0]! : us[Math.floor(ctx.rng() * us.length)]!;
+      return { applied: true, item: without(item, u), added: [], removed: [u] };
+    }
+  }
   let sides: readonly StageSide[] = side ? [side] : SIDES;
   const e = ctx.essence;
   if (a.sideWhenFull && e && !room(item, e.side)) {
