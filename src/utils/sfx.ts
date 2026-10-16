@@ -40,13 +40,36 @@ export function sfxOf(key: string): string {
 }
 
 let ctx: AudioContext | null = null;
+const ALL = ["orb", "transmute", "alchemy", "regal", "exalt", "chaos", "annul", "chance", "fracture", "vaal", "vaal-infuser", "abyss", "divine-drop"];
+function context(): AudioContext | null {
+  if (ctx) return ctx;
+  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AC) return null;
+  ctx = new AC({ latencyHint: "interactive" });
+  return ctx;
+}
+/**
+ * 先に全部読んでおく (2026-10-16 オーナー「ちょいズレてる、付いた瞬間に」: 初めて使うカレンシーは、その時に音を取りに行って読むので遅れていた)。
+ * 音の出口はブラウザが押した時まで寝かせるので、最初に触った時 (pointerdown = クリックより先) に起こしておく
+ */
+let preloaded = false;
+export function preloadSfx(): void {
+  if (preloaded || typeof window === "undefined" || !context()) return;
+  preloaded = true;
+  for (const n of ALL) void load(n);
+  const wake = (): void => { if (ctx?.state === "suspended") void ctx.resume(); };
+  window.addEventListener("pointerdown", wake, { capture: true, passive: true });
+  window.addEventListener("keydown", wake, { capture: true, passive: true });
+}
 const buffers = new Map<string, Promise<AudioBuffer | null>>();
+const decoded = new Map<string, AudioBuffer>();
 function load(name: string): Promise<AudioBuffer | null> {
   let p = buffers.get(name);
   if (!p) {
     p = fetch(`/sfx/${name}.mp3`)
       .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
       .then((b) => ctx!.decodeAudioData(b))
+      .then((buf) => { decoded.set(name, buf); return buf; })
       .catch(() => null);
     buffers.set(name, p);
   }
@@ -57,12 +80,10 @@ function load(name: string): Promise<AudioBuffer | null> {
 export function playSfx(name: string): void {
   if (sfxOff.value || typeof window === "undefined") return;
   try {
-    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AC) return;
-    ctx ??= new AC();
-    if (ctx.state === "suspended") void ctx.resume();
-    const c = ctx;
-    void load(name).then((buf) => {
+    const c = context();
+    if (!c) return;
+    if (c.state === "suspended") void c.resume();
+    const play = (buf: AudioBuffer | null): void => {
       if (!buf) return;
       const src = c.createBufferSource();
       const gain = c.createGain();
@@ -70,7 +91,11 @@ export function playSfx(name: string): void {
       src.buffer = buf;
       src.connect(gain).connect(c.destination);
       src.start();
-    });
+    };
+    // 読み終わっていれば待たずにその場で (Promise を挟むと 1 拍遅れる)
+    const ready = decoded.get(name);
+    if (ready) play(ready);
+    else void load(name).then(play);
   } catch { /* 音が出せなくても動きは変えない */ }
 }
 

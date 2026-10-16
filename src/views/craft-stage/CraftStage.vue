@@ -12,7 +12,7 @@
 import { inGroup } from "../../services/mods/item-classes";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
-import { setSfxOff, sfxOff } from "../../utils/sfx";
+import { preloadSfx, setSfxOff, sfxOff } from "../../utils/sfx";
 import { scrollToTop } from "../../utils/keep-place";
 import { baseNameOf, modText, tr } from "../../i18n/lang";
 import { forceKey } from "../../services/craft-stage/apply-force";
@@ -66,6 +66,8 @@ function useAtSocket(n: number): void {
   else s.use();
 }
 onMounted(() => void s.init());
+// 使った時の音を先に読んでおく (初めて使うカレンシーで遅れないように)
+onMounted(preloadSfx);
 /** 読めなかった時の「もう一度」 */
 function retryInit(): void { s.error.value = null; void s.init(); }
 
