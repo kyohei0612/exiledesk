@@ -72,7 +72,7 @@ describe("深淵の印 (クラフトステージ)", async () => {
     for (const [k, o] of [["exalt", "OmenofSinistralExaltation"], ["exalt", "OmenofDextralExaltation"], ["exalt", "OmenofDextralExaltation"], ["exalt", "OmenofDextralExaltation"]] as const) it = A(it, k, [o]).item as typeof it;
     return it;
   }
-  it("結晶化 + 深淵のエッセンスで、消した側に印 → 骨は印を置き換える (段の下限 33)", () => {
+  it("結晶化 + 深淵のエッセンスで、消した側に印 → 骨は印を置き換える (段の下限 = アイテムレベル 82 × 0.4 = 32、CoE の式)", () => {
     const it = rareBoots();
     const e = A(it, ABYSS, ["OmenofSinistralCrystallisation"]);
     expect(e.applied).toBe(true);
@@ -83,7 +83,7 @@ describe("深淵の印 (クラフトステージ)", async () => {
     expect(b.applied).toBe(true);
     expect(b.removed.some((m) => m.abyssMark)).toBe(true);
     const hidden = b.item.prefixes.find((m) => m.unrevealed)!;
-    expect(hidden.unrevealed!.floor).toBe(33);
+    expect(hidden.unrevealed!.floor).toBe(32);
     expect(b.item.suffixes.length).toBe(3);
   });
   it("冒涜の MOD があっても深淵のエッセンスを打てる (2026-10-16 オーナー、取引所に両方ある物)", () => {

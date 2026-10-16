@@ -16,7 +16,7 @@ import { hasImplicitRange } from "../roll-text";
 import { applyRune } from "../stage-runes";
 import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action, ModPool } from "./types";
-import { MARK_FLOOR } from "./desecrate-specs";
+import { markFloorOf } from "./desecrate-specs";
 import { jaOfOmen } from "../../htc/labels";
 import { tr } from "../../../i18n/lang";
 
@@ -105,7 +105,7 @@ const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>):
 export type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnrevealed"];
 /**
  * 未発現の冒涜 MOD をどの側に付けるか (打つ処理と確率表 held-odds.ts の骨が同じ物を使う)。
- *   - 深淵の王の印 (固定していない物) があれば、必ず印を置き換える。側は印の側、段の下限は MARK_FLOOR (用語集 MarkofAbyssalLord)
+ *   - 深淵の王の印 (固定していない物) があれば、必ず印を置き換える。側は印の側、段の下限はアイテムレベル × 0.4 の切り捨て (markFloorOf、用語集 MarkofAbyssalLord)
  *   - 側: お告げ → それ (fixed)。無ければ両側が空いていれば半々 (空きが 1 つなら抽選しない)。両側が埋まっていれば、固定以外の MOD を全部から等しく 1 つ消して、
  *     その側 (= 側ごとの重みは消せる MOD の数)。2026-10-16 Craft of Exile の poe2_desecrate に合わせる (オーナー「書いていない所はランダム」)
  *   - その側で出うる MOD が無い側は選ばない (重み 0)
@@ -120,7 +120,7 @@ export interface UnrevealedPlan {
 }
 export function unrevealedPlan(data: PatchData, item: StageItem, a: AddUnrevealed, mods: Mods): UnrevealedPlan {
   const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
-  const floor = Math.max(a.floor, mark ? MARK_FLOOR : 0);
+  const floor = Math.max(a.floor, mark ? markFloorOf(item.itemLevel) : 0);
   const fixed: StageSide | null = mark ? mark.side : mods.side;
   const args = (tag: string | null, plain: boolean): PoolArgs => ({ pools: plain ? ["normal"] : a.pools, floor, exclusiveAnyLevel: a.exclusiveAnyLevel, tag });
   const tagW = (side: StageSide) => sumW(pool(data, item, side, args(mods.guaranteeTag, false)));

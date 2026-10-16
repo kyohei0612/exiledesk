@@ -325,16 +325,16 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (t.mod.family === "EssenceAbyss" && isEn()) {
       return [
         "Removes 1 mod from a **Rare** and adds the **Mark of the Abyssal Lord** on that side",
-        "The next Abyssal Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Tier floor mod level 33 (assumed: the description only says \"higher tier\")",
-        "Can't be used while a Desecrated mod is present (overwrite it first with an Essence or Alloy). The Mark is a crafted mod too (2 allowed with Astrid's Creativity)",
+        "The next Abyssal Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Tier floor mod level = item level × 0.4 rounded down (the description only says \"higher tier\"; same as Craft of Exile)",
+        "Can be used even with a Desecrated mod on the item. The Mark is a crafted mod too (2 allowed with Astrid's Creativity)",
         "Omens: Sinistral / Dextral Crystallisation (removed side = Mark side)",
       ];
     }
     if (t.mod.family === "EssenceAbyss") {
       return [
         "**レア** の MOD を 1 つ消して、消した側に **深淵の王の印** を付ける",
-        "次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。段の下限 MOD レベル 33 (仮: 説明文は「より高い段」だけ)",
-        "冒涜の MOD がある間は打てない (先にエッセンス・合金で上書き)。印もクラフト MOD (アストリッドの創造性で 2 つまで持てる)",
+        "次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。段の下限 MOD レベル = アイテムレベル × 0.4 の切り捨て (説明文は「より高い段」だけ。Craft of Exile と同じ式)",
+        "冒涜の MOD があっても打てる。印もクラフト MOD (アストリッドの創造性で 2 つまで持てる)",
         "お告げ: 左右の結晶化 (消す側 = 印の付く側)",
       ];
     }

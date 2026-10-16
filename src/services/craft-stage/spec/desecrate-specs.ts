@@ -7,12 +7,14 @@
  * 部位の名前は書かない (まとまりは item-classes.ts、クライアントの表)。
  */
 import { ANCIENT_BONE_FLOOR } from "../../../vendor/poe2htc/engine/probability";
-import { ABYSS_MARK_FLOOR } from "../../htc/omens";
 import { GNAWED_MAX_ILVL } from "../stage-core";
 import type { Action, CurrencySpec, Limit, ModPool, OmenSpec, Source, Target } from "./types";
 
-/** 深淵の王の印から打つ骨の段の下限 (用語集 MarkofAbyssalLord「a higher tier」。値 33 は poe2fun の 1 件だけ = 仮、2026-10-10 オーナーが仮のまま確定) */
-export const MARK_FLOOR = ABYSS_MARK_FLOOR;
+/**
+ * 深淵の王の印から打つ骨の段の下限 = アイテムレベル × 0.4 の切り捨て (用語集 MarkofAbyssalLord は「a higher tier」だけ。
+ * Craft of Exile の poe2_desecrate と同じ式、2026-10-16 オーナー「進めて」で CoE に。前は 33 固定 (poe2fun の 1 件、仮))
+ */
+export const markFloorOf = (itemLevel: number): number => Math.floor(itemLevel * 0.4);
 
 /** 骨の部位ごとの説明文と対象 (種類 = 噛み切られた / 保存された / 古代の は同じ文) */
 const BONE_PARTS = {
