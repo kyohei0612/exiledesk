@@ -12,6 +12,8 @@
  *     layout=clip で撮影用のすっきりレイアウト)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
+import { playUseSfx } from "../utils/sfx";
+import { isRareChance } from "../utils/format-pct";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
 import type { Pattern } from "../services/craft-stage/pattern";
@@ -611,6 +613,8 @@ export const craftStage = {
     const ms = (l: readonly StageMod[]): string[] => l.map((m) => `${m.modId}#${m.tierIndex}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}`);
     // カオススパム (chaos-spam.ts) は 1 回ごとには送らない (何千回にもなる。スパムの終わりに 1 件だけ送る)
     if (!opts.quiet) logRecord("emu_use", { base: base.value, ilvl: itemLevel.value, rarity: p.before.rarity, before: ms([...p.before.prefixes, ...p.before.suffixes]), use: key, omens: want, added: ms(p.added), removed: ms(p.removed), ok: p.out.applied, cost: p.out.cost?.subtotal ?? null, baseJa: p.before.baseJa, useJa: p.out.currency_ja });
+    // 使った時の音 (ゲームと同じ。珍しい段なら神のオーブの音)。カオススパム (quiet) では鳴らさない
+    if (!opts.quiet && p.out.applied) playUseSfx(key, Object.values(p.chances ?? {}).some(isRareChance));
     if (!opts.quiet) recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
     // 食ったお告げは外す
     const ate = p.out.omen ? p.out.omen.split("+") : [];
