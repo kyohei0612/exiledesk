@@ -6,7 +6,7 @@
  *   ③ 100 人が当たるまでスパムした時の回数を計算 + 自分でもスパムする (長押し、狙いが出たら自動で止まる)
  *   ④ 100 人の結果で、今回の自分のスパムの運試しができる
  *
- * 1 人 = 同じ状態から、狙いが全部揃うまで同じカオスを打ち続ける (外れても、その結果に続けて打つ。今の MOD が消えても狙いが揃えば当たり)。
+ * 1 人 = 同じ状態から、狙いのどれか 1 つが付くまで同じカオスを打ち続ける (2026-10-16 オーナー「どれか付いたらでしょ、2 つ付いたらなんていう計算機じゃない」。前は全部揃うまで) (外れても、その結果に続けて打つ。今の MOD が消えても狙いが揃えば当たり)。
  * 打つ処理はステージと同じ applyCurrency (お告げ無し)。打てなくなった時・上限に届いた時は「付かなかった」(null)
  */
 import { applyCurrency } from "./apply-currency";
@@ -21,9 +21,11 @@ export const SPAM_CAP = 50_000;
 /** 比べる人数 */
 export const SPAM_PEOPLE = 100;
 
-/** 1 人分: 狙いが揃うまでの回数 (揃わなければ null) */
+/** 当たり: 狙いのどれか 1 つが (その段以上で) 付いている */
+export const spamHit = (item: StageItem, ts: readonly AimTarget[]): boolean => ts.some((t) => aimDone(item, [t]));
+/** 1 人分: 狙いのどれかが付くまでの回数 (付かなければ null) */
 export function spamOne(data: PatchData, start: StageItem, ts: readonly AimTarget[], key: string, rng: () => number, cap = SPAM_CAP): number | null {
-  if (aimDone(start, ts)) return 0;
+  if (spamHit(start, ts)) return 0;
   let item = start;
   for (let n = 1; n <= cap; n++) {
     const r = applyCurrency(data, item, key, rng);
@@ -33,7 +35,7 @@ export function spamOne(data: PatchData, start: StageItem, ts: readonly AimTarge
       continue;
     }
     item = r.item;
-    if (aimDone(item, ts)) return n;
+    if (spamHit(item, ts)) return n;
   }
   return null;
 }

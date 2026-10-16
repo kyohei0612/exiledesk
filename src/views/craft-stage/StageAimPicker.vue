@@ -13,7 +13,7 @@ import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { aimLabel, groupLabelOf, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { scrollToTop } from "../../utils/keep-place";
-import { spamAims, spamKey } from "../../state/chaos-spam";
+import { spamAims, spamKey, SPAM_AIM_MAX } from "../../state/chaos-spam";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
@@ -23,8 +23,10 @@ const seed = s.aimPicker.value?.seed ?? null;
 /** 選んでいる物 (決めるまで手元だけ) */
 /** カオススパム計算機の狙いを選ぶ時 (「次の手で狙う」とは別の狙い) */
 const forSpam = !!s.aimPicker.value?.spam;
-const draft = ref<AimPick[]>([...(forSpam ? spamAims.value : s.aims.value)]);
-if (seed && !draft.value.some((a) => a.modId === seed.modId)) draft.value = [...draft.value, seed].slice(-AIM_MAX);
+/** 選べる数: カオススパム計算機は 3 つまで (多いと 3 種類の計算が何十秒もかかる。2026-10-16 オーナー「3 種類とかまでにするか」) */
+const MAX = forSpam ? SPAM_AIM_MAX : AIM_MAX;
+const draft = ref<AimPick[]>([...(forSpam ? spamAims.value : s.aims.value)].slice(0, MAX));
+if (seed && !draft.value.some((a) => a.modId === seed.modId)) draft.value = [...draft.value, seed].slice(-MAX);
 else if (seed) draft.value = draft.value.map((a) => (a.modId === seed.modId ? seed : a));
 
 // 狙えるのは打って付く種類 (ルーンは差すだけなので外す)
@@ -50,12 +52,12 @@ const pickOf = (r: ListRow, t: ListTier): AimPick | null => {
   const { modId, idx } = idOf(r, t);
   return idx < 0 ? null : { modId, minTierIndex: idx, label: `${t.text} (${tr(`${t.rank} 以上`, `${t.rank}+`)})`, at: `${modId}:${t.rank}` };
 };
-const full = computed(() => draft.value.length >= AIM_MAX);
+const full = computed(() => draft.value.length >= MAX);
 /** 選べない理由 (灰色の行の下に文で。スマホはホバーが無い) */
 function whyNot(r: ListRow): string | null {
   if (r.on) return tr("付いている", "On item");
   if (r.blocked) return tr("同じ系統が付いている", "Same group on item");
-  if (full.value && !pickedOf(r)) return tr(`${AIM_MAX} つまで`, `Max ${AIM_MAX}`);
+  if (full.value && !pickedOf(r)) return tr(`${MAX} つまで`, `Max ${MAX}`);
   return null;
 }
 /** チェック: どの段でも (付けば当たり) = このアイテムレベルで付く一番下の段以上 */
@@ -107,7 +109,7 @@ function decide(): void {
   <!-- 窓の動き (Esc・後ろを押す・×・後ろのページを止める) は ModalShell (2026-10-10 これが原点) -->
   <ModalShell :open="true" rec="aim-dialog" :title="forSpam ? tr('カオススパムで狙う MOD', 'Mods to chaos spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
     <template #header>
-      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ AIM_MAX }} · {{ tr("全部付いて当たり", "Hit when all roll") }}</span>
+      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ MAX }} · {{ forSpam ? tr("どれか 1 つ付いて当たり", "Hit when any one rolls") : tr("全部付いて当たり", "Hit when all roll") }}</span>
     </template>
     <template #subheader>
       <p v-if="draft.length" class="mt-1 flex flex-wrap gap-1">

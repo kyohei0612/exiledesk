@@ -24,6 +24,11 @@ describe("カオススパム", () => {
     expect(spamOne(data, rare, [{ modId: m.modId, minTierIndex: 0 }], "chaos", mulberry32(1))).toBe(0);
   });
 
+  it("狙いのどれか 1 つが付いていれば当たり (2026-10-16 オーナー「どれか付いたら」)", () => {
+    const m = rare.suffixes[0] ?? rare.prefixes[0]!;
+    expect(spamOne(data, rare, [{ modId: "Rings/FireResistance", minTierIndex: 0 }, { modId: m.modId, minTierIndex: 0 }], "chaos", mulberry32(1))).toBe(0);
+  });
+
   it("回数は 1 回ずつ打って揃った回と同じ (同じ種)", () => {
     const t = [{ modId: "Rings/FireResistance", minTierIndex: 0 }];
     const n = spamOne(data, rare, t, "chaos", mulberry32(42));

@@ -15,9 +15,9 @@ import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stag
 import { spamAims, spamKey, spamPending, spamming, spamSteps } from "../../state/chaos-spam";
 import { centerOnScreen, scrollToTop } from "../../utils/keep-place";
 import { displayCurrency } from "../../state/display-currency";
-import { aimDone, type AimTarget } from "../../services/craft-stage/aim-odds";
+import type { AimTarget } from "../../services/craft-stage/aim-odds";
 import type { StageItem } from "../../services/craft-stage/types";
-import { medianOf, rankOf, unluckyOf, SPAM_KEYS, SPAM_PEOPLE } from "../../services/craft-stage/chaos-spam";
+import { medianOf, rankOf, spamHit, unluckyOf, SPAM_KEYS, SPAM_PEOPLE } from "../../services/craft-stage/chaos-spam";
 import { logRecord } from "../../utils/log-record";
 import { luck, rankWord, useSpamShare, type SpamResult } from "./use-spam-share";
 import { useSpamSim } from "./use-spam-sim";
@@ -167,9 +167,9 @@ let snapIlvl = 82;
 let startItem: typeof s.item.value = null;
 let raf = 0, t0 = 0, last = 0;
 const CAP = 20_000;
-/** 押し始め: 狙いが揃うまで打ち続ける (最初はゆっくり、押し続けると速く) */
+/** 押し始め: 狙いのどれかが付くまで打ち続ける (最初はゆっくり、押し続けると速く) */
 function startSpam(e: PointerEvent): void {
-  if (spamming.value || !s.item.value || !targets.value.length || aimDone(s.item.value, targets.value)) return;
+  if (spamming.value || !s.item.value || !targets.value.length || spamHit(s.item.value, targets.value)) return;
   // 押したまま指が外へずれても止まらないように (取れない時はそのまま)
   try { (e.currentTarget as Element | null)?.setPointerCapture?.(e.pointerId); } catch { /* 無くてよい */ }
   // 前のスパムの続きなら回数を足す (離してもう一度押した時)。新しく始める時は今の状態を控える
@@ -204,7 +204,7 @@ function startSpam(e: PointerEvent): void {
       if (after) spamSteps.add(after);
       live.value.uses++;
       if (after?.out.applied) live.value.applied++;
-      if (aimDone(s.item.value!, targets.value)) { finish(true, null); return; }
+      if (spamHit(s.item.value!, targets.value)) { finish(true, null); return; }
       if (live.value.uses >= CAP) { finish(false, tr(`${CAP.toLocaleString()} 回で止めました`, `Stopped at ${CAP.toLocaleString()} uses`)); return; }
     }
     raf = requestAnimationFrame(loop);
@@ -262,7 +262,7 @@ const onResize = (): void => { phone.value = window.innerWidth < 768; };
 onMounted(() => window.addEventListener("resize", onResize));
 onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 const barShown = computed(() => phone.value && !s.held.value && keys.value.length > 0 && (!!spamKey.value || spamming.value || !!result.value));
-const canSpam = computed(() => !sim.busy.value && keys.value.length > 0 && targets.value.length > 0 && !!s.item.value && !aimDone(s.item.value, targets.value));
+const canSpam = computed(() => !sim.busy.value && keys.value.length > 0 && targets.value.length > 0 && !!s.item.value && !spamHit(s.item.value, targets.value));
 /** 押すボタンの文字 (PC の欄とスマホの帯で同じ。離した後は「押して続ける」) */
 const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : sim.busy.value ? tr(`計算中… ${Math.floor((sim.done.value / sim.total.value) * 100)}%`, `Calculating… ${Math.floor((sim.done.value / sim.total.value) * 100)}%`) : result.value && !result.value.hit && result.value.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
 // シェア (X に結果のカード) は use-spam-share.ts
@@ -313,7 +313,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
         <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-2 !text-[12px] tabular-nums" :class="ilvl === lv ? 'on' : ''" :disabled="spamming || lv < floor" :title="lv < floor ? tr(`狙いの段はアイテムレベル ${floor} から`, `The target tier needs item level ${floor}`) : undefined" @click="ilvl = lv">{{ lv }}</button>
       </span>
       <HelpTip :title="tr('カオススパム', 'Chaos spam')" :width="320">
-        <p>{{ tr("狙いの MOD が全部揃うまで、同じカオスを打ち続けます。外れても、その結果に続けて打ちます (今の MOD が消えても、狙いが揃えば当たり)。", "Keeps using the same Chaos Orb until all target mods are on. A miss keeps going from the result (a hit even if current mods were removed).") }}</p>
+        <p>{{ tr("狙いの MOD のどれか 1 つが付くまで、同じカオスを打ち続けます (狙いは 3 つまで)。外れても、その結果に続けて打ちます。", "Keeps using the same Chaos Orb until any one of the target mods rolls (up to 3 targets). A miss keeps going from the result.") }}</p>
         <p class="mt-1">{{ tr(`「${SPAM_PEOPLE} 人がスパムしたら」は、今の状態から ${SPAM_PEOPLE} 人が同じように打った時に、何回で付いたか。止まった後に、今回の自分の回数と比べて運を出します。`, `"If ${SPAM_PEOPLE} people spammed" shows how many uses it took ${SPAM_PEOPLE} people starting from the current state. After you stop, your count is compared with theirs.`) }}</p>
         <p class="mt-1">{{ tr("アイテムレベルで付く段が変わるので、確率も変わります。最初は今のアイテムのアイテムレベルです (選んだ MOD が付かない時は、付く一番近いアイテムレベル)。回す時は今のアイテムをそのアイテムレベルにします (スパムの前に戻すと元に戻ります)。", "Item level changes which tiers can roll, so it changes the odds. It starts at the item's current item level (raised to the nearest level where all target mods can roll if needed). Spamming sets the item to that item level (Undo the spam restores it).") }}</p>
         <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("ボタンを押している間だけ打ちます。押し続けると速くなり、狙いが出たら自動で止まります。戻す時は「スパムの前に戻す」。", "Uses only while the button is held, faster the longer you hold, and stops automatically on a hit. Use “Undo the spam” to go back.") }}</p>
