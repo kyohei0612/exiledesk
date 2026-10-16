@@ -16,6 +16,11 @@ def test_mod_and_plus_read() -> None:
     assert normalize_speech("知性 +9 も") == "知性プラス9も"
 
 
+def test_exiledesk_read() -> None:
+    assert normalize_speech("ExileDeskの新しい機能よ") == "エグザイルデスクの新しい機能よ"
+    assert normalize_speech("サイトはexiledesk.comで") == "サイトはエグザイルデスク・ドットコムで"
+
+
 def test_line_spoken_is_normalized() -> None:
     line = Line.model_validate(
         {"speaker": "metan", "text": "MOD が 2 つ", "scene": {"kind": "talk"}}
