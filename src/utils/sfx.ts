@@ -3,7 +3,9 @@
  * カオスの確率機では出しちゃダメ」「レア MOD 時は神のオーブの音」)。
  *
  * 音はゲームのクライアント (FMOD/Desktop/ItemDrops.bank の OrbUse_* と OrbDrop_Divine_01) から取り出して mp3 にした物 (public/sfx)。
- * 珍しい段 (付いた瞬間の確率が isRareChance = 工程で黄色に出る物) が付いた時は、カレンシーの音の代わりに神のオーブが落ちた時の音。
+ * 珍しい段 (付いた瞬間の確率が isRareChance = 工程で黄色に出る物) が付いた時は、カレンシーの音の代わりに神のオーブが落ちた時の音
+ * (ゲームと同じく、高いカレンシーが落ちた時の派手な音 Item_Drop_HighTier_Rare_Currency_01 と神のオーブの音 OrbDrop_Divine_01 を重ねた物。
+ * 2026-10-16 オーナー「神のオーブしょぼくね、ドロップした時のクソ派手演出」で重ねた。少し大きめに鳴らす)。
  * iPhone の Safari は <audio> の音量を無視するので Web Audio の GainNode で絞る。オフは端末に覚える (sfx-off)
  */
 import { ref } from "vue";
@@ -77,7 +79,7 @@ function load(name: string): Promise<AudioBuffer | null> {
 }
 
 /** 音を 1 回鳴らす (押した時の中から呼ぶ。ブラウザは押した時でないと音を出させない) */
-export function playSfx(name: string): void {
+export function playSfx(name: string, loud = 1): void {
   if (sfxOff.value || typeof window === "undefined") return;
   try {
     const c = context();
@@ -87,7 +89,7 @@ export function playSfx(name: string): void {
       if (!buf) return;
       const src = c.createBufferSource();
       const gain = c.createGain();
-      gain.gain.value = VOLUME;
+      gain.gain.value = VOLUME * loud;
       src.buffer = buf;
       src.connect(gain).connect(c.destination);
       src.start();
@@ -101,5 +103,6 @@ export function playSfx(name: string): void {
 
 /** 使った時: 珍しい段が付いたら神のオーブの音、それ以外はそのカレンシーの音 */
 export function playUseSfx(key: string, rare: boolean): void {
-  playSfx(rare ? "divine-drop" : sfxOf(key));
+  if (rare) playSfx("divine-drop", 1.5);
+  else playSfx(sfxOf(key));
 }
