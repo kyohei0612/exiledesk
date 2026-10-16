@@ -7,7 +7,7 @@ import { applyForce, forceKey } from "../src/services/craft-stage/apply-force";
 import { allMods, boostedMod } from "../src/services/craft-stage/stage-core";
 
 const data = loadPatch();
-it("キャスターの品質 34% でスペルスキルのレベル +3 → +4 (20% なら 3.6 の切り捨てで +3)", () => {
+it("キャスターの品質 34% でスペルスキルのレベル +3 → +4 (20% でも 3.6 の四捨五入で +4、2026-10-16 CoE)", () => {
   let it0 = startFrom(data, "Gold Amulet", 82, { rarity: "rare", mods: [{ mod: "Amulets/GlobalIncreaseSpellSkillGemLevel", tier: "T1" }] } as never, 1);
   it0 = applyCurrency(data, it0, "qcap:40", () => 0.5).item;
   it0 = applyCurrency(data, it0, "qset:34:caster", () => 0.5).item;
@@ -15,7 +15,7 @@ it("キャスターの品質 34% でスペルスキルのレベル +3 → +4 (20
   const m = allMods(it0)[0]!;
   expect(m.values[0]).toBe(3);
   expect(boostedMod(it0, m, data)?.values[0]).toBe(4);
-  expect(boostedMod({ ...it0, quality: 20 }, m, data)).toBeNull();
+  expect(boostedMod({ ...it0, quality: 20 }, m, data)?.values[0]).toBe(4);
 });
 it("上限は足し算 (ベース 20 + 品質の最大値の MOD。インフューザーは棚に無い間は足さない)、プルダウン (qcap) で広げられる", () => {
   const ring = startFrom(data, "Gold Ring", 82, {} as never, 1);

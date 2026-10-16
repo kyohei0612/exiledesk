@@ -23,12 +23,13 @@ import { htcBaseInfo } from "../htc/patch";
 import runesRaw from "./stage-runes.json";
 import basesPob from "./stage-bases-pob.json";
 import { handsOf, inAny, inGroup, soulCoreFits, soulCoreSize } from "../mods/item-classes";
-import type { StageApply, StageItem, StageAugment, StageMod } from "./types";
-import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import type { StageApply, StageItem, StageAugment } from "./types";
+import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { RUNE_BY_ID, runeIdByName } from "../../vendor/poe2htc/engine/runes";
-import { allMods, makeStageMod, replaced, skip, withValues } from "./stage-core";
+import { skip } from "./stage-core";
 import { augmentRule, limitBlock, placeBlock, replaceBlock } from "../augment-rules";
 import { tr } from "../../i18n/lang";
+import { convertByTable } from "./element-convert";
 
 export interface RuneEffect { cat: string; catJa: string; stats: Array<{ id: string; value: number }>; ja: string; en: string }
 export interface RuneRow {
@@ -170,64 +171,8 @@ function applyMasterwork(item: StageItem, socket: number | null): StageApply {
   };
 }
 
-/** アルダーのルーンの属性 (エンジンの表の element / eats) の英語の言葉と日本語 */
-const EL_EN: Record<string, string> = { fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos" };
+/** アルダーのルーンの属性 (エンジンの表の element / eats) の日本語 */
 export const EL_JA: Record<string, string> = { fire: "火", cold: "冷気", lightning: "雷", chaos: "混沌" };
-/**
- * 属性の変換 (アルダーのルーン・耐性のフラックスで共通)。only で変える MOD を絞る (フラックスは耐性の MOD だけ)。
- * アルダーの情熱 / 息吹 / 怒り / 裏切り (POE2Tube 要望 ㉙ 2026-10-04): 差した瞬間に、付いている「食う属性」の MOD を同じ段の
- * 対応する属性の MOD に置き換える (説明文「アイテム上の全ての冷気および雷モッドを同等の火モッドに変化させる」)。
- * 対応の決め方はサーバー側で公開されていないので仮定: 同じベースの置き場の、id (無ければ文面) の属性の言葉だけを替えた MOD
- * (Bows/LocalColdDamage → Bows/LocalFireDamage、Wands/DamageGainedAsCold → DamageGainedAsFire)。段は上から数えて同じ順位、
- * 数値は段の範囲の中の同じ位置。対応する MOD が無い物は変えない。後から付けた MOD は変えない (差した時だけ)
- */
-export function convertElements(data: PatchData, item: StageItem, element: string, eats: readonly string[], only?: (md: Mod) => boolean): { item: StageItem; mods: Array<{ from: StageMod; to: StageMod }> } {
-  const words = eats.map((e) => EL_EN[e]).filter((w): w is string => !!w);
-  const to = EL_EN[element]!;
-  const hit = new RegExp(`(${words.join("|")})`);
-  const swap = (x: string) => x.replace(new RegExp(`(${words.join("|")})`, "g"), to);
-  const byId = data.mods;
-  let byText: Map<string, Mod> | null = null;
-  const mods: Array<{ from: StageMod; to: StageMod }> = [];
-  let out = item;
-  for (const m of allMods(item)) {
-    // 固定 (フラクチャー) した MOD は変えない (神の聖別と同じ。2026-10-10 点検)
-    if (m.unrevealed || m.fractured) continue;
-    const md = byId.get(m.modId);
-    if (!md || (only && !only(md)) || !(hit.test(md.id) || hit.test(md.text ?? ""))) continue;
-    let target = hit.test(md.id) ? byId.get(swap(md.id)) : undefined;
-    if (!target && md.text) {
-      if (!byText) {
-        byText = new Map();
-        for (const x of byId.values()) if (x.text) byText.set(`${x.id.split("/")[0]}|${x.source}|${x.text}`, x);
-      }
-      target = byText.get(`${md.id.split("/")[0]}|${md.source}|${swap(md.text)}`);
-    }
-    if (!target || target.id === md.id || !target.tiers.length) continue;
-    const rank = md.tiers.length - m.tierIndex;
-    const idx = Math.max(0, target.tiers.length - rank);
-    const fresh = makeStageMod(target, m.side, idx, () => 0.5);
-    // 数値は段の範囲の中の同じ位置 (下限 0 〜 上限 1)
-    const fixed = fresh.ranges.map((r, i) => {
-      const lo2 = Math.min(r[0]!, r[1]!), hi2 = Math.max(r[0]!, r[1]!);
-      const or = m.ranges[i], v = m.values[i];
-      const f = or && v != null && or[1] !== or[0] ? (v - Math.min(or[0]!, or[1]!)) / Math.abs(or[1]! - or[0]!) : 0.5;
-      const x = lo2 + Math.min(1, Math.max(0, f)) * (hi2 - lo2);
-      return Number.isInteger(lo2) && Number.isInteger(hi2) ? Math.round(x) : Math.round(x * 100) / 100;
-    });
-    const next: StageMod = {
-      ...withValues(fresh, target, () => 0.5, fixed),
-      ...(m.fractured ? { fractured: true } : {}),
-      ...(m.desecrated ? { desecrated: true } : {}),
-      ...(m.crafted ? { crafted: true } : {}),
-      convertedFrom: m.textJa,
-    };
-    out = replaced(out, m, next);
-    mods.push({ from: m, to: next });
-  }
-  return { item: out, mods };
-}
-
 /**
  * ルーンを外す (2026-10-09 オーナー「右クリックでソケットクリックしたら外せるように、ルーンの所クリックで外せるでもいい、どっちも」)。
  * ゲームでは外せない (置き換えると壊れる) が、ここは手で組む道具なので外せる。費用 0、1 手戻すで戻る。付いている MOD はそのまま
@@ -289,7 +234,8 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   // アルダーのルーン: 差した瞬間に属性を変える。変える物が無ければ打てない (ClientStrings 9272 の文)
   const conv = RUNE_BY_ID.get(runeIdByName(p.en) ?? "")?.effect;
   if (conv?.kind === "convert" && data) {
-    const c = convertElements(data, item, conv.element, conv.eats);
+    // 変え方はクライアントの変換表の耐性以外の行 (element-convert.ts)。表に無い MOD は変わらない (2026-10-16 Craft of Exile と同じ)
+    const c = convertByTable(data, item, conv.element, conv.eats, false);
     if (!c.mods.length) return skip(item, tr("この変換で有効なモッドが対象のアイテムにありません", "No mods on this item can be converted"));
     return {
       applied: true,

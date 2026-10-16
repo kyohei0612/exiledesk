@@ -73,6 +73,44 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(right.omensUsed).toEqual(expect.arrayContaining(["OmenofLight", "OmenofDextralAnnulment"]));
   });
 
+  it("14. アルダーのルーンはクライアントの変換表 (耐性以外の行) の MOD だけを変える", async () => {
+    const table = (await import("../src/data/element-conversions.json")).default as { rows: Array<{ res: boolean; fire?: { name: string; level: number } | null; cold?: { name: string; level: number } | null; lightning?: { name: string; level: number } | null }> };
+    const fireTiers = new Set(table.rows.filter((r) => !r.res && r.fire).map((r) => `${r.fire!.name}|${r.fire!.level}`));
+    const wand = freshItem(data, "Withered Wand", 82);
+    let hits = 0;
+    for (let s = 1; s < 300 && hits < 5; s++) {
+      const rare = { ...applyCurrency(data, wand, "alchemy", mulberry32(s)).item, sockets: 1 };
+      const r = applyCurrency(data, rare, "rune:Passion of Aldur", mulberry32(1));
+      if (!r.applied) continue;
+      hits++;
+      for (const m of r.added) {
+        const t = data.mods.get(m.modId)!.tiers[m.tierIndex]!;
+        expect(fireTiers.has(`${t.name}|${t.ilvl}`)).toBe(true);
+      }
+    }
+    expect(hits).toBeGreaterThan(0);
+  });
+
+  it("13. 品質で伸びた整数の値は四捨五入 (CoE の applyQualityToValue = Math.round)", async () => {
+    const { displayedValue, rawValue } = await import("../src/services/htc/quality");
+    expect(displayedValue(8, 20)).toBe(10);
+    expect(displayedValue(7, 20)).toBe(8);
+    expect(displayedValue(3, 34)).toBe(4);
+    expect(rawValue(10, 20)).toBe(8);
+    expect(rawValue(4, 34)).toBe(3);
+  });
+
+  it("15. 深淵のエッセンスは冒涜の MOD があっても打てる", async () => {
+    const { essenceShelf } = await import("../src/state/craft-stage-shelf");
+    const { resolveEssence, ABYSS_ESSENCE_SPEC } = await import("../src/services/craft-stage/spec/essence-specs");
+    const it = rareWhere((x) => room(x, "suffix"));
+    const key = essenceShelf(data, it).flatMap((g) => g.keys).find((k) => resolveEssence(data, it, k)?.spec === ABYSS_ESSENCE_SPEC);
+    expect(key).toBeTruthy();
+    const bone = applyCurrency(data, it, "desecrate", mulberry32(1), ["OmenofDextralNecromancy"]);
+    expect(allMods(bone.item).some((m) => m.desecrated)).toBe(true);
+    expect(applyCurrency(data, bone.item, key!, mulberry32(3)).applied).toBe(true);
+  });
+
   it("10. 触媒の高貴の倍率は 1 + 0.2 × 品質、20% を超えた分は 1% ごとに +0.12", () => {
     expect(catalysingMultiplier(0)).toBe(1);
     expect(catalysingMultiplier(10)).toBeCloseTo(3);

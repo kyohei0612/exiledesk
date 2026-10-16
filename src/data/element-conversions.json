@@ -1,0 +1,4899 @@
+{
+ "source": "GGG クライアント Expedition2ElementalModConversions (res = 耐性の行)",
+ "rows": [
+  {
+   "id": "DamageAsExtra1",
+   "fire": {
+    "id": "SpellDamageGainedAsFire1",
+    "name": "Fervent",
+    "level": 5,
+    "ranges": [
+     [
+      13,
+      15
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsCold1",
+    "name": "Malignant",
+    "level": 5,
+    "ranges": [
+     [
+      13,
+      15
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightning1",
+    "name": "Deadly",
+    "level": 5,
+    "ranges": [
+     [
+      13,
+      15
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaos1",
+    "name": "Impure",
+    "level": 5,
+    "ranges": [
+     [
+      13,
+      15
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtra2",
+   "fire": {
+    "id": "SpellDamageGainedAsFire2",
+    "name": "Ardent",
+    "level": 16,
+    "ranges": [
+     [
+      16,
+      18
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsCold2",
+    "name": "Pernicious",
+    "level": 16,
+    "ranges": [
+     [
+      16,
+      18
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightning2",
+    "name": "Lethal",
+    "level": 16,
+    "ranges": [
+     [
+      16,
+      18
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaos2",
+    "name": "Tainted",
+    "level": 16,
+    "ranges": [
+     [
+      16,
+      18
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtra3",
+   "fire": {
+    "id": "SpellDamageGainedAsFire3",
+    "name": "Fanatic's",
+    "level": 33,
+    "ranges": [
+     [
+      19,
+      21
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsCold3",
+    "name": "Destructive",
+    "level": 33,
+    "ranges": [
+     [
+      19,
+      21
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightning3",
+    "name": "Fatal",
+    "level": 33,
+    "ranges": [
+     [
+      19,
+      21
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaos3",
+    "name": "Clouded",
+    "level": 33,
+    "ranges": [
+     [
+      19,
+      21
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtra4",
+   "fire": {
+    "id": "SpellDamageGainedAsFire4",
+    "name": "Zealot's",
+    "level": 46,
+    "ranges": [
+     [
+      22,
+      24
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsCold4",
+    "name": "Malicious",
+    "level": 46,
+    "ranges": [
+     [
+      22,
+      24
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightning4",
+    "name": "Vorpal",
+    "level": 46,
+    "ranges": [
+     [
+      22,
+      24
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaos4",
+    "name": "Darkened",
+    "level": 46,
+    "ranges": [
+     [
+      22,
+      24
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtra5",
+   "fire": {
+    "id": "SpellDamageGainedAsFire5",
+    "name": "Infernal",
+    "level": 60,
+    "ranges": [
+     [
+      25,
+      27
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsCold5",
+    "name": "Ruthless",
+    "level": 60,
+    "ranges": [
+     [
+      25,
+      27
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightning5",
+    "name": "Electrifying",
+    "level": 60,
+    "ranges": [
+     [
+      25,
+      27
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaos5",
+    "name": "Malignant",
+    "level": 60,
+    "ranges": [
+     [
+      25,
+      27
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtra6",
+   "fire": {
+    "id": "SpellDamageGainedAsFire6",
+    "name": "Flamebound",
+    "level": 80,
+    "ranges": [
+     [
+      28,
+      30
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsCold6",
+    "name": "Frostbound",
+    "level": 80,
+    "ranges": [
+     [
+      28,
+      30
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightning6",
+    "name": "Stormbound",
+    "level": 80,
+    "ranges": [
+     [
+      28,
+      30
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaos6",
+    "name": "Vile",
+    "level": 80,
+    "ranges": [
+     [
+      28,
+      30
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtraTwoHand1",
+   "fire": {
+    "id": "SpellDamageGainedAsFireTwoHand1",
+    "name": "Fervent",
+    "level": 5,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsColdTwoHand1",
+    "name": "Malignant",
+    "level": 5,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightningTwoHand1",
+    "name": "Deadly",
+    "level": 5,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaosTwoHand1",
+    "name": "Impure",
+    "level": 5,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtraTwoHand2",
+   "fire": {
+    "id": "SpellDamageGainedAsFireTwoHand2",
+    "name": "Ardent",
+    "level": 16,
+    "ranges": [
+     [
+      31,
+      36
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsColdTwoHand2",
+    "name": "Pernicious",
+    "level": 16,
+    "ranges": [
+     [
+      31,
+      36
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightningTwoHand2",
+    "name": "Lethal",
+    "level": 16,
+    "ranges": [
+     [
+      31,
+      36
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaosTwoHand2",
+    "name": "Tainted",
+    "level": 16,
+    "ranges": [
+     [
+      31,
+      36
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtraTwoHand3",
+   "fire": {
+    "id": "SpellDamageGainedAsFireTwoHand3",
+    "name": "Fanatic's",
+    "level": 33,
+    "ranges": [
+     [
+      37,
+      42
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsColdTwoHand3",
+    "name": "Destructive",
+    "level": 33,
+    "ranges": [
+     [
+      37,
+      42
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightningTwoHand3",
+    "name": "Fatal",
+    "level": 33,
+    "ranges": [
+     [
+      37,
+      42
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaosTwoHand3",
+    "name": "Clouded",
+    "level": 33,
+    "ranges": [
+     [
+      37,
+      42
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtraTwoHand4",
+   "fire": {
+    "id": "SpellDamageGainedAsFireTwoHand4",
+    "name": "Zealot's",
+    "level": 46,
+    "ranges": [
+     [
+      43,
+      48
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsColdTwoHand4",
+    "name": "Malicious",
+    "level": 46,
+    "ranges": [
+     [
+      43,
+      48
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightningTwoHand4",
+    "name": "Vorpal",
+    "level": 46,
+    "ranges": [
+     [
+      43,
+      48
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaosTwoHand4",
+    "name": "Darkened",
+    "level": 46,
+    "ranges": [
+     [
+      43,
+      48
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtraTwoHand5",
+   "fire": {
+    "id": "SpellDamageGainedAsFireTwoHand5",
+    "name": "Infernal",
+    "level": 60,
+    "ranges": [
+     [
+      49,
+      54
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsColdTwoHand5",
+    "name": "Ruthless",
+    "level": 60,
+    "ranges": [
+     [
+      49,
+      54
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightningTwoHand5",
+    "name": "Electrifying",
+    "level": 60,
+    "ranges": [
+     [
+      49,
+      54
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaosTwoHand5",
+    "name": "Malignant",
+    "level": 60,
+    "ranges": [
+     [
+      49,
+      54
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtraTwoHand6",
+   "fire": {
+    "id": "SpellDamageGainedAsFireTwoHand6",
+    "name": "Flamebound",
+    "level": 80,
+    "ranges": [
+     [
+      55,
+      60
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SpellDamageGainedAsColdTwoHand6",
+    "name": "Frostbound",
+    "level": 80,
+    "ranges": [
+     [
+      55,
+      60
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SpellDamageGainedAsLightningTwoHand6",
+    "name": "Stormbound",
+    "level": 80,
+    "ranges": [
+     [
+      55,
+      60
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSpellDamageGainedAsChaosTwoHand6",
+    "name": "Vile",
+    "level": 80,
+    "ranges": [
+     [
+      55,
+      60
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamage1",
+   "fire": {
+    "id": "FireDamagePrefixOnWeapon1",
+    "name": "Searing",
+    "level": 2,
+    "ranges": [
+     [
+      25,
+      34
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnWeapon1",
+    "name": "Bitter",
+    "level": 2,
+    "ranges": [
+     [
+      25,
+      34
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnWeapon1_",
+    "name": "Charged",
+    "level": 2,
+    "ranges": [
+     [
+      25,
+      34
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnWeapon1",
+    "name": "Impure",
+    "level": 2,
+    "ranges": [
+     [
+      25,
+      34
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamage2",
+   "fire": {
+    "id": "FireDamagePrefixOnWeapon2",
+    "name": "Sizzling",
+    "level": 8,
+    "ranges": [
+     [
+      35,
+      44
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnWeapon2",
+    "name": "Biting",
+    "level": 8,
+    "ranges": [
+     [
+      35,
+      44
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnWeapon2",
+    "name": "Hissing",
+    "level": 8,
+    "ranges": [
+     [
+      35,
+      44
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnWeapon2",
+    "name": "Tainted",
+    "level": 8,
+    "ranges": [
+     [
+      35,
+      44
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamage3",
+   "fire": {
+    "id": "FireDamagePrefixOnWeapon3",
+    "name": "Blistering",
+    "level": 16,
+    "ranges": [
+     [
+      45,
+      54
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnWeapon3_",
+    "name": "Alpine",
+    "level": 16,
+    "ranges": [
+     [
+      45,
+      54
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnWeapon3",
+    "name": "Bolting",
+    "level": 16,
+    "ranges": [
+     [
+      45,
+      54
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnWeapon3",
+    "name": "Clouded",
+    "level": 16,
+    "ranges": [
+     [
+      45,
+      54
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamage4",
+   "fire": {
+    "id": "FireDamagePrefixOnWeapon4",
+    "name": "Cauterising",
+    "level": 33,
+    "ranges": [
+     [
+      55,
+      64
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnWeapon4",
+    "name": "Snowy",
+    "level": 33,
+    "ranges": [
+     [
+      55,
+      64
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnWeapon4",
+    "name": "Coursing",
+    "level": 33,
+    "ranges": [
+     [
+      55,
+      64
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnWeapon4",
+    "name": "Darkened",
+    "level": 33,
+    "ranges": [
+     [
+      55,
+      64
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamage5",
+   "fire": {
+    "id": "FireDamagePrefixOnWeapon5_",
+    "name": "Smoldering",
+    "level": 46,
+    "ranges": [
+     [
+      65,
+      74
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnWeapon5_",
+    "name": "Hailing",
+    "level": 46,
+    "ranges": [
+     [
+      65,
+      74
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnWeapon5",
+    "name": "Striking",
+    "level": 46,
+    "ranges": [
+     [
+      65,
+      74
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnWeapon5",
+    "name": "Malignant",
+    "level": 46,
+    "ranges": [
+     [
+      65,
+      74
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamage6",
+   "fire": {
+    "id": "FireDamagePrefixOnWeapon6",
+    "name": "Magmatic",
+    "level": 60,
+    "ranges": [
+     [
+      75,
+      89
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnWeapon6",
+    "name": "Arctic",
+    "level": 60,
+    "ranges": [
+     [
+      75,
+      89
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnWeapon6",
+    "name": "Smiting",
+    "level": 60,
+    "ranges": [
+     [
+      75,
+      89
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnWeapon6",
+    "name": "Vile",
+    "level": 60,
+    "ranges": [
+     [
+      75,
+      89
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamage7",
+   "fire": {
+    "id": "FireDamagePrefixOnWeapon7_",
+    "name": "Volcanic",
+    "level": 70,
+    "ranges": [
+     [
+      90,
+      104
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnWeapon7",
+    "name": "Crystalline",
+    "level": 70,
+    "ranges": [
+     [
+      90,
+      104
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnWeapon7",
+    "name": "Ionising",
+    "level": 70,
+    "ranges": [
+     [
+      90,
+      104
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnWeapon7",
+    "name": "Twisted",
+    "level": 70,
+    "ranges": [
+     [
+      90,
+      104
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamage8",
+   "fire": {
+    "id": "FireDamagePrefixOnWeapon8_",
+    "name": "Pyromancer's",
+    "level": 81,
+    "ranges": [
+     [
+      105,
+      119
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnWeapon8",
+    "name": "Cryomancer's",
+    "level": 81,
+    "ranges": [
+     [
+      105,
+      119
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnWeapon8",
+    "name": "Electromancer's",
+    "level": 81,
+    "ranges": [
+     [
+      105,
+      119
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnWeapon8",
+    "name": "Malevolent",
+    "level": 81,
+    "ranges": [
+     [
+      105,
+      119
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamageTwoHand1",
+   "fire": {
+    "id": "FireDamagePrefixOnTwoHandWeapon1",
+    "name": "Searing",
+    "level": 2,
+    "ranges": [
+     [
+      50,
+      68
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnTwoHandWeapon1",
+    "name": "Bitter",
+    "level": 2,
+    "ranges": [
+     [
+      50,
+      68
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnTwoHandWeapon1",
+    "name": "Charged",
+    "level": 2,
+    "ranges": [
+     [
+      50,
+      68
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnTwoHandWeapon1",
+    "name": "Impure",
+    "level": 2,
+    "ranges": [
+     [
+      50,
+      68
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamageTwoHand2",
+   "fire": {
+    "id": "FireDamagePrefixOnTwoHandWeapon2___",
+    "name": "Sizzling",
+    "level": 8,
+    "ranges": [
+     [
+      69,
+      88
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnTwoHandWeapon2",
+    "name": "Biting",
+    "level": 8,
+    "ranges": [
+     [
+      69,
+      88
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnTwoHandWeapon2",
+    "name": "Hissing",
+    "level": 8,
+    "ranges": [
+     [
+      69,
+      88
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnTwoHandWeapon2",
+    "name": "Tainted",
+    "level": 8,
+    "ranges": [
+     [
+      69,
+      88
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamageTwoHand3",
+   "fire": {
+    "id": "FireDamagePrefixOnTwoHandWeapon3",
+    "name": "Blistering",
+    "level": 16,
+    "ranges": [
+     [
+      89,
+      108
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnTwoHandWeapon3",
+    "name": "Alpine",
+    "level": 16,
+    "ranges": [
+     [
+      89,
+      108
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnTwoHandWeapon3",
+    "name": "Bolting",
+    "level": 16,
+    "ranges": [
+     [
+      89,
+      108
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnTwoHandWeapon3",
+    "name": "Clouded",
+    "level": 16,
+    "ranges": [
+     [
+      89,
+      108
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamageTwoHand4",
+   "fire": {
+    "id": "FireDamagePrefixOnTwoHandWeapon4",
+    "name": "Cauterising",
+    "level": 33,
+    "ranges": [
+     [
+      109,
+      128
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnTwoHandWeapon4_",
+    "name": "Snowy",
+    "level": 33,
+    "ranges": [
+     [
+      109,
+      128
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnTwoHandWeapon4",
+    "name": "Coursing",
+    "level": 33,
+    "ranges": [
+     [
+      109,
+      128
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnTwoHandWeapon4",
+    "name": "Darkened",
+    "level": 33,
+    "ranges": [
+     [
+      109,
+      128
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamageTwoHand5",
+   "fire": {
+    "id": "FireDamagePrefixOnTwoHandWeapon5",
+    "name": "Smoldering",
+    "level": 46,
+    "ranges": [
+     [
+      129,
+      148
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnTwoHandWeapon5_",
+    "name": "Hailing",
+    "level": 46,
+    "ranges": [
+     [
+      129,
+      148
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnTwoHandWeapon5",
+    "name": "Striking",
+    "level": 46,
+    "ranges": [
+     [
+      129,
+      148
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnTwoHandWeapon5",
+    "name": "Malignant",
+    "level": 46,
+    "ranges": [
+     [
+      129,
+      148
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamageTwoHand6",
+   "fire": {
+    "id": "FireDamagePrefixOnTwoHandWeapon6",
+    "name": "Magmatic",
+    "level": 60,
+    "ranges": [
+     [
+      149,
+      188
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnTwoHandWeapon6",
+    "name": "Arctic",
+    "level": 60,
+    "ranges": [
+     [
+      149,
+      188
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnTwoHandWeapon6",
+    "name": "Smiting",
+    "level": 60,
+    "ranges": [
+     [
+      149,
+      188
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnTwoHandWeapon6",
+    "name": "Vile",
+    "level": 60,
+    "ranges": [
+     [
+      149,
+      188
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamageTwoHand7",
+   "fire": {
+    "id": "FireDamagePrefixOnTwoHandWeapon7",
+    "name": "Volcanic",
+    "level": 70,
+    "ranges": [
+     [
+      189,
+      208
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnTwoHandWeapon7",
+    "name": "Crystalline",
+    "level": 70,
+    "ranges": [
+     [
+      189,
+      208
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnTwoHandWeapon7",
+    "name": "Ionising",
+    "level": 70,
+    "ranges": [
+     [
+      189,
+      208
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnTwoHandWeapon7",
+    "name": "Twisted",
+    "level": 70,
+    "ranges": [
+     [
+      189,
+      208
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "IncreasedDamageTwoHand8",
+   "fire": {
+    "id": "FireDamagePrefixOnTwoHandWeapon8_",
+    "name": "Pyromancer's",
+    "level": 81,
+    "ranges": [
+     [
+      209,
+      238
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdDamagePrefixOnTwoHandWeapon8",
+    "name": "Cryomancer's",
+    "level": 81,
+    "ranges": [
+     [
+      209,
+      238
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningDamagePrefixOnTwoHandWeapon8",
+    "name": "Electromancer's",
+    "level": 81,
+    "ranges": [
+     [
+      209,
+      238
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosDamagePrefixOnTwoHandWeapon8",
+    "name": "Malevolent",
+    "level": 81,
+    "ranges": [
+     [
+      209,
+      238
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevel1",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelWeapon1",
+    "name": "of Coals",
+    "level": 2,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelWeapon1",
+    "name": "of Snow",
+    "level": 2,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelWeapon1",
+    "name": "of Sparks",
+    "level": 2,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelWeapon1",
+    "name": "of Anarchy",
+    "level": 2,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevel2",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelWeapon2",
+    "name": "of Cinders",
+    "level": 18,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelWeapon2",
+    "name": "of Sleet",
+    "level": 18,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelWeapon2",
+    "name": "of Static",
+    "level": 18,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelWeapon2",
+    "name": "of Turmoil",
+    "level": 18,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevel3",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelWeapon3",
+    "name": "of Flames",
+    "level": 36,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelWeapon3",
+    "name": "of Ice",
+    "level": 36,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelWeapon3",
+    "name": "of Electricity",
+    "level": 36,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelWeapon3",
+    "name": "of Ruin",
+    "level": 36,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevel4",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelWeapon4",
+    "name": "of Immolation",
+    "level": 55,
+    "ranges": [
+     [
+      4,
+      4
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelWeapon4",
+    "name": "of Rime",
+    "level": 55,
+    "ranges": [
+     [
+      4,
+      4
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelWeapon4",
+    "name": "of Voltage",
+    "level": 55,
+    "ranges": [
+     [
+      4,
+      4
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelWeapon4",
+    "name": "of Havoc",
+    "level": 55,
+    "ranges": [
+     [
+      4,
+      4
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevel5",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelWeapon5",
+    "name": "of Inferno",
+    "level": 81,
+    "ranges": [
+     [
+      5,
+      5
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelWeapon5",
+    "name": "of Frostbite",
+    "level": 81,
+    "ranges": [
+     [
+      5,
+      5
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelWeapon5",
+    "name": "of Thunder",
+    "level": 81,
+    "ranges": [
+     [
+      5,
+      5
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelWeapon5",
+    "name": "of Armageddon",
+    "level": 81,
+    "ranges": [
+     [
+      5,
+      5
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevelTwoHand1",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelTwoHandWeapon1",
+    "name": "of Coals",
+    "level": 2,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelTwoHandWeapon1",
+    "name": "of Snow",
+    "level": 2,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelTwoHandWeapon1",
+    "name": "of Sparks",
+    "level": 2,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelTwoHandWeapon1",
+    "name": "of Anarchy",
+    "level": 2,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevelTwoHand2",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelTwoHandWeapon2",
+    "name": "of Cinders",
+    "level": 18,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelTwoHandWeapon2",
+    "name": "of Sleet",
+    "level": 18,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelTwoHandWeapon2",
+    "name": "of Static",
+    "level": 18,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelTwoHandWeapon2",
+    "name": "of Turmoil",
+    "level": 18,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevelTwoHand3",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelTwoHandWeapon3",
+    "name": "of Flames",
+    "level": 36,
+    "ranges": [
+     [
+      3,
+      4
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelTwoHandWeapon3",
+    "name": "of Ice",
+    "level": 36,
+    "ranges": [
+     [
+      3,
+      4
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelTwoHandWeapon3",
+    "name": "of Electricity",
+    "level": 36,
+    "ranges": [
+     [
+      3,
+      4
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelTwoHandWeapon3",
+    "name": "of Ruin",
+    "level": 36,
+    "ranges": [
+     [
+      3,
+      4
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevelTwoHand4",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelTwoHandWeapon4",
+    "name": "of Immolation",
+    "level": 55,
+    "ranges": [
+     [
+      5,
+      6
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelTwoHandWeapon4",
+    "name": "of Rime",
+    "level": 55,
+    "ranges": [
+     [
+      5,
+      6
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelTwoHandWeapon4",
+    "name": "of Voltage",
+    "level": 55,
+    "ranges": [
+     [
+      5,
+      6
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelTwoHandWeapon4",
+    "name": "of Havoc",
+    "level": 55,
+    "ranges": [
+     [
+      5,
+      6
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "PlusGemLevelTwoHand5",
+   "fire": {
+    "id": "GlobalFireSpellGemsLevelTwoHandWeapon5",
+    "name": "of Inferno",
+    "level": 81,
+    "ranges": [
+     [
+      7,
+      7
+     ]
+    ]
+   },
+   "cold": {
+    "id": "GlobalColdSpellGemsLevelTwoHandWeapon5",
+    "name": "of Frostbite",
+    "level": 81,
+    "ranges": [
+     [
+      7,
+      7
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "GlobalLightningSpellGemsLevelTwoHandWeapon5",
+    "name": "of Thunder",
+    "level": 81,
+    "ranges": [
+     [
+      7,
+      7
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "GlobalChaosSpellGemsLevelTwoHandWeapon5",
+    "name": "of Armageddon",
+    "level": 81,
+    "ranges": [
+     [
+      7,
+      7
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "EssenceDamageAsExtra1",
+   "fire": {
+    "id": "EssenceDamageasExtraFire1",
+    "name": "Essences",
+    "level": 72,
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   "cold": {
+    "id": "EssenceDamageasExtraCold1",
+    "name": "Essences",
+    "level": 72,
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "EssenceDamageasExtraLightning1",
+    "name": "Essences",
+    "level": 72,
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedEssenceDamageasExtraChaos1",
+    "name": "Essences",
+    "level": 72,
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "EssenceDamageAsExtraTwoHand1",
+   "fire": {
+    "id": "EssenceDamageasExtraFire2H",
+    "name": "Essences",
+    "level": 72,
+    "ranges": [
+     [
+      25,
+      33
+     ]
+    ]
+   },
+   "cold": {
+    "id": "EssenceDamageasExtraCold2H",
+    "name": "Essences",
+    "level": 72,
+    "ranges": [
+     [
+      25,
+      33
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "EssenceDamageasExtraLightning2H",
+    "name": "Essences",
+    "level": 72,
+    "ranges": [
+     [
+      25,
+      33
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedEssenceDamageasExtraChaos2H",
+    "name": "Essences",
+    "level": 72,
+    "ranges": [
+     [
+      25,
+      33
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AilmentIncrease1",
+   "fire": {
+    "id": "IgniteChanceIncrease1",
+    "name": "of Ignition",
+    "level": 15,
+    "ranges": [
+     [
+      51,
+      60
+     ]
+    ]
+   },
+   "cold": {
+    "id": "FreezeDamageIncrease1",
+    "name": "of Freezing",
+    "level": 15,
+    "ranges": [
+     [
+      31,
+      40
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "ShockChanceIncrease1",
+    "name": "of Shocking",
+    "level": 15,
+    "ranges": [
+     [
+      51,
+      60
+     ]
+    ]
+   },
+   "chaos": null,
+   "res": false
+  },
+  {
+   "id": "AilmentIncrease2",
+   "fire": {
+    "id": "IgniteChanceIncrease2",
+    "name": "of Scorching",
+    "level": 30,
+    "ranges": [
+     [
+      61,
+      70
+     ]
+    ]
+   },
+   "cold": {
+    "id": "FreezeDamageIncrease2",
+    "name": "of Bleakness",
+    "level": 30,
+    "ranges": [
+     [
+      41,
+      50
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "ShockChanceIncrease2",
+    "name": "of Zapping",
+    "level": 30,
+    "ranges": [
+     [
+      61,
+      70
+     ]
+    ]
+   },
+   "chaos": null,
+   "res": false
+  },
+  {
+   "id": "AilmentIncrease3",
+   "fire": {
+    "id": "IgniteChanceIncrease3",
+    "name": "of Incineration",
+    "level": 45,
+    "ranges": [
+     [
+      71,
+      80
+     ]
+    ]
+   },
+   "cold": {
+    "id": "FreezeDamageIncrease3",
+    "name": "of the Glacier",
+    "level": 45,
+    "ranges": [
+     [
+      51,
+      60
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "ShockChanceIncrease3",
+    "name": "of Electrocution",
+    "level": 45,
+    "ranges": [
+     [
+      71,
+      80
+     ]
+    ]
+   },
+   "chaos": null,
+   "res": false
+  },
+  {
+   "id": "AilmentIncrease4",
+   "fire": {
+    "id": "IgniteChanceIncrease4",
+    "name": "of Combustion",
+    "level": 60,
+    "ranges": [
+     [
+      81,
+      90
+     ]
+    ]
+   },
+   "cold": {
+    "id": "FreezeDamageIncrease4",
+    "name": "of the Hyperboreal",
+    "level": 60,
+    "ranges": [
+     [
+      61,
+      70
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "ShockChanceIncrease4",
+    "name": "of Voltages",
+    "level": 60,
+    "ranges": [
+     [
+      81,
+      90
+     ]
+    ]
+   },
+   "chaos": null,
+   "res": false
+  },
+  {
+   "id": "AilmentIncrease5",
+   "fire": {
+    "id": "IgniteChanceIncrease5",
+    "name": "of Conflagration",
+    "level": 75,
+    "ranges": [
+     [
+      91,
+      100
+     ]
+    ]
+   },
+   "cold": {
+    "id": "FreezeDamageIncrease5",
+    "name": "of the Arctic",
+    "level": 75,
+    "ranges": [
+     [
+      71,
+      80
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "ShockChanceIncrease5",
+    "name": "of the Thunderbolt",
+    "level": 75,
+    "ranges": [
+     [
+      91,
+      100
+     ]
+    ]
+   },
+   "chaos": null,
+   "res": false
+  },
+  {
+   "id": "Resist1",
+   "fire": {
+    "id": "FireResist1",
+    "name": "of the Whelpling",
+    "level": 1,
+    "ranges": [
+     [
+      6,
+      10
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist1",
+    "name": "of the Seal",
+    "level": 1,
+    "ranges": [
+     [
+      6,
+      10
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist1",
+    "name": "of the Cloud",
+    "level": 1,
+    "ranges": [
+     [
+      6,
+      10
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist1",
+    "name": "of the Lost",
+    "level": 16,
+    "ranges": [
+     [
+      4,
+      7
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "Resist2",
+   "fire": {
+    "id": "FireResist2",
+    "name": "of the Salamander",
+    "level": 12,
+    "ranges": [
+     [
+      11,
+      15
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist2",
+    "name": "of the Penguin",
+    "level": 14,
+    "ranges": [
+     [
+      11,
+      15
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist2",
+    "name": "of the Squall",
+    "level": 13,
+    "ranges": [
+     [
+      11,
+      15
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist2",
+    "name": "of Banishment",
+    "level": 30,
+    "ranges": [
+     [
+      8,
+      11
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "Resist3",
+   "fire": {
+    "id": "FireResist3",
+    "name": "of the Drake",
+    "level": 24,
+    "ranges": [
+     [
+      16,
+      20
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist3",
+    "name": "of the Narwhal",
+    "level": 26,
+    "ranges": [
+     [
+      16,
+      20
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist3",
+    "name": "of the Storm",
+    "level": 25,
+    "ranges": [
+     [
+      16,
+      20
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist3",
+    "name": "of Eviction",
+    "level": 44,
+    "ranges": [
+     [
+      12,
+      15
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "Resist4",
+   "fire": {
+    "id": "FireResist4",
+    "name": "of the Kiln",
+    "level": 36,
+    "ranges": [
+     [
+      21,
+      25
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist4",
+    "name": "of the Yeti",
+    "level": 38,
+    "ranges": [
+     [
+      21,
+      25
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist4",
+    "name": "of the Thunderhead",
+    "level": 37,
+    "ranges": [
+     [
+      21,
+      25
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist4",
+    "name": "of Expulsion",
+    "level": 56,
+    "ranges": [
+     [
+      16,
+      19
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "Resist5",
+   "fire": {
+    "id": "FireResist5",
+    "name": "of the Furnace",
+    "level": 48,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist5",
+    "name": "of the Walrus",
+    "level": 50,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist5",
+    "name": "of the Tempest",
+    "level": 49,
+    "ranges": [
+     [
+      26,
+      30
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist4",
+    "name": "of Expulsion",
+    "level": 56,
+    "ranges": [
+     [
+      16,
+      19
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "Resist6",
+   "fire": {
+    "id": "FireResist6",
+    "name": "of the Volcano",
+    "level": 60,
+    "ranges": [
+     [
+      31,
+      35
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist6",
+    "name": "of the Polar Bear",
+    "level": 60,
+    "ranges": [
+     [
+      31,
+      35
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist6",
+    "name": "of the Maelstrom",
+    "level": 60,
+    "ranges": [
+     [
+      31,
+      35
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist5",
+    "name": "of Exile",
+    "level": 68,
+    "ranges": [
+     [
+      20,
+      23
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "Resist7",
+   "fire": {
+    "id": "FireResist7",
+    "name": "of Magma",
+    "level": 71,
+    "ranges": [
+     [
+      36,
+      40
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist7",
+    "name": "of the Ice",
+    "level": 71,
+    "ranges": [
+     [
+      36,
+      40
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist7",
+    "name": "of the Lightning",
+    "level": 71,
+    "ranges": [
+     [
+      36,
+      40
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist5",
+    "name": "of Exile",
+    "level": 68,
+    "ranges": [
+     [
+      20,
+      23
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "Resist8",
+   "fire": {
+    "id": "FireResist8",
+    "name": "of Tzteosh",
+    "level": 82,
+    "ranges": [
+     [
+      41,
+      45
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ColdResist8",
+    "name": "of Haast",
+    "level": 82,
+    "ranges": [
+     [
+      41,
+      45
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LightningResist8",
+    "name": "of Ephij",
+    "level": 82,
+    "ranges": [
+     [
+      41,
+      45
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist6",
+    "name": "of Bameth",
+    "level": 81,
+    "ranges": [
+     [
+      24,
+      27
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "LocalAddedDamage1",
+   "fire": {
+    "id": "LocalAddedFireDamage1",
+    "name": "Heated",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      3,
+      5
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage1",
+    "name": "Frosted",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      3,
+      4
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage1",
+    "name": "Humming",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ],
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage1",
+    "name": "Impure",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      3
+     ],
+     [
+      3,
+      5
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamage2",
+   "fire": {
+    "id": "LocalAddedFireDamage2",
+    "name": "Smouldering",
+    "level": 8,
+    "ranges": [
+     [
+      4,
+      6
+     ],
+     [
+      7,
+      10
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage2",
+    "name": "Chilled",
+    "level": 8,
+    "ranges": [
+     [
+      3,
+      5
+     ],
+     [
+      6,
+      9
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage2",
+    "name": "Buzzing",
+    "level": 8,
+    "ranges": [
+     [
+      1,
+      1
+     ],
+     [
+      13,
+      19
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage2",
+    "name": "Tainted",
+    "level": 8,
+    "ranges": [
+     [
+      3,
+      5
+     ],
+     [
+      7,
+      11
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamage3",
+   "fire": {
+    "id": "LocalAddedFireDamage3",
+    "name": "Smoking",
+    "level": 16,
+    "ranges": [
+     [
+      7,
+      11
+     ],
+     [
+      13,
+      19
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage3",
+    "name": "Icy",
+    "level": 16,
+    "ranges": [
+     [
+      6,
+      9
+     ],
+     [
+      10,
+      16
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage3",
+    "name": "Snapping",
+    "level": 16,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      20,
+      30
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage3",
+    "name": "Clouded",
+    "level": 16,
+    "ranges": [
+     [
+      5,
+      11
+     ],
+     [
+      13,
+      19
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamage4",
+   "fire": {
+    "id": "LocalAddedFireDamage4",
+    "name": "Burning",
+    "level": 33,
+    "ranges": [
+     [
+      13,
+      19
+     ],
+     [
+      21,
+      29
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage4",
+    "name": "Frigid",
+    "level": 33,
+    "ranges": [
+     [
+      11,
+      15
+     ],
+     [
+      17,
+      24
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage4",
+    "name": "Crackling",
+    "level": 33,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      36,
+      52
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage4",
+    "name": "Darkened",
+    "level": 33,
+    "ranges": [
+     [
+      11,
+      19
+     ],
+     [
+      23,
+      29
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamage5",
+   "fire": {
+    "id": "LocalAddedFireDamage5",
+    "name": "Flaming",
+    "level": 46,
+    "ranges": [
+     [
+      20,
+      24
+     ],
+     [
+      32,
+      37
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage5",
+    "name": "Freezing",
+    "level": 46,
+    "ranges": [
+     [
+      17,
+      20
+     ],
+     [
+      26,
+      32
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage5",
+    "name": "Sparking",
+    "level": 46,
+    "ranges": [
+     [
+      1,
+      3
+     ],
+     [
+      55,
+      60
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage5",
+    "name": "Malignant",
+    "level": 46,
+    "ranges": [
+     [
+      19,
+      23
+     ],
+     [
+      31,
+      37
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamage6",
+   "fire": {
+    "id": "LocalAddedFireDamage6",
+    "name": "Scorching",
+    "level": 54,
+    "ranges": [
+     [
+      25,
+      33
+     ],
+     [
+      38,
+      54
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage6",
+    "name": "Frozen",
+    "level": 54,
+    "ranges": [
+     [
+      22,
+      29
+     ],
+     [
+      34,
+      44
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage6",
+    "name": "Arcing",
+    "level": 54,
+    "ranges": [
+     [
+      1,
+      4
+     ],
+     [
+      63,
+      82
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage6",
+    "name": "Vile",
+    "level": 54,
+    "ranges": [
+     [
+      23,
+      31
+     ],
+     [
+      41,
+      53
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamage7",
+   "fire": {
+    "id": "LocalAddedFireDamage7",
+    "name": "Incinerating",
+    "level": 60,
+    "ranges": [
+     [
+      35,
+      44
+     ],
+     [
+      56,
+      71
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage7",
+    "name": "Glaciated",
+    "level": 60,
+    "ranges": [
+     [
+      31,
+      38
+     ],
+     [
+      47,
+      59
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage7",
+    "name": "Shocking",
+    "level": 60,
+    "ranges": [
+     [
+      1,
+      6
+     ],
+     [
+      85,
+      107
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage7",
+    "name": "Twisted",
+    "level": 60,
+    "ranges": [
+     [
+      31,
+      43
+     ],
+     [
+      59,
+      71
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamage8",
+   "fire": {
+    "id": "LocalAddedFireDamage8",
+    "name": "Blasting",
+    "level": 65,
+    "ranges": [
+     [
+      47,
+      59
+     ],
+     [
+      74,
+      97
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage8",
+    "name": "Polar",
+    "level": 65,
+    "ranges": [
+     [
+      40,
+      53
+     ],
+     [
+      62,
+      80
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage8",
+    "name": "Discharging",
+    "level": 65,
+    "ranges": [
+     [
+      1,
+      8
+     ],
+     [
+      111,
+      152
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage8",
+    "name": "Malevolent",
+    "level": 65,
+    "ranges": [
+     [
+      43,
+      59
+     ],
+     [
+      73,
+      97
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamage9",
+   "fire": {
+    "id": "LocalAddedFireDamage9",
+    "name": "Cremating",
+    "level": 75,
+    "ranges": [
+     [
+      62,
+      85
+     ],
+     [
+      101,
+      129
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage9",
+    "name": "Entombing",
+    "level": 75,
+    "ranges": [
+     [
+      55,
+      69
+     ],
+     [
+      83,
+      106
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage9",
+    "name": "Electrocuting",
+    "level": 75,
+    "ranges": [
+     [
+      1,
+      10
+     ],
+     [
+      157,
+      196
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage9",
+    "name": "Baleful",
+    "level": 75,
+    "ranges": [
+     [
+      59,
+      83
+     ],
+     [
+      101,
+      131
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamage10",
+   "fire": {
+    "id": "LocalAddedFireDamage10_",
+    "name": "Carbonising",
+    "level": 81,
+    "ranges": [
+     [
+      88,
+      101
+     ],
+     [
+      133,
+      154
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamage10__",
+    "name": "Crystalising",
+    "level": 81,
+    "ranges": [
+     [
+      72,
+      81
+     ],
+     [
+      110,
+      123
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamage10",
+    "name": "Vapourising",
+    "level": 81,
+    "ranges": [
+     [
+      1,
+      12
+     ],
+     [
+      202,
+      234
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamage10",
+    "name": "Pestilent",
+    "level": 81,
+    "ranges": [
+     [
+      83,
+      101
+     ],
+     [
+      137,
+      157
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand1",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand1",
+    "name": "Heated",
+    "level": 1,
+    "ranges": [
+     [
+      2,
+      4
+     ],
+     [
+      5,
+      7
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand1",
+    "name": "Frosted",
+    "level": 1,
+    "ranges": [
+     [
+      2,
+      3
+     ],
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand1_",
+    "name": "Humming",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ],
+     [
+      7,
+      10
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand1",
+    "name": "Impure",
+    "level": 1,
+    "ranges": [
+     [
+      2,
+      3
+     ],
+     [
+      5,
+      7
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand2",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand2",
+    "name": "Smouldering",
+    "level": 8,
+    "ranges": [
+     [
+      6,
+      9
+     ],
+     [
+      10,
+      16
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand2",
+    "name": "Chilled",
+    "level": 8,
+    "ranges": [
+     [
+      5,
+      8
+     ],
+     [
+      9,
+      14
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand2",
+    "name": "Buzzing",
+    "level": 8,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      19,
+      27
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand2",
+    "name": "Tainted",
+    "level": 8,
+    "ranges": [
+     [
+      5,
+      9
+     ],
+     [
+      11,
+      17
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand3",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand3",
+    "name": "Smoking",
+    "level": 16,
+    "ranges": [
+     [
+      11,
+      17
+     ],
+     [
+      19,
+      28
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand3",
+    "name": "Icy",
+    "level": 16,
+    "ranges": [
+     [
+      10,
+      14
+     ],
+     [
+      15,
+      23
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand3",
+    "name": "Snapping",
+    "level": 16,
+    "ranges": [
+     [
+      1,
+      3
+     ],
+     [
+      31,
+      43
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand3",
+    "name": "Clouded",
+    "level": 16,
+    "ranges": [
+     [
+      11,
+      17
+     ],
+     [
+      19,
+      29
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand4",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand4",
+    "name": "Burning",
+    "level": 33,
+    "ranges": [
+     [
+      19,
+      27
+     ],
+     [
+      30,
+      42
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand4",
+    "name": "Frigid",
+    "level": 33,
+    "ranges": [
+     [
+      16,
+      23
+     ],
+     [
+      25,
+      35
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand4",
+    "name": "Crackling",
+    "level": 33,
+    "ranges": [
+     [
+      1,
+      4
+     ],
+     [
+      53,
+      76
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand4",
+    "name": "Darkened",
+    "level": 33,
+    "ranges": [
+     [
+      19,
+      29
+     ],
+     [
+      31,
+      41
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand5",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand5",
+    "name": "Flaming",
+    "level": 46,
+    "ranges": [
+     [
+      30,
+      37
+     ],
+     [
+      45,
+      56
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand5",
+    "name": "Freezing",
+    "level": 46,
+    "ranges": [
+     [
+      25,
+      30
+     ],
+     [
+      38,
+      46
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand5",
+    "name": "Sparking",
+    "level": 46,
+    "ranges": [
+     [
+      1,
+      4
+     ],
+     [
+      80,
+      88
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand5",
+    "name": "Malignant",
+    "level": 46,
+    "ranges": [
+     [
+      31,
+      37
+     ],
+     [
+      43,
+      53
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand6",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand6",
+    "name": "Scorching",
+    "level": 54,
+    "ranges": [
+     [
+      39,
+      53
+     ],
+     [
+      59,
+      80
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand6",
+    "name": "Frozen",
+    "level": 54,
+    "ranges": [
+     [
+      32,
+      43
+     ],
+     [
+      49,
+      66
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand6",
+    "name": "Arcing",
+    "level": 54,
+    "ranges": [
+     [
+      1,
+      6
+     ],
+     [
+      93,
+      122
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand6",
+    "name": "Vile",
+    "level": 54,
+    "ranges": [
+     [
+      41,
+      53
+     ],
+     [
+      59,
+      79
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand7",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand7",
+    "name": "Incinerating",
+    "level": 60,
+    "ranges": [
+     [
+      56,
+      70
+     ],
+     [
+      84,
+      107
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand7",
+    "name": "Glaciated",
+    "level": 60,
+    "ranges": [
+     [
+      46,
+      57
+     ],
+     [
+      70,
+      88
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand7",
+    "name": "Shocking",
+    "level": 60,
+    "ranges": [
+     [
+      1,
+      8
+     ],
+     [
+      128,
+      162
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand7",
+    "name": "Twisted",
+    "level": 60,
+    "ranges": [
+     [
+      59,
+      71
+     ],
+     [
+      83,
+      107
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand8",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand8_",
+    "name": "Blasting",
+    "level": 65,
+    "ranges": [
+     [
+      73,
+      97
+     ],
+     [
+      112,
+      149
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand8",
+    "name": "Polar",
+    "level": 65,
+    "ranges": [
+     [
+      60,
+      80
+     ],
+     [
+      92,
+      121
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand8",
+    "name": "Discharging",
+    "level": 65,
+    "ranges": [
+     [
+      1,
+      13
+     ],
+     [
+      168,
+      231
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand8",
+    "name": "Malevolent",
+    "level": 65,
+    "ranges": [
+     [
+      73,
+      97
+     ],
+     [
+      113,
+      149
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand9",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand9",
+    "name": "Cremating",
+    "level": 75,
+    "ranges": [
+     [
+      102,
+      130
+     ],
+     [
+      155,
+      198
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand9",
+    "name": "Entombing",
+    "level": 75,
+    "ranges": [
+     [
+      84,
+      107
+     ],
+     [
+      126,
+      161
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand9",
+    "name": "Electrocuting",
+    "level": 75,
+    "ranges": [
+     [
+      1,
+      16
+     ],
+     [
+      239,
+      300
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand9",
+    "name": "Baleful",
+    "level": 75,
+    "ranges": [
+     [
+      101,
+      131
+     ],
+     [
+      151,
+      197
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "LocalAddedDamageTwoHand10",
+   "fire": {
+    "id": "LocalAddedFireDamageTwoHand10",
+    "name": "Carbonising",
+    "level": 81,
+    "ranges": [
+     [
+      135,
+      156
+     ],
+     [
+      205,
+      236
+     ]
+    ]
+   },
+   "cold": {
+    "id": "LocalAddedColdDamageTwoHand10",
+    "name": "Crystalising",
+    "level": 81,
+    "ranges": [
+     [
+      112,
+      124
+     ],
+     [
+      168,
+      189
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "LocalAddedLightningDamageTwoHand10",
+    "name": "Vapourising",
+    "level": 81,
+    "ranges": [
+     [
+      1,
+      19
+     ],
+     [
+      310,
+      358
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedLocalAddedChaosDamageTwoHand10",
+    "name": "Pestilent",
+    "level": 81,
+    "ranges": [
+     [
+      137,
+      157
+     ],
+     [
+      199,
+      239
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AlliesAddedDamage1",
+   "fire": {
+    "id": "NearbyAlliesAddedFireDamage1",
+    "name": "Heated",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      3,
+      4
+     ]
+    ]
+   },
+   "cold": {
+    "id": "NearbyAlliesAddedColdDamage1",
+    "name": "Frosted",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      3,
+      4
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "NearbyAlliesAddedLightningDamage1",
+    "name": "Humming",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ],
+     [
+      5,
+      7
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedNearbyAlliesAddedChaosDamage1",
+    "name": "Impure",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      3,
+      5
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AlliesAddedDamage2",
+   "fire": {
+    "id": "NearbyAlliesAddedFireDamage2",
+    "name": "Smouldering",
+    "level": 8,
+    "ranges": [
+     [
+      3,
+      5
+     ],
+     [
+      6,
+      9
+     ]
+    ]
+   },
+   "cold": {
+    "id": "NearbyAlliesAddedColdDamage2",
+    "name": "Chilled",
+    "level": 8,
+    "ranges": [
+     [
+      3,
+      4
+     ],
+     [
+      5,
+      8
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "NearbyAlliesAddedLightningDamage2",
+    "name": "Buzzing",
+    "level": 8,
+    "ranges": [
+     [
+      1,
+      1
+     ],
+     [
+      10,
+      15
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedNearbyAlliesAddedChaosDamage2",
+    "name": "Tainted",
+    "level": 8,
+    "ranges": [
+     [
+      3,
+      5
+     ],
+     [
+      6,
+      7
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AlliesAddedDamage3",
+   "fire": {
+    "id": "NearbyAlliesAddedFireDamage3",
+    "name": "Smoking",
+    "level": 16,
+    "ranges": [
+     [
+      6,
+      8
+     ],
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   "cold": {
+    "id": "NearbyAlliesAddedColdDamage3",
+    "name": "Icy",
+    "level": 16,
+    "ranges": [
+     [
+      5,
+      6
+     ],
+     [
+      9,
+      11
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "NearbyAlliesAddedLightningDamage3",
+    "name": "Snapping",
+    "level": 16,
+    "ranges": [
+     [
+      1,
+      1
+     ],
+     [
+      16,
+      22
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedNearbyAlliesAddedChaosDamage3",
+    "name": "Clouded",
+    "level": 16,
+    "ranges": [
+     [
+      6,
+      7
+     ],
+     [
+      11,
+      13
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AlliesAddedDamage4",
+   "fire": {
+    "id": "NearbyAlliesAddedFireDamage4",
+    "name": "Burning",
+    "level": 33,
+    "ranges": [
+     [
+      9,
+      11
+     ],
+     [
+      14,
+      17
+     ]
+    ]
+   },
+   "cold": {
+    "id": "NearbyAlliesAddedColdDamage4",
+    "name": "Frigid",
+    "level": 33,
+    "ranges": [
+     [
+      7,
+      8
+     ],
+     [
+      12,
+      14
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "NearbyAlliesAddedLightningDamage4",
+    "name": "Crackling",
+    "level": 33,
+    "ranges": [
+     [
+      1,
+      1
+     ],
+     [
+      23,
+      27
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedNearbyAlliesAddedChaosDamage4",
+    "name": "Darkened",
+    "level": 33,
+    "ranges": [
+     [
+      8,
+      11
+     ],
+     [
+      14,
+      17
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AlliesAddedDamage5",
+   "fire": {
+    "id": "NearbyAlliesAddedFireDamage5",
+    "name": "Flaming",
+    "level": 46,
+    "ranges": [
+     [
+      12,
+      13
+     ],
+     [
+      18,
+      20
+     ]
+    ]
+   },
+   "cold": {
+    "id": "NearbyAlliesAddedColdDamage5",
+    "name": "Freezing",
+    "level": 46,
+    "ranges": [
+     [
+      9,
+      10
+     ],
+     [
+      15,
+      17
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "NearbyAlliesAddedLightningDamage5",
+    "name": "Sparking",
+    "level": 46,
+    "ranges": [
+     [
+      1,
+      1
+     ],
+     [
+      28,
+      32
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedNearbyAlliesAddedChaosDamage5",
+    "name": "Malignant",
+    "level": 46,
+    "ranges": [
+     [
+      12,
+      13
+     ],
+     [
+      19,
+      23
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AlliesAddedDamage6",
+   "fire": {
+    "id": "NearbyAlliesAddedFireDamage6",
+    "name": "Scorching",
+    "level": 54,
+    "ranges": [
+     [
+      14,
+      16
+     ],
+     [
+      21,
+      26
+     ]
+    ]
+   },
+   "cold": {
+    "id": "NearbyAlliesAddedColdDamage6",
+    "name": "Frozen",
+    "level": 54,
+    "ranges": [
+     [
+      11,
+      13
+     ],
+     [
+      18,
+      21
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "NearbyAlliesAddedLightningDamage6",
+    "name": "Arcing",
+    "level": 54,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      33,
+      40
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedNearbyAlliesAddedChaosDamage6",
+    "name": "Vile",
+    "level": 54,
+    "ranges": [
+     [
+      14,
+      17
+     ],
+     [
+      21,
+      29
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AlliesAddedDamage7",
+   "fire": {
+    "id": "NearbyAlliesAddedFireDamage7",
+    "name": "Incinerating",
+    "level": 60,
+    "ranges": [
+     [
+      17,
+      19
+     ],
+     [
+      27,
+      30
+     ]
+    ]
+   },
+   "cold": {
+    "id": "NearbyAlliesAddedColdDamage7",
+    "name": "Glaciated",
+    "level": 60,
+    "ranges": [
+     [
+      14,
+      15
+     ],
+     [
+      22,
+      24
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "NearbyAlliesAddedLightningDamage7",
+    "name": "Shocking",
+    "level": 60,
+    "ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      41,
+      47
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedNearbyAlliesAddedChaosDamage7",
+    "name": "Twisted",
+    "level": 60,
+    "ranges": [
+     [
+      17,
+      19
+     ],
+     [
+      30,
+      31
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AlliesAddedDamage8",
+   "fire": {
+    "id": "NearbyAlliesAddedFireDamage8",
+    "name": "Blasting",
+    "level": 65,
+    "ranges": [
+     [
+      20,
+      24
+     ],
+     [
+      31,
+      38
+     ]
+    ]
+   },
+   "cold": {
+    "id": "NearbyAlliesAddedColdDamage8",
+    "name": "Polar",
+    "level": 65,
+    "ranges": [
+     [
+      16,
+      20
+     ],
+     [
+      25,
+      31
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "NearbyAlliesAddedLightningDamage8",
+    "name": "Discharging",
+    "level": 65,
+    "ranges": [
+     [
+      1,
+      3
+     ],
+     [
+      48,
+      59
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedNearbyAlliesAddedChaosDamage8",
+    "name": "Malevolent",
+    "level": 65,
+    "ranges": [
+     [
+      20,
+      23
+     ],
+     [
+      32,
+      37
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "AlliesAddedDamage9",
+   "fire": {
+    "id": "NearbyAlliesAddedFireDamage9",
+    "name": "Cremating",
+    "level": 75,
+    "ranges": [
+     [
+      25,
+      29
+     ],
+     [
+      39,
+      45
+     ]
+    ]
+   },
+   "cold": {
+    "id": "NearbyAlliesAddedColdDamage9",
+    "name": "Entombing",
+    "level": 75,
+    "ranges": [
+     [
+      21,
+      24
+     ],
+     [
+      32,
+      37
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "NearbyAlliesAddedLightningDamage9",
+    "name": "Electrocuting",
+    "level": 75,
+    "ranges": [
+     [
+      1,
+      4
+     ],
+     [
+      60,
+      71
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedNearbyAlliesAddedChaosDamage9",
+    "name": "Baleful",
+    "level": 75,
+    "ranges": [
+     [
+      24,
+      29
+     ],
+     [
+      38,
+      47
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DesecratedQuarterstaffDamageAndAilment",
+   "fire": {
+    "id": "AbyssModQuarterstaffAmanamuPrefixFireDamageIgniteMagnitude",
+    "name": "Amanamu's",
+    "level": 65,
+    "ranges": [
+     [
+      86,
+      99
+     ],
+     [
+      14,
+      23
+     ]
+    ]
+   },
+   "cold": {
+    "id": "AbyssModQuarterstaffKurgalPrefixColdDamageFreezeBuildup",
+    "name": "Kurgal's",
+    "level": 65,
+    "ranges": [
+     [
+      86,
+      99
+     ],
+     [
+      14,
+      23
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "AbyssModQuarterstaffUlamanPrefixLightningDamageShockMagnitude",
+    "name": "Ulaman's",
+    "level": 65,
+    "ranges": [
+     [
+      86,
+      99
+     ],
+     [
+      14,
+      23
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedAbyssModQuarterstaffChaosAndAilment1",
+    "name": "Lich's",
+    "level": 65,
+    "ranges": [
+     [
+      86,
+      99
+     ],
+     [
+      14,
+      23
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DesecratedAttackPenetration1",
+   "fire": {
+    "id": "AbyssModGenWeaponAmanamuPrefixFirePenetration",
+    "name": "Amanamu's",
+    "level": 65,
+    "ranges": [
+     [
+      15,
+      25
+     ]
+    ]
+   },
+   "cold": {
+    "id": "AbyssModGenWeaponKurgalPrefixColdPenetration",
+    "name": "Kurgal's",
+    "level": 65,
+    "ranges": [
+     [
+      15,
+      25
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "AbyssModGenWeaponUlamanPrefixLightningPenetration",
+    "name": "Ulaman's",
+    "level": 65,
+    "ranges": [
+     [
+      15,
+      25
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedAbyssChaosPenetration",
+    "name": "Abyssal",
+    "level": 65,
+    "ranges": [
+     [
+      15,
+      25
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DesecratedHybridChaosResistance1",
+   "fire": {
+    "id": "AbyssModArmourJewelleryAmanamuSuffixFireChaosResistance",
+    "name": "of Amanamu",
+    "level": 65,
+    "ranges": [
+     [
+      13,
+      17
+     ]
+    ]
+   },
+   "cold": {
+    "id": "AbyssModArmourJewelleryKurgalSuffixColdChaosResistance",
+    "name": "of Kurgal",
+    "level": 65,
+    "ranges": [
+     [
+      13,
+      17
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "AbyssModArmourJewelleryUlamanSuffixLightningChaosResistance",
+    "name": "of Ulaman",
+    "level": 65,
+    "ranges": [
+     [
+      13,
+      17
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ChaosResist6",
+    "name": "of Bameth",
+    "level": 81,
+    "ranges": [
+     [
+      24,
+      27
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "MaximumResistance1",
+   "fire": {
+    "id": "MaximumFireResist1",
+    "name": "of the Bushfire",
+    "level": 68,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "cold": {
+    "id": "MaximumColdResist1",
+    "name": "of Furs",
+    "level": 68,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "MaximumLightningResist1",
+    "name": "of Impedance",
+    "level": 68,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "MaximumChaosResist1",
+    "name": "of Regularity",
+    "level": 68,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "MaximumResistance2",
+   "fire": {
+    "id": "MaximumFireResist2_",
+    "name": "of the Molten Core",
+    "level": 75,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "cold": {
+    "id": "MaximumColdResist2",
+    "name": "of the Tundra",
+    "level": 75,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "MaximumLightningResist2___",
+    "name": "of Shockproofing",
+    "level": 75,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "MaximumChaosResist2_",
+    "name": "of Concord",
+    "level": 75,
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "MaximumResistance3",
+   "fire": {
+    "id": "MaximumFireResist3",
+    "name": "of the Solar Storm",
+    "level": 81,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "cold": {
+    "id": "MaximumColdResist3",
+    "name": "of the Mammoth",
+    "level": 81,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "MaximumLightningResist3",
+    "name": "of the Lightning Rod",
+    "level": 81,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "MaximumChaosResist3",
+    "name": "of Harmony",
+    "level": 81,
+    "ranges": [
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "SoulInfluenceHybridChaosResistance1",
+   "fire": {
+    "id": "SoulInfluenceFireAndChaosResistance",
+    "name": "of the Soul",
+    "level": 65,
+    "ranges": [
+     [
+      3,
+      31
+     ]
+    ]
+   },
+   "cold": {
+    "id": "SoulInfluenceColdAndChaosResistance",
+    "name": "of the Soul",
+    "level": 65,
+    "ranges": [
+     [
+      3,
+      31
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "SoulInfluenceLightningAndChaosResistance",
+    "name": "of the Soul",
+    "level": 65,
+    "ranges": [
+     [
+      3,
+      31
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedSoulHybridResistance1",
+    "name": "of the Soul",
+    "level": 65,
+    "ranges": [
+     [
+      3,
+      41
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "JewelRadiusCraftedMod",
+   "fire": {
+    "id": "CraftedJewelRadiusFireResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      5,
+      7
+     ]
+    ]
+   },
+   "cold": {
+    "id": "CraftedJewelRadiusColdResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      5,
+      7
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "CraftedJewelRadiusLightningResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      5,
+      7
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "CraftedJewelRadiusChaosResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      4,
+      5
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "JewelMaximumResistance",
+   "fire": {
+    "id": "JewelMaximumFireResistance",
+    "name": "of the Phoenix",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "cold": {
+    "id": "JewelMaximumColdResistance",
+    "name": "of the Kraken",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "JewelMaximumLightningResistance",
+    "name": "of the Leviathan",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "CraftedJewelMaximumChaosResistance",
+    "name": "",
+    "level": 1,
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "res": true
+  },
+  {
+   "id": "DamageAsExtraWhileMissingRunicWard1",
+   "fire": {
+    "id": "AlloyDamageAsExtraFireWhileMissingRunicWard1",
+    "name": "Verisium",
+    "level": 25,
+    "ranges": [
+     [
+      21,
+      26
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ConvertedAlloyDamageAsExtraColdWhileMissingRunicWard1",
+    "name": "Verisium",
+    "level": 25,
+    "ranges": [
+     [
+      21,
+      26
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "ConvertedAlloyDamageAsExtraLightningWhileMissingRunicWard1",
+    "name": "Verisium",
+    "level": 25,
+    "ranges": [
+     [
+      21,
+      26
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedAlloyDamageAsExtraChaosWhileMissingRunicWard1",
+    "name": "Verisium",
+    "level": 25,
+    "ranges": [
+     [
+      21,
+      26
+     ]
+    ]
+   },
+   "res": false
+  },
+  {
+   "id": "DamageAsExtraWhileMissingRunicWard2H1",
+   "fire": {
+    "id": "AlloyDamageAsExtraFireTwoHandWhileMissingRunicWard1",
+    "name": "Verisium",
+    "level": 25,
+    "ranges": [
+     [
+      42,
+      52
+     ]
+    ]
+   },
+   "cold": {
+    "id": "ConvertedAlloyDamageAsExtraColdTwoHandWhileMissingRunicWard1",
+    "name": "Verisium",
+    "level": 25,
+    "ranges": [
+     [
+      42,
+      52
+     ]
+    ]
+   },
+   "lightning": {
+    "id": "ConvertedAlloyDamageAsExtraLightningTwoHandWhileMissingRunicWard1",
+    "name": "Verisium",
+    "level": 25,
+    "ranges": [
+     [
+      42,
+      52
+     ]
+    ]
+   },
+   "chaos": {
+    "id": "ConvertedAlloyDamageAsExtraChaosTwoHandWhileMissingRunicWard1",
+    "name": "Verisium",
+    "level": 25,
+    "ranges": [
+     [
+      42,
+      52
+     ]
+    ]
+   },
+   "res": false
+  }
+ ]
+}

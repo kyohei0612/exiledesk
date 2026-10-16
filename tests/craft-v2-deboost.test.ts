@@ -16,11 +16,11 @@ describe("カタリストの割り戻し", () => {
     expect(out[0]).toBe("+182 to maximum Mana");
     expect(out[1]).toBe("+30 to [Strength|Strength]");
   });
-  it("宝飾品のスキルレベル: 品質 34% の +4 は素 3 (T1)、33% の +3 も素 3", async () => {
+  it("宝飾品のスキルレベル: 品質 34% の +4 は素 3 (T1)、33% の +3 は素 2 (四捨五入、2026-10-16 CoE)", async () => {
     const { rawValue } = await import("../src/services/htc/quality");
     expect(rawValue(4, 34)).toBe(3);
-    expect(rawValue(3, 33)).toBe(3);
-    expect(rawValue(9, 20)).toBe(8);
+    expect(rawValue(3, 33)).toBe(2);
+    expect(rawValue(10, 20)).toBe(8);
   });
   it("種類の無い品質 (旧キャッシュ) と防具は戻さない", () => {
     expect(deboostMods("Gold Ring", [{ name: "[Quality]", values: [["+20%", 1]] }], ["+218 to maximum Mana"], data)).toEqual(["+218 to maximum Mana"]);

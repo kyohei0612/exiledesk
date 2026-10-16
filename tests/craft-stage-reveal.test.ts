@@ -86,10 +86,10 @@ describe("深淵の印 (クラフトステージ)", async () => {
     expect(hidden.unrevealed!.floor).toBe(33);
     expect(b.item.suffixes.length).toBe(3);
   });
-  it("冒涜の MOD がある間は深淵のエッセンスを打てない", () => {
+  it("冒涜の MOD があっても深淵のエッセンスを打てる (2026-10-16 オーナー、取引所に両方ある物)", () => {
     const it = rareBoots();
     const b = A(it, "desecrate", ["OmenofSinistralNecromancy"]);
-    expect(A(b.item, ABYSS, ["OmenofSinistralCrystallisation"]).applied).toBe(false);
+    expect(A(b.item, ABYSS, ["OmenofSinistralCrystallisation"]).applied).toBe(true);
   });
   it("クラフト MOD は 1 つまで、アストリッドの創造性をはめていれば 2 つ", () => {
     const it = rareBoots();

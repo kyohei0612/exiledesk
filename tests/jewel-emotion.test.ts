@@ -91,7 +91,7 @@ describe("液化した感情", () => {
     expect(sideEffectPct(f!, "suffix")).toBe(fero.values[0]);
     expect(sideEffectPct(f!, "prefix")).toBe(0);
     for (const sm of f!.suffixes.filter((m) => m.values.length && Number.isInteger(m.values[0]))) {
-      const want = Math.floor(sm.values[0]! * (1 + fero.values[0]! / 100) + 1e-9);
+      const want = Math.round(sm.values[0]! * (1 + fero.values[0]! / 100) + 1e-9);
       expect(boostedMod(f!, sm, data)?.values[0] ?? sm.values[0]).toBe(want);
     }
     expect(boostedMod(f!, fero, data)).toBeNull();

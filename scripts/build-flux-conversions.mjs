@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * build-flux-conversions.mjs — 耐性のフラックスの変換表 (2026-10-10 要望「虚無フラックスで T3 火 → T2 混沌、冒涜専用の火 & 混沌 → T1 混沌」)。
- * クライアントの Expedition2ElementalModConversions (火 / 冷気 / 雷 / 混沌の MOD を 1 行ずつ対応させた表) のうち耐性の行を、
- * MOD の名前 (接尾辞)・Lv・数値の幅で書き出す。エンジンの MOD の段とはこの 3 つで突き合わせる (apply-flux.ts)。
+ * build-flux-conversions.mjs — 属性の変換表 (2026-10-10 要望「虚無フラックスで T3 火 → T2 混沌、冒涜専用の火 & 混沌 → T1 混沌」)。
+ * クライアントの Expedition2ElementalModConversions (火 / 冷気 / 雷 / 混沌の MOD を 1 行ずつ対応させた表) の全部の行を、
+ * MOD の名前 (接尾辞)・Lv・数値の幅で書き出す。エンジンの MOD の段とはこの 3 つで突き合わせる (element-convert.ts)。
+ * res = 耐性の行 (フラックスが使う)。それ以外の行はアルダーのルーンが使う (2026-10-16 Craft of Exile の conversions と同じ分け方、15 行 / 78 行)
  *   cd data-cache/client-export-flux && npx pathofexile-dat   (config.json に表と列)
  *   node scripts/build-flux-conversions.mjs
  */
@@ -18,6 +19,6 @@ const side = (i) => {
 };
 const out = rows
   .map((r) => ({ id: r.Id, fire: side(r.FireMod), cold: side(r.ColdMod), lightning: side(r.LightningMod), chaos: side(r.ChaosMod) }))
-  .filter((r) => [r.fire, r.cold, r.lightning, r.chaos].some((x) => x && /Resist/i.test(x.id)));
-writeFileSync("src/data/flux-conversions.json", JSON.stringify({ source: "GGG クライアント Expedition2ElementalModConversions (耐性の行)", rows: out }, null, 1) + "\n");
-console.log(`${out.length} 行 → src/data/flux-conversions.json`);
+  .map((r) => ({ ...r, res: [r.fire, r.cold, r.lightning, r.chaos].some((x) => x && /Resist/i.test(x.id)) }));
+writeFileSync("src/data/element-conversions.json", JSON.stringify({ source: "GGG クライアント Expedition2ElementalModConversions (res = 耐性の行)", rows: out }, null, 1) + "\n");
+console.log(`${out.length} 行 (耐性 ${out.filter((r) => r.res).length}) → src/data/element-conversions.json`);

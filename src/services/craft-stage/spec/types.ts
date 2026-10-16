@@ -64,7 +64,6 @@ export type Limit =
   /** 固定 (フラクチャー) した MOD がまだ無い (固定は 1 つ。2026-10-08 オーナー確認) */
   | { kind: "noFractured" }
   /** 冒涜の MOD が無い (深淵のエッセンス。計算機と同じ決まり、外の正解は無い) */
-  | { kind: "noDesecrated" }
   /** 深淵の王の印がまだ無い (深淵のエッセンス) */
   | { kind: "noAbyssMark" }
   /** クラフト MOD の空き (用語集 Crafted「An item can only have one Crafted Modifier」。アストリッドの創造性で増える) */
