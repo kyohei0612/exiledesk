@@ -7,7 +7,7 @@
     - 問題は「Q3」の札 + 大きな問い + A/B/C の 3 択。正解は緑で理由、外れは赤でなぜ違うか
     - 完成の形は ✓ (付いた・緑) / 🔒 (固定・青) / ○ (まだ・琥珀) の札、上に進み具合
   見本のレシピ (services/craft-stage/quiz-tutorials.ts) を今のアイテムで 1 手ずつ進める。一度正解した手と同じ状況は聞かずに自動で打つ
-  (quiz-tutorial-run.ts)。資料で決まらない手は「仮」の札。開発版だけ開く (シミュレーターと同じ SIM_LOCKED)
+  (quiz-tutorial-run.ts)。資料で決まらない手は「仮」の札。2026-10-17 から本番にも出す
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, shallowRef } from "vue";

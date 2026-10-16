@@ -297,7 +297,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <!-- ジェムコラプト (Web 版だけ、2026-10-16) -->
         <button v-if="!inApp && GEM_CORRUPT_SHOWN" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
         <!-- クイズのチュートリアル (2026-10-16)。開発版だけ (本番はシミュレーターと同じく閉じたまま出さない) -->
-        <button v-if="!SIM_LOCKED" type="button" role="tab" :aria-selected="s.mode.value === 'tutorial' && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3" :class="s.mode.value === 'tutorial' && !gemCorrupt ? 'on' : ''" @click="s.hold(null); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}<span class="text-[10px] font-normal opacity-70" :title="tr('開発版だけの画面', 'Dev build only')">β</span></button>
+        <button type="button" role="tab" :aria-selected="s.mode.value === 'tutorial' && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3" :class="s.mode.value === 'tutorial' && !gemCorrupt ? 'on' : ''" @click="s.hold(null); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}<span class="text-[10px] font-normal opacity-70" :title="tr('開発版だけの画面', 'Dev build only')">β</span></button>
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
       <div v-show="!gemCorrupt" id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
@@ -354,7 +354,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     <!-- 手で打つ画面と行き来しても入れた物が残るように、一度ベースを選んだら消さずに隠す (2026-10-05 オーナー「ステージと実験行き来できるように、行き来したらもっかい最初からになった」) -->
     <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
     <!-- クイズのチュートリアル (見本のレシピを 1 手ずつ。StageTutorial.vue) -->
-    <StageTutorial v-if="s.ready.value && s.mode.value === 'tutorial' && !s.replay.value && !SIM_LOCKED" class="mb-4" />
+    <StageTutorial v-if="s.ready.value && s.mode.value === 'tutorial' && !s.replay.value" class="mb-4" />
     <!-- ベースを選んだ後に出る中身はふわっと出す (2026-10-10 オーナー「切り替えがワープみたい」) -->
     <Transition name="stage-fade" appear>
     <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
