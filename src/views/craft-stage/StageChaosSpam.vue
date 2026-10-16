@@ -169,7 +169,8 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
 </script>
 
 <template>
-  <div v-if="s.aims.value.length" ref="root" data-chaos-spam class="rounded-md bg-black/25 p-2 ring-1 ring-white/10">
+  <!-- 「次の手で狙う」を押しただけの時は出さない。アイテムの下の「カオススパム確率機へ」から来た時 (spamKey) と、回している・結果がある時だけ (2026-10-16 オーナー) -->
+  <div v-if="s.aims.value.length && (spamKey || spamming || result)" ref="root" data-chaos-spam class="rounded-md bg-black/25 p-2 ring-1 ring-white/10">
     <div class="flex flex-wrap items-center gap-2">
       <b class="text-[13px] text-[var(--exile-color-text-title)]">{{ tr("カオススパム", "Chaos spam") }}</b>
       <!-- ② カオス・上級・完全 -->
