@@ -2,7 +2,7 @@
  * sfx.ts — カレンシーを使った時の音 (2026-10-16 オーナー「つける時の SE、ゲーム内と同じに。音量はめっちゃ小さくて OK、
  * カオスの確率機では出しちゃダメ」「レア MOD 時は神のオーブの音」)。
  *
- * 音はゲームのクライアント (FMOD/Desktop/ItemDrops.bank の OrbUse_* と OrbDrop_Divine_01) から取り出して mp3 にした物 (public/sfx)。
+ * 音はゲームのクライアント (FMOD/Desktop/ItemDrops.bank の OrbUse_* と Four_ItemFilter.bank の AlertSound_06) から取り出して mp3 にした物 (public/sfx)。
  * 珍しい段 (付いた瞬間の確率が isRareChance = 工程で黄色に出る物) が付いた時は、カレンシーの音の代わりにアイテムフィルターの通知音 6
  * (Four_ItemFilter.bank の AlertSound_06。フィルターの PlayAlertSound 6 の「しゃきぃん → ぽーん」。2026-10-16 オーナー「これこれ 6 のやつ」)。少し大きめに鳴らす。
  * iPhone の Safari は <audio> の音量を無視するので Web Audio の GainNode で絞る。オフは端末に覚える (sfx-off)
