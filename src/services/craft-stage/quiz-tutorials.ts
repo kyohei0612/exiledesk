@@ -285,14 +285,17 @@ function ring(): QuizTutorial {
 }
 
 /**
- * アミュレット: 不在のアミュレット (MOD はプレ 2・サフィ 2)。全部入りのコース (2026-10-16 オーナー「ガチ構築クラフトでフラクチャー、冒涜、
+ * アミュレット: 不在のアミュレット。全部入りのコース (2026-10-16 オーナー「ガチ構築クラフトでフラクチャー、冒涜、
  * カオススパム、エッセンスリロールも学ばしたい。深淵エッセンス冒涜の 3 MOD フラクチャーとか」):
  * 3 MOD のアミュレットに冒涜で未発現を足して 4 MOD (未発現・冒涜はフラクチャーで選ばれない) → スピリットが 3 分の 1 で固定 →
- * 発現 (反響) で全てのスキルのレベル → 外れはエッセンスでリロール → 残りのサフィはエッセンス → プレをカオススパム (左の抹消) でライフ
+ * 壁の未発現を光のお告げで外す → サフィをカオススパム (右の抹消) で全元素耐性 → 空いたサフィに冒涜、発現 (反響) で全てのスキルのレベル
+ * (外れは光のお告げで消して冒涜し直す) → プレの外れを左の結晶化 + エッセンスでグローバル防御 (固定のスピリットは消えないので必ず外れが消える)。
+ * 不在のアミュレットはプレ 2・サフィ 2 まで。
+ * エッセンスは 2026-10-16 オーナー「グローバル防御にしようか」(前は受けたダメージのライフ回収、サフィ)
  */
 function amulet(): QuizTutorial {
   const A = "Amulets/";
-  const ESS = "essence:perfect:" + A + "PerfectEssence_DamageTakenGainedAsLife";
+  const ESS = "essence:perfect:" + A + "PerfectEssence_AllDefences";
   const DES = use("desecrate", "OmenofDextralNecromancy", "OmenoftheSovereign");
   const desWrong = [
     d(use("desecrate", "OmenofDextralNecromancy", "OmenoftheLiege"), "君主のお告げはアマナム。スキルのレベルはウラマン", "Omen of the Liege is Amanamu; the skill level is Ulaman"),
@@ -300,11 +303,11 @@ function amulet(): QuizTutorial {
   ] as const;
   return {
     id: "amulet", part: ["アミュレット", "Amulet"],
-    learn: ["未発現で 3 分の 1 のフラクチャー・冒涜と反響・エッセンスのリロール・カオススパム", "1-in-3 Fracture with an unrevealed mod, desecration + Echoes, essence rerolls, chaos spam"],
+    learn: ["未発現で 3 分の 1 のフラクチャー・光のお告げで壁を外す・カオススパム・冒涜と反響・固定を盾に結晶化でエッセンス", "1-in-3 Fracture with an unrevealed wall, Omen of Light to drop the wall, chaos spam, desecration + Echoes, essence with Crystallisation behind the fractured mod"],
     source: "メモ recipe-showcase (オーナー「基礎が詰まって殿堂入り」「ガチ構築クラフト」)",
     seed: 4,
     assumed: [
-      ["固定する MOD はスピリット、冒涜の狙いは「全てのスキルのレベル +1」、エッセンスは「受けたダメージのライフ回収」のパーフェクト、カオススパムの狙いは最大ライフ (オーナーの指定は形だけ)", "Spirit as the fractured mod, “+1 to Level of all Skills” as the desecration target, the Perfect “Damage taken Recouped as Life” essence, maximum Life for the chaos spam (the owner only set the shape)"],
+      ["固定する MOD はスピリット、冒涜の狙いは「全てのスキルのレベル +1」、カオススパムの狙いは全元素耐性 (エッセンスはオーナーの指定でグローバル防御、不在のアミュレットはプレ 2 つまでなのでカオススパムはサフィ)", "Spirit as the fractured mod, “+1 to Level of all Skills” as the desecration target, all Elemental Resistances for the chaos spam (the Global Defences essence is the owner's pick; Absent Amulet has only 2 prefixes, so the chaos spam is on a suffix)"],
     ],
     recipe: {
       v: 3, name: "Absent Amulet", base: "Absent Amulet", itemLevel: 82,
@@ -313,65 +316,51 @@ function amulet(): QuizTutorial {
         id: "main",
         goal: [
           slot("A", "prefix", [A + "BaseSpirit"], "fractured"),
-          slot("P", "prefix", [A + "IncreasedLife"]),
+          slot("E", "prefix", [A + "PerfectEssence_AllDefences"], "essence"),
+          slot("S", "suffix", [A + "AllResistances"]),
           slot("B", "suffix", [A + "Desecrated_IncreaseSocketedGemLevel"], "desecrated"),
-          slot("E", "suffix", [A + "PerfectEssence_DamageTakenGainedAsLife"], "essence"),
         ],
         rules: [
-          rule({ A: 2, fx: 0, des: 0 }, DES,
+          rule({ A: 2, fx: 0, des: 0 }, use("desecrate"),
             ["3 MOD のうちにフラクチャーの当たりを 3 分の 1 にする小テクは?", "The trick to make the Fracture odds 1 in 3 with 3 mods?"],
-            ["空いたサフィに冒涜で未発現の MOD を足して 4 MOD にする。未発現は 4 つの数に入るのにフラクチャーでは選ばれない。ついでに狙いの冒涜 (ウラマン) も仕込む", "Desecrate the open suffix: the unrevealed mod counts toward the 4 but is never fractured. Aim it at the Ulaman target while at it"],
+            ["空いたサフィに冒涜で未発現の MOD を足して 4 MOD にする。未発現は 4 つの数に入るのにフラクチャーでは選ばれない (壁)", "Desecrate the open suffix: the unrevealed mod counts toward the 4 but is never fractured (a wall)"],
             [d(use("exalt"), "普通の MOD を足すと 4 分の 1 になる", "A normal mod makes it 1 in 4"), DIVINE_LOCK]),
           rule({ A: 2, fx: 0, des: 1 }, use("fracture"),
             ["スピリットを固定するには?", "Lock the Spirit?"],
             ["未発現の冒涜は選ばれないので、残り 3 つから 3 分の 1 でスピリットが固定される", "The unrevealed mod is skipped, so Spirit locks 1 time in 3"],
-            [d({ reveal: { echoes: true } }, "先に発現すると普通の冒涜 MOD になり、やっぱり選ばれないが、外れた時に枠を空け直す手間が増える", "Revealing first gains nothing here; fracture while it's still unrevealed"), DIVINE_LOCK]),
+            [d({ reveal: { echoes: true } }, "発現すると普通の冒涜 MOD になる。未発現のうちにフラクチャーする", "Revealing gains nothing here; fracture while it's still unrevealed"), DIVINE_LOCK]),
           rule({ fx: 1, A: [0, 1, 2] }, RESTART,
             ["違う MOD が固定された。どうする?", "The wrong mod got fractured. What now?"],
             ["次のベースを買う", "Buy the next base"],
             [ANNUL_FRACTURED, FRACTURE_TWICE]),
-          rule({ A: 3, "s.hid": 1 }, { reveal: { echoes: true } },
+          rule({ A: 3, S: 0, "s.hid": 1 }, use("annul", "OmenofLight"),
+            ["壁の役目は終わった。サフィをカオススパムするために、未発現の冒涜だけ外すには?", "The wall has done its job. Remove only the unrevealed mod so the suffix can be chaos spammed?"],
+            ["光のお告げ + 消去で冒涜の MOD だけ消す。冒涜が残っているとカオスで消えることもあり、狙いの冒涜は後で付け直す", "Omen of Light + Annulment removes only the desecrated mod; the real desecration comes later"],
+            [d({ reveal: { echoes: true } }, "発現するとサフィが 2 つ埋まり、カオススパムで当たりも消える", "Revealing fills both suffixes, and the chaos spam would hit it"),
+              d(use("annul"), "お告げ無しの消去はプレやサフィの外れを消すこともあり、壁が残る", "Plain Annulment may hit a junk prefix or suffix and leave the wall")]),
+          rule({ A: 3, S: 0, "s.hid": 0, "s.bad": 0, des: 0 }, use("chaos", "OmenofDextralErasure"),
+            ["サフィの外れを全元素耐性に変えるには?", "Turn the junk suffix into all Elemental Resistances?"],
+            ["右の抹消のお告げ + カオスでサフィだけ振り直す (カオススパム)。プレは満杯なので、足される MOD もサフィ", "Dextral Erasure + Chaos rerolls only a suffix (chaos spam); prefixes are full, so the new mod is a suffix too"],
+            [d(use("chaos"), "お告げ無しのカオスはプレの外れも消す。プレは後でエッセンスの置き場", "Chaos without an omen may hit the prefix, which is saved for the essence"),
+              d(use("chaos", "OmenofSinistralErasure"), "左の抹消はプレを消す", "Sinistral Erasure removes a prefix")]),
+          rule({ A: 3, S: 2, "s.hid": 1 }, { reveal: { echoes: true } },
             ["未発現の MOD を、なるべく狙いが出るように発現するには?", "Reveal the unrevealed mod with the best chance at the target?"],
             ["アビスの反響のお告げを掛けて発現。3 つに狙いが無ければもう 3 つ見られる", "Reveal with Omen of Abyssal Echoes: if the 3 options miss, you see 3 more"],
             [d({ reveal: { echoes: false } }, "反響のお告げが無いと、外れた時にもう 3 つ見られない", "Without Abyssal Echoes there's no second set of 3"),
               d(use("annul", "OmenofLight"), "光のお告げは冒涜を消す。まず中身を見る", "Omen of Light removes the desecrated mod; look inside first")]),
-          rule({ A: 3, "s.bad": 1, E: 0 }, use(ESS, "OmenofDextralCrystallisation"),
-            ["外れた冒涜 MOD を、エッセンスの MOD に置き換えるには?", "Replace the wrong desecrated mod with the essence mod?"],
-            ["右の結晶化 + エッセンスで、サフィを 1 つ消してエッセンスに置き換える (エッセンスのリロール)。もう 1 つのサフィが消えることもある", "Dextral Crystallisation + essence removes a suffix and puts the essence in (an essence reroll); it may hit the other suffix instead"],
-            [d(use("annul", "OmenofLight"), "光のお告げは消すだけ。エッセンスの枠も一緒に埋めたい", "Omen of Light only removes; we also want the essence in"),
-              d(use(ESS, "OmenofSinistralCrystallisation"), "左の結晶化はプレを消す", "Sinistral Crystallisation removes a prefix")]),
-          rule({ A: 3, "s.bad": 1, E: 2 }, use("annul", "OmenofLight"),
-            ["エッセンスは付いている。外れた冒涜だけを消すには?", "The essence is on. Remove only the wrong desecrated mod?"],
-            ["光のお告げ + 消去で冒涜だけ消す", "Omen of Light + Annulment removes only the desecrated mod"],
-            [d(use("annul", "OmenofDextralAnnulment"), "右の消去はエッセンスの MOD を消すこともある", "Dextral Annulment may remove the essence mod"), CHAOS_ANY]),
-          rule({ A: 3, B: 2, E: 0, "s.junk": 1 }, use(ESS, "OmenofDextralCrystallisation"),
-            ["狙いが付いた。残りのサフィをエッセンスにするには?", "The target landed. Turn the other suffix into the essence?"],
-            ["右の結晶化 + エッセンス。半々で狙いの方が消えるが、その時は冒涜からやり直す", "Dextral Crystallisation + essence. Half the time it removes the target instead; then desecrate again"],
-            [d(use(ESS), "お告げ無しだとプレのライフが消えることもある", "Without an omen it may remove the Life prefix"),
-              d(use("annul", "OmenofDextralAnnulment"), "消去だと狙いの方が消えることもあり、エッセンスも入らない", "Annulment may remove the target and adds no essence")]),
-          rule({ A: 3, B: 0, E: 2, "s.junk": 1, "s.hid": 0 }, use("annul", "OmenofDextralAnnulment"),
-            ["エッセンスは付いた。冒涜する枠をサフィに空けるには?", "The essence is on. Open a suffix slot for desecration?"],
-            ["右の消去のお告げでサフィを 1 つ消す (半々でエッセンスが消えたら、またエッセンスから)", "Dextral Annulment removes a suffix (if it hits the essence, apply it again)"],
-            [d(use("annul", "OmenofSinistralAnnulment"), "左の消去はプレを空ける", "Sinistral Annulment empties a prefix"), CHAOS_ANY]),
-          rule({ A: 3, B: 0, "s.free": 1, "s.hid": 0, "s.bad": 0 }, DES,
+          rule({ A: 3, "s.bad": 1 }, use("annul", "OmenofLight"),
+            ["外れた冒涜 MOD だけを消すには?", "Remove only the wrong desecrated mod?"],
+            ["光のお告げ + 消去で冒涜の MOD だけ消す。耐性は残る", "Omen of Light + Annulment removes only the desecrated mod; the resistances stay"],
+            [d(use("annul", "OmenofDextralAnnulment"), "右の消去は全元素耐性を消すこともある", "Dextral Annulment may remove the resistances instead"), CHAOS_ANY]),
+          rule({ A: 3, S: 2, B: 0, "s.free": 1, "s.hid": 0, "s.bad": 0 }, DES,
             ["空いたサフィにウラマンの冒涜 MOD (スキルのレベル) を狙うには?", "Aim an Ulaman desecrated suffix (skill level) in the open slot?"],
             ["右手のネクロマンシーでサフィに、支配者のお告げでウラマンだけに", "Dextral Necromancy for the suffix side, Omen of the Sovereign for Ulaman only"],
             desWrong),
-          rule({ A: 3, B: 2, E: 0, "s.free": 1 }, use(ESS),
-            ["空いたサフィにエッセンスを入れるには?", "Put the essence into the open suffix?"],
-            ["空きがあればエッセンスはそのまま入る (消さない)", "With an open slot the essence just goes in (nothing is removed)"],
-            [d(use("exalt", "OmenofDextralExaltation"), "高貴だとランダムな MOD", "Exalted adds a random mod"),
-              d(use(ESS, "OmenofDextralCrystallisation"), "結晶化は消す物を選ぶお告げ。空きがある時は要らない", "Crystallisation picks what to remove; not needed with an open slot")]),
-          rule({ A: 3, B: 2, E: 2, P: 0, "p.junk": 1 }, use("chaos", "OmenofSinistralErasure"),
-            ["サフィは完成。プレの外れを最大ライフに変えるには?", "Suffixes are done. Turn the junk prefix into maximum Life?"],
-            ["左の抹消のお告げ + カオスでプレだけ振り直す (カオススパム)。固定のスピリットは消えない", "Sinistral Erasure + Chaos rerolls only the prefix (chaos spam); the fractured Spirit stays"],
-            [d(use("chaos"), "お告げ無しのカオスは完成したサフィを消すことがある", "Chaos without an omen may remove a finished suffix"),
-              d(use("chaos", "OmenofDextralErasure"), "右の抹消はサフィを消す", "Dextral Erasure removes a suffix")]),
-          rule({ A: 3, B: 2, E: 2, P: 0, "p.free": 1 }, use("exalt", "OmenofSinistralExaltation"),
-            ["プレが空いている。埋めるには?", "A prefix slot is open. Fill it?"],
-            ["左の高貴のお告げでプレに付ける (外れたらカオススパムへ)", "Sinistral Exaltation adds a prefix (on a miss, go chaos spam)"],
-            [d(use("chaos", "OmenofSinistralErasure"), "空きがある時は高貴で足す方が安い", "With an open slot, an Exalted Orb is cheaper"),
-              d(use("exalt", "OmenofDextralExaltation"), "右の高貴はサフィに付く。サフィは満杯", "Dextral Exaltation is for suffixes, which are full")]),
+          rule({ A: 3, S: 2, B: 2, E: 0, "p.junk": 1 }, use(ESS, "OmenofSinistralCrystallisation"),
+            ["プレはスピリットと外れ 1 つ。外れをグローバル防御のエッセンスに置き換えるには?", "Prefixes are Spirit and 1 junk mod. Swap the junk for the Global Defences essence?"],
+            ["左の結晶化 + エッセンス。固定のスピリットは消えないので、消えるのは必ず外れ", "Sinistral Crystallisation + essence. The fractured Spirit can't be removed, so it always hits the junk"],
+            [d(use(ESS), "お告げ無しだと完成したサフィが消えることもある", "Without an omen it may remove a finished suffix"),
+              d(use("annul", "OmenofSinistralAnnulment"), "消去は消すだけ。エッセンスは入らない", "Annulment only removes; no essence goes in")]),
         ],
       }],
     },
