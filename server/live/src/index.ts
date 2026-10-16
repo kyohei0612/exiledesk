@@ -363,7 +363,7 @@ async function boardPost(req: Request, env: Env, ctx: ExecutionContext, url: URL
       if (p.parent) { const no = await replyTarget(db, p.parent); if (no) return json({ error: no }, 400); }
       const item = await savePost(db, { ...p, iph });
       ctx.waitUntil(purgeLists());
-      if (env.DISCORD_WEBHOOK && item.kind === "post") ctx.waitUntil(notifyBoardDiscord(env.DISCORD_WEBHOOK, { kind: "post", item, uid: p.uid }, fetch));
+      // 新しい書き込みの Discord 通知は止めた (2026-10-16 オーナー「掲示板の通知はいらん」)。通報で隠した時だけ知らせる
       return json({ ok: true, item });
     }
     case "/board/hit": {

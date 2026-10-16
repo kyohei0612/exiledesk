@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { spamKey, spamPending, spamming } from "../../state/chaos-spam";
+import { spamAims, spamKey, spamPending, spamming } from "../../state/chaos-spam";
 import { centerOnScreen, scrollToTop } from "../../utils/keep-place";
 import { displayCurrency } from "../../state/display-currency";
 import { aimDone, type AimTarget } from "../../services/craft-stage/aim-odds";
@@ -29,7 +29,7 @@ import { baseArtFile } from "../../services/craft-stage/base-art";
 import { playSfx } from "../../utils/sfx";
 import { boardOn } from "../../services/board/board-api";
 
-const targets = computed<AimTarget[]>(() => s.aims.value.map((a) => ({ modId: a.modId, minTierIndex: a.minTierIndex })));
+const targets = computed<AimTarget[]>(() => spamAims.value.map((a) => ({ modId: a.modId, minTierIndex: a.minTierIndex })));
 /** 今打てるカオス (普通・上級・完全。アイテムレベルが足りない物などは出さない) */
 const keys = computed(() => (s.item.value ? SPAM_KEYS.filter((k) => s.usableBare(k) == null) : []));
 const key = ref<string>("chaos");
@@ -57,7 +57,7 @@ watch(spamKey, (k) => { if (k && SPAM_KEYS.includes(k as (typeof SPAM_KEYS)[numb
 /** そのボタンから来た時: 狙いが決まったら、この欄を画面の真ん中へ */
 const root = ref<HTMLElement | null>(null);
 function arrive(): void {
-  if (!spamPending.value || !s.aims.value.length) return;
+  if (!spamPending.value || !spamAims.value.length) return;
   spamPending.value = false;
   // 帯 (スマホ) が出てから測る。100 人の計算が済むと欄が伸びるので、済んだらもう一度
   void nextTick(() => requestAnimationFrame(() => centerOnScreen(root.value)));
@@ -66,7 +66,7 @@ function arrive(): void {
   setTimeout(() => { recenter = false; }, 3000);
 }
 onMounted(arrive);
-watch([spamPending, () => s.aims.value], arrive);
+watch([spamPending, () => spamAims.value], arrive);
 
 /** 自分のスパムの結果 (④ の運試し)。sig = 狙いとカオスの種類 (変わったら別のスパム) */
 interface SpamResult { sig: string; uses: number; applied: number; hit: boolean; reason: string | null; rank: number | null }
@@ -131,14 +131,10 @@ function closeSpam(): void {
   result.value = null;
   snap = null;
   spamKey.value = null;
-  s.aims.value = [];
+  spamAims.value = [];
 }
-/** ベースを変えたら確率機を閉じる。確率機でない時 (普段の「次の手で狙う」) は、そのベースに付かない狙いだけ外す */
-watch(() => s.base.value, () => {
-  if (spamKey.value || result.value) { closeSpam(); return; }
-  const it = s.item.value;
-  if (s.data.value && it) s.aims.value = s.aims.value.filter((a) => [...it.cls.pools.normal.prefixes, ...it.cls.pools.normal.suffixes].includes(a.modId));
-});
+/** ベースを変えたら確率機を閉じる (狙いはそのベースの MOD) */
+watch(() => s.base.value, () => { if (spamKey.value || result.value || spamAims.value.length) closeSpam(); });
 onBeforeUnmount(() => { gen++; clearTimeout(timer); stopSpam(); });
 
 const cost = (n: number): string => (priceOf(key.value) > 0 ? displayCurrency.money(n * priceOf(key.value)) : "");
@@ -227,7 +223,7 @@ function startHere(): void {
   snap = null;
   result.value = null;
   spamKey.value = null;
-  s.aims.value = [];
+  spamAims.value = [];
   s.aimPicker.value = null;
   void nextTick(() => scrollToTop(document.querySelector("[data-stage-card]") as HTMLElement | null, "smooth", "nearest"));
 }
@@ -269,7 +265,7 @@ watch([result, () => stats.value, isEn], async () => {
     isEn.value ? "en" : "ja",
     s.base.value,
     isEn.value ? s.base.value : (s.item.value?.baseJa ?? s.base.value),
-    s.aims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", ")),
+    spamAims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", ")),
     r.uses,
     baseArtFile(s.base.value),
     r.rank,
@@ -285,7 +281,7 @@ const shareText = computed(() => {
   const r = result.value;
   if (!r?.hit) return "";
   const base = isEn.value ? s.base.value : (s.item.value?.baseJa ?? s.base.value);
-  const mods = s.aims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", "));
+  const mods = spamAims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", "));
   const luckLine = r.rank != null ? tr(`${SPAM_PEOPLE} 人中 ${rankWord(r.rank)} の運 (${luck(r.rank)})`, `${rankWord(r.rank)} luck among ${SPAM_PEOPLE} people (${luck(r.rank)})`) : "";
   return tr(
     `カオススパムで ${base} に ${mods} を ${nameOf(key.value)} ${r.uses.toLocaleString()} 回で付けた！ ${luckLine}\n#PoE2 #ExileDesk`,
@@ -339,10 +335,20 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
 <template>
   <!-- 「次の手で狙う」を押しただけの時は出さない。アイテムの下の「カオススパム確率機へ」から来た時 (spamKey) と、回している・結果がある時だけ (2026-10-16 オーナー) -->
   <!--
-    枠は描かない (狙いの欄の 1 つの枠の中。題は欄の見出しが「カオススパム」になる。2026-10-16 UI の見直し: 枠の中に枠・小さいボタン・結果が細い字だった)
+    確率機は「次の手で狙う」とは別の欄・別の狙い (spamAims。2026-10-16 オーナー「カオススパム確率機と狙うは別ルートとして扱って」)。
     PC: 左に 100 人の結果、右に押すボタンと自分の結果。スマホは縦に積み、押すボタンは下の帯
   -->
-  <div v-if="s.aims.value.length && (spamKey || spamming || result)" ref="root" data-chaos-spam class="text-[12px]">
+  <section v-if="spamKey || spamming || result" ref="root" data-chaos-spam class="g-panel scroll-mt-2 p-2 text-[12px]">
+    <header class="g-sec-head">
+      <b class="g-sec-title">{{ tr("カオススパム", "Chaos spam") }}</b>
+      <span class="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:w-full">
+        <span v-for="a in spamAims" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ aimLabel(s.data.value, a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :disabled="spamming" :title="tr('この MOD を外す', 'Remove this mod')" @click="spamAims = spamAims.filter((x) => x.modId !== a.modId)">×</button></span>
+        <button type="button" class="g-plain inline-flex min-h-7 items-center gap-1 rounded border border-dashed border-white/25 px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5" :disabled="spamming" @click="s.aimPicker.value = { seed: null, spam: true }">+ {{ spamAims.length ? tr("足す・変える", "Add / change") : tr("狙う MOD を選ぶ", "Choose mods") }}</button>
+      </span>
+      <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" :disabled="spamming" :title="tr('確率機を閉じる', 'Close the calculator')" @click="closeSpam">×</button>
+    </header>
+    <p v-if="!spamAims.length" class="py-2 text-[var(--exile-color-text-secondary)]">{{ tr("狙う MOD を選ぶと、100 人がスパムした時の回数が出ます", "Choose target mods to see how many uses 100 people needed") }}</p>
+    <div v-else>
     <!-- ② カオスの種類・アイテムレベル -->
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
       <span v-if="keys.length" class="flex items-center gap-1">
@@ -413,6 +419,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
         </div>
       </div>
     </div>
+    </div>
     <!-- スマホ: 画面の下の帯 (「使う」の帯と同じ場所と見た目)。押しっぱなしでスパム -->
     <Teleport to="body">
       <div v-if="barShown" data-chaos-spam-bar data-bottom-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
@@ -433,7 +440,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
         </div>
       </div>
     </Teleport>
-  </div>
+  </section>
 </template>
 
 <style scoped>

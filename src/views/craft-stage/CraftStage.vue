@@ -29,7 +29,8 @@ import StageQualityBar from "./StageQualityBar.vue";
 import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
 import { SPAM_KEYS } from "../../services/craft-stage/chaos-spam";
-import { spamKey, spamPending } from "../../state/chaos-spam";
+import { spamAims, spamKey, spamPending } from "../../state/chaos-spam";
+import StageChaosSpam from "./StageChaosSpam.vue";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -210,12 +211,12 @@ function openChaosSpam(): void {
   // 手に持っている物は離す (スマホの「使う」の帯と、カオススパムの帯がぶつからないように。2026-10-16 オーナー)
   s.hold(null);
   // 狙いがあれば欄を真ん中へ (StageChaosSpam の arrive が spamPending を見て送る)
-  if (!s.aims.value.length) s.aimPicker.value = { seed: null };
+  if (!spamAims.value.length) s.aimPicker.value = { seed: null, spam: true };
 }
 // 選ぶ窓を狙い無しで閉じた時は、送る予約を消す
-watch(() => s.aimPicker.value, (v) => { if (!v && !s.aims.value.length) { spamPending.value = false; spamKey.value = null; } });
+watch(() => s.aimPicker.value, (v, old) => { if (!v && old?.spam && !spamAims.value.length) { spamPending.value = false; spamKey.value = null; } });
 // 狙いが空になったら確率機の印も外す (狙いの欄の × で閉じた後、普段の「狙う」が確率機の形で開いていた。2026-10-16)
-watch(() => s.aims.value.length, (n) => { if (!n && !s.aimPicker.value) spamKey.value = null; });
+watch(() => spamAims.value.length, (n) => { if (!n && !s.aimPicker.value) spamKey.value = null; });
 /**
  * スマホ (幅 768 CSS px 未満): 棚からアイテムまで縦に遠いので、何か持っている間は画面の下に「持っている物 → アイテムに使う」の帯を出す
  * (2026-10-08 オーナー「タップして使う時はアイテムに再度付けるような動作で。押した瞬間付けるだとお告げが使えない」。お告げは掛けてから「アイテムに使う」)
@@ -644,6 +645,8 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
       <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
         <StageAimPanel v-if="!s.replay.value" data-rec-part="aim-panel" />
+        <!-- カオススパム確率機 (「次の手で狙う」とは別の欄・別の狙い。2026-10-16 オーナー「別ルートとして扱って」) -->
+        <StageChaosSpam v-if="!s.replay.value" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
         <section class="g-panel p-2">
           <p class="g-sec-head">

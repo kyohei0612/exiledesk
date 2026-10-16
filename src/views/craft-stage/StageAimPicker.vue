@@ -13,7 +13,7 @@ import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { aimLabel, groupLabelOf, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { scrollToTop } from "../../utils/keep-place";
-import { spamKey } from "../../state/chaos-spam";
+import { spamAims } from "../../state/chaos-spam";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
@@ -21,7 +21,9 @@ import { tr } from "../../i18n/lang";
 
 const seed = s.aimPicker.value?.seed ?? null;
 /** 選んでいる物 (決めるまで手元だけ) */
-const draft = ref<AimPick[]>([...s.aims.value]);
+/** カオススパム確率機の狙いを選ぶ時 (「次の手で狙う」とは別の狙い) */
+const forSpam = !!s.aimPicker.value?.spam;
+const draft = ref<AimPick[]>([...(forSpam ? spamAims.value : s.aims.value)]);
 if (seed && !draft.value.some((a) => a.modId === seed.modId)) draft.value = [...draft.value, seed].slice(-AIM_MAX);
 else if (seed) draft.value = draft.value.map((a) => (a.modId === seed.modId ? seed : a));
 
@@ -83,19 +85,20 @@ const pct = (x: number): string => fmtPct(x, { zero: "" });
 function close(): void { s.aimPicker.value = null; }
 function decide(): void {
   if (!draft.value.length) return;
-  s.aims.value = draft.value;
+  if (forSpam) spamAims.value = draft.value;
+  else s.aims.value = draft.value;
   close();
   // 決めたら後ろの MOD 一覧の窓も閉じて、確率の一覧を見せる (やめる時は残す。POE2Tube 要望 ㊴)
   s.modOverlay.value = false;
   // 確率の一覧の見出し (と狙いの札) が見える所へ
   // カオススパムの確率機から来た時は送らない (StageChaosSpam の arrive が欄を画面の真ん中へ送る)
-  if (!spamKey.value) void nextTick(() => scrollToTop(document.querySelector("[data-aim-panel]")));
+  if (!forSpam) void nextTick(() => scrollToTop(document.querySelector("[data-aim-panel]")));
 }
 </script>
 
 <template>
   <!-- 窓の動き (Esc・後ろを押す・×・後ろのページを止める) は ModalShell (2026-10-10 これが原点) -->
-  <ModalShell :open="true" rec="aim-dialog" :title="spamKey ? tr('カオススパムで狙う MOD', 'Mods to chaos spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
+  <ModalShell :open="true" rec="aim-dialog" :title="forSpam ? tr('カオススパムで狙う MOD', 'Mods to chaos spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
     <template #header>
       <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ AIM_MAX }} · {{ tr("全部付いて当たり", "Hit when all roll") }}</span>
     </template>
@@ -141,7 +144,7 @@ function decide(): void {
     <!-- 決める (下に固定。1 つだけでも進める) -->
     <template #footer>
       <button type="button" class="g-btn" @click="close">{{ tr("やめる", "Cancel") }}</button>
-      <button type="button" data-rec="aim-decide" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ spamKey ? tr("決める", "Set") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
+      <button type="button" data-rec="aim-decide" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ forSpam ? tr("決める", "Set") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
     </template>
   </ModalShell>
 </template>
