@@ -143,6 +143,8 @@ describe("返信・いいね・貼ったアイテム (2 段目)", () => {
     const { call } = setup();
     const a = (await call("/board/post", post({ text: "A" }))).j.item as { id: string };
     const b = (await call("/board/post", post({ uid: "bbbbbbbbbbbb", text: "B" }, ), { ip: "5.5.5.5" })).j.item as { id: string };
+    // 同じ 1 ミリ秒に入ると並びが決まらないので、返信の前に少し空ける
+    await new Promise((r) => setTimeout(r, 5));
     const r1 = await call("/board/post", post({ uid: "cccccccccccc", text: "A への返信", parent: a.id }), { ip: "6.6.6.6" });
     expect(r1.j.ok).toBe(true);
     const items = (await call("/board.json")).j.items!;

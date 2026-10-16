@@ -226,12 +226,12 @@ export async function listBoard(db: D1Database, tag: string | null, before: stri
   const args: unknown[] = [];
   if (tag) { where.push("tag = ?"); args.push(tag); }
   if (before) { where.push("coalesce(bump, at) < (SELECT coalesce(bump, at) FROM board_posts WHERE id = ?)"); args.push(before); }
-  const r = await db.prepare(`SELECT id, kind, name, tag, body, likes, att, parent FROM board_posts WHERE ${where.join(" AND ")} ORDER BY coalesce(bump, at) DESC LIMIT ?`).bind(...args, PAGE + 1).all<BoardRow>();
+  const r = await db.prepare(`SELECT id, kind, name, tag, body, likes, att, parent FROM board_posts WHERE ${where.join(" AND ")} ORDER BY coalesce(bump, at) DESC, rowid DESC LIMIT ?`).bind(...args, PAGE + 1).all<BoardRow>();
   const rows = (r.results ?? []).slice(0, PAGE);
   const items = rows.map(itemOf).filter((x): x is BoardItem => !!x);
   const ids = items.filter((x) => x.kind === "post").map((x) => x.id);
   if (ids.length) {
-    const rr = await db.prepare(`SELECT id, kind, name, tag, body, likes, att, parent FROM board_posts WHERE hidden = 0 AND parent IN (${ids.map(() => "?").join(",")}) ORDER BY at ASC`).bind(...ids).all<BoardRow>();
+    const rr = await db.prepare(`SELECT id, kind, name, tag, body, likes, att, parent FROM board_posts WHERE hidden = 0 AND parent IN (${ids.map(() => "?").join(",")}) ORDER BY at ASC, rowid ASC`).bind(...ids).all<BoardRow>();
     const by = new Map<string, BoardPostItem[]>();
     for (const x of rr.results ?? []) { const l = by.get(x.parent!) ?? []; l.push(postOf(x)); by.set(x.parent!, l); }
     for (const it of items) if (it.kind === "post" && by.has(it.id)) it.replies = by.get(it.id)!.slice(-REPLIES_MAX);
