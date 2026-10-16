@@ -2,7 +2,7 @@
  * クラフトステージ: 1 手の抽選で共通に使う物 (2026-09-27、ADR-001)
  *
  * 枠・MOD の候補・重みの抽選・数値の転がし・文面への数値の埋め込み。各アイテムの規則は
- * [[apply-currency.ts]] (オーブ) / [[apply-essence.ts]] / [[apply-desecrate.ts]] / [[apply-other.ts]] に置く。
+ * 説明文の分解 (spec/、ADR-004) と、まだ移していない物の [[apply-currency.ts]] に置く。
  * 候補の規則は計算機 (sim-route-helpers.ts の roll) と同じ: 付いている系統を除き、アイテムレベル以下・段の下限以上の段の重みで引く。
  */
 import { inAny, inGroup } from "../mods/item-classes";

@@ -44,7 +44,7 @@ export const ORBS: ShelfGroup[] = [
   // 可能性のオーブ (と可能性・古代のお告げ) は外した (2026-10-13 オーナー「可能性のオーブ周り実装やめようか、ランダム性がありすぎる」)。打つ処理は apply-act.ts に残す
   // ヴァールのオーブも外した (2026-10-13 オーナー「ヴァール MOD も確率分からへん」)。打つ処理は apply-vaal.ts に残す (古い手順の再生)
   { kind: "other", get label() { return tr("その他", "Other"); }, keys: ["divine", "fracture", "hinekora"] },
-  // 熟練工のオーブは出さない: 新品は最初から規格外の最大のソケット (2026-10-10 オーナー)。打つ処理 (apply-other) は古い手順の再生のため残す
+  // 熟練工のオーブは出さない: 新品は最初から規格外の最大のソケット (2026-10-10 オーナー)。打つ処理 (spec/other-specs.ts) は古い手順の再生のため残す
   // 耐性のフラックス (2026-10-04 オーナー「カレンシーフルチェック」、apply-flux.ts)
   { kind: "flux", get label() { return tr("フラックス (耐性の変換)", "Flux (resistance conversion)"); }, keys: ["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"] },
   // 2026-10-09 オーナー「カランドラとか抽出のオーブとか、クラフト要素ではあるけどエミュレーターに関係ないものは削除」で外した物:

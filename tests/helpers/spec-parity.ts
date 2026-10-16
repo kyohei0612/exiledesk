@@ -64,7 +64,7 @@ export const RARE_BASES = BASES.filter((n) => !/Flask$/.test(n));
 export function statesOf(base: string, ilvl: number): Array<[string, StageItem]> {
   const out: Array<[string, StageItem]> = [];
   let k = 0;
-  const step = (it: StageItem, key: string, omens: string[] = []): StageItem => applyCurrency(data, it, key, mulberry32(ilvl * 1000 + ++k), omens, { legacy: true }).item;
+  const step = (it: StageItem, key: string, omens: string[] = []): StageItem => applyCurrency(data, it, key, mulberry32(ilvl * 1000 + ++k), omens).item;
   const white = freshItem(data, base, ilvl);
   out.push(["ノーマル", white]);
   if (/Flask$/.test(base)) return out;
@@ -104,7 +104,7 @@ export function statesOf(base: string, ilvl: number): Array<[string, StageItem]>
 export function moreStatesOf(base: string, ilvl: number): Array<[string, StageItem]> {
   const out: Array<[string, StageItem]> = [];
   let k = 500;
-  const step = (it: StageItem, key: string, omens: string[] = []): StageItem => applyCurrency(data, it, key, mulberry32(ilvl * 1000 + ++k), omens, { legacy: true }).item;
+  const step = (it: StageItem, key: string, omens: string[] = []): StageItem => applyCurrency(data, it, key, mulberry32(ilvl * 1000 + ++k), omens).item;
   const white = freshItem(data, base, ilvl);
   if (/Flask$/.test(base)) return [["品質 19 のフラスコ", { ...white, quality: 19 }], ["品質 20 のフラスコ", { ...white, quality: 20 }]];
   const magic = step(white, "transmute");

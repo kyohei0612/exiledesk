@@ -1,8 +1,9 @@
 /**
  * カレンシーの結果の控え (2026-10-16、ADR-004 の 5 段目)。
- * 説明文の分解 (spec/) に切り替えて、今の関数 (例外を書き足した作り) を消す前に、両方が同じだと確かめた結果を手の種類ごとのハッシュで控えた。
+ * 説明文の分解 (spec/) に切り替えて、今の関数 (例外を書き足した作り) を消す前に、両方が同じだと確かめた結果を手の種類ごとのハッシュで控えた
+ * (一言の順だけ違う物・説明文どおりに直した物は新しい作りの方)。
  * 控えと違ったら、打った結果が変わったということ。わざと変えた時 (ゲームでの確認・説明文の変更) は控えを取り直す:
- *   GOLDEN_WRITE=1 pnpm vitest run tests/currency-golden
+ *   GOLDEN_WRITE=1 pnpm vitest run tests/currency-spec-golden
  * 正解の出どころは外 (説明文・クライアント・オーナーのゲームでの確認) で、これは「変わっていないか」の見張りだけ
  */
 import { createHash } from "node:crypto";
@@ -39,17 +40,17 @@ const GROUPS: Record<string, (item: StageItem) => Array<{ key: string; kind: str
   other: () => [...QUALITY_SPECS, ...CATALYST_SPECS, ARTIFICER_SPEC].map((s) => ({ key: s.stageKey, kind: s.kind })).concat(RUNES.map((key) => ({ key, kind: "rune" }))),
 };
 
-function hashGroup(name: string, legacy: boolean): { hash: string; n: number } {
+function hashGroup(name: string): { hash: string; n: number } {
   const h = createHash("sha256");
   let n = 0;
   for (const base of BASES) for (const [, item] of states(base)) {
     for (const { key, kind } of GROUPS[name]!(item)) for (const omens of omenSets(kind)) {
-      const r = applyCurrency(data, item, key, mulberry32(20261016), omens, legacy ? { legacy: true } : {});
+      const r = applyCurrency(data, item, key, mulberry32(20261016), omens);
       h.update(canon({ key, omens, a: r.applied, i: r.item, ad: r.added, rm: r.removed, u: r.omensUsed ?? [], ro: r.rolled ?? [], no: r.note ?? "", c: r.count ?? 1, au: r.augment ?? null, rs: r.reason ?? "", x: !!r.random }));
       n++;
       // 手順の再生の形 (触媒は 1 個ずつ)
       if (kind === "catalyst") {
-        const r1 = applyCurrency(data, item, key, mulberry32(1), omens, { oneCatalyst: true, ...(legacy ? { legacy: true } : {}) });
+        const r1 = applyCurrency(data, item, key, mulberry32(1), omens, { oneCatalyst: true });
         h.update(canon({ a: r1.applied, i: r1.item, rs: r1.reason ?? "" }));
       }
     }
@@ -62,11 +63,9 @@ describe("カレンシーの結果の控え", () => {
   const out: Record<string, { hash: string; n: number }> = {};
   for (const name of Object.keys(GROUPS)) {
     it(name, () => {
-      const now = hashGroup(name, false);
+      const now = hashGroup(name);
       out[name] = now;
       if (WRITE) {
-        // 取り直す時は、今の関数 (残っている間) とも同じかを確かめてから書く
-        if (process.env.GOLDEN_LEGACY === "1") expect(hashGroup(name, true)).toEqual(now);
         writeFileSync(FILE, JSON.stringify({ ...saved, ...out }, null, 1) + "\n");
         return;
       }

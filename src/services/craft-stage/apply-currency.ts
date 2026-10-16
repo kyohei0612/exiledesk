@@ -2,13 +2,10 @@
  * クラフトステージ: クラフトに使える物 1 個を打った結果を 1 回抽選する (2026-09-27、ADR-001)
  *
  * オーナー:「カレンシーっていうかクラフトに使える奴全部だねこのステージは」。
- * ここはオーブ (変成 / 増強 / 王者 / 錬金 / 高貴 / カオス / 消去) とそれに掛かるお告げ、そして他の物への振り分け:
- *   エッセンス → [[apply-essence.ts]]、骨と発現 → [[apply-desecrate.ts]]、神 / フラクチャー / カタリスト / アーティファサー → [[apply-other.ts]]、
- *   ヴァールと聖別 → [[apply-vaal.ts]]
- * 規則は計算機 (sim-route-helpers.ts の roll / usable / apply、エンジンの probability.ts) と同じ:
- *   - 足す MOD は、その側の普通の MOD の置き場から、**付いている系統を除き**、アイテムレベル以下 (上級・完全は段の下限以上) の段の重みで引く
- *   - 上級・完全の段の下限はエンジンの CURRENCY_FLOOR (変成・増強 44 / 70、王者・高貴 35 / 50)。カオスも 35 / 50 (どれも poe2db の Minimum Modifier Level で確認、2026-10-14)
- *   - 消す (カオス・消去) のは固定済み (フラクチャー) 以外から等しく 1 つ
+ * オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーンは、説明文の分解 (spec/、ADR-004) で打つ。
+ * 2026-10-16 に、ここに書き足していた例外の作り (オーブの switch・apply-other.ts・applyBone / applyEssence など) を外した。
+ * ここに残るのは、まだ移していない物の振り分け: 指名で付ける手・アクト中の物・可能性・フラックス・ヴァールと聖別 ([[apply-vaal.ts]])・
+ * 液化した感情・処分・手で決める品質や暗黙の値。
  * お告げは持っている物を渡し、その手に関係する物だけ食う (omensUsed)。
  */
 import { applyEmotion, isEmotion } from "./apply-emotion";
@@ -17,8 +14,7 @@ import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
 import { boostedBy } from "../htc/quality";
 import { inAny, inGroup, type ItemGroup } from "../mods/item-classes";
-import { addForced, addOne, allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, maxQualityOf, removeForced, removeOne, room, SIDES, skip, without, type Candidate, type Force, type PoolOpts } from "./stage-core";
-import { applyEssence } from "./apply-essence";
+import { allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, maxQualityOf, room, SIDES, skip, without, type Candidate, type Force } from "./stage-core";
 import { applyForce, isForce } from "./apply-force";
 /** 品質を手で決める手 (`qset:15` = 品質 15%、`qset:34:caster` = 宝飾品の品質の種類も) */
 export const QUALITY_SET = "qset:";
@@ -56,26 +52,21 @@ export const qualityCapKey = (n: number): string => `${QUALITY_CAP}${n}`;
 export function qualityCapOf(item: StageItem): number {
   return item.qualityCap ?? qualityFieldMax(item);
 }
-import { applyBone, applyReveal } from "./apply-desecrate";
-import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
-import { applyChance, applyJeweller, applyQuality, applyWisdom, collectShard, isShard, QUALITY_TARGET, shardReason } from "./apply-act";
+import { applyChance, applyJeweller, applyWisdom, collectShard, isShard, shardReason } from "./apply-act";
 import { isFlask, isGem, uniqueBaseOf, uniquesForBase, uniquesOfClassForBase } from "./stage-bases";
 import { itemBaseFor } from "../htc/bridge";
 import { jaTypeName } from "../trade2/localize";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
-import { overLimit, skipRandom } from "./stage-core";
+import { overLimit } from "./stage-core";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyFlux, isFlux } from "./apply-flux";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
-import { applyRune, isRune, applyUnsocket, isUnsocket } from "./stage-runes";
-import { hasImplicitRange } from "./roll-text";
-import { htcBaseInfo } from "../htc/patch";
+import { applyUnsocket, isUnsocket } from "./stage-runes";
 import { tr } from "../../i18n/lang";
 
 export { GNAWED_MAX_ILVL } from "./stage-core";
-import { GNAWED_MAX_ILVL } from "./stage-core";
 import { applyBySpec } from "./spec/run-spec";
 
 /** カレンシーのキー (price-keys.json) → 種類と強さ */
@@ -145,11 +136,7 @@ export interface ApplyHint {
   remove?: string;
   /** 手順の再生: カタリストは 1 手 = 1 個 (手で打つ画面は 1 手で上限まで。要望 ㉜ の 2) */
   oneCatalyst?: boolean;
-  /** 今の関数 (例外を書き足した作り) で打つ。新しい作りとの打ち比べのテスト用 (ADR-004) */
-  legacy?: boolean;
 }
-/** 指名が通らなかった時 (理由つきで打てない、pickError) */
-const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, tr(`指名できない: ${why}`, `Can't force: ${why}`)), pickError: true });
 
 /**
  * ユニークになった (古代のお告げの可能性・ヴァール培養) 時は、そのユニークのベースに変える (説明文「同じアイテムクラスのランダムなユニーク」
@@ -175,15 +162,12 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // 解呪・サルベージ (要望 ⑰-5) は未鑑定・コラプトでもできる
   if (isDispose(currency)) return applyDispose(item, currency);
   if (item.identified === false && currency !== "wisdom") return skip(item, tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)"));
-  // ADR-004 (2026-10-16): 移し終えた手は説明文の分解 (spec/) で打つ。指名・結果の指定・まだ移していない手は今の関数で。
-  if (!hint.legacy && !hint.outcome && !hint.collect) {
-    const s = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst, ...(hint.pick ? { pick: hint.pick } : {}), ...(hint.remove ? { remove: hint.remove } : {}) });
-    if (s) return s;
-  }
+  // ADR-004 (2026-10-16): 移し終えた手 (spec/run-spec.ts の specCovers) は説明文の分解で打つ。まだ移していない手 (ヴァール・聖別・可能性など) は下で
+  const bySpec = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst, ...(hint.pick ? { pick: hint.pick } : {}), ...(hint.remove ? { remove: hint.remove } : {}) });
+  if (bySpec) return bySpec;
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未発現の MOD の発現だけはできる (ゲームと同じ)
   // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す
  // ルーン (要望 ⑰-1) はコラプト・聖別の後でもはめられる物がある (クライアントの CanSocketInCorruptedSanctified、applyRune で見る)
-  if (isRune(currency)) return applyRune(item, currency, data);
   // 液化した感情 (デリリウム、ジュエル。2026-10-11)
   if (isEmotion(currency)) return applyEmotion(data, item, currency, rng);
   if (isUnsocket(currency)) return applyUnsocket(item, currency);
@@ -229,156 +213,16 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   const kind = kindOf(currency);
   // アクト中に落ちる物 (要望 ⑧、apply-act.ts)
   if (currency === "wisdom") return applyWisdom(item);
-  if (currency in QUALITY_TARGET) return applyQuality(item, currency, rng);
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
   if (currency === "chance") return toUniqueBase(data, applyChance(item, rng, used.includes("OmenoftheAncients") ? uniquesOfClassForBase(item.base) : uniquesForBase(item.base), hint.outcome, used));
   if (isExtra(currency)) return toUniqueBase(data, applyExtra(item, currency, rng, hint.outcome));
   if (isFlux(currency)) return applyFlux(data, item, currency);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)"));
-  if (kind === "essence" || kind === "essence_perfect") return applyEssence(data, item, currency, rng, used);
-  // 噛み切られた骨はアイテムレベル 64 以下だけ (クライアントの AbyssBenchTicketTypes.MaximumItemLevel)
-  if (currency === "desecrate_gnawed" && item.itemLevel > GNAWED_MAX_ILVL && !noIlvl(item)) return skip(item, tr(`アイテムレベル ${GNAWED_MAX_ILVL} 以下にだけ使える`, `Item Level ${GNAWED_MAX_ILVL} or lower only`));
-  if (kind === "desecrate") return applyBone(data, item, currency, rng, used);
-  if (kind === "reveal") return applyReveal(data, item, currency, rng, used);
   if (kind === "vaal") return applyVaal(data, item, rng, used);
   if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(data, item, rng);
-  // 祝福のお告げ: 暗黙 MOD だけを振り直す (クライアントの説明)。明示 MOD はそのまま (2026-10-12 から暗黙の数値を持つ: roll-text.ts の implicitRoll)
-  if (kind === "divine" && used.includes("OmenoftheBlessed")) {
-    if (!hasImplicitRange((htcBaseInfo()[item.base]?.implicits ?? []).map((l) => l.en))) return skip(item, tr("振り直せる暗黙 MOD が無い", "No implicit mod to reroll"));
-    return { applied: true, item: { ...item, implicitRoll: (item.implicitRoll ?? 0) + 1, implicitFixed: undefined }, added: [], removed: [], note: tr("祝福のお告げ: 暗黙 MOD だけを振り直した", "Omen of the Blessed: rerolled implicit values only") };
-  }
-  if (kind === "catalyst" || OTHER_KINDS.includes(kind)) return applyOther(data, item, currency, rng, !!hint.oneCatalyst);
-
-  const { strength } = parseKey(currency);
-  const floor = floorOf(kind, strength);
-  // 用語集 BetterCurrencyMinimumLevel「最低 MOD レベルのあるカレンシーは、アイテムレベルがそれより低い品には使えない」(要望 ㉝ の 3)
-  if (floor > 0 && item.itemLevel < floor && !noIlvl(item)) return skip(item, tr(`アイテムレベルが ${floor} 未満には使えない`, `Requires Item Level ${floor}+`));
-  const add = (it: StageItem, n: number, pick: (k: number, cur: StageItem) => readonly StageSide[] = () => SIDES, boost?: PoolOpts["boost"]): StageApply => {
-    let cur = it;
-    const added: StageMod[] = [];
-    const picked: NonNullable<StageApply["picked"]> = [];
-    const rolled: NonNullable<StageApply["rolled"]> = [];
-    if ((hint.pick?.length ?? 0) > n) return pickFail(item, tr(`この手で付く MOD は ${n} つまで`, `this adds at most ${n} mod${n === 1 ? "" : "s"}`));
-    for (let i = 0; i < n; i++) {
-      const f = hint.pick?.[i];
-      if (f) {
-        const r = addForced(data, cur, floor, rng, f, { sides: pick(i, cur), boost });
-        if ("error" in r) return pickFail(item, r.error);
-        cur = r.item;
-        added.push(r.mod);
-        picked.push({ modId: r.mod.modId, tierName: r.mod.tierName, chance: r.chance });
-        continue;
-      }
-      const r = addOne(data, cur, floor, rng, { sides: pick(i, cur), boost });
-      if (!r) break;
-      cur = r.item;
-      added.push(r.mod);
-      rolled.push({ modId: r.mod.modId, tierName: r.mod.tierName, chance: r.chance });
-    }
-    return added.length ? { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}) } : skip(item, tr("付けられる MOD が無い", "No mod can be added"));
-  };
-  switch (kind) {
-    case "transmute": {
-      if (item.rarity !== "normal") return skip(item, tr("ノーマルのアイテムにだけ使える", "Normal items only"));
-      // マジックの枠が 0 のベース (不在のアミュレット = プレ -1 / サフィ -1) は MOD 無しのマジックになる (ゲームで確認、要望 19c7d2de)
-      const magic = { ...item, rarity: "magic" as const };
-      if (!SIDES.some((sd) => room(magic, sd))) return { applied: true, item: magic, added: [], removed: [] };
-      return add(magic, 1);
-    }
-    case "augment":
-      if (item.rarity !== "magic") return skip(item, tr("マジックのアイテムにだけ使える", "Magic items only"));
-      // 枠はベースの暗黙で増減する (黄昏の指輪はプレ 2 / サフィ 0)。決め打ちの「2 つまで」をやめた
-      if (!SIDES.some((sd) => room(item, sd))) return skip(item, tr("マジックの枠が埋まっている", "No room for another mod on this Magic item"));
-      return add(item, 1);
-    case "regal": {
-      if (item.rarity !== "magic") return skip(item, tr("マジックのアイテムにだけ使える", "Magic items only"));
-      // 左右の戴冠のお告げ: 足すのをその側だけに
-      const side = sideOmen(used, "OmenofSinistralCoronation", "OmenofDextralCoronation");
-      const rare = { ...item, rarity: "rare" as const };
-      if (side && !room(rare, side)) return skip(item, tr("お告げの側に空きが無い", "No open slot on the Omen's side"));
-      return add(rare, 1, () => (side ? [side] : SIDES));
-    }
-    case "alchemy": {
-      // ノーマルかマジック → MOD 4 個のレア (クライアントの説明文)。マジックに使った時は**付いている MOD は残らない**
-      // (0.3.1「When used on Magic items the original modifiers are not retained」、POE2Tube 要望 ㉞-1。前は残して 4 個まで足していた)
-      if (item.rarity !== "normal" && item.rarity !== "magic") return skip(item, tr("ノーマルかマジックのアイテムにだけ使える", "Normal or Magic items only"));
-      // 左右の錬金のお告げ: その側を上限まで (残りは反対側)
-      const side = sideOmen(used, "OmenofSinistralAlchemy", "OmenofDextralAlchemy");
-      const gone = allMods(item);
-      const r = add({ ...item, rarity: "rare", prefixes: [], suffixes: [] }, 4, (_k, cur) => (side ? (room(cur, side) ? [side] : SIDES.filter((s) => s !== side)) : SIDES));
-      return r.applied ? { ...r, removed: [...gone, ...r.removed] } : r;
-    }
-    case "exalt": {
-      if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
-      const side = sideOmen(used, "OmenofSinistralExaltation", "OmenofDextralExaltation");
-      const sides = side ? [side] : SIDES;
-      if (!sides.some((s) => room(item, s))) return skip(item, side ? tr("お告げの側に空きが無い", "No open slot on the Omen's side") : tr("足す枠が無い", "No open affix slot"));
-      // 大いなる高貴のお告げ: 2 つ足す (枠が 1 つなら 1 つ)。触媒の高貴のお告げ: 品質の種類の MOD を重く引いて、品質を使い切る
-      const n = used.includes("OmenofGreaterExaltation") ? 2 : 1;
-      if (used.includes("OmenofCatalysingExaltation")) {
-        const { tag, pct } = catalystOf(item);
-        if (!tag || !(pct > 0)) return skip(item, tr("触媒の高貴のお告げは品質 (カタリスト) が要る", "Omen of Catalysing Exaltation needs Catalyst quality"));
-        const r = add(item, n, () => sides, { test: (m) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, data), mult: catalysingMultiplier(pct) });
-        // 品質を使い切る (グラスピングメイルはカタリストの欄だけ)
-        return r.applied ? { ...r, item: hasExtraCatalyst(item.base) ? { ...r.item, catalystQuality: 0 } : { ...r.item, quality: 0 } } : r;
-      }
-      return add(item, n, () => sides);
-    }
-    case "chaos": {
-      if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
-      let r: { item: StageItem; mod: StageMod } | null;
-      if (hint.remove) {
-        // 消える MOD の指名 (要望 ⑱-1)
-        const f = removeForced(item, hint.remove);
-        if ("error" in f) return pickFail(item, f.error);
-        r = f;
-      } else if (used.includes("OmenofWhittling")) {
-        // 削りのお告げ: 一番 MOD レベルの低い物を消す (同じなら等しく)。左右の抹消も掛けていればその側の中で
-        const lows = whittleTargets(item, sideOmen(used, "OmenofSinistralErasure", "OmenofDextralErasure"));
-        const mod = lows[Math.floor(rng() * lows.length)];
-        r = mod ? { item: without(item, mod), mod } : null;
-      } else {
-        // 左右の抹消のお告げ: 消すのをその側だけに (足す側は選べない)
-        const side = sideOmen(used, "OmenofSinistralErasure", "OmenofDextralErasure");
-        r = removeOne(item, rng, side ? [side] : SIDES);
-      }
-      if (!r) return skip(item, tr("外せる MOD が無い", "No mod can be removed"));
-      // 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) が当たると付け直せずに弾かれる (参考動画: 「追加できません」)
-      if (overLimit(item, r.mod.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
-      const f = hint.pick?.[0];
-      if (f) {
-        const a = addForced(data, r.item, floor, rng, f);
-        if ("error" in a) return pickFail(item, a.error);
-        return { applied: true, item: a.item, added: [a.mod], removed: [r.mod], picked: [{ modId: a.mod.modId, tierName: a.mod.tierName, chance: a.chance }] };
-      }
-      const a = addOne(data, r.item, floor, rng);
-      return { applied: true, item: a?.item ?? r.item, added: a ? [a.mod] : [], removed: [r.mod], ...(a ? { rolled: [{ modId: a.mod.modId, tierName: a.mod.tierName, chance: a.chance }] } : {}) };
-    }
-    case "annul": {
-      if (item.rarity === "normal") return skip(item, tr("マジックかレアのアイテムにだけ使える", "Magic or Rare items only"));
-      if (used.includes("OmenofLight")) {
-        // 光のお告げ: 冒涜の MOD を消す
-        const d = allMods(item).find((m) => m.desecrated && !m.fractured);
-        if (!d) return skip(item, tr("光のお告げ: 冒涜の MOD が無い", "Omen of Light: no Desecrated mod"));
-        return { applied: true, item: without(item, d), added: [], removed: [d] };
-      }
-      const side = sideOmen(used, "OmenofSinistralAnnulment", "OmenofDextralAnnulment");
-      const n = used.includes("OmenofGreaterAnnulment") ? 2 : 1;
-      let cur = item;
-      const removed: StageMod[] = [];
-      for (let i = 0; i < n; i++) {
-        const r = removeOne(cur, rng, side ? [side] : SIDES);
-        if (!r) break;
-        cur = r.item;
-        removed.push(r.mod);
-      }
-      if (!removed.length) return skip(item, side ? tr("お告げの側に外せる MOD が無い", "No removable mod on the Omen's side") : tr("外せる MOD が無い", "No mod can be removed"));
-      return { applied: true, item: cur, added: [], removed };
-    }
-    default:
-      return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`));
-  }
+  // オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーンは説明文の分解 (spec/) で打つ (ADR-004、2026-10-16 に今の関数から外した)
+  return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`));
 }
 
 /**

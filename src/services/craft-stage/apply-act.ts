@@ -12,7 +12,7 @@
 import type { StageApply, StageItem } from "./types";
 import { skip } from "./stage-core";
 import { isGem } from "./stage-bases";
-import { inGroup, type ItemGroup } from "../mods/item-classes";
+import { type ItemGroup } from "../mods/item-classes";
 import { jaOfOmen } from "../htc/labels";
 import { tr } from "../../i18n/lang";
 
@@ -83,15 +83,6 @@ export const QUALITY_STEP = { item: 1, gem: 5 } as const;
 export const QUALITY_STEP_ITEM_ROLLS: readonly number[] = [1, 2];
 export const QUALITY_STEP_CONFIRMED = true;
 
-export function applyQuality(item: StageItem, key: string, rng: () => number = Math.random): StageApply {
-  const t = QUALITY_TARGET[key]!;
-  if (!inGroup(item.cls.category, t.group)) return skip(item, tr(`${t.ja}にだけ使える`, `${t.en} only`));
-  if (item.quality >= QUALITY_MAX) return skip(item, tr(`品質が上限 (${QUALITY_MAX}%)`, `Quality is maxed (${QUALITY_MAX}%)`));
-  // ジェムは 5、フラスコの飾り玉は 1 固定 (オーナーがゲームで確認)。装備は 1 か 2 を等分で引く (同じ seed なら再生でも同じ)。
-  // 2026-10-14 総点検: 前は飾り玉も 1 / 2 の抽選に入っていた
-  const step = isGem(item.cls.category) ? QUALITY_STEP.gem : key === "bauble" ? QUALITY_STEP.item : QUALITY_STEP_ITEM_ROLLS[Math.min(QUALITY_STEP_ITEM_ROLLS.length - 1, Math.floor(rng() * QUALITY_STEP_ITEM_ROLLS.length))]!;
-  return { applied: true, item: { ...item, quality: Math.min(QUALITY_MAX, item.quality + step) }, added: [], removed: [] };
-}
 
 // ---- 可能性のオーブ ------------------------------------------------------------------------------------------------
 // クライアントの説明文「Unpredictably either upgrades a Normal item to Unique rarity or destroys it」: ノーマルにだけ、ユニークか破壊。

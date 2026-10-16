@@ -6,12 +6,12 @@
  * 今の関数と違う所は、どちらが正しいかを決めるまで「分かっている違い」として下に並べる (docs/reviews/2026-10-16-adr-004-desecrate-rules.md)
  */
 import { describe, expect, it } from "vitest";
-import { BASES, compare, data, RARE_BASES, show, statesOf, type Diff } from "./helpers/spec-parity";
+import { data } from "./helpers/spec-parity";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
-import { freshItem, splitOmens, startItem } from "../src/services/craft-stage/run-plan";
+import { freshItem } from "../src/services/craft-stage/run-plan";
 import { bonesFor } from "../src/state/craft-stage-shelf";
 import { mulberry32 } from "../src/services/htc/rng";
-import { applyBySpec, resolveSpec, specCovers } from "../src/services/craft-stage/spec/run-spec";
+import { applyBySpec, resolveSpec } from "../src/services/craft-stage/spec/run-spec";
 import { BONE_SPECS, CURRENCY_SPECS, OMEN_SPECS } from "../src/services/craft-stage/spec/desecrate-specs";
 import { bossOmenAllowed, desecrationBoneFor } from "../src/vendor/poe2htc/engine/probability";
 import { categoriesIn, clientClassOf, ENGINE_CATEGORIES } from "../src/services/mods/item-classes";
@@ -20,33 +20,7 @@ import HOVER_EN from "../src/i18n/currency-hover-en.json";
 import HOVER_JA from "../src/i18n/currency-hover-ja.json";
 import KW_EN from "../src/i18n/keywords-en.json";
 import KW_JA from "../src/i18n/keywords-ja.json";
-import FIXTURE_PLAN from "./fixtures/plan-essence-crit-spear.json";
 import type { StageItem } from "../src/services/craft-stage/types";
-import type { CraftStagePlan } from "../src/services/craft-stage/contract";
-
-const BONE_OMENS: string[][] = [
-  [], ["OmenofSinistralNecromancy"], ["OmenofDextralNecromancy"],
-  ["OmenoftheSovereign"], ["OmenoftheLiege"], ["OmenoftheBlackblooded"],
-  ["OmenofDextralNecromancy", "OmenoftheBlackblooded"], ["OmenoftheLiege", "OmenofSinistralNecromancy"],
-  ["OmenofPutrefaction"], ["OmenofPutrefaction", "OmenofSinistralNecromancy"],
-  ["OmenofAbyssalEchoes"], ["OmenofLight"],
-];
-const REVEAL_KEYS = ["reveal:1", "reveal:2", "reveal:3", "reveal:4", "reveal:1:reroll", "reveal:3:reroll", "reveal:x"];
-const REVEAL_OMENS: string[][] = [[], ["OmenofAbyssalEchoes"], ["OmenofAbyssalEchoes", "OmenofDextralNecromancy"]];
-const ANNUL_OMENS: string[][] = [[], ["OmenofLight"], ["OmenofSinistralAnnulment"], ["OmenofDextralAnnulment"], ["OmenofLight", "OmenofDextralAnnulment"], ["OmenofSinistralNecromancy"], ["OmenofGreaterAnnulment"]];
-const ILVLS = [35, 64, 82];
-const SEEDS = [1, 7, 20261016];
-
-/**
- * 分かっている違い (今の関数の方が説明文と合わない、か、決まりの順が違うだけ)。どれもオーナーの確認待ち
- *   1. 古代の骨 + 腐食のお告げで、アイテムレベル 40 未満: 今は腐食が先に効いて打てる。新しい作りは「古代の骨はアイテムレベル 40 未満に使えない」が先
- *   2. 噛み切られた骨をアイテムレベル 65 以上のレア以外に: 弾く一言が違うだけ (今はアイテムレベル、新はレアリティ)
- */
-function knownDiff(key: string, item: StageItem, omens: readonly string[]): string | null {
-  if (key === "desecrate_ancient" && omens.includes("OmenofPutrefaction") && item.itemLevel < 40 && item.rarity === "rare") return "古代の骨 + 腐食 + アイテムレベル 40 未満";
-  if (key === "desecrate_gnawed" && item.itemLevel > 64 && item.rarity !== "rare") return "噛み切られた骨の一言の順";
-  return null;
-}
 
 describe("説明文はクライアントの写しと同じ", () => {
   const en = HOVER_EN as Record<string, { e: string[] }>;
@@ -107,144 +81,14 @@ describe("対象の部位はクライアントの区分から", () => {
   });
 });
 
-describe("打ち比べ: 新しい作り = applyCurrency", () => {
-  it(`骨 (棚に出る物) × ${BONE_OMENS.length} 通りのお告げ`, () => {
-    const diffs: Diff[] = [];
-    const known = new Map<string, number>();
-    let n = 0, hit = 0;
-    for (const base of BASES) for (const ilvl of ILVLS) for (const [label, item] of statesOf(base, ilvl)) {
-      for (const key of bonesFor(item)) for (const omens of BONE_OMENS) for (const seed of SEEDS) {
-        const a = applyCurrency(data, item, key, mulberry32(seed), omens, { legacy: true });
-        const b = applyBySpec(data, item, key, mulberry32(seed), omens)!;
-        n++;
-        if (a.applied) hit++;
-        const d: Diff[] = [];
-        compare(`${base} Lv${ilvl} ${label} ${key} [${omens.join("+")}] 種 ${seed}`, a, b, d);
-        const k = d.length ? knownDiff(key, item, omens) : null;
-        if (k) known.set(k, (known.get(k) ?? 0) + 1);
-        else diffs.push(...d);
-      }
-    }
-    console.log(`骨: ベース ${BASES.length}、${n} 通り (打てた ${hit})、分かっている違い ${JSON.stringify([...known])}`);
-    expect(diffs.length, show(diffs)).toBe(0);
-    expect(n).toBeGreaterThan(5000);
-  });
-
-  it("発現 (番号・引き直し・形の違う手) × 反響のお告げ", () => {
-    const diffs: Diff[] = [];
-    let n = 0, hit = 0;
-    for (const base of RARE_BASES) for (const ilvl of ILVLS) for (const [label, item] of statesOf(base, ilvl)) {
-      for (const key of REVEAL_KEYS) for (const omens of REVEAL_OMENS) for (const seed of SEEDS) {
-        const a = applyCurrency(data, item, key, mulberry32(seed), omens, { legacy: true });
-        const b = applyBySpec(data, item, key, mulberry32(seed), omens)!;
-        n++;
-        if (a.applied) hit++;
-        compare(`${base} Lv${ilvl} ${label} ${key} [${omens.join("+")}] 種 ${seed}`, a, b, diffs);
-      }
-    }
-    console.log(`発現: ${n} 通り (打てた ${hit})`);
-    expect(diffs.length, show(diffs)).toBe(0);
-  });
-
-  it("消去 × 光・左右の消去のお告げ", () => {
-    const diffs: Diff[] = [];
-    let n = 0, hit = 0;
-    for (const base of BASES) for (const ilvl of [82]) for (const [label, item] of statesOf(base, ilvl)) {
-      for (const omens of ANNUL_OMENS) for (const seed of SEEDS) {
-        const a = applyCurrency(data, item, "annul", mulberry32(seed), omens, { legacy: true });
-        const b = applyBySpec(data, item, "annul", mulberry32(seed), omens)!;
-        n++;
-        if (a.applied) hit++;
-        compare(`${base} ${label} annul [${omens.join("+")}] 種 ${seed}`, a, b, diffs);
-      }
-    }
-    console.log(`消去: ${n} 通り (打てた ${hit})`);
-    expect(diffs.length, show(diffs)).toBe(0);
-  });
-});
-
-/**
- * 手を続けて打つ: 移した手は両方で、移していない手は今の関数で。毎手のアイテムを比べ、続きは今の関数の結果から。
- * 棚に出ない骨 (盾に変質した鎖骨など) は比べない (下の「分かっている違い」で別に見る)
- */
-function replay(name: string, start: StageItem, steps: Array<{ key: string; omens: string[]; seed: number }>, diffs: Diff[]): number {
-  let item = start;
-  let n = 0;
-  steps.forEach((s, i) => {
-    const a = applyCurrency(data, item, s.key, mulberry32(s.seed), s.omens, { legacy: true });
-    const offShelf = s.key.startsWith("desecrate") && !bonesFor(item).includes(s.key);
-    if (specCovers(s.key) && !offShelf) {
-      const b = applyBySpec(data, item, s.key, mulberry32(s.seed), s.omens)!;
-      compare(`${name} 手 ${i + 1} ${s.key} [${s.omens.join("+")}]`, a, b, diffs);
-      n++;
-    }
-    item = a.item;
-  });
-  return n;
-}
-
-describe("手順の再生: 毎手同じ", () => {
-  it("手順 JSON (槍のエッセンス・発現の見本)", () => {
-    const diffs: Diff[] = [];
-    const plans: CraftStagePlan[] = [
-      FIXTURE_PLAN as unknown as CraftStagePlan,
-      {
-        schema: "craft-stage-plan/1", base: "Amber Amulet", item_level: 82, seed: 20261003,
-        start: { rarity: "rare", mods: [{ mod: "Amulets/IncreasedLife", tier: "T2" }, { mod: "Amulets/IncreasedMana", tier: "T3" }, { mod: "Amulets/AllResistances", tier: "T2" }, { mod: "Amulets/Strength", tier: "T3" }] },
-        steps: [
-          { currency: "exalt_perfect", omen: "OmenofSinistralExaltation" },
-          { currency: "desecrate", omen: "OmenofDextralNecromancy" },
-          { currency: "reveal:2:reroll", omen: "OmenofAbyssalEchoes" },
-          { currency: "annul", omen: "OmenofLight" },
-          { currency: "desecrate_ancient", omen: "OmenoftheLiege" },
-          { currency: "reveal:1" },
-        ],
-      } as unknown as CraftStagePlan,
-    ];
-    let n = 0;
-    for (const plan of plans) {
-      const steps: Array<{ key: string; omens: string[]; seed: number }> = [];
-      let index = 0;
-      for (const ps of plan.steps) for (let k = 0; k < (ps.times ?? 1); k++) {
-        index++;
-        steps.push({ key: ps.currency, omens: splitOmens(ps.omen), seed: (ps as { seed?: number }).seed ?? plan.seed + index });
-      }
-      n += replay(plan.base, startItem(data, plan), steps, diffs);
-    }
-    expect(n).toBeGreaterThan(5);
-    expect(diffs.length, show(diffs)).toBe(0);
-  });
-
-  it("でたらめに続けて打つ (骨・発現・消去・高貴・カオス・エッセンス)", () => {
-    const diffs: Diff[] = [];
-    let n = 0;
-    const KEYS = ["desecrate", "desecrate_ancient", "desecrate_gnawed", "desecrate_altered", "reveal:1", "reveal:2", "reveal:3", "reveal:1:reroll", "annul", "exalt", "chaos", "exalt_perfect", "fracture"];
-    const OMENS = ["OmenofSinistralNecromancy", "OmenofDextralNecromancy", "OmenoftheSovereign", "OmenoftheLiege", "OmenoftheBlackblooded", "OmenofPutrefaction", "OmenofAbyssalEchoes", "OmenofLight", "OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofSinistralExaltation"];
-    for (const base of RARE_BASES) for (const walk of [1, 2, 3]) {
-      const pick = mulberry32(walk * 7919 + base.length);
-      const start = applyCurrency(data, freshItem(data, base, [82, 64, 45][walk - 1]!), "alchemy", mulberry32(walk)).item;
-      const steps = Array.from({ length: 30 }, (_, i) => {
-        const key = KEYS[Math.floor(pick() * KEYS.length)]!;
-        const omens = pick() < 0.5 ? [] : [OMENS[Math.floor(pick() * OMENS.length)]!];
-        return { key, omens, seed: walk * 100000 + i };
-      });
-      n += replay(`${base} 道 ${walk}`, start, steps, diffs);
-    }
-    console.log(`続けて打つ: 移した手 ${n} 手`);
-    expect(diffs.length, show(diffs)).toBe(0);
-  });
-});
-
-describe("分かっている違い (新しい作り = 説明文・クライアントの方に切り替えた。2026-10-16)", () => {
+describe("説明文・クライアントどおり (2026-10-16 に切り替えた時に変わった所)", () => {
   it("古代の骨 + 腐食のお告げ、アイテムレベル 40 未満: 今は打てる、新しい作りは古代の骨の制約で打てない", () => {
     const item = applyCurrency(data, freshItem(data, "Gold Ring", 35), "alchemy", mulberry32(3)).item;
-    expect(applyCurrency(data, item, "desecrate_ancient", mulberry32(1), ["OmenofPutrefaction"], { legacy: true }).applied).toBe(true);
     expect(applyBySpec(data, item, "desecrate_ancient", mulberry32(1), ["OmenofPutrefaction"])!.applied).toBe(false);
   });
   it("棚に無い骨 (古代の頭蓋骨・武器の変質した骨): 今の関数は打ててしまう物がある、新しい作りはクライアントにある骨だけ", () => {
     const jewel = applyCurrency(data, freshItem(data, "Ruby", 82), "alchemy", mulberry32(3)).item;
     expect(bonesFor(jewel)).toEqual(["desecrate"]);
-    expect(applyCurrency(data, jewel, "desecrate_ancient", mulberry32(1), [], { legacy: true }).applied).toBe(true);
     expect(applyBySpec(data, jewel, "desecrate_ancient", mulberry32(1))!.applied).toBe(false);
     const wand = applyCurrency(data, freshItem(data, "Withered Wand", 82), "alchemy", mulberry32(3)).item;
     expect(applyCurrency(data, wand, "desecrate_altered", mulberry32(1)).applied).toBe(false);

@@ -2,8 +2,8 @@
  * 動作の部品 (2026-10-16、ADR-004)。部品は「何をするか」だけを持ち、カレンシーの名前・部位の名前で分けない。
  * お告げの効き目は Mods (側・保証する勢力・引き直し・消す物の絞り・普通の MOD だけ) で渡す。
  *
- * 乱数の引き方は今の関数 (apply-desecrate.ts の applyBone / revealOffers / putrefy、apply-currency.ts の消去) と同じ順にしてある:
- * 同じ種なら同じ結果 (tests/currency-spec-parity.test.ts で突き合わせ)。違う引き方にする時は、先にどちらが正しいかを決めてから
+ * 乱数の引き方は、2026-10-16 に外した前の作り (applyBone / putrefy・オーブの switch など) と同じ順にしてある (同じ種なら同じ結果)。
+ * 結果は tests/currency-spec-golden.test.ts の控えで見張る。違う引き方にする時は、先にどちらが正しいかを決めてから控えを取り直す
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";

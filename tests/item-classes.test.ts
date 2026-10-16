@@ -11,9 +11,8 @@ import { loadHtcPatch } from "../src/services/htc/patch";
 import { freshItem } from "../src/services/craft-stage/run-plan";
 import { clientClassOf, ENGINE_CATEGORIES } from "../src/services/mods/item-classes";
 import { bossOmenAllowed, desecrationBoneFor } from "../src/vendor/poe2htc/engine/probability";
-import { applyQuality } from "../src/services/craft-stage/apply-act";
 import { applyExtra } from "../src/services/craft-stage/apply-extra";
-import { applyOther } from "../src/services/craft-stage/apply-other";
+import { applyCurrency } from "../src/services/craft-stage/apply-currency";
 import { socketCapOf } from "../src/services/craft-stage/stage-runes";
 import type { PatchData } from "../src/vendor/poe2htc/engine/types";
 import type { StageItem } from "../src/services/craft-stage/types";
@@ -62,9 +61,9 @@ describe("部位の種別 (クライアントの表)", () => {
 
   it("品質のカレンシー: 砥石 = マーシャル武器、エッチャー = ワンド・スタッフ・セプター、スクラップ = 防具", () => {
     for (const cat of SAMPLE.keys()) {
-      expect(ok(applyQuality(item(cat), "whetstone", () => 0)), `whetstone ${cat}`).toBe(has(MARTIAL)(cat));
-      expect(ok(applyQuality(item(cat), "etcher", () => 0)), `etcher ${cat}`).toBe(has(CASTER)(cat));
-      expect(ok(applyQuality(item(cat), "scrap", () => 0)), `scrap ${cat}`).toBe(has(ARMOUR)(cat));
+      expect(ok(applyCurrency(data, item(cat), "whetstone", () => 0)), `whetstone ${cat}`).toBe(has(MARTIAL)(cat));
+      expect(ok(applyCurrency(data, item(cat), "etcher", () => 0)), `etcher ${cat}`).toBe(has(CASTER)(cat));
+      expect(ok(applyCurrency(data, item(cat), "scrap", () => 0)), `scrap ${cat}`).toBe(has(ARMOUR)(cat));
     }
   });
 
@@ -90,8 +89,8 @@ describe("部位の種別 (クライアントの表)", () => {
     for (const cat of SAMPLE.keys()) {
       // グラスピングメイルの行は鎧でもカタリストを使える (poe2db「Catalysts can be applied to this item」、2026-10-16 要望 a286ced8)
       const grasping = /^Grasping Mail$|Grasping Mail$/.test(SAMPLE.get(cat)!);
-      expect(ok(applyOther(data, item(cat), "catalyst_life", () => 0)), `catalyst ${cat}`).toBe(has(["Ring", "Amulet"])(cat) || grasping);
-      expect(ok(applyOther(data, item(cat), "jcatalyst_life", () => 0)), `jcatalyst ${cat}`).toBe(has(["Jewel"])(cat));
+      expect(ok(applyCurrency(data, item(cat), "catalyst_life", () => 0)), `catalyst ${cat}`).toBe(has(["Ring", "Amulet"])(cat) || grasping);
+      expect(ok(applyCurrency(data, item(cat), "jcatalyst_life", () => 0)), `jcatalyst ${cat}`).toBe(has(["Jewel"])(cat));
     }
   });
 

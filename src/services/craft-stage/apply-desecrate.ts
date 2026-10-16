@@ -1,5 +1,6 @@
 /**
- * クラフトステージ: 冒涜 (骨) と発現 (2026-09-27、ADR-001)
+ * クラフトステージ: 冒涜 (骨) と発現 (2026-09-27、ADR-001)。打つ処理は 2026-10-16 から spec/ (ADR-004)。ここに残るのは発現の候補 (revealOffers)・
+ * 骨の側の重み (boneSideWeights) など、確率表と spec が共通に使う物
  *
  * ゲームと同じく 2 手に分ける:
  *   1. 骨 (desecrate / desecrate_ancient / desecrate_altered。骨の種類は装備で決まる): **レア**に未発現の冒涜 MOD を 1 つ付ける。
@@ -10,15 +11,11 @@
  *   - 冒涜の MOD はアイテムに 1 つまで。古びた骨は段の下限 40 (ANCIENT_BONE_FLOOR)
  *   - 王 / 君主 / 黒血のお告げ: 候補をその勢力の冒涜の MOD だけに (MOD ごとに等しく。エンジンの desecrationBossProbability)。防具には使えない
  */
-import { inGroup } from "../mods/item-classes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { ANCIENT_BONE_FLOOR, bossOmenAllowed, DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
-import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate, effectiveCls } from "./stage-core";
-import { ABYSS_MARK_FLOOR } from "../htc/omens";
+import { ANCIENT_BONE_FLOOR, DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
+import { allMods, candidates, makeStageMod, pickWeighted, type Candidate, effectiveCls } from "./stage-core";
 import { FACTION_TAG } from "./omens";
-import type { StageApply, StageItem, StageMod, StageSide } from "./types";
-import { jaOfOmen } from "../htc/labels";
-import { tr } from "../../i18n/lang";
+import type { StageItem, StageMod, StageSide } from "./types";
 
 const OFFERS = 3;
 
@@ -34,68 +31,6 @@ function poolsFor(item: StageItem, altered: boolean, plain = false) {
   };
 }
 
-export function applyBone(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
-  if (item.rarity !== "rare") return skip(item, tr("レアのアイテムにだけ使える", "Rare items only"));
-  // 冒涜の MOD が付いていたら骨は使えない。腐食のお告げを掛けていても同じ (お告げは骨の効果を変えるだけで、骨を使う前提は変わらない)。
-  // 前はお告げの分かれ道が先にあって素通りしていた (2026-10-12 動画 mgylemFtDzM「冒涜の MOD が付いていたら使えない」)
-  if (allMods(item).some((m) => m.desecrated)) return skip(item, tr("冒涜の MOD はアイテムに 1 つまで", "Only 1 Desecrated mod per item"));
-  if (used.includes("OmenofPutrefaction")) return putrefy(item, key);
-  const altered = key === "desecrate_altered";
-  if (altered && !item.cls.pools.otherworldly) return skip(item, tr("変質した鎖骨はアミュレット・指輪・ベルトだけ", "Altered Collarbone: Amulets, Rings and Belts only"));
-  // 深淵の王の印があれば、骨は必ず印を置き換える (側は印の側)。段の下限 33 (仮)。古代の骨とは重ならない (高い方)
-  // 固定 (フラクチャー) した印は置き換えない (2026-10-10 点検: 骨が固定済みの印を消していた)。その時は普通の骨と同じ
-  const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
-  const floor = Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0);
-  // 古代の骨も最低 MOD レベルのあるカレンシー (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 3)。深淵の王の印の下限 (仮) は別
-  if (key === "desecrate_ancient" && item.itemLevel < ANCIENT_BONE_FLOOR && !inGroup(item.cls.category, "jewel")) return skip(item, tr(`アイテムレベルが ${ANCIENT_BONE_FLOOR} 未満には使えない`, `Requires Item Level ${ANCIENT_BONE_FLOOR}+`));
-  const factionOmen = used.find((o) => FACTION_TAG[o]);
-  if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, tr("勢力のお告げは武器・宝飾品・矢筒だけ", "Faction Omens: weapons, jewellery and quivers only"));
-  const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;
-
-  // 側: お告げ → それ、無ければ出うる MOD の重みで
-  const omenSide: StageSide | null = mark ? mark.side : used.includes("OmenofSinistralNecromancy") ? "prefix" : used.includes("OmenofDextralNecromancy") ? "suffix" : null;
-  const gnawed = key === "desecrate_gnawed";
-  const factionW = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined, false, gnawed).reduce((a, c) => a + c.w, 0);
-  // 勢力のお告げで、その勢力の MOD がどの空いた側にも出せない時は普通の重みで (発現は普通の MOD 3 つ。フォーラム 3956293)
-  const openSides = SIDES.filter((s) => room(item, s));
-  const noFaction = !!faction && !(openSides.length ? openSides : SIDES).some((s) => factionW(s) > 0);
-  const weightOf = (side: StageSide) => (noFaction ? pool(data, item, side, floor, altered, null, undefined, true, gnawed).reduce((a, c) => a + c.w, 0) : factionW(side));
-  let side: StageSide;
-  if (omenSide) side = omenSide;
-  else {
-    const open = SIDES.filter((s) => room(item, s));
-    // 空いている側が 1 つなら抽選しない (乱数を使わない)。使うと同じ種でも後の候補の乱数がずれ、お告げで側を決めた時と
-    // 結果が食い違って「効かないお告げで確率が変わる」ように見えた (2026-10-16 要望 0c542dae)
-    if (open.length === 1) {
-      if (!(weightOf(open[0]!) > 0)) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
-      side = open[0]!;
-    } else {
-      const pick = pickWeighted((open.length ? open : SIDES).map((s) => ({ s, w: weightOf(s) })), rng);
-      if (!pick) return skip(item, tr("付けられる冒涜の MOD が無い", "No Desecrated mod can be added"));
-      side = pick.s;
-    }
-  }
-  if (!(weightOf(side) > 0)) return skip(item, tr("その側に付けられる冒涜の MOD が無い", "No Desecrated mod can be added on that side"));
-  let cur = item;
-  const removed: StageMod[] = [];
-  if (mark) {
-    cur = without(cur, mark);
-    removed.push(mark);
-  } else if (!room(cur, side)) {
-    const r = removeOne(cur, rng, [side]);
-    // 側を重みで選んだ時は、選ばれた側が固定の MOD だけかは当たり所 (お告げで決めた側なら打つ前に分かる)
-    if (!r) return (omenSide ? skip : skipRandom)(item, tr("その側に空きが無い", "No open slot on that side"));
-    cur = r.item;
-    removed.push(r.mod);
-  }
-  const hidden: StageMod = {
-    modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 1,
-    values: [], ranges: [], textJa: `未発現の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
-    textEn: `Unrevealed Desecrated ${side === "prefix" ? "Prefix" : "Suffix"}`,
-    desecrated: true, unrevealed: { floor, altered, faction, ...(gnawed ? { gnawed } : {}) },
-  };
-  return { applied: true, item: withMod(cur, hidden), added: [hidden], removed };
-}
 
 /**
  * 両側が埋まったレアに骨を打つ時の、側ごとの重み (applyBone と同じ: 出うる冒涜の MOD の重みの和、勢力のお告げなら数)。
@@ -238,44 +173,4 @@ export function revealOffers(data: PatchData, item: StageItem, rng: () => number
   const first = draw();
   return { first, reroll: draw(), chances };
 }
-/** reveal:N (N は 1 から) / reveal:N:reroll */
-export function applyReveal(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
-  const hidden = unrevealedOf(item);
-  if (!hidden) return skip(item, tr("未発現の冒涜 MOD が無い", "No Unrevealed Desecrated mod"));
-  const m = /^reveal:(\d)(:reroll)?$/.exec(key);
-  if (!m) return skip(item, tr(`発現の手の形が違う (${key})`, `Invalid reveal step (${key})`));
-  const reroll = !!m[2];
-  if (reroll && !used.includes("OmenofAbyssalEchoes")) return skip(item, tr(`引き直しには${jaOfOmen("OmenofAbyssalEchoes") ?? "アビスの反響のお告げ"}が要る`, "Rerolling needs Omen of Abyssal Echoes"));
-  const offers = revealOffers(data, item, rng);
-  const list = reroll ? offers.reroll : offers.first;
-  const pick = list[Number(m[1]) - 1];
-  if (!pick) return skipRandom(item, tr("その番号の候補が無い", "No option with that number"));
-  const chance = offers.chances.get(pick);
-  return { applied: true, item: replaced(item, hidden, pick), added: [pick], removed: [hidden], ...(chance != null ? { rolled: [{ modId: pick.modId, tierName: pick.tierName, chance }] } : {}) };
-}
 
-const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>): StageMod => ({
-  modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 1,
-  values: [], ranges: [], textJa: `未発現の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
-  textEn: `Unrevealed Desecrated ${side === "prefix" ? "Prefix" : "Suffix"}`,
-  desecrated: true, unrevealed: u,
-});
-
-/**
- * 腐食のお告げ: 固定済み (フラクチャー) 以外の MOD を全部外し、枠いっぱいまで未発現の MOD にしてコラプトする (普通 6 つ、フラクチャーがあれば 5 つ)。
- * 発現で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)。古びた骨でも段の下限は掛からない (PoE2 Wiki の Omen of Putrefaction)
- */
-function putrefy(item: StageItem, key: string): StageApply {
-  const removed = allMods(item).filter((m) => !m.fractured);
-  let cur: StageItem = { ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) };
-  const u = { floor: 0, altered: key === "desecrate_altered", faction: null, plain: true };
-  const added: StageMod[] = [];
-  for (const side of SIDES) {
-    while (room(cur, side)) {
-      const m = unrevealedMod(side, u);
-      cur = withMod(cur, m);
-      added.push(m);
-    }
-  }
-  return { applied: true, item: { ...cur, corrupted: true }, added, removed };
-}
