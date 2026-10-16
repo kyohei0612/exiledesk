@@ -21,7 +21,11 @@ export const MAX_NAME = 20;
 
 /** 当たりの速報の中身 (サーバーは形だけ確かめる。文は見る側の画面が自分のデータで作る) */
 export interface BoardHit { base: string; ilvl: number; cur: string; n: number; modId: string; ti: number; v: number[]; p: number }
-export type BoardItem = { id: string; kind: "post"; name: string; tag: string; text: string } | { id: string; kind: "hit"; hit: BoardHit };
+/** 貼ったアイテム (サーバーの board.ts の BoardAtt と同じ形。文は見る側の画面が自分のデータで作る) */
+export interface BoardAtt { b: string; i: number; r: "normal" | "magic" | "rare" | "unique"; m: Array<[string, number, number[], "p" | "s", string]>; c?: 1 }
+/** 書き込み (返信は replies に古い順。返信は 1 段だけ) */
+export type BoardPostItem = { id: string; kind: "post"; name: string; tag: string; text: string; likes: number; att?: BoardAtt; parent?: string; replies?: BoardPostItem[] };
+export type BoardItem = BoardPostItem | { id: string; kind: "hit"; hit: BoardHit };
 
 /** 掲示板のタブを開いているか (クラフトステージのタブの並び。エミュレーター・シミュレーターの中身は隠すだけで残す) */
 export const boardOn = ref(false);
@@ -78,14 +82,34 @@ const ERR_EN: Record<string, string> = {
   "メールアドレス・電話番号は書けません": "Email addresses and phone numbers are not allowed",
   "本文が空": "The post is empty",
   "タグを選んでください": "Choose a tag",
+  "返信先がありません": "The post you replied to is gone",
+  "続けて返信できるのは 15 秒に 1 件": "You can reply once every 15 seconds",
+  "返信しすぎ (1 時間に 30 件まで)": "Too many replies (30 per hour)",
+  "返信には返信できません": "You can't reply to a reply",
+  "貼ったアイテムの形が違う": "The attached item looks wrong",
 };
 export const errText = (e: string): string => tr(e, ERR_EN[e] ?? e);
 
-export async function sendPost(p: { name: string; tag?: BoardTag; text: string; website: string }): Promise<{ item?: BoardItem; error?: string }> {
+export async function sendPost(p: { name: string; tag?: BoardTag; text: string; website: string; parent?: string; att?: BoardAtt | null }): Promise<{ item?: BoardPostItem; error?: string }> {
   try {
     const j = await postJson("/board/post", { uid: boardUid(), ...p });
-    return j.ok && j.item ? { item: j.item } : { error: j.error ?? "?" };
+    return j.ok && j.item?.kind === "post" ? { item: j.item } : { error: j.error ?? "?" };
   } catch (e) { return { error: String((e as Error).message ?? e) }; }
+}
+/** いいね (押した端末は手元に覚える。一覧はキャッシュで 45 秒遅れるので、数は手元で足し引きする) */
+const LIKED_KEY = "exiledesk.board.liked";
+export const likedIds = ref<Set<string>>((() => { try { return new Set(JSON.parse(localStorage.getItem(LIKED_KEY) ?? "[]") as string[]); } catch { return new Set<string>(); } })());
+export async function toggleLike(id: string): Promise<{ likes: number; liked: boolean } | null> {
+  try {
+    const r = await fetch(`${WEB_API_BASE}/board/like`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ uid: boardUid(), id }), credentials: "omit" });
+    const j = (await r.json().catch(() => ({}))) as { ok?: boolean; likes?: number; liked?: boolean };
+    if (!j.ok || j.likes == null) return null;
+    const next = new Set(likedIds.value);
+    if (j.liked) next.add(id); else next.delete(id);
+    likedIds.value = next;
+    try { localStorage.setItem(LIKED_KEY, JSON.stringify([...next].slice(-500))); } catch { /* 覚えられなくてよい */ }
+    return { likes: j.likes, liked: !!j.liked };
+  } catch { return null; }
 }
 export async function reportItem(id: string): Promise<boolean> {
   try { return !!(await postJson("/board/report", { uid: boardUid(), id })).ok; } catch { return false; }

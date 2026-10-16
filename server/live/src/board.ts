@@ -151,11 +151,21 @@ export async function banned(db: D1Database, uid: string, iph: string): Promise<
   return (await count(db, "SELECT count(*) AS n FROM board_bans WHERE uid = ? OR iph = ?", uid, iph)) > 0;
 }
 
-/** 書き込みの連投よけ (通れば null) */
-export async function allowPost(db: D1Database, uid: string, iph: string, now = Date.now()): Promise<string | null> {
+/** 返信は会話になるので書き込みとは別に数える (15 秒に 1 件・1 時間 30 件) */
+const REPLY_GAP_MS = 15e3;
+const REPLIES_PER_HOUR = 30;
+/** 書き込み・返信の連投よけ (通れば null) */
+export async function allowPost(db: D1Database, uid: string, iph: string, now = Date.now(), reply = false): Promise<string | null> {
   if (await banned(db, uid, iph)) return "この端末からは書き込めません";
-  if ((await count(db, "SELECT count(*) AS n FROM board_posts WHERE kind = 'post' AND (uid = ? OR iph = ?) AND at > ?", uid, iph, now - 60e3)) >= PER_MINUTE) return "続けて書けるのは 1 分に 1 件";
-  if ((await count(db, "SELECT count(*) AS n FROM board_posts WHERE kind = 'post' AND (uid = ? OR iph = ?) AND at > ?", uid, iph, now - 3600e3)) >= PER_HOUR) return `書きすぎ (1 時間に ${PER_HOUR} 件まで)`;
+  const which = reply ? "parent IS NOT NULL" : "parent IS NULL";
+  const n = (since: number): Promise<number> => count(db, `SELECT count(*) AS n FROM board_posts WHERE kind = 'post' AND ${which} AND (uid = ? OR iph = ?) AND at > ?`, uid, iph, now - since);
+  if (reply) {
+    if ((await n(REPLY_GAP_MS)) >= 1) return "続けて返信できるのは 15 秒に 1 件";
+    if ((await n(3600e3)) >= REPLIES_PER_HOUR) return `返信しすぎ (1 時間に ${REPLIES_PER_HOUR} 件まで)`;
+    return null;
+  }
+  if ((await n(60e3)) >= PER_MINUTE) return "続けて書けるのは 1 分に 1 件";
+  if ((await n(3600e3)) >= PER_HOUR) return `書きすぎ (1 時間に ${PER_HOUR} 件まで)`;
   return null;
 }
 

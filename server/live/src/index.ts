@@ -358,7 +358,7 @@ async function boardPost(req: Request, env: Env, ctx: ExecutionContext, url: URL
     case "/board/post": {
       const p = parsePost(body);
       if (!p.ok) return json({ error: p.why }, p.why === "bot" ? 200 : 400);
-      const limited = await allowPost(db, p.uid, iph);
+      const limited = await allowPost(db, p.uid, iph, Date.now(), !!p.parent);
       if (limited) return json({ error: limited }, 429);
       if (p.parent) { const no = await replyTarget(db, p.parent); if (no) return json({ error: no }, 400); }
       const item = await savePost(db, { ...p, iph });
