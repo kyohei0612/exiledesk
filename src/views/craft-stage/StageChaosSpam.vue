@@ -64,6 +64,10 @@ watch([spamPending, () => s.aims.value], arrive);
 interface SpamResult { sig: string; uses: number; applied: number; hit: boolean; reason: string | null; rank: number | null }
 const result = ref<SpamResult | null>(null);
 
+/** スパムの前の状態 (スパムの前に戻す用)。下の watch (immediate) より前に置く */
+let snap: ReturnType<typeof s.snapshot> | null = null;
+/** スパムが終わった時のアイテム (これから変わったら結果は古い) */
+let resultItem: typeof s.item.value = null;
 // ---- ③ 100 人の結果 (今の状態から。回している間は出し直さない) ----
 const stats = ref<SpamStats | null>(null);
 const statsFor = ref<string>("");
@@ -102,11 +106,24 @@ function simulate(start = atIlvl(s.item.value)): void {
 // 狙いがもう揃っている時 (スパムで付いた直後) は出し直さない (今の状態から数えると全員 0 回になる)。比べた 100 人の結果と運試しをそのまま残す
 watch([key, ilvl, targets, () => s.item.value], () => {
   if (spamming.value) return;
-  // 途中で離した時も同じ (続けて押すと回数を足すので、比べるのはスパムを始めた時の 100 人のまま)
-  if (result.value?.sig === sig()) return;
-  result.value = result.value && sig() === result.value.sig ? result.value : null;
+  // スパムの後にアイテムが変わっていなければ結果をそのまま (付いた直後・途中で離した時。続けて押すと回数を足すので、比べるのはスパムを始めた時の 100 人のまま)
+  if (result.value?.sig === sig() && s.item.value === resultItem) return;
+  // 別の手を打った・1 手戻した・白に戻した・ベースを変えた時は、前のスパムの結果は消す
+  // (2026-10-16 オーナー「確率機の後、別のベースに変えたら確率機の前の結果のまま表示される」)
+  result.value = null;
+  snap = null;
   simulate();
 }, { immediate: true });
+/** ベースを変えたら確率機を閉じる (狙いの MOD はそのベースのもの。付かない物は外す) */
+watch(() => s.base.value, () => {
+  stopSpam();
+  result.value = null;
+  snap = null;
+  spamKey.value = null;
+  const d = s.data.value;
+  const it = s.item.value;
+  if (d && it) s.aims.value = s.aims.value.filter((a) => [...it.cls.pools.normal.prefixes, ...it.cls.pools.normal.suffixes].includes(a.modId));
+});
 onBeforeUnmount(() => { gen++; clearTimeout(timer); stopSpam(); });
 
 const cost = (n: number): string => (priceOf(key.value) > 0 ? displayCurrency.money(n * priceOf(key.value)) : "");
@@ -116,7 +133,6 @@ const unlucky = computed(() => (stats.value ? unluckyOf(stats.value) : null));
 
 // ---- ③ 自分でスパム (押している間) ----
 const live = ref<{ uses: number; applied: number } | null>(null);
-let snap: ReturnType<typeof s.snapshot> | null = null;
 let snapIlvl = 82;
 let startItem: typeof s.item.value = null;
 let raf = 0, t0 = 0, last = 0;
@@ -171,11 +187,12 @@ function finish(hit: boolean, reason: string | null): void {
   spamming.value = false;
   if (!l) return;
   const st = stats.value && statsFor.value === sig() ? stats.value : null;
-  result.value = { sig: sig(), uses: l.uses, applied: l.applied, hit, reason, rank: hit && st ? rankFor(st, l.uses) : null };
+  resultItem = s.item.value;
+  result.value = { sig: sig(), uses: l.uses, applied: l.applied, hit, reason, rank: hit && st ? rankOf(st, l.uses) : null };
   // 100 人の結果がまだ無ければ、スパムの前の状態から出して運を比べる
   if (hit && !st && startItem) {
     simulate(startItem);
-    const stop = watch(stats, (v) => { if (v && result.value?.hit) { result.value = { ...result.value, rank: rankFor(v, result.value.uses) }; stop(); } });
+    const stop = watch(stats, (v) => { if (v && result.value?.hit) { result.value = { ...result.value, rank: rankOf(v, result.value.uses) }; stop(); } });
   }
   if (hit || !reason) logRecord("emu_spam", { base: s.item.value?.base, key: key.value, aims: targets.value.map((t) => `${t.modId}#${t.minTierIndex}`), uses: l.uses, hit });
 }
@@ -298,12 +315,6 @@ watch(() => result.value?.rank, (r) => {
   playSfx("rare", 1.5);
   lucky.value++;
 });
-/**
- * 開発版 (スマホ用の web-dev、VITE_DEV_PREVIEW) だけ、運を毎回「上位 1〜9%」にする (2026-10-16 オーナー「試しにやってみたいから開発版で一瞬乱数いじって 10% になるように」)。
- * 本番のビルドには効かない。強運の演出を確かめ終わったら外す
- */
-const DEV_LUCKY = import.meta.env.VITE_DEV_PREVIEW === "1";
-const rankFor = (st: SpamStats, uses: number): number => (DEV_LUCKY ? 1 + Math.floor(Math.random() * 9) : rankOf(st, uses));
 /** かなりの強運 (上位 10% 以内) */
 const isLucky = computed(() => !!result.value?.hit && result.value.rank != null && result.value.rank <= 10);
 const shownUses = computed(() => live.value?.uses ?? result.value?.uses ?? 0);
