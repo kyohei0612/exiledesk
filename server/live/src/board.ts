@@ -2,7 +2,7 @@
  * 掲示板 (2026-10-16 最初の段、docs/roadmap-2026-10.md「掲示板の作り」。オーナー「クラフトの相談や自慢系、意見交換の場所にしたい」)。
  *   GET  /board.json?tag=&before=   … 1 つのタイムライン (新しい順、30 件ずつ)。Cloudflare のキャッシュに 45 秒 (読みの負荷はほぼ 0)
  *   POST /board/post   { uid, name, tag, text, website? (bot よけ) } … 書き込み。1 端末 1 分 1 件・1 時間 10 件、禁止の言葉は弾く
- *   POST /board/hit    { uid, base, ilvl, cur, n, modId, ti, v, p } … 当たりの速報の札 (エミュレーターがクソレアの線より下を引いた時。名前は出さない)
+ *   POST /board/hit    { uid, base, ilvl, cur, n, modId, ti, v, p } … 当たりの速報の札 (エミュレーターがクソレアの線より下を引いた時。名前は出さない。1 端末 1 時間に 1 件)
  *   POST /board/report { uid, id } … 通報 (同じ端末は 1 回)。REPORT_HIDE 件で自動で隠す
  *   POST /board/delete { id, ban? } (ヘッダー x-exiledesk-key) … オーナーが消す。ban で書いた端末を書けなくする
  *   GET  /board/all.json (ヘッダー x-exiledesk-key) … 隠した物・端末の印も込みの一覧 (オーナー用)
@@ -24,8 +24,8 @@ const PAGE = 30;
 /** 連投よけ (1 端末 1 分 1 件・1 時間 10 件。同じ IP も同じ数で数える) */
 const PER_MINUTE = 1;
 const PER_HOUR = 10;
-/** 当たりの速報は 1 端末 1 時間に 3 件まで、同じ物 (ベース・MOD・段) は 1 日 1 回 */
-const HITS_PER_HOUR = 3;
+/** 当たりの速報は 1 端末 1 時間に 1 件まで (2026-10-16 オーナー「1 ID 1 時間に 1 回まで」)、同じ物 (ベース・MOD・段) は 1 日 1 回 */
+const HITS_PER_HOUR = 1;
 const HIT_SAME_MS = 24 * 3600e3;
 /** 通報がこの数で自動で隠す */
 export const REPORT_HIDE = 3;

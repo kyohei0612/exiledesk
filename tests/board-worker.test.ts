@@ -89,13 +89,13 @@ describe("当たりの速報", () => {
     expect(parseHit(hit({ p: 0.5 }))).toMatchObject({ ok: false });
     expect(parseHit(hit({ modId: "a b" }))).toMatchObject({ ok: false });
   });
-  it("1 端末 1 時間に 3 件まで・同じ物は重ねない", async () => {
+  it("1 端末 1 時間に 1 件まで (2026-10-16 オーナー「1 ID 1 時間に 1 回」)", async () => {
     const { call } = setup();
     expect((await call("/board/hit", hit())).j.ok).toBe(true);
-    expect((await call("/board/hit", hit({ n: 99 }))).j).toMatchObject({ ok: false, why: "同じ物" });
-    expect((await call("/board/hit", hit({ modId: "Rings/AddedFireDamage" }))).j.ok).toBe(true);
-    expect((await call("/board/hit", hit({ modId: "Rings/AddedLightningDamage" }))).j.ok).toBe(true);
-    expect((await call("/board/hit", hit({ modId: "Rings/Other" }))).j).toMatchObject({ ok: false, why: "多すぎ" });
+    expect((await call("/board/hit", hit({ n: 99 }))).j).toMatchObject({ ok: false, why: "多すぎ" });
+    expect((await call("/board/hit", hit({ modId: "Rings/AddedFireDamage" }))).j).toMatchObject({ ok: false, why: "多すぎ" });
+    // 同じ IP からは端末を変えても同じ数 (連投よけ)
+    expect((await call("/board/hit", hit({ uid: "zzzzzzzzzzzz", modId: "Rings/AddedFireDamage" }))).j).toMatchObject({ ok: false, why: "多すぎ" });
   });
   it("BOARD_HITS = 0 で止まる", async () => {
     const { call } = setup({ BOARD_HITS: "0" });
