@@ -393,9 +393,13 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 
 <template>
   <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
-  <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
+  <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? (heldChaos && !s.offers.value ? 'pb-44' : 'pb-32') : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す -->
     <div v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+      <!-- カオスを持っている時: 確率機へのボタンは帯の上 (スマホはアイテムの下ではなくここ。2026-10-16 オーナー) -->
+      <div v-if="heldChaos && !s.offers.value" class="mb-1.5 flex justify-end">
+        <button type="button" data-chaos-spam-open class="g-btn sm min-h-10" @click="openChaosSpam">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
+      </div>
       <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
       <div v-if="s.offers.value" class="flex items-center gap-2">
         <span class="min-w-0 flex-1 truncate text-rose-200">{{ tr("発現する MOD を 3 つから選ぶ", "Choose 1 of 3 mods to reveal") }}</span>
@@ -575,7 +579,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>
         <!-- カオス (普通・上級・完全) を持っている時: カオススパム確率機へ (2026-10-16 オーナー「カオス持った時にアイテムの下にボタン、押したら MOD 選択から」) -->
-        <button v-if="heldChaos" type="button" data-chaos-spam-open class="g-btn sm max-md:min-h-10" @click="openChaosSpam">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
+        <button v-if="heldChaos && !phone" type="button" data-chaos-spam-open class="g-btn sm" @click="openChaosSpam">{{ tr("カオススパム確率機へ", "Chaos spam calculator") }}</button>
         <RevealPanel />
         <!-- ヒネコラの髪束の予見: 持っているカレンシーを打った時の結果 (次の手の seed で引くので、打つとこの通りになる) -->
         <div v-if="s.foresight.value" class="w-[380px] max-md:w-full rounded-xl border border-violet-400/50 bg-violet-500/10 p-3 text-[12px]">
