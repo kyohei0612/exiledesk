@@ -5,7 +5,7 @@
   当たりの速報 (エミュレーターでクソレアの線より下の T1 を引いた札、services/board/rare-hit.ts) は書き込みと別の見た目。
   時刻・「◯分前」・件数・閲覧数・人ごとの印は出さない (オーナー「過疎ってるって思われたくない」)。サーバーは server/live の board.ts
   2 段目 (2026-10-16 オーナー「掲示板強化」): エミュレーターの今のアイテムを貼る (BoardAttCard)。
-  返信・いいねは作ったが外した (オーナー「Twitter くらいシンプルでいい、いいねとかリプとかリツイートはいらん」。サーバーの /board/like と parent は残してある)
+  いいねはあり、返信は無し (オーナー「返信こない時の悲壮感あるから」。サーバーの parent は残してある)
 -->
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
@@ -19,7 +19,7 @@ import Disclosure from "../../components/ui/Disclosure.vue";
 import Icon from "../../components/ui/Icon.vue";
 import BoardAttCard from "./BoardAttCard.vue";
 import type { StageItem } from "../../services/craft-stage/types";
-import { BOARD_HITS_ENABLED, BOARD_TAGS, boardHitsOn, boardName, errText, fetchBoard, MAX_NAME, MAX_TEXT, NAMELESS, rememberName, reportItem, sendPost, setBoardHits, tagLabel, type BoardAtt, type BoardHit, type BoardItem, type BoardTag } from "../../services/board/board-api";
+import { BOARD_HITS_ENABLED, BOARD_TAGS, boardHitsOn, boardName, errText, fetchBoard, likedIds, MAX_NAME, MAX_TEXT, NAMELESS, rememberName, reportItem, sendPost, setBoardHits, tagLabel, toggleLike, type BoardAtt, type BoardHit, type BoardItem, type BoardPostItem, type BoardTag } from "../../services/board/board-api";
 
 /** 一覧の絞り込み (null = すべて) */
 const items = ref<BoardItem[]>([]);
@@ -80,6 +80,19 @@ function attOf(it: StageItem): BoardAtt {
 /** 貼れる時 (エミュレーターにアイテムがある) */
 const canAttach = computed(() => !!craftStage.item.value);
 function attachNow(): void { const it = craftStage.item.value; if (it) attach.value = attOf(it); }
+
+// ---- いいね (押し直しで外す。数は手元で足し引き。0 の時は数を出さない) ----
+// 返信は無し (2026-10-16 オーナー「いいね付けてもいいかも、返信は無くていい、返信こない時の悲壮感あるから」)
+const liking = ref<Set<string>>(new Set());
+/** 一覧は 45 秒ためるので、自分が押した物は最低 1 にする */
+const likeCount = (p: BoardPostItem): number => Math.max(p.likes ?? 0, likedIds.value.has(p.id) ? 1 : 0);
+async function like(p: BoardPostItem): Promise<void> {
+  if (liking.value.has(p.id)) return;
+  liking.value = new Set([...liking.value, p.id]);
+  const r = await toggleLike(p.id);
+  if (r) p.likes = r.likes;
+  const next = new Set(liking.value); next.delete(p.id); liking.value = next;
+}
 
 // ---- 通報 (押すと確かめの 2 つのボタン) ----
 const asking = ref<string | null>(null);
@@ -172,6 +185,7 @@ const shown = computed(() => items.value.filter((it) => it.kind === "post" || (B
           </div>
           <p class="mt-0.5 whitespace-pre-wrap break-words text-left leading-relaxed">{{ it.text }}</p>
           <BoardAttCard v-if="it.att" :att="it.att" />
+          <button type="button" class="g-plain mt-1 inline-flex min-h-8 items-center gap-1 rounded px-1 text-[13px] hover:bg-white/5" :class="likedIds.has(it.id) ? 'text-rose-300' : 'text-[var(--exile-color-text-tertiary)]'" :aria-pressed="likedIds.has(it.id)" :title="tr('いいね', 'Like')" @click="like(it)">{{ likedIds.has(it.id) ? "♥" : "♡" }}<span v-if="likeCount(it)" class="text-[12px] tabular-nums">{{ likeCount(it) }}</span></button>
         </template>
       </li>
     </ul>
