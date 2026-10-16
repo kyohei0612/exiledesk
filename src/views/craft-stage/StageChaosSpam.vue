@@ -95,17 +95,30 @@ function simulate(start = atIlvl(s.item.value), auto = true): void {
     if (auto && !picked && !spamming.value && sim.best.value && sim.best.value !== key.value) key.value = sim.best.value;
   });
 }
-// 狙いがもう揃っている時 (スパムで付いた直後) は出し直さない (今の状態から数えると全員 0 回になる)。比べた 100 人の結果と運試しをそのまま残す
-watch([key, ilvl, targets, () => s.item.value], () => {
+/**
+ * カオスの種類を替えた時: 計算は全部の種類で済んでいるので、覚えている物を使う。スパムの後なら、スパムの前の状態に戻して
+ * 別のカオスですぐ試せるように (2026-10-16 オーナー「計算機後、カオス種類変えてやろうとしたらリセットされてスパムが出来ない」
+ * 「MOD を変えないならキャッシュ使って試せるように」。前は付いた後のアイテムから計算し直し、全員 0 回・スパムも押せなくなっていた)
+ */
+watch(key, () => {
   if (spamming.value) return;
+  if (snap && result.value) undoSpam();
+  else result.value = null;
+});
+// 計算し直すのは、狙い (足す・変える)・アイテムレベル・アイテムが変わった時だけ。閉じた時・ベースを変えた時は closeSpam で消える
+// 狙いがもう揃っている時 (スパムで付いた直後) は出し直さない (今の状態から数えると全員 0 回になる)。比べた 100 人の結果と運試しをそのまま残す
+watch([ilvl, targets, () => s.item.value], ([lv, ts], [lv0, ts0]) => {
+  if (spamming.value) return;
+  // スパムの後に狙い・アイテムレベルを替えた: スパムの前の状態に戻してから計算し直す (付いた後のアイテムから数えると全員 0 回になる。2026-10-16)
+  if (snap && result.value && (lv !== lv0 || ts !== ts0)) { undoSpam(); return; }
   // スパムの後にアイテムが変わっていなければ結果をそのまま (付いた直後・途中で離した時。続けて押すと回数を足すので、比べるのはスパムを始めた時の 100 人のまま)
   if (result.value?.sig === sig() && s.item.value === resultItem) return;
+  // 計算した時と同じアイテム・同じ狙い (スパムの前に戻した時など) なら計算は覚えている物を使う
+  if (simSrc === s.item.value && statsFresh() && (sim.busy.value || Object.keys(sim.all.value).length)) { result.value = null; return; }
   // 別の手を打った・1 手戻した・白に戻した・ベースを変えた時は、前のスパムの結果は消す
   // (2026-10-16 オーナー「計算機の後、別のベースに変えたら計算機の前の結果のまま表示される」)
   result.value = null;
   snap = null;
-  // カオスの種類を替えただけなら計算は済んでいる (全部の種類を計算するので)
-  if (simSrc === s.item.value && statsFresh() && (sim.busy.value || Object.keys(sim.all.value).length)) return;
   simSrc = s.item.value;
   simulate();
 }, { immediate: true });
