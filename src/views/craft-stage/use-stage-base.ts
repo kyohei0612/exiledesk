@@ -6,6 +6,7 @@ import { computed, nextTick, ref, watch } from "vue";
 import { craftStage as s, URL_BASE, type SimRecipe } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { scrollToTop } from "../../utils/keep-place";
+import { course } from "../../state/craft-course";
 
 function create() {
   const inApp = isTauriRuntime();
@@ -25,6 +26,8 @@ function create() {
   watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
   // 録画モードで URL の最初の状態を入れた時もベースは決まっている (POE2Tube 要望 ㊷)
   watch(() => s.recPreset.value, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
+  // クラフトのコースを始めた時もベースは決まっている (2026-10-17)
+  watch(() => course.value, (c) => { if (c) handNoBase.value = false; }, { immediate: true });
   const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);
   /**
    * シミュレーションのベースを選んだ時は、狙い・順番・パターンを空に戻す (前のベースの手が残って変になっていた。

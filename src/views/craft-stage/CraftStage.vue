@@ -38,7 +38,8 @@ import { useStageFx } from "./use-stage-fx";
 import VideoStage from "./VideoStage.vue";
 import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
-import StageTutorial from "./StageTutorial.vue";
+import StageCourses from "./StageCourses.vue";
+import StageCourseGuide from "./StageCourseGuide.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
@@ -353,8 +354,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
 
     <!-- 手で打つ画面と行き来しても入れた物が残るように、一度ベースを選んだら消さずに隠す (2026-10-05 オーナー「ステージと実験行き来できるように、行き来したらもっかい最初からになった」) -->
     <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
-    <!-- クイズのチュートリアル (見本のレシピを 1 手ずつ。StageTutorial.vue) -->
-    <StageTutorial v-if="s.ready.value && s.mode.value === 'tutorial' && !s.replay.value" class="mb-4" />
+    <StageCourses v-if="s.ready.value && s.mode.value === 'tutorial' && !s.replay.value && !SIM_LOCKED" class="mb-4" /><!-- 動画のクラフトのコース (2026-10-17、白から自分で作る) -->
     <!-- ベースを選んだ後に出る中身はふわっと出す (2026-10-10 オーナー「切り替えがワープみたい」) -->
     <Transition name="stage-fade" appear>
     <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
@@ -425,6 +425,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
            2026-10-11 オーナー「枠の高さが違うのが気に食わん、カレンシーの方が高く感じる」) -->
       <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
+        <StageCourseGuide v-if="!s.replay.value && s.mode.value === 'hand'" />
         <StageAimPanel v-if="!s.replay.value" data-rec-part="aim-panel" />
         <StageChaosSpam v-if="!s.replay.value" /><!-- 「次の手で狙う」とは別の欄・別の狙い (2026-10-16 オーナー「別ルートとして扱って」) -->
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
