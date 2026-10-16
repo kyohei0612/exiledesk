@@ -36,12 +36,19 @@ watch(keys, (ks) => { if (ks.length && !ks.includes(key.value as (typeof SPAM_KE
 /**
  * アイテムレベル (2026-10-16 オーナー「アイテムレベル選べるようにせなね。下限は指定の MOD を下限として、そこから一番近いベースのアイテムレベル、あとは変えれる」)。
  * 付く段はアイテムレベルで決まる (段の ilvl 以下だけ) ので確率が変わる (金の指輪の火耐性 T2 以上: 75 は 0.57%、82 は 1.19%)。
- * 下限 = 選んだ段が全部付くアイテムレベル (狙いが複数なら一番高い物)。既定はそれ以上で一番近い段 (73 なら 75。2026-10-16 オーナー)。選べるのはエミュレーターと同じ 45 / 65 / 75 / 82 / 86
+ * 下限 = 選んだ段が全部付くアイテムレベル (狙いが複数なら一番高い物)。既定は今のアイテムのアイテムレベル、下限より低ければ下限以上で一番近い段 (73 なら 75)。
+ * 選べるのはエミュレーターと同じ 45 / 65 / 75 / 82 / 86
  */
 const ILVLS = [45, 65, 75, 82, 86];
 const floor = computed(() => Math.max(1, ...targets.value.map((t) => s.data.value?.mods.get(t.modId)?.tiers[t.minTierIndex]?.ilvl ?? 1)));
 const ilvl = ref(82);
-watch(floor, (f) => { ilvl.value = ILVLS.find((x) => x >= f) ?? ILVLS[ILVLS.length - 1]!; }, { immediate: true });
+// 既定は今のアイテムのアイテムレベル (エミュレーターで選んでいる物)。それが下限より低い時だけ、下限以上で一番近い段に上げる
+// (2026-10-16 オーナー「導線的におかしくないように」: エミュレーターが 65 なのに確率機が 45 で開き、回すと 45 に下がっていた)
+watch([floor, () => s.itemLevel.value], ([f]) => {
+  if (spamming.value) return;
+  const now = s.itemLevel.value;
+  ilvl.value = ILVLS.includes(now) && now >= f ? now : ILVLS.find((x) => x >= Math.max(f, now)) ?? ILVLS[ILVLS.length - 1]!;
+}, { immediate: true });
 /** そのアイテムレベルにした今のアイテム (計算と自分のスパムの始まり) */
 const atIlvl = (it: StageItem | null): StageItem | null => (it && it.itemLevel !== ilvl.value ? { ...it, itemLevel: ilvl.value } : it);
 /** アイテムの下の「カオススパム確率機へ」で持っていたカオスの種類で開く */
@@ -340,7 +347,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
       <HelpTip :title="tr('カオススパム', 'Chaos spam')" :width="320">
         <p>{{ tr("狙いの MOD が全部揃うまで、同じカオスを打ち続けます。外れても、その結果に続けて打ちます (今の MOD が消えても、狙いが揃えば当たり)。", "Keeps using the same Chaos Orb until all target mods are on. A miss keeps going from the result (a hit even if current mods were removed).") }}</p>
         <p class="mt-1">{{ tr(`「${SPAM_PEOPLE} 人がスパムしたら」は、今の状態から ${SPAM_PEOPLE} 人が同じように打った時に、何回で付いたか。止まった後に、今回の自分の回数と比べて運を出します。`, `"If ${SPAM_PEOPLE} people spammed" shows how many uses it took ${SPAM_PEOPLE} people starting from the current state. After you stop, your count is compared with theirs.`) }}</p>
-        <p class="mt-1">{{ tr("アイテムレベルで付く段が変わるので、確率も変わります。最初は選んだ MOD が全部付く一番低いアイテムレベルです。回す時は今のアイテムをそのアイテムレベルにします (スパムの前に戻すと元に戻ります)。", "Item level changes which tiers can roll, so it changes the odds. It starts at the lowest item level where all target mods can roll. Spamming sets the item to that item level (Undo the spam restores it).") }}</p>
+        <p class="mt-1">{{ tr("アイテムレベルで付く段が変わるので、確率も変わります。最初は今のアイテムのアイテムレベルです (選んだ MOD が付かない時は、付く一番近いアイテムレベル)。回す時は今のアイテムをそのアイテムレベルにします (スパムの前に戻すと元に戻ります)。", "Item level changes which tiers can roll, so it changes the odds. It starts at the item's current item level (raised to the nearest level where all target mods can roll if needed). Spamming sets the item to that item level (Undo the spam restores it).") }}</p>
         <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("ボタンを押している間だけ打ちます。押し続けると速くなり、狙いが出たら自動で止まります。戻す時は「スパムの前に戻す」。", "Uses only while the button is held, faster the longer you hold, and stops automatically on a hit. Use “Undo the spam” to go back.") }}</p>
       </HelpTip>
     </div>
