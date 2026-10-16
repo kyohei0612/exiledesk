@@ -6,7 +6,7 @@
   時刻・「◯分前」・件数・閲覧数・人ごとの印は出さない (オーナー「過疎ってるって思われたくない」)。サーバーは server/live の board.ts
 -->
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { baseNameOf, isEn, modText, tr } from "../../i18n/lang";
 import { craftStage } from "../../state/craft-stage";
 import { iconOfKey, nameOfKey } from "../../state/craft-stage-shelf";
@@ -17,16 +17,15 @@ import Disclosure from "../../components/ui/Disclosure.vue";
 import { BOARD_HITS_ENABLED, BOARD_TAGS, boardHitsOn, boardName, errText, fetchBoard, MAX_NAME, MAX_TEXT, NAMELESS, rememberName, reportItem, sendPost, setBoardHits, tagLabel, type BoardHit, type BoardItem, type BoardTag } from "../../services/board/board-api";
 
 /** 一覧の絞り込み (null = すべて) */
-const filter = ref<BoardTag | null>(null);
 const items = ref<BoardItem[]>([]);
 const more = ref(false);
 const state = ref<"loading" | "ready" | "error">("loading");
 async function load(append = false): Promise<void> {
   if (!append) state.value = "loading";
   try {
-    const r = await fetchBoard(filter.value, append ? items.value[items.value.length - 1]?.id ?? null : null);
+    const r = await fetchBoard(null, append ? items.value[items.value.length - 1]?.id ?? null : null);
     // 自分が今書いた物 (キャッシュの 45 秒の間は一覧に無い) は頭に残す
-    const mine = append ? [] : posted.value.filter((p) => !r.items.some((x) => x.id === p.id) && (!filter.value || (p.kind === "post" && p.tag === filter.value)));
+    const mine = append ? [] : posted.value.filter((p) => !r.items.some((x) => x.id === p.id));
     items.value = append ? [...items.value, ...r.items.filter((x) => !items.value.some((y) => y.id === x.id))] : [...mine, ...r.items];
     more.value = r.more;
     state.value = "ready";
@@ -35,7 +34,6 @@ async function load(append = false): Promise<void> {
   }
 }
 onMounted(() => void load());
-watch(filter, () => void load());
 
 // ---- 書く ----
 const name = ref(boardName.value);
@@ -46,21 +44,21 @@ const sending = ref(false);
 const error = ref("");
 const posted = ref<BoardItem[]>([]);
 const textLen = computed(() => [...text.value].length);
-const canSend = computed(() => !sending.value && !!tag.value && text.value.trim().length > 0 && textLen.value <= MAX_TEXT);
+const canSend = computed(() => !sending.value && text.value.trim().length > 0 && textLen.value <= MAX_TEXT);
 async function send(): Promise<void> {
-  if (!canSend.value || !tag.value) return;
+  if (!canSend.value) return;
   sending.value = true;
   error.value = "";
   const nm = name.value.trim();
-  const r = await sendPost({ name: nm, tag: tag.value, text: text.value.trim(), website: website.value });
+  const r = await sendPost({ name: nm, tag: tag.value ?? undefined, text: text.value.trim(), website: website.value });
   sending.value = false;
   if (!r.item) { error.value = errText(r.error ?? "?"); return; }
   boardName.value = nm;
   rememberName(nm);
   posted.value = [r.item, ...posted.value];
-  if (!filter.value || filter.value === tag.value) items.value = [r.item, ...items.value];
-  text.value = "";
+  items.value = [r.item, ...items.value];
   tag.value = null;
+  text.value = "";
 }
 
 // ---- 通報 (押すと確かめの 2 つのボタン) ----
@@ -90,11 +88,9 @@ const shown = computed(() => items.value.filter((it) => it.kind === "post" || (B
 
 <template>
   <section class="g-panel px-3 py-2 text-[13px]" data-rec-part="board">
-    <!-- 絞り込み (すべて + タグ) と決まり・当たりの設定 -->
+    <!-- 決まり・当たりの設定 (タグは無し。2026-10-16 オーナー「タグなくておけ、自由に書き込める感じで」) -->
     <div class="mb-2 flex flex-wrap items-center gap-1">
-      <button type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="filter === null ? 'on' : ''" @click="filter = null">{{ tr("すべて", "All") }}</button>
-      <button v-for="t in BOARD_TAGS" :key="t.k" type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="filter === t.k ? 'on' : ''" @click="filter = t.k">{{ tr(t.ja, t.en) }}</button>
-      <span class="ml-auto flex items-center gap-3 text-[11px] text-[var(--exile-color-text-tertiary)] max-md:ml-0 max-md:w-full max-md:justify-end">
+      <span class="ml-auto flex items-center gap-3 text-[11px] text-[var(--exile-color-text-tertiary)]">
         <label v-if="BOARD_HITS_ENABLED" class="inline-flex cursor-pointer items-center gap-1.5" :title="tr('エミュレーターでとても珍しい T1 を引いた時、名前を出さずにここへ流す', 'When you hit a very rare T1 in the Emulator, post it here anonymously')">
           <input type="checkbox" class="size-4 accent-amber-500" :checked="boardHitsOn" @change="setBoardHits(($event.target as HTMLInputElement).checked)" />{{ tr("自分の当たりを流す", "Share my rare hits") }}
         </label>
@@ -106,7 +102,8 @@ const shown = computed(() => items.value.filter((it) => it.kind === "post" || (B
     <form class="mb-3 flex flex-col gap-2" @submit.prevent="send">
       <div class="flex flex-wrap items-center gap-2">
         <input v-model="name" :maxlength="MAX_NAME" class="w-44 min-w-0 rounded-md border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60 max-md:min-h-10 max-md:flex-1" :placeholder="NAMELESS()" :aria-label="tr('名前', 'Name')" />
-        <span class="flex flex-wrap items-center gap-1" role="radiogroup" :aria-label="tr('タグ', 'Tag')">
+        <!-- タグは付けたい人だけ (付けなくても書ける。2026-10-16 オーナー「自由に書き込める感じで、ただ自分の文章にタグ付けるのはあり」) -->
+        <span class="flex flex-wrap items-center gap-1" role="radiogroup" :aria-label="tr('タグ (なくてもよい)', 'Tag (optional)')">
           <button v-for="t in BOARD_TAGS" :key="t.k" type="button" role="radio" :aria-checked="tag === t.k" class="rounded-full border px-2.5 py-0.5 text-[12px] max-md:min-h-9" :class="tag === t.k ? 'border-amber-300 bg-amber-500/30 font-bold text-amber-50' : 'border-white/20 text-[var(--exile-color-text-secondary)] hover:border-amber-400/60'" @click="tag = tag === t.k ? null : t.k">{{ tr(t.ja, t.en) }}</button>
         </span>
       </div>
@@ -114,7 +111,6 @@ const shown = computed(() => items.value.filter((it) => it.kind === "post" || (B
       <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />
       <div class="flex items-center gap-2">
         <span v-if="error" class="min-w-0 flex-1 truncate text-rose-300" :title="error">{{ error }}</span>
-        <span v-else-if="text.trim() && !tag" class="min-w-0 flex-1 truncate text-[12px] text-[var(--exile-color-text-tertiary)]">{{ tr("タグを 1 つ選んでください", "Choose a tag") }}</span>
         <span v-else class="flex-1" />
         <span class="shrink-0 text-[10px] tabular-nums" :class="textLen > MAX_TEXT ? 'text-rose-300' : 'opacity-40'">{{ textLen }} / {{ MAX_TEXT }}</span>
         <button type="submit" class="g-btn-red sm shrink-0 disabled:opacity-40 max-md:min-h-10" :disabled="!canSend">{{ sending ? tr("書き込んでいます…", "Posting…") : tr("書き込む", "Post") }}</button>
@@ -138,7 +134,7 @@ const shown = computed(() => items.value.filter((it) => it.kind === "post" || (B
         <template v-else-if="it.kind === 'post'">
           <div class="flex min-w-0 items-center gap-2">
             <b class="min-w-0 truncate text-amber-200">{{ it.name || NAMELESS() }}</b>
-            <span class="shrink-0 rounded-sm bg-white/10 px-1.5 text-[11px] text-[var(--exile-color-text-secondary)]">{{ tagLabel(it.tag) }}</span>
+            <span v-if="it.tag" class="shrink-0 rounded-sm bg-white/10 px-1.5 text-[11px] text-[var(--exile-color-text-secondary)]">{{ tagLabel(it.tag) }}</span>
             <span class="ml-auto shrink-0 text-[11px]">
               <template v-if="reported.has(it.id)"><span class="opacity-40">{{ tr("通報しました", "Reported") }}</span></template>
               <template v-else-if="asking === it.id">

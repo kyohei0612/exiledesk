@@ -1,7 +1,7 @@
 /**
  * 掲示板 (2026-10-16 最初の段、docs/roadmap-2026-10.md「掲示板の作り」。オーナー「クラフトの相談や自慢系、意見交換の場所にしたい」)。
  *   GET  /board.json?tag=&before=   … 1 つのタイムライン (新しい順、30 件ずつ)。Cloudflare のキャッシュに 45 秒 (読みの負荷はほぼ 0)
- *   POST /board/post   { uid, name, tag, text, website? (bot よけ) } … 書き込み。1 端末 1 分 1 件・1 時間 10 件、禁止の言葉は弾く
+ *   POST /board/post   { uid, name, text, tag? (今は使わない), website? (bot よけ) } … 書き込み。1 端末 1 分 1 件・1 時間 10 件、禁止の言葉は弾く
  *   POST /board/hit    { uid, base, ilvl, cur, n, modId, ti, v, p } … 当たりの速報の札 (エミュレーターがクソレアの線より下を引いた時。名前は出さない。1 端末 1 時間に 1 件)
  *   POST /board/report { uid, id } … 通報 (同じ端末は 1 回)。REPORT_HIDE 件で自動で隠す
  *   POST /board/delete { id, ban? } (ヘッダー x-exiledesk-key) … オーナーが消す。ban で書いた端末を書けなくする
@@ -67,13 +67,14 @@ export function ngReason(text: string): string | null {
 /** 文字の掃除 (見えない制御文字を外す。改行は 2 つまで続けてよい) */
 const clean = (s: string): string => s.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f‪-‮⁦-⁩]/g, "").replace(/\n{3,}/g, "\n\n").trim();
 
-export type PostIn = { ok: true; uid: string; name: string; tag: BoardTag; text: string } | { ok: false; why: string };
+export type PostIn = { ok: true; uid: string; name: string; tag: BoardTag | ""; text: string } | { ok: false; why: string };
 export function parsePost(body: unknown): PostIn {
   if (!body || typeof body !== "object") return { ok: false, why: "JSON ではない" };
   const b = body as Record<string, unknown>;
   if (typeof b.website === "string" && b.website.trim()) return { ok: false, why: "bot" };
   if (typeof b.uid !== "string" || !UID_RE.test(b.uid)) return { ok: false, why: "端末の番号が無い" };
-  if (!BOARD_TAGS.includes(b.tag as BoardTag)) return { ok: false, why: "タグを選んでください" };
+  // タグは無くてよい (2026-10-16 オーナー「タグなくておけ、自由に書き込める感じで」)。古い画面が送ってきた時だけ形を確かめる
+  if (b.tag != null && b.tag !== "" && !BOARD_TAGS.includes(b.tag as BoardTag)) return { ok: false, why: "タグが違う" };
   const text = typeof b.text === "string" ? clean(b.text) : "";
   if (!text) return { ok: false, why: "本文が空" };
   if ([...text].length > MAX_TEXT) return { ok: false, why: `本文は ${MAX_TEXT} 字まで` };
@@ -81,7 +82,7 @@ export function parsePost(body: unknown): PostIn {
   if ([...name].length > MAX_NAME) return { ok: false, why: `名前は ${MAX_NAME} 字まで` };
   const ng = ngReason(`${name}\n${text}`);
   if (ng) return { ok: false, why: ng };
-  return { ok: true, uid: b.uid, name, tag: b.tag as BoardTag, text };
+  return { ok: true, uid: b.uid, name, tag: (b.tag as BoardTag | undefined) || "", text };
 }
 
 /** 当たりの速報の中身 (画面が自分のデータで文にする。サーバーは形だけ確かめる = 好きな文字は載らない) */
@@ -140,7 +141,7 @@ export type BoardItem = { id: string; kind: "post"; name: string; tag: string; t
 
 const newId = (): string => crypto.randomUUID().replace(/-/g, "").slice(0, 10);
 
-export async function savePost(db: D1Database, p: { uid: string; iph: string; name: string; tag: BoardTag; text: string }, now = Date.now()): Promise<BoardItem> {
+export async function savePost(db: D1Database, p: { uid: string; iph: string; name: string; tag: BoardTag | ""; text: string }, now = Date.now()): Promise<BoardItem> {
   const id = newId();
   await db.prepare("INSERT INTO board_posts (id, at, kind, uid, iph, name, tag, body) VALUES (?, ?, 'post', ?, ?, ?, ?, ?)").bind(id, now, p.uid, p.iph, p.name, p.tag, p.text).run();
   return { id, kind: "post", name: p.name, tag: p.tag, text: p.text };
@@ -212,7 +213,7 @@ export async function purgeLists(): Promise<void> {
 export async function notifyBoardDiscord(webhook: string, ev: { kind: "post"; item: Extract<BoardItem, { kind: "post" }>; uid: string } | { kind: "hidden"; id: string }, fetchFn: Fetch, now = Date.now()): Promise<boolean> {
   const jst = new Date(now + 9 * 3600e3).toISOString().slice(0, 16).replace("T", " ");
   const content = ev.kind === "post"
-    ? `**🗨 掲示板** [${TAG_JA[ev.item.tag as BoardTag] ?? ev.item.tag}] ${ev.item.name || "名無しのエグザイル"} 👤 **${ev.uid.slice(0, 6)}** · ${jst} JST\n${ev.item.text.slice(0, 1500)}\n-# 書き込みの id ${ev.item.id}`
+    ? `**🗨 掲示板** ${ev.item.tag ? `[${TAG_JA[ev.item.tag as BoardTag] ?? ev.item.tag}] ` : ""}${ev.item.name || "名無しのエグザイル"} 👤 **${ev.uid.slice(0, 6)}** · ${jst} JST\n${ev.item.text.slice(0, 1500)}\n-# 書き込みの id ${ev.item.id}`
     : `**🚫 掲示板** 通報が ${REPORT_HIDE} 件で隠しました · ${jst} JST\n-# 書き込みの id ${ev.id}`;
   try {
     const r = await fetchFn(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content, allowed_mentions: { parse: [] } }) });

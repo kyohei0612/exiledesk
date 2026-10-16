@@ -61,8 +61,10 @@ describe("掲示板の書き込み", () => {
     expect((await call("/board/post", post({ uid: "otherotherr1" }))).status).toBe(429);
     expect((await call("/board/post", post({ uid: "otherotherr1" }), { ip: "4.4.4.4" })).status).toBe(200);
   });
-  it("タグ無し・空・長すぎ・bot よけは弾く", () => {
-    expect(parsePost(post({ tag: "" }))).toMatchObject({ ok: false });
+  it("タグは無くてもよい (2026-10-16 オーナー)。知らないタグ・空・長すぎ・bot よけは弾く", () => {
+    expect(parsePost(post({ tag: "" }))).toMatchObject({ ok: true, tag: "" });
+    expect(parsePost(post({ tag: undefined }))).toMatchObject({ ok: true, tag: "" });
+    expect(parsePost(post({ tag: "spam" }))).toMatchObject({ ok: false });
     expect(parsePost(post({ text: "   " }))).toMatchObject({ ok: false, why: "本文が空" });
     expect(parsePost(post({ text: "あ".repeat(1001) }))).toMatchObject({ ok: false });
     expect(parsePost(post({ name: "あ".repeat(21) }))).toMatchObject({ ok: false });

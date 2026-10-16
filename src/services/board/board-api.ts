@@ -81,7 +81,7 @@ const ERR_EN: Record<string, string> = {
 };
 export const errText = (e: string): string => tr(e, ERR_EN[e] ?? e);
 
-export async function sendPost(p: { name: string; tag: BoardTag; text: string; website: string }): Promise<{ item?: BoardItem; error?: string }> {
+export async function sendPost(p: { name: string; tag?: BoardTag; text: string; website: string }): Promise<{ item?: BoardItem; error?: string }> {
   try {
     const j = await postJson("/board/post", { uid: boardUid(), ...p });
     return j.ok && j.item ? { item: j.item } : { error: j.error ?? "?" };
