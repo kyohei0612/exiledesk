@@ -80,8 +80,8 @@ function sharePage(url, c, img) {
 }
 
 /** 日本語の字は Google Fonts から使う字だけ取る (全部入りは重い) */
-async function font(text, weight) {
-  const css = await (await fetch(`https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@${weight}&text=${encodeURIComponent(text)}`)).text();
+async function font(text, weight, family = "Noto+Sans+JP") {
+  const css = await (await fetch(`https://fonts.googleapis.com/css2?family=${family}${weight ? `:wght@${weight}` : ""}&text=${encodeURIComponent(text)}`)).text();
   const src = /src: url\((.+?)\) format\('(opentype|truetype)'\)/.exec(css)?.[1];
   if (!src) throw new Error("font");
   return (await fetch(src)).arrayBuffer();
@@ -114,7 +114,7 @@ async function dataUrl(env, url, path) {
   }
 }
 
-/** かなりの強運 (上位 10% 以内) は銅色の二重の細い枠 (2026-10-16 オーナー「銅色の光って大人っぽい」)。
+/** かなりの強運 (上位 10% 以内) は確率機の中と同じ銅色の特別仕様 (二重の細い枠・線・「かなりの強運 / TOP n%」、2026-10-16 オーナー「銅色の光って大人っぽい」「Twitter にもその特別仕様で」)。
  * X は大きいカードの下 (約 80px) に題を重ねて出すので、字は 500px より上に置く (2026-10-16 オーナーのスマホで「半分の人」の行が隠れた) */
 async function cardImage(url, env, c) {
   // satori は WebP を読めないので、カード用の PNG (public/og-art、base-art から作った物) を使う
@@ -138,7 +138,14 @@ async function cardImage(url, env, c) {
   ].filter(Boolean).join(" · ");
   const lucky = r != null && r <= 50;
   const allText = ["ExileDesk", head, c.baseName, c.mods, hit, hitTail, luckLine, luckWord, stats, T(c, "強運", "Lucky"), T(c, "沼", "Unlucky"), "exiledesk.com", "0123456789%·,!?"].join("");
-  const [bold, regular] = await Promise.all([font(allText, 800), font(allText, 500)]);
+  const top = r != null && r <= 10;
+  const kicker = T(c, "かなりの強運", "EXCEPTIONAL LUCK");
+  const [bold, regular, antique] = await Promise.all([
+    font(allText, 800),
+    font(allText, 500),
+    // かなりの強運の字は確率機の中と同じ明朝寄りの字 (Zen Antique)
+    top ? font(`${kicker}TOP0123456789%`, 0, "Zen+Antique") : Promise.resolve(null),
+  ]);
   const markLeft = r != null ? Math.max(0, Math.min(590, Math.round(620 * (r / 100)) - 15)) : 0;
   const html = `
 <div style="display:flex;width:1200px;height:630px;position:relative;background-image:radial-gradient(ellipse at 78% 45%, #4a3410 0%, #1c140a 38%, #050403 75%);font-family:'Noto Sans JP';color:#efe6d2">
@@ -155,10 +162,20 @@ async function cardImage(url, env, c) {
     <span style="font-size:30px;font-weight:800;color:#f3e3b5;margin-top:14px">${esc(c.baseName)}</span>
     <span style="font-size:${c.mods.length > 26 ? 24 : 28}px;font-weight:800;color:#8f8fff;margin-top:4px;line-height:1.3">${esc(c.mods)}</span>
     <div style="display:flex;align-items:flex-end;margin-top:12px">
-      <span style="font-size:84px;font-weight:800;color:#6ee7b7;line-height:1">${esc(hit)}</span>
-      <span style="font-size:42px;font-weight:800;color:#d9f5e8;margin-left:8px;margin-bottom:6px">${esc(hitTail)}</span>
+      <span style="font-size:84px;font-weight:800;color:${top ? "#e0a46e" : "#6ee7b7"};line-height:1">${esc(hit)}</span>
+      <span style="font-size:42px;font-weight:800;color:${top ? "#f0d2b4" : "#d9f5e8"};margin-left:8px;margin-bottom:6px">${esc(hitTail)}</span>
     </div>
-    ${r != null ? `
+    ${top ? `
+    <div style="display:flex;flex-direction:column;align-items:center;width:620px;margin-top:14px;padding:6px 0 4px;background-image:radial-gradient(ellipse at 50% 55%, rgba(150,82,40,0.30), rgba(150,82,40,0) 70%)">
+      <div style="display:flex;width:620px;height:2px;background-image:linear-gradient(90deg, rgba(184,115,51,0), rgba(184,115,51,0.95), rgba(184,115,51,0))"></div>
+      <span style="font-family:'Zen Antique';font-size:22px;letter-spacing:12px;color:#b87333;margin-top:10px">${esc(kicker)}</span>
+      <div style="display:flex;align-items:flex-end;margin-top:2px">
+        <span style="font-family:'Zen Antique';font-size:24px;letter-spacing:8px;color:#9c7a62;margin-right:10px;margin-bottom:16px">TOP</span>
+        <span style="font-family:'Zen Antique';font-size:96px;line-height:1;color:#e0a46e">${r}</span>
+        <span style="font-family:'Zen Antique';font-size:44px;color:#c4814a;margin-left:4px;margin-bottom:10px">%</span>
+      </div>
+      <div style="display:flex;width:620px;height:2px;margin-top:8px;background-image:linear-gradient(90deg, rgba(184,115,51,0), rgba(184,115,51,0.95), rgba(184,115,51,0))"></div>
+    </div>` : r != null ? `
     <div style="display:flex;margin-top:18px;font-size:32px;font-weight:800">
       <span>${esc(luckLine)}</span><span style="margin-left:16px;color:${r <= 10 ? "#d9965f" : lucky ? "#6ee7b7" : "#fda4af"}">${esc(luckWord)}</span>
     </div>
@@ -177,6 +194,7 @@ async function cardImage(url, env, c) {
     fonts: [
       { name: "Noto Sans JP", data: bold, weight: 800, style: "normal" },
       { name: "Noto Sans JP", data: regular, weight: 500, style: "normal" },
+      ...(antique ? [{ name: "Zen Antique", data: antique, weight: 400, style: "normal" }] : []),
     ],
   }).arrayBuffer();
 }
