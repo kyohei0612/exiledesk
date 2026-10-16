@@ -419,9 +419,9 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
         </div>
         <div class="flex items-center gap-2">
           <img v-if="iconOf(s.held.value!)" :src="iconOf(s.held.value!)" alt="" class="h-9 w-9 object-contain" />
-          <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join(tr("・", ", ")) }}</span></span>
-          <button v-if="s.log.value.length" type="button" class="g-btn sm min-h-11" :title="tr('直前の 1 手を取り消す', 'Undo the last step')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
-          <button type="button" class="min-h-11 rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!!heldWhy" @click="useFromBar">{{ tr("使う", "Use") }}</button>
+          <span class="min-w-0 flex-1 line-clamp-2 text-[12px] leading-tight"><b class="text-amber-100">{{ nameOf(s.held.value!) }}</b><span v-if="s.omens.value.length" class="ml-1 text-orange-200">+ {{ s.omens.value.map((o) => nameOf(o)).join(tr("・", ", ")) }}</span></span>
+          <button v-if="s.log.value.length" type="button" class="g-btn sm min-h-11 shrink-0 whitespace-nowrap" :title="tr('直前の 1 手を取り消す', 'Undo the last step')" @click="s.undo()">{{ tr("戻す", "Undo") }}</button>
+          <button type="button" class="g-btn-red min-h-11 shrink-0 whitespace-nowrap px-2 text-[14px]" :disabled="!!heldWhy" @click="useFromBar">{{ tr("使う", "Use") }}</button>
           <!-- 離す = 大きめの × (2026-10-08 オーナー「バツボタン割とデカく」) -->
           <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" :title="tr('離す', 'Drop')" @click="s.hold(null)">×</button>
         </div>

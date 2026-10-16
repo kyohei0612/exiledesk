@@ -273,7 +273,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
         <div class="flex items-center gap-2">
           <img v-if="iconOf(key)" :src="iconOf(key)" alt="" class="h-9 w-9 object-contain" />
           <b class="min-w-0 flex-1 line-clamp-2 text-[12px] leading-tight text-amber-100">{{ nameOf(key) }}</b>
-          <button type="button" data-chaos-spam-hold class="shrink-0 whitespace-nowrap min-h-11 select-none touch-none rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!canSpam && !spamming" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ spamming ? tr("スパム中…", "Spamming…") : result && !result.hit && result.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押しっぱなしで使う", "Hold to use") }}</button>
+          <button type="button" data-chaos-spam-hold class="g-btn-red min-h-11 shrink-0 whitespace-nowrap select-none touch-none px-1 text-[13px]" :disabled="!canSpam && !spamming" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ spamming ? tr("スパム中…", "Spamming…") : result && !result.hit && result.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押しっぱなしで使う", "Hold to use") }}</button>
           <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" :title="tr('閉じる', 'Close')" @click="spamKey = null; result = null">×</button>
         </div>
       </div>
