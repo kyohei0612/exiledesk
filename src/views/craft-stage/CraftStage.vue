@@ -201,6 +201,8 @@ const heldChaos = computed(() => !s.replay.value && !!s.held.value && (SPAM_KEYS
 function openChaosSpam(): void {
   spamKey.value = s.held.value;
   spamPending.value = true;
+  // 手に持っている物は離す (スマホの「使う」の帯と、カオススパムの帯がぶつからないように。2026-10-16 オーナー)
+  s.hold(null);
   if (!s.aims.value.length) s.aimPicker.value = { seed: null };
   else void nextTick(() => scrollToTop(document.querySelector("[data-chaos-spam]"), "smooth", "center"));
 }

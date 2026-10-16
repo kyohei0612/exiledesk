@@ -154,6 +154,15 @@ function undoSpam(): void {
   snap = null;
   result.value = null;
 }
+/**
+ * スマホ: 押している間スパムのボタンは、いつもの「使う」と同じ画面の下の帯に出す (2026-10-16 オーナー「いつものつける時の動作で、
+ * つけるボタン押しっぱなしで反応」)。確率機から来た時 (spamKey) か、回している・結果がある時だけ。何か持っている時は「使う」の帯を優先
+ */
+const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
+const onResize = (): void => { phone.value = window.innerWidth < 768; };
+onMounted(() => window.addEventListener("resize", onResize));
+onBeforeUnmount(() => window.removeEventListener("resize", onResize));
+const barShown = computed(() => phone.value && !s.held.value && keys.value.length > 0 && (!!spamKey.value || spamming.value || !!result.value));
 const canSpam = computed(() => keys.value.length > 0 && targets.value.length > 0 && !!s.item.value && !aimDone(s.item.value, targets.value));
 const shownUses = computed(() => live.value?.uses ?? result.value?.uses ?? 0);
 const shownApplied = computed(() => live.value?.applied ?? result.value?.applied ?? 0);
@@ -189,7 +198,7 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
       </div>
       <!-- ③ 自分でスパム (押している間) -->
       <div class="mt-2 flex flex-wrap items-center gap-2">
-        <button type="button" data-chaos-spam-hold class="g-btn-red sm select-none touch-none" :disabled="!canSpam" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ spamming ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : result && !result.hit && result.sig === `${key}|${targets.map((t) => `${t.modId}#${t.minTierIndex}`).join(",")}` ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam") }}</button>
+        <button v-if="!barShown" type="button" data-chaos-spam-hold class="g-btn-red sm select-none touch-none" :disabled="!canSpam" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ spamming ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : result && !result.hit && result.sig === `${key}|${targets.map((t) => `${t.modId}#${t.minTierIndex}`).join(",")}` ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam") }}</button>
         <span v-if="spamming || result" class="tabular-nums text-[12px]">{{ tr(`${shownUses.toLocaleString()} 回`, `${shownUses.toLocaleString()} uses`) }}<template v-if="cost(shownApplied)"> · {{ cost(shownApplied) }}</template></span>
         <button v-if="result && !spamming" type="button" class="g-btn sm ml-auto" @click="undoSpam">{{ tr("スパムの前に戻す", "Undo the spam") }}</button>
       </div>
@@ -203,5 +212,21 @@ const shownApplied = computed(() => live.value?.applied ?? result.value?.applied
         <template v-else>{{ result.reason ?? tr(`${result.uses.toLocaleString()} 回打って、まだ付いていません`, `${result.uses.toLocaleString()} uses, not hit yet`) }}</template>
       </p>
     </template>
+    <!-- スマホ: 画面の下の帯 (「使う」の帯と同じ場所と見た目)。押しっぱなしでスパム -->
+    <Teleport to="body">
+      <div v-if="barShown" data-chaos-spam-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+        <p v-if="spamming || result" class="mb-1 truncate text-[12px] font-bold" :class="result?.hit ? 'text-emerald-300' : 'text-white/80'">
+          <template v-if="result?.hit && !spamming">{{ tr(`${result.uses.toLocaleString()} 回目で付きました！`, `Hit on use ${result.uses.toLocaleString()}!`) }}<template v-if="result.rank != null"> {{ tr(`上位 ${result.rank}%`, `Top ${result.rank}%`) }}</template></template>
+          <template v-else>{{ tr(`${shownUses.toLocaleString()} 回`, `${shownUses.toLocaleString()} uses`) }}<template v-if="cost(shownApplied)"> · {{ cost(shownApplied) }}</template></template>
+        </p>
+        <div class="flex items-center gap-2">
+          <img v-if="iconOf(key)" :src="iconOf(key)" alt="" class="h-9 w-9 object-contain" />
+          <b class="min-w-0 flex-1 line-clamp-2 text-[12px] leading-tight text-amber-100">{{ nameOf(key) }}</b>
+          <button v-if="result && !spamming" type="button" class="g-btn sm min-h-11" @click="undoSpam">{{ tr("戻す", "Undo") }}</button>
+          <button type="button" data-chaos-spam-hold class="min-h-11 select-none touch-none rounded-lg bg-amber-500/30 px-3 py-2 font-bold text-amber-50 ring-1 ring-amber-400/70 active:bg-amber-500/50 disabled:opacity-35" :disabled="!canSpam && !spamming" @pointerdown.prevent="startSpam" @pointerup="stopSpam" @pointercancel="stopSpam" @contextmenu.prevent>{{ spamming ? tr("スパム中…", "Spamming…") : tr("押しっぱなしで使う", "Hold to use") }}</button>
+          <button type="button" class="grid min-h-11 min-w-11 place-items-center rounded-lg border border-white/25 text-[22px] leading-none opacity-80" :title="tr('閉じる', 'Close')" @click="spamKey = null; result = null">×</button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
