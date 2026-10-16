@@ -11,12 +11,11 @@ import { fillModText } from "../services/htc/mod-text";
 import { tierDisplayRanges } from "../services/mods/stat-scale";
 import { essenceTarget } from "../services/craft-stage/apply-essence";
 import { essenceLevelOf } from "../vendor/poe2htc/optimizer/cost";
-import { enchantPool } from "../services/craft-stage/apply-vaal";
 import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../services/craft-stage/stage-runes";
 import { ruleLines } from "../services/augment-rules";
 import { maxQualityOf } from "../services/craft-stage/stage-core";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
-import { CHANCE_UNIQUE_P, isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
+import { isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
 import { CURRENCY_FLOOR, type PatchData } from "../vendor/poe2htc/engine/types";
 import { CATALYSTS as HTC_CATALYSTS } from "../services/htc/quality";
 import { enOf } from "./craft-stage-shelf";
@@ -82,10 +81,7 @@ const OMEN: Record<string, string[]> = {
   OmenoftheBlackblooded: ["次の骨の発現の候補を **クルガルの MOD だけ** にする", "武器・宝飾品・矢筒"],
   OmenofPutrefaction: ["次の骨は **フラクチャー以外の MOD を全部外し**、枠いっぱい (普通 6 つ) を未発現の MOD にして **コラプト** する", "発現で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)", "古びた骨でもティアの下限は掛からない"],
   OmenofAbyssalEchoes: ["次の発現で、候補 3 つを **1 回だけ引き直せる**", "引き直さなくても、その発現で使い切る"],
-  OmenofCorruption: ["次のヴァールオーブの「変化なし」を外す (残り 3 つから等しく)", "アクセサリーの 4 つ目 (ソケットの代わりの変化なし) は外れない", "0.5.0 で入手できなくなった"],
   OmenoftheBlessed: ["次の神のオーブは **暗黙 MOD だけ** を振り直す (明示 MOD は変わらない)"],
-  OmenofChance: ["次の可能性のオーブは **アイテムを壊さない**", "外れた時はノーマルのまま残る (オーブは使う)"],
-  OmenoftheAncients: ["次の可能性のオーブは、**必ず** 同じアイテムクラスのランダムなユニークになる (外れない)", "ベースもそのユニークのベースに変わる"],
   OmenofSanctification: ["次の神のオーブをレアに使うと **聖別** する: MOD ごとに 0.78〜1.22 倍 (0.01 刻み) を掛けて丸める", "聖別したアイテムは、以後手を加えられない"],
 };
 /** お告げの動き (英語の画面) */
@@ -114,10 +110,7 @@ const OMEN_EN: Record<string, string[]> = {
   OmenoftheBlackblooded: ["The next Abyssal Bone's reveal options are **Kurgal mods only**", "Weapons, jewellery and quivers"],
   OmenofPutrefaction: ["The next Abyssal Bone **removes all non-Fractured mods**, fills every slot (usually 6) with Unrevealed mods and **corrupts** the item", "Reveals only offer normal mods (no faction Desecrated mods)", "No tier floor even with an Ancient Jawbone / Rib / Collarbone"],
   OmenofAbyssalEchoes: ["On the next reveal, the 3 options can be **rerolled once**", "Consumed by that reveal even if you don't reroll"],
-  OmenofCorruption: ["Removes the \"no change\" outcome from the next Vaal Orb (equal among the other 3)", "The 4th jewellery outcome (no change instead of a socket) stays", "No longer obtainable since 0.5.0"],
   OmenoftheBlessed: ["The next Divine Orb rerolls **only implicit mods** (explicit mods unchanged)"],
-  OmenofChance: ["The next Orb of Chance **won't destroy the item**", "On failure the item stays Normal (the orb is still used)"],
-  OmenoftheAncients: ["The next Orb of Chance **always** upgrades it to a random Unique of the same Item Class (no failure)", "The base changes to that Unique's base"],
   OmenofSanctification: ["The next Divine Orb on a Rare **sanctifies** it: each mod is multiplied by x0.78-1.22 (0.01 steps) and rounded", "Sanctified items can't be modified afterwards"],
 };
 
@@ -241,27 +234,6 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       const n = item ? socketCapOf(item.base, item.cls.category) : 1;
       return [tr("マーシャル武器・ワンド・スタッフ・防具に **ソケットを 1 つ** 足す", "Adds **1 socket** to Martial Weapons, Wands, Staves and Armour"), n ? tr(`このベースは ${n} つまで (胴・両手武器 2 / ほか 1。コラプトで +1)`, `Up to ${n} on this base (Body Armour / Two Handed Weapon 2, others 1; +1 via corruption)`) : tr("このベース (アクセサリー・矢筒・フラスコ) には付けられない", "Can't be added to this base (jewellery, quivers, flasks)")];
     }
-    case "vaal": {
-      const pool = item ? enchantPool(item).length : 0;
-      if (isEn()) {
-        return [
-          "**Corrupts** the item. No further changes (except reveals)",
-          "One of 4 outcomes with equal chance (no public data, assumed equal):",
-          "1. No change",
-          "2. Rerolls 1-3 mods into new mods (Fractured mods stay)",
-          `3. Adds 1 Corrupted enchantment${pool ? ` (equal among ${pool} for this base)` : ""}`,
-          "4. Weapons / armour: +1 socket (can exceed the Artificer cap by 1); jewellery: no change",
-        ];
-      }
-      return [
-        "アイテムを **コラプト** する。以後手を加えられない (発現だけはできる)",
-        "結果は次の 4 つから等しく 1 つ (公開の実測が無いので等分と仮定):",
-        "① 変化なし",
-        "② MOD を 1〜3 つ、別の新しい MOD に振り直す (フラクチャーは残る)",
-        `③ ヴァールのエンチャントを 1 つ付ける${pool ? ` (このベースに付くのは ${pool} 種類から等しく)` : ""}`,
-        "④ 武器・防具はソケット +1 (熟練工の上限を 1 つ超えられる)、アクセサリーは変化なし",
-      ];
-    }
     case "desecrate":
     case "desecrate_ancient":
     case "desecrate_altered":
@@ -313,20 +285,6 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
   const extra = (isEn() ? EXTRA_HELP_EN[key] : null) ?? EXTRA_HELP[key];
   if (extra) return extra;
   if (key === "wisdom") return [tr("**未鑑定** のアイテムを鑑定する (隠れていた MOD が見える)", "Identifies an **unidentified** item (reveals its mods)"), tr("未鑑定のアイテムには、ほかのカレンシーは打てない", "Other currency can't be used on unidentified items")];
-  if (key === "chance") {
-    if (isEn()) {
-      return [
-        "Turns a **Normal** item into a **Unique** or **destroys** it (game description)",
-        `The Unique chance isn't public (**unconfirmed**, assumed ${Math.round(CHANCE_UNIQUE_P * 100)}%; set the result with the step outcome)`,
-        "The Unique is picked equally from this base's Uniques (no public weights)",
-      ];
-    }
-    return [
-      "**ノーマル** のアイテムを **ユニーク** にするか、**壊す** (クライアントの説明文)",
-      `ユニークになる確率は公開されていない (**未確定**、仮に ${Math.round(CHANCE_UNIQUE_P * 100)}%。手順の outcome で結果を指定できる)`,
-      "なるユニークはそのベースのユニークから等しく 1 つ (重みは公開値なし)",
-    ];
-  }
   if (JEWELLER_TO[key]) {
     const n = JEWELLER_TO[key];
     if (isEn()) return [`Sets a **Skill Gem** to have **${n} Support Gem Sockets** (all at once)`, `Only for gems with fewer than ${n} Support Gem Sockets`, "Can't be used on equipment"];

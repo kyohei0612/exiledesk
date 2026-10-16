@@ -139,12 +139,10 @@ export function onHtcPatchLoaded(cb: (d: PatchData) => void): void {
  */
 /** ジュエルの部位 → 液化した感情 (デリリウム) で付く物 / コラプトの付与 (jewel-bases.json) */
 let jewelEmotions: JewelBases["emotions"] = {};
-let jewelCorrupted: JewelBases["corrupted"] = {};
 let jewelEmotionNames: Record<string, string> = {};
 /** 液化した感情の日本語名 (クライアント)。無ければ null */
 export const jewelEmotionJa = (en: string): string | null => jewelEmotionNames[en] ?? null;
 export const jewelEmotionsOf = (cls: string): JewelBases["emotions"][string] => jewelEmotions[cls] ?? [];
-export const jewelCorruptedOf = (cls: string): JewelBases["corrupted"][string] | null => jewelCorrupted[cls] ?? null;
 
 /**
  * stat の id を持たない MOD (エッセンス・パーフェクトエッセンス・冒涜) の stat (2026-10-12、要望 6646644d
@@ -229,7 +227,6 @@ export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBa
   baseLimits = extra.baseLimits ?? {};
   baseInfo = { ...(extra.baseInfo ?? {}), ...(jewels?.baseInfo ?? {}) };
   jewelEmotions = jewels?.emotions ?? {};
-  jewelCorrupted = jewels?.corrupted ?? {};
   jewelEmotionNames = jewels?.emotionNames ?? {};
   extras = {
     generated: extra.generated,

@@ -3,7 +3,7 @@
  *
  * 名前はクライアントの文言表 (ClientStrings): SellWindowTitle「Disenchant / 解呪」、AdvancedCraftingBenchSalvageButton「Salvage / サルベージ」。
  * どちらもアイテムは無くなる (解呪の説明「これによりアイテムは破壊されます」)。
- *   - 解呪: 出る物は攻略の定番の説明 (マジック → 変成のシャード、レア → 王者のシャード、ユニーク → 可能性のシャード)。ノーマルは解呪できない扱い。
+ *   - 解呪: 出る物は攻略の定番の説明 (マジック → 変成のシャード、レア → 王者のシャード)。ノーマル・ユニークは解呪できない扱い (可能性のシャードは 2026-10-16 に外した)。
  *     **個数の出典なし (未確定)**。クライアントに解呪の表は書き出していないので 1 個と置く (DISPOSE_COUNT_CONFIRMED = false)
  *   - サルベージ: クライアントの説明文「品質またはソケットを持つ装備アイテムをサルベージし、品質カレンシーまたは熟練工のシャードにします」
  *     「アイテムは品質またはソケットを持っている必要があります」。ソケット → 熟練工のシャード、品質 → その装備の品質カレンシー
@@ -25,7 +25,7 @@ export const DISPOSE_COUNT = 1;
 export const DISPOSE_COUNT_CONFIRMED = false;
 
 /** 解呪で出るシャード (レアリティごと) */
-const DISENCHANT_TO: Record<string, string> = { magic: "transmute_shard", rare: "regal_shard", unique: "chance_shard" };
+const DISENCHANT_TO: Record<string, string> = { magic: "transmute_shard", rare: "regal_shard" };
 /** サルベージで出る品質カレンシー (装備の種類ごと) */
 function qualityCurrencyOf(category: string): string | null {
   if (inGroup(category, "martial")) return "whetstone";
@@ -45,7 +45,7 @@ export function applyDispose(item: StageItem, key: string): StageApply {
   if (isGem(item.cls.category) || isFlask(item.cls.category)) return skip(item, tr(`装備アイテムにだけ使える (${DISPOSE_JA[key]})`, `Equipment only (${key === "disenchant" ? "Disenchant" : "Salvage"})`));
   if (key === "disenchant") {
     const shard = DISENCHANT_TO[item.rarity];
-    if (!shard) return skip(item, tr("ノーマルのアイテムは解呪できない", "Normal items can't be disenchanted"));
+    if (!shard) return skip(item, tr("マジック・レアのアイテムだけ解呪できる", "Only Magic and Rare items can be disenchanted"));
     return { applied: true, item: { ...addShards(item, shard, DISPOSE_COUNT), disposed: "disenchant" }, added: [], removed: [] };
   }
   const q = item.quality > 0 ? qualityCurrencyOf(item.cls.category) : null;

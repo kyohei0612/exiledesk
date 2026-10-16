@@ -48,16 +48,6 @@ describe("エッセンスの段は普通の MOD の段 (要望 ㉝ の 4)", () =
 });
 
 describe("ユニーク・抽出・小数 (要望 ㉝ の 6 / 13 / 10)", () => {
-  it("古代のお告げでユニークになったらそのユニークのベースになる", async () => {
-    const { uniqueBaseOf } = await import("../src/services/craft-stage/stage-bases");
-    const data = await loadPatch();
-    for (let s = 1; s < 40; s++) {
-      const r = applyCurrency(data, freshItem(data, "Sapphire Ring", 82), "chance", mulberry32(s), ["OmenoftheAncients"], { outcome: "unique" });
-      expect(r.applied).toBe(true);
-      const want = uniqueBaseOf(r.item.unique!.en);
-      if (want) expect(r.item.base).toBe(want);
-    }
-  });
   it("抽出のオーブはソケットバウンドでないオーグメントを取り戻す", async () => {
     const data = await loadPatch();
     let it = { ...freshItem(data, "Warlord Cuirass", 82), sockets: 2 };

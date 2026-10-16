@@ -135,7 +135,7 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource =
     else if (st.after.disposed && !st.before.disposed) next = { kind: "up", color: COLOR.top, text: disposeText(st.before, st.after) };
     else if (act) next = st.after.corrupted && !st.before.corrupted ? { ...act, color: COLOR.corrupt, text: tr(`${act.text} — コラプト!`, `${act.text} — Corrupted!`) } : act;
     else if (extra) next = { kind: "up", color: COLOR.top, text: `${extra}${mods ? ` ${mods}` : ""}` };
-    else if (st.after.corrupted && !st.before.corrupted && o.currency !== "vaal") next = { kind: "up", color: COLOR.desecrated, text: tr("腐食!", "Putrefied!") };
+    else if (st.after.corrupted && !st.before.corrupted) next = { kind: "up", color: COLOR.desecrated, text: tr("腐食!", "Putrefied!") };
     else if (st.after.corrupted && !st.before.corrupted) next = { kind: "up", color: COLOR.corrupt, text: vaalText(st.before, st.after, st.added.length + st.removed.length) };
     else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: tr("聖別!", "Sanctified!") };
     // オーグメント (POE2Tube 要望 ㉘): 傑作のルーンで上げた / 置き換えた / はめた (ルーン・ソウルコア・アイドルは名前で)

@@ -31,17 +31,15 @@ export function sfxOf(key: string): string {
   if (key.startsWith("exalt")) return "exalt";
   if (key.startsWith("chaos")) return "chaos";
   if (key.startsWith("annul")) return "annul";
-  if (key.startsWith("chance")) return "chance";
   if (key.startsWith("fracture")) return "fracture";
   if (key.startsWith("vaal_infuser")) return "vaal-infuser";
-  if (key === "vaal" || key.startsWith("vaal_orb")) return "vaal";
   // 骨と発現 (アビスの UI の音)
   if (key.startsWith("desecrate") || key.startsWith("reveal:")) return "abyss";
   return "orb";
 }
 
 let ctx: AudioContext | null = null;
-const ALL = ["orb", "transmute", "alchemy", "regal", "exalt", "chaos", "annul", "chance", "fracture", "vaal", "vaal-infuser", "abyss", "rare"];
+const ALL = ["orb", "transmute", "alchemy", "regal", "exalt", "chaos", "annul", "fracture", "vaal-infuser", "abyss", "rare"];
 function context(): AudioContext | null {
   if (ctx) return ctx;
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;

@@ -85,9 +85,9 @@ export function aimCombos(data: PatchData, item: StageItem, keys: readonly strin
       const r = applyCurrency(data, item, k, mulberry32(1), om);
       // 当たり所で弾かれた (打つ前には分からない) 物は打てる手として残す。確率は aimOdds が弾かれた回も数えて出す
       if (!r.applied && !r.random) continue;
-      // コラプトさせる物 (ヴァールなど) は狙う手にしない。打てばその先クラフトできず、外れも当たりも狙いの役に立たない
+      // コラプトさせる物は狙う手にしない。打てばその先クラフトできず、外れも当たりも狙いの役に立たない
       // (2026-10-09 オーナー「ヴァールに関しては意味わからん」: 書き換えの目でまれに付くので 1 位に出ていた)
-      if (kind === "vaal" || (r.item.corrupted && !item.corrupted)) continue;
+      if (r.item.corrupted && !item.corrupted) continue;
       out.push({ currency: k, omens: kind === "desecrate" ? [...om, ECHOES] : om });
     }
   }

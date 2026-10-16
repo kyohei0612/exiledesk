@@ -4,7 +4,7 @@
  * オーナー:「カレンシーっていうかクラフトに使える奴全部だねこのステージは」。
  * オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーンは、説明文の分解 (spec/、ADR-004) で打つ。
  * 2026-10-16 に、ここに書き足していた例外の作り (オーブの switch・apply-other.ts・applyBone / applyEssence など) を外した。
- * ここに残るのは、まだ移していない物の振り分け: 指名で付ける手・アクト中の物・可能性・フラックス・ヴァールと聖別 ([[apply-vaal.ts]])・
+ * ここに残るのは、まだ移していない物の振り分け: 指名で付ける手・アクト中の物・フラックス・聖別 ([[apply-vaal.ts]])・
  * 液化した感情・処分・手で決める品質や暗黙の値。
  * お告げは持っている物を渡し、その手に関係する物だけ食う (omensUsed)。
  */
@@ -49,9 +49,9 @@ export const qualityCapKey = (n: number): string => `${QUALITY_CAP}${n}`;
 export function qualityCapOf(item: StageItem): number {
   return item.qualityCap ?? qualityFieldMax(item);
 }
-import { applySanctify, applyVaal } from "./apply-vaal";
-import { applyChance, applyJeweller, applyWisdom, collectShard, isShard, shardReason } from "./apply-act";
-import { isFlask, isGem, uniqueBaseOf, uniquesForBase, uniquesOfClassForBase } from "./stage-bases";
+import { applySanctify } from "./apply-vaal";
+import { applyJeweller, applyWisdom, collectShard, isShard, shardReason } from "./apply-act";
+import { isFlask, isGem, uniqueBaseOf } from "./stage-bases";
 import { itemBaseFor } from "../htc/bridge";
 import { jaTypeName } from "../trade2/localize";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
@@ -109,7 +109,7 @@ export function omensFor(currency: string, held: readonly string[]): string[] {
  */
 /**
  * hint: 手順の手の追加の指定 (要望 ⑧)。collect = シャードを拾う手 (手で打つ画面でアイテムに使う時は無し → 打てない)、
- * outcome = 可能性のオーブの結果を指定 ("unique" / "destroyed")
+ * outcome = 確率で分かれる物の結果を指定 (apply-extra.ts)
  */
 export interface ApplyHint {
   collect?: boolean;
@@ -123,7 +123,7 @@ export interface ApplyHint {
 }
 
 /**
- * ユニークになった (古代のお告げの可能性・ヴァール培養) 時は、そのユニークのベースに変える (説明文「同じアイテムクラスのランダムなユニーク」
+ * ユニークになった (ヴァール培養) 時は、そのユニークのベースに変える (説明文「同じアイテムクラスのランダムなユニーク」
  * = そのユニークのベースになる。2026-10-06 POE2Tube 要望 ㉝ の 6: サファイアの指輪 → ベレクの山道 なのにカードがサファイアの指輪のままだった)。
  * 計算機のベースに無いベースならそのまま
  */
@@ -146,7 +146,7 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // 解呪・サルベージ (要望 ⑰-5) は未鑑定・コラプトでもできる
   if (isDispose(currency)) return applyDispose(item, currency);
   if (item.identified === false && currency !== "wisdom") return skip(item, tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)"));
-  // ADR-004 (2026-10-16): 移し終えた手 (spec/run-spec.ts の specCovers) は説明文の分解で打つ。まだ移していない手 (ヴァール・聖別・可能性など) は下で
+  // ADR-004 (2026-10-16): 移し終えた手 (spec/run-spec.ts の specCovers) は説明文の分解で打つ。まだ移していない手 (聖別など) は下で
   const bySpec = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst, ...(hint.pick ? { pick: hint.pick } : {}), ...(hint.remove ? { remove: hint.remove } : {}) });
   if (bySpec) return bySpec;
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未発現の MOD の発現だけはできる (ゲームと同じ)
@@ -198,12 +198,10 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   // アクト中に落ちる物 (要望 ⑧、apply-act.ts)
   if (currency === "wisdom") return applyWisdom(item);
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
-  if (currency === "chance") return toUniqueBase(data, applyChance(item, rng, used.includes("OmenoftheAncients") ? uniquesOfClassForBase(item.base) : uniquesForBase(item.base), hint.outcome, used));
   if (isExtra(currency)) return toUniqueBase(data, applyExtra(item, currency, rng, hint.outcome));
   if (isFlux(currency)) return applyFlux(data, item, currency);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)"));
-  if (kind === "vaal") return applyVaal(data, item, rng, used);
   if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(data, item, rng);
   // オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーンは説明文の分解 (spec/) で打つ (ADR-004、2026-10-16 に今の関数から外した)
   return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`));

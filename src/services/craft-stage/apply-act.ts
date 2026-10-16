@@ -6,14 +6,14 @@
  *   - シャード 4 種「A stack of 10 shards becomes an Orb of …」→ 10 個で 1 個のオーブ。アイテムには使えない
  *     (手順の shard の手 = 1 個拾う。棚の個数 (item.shards) が 10 になるとオーブに変わる)
  *   - 宝飾職人のオーブ (見習い / 上級)「Sets a Skill Gem to have 3 / 4 Support Gem Sockets … fewer than 3 / 4」
- *   - 品質 4 種 (砥石 = martial weapon / 端材 = armour / 飾り玉 = flask / プリズム = skill gem) と可能性のオーブは
- *     数値の出典 (上がり幅・確率) を ADR-001 に書く (apply-act-quality.ts)
+ *   - 品質 4 種 (砥石 = martial weapon / 端材 = armour / 飾り玉 = flask / プリズム = skill gem) は
+ *     数値の出典 (上がり幅) を ADR-001 に書く (apply-act-quality.ts)
+ *   - 可能性のオーブ (と可能性・古代のお告げ) は 2026-10-16 に削除 (オーナー「可能性もなし」)
  */
 import type { StageApply, StageItem } from "./types";
 import { skip } from "./stage-core";
 import { isGem } from "./stage-bases";
 import { type ItemGroup } from "../mods/item-classes";
-import { jaOfOmen } from "../htc/labels";
 import { tr } from "../../i18n/lang";
 
 /** シャードのキー → 揃った時に変わるオーブのキー (クライアントの full_stack_turns_into) */
@@ -21,7 +21,6 @@ export const SHARD_TO_ORB: Record<string, string> = {
   transmute_shard: "transmute",
   regal_shard: "regal",
   artificer_shard: "artificer",
-  chance_shard: "chance",
 };
 /** 何個で 1 個になるか (クライアントの stack_size。4 種とも 10) */
 export const SHARDS_PER_ORB = 10;
@@ -84,32 +83,3 @@ export const QUALITY_STEP_ITEM_ROLLS: readonly number[] = [1, 2];
 export const QUALITY_STEP_CONFIRMED = true;
 
 
-// ---- 可能性のオーブ ------------------------------------------------------------------------------------------------
-// クライアントの説明文「Unpredictably either upgrades a Normal item to Unique rarity or destroys it」: ノーマルにだけ、ユニークか破壊。
-// なるユニークは そのベースのユニーク (src/i18n/vaal-enchants.json の uniques、ベースごと)。ユニークの間の重みは公開値なし → 等分
-/**
- * ユニークになる確率。**公開値なし (未確定)**。maxroll も「非公開のレアリティの段で決まる」とだけ書く。
- * 動画では手順の outcome ("unique" / "destroyed") で結果を指定する前提。指定が無い時だけこの仮の値で引く
- */
-export const CHANCE_UNIQUE_P = 0.1;
-export const CHANCE_P_CONFIRMED = false;
-
-/**
- * お告げ (2026-10-05): 可能性のお告げ = 壊さない (外れてもノーマルのまま残る)。古代人のお告げ = 同じアイテムクラスのランダムなユニーク
- * (候補は呼ぶ側が同じクラスの全部を渡す。ベースはそのユニークのベースに変わる: apply-currency.ts の toUniqueBase、要望 ㉝ の 6)
- */
-export function applyChance(item: StageItem, rng: () => number, uniques: Array<{ en: string; ja: string }>, outcome?: string, used: readonly string[] = []): StageApply {
-  if (item.rarity !== "normal") return skip(item, tr("ノーマルのアイテムにだけ使える", "Normal items only"));
-  if (!uniques.length) return skip(item, tr("このベースのユニークが無い", "No Unique for this base"));
-  // 古代のお告げは「次の可能性のオーブはアイテムを同じアイテムクラスのランダムなユニークにアップグレードする」(説明文のまま、外れは無い。
-  // 2026-10-13 要望 bfe2e1e5「各種お告げを使っても変化無しや壊れる事がある」: 前は普通の可能性のオーブと同じく 1 割で、外れると壊れていた)
-  const ancients = used.includes("OmenoftheAncients");
-  const win = ancients || outcome === "unique" ? true : outcome === "destroyed" ? false : rng() < CHANCE_UNIQUE_P;
-  if (!win) {
-    if (used.includes("OmenofChance")) return { applied: true, item, added: [], removed: [], note: tr("可能性のお告げ: ユニークにはならなかったが、壊れずにノーマルのまま残った", "Omen of Chance: no Unique, but the item stayed Normal instead of being destroyed") };
-    return { applied: true, item: { ...item, destroyed: true }, added: [], removed: [] };
-  }
-  const u = uniques[Math.floor(rng() * uniques.length)]!;
-  const note = used.includes("OmenoftheAncients") ? tr(`${jaOfOmen("OmenoftheAncients") ?? "古代のお告げ"}: 同じ種類のユニーク ${uniques.length} 種類から選んだ`, `Omen of the Ancients: picked from ${uniques.length} Uniques of the same Item Class`) : undefined;
-  return { applied: true, item: { ...item, rarity: "unique", unique: u, prefixes: [], suffixes: [] }, added: [], removed: [], ...(note ? { note } : {}) };
-}
