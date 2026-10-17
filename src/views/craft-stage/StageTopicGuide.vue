@@ -78,7 +78,7 @@ const example = computed(() => {
 const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**").map((t, i) => ({ t, b: i % 2 === 1 }));
 /** 押すと持つ (お告げも掛ける)。発現の反響は掛けるだけ */
 /** 次へ: 次の手に進み、打てるアイテムを用意する */
-function next(): void { topicNext(); prepareStep(); }
+function next(): void { s.hold(null); topicNext(); prepareStep(); } // 次へで持っている物は離す (2026-10-17 オーナー)
 function holdIt(): void {
   if (topicUsed.value) return; // 1 つの手は 1 回だけ (もう一度はボタンで)
   prepareStep(); // 今のアイテムにこの手が打てなければ、ここで打てるアイテムを用意する
