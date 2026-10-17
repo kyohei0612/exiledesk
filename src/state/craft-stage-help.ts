@@ -145,14 +145,14 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (isEn()) {
       return [
         `Raises the quality of **${t.en}** (max ${QUALITY_MAX}%)${key === "etcher" ? ". For wands, staves and sceptres (Blacksmith's Whetstone is for martial weapons)" : ""}${key === "whetstone" ? ". Martial weapons = bows, crossbows, maces, quarterstaves, spears, talismans (not wands, sceptres or staves)" : ""}`,
-        `+${key === "gemcutter" ? st.gem : st.item}% per use (any rarity; checked in game)`,
-        key === "whetstone" ? "Each 1% quality gives 1% more Physical Damage (Quality on poe2db)" : key === "scrap" ? "Each 1% quality gives 1% more Armour / Evasion / Energy Shield" : key === "bauble" ? "Each 1% quality gives 1% more Life / Mana recovery" : "Quality effects differ per gem",
+        key === "gemcutter" || key === "bauble" ? `+${key === "gemcutter" ? st.gem : st.item}% per use (any rarity; checked in game)` : "**+1% or +2%** per use (random, even odds)",
+        key === "whetstone" ? "Each 1% quality gives 1% more Physical Damage (Quality on poe2db)" : key === "scrap" ? "Each 1% quality gives 1% more Armour / Evasion / Energy Shield" : key === "bauble" ? "Each 1% quality gives 1% more Life / Mana recovery" : key === "etcher" ? "Quality boosts the weapon's granted skill (the bonus differs per skill), not its mods" : "Quality effects differ per gem",
       ];
     }
     return [
       `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "etcher" ? "。ワンド・スタッフ・セプター用 (砥石はマーシャル武器用)" : ""}${key === "whetstone" ? "。マーシャル武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
-      `1 回で +${key === "gemcutter" ? st.gem : st.item}% (レアリティに関係なし。ゲームで確認)`,
-      key === "whetstone" ? "品質 1% ごとに物理ダメージが 1% 増える (poe2db の Quality)" : key === "scrap" ? "品質 1% ごとにアーマー・回避力・エナジーシールドが 1% 増える" : key === "bauble" ? "品質 1% ごとにライフ・マナの回復量が 1% 増える" : "品質の効果はジェムごとに違う",
+      key === "gemcutter" || key === "bauble" ? `1 回で +${key === "gemcutter" ? st.gem : st.item}% (レアリティに関係なし。ゲームで確認)` : "1 回で **+1% か +2%** (ランダム、半々)",
+      key === "whetstone" ? "品質 1% ごとに物理ダメージが 1% 増える (poe2db の Quality)" : key === "scrap" ? "品質 1% ごとにアーマー・回避力・エナジーシールドが 1% 増える" : key === "bauble" ? "品質 1% ごとにライフ・マナの回復量が 1% 増える" : key === "etcher" ? "品質は武器に付いているスキルを強くする (上がる物はスキルごとに違う)。MOD には効かない" : "品質の効果はジェムごとに違う",
     ];
   }
   // 2026-09-29 に足した物 (apply-extra.ts)。確率は公開されていないので仮
@@ -181,14 +181,14 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     const max = item ? maxQualityOf(item) : 20;
     if (isEn()) {
       return [
-        `Raises the quality of **Rings and Amulets** **to the cap in one go (${max}% on this item)**. Counted as +1% per Catalyst (in game 1-2% each, mostly 1%)`,
+        `Raises the quality of **Rings and Amulets** by **+1% or +2%** per Catalyst (random, even odds; up to ${max}% on this item)`,
         "The quality type comes from the Catalyst. **Using a different type restarts quality from 0**",
         "With Omen of Catalysing Exaltation, mods of that type become more likely (quality is consumed). Stacked with Greater Exaltation, both mods are weighted",
       ];
     }
     return [
       // 上限はベースの最大品質 + MOD の「品質の最大値 +N%」(ブリーチのエッセンス) なので「このベースで」ではなく「今のアイテムで」
-      `**指輪・アミュレット** の品質を **1 回で上限 (今のアイテムで ${max}%) まで** 上げる。使う数は 1 個 +1% で数える (ゲームは 1 個で 1〜2%、ほとんど 1%)`,
+      `**指輪・アミュレット** の品質を 1 個で **+1% か +2%** 上げる (ランダム、半々。上限は今のアイテムで ${max}%)`,
       "品質の種類はカタリストで決まる。**別の種類を使うと品質は 0 からやり直し**",
       "触媒の高貴のお告げと組むと、その種類の MOD が付きやすくなる (品質は使い切る)。大いなる高貴のお告げも重ねると 2 つとも付きやすくなる",
     ];

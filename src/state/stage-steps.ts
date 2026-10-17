@@ -17,7 +17,7 @@ export const fullSockets = (it: StageItem): StageItem => {
   const want = baseSocketsOf(it.base, it.cls.category);
   return want > (it.sockets ?? 0) ? { ...it, sockets: want } : it;
 };
-/** 打った手 1 つを手順 JSON の 1 手に。カタリストは手で打つと 1 手で上限まで、再生は 1 手 = 1 個 (+1%)。上げた分の回数で書く (2026-10-10 点検: 再生で品質が違った) */
+/** 打った手 1 つを手順 JSON の 1 手に。カタリストは手で打つと 1 個 +1〜2%、再生は 1 手 = 1 個 (+1%)。上げた分の回数で書く (2026-10-10 点検: 再生で品質が違った) */
 export function planStepOf(s: PlayedStep): PlanStep {
   const times = s.out.currency.startsWith("catalyst_") || s.out.currency.startsWith("jcatalyst_") ? Math.max(1, (s.after.quality ?? 0) - (s.before.qualityTag === s.after.qualityTag ? s.before.quality ?? 0 : 0)) : 1;
   return { currency: s.out.currency, omen: s.out.omen ?? null, times, note: null, ...(s.out.seed != null ? { seed: s.out.seed } : {}) } as PlanStep;

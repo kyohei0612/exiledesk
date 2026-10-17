@@ -124,7 +124,7 @@ export interface ApplyHint {
   pick?: Force[];
   /** 消える MOD の指名 (カオス) */
   remove?: string;
-  /** 手順の再生: カタリストは 1 手 = 1 個 (手で打つ画面は 1 手で上限まで。要望 ㉜ の 2) */
+  /** 手順の再生: カタリストは 1 手 = 1 個 +1% (手で打つ画面は 1 個 +1〜2%) */
   oneCatalyst?: boolean;
 }
 

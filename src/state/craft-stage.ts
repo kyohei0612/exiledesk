@@ -422,7 +422,7 @@ export const craftStage = {
       })(),
       seed: seed.value,
       // 手ごとの乱数 (seed) も書く (2026-10-09 から手ごとに新しい乱数。再生はこれを使う。追加のキー = outcome / pick と同じ扱い)
-      // カタリストは手で打つと 1 手で上限まで、再生は 1 手 = 1 個 (+1%)。上げた分の回数で書く (2026-10-10 点検: 再生で品質が違った)
+      // カタリストは手で打つと 1 個 +1〜2%、再生は 1 手 = 1 個 (+1%)。上げた分の回数で書く (2026-10-10 点検: 再生で品質が違った)
       // Web で 50 手より前に消した手も頭に付ける (dropped)
       steps: (log.value.length || dropped.value.length ? [...dropped.value.map((d) => d.step), ...log.value.map(planStepOf)] : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
     };

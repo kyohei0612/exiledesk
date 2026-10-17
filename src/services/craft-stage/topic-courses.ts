@@ -127,9 +127,9 @@ export const TOPIC_COURSES: TopicCourse[] = [
     steps: [
       S("transmute", ["マジックに", "Make it magic"]),
       S("regal", ["レアに", "Rare"]),
-      S("catalyst_fire", ["火の品質を上限まで", "Fire quality to the cap"]),
+      S("catalyst_fire", ["火の品質 +1〜2%", "Fire quality +1–2%"]),
       S("exalt", ["火の MOD が出やすい・品質は消える", "Fire mods more likely, quality used up"], ["OmenofCatalysingExaltation"]),
-      S("catalyst_cold", ["種類を替えると品質は 0 から", "New type restarts from 0"]),
+      S("catalyst_cold", ["種類を替えると品質は 0 から", "A new type restarts from 0"]),
       S("catalyst_lightning", ["雷", "Lightning"]),
       S("catalyst_chaos", ["混沌", "Chaos"]),
       S("catalyst_physical", ["物理", "Physical"]),

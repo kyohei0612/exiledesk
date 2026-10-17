@@ -13,7 +13,7 @@ describe("触媒の高貴のお告げ + 大いなる高貴のお告げ", () => {
     let it0 = freshItem(data, "Gold Ring", 82);
     it0 = applyCurrency(data, it0, "transmute", mulberry32(3)).item;
     it0 = applyCurrency(data, it0, "regal", mulberry32(4)).item;
-    it0 = applyCurrency(data, it0, "catalyst_life", mulberry32(5)).item;
+    for (let i = 0; i < 30; i++) it0 = applyCurrency(data, it0, "catalyst_life", mulberry32(5 + i)).item; // 上限まで (1 個 +1〜2%)
     expect(it0.quality).toBeGreaterThan(0);
     const lifeRate = (omens: string[]) => {
       let hit = 0, n = 0;

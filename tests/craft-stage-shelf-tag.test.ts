@@ -78,7 +78,7 @@ describe("祝福のお告げ (2026-10-05)・ヴァールと可能性は打てな
 });
 
 describe("手順のカタリストは 1 手 = 1 個 (要望 ㉜ の 2)", () => {
-  it("手順の再生では品質 +1% ずつ、手で打つ (hint 無し) は上限まで", async () => {
+  it("手順の再生では品質 +1% ずつ、手で打つ (hint 無し) は 1 個 +1〜2%", async () => {
     const { loadPatch } = await import("./helpers/patch");
     const { freshItem } = await import("../src/services/craft-stage/run-plan");
     const { applyCurrency } = await import("../src/services/craft-stage/apply-currency");
@@ -88,7 +88,9 @@ describe("手順のカタリストは 1 手 = 1 個 (要望 ㉜ の 2)", () => {
     const one = applyCurrency(data, it0, "catalyst_life", mulberry32(1), [], { oneCatalyst: true });
     expect(one.applied).toBe(true);
     expect(one.item.quality).toBe(1);
-    const all = applyCurrency(data, it0, "catalyst_life", mulberry32(1));
-    expect(all.item.quality).toBe(20);
+    // 手で打つ (hint 無し) は 1 個で +1% か +2% (2026-10-17 オーナー「1% から 2% の完全ランダムで手動で」)
+    const seen = new Set<number>();
+    for (let s = 1; s <= 40; s++) seen.add(applyCurrency(data, it0, "catalyst_life", mulberry32(s)).item.quality);
+    expect([...seen].sort()).toEqual([1, 2]);
   });
 });

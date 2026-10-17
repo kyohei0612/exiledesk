@@ -58,7 +58,7 @@ const CATALYST_WORDS: Readonly<Record<string, Words>> = {
 };
 const CATALYST_SOURCE: Source = {
   client: "currency-hover の説明文 (指輪またはアミュレット / ジュエル、他の品質の種類を置き換える)",
-  owner: "1 手で上限まで (使った数 = 上げた品質 ÷ 1%)、手順の再生は 1 手 1 個 (2026-10-05・要望 ㉜ の 2)",
+  owner: "手で打つと 1 個で +1% か +2% (等分、2026-10-17 オーナー「1% から 2% の完全ランダムで手動で」)、手順の再生は 1 手 1 個 +1%",
   coe: "種類が変わると品質は 0 から (package_poe2.js Item.addQuality、2026-10-16)",
 };
 const squash = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, "");

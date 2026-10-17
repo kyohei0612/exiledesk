@@ -53,7 +53,7 @@ export interface PartCtx {
   essence?: { mod: StageMod; side: StageSide; clash: (it: StageItem) => boolean } | null;
   /** 触媒の品質の種類 (タグ) */
   catalystTag?: string | null;
-  /** 手順の再生: 触媒は 1 手 = 1 個 (手で打つ画面は 1 手で上限まで) */
+  /** 手順の再生: 触媒は 1 手 = 1 個 +1% (手で打つ画面は 1 個 +1〜2%) */
   oneCatalyst?: boolean;
   /** ルーンの手の鍵 (rune:<英語名>@n) */
   runeKey?: string;
@@ -458,8 +458,9 @@ function quality(ctx: PartCtx, item: StageItem, a: Quality): StageApply {
 }
 
 /**
- * 触媒の品質: 種類を変えると 0 から (「Replaces other quality types」)。手で打つ画面は 1 手で上限まで (使った数は count)、
- * 手順の再生は 1 手 = 1 個 (2026-10-05 オーナー・要望 ㉜ の 2)。上限はベースの最大品質 + 「品質の最大値 +N%」の MOD
+ * 触媒の品質: 種類を変えると 0 から (「Replaces other quality types」)。手で打つ画面は 1 個ずつ +1% か +2% (等分。
+ * 2026-10-17 オーナー「1% から 2% の完全ランダムで手動で」。前は 1 手で上限まで)。
+ * 手順の再生は 1 手 = 1 個 +1% (手順の times は上げた分の数で書く)。上限はベースの最大品質 + 「品質の最大値 +N%」の MOD
  */
 function catalyst(ctx: PartCtx, item: StageItem): StageApply {
   const tag = ctx.catalystTag!;
@@ -468,10 +469,12 @@ function catalyst(ctx: PartCtx, item: StageItem): StageApply {
   const extra = hasExtraCatalyst(item.base);
   const base = item.qualityTag === tag ? catalystOf(item).pct : 0;
   const put = (n: number): StageItem => (extra ? { ...item, catalystQuality: n, qualityTag: tag } : { ...item, quality: n, qualityTag: tag });
-  if (ctx.oneCatalyst) return { applied: true, item: put(Math.min(max, base + QUALITY_PER_CATALYST)), added: [], removed: [] };
-  const count = Math.ceil((max - base) / QUALITY_PER_CATALYST);
-  return { applied: true, item: put(max), added: [], removed: [], count };
+  const step = ctx.oneCatalyst ? QUALITY_PER_CATALYST : CATALYST_ROLLS[Math.floor(ctx.rng() * CATALYST_ROLLS.length)]!;
+  return { applied: true, item: put(Math.min(max, base + step)), added: [], removed: [] };
 }
+
+/** 手で打つ触媒 1 個で上がる品質 (等分) */
+const CATALYST_ROLLS = [1, 2] as const;
 
 /** 部品を 1 つ打つ */
 export function runPart(ctx: PartCtx, item: StageItem, a: Action): StageApply {

@@ -65,7 +65,7 @@ describe("グラスピングメイルはカタリストも使える (ベース�
     const g = { ...freshItem(data, "Grasping Mail", 82), quality: 15 };
     const r = applyCurrency(data, g, "catalyst_life", mulberry32(1));
     expect(r.applied, r.reason).toBe(true);
-    expect(r.item.catalystQuality).toBe(20);
+    expect([1, 2]).toContain(r.item.catalystQuality); // 1 個 +1〜2% (2026-10-17)
     expect(r.item.qualityTag).toBe("life");
     expect(r.item.quality).toBe(15);
     expect(applyCurrency(data, freshItem(data, "Grand Regalia", 82), "catalyst_life", mulberry32(1)).applied).toBe(false);

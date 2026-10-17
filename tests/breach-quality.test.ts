@@ -13,7 +13,7 @@ it("最大品質の MOD を消しても品質は残る", () => {
   expect(f.applied, f.reason).toBe(true);
   it0 = f.item;
   expect(maxQualityOf(it0)).toBe(40);
-  it0 = applyCurrency(data, it0, "catalyst_fire", () => 0.5).item;
+  for (let i = 0; i < 40; i++) it0 = applyCurrency(data, it0, "catalyst_fire", () => 0.5).item; // 1 個 +1〜2% (2026-10-17)
   expect(it0.quality).toBe(40);
   it0 = applyForce(data, it0, forceKey("Rings/PerfectEssence_LocalMaximumQuality", null, "x"), () => 0.5).item;
   expect(allMods(it0).some((m) => m.modId === "Rings/PerfectEssence_LocalMaximumQuality")).toBe(false);
