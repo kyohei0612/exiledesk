@@ -57,7 +57,7 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
     <template v-for="lv in LEVELS.filter((x) => OPEN_LEVELS.includes(x.n))" :key="lv.n">
       <div v-if="TOPIC_COURSES.some((c) => c.level === lv.n)" class="flex flex-col gap-2">
         <p class="flex items-center gap-2"><span class="rounded px-2 py-0.5 text-[12px] font-bold" :class="lv.chip">{{ t2(lv.label) }}</span><span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ t2(lv.note) }}</span></p>
-        <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
+        <div class="grid grid-cols-2 items-start gap-3 max-md:grid-cols-1">
           <!-- カード: 上を押すと 1 手目から、下の手の一覧を押すとその手から (2026-10-17 オーナー「入門でコレ知りたい時もある、コース一覧で手を表示」) -->
           <div v-for="c in TOPIC_COURSES.filter((x) => x.level === lv.n)" :key="c.id" data-topic-card-box :data-course="c.id" class="flex min-w-0 flex-col rounded-xl border-2 bg-white/[0.03]" :class="lv.ring">
             <!-- 上は表示だけ。進めるのは「始める」と「コース一覧を見る」の 2 つ (2026-10-17 オーナー「それ以外はクリックできないように、基本その 2 ボタンで進行」) -->
