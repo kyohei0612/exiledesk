@@ -60,7 +60,8 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
         <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <!-- カード: 上を押すと 1 手目から、下の手の一覧を押すとその手から (2026-10-17 オーナー「入門でコレ知りたい時もある、コース一覧で手を表示」) -->
           <div v-for="c in TOPIC_COURSES.filter((x) => x.level === lv.n)" :key="c.id" data-topic-card-box :data-course="c.id" class="flex min-w-0 flex-col rounded-xl border-2 bg-white/[0.03]" :class="lv.ring">
-            <button type="button" data-topic-card class="g-plain flex min-w-0 flex-col items-start gap-1.5 rounded-t-xl px-4 py-3 text-left transition hover:bg-white/[0.06]" :disabled="!s.data.value" @click="startTopicAt(c, 0)">
+            <!-- 上は表示だけ。進めるのは「始める」と「コース一覧を見る」の 2 つ (2026-10-17 オーナー「それ以外はクリックできないように、基本その 2 ボタンで進行」) -->
+            <div data-topic-card class="flex min-w-0 flex-col items-start gap-1.5 px-4 py-3">
               <span class="flex w-full items-center gap-2">
                 <b class="min-w-0 truncate text-[16px] text-[var(--exile-color-text-title)]">{{ t2(c.title) }}</b>
                 <span v-if="cleared.has(`topic:${c.id}`)" data-cleared class="shrink-0 rounded bg-amber-400 px-2 py-0.5 text-[11px] font-black text-black">{{ tr("クリア", "Cleared") }}</span>
@@ -68,8 +69,12 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
               </span>
               <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ t2(c.learn) }}</span>
               <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("使うベース", "Base") }}: {{ baseName(c.base) }}</span>
-            </button>
-            <button type="button" data-topic-card-toggle class="g-plain flex items-center gap-1 border-t border-white/10 px-4 py-1.5 text-left text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04]" :aria-expanded="openSteps === c.id" @click="toggleSteps(c.id)"><Icon :name="openSteps === c.id ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ openSteps === c.id ? tr("コース一覧を閉じる", "Hide the steps") : tr("コース一覧を見る (押すとその手から)", "Show the steps (click one to start there)") }}</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 border-t border-white/10 px-4 py-2">
+              <button type="button" data-topic-start class="g-btn-red sm" :disabled="!s.data.value" @click="startTopicAt(c, 0)">{{ tr("始める", "Start") }}</button>
+              <button type="button" data-topic-card-toggle class="g-btn sm inline-flex items-center gap-1" :aria-expanded="openSteps === c.id" @click="toggleSteps(c.id)"><Icon :name="openSteps === c.id ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ openSteps === c.id ? tr("コース一覧を閉じる", "Hide the steps") : tr("コース一覧を見る", "Show the steps") }}</button>
+              <span v-if="openSteps === c.id" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("押すとその手から始める", "Click a step to start there") }}</span>
+            </div>
             <ol v-if="openSteps === c.id" data-topic-card-steps class="columns-2 gap-x-2 px-3 pb-2 max-md:columns-1">
               <li v-for="(st, i) in c.steps" :key="i" class="mb-0.5 break-inside-avoid">
                 <button type="button" class="g-plain flex w-full min-w-0 items-center gap-1.5 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :disabled="!s.data.value" :title="tr('この手から始める', 'Start from this step')" @click="startTopicAt(c, i)">
