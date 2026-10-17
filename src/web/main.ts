@@ -5,6 +5,7 @@ import "../style.css";
 import WebApp from "./WebApp.vue";
 import { startTracking } from "./track";
 import { startLogSender } from "../services/telemetry/log-sender";
+import { startPwa } from "./pwa";
 import { applyNoLogParam, noLog } from "../utils/no-log";
 import { initRecParts } from "../utils/rec-mode";
 import { setMarketLoader } from "../state/market-store";
@@ -27,6 +28,8 @@ createApp(WebApp).mount("#app");
 watchEffect(() => { document.title = tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator"); });
 // 分析用の記録 (開発中は送らない)
 if (!import.meta.env.DEV) startLogSender("web");
+// ホーム画面に追加 (PWA) とオフライン (public/sw.js)。開発中は登録しない (2026-10-17)
+if (!import.meta.env.DEV) startPwa();
 // 開発版だけ: 画面の幅からはみ出した物に赤い枠 (utils/overflow-guard.ts、2026-10-13)
 if (import.meta.env.DEV) void import("../utils/overflow-guard").then((m) => m.startOverflowGuard());
 // Web Analytics (訪問数)。記録しない端末と開発中は読み込まない (前は web.html に直に書いていて、オーナーの PC の訪問も数えていた)

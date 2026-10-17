@@ -56,6 +56,8 @@
     <!-- ホーム画面に追加した時のアイコンはアプリ (PC) と同じ絵 (2026-10-10 オーナー「ホーム追加した時ダサい」) -->
     <link rel="apple-touch-icon" href="/web/apple-touch-icon.png" />
     <link rel="manifest" href="/web/manifest.webmanifest" />
+    <!-- ホーム画面に追加 (PWA): ブラウザの知らせは画面の JS より先に来ることがあるので、ここで取っておく (src/web/pwa.ts が拾う。2026-10-17) -->
+    <script>addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); window.__bip = e; });</script>
     <meta name="apple-mobile-web-app-title" content="ExileDesk" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Path of Exile 2 のクラフトを日本語で 1 手ずつ試せる無料ツール。カレンシー・骨・お告げ・エッセンス・デリリウムをゲームと同じ決まりで。カオススパムで狙いの MOD が付くまでの回数と運も分かる。" />
