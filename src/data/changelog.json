@@ -15,7 +15,8 @@
     "text": "アイテムの MOD の行の ↓ をなくしました。MOD を押すと MOD 一覧が開き、付いている段を枠で囲んで見せます",
     "en": "Removed the ↓ on item mod rows. Clicking a mod opens the mod list with its current tier framed"
    }
-  ]
+  ],
+  "pop": true
  },
  {
   "v": "0.1.556",
