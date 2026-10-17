@@ -1,5 +1,8 @@
 {
  "_": "changelog-notes.json の英語 (同じ版・同じ順。2026-10-17 英語の仕上げ)。ゲームの用語はクライアントの英語の原文",
+ "0.1.555": [
+  "Desecrated mod rows now look like on the trade site (green bands on the sides), use the same text colour as other mods, and are listed at the bottom"
+ ],
  "0.1.554": [
   "Revealing Desecrated mods now looks like the in-game Well of Souls: Abyss frame and emblem, pick an option and press Reveal, tiers shown on each option. Reroll with the arrow at the bottom right when Omen of Abyssal Echoes is applied",
   "Unrevealed Desecrated mods on the item now show as green scrambled text, like in the game",

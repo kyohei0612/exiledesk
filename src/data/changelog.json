@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.555",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "冒涜の MOD の行をトレードと同じ見た目に (左右に緑の帯)。文字はほかの MOD と同じ色にして、MOD 一覧の一番下に並べるように",
+    "en": "Desecrated mod rows now look like on the trade site (green bands on the sides), use the same text colour as other mods, and are listed at the bottom"
+   }
+  ]
+ },
+ {
   "v": "0.1.554",
   "date": "2026-10-17",
   "items": [
@@ -626,48 +638,6 @@
     "area": "",
     "text": "3 属性の兜・手袋・靴・鎧とタリスマンで、一部の段の確率が 0 になっていた MOD (最大ライフ・耐性・アイテムレアリティなど) を直しました",
     "en": "Fixed some tiers having 0% odds (maximum life, resistances, item rarity etc.) on tri-attribute helmets, gloves, boots, body armours and talismans"
-   }
-  ]
- },
- {
-  "v": "0.1.515",
-  "date": "2026-10-15",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "「次の手で狙う」: 効かないお告げ (プレが埋まっている時の右手のネクロマンシーなど) は出さないように。お告げの有る無しで数字がずれていたのも直しました",
-    "en": "\"Aim with the next move\": omens that have no effect (e.g. Dextral Necromancy with full prefixes) are no longer listed. Also fixed numbers differing with and without an omen"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "「次の手で狙う」: 各行の ▾ で、その数字をどう回して数えたかを見られるように",
-    "en": "\"Aim with the next move\": the ▾ on each row shows how the number was simulated"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "「次の手で狙う」: カオスオーブも候補に (カオススパム: 今の MOD が消えても狙いが揃えば当たり)",
-    "en": "\"Aim with the next move\": Chaos Orbs are now candidates too (chaos spam: a hit counts even if current mods are removed, as long as the targets line up)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "上級・完全のカレンシーのカードの頭に「MOD レベル ◯ 以上だけ付く」を大きく出すように",
-    "en": "Greater / Perfect currency cards now show \"Only mod level ◯+ tiers\" prominently at the top"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "50 手を超えると、アビスの反響の引き直しボタンが出なくなることがあったのを直しました",
-    "en": "Fixed the Abyssal Echoes reroll button sometimes not appearing after more than 50 steps"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "50 手を超えた手順を送ると、頭の手が抜けて再生しても同じアイテムにならなかったのを直しました",
-    "en": "Fixed shared steps beyond 50 losing the first steps so the replay produced a different item"
    }
   ]
  }
