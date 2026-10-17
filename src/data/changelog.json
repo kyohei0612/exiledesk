@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.552",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "上の帯の「アプリ版はこちら」から、ExileDesk をアプリとしてデスクトップに置けるように (中身はウェブと同じ)。スマホは「追加」でホーム画面に置けます。一度開いた画面はオフラインでも開けます",
+    "en": "“Get the app” in the top bar now installs ExileDesk as a desktop app (same as the web version). On phones, “Install” adds it to your home screen. Pages you have opened once also work offline"
+   }
+  ]
+ },
+ {
   "v": "0.1.551",
   "date": "2026-10-17",
   "items": [
@@ -626,36 +638,6 @@
     "area": "",
     "text": "「今の MOD を取引所で検索」の横に、検索の仕組みのヒント (?) を足しました",
     "en": "Added a hint (?) on how the search works next to \"Search these mods on trade\""
-   }
-  ]
- },
- {
-  "v": "0.1.512",
-  "date": "2026-10-14",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "同じ MOD が 2 つ並んだ時 (フラックスで変えた耐性とフラクチャーの耐性など) に、行が増えて見えることがあったのを直しました",
-    "en": "Fixed rows appearing duplicated when the same mod appeared twice (e.g. a Flux-converted resistance and a Fractured resistance)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "フラックスで変えた MOD に「アルダー」の札が付いていたのを外しました",
-    "en": "Removed the \"Aldur\" tag from mods converted by Flux"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "「今の MOD を取引所で検索」の横に「ベース検索含め」を足しました (既定はオフ: ベース・アイテムレベル・ソケットは入れず MOD だけで探します)",
-    "en": "Added \"Include base\" next to \"Search these mods on trade\" (off by default: searches by mods only, without base, item level and sockets)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "要望・バグに画像を付けられるように (3 枚まで、貼り付けでも)",
-    "en": "Feedback and bug reports can now include images (up to 3, paste works too)"
    }
   ]
  }
