@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.557",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルに「冒涜を学ぶ」を追加: 骨 4 種と発現・左右のネクロマンシー・アビスの反響・勢力のお告げ (このアイテムに付く勢力の MOD の一覧つき)・光のお告げ・アビスのエッセンス・腐食のお告げ",
+    "en": "Added the “Learn desecration” tutorial: 4 Bones and revealing, Necromancy, Abyssal Echoes, faction omens (with a list of that faction’s mods for the item), Omen of Light, Essence of the Abyss and Omen of Putrefaction"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "アイテムの MOD の行の ↓ をなくしました。MOD を押すと MOD 一覧が開き、付いている段を枠で囲んで見せます",
+    "en": "Removed the ↓ on item mod rows. Clicking a mod opens the mod list with its current tier framed"
+   }
+  ]
+ },
+ {
   "v": "0.1.556",
   "date": "2026-10-17",
   "items": [
@@ -608,36 +626,6 @@
     "area": "",
     "text": "カオススパム: ベースを変えた・1 手戻した時に、前のスパムの結果が残っていたのを直しました。アイテムレベルは今のアイテムの物から始まります",
     "en": "Chaos spam: fixed the previous spam result remaining after changing the base or undoing. The item level now starts from the current item's"
-   }
-  ]
- },
- {
-  "v": "0.1.517",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム確率機: カオスを持つとアイテムの下 (スマホは下の帯の上) に「カオススパム確率機へ」。狙う MOD を選ぶと、100 人が当たるまでスパムした回数 (半分の人・運が悪い 10 人に 1 人) と、押しっぱなしで自分もスパム。付いたら 100 人中の運を出します",
-    "en": "Chaos spam tool: holding a Chaos Orb shows \"Chaos spam tool\" below the item (above the bottom bar on phones). Pick target mods to see how many tries 100 people needed (half of people, the unlucky 1 in 10), and hold the button to spam yourself. When you hit, it shows your luck among 100 people"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム: アイテムレベルを選べるように (選んだ MOD が全部付く一番低い所から)。「ここから開始」で工程と費用をそのままにエミュレーターへ戻れます",
-    "en": "Chaos spam: you can choose the item level (starting from the lowest where all selected mods can roll). \"Start from here\" returns to the emulator keeping steps and cost"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "カレンシーを使った時にゲームと同じ音 (小さめ、右上のスピーカーで消せます)。珍しい段 (0.2% 以下) が付いた時はフィルターの音と光の演出",
-    "en": "Currency now plays the game's sounds (quiet; mute with the speaker in the top right). Rare tiers (0.2% or less) play the filter sound with a light effect"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホ: 下の帯の「使う」をゲームのボタンに",
-    "en": "Phones: the \"Use\" button in the bottom bar now uses the game's button art"
    }
   ]
  }
