@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { canLessonBack, lessonBack, lessonJump, quitLesson, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
+import { lessonJump, quitLesson, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
 import { topic, topicAt, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
@@ -125,7 +125,6 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <!-- 次へは枠の左端にいつも出す。打ち終えるまでは押せない (2026-10-17 オーナー) -->
       <button type="button" data-topic-next class="g-btn-red sm" :class="topicUsed ? '' : 'mr-auto'" :disabled="!topicUsed || !topicStep" :title="topicUsed ? undefined : tr('今の手を使うと押せる', 'Use this step first')" @click="next">{{ topic && topicAt + 1 >= topic.steps.length ? tr("完了", "Finish") : tr("次へ →", "Next →") }}</button>
       <button v-if="topicUsed" type="button" data-topic-retry class="g-btn sm mr-auto" @click="retryStep">{{ tr("もう一度", "Try again") }}</button>
-      <button type="button" data-lesson-back class="g-btn sm inline-flex items-center gap-1" :disabled="!canLessonBack" :title="tr('1 つ前の手に戻る (R でも)', 'Go back one step (R also works)')" @click="lessonBack">{{ tr("1 つ前に戻る", "Back one step") }}<kbd class="kbd max-md:hidden">R</kbd></button>
       <button type="button" data-topic-mods class="g-btn sm" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
       <button type="button" class="g-btn sm" @click="quitLesson">{{ tr("コースをやめる", "Quit course") }}</button>
     </div>
@@ -188,12 +187,12 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
     <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300 transition-[width] duration-500" :style="{ width: `${(topicAt / topic.steps.length) * 100}%` }" /></div>
     <!-- 手の一覧 (押すとその手から) -->
     <!-- 2 列は左の列を上から下へ、次に右の列 (並び順のまま読めるように) -->
-    <ol class="mt-2 columns-2 gap-x-2 max-md:columns-1">
+    <ol class="mt-2 columns-2 gap-x-2">
       <li v-for="i in order" :key="i" class="mb-0.5 break-inside-avoid">
         <!-- 押すとその手から (次へと同じ動き。2026-10-17 オーナー「やっぱりクリックできるように、挙動は次へを押した時と同じ」) -->
         <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :class="i === topicAt ? 'bg-amber-500/10' : ''" @click="lessonJump(i)">
           <span class="grid size-4 shrink-0 place-items-center rounded-full text-[10px] font-bold" :class="i < topicAt ? 'bg-emerald-400 text-black' : i === topicAt ? 'bg-amber-400 text-black' : 'border border-white/25 text-white/50'">{{ i < topicAt ? "✓" : "" }}</span>
-          <span class="min-w-0 flex-1 truncate text-[12px]" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ stepName(topic.steps[i]!) }}</span>
+          <span class="min-w-0 flex-1 truncate text-[12px] max-md:whitespace-normal max-md:text-[11px] max-md:leading-tight" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ stepName(topic.steps[i]!) }}</span>
         </button>
       </li>
     </ol>

@@ -21,6 +21,10 @@ const t2 = (x: JaEn): string => tr(x[0], x[1]);
 /** オーナーの合格が出た段だけ出す (開発版でも。2026-10-17 オーナー「他まだ合格できてないから非表示、即出せるように」)。合格したら足す */
 const OPEN_LEVELS: number[] = [1];
 const PRACTICE_OPEN = false;
+/** 本番に出すコース (合格したコースだけ。2026-10-17 基本のオーブだけ OK、エッセンスはまだ)。手元の dev は OPEN_LEVELS の段を全部 */
+const RELEASED = new Set(["orbs"]);
+const DEV_BUILD = import.meta.env.DEV; // 開発版 (deploy:web-dev) も本番と同じ表示 (2026-10-17 オーナー「表示は本番用でおk」)。手元の dev だけ全部
+const shown = (c: TopicCourse): boolean => OPEN_LEVELS.includes(c.level) && (DEV_BUILD || RELEASED.has(c.id));
 const LEVELS: Array<{ n: 1 | 2 | 3; label: JaEn; note: JaEn; chip: string; ring: string }> = [
   { n: 1, label: ["入門", "Intro"], note: ["はじめての人はここから", "Start here"], chip: "bg-emerald-500/25 text-emerald-100", ring: "border-emerald-400/50 hover:border-emerald-300" },
   { n: 2, label: ["初級", "Easy"], note: ["冒涜とお告げ", "Desecration and omens"], chip: "bg-sky-500/25 text-sky-100", ring: "border-sky-400/50 hover:border-sky-300" },
@@ -52,14 +56,14 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
   <section data-courses class="flex flex-col gap-4">
     <div class="rounded-xl border border-amber-300/30 bg-gradient-to-r from-amber-500/[0.10] to-transparent px-4 py-3">
       <p class="text-[16px] font-bold text-amber-100">{{ tr("クラフトのコース", "Crafting courses") }}</p>
-      <p class="mt-1 text-[13px] text-[var(--exile-color-text-primary)]">{{ tr("入門〜中級は、その仲間のカレンシーとお告げを全部、1 つずつ実際に使って覚えます。実践は動画のクラフトを自分で作ります。", "Intro to medium: try every currency and omen of a kind, one by one. Practice: recreate a video's craft yourself.") }}</p>
+      <p class="mt-1 text-[13px] text-[var(--exile-color-text-primary)]">{{ tr("カレンシーを 1 つずつ実際に使って、どう動くかを覚えます。", "Use each currency for real, one at a time, to learn what it does.") }}</p>
     </div>
-    <template v-for="lv in LEVELS.filter((x) => OPEN_LEVELS.includes(x.n))" :key="lv.n">
+    <template v-for="lv in LEVELS.filter((x) => TOPIC_COURSES.some((c) => c.level === x.n && shown(c)))" :key="lv.n">
       <div v-if="TOPIC_COURSES.some((c) => c.level === lv.n)" class="flex flex-col gap-2">
         <p class="flex items-center gap-2"><span class="rounded px-2 py-0.5 text-[12px] font-bold" :class="lv.chip">{{ t2(lv.label) }}</span><span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ t2(lv.note) }}</span></p>
         <div class="grid grid-cols-2 items-start gap-3 max-md:grid-cols-1">
           <!-- カード: 上を押すと 1 手目から、下の手の一覧を押すとその手から (2026-10-17 オーナー「入門でコレ知りたい時もある、コース一覧で手を表示」) -->
-          <div v-for="c in TOPIC_COURSES.filter((x) => x.level === lv.n)" :key="c.id" data-topic-card-box :data-course="c.id" class="flex min-w-0 flex-col rounded-xl border-2 bg-white/[0.03]" :class="lv.ring">
+          <div v-for="c in TOPIC_COURSES.filter((x) => x.level === lv.n && shown(x))" :key="c.id" data-topic-card-box :data-course="c.id" class="flex min-w-0 flex-col rounded-xl border-2 bg-white/[0.03]" :class="lv.ring">
             <!-- 上は表示だけ。進めるのは「始める」と「コース一覧を見る」の 2 つ (2026-10-17 オーナー「それ以外はクリックできないように、基本その 2 ボタンで進行」) -->
             <div data-topic-card class="flex min-w-0 flex-col items-start gap-1.5 px-4 py-3">
               <span class="flex w-full items-center gap-2">
@@ -75,11 +79,11 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
               <button type="button" data-topic-card-toggle class="g-btn sm inline-flex items-center gap-1" :aria-expanded="openSteps === c.id" @click="toggleSteps(c.id)"><Icon :name="openSteps === c.id ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ openSteps === c.id ? tr("コース一覧を閉じる", "Hide the steps") : tr("コース一覧を見る", "Show the steps") }}</button>
               <span v-if="openSteps === c.id" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("押すとその手から始める", "Click a step to start there") }}</span>
             </div>
-            <ol v-if="openSteps === c.id" data-topic-card-steps class="columns-2 gap-x-2 px-3 pb-2 max-md:columns-1">
+            <ol v-if="openSteps === c.id" data-topic-card-steps class="columns-2 gap-x-2 px-3 pb-2">
               <li v-for="(st, i) in c.steps" :key="i" class="mb-0.5 break-inside-avoid">
                 <button type="button" class="g-plain flex w-full min-w-0 items-center gap-1.5 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :disabled="!s.data.value" :title="tr('この手から始める', 'Start from this step')" @click="startTopicAt(c, i)">
                   <span class="w-5 shrink-0 text-right text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
-                  <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--exile-color-text-secondary)]">{{ stepLabel(c, st) }}</span>
+                  <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--exile-color-text-secondary)] max-md:whitespace-normal max-md:text-[11px] max-md:leading-tight">{{ stepLabel(c, st) }}</span>
                 </button>
               </li>
             </ol>

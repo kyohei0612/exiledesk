@@ -1,9 +1,8 @@
 /**
  * craft-lesson.ts — チュートリアルのコースを遊んでいる間の決まり (2026-10-17 オーナー)。
  * - 打ったら持った物を離す (「付けたらここでは即消しておk、連打する機会ないから」)
- * - 「1 つ前に戻る」(「1 手戻すとかチュートリアルの仕様になってない」「MOD 一覧の横に 1 つ前に戻るボタン」):
- *   動作を学ぶコースは手ごとの始めの状態を控えておき、手の番号ごと戻す (白に戻す手も戻せる)。
- *   クラフトのコースは進み具合をアイテムから数えるので、いつもの 1 手戻す
+ * - 1 つの手は 1 回だけ。「もう一度」で今の手の始めに戻す (手ごとの始めの状態を控えておく)。
+ *   「1 つ前に戻る」は外した (2026-10-17 オーナー「いらんな全てにおいて、もう一度があるんだから」)
  * - ベース・アイテムレベルはコースが決めるので、ベースの帯 (StageSettings) はコースの間は出さない
  * - 最後までやったコースは「クリア」(ブラウザに残す。キーはコースの id だけなので、手や文が変わるアップデートでも消えない。
  *   2026-10-17 オーナー「クリアしたのに…みたいなかんじになるから A 型の細かい連中は」)
@@ -111,19 +110,6 @@ function restore(x: Snap): void {
   restoring = false;
 }
 
-/** 戻れるか */
-export const canLessonBack = computed(() => (topic.value ? topicAt.value > 0 || s.log.value.length > 0 : s.log.value.length > 0));
-
-/** 1 つ前に戻る。今の手の途中で別の手を打っていたら、先に今の手の始めへ */
-export function lessonBack(): void {
-  s.hold(null);
-  if (!topic.value) { if (s.log.value.length) s.undo(); return; }
-  const top = snaps[snaps.length - 1];
-  if (top && (top.log !== s.log.value || top.item !== s.item.value)) { restore(top); return; }
-  if (snaps.length < 2) return;
-  snaps.pop();
-  restore(snaps[snaps.length - 1]!);
-}
 
 /**
  * 完全の手 (王者・高貴・カオス) は神の演出が出る段 (付いた瞬間の確率が 0.2% 以下) が付くように、次の手の乱数を選んでおく。
