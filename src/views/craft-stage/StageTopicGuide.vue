@@ -40,9 +40,28 @@ const essKey = (st: TopicStep): string | null => {
 };
 /** 手の名前 (エミュレーターの名前。白に戻す・発現は言葉で) */
 function stepName(st: TopicStep): string {
-  const main = st.use === "reset" ? tr("白に戻す", "Reset to white") : st.use === "reveal" ? tr("発現", "Reveal") : st.use.startsWith("ess:") ? (essKey(st) ? nameOf(essKey(st)!) : st.use.split(":")[1]!) : nameOf(st.use);
+  const main = st.use === "reset" ? tr("白に戻す", "Reset to white") : st.use === "reveal" ? tr("MOD を選んで発現", "Pick a mod and Reveal") : st.use.startsWith("ess:") ? (essKey(st) ? nameOf(essKey(st)!) : st.use.split(":")[1]!) : nameOf(st.use);
   return [main, ...(st.omens ?? []).map(nameOf)].join(" + ");
 }
+/** 手の一覧の名前: 続きの手 (chain) で掛けるお告げも入れる (2026-10-17 オーナー「6 手目もタイトルからそうだけど骨 + 反響のお告げだよね」) */
+const listName = (st: TopicStep): string => [stepName(st), ...(st.chain ?? []).flatMap((c) => c.omens ?? []).map(nameOf)].join(" + ");
+/**
+ * 続きのある手のボタン: 発現に掛けるお告げは発現と分けて 1 つのボタンにする (骨 → 反響のお告げ → 発現)。
+ * 2026-10-17 オーナー「お告げが分かりづらいから反響と一緒にしないで分けてあげた方が分かりやすい」
+ */
+type ChainButton = { j: number; kind: "omen" | "reveal" | "step"; sub: TopicStep };
+const chainButtons = computed((): ChainButton[] => {
+  const cur = topicStep.value;
+  if (!cur) return [];
+  return [cur.step, ...(cur.step.chain ?? [])].flatMap((sub, j): ChainButton[] =>
+    sub.use === "reveal" && sub.omens?.length
+      ? [{ j, kind: "omen", sub }, { j, kind: "reveal", sub: { ...sub, omens: [] } }]
+      : [{ j, kind: "step", sub }]);
+});
+/** 発現のお告げが掛かっているか */
+const omensOn = (sub: TopicStep): boolean => (sub.omens ?? []).every((o) => s.omens.value.includes(o));
+/** お告げのボタン: 今の手のお告げを掛ける */
+function applyOmens(sub: TopicStep): void { for (const o of sub.omens ?? []) if (!s.omens.value.includes(o)) s.toggleOmen(o); }
 const iconOfStep = (st: TopicStep): string => (st.use === "reset" || st.use === "reveal" ? "" : st.use.startsWith("ess:") ? (essKey(st) ? iconOf(essKey(st)!) : "") : iconOf(st.use));
 /**
  * 今の手の動き (カレンシー・お告げごと): ゲームの公式の説明 (クライアントの原文、棚のカードの上と同じ) と、カードの「このステージでの動き」(条件・決まり) を畳まずに出す
@@ -161,17 +180,23 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <div class="mt-1 flex flex-wrap items-center gap-2">
         <button v-if="topicStep.step.use === 'reset'" type="button" data-topic-reset class="g-btn sm" @click="topicReset">{{ tr("白に戻す", "Reset to white") }}</button>
         <!-- 続きのある手 (アビス → 骨 → 発現) は並べて出し、今の手だけ押せる。済んだ手は ✓ (2026-10-17 オーナー「打つ前はグレーアウトで、付けたら表示」) -->
-        <template v-else v-for="(sub, j) in [topicStep.step, ...(topicStep.step.chain ?? [])]" :key="j">
-          <span v-if="j > 0" class="text-amber-300/60">→</span>
-          <button type="button" :data-topic-hold="j === topicSub ? '' : undefined" :data-topic-chain="j" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :disabled="topicUsed || j !== topicSub || (sub.use === 'reveal' && !sub.omens?.length)" :title="tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="holdIt">
-            <span v-if="topicUsed || j < topicSub" class="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[10px] font-bold text-black">✓</span>
-            <img v-if="iconOfStep(sub)" :src="iconOfStep(sub)" alt="" class="size-7 shrink-0 object-contain" />
+        <template v-else v-for="(b, n) in chainButtons" :key="n">
+          <span v-if="n > 0" class="text-amber-300/60">→</span>
+          <!-- 発現に掛けるお告げ: 押すと掛かる。掛けたら ✓ -->
+          <button v-if="b.kind === 'omen'" type="button" data-topic-omen :data-topic-hold="b.j === topicSub && !omensOn(b.sub) ? '' : undefined" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :disabled="topicUsed || b.j !== topicSub || omensOn(b.sub)" :title="tr('押すとお告げを掛ける', 'Click to apply the omen')" @click="applyOmens(b.sub)">
+            <span v-if="topicUsed || b.j < topicSub || (b.j === topicSub && omensOn(b.sub))" class="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[10px] font-bold text-black">✓</span>
+            <img v-for="o in b.sub.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="size-7 shrink-0 object-contain" />
+            <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ (b.sub.omens ?? []).map(nameOf).join(" + ") }}</span>
+          </button>
+          <button v-else type="button" :data-topic-hold="b.j === topicSub && b.kind === 'step' ? '' : undefined" :data-topic-chain="b.j" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :disabled="topicUsed || b.j !== topicSub || b.sub.use === 'reveal'" :title="tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="holdIt">
+            <span v-if="topicUsed || b.j < topicSub" class="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[10px] font-bold text-black">✓</span>
+            <img v-if="iconOfStep(b.sub)" :src="iconOfStep(b.sub)" alt="" class="size-7 shrink-0 object-contain" />
             <Icon v-else name="sparkles" class="size-6 shrink-0 text-violet-200" />
-            <img v-for="o in sub.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="size-6 shrink-0 object-contain" />
-            <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ stepName(sub) }}</span>
+            <img v-for="o in b.sub.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="size-6 shrink-0 object-contain" />
+            <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ stepName(b.sub) }}</span>
           </button>
         </template>
-        <span v-if="topicCur?.step.use === 'reveal' && !topicUsed" class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムの下の候補を選んで「発現」", "Pick an option under the item, then Reveal") }}</span>
+        <!-- 発現の案内はボタンの名前に入れた (「MOD を選んで発現」。2026-10-17 オーナー「発現ややこしいから」) -->
       </div>
       <!-- 要点はエミュレーターのカードの頭と同じ大きな枠で (2026-10-17 オーナー「入門は要点でっかく表示のみ、文章長くてだるい」) -->
       <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>
@@ -229,7 +254,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
         <!-- 押すとその手から (次へと同じ動き。2026-10-17 オーナー「やっぱりクリックできるように、挙動は次へを押した時と同じ」) -->
         <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :class="i === topicAt ? 'bg-amber-500/10' : ''" @click="lessonJump(i)">
           <span class="grid size-4 shrink-0 place-items-center rounded-full text-[10px] font-bold" :class="i < topicAt ? 'bg-emerald-400 text-black' : i === topicAt ? 'bg-amber-400 text-black' : 'border border-white/25 text-white/50'">{{ i < topicAt ? "✓" : "" }}</span>
-          <span class="min-w-0 flex-1 truncate text-[12px] max-md:whitespace-normal max-md:text-[11px] max-md:leading-tight" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ stepName(topic.steps[i]!) }}</span>
+          <span class="min-w-0 flex-1 truncate text-[12px] max-md:whitespace-normal max-md:text-[11px] max-md:leading-tight" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ listName(topic.steps[i]!) }}</span>
         </button>
       </li>
     </ol>

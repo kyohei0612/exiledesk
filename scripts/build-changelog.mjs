@@ -27,6 +27,9 @@ const git = (...args) => execFileSync("git", args, { cwd: ROOT, encoding: "utf8"
 const tags = git("tag", "--list", "v*", "--sort=-v:refname").split("\n").filter(Boolean);
 const notes = existsSync(NOTES) ? JSON.parse(readFileSync(NOTES, "utf8")) : {};
 const notesEn = existsSync(NOTES_EN) ? JSON.parse(readFileSync(NOTES_EN, "utf8")) : {};
+/** ポップアップを出す版 (大型のリリースだけ。2026-10-17 オーナー) */
+const POPUP = resolve(ROOT, "src/data/changelog-popup.json");
+const popup = new Set(existsSync(POPUP) ? JSON.parse(readFileSync(POPUP, "utf8")).versions : []);
 const vnum = (v) => v.split(".").map(Number);
 const cmp = (a, b) => { const x = vnum(a), y = vnum(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return y[i] - x[i]; return 0; };
 
@@ -45,7 +48,7 @@ function itemOf(subject) {
 function entry(v, range, date) {
   const subjects = range ? git("log", range, "--no-merges", "--format=%s").split("\n").filter(Boolean) : [];
   const items = notes[v] ? notes[v].map((text, i) => ({ kind: "", area: "", text, ...(notesEn[v]?.[i] ? { en: notesEn[v][i] } : {}) })) : subjects.map(itemOf).filter(Boolean).reverse();
-  return { v, date, items };
+  return { v, date, items, ...(popup.has(v) ? { pop: true } : {}) };
 }
 
 const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);

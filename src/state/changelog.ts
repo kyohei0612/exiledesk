@@ -11,7 +11,8 @@ import pkg from "../../package.json";
 import log from "../data/changelog.json";
 
 /** en = 英語の文 (changelog-notes-en.json、2026-10-17)。無い物は英語の画面でも日本語のまま */
-export interface ChangelogEntry { v: string; date: string; items: Array<{ kind: string; area: string; text: string; en?: string }> }
+/** pop = 起動した時にポップアップで出す版 (大型のリリースだけ。src/data/changelog-popup.json) */
+export interface ChangelogEntry { v: string; date: string; items: Array<{ kind: string; area: string; text: string; en?: string }>; pop?: boolean }
 export const APP_VERSION: string = pkg.version;
 
 const cmp = (a: string, b: string): number => {
@@ -41,8 +42,9 @@ export function initChangelog(skip = false): void {
   if (skip || seen === APP_VERSION || lang.value === "en") return;
   // 前に見た版が無い = この仕組みより前から使っている人 (保存がある) には今の版の分だけ。初めての人には出さない
   if (!seen && !used) return;
+  // ポップアップは大型のリリースの版だけ (pop)。細かい版は更新履歴 (版を押す) にだけ残す (2026-10-17 オーナー「今後めっちゃ更新するから、ポップアップは大型リリースのタイミングだけ」)
   // 書く事の無い版 (裏方だけの版、更新内容を空にした物) は数えない (2026-10-12 オーナー「裏だから更新通知はいらん」)
-  const list = (seen ? CHANGELOG.filter((e) => cmp(e.v, seen!) > 0) : CHANGELOG.filter((e) => e.v === APP_VERSION)).filter((e) => e.items.length).slice(0, 5);
+  const list = (seen ? CHANGELOG.filter((e) => cmp(e.v, seen!) > 0) : CHANGELOG.filter((e) => e.v === APP_VERSION)).filter((e) => e.items.length && e.pop).slice(0, 5);
   if (!list.length) return;
   changelogNew.value = list;
   changelogOpen.value = "new";

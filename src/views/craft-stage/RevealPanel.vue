@@ -15,6 +15,8 @@ import { jaOfOmen } from "../../services/htc/labels";
 import { reqOfItem } from "../../services/craft-stage/stage-bases";
 import type { StageMod } from "../../services/craft-stage/types";
 import Icon from "../../components/ui/Icon.vue";
+import { planSpec } from "../../services/craft-stage/spec/run-spec";
+import { topicCur } from "../../state/craft-topic";
 
 const rerolled = ref(false);
 /** 選んだ候補 (確認で発現する) */
@@ -24,7 +26,11 @@ const chosen = ref<number | null>(null);
 watch(() => craftStage.log.value[craftStage.log.value.length - 1]?.out.index ?? 0, () => { rerolled.value = false; chosen.value = null; });
 watch(() => craftStage.offers.value, () => { chosen.value = null; });
 const left = () => { const it = craftStage.item.value; return it ? [...it.prefixes, ...it.suffixes].filter((m) => m.unrevealed).length : 0; };
-const canReroll = () => craftStage.omens.value.includes("OmenofAbyssalEchoes");
+/** 引き直せるか: エンジンの発現の手に掛かっているお告げの効き目 (rerolls) で決める (spec/run-spec.ts の planSpec) */
+const canReroll = (): boolean => {
+  const d = craftStage.data.value, it = craftStage.item.value;
+  return !!d && !!it && (planSpec(d, it, "reveal:1", craftStage.omens.value)?.mods.rerolls ?? 0) > 0;
+};
 /**
  * 選ぶと要求レベルが上がる候補は、乗せた時にその数字を出す (2026-10-10 オーナー「要求レベル出すのやっとこか」→「候補に出すのは邪魔、ホバーで」: 冒涜専用の MOD はアイテムレベルに関わらず T1 まで出て、
  * レベル上げ中の装備が着けられなくなる。reddit「Preserved rib can roll T1 mod on lower ilvl」)。決まりはアイテムのカードと同じ reqOfItem (MOD レベル × 0.8)
@@ -43,13 +49,26 @@ function hoverOf(m: StageMod): string {
   const up = raisesTo(m);
   return [`${side} ${m.tierName}`, up ? tr(`選ぶと要求 Lv ${up} に上がる (今 Lv ${nowReq()})`, `Raises requirement to Level ${up} (now ${nowReq()})`) : ""].filter(Boolean).join(" · ");
 }
+/**
+ * チュートリアルの反響の手: 引き直さずに発現したらエラーで止める (2026-10-17 オーナー「リロールしなかったらお告げを使用するでエラー吐かせておk、そこだけチュートリアルっぽく」)
+ */
+const lessonErr = ref("");
+watch(() => craftStage.offers.value, () => { lessonErr.value = ""; });
+const mustReroll = (): boolean => !!topicCur.value?.step.omens?.includes("OmenofAbyssalEchoes") && topicCur.value.step.use === "reveal";
 function confirm(): void {
   if (chosen.value == null) return;
+  if (mustReroll() && !rerolled.value) {
+    lessonErr.value = canReroll()
+      ? tr("お告げを使用する: 右下の回る矢印で候補を引き直してから発現", "Use the omen: reroll the options with the arrow at the bottom right, then Reveal")
+      : tr("お告げを使用する: 先に反響のお告げのボタンを押して掛ける", "Use the omen: press the Omen of Abyssal Echoes button first");
+    return;
+  }
+  lessonErr.value = "";
   const i = chosen.value;
   chosen.value = null;
   craftStage.use(`reveal:${i + 1}${rerolled.value ? ":reroll" : ""}`);
 }
-function reroll(): void { rerolled.value = true; chosen.value = null; }
+function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.value = ""; }
 </script>
 
 <template>
@@ -76,6 +95,7 @@ function reroll(): void { rerolled.value = true; chosen.value = null; }
         <span class="w-8 shrink-0" aria-hidden="true" />
       </button>
     </div>
+    <p v-if="lessonErr" data-reveal-error class="mt-1.5 rounded border border-rose-400/50 bg-rose-500/15 px-2 py-1 text-center text-[12px] font-bold text-rose-200">{{ lessonErr }}</p>
     <div class="relative mt-1.5 flex items-center justify-center">
       <button type="button" data-reveal-confirm class="g-btn sm min-w-[120px] justify-center" :disabled="chosen == null" @click="confirm">{{ tr("発現", "Reveal") }}</button>
       <!-- 引き直し (アビスの反響のお告げ)。ゲームと同じく右下の回る矢印 -->

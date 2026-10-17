@@ -220,7 +220,8 @@ export const TOPIC_COURSES: TopicCourse[] = [
       ], ["alchemy"])), omens: ["OmenofSinistralNecromancy"], chain: [S("reveal", ["発現", "Reveal"])] },
       { ...ALWAYS(H("desecrate", ["発現の候補を引き直す", "Reroll the reveal options"], [
         ["発現の前にアビスの反響のお告げを掛けると、候補 3 つを 1 回だけ引き直せる", "Apply Omen of Abyssal Echoes before revealing to reroll the 3 options once"],
-        ["発現の手のボタンを押すとお告げが掛かる。候補の窓の右下の回る矢印で引き直せる", "Press the Reveal button to apply the omen; the circular arrow at the bottom right of the options rerolls them"],
+        ["骨を使ったら、反響のお告げのボタンを押して掛ける", "After using the Bone, press the Omen of Abyssal Echoes button to apply it"],
+        ["候補の窓の右下の回る矢印で引き直してから、選んで「発現」", "Reroll with the circular arrow at the bottom right of the options, then pick one and Reveal"],
       ], ["alchemy"])), chain: [S("reveal", ["発現 (反響)", "Reveal (Echoes)"], ["OmenofAbyssalEchoes"])] },
       { ...ALWAYS(H("desecrate", ["勢力: ウラマン", "Faction: Ulaman"], [
         ["支配者のお告げを掛けると、発現の候補がウラマンの MOD だけになる", "With Omen of the Sovereign, the reveal options are Ulaman mods only"],

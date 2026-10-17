@@ -51,7 +51,7 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
   if (st.use === "reveal") return tr("発現", "Reveal");
   const d = s.data.value;
   const key = st.use.startsWith("ess:") ? (d ? topicKey(st, d, freshItem(d, st.base ?? c.base, c.itemLevel)) : null) : st.use;
-  return [key ? nameOf(key) : st.use.split(":")[1] ?? st.use, ...(st.omens ?? []).map(nameOf)].join(" + ");
+  return [key ? nameOf(key) : st.use.split(":")[1] ?? st.use, ...[...(st.omens ?? []), ...(st.chain ?? []).flatMap((c) => c.omens ?? [])].map(nameOf)].join(" + "); // 続きの手のお告げも (骨 + 反響)
 }
 </script>
 

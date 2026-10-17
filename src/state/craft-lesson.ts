@@ -60,6 +60,8 @@ watch([topic, topicAt], ([t], [oldT]) => {
   else if (restoring) return;
   prepared.value = false;
   preparedAt = -1;
+  // 手が変わったら前の手で掛けたお告げは外す (掛けたまま次へ・一覧から選ぶと残って、反響が無いのに引き直しが出た。2026-10-17 オーナー「冒涜 7 手目で反響使ってないのにリロールできる」)
+  s.omens.value = [];
   snaps.push(now());
 }, { flush: "sync" });
 
