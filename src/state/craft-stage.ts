@@ -122,7 +122,8 @@ const mode = ref<"hand" | "sim" | "tutorial">("hand");
 // 開発版 (pnpm dev:web) では開ける (クイズのレシピをオーナーに触ってもらう。リリースはオーナーの OK まで閉じたまま、2026-10-12)
 export const SIM_LOCKED = !isTauriRuntime() && !import.meta.env.DEV && import.meta.env.VITE_DEV_PREVIEW !== "1"; // 非公開の開発版 (deploy:web-dev) では開く
 // チュートリアルは 2026-10-17 に一度出して、同じ日に取り下げた (オーナー「白紙、動画のクラフトを難しさ順に 1 から作らせる形に作り直す」)
-watch(mode, (m) => { if (SIM_LOCKED && (m === "sim" || m === "tutorial")) mode.value = "hand"; }, { immediate: true, flush: "sync" });
+export const TUTORIAL_LOCKED = SIM_LOCKED; // チュートリアルを本番に出す時は false に (docs/pending-release.md、2026-10-17)
+watch(mode, (m) => { if ((SIM_LOCKED && m === "sim") || (TUTORIAL_LOCKED && m === "tutorial")) mode.value = "hand"; }, { immediate: true, flush: "sync" });
 
 /** Web 版の工程を覚える手の数 */
 export const LOG_KEEP = 50;
