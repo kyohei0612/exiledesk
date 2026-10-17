@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { canLessonBack, lessonBack, prepared } from "../../state/craft-lesson";
+import { canLessonBack, lessonBack, prepareStep, prepared } from "../../state/craft-lesson";
 import { endTopic, goTopic, topic, topicAt, topicDone, topicReset, topicStep } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
@@ -78,6 +78,7 @@ const example = computed(() => {
 const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**").map((t, i) => ({ t, b: i % 2 === 1 }));
 /** 押すと持つ (お告げも掛ける)。発現の反響は掛けるだけ */
 function holdIt(): void {
+  prepareStep(); // 今のアイテムにこの手が打てなければ、ここで打てるアイテムを用意する
   const cur = topicStep.value;
   if (!cur) return;
   if (cur.step.use !== "reveal" && cur.key) s.hold(cur.key);

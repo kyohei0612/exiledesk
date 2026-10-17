@@ -13,7 +13,7 @@ import type { Force } from "./stage-core";
 import { essenceShelf } from "../../state/craft-stage-shelf";
 
 /** how = 案内に出すやさしい箇条書き (2026-10-17 オーナー「赤ちゃんに説明するくらい簡単に」)。無い手はカードの公式の説明と決まりの文を出す */
-/** prep = 今のアイテムにこの手が打てない時、白から打ってこの手が打てる状態を作る手 ([] = 白。craft-lesson.ts) */
+/** prep = 今のアイテムにこの手が打てない時、白 (start があればそのレア度の MOD 0 個) から打ってこの手が打てる状態を作る手 ([] = 白。craft-lesson.ts) */
 /** start = この手はいつも MOD 0 個のこのレア度から (付ける手。2026-10-17 オーナー「ついてるの多くてややこしい、付くときカオス以外は 0 から」) */
 export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: JaEn[]; prep?: string[]; start?: StageItem["rarity"]; /** 打てても毎回 prep から (消去は MOD 4 つから。2026-10-17 オーナー「4 MOD くらいあったらわかる」) */ prepAlways?: boolean;
   /** start と一緒に: 毎回この MOD だけ付けて始める (神は数字の幅が分かりやすい MOD 1 つ。2026-10-17 オーナー「神は 1 MOD で見た方が良い」) */
@@ -31,8 +31,10 @@ export interface TopicCourse {
 const S = (use: string, note: JaEn, omens?: string[]): TopicStep => ({ use, note, ...(omens ? { omens } : {}) });
 const H = (use: string, note: JaEn, how: JaEn[], prep?: string[] | StageItem["rarity"]): TopicStep =>
   ({ use, note, how, ...(typeof prep === "string" ? { start: prep } : prep ? { prep } : {}) });
-/** 打てても毎回 prep から始める手 (カオスの最初・消去・フラクチャーは MOD 4 つから) */
+/** 打てても毎回 prep から始める手 (消去・フラクチャーは MOD 4 つから) */
 const ALWAYS = (st: TopicStep): TopicStep => ({ ...st, prepAlways: true });
+/** MOD 1 つの黄から毎回 (カオスの入れ替えを見る。2026-10-17 オーナー「カオスは 1 MOD でおk」) */
+const ONE_MOD = (st: TopicStep): TopicStep => ({ ...st, prep: ["exalt"], prepAlways: true });
 const RESET = H("reset", ["白に戻す", "Reset to white"], [["アイテムを最初の白い状態に戻す (練習用のボタン)", "Puts the item back to a fresh white one (a practice button)"]]);
 const EMPTY: TopicStep[] = [
   S("transmute", ["マジックに", "Make it magic"]),
@@ -99,18 +101,18 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["高貴と同じで、黄色いアイテムに MOD を 1 つ足す", "Like the Exalted Orb: adds 1 mod to a yellow item"],
         ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
       ], "rare"),
-      ALWAYS(H("chaos", ["1 つ消して 1 つ付ける", "Remove 1, add 1"], [
+      ONE_MOD(H("chaos", ["1 つ消して 1 つ付ける", "Remove 1, add 1"], [
         ["黄色いアイテムの MOD を 1 つ消して、別の MOD を 1 つ付ける", "Removes 1 mod from a yellow item and adds a different 1"],
         ["どれが消えるかも、何が付くかも運", "Which one goes and which one comes are both luck"],
-      ], ["alchemy"])),
-      H("chaos_greater", ["カオスの上級", "Greater Chaos Orb"], [
+      ], "rare")),
+      ONE_MOD(H("chaos_greater", ["カオスの上級", "Greater Chaos Orb"], [
         ["カオスと同じで、1 つ消して 1 つ付ける", "Like the Chaos Orb: removes 1, adds 1"],
         ["上級は、付く方に弱い MOD が出ない", "Greater: the added mod is never weak"],
-      ], ["alchemy"]),
-      H("chaos_perfect", ["カオスの完全", "Perfect Chaos Orb"], [
+      ], "rare")),
+      ONE_MOD(H("chaos_perfect", ["カオスの完全", "Perfect Chaos Orb"], [
         ["カオスと同じで、1 つ消して 1 つ付ける", "Like the Chaos Orb: removes 1, adds 1"],
         ["完全は、付く方が強い MOD だけ", "Perfect: the added mod is always strong"],
-      ], ["alchemy"]),
+      ], "rare")),
       ALWAYS(H("annul", ["MOD を 1 つ消す", "Remove 1 mod"], [
         ["MOD を 1 つ消す。どれが消えるかは運 (自分では選べない)", "Removes 1 mod. Which one is luck (you can't choose)"],
         ["消すと空きができて、また MOD を足せる", "That opens a slot, so you can add a mod again"],

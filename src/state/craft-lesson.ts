@@ -56,7 +56,8 @@ watch([topic, topicAt], ([t], [oldT]) => {
   if (!t) { snaps.length = 0; prepared.value = false; return; }
   if (t !== oldT) snaps.length = 0;
   else if (restoring) return;
-  prepareStep();
+  prepared.value = false;
+  preparedAt = -1;
   snaps.push(now());
 }, { flush: "sync" });
 
@@ -65,12 +66,19 @@ watch([topic, topicAt], ([t], [oldT]) => {
  * 2026-10-17 オーナー「わざわざ白に戻すようなボタン不要、つどつどリセット掛けておk。レア以上のチュートリアルは今の手が打てる手に再現してあげる」
  */
 export const prepared = ref(false);
-function prepareStep(): void {
-  prepared.value = false;
+/** 用意した手の番号 (1 つの手で 1 回だけ。持ち直しても振り直さない) */
+let preparedAt = -1;
+/**
+ * 今の手の枠で持った時に呼ぶ (手が進んだ時ではない: 打った結果をアイテムに残して見せるため。
+ * 2026-10-17 オーナー「高貴打ったら MOD がでない」= 打った直後に次の手の用意で MOD 0 個に戻っていた)
+ */
+export function prepareStep(): void {
+  if (preparedAt === topicAt.value) return;
+  preparedAt = topicAt.value;
   const c = topic.value, d = s.data.value, it = s.item.value, st = c?.steps[topicAt.value];
   if (!c || !d || !it || !st) return;
   // 付ける手はいつも MOD 0 個のそのレア度から (もうそうなっていれば今のまま)
-  if (st.start) {
+  if (st.start && !st.prep) {
     if (!st.startMods && it.rarity === st.start && !it.prefixes.length && !it.suffixes.length) return;
     const fresh = st.startMods ? startFrom(d, c.base, c.itemLevel, { rarity: st.start, mods: st.startMods }, Math.floor(Math.random() * 1e9)) : freshItem(d, c.base, c.itemLevel, st.start);
     s.item.value = { ...fullSockets(fresh), rollSeed: it.rollSeed };
@@ -81,7 +89,7 @@ function prepareStep(): void {
   const key = topicKey(st, d, it);
   if (key && !s.usable(key) && !st.prepAlways) return;
   const g = mulberry32(Math.floor(Math.random() * 1e9));
-  let next: StageItem = { ...fullSockets(freshItem(d, c.base, c.itemLevel)), rollSeed: it.rollSeed };
+  let next: StageItem = { ...fullSockets(freshItem(d, c.base, c.itemLevel, st.start)), rollSeed: it.rollSeed };
   for (const k of st.prep) { const r = applyCurrency(d, next, k, g, []); if (r.applied) next = { ...r.item, rollSeed: it.rollSeed }; }
   s.item.value = next;
   prepared.value = true;
