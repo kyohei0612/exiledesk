@@ -39,7 +39,7 @@ const iconOfStep = (st: TopicStep): string => (st.use === "reset" || st.use === 
 const plain = (x: string): string => x.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
 const help = computed(() => {
   const cur = topicStep.value;
-  if (!cur) return [];
+  if (!cur || cur.step.how) return []; // やさしい箇条書き (how) がある手はそれだけ出す (2026-10-17 オーナー「まんますぎる、赤ちゃんに説明するくらい簡単に」)
   const keys = cur.step.use === "reveal" ? ["reveal", ...(cur.step.omens ?? [])] : [...(cur.key ? [cur.key] : []), ...(cur.step.omens ?? [])];
   return keys.map((k) => ({
     k,
@@ -119,6 +119,9 @@ const order = computed(() => {
       </div>
       <!-- 要点はエミュレーターのカードの頭と同じ大きな枠で (2026-10-17 オーナー「入門は要点でっかく表示のみ、文章長くてだるい」) -->
       <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>
+      <ul v-if="topicStep.step.how" data-topic-how class="mt-1.5 grid gap-1 rounded-lg bg-black/25 px-2.5 py-2">
+        <li v-for="(l, i) in topicStep.step.how" :key="i" class="flex gap-1.5 text-[14px] text-[var(--exile-color-text-primary)]"><span class="text-amber-300/70">・</span><span>{{ t2(l) }}</span></li>
+      </ul>
       <div v-for="h in help" :key="h.k" data-topic-how class="mt-1.5 rounded-lg bg-black/25 px-2.5 py-1.5">
         <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ h.k === "reveal" ? tr("発現", "Reveal") : nameOf(h.k) }}</p>
         <p v-for="(l, i) in h.official" :key="'o' + i" class="text-[13px] text-[var(--exile-color-text-primary)]">{{ l }}</p>
