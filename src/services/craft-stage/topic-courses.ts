@@ -9,12 +9,15 @@
 import type { JaEn } from "./quiz-tutorials";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageItem } from "./types";
+import type { Force } from "./stage-core";
 import { essenceShelf } from "../../state/craft-stage-shelf";
 
 /** how = 案内に出すやさしい箇条書き (2026-10-17 オーナー「赤ちゃんに説明するくらい簡単に」)。無い手はカードの公式の説明と決まりの文を出す */
 /** prep = 今のアイテムにこの手が打てない時、白から打ってこの手が打てる状態を作る手 ([] = 白。craft-lesson.ts) */
 /** start = この手はいつも MOD 0 個のこのレア度から (付ける手。2026-10-17 オーナー「ついてるの多くてややこしい、付くときカオス以外は 0 から」) */
-export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: JaEn[]; prep?: string[]; start?: StageItem["rarity"]; /** 打てても毎回 prep から (消去は MOD 4 つから。2026-10-17 オーナー「4 MOD くらいあったらわかる」) */ prepAlways?: boolean }
+export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: JaEn[]; prep?: string[]; start?: StageItem["rarity"]; /** 打てても毎回 prep から (消去は MOD 4 つから。2026-10-17 オーナー「4 MOD くらいあったらわかる」) */ prepAlways?: boolean;
+  /** start と一緒に: 毎回この MOD だけ付けて始める (神は数字の幅が分かりやすい MOD 1 つ。2026-10-17 オーナー「神は 1 MOD で見た方が良い」) */
+  startMods?: Force[] }
 export interface TopicCourse {
   id: string;
   level: 1 | 2 | 3;
@@ -117,10 +120,11 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["どれが固定されるかは運", "Which one gets locked is luck"],
         ["使えるのは、黄色いアイテムで MOD が 4 つ以上ある時だけ。1 つのアイテムに 1 回まで", "Only on a yellow item with 4+ mods. Once per item"],
       ], ["alchemy"])),
-      H("divine", ["数字だけ振り直す", "Reroll the numbers"], [
+      { ...H("divine", ["数字だけ振り直す", "Reroll the numbers"], [
         ["MOD の数字だけが変わる (その MOD の幅の中で上がったり下がったり)", "Only the mod numbers change (up or down within that mod's range)"],
+        ["例: 最大マナ +(35-54) の MOD なら、35 から 54 の間で数字が変わる", "Example: a Maximum Mana +(35-54) mod rerolls to anything from 35 to 54"],
         ["MOD の種類と強さの段 (ティア) は変わらない", "The mods and their tiers stay the same"],
-      ], ["alchemy"]),
+      ], "magic"), startMods: [{ mod: "Wands/IncreasedMana", tier: "T8" }] },
     ],
   },
   {

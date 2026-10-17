@@ -14,7 +14,7 @@ import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, topic, topicAt, topicDone } from "./craft-topic";
 import { fullSockets } from "./stage-steps";
 import { topicKey } from "../services/craft-stage/topic-courses";
-import { freshItem } from "../services/craft-stage/run-plan";
+import { freshItem, startFrom } from "../services/craft-stage/run-plan";
 import { applyCurrency } from "../services/craft-stage/apply-currency";
 import { mulberry32 } from "../services/htc/rng";
 import type { StageItem } from "../services/craft-stage/types";
@@ -71,8 +71,9 @@ function prepareStep(): void {
   if (!c || !d || !it || !st) return;
   // 付ける手はいつも MOD 0 個のそのレア度から (もうそうなっていれば今のまま)
   if (st.start) {
-    if (it.rarity === st.start && !it.prefixes.length && !it.suffixes.length) return;
-    s.item.value = { ...fullSockets(freshItem(d, c.base, c.itemLevel, st.start)), rollSeed: it.rollSeed };
+    if (!st.startMods && it.rarity === st.start && !it.prefixes.length && !it.suffixes.length) return;
+    const fresh = st.startMods ? startFrom(d, c.base, c.itemLevel, { rarity: st.start, mods: st.startMods }, Math.floor(Math.random() * 1e9)) : freshItem(d, c.base, c.itemLevel, st.start);
+    s.item.value = { ...fullSockets(fresh), rollSeed: it.rollSeed };
     prepared.value = true;
     return;
   }

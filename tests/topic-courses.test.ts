@@ -1,7 +1,7 @@
 // 動作を学ぶコース (topic-courses.ts): 並べた手を順に打つと、どの手も必ず打てる (200 回)
 import { beforeAll, describe, expect, it } from "vitest";
 import { loadHtcPatch } from "../src/services/htc/patch";
-import { freshItem } from "../src/services/craft-stage/run-plan";
+import { freshItem, startFrom } from "../src/services/craft-stage/run-plan";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
 import { mulberry32 } from "../src/services/htc/rng";
 import { fullSockets } from "../src/state/stage-steps";
@@ -21,7 +21,7 @@ describe("動作を学ぶコース", () => {
         c.steps.forEach((st, i) => {
           if (st.use === "reset") { it = fullSockets(freshItem(data, c.base, c.itemLevel)); return; }
           // 付ける手は MOD 0 個のそのレア度から、ほかは打てない時に prep の手で打てる状態を作る (craft-lesson.ts の prepareStep と同じ)
-          if (st.start) it = fullSockets(freshItem(data, c.base, c.itemLevel, st.start));
+          if (st.start) it = fullSockets(st.startMods ? startFrom(data, c.base, c.itemLevel, { rarity: st.start, mods: st.startMods }, seed) : freshItem(data, c.base, c.itemLevel, st.start));
           if (st.prep && (st.prepAlways || !applyCurrency(data, it, topicKey(st, data, it) ?? "", mulberry32(seed), st.omens ?? []).applied)) {
             it = fullSockets(freshItem(data, c.base, c.itemLevel));
             for (const k of st.prep) { const p = applyCurrency(data, it, k, g, []); if (p.applied) it = p.item; }
