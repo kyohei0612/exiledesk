@@ -14,6 +14,11 @@ const KEY = "exiledesk.lang";
 function initial(): Lang {
   // 画面の無い所 (テスト・Node。Node 21 からは navigator.language が en-US) とアプリは日本語
   if (typeof window === "undefined" || isTauriRuntime()) return "ja";
+  // ?lang=en / ?lang=ja (英語のベースのページからのリンク。2026-10-17)。選んだ言語として覚える
+  try {
+    const q = new URLSearchParams(location.search).get("lang");
+    if (q === "ja" || q === "en") { localStorage.setItem(KEY, q); return q; }
+  } catch { /* 無くてよい */ }
   try {
     const v = localStorage.getItem(KEY);
     if (v === "ja" || v === "en") return v;

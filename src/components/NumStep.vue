@@ -10,6 +10,7 @@
 -->
 <script setup lang="ts">
 import { stepFrom } from "../composables/usePlaceholderStep";
+import { tr } from "../i18n/lang";
 
 const props = withDefaults(
   defineProps<{
@@ -76,12 +77,12 @@ function onInput(ev: Event): void {
         tabindex="-1"
         :disabled="disabled"
         class="numstep-btn"
-        :title="`1 増やす (今の値か灰色の値から)`"
+        :title="tr('1 増やす (今の値か灰色の値から)', '+1 (from the current or greyed value)')"
         @click="step(1)"
       >
         ▲
       </button>
-      <button type="button" tabindex="-1" :disabled="disabled" class="numstep-btn" title="1 減らす" @click="step(-1)">▼</button>
+      <button type="button" tabindex="-1" :disabled="disabled" class="numstep-btn" :title="tr('1 減らす', '−1')" @click="step(-1)">▼</button>
     </span>
   </span>
 </template>

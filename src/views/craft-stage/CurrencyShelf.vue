@@ -86,7 +86,7 @@ const orbSplit = computed(() => {
   void craftStage.omens.value;
   const shown = (k: string): boolean => !craftStage.hidden?.(k);
   // 棚に出さない物 (シミュレーションに要らない物) は写しから外す (ORBS は共通の一覧なので書き換えない)
-  const groups = [...ORBS, { kind: "bones", label: "骨", keys: bonesFor(it) }].map((g) => ({ ...g, keys: g.keys.filter(shown) }));
+  const groups = [...ORBS, { kind: "bones", label: tr("骨", "Bones"), keys: bonesFor(it) }].map((g) => ({ ...g, keys: g.keys.filter(shown) }));
   // お告げを抜きにして打てる物は全部 (掛けたままのお告げのせいで打てない物も残し、ボタンに理由を出す。2026-10-10「錬金の後に高貴が打てない」)
   const ok = (k: string): boolean => !(craftStage.usableBare ?? craftStage.usable)(k);
   return {

@@ -11,6 +11,8 @@ import { feedbackReplies, imageAskFor, markRepliesSeen } from "../state/feedback
 
 const list = computed(() => (changelogOpen.value === "new" ? changelogNew.value : CHANGELOG.filter((e) => e.items.length)));
 /** 要望・バグへの返事 (今回の更新の窓の一番上。2026-10-11) */
+/** 英語の文が無い行がある (古い版) */
+const someJa = computed(() => list.value.some((e) => e.items.some((it) => !it.en)));
 const replies = computed(() => (changelogOpen.value === "new" ? feedbackReplies.value : []));
 const close = (): void => { if (changelogOpen.value === "new") markRepliesSeen(); changelogOpen.value = null; };
 /** 「画像を下さい」の返事: この窓を閉じて、その要望に画像を送る窓を開く */
@@ -24,7 +26,7 @@ const sendImage = (id: string): void => { close(); imageAskFor.value = id; };
     <template #title>{{ changelogOpen === "new" ? (changelogNew.length ? tr("更新しました", "What's new") : tr("お知らせ", "Notice")) : tr("更新履歴", "Changelog") }}</template>
     <template #header>
       <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">{{ tr("今の版", "Current version") }} v{{ APP_VERSION }}</span>
-      <span v-if="isEn" class="text-[11px] text-[var(--exile-color-text-tertiary)]">(notes are in Japanese)</span>
+      <span v-if="isEn && someJa" class="text-[11px] text-[var(--exile-color-text-tertiary)]">(older notes are in Japanese)</span>
     </template>
     <!-- 送ってくれた要望・バグへの返事 -->
     <section v-if="replies.length" class="mb-2 rounded-md bg-emerald-500/10 px-3 py-2 ring-1 ring-emerald-400/30">
@@ -45,7 +47,7 @@ const sendImage = (id: string): void => { close(); imageAskFor.value = id; };
       <ul class="space-y-0.5 text-[12px] leading-relaxed">
         <li v-for="(it, i) in e.items" :key="i" class="flex gap-2">
           <span class="shrink-0 text-[var(--exile-color-text-tertiary)]">・</span>
-          <span class="min-w-0 break-words"><span v-if="it.area" class="mr-1 text-[var(--exile-color-text-secondary)]">{{ it.area }}:</span>{{ it.text }}</span>
+          <span class="min-w-0 break-words"><span v-if="it.area" class="mr-1 text-[var(--exile-color-text-secondary)]">{{ it.area }}:</span>{{ isEn && it.en ? it.en : it.text }}</span>
         </li>
       </ul>
     </section>

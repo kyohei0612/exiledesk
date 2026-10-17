@@ -1,0 +1,163 @@
+{
+ "_": "changelog-notes.json の英語 (同じ版・同じ順。2026-10-17 英語の仕上げ)。ゲームの用語はクライアントの英語の原文",
+ "0.1.548": [
+  "English: release notes are now shown in English, and the base pages are available in English (/en/bases/)"
+ ],
+ "0.1.547": [
+  "Omen of Sanctification: values are now rerolled like a Divine Orb before being multiplied by 0.78–1.22 (previously the multiplier was applied to the current values). Values can exceed the tier's range"
+ ],
+ "0.1.546": [
+  "Resistance Flux and Aldur runes now also convert Essence-made mods and base-specific mods, the same way as regular mods (previously they stayed unchanged)"
+ ],
+ "0.1.545": [
+  "With a Mark of the Abyssal Lord on the item, a bone always replaces the Mark, so Sinistral / Dextral Necromancy omens are no longer used (and not consumed)",
+  "Updated the Resistance Flux card to describe the current behaviour (converted by the game's conversion table)"
+ ],
+ "0.1.544": [
+  "Omen of Light and Sinistral / Dextral Annulment can no longer be active together (only Light is used)"
+ ],
+ "0.1.543": [
+  "Added a \"Keep omens after use\" switch (in the omen box when holding currency, and on the Omens tab). While on, omens like Whittling stay active so you can keep using Chaos Orbs. The omen's cost is still added each time"
+ ],
+ "0.1.542": [
+  "Wands, staves and sceptres now have the quality field above the item (− / + / Max). Quality can be raised with currency or the field alike"
+ ],
+ "0.1.541": [
+  "Blacksmith's Whetstone, Arcanist's Etcher and Armourer's Scrap are back on the currency shelf (shown only for items they can be used on)",
+  "Quality on wands and staves strengthens the weapon's granted skill, so the item now shows what the current quality adds (e.g. \"Chaos Bolt quality: 14% increased Projectile Speed\"). The Arcanist's Etcher card shows the value at 20% quality"
+ ],
+ "0.1.540": [
+  "Catalysts, Blacksmith's Whetstone, Arcanist's Etcher and Armourer's Scrap now add +1% or +2% quality per use (random). Catalysts used to fill quality to the cap in one click; now you use them one at a time (you can still set the number directly in the quality field)"
+ ],
+ "0.1.539": [
+  "Unified the abbreviated \"Pre\" / \"Suf\" labels to \"Prefix\" / \"Suffix\""
+ ],
+ "0.1.538": [
+  "Chaos spam calculator: a hit now means \"any one\" of the selected mods lands (previously all of them). Up to 3 targets. Even rare mods finish calculating in a few seconds"
+ ],
+ "0.1.537": [
+  "Chaos spam calculator: the currency shelf is locked while it is open (\"Close the calculator\" over the shelf). The small × in the top right is now a \"Close\" button",
+  "Chaos spam calculator: targets nobody hits no longer calculate for minutes; it gives up if the first 10 people all miss (shows \"many people never hit\")"
+ ],
+ "0.1.536": [
+  "Chaos spam calculator: going back to an item level you already calculated shows the result immediately. It recalculates when you add or change target mods and when you close the calculator (your own spam always uses fresh random numbers)"
+ ],
+ "0.1.535": [
+  "Chaos spam calculator: fixed switching the Chaos Orb type after spamming restarting the calculation and blocking spam. With the same target mods the previous result is reused, and you return to the pre-spam state to try another Chaos Orb right away. Changing the item level or targets also recalculates from the pre-spam state"
+ ],
+ "0.1.534": [
+  "Chaos spam calculator (renamed from the spam odds tool): once targets are set it calculates Chaos Orb, Greater and Perfect, and picks the one with the lowest cost for half of people to hit as \"Recommended\". You can't spam until the calculation finishes (requested on YouTube)",
+  "Target mod picker: rows that group several mods (spell / minion / melee / projectile skill levels) now open the tier table when checked so you choose which to target (previously projectile +1 was targeted)",
+  "Cards: added that Crystallisation omens also work with corrupted essences (Hysteria etc.) and alloys, what Astrid's Creativity's crafted mods are, and the Catalysing Exaltation multiplier (5x at 20%). Updated the Contempt / Ferocity cards to the current rule (version is random)"
+ ],
+ "0.1.533": [
+  "Liquid emotions (Contempt / Ferocity): whether the prefix or suffix version is added is now random (the description doesn't say; previously it followed the side of the removed mod)"
+ ],
+ "0.1.532": [
+  "Essence of the Abyss: usable when the item has an Unrevealed Desecrated mod, and the Mark replaces that Unrevealed mod. Not usable with a revealed Desecrated mod (confirmed in game)"
+ ],
+ "0.1.531": [
+  "Bones on a Mark of the Abyssal Lord now have a minimum tier of \"item level × 0.4\" (same as Craft of Exile; previously fixed at 33)",
+  "Fixed the Essence of the Abyss description (usable even with a Desecrated mod)"
+ ],
+ "0.1.530": [
+  "Re-recorded the currency sounds from the game (Whetstone, Scrap, runes, omens and more have their own sounds; bones pick from 5). Volumes are matched and rapid use no longer overlaps",
+  "Desecrated mods in the mod list now show their faction (Amanamu / Kurgal / Ulaman) tag from the start"
+ ],
+ "0.1.529": [
+  "Whetstone, Etcher and Scrap now add +1% quality each (previously +1% or +2% at random)"
+ ],
+ "0.1.528": [
+  "All Desecrated-only mods are now equally likely (the game doesn't publish the odds; previously based on community measurements on rings and estimates from them)"
+ ],
+ "0.1.527": [
+  "Changing the item level while using the chaos spam tool now records an \"item level change\" step (replays used to produce a different item)"
+ ],
+ "0.1.526": [
+  "Emulator: values boosted by quality are now rounded (previously truncated, same as Craft of Exile)",
+  "Flux and Aldur runes now only convert mods in the game's conversion table (other mods stay unchanged)",
+  "Essence of the Abyss can now be used on items with a Desecrated mod"
+ ],
+ "0.1.525": [
+  "Emulator: bones now follow Craft of Exile (50/50 when both sides are open; when both are full, one non-Fractured mod is removed at random and the bone goes on that side)",
+  "Omen of Light and Sinistral / Dextral Annulment can now be active together (removes only the Desecrated mod on that side)",
+  "Omen of Catalysing Exaltation multiplier is now 1 + 0.2 × quality (5x at 20%)"
+ ],
+ "0.1.524": [
+  "Closed the message board for now"
+ ],
+ "0.1.523": [
+  "Emulator: rebuilt currency behaviour to follow the game's descriptions (results are almost unchanged)",
+  "Artificer's Orb can no longer be used on sceptres, and socketing a rune clears Hinekora's Lock foresight (as described)"
+ ],
+ "0.1.522": [
+  "Fixed the desktop app's auto-update having stopped since v0.1.519 (the message board, chaos spam X sharing and sounds arrive with this version)"
+ ],
+ "0.1.521": [
+  "The chaos spam tool and \"Aim with the next move\" are now separate. Only the one you opened is shown, and closing it or changing the base clears the previous result",
+  "Fixed sounds no longer playing on phones after a call etc."
+ ],
+ "0.1.520": [
+  "Message board: you can attach your current emulator item to a post (base art, mods and tiers as a card)",
+  "Message board: likes"
+ ],
+ "0.1.519": [
+  "Added a message board (the \"Board\" tab in the Craft Stage) for crafting questions, showing off and discussion. Leave the name empty to post as \"Nameless Exile\"; tags are optional. Use \"Report\" for problem posts",
+  "The web simulator tab is hidden until it's finished"
+ ],
+ "0.1.518": [
+  "Chaos spam tool: \"Share on X\" when you hit, with a result card (base art, attempts, your luck among 100 people). Opens the X app on phones",
+  "Chaos spam: luck in the top 10% of 100 people gets a sound and a special copper effect (and a special X card)",
+  "Chaos spam: fixed the previous spam result remaining after changing the base or undoing. The item level now starts from the current item's"
+ ],
+ "0.1.517": [
+  "Chaos spam tool: holding a Chaos Orb shows \"Chaos spam tool\" below the item (above the bottom bar on phones). Pick target mods to see how many tries 100 people needed (half of people, the unlucky 1 in 10), and hold the button to spam yourself. When you hit, it shows your luck among 100 people",
+  "Chaos spam: you can choose the item level (starting from the lowest where all selected mods can roll). \"Start from here\" returns to the emulator keeping steps and cost",
+  "Currency now plays the game's sounds (quiet; mute with the speaker in the top right). Rare tiers (0.2% or less) play the filter sound with a light effect",
+  "Phones: the \"Use\" button in the bottom bar now uses the game's button art"
+ ],
+ "0.1.516": [
+  "Grasping Mail can now roll ring mods (all elemental resistances, item rarity etc.) and use Catalysts (separately from base quality; choose \"Catalyst\" in the quality bar)",
+  "Fixed some tiers having 0% odds (maximum life, resistances, item rarity etc.) on tri-attribute helmets, gloves, boots, body armours and talismans"
+ ],
+ "0.1.515": [
+  "\"Aim with the next move\": omens that have no effect (e.g. Dextral Necromancy with full prefixes) are no longer listed. Also fixed numbers differing with and without an omen",
+  "\"Aim with the next move\": the ▾ on each row shows how the number was simulated",
+  "\"Aim with the next move\": Chaos Orbs are now candidates too (chaos spam: a hit counts even if current mods are removed, as long as the targets line up)",
+  "Greater / Perfect currency cards now show \"Only mod level ◯+ tiers\" prominently at the top",
+  "Fixed the Abyssal Echoes reroll button sometimes not appearing after more than 50 steps",
+  "Fixed shared steps beyond 50 losing the first steps so the replay produced a different item"
+ ],
+ "0.1.514": [
+  "Base picker: \"Show more\" now scrolls so \"Collapse\" is visible, and collapsing returns to the previous position (also fixed too little scrolling on wide screens)"
+ ],
+ "0.1.513": [
+  "Added a hint (?) on how the search works next to \"Search these mods on trade\""
+ ],
+ "0.1.512": [
+  "Fixed rows appearing duplicated when the same mod appeared twice (e.g. a Flux-converted resistance and a Fractured resistance)",
+  "Removed the \"Aldur\" tag from mods converted by Flux",
+  "Added \"Include base\" next to \"Search these mods on trade\" (off by default: searches by mods only, without base, item level and sockets)",
+  "Feedback and bug reports can now include images (up to 3, paste works too)"
+ ],
+ "0.1.511": [
+  "Corona Amulet, Grasping Ring and Stalking Belt now start with 1 socket even when white, and socketed runes work as they do in helmets / gloves / boots",
+  "Bones can be used on sceptres again (no Desecrated-only mods; candidates are regular mods)",
+  "Glassblower's Bauble (flask quality) now adds +1% each",
+  "Necromancy omens now say \"replaces 1\" when that side is full",
+  "Faction omens can be used on quivers (aligned with the description)"
+ ],
+ "0.1.510": [
+  "Bases that change their prefix / suffix count (e.g. Absent Amulet) now change magic slots too (Absent Amulet becomes a magic item with no mods from Transmutation, and Augmentation can't be used)"
+ ],
+ "0.1.509": [
+  "Quality: choosing a Catalyst type raises quality to the current cap (then adjust with − / +)",
+  "Removed the Infuser bonus (+10%, not on the shelf) from \"current max\" quality",
+  "Base picker: opening it now scrolls so the bottom of the list (Show more) is visible"
+ ],
+ "0.1.508": [
+  "Fixed talismans being treated as armour so faction omens couldn't be used (bones are now jawbones too)",
+  "Catalysts for jewels are now \"Refined Catalysts\" (regular Catalysts are for rings and amulets)",
+  "Bones are no longer shown for sceptres without Desecrated mods"
+ ]
+}

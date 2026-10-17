@@ -1,12 +1,355 @@
 [
  {
+  "v": "0.1.548",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "英語の画面: 更新内容を英語で出すように。ベースの読み物のページの英語版 (/en/bases/) を作りました",
+    "en": "English: release notes are now shown in English, and the base pages are available in English (/en/bases/)"
+   }
+  ]
+ },
+ {
   "v": "0.1.547",
   "date": "2026-10-17",
   "items": [
    {
     "kind": "",
     "area": "",
-    "text": "聖別のお告げ: 神のオーブと同じく数値を振り直してから 0.78〜1.22 倍に (前は今の数値に倍率を掛けるだけ)。段の上限を超えることもあります"
+    "text": "聖別のお告げ: 神のオーブと同じく数値を振り直してから 0.78〜1.22 倍に (前は今の数値に倍率を掛けるだけ)。段の上限を超えることもあります",
+    "en": "Omen of Sanctification: values are now rerolled like a Divine Orb before being multiplied by 0.78–1.22 (previously the multiplier was applied to the current values). Values can exceed the tier's range"
+   }
+  ]
+ },
+ {
+  "v": "0.1.546",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "耐性のフラックス・アルダーのルーンで、エッセンスで付けた MOD やベース専用の MOD も普通の MOD と同じように変わるように (前は変わりませんでした)",
+    "en": "Resistance Flux and Aldur runes now also convert Essence-made mods and base-specific mods, the same way as regular mods (previously they stayed unchanged)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.545",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "深淵の王の印がある時に骨を打つと印と入れ替わるので、左右のネクロマンシーのお告げは使わないように (減りません)",
+    "en": "With a Mark of the Abyssal Lord on the item, a bone always replaces the Mark, so Sinistral / Dextral Necromancy omens are no longer used (and not consumed)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "耐性のフラックスのカードの説明を今の動き (ゲームの変換表のとおり、表に無い MOD は変わらない) に",
+    "en": "Updated the Resistance Flux card to describe the current behaviour (converted by the game's conversion table)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.544",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "光のお告げと左右の消去のお告げは一緒に掛けられないように (光を使う時は左右は使いません)",
+    "en": "Omen of Light and Sinistral / Dextral Annulment can no longer be active together (only Light is used)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.543",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "お告げに「打ってもお告げを外さない」の切り替えを付けました (持った時のお告げの欄とお告げのタブ)。ON の間は削減のお告げなどを掛けたままカオスを続けて打てます。使ったお告げの費用は毎回足します",
+    "en": "Added a \"Keep omens after use\" switch (in the omen box when holding currency, and on the Omens tab). While on, omens like Whittling stay active so you can keep using Chaos Orbs. The omen's cost is still added each time"
+   }
+  ]
+ },
+ {
+  "v": "0.1.542",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "ワンド・スタッフ・セプターにも、アイテムの上の品質の欄 (− / + / 最大) を出すように。カレンシーでも欄でも同じように品質を上げられます",
+    "en": "Wands, staves and sceptres now have the quality field above the item (− / + / Max). Quality can be raised with currency or the field alike"
+   }
+  ]
+ },
+ {
+  "v": "0.1.541",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "鍛冶屋の砥石・秘術師の彫刻針・鎧鍛冶の端材をカレンシーの棚に戻しました (使える装備の時だけ出ます)",
+    "en": "Blacksmith's Whetstone, Arcanist's Etcher and Armourer's Scrap are back on the currency shelf (shown only for items they can be used on)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ワンド・スタッフは品質で武器のスキルが強くなるので、アイテムに「◯◯ の品質: 投射物スピードが 14% 増加する」のように今の品質で上がる物を出すように。秘術師の彫刻針のカードには品質 20% の時の値",
+    "en": "Quality on wands and staves strengthens the weapon's granted skill, so the item now shows what the current quality adds (e.g. \"Chaos Bolt quality: 14% increased Projectile Speed\"). The Arcanist's Etcher card shows the value at 20% quality"
+   }
+  ]
+ },
+ {
+  "v": "0.1.540",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カタリスト・鍛冶屋の砥石・秘術師の彫刻針・鎧鍛冶の端材は、1 個打つごとに品質 +1% か +2% (ランダム) に。カタリストは前は 1 回で上限まででしたが、1 個ずつ手で打つ形にしました (品質の欄で数字を直接決めることもできます)",
+    "en": "Catalysts, Blacksmith's Whetstone, Arcanist's Etcher and Armourer's Scrap now add +1% or +2% quality per use (random). Catalysts used to fill quality to the cap in one click; now you use them one at a time (you can still set the number directly in the quality field)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.539",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "画面の「プレ」「サフィ」の略を「プレフィックス」「サフィックス」に揃えました",
+    "en": "Unified the abbreviated \"Pre\" / \"Suf\" labels to \"Prefix\" / \"Suffix\""
+   }
+  ]
+ },
+ {
+  "v": "0.1.538",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機: 選んだ MOD の「どれか 1 つ」が付いたら当たりに (前は全部揃うまで)。狙いは 3 つまで。付きにくい MOD でも計算は数秒で終わります",
+    "en": "Chaos spam calculator: a hit now means \"any one\" of the selected mods lands (previously all of them). Up to 3 targets. Even rare mods finish calculating in a few seconds"
+   }
+  ]
+ },
+ {
+  "v": "0.1.537",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機: 開いている間はカレンシーの棚を使えないように (棚の上に「計算機を閉じる」)。右上の小さい × を「閉じる」ボタンに",
+    "en": "Chaos spam calculator: the currency shelf is locked while it is open (\"Close the calculator\" over the shelf). The small × in the top right is now a \"Close\" button"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機: 誰も付かない狙いの時に計算が何分も続いていたのを、最初の 10 人が付かなければ打ち切るように (「付かない人が多い」と出ます)",
+    "en": "Chaos spam calculator: targets nobody hits no longer calculate for minutes; it gives up if the first 10 people all miss (shows \"many people never hit\")"
+   }
+  ]
+ },
+ {
+  "v": "0.1.536",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機: 一度計算したアイテムレベルに戻した時は、計算し直さずにすぐ結果を出すように。狙いの MOD を足す・変えた時と、計算機を閉じた時は計算し直します (自分でスパムする方は毎回ちがう乱数のまま)",
+    "en": "Chaos spam calculator: going back to an item level you already calculated shows the result immediately. It recalculates when you add or change target mods and when you close the calculator (your own spam always uses fresh random numbers)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.535",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機: スパムの後にカオスの種類を替えると計算がやり直しになり、スパムできなくなっていたのを直しました。狙いの MOD が同じなら計算した結果をそのまま使い、スパムの前の状態に戻ってすぐ別のカオスで試せます。アイテムレベルや狙いを替えた時も、スパムの前の状態から計算し直します",
+    "en": "Chaos spam calculator: fixed switching the Chaos Orb type after spamming restarting the calculation and blocking spam. With the same target mods the previous result is reused, and you return to the pre-spam state to try another Chaos Orb right away. Changing the item level or targets also recalculates from the pre-spam state"
+   }
+  ]
+ },
+ {
+  "v": "0.1.534",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機 (確率機から名前を変えました): 狙いを決めると普通・上級・完全のカオスを全部計算して、半分の人が付くまでの費用が一番安い物を「おすすめ」にして選びます。計算が終わるまではスパムできません (YouTube でのご要望)",
+    "en": "Chaos spam calculator (renamed from the spam odds tool): once targets are set it calculates Chaos Orb, Greater and Perfect, and picks the one with the lowest cost for half of people to hit as \"Recommended\". You can't spam until the calculation finishes (requested on YouTube)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "狙う MOD の窓: スキルのレベル (スペル / ミニオン / 近接 / 投射物) のように 1 行にまとめた行は、チェックを入れると段の表が開き、どれを狙うか選ぶように (前は投射物 +1 が狙いになっていた)",
+    "en": "Target mod picker: rows that group several mods (spell / minion / melee / projectile skill levels) now open the tier table when checked so you choose which to target (previously projectile +1 was targeted)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "カードの説明: 結晶化のお告げにコラプトのエッセンス (ヒステリー等) と合金も効くこと、アストリッドの創造性のクラフトモッドの中身、触媒の高貴のお告げの倍率 (20% で 5 倍) を書き足しました。軽蔑・獰猛のカードを今の決まり (版はランダム) に",
+    "en": "Cards: added that Crystallisation omens also work with corrupted essences (Hysteria etc.) and alloys, what Astrid's Creativity's crafted mods are, and the Catalysing Exaltation multiplier (5x at 20%). Updated the Contempt / Ferocity cards to the current rule (version is random)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.533",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "液化した感情 (侮蔑・獰猛): プレの版とサフィの版のどちらが付くかをランダムに (説明文に決め方が無いため。前は消えた MOD の側で決まっていた)",
+    "en": "Liquid emotions (Contempt / Ferocity): whether the prefix or suffix version is added is now random (the description doesn't say; previously it followed the side of the removed mod)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.532",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "深淵のエッセンス: 未発現の冒涜 MOD があれば使えて、印はその未発現の MOD に入れ替わるように。発現済みの冒涜 MOD があると使えません (ゲームで確認)",
+    "en": "Essence of the Abyss: usable when the item has an Unrevealed Desecrated mod, and the Mark replaces that Unrevealed mod. Not usable with a revealed Desecrated mod (confirmed in game)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.531",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "深淵の王の印から骨を使った時の段の下限を「アイテムレベル × 0.4」に (Craft of Exile と同じ。前は 33 固定)",
+    "en": "Bones on a Mark of the Abyssal Lord now have a minimum tier of \"item level × 0.4\" (same as Craft of Exile; previously fixed at 33)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "深淵のエッセンスの説明を直しました (冒涜の MOD があっても使えます)",
+    "en": "Fixed the Essence of the Abyss description (usable even with a Desecrated mod)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.530",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カレンシーを使った時の音をゲームの物で取り直しました (砥石・端材・ルーン・お告げなども専用の音、骨は毎回 5 通りから)。大きさをそろえ、続けて打っても重ならないように",
+    "en": "Re-recorded the currency sounds from the game (Whetstone, Scrap, runes, omens and more have their own sounds; bones pick from 5). Volumes are matched and rapid use no longer overlaps"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧の冒涜の MOD に、勢力 (アマナム・クルガル・ウラマン) の札を最初から出すように",
+    "en": "Desecrated mods in the mod list now show their faction (Amanamu / Kurgal / Ulaman) tag from the start"
+   }
+  ]
+ },
+ {
+  "v": "0.1.529",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "砥石・彫刻針・端材は 1 個で品質 +1% に揃えました (前は +1% か +2% のランダム)",
+    "en": "Whetstone, Etcher and Scrap now add +1% quality each (previously +1% or +2% at random)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.528",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "冒涜専用 MOD どうしの出やすさを全部同じに (ゲームが公開していないため。前は指輪の有志の実測と、それを当てた推定)",
+    "en": "All Desecrated-only mods are now equally likely (the game doesn't publish the odds; previously based on community measurements on rings and estimates from them)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.527",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム確率機でアイテムレベルを変えて続けた時、手順に「アイテムレベルを変える手」が入るように (再生すると前の手まで別物になっていた)",
+    "en": "Changing the item level while using the chaos spam tool now records an \"item level change\" step (replays used to produce a different item)"
+   }
+  ]
+ },
+ {
+  "v": "0.1.526",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 品質で伸びた数値を四捨五入に (前は切り捨て、Craft of Exile と同じ)",
+    "en": "Emulator: values boosted by quality are now rounded (previously truncated, same as Craft of Exile)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "フラックス・アルダーのルーンは、ゲームの変換表にある MOD だけを変えるように (表に無い MOD は変わらない)",
+    "en": "Flux and Aldur runes now only convert mods in the game's conversion table (other mods stay unchanged)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "深淵のエッセンスを、冒涜の MOD があるアイテムにも使えるように",
+    "en": "Essence of the Abyss can now be used on items with a Desecrated mod"
+   }
+  ]
+ },
+ {
+  "v": "0.1.525",
+  "date": "2026-10-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 骨の付き方を Craft of Exile に合わせました (両側が空いていれば半々、両側が埋まっていれば固定以外の MOD から等しく 1 つ消えてその側に付く)",
+    "en": "Emulator: bones now follow Craft of Exile (50/50 when both sides are open; when both are full, one non-Fractured mod is removed at random and the bone goes on that side)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "光のお告げと左右の消去のお告げを一緒に掛けられるように (その側の冒涜の MOD だけ消える)",
+    "en": "Omen of Light and Sinistral / Dextral Annulment can now be active together (removes only the Desecrated mod on that side)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "触媒の高貴のお告げの倍率を 1 + 0.2 × 品質 に (20% で 5 倍)",
+    "en": "Omen of Catalysing Exaltation multiplier is now 1 + 0.2 × quality (5x at 20%)"
    }
   ]
  },
@@ -17,7 +360,8 @@
    {
     "kind": "",
     "area": "",
-    "text": "掲示板をいったん閉じました"
+    "text": "掲示板をいったん閉じました",
+    "en": "Closed the message board for now"
    }
   ]
  },
@@ -28,12 +372,14 @@
    {
     "kind": "",
     "area": "",
-    "text": "エミュレーター: カレンシーの動きを、ゲームの説明文どおりに組み直しました (結果は今までとほぼ同じ)"
+    "text": "エミュレーター: カレンシーの動きを、ゲームの説明文どおりに組み直しました (結果は今までとほぼ同じ)",
+    "en": "Emulator: rebuilt currency behaviour to follow the game's descriptions (results are almost unchanged)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "熟練工のオーブはセプターに使えないように、ルーンをはめるとヒネコラの予見が消えるように (説明文どおり)"
+    "text": "熟練工のオーブはセプターに使えないように、ルーンをはめるとヒネコラの予見が消えるように (説明文どおり)",
+    "en": "Artificer's Orb can no longer be used on sceptres, and socketing a rune clears Hinekora's Lock foresight (as described)"
    }
   ]
  },
@@ -44,7 +390,8 @@
    {
     "kind": "",
     "area": "",
-    "text": "アプリの自動更新が v0.1.519 から止まっていたのを直しました (掲示板・カオススパム確率機の X シェア・音などもこの版で届きます)"
+    "text": "アプリの自動更新が v0.1.519 から止まっていたのを直しました (掲示板・カオススパム確率機の X シェア・音などもこの版で届きます)",
+    "en": "Fixed the desktop app's auto-update having stopped since v0.1.519 (the message board, chaos spam X sharing and sounds arrive with this version)"
    }
   ]
  },
@@ -55,12 +402,14 @@
    {
     "kind": "",
     "area": "",
-    "text": "カオススパム確率機と「次の手で狙う」を別々に。開いた方だけ出て、閉じたりベースを変えたりした時は前の結果を残しません"
+    "text": "カオススパム確率機と「次の手で狙う」を別々に。開いた方だけ出て、閉じたりベースを変えたりした時は前の結果を残しません",
+    "en": "The chaos spam tool and \"Aim with the next move\" are now separate. Only the one you opened is shown, and closing it or changing the base clears the previous result"
    },
    {
     "kind": "",
     "area": "",
-    "text": "スマホで電話の後などに、使った時の音が鳴らなくなるのを直しました"
+    "text": "スマホで電話の後などに、使った時の音が鳴らなくなるのを直しました",
+    "en": "Fixed sounds no longer playing on phones after a call etc."
    }
   ]
  },
@@ -71,12 +420,14 @@
    {
     "kind": "",
     "area": "",
-    "text": "掲示板: エミュレーターの今のアイテムを書き込みに貼れるように (ベースの絵・MOD・段がカードで出ます)"
+    "text": "掲示板: エミュレーターの今のアイテムを書き込みに貼れるように (ベースの絵・MOD・段がカードで出ます)",
+    "en": "Message board: you can attach your current emulator item to a post (base art, mods and tiers as a card)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "掲示板: いいねを付けられるように"
+    "text": "掲示板: いいねを付けられるように",
+    "en": "Message board: likes"
    }
   ]
  },
@@ -87,12 +438,14 @@
    {
     "kind": "",
     "area": "",
-    "text": "掲示板を作りました (クラフトステージの「掲示板」タブ)。クラフトの相談・自慢・意見交換にどうぞ。名前は空なら「名無しのエグザイル」、タグは付けたい時だけ。困った書き込みは「通報」から"
+    "text": "掲示板を作りました (クラフトステージの「掲示板」タブ)。クラフトの相談・自慢・意見交換にどうぞ。名前は空なら「名無しのエグザイル」、タグは付けたい時だけ。困った書き込みは「通報」から",
+    "en": "Added a message board (the \"Board\" tab in the Craft Stage) for crafting questions, showing off and discussion. Leave the name empty to post as \"Nameless Exile\"; tags are optional. Use \"Report\" for problem posts"
    },
    {
     "kind": "",
     "area": "",
-    "text": "Web 版のシミュレーターのタブは、作り終わるまで出さないようにしました"
+    "text": "Web 版のシミュレーターのタブは、作り終わるまで出さないようにしました",
+    "en": "The web simulator tab is hidden until it's finished"
    }
   ]
  },
@@ -103,17 +456,20 @@
    {
     "kind": "",
     "area": "",
-    "text": "カオススパム確率機: 付いたら「X でシェア」。結果のカード (ベースの絵・回数・100 人中の運) 付きで投稿できます (スマホは X のアプリが開きます)"
+    "text": "カオススパム確率機: 付いたら「X でシェア」。結果のカード (ベースの絵・回数・100 人中の運) 付きで投稿できます (スマホは X のアプリが開きます)",
+    "en": "Chaos spam tool: \"Share on X\" when you hit, with a result card (base art, attempts, your luck among 100 people). Opens the X app on phones"
    },
    {
     "kind": "",
     "area": "",
-    "text": "カオススパム: 100 人中 上位 10% 以内の強運は、音と銅色の特別な演出 (X のカードも特別仕様)"
+    "text": "カオススパム: 100 人中 上位 10% 以内の強運は、音と銅色の特別な演出 (X のカードも特別仕様)",
+    "en": "Chaos spam: luck in the top 10% of 100 people gets a sound and a special copper effect (and a special X card)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "カオススパム: ベースを変えた・1 手戻した時に、前のスパムの結果が残っていたのを直しました。アイテムレベルは今のアイテムの物から始まります"
+    "text": "カオススパム: ベースを変えた・1 手戻した時に、前のスパムの結果が残っていたのを直しました。アイテムレベルは今のアイテムの物から始まります",
+    "en": "Chaos spam: fixed the previous spam result remaining after changing the base or undoing. The item level now starts from the current item's"
    }
   ]
  },
@@ -124,22 +480,26 @@
    {
     "kind": "",
     "area": "",
-    "text": "カオススパム確率機: カオスを持つとアイテムの下 (スマホは下の帯の上) に「カオススパム確率機へ」。狙う MOD を選ぶと、100 人が当たるまでスパムした回数 (半分の人・運が悪い 10 人に 1 人) と、押しっぱなしで自分もスパム。付いたら 100 人中の運を出します"
+    "text": "カオススパム確率機: カオスを持つとアイテムの下 (スマホは下の帯の上) に「カオススパム確率機へ」。狙う MOD を選ぶと、100 人が当たるまでスパムした回数 (半分の人・運が悪い 10 人に 1 人) と、押しっぱなしで自分もスパム。付いたら 100 人中の運を出します",
+    "en": "Chaos spam tool: holding a Chaos Orb shows \"Chaos spam tool\" below the item (above the bottom bar on phones). Pick target mods to see how many tries 100 people needed (half of people, the unlucky 1 in 10), and hold the button to spam yourself. When you hit, it shows your luck among 100 people"
    },
    {
     "kind": "",
     "area": "",
-    "text": "カオススパム: アイテムレベルを選べるように (選んだ MOD が全部付く一番低い所から)。「ここから開始」で工程と費用をそのままにエミュレーターへ戻れます"
+    "text": "カオススパム: アイテムレベルを選べるように (選んだ MOD が全部付く一番低い所から)。「ここから開始」で工程と費用をそのままにエミュレーターへ戻れます",
+    "en": "Chaos spam: you can choose the item level (starting from the lowest where all selected mods can roll). \"Start from here\" returns to the emulator keeping steps and cost"
    },
    {
     "kind": "",
     "area": "",
-    "text": "カレンシーを使った時にゲームと同じ音 (小さめ、右上のスピーカーで消せます)。珍しい段 (0.2% 以下) が付いた時はフィルターの音と光の演出"
+    "text": "カレンシーを使った時にゲームと同じ音 (小さめ、右上のスピーカーで消せます)。珍しい段 (0.2% 以下) が付いた時はフィルターの音と光の演出",
+    "en": "Currency now plays the game's sounds (quiet; mute with the speaker in the top right). Rare tiers (0.2% or less) play the filter sound with a light effect"
    },
    {
     "kind": "",
     "area": "",
-    "text": "スマホ: 下の帯の「使う」をゲームのボタンに"
+    "text": "スマホ: 下の帯の「使う」をゲームのボタンに",
+    "en": "Phones: the \"Use\" button in the bottom bar now uses the game's button art"
    }
   ]
  },
@@ -150,12 +510,14 @@
    {
     "kind": "",
     "area": "",
-    "text": "グラスピングメイルに指輪の MOD (全ての元素耐性・アイテムレアリティなど) が付くように。カタリストも使えるように (ベースの品質とは別に、品質の帯の「カタリスト」で選べます)"
+    "text": "グラスピングメイルに指輪の MOD (全ての元素耐性・アイテムレアリティなど) が付くように。カタリストも使えるように (ベースの品質とは別に、品質の帯の「カタリスト」で選べます)",
+    "en": "Grasping Mail can now roll ring mods (all elemental resistances, item rarity etc.) and use Catalysts (separately from base quality; choose \"Catalyst\" in the quality bar)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "3 属性の兜・手袋・靴・鎧とタリスマンで、一部の段の確率が 0 になっていた MOD (最大ライフ・耐性・アイテムレアリティなど) を直しました"
+    "text": "3 属性の兜・手袋・靴・鎧とタリスマンで、一部の段の確率が 0 になっていた MOD (最大ライフ・耐性・アイテムレアリティなど) を直しました",
+    "en": "Fixed some tiers having 0% odds (maximum life, resistances, item rarity etc.) on tri-attribute helmets, gloves, boots, body armours and talismans"
    }
   ]
  },
@@ -166,32 +528,38 @@
    {
     "kind": "",
     "area": "",
-    "text": "「次の手で狙う」: 効かないお告げ (プレが埋まっている時の右手のネクロマンシーなど) は出さないように。お告げの有る無しで数字がずれていたのも直しました"
+    "text": "「次の手で狙う」: 効かないお告げ (プレが埋まっている時の右手のネクロマンシーなど) は出さないように。お告げの有る無しで数字がずれていたのも直しました",
+    "en": "\"Aim with the next move\": omens that have no effect (e.g. Dextral Necromancy with full prefixes) are no longer listed. Also fixed numbers differing with and without an omen"
    },
    {
     "kind": "",
     "area": "",
-    "text": "「次の手で狙う」: 各行の ▾ で、その数字をどう回して数えたかを見られるように"
+    "text": "「次の手で狙う」: 各行の ▾ で、その数字をどう回して数えたかを見られるように",
+    "en": "\"Aim with the next move\": the ▾ on each row shows how the number was simulated"
    },
    {
     "kind": "",
     "area": "",
-    "text": "「次の手で狙う」: カオスオーブも候補に (カオススパム: 今の MOD が消えても狙いが揃えば当たり)"
+    "text": "「次の手で狙う」: カオスオーブも候補に (カオススパム: 今の MOD が消えても狙いが揃えば当たり)",
+    "en": "\"Aim with the next move\": Chaos Orbs are now candidates too (chaos spam: a hit counts even if current mods are removed, as long as the targets line up)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "上級・完全のカレンシーのカードの頭に「MOD レベル ◯ 以上だけ付く」を大きく出すように"
+    "text": "上級・完全のカレンシーのカードの頭に「MOD レベル ◯ 以上だけ付く」を大きく出すように",
+    "en": "Greater / Perfect currency cards now show \"Only mod level ◯+ tiers\" prominently at the top"
    },
    {
     "kind": "",
     "area": "",
-    "text": "50 手を超えると、アビスの反響の引き直しボタンが出なくなることがあったのを直しました"
+    "text": "50 手を超えると、アビスの反響の引き直しボタンが出なくなることがあったのを直しました",
+    "en": "Fixed the Abyssal Echoes reroll button sometimes not appearing after more than 50 steps"
    },
    {
     "kind": "",
     "area": "",
-    "text": "50 手を超えた手順を送ると、頭の手が抜けて再生しても同じアイテムにならなかったのを直しました"
+    "text": "50 手を超えた手順を送ると、頭の手が抜けて再生しても同じアイテムにならなかったのを直しました",
+    "en": "Fixed shared steps beyond 50 losing the first steps so the replay produced a different item"
    }
   ]
  },
@@ -202,7 +570,8 @@
    {
     "kind": "",
     "area": "",
-    "text": "ベース選び: 「もっと見る」で広げた時は「たたむ」が見える所まで送り、たたむと元の位置に戻るように (幅の広い画面で送りが足りなかったのも直しました)"
+    "text": "ベース選び: 「もっと見る」で広げた時は「たたむ」が見える所まで送り、たたむと元の位置に戻るように (幅の広い画面で送りが足りなかったのも直しました)",
+    "en": "Base picker: \"Show more\" now scrolls so \"Collapse\" is visible, and collapsing returns to the previous position (also fixed too little scrolling on wide screens)"
    }
   ]
  },
@@ -213,7 +582,8 @@
    {
     "kind": "",
     "area": "",
-    "text": "「今の MOD を取引所で検索」の横に、検索の仕組みのヒント (?) を足しました"
+    "text": "「今の MOD を取引所で検索」の横に、検索の仕組みのヒント (?) を足しました",
+    "en": "Added a hint (?) on how the search works next to \"Search these mods on trade\""
    }
   ]
  },
@@ -224,22 +594,26 @@
    {
     "kind": "",
     "area": "",
-    "text": "同じ MOD が 2 つ並んだ時 (フラックスで変えた耐性とフラクチャーの耐性など) に、行が増えて見えることがあったのを直しました"
+    "text": "同じ MOD が 2 つ並んだ時 (フラックスで変えた耐性とフラクチャーの耐性など) に、行が増えて見えることがあったのを直しました",
+    "en": "Fixed rows appearing duplicated when the same mod appeared twice (e.g. a Flux-converted resistance and a Fractured resistance)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "フラックスで変えた MOD に「アルダー」の札が付いていたのを外しました"
+    "text": "フラックスで変えた MOD に「アルダー」の札が付いていたのを外しました",
+    "en": "Removed the \"Aldur\" tag from mods converted by Flux"
    },
    {
     "kind": "",
     "area": "",
-    "text": "「今の MOD を取引所で検索」の横に「ベース検索含め」を足しました (既定はオフ: ベース・アイテムレベル・ソケットは入れず MOD だけで探します)"
+    "text": "「今の MOD を取引所で検索」の横に「ベース検索含め」を足しました (既定はオフ: ベース・アイテムレベル・ソケットは入れず MOD だけで探します)",
+    "en": "Added \"Include base\" next to \"Search these mods on trade\" (off by default: searches by mods only, without base, item level and sockets)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "要望・バグに画像を付けられるように (3 枚まで、貼り付けでも)"
+    "text": "要望・バグに画像を付けられるように (3 枚まで、貼り付けでも)",
+    "en": "Feedback and bug reports can now include images (up to 3, paste works too)"
    }
   ]
  },
@@ -250,27 +624,32 @@
    {
     "kind": "",
     "area": "",
-    "text": "コロナのアミュレット・グラスピングリング・ストーキングベルトは、白の時からソケットが 1 つあり、はめたルーンが兜・手袋・靴として効くように"
+    "text": "コロナのアミュレット・グラスピングリング・ストーキングベルトは、白の時からソケットが 1 つあり、はめたルーンが兜・手袋・靴として効くように",
+    "en": "Corona Amulet, Grasping Ring and Stalking Belt now start with 1 socket even when white, and socketed runes work as they do in helmets / gloves / boots"
    },
    {
     "kind": "",
     "area": "",
-    "text": "セプターにも骨を使えるように戻しました (専用の冒涜 MOD は無く、候補は普通の MOD)"
+    "text": "セプターにも骨を使えるように戻しました (専用の冒涜 MOD は無く、候補は普通の MOD)",
+    "en": "Bones can be used on sceptres again (no Desecrated-only mods; candidates are regular mods)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "ガラス職人の玉 (フラスコの品質) は 1 個 +1% に"
+    "text": "ガラス職人の玉 (フラスコの品質) は 1 個 +1% に",
+    "en": "Glassblower's Bauble (flask quality) now adds +1% each"
    },
    {
     "kind": "",
     "area": "",
-    "text": "ネクロマンシーのお告げ: 側が満杯の時は「1 つ置き換える」と出すように"
+    "text": "ネクロマンシーのお告げ: 側が満杯の時は「1 つ置き換える」と出すように",
+    "en": "Necromancy omens now say \"replaces 1\" when that side is full"
    },
    {
     "kind": "",
     "area": "",
-    "text": "勢力のお告げは矢筒にも使えます (説明文の表記を合わせました)"
+    "text": "勢力のお告げは矢筒にも使えます (説明文の表記を合わせました)",
+    "en": "Faction omens can be used on quivers (aligned with the description)"
    }
   ]
  },
@@ -281,7 +660,8 @@
    {
     "kind": "",
     "area": "",
-    "text": "不在のアミュレットなど「プレ / サフィの数が増減する」ベースで、マジックの枠も増減するように (不在のアミュレットは変成で MOD 無しのマジックになり、増強は打てません)"
+    "text": "不在のアミュレットなど「プレ / サフィの数が増減する」ベースで、マジックの枠も増減するように (不在のアミュレットは変成で MOD 無しのマジックになり、増強は打てません)",
+    "en": "Bases that change their prefix / suffix count (e.g. Absent Amulet) now change magic slots too (Absent Amulet becomes a magic item with no mods from Transmutation, and Augmentation can't be used)"
    }
   ]
  },
@@ -292,393 +672,20 @@
    {
     "kind": "",
     "area": "",
-    "text": "品質: 触媒の種類を選ぶと、その時点の上限まで品質が上がるように (そこから − / + で変えられます)"
+    "text": "品質: 触媒の種類を選ぶと、その時点の上限まで品質が上がるように (そこから − / + で変えられます)",
+    "en": "Quality: choosing a Catalyst type raises quality to the current cap (then adjust with − / +)"
    },
    {
     "kind": "",
     "area": "",
-    "text": "品質の「今の最大」から、棚に無いインフューザーの分 (+10%) を外しました"
+    "text": "品質の「今の最大」から、棚に無いインフューザーの分 (+10%) を外しました",
+    "en": "Removed the Infuser bonus (+10%, not on the shelf) from \"current max\" quality"
    },
    {
     "kind": "",
     "area": "",
-    "text": "ベース選び: 開いた時に、一覧の下 (もっと見る) まで見える位置に送るように"
-   }
-  ]
- },
- {
-  "v": "0.1.508",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "タリスマンが防具扱いになっていて、勢力のお告げが使えなかったのを直しました (骨も顎骨に)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ジュエルの触媒は「精製されたカタリスト」に (普通のカタリストは指輪・アミュレット用)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "冒涜の MOD が無いセプターには骨を出さないように"
-   }
-  ]
- },
- {
-  "v": "0.1.507",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "持っている物のお告げとエッセンスの段を選ぶ窓が重なっていたのを直しました"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "タブレットの幅でアイテムのカードがはみ出していたのを直しました"
-   }
-  ]
- },
- {
-  "v": "0.1.506",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホ: 発現の候補 3 つが右へはみ出していたのを直しました"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホ・タブレット: ベースの名前・タブ・検索欄・上の帯などの崩れを直しました"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "英語の画面で打った MOD・選んだ狙いが、日本語に戻しても英語のままだったのを直しました"
-   }
-  ]
- },
- {
-  "v": "0.1.505",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "アプリ: ベース選びの部位のタイルの光を、Web 版と同じく絵の色に (全部黄色になっていました)"
-   }
-  ]
- },
- {
-  "v": "0.1.504",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "Web 版: 右のチャンネルの欄でも、右クリックで持っている物を手放すように (ブラウザのメニューを出さない)"
-   }
-  ]
- },
- {
-  "v": "0.1.503",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ヴァールのオーブを棚から外しました (ヴァールの MOD の出る確率が分からないため)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "可能性のオーブと一緒に、可能性・古代のお告げも外しました"
-   }
-  ]
- },
- {
-  "v": "0.1.502",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "可能性のオーブを棚から外しました (不具合が多いため)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "要望・バグを送る: その時の画面の状態をいつも一緒に送るように (チェックの欄を外しました)"
-   }
-  ]
- },
- {
-  "v": "0.1.501",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選び: 「装備・エフェクトオフ」のチェックで、部位のタイルを元のベースの絵に (光と粒なし)。このブラウザに覚えます"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選び: 名前で探す欄を短く"
-   }
-  ]
- },
- {
-  "v": "0.1.500",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選びの部位のタイルを、武器・防具・宝飾品ともユニークの絵に。絵の色でうっすら光り、小さな光の粒が立ちのぼる"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "Web 版: ベースごとのページ (付く MOD・段・出やすさ・素の数値・暗黙) とベース一覧を追加。各ページからそのベースでエミュレーターを開ける"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "Web 版: 「使い方」と「お問い合わせ」のページを追加 (一番下のリンクから)"
-   }
-  ]
- },
- {
-  "v": "0.1.498",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エッセンス・冒涜の MOD がアーマー・回避力・エナジーシールド・物理ダメージなど上の数値に反映されていなかったのを直した (エッセンスの文も実際に付く MOD の文に)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "暗黙の MOD: タグを表示、カタリストの品質で伸びる、左に値の幅、右の ▼▲ で値を変えられる、神のオーブ・祝福のお告げで振り直し"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "冒涜の MOD とジュエルにもカタリストの品質が乗るように"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "カレンシーを持った時、MOD 一覧で狙いを複数選んで「どれか 1 つでも付く確率」を表示 (段の表ではその段以上も選べる)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "発現で付いた MOD にも付いた瞬間の確率を表示、光るのは 0.2% 以下に"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "取引所の検索: 獰猛の「サフィックス / プレフィックスの効果」が逆の側で検索されていたのを直した、ジュエルの MOD の検索を正しく"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ジュエルはアイテムレベルを出さない・見ない (付く MOD が変わらないため)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "発現などで出る長い MOD 名が枠からはみ出ないように"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "Web 版: 上の「はじめに」を「使い方」(使い方の動画を別タブで) に"
-   }
-  ]
- },
- {
-  "v": "0.1.496",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "「次の手で狙う」で決めたら、後ろの MOD 一覧の窓も閉じて確率の一覧へ"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフトステージの上の説明文を今の使い方に"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "工程の「共有」は準備中のため一旦外した"
-   }
-  ]
- },
- {
-  "v": "0.1.495",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "Web 版の一番下の記録の切り替えを「記録: しています / 止めています」とボタンに分けて分かりやすく"
-   }
-  ]
- },
- {
-  "v": "0.1.494",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選び: 開いた部位を畳んだ後に下の空きが残っていたのを直した"
-   }
-  ]
- },
- {
-  "v": "0.1.493",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーターをゲームと同じく自由に: 当たり所で弾かれるだけの物 (上限を超えた側に当たるカオス・液化した感情など) は棚から消さず、押して弾かれたら減らずに工程に残る"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "アストリッドの創造性: クラフト MOD が付いたままでも置き換え・取り外しできる (MOD はそのまま)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "液化した感情: 作った MOD が付いている間は使えない"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "腐食のお告げ: 冒涜の MOD が付いていると使えないように"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ヴァールのインフューザーのコラプトする確率はコミュニティの報告の約 25% と説明に"
-   }
-  ]
- },
- {
-  "v": "0.1.492",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "修正",
-    "area": "棚",
-    "text": "「使用可能」の判定で当たり所の弾き (もう一度) は別の乱数でも試す (要望 541d2ae1 / 1b901ac5: 軽蔑を外してプレ 3 つのルビーでカオスと液化した感情が消…"
-   },
-   {
-    "kind": "追加",
-    "area": "要望・日報",
-    "text": "Discord の要望の知らせに送った人の短い印 (端末の番号の頭 6 文字、前の版は IP とブラウザから作った印)"
-   },
-   {
-    "kind": "追加",
-    "area": "クラフトステージ",
-    "text": "エミュレーターの手順を URL で共有 (工程の「共有」→ URL をコピー / X に投稿)"
-   }
-  ]
- },
- {
-  "v": "0.1.491",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "使い方の記録を軽く (見ていた時間・打った手の数は端末でまとめて送る)"
-   }
-  ]
- },
- {
-  "v": "0.1.490",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "Web 版の一番下に「ExileDesk について」と「プライバシーポリシー」のページを追加"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "Web 版の題を「ExileDesk — PoE2 クラフトシミュレーター」に"
-   }
-  ]
- },
- {
-  "v": "0.1.489",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選びのアミュレットのアイコンを不在のアミュレットに (指輪と見分けやすく)"
-   }
-  ]
- },
- {
-  "v": "0.1.488",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "要望を送る時に、今作っている物と打った手を日本語で添えるように (受けた側がすぐ分かる)"
-   }
-  ]
- },
- {
-  "v": "0.1.487",
-  "date": "2026-10-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選び: 「ベースを変える」で開き直すと、今のベースの一覧が全部見えるところまで送る。開いた部位をもう一度押して畳んでも画面がずれない"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "一覧の下を少し空ける (「もっと見る」の下も)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "部位のアイコンを替えた (ジュエル = ダイヤモンド、指輪 = ブリーチリング、ベルト = 招来 など)"
-   }
-  ]
- },
- {
-  "v": "0.1.486",
-  "date": "2026-10-11",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選びの最後の段を「宝飾品・その他」にして、ジュエルを同じ段に"
+    "text": "ベース選び: 開いた時に、一覧の下 (もっと見る) まで見える位置に送るように",
+    "en": "Base picker: opening it now scrolls so the bottom of the list (Show more) is visible"
    }
   ]
  }

@@ -10,7 +10,8 @@ import { ref } from "vue";
 import pkg from "../../package.json";
 import log from "../data/changelog.json";
 
-export interface ChangelogEntry { v: string; date: string; items: Array<{ kind: string; area: string; text: string }> }
+/** en = 英語の文 (changelog-notes-en.json、2026-10-17)。無い物は英語の画面でも日本語のまま */
+export interface ChangelogEntry { v: string; date: string; items: Array<{ kind: string; area: string; text: string; en?: string }> }
 export const APP_VERSION: string = pkg.version;
 
 const cmp = (a: string, b: string): number => {
