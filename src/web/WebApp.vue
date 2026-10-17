@@ -114,7 +114,6 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <span v-if="!phone" data-rec-part="header-lang" class="shrink-0 whitespace-nowrap"><LangSwitch /></span>
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
       <a data-rec-part="header-help" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :href="HOWTO_URL" target="_blank" rel="noopener noreferrer" :title="tr('使い方の動画 (YouTube)', 'How-to video (YouTube, Japanese)')">{{ tr("使い方", "How to use") }}</a>
-      <InstallButton v-if="phone" :phone="phone" />
       <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
       <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
