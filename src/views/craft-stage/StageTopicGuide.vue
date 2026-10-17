@@ -7,9 +7,10 @@
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { lessonJump, quitLesson, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
-import { topic, topicAt, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
+import { topic, topicAt, topicCur, topicSub, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
+import { freshItem } from "../../services/craft-stage/run-plan";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { enOf } from "../../state/craft-stage-shelf";
 import { modText, tr } from "../../i18n/lang";
@@ -27,7 +28,14 @@ const LEVEL: Record<number, { label: JaEn; chip: string }> = {
   3: { label: ["中級", "Medium"], chip: "bg-amber-500/25 text-amber-100" },
 };
 /** エッセンスの手の実際のキー (今のアイテムの棚から。一覧の先の手も日本語の名前で出す) */
-const essKey = (st: TopicStep): string | null => (s.item.value && s.data.value ? topicKey(st, s.data.value, s.item.value) : null);
+/** エッセンスの名前は、その手のベース (手ごとの base) の棚から引く (別のベースの手が英語の名前のまま出ていた) */
+const essKey = (st: TopicStep): string | null => {
+  const d = s.data.value, c = topic.value;
+  if (!d || !c) return null;
+  const base = st.base ?? c.base;
+  const it = s.item.value?.base === base ? s.item.value : freshItem(d, base, c.itemLevel, "rare");
+  return topicKey(st, d, it);
+};
 /** 手の名前 (エミュレーターの名前。白に戻す・発現は言葉で) */
 function stepName(st: TopicStep): string {
   const main = st.use === "reset" ? tr("白に戻す", "Reset to white") : st.use === "reveal" ? tr("発現", "Reveal") : st.use.startsWith("ess:") ? (essKey(st) ? nameOf(essKey(st)!) : st.use.split(":")[1]!) : nameOf(st.use);
@@ -81,8 +89,8 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
 function next(): void { s.hold(null); topicNext(); prepareStep(); } // 次へで持っている物は離す (2026-10-17 オーナー)
 function holdIt(): void {
   if (topicUsed.value) return; // 1 つの手は 1 回だけ (もう一度はボタンで)
-  prepareStep(); // 今のアイテムにこの手が打てなければ、ここで打てるアイテムを用意する
-  const cur = topicStep.value;
+  if (topicSub.value === 0) prepareStep(); // 今のアイテムにこの手が打てなければ、ここで打てるアイテムを用意する (続きの手では用意しない)
+  const cur = topicCur.value;
   if (!cur) return;
   if (cur.step.use !== "reveal" && cur.key) { rigRare(cur.key); s.hold(cur.key); }
   for (const o of cur.step.omens ?? []) if (!s.omens.value.includes(o)) s.toggleOmen(o);
@@ -134,13 +142,18 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <p v-if="prepared && !topicUsed" data-topic-prepared class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("この手が使えるアイテムを用意しました", "We set up an item this can be used on") }}</p>
       <div class="mt-1 flex flex-wrap items-center gap-2">
         <button v-if="topicStep.step.use === 'reset'" type="button" data-topic-reset class="g-btn sm" @click="topicReset">{{ tr("白に戻す", "Reset to white") }}</button>
-        <button v-else type="button" data-topic-hold class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-50" :disabled="topicUsed" :title="tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="holdIt">
-          <img v-if="iconOfStep(topicStep.step)" :src="iconOfStep(topicStep.step)" alt="" class="size-7 shrink-0 object-contain" />
-          <Icon v-else name="sparkles" class="size-6 shrink-0 text-violet-200" />
-          <img v-for="o in topicStep.step.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="size-6 shrink-0 object-contain" />
-          <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ stepName(topicStep.step) }}</span>
-        </button>
-        <span v-if="topicStep.step.use === 'reveal'" class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムの下の候補から 1 つ選ぶ", "Pick one of the options under the item") }}</span>
+        <!-- 続きのある手 (アビス → 骨 → 発現) は並べて出し、今の手だけ押せる。済んだ手は ✓ (2026-10-17 オーナー「打つ前はグレーアウトで、付けたら表示」) -->
+        <template v-else v-for="(sub, j) in [topicStep.step, ...(topicStep.step.chain ?? [])]" :key="j">
+          <span v-if="j > 0" class="text-amber-300/60">→</span>
+          <button type="button" :data-topic-hold="j === topicSub ? '' : undefined" :data-topic-chain="j" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :disabled="topicUsed || j !== topicSub || sub.use === 'reveal'" :title="tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="holdIt">
+            <span v-if="topicUsed || j < topicSub" class="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[10px] font-bold text-black">✓</span>
+            <img v-if="iconOfStep(sub)" :src="iconOfStep(sub)" alt="" class="size-7 shrink-0 object-contain" />
+            <Icon v-else name="sparkles" class="size-6 shrink-0 text-violet-200" />
+            <img v-for="o in sub.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="size-6 shrink-0 object-contain" />
+            <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ stepName(sub) }}</span>
+          </button>
+        </template>
+        <span v-if="topicCur?.step.use === 'reveal' && !topicUsed" class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムの下の候補から 1 つ選ぶ", "Pick one of the options under the item") }}</span>
       </div>
       <!-- 要点はエミュレーターのカードの頭と同じ大きな枠で (2026-10-17 オーナー「入門は要点でっかく表示のみ、文章長くてだるい」) -->
       <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>

@@ -16,7 +16,9 @@ export const topicAt = ref(0);
  * (2026-10-17 オーナー「次へがやっぱり必要、打った瞬間次にすすむから」)
  */
 export const topicUsed = ref(false);
-watch([topic, topicAt], () => { topicUsed.value = false; }, { flush: "sync" });
+/** 続きのある手 (chain) で、いくつ目まで打ったか (0 = 最初の手から) */
+export const topicSub = ref(0);
+watch([topic, topicAt], () => { topicUsed.value = false; topicSub.value = 0; }, { flush: "sync" });
 /** 次の手へ (最後の手なら完了) */
 export function topicNext(): void { if (topic.value && topicUsed.value) topicAt.value++; }
 
@@ -37,7 +39,8 @@ export function goTopic(i: number): void { if (topic.value) topicAt.value = Math
 /** 白に戻す手 (案内のボタン) */
 export function topicReset(): void { s.reset(); topicAt.value++; }
 // ほかのベースにしたらコースは終わり
-watch(() => s.base.value, (b) => { if (topic.value && b !== topic.value.base) topic.value = null; });
+// コースの中で使うベース (手ごとの base) なら終わらない
+watch(() => s.base.value, (b) => { const c = topic.value; if (c && b !== c.base && !c.steps.some((st) => st.base === b)) topic.value = null; });
 
 /** 今の手 (と、実際に打つキー) */
 export const topicStep = computed(() => {
@@ -46,15 +49,25 @@ export const topicStep = computed(() => {
   const st = c.steps[topicAt.value]!;
   return { step: st, key: it && d ? topicKey(st, d, it) : null };
 });
+/** 今打つ手 (続きのある手なら、その中の今の手) */
+export const topicCur = computed(() => {
+  const cur = topicStep.value, it = s.item.value, d = s.data.value;
+  if (!cur) return null;
+  const st = topicSub.value === 0 ? cur.step : cur.step.chain?.[topicSub.value - 1];
+  if (!st) return null;
+  return { step: st, key: it && d ? topicKey(st, d, it) : null };
+});
 export const topicDone = computed(() => !!topic.value && topicAt.value >= topic.value.steps.length);
 
 // 打った手が今の手と合えば「打ち終えた」(発現はどの候補でも。お告げは全部掛かっていること)。進むのは「次へ」で
 watch(() => s.log.value.length, (n, old) => {
-  const cur = topicStep.value;
+  const cur = topicCur.value, chain = topicStep.value?.step.chain ?? [];
   if (!cur || n <= (old ?? 0)) return;
   const e = s.log.value[n - 1];
   if (!e) return;
   const want = cur.step.use === "reveal" ? e.out.currency.startsWith("reveal") : e.out.currency === cur.key;
   const omensOk = (cur.step.omens ?? []).every((o) => splitOmens(e.out.omen).includes(o) || (o === "OmenofAbyssalEchoes" && e.out.currency.endsWith(":reroll")));
-  if (want && omensOk && e.out.applied) topicUsed.value = true;
+  if (!want || !omensOk || !e.out.applied) return;
+  if (topicSub.value < chain.length) topicSub.value++; // 続きの手へ
+  else topicUsed.value = true;
 });

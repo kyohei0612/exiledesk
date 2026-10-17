@@ -19,11 +19,11 @@ describe("動作を学ぶコース", () => {
         const g = mulberry32(seed);
         let it = fullSockets(freshItem(data, c.base, c.itemLevel));
         c.steps.forEach((st, i) => {
-          if (st.use === "reset") { it = fullSockets(freshItem(data, c.base, c.itemLevel)); return; }
+          if (st.use === "reset") { it = fullSockets(freshItem(data, st.base ?? c.base, c.itemLevel)); return; }
           // 付ける手は MOD 0 個のそのレア度から、ほかは打てない時に prep の手で打てる状態を作る (craft-lesson.ts の prepareStep と同じ)
-          if (st.start && !st.prep) it = fullSockets(st.startMods ? startFrom(data, c.base, c.itemLevel, { rarity: st.start, mods: st.startMods }, seed) : freshItem(data, c.base, c.itemLevel, st.start));
+          if (st.start && !st.prep) it = fullSockets(st.startMods ? startFrom(data, st.base ?? c.base, c.itemLevel, { rarity: st.start, mods: st.startMods }, seed) : freshItem(data, st.base ?? c.base, c.itemLevel, st.start));
           if (st.prep && (st.prepAlways || !applyCurrency(data, it, topicKey(st, data, it) ?? "", mulberry32(seed), st.omens ?? []).applied)) {
-            it = fullSockets(freshItem(data, c.base, c.itemLevel, st.start));
+            it = fullSockets(freshItem(data, st.base ?? c.base, c.itemLevel, st.start));
             for (const k of st.prep) { const p = applyCurrency(data, it, k, g, []); if (p.applied) it = p.item; }
           }
           const key = topicKey(st, data, it);

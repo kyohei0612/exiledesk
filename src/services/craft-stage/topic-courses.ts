@@ -17,7 +17,11 @@ import { essenceShelf } from "../../state/craft-stage-shelf";
 /** start = この手はいつも MOD 0 個のこのレア度から (付ける手。2026-10-17 オーナー「ついてるの多くてややこしい、付くときカオス以外は 0 から」) */
 export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: JaEn[]; prep?: string[]; start?: StageItem["rarity"]; /** 打てても毎回 prep から (消去は MOD 4 つから。2026-10-17 オーナー「4 MOD くらいあったらわかる」) */ prepAlways?: boolean;
   /** start と一緒に: 毎回この MOD だけ付けて始める (神は数字の幅が分かりやすい MOD 1 つ。2026-10-17 オーナー「神は 1 MOD で見た方が良い」) */
-  startMods?: Force[] }
+  startMods?: Force[];
+  /** この手だけ別のベースで (特殊なエッセンスは部位が決まっている。2026-10-17)。無ければコースのベース */
+  base?: string;
+  /** 同じ手の中で続けて打つ手 (アビス → 骨 → 発現。前の手を打つまで押せない。2026-10-17 オーナー「発現までセットで」) */
+  chain?: TopicStep[] }
 export interface TopicCourse {
   id: string;
   level: 1 | 2 | 3;
@@ -36,10 +40,6 @@ const ALWAYS = (st: TopicStep): TopicStep => ({ ...st, prepAlways: true });
 /** MOD 1 つの黄から毎回 (カオスの入れ替えを見る。2026-10-17 オーナー「カオスは 1 MOD でおk」) */
 const ONE_MOD = (st: TopicStep): TopicStep => ({ ...st, prep: ["exalt"], prepAlways: true });
 const RESET = H("reset", ["白に戻す", "Reset to white"], [["アイテムを最初の白い状態に戻す (練習用のボタン)", "Puts the item back to a fresh white one (a practice button)"]]);
-const EMPTY: TopicStep[] = [
-  S("transmute", ["マジックに", "Make it magic"]),
-  S("annul", ["消して空のマジックに", "Annul to an empty magic"]),
-];
 
 export const TOPIC_COURSES: TopicCourse[] = [
   {
@@ -133,22 +133,62 @@ export const TOPIC_COURSES: TopicCourse[] = [
   },
   {
     id: "essence", level: 1, title: ["エッセンスを学ぶ", "Learn essences"], base: "Secured Wraps", itemLevel: 82,
-    learn: ["レッサー〜グレーター (マジック → レア)・パーフェクト・コラプト・合金・結晶化のお告げ・アストリッド", "Lesser to greater (magic → rare), perfect, corrupted, alloys, crystallisation omens, Astrid"],
+    learn: ["グレーター (青 → 黄)・パーフェクト・結晶化のお告げ・合金と、特殊なエッセンス (戦慄・ヒステリー・アビス・錯乱・狂気・ブリーチ)", "Greater (blue → yellow), Perfect, crystallisation omens, alloys, and the special essences (Horror, Hysteria, Abyss, Delirium, Insanity, Breach)"],
+    // 2026-10-17 オーナー「仕組みはオーブを学ぶと一緒。使うのはグレーターとパーフェクトの挙動、色んなエッセンスの紹介も込み。特殊なエッセンスは必ず触らせたい」
+    // 「エッセンスは MOD が確実に付くから、そこはしっかり記入」。特殊なエッセンスは部位が決まっているので、手ごとにベースを替える (base)
     steps: [
-      ...EMPTY,
-      S("ess:Opulence:lesser", ["マジック → レア・決まった MOD が付く", "Magic → rare with a fixed mod"]),
-      RESET, ...EMPTY,
-      S("ess:Opulence:normal", ["同じ MOD で段が上がる", "Same mod, higher tier"]),
-      RESET, ...EMPTY,
-      S("ess:Opulence:greater", ["さらに高い段", "Higher still"]),
-      RESET,
-      S("alchemy", ["レアにする (パーフェクトはレアに打つ)", "Make it rare (Perfect goes on rares)"]),
-      S("ess:Grounding:perfect", ["1 つ消して決まった MOD を付ける", "Removes 1, adds a fixed mod"]),
-      S("rune:Astrid's Creativity", ["エッセンスの MOD を 2 つ持てる", "Allows 2 essence mods"]),
-      S("ess:Hysteria:perfect", ["消すのはサフィックスから", "Removes a suffix"], ["OmenofDextralCrystallisation"]),
-      RESET,
-      S("alchemy", ["もう一度レアに", "Rare again"]),
-      S("ess:Adaptive Alloy:perfect", ["合金 = パーフェクトエッセンスと同じ", "Alloy = Perfect Essence"]),
+      ALWAYS(H("ess:Opulence:greater", ["青 → 黄 + 決まった MOD", "Blue → yellow + a set mod"], [
+        ["青いアイテムが黄色いアイテムになり、エッセンスの MOD が必ず 1 つ付く (運ではない)", "A blue item becomes yellow, and the essence's mod is always added (no luck involved)"],
+        ["今付いている MOD はそのまま残る", "The mods it already has stay"],
+        ["レッサー → 普通 → グレーターの順に、同じ MOD がより高いティアで付く", "Lesser → normal → Greater add the same mod at higher and higher tiers"],
+      ], ["transmute"])),
+      ALWAYS(H("ess:the Body:greater", ["付く MOD は種類で決まる", "The mod depends on the essence"], [
+        ["肉体のエッセンスはライフ、絢爛はアイテムレアリティ … と、必ず付く MOD はエッセンスの種類で決まっている (下の緑の枠)", "Body adds life, Opulence adds item rarity … each essence always adds its own mod (green box below)"],
+        ["同じエッセンスでも、部位によって付く MOD が違うことがある", "The same essence can add a different mod on a different item type"],
+      ], ["transmute"])),
+      ALWAYS(H("ess:the Infinite:greater", ["候補の中から 1 つ", "One of several"], [
+        ["無限のエッセンスは、付く MOD の候補が複数ある (下の緑の枠)", "The Infinite essence has several possible mods (green box below)"],
+        ["候補のどれか 1 つが必ず付く。どれになるかは運", "One of them is always added; which one is luck"],
+      ], ["transmute"])),
+      ALWAYS(H("ess:Grounding:perfect", ["黄の MOD を 1 つ消して、決まった MOD を付ける", "Remove 1 from a yellow item, add a set mod"], [
+        ["パーフェクトは黄色いアイテムに使う", "Perfect essences are used on yellow items"],
+        ["MOD をランダムに 1 つ消して、エッセンスの MOD を必ず 1 つ付ける", "Removes 1 random mod, then always adds the essence's mod"],
+        ["付ける側 (プレフィックス / サフィックス) が埋まっている時は、その側から消える", "If the side it adds to (prefix / suffix) is full, the removed mod comes from that side"],
+      ], ["alchemy"])),
+      { ...ALWAYS(H("ess:Opulence:perfect", ["お告げで消す側を決める", "Pick the side to remove with an omen"], [
+        ["右側の結晶化のお告げを掛けると、消える MOD がサフィックスからだけになる (左側ならプレフィックスから)", "With Omen of Dextral Crystallisation, the removed mod is a suffix only (Sinistral: prefix only)"],
+        ["付くのは、いつも通りエッセンスの MOD (必ず付く)", "The essence's mod is still always added"],
+      ], ["alchemy"])), omens: ["OmenofDextralCrystallisation"] },
+      ALWAYS(H("ess:Adaptive Alloy:perfect", ["合金 = パーフェクトと同じ", "Alloys work like Perfect essences"], [
+        ["合金もパーフェクトエッセンスと同じ動き: 黄の MOD を 1 つ消して、合金の MOD を必ず 1 つ付ける", "Alloys work like Perfect essences: remove 1 random mod, always add the alloy's mod"],
+        ["エッセンスや合金で付く MOD は、1 つのアイテムに 1 つまで (アストリッドの創造性のルーンをはめると 2 つまで)", "Only 1 essence / alloy mod per item (2 with the Astrid's Creativity rune socketed)"],
+      ], ["alchemy"])),
+      ALWAYS(H("ess:Horror:perfect", ["特殊: 戦慄 (手袋・靴)", "Special: Horror (gloves, boots)"], [
+        ["戦慄のエッセンスは、黄色い手袋・靴にだけ使える", "Essence of Horror works on yellow gloves and boots only"],
+        ["サフィックスに「ソケットされているアイテムの効果が 60% 増加する」が必ず付く (はめたルーンなどの効き目が 1.6 倍)", "Always adds the suffix “60% increased effect of Socketed Items” (socketed runes etc. become 1.6x as strong)"],
+        ["動きはパーフェクトと同じ: 1 つ消して付ける", "Works like a Perfect essence: remove 1, add 1"],
+      ], ["alchemy"])),
+      ALWAYS(H("ess:Hysteria:perfect", ["特殊: ヒステリー", "Special: Hysteria"], [
+        ["ヒステリーのエッセンスは、武器以外の黄色いアイテムに使える", "Essence of Hysteria works on yellow non-weapon items"],
+        ["必ず付く MOD は部位ごとに違う (手袋なら下の緑の枠の MOD)", "The mod it always adds depends on the item type (for gloves, the green box below)"],
+        ["動きはパーフェクトと同じ: 1 つ消して付ける", "Works like a Perfect essence: remove 1, add 1"],
+      ], ["alchemy"])),
+      { ...ALWAYS(H("ess:the Abyss:perfect", ["特殊: アビス", "Special: Abyss"], [
+        ["アビスのエッセンスは「アビサルロードの紋章を身につけている」を必ず付ける (消した MOD の側に付く)", "Essence of the Abyss always adds “Bears the Mark of the Abyssal Lord” (on the side of the removed mod)"],
+        ["紋章は、次に骨を使うと冒涜の MOD (未発現) に置き換わる。そのまま発現まで試せる", "The next Bone replaces the Mark with an Unrevealed Desecrated mod; try revealing it right after"],
+      ], ["alchemy"])), chain: [S("desecrate", ["骨で冒涜", "Desecrate with a Bone"]), S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("ess:Delirium:perfect", ["特殊: 錯乱 (胴の防具)", "Special: Delirium (body armour)"], [
+        ["錯乱のエッセンスは、黄色い胴の防具 (鎧) にだけ使える。ここでは革のベストで試す", "Essence of Delirium works on yellow body armour only; here we use a Leather Vest"],
+        ["「ランダムなノータブルパッシブスキルを割り当てる」が必ず付く。どのノータブルかは運で、選べない", "Always adds “Allocates a random Notable Passive Skill”; which notable is luck"],
+      ], ["alchemy"])), base: "Leather Vest" },
+      { ...ALWAYS(H("ess:Insanity:perfect", ["特殊: 狂気 (ベルト)", "Special: Insanity (belts)"], [
+        ["狂気のエッセンスは、黄色いベルトにだけ使える。ここではワイドベルトで試す", "Essence of Insanity works on yellow belts only; here we use a Wide Belt"],
+        ["「コラプト時に、アイテムは 2 個のエンチャントを獲得する」が必ず付く (ヴァールのオーブでエンチャントが付く時に 2 個になる)", "Always adds “On Corruption, Item gains two Enchantments” (a Vaal Orb enchant gives two)"],
+      ], ["alchemy"])), base: "Wide Belt" },
+      { ...ALWAYS(H("ess:the Breach:perfect", ["特殊: ブリーチ (指輪・アミュレット)", "Special: Breach (rings, amulets)"], [
+        ["ブリーチのエッセンスは、黄色い指輪・アミュレットにだけ使える。ここでは金の指輪で試す", "Essence of the Breach works on yellow rings and amulets only; here we use a Gold Ring"],
+        ["プレフィックスに「品質の最大値 +20%」が必ず付く。カタリストで品質を 40% まで上げられる", "Always adds the prefix “+20% to Maximum Quality”, so catalysts can take quality to 40%"],
+      ], ["alchemy"])), base: "Gold Ring" },
     ],
   },
   {

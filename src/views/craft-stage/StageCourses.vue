@@ -24,7 +24,10 @@ const PRACTICE_OPEN = false;
 /** 本番に出すコース (合格したコースだけ。2026-10-17 基本のオーブだけ OK、エッセンスはまだ)。手元の dev は OPEN_LEVELS の段を全部 */
 const RELEASED = new Set(["orbs"]);
 const DEV_BUILD = import.meta.env.DEV; // 開発版 (deploy:web-dev) も本番と同じ表示 (2026-10-17 オーナー「表示は本番用でおk」)。手元の dev だけ全部
-const shown = (c: TopicCourse): boolean => OPEN_LEVELS.includes(c.level) && (DEV_BUILD || RELEASED.has(c.id));
+/** 開発版 (deploy:web-dev) でだけ出す、オーナーに見てもらい中のコース (合格したら RELEASED へ移す) */
+const REVIEW = new Set(["essence"]);
+const DEV_PREVIEW = import.meta.env.VITE_DEV_PREVIEW === "1";
+const shown = (c: TopicCourse): boolean => OPEN_LEVELS.includes(c.level) && (DEV_BUILD || RELEASED.has(c.id) || (DEV_PREVIEW && REVIEW.has(c.id)));
 const LEVELS: Array<{ n: 1 | 2 | 3; label: JaEn; note: JaEn; chip: string; ring: string }> = [
   { n: 1, label: ["入門", "Intro"], note: ["はじめての人はここから", "Start here"], chip: "bg-emerald-500/25 text-emerald-100", ring: "border-emerald-400/50 hover:border-emerald-300" },
   { n: 2, label: ["初級", "Easy"], note: ["冒涜とお告げ", "Desecration and omens"], chip: "bg-sky-500/25 text-sky-100", ring: "border-sky-400/50 hover:border-sky-300" },
@@ -47,7 +50,7 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
   if (st.use === "reset") return tr("白に戻す", "Reset to white");
   if (st.use === "reveal") return tr("発現", "Reveal");
   const d = s.data.value;
-  const key = st.use.startsWith("ess:") ? (d ? topicKey(st, d, freshItem(d, c.base, c.itemLevel)) : null) : st.use;
+  const key = st.use.startsWith("ess:") ? (d ? topicKey(st, d, freshItem(d, st.base ?? c.base, c.itemLevel)) : null) : st.use;
   return [key ? nameOf(key) : st.use.split(":")[1] ?? st.use, ...(st.omens ?? []).map(nameOf)].join(" + ");
 }
 </script>

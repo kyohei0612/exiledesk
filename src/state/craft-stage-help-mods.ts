@@ -139,7 +139,7 @@ const SPECIAL_ESSENCE: Record<string, { short?: string; groups?: Array<{ h: stri
     short: "オーグメント効果",
     notes: [
       "**レアの手袋・靴だけ**",
-      "サフィックスに「ソケットされているオーグメントの効果が 60% 増加する」(固定値)。はめたルーン・ソウルコア等の効き目が 1.6 倍になるので、ソケットの多い物ほど得",
+      "サフィックスに「ソケットされているアイテムの効果が 60% 増加する」(固定値)。はめたルーン・ソウルコア等の効き目が 1.6 倍になるので、ソケットの多い物ほど得",
     ],
   },
   "Essence of Hysteria": {
@@ -176,7 +176,7 @@ const SPECIAL_ESSENCE_EN: Record<string, { short?: string; groups?: Array<{ h: s
     short: "Augment effect",
     notes: [
       "**Rare Gloves and Boots only**",
-      "Suffix \"60% increased effect of Socketed Augment Items\" (fixed). Socketed runes / Soul Cores become 1.6x as strong, so more sockets = more value",
+      "Suffix \"60% increased effect of Socketed Items\" (fixed). Socketed runes / Soul Cores become 1.6x as strong, so more sockets = more value",
     ],
   },
   "Essence of Hysteria": {
