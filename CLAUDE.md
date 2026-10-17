@@ -5,6 +5,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 
 ## いつも
 - 返事は日本語。確認はスクリプトで、見せるなら Chrome 1 タブ。リリースは版上げ + `pnpm deploy:web` (UI はオーナーの OK の後)。
+- スクリーンショットは見終わったらすぐ消す (ゴミ箱を通さない)。置き場は ~/.claude/projects/C--Users-kyohei-ExileDesk/<セッション>/tool-results と %TEMP%/claude/…/scratchpad・images。送った物も送った後に消す。
 - 1 ファイル 500 行まで (超えるなら分ける)。全体の地図は docs/ARCHITECTURE.md、計画は docs/roadmap-2026-10.md。
 
 ## 作業 → 先に読む物

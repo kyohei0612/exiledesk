@@ -85,7 +85,7 @@ export const CATALYST_SPECS: readonly CurrencySpec[] = CATALYSTS.flatMap((c) => 
 });
 export const CATALYST_SPEC_BY_KEY: ReadonlyMap<string, CurrencySpec> = new Map(CATALYST_SPECS.map((s) => [s.stageKey, s]));
 
-/** アーティフィサー。セプターは説明文に無い (今の関数は武器・防具の全部に使える = docs/reviews/2026-10-16-adr-004-orbs-diff.md) */
+/** アーティフィサー。セプターは説明文に無い (今の関数は武器・防具の全部に使える = docs/archive/2026-10-16-adr-004-orbs-diff.md) */
 export const ARTIFICER_SPEC: CurrencySpec = {
   key: "artificersorb",
   stageKey: "artificer",

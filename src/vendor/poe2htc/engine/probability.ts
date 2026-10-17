@@ -616,7 +616,7 @@ export function desecrationBoneFor(category: string): DesecrationBone {
  */
 export function bossOmenAllowed(category: string): boolean {
   // 説明文「Weapon or Jewellery」。ジュエルは宝飾品ではない (勢力の MOD も無い、poe2db 2026-10-11)。
-  // 矢筒は説明文に無いが、冒涜の MOD に 3 勢力の物があり今までも使えた。ゲームで確かめるまで今のまま (docs/reviews/2026-10-13-item-class-audit.md)
+  // 矢筒は説明文に無いが、冒涜の MOD に 3 勢力の物があり今までも使えた。ゲームで確かめるまで今のまま (docs/archive/2026-10-13-item-class-audit.md)
   return inAny(category, ['weapon', 'jewellery', 'quiver']);
 }
 

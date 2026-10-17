@@ -3,7 +3,7 @@
  * 冒涜まわり (骨 4 種 × 部位・発現・ネクロマンシー・勢力・腐食・反響) と消去 (光・左右の消去) を、
  * いくつものベース × 状態 × アイテムレベル × お告げ × 種で打ち比べ、手順の再生 (続けて打つ・手順 JSON) でも全部の手を比べる。
  * 説明文はクライアントの currency-hover / 用語集の写しと同じか (パッチで変わったら落ちる)。
- * 今の関数と違う所は、どちらが正しいかを決めるまで「分かっている違い」として下に並べる (docs/reviews/2026-10-16-adr-004-desecrate-rules.md)
+ * 今の関数と違う所は、どちらが正しいかを決めるまで「分かっている違い」として下に並べる (docs/archive/2026-10-16-adr-004-desecrate-rules.md)
  */
 import { describe, expect, it } from "vitest";
 import { data } from "./helpers/spec-parity";

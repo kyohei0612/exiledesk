@@ -43,7 +43,7 @@ export const show = (d: Diff[]): string => d.slice(0, 8).map((x) => `${x.where} 
 
 /**
  * 弾いた一言だけが違う (どちらも打てない・アイテムも同じ)。決まりを見る順が違うだけの物は「今 → 新」の組で数える。
- * 組の一覧は docs/reviews/2026-10-16-adr-004-orbs-diff.md の「一言だけ違う」と同じにしておく
+ * 組の一覧は docs/archive/2026-10-16-adr-004-orbs-diff.md の「一言だけ違う」と同じにしておく
  */
 export function reasonOnly(d: readonly Diff[]): string | null {
   if (!d.length || d.some((x) => x.field !== "reason")) return null;

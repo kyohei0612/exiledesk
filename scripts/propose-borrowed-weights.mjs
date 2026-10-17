@@ -8,7 +8,7 @@
  *   1. 同じ部位の普通の置き場に同じ系統 → その MOD の段のうち、レベルが一番近い段の重み
  *   2. 他の部位の普通の置き場に同じ系統 → 同じく (部位の名前を書く)
  *   3. 無し → 「相談」
- * 結果: docs/reviews/2026-10-09-borrowed-weights.md (オーナーが決める用の一覧)
+ * 結果: docs/archive/2026-10-09-borrowed-weights.md (オーナーが決める用の一覧)
  */
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -107,6 +107,6 @@ ${near.sort((a, b) => a.kind.localeCompare(b.kind) || a.text.localeCompare(b.tex
 ${head}
 ${ok.sort((a, b) => a.kind.localeCompare(b.kind) || a.text.localeCompare(b.text)).map(line).join("\n")}
 `;
-const out = resolve(ROOT, "docs/reviews/2026-10-09-borrowed-weights.md");
+const out = resolve(ROOT, "docs/archive/2026-10-09-borrowed-weights.md");
 writeFileSync(out, md);
 console.log(`借りられる ${ok.length} / 要確認 ${near.length} / 相談 ${ask.length} → ${out}`);

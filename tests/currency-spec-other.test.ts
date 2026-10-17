@@ -1,7 +1,7 @@
 /**
  * ADR-004 の 4 段目 (2026-10-16): 品質のカレンシー (砥石・端材・飾り玉・プリズム・彫刻針)・触媒 (普通・精製)・アーティフィサー・ルーンを
  * 説明文の分解 (spec/other-specs.ts) で打った結果 = 今の applyCurrency の結果か。
- * 違いは docs/reviews/2026-10-16-adr-004-orbs-diff.md の「品質・触媒・ルーン」
+ * 違いは docs/archive/2026-10-16-adr-004-orbs-diff.md の「品質・触媒・ルーン」
  */
 import { describe, expect, it } from "vitest";
 import { BASES, data, moreStatesOf, statesOf } from "./helpers/spec-parity";

@@ -2,7 +2,7 @@
  * ADR-004 の 4 段目 (2026-10-16): エッセンス (レッサー / 普通 / グレーター・パーフェクト・ブリーチ・深淵・ヒステリーなど) を
  * 説明文の分解 (spec/essence-specs.ts) で打った結果 = 今の applyCurrency の結果か。
  * 説明文は全部のエッセンスの鍵 (essence-key-table) で、クライアントの currency-hover の文と同じか確かめる。
- * 違いは docs/reviews/2026-10-16-adr-004-orbs-diff.md の「エッセンス」
+ * 違いは docs/archive/2026-10-16-adr-004-orbs-diff.md の「エッセンス」
  */
 import { describe, expect, it } from "vitest";
 import { BASES, data, statesOf } from "./helpers/spec-parity";
