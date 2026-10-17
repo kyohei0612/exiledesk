@@ -11,7 +11,7 @@
 import { computed, ref, watch } from "vue";
 import { craftStage as s } from "./craft-stage";
 import { course, courseView, endCourse } from "./craft-course";
-import { endTopic, topic, topicAt, topicDone } from "./craft-topic";
+import { endTopic, topic, topicAt, topicDone, topicUsed } from "./craft-topic";
 import { fullSockets } from "./stage-steps";
 import { topicKey } from "../services/craft-stage/topic-courses";
 import { freshItem, startFrom } from "../services/craft-stage/run-plan";
@@ -102,6 +102,7 @@ function restore(x: Snap): void {
   s.startMods.value = x.startMods;
   s.omens.value = [...x.omens];
   topicAt.value = x.at;
+  topicUsed.value = false;
   prepared.value = false;
   restoring = false;
 }

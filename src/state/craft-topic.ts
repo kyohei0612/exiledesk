@@ -11,6 +11,14 @@ import { topicKey, type TopicCourse } from "../services/craft-stage/topic-course
 export const topic = ref<TopicCourse | null>(null);
 /** 今の手の番号 (steps.length で完成) */
 export const topicAt = ref(0);
+/**
+ * 今の手を打ち終えた (結果を見ている)。打っても手は進めず、「次へ」で進む
+ * (2026-10-17 オーナー「次へがやっぱり必要、打った瞬間次にすすむから」)
+ */
+export const topicUsed = ref(false);
+watch([topic, topicAt], () => { topicUsed.value = false; }, { flush: "sync" });
+/** 次の手へ (最後の手なら完了) */
+export function topicNext(): void { if (topic.value && topicUsed.value) topicAt.value++; }
 
 export function startTopic(c: TopicCourse, onStart?: () => void): void {
   onStart?.();
@@ -40,7 +48,7 @@ export const topicStep = computed(() => {
 });
 export const topicDone = computed(() => !!topic.value && topicAt.value >= topic.value.steps.length);
 
-// 打った手が今の手と合えば次へ (発現はどの候補でも。お告げは全部掛かっていること)
+// 打った手が今の手と合えば「打ち終えた」(発現はどの候補でも。お告げは全部掛かっていること)。進むのは「次へ」で
 watch(() => s.log.value.length, (n, old) => {
   const cur = topicStep.value;
   if (!cur || n <= (old ?? 0)) return;
@@ -48,5 +56,5 @@ watch(() => s.log.value.length, (n, old) => {
   if (!e) return;
   const want = cur.step.use === "reveal" ? e.out.currency.startsWith("reveal") : e.out.currency === cur.key;
   const omensOk = (cur.step.omens ?? []).every((o) => splitOmens(e.out.omen).includes(o) || (o === "OmenofAbyssalEchoes" && e.out.currency.endsWith(":reroll")));
-  if (want && omensOk && e.out.applied) topicAt.value++;
+  if (want && omensOk && e.out.applied) topicUsed.value = true;
 });

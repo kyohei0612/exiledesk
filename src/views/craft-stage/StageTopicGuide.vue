@@ -7,7 +7,7 @@
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { canLessonBack, lessonBack, prepareStep, prepared } from "../../state/craft-lesson";
-import { endTopic, goTopic, topic, topicAt, topicDone, topicReset, topicStep } from "../../state/craft-topic";
+import { endTopic, goTopic, topic, topicAt, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
@@ -77,6 +77,8 @@ const example = computed(() => {
 });
 const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**").map((t, i) => ({ t, b: i % 2 === 1 }));
 /** 押すと持つ (お告げも掛ける)。発現の反響は掛けるだけ */
+/** 次へ: 次の手に進み、打てるアイテムを用意する */
+function next(): void { topicNext(); prepareStep(); }
 function holdIt(): void {
   prepareStep(); // 今のアイテムにこの手が打てなければ、ここで打てるアイテムを用意する
   const cur = topicStep.value;
@@ -123,6 +125,8 @@ const order = computed(() => {
   <section v-if="topic && part === 'now'" data-topic-now-panel class="g-panel p-3 text-[12px]">
     <!-- 操作のボタンは今の手の枠の上 (2026-10-17 オーナー「こっちのが良いな場所」) -->
     <div class="mb-2 flex flex-wrap justify-end gap-2">
+      <!-- 次へは枠の左端にいつも出す。打ち終えるまでは押せない (2026-10-17 オーナー) -->
+      <button type="button" data-topic-next class="g-btn-red sm mr-auto" :disabled="!topicUsed || !topicStep" :title="topicUsed ? undefined : tr('今の手を使うと押せる', 'Use this step first')" @click="next">{{ topic && topicAt + 1 >= topic.steps.length ? tr("完了", "Finish") : tr("次へ →", "Next →") }}</button>
       <button type="button" data-lesson-back class="g-btn sm inline-flex items-center gap-1" :disabled="!canLessonBack" :title="tr('1 つ前の手に戻る (R でも)', 'Go back one step (R also works)')" @click="lessonBack">{{ tr("1 つ前に戻る", "Back one step") }}<kbd class="kbd max-md:hidden">R</kbd></button>
       <button type="button" data-topic-mods class="g-btn sm" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
       <button type="button" class="g-btn sm" @click="endTopic">{{ tr("コースをやめる", "Quit course") }}</button>
