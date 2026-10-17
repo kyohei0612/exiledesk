@@ -1,5 +1,9 @@
 {
  "_": "changelog-notes.json の英語 (同じ版・同じ順。2026-10-17 英語の仕上げ)。ゲームの用語はクライアントの英語の原文",
+ "0.1.556": [
+  "Fixed omens from the previous tutorial step staying applied after moving to another step",
+  "The update popup now only appears for major releases (click the version number to see every update)"
+ ],
  "0.1.555": [
   "Desecrated mod rows now look like on the trade site (green bands on the sides), use the same text colour as other mods, and are listed at the bottom"
  ],

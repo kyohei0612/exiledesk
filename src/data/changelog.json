@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.556",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルで手を移った時、前の手で掛けたお告げが残っていたのを直しました",
+    "en": "Fixed omens from the previous tutorial step staying applied after moving to another step"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "更新内容のポップアップは大きなリリースの時だけ出すように (細かい更新は版の番号を押すと見られます)",
+    "en": "The update popup now only appears for major releases (click the version number to see every update)"
+   }
+  ]
+ },
+ {
   "v": "0.1.555",
   "date": "2026-10-17",
   "items": [
@@ -620,24 +638,6 @@
     "area": "",
     "text": "スマホ: 下の帯の「使う」をゲームのボタンに",
     "en": "Phones: the \"Use\" button in the bottom bar now uses the game's button art"
-   }
-  ]
- },
- {
-  "v": "0.1.516",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "グラスピングメイルに指輪の MOD (全ての元素耐性・アイテムレアリティなど) が付くように。カタリストも使えるように (ベースの品質とは別に、品質の帯の「カタリスト」で選べます)",
-    "en": "Grasping Mail can now roll ring mods (all elemental resistances, item rarity etc.) and use Catalysts (separately from base quality; choose \"Catalyst\" in the quality bar)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "3 属性の兜・手袋・靴・鎧とタリスマンで、一部の段の確率が 0 になっていた MOD (最大ライフ・耐性・アイテムレアリティなど) を直しました",
-    "en": "Fixed some tiers having 0% odds (maximum life, resistances, item rarity etc.) on tri-attribute helmets, gloves, boots, body armours and talismans"
    }
   ]
  }
