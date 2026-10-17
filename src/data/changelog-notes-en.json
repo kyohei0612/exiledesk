@@ -1,5 +1,11 @@
 {
  "_": "changelog-notes.json の英語 (同じ版・同じ順。2026-10-17 英語の仕上げ)。ゲームの用語はクライアントの英語の原文",
+ "0.1.553": [
+  "New tutorial “Learn essences”: Greater, Perfect, crystallisation omens, alloys and the special essences (Horror, Hysteria, Abyss, Delirium, Insanity, Breach) in 12 steps. The Abyss step continues through a Bone and the reveal",
+  "With an omen applied, holding a currency now highlights the mods it may remove, replace or reroll (orange text) and the open slots a new mod can roll into (green; up to 4 with Greater Exaltation)",
+  "Essence of Delirium now shows the allocated notable by name (“Allocates …”) instead of “a random Notable Passive Skill”",
+  "Tutorial text now names the rarity next to each colour: white (Normal), blue (Magic), yellow (Rare)"
+ ],
  "0.1.552": [
   "“Get the app” in the top bar (PC) now installs ExileDesk as a desktop app (same as the web version). Pages you have opened once also work offline"
  ],
