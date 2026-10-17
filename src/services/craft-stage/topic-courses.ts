@@ -280,11 +280,16 @@ export const TOPIC_COURSES: TopicCourse[] = [
       { ...ALWAYS(H("annul", ["サフィックスからだけ消す", "Remove only a suffix"], [
         ["右側の消去のお告げを掛けると、消去のオーブはサフィックスからだけ 1 つ消す", "With Omen of Dextral Annulment, the Orb of Annulment removes only a suffix"],
       ], ["alchemy"])), omens: ["OmenofDextralAnnulment"] },
-      { ...ALWAYS(H("chaos", ["一番 MOD レベルの低い MOD を入れ替える", "Replace the lowest-level mod"], [
-        ["削減のお告げを掛けると、カオスオーブは MOD レベルが一番低い MOD を消す (同じなら運)", "With Omen of Whittling, the Chaos Orb removes the mod with the lowest mod level (ties are luck)"],
+      // 削減は MOD レベルが同じだと運になるので、一番低い物が 1 つだけの決まった MOD で始める (2026-10-18 オーナー「同じ MOD レベルだとランダムでややこしい、どれか 1 つ確定で消せる話に」)
+      { ...H("chaos", ["一番 MOD レベルの低い MOD を入れ替える", "Replace the lowest-level mod"], [
+        ["削減のお告げを掛けると、カオスオーブは MOD レベルが一番低い MOD を消す", "With Omen of Whittling, the Chaos Orb removes the mod with the lowest mod level"],
+        ["このアイテムでは 筋力 (MOD レベル 1) が一番低いので、必ず筋力が消える", "On this item Strength (mod level 1) is the lowest, so Strength is always removed"],
         ["消したあとに新しい MOD が 1 つ付く。何が付くかは運", "Then 1 new mod is added. Which one is luck"],
-        ["MOD レベルは MOD 一覧の「Lv」の数字", "The mod level is the “Lv” number in the mod list"],
-      ], ["alchemy"])), omens: ["OmenofWhittling"] },
+        ["MOD レベルは、MOD を押すと開く MOD 一覧の「Lv」の数字", "The mod level is the “Lv” number in the mod list (click a mod to open it)"],
+      ], "rare"), omens: ["OmenofWhittling"], startMods: [
+        { mod: "Rings/IncreasedLife", tier: "T1" }, { mod: "Rings/IncreasedMana", tier: "T3" },
+        { mod: "Rings/ColdResistance", tier: "T2" }, { mod: "Rings/Strength", tier: "T8" },
+      ] },
       { ...ALWAYS(H("chaos", ["プレフィックスを入れ替える", "Replace a prefix"], [
         ["左側の抹消のお告げを掛けると、カオスオーブはプレフィックスからだけ 1 つ消す", "With Omen of Sinistral Erasure, the Chaos Orb removes only a prefix"],
         ["MOD が 6 つで満杯の時は、空いたプレフィックスに新しい MOD が付く (入れ替え)", "With all 6 slots full, the new mod goes into the freed prefix (a swap)"],
@@ -293,10 +298,15 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["右側の抹消のお告げを掛けると、カオスオーブはサフィックスからだけ 1 つ消す", "With Omen of Dextral Erasure, the Chaos Orb removes only a suffix"],
         ["MOD が 6 つで満杯の時は、空いたサフィックスに新しい MOD が付く (入れ替え)", "With all 6 slots full, the new mod goes into the freed suffix (a swap)"],
       ], FULL)), omens: ["OmenofDextralErasure"] },
-      { ...ALWAYS(H("chaos", ["一番低いプレフィックスを入れ替える", "Replace the lowest prefix"], [
+      { ...H("chaos", ["一番低いプレフィックスを入れ替える", "Replace the lowest prefix"], [
         ["削減と左側の抹消は一緒に掛けられる。プレフィックスの中で MOD レベルが一番低い物を消す", "Whittling and Sinistral Erasure stack: the lowest-level prefix is removed"],
+        ["このアイテムでは プレフィックスの 命中力 (MOD レベル 11) が必ず消える。サフィックスの筋力 (MOD レベル 1) の方が低くても、サフィックスは消えない", "On this item the Accuracy prefix (mod level 11) is always removed. Strength (mod level 1) is lower, but it's a suffix, so it stays"],
+        ["満杯なので、空いたプレフィックスに新しい MOD が付く", "The item is full, so the new mod goes into the freed prefix"],
         ["左右の抹消どうし (左 + 右) は一緒に掛けられない", "Sinistral and Dextral Erasure can't be used together"],
-      ], FULL)), omens: ["OmenofWhittling", "OmenofSinistralErasure"] },
+      ], "rare"), omens: ["OmenofWhittling", "OmenofSinistralErasure"], startMods: [
+        { mod: "Rings/IncreasedLife", tier: "T1" }, { mod: "Rings/IncreasedMana", tier: "T3" }, { mod: "Rings/IncreasedAccuracy", tier: "T7" },
+        { mod: "Rings/FireResistance", tier: "T2" }, { mod: "Rings/IncreasedCastSpeed", tier: "T2" }, { mod: "Rings/Strength", tier: "T8" },
+      ] },
       { ...ALWAYS(H("divine", ["暗黙の数字だけ振り直す", "Reroll only the implicit's values"], [
         ["祝福のお告げを掛けると、神のオーブは暗黙 MOD (アイテムの上にある MOD) の数字だけ振り直す", "With Omen of the Blessed, the Divine Orb rerolls only the implicit mod's values (the mod at the top of the item)"],
         ["ほかの MOD の数字は変わらない", "Other mods keep their values"],
