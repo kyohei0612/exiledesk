@@ -120,6 +120,12 @@ const order = computed(() => {
 <template>
   <!-- 今の手の枠 (使う物と動きの説明・前の手で起きたこと)。カレンシーの棚のすぐ上 (2026-10-17 オーナー「コースと打つ挙動の部分を隔離」) -->
   <section v-if="topic && part === 'now'" data-topic-now-panel class="g-panel p-3 text-[12px]">
+    <!-- 操作のボタンは今の手の枠の上 (2026-10-17 オーナー「こっちのが良いな場所」) -->
+    <div class="mb-2 flex flex-wrap justify-end gap-2">
+      <button type="button" data-lesson-back class="g-btn sm inline-flex items-center gap-1" :disabled="!canLessonBack" :title="tr('1 つ前の手に戻る (R でも)', 'Go back one step (R also works)')" @click="lessonBack">{{ tr("1 つ前に戻る", "Back one step") }}<kbd class="kbd max-md:hidden">R</kbd></button>
+      <button type="button" data-topic-mods class="g-btn sm" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
+      <button type="button" class="g-btn sm" @click="endTopic">{{ tr("コースをやめる", "Quit course") }}</button>
+    </div>
     <div v-if="topicStep" data-topic-now class="rounded-lg border-2 border-amber-300/50 bg-amber-500/[0.08] px-3 py-2">
       <p class="text-[11px] font-bold text-amber-200">{{ tr(`${topicAt + 1} 手目: これを使ってみる`, `Step ${topicAt + 1}: try this`) }}</p>
       <p v-if="prepared" data-topic-prepared class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("この手が使えるアイテムを用意しました", "We set up an item this can be used on") }}</p>
@@ -175,10 +181,6 @@ const order = computed(() => {
       <span class="rounded px-2 py-0.5 text-[11px] font-bold" :class="LEVEL[topic.level]!.chip">{{ t2(LEVEL[topic.level]!.label) }}</span>
       <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ t2(topic.title) }}</b>
       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-tertiary)]">{{ Math.min(topicAt, topic.steps.length) }} / {{ topic.steps.length }}</span>
-      <!-- 1 つ前に戻るは MOD 一覧の横 (2026-10-17 オーナー) -->
-      <button type="button" data-lesson-back class="g-btn sm ml-auto inline-flex items-center gap-1" :disabled="!canLessonBack" :title="tr('1 つ前の手に戻る (R でも)', 'Go back one step (R also works)')" @click="lessonBack">{{ tr("1 つ前に戻る", "Back one step") }}<kbd class="kbd max-md:hidden">R</kbd></button>
-      <button type="button" data-topic-mods class="g-btn sm" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
-      <button type="button" class="g-btn sm" @click="endTopic">{{ tr("コースをやめる", "Quit course") }}</button>
     </header>
     <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300 transition-[width] duration-500" :style="{ width: `${(topicAt / topic.steps.length) * 100}%` }" /></div>
     <!-- 手の一覧 (押すとその手から) -->
