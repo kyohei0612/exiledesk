@@ -37,18 +37,21 @@ describe("説明文はクライアントの写しと同じ (オーブ類)", () =
       }
     }
   });
-  it("お告げの掛かる手は今の棚 (OMEN_FOR) と同じ (今のゲームに無い物と聖別を除く)", () => {
+  it("お告げの掛かる手は今の棚 (OMEN_FOR) と同じ (今のゲームに無い物を除く)", () => {
     for (const kind of ["exalt", "chaos", "divine"]) {
       const mine = ALL_OMEN_SPECS.filter((o) => o.appliesTo === kind).map((o) => o.key).sort();
-      const shelf = (OMEN_FOR[kind] ?? []).filter((o) => !REMOVED_OMENS.includes(o) && o !== "OmenofSanctification");
+      const shelf = (OMEN_FOR[kind] ?? []).filter((o) => !REMOVED_OMENS.includes(o));
       expect(mine, kind).toEqual([...shelf].sort());
     }
   });
 });
 
-describe("聖別のお告げが掛かる神は移していない (apply-vaal.ts で打つ)", () => {
-  it("applyBySpec は null", () => {
+describe("聖別のお告げが掛かる神も説明文の分解で打つ (2026-10-17 ADR-004 の残り)", () => {
+  it("applyBySpec で聖別になり、お告げを使う", () => {
     const item = statesOf("Gold Ring", 82)[3]![1];
-    expect(applyBySpec(data, item, "divine", mulberry32(1), ["OmenofSanctification"])).toBeNull();
+    const r = applyBySpec(data, item, "divine", mulberry32(1), ["OmenofSanctification"]);
+    expect(r?.applied, r?.reason).toBe(true);
+    expect(r!.item.sanctified).toBe(true);
+    expect(r!.omensUsed).toEqual(["OmenofSanctification"]);
   });
 });

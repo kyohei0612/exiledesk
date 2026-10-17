@@ -8,7 +8,7 @@
  * 液化した感情・処分・手で決める品質や暗黙の値。
  * お告げは持っている物を渡し、その手に関係する物だけ食う (omensUsed)。
  */
-import { applyEmotion, isEmotion } from "./apply-emotion";
+import { isEmotion } from "./apply-emotion";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { inAny, inGroup, type ItemGroup } from "../mods/item-classes";
 import { allMods, hasExtraCatalyst, maxQualityOf, skip, type Force } from "./stage-core";
@@ -55,7 +55,6 @@ export const itemLevelKey = (n: number): string => `${ITEM_LEVEL_SET}${n}`;
 export function qualityCapOf(item: StageItem): number {
   return item.qualityCap ?? qualityFieldMax(item);
 }
-import { applySanctify } from "./apply-vaal";
 import { applyJeweller, applyWisdom, collectShard, isShard, shardReason } from "./apply-act";
 import { isFlask, isGem, uniqueBaseOf } from "./stage-bases";
 import { itemBaseFor } from "../htc/bridge";
@@ -63,7 +62,6 @@ import { jaTypeName } from "../trade2/localize";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
-import { applyFlux, isFlux } from "./apply-flux";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
 import { applyUnsocket, isUnsocket } from "./stage-runes";
 import { tr } from "../../i18n/lang";
@@ -159,7 +157,6 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す
  // ルーン (要望 ⑰-1) はコラプト・聖別の後でもはめられる物がある (クライアントの CanSocketInCorruptedSanctified、applyRune で見る)
   // 液化した感情 (デリリウム、ジュエル。2026-10-11)
-  if (isEmotion(currency)) return applyEmotion(data, item, currency, rng);
   if (isUnsocket(currency)) return applyUnsocket(item, currency);
   // 品質を手で決める (アイテムのカードの品質の欄。2026-10-10 要望「品質欄を付けて防御値がシミュレーションできると便利」)。費用 0、コラプト後も試せる
   if (currency.startsWith(ITEM_LEVEL_SET)) {
@@ -194,25 +191,22 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   const used = omensFor(currency, omens);
   const bad = used.find((o) => UNMODELLED_OMENS.includes(o));
   if (bad) return skip(item, tr("このお告げの効果はまだ入れていない", "This Omen isn't supported yet"));
-  const r = applyInner(data, item, currency, rng, used, hint);
+  const r = applyInner(data, item, currency, rng, hint);
   if (!r.applied) return r;
   // ヒネコラの予見は「アイテムを変えると消える」(説明文)
   const item2 = currency !== "hinekora" && r.item.foreseen ? { ...r.item, foreseen: false } : r.item;
   return { ...r, item: item2, omensUsed: used };
 }
 
-function applyInner(data: PatchData, item: StageItem, currency: string, rng: () => number, used: readonly string[], hint: ApplyHint): StageApply {
+function applyInner(data: PatchData, item: StageItem, currency: string, rng: () => number, hint: ApplyHint): StageApply {
   // 指名で付ける手 (手で打つ画面の「付ける」。apply-force.ts)
   if (isForce(currency)) return applyForce(data, item, currency, rng);
-  const kind = kindOf(currency);
   // アクト中に落ちる物 (要望 ⑧、apply-act.ts)
   if (currency === "wisdom") return applyWisdom(item);
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
   if (isExtra(currency)) return toUniqueBase(data, applyExtra(item, currency, rng, hint.outcome));
-  if (isFlux(currency)) return applyFlux(data, item, currency);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)"));
-  if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(data, item, rng);
-  // オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーンは説明文の分解 (spec/) で打つ (ADR-004、2026-10-16 に今の関数から外した)
+  // オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーン・感情・フラックス・聖別は説明文の分解 (spec/) で打つ (ADR-004、2026-10-16〜17 に今の関数から外した)
   return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`));
 }

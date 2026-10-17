@@ -86,6 +86,8 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
     }
     case "fracturableClass":
       return canFracture(item.cls.category) ? null : tr("この部位はフラクチャーできない", "This item class can't be Fractured");
+    case "noCrafted":
+      return allMods(item).some((m) => m.crafted) ? tr("作った MOD が付いているジュエルには使えない", "Can't be used while the jewel has a crafted mod") : null;
   }
 }
 

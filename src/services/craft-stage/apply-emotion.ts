@@ -13,12 +13,11 @@
  *   - 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) が当たると弾かれる。片方の版しか無い物で、付ける側に空きが無い所が消えた時も弾かれる
  *
  * 鍵: `emotion:<英語名>` (例 emotion:Liquid Envy / emotion:Ancient Liquid Envy)。1 手として log に入る
+ * 打つ処理は説明文の分解 (spec/other-specs.ts の EMOTION_SPEC、2026-10-17 ADR-004 の残りで移した)。ここは名前・部位の判定だけ
  */
 import { inGroup } from "../mods/item-classes";
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { jewelEmotionsOf } from "../htc/patch";
-import { allMods, limitOf, listOf, makeStageMod, overLimit, skip, skipRandom, withMod, without } from "./stage-core";
-import type { StageApply, StageItem, StageMod, StageSide } from "./types";
+import type { StageItem } from "./types";
 import { tr } from "../../i18n/lang";
 
 export const EMOTION_PREFIX = "emotion:";
@@ -31,33 +30,11 @@ export function emotionKeysFor(item: StageItem | null): string[] {
   return [...new Set(jewelEmotionsOf(item.cls.id).map((e) => EMOTION_PREFIX + e.item))];
 }
 
-export function applyEmotion(data: PatchData, item: StageItem, key: string, rng: () => number): StageApply {
+/** その部位で使えない感情なら一言 (spec/run-spec.ts の resolveSpec が使う)。使えれば null */
+export function emotionReason(item: StageItem, key: string): string | null {
   const name = emotionNameOf(key);
-  const entries = jewelEmotionsOf(item.cls.id).filter((e) => e.item === name);
-  if (!entries.length) {
-    const ancient = name.startsWith("Ancient ");
-    return skip(item, ancient ? tr("古代の液化した感情は時を失ったジュエルにだけ使える", "Ancient Liquid Emotions: Time-Lost Jewels only")
-      : inGroup(item.cls.category, "jewel") ? tr("このジュエルには使えない (古代の版は時を失ったジュエル用)", "Not usable on this jewel (Ancient versions are for Time-Lost Jewels)")
-      : tr("ジュエルにだけ使える", "Jewels only"));
-  }
-  if (item.rarity !== "rare") return skip(item, tr("レアのジュエルにだけ使える", "Rare jewels only"));
-  if (item.corrupted) return skip(item, tr("コラプトしたアイテムには使えない", "Can't be used on a Corrupted item"));
-  // 作った MOD (前の感情で付いた物) が付いている間は使えない (2026-10-12 オーナー「クラフト MOD が見えてる状態なら付けれない」)
-  if (allMods(item).some((m) => m.crafted)) return skip(item, tr("作った MOD が付いているジュエルには使えない", "Can't be used while the jewel has a crafted mod"));
-  // 消す: 固定以外から等しく
-  const pool = allMods(item).filter((m) => !m.fractured);
-  if (!pool.length) return skip(item, tr("消せる MOD が無い (固定だけ)", "No mod can be removed (only fractured ones)"));
-  const gone = pool[Math.floor(rng() * pool.length)]!;
-  if (overLimit(item, gone.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
-  const it = without(item, gone);
-  const removed: StageMod[] = [gone];
-  // 2 つの版がある物 (獰猛・侮蔑) は、消した後に空きのある側の版から等しく 1 つ (説明文に決め方が無いのでランダム)。1 つの物はその版
-  const fits = entries.filter((x) => listOf(it, x.side as StageSide).length < limitOf(it, x.side as StageSide));
-  if (!fits.length) return skipRandom(item, tr("付ける側に空きが無いので追加できない (もう一度)", "No room on the side this mod goes to, so nothing can be added (try again)"));
-  const e = fits.length === 1 ? fits[0]! : fits[Math.floor(rng() * fits.length)]!;
-  const mod = data.mods.get(e.modId);
-  if (!mod) return skip(item, tr("感情の MOD のデータが無い", "No data for this emotion's mod"));
-  const side = e.side as StageSide;
-  const added: StageMod = { ...makeStageMod(mod, side, 0, rng), crafted: true };
-  return { applied: true, item: withMod(it, added), added: [added], removed };
+  if (jewelEmotionsOf(item.cls.id).some((e) => e.item === name)) return null;
+  return name.startsWith("Ancient ") ? tr("古代の液化した感情は時を失ったジュエルにだけ使える", "Ancient Liquid Emotions: Time-Lost Jewels only")
+    : inGroup(item.cls.category, "jewel") ? tr("このジュエルには使えない (古代の版は時を失ったジュエル用)", "Not usable on this jewel (Ancient versions are for Time-Lost Jewels)")
+    : tr("ジュエルにだけ使える", "Jewels only");
 }

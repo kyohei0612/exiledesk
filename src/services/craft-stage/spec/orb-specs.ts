@@ -166,7 +166,13 @@ export const ORB_OMEN_SPECS: readonly OmenSpec[] = [
     text: { en: ["While this item is active in your inventory your next", "Divine Orb will only reroll Implicit Modifiers"], ja: ["インベントリ内でアクティブ状態の時", "次回使用する神のオーブは暗黙モッドだけをリロールする"] },
     effect: { implicitOnly: true }, source: CLIENT,
   },
+  {
+    // 聖別 (2026-10-17 ADR-004 の残りで移した。前は「ヴァールの仲間で移さない」だった)。神のオーブの動作をまるごと聖別に置き換える
+    key: "OmenofSanctification", hover: "omenofsanctification", appliesTo: "divine",
+    text: { en: ["While this item is active in your inventory your next", "Divine Orb used on a [ItemRarity|Rare] item will [Sanctified|Sanctify] it"], ja: ["インベントリ内でアクティブ状態の時", "次回[ItemRarity|レア]アイテムに使用する神のオーブはそのアイテムを[Sanctified|聖別]する"] },
+    effect: { replace: [{ sanctify: true }] }, source: { client: "currency-hover の説明文", community: "数値は 0.78〜1.22 倍 (apply-vaal.ts)" },
+  },
 ];
 
-/** 移していないお告げ (これが掛かった手は今の関数で打つ)。聖別はヴァールの仲間で移さない (ADR-004 の決めたこと 1) */
-export const UNPORTED_OMENS: readonly string[] = ["OmenofSanctification"];
+/** 移していないお告げ (これが掛かった手は今の関数で打つ)。2026-10-17 に聖別も移して空 */
+export const UNPORTED_OMENS: readonly string[] = [];

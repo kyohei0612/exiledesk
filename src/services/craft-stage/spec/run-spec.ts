@@ -12,7 +12,8 @@ import type { Action, CurrencySpec, OmenSpec } from "./types";
 import { ANNUL_SPEC, BONE_SPECS, OMEN_SPECS, REVEAL_SPEC } from "./desecrate-specs";
 import { ORB_OMEN_SPECS, ORB_SPEC_BY_KEY, UNPORTED_OMENS } from "./orb-specs";
 import { ESSENCE_OMEN_SPECS, prepareEssence, resolveEssence } from "./essence-specs";
-import { ARTIFICER_SPEC, CATALYST_SPEC_BY_KEY, QUALITY_SPECS, RUNE_SPEC } from "./other-specs";
+import { ARTIFICER_SPEC, CATALYST_SPEC_BY_KEY, EMOTION_SPEC, FLUX_SPECS, QUALITY_SPECS, RUNE_SPEC } from "./other-specs";
+import { emotionReason, isEmotion } from "../apply-emotion";
 import { isRune } from "../stage-runes";
 import { groupsFit, limitBlock, stateBlock, targetBlock } from "./judge";
 import { NO_MODS, runPart, type Mods, type PartCtx } from "./parts";
@@ -34,6 +35,10 @@ export function resolveSpec(key: string, item: StageItem, data?: PatchData): Res
   const orb = ORB_SPEC_BY_KEY.get(key) ?? CATALYST_SPEC_BY_KEY.get(key) ?? QUALITY_SPECS.find((s) => s.stageKey === key) ?? (key === ARTIFICER_SPEC.stageKey ? ARTIFICER_SPEC : null);
   if (orb) return { spec: orb, reveal: null };
   if (isRune(key)) return { spec: RUNE_SPEC, reveal: null };
+  const flux = FLUX_SPECS.find((s) => s.stageKey === key);
+  if (flux) return { spec: flux, reveal: null };
+  // 感情: その部位で使える物か (古代の版は時を失ったジュエル用)。使えなければ一言
+  if (isEmotion(key)) { const why = emotionReason(item, key); return { spec: EMOTION_SPEC, reveal: null, ...(why ? { reason: why } : {}) }; }
   if (key.startsWith("reveal")) {
     const m = /^reveal:(\d)(:reroll)?$/.exec(key);
     return { spec: REVEAL_SPEC, reveal: m ? { index: Number(m[1]), reroll: !!m[2] } : { invalid: key } };
@@ -52,6 +57,7 @@ const OMEN_FOR_KIND = (kind: string, omen: string): boolean => (OMEN_FOR[kind] ?
 export const specCovers = (key: string): boolean =>
   key === ANNUL_SPEC.stageKey || /^reveal/.test(key) || BONE_SPECS.some((s) => s.stageKey === key) || ORB_SPEC_BY_KEY.has(key) ||
   CATALYST_SPEC_BY_KEY.has(key) || QUALITY_SPECS.some((s) => s.stageKey === key) || key === ARTIFICER_SPEC.stageKey || isRune(key) ||
+  FLUX_SPECS.some((s) => s.stageKey === key) || isEmotion(key) ||
   /^essence:(breach$|(lesser|normal|greater|perfect):)/.test(key);
 
 /** 全部のお告げ (冒涜まわり + オーブ)。並びは左右を両方掛けた時に先に効く方 */
@@ -83,7 +89,7 @@ export function modsOf(used: readonly OmenSpec[]): Mods {
     if ("guaranteeTag" in e) m.guaranteeTag ??= e.guaranteeTag;
     else if ("rerolls" in e) m.rerolls += e.rerolls;
     else if ("pick" in e) m.pick = e.pick;
-    else if ("replace" in e) m.plain = e.plain;
+    else if ("replace" in e) m.plain = !!e.plain;
     else if ("addCount" in e) m.addCount = e.addCount;
     else if ("pickLowest" in e) m.pickLowest = true;
     else if ("catalysing" in e) m.catalysing = true;
@@ -185,9 +191,10 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
   const note = parts.map((p) => p.note).find((x) => x);
   const count = parts.map((p) => p.count).find((x) => x != null);
   const augment = parts.map((p) => p.augment).find((x) => x);
+  const converted = parts.map((p) => p.converted).find((x) => x);
   return {
     applied: true, item: cur, added, removed,
-    ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}), ...(note ? { note } : {}), ...(count != null ? { count } : {}), ...(augment ? { augment } : {}),
+    ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}), ...(note ? { note } : {}), ...(count != null ? { count } : {}), ...(augment ? { augment } : {}), ...(converted ? { converted } : {}),
     omensUsed: used.map((o) => o.key),
   };
 }

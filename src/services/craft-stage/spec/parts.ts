@@ -14,6 +14,12 @@ import { QUALITY_PER_CATALYST } from "../../htc/catalysing-setup";
 import { htcBaseInfo } from "../../htc/patch";
 import { hasImplicitRange } from "../roll-text";
 import { applyRune } from "../stage-runes";
+import { emotionNameOf } from "../apply-emotion";
+import { jewelEmotionsOf } from "../../htc/patch";
+import { FLUX } from "../apply-flux";
+import { convertByTable } from "../element-convert";
+import { applySanctify } from "../apply-vaal";
+import { limitOf, listOf } from "../stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action, ModPool } from "./types";
 import { markFloorOf } from "./desecrate-specs";
@@ -55,7 +61,7 @@ export interface PartCtx {
   catalystTag?: string | null;
   /** 手順の再生: 触媒は 1 手 = 1 個 +1% (手で打つ画面は 1 個 +1〜2%) */
   oneCatalyst?: boolean;
-  /** ルーンの手の鍵 (rune:<英語名>@n) */
+  /** 手の鍵そのもの (ルーン rune:<英語名>@n・感情 emotion:<英語名>・フラックス flux_<属性>) */
   runeKey?: string;
   /** この手で前の部品が消した MOD (深淵の王の印は消した側に付く) */
   removedSoFar: StageMod[];
@@ -475,6 +481,26 @@ function catalyst(ctx: PartCtx, item: StageItem): StageApply {
 /** 手で打つ触媒 1 個で上がる品質 (等分) */
 const CATALYST_ROLLS = [1, 2] as const;
 
+/** 液化した感情の作った MOD を付ける (消すのは前の部品)。2 つの版がある物は、空きのある側の版から等しく 1 つ */
+function addEmotion(ctx: PartCtx, item: StageItem): StageApply {
+  const entries = jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(ctx.runeKey ?? ""));
+  const fits = entries.filter((x) => listOf(item, x.side as StageSide).length < limitOf(item, x.side as StageSide));
+  if (!fits.length) return skipRandom(item, tr("付ける側に空きが無いので追加できない (もう一度)", "No room on the side this mod goes to, so nothing can be added (try again)"));
+  const e = fits.length === 1 ? fits[0]! : fits[Math.floor(ctx.rng() * fits.length)]!;
+  const mod = ctx.data.mods.get(e.modId);
+  if (!mod) return skip(item, tr("感情の MOD のデータが無い", "No data for this emotion's mod"));
+  const added: StageMod = { ...makeStageMod(mod, e.side as StageSide, 0, ctx.rng), crafted: true };
+  return { applied: true, item: withMod(item, added), added: [added], removed: [] };
+}
+/** 属性の MOD を変える (フラックス)。変える物が無ければ打てない */
+function convertElements(ctx: PartCtx, item: StageItem, res: boolean): StageApply {
+  const f = FLUX[ctx.runeKey ?? ""];
+  if (!f) return skip(item, tr("フラックスの種類が分からない", "Unknown Flux"));
+  const c = convertByTable(ctx.data, item, f.element, f.eats, res, "flux");
+  if (!c.mods.length) return skip(item, tr("変換できる耐性モッドが無い", "No resistance mod to convert"));
+  return { applied: true, item: c.item, added: c.mods.map((x) => x.to), removed: c.mods.map((x) => x.from), converted: { element: f.element, mods: c.mods } };
+}
+
 /** 部品を 1 つ打つ */
 export function runPart(ctx: PartCtx, item: StageItem, a: Action): StageApply {
   if ("addUnrevealed" in a) return addUnrevealed(ctx, item, a.addUnrevealed);
@@ -490,5 +516,8 @@ export function runPart(ctx: PartCtx, item: StageItem, a: Action): StageApply {
   if ("addSocket" in a) return { applied: true, item: { ...item, sockets: (item.sockets ?? 0) + 1 }, added: [], removed: [] };
   // ルーンのはめ方は説明文から作った表 (augment-rules.json) に通す今の関数そのまま (部位・数・置き換え・コラプト後も表で決まる)
   if ("socketAugment" in a) return applyRune(item, ctx.runeKey!, ctx.data);
+  if ("addEmotion" in a) return addEmotion(ctx, item);
+  if ("convertElements" in a) return convertElements(ctx, item, a.convertElements.res);
+  if ("sanctify" in a) return applySanctify(ctx.data, item, ctx.rng);
   return { applied: true, item: { ...item, corrupted: true }, added: [], removed: [] };
 }

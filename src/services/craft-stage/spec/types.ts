@@ -77,7 +77,9 @@ export type Limit =
   /** ソケットが熟練工の上限より少ない (上限はベースごと、PoB の socketLimit − 2) */
   | { kind: "socketsBelowCap" }
   /** クライアントの ItemClasses でフラクチャーできる部位 */
-  | { kind: "fracturableClass" };
+  | { kind: "fracturableClass" }
+  /** 作った MOD が 1 つも無い (液化した感情: 前の感情で付いた MOD がある間は使えない。2026-10-12 オーナー) */
+  | { kind: "noCrafted" };
 
 /**
  * 動作の部品 (順に打つ)。カレンシー固有の処理は書かない。
@@ -125,7 +127,19 @@ export type Action =
   /** ソケットを 1 つ足す (アーティフィサー「Adds an Augment Socket」) */
   | { addSocket: true }
   /** オーグメントをはめる (ルーン・ソウルコア・アイドル。決まりは augment-rules.json = 説明文から作った表) */
-  | { socketAugment: true };
+  | { socketAugment: true }
+  /**
+   * 液化した感情の決まった作った MOD を付ける (「adds a specific Crafted Modifier」)。どの感情で何が付くかはジュエルごと (jewel-bases.json の emotions)。
+   * 2 つの版 (プレフィックス・サフィックス) がある物は、空きのある側の版から等しく 1 つ (説明文に決め方が無い = ランダム、2026-10-16 オーナー)
+   */
+  | { addEmotion: true }
+  /**
+   * 属性の MOD を別の属性に変える (耐性のフラックス「Converts all … Resistance modifiers on an item into equivalent … Resistance modifiers」)。
+   * 変え方はクライアントの変換表 (element-convert.ts)。res = 耐性の行
+   */
+  | { convertElements: { res: boolean } }
+  /** 聖別 (聖別のお告げ「Sanctify the item」: 数値を 0.78〜1.22 倍、以後は手を加えられない) */
+  | { sanctify: true };
 
 /** カレンシー 1 つ (骨は種類ごとに 1 つ: 保存された顎骨・古代の肋骨 …) */
 export interface CurrencySpec {
@@ -162,7 +176,7 @@ export type OmenEffect =
   | { guaranteeTag: string }
   | { rerolls: number }
   | { pick: "desecrated" }
-  | { replace: Action[]; plain: true }
+  | { replace: Action[]; plain?: true }
   /** 足す数 (大いなる高貴のお告げ「add two random modifiers」) */
   | { addCount: number }
   /** 消す物を MOD レベルの一番低い物に (削りのお告げ「remove the lowest level modifier」) */

@@ -8,12 +8,8 @@
  * 2026-10-10 要望で分かった (前はアルダーのルーンと同じ「同じ段の順位」で、T3 → T3 にしていた)。表の MOD とエンジンの段は 名前・Lv・数値の幅で突き合わせる。
  * 表に無い MOD (エッセンスで付けた耐性・ベース専用の耐性) も普通の MOD と同じに変わる (2026-10-17 オーナー、element-convert.ts)。数値は段の範囲の中の同じ位置。変える物が無ければ打てない。
  * 使い切りで、ソケットは要らない。コラプト・聖別の後は打てない (普通のカレンシーと同じ)
+ * 打つ処理は説明文の分解 (spec/other-specs.ts の FLUX_SPECS、2026-10-17 ADR-004 の残りで移した)。ここは種類の表だけ
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import type { StageApply, StageItem } from "./types";
-import { skip } from "./stage-core";
-import { convertByTable } from "./element-convert";
-import { tr } from "../../i18n/lang";
 
 export const FLUX: Record<string, { element: string; eats: string[] }> = {
   flux_fire: { element: "fire", eats: ["cold", "lightning"] },
@@ -22,10 +18,3 @@ export const FLUX: Record<string, { element: string; eats: string[] }> = {
   flux_chaos: { element: "chaos", eats: ["fire", "cold", "lightning"] },
 };
 export const isFlux = (key: string): boolean => key in FLUX;
-
-export function applyFlux(data: PatchData, item: StageItem, key: string): StageApply {
-  const f = FLUX[key]!;
-  const c = convertByTable(data, item, f.element, f.eats, true, "flux");
-  if (!c.mods.length) return skip(item, tr("変換できる耐性モッドが無い", "No resistance mod to convert"));
-  return { applied: true, item: c.item, added: c.mods.map((x) => x.to), removed: c.mods.map((x) => x.from), converted: { element: f.element, mods: c.mods } };
-}

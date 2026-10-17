@@ -120,3 +120,40 @@ export const RUNE_SPEC: CurrencySpec = {
   modless: true,
   source: { client: "用語集 Augment、SoulCores (Limit・CanSocketInCorruptedSanctified)・SoulCoreStats、augment-rules.json (説明文から作った表)" },
 };
+
+/**
+ * 液化した感情 (デリリウム、2026-10-17 ADR-004 の残り)。説明文「ランダムなモッドを 1 個取り除き、レアの基本ジュエルに確定でクラフトモッドを追加する」。
+ * 消すのは固定以外から等しく (上限を超えた側に当たると不成立)、付けるのはジュエルごとの表 (jewel-bases.json の emotions)。
+ * 古代の版は時を失ったジュエル用 (どの感情が使えるかは resolveSpec が部位の表で見る)
+ */
+export const EMOTION_SPEC: CurrencySpec = {
+  key: "liquidenvy",
+  stageKey: "emotion:",
+  kind: "emotion",
+  text: {
+    en: ["Removes a random modifer and Augments a [Rarity|Rare] [BasicJewel|Basic Jewel] with a", "new guaranteed [Crafted] modifier"],
+    ja: ["ランダムなモッドを1個取り除き、[Rarity|レア][BasicJewel|基本ジュエル]に確定で", "[Crafted|クラフト]モッドを追加する"],
+  },
+  target: { groups: ["jewel"], rarity: ["rare"], groupsReason: { ja: "ジュエルにだけ使える", en: "Jewels only" }, rarityReason: { ja: "レアのジュエルにだけ使える", en: "Rare jewels only" } },
+  actions: [{ remove: { n: 1, pick: "equal", overLimitVoids: true } }, { addEmotion: true }],
+  limits: [{ kind: "noCrafted" }],
+  source: { client: "currency-hover の説明文", poe2db: "感情ごとに付く MOD (jewel-bases.json)", owner: "作った MOD がある間は使えない (2026-10-12)・2 つの版は等しく (2026-10-16)・上限を超えた側に当たると不成立 (2026-10-14)" },
+};
+
+/** 耐性のフラックス (2026-10-17 ADR-004 の残り)。説明文「アイテム上の全ての◯◯耐性モッドを同等な◯◯耐性モッドに変換する」。変え方はクライアントの変換表 */
+const FLUX_TEXT: Record<string, { hover: string; en: string; ja: string }> = {
+  flux_fire: { hover: "blazingflux", en: "Transforms all [Cold] and [Lightning] Resistance modifiers on an item to equivalent [Fire] Resistance modifiers", ja: "アイテム上の全ての[Cold|冷気]および[Lightning|雷]耐性モッドを同等な[Fire|火]耐性モッドに変換する" },
+  flux_cold: { hover: "chillingflux", en: "Transforms all [Fire] and [Lightning] Resistance modifiers on an item to equivalent [Cold] Resistance modifiers", ja: "アイテム上の全ての[Fire|火]および[Lightning|雷]耐性モッドを同等な[Cold|冷気]耐性モッドに変換する" },
+  flux_lightning: { hover: "cracklingflux", en: "Transforms all [Fire] and [Cold] Resistance modifiers on an item to equivalent [Lightning] Resistance modifiers", ja: "アイテム上の全ての[Fire|火]および[Cold|冷気]耐性モッドを同等な[Lightning|雷]耐性モッドに変換する" },
+  flux_chaos: { hover: "voidflux", en: "Transforms all [Fire], [Cold] and [Lightning] Resistance modifiers on an item to equivalent [Chaos] resistance modifiers", ja: "アイテム上の全ての[Fire|火]、[Cold|冷気]および[Lightning|雷]耐性モッドを同等な[Chaos|混沌]耐性モッドに変換する" },
+};
+export const FLUX_SPECS: readonly CurrencySpec[] = Object.entries(FLUX_TEXT).map(([stageKey, t]) => ({
+  key: t.hover, stageKey, kind: "flux",
+  text: { en: [t.en], ja: [t.ja] },
+  target: {},
+  actions: [{ convertElements: { res: true } }],
+  limits: [],
+  // フラスコ・ジェムにも打てる (変える物が無いので「変換できる耐性モッドが無い」で弾かれる、今の関数と同じ)
+  modless: true,
+  source: { client: "currency-hover の説明文・Expedition2ElementalModConversions (element-convert.ts)", owner: "表に無い MOD も普通の MOD と同じに変わる (2026-10-17)" },
+}));
