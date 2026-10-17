@@ -95,9 +95,14 @@ const lastRows = computed(() => {
   if (!l) return null;
   const divine = l.out.currency.startsWith("divine");
   const same = (a: StageMod, b: StageMod): boolean => a.modId === b.modId && a.side === b.side && (divine || (!!a.fractured && !b.fractured));
-  const changed = l.added.flatMap((a) => { const b = l.removed.find((r) => same(r, a)); return b ? [{ before: b, after: a, fractured: !!a.fractured && !b.fractured }] : []; });
+  // フラクチャーの手は固定した MOD が「付いた」だけで記録される (消えた側は空)
+  const fracOnly = (a: StageMod): boolean => l.out.currency === "fracture" && !!a.fractured && !l.removed.some((r) => same(r, a));
+  const changed = [
+    ...l.added.flatMap((a) => { const b = l.removed.find((r) => same(r, a)); return b ? [{ before: b, after: a, fractured: !!a.fractured && !b.fractured }] : []; }),
+    ...l.added.filter(fracOnly).map((a) => ({ before: a, after: a, fractured: true })),
+  ];
   return {
-    added: l.added.filter((a) => !l.removed.some((r) => same(r, a))),
+    added: l.added.filter((a) => !l.removed.some((r) => same(r, a)) && !fracOnly(a)),
     removed: l.removed.filter((r) => !l.added.some((a) => same(r, a))),
     changed,
   };
