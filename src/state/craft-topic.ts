@@ -68,6 +68,8 @@ watch(() => s.log.value.length, (n, old) => {
   const want = cur.step.use === "reveal" ? e.out.currency.startsWith("reveal") : e.out.currency === cur.key;
   const omensOk = (cur.step.omens ?? []).every((o) => splitOmens(e.out.omen).includes(o) || (o === "OmenofAbyssalEchoes" && e.out.currency.endsWith(":reroll")));
   if (!want || !omensOk || !e.out.applied) return;
+  // 発現の手は、未発現の MOD が全部無くなるまで次へ進めない (腐食で最大 6 つ。2026-10-17 オーナー「腐食は全部発現させてから完了に、もったいない体験が」)
+  if (cur.step.use === "reveal" && [...e.after.prefixes, ...e.after.suffixes].some((m) => m.unrevealed)) return;
   if (topicSub.value < chain.length) topicSub.value++; // 続きの手へ
   else topicUsed.value = true;
 });

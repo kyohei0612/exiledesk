@@ -142,6 +142,9 @@ const flashKey = ref<string | null>(null);
 /** この一覧の根 (窓とページの下の 2 つが同時にあるので、行は自分の中から探す) */
 const listEl = ref<HTMLElement | null>(null);
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
+/** カードから飛んで来た行と、アイテムに付いている段 (枠で囲んで残す。2026-10-17 オーナー「MOD クリックで MOD 一覧のこれが付いてますって枠で」) */
+const jumped = ref<{ key: string; modId: string; rank: string | null } | null>(null);
+const isJumpTier = (key: string, modId: string, rank: string): boolean => !!jumped.value && jumped.value.key === key && jumped.value.modId === modId && jumped.value.rank === rank;
 /** カードの MOD を押した: その MOD の行のある節・行を探して開き、一気に送る (ワープ。2026-10-10 オーナー「MOD をクリックしたらその MOD のあるとこまでスクロール」) */
 watch(() => s.modJump.value, (j) => {
   if (!j || (!props.overlay && !props.embedded)) return;
@@ -154,6 +157,9 @@ watch(() => s.modJump.value, (j) => {
     if (phone && !secOpen.value.has(hit.sec.sid)) toggleSec(hit.sec.sid);
     active.value = hit.sec.sid;
     expanded.value = key;
+    const it = s.item.value;
+    const on = it ? [...it.prefixes, ...it.suffixes].find((m) => m.modId === j.modId) : undefined;
+    jumped.value = { key, modId: j.modId, rank: on?.tierName ?? null };
     // 窓は開いたばかりで中身がまだ並んでいない事があるので 1 枚待つ。済んだら消す (次に Tab で開いた時に同じ行へ飛ばない)
     if (props.overlay) s.modJump.value = null;
     void nextTick(() => requestAnimationFrame(() => {
@@ -384,7 +390,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
               <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap text-right" :class="heldCands ? 'text-sky-200' : ''">{{ heldCands ? ('bone' in heldCands ? tr("候補に出る", "Offered") : tr("付く確率", "Chance")) : tr("出やすさ", "Weight") }}</span><span class="w-6 text-right">{{ tr("段", "T") }}</span><span class="w-7 text-right">Lv</span></span>
             </p>
             <p v-if="!col.items.length" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
-            <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : ''">
+            <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '', jumped?.key === `${sec.sid}:${r.id}` ? 'rounded-md ring-2 ring-amber-300/80 shadow-[0_0_12px_rgba(251,191,36,0.35)]' : '']">
               <!-- 1 系統 1 行。後ろの棒が出やすさ (列の一番出やすい物を 100%)。カレンシーを持っている時は左に狙いのチェック欄 -->
               <div class="flex items-center gap-0">
               <label v-if="heldCands" class="flex w-5 shrink-0 cursor-pointer justify-center self-stretch" :class="heldShare(r) ? '' : 'pointer-events-none opacity-25'" :title="tr('狙いに入れる (付きうる段を全部。段の表で段ごとにも選べる)', 'Add to targets (all tiers that can roll; pick tiers in the tier table)')">
@@ -394,7 +400,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 type="button"
                 :data-rec="`mod:${r.id}`"
                 class="relative min-w-0 flex-1 overflow-hidden rounded-md px-2 py-1 text-left transition hover:bg-white/[0.05]"
-                :class="[r.on ? 'ring-1 ring-emerald-400/60' : '', r.blocked || (heldCands && !heldShare(r)) || (r.group === 'rune' && !r.socketed) ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : '']"
+                :class="[r.blocked || (heldCands && !heldShare(r)) || (r.group === 'rune' && !r.socketed) ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : '']"
                 :title="r.blocked ? tr('同じ系統の MOD が付いているので、今は付かない', 'A mod from the same group is already on the item, so this cannot roll now') : heldCands && !heldShare(r) ? tr(`持っている ${heldCands.name} では付かない`, `Cannot roll with the held ${heldCands.name}`) : undefined"
                 @click="toggleRow(`${sec.sid}:${r.id}`, $event)"
               >
@@ -421,11 +427,11 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
               <table v-if="expanded === `${sec.sid}:${r.id}`" class="mt-1 w-full text-[11px]">
                 <caption v-if="s.mode.value === 'sim'" class="pb-1 text-left text-[10px] opacity-60">{{ tr("T1 が一番良い段。「T○ 以上」= その段か、それより良い段が付けば当たり", "T1 is the best tier. “T○+” = a hit if that tier or better rolls") }}</caption>
                 <tbody>
-                  <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5" :class="heldCands && !heldTierShare(r, t) ? 'opacity-35' : ''" :title="heldCands && !heldTierShare(r, t) ? tr(`持っている ${heldCands.name} では付かない段 (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.name} (minimum tier, item level, or same group)`) : undefined">
+                  <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5" :class="[heldCands && !heldTierShare(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="heldCands && !heldTierShare(r, t) ? tr(`持っている ${heldCands.name} では付かない段 (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.name} (minimum tier, item level, or same group)`) : undefined">
                     <!-- 段のチェック: その段以上を狙いに (外す時はその段だけ) -->
                     <td v-if="heldCands" class="w-5 py-0.5 text-center"><input type="checkbox" class="accent-sky-400 align-middle" :checked="isAimTier(r, t)" :disabled="!heldTierShare(r, t)" :title="tr(`${t.rank} 以上を狙いに入れる`, `Target ${t.rank} or better`)" @click.stop @change="toggleAimTier(r, t)" /></td>
                     <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
-                    <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
+                    <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}<span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span></td>
                     <td class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :class="heldCands ? 'text-sky-200' : ''" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ !cannow(r) ? "0%" : heldCands ? pct(heldTierShare(r, t)) : t.weight && r.weight ? pct((r.share * t.weight) / r.weight) : "" }}</td>

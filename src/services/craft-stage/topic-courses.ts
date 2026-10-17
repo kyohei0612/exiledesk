@@ -247,7 +247,8 @@ export const TOPIC_COURSES: TopicCourse[] = [
       { ...ALWAYS(H("desecrate", ["腐食のお告げ", "Omen of Putrefaction"], [
         ["腐食のお告げを掛けた骨は、MOD を全部消して、空き全部に未発現の MOD を付ける (最大 6 つ)", "A Bone with Omen of Putrefaction removes every mod and fills every slot with Unrevealed mods (up to 6)"],
         ["アイテムはコラプトする (もう手を加えられない)。発現で付くのは普通の MOD だけ", "The item becomes Corrupted (no further changes). Reveals offer normal mods only"],
-      ], ["alchemy"])), omens: ["OmenofPutrefaction"] },
+        ["未発現の MOD を全部発現すると完了", "Reveal every Unrevealed mod to finish"],
+      ], ["alchemy"])), omens: ["OmenofPutrefaction"], chain: [S("reveal", ["発現", "Reveal"])] },
     ],
   },
   {

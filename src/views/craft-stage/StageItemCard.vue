@@ -36,7 +36,7 @@ import RichText from "../../components/decor/RichText.vue";
 const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean}>();
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
 /** 行の左 (P / S) と右 (↓・確率・×) の枠は同じ幅。MOD の文がカードの真ん中に来る (2026-10-17 オーナー「全体的に左に寄ってる、MOD は真ん中、→ に %、← に P,S」) */
-const sideColW = computed(() => (props.removable ? "w-[5.75rem] max-md:w-[6.75rem]" : "w-[4.25rem] max-md:w-[4.75rem]"));
+const sideColW = computed(() => (props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
 /** 未発現の行の崩れた文字。どの行も同じ並び・同じフォント (行ごとに変えると形がばらばらで気持ち悪い。2026-10-17 オーナー) */
 const UNREVEALED_GLYPHS = "ʘɿɕʞɞ ʖɷɦɕɷʞ";
 /** 付く空きの枠 (プレ → サフィ) */
@@ -91,7 +91,7 @@ const tone = computed(() => TONE[props.item.rarity]);
 const hover = ref<"mod" | "rune" | null>(null);
 const phoneW = typeof window !== "undefined" && window.innerWidth < 768;
 const hint = computed((): string => {
-  if (props.holding) return phoneW ? tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") : tr("押すと使う · 右クリック / Esc で手放す · ↓ で MOD 一覧のその行へ", "Click to use · Right-click / Esc to drop · ↓ to find it in the mod list");
+  if (props.holding) return phoneW ? tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") : tr("押すと使う · 右クリック / Esc で手放す", "Click to use · Right-click / Esc to drop");
   if (!props.removable) return "";
   if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補を選んで「発現」", "Pick an option below, then Reveal");
   if (hover.value === "mod") return tr("押すと MOD 一覧のその行へ · 右クリックでフラクチャー · × で外す", "Click to find it in the mod list · Right-click to fracture · × to remove");
@@ -266,9 +266,7 @@ const rows = computed(() => {
           </span>
           <!-- 右端 (↓・確率・×) は行ごとに中身が違うので枠の幅を決めておき、真ん中の文字をどの行もそろえる (2026-10-17 オーナー「% が無いからずれた、枠幅決めて中央ぞろえ」) -->
           <span class="flex shrink-0 items-center justify-end gap-1" :class="sideColW">
-            <!-- MOD 一覧のこの行へ (持ったままでも押せる。持っている時は行を押すと「使う」なので、飛ぶのはこの ↓。2026-10-10 オーナー「持ちながらできるように」) -->
-            <span v-if="r.m.unrevealed" aria-hidden="true" class="invisible rounded px-1 text-[11px] leading-none max-md:px-2 max-md:py-1">↓</span>
-            <button v-if="!r.m.unrevealed" type="button" class="rounded px-1 text-[11px] leading-none text-white/35 hover:bg-white/10 hover:text-white/80 max-md:px-2 max-md:py-1" :title="tr('MOD 一覧のこの行へ', 'Find in the mod list')" @click.stop="emit('jump', r.m.modId)">↓</button>
+            <!-- ↓ (MOD 一覧のこの行へ) は外した。行を押すと MOD 一覧のその行を枠で囲んで見せる (2026-10-17 オーナー「この矢印めっちゃ気になる、MOD クリックでその挙動に」) -->
             <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="w-11 text-right text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
           </span>
