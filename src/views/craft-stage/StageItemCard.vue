@@ -32,9 +32,13 @@ import RichText from "../../components/decor/RichText.vue";
  * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
-/** doomed: 今持っている物を打つと消える MOD (削減のお告げ + カオスの時の候補。ゲームと同じく打つ前に色を付ける、オーナー 2026-10-04) */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[] ; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean}>();
+/** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean}>();
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
+/** 付く空きの枠 (プレ → サフィ) */
+const openRows = computed(() => (["prefix", "suffix"] as const).flatMap((side) => Array.from({ length: props.open?.[side] ?? 0 }, () => ({ side }))));
+/** 両側が光っている時は「どちらかに付く」 */
+const openTitle = computed(() => ((props.open?.prefix ?? 0) && (props.open?.suffix ?? 0) ? tr("光っている枠のどれかに付く (どちらの側かは運)", "Rolls into one of the lit slots (which side is luck)") : tr("ここに付く", "Rolls here")));
 /**
  * スポットライト (POE2Tube 要望 ⑪-2、URL の focus=<MOD の id か系統>): その MOD の行だけ光らせて少し大きく、他は暗く
  */
@@ -239,7 +243,7 @@ const rows = computed(() => {
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
           :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
-          :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で消える候補 (${doomed!.length} つのうち 1 つ)`, `May be removed by this use (1 of ${doomed!.length})`) : tr('この手で消える', 'Removed by this use')) : removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
+          :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
           @contextmenu="!holding && removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
@@ -258,6 +262,13 @@ const rows = computed(() => {
             <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
           </span>
+        </p>
+      </div>
+      <!-- 付く空き: 持っている物で新しい MOD が付きうる枠を緑で光らせる (両側が空いていれば両方、大いなる高貴なら側ごとに 2 つまで。2026-10-17 オーナー) -->
+      <div v-if="!hidden && openRows.length" data-open-slots class="mt-1 space-y-1">
+        <p v-for="(o, i) in openRows" :key="'open' + i + o.side" class="flex items-center gap-2 rounded bg-emerald-400/10 px-2 py-0.5 shadow-[0_0_10px_rgba(52,211,153,0.35)]" :title="openTitle">
+          <span class="w-7 shrink-0 text-left text-[12px] font-bold" :class="o.side === 'prefix' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ o.side === "prefix" ? "P" : "S" }}</span>
+          <span class="min-w-0 flex-1 text-center text-[12px] font-bold text-emerald-200">{{ o.side === "prefix" ? tr("＋ プレフィックスの空き (ここに付く)", "+ Open prefix (can roll here)") : tr("＋ サフィックスの空き (ここに付く)", "+ Open suffix (can roll here)") }}</span>
         </p>
       </div>
       <!-- ユニークの効果 (要望 ⑨)。クライアントの表に「どのユニークがどの MOD」が無いので poe2db のページ (保存済み) から -->

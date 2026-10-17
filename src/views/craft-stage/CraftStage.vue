@@ -33,6 +33,7 @@ import StageChaosSpam from "./StageChaosSpam.vue";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
+import { previewUse } from "../../services/craft-stage/spec/preview";
 import { endLesson, inLesson, inTopic } from "../../state/craft-lesson"; // チュートリアルのコースの間 (2026-10-17)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
@@ -47,7 +48,7 @@ import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
-import { catalystSetKey, IMPLICIT_SET, implicitSetKey, isCatalystSet, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey, whittleTargets } from "../../services/craft-stage/apply-currency";
+import { catalystSetKey, IMPLICIT_SET, implicitSetKey, isCatalystSet, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import OmenKeepToggle from "./OmenKeepToggle.vue";
 import ShelfButton from "./ShelfButton.vue";
@@ -114,13 +115,9 @@ const heldOmens = computed(() => {
   const kind = kindOf(s.held.value);
   return [...(OMEN_FOR[kind] ?? []), ...(kind === "desecrate" ? OMEN_FOR.reveal ?? [] : [])];
 });
-/** 削減のお告げを掛けてカオスを持っている時に消える候補 (ゲームと同じく打つ前に色を付ける、オーナー 2026-10-04) */
-const doomed = computed(() => {
-  const it = s.item.value;
-  if (!it || !s.held.value || kindOf(s.held.value) !== "chaos" || it.rarity !== "rare" || !s.omens.value.includes("OmenofWhittling")) return [];
-  const o = s.omens.value;
-  return whittleTargets(it, o.includes("OmenofSinistralErasure") ? "prefix" : o.includes("OmenofDextralErasure") ? "suffix" : null).map((m) => m.modId);
-});
+/** 持っている物を打つ前に光らせる: 変わる候補の MOD (オレンジの文字) と付く空き (緑の枠)。エンジンの previewUse から (2026-10-17 オーナー、前は削減のカオスだけ) */
+const preview = computed(() => (s.held.value && s.item.value && s.data.value && !s.replay.value ? previewUse(s.data.value, s.item.value, s.held.value, s.omens.value) : null));
+const doomed = computed(() => preview.value?.change ?? []);
 /** 打った瞬間の演出 (波紋・枠の光・「レアに!」など) */
 const fx = useStageFx(mouse);
 const fxCls = computed(() => (fx.value ? { hit: "stage-hit", up: "stage-up", shake: "stage-shake" }[fx.value.kind] : ""));
@@ -368,7 +365,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         </div>
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
-          :doomed="doomed"
+          :doomed="doomed" :open="preview?.open"
           :item="s.item.value!"
           :added="s.last.value?.added ?? []"
           :removed="s.last.value?.removed ?? []"
