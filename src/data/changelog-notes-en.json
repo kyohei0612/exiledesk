@@ -1,5 +1,9 @@
 {
  "_": "changelog-notes.json の英語 (同じ版・同じ順。2026-10-17 英語の仕上げ)。ゲームの用語はクライアントの英語の原文",
+ "0.1.558": [
+  "Added the “Learn omens” tutorial: Exalt (Sinistral, Dextral, Greater, stacking), Annul (Sinistral, Dextral), Chaos (Whittling, Erasure) and Divine (Blessed, Sanctification)",
+  "In tutorials, omens now have their own button and are applied before the currency"
+ ],
  "0.1.557": [
   "Added the “Learn desecration” tutorial: 4 Bones and revealing, Necromancy, Abyssal Echoes, faction omens (with a list of that faction’s mods for the item), Omen of Light, Essence of the Abyss and Omen of Putrefaction",
   "Removed the ↓ on item mod rows. Clicking a mod opens the mod list with its current tier framed"

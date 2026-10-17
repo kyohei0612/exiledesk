@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.558",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルに「お告げを学ぶ」を追加: 高貴 (左右・偉大なる・重ね掛け)・消去 (左右)・カオス (削減・左右の抹消)・神 (祝福・聖別)",
+    "en": "Added the “Learn omens” tutorial: Exalt (Sinistral, Dextral, Greater, stacking), Annul (Sinistral, Dextral), Chaos (Whittling, Erasure) and Divine (Blessed, Sanctification)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルのお告げは、カレンシーと別のボタンで先に掛けるように",
+    "en": "In tutorials, omens now have their own button and are applied before the currency"
+   }
+  ]
+ },
+ {
   "v": "0.1.557",
   "date": "2026-10-18",
   "items": [
@@ -603,30 +621,6 @@
     "area": "",
     "text": "Web 版のシミュレーターのタブは、作り終わるまで出さないようにしました",
     "en": "The web simulator tab is hidden until it's finished"
-   }
-  ]
- },
- {
-  "v": "0.1.518",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム確率機: 付いたら「X でシェア」。結果のカード (ベースの絵・回数・100 人中の運) 付きで投稿できます (スマホは X のアプリが開きます)",
-    "en": "Chaos spam tool: \"Share on X\" when you hit, with a result card (base art, attempts, your luck among 100 people). Opens the X app on phones"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム: 100 人中 上位 10% 以内の強運は、音と銅色の特別な演出 (X のカードも特別仕様)",
-    "en": "Chaos spam: luck in the top 10% of 100 people gets a sound and a special copper effect (and a special X card)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム: ベースを変えた・1 手戻した時に、前のスパムの結果が残っていたのを直しました。アイテムレベルは今のアイテムの物から始まります",
-    "en": "Chaos spam: fixed the previous spam result remaining after changing the base or undoing. The item level now starts from the current item's"
    }
   ]
  }
