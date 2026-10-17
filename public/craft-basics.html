@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PoE2 クラフト入門 — 1.0 から始める人へ | ExileDesk</title>
+<meta name="description" content="Path of Exile 2 のクラフトの基本。レアリティと MOD の枠、段とアイテムレベル、基本のオーブ、上級・完全、エッセンス、お告げ、骨と冒涜、フラクチャー、最初のクラフトの進め方。エミュレーターで無料で試せる。" />
+<link rel="canonical" href="https://exiledesk.com/craft-basics" />
+<link rel="alternate" hreflang="ja" href="https://exiledesk.com/craft-basics" />
+<link rel="alternate" hreflang="en" href="https://exiledesk.com/en/craft-basics" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg: #0e0c09; --panel: #17130e; --line: #3a3024; --fg: #e8dfcf; --sub: #a99b84; --accent: #e0b062; --link: #f0c878; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.85 "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif; }
+  header { border-bottom: 1px solid var(--line); background: #0a0907; }
+  header .in, main, footer .in { max-width: 820px; margin: 0 auto; padding: 0 16px; }
+  header .in { display: flex; align-items: center; gap: 12px; height: 52px; flex-wrap: wrap; }
+  header a { color: var(--fg); text-decoration: none; font-weight: 700; letter-spacing: .04em; }
+  header nav { margin-left: auto; display: flex; gap: 14px; font-size: 13px; flex-wrap: wrap; }
+  header nav a { color: var(--sub); font-weight: 400; }
+  main { padding-top: 28px; padding-bottom: 48px; }
+  h1 { font-size: 24px; margin: 0 0 16px; color: var(--accent); }
+  h2 { font-size: 17px; margin: 30px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); color: var(--accent); }
+  ul, ol { padding-left: 1.3em; margin: 6px 0 12px; }
+  li { margin: 3px 0; }
+  .note { color: var(--sub); font-size: 13px; }
+  a { color: var(--link); }
+  .cta { display: inline-block; margin: 6px 8px 4px 0; padding: 8px 18px; border: 1px solid #8a6a32; border-radius: 6px; background: #2a1f12; color: var(--accent); text-decoration: none; font-weight: 700; }
+  .toc { padding: 10px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .toc ol { margin: 0; }
+  footer { border-top: 1px solid var(--line); color: var(--sub); font-size: 12px; }
+  footer .in { padding-top: 14px; padding-bottom: 20px; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
+</head>
+<body>
+<header><div class="in"><a href="/">ExileDesk</a><nav><a href="/">エミュレーター</a><a href="/craft-basics">クラフト入門</a><a href="/bases/">ベース一覧</a><a href="/guide">使い方</a><a href="/en/craft-basics" hreflang="en">English</a></nav></div></header>
+<main>
+<h1>PoE2 クラフト入門 — 1.0 から始める人へ</h1>
+<p>Path of Exile 2 は 2026-12-11 に正式リリース (1.0) を迎えます。ここでは、装備のクラフト (カレンシーを使って MOD を付けたり消したりすること) の基本を、最初に知っておくと迷わない順にまとめます。書いてあることは全部 <a href="/">ExileDesk のエミュレーター</a> で、ゲーム内のお金を使わずに試せます。</p>
+<p><a class="cta" href="/?base=Gold%20Ring">エミュレーターで試す (金の指輪)</a></p>
+<div class="toc"><ol>
+<li><a href="#rarity">レアリティと MOD の枠</a></li>
+<li><a href="#tier">MOD の段とアイテムレベル</a></li>
+<li><a href="#orbs">基本のオーブ</a></li>
+<li><a href="#strength">上級・完全のカレンシー</a></li>
+<li><a href="#essence">エッセンス</a></li>
+<li><a href="#omen">お告げ</a></li>
+<li><a href="#bone">骨と冒涜</a></li>
+<li><a href="#fracture">フラクチャー</a></li>
+<li><a href="#first">最初のクラフトの進め方</a></li>
+</ol></div>
+
+<h2 id="rarity">1. レアリティと MOD の枠</h2>
+<ul>
+<li><b>ノーマル</b> (白): MOD なし。</li>
+<li><b>マジック</b> (青): プレフィックス 1 つ・サフィックス 1 つまで。</li>
+<li><b>レア</b> (黄): プレフィックス 3 つ・サフィックス 3 つまで (合わせて 6 つ)。</li>
+<li><b>ユニーク</b>: 決まった効果を持つ特別なアイテム。クラフトで MOD は足せません。</li>
+</ul>
+<p>MOD には<b>プレフィックス</b> (主に火力・ライフ・防御力など) と<b>サフィックス</b> (主に耐性・能力値・速度など) があり、それぞれの枠が埋まると、その側にはもう付きません。</p>
+
+<h2 id="tier">2. MOD の段とアイテムレベル</h2>
+<ul>
+<li>同じ MOD でも強さに段 (T1, T2, …) があり、<b>T1 が一番強い</b>です。段ごとに「MOD レベル」が決まっています。</li>
+<li>アイテムの<b>アイテムレベル</b>より高い MOD レベルの段は付きません。強い段を狙うなら、アイテムレベルの高いベースを使います。</li>
+<li>どの MOD がどれくらい出やすいか (重み) は MOD ごとに違います。エミュレーターの「MOD 一覧」で、段と出やすさを見られます。</li>
+</ul>
+
+<h2 id="orbs">3. 基本のオーブ</h2>
+<ul>
+<li><b>変成のオーブ</b>: ノーマル → マジック (MOD 1 つ)。</li>
+<li><b>増強のオーブ</b>: マジックに MOD を 1 つ足す。</li>
+<li><b>王者のオーブ</b>: マジック → レア (MOD を 1 つ足す)。</li>
+<li><b>高貴なオーブ</b>: レアに MOD を 1 つ足す (6 つまで)。</li>
+<li><b>カオスオーブ</b>: レアの MOD を 1 つ消して、1 つ足す (入れ替え)。</li>
+<li><b>消去のオーブ</b>: MOD を 1 つ消す。</li>
+<li><b>神のオーブ</b>: MOD の数値だけを振り直す (段は変わらない)。</li>
+<li><b>錬金術のオーブ</b>: ノーマル → レア (MOD 4 つ)。</li>
+</ul>
+<p class="note">どれも、どの MOD が付く・消えるかはランダムです。欲しい MOD を確実に付けたい時は、下のエッセンスやお告げと組み合わせます。</p>
+
+<h2 id="strength">4. 上級・完全のカレンシー</h2>
+<p>変成・増強・王者・高貴・カオスには、上級と完全があります。付く MOD の<b>MOD レベルに下限</b>があり、弱い段が出ません。</p>
+<ul>
+<li>変成・増強: 上級は MOD レベル 44 以上、完全は 70 以上。</li>
+<li>王者・高貴・カオス: 上級は 35 以上、完全は 50 以上。</li>
+</ul>
+<p class="note">アイテムレベルが下限より低いアイテムには使えません。</p>
+
+<h2 id="essence">5. エッセンス</h2>
+<ul>
+<li>エッセンスは、種類ごとに<b>決まった MOD を必ず付けます</b>。</li>
+<li>レッサー〜グレーターは、マジックをレアにしながら決まった MOD を付けます。</li>
+<li>パーフェクトエッセンスは、レアの MOD を 1 つ消してから決まった MOD を付けます。</li>
+<li>エッセンスなどで付く「クラフト MOD」は、普通はアイテムに 1 つまでです。</li>
+</ul>
+
+<h2 id="omen">6. お告げ</h2>
+<p>お告げは、インベントリで有効にしておくと、<b>次に使うカレンシーの動きを変えます</b>。例:</p>
+<ul>
+<li><b>左側 / 右側の高貴なお告げ</b>: 次の高貴なオーブがプレフィックス / サフィックスに付く。</li>
+<li><b>偉大なる高貴なお告げ</b>: 次の高貴なオーブで MOD が 2 つ付く。</li>
+<li><b>削減のお告げ</b>: 次のカオスオーブで消えるのが、MOD レベルの一番低い MOD になる。</li>
+<li><b>光のお告げ</b>: 次の消去のオーブで、冒涜の MOD だけを消す。</li>
+</ul>
+
+<h2 id="bone">7. 骨と冒涜</h2>
+<ul>
+<li>骨 (保存された顎骨など) は、レアに<b>未発現の冒涜 MOD</b> を 1 つ付けます。冒涜の MOD はアイテムに 1 つまでです。</li>
+<li>未発現の MOD は、魂の井戸で<b>候補 3 つから 1 つを選んで発現</b>します。普通の MOD にはない、冒涜専用の MOD が候補に出ることがあります。</li>
+<li>お告げで、付く側 (ネクロマンシー) や候補の勢力 (アマナム・クルガル・ウラマン) を絞れます。</li>
+</ul>
+
+<h2 id="fracture">8. フラクチャー</h2>
+<ul>
+<li>フラクチャーオーブは、MOD が 4 つ以上のレアの MOD を 1 つ<b>固定</b>します。固定した MOD はもう消えません。</li>
+<li>固定できるのは 1 つまで。冒涜の MOD は固定されません。</li>
+</ul>
+
+<h2 id="first">9. 最初のクラフトの進め方</h2>
+<ol>
+<li>アイテムレベルの高いベースを選ぶ (強い段が付けられる)。</li>
+<li>一番欲しい MOD をエッセンスで確定させる。</li>
+<li>空いた枠を高貴なオーブで埋める。側を決めたい時はお告げを使う。</li>
+<li>要らない MOD が付いたら、消去のオーブ (やお告げを組み合わせたカオス) で入れ替える。</li>
+<li>いい形ができたら、神のオーブで数値を伸ばす。</li>
+</ol>
+<p>高いカレンシーを使う前に、<a href="/">エミュレーター</a>で同じ手順を何度でも試せます。「次の手で狙う」で、次の 1 手で欲しい MOD が付く確率も見られます。</p>
+<p><a class="cta" href="/">エミュレーターを開く</a><a class="cta" href="/bases/">ベース一覧 (付く MOD と段)</a></p>
+<p class="note">PoE2 の 1.0 で新しく入るベース (剣など) は、リリースの後にエミュレーターに足します。確率はゲームのデータと poe2db・Craft of Exile をもとにした推定で、結果を保証するものではありません。</p>
+</main>
+<footer><div class="in">ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。 · <a href="/about">ExileDesk について</a> · <a href="/privacy">プライバシーポリシー</a> · <a href="/contact">お問い合わせ</a></div></footer>
+</body>
+</html>

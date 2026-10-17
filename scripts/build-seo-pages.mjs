@@ -47,7 +47,7 @@ const LANGS = {
   ja: {
     prefix: "",
     app: "/",
-    nav: `<a href="/">エミュレーター</a><a href="/bases/">ベース一覧</a><a href="/guide">使い方</a><a href="/about">ExileDesk について</a><a href="/contact">お問い合わせ</a><a href="/en/bases/" hreflang="en">English</a>`,
+    nav: `<a href="/">エミュレーター</a><a href="/craft-basics">クラフト入門</a><a href="/bases/">ベース一覧</a><a href="/guide">使い方</a><a href="/about">ExileDesk について</a><a href="/contact">お問い合わせ</a><a href="/en/bases/" hreflang="en">English</a>`,
     foot: `ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。MOD・段・重みはゲームのデータと poe2db の情報を元にした推定で、結果を保証するものではありません。 · <a href="/privacy">プライバシーポリシー</a> · <a href="/contact">お問い合わせ</a>`,
     side: { prefix: "プレフィックス", suffix: "サフィックス" },
     none: "無し",
@@ -61,7 +61,7 @@ const LANGS = {
   en: {
     prefix: "/en",
     app: "/?lang=en",
-    nav: `<a href="/?lang=en">Emulator</a><a href="/en/bases/">Bases</a><a href="/bases/" hreflang="ja">日本語</a>`,
+    nav: `<a href="/?lang=en">Emulator</a><a href="/en/craft-basics">Crafting basics</a><a href="/en/bases/">Bases</a><a href="/bases/" hreflang="ja">日本語</a>`,
     foot: `ExileDesk is an unofficial fan site. Path of Exile 2 and its images and names belong to Grinding Gear Games. Mods, tiers and weights are estimates based on game data and poe2db and are not guaranteed. · <a href="/privacy">Privacy policy (Japanese)</a>`,
     side: { prefix: "Prefixes", suffix: "Suffixes" },
     none: "None",
@@ -179,7 +179,7 @@ ${foot}`);
 M.setLang("ja");
 
 // サイトマップ (出力先の物を書き直す)
-const fixed = ["/", "/guide", "/about", "/contact", "/privacy"];
+const fixed = ["/", "/craft-basics", "/en/craft-basics", "/guide", "/about", "/contact", "/privacy"];
 writeFileSync(resolve(OUT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${[...fixed, ...urls].map((u) => `  <url><loc>${SITE}${u}</loc></url>`).join("\n")}
