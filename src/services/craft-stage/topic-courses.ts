@@ -13,7 +13,8 @@ import { essenceShelf } from "../../state/craft-stage-shelf";
 
 /** how = 案内に出すやさしい箇条書き (2026-10-17 オーナー「赤ちゃんに説明するくらい簡単に」)。無い手はカードの公式の説明と決まりの文を出す */
 /** prep = 今のアイテムにこの手が打てない時、白から打ってこの手が打てる状態を作る手 ([] = 白。craft-lesson.ts) */
-export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: JaEn[]; prep?: string[] }
+/** start = この手はいつも MOD 0 個のこのレア度から (付ける手。2026-10-17 オーナー「ついてるの多くてややこしい、付くときカオス以外は 0 から」) */
+export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: JaEn[]; prep?: string[]; start?: StageItem["rarity"]; /** 打てても毎回 prep から (消去は MOD 4 つから。2026-10-17 オーナー「4 MOD くらいあったらわかる」) */ prepAlways?: boolean }
 export interface TopicCourse {
   id: string;
   level: 1 | 2 | 3;
@@ -25,7 +26,10 @@ export interface TopicCourse {
 }
 
 const S = (use: string, note: JaEn, omens?: string[]): TopicStep => ({ use, note, ...(omens ? { omens } : {}) });
-const H = (use: string, note: JaEn, how: JaEn[], prep?: string[]): TopicStep => ({ use, note, how, ...(prep ? { prep } : {}) });
+const H = (use: string, note: JaEn, how: JaEn[], prep?: string[] | StageItem["rarity"]): TopicStep =>
+  ({ use, note, how, ...(typeof prep === "string" ? { start: prep } : prep ? { prep } : {}) });
+/** 打てても毎回 prep から始める手 (消去・フラクチャーは MOD 4 つから) */
+const ALWAYS = (st: TopicStep): TopicStep => ({ ...st, prepAlways: true });
 const RESET = H("reset", ["白に戻す", "Reset to white"], [["アイテムを最初の白い状態に戻す (練習用のボタン)", "Puts the item back to a fresh white one (a practice button)"]]);
 const EMPTY: TopicStep[] = [
   S("transmute", ["マジックに", "Make it magic"]),
@@ -42,55 +46,56 @@ export const TOPIC_COURSES: TopicCourse[] = [
       H("transmute", ["白 → 青", "White → blue"], [
         ["白いアイテム (ノーマル) が、青いアイテム (マジック) になる", "A white item (Normal) becomes a blue item (Magic)"],
         ["MOD が 1 つ付く。何が付くかは運", "It gets 1 mod. Which one is luck"],
-      ], []),
+      ], "normal"),
       H("transmute_greater", ["変成の上級", "Greater Transmutation"], [
         ["変成と同じで、白 → 青。MOD が 1 つ付く", "Like Transmutation: white → blue with 1 mod"],
         ["上級は弱い MOD が付かない (下の MOD レベルより上だけ)", "Greater: no weak mods (only the mod levels shown below)"],
-      ], []),
+      ], "normal"),
       H("transmute_perfect", ["変成の完全", "Perfect Transmutation"], [
         ["変成と同じで、白 → 青。MOD が 1 つ付く", "Like Transmutation: white → blue with 1 mod"],
         ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
-      ], []),
+      ], "normal"),
       H("augment", ["青に MOD を 1 つ足す", "Add 1 mod to a blue item"], [
         ["青いアイテムに MOD を 1 つ足す。何が付くかは運", "Adds 1 mod to a blue item. Which one is luck"],
-        ["青いアイテムの MOD は 2 つまで。もう 2 つある時は使えない", "Blue items hold up to 2 mods. Can't be used when it already has 2"],
-      ], ["transmute"]),
+        ["青いアイテムの MOD は、プレフィックス 1 つ + サフィックス 1 つの 2 つまで", "Blue items hold up to 2 mods: 1 prefix + 1 suffix"],
+        ["空いている方のどちらかに、ランダムで付く。2 つとも埋まっている時は使えない", "It goes into whichever side is open, at random. Can't be used when both are filled"],
+      ], "magic"),
       H("augment_greater", ["増強の上級", "Greater Augmentation"], [
         ["増強と同じで、青いアイテムに MOD を 1 つ足す", "Like Augmentation: adds 1 mod to a blue item"],
         ["上級は弱い MOD が付かない", "Greater: no weak mods"],
-      ], ["transmute"]),
+      ], "magic"),
       H("augment_perfect", ["増強の完全", "Perfect Augmentation"], [
         ["増強と同じで、青いアイテムに MOD を 1 つ足す", "Like Augmentation: adds 1 mod to a blue item"],
         ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
-      ], ["transmute"]),
+      ], "magic"),
       H("regal", ["青 → 黄", "Blue → yellow"], [
         ["青いアイテムが、黄色いアイテム (レア) になる", "A blue item becomes a yellow item (Rare)"],
         ["MOD が 1 つ増える。今付いている MOD はそのまま残る", "It gains 1 mod. The mods it has stay"],
-      ], ["transmute"]),
+      ], "magic"),
       H("regal_greater", ["王者の上級", "Greater Regal Orb"], [
         ["王者と同じで、青 → 黄。MOD が 1 つ増える", "Like the Regal Orb: blue → yellow, +1 mod"],
         ["上級は弱い MOD が付かない", "Greater: no weak mods"],
-      ], ["transmute"]),
+      ], "magic"),
       H("regal_perfect", ["王者の完全", "Perfect Regal Orb"], [
         ["王者と同じで、青 → 黄。MOD が 1 つ増える", "Like the Regal Orb: blue → yellow, +1 mod"],
         ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
-      ], ["transmute"]),
+      ], "magic"),
       H("alchemy", ["白か青 → いきなり黄", "White or blue → straight to yellow"], [
         ["白か青のアイテムが、いきなり黄色いアイテムになる", "A white or blue item jumps straight to yellow"],
         ["MOD が 4 つ付く。何が付くかは運 (青に付いていた MOD は付け直し)", "It gets 4 mods, all luck (a blue item's mods are rolled again)"],
-      ], []),
+      ], "normal"),
       H("exalt", ["黄に MOD を 1 つ足す", "Add 1 mod to a yellow item"], [
         ["黄色いアイテムに MOD を 1 つ足す。何が付くかは運", "Adds 1 mod to a yellow item. Which one is luck"],
         ["黄色いアイテムの MOD は 6 つまで。空きがある時だけ使える", "Yellow items hold up to 6 mods. Only usable when there is room"],
-      ], ["alchemy"]),
+      ], "rare"),
       H("exalt_greater", ["高貴の上級", "Greater Exalted Orb"], [
         ["高貴と同じで、黄色いアイテムに MOD を 1 つ足す", "Like the Exalted Orb: adds 1 mod to a yellow item"],
         ["上級は弱い MOD が付かない", "Greater: no weak mods"],
-      ], ["alchemy"]),
+      ], "rare"),
       H("exalt_perfect", ["高貴の完全", "Perfect Exalted Orb"], [
         ["高貴と同じで、黄色いアイテムに MOD を 1 つ足す", "Like the Exalted Orb: adds 1 mod to a yellow item"],
         ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
-      ], ["alchemy"]),
+      ], "rare"),
       H("chaos", ["1 つ消して 1 つ付ける", "Remove 1, add 1"], [
         ["黄色いアイテムの MOD を 1 つ消して、別の MOD を 1 つ付ける", "Removes 1 mod from a yellow item and adds a different 1"],
         ["どれが消えるかも、何が付くかも運", "Which one goes and which one comes are both luck"],
@@ -103,15 +108,15 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["カオスと同じで、1 つ消して 1 つ付ける", "Like the Chaos Orb: removes 1, adds 1"],
         ["完全は、付く方が強い MOD だけ", "Perfect: the added mod is always strong"],
       ], ["alchemy"]),
-      H("annul", ["MOD を 1 つ消す", "Remove 1 mod"], [
+      ALWAYS(H("annul", ["MOD を 1 つ消す", "Remove 1 mod"], [
         ["MOD を 1 つ消す。どれが消えるかは運 (自分では選べない)", "Removes 1 mod. Which one is luck (you can't choose)"],
         ["消すと空きができて、また MOD を足せる", "That opens a slot, so you can add a mod again"],
-      ], ["alchemy"]),
-      H("fracture", ["MOD を 1 つ固定", "Lock 1 mod"], [
+      ], ["alchemy"])),
+      ALWAYS(H("fracture", ["MOD を 1 つ固定", "Lock 1 mod"], [
         ["MOD を 1 つ固定する。固定した MOD は、もう消えない", "Locks 1 mod. A locked mod can never be removed"],
         ["どれが固定されるかは運", "Which one gets locked is luck"],
         ["使えるのは、黄色いアイテムで MOD が 4 つ以上ある時だけ。1 つのアイテムに 1 回まで", "Only on a yellow item with 4+ mods. Once per item"],
-      ], ["alchemy"]),
+      ], ["alchemy"])),
       H("divine", ["数字だけ振り直す", "Reroll the numbers"], [
         ["MOD の数字だけが変わる (その MOD の幅の中で上がったり下がったり)", "Only the mod numbers change (up or down within that mod's range)"],
         ["MOD の種類と強さの段 (ティア) は変わらない", "The mods and their tiers stay the same"],

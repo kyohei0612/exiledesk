@@ -68,9 +68,17 @@ export const prepared = ref(false);
 function prepareStep(): void {
   prepared.value = false;
   const c = topic.value, d = s.data.value, it = s.item.value, st = c?.steps[topicAt.value];
-  if (!c || !d || !it || !st?.prep) return;
+  if (!c || !d || !it || !st) return;
+  // 付ける手はいつも MOD 0 個のそのレア度から (もうそうなっていれば今のまま)
+  if (st.start) {
+    if (it.rarity === st.start && !it.prefixes.length && !it.suffixes.length) return;
+    s.item.value = { ...fullSockets(freshItem(d, c.base, c.itemLevel, st.start)), rollSeed: it.rollSeed };
+    prepared.value = true;
+    return;
+  }
+  if (!st.prep) return;
   const key = topicKey(st, d, it);
-  if (key && !s.usable(key)) return;
+  if (key && !s.usable(key) && !st.prepAlways) return;
   const g = mulberry32(Math.floor(Math.random() * 1e9));
   let next: StageItem = { ...fullSockets(freshItem(d, c.base, c.itemLevel)), rollSeed: it.rollSeed };
   for (const k of st.prep) { const r = applyCurrency(d, next, k, g, []); if (r.applied) next = { ...r.item, rollSeed: it.rollSeed }; }
