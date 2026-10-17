@@ -25,6 +25,8 @@ import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { classLabel } from "../../services/items/base-catalog";
 import { tagLabel } from "../../services/mods/tag-ja";
 import { craftStage } from "../../state/craft-stage";
+import { skillQualityOf } from "../../services/craft-stage/skill-quality";
+import RichText from "../../components/decor/RichText.vue";
 
 /**
  * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
@@ -112,6 +114,8 @@ const implicits = computed(() => implicitRows(props.item).map((r) => ({ ...r, ta
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId && !!a.fractured === !!m.fractured);
 /** 今付いた珍しい段 (付いた瞬間の確率 ≤ 0.2%)。神のオーブのフィルターのような枠・光の柱・文字の光を一瞬 (2026-10-16 オーナー「神のフィルターでエフェクト付きで」「一瞬文字光的なやつ」) */
 const isRareNew = (m: StageMod): boolean => isNew(m) && chanceOf(m) != null && isRareChance(chanceOf(m)!);
+/** ワンド・スタッフの品質で上がる付与スキルの物 */
+const skillQ = computed(() => skillQualityOf(props.item.base, props.item.cls.category, props.item.quality));
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
 /** ベースの品質とは別にカタリストの品質を持つベース (グラスピングメイル)。品質の行を 2 つに分ける */
@@ -180,6 +184,8 @@ const rows = computed(() => {
       <p v-if="!isGem(item.cls.category) && item.cls.category !== 'Jewels'" class="text-[12px] text-white/50">{{ tr("アイテムレベル", "Item Level") }}: <span class="text-white">{{ item.itemLevel }}</span></p>
       <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ extraCat ? qualityLabelOf(null) : qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <p v-if="extraCat && (item.catalystQuality ?? 0) > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.catalystQuality }}%</span></p>
+      <!-- ワンド・スタッフの品質は付与スキルの品質 (上がる物はスキルごと、skill-quality.ts。2026-10-17 オーナー) -->
+      <p v-for="sq in skillQ" :key="sq.name" class="text-[12px] text-white/50">{{ tr(`${sq.name} の品質`, `${sq.name} quality`) }}: <span v-for="(l, i) in sq.lines" :key="i" class="text-rarity-magic"><RichText :text="l" /></span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
       <p v-for="r in baseRows" :key="r.key" class="text-[12px] text-white/50">{{ r.label ? `${r.label}: ` : "" }}<span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
       <!-- ソケット (熟練工のオーブ) の絵 -->

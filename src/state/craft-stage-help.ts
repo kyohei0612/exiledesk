@@ -12,6 +12,7 @@ import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../servi
 import { ruleLines } from "../services/augment-rules";
 import { maxQualityOf } from "../services/craft-stage/stage-core";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
+import { skillQualityOf } from "../services/craft-stage/skill-quality";
 import { isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
 import { CURRENCY_FLOOR, type PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
@@ -24,6 +25,8 @@ export { shelfTag, shortMod, specialEssence, stageAdds } from "./craft-stage-hel
 
 /** 英語の画面か (2026-10-10 英語版) */
 const isEn = (): boolean => lang.value === "en";
+/** ゲームの書式記号 ([Projectile|投射物] → 投射物) を外す */
+const plainGame = (x: string): string => x.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
 
 const FLOOR = (kind: "transmute" | "regal", s: string): string => {
   const f = CURRENCY_FLOOR[kind];
@@ -142,17 +145,21 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
   if (key in QUALITY_TARGET) {
     const t = QUALITY_TARGET[key]!;
     const st = QUALITY_STEP;
+    // 彫刻針: 今のワンド・スタッフのスキルが品質 20% で何を得るか (skill-quality.ts、2026-10-17)
+    const sq = key === "etcher" && item ? skillQualityOf(item.base, item.cls.category, QUALITY_MAX).map((x) => `**${x.name}**: ${x.lines.map(plainGame).join(" / ")}`) : [];
     if (isEn()) {
       return [
         `Raises the quality of **${t.en}** (max ${QUALITY_MAX}%)${key === "etcher" ? ". For wands, staves and sceptres (Blacksmith's Whetstone is for martial weapons)" : ""}${key === "whetstone" ? ". Martial weapons = bows, crossbows, maces, quarterstaves, spears, talismans (not wands, sceptres or staves)" : ""}`,
         key === "gemcutter" || key === "bauble" ? `+${key === "gemcutter" ? st.gem : st.item}% per use (any rarity; checked in game)` : "**+1% or +2%** per use (random, even odds)",
         key === "whetstone" ? "Each 1% quality gives 1% more Physical Damage (Quality on poe2db)" : key === "scrap" ? "Each 1% quality gives 1% more Armour / Evasion / Energy Shield" : key === "bauble" ? "Each 1% quality gives 1% more Life / Mana recovery" : key === "etcher" ? "Quality boosts the weapon's granted skill (the bonus differs per skill), not its mods" : "Quality effects differ per gem",
+        ...sq.map((l) => `At ${QUALITY_MAX}% quality: ${l}`),
       ];
     }
     return [
       `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "etcher" ? "。ワンド・スタッフ・セプター用 (砥石はマーシャル武器用)" : ""}${key === "whetstone" ? "。マーシャル武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
       key === "gemcutter" || key === "bauble" ? `1 回で +${key === "gemcutter" ? st.gem : st.item}% (レアリティに関係なし。ゲームで確認)` : "1 回で **+1% か +2%** (ランダム、半々)",
       key === "whetstone" ? "品質 1% ごとに物理ダメージが 1% 増える (poe2db の Quality)" : key === "scrap" ? "品質 1% ごとにアーマー・回避力・エナジーシールドが 1% 増える" : key === "bauble" ? "品質 1% ごとにライフ・マナの回復量が 1% 増える" : key === "etcher" ? "品質は武器に付いているスキルを強くする (上がる物はスキルごとに違う)。MOD には効かない" : "品質の効果はジェムごとに違う",
+      ...sq.map((l) => `品質 ${QUALITY_MAX}% で ${l}`),
     ];
   }
   // 2026-09-29 に足した物 (apply-extra.ts)。確率は公開されていないので仮
