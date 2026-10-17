@@ -12,6 +12,7 @@ import { baseCatalog, classLabel } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
 import Icon from "../../components/ui/Icon.vue";
 import { tr } from "../../i18n/lang";
+import { logRecord } from "../../utils/log-record";
 import { glideBy, scrollBoxOf } from "../../utils/keep-place";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -20,6 +21,8 @@ const emit = defineEmits<{ pick: [en: string] }>();
 
 const current = computed(() => (props.data ? (baseCatalog(props.data, true).find((b) => b.en === props.base) ?? null) : null));
 const open = ref(!!props.unpicked);
+// ベースを選ぶ画面を開いた (広告を入れ替えられる所の数え、src/web/track.ts の screen。2026-10-17)
+watch(open, (v) => { if (v) logRecord("screen", { to: "picker" }); });
 // ベースが決まったら閉じる (レシピを呼んだ時も。2026-10-09 レビュー: 一覧が開いたままで打ち方の段が画面の下に隠れた)
 watch(() => props.unpicked, (v) => { open.value = !!v; });
 const everOpen = ref(open.value);
