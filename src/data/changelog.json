@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.554",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "冒涜の発現をゲームの魂の井戸の見た目に: アビスの枠と紋章、候補を選んで「発現」、候補にはティアも。引き直しはアビスの反響のお告げを掛けた時だけ右下の矢印で",
+    "en": "Revealing Desecrated mods now looks like the in-game Well of Souls: Abyss frame and emblem, pick an option and press Reveal, tiers shown on each option. Reroll with the arrow at the bottom right when Omen of Abyssal Echoes is applied"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "アイテムの未発現の冒涜 MOD を、ゲームと同じく緑の崩れた文字で出すように",
+    "en": "Unrevealed Desecrated mods on the item now show as green scrambled text, like in the game"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "アイテムの MOD の行をそろえました: MOD の文は真ん中、左に P / S とティア、右に確率",
+    "en": "Item mod rows are now aligned: mod text in the centre, P / S and tier on the left, chances on the right"
+   }
+  ]
+ },
+ {
   "v": "0.1.553",
   "date": "2026-10-17",
   "items": [
@@ -644,18 +668,6 @@
     "area": "",
     "text": "50 手を超えた手順を送ると、頭の手が抜けて再生しても同じアイテムにならなかったのを直しました",
     "en": "Fixed shared steps beyond 50 losing the first steps so the replay produced a different item"
-   }
-  ]
- },
- {
-  "v": "0.1.514",
-  "date": "2026-10-14",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選び: 「もっと見る」で広げた時は「たたむ」が見える所まで送り、たたむと元の位置に戻るように (幅の広い画面で送りが足りなかったのも直しました)",
-    "en": "Base picker: \"Show more\" now scrolls so \"Collapse\" is visible, and collapsing returns to the previous position (also fixed too little scrolling on wide screens)"
    }
   ]
  }
