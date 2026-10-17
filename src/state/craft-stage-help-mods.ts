@@ -131,7 +131,7 @@ const SPECIAL_ESSENCE: Record<string, { short?: string; groups?: Array<{ h: stri
     groups: [{ h: "鎧 (胴の防具) だけ", l: ["ランダムなノータブルパッシブスキルを割り当てる (プレフィックス)"] }],
     notes: [
       "**レアの胴の防具 (鎧) だけ**。他の部位には使えない",
-      "付くのは「ランダムなノータブルパッシブスキルを割り当てる」。どのノータブルかはパッシブツリーのノータブルからランダムで、**選べない** (重みは公開値なし)。ゲームでは付いた後「○○を割り当てる」とノード名が出る",
+      "付くのは「ランダムなノータブルパッシブスキルを割り当てる」。どのノータブルかはパッシブツリーのノータブルからランダムで、**選べない** (重みは公開値なし)。付いた後は「○○を割り当てる」とノード名が出る (ここでは poe2db のアノイントできるノータブルから等しく 1 つ)",
       "数値の無い MOD なので神のオーブで変わらない",
     ],
   },
@@ -168,7 +168,7 @@ const SPECIAL_ESSENCE_EN: Record<string, { short?: string; groups?: Array<{ h: s
     groups: [{ h: "Body Armour only", l: ["Allocates a random Notable Passive Skill (prefix)"] }],
     notes: [
       "**Rare Body Armour only**. Can't be used on other slots",
-      "Adds \"Allocates a random Notable Passive Skill\". Which Notable is random from the passive tree and **can't be chosen** (no public weights). In game the node name shows after it's added",
+      "Adds \"Allocates a random Notable Passive Skill\". Which Notable is random from the passive tree and **can't be chosen** (no public weights). The node name shows after it's added (here: one of poe2db's anointable notables, equally)",
       "Has no values, so Divine Orbs don't change it",
     ],
   },

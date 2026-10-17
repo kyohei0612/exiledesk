@@ -17,6 +17,7 @@ import { makeStageMod, takenCraftedFamilies } from "../stage-core";
 import type { StageItem, StageMod, StageSide } from "../types";
 import type { CurrencySpec, OmenSpec, Source, Words } from "./types";
 import { tr } from "../../../i18n/lang";
+import deliriumNotables from "../../../data/delirium-notables.json";
 
 const UPGRADE_TEXT = {
   en: ["Upgrades a [ItemRarity|Magic] item to a [ItemRarity|Rare] item, adding a guaranteed modifier"],
@@ -115,9 +116,22 @@ export function prepareEssence(data: PatchData, item: StageItem, key: string, rn
   const i = tierIndexOf(t.level, t.mod);
   const tier = t.mod.tiers[i];
   if (!tier) return null;
-  const mod: StageMod = { ...makeStageMod(t.mod, t.side, i, rng), ...normalTierOf(data, item, t.mod, tier), crafted: true };
+  const base: StageMod = { ...makeStageMod(t.mod, t.side, i, rng), ...normalTierOf(data, item, t.mod, tier), crafted: true };
+  const mod = withNotable(base, rng);
   return { mod, side: t.side, clash: (it) => essenceClash(t.mod, takenCraftedFamilies(data, it)) };
 }
+
+/**
+ * 錯乱のエッセンスの「ランダムなノータブルパッシブスキルを割り当てる」: 付いた時にノータブルを 1 つ選んで「○○を割り当てる」にする
+ * (ゲームと同じくノード名が出る。2026-10-17 オーナー「ノータブルパッシブもランダムで出さないと何も付かんってなる」)。
+ * 候補は poe2db のノータブルのうちアセンダンシー以外でアノイントのレシピがある物 (src/data/delirium-notables.json)。選ばれ方は poe2db にも無いので等しく 1 つ (仮)
+ */
+function withNotable(m: StageMod, rng: () => number): StageMod {
+  if (!/ランダムなノータブルパッシブスキルを割り当てる|Allocates a random Notable Passive Skill/i.test(`${m.textJa} ${m.textEn}`)) return m;
+  const n = DELIRIUM_NOTABLES[Math.floor(rng() * DELIRIUM_NOTABLES.length)];
+  return n ? { ...m, textJa: `${n.ja}を割り当てる`, textEn: `Allocates ${n.en}` } : m;
+}
+const DELIRIUM_NOTABLES: ReadonlyArray<{ en: string; ja: string }> = deliriumNotables.list;
 
 const crystal = (key: string, hover: string, side: "prefix" | "suffix", word: Words): OmenSpec => ({
   key, hover, appliesTo: "essence_perfect",

@@ -179,7 +179,7 @@ export const TOPIC_COURSES: TopicCourse[] = [
       ], ["alchemy"])), chain: [S("desecrate", ["骨で冒涜", "Desecrate with a Bone"]), S("reveal", ["発現", "Reveal"])] },
       { ...ALWAYS(H("ess:Delirium:perfect", ["特殊: 錯乱 (胴の防具)", "Special: Delirium (body armour)"], [
         ["錯乱のエッセンスは、黄色 (レア) の胴の防具 (鎧) にだけ使える。ここでは革のベストで試す", "Essence of Delirium works on yellow (Rare) body armour only; here we use a Leather Vest"],
-        ["「ランダムなノータブルパッシブスキルを割り当てる」が必ず付く。どのノータブルかは運で、選べない", "Always adds “Allocates a random Notable Passive Skill”; which notable is luck"],
+        ["「○○を割り当てる」が必ず付く (○○はパッシブツリーのノータブル)。どのノータブルかは運で、選べない", "Always adds “Allocates (a Notable)”: a notable from the passive tree; which one is luck"],
       ], ["alchemy"])), base: "Leather Vest" },
       { ...ALWAYS(H("ess:Insanity:perfect", ["特殊: 狂気 (ベルト)", "Special: Insanity (belts)"], [
         ["狂気のエッセンスは、黄色 (レア) のベルトにだけ使える。ここではワイドベルトで試す", "Essence of Insanity works on yellow (Rare) belts only; here we use a Wide Belt"],
