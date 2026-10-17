@@ -2,9 +2,10 @@
  * element-convert.ts — 属性の変換 (耐性のフラックス・アルダーのルーンで共通、2026-10-16)
  *
  * 変え方はクライアントの Expedition2ElementalModConversions (火 / 冷気 / 雷 / 混沌の MOD を 1 行ずつ対応させた表、src/data/element-conversions.json)。
- * 耐性の行 (res) はフラックス、それ以外の行はアルダーのルーンが使う。表に無い MOD は変わらない
- * (Craft of Exile の Item.convertModifiers と同じ。2026-10-16 オーナー「表にない MOD はトレードで無かったら無いでいい」。
- * 前は id・文面の属性の言葉を替えた MOD に同じ段の順位で置き換えていた)。
+ * 耐性の行 (res) はフラックス、それ以外の行はアルダーのルーンが使う。表に無い MOD (エッセンスで付けた物・ベース専用の行) は、
+ * 属性の言葉だけ違う兄弟の同じ段 → 無ければ同じ数値の普通の MOD の段として表で変える
+ * (2026-10-17 オーナー「耐性は全部変わる、説明通り。普通の MOD と同じ挙動。アルダーもスキルレベルやエッセンスで付いた奴も変わる」。
+ * 10-16 は CoE に合わせて表に無い物は変えなかった)。
  * 表の MOD とエンジンの段は 名前・Lv・数値の幅で突き合わせる。数値は段の範囲の中の同じ位置。固定 (フラクチャー) と未発現は変えない
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -34,9 +35,44 @@ function modsOfClass(data: PatchData, cls: string): Mod[] {
   return list;
 }
 
-/** 表で 1 つ変える (表に無ければ null) */
+/**
+ * 表に無い段 (エッセンスで付けた物・ベース専用の行) は、同じ系統・同じ数値の幅の普通の MOD の段と同じに扱う
+ * (2026-10-17 オーナー「耐性は全部変わる、説明通り。普通の MOD と同じ挙動。アルダーもスキルレベルやエッセンスで付いた奴も変わる」)
+ */
+function plainTwin(data: PatchData, md: Mod, t: Mod["tiers"][number]): Mod["tiers"][number] | null {
+  const fams = new Set(md.families ?? [md.family]);
+  for (const cand of modsOfClass(data, md.id.split("/")[0]!)) {
+    if (cand.source !== "normal" || cand.id === md.id || !(cand.families ?? [cand.family]).some((f) => fams.has(f))) continue;
+    const twin = cand.tiers.find((x) => sameRange(t.ranges, x.ranges.map((r) => [...r])));
+    if (twin) return twin;
+  }
+  return null;
+}
+const inTable = (t: Mod["tiers"][number], eats: readonly string[], res: boolean): boolean =>
+  ROWS.some((row) => row.res === res && eats.some((e) => { const s = row[e as Element]; return !!s && isTier(t, s); }));
+
+const WORD: Record<Element, string> = { fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos" };
+/** 表に無い MOD の兄弟 (id の属性の言葉だけ違う物。エッセンスの火耐性 → エッセンスの冷気耐性、ラップ専用の火耐性 → ラップ専用の雷耐性) の同じ段 */
+function sibling(data: PatchData, md: Mod, tierIndex: number, element: string, eats: readonly string[]): { mod: Mod; tierIndex: number } | null {
+  for (const e of eats) {
+    const from = WORD[e as Element], to = WORD[element as Element];
+    if (!from || !to || !md.id.includes(from)) continue;
+    const sib = data.mods.get(md.id.replace(from, to));
+    if (sib && sib.tiers[tierIndex]) return { mod: sib, tierIndex };
+  }
+  return null;
+}
+
+/** 表で 1 つ変える (表に無ければ、属性の言葉だけ違う兄弟の同じ段 → 同じ数値の普通の MOD の段として。どれも無ければ null) */
 function viaTable(data: PatchData, m: StageMod, md: Mod, element: string, eats: readonly string[], res: boolean): { mod: Mod; tierIndex: number } | null {
-  const t = md.tiers[m.tierIndex];
+  const own = md.tiers[m.tierIndex];
+  if (!own) return null;
+  const listed = inTable(own, eats, res);
+  // 表に無い物は、耐性の MOD はフラックスだけ・それ以外はアルダーだけが変える (アルダーで耐性が変わらないように)
+  const isRes = (md.families ?? [md.family]).some((f) => /Resistance$/.test(f));
+  if (!listed && isRes !== res) return null;
+  if (!listed) { const sib = sibling(data, md, m.tierIndex, element, eats); if (sib) return sib; }
+  const t = listed ? own : plainTwin(data, md, own);
   if (!t) return null;
   for (const row of ROWS) {
     if (row.res !== res) continue;

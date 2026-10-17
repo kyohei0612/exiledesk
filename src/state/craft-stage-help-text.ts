@@ -98,10 +98,10 @@ export const EXTRA_HELP: Record<string, string[]> = {
   mirror: ["アイテムの **ミラー化した写し** を作る (クライアントの説明文)", "ミラーしたアイテムにはもう何も使えない"],
   hinekora: ["次に使うカレンシーの **結果を予見** できるようにする (クライアントの説明文)", "アイテムを何かで変えると予見は消える"],
   extraction: ["装備を **壊して**、差してある (ソケットバウンドでない) オーグメントを取り戻す (クライアントの説明文)"],
-  flux_fire: ["アイテム上の全ての **冷気・雷耐性** の MOD を同じ強さの **火耐性** に変える (クライアントの説明文)", "対応はゲームの変換表のとおり (段の中の同じ位置の数値に)。表に無い MOD は変わらない"],
-  flux_cold: ["アイテム上の全ての **火・雷耐性** の MOD を同じ強さの **冷気耐性** に変える (クライアントの説明文)", "対応はゲームの変換表のとおり (段の中の同じ位置の数値に)。表に無い MOD は変わらない"],
-  flux_lightning: ["アイテム上の全ての **火・冷気耐性** の MOD を同じ強さの **雷耐性** に変える (クライアントの説明文)", "対応はゲームの変換表のとおり (段の中の同じ位置の数値に)。表に無い MOD は変わらない"],
-  flux_chaos: ["アイテム上の全ての **火・冷気・雷耐性** の MOD を同じ強さの **混沌耐性** に変える (クライアントの説明文)", "対応はゲームの変換表のとおり (段の中の同じ位置の数値に)。表に無い MOD は変わらない"],
+  flux_fire: ["アイテム上の全ての **冷気・雷耐性** の MOD を同じ強さの **火耐性** に変える (クライアントの説明文)", "対応はゲームの変換表のとおり (段の中の同じ位置の数値に)。エッセンスで付けた耐性も同じように変わる"],
+  flux_cold: ["アイテム上の全ての **火・雷耐性** の MOD を同じ強さの **冷気耐性** に変える (クライアントの説明文)", "対応はゲームの変換表のとおり (段の中の同じ位置の数値に)。エッセンスで付けた耐性も同じように変わる"],
+  flux_lightning: ["アイテム上の全ての **火・冷気耐性** の MOD を同じ強さの **雷耐性** に変える (クライアントの説明文)", "対応はゲームの変換表のとおり (段の中の同じ位置の数値に)。エッセンスで付けた耐性も同じように変わる"],
+  flux_chaos: ["アイテム上の全ての **火・冷気・雷耐性** の MOD を同じ強さの **混沌耐性** に変える (クライアントの説明文)", "対応はゲームの変換表のとおり (段の中の同じ位置の数値に)。エッセンスで付けた耐性も同じように変わる"],
 };
 /** EXTRA_HELP の英語 (英語の画面) */
 const INFUSER_LINE_EN = (en: string) => [
@@ -112,7 +112,7 @@ const SACRIFICE_LINE_EN = (en: string) => [
   `On **Corrupted Rare** ${en}: **upgrades the Corruption Enchantment** and **removes 1 random mod** (game description)`,
   "The upgrade is the \"CorruptionUpgrade…\" mod in the game's mod table (same group as the original enchantment). Can't be used without an enchantment",
 ];
-const FLUX_TABLE_EN = "Converted by the game's conversion table (same roll position within the tier). Mods not in the table stay as they are";
+const FLUX_TABLE_EN = "Converted by the game's conversion table (same roll position within the tier). Essence-made resistances convert the same way";
 export const EXTRA_HELP_EN: Record<string, string[]> = {
   vaal_infuser_jewellery: INFUSER_LINE_EN("Rings and Amulets"),
   vaal_infuser_armour: INFUSER_LINE_EN("Armour"),

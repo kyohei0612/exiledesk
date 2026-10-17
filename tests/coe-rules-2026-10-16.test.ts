@@ -104,6 +104,24 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(hits).toBeGreaterThan(0);
   });
 
+  it("14 の続き: 表に無い耐性 (エッセンスで付けた物・ラップ専用の行) も、同じ数値の普通の MOD と同じに変わる (2026-10-17 オーナー「耐性は全部変わる、普通の MOD と同じ挙動」)", async () => {
+    const { applyForce, forceKey } = await import("../src/services/craft-stage/apply-force");
+    const amu = { ...freshItem(data, "Gold Amulet", 82), rarity: "rare" as const };
+    const ess = applyForce(data, amu, forceKey("Amulets/Essence_FireResistance", null, "e"), () => 0.5);
+    expect(ess.applied, ess.reason).toBe(true);
+    const r = applyCurrency(data, ess.item, "flux_cold", mulberry32(1));
+    expect(r.applied, r.reason).toBe(true);
+    const cold = allMods(r.item).find((m) => /ColdResistance/.test(m.modId));
+    expect(cold, "火耐性 (エッセンス) が冷気耐性に").toBeTruthy();
+    expect(allMods(r.item).some((m) => /FireResistance/.test(m.modId))).toBe(false);
+    // ラップ専用の火耐性 (Gloves_dex_int/Special_hand_wraps_FireResistance)
+    const wf = applyForce(data, { ...freshItem(data, "Secured Wraps", 82), rarity: "rare" as const }, forceKey("Gloves_dex_int/Special_hand_wraps_FireResistance", null, "n"), () => 0.5);
+    expect(wf.applied, wf.reason).toBe(true);
+    const w = applyCurrency(data, wf.item, "flux_lightning", mulberry32(1));
+    expect(w.applied, w.reason).toBe(true);
+    expect(allMods(w.item).some((m) => /LightningResistance/.test(m.modId))).toBe(true);
+  });
+
   it("13. 品質で伸びた整数の値は四捨五入 (CoE の applyQualityToValue = Math.round)", async () => {
     const { displayedValue, rawValue } = await import("../src/services/htc/quality");
     expect(displayedValue(8, 20)).toBe(10);
