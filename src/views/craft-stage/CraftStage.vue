@@ -33,7 +33,7 @@ import StageChaosSpam from "./StageChaosSpam.vue";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
-import { inLesson, lessonBack } from "../../state/craft-lesson"; // チュートリアルのコースの間 (2026-10-17)
+import { endLesson, inLesson, inTopic, lessonBack } from "../../state/craft-lesson"; // チュートリアルのコースの間 (2026-10-17)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
 import VideoStage from "./VideoStage.vue";
@@ -41,6 +41,7 @@ import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
 import StageCourses from "./StageCourses.vue";
 import StageCourseGuide from "./StageCourseGuide.vue";
+import StageTopicGuide from "./StageTopicGuide.vue";
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
@@ -279,11 +280,10 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
             <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("確率はクラフト計算機と同じ規則。値段は今の相場。", "Chances follow the craft calculator's rules. Prices are current market prices.") }}</p>
           </HelpTip>
         </p>
-        <p v-else-if="s.mode.value === 'tutorial' && !s.replay.value && !TUTORIAL_LOCKED" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("見本のクラフトを 1 手ずつ、次に打つ物を選んで進めます", "Walk through a sample craft, choosing what to use at each step") }}</p>
+        <p v-else-if="(s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシーを 1 つずつ実際に使って、どう動くかを覚えます", "Use each currency for real, one at a time, to learn what it does") }}</p>
         <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
-      <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う -->
-      <!-- スマホは縦に積む (横に並べると題が 2 行に折れる) -->
+      <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う。スマホは縦に積む (横に並べると題が 2 行に折れる) -->
       <div v-show="!gemCorrupt" class="flex shrink-0 items-center gap-2 max-md:flex-col-reverse max-md:items-end">
         <!-- 使った時の音のオン / オフ (2026-10-16 ゲームと同じ音。端末に覚える) -->
         <button v-show="s.mode.value === 'hand' && !s.replay.value" type="button" data-sfx-toggle class="g-btn sm shrink-0 !px-1 max-md:min-h-10" :aria-pressed="!sfxOff" :aria-label="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" :title="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" @click="setSfxOff(!sfxOff)"><Icon :name="sfxOff ? 'volume-x' : 'volume'" class="size-4" :class="sfxOff ? 'opacity-50' : ''" /></button>
@@ -296,11 +296,11 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     <div v-show="!s.replay.value" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
       <!-- スマホは 2 つで横幅を分ける (170px ずつだと 375px の画面からはみ出した。2026-10-13) -->
       <div class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
-        <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0] && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] && !gemCorrupt ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); s.mode.value = t[0]; setGemCorrupt(false)">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
+        <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0] && !gemCorrupt && !inLesson" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] && !gemCorrupt && !inLesson ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); endLesson(); s.mode.value = t[0]; setGemCorrupt(false)">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
         <!-- ジェムコラプト (Web 版だけ、2026-10-16) -->
         <button v-if="!inApp && GEM_CORRUPT_SHOWN" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
         <!-- クイズのチュートリアル (2026-10-16)。開発版だけ (本番はシミュレーターと同じく閉じたまま出さない) -->
-        <button v-if="!TUTORIAL_LOCKED" type="button" role="tab" :aria-selected="s.mode.value === 'tutorial' && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3" :class="s.mode.value === 'tutorial' && !gemCorrupt ? 'on' : ''" @click="s.hold(null); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}<span class="text-[10px] font-normal opacity-70" :title="tr('開発版だけの画面', 'Dev build only')">β</span></button>
+        <button v-if="!TUTORIAL_LOCKED" type="button" role="tab" :aria-selected="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3" :class="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt ? 'on' : ''" @click="s.hold(null); endLesson(); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}<span class="text-[10px] font-normal opacity-70" :title="tr('開発版だけの画面', 'Dev build only')">β</span></button>
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
       <div v-show="!gemCorrupt" id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
@@ -361,8 +361,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex min-w-0 flex-col items-center gap-8 max-md:items-stretch">
-        <!-- 品質を変える帯 (アイテムの説明の窓の外、すぐ上。2026-10-10) -->
-        <!-- カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
+        <!-- 品質を変える帯はアイテムの説明の窓の外、すぐ上 (2026-10-10)。カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
         <div v-if="!inLesson" class="-mb-6 flex w-full max-w-[480px] items-start gap-2">
           <button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button>
           <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" @catalyst="setCatalyst" />
@@ -376,7 +375,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
           :holding="!!s.held.value && !s.replay.value"
           :flash-key="flashKey"
           @use="s.use()"
-          :removable="!s.replay.value"
+          :removable="!s.replay.value && !inLesson"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @fracture="fractureMod"
           @jump="(id: string) => { s.modOverlay.value = true; s.modJump.value = { modId: id, n: (s.modJump.value?.n ?? 0) + 1 }; }"
@@ -426,10 +425,11 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
            2026-10-11 オーナー「枠の高さが違うのが気に食わん、カレンシーの方が高く感じる」) -->
       <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
+        <StageTopicGuide v-if="!s.replay.value && s.mode.value === 'hand'" part="now" /><!-- コースの今の手 (棚のすぐ上) -->
         <StageAimPanel v-if="!s.replay.value && !inLesson" data-rec-part="aim-panel" />
         <StageChaosSpam v-if="!s.replay.value && !inLesson" /><!-- 「次の手で狙う」とは別の欄・別の狙い (2026-10-16 オーナー「別ルートとして扱って」) -->
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
-        <section class="g-panel relative p-2">
+        <section v-show="!inTopic" class="g-panel relative p-2">
           <div v-if="spamOpen" data-spam-shelf-lock class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-lg bg-black/75 p-4 text-center">
             <p class="text-[13px] text-[var(--exile-color-text-primary)]">{{ tr("カオススパム計算機を使っている間は、カレンシーは使えません", "Currency is locked while the Chaos spam calculator is open") }}</p>
             <button type="button" class="g-btn" :disabled="spamming" @click="closeChaosSpam">{{ tr("計算機を閉じる", "Close the calculator") }}</button>

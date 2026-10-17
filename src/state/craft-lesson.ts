@@ -10,10 +10,14 @@
  */
 import { computed, ref, watch } from "vue";
 import { craftStage as s } from "./craft-stage";
-import { course, courseView } from "./craft-course";
-import { topic, topicAt, topicDone } from "./craft-topic";
+import { course, courseView, endCourse } from "./craft-course";
+import { endTopic, topic, topicAt, topicDone } from "./craft-topic";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
+/** コースを終える (タブを押した時) */
+export function endLesson(): void { endTopic(); endCourse(); }
+/** 動作を学ぶコースの間はカレンシーの棚を出さない (使う物は今の手の枠から持つ。実践のコースは棚を出す。2026-10-17 オーナー「チュートリアルではカレンシーは表示しないでおk、実践くらいじゃね」) */
+export const inTopic = computed(() => !!topic.value);
 
 // ── クリア (topic:<id> / course:<id>) ─────────────────────────
 const CLEAR_KEY = "exiledesk.tutorialCleared.v1";
