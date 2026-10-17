@@ -3,7 +3,7 @@
   2026-10-10 要望「品質欄で防御値をシミュレーション」→ オーナー「今の仕組みを装備にも、最大もつけて」「長押しでも」
   「アイテムのぞいた時の窓の中にゲームに無い物を出すのはおかしい」で窓の外へ。
   − / + は長押しで続けて動く (押した時に 1 つ、0.4 秒後から 0.06 秒ごと)。最小は 0%、最大は上限まで。上限はふだん足し算 (ベース + 「品質の最大値」の MOD、qualityFieldMax。インフューザーは棚に無い間は足さない)、プルダウンで広げられる (qcap の手)。
-  宝飾品は品質の種類 (触媒と同じ。選んだ種類のタグの MOD が伸びる)。ワンド・スタッフ・セプター (品質は付与スキルの品質で数字は変わらない) とスキルジェムには出さない
+  宝飾品は品質の種類 (触媒と同じ。選んだ種類のタグの MOD が伸びる)。スキルジェムには出さない (ワンド・スタッフ・セプターは 10-17 から出す)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount } from "vue";
@@ -29,7 +29,8 @@ const jewel = computed(() => inAny(props.item.cls.category, ["ringAmulet", "jewe
 const extraCat = computed(() => hasExtraCatalyst(props.item.base));
 const catMax = computed(() => maxQualityOf(props.item));
 const catQ = computed(() => props.item.catalystQuality ?? 0);
-const shown = computed(() => !isGem(props.item.cls.category) && !["Wands", "Staves", "Sceptres"].includes(props.item.cls.category));
+// ワンド・スタッフ・セプターにも出す (品質は付与スキルに乗る。2026-10-17 オーナー「品質は等しく上げれるように、カレンシーでも設定でも」)
+const shown = computed(() => !isGem(props.item.cls.category));
 
 let rep: ReturnType<typeof setTimeout> | null = null;
 function step(d: number): void {
