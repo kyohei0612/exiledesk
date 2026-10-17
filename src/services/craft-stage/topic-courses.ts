@@ -31,7 +31,7 @@ export interface TopicCourse {
 const S = (use: string, note: JaEn, omens?: string[]): TopicStep => ({ use, note, ...(omens ? { omens } : {}) });
 const H = (use: string, note: JaEn, how: JaEn[], prep?: string[] | StageItem["rarity"]): TopicStep =>
   ({ use, note, how, ...(typeof prep === "string" ? { start: prep } : prep ? { prep } : {}) });
-/** 打てても毎回 prep から始める手 (消去・フラクチャーは MOD 4 つから) */
+/** 打てても毎回 prep から始める手 (カオスの最初・消去・フラクチャーは MOD 4 つから) */
 const ALWAYS = (st: TopicStep): TopicStep => ({ ...st, prepAlways: true });
 const RESET = H("reset", ["白に戻す", "Reset to white"], [["アイテムを最初の白い状態に戻す (練習用のボタン)", "Puts the item back to a fresh white one (a practice button)"]]);
 const EMPTY: TopicStep[] = [
@@ -99,10 +99,10 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["高貴と同じで、黄色いアイテムに MOD を 1 つ足す", "Like the Exalted Orb: adds 1 mod to a yellow item"],
         ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
       ], "rare"),
-      H("chaos", ["1 つ消して 1 つ付ける", "Remove 1, add 1"], [
+      ALWAYS(H("chaos", ["1 つ消して 1 つ付ける", "Remove 1, add 1"], [
         ["黄色いアイテムの MOD を 1 つ消して、別の MOD を 1 つ付ける", "Removes 1 mod from a yellow item and adds a different 1"],
         ["どれが消えるかも、何が付くかも運", "Which one goes and which one comes are both luck"],
-      ], ["alchemy"]),
+      ], ["alchemy"])),
       H("chaos_greater", ["カオスの上級", "Greater Chaos Orb"], [
         ["カオスと同じで、1 つ消して 1 つ付ける", "Like the Chaos Orb: removes 1, adds 1"],
         ["上級は、付く方に弱い MOD が出ない", "Greater: the added mod is never weak"],
