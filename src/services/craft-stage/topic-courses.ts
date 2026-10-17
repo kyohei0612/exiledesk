@@ -85,10 +85,12 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["王者と同じで、青 → 黄。MOD が 1 つ増える", "Like the Regal Orb: blue → yellow, +1 mod"],
         ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
       ], "magic"),
-      H("alchemy", ["白か青 → いきなり黄", "White or blue → straight to yellow"], [
-        ["白か青のアイテムが、いきなり黄色いアイテムになる", "A white or blue item jumps straight to yellow"],
-        ["MOD が 4 つ付く。何が付くかは運 (青に付いていた MOD は付け直し)", "It gets 4 mods, all luck (a blue item's mods are rolled again)"],
-      ], "normal"),
+      // 錬金術は青から (付いていた MOD が付け直しになるのを見せる。2026-10-17 オーナー「錬金術は青から打たせて」)
+      ALWAYS(H("alchemy", ["青 → いきなり黄", "Blue → straight to yellow"], [
+        ["青いアイテムが、いきなり黄色いアイテムになる (白いアイテムにも使える)", "A blue item jumps straight to yellow (works on white items too)"],
+        ["MOD が 4 つ付く。何が付くかは運", "It gets 4 mods, all luck"],
+        ["青に付いていた MOD は消えて、全部付け直しになる", "The blue item's mods are removed and all 4 are rolled fresh"],
+      ], ["transmute"])),
       H("exalt", ["黄に MOD を 1 つ足す", "Add 1 mod to a yellow item"], [
         ["黄色いアイテムに MOD を 1 つ足す。何が付くかは運", "Adds 1 mod to a yellow item. Which one is luck"],
         ["黄色いアイテムの MOD は 6 つまで。空きがある時だけ使える", "Yellow items hold up to 6 mods. Only usable when there is room"],
