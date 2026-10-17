@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { canLessonBack, lessonBack, prepareStep, prepared, rigRare } from "../../state/craft-lesson";
+import { canLessonBack, lessonBack, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
 import { endTopic, goTopic, topic, topicAt, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
@@ -80,6 +80,7 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
 /** 次へ: 次の手に進み、打てるアイテムを用意する */
 function next(): void { topicNext(); prepareStep(); }
 function holdIt(): void {
+  if (topicUsed.value) return; // 1 つの手は 1 回だけ (もう一度はボタンで)
   prepareStep(); // 今のアイテムにこの手が打てなければ、ここで打てるアイテムを用意する
   const cur = topicStep.value;
   if (!cur) return;
@@ -126,7 +127,8 @@ const order = computed(() => {
     <!-- 操作のボタンは今の手の枠の上 (2026-10-17 オーナー「こっちのが良いな場所」) -->
     <div class="mb-2 flex flex-wrap justify-end gap-2">
       <!-- 次へは枠の左端にいつも出す。打ち終えるまでは押せない (2026-10-17 オーナー) -->
-      <button type="button" data-topic-next class="g-btn-red sm mr-auto" :disabled="!topicUsed || !topicStep" :title="topicUsed ? undefined : tr('今の手を使うと押せる', 'Use this step first')" @click="next">{{ topic && topicAt + 1 >= topic.steps.length ? tr("完了", "Finish") : tr("次へ →", "Next →") }}</button>
+      <button type="button" data-topic-next class="g-btn-red sm" :class="topicUsed ? '' : 'mr-auto'" :disabled="!topicUsed || !topicStep" :title="topicUsed ? undefined : tr('今の手を使うと押せる', 'Use this step first')" @click="next">{{ topic && topicAt + 1 >= topic.steps.length ? tr("完了", "Finish") : tr("次へ →", "Next →") }}</button>
+      <button v-if="topicUsed" type="button" data-topic-retry class="g-btn sm mr-auto" @click="retryStep">{{ tr("もう一度", "Try again") }}</button>
       <button type="button" data-lesson-back class="g-btn sm inline-flex items-center gap-1" :disabled="!canLessonBack" :title="tr('1 つ前の手に戻る (R でも)', 'Go back one step (R also works)')" @click="lessonBack">{{ tr("1 つ前に戻る", "Back one step") }}<kbd class="kbd max-md:hidden">R</kbd></button>
       <button type="button" data-topic-mods class="g-btn sm" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
       <button type="button" class="g-btn sm" @click="endTopic">{{ tr("コースをやめる", "Quit course") }}</button>
@@ -136,7 +138,7 @@ const order = computed(() => {
       <p v-if="prepared && !topicUsed" data-topic-prepared class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("この手が使えるアイテムを用意しました", "We set up an item this can be used on") }}</p>
       <div class="mt-1 flex flex-wrap items-center gap-2">
         <button v-if="topicStep.step.use === 'reset'" type="button" data-topic-reset class="g-btn sm" @click="topicReset">{{ tr("白に戻す", "Reset to white") }}</button>
-        <button v-else type="button" data-topic-hold class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15" :title="tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="holdIt">
+        <button v-else type="button" data-topic-hold class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-50" :disabled="topicUsed" :title="tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="holdIt">
           <img v-if="iconOfStep(topicStep.step)" :src="iconOfStep(topicStep.step)" alt="" class="size-7 shrink-0 object-contain" />
           <Icon v-else name="sparkles" class="size-6 shrink-0 text-violet-200" />
           <img v-for="o in topicStep.step.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="size-6 shrink-0 object-contain" />
@@ -167,7 +169,7 @@ const order = computed(() => {
     </div>
     <div v-else-if="topicDone" data-topic-done class="mt-3 rounded-xl border-2 border-amber-300/70 bg-gradient-to-b from-amber-400/[0.18] to-transparent px-4 py-3">
       <p class="text-[18px] font-black text-amber-100">{{ tr("全部使ってみた! おつかれさま", "You tried them all!") }}</p>
-      <p class="mt-0.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("気になった手は、下の一覧から押すともう一度試せます", "Click any step below to try it again") }}</p>
+      <p v-if="topic.level !== 1" class="mt-0.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("気になった手は、下の一覧から押すともう一度試せます", "Click any step below to try it again") }}</p>
     </div>
 
     <!-- 前の手で起きたこと -->
@@ -192,7 +194,8 @@ const order = computed(() => {
     <!-- 2 列は左の列を上から下へ、次に右の列 (並び順のまま読めるように) -->
     <ol class="mt-2 columns-2 gap-x-2 max-md:columns-1">
       <li v-for="i in order" :key="i" class="mb-0.5 break-inside-avoid">
-        <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :class="i === topicAt ? 'bg-amber-500/10' : ''" @click="goTopic(i)">
+        <!-- 入門は押せない (順に進むだけ。2026-10-17 オーナー「入門のここはクリックできないように」) -->
+        <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left disabled:cursor-default" :class="[i === topicAt ? 'bg-amber-500/10' : '', topic.level === 1 ? '' : 'hover:bg-white/5']" :disabled="topic.level === 1" @click="goTopic(i)">
           <span class="grid size-4 shrink-0 place-items-center rounded-full text-[10px] font-bold" :class="i < topicAt ? 'bg-emerald-400 text-black' : i === topicAt ? 'bg-amber-400 text-black' : 'border border-white/25 text-white/50'">{{ i < topicAt ? "✓" : "" }}</span>
           <span class="min-w-0 flex-1 truncate text-[12px]" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ stepName(topic.steps[i]!) }}</span>
         </button>

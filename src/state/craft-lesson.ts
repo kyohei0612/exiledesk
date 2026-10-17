@@ -105,6 +105,7 @@ function restore(x: Snap): void {
   topicAt.value = x.at;
   topicUsed.value = false;
   prepared.value = false;
+  preparedAt = -1;
   restoring = false;
 }
 
@@ -140,4 +141,13 @@ export function rigRare(key: string): void {
     s.undo();
     if (rare) { s.rollSeed.value = tryRoll; return; }
   }
+}
+
+/**
+ * もう一度: 今の手の始めに戻して、同じ手をもう 1 回 (1 つの手は 1 回だけ打てる。2026-10-17 オーナー「何回も連続で打てちゃうのはだめ、1 回だけ。もう一度ボタンを次への横に」)
+ */
+export function retryStep(): void {
+  s.hold(null);
+  const top = snaps[snaps.length - 1];
+  if (topic.value && top) restore(top);
 }

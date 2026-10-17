@@ -54,11 +54,11 @@ export const TOPIC_COURSES: TopicCourse[] = [
       ], "normal"),
       H("transmute_greater", ["変成の上級", "Greater Transmutation"], [
         ["変成と同じで、白 → 青。MOD が 1 つ付く", "Like Transmutation: white → blue with 1 mod"],
-        ["上級は弱い MOD が付かない (下の MOD レベルより上だけ)", "Greater: no weak mods (only the mod levels shown below)"],
+        ["上級は、決まった MOD レベル未満の MOD は付かない (下に出る数字)", "Greater: mods below a set mod level can't roll (the number shown below)"],
       ], "normal"),
       H("transmute_perfect", ["変成の完全", "Perfect Transmutation"], [
         ["変成と同じで、白 → 青。MOD が 1 つ付く", "Like Transmutation: white → blue with 1 mod"],
-        ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
+        ["完全は、上級より高い MOD レベル未満の MOD は付かない (下に出る数字)", "Perfect: mods below an even higher mod level can't roll (the number shown below)"],
       ], "normal"),
       H("augment", ["青に MOD を 1 つ足す", "Add 1 mod to a blue item"], [
         ["青いアイテムに MOD を 1 つ足す。何が付くかは運", "Adds 1 mod to a blue item. Which one is luck"],
@@ -67,11 +67,11 @@ export const TOPIC_COURSES: TopicCourse[] = [
       ], "magic"),
       H("augment_greater", ["増強の上級", "Greater Augmentation"], [
         ["増強と同じで、青いアイテムに MOD を 1 つ足す", "Like Augmentation: adds 1 mod to a blue item"],
-        ["上級は弱い MOD が付かない", "Greater: no weak mods"],
+        ["上級は、決まった MOD レベル未満の MOD は付かない (下に出る数字)", "Greater: mods below a set mod level can't roll (the number shown below)"],
       ], "magic"),
       H("augment_perfect", ["増強の完全", "Perfect Augmentation"], [
         ["増強と同じで、青いアイテムに MOD を 1 つ足す", "Like Augmentation: adds 1 mod to a blue item"],
-        ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
+        ["完全は、上級より高い MOD レベル未満の MOD は付かない (下に出る数字)", "Perfect: mods below an even higher mod level can't roll (the number shown below)"],
       ], "magic"),
       H("regal", ["青 → 黄", "Blue → yellow"], [
         ["青いアイテムが、黄色いアイテム (レア) になる", "A blue item becomes a yellow item (Rare)"],
@@ -79,11 +79,11 @@ export const TOPIC_COURSES: TopicCourse[] = [
       ], "magic"),
       H("regal_greater", ["王者の上級", "Greater Regal Orb"], [
         ["王者と同じで、青 → 黄。MOD が 1 つ増える", "Like the Regal Orb: blue → yellow, +1 mod"],
-        ["上級は弱い MOD が付かない", "Greater: no weak mods"],
+        ["上級は、決まった MOD レベル未満の MOD は付かない (下に出る数字)", "Greater: mods below a set mod level can't roll (the number shown below)"],
       ], "magic"),
       H("regal_perfect", ["王者の完全", "Perfect Regal Orb"], [
         ["王者と同じで、青 → 黄。MOD が 1 つ増える", "Like the Regal Orb: blue → yellow, +1 mod"],
-        ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
+        ["完全は、上級より高い MOD レベル未満の MOD は付かない (下に出る数字)", "Perfect: mods below an even higher mod level can't roll (the number shown below)"],
       ], "magic"),
       // 錬金術は青から (付いていた MOD が付け直しになるのを見せる。2026-10-17 オーナー「錬金術は青から打たせて」)
       ALWAYS(H("alchemy", ["青 → いきなり黄", "Blue → straight to yellow"], [
@@ -97,11 +97,11 @@ export const TOPIC_COURSES: TopicCourse[] = [
       ], "rare"),
       H("exalt_greater", ["高貴の上級", "Greater Exalted Orb"], [
         ["高貴と同じで、黄色いアイテムに MOD を 1 つ足す", "Like the Exalted Orb: adds 1 mod to a yellow item"],
-        ["上級は弱い MOD が付かない", "Greater: no weak mods"],
+        ["上級は、決まった MOD レベル未満の MOD は付かない (下に出る数字)", "Greater: mods below a set mod level can't roll (the number shown below)"],
       ], "rare"),
       H("exalt_perfect", ["高貴の完全", "Perfect Exalted Orb"], [
         ["高貴と同じで、黄色いアイテムに MOD を 1 つ足す", "Like the Exalted Orb: adds 1 mod to a yellow item"],
-        ["完全は強い MOD だけが付く", "Perfect: strong mods only"],
+        ["完全は、上級より高い MOD レベル未満の MOD は付かない (下に出る数字)", "Perfect: mods below an even higher mod level can't roll (the number shown below)"],
       ], "rare"),
       ONE_MOD(H("chaos", ["1 つ消して 1 つ付ける", "Remove 1, add 1"], [
         ["黄色いアイテムの MOD を 1 つ消して、別の MOD を 1 つ付ける", "Removes 1 mod from a yellow item and adds a different 1"],
@@ -109,11 +109,11 @@ export const TOPIC_COURSES: TopicCourse[] = [
       ], "rare")),
       ONE_MOD(H("chaos_greater", ["カオスの上級", "Greater Chaos Orb"], [
         ["カオスと同じで、1 つ消して 1 つ付ける", "Like the Chaos Orb: removes 1, adds 1"],
-        ["上級は、付く方に弱い MOD が出ない", "Greater: the added mod is never weak"],
+        ["上級は、付く方に決まった MOD レベル未満の MOD は出ない (下に出る数字)", "Greater: the added mod can't be below a set mod level (the number shown below)"],
       ], "rare")),
       ONE_MOD(H("chaos_perfect", ["カオスの完全", "Perfect Chaos Orb"], [
         ["カオスと同じで、1 つ消して 1 つ付ける", "Like the Chaos Orb: removes 1, adds 1"],
-        ["完全は、付く方が強い MOD だけ", "Perfect: the added mod is always strong"],
+        ["完全は、付く方に上級より高い MOD レベル未満の MOD は出ない (下に出る数字)", "Perfect: the added mod can't be below an even higher mod level (the number shown below)"],
       ], "rare")),
       ALWAYS(H("annul", ["MOD を 1 つ消す", "Remove 1 mod"], [
         ["MOD を 1 つ消す。どれが消えるかは運 (自分では選べない)", "Removes 1 mod. Which one is luck (you can't choose)"],
