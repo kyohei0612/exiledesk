@@ -35,6 +35,8 @@ import RichText from "../../components/decor/RichText.vue";
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
 const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean}>();
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
+/** 行の左 (P / S) と右 (↓・確率・×) の枠は同じ幅。MOD の文がカードの真ん中に来る (2026-10-17 オーナー「全体的に左に寄ってる、MOD は真ん中、→ に %、← に P,S」) */
+const sideColW = computed(() => (props.removable ? "w-[5.75rem] max-md:w-[6.75rem]" : "w-[4.25rem] max-md:w-[4.75rem]"));
 /** 未発現の行の崩れた文字。どの行も同じ並び・同じフォント (行ごとに変えると形がばらばらで気持ち悪い。2026-10-17 オーナー) */
 const UNREVEALED_GLYPHS = "ʘɿɕʞɞ ʖɷɦɕɷʞ";
 /** 付く空きの枠 (プレ → サフィ) */
@@ -251,7 +253,7 @@ const rows = computed(() => {
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
-          <span class="w-7 shrink-0 text-left text-[12px] font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
+          <span class="shrink-0 text-left text-[12px] font-bold tabular-nums" :class="[sideColW, r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
           <span class="min-w-0 flex-1 text-center">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
@@ -261,11 +263,11 @@ const rows = computed(() => {
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
           </span>
           <!-- 右端 (↓・確率・×) は行ごとに中身が違うので枠の幅を決めておき、真ん中の文字をどの行もそろえる (2026-10-17 オーナー「% が無いからずれた、枠幅決めて中央ぞろえ」) -->
-          <span class="flex shrink-0 items-center justify-end gap-1" :class="removable ? 'min-w-[5.75rem]' : 'min-w-[3.75rem]'">
+          <span class="flex shrink-0 items-center justify-end gap-1" :class="sideColW">
             <!-- MOD 一覧のこの行へ (持ったままでも押せる。持っている時は行を押すと「使う」なので、飛ぶのはこの ↓。2026-10-10 オーナー「持ちながらできるように」) -->
             <span v-if="r.m.unrevealed" aria-hidden="true" class="invisible rounded px-1 text-[11px] leading-none max-md:px-2 max-md:py-1">↓</span>
             <button v-if="!r.m.unrevealed" type="button" class="rounded px-1 text-[11px] leading-none text-white/35 hover:bg-white/10 hover:text-white/80 max-md:px-2 max-md:py-1" :title="tr('MOD 一覧のこの行へ', 'Find in the mod list')" @click.stop="emit('jump', r.m.modId)">↓</button>
-            <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
+            <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="w-11 text-right text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
           </span>
         </p>
