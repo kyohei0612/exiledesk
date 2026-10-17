@@ -36,7 +36,7 @@ export const OMEN: Record<string, string[]> = {
   OmenofPutrefaction: ["次の骨は **フラクチャー以外の MOD を全部外し**、枠いっぱい (普通 6 つ) を未発現の MOD にして **コラプト** する", "発現で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)", "古びた骨でもティアの下限は掛からない"],
   OmenofAbyssalEchoes: ["次の発現で、候補 3 つを **1 回だけ引き直せる**", "引き直さなくても、その発現で使い切る"],
   OmenoftheBlessed: ["次の神のオーブは **暗黙 MOD だけ** を振り直す (明示 MOD は変わらない)"],
-  OmenofSanctification: ["次の神のオーブをレアに使うと **聖別** する: MOD ごとに 0.78〜1.22 倍 (0.01 刻み) を掛けて丸める", "聖別したアイテムは、以後手を加えられない"],
+  OmenofSanctification: ["次の神のオーブをレアに使うと **聖別** する: 数値を振り直してから、MOD ごとに 0.78〜1.22 倍 (0.01 刻み) を掛けて丸める (段の上限を超えることもある)", "聖別したアイテムは、以後手を加えられない"],
 };
 /** お告げの動き (英語の画面) */
 export const OMEN_EN: Record<string, string[]> = {
@@ -65,7 +65,7 @@ export const OMEN_EN: Record<string, string[]> = {
   OmenofPutrefaction: ["The next Abyssal Bone **removes all non-Fractured mods**, fills every slot (usually 6) with Unrevealed mods and **corrupts** the item", "Reveals only offer normal mods (no faction Desecrated mods)", "No tier floor even with an Ancient Jawbone / Rib / Collarbone"],
   OmenofAbyssalEchoes: ["On the next reveal, the 3 options can be **rerolled once**", "Consumed by that reveal even if you don't reroll"],
   OmenoftheBlessed: ["The next Divine Orb rerolls **only implicit mods** (explicit mods unchanged)"],
-  OmenofSanctification: ["The next Divine Orb on a Rare **sanctifies** it: each mod is multiplied by x0.78-1.22 (0.01 steps) and rounded", "Sanctified items can't be modified afterwards"],
+  OmenofSanctification: ["The next Divine Orb on a Rare **sanctifies** it: values are rerolled, then each mod is multiplied by x0.78-1.22 (0.01 steps) and rounded (can exceed the tier's range)", "Sanctified items can't be modified afterwards"],
 };
 
 /** 棚の 1 つの「ステージでの動き」(行の並び)。** で囲んだ所は強調 */

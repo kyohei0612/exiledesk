@@ -5,12 +5,14 @@
  *
  * エンチャントのプールは src/i18n/vaal-enchants.json (クライアントの Mods.GenerationType=corrupted、spawn は 0/1 なので付く物から等分)。
  *
- * 聖別 (聖別のお告げ + 神のオーブ、レアだけ): MOD ごとに 0.78〜1.22 倍 (0.01 刻み) を掛けて丸め、聖別済みになる (Wiki の Omen of Sanctification)。
+ * 聖別 (聖別のお告げ + 神のオーブ、レアだけ): 神のオーブと同じく数値を振り直してから、MOD ごとに 0.78〜1.22 倍 (0.01 刻み) を掛けて丸め、聖別済みになる
+ * (Wiki の Omen of Sanctification。振り直してから掛けるのは Craft of Exile の divine + rerollValues、2026-10-17 オーナー「CoE に合わせて」)。
+ * 倍率を掛けた値は段の範囲を超えることがある (上限突破、2026-10-17 オーナー)。暗黙・固定・未発現は変えない。
  * コラプトと同じく、以後は手を加えられない。
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import vaal from "../../i18n/vaal-enchants.json";
-import { allMods, replaced, retext, skip } from "./stage-core";
+import { allMods, replaced, retext, skip, withValues } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
 import { displayValue } from "../mods/stat-scale";
@@ -59,12 +61,15 @@ export function applySanctify(data: PatchData, item: StageItem, rng: () => numbe
   const added: StageMod[] = [];
   const removed: StageMod[] = [];
   for (const m of mods) {
+    // 神のオーブと同じく段の範囲で振り直してから倍率 (CoE と同じ順)
+    const md = data.mods.get(m.modId);
+    const rolled = md && m.ranges.length ? withValues(m, md, rng) : m;
     const k = (78 + Math.floor(rng() * 45)) / 100;
     const digits = (v: number) => (Number.isInteger(v) ? 0 : 2);
-    const values = m.values.map((v) => { const d = 10 ** digits(v); return Math.round(v * k * d) / d; });
+    const values = rolled.values.map((v) => { const d = 10 ** digits(v); return Math.round(v * k * d) / d; });
     // 値が変わらなかった MOD は変化に入れない (「+16% → +16%」、要望 ㉟-4)
     if (values.every((v, i) => v === m.values[i])) continue;
-    const next = { ...m, values, ...retext(m, values, data) };
+    const next = { ...rolled, values, ...retext(rolled, values, data) };
     cur = replaced(cur, m, next);
     added.push(next);
     removed.push(m);
