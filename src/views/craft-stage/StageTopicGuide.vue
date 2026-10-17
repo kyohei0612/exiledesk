@@ -49,15 +49,15 @@ const listName = (st: TopicStep): string => [stepName(st), ...(st.chain ?? []).f
  * 続きのある手のボタン: 発現に掛けるお告げは発現と分けて 1 つのボタンにする (骨 → 反響のお告げ → 発現)。
  * 2026-10-17 オーナー「お告げが分かりづらいから反響と一緒にしないで分けてあげた方が分かりやすい」
  */
-/** need = 発現の前に掛けるお告げのある手 (掛け終わるまで発現の番にしない) */
+/** need = 前に掛けるお告げのある手 (掛け終わるまでカレンシー・発現のボタンは押せない)。全部の手で お告げ → カレンシー の順 (2026-10-18 お告げのコースから) */
 type ChainButton = { j: number; kind: "omen" | "reveal" | "step"; sub: TopicStep; need?: TopicStep };
 const chainButtons = computed((): ChainButton[] => {
   const cur = topicStep.value;
   if (!cur) return [];
   return [cur.step, ...(cur.step.chain ?? [])].flatMap((sub, j): ChainButton[] =>
-    sub.use === "reveal" && sub.omens?.length
-      ? [{ j, kind: "omen", sub }, { j, kind: "reveal", sub: { ...sub, omens: [] }, need: sub }]
-      : [{ j, kind: "step", sub }]);
+    sub.omens?.length
+      ? [{ j, kind: "omen", sub }, { j, kind: sub.use === "reveal" ? "reveal" : "step", sub: { ...sub, omens: [] }, need: sub }]
+      : [{ j, kind: sub.use === "reveal" ? "reveal" : "step", sub }]);
 });
 /**
  * 発現の番か: 今の手が発現で、まだ発現していない (お告げが要る手は掛け終えた後)。この時は光らせて、押すと候補の窓へ
@@ -67,8 +67,14 @@ const revealTurn = (b: ChainButton): boolean => b.sub.use === "reveal" && !topic
 function toReveal(): void { document.querySelector("[data-reveal-panel]")?.scrollIntoView({ behavior: "smooth", block: "center" }); }
 /** 発現のお告げが掛かっているか */
 const omensOn = (sub: TopicStep): boolean => (sub.omens ?? []).every((o) => s.omens.value.includes(o));
-/** お告げのボタン: 今の手のお告げを掛ける */
-function applyOmens(sub: TopicStep): void { for (const o of sub.omens ?? []) if (!s.omens.value.includes(o)) s.toggleOmen(o); }
+/** お告げのボタン: 今の手のお告げを掛ける (最初の手なら、ここで打てるアイテムを用意する) */
+function applyOmens(b: ChainButton): void {
+  if (topicUsed.value) return;
+  if (b.j === 0) prepareStep();
+  for (const o of b.sub.omens ?? []) if (!s.omens.value.includes(o)) s.toggleOmen(o);
+}
+/** カレンシーのボタンが押せるか (今の手で、お告げが要る時は掛け終えた後) */
+const stepReady = (b: ChainButton): boolean => !topicUsed.value && b.j === topicSub.value && (!b.need || omensOn(b.need));
 const iconOfStep = (st: TopicStep): string => (st.use === "reset" || st.use === "reveal" ? "" : st.use.startsWith("ess:") ? (essKey(st) ? iconOf(essKey(st)!) : "") : iconOf(st.use));
 /**
  * 今の手の動き (カレンシー・お告げごと): ゲームの公式の説明 (クライアントの原文、棚のカードの上と同じ) と、カードの「このステージでの動き」(条件・決まり) を畳まずに出す
@@ -189,13 +195,13 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
         <!-- 続きのある手 (アビス → 骨 → 発現) は並べて出し、今の手だけ押せる。済んだ手は ✓ (2026-10-17 オーナー「打つ前はグレーアウトで、付けたら表示」) -->
         <template v-else v-for="(b, n) in chainButtons" :key="n">
           <span v-if="n > 0" class="text-amber-300/60">→</span>
-          <!-- 発現に掛けるお告げ: 押すと掛かる。掛けたら ✓ -->
-          <button v-if="b.kind === 'omen'" type="button" data-topic-omen :data-topic-hold="b.j === topicSub && !omensOn(b.sub) ? '' : undefined" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :disabled="topicUsed || b.j !== topicSub || omensOn(b.sub)" :title="tr('押すとお告げを掛ける', 'Click to apply the omen')" @click="applyOmens(b.sub)">
+          <!-- お告げ: 押すと掛かる。掛けたら ✓。カレンシー・発現はその後 (2026-10-17 オーナー「お告げが分かりづらいから分けて」) -->
+          <button v-if="b.kind === 'omen'" type="button" data-topic-omen :data-topic-hold="b.j === topicSub && !omensOn(b.sub) ? '' : undefined" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :disabled="topicUsed || b.j !== topicSub || omensOn(b.sub)" :title="tr('押すとお告げを掛ける', 'Click to apply the omen')" @click="applyOmens(b)">
             <span v-if="topicUsed || b.j < topicSub || (b.j === topicSub && omensOn(b.sub))" class="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[10px] font-bold text-black">✓</span>
             <img v-for="o in b.sub.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="size-7 shrink-0 object-contain" />
             <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ (b.sub.omens ?? []).map(nameOf).join(" + ") }}</span>
           </button>
-          <button v-else type="button" :data-topic-hold="b.j === topicSub && b.kind === 'step' ? '' : undefined" :data-topic-chain="b.j" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :class="revealTurn(b) ? 'ring-2 ring-amber-300/80 shadow-[0_0_12px_rgba(251,191,36,0.45)]' : ''" :disabled="b.sub.use === 'reveal' ? !revealTurn(b) : topicUsed || b.j !== topicSub" :title="b.sub.use === 'reveal' ? tr('アイテムの下の候補から選んで「発現」', 'Pick an option under the item, then Reveal') : tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="b.sub.use === 'reveal' ? toReveal() : holdIt()">
+          <button v-else type="button" :data-topic-hold="b.kind === 'step' && stepReady(b) ? '' : undefined" :data-topic-chain="b.j" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :class="revealTurn(b) ? 'ring-2 ring-amber-300/80 shadow-[0_0_12px_rgba(251,191,36,0.45)]' : ''" :disabled="b.sub.use === 'reveal' ? !revealTurn(b) : !stepReady(b)" :title="b.sub.use === 'reveal' ? tr('アイテムの下の候補から選んで「発現」', 'Pick an option under the item, then Reveal') : b.need && !omensOn(b.need) ? tr('先にお告げを掛ける', 'Apply the omen first') : tr('押すと持つ', 'Click to hold')" @click="b.sub.use === 'reveal' ? toReveal() : holdIt()">
             <span v-if="topicUsed || b.j < topicSub" class="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[10px] font-bold text-black">✓</span>
             <img v-if="iconOfStep(b.sub)" :src="iconOfStep(b.sub)" alt="" class="size-7 shrink-0 object-contain" />
             <Icon v-else name="sparkles" class="size-6 shrink-0 text-violet-200" />

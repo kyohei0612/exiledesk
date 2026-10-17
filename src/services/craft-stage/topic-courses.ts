@@ -39,6 +39,8 @@ const H = (use: string, note: JaEn, how: JaEn[], prep?: string[] | StageItem["ra
 const ALWAYS = (st: TopicStep): TopicStep => ({ ...st, prepAlways: true });
 /** MOD 1 つの黄から毎回 (カオスの入れ替えを見る。2026-10-17 オーナー「カオスは 1 MOD でおk」) */
 const ONE_MOD = (st: TopicStep): TopicStep => ({ ...st, prep: ["exalt"], prepAlways: true });
+/** MOD 6 つで満杯の黄 (レア)。抹消の入れ替えを見る (2026-10-18) */
+const FULL = ["transmute", "augment", "regal", "exalt", "exalt", "exalt"];
 const RESET = H("reset", ["白に戻す", "Reset to white (Normal)"], [["アイテムを最初の白 (ノーマル) の状態に戻す (練習用のボタン)", "Puts the item back to a fresh white (Normal) one (a practice button)"]]);
 
 export const TOPIC_COURSES: TopicCourse[] = [
@@ -253,21 +255,57 @@ export const TOPIC_COURSES: TopicCourse[] = [
   },
   {
     id: "omens", level: 2, title: ["お告げを学ぶ", "Learn omens"], base: "Gold Ring", itemLevel: 82,
-    learn: ["高貴 (左右・偉大)・消去 (左右)・カオス (削減・左右の抹消)・神 (祝福・聖別)", "Exalt (sides, greater), annul (sides), chaos (whittling, erasure), divine (blessed, sanctification)"],
+    learn: ["高貴 (左右・偉大なる)・消去 (左右)・カオス (削減・左右の抹消)・神 (祝福・聖別)", "Exalt (Sinistral, Dextral, Greater), Annul (Sinistral, Dextral), Chaos (Whittling, Erasure), Divine (Blessed, Sanctification)"],
+    // 2026-10-18 オーナー「お告げか次は順にいくべ」。基本のオーブと同じ作り (毎回の用意・やさしい箇条書き)。お告げはカレンシーと別のボタンで先に掛ける。
+    // 付ける手は黄 (レア) の MOD 0 個から、消す手は MOD 4 つ (錬金術)、入れ替える手は MOD 6 つの満杯 (FULL) から。最後は神 (聖別) で完了
     steps: [
-      S("transmute", ["マジックに", "Make it magic"]),
-      S("regal", ["レアに", "Rare"]),
-      S("exalt", ["プレフィックスに足す", "Adds a prefix"], ["OmenofSinistralExaltation"]),
-      S("exalt", ["サフィックスに足す", "Adds a suffix"], ["OmenofDextralExaltation"]),
-      S("exalt", ["1 回で 2 つ足す", "Adds 2 at once"], ["OmenofGreaterExaltation"]),
-      S("annul", ["プレフィックスから消す", "Removes a prefix"], ["OmenofSinistralAnnulment"]),
-      S("annul", ["サフィックスから消す", "Removes a suffix"], ["OmenofDextralAnnulment"]),
-      S("exalt", ["空きを 2 つ埋める", "Fills 2 slots"], ["OmenofGreaterExaltation"]),
-      S("chaos", ["一番低い MOD を消す", "Removes the lowest mod"], ["OmenofWhittling"]),
-      S("chaos", ["プレフィックスを入れ替える", "Swaps a prefix"], ["OmenofSinistralErasure"]),
-      S("chaos", ["サフィックスを入れ替える", "Swaps a suffix"], ["OmenofDextralErasure"]),
-      S("divine", ["暗黙 MOD だけ振り直す", "Rerolls only the implicit"], ["OmenoftheBlessed"]),
-      S("divine", ["数値 0.78〜1.22 倍・以後は変更不可", "Values ×0.78–1.22, then locked"], ["OmenofSanctification"]),
+      { ...H("exalt", ["プレフィックスにだけ足す", "Add only a prefix"], [
+        ["左側の高貴なお告げを掛けると、高貴なオーブはプレフィックスにだけ MOD を足す", "With Omen of Sinistral Exaltation, the Exalted Orb adds only a prefix"],
+        ["お告げはカレンシーより先に掛ける。使うと 1 枚なくなる", "Apply the omen before the currency. It's used up when you use the currency"],
+      ], "rare"), omens: ["OmenofSinistralExaltation"] },
+      { ...H("exalt", ["サフィックスにだけ足す", "Add only a suffix"], [
+        ["右側の高貴なお告げを掛けると、高貴なオーブはサフィックスにだけ MOD を足す", "With Omen of Dextral Exaltation, the Exalted Orb adds only a suffix"],
+      ], "rare"), omens: ["OmenofDextralExaltation"] },
+      { ...H("exalt", ["1 回で 2 つ足す", "Add 2 at once"], [
+        ["偉大なる高貴なお告げを掛けると、高貴なオーブ 1 個で MOD が 2 つ付く", "With Omen of Greater Exaltation, one Exalted Orb adds 2 mods"],
+        ["どちらの側に付くかは運。空きが 1 つしか無ければ 1 つだけ", "Which side is luck. If only 1 slot is open, only 1 is added"],
+      ], "rare"), omens: ["OmenofGreaterExaltation"] },
+      { ...H("exalt", ["プレフィックスに 2 つ足す", "Add 2 prefixes"], [
+        ["お告げは重ねて掛けられる。偉大なる高貴 + 左側の高貴なら、プレフィックスに 2 つ", "Omens stack. Greater + Sinistral Exaltation adds 2 prefixes"],
+      ], "rare"), omens: ["OmenofGreaterExaltation", "OmenofSinistralExaltation"] },
+      { ...ALWAYS(H("annul", ["プレフィックスからだけ消す", "Remove only a prefix"], [
+        ["左側の消去のお告げを掛けると、消去のオーブはプレフィックスからだけ 1 つ消す", "With Omen of Sinistral Annulment, the Orb of Annulment removes only a prefix"],
+        ["どのプレフィックスが消えるかは運 (フラクチャーは消えない)", "Which prefix is luck (Fractured mods stay)"],
+      ], ["alchemy"])), omens: ["OmenofSinistralAnnulment"] },
+      { ...ALWAYS(H("annul", ["サフィックスからだけ消す", "Remove only a suffix"], [
+        ["右側の消去のお告げを掛けると、消去のオーブはサフィックスからだけ 1 つ消す", "With Omen of Dextral Annulment, the Orb of Annulment removes only a suffix"],
+      ], ["alchemy"])), omens: ["OmenofDextralAnnulment"] },
+      { ...ALWAYS(H("chaos", ["一番 MOD レベルの低い MOD を入れ替える", "Replace the lowest-level mod"], [
+        ["削減のお告げを掛けると、カオスオーブは MOD レベルが一番低い MOD を消す (同じなら運)", "With Omen of Whittling, the Chaos Orb removes the mod with the lowest mod level (ties are luck)"],
+        ["消したあとに新しい MOD が 1 つ付く。何が付くかは運", "Then 1 new mod is added. Which one is luck"],
+        ["MOD レベルは MOD 一覧の「Lv」の数字", "The mod level is the “Lv” number in the mod list"],
+      ], ["alchemy"])), omens: ["OmenofWhittling"] },
+      { ...ALWAYS(H("chaos", ["プレフィックスを入れ替える", "Replace a prefix"], [
+        ["左側の抹消のお告げを掛けると、カオスオーブはプレフィックスからだけ 1 つ消す", "With Omen of Sinistral Erasure, the Chaos Orb removes only a prefix"],
+        ["MOD が 6 つで満杯の時は、空いたプレフィックスに新しい MOD が付く (入れ替え)", "With all 6 slots full, the new mod goes into the freed prefix (a swap)"],
+      ], FULL)), omens: ["OmenofSinistralErasure"] },
+      { ...ALWAYS(H("chaos", ["サフィックスを入れ替える", "Replace a suffix"], [
+        ["右側の抹消のお告げを掛けると、カオスオーブはサフィックスからだけ 1 つ消す", "With Omen of Dextral Erasure, the Chaos Orb removes only a suffix"],
+        ["MOD が 6 つで満杯の時は、空いたサフィックスに新しい MOD が付く (入れ替え)", "With all 6 slots full, the new mod goes into the freed suffix (a swap)"],
+      ], FULL)), omens: ["OmenofDextralErasure"] },
+      { ...ALWAYS(H("chaos", ["一番低いプレフィックスを入れ替える", "Replace the lowest prefix"], [
+        ["削減と左側の抹消は一緒に掛けられる。プレフィックスの中で MOD レベルが一番低い物を消す", "Whittling and Sinistral Erasure stack: the lowest-level prefix is removed"],
+        ["左右の抹消どうし (左 + 右) は一緒に掛けられない", "Sinistral and Dextral Erasure can't be used together"],
+      ], FULL)), omens: ["OmenofWhittling", "OmenofSinistralErasure"] },
+      { ...ALWAYS(H("divine", ["暗黙の数字だけ振り直す", "Reroll only the implicit's values"], [
+        ["祝福のお告げを掛けると、神のオーブは暗黙 MOD (アイテムの上にある MOD) の数字だけ振り直す", "With Omen of the Blessed, the Divine Orb rerolls only the implicit mod's values (the mod at the top of the item)"],
+        ["ほかの MOD の数字は変わらない", "Other mods keep their values"],
+      ], ["alchemy"])), omens: ["OmenoftheBlessed"] },
+      { ...ALWAYS(H("divine", ["聖別する", "Sanctify"], [
+        ["聖別のお告げを掛けると、神のオーブは黄 (レア) のアイテムを聖別する", "With Omen of Sanctification, the Divine Orb Sanctifies a yellow (Rare) item"],
+        ["MOD の数字が 0.78〜1.22 倍のどこかになる (上がるか下がるかは運)", "Mod values become 0.78–1.22× (up or down is luck)"],
+        ["聖別したアイテムは、もうカレンシーで手を加えられない", "A Sanctified item can't be changed with currency anymore"],
+      ], ["alchemy"])), omens: ["OmenofSanctification"] },
     ],
   },
   {
