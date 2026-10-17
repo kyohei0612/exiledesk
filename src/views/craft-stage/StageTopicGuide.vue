@@ -16,6 +16,7 @@ import { modText, tr } from "../../i18n/lang";
 import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
 import { topicKey, type TopicStep } from "../../services/craft-stage/topic-courses";
+import type { StageMod } from "../../services/craft-stage/types";
 
 /** now = 今の手の枠 (棚の上) / course = コースの枠 (アイテムの下、既定) */
 defineProps<{ part?: "now" | "course" }>();
@@ -85,6 +86,8 @@ function holdIt(): void {
 /** MOD 一覧の窓を開いて、その MOD の行へ (確認用。2026-10-17 オーナー「MOD 一覧もそこで出せるように」) */
 function jump(modId: string): void { s.modOverlay.value = true; s.modJump.value = { modId, n: (s.modJump.value?.n ?? 0) + 1 }; }
 const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
+/** MOD の札: ティア · MOD レベル · プレ / サフィ */
+const modInfo = (m: StageMod): string => [m.tierName, tr(`MOD レベル ${m.modLevel}`, `mod level ${m.modLevel}`), m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix")].filter(Boolean).join(" · ");
 /** 手の一覧の並び: 今の手から上に順に、済んだ手は ✓ のまま最後尾へ (2026-10-17 オーナー「終わったやつは列の最後尾に」)。全部済んだら元の順 */
 const order = computed(() => {
   const n = topic.value?.steps.length ?? 0, at = topicAt.value;
@@ -137,8 +140,9 @@ const order = computed(() => {
     <!-- 前の手で起きたこと -->
     <div v-if="last && topicAt > 0" class="mt-2 rounded-md bg-black/25 px-2.5 py-1.5">
       <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ tr("前の手で起きたこと", "What the last move did") }}: {{ nameOf(last.out.currency) }}</p>
-      <button v-for="(m, i) in last.added" :key="'a' + i" type="button" class="g-plain block text-left text-[12px] text-emerald-300 hover:underline" :title="tr('MOD 一覧のこの行へ', 'Show in the mod list')" @click="jump(m.modId)">＋ {{ modText(m) }}</button>
-      <p v-for="(m, i) in last.removed" :key="'r' + i" class="text-[12px] text-rose-300 line-through">－ {{ modText(m) }}</p>
+      <!-- 付いた / 消えた MOD のティア・MOD レベル・側も出す (2026-10-17 オーナー「結局何レベルの奴がついてるかの体験ができない」) -->
+      <button v-for="(m, i) in last.added" :key="'a' + i" type="button" class="g-plain block text-left text-[12px] text-emerald-300 hover:underline" :title="tr('MOD 一覧のこの行へ', 'Show in the mod list')" @click="jump(m.modId)">＋ {{ modText(m) }} <span class="whitespace-nowrap text-[11px] text-emerald-200/70">({{ modInfo(m) }})</span></button>
+      <p v-for="(m, i) in last.removed" :key="'r' + i" class="text-[12px] text-rose-300"><span class="line-through">－ {{ modText(m) }}</span> <span class="whitespace-nowrap text-[11px] text-rose-300/70">({{ modInfo(m) }})</span></p>
       <p v-if="!last.added.length && !last.removed.length" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("MOD の出入りは無し (数値・品質・レアリティなどが変わる手)", "No mod added or removed (values, quality, rarity and so on changed)") }}</p>
     </div>
   </section>
