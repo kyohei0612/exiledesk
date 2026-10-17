@@ -9,7 +9,9 @@ import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { lessonJump, quitLesson, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
 import { topic, topicAt, topicCur, topicSub, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
-import { modListFor } from "../../services/craft-stage/mod-list";
+import { aimLabel, modListFor } from "../../services/craft-stage/mod-list";
+import { factionCandidates } from "../../services/craft-stage/spec/parts";
+import { ALL_OMEN_SPECS } from "../../services/craft-stage/spec/run-spec";
 import { freshItem } from "../../services/craft-stage/run-plan";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { enOf } from "../../state/craft-stage-shelf";
@@ -119,6 +121,22 @@ const lastRows = computed(() => {
     changed,
   };
 });
+/**
+ * 勢力のお告げの手: このアイテムに付くその勢力の MOD の一覧 (発現の候補はこの中から。2026-10-17 オーナー「アマナムとか付ける時はそのアイテムのアマナムだけ一覧で」)
+ */
+const FACTION: Record<string, [string, string]> = { ulaman_mod: ["ウラマン", "Ulaman"], amanamu_mod: ["アマナム", "Amanamu"], kurgal_mod: ["クルガル", "Kurgal"] };
+const faction = computed(() => {
+  const st = topicStep.value?.step, d = s.data.value, it = s.item.value;
+  if (!st || !d || !it) return null;
+  for (const o of st.omens ?? []) {
+    const spec = ALL_OMEN_SPECS.find((x) => x.key === o);
+    const tag = spec && "guaranteeTag" in spec.effect ? spec.effect.guaranteeTag : null;
+    if (!tag) continue;
+    const mods = factionCandidates(d, it, tag).map((c) => ({ side: c.side, text: aimLabel(d, { modId: c.mod.id, minTierIndex: 0, label: c.mod.id }).replace(/ \((T\d+ 以上|T\d+\+)\)$/, "") }));
+    return { name: tr(FACTION[tag]?.[0] ?? nameOf(o), FACTION[tag]?.[1] ?? nameOf(o)), mods };
+  }
+  return null;
+});
 /** MOD の札: ティア · MOD レベル · プレ / サフィ */
 const modInfo = (m: StageMod): string => [m.tierName, tr(`MOD レベル ${m.modLevel}`, `mod level ${m.modLevel}`), m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix")].filter(Boolean).join(" · ");
 /** 手の一覧はいつも元の順 (2026-10-17 オーナー「全容が見れるので並び替えずにそのまま」。前は済んだ手を最後尾に回していた) */
@@ -145,7 +163,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
         <!-- 続きのある手 (アビス → 骨 → 発現) は並べて出し、今の手だけ押せる。済んだ手は ✓ (2026-10-17 オーナー「打つ前はグレーアウトで、付けたら表示」) -->
         <template v-else v-for="(sub, j) in [topicStep.step, ...(topicStep.step.chain ?? [])]" :key="j">
           <span v-if="j > 0" class="text-amber-300/60">→</span>
-          <button type="button" :data-topic-hold="j === topicSub ? '' : undefined" :data-topic-chain="j" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :disabled="topicUsed || j !== topicSub || sub.use === 'reveal'" :title="tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="holdIt">
+          <button type="button" :data-topic-hold="j === topicSub ? '' : undefined" :data-topic-chain="j" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :disabled="topicUsed || j !== topicSub || (sub.use === 'reveal' && !sub.omens?.length)" :title="tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="holdIt">
             <span v-if="topicUsed || j < topicSub" class="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[10px] font-bold text-black">✓</span>
             <img v-if="iconOfStep(sub)" :src="iconOfStep(sub)" alt="" class="size-7 shrink-0 object-contain" />
             <Icon v-else name="sparkles" class="size-6 shrink-0 text-violet-200" />
@@ -160,6 +178,11 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <ul v-if="topicStep.step.how" data-topic-how class="mt-1.5 grid gap-1 rounded-lg bg-black/25 px-2.5 py-2">
         <li v-for="(l, i) in topicStep.step.how" :key="i" class="flex gap-1.5 text-[14px] text-[var(--exile-color-text-primary)]"><span class="text-amber-300/70">・</span><span>{{ t2(l) }}</span></li>
       </ul>
+      <div v-if="faction" data-topic-faction class="mt-1.5 rounded-lg border border-violet-400/40 bg-violet-500/10 px-2.5 py-1.5">
+        <p class="text-[11px] font-bold text-violet-200">{{ tr(`このアイテムに付く${faction.name}の MOD (${faction.mods.length} 種。発現の候補はこの中から)`, `${faction.name} mods this item can get (${faction.mods.length}; reveal options come from these)`) }}</p>
+        <p v-for="(m, i) in faction.mods" :key="i" class="flex gap-1.5 text-[12px] text-violet-100"><span class="w-4 shrink-0 font-bold" :class="m.side === 'prefix' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ m.side === "prefix" ? "P" : "S" }}</span><span>{{ m.text }}</span></p>
+        <p v-if="!faction.mods.length" class="text-[12px] text-violet-100/70">{{ tr("このアイテムにはこの勢力の MOD が無い (発現は普通の MOD になる)", "No mods of this faction for this item (reveals use normal mods)") }}</p>
+      </div>
       <div v-for="h in help" :key="h.k" data-topic-how class="mt-1.5 rounded-lg bg-black/25 px-2.5 py-1.5">
         <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ h.k === "reveal" ? tr("発現", "Reveal") : nameOf(h.k) }}</p>
         <p v-for="(l, i) in h.official" :key="'o' + i" class="text-[13px] text-[var(--exile-color-text-primary)]">{{ l }}</p>

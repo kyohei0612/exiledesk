@@ -100,6 +100,13 @@ function pool(data: PatchData, item: StageItem, side: StageSide, a: PoolArgs): C
   return c.filter((x) => x.mod.tags.includes(a.tag!)).map((x) => ({ ...x, w: 1 }));
 }
 const sumW = (xs: readonly { w: number }[]): number => xs.reduce((a, x) => a + x.w, 0);
+/**
+ * 勢力のお告げで発現に出うる、そのアイテムのその勢力の MOD (骨の置き場をタグで絞る。発現の候補と同じ pool)。
+ * チュートリアルの一覧に出す (2026-10-17 オーナー「アマナムとか付ける時はそのアイテムのアマナムだけ一覧で出してあげたらいい」)
+ */
+export function factionCandidates(data: PatchData, item: StageItem, tag: string, floor = 0): Candidate[] {
+  return SIDES.flatMap((side) => pool(data, item, side, { pools: ["normal", "desecrated"], floor, exclusiveAnyLevel: true, tag }));
+}
 
 const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>): StageMod => ({
   modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 1,

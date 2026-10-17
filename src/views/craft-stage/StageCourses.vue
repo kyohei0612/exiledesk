@@ -25,9 +25,9 @@ const PRACTICE_OPEN = false;
 const RELEASED = new Set(["orbs", "essence"]);
 const DEV_BUILD = import.meta.env.DEV; // 開発版 (deploy:web-dev) も本番と同じ表示 (2026-10-17 オーナー「表示は本番用でおk」)。手元の dev だけ全部
 /** 開発版 (deploy:web-dev) でだけ出す、オーナーに見てもらい中のコース (合格したら RELEASED へ移す) */
-const REVIEW = new Set<string>([]);
+const REVIEW = new Set<string>(["desecrate"]);
 const DEV_PREVIEW = import.meta.env.VITE_DEV_PREVIEW === "1";
-const shown = (c: TopicCourse): boolean => OPEN_LEVELS.includes(c.level) && (DEV_BUILD || RELEASED.has(c.id) || (DEV_PREVIEW && REVIEW.has(c.id)));
+const shown = (c: TopicCourse): boolean => (DEV_BUILD ? OPEN_LEVELS.includes(c.level) : RELEASED.has(c.id)) || (DEV_PREVIEW && REVIEW.has(c.id));
 const LEVELS: Array<{ n: 1 | 2 | 3; label: JaEn; note: JaEn; chip: string; ring: string }> = [
   { n: 1, label: ["入門", "Intro"], note: ["はじめての人はここから", "Start here"], chip: "bg-emerald-500/25 text-emerald-100", ring: "border-emerald-400/50 hover:border-emerald-300" },
   { n: 2, label: ["初級", "Easy"], note: ["冒涜とお告げ", "Desecration and omens"], chip: "bg-sky-500/25 text-sky-100", ring: "border-sky-400/50 hover:border-sky-300" },

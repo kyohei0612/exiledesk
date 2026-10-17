@@ -193,25 +193,60 @@ export const TOPIC_COURSES: TopicCourse[] = [
   },
   {
     id: "desecrate", level: 2, title: ["冒涜を学ぶ", "Learn desecration"], base: "Gold Ring", itemLevel: 64,
-    learn: ["骨 4 種・発現・アビスの反響・左右のネクロマンシー・勢力のお告げ・光のお告げ・深淵のエッセンス", "4 bones, revealing, Abyssal Echoes, Necromancy, faction omens, Omen of Light, Essence of the Abyss"],
+    learn: ["骨 4 種と発現・左右のネクロマンシー・アビスの反響・勢力のお告げ (ウラマン・アマナム・クルガル)・光のお告げ・アビスのエッセンス・腐食のお告げ", "4 bones and revealing, Necromancy, Abyssal Echoes, faction omens (Ulaman, Amanamu, Kurgal), Omen of Light, Essence of the Abyss, Omen of Putrefaction"],
+    // 2026-10-17 オーナー「次は冒涜のチュートリアル。勢力系はアマナムとか付ける時はそのアイテムのアマナムだけ一覧で」。
+    // 骨 → 発現は 1 つの手 (chain)。冒涜の MOD は 1 つのアイテムに 1 つまでなので、骨の手は毎回 MOD 4 つの黄 (レア) から (ALWAYS)
     steps: [
-      S("transmute", ["マジックに", "Make it magic"]),
-      S("regal", ["レアに (骨はレアに打つ)", "Rare (bones go on rares)"]),
-      S("desecrate_gnawed", ["未発現の冒涜 MOD を 1 つ (アイテムレベル 64 以下)", "1 unrevealed desecrated mod (item level ≤64)"]),
-      S("reveal", ["候補 3 つから 1 つ選ぶ", "Pick 1 of 3"]),
-      S("annul", ["冒涜の MOD だけ消す", "Removes only the desecrated mod"], ["OmenofLight"]),
-      S("desecrate", ["プレフィックスに付ける", "On the prefix side"], ["OmenofSinistralNecromancy"]),
-      S("reveal", ["候補を 1 回引き直せる", "Reroll the options once"], ["OmenofAbyssalEchoes"]),
-      S("annul", ["冒涜の MOD だけ消す", "Removes only the desecrated mod"], ["OmenofLight"]),
-      S("desecrate_ancient", ["サフィックスに・ウラマンだけ", "Suffix, Ulaman only"], ["OmenofDextralNecromancy", "OmenoftheSovereign"]),
-      S("reveal", ["ウラマンから選ぶ", "Pick an Ulaman mod"]),
-      S("annul", ["冒涜の MOD だけ消す", "Removes only the desecrated mod"], ["OmenofLight"]),
-      S("desecrate_altered", ["アマナムだけ (装飾品専用の骨)", "Amanamu only (jewellery bone)"], ["OmenoftheLiege"]),
-      S("reveal", ["アマナムから選ぶ", "Pick an Amanamu mod"]),
-      S("annul", ["冒涜の MOD だけ消す", "Removes only the desecrated mod"], ["OmenofLight"]),
-      S("ess:the Abyss:perfect", ["1 つ消して「深淵の王の印」", "Removes 1, adds the Mark"]),
-      S("desecrate", ["印が冒涜 MOD に変わる・クルガルだけ", "The Mark becomes a desecrated mod, Kurgal only"], ["OmenoftheBlackblooded"]),
-      S("reveal", ["クルガルから選ぶ", "Pick a Kurgal mod"]),
+      { ...ALWAYS(H("desecrate", ["骨 → 発現", "Bone → reveal"], [
+        ["骨は黄色 (レア) のアイテムに使う。中身の分からない「未発現の冒涜 MOD」が 1 つ付く", "Bones are used on yellow (Rare) items. They add 1 “Unrevealed Desecrated mod” whose contents are hidden"],
+        ["発現すると、候補 3 つから 1 つを選んで付ける (アイテムの下に出る)", "Revealing shows 3 options and you pick 1 (shown under the item)"],
+        ["空きが無い時は、付ける側の MOD がランダムに 1 つ消えて入れ替わる", "If there's no open slot, a random mod on that side is removed to make room"],
+        ["冒涜の MOD は 1 つのアイテムに 1 つまで。骨の種類 (顎骨・肋骨・鎖骨) は部位で決まる (指輪は鎖骨)", "Only 1 Desecrated mod per item. The bone type (Jawbone, Rib, Collarbone) depends on the item (rings use Collarbones)"],
+      ], ["alchemy"])), chain: [S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("desecrate_gnawed", ["噛み切られた骨", "Gnawed bone"], [
+        ["噛み切られた骨は、アイテムレベル 64 以下のアイテムにだけ使える", "Gnawed bones work only on items of item level 64 or lower"],
+        ["候補の出方は保存された骨と同じ", "The options are the same as with a Preserved bone"],
+      ], ["alchemy"])), chain: [S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("desecrate_ancient", ["古びた骨", "Ancient bone"], [
+        ["古びた骨は、発現の候補が MOD レベル 40 以上の物だけになる", "With an Ancient bone, the reveal options are only mods of mod level 40 or higher"],
+      ], ["alchemy"])), chain: [S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("desecrate_altered", ["変質した鎖骨", "Altered Collarbone"], [
+        ["変質した鎖骨は、装飾品 (指輪・アミュレットなど) にだけ使える", "Altered Collarbones work only on jewellery (rings, amulets and so on)"],
+        ["発現の候補に、異界の MOD も入る", "The reveal options can also include Otherworldly mods"],
+      ], ["alchemy"])), chain: [S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("desecrate", ["お告げで付く側を決める", "Pick the side with an omen"], [
+        ["左側のネクロマンシーのお告げを掛けると、未発現の MOD がプレフィックスに付く (右側ならサフィックス)", "With Omen of Sinistral Necromancy, the Unrevealed mod goes to a prefix (Dextral: suffix)"],
+        ["その側が埋まっている時は、その側の MOD がランダムに 1 つ消えて入れ替わる", "If that side is full, a random mod on that side is replaced"],
+      ], ["alchemy"])), omens: ["OmenofSinistralNecromancy"], chain: [S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("desecrate", ["発現の候補を引き直す", "Reroll the reveal options"], [
+        ["発現の前にアビスの反響のお告げを掛けると、候補 3 つを 1 回だけ引き直せる", "Apply Omen of Abyssal Echoes before revealing to reroll the 3 options once"],
+        ["発現の手のボタンを押すとお告げが掛かる。そのあとアイテムの下の候補から選ぶ", "Press the Reveal button to apply the omen, then pick from the options under the item"],
+      ], ["alchemy"])), chain: [S("reveal", ["発現 (反響)", "Reveal (Echoes)"], ["OmenofAbyssalEchoes"])] },
+      { ...ALWAYS(H("desecrate", ["勢力: ウラマン", "Faction: Ulaman"], [
+        ["支配者のお告げを掛けると、発現の候補がウラマンの MOD だけになる", "With Omen of the Sovereign, the reveal options are Ulaman mods only"],
+        ["このアイテムに付くウラマンの MOD は下の一覧", "The Ulaman mods this item can get are listed below"],
+      ], ["alchemy"])), omens: ["OmenoftheSovereign"], chain: [S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("desecrate", ["勢力: アマナム", "Faction: Amanamu"], [
+        ["君主のお告げを掛けると、発現の候補がアマナムの MOD だけになる", "With Omen of the Liege, the reveal options are Amanamu mods only"],
+        ["このアイテムに付くアマナムの MOD は下の一覧", "The Amanamu mods this item can get are listed below"],
+      ], ["alchemy"])), omens: ["OmenoftheLiege"], chain: [S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("desecrate", ["勢力: クルガル", "Faction: Kurgal"], [
+        ["ブラックブラッドのお告げを掛けると、発現の候補がクルガルの MOD だけになる", "With Omen of the Blackblooded, the reveal options are Kurgal mods only"],
+        ["このアイテムに付くクルガルの MOD は下の一覧", "The Kurgal mods this item can get are listed below"],
+      ], ["alchemy"])), omens: ["OmenoftheBlackblooded"], chain: [S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("annul", ["冒涜の MOD だけを消す", "Remove only the Desecrated mod"], [
+        ["光のお告げを掛けた消去は、冒涜の MOD (未発現も) だけを消す", "Annulment with Omen of Light removes only the Desecrated mod (Unrevealed too)"],
+        ["ほかの MOD は消えない。冒涜をやり直したい時に使う", "Other mods stay. Use it to redo a Desecration"],
+      ], ["alchemy", "desecrate"])), omens: ["OmenofLight"] },
+      { ...ALWAYS(H("ess:the Abyss:perfect", ["アビス → 骨 → 発現", "Abyss → bone → reveal"], [
+        ["アビスのエッセンスで「アビサルロードの紋章を身につけている」が必ず付く", "Essence of the Abyss always adds “Bears the Mark of the Abyssal Lord”"],
+        ["骨を使うと、紋章が未発現の冒涜 MOD に入れ替わる (側は紋章の側)", "A Bone then replaces the Mark with an Unrevealed Desecrated mod (on the Mark's side)"],
+        ["紋章からの冒涜は、MOD レベルがアイテムレベルの 4 割以上の物だけ", "Desecrations from the Mark only offer mods of at least 40% of the item level"],
+      ], ["alchemy"])), chain: [S("desecrate", ["骨で冒涜", "Desecrate with a Bone"]), S("reveal", ["発現", "Reveal"])] },
+      { ...ALWAYS(H("desecrate", ["腐食のお告げ", "Omen of Putrefaction"], [
+        ["腐食のお告げを掛けた骨は、MOD を全部消して、空き全部に未発現の MOD を付ける (最大 6 つ)", "A Bone with Omen of Putrefaction removes every mod and fills every slot with Unrevealed mods (up to 6)"],
+        ["アイテムはコラプトする (もう手を加えられない)。発現で付くのは普通の MOD だけ", "The item becomes Corrupted (no further changes). Reveals offer normal mods only"],
+      ], ["alchemy"])), omens: ["OmenofPutrefaction"] },
     ],
   },
   {
