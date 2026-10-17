@@ -5,6 +5,10 @@
  */
 export function logRecord(kind: string, data: Record<string, unknown>): void {
   try {
-    (globalThis as { __exiledeskLog?: (k: string, d: Record<string, unknown>) => void }).__exiledeskLog?.(kind, data);
+    const g = globalThis as { __exiledeskLog?: (k: string, d: Record<string, unknown>) => void; __exiledeskLogEarly?: Array<[string, Record<string, unknown>, number]> };
+    if (g.__exiledeskLog) { g.__exiledeskLog(kind, data); return; }
+    // 送る仕組みが始まる前の記録は取っておき、始まった時に送る (2026-10-17: 入口の visit が始まる前に呼ばれて 1 件も届いていなかった)
+    const early = (g.__exiledeskLogEarly ??= []);
+    if (early.length < 50) early.push([kind, data, Date.now()]);
   } catch { /* 記録は落としてよい */ }
 }

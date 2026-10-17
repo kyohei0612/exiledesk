@@ -9,7 +9,7 @@ import { craftStage, SIM_LOCKED } from "../state/craft-stage";
 import { noLog } from "../utils/no-log";
 import { lang } from "../i18n/lang";
 import { logRecord } from "../utils/log-record";
-import { spamSteps } from "../state/chaos-spam";
+import { spamKey, spamSteps } from "../state/chaos-spam";
 
 const UID_KEY = "exiledesk.web.uid";
 /**
@@ -63,7 +63,15 @@ const buf: Array<{ n: string; x?: string; s: number }> = [];
 const trail: Array<{ n: string; t: number }> = [];
 const once = new Set<string>();
 
+/**
+ * 画面の切り替え (広告を入れ替えられる所の数を知る。2026-10-17 オーナー「この使い方なら PV なんぼ」)。D1 に残す (私が読める方)。
+ * 数えるのは: タブ (エミュレーター・シミュレーター・ジェムコラプト・チュートリアル)、ベースを変えた、MOD 一覧の窓・カオススパム計算機を開いた
+ */
+function screen(to: string): void {
+  if (!noLog()) logRecord("screen", { to, s: Math.round((Date.now() - t0) / 1000) });
+}
 export function track(name: string, extra?: string): void {
+  if (name === "mode:gem-corrupt") screen("gem-corrupt");
   buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
   if (trail.length > 40) trail.shift();
@@ -157,7 +165,10 @@ export function startTracking(): void {
   });
   // ベースを選ぶと手で打つ方でも simPicked が立つので、シミュレーターの時だけ (2026-10-11 日報でシミュレーション: ベースを選んだ 227 になっていた)
   watch(s.simPicked, (v) => { if (v && s.mode.value === "sim") trackOnce("sim:base"); });
-  watch(s.base, () => { if (s.mode.value === "hand") trackOnce("hand:base"); });
+  watch(s.base, () => { if (s.mode.value === "hand") trackOnce("hand:base"); screen("base"); });
+  watch(s.mode, (m) => screen(`mode:${m}`));
+  watch(s.modOverlay, (v) => { if (v) screen("mod-list"); });
+  watch(spamKey, (k) => { if (k) screen("spam"); });
   watch(() => s.simTargets.value.length, (n) => { if (n > 0) trackOnce("sim:targets"); });
   watch(() => s.simOrder.value.length, (n) => { if (n > 0) trackOnce("sim:order"); });
   watch(() => s.simPatterns.value.some((p) => p.steps.length > 0), (v) => { if (v) trackOnce("sim:pattern"); });

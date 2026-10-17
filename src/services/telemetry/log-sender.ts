@@ -64,15 +64,19 @@ export function startLogSender(app: "web" | "app"): void {
       void fetch(url, { method: "POST", body, headers: { "content-type": "text/plain;charset=UTF-8" }, keepalive: body.length < 60_000, credentials: "omit" }).catch(() => undefined);
     } catch { /* 落としてよい */ }
   };
-  (globalThis as { __exiledeskLog?: (k: string, d: Record<string, unknown>) => void }).__exiledeskLog = (k, d) => {
+  const put = (k: string, d: Record<string, unknown>, t = Date.now()): void => {
     if (noLog()) return;
-    const r: Rec = { k, t: Date.now(), d };
+    const r: Rec = { k, t, d };
     const len = JSON.stringify(r).length;
     if (len > 20_000) return; // 1 件が大きすぎる物は捨てる
     buf.push(r);
     chars += len;
     if (buf.length >= MAX_RECS || chars >= MAX_CHARS) flush();
   };
+  const g = globalThis as { __exiledeskLog?: (k: string, d: Record<string, unknown>) => void; __exiledeskLogEarly?: Array<[string, Record<string, unknown>, number]> };
+  g.__exiledeskLog = (k, d) => put(k, d);
+  // 始まる前に呼ばれた記録 (入口の visit など。log-record.ts が取っておいた物)
+  for (const [k, d, t] of g.__exiledeskLogEarly?.splice(0) ?? []) put(k, d, t);
   (globalThis as { __exiledeskLogFlush?: (beacon?: boolean) => void }).__exiledeskLogFlush = flush;
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(true); });
   addEventListener("pagehide", () => flush(true));
