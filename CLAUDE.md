@@ -19,7 +19,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 | チュートリアル・コース・クラフトチャレンジ | docs/decisions/003-quiz-recipe.md、docs/craft-challenge.md、メモ quiz-recipe・craft-challenge・recipe-showcase |
 | シミュレーター (開発版だけ) | docs/decisions/002-play-recipe.md、メモ sim-cost-model・sim-split-by-side・feedback-show-sim-rules |
 | 英語の画面・用語 | src/i18n/GLOSSARY.md、メモ web-english・feedback-english-with-every-feature・feedback-no-guessed-terms |
-| リリース・更新内容・要望の返事 | メモ feedback-web-only-for-now・feedback-backstage-release・feedback-replies (更新内容は changelog-notes.json と -en.json) |
+| リリース・更新内容・要望の返事 | docs/pending-release.md (OK 待ちの物)、メモ feedback-web-only-for-now・feedback-backstage-release・feedback-replies (更新内容は changelog-notes.json と -en.json) |
 | サーバー (server/live・server/web)・分析の記録 | server/live/README.md、メモ analytics-logs |
 | 広告・ドメイン・SEO のページ | メモ web-ads-domain-plan、scripts/build-seo-pages.mjs |
 | テストを足す・直す | メモ feedback-tests-need-external-truth・feedback-self-tests・feedback-test-strategy |
