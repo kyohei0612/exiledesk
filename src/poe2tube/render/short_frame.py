@@ -26,17 +26,37 @@ WRAP = 15  # 字幕 1 行の字数の目安
 
 PUNCT = "、。！？…"
 PARTICLES = "はがをにでもへと"
+SENTENCE_END = "。！？"
+
+
+def _in_quote(rest: str, i: int) -> bool:
+    """i 字目の前で折ると「」の中で切れるか (kyohei 2026-10-17「読みやすいように改行」)."""
+    return rest[:i].count("「") > rest[:i].count("」")
 
 
 def _break_points(rest: str, cut: int) -> list[list[int]]:
-    """折ってよい位置の候補: 句読点の後 (前後 6 字) → 助詞の後 (前後 4 字)."""
+    """折ってよい位置の候補: 句読点の後 (前後 6 字) → 助詞の後 (前後 4 字)。「」の中は折らない."""
     punct = [i + 1 for i in range(max(1, cut - 6), min(len(rest) - 1, cut + 6)) if rest[i] in PUNCT]
     particle = [
         i + 1
         for i in range(max(1, cut - 4), min(len(rest) - 1, cut + 4))
         if rest[i] in PARTICLES and not ("ぁ" <= rest[i + 1] <= "ゖ") and rest[i + 1] not in PUNCT
     ]
-    return [punct, particle]
+    return [[i for i in c if not _in_quote(rest, i)] for c in (punct, particle)]
+
+
+def _sentence_split(text: str, width: int) -> list[str] | None:
+    """2 行で済む文に「。」などの区切りがあれば、そこで分ける (どちらも 6 字以上・行に収まる時)."""
+    ends = [
+        i + 1
+        for i, ch in enumerate(text[:-1])
+        if ch in SENTENCE_END and text[i + 1] not in PUNCT + "）」" and not _in_quote(text, i + 1)
+    ]
+    fit = [i for i in ends if 6 <= i <= width + 3 and 6 <= len(text) - i <= width + 3]
+    if not fit:
+        return None
+    cut = min(fit, key=lambda i: abs(i - len(text) / 2))
+    return [text[:cut], text[cut:]]
 
 
 def _not_in_word(rest: str, cut: int) -> int:
@@ -61,6 +81,8 @@ def wrap_text(text: str, width: int = WRAP, max_rows: int = 3) -> list[str]:
     if len(text) <= width:
         return [text]
     rows = min(max_rows, -(-len(text) // width))
+    if rows == 2 and (split := _sentence_split(text, width)):
+        return split
     target = -(-len(text) // rows)
     out: list[str] = []
     rest = text
@@ -73,6 +95,9 @@ def wrap_text(text: str, width: int = WRAP, max_rows: int = 3) -> list[str]:
                 cut = min(fit, key=lambda i: abs(i - target))
                 break
         cut = _not_in_word(rest, cut)
+        if _in_quote(rest, cut):  # 候補が無くて「」の中に落ちた時は、「 の前か 」の後へ
+            start, end = rest.rfind("「", 0, cut), rest.find("」", cut) + 1
+            cut = start if start >= 4 else end or cut
         while cut < len(rest) and rest[cut] in PUNCT + "）」":
             cut += 1  # 行頭に句読点を置かない
         out.append(rest[:cut])

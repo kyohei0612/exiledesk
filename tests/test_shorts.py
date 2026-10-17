@@ -21,6 +21,18 @@ def test_wrap_text_breaks_at_punct_or_particle() -> None:
         assert r[0] not in "、。！？"
 
 
+def test_wrap_text_sentence_and_quote() -> None:
+    # 2 行に収まる 2 文は「。」で分ける。「」の中では折らない (kyohei 2026-10-17)
+    assert wrap_text("中身はウェブ版と同じ。アプリ専用の窓で開くわ。") == [
+        "中身はウェブ版と同じ。",
+        "アプリ専用の窓で開くわ。",
+    ]
+    for r in wrap_text("「アプリ版はこちら」から、PCにアプリとして入れられるの。"):
+        assert r.count("「") == r.count("」")
+    for r in wrap_text("本当よ。右上の「アプリ版はこちら」を見て。"):
+        assert r.count("「") == r.count("」")
+
+
 def test_quiz_scene_rules() -> None:
     Scene(kind="quiz", choices=["alchemy", "chaos"], answer=1, badges=["a", "b"])
     with pytest.raises(ValueError):

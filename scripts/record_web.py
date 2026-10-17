@@ -175,6 +175,8 @@ START = {
     # カオススパム確率機 (ExileDesk v0.1.517、X とショート用)
     # 種 57 = 半分の人 839 回のところ 129 回で上位 10%
     "spam": f"seed=57&{RING}&hands=transmute,augment,regal",
+    # アプリ版 (v0.1.552) とチュートリアル (v0.1.551) のリリース (X とショート用)
+    "release": "seed=1",
 }
 
 
@@ -430,6 +432,36 @@ def c_spam(w: Web) -> None:
     pause(4.0)
 
 
+def c_release(w: Web) -> None:
+    """アプリ版のボタンを指す → チュートリアルのタブ → 基本のオーブを学ぶ → 1 手目の変成 → 次へ."""
+    p, h = w.page, w.hand
+    # 録画モードでは隠れる「アプリ版はこちら」を出す (押すと Chrome の画面なので指すだけ)
+    app = p.locator('[data-rec-part="header-app"]').first
+    app.evaluate("e => e.style.setProperty('display', 'inline-block', 'important')")
+    pause(1.0)
+    bb = app.bounding_box()
+    assert bb
+    h.glide(bb["x"] + bb["width"] - 10, bb["y"] + bb["height"] - 4, 800)  # 字に被せない
+    mark("指す: アプリ版はこちら")
+    w.notes.append({"app": app.bounding_box()})
+    pause(3.5)
+    h.click(p.get_by_role("tab", name="チュートリアル").first, 800, 1.5)
+    mark("コース一覧")
+    pause(2.5)
+    h.click(p.get_by_role("button", name="始める").first, 700, 1.5)
+    mark("1 手目")
+    pause(2.5)
+    h.click(p.get_by_role("button", name="変成のオーブ", exact=True).last, 700, 0.6)
+    h.click(w.rec("item-name"), 700, 0)
+    p.get_by_text("MOD なし").first.wait_for(state="hidden", timeout=5000)
+    mark("付いた")
+    w.notes.append({"card": w.card.inner_text()})
+    pause(3.5)
+    h.click(p.get_by_role("button", name=re.compile("^次へ")).first, 700, 1.5)
+    mark("2 手目")
+    pause(3.0)
+
+
 CLIPS = {
     "open": c_open,
     "orbs": c_orbs,
@@ -440,6 +472,7 @@ CLIPS = {
     "rune": c_rune,
     "multi": c_multi,
     "spam": c_spam,
+    "release": c_release,
 }
 # 8 章の静止画: 「要望・バグを送る」に黄色の枠
 FEEDBACK_JS = r"""

@@ -62,6 +62,10 @@ FootageZoom = Literal[
     "spam_open",
     "spam_stats",
     "spam_luck",
+    "rel_app",
+    "rel_course",
+    "rel_step1",
+    "rel_step2",
 ]
 
 CHARS_PER_MINUTE = 400  # 実測 (2026-09-28): 1.2 倍速 + 話速正規化で 2,502 字 → 370 秒 ≈ 405 字/分
