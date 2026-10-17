@@ -289,7 +289,7 @@ function reveal(ctx: PartCtx, item: StageItem, a: { offers: number }): StageAppl
 
 type Remove = Extract<Action, { remove: unknown }>["remove"];
 /**
- * 固定以外から消す。冒涜だけ (光のお告げ) で左右の消去も掛けていれば、その側の冒涜の MOD だけ (2026-10-16 Craft of Exile と同じ)。
+ * 固定以外から消す。冒涜だけ (光のお告げ) は側を見ない (左右の消去は光と一緒には使えない、run-spec.ts の omensOf。2026-10-17 オーナー)。
  * 側: お告げ (抹消・結晶化・左右の消去) → それ。付ける側が埋まっている完全エッセンスは、その側から (sideWhenFull)。
  * 削りのお告げは MOD レベルの一番低い物から (未発現の枠は 1 として数える、apply-currency.ts の whittleTargets)
  */
@@ -300,9 +300,8 @@ function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
   }
   const pick = ctx.mods.pick ?? a.pick;
   if (pick === "desecrated") {
-    const only = ctx.mods.removeSide ?? ctx.mods.side;
-    const ds = allMods(item).filter((m) => m.desecrated && !m.fractured && (!only || m.side === only));
-    if (!ds.length) return skip(item, only ? tr("光のお告げ: その側に冒涜の MOD が無い", "Omen of Light: no Desecrated mod on that side") : tr("光のお告げ: 冒涜の MOD が無い", "Omen of Light: no Desecrated mod"));
+    const ds = allMods(item).filter((m) => m.desecrated && !m.fractured);
+    if (!ds.length) return skip(item, tr("光のお告げ: 冒涜の MOD が無い", "Omen of Light: no Desecrated mod"));
     // 冒涜の MOD は 1 つまでなので、ふつうは 1 つから選ぶ (乱数を使わない)
     const d = ds.length === 1 ? ds[0]! : ds[Math.floor(ctx.rng() * ds.length)]!;
     return { applied: true, item: without(item, d), added: [], removed: [d] };

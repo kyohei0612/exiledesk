@@ -37,8 +37,8 @@ export const OMEN_EXCLUSIVE: readonly (readonly string[])[] = [
   ["OmenofSinistralExaltation", "OmenofDextralExaltation"],
   // 削減は左右の抹消と一緒に掛けられる (その側の一番 MOD レベルの低い物を消す。2026-10-11 要望 aa132a4a、timesaver.gg の解説・公式フォーラム 3754679 で併用の例)
   ["OmenofSinistralErasure", "OmenofDextralErasure"],
-  // 光と左右の消去は一緒に掛けられる (冒涜の MOD のうち、その側だけ。2026-10-16 Craft of Exile の getRemovableModifiers に合わせる、書いていない所は両方効く)
-  ["OmenofSinistralAnnulment", "OmenofDextralAnnulment"],
+  // 光と左右の消去は一緒に掛けられない (光を使う時は左右は使えない。2026-10-17 オーナーが決めた。10-16 の「CoE に合わせて両方効く」は戻した)
+  ["OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofLight"],
   ["OmenofSinistralCrystallisation", "OmenofDextralCrystallisation"],
   ["OmenofSinistralNecromancy", "OmenofDextralNecromancy"],
   ["OmenoftheSovereign", "OmenoftheLiege", "OmenoftheBlackblooded"],

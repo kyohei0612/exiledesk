@@ -62,7 +62,10 @@ const OMEN_BY_KEY: ReadonlyMap<string, OmenSpec> = new Map(ALL_OMEN_SPECS.map((o
 export function omensOf(spec: CurrencySpec, held: readonly string[]): OmenSpec[] {
   const used = held.flatMap((k) => { const o = OMEN_BY_KEY.get(k); return o && o.appliesTo === spec.kind ? [o] : []; });
   const alone = used.find((o) => o.alone);
-  return alone ? [alone] : used;
+  if (alone) return [alone];
+  // 光のお告げを使う時は、左右の消去のお告げは使わない (効かず、減らない。2026-10-17 オーナー「使えない、光使ってるから」。10-16 に CoE に合わせて両方効く形にしたのを戻す)
+  if (used.some((o) => o.key === "OmenofLight")) return used.filter((o) => o.key !== "OmenofSinistralAnnulment" && o.key !== "OmenofDextralAnnulment");
+  return used;
 }
 /**
  * お告げの効き目をまとめる。左右を両方掛けた時は左 (OMEN_SPECS の順)、勢力を 2 つ掛けた時は先に掛けた方

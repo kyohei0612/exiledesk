@@ -3,7 +3,7 @@
  * 期待値は CoE beta の package_poe2.js (写し data-cache/coe-beta-package_poe2.js):
  *   1. poe2_desecrate: 両側が空いていれば randomNumber(0,2) で半々
  *   2. poe2_desecrate: 空きが無ければ annul() (固定以外の全部から等しく 1 つ) → 空いた側に付く
- *   5. getRemovableModifiers: 光のお告げ (OmenOnAnnulRemoveAbyssMod) と左右の消去は一緒に効く
+ *   5. getRemovableModifiers: CoE は光と左右の消去が一緒に効くが、オーナーの決めで光を使う時は左右を使わない (2026-10-17)
  *   10. exaltedParams: 1 + 0.2 × 品質、20% を超えた分は 1% ごとに +0.12
  */
 import { describe, expect, it } from "vitest";
@@ -61,16 +61,14 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     for (const m of mods) expect(Math.abs((hits.get(m.modId) ?? 0) / N - 1 / mods.length)).toBeLessThan(0.03);
   });
 
-  it("5. 光のお告げと左右の消去は一緒に効く (冒涜の MOD のうち、その側だけ)", () => {
+  it("5. 光のお告げを使う時、左右の消去のお告げは使わない (効かず、減らない。2026-10-17 オーナーが CoE と違う方に決めた)", () => {
     const it = rareWhere((x) => room(x, "suffix"));
     const bone = applyCurrency(data, it, "desecrate", mulberry32(1), ["OmenofDextralNecromancy"]);
     expect(bone.added[0]!.side).toBe("suffix");
     const left = applyCurrency(data, bone.item, "annul", mulberry32(2), ["OmenofLight", "OmenofSinistralAnnulment"]);
-    expect(left.applied).toBe(false);
-    const right = applyCurrency(data, bone.item, "annul", mulberry32(2), ["OmenofLight", "OmenofDextralAnnulment"]);
-    expect(right.applied).toBe(true);
-    expect(right.removed[0]!.desecrated).toBe(true);
-    expect(right.omensUsed).toEqual(expect.arrayContaining(["OmenofLight", "OmenofDextralAnnulment"]));
+    expect(left.applied).toBe(true);
+    expect(left.removed[0]!.desecrated).toBe(true);
+    expect(left.omensUsed).toEqual(["OmenofLight"]);
   });
 
   it("14. アルダーのルーンはクライアントの変換表 (耐性以外の行) の MOD だけを変える", async () => {
