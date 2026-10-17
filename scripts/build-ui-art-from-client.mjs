@@ -36,6 +36,8 @@ const FILES = [
   ...["Rare", "Unique"].flatMap((r) => ["Left", "Middle", "Right"].map((p) => `InGame/ItemsHeader${r}SingleLine${p}`)),
   ...["White", "Magic", "Rare", "Unique", "Gem", "Currency"].map((r) => `InGame/ItemsSeparator${r}`),
   // サイドバーのアイコン (キャラ画面の上の金のアイコン。通常 / hover = 選んでいる時)
+  // 冒涜の発現の窓 (魂の井戸): アビスの倉庫の背景 = 枠と地、アビスのお知らせの紋章 = 題の飾り (2026-10-17 オーナー「冒涜感ある背景や枠の感じがいい、こだわってほしい」)
+  "InGame/MTX/AbyssStash/AbyssStashBG", "InGame/HubToastDisplayAbyss",
   ...["HeaderIconTrade", "HeaderIconFriend", "HeaderIconAchievement", "HeaderIconShop", "HeaderIconCharacter", "HeaderIconPassive", "HeaderIconCosmetics", "HeaderAltasPoint", "HeaderAltasMap"].flatMap((k) => [`${CM}${k}`, `${CM}${k}Hover`]),
 ];
 const tmp = join(tmpdir(), "exiledesk-ui-art");

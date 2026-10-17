@@ -21,6 +21,19 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
 }
 
+/* 冒涜 (アビス) の窓: 魂の井戸の発現など。ゲームのアビスの倉庫の背景 (abyss-panel) の骨の蔓の四隅を枠に、真ん中の紋章を地に敷く
+   (2026-10-17 オーナー「冒涜感ある背景や枠の感じがいい、こだわってほしい」。scripts/build-ui-art-from-client.mjs) */
+.g-abyss {
+  position: relative;
+  border: 16px solid transparent;
+  border-image: url("/ui-art/abyss-panel.webp") 110 / 40px / 6px stretch;
+  background:
+    radial-gradient(ellipse at center, rgba(10, 14, 6, 0.25), rgba(0, 0, 0, 0.7)) border-box,
+    url("/ui-art/abyss-panel.webp") center / 140% auto no-repeat border-box,
+    #0a0c08;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), 0 0 28px rgba(110, 160, 50, 0.14);
+}
+
 .g-head {
   position: relative;
   display: flex;

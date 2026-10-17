@@ -53,8 +53,10 @@ function reroll(): void { rerolled.value = true; chosen.value = null; }
 </script>
 
 <template>
-  <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="w-[380px] max-md:w-full rounded-md border border-[#3d4a2a] bg-[#1a1913] px-3 py-2 shadow-[0_0_24px_rgba(0,0,0,0.7),inset_0_0_30px_rgba(60,90,30,0.12)]">
-    <p class="mb-1.5 text-center text-[11px] text-[#9fb57a]">{{ tr("魂の井戸 — 発現する MOD を選ぶ", "Well of Souls — choose a mod to reveal") }}<span v-if="left() > 1" class="ml-1 opacity-70">{{ tr(`(未発現 残り ${left()})`, `(${left()} unrevealed left)`) }}</span></p>
+  <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="g-abyss mt-5 w-[380px] max-md:w-full px-2 pb-2 pt-4">
+    <!-- 題の上の緑の紋章 (アビスのお知らせの絵) -->
+    <img src="/ui-art/abyss-emblem.webp" alt="" aria-hidden="true" class="pointer-events-none absolute -top-[38px] left-1/2 size-11 -translate-x-1/2 drop-shadow-[0_0_8px_rgba(120,190,60,0.5)]" />
+    <p class="mb-1.5 text-center font-display text-[12px] tracking-wider text-[#a9c97a] [text-shadow:0_0_6px_rgba(110,170,50,0.6)]">{{ tr("魂の井戸 — 発現する MOD を選ぶ", "Well of Souls — choose a mod to reveal") }}<span v-if="left() > 1" class="ml-1 opacity-70">{{ tr(`(未発現 残り ${left()})`, `(${left()} unrevealed left)`) }}</span></p>
     <!-- 候補は濃い黒の箱、地は少し明るく、間を空けて境目をはっきり (ゲームと同じ。2026-10-17 オーナー「境界線が分かりづらい」) -->
     <div class="space-y-1">
       <button
@@ -64,7 +66,7 @@ function reroll(): void { rerolled.value = true; chosen.value = null; }
         :data-rec="`reveal:${i + 1}`"
         data-reveal-option
         class="g-plain flex w-full items-center gap-2 whitespace-normal rounded border px-2 py-1.5 text-center text-[13px] leading-snug text-[#d6dcb8] transition max-md:min-h-10"
-        :class="chosen === i ? 'border-[#c9a96a] bg-[#050504] shadow-[0_0_10px_rgba(201,169,106,0.35)]' : 'border-[#2c2b22] bg-[#050504] hover:border-[#5a6a3a]'"
+        :class="chosen === i ? 'border-[#c9a96a] bg-black/85 shadow-[0_0_10px_rgba(201,169,106,0.35)]' : 'border-[#2e3a1e] bg-black/75 hover:border-[#6a8a3a]'"
         :title="hoverOf(m)"
         @click="chosen = i"
       >

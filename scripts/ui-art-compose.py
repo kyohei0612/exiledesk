@@ -107,3 +107,11 @@ for r, n in (("White", "normal"), ("Magic", "magic"), ("Rare", "rare"), ("Unique
     im = load(f"ItemsSeparator{r}")
     save(im, "isep-" + n)
     print("isep-" + n, im.size)
+
+# 冒涜の発現の窓 (2026-10-17): アビスの倉庫の背景 (枠は border-image で角 ABYSS_C px、地は同じ絵の真ん中) と、題の上の紋章
+im = load("AbyssStashBG")
+save(im, "abyss-panel")
+print("abyss-panel", im.size)
+em = load("HubToastDisplayAbyss").resize((96, 96), Image.LANCZOS)
+save(em, "abyss-emblem")
+print("abyss-emblem", em.size)
