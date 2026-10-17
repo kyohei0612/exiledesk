@@ -27,7 +27,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 
 ## 動かし方
 - 開発: `pnpm dev:web` は preview_start の "web" (port 1440)。Web 版は http://localhost:1440/web.html (`/` はアプリの入口)。
-- 型: `pnpm -s exec vue-tsc --noEmit -p tsconfig.json`。テスト: `pnpm -s exec vitest run <ファイル>` (触った所だけ)。
+- 型: `pnpm -s exec vue-tsc --noEmit -p tsconfig.json`。テストはオーナーが言った時だけ (確かめは開発版の画面のスナップ。メモ feedback-test-strategy)。
 - 版上げ: `node scripts/bump-version.mjs patch` → `cd src-tauri && cargo check -q` → commit → push → `pnpm deploy:web`。
 - 非公開の開発版: `pnpm deploy:web-dev` (チュートリアル・シミュレーターが開く)。
 - Bash では `\` が 1 段消える。正規表現や `\` の入る物は Write / Edit で書く。
