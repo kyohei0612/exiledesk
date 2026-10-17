@@ -6,6 +6,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
+import { canLessonBack, lessonBack } from "../../state/craft-lesson";
 import { endTopic, goTopic, topic, topicAt, topicDone, topicReset, topicStep } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
@@ -96,7 +97,9 @@ const order = computed(() => {
       <span class="rounded px-2 py-0.5 text-[11px] font-bold" :class="LEVEL[topic.level]!.chip">{{ t2(LEVEL[topic.level]!.label) }}</span>
       <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ t2(topic.title) }}</b>
       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-tertiary)]">{{ Math.min(topicAt, topic.steps.length) }} / {{ topic.steps.length }}</span>
-      <button type="button" data-topic-mods class="g-btn sm ml-auto" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
+      <!-- 1 つ前に戻るは MOD 一覧の横 (2026-10-17 オーナー) -->
+      <button type="button" data-lesson-back class="g-btn sm ml-auto inline-flex items-center gap-1" :disabled="!canLessonBack" :title="tr('1 つ前の手に戻る (R でも)', 'Go back one step (R also works)')" @click="lessonBack">{{ tr("1 つ前に戻る", "Back one step") }}<kbd class="kbd max-md:hidden">R</kbd></button>
+      <button type="button" data-topic-mods class="g-btn sm" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
       <button type="button" class="g-btn sm" @click="endTopic">{{ tr("コースをやめる", "Quit course") }}</button>
     </header>
     <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300 transition-[width] duration-500" :style="{ width: `${(topicAt / topic.steps.length) * 100}%` }" /></div>
