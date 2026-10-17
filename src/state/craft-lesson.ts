@@ -11,9 +11,9 @@
 import { computed, ref, watch } from "vue";
 import { craftStage as s } from "./craft-stage";
 import { course, courseView, endCourse } from "./craft-course";
-import { endTopic, topic, topicAt, topicDone, topicUsed } from "./craft-topic";
+import { endTopic, goTopic, startTopic, topic, topicAt, topicDone, topicUsed } from "./craft-topic";
 import { fullSockets } from "./stage-steps";
-import { topicKey } from "../services/craft-stage/topic-courses";
+import { topicKey, type TopicCourse } from "../services/craft-stage/topic-courses";
 import { freshItem, startFrom } from "../services/craft-stage/run-plan";
 import { applyCurrency } from "../services/craft-stage/apply-currency";
 import { mulberry32 } from "../services/htc/rng";
@@ -150,4 +150,20 @@ export function retryStep(): void {
   s.hold(null);
   const top = snaps[snaps.length - 1];
   if (topic.value && top) restore(top);
+}
+
+/**
+ * その手から始める (手の一覧を押した時。次へを押した時と同じ: 持っている物を離して、その手が打てるアイテムを用意する)。
+ * 2026-10-17 オーナー「入門でコレ知りたいみたいな時もある、クリックできるように。挙動は次へを押した時と同じ」
+ */
+export function lessonJump(i: number): void {
+  if (!topic.value) return;
+  s.hold(null);
+  goTopic(i);
+  prepareStep();
+}
+/** コース一覧から、そのコースの i 手目から始める */
+export function startTopicAt(c: TopicCourse, i: number): void {
+  startTopic(c, endCourse);
+  lessonJump(i);
 }

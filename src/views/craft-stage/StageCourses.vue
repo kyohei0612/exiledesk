@@ -5,11 +5,12 @@
 -->
 <script setup lang="ts">
 import { craftStage as s } from "../../state/craft-stage";
-import { endCourse, startCourse } from "../../state/craft-course";
-import { startTopic } from "../../state/craft-topic";
-import { cleared } from "../../state/craft-lesson";
+import { startCourse } from "../../state/craft-course";
+import { cleared, startTopicAt } from "../../state/craft-lesson";
+import { nameOf } from "../../state/craft-stage";
+import { freshItem } from "../../services/craft-stage/run-plan";
 import { CRAFT_COURSES, courseSlots } from "../../services/craft-stage/craft-courses";
-import { TOPIC_COURSES } from "../../services/craft-stage/topic-courses";
+import { TOPIC_COURSES, topicKey, type TopicCourse, type TopicStep } from "../../services/craft-stage/topic-courses";
 import { baseNameOf, tr } from "../../i18n/lang";
 import { jaTypeName } from "../../services/trade2/localize";
 import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
@@ -24,6 +25,14 @@ const LEVELS: Array<{ n: 1 | 2 | 3; label: JaEn; note: JaEn; chip: string; ring:
   { n: 3, label: ["中級", "Medium"], note: ["カタリストと液化した感情", "Catalysts and liquid emotions"], chip: "bg-amber-500/25 text-amber-100", ring: "border-amber-400/50 hover:border-amber-300" },
 ];
 const baseName = (b: string): string => baseNameOf({ base: b, baseJa: jaTypeName(b) });
+/** カードの手の一覧の名前 (エッセンスはそのコースのベースの棚から引く) */
+function stepLabel(c: TopicCourse, st: TopicStep): string {
+  if (st.use === "reset") return tr("白に戻す", "Reset to white");
+  if (st.use === "reveal") return tr("発現", "Reveal");
+  const d = s.data.value;
+  const key = st.use.startsWith("ess:") ? (d ? topicKey(st, d, freshItem(d, c.base, c.itemLevel)) : null) : st.use;
+  return [key ? nameOf(key) : st.use.split(":")[1] ?? st.use, ...(st.omens ?? []).map(nameOf)].join(" + ");
+}
 </script>
 
 <template>
@@ -36,15 +45,26 @@ const baseName = (b: string): string => baseNameOf({ base: b, baseJa: jaTypeName
       <div v-if="TOPIC_COURSES.some((c) => c.level === lv.n)" class="flex flex-col gap-2">
         <p class="flex items-center gap-2"><span class="rounded px-2 py-0.5 text-[12px] font-bold" :class="lv.chip">{{ t2(lv.label) }}</span><span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ t2(lv.note) }}</span></p>
         <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
-          <button v-for="c in TOPIC_COURSES.filter((x) => x.level === lv.n)" :key="c.id" type="button" data-topic-card class="g-plain flex min-w-0 flex-col items-start gap-1.5 rounded-xl border-2 bg-white/[0.03] px-4 py-3 text-left transition hover:bg-white/[0.06]" :class="lv.ring" :disabled="!s.data.value" @click="startTopic(c, endCourse)">
-            <span class="flex w-full items-center gap-2">
-              <b class="min-w-0 truncate text-[16px] text-[var(--exile-color-text-title)]">{{ t2(c.title) }}</b>
-              <span v-if="cleared.has(`topic:${c.id}`)" data-cleared class="shrink-0 rounded bg-amber-400 px-2 py-0.5 text-[11px] font-black text-black">{{ tr("クリア", "Cleared") }}</span>
-              <span class="ml-auto shrink-0 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${c.steps.length} 手`, `${c.steps.length} steps`) }}</span>
-            </span>
-            <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ t2(c.learn) }}</span>
-            <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("使うベース", "Base") }}: {{ baseName(c.base) }}</span>
-          </button>
+          <!-- カード: 上を押すと 1 手目から、下の手の一覧を押すとその手から (2026-10-17 オーナー「入門でコレ知りたい時もある、コース一覧で手を表示」) -->
+          <div v-for="c in TOPIC_COURSES.filter((x) => x.level === lv.n)" :key="c.id" data-topic-card-box class="flex min-w-0 flex-col rounded-xl border-2 bg-white/[0.03]" :class="lv.ring">
+            <button type="button" data-topic-card class="g-plain flex min-w-0 flex-col items-start gap-1.5 rounded-t-xl px-4 py-3 text-left transition hover:bg-white/[0.06]" :disabled="!s.data.value" @click="startTopicAt(c, 0)">
+              <span class="flex w-full items-center gap-2">
+                <b class="min-w-0 truncate text-[16px] text-[var(--exile-color-text-title)]">{{ t2(c.title) }}</b>
+                <span v-if="cleared.has(`topic:${c.id}`)" data-cleared class="shrink-0 rounded bg-amber-400 px-2 py-0.5 text-[11px] font-black text-black">{{ tr("クリア", "Cleared") }}</span>
+                <span class="ml-auto shrink-0 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${c.steps.length} 手`, `${c.steps.length} steps`) }}</span>
+              </span>
+              <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ t2(c.learn) }}</span>
+              <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("使うベース", "Base") }}: {{ baseName(c.base) }}</span>
+            </button>
+            <ol data-topic-card-steps class="columns-2 gap-x-2 border-t border-white/10 px-3 py-2 max-md:columns-1">
+              <li v-for="(st, i) in c.steps" :key="i" class="mb-0.5 break-inside-avoid">
+                <button type="button" class="g-plain flex w-full min-w-0 items-center gap-1.5 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :disabled="!s.data.value" :title="tr('この手から始める', 'Start from this step')" @click="startTopicAt(c, i)">
+                  <span class="w-5 shrink-0 text-right text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
+                  <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--exile-color-text-secondary)]">{{ stepLabel(c, st) }}</span>
+                </button>
+              </li>
+            </ol>
+          </div>
         </div>
       </div>
     </template>

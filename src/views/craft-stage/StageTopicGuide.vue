@@ -6,8 +6,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { canLessonBack, lessonBack, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
-import { endTopic, goTopic, topic, topicAt, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
+import { canLessonBack, lessonBack, lessonJump, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
+import { endTopic, topic, topicAt, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
@@ -165,7 +165,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
     </div>
     <div v-else-if="topicDone" data-topic-done class="mt-3 rounded-xl border-2 border-amber-300/70 bg-gradient-to-b from-amber-400/[0.18] to-transparent px-4 py-3">
       <p class="text-[18px] font-black text-amber-100">{{ tr("全部使ってみた! おつかれさま", "You tried them all!") }}</p>
-      <p v-if="topic.level !== 1" class="mt-0.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("気になった手は、下の一覧から押すともう一度試せます", "Click any step below to try it again") }}</p>
+      <p class="mt-0.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("気になった手は、下の一覧から押すともう一度試せます", "Click any step below to try it again") }}</p>
     </div>
 
     <!-- 前の手で起きたこと -->
@@ -190,11 +190,11 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
     <!-- 2 列は左の列を上から下へ、次に右の列 (並び順のまま読めるように) -->
     <ol class="mt-2 columns-2 gap-x-2 max-md:columns-1">
       <li v-for="i in order" :key="i" class="mb-0.5 break-inside-avoid">
-        <!-- 入門はボタンにしない (ただの表示。ホバーでカーソルも変わらない。2026-10-17 オーナー「入門のここはクリックできないように」「押せんのかな？って思っちゃう」) -->
-        <component :is="topic.level === 1 ? 'div' : 'button'" :type="topic.level === 1 ? undefined : 'button'" class="flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left" :class="[i === topicAt ? 'bg-amber-500/10' : '', topic.level === 1 ? 'cursor-default select-none' : 'g-plain hover:bg-white/5']" @click="topic.level === 1 ? undefined : goTopic(i)">
+        <!-- 押すとその手から (次へと同じ動き。2026-10-17 オーナー「やっぱりクリックできるように、挙動は次へを押した時と同じ」) -->
+        <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :class="i === topicAt ? 'bg-amber-500/10' : ''" @click="lessonJump(i)">
           <span class="grid size-4 shrink-0 place-items-center rounded-full text-[10px] font-bold" :class="i < topicAt ? 'bg-emerald-400 text-black' : i === topicAt ? 'bg-amber-400 text-black' : 'border border-white/25 text-white/50'">{{ i < topicAt ? "✓" : "" }}</span>
           <span class="min-w-0 flex-1 truncate text-[12px]" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ stepName(topic.steps[i]!) }}</span>
-        </component>
+        </button>
       </li>
     </ol>
   </section>
