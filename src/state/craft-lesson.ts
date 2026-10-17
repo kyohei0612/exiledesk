@@ -1,0 +1,73 @@
+/**
+ * craft-lesson.ts — チュートリアルのコースを遊んでいる間の決まり (2026-10-17 オーナー)。
+ * - 打ったら持った物を離す (「付けたらここでは即消しておk、連打する機会ないから」)
+ * - 「1 つ前に戻る」(「1 手戻すとかチュートリアルの仕様になってない」「MOD 一覧の横に 1 つ前に戻るボタン」):
+ *   動作を学ぶコースは手ごとの始めの状態を控えておき、手の番号ごと戻す (白に戻す手も戻せる)。
+ *   クラフトのコースは進み具合をアイテムから数えるので、いつもの 1 手戻す
+ * - ベース・アイテムレベルはコースが決めるので、ベースの帯 (StageSettings) はコースの間は出さない
+ * - 最後までやったコースは「クリア」(ブラウザに残す。キーはコースの id だけなので、手や文が変わるアップデートでも消えない。
+ *   2026-10-17 オーナー「クリアしたのに…みたいなかんじになるから A 型の細かい連中は」)
+ */
+import { computed, ref, watch } from "vue";
+import { craftStage as s } from "./craft-stage";
+import { course, courseView } from "./craft-course";
+import { topic, topicAt, topicDone } from "./craft-topic";
+
+export const inLesson = computed(() => !!topic.value || !!course.value);
+
+// ── クリア (topic:<id> / course:<id>) ─────────────────────────
+const CLEAR_KEY = "exiledesk.tutorialCleared.v1";
+function loadCleared(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(CLEAR_KEY) ?? "[]");
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+export const cleared = ref<Set<string>>(new Set(loadCleared()));
+function markCleared(id: string): void {
+  if (cleared.value.has(id)) return;
+  cleared.value = new Set([...cleared.value, id]);
+  try { localStorage.setItem(CLEAR_KEY, JSON.stringify([...cleared.value])); } catch { /* 残せない環境では今回だけ */ }
+}
+watch(topicDone, (d) => { if (d && topic.value) markCleared(`topic:${topic.value.id}`); });
+watch(() => courseView.value?.done, (d) => { if (d && course.value) markCleared(`course:${course.value.id}`); });
+
+watch(() => s.log.value.length, (n, old) => { if (inLesson.value && n > (old ?? 0)) s.hold(null); });
+
+/** 動作を学ぶコースの手ごとの始めの状態 (最後 = 今の手の始め) */
+interface Snap { at: number; item: typeof s.item.value; log: typeof s.log.value; startMods: typeof s.startMods.value; omens: string[] }
+const snaps: Snap[] = [];
+const now = (): Snap => ({ at: topicAt.value, item: s.item.value, log: s.log.value, startMods: s.startMods.value, omens: [...s.omens.value] });
+// 手の番号が変わったら (打って次へ・白に戻す・一覧から選ぶ・始め)、その手の始めとして控える。戻した時は控えない
+let restoring = false;
+watch([topic, topicAt], ([t], [oldT]) => {
+  if (!t) { snaps.length = 0; return; }
+  if (t !== oldT) { snaps.length = 0; snaps.push(now()); return; }
+  if (!restoring) snaps.push(now());
+}, { flush: "sync" });
+
+function restore(x: Snap): void {
+  restoring = true;
+  s.item.value = x.item;
+  s.log.value = x.log;
+  s.startMods.value = x.startMods;
+  s.omens.value = [...x.omens];
+  topicAt.value = x.at;
+  restoring = false;
+}
+
+/** 戻れるか */
+export const canLessonBack = computed(() => (topic.value ? topicAt.value > 0 || s.log.value.length > 0 : s.log.value.length > 0));
+
+/** 1 つ前に戻る。今の手の途中で別の手を打っていたら、先に今の手の始めへ */
+export function lessonBack(): void {
+  s.hold(null);
+  if (!topic.value) { if (s.log.value.length) s.undo(); return; }
+  const top = snaps[snaps.length - 1];
+  if (top && (top.log !== s.log.value || top.item !== s.item.value)) { restore(top); return; }
+  if (snaps.length < 2) return;
+  snaps.pop();
+  restore(snaps[snaps.length - 1]!);
+}

@@ -4,12 +4,13 @@
   前の手で何が起きたか (付いた / 消えた MOD) も出す。名前・説明はエミュレーターの物 (nameOf / stageHelp)
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { endTopic, goTopic, topic, topicAt, topicDone, topicReset, topicStep } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
-import Disclosure from "../../components/ui/Disclosure.vue";
+import { currencyHoverOf } from "../../services/currency/currency-hover";
+import { enOf } from "../../state/craft-stage-shelf";
 import { modText, tr } from "../../i18n/lang";
 import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
@@ -29,34 +30,47 @@ function stepName(st: TopicStep): string {
   return [main, ...(st.omens ?? []).map(nameOf)].join(" + ");
 }
 const iconOfStep = (st: TopicStep): string => (st.use === "reset" || st.use === "reveal" ? "" : st.use.startsWith("ess:") ? (essKey(st) ? iconOf(essKey(st)!) : "") : iconOf(st.use));
-/** 今の手のカレンシーとお告げのカードの「このステージでの動き」 */
+/**
+ * 今の手の動き (カレンシー・お告げごと): ゲームの公式の説明 (クライアントの原文、棚のカードの上と同じ) と、カードの「このステージでの動き」(条件・決まり) を畳まずに出す
+ * (2026-10-17 オーナー「説明はしょりすぎ、挙動の説明はかならずいる。箇条書きでも」「フラクチャーとかも何個以上の MOD で適応とか全然書いてない」)。
+ * この手で使わないお告げの案内 (「お告げ: …」の行) は外す
+ */
+const plain = (x: string): string => x.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
 const help = computed(() => {
   const cur = topicStep.value;
   if (!cur) return [];
-  const keys = [...(cur.key && cur.step.use !== "reveal" ? [cur.key] : []), ...(cur.step.omens ?? [])];
-  return keys.map((k) => ({ k, lines: stageHelp(k, s.data.value, s.item.value) })).filter((x) => x.lines.length);
+  const keys = cur.step.use === "reveal" ? ["reveal", ...(cur.step.omens ?? [])] : [...(cur.key ? [cur.key] : []), ...(cur.step.omens ?? [])];
+  return keys.map((k) => ({
+    k,
+    official: k === "reveal" ? [] : (currencyHoverOf(enOf(k, s.item.value))?.e ?? []).map(plain),
+    lines: stageHelp(k, s.data.value, s.item.value).filter((l) => !/^(お告げ|Omens):/.test(l)),
+  })).filter((x) => x.official.length || x.lines.length);
 });
 /** カードの頭と同じ: 上級・完全の MOD レベルの下限と、付く MOD (エッセンス・ルーン・感情) */
 const floor = computed(() => { const k = topicStep.value?.key; return k && topicStep.value?.step.use !== "reveal" ? stageFloor(k) : null; });
 const adds = computed(() => { const k = topicStep.value?.key; return k && topicStep.value?.step.use !== "reveal" ? stageAdds(k, s.data.value, s.item.value) : null; });
 /**
  * 上級・完全の例: このアイテムに出やすい MOD 1 つで、下限ぎりぎりで付く段と、すぐ下の付かない段 (エミュレーターの MOD 一覧の行から)。
- * 2026-10-17 オーナー「例も簡単に欲しい、これは付くけどこれは付かないみたいな」
+ * 2026-10-17 オーナー「例も簡単に欲しい、これは付くけどこれは付かないみたいな」。
+ * 境目に一番近い組 (付く段と付かない段の MOD レベルの差が一番小さい MOD) を選ぶ。同じ差なら出やすい MOD
+ * (2026-10-17 オーナー「ぎりぎりのところせめてくれ、50 以上付く・25 は付かないみたいな離れた例だとイメージしづらい」)
  */
 const example = computed(() => {
   const f = floor.value, d = s.data.value, it = s.item.value;
   if (!f || !d || !it) return null;
   const rows = modListFor(d, it).filter((r) => r.group === "normal" && !r.on && !r.blocked).sort((a, b) => b.weight - a.weight);
+  type Tier = (typeof rows)[number]["tiers"][number];
+  let best: { ok: Tier; ng: Tier } | null = null;
   // 行は同じ系統の MOD をまとめているので、MOD (modId) ごとの段で比べる
   for (const r of rows) for (const id of new Set(r.tiers.map((t) => t.modId))) {
     const ts = r.tiers.filter((t) => t.modId === id && t.ilvl <= s.itemLevel.value);
-    const ok = [...ts].reverse().find((t) => t.ilvl >= f), ng = ts.find((t) => t.ilvl < f);
-    if (ok && ng) return { ok, ng };
+    const above = ts.filter((t) => t.ilvl >= f), below = ts.filter((t) => t.ilvl < f);
+    if (!above.length || !below.length) continue;
+    const ok = above.reduce((a, b) => (b.ilvl < a.ilvl ? b : a)), ng = below.reduce((a, b) => (b.ilvl > a.ilvl ? b : a));
+    if (!best || ok.ilvl - ng.ilvl < best.ok.ilvl - best.ng.ilvl) best = { ok, ng };
   }
-  return null;
+  return best;
 });
-/** 細かい説明 (カードの「このステージでの動き」) は既定で閉じる */
-const more = ref(false);
 const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**").map((t, i) => ({ t, b: i % 2 === 1 }));
 /** 押すと持つ (お告げも掛ける)。発現の反響は掛けるだけ */
 function holdIt(): void {
@@ -68,6 +82,12 @@ function holdIt(): void {
 /** MOD 一覧の窓を開いて、その MOD の行へ (確認用。2026-10-17 オーナー「MOD 一覧もそこで出せるように」) */
 function jump(modId: string): void { s.modOverlay.value = true; s.modJump.value = { modId, n: (s.modJump.value?.n ?? 0) + 1 }; }
 const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
+/** 手の一覧の並び: 今の手から上に順に、済んだ手は ✓ のまま最後尾へ (2026-10-17 オーナー「終わったやつは列の最後尾に」)。全部済んだら元の順 */
+const order = computed(() => {
+  const n = topic.value?.steps.length ?? 0, at = topicAt.value;
+  const idx = [...Array(n).keys()];
+  return at >= n ? idx : [...idx.slice(at), ...idx.slice(0, at)];
+});
 </script>
 
 <template>
@@ -96,6 +116,11 @@ const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
       </div>
       <!-- 要点はエミュレーターのカードの頭と同じ大きな枠で (2026-10-17 オーナー「入門は要点でっかく表示のみ、文章長くてだるい」) -->
       <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>
+      <div v-for="h in help" :key="h.k" data-topic-how class="mt-1.5 rounded-lg bg-black/25 px-2.5 py-1.5">
+        <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ h.k === "reveal" ? tr("発現", "Reveal") : nameOf(h.k) }}</p>
+        <p v-for="(l, i) in h.official" :key="'o' + i" class="text-[13px] text-[var(--exile-color-text-primary)]">{{ l }}</p>
+        <p v-for="(l, i) in h.lines" :key="i" class="flex gap-1.5 text-[12px] text-[#cfc6ae]"><span class="text-amber-300/60">・</span><span><template v-for="(p, j) in parts(l)" :key="j"><b v-if="p.b" class="text-white">{{ p.t }}</b><template v-else>{{ p.t }}</template></template></span></p>
+      </div>
       <p v-if="floor" class="mt-1.5 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ tr(`MOD レベル ${floor} 以上だけ付く`, `Only mod level ${floor}+ tiers`) }}</p>
       <div v-if="example" data-topic-example class="mt-1.5 grid gap-0.5 rounded-lg bg-black/25 px-2.5 py-1.5 text-[12px]">
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("例", "Example") }}</p>
@@ -106,15 +131,6 @@ const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
         <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
         <p v-for="(l, i) in adds.lines" :key="i" class="text-[13px] font-semibold text-emerald-200">・{{ l }}</p>
       </div>
-      <template v-if="help.length">
-        <Disclosure v-model:open="more" kind="detail" class="mt-1.5" />
-        <div v-if="more">
-          <div v-for="h in help" :key="h.k" class="mt-1.5 rounded-md bg-black/25 px-2.5 py-1.5">
-            <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ nameOf(h.k) }}</p>
-            <p v-for="(l, i) in h.lines" :key="i" class="flex gap-1.5 text-[12px] text-[#cfc6ae]"><span class="text-amber-300/60">・</span><span><template v-for="(p, j) in parts(l)" :key="j"><b v-if="p.b" class="text-white">{{ p.t }}</b><template v-else>{{ p.t }}</template></template></span></p>
-          </div>
-        </div>
-      </template>
     </div>
     <div v-else-if="topicDone" data-topic-done class="mt-3 rounded-xl border-2 border-amber-300/70 bg-gradient-to-b from-amber-400/[0.18] to-transparent px-4 py-3">
       <p class="text-[18px] font-black text-amber-100">{{ tr("全部使ってみた! おつかれさま", "You tried them all!") }}</p>
@@ -131,10 +147,10 @@ const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
 
     <!-- 手の一覧 (押すとその手から) -->
     <ol class="mt-2 flex flex-col gap-0.5">
-      <li v-for="(st, i) in topic.steps" :key="i">
+      <li v-for="i in order" :key="i">
         <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :class="i === topicAt ? 'bg-amber-500/10' : ''" @click="goTopic(i)">
           <span class="grid size-4 shrink-0 place-items-center rounded-full text-[10px] font-bold" :class="i < topicAt ? 'bg-emerald-400 text-black' : i === topicAt ? 'bg-amber-400 text-black' : 'border border-white/25 text-white/50'">{{ i < topicAt ? "✓" : "" }}</span>
-          <span class="min-w-0 flex-1 truncate text-[12px]" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ stepName(st) }}</span>
+          <span class="min-w-0 flex-1 truncate text-[12px]" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ stepName(topic.steps[i]!) }}</span>
         </button>
       </li>
     </ol>

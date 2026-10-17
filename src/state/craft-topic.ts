@@ -14,12 +14,14 @@ export const topicAt = ref(0);
 
 export function startTopic(c: TopicCourse, onStart?: () => void): void {
   onStart?.();
-  topic.value = c;
-  topicAt.value = 0;
+  topic.value = null;
   s.base.value = c.base;
   s.itemLevel.value = c.itemLevel;
   s.mode.value = "hand";
   s.reset();
+  // コースは白にしてから付ける (1 つ前に戻るの始めの状態 = 白。craft-lesson.ts)
+  topicAt.value = 0;
+  topic.value = c;
 }
 export function endTopic(): void { topic.value = null; }
 /** 手を選び直す (押した手から) */

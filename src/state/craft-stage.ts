@@ -144,6 +144,7 @@ const handQuiz = computed<QuizRecipe | null>(() => {
 
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
+
 export const priceOf = (key: string): number => priceOfKey(key, item.value);
 export const iconOf = (key: string): string => iconOfKey(key, item.value);
 export const nameOf = (key: string): string => nameOfKey(key, item.value);
@@ -328,7 +329,6 @@ export const craftStage = {
     // 食ったお告げは外す
     const ate = p.out.omen ? p.out.omen.split("+") : [];
     if (ate.length && !omenKeep.value) omens.value = omens.value.filter((o) => !ate.includes(o));
-    if (mode.value === "tutorial" && !opts.quiet) held.value = null; // チュートリアルは 1 手ずつ: 打ったら離す (2026-10-17 オーナー「連打する機会ない」)
   },
   /**
    * クイズのレシピで 1 手 (ADR-003): 今のアイテムに当たる答えを打つ (お告げは答えの物に掛け替える)。

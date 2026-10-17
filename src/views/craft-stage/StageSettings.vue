@@ -8,6 +8,7 @@ import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { modText, tr } from "../../i18n/lang";
 import { SIM_LOCKED } from "../../state/craft-stage";
+import { inLesson } from "../../state/craft-lesson";
 import StageRecipeStart from "./StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, ref, watch } from "vue";
@@ -108,7 +109,7 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
 <template>
   <!-- 設定と操作 -->
   <!-- data-craft-top: クラフトの位置 (「クラフトへ」とベースを選んだ後はここの外枠の少し上。2026-10-10 オーナー「ベースの上枠の外枠から少し上空けた位置が心地いい」) -->
-  <section v-if="!s.replay.value && s.mode.value !== 'tutorial'" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
+  <section v-if="!s.replay.value && s.mode.value !== 'tutorial' && !inLesson" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
     <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
     <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
       <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>

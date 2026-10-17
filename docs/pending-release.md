@@ -10,4 +10,5 @@ OK が出ていない物を外して出す時は `git revert --no-edit --no-comm
 | チュートリアル (動作を学ぶコース 6 本 + 実践 5 本) | 5765aed5 ほか | チュートリアルを公開しました: 基本のオーブ・エッセンス・冒涜・お告げ・カタリストと品質・液化した感情を、1 つずつ打って覚えるコース | Tutorials are live: courses that teach basic orbs, essences, desecration, omens, catalysts and quality, and liquid emotions one step at a time |
 
 チュートリアルを出す時は `src/state/craft-stage.ts` の `TUTORIAL_LOCKED` を `false` にするだけ (シミュレーターは SIM_LOCKED で閉じたまま)。
+一覧に出すコースはオーナーの合格が出た段だけ (`StageCourses.vue` の `OPEN_LEVELS` と `PRACTICE_OPEN`、開発版でも。2026-10-17 は入門だけ)。合格したら足す。
 済み: MOD 一覧の「付ける」(v0.1.550、2026-10-17)。POE2Tube への連絡: 目印が `mod-add-n / f / d / e` に変わった (メモ poe2tube-handoff)。
