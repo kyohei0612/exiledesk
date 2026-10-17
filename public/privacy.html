@@ -74,7 +74,8 @@
 <p>作業中のアイテム・設定・表示の言語などは、ブラウザの保存領域 (localStorage) に保存します。これは端末の中にだけあり、使い方の記録として送る分を除いて当サイトには届きません。ブラウザのサイトデータを消すと消えます。</p>
 
 <h2>4. 記録を止める方法</h2>
-<p>ページの一番下の「この端末は記録しない」を押すと、その端末からは使い方の記録を送らなくなり、それまでに届いた記録も消します。もう一度押すと再開します。</p>
+<p>下の「この端末は記録しない」を押すと、その端末からは使い方の記録を送らなくなり、それまでに届いた記録も消します。「記録を再開する」で元に戻ります。</p>
+<p class="note" data-nolog-box>この端末: <b data-nolog-state>記録しています</b> — <a href="/?nolog=1" data-nolog-off>この端末は記録しない</a><span data-nolog-sep> / </span><a href="/?nolog=0" data-nolog-on>記録を再開する</a></p>
 
 <h2>5. 広告について</h2>
 <p>当サイトは、第三者配信の広告サービス (NitroPay) を利用して広告を表示します。広告の配信事業者は、利用者の興味に応じた広告を出すために、Cookie などの技術を使って当サイトや他のサイトへのアクセスの情報を使うことがあります。この情報にお名前やメールアドレスは含まれません。</p>
@@ -113,7 +114,7 @@
   <h2>Stored on your device</h2>
   <p>Your work in progress and settings are kept in your browser's localStorage and never leave your device except as the usage data above.</p>
   <h2>Opting out</h2>
-  <p>Click "Don't log this device" at the bottom of the page. This stops usage data from that device and deletes what was already sent.</p>
+  <p>Use "Don't log this device" in section 4 above (<a href="/?nolog=1">don't log</a> / <a href="/?nolog=0">resume logging</a>). This stops usage data from that device and deletes what was already sent.</p>
   <h2>Advertising</h2>
   <p>We use a third-party ad service (NitroPay). Ad partners may use cookies and similar technologies to show ads based on your interests. See the <a href="https://nitropay.com/privacy" rel="noopener" target="_blank">NitroPay privacy policy</a>, <a href="https://adssettings.google.com/" rel="noopener" target="_blank">Google Ad Settings</a>, <a href="https://optout.aboutads.info/" rel="noopener" target="_blank">aboutads.info</a> or <a href="https://www.youronlinechoices.eu/" rel="noopener" target="_blank">youronlinechoices.eu</a> to opt out of personalized ads. Sponsored slots are marked "PR".</p>
   <h2>Third-party services</h2>
@@ -123,5 +124,15 @@
 </section>
 </main>
 <footer><div class="in">ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。 · <a href="/about.html">ExileDesk について</a> · <a href="/privacy.html">プライバシーポリシー</a></div></footer>
+<script>
+  // 今の状態 (本体の no-log.ts と同じ印 exiledesk.noLog)。切り替えは本体の ?nolog=1 / ?nolog=0 (サーバーの記録も消す)
+  try {
+    var off = localStorage.getItem("exiledesk.noLog") === "1";
+    var st = document.querySelector("[data-nolog-state]");
+    if (st) st.textContent = off ? "記録を止めています" : "記録しています";
+    // 今の状態に合う方のリンクだけ出す
+    [off ? "[data-nolog-off]" : "[data-nolog-on]", "[data-nolog-sep]"].forEach(function (q) { var el = document.querySelector(q); if (el) el.style.display = "none"; });
+  } catch (e) { /* 読めない時は両方出す */ }
+</script>
 </body>
 </html>
