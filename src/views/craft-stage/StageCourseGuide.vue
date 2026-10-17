@@ -6,13 +6,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { course, courseBases, courseView, endCourse, restartCourse } from "../../state/craft-course";
+import { course, courseBases, courseView, restartCourse } from "../../state/craft-course";
 import { aimLabel } from "../../services/craft-stage/mod-list";
 import { tr } from "../../i18n/lang";
 import { displayCurrency } from "../../state/display-currency";
 import Icon from "../../components/ui/Icon.vue";
 import StageTopicGuide from "./StageTopicGuide.vue";
-import { canLessonBack, lessonBack } from "../../state/craft-lesson";
+import { canLessonBack, lessonBack, quitLesson } from "../../state/craft-lesson";
 import { topic } from "../../state/craft-topic";
 import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
 import type { QuizSlot } from "../../services/craft-stage/quiz-recipe";
@@ -74,7 +74,7 @@ const cost = computed(() => s.log.value[s.log.value.length - 1]?.out.cost.cumula
       <span v-else class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ t2(course.video.title) }}</span>
       <button type="button" data-lesson-back class="g-btn sm ml-auto inline-flex items-center gap-1" :disabled="!canLessonBack" :title="tr('1 つ前の手に戻る (R でも)', 'Go back one step (R also works)')" @click="lessonBack">{{ tr("1 つ前に戻る", "Back one step") }}<kbd class="kbd max-md:hidden">R</kbd></button>
       <button type="button" class="g-btn sm" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
-      <button type="button" class="g-btn sm" @click="endCourse">{{ tr("コースをやめる", "Quit course") }}</button>
+      <button type="button" class="g-btn sm" @click="quitLesson">{{ tr("コースをやめる", "Quit course") }}</button>
     </header>
     <p class="mt-1 text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("作り方は自由。順番と、今の状況でのおすすめの手だけ案内します。アイコンを押すとその物を持ちます", "Craft however you like. This shows the order and a suggested move for the current state; click an icon to hold it") }}</p>
 

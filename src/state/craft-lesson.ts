@@ -23,6 +23,8 @@ import { isRareChance } from "../utils/format-pct";
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** コースを終える (タブを押した時) */
 export function endLesson(): void { endTopic(); endCourse(); }
+/** コースをやめる: チュートリアルのタブ (コース一覧) に戻る (2026-10-17 オーナー「エミュレーターから開始になってる、タブはチュートリアルから」) */
+export function quitLesson(): void { s.hold(null); endLesson(); s.mode.value = "tutorial"; }
 /** 動作を学ぶコースの間はカレンシーの棚を出さない (使う物は今の手の枠から持つ。実践のコースは棚を出す。2026-10-17 オーナー「チュートリアルではカレンシーは表示しないでおk、実践くらいじゃね」) */
 export const inTopic = computed(() => !!topic.value);
 

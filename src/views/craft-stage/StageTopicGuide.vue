@@ -6,8 +6,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { canLessonBack, lessonBack, lessonJump, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
-import { endTopic, topic, topicAt, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
+import { canLessonBack, lessonBack, lessonJump, quitLesson, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
+import { topic, topicAt, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
@@ -127,7 +127,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <button v-if="topicUsed" type="button" data-topic-retry class="g-btn sm mr-auto" @click="retryStep">{{ tr("もう一度", "Try again") }}</button>
       <button type="button" data-lesson-back class="g-btn sm inline-flex items-center gap-1" :disabled="!canLessonBack" :title="tr('1 つ前の手に戻る (R でも)', 'Go back one step (R also works)')" @click="lessonBack">{{ tr("1 つ前に戻る", "Back one step") }}<kbd class="kbd max-md:hidden">R</kbd></button>
       <button type="button" data-topic-mods class="g-btn sm" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
-      <button type="button" class="g-btn sm" @click="endTopic">{{ tr("コースをやめる", "Quit course") }}</button>
+      <button type="button" class="g-btn sm" @click="quitLesson">{{ tr("コースをやめる", "Quit course") }}</button>
     </div>
     <div v-if="topicStep" data-topic-now class="rounded-lg border-2 border-amber-300/50 bg-amber-500/[0.08] px-3 py-2">
       <p class="text-[11px] font-bold text-amber-200">{{ tr(`${topicAt + 1} 手目: これを使ってみる`, `Step ${topicAt + 1}: try this`) }}</p>
