@@ -54,8 +54,9 @@ const data = shallowRef<PatchData | null>(null);
 const item = shallowRef<StageItem | null>(null);
 const log = shallowRef<PlayedStep[]>([]);
 const held = ref<string | null>(null);
-/** 掛けてあるお告げ */
+/** 掛けてあるお告げ。omenKeep = 打っても外さない (使った分の費用は毎回。2026-10-17 要望 aef329b8「削減のお告げを ON にしたままカオス連打」) */
 const omens = ref<string[]>([]);
+const omenKeep = ref(false);
 const seed = ref(0);
 /**
  * 次の手の乱数 (2026-10-09 オーナー「1 戻すと次も同じ。1 戻したら次の MOD はまた新しい変数で」「ヒネコラの予見が固定値」)。
@@ -172,7 +173,7 @@ function usableWith(key: string, om: readonly string[]): string | null {
   return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
 }
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
+  data, item, log, held, omens, omenKeep, seed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -325,7 +326,7 @@ export const craftStage = {
     if (!opts.quiet) recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
     // 食ったお告げは外す
     const ate = p.out.omen ? p.out.omen.split("+") : [];
-    if (ate.length) omens.value = omens.value.filter((o) => !ate.includes(o));
+    if (ate.length && !omenKeep.value) omens.value = omens.value.filter((o) => !ate.includes(o));
   },
   /**
    * クイズのレシピで 1 手 (ADR-003): 今のアイテムに当たる答えを打つ (お告げは答えの物に掛け替える)。
