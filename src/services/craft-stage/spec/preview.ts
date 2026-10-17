@@ -7,7 +7,8 @@
  *   reroll → 数値が変わる MOD (固定と未発現以外。祝福のお告げは暗黙だけなので無し)、fracture → 固定される候補
  *   addUnrevealed → 骨で入れ替わる物 (深淵の王の印、満杯の側の候補)
  *   add → 付く空き (お告げの側 ∩ 空きのある側に、付く数まで。大いなる高貴なら 2 ずつ = 最大 4)。消してから付ける手 (カオス) は空きを光らせない
- * 付ける手のうちエッセンス・冒涜は空きを光らせない (付く側が決まっている / 付ける作業は要らない、オーナー)
+ * 付ける手のうちエッセンス・冒涜は空きを光らせない (付く側が決まっている / 付ける作業は要らない、オーナー)。
+ * お告げを掛けていない時は何も光らせない (お告げで変わる所を見せる物)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { allMods, limitOf, listOf, room, SIDES, unfracturable } from "../stage-core";
@@ -29,6 +30,8 @@ const fixedRng = (): number => 0.5;
 export function previewUse(data: PatchData, item: StageItem, key: string, omens: readonly string[]): UsePreview | null {
   const plan = planSpec(data, item, key, omens);
   if (!plan || plan.block) return null;
+  // 光らせるのは、この手に効くお告げを掛けている時だけ (2026-10-17 オーナー「お告げオンの時にカレンシー持ったらで限定、お告げオフは何でもいい」。フラクチャーは完全ランダムなので光らない)
+  if (!plan.used.length) return null;
   const { mods, actions } = plan;
   const change = new Set<string>();
   const open: Record<StageSide, number> = { prefix: 0, suffix: 0 };
