@@ -155,8 +155,9 @@ const order = computed(() => {
     </header>
     <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300 transition-[width] duration-500" :style="{ width: `${(topicAt / topic.steps.length) * 100}%` }" /></div>
     <!-- 手の一覧 (押すとその手から) -->
-    <ol class="mt-2 grid grid-cols-2 gap-x-2 gap-y-0.5 max-md:grid-cols-1">
-      <li v-for="i in order" :key="i">
+    <!-- 2 列は左の列を上から下へ、次に右の列 (並び順のまま読めるように) -->
+    <ol class="mt-2 columns-2 gap-x-2 max-md:columns-1">
+      <li v-for="i in order" :key="i" class="mb-0.5 break-inside-avoid">
         <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :class="i === topicAt ? 'bg-amber-500/10' : ''" @click="goTopic(i)">
           <span class="grid size-4 shrink-0 place-items-center rounded-full text-[10px] font-bold" :class="i < topicAt ? 'bg-emerald-400 text-black' : i === topicAt ? 'bg-amber-400 text-black' : 'border border-white/25 text-white/50'">{{ i < topicAt ? "✓" : "" }}</span>
           <span class="min-w-0 flex-1 truncate text-[12px]" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ stepName(topic.steps[i]!) }}</span>
