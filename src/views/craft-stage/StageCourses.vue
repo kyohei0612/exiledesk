@@ -4,7 +4,7 @@
   どれからでも始められる。押すとエミュレーターで始まり、横に案内が出る
 -->
 <script setup lang="ts">
-import { ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { startCourse } from "../../state/craft-course";
 import { cleared, startTopicAt } from "../../state/craft-lesson";
@@ -28,8 +28,16 @@ const LEVELS: Array<{ n: 1 | 2 | 3; label: JaEn; note: JaEn; chip: string; ring:
 ];
 const baseName = (b: string): string => baseNameOf({ base: b, baseJa: jaTypeName(b) });
 /** 手の一覧を開いているコース (既定は閉じる。押すと開く。2026-10-17 オーナー「全部出したらバカでしょ、コース一覧を見るで見れるように」) */
-const openSteps = ref<Set<string>>(new Set());
-function toggleSteps(id: string): void { const n = new Set(openSteps.value); if (n.has(id)) n.delete(id); else n.add(id); openSteps.value = n; }
+/** 開けるのは 1 つだけ。そのカードの外を押したら閉じる (オーナー「他の動作したら閉じる、開きっぱなしは品が無い」) */
+const openSteps = ref<string | null>(null);
+function toggleSteps(id: string): void { openSteps.value = openSteps.value === id ? null : id; }
+function closeOutside(e: PointerEvent): void {
+  if (!openSteps.value) return;
+  const box = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-topic-card-box]");
+  if (box?.dataset.course !== openSteps.value) openSteps.value = null;
+}
+onMounted(() => document.addEventListener("pointerdown", closeOutside));
+onBeforeUnmount(() => document.removeEventListener("pointerdown", closeOutside));
 /** カードの手の一覧の名前 (エッセンスはそのコースのベースの棚から引く) */
 function stepLabel(c: TopicCourse, st: TopicStep): string {
   if (st.use === "reset") return tr("白に戻す", "Reset to white");
@@ -51,7 +59,7 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
         <p class="flex items-center gap-2"><span class="rounded px-2 py-0.5 text-[12px] font-bold" :class="lv.chip">{{ t2(lv.label) }}</span><span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ t2(lv.note) }}</span></p>
         <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <!-- カード: 上を押すと 1 手目から、下の手の一覧を押すとその手から (2026-10-17 オーナー「入門でコレ知りたい時もある、コース一覧で手を表示」) -->
-          <div v-for="c in TOPIC_COURSES.filter((x) => x.level === lv.n)" :key="c.id" data-topic-card-box class="flex min-w-0 flex-col rounded-xl border-2 bg-white/[0.03]" :class="lv.ring">
+          <div v-for="c in TOPIC_COURSES.filter((x) => x.level === lv.n)" :key="c.id" data-topic-card-box :data-course="c.id" class="flex min-w-0 flex-col rounded-xl border-2 bg-white/[0.03]" :class="lv.ring">
             <button type="button" data-topic-card class="g-plain flex min-w-0 flex-col items-start gap-1.5 rounded-t-xl px-4 py-3 text-left transition hover:bg-white/[0.06]" :disabled="!s.data.value" @click="startTopicAt(c, 0)">
               <span class="flex w-full items-center gap-2">
                 <b class="min-w-0 truncate text-[16px] text-[var(--exile-color-text-title)]">{{ t2(c.title) }}</b>
@@ -61,8 +69,8 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
               <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ t2(c.learn) }}</span>
               <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("使うベース", "Base") }}: {{ baseName(c.base) }}</span>
             </button>
-            <button type="button" data-topic-card-toggle class="g-plain flex items-center gap-1 border-t border-white/10 px-4 py-1.5 text-left text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04]" :aria-expanded="openSteps.has(c.id)" @click="toggleSteps(c.id)"><Icon :name="openSteps.has(c.id) ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ openSteps.has(c.id) ? tr("コース一覧を閉じる", "Hide the steps") : tr("コース一覧を見る (押すとその手から)", "Show the steps (click one to start there)") }}</button>
-            <ol v-if="openSteps.has(c.id)" data-topic-card-steps class="columns-2 gap-x-2 px-3 pb-2 max-md:columns-1">
+            <button type="button" data-topic-card-toggle class="g-plain flex items-center gap-1 border-t border-white/10 px-4 py-1.5 text-left text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/[0.04]" :aria-expanded="openSteps === c.id" @click="toggleSteps(c.id)"><Icon :name="openSteps === c.id ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ openSteps === c.id ? tr("コース一覧を閉じる", "Hide the steps") : tr("コース一覧を見る (押すとその手から)", "Show the steps (click one to start there)") }}</button>
+            <ol v-if="openSteps === c.id" data-topic-card-steps class="columns-2 gap-x-2 px-3 pb-2 max-md:columns-1">
               <li v-for="(st, i) in c.steps" :key="i" class="mb-0.5 break-inside-avoid">
                 <button type="button" class="g-plain flex w-full min-w-0 items-center gap-1.5 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :disabled="!s.data.value" :title="tr('この手から始める', 'Start from this step')" @click="startTopicAt(c, i)">
                   <span class="w-5 shrink-0 text-right text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
