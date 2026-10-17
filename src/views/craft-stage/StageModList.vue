@@ -142,7 +142,7 @@ const flashKey = ref<string | null>(null);
 /** この一覧の根 (窓とページの下の 2 つが同時にあるので、行は自分の中から探す) */
 const listEl = ref<HTMLElement | null>(null);
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
-/** カードから飛んで来た行と、アイテムに付いている段 (枠で囲んで残す。2026-10-17 オーナー「MOD クリックで MOD 一覧のこれが付いてますって枠で」) */
+/** カードから飛んで来た MOD の、アイテムに付いている段 (その段だけ枠で囲んで残す。全体の枠は無し、2026-10-17 オーナー「MOD クリックで MOD 一覧のこれが付いてますって枠で」) */
 const jumped = ref<{ key: string; modId: string; rank: string | null } | null>(null);
 const isJumpTier = (key: string, modId: string, rank: string): boolean => !!jumped.value && jumped.value.key === key && jumped.value.modId === modId && jumped.value.rank === rank;
 /** カードの MOD を押した: その MOD の行のある節・行を探して開き、一気に送る (ワープ。2026-10-10 オーナー「MOD をクリックしたらその MOD のあるとこまでスクロール」) */
@@ -390,7 +390,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
               <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap text-right" :class="heldCands ? 'text-sky-200' : ''">{{ heldCands ? ('bone' in heldCands ? tr("候補に出る", "Offered") : tr("付く確率", "Chance")) : tr("出やすさ", "Weight") }}</span><span class="w-6 text-right">{{ tr("段", "T") }}</span><span class="w-7 text-right">Lv</span></span>
             </p>
             <p v-if="!col.items.length" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
-            <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '', jumped?.key === `${sec.sid}:${r.id}` ? 'rounded-md ring-2 ring-amber-300/80 shadow-[0_0_12px_rgba(251,191,36,0.35)]' : '']">
+            <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '']">
               <!-- 1 系統 1 行。後ろの棒が出やすさ (列の一番出やすい物を 100%)。カレンシーを持っている時は左に狙いのチェック欄 -->
               <div class="flex items-center gap-0">
               <label v-if="heldCands" class="flex w-5 shrink-0 cursor-pointer justify-center self-stretch" :class="heldShare(r) ? '' : 'pointer-events-none opacity-25'" :title="tr('狙いに入れる (付きうる段を全部。段の表で段ごとにも選べる)', 'Add to targets (all tiers that can roll; pick tiers in the tier table)')">
