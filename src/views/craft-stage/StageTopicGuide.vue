@@ -113,12 +113,8 @@ const lastRows = computed(() => {
 });
 /** MOD の札: ティア · MOD レベル · プレ / サフィ */
 const modInfo = (m: StageMod): string => [m.tierName, tr(`MOD レベル ${m.modLevel}`, `mod level ${m.modLevel}`), m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix")].filter(Boolean).join(" · ");
-/** 手の一覧の並び: 今の手から上に順に、済んだ手は ✓ のまま最後尾へ (2026-10-17 オーナー「終わったやつは列の最後尾に」)。全部済んだら元の順 */
-const order = computed(() => {
-  const n = topic.value?.steps.length ?? 0, at = topicAt.value;
-  const idx = [...Array(n).keys()];
-  return at >= n ? idx : [...idx.slice(at), ...idx.slice(0, at)];
-});
+/** 手の一覧はいつも元の順 (2026-10-17 オーナー「全容が見れるので並び替えずにそのまま」。前は済んだ手を最後尾に回していた) */
+const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
 </script>
 
 <template>
