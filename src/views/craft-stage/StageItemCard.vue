@@ -128,11 +128,11 @@ const skillQ = computed(() => skillQualityOf(props.item.base, props.item.cls.cat
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
 /** ベースの品質とは別にカタリストの品質を持つベース (グラスピングメイル)。品質の行を 2 つに分ける */
 const extraCat = computed(() => hasExtraCatalyst(props.item.base));
-/** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
+/** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、エッセンス = 薄い青。冒涜は文字は普通の青で、行をトレードと同じ緑の帯に。2026-10-17 オーナー「MOD の色は赤じゃなくて他の MOD と同じで」) */
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "", tag: "" };
   if (m.fractured) return { cls: "text-mod-fractured", tag: tr("フラクチャー", "Fractured") };
-  if (m.desecrated) return { cls: "text-mod-desecrated", tag: tr("冒涜", "Desecrated") };
+  if (m.desecrated) return { cls: "text-rarity-magic", tag: tr("冒涜", "Desecrated") };
   // 液化した感情 (ジュエル) で付いた物はデリリウム (2026-10-11 オーナー「デリリウムに変えて」)
   if (m.crafted) return { cls: "text-mod-crafted", tag: m.modId.includes("/Emotion_") ? tr("デリリウム", "Delirium") : tr("エッセンス", "Essence") };
   // 要望 ㉙: 特殊 MOD のルーンの MOD (重みは仮定) / アルダーのルーンで属性を変えた MOD
@@ -159,7 +159,8 @@ const rows = computed(() => {
     const st = (r.m as { stats?: string[] }).stats?.[0] ?? (em?.tiers?.[0] as { stats?: string[] } | undefined)?.stats?.[0];
     const ord = st != null ? (STAT_ORDER as Record<string, number>)[st] ?? 1e9 : 1e9;
     return { ...r, text: b ? modText(b) : modText(r.m), boosted: !!b, tags, ord };
-  }).sort((x, y) => x.ord - y.ord);
+  // 冒涜の MOD (未発現も) はゲーム・トレードと同じく一番下 (2026-10-17 オーナー「冒涜って基本一番下よね」)
+  }).sort((x, y) => Number(!!(x.m.desecrated || x.m.unrevealed)) - Number(!!(y.m.desecrated || y.m.unrevealed)) || x.ord - y.ord);
 });
 </script>
 
@@ -246,7 +247,7 @@ const rows = computed(() => {
           @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
-          :class="[r.m.desecrated ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
+          :class="[r.m.desecrated ? 'g-abyss-row' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
           @contextmenu="!holding && removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >

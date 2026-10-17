@@ -34,6 +34,12 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), 0 0 28px rgba(110, 160, 50, 0.14);
 }
 
+/* 冒涜の MOD の行 (アイテムのカード)。発現の窓 (.g-abyss) と同じアビスの絵の真ん中を暗く敷き、縁は緑の淡い光 (細い線は使わない)。2026-10-17 オーナー「ここも冒涜仕様に」 */
+/* 冒涜の MOD の行: トレードと同じく左右に緑の帯・真ん中は黒 (ゲームの HoverModBGAbyss の内側の帯を左右に。2026-10-17 オーナー「枠はトレードで言うとこんな感じ」) */
+.g-abyss-row {
+  background: url("/ui-art/abyss-modrow.webp") center / 100% 100% no-repeat, #050604;
+}
+
 .g-head {
   position: relative;
   display: flex;
