@@ -194,11 +194,11 @@ const order = computed(() => {
     <!-- 2 列は左の列を上から下へ、次に右の列 (並び順のまま読めるように) -->
     <ol class="mt-2 columns-2 gap-x-2 max-md:columns-1">
       <li v-for="i in order" :key="i" class="mb-0.5 break-inside-avoid">
-        <!-- 入門は押せない (順に進むだけ。2026-10-17 オーナー「入門のここはクリックできないように」) -->
-        <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left disabled:cursor-default" :class="[i === topicAt ? 'bg-amber-500/10' : '', topic.level === 1 ? '' : 'hover:bg-white/5']" :disabled="topic.level === 1" @click="goTopic(i)">
+        <!-- 入門はボタンにしない (ただの表示。ホバーでカーソルも変わらない。2026-10-17 オーナー「入門のここはクリックできないように」「押せんのかな？って思っちゃう」) -->
+        <component :is="topic.level === 1 ? 'div' : 'button'" :type="topic.level === 1 ? undefined : 'button'" class="flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-0.5 text-left" :class="[i === topicAt ? 'bg-amber-500/10' : '', topic.level === 1 ? 'cursor-default select-none' : 'g-plain hover:bg-white/5']" @click="topic.level === 1 ? undefined : goTopic(i)">
           <span class="grid size-4 shrink-0 place-items-center rounded-full text-[10px] font-bold" :class="i < topicAt ? 'bg-emerald-400 text-black' : i === topicAt ? 'bg-amber-400 text-black' : 'border border-white/25 text-white/50'">{{ i < topicAt ? "✓" : "" }}</span>
           <span class="min-w-0 flex-1 truncate text-[12px]" :class="i < topicAt ? 'text-emerald-100/80' : 'text-[var(--exile-color-text-secondary)]'">{{ stepName(topic.steps[i]!) }}</span>
-        </button>
+        </component>
       </li>
     </ol>
   </section>
