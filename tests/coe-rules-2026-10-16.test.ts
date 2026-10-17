@@ -3,6 +3,7 @@
  * 期待値は CoE beta の package_poe2.js (写し data-cache/coe-beta-package_poe2.js):
  *   1. poe2_desecrate: 両側が空いていれば randomNumber(0,2) で半々
  *   2. poe2_desecrate: 空きが無ければ annul() (固定以外の全部から等しく 1 つ) → 空いた側に付く
+ *   4. 印がある時の骨: ネクロマンシーのお告げは使わない (オーナーの決め、2026-10-17)
  *   5. getRemovableModifiers: CoE は光と左右の消去が一緒に効くが、オーナーの決めで光を使う時は左右を使わない (2026-10-17)
  *   10. exaltedParams: 1 + 0.2 × 品質、20% を超えた分は 1% ごとに +0.12
  */
@@ -69,6 +70,20 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(left.applied).toBe(true);
     expect(left.removed[0]!.desecrated).toBe(true);
     expect(left.omensUsed).toEqual(["OmenofLight"]);
+  });
+
+  it("4. 深淵の王の印がある時の骨は印と入れ替わり、左右のネクロマンシーのお告げは使わない (減らない。2026-10-17 オーナー)", async () => {
+    const { essenceShelf } = await import("../src/state/craft-stage-shelf");
+    const it = rareWhere((x) => room(x, "prefix") && room(x, "suffix"));
+    const key = essenceShelf(data, it).find((g) => g.kind === "the Abyss")!.keys.find((k) => k.startsWith("essence:perfect:"))!;
+    const marked = applyCurrency(data, it, key, mulberry32(3));
+    expect(marked.applied, marked.reason).toBe(true);
+    const mark = allMods(marked.item).find((m) => m.abyssMark)!;
+    const other = mark.side === "prefix" ? "OmenofDextralNecromancy" : "OmenofSinistralNecromancy";
+    const bone = applyCurrency(data, marked.item, "desecrate", mulberry32(4), [other]);
+    expect(bone.applied, bone.reason).toBe(true);
+    expect(bone.added[0]!.side).toBe(mark.side);
+    expect(bone.omensUsed ?? []).not.toContain(other);
   });
 
   it("14. アルダーのルーンはクライアントの変換表 (耐性以外の行) の MOD だけを変える", async () => {
