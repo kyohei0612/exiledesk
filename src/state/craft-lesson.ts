@@ -18,6 +18,7 @@ import { freshItem, startFrom } from "../services/craft-stage/run-plan";
 import { applyCurrency } from "../services/craft-stage/apply-currency";
 import { mulberry32 } from "../services/htc/rng";
 import type { StageItem } from "../services/craft-stage/types";
+import { isRareChance } from "../utils/format-pct";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** コースを終える (タブを押した時) */
@@ -119,4 +120,24 @@ export function lessonBack(): void {
   if (snaps.length < 2) return;
   snaps.pop();
   restore(snaps[snaps.length - 1]!);
+}
+
+/**
+ * 完全の手 (王者・高貴・カオス) は神の演出が出る段 (付いた瞬間の確率が 0.2% 以下) が付くように、次の手の乱数を選んでおく。
+ * 裏で試し打ち (quiet: 記録・音なし) → 戻すを繰り返し、当たった乱数を残す。打つのはいつもの処理。
+ * 変成・増強の完全はマジックの強い段に 0.2% 以下が無いので選べない (決闘のワンドで一番低いのが 0.415%)。
+ * 2026-10-17 オーナー「完全打った時には神の演出入る MOD つけさせてあげるか、せっかくだし」
+ */
+const RIG = new Set(["regal_perfect", "exalt_perfect", "chaos_perfect"]);
+export function rigRare(key: string): void {
+  if (!topic.value || !RIG.has(key) || s.usable(key)) return;
+  for (let i = 0; i < 1500; i++) {
+    const tryRoll = s.rollSeed.value;
+    const n = s.log.value.length;
+    s.use(key, { quiet: true });
+    if (s.log.value.length === n) return;
+    const rare = Object.values(s.log.value[s.log.value.length - 1]!.chances ?? {}).some(isRareChance);
+    s.undo();
+    if (rare) { s.rollSeed.value = tryRoll; return; }
+  }
 }

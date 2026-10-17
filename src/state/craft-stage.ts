@@ -174,7 +174,7 @@ function usableWith(key: string, om: readonly string[]): string | null {
   return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
 }
 export const craftStage = {
-  data, item, log, held, omens, omenKeep, seed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
+  data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

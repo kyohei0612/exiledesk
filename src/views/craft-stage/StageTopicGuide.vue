@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { canLessonBack, lessonBack, prepareStep, prepared } from "../../state/craft-lesson";
+import { canLessonBack, lessonBack, prepareStep, prepared, rigRare } from "../../state/craft-lesson";
 import { endTopic, goTopic, topic, topicAt, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
@@ -83,7 +83,7 @@ function holdIt(): void {
   prepareStep(); // 今のアイテムにこの手が打てなければ、ここで打てるアイテムを用意する
   const cur = topicStep.value;
   if (!cur) return;
-  if (cur.step.use !== "reveal" && cur.key) s.hold(cur.key);
+  if (cur.step.use !== "reveal" && cur.key) { rigRare(cur.key); s.hold(cur.key); }
   for (const o of cur.step.omens ?? []) if (!s.omens.value.includes(o)) s.toggleOmen(o);
 }
 /** MOD 一覧の窓を開いて、その MOD の行へ (確認用。2026-10-17 オーナー「MOD 一覧もそこで出せるように」) */
