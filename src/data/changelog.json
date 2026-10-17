@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.549",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "X でシェアしたカオススパムの結果を開くと、同じアイテム・同じ狙いでカオススパム計算機がすぐ開いて計算が始まるように",
+    "en": "Opening a shared chaos spam result from X now opens the Chaos spam calculator right away with the same item and targets"
+   }
+  ]
+ },
+ {
   "v": "0.1.548",
   "date": "2026-10-17",
   "items": [
@@ -662,30 +674,6 @@
     "area": "",
     "text": "不在のアミュレットなど「プレ / サフィの数が増減する」ベースで、マジックの枠も増減するように (不在のアミュレットは変成で MOD 無しのマジックになり、増強は打てません)",
     "en": "Bases that change their prefix / suffix count (e.g. Absent Amulet) now change magic slots too (Absent Amulet becomes a magic item with no mods from Transmutation, and Augmentation can't be used)"
-   }
-  ]
- },
- {
-  "v": "0.1.509",
-  "date": "2026-10-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "品質: 触媒の種類を選ぶと、その時点の上限まで品質が上がるように (そこから − / + で変えられます)",
-    "en": "Quality: choosing a Catalyst type raises quality to the current cap (then adjust with − / +)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "品質の「今の最大」から、棚に無いインフューザーの分 (+10%) を外しました",
-    "en": "Removed the Infuser bonus (+10%, not on the shelf) from \"current max\" quality"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選び: 開いた時に、一覧の下 (もっと見る) まで見える位置に送るように",
-    "en": "Base picker: opening it now scrolls so the bottom of the list (Show more) is visible"
    }
   ]
  }

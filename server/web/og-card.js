@@ -16,7 +16,8 @@ const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
 
 /**
  * 中身を読む (変な値は捨てる)。get(名前) で 1 つずつ。
- * 短い形 (/s/<code>): 中身の JSON の配列 [l, b, bn, m, n, a, r, md, u, c] を deflate して base64url にした物 (日本語をそのまま URL に入れると長すぎた。2026-10-16 オーナーのスマホで)
+ * 短い形 (/s/<code>): 中身の JSON の配列 [l, b, bn, m, n, a, r, md, u, c, setup] を deflate して base64url にした物 (日本語をそのまま URL に入れると長すぎた。2026-10-16 オーナーのスマホで)。
+ * setup (11 番目) はカードには使わず、本体が計算機を開くのに使う (/?spam=<code>、2026-10-17)
  */
 const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c"];
 async function unpack(code) {
@@ -62,10 +63,11 @@ function descOf(c) {
 }
 
 /** X などが読むページ。人は JS でそのベースのエミュレーターへ (クローラーは JS を動かさないので OGP だけ読む) */
-function sharePage(url, c, img) {
+function sharePage(url, c, img, code = null) {
   // 押した人はそのベースのエミュレーターへ (2026-10-16 オーナー「開いたらデスクに飛ぶでいい」)
   // via=share と、カードを開く前の referrer のホスト (r) を本体に渡す (本体の referrer はこのページになるので。2026-10-16 どの投稿から来たか分からなかった)
-  const to = `/?base=${encodeURIComponent(c.base || "Gold Ring")}&via=share`;
+  // 開いた人に同じカオススパム計算機を出す (code の setup を本体が読む、src/state/spam-share-open.ts。2026-10-17 オーナー「開いたら即スパム測定」)
+  const to = `/?base=${encodeURIComponent(c.base || "Gold Ring")}&via=share${code ? `&spam=${code}` : ""}`;
   const t = esc(titleOf(c)), d = esc(descOf(c));
   return new Response(`<!doctype html><html lang="${c.en ? "en" : "ja"}"><head><meta charset="utf-8">
 <title>${t}</title><meta name="description" content="${d}">
@@ -209,7 +211,7 @@ export async function ogCard(request, env, ctx) {
   if (page) {
     let get;
     try { get = await unpack(page[1]); } catch { return Response.redirect(`${url.origin}/`, 302); }
-    return sharePage(url, readCard(get), `${url.origin}/og/${page[1]}.png`);
+    return sharePage(url, readCard(get), `${url.origin}/og/${page[1]}.png`, page[1]);
   }
   if (url.pathname !== "/og/spam.png" && !pic) return null;
   const cache = caches.default;

@@ -12,6 +12,8 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { openExternal } from "../../services/trade2/open-external";
 import { logRecord } from "../../utils/log-record";
 import { isEn, tr } from "../../i18n/lang";
+import { setupOf } from "../../state/spam-share-open";
+import type { StageItem } from "../../services/craft-stage/types";
 
 /** 自分のスパムの結果。sig = 狙いとカオスの種類 (変わったら別のスパム) */
 export interface SpamResult { sig: string; uses: number; applied: number; hit: boolean; reason: string | null; rank: number | null }
@@ -21,7 +23,7 @@ export const luck = (r: number): string => (r <= 10 ? tr("かなりの強運", "
 /** 順位の言葉: 半分より早ければ「上位」、遅ければ「下位」(85% → 下位 15%。2026-10-16 オーナー「運悪いのに上位はおかしい」) */
 export const rankWord = (r: number): string => (r <= 50 ? tr(`上位 ${r}%`, `top ${r}%`) : tr(`下位 ${Math.max(1, 100 - r)}%`, `bottom ${Math.max(1, 100 - r)}%`));
 
-export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<SpamStats | null>; statsFresh: () => boolean; key: Ref<string>; cost: (n: number) => string }) {
+export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<SpamStats | null>; statsFresh: () => boolean; key: Ref<string>; cost: (n: number) => string; startOf: () => StageItem | null }) {
   const { result, stats, key, cost } = o;
   const inApp = isTauriRuntime();
   /**
@@ -29,8 +31,11 @@ export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<Spa
    * 押すと X の投稿画面へ (アプリは外のブラウザで)。URL は /s/spam (server/web/og-card.js): X はそこから結果のカードの絵を出し、
    * 押した人はそのベースのエミュレーターへ。結果は全部 URL に入れる (サーバーは何も保存しない)
    */
-  /** 中身を縮めて URL に (server/web/og-card.js の PACK と同じ並び: [l, b, bn, m, n, a, r, md, u, c] を deflate → base64url) */
-  async function packCard(v: Array<string | number | null>): Promise<string> {
+  /**
+   * 中身を縮めて URL に (server/web/og-card.js の PACK と同じ並び: [l, b, bn, m, n, a, r, md, u, c, setup] を deflate → base64url)。
+   * setup = スパムを始めた時のアイテム・狙い・カオスの種類 (開いた人に同じ計算機を出す、state/spam-share-open.ts。2026-10-17)
+   */
+  async function packCard(v: Array<string | number | object | null>): Promise<string> {
     const bytes = new Uint8Array(await new Response(new Blob([JSON.stringify(v)]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
     let bin = "";
     for (const x of bytes) bin += String.fromCharCode(x);
@@ -52,6 +57,7 @@ export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<Spa
       st ? medianOf(st) : null,
       st ? unluckyOf(st) : null,
       cost(r.applied) || null,
+      setupOf(o.startOf(), spamAims.value, key.value),
     ]);
     shareUrl.value = `${inApp ? "https://exiledesk.com" : location.origin}/s/${code}`;
     // カードの絵を先に作らせておく (X が読みに来た時に作り始めると、出るまで待たされた。2026-10-16)

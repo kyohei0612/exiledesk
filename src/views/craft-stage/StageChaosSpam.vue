@@ -266,7 +266,7 @@ const canSpam = computed(() => !sim.busy.value && keys.value.length > 0 && targe
 /** 押すボタンの文字 (PC の欄とスマホの帯で同じ。離した後は「押して続ける」) */
 const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : sim.busy.value ? tr(`計算中… ${Math.floor((sim.done.value / sim.total.value) * 100)}%`, `Calculating… ${Math.floor((sim.done.value / sim.total.value) * 100)}%`) : result.value && !result.value.hit && result.value.sig === sig() ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
 // シェア (X に結果のカード) は use-spam-share.ts
-const { xUrl, shareX } = useSpamShare({ result, stats, statsFresh, key, cost });
+const { xUrl, shareX } = useSpamShare({ result, stats, statsFresh, key, cost, startOf: () => startItem });
 /**
  * かなりの強運 (100 人中 上位 10% 以内) で付いた時は、珍しい段と同じ音 (フィルターの通知音 6) と光 (2026-10-16 オーナー
  * 「計算機で運がめっちゃいい人にはちゃんと音出してあげてね、あの例の神演出で」)。運は 100 人の計算が済んでから出るので、出た時に 1 回だけ
