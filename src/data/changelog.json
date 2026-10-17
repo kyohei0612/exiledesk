@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.550",
+  "date": "2026-10-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧の「付ける」を押すと、付け方 (普通 / フラクチャー / 冒涜 / エッセンス) を選べるように。もうフラクチャー・冒涜がある時はその付け方を出しません",
+    "en": "In the mod list, \"Add\" now lets you choose how to add (Normal / Fracture / Desecrated / Essence). Options already used on the item are hidden"
+   }
+  ]
+ },
+ {
   "v": "0.1.549",
   "date": "2026-10-17",
   "items": [
@@ -662,18 +674,6 @@
     "area": "",
     "text": "勢力のお告げは矢筒にも使えます (説明文の表記を合わせました)",
     "en": "Faction omens can be used on quivers (aligned with the description)"
-   }
-  ]
- },
- {
-  "v": "0.1.510",
-  "date": "2026-10-14",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "不在のアミュレットなど「プレ / サフィの数が増減する」ベースで、マジックの枠も増減するように (不在のアミュレットは変成で MOD 無しのマジックになり、増強は打てません)",
-    "en": "Bases that change their prefix / suffix count (e.g. Absent Amulet) now change magic slots too (Absent Amulet becomes a magic item with no mods from Transmutation, and Augmentation can't be used)"
    }
   ]
  }
