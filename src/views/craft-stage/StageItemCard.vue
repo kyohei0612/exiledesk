@@ -132,7 +132,8 @@ const extraCat = computed(() => hasExtraCatalyst(props.item.base));
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "", tag: "" };
   if (m.fractured) return { cls: "text-mod-fractured", tag: tr("フラクチャー", "Fractured") };
-  if (m.desecrated) return { cls: "text-rarity-magic", tag: tr("冒涜", "Desecrated") };
+  // 札は無し: 行の緑の帯で冒涜と分かる (2026-10-17 オーナー「冒涜って文字はいらん」)
+  if (m.desecrated) return { cls: "text-rarity-magic", tag: "" };
   // 液化した感情 (ジュエル) で付いた物はデリリウム (2026-10-11 オーナー「デリリウムに変えて」)
   if (m.crafted) return { cls: "text-mod-crafted", tag: m.modId.includes("/Emotion_") ? tr("デリリウム", "Delirium") : tr("エッセンス", "Essence") };
   // 要望 ㉙: 特殊 MOD のルーンの MOD (重みは仮定) / アルダーのルーンで属性を変えた MOD
