@@ -1,5 +1,9 @@
 {
  "_": "changelog-notes.json の英語 (同じ版・同じ順。2026-10-17 英語の仕上げ)。ゲームの用語はクライアントの英語の原文",
+ "0.1.551": [
+  "Tutorials are live, starting with \"Learn the basic orbs\": use Transmutation, Augmentation, Regal, Alchemy, Exalted, Chaos, Annulment, Fracturing and Divine Orbs (Greater / Perfect too) one at a time over 19 steps to see what each does and what mod levels can roll",
+  "Moved the usage-logging note and its switch from the page footer into the Privacy Policy"
+ ],
  "0.1.550": [
   "In the mod list, \"Add\" now lets you choose how to add (Normal / Fracture / Desecrated / Essence). Options already used on the item are hidden"
  ],
