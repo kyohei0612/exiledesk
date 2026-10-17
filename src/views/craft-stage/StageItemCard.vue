@@ -93,7 +93,7 @@ const phoneW = typeof window !== "undefined" && window.innerWidth < 768;
 const hint = computed((): string => {
   if (props.holding) return phoneW ? tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") : tr("押すと使う · 右クリック / Esc で手放す · ↓ で MOD 一覧のその行へ", "Click to use · Right-click / Esc to drop · ↓ to find it in the mod list");
   if (!props.removable) return "";
-  if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補を選んで「確認」で発現", "Pick an option below, then Confirm to reveal");
+  if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補を選んで「発現」", "Pick an option below, then Reveal");
   if (hover.value === "mod") return tr("押すと MOD 一覧のその行へ · 右クリックでフラクチャー · × で外す", "Click to find it in the mod list · Right-click to fracture · × to remove");
   if (hover.value === "rune") return tr("右クリックでルーンを外す", "Right-click to remove the rune");
   return phoneW ? "" : tr("MOD を右クリックでフラクチャー · × で外す · R で 1 手戻す", "Right-click a mod to fracture · × to remove · R to undo");

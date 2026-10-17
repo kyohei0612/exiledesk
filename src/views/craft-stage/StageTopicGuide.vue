@@ -171,7 +171,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
             <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ stepName(sub) }}</span>
           </button>
         </template>
-        <span v-if="topicCur?.step.use === 'reveal' && !topicUsed" class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムの下の候補を選んで「確認」", "Pick an option under the item, then Confirm") }}</span>
+        <span v-if="topicCur?.step.use === 'reveal' && !topicUsed" class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムの下の候補を選んで「発現」", "Pick an option under the item, then Reveal") }}</span>
       </div>
       <!-- 要点はエミュレーターのカードの頭と同じ大きな枠で (2026-10-17 オーナー「入門は要点でっかく表示のみ、文章長くてだるい」) -->
       <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>

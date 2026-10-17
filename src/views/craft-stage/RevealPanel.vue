@@ -5,7 +5,7 @@
   アビスの反響のお告げを掛けてあれば 1 回だけ引き直せる (引き直した方から選ぶと reveal:N:reroll)。
   候補は次の手の seed で引いてあるので、見せた候補と選んだ手の結果は一致する ([[craft-stage.ts]] の offers)。
   見た目はゲームの魂の井戸に合わせる (2026-10-17 オーナー「発現の UI 全部ゲーム仕様に、リロールもこの感じで、色味は冒涜の緑」):
-  候補は縦に 3 つ・文は真ん中、押すと金の枠で選んだ状態、下の「確認」で発現、引き直しは右下の回る矢印。プレ / サフィ・ティアはホバーで
+  候補は縦に 3 つ・文は真ん中、押すと金の枠で選んだ状態、下の「発現」で発現、引き直しは右下の回る矢印。プレ / サフィ・ティアはホバーで
 -->
 <script setup lang="ts">
 import { modText, tr } from "../../i18n/lang";
@@ -75,7 +75,7 @@ function reroll(): void { rerolled.value = true; chosen.value = null; }
       </button>
     </div>
     <div class="relative mt-1.5 flex items-center justify-center">
-      <button type="button" data-reveal-confirm class="g-btn sm min-w-[120px] justify-center" :disabled="chosen == null" @click="confirm">{{ tr("確認", "Confirm") }}</button>
+      <button type="button" data-reveal-confirm class="g-btn sm min-w-[120px] justify-center" :disabled="chosen == null" @click="confirm">{{ tr("発現", "Reveal") }}</button>
       <!-- 引き直し (アビスの反響のお告げ)。ゲームと同じく右下の回る矢印 -->
       <button
         v-if="canReroll()"
