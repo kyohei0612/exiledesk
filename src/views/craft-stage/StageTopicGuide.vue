@@ -86,6 +86,22 @@ function holdIt(): void {
 /** MOD 一覧の窓を開いて、その MOD の行へ (確認用。2026-10-17 オーナー「MOD 一覧もそこで出せるように」) */
 function jump(modId: string): void { s.modOverlay.value = true; s.modJump.value = { modId, n: (s.modJump.value?.n ?? 0) + 1 }; }
 const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
+/**
+ * 前の手で起きたこと: 同じ MOD (modId と側が同じ) が消えて付いたのは 1 行にまとめる (神 = 数字が変わった、フラクチャー = 固定された)。
+ * 2026-10-17 点検: 神のオーブの後に「消えた 3 つ + 付いた 3 つ」に見えて、MOD が入れ替わったように読めた
+ */
+const lastRows = computed(() => {
+  const l = last.value;
+  if (!l) return null;
+  const divine = l.out.currency.startsWith("divine");
+  const same = (a: StageMod, b: StageMod): boolean => a.modId === b.modId && a.side === b.side && (divine || (!!a.fractured && !b.fractured));
+  const changed = l.added.flatMap((a) => { const b = l.removed.find((r) => same(r, a)); return b ? [{ before: b, after: a, fractured: !!a.fractured && !b.fractured }] : []; });
+  return {
+    added: l.added.filter((a) => !l.removed.some((r) => same(r, a))),
+    removed: l.removed.filter((r) => !l.added.some((a) => same(r, a))),
+    changed,
+  };
+});
 /** MOD の札: ティア · MOD レベル · プレ / サフィ */
 const modInfo = (m: StageMod): string => [m.tierName, tr(`MOD レベル ${m.modLevel}`, `mod level ${m.modLevel}`), m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix")].filter(Boolean).join(" · ");
 /** 手の一覧の並び: 今の手から上に順に、済んだ手は ✓ のまま最後尾へ (2026-10-17 オーナー「終わったやつは列の最後尾に」)。全部済んだら元の順 */
@@ -142,9 +158,10 @@ const order = computed(() => {
     <div v-if="last && topicAt > 0" class="mt-2 rounded-md bg-black/25 px-2.5 py-1.5">
       <p class="text-[11px] font-bold text-[var(--exile-color-text-tertiary)]">{{ tr("前の手で起きたこと", "What the last move did") }}: {{ nameOf(last.out.currency) }}</p>
       <!-- 付いた / 消えた MOD のティア・MOD レベル・側も出す (2026-10-17 オーナー「結局何レベルの奴がついてるかの体験ができない」) -->
-      <button v-for="(m, i) in last.added" :key="'a' + i" type="button" class="g-plain block text-left text-[12px] text-emerald-300 hover:underline" :title="tr('MOD 一覧のこの行へ', 'Show in the mod list')" @click="jump(m.modId)">＋ {{ modText(m) }} <span class="whitespace-nowrap text-[11px] text-emerald-200/70">({{ modInfo(m) }})</span></button>
-      <p v-for="(m, i) in last.removed" :key="'r' + i" class="text-[12px] text-rose-300"><span class="line-through">－ {{ modText(m) }}</span> <span class="whitespace-nowrap text-[11px] text-rose-300/70">({{ modInfo(m) }})</span></p>
-      <p v-if="!last.added.length && !last.removed.length" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("MOD の出入りは無し (数値・品質・レアリティなどが変わる手)", "No mod added or removed (values, quality, rarity and so on changed)") }}</p>
+      <p v-for="(c, i) in lastRows?.changed ?? []" :key="'c' + i" class="text-[12px] text-sky-200"><template v-if="c.fractured">{{ tr("固定された", "Fractured") }}: {{ modText(c.after) }}</template><template v-else>{{ tr("数字が変わった", "Numbers changed") }}: <span class="text-sky-200/60">{{ modText(c.before) }}</span> → {{ modText(c.after) }}</template> <span class="whitespace-nowrap text-[11px] text-sky-200/60">({{ modInfo(c.after) }})</span></p>
+      <button v-for="(m, i) in lastRows?.added ?? []" :key="'a' + i" type="button" class="g-plain block text-left text-[12px] text-emerald-300 hover:underline" :title="tr('MOD 一覧のこの行へ', 'Show in the mod list')" @click="jump(m.modId)">＋ {{ modText(m) }} <span class="whitespace-nowrap text-[11px] text-emerald-200/70">({{ modInfo(m) }})</span></button>
+      <p v-for="(m, i) in lastRows?.removed ?? []" :key="'r' + i" class="text-[12px] text-rose-300"><span class="line-through">－ {{ modText(m) }}</span> <span class="whitespace-nowrap text-[11px] text-rose-300/70">({{ modInfo(m) }})</span></p>
+      <p v-if="!last.added.length && !last.removed.length && !lastRows?.changed.length" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("MOD の出入りは無し (数値・品質・レアリティなどが変わる手)", "No mod added or removed (values, quality, rarity and so on changed)") }}</p>
     </div>
   </section>
   <!-- コースの枠 (題・ボタン・進み具合・手の一覧)。アイテムの下 -->
