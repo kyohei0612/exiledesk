@@ -41,7 +41,16 @@ const ALWAYS = (st: TopicStep): TopicStep => ({ ...st, prepAlways: true });
 const ONE_MOD = (st: TopicStep): TopicStep => ({ ...st, prep: ["exalt"], prepAlways: true });
 /** MOD 6 つで満杯の黄 (レア)。抹消の入れ替えを見る (2026-10-18) */
 const FULL = ["transmute", "augment", "regal", "exalt", "exalt", "exalt"];
-const RESET = H("reset", ["白に戻す", "Reset to white (Normal)"], [["アイテムを最初の白 (ノーマル) の状態に戻す (練習用のボタン)", "Puts the item back to a fresh white (Normal) one (a practice button)"]]);
+/** カタリストの手の指輪: 火の MOD 1 つ (火耐性) と火ではない MOD 2 つ (2026-10-18) */
+const RING: Force[] = [{ mod: "Rings/FireResistance", tier: "T5" }, { mod: "Rings/IncreasedLife", tier: "T6" }, { mod: "Rings/Strength", tier: "T4" }];
+/** 触媒の高貴の手: 火ではない MOD 2 つ (足した MOD が火かを見る) */
+const TWO: Force[] = [{ mod: "Rings/IncreasedLife", tier: "T6" }, { mod: "Rings/Strength", tier: "T4" }];
+/** 火の品質 20% まで (1 個 +1〜2%、上限で止まる) */
+const FIRE20 = Array<string>(20).fill("catalyst_fire");
+/** エメラルドの MOD (段は 1 つだけ) */
+const J = (mod: string): Force => ({ mod: `Jewels_dex/${mod}`, tier: "T1" });
+/** MOD 4 つで満杯のエメラルド (軽蔑・獰猛は消えた側の版が付く) */
+const FULL_JEWEL = [J("JewelAccuracy"), J("JewelProjectileDamage"), J("JewelAilmentChance"), J("JewelPoisonChance")];
 
 export const TOPIC_COURSES: TopicCourse[] = [
   {
@@ -320,41 +329,72 @@ export const TOPIC_COURSES: TopicCourse[] = [
   },
   {
     id: "catalyst", level: 3, title: ["カタリストと品質を学ぶ", "Learn catalysts and quality"], base: "Gold Ring", itemLevel: 82,
-    learn: ["カタリストの種類・別の種類は 0 から・触媒の高貴のお告げ", "Catalyst types, a new type restarts from 0, Catalysing Exaltation"],
+    learn: ["カタリストの種類・品質で上がる MOD・別の種類は 0 から・触媒の高貴のお告げ (偉大なると重ねる)", "Catalyst types, which mods quality boosts, a new type restarts from 0, Catalysing Exaltation (stacked with Greater)"],
+    // 2026-10-18 オーナー「カタリスト、液化まで一気に行こうか」。基本のオーブ・お告げと同じ作り。品質を見せる手は決まった MOD の黄 (レア) の指輪から (火の MOD 1 つ・火ではない MOD 2 つ)
     steps: [
-      S("transmute", ["マジックに", "Make it magic"]),
-      S("regal", ["レアに", "Rare"]),
-      S("catalyst_fire", ["火の品質 +1〜2%", "Fire quality +1–2%"]),
-      S("exalt", ["火の MOD が出やすい・品質は消える", "Fire mods more likely, quality used up"], ["OmenofCatalysingExaltation"]),
-      S("catalyst_cold", ["種類を替えると品質は 0 から", "A new type restarts from 0"]),
-      S("catalyst_lightning", ["雷", "Lightning"]),
-      S("catalyst_chaos", ["混沌", "Chaos"]),
-      S("catalyst_physical", ["物理", "Physical"]),
-      S("catalyst_attribute", ["能力値", "Attributes"]),
-      S("catalyst_speed", ["速度", "Speed"]),
-      S("catalyst_caster", ["キャスター", "Caster"]),
-      S("catalyst_minion", ["ミニオン", "Minions"]),
-      S("catalyst_mana", ["マナ", "Mana"]),
-      S("catalyst_life", ["ライフ", "Life"]),
-      S("catalyst_defences", ["防御", "Defences"]),
-      S("exalt", ["2 つとも出やすい", "Both added mods weighted"], ["OmenofCatalysingExaltation", "OmenofGreaterExaltation"]),
+      { ...H("catalyst_fire", ["火の品質を付ける", "Add Fire quality"], [
+        ["ゾフのカタリストは、指輪・アミュレットに「火」の品質を付ける。1 個で +1% か +2% (運)", "Xoph's Catalyst adds Fire quality to a ring or amulet: +1% or +2% each (luck)"],
+        ["品質の分だけ、火の MOD の数字が上がる (このアイテムなら火耐性。品質 20% で 1.2 倍)", "Fire mods get bigger numbers by the quality (here, Fire Resistance; 20% quality = 1.2×)"],
+        ["火ではない MOD (最大ライフ・筋力) の数字は変わらない", "Non-fire mods (maximum Life, Strength) don't change"],
+        ["品質は 20% まで (ブリーチのエッセンスの「品質の最大値 +20%」があれば 40% まで)", "Quality goes up to 20% (40% with the Essence of the Breach mod “+20% to Maximum Quality”)"],
+      ], "rare"), startMods: RING },
+      { ...H("catalyst_life", ["カタリストは 13 種類", "13 kinds of catalyst"], [
+        ["カタリストは 13 種類。種類ごとに、数字が上がる MOD が決まっている", "There are 13 catalysts; each one boosts its own kind of mod"],
+        ["肉体 = ライフ、神経 = マナ、甲羅 = アーマー・回避力・エナジーシールド、ウール・ネトル = 物理、ゾフ = 火、トゥル = 冷気、エシュ = 雷、チャユラ = 混沌", "Flesh = Life, Neural = Mana, Carapace = Armour / Evasion / Energy Shield, Uul-Netol's = Physical, Xoph's = Fire, Tul's = Cold, Esh's = Lightning, Chayula's = Chaos"],
+        ["強奪者 = アタック、歯擦音 = キャスター、軽快 = スピード、適応 = 能力値、死霊術 = ミニオン", "Reaver = Attack, Sibilant = Caster, Skittering = Speed, Adaptive = Attributes, Necrotic = Minion"],
+        ["肉体のカタリストなら、このアイテムでは最大ライフの数字が上がる", "With a Flesh Catalyst, maximum Life goes up on this item"],
+      ], "rare"), startMods: RING },
+      { ...ALWAYS(H("catalyst_cold", ["別の種類にすると 0 から", "A new type restarts from 0"], [
+        ["アイテムの品質は 1 つの種類だけ。今は火の品質 20%", "An item has only one quality type. Right now it's 20% Fire quality"],
+        ["トゥルのカタリスト (冷気) を使うと、火の品質は消えて、冷気の品質 1〜2% から始まる", "Tul's Catalyst (Cold) removes the Fire quality and starts Cold quality at 1–2%"],
+        ["火耐性の数字は元に戻り、冷気耐性の数字が上がる", "Fire Resistance goes back down, Cold Resistance goes up"],
+        ["種類を替える時は、もう一度 0 から貯め直し", "Switching type means building it up again from 0"],
+      ], FIRE20)), startMods: [...RING, { mod: "Rings/ColdResistance", tier: "T5" }] },
+      { ...ALWAYS(H("exalt", ["品質の種類の MOD が出やすい", "Quality's mod type is more likely"], [
+        ["触媒の高貴のお告げを掛けた高貴なオーブは、品質の種類の MOD が付きやすくなる (火の品質なら、火耐性・火ダメージなど)", "With Omen of Catalysing Exaltation, the Exalted Orb favours mods of the quality's type (Fire quality: Fire Resistance, Fire Damage and so on)"],
+        ["品質 20% なら、火の MOD の出やすさが 5 倍 (Craft of Exile の式: 1 + 0.2 × 品質)", "At 20% quality, Fire mods are 5× as likely (Craft of Exile's formula: 1 + 0.2 × quality)"],
+        ["必ず火の MOD になるわけではない (出やすくなるだけ)", "It isn't always a Fire mod (just more likely)"],
+        ["使うと品質は全部なくなって 0 に。品質が無いアイテムには掛けられない", "All the quality is used up (back to 0). It can't be used without quality"],
+      ], FIRE20)), omens: ["OmenofCatalysingExaltation"], startMods: TWO },
+      { ...ALWAYS(H("exalt", ["偉大なると重ねて 2 つ", "Stack with Greater for 2"], [
+        ["偉大なる高貴なお告げと重ねると、高貴なオーブ 1 個で MOD が 2 つ付き、2 つとも火の MOD が出やすい (2 つともはクラフト配信者の説明に合わせている)", "Stacked with Omen of Greater Exaltation, one Exalted Orb adds 2 mods, both favouring Fire (both, per crafting streamers' explanations)"],
+        ["品質は 1 回で全部なくなる", "All the quality is used up at once"],
+      ], FIRE20)), omens: ["OmenofCatalysingExaltation", "OmenofGreaterExaltation"], startMods: TWO },
     ],
   },
   {
     id: "emotion", level: 3, title: ["液化した感情を学ぶ", "Learn liquid emotions"], base: "Emerald", itemLevel: 82,
-    learn: ["レアのジュエルに 1 つ消して決まった作った MOD を付ける・枠を増やす軽蔑・効果を上げる獰猛", "Removes 1 mod from a rare jewel and adds a fixed crafted mod; Contempt adds a slot, Ferocity raises effect"],
+    learn: ["液化した感情 (希釈された・普通・濃縮された・強力な) で黄 (レア) のジュエルに作った MOD を付ける・枠を増やす軽蔑・反対側を上げる獰猛", "Liquid emotions (Diluted, plain, Concentrated, Potent) add a crafted mod to a yellow (Rare) jewel; Contempt adds a slot, Ferocity boosts the other side"],
+    // 2026-10-18。感情は 1 つ消してから付けるので、付ける側に空きのある決まった MOD のジュエルから (満杯で反対側が消えると失敗して分かりにくい)。軽蔑・獰猛は満杯から (消えた側の版が付く)
     steps: [
-      S("transmute", ["マジックに", "Make it magic"]),
-      S("regal", ["レアに (感情はレアのジュエルに)", "Rare (emotions go on rare jewels)"]),
-      S("emotion:Liquid Envy", ["1 つ消して決まった MOD を付ける", "Removes 1, adds a fixed crafted mod"]),
-      RESET, S("transmute", ["マジックに", "Make it magic"]), S("regal", ["新しいジュエルでレアに", "A new jewel, rare"]),
-      S("emotion:Diluted Liquid Ire", ["弱い版", "Weaker version"]),
-      RESET, S("transmute", ["マジックに", "Make it magic"]), S("regal", ["レアに", "Rare"]),
-      S("emotion:Concentrated Liquid Fear", ["強い版", "Stronger version"]),
-      RESET, S("transmute", ["マジックに", "Make it magic"]), S("regal", ["レアに", "Rare"]),
-      S("emotion:Potent Liquid Contempt", ["枠を 1 つ増やす", "+1 mod slot"]),
-      RESET, S("transmute", ["マジックに", "Make it magic"]), S("regal", ["レアに", "Rare"]),
-      S("emotion:Potent Liquid Ferocity", ["反対側の効果を上げる", "Boosts the other side"]),
+      { ...H("emotion:Liquid Envy", ["1 つ消して決まった MOD を付ける", "Remove 1, add a set crafted mod"], [
+        ["液化した感情は、黄色 (レア) のジュエルに使う", "Liquid emotions are used on yellow (Rare) jewels"],
+        ["MOD をランダムに 1 つ消して、その感情で決まった「作った MOD」を必ず 1 つ付ける", "They remove 1 random mod and always add that emotion's set crafted mod"],
+        ["液化した嫉妬なら、サフィックスに「クールダウン解消レートが (3-5)% 増加する」", "Liquid Envy adds the suffix “(3-5)% increased Cooldown Recovery Rate”"],
+        ["このジュエルはサフィックスに空きがあるので、どれが消えても必ず付く (付ける側が埋まっていて、反対側が消えた時は失敗する)", "This jewel has an open suffix, so it always works (if that side is full and the other side loses the mod, it fails)"],
+        ["作った MOD は 1 つまで。付いている間は、ほかの感情は使えない", "Only 1 crafted mod: while it's there, no other emotion can be used"],
+      ], "rare"), startMods: [J("JewelAccuracy"), J("JewelProjectileDamage"), J("JewelAilmentChance")] },
+      { ...H("emotion:Diluted Liquid Ire", ["希釈された感情", "A Diluted emotion"], [
+        ["感情には、名前の頭に「希釈された」「濃縮された」「強力な」が付く物がある。付く MOD は感情ごとに決まっている", "Some emotions are “Diluted”, “Concentrated” or “Potent”; each emotion has its own set mod"],
+        ["希釈された液化した怒りは、プレフィックスに「回避力が (10-20)% 増加する」", "Diluted Liquid Ire adds the prefix “(10-20)% increased Evasion Rating”"],
+        ["付く MOD はジュエルで違う (エメラルドなら回避力、ルビーならアーマー)", "The mod depends on the jewel (Emerald: Evasion, Ruby: Armour)"],
+        ["このジュエルはプレフィックスに空きがあるので、必ず付く", "This jewel has an open prefix, so it always works"],
+      ], "rare"), startMods: [J("JewelAccuracy"), J("JewelAilmentChance"), J("JewelPoisonChance")] },
+      { ...H("emotion:Concentrated Liquid Fear", ["濃縮された感情", "A Concentrated emotion"], [
+        ["濃縮された液化した恐怖は、サフィックスに「アタックダメージのクリティカルダメージボーナスが (10-20)% 増加する」", "Concentrated Liquid Fear adds the suffix “(10-20)% increased Critical Damage Bonus for Attack Damage”"],
+        ["サフィックスに空きがあるので、必ず付く", "There's an open suffix, so it always works"],
+      ], "rare"), startMods: [J("JewelAccuracy"), J("JewelProjectileDamage"), J("JewelAilmentChance")] },
+      { ...H("emotion:Potent Liquid Contempt", ["枠を 1 つ増やす", "+1 mod slot"], [
+        ["ジュエルの MOD は普通 4 つまで (プレフィックス 2 つ + サフィックス 2 つ)", "Jewels normally hold 4 mods (2 prefixes + 2 suffixes)"],
+        ["強力な液化した軽蔑は、MOD を 1 つ消して「プレフィックスモッド +1 個」か「サフィックスモッド +1 個」を付ける", "Potent Liquid Contempt removes 1 mod and adds “+1 Prefix Modifier allowed” or “+1 Suffix Modifier allowed”"],
+        ["消えた側に付いて、反対側の枠が 1 つ増える (サフィックスに付いたらプレフィックスが 3 つまで)", "It goes on the side that lost a mod and gives the other side +1 slot (on a suffix: up to 3 prefixes)"],
+        ["続けて高貴なオーブで、増えた枠に 5 つ目の MOD を足す", "Then use an Exalted Orb to add a 5th mod in the new slot"],
+      ], "rare"), startMods: FULL_JEWEL, chain: [S("exalt", ["高貴で 5 つ目", "5th mod with an Exalted Orb"])] },
+      { ...H("emotion:Potent Liquid Ferocity", ["反対側の効果を上げる", "Boost the other side"], [
+        ["強力な液化した獰猛は、MOD を 1 つ消して「プレフィックスの効果が (40-60)% 増加する」か「サフィックスの効果が (40-60)% 増加する」を付ける", "Potent Liquid Ferocity removes 1 mod and adds “(40-60)% increased Effect of Prefixes” or “… of Suffixes”"],
+        ["消えた側に付いて、反対側の MOD の数字を上げる (サフィックスに付いたら、プレフィックスの数字が 1.4〜1.6 倍)", "It goes on the side that lost a mod and boosts the other side (on a suffix: prefix numbers become 1.4–1.6×)"],
+        ["付けた後は、ほかの感情は使えない (作った MOD は 1 つまで)", "After that no other emotion can be used (only 1 crafted mod)"],
+      ], "rare"), startMods: FULL_JEWEL },
     ],
   },
 ];

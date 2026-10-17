@@ -97,7 +97,9 @@ export function prepareStep(): void {
   const key = topicKey(st, d, it);
   if (!otherBase && key && !s.usable(key) && !st.prepAlways) return;
   const g = mulberry32(Math.floor(Math.random() * 1e9));
-  let next: StageItem = { ...fullSockets(freshItem(d, base, c.itemLevel, st.start)), rollSeed: it.rollSeed };
+  // startMods があれば決まった MOD から用意の手を打つ (カタリストは決まった MOD の指輪に火の品質 20%。2026-10-18)
+  const from = st.startMods ? startFrom(d, base, c.itemLevel, { rarity: st.start ?? "rare", mods: st.startMods }, Math.floor(Math.random() * 1e9)) : freshItem(d, base, c.itemLevel, st.start);
+  let next: StageItem = { ...fullSockets(from), rollSeed: it.rollSeed };
   for (const k of st.prep) { const r = applyCurrency(d, next, k, g, []); if (r.applied) next = { ...r.item, rollSeed: it.rollSeed }; }
   s.item.value = next;
   prepared.value = true;
