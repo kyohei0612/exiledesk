@@ -35,6 +35,15 @@ import RichText from "../../components/decor/RichText.vue";
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
 const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean}>();
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
+/** 未発現の行の崩れた文字 (行ごとに決まった並び。ゲームの未発現の冒涜 MOD の見た目) */
+const GLYPHS = "ʗƀɨɕɿʛɦɩᵬɞʞɮɷʚɤʘɧƫʠɋƾ";
+function glitch(seed: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619) >>> 0;
+  let out = "";
+  for (let i = 0; i < 13; i++) { h = Math.imul(h ^ (h >>> 13), 1103515245) >>> 0; out += i === 5 ? " " : GLYPHS[h % GLYPHS.length]; }
+  return out;
+}
 /** 付く空きの枠 (プレ → サフィ) */
 const openRows = computed(() => (["prefix", "suffix"] as const).flatMap((side) => Array.from({ length: props.open?.[side] ?? 0 }, () => ({ side }))));
 /** 両側が光っている時は「どちらかに付く」 */
@@ -89,7 +98,7 @@ const phoneW = typeof window !== "undefined" && window.innerWidth < 768;
 const hint = computed((): string => {
   if (props.holding) return phoneW ? tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") : tr("押すと使う · 右クリック / Esc で手放す · ↓ で MOD 一覧のその行へ", "Click to use · Right-click / Esc to drop · ↓ to find it in the mod list");
   if (!props.removable) return "";
-  if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補から発現する MOD を選ぶ", "Choose the mod to reveal below");
+  if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補を選んで「確認」で発現", "Pick an option below, then Confirm to reveal");
   if (hover.value === "mod") return tr("押すと MOD 一覧のその行へ · 右クリックでフラクチャー · × で外す", "Click to find it in the mod list · Right-click to fracture · × to remove");
   if (hover.value === "rune") return tr("右クリックでルーンを外す", "Right-click to remove the rune");
   return phoneW ? "" : tr("MOD を右クリックでフラクチャー · × で外す · R で 1 手戻す", "Right-click a mod to fracture · × to remove · R to undo");
@@ -126,7 +135,7 @@ const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
 const extraCat = computed(() => hasExtraCatalyst(props.item.base));
 /** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
 function look(m: StageMod): { cls: string; tag: string } {
-  if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
+  if (m.unrevealed) return { cls: "", tag: "" };
   if (m.fractured) return { cls: "text-mod-fractured", tag: tr("フラクチャー", "Fractured") };
   if (m.desecrated) return { cls: "text-mod-desecrated", tag: tr("冒涜", "Desecrated") };
   // 液化した感情 (ジュエル) で付いた物はデリリウム (2026-10-11 オーナー「デリリウムに変えて」)
@@ -242,7 +251,7 @@ const rows = computed(() => {
           @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
-          :class="[r.m.desecrated && !r.m.unrevealed ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
+          :class="[r.m.desecrated ? 'border border-[#4a5a2c]/70 bg-gradient-to-r from-[#0b1008]/80 via-[#1a2612]/80 to-[#0b1008]/80' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
           @contextmenu="!holding && removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >
@@ -252,12 +261,16 @@ const rows = computed(() => {
           <span class="w-7 shrink-0 text-left text-[12px] font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
           <span class="min-w-0 flex-1 text-center">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
-            <span :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
+            <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
+            <span v-if="r.m.unrevealed" data-unrevealed class="tracking-wider text-[#a6e05c] [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ glitch(r.key + r.m.side) }}</span>
+            <span v-else :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
             <span v-if="look(r.m).tag" class="ml-1.5 whitespace-nowrap align-middle text-[10px] opacity-80">{{ look(r.m).tag }}</span>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
           </span>
+          <!-- 未発現の行は右端に見えない ↓ を置いて、ほかの行と同じ幅にして文字を真ん中にそろえる (2026-10-17 オーナー「ぐちゃ文字が右に寄ってる」) -->
           <span class="flex shrink-0 items-center justify-end gap-1">
             <!-- MOD 一覧のこの行へ (持ったままでも押せる。持っている時は行を押すと「使う」なので、飛ぶのはこの ↓。2026-10-10 オーナー「持ちながらできるように」) -->
+            <span v-if="r.m.unrevealed" aria-hidden="true" class="invisible rounded px-1 text-[11px] leading-none max-md:px-2 max-md:py-1">↓</span>
             <button v-if="!r.m.unrevealed" type="button" class="rounded px-1 text-[11px] leading-none text-white/35 hover:bg-white/10 hover:text-white/80 max-md:px-2 max-md:py-1" :title="tr('MOD 一覧のこの行へ', 'Find in the mod list')" @click.stop="emit('jump', r.m.modId)">↓</button>
             <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>

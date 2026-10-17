@@ -4,6 +4,8 @@
   骨で付いた未発現の冒涜 MOD を、候補 3 つから選んで発現する (ゲームの「魂の井戸」と同じ)。選ぶと reveal:N の手になる。
   アビスの反響のお告げを掛けてあれば 1 回だけ引き直せる (引き直した方から選ぶと reveal:N:reroll)。
   候補は次の手の seed で引いてあるので、見せた候補と選んだ手の結果は一致する ([[craft-stage.ts]] の offers)。
+  見た目はゲームの魂の井戸に合わせる (2026-10-17 オーナー「発現の UI 全部ゲーム仕様に、リロールもこの感じで、色味は冒涜の緑」):
+  候補は縦に 3 つ・文は真ん中、押すと金の枠で選んだ状態、下の「確認」で発現、引き直しは右下の回る矢印。プレ / サフィ・ティアはホバーで
 -->
 <script setup lang="ts">
 import { modText, tr } from "../../i18n/lang";
@@ -12,11 +14,15 @@ import { craftStage } from "../../state/craft-stage";
 import { jaOfOmen } from "../../services/htc/labels";
 import { reqOfItem } from "../../services/craft-stage/stage-bases";
 import type { StageMod } from "../../services/craft-stage/types";
+import Icon from "../../components/ui/Icon.vue";
 
 const rerolled = ref(false);
+/** 選んだ候補 (確認で発現する) */
+const chosen = ref<number | null>(null);
 // 打つたびに戻す。log の長さでは見ない (Web は 50 手で古い手を消すので長さが変わらず、一度引き直すと以後ずっと「引き直した候補」のまま
 // ボタンが出なかった。2026-10-16 要望 eb671189「反響を掛けていても引き直しができない時がある」)
-watch(() => craftStage.log.value[craftStage.log.value.length - 1]?.out.index ?? 0, () => (rerolled.value = false));
+watch(() => craftStage.log.value[craftStage.log.value.length - 1]?.out.index ?? 0, () => { rerolled.value = false; chosen.value = null; });
+watch(() => craftStage.offers.value, () => { chosen.value = null; });
 const left = () => { const it = craftStage.item.value; return it ? [...it.prefixes, ...it.suffixes].filter((m) => m.unrevealed).length : 0; };
 const canReroll = () => craftStage.omens.value.includes("OmenofAbyssalEchoes");
 /**
@@ -31,39 +37,49 @@ function raisesTo(m: StageMod): number | null {
   return need > now ? need : null;
 }
 const nowReq = (): number => { const it = craftStage.item.value; return it ? reqOfItem(it)?.level ?? 0 : 0; };
-function pick(i: number): void {
+/** ホバーの札: プレ / サフィ・ティア (・要求レベルが上がる時はその数字) */
+function hoverOf(m: StageMod): string {
+  const side = m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix");
+  const up = raisesTo(m);
+  return [`${side} ${m.tierName}`, up ? tr(`選ぶと要求 Lv ${up} に上がる (今 Lv ${nowReq()})`, `Raises requirement to Level ${up} (now ${nowReq()})`) : ""].filter(Boolean).join(" · ");
+}
+function confirm(): void {
+  if (chosen.value == null) return;
+  const i = chosen.value;
+  chosen.value = null;
   craftStage.use(`reveal:${i + 1}${rerolled.value ? ":reroll" : ""}`);
 }
+function reroll(): void { rerolled.value = true; chosen.value = null; }
 </script>
 
 <template>
-  <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="w-[380px] max-md:w-full rounded-xl border border-rose-400/40 bg-rose-500/10 p-3 text-[12px]">
-    <p class="mb-2 flex items-center justify-between">
-      <b class="text-rose-200">{{ tr("魂の井戸で発現 — 1 つ選ぶ", "Well of Souls — choose 1 to reveal") }}<span v-if="left() > 1" class="ml-1 font-normal opacity-70">{{ tr(`(未発現 残り ${left()})`, `(${left()} unrevealed left)`) }}</span></b>
-      <button
-        v-if="canReroll() && !rerolled"
-        type="button"
-        data-rec="reveal-reroll"
-        class="rounded-lg border border-violet-400/60 px-2 py-0.5 text-violet-200 hover:bg-violet-500/15"
-        :title="tr(`${jaOfOmen('OmenofAbyssalEchoes') ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`, 'Omen of Abyssal Echoes: reroll the options once')"
-        @click="rerolled = true"
-      >{{ tr("引き直す", "Reroll") }}</button>
-      <span v-else-if="rerolled" class="text-violet-200">{{ tr("引き直した候補", "Rerolled options") }}</span>
-    </p>
-    <div class="space-y-1.5">
+  <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="w-[380px] max-md:w-full rounded-md border border-[#3d4a2a] bg-[#0a0b08] p-3 shadow-[0_0_24px_rgba(0,0,0,0.7),inset_0_0_30px_rgba(60,90,30,0.12)]">
+    <p class="mb-2 text-center text-[11px] text-[#9fb57a]">{{ tr("魂の井戸 — 発現する MOD を選ぶ", "Well of Souls — choose a mod to reveal") }}<span v-if="left() > 1" class="ml-1 opacity-70">{{ tr(`(未発現 残り ${left()})`, `(${left()} unrevealed left)`) }}</span></p>
+    <div class="space-y-1">
       <button
         v-for="(m, i) in rerolled ? craftStage.offers.value.reroll : craftStage.offers.value.first"
         :key="`${rerolled}-${m.modId}`"
         type="button"
         :data-rec="`reveal:${i + 1}`"
-        class="g-plain flex w-full items-center justify-between gap-2 whitespace-normal rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-left max-md:min-h-11 hover:border-rose-300/60 hover:bg-rose-500/10"
-        :title="raisesTo(m) ? tr(`選ぶと要求 Lv ${raisesTo(m)} に上がる (今 Lv ${nowReq()})`, `Raises requirement to Level ${raisesTo(m)} (now ${nowReq()})`) : undefined"
-        @click="pick(i)"
-      >
-        <!-- 長い MOD は折り返す (ゲームのボタンの絵が自動で付いて 1 行になり、スマホで候補の欄が画面の右へはみ出していた。2026-10-13 要望 ea383d1e) -->
-        <span class="min-w-0 text-mod-desecrated">{{ modText(m) }}</span>
-        <span class="shrink-0 text-[10px] opacity-60">{{ m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix") }} {{ m.tierName }}</span>
-      </button>
+        data-reveal-option
+        class="g-plain flex w-full items-center justify-center whitespace-normal rounded border-2 px-3 py-3 text-center text-[14px] text-[#d6dcb8] transition max-md:min-h-12"
+        :class="chosen === i ? 'border-[#c9a96a] bg-black/70 shadow-[0_0_12px_rgba(201,169,106,0.35)]' : 'border-transparent bg-black/30 hover:border-[#5a6a3a]'"
+        :title="hoverOf(m)"
+        @click="chosen = i"
+      >{{ modText(m) }}</button>
+    </div>
+    <div class="relative mt-2 flex items-center justify-center">
+      <button type="button" data-reveal-confirm class="g-btn sm min-w-[120px] justify-center" :disabled="chosen == null" @click="confirm">{{ tr("確認", "Confirm") }}</button>
+      <!-- 引き直し (アビスの反響のお告げ)。ゲームと同じく右下の回る矢印 -->
+      <button
+        v-if="canReroll()"
+        type="button"
+        data-rec="reveal-reroll"
+        class="g-btn sm absolute right-0 !px-1.5 disabled:opacity-40"
+        :disabled="rerolled"
+        :title="rerolled ? tr('引き直した候補', 'Rerolled options') : tr(`${jaOfOmen('OmenofAbyssalEchoes') ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`, 'Omen of Abyssal Echoes: reroll the options once')"
+        @click="reroll"
+      ><Icon name="rotate" class="size-4" /></button>
     </div>
   </section>
 </template>
