@@ -53,22 +53,22 @@ function reroll(): void { rerolled.value = true; chosen.value = null; }
 </script>
 
 <template>
-  <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="w-[380px] max-md:w-full rounded-md border border-[#3d4a2a] bg-[#0a0b08] p-3 shadow-[0_0_24px_rgba(0,0,0,0.7),inset_0_0_30px_rgba(60,90,30,0.12)]">
-    <p class="mb-2 text-center text-[11px] text-[#9fb57a]">{{ tr("魂の井戸 — 発現する MOD を選ぶ", "Well of Souls — choose a mod to reveal") }}<span v-if="left() > 1" class="ml-1 opacity-70">{{ tr(`(未発現 残り ${left()})`, `(${left()} unrevealed left)`) }}</span></p>
-    <div class="space-y-1">
+  <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="w-[380px] max-md:w-full rounded-md border border-[#3d4a2a] bg-[#0a0b08] px-3 py-2 shadow-[0_0_24px_rgba(0,0,0,0.7),inset_0_0_30px_rgba(60,90,30,0.12)]">
+    <p class="mb-1.5 text-center text-[11px] text-[#9fb57a]">{{ tr("魂の井戸 — 発現する MOD を選ぶ", "Well of Souls — choose a mod to reveal") }}<span v-if="left() > 1" class="ml-1 opacity-70">{{ tr(`(未発現 残り ${left()})`, `(${left()} unrevealed left)`) }}</span></p>
+    <div class="space-y-0.5">
       <button
         v-for="(m, i) in rerolled ? craftStage.offers.value.reroll : craftStage.offers.value.first"
         :key="`${rerolled}-${m.modId}`"
         type="button"
         :data-rec="`reveal:${i + 1}`"
         data-reveal-option
-        class="g-plain flex w-full items-center justify-center whitespace-normal rounded border-2 px-3 py-3 text-center text-[14px] text-[#d6dcb8] transition max-md:min-h-12"
-        :class="chosen === i ? 'border-[#c9a96a] bg-black/70 shadow-[0_0_12px_rgba(201,169,106,0.35)]' : 'border-transparent bg-black/30 hover:border-[#5a6a3a]'"
+        class="g-plain flex w-full items-center justify-center whitespace-normal rounded border px-3 py-1.5 text-center text-[13px] leading-snug text-[#d6dcb8] transition max-md:min-h-10"
+        :class="chosen === i ? 'border-[#c9a96a] bg-black/70 shadow-[0_0_10px_rgba(201,169,106,0.35)]' : 'border-transparent bg-black/30 hover:border-[#5a6a3a]'"
         :title="hoverOf(m)"
         @click="chosen = i"
       >{{ modText(m) }}</button>
     </div>
-    <div class="relative mt-2 flex items-center justify-center">
+    <div class="relative mt-1.5 flex items-center justify-center">
       <button type="button" data-reveal-confirm class="g-btn sm min-w-[120px] justify-center" :disabled="chosen == null" @click="confirm">{{ tr("確認", "Confirm") }}</button>
       <!-- 引き直し (アビスの反響のお告げ)。ゲームと同じく右下の回る矢印 -->
       <button

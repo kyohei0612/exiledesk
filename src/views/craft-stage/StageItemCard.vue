@@ -35,15 +35,8 @@ import RichText from "../../components/decor/RichText.vue";
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
 const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean}>();
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
-/** 未発現の行の崩れた文字 (行ごとに決まった並び。ゲームの未発現の冒涜 MOD の見た目) */
-const GLYPHS = "ʗƀɨɕɿʛɦɩᵬɞʞɮɷʚɤʘɧƫʠɋƾ";
-function glitch(seed: string): string {
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619) >>> 0;
-  let out = "";
-  for (let i = 0; i < 13; i++) { h = Math.imul(h ^ (h >>> 13), 1103515245) >>> 0; out += i === 5 ? " " : GLYPHS[h % GLYPHS.length]; }
-  return out;
-}
+/** 未発現の行の崩れた文字。どの行も同じ並び・同じフォント (行ごとに変えると形がばらばらで気持ち悪い。2026-10-17 オーナー) */
+const UNREVEALED_GLYPHS = "ʘɿɕʞɞ ʖɷɦɕɷʞ";
 /** 付く空きの枠 (プレ → サフィ) */
 const openRows = computed(() => (["prefix", "suffix"] as const).flatMap((side) => Array.from({ length: props.open?.[side] ?? 0 }, () => ({ side }))));
 /** 両側が光っている時は「どちらかに付く」 */
@@ -262,13 +255,13 @@ const rows = computed(() => {
           <span class="min-w-0 flex-1 text-center">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
-            <span v-if="r.m.unrevealed" data-unrevealed class="tracking-wider text-[#a6e05c] [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ glitch(r.key + r.m.side) }}</span>
+            <span v-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider text-[#a6e05c] [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
             <span v-else :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
             <span v-if="look(r.m).tag" class="ml-1.5 whitespace-nowrap align-middle text-[10px] opacity-80">{{ look(r.m).tag }}</span>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
           </span>
-          <!-- 未発現の行は右端に見えない ↓ を置いて、ほかの行と同じ幅にして文字を真ん中にそろえる (2026-10-17 オーナー「ぐちゃ文字が右に寄ってる」) -->
-          <span class="flex shrink-0 items-center justify-end gap-1">
+          <!-- 右端 (↓・確率・×) は行ごとに中身が違うので枠の幅を決めておき、真ん中の文字をどの行もそろえる (2026-10-17 オーナー「% が無いからずれた、枠幅決めて中央ぞろえ」) -->
+          <span class="flex shrink-0 items-center justify-end gap-1" :class="removable ? 'min-w-[5.75rem]' : 'min-w-[3.75rem]'">
             <!-- MOD 一覧のこの行へ (持ったままでも押せる。持っている時は行を押すと「使う」なので、飛ぶのはこの ↓。2026-10-10 オーナー「持ちながらできるように」) -->
             <span v-if="r.m.unrevealed" aria-hidden="true" class="invisible rounded px-1 text-[11px] leading-none max-md:px-2 max-md:py-1">↓</span>
             <button v-if="!r.m.unrevealed" type="button" class="rounded px-1 text-[11px] leading-none text-white/35 hover:bg-white/10 hover:text-white/80 max-md:px-2 max-md:py-1" :title="tr('MOD 一覧のこの行へ', 'Find in the mod list')" @click.stop="emit('jump', r.m.modId)">↓</button>
