@@ -12,6 +12,12 @@ import { computed, ref, watch } from "vue";
 import { craftStage as s } from "./craft-stage";
 import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, topic, topicAt, topicDone } from "./craft-topic";
+import { fullSockets } from "./stage-steps";
+import { topicKey } from "../services/craft-stage/topic-courses";
+import { freshItem } from "../services/craft-stage/run-plan";
+import { applyCurrency } from "../services/craft-stage/apply-currency";
+import { mulberry32 } from "../services/htc/rng";
+import type { StageItem } from "../services/craft-stage/types";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** コースを終える (タブを押した時) */
@@ -47,10 +53,30 @@ const now = (): Snap => ({ at: topicAt.value, item: s.item.value, log: s.log.val
 // 手の番号が変わったら (打って次へ・白に戻す・一覧から選ぶ・始め)、その手の始めとして控える。戻した時は控えない
 let restoring = false;
 watch([topic, topicAt], ([t], [oldT]) => {
-  if (!t) { snaps.length = 0; return; }
-  if (t !== oldT) { snaps.length = 0; snaps.push(now()); return; }
-  if (!restoring) snaps.push(now());
+  if (!t) { snaps.length = 0; prepared.value = false; return; }
+  if (t !== oldT) snaps.length = 0;
+  else if (restoring) return;
+  prepareStep();
+  snaps.push(now());
 }, { flush: "sync" });
+
+/**
+ * 今の手が今のアイテムに打てない時は、白から prep の手を打って打てる状態を作る (工程には積まない。前の手で起きたことは残す)。
+ * 2026-10-17 オーナー「わざわざ白に戻すようなボタン不要、つどつどリセット掛けておk。レア以上のチュートリアルは今の手が打てる手に再現してあげる」
+ */
+export const prepared = ref(false);
+function prepareStep(): void {
+  prepared.value = false;
+  const c = topic.value, d = s.data.value, it = s.item.value, st = c?.steps[topicAt.value];
+  if (!c || !d || !it || !st?.prep) return;
+  const key = topicKey(st, d, it);
+  if (key && !s.usable(key)) return;
+  const g = mulberry32(Math.floor(Math.random() * 1e9));
+  let next: StageItem = { ...fullSockets(freshItem(d, c.base, c.itemLevel)), rollSeed: it.rollSeed };
+  for (const k of st.prep) { const r = applyCurrency(d, next, k, g, []); if (r.applied) next = { ...r.item, rollSeed: it.rollSeed }; }
+  s.item.value = next;
+  prepared.value = true;
+}
 
 function restore(x: Snap): void {
   restoring = true;
@@ -59,6 +85,7 @@ function restore(x: Snap): void {
   s.startMods.value = x.startMods;
   s.omens.value = [...x.omens];
   topicAt.value = x.at;
+  prepared.value = false;
   restoring = false;
 }
 

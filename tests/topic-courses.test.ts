@@ -20,6 +20,11 @@ describe("動作を学ぶコース", () => {
         let it = fullSockets(freshItem(data, c.base, c.itemLevel));
         c.steps.forEach((st, i) => {
           if (st.use === "reset") { it = fullSockets(freshItem(data, c.base, c.itemLevel)); return; }
+          // 打てない時は prep の手で打てる状態を作る (craft-lesson.ts の prepareStep と同じ)
+          if (st.prep && !applyCurrency(data, it, topicKey(st, data, it) ?? "", mulberry32(seed), st.omens ?? []).applied) {
+            it = fullSockets(freshItem(data, c.base, c.itemLevel));
+            for (const k of st.prep) { const p = applyCurrency(data, it, k, g, []); if (p.applied) it = p.item; }
+          }
           const key = topicKey(st, data, it);
           const r = key ? applyCurrency(data, it, key, g, st.omens ?? []) : null;
           if (!r?.applied) { const k = `${i + 1}:${st.use} ${r?.reason ?? "キーが無い"}`; fails[k] = (fails[k] ?? 0) + 1; return; }

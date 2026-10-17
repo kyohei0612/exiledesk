@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { canLessonBack, lessonBack } from "../../state/craft-lesson";
+import { canLessonBack, lessonBack, prepared } from "../../state/craft-lesson";
 import { endTopic, goTopic, topic, topicAt, topicDone, topicReset, topicStep } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { modListFor } from "../../services/craft-stage/mod-list";
@@ -101,6 +101,7 @@ const order = computed(() => {
   <section v-if="topic && part === 'now'" data-topic-now-panel class="g-panel p-3 text-[12px]">
     <div v-if="topicStep" data-topic-now class="rounded-lg border-2 border-amber-300/50 bg-amber-500/[0.08] px-3 py-2">
       <p class="text-[11px] font-bold text-amber-200">{{ tr(`${topicAt + 1} 手目: これを使ってみる`, `Step ${topicAt + 1}: try this`) }}</p>
+      <p v-if="prepared" data-topic-prepared class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("この手が使えるアイテムを用意しました", "We set up an item this can be used on") }}</p>
       <div class="mt-1 flex flex-wrap items-center gap-2">
         <button v-if="topicStep.step.use === 'reset'" type="button" data-topic-reset class="g-btn sm" @click="topicReset">{{ tr("白に戻す", "Reset to white") }}</button>
         <button v-else type="button" data-topic-hold class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15" :title="tr('押すと持つ (お告げも掛ける)', 'Click to hold (omens applied too)')" @click="holdIt">
