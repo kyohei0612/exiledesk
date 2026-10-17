@@ -164,7 +164,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       </div>
     </div>
     <div v-else-if="topicDone" data-topic-done class="mt-3 rounded-xl border-2 border-amber-300/70 bg-gradient-to-b from-amber-400/[0.18] to-transparent px-4 py-3">
-      <p class="text-[18px] font-black text-amber-100">{{ tr("全部使ってみた! おつかれさま", "You tried them all!") }}</p>
+      <p class="text-[18px] font-black text-amber-100">{{ tr("チュートリアル完了！お疲れ様でした！！", "Tutorial complete! Great work!!") }}</p>
       <p class="mt-0.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("気になった手は、下の一覧から押すともう一度試せます", "Click any step below to try it again") }}</p>
     </div>
 
