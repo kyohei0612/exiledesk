@@ -15,8 +15,8 @@ import { craftStage as s } from "../state/craft-stage";
 import { topic } from "../state/craft-topic";
 import { course } from "../state/craft-course";
 import { endLesson, inLesson, startTopicAt } from "../state/craft-lesson";
-import { closeChaosSpam, spamKey, spamming } from "../state/chaos-spam";
-import { basePage, baseUnpicked, feedbackPage } from "../state/web-page";
+import { closeChaosSpam } from "../state/chaos-spam";
+import { basePage, baseUnpicked, feedbackPage, spamPage } from "../state/web-page";
 import { TOPIC_COURSES } from "../services/craft-stage/topic-courses";
 import { courseShown } from "../services/craft-stage/course-release";
 import { pageTick } from "../utils/ads";
@@ -54,14 +54,14 @@ export function openBasePage(): void {
 const autoBase = computed(() => baseUnpicked.value && !basePage.value);
 
 /** 今のページ (URL の query の 1 組。空 = エミュレーターなど今までの画面) */
-const page = computed((): string => {
+export const page = computed((): string => {
   if (feedbackPage.value) return "page=feedback";
   const id = topic.value?.id ?? course.value?.id;
   if (id) return `course=${id}`;
   if (s.mode.value === "tutorial") return "page=guide";
   if (s.replay.value) return "";
   if (basePage.value || baseUnpicked.value) return "page=base";
-  if (!inLesson.value && (spamKey.value || spamming.value)) return "page=spam";
+  if (spamPage.value) return "page=spam";
   return "";
 });
 

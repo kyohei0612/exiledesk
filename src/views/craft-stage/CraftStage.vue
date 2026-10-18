@@ -32,7 +32,7 @@ import { closeChaosSpam, spamAims, spamKey, spamPending, spamming } from "../../
 import StageChaosSpam from "./StageChaosSpam.vue";
 import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
-import { PAGES_ON, basePage, baseUnpicked } from "../../state/web-page"; // Web のページ (ベース選び・計算機。web/page.ts)
+import { PAGES_ON, basePage, baseUnpicked, spamPage } from "../../state/web-page"; // Web のページ (ベース選び・計算機は棚・工程・設定を隠す。アプリは棚に覆い。web/page.ts)
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -179,8 +179,6 @@ function openChaosSpam(): void {
 }
 // カオススパム計算機を開いている間は棚を触らせない (2026-10-16 オーナー「計算機触ってる時カレンシー触らせないように、閉じるボタンしっかり」)
 const spamOpen = computed(() => !s.replay.value && (!!spamKey.value || spamming.value));
-/** Web は計算機を別のページに (?page=spam、web/page.ts): 棚・工程・設定は隠す (2026-10-18 オーナー)。アプリは今まで通り棚に覆い */
-const spamPage = computed(() => PAGES_ON && spamOpen.value && !inLesson.value);
 watch([spamOpen, () => s.held.value], ([o, k]) => { if (o && k) s.hold(null); }); // 開いている間に持った物は離す (どの経路でも。2026-10-16 ランダム操作で見つけた)
 // 選ぶ窓を狙い無しで閉じた時は、送る予約を消す
 watch(() => s.aimPicker.value, (v, old) => { if (!v && old?.spam && !spamAims.value.length) { spamPending.value = false; spamKey.value = null; } });

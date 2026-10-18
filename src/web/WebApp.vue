@@ -25,11 +25,11 @@ import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import InstallButton from "./InstallButton.vue";
 import LangSwitch from "../components/LangSwitch.vue";
-import { openFeedback, openGuide } from "./page";
+import { openFeedback, openGuide, page } from "./page";
 import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
 import { AD_FRAMES, pageTick, sideAdW } from "../utils/ads";
-import { basePage, baseUnpicked, feedbackPage } from "../state/web-page";
+import { feedbackPage } from "../state/web-page";
 import { inLesson } from "../state/craft-lesson";
 
 const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);
@@ -46,8 +46,11 @@ watch(feedbackPage, (on) => {
   imageAskFor.value = null;
   void nextTick(() => window.scrollTo(0, fbScroll));
 });
-/** ベース選びのページ (PC は右の列も外して画面いっぱい。2026-10-12 オーナー「ベース選択の時は右側の固定バーも突っ切っていい」) */
-const wideBase = computed(() => basePage.value || baseUnpicked.value);
+/**
+ * 右についてくる列 (チャンネルと 300×250 の枠) があるのはクラフト画面だけ。ほかのページ (使い方・コツ・コース・ベース選び・計算機・要望) は
+ * 右の列を外して、両脇に縦長の枠 (2026-10-18 オーナー「固定スクロールがあるのはクラフト画面のみ、それ以外は全部別ページ扱い」。MOD 一覧だけ重ねる窓)
+ */
+const craftPage = computed(() => page.value === "");
 /**
  * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
  * (2026-10-07 オーナー「45 分放置でリロードにしようかな」→ ページごと読み直すと手で打った手順などが消えるので、取り直しだけに)
@@ -157,13 +160,14 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
       <!-- 要望・バグを送るのページ。PC は左に縦長の広告の枠、右の列はそのまま -->
       <section v-if="feedbackPage" data-feedback-page class="flex min-w-0 flex-1 items-start gap-6 p-4">
-        <div v-if="!phone" class="sticky top-3 shrink-0 empty:hidden"><AdSlot id="fb-left" :w="sideAdW()" :h="600" /></div>
         <div class="min-w-0 max-w-[48rem] flex-1">
           <button type="button" data-feedback-back class="g-btn sm mb-3 max-md:min-h-10" @click="closeFeedback">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
           <FeedbackDialog page open :for-id="imageAskFor" @close="closeFeedback" />
           <WebFooter class="mt-10" />
         </div>
       </section>
+      <!-- クラフト画面以外のページ: 両脇に縦長の枠 (ページを移るたびに出し直す、60 秒に 1 回まで) -->
+      <div v-if="!craftPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pl-4 empty:hidden"><AdSlot id="page-left" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
       <CraftStage v-show="!feedbackPage" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <WebFooter class="-mx-4" />
@@ -171,7 +175,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       </CraftStage>
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
       <!-- 右クリックは真ん中 (CraftStage.vue) と同じく「持っている物を手放す」。ブラウザのメニュー (コピーなど) は出さない (2026-10-13 オーナー) -->
-      <aside v-show="phone || !wideBase || feedbackPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : AD_FRAMES ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
+      <div v-if="!craftPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pr-4 empty:hidden"><AdSlot id="page-right" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
+      <aside v-show="phone || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : AD_FRAMES ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
         <div :class="phone ? '' : 'sticky top-3'">
           <LivePanel />
           <!-- 広告の枠 (utils/ads.ts): チャンネルの下に 300×250 を 2 つ。ページを移った時だけ出し直す (60 秒に 1 回まで) -->
