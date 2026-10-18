@@ -119,26 +119,27 @@ export function catalystsFor(mod: Mod): Catalyst[] {
 /**
  * 素の値 → 画面に出る値。
  *
- * 整数の MOD は四捨五入 (2026-10-16 オーナー「品質での効果の上がり方は CoE 仕様で」。Craft of Exile の ModsManager.applyQualityToValue
- * = Math.round(値 × (100 + 品質) / 100)。前は切り捨て)。小数を持つ MOD はそのまま。
+ * 整数の MOD は切り捨て (2026-10-18 オーナー: ゲームでは宝飾品のスキルレベル +3 が品質 34% でちょうど +4 = 33% では 3。
+ * 10-16 に Craft of Exile の Math.round に合わせていたが、それだと 17% で +4 になってゲームと合わない)。小数を持つ MOD はそのまま。
+ * 1e-9 は 3 × 1.34 = 4.0200…01 のような誤差で境目を落とさないため
  */
 export function displayedValue(raw: number, qualityPct: number): number {
-  const v = raw * (1 + qualityPct / 100);
-  return Number.isInteger(raw) ? Math.round(v + 1e-9) : v;
+  const v = (raw * (100 + qualityPct)) / 100;
+  return Number.isInteger(raw) ? Math.floor(v + 1e-9) : v;
 }
 
 /**
  * 画面に出ている値 → 素の値。
  *
- * **丸めた後なので完全には戻りません。**整数の表示は、四捨五入して同じ表示になる一番小さい整数を返します
- * (品質 20% の 10 → 8、品質 34% の +4 → 3)。当てはまる整数が無ければ割った値 (「素はこれ以上」の下限)
+ * **丸めた後なので完全には戻りません。**整数の表示は、切り捨てて同じ表示になる一番小さい整数を返します
+ * (品質 20% の 12 → 10、品質 34% の +4 → 3)。当てはまる整数が無ければ割った値 (「素はこれ以上」の下限)
  */
 export function rawValue(displayed: number, qualityPct: number): number {
   if (!(qualityPct > 0)) return displayed;
-  // 整数の表示は、四捨五入して同じ表示になる一番小さい整数が素 (2026-10-03: 宝飾品のスキルレベル +3 は品質 34% で +4 と出る。
+  // 整数の表示は、切り捨てて同じ表示になる一番小さい整数が素 (2026-10-03: 宝飾品のスキルレベル +3 は品質 34% で +4 と出る。
   // 4 / 1.34 = 2.985 のままだと T1 (3) に届かず T2 と判定していた。SaVeQ「品質 34% で +4」)
   if (displayed > 0 && Number.isInteger(displayed)) {
-    const r = Math.ceil((displayed - 0.5) / (1 + qualityPct / 100) - 1e-9);
+    const r = Math.ceil((displayed * 100) / (100 + qualityPct) - 1e-9);
     if (displayedValue(r, qualityPct) === displayed) return r;
   }
   return displayed / (1 + qualityPct / 100);

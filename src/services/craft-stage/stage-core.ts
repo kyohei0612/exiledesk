@@ -71,7 +71,7 @@ export function augmentEffectPct(item: StageItem, a: StageAugment): number {
   return p.augments + (runeRow(a.en)?.kind === "rune" ? p.runes : 0);
 }
 /**
- * 効果の増加を掛けた効き目 (stat の値と文面)。丸めは四捨五入 (品質で MOD を伸ばす時と同じ、quality.ts の displayedValue)。
+ * 効果の増加を掛けた効き目 (stat の値と文面)。丸めは切り捨て (品質で MOD を伸ばす時と同じ、quality.ts の displayedValue。2026-10-18 から)。
  * 文面は stat の画面の値 (stat-scale の displayValue) を探して置き換える。効果の増加そのもの (local_rune_effect_+%) は伸ばさない
  */
 export function scaledAugment(item: StageItem, a: StageAugment): StageAugment {
@@ -215,7 +215,7 @@ function fillEn(text: string, values: readonly number[]): string {
 /**
  * カタリストの品質で伸びた後の数値と文 (POE2Tube 要望 ㉔-4、2026-10-02)。伸びない時は null。
  * 決まりは計算機の quality.ts と同じ (オーナーの実物で検算済み): 指輪・アミュレットだけ、品質の種類 (qualityTag) のタグを
- * MOD 自身が持っていれば 素の値 × (1 + 品質) を四捨五入。防具・武器の MOD は品質で数値が動かない。
+ * MOD 自身が持っていれば 素の値 × (1 + 品質) を切り捨て (2026-10-18)。防具・武器の MOD は品質で数値が動かない。
  * タグは MOD に持たせた物 (無い古い物は data から引く)
  */
 export function boostedMod(item: StageItem, m: StageMod, data?: PatchData): { values: number[]; textJa: string; textEn: string } | null {
@@ -260,7 +260,7 @@ function qualityPctOf(item: StageItem, m: StageMod, data?: PatchData): number {
 }
 /**
  * 獰猛 (液化した感情) の「サフィックス / プレフィックスの効果が N% 増加する」がその側の MOD に掛ける % (2026-10-11 オーナーの参考動画 2 本の仕上げの手)。
- * 獰猛は反対側に付くので自分は伸ばさない。丸めは品質と同じ四捨五入 (確かめていない)
+ * 獰猛は反対側に付くので自分は伸ばさない。丸めは品質と同じ切り捨て (2026-10-18。獰猛は確かめていない)
  */
 export function sideEffectPct(item: StageItem, side: StageSide): number {
   const id = side === "prefix" ? "PrefixEffect" : "SuffixEffect";

@@ -122,13 +122,17 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(allMods(w.item).some((m) => /LightningResistance/.test(m.modId))).toBe(true);
   });
 
-  it("13. 品質で伸びた整数の値は四捨五入 (CoE の applyQualityToValue = Math.round)", async () => {
+  // 2026-10-18 オーナー: 切り捨てに戻す (ゲームでは宝飾品のスキルレベル +3 が品質 34% でちょうど +4 になる = 33% では 3。四捨五入だと 17% で 4 になってしまう)。
+  // 10-16 の「CoE 仕様 (Math.round)」のうち品質の丸めだけを上書き
+  it("13. 品質で伸びた整数の値は切り捨て (スキルレベル +3 は品質 34% が境目で +4)", async () => {
     const { displayedValue, rawValue } = await import("../src/services/htc/quality");
-    expect(displayedValue(8, 20)).toBe(10);
-    expect(displayedValue(7, 20)).toBe(8);
+    expect(displayedValue(3, 33)).toBe(3);
     expect(displayedValue(3, 34)).toBe(4);
-    expect(rawValue(10, 20)).toBe(8);
+    expect(displayedValue(3, 17)).toBe(3);
+    expect(displayedValue(8, 20)).toBe(9);
+    expect(displayedValue(10, 20)).toBe(12);
     expect(rawValue(4, 34)).toBe(3);
+    expect(rawValue(12, 20)).toBe(10);
   });
 
   it("15. 深淵のエッセンスは未発現の冒涜 MOD があれば打てて印に入れ替わり、発現済みだと打てない (2026-10-16 オーナーがゲームで確認)", async () => {

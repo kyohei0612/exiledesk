@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.567",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "品質で伸びる MOD の数字を、ゲームと同じ切り捨てに (例: 全てのスペルスキルのレベル +3 は、品質 34% でちょうど +4)",
+    "en": "Quality-boosted mod values now round down like the game (e.g. +3 to Level of all Spell Skills becomes +4 at exactly 34% quality)"
+   }
+  ]
+ },
+ {
   "v": "0.1.566",
   "date": "2026-10-18",
   "items": [
@@ -593,18 +605,6 @@
     "area": "",
     "text": "冒涜専用 MOD どうしの出やすさを全部同じに (ゲームが公開していないため。前は指輪の有志の実測と、それを当てた推定)",
     "en": "All Desecrated-only mods are now equally likely (the game doesn't publish the odds; previously based on community measurements on rings and estimates from them)"
-   }
-  ]
- },
- {
-  "v": "0.1.527",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム確率機でアイテムレベルを変えて続けた時、手順に「アイテムレベルを変える手」が入るように (再生すると前の手まで別物になっていた)",
-    "en": "Changing the item level while using the chaos spam tool now records an \"item level change\" step (replays used to produce a different item)"
    }
   ]
  }
