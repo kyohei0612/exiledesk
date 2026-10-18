@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
-import { craftStage as s } from "../../state/craft-stage";
+import { craftStage as s, SIM_LOCKED } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
 import { useStageBase } from "./use-stage-base";
@@ -17,6 +17,8 @@ const { pickSimBase } = useStageBase();
 const catalog = ref<InstanceType<typeof BaseCatalog> | null>(null);
 
 function back(): void { basePage.value = false; }
+/** シミュレーターを選んだ: シミュレーターの画面へ (そこで自分のベース選び・レシピから始める。2026-10-18 オーナー「何からやるのか、エミュレーターかシミュレーターか。デフォはエミュレーター」) */
+function toSim(): void { s.hold(null); basePage.value = false; s.mode.value = "sim"; }
 function pick(en: string): void {
   const first = baseUnpicked.value;
   basePage.value = false;
@@ -48,6 +50,11 @@ onBeforeUnmount(() => {
           <button type="button" data-base-page-back class="g-btn sm max-md:min-h-10" @click="back">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
           <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
         </span>
+      </div>
+      <!-- 何から始めるか (シミュレーターが開いている開発版だけ。本番はエミュレーターだけなので出さない) -->
+      <div v-if="!SIM_LOCKED" class="mb-3 flex gap-1 max-md:w-full" role="tablist">
+        <button type="button" role="tab" aria-selected="true" class="g-tab on min-w-[170px] max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]">{{ tr("エミュレーター", "Emulator") }}</button>
+        <button type="button" role="tab" aria-selected="false" data-base-page-sim class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" @click="toSim">{{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70">β</span></button>
       </div>
       <!-- 未選択の時は前のベース・種類を選んだ状態にしない・人気のベースを上に (StageBasePicker.vue と同じ) -->
       <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog ref="catalog" :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" @pick="pick" /></div>
