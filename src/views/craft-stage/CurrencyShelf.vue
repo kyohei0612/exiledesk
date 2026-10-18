@@ -164,7 +164,17 @@ const RUNE_ORDER = (k: string): number => { const m = RUNE_TIER.exec(k.slice("ru
 /** 段をまとめた物の鍵の並び (エッセンスは種類の名前、ルーンは rf:<英語名>) */
 function groupKeys(id: string): string[] {
   if (id.startsWith("rf:")) return otherRunes.value.flatMap((g) => g.keys).filter((k) => runeFam(k) === id).sort((a, b) => RUNE_ORDER(a) - RUNE_ORDER(b));
-  return essences.value.find((g) => g.kind === id)?.keys ?? [];
+  return essByRarity(essences.value.find((g) => g.kind === id)?.keys ?? []);
+}
+/**
+ * エッセンスの段はアイテムのレアリティで絞る: レアはパーフェクトだけ (段が 1 つなので欄を出さず、押したらそのまま持つ)、
+ * ノーマル・マジックはパーフェクトを出さない (2026-10-18 オーナー「レアの時のエッセンスはパーフェクトのみだから選ばせる工程なくして」)。絞って空ならそのまま
+ */
+function essByRarity(ks: string[]): string[] {
+  const r = craftStage.item.value?.rarity;
+  const perfect = (k: string): boolean => k.startsWith("essence:perfect:");
+  const out = r === "rare" ? ks.filter(perfect) : r === "normal" || r === "magic" ? ks.filter((k) => !perfect(k)) : ks;
+  return out.length ? out : ks;
 }
 /**
  * まとめたアイコンに使う鍵: 使える段のうち一番上 (レアならパーフェクト)。どれも使えなければ普通の段
@@ -307,7 +317,7 @@ const TABS = computed(() => (!props.full ? [] : [
     <div v-else-if="tab === 'essence'" class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
       <template v-for="g in essences" :key="g.kind">
         <div class="flex flex-wrap gap-1.5 max-md:contents">
-          <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+          <ShelfButton v-for="k in groupKeys(g.kind)" :key="k" :k="k" @pick="emit('hold', $event)" />
         </div>
       </template>
       <p v-if="!essences.length" class="text-[12px] opacity-50">{{ tr("このベースに使えるエッセンスはありません", "No essences for this base") }}</p>
