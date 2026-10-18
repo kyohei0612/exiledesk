@@ -75,6 +75,9 @@ export function track(name: string, extra?: string): void {
   // 使い方・コツのページ・コースのページ (2026-10-18、web/page.ts)
   if (name === "page:guide") screen("guide");
   if (name === "page:course") screen(`course:${extra ?? ""}`);
+  // ベース選び・要望のページ (2026-10-18 2 回目)。ベース選びは前の下に開く一覧と同じ "picker" で数える (StageBasePicker.vue)
+  if (name === "page:base") screen("picker");
+  if (name === "page:feedback") screen("feedback");
   buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
   if (trail.length > 40) trail.shift();

@@ -16,8 +16,8 @@ import { logRecord } from "../../utils/log-record";
 import { glideBy, scrollBoxOf } from "../../utils/keep-place";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
-const props = defineProps<{ base: string; data: PatchData | null; /** まだ選んでいない (開いた状態で始まり、今のベースは出さない) */ unpicked?: boolean }>();
-const emit = defineEmits<{ pick: [en: string] }>();
+const props = defineProps<{ base: string; data: PatchData | null; /** まだ選んでいない (開いた状態で始まり、今のベースは出さない) */ unpicked?: boolean; /** Web: 「ベースを変える」は下に開かず、ベース選びのページへ (openPage、StageBasePage.vue。2026-10-18) */ page?: boolean }>();
+const emit = defineEmits<{ pick: [en: string]; openPage: [] }>();
 
 const current = computed(() => (props.data ? (baseCatalog(props.data, true).find((b) => b.en === props.base) ?? null) : null));
 const open = ref(!!props.unpicked);
@@ -57,7 +57,7 @@ async function choose(en: string): Promise<void> {
 <template>
   <div class="w-full">
     <!-- 今のベース (押すと開く) -->
-    <button ref="head" type="button" data-rec="base-toggle" class="group flex h-10 max-w-full items-center gap-3 rounded-md max-md:w-full max-md:gap-2 max-md:px-0 px-2 text-left transition hover:bg-white/5" :class="open ? 'bg-white/[0.04]' : ''" :aria-expanded="open" @click="open = !open">
+    <button ref="head" type="button" data-rec="base-toggle" class="group flex h-10 max-w-full items-center gap-3 rounded-md max-md:w-full max-md:gap-2 max-md:px-0 px-2 text-left transition hover:bg-white/5" :class="open ? 'bg-white/[0.04]' : ''" :aria-expanded="open" @click="page && !unpicked ? emit('openPage') : (open = !open)">
       <template v-if="unpicked"><b class="text-[15px] text-[var(--exile-color-accent-focus)]">{{ tr("ベースを選ぶ", "Choose a base") }}</b></template>
       <template v-else>
         <img v-if="baseArt(base)" :src="baseArt(base)!" alt="" class="size-8 shrink-0 object-contain" draggable="false" />

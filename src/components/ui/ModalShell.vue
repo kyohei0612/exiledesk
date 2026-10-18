@@ -39,6 +39,8 @@ const props = withDefaults(defineProps<{
   layer?: "modal" | "confirm";
   /** スマホ (768 px 未満) は画面いっぱい (エミュレーターの一覧の窓) */
   fullOnPhone?: boolean;
+  /** 重ねずに、置いた場所にそのまま出す (Web の要望・バグを送るのページ。後ろを暗くせず、ページも止めない。2026-10-18) */
+  inline?: boolean;
 }>(), { title: "", width: "w-[1000px] max-w-full", bodyClass: "px-3 py-2", closable: true, closeTitle: "", layer: "modal", fullOnPhone: false });
 const emit = defineEmits<{ close: [] }>();
 const slots = useSlots();
@@ -67,7 +69,7 @@ function activate(): void {
   active = true;
   stack.push(id);
   // Web 版は html が送りの箱 (web-page) なので html も止める。body だけだと窓の上で回したホイールで後ろが送られていた (2026-10-11 オーナー)
-  if (locks++ === 0) { prevOverflow = document.body.style.overflow; prevHtmlOverflow = document.documentElement.style.overflow; document.body.style.overflow = "hidden"; document.documentElement.style.overflow = "hidden"; }
+  if (!props.inline && locks++ === 0) { prevOverflow = document.body.style.overflow; prevHtmlOverflow = document.documentElement.style.overflow; document.body.style.overflow = "hidden"; document.documentElement.style.overflow = "hidden"; }
   window.addEventListener("keydown", onKey, true);
   prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   // 開いたら窓に (autofocus の欄があればそこ)。Esc・Tab が窓から始まる
@@ -83,7 +85,7 @@ function deactivate(): void {
   active = false;
   const i = stack.indexOf(id);
   if (i >= 0) stack.splice(i, 1);
-  if (--locks === 0) { document.body.style.overflow = prevOverflow; document.documentElement.style.overflow = prevHtmlOverflow; }
+  if (!props.inline && --locks === 0) { document.body.style.overflow = prevOverflow; document.documentElement.style.overflow = prevHtmlOverflow; }
   window.removeEventListener("keydown", onKey, true);
   // 閉じたら前に居た所へ (消えていたらそのまま)
   const back = prevFocus;
@@ -95,11 +97,10 @@ onBeforeUnmount(deactivate);
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport to="body" :disabled="inline">
     <div
       v-if="open"
-      class="fixed inset-0 flex items-center justify-center overscroll-contain bg-black/65 p-4"
-      :class="[layer === 'confirm' ? 'z-[310]' : 'z-[300]', fullOnPhone ? 'max-md:items-stretch max-md:p-0' : '']"
+      :class="inline ? 'flex justify-center' : ['fixed inset-0 flex items-center justify-center overscroll-contain bg-black/65 p-4', layer === 'confirm' ? 'z-[310]' : 'z-[300]', fullOnPhone ? 'max-md:items-stretch max-md:p-0' : '']"
       @mousedown="onDown"
       @click="onBackdrop"
     >

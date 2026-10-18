@@ -5,7 +5,7 @@
  * アプリ版の App.vue にある起動の処理 (更新・PoB・画像パック・ログイン・見回り) は Web では要らないので載せない。
  * 画面は 1660 幅で組んだ絵を窓に合わせて拡大縮小する (アプリと同じ。狭い時は縮める)
  */
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { marketStore } from "../state/market-store";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import { craftStage } from "../state/craft-stage";
@@ -25,12 +25,29 @@ import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import InstallButton from "./InstallButton.vue";
 import LangSwitch from "../components/LangSwitch.vue";
-import { openGuide } from "./page";
+import { openFeedback, openGuide } from "./page";
+import AdSlot from "../components/ui/AdSlot.vue";
+import WebFooter from "./WebFooter.vue";
+import { AD_FRAMES, pageTick, sideAdW } from "../utils/ads";
+import { basePage, baseUnpicked, feedbackPage } from "../state/web-page";
 import { inLesson } from "../state/craft-lesson";
 
 const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);
 
-const feedbackOpen = ref(false);
+/**
+ * 要望・バグを送るはページ (?page=feedback、web/page.ts。2026-10-18 オーナー「広告入れてる前提のページ作り」)。前は重ねる窓。
+ * 返事の「画像を送る」(imageAskFor) も同じページで開く。開いたら一番上から、戻ったら前の位置へ
+ */
+watch(imageAskFor, (id) => { if (id) feedbackPage.value = true; }, { immediate: true });
+function closeFeedback(): void { feedbackPage.value = false; imageAskFor.value = null; }
+let fbScroll = 0;
+watch(feedbackPage, (on) => {
+  if (on) { fbScroll = window.scrollY; window.scrollTo(0, 0); return; }
+  imageAskFor.value = null;
+  void nextTick(() => window.scrollTo(0, fbScroll));
+});
+/** ベース選びのページ (PC は右の列も外して画面いっぱい。2026-10-12 オーナー「ベース選択の時は右側の固定バーも突っ切っていい」) */
+const wideBase = computed(() => basePage.value || baseUnpicked.value);
 /**
  * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
  * (2026-10-07 オーナー「45 分放置でリロードにしようかな」→ ページごと読み直すと手で打った手順などが消えるので、取り直しだけに)
@@ -118,7 +135,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
       <!-- 使い方・コツのページ (動画へのリンク + チュートリアルのコース。2026-10-18 オーナー「チュートリアルは使い方にしまう」) -->
       <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" @click="openGuide">{{ tr("使い方・コツ", "Guide & Tips") }}</button>
-      <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
+      <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', feedbackPage ? 'on' : '']" :aria-pressed="feedbackPage" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="imageAskFor = null; openFeedback()">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
       <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
       <!-- 前の「アプリ版 近日公開」の所: このサイトをアプリとしてデスクトップに置く (PWA、2026-10-17 オーナー) -->
@@ -134,30 +151,35 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <HoverStack />
     <ChangelogDialog />
     <SupportDialog />
-    <FeedbackDialog :open="feedbackOpen || !!imageAskFor" :for-id="feedbackOpen ? null : imageAskFor" @close="feedbackOpen = false; imageAskFor = null" />
+    <!-- スマホの広告の枠: 上の帯の下に 1 つ。棚・「ベースを変える」から指 1 本分離す (誤タップは規約違反。utils/ads.ts) -->
+    <div v-if="phone" class="mb-4 flex justify-center pt-2 empty:hidden"><AdSlot id="phone-top" :w="320" :h="100" :tick="pageTick" /></div>
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
-      <CraftStage class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
+      <!-- 要望・バグを送るのページ。PC は左に縦長の広告の枠、右の列はそのまま -->
+      <section v-if="feedbackPage" data-feedback-page class="flex min-w-0 flex-1 items-start gap-6 p-4">
+        <div v-if="!phone" class="sticky top-3 shrink-0 empty:hidden"><AdSlot id="fb-left" :w="sideAdW()" :h="600" /></div>
+        <div class="min-w-0 max-w-[48rem] flex-1">
+          <button type="button" data-feedback-back class="g-btn sm mb-3 max-md:min-h-10" @click="closeFeedback">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
+          <FeedbackDialog page open :for-id="imageAskFor" @close="closeFeedback" />
+          <WebFooter class="mt-10" />
+        </div>
+      </section>
+      <CraftStage v-show="!feedbackPage" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
-          <!-- 決まり事 (2026-10-07、2026-10-10 から画面に貼り付けずクラフトステージの一番下): 非公式のファンサイトであること・素材の権利・相場と確率の出どころ。1 行だけ -->
-          <footer data-rec-part="footer" class="-mx-4 mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--exile-color-border-subtle)] px-4 py-2 text-[10px] opacity-50">
-            <span>{{ tr("ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。", "ExileDesk is an unofficial fan site and is not affiliated with or endorsed by Grinding Gear Games. Path of Exile 2 and all related names and images are the property of Grinding Gear Games.") }}</span>
-            <span>{{ tr("相場は", "Market prices from") }} <a href="https://poe2scout.com/" target="_blank" rel="noopener" class="underline">poe2scout</a>{{ tr("、確率はゲームのデータからの推定で、結果を保証するものではありません。", ". Chances are estimates from game data; results are not guaranteed.") }}</span>
-            <!-- 使い方の記録の案内と切り替えはプライバシーポリシーの「4. 記録を止める方法」へ (2026-10-17 オーナー「ちょっと目立って嫌だ」) -->
-            <span class="ml-auto">{{ tr("協賛の枠には PR と表示します", "Sponsored slots are marked PR") }}</span>
-            <!-- よくある一番下のリンク (2026-10-12 広告の審査の前に。中身は public/about.html・privacy.html の単独のページ) -->
-            <a href="/guide" class="underline">{{ tr("使い方", "Guide") }}</a>
-            <a href="/bases/" class="underline">{{ tr("ベース一覧", "Bases") }}</a>
-            <a href="/about.html" class="underline">{{ tr("ExileDesk について", "About") }}</a>
-            <a href="/contact" class="underline">{{ tr("お問い合わせ", "Contact") }}</a>
-            <a href="/privacy.html" class="underline">{{ tr("プライバシーポリシー", "Privacy Policy") }}</a>
-          </footer>
+          <WebFooter class="-mx-4" />
         </template>
       </CraftStage>
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
       <!-- 右クリックは真ん中 (CraftStage.vue) と同じく「持っている物を手放す」。ブラウザのメニュー (コピーなど) は出さない (2026-10-13 オーナー) -->
-      <aside data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
-        <div :class="phone ? '' : 'sticky top-3'"><LivePanel /></div>
+      <aside v-show="phone || !wideBase || feedbackPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : AD_FRAMES ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
+        <div :class="phone ? '' : 'sticky top-3'">
+          <LivePanel />
+          <!-- 広告の枠 (utils/ads.ts): チャンネルの下に 300×250 を 2 つ。ページを移った時だけ出し直す (60 秒に 1 回まで) -->
+          <div v-if="AD_FRAMES && !phone" class="mt-3 flex flex-col gap-3">
+            <AdSlot id="side-1" :w="300" :h="250" :tick="pageTick" />
+            <AdSlot id="side-2" :w="300" :h="250" :tick="pageTick" />
+          </div>
+        </div>
       </aside>
     </div>
   </div>
