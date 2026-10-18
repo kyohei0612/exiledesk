@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.565",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルのコース一覧を見やすく (段ごとの見出し・カードにアイコン・クリアの進み具合)",
+    "en": "Tutorial course list redesigned (level headers, course icons, cleared progress)"
+   }
+  ]
+ },
+ {
   "v": "0.1.564",
   "date": "2026-10-18",
   "items": [
@@ -605,30 +617,6 @@
     "area": "",
     "text": "深淵のエッセンスを、冒涜の MOD があるアイテムにも使えるように",
     "en": "Essence of the Abyss can now be used on items with a Desecrated mod"
-   }
-  ]
- },
- {
-  "v": "0.1.525",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: 骨の付き方を Craft of Exile に合わせました (両側が空いていれば半々、両側が埋まっていれば固定以外の MOD から等しく 1 つ消えてその側に付く)",
-    "en": "Emulator: bones now follow Craft of Exile (50/50 when both sides are open; when both are full, one non-Fractured mod is removed at random and the bone goes on that side)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "光のお告げと左右の消去のお告げを一緒に掛けられるように (その側の冒涜の MOD だけ消える)",
-    "en": "Omen of Light and Sinistral / Dextral Annulment can now be active together (removes only the Desecrated mod on that side)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "触媒の高貴のお告げの倍率を 1 + 0.2 × 品質 に (20% で 5 倍)",
-    "en": "Omen of Catalysing Exaltation multiplier is now 1 + 0.2 × quality (5x at 20%)"
    }
   ]
  }
