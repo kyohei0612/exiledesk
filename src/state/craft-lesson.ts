@@ -65,8 +65,6 @@ watch(() => s.log.value.length, (n, old) => {
 /** 動作を学ぶコースの手ごとの始めの状態 (最後 = 今の手の始め) */
 interface Snap { at: number; item: typeof s.item.value; log: typeof s.log.value; startMods: typeof s.startMods.value; omens: string[] }
 const snaps: Snap[] = [];
-/** 今の手の始めの工程の長さ (もう一度が押せるかに使う) */
-const snapLogLen = ref<number | null>(null);
 const now = (): Snap => ({ at: topicAt.value, item: s.item.value, log: s.log.value, startMods: s.startMods.value, omens: [...s.omens.value] });
 // 手の番号が変わったら (打って次へ・白に戻す・一覧から選ぶ・始め)、その手の始めとして控える。戻した時は控えない
 let restoring = false;
@@ -79,7 +77,6 @@ watch([topic, topicAt], ([t], [oldT]) => {
   // 手が変わったら前の手で掛けたお告げは外す (掛けたまま次へ・一覧から選ぶと残って、反響が無いのに引き直しが出た。2026-10-17 オーナー「冒涜 7 手目で反響使ってないのにリロールできる」)
   s.omens.value = [];
   snaps.push(now());
-  snapLogLen.value = s.log.value.length;
 }, { flush: "sync" });
 
 /**
@@ -93,11 +90,13 @@ let preparedAt = -1;
  * 今の手の枠で持った時に呼ぶ (手が進んだ時ではない: 打った結果をアイテムに残して見せるため。
  * 2026-10-17 オーナー「高貴打ったら MOD がでない」= 打った直後に次の手の用意で MOD 0 個に戻っていた)
  */
-export function prepareStep(): void {
+export function prepareStep(o: { viaNext?: boolean } = {}): void {
   if (preparedAt === topicAt.value) return;
   preparedAt = topicAt.value;
   const c = topic.value, d = s.data.value, it = s.item.value, st = c?.steps[topicAt.value];
   if (!c || !d || !it || !st) return;
+  // 続けて作るコースは、次へで来たら前の手のアイテムのまま (作り直さない)
+  if (st.cont && o.viaNext) return;
   // 手ごとのベース (特殊なエッセンスは部位が決まっている)。違うベースのアイテムなら、打てるかに関係なく用意し直す
   const base = st.base ?? c.base;
   const otherBase = it.base !== base;
@@ -175,6 +174,17 @@ export function rigRare(key: string): void {
     }
     return;
   }
+  // 手に wantRemoved がある時: その MOD が消える乱数を選ぶ (ジュエルの左の消去で「+1 個」を消す)
+  const wr = topic.value.steps[topicAt.value]?.wantRemoved;
+  if (wr) {
+    const omens = omensFor(key, s.omens.value);
+    for (let i = 0; i < 3000; i++) {
+      const roll = Math.floor(Math.random() * 2_147_483_647);
+      const r = applyCurrency(d, it, key, mulberry32(seedOfRoll(roll, key)), omens);
+      if (r.applied && r.removed.some((m) => m.modId === wr)) { s.rollSeed.value = roll; return; }
+    }
+    return;
+  }
   const want = topic.value.steps[topicAt.value]?.want;
   if (want) {
     const omens = omensFor(key, s.omens.value);
@@ -229,13 +239,17 @@ watch(() => s.log.value.length, (n, old) => {
   }
 });
 /** もう一度が押せるか: この手で何か打った (打ち終えた・続きの途中・ループの 2 周目以降)。前は打ち終えた時だけで、ループで手の最初に戻ると押せなかった (2026-10-18) */
-export const canRetry = computed(() => topicUsed.value || topicSub.value > 0 || loopRound.value > 1 || s.log.value.length > (snapLogLen.value ?? 0));
+// もう一度はいつでも押せる (その手の始めに戻す。2026-10-18 オーナー「もう一度押せない」)
+export const canRetry = computed(() => !!topic.value);
 export function retryStep(): void {
   s.hold(null);
   // もう一度は本当に最初から (ループの手も 1 周目・用意し直したアイテムに戻す。2026-10-18 オーナー「もう一度ボタンはホントに最初から」)
   loopRound.value = 1;
   const top = snaps[snaps.length - 1];
   if (topic.value && top) restore(top);
+  // 続けて作る手は、その手の始め (引き継いだアイテム) が打てる形ならそのまま。打てない (一覧から来た等) 時だけ用意する
+  const st = topic.value?.steps[topicAt.value], d = s.data.value, it = s.item.value;
+  if (st?.cont && d && it) { const k = topicKey(st, d, it); if (k && s.usable(k) === null) { preparedAt = topicAt.value; return; } }
   // 戻したらすぐ、その手の始めの形を用意する (前は用意の前の白いアイテムが出ていた。2026-10-18)
   if (topic.value) prepareStep();
 }
@@ -249,6 +263,8 @@ export function lessonJump(i: number): void {
   s.hold(null);
   goTopic(i);
   prepareStep();
+  // 手の始めの状態は用意した後の形で取り直す (前は用意の前のアイテムで、もう一度を押すと前に作っていたアイテムに戻った。2026-10-18)
+  if (snaps.length) snaps[snaps.length - 1] = now();
 }
 /** コース一覧から、そのコースの i 手目から始める */
 export function startTopicAt(c: TopicCourse, i: number): void {

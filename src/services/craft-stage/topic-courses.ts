@@ -36,7 +36,11 @@ export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: Ja
   /** ループの手で、発現の候補に狙いの MOD (・数字) が出る周 (それより前の周は出ない)。上級のエッセンスやり直しは 2 周目にスピリット +50 (2026-10-18 オーナー) */
   wantReveal?: { mod: string; value?: number; from: number; label?: JaEn };
   /** ループの手で、この MOD が全部そろったら手を終える。from 周目でそろう成功例にする (それより前の周はそろわない乱数を選ぶ)。上級のエッセンス 2 つ (2026-10-18 オーナー「2 つそろうまでループ、3 回くらいでそろえさせて」) */
-  loopUntil?: { mods: string[]; from: number } }
+  loopUntil?: { mods: string[]; from: number };
+  /** 次へで来た時は前の手のアイテムをそのまま引き継ぐ (作り直さない)。一覧から選んだ時だけ prep で用意する (続けて作るコース。2026-10-18 オーナー「次へで MOD 変わってんの意味わからん」) */
+  cont?: boolean;
+  /** この MOD が消える成功例にする (乱数を先に選ぶ。ジュエルの左の消去で「+1 個」を消す) */
+  wantRemoved?: string }
 export interface TopicCourse {
   id: string;
   level: 1 | 2 | 3 | 4;

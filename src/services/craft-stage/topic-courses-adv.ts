@@ -19,6 +19,8 @@ const AM = (mod: string, tier: string, x: Partial<Force> = {}): Force => ({ mod:
 const BOOTS_FR: Force[] = [BT("MovementVelocity", "T2"), BT("IncreasedLife", "T3"), BT("LocalArmourAndStunThreshold", "T3"), BT("LightningResistance", "T1", { fractured: true }), BT("FireResistance", "T3"), BT("ColdResistance", "T3")];
 /** 軽蔑の当たり (「サフィックスモッド +1 個」がプレフィックスに) を置く手 */
 const CONTEMPT = "force:Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed|T1|n";
+/** 軽蔑の当たりの後のジュエル (一覧から途中の手を選んだ時の始め): 何でも良いプレフィックス 1 つ + 欲しいサフィックス 2 つ。prep の CONTEMPT で「+1 個」が付く */
+const JEWEL_HIT: Force[] = [JI("JewelCriticalAilmentEffect"), JI("JewelDamagefromMana"), JI("JewelCriticalDamage")];
 /** ブリーチのエッセンスの「品質の最大値 +20%」を置く手 */
 const BREACH = "force:Amulets/PerfectEssence_LocalMaximumQuality|T1|e";
 /** 強化のエッセンスの「グローバル防御」を置く手 */
@@ -82,26 +84,31 @@ export const ADV_COURSES: TopicCourse[] = [
     id: "adv-jewel-five", level: 4, title: ["ジュエルの 5 MOD", "5-mod jewels"], base: "Sapphire", itemLevel: 82,
     learn: ["軽蔑で枠を増やして埋めてから「+1 個」を消しても、付いた MOD は残る", "Add a slot with Contempt, fill it, then remove the “+1” mod: the extra mod stays"],
     // ジュエルの動画 (h4dw1U9Od0Y)。2026-10-18 オーナー「1 度付けたら外してもその MOD の効果は残ることの証明」
+    // 1 つのジュエルを続けて作る: 2 手目からは次へで前の手のアイテムを引き継ぐ (cont)。prep は一覧から途中の手を選んだ時だけ
+    // 運で話がずれる所は成功例 (軽蔑は当たり・冒涜の候補にクリティカルヒット率・左の消去で「+1 個」が消える)。2026-10-18 オーナー「次へで MOD 変わってんの意味わからん」
     steps: [
-      { ...H("emotion:Potent Liquid Contempt", ["軽蔑で枠を増やす (50/50)", "Add a slot with Contempt (50/50)"], [
+      { ...H("emotion:Potent Liquid Contempt", ["軽蔑で枠を増やす", "Add a slot with Contempt"], [
         ["欲しいのはサフィックスの「ライフより先にマナで受ける」と「クリティカルダメージボーナス」。プレフィックスの 2 つは何でも良い", "You want the suffixes “damage taken from Mana before Life” and “Critical Damage Bonus”. The 2 prefixes don't matter"],
-        ["強力な液化した軽蔑は MOD を 1 つ消して、消えた側に付く。プレフィックスが消えれば「サフィックスモッド +1 個」(当たり)", "Potent Liquid Contempt removes a mod and goes on that side. If a prefix goes: “+1 Suffix Modifier allowed” (a hit)"],
-        ["サフィックスが消えると「プレフィックスモッド +1 個」(外れ)。外れたら「もう一度」", "If a suffix goes: “+1 Prefix Modifier allowed” (a miss). Try again"],
-      ], "rare"), startMods: [JI("JewelCriticalAilmentEffect"), JI("JewelOfferingLife"), JI("JewelDamagefromMana"), JI("JewelCriticalDamage")] },
+        ["強力な液化した軽蔑は MOD を 1 つ消して、消えた側に付く。プレフィックスが消えれば「サフィックスモッド +1 個」(当たり)、サフィックスが消えれば「プレフィックスモッド +1 個」(外れ) で 50/50", "Potent Liquid Contempt removes a mod and goes on that side: a prefix → “+1 Suffix Modifier allowed” (hit), a suffix → “+1 Prefix Modifier allowed” (miss). 50/50"],
+        ["このコースでは当たり (サフィックスモッド +1 個) の例を見せる", "This course shows the hit (+1 Suffix Modifier allowed)"],
+      ], "rare"), startMods: [JI("JewelCriticalAilmentEffect"), JI("JewelOfferingLife"), JI("JewelDamagefromMana"), JI("JewelCriticalDamage")],
+      want: { mod: "Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed" } },
       { ...ALWAYS(H("desecrate", ["3 つ目のサフィックスを冒涜で", "A 3rd suffix by Desecration"], [
-        ["当たりの状態から。サフィックスが 3 つまで入る", "From the hit: suffixes can now hold 3"],
+        ["サフィックスが 3 つまで入るようになった", "Suffixes can now hold 3"],
         ["右側のネクロマンシーのお告げを掛けた骨で、3 つ目のサフィックスを足す (ジュエルの骨は頭蓋骨)", "A bone with Omen of Dextral Necromancy adds the 3rd suffix (jewels use Craniums)"],
-        ["発現でクリティカルヒット率などを選ぶ", "Reveal and pick Critical Hit Chance or similar"],
-      ], [CONTEMPT])), omens: ["OmenofDextralNecromancy"], startMods: [JI("JewelDamagefromMana"), JI("JewelCriticalDamage")], chain: [S("reveal", ["発現", "Reveal"])] },
+        ["発現でクリティカルヒット率を選ぶ", "Reveal and pick Critical Hit Chance"],
+      ], [CONTEMPT])), omens: ["OmenofDextralNecromancy"], startMods: JEWEL_HIT, cont: true, chain: [S("reveal", ["発現", "Reveal"])],
+      target: "Jewels_int/JewelCriticalChance", wantReveal: { mod: "Jewels_int/JewelCriticalChance", from: 1, label: ["クリティカルヒット率", "Critical Hit Chance"] } },
       { ...ALWAYS(H("annul", ["「+1 個」を消しても残る", "Remove the “+1”: the mod stays"], [
-        ["左側の消去のお告げで、プレフィックスの「サフィックスモッド +1 個」だけを消す", "Omen of Sinistral Annulment removes only the prefix “+1 Suffix Modifier allowed”"],
+        ["プレフィックスは「何でも良い MOD」と「サフィックスモッド +1 個」の 2 つ。左側の消去のお告げで、プレフィックスから 1 つ消す", "Prefixes: a don't-care mod and “+1 Suffix Modifier allowed”. Omen of Sinistral Annulment removes one prefix"],
+        ["このコースでは「サフィックスモッド +1 個」が消える例を見せる", "This course shows “+1 Suffix Modifier allowed” being removed"],
         ["消してもサフィックスの 3 つ目は消えない。一度付いた MOD は、枠が戻っても残る", "The 3rd suffix stays. A mod that's already there remains even after the slot goes away"],
-        ["これでプレフィックスが 2 つ空く (サフィックス 3 + プレフィックス 2 = 5 MOD にできる)", "Now both prefixes are open (3 suffixes + 2 prefixes = 5 mods)"],
-      ], [CONTEMPT, "force:Jewels_int/JewelCriticalChance|T1|d"])), omens: ["OmenofSinistralAnnulment"], startMods: [JI("JewelDamagefromMana"), JI("JewelCriticalDamage")] },
+      ], [CONTEMPT, "force:Jewels_int/JewelCriticalChance|T1|d"])), omens: ["OmenofSinistralAnnulment"], startMods: JEWEL_HIT, cont: true,
+      wantRemoved: "Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed" },
       { ...H("exalt", ["5 MOD のジュエル", "A 5-mod jewel"], [
-        ["偉大なる高貴なお告げを掛けた高貴で、空いたプレフィックスに 2 つ足す", "An Exalted Orb with Omen of Greater Exaltation adds 2 prefixes"],
+        ["高貴なオーブで、空いたプレフィックスに 1 つ足す", "An Exalted Orb adds a prefix in the open slot"],
         ["サフィックス 3 つ + プレフィックス 2 つで、5 MOD のジュエルの完成", "3 suffixes + 2 prefixes: a 5-mod jewel"],
-      ], [CONTEMPT, "force:Jewels_int/JewelCriticalChance|T1|d"]), omens: ["OmenofGreaterExaltation"], startMods: [JI("JewelDamagefromMana"), JI("JewelCriticalDamage")] },
+      ], [CONTEMPT, "force:Jewels_int/JewelCriticalChance|T1|d", "force:Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed|T1|x"]), startMods: JEWEL_HIT, cont: true },
     ],
   },
   {
