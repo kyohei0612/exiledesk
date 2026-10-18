@@ -11,6 +11,7 @@
 -->
 <script setup lang="ts">
 import SimStartPick from "./SimStartPick.vue";
+import SimRareStrip from "./SimRareStrip.vue";
 import { ARMED_CLASS } from "../../utils/use-armed";
 import { iconOf, priceOf } from "../../state/craft-stage";
 import { simCurrency } from "../../state/display-currency";
@@ -173,6 +174,8 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, order
           <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
           </template>
         </div>
+        <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (2026-10-18 オーナー) -->
+        <SimRareStrip v-if="s.simStart.value === 'white' && !whiteDone" :white="num(whiteDivine)" />
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ -->
         <p class="mt-3 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]" :class="fractureRows.length ? '' : 'max-md:hidden'">{{ s.simStart.value === "fractured" ? "フラクチャーの MOD (買う物)" : s.simStart.value === "four" ? "自分でフラクチャーする MOD" : "増強・消去スパムで狙う MOD (フラクチャー予定)" }}</p>
         <p v-if="!fractureRows.length" class="text-[11px] opacity-50 max-md:hidden">無し (フラクチャーしない。2 の付け方の予定で「フラクチャー予定」を選ぶと出る)</p>
