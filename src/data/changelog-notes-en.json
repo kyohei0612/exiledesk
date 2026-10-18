@@ -1,4 +1,9 @@
 {
+ "0.1.562": [
+  "Mod list: “Add” is now a dropdown (As is / Desecrated / Fracture). Unavailable ones are greyed out and show the reason on hover",
+  "Mod list: tier buttons only on the hovered tier, English tier names removed, tags cut to one line, “※” is now an “Est. weight” badge",
+  "Chaos spam share card: the logo now matches the site"
+ ],
  "0.1.561": [
   "Tutorial: two Medium courses added",
   "“Learn catalysts and quality”: raise quality to 20% and compare the mods it changes, the 13 catalysts, a new type restarts from 0, Omen of Catalysing Exaltation (stacked with Greater)",

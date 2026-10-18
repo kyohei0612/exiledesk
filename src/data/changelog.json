@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.562",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧の「付ける」をプルダウンに (そのまま・冒涜・フラクチャー)。付けられない付け方はグレーアウトして、乗せると理由を出します",
+    "en": "Mod list: “Add” is now a dropdown (As is / Desecrated / Fracture). Unavailable ones are greyed out and show the reason on hover"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧: 段のボタンはマウスを乗せた段だけに・英語の段の名前を外す・タグは 1 行で切る・「※」を「重みは推定」の札に",
+    "en": "Mod list: tier buttons only on the hovered tier, English tier names removed, tags cut to one line, “※” is now an “Est. weight” badge"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機の X シェアのカードのロゴを、サイトと同じ形に",
+    "en": "Chaos spam share card: the logo now matches the site"
+   }
+  ]
+ },
+ {
   "v": "0.1.561",
   "date": "2026-10-18",
   "items": [
@@ -604,18 +628,6 @@
     "area": "",
     "text": "熟練工のオーブはセプターに使えないように、ルーンをはめるとヒネコラの予見が消えるように (説明文どおり)",
     "en": "Artificer's Orb can no longer be used on sceptres, and socketing a rune clears Hinekora's Lock foresight (as described)"
-   }
-  ]
- },
- {
-  "v": "0.1.522",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "アプリの自動更新が v0.1.519 から止まっていたのを直しました (掲示板・カオススパム確率機の X シェア・音などもこの版で届きます)",
-    "en": "Fixed the desktop app's auto-update having stopped since v0.1.519 (the message board, chaos spam X sharing and sounds arrive with this version)"
    }
   ]
  }
