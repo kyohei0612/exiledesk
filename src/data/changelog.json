@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.570",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "使い方のページ (/guide) から「使い方・コツ」(チュートリアル) へ行けるように",
+    "en": "The guide page (/guide) now links to “Guide & Tips” (tutorials)"
+   }
+  ]
+ },
+ {
   "v": "0.1.569",
   "date": "2026-10-18",
   "items": [
@@ -600,24 +612,6 @@
     "area": "",
     "text": "深淵のエッセンスの説明を直しました (冒涜の MOD があっても使えます)",
     "en": "Fixed the Essence of the Abyss description (usable even with a Desecrated mod)"
-   }
-  ]
- },
- {
-  "v": "0.1.530",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カレンシーを使った時の音をゲームの物で取り直しました (砥石・端材・ルーン・お告げなども専用の音、骨は毎回 5 通りから)。大きさをそろえ、続けて打っても重ならないように",
-    "en": "Re-recorded the currency sounds from the game (Whetstone, Scrap, runes, omens and more have their own sounds; bones pick from 5). Volumes are matched and rapid use no longer overlaps"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD 一覧の冒涜の MOD に、勢力 (アマナム・クルガル・ウラマン) の札を最初から出すように",
-    "en": "Desecrated mods in the mod list now show their faction (Amanamu / Kurgal / Ulaman) tag from the start"
    }
   ]
  }
