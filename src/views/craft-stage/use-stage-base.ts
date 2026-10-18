@@ -46,6 +46,7 @@ function create() {
     s.simStart.value = "white";
     s.simStartItem.value = null;
     s.simPicked.value = true;
+    s.simGrant.value = null; // 付与スキルは 3 で選び直す
     // シミュレーターのアイテムレベルは 3 (始め方) で決める。2 で全部の段を選べるように一番上にしておく (2026-10-18 オーナー「MOD を選んだ後なら、付く下限のアイテムレベルを既定で置ける」)
     if (s.mode.value === "sim") s.itemLevel.value = SIM_ILVL_MAX;
     s.reset();

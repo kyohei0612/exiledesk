@@ -7,6 +7,8 @@
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
 import { SIM_ILVL_MAX } from "./use-stage-base";
+import { htcBaseInfo } from "../../services/htc/patch";
+import { jaSkill } from "../../i18n/skills-ja";
 import { craftStage as s } from "../../state/craft-stage";
 import { modText, tr } from "../../i18n/lang";
 import HelpTip from "../../components/ui/HelpTip.vue";
@@ -25,6 +27,8 @@ const needIlvl = computed(() => Math.max(1, ...s.simTargets.value.map((t) => s.d
 const ILVL_CHOICES = computed(() => Array.from({ length: Math.max(0, SIM_ILVL_MAX - needIlvl.value + 1) }, (_, i) => needIlvl.value + i));
 // 3 に来た時: まだ選んでいない (2 の間の一番上のまま) か、下限より低ければ下限を入れる。エミュレーターの状態からは、そのアイテムのレベルのまま
 onMounted(() => { if (s.simStart.value !== "item" && (s.itemLevel.value === SIM_ILVL_MAX || s.itemLevel.value < needIlvl.value)) s.itemLevel.value = needIlvl.value; });
+/** 付与スキルの候補 (2 つ以上ある時だけ選ばせる。1 つに決まっているベースは選ぶ物が無い) */
+const grants = computed(() => htcBaseInfo()[s.base.value]?.grants ?? []);
 /** 手打ちの状態の MOD (札の下に 1 行) */
 const startItemMods = computed(() => {
   const it = s.simStartItem.value;
@@ -39,6 +43,15 @@ const startItemMods = computed(() => {
     <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="s.simStart.value === x.k ? 'on' : ''" :title="tr(x.hint, x.hintEn)" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="size-3.5 shrink-0" />{{ tr(x.label, x.labelEn) }}</button>
     <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? tr("レア", "Rare") : s.simStartItem.value?.rarity === "magic" ? tr("マジック", "Magic") : tr("ノーマル", "Normal") }} · {{ startItemMods.length ? startItemMods.join(" / ") : tr("MOD なし", "No mods") }}</span>
     <HelpTip v-else-if="s.simStart.value !== 'white' && s.simStart.value !== 'magic'" :text="tr('フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物', 'The fractured mod is the first one added in step 2 (Target mods)')" />
+  </span>
+  <!-- 付与スキル (候補から 1 つ付くベースだけ。クラフトでは変えられないので、買うベースを決める物) -->
+  <span v-if="grants.length > 1" class="flex flex-wrap items-center gap-2 text-[12px]">
+    <span class="text-[var(--exile-color-text-secondary)]">{{ tr("付与スキル", "Granted skill") }}</span>
+    <select data-sim-grant class="h-[30px] max-w-full cursor-pointer rounded border bg-black/60 px-1.5 max-md:h-10" :class="s.simGrant.value ? 'border-white/15 text-white/85' : 'border-amber-300/70 text-amber-100'" :value="s.simGrant.value ?? ''" @change="s.simGrant.value = ($event.target as HTMLSelectElement).value || null">
+      <option value="">{{ tr(`選ぶ (${grants.length} 種)`, `Choose (${grants.length})`) }}</option>
+      <option v-for="g in grants" :key="g.en" :value="g.en">{{ tr(jaSkill(g.en), g.en) }}{{ g.level ? ` (Lv ${g.level})` : "" }}</option>
+    </select>
+    <span class="text-[11px] opacity-60">{{ tr("クラフトでは変わらない。買うベースを決める物", "Crafting can't change it; it decides which base you buy") }}</span>
   </span>
   <!-- アイテムレベル (エミュレーターの状態からは、そのアイテムのレベルのまま) -->
   <span v-if="s.simStart.value !== 'item'" class="flex flex-wrap items-center gap-2 text-[12px]">

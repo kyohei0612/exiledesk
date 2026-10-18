@@ -12,6 +12,8 @@ import type { Pattern } from "../services/craft-stage/pattern";
  * simPicked = このタブでベースを選んだ。simShowMods = 下の MOD 一覧を出す段まで来た (② 付ける順番から)
  */
 export const simPicked = ref(false);
+/** 付与スキル (候補から 1 つ付くベース = 悲嘆・前兆・不在のアミュレットだけ)。3 の始め方で選ぶ。ベースを選び直すと空 (2026-10-18 オーナー「スキル付与が違うベース、3 の始め方で選ばせよう」) */
+export const simGrant = ref<string | null>(null);
 export const simShowMods = ref(false);
 /** シミュレーションの白のベースのソケットの数 (1 ベースの枠で選ぶ。null = まだ) */
 export const simSockets = ref<number | null>(null);
