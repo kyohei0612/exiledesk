@@ -6,6 +6,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { SimMethod } from "./quiz-build";
 import { freshItem } from "./run-plan";
 import { limitOf } from "./stage-core";
+import { tr } from "../../i18n/lang";
 
 export const METHOD_JA: Record<SimMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", fracture: "フラクチャー", essence: "エッセンス" };
 export const METHOD_EN: Record<SimMethod, string> = { exalt: "Exalt gamble", chaos: "Chaos spam", desecrate: "Desecrate", fracture: "Fracture", essence: "Essence" };
@@ -97,3 +98,14 @@ export const SIM_STARTS: Array<{ k: SimStartKind; label: string; hint: string; l
   { k: "fractured", label: "フラクチャー済みを買う", hint: "フラクチャーの MOD が 1 つ付いたベースを買う (フラクチャー予定の MOD)", labelEn: "Buy fractured", hintEn: "Buy a base with the fracture-planned mod already fractured", needsFracture: true },
   { k: "item", label: "エミュレーターの状態から", hint: "エミュレーターの今のアイテムから先を回す", labelEn: "From the Emulator item", hintEn: "Continue from the current Emulator item" },
 ];
+
+/**
+ * カオススパムは片側だけ (2026-10-18 オーナー「サフィかプレでカオススパムの道順が違ってくるから、同時にスパムを選ぶのはなし。選ぶならどっちかで」。
+ * [[sim-split-by-side]] と同じ考え)。反対側にもうカオススパムの狙いがあれば、その理由 (無ければ null)
+ */
+export function chaosBlocked(d: PatchData | null, targets: readonly SimTargetLike[], modId: string): string | null {
+  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const me = side(modId);
+  const other = targets.find((t) => t.modId !== modId && t.method === "chaos" && side(t.modId) !== me);
+  return other ? (me === "prefix" ? tr("カオススパムはサフィックスで選んでいる (片側だけ)", "Chaos spam is already on suffixes (one side only)") : tr("カオススパムはプレフィックスで選んでいる (片側だけ)", "Chaos spam is already on prefixes (one side only)")) : null;
+}
