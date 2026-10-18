@@ -295,6 +295,12 @@ function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
   else if (list.some((x) => x.modId === modId)) s.simTargets.value = list.map((x) => (x.modId === modId ? { ...x, minTierIndex: idx } : x));
   else s.simTargets.value = s.data.value ? autoGroup(s.data.value, [...list, { modId, minTierIndex: idx }], modId) : [...list, { modId, minTierIndex: idx }];
 }
+/** 段の表の「T○ 以上」: 足したら段の表は閉じる (外した時は開いたまま)。閉じても MOD の行の位置は動かさない (2026-10-18 オーナー「MOD 選んだらティア一覧は閉じよう、開きっぱなしは美しくない」) */
+function pickTier(ev: MouseEvent, modId: string, t: { name: string; ilvl: number }): void {
+  const adding = !isTarget(modId, t);
+  const row = (ev.currentTarget as Element).closest("table")?.previousElementSibling ?? (ev.currentTarget as Element);
+  keepPlace(row, () => { toggleTarget(modId, t); if (adding) expanded.value = null; });
+}
 
 /** エッセンスの段の名前 (英語) → 日本語 */
 const ESS_JA = new Map(Object.values((essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys).map((k) => [k.en, k.ja]));
@@ -442,7 +448,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :class="heldCands ? 'text-sky-200' : ''" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ !cannow(r) ? "0%" : heldCands ? pct(heldTierShare(r, t)) : t.weight && r.weight ? pct((r.share * t.weight) / r.weight) : "" }}</td>
                     <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'rune' || sec.g === 'desecrated' || sec.g === 'essence' || sec.g === 'perfect_essence')" class="w-20 py-0.5 text-right">
-                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-10 max-md:px-3 max-md:text-[12px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? tr('もう一度押すと外す', 'Click again to remove') : sec.rune ? tr(`② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める`, `Add to ② (${t.rank}+). Runs start from a Normal item with ${sec.label} socketed`) : tr(`② に足す (${t.rank} 以上)`, `Add to ② (${t.rank}+)`)" @click.stop="keepPlace($event.currentTarget as Element, () => toggleTarget(t.modId ?? r.id, t))">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
+                      <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-10 max-md:px-3 max-md:text-[12px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? tr('もう一度押すと外す', 'Click again to remove') : sec.rune ? tr(`② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める`, `Add to ② (${t.rank}+). Runs start from a Normal item with ${sec.label} socketed`) : tr(`② に足す (${t.rank} 以上)`, `Add to ② (${t.rank}+)`)" @click.stop="pickTier($event, t.modId ?? r.id, t)">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
                     </td>
                     <td v-else-if="s.mode.value !== 'sim' && !s.replay.value" class="py-0.5 pl-2">
                       <!-- ボタンは乗せた段だけ (12 段全部に並ぶとボタンの壁だった。2026-10-18 オーナーの UI 点検)。狙い中・プルダウンを開いている段とスマホは出したまま -->
