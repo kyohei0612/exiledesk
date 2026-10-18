@@ -237,6 +237,12 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
         <!-- 発現の案内はボタンの名前に入れた (「MOD を選んで発現」。2026-10-17 オーナー「発現ややこしいから」) -->
       </div>
       <!-- 要点はエミュレーターのカードの頭と同じ大きな枠で (2026-10-17 オーナー「入門は要点でっかく表示のみ、文章長くてだるい」) -->
+      <!-- 狙いの MOD は要点の上 (下だと見づらい。2026-10-18 オーナー) -->
+      <!-- 見た目はエッセンスのカードの「付く MOD」と同じ緑 (2026-10-18 オーナー「エミュのエッセンスで付く MOD みたいな色」)。当たりは札、外れは灰色 -->
+      <div v-if="targetRow?.m" data-topic-target class="mt-2 rounded-lg border px-2.5 py-1.5" :class="targetRow.state === 'miss' ? 'border-white/20 bg-white/[0.05]' : 'border-emerald-400/40 bg-emerald-500/10'">
+        <p class="flex items-center gap-1.5 text-[10px]" :class="targetRow.state === 'miss' ? 'text-white/50' : 'text-emerald-200/70'">{{ tr("狙いの MOD", "Target mod") }} ({{ targetRow.m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix") }})<span v-if="targetRow.state === 'hit'" class="rounded bg-emerald-400 px-1.5 py-px text-[10px] font-black text-black">{{ tr("当たり・固定された", "Hit · Fractured") }}</span><span v-else-if="targetRow.state === 'miss'" class="rounded bg-white/20 px-1.5 py-px text-[10px] font-bold text-white/80">{{ tr("外れ (もう一度)", "Miss (Try again)") }}</span></p>
+        <p class="text-[13px] font-semibold" :class="targetRow.state === 'miss' ? 'text-white/60' : 'text-emerald-200'">・{{ modText(targetRow.m) }}</p>
+      </div>
       <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>
       <ul v-if="topicStep.step.how" data-topic-how class="mt-1.5 grid gap-1 rounded-lg bg-black/25 px-2.5 py-2">
         <li v-for="(l, i) in topicStep.step.how" :key="i" class="flex gap-1.5 text-[14px] text-[var(--exile-color-text-primary)]"><span class="text-amber-300/70">・</span><span>{{ t2(l) }}</span></li>
@@ -260,10 +266,6 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <div v-if="adds" class="mt-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
         <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
         <p v-for="(l, i) in adds.lines" :key="i" class="text-[13px] font-semibold text-emerald-200">・{{ l }}</p>
-      </div>
-      <div v-if="targetRow?.m" data-topic-target class="mt-1.5 rounded-lg border px-2.5 py-1.5" :class="targetRow.state === 'hit' ? 'border-emerald-400/60 bg-emerald-500/15' : targetRow.state === 'miss' ? 'border-white/25 bg-white/[0.06]' : 'border-amber-300/50 bg-amber-400/10'">
-        <p class="text-[11px] font-bold" :class="targetRow.state === 'hit' ? 'text-emerald-200' : targetRow.state === 'miss' ? 'text-[var(--exile-color-text-secondary)]' : 'text-amber-200'">{{ targetRow.state === "hit" ? tr("当たり: 狙いの MOD が固定された", "Hit: your target got Fractured") : targetRow.state === "miss" ? tr("外れ: 別の MOD が固定された (もう一度)", "Miss: another mod got Fractured (Try again)") : tr("狙いの MOD", "Your target mod") }}</p>
-        <p class="text-[14px] font-bold text-[var(--exile-color-text-primary)]">◎ {{ modText(targetRow.m) }} <span class="text-[11px] font-normal text-[var(--exile-color-text-tertiary)]">({{ targetRow.m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix") }})</span></p>
       </div>
       <div v-if="qualityRows" data-topic-quality class="mt-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
         <p class="text-[11px] font-bold text-emerald-200">{{ tr("品質で変わった MOD", "Mods changed by quality") }} <span class="text-emerald-100">({{ qualityRows.head }})</span></p>
