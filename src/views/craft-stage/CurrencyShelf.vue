@@ -15,7 +15,6 @@ import { nameOf } from "../../state/craft-stage";
 import { toCss } from "../../utils/zoom";
 import { GAP_X, GAP_Y } from "../../utils/anchor-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import OmenKeepToggle from "./OmenKeepToggle.vue";
 import ShelfButton from "./ShelfButton.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { useShelf } from "../../state/shelf-context";
@@ -344,7 +343,7 @@ const TABS = computed(() => (!props.full ? [] : [
     </div>
 
     <div v-else>
-      <p class="mb-2 flex flex-wrap items-center gap-2 text-[11px]"><span class="opacity-60">{{ tr("押すと掛けておきます (何枚でも)。次に打つ手に関係する物だけ使われます。", "Click to activate (any number). Only omens relevant to your next action are consumed.") }}</span><OmenKeepToggle /></p>
+      <p class="mb-2 flex flex-wrap items-center gap-2 text-[11px]"><span class="opacity-60">{{ tr("押すと掛けておきます (何枚でも)。打っても外れません (外す時はもう一度押す)。", "Click to activate (any number). They stay on after you craft (click again to remove).") }}</span></p>
       <div class="flex flex-wrap gap-x-4 gap-y-2 max-md:gap-x-1.5">
       <div v-for="g in OMEN_GROUPS" :key="g.kind">
         <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>

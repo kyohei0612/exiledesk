@@ -50,7 +50,6 @@ import { displayCurrency } from "../../state/display-currency";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
 import { catalystSetKey, IMPLICIT_SET, implicitSetKey, isCatalystSet, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
-import OmenKeepToggle from "./OmenKeepToggle.vue";
 import ShelfButton from "./ShelfButton.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
@@ -442,7 +441,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
             <template v-if="heldOmens.length" #held>
               <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
                 <!-- 横に「MOD 一覧へ」(お告げを選びながら付く MOD を見に行ける。2026-10-11 オーナー「お告げの横にも MOD 一覧へ、楽だ」) -->
-                <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOf(s.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(s.held.value ?? "")}`) }}<button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button><OmenKeepToggle /></p>
+                <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOf(s.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(s.held.value ?? "")}`) }}<button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button></p>
                 <div class="flex flex-wrap gap-1.5">
                   <ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="s.toggleOmen($event)" />
                 </div>

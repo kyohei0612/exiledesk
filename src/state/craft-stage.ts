@@ -56,7 +56,8 @@ const log = shallowRef<PlayedStep[]>([]);
 const held = ref<string | null>(null);
 /** 掛けてあるお告げ。omenKeep = 打っても外さない (使った分の費用は毎回。2026-10-17 要望 aef329b8「削減のお告げを ON にしたままカオス連打」) */
 const omens = ref<string[]>([]);
-const omenKeep = ref(false);
+// 2026-10-18 オーナー「デフォで打ってもお告げは外さない、チェックはもういらない」で既定にした (切り替えの OmenKeepToggle は外した)。外すのはお告げをもう一度押す
+const omenKeep = ref(true);
 const seed = ref(0);
 /**
  * 次の手の乱数 (2026-10-09 オーナー「1 戻すと次も同じ。1 戻したら次の MOD はまた新しい変数で」「ヒネコラの予見が固定値」)。

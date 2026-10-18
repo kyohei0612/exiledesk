@@ -2,7 +2,7 @@
   ModAddPicker.vue — MOD 一覧の段の行の「付ける」(2026-10-17、オーナーの残りのタスク「付け方を選べるように」)。
   押すとプルダウンで付け方を 3 つ (そのまま / 冒涜 / フラクチャー) 出す (2026-10-18 オーナー「横に展開は寒い、プルダウンで 3 種類に分けて」)。
   付けられない付け方もプルダウンに残してグレーアウトし、乗せると理由 (既に付いているため など) を出す。
-  冒涜で付けられるのは冒涜の置き場の MOD だけ (2026-10-08 オーナー「冒涜 MOD しか冒涜は付けれない」、apply-force.ts)。冒涜の MOD は固定できない (unfracturable)。
+  冒涜で付けられるのは冒涜の置き場の MOD と普通の MOD (骨の発現には普通の MOD も出る。2026-10-18 オーナー「一般 MOD も冒涜で付けれるでしょ」、apply-force.ts)。冒涜の MOD は固定できない (unfracturable)。
   打ち始める前 (始めの状態を組む時) は addStartMod、打ち始めた後は指名の手 (force:…、費用 0・1 手戻すで外せる)
 -->
 <script setup lang="ts">
@@ -32,7 +32,7 @@ const ways = computed<Way[]>(() => {
   // 3 つの付け方と、この MOD・このアイテムで付けられない理由 (付けられるなら null で、次に打てるかを見る)
   const list: Array<{ flag: ForceFlag; label: string; block: string | null }> = [
     { flag: plain === "d" ? "n" : plain, label: tr("そのまま", "As is"), block: desecratedPool.value ? tr("冒涜の MOD は「冒涜」で付ける", "Desecrated mods are added as Desecrated") : null },
-    { flag: "d", label: tr("冒涜", "Desecrated"), block: !desecratedPool.value ? tr("冒涜で付けられるのは冒涜の MOD だけ", "Only desecrated mods can be added as Desecrated") : hasDe ? tr("既に冒涜の MOD が付いているため (1 つまで)", "A desecrated mod is already on the item (1 max)") : null },
+    { flag: "d", label: tr("冒涜", "Desecrated"), block: !desecratedPool.value && props.group !== "normal" ? tr("冒涜で付けられるのは冒涜の MOD と普通の MOD だけ", "Only desecrated and normal mods can be added as Desecrated") : hasDe ? tr("既に冒涜の MOD が付いているため (1 つまで)", "A desecrated mod is already on the item (1 max)") : null },
     { flag: "f", label: tr("フラクチャー", "Fracture"), block: desecratedPool.value ? tr("冒涜の MOD は固定できない", "Desecrated mods can't be fractured") : hasFr ? tr("既にフラクチャーの MOD が付いているため (1 つまで)", "A fractured mod is already on the item (1 max)") : null },
   ];
   return list.map(({ flag, label, block }) => {
