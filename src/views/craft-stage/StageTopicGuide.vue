@@ -124,6 +124,14 @@ const example = computed(() => {
  * カタリストの手: 品質で数字が変わった MOD を 素の値 → 今の値 で並べる (変わらない MOD も薄く)。
  * ゲームの表示は品質を掛けた後の数字だけで、どこが上がったか分かりづらい (2026-10-18 オーナー「どこが変化したか分かりやすく」)
  */
+/** 狙いの MOD (手の target): 今のアイテムの行と、固定されたか (フラクチャーの当たり / 外れ) */
+const targetRow = computed(() => {
+  const id = topicStep.value?.step.target, it = s.item.value;
+  if (!id || !it) return null;
+  const m = allMods(it).find((x) => x.modId === id) ?? null;
+  const fr = allMods(it).find((x) => x.fractured) ?? null;
+  return { m, state: !fr ? "none" : fr.modId === id ? "hit" : "miss" } as const;
+});
 const qualityRows = computed(() => {
   const it = s.item.value, d = s.data.value, st = topicStep.value?.step;
   // カタリストの手と、品質の付いたアイテムを扱う手 (上級の「品質を上げてからカオス」) で出す
@@ -252,6 +260,10 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <div v-if="adds" class="mt-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
         <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
         <p v-for="(l, i) in adds.lines" :key="i" class="text-[13px] font-semibold text-emerald-200">・{{ l }}</p>
+      </div>
+      <div v-if="targetRow?.m" data-topic-target class="mt-1.5 rounded-lg border px-2.5 py-1.5" :class="targetRow.state === 'hit' ? 'border-emerald-400/60 bg-emerald-500/15' : targetRow.state === 'miss' ? 'border-rose-400/60 bg-rose-500/15' : 'border-rose-300/40 bg-rose-500/10'">
+        <p class="text-[11px] font-bold" :class="targetRow.state === 'hit' ? 'text-emerald-200' : 'text-rose-200'">{{ targetRow.state === "hit" ? tr("当たり: 狙いの MOD が固定された", "Hit: your target got Fractured") : targetRow.state === "miss" ? tr("外れ: 別の MOD が固定された (もう一度)", "Miss: another mod got Fractured (Try again)") : tr("狙いの MOD", "Your target mod") }}</p>
+        <p class="text-[14px] font-bold text-[var(--exile-color-text-primary)]">◎ {{ modText(targetRow.m) }} <span class="text-[11px] font-normal text-[var(--exile-color-text-tertiary)]">({{ targetRow.m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix") }})</span></p>
       </div>
       <div v-if="qualityRows" data-topic-quality class="mt-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
         <p class="text-[11px] font-bold text-emerald-200">{{ tr("品質で変わった MOD", "Mods changed by quality") }} <span class="text-emerald-100">({{ qualityRows.head }})</span></p>

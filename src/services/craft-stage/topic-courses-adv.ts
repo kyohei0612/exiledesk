@@ -32,10 +32,12 @@ export const ADV_COURSES: TopicCourse[] = [
         ["本命は移動スピード。ほかの 3 つ (最大ライフ・火耐性・レアリティ) は何でも良い MOD", "The one you want is Movement Speed. The other 3 (Life, Fire Resistance, Rarity) don't matter"],
         ["フラクチャーは 4 つのうちどれか 1 つを固定する。このままだと本命が固定されるのは 1/4 (25%)", "Fracture locks 1 of the 4 mods. As is, Movement Speed has a 1/4 (25%) chance"],
         ["右側の結晶化のお告げを掛けたアビスのエッセンスで、サフィックスの 1 つを紋章に置き換える (本命のプレフィックスは消えない)", "Abyss essence with Omen of Dextral Crystallisation turns a suffix into the Mark (your prefix is safe)"],
-        ["骨で紋章を冒涜の MOD にして発現する。冒涜の MOD は固定されないので、フラクチャーの候補は 3 つになる", "A bone turns the Mark into a Desecrated mod; reveal it. Desecrated mods can't be Fractured, so Fracture picks from 3"],
+        ["骨で紋章を冒涜の MOD にする (発現はしなくて良い)。冒涜の MOD は未発現でも固定されないので、フラクチャーの候補は 3 つになる", "A bone turns the Mark into a Desecrated mod (no need to reveal). Desecrated mods can't be Fractured even unrevealed, so Fracture picks from 3"],
         ["本命が固定される確率は 1/3 (33%) に上がる。外れたら「もう一度」", "Now Movement Speed has a 1/3 (33%) chance. If it misses, Try again"],
       ], [])), omens: ["OmenofDextralCrystallisation"], startMods: [BT("MovementVelocity", "T2"), BT("IncreasedLife", "T4"), BT("FireResistance", "T3"), BT("ItemFoundRarityIncrease", "T2")],
-      chain: [S("desecrate", ["骨で冒涜", "Desecrate with a Bone"]), S("reveal", ["発現", "Reveal"]), S("fracture", ["フラクチャー (1/3)", "Fracture (1/3)"])] },
+      target: "Boots_str/MovementVelocity",
+      // 発現はしないでフラクチャー (よくやるのは未発現のまま。2026-10-18 オーナー「発現は別にしなくてもいい、飛ばしてフラクチャー」)
+      chain: [S("desecrate", ["骨で冒涜", "Desecrate with a Bone"]), S("fracture", ["フラクチャー (1/3)", "Fracture (1/3)"])] },
     ],
   },
   {

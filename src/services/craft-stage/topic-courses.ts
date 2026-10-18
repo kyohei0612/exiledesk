@@ -28,7 +28,9 @@ export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: Ja
   /** 品質をこの % まで連打で上げる手 (上限まで行かずに止める。上級の「品質 34% でスペルスキル +4」。2026-10-18) */
   untilQuality?: number;
   /** この MOD (・段) が付く成功例を見せる (乱数を先に選ぶ。craft-lesson.ts の rigRare。上級の「品質を上げてからカオス」。2026-10-18 オーナー) */
-  want?: { mod: string; tier?: string } }
+  want?: { mod: string; tier?: string };
+  /** 狙いの MOD (手の枠に「狙い」の箱で出し、フラクチャーの後は当たり / 外れも出す。2026-10-18 オーナー「どれが狙いたい MOD かまず分からない」) */
+  target?: string }
 export interface TopicCourse {
   id: string;
   level: 1 | 2 | 3 | 4;
