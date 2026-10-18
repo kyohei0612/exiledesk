@@ -12,6 +12,8 @@ import type { Pattern } from "../services/craft-stage/pattern";
  * simPicked = このタブでベースを選んだ。simShowMods = 下の MOD 一覧を出す段まで来た (② 付ける順番から)
  */
 export const simPicked = ref(false);
+/** シミュレーターでアイテムレベルを選んだか (選ぶまで 2 狙う MOD を出さない。ベースを選び直すと戻る。2026-10-18 オーナー「ベース → アイテムレベル → MOD の順に案内」) */
+export const simIlvlOk = ref(false);
 export const simShowMods = ref(false);
 /** シミュレーションの白のベースのソケットの数 (1 ベースの枠で選ぶ。null = まだ) */
 export const simSockets = ref<number | null>(null);

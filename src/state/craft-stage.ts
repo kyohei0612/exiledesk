@@ -23,7 +23,7 @@ import { htcBaseInfo, loadHtcPatch } from "../services/htc/patch";
 import { REC_START, recNext } from "../utils/rec-mode";
 import { extraFromUrl, videoFromUrl, type StageExtra } from "./stage-extra";
 export type { ResistsBlock, StageExtra } from "./stage-extra";
-import { simPicked, simShowMods, simSockets, simStart, simStartItem, simPendingRecipe, simStartCost, simTargets, simAltFor, simOrder, simPatterns, simPlayLeft, simQuizActive } from "./sim-state";
+import { simIlvlOk, simPicked, simShowMods, simSockets, simStart, simStartItem, simPendingRecipe, simStartCost, simTargets, simAltFor, simOrder, simPatterns, simPlayLeft, simQuizActive } from "./sim-state";
 export type { SimStart, SimTargets } from "./sim-state";
 import { aims, aimPicker, modJump, modOverlay } from "./aim-state";
 export { AIM_MAX, type AimPick } from "./aim-state";
@@ -189,7 +189,7 @@ function usableWith(key: string, om: readonly string[]): string | null {
   return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
 }
 export const craftStage = {
-  play, data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
+  play, data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simIlvlOk, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

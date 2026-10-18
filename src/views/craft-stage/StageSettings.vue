@@ -6,7 +6,7 @@
 import { inGroup } from "../../services/mods/item-classes";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
-import { modText, tr } from "../../i18n/lang";
+import { tr } from "../../i18n/lang";
 import { SIM_LOCKED } from "../../state/craft-stage";
 import { inLesson } from "../../state/craft-lesson";
 import StageRecipeStart from "./StageRecipeStart.vue";
@@ -20,7 +20,6 @@ import pkg from "../../../package.json";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import { ITEM_LEVEL_SET, itemLevelKey } from "../../services/craft-stage/apply-currency";
 import HelpTip from "../../components/ui/HelpTip.vue";
-import Icon from "../../components/ui/Icon.vue";
 import { searchModGroups, type ModGroup } from "../../services/craft-stage/trade-search";
 
 defineProps<{ phone: boolean }>();
@@ -41,6 +40,7 @@ const curIlvl = computed(() => (s.mode.value === "hand" ? s.item.value?.itemLeve
  * そのレベルで付かない段の MOD だけ消す (2026-10-18 オーナー「全部やり直しになるのもおかしい」。apply-currency の ilvl:)。続けて変えた分は 1 手にまとめる
  */
 function setIlvl(lv: number): void {
+  if (s.mode.value === "sim") s.simIlvlOk.value = true;
   if (lv === curIlvl.value) return;
   if (s.mode.value !== "hand" || (!s.log.value.length && !s.startMods.value.length)) { s.itemLevel.value = lv; s.reset(); return; }
   const last = s.log.value[s.log.value.length - 1];
@@ -107,22 +107,9 @@ function simFromHand(): void {
   s.simSockets.value = it.sockets ?? 0;
   s.simStart.value = "item";
   s.simPicked.value = true;
+  s.simIlvlOk.value = true; // エミュレーターのアイテムレベルのまま
   s.mode.value = "sim";
 }
-/** 手打ちの状態の MOD (1 ベースの札の下に 1 行) */
-const startItemMods = computed(() => {
-  const it = s.simStartItem.value;
-  return it ? [...it.prefixes, ...it.suffixes].map((m) => `${m.fractured ? tr("[固定] ", "[Fractured] ") : ""}${modText(m)} (${m.tierName})`) : [];
-});
-/** 始め方の札 (1 ベース)。白以外は 2 狙う MOD の最初の 1 つが固定 MOD になる */
-const START_KINDS: Array<{ k: "white" | "fractured" | "four" | "magic"; label: string; hint: string; labelEn: string; hintEn: string }> = [
-  { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る", labelEn: "From a white base", hintEn: "Buy a white base and craft from scratch" },
-  { k: "fractured", label: "フラクチャー済みを買う", hint: "フラクチャーの MOD が 1 つ付いたベースを買う。フラクチャーの MOD は 2 狙う MOD で最初に足した物", labelEn: "Buy fractured", hintEn: "Buy a base with 1 fractured mod: the first mod added in step 2 (Target mods)" },
-  { k: "magic", label: "マジックを買う", hint: "狙う MOD の最初のプレフィックス 1 つ・サフィックス 1 つが付いたマジックを買う (段は狙いの下限)", labelEn: "Buy a magic", hintEn: "Buy a magic item with the first target prefix and suffix (at their minimum tier)" },
-  { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)", labelEn: "Buy a 4-mod rare", hintEn: "Buy a rare with 3 mods + 1 target, block with an Abyssal Bone, then use a Fracturing Orb (1/3 hit)" },
-];
-/** 手打ちから持ってきた時だけ出る札 */
-const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態から", hint: "エミュレーターの今のアイテムから先を回す", labelEn: "From the Emulator item", hintEn: "Continue from the current Emulator item" };
 </script>
 
 <template>
@@ -133,33 +120,28 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
       <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>
       <h3 class="text-[15px] font-bold text-[var(--exile-color-text-primary)]">{{ tr("ベース", "Base") }}</h3>
-      <HelpTip :text="tr('作るアイテムの種類 (ベース) とアイテムレベル。ソケットと始め方 (白から作るか、フラクチャー済みを買うか) もここで', 'The item type (base) and item level to craft. Sockets and how to start (white base or bought fractured) are set here too')" />
+      <HelpTip :text="tr('作るアイテムの種類 (ベース) とアイテムレベル (とソケット)。アイテムレベルを選ぶと 2 狙う MOD へ進む。始め方は狙う MOD を決めた後', 'The item type (base) and item level (and sockets). Choosing an item level moves on to step 2 (Target mods). How to start is chosen after the target mods')" />
     </span>
     <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
     <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
     <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" :page="PAGES_ON" @pick="pickSimBase" @open-page="s.hold(null); basePage = true" />
     <span v-if="!simNoBase && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1">
       <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
-      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv ? 'on' : ''" @click="setIlvl(lv)">{{ lv }}</button>
+      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv && (s.mode.value !== 'sim' || s.simIlvlOk.value) ? 'on' : ''" @click="setIlvl(lv)">{{ lv }}</button>
       <select data-ilvl-select class="h-[30px] cursor-pointer rounded border bg-black/60 px-1.5 tabular-nums max-md:h-10" :class="ILVLS.includes(curIlvl) ? 'border-white/15 text-white/60' : 'border-amber-300/70 text-amber-100'" :value="ILVLS.includes(curIlvl) ? '' : curIlvl" :aria-label="tr('アイテムレベル (70〜86)', 'Item level (70–86)')" @change="setIlvl(Number(($event.target as HTMLSelectElement).value))">
         <option value="" disabled>{{ tr("70〜86", "70–86") }}</option>
         <option v-if="!ILVLS.includes(curIlvl) && !ILVL_LIST.includes(curIlvl)" :value="curIlvl">{{ curIlvl }}</option>
         <option v-for="lv in ILVL_LIST" :key="lv" :value="lv">{{ lv }}</option>
       </select>
+      <span v-if="s.mode.value === 'sim' && !s.simIlvlOk.value" class="ml-1 font-semibold text-amber-200">{{ tr("← アイテムレベルを選ぶ", "← Choose an item level") }}</span>
     </span>
     <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
-    <span v-if="s.mode.value === 'sim' && !simNoBase && simSocketCap > 0" class="flex items-center gap-1">
+    <span v-if="s.mode.value === 'sim' && !simNoBase && s.simIlvlOk.value && simSocketCap > 0" class="flex items-center gap-1">
       <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("ソケット", "Sockets") }}</span>
       <button v-for="n in simSocketCap + 1" :key="n" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.simSockets.value === n - 1 ? 'on' : ''" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]" :title="tr('熟練工のオーブの上限より多い (規格外の品だけ)', 'Above the Artificer’s Orb limit (Exceptional items only)')">{{ tr("規格外", "Exceptional") }}</span></button>
       <span v-if="s.simSockets.value == null" class="text-amber-200/80">{{ tr("ソケットの数を選ぶ", "Choose socket count") }}</span>
     </span>
-    <!-- 始め方 (白 / 固定済みを買う / 4 MOD を買う)。2026-10-08 オーナー「最初の段階から選択式がいい」 -->
-    <span v-if="s.mode.value === 'sim' && !simNoBase" class="flex flex-wrap items-center gap-1 max-md:grid max-md:w-full max-md:grid-cols-1">
-      <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("始め方", "Start") }}</span>
-      <button v-for="x in (s.simStartItem.value ? [...START_KINDS, ITEM_KIND] : START_KINDS)" :key="x.k" type="button" class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="s.simStart.value === x.k ? 'on' : ''" :title="tr(x.hint, x.hintEn)" @click="s.simStart.value = x.k"><Icon v-if="x.k === 'fractured'" name="lock" class="size-3.5 shrink-0" />{{ tr(x.label, x.labelEn) }}</button>
-      <span v-if="s.simStart.value === 'item'" class="text-[11px] opacity-70 max-md:w-full">{{ s.simStartItem.value?.rarity === "rare" ? tr("レア", "Rare") : s.simStartItem.value?.rarity === "magic" ? tr("マジック", "Magic") : tr("ノーマル", "Normal") }} · {{ startItemMods.length ? startItemMods.join(" / ") : tr("MOD なし", "No mods") }}</span>
-      <HelpTip v-else-if="s.simStart.value !== 'white' && s.simStart.value !== 'magic'" :text="tr('フラクチャー (固定) される MOD は、2 狙う MOD で最初に足した物', 'The fractured mod is the first one added in step 2 (Target mods)')" />
-    </span>
+    <!-- 始め方は狙う MOD を決めた後の段へ (SimStartPick.vue、2026-10-18) -->
     <template v-if="s.mode.value === 'hand' && !handNoBase">
     <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->
     <button type="button" data-rec="reset" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>

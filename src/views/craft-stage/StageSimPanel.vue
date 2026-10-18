@@ -10,6 +10,7 @@
   探す自動 (計算機の自動のツリー) は外した。計算機 (htc-craft) はそのまま。
 -->
 <script setup lang="ts">
+import SimStartPick from "./SimStartPick.vue";
 import { ARMED_CLASS } from "../../utils/use-armed";
 import { iconOf, priceOf } from "../../state/craft-stage";
 import { simCurrency } from "../../state/display-currency";
@@ -135,7 +136,9 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, order
 
       <!-- 3 白ベース設定: 白ベースの値段 + 増強・消去スパムで狙う MOD (= フラクチャー予定、2 の中から) -->
       <div v-if="step3" :data-sim-cur="!whiteDone || undefined" :class="!whiteDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4">
-        <SimStepHead class="mb-3" :n="3" :title="s.simStart.value === 'white' ? '白ベースの値段' : 'ベースの値段'" :done="whiteDone" :current="!whiteDone" :redo="whiteDone" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" @redo="goTo('white')" />
+        <SimStepHead class="mb-3" :n="3" title="始め方とベースの値段" :done="whiteDone" :current="!whiteDone" :redo="whiteDone" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" @redo="goTo('white')" />
+        <!-- 始め方 (前は 1 ベースの欄。2026-10-18 オーナー「MOD へ進む、そのあとに始め方を決める工程」) -->
+        <SimStartPick v-if="!whiteDone" class="mb-3" />
         <div class="flex flex-wrap items-center gap-2 text-[11px]">
           <!-- 始め方ごとに入れるベース代 (1 ベースで決めた物。2026-10-08) -->
           <template v-if="s.simStart.value === 'item'">

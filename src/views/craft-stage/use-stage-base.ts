@@ -44,6 +44,7 @@ function create() {
     s.simStart.value = "white";
     s.simStartItem.value = null;
     s.simPicked.value = true;
+    s.simIlvlOk.value = false; // アイテムレベルは選び直し (選ぶまで 2 を出さない)
     s.reset();
     // スマホ: 選んだ所 (下の方) から一番上の見出しまで飛ばず、ベースの欄 (次に決めるアイテムレベル・始め方) を画面の上に (2026-10-09)
     if (phone.value) void nextTick(() => scrollToTop(document.querySelector("[data-stage-settings]"), "auto"));
@@ -54,6 +55,7 @@ function create() {
     preRecipeOpen.value = false;
     s.simPendingRecipe.value = r.id;
     pickSimBase(r.session.base);
+    s.simIlvlOk.value = true; // レシピにアイテムレベルも入っている
   }
 
   return { handNoBase, simNoBase, pickSimBase, preRecipeOpen, startFromRecipe };
