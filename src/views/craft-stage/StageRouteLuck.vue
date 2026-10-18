@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { routeKey, routeRun, type RaceRow, type RaceTarget, type RouteRun } from "../../services/craft-stage/route-race";
+import { routeKey, routeRun, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/route-race";
 import { medianOf, rankOf, unluckyOf, type SpamStats } from "../../services/craft-stage/chaos-spam";
 import { mulberry32 } from "../../services/htc/rng";
 import { baseArtFile } from "../../services/craft-stage/base-art";
@@ -27,7 +27,7 @@ import type { Force } from "../../services/craft-stage/stage-core";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 
 /** options = 同じ道の等級 (着いた物。タブと比べに出す。2026-10-19 オーナー「等級も選べるように、カオススパム計算機の形で」) */
-const props = defineProps<{ row: RaceRow; options: RaceRow[]; target: RaceTarget; ilvl: number; label: string; routeName: string }>();
+const props = defineProps<{ row: RaceRow; options: RaceRow[]; target: RaceTarget; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[] }>();
 const emit = defineEmits<{ close: []; pick: [row: RaceRow] }>();
 const GRADE_NAME: Record<RaceRow["grade"], [string, string]> = { base: ["無印", "Regular"], greater: ["上級", "Greater"], perfect: ["完全", "Perfect"] }; // 道のカードと同じ呼び方
 /** 道の中で一番安い等級 (おすすめ) */
@@ -51,7 +51,7 @@ const result = ref<{ hit: boolean; n: number; cost: number; rank: number | null;
 function fresh(): void {
   stop();
   item.value = null;
-  run = routeRun(s.data.value!, s.base.value, props.ilvl, props.target, props.row.route, props.row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf);
+  run = routeRun(s.data.value!, s.base.value, props.ilvl, props.target, props.row.route, props.row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf, props.prep);
   // 暗黙の値の種はエミュレーターと同じ (「ここから開始」で置いた時に暗黙の値がずれないように)
   if (run) run.item = { ...run.item, rollSeed: s.seed.value - 1 };
   sync();
@@ -71,7 +71,7 @@ function sync(): void {
   chanceMap.value = new Map(run?.chances ?? []);
   item.value = now; n.value = run?.n ?? 0; cost.value = run?.cost ?? 0; last.value = run?.last ?? null;
 }
-watch(() => [props.row, props.target, props.ilvl], fresh, { immediate: true });
+watch(() => [props.row, props.target, props.ilvl, props.prep], fresh, { immediate: true });
 
 let raf = 0, t0 = 0, lastT = 0;
 const CAP = 20_000;
@@ -132,7 +132,7 @@ watch([result, isEn], async () => {
   if (!r?.hit) { shareUrl.value = ""; return; }
   const code = await packCard([
     isEn.value ? "en" : "ja", s.base.value, baseName.value, props.label, r.n, baseArtFile(s.base.value), r.rank, median.value, unlucky.value, money(r.cost),
-    { route: { r: props.row.route, g: props.row.grade, m: props.target.modId, t: props.target.minTierIndex, i: props.ilvl } },
+    { route: { r: props.row.route, g: props.row.grade, m: props.target.modId, t: props.target.minTierIndex, i: props.ilvl, u: [...props.runes] } },
     tr(`スパムシミュレーター · ${props.routeName}`, `Spam simulator · ${props.routeName}`),
     iconOf(mainKey.value) || null,
   ]);
@@ -160,7 +160,9 @@ function startHere(): void {
   s.itemLevel.value = it.itemLevel;
   s.reset();
   s.startMods.value = forces;
-  s.item.value = { ...fullSockets(startFrom(d, s.base.value, it.itemLevel, { mods: forces, rarity: it.rarity }, s.seed.value - 1)), rollSeed: s.seed.value - 1 };
+  // 嵌めたルーンもそのまま (ソケットの数とオーグメント)
+  const placed = fullSockets(startFrom(d, s.base.value, it.itemLevel, { mods: forces, rarity: it.rarity }, s.seed.value - 1));
+  s.item.value = { ...placed, rollSeed: s.seed.value - 1, ...(it.augments?.length ? { sockets: Math.max(placed.sockets ?? 0, it.sockets ?? 0), augments: it.augments } : {}) };
   routesLuck.value = false;
   routesTarget.value = null;
   routesOpen.value = false;

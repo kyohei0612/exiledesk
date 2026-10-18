@@ -18,7 +18,7 @@ export type AimPick = { modId: string; minTierIndex: number; label: string; at?:
  * (2026-10-09 オーナー「押したらチェックボックスで複数狙えるように別でポップアップ、選択しなくて単体でも進めるように」)
  */
 /** 狙う MOD を選ぶ窓。spam = カオススパム計算機の狙い (spamAims) を選ぶ */
-export const aimPicker = ref<{ seed: AimPick | null; spam?: boolean; /** スパムシミュレーターの狙い (1 つ) */ routes?: boolean } | null>(null);
+export const aimPicker = ref<{ seed: AimPick | null; /** スパムシミュレーターの狙い (1 つ) */ routes?: boolean } | null>(null);
 /** カードの MOD を押した: MOD の一覧のその行まで飛ぶ (StageModList が見る。n は同じ MOD を続けて押しても動くように) */
 export const modJump = ref<{ modId: string; n: number } | null>(null);
 /** MOD 一覧を画面いっぱいの重ね (後ろを暗く) で開いている (2026-10-11 オーナー「MOD 一覧は飛ばずに全部画面に出して、閉じる・Tab でいつでも」) */

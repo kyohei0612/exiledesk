@@ -10,7 +10,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
+import { routesLuck, routesOpen, routesRunes, routesTarget } from "../../state/web-page";
+import StageRoutesIntro from "./StageRoutesIntro.vue";
+import StageRouteRunes from "./StageRouteRunes.vue";
+import { routeRunesFor, runePrep } from "../../services/craft-stage/route-runes";
+import { stageRuneIds } from "../../services/craft-stage/stage-core";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { raceRoutes, type Grade, type RaceRow, type RouteKind } from "../../services/craft-stage/route-race";
 import { fillModText } from "../../services/htc/mod-text";
@@ -41,6 +45,20 @@ const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; gr
     { k: "annul", ja: "外れたら消去 2 回で MOD 0 に戻して 2 から繰り返す", en: "On a miss, annul twice back to 0 mods and repeat from 2" },
   ] },
 ];
+/** 最初の画面のカード (始めの状態。打ち方は steps をそのまま出す) */
+const INTRO = ROUTES.map((r) => ({ ...r, start: ({ augment: ["白のベース", "White base"], chaos: ["MOD 1 つのレア", "Rare with 1 mod"], exalt: ["MOD 0 のレア", "Rare with 0 mods"] } as const)[r.route] as [string, string] }));
+/**
+ * 嵌めて打つルーン (StageRouteRunes.vue。2026-10-19 オーナー「ルーン嵌めた状態でスパムシミュレーターやらないと確率違うぞ」)。
+ * 既定はエミュレーターのアイテムに嵌めている物 (この部位で確率が変わる物だけ)。狙いが特殊 MOD なら、そのルーンは必ず嵌める
+ */
+const runeNeed = computed((): string[] => { const r = t.value ? s.data.value?.mods.get(t.value.modId)?.rune : undefined; return r ? [r] : []; });
+const runeIds = computed((): string[] => {
+  const ok = new Set(routeRunesFor(s.item.value).map((r) => r.id));
+  const base = routesRunes.value ?? (s.item.value ? stageRuneIds(s.item.value).filter((id) => ok.has(id)) : []);
+  return [...new Set([...runeNeed.value, ...base])];
+});
+function setRunes(ids: string[]): void { routesRunes.value = ids; }
+const prep = computed(() => (s.data.value ? runePrep(s.data.value, runeIds.value) : undefined));
 const ORDER = ROUTES.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
 
 const t = computed(() => routesTarget.value);
@@ -81,11 +99,13 @@ async function run(): Promise<void> {
   for (const one of ORDER) {
     await new Promise((r) => setTimeout(r, 0));
     if (id !== runId) return;
-    rows.value = [...rows.value, ...raceRoutes(d, s.base.value, ilvl.value, tt, priceOf, { runs: RUNS, only: one, seed: seed.value })];
+    rows.value = [...rows.value, ...raceRoutes(d, s.base.value, ilvl.value, tt, priceOf, { runs: RUNS, only: one, seed: seed.value, prep: prep.value })];
   }
   busy.value = false;
 }
 watch(t, () => { luckRow.value = null; seed.value = newSeed(); round.value = 1; void run(); });
+// 嵌めるルーンを変えたら、別の 100 人で計算し直す
+watch(() => runeIds.value.join(), () => { if (t.value) { luckRow.value = null; seed.value = newSeed(); void run(); } });
 /** 運試しの欄 (一番安い道で。2026-10-19 オーナー「一番安い欄に運試しボタン」)。シェアから来た時は計算が済んだら開く */
 /** 運試しの道 (一番安い欄・道のカードの下のボタンから。2026-10-19 オーナー「それぞれ運試しボタン、運試しはここに出す」)。null = 閉じている */
 const luckRow = ref<RaceRow | null>(null);
@@ -113,7 +133,7 @@ const usesOf = (r: RaceRow) => Object.entries(r.uses).sort((a, b) => b[1] - a[1]
 const pct = (x: number): string => `${Math.max(2, Math.min(100, (x / maxCost.value) * 100))}%`;
 const money = (x: number): string => displayCurrency.money(x);
 const fmtN = (n: number): string => (n >= 10 ? Math.round(n).toLocaleString() : n.toFixed(1));
-function back(): void { routesLuck.value = false; s.aimPicker.value = null; routesOpen.value = false; routesTarget.value = null; }
+function back(): void { routesLuck.value = false; routesRunes.value = null; s.aimPicker.value = null; routesOpen.value = false; routesTarget.value = null; }
 function pickMod(): void { s.aimPicker.value = { seed: null, routes: true }; }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !s.aimPicker.value) back(); }
 let before = 0;
@@ -132,13 +152,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
     </div>
 
     <!-- まだ狙いが無い: MOD を選ぶ -->
-    <div v-if="!t" class="g-panel flex flex-col items-center gap-4 px-4 py-10 text-center">
-      <div class="flex items-center gap-3">
-        <img v-for="k in ['augment', 'chaos', 'exalt']" :key="k" :src="iconOf(k)" alt="" class="size-12 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" />
-      </div>
-      <p class="max-w-[30rem] text-[13px] text-[var(--exile-color-text-secondary)]">{{ tr(`狙う MOD を 1 つ選ぶと、増強・カオス・高貴のスパムをそれぞれ ${RUNS} 人が打って、どれが一番安く着くかを比べます`, `Pick one mod: ${RUNS} people try each of augment, chaos and exalt spam to see which gets there cheapest`) }}</p>
-      <button type="button" data-routes-pick class="g-btn-red min-w-48" @click="pickMod">{{ tr("狙う MOD を選ぶ", "Pick a mod") }}</button>
-    </div>
+    <StageRoutesIntro v-if="!t" :routes="INTRO" :runs="RUNS" :picked="runeIds" :required="runeNeed" @pick="pickMod" @runes="setRunes" />
 
     <div v-else class="g-panel px-4 py-3">
       <!-- 上: 狙い (アイテムの札の見た目) と一番安い道 -->
@@ -149,6 +163,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${rank} 以上で当たり`, `Hit at ${rank}+`) }}</span></p>
           <p class="mt-2 text-[12px] text-[var(--exile-color-text-secondary)]">{{ s.item.value?.baseJa ?? s.base.value }} · {{ tr(`アイテムレベル ${ilvl}`, `Item level ${ilvl}`) }}</p>
           <p class="mt-2"><button type="button" data-routes-pick class="g-btn sm" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button></p>
+          <StageRouteRunes class="mt-3 flex flex-col items-center" :picked="runeIds" :required="runeNeed" :disabled="busy" @change="setRunes" />
         </div>
         <div data-routes-best class="relative flex min-w-0 items-center gap-4 overflow-hidden rounded-md border border-emerald-400/30 bg-gradient-to-r from-emerald-500/[0.12] via-emerald-500/[0.04] to-transparent px-4 py-3">
           <template v-if="best">
@@ -171,7 +186,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
       </div>
 
       <!-- 運試し (一番安い道で。StageRouteLuck.vue) -->
-      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route)" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
+      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route)" :prep="prep" :runes="runeIds" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
       <!-- 下: 3 つの道 -->
       <div class="route-rule mt-4 grid gap-3 lg:grid-cols-3">
         <article v-for="r in ROUTES" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">

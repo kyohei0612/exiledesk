@@ -1,0 +1,32 @@
+/*
+ * poe-card.css — 画面に置く「ゲームのアイテムの説明のカード」(2026-10-19 オーナー「AI の UI みたい。PoE2 の雰囲気出した UI で」)。
+ * 浮かぶカード (components/decor/GameItemCard.vue) と同じ見た目を、置きっぱなしの欄に使う: 灰金の二重枠・カレンシーの題の帯 (ihead-currency)・
+ * 区切りの絵 (isep-currency)・字の色 (性能 = 灰 + 白、MOD = 青、説明 = 白っぽい、フレーバー = 橙の斜体)。字はゲームに寄せた明朝
+ */
+.poe-card {
+  font-family: "Noto Serif JP", "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", Georgia, serif;
+  background: linear-gradient(180deg, #0d0d10 0%, #050506 100%);
+  border: 1px solid #6a5f48;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #22201a, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75);
+  font-size: 13.5px;
+  line-height: 1.5;
+  text-align: center;
+}
+.poe-card-head {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 40px;
+  padding: 4px 40px;
+  border-style: solid;
+  border-image: url("/ui-art/ihead-currency.webp") 0 56 fill / 0 36px stretch;
+}
+.poe-card-name { font-weight: 700; font-size: 17px; letter-spacing: 0.06em; color: #aa9e82; }
+.poe-card-body { padding: 10px 16px 14px; }
+.poe-sep { height: 8px; margin: 6px auto; max-width: 364px; background: url("/ui-art/isep-currency.webp") center / 100% 100% no-repeat; }
+.poe-prop { color: #7f7f7f; }
+.poe-prop b { color: #fff; font-weight: 400; }
+.poe-mod { color: var(--color-rarity-magic); }
+.poe-desc { color: var(--color-rarity-normal); }
+.poe-flavour { color: var(--color-rarity-unique); font-style: italic; font-size: 12.5px; }

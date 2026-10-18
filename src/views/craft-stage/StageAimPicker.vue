@@ -13,7 +13,6 @@ import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { aimLabel, groupLabelOf, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { scrollToTop } from "../../utils/keep-place";
-import { spamAims, spamKey, SPAM_AIM_MAX } from "../../state/chaos-spam";
 import { routesTarget } from "../../state/web-page";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
@@ -22,18 +21,17 @@ import { tr } from "../../i18n/lang";
 
 const seed = s.aimPicker.value?.seed ?? null;
 /** 選んでいる物 (決めるまで手元だけ) */
-/** カオススパム計算機の狙いを選ぶ時 (「次の手で狙う」とは別の狙い) */
-const forSpam = !!s.aimPicker.value?.spam;
 /** スパムシミュレーターの狙い (1 つだけ。web-page.ts の routesTarget) */
 const forRoutes = !!s.aimPicker.value?.routes;
-/** 選べる数: カオススパム計算機は 3 つまで (多いと 3 種類の計算が何十秒もかかる。2026-10-16 オーナー「3 種類とかまでにするか」) */
-const MAX = forRoutes ? 1 : forSpam ? SPAM_AIM_MAX : AIM_MAX;
-const draft = ref<AimPick[]>(forRoutes ? [] : [...(forSpam ? spamAims.value : s.aims.value)].slice(0, MAX));
+/** 選べる数: スパムシミュレーターは 1 つ、次の手で狙うは AIM_MAX まで */
+const MAX = forRoutes ? 1 : AIM_MAX;
+const draft = ref<AimPick[]>(forRoutes ? [] : [...s.aims.value].slice(0, MAX));
 if (seed && !draft.value.some((a) => a.modId === seed.modId)) draft.value = [...draft.value, seed].slice(-MAX);
 else if (seed) draft.value = draft.value.map((a) => (a.modId === seed.modId ? seed : a));
 
 // 狙えるのは打って付く種類 (ルーンは差すだけなので外す)
-const GROUPS: ModGroup[] = ["normal", "essence", "desecrated", "otherworldly"];
+// スパムシミュレーターではルーンの特殊 MOD も狙える (嵌めて打つ。2026-10-19 オーナー「ルーン嵌めた状態でスパムシミュレーター」)
+const GROUPS: ModGroup[] = forRoutes ? ["normal", "rune", "essence", "desecrated", "otherworldly"] : ["normal", "essence", "desecrated", "otherworldly"];
 const inGroup = (r: ListRow, g: ModGroup): boolean => r.group === g || (g === "essence" && r.group === "perfect_essence");
 const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.value, s.item.value) : []));
 const groups = computed(() => GROUPS.filter((g) => rows.value.some((r) => inGroup(r, g))));
@@ -94,26 +92,20 @@ function close(): void { s.aimPicker.value = null; }
 function decide(): void {
   if (!draft.value.length) return;
   if (forRoutes) { const a = draft.value[0]!; routesTarget.value = { modId: a.modId, minTierIndex: a.minTierIndex }; close(); s.modOverlay.value = false; return; }
-  if (forSpam) spamAims.value = draft.value;
-  else {
-    s.aims.value = draft.value;
-    // 「次の手で狙う」を開いたら計算機は閉じる (同時には出さない。2026-10-16 オーナー)
-    spamKey.value = null;
-  }
+  s.aims.value = draft.value;
   close();
   // 決めたら後ろの MOD 一覧の窓も閉じて、確率の一覧を見せる (やめる時は残す。POE2Tube 要望 ㊴)
   s.modOverlay.value = false;
   // 確率の一覧の見出し (と狙いの札) が見える所へ
-  // カオススパムの計算機から来た時は送らない (StageChaosSpam の arrive が欄を画面の真ん中へ送る)
-  if (!forSpam) void nextTick(() => scrollToTop(document.querySelector("[data-aim-panel]")));
+  void nextTick(() => scrollToTop(document.querySelector("[data-aim-panel]")));
 }
 </script>
 
 <template>
   <!-- 窓の動き (Esc・後ろを押す・×・後ろのページを止める) は ModalShell (2026-10-10 これが原点) -->
-  <ModalShell :open="true" rec="aim-dialog" :title="forRoutes ? tr('スパムで狙う MOD', 'Mod to spam for') : forSpam ? tr('カオススパムで狙う MOD', 'Mods to chaos spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
+  <ModalShell :open="true" rec="aim-dialog" :title="forRoutes ? tr('スパムで狙う MOD', 'Mod to spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
     <template #header>
-      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ MAX }} · {{ forRoutes ? tr("1 つ選ぶ", "Pick one") : forSpam ? tr("どれか 1 つ付いて当たり", "Hit when any one rolls") : tr("全部付いて当たり", "Hit when all roll") }}</span>
+      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ MAX }} · {{ forRoutes ? tr("1 つ選ぶ", "Pick one") : tr("全部付いて当たり", "Hit when all roll") }}</span>
     </template>
     <template #subheader>
       <p v-if="draft.length" class="mt-1 flex flex-wrap gap-1">
@@ -157,7 +149,7 @@ function decide(): void {
     <!-- 決める (下に固定。1 つだけでも進める) -->
     <template #footer>
       <button type="button" class="g-btn" @click="close">{{ tr("やめる", "Cancel") }}</button>
-      <button type="button" data-rec="aim-decide" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ forRoutes ? tr("比べる", "Compare") : forSpam ? tr("決める", "Set") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
+      <button type="button" data-rec="aim-decide" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ forRoutes ? tr("比べる", "Compare") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
     </template>
   </ModalShell>
 </template>

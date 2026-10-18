@@ -5,7 +5,7 @@
  *   - 使い方・コツ (動画へのリンク + チュートリアルのコース一覧): ?page=guide
  *   - コースの途中: ?course=<id>
  *   - ベース選び: ?page=base (「ベースを変える」・まだ選んでいない時。2026-10-18 2 回目)
- *   - カオススパム計算機: ?page=spam (アイテムの下の「カオススパム計算機へ」・X のシェアから)
+ *   - スパムシミュレーター: ?page=routes (カレンシーの見出しから・X のシェアから。旧カオススパム計算機 ?page=spam は 2026-10-19 に消した)
  *   - 要望・バグを送る: ?page=feedback
  * 移るたびに履歴に積む (ブラウザの戻るで前のページへ)。URL から開いた時もそのページで始める (計算機は今のアイテムが要るので URL からは開かない)。
  * ページを移るたびに広告の枠を出し直す (utils/ads.ts の pageTick)。MOD 一覧は重ねる窓のまま、ページにしない (2026-10-12)
@@ -15,8 +15,7 @@ import { craftStage as s } from "../state/craft-stage";
 import { topic } from "../state/craft-topic";
 import { course } from "../state/craft-course";
 import { endLesson, inLesson, startTopicAt } from "../state/craft-lesson";
-import { closeChaosSpam } from "../state/chaos-spam";
-import { basePage, baseUnpicked, feedbackPage, routesOpen, routesTarget, spamPage } from "../state/web-page";
+import { basePage, baseUnpicked, feedbackPage, routesOpen, routesTarget } from "../state/web-page";
 import { TOPIC_COURSES } from "../services/craft-stage/topic-courses";
 import { courseShown } from "../services/craft-stage/course-release";
 import { pageTick } from "../utils/ads";
@@ -29,7 +28,6 @@ function leaveSubPages(): void {
   routesOpen.value = false;
   routesTarget.value = null;
   basePage.value = false;
-  closeChaosSpam();
 }
 
 /** 使い方・コツを開く (ヘッダーのボタン)。コースの途中なら抜ける */
@@ -64,7 +62,6 @@ export const page = computed((): string => {
   if (s.mode.value === "tutorial") return "page=guide";
   if (s.replay.value) return "";
   if (basePage.value || baseUnpicked.value) return "page=base";
-  if (spamPage.value) return "page=spam";
   return "";
 });
 
@@ -77,11 +74,10 @@ export const pageTitle = computed((): string => {
   if (t) return `${tr(t[0], t[1])} — ExileDesk`;
   if (p === "page=guide") return tr("使い方・コツ — ExileDesk", "Guide & Tips — ExileDesk");
   if (p === "page=base") return tr("ベースを選ぶ — ExileDesk", "Choose a base — ExileDesk");
-  if (p === "page=spam") return tr("カオススパム計算機 — ExileDesk", "Chaos spam calculator — ExileDesk");
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "spam", "feedback", "routes"];
+const PAGE_KEYS = ["guide", "base", "feedback", "routes"];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
@@ -115,9 +111,9 @@ function apply(p: string): void {
     }
     if (p === "page=guide") { if (page.value !== p) openGuide(); return; }
     // 計算機・どのスパムが早いかは URL からは開けない (今のアイテム・狙いが要る)。クラフトに戻す
-    if ((p === "page=spam" || p === "page=routes") && page.value === p) return;
+    if (p === "page=routes" && page.value === p) return;
     if (s.mode.value === "tutorial" || inLesson.value) { s.hold(null); endLesson(); s.mode.value = "hand"; }
-    if (p === "page=base") { closeChaosSpam(); openBasePage(); return; }
+    if (p === "page=base") { openBasePage(); return; }
     leaveSubPages();
   } finally {
     applying = false;

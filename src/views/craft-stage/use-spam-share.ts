@@ -1,22 +1,12 @@
 /**
- * use-spam-share.ts — カオススパム計算機の結果を X でシェア (StageChaosSpam.vue から分けた、2026-10-16、500 行の決まり)。
+ * use-spam-share.ts — スパムシミュレーターの運試しの X のシェア (StageRouteLuck.vue。もとはカオススパム計算機の物、計算機は 2026-10-19 に消した)。
  * 運の言葉 (luck・rankWord) も PC の欄・スマホの帯・シェアの文で同じ物を使う
  */
-import { computed, ref, watch, type Ref } from "vue";
-import { craftStage as s, nameOf } from "../../state/craft-stage";
-import { spamAims } from "../../state/chaos-spam";
-import { medianOf, unluckyOf, SPAM_PEOPLE, type SpamStats } from "../../services/craft-stage/chaos-spam";
-import { aimLabel } from "../../services/craft-stage/mod-list";
-import { baseArtFile } from "../../services/craft-stage/base-art";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { openExternal } from "../../services/trade2/open-external";
 import { logRecord } from "../../utils/log-record";
-import { isEn, tr } from "../../i18n/lang";
-import { setupOf } from "../../state/spam-share-open";
-import type { StageItem } from "../../services/craft-stage/types";
+import { tr } from "../../i18n/lang";
 
-/** 自分のスパムの結果。sig = 狙いとカオスの種類 (変わったら別のスパム) */
-export interface SpamResult { sig: string; uses: number; applied: number; hit: boolean; reason: string | null; rank: number | null }
 
 /** 運の言葉 (PC の欄とスマホの帯で同じ) */
 export const luck = (r: number): string => (r <= 10 ? tr("かなりの強運", "very lucky") : r <= 50 ? tr("運がいい方", "lucky") : r <= 90 ? tr("運が悪い方", "unlucky") : tr("かなりの沼", "very unlucky"));
@@ -69,54 +59,4 @@ export function sendShare(e: MouseEvent, o: { code: string; web: string; text: s
     if (!left && document.visibilityState === "visible") location.href = o.web;
   }, 1500);
   location.href = `twitter://post?message=${encodeURIComponent(`${o.text}\n${o.url}`)}`;
-}
-
-export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<SpamStats | null>; statsFresh: () => boolean; key: Ref<string>; cost: (n: number) => string; startOf: () => StageItem | null }) {
-  const { result, stats, key, cost } = o;
-  /**
-   * シェア (2026-10-16 オーナー「計算機はシェア機能追加。自慢目的、URL と共に宣伝」「押したらそのまま X に」「画像付き」)。
-   * 押すと X の投稿画面へ (アプリは外のブラウザで)。URL は /s/spam (server/web/og-card.js): X はそこから結果のカードの絵を出し、
-   * 押した人はそのベースのエミュレーターへ。結果は全部 URL に入れる (サーバーは何も保存しない)
-   */
-  const origin = shareOrigin();
-  const shareUrl = ref("");
-  let shareCode = "";
-  watch([result, () => stats.value, isEn], async () => {
-    const r = result.value;
-    if (!r?.hit) { shareUrl.value = ""; return; }
-    const st = stats.value && o.statsFresh() ? stats.value : null;
-    const code = await packCard([
-      isEn.value ? "en" : "ja",
-      s.base.value,
-      isEn.value ? s.base.value : (s.item.value?.baseJa ?? s.base.value),
-      spamAims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", ")),
-      r.uses,
-      baseArtFile(s.base.value),
-      r.rank,
-      st ? medianOf(st) : null,
-      st ? unluckyOf(st) : null,
-      cost(r.applied) || null,
-      setupOf(o.startOf(), spamAims.value, key.value),
-    ]);
-    shareCode = code;
-    shareUrl.value = `${origin}/s/${await shortIdOf(code)}`;
-  }, { immediate: true });
-  const shareText = computed(() => {
-    const r = result.value;
-    if (!r?.hit) return "";
-    const base = isEn.value ? s.base.value : (s.item.value?.baseJa ?? s.base.value);
-    const mods = spamAims.value.map((a) => aimLabel(s.data.value, a)).join(tr("・", ", "));
-    const luckLine = r.rank != null ? tr(`${SPAM_PEOPLE} 人中 ${rankWord(r.rank)} の運 (${luck(r.rank)})`, `${rankWord(r.rank)} luck among ${SPAM_PEOPLE} people (${luck(r.rank)})`) : "";
-    return tr(
-      `カオススパムで ${base} に ${mods} を ${nameOf(key.value)} ${r.uses.toLocaleString()} 回で付けた！ ${luckLine}\n#PoE2 #ExileDesk`,
-      `Chaos spammed ${mods} onto ${base} in ${r.uses.toLocaleString()} ${nameOf(key.value)} uses! ${luckLine}\n#PoE2 #ExileDesk`,
-    );
-  });
-  /** X の投稿画面 (文の最後に URL が付く) */
-  const xUrl = computed(() => `https://x.com/intent/post?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`);
-  function shareX(e: MouseEvent): void {
-    sendShare(e, { code: shareCode, web: xUrl.value, text: shareText.value, url: shareUrl.value, log: { base: s.base.value, rank: result.value?.rank ?? null } });
-  }
-
-  return { shareUrl, shareText, xUrl, shareX };
 }

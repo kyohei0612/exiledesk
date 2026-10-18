@@ -57,18 +57,22 @@ export interface RouteRun {
 }
 
 /** 使えない理由 (無ければ null) */
-export function routeOff(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind): string | null {
+/** prep = 始めのアイテムの下ごしらえ (ルーンを嵌める。route-runes.ts の runePrep) */
+export type RoutePrep = ((it: StageItem) => StageItem) | undefined;
+
+export function routeOff(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind, prep?: RoutePrep): string | null {
   const side: "prefix" | "suffix" = data.mods.get(target.modId)?.type === "suffix" ? "suffix" : "prefix";
   // 増強の道はマジックに狙いの側の枠が要る (不在のアミュレットなど、マジックで MOD が付かないベースは使えない)
-  if (route === "augment" && limitOf({ ...freshItem(data, base, itemLevel), rarity: "magic" }, side) < 1) return "マジックに狙いの側の枠が無いベース";
+  if (route === "augment" && limitOf({ ...(prep ? prep(freshItem(data, base, itemLevel)) : freshItem(data, base, itemLevel)), rarity: "magic" }, side) < 1) return "マジックに狙いの側の枠が無いベース";
   return null;
 }
 
 /** 始めの状態を置いた 1 人分 (作れなければ null) */
-export function routeRun(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind, grade: Grade, rng: () => number, price: (key: string) => number): RouteRun | null {
+export function routeRun(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind, grade: Grade, rng: () => number, price: (key: string) => number, prep?: RoutePrep): RouteRun | null {
   const side: "prefix" | "suffix" = data.mods.get(target.modId)?.type === "suffix" ? "suffix" : "prefix";
   const g = GRADE_KEY[grade];
   let it: StageItem = freshItem(data, base, itemLevel);
+  if (prep) it = prep(it);
   if (route === "chaos") {
     // MOD 1 つのレア (作る高貴 1 回は数えない)。始めの 1 つが狙いそのものなら作り直す (始めは「狙いでない MOD が 1 つ」)
     const blank: StageItem = { ...it, rarity: "rare" };
@@ -104,19 +108,19 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
   return run;
 }
 
-export function raceRoutes(data: PatchData, base: string, itemLevel: number, target: RaceTarget, price: (key: string) => number, opts: { runs?: number; maxSteps?: number; seed?: number; /** この 1 通りだけ回す (画面で 1 つずつ間を空けて回す時) */ only?: { route: RouteKind; grade: Grade } } = {}): RaceRow[] {
+export function raceRoutes(data: PatchData, base: string, itemLevel: number, target: RaceTarget, price: (key: string) => number, opts: { runs?: number; maxSteps?: number; seed?: number; /** この 1 通りだけ回す (画面で 1 つずつ間を空けて回す時) */ only?: { route: RouteKind; grade: Grade }; prep?: RoutePrep } = {}): RaceRow[] {
   const runs = opts.runs ?? 300, maxSteps = opts.maxSteps ?? 3000;
   const out: RaceRow[] = [];
   for (const route of ["augment", "chaos", "exalt"] as const) {
     for (const grade of ["perfect", "greater", "base"] as const) {
       if (opts.only && (opts.only.route !== route || opts.only.grade !== grade)) continue;
-      const off = routeOff(data, base, itemLevel, target, route);
+      const off = routeOff(data, base, itemLevel, target, route, opts.prep);
       if (off) { out.push({ route, grade, off, hitRate: 0, avgCost: 0, avgSteps: 0, p50: 0, p90: 0, uses: {}, tries: [], people: runs }); continue; }
       const costs: number[] = [], steps: number[] = [];
       const uses: Record<string, number> = {};
       for (let r = 0; r < runs; r++) {
         const rng = mulberry32((opts.seed ?? 1) * 100003 + r * 7919 + route.length * 31 + grade.length);
-        const run = routeRun(data, base, itemLevel, target, route, grade, rng, price);
+        const run = routeRun(data, base, itemLevel, target, route, grade, rng, price, opts.prep);
         if (!run) continue;
         while (run.n < maxSteps && !run.hit()) if (!run.step()) break;
         for (const [k, v] of Object.entries(run.uses)) uses[k] = (uses[k] ?? 0) + v;

@@ -22,7 +22,6 @@ import HelpTip from "../../components/ui/HelpTip.vue";
 import { logRecord } from "../../utils/log-record";
 import { keepPlace, keepTopOf, scrollToTop } from "../../utils/keep-place";
 import { tr } from "../../i18n/lang";
-import { spamming } from "../../state/chaos-spam";
 
 /** 分析用の記録 (狙い・今のアイテムの MOD と一緒に) */
 function logAim(kind: string, extra: Record<string, unknown>): void {
@@ -71,8 +70,7 @@ function recompute(): void {
   timer = setTimeout(step, 0);
 }
 // カオススパムで回している間は出し直さない (1 手ごとに数千回試すと重い)。止まった時に 1 回出し直す
-watch([() => s.aims.value, () => s.item.value], () => { if (!spamming.value) recompute(); }, { immediate: true });
-watch(spamming, (v) => { if (!v) recompute(); });
+watch([() => s.aims.value, () => s.item.value], () => recompute(), { immediate: true });
 /**
  * スマホ: 打った時に上 (工程・アイテムのカード) が伸びても、この一覧を画面の同じ高さに残す (打つたびに一覧が下へ流れて探し直していた)。
  * 画面に見えている時だけ。PC は棚の横なので動かない
@@ -146,7 +144,7 @@ function roll(r: AimOdd): void {
   rolled.value = { key: keyOf(r), n: rollN.value, hit };
   logAim("aim_roll", { combo: keyOf(r), n: rollN.value, hit, odds: r.p });
 }
-watch([() => s.aims.value, () => s.item.value], () => { if (!spamming.value) rolled.value = null; });
+watch([() => s.aims.value, () => s.item.value], () => { rolled.value = null; });
 /** 平均で何回に 1 回付くか */
 const every = (p: number): string => (p <= 0 ? "" : p >= 0.995 ? tr("毎回", "Every time") : tr(`${Math.round(1 / p).toLocaleString()} 回に 1 回`, `1 in ${Math.round(1 / p).toLocaleString()}`));
 /**
@@ -193,7 +191,7 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
       <button type="button" class="ml-auto grid size-8 place-items-center rounded text-[var(--exile-color-text-tertiary)] hover:bg-white/10 hover:text-[var(--exile-color-text-primary)]" :title="tr('狙うのをやめる', 'Stop targeting')" @click="s.aims.value = []"><Icon name="x" class="size-4" /></button>
     </header>
     <p v-if="done" class="text-emerald-300">{{ tr("もう全部付いています", "All targets are already on the item") }}</p>
-    <template v-if="!done && !spamming">
+    <template v-if="!done">
       <p class="mb-0.5 pr-[108px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("付きやすい順", "By chance") }}</p>
       <ol class="flex flex-col gap-1">
         <!-- 「回す」は行のボタンの中に入れられない (ボタンの入れ子) ので、行の右端に重ねる (2026-10-10 動きの揃え 6: span role=button をやめた) -->

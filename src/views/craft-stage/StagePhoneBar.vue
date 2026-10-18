@@ -9,8 +9,7 @@ import { stageAdds, stageHelp } from "../../state/craft-stage-help";
 import { modText, tr } from "../../i18n/lang";
 import Disclosure from "../../components/ui/Disclosure.vue";
 
-defineProps<{ heldChaos: boolean }>();
-const emit = defineEmits<{ openChaosSpam: []; scrollToReveal: [] }>();
+const emit = defineEmits<{ scrollToReveal: [] }>();
 
 /** 帯から打った直後の結果 (次の操作か 5 秒まで帯に出す。カードと直前の変化は画面の上で見えないため。2026-10-08 レビュー A1) */
 const barMsg = ref<{ text: string; tone: string } | null>(null);
@@ -61,10 +60,6 @@ watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
 
 <template>
   <div data-bottom-bar class="fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
-    <!-- カオスを持っている時: 計算機へのボタンは帯の上 (スマホはアイテムの下ではなくここ。2026-10-16 オーナー) -->
-    <div v-if="heldChaos && !s.offers.value" class="mb-1.5 flex justify-end">
-      <button type="button" data-chaos-spam-open class="g-btn sm min-h-10" @click="emit('openChaosSpam')">{{ tr("カオススパム計算機へ", "Chaos spam calculator") }}</button>
-    </div>
     <!-- 発現の候補が出ている間は、選ぶ所へ送る案内だけ -->
     <div v-if="s.offers.value" class="flex items-center gap-2">
       <span class="min-w-0 flex-1 truncate text-rose-200">{{ tr("発現する MOD を 3 つから選ぶ", "Choose 1 of 3 mods to reveal") }}</span>

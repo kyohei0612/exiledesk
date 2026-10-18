@@ -9,7 +9,6 @@ import { craftStage, SIM_LOCKED } from "../state/craft-stage";
 import { noLog } from "../utils/no-log";
 import { lang } from "../i18n/lang";
 import { logRecord } from "../utils/log-record";
-import { spamKey, spamSteps } from "../state/chaos-spam";
 
 const UID_KEY = "exiledesk.web.uid";
 /**
@@ -154,14 +153,12 @@ export function startTracking(): void {
   // シミュレーターを閉じている間は数えない (前に開いていた人が一瞬 sim になって数えられていた)
   watch(s.mode, (m) => { if (m === "sim" && SIM_LOCKED) return; trackOnce(`mode:${m}`); }, { immediate: true });
   // 確率機だけ回した人は「エミュレーターで打った人」に入れない (2026-10-16)
-  watch(() => s.log.value.length, (n) => { const p = s.log.value[n - 1]; if (n > 0 && p && !spamSteps.has(p)) trackOnce("hand:use"); });
+  watch(() => s.log.value.length, (n) => { const p = s.log.value[n - 1]; if (n > 0 && p) trackOnce("hand:use"); });
   // 打った手を数える (戻した時は数え直さない。新しく足された最後の手だけ)
   let lastStep: unknown = null;
   watch(s.log, (l) => {
     const p = l[l.length - 1];
     if (!p || p === lastStep || !p.out.applied) { lastStep = p ?? null; return; }
-    // カオススパム確率機が打った手は数えない (確率機は spam:run で回した回数だけ数える。2026-10-16 オーナー)
-    if (spamSteps.has(p)) { lastStep = p; return; }
     lastStep = p;
     const cur = p.out.currency;
     if (cur.startsWith("force:") || cur.startsWith("reveal")) return;
@@ -175,7 +172,6 @@ export function startTracking(): void {
   watch(s.base, () => { if (s.mode.value === "hand") trackOnce("hand:base"); screen("base"); });
   watch(s.mode, (m) => screen(`mode:${m}`));
   watch(s.modOverlay, (v) => { if (v) screen("mod-list"); });
-  watch(spamKey, (k) => { if (k) screen("spam"); });
   watch(() => s.simTargets.value.length, (n) => { if (n > 0) trackOnce("sim:targets"); });
   watch(() => s.simOrder.value.length, (n) => { if (n > 0) trackOnce("sim:order"); });
   watch(() => s.simPatterns.value.some((p) => p.steps.length > 0), (v) => { if (v) trackOnce("sim:pattern"); });

@@ -254,7 +254,7 @@ export const craftStage = {
         craftStage.reset();
         // 開いた後は URL から外す (読み直すたびに白に戻らないように)
         try { const u = new URL(location.href); u.searchParams.delete("base"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch { /* 外せなくても開く */ }
-        void import("./spam-share-open").then((m) => m.openSharedSpam()); // X のシェアから: 同じカオススパム計算機を開く (?spam=)
+        void import("./spam-share-open").then((m) => m.openSharedSpam()); // X のシェアから: スパムシミュレーターの運試しを開く (?spam=)
       }
       // 録画モードの最初の状態 (?rec=1&base=&ilvl=&hands=、POE2Tube 要望 ㊷): 準備の手まで URL で済ませる
       if (!raw && !shared && REC_START && data.value) {

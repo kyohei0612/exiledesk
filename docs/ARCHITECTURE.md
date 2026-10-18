@@ -5,7 +5,7 @@ PoE2 のクラフトのエミュレーター。**本番は Web** (https://exiled
 
 ```
 Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
-  └ 状態 (src/state)                … craft-stage.ts (アイテム・工程・持っている物・お告げ)、chaos-spam・craft-course・craft-topic …
+  └ 状態 (src/state)                … craft-stage.ts (アイテム・工程・持っている物・お告げ)、web-page (ページの印)・craft-course・craft-topic …
       └ 仕組み (src/services/craft-stage)
           ├ カレンシーの動き (spec/)   … 説明文の分解 (対象・動作の部品・制約・お告げ)。ADR-004
           ├ 打つ入口 (apply-currency.ts) … spec で打てない物 (指名・鑑定など) だけ今の関数
@@ -19,7 +19,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 | タブ | 入口 | 中身 |
 |---|---|---|
-| エミュレーター | `views/craft-stage/CraftStage.vue` | ベース選び → 棚 (`CurrencyShelf.vue`) から持って打つ。アイテム (`StageItemCard.vue`)・工程・MOD 一覧 (`StageModList.vue`)・次の手で狙う (`StageAimPanel.vue`)・カオススパム計算機 (`StageChaosSpam.vue`) |
+| エミュレーター | `views/craft-stage/CraftStage.vue` | ベース選び → 棚 (`CurrencyShelf.vue`) から持って打つ。アイテム (`StageItemCard.vue`)・工程・MOD 一覧 (`StageModList.vue`)・次の手で狙う (`StageAimPanel.vue`)・スパムシミュレーター (別ページ `StageRoutesPage.vue`、運試し `StageRouteLuck.vue`、計算は `services/craft-stage/route-race.ts`。旧カオススパム計算機は 2026-10-19 に消した) |
 | ジェムコラプト | `views/gem-corrupt/GemCorruptWebPanel.vue` (計算は views/gem-corrupt/model.ts。Web では広告と一緒に出す予定) | 売値 3 つを入れて収支 |
 | チュートリアル (開発版だけ) | `StageCourses.vue`・`StageTopicGuide.vue`・`StageCourseGuide.vue` | 動作を学ぶコース (`services/craft-stage/topic-courses.ts`)・実践 (`course-recipes.ts`) |
 | シミュレーター (開発版だけ) | `StageSimPanel.vue` | 打ち方を組んで何百人分作る (ADR-002・003) |
@@ -34,7 +34,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
   (同梱データ + `extra-bases.json` + `weight-overrides.ts` + poe2db の直し `poe2db-pool-fixes.json`)。ベース名 → 行は `services/htc/bridge.ts` の `classOfBase`。
   画面で MOD を並べるのは `services/craft-stage/mod-list.ts` の `modListFor`。
 - **MOD の決まり (系統・重み・出やすさ)** … `services/mods/mod-rules.ts`。`m.family` を直接比べたり、段の重みを自分で足したりしない。
-- **確率の表** … `services/craft-stage/held-odds.ts` (棚の確率)・`aim-odds.ts` (次の手で狙う)・`chaos-spam.ts` (カオススパム)。打つ処理と同じ部品を使う。
+- **確率の表** … `services/craft-stage/held-odds.ts` (棚の確率)・`aim-odds.ts` (次の手で狙う)・`route-race.ts` (スパムシミュレーターの 100 人)・`chaos-spam.ts` (運の順位)。打つ処理と同じ部品を使う。
 - **ベースの一覧** … `services/items/base-catalog.ts` と `components/items/BaseCatalog.vue`。今のゲームに無いベースは `removed-bases.json` で外す。
 - **部位のまとまり** … `services/mods/item-classes.ts` (クライアントの ItemClasses。部位の名前を手で並べない)。
 - **ゲームの名前・文面** … クライアント (`src/i18n/*-client.json`、`currency-hover-*.json`)。自分で訳さない。画面の言葉は `i18n/lang.ts` の `tr("日本語", "English")`、MOD の文は `modText`。

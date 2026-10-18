@@ -27,12 +27,9 @@ import StageItemCard from "./StageItemCard.vue";
 import StageQualityBar from "./StageQualityBar.vue";
 import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
-import { SPAM_KEYS } from "../../services/craft-stage/chaos-spam";
-import { closeChaosSpam, spamAims, spamKey, spamPending, spamming } from "../../state/chaos-spam";
-import StageChaosSpam from "./StageChaosSpam.vue";
 import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
-import { PAGES_ON, basePage, baseUnpicked, openRoutes, spamPage } from "../../state/web-page"; // Web のページ (ベース選び・計算機は棚・工程・設定を隠す。アプリは棚に覆い。web/page.ts)
+import { PAGES_ON, basePage, baseUnpicked, openRoutes } from "../../state/web-page"; // Web のページ (ベース選び。web/page.ts)
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -104,7 +101,7 @@ function onKey(e: KeyboardEvent): void {
 }
 onMounted(() => { window.addEventListener("mousemove", onMove); window.addEventListener("keydown", onKey); });
 onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.removeEventListener("keydown", onKey); s.hold(null); });
-function hold(k: string): void { if (!spamOpen.value) s.hold(s.held.value === k ? null : k); }
+function hold(k: string): void { s.hold(s.held.value === k ? null : k); }
 /**
  * 持っているカレンシーに掛けられるお告げ (オーナー 2026-10-04「オーブ使う時、下に使えるお告げを出して、持ったまま使えるように」)。
  * 押すと持ったまま掛ける / 外す (お告げのタブに切り替えなくてよい)
@@ -164,26 +161,6 @@ watch(() => s.log.value, () => { shareOpen.value = null; });
  */
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
-/** カオス (普通・上級・完全) を持っているか (アイテムの下の「カオススパム計算機へ」) */
-const heldChaos = computed(() => !s.replay.value && !inLesson.value && !!s.held.value && (SPAM_KEYS as readonly string[]).includes(s.held.value));
-/** 狙いがまだ無ければ MOD を選ぶ窓から。あればカオススパムの欄へ */
-function openChaosSpam(): void {
-  spamKey.value = s.held.value;
-  spamPending.value = true;
-  // 手に持っている物は離す (スマホの「使う」の帯と、カオススパムの帯がぶつからないように。2026-10-16 オーナー)
-  s.hold(null);
-  // 「次の手で狙う」は閉じる (計算機と狙うは別ルート、同時には出さない。2026-10-16 オーナー「狙いボタンを押さない限り出なければおけ、逆もまた然り」)
-  s.aims.value = [];
-  // 狙いがあれば欄を真ん中へ (StageChaosSpam の arrive が spamPending を見て送る)
-  if (!spamAims.value.length) s.aimPicker.value = { seed: null, spam: true };
-}
-// カオススパム計算機を開いている間は棚を触らせない (2026-10-16 オーナー「計算機触ってる時カレンシー触らせないように、閉じるボタンしっかり」)
-const spamOpen = computed(() => !s.replay.value && (!!spamKey.value || spamming.value));
-watch([spamOpen, () => s.held.value], ([o, k]) => { if (o && k) s.hold(null); }); // 開いている間に持った物は離す (どの経路でも。2026-10-16 ランダム操作で見つけた)
-// 選ぶ窓を狙い無しで閉じた時は、送る予約を消す
-watch(() => s.aimPicker.value, (v, old) => { if (!v && old?.spam && !spamAims.value.length) { spamPending.value = false; spamKey.value = null; } });
-// 狙いが空になったら計算機の印も外す (狙いの欄の × で閉じた後、普段の「狙う」が計算機の形で開いていた。2026-10-16)
-watch(() => spamAims.value.length, (n) => { if (!n && !s.aimPicker.value) spamKey.value = null; });
 /**
  * スマホ (幅 768 CSS px 未満): 棚からアイテムまで縦に遠いので、何か持っている間は画面の下に「持っている物 → アイテムに使う」の帯を出す
  * (2026-10-08 オーナー「タップして使う時はアイテムに再度付けるような動作で。押した瞬間付けるだとお告げが使えない」。お告げは掛けてから「アイテムに使う」)
@@ -271,14 +248,14 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
 
 <template>
   <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
-  <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? (heldChaos && !s.offers.value ? 'pb-44' : 'pb-32') : phone && spamKey ? 'pb-48' : ''" @contextmenu.prevent="s.hold(null)">
+  <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す (StagePhoneBar.vue) -->
-    <StagePhoneBar v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value && !gemCorrupt" :held-chaos="heldChaos" @open-chaos-spam="openChaosSpam" @scroll-to-reveal="scrollToReveal" />
+    <StagePhoneBar v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value && !gemCorrupt" @scroll-to-reveal="scrollToReveal" />
     <div v-show="!subPage"><!-- ベース選びのページの間は中身を隠す (消さないので戻ると元のまま) -->
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
-        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : spamPage ? tr("カオススパム計算機", "Chaos spam calculator") : tr("クラフトステージ", "Craft Stage") }}</h1>
+        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : tr("クラフトステージ", "Craft Stage") }}</h1>
         <p v-if="gemCorrupt" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ジェムをコラプトして レベル 21 · 品質 23% を狙う時の収支。売値 3 つを入れるだけ (素材はカレンシーの相場)", "Profit of corrupting a gem for level 21 / 23% quality. Just enter 3 sell prices (materials use currency market prices)") }}</p>
         <p v-else-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す", "Pick a base and target mods, plan the steps, then craft hundreds of copies to get the cost per item") }}
           <HelpTip :title="tr('シミュレーター', 'Simulator')" :width="320">
@@ -287,7 +264,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
           </HelpTip>
         </p>
         <p v-else-if="(s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ guidePage ? tr("使い方の動画と、カレンシーの動きを実際に使って覚えるコース", "A how-to video and courses where you learn each currency by using it") : tr("カレンシーを 1 つずつ実際に使って、どう動くかを覚えます", "Use each currency for real, one at a time, to learn what it does") }}</p>
-        <p v-else-if="!spamPage" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
+        <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う。スマホは縦に積む (横に並べると題が 2 行に折れる) -->
       <div v-show="!gemCorrupt" class="flex shrink-0 items-center gap-2 max-md:flex-col-reverse max-md:items-end">
@@ -299,7 +276,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
     <!-- 再生中も消さずに隠す (シミュレーションの「1 つ戻す」の置き場 #sim-tools を残す) -->
-    <div v-show="!s.replay.value && !spamPage" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
+    <div v-show="!s.replay.value" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
       <!-- スマホは 2 つで横幅を分ける (170px ずつだと 375px の画面からはみ出した。2026-10-13) -->
       <!-- Web の使い方・コツ・コースのページはタブではなく、ほかのページと同じ「← クラフトへ戻る」(2026-10-18 オーナー) -->
       <button v-if="!inApp && (guidePage || inLesson)" type="button" data-guide-back class="g-btn sm max-md:min-h-10" @click="s.hold(null); endLesson(); s.mode.value = 'hand'; setGemCorrupt(false)">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
@@ -354,7 +331,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     </div>
 
     <!-- 設定と操作 (StageSettings.vue) -->
-    <StageSettings v-show="!spamPage" :phone="phone" />
+    <StageSettings :phone="phone" />
     <!-- スマホ: アイテムのカードが画面の外に出たら上に要約を貼る (2026-10-09 オーナー「下にスクロールしても MOD 付いても見えん」) -->
     <StageItemMini v-if="phone && !cardOnScreen && s.item.value && (s.mode.value === 'hand' || s.replay.value)" :item="s.item.value" :added="s.last.value?.added ?? []" :removed="s.last.value?.removed ?? []" />
     <!-- 読めなかった時は「もう一度」(web/MarketNotice.vue と同じ。2026-10-10 動きの揃え 8) -->
@@ -395,12 +372,11 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>
         <!-- カオス (普通・上級・完全) を持っている時: カオススパム計算機へ (2026-10-16 オーナー「カオス持った時にアイテムの下にボタン、押したら MOD 選択から」) -->
-        <button v-if="heldChaos && !phone" type="button" data-chaos-spam-open class="g-btn sm" @click="openChaosSpam">{{ tr("カオススパム計算機へ", "Chaos spam calculator") }}</button>
         <RevealPanel />
-        <StageForesight v-show="!spamPage" /><!-- ヒネコラの髪束の予見 (StageForesight.vue) -->
+        <StageForesight /><!-- ヒネコラの髪束の予見 (StageForesight.vue) -->
         <!-- 工程 (累計と新しい手が上。2026-10-10 オーナー)。上の行との間はカードとの間と同じ mt-2、枠に近く p-1 (10-11)。コースの間は出さない (10-17) -->
         <StageTopicGuide v-if="phone && !s.replay.value && s.mode.value === 'hand'" part="now" class="w-full" /><StageCourseGuide v-if="!s.replay.value && s.mode.value === 'hand'" class="mt-2 w-[480px] max-md:w-full" /><!-- コースの案内はアイテムの下。スマホは今の手もアイテムのすぐ下 (2026-10-17 オーナー) -->
-        <div v-if="!inLesson" v-show="!spamPage" data-rec-part="history" class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
+        <div v-if="!inLesson" data-rec-part="history" class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
           <p class="g-sec-head"><b class="g-sec-title">{{ tr("工程", "Steps") }}</b><span class="g-sec-sub">{{ inApp || s.replay.value ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span>
             <!-- 手順の共有 (2026-10-12)。押せない時は理由を title に (打ち始めた後の手で足した MOD は下にも 1 行) -->
             <span v-if="SHARE_ENABLED" :title="s.shareWhy.value ?? tr('この手順を URL で共有 (受け取った人は同じベースから同じ結果を再生できる)', 'Share these steps as a URL (others can replay them with the same results)')"><button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-9" :disabled="!!s.shareWhy.value" :aria-expanded="!!shareOpen" @click="shareOpen ? (shareOpen = null) : openShare()"><Icon name="link" class="size-3.5" />{{ tr("共有", "Share") }}</button></span>
@@ -425,20 +401,15 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
         <StageTopicGuide v-if="!phone && !s.replay.value && s.mode.value === 'hand'" part="now" /><!-- コースの今の手 (棚のすぐ上) -->
         <StageAimPanel v-if="!s.replay.value && !inLesson" data-rec-part="aim-panel" />
-        <StageChaosSpam v-if="!s.replay.value && !inLesson" /><!-- 「次の手で狙う」とは別の欄・別の狙い (2026-10-16 オーナー「別ルートとして扱って」) -->
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
-        <section v-show="!inTopic && !spamPage" class="g-panel relative p-2">
-          <div v-if="spamOpen" data-spam-shelf-lock class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-lg bg-black/75 p-4 text-center">
-            <p class="text-[13px] text-[var(--exile-color-text-primary)]">{{ tr("カオススパム計算機を使っている間は、カレンシーは使えません", "Currency is locked while the Chaos spam calculator is open") }}</p>
-            <button type="button" class="g-btn" :disabled="spamming" @click="closeChaosSpam">{{ tr("計算機を閉じる", "Close the calculator") }}</button>
-          </div>
+        <section v-show="!inTopic" class="g-panel relative p-2">
           <p class="g-sec-head">
             <b class="g-sec-title">{{ tr("カレンシー", "Currency") }}</b>
             <span v-if="s.held.value" class="whitespace-nowrap rounded-full bg-amber-500/20 px-2 text-amber-200">{{ tr("持っている", "Holding") }}: {{ nameOf(s.held.value) }}</span>
             <span v-else class="g-sec-sub whitespace-nowrap">{{ tr("押して持つ → アイテムを押す", "Click to hold → click the item") }}</span>
             <span v-for="o in s.omens.value" :key="o" class="cursor-pointer whitespace-nowrap rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" :title="tr('押すと外す', 'Click to remove')" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span><button v-if="PAGES_ON && s.mode.value === 'hand' && !inLesson && s.item.value" type="button" data-routes-open class="g-btn sm ml-auto" :title="tr('MOD を 1 つ選んで、増強・カオス・高貴のどのスパムが一番安く着くかを比べる', 'Pick one mod and compare which spam (augment / chaos / exalt) gets there cheapest')" @click="openRoutes">{{ tr("スパムシミュレーター", "Spam simulator") }}</button>
           </p>
-          <CurrencyShelf :inert="spamOpen" @hold="hold">
+          <CurrencyShelf @hold="hold">
             <!-- 棚の中の「神〜ヴァールオーブ」の段の下に出る (置き場は CurrencyShelf が決める。上に出すと持っているカレンシーがずれる、オーナー 2026-10-04) -->
             <template v-if="heldOmens.length" #held>
               <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
@@ -460,7 +431,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     <!-- 手で打つ画面は重ね (後ろを暗く) で出す。枠の外を押す・閉じる・Esc・Tab で閉じる。持っている物はそのまま (2026-10-11 オーナー) -->
     <!-- 大きさは後ろの画面の 75% (縦横とも。2026-10-11 オーナー「MOD 枠は後ろのウィンドウの大きさで決まる、75%」) -->
     <!-- ページの下にも同じ一覧 (同じ部品 = 同じエンジン。窓はすぐ見るための便利機能。2026-10-11 オーナー「スクロールした下に配置してていい」) -->
-    <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase && !inLesson && !spamPage) || s.replay.value)" data-rec-part="mod-list-bottom" /></Transition>
+    <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase && !inLesson) || s.replay.value)" data-rec-part="mod-list-bottom" /></Transition>
     </div>
     </div>
     <StageBasePage v-if="subPage" :phone="phone" />
