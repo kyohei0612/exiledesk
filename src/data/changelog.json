@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.573",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "ベースを選ぶ・カオススパム計算機・要望・バグを送るを別のページにしました (URL が変わり、ブラウザの戻るで前の画面へ)",
+    "en": "Choosing a base, the Chaos spam calculator and Send feedback are now separate pages (the URL changes and the browser Back button returns to the previous screen)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "アイテムレベルを 70〜86 の 1 ずつ選べるように。打った後に変えても最初からやり直さず、そのレベルで付かない MOD だけ消えます",
+    "en": "Item level can now be set to any value from 70 to 86. Changing it mid-craft no longer starts over; only mods that can't roll at that level are removed"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧で 1 行にまとめた MOD (スキルのレベルなど) の段の表に、段ごとのタグを出すように",
+    "en": "The tier table of grouped mods (e.g. skill levels) in the mod list now shows each tier's tags"
+   }
+  ]
+ },
+ {
   "v": "0.1.572",
   "date": "2026-10-18",
   "items": [
@@ -594,18 +618,6 @@
     "area": "",
     "text": "カードの説明: 結晶化のお告げにコラプトのエッセンス (ヒステリー等) と合金も効くこと、アストリッドの創造性のクラフトモッドの中身、触媒の高貴のお告げの倍率 (20% で 5 倍) を書き足しました。軽蔑・獰猛のカードを今の決まり (版はランダム) に",
     "en": "Cards: added that Crystallisation omens also work with corrupted essences (Hysteria etc.) and alloys, what Astrid's Creativity's crafted mods are, and the Catalysing Exaltation multiplier (5x at 20%). Updated the Contempt / Ferocity cards to the current rule (version is random)"
-   }
-  ]
- },
- {
-  "v": "0.1.533",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "液化した感情 (侮蔑・獰猛): プレの版とサフィの版のどちらが付くかをランダムに (説明文に決め方が無いため。前は消えた MOD の側で決まっていた)",
-    "en": "Liquid emotions (Contempt / Ferocity): whether the prefix or suffix version is added is now random (the description doesn't say; previously it followed the side of the removed mod)"
    }
   ]
  }

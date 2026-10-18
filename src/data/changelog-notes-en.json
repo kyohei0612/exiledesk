@@ -1,4 +1,9 @@
 {
+  "0.1.573": [
+    "Choosing a base, the Chaos spam calculator and Send feedback are now separate pages (the URL changes and the browser Back button returns to the previous screen)",
+    "Item level can now be set to any value from 70 to 86. Changing it mid-craft no longer starts over; only mods that can't roll at that level are removed",
+    "The tier table of grouped mods (e.g. skill levels) in the mod list now shows each tier's tags"
+  ],
   "0.1.572": [
     "Mod tags and Desecrated factions (Amanamu / Ulaman / Kurgal) now match poe2db (93 mods). Some faction tags, such as Aftershock and Fissure on maces, were wrong and affected faction omens"
   ],
