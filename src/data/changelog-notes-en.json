@@ -1,4 +1,7 @@
 {
+  "0.1.577": [
+    "Essences now show only the tiers you can use: Perfect for Rare items (picked directly, no tier menu), non-Perfect for Normal and Magic items"
+  ],
   "0.1.576": [
     "Right-click a fractured mod again to unfracture it"
   ],

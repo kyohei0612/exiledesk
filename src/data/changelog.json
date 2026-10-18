@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.577",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エッセンスは使える段だけを出すように (レアはパーフェクトだけで、段を選ばずにそのまま持てます。ノーマル・マジックにはパーフェクトを出しません)",
+    "en": "Essences now show only the tiers you can use: Perfect for Rare items (picked directly, no tier menu), non-Perfect for Normal and Magic items"
+   }
+  ]
+ },
+ {
   "v": "0.1.576",
   "date": "2026-10-18",
   "items": [
@@ -588,24 +600,6 @@
     "area": "",
     "text": "カオススパム計算機: 選んだ MOD の「どれか 1 つ」が付いたら当たりに (前は全部揃うまで)。狙いは 3 つまで。付きにくい MOD でも計算は数秒で終わります",
     "en": "Chaos spam calculator: a hit now means \"any one\" of the selected mods lands (previously all of them). Up to 3 targets. Even rare mods finish calculating in a few seconds"
-   }
-  ]
- },
- {
-  "v": "0.1.537",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム計算機: 開いている間はカレンシーの棚を使えないように (棚の上に「計算機を閉じる」)。右上の小さい × を「閉じる」ボタンに",
-    "en": "Chaos spam calculator: the currency shelf is locked while it is open (\"Close the calculator\" over the shelf). The small × in the top right is now a \"Close\" button"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム計算機: 誰も付かない狙いの時に計算が何分も続いていたのを、最初の 10 人が付かなければ打ち切るように (「付かない人が多い」と出ます)",
-    "en": "Chaos spam calculator: targets nobody hits no longer calculate for minutes; it gives up if the first 10 people all miss (shows \"many people never hit\")"
    }
   ]
  }
