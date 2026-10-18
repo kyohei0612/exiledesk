@@ -1,5 +1,26 @@
 [
  {
+  "v": "0.1.575",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "追加",
+    "area": "シミュレーター",
+    "text": "クイズのレシピの型と計算 (ADR-003)"
+   },
+   {
+    "kind": "追加",
+    "area": "シミュレーター",
+    "text": "クイズの画面 (5 打ち方)"
+   },
+   {
+    "kind": "追加",
+    "area": "チュートリアル",
+    "text": "クイズのチュートリアル 4 本の型と見本 (決闘のワンド・手袋 コルの狩り→アストリッド・洗練されたブリーチリング・不在のアミュレット)"
+   }
+  ]
+ },
+ {
   "v": "0.1.574",
   "date": "2026-10-18",
   "items": [
@@ -594,18 +615,6 @@
     "area": "",
     "text": "カオススパム計算機: 一度計算したアイテムレベルに戻した時は、計算し直さずにすぐ結果を出すように。狙いの MOD を足す・変えた時と、計算機を閉じた時は計算し直します (自分でスパムする方は毎回ちがう乱数のまま)",
     "en": "Chaos spam calculator: going back to an item level you already calculated shows the result immediately. It recalculates when you add or change target mods and when you close the calculator (your own spam always uses fresh random numbers)"
-   }
-  ]
- },
- {
-  "v": "0.1.535",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム計算機: スパムの後にカオスの種類を替えると計算がやり直しになり、スパムできなくなっていたのを直しました。狙いの MOD が同じなら計算した結果をそのまま使い、スパムの前の状態に戻ってすぐ別のカオスで試せます。アイテムレベルや狙いを替えた時も、スパムの前の状態から計算し直します",
-    "en": "Chaos spam calculator: fixed switching the Chaos Orb type after spamming restarting the calculation and blocking spam. With the same target mods the previous result is reused, and you return to the pre-spam state to try another Chaos Orb right away. Changing the item level or targets also recalculates from the pre-spam state"
    }
   ]
  }
