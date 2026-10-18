@@ -297,7 +297,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <!-- ジェムコラプト (Web 版だけ、2026-10-16) -->
         <button v-if="!inApp && GEM_CORRUPT_SHOWN" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
         <!-- クイズのチュートリアル (2026-10-16)。開発版だけ (本番はシミュレーターと同じく閉じたまま出さない) -->
-        <button v-if="!TUTORIAL_LOCKED" type="button" role="tab" :aria-selected="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt ? 'on' : ''" @click="s.hold(null); endLesson(); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}<span class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能', 'Still in development')">β</span></button>
+        <button v-if="!TUTORIAL_LOCKED" type="button" role="tab" :aria-selected="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt ? 'on' : ''" @click="s.hold(null); endLesson(); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}</button><!-- β は外した (入門〜中級の 6 コースを公開。2026-10-18 オーナーの UI 点検) -->
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
       <div v-show="!gemCorrupt" id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
@@ -359,8 +359,8 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex min-w-0 flex-col items-center gap-8 max-md:items-stretch">
         <!-- 品質を変える帯はアイテムの説明の窓の外、すぐ上 (2026-10-10)。カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
-        <div v-if="!inLesson" class="-mb-6 flex w-full max-w-[480px] items-start gap-2">
-          <button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button>
+        <div v-if="!inLesson" class="-mb-6 flex w-full max-w-[480px] items-center gap-2">
+          <button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top shrink-0" :title="tr('このベースに付く MOD の一覧へ (Tab でも開く)', 'Go to the mod list (Tab also opens it)')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}</button><!-- Tab の札は説明へ (品質の帯が 1 行に入らなかった。2026-10-18) -->
           <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" @catalyst="setCatalyst" />
         </div>
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">

@@ -354,7 +354,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
       <div data-mod-toc class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-[#120f0c]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
         <!-- クラフトへ: ベースの枠の下 (カードの頭) が画面の上に来るまで一気に戻る (2026-10-10 オーナー「行ったり来たりできるでしょ」) -->
         <button v-if="!props.embedded && !props.overlay" type="button" class="tbtn mr-1 max-md:shrink-0" :title="tr('アイテムのカードへ戻る', 'Back to the item')" @click="toCraft">{{ tr("↑ クラフトへ", "↑ Craft") }}</button>
-        <button v-for="sec in sections" :key="sec.sid" type="button" class="rounded-full px-3 py-0.5 max-md:shrink-0 max-md:py-1.5" :class="active === sec.sid ? toneOf(sec).tab : 'text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]'" @click="jump(sec.sid)">
+        <!-- 節の切り替えはほかのタブと同じ .g-tab (前は丸い札だった。2026-10-18 オーナーの UI 点検、決まり ui-one-frame-rule)。細い帯に合うよう低く -->
+        <button v-for="sec in sections" :key="sec.sid" type="button" role="tab" :aria-selected="active === sec.sid" class="g-tab !min-h-[28px] !px-4 !text-[13px] max-md:shrink-0" :class="active === sec.sid ? 'on' : ''" @click="jump(sec.sid)">
           {{ sec.label }} <span class="ml-0.5 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ sec.count }}</span>
         </button>
         <!-- 狙いに選んだ MOD のどれかが付く確率 (チェック欄、要望 c9dee700) -->
