@@ -62,19 +62,20 @@ export const ADV_COURSES: TopicCourse[] = [
   },
   {
     id: "adv-two-essences", level: 4, title: ["サフィックスでエッセンス 2 つ", "Two essences on suffixes"], base: "Vaal Greaves", itemLevel: 82,
-    learn: ["サフィックスを固定してしまった時の立て直し。満杯なら消えるのはサフィックスだけ、戦慄と神秘の合金を交互に", "Recovering from a Fractured suffix: when full, only suffixes are removed; alternate Horror and Mystic Alloy"],
+    learn: ["サフィックスを固定してしまった時の立て直し。満杯なら消えるのはサフィックスだけ、戦慄と神秘の合金を 2 つそろうまで交互に", "Recovering from a Fractured suffix: when full, only suffixes are removed; alternate Horror and Mystic Alloy"],
     // 時間術の靴 (S-7YHuq3-P4) の「サフィックスを固定した時は、戦慄のエッセンスと神秘の合金を交互に」
     steps: [
-      { ...ALWAYS(H("ess:Horror:perfect", ["満杯のサフィックスに戦慄", "Horror on full suffixes"], [
+      // 1 つの手で 戦慄 → 神秘の合金 を 1 周、2 つそろうまで手の最初に戻ってループ (loop)。3 周目でそろう成功例 (loopUntil)
+      // 2026-10-18 オーナー「画面変えずに連続で使えるように、2 つそろうまでループ。3 回くらいループさせてそろえさせて」
+      { ...ALWAYS(H("ess:Horror:perfect", ["戦慄と神秘の合金を交互に", "Alternate Horror and Mystic Alloy"], [
         ["雷耐性を固定してしまった靴。サフィックスは満杯 (雷耐性・火耐性・冷気耐性)", "Boots with Lightning Resistance Fractured. Suffixes are full (Lightning, Fire, Cold)"],
-        ["満杯の時、エッセンスは付ける側 (サフィックス) から消す。プレフィックスは消えない", "When full, an essence removes from the side it adds to (suffix). Prefixes are safe"],
-        ["戦慄のエッセンスで、固定していない耐性が 1 つ消えて「ソケットされているアイテムの効果 60%」が付く", "Horror removes an unfractured resistance and adds “60% increased effect of Socketed Items”"],
-        ["アストリッドの創造性をはめてあるので、作った MOD は 2 つまで持てる", "Astrid's Creativity is socketed: up to 2 crafted mods"],
-      ], ["rune:Astrid's Creativity"])), startMods: BOOTS_FR },
-      { ...H("ess:Mystic Alloy:perfect", ["続けて神秘の合金", "Then Mystic Alloy"], [
-        ["神秘の合金も、サフィックスから 1 つ消してスピリット +15 を付ける", "Mystic Alloy also removes a suffix and adds +15 Spirit"],
-        ["消えるのが戦慄の MOD なら、もう一度戦慄を打つ。交互に打っていれば、いつかは 2 つともそろう", "If it removes the Horror mod, use Horror again. Alternating, you eventually get both"],
-      ], ["rune:Astrid's Creativity", "force:Boots_str/PerfectEssence_SoulCore|T1|e"]), startMods: BOOTS_FR },
+        ["満杯の時、エッセンスは付ける側 (サフィックス) から消す。プレフィックスは消えないし、固定した雷耐性も消えない", "When full, an essence removes from its own side (suffix). Prefixes and the Fractured Lightning Resistance are safe"],
+        ["戦慄で「ソケットされているアイテムの効果 60%」、神秘の合金で「スピリット +15」。どちらもサフィックスを 1 つ消してから付く", "Horror adds “60% increased effect of Socketed Items”, Mystic Alloy adds “+15 Spirit”. Each removes a suffix first"],
+        ["相手のエッセンスの MOD が消えることもある。消えたら、また交互に打つ。アストリッドの創造性で作った MOD は 2 つまで持てるので、いつかは 2 つともそろう", "Sometimes the other essence's mod is the one removed: just keep alternating. With Astrid's Creativity you can hold 2 crafted mods, so both eventually stick"],
+        ["2 つそろうまで、戦慄 → 神秘の合金 を繰り返す (ボタンは最初に戻る)", "Repeat Horror → Mystic Alloy until both are on (the buttons go back to the start)"],
+      ], ["rune:Astrid's Creativity"])), startMods: BOOTS_FR, loop: true,
+      loopUntil: { mods: ["Boots_str/PerfectEssence_SoulCore", "Boots_str/PerfectEssence_BaseSpirit"], from: 3 },
+      chain: [S("ess:Mystic Alloy:perfect", ["神秘の合金", "Mystic Alloy"])] },
     ],
   },
   {

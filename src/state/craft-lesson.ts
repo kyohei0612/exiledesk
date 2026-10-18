@@ -157,6 +157,20 @@ export function rigRare(key: string): void {
     }
     return;
   }
+  // ループでそろえる手 (loopUntil): from 周目より前はそろわない乱数、from 周目からは狙いの MOD を消さない乱数を選ぶ
+  const lu = topic.value.steps[topicAt.value]?.loopUntil;
+  if (lu) {
+    const omens = omensFor(key, s.omens.value);
+    for (let i = 0; i < 3000; i++) {
+      const roll = Math.floor(Math.random() * 2_147_483_647);
+      const r = applyCurrency(d, it, key, mulberry32(seedOfRoll(roll, key)), omens);
+      if (!r.applied) continue;
+      const all = lu.mods.every((id) => [...r.item.prefixes, ...r.item.suffixes].some((m) => m.modId === id));
+      const ok = loopRound.value >= lu.from ? !r.removed.some((m) => lu.mods.includes(m.modId)) : !all;
+      if (ok) { s.rollSeed.value = roll; return; }
+    }
+    return;
+  }
   const want = topic.value.steps[topicAt.value]?.want;
   if (want) {
     const omens = omensFor(key, s.omens.value);

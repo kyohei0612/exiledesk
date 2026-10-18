@@ -86,6 +86,9 @@ watch(() => s.log.value.length, (n, old) => {
   // ループの手で狙いの MOD を発現したら、続き (エッセンス) を打たずに手を終える (2026-10-18 オーナー「スピリット 50 を発現させて終了」)
   const wr = topicStep.value?.step.wantReveal;
   if (wr && cur.step.use === "reveal" && e.added.some((m) => m.modId === wr.mod && (wr.value == null || m.values[0] === wr.value))) { topicUsed.value = true; return; }
+  // ループの手で決めた MOD が全部そろったら手を終える
+  const lu = topicStep.value?.step.loopUntil;
+  if (lu && lu.mods.every((id) => [...e.after.prefixes, ...e.after.suffixes].some((m) => m.modId === id))) { topicUsed.value = true; return; }
   if (topicSub.value < chain.length) topicSub.value++; // 続きの手へ
   // ループの手は、続き (エッセンス) まで打ったら手の最初に戻して次の周へ (狙いを発現するまで手を終えない。2026-10-18 オーナー「エッセンス選んだあとクリア扱いでグレーアウト、復活させて」)
   else if (topicStep.value?.step.loop) {
