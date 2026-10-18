@@ -5,7 +5,7 @@
   「狙う MOD がシミュレーションの枠に入っていて、その下の枠にまた MOD 選択枠があって分かれているのかと思う。枠は一緒の枠で、
   ベースの所に出している表示を ① の MOD の所でするべきで、ベースには非表示でいい。そこに付きやすさの % も出そう、T2 以上なら確率が上がる」。
   クラフト計算機の MOD 解析 ([[ModBreakdown.vue]]) と同じく、左にプレ・右にサフィ、種類の札 + 文 + 段。番号は付ける順番。
-  editable の時は ① で選んでいる間: 段のプルダウン・＋ (あるいは)・× (外す)・⧉ コピー (同じ候補のグループをもう 1 つ)。
+  editable の時は ① で選んでいる間: 段のプルダウン・× (外す)・付け方の印 (押すと変える)。＋ (あるいは)・どれか N つの増減は 2 の後の整理 (SimTargetSort.vue) でやる (2026-10-18 オーナー「ここでプラスはいらん、その作業は次工程」)。
   付きやすさ = その段以上の重み ÷ 同じ側の全部の重み (このアイテムレベルで出る段、普通の MOD は差したルーンの MOD 込み、冒涜は冒涜の置き場)。
   同じ系統の除外は見ない目安。エッセンスは確定なので出さない
 -->
@@ -23,7 +23,7 @@ import { runeJaOf, runeToneOf } from "../../services/craft-stage/mod-list";
 import SimMethodPop from "./SimMethodPop.vue";
 import { ref } from "vue";
 
-const props = defineProps<{ /** ① で選んでいる間 (段・＋・×・コピーを出す) */ editable?: boolean; /** 付け方を選べる (2 の「決めた」の後、3 を決めるまで。2026-10-18 オーナー「決めたボタンの後ここで設定する感じで」) */ plans?: boolean }>();
+const props = defineProps<{ /** ① で選んでいる間 (段・×・付け方の印を出す) */ editable?: boolean; /** 付け方を選べる (2 の「決めた」の後、3 を決めるまで。2026-10-18 オーナー「決めたボタンの後ここで設定する感じで」) */ plans?: boolean }>();
 const s = craftStage;
 const methodPop = ref<InstanceType<typeof SimMethodPop> | null>(null);
 
@@ -107,38 +107,9 @@ function drop(r: Row, hosts: readonly string[] = [r.group]): void {
   if (r.alt) s.simTargets.value = s.simTargets.value.map((t) => (t.modId === r.group ? { ...t, alts: (t.alts ?? []).filter((a) => a.modId !== r.modId) } : t));
   else s.simTargets.value = s.simTargets.value.filter((t) => t.modId !== r.modId);
 }
-/** どれか N つ の N を減らす (最後のコピーを外す) */
-function lessOf(hosts: readonly string[]): void {
-  const last = hosts[hosts.length - 1];
-  if (hosts.length > 1 && last) s.simTargets.value = s.simTargets.value.filter((t) => t.modId !== last);
-}
 function setTier(r: Row, idx: number): void {
   s.simTargets.value = s.simTargets.value.map((t) => (t.modId !== r.group ? t
     : !r.alt ? { ...t, minTierIndex: idx } : { ...t, alts: (t.alts ?? []).map((a) => (a.modId === r.modId ? { ...a, minTierIndex: idx } : a)) }));
-}
-/**
- * グループをコピーして、同じ候補の手順をもう 1 つ作る (2026-10-05 オーナー「その MOD 群は 1 MOD としての扱い、コピーボタンで同じ奴が
- * もう 1 個できる」: 耐性 3 つのどれかを 2 つ欲しい時はグループを 2 つ)。手順の名前 (本体) は候補の中でまだ本体に使っていない物に回す。
- * 冒涜の手順を並べた時、2 つ目からは高貴 (冒涜の MOD は 1 つまで)。手順はすぐ後ろに入る
- */
-function copyGroup(host: string): void {
-  const list = s.simTargets.value;
-  const i = list.findIndex((t) => t.modId === host);
-  const t = list[i];
-  if (!t) return;
-  const members = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
-  const mains = new Set(list.map((x) => x.modId));
-  const next = members.find((m) => !mains.has(m.modId));
-  if (!next) return;
-  const method = t.method === "desecrate" ? "exalt" : t.method === "fracture" ? undefined : t.method;
-  const copy = { modId: next.modId, minTierIndex: next.minTierIndex, ...(method ? { method } : {}), alts: members.filter((m) => m.modId !== next.modId) };
-  s.simTargets.value = [...list.slice(0, i + 1), copy, ...list.slice(i + 1)];
-}
-/** コピーできるか (候補の中にまだ手順の本体になっていない物がある) */
-function canCopy(host: string): boolean {
-  const t = s.simTargets.value.find((x) => x.modId === host);
-  const mains = new Set(s.simTargets.value.map((x) => x.modId));
-  return !!t && (t.alts ?? []).some((a) => !mains.has(a.modId));
 }
 
 /**
@@ -174,7 +145,6 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
   const used = merged.reduce((a, g) => a + g.need, 0);
   return { title: side === "P" ? "プレフィックス" : "サフィックス", groups: merged, used };
 }));
-const canAlt = (k: Kind): boolean => k === "normal" || k === "desecrated";
 
 /**
  * 付け方の予定をここで決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか冒涜予定とかカオススパム予定とか、そこで全部決めたら
@@ -269,9 +239,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
           <!-- 2 つ以上: 見出し (どれか 1 つ・合計の付きやすさ) と、横に並べて折り返す候補 -->
           <p v-if="g.members.length > 1" class="mb-0.5 flex flex-wrap items-center gap-1 text-[11px] font-bold text-amber-200">
             <span>この中のどれか</span>
-            <button v-if="props.editable" type="button" class="grid h-5 w-5 place-items-center rounded border border-amber-400/50 leading-none disabled:opacity-30 max-md:h-8 max-md:w-8" :disabled="g.hosts.length <= 1" title="1 つ減らす" @click="lessOf(g.hosts)">−</button>
             <b class="text-[13px] tabular-nums text-amber-100">{{ g.need }}</b>
-            <button v-if="props.editable" type="button" class="grid h-5 w-5 place-items-center rounded border border-amber-400/50 leading-none disabled:opacity-30 max-md:h-8 max-md:w-8" :disabled="!canCopy(g.host) || col.used >= 3" :title="!canCopy(g.host) ? '候補の数まで' : col.used >= 3 ? '枠が埋まっている' : '1 つ増やす'" @click="copyGroup(g.hosts[g.hosts.length - 1]!)">＋</button>
             <span>つ</span>
             <span class="font-normal text-amber-100/70">(どの順番でもいい。{{ g.need }} つ付けば完成)</span>
             <span v-if="g.share != null" class="ml-1 font-normal tabular-nums text-amber-100/70">1 回で付く 合計 {{ pct(g.share) }}</span>
@@ -287,8 +255,6 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
               <span v-if="r.share != null" class="shrink-0 text-[10px] tabular-nums opacity-70" title="1 回の抽選でこの段以上が出る割合 (同じ側の重み)">{{ pct(r.share) }}</span>
               <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100 max-md:min-h-9 max-md:min-w-9 max-md:text-[16px]" :title="r.alt || g.hosts.length > 1 ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r, g.hosts)">×</button>
             </span>
-            <!-- 「＋」は MOD のすぐ横 (2026-10-05 オーナー) -->
-            <button v-if="props.editable && canAlt(g.kind)" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="この枠に候補を足す (どれか 1 つ付けば当たり)" @click="s.simAltFor.value = g.host">＋</button>
             
           </div>
         </div>
@@ -321,7 +287,6 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
               <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
               <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button>
             </span>
-            <button v-if="props.editable" type="button" class="shrink-0 rounded border border-amber-400/40 px-1 text-[11px] leading-none text-amber-200 hover:bg-amber-500/15" title="この枠に候補を足す (どれか 1 つ付けば当たり)" @click="s.simAltFor.value = g.host">＋</button>
           </div>
         </div>
         <span class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS.chaos">カオススパム</span>
