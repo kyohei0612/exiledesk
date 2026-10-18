@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.560",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルに中級「カタリストと品質を学ぶ」を追加: 品質を 20% まで上げて変わる MOD を見比べる・13 種類のカタリスト・別の種類は 0 から・触媒の高貴のお告げ (偉大なると重ねる)",
+    "en": "Tutorial: added the Medium course “Learn catalysts and quality”: raise quality to 20% and compare the mods it changes, the 13 catalysts, a new type restarts from 0, Omen of Catalysing Exaltation (stacked with Greater)"
+   }
+  ]
+ },
+ {
   "v": "0.1.559",
   "date": "2026-10-18",
   "items": [
@@ -597,24 +609,6 @@
     "area": "",
     "text": "スマホで電話の後などに、使った時の音が鳴らなくなるのを直しました",
     "en": "Fixed sounds no longer playing on phones after a call etc."
-   }
-  ]
- },
- {
-  "v": "0.1.520",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "掲示板: エミュレーターの今のアイテムを書き込みに貼れるように (ベースの絵・MOD・段がカードで出ます)",
-    "en": "Message board: you can attach your current emulator item to a post (base art, mods and tiers as a card)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "掲示板: いいねを付けられるように",
-    "en": "Message board: likes"
    }
   ]
  }
