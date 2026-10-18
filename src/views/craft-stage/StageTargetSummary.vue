@@ -228,6 +228,8 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
 
 <template>
   <div class="grid min-w-0 gap-x-6 gap-y-1 text-[12px] md:grid-cols-2 max-md:grid-cols-1">
+    <!-- % が何の割合か (2 は一番上のアイテムレベル、3 で決めたレベルで変わる。2026-10-18 初めての 10 人: 同じ MOD で 1.4% → 1.9% と変わって分からない) -->
+    <p v-if="rows.length" class="text-[10px] text-[var(--exile-color-text-tertiary)] md:col-span-2">{{ `% = 1 回付く時に、その段以上が出る割合 (アイテムレベル ${s.itemLevel.value} の時${props.editable ? "。3 でレベルを決めると変わる" : ""})` }}</p>
     <div v-for="col in columns" :key="col.title" class="min-w-0">
       <!-- 狙う MOD は何個でもいい (枠より多くても、次の段で整理する時にまとめる。2026-10-18 オーナー) -->
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold opacity-70">

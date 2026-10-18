@@ -402,8 +402,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
             <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2">
               <!-- チェック欄の上の ? (狙いは複数選べる。要望 c9dee700) -->
               <span v-if="heldCands" class="flex w-5 shrink-0 justify-center self-center"><HelpTip :text="tr('狙う MOD は複数選べます (段の表で「その段以上」も)。選んだどれか 1 つでも付く確率を上に出します (打つ・持つ物を変えると外れます)', 'You can tick several target mods (or a tier and better in the tier table). The chance that any one of them rolls is shown at the top (cleared when you use or change the held item)')" /></span>
-              <b class="text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
-              <span class="text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
+              <b class="whitespace-nowrap text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
+              <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
               <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap text-right" :class="heldCands ? 'text-sky-200' : ''">{{ heldCands ? ('bone' in heldCands ? tr("候補に出る", "Offered") : tr("付く確率", "Chance")) : tr("出やすさ", "Weight") }}</span><span class="w-6 text-right">{{ tr("段", "T") }}</span><span class="w-7 text-right">Lv</span></span>
             </p>
             <p v-if="!col.items.length" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>

@@ -10,6 +10,7 @@ import { type Pattern, ANY_TARGET, isRest } from "../../services/craft-stage/pat
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
 import { SIM_ILVL_MAX } from "./use-stage-base";
+import { sideLimits, sideUse, sortBuckets } from "../../services/craft-stage/sim-methods";
 
 /**
  * 工程を押すとそこからやり直す (後ろの工程は決め直し)。「1 つ戻す」は今の 1 つ前の工程へ
@@ -160,10 +161,13 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
    * 費用もそこから」)。ベース代は既定のまま (作り直す時の買い直しの値段)、出す費用はこの状態から先
    */
   watch(modsDone, (v) => { if (v) ilvlNote.value = ""; });
+  // まとめる組が無く枠にも収まっていれば、整理の欄は飛ばして 3 へ (狙い 1 つでも決めたを 2 回押していた。2026-10-18 初めての 10 人)
   watch(modsDone, (v) => {
-    if (!v || restoring.v || s.simStart.value !== "item") return;
-    whiteOk.value = true; fracDone.value = true; orderDone.value = true;
+    if (!v || restoring.v) return;
+    const u = sideUse(s.data.value, s.simTargets.value), l = sideLimits(s.data.value, s.base.value, s.itemLevel.value);
+    if (!sortBuckets(s.data.value, s.simTargets.value).length && u.prefix <= l.prefix && u.suffix <= l.suffix) sortDone.value = true;
   });
+  // エミュレーターの状態からも 3 (始め方・ベース代)・4 (付ける順番) を通る (前は自動で済ませて 2 → 5 に番号が飛んだ。2026-10-18 初めての 10 人の 10 人目)
   /**
    * 「決めた →」で次の工程が開いたら、次に決める段 (金の枠) の下の線 + 24px まで送る (2026-10-08 オーナー「決めたで順に進むけど、スクロールは基本進むなら一番下に」、
    * 2026-10-18「番号が進む時もスクロールで次工程表示は必ず」「下枠 + 24px」)。戻した時 (ここからやり直す) は動かさない

@@ -36,7 +36,8 @@ const cheaper = computed(() => (props.white == null || rare.value == null ? null
     <span class="opacity-70">{{ tr("適当なレアを消去で 1 MOD に", "A random Rare annulled to 1 mod") }}</span>
     <PriceInput v-model="rare" base="exalted" unit-key="sim.rare" :placeholder="tr('レアの値段', 'Rare price')" />
     <span class="tabular-nums opacity-80">+ {{ tr(`消去 × ${annuls}`, `Annul × ${annuls}`) }} ({{ simCurrency.money(annuls * annulPrice) }})</span>
-    <span class="tabular-nums font-semibold" :class="cheaper === 'rare' ? 'text-emerald-300' : 'text-[var(--exile-color-text-primary)]'">= {{ simCurrency.money(total) }}</span>
+    <span v-if="rare != null" class="tabular-nums font-semibold" :class="cheaper === 'rare' ? 'text-emerald-300' : 'text-[var(--exile-color-text-primary)]'">= {{ simCurrency.money(total) }}</span>
+    <span v-else class="opacity-50">{{ tr("(レアの値段を入れると合計が出る)", "(enter the Rare price to see the total)") }}</span>
     <span v-if="cheaper === 'rare'" class="rounded-sm bg-emerald-500/20 px-1.5 py-px text-emerald-200">{{ tr("白ベースより安い", "Cheaper than a white base") }}</span>
     <span v-else-if="cheaper === 'white'" class="opacity-60">{{ tr("白ベースの方が安い", "The white base is cheaper") }}</span>
     <span class="opacity-50">{{ tr(`(満杯のレア ${slots} MOD と見る)`, `(assumes a full ${slots}-mod Rare)`) }}</span>

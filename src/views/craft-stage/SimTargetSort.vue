@@ -44,9 +44,9 @@ function set(b: SortBucket, n: number): void { s.simTargets.value = setAnyOf(s.s
         <button type="button" class="g-tab !min-h-[26px] !px-2 !text-[11px] max-md:!min-h-10" :class="all(b) ? 'on' : ''" @click="set(b, b.members.length)">{{ tr(`全部 (${b.members.length} つ)`, `All (${b.members.length})`) }}</button>
         <button type="button" class="g-tab !min-h-[26px] !px-2 !text-[11px] max-md:!min-h-10" :class="all(b) ? '' : 'on'" @click="all(b) && set(b, b.members.length - 1)">{{ tr("この中のどれか", "Any of these:") }}</button>
         <template v-if="!all(b)">
-          <button type="button" class="grid size-6 place-items-center rounded border border-white/20 text-[13px] leading-none hover:bg-white/10 disabled:opacity-30 max-md:size-10" :disabled="b.need <= 1" :aria-label="tr('1 つ減らす', 'One fewer')" @click="set(b, b.need - 1)">−</button>
+          <button type="button" class="g-plain grid size-6 place-items-center rounded border border-amber-400/50 bg-black/40 font-sans text-[15px] font-bold leading-none text-amber-100 hover:bg-amber-500/15 disabled:opacity-30 max-md:size-10" :disabled="b.need <= 1" :aria-label="tr('1 つ減らす', 'One fewer')" @click="set(b, b.need - 1)">−</button>
           <b class="w-4 text-center tabular-nums text-amber-100">{{ b.need }}</b>
-          <button type="button" class="grid size-6 place-items-center rounded border border-white/20 text-[13px] leading-none hover:bg-white/10 disabled:opacity-30 max-md:size-10" :disabled="b.need >= b.members.length - 1" :aria-label="tr('1 つ増やす', 'One more')" @click="set(b, b.need + 1)">+</button>
+          <button type="button" class="g-plain grid size-6 place-items-center rounded border border-amber-400/50 bg-black/40 font-sans text-[15px] font-bold leading-none text-amber-100 hover:bg-amber-500/15 disabled:opacity-30 max-md:size-10" :disabled="b.need >= b.members.length - 1" :aria-label="tr('1 つ増やす', 'One more')" @click="set(b, b.need + 1)">+</button>
           <span class="text-[11px] opacity-70">{{ tr("つ", "") }}</span>
         </template>
       </span>
@@ -54,7 +54,7 @@ function set(b: SortBucket, n: number): void { s.simTargets.value = setAnyOf(s.s
     <!-- 戻る / 決めた (2026-10-18 オーナー「決定とか戻るとかない」)。枠に収まるまで決められない -->
     <div class="mt-2 flex items-center gap-2 border-t border-white/5 pt-2">
       <button type="button" data-sim-sort-back class="g-btn sm max-md:min-h-10" @click="emit('back')">{{ tr("← 狙う MOD に戻る", "← Back to target mods") }}</button>
-      <button type="button" data-sim-sort-done class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :disabled="over" :title="over ? tr('枠に収めると押せる', 'Fit the slots first') : undefined" @click="emit('done')">{{ tr("決めた", "Done") }}<Icon name="arrow-right" class="size-4" /></button>
+      <button type="button" data-sim-sort-done class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :class="over ? '!bg-white/10 !text-white/45 cursor-not-allowed' : ''" :disabled="over" :title="over ? tr('枠に収めると押せる', 'Fit the slots first') : undefined" @click="emit('done')">{{ over ? tr("枠に収めると決められる", "Fit the slots to continue") : tr("決めた", "Done") }}<Icon v-if="!over" name="arrow-right" class="size-4" /></button>
     </div>
   </div>
 </template>

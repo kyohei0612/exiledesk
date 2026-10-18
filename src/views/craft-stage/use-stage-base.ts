@@ -45,7 +45,8 @@ function create() {
     s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
     s.simStart.value = "white";
     s.simStartItem.value = null;
-    s.simPicked.value = true;
+    // シミュレーターのベースはシミュレーターで選んだ時だけ決まる (エミュレーターから切り替えたら、ベース選びから。2026-10-18 初めての 10 人の 2 人目)
+    if (s.mode.value === "sim") s.simPicked.value = true;
     s.simGrant.value = null; // 付与スキルは 3 で選び直す
     // シミュレーターのアイテムレベルは 3 (始め方) で決める。2 で全部の段を選べるように一番上にしておく (2026-10-18 オーナー「MOD を選んだ後なら、付く下限のアイテムレベルを既定で置ける」)
     if (s.mode.value === "sim") s.itemLevel.value = SIM_ILVL_MAX;
