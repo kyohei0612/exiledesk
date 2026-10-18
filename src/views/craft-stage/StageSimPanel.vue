@@ -49,7 +49,7 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, order
   orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, boughtDivine, magicDivine, whiteDivine,
   fourDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
-  showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, magicMods, runnable, blocked, activePattern, run, stop, open, toggle,
+  showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
   help, modsDone, sortDone, orderDone, startDone, step3, startPrice, whiteDone, stepStart, stepOrder, patternDone, stale, recipes, recipeOpen,
   recipeName, recipeArm, recipeRenaming, fmtDate, openRecipes, saveRecipe, recipeBox, renameRecipe, recipeNote, recipeFile, exportRecipes,
   importRecipes, removeRecipe, loadRecipe, step4pre, stepNo, fold, step4, ilvlNote, goTo, resetArm, resetAll, panelEl, whiteDecide,
@@ -65,6 +65,8 @@ const startKinds = computed(() => SIM_STARTS.filter((k) => (k.k !== "item" || !!
 watch(startKinds, (ks) => { if (!ks.some((k) => k.k === s.simStart.value)) s.simStart.value = "white"; }, { immediate: true });
 /** 使えない始め方の理由 (今は出さない作りなので空。行の作りは残す) */
 const startOff = (_k: (typeof SIM_STARTS)[number]): string => "";
+/** 入れた時刻の札 (始め方 → 値段の欄。エミュレーターの状態からは無い) */
+const startAge = (k: SimStartKind): ReturnType<typeof ageOf> | null => (k === "item" ? null : ageOf(k === "fractured" ? "bought" : k));
 /** その始め方のベースの値段 (高貴建て。入れていなければ null) */
 function startCost(k: SimStartKind): number | null {
   return num(k === "white" ? whiteDivine.value : k === "fractured" ? boughtDivine.value : k === "magic" ? magicDivine.value : k === "four" ? fourDivine.value : itemDivine.value);
@@ -174,50 +176,43 @@ const cheapStart = computed((): SimStartKind | null => {
         <template v-else>
         <!-- 始め方は縦に全部並べて、ベースの値段を比べる (2026-10-18 オーナー「タブで出さず全部計算させるから縦にそれぞれ表示」)。行を押すとその始め方で回す。一番安い行に印 -->
         <div data-sim-starts class="flex flex-col gap-1.5 text-[11px]">
-          <template v-for="k in startKinds" :key="k.k">
-          <div data-sim-start-row :data-start="k.k" class="flex flex-wrap items-center gap-2 rounded-lg border px-2 py-1.5" :class="[s.simStart.value === k.k ? 'border-[var(--exile-color-border-brass)] bg-white/[0.04]' : 'border-white/10', startOff(k) ? 'opacity-45' : 'cursor-pointer hover:bg-white/[0.03]']" :title="tr(k.hint, k.hintEn)" @click="!whiteDone && !startOff(k) && (s.simStart.value = k.k)">
-            <span class="grid size-4 shrink-0 place-items-center rounded-full border" :class="s.simStart.value === k.k ? 'border-amber-300' : 'border-white/30'"><span v-if="s.simStart.value === k.k" class="size-2 rounded-full bg-amber-300" /></span>
-            <b class="w-36 shrink-0 text-[12px] max-md:w-auto"><Icon v-if="k.k === 'fractured'" name="lock" class="mr-0.5 inline size-3.5" />{{ tr(k.label, k.labelEn) }}</b>
-            <span v-if="startOff(k)" class="opacity-80">{{ startOff(k) }}</span>
-            <template v-else-if="k.k === 'item'">
-              <PriceInput v-model="itemDivine" base="exalted" unit-key="sim.item" initial-unit="exalted" placeholder="0" />
-              <span class="opacity-60">(エミュレーターの累計 {{ money(s.simStartCost.value) }} + 白ベース。直せる)</span>
-            </template>
-            <template v-else-if="k.k === 'fractured'">
-              <span class="text-[var(--exile-color-text-secondary)]">{{ fracMembers[0]?.text }}</span>
-              <PriceInput v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="値段" />
-              <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline max-md:min-h-11" title="フラクチャーの MOD が付いたベースを取引所で探す (開くだけ)" @click.stop="searchBought">取引所で探す<Icon name="external" class="size-3.5" /></button>
-              <span class="inline-block w-24 shrink-0" :class="ageOf('bought')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("bought")?.text ?? "" }}</span>
-            </template>
-            <template v-else-if="k.k === 'magic'">
-              <span class="text-[var(--exile-color-text-secondary)]">{{ magicMods.length ? magicMods.join(" / ") : tr("2 で狙う MOD を足す", "Add target mods in step 2") }}</span>
-              <PriceInput v-model="magicDivine" base="exalted" unit-key="sim.magic" placeholder="値段" />
-              <span class="inline-block w-24 shrink-0" :class="ageOf('magic')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("magic")?.text ?? "" }}</span>
-            </template>
-            <template v-else-if="k.k === 'four'">
-              <span class="text-[var(--exile-color-text-secondary)]">3 MOD + {{ fracMembers[0]?.text }}</span>
-              <PriceInput v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
-              <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline max-md:min-h-11" title="狙いの MOD が付いたレア (固定済みは除く、MOD 4 つまで) を取引所で探す (開くだけ)" @click.stop="searchFour">取引所で探す<Icon name="external" class="size-3.5" /></button>
-              <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
-            </template>
-            <template v-else>
-              <PriceInput v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="0" />
-              <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline max-md:min-h-11" :title="`アイテムレベル ${searchIlvl} 以上 (狙う MOD の段が付く一番高いレベル) の白のベースを取引所で探す (開くだけ)`" @click.stop="searchWhite">取引所で探す<Icon name="external" class="size-3.5" /></button>
-              <span class="inline-block w-24 shrink-0" :class="ageOf('white')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("white")?.text ?? "" }}</span>
-            </template>
-            <span v-if="!startOff(k)" class="ml-auto shrink-0 tabular-nums" :class="cheapStart === k.k ? 'font-bold text-emerald-300' : 'opacity-80'">{{ startCost(k.k) != null ? money(startCost(k.k)!) : "—" }}</span>
-            <span v-if="cheapStart === k.k" class="shrink-0 rounded-sm bg-emerald-500/20 px-1.5 py-px text-emerald-200">一番安い</span>
+          <!-- 列を揃えた表: ラジオ | 始め方 | 買う物 | 値段 | 取引所で探す・入れた時刻 | このベースの値段 (2026-10-18 オーナー「UI 最悪、もっと練らないと」)。スマホは折り返す -->
+          <div v-for="k in startKinds" :key="k.k" data-sim-start-row :data-start="k.k" class="rounded-lg border px-2.5 py-1.5" :class="s.simStart.value === k.k ? 'border-[var(--exile-color-border-brass)] bg-white/[0.04]' : 'cursor-pointer border-white/10 hover:bg-white/[0.03]'" :title="tr(k.hint, k.hintEn)" @click="!whiteDone && (s.simStart.value = k.k)">
+            <div class="grid items-center gap-x-3 gap-y-1 md:grid-cols-[1rem_13rem_minmax(0,1fr)_auto_10rem_7rem] max-md:flex max-md:flex-wrap">
+              <span class="grid size-4 shrink-0 place-items-center rounded-full border" :class="s.simStart.value === k.k ? 'border-amber-300' : 'border-white/30'"><span v-if="s.simStart.value === k.k" class="size-2 rounded-full bg-amber-300" /></span>
+              <b class="whitespace-nowrap text-[12px]"><Icon v-if="k.k === 'fractured'" name="lock" class="mr-0.5 inline size-3.5 align-[-2px]" />{{ tr(k.label, k.labelEn) }}</b>
+              <span class="min-w-0 truncate text-[var(--exile-color-text-secondary)] max-md:basis-full">
+                <template v-if="k.k === 'white'">{{ tr(`アイテムレベル ${s.itemLevel.value} の白のベース`, `White base, item level ${s.itemLevel.value}`) }}</template>
+                <template v-else-if="k.k === 'four'">3 MOD + <span class="text-[#c8c8ff]">{{ fracMembers[0]?.text }}</span></template>
+                <template v-else-if="k.k === 'fractured'"><span class="text-[#c8c8ff]">{{ fracMembers[0]?.text }}</span> {{ tr("(固定済み)", "(fractured)") }}</template>
+                <template v-else>{{ tr(`エミュレーターの累計 ${money(s.simStartCost.value)} + 白ベース`, `Emulator total ${money(s.simStartCost.value)} + white base`) }}</template>
+              </span>
+              <span class="flex items-center" @click.stop>
+                <PriceInput v-if="k.k === 'white'" v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="0" />
+                <PriceInput v-else-if="k.k === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
+                <PriceInput v-else-if="k.k === 'fractured'" v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="値段" />
+                <PriceInput v-else v-model="itemDivine" base="exalted" unit-key="sim.item" initial-unit="exalted" placeholder="0" />
+              </span>
+              <span class="flex items-center gap-2">
+                <button v-if="k.k !== 'item'" type="button" class="inline-flex shrink-0 items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline max-md:min-h-11" :title="k.k === 'white' ? `アイテムレベル ${searchIlvl} 以上の白のベースを取引所で探す (開くだけ)` : k.k === 'four' ? '狙いの MOD が付いたレア (固定済みは除く、MOD 4 つまで) を取引所で探す (開くだけ)' : 'フラクチャーの MOD が付いたベースを取引所で探す (開くだけ)'" @click.stop="k.k === 'white' ? searchWhite() : k.k === 'four' ? searchFour() : searchBought()">取引所で探す<Icon name="external" class="size-3.5" /></button>
+                <span class="truncate" :class="startAge(k.k)?.old ? 'text-amber-300' : 'opacity-60'">{{ startAge(k.k)?.text ?? "" }}</span>
+              </span>
+              <span class="flex flex-col items-end text-right tabular-nums max-md:ml-auto">
+                <span v-if="startCost(k.k) != null" :class="cheapStart === k.k ? 'font-bold text-emerald-300' : 'text-[var(--exile-color-text-primary)]'">{{ money(startCost(k.k)!) }}</span>
+                <span v-else class="opacity-45">{{ tr("値段を入れる", "Enter a price") }}</span>
+                <span v-if="cheapStart === k.k" class="text-[10px] text-emerald-200">{{ tr("一番安い", "Cheapest") }}</span>
+              </span>
+            </div>
+            <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (白の行の 2 段目。2026-10-18 オーナー) -->
+            <SimRareStrip v-if="k.k === 'white' && !whiteDone" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" @click.stop />
           </div>
-          <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (2026-10-18 オーナー) -->
-          <SimRareStrip v-if="k.k === 'white' && !whiteDone" class="pl-8" :white="num(whiteDivine)" />
-          </template>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ。無ければ出さない (2026-10-18) -->
         <template v-if="fracMembers.length">
         <p class="mt-3 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]" :class="fractureRows.length ? '' : 'max-md:hidden'">{{ s.simStart.value === "fractured" ? "フラクチャーの MOD (買う物)" : s.simStart.value === "four" ? "自分でフラクチャーする MOD" : "増強・消去スパムで狙う MOD (フラクチャー予定)" }}</p>
         <p v-if="mixedSides" class="text-[11px] text-amber-200">候補がプレフィックスとサフィックスに分かれています (推奨は同じ側。マジックの間はどちらの側に付いても当たり)</p>
         <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
-          <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
+          <span class="shrink-0 rounded-sm border border-white/15 px-1 text-[10px] opacity-70">{{ r.side.startsWith("プレ") ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }}</span>
           <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
           <span v-if="calc?.each[i] && s.simStart.value !== 'fractured'" class="ml-auto text-[11px] tabular-nums opacity-80" title="増強 1 回でこの段以上が付く割合 (2 狙う MOD の出やすさは全段の重み、ここは打つ増強の下限で絞る)">増強で付く {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}では MOD レベルが低い)</template></span>
         </p>
