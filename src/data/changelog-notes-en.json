@@ -1,4 +1,8 @@
 {
+  "0.1.575": [
+    "The Guide & Tips and course pages now have a “← Back to craft” button",
+    "Fixed the Send feedback page showing both side slots on the right"
+  ],
   "0.1.574": [
     "The Chaos spam calculator is now its own page too. Pages other than the craft screen (guide, base picker, calculator, feedback) no longer show the channel column on the right"
   ],
