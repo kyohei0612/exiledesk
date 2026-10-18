@@ -16,6 +16,7 @@ import { jaSkill } from "../../i18n/skills-ja";
 import { revealBottom } from "../../utils/keep-place";
 import SimStartPick from "./SimStartPick.vue";
 import SimRareStrip from "./SimRareStrip.vue";
+import SimCostTip from "./SimCostTip.vue";
 import SimTargetSort from "./SimTargetSort.vue";
 import { SIM_STARTS, type SimStartKind } from "../../services/craft-stage/sim-methods";
 import { ARMED_CLASS } from "../../utils/use-armed";
@@ -213,6 +214,7 @@ const cheapStart = computed((): SimStartKind | null => {
                 <span v-if="startCost(k.k) != null" :class="cheapStart === k.k ? 'font-bold text-emerald-300' : 'text-[var(--exile-color-text-primary)]'">{{ money(startCost(k.k)!) }}</span>
                 <span v-else class="opacity-45">{{ tr("値段を入れる", "Enter a price") }}</span>
                 <span v-if="cheapStart === k.k" class="text-[10px] text-emerald-200">{{ tr("一番安い", "Cheapest") }}</span>
+                <SimCostTip v-if="fracMembers.length && k.k !== 'item' && startCost(k.k) != null" :kind="k.k === 'four' ? 'four' : k.k === 'fractured' ? 'fractured' : 'white'" :calc="calc" :base="num(k.k === 'four' ? fourDivine : k.k === 'fractured' ? boughtDivine : whiteDivine)" class="mt-0.5" />
               </span>
             </div>
             <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (白の行の 2 段目。2026-10-18 オーナー) -->
