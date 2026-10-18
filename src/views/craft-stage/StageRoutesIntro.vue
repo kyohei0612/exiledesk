@@ -2,7 +2,7 @@
   StageRoutesIntro.vue — スパムシミュレーターの最初の画面 (狙いを選ぶ前。2026-10-19 オーナー「最初の画面はこれでおｋ、こっちのがかわいい」
   「もっと情報多くていい、大きくしていいし文字もアイコンも」「AI の UI みたい。PoE2 の雰囲気出した UI で」)。
   ゲームの部品だけで組む: 今のアイテムはアイテムの額 (.g-item)、3 つの道はカレンシーの説明のカード (styles/poe-card.css) で、
-  上にカレンシーの絵を棚の枠 (.g-slot) に入れて、始めの状態 = 性能の行、打ち方 = MOD の青い行、等級 = 棚の枠。使い方も同じカード。嵌めるルーンは StageRouteRunes
+  上にカレンシーの絵を棚の枠 (.g-slot) に入れて、始めの状態 = 性能の行、打ち方 = MOD の青い行、等級 = 棚の枠。下の真ん中に嵌めるルーン (StageRouteRunes) と選ぶボタン
 -->
 <script setup lang="ts">
 import { computed } from "vue";
@@ -54,25 +54,11 @@ const ilvl = computed(() => s.item.value?.itemLevel ?? s.itemLevel.value);
       </div>
     </div>
 
-    <!-- 使い方 (同じカード) と、嵌めるルーン・選ぶ -->
-    <div class="mt-6 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <article class="poe-card">
-        <div class="poe-card-head"><p class="poe-card-name">{{ tr("スパムシミュレーター", "Spam simulator") }}</p></div>
-        <div class="poe-card-body">
-          <p class="poe-desc">{{ tr("狙う MOD を 1 つ選ぶと、増強・カオス・高貴のスパムを", "Pick one target mod, and augment, chaos and exalt spam") }}</p>
-          <p class="poe-desc">{{ tr(`それぞれ 3 つの等級で ${runs} 人ずつ打って比べる`, `are each run ${runs} times at 3 grades and compared`) }}</p>
-          <div class="poe-sep" />
-          <p class="poe-mod">{{ tr("一番安い道と、平均・半分の人・運が悪い 10 人に 1 人の費用", "The cheapest route, with average / half / unluckiest 1 in 10 costs") }}</p>
-          <p class="poe-mod">{{ tr("運試しで自分も打って、100 人の中の順位を X でシェア", "Luck test: spam it yourself, see your rank among 100, share on X") }}</p>
-          <div class="poe-sep" />
-          <p class="poe-prop">{{ tr("値段は今の相場。ベース代と始めの状態を作る費用は入れない。冒涜スパムは入れない", "Current prices. Base and start-state costs not included. No desecration spam") }}</p>
-          <p class="poe-flavour mt-2">{{ tr("エミュレーターと同じ決まりで、同じ乱数は二度と使わない", "Same rules as the Emulator, never the same dice twice") }}</p>
-        </div>
-      </article>
-      <div class="flex flex-col items-center gap-5 pt-2">
-        <StageRouteRunes :picked="picked" :required="required" @change="emit('runes', $event)" />
-        <button type="button" data-routes-pick class="g-btn-red min-h-14 w-full max-w-[22rem] text-[17px]" @click="emit('pick')">{{ tr("狙う MOD を選ぶ", "Pick a target mod") }}</button>
-      </div>
+    <!-- 嵌めるルーンと「狙う MOD を選ぶ」は真ん中下 (使い方のカードは外した。2026-10-19 オーナー「これいらんかも、真ん中下に配置した方がシンプル」) -->
+    <div class="mt-6 flex flex-col items-center gap-5">
+      <StageRouteRunes :picked="picked" :required="required" @change="emit('runes', $event)" />
+      <button type="button" data-routes-pick class="g-btn-red min-h-14 w-full max-w-[22rem] text-[17px]" @click="emit('pick')">{{ tr("狙う MOD を選ぶ", "Pick a target mod") }}</button>
+      <p class="text-[12px] text-[var(--exile-color-text-tertiary)]">{{ tr(`各道 ${runs} 人ずつ。値段は今の相場、ベース代と始めの状態を作る費用は入れない`, `${runs} runs per route. Current prices; base and start-state costs not included`) }}</p>
     </div>
   </div>
 </template>
