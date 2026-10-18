@@ -5,6 +5,8 @@
   "name": "web-dev",
   "main": "dev-gate.js",
   "compatibility_date": "2026-09-01",
+  // シェアの短い URL (/s/<id>) の中身。分析の記録と同じ D1 (KV は増やさない)。表は server/live/migrations/0007_shares.sql (2026-10-18)
+  "d1_databases": [{ "binding": "LOGS", "database_name": "exiledesk-logs", "database_id": "26272a12-1dfa-4d2f-aab4-cc27f7bc0efe" }],
   "assets": {
     "directory": "../../dist-web-dev",
     "binding": "ASSETS",

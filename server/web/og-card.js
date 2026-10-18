@@ -1,6 +1,6 @@
 // カオススパムの自慢のカード (2026-10-16 オーナー「計算機はシェア機能追加。自慢目的、URL と共に宣伝」「画像付きが望ましい」)。
 //   GET /s/spam?…      X・Discord・LINE が読む OGP のページ。人はそのベースのエミュレーター (/?base=) へ送る
-//   GET /og/spam.png?… そのカードの絵 (1200×630)。結果は全部 URL に入っているので何も保存しない (KV・D1 は使わない)。
+//   GET /og/spam.png?… そのカードの絵 (1200×630)。中身は URL の code か、短い id (7 文字) なら D1 の shares の行 (下の shortIdOf)。
 //                       一度作った絵は Cloudflare のキャッシュに置いて使い回す (同じ URL は作り直さない)
 // 中身 (URL の ?): l=ja|en, b=ベースの英語名, bn=ベースの表示名, a=ベースの絵のファイル名, m=狙った MOD, k=カオスの名前,
 //                  n=何回目で付いたか, r=100 人中の順位 (1〜100、小さいほど早い), md=半分の人, u=運が悪い 10 人に 1 人, c=費用
@@ -202,16 +202,61 @@ async function cardImage(url, env, c) {
   }).arrayBuffer();
 }
 
-/** /s/<code> (と古い形の /s/spam?…) と /og/<code>.png (/og/spam.png?…) だけ受ける。違えば null (呼んだ側が今まで通りに続ける) */
+/**
+ * 短い URL (2026-10-18 オーナー「スマホからシェアの URL 長くて怖い」): 中身の code を D1 (exiledesk-logs の shares) に 1 行置いて /s/<id> に。
+ * id は code の SHA-256 から決まる 7 文字 (src/views/craft-stage/use-spam-share.ts の shortIdOf と同じ式)。同じ結果は同じ id なので行は増えない。
+ * 画面は押した時に POST /s/new (keepalive) で置いてすぐ X へ。置いた時にカードの絵も作ってキャッシュしておく (X が読みに来た時に待たせない)。KV は使わない
+ */
+const SHORT = /^[A-Za-z0-9]{7}$/;
+const B62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+export async function shortIdOf(code) {
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code)));
+  let n = 0n;
+  for (let i = 0; i < 8; i++) n = (n << 8n) | BigInt(h[i]);
+  let out = "";
+  for (let i = 0; i < 7; i++) { out += B62[Number(n % 62n)]; n /= 62n; }
+  return out;
+}
+const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type" };
+const PNG_HEADERS = { "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" };
+/** 短い id → code (無ければ null)。長い code はそのまま */
+async function codeOf(token, env) {
+  if (!SHORT.test(token)) return token;
+  if (!env.LOGS) return null;
+  const row = await env.LOGS.prepare("SELECT code FROM shares WHERE id = ?").bind(token).first();
+  return row ? String(row.code) : null;
+}
+async function renderPng(url, env, code) {
+  return new Response(await cardImage(url, env, readCard(await unpack(code))), { headers: PNG_HEADERS });
+}
+
+/** /s/<code|id> (と古い形の /s/spam?…)、/og/<code|id>.png (/og/spam.png?…)、POST /s/new だけ受ける。違えば null (呼んだ側が今まで通りに続ける) */
 export async function ogCard(request, env, ctx) {
   const url = new URL(request.url);
-  const page = /^\/s\/([A-Za-z0-9_-]{8,1500})$/.exec(url.pathname);
-  const pic = /^\/og\/([A-Za-z0-9_-]{8,1500})\.png$/.exec(url.pathname);
+  if (url.pathname === "/s/new") {
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+    if (request.method !== "POST" || !env.LOGS) return new Response("no", { status: 405, headers: CORS });
+    const code = (await request.text()).trim();
+    if (!/^[A-Za-z0-9_-]{8,1500}$/.test(code)) return new Response("bad", { status: 400, headers: CORS });
+    try { await unpack(code); } catch { return new Response("bad", { status: 400, headers: CORS }); }
+    const id = await shortIdOf(code);
+    await env.LOGS.prepare("INSERT OR IGNORE INTO shares (id, code, at) VALUES (?, ?, ?)").bind(id, code, Date.now()).run();
+    // カードの絵を先に作ってキャッシュ (X が読みに来た時にすぐ出す)
+    const picUrl = new URL(`/og/${id}.png`, url.origin);
+    ctx?.waitUntil?.((async () => {
+      const key = new Request(picUrl.toString(), { method: "GET" });
+      if (await caches.default.match(key)) return;
+      try { await caches.default.put(key, await renderPng(picUrl, env, code)); } catch { /* 読みに来た時に作る */ }
+    })());
+    return new Response(JSON.stringify({ id }), { headers: { "content-type": "application/json", ...CORS } });
+  }
+  const page = /^\/s\/([A-Za-z0-9_-]{7,1500})$/.exec(url.pathname);
+  const pic = /^\/og\/([A-Za-z0-9_-]{7,1500})\.png$/.exec(url.pathname);
   if (url.pathname === "/s/spam") return sharePage(url, readCard((k) => url.searchParams.get(k)), `${url.origin}/og/spam.png${url.search}`);
   if (page) {
-    let get;
-    try { get = await unpack(page[1]); } catch { return Response.redirect(`${url.origin}/`, 302); }
-    return sharePage(url, readCard(get), `${url.origin}/og/${page[1]}.png`, page[1]);
+    let get, code;
+    try { code = await codeOf(page[1], env); if (!code) throw new Error("none"); get = await unpack(code); } catch { return Response.redirect(`${url.origin}/`, 302); }
+    return sharePage(url, readCard(get), `${url.origin}/og/${page[1]}.png`, code);
   }
   if (url.pathname !== "/og/spam.png" && !pic) return null;
   const cache = caches.default;
@@ -220,11 +265,11 @@ export async function ogCard(request, env, ctx) {
   if (hit) return hit;
   let res;
   try {
-    const get = pic ? await unpack(pic[1]) : (k) => url.searchParams.get(k);
-    const png = await cardImage(url, env, readCard(get));
-    res = new Response(png, { headers: { "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" } });
+    const code = pic ? await codeOf(pic[1], env) : null;
+    if (pic && !code) throw new Error("none");
+    res = code ? await renderPng(url, env, code) : new Response(await cardImage(url, env, readCard((k) => url.searchParams.get(k))), { headers: PNG_HEADERS });
   } catch {
-    // 作れなかった時はサイトの共通の絵
+    // 作れなかった時はサイトの共通の絵 (キャッシュしない)
     return env.ASSETS.fetch(new Request(new URL("/web/og.png", url.origin)));
   }
   ctx?.waitUntil?.(cache.put(key, res.clone()));

@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.559",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機の X シェアの URL を短く (exiledesk.com/s/ + 7 文字)。前の長い URL もそのまま開けます",
+    "en": "Chaos spam calculator: the Share on X link is now short (exiledesk.com/s/ + 7 characters). Old long links still work"
+   }
+  ]
+ },
+ {
   "v": "0.1.558",
   "date": "2026-10-18",
   "items": [
@@ -603,24 +615,6 @@
     "area": "",
     "text": "掲示板: いいねを付けられるように",
     "en": "Message board: likes"
-   }
-  ]
- },
- {
-  "v": "0.1.519",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "掲示板を作りました (クラフトステージの「掲示板」タブ)。クラフトの相談・自慢・意見交換にどうぞ。名前は空なら「名無しのエグザイル」、タグは付けたい時だけ。困った書き込みは「通報」から",
-    "en": "Added a message board (the \"Board\" tab in the Craft Stage) for crafting questions, showing off and discussion. Leave the name empty to post as \"Nameless Exile\"; tags are optional. Use \"Report\" for problem posts"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "Web 版のシミュレーターのタブは、作り終わるまで出さないようにしました",
-    "en": "The web simulator tab is hidden until it's finished"
    }
   ]
  }

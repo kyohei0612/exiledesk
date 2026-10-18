@@ -6,6 +6,8 @@
   // 旧 URL を開いたクローラーにだけ 301 (move-gate.js)。人は web.html の script でデータごと移る
   "main": "move-gate.js",
   "compatibility_date": "2026-09-01",
+  // シェアの短い URL (/s/<id>) の中身。分析の記録と同じ D1 (KV は増やさない)。表は server/live/migrations/0007_shares.sql (2026-10-18)
+  "d1_databases": [{ "binding": "LOGS", "database_name": "exiledesk-logs", "database_id": "26272a12-1dfa-4d2f-aab4-cc27f7bc0efe" }],
   // 独自ドメイン (2026-10-11 Porkbun で取得、ネームサーバーは Cloudflare)。www も同じ所へ。web.exiledesk.workers.dev も残る
   // routes を書くと workers.dev が既定で切れる (2026-10-11 一度 404 になった)。今の URL (X のリンク) を生かすので必ず true
   "workers_dev": true,

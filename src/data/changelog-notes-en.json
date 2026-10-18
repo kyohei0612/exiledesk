@@ -1,4 +1,7 @@
 {
+ "0.1.559": [
+  "Chaos spam calculator: the Share on X link is now short (exiledesk.com/s/ + 7 characters). Old long links still work"
+ ],
  "_": "changelog-notes.json の英語 (同じ版・同じ順。2026-10-17 英語の仕上げ)。ゲームの用語はクライアントの英語の原文",
  "0.1.558": [
   "Added the “Learn omens” tutorial: Exalt (Sinistral, Dextral, Greater, stacking), Annul (Sinistral, Dextral), Chaos (Whittling, Erasure) and Divine (Blessed, Sanctification)",

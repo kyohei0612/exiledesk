@@ -22,6 +22,7 @@ export interface SpamResult { sig: string; uses: number; applied: number; hit: b
 export const luck = (r: number): string => (r <= 10 ? tr("かなりの強運", "very lucky") : r <= 50 ? tr("運がいい方", "lucky") : r <= 90 ? tr("運が悪い方", "unlucky") : tr("かなりの沼", "very unlucky"));
 /** 順位の言葉: 半分より早ければ「上位」、遅ければ「下位」(85% → 下位 15%。2026-10-16 オーナー「運悪いのに上位はおかしい」) */
 export const rankWord = (r: number): string => (r <= 50 ? tr(`上位 ${r}%`, `top ${r}%`) : tr(`下位 ${Math.max(1, 100 - r)}%`, `bottom ${Math.max(1, 100 - r)}%`));
+const B62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<SpamStats | null>; statsFresh: () => boolean; key: Ref<string>; cost: (n: number) => string; startOf: () => StageItem | null }) {
   const { result, stats, key, cost } = o;
@@ -41,7 +42,21 @@ export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<Spa
     for (const x of bytes) bin += String.fromCharCode(x);
     return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
+  /**
+   * 短い URL (2026-10-18 オーナー「スマホからシェアの URL 長くて怖い」): code の SHA-256 から 7 文字の id (server/web/og-card.js の shortIdOf と同じ式)。
+   * 中身は押した時に POST /s/new で D1 に置く (サーバーはその時にカードの絵も作る)。押さなければ何も置かない
+   */
+  async function shortIdOf(code: string): Promise<string> {
+    const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code)));
+    let n = 0n;
+    for (let i = 0; i < 8; i++) n = (n << 8n) | BigInt(h[i]!);
+    let out = "";
+    for (let i = 0; i < 7; i++) { out += B62[Number(n % 62n)]; n /= 62n; }
+    return out;
+  }
+  const origin = inApp ? "https://exiledesk.com" : location.origin;
   const shareUrl = ref("");
+  let shareCode = "";
   watch([result, () => stats.value, isEn], async () => {
     const r = result.value;
     if (!r?.hit) { shareUrl.value = ""; return; }
@@ -59,9 +74,8 @@ export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<Spa
       cost(r.applied) || null,
       setupOf(o.startOf(), spamAims.value, key.value),
     ]);
-    shareUrl.value = `${inApp ? "https://exiledesk.com" : location.origin}/s/${code}`;
-    // カードの絵を先に作らせておく (X が読みに来た時に作り始めると、出るまで待たされた。2026-10-16)
-    try { void fetch(`${inApp ? "https://exiledesk.com" : location.origin}/og/${code}.png`, { mode: "no-cors" }); } catch { /* 作れなくても X が来た時に作る */ }
+    shareCode = code;
+    shareUrl.value = `${origin}/s/${await shortIdOf(code)}`;
   }, { immediate: true });
   const shareText = computed(() => {
     const r = result.value;
@@ -79,6 +93,8 @@ export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<Spa
   /** スマホ (iPhone・Android) */
   const mobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   function shareX(e: MouseEvent): void {
+    // 短い URL の中身を置く (ページを離れても届くように keepalive。カードの絵もサーバーがこの時に作る)
+    if (shareCode) void fetch(`${origin}/s/new`, { method: "POST", body: shareCode, keepalive: true, headers: { "content-type": "text/plain" } }).catch(() => { /* 置けなければ開いた人はトップへ */ });
     logRecord("emu_spam_share", { to: mobile ? "x-app" : "x", base: s.base.value, rank: result.value?.rank ?? null });
     if (inApp) {
       e.preventDefault();
