@@ -3,7 +3,7 @@
  * StageSimPanel.vue から分けた (2026-10-16、500 行の決まり)。画面の 1 つごとに呼ぶ (状態は画面ごと)
  */
 import { useArmed } from "../../utils/use-armed";
-import { scrollToTop } from "../../utils/keep-place";
+import { revealBottom, scrollToTop } from "../../utils/keep-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, writeSimSession } from "../../state/craft-stage";
 import { type Pattern, ANY_TARGET, isRest } from "../../services/craft-stage/pattern";
@@ -24,7 +24,7 @@ export type Stage = "mods" | "white" | "start" | "order";
 export type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; startDone: boolean; orderDone: boolean; sockets: number | null; white: number | null; patterns?: string };
 
 export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
-  const { fracDone, hasSteps, itemDivine, keptKey, modsDone, num, orderDone, patternDone, phone, recipeOut, restBases, restCost,
+  const { fracDone, sortDone, hasSteps, itemDivine, keptKey, modsDone, num, orderDone, patternDone, phone, recipeOut, restBases, restCost,
     restoring, results, rows, sockets, socketsOk, startDone, step3, stepOrder, stepStart, whiteDivine, whiteOk } = d;
   const s = craftStage;
   const step4pre = computed(() => stepOrder.value && orderDone.value);
@@ -165,18 +165,19 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     whiteOk.value = true; fracDone.value = true; orderDone.value = true;
   });
   /**
-   * 「決めた →」で次の工程が開いたら、その一番下まで送る (2026-10-08 オーナー「決めたで順に進むけど、スクロールは基本進むなら一番下に」)。
-   * 戻した時 (ここからやり直す) は動かさない
+   * 「決めた →」で次の工程が開いたら、次に決める段 (金の枠) の下の線 + 24px まで送る (2026-10-08 オーナー「決めたで順に進むけど、スクロールは基本進むなら一番下に」、
+   * 2026-10-18「番号が進む時もスクロールで次工程表示は必ず」「下枠 + 24px」)。戻した時 (ここからやり直す) は動かさない
    */
   const panelEl = ref<HTMLElement | null>(null);
-  watch([modsDone, whiteOk, startDone, orderDone], (now, prev) => {
+  watch([modsDone, sortDone, whiteOk, startDone, orderDone], (now, prev) => {
     if (restoring.v || !now.some((v, i) => v && !prev[i])) return;
     // スマホは画面が短いので、次に決める段 (金の枠) の頭を画面の上に (2026-10-09 スナップで確認: 一番下だと次の段が画面の下の端に出ていた)
-    void nextTick(() => {
-      const cur = phone.value ? panelEl.value?.querySelector("[data-sim-cur]") : null;
-      if (cur) scrollToTop(cur);
+    void nextTick(() => requestAnimationFrame(() => {
+      const cur = panelEl.value?.querySelector("[data-sim-cur]");
+      if (cur && phone.value) scrollToTop(cur);
+      else if (cur) revealBottom(cur);
       else panelEl.value?.scrollIntoView({ block: "end", behavior: "smooth" });
-    });
+    }));
   });
   /** 3 白ベース設定の「決めた」: 値段とフラクチャー予定 (無ければ「しない」) */
   function whiteDecide(): void {

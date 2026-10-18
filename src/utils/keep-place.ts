@@ -127,3 +127,15 @@ function glideCss(box: HTMLElement | null, d: number, ms: number): Promise<void>
   requestAnimationFrame(step);
   });
 }
+
+/**
+ * 段が進んだ時の送り: el (次に決める段の枠) の下の線 + pad が画面に入るまでぬるっと送る。枠が画面より高ければ枠の上で止める。見えていれば動かさない
+ * (2026-10-18 オーナー「番号が進む時もスクロールで次工程表示は必ず」「下枠 + 24px が基準」。ベースの一覧の「もっと見る」と同じ 24px)
+ */
+export function revealBottom(el: Element, pad = 24): void {
+  const box = scrollBoxOf(el as HTMLElement);
+  const r = el.getBoundingClientRect();
+  const viewTop = box ? box.getBoundingClientRect().top : 0, viewH = box ? box.clientHeight : window.innerHeight;
+  const d = Math.min(r.bottom + pad - (viewTop + viewH), r.top - viewTop - 8);
+  if (d > 0) void glideRect(box, el, d, 320);
+}

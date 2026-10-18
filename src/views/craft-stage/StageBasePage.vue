@@ -11,7 +11,7 @@ import { craftStage as s, SIM_LOCKED } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
 import { useStageBase } from "./use-stage-base";
-import { glideRect, scrollBoxOf } from "../../utils/keep-place";
+import { revealBottom } from "../../utils/keep-place";
 import StageRecipeStart from "./StageRecipeStart.vue";
 
 defineProps<{ phone: boolean }>();
@@ -36,13 +36,7 @@ function pick(en: string): void {
  */
 function revealSimMods(): void {
   const el = document.querySelector<HTMLElement>("[data-sim-cur]");
-  if (!el) return;
-  const box = scrollBoxOf(el);
-  const r = el.getBoundingClientRect();
-  const viewTop = box ? box.getBoundingClientRect().top : 0, viewH = box ? box.clientHeight : window.innerHeight;
-  const over = r.bottom + 24 - (viewTop + viewH); // 下は 24px あける (ベースの一覧と同じ。2026-10-14 オーナー「下 24px あける」)
-  const d = Math.min(over, r.top - viewTop - 8);
-  if (d > 0) void glideRect(box, el, d, 320);
+  if (el) revealBottom(el);
 }
 // 開いたら一番上から、戻ったら前の位置へ (ページを移ったのと同じに。2026-10-12 広告のお試しと同じ)
 let before = 0;
