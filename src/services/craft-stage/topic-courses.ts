@@ -11,6 +11,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageItem } from "./types";
 import type { Force } from "./stage-core";
 import { essenceShelf } from "../../state/craft-stage-shelf";
+import { ADV_COURSES } from "./topic-courses-adv";
 
 /** how = 案内に出すやさしい箇条書き (2026-10-17 オーナー「赤ちゃんに説明するくらい簡単に」)。無い手はカードの公式の説明と決まりの文を出す */
 /** prep = 今のアイテムにこの手が打てない時、白 (start があればそのレア度の MOD 0 個) から打ってこの手が打てる状態を作る手 ([] = 白。craft-lesson.ts) */
@@ -23,10 +24,14 @@ export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: Ja
   /** 同じ手の中で続けて打つ手 (アビス → 骨 → 発現。前の手を打つまで押せない。2026-10-17 オーナー「発現までセットで」) */
   chain?: TopicStep[];
   /** 打てなくなるまで (品質の上限まで) 連打で続ける手。持ったまま、上限で手を終える (カタリスト。2026-10-18 オーナー「20% まで上げさせてあげよう連打で」) */
-  untilMax?: boolean }
+  untilMax?: boolean;
+  /** 品質をこの % まで連打で上げる手 (上限まで行かずに止める。上級の「品質 34% でスペルスキル +4」。2026-10-18) */
+  untilQuality?: number;
+  /** この MOD (・段) が付く成功例を見せる (乱数を先に選ぶ。craft-lesson.ts の rigRare。上級の「品質を上げてからカオス」。2026-10-18 オーナー) */
+  want?: { mod: string; tier?: string } }
 export interface TopicCourse {
   id: string;
-  level: 1 | 2 | 3;
+  level: 1 | 2 | 3 | 4;
   title: JaEn;
   learn: JaEn;
   base: string;
@@ -407,6 +412,7 @@ export const TOPIC_COURSES: TopicCourse[] = [
       ], "rare"), startMods: FULL_JEWEL },
     ],
   },
+  ...ADV_COURSES, // 上級 (topic-courses-adv.ts)
 ];
 
 /**

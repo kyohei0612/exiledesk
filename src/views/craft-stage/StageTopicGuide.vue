@@ -30,6 +30,7 @@ const LEVEL: Record<number, { label: JaEn; chip: string }> = {
   1: { label: ["入門", "Intro"], chip: "bg-emerald-500/25 text-emerald-100" },
   2: { label: ["初級", "Easy"], chip: "bg-sky-500/25 text-sky-100" },
   3: { label: ["中級", "Medium"], chip: "bg-amber-500/25 text-amber-100" },
+  4: { label: ["上級", "Advanced"], chip: "bg-rose-500/25 text-rose-100" },
 };
 /** エッセンスの手の実際のキー (今のアイテムの棚から。一覧の先の手も日本語の名前で出す) */
 /** エッセンスの名前は、その手のベース (手ごとの base) の棚から引く (別のベースの手が英語の名前のまま出ていた) */
@@ -125,7 +126,8 @@ const example = computed(() => {
  */
 const qualityRows = computed(() => {
   const it = s.item.value, d = s.data.value, st = topicStep.value?.step;
-  if (!it || !d || !st?.use.startsWith("catalyst")) return null;
+  // カタリストの手と、品質の付いたアイテムを扱う手 (上級の「品質を上げてからカオス」) で出す
+  if (!it || !d || !st || !(st.use.startsWith("catalyst") || (it.qualityTag && it.quality > 0))) return null;
   const { tag, pct } = catalystOf(it);
   return {
     head: tag && pct > 0 ? `${qualityLabelOf(tag)}: +${pct}%` : tr("品質はまだ 0%", "No quality yet"),

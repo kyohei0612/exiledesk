@@ -57,6 +57,12 @@ export const topicCur = computed(() => {
   if (!st) return null;
   return { step: st, key: it && d ? topicKey(st, d, it) : null };
 });
+/** 連打で続ける手がまだ続くか (品質の上限まで / 決めた % まで、まだ打てる間) */
+export function keepGoing(st: { untilMax?: boolean; untilQuality?: number }, key: string): boolean {
+  if (s.usable(key) !== null) return false;
+  if (st.untilMax) return true;
+  return st.untilQuality != null && (s.item.value?.quality ?? 0) < st.untilQuality;
+}
 export const topicDone = computed(() => !!topic.value && topicAt.value >= topic.value.steps.length);
 
 // 打った手が今の手と合えば「打ち終えた」(発現はどの候補でも。お告げは全部掛かっていること)。進むのは「次へ」で
@@ -71,7 +77,7 @@ watch(() => s.log.value.length, (n, old) => {
   // 発現の手は、未発現の MOD が全部無くなるまで次へ進めない (腐食で最大 6 つ。2026-10-17 オーナー「腐食は全部発現させてから完了に、もったいない体験が」)
   if (cur.step.use === "reveal" && [...e.after.prefixes, ...e.after.suffixes].some((m) => m.unrevealed)) return;
   // 品質を上げる手は上限まで連打で (まだ打てる間は手を終えない。2026-10-18 オーナー「初手は 20% まで上げさせてあげよう連打で」)
-  if (cur.step.untilMax && cur.key && s.usable(cur.key) === null) return;
+  if (cur.key && keepGoing(cur.step, cur.key)) return;
   if (topicSub.value < chain.length) topicSub.value++; // 続きの手へ
   else topicUsed.value = true;
 });

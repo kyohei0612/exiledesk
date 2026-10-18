@@ -10,7 +10,7 @@
 import { computed, ref, watch } from "vue";
 import { craftStage as s, seedOfRoll } from "./craft-stage";
 import { course, courseView, endCourse } from "./craft-course";
-import { endTopic, goTopic, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
+import { endTopic, goTopic, keepGoing, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
 import { fullSockets } from "./stage-steps";
 import { topicKey, type TopicCourse } from "../services/craft-stage/topic-courses";
 import { freshItem, startFrom } from "../services/craft-stage/run-plan";
@@ -51,7 +51,7 @@ watch(() => s.log.value.length, (n, old) => {
   if (!inLesson.value || n <= (old ?? 0)) return;
   // 上限まで連打する手 (カタリスト) は、まだ打てる間は持ったまま (2026-10-18 オーナー「連打で」)
   const st = topic.value?.steps[topicAt.value], h = s.held.value;
-  if (st?.untilMax && h && s.usable(h) === null) return;
+  if (st && h && keepGoing(st, h)) return;
   s.hold(null);
 });
 
@@ -140,6 +140,17 @@ export function rigRare(key: string): void {
   const it = s.item.value, d = s.data.value;
   if (!topic.value || !it || !d || s.usable(key)) return;
   const tag = s.omens.value.includes(CATALYSING) ? it.qualityTag ?? null : null;
+  // 手に want がある時: その MOD (・段) が付く乱数を選ぶ (上級の「品質を上げてからカオス」でスペルスキルのレベル T1。2026-10-18)
+  const want = topic.value.steps[topicAt.value]?.want;
+  if (want) {
+    const omens = omensFor(key, s.omens.value);
+    for (let i = 0; i < 30000; i++) {
+      const roll = Math.floor(Math.random() * 2_147_483_647);
+      const r = applyCurrency(d, it, key, mulberry32(seedOfRoll(roll, key)), omens);
+      if (r.applied && r.added.some((m) => m.modId === want.mod && (!want.tier || m.tierName === want.tier))) { s.rollSeed.value = roll; return; }
+    }
+    return;
+  }
   if (tag) {
     // エンジンを直接呼んで探す (本物の 1 手は確率の計算まで回るので、1,500 回で画面が止まった。2026-10-18)
     const omens = omensFor(key, s.omens.value);
