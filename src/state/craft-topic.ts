@@ -63,6 +63,9 @@ export function keepGoing(st: { untilMax?: boolean; untilQuality?: number }, key
   if (st.untilMax) return true;
   return st.untilQuality != null && (s.item.value?.quality ?? 0) < st.untilQuality;
 }
+/** ループの手の何周目か (1 から。手が変わったら 1 に戻す) */
+export const loopRound = ref(1);
+watch(topicAt, () => { loopRound.value = 1; });
 export const topicDone = computed(() => !!topic.value && topicAt.value >= topic.value.steps.length);
 
 // 打った手が今の手と合えば「打ち終えた」(発現はどの候補でも。お告げは全部掛かっていること)。進むのは「次へ」で
@@ -78,6 +81,11 @@ watch(() => s.log.value.length, (n, old) => {
   if (cur.step.use === "reveal" && [...e.after.prefixes, ...e.after.suffixes].some((m) => m.unrevealed)) return;
   // 品質を上げる手は上限まで連打で (まだ打てる間は手を終えない。2026-10-18 オーナー「初手は 20% まで上げさせてあげよう連打で」)
   if (cur.key && keepGoing(cur.step, cur.key)) return;
+  // ループの手で狙いの MOD を発現したら、続き (エッセンス) を打たずに手を終える (2026-10-18 オーナー「スピリット 50 を発現させて終了」)
+  const wr = topicStep.value?.step.wantReveal;
+  if (wr && cur.step.use === "reveal" && e.added.some((m) => m.modId === wr.mod && (wr.value == null || m.values[0] === wr.value))) { topicUsed.value = true; return; }
   if (topicSub.value < chain.length) topicSub.value++; // 続きの手へ
+  // ループの手は、続き (エッセンス) まで打ったら手の最初に戻して次の周へ (狙いを発現するまで手を終えない。2026-10-18 オーナー「エッセンス選んだあとクリア扱いでグレーアウト、復活させて」)
+  else if (topicStep.value?.step.loop) { topicSub.value = 0; loopRound.value++; }
   else topicUsed.value = true;
 });

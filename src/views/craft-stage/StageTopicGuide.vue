@@ -47,7 +47,8 @@ function stepName(st: TopicStep): string {
   return [main, ...(st.omens ?? []).map(nameOf)].join(" + ");
 }
 /** 手の一覧の名前: 続きの手 (chain) で掛けるお告げも入れる (2026-10-17 オーナー「6 手目もタイトルからそうだけど骨 + 反響のお告げだよね」) */
-const listName = (st: TopicStep): string => [stepName(st), ...(st.chain ?? []).flatMap((c) => c.omens ?? []).map(nameOf)].join(" + ");
+// 同じお告げは 1 回だけ (エッセンスやり直しは 2 周目にも同じお告げを掛けるので 2 回並んでいた。2026-10-18)
+const listName = (st: TopicStep): string => [...new Set([stepName(st), ...(st.chain ?? []).flatMap((c) => c.omens ?? []).map(nameOf)])].join(" + ");
 /**
  * 続きのある手のボタン: 発現に掛けるお告げは発現と分けて 1 つのボタンにする (骨 → 反響のお告げ → 発現)。
  * 2026-10-17 オーナー「お告げが分かりづらいから反響と一緒にしないで分けてあげた方が分かりやすい」
@@ -126,11 +127,20 @@ const example = computed(() => {
  */
 /** 狙いの MOD (手の target): 今のアイテムの行と、固定されたか (フラクチャーの当たり / 外れ) */
 const targetRow = computed(() => {
-  const id = topicStep.value?.step.target, it = s.item.value;
-  if (!id || !it) return null;
+  const st = topicStep.value?.step, id = st?.target, it = s.item.value, d = s.data.value;
+  if (!st || !id || !it || !d) return null;
+  const side = d.mods.get(id)?.type === "suffix" ? "suffix" : "prefix";
+  // 冒涜で狙う手 (wantReveal): 付いたら当たり。まだの間は狙いの文 (label) を出す (2026-10-18 オーナー「スピリット 50」)
+  const want = st.wantReveal;
+  if (want) {
+    const m = allMods(it).find((x) => x.modId === id && (want.value == null || x.values[0] === want.value)) ?? null;
+    return { text: m ? modText(m) : want.label ? t2(want.label) : "", side, state: m ? "got" : "none", head: tr("狙いの冒涜", "Target desecration") } as const;
+  }
+  // フラクチャーで狙う手: 固定された MOD で当たり / 外れ
   const m = allMods(it).find((x) => x.modId === id) ?? null;
+  if (!m) return null;
   const fr = allMods(it).find((x) => x.fractured) ?? null;
-  return { m, state: !fr ? "none" : fr.modId === id ? "hit" : "miss" } as const;
+  return { text: modText(m), side, state: !fr ? "none" : fr.modId === id ? "hit" : "miss", head: tr("狙いの MOD", "Target mod") } as const;
 });
 const qualityRows = computed(() => {
   const it = s.item.value, d = s.data.value, st = topicStep.value?.step;
@@ -239,9 +249,9 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <!-- 要点はエミュレーターのカードの頭と同じ大きな枠で (2026-10-17 オーナー「入門は要点でっかく表示のみ、文章長くてだるい」) -->
       <!-- 狙いの MOD は要点の上 (下だと見づらい。2026-10-18 オーナー) -->
       <!-- 見た目はエッセンスのカードの「付く MOD」と同じ緑 (2026-10-18 オーナー「エミュのエッセンスで付く MOD みたいな色」)。当たりは札、外れは灰色 -->
-      <div v-if="targetRow?.m" data-topic-target class="mt-2 rounded-lg border px-2.5 py-1.5" :class="targetRow.state === 'miss' ? 'border-white/20 bg-white/[0.05]' : 'border-emerald-400/40 bg-emerald-500/10'">
-        <p class="flex items-center gap-1.5 text-[10px]" :class="targetRow.state === 'miss' ? 'text-white/50' : 'text-emerald-200/70'">{{ tr("狙いの MOD", "Target mod") }} ({{ targetRow.m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix") }})<span v-if="targetRow.state === 'hit'" class="rounded bg-emerald-400 px-1.5 py-px text-[10px] font-black text-black">{{ tr("当たり・固定された", "Hit · Fractured") }}</span><span v-else-if="targetRow.state === 'miss'" class="rounded bg-white/20 px-1.5 py-px text-[10px] font-bold text-white/80">{{ tr("外れ (もう一度)", "Miss (Try again)") }}</span></p>
-        <p class="text-[13px] font-semibold" :class="targetRow.state === 'miss' ? 'text-white/60' : 'text-emerald-200'">・{{ modText(targetRow.m) }}</p>
+      <div v-if="targetRow?.text" data-topic-target class="mt-2 rounded-lg border px-2.5 py-1.5" :class="targetRow.state === 'miss' ? 'border-white/20 bg-white/[0.05]' : 'border-emerald-400/40 bg-emerald-500/10'">
+        <p class="flex items-center gap-1.5 text-[10px]" :class="targetRow.state === 'miss' ? 'text-white/50' : 'text-emerald-200/70'">{{ targetRow.head }} ({{ targetRow.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix") }})<span v-if="targetRow.state === 'got'" class="rounded bg-emerald-400 px-1.5 py-px text-[10px] font-black text-black">{{ tr("当たり", "Hit") }}</span><span v-else-if="targetRow.state === 'hit'" class="rounded bg-emerald-400 px-1.5 py-px text-[10px] font-black text-black">{{ tr("当たり・固定された", "Hit · Fractured") }}</span><span v-else-if="targetRow.state === 'miss'" class="rounded bg-white/20 px-1.5 py-px text-[10px] font-bold text-white/80">{{ tr("外れ (もう一度)", "Miss (Try again)") }}</span></p>
+        <p class="text-[13px] font-semibold" :class="targetRow.state === 'miss' ? 'text-white/60' : 'text-emerald-200'">・{{ targetRow.text }}</p>
       </div>
       <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>
       <ul v-if="topicStep.step.how" data-topic-how class="mt-1.5 grid gap-1 rounded-lg bg-black/25 px-2.5 py-2">
@@ -291,7 +301,8 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
     </div>
   </section>
   <!-- コースの枠 (題・ボタン・進み具合・手の一覧)。アイテムの下 -->
-  <section v-if="topic && part !== 'now'" data-topic-guide class="g-panel p-3 text-[12px]">
+  <!-- 幅はアイテムのカードまで (長い手の名前で左の列が広がり、右の今の手の枠が押しつぶされていた。2026-10-18) -->
+  <section v-if="topic && part !== 'now'" data-topic-guide class="g-panel w-full max-w-[480px] min-w-0 p-3 text-[12px] max-md:max-w-none">
     <header class="flex flex-wrap items-center gap-2">
       <span class="rounded px-2 py-0.5 text-[11px] font-bold" :class="LEVEL[topic.level]!.chip">{{ t2(LEVEL[topic.level]!.label) }}</span>
       <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ t2(topic.title) }}</b>

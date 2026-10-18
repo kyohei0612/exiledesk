@@ -16,7 +16,7 @@ import { reqOfItem } from "../../services/craft-stage/stage-bases";
 import type { StageMod } from "../../services/craft-stage/types";
 import Icon from "../../components/ui/Icon.vue";
 import { planSpec } from "../../services/craft-stage/spec/run-spec";
-import { topicCur } from "../../state/craft-topic";
+import { topicCur, topicStep } from "../../state/craft-topic";
 
 const rerolled = ref(false);
 /**
@@ -67,6 +67,15 @@ function confirm(): void {
     lessonErr.value = canReroll()
       ? tr("お告げを使用する: 右下の回る矢印で候補を引き直してから発現", "Use the omen: reroll the options with the arrow at the bottom right, then Reveal")
       : tr("お告げを使用する: 先に反響のお告げのボタンを押して掛ける", "Use the omen: press the Omen of Abyssal Echoes button first");
+    return;
+  }
+  // ループの手で狙いの MOD (スピリット +50) が候補に出ている時は、それを選ばせる (2026-10-18 オーナー「それ以外の選択肢クリックはスピリット 50 を選択としてエラー」)
+  const want = topicStep.value?.step.wantReveal;
+  const list = rerolled.value ? craftStage.offers.value?.reroll : craftStage.offers.value?.first;
+  const isWant = (m: StageMod | undefined): boolean => !!m && !!want && m.modId === want.mod && (want.value == null || m.values[0] === want.value);
+  const wanted = list?.find(isWant);
+  if (wanted && !isWant(list?.[chosen.value])) {
+    lessonErr.value = tr(`${modText(wanted)} を選んで発現`, `Pick ${modText(wanted)} and Reveal`);
     return;
   }
   lessonErr.value = "";

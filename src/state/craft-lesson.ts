@@ -10,7 +10,7 @@
 import { computed, ref, watch } from "vue";
 import { craftStage as s, seedOfRoll } from "./craft-stage";
 import { course, courseView, endCourse } from "./craft-course";
-import { endTopic, goTopic, keepGoing, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
+import { endTopic, goTopic, keepGoing, loopRound, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
 import { fullSockets } from "./stage-steps";
 import { topicKey, type TopicCourse } from "../services/craft-stage/topic-courses";
 import { freshItem, startFrom } from "../services/craft-stage/run-plan";
@@ -18,7 +18,8 @@ import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency"
 import { mulberry32 } from "../services/htc/rng";
 import type { StageItem } from "../services/craft-stage/types";
 import { isRareChance } from "../utils/format-pct";
-import { catalystBoosts } from "../services/craft-stage/stage-core";
+import { allMods, catalystBoosts } from "../services/craft-stage/stage-core";
+import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** コースを終える (タブを押した時) */
@@ -187,10 +188,38 @@ export function rigRare(key: string): void {
 /**
  * もう一度: 今の手の始めに戻して、同じ手をもう 1 回 (1 つの手は 1 回だけ打てる。2026-10-17 オーナー「何回も連続で打てちゃうのはだめ、1 回だけ。もう一度ボタンを次への横に」)
  */
+/**
+ * ループの手の発現の候補: 骨で未発現が付いた時に、狙いの周なら狙いの MOD が候補に出る・それより前の周なら出ない乱数を選ぶ
+ * (2026-10-18 オーナー「2 周目でお目当ての冒涜 MOD が出るみたいな感じに、ここではスピリット 50」)
+ */
+watch(() => !!s.item.value && !!unrevealedOf(s.item.value), (has) => {
+  const st = topic.value?.steps[topicAt.value], want = st?.wantReveal, it = s.item.value, d = s.data.value;
+  if (!has || !want || !it || !d) return;
+  const hit = loopRound.value >= want.from;
+  for (let i = 0; i < 20000; i++) {
+    const roll = Math.floor(Math.random() * 2_147_483_647);
+    const o = revealOffers(d, it, mulberry32(seedOfRoll(roll, "reveal")));
+    const got = o.first.some((m) => m.modId === want.mod && (want.value == null || m.values[0] === want.value));
+    const any = o.first.some((m) => m.modId === want.mod);
+    if (hit ? got : !any) { s.rollSeed.value = roll; return; }
+  }
+});
 export function retryStep(): void {
   s.hold(null);
+  // ループの手 (上級のエッセンスやり直し) は、今のアイテムのまま手の最初の動作に戻る (2026-10-18 オーナー「流れの中のもう一度は挙動ちゃう」= 用意し直すと別のアイテムになる)
+  // 冒涜が残っている途中 (エッセンスの前) は今まで通り最初の形に戻す
+  const it = s.item.value;
+  if (topic.value?.steps[topicAt.value]?.loop && it && !allMods(it).some((m) => m.desecrated)) {
+    loopRound.value++;
+    topicUsed.value = false;
+    topicSub.value = 0;
+    snaps.push(now());
+    return;
+  }
   const top = snaps[snaps.length - 1];
   if (topic.value && top) restore(top);
+  // 戻したらすぐ、その手の始めの形を用意する (前は用意の前の白いアイテムが出ていた。2026-10-18)
+  if (topic.value) prepareStep();
 }
 
 /**

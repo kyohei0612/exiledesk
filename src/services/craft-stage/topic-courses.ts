@@ -30,7 +30,11 @@ export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: Ja
   /** この MOD (・段) が付く成功例を見せる (乱数を先に選ぶ。craft-lesson.ts の rigRare。上級の「品質を上げてからカオス」。2026-10-18 オーナー) */
   want?: { mod: string; tier?: string };
   /** 狙いの MOD (手の枠に「狙い」の箱で出し、フラクチャーの後は当たり / 外れも出す。2026-10-18 オーナー「どれが狙いたい MOD かまず分からない」) */
-  target?: string }
+  target?: string;
+  /** 「もう一度」で用意し直さずに、今のアイテムのまま手の最初の動作に戻る (エッセンスでやり直すループ。2026-10-18) */
+  loop?: boolean;
+  /** ループの手で、発現の候補に狙いの MOD (・数字) が出る周 (それより前の周は出ない)。上級のエッセンスやり直しは 2 周目にスピリット +50 (2026-10-18 オーナー) */
+  wantReveal?: { mod: string; value?: number; from: number; label?: JaEn } }
 export interface TopicCourse {
   id: string;
   level: 1 | 2 | 3 | 4;

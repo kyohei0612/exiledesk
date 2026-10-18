@@ -54,11 +54,10 @@ export const ADV_COURSES: TopicCourse[] = [
         ["左のネクロマンシーの骨: 満杯なので、固定していない方 (強化) が冒涜に入れ替わる", "Bone with Sinistral Necromancy: prefixes are full, so the unfractured one (Enhancement) becomes the Desecration"],
         ["発現して、狙い (スピリットなど) が無ければほかを選ぶ", "Reveal; if your target (Spirit etc.) isn't there, pick another"],
         ["強化のエッセンス: 付ける側 (プレフィックス) が満杯なので、プレフィックスから消す。固定した MOD は消えないので、消えるのは必ず冒涜。結晶化のお告げはいらない", "Enhancement essence: its side (prefix) is full, so it removes a prefix. The Fractured one stays, so it's always the Desecration. No crystallisation omen needed"],
-        ["これで最初と同じ形に戻る。そのまま 2 周目の骨 → 発現。光のお告げを使わずに、狙いが出るまで何回でも回せる", "You're back to the start, so go straight into a 2nd bone → reveal. Loop as often as you like until your target shows up, without Omen of Light"],
-      ], [ENHANCE])), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
-      // エッセンスの後、同じ手の中でそのまま 2 周目 (骨 → 発現) まで (2026-10-18 オーナー「エッセンス打った後 2 週目させてそのまま」)
-      chain: [S("reveal", ["発現", "Reveal"]), S("ess:Enhancement:perfect", ["強化で冒涜を消す", "Enhancement removes the Desecration"]),
-        S("desecrate", ["2 周目の骨", "2nd bone"], ["OmenofSinistralNecromancy"]), S("reveal", ["発現", "Reveal"])] },
+        ["これで最初と同じ形に戻る。ボタンも骨に戻るので、そのままもう 1 周。光のお告げを使わずに、狙い (スピリット +50) が出るまで何回でも回せる", "You're back to the start. The buttons go back to the bone, so loop again: repeat until your target (+50 Spirit) shows up, without Omen of Light"],
+      ], [ENHANCE])), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT, loop: true, wantReveal: { mod: "Amulets/BaseSpirit", value: 50, from: 2, label: ["スピリット +50", "+50 to Spirit"] }, target: "Amulets/BaseSpirit",
+      // エッセンスまで打ったら手の最初に戻って次の周 (loop)。2 周目の発現でスピリット +50 が候補に出て、それを発現したら完了 (wantReveal)
+      chain: [S("reveal", ["発現", "Reveal"]), S("ess:Enhancement:perfect", ["強化で冒涜を消す", "Enhancement removes the Desecration"])] },
     ],
   },
   {
