@@ -29,7 +29,7 @@ export default defineConfig({
   server: {
     port: 1440,
     strictPort: true,
-    open: "/web.html",
+    // 起動しても普段の Chrome にタブを開かない (2026-10-18 オーナー「タブで開いたり同時に 2 個立ち上がるのやめーや」。開くのは http://localhost:1440/web.html)
     watch: { ignored: ["**/src-tauri/**", "**/data-cache/**", "**/scripts/**"] },
     proxy: {
       "/api/poe2scout": { target: "https://api.poe2scout.com", changeOrigin: true, rewrite: (path) => path.replace(/^\/api\/poe2scout/, "") },
