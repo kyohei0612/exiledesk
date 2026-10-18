@@ -1,4 +1,7 @@
 {
+  "0.1.574": [
+    "The Chaos spam calculator is now its own page too. Pages other than the craft screen (guide, base picker, calculator, feedback) no longer show the channel column on the right"
+  ],
   "0.1.573": [
     "Choosing a base, the Chaos spam calculator and Send feedback are now separate pages (the URL changes and the browser Back button returns to the previous screen)",
     "Item level can now be set to any value from 70 to 86. Changing it mid-craft no longer starts over; only mods that can't roll at that level are removed",

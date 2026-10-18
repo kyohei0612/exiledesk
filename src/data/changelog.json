@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.574",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機も別のページに。クラフト画面以外のページ (使い方・ベース選び・計算機・要望) は右のチャンネルの列を外して広く",
+    "en": "The Chaos spam calculator is now its own page too. Pages other than the craft screen (guide, base picker, calculator, feedback) no longer show the channel column on the right"
+   }
+  ]
+ },
+ {
   "v": "0.1.573",
   "date": "2026-10-18",
   "items": [
@@ -594,30 +606,6 @@
     "area": "",
     "text": "カオススパム計算機: スパムの後にカオスの種類を替えると計算がやり直しになり、スパムできなくなっていたのを直しました。狙いの MOD が同じなら計算した結果をそのまま使い、スパムの前の状態に戻ってすぐ別のカオスで試せます。アイテムレベルや狙いを替えた時も、スパムの前の状態から計算し直します",
     "en": "Chaos spam calculator: fixed switching the Chaos Orb type after spamming restarting the calculation and blocking spam. With the same target mods the previous result is reused, and you return to the pre-spam state to try another Chaos Orb right away. Changing the item level or targets also recalculates from the pre-spam state"
-   }
-  ]
- },
- {
-  "v": "0.1.534",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム計算機 (確率機から名前を変えました): 狙いを決めると普通・上級・完全のカオスを全部計算して、半分の人が付くまでの費用が一番安い物を「おすすめ」にして選びます。計算が終わるまではスパムできません (YouTube でのご要望)",
-    "en": "Chaos spam calculator (renamed from the spam odds tool): once targets are set it calculates Chaos Orb, Greater and Perfect, and picks the one with the lowest cost for half of people to hit as \"Recommended\". You can't spam until the calculation finishes (requested on YouTube)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "狙う MOD の窓: スキルのレベル (スペル / ミニオン / 近接 / 投射物) のように 1 行にまとめた行は、チェックを入れると段の表が開き、どれを狙うか選ぶように (前は投射物 +1 が狙いになっていた)",
-    "en": "Target mod picker: rows that group several mods (spell / minion / melee / projectile skill levels) now open the tier table when checked so you choose which to target (previously projectile +1 was targeted)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "カードの説明: 結晶化のお告げにコラプトのエッセンス (ヒステリー等) と合金も効くこと、アストリッドの創造性のクラフトモッドの中身、触媒の高貴のお告げの倍率 (20% で 5 倍) を書き足しました。軽蔑・獰猛のカードを今の決まり (版はランダム) に",
-    "en": "Cards: added that Crystallisation omens also work with corrupted essences (Hysteria etc.) and alloys, what Astrid's Creativity's crafted mods are, and the Catalysing Exaltation multiplier (5x at 20%). Updated the Contempt / Ferocity cards to the current rule (version is random)"
    }
   ]
  }
