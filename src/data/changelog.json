@@ -15,7 +15,8 @@
     "text": "品質の帯を 1 行に揃える・カレンシーの名前を切りの良い所で折る・チュートリアルの「β」を外す・MOD 一覧のタブをほかのタブと同じ見た目に",
     "en": "Quality bar fits on one line, currency names wrap at natural points, “β” removed from Tutorial, mod list tabs match the other tabs"
    }
-  ]
+  ],
+  "pop": true
  },
  {
   "v": "0.1.562",
