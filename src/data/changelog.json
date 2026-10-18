@@ -21,7 +21,8 @@
     "text": "ジュエルの MOD がプレフィックスとサフィックスで混ざって並んでいたのを直しました",
     "en": "Jewel mods are no longer listed with prefixes and suffixes mixed together"
    }
-  ]
+  ],
+  "pop": true
  },
  {
   "v": "0.1.567",
