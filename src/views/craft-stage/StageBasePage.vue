@@ -40,7 +40,7 @@ function revealSimMods(): void {
   const box = scrollBoxOf(el);
   const r = el.getBoundingClientRect();
   const viewTop = box ? box.getBoundingClientRect().top : 0, viewH = box ? box.clientHeight : window.innerHeight;
-  const over = r.bottom + 16 - (viewTop + viewH);
+  const over = r.bottom + 24 - (viewTop + viewH); // 下は 24px あける (ベースの一覧と同じ。2026-10-14 オーナー「下 24px あける」)
   const d = Math.min(over, r.top - viewTop - 8);
   if (d > 0) void glideRect(box, el, d, 320);
 }
