@@ -17,7 +17,9 @@ import { baseNameOf, tr } from "../../i18n/lang";
 import { keepPlace, scrollToTop } from "../../utils/keep-place";
 import { OVERRIDDEN, weightOverrideNote } from "../../services/htc/weight-overrides";
 import { aimTierKey, heldAnyOf, heldOdds } from "../../services/craft-stage/held-odds";
-import { autoGroup } from "../../services/craft-stage/auto-group";
+import { methodsFor } from "../../services/craft-stage/sim-methods";
+import type { SimMethod } from "../../services/craft-stage/quiz-build";
+import SimMethodPop from "./SimMethodPop.vue";
 import { AIM_MAX } from "../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
@@ -280,7 +282,7 @@ function aimAt(modId: string, t: { name: string; ilvl: number; rank: string; tex
   if (idx < 0) return;
   s.aimPicker.value = { seed: { modId, minTierIndex: idx, label: `${t.text} (${tr(`${t.rank} 以上`, `${t.rank}+`)})`, at: `${modId}:${t.rank}` } };
 }
-function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
+function toggleTarget(modId: string, t: { name: string; ilvl: number }, method?: SimMethod): void {
   const idx = tierIndexOf(modId, t);
   if (idx < 0) return;
   const list = s.simTargets.value;
@@ -293,13 +295,19 @@ function toggleTarget(modId: string, t: { name: string; ilvl: number }): void {
   // (① フラクチャーの候補はシミュレーションのポップアップ [[StageFracturePicker.vue]] で選ぶ)
   if (isTarget(modId, t)) s.simTargets.value = list.filter((x) => x.modId !== modId);
   else if (list.some((x) => x.modId === modId)) s.simTargets.value = list.map((x) => (x.modId === modId ? { ...x, minTierIndex: idx } : x));
-  else s.simTargets.value = s.data.value ? autoGroup(s.data.value, [...list, { modId, minTierIndex: idx }], modId) : [...list, { modId, minTierIndex: idx }];
+  // 付け方が重なっても 2 ではまとめない (「どれか N つ」は次の段で整理する時。2026-10-18 オーナー)
+  else s.simTargets.value = [...list, { modId, minTierIndex: idx, ...(method ? { method } : {}) }];
 }
 /** 段の表の「T○ 以上」: 足したら段の表は閉じる (外した時は開いたまま)。閉じても MOD の行の位置は動かさない (2026-10-18 オーナー「MOD 選んだらティア一覧は閉じよう、開きっぱなしは美しくない」) */
+/** 初めて足す MOD は、付け方をポップアップで選んでから足す (選べる付け方が 1 つならそのまま。SimMethodPop.vue) */
+const methodPop = ref<InstanceType<typeof SimMethodPop> | null>(null);
 function pickTier(ev: MouseEvent, modId: string, t: { name: string; ilvl: number }): void {
-  const adding = !isTarget(modId, t);
-  const row = (ev.currentTarget as Element).closest("table")?.previousElementSibling ?? (ev.currentTarget as Element);
-  keepPlace(row, () => { toggleTarget(modId, t); if (adding) expanded.value = null; });
+  const adding = !isTarget(modId, t), btn = ev.currentTarget as Element;
+  const row = btn.closest("table")?.previousElementSibling ?? btn;
+  const done = (m?: SimMethod): void => keepPlace(row, () => { toggleTarget(modId, t, m); if (adding) expanded.value = null; });
+  const opts = methodsFor(s.data.value, modId);
+  if (adding && !s.simTargets.value.some((x) => x.modId === modId) && opts.length > 1) methodPop.value?.ask(btn, opts, done);
+  else done(adding ? opts[0] : undefined);
 }
 
 /** エッセンスの段の名前 (英語) → 日本語 */
@@ -468,7 +476,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
         </div>
       </section>
     </div>
-  </section>
+    <SimMethodPop ref="methodPop" /></section>
 </template>
 
 <!-- 段の行のボタン (tbtn) は子の ModAddPicker.vue でも使うので scoped にしない (scoped だと子の中のボタンに効かず「付ける」が素のボタンで折り返していた。2026-10-18) -->
