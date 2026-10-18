@@ -102,7 +102,6 @@ export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
     s.itemLevel.value = ses.itemLevel;
     s.simTargets.value = ses.targets;
     s.simSockets.value = ses.sockets;
-    s.simIlvlOk.value = true; // 読み込んだレシピはアイテムレベルも決まっている
     s.simStart.value = ses.start ?? "white";
     s.simStartItem.value = ses.startItem ?? null;
     s.simStartCost.value = ses.startCost ?? 0;

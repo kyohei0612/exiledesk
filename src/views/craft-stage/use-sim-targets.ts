@@ -235,13 +235,13 @@ export function useSimTargets() {
   const socketCap = computed(() => (craftCap.value > 0 ? craftCap.value + 1 : 0));
   /** ソケットの数は 1 ベースの枠 (CraftStage.vue) で選ぶので状態に置く */
   const sockets = s.simSockets;
-  // 1 ベースの欄が済んだか: アイテムレベルを選んで、ソケットも選んだ (2026-10-18 オーナー「ベース → アイテムレベル → MOD の順」)
-  const socketsOk = computed(() => s.simIlvlOk.value && (socketCap.value === 0 || sockets.value != null));
+  const socketsOk = computed(() => socketCap.value === 0 || sockets.value != null);
   const socketCount = computed(() => (socketCap.value === 0 ? 0 : sockets.value ?? 0));
   watch(() => s.base.value, () => { sockets.value = null; });
   /** ソケットの数だけ下限にした取引所の条件 (0 なら付けない) */
   const socketQuery = (): { socketsMin?: number } => (socketCount.value > 0 ? { socketsMin: socketCount.value } : {});
-  const keptKey = computed(() => `${s.base.value}|${s.itemLevel.value}${socketCount.value ? `|s${socketCount.value}` : ""}`);
+  // アイテムレベルは入れない (3 の始め方で決めるので、変えても決めた狙いは戻さない。2026-10-18)
+  const keptKey = computed(() => `${s.base.value}${socketCount.value ? `|s${socketCount.value}` : ""}`);
   const kept = computed(() => keptAll.value[keptKey.value] ?? {});
   let loadingKept = false;
   function loadKept(): void {

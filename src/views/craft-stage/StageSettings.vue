@@ -40,7 +40,6 @@ const curIlvl = computed(() => (s.mode.value === "hand" ? s.item.value?.itemLeve
  * そのレベルで付かない段の MOD だけ消す (2026-10-18 オーナー「全部やり直しになるのもおかしい」。apply-currency の ilvl:)。続けて変えた分は 1 手にまとめる
  */
 function setIlvl(lv: number): void {
-  if (s.mode.value === "sim") s.simIlvlOk.value = true;
   if (lv === curIlvl.value) return;
   if (s.mode.value !== "hand" || (!s.log.value.length && !s.startMods.value.length)) { s.itemLevel.value = lv; s.reset(); return; }
   const last = s.log.value[s.log.value.length - 1];
@@ -107,7 +106,6 @@ function simFromHand(): void {
   s.simSockets.value = it.sockets ?? 0;
   s.simStart.value = "item";
   s.simPicked.value = true;
-  s.simIlvlOk.value = true; // エミュレーターのアイテムレベルのまま
   s.mode.value = "sim";
 }
 </script>
@@ -120,23 +118,22 @@ function simFromHand(): void {
     <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
       <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>
       <h3 class="text-[15px] font-bold text-[var(--exile-color-text-primary)]">{{ tr("ベース", "Base") }}</h3>
-      <HelpTip :text="tr('作るアイテムの種類 (ベース) とアイテムレベル (とソケット)。アイテムレベルを選ぶと 2 狙う MOD へ進む。始め方は狙う MOD を決めた後', 'The item type (base) and item level (and sockets). Choosing an item level moves on to step 2 (Target mods). How to start is chosen after the target mods')" />
+      <HelpTip :text="tr('作るアイテムの種類 (ベース) とソケット。アイテムレベルと始め方は、狙う MOD を決めた後の 3 で (狙いが全部付く一番低いレベルが最初から入る)', 'The item type (base) and sockets. Item level and how to start are set in step 3, after the target mods (the lowest level where every target can roll is filled in)')" />
     </span>
     <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
     <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
     <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" :page="PAGES_ON" @pick="pickSimBase" @open-page="s.hold(null); basePage = true" />
-    <span v-if="!simNoBase && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1">
+    <span v-if="s.mode.value !== 'sim' && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1"><!-- シミュレーターのアイテムレベルは 3 の始め方で (SimStartPick.vue) -->
       <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
-      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv && (s.mode.value !== 'sim' || s.simIlvlOk.value) ? 'on' : ''" @click="setIlvl(lv)">{{ lv }}</button>
+      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv ? 'on' : ''" @click="setIlvl(lv)">{{ lv }}</button>
       <select data-ilvl-select class="h-[30px] cursor-pointer rounded border bg-black/60 px-1.5 tabular-nums max-md:h-10" :class="ILVLS.includes(curIlvl) ? 'border-white/15 text-white/60' : 'border-amber-300/70 text-amber-100'" :value="ILVLS.includes(curIlvl) ? '' : curIlvl" :aria-label="tr('アイテムレベル (70〜86)', 'Item level (70–86)')" @change="setIlvl(Number(($event.target as HTMLSelectElement).value))">
         <option value="" disabled>{{ tr("70〜86", "70–86") }}</option>
         <option v-if="!ILVLS.includes(curIlvl) && !ILVL_LIST.includes(curIlvl)" :value="curIlvl">{{ curIlvl }}</option>
         <option v-for="lv in ILVL_LIST" :key="lv" :value="lv">{{ lv }}</option>
       </select>
-      <span v-if="s.mode.value === 'sim' && !s.simIlvlOk.value" class="ml-1 font-semibold text-amber-200">{{ tr("← アイテムレベルを選ぶ", "← Choose an item level") }}</span>
     </span>
     <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
-    <span v-if="s.mode.value === 'sim' && !simNoBase && s.simIlvlOk.value && simSocketCap > 0" class="flex items-center gap-1">
+    <span v-if="s.mode.value === 'sim' && !simNoBase && simSocketCap > 0" class="flex items-center gap-1">
       <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("ソケット", "Sockets") }}</span>
       <button v-for="n in simSocketCap + 1" :key="n" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.simSockets.value === n - 1 ? 'on' : ''" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]" :title="tr('熟練工のオーブの上限より多い (規格外の品だけ)', 'Above the Artificer’s Orb limit (Exceptional items only)')">{{ tr("規格外", "Exceptional") }}</span></button>
       <span v-if="s.simSockets.value == null" class="text-amber-200/80">{{ tr("ソケットの数を選ぶ", "Choose socket count") }}</span>

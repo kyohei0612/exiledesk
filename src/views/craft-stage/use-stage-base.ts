@@ -4,6 +4,8 @@
  */
 import { computed, nextTick, ref, watch } from "vue";
 import { craftStage as s, URL_BASE, type SimRecipe } from "../../state/craft-stage";
+/** シミュレーターで狙う MOD を選ぶ間のアイテムレベル (アイテムレベルの選び方の一番上) */
+export const SIM_ILVL_MAX = 86;
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { scrollToTop } from "../../utils/keep-place";
 import { course } from "../../state/craft-course";
@@ -44,7 +46,8 @@ function create() {
     s.simStart.value = "white";
     s.simStartItem.value = null;
     s.simPicked.value = true;
-    s.simIlvlOk.value = false; // アイテムレベルは選び直し (選ぶまで 2 を出さない)
+    // シミュレーターのアイテムレベルは 3 (始め方) で決める。2 で全部の段を選べるように一番上にしておく (2026-10-18 オーナー「MOD を選んだ後なら、付く下限のアイテムレベルを既定で置ける」)
+    if (s.mode.value === "sim") s.itemLevel.value = SIM_ILVL_MAX;
     s.reset();
     // スマホ: 選んだ所 (下の方) から一番上の見出しまで飛ばず、ベースの欄 (次に決めるアイテムレベル・始め方) を画面の上に (2026-10-09)
     if (phone.value) void nextTick(() => scrollToTop(document.querySelector("[data-stage-settings]"), "auto"));
@@ -55,7 +58,6 @@ function create() {
     preRecipeOpen.value = false;
     s.simPendingRecipe.value = r.id;
     pickSimBase(r.session.base);
-    s.simIlvlOk.value = true; // レシピにアイテムレベルも入っている
   }
 
   return { handNoBase, simNoBase, pickSimBase, preRecipeOpen, startFromRecipe };
