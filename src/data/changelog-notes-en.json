@@ -1,4 +1,7 @@
 {
+  "0.1.571": [
+    "Fixed “Add” in the mod list doing nothing on bases that can't hold mods as Magic (e.g. Absent Amulet). It now makes the item Rare and adds the mod"
+  ],
   "0.1.570": [
     "The guide page (/guide) now links to “Guide & Tips” (tutorials)"
   ],

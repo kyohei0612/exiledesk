@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.571",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧の「付ける」で、マジックに MOD が付かないベース (不在のアミュレットなど) に付けた時に反応しなかったのを直しました (付けられるレアにして付けます)",
+    "en": "Fixed “Add” in the mod list doing nothing on bases that can't hold mods as Magic (e.g. Absent Amulet). It now makes the item Rare and adds the mod"
+   }
+  ]
+ },
+ {
   "v": "0.1.570",
   "date": "2026-10-18",
   "items": [
@@ -594,24 +606,6 @@
     "area": "",
     "text": "深淵のエッセンス: 未発現の冒涜 MOD があれば使えて、印はその未発現の MOD に入れ替わるように。発現済みの冒涜 MOD があると使えません (ゲームで確認)",
     "en": "Essence of the Abyss: usable when the item has an Unrevealed Desecrated mod, and the Mark replaces that Unrevealed mod. Not usable with a revealed Desecrated mod (confirmed in game)"
-   }
-  ]
- },
- {
-  "v": "0.1.531",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "深淵の王の印から骨を使った時の段の下限を「アイテムレベル × 0.4」に (Craft of Exile と同じ。前は 33 固定)",
-    "en": "Bones on a Mark of the Abyssal Lord now have a minimum tier of \"item level × 0.4\" (same as Craft of Exile; previously fixed at 33)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "深淵のエッセンスの説明を直しました (冒涜の MOD があっても使えます)",
-    "en": "Fixed the Essence of the Abyss description (usable even with a Desecrated mod)"
    }
   ]
  }

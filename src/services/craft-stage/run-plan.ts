@@ -19,7 +19,7 @@ import { mulberry32 } from "../htc/rng";
 import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
-import { addForced, boostedMod, effectiveCls, replaced, unfracturable, type Force } from "./stage-core";
+import { addForced, boostedMod, effectiveCls, limitOf, replaced, unfracturable, type Force } from "./stage-core";
 import { baseSocketsOf, isUnsocket, UNSOCKET_PREFIX } from "./stage-runes";
 import { qualityLabelOf } from "../htc/quality";
 import { isShard } from "./apply-act";
@@ -260,7 +260,14 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
   // 「MOD 2 つ以上とかプレフィックス付けだしたらレアにしていいよ」)
   const sideOfKey = (k: string): string => [...data.mods.values()].find((m) => m.id === k || m.id.endsWith(`/${k}`) || m.family === k)?.type ?? "prefix";
   const sameSide = !!s.mods && s.mods.length >= 2 && new Set(s.mods.map((f) => sideOfKey(f.mod))).size < s.mods.length;
-  const rarity = s.rarity ?? (s.mods?.some((f) => f.fractured || f.desecrated) || (s.mods && s.mods.length > 2) || sameSide ? "rare" : s.mods?.length ? "magic" : "normal");
+  let rarity = s.rarity ?? (s.mods?.some((f) => f.fractured || f.desecrated) || (s.mods && s.mods.length > 2) || sameSide ? "rare" : s.mods?.length ? "magic" : "normal");
+  // マジックの枠が足りないベース (不在のアミュレットはマジックでプレ 0・サフィ 0、黄昏の指輪はサフィ 0) は、付けられるレアまで上げる
+  // (2026-10-18 オーナー「マジックに MOD 付かないような奴に MOD 付けたら反応しないのカス過ぎる、付けれるとこまでレアリティあげて」)
+  if (!s.rarity && rarity === "magic") {
+    const magic: StageItem = { ...freshItem(data, base, itemLevel), rarity: "magic" };
+    const over = (["prefix", "suffix"] as const).some((sd) => (s.mods ?? []).filter((f) => sideOfKey(f.mod) === sd).length > limitOf(magic, sd));
+    if (over) rarity = "rare";
+  }
   let item: StageItem = { ...freshItem(data, base, itemLevel), rarity, rollSeed: seed };
   const rng = mulberry32(seed);
   if (s.sockets != null) {
