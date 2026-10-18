@@ -273,7 +273,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
   <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
   <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? (heldChaos && !s.offers.value ? 'pb-44' : 'pb-32') : phone && spamKey ? 'pb-48' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す (StagePhoneBar.vue) -->
-    <StagePhoneBar v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value && !gemCorrupt" :held-chaos="heldChaos && !PAGES_ON" @open-chaos-spam="openChaosSpam" @scroll-to-reveal="scrollToReveal" />
+    <StagePhoneBar v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value && !gemCorrupt" :held-chaos="heldChaos" @open-chaos-spam="openChaosSpam" @scroll-to-reveal="scrollToReveal" />
     <div v-show="!subPage"><!-- ベース選びのページの間は中身を隠す (消さないので戻ると元のまま) -->
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1" data-rec-part="title">
@@ -395,7 +395,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>
         <!-- カオス (普通・上級・完全) を持っている時: カオススパム計算機へ (2026-10-16 オーナー「カオス持った時にアイテムの下にボタン、押したら MOD 選択から」) -->
-        <button v-if="heldChaos && !phone && !PAGES_ON" type="button" data-chaos-spam-open class="g-btn sm" @click="openChaosSpam">{{ tr("カオススパム計算機へ", "Chaos spam calculator") }}</button>
+        <button v-if="heldChaos && !phone" type="button" data-chaos-spam-open class="g-btn sm" @click="openChaosSpam">{{ tr("カオススパム計算機へ", "Chaos spam calculator") }}</button>
         <RevealPanel />
         <StageForesight v-show="!spamPage" /><!-- ヒネコラの髪束の予見 (StageForesight.vue) -->
         <!-- 工程 (累計と新しい手が上。2026-10-10 オーナー)。上の行との間はカードとの間と同じ mt-2、枠に近く p-1 (10-11)。コースの間は出さない (10-17) -->
