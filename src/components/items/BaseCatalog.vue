@@ -322,16 +322,6 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
 
 <template>
   <div ref="rootEl">
-    <!-- 名前で探す (種類をまたぐ) -->
-    <div class="mb-2 flex flex-wrap items-center gap-2">
-      <!-- 欄は例の文が入るだけの幅 (2026-10-13 オーナー「検索バー長いから例に合わせて小さく」) -->
-      <input v-model="query" type="search" data-rec="base-search" :placeholder="tr('名前で探す (例: サファイア、ルビー)', 'Search by name (e.g. Sapphire, Ruby)')" class="min-w-0 rounded-lg border border-white/15 bg-black/30 px-2 py-1 max-md:basis-full md:w-[19rem] md:py-1.5 md:text-[14px]" />
-      <span v-if="query.trim()" class="opacity-50">{{ tr(`${list.length} 件`, `${list.length} found`) }}</span>
-      <!-- 装備 (ユニークの絵)・エフェクトを切る: タイルを元のベースの絵にして、光と粒も出さない。このブラウザに覚える (2026-10-13 オーナー) -->
-      <label class="ml-1 flex shrink-0 cursor-pointer items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)] md:text-[13px]" :title="tr('部位のタイルを元のベースの絵にして、光と動きを止める', 'Show the plain base art on the category tiles, without glow or motion')">
-        <input v-model="plainArt" type="checkbox" class="accent-amber-400" />{{ tr("装備・エフェクトオフ", "Plain art, no effects") }}
-      </label>
-    </div>
     <!-- 人気のベース (初めての人のベース選び): 部位をまたいだ上位。押せばそのまま始まる -->
     <div v-if="popular && !query.trim() && popularTop.length && (!phone || !family)" class="mb-4">
       <p class="mb-1 text-[12px] text-amber-200/90 md:text-[13px]">{{ tr("人気のベース", "Popular bases") }}<span class="ml-2 text-[11px] opacity-60">{{ tr("みんながよく作っているベース", "What people craft most") }}</span></p>
@@ -386,6 +376,11 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
     </template>
     <!-- ② ベースのカード: スマホ (1 段ずつの最後) と名前で探す時はここ -->
     <BaseCardGrid v-if="query.trim() || (phone && cls)" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" />
+    <!-- 名前で探す欄は外した (2026-10-18 オーナー「ここで探すことは無い」)。装備 (ユニークの絵)・エフェクトを切るチェックは一番下 (同)。
+         タイルを元のベースの絵にして、光と粒も出さない。このブラウザに覚える (2026-10-13 オーナー) -->
+    <label class="mt-3 flex w-fit cursor-pointer items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)] md:text-[13px]" :title="tr('部位のタイルを元のベースの絵にして、光と動きを止める', 'Show the plain base art on the category tiles, without glow or motion')">
+      <input v-model="plainArt" type="checkbox" class="accent-amber-400" />{{ tr("装備・エフェクトオフ", "Plain art, no effects") }}
+    </label>
   </div>
 </template>
 

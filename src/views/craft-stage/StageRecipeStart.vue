@@ -30,13 +30,14 @@ const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getM
 <template>
   <div class="w-full">
     <p class="mb-1.5 flex items-center gap-2">
-      <b class="text-[13px] text-[var(--exile-color-text-primary)]">保存したレシピから始める</b>
-      <button type="button" class="ml-auto rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-80 hover:bg-white/10 hover:opacity-100 max-md:min-h-9" title="書き出したファイルからレシピを足す (別の PC・ブラウザで作った物)" @click="file?.click()">ファイルから読み込む</button>
+      <b class="shrink-0 text-[13px] text-[var(--exile-color-text-primary)]">保存したレシピから始める</b>
+      <!-- 無い時の案内は見出しと同じ行 (下のベースの一覧が見えるように 1 行。2026-10-18 オーナー) -->
+      <span v-if="!recipes.length" class="min-w-0 truncate text-[12px] opacity-50" title="下でベースを選んで作り、右上の「レシピ」で保存できます">まだありません (下でベースを選んで作り、右上の「レシピ」で保存)</span>
+      <button type="button" class="ml-auto shrink-0 rounded border border-white/15 px-2 py-0.5 text-[11px] opacity-80 hover:bg-white/10 hover:opacity-100 max-md:min-h-9" title="書き出したファイルからレシピを足す (別の PC・ブラウザで作った物)" @click="file?.click()">ファイルから読み込む</button>
       <input ref="file" type="file" accept=".json,application/json" class="hidden" @change="importFile" />
     </p>
     <p v-if="note" class="mb-1 text-[11px] opacity-70">{{ note }}</p>
-    <p v-if="!recipes.length" class="text-[12px] opacity-50">まだ保存したレシピはありません (下でベースを選んで作り、右上の「レシピ」で保存できます)</p>
-    <div v-else class="grid gap-1.5" :class="compact ? 'grid-cols-1' : 'grid-cols-[repeat(auto-fill,minmax(220px,1fr))] max-md:grid-cols-1'">
+    <div v-if="recipes.length" class="grid gap-1.5" :class="compact ? 'grid-cols-1' : 'grid-cols-[repeat(auto-fill,minmax(220px,1fr))] max-md:grid-cols-1'">
       <button v-for="r in recipes" :key="r.id" type="button" class="g-plain g-item flex items-center gap-2 bg-black/50 px-1.5 py-1 text-left transition hover:bg-white/[0.06] max-md:min-h-12" :title="`${r.baseJa ?? r.session.base} · パターン ${r.session.patterns.length} つ`" @click="emit('start', r)">
         <img v-if="baseArt(r.session.base)" :src="baseArt(r.session.base)!" alt="" class="size-10 shrink-0 object-contain" draggable="false" />
         <span v-else class="size-10 shrink-0" />
