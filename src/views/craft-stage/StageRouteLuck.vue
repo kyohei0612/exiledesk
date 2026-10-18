@@ -160,7 +160,7 @@ function shareX(e: MouseEvent): void {
 </script>
 
 <template>
-  <div data-route-luck class="g-section mt-4 grid gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+  <div data-route-luck class="route-rule mt-4 grid gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
     <!-- 左: この欄のアイテム (始めの状態から、打つたびに変わる)。札はエミュレーターと同じ (StageItemCard)、狙いの MOD を光らせる -->
     <div class="flex min-w-0 flex-col items-center gap-1">
       <StageItemCard v-if="item" :item="item" :added="added" :removed="removed" :holding="false" :flash-key="n" :focus="target.modId" class="max-w-full" />

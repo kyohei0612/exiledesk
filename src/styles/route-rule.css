@@ -1,0 +1,29 @@
+/*
+ * route-rule.css — スパムシミュレーターの区切り (2026-10-19 オーナー「ここも画像使われてるね。この画面用に作ってくれ、画像切り出しじゃなくて」)。
+ * .g-section (divider.webp の切り出し) の代わりに CSS で描く: 両端が消える真鍮色の 2px の線 + 真ん中に小さな菱形。
+ * 1px の線はチカチカするので使わない (メモ feedback-no-flicker-lines)。.route-rule は上に 20px 空けて線を引く
+ */
+.route-rule { position: relative; padding-top: 20px; }
+.route-rule::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(160, 120, 60, 0) 0%, rgba(160, 120, 60, 0.55) 30%, rgba(214, 170, 96, 0.8) 50%, rgba(160, 120, 60, 0.55) 70%, rgba(160, 120, 60, 0) 100%);
+  pointer-events: none;
+}
+.route-rule::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%) rotate(45deg);
+  background: #1a140c;
+  border: 2px solid rgba(214, 170, 96, 0.85);
+  box-shadow: 0 0 8px rgba(214, 170, 96, 0.35);
+  pointer-events: none;
+}

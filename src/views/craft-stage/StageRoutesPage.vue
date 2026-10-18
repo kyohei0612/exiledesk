@@ -8,7 +8,7 @@
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 import StageRouteLuck from "./StageRouteLuck.vue";
@@ -69,7 +69,7 @@ function recompute(): void {
   if (busy.value) return;
   seed.value = newSeed();
   round.value++;
-  luckOpen.value = false;
+  luckRow.value = null;
   void run();
 }
 async function run(): Promise<void> {
@@ -85,10 +85,20 @@ async function run(): Promise<void> {
   }
   busy.value = false;
 }
-watch(t, () => { luckOpen.value = false; seed.value = newSeed(); round.value = 1; void run(); });
+watch(t, () => { luckRow.value = null; seed.value = newSeed(); round.value = 1; void run(); });
 /** 運試しの欄 (一番安い道で。2026-10-19 オーナー「一番安い欄に運試しボタン」)。シェアから来た時は計算が済んだら開く */
-const luckOpen = ref(false);
-watch(busy, (b) => { if (!b && routesLuck.value) { routesLuck.value = false; if (best.value) luckOpen.value = true; } });
+/** 運試しの道 (一番安い欄・道のカードの下のボタンから。2026-10-19 オーナー「それぞれ運試しボタン、運試しはここに出す」)。null = 閉じている */
+const luckRow = ref<RaceRow | null>(null);
+const luckOpen = computed(() => !!luckRow.value);
+/** 運試しを開いて、その欄を画面に入れる */
+function openLuck(r: RaceRow | null): void {
+  if (!r) return;
+  luckRow.value = r;
+  void nextTick(() => document.querySelector("[data-route-luck]")?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+}
+/** 道の中で一番安い等級 */
+const bestIn = (route: RouteKind): RaceRow | null => { const xs = ok.value.filter((r) => r.route === route); return xs.length ? xs.reduce((a, b) => (b.avgCost < a.avgCost ? b : a)) : null; };
+watch(busy, (b) => { if (!b && routesLuck.value) { routesLuck.value = false; openLuck(best.value); } });
 const rowOf = (route: RouteKind, grade: Grade): RaceRow | undefined => rows.value.find((r) => r.route === route && r.grade === grade);
 const ok = computed(() => rows.value.filter((r) => !r.off));
 /** 一番安い (着いた物の中で) */
@@ -150,7 +160,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <p class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half") }} {{ money(best.p50) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ money(best.p90) }}</p>
             </div>
             <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:self-end">
-            <button v-if="!busy && !luckOpen" type="button" data-route-luck-open class="g-btn-red" :title="tr('この道の決まりで、100 人と同じ始めの状態から自分でスパムして運を比べる', 'Spam it yourself with this route from the same start and compare your luck with the 100 people')" @click="luckOpen = true">{{ tr("運試し", "Luck test") }}</button>
+            <button v-if="!busy && !luckOpen" type="button" data-route-luck-open class="g-btn-red" :title="tr('この道の決まりで、100 人と同じ始めの状態から自分でスパムして運を比べる', 'Spam it yourself with this route from the same start and compare your luck with the 100 people')" @click="openLuck(best)">{{ tr("運試し", "Luck test") }}</button>
             <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr('別の 100 人でもう一度全部の道を計算する (乱数を変える)', 'Run all routes again with a different 100 people (new random seed)')" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
             <span v-if="!busy && round > 1" class="text-center text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${round} 回目の 100 人`, `100 people, run ${round}`) }}</span>
             </span>
@@ -161,9 +171,9 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
       </div>
 
       <!-- 運試し (一番安い道で。StageRouteLuck.vue) -->
-      <StageRouteLuck v-if="luckOpen && best && !busy" :row="best" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(best)" @close="luckOpen = false" />
+      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" @close="luckRow = null" />
       <!-- 下: 3 つの道 -->
-      <div class="g-section mt-4 grid gap-3 lg:grid-cols-3">
+      <div class="route-rule mt-4 grid gap-3 lg:grid-cols-3">
         <article v-for="r in ROUTES" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">
           <header class="flex items-center gap-2">
             <img :src="iconOf(r.main)" alt="" class="size-10 object-contain" />
@@ -213,6 +223,10 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               </div>
             </li>
           </ul>
+          <!-- この道で運試し (道の中で一番安い等級。運試しの欄は一番安い欄の下に出す) -->
+          <p v-if="!offRoute(r.route) && !busy && bestIn(r.route)" class="mt-auto pt-3 text-center">
+            <button type="button" :data-route-luck-card="r.route" class="g-btn sm" :class="luckRow === bestIn(r.route) ? 'on' : ''" :title="tr(`${tr(r.ja, r.en)}の一番安い等級 (${tr(...GRADE_JA[bestIn(r.route)!.grade])}) で運試し`, `Luck test with ${r.en} at its cheapest grade (${GRADE_JA[bestIn(r.route)!.grade][1]})`)" @click="openLuck(bestIn(r.route))">{{ tr(`運試し (${tr(...GRADE_JA[bestIn(r.route)!.grade])})`, `Luck test (${GRADE_JA[bestIn(r.route)!.grade][1]})`) }}</button>
+          </p>
         </article>
       </div>
 
@@ -229,3 +243,5 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
     </div>
   </section>
 </template>
+
+<style src="../../styles/route-rule.css"></style>
