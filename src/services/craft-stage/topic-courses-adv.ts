@@ -57,11 +57,11 @@ export const ADV_COURSES: TopicCourse[] = [
         ["これで最初と同じ形に戻る。光のお告げを使わずに、何回でも冒涜をやり直せる", "You're back to the start: redo the Desecration as often as you like, without Omen of Light"],
       ], [ENHANCE])), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
       chain: [S("reveal", ["発現", "Reveal"]), S("ess:Enhancement:perfect", ["強化で冒涜を消す", "Enhancement removes the Desecration"])] },
-      { ...H("desecrate", ["2 回目", "2nd time"], [
-        ["もう一度: 骨 → 発現 → 強化。毎回、最初と同じ形に戻る", "Again: bone → reveal → Enhancement. It returns to the same shape every time"],
-        ["実際は狙いが出るまで同じ動作を続けて、出たらそれを選んで終わり (強化は打たない)", "In practice, repeat until your target shows up, then pick it and stop (no Enhancement)"],
-      ], [ENHANCE]), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
-      chain: [S("reveal", ["発現", "Reveal"]), S("ess:Enhancement:perfect", ["強化で冒涜を消す", "Enhancement removes the Desecration"])] },
+      // 2 手目は冒涜まで (エッセンスの後にまた骨が打てる = ループできる、を見せる。2026-10-18 オーナー「冒涜を 2 回やらせる、エッセンス後ループできるって思わせたい」)
+      { ...H("desecrate", ["エッセンスの後、また冒涜できる", "After the essence, Desecrate again"], [
+        ["強化のエッセンスで元の形に戻ったので、また同じ骨が打てる。強化の MOD が冒涜に入れ替わる", "The essence put it back, so the same bone works again: the Enhancement mod becomes the Desecration"],
+        ["骨 → 発現 → 強化 を、狙い (スピリットなど) が出るまで何回でも回せる。出たらそれを選んで終わり", "Loop bone → reveal → Enhancement until your target (Spirit etc.) shows up, then pick it and stop"],
+      ], [ENHANCE]), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT, chain: [S("reveal", ["発現", "Reveal"])] },
     ],
   },
   {
