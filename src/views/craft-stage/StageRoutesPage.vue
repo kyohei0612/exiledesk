@@ -5,7 +5,7 @@
   計算は services/craft-stage/route-race.ts (エミュレーターと同じ applyCurrency で 1 通り 100 人分)。8 通り (増強・高貴 × 完全 / 上級 / 無印、カオス × 上級 / 無印) を 1 つずつ間を空けて回し、出た順に出す。
   見た目 (2026-10-19 オーナー「UI ダサすぎる、シンプル過ぎる」「各工程で詳しいルールは書いた方が良い」): 上に狙いと一番安い道を大きく、
   下に 3 つの道をカード (カレンシーの絵・打ち方の決まりを番号で・等級ごとの棒と使った物)。1 つの枠 (.g-panel) の中。決まりは route-race.ts と同じ文 (メモ feedback-show-sim-rules)
-  値段は今の相場 (priceOf)、白のベース代はどの道でも同じなので入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
+  値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -31,15 +31,14 @@ const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; gr
     { k: null, ja: "狙いが付くまで 2・3 を繰り返す。マジックで狙いの側に枠が無いベースは使えない", en: "Repeat 2–3 until the target rolls. Bases with no slot on that side while magic can't use this" },
   ] },
   { route: "chaos", ja: "カオススパム", en: "Chaos spam", main: "chaos", grades: ["greater", "base"], steps: [
-    { k: "alchemy", ja: "白のベースに錬金でレアにする", en: "Alchemy the white base to rare" },
-    { k: "chaos", ja: "狙いが付くまで同じカオスを打ち続ける (1 つ消えて 1 つ付く。外れてもその結果に続けて打つ)", en: "Keep using the same Chaos Orb until the target rolls (one mod out, one in; a miss keeps going from the result)" },
+    { k: "exalt", ja: "MOD 1 つのレアから始める (狙いでない MOD が 1 つ。作る費用は入れない)", en: "Start from a rare with 1 mod (not the target; its cost is not included)" },
+    { k: "chaos", ja: "狙いが付くまで同じカオスを打ち続ける (1 つ消えて 1 つ付くので、MOD はずっと 1 つ)", en: "Keep using the same Chaos Orb until the target rolls (one out, one in, so it stays at 1 mod)" },
     { k: null, ja: "完全のカオス (リロール) は入れない", en: "Perfect Chaos (reroll) is not included" },
   ] },
   { route: "exalt", ja: "高貴スパム", en: "Exalt spam", main: "exalt", grades: ["perfect", "greater", "base"], steps: [
-    { k: "alchemy", ja: "白のベースに錬金でレアにする", en: "Alchemy the white base to rare" },
-    { k: "annul", ja: "MOD が 1 つになるまで消去 (錬金は 4 つなので最初は 3 回、外れた後は 2 回)", en: "Annul down to 1 mod (alchemy gives 4, so 3 the first time, 2 after each miss)" },
-    { k: "OmenofGreaterExaltation", ja: "高貴 + 偉大な高貴のお告げ (2 つ付く) + 狙いの側の高貴のお告げ (左 = プレ、右 = サフィ) で、狙いの側に 2 つ付ける", en: "Exalt with Omen of Greater Exaltation (adds 2) + the side omen (Sinistral = prefix, Dextral = suffix) to add 2 mods on the target side" },
-    { k: null, ja: "外れたら 2 に戻る。狙いの側に 2 つの枠が無い時は側のお告げだけで 1 つ", en: "On a miss, back to 2. If the side has no room for 2, use the side omen only (adds 1)" },
+    { k: null, ja: "MOD 0 のレアから始める (作る費用は入れない)", en: "Start from a rare with 0 mods (its cost is not included)" },
+    { k: "OmenofGreaterExaltation", ja: "高貴 + 偉大な高貴のお告げで 2 つ付ける (どちらの側に付くかは運)", en: "Exalt with Omen of Greater Exaltation to add 2 mods (sides are random)" },
+    { k: "annul", ja: "外れたら消去 2 回で MOD 0 に戻して 2 から繰り返す", en: "On a miss, annul twice back to 0 mods and repeat from 2" },
   ] },
 ];
 const ORDER = ROUTES.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
@@ -196,9 +195,9 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
         <span class="inline-flex items-center gap-1"><span class="inline-block h-2 w-5 rounded-full bg-amber-400/70" />{{ tr("半分の人が着いた費用", "Half had hit by") }}</span>
         <span class="inline-flex items-center gap-1"><span class="inline-block h-2 w-5 rounded-full bg-amber-400/25" />{{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }}</span>
         <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-0.5 bg-white/80" />{{ tr("平均", "Average") }}</span>
-        <span>{{ tr(`· エミュレーターと同じ決まりで白のベースから ${RUNS} 人ずつ。値段は今の相場、白のベース代は入れない`, `· ${RUNS} runs each from a white base with the Emulator's rules. Current prices; white base cost not included`) }}</span>
+        <span>{{ tr(`· エミュレーターと同じ決まりで決まりの始めの状態から ${RUNS} 人ずつ。値段は今の相場、ベース代と始めの状態を作る費用は入れない`, `· ${RUNS} runs each from the listed start with the Emulator's rules. Current prices; base and start-state costs not included`) }}</span>
         <HelpTip :title="tr('比べ方', 'How it compares')" :width="340" class="ml-auto">
-          <p>{{ tr("手 = 打った回数 (お告げは数えない)。費用 = 打った物とお告げの値段の合計。白のベース代はどの道でも同じなので入れていない", "Uses = items used (omens not counted). Cost = currency plus omens. The white base cost is the same for every route, so it is left out") }}</p>
+          <p>{{ tr("手 = 打った回数 (お告げは数えない)。費用 = 打った物とお告げの値段の合計。ベース代と始めの状態 (MOD 0 / 1 つのレア) を作る費用は入れていない", "Uses = items used (omens not counted). Cost = currency plus omens. The base and the start state (rare with 0 / 1 mod) are left out") }}</p>
           <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("冒涜スパムは入れていない", "Desecration spam is not included") }}</p>
         </HelpTip>
       </p>

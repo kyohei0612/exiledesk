@@ -6,9 +6,10 @@
  * 白のベース代はどの道でも同じなので入れない。
  *   - 増強スパム: 変成でマジック → 狙いの側に狙い以外が付いていれば消去 (狙いの側が空くまで)、空いていれば増強 (狙いの側に付くまで) を、狙いが付くまで繰り返す。
  *     (オーナー「狙いたい側の接辞が消えるまで消去、増強は狙いたい側の接辞が付くまで増強、これを一生繰り返す」)。マジックに狙いの側の枠が無いベースは使えない
- *   - カオススパム: 錬金でレア → 狙いが付くまでカオス (計算機と同じ)
- *   - 高貴スパム: 錬金でレア → 消去で 1 MOD → 高貴 + 偉大な高貴のお告げ + 狙いの側の高貴のお告げ → 外れたら消去で 1 MOD に戻して繰り返す
- *     (オーナー「レアの状態で偉大・側のお告げ、1 回目だけ消去で 1 MOD にして偉大、そこからは 2 消去 → 偉大」)
+ *   - カオススパム: MOD 1 つのレアから、狙いが付くまでカオス (1 つ消えて 1 つ付くので MOD は 1 つのまま)
+ *   - 高貴スパム: MOD 0 のレアから、高貴 + 偉大な高貴のお告げで 2 つ付ける → 外れたら消去 2 回で 0 に戻して繰り返す
+ *     (2026-10-19 オーナー「カオスは 1 MOD レアで開始、高貴は 0 MOD レアで開始。偉大打って消去で 2 MOD でスパム、ベースは同じで 0 MOD レア」)
+ *   始めのレア (MOD 0 / 1 つ) を作る費用はどの道にも入れない (カオスの 1 つは高貴 1 回で作るが数えない。狙いそのものが付いたら作り直す)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "./apply-currency";
@@ -74,14 +75,18 @@ export function raceRoutes(data: PatchData, base: string, itemLevel: number, tar
             else if (!use(`augment${g}`)) break;
           }
         } else if (route === "chaos") {
-          if (!use("alchemy")) break;
+          // MOD 1 つのレア (作る高貴 1 回は数えない)
+          // 始めの 1 つが狙いそのものなら作り直す (始めは「狙いでない MOD が 1 つ」)
+          const blank: StageItem = { ...it, rarity: "rare" };
+          for (let k = 0; k < 50 && (k === 0 || hit(it)); k++) { const first = applyCurrency(data, blank, "exalt", rng, []); if (!first.applied) break; it = first.item; }
+          if (!allMods(it).length || hit(it)) break;
           while (n < maxSteps && !(ok = hit(it))) if (!use(`chaos${g}`)) break;
         } else {
-          if (!use("alchemy")) break;
-          const sideOmen = side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation";
+          // MOD 0 のレア → 偉大な高貴のお告げで 2 つ → 外れたら消去で 0 に戻す
+          it = { ...it, rarity: "rare" };
           while (n < maxSteps && !(ok = hit(it))) {
-            if (allMods(it).length > 1) { if (!use("annul")) break; continue; }
-            if (!use(`exalt${g}`, ["OmenofGreaterExaltation", sideOmen]) && !use(`exalt${g}`, [sideOmen])) break;
+            if (allMods(it).length > 0) { if (!use("annul")) break; continue; }
+            if (!use(`exalt${g}`, ["OmenofGreaterExaltation"])) break;
           }
         }
         ok = ok || hit(it);
