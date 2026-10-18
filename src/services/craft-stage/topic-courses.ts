@@ -21,7 +21,9 @@ export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: Ja
   /** この手だけ別のベースで (特殊なエッセンスは部位が決まっている。2026-10-17)。無ければコースのベース */
   base?: string;
   /** 同じ手の中で続けて打つ手 (アビス → 骨 → 発現。前の手を打つまで押せない。2026-10-17 オーナー「発現までセットで」) */
-  chain?: TopicStep[] }
+  chain?: TopicStep[];
+  /** 打てなくなるまで (品質の上限まで) 連打で続ける手。持ったまま、上限で手を終える (カタリスト。2026-10-18 オーナー「20% まで上げさせてあげよう連打で」) */
+  untilMax?: boolean }
 export interface TopicCourse {
   id: string;
   level: 1 | 2 | 3;
@@ -332,32 +334,38 @@ export const TOPIC_COURSES: TopicCourse[] = [
     learn: ["カタリストの種類・品質で上がる MOD・別の種類は 0 から・触媒の高貴のお告げ (偉大なると重ねる)", "Catalyst types, which mods quality boosts, a new type restarts from 0, Catalysing Exaltation (stacked with Greater)"],
     // 2026-10-18 オーナー「カタリスト、液化まで一気に行こうか」。基本のオーブ・お告げと同じ作り。品質を見せる手は決まった MOD の黄 (レア) の指輪から (火の MOD 1 つ・火ではない MOD 2 つ)
     steps: [
-      { ...H("catalyst_fire", ["火の品質を付ける", "Add Fire quality"], [
+      // 品質の手は 20% まで連打 (untilMax。2026-10-18 オーナー「初手は 20% まで上げさせてあげよう連打で」)。品質で変わった MOD は今の手の枠に 素の値 → 今の値 で出す
+      { ...H("catalyst_fire", ["火の品質を 20% まで", "Fire quality up to 20%"], [
         ["ゾフのカタリストは、指輪・アミュレットに「火」の品質を付ける。1 個で +1% か +2% (運)", "Xoph's Catalyst adds Fire quality to a ring or amulet: +1% or +2% each (luck)"],
-        ["品質の分だけ、火の MOD の数字が上がる (このアイテムなら火耐性。品質 20% で 1.2 倍)", "Fire mods get bigger numbers by the quality (here, Fire Resistance; 20% quality = 1.2×)"],
+        ["持ったまま、アイテムを続けて押して品質を 20% まで上げる", "Keep holding it and click the item again and again until quality reaches 20%"],
+        ["品質の分だけ、火の MOD の数字が上がる。このアイテムでは火耐性 (下の「品質で変わった MOD」で、品質の前と今の数字を見比べられる)", "Fire mods get bigger by the quality. Here it's Fire Resistance (compare the before / now numbers in “Mods changed by quality” below)"],
         ["火ではない MOD (最大ライフ・筋力) の数字は変わらない", "Non-fire mods (maximum Life, Strength) don't change"],
         ["品質は 20% まで (ブリーチのエッセンスの「品質の最大値 +20%」があれば 40% まで)", "Quality goes up to 20% (40% with the Essence of the Breach mod “+20% to Maximum Quality”)"],
-      ], "rare"), startMods: RING },
+      ], "rare"), startMods: RING, untilMax: true },
       { ...H("catalyst_life", ["カタリストは 13 種類", "13 kinds of catalyst"], [
-        ["カタリストは 13 種類。種類ごとに、数字が上がる MOD が決まっている", "There are 13 catalysts; each one boosts its own kind of mod"],
-        ["肉体 = ライフ、神経 = マナ、甲羅 = アーマー・回避力・エナジーシールド、ウール・ネトル = 物理、ゾフ = 火、トゥル = 冷気、エシュ = 雷、チャユラ = 混沌", "Flesh = Life, Neural = Mana, Carapace = Armour / Evasion / Energy Shield, Uul-Netol's = Physical, Xoph's = Fire, Tul's = Cold, Esh's = Lightning, Chayula's = Chaos"],
-        ["強奪者 = アタック、歯擦音 = キャスター、軽快 = スピード、適応 = 能力値、死霊術 = ミニオン", "Reaver = Attack, Sibilant = Caster, Skittering = Speed, Adaptive = Attributes, Necrotic = Minion"],
-        ["肉体のカタリストなら、このアイテムでは最大ライフの数字が上がる", "With a Flesh Catalyst, maximum Life goes up on this item"],
-      ], "rare"), startMods: RING },
+        ["カタリストは 13 種類あり、どの MOD の数字を上げるかで分かれている", "There are 13 catalysts, split by which mods they boost"],
+        ["ライフ・マナ・防御を上げるのは、肉体 (ライフ)・神経 (マナ)・甲羅 (アーマー・回避力・エナジーシールド)", "Life, Mana and defences: Flesh (Life), Neural (Mana), Carapace (Armour, Evasion, Energy Shield)"],
+        ["属性を上げるのは、ウール・ネトル (物理)・ゾフ (火)・トゥル (冷気)・エシュ (雷)・チャユラ (混沌)", "Damage types: Uul-Netol's (Physical), Xoph's (Fire), Tul's (Cold), Esh's (Lightning), Chayula's (Chaos)"],
+        ["戦い方で上げるのは、強奪者 (アタック)・歯擦音 (キャスター)・軽快 (スピード)", "Play style: Reaver (Attack), Sibilant (Caster), Skittering (Speed)"],
+        ["そのほかは、適応 (能力値)・死霊術 (ミニオン)", "Others: Adaptive (Attributes), Necrotic (Minion)"],
+        ["ここでは肉体のカタリストを 20% まで使う。数字が上がるのは最大ライフだけ", "Here you use a Flesh Catalyst up to 20%. Only maximum Life goes up"],
+      ], "rare"), startMods: RING, untilMax: true },
       { ...ALWAYS(H("catalyst_cold", ["別の種類にすると 0 から", "A new type restarts from 0"], [
         ["アイテムの品質は 1 つの種類だけ。今は火の品質 20%", "An item has only one quality type. Right now it's 20% Fire quality"],
-        ["トゥルのカタリスト (冷気) を使うと、火の品質は消えて、冷気の品質 1〜2% から始まる", "Tul's Catalyst (Cold) removes the Fire quality and starts Cold quality at 1–2%"],
+        ["トゥルのカタリスト (冷気) を使うと、火の品質は消えて、冷気の品質 1〜2% から始まる。そのまま 20% まで上げる", "Tul's Catalyst (Cold) removes the Fire quality and starts Cold quality at 1–2%. Keep going to 20%"],
         ["火耐性の数字は元に戻り、冷気耐性の数字が上がる", "Fire Resistance goes back down, Cold Resistance goes up"],
         ["種類を替える時は、もう一度 0 から貯め直し", "Switching type means building it up again from 0"],
-      ], FIRE20)), startMods: [...RING, { mod: "Rings/ColdResistance", tier: "T5" }] },
+      ], FIRE20)), startMods: [...RING, { mod: "Rings/ColdResistance", tier: "T5" }], untilMax: true },
+      // 触媒の高貴は成功例 (足した MOD が全部火の MOD) を見せる (craft-lesson.ts の rigRare。2026-10-18 オーナー「触媒を使った成功例見せたい」)
       { ...ALWAYS(H("exalt", ["品質の種類の MOD が出やすい", "Quality's mod type is more likely"], [
         ["触媒の高貴のお告げを掛けた高貴なオーブは、品質の種類の MOD が付きやすくなる (火の品質なら、火耐性・火ダメージなど)", "With Omen of Catalysing Exaltation, the Exalted Orb favours mods of the quality's type (Fire quality: Fire Resistance, Fire Damage and so on)"],
         ["品質 20% なら、火の MOD の出やすさが 5 倍 (Craft of Exile の式: 1 + 0.2 × 品質)", "At 20% quality, Fire mods are 5× as likely (Craft of Exile's formula: 1 + 0.2 × quality)"],
-        ["必ず火の MOD になるわけではない (出やすくなるだけ)", "It isn't always a Fire mod (just more likely)"],
+        ["このコースでは火の MOD が付いた成功例を見せる。実際のゲームでは必ず火になるわけではない (出やすくなるだけ)", "This course shows a success (a Fire mod). In the real game it isn't always Fire, just more likely"],
         ["使うと品質は全部なくなって 0 に。品質が無いアイテムには掛けられない", "All the quality is used up (back to 0). It can't be used without quality"],
       ], FIRE20)), omens: ["OmenofCatalysingExaltation"], startMods: TWO },
       { ...ALWAYS(H("exalt", ["偉大なると重ねて 2 つ", "Stack with Greater for 2"], [
         ["偉大なる高貴なお告げと重ねると、高貴なオーブ 1 個で MOD が 2 つ付き、2 つとも火の MOD が出やすい (2 つともはクラフト配信者の説明に合わせている)", "Stacked with Omen of Greater Exaltation, one Exalted Orb adds 2 mods, both favouring Fire (both, per crafting streamers' explanations)"],
+        ["このコースでは 2 つとも火の MOD が付いた成功例を見せる", "This course shows a success with both mods Fire"],
         ["品質は 1 回で全部なくなる", "All the quality is used up at once"],
       ], FIRE20)), omens: ["OmenofCatalysingExaltation", "OmenofGreaterExaltation"], startMods: TWO },
     ],

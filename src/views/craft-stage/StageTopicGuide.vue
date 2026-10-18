@@ -11,6 +11,8 @@ import { topic, topicAt, topicCur, topicSub, topicDone, topicNext, topicReset, t
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { aimLabel, modListFor } from "../../services/craft-stage/mod-list";
 import { factionCandidates } from "../../services/craft-stage/spec/parts";
+import { allMods, boostedMod, catalystOf } from "../../services/craft-stage/stage-core";
+import { qualityLabelOf } from "../../services/htc/quality";
 import { ALL_OMEN_SPECS } from "../../services/craft-stage/spec/run-spec";
 import { freshItem } from "../../services/craft-stage/run-plan";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
@@ -116,6 +118,19 @@ const example = computed(() => {
     if (!best || ok.ilvl - ng.ilvl < best.ok.ilvl - best.ng.ilvl) best = { ok, ng };
   }
   return best;
+});
+/**
+ * カタリストの手: 品質で数字が変わった MOD を 素の値 → 今の値 で並べる (変わらない MOD も薄く)。
+ * ゲームの表示は品質を掛けた後の数字だけで、どこが上がったか分かりづらい (2026-10-18 オーナー「どこが変化したか分かりやすく」)
+ */
+const qualityRows = computed(() => {
+  const it = s.item.value, d = s.data.value, st = topicStep.value?.step;
+  if (!it || !d || !st?.use.startsWith("catalyst")) return null;
+  const { tag, pct } = catalystOf(it);
+  return {
+    head: tag && pct > 0 ? `${qualityLabelOf(tag)}: +${pct}%` : tr("品質はまだ 0%", "No quality yet"),
+    rows: allMods(it).map((m) => { const b = boostedMod(it, m, d); return { m, after: b ? { ...m, ...b } : null }; }),
+  };
 });
 const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**").map((t, i) => ({ t, b: i % 2 === 1 }));
 /** 押すと持つ (お告げも掛ける)。発現の反響は掛けるだけ */
@@ -235,6 +250,13 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <div v-if="adds" class="mt-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
         <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
         <p v-for="(l, i) in adds.lines" :key="i" class="text-[13px] font-semibold text-emerald-200">・{{ l }}</p>
+      </div>
+      <div v-if="qualityRows" data-topic-quality class="mt-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
+        <p class="text-[11px] font-bold text-emerald-200">{{ tr("品質で変わった MOD", "Mods changed by quality") }} <span class="text-emerald-100">({{ qualityRows.head }})</span></p>
+        <p v-for="(r, i) in qualityRows.rows" :key="i" class="text-[13px]" :class="r.after ? 'font-semibold text-emerald-200' : 'text-[var(--exile-color-text-tertiary)]'">
+          <template v-if="r.after"><span class="text-emerald-200/60">{{ modText(r.m) }}</span> → {{ modText(r.after) }}</template>
+          <template v-else>{{ modText(r.m) }} <span class="text-[11px]">({{ tr("変わらない", "unchanged") }})</span></template>
+        </p>
       </div>
     </div>
     <div v-else-if="topicDone" data-topic-done class="mt-3 rounded-xl border-2 border-amber-300/70 bg-gradient-to-b from-amber-400/[0.18] to-transparent px-4 py-3">

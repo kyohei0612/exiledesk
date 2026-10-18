@@ -70,6 +70,8 @@ watch(() => s.log.value.length, (n, old) => {
   if (!want || !omensOk || !e.out.applied) return;
   // 発現の手は、未発現の MOD が全部無くなるまで次へ進めない (腐食で最大 6 つ。2026-10-17 オーナー「腐食は全部発現させてから完了に、もったいない体験が」)
   if (cur.step.use === "reveal" && [...e.after.prefixes, ...e.after.suffixes].some((m) => m.unrevealed)) return;
+  // 品質を上げる手は上限まで連打で (まだ打てる間は手を終えない。2026-10-18 オーナー「初手は 20% まで上げさせてあげよう連打で」)
+  if (cur.step.untilMax && cur.key && s.usable(cur.key) === null) return;
   if (topicSub.value < chain.length) topicSub.value++; // 続きの手へ
   else topicUsed.value = true;
 });

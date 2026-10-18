@@ -72,8 +72,12 @@ function freshSeed(): number {
 }
 /** その手の乱数 (カレンシーのキーを混ぜる。発現は混ぜない = 出した候補のまま) */
 function stepSeedFor(key: string): number {
-  if (key.startsWith("reveal")) return rollSeed.value;
-  let h = rollSeed.value ^ 0x9e3779b9;
+  return seedOfRoll(rollSeed.value, key);
+}
+/** 乱数の元 (rollSeed) とキーからその手の乱数 (チュートリアルが成功例を先に探す時にも使う。craft-lesson.ts) */
+export function seedOfRoll(roll: number, key: string): number {
+  if (key.startsWith("reveal")) return roll;
+  let h = roll ^ 0x9e3779b9;
   for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193) >>> 0;
   return h % 2_147_483_647;
 }

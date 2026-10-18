@@ -8,16 +8,17 @@
  *   2026-10-17 オーナー「クリアしたのに…みたいなかんじになるから A 型の細かい連中は」)
  */
 import { computed, ref, watch } from "vue";
-import { craftStage as s } from "./craft-stage";
+import { craftStage as s, seedOfRoll } from "./craft-stage";
 import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, goTopic, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
 import { fullSockets } from "./stage-steps";
 import { topicKey, type TopicCourse } from "../services/craft-stage/topic-courses";
 import { freshItem, startFrom } from "../services/craft-stage/run-plan";
-import { applyCurrency } from "../services/craft-stage/apply-currency";
+import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
 import { mulberry32 } from "../services/htc/rng";
 import type { StageItem } from "../services/craft-stage/types";
 import { isRareChance } from "../utils/format-pct";
+import { catalystBoosts } from "../services/craft-stage/stage-core";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** コースを終える (タブを押した時) */
@@ -46,7 +47,13 @@ function markCleared(id: string): void {
 watch(topicDone, (d) => { if (d && topic.value) markCleared(`topic:${topic.value.id}`); });
 watch(() => courseView.value?.done, (d) => { if (d && course.value) markCleared(`course:${course.value.id}`); });
 
-watch(() => s.log.value.length, (n, old) => { if (inLesson.value && n > (old ?? 0)) s.hold(null); });
+watch(() => s.log.value.length, (n, old) => {
+  if (!inLesson.value || n <= (old ?? 0)) return;
+  // 上限まで連打する手 (カタリスト) は、まだ打てる間は持ったまま (2026-10-18 オーナー「連打で」)
+  const st = topic.value?.steps[topicAt.value], h = s.held.value;
+  if (st?.untilMax && h && s.usable(h) === null) return;
+  s.hold(null);
+});
 
 /** 動作を学ぶコースの手ごとの始めの状態 (最後 = 今の手の始め) */
 interface Snap { at: number; item: typeof s.item.value; log: typeof s.log.value; startMods: typeof s.startMods.value; omens: string[] }
@@ -127,16 +134,32 @@ function restore(x: Snap): void {
  * 2026-10-17 オーナー「完全打った時には神の演出入る MOD つけさせてあげるか、せっかくだし」
  */
 const RIG = new Set(["regal_perfect", "exalt_perfect", "chaos_perfect"]);
+/** 触媒の高貴のお告げを掛けた高貴は、足した MOD が全部品質の種類の物 (火の品質なら火の MOD) になる乱数を選ぶ (2026-10-18 オーナー「触媒を使った成功例見せたい」) */
+const CATALYSING = "OmenofCatalysingExaltation";
 export function rigRare(key: string): void {
-  if (!topic.value || !RIG.has(key) || s.usable(key)) return;
+  const it = s.item.value, d = s.data.value;
+  if (!topic.value || !it || !d || s.usable(key)) return;
+  const tag = s.omens.value.includes(CATALYSING) ? it.qualityTag ?? null : null;
+  if (tag) {
+    // エンジンを直接呼んで探す (本物の 1 手は確率の計算まで回るので、1,500 回で画面が止まった。2026-10-18)
+    const omens = omensFor(key, s.omens.value);
+    for (let i = 0; i < 3000; i++) {
+      const roll = Math.floor(Math.random() * 2_147_483_647);
+      const r = applyCurrency(d, it, key, mulberry32(seedOfRoll(roll, key)), omens);
+      if (r.applied && r.added.length > 0 && r.added.every((m) => catalystBoosts(it, m, tag, d))) { s.rollSeed.value = roll; return; }
+    }
+    return;
+  }
+  if (!RIG.has(key)) return;
   for (let i = 0; i < 1500; i++) {
     const tryRoll = s.rollSeed.value;
     const n = s.log.value.length;
     s.use(key, { quiet: true });
     if (s.log.value.length === n) return;
-    const rare = Object.values(s.log.value[s.log.value.length - 1]!.chances ?? {}).some(isRareChance);
+    const e = s.log.value[s.log.value.length - 1]!;
+    const ok = tag ? e.added.length > 0 && e.added.every((m) => catalystBoosts(it, m, tag, d)) : Object.values(e.chances ?? {}).some(isRareChance);
     s.undo();
-    if (rare) { s.rollSeed.value = tryRoll; return; }
+    if (ok) { s.rollSeed.value = tryRoll; return; }
   }
 }
 
