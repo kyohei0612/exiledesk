@@ -19,14 +19,15 @@ const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
  * 短い形 (/s/<code>): 中身の JSON の配列 [l, b, bn, m, n, a, r, md, u, c, setup] を deflate して base64url にした物 (日本語をそのまま URL に入れると長すぎた。2026-10-16 オーナーのスマホで)。
  * setup (11 番目) はカードには使わず、本体が計算機を開くのに使う (/?spam=<code>、2026-10-17)
  */
-const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c"];
+// 12・13 番目 (h = 題、o = 主のカレンシーの絵の URL) はスパムシミュレーターの運試し (2026-10-19)。無ければカオススパム計算機
+const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o"];
 async function unpack(code) {
   const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
   const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
   const json = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
   const arr = JSON.parse(json);
   if (!Array.isArray(arr)) throw new Error("pack");
-  const m = new Map(PACK.map((k, i) => [k, arr[i] == null ? null : String(arr[i])]));
+  const m = new Map(PACK.map((k, i) => [k, arr[i] == null ? null : String(arr[i])]).filter(([k]) => k));
   return (k) => m.get(k) ?? null;
 }
 function readCard(get) {
@@ -42,6 +43,8 @@ function readCard(get) {
     median: num(get("md")),
     unlucky: num(get("u")),
     cost: cut(get("c"), 20),
+    head: get("h") ? cut(get("h"), 40) : null,
+    orb: /^https:\/\/web\.poecdn\.com\/[^"'<>\s]{1,400}$/.test(get("o") ?? "") ? get("o") : null,
   };
 }
 
@@ -58,7 +61,7 @@ function titleOf(c) {
 function descOf(c) {
   const parts = [];
   if (c.rank != null) parts.push(T(c, `${PEOPLE} 人中 ${rankWord(c, c.rank)} の運 (${luck(c, c.rank)})`, `${rankWord(c, c.rank)} luck among ${PEOPLE} people (${luck(c, c.rank)})`));
-  parts.push(T(c, "ExileDesk のカオススパム計算機 — PoE2 のクラフトを試せる", "ExileDesk Chaos spam calculator — try PoE2 crafting"));
+  parts.push(c.head ? `ExileDesk ${c.head}` : T(c, "ExileDesk のカオススパム計算機 — PoE2 のクラフトを試せる", "ExileDesk Chaos spam calculator — try PoE2 crafting"));
   return parts.join(" · ");
 }
 
@@ -127,11 +130,11 @@ async function cardImage(url, env, c) {
   const k = size ? Math.min(2.4, 380 / size.w, 440 / size.h) : 1;
   const aw = size ? Math.round(size.w * k) : 300, ah = size ? Math.round(size.h * k) : 300;
   const ax = 930 - aw / 2, ay = 290 - ah / 2;
-  const orb = await dataUrl(env, CHAOS_ICON);
+  const orb = await dataUrl(env, c.orb ?? CHAOS_ICON);
   // 左上のロゴはサイトの上の帯と同じ (アプリのアイコン + Cinzel の金の EXILEDESK)。前は Noto Sans の平たい字だった (2026-10-18 オーナー「旧エグザイルデスクじゃね？のっぺりしてる」)
   const logo = await dataUrl(env, url, "/web/icon-192.png");
   const r = c.rank;
-  const head = T(c, "カオススパム計算機", "Chaos spam calculator");
+  const head = c.head ?? T(c, "カオススパム計算機", "Chaos spam calculator");
   const hit = c.uses != null ? fmt(c.uses) : "?";
   const hitTail = T(c, " 回目で付いた！", " uses to hit!");
   const luckLine = r != null ? T(c, `${PEOPLE} 人中 ${rankWord(c, r)} の運`, `${rankWord(c, r)} luck of ${PEOPLE}`) : "";

@@ -26,6 +26,8 @@ export const spamPage = computed(() => PAGES_ON && !s.replay.value && !inLesson.
  * (2026-10-18 オーナー「1 MOD を対象にどのルートが一番早く着くか」「スパム計算機はここで全部管理」)
  */
 export const routesOpen = ref(false);
+/** 計算が済んだら運試しの欄を開く (X のシェアから来た時。state/spam-share-open.ts) */
+export const routesLuck = ref(false);
 /** その狙い (選ぶまでは null) */
 export const routesTarget = ref<{ modId: string; minTierIndex: number } | null>(null);
 /** スパムシミュレーターのページを開く (カレンシーの見出しのボタン)。開いたら MOD を 1 つ選ぶ窓から */

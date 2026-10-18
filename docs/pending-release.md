@@ -7,7 +7,7 @@ OK が出ていない物を外して出す時は `git revert --no-edit --no-comm
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | 開く / たたむを折り返さない・MOD 一覧の列の見出し (エミュレーターにも出る。ほかはシミュレーターだけ) | 1ee2ad43 | (見た目だけ。更新内容は書かない) | (layout only, no changelog entry) |
-| スパムシミュレーター (カレンシーの見出しから別ページ・MOD を 1 つ選ぶ → 増強 / カオス / 高貴を 100 人で比べる)。旧カオススパム計算機はそのまま残す (オーナー「挙動残しててもいい」) | (このコミット) | カレンシーの横に「スパムシミュレーター」を足しました。狙う MOD を 1 つ選ぶと、増強・カオス・高貴のスパムでどれが一番安く着くかを比べます | Added “Spam simulator” next to Currency: pick one mod to see whether augment, chaos or exalt spam gets there cheapest |
+| スパムシミュレーター (カレンシーの見出しから別ページ・MOD を 1 つ選ぶ → 増強 / カオス / 高貴を 100 人で比べる)。旧カオススパム計算機はそのまま残す (オーナー「挙動残しててもいい」)。一番安い欄の「運試し」(その道で自分でスパム → 100 人と比べた順位・強運の演出・X のシェア。シェアのカードは server/web/og-card.js に題と絵) | (このコミット) | カレンシーの横に「スパムシミュレーター」を足しました。狙う MOD を 1 つ選ぶと、増強・カオス・高貴のスパムでどれが一番安く着くかを比べます。一番安い道で運試しもできます (X でシェアできます) | Added “Spam simulator” next to Currency: pick one mod to see whether augment, chaos or exalt spam gets there cheapest, with a luck test on the cheapest route (shareable on X) |
 | ベースの一覧: 名前で探すを外し、装備・エフェクトオフを一番下へ | 0c5d5be9 | ベースの一覧から名前で探す欄を外し、「装備・エフェクトオフ」を一番下に移しました | Removed the name search from the base list and moved “Plain art, no effects” to the bottom |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。

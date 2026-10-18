@@ -13,6 +13,8 @@ import { aimLabel } from "../services/craft-stage/mod-list";
 import { SPAM_KEYS } from "../services/craft-stage/chaos-spam";
 import type { Force } from "../services/craft-stage/stage-core";
 import type { StageItem } from "../services/craft-stage/types";
+import type { Grade, RouteKind } from "../services/craft-stage/route-race";
+import { routesLuck, routesOpen, routesTarget } from "./web-page";
 
 /** シェアに入れるスパムの始めの状態 (短く: i = アイテムレベル、r = レアリティ、s = MOD、a = 狙い、k = カオスの種類) */
 export interface SpamSetup {
@@ -24,6 +26,8 @@ export interface SpamSetup {
   a: Array<[string, number]>;
   k: string;
 }
+/** スパムシミュレーターの運試しのシェア (2026-10-19): r = 道、g = 等級、m = 狙いの MOD、t = 段の下限、i = アイテムレベル */
+export interface RouteSetup { route: { r: RouteKind; g: Grade; m: string; t: number; i: number } }
 
 /** スパムを始めた時のアイテムと狙いから setup を作る (use-spam-share.ts が URL に入れる) */
 export function setupOf(start: StageItem | null, aims: ReadonlyArray<{ modId: string; minTierIndex: number }>, key: string): SpamSetup | null {
@@ -55,8 +59,18 @@ export async function openSharedSpam(): Promise<void> {
   if (!code) return;
   try { const u = new URL(location.href); u.searchParams.delete("spam"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch { /* 外せなくても開く */ }
   const arr = await unpack(code);
-  const st = arr?.[10] as SpamSetup | undefined;
   const d = s.data.value;
+  // スパムシミュレーターの運試しから: 同じ狙いでページを開き、計算が済んだら運試しの欄を開く
+  const rt = (arr?.[10] as RouteSetup | undefined)?.route;
+  if (rt && d?.mods.has(rt.m)) {
+    s.itemLevel.value = Math.max(1, Math.min(100, Number(rt.i) || 82));
+    s.reset();
+    routesTarget.value = { modId: rt.m, minTierIndex: Math.max(0, Number(rt.t) || 0) };
+    routesLuck.value = true;
+    routesOpen.value = true;
+    return;
+  }
+  const st = arr?.[10] as SpamSetup | undefined;
   if (!st || !d || !Array.isArray(st.s) || !Array.isArray(st.a) || !st.a.length) return;
   const forces: Force[] = st.s.filter((x) => d.mods.has(x[0])).map(([mod, tier, values, f]) => ({ mod, ...(tier ? { tier } : {}), ...(values?.length ? { values } : {}), ...(f === 1 ? { fractured: true } : f === 2 ? { desecrated: true } : {}) }));
   const ilvl = Math.max(1, Math.min(100, Number(st.i) || 82));

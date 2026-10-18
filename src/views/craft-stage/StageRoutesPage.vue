@@ -10,7 +10,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { routesOpen, routesTarget } from "../../state/web-page";
+import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
+import StageRouteLuck from "./StageRouteLuck.vue";
 import { raceRoutes, type Grade, type RaceRow, type RouteKind } from "../../services/craft-stage/route-race";
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
@@ -70,7 +71,10 @@ async function run(): Promise<void> {
   }
   busy.value = false;
 }
-watch(t, () => void run());
+watch(t, () => { luckOpen.value = false; void run(); });
+/** 運試しの欄 (一番安い道で。2026-10-19 オーナー「一番安い欄に運試しボタン」)。シェアから来た時は計算が済んだら開く */
+const luckOpen = ref(false);
+watch(busy, (b) => { if (!b && routesLuck.value) { routesLuck.value = false; if (best.value) luckOpen.value = true; } });
 const rowOf = (route: RouteKind, grade: Grade): RaceRow | undefined => rows.value.find((r) => r.route === route && r.grade === grade);
 const ok = computed(() => rows.value.filter((r) => !r.off));
 /** 一番安い (着いた物の中で) */
@@ -85,7 +89,7 @@ const usesOf = (r: RaceRow) => Object.entries(r.uses).sort((a, b) => b[1] - a[1]
 const pct = (x: number): string => `${Math.max(2, Math.min(100, (x / maxCost.value) * 100))}%`;
 const money = (x: number): string => displayCurrency.money(x);
 const fmtN = (n: number): string => (n >= 10 ? Math.round(n).toLocaleString() : n.toFixed(1));
-function back(): void { s.aimPicker.value = null; routesOpen.value = false; routesTarget.value = null; }
+function back(): void { routesLuck.value = false; s.aimPicker.value = null; routesOpen.value = false; routesTarget.value = null; }
 function pickMod(): void { s.aimPicker.value = { seed: null, routes: true }; }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !s.aimPicker.value) back(); }
 let before = 0;
@@ -131,12 +135,15 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <p class="tabular-nums"><b class="text-[26px] text-emerald-300 max-md:text-[20px]">{{ money(best.avgCost) }}</b> <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr(`平均 · ${fmtN(best.avgSteps)} 手`, `avg · ${fmtN(best.avgSteps)} uses`) }}</span></p>
               <p class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half") }} {{ money(best.p50) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ money(best.p90) }}</p>
             </div>
+            <button v-if="!busy && !luckOpen" type="button" data-route-luck-open class="g-btn-red shrink-0 max-md:self-end" :title="tr('この道の決まりで、100 人と同じ始めの状態から自分でスパムして運を比べる', 'Spam it yourself with this route from the same start and compare your luck with the 100 people')" @click="luckOpen = true">{{ tr("運試し", "Luck test") }}</button>
           </template>
           <p v-else class="text-[13px] text-[var(--exile-color-text-secondary)]">{{ busy ? tr("計算中…", "Calculating…") : tr("どの道でも着かなかった", "No route reached it") }}</p>
           <p v-if="busy" class="absolute right-3 top-2 text-[11px] tabular-nums text-amber-200">{{ tr("計算中", "Calculating") }} {{ rows.length }} / {{ ORDER.length }}</p>
         </div>
       </div>
 
+      <!-- 運試し (一番安い道で。StageRouteLuck.vue) -->
+      <StageRouteLuck v-if="luckOpen && best && !busy" :row="best" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(best)" @close="luckOpen = false" />
       <!-- 下: 3 つの道 -->
       <div class="g-section mt-4 grid gap-3 lg:grid-cols-3">
         <article v-for="r in ROUTES" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">

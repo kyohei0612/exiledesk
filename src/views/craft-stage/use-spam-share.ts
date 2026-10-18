@@ -24,37 +24,61 @@ export const luck = (r: number): string => (r <= 10 ? tr("かなりの強運", "
 export const rankWord = (r: number): string => (r <= 50 ? tr(`上位 ${r}%`, `top ${r}%`) : tr(`下位 ${Math.max(1, 100 - r)}%`, `bottom ${Math.max(1, 100 - r)}%`));
 const B62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
+/**
+ * 中身を縮めて URL に (server/web/og-card.js の PACK と同じ並び: [l, b, bn, m, n, a, r, md, u, c, setup] を deflate → base64url)。
+ * setup = スパムを始めた時のアイテム・狙い・カオスの種類 (開いた人に同じ計算機を出す、state/spam-share-open.ts。2026-10-17)
+ */
+export async function packCard(v: Array<string | number | object | null>): Promise<string> {
+  const bytes = new Uint8Array(await new Response(new Blob([JSON.stringify(v)]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+  let bin = "";
+  for (const x of bytes) bin += String.fromCharCode(x);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+/**
+ * 短い URL (2026-10-18 オーナー「スマホからシェアの URL 長くて怖い」): code の SHA-256 から 7 文字の id (server/web/og-card.js の shortIdOf と同じ式)。
+ * 中身は押した時に POST /s/new で D1 に置く (サーバーはその時にカードの絵も作る)。押さなければ何も置かない
+ */
+export async function shortIdOf(code: string): Promise<string> {
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code)));
+  let n = 0n;
+  for (let i = 0; i < 8; i++) n = (n << 8n) | BigInt(h[i]!);
+  let out = "";
+  for (let i = 0; i < 7; i++) { out += B62[Number(n % 62n)]; n /= 62n; }
+  return out;
+}
+
+/** シェアの URL の頭 (アプリは本番のサイト) */
+export const shareOrigin = (): string => (isTauriRuntime() ? "https://exiledesk.com" : location.origin);
+/**
+ * X へ送る (カオススパム計算機とスパムシミュレーターで同じ)。短い URL の中身を置いて、アプリは外のブラウザ、スマホは X のアプリ
+ * (2026-10-16 オーナー「スマホ版はそのままアプリに飛ばそうか」。アプリが無くて開けなかった時は 1.5 秒後に Web の投稿画面へ)
+ */
+export function sendShare(e: MouseEvent, o: { code: string; web: string; text: string; url: string; log: Record<string, unknown> }): void {
+  const origin = shareOrigin();
+  if (o.code) void fetch(`${origin}/s/new`, { method: "POST", body: o.code, keepalive: true, headers: { "content-type": "text/plain" } }).catch(() => { /* 置けなければ開いた人はトップへ */ });
+  const mobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  logRecord("emu_spam_share", { to: mobile ? "x-app" : "x", ...o.log });
+  if (isTauriRuntime()) { e.preventDefault(); void openExternal(o.web); return; }
+  if (!mobile) return;
+  e.preventDefault();
+  let left = false;
+  const onHide = (): void => { if (document.visibilityState === "hidden") left = true; };
+  document.addEventListener("visibilitychange", onHide);
+  setTimeout(() => {
+    document.removeEventListener("visibilitychange", onHide);
+    if (!left && document.visibilityState === "visible") location.href = o.web;
+  }, 1500);
+  location.href = `twitter://post?message=${encodeURIComponent(`${o.text}\n${o.url}`)}`;
+}
+
 export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<SpamStats | null>; statsFresh: () => boolean; key: Ref<string>; cost: (n: number) => string; startOf: () => StageItem | null }) {
   const { result, stats, key, cost } = o;
-  const inApp = isTauriRuntime();
   /**
    * シェア (2026-10-16 オーナー「計算機はシェア機能追加。自慢目的、URL と共に宣伝」「押したらそのまま X に」「画像付き」)。
    * 押すと X の投稿画面へ (アプリは外のブラウザで)。URL は /s/spam (server/web/og-card.js): X はそこから結果のカードの絵を出し、
    * 押した人はそのベースのエミュレーターへ。結果は全部 URL に入れる (サーバーは何も保存しない)
    */
-  /**
-   * 中身を縮めて URL に (server/web/og-card.js の PACK と同じ並び: [l, b, bn, m, n, a, r, md, u, c, setup] を deflate → base64url)。
-   * setup = スパムを始めた時のアイテム・狙い・カオスの種類 (開いた人に同じ計算機を出す、state/spam-share-open.ts。2026-10-17)
-   */
-  async function packCard(v: Array<string | number | object | null>): Promise<string> {
-    const bytes = new Uint8Array(await new Response(new Blob([JSON.stringify(v)]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
-    let bin = "";
-    for (const x of bytes) bin += String.fromCharCode(x);
-    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  }
-  /**
-   * 短い URL (2026-10-18 オーナー「スマホからシェアの URL 長くて怖い」): code の SHA-256 から 7 文字の id (server/web/og-card.js の shortIdOf と同じ式)。
-   * 中身は押した時に POST /s/new で D1 に置く (サーバーはその時にカードの絵も作る)。押さなければ何も置かない
-   */
-  async function shortIdOf(code: string): Promise<string> {
-    const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code)));
-    let n = 0n;
-    for (let i = 0; i < 8; i++) n = (n << 8n) | BigInt(h[i]!);
-    let out = "";
-    for (let i = 0; i < 7; i++) { out += B62[Number(n % 62n)]; n /= 62n; }
-    return out;
-  }
-  const origin = inApp ? "https://exiledesk.com" : location.origin;
+  const origin = shareOrigin();
   const shareUrl = ref("");
   let shareCode = "";
   watch([result, () => stats.value, isEn], async () => {
@@ -90,30 +114,8 @@ export function useSpamShare(o: { result: Ref<SpamResult | null>; stats: Ref<Spa
   });
   /** X の投稿画面 (文の最後に URL が付く) */
   const xUrl = computed(() => `https://x.com/intent/post?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`);
-  /** スマホ (iPhone・Android) */
-  const mobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   function shareX(e: MouseEvent): void {
-    // 短い URL の中身を置く (ページを離れても届くように keepalive。カードの絵もサーバーがこの時に作る)
-    if (shareCode) void fetch(`${origin}/s/new`, { method: "POST", body: shareCode, keepalive: true, headers: { "content-type": "text/plain" } }).catch(() => { /* 置けなければ開いた人はトップへ */ });
-    logRecord("emu_spam_share", { to: mobile ? "x-app" : "x", base: s.base.value, rank: result.value?.rank ?? null });
-    if (inApp) {
-      e.preventDefault();
-      void openExternal(xUrl.value);
-      return;
-    }
-    if (!mobile) return;
-    // スマホは X のアプリを直接開く (2026-10-16 オーナー「スマホ版はそのままアプリに飛ばそうか、これウェブに飛ぶね」)。
-    // アプリが無くて開けなかった時 (1.5 秒たってもページが見えたまま) は Web の投稿画面へ
-    e.preventDefault();
-    const web = xUrl.value;
-    let left = false;
-    const onHide = (): void => { if (document.visibilityState === "hidden") left = true; };
-    document.addEventListener("visibilitychange", onHide);
-    setTimeout(() => {
-      document.removeEventListener("visibilitychange", onHide);
-      if (!left && document.visibilityState === "visible") location.href = web;
-    }, 1500);
-    location.href = `twitter://post?message=${encodeURIComponent(`${shareText.value}\n${shareUrl.value}`)}`;
+    sendShare(e, { code: shareCode, web: xUrl.value, text: shareText.value, url: shareUrl.value, log: { base: s.base.value, rank: result.value?.rank ?? null } });
   }
 
   return { shareUrl, shareText, xUrl, shareX };
