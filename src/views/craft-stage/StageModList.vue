@@ -310,6 +310,8 @@ function essName(r: ListRow): string | null {
   const top = r.tiers[0]?.name;
   return top ? tr(ESS_JA.get(top) ?? jewelEmotionJa(top) ?? top, top) : null;
 }
+/** まとめた行 (同じ系統の別の MOD を 1 行に) の段は MOD ごとにタグが違うので、段の表の行にその段の MOD のタグを出す (2026-10-18 オーナー「ティア表にタグがない」) */
+const tierTags = (r: ListRow, t: ListRow["tiers"][number]): string[] => { if (!t.modId || t.modId === r.id && r.tiers.every((u) => u.modId === t.modId)) return []; const m = s.data.value?.mods.get(t.modId); return m ? shownTags(m.displayTags ?? m.tags) : []; };
 const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? tr(ESS_JA.get(name) ?? jewelEmotionJa(name) ?? name, name) : name);
 /** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
 const pct = (x: number): string => fmtPct(x);
@@ -434,7 +436,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <!-- 段のチェック: その段以上を狙いに (外す時はその段だけ) -->
                     <td v-if="heldCands" class="w-5 py-0.5 text-center"><input type="checkbox" class="accent-sky-400 align-middle" :checked="isAimTier(r, t)" :disabled="!heldTierShare(r, t)" :title="tr(`${t.rank} 以上を狙いに入れる`, `Target ${t.rank} or better`)" @click.stop @change="toggleAimTier(r, t)" /></td>
                     <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
-                    <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}<span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span></td>
+                    <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}<span v-if="tierTags(r, t).length" class="ml-2 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tierTags(r, t).map(tagLabel).join(" · ") }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span></td>
                     <!-- 段の名前 (Zaffre など) は英語しか無いので出さない。エッセンスの節はエッセンスの名前なので出す (2026-10-18 オーナーの UI 点検) -->
                     <td v-if="r.group === 'essence' || r.group === 'perfect_essence'" class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
