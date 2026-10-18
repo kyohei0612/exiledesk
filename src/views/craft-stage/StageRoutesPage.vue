@@ -1,8 +1,8 @@
 <!--
   StageRoutesPage.vue — スパムシミュレーター (?page=routes、2026-10-18 オーナー「エミュレーターに簡易シミュレーターページ。1 MOD を対象にどのルートが一番早く着くか。
   要はスパム。冒涜スパムは無し。高貴・増強・カオスのスパム」)。カレンシーの見出しの「スパムシミュレーター」で開き、最初に MOD を 1 つ選ぶ (StageAimPicker の routes)。
-  オーナー「全てのスパムで計測、100 人で。カオスは今まで通り。カオススパム計算機じゃないから完全でのリロールは無し、カオスは無印と上級」
-  計算は services/craft-stage/route-race.ts (エミュレーターと同じ applyCurrency で 1 通り 100 人分)。8 通り (増強・高貴 × 完全 / 上級 / 無印、カオス × 上級 / 無印) を 1 つずつ間を空けて回し、出た順に出す。
+  オーナー「全てのスパムで計測、100 人で。カオスは今まで通り」。カオスの完全は最初は外していたが入れる (2026-10-19 オーナー「流石に完全カオスも出してあげるか」)
+  計算は services/craft-stage/route-race.ts (エミュレーターと同じ applyCurrency で 1 通り 100 人分)。9 通り (3 つの道 × 完全 / 上級 / 無印) を 1 つずつ間を空けて回し、出た順に出す。
   見た目 (2026-10-19 オーナー「UI ダサすぎる、シンプル過ぎる」「各工程で詳しいルールは書いた方が良い」): 上に狙いと一番安い道を大きく、
   下に 3 つの道をカード (カレンシーの絵・打ち方の決まりを番号で・等級ごとの棒と使った物)。1 つの枠 (.g-panel) の中。決まりは route-race.ts と同じ文 (メモ feedback-show-sim-rules)
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
@@ -31,10 +31,9 @@ const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; gr
     { k: "augment", ja: "狙いの側が空いたら増強 (両側とも空いている時はどちらに付くかは運。反対側に付いたら次は増強で狙いの側へ)", en: "When the target side is empty, augment (if both sides are empty the side is random; if it lands on the other side, the next augment goes to the target side)" },
     { k: null, ja: "狙いが付くまで 2・3 を繰り返す。マジックで狙いの側に枠が無いベースは使えない", en: "Repeat 2–3 until the target rolls. Bases with no slot on that side while magic can't use this" },
   ] },
-  { route: "chaos", ja: "カオススパム", en: "Chaos spam", main: "chaos", grades: ["greater", "base"], steps: [
+  { route: "chaos", ja: "カオススパム", en: "Chaos spam", main: "chaos", grades: ["perfect", "greater", "base"], steps: [
     { k: "exalt", ja: "MOD 1 つのレアから始める (狙いでない MOD が 1 つ。作る費用は入れない)", en: "Start from a rare with 1 mod (not the target; its cost is not included)" },
     { k: "chaos", ja: "狙いが付くまで同じカオスを打ち続ける (1 つ消えて 1 つ付くので、MOD はずっと 1 つ)", en: "Keep using the same Chaos Orb until the target rolls (one out, one in, so it stays at 1 mod)" },
-    { k: null, ja: "完全のカオス (リロール) は入れない", en: "Perfect Chaos (reroll) is not included" },
   ] },
   { route: "exalt", ja: "高貴スパム", en: "Exalt spam", main: "exalt", grades: ["perfect", "greater", "base"], steps: [
     { k: null, ja: "MOD 0 のレアから始める (作る費用は入れない)", en: "Start from a rare with 0 mods (its cost is not included)" },
