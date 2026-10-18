@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { lessonJump, quitLesson, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
+import { canRetry, lessonJump, quitLesson, prepareStep, prepared, retryStep, rigRare } from "../../state/craft-lesson";
 import { topic, topicAt, topicCur, topicSub, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { aimLabel, modListFor } from "../../services/craft-stage/mod-list";
@@ -218,7 +218,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
     <div class="mb-2 flex flex-wrap justify-end gap-2 max-md:grid max-md:grid-cols-2">
       <!-- 次へは枠の左端にいつも出す。打ち終えるまでは押せない (2026-10-17 オーナー) -->
       <button type="button" data-topic-next class="g-btn-red sm max-md:w-full max-md:justify-center" :disabled="!topicUsed || !topicStep" :title="topicUsed ? undefined : tr('今の手を使うと押せる', 'Use this step first')" @click="next">{{ topic && topicAt + 1 >= topic.steps.length ? tr("完了", "Finish") : tr("次へ →", "Next →") }}</button>
-      <button type="button" data-topic-retry class="g-btn sm mr-auto max-md:mr-0 max-md:w-full max-md:justify-center" :disabled="!topicUsed" @click="retryStep">{{ tr("もう一度", "Try again") }}</button>
+      <button type="button" data-topic-retry class="g-btn sm mr-auto max-md:mr-0 max-md:w-full max-md:justify-center" :disabled="!canRetry" @click="retryStep">{{ tr("もう一度", "Try again") }}</button>
       <button type="button" data-topic-mods class="g-btn sm max-md:w-full max-md:justify-center" :title="tr('このベースに付く MOD (Tab でも開く)', 'Mods for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button>
       <button type="button" class="g-btn sm max-md:w-full max-md:justify-center" @click="quitLesson">{{ tr("コースをやめる", "Quit course") }}</button>
     </div>

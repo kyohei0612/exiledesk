@@ -31,11 +31,12 @@ export function startTopic(c: TopicCourse, onStart?: () => void): void {
   s.reset();
   // コースは白にしてから付ける (1 つ前に戻るの始めの状態 = 白。craft-lesson.ts)
   topicAt.value = 0;
+  loopRound.value = 1;
   topic.value = c;
 }
-export function endTopic(): void { topic.value = null; }
+export function endTopic(): void { topic.value = null; loopRound.value = 1; }
 /** 手を選び直す (押した手から) */
-export function goTopic(i: number): void { if (topic.value) topicAt.value = Math.max(0, Math.min(topic.value.steps.length, i)); }
+export function goTopic(i: number): void { loopRound.value = 1; if (topic.value) topicAt.value = Math.max(0, Math.min(topic.value.steps.length, i)); }
 /** 白に戻す手 (案内のボタン) */
 export function topicReset(): void { s.reset(); topicAt.value++; }
 // ほかのベースにしたらコースは終わり
@@ -65,7 +66,8 @@ export function keepGoing(st: { untilMax?: boolean; untilQuality?: number }, key
 }
 /** ループの手の何周目か (1 から。手が変わったら 1 に戻す) */
 export const loopRound = ref(1);
-watch(topicAt, () => { loopRound.value = 1; });
+// コースを始めた・手を選んだ・やめた時も 1 に戻す (手の番号が同じだと戻らず、始め直しても 2 周目のままだった。2026-10-18 オーナー「1 週目でスピリット 50 出る、リセットかかってない」)
+watch([topic, topicAt], () => { loopRound.value = 1; });
 export const topicDone = computed(() => !!topic.value && topicAt.value >= topic.value.steps.length);
 
 // 打った手が今の手と合えば「打ち終えた」(発現はどの候補でも。お告げは全部掛かっていること)。進むのは「次へ」で
@@ -86,6 +88,12 @@ watch(() => s.log.value.length, (n, old) => {
   if (wr && cur.step.use === "reveal" && e.added.some((m) => m.modId === wr.mod && (wr.value == null || m.values[0] === wr.value))) { topicUsed.value = true; return; }
   if (topicSub.value < chain.length) topicSub.value++; // 続きの手へ
   // ループの手は、続き (エッセンス) まで打ったら手の最初に戻して次の周へ (狙いを発現するまで手を終えない。2026-10-18 オーナー「エッセンス選んだあとクリア扱いでグレーアウト、復活させて」)
-  else if (topicStep.value?.step.loop) { topicSub.value = 0; loopRound.value++; }
+  else if (topicStep.value?.step.loop) {
+    topicSub.value = 0;
+    loopRound.value++;
+    // その手のお告げは外して、次の周でもう一度押して掛ける (掛けたままだとお告げのボタンがグレーアウトしていた。ゲームでもお告げは 1 回で消える。2026-10-18 オーナー)
+    const om = topicStep.value.step.omens ?? [];
+    s.omens.value = s.omens.value.filter((o) => !om.includes(o));
+  }
   else topicUsed.value = true;
 });

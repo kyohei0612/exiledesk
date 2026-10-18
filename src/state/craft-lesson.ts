@@ -18,10 +18,12 @@ import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency"
 import { mulberry32 } from "../services/htc/rng";
 import type { StageItem } from "../services/craft-stage/types";
 import { isRareChance } from "../utils/format-pct";
-import { allMods, catalystBoosts } from "../services/craft-stage/stage-core";
+import { catalystBoosts } from "../services/craft-stage/stage-core";
 import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
+/** チュートリアルの間はお告げを打つと消す (ゲームと同じ)。エミュレーターの既定は掛けっぱなし (2026-10-18 オーナー「デフォではかけっぱなし、チュートリアルでは分離して」) */
+watch(inLesson, (v) => { s.omenKeep.value = !v; }, { immediate: true });
 /** コースを終える (タブを押した時) */
 export function endLesson(): void { endTopic(); endCourse(); }
 /** コースをやめる: チュートリアルのタブ (コース一覧) に戻る (2026-10-17 オーナー「エミュレーターから開始になってる、タブはチュートリアルから」) */
@@ -59,6 +61,8 @@ watch(() => s.log.value.length, (n, old) => {
 /** 動作を学ぶコースの手ごとの始めの状態 (最後 = 今の手の始め) */
 interface Snap { at: number; item: typeof s.item.value; log: typeof s.log.value; startMods: typeof s.startMods.value; omens: string[] }
 const snaps: Snap[] = [];
+/** 今の手の始めの工程の長さ (もう一度が押せるかに使う) */
+const snapLogLen = ref<number | null>(null);
 const now = (): Snap => ({ at: topicAt.value, item: s.item.value, log: s.log.value, startMods: s.startMods.value, omens: [...s.omens.value] });
 // 手の番号が変わったら (打って次へ・白に戻す・一覧から選ぶ・始め)、その手の始めとして控える。戻した時は控えない
 let restoring = false;
@@ -71,6 +75,7 @@ watch([topic, topicAt], ([t], [oldT]) => {
   // 手が変わったら前の手で掛けたお告げは外す (掛けたまま次へ・一覧から選ぶと残って、反響が無いのに引き直しが出た。2026-10-17 オーナー「冒涜 7 手目で反響使ってないのにリロールできる」)
   s.omens.value = [];
   snaps.push(now());
+  snapLogLen.value = s.log.value.length;
 }, { flush: "sync" });
 
 /**
@@ -192,9 +197,10 @@ export function rigRare(key: string): void {
  * ループの手の発現の候補: 骨で未発現が付いた時に、狙いの周なら狙いの MOD が候補に出る・それより前の周なら出ない乱数を選ぶ
  * (2026-10-18 オーナー「2 周目でお目当ての冒涜 MOD が出るみたいな感じに、ここではスピリット 50」)
  */
-watch(() => !!s.item.value && !!unrevealedOf(s.item.value), (has) => {
-  const st = topic.value?.steps[topicAt.value], want = st?.wantReveal, it = s.item.value, d = s.data.value;
-  if (!has || !want || !it || !d) return;
+// 骨を打った直後に必ず選ぶ (前は「未発現がある」の切り替わりを見ていて、途中でやめて始め直すと見落として 1 周目にスピリットが出た。2026-10-18 オーナー「リセットかかってない」)
+watch(() => s.log.value.length, (n, old) => {
+  const e = s.log.value[n - 1], st = topic.value?.steps[topicAt.value], want = st?.wantReveal, it = s.item.value, d = s.data.value;
+  if (n <= (old ?? 0) || !e?.out.applied || !e.out.currency.startsWith("desecrate") || !want || !it || !d || !unrevealedOf(it)) return;
   const hit = loopRound.value >= want.from;
   for (let i = 0; i < 20000; i++) {
     const roll = Math.floor(Math.random() * 2_147_483_647);
@@ -204,18 +210,12 @@ watch(() => !!s.item.value && !!unrevealedOf(s.item.value), (has) => {
     if (hit ? got : !any) { s.rollSeed.value = roll; return; }
   }
 });
+/** もう一度が押せるか: この手で何か打った (打ち終えた・続きの途中・ループの 2 周目以降)。前は打ち終えた時だけで、ループで手の最初に戻ると押せなかった (2026-10-18) */
+export const canRetry = computed(() => topicUsed.value || topicSub.value > 0 || loopRound.value > 1 || s.log.value.length > (snapLogLen.value ?? 0));
 export function retryStep(): void {
   s.hold(null);
-  // ループの手 (上級のエッセンスやり直し) は、今のアイテムのまま手の最初の動作に戻る (2026-10-18 オーナー「流れの中のもう一度は挙動ちゃう」= 用意し直すと別のアイテムになる)
-  // 冒涜が残っている途中 (エッセンスの前) は今まで通り最初の形に戻す
-  const it = s.item.value;
-  if (topic.value?.steps[topicAt.value]?.loop && it && !allMods(it).some((m) => m.desecrated)) {
-    loopRound.value++;
-    topicUsed.value = false;
-    topicSub.value = 0;
-    snaps.push(now());
-    return;
-  }
+  // もう一度は本当に最初から (ループの手も 1 周目・用意し直したアイテムに戻す。2026-10-18 オーナー「もう一度ボタンはホントに最初から」)
+  loopRound.value = 1;
   const top = snaps[snaps.length - 1];
   if (topic.value && top) restore(top);
   // 戻したらすぐ、その手の始めの形を用意する (前は用意の前の白いアイテムが出ていた。2026-10-18)
