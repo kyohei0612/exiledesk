@@ -16,18 +16,10 @@ import { baseNameOf, tr } from "../../i18n/lang";
 import { jaTypeName } from "../../services/trade2/localize";
 import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
+import { courseShown as shown } from "../../services/craft-stage/course-release";
+const PRACTICE_OPEN = false;
 
 const t2 = (x: JaEn): string => tr(x[0], x[1]);
-/** オーナーの合格が出た段だけ出す (開発版でも。2026-10-17 オーナー「他まだ合格できてないから非表示、即出せるように」)。合格したら足す */
-const OPEN_LEVELS: number[] = [1];
-const PRACTICE_OPEN = false;
-/** 本番に出すコース (合格したコースだけ。2026-10-17 基本のオーブだけ OK、エッセンスはまだ)。手元の dev は OPEN_LEVELS の段を全部 */
-const RELEASED = new Set(["orbs", "essence", "desecrate", "omens", "catalyst", "emotion", "adv-fracture", "adv-essence-desecrate", "adv-two-essences", "adv-jewel-five", "adv-quality-chaos"]);
-const DEV_BUILD = import.meta.env.DEV; // 開発版 (deploy:web-dev) も本番と同じ表示 (2026-10-17 オーナー「表示は本番用でおk」)。手元の dev だけ全部
-/** 開発版 (deploy:web-dev) でだけ出す、オーナーに見てもらい中のコース (合格したら RELEASED へ移す) */
-const REVIEW = new Set<string>([]);
-const DEV_PREVIEW = import.meta.env.VITE_DEV_PREVIEW === "1";
-const shown = (c: TopicCourse): boolean => (DEV_BUILD ? OPEN_LEVELS.includes(c.level) : RELEASED.has(c.id)) || (DEV_PREVIEW && REVIEW.has(c.id));
 const LEVELS: Array<{ n: 1 | 2 | 3 | 4; label: JaEn; note: JaEn; chip: string; bar: string; band: string; num: string; text: string }> = [
   { n: 1, label: ["入門", "Intro"], note: ["はじめての人はここから", "Start here"], chip: "bg-emerald-500/25 text-emerald-100", bar: "bg-emerald-400/70", band: "bg-gradient-to-r from-emerald-500/25 via-emerald-500/10 to-transparent", num: "bg-emerald-400 text-black", text: "text-emerald-100" },
   { n: 2, label: ["初級", "Easy"], note: ["冒涜とお告げ", "Desecration and omens"], chip: "bg-sky-500/25 text-sky-100", bar: "bg-sky-400/70", band: "bg-gradient-to-r from-sky-500/25 via-sky-500/10 to-transparent", num: "bg-sky-400 text-black", text: "text-sky-100" },

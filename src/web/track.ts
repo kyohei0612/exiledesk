@@ -72,6 +72,9 @@ function screen(to: string): void {
 }
 export function track(name: string, extra?: string): void {
   if (name === "mode:gem-corrupt") screen("gem-corrupt");
+  // 使い方・コツのページ・コースのページ (2026-10-18、web/page.ts)
+  if (name === "page:guide") screen("guide");
+  if (name === "page:course") screen(`course:${extra ?? ""}`);
   buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
   if (trail.length > 40) trail.shift();

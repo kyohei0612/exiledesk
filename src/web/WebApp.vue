@@ -5,7 +5,7 @@
  * アプリ版の App.vue にある起動の処理 (更新・PoB・画像パック・ログイン・見回り) は Web では要らないので載せない。
  * 画面は 1660 幅で組んだ絵を窓に合わせて拡大縮小する (アプリと同じ。狭い時は縮める)
  */
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { marketStore } from "../state/market-store";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import { craftStage } from "../state/craft-stage";
@@ -25,6 +25,10 @@ import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import InstallButton from "./InstallButton.vue";
 import LangSwitch from "../components/LangSwitch.vue";
+import { openGuide } from "./page";
+import { inLesson } from "../state/craft-lesson";
+
+const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);
 
 const feedbackOpen = ref(false);
 /**
@@ -53,11 +57,10 @@ onBeforeUnmount(() => {
   document.removeEventListener("visibilitychange", onVisible);
 });
 /**
- * 上の「使い方」は使い方の動画 (POE2Tube の本編) を必ず別タブで開く。2026-10-12 オーナー「はじめにのところを使い方ってボタンに変えちゃう」
+ * 上の「使い方」は使い方の動画 (POE2Tube の本編) を必ず別タブで開く (2026-10-18 から「使い方・コツ」のページ。動画はその中のリンク、web/page.ts)。2026-10-12 オーナー「はじめにのところを使い方ってボタンに変えちゃう」
  * (前は「はじめに」の窓。初めて来た人にも勝手には出さない 2026-10-10)。スマホは youtu.be なので YouTube のアプリがあればアプリで開く。
  * WELCOME_KEY は初めて来た人の判定 (更新内容を出さない) にだけ使う
  */
-const HOWTO_URL = "https://youtu.be/L_2lhU8Hy_U";
 const WELCOME_KEY = "exiledesk.web.welcomed";
 let firstVisit = false;
 try { firstVisit = !localStorage.getItem(WELCOME_KEY); localStorage.setItem(WELCOME_KEY, "1"); } catch { /* 無くてよい */ }
@@ -113,7 +116,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <button type="button" data-rec-part="header-version" class="g-plain opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
       <span v-if="!phone" data-rec-part="header-lang" class="shrink-0 whitespace-nowrap"><LangSwitch /></span>
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
-      <a data-rec-part="header-help" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :href="HOWTO_URL" target="_blank" rel="noopener noreferrer" :title="tr('使い方の動画 (YouTube)', 'How-to video (YouTube, Japanese)')">{{ tr("使い方", "How to use") }}</a>
+      <!-- 使い方・コツのページ (動画へのリンク + チュートリアルのコース。2026-10-18 オーナー「チュートリアルは使い方にしまう」) -->
+      <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" @click="openGuide">{{ tr("使い方・コツ", "Guide & Tips") }}</button>
       <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="feedbackOpen = true">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
       <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>

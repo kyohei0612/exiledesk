@@ -41,6 +41,7 @@ import VideoStage from "./VideoStage.vue";
 import StageModList from "./StageModList.vue";
 import StageSimPanel from "./StageSimPanel.vue";
 import StageCourses from "./StageCourses.vue";
+import GuideVideoCard from "./GuideVideoCard.vue";
 import StageCourseGuide from "./StageCourseGuide.vue";
 import StageTopicGuide from "./StageTopicGuide.vue";
 import VideoExtra from "./VideoExtra.vue";
@@ -244,6 +245,7 @@ function scrollToReveal(): void { scrollToTop(document.querySelector("[data-reve
  */
 /** アプリ版だけ (Web 版は POE2Tube 用の JSON・動画モードを出さない) */
 const inApp = isTauriRuntime();
+const guidePage = computed(() => !inApp && s.mode.value === "tutorial" && !inLesson.value && !s.replay.value); // Web の使い方・コツのページ (コース一覧)
 // ベースを選んだか・選ぶ (設定の欄と共通、use-stage-base.ts)
 const { handNoBase, simNoBase, preRecipeOpen, startFromRecipe } = useStageBase();
 /** モードのタブ。Web はシミュレーターを作っている途中なのでタブごと出さない (2026-10-16 オーナー「まだシミュレーター開発してないから出さなくておけ、エミュレーターと掲示板のみ」) */
@@ -254,6 +256,7 @@ const MODE_TABS = SIM_LOCKED ? ([["hand", "エミュレーター"]] as const) : 
  */
 const GemCorruptWebPanel = defineAsyncComponent(() => import("../gem-corrupt/GemCorruptWebPanel.vue"));
 const gemCorruptOn = ref(false);
+watch(() => s.mode.value === "tutorial" || inLesson.value, (v) => { if (v) gemCorruptOn.value = false; }); // 使い方・コツを開いたらジェムコラプトは閉じる (web/page.ts)
 /** 本番には出さない (2026-10-16 オーナー「ジェムコラプトは内緒」)。開発版 (pnpm dev:web) だけタブを出す */
 const GEM_CORRUPT_SHOWN = import.meta.env.DEV;
 const gemCorrupt = computed(() => GEM_CORRUPT_SHOWN && !inApp && gemCorruptOn.value && !s.replay.value);
@@ -268,7 +271,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
-        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトステージ", "Craft Stage") }}</h1>
+        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : tr("クラフトステージ", "Craft Stage") }}</h1>
         <p v-if="gemCorrupt" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ジェムをコラプトして レベル 21 · 品質 23% を狙う時の収支。売値 3 つを入れるだけ (素材はカレンシーの相場)", "Profit of corrupting a gem for level 21 / 23% quality. Just enter 3 sell prices (materials use currency market prices)") }}</p>
         <p v-else-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す", "Pick a base and target mods, plan the steps, then craft hundreds of copies to get the cost per item") }}
           <HelpTip :title="tr('シミュレーター', 'Simulator')" :width="320">
@@ -276,7 +279,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
             <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("確率はクラフト計算機と同じ規則。値段は今の相場。", "Chances follow the craft calculator's rules. Prices are current market prices.") }}</p>
           </HelpTip>
         </p>
-        <p v-else-if="(s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシーを 1 つずつ実際に使って、どう動くかを覚えます", "Use each currency for real, one at a time, to learn what it does") }}</p>
+        <p v-else-if="(s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ guidePage ? tr("使い方の動画と、カレンシーの動きを実際に使って覚えるコース", "A how-to video and courses where you learn each currency by using it") : tr("カレンシーを 1 つずつ実際に使って、どう動くかを覚えます", "Use each currency for real, one at a time, to learn what it does") }}</p>
         <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う。スマホは縦に積む (横に並べると題が 2 行に折れる) -->
@@ -294,9 +297,9 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       <div class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
         <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0] && !gemCorrupt && !inLesson" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] && !gemCorrupt && !inLesson ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); endLesson(); s.mode.value = t[0]; setGemCorrupt(false)">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
         <!-- ジェムコラプト (Web 版だけ、2026-10-16) -->
-        <button v-if="!inApp && GEM_CORRUPT_SHOWN" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
-        <!-- クイズのチュートリアル (2026-10-16)。開発版だけ (本番はシミュレーターと同じく閉じたまま出さない) -->
-        <button v-if="!TUTORIAL_LOCKED" type="button" role="tab" :aria-selected="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt ? 'on' : ''" @click="s.hold(null); endLesson(); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}</button><!-- β は外した (入門〜中級の 6 コースを公開。2026-10-18 オーナーの UI 点検) -->
+        <button v-if="!inApp && GEM_CORRUPT_SHOWN" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); if (s.mode.value === 'tutorial' || inLesson) { endLesson(); s.mode.value = 'hand'; } setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
+        <!-- Web はタブに出さず、ヘッダーの「使い方・コツ」のページへ (2026-10-18 オーナー「1 回きりでしょこんなもん使うの、使い方にしまう」) -->
+        <button v-if="!TUTORIAL_LOCKED && inApp" type="button" role="tab" :aria-selected="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt ? 'on' : ''" @click="s.hold(null); endLesson(); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}</button><!-- β は外した (入門〜中級の 6 コースを公開。2026-10-18 オーナーの UI 点検) -->
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
       <div v-show="!gemCorrupt" id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
@@ -351,6 +354,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
 
     <!-- 手で打つ画面と行き来しても入れた物が残るように、一度ベースを選んだら消さずに隠す (2026-10-05 オーナー「ステージと実験行き来できるように、行き来したらもっかい最初からになった」) -->
     <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
+    <GuideVideoCard v-if="guidePage" />
     <StageCourses v-if="s.ready.value && s.mode.value === 'tutorial' && !s.replay.value && !TUTORIAL_LOCKED" class="mb-4" /><!-- 動画のクラフトのコース (2026-10-17、白から自分で作る) -->
     <!-- ベースを選んだ後に出る中身はふわっと出す (2026-10-10 オーナー「切り替えがワープみたい」) -->
     <Transition name="stage-fade" appear>

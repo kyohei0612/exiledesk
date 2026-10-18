@@ -1,6 +1,5 @@
 // Web 版の入口 (2026-10-07)。アプリ版の App.vue は使わず、クラフトステージだけを載せる殻 (WebApp.vue) を出す
 import { createApp, watchEffect } from "vue";
-import { tr } from "../i18n/lang";
 import "../style.css";
 import WebApp from "./WebApp.vue";
 import { startTracking } from "./track";
@@ -10,6 +9,7 @@ import { applyNoLogParam, noLog } from "../utils/no-log";
 import { initRecParts } from "../utils/rec-mode";
 import { setMarketLoader } from "../state/market-store";
 import { loadBoot } from "./boot";
+import { pageTitle, startPages } from "./page";
 import type { CurrencyItem, League } from "../api/poe2scout";
 
 // この端末は記録しない (?nolog=1 / 0 で切り替え、no-log.ts)。印を読んでから記録を始める
@@ -25,7 +25,9 @@ setMarketLoader(async () => {
 });
 createApp(WebApp).mount("#app");
 // タブの題は言語に合わせる (web.html の題は日本語の既定。2026-10-10 英語の巡回で見つかった)
-watchEffect(() => { document.title = tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator"); });
+// ページ (使い方・コツ・コース) ごとに題を変える (web/page.ts)
+watchEffect(() => { document.title = pageTitle.value; });
+startPages();
 // 分析用の記録 (開発中は送らない)
 if (!import.meta.env.DEV) startLogSender("web");
 // ホーム画面に追加 (PWA) とオフライン (public/sw.js)。開発中は登録しない (2026-10-17)
