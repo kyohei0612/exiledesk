@@ -252,8 +252,8 @@ const guidePage = computed(() => !inApp && s.mode.value === "tutorial" && !inLes
 // ベースを選んだか・選ぶ (設定の欄と共通、use-stage-base.ts)
 const { handNoBase, simNoBase, preRecipeOpen, startFromRecipe } = useStageBase();
 // Web はベース選びを別のページに (?page=base、StageBasePage.vue)。まだ選んでいない時もそのページ (エミュレーターだけ。シミュレーターは今まで通り)
-watch(() => PAGES_ON && s.mode.value === "hand" && handNoBase.value && !s.replay.value, (u) => { baseUnpicked.value = u; }, { immediate: true });
-const subPage = computed(() => PAGES_ON && !s.replay.value && s.mode.value === "hand" && !inLesson.value && (basePage.value || baseUnpicked.value));
+watch(() => PAGES_ON && !s.replay.value && ((s.mode.value === "hand" && handNoBase.value) || simNoBase.value), (u) => { baseUnpicked.value = u; }, { immediate: true }); // シミュレーターも (2026-10-18 オーナー「開発版でもベースのとこは広告出す想定で」)
+const subPage = computed(() => PAGES_ON && !s.replay.value && (s.mode.value === "hand" || s.mode.value === "sim") && !inLesson.value && (basePage.value || baseUnpicked.value));
 /** モードのタブ。Web はシミュレーターを作っている途中なのでタブごと出さない (2026-10-16 オーナー「まだシミュレーター開発してないから出さなくておけ、エミュレーターと掲示板のみ」) */
 const MODE_TABS = SIM_LOCKED ? ([["hand", "エミュレーター"]] as const) : ([["hand", "エミュレーター"], ["sim", "シミュレーター"]] as const);
 /**
