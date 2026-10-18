@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.566",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルの「お告げを学ぶ」のアイコンをお告げの絵に",
+    "en": "Tutorial: the “Learn omens” card now shows an omen icon"
+   }
+  ]
+ },
+ {
   "v": "0.1.565",
   "date": "2026-10-18",
   "items": [
@@ -593,30 +605,6 @@
     "area": "",
     "text": "カオススパム確率機でアイテムレベルを変えて続けた時、手順に「アイテムレベルを変える手」が入るように (再生すると前の手まで別物になっていた)",
     "en": "Changing the item level while using the chaos spam tool now records an \"item level change\" step (replays used to produce a different item)"
-   }
-  ]
- },
- {
-  "v": "0.1.526",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: 品質で伸びた数値を四捨五入に (前は切り捨て、Craft of Exile と同じ)",
-    "en": "Emulator: values boosted by quality are now rounded (previously truncated, same as Craft of Exile)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "フラックス・アルダーのルーンは、ゲームの変換表にある MOD だけを変えるように (表に無い MOD は変わらない)",
-    "en": "Flux and Aldur runes now only convert mods in the game's conversion table (other mods stay unchanged)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "深淵のエッセンスを、冒涜の MOD があるアイテムにも使えるように",
-    "en": "Essence of the Abyss can now be used on items with a Desecrated mod"
    }
   ]
  }
