@@ -21,7 +21,9 @@ const BOOTS_FR: Force[] = [BT("MovementVelocity", "T2"), BT("IncreasedLife", "T3
 const CONTEMPT = "force:Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed|T1|n";
 /** ブリーチのエッセンスの「品質の最大値 +20%」を置く手 */
 const BREACH = "force:Amulets/PerfectEssence_LocalMaximumQuality|T1|e";
-/** 不在のアミュレット (プレ 2・サフィ 2): 固定した最大マナ + スペルスキルのレベル・キャストスピード。prep の BREACH でプレフィックスが満杯になる */
+/** 強化のエッセンスの「グローバル防御」を置く手 */
+const ENHANCE = "force:Amulets/PerfectEssence_AllDefences|T1|e";
+/** 不在のアミュレット (プレ 2・サフィ 2): 固定した最大マナ + スペルスキルのレベル・キャストスピード。prep の ENHANCE でプレフィックスが満杯になる */
 const ABSENT: Force[] = [AM("IncreasedMana", "T1", { fractured: true }), AM("GlobalIncreaseSpellSkillGemLevel", "T1"), AM("IncreasedCastSpeed", "T2")];
 
 export const ADV_COURSES: TopicCourse[] = [
@@ -44,25 +46,22 @@ export const ADV_COURSES: TopicCourse[] = [
   },
   {
     id: "adv-essence-desecrate", level: 4, title: ["冒涜をエッセンスでやり直す", "Redo Desecrations with an essence"], base: "Absent Amulet", itemLevel: 82,
-    learn: ["不在のアミュレットで、骨 → 発現 → ブリーチのエッセンスを何度でも。光のお告げも結晶化のお告げもいらない", "On an Absent Amulet: bone → reveal → Breach essence, as many times as you like. No Omen of Light or crystallisation needed"],
-    // 不在のアミュレットの動画 (mjaMYCYl-PI 24:31)。2026-10-18 オーナー「付く方のエッセンスの枠が埋まってるから必ず邪魔な方の MOD を消してくれる、それに合ったエッセンスを使うと無限」「同じ動作 3 回」
+    learn: ["不在のアミュレットで、骨 → 発現 → 強化のエッセンスを何度でも。光のお告げも結晶化のお告げもいらない", "On an Absent Amulet: bone → reveal → Enhancement essence, as many times as you like. No Omen of Light or crystallisation needed"],
+    // 不在のアミュレットの動画 (mjaMYCYl-PI 24:31)。2026-10-18 オーナー「付く方のエッセンスの枠が埋まってるから必ず邪魔な方の MOD を消してくれる、それに合ったエッセンスを使うと無限」「同じ動作 2 回くらい」「ブリーチだとややこしいから他のエッセンスで」
     steps: [
       { ...ALWAYS(H("desecrate", ["骨 → 発現 → エッセンスで元に戻る", "Bone → reveal → essence puts it back"], [
-        ["不在のアミュレットはプレフィックスが 2 つまで。今は「固定した最大マナ」と「ブリーチのエッセンス」で満杯", "Absent Amulets hold only 2 prefixes. Now: a Fractured Mana mod + the Breach essence mod (full)"],
-        ["左のネクロマンシーの骨: 満杯なので、固定していない方 (ブリーチ) が冒涜に入れ替わる", "Bone with Sinistral Necromancy: prefixes are full, so the unfractured one (Breach) becomes the Desecration"],
+        ["不在のアミュレットはプレフィックスが 2 つまで。今は「固定した最大マナ」と「強化のエッセンス」で満杯", "Absent Amulets hold only 2 prefixes. Now: a Fractured Mana mod + the Enhancement essence mod (full)"],
+        ["左のネクロマンシーの骨: 満杯なので、固定していない方 (強化) が冒涜に入れ替わる", "Bone with Sinistral Necromancy: prefixes are full, so the unfractured one (Enhancement) becomes the Desecration"],
         ["発現して、狙い (スピリットなど) が無ければほかを選ぶ", "Reveal; if your target (Spirit etc.) isn't there, pick another"],
-        ["ブリーチのエッセンス: 付ける側 (プレフィックス) が満杯なので、プレフィックスから消す。固定した MOD は消えないので、消えるのは必ず冒涜。結晶化のお告げはいらない", "Breach essence: its side (prefix) is full, so it removes a prefix. The Fractured one stays, so it's always the Desecration. No crystallisation omen needed"],
+        ["強化のエッセンス: 付ける側 (プレフィックス) が満杯なので、プレフィックスから消す。固定した MOD は消えないので、消えるのは必ず冒涜。結晶化のお告げはいらない", "Enhancement essence: its side (prefix) is full, so it removes a prefix. The Fractured one stays, so it's always the Desecration. No crystallisation omen needed"],
         ["これで最初と同じ形に戻る。光のお告げを使わずに、何回でも冒涜をやり直せる", "You're back to the start: redo the Desecration as often as you like, without Omen of Light"],
-      ], [BREACH])), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
-      chain: [S("reveal", ["発現", "Reveal"]), S("ess:the Breach:perfect", ["ブリーチで冒涜を消す", "Breach removes the Desecration"])] },
+      ], [ENHANCE])), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
+      chain: [S("reveal", ["発現", "Reveal"]), S("ess:Enhancement:perfect", ["強化で冒涜を消す", "Enhancement removes the Desecration"])] },
       { ...H("desecrate", ["2 回目", "2nd time"], [
-        ["もう一度: 骨 → 発現 → ブリーチ。毎回、最初と同じ形に戻る", "Again: bone → reveal → Breach. It returns to the same shape every time"],
-      ], [BREACH]), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
-      chain: [S("reveal", ["発現", "Reveal"]), S("ess:the Breach:perfect", ["ブリーチで冒涜を消す", "Breach removes the Desecration"])] },
-      { ...H("desecrate", ["3 回目", "3rd time"], [
-        ["3 回目。実際は狙いが出るまで同じ動作を続けて、出たらそれを選んで終わり (ブリーチは打たない)", "3rd time. In practice, repeat until your target shows up, then pick it and stop (no Breach)"],
-      ], [BREACH]), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
-      chain: [S("reveal", ["発現", "Reveal"]), S("ess:the Breach:perfect", ["ブリーチで冒涜を消す", "Breach removes the Desecration"])] },
+        ["もう一度: 骨 → 発現 → 強化。毎回、最初と同じ形に戻る", "Again: bone → reveal → Enhancement. It returns to the same shape every time"],
+        ["実際は狙いが出るまで同じ動作を続けて、出たらそれを選んで終わり (強化は打たない)", "In practice, repeat until your target shows up, then pick it and stop (no Enhancement)"],
+      ], [ENHANCE]), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
+      chain: [S("reveal", ["発現", "Reveal"]), S("ess:Enhancement:perfect", ["強化で冒涜を消す", "Enhancement removes the Desecration"])] },
     ],
   },
   {
