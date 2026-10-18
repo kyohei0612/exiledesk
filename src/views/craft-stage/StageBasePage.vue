@@ -11,6 +11,7 @@ import { craftStage as s, SIM_LOCKED } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
 import { useStageBase } from "./use-stage-base";
+import { glideRect, scrollBoxOf } from "../../utils/keep-place";
 import StageRecipeStart from "./StageRecipeStart.vue";
 
 defineProps<{ phone: boolean }>();
@@ -27,6 +28,21 @@ function pick(en: string): void {
   const first = baseUnpicked.value;
   basePage.value = false;
   if (first || en !== s.base.value) pickSimBase(en);
+  if (s.mode.value === "sim") setTimeout(revealSimMods, 120);
+}
+/**
+ * シミュレーター: ベースを選んだら、すぐ狙う MOD を選べるように、2 の枠の下の線 + 少しの隙間が見える所まで送る
+ * (2026-10-18 オーナー「MOD の枠の下枠と例の隙間少し開けたところまで進んであげんと可哀そう」。ベースの一覧の reveal と同じ考え)。枠が画面より高ければ枠の上で止める
+ */
+function revealSimMods(): void {
+  const el = document.querySelector<HTMLElement>("[data-sim-cur]");
+  if (!el) return;
+  const box = scrollBoxOf(el);
+  const r = el.getBoundingClientRect();
+  const viewTop = box ? box.getBoundingClientRect().top : 0, viewH = box ? box.clientHeight : window.innerHeight;
+  const over = r.bottom + 16 - (viewTop + viewH);
+  const d = Math.min(over, r.top - viewTop - 8);
+  if (d > 0) void glideRect(box, el, d, 320);
 }
 // 開いたら一番上から、戻ったら前の位置へ (ページを移ったのと同じに。2026-10-12 広告のお試しと同じ)
 let before = 0;
