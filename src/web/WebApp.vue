@@ -158,16 +158,16 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <div v-if="phone" class="mb-4 flex justify-center pt-2 empty:hidden"><AdSlot id="phone-top" :w="320" :h="100" :tick="pageTick" /></div>
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
-      <!-- 要望・バグを送るのページ。PC は左に縦長の広告の枠、右の列はそのまま -->
-      <section v-if="feedbackPage" data-feedback-page class="flex min-w-0 flex-1 items-start gap-6 p-4">
+      <!-- クラフト画面以外のページ: 両脇に縦長の枠 (ページを移るたびに出し直す、60 秒に 1 回まで) -->
+      <div v-if="!craftPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pl-4 empty:hidden"><AdSlot id="page-left" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
+      <!-- 要望・バグを送るのページ (両脇の枠の間の真ん中にフォーム) -->
+      <section v-if="feedbackPage" data-feedback-page class="flex min-w-0 flex-1 items-start justify-center gap-6 p-4">
         <div class="min-w-0 max-w-[48rem] flex-1">
           <button type="button" data-feedback-back class="g-btn sm mb-3 max-md:min-h-10" @click="closeFeedback">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
           <FeedbackDialog page open :for-id="imageAskFor" @close="closeFeedback" />
           <WebFooter class="mt-10" />
         </div>
       </section>
-      <!-- クラフト画面以外のページ: 両脇に縦長の枠 (ページを移るたびに出し直す、60 秒に 1 回まで) -->
-      <div v-if="!craftPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pl-4 empty:hidden"><AdSlot id="page-left" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
       <CraftStage v-show="!feedbackPage" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <WebFooter class="-mx-4" />
