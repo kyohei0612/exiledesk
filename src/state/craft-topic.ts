@@ -24,6 +24,7 @@ export function topicNext(): void { if (topic.value && topicUsed.value) topicAt.
 
 export function startTopic(c: TopicCourse, onStart?: () => void): void {
   onStart?.();
+  s.stashEmu(); // エミュレーターの状態を取っておく (チュートリアルを抜けたら戻す)
   topic.value = null;
   s.base.value = c.base;
   s.itemLevel.value = c.itemLevel;

@@ -21,6 +21,7 @@ export const courseBases = ref(1);
 function placeStart(c: CraftCourse): void {
   const d = s.data.value;
   if (!d) return;
+  s.stashEmu(); // エミュレーターの状態を取っておく (チュートリアルを抜けたら戻す)
   s.reset();
   const st = c.recipe.start;
   const extra = { ...("sockets" in st && st.sockets ? { sockets: st.sockets } : {}), ...("runes" in st && st.runes?.length ? { runes: st.runes } : {}) };

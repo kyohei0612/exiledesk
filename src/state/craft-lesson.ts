@@ -24,6 +24,8 @@ import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecr
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** チュートリアルの間はお告げを打つと消す (ゲームと同じ)。エミュレーターの既定は掛けっぱなし (2026-10-18 オーナー「デフォではかけっぱなし、チュートリアルでは分離して」) */
 watch(inLesson, (v) => { s.omenKeep.value = !v; }, { immediate: true });
+// チュートリアルを抜けたら、取っておいたエミュレーターの状態に戻す (2026-10-18 オーナー「エミュでやってた手がなくなる、分離して」)
+watch(inLesson, (v, was) => { if (was && !v) s.unstashEmu(); });
 /** コースを終える (タブを押した時) */
 export function endLesson(): void { endTopic(); endCourse(); }
 /** コースをやめる: チュートリアルのタブ (コース一覧) に戻る (2026-10-17 オーナー「エミュレーターから開始になってる、タブはチュートリアルから」) */

@@ -137,6 +137,8 @@ export const LOG_KEEP = 50;
  * 消した手も手順に要る (無いと再生で始めの方の手が抜け、送った人のアイテムにならなかった。2026-10-16 要望 0ce15a82 の決闘のワンド)
  */
 const dropped = shallowRef<Array<{ step: PlanStep; index: number }>>([]);
+/** チュートリアルの間に取っておくエミュレーターの状態 (stashEmu / unstashEmu) */
+let emuStash: { base: string; itemLevel: number; seed: number; startMods: Force[]; item: StageItem | null; log: PlayedStep[]; dropped: Array<{ step: PlanStep; index: number }>; omens: string[] } | null = null;
 /** エミュレーターで再生するクイズのレシピ (開いているパターン、無ければ答えのある最初のパターン)。今のベースと狙う MOD で組む */
 const handQuiz = computed<QuizRecipe | null>(() => {
   const d = data.value;
@@ -394,6 +396,29 @@ export const craftStage = {
    * カオススパムの前の状態を控える / 戻す (2026-10-16 カオススパムモード)。スパムは何百手にもなり、工程は 50 手で古い方が消えるので、
    * 1 手戻すではなく「スパムの前に戻す」で丸ごと戻す (アイテム・工程・消えた工程・お告げ)
    */
+  /**
+   * エミュレーターの状態を取っておく / 戻す (チュートリアルの間)。コースを始めると白に戻すので、エミュレーターでやっていた物が消えていた
+   * (2026-10-18 オーナー「チュートリアルでやったやつエミュレーターに連動してる、分離して」)。取っておくのは最初の 1 回 (コースからコースへ移っても持ち続ける)
+   */
+  stashEmu(): void {
+    if (emuStash || replay.value) return;
+    emuStash = { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, item: item.value, log: log.value, dropped: dropped.value, omens: [...omens.value] };
+  },
+  unstashEmu(): void {
+    const x = emuStash;
+    emuStash = null;
+    if (!x) return;
+    held.value = null;
+    base.value = x.base;
+    itemLevel.value = x.itemLevel;
+    seed.value = x.seed;
+    startMods.value = x.startMods;
+    item.value = x.item;
+    log.value = x.log;
+    dropped.value = x.dropped;
+    omens.value = x.omens;
+    rollSeed.value = freshSeed();
+  },
   snapshot(): { item: StageItem | null; log: typeof log.value; dropped: typeof dropped.value; omens: string[] } {
     return { item: item.value, log: log.value, dropped: dropped.value, omens: omens.value };
   },
