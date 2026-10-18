@@ -25,7 +25,7 @@ import { track } from "../../utils/track";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import { tr } from "../../i18n/lang";
 import { aimLabel } from "../../services/craft-stage/mod-list";
-import { playSfx } from "../../utils/sfx";
+import { playSfx, playUseSfx } from "../../utils/sfx";
 import { itemLevelKey } from "../../services/craft-stage/apply-currency";
 
 const targets = computed<AimTarget[]>(() => spamAims.value.map((a) => ({ modId: a.modId, minTierIndex: a.minTierIndex })));
@@ -224,6 +224,8 @@ function finish(hit: boolean, reason: string | null): void {
   const st = stats.value && statsFresh() ? stats.value : null;
   resultItem = s.item.value;
   result.value = { sig: sig(), uses: l.uses, applied: l.applied, hit, reason, rank: hit && st ? rankOf(st, l.uses) : null };
+  // 付いた時の音 (スパムの間は鳴らさず、付いた 1 回だけ。2026-10-19 オーナー「付いた時の SE が無い」)。かなりの強運は下の watch が珍しい段の音
+  if (hit && !(result.value.rank != null && result.value.rank <= 10)) playUseSfx(key.value, false);
   // 100 人の結果がまだ無ければ、スパムの前の状態から出して運を比べる
   if (hit && !st && startItem) {
     simulate(startItem, false, startItem);

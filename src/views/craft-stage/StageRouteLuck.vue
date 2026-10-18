@@ -11,15 +11,15 @@ import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stag
 import { routeKey, routeRun, type RaceRow, type RaceTarget, type RouteRun } from "../../services/craft-stage/route-race";
 import { medianOf, rankOf, unluckyOf, type SpamStats } from "../../services/craft-stage/chaos-spam";
 import { mulberry32 } from "../../services/htc/rng";
-import { fillModText } from "../../services/htc/mod-text";
 import { baseArtFile } from "../../services/craft-stage/base-art";
 import { displayCurrency } from "../../state/display-currency";
 import { luck, packCard, rankWord, sendShare, shareOrigin, shortIdOf } from "./use-spam-share";
-import { playSfx } from "../../utils/sfx";
+import { playSfx, playUseSfx } from "../../utils/sfx";
 import { track } from "../../utils/track";
 import { logRecord } from "../../utils/log-record";
 import { isEn, tr } from "../../i18n/lang";
-import type { StageItem } from "../../services/craft-stage/types";
+import type { StageItem, StageMod } from "../../services/craft-stage/types";
+import StageItemCard from "./StageItemCard.vue";
 
 const props = defineProps<{ row: RaceRow; target: RaceTarget; ilvl: number; label: string; routeName: string }>();
 const emit = defineEmits<{ close: [] }>();
@@ -39,11 +39,22 @@ const spamming = ref(false);
 const result = ref<{ hit: boolean; n: number; cost: number; rank: number | null; reason: string | null } | null>(null);
 function fresh(): void {
   stop();
+  item.value = null;
   run = routeRun(s.data.value!, s.base.value, props.ilvl, props.target, props.row.route, props.row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf);
   sync();
   result.value = null;
 }
-function sync(): void { item.value = run?.item ?? null; n.value = run?.n ?? 0; cost.value = run?.cost ?? 0; last.value = run?.last ?? null; }
+/** 直前の描き直しから付いた・消えた MOD (札の緑と取り消し線。エミュレーターの 1 手分と同じ見せ方) */
+const added = ref<StageMod[]>([]);
+const removed = ref<StageMod[]>([]);
+const sameMod = (a: StageMod, b: StageMod): boolean => a.modId === b.modId && a.tierIndex === b.tierIndex && a.values.join() === b.values.join();
+function sync(): void {
+  const before = item.value, now = run?.item ?? null;
+  const was = before ? [...before.prefixes, ...before.suffixes] : [], is = now ? [...now.prefixes, ...now.suffixes] : [];
+  added.value = before && now ? is.filter((m) => !was.some((x) => sameMod(x, m))) : [];
+  removed.value = before && now ? was.filter((m) => !is.some((x) => sameMod(x, m))) : [];
+  item.value = now; n.value = run?.n ?? 0; cost.value = run?.cost ?? 0; last.value = run?.last ?? null;
+}
 watch(() => [props.row, props.target, props.ilvl], fresh, { immediate: true });
 
 let raf = 0, t0 = 0, lastT = 0;
@@ -77,6 +88,8 @@ function finish(reason: string | null): void {
   if (!run) return;
   const hit = run.hit();
   result.value = { hit, n: run.n, cost: run.cost, rank: hit ? rankOf(stats.value, run.n) : null, reason };
+  // 付いた時の音 (押しっぱなしの間は鳴らさず、付いた 1 回だけ。2026-10-19 オーナー「付いた時の SE が無い」)。かなりの強運は下の watch が珍しい段の音を鳴らす
+  if (hit && !(result.value.rank != null && result.value.rank <= 10) && run.last) playUseSfx(run.last.key, false);
   if (hit || reason) {
     track("spam:run", hit ? "hit" : "stop");
     logRecord("emu_spam", { base: s.base.value, key: mainKey.value, route: props.row.route, aims: [`${props.target.modId}#${props.target.minTierIndex}`], uses: run.n, hit });
@@ -88,18 +101,8 @@ onBeforeUnmount(() => cancelAnimationFrame(raf));
 const isLucky = computed(() => !!result.value?.hit && result.value.rank != null && result.value.rank <= 10);
 watch(isLucky, (v) => { if (v) playSfx("rare", 1.5); });
 
-/** アイテムの MOD の行 (狙いは緑) */
-const lines = computed(() => {
-  const it = item.value, d = s.data.value;
-  if (!it || !d) return [];
-  return [...it.prefixes, ...it.suffixes].map((m) => {
-    const mod = d.mods.get(m.modId);
-    const hit = m.modId === props.target.modId && m.tierIndex >= props.target.minTierIndex;
-    return { key: `${m.side}:${m.modId}`, text: mod ? fillModText(mod, m.values.map((v) => [v, v])).replace(/\n/g, " / ") : m.modId, tier: m.tierName, side: m.side, hit };
-  });
-});
-const rarityColor = computed(() => (item.value?.rarity === "rare" ? "text-[var(--color-rarity-rare)]" : item.value?.rarity === "magic" ? "text-[var(--color-rarity-magic)]" : "text-[var(--exile-color-text-primary)]"));
 const money = (x: number): string => displayCurrency.money(x);
+const fmt = (v: number | null): string => (v == null ? tr("付かない人が多い", "Most never hit") : tr(`${v.toLocaleString()} 手`, `${v.toLocaleString()} uses`));
 const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : result.value && !result.value.hit ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
 
 // ---- シェア (計算機と同じカード。setup に道と狙いを入れて、開いた人に同じ運試しを出す: state/spam-share-open.ts) ----
@@ -135,18 +138,10 @@ function shareX(e: MouseEvent): void {
 
 <template>
   <div data-route-luck class="g-section mt-4 grid gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-    <!-- 左: この欄のアイテム (始めの状態から、打つたびに変わる) -->
-    <div class="min-w-0 rounded-md border border-[var(--exile-color-border-brass)]/40 bg-black/50 px-3 py-2 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.7)]">
-      <p class="text-[13px] font-bold" :class="rarityColor">{{ s.item.value?.baseJa ?? s.base.value }}</p>
-      <p class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`アイテムレベル ${ilvl}`, `Item level ${ilvl}`) }}</p>
-      <div class="my-1.5 h-px bg-gradient-to-r from-transparent via-[var(--exile-color-border-brass)]/50 to-transparent" />
-      <ul class="flex min-h-[4.5rem] flex-col justify-center gap-0.5 text-[12px]">
-        <li v-for="l in lines" :key="l.key" class="flex items-center justify-center gap-1.5" :class="l.hit ? 'font-bold text-emerald-300' : 'text-[#8888ff]'">
-          <span class="min-w-0">{{ l.text }}</span><span class="shrink-0 text-[10px] opacity-60">{{ l.tier }}</span>
-        </li>
-        <li v-if="!lines.length" class="text-[11px] opacity-50">{{ tr("MOD なし", "No mods") }}</li>
-      </ul>
-      <p class="mt-1 flex h-5 items-center justify-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">
+    <!-- 左: この欄のアイテム (始めの状態から、打つたびに変わる)。札はエミュレーターと同じ (StageItemCard)、狙いの MOD を光らせる -->
+    <div class="flex min-w-0 flex-col items-center gap-1">
+      <StageItemCard v-if="item" :item="item" :added="added" :removed="removed" :holding="false" :flash-key="n" :focus="target.modId" class="max-w-full" />
+      <p class="flex h-5 items-center justify-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">
         <template v-if="last">{{ tr("今打った", "Last") }}: <img :src="iconOf(last.key)" alt="" class="size-4 object-contain" />{{ nameOf(last.key) }}<img v-for="o in last.omens" :key="o" :src="iconOf(o)" alt="" class="size-4 object-contain" /></template>
         <template v-else>{{ tr("始めの状態", "Start state") }}</template>
       </p>
@@ -185,7 +180,16 @@ function shareX(e: MouseEvent): void {
         <p v-if="result && !spamming" class="mt-0.5 text-[var(--exile-color-text-secondary)]">{{ result.reason ?? tr("まだ付いていません。もう一度押すと続きから", "Not hit yet. Hold again to continue") }}</p>
         <button v-if="result && !spamming" type="button" class="g-btn sm mt-1" @click="fresh">{{ tr("始めの状態に戻す", "Back to the start") }}</button>
       </template>
-      <p class="mt-2 text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr("100 人", "100 people") }}: {{ tr("半分の人", "Half") }} {{ median == null ? "—" : tr(`${median.toLocaleString()} 手`, `${median.toLocaleString()} uses`) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ unlucky == null ? "—" : tr(`${unlucky.toLocaleString()} 手`, `${unlucky.toLocaleString()} uses`) }}</p>
+      <!-- 100 人の結果 (カオススパム計算機と同じ並び) -->
+      <p class="g-section mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("100 人が同じ始めの状態からスパムしたら", "If 100 people spammed from the same start") }}</p>
+      <dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
+        <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half of them") }}</dt>
+        <dd class="tabular-nums"><b>{{ fmt(median) }}</b><span class="text-[var(--exile-color-text-secondary)]"> · {{ money(row.p50) }}</span></dd>
+        <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }}</dt>
+        <dd class="tabular-nums"><b>{{ fmt(unlucky) }}</b><span class="text-[var(--exile-color-text-secondary)]"> · {{ money(row.p90) }}</span></dd>
+        <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("一番早い / 遅い", "Fastest / slowest") }}</dt>
+        <dd class="tabular-nums">{{ row.tries.length ? `${fmt(row.tries[0]!)} / ${fmt(row.tries[row.tries.length - 1]!)}` : "—" }}<template v-if="stats.failed"> · {{ tr(`${stats.failed} 人は付かなかった`, `${stats.failed} never hit`) }}</template></dd>
+      </dl>
     </div>
   </div>
 </template>

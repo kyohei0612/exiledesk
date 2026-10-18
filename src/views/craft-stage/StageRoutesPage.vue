@@ -58,6 +58,21 @@ const ilvl = computed(() => s.item.value?.itemLevel ?? s.itemLevel.value);
 const rows = ref<RaceRow[]>([]);
 const busy = ref(false);
 let runId = 0;
+/**
+ * 100 人の乱数の種。開くたび・狙いを変えるたび・「再計算」のたびに毎回ばらばら (2026-10-19 オーナー「再計算ボタンもあればいいね、疑ってる人多いからな」
+ * 「全てにおいて乱数は頼むでな」)
+ */
+const newSeed = (): number => 1 + Math.floor(Math.random() * 2 ** 30);
+const seed = ref(newSeed());
+/** 何回目の 100 人か (1 = 最初) */
+const round = ref(1);
+function recompute(): void {
+  if (busy.value) return;
+  seed.value = newSeed();
+  round.value++;
+  luckOpen.value = false;
+  void run();
+}
 async function run(): Promise<void> {
   const d = s.data.value, tt = t.value;
   if (!d || !tt) return;
@@ -67,11 +82,11 @@ async function run(): Promise<void> {
   for (const one of ORDER) {
     await new Promise((r) => setTimeout(r, 0));
     if (id !== runId) return;
-    rows.value = [...rows.value, ...raceRoutes(d, s.base.value, ilvl.value, tt, priceOf, { runs: RUNS, only: one })];
+    rows.value = [...rows.value, ...raceRoutes(d, s.base.value, ilvl.value, tt, priceOf, { runs: RUNS, only: one, seed: seed.value })];
   }
   busy.value = false;
 }
-watch(t, () => { luckOpen.value = false; void run(); });
+watch(t, () => { luckOpen.value = false; seed.value = newSeed(); round.value = 1; void run(); });
 /** 運試しの欄 (一番安い道で。2026-10-19 オーナー「一番安い欄に運試しボタン」)。シェアから来た時は計算が済んだら開く */
 const luckOpen = ref(false);
 watch(busy, (b) => { if (!b && routesLuck.value) { routesLuck.value = false; if (best.value) luckOpen.value = true; } });
@@ -135,7 +150,11 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <p class="tabular-nums"><b class="text-[26px] text-emerald-300 max-md:text-[20px]">{{ money(best.avgCost) }}</b> <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr(`平均 · ${fmtN(best.avgSteps)} 手`, `avg · ${fmtN(best.avgSteps)} uses`) }}</span></p>
               <p class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half") }} {{ money(best.p50) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ money(best.p90) }}</p>
             </div>
-            <button v-if="!busy && !luckOpen" type="button" data-route-luck-open class="g-btn-red shrink-0 max-md:self-end" :title="tr('この道の決まりで、100 人と同じ始めの状態から自分でスパムして運を比べる', 'Spam it yourself with this route from the same start and compare your luck with the 100 people')" @click="luckOpen = true">{{ tr("運試し", "Luck test") }}</button>
+            <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:self-end">
+            <button v-if="!busy && !luckOpen" type="button" data-route-luck-open class="g-btn-red" :title="tr('この道の決まりで、100 人と同じ始めの状態から自分でスパムして運を比べる', 'Spam it yourself with this route from the same start and compare your luck with the 100 people')" @click="luckOpen = true">{{ tr("運試し", "Luck test") }}</button>
+            <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr('別の 100 人でもう一度全部の道を計算する (乱数を変える)', 'Run all routes again with a different 100 people (new random seed)')" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
+            <span v-if="!busy && round > 1" class="text-center text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${round} 回目の 100 人`, `100 people, run ${round}`) }}</span>
+            </span>
           </template>
           <p v-else class="text-[13px] text-[var(--exile-color-text-secondary)]">{{ busy ? tr("計算中…", "Calculating…") : tr("どの道でも着かなかった", "No route reached it") }}</p>
           <p v-if="busy" class="absolute right-3 top-2 text-[11px] tabular-nums text-amber-200">{{ tr("計算中", "Calculating") }} {{ rows.length }} / {{ ORDER.length }}</p>
