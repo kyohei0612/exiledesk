@@ -6,9 +6,6 @@ OK が出ていない物を外して出す時は `git revert --no-edit --no-comm
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
-| チュートリアル上級 5 コース | 577ab4fd〜 | チュートリアルに上級「損をせずに確率を上げる小技」を追加: フラクチャーを 33% に・冒涜をエッセンスでやり直す (不在のアミュレット)・サフィックスでエッセンス 2 つ・ジュエルの 5 MOD・品質を上げてからカオス | Tutorial: Advanced courses added (tricks to raise your odds): Fracture at 33%, redo Desecrations with an essence (Absent Amulet), two essences on suffixes, 5-mod jewels, quality first then Chaos |
-| エミュレーターとチュートリアルの分離 | 9421ff59 | チュートリアルを遊んでも、エミュレーターでやっていたアイテムと工程はそのまま残るように | Playing a tutorial no longer replaces the item and steps you had in the emulator |
-| ジュエルの MOD の並び | (このコミット) | ジュエルの MOD がプレフィックスとサフィックスで混ざって並んでいたのを直しました | Jewel mods are no longer listed with prefixes and suffixes mixed together |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 済み: MOD 一覧の「付ける」(v0.1.550)、チュートリアル (基本のオーブ) と一番下の行の記録の案内をプライバシーポリシーへ (v0.1.551)、PWA (アプリ版はこちら・オフライン、v0.1.552)、エッセンスのチュートリアル・お告げで光らせる・錯乱のノータブル (v0.1.553)、発現の魂の井戸の見た目・未発現の緑の文字・MOD の行の並び (v0.1.554、2026-10-17)、冒涜の MOD の行 (トレードの見た目・一番下、v0.1.555)。冒涜のチュートリアルと MOD の行の ↓ を外す・MOD 一覧の枠 (v0.1.557)。POE2Tube への連絡: 目印が `mod-add-n / f / d / e` に変わった (メモ poe2tube-handoff)。

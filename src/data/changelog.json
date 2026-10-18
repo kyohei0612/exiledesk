@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.568",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルに上級「損をせずに確率を上げる小技」を追加: フラクチャーを 33% に・冒涜をエッセンスでやり直す (不在のアミュレット)・サフィックスでエッセンス 2 つ・ジュエルの 5 MOD・品質を上げてからカオス",
+    "en": "Tutorial: Advanced courses added (tricks to raise your odds): Fracture at 33%, redo Desecrations with an essence (Absent Amulet), two essences on suffixes, 5-mod jewels, quality first then Chaos"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルを遊んでも、エミュレーターでやっていたアイテムと工程はそのまま残るように",
+    "en": "Playing a tutorial no longer replaces the item and steps you had in the emulator"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ジュエルの MOD がプレフィックスとサフィックスで混ざって並んでいたのを直しました",
+    "en": "Jewel mods are no longer listed with prefixes and suffixes mixed together"
+   }
+  ]
+ },
+ {
   "v": "0.1.567",
   "date": "2026-10-18",
   "items": [
@@ -593,18 +617,6 @@
     "area": "",
     "text": "砥石・彫刻針・端材は 1 個で品質 +1% に揃えました (前は +1% か +2% のランダム)",
     "en": "Whetstone, Etcher and Scrap now add +1% quality each (previously +1% or +2% at random)"
-   }
-  ]
- },
- {
-  "v": "0.1.528",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "冒涜専用 MOD どうしの出やすさを全部同じに (ゲームが公開していないため。前は指輪の有志の実測と、それを当てた推定)",
-    "en": "All Desecrated-only mods are now equally likely (the game doesn't publish the odds; previously based on community measurements on rings and estimates from them)"
    }
   ]
  }

@@ -1,4 +1,9 @@
 {
+  "0.1.568": [
+    "Tutorial: Advanced courses added (tricks to raise your odds): Fracture at 33%, redo Desecrations with an essence (Absent Amulet), two essences on suffixes, 5-mod jewels, quality first then Chaos",
+    "Playing a tutorial no longer replaces the item and steps you had in the emulator",
+    "Jewel mods are no longer listed with prefixes and suffixes mixed together"
+  ],
  "0.1.567": [
   "Quality-boosted mod values now round down like the game (e.g. +3 to Level of all Spell Skills becomes +4 at exactly 34% quality)"
  ],
