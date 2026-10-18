@@ -48,7 +48,7 @@ const st = useSimSteps({ ...tg, ...rn });
 const rs = useSimResult({ ...tg, ...sr, ...rn, ...rc });
 const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, orderKeys, moveOrder, removeRune, runeChoices, toggleRune,
   orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, boughtDivine, magicDivine, whiteDivine,
-  fourDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, mixedSides, searchBought, doneDivine,
+  fourDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
   help, modsDone, sortDone, orderDone, startDone, step3, startPrice, whiteDone, stepStart, stepOrder, patternDone, stale, recipes, recipeOpen,
@@ -216,7 +216,7 @@ const cheapStart = computed((): SimStartKind | null => {
               </span>
             </div>
             <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (白の行の 2 段目。2026-10-18 オーナー) -->
-            <SimRareStrip v-if="k.k === 'white' && !whiteDone" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" @click.stop />
+            <SimRareStrip v-if="k.k === 'white' && !whiteDone" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" @click.stop @search="searchRare" />
           </div>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ。無ければ出さない (2026-10-18) -->

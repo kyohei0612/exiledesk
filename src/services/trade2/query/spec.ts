@@ -9,7 +9,7 @@ import trade2Skills from "../../../i18n/trade2-skills.json";
 /**
  * レアクラフト用の「条件で絞る」検索 (2026-09-14、ES 兜のクラフトから)。ベース (ノーマル / マジック) と完成品 (レア) の両方に使う。
  *   category: trade2 の type_filters.category (armour.helmet 等)
- *   rarity: normal / magic / nonunique (レア = ユニーク以外)
+ *   rarity: normal / magic / rare / nonunique (ユニーク以外)。rare は data-cache/trade2-filters-jp.json の type_filters.rarity で確認 (2026-10-18)
  *   ilvlMin / esMin / socketsMin: type_filters.ilvl / equipment_filters.es / equipment_filters.rune_sockets
  *   stats: stat id と下限 (pseudo.* も可)
  */
@@ -25,7 +25,7 @@ export interface SpecQueryOptions {
    * カテゴリの内部値が未確認なクラス (武器 / 帯 / 盾) でも引けるのが効く。
    */
   baseType?: string;
-  rarity: "normal" | "magic" | "nonunique";
+  rarity: "normal" | "magic" | "rare" | "nonunique";
   ilvlMin?: number;
   /** 品質の下限 (%)。type_filters.quality (data-cache/trade2-filters-jp.json で確認) */
   qualityMin?: number;
