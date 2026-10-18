@@ -20,6 +20,10 @@ import { logRecord } from "../../utils/log-record";
 import { isEn, tr } from "../../i18n/lang";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import StageItemCard from "./StageItemCard.vue";
+import { fullSockets } from "../../state/stage-steps";
+import { startFrom } from "../../services/craft-stage/run-plan";
+import type { Force } from "../../services/craft-stage/stage-core";
+import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 
 const props = defineProps<{ row: RaceRow; target: RaceTarget; ilvl: number; label: string; routeName: string }>();
 const emit = defineEmits<{ close: [] }>();
@@ -41,6 +45,8 @@ function fresh(): void {
   stop();
   item.value = null;
   run = routeRun(s.data.value!, s.base.value, props.ilvl, props.target, props.row.route, props.row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf);
+  // 暗黙の値の種はエミュレーターと同じ (「ここから開始」で置いた時に暗黙の値がずれないように)
+  if (run) run.item = { ...run.item, rollSeed: s.seed.value - 1 };
   sync();
   result.value = null;
 }
@@ -130,6 +136,23 @@ const shareText = computed(() => {
     `${props.routeName}: ${props.label} on ${baseName.value} in ${r.n.toLocaleString()} uses (${money(r.cost)})! ${luckLine}\n#PoE2 #ExileDesk`,
   );
 });
+/**
+ * ここから開始 (計算機と同じ。2026-10-19 オーナー「ここから始めるボタンが無い」): この欄のアイテムをエミュレーターに置いて、ページを閉じる。
+ * 運試しの手はエミュレーターの工程には入っていないので、工程・費用は 0 から (始めの MOD として置く)
+ */
+function startHere(): void {
+  const it = item.value, d = s.data.value;
+  if (!it || !d) return;
+  const forces: Force[] = [...it.prefixes, ...it.suffixes].map((m) => ({ mod: m.modId, tier: m.tierName, values: m.values }));
+  s.hold(null);
+  s.itemLevel.value = it.itemLevel;
+  s.reset();
+  s.startMods.value = forces;
+  s.item.value = { ...fullSockets(startFrom(d, s.base.value, it.itemLevel, { mods: forces, rarity: it.rarity }, s.seed.value - 1)), rollSeed: s.seed.value - 1 };
+  routesLuck.value = false;
+  routesTarget.value = null;
+  routesOpen.value = false;
+}
 const xUrl = computed(() => `https://x.com/intent/post?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`);
 function shareX(e: MouseEvent): void {
   sendShare(e, { code: shareCode, web: xUrl.value, text: shareText.value, url: shareUrl.value, log: { base: s.base.value, rank: result.value?.rank ?? null, route: props.row.route } });
@@ -172,16 +195,20 @@ function shareX(e: MouseEvent): void {
         <div class="mt-2 flex flex-wrap gap-2">
           <a data-route-share :href="xUrl" target="_blank" rel="noopener" class="g-btn-red sm inline-flex items-center !no-underline" @click="shareX">{{ tr("X でシェア", "Share on X") }}</a>
           <button type="button" data-route-again class="g-btn sm" @click="fresh">{{ tr("もう一度 (始めの状態から)", "Again (from the start)") }}</button>
+          <button type="button" data-route-start class="g-btn sm" :title="tr('このアイテムでエミュレーターを始める (運試しの手は工程に入らない)', 'Start the emulator with this item (the luck-test uses are not in the steps)')" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
         </div>
       </template>
       <template v-else>
         <button type="button" data-route-hold class="g-btn-red mt-2 min-h-11 w-full max-w-[320px] select-none touch-none px-2 text-[14px]" @pointerdown.prevent="start" @pointerup="stop" @pointercancel="stop" @contextmenu.prevent>{{ holdLabel }}</button>
         <p class="mt-1.5 tabular-nums text-[14px]"><b>{{ tr(`${n.toLocaleString()} 手`, `${n.toLocaleString()} uses`) }}</b><span class="text-[var(--exile-color-text-secondary)]"> · {{ money(cost) }}</span></p>
         <p v-if="result && !spamming" class="mt-0.5 text-[var(--exile-color-text-secondary)]">{{ result.reason ?? tr("まだ付いていません。もう一度押すと続きから", "Not hit yet. Hold again to continue") }}</p>
-        <button v-if="result && !spamming" type="button" class="g-btn sm mt-1" @click="fresh">{{ tr("始めの状態に戻す", "Back to the start") }}</button>
+        <span v-if="result && !spamming" class="mt-1 flex flex-wrap gap-2">
+          <button type="button" class="g-btn sm" @click="fresh">{{ tr("始めの状態に戻す", "Back to the start") }}</button>
+          <button type="button" class="g-btn sm" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
+        </span>
       </template>
       <!-- 100 人の結果 (カオススパム計算機と同じ並び) -->
-      <p class="g-section mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("100 人が同じ始めの状態からスパムしたら", "If 100 people spammed from the same start") }}</p>
+      <p class="mt-4 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("100 人が同じ始めの状態からスパムしたら", "If 100 people spammed from the same start") }}</p>
       <dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
         <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half of them") }}</dt>
         <dd class="tabular-nums"><b>{{ fmt(median) }}</b><span class="text-[var(--exile-color-text-secondary)]"> · {{ money(row.p50) }}</span></dd>
