@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import SimStartPick from "./SimStartPick.vue";
 import SimRareStrip from "./SimRareStrip.vue";
+import SimTargetSort from "./SimTargetSort.vue";
 import { ARMED_CLASS } from "../../utils/use-armed";
 import { iconOf, priceOf } from "../../state/craft-stage";
 import { simCurrency } from "../../state/display-currency";
@@ -121,6 +122,8 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, order
         <!-- スマホ: 狙う MOD を選んでいる間は完成図を画面の上に貼り付ける (2026-10-09 オーナー「上の方がいいな、絶えず表示してあげたらいい。どの MOD どういう設定か忘れがち」) -->
         <div :class="phone && !modsDone && rows.length ? 'sticky top-0 z-[60] -mx-3 max-h-[40vh] overflow-y-auto border-b border-[var(--exile-color-border-brass)] bg-[#120f0c] px-3 pb-2 pt-1 shadow-[0_8px_18px_rgba(0,0,0,0.7)] [&_select]:max-w-full' : ''">
           <StageTargetSummary :editable="!modsDone" />
+          <!-- 「決めた」の後: 付け方が同じ MOD の整理 (全部 / この中のどれか N つ)。枠に収まるまで 3 に進めない -->
+          <SimTargetSort v-if="modsDone && !whiteDone" />
         </div>
         <div v-if="rows.length && !modsDone" class="mt-1 flex items-center gap-2">
           <button type="button" class="inline-flex h-8 items-center rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)]" @click="s.simTargets.value = []">全部外す</button>

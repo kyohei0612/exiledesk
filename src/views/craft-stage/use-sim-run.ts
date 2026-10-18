@@ -15,6 +15,7 @@ import { patternSets, setByKey, type Pattern } from "../../services/craft-stage/
 import { runQuizOnce, summarizeQuiz, type QuizResult, type QuizRun } from "../../services/craft-stage/quiz-recipe";
 import { magicStartMods, quizFromSim, type QuizSimIn } from "../../services/craft-stage/quiz-build";
 import { tr } from "../../i18n/lang";
+import { sideLimits, sideUse } from "../../services/craft-stage/sim-methods";
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimSearchCtx } from "./use-sim-search";
 
@@ -360,7 +361,9 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
    *   1 ベース → 2 狙う MOD → 3 白ベース設定 (値段 + 増強・消去スパムで狙う = フラクチャー予定) → 4 最安値スタート (回さずに 3 ルートの計算)
    *   → 5 付ける順番と付け方 (フラクチャー後は共通) → 6 回す
    */
-  const step3 = computed(() => modsDone.value && rows.value.length > 0);
+  // 枠より多い狙いは整理の欄 (SimTargetSort.vue) で「どれか N つ」にまとめてから 3 へ (2026-10-18 オーナー「決めたボタンを押してこの画面で付け方が同じ奴の設定」)
+  const slotsFit = computed(() => { const u = sideUse(s.data.value, s.simTargets.value), l = sideLimits(s.data.value, s.base.value, s.itemLevel.value); return u.prefix <= l.prefix && u.suffix <= l.suffix; });
+  const step3 = computed(() => modsDone.value && rows.value.length > 0 && slotsFit.value);
   /** 3 で入れる始めのベース代 (始め方ごと: 白 / 固定済み / 4 MOD のレア) */
   const startPrice = computed(() => (s.simStart.value === "magic" ? magicDivine.value : s.simStart.value === "fractured" ? boughtDivine.value : s.simStart.value === "four" ? fourDivine.value : s.simStart.value === "item" ? itemDivine.value : whiteDivine.value));
   const whiteDone = computed(() => step3.value && whiteOk.value && fracDone.value && num(startPrice.value) != null);
