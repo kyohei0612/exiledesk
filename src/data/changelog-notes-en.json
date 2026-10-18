@@ -1,4 +1,10 @@
 {
+  "0.1.578": [
+    "Added the Spam simulator (button next to Currency). Pick one target mod and it runs augment, chaos and exalt spam 100 times each at Perfect, Greater and Regular grades to show which gets there cheapest. “Recompute” runs a different 100",
+    "Luck test: spam it yourself on the cheapest route (or any route and grade) and see your rank among the 100. Exceptional luck gets a special effect, and you can share the result on X. “Continue from here” takes that item to the Emulator",
+    "Compare with runes socketed (Serle’s Triumph and special-mod runes like Kolr’s Hunt). Special mods can be targeted too",
+    "The Chaos spam calculator is now part of the Spam simulator (old calculator share links open the Spam simulator)"
+  ],
   "0.1.577": [
     "Essences now show only the tiers you can use: Perfect for Rare items (picked directly, no tier menu), non-Perfect for Normal and Magic items"
   ],

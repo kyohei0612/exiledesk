@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.578",
+  "date": "2026-10-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーターを足しました (カレンシーの見出しのボタンから)。狙う MOD を 1 つ選ぶと、増強・カオス・高貴のスパムをそれぞれ完全・上級・無印で 100 人ずつ打って、どれが一番安く着くかを比べます。「再計算」で別の 100 人にもできます",
+    "en": "Added the Spam simulator (button next to Currency). Pick one target mod and it runs augment, chaos and exalt spam 100 times each at Perfect, Greater and Regular grades to show which gets there cheapest. “Recompute” runs a different 100"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "運試し: 一番安い道 (どの道・等級でも選べます) で自分もスパムして、100 人の中の順位を出します。かなりの強運は特別な演出、結果は X でシェアできます。「ここから開始」でそのアイテムのままエミュレーターへ",
+    "en": "Luck test: spam it yourself on the cheapest route (or any route and grade) and see your rank among the 100. Exceptional luck gets a special effect, and you can share the result on X. “Continue from here” takes that item to the Emulator"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ルーンを嵌めたまま比べられるように (セールの凱旋・コルの狩りなどの特殊 MOD のルーン)。特殊 MOD も狙えます",
+    "en": "Compare with runes socketed (Serle’s Triumph and special-mod runes like Kolr’s Hunt). Special mods can be targeted too"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "カオススパム計算機はスパムシミュレーターにまとめました (前の計算機のシェアの URL はスパムシミュレーターで開きます)",
+    "en": "The Chaos spam calculator is now part of the Spam simulator (old calculator share links open the Spam simulator)"
+   }
+  ]
+ },
+ {
   "v": "0.1.577",
   "date": "2026-10-18",
   "items": [
@@ -588,18 +618,6 @@
     "area": "",
     "text": "画面の「プレ」「サフィ」の略を「プレフィックス」「サフィックス」に揃えました",
     "en": "Unified the abbreviated \"Pre\" / \"Suf\" labels to \"Prefix\" / \"Suffix\""
-   }
-  ]
- },
- {
-  "v": "0.1.538",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム計算機: 選んだ MOD の「どれか 1 つ」が付いたら当たりに (前は全部揃うまで)。狙いは 3 つまで。付きにくい MOD でも計算は数秒で終わります",
-    "en": "Chaos spam calculator: a hit now means \"any one\" of the selected mods lands (previously all of them). Up to 3 targets. Even rare mods finish calculating in a few seconds"
    }
   ]
  }
