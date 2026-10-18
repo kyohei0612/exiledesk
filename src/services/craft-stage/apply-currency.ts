@@ -161,7 +161,11 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // 品質を手で決める (アイテムのカードの品質の欄。2026-10-10 要望「品質欄を付けて防御値がシミュレーションできると便利」)。費用 0、コラプト後も試せる
   if (currency.startsWith(ITEM_LEVEL_SET)) {
     const lv = Math.max(1, Math.min(100, Number(currency.slice(ITEM_LEVEL_SET.length)) || 0));
-    return { applied: true, item: { ...item, itemLevel: lv }, added: [], removed: [] };
+    // そのアイテムレベルでは付かない段の MOD だけ消す (2026-10-18 オーナー「アイテムレベル変えたら全部やり直しになるのもおかしい、そのレベルで付かない MOD だけ消してあげるのが筋」)。
+    // エッセンス (クラフト) の MOD はレベルの制限が無いので残す。未発現の枠も残す (発現する時に今のアイテムレベルで引く)
+    const over = (m: StageMod): boolean => !m.crafted && !m.unrevealed && (data.mods.get(m.modId)?.tiers[m.tierIndex]?.ilvl ?? 0) > lv;
+    const removed = [...item.prefixes, ...item.suffixes].filter(over);
+    return { applied: true, item: { ...item, itemLevel: lv, prefixes: item.prefixes.filter((m) => !over(m)), suffixes: item.suffixes.filter((m) => !over(m)) }, added: [], removed };
   }
   if (currency.startsWith(QUALITY_CAP)) {
     const cap = Math.max(0, Number(currency.slice(QUALITY_CAP.length)) || 0);

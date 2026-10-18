@@ -18,6 +18,7 @@ import { PAGES_ON, basePage } from "../../state/web-page";
 import { craftStage } from "../../state/craft-stage";
 import pkg from "../../../package.json";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
+import { ITEM_LEVEL_SET, itemLevelKey } from "../../services/craft-stage/apply-currency";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Icon from "../../components/ui/Icon.vue";
 import { searchModGroups, type ModGroup } from "../../services/craft-stage/trade-search";
@@ -28,7 +29,24 @@ const inApp = isTauriRuntime();
 const { handNoBase, simNoBase, pickSimBase, startFromRecipe } = useStageBase();
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
-const ILVLS = [45, 65, 75, 82, 86];
+/**
+ * アイテムレベル: よく使う 3 つはボタン、70〜86 は 1 ずつプルダウン (2026-10-18 オーナー「トレードで 78 やら 76 やら 79 やらいろいろある」「45・75・82 だけ出して、70 から 86 は 1 ずつ」)
+ */
+const ILVLS = [45, 75, 82];
+const ILVL_LIST = Array.from({ length: 17 }, (_, i) => 70 + i);
+/** 今のアイテムレベル (エミュレーターは打った手で変わるのでアイテムの値) */
+const curIlvl = computed(() => (s.mode.value === "hand" ? s.item.value?.itemLevel : null) ?? s.itemLevel.value);
+/**
+ * 変えた時: 打つ前 (手も始めの MOD も無い) とシミュレーターは今まで通り白から。エミュレーターで打ち始めた後は 1 手にして、
+ * そのレベルで付かない段の MOD だけ消す (2026-10-18 オーナー「全部やり直しになるのもおかしい」。apply-currency の ilvl:)。続けて変えた分は 1 手にまとめる
+ */
+function setIlvl(lv: number): void {
+  if (lv === curIlvl.value) return;
+  if (s.mode.value !== "hand" || (!s.log.value.length && !s.startMods.value.length)) { s.itemLevel.value = lv; s.reset(); return; }
+  const last = s.log.value[s.log.value.length - 1];
+  if (last && last.out.currency.startsWith(ITEM_LEVEL_SET)) s.undo();
+  if (lv !== curIlvl.value) s.use(itemLevelKey(lv));
+}
 const jewelBase = computed(() => !!s.item.value && inGroup(s.item.value.cls.category, "jewel"));
 /** JSON をコピー (POE2Tube に渡す / CLI の --prices に使う) */
 const copyNote = useFlash();
@@ -122,7 +140,12 @@ const ITEM_KIND = { k: "item" as const, label: "エミュレーターの状態�
     <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" :page="PAGES_ON && s.mode.value === 'hand'" @pick="pickSimBase" @open-page="s.hold(null); basePage = true" />
     <span v-if="!simNoBase && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1">
       <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
-      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.itemLevel.value === lv ? 'on' : ''" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
+      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv ? 'on' : ''" @click="setIlvl(lv)">{{ lv }}</button>
+      <select data-ilvl-select class="h-[30px] cursor-pointer rounded border bg-black/60 px-1.5 tabular-nums max-md:h-10" :class="ILVLS.includes(curIlvl) ? 'border-white/15 text-white/60' : 'border-amber-300/70 text-amber-100'" :value="ILVLS.includes(curIlvl) ? '' : curIlvl" :aria-label="tr('アイテムレベル (70〜86)', 'Item level (70–86)')" @change="setIlvl(Number(($event.target as HTMLSelectElement).value))">
+        <option value="" disabled>{{ tr("70〜86", "70–86") }}</option>
+        <option v-if="!ILVLS.includes(curIlvl) && !ILVL_LIST.includes(curIlvl)" :value="curIlvl">{{ curIlvl }}</option>
+        <option v-for="lv in ILVL_LIST" :key="lv" :value="lv">{{ lv }}</option>
+      </select>
     </span>
     <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
     <span v-if="s.mode.value === 'sim' && !simNoBase && simSocketCap > 0" class="flex items-center gap-1">
