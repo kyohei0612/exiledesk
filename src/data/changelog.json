@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.564",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "冒涜の発現の候補を、ゲームの魂の井戸のように上から順に光って出すように (リロールも同じ。リロールした後は回る矢印を消します)",
+    "en": "Desecration reveal: options now appear one by one with a glow, like the Well of Souls (rerolls too; the reroll arrow disappears after use)"
+   }
+  ]
+ },
+ {
   "v": "0.1.563",
   "date": "2026-10-18",
   "items": [
@@ -617,18 +629,6 @@
     "area": "",
     "text": "触媒の高貴のお告げの倍率を 1 + 0.2 × 品質 に (20% で 5 倍)",
     "en": "Omen of Catalysing Exaltation multiplier is now 1 + 0.2 × quality (5x at 20%)"
-   }
-  ]
- },
- {
-  "v": "0.1.524",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "掲示板をいったん閉じました",
-    "en": "Closed the message board for now"
    }
   ]
  }
