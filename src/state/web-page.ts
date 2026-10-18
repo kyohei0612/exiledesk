@@ -6,7 +6,7 @@ import { computed, ref } from "vue";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { craftStage as s } from "./craft-stage";
 import { inLesson } from "./craft-lesson";
-import { spamKey, spamming } from "./chaos-spam";
+import { closeChaosSpam, spamKey, spamming } from "./chaos-spam";
 
 /** ページを移る作り (Web 版だけ) */
 export const PAGES_ON = !isTauriRuntime();
@@ -21,3 +21,18 @@ export const feedbackPage = ref(false);
  * (2026-10-18 オーナー「固定バーあるし 1 ページとして扱わないんじゃないの」→「本当に別のページにする」)
  */
 export const spamPage = computed(() => PAGES_ON && !s.replay.value && !inLesson.value && (!!spamKey.value || spamming.value));
+/**
+ * スパムシミュレーターのページ (?page=routes)。カレンシーの見出しの「スパムシミュレーター」で開く → MOD を 1 つ選ぶ → 増強・カオス・高貴のスパムを比べる
+ * (2026-10-18 オーナー「1 MOD を対象にどのルートが一番早く着くか」「スパム計算機はここで全部管理」)
+ */
+export const routesOpen = ref(false);
+/** その狙い (選ぶまでは null) */
+export const routesTarget = ref<{ modId: string; minTierIndex: number } | null>(null);
+/** スパムシミュレーターのページを開く (カレンシーの見出しのボタン)。開いたら MOD を 1 つ選ぶ窓から */
+export function openRoutes(): void {
+  s.hold(null);
+  closeChaosSpam();
+  routesTarget.value = null;
+  routesOpen.value = true;
+  s.aimPicker.value = { seed: null, routes: true };
+}

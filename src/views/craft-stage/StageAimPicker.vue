@@ -14,6 +14,7 @@ import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage"
 import { aimLabel, groupLabelOf, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { scrollToTop } from "../../utils/keep-place";
 import { spamAims, spamKey, SPAM_AIM_MAX } from "../../state/chaos-spam";
+import { routesTarget } from "../../state/web-page";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
@@ -23,9 +24,11 @@ const seed = s.aimPicker.value?.seed ?? null;
 /** 選んでいる物 (決めるまで手元だけ) */
 /** カオススパム計算機の狙いを選ぶ時 (「次の手で狙う」とは別の狙い) */
 const forSpam = !!s.aimPicker.value?.spam;
+/** スパムシミュレーターの狙い (1 つだけ。web-page.ts の routesTarget) */
+const forRoutes = !!s.aimPicker.value?.routes;
 /** 選べる数: カオススパム計算機は 3 つまで (多いと 3 種類の計算が何十秒もかかる。2026-10-16 オーナー「3 種類とかまでにするか」) */
-const MAX = forSpam ? SPAM_AIM_MAX : AIM_MAX;
-const draft = ref<AimPick[]>([...(forSpam ? spamAims.value : s.aims.value)].slice(0, MAX));
+const MAX = forRoutes ? 1 : forSpam ? SPAM_AIM_MAX : AIM_MAX;
+const draft = ref<AimPick[]>(forRoutes ? [] : [...(forSpam ? spamAims.value : s.aims.value)].slice(0, MAX));
 if (seed && !draft.value.some((a) => a.modId === seed.modId)) draft.value = [...draft.value, seed].slice(-MAX);
 else if (seed) draft.value = draft.value.map((a) => (a.modId === seed.modId ? seed : a));
 
@@ -57,7 +60,7 @@ const full = computed(() => draft.value.length >= MAX);
 function whyNot(r: ListRow): string | null {
   if (r.on) return tr("付いている", "On item");
   if (r.blocked) return tr("同じ系統が付いている", "Same group on item");
-  if (full.value && !pickedOf(r)) return tr(`${MAX} つまで`, `Max ${MAX}`);
+  if (full.value && !pickedOf(r) && !forRoutes) return tr(`${MAX} つまで`, `Max ${MAX}`);
   return null;
 }
 /** チェック: どの段でも (付けば当たり) = このアイテムレベルで付く一番下の段以上 */
@@ -70,14 +73,14 @@ function toggle(r: ListRow, e?: Event): void {
   if (new Set(r.tiers.map((t) => t.modId ?? r.id)).size > 1) { expanded.value = r.id; if (e?.target instanceof HTMLInputElement) e.target.checked = false; return; }
   const t = [...r.tiers].reverse().find((x) => x.ilvl <= s.itemLevel.value) ?? r.tiers[r.tiers.length - 1];
   const p = t ? pickOf(r, t) : null;
-  if (p) draft.value = [...draft.value, p];
+  if (p) draft.value = forRoutes ? [p] : [...draft.value, p];
 }
 function pickTier(r: ListRow, t: ListTier): void {
   const cur = pickedOf(r);
   if (!cur && whyNot(r)) return;
   const p = pickOf(r, t);
   if (!p) return;
-  draft.value = cur ? draft.value.map((a) => (a === cur ? p : a)) : [...draft.value, p];
+  draft.value = cur ? draft.value.map((a) => (a === cur ? p : a)) : forRoutes ? [p] : [...draft.value, p];
 }
 const isPickedTier = (r: ListRow, t: ListTier): boolean => { const c = pickedOf(r), { modId, idx } = idOf(r, t); return !!c && c.modId === modId && c.minTierIndex === idx; };
 const isCoveredTier = (r: ListRow, t: ListTier): boolean => { const c = pickedOf(r), { modId, idx } = idOf(r, t); return !!c && c.modId === modId && idx >= c.minTierIndex; };
@@ -90,6 +93,7 @@ const pct = (x: number): string => fmtPct(x, { zero: "" });
 function close(): void { s.aimPicker.value = null; }
 function decide(): void {
   if (!draft.value.length) return;
+  if (forRoutes) { const a = draft.value[0]!; routesTarget.value = { modId: a.modId, minTierIndex: a.minTierIndex }; close(); s.modOverlay.value = false; return; }
   if (forSpam) spamAims.value = draft.value;
   else {
     s.aims.value = draft.value;
@@ -107,9 +111,9 @@ function decide(): void {
 
 <template>
   <!-- 窓の動き (Esc・後ろを押す・×・後ろのページを止める) は ModalShell (2026-10-10 これが原点) -->
-  <ModalShell :open="true" rec="aim-dialog" :title="forSpam ? tr('カオススパムで狙う MOD', 'Mods to chaos spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
+  <ModalShell :open="true" rec="aim-dialog" :title="forRoutes ? tr('スパムで狙う MOD', 'Mod to spam for') : forSpam ? tr('カオススパムで狙う MOD', 'Mods to chaos spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
     <template #header>
-      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ MAX }} · {{ forSpam ? tr("どれか 1 つ付いて当たり", "Hit when any one rolls") : tr("全部付いて当たり", "Hit when all roll") }}</span>
+      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ MAX }} · {{ forRoutes ? tr("1 つ選ぶ", "Pick one") : forSpam ? tr("どれか 1 つ付いて当たり", "Hit when any one rolls") : tr("全部付いて当たり", "Hit when all roll") }}</span>
     </template>
     <template #subheader>
       <p v-if="draft.length" class="mt-1 flex flex-wrap gap-1">
@@ -153,7 +157,7 @@ function decide(): void {
     <!-- 決める (下に固定。1 つだけでも進める) -->
     <template #footer>
       <button type="button" class="g-btn" @click="close">{{ tr("やめる", "Cancel") }}</button>
-      <button type="button" data-rec="aim-decide" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ forSpam ? tr("決める", "Set") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
+      <button type="button" data-rec="aim-decide" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ forRoutes ? tr("比べる", "Compare") : forSpam ? tr("決める", "Set") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
     </template>
   </ModalShell>
 </template>

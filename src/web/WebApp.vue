@@ -29,7 +29,8 @@ import { openFeedback, openGuide, page } from "./page";
 import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
 import { AD_FRAMES, pageTick, sideAdW } from "../utils/ads";
-import { feedbackPage } from "../state/web-page";
+import { feedbackPage, routesOpen } from "../state/web-page";
+import StageRoutesPage from "../views/craft-stage/StageRoutesPage.vue";
 import { inLesson } from "../state/craft-lesson";
 
 const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);
@@ -168,7 +169,9 @@ window.visualViewport?.addEventListener("resize", fitZoom);
           <WebFooter class="mt-10" />
         </div>
       </section>
-      <CraftStage v-show="!feedbackPage" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
+      <!-- スパムシミュレーターのページ (カレンシーの見出しから。2026-10-18) -->
+      <StageRoutesPage v-if="routesOpen && craftStage.item.value" />
+      <CraftStage v-show="!feedbackPage && !(routesOpen && craftStage.item.value)" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <WebFooter class="-mx-4" />
         </template>

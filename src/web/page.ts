@@ -16,7 +16,7 @@ import { topic } from "../state/craft-topic";
 import { course } from "../state/craft-course";
 import { endLesson, inLesson, startTopicAt } from "../state/craft-lesson";
 import { closeChaosSpam } from "../state/chaos-spam";
-import { basePage, baseUnpicked, feedbackPage, spamPage } from "../state/web-page";
+import { basePage, baseUnpicked, feedbackPage, routesOpen, routesTarget, spamPage } from "../state/web-page";
 import { TOPIC_COURSES } from "../services/craft-stage/topic-courses";
 import { courseShown } from "../services/craft-stage/course-release";
 import { pageTick } from "../utils/ads";
@@ -26,6 +26,8 @@ import { track } from "./track";
 /** ベース選び・計算機・要望のページを閉じる (別のページへ移る時) */
 function leaveSubPages(): void {
   feedbackPage.value = false;
+  routesOpen.value = false;
+  routesTarget.value = null;
   basePage.value = false;
   closeChaosSpam();
 }
@@ -56,6 +58,7 @@ const autoBase = computed(() => baseUnpicked.value && !basePage.value);
 /** 今のページ (URL の query の 1 組。空 = エミュレーターなど今までの画面) */
 export const page = computed((): string => {
   if (feedbackPage.value) return "page=feedback";
+  if (routesOpen.value) return "page=routes";
   const id = topic.value?.id ?? course.value?.id;
   if (id) return `course=${id}`;
   if (s.mode.value === "tutorial") return "page=guide";
@@ -69,6 +72,7 @@ export const page = computed((): string => {
 export const pageTitle = computed((): string => {
   const p = page.value;
   if (p === "page=feedback") return tr("要望・バグを送る — ExileDesk", "Send feedback — ExileDesk");
+  if (p === "page=routes") return tr("スパムシミュレーター — ExileDesk", "Spam simulator — ExileDesk");
   const t = topic.value?.title ?? course.value?.video.title;
   if (t) return `${tr(t[0], t[1])} — ExileDesk`;
   if (p === "page=guide") return tr("使い方・コツ — ExileDesk", "Guide & Tips — ExileDesk");
@@ -77,7 +81,7 @@ export const pageTitle = computed((): string => {
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "spam", "feedback"];
+const PAGE_KEYS = ["guide", "base", "spam", "feedback", "routes"];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
@@ -110,8 +114,8 @@ function apply(p: string): void {
       p = "page=guide";
     }
     if (p === "page=guide") { if (page.value !== p) openGuide(); return; }
-    // 計算機は URL からは開けない (今のアイテムが要る)。クラフトに戻す
-    if (p === "page=spam" && page.value === p) return;
+    // 計算機・どのスパムが早いかは URL からは開けない (今のアイテム・狙いが要る)。クラフトに戻す
+    if ((p === "page=spam" || p === "page=routes") && page.value === p) return;
     if (s.mode.value === "tutorial" || inLesson.value) { s.hold(null); endLesson(); s.mode.value = "hand"; }
     if (p === "page=base") { closeChaosSpam(); openBasePage(); return; }
     leaveSubPages();
@@ -141,6 +145,7 @@ export function startPages(): void {
     else if (p.startsWith("course=")) track("page:course", p.slice(7));
     else if (p === "page=base") track("page:base");
     else if (p === "page=feedback") track("page:feedback");
+    else if (p === "page=routes") track("page:routes");
     if (applying || pageOfUrl() === p) return;
     // 自分で出たベース選び (初めて・白に戻した後) と、そこから選んで出た時は積まない (戻るで選ぶ前に戻っても選び直しになるだけ)
     try {
