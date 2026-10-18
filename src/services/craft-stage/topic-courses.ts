@@ -32,6 +32,8 @@ export interface TopicCourse {
   base: string;
   itemLevel: number;
   steps: TopicStep[];
+  /** 一覧のカードのアイコンに使うキー (無ければ 1 手目のカレンシー。お告げのコースは高貴のオーブになっていた。2026-10-18 オーナー「削減のお告げでも出しておくか」) */
+  icon?: string;
 }
 
 const S = (use: string, note: JaEn, omens?: string[]): TopicStep => ({ use, note, ...(omens ? { omens } : {}) });
@@ -265,7 +267,7 @@ export const TOPIC_COURSES: TopicCourse[] = [
     ],
   },
   {
-    id: "omens", level: 2, title: ["お告げを学ぶ", "Learn omens"], base: "Gold Ring", itemLevel: 82,
+    id: "omens", level: 2, title: ["お告げを学ぶ", "Learn omens"], base: "Gold Ring", itemLevel: 82, icon: "OmenofWhittling",
     learn: ["高貴 (左右・偉大なる)・消去 (左右)・カオス (削減・左右の抹消)・神 (祝福・聖別)", "Exalt (Sinistral, Dextral, Greater), Annul (Sinistral, Dextral), Chaos (Whittling, Erasure), Divine (Blessed, Sanctification)"],
     // 2026-10-18 オーナー「お告げか次は順にいくべ」。基本のオーブと同じ作り (毎回の用意・やさしい箇条書き)。お告げはカレンシーと別のボタンで先に掛ける。
     // 付ける手は黄 (レア) の MOD 0 個から、消す手は MOD 4 つ (錬金術)、入れ替える手は MOD 6 つの満杯 (FULL) から。最後は神 (聖別) で完了

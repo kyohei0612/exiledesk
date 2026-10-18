@@ -39,6 +39,7 @@ const shownCourses = computed(() => TOPIC_COURSES.filter(shown));
 const clearedCount = computed(() => shownCourses.value.filter((c) => cleared.value.has(`topic:${c.id}`)).length);
 /** カードのアイコン: 1 手目のカレンシー (エッセンスはそのベースの棚の物) */
 function courseIcon(c: TopicCourse): string {
+  if (c.icon) return iconOf(c.icon);
   const st = c.steps[0], d = s.data.value;
   if (!st || !d) return "";
   const key = st.use.startsWith("ess:") ? topicKey(st, d, freshItem(d, st.base ?? c.base, c.itemLevel)) : st.use;
