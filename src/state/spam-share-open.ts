@@ -10,11 +10,11 @@
 import { craftStage as s } from "./craft-stage";
 import { fullSockets } from "./stage-steps";
 import { startFrom } from "../services/craft-stage/run-plan";
-import type { Grade, RouteKind } from "../services/craft-stage/route-race";
-import { routesLuck, routesOpen, routesRunes, routesTarget } from "./web-page";
+import type { Grade, RouteKind, SharedRace } from "../services/craft-stage/route-race";
+import { routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "./web-page";
 
 /** スパムシミュレーターの運試しのシェア: r = 道、g = 等級、m = 狙いの MOD、t = 段の下限、i = アイテムレベル */
-export interface RouteSetup { route: { r: RouteKind; g: Grade; m: string; t: number; i: number; /** 嵌めたルーンの id */ u?: string[] } }
+export interface RouteSetup { route: { r: RouteKind; g: Grade; m: string; t: number; i: number; /** 嵌めたルーンの id */ u?: string[]; /** 計算済みの結果 (開いた人は計算しない) */ x?: SharedRace } }
 /** 旧カオススパム計算機のシェア (読むだけ): i = アイテムレベル、a = [MOD の id, 段の下限] の並び */
 interface OldSpamSetup { i: number; a: Array<[string, number]> }
 
@@ -49,6 +49,8 @@ export async function openSharedSpam(): Promise<void> {
   try { s.item.value = { ...fullSockets(startFrom(d, s.base.value, ilvl, { mods: [], rarity: "normal" }, s.seed.value - 1)), rollSeed: s.seed.value - 1 }; } catch { return; }
   routesTarget.value = { modId: mod, minTierIndex: Math.max(0, Number(rt?.t ?? old?.[1]) || 0) };
   routesRunes.value = Array.isArray(rt?.u) ? rt!.u!.filter((x) => typeof x === "string") : null;
+  const x = rt?.x;
+  routesShared.value = x && Array.isArray(x.r) && Array.isArray(x.l) && Array.isArray(x.t) && Number(x.n) > 0 ? x : null;
   routesLuck.value = true;
   routesOpen.value = true;
 }

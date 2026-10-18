@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { routeKey, routeRun, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/route-race";
+import { packRace, routeKey, routeRun, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/route-race";
 import { medianOf, rankOf, unluckyOf, type SpamStats } from "../../services/craft-stage/chaos-spam";
 import { mulberry32 } from "../../services/htc/rng";
 import { baseArtFile } from "../../services/craft-stage/base-art";
@@ -27,7 +27,9 @@ import type { Force } from "../../services/craft-stage/stage-core";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 
 /** options = 同じ道の等級 (着いた物。タブと比べに出す。2026-10-19 オーナー「等級も選べるように、カオススパム計算機の形で」) */
-const props = defineProps<{ row: RaceRow; options: RaceRow[]; target: RaceTarget; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[] }>();
+const props = defineProps<{ row: RaceRow; options: RaceRow[]; target: RaceTarget; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[]; /** 全部の道の結果 (シェアに入れる) */ rows: RaceRow[] }>();
+/** 比べる人数 (スマホは 10 人) */
+const people = computed(() => props.row.people);
 const emit = defineEmits<{ close: []; pick: [row: RaceRow] }>();
 const GRADE_NAME: Record<RaceRow["grade"], [string, string]> = { base: ["無印", "Regular"], greater: ["上級", "Greater"], perfect: ["完全", "Perfect"] }; // 道のカードと同じ呼び方
 /** 道の中で一番安い等級 (おすすめ) */
@@ -132,9 +134,10 @@ watch([result, isEn], async () => {
   if (!r?.hit) { shareUrl.value = ""; return; }
   const code = await packCard([
     isEn.value ? "en" : "ja", s.base.value, baseName.value, props.label, r.n, baseArtFile(s.base.value), r.rank, median.value, unlucky.value, money(r.cost),
-    { route: { r: props.row.route, g: props.row.grade, m: props.target.modId, t: props.target.minTierIndex, i: props.ilvl, u: [...props.runes] } },
+    { route: { r: props.row.route, g: props.row.grade, m: props.target.modId, t: props.target.minTierIndex, i: props.ilvl, u: [...props.runes], x: packRace(props.rows, props.row) } },
     tr(`スパムシミュレーター · ${props.routeName}`, `Spam simulator · ${props.routeName}`),
     iconOf(mainKey.value) || null,
+    people.value,
   ]);
   shareCode = code;
   shareUrl.value = `${shareOrigin()}/s/${await shortIdOf(code)}`;
@@ -142,7 +145,7 @@ watch([result, isEn], async () => {
 const shareText = computed(() => {
   const r = result.value;
   if (!r?.hit) return "";
-  const luckLine = r.rank != null ? tr(`100 人中 ${rankWord(r.rank)} の運 (${luck(r.rank)})`, `${rankWord(r.rank)} luck among 100 people (${luck(r.rank)})`) : "";
+  const luckLine = r.rank != null ? tr(`${people.value} 人中 ${rankWord(r.rank)} の運 (${luck(r.rank)})`, `${rankWord(r.rank)} luck among ${people.value} people (${luck(r.rank)})`) : "";
   return tr(
     `${props.routeName}で ${baseName.value} に ${props.label} を ${r.n.toLocaleString()} 手 (${money(r.cost)}) で付けた！ ${luckLine}\n#PoE2 #ExileDesk`,
     `${props.routeName}: ${props.label} on ${baseName.value} in ${r.n.toLocaleString()} uses (${money(r.cost)})! ${luckLine}\n#PoE2 #ExileDesk`,
@@ -187,7 +190,7 @@ function shareX(e: MouseEvent): void {
     <!-- 右: 押すボタン・回数・結果 -->
     <div class="min-w-0">
       <p class="flex items-center gap-2 text-[12px] text-[var(--exile-color-text-secondary)]">
-        <img :src="iconOf(mainKey)" alt="" class="size-6 object-contain" />{{ tr(`${routeName}の運試し (100 人と同じ始めの状態から)`, `${routeName} luck test (same start as the 100 people)`) }}
+        <img :src="iconOf(mainKey)" alt="" class="size-6 object-contain" />{{ tr(`${routeName}の運試し (${people} 人と同じ始めの状態から)`, `${routeName} luck test (same start as the ${people} people)`) }}
         <button type="button" class="g-btn sm ml-auto" :disabled="spamming" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
       </p>
       <!-- 等級 (カオススパム計算機と同じタブ。押すとその等級で始めの状態から) -->
@@ -199,12 +202,12 @@ function shareX(e: MouseEvent): void {
           <span class="spam-lucky-line" aria-hidden="true" />
           <p class="spam-lucky-kicker">{{ tr("かなりの強運", "Exceptional luck") }}</p>
           <p class="spam-lucky-rank"><span class="spam-lucky-top">TOP</span><span class="spam-lucky-num">{{ result.rank }}</span><span class="spam-lucky-pct">%</span></p>
-          <p class="spam-lucky-sub">{{ tr(`100 人の中で ${result.n.toLocaleString()} 手目に付いた`, `Hit on use ${result.n.toLocaleString()} among 100 people`) }}</p>
+          <p class="spam-lucky-sub">{{ tr(`${people} 人の中で ${result.n.toLocaleString()} 手目に付いた`, `Hit on use ${result.n.toLocaleString()} among ${people} people`) }}</p>
           <span class="spam-lucky-line" aria-hidden="true" />
         </div>
         <p v-else class="mt-2 text-[16px] font-bold text-emerald-300">{{ tr(`${result.n.toLocaleString()} 手目で付きました！`, `Hit on use ${result.n.toLocaleString()}!`) }}</p>
         <template v-if="result.rank != null">
-          <p v-if="!isLucky" class="mt-0.5 text-[13px]">{{ tr(`100 人中 ${rankWord(result.rank)} の運`, `${rankWord(result.rank)} luck among 100 people`) }} <b :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">{{ luck(result.rank) }}</b></p>
+          <p v-if="!isLucky" class="mt-0.5 text-[13px]">{{ tr(`${people} 人中 ${rankWord(result.rank)} の運`, `${rankWord(result.rank)} luck among ${people} people`) }} <b :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">{{ luck(result.rank) }}</b></p>
           <div class="relative mt-1.5 h-2 max-w-[320px] rounded-full bg-gradient-to-r from-emerald-500/60 via-amber-400/50 to-rose-500/60">
             <span class="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#14110d]" :style="{ left: `${result.rank}%` }" />
           </div>
@@ -226,7 +229,7 @@ function shareX(e: MouseEvent): void {
         </span>
       </template>
       <!-- 100 人の結果 (カオススパム計算機と同じ並び) -->
-      <p class="mt-4 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("100 人が同じ始めの状態からスパムしたら", "If 100 people spammed from the same start") }}</p>
+      <p class="mt-4 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${people} 人が同じ始めの状態からスパムしたら`, `If ${people} people spammed from the same start`) }}</p>
       <dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
         <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half of them") }}</dt>
         <dd class="tabular-nums"><b>{{ fmt(median) }}</b><span class="text-[var(--exile-color-text-secondary)]"> · {{ money(row.p50) }}</span></dd>

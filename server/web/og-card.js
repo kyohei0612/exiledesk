@@ -20,7 +20,8 @@ const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
  * setup (11 番目) はカードには使わず、本体が計算機を開くのに使う (/?spam=<code>、2026-10-17)
  */
 // 12・13 番目 (h = 題、o = 主のカレンシーの絵の URL) はスパムシミュレーターの運試し (2026-10-19)。無ければカオススパム計算機
-const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o"];
+// 14 番目 (p) は比べた人数 (スマホは 10 人。2026-10-19)。無ければ 100
+const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p"];
 async function unpack(code) {
   const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
   const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
@@ -44,6 +45,7 @@ function readCard(get) {
     unlucky: num(get("u")),
     cost: cut(get("c"), 20),
     head: get("h") ? cut(get("h"), 40) : null,
+    people: num(get("p"), 1000) || PEOPLE,
     orb: /^https:\/\/web\.poecdn\.com\/[^"'<>\s]{1,400}$/.test(get("o") ?? "") ? get("o") : null,
   };
 }
@@ -60,7 +62,7 @@ function titleOf(c) {
 }
 function descOf(c) {
   const parts = [];
-  if (c.rank != null) parts.push(T(c, `${PEOPLE} 人中 ${rankWord(c, c.rank)} の運 (${luck(c, c.rank)})`, `${rankWord(c, c.rank)} luck among ${PEOPLE} people (${luck(c, c.rank)})`));
+  if (c.rank != null) parts.push(T(c, `${c.people} 人中 ${rankWord(c, c.rank)} の運 (${luck(c, c.rank)})`, `${rankWord(c, c.rank)} luck among ${c.people} people (${luck(c, c.rank)})`));
   parts.push(c.head ? `ExileDesk ${c.head}` : T(c, "ExileDesk のカオススパム計算機 — PoE2 のクラフトを試せる", "ExileDesk Chaos spam calculator — try PoE2 crafting"));
   return parts.join(" · ");
 }
@@ -137,7 +139,7 @@ async function cardImage(url, env, c) {
   const head = c.head ?? T(c, "カオススパム計算機", "Chaos spam calculator");
   const hit = c.uses != null ? fmt(c.uses) : "?";
   const hitTail = T(c, " 回目で付いた！", " uses to hit!");
-  const luckLine = r != null ? T(c, `${PEOPLE} 人中 ${rankWord(c, r)} の運`, `${rankWord(c, r)} luck of ${PEOPLE}`) : "";
+  const luckLine = r != null ? T(c, `${c.people} 人中 ${rankWord(c, r)} の運`, `${rankWord(c, r)} luck of ${c.people}`) : "";
   const luckWord = r != null ? luck(c, r) : "";
   const stats = [
     c.median != null ? T(c, `半分の人 ${fmt(c.median)} 回`, `Half: ${fmt(c.median)}`) : "",

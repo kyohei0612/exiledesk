@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.579",
+  "date": "2026-10-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーターは狙いを選んでもすぐには計算せず、「計算開始」を押した時に計算するように。計算中は同じボタンで中止できます",
+    "en": "The Spam simulator no longer calculates as soon as you pick a target; press “Start” to run it. The same button stops it while it runs"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "計算中も画面が固まらないように。スマホは 1 通り 10 人で比べます",
+    "en": "The screen no longer freezes while calculating. On phones each route is compared with 10 runs"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "運試しのシェアから開いた人は、シェアした人の計算済みの結果ですぐ運試しができるように",
+    "en": "Opening a shared luck test now shows the sharer’s results right away, ready for your own luck test"
+   }
+  ]
+ },
+ {
   "v": "0.1.578",
   "date": "2026-10-19",
   "items": [
@@ -606,18 +630,6 @@
     "area": "",
     "text": "カタリスト・鍛冶屋の砥石・秘術師の彫刻針・鎧鍛冶の端材は、1 個打つごとに品質 +1% か +2% (ランダム) に。カタリストは前は 1 回で上限まででしたが、1 個ずつ手で打つ形にしました (品質の欄で数字を直接決めることもできます)",
     "en": "Catalysts, Blacksmith's Whetstone, Arcanist's Etcher and Armourer's Scrap now add +1% or +2% quality per use (random). Catalysts used to fill quality to the cap in one click; now you use them one at a time (you can still set the number directly in the quality field)"
-   }
-  ]
- },
- {
-  "v": "0.1.539",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "画面の「プレ」「サフィ」の略を「プレフィックス」「サフィックス」に揃えました",
-    "en": "Unified the abbreviated \"Pre\" / \"Suf\" labels to \"Prefix\" / \"Suffix\""
    }
   ]
  }

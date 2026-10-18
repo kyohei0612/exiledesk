@@ -1,4 +1,9 @@
 {
+  "0.1.579": [
+    "The Spam simulator no longer calculates as soon as you pick a target; press “Start” to run it. The same button stops it while it runs",
+    "The screen no longer freezes while calculating. On phones each route is compared with 10 runs",
+    "Opening a shared luck test now shows the sharer’s results right away, ready for your own luck test"
+  ],
   "0.1.578": [
     "Added the Spam simulator (button next to Currency). Pick one target mod and it runs augment, chaos and exalt spam 100 times each at Perfect, Greater and Regular grades to show which gets there cheapest. “Recompute” runs a different 100",
     "Luck test: spam it yourself on the cheapest route (or any route and grade) and see your rank among the 100. Exceptional luck gets a special effect, and you can share the result on X. “Continue from here” takes that item to the Emulator",

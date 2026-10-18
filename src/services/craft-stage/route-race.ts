@@ -19,6 +19,24 @@ import { mulberry32 } from "../htc/rng";
 import type { StageItem } from "./types";
 
 export type RouteKind = "augment" | "chaos" | "exalt";
+/**
+ * シェアに入れる計算済みの結果 (開いた人は計算せずにこれを出して、すぐ運試し。2026-10-19 オーナー「シェア押したら即運試しのページで計算済みのを出して」)。
+ * r = 道ごとの [道, 等級, 使えない理由, 平均の費用, 平均の手数, 半分, 9 割, 使った物]、l = 運試しの道と等級、t = その道の着いた人の手数、n = 人数
+ */
+export interface SharedRace { r: Array<[RouteKind, Grade, string | null, number, number, number, number, Record<string, number>]>; l: [RouteKind, Grade]; t: number[]; n: number }
+export function packRace(rows: readonly RaceRow[], luck: RaceRow): SharedRace {
+  const r2 = (x: number): number => Math.round(x * 100) / 100;
+  return {
+    r: rows.map((x) => [x.route, x.grade, x.off, r2(x.avgCost), r2(x.avgSteps), r2(x.p50), r2(x.p90), Object.fromEntries(Object.entries(x.uses).map(([k, v]) => [k, r2(v)]))]),
+    l: [luck.route, luck.grade], t: luck.tries, n: luck.people,
+  };
+}
+export function unpackRace(s: SharedRace): RaceRow[] {
+  return s.r.map(([route, grade, off, avgCost, avgSteps, p50, p90, uses]) => {
+    const isLuck = route === s.l[0] && grade === s.l[1];
+    return { route, grade, off, hitRate: isLuck ? s.t.length / s.n : off ? 0 : 1, avgCost, avgSteps, p50, p90, uses, tries: isLuck ? s.t : [], people: s.n };
+  });
+}
 export type Grade = "base" | "greater" | "perfect";
 export interface RaceTarget { modId: string; minTierIndex: number }
 export interface RaceRow {
@@ -42,7 +60,7 @@ export const routeHit = (it: StageItem, t: RaceTarget): boolean => allMods(it).s
 /** 道の主のカレンシーの鍵 (augment_greater など) */
 export const routeKey = (route: RouteKind, grade: Grade): string => `${route}${GRADE_KEY[grade]}`;
 
-/** 1 人分の打ち手。100 人の計算 (raceRoutes) と画面の運試し (StageRouteLuck.vue) が同じ物を使う */
+/** 1 人分の打ち手。100 人の計算 (raceOne) と画面の運試し (StageRouteLuck.vue) が同じ物を使う */
 export interface RouteRun {
   item: StageItem;
   /** 打った回数 (お告げは数えない)・費用・使った物 */
@@ -108,30 +126,39 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
   return run;
 }
 
-export function raceRoutes(data: PatchData, base: string, itemLevel: number, target: RaceTarget, price: (key: string) => number, opts: { runs?: number; maxSteps?: number; seed?: number; /** この 1 通りだけ回す (画面で 1 つずつ間を空けて回す時) */ only?: { route: RouteKind; grade: Grade }; prep?: RoutePrep } = {}): RaceRow[] {
-  const runs = opts.runs ?? 300, maxSteps = opts.maxSteps ?? 3000;
-  const out: RaceRow[] = [];
-  for (const route of ["augment", "chaos", "exalt"] as const) {
-    for (const grade of ["perfect", "greater", "base"] as const) {
-      if (opts.only && (opts.only.route !== route || opts.only.grade !== grade)) continue;
-      const off = routeOff(data, base, itemLevel, target, route, opts.prep);
-      if (off) { out.push({ route, grade, off, hitRate: 0, avgCost: 0, avgSteps: 0, p50: 0, p90: 0, uses: {}, tries: [], people: runs }); continue; }
-      const costs: number[] = [], steps: number[] = [];
-      const uses: Record<string, number> = {};
-      for (let r = 0; r < runs; r++) {
-        const rng = mulberry32((opts.seed ?? 1) * 100003 + r * 7919 + route.length * 31 + grade.length);
-        const run = routeRun(data, base, itemLevel, target, route, grade, rng, price, opts.prep);
-        if (!run) continue;
-        while (run.n < maxSteps && !run.hit()) if (!run.step()) break;
-        for (const [k, v] of Object.entries(run.uses)) uses[k] = (uses[k] ?? 0) + v;
-        if (run.hit()) { costs.push(run.cost); steps.push(run.n); }
-      }
-      costs.sort((a, b) => a - b);
-      const at = (q: number) => (costs.length ? costs[Math.min(costs.length - 1, Math.floor(q * costs.length))]! : 0);
-      const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
-      for (const k of Object.keys(uses)) uses[k] = uses[k]! / runs;
-      out.push({ route, grade, off: steps.length === 0 ? "上限の手数までに付かなかった (この等級では付かない段かも)" : null, hitRate: steps.length / runs, avgCost: avg(costs), avgSteps: avg(steps), p50: at(0.5), p90: at(0.9), uses, tries: [...steps].sort((a, b) => a - b), people: runs });
+/**
+ * 1 通り (道 × 等級) を runs 人分打つ。打つのは重い (1 人で数百〜数千手) ので、sliceMs ごとに画面へ手を返す
+ * (2026-10-19 スマホ相当 = CPU 4 倍遅くで、まとめて打つと画面が最長 8.9 秒固まった)。stop() が true になったら null で止める
+ */
+export async function raceOne(data: PatchData, base: string, itemLevel: number, target: RaceTarget, price: (key: string) => number, route: RouteKind, grade: Grade,
+  opts: { runs: number; maxSteps?: number; seed?: number; prep?: RoutePrep; stop?: () => boolean; sliceMs?: number }): Promise<RaceRow | null> {
+  const runs = opts.runs, maxSteps = opts.maxSteps ?? 3000, sliceMs = opts.sliceMs ?? 25;
+  const off = routeOff(data, base, itemLevel, target, route, opts.prep);
+  if (off) return { route, grade, off, hitRate: 0, avgCost: 0, avgSteps: 0, p50: 0, p90: 0, uses: {}, tries: [], people: runs };
+  const costs: number[] = [], steps: number[] = [];
+  const uses: Record<string, number> = {};
+  let t0 = performance.now();
+  const breathe = async (): Promise<boolean> => {
+    if (performance.now() - t0 < sliceMs) return true;
+    await new Promise((r) => setTimeout(r, 0));
+    t0 = performance.now();
+    return !opts.stop?.();
+  };
+  for (let r = 0; r < runs; r++) {
+    const rng = mulberry32((opts.seed ?? 1) * 100003 + r * 7919 + route.length * 31 + grade.length);
+    const run = routeRun(data, base, itemLevel, target, route, grade, rng, price, opts.prep);
+    if (!run) continue;
+    while (run.n < maxSteps && !run.hit()) {
+      if (!run.step()) break;
+      if ((run.n & 15) === 0 && !(await breathe())) return null;
     }
+    for (const [k, v] of Object.entries(run.uses)) uses[k] = (uses[k] ?? 0) + v;
+    if (run.hit()) { costs.push(run.cost); steps.push(run.n); }
+    if (!(await breathe())) return null;
   }
-  return out;
+  costs.sort((a, b) => a - b);
+  const at = (q: number) => (costs.length ? costs[Math.min(costs.length - 1, Math.floor(q * costs.length))]! : 0);
+  const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  for (const k of Object.keys(uses)) uses[k] = uses[k]! / runs;
+  return { route, grade, off: steps.length === 0 ? "上限の手数までに付かなかった (この等級では付かない段かも)" : null, hitRate: steps.length / runs, avgCost: avg(costs), avgSteps: avg(steps), p50: at(0.5), p90: at(0.9), uses, tries: [...steps].sort((a, b) => a - b), people: runs };
 }

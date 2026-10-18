@@ -23,6 +23,8 @@ export const routesOpen = ref(false);
 export const routesLuck = ref(false);
 /** 嵌めて打つルーンの id (null = エミュレーターのアイテムに嵌めている物。StageRouteRunes.vue) */
 export const routesRunes = ref<string[] | null>(null);
+/** シェアから来た時の計算済みの結果 (StageRoutesPage が計算の代わりに出す。route-race.ts の SharedRace) */
+export const routesShared = ref<import("../services/craft-stage/route-race").SharedRace | null>(null);
 /** その狙い (選ぶまでは null) */
 export const routesTarget = ref<{ modId: string; minTierIndex: number } | null>(null);
 /** スパムシミュレーターのページを開く (カレンシーの見出しのボタン)。最初は「狙う MOD を選ぶ」の画面 (すぐ窓は出さない。2026-10-19 オーナー「こっちのがかわいい」) */

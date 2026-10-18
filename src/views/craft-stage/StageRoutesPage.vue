@@ -10,13 +10,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { routesLuck, routesOpen, routesRunes, routesTarget } from "../../state/web-page";
+import { routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../../state/web-page";
 import StageRoutesIntro from "./StageRoutesIntro.vue";
 import StageRouteRunes from "./StageRouteRunes.vue";
 import { routeRunesFor, runePrep } from "../../services/craft-stage/route-runes";
 import { stageRuneIds } from "../../services/craft-stage/stage-core";
 import StageRouteLuck from "./StageRouteLuck.vue";
-import { raceRoutes, type Grade, type RaceRow, type RouteKind } from "../../services/craft-stage/route-race";
+import { raceOne, unpackRace, type Grade, type RaceRow, type RouteKind } from "../../services/craft-stage/route-race";
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { displayCurrency } from "../../state/display-currency";
@@ -25,7 +25,8 @@ import HelpTip from "../../components/ui/HelpTip.vue";
 
 const GRADE_KEY: Record<Grade, string> = { base: "", greater: "_greater", perfect: "_perfect" };
 const GRADE_JA: Record<Grade, [string, string]> = { perfect: ["完全", "Perfect"], greater: ["上級", "Greater"], base: ["無印", "Regular"] };
-const RUNS = 100;
+/** 1 通りの人数。スマホは 10 人 (2026-10-19 スマホ相当で 100 人は 35 秒・画面が最長 9 秒固まった。オーナー「スマホだと 10 人だな規模感的に」) */
+const RUNS = typeof window !== "undefined" && window.innerWidth < 768 ? 10 : 100;
 type Step = { k: string | null; ja: string; en: string };
 /** 道ごと: 名前・主のカレンシー・等級・打ち方の決まり (route-race.ts と同じ。絵と文) */
 const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; grades: Grade[]; steps: Step[] }> = [
@@ -83,29 +84,63 @@ const newSeed = (): number => 1 + Math.floor(Math.random() * 2 ** 30);
 const seed = ref(newSeed());
 /** 何回目の 100 人か (1 = 最初) */
 const round = ref(1);
-function recompute(): void {
-  if (busy.value) return;
-  seed.value = newSeed();
-  round.value++;
+/**
+ * 計算は「計算開始」を押した時だけ (2026-10-19 オーナー「PC でもまぁまぁ重い、即計算ではなく計算開始を MOD を選ぶの下に。中止ボタンも、
+ * 計算開始が中止に変わる仕組み。開いたら即計算開始はダメ」)。2 回目からは別の 100 人 (再計算と同じ)
+ */
+const started = ref(false);
+function start(): void {
+  if (busy.value || !t.value) return;
+  if (started.value) { seed.value = newSeed(); round.value++; }
+  started.value = true;
   luckRow.value = null;
   void run();
+}
+/** 中止 (出た分の道はそのまま残す) */
+function stop(): void {
+  runId++;
+  busy.value = false;
+}
+const recompute = start;
+/** 狙い・ルーンが変わったら、計算の前に戻す (計算はしない) */
+function resetRace(): void {
+  runId++;
+  busy.value = false;
+  rows.value = [];
+  luckRow.value = null;
+  started.value = false;
+  round.value = 1;
+  seed.value = newSeed();
 }
 async function run(): Promise<void> {
   const d = s.data.value, tt = t.value;
   if (!d || !tt) return;
   const id = ++runId;
+  // シェアから来た時: 計算せずにシェアした人の結果を出して、すぐ運試し
+  const sh = routesShared.value;
+  if (sh) {
+    routesShared.value = null;
+    started.value = true;
+    rows.value = unpackRace(sh);
+    busy.value = false;
+    routesLuck.value = false;
+    openLuck(rows.value.find((r) => r.route === sh.l[0] && r.grade === sh.l[1]) ?? best.value);
+    return;
+  }
   rows.value = [];
   busy.value = true;
   for (const one of ORDER) {
     await new Promise((r) => setTimeout(r, 0));
     if (id !== runId) return;
-    rows.value = [...rows.value, ...raceRoutes(d, s.base.value, ilvl.value, tt, priceOf, { runs: RUNS, only: one, seed: seed.value, prep: prep.value })];
+    const row = await raceOne(d, s.base.value, ilvl.value, tt, priceOf, one.route, one.grade, { runs: RUNS, seed: seed.value, prep: prep.value, stop: () => id !== runId });
+    if (!row || id !== runId) return;
+    rows.value = [...rows.value, row];
   }
   busy.value = false;
 }
-watch(t, () => { luckRow.value = null; seed.value = newSeed(); round.value = 1; void run(); });
+watch(t, resetRace);
 // 嵌めるルーンを変えたら、別の 100 人で計算し直す
-watch(() => runeIds.value.join(), () => { if (t.value) { luckRow.value = null; seed.value = newSeed(); void run(); } });
+watch(() => runeIds.value.join(), () => { if (t.value) resetRace(); });
 /** 運試しの欄 (一番安い道で。2026-10-19 オーナー「一番安い欄に運試しボタン」)。シェアから来た時は計算が済んだら開く */
 /** 運試しの道 (一番安い欄・道のカードの下のボタンから。2026-10-19 オーナー「それぞれ運試しボタン、運試しはここに出す」)。null = 閉じている */
 const luckRow = ref<RaceRow | null>(null);
@@ -137,7 +172,7 @@ function back(): void { routesLuck.value = false; routesRunes.value = null; s.ai
 function pickMod(): void { s.aimPicker.value = { seed: null, routes: true }; }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !s.aimPicker.value) back(); }
 let before = 0;
-onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEventListener("keydown", onKey); void run(); });
+onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEventListener("keydown", onKey); if (routesShared.value) void run(); });
 onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
 </script>
 
@@ -162,7 +197,9 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <p class="mt-1 text-[16px] font-bold leading-snug text-[var(--color-rarity-magic)] [text-shadow:0_1px_2px_#000]">{{ modText }}</p>
           <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${rank} 以上で当たり`, `Hit at ${rank}+`) }}</span></p>
           <p class="mt-2 text-[12px] text-[var(--exile-color-text-secondary)]">{{ s.item.value?.baseJa ?? s.base.value }} · {{ tr(`アイテムレベル ${ilvl}`, `Item level ${ilvl}`) }}</p>
-          <p class="mt-2"><button type="button" data-routes-pick class="g-btn sm" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button></p>
+          <p class="mt-2"><button type="button" data-routes-pick class="g-btn sm" :disabled="busy" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button></p>
+          <!-- 計算開始 ⇔ 中止 (同じ場所のボタンが変わる) -->
+          <p class="mt-2"><button type="button" data-routes-start class="min-h-11 w-full max-w-[16rem]" :class="busy ? 'g-btn' : 'g-btn-red'" @click="busy ? stop() : start()">{{ busy ? tr(`中止 (${rows.length} / ${ORDER.length})`, `Stop (${rows.length} / ${ORDER.length})`) : started ? tr(`別の ${RUNS} 人でもう一度計算`, `Again with another ${RUNS}`) : tr("計算開始", "Start") }}</button></p>
           <StageRouteRunes class="mt-3 flex flex-col items-center" :picked="runeIds" :required="runeNeed" :disabled="busy" @change="setRunes" />
         </div>
         <div data-routes-best class="relative flex min-w-0 items-center gap-4 overflow-hidden rounded-md border border-emerald-400/30 bg-gradient-to-r from-emerald-500/[0.12] via-emerald-500/[0.04] to-transparent px-4 py-3">
@@ -175,18 +212,18 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <p class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half") }} {{ money(best.p50) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ money(best.p90) }}</p>
             </div>
             <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:self-end">
-            <button v-if="!busy && !luckOpen" type="button" data-route-luck-open class="g-btn-red" :title="tr('この道の決まりで、100 人と同じ始めの状態から自分でスパムして運を比べる', 'Spam it yourself with this route from the same start and compare your luck with the 100 people')" @click="openLuck(best)">{{ tr("運試し", "Luck test") }}</button>
-            <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr('別の 100 人でもう一度全部の道を計算する (乱数を変える)', 'Run all routes again with a different 100 people (new random seed)')" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
-            <span v-if="!busy && round > 1" class="text-center text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${round} 回目の 100 人`, `100 people, run ${round}`) }}</span>
+            <button v-if="!busy && !luckOpen" type="button" data-route-luck-open class="g-btn-red" :title="tr(`この道の決まりで、${RUNS} 人と同じ始めの状態から自分でスパムして運を比べる`, `Spam it yourself with this route from the same start and compare your luck with the ${RUNS} people`)" @click="openLuck(best)">{{ tr("運試し", "Luck test") }}</button>
+            <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr(`別の ${RUNS} 人でもう一度全部の道を計算する (乱数を変える)`, `Run all routes again with a different ${RUNS} people (new random seed)`)" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
+            <span v-if="!busy && round > 1" class="text-center text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${round} 回目の ${RUNS} 人`, `${RUNS} people, run ${round}`) }}</span>
             </span>
           </template>
-          <p v-else class="text-[13px] text-[var(--exile-color-text-secondary)]">{{ busy ? tr("計算中…", "Calculating…") : tr("どの道でも着かなかった", "No route reached it") }}</p>
+          <p v-else class="text-[13px] text-[var(--exile-color-text-secondary)]">{{ busy ? tr("計算中…", "Calculating…") : started ? tr("どの道でも着かなかった (中止した時は出た分だけ)", "No route reached it (or stopped early)") : tr(`「計算開始」を押すと、3 つの道を 3 つの等級で ${RUNS} 人ずつ打って比べます`, `Press “Start” to run each route at 3 grades, ${RUNS} times each`) }}</p>
           <p v-if="busy" class="absolute right-3 top-2 text-[11px] tabular-nums text-amber-200">{{ tr("計算中", "Calculating") }} {{ rows.length }} / {{ ORDER.length }}</p>
         </div>
       </div>
 
       <!-- 運試し (一番安い道で。StageRouteLuck.vue) -->
-      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route)" :prep="prep" :runes="runeIds" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
+      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route && x.tries.length)" :rows="ok" :prep="prep" :runes="runeIds" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
       <!-- 下: 3 つの道 -->
       <div class="route-rule mt-4 grid gap-3 lg:grid-cols-3">
         <article v-for="r in ROUTES" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">
@@ -234,7 +271,8 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <div v-else class="flex items-center gap-2 text-[12px] opacity-50">
                 <img :src="iconOf(`${r.main}${GRADE_KEY[g]}`)" alt="" class="size-6 object-contain" />
                 <span>{{ tr(...GRADE_JA[g]) }}</span>
-                <span class="ml-auto animate-pulse text-[11px]">{{ tr("計算中…", "Calculating…") }}</span>
+                <span v-if="busy" class="ml-auto animate-pulse text-[11px]">{{ tr("計算中…", "Calculating…") }}</span>
+                <span v-else class="ml-auto text-[11px]">—</span>
               </div>
             </li>
           </ul>
