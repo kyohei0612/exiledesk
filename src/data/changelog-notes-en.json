@@ -1,4 +1,8 @@
 {
+ "0.1.563": [
+  "Mod list “Add”: normal mods can now be added as Desecrated. Omens now stay on after you craft (the toggle is gone; click an omen again to remove it)",
+  "Quality bar fits on one line, currency names wrap at natural points, “β” removed from Tutorial, mod list tabs match the other tabs"
+ ],
  "0.1.562": [
   "Mod list: “Add” is now a dropdown (As is / Desecrated / Fracture). Unavailable ones are greyed out and show the reason on hover",
   "Mod list: tier buttons only on the hovered tier, English tier names removed, tags cut to one line, “※” is now an “Est. weight” badge",

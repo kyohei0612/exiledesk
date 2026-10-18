@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.563",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧の「付ける」で、普通の MOD も冒涜で付けられるように・お告げは打っても掛けたままに (切り替えのチェックは無くしました。外す時はもう一度押す)",
+    "en": "Mod list “Add”: normal mods can now be added as Desecrated. Omens now stay on after you craft (the toggle is gone; click an omen again to remove it)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "品質の帯を 1 行に揃える・カレンシーの名前を切りの良い所で折る・チュートリアルの「β」を外す・MOD 一覧のタブをほかのタブと同じ見た目に",
+    "en": "Quality bar fits on one line, currency names wrap at natural points, “β” removed from Tutorial, mod list tabs match the other tabs"
+   }
+  ]
+ },
+ {
   "v": "0.1.562",
   "date": "2026-10-18",
   "items": [
@@ -610,24 +628,6 @@
     "area": "",
     "text": "掲示板をいったん閉じました",
     "en": "Closed the message board for now"
-   }
-  ]
- },
- {
-  "v": "0.1.523",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: カレンシーの動きを、ゲームの説明文どおりに組み直しました (結果は今までとほぼ同じ)",
-    "en": "Emulator: rebuilt currency behaviour to follow the game's descriptions (results are almost unchanged)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "熟練工のオーブはセプターに使えないように、ルーンをはめるとヒネコラの予見が消えるように (説明文どおり)",
-    "en": "Artificer's Orb can no longer be used on sceptres, and socketing a rune clears Hinekora's Lock foresight (as described)"
    }
   ]
  }
