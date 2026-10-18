@@ -243,7 +243,7 @@ watch(() => s.log.value.length, (n, old) => {
 export const canRetry = computed(() => !!topic.value);
 export function retryStep(): void {
   s.hold(null);
-  // もう一度は本当に最初から (ループの手も 1 周目・用意し直したアイテムに戻す。2026-10-18 オーナー「もう一度ボタンはホントに最初から」)
+  // もう一度: 今の手の始めに戻す (ループの手も 1 周目・用意し直したアイテムに戻す。2026-10-18 オーナー「もう一度ボタンはホントに最初から」)
   loopRound.value = 1;
   const top = snaps[snaps.length - 1];
   if (topic.value && top) restore(top);
@@ -252,6 +252,13 @@ export function retryStep(): void {
   if (st?.cont && d && it) { const k = topicKey(st, d, it); if (k && s.usable(k) === null) { preparedAt = topicAt.value; return; } }
   // 戻したらすぐ、その手の始めの形を用意する (前は用意の前の白いアイテムが出ていた。2026-10-18)
   if (topic.value) prepareStep();
+}
+
+/** 最初から: コースの 1 手目から、まっさらで始め直す (クリアの印は残す)。2026-10-18 オーナー「最初からともう一度で 2 つボタン」 */
+export function restartCourse(): void {
+  s.hold(null);
+  const c = topic.value;
+  if (c) startTopicAt(c, 0);
 }
 
 /**

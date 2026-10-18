@@ -150,7 +150,7 @@ const rows = computed(() => {
   // 消えずに残り、「アルダーの MOD が増える」に見えていた (要望 28a9398d)。同じ modId は出てきた順の番号で分ける
   const seen = new Map<string, number>();
   const keyOf = (m: StageMod): string => { const n = seen.get(m.modId) ?? 0; seen.set(m.modId, n + 1); return n ? `${m.modId}~${n}` : m.modId; };
-  return [...props.item.prefixes.map((m) => ({ m, side: "プレフィックス", key: keyOf(m) })), ...props.item.suffixes.map((m) => ({ m, side: "サフィックス", key: keyOf(m) }))].map((r) => {
+  const list = [...props.item.prefixes.map((m) => ({ m, side: "プレフィックス", key: keyOf(m) })), ...props.item.suffixes.map((m) => ({ m, side: "サフィックス", key: keyOf(m) }))].map((r) => {
     // カタリストの品質で伸びた数値 (伸びない MOD は null)
     const b = boostedMod(props.item, r.m, craftStage.data.value ?? undefined);
     // 画面用のタグ (クライアントの implicit_tags) を先に。r.m.tags は確率用 (カタリスト等) なので中身のタグが無い MOD がある (2026-10-05)
@@ -160,8 +160,13 @@ const rows = computed(() => {
     const st = (r.m as { stats?: string[] }).stats?.[0] ?? (em?.tiers?.[0] as { stats?: string[] } | undefined)?.stats?.[0];
     const ord = st != null ? (STAT_ORDER as Record<string, number>)[st] ?? 1e9 : 1e9;
     return { ...r, text: b ? modText(b) : modText(r.m), boosted: !!b, tags, ord };
+  });
+  // 表に無い MOD が 1 つでもあると、表にある物だけ上に来てプレ・サフィが混ざる (ジュエルは表に無い MOD が多い)。その時はプレ → サフィで分ける
+  // (2026-10-18 オーナー「なんでジュエルだけサフィとプレの順番がぐちゃぐちゃ」)
+  const bySide = list.some((r) => r.ord >= 1e9);
+  const sideOf = (r: { side: string }): number => (bySide && r.side === "サフィックス" ? 1 : 0);
   // 冒涜の MOD (未発現も) はゲーム・トレードと同じく一番下 (2026-10-17 オーナー「冒涜って基本一番下よね」)
-  }).sort((x, y) => Number(!!(x.m.desecrated || x.m.unrevealed)) - Number(!!(y.m.desecrated || y.m.unrevealed)) || x.ord - y.ord);
+  return list.sort((x, y) => Number(!!(x.m.desecrated || x.m.unrevealed)) - Number(!!(y.m.desecrated || y.m.unrevealed)) || sideOf(x) - sideOf(y) || x.ord - y.ord);
 });
 </script>
 
