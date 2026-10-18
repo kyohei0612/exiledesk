@@ -125,6 +125,7 @@ export const splitOmens = (omen: string | null | undefined): string[] => (omen ?
 export function stepJa(currency: string, item: StageItem): string {
   const fc = parseForce(currency);
   if (fc?.flag === "x") return "× で外す";
+  if (fc?.flag === "u") return "フラクチャーを外す";
   if (fc) return `指名で付ける (${fc.rank ?? "T1"}${fc.flag === "e" ? "・エッセンス" : fc.flag === "d" ? "・冒涜" : fc.flag === "f" ? "・フラクチャー" : ""})`;
   const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
   if (rv) return `発現 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
@@ -150,6 +151,7 @@ export function stepJa(currency: string, item: StageItem): string {
 export function stepEn(currency: string): string | null {
   const fc = parseForce(currency);
   if (fc?.flag === "x") return "Remove (×)";
+  if (fc?.flag === "u") return "Unfracture";
   if (fc) return `Force (${fc.rank ?? "T1"}${fc.flag === "e" ? ", Essence" : fc.flag === "d" ? ", Desecrated" : fc.flag === "f" ? ", Fractured" : ""})`;
   const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
   if (rv) return `Reveal (${rv[2] ? "reroll, " : ""}#${rv[1]})`;

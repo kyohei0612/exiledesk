@@ -2,7 +2,8 @@
  * 指名で MOD を付ける手 (手で打つ画面の「このベースに付く MOD」の「付ける」。2026-10-08 オーナー「クラフト途中でも MOD 付けれるようにして、
  * ただ基本的な事は抑えて: サフィ満杯の時にはサフィに付けれない」「エッセンスとか全 MOD がそのまま MOD 選択で付けれるか確認して」)。
  *
- * 鍵: `force:<modId>|<段 (T2 など、空なら一番上)>|<種類>`。種類は n = 普通 / e = エッセンス (クラフト MOD) / d = 冒涜 / f = フラクチャー。
+ * 鍵: `force:<modId>|<段 (T2 など、空なら一番上)>|<種類>`。種類は n = 普通 / e = エッセンス (クラフト MOD) / d = 冒涜 / f = フラクチャー /
+ * x = 外す / u = フラクチャーを外す (固定を解く。アイテムのカードの右クリック、2026-10-18 オーナー「右クリックでフラクチャー解除」)。
  * 1 手として log に入り (1 手戻す・再生・手順 JSON の currency にそのまま入る)、費用は 0。
  *
  * 手で付けるのはゆるく (2026-10-11 オーナー「付けれないけど付けた時の挙動に、レアでしか使えないならレアにして付ける、シミュレーターだから親切に、ただルールは順守」)。
@@ -25,14 +26,14 @@ import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, takenCr
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
 
-export type ForceFlag = "n" | "e" | "d" | "f" | "x";
+export type ForceFlag = "n" | "e" | "d" | "f" | "x" | "u";
 export const isForce = (key: string): boolean => key.startsWith("force:");
 export const forceKey = (modId: string, rank: string | null, flag: ForceFlag): string => `force:${modId}|${rank ?? ""}|${flag}`;
 export function parseForce(key: string): { modId: string; rank: string | null; flag: ForceFlag } | null {
   if (!isForce(key)) return null;
   const [modId, rank, flag] = key.slice("force:".length).split("|");
   if (!modId) return null;
-  const f = (["n", "e", "d", "f", "x"] as const).find((x) => x === flag) ?? "n";
+  const f = (["n", "e", "d", "f", "x", "u"] as const).find((x) => x === flag) ?? "n";
   return { modId, rank: rank || null, flag: f };
 }
 const SIDE_JA: Record<StageSide, string> = { prefix: "プレフィックス", suffix: "サフィックス" };
@@ -49,6 +50,14 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
     if (!have) return skip(item, tr("その MOD は付いていない", "That mod isn't on the item"));
     const drop = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.filter((m) => m !== have);
     return { applied: true, item: { ...item, prefixes: drop(item.prefixes), suffixes: drop(item.suffixes) }, added: [], removed: [have] };
+  }
+  // u: フラクチャーを外す (費用 0、1 手戻すで戻る)。MOD はそのまま、固定だけ解く
+  if (p.flag === "u") {
+    const have = allMods(item).find((m) => m.modId === p.modId && m.fractured);
+    if (!have) return skip(item, tr("その MOD はフラクチャーしていない", "That mod isn't fractured"));
+    const loose = { ...have, fractured: false };
+    const swap = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.map((m) => (m === have ? loose : m));
+    return { applied: true, item: { ...item, prefixes: swap(item.prefixes), suffixes: swap(item.suffixes) }, added: [], removed: [] };
   }
   // ユニークには足せない (2026-10-08 使い倒しテスト)
   if (item.rarity === "unique") return skip(item, tr("ユニークには MOD を足せない", "Can't add mods to a Unique"));

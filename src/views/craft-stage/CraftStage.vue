@@ -237,8 +237,8 @@ function setQualityCap(n: number): void {
 function toModList(): void { s.modOverlay.value = true; }
 watch(() => s.item.value, (it) => { if (!it) s.modOverlay.value = false; });
 function fractureMod(m: StageMod): void {
-  const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0;
-  s.use(forceKey(m.modId, n ? `T${n - m.tierIndex}` : null, "f"));
+  if (m.fractured) { s.use(forceKey(m.modId, null, "u")); return; } // フラクチャー済みは右クリックで外す (2026-10-18 オーナー)
+  const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0; s.use(forceKey(m.modId, n ? `T${n - m.tierIndex}` : null, "f"));
 }
 /** 発現の候補が出ている時: 帯を「発現する MOD を選ぶ ↑」にしてパネルへ送る (骨 → 発現の流れ。2026-10-08 レビュー A3) */
 function scrollToReveal(): void { scrollToTop(document.querySelector("[data-reveal-panel]"), "smooth", "center"); }

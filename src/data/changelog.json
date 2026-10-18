@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.576",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "フラクチャーした MOD はもう一度右クリックするとフラクチャーを外せるように",
+    "en": "Right-click a fractured mod again to unfracture it"
+   }
+  ]
+ },
+ {
   "v": "0.1.575",
   "date": "2026-10-18",
   "items": [
@@ -594,18 +606,6 @@
     "area": "",
     "text": "カオススパム計算機: 誰も付かない狙いの時に計算が何分も続いていたのを、最初の 10 人が付かなければ打ち切るように (「付かない人が多い」と出ます)",
     "en": "Chaos spam calculator: targets nobody hits no longer calculate for minutes; it gives up if the first 10 people all miss (shows \"many people never hit\")"
-   }
-  ]
- },
- {
-  "v": "0.1.536",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム計算機: 一度計算したアイテムレベルに戻した時は、計算し直さずにすぐ結果を出すように。狙いの MOD を足す・変えた時と、計算機を閉じた時は計算し直します (自分でスパムする方は毎回ちがう乱数のまま)",
-    "en": "Chaos spam calculator: going back to an item level you already calculated shows the result immediately. It recalculates when you add or change target mods and when you close the calculator (your own spam always uses fresh random numbers)"
    }
   ]
  }

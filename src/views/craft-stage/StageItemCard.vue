@@ -94,7 +94,7 @@ const hint = computed((): string => {
   if (props.holding) return phoneW ? tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") : tr("押すと使う · 右クリック / Esc で手放す", "Click to use · Right-click / Esc to drop");
   if (!props.removable) return "";
   if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補を選んで「発現」", "Pick an option below, then Reveal");
-  if (hover.value === "mod") return tr("押すと MOD 一覧のその行へ · 右クリックでフラクチャー · × で外す", "Click to find it in the mod list · Right-click to fracture · × to remove");
+  if (hover.value === "mod") return tr("押すと MOD 一覧のその行へ · 右クリックでフラクチャー (もう一度で外す) · × で外す", "Click to find it in the mod list · Right-click to fracture (again to unfracture) · × to remove");
   if (hover.value === "rune") return tr("右クリックでルーンを外す", "Right-click to remove the rune");
   return phoneW ? "" : tr("MOD を右クリックでフラクチャー · × で外す · R で 1 手戻す", "Right-click a mod to fracture · × to remove · R to undo");
 });
@@ -254,8 +254,8 @@ const rows = computed(() => {
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
           :class="[r.m.desecrated ? 'g-abyss-row' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
-          :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
-          @contextmenu="!holding && removable && !unfracturable(craftStage.data.value, item, r.m) && !r.m.fractured ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
+          :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : removable && r.m.fractured ? tr('右クリックでフラクチャーを外す', 'Right-click to unfracture') : removable && !unfracturable(craftStage.data.value, item, r.m) ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
+          @contextmenu="!holding && removable && (r.m.fractured || !unfracturable(craftStage.data.value, item, r.m)) ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
         >
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
