@@ -59,10 +59,12 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, order
 const grantPending = computed(() => (htcBaseInfo()[s.base.value]?.grants?.length ?? 0) > 1 && !s.simGrant.value);
 // 付与スキルを選んで始め方が出たら、3 の枠の下の線 + 24px まで送る (段が進んだ時と同じ。2026-10-18 オーナー)
 watch(grantPending, (p, was) => { if (!p && was) void nextTick(() => requestAnimationFrame(() => { const el = panelEl.value?.querySelector("[data-sim-cur]"); if (el) revealBottom(el); })); });
-/** 3 の始め方の行 (エミュレーターの状態からは、持ってきた時だけ) */
-const startKinds = computed(() => SIM_STARTS.filter((k) => k.k !== "item" || !!s.simStartItem.value));
-/** 使えない始め方の理由 (フラクチャー予定が無いと、フラクチャー済み・4 MOD のレアは使えない) */
-const startOff = (k: (typeof SIM_STARTS)[number]): string => (k.needsFracture && !fracMembers.value.length ? "2 でフラクチャー予定を選ぶと使える" : "");
+/** 3 の始め方の行。エミュレーターの状態からは持ってきた時だけ、フラクチャーの始め方は 2 にフラクチャー予定がある時だけ (無ければ出さない。2026-10-18 オーナー) */
+const startKinds = computed(() => SIM_STARTS.filter((k) => (k.k !== "item" || !!s.simStartItem.value) && (!k.needsFracture || fracMembers.value.length > 0)));
+// 選んでいた始め方が一覧から消えたら (マジック・フラクチャー予定を外した時) 白ベースからに戻す
+watch(startKinds, (ks) => { if (!ks.some((k) => k.k === s.simStart.value)) s.simStart.value = "white"; }, { immediate: true });
+/** 使えない始め方の理由 (今は出さない作りなので空。行の作りは残す) */
+const startOff = (_k: (typeof SIM_STARTS)[number]): string => "";
 /** その始め方のベースの値段 (高貴建て。入れていなければ null) */
 function startCost(k: SimStartKind): number | null {
   return num(k === "white" ? whiteDivine.value : k === "fractured" ? boughtDivine.value : k === "magic" ? magicDivine.value : k === "four" ? fourDivine.value : itemDivine.value);
@@ -210,15 +212,16 @@ const cheapStart = computed((): SimStartKind | null => {
           <SimRareStrip v-if="k.k === 'white' && !whiteDone" class="pl-8" :white="num(whiteDivine)" />
           </template>
         </div>
-        <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ -->
+        <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ。無ければ出さない (2026-10-18) -->
+        <template v-if="fracMembers.length">
         <p class="mt-3 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]" :class="fractureRows.length ? '' : 'max-md:hidden'">{{ s.simStart.value === "fractured" ? "フラクチャーの MOD (買う物)" : s.simStart.value === "four" ? "自分でフラクチャーする MOD" : "増強・消去スパムで狙う MOD (フラクチャー予定)" }}</p>
-        <p v-if="!fractureRows.length" class="text-[11px] opacity-50 max-md:hidden">無し (フラクチャーしない。2 の付け方の予定で「フラクチャー予定」を選ぶと出る)</p>
         <p v-if="mixedSides" class="text-[11px] text-amber-200">候補がプレフィックスとサフィックスに分かれています (推奨は同じ側。マジックの間はどちらの側に付いても当たり)</p>
         <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
           <span class="w-8 text-[10px] opacity-60">{{ r.side }}</span>
           <span :class="r.tone">{{ r.text }}</span> <span class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }} 以上</span>
           <span v-if="calc?.each[i] && s.simStart.value !== 'fractured'" class="ml-auto text-[11px] tabular-nums opacity-80" title="増強 1 回でこの段以上が付く割合 (2 狙う MOD の出やすさは全段の重み、ここは打つ増強の下限で絞る)">増強で付く {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}では MOD レベルが低い)</template></span>
         </p>
+        </template>
         <div v-if="!whiteDone" class="mt-1 flex items-center gap-2">
           <span v-if="calc && fracMembers.length >= 2" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
           <span v-if="num(startPrice) == null" class="ml-auto text-[11px] text-amber-200/80">{{ s.simStart.value === "white" ? "白ベースの値段を入れる (分からなければ 0)" : "買うベースの値段を入れる" }}</span>

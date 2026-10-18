@@ -90,10 +90,10 @@ export function sideLimits(d: PatchData | null, base: string, itemLevel: number)
 
 /** シミュレーターの始め方 (3 で縦に全部並べて、ベースの値段を比べる。2026-10-18 オーナー「始め方はタブで出さず全部計算させるから縦にそれぞれ表示」) */
 export type SimStartKind = "white" | "fractured" | "magic" | "four" | "item";
+// マジックを買うは出さない (出回っていないことが多い。2026-10-18 オーナー「流石にマジックから買うのそもそも物が無かったりするからスルー」)。並びは白 → フラクチャーの MOD 付きレア → フラクチャー済み
 export const SIM_STARTS: Array<{ k: SimStartKind; label: string; hint: string; labelEn: string; hintEn: string; needsFracture?: boolean }> = [
   { k: "white", label: "白ベースから", hint: "白のベースを買って 1 から作る", labelEn: "From a white base", hintEn: "Buy a white base and craft from scratch" },
+  { k: "four", label: "フラクチャーの MOD 付きレアを買う", hint: "フラクチャー予定の MOD が付いた 4 MOD のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)", labelEn: "Buy a rare with the mod", hintEn: "Buy a 4-mod rare with the fracture-planned mod, block with an Abyssal Bone, then use a Fracturing Orb (1/3 hit)", needsFracture: true },
   { k: "fractured", label: "フラクチャー済みを買う", hint: "フラクチャーの MOD が 1 つ付いたベースを買う (フラクチャー予定の MOD)", labelEn: "Buy fractured", hintEn: "Buy a base with the fracture-planned mod already fractured", needsFracture: true },
-  { k: "magic", label: "マジックを買う", hint: "狙う MOD の最初のプレフィックス 1 つ・サフィックス 1 つが付いたマジックを買う (段は狙いの下限)", labelEn: "Buy a magic", hintEn: "Buy a magic item with the first target prefix and suffix (at their minimum tier)" },
-  { k: "four", label: "4 MOD のレアを買う", hint: "3 MOD + 狙い 1 のレアを買って、骨の壁を足してからフラクチャー (当たり 1/3)", labelEn: "Buy a 4-mod rare", hintEn: "Buy a rare with 3 mods + 1 target, block with an Abyssal Bone, then use a Fracturing Orb (1/3 hit)", needsFracture: true },
   { k: "item", label: "エミュレーターの状態から", hint: "エミュレーターの今のアイテムから先を回す", labelEn: "From the Emulator item", hintEn: "Continue from the current Emulator item" },
 ];
