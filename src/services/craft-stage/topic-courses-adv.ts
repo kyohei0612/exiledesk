@@ -14,13 +14,15 @@ const H = (use: string, note: JaEn, how: JaEn[], prep?: string[] | StageItem["ra
 const ALWAYS = (st: TopicStep): TopicStep => ({ ...st, prepAlways: true });
 const BT = (mod: string, tier: string, x: Partial<Force> = {}): Force => ({ mod: `Boots_str/${mod}`, tier, ...x });
 const JI = (mod: string): Force => ({ mod: `Jewels_int/${mod}`, tier: "T1" });
-const AM = (mod: string, tier: string): Force => ({ mod: `Amulets/${mod}`, tier });
+const AM = (mod: string, tier: string, x: Partial<Force> = {}): Force => ({ mod: `Amulets/${mod}`, tier, ...x });
 /** 雷耐性を固定してしまった靴 (サフィックス満杯) */
 const BOOTS_FR: Force[] = [BT("MovementVelocity", "T2"), BT("IncreasedLife", "T3"), BT("LocalArmourAndStunThreshold", "T3"), BT("LightningResistance", "T1", { fractured: true }), BT("FireResistance", "T3"), BT("ColdResistance", "T3")];
 /** 軽蔑の当たり (「サフィックスモッド +1 個」がプレフィックスに) を置く手 */
 const CONTEMPT = "force:Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed|T1|n";
 /** ブリーチのエッセンスの「品質の最大値 +20%」を置く手 */
 const BREACH = "force:Amulets/PerfectEssence_LocalMaximumQuality|T1|e";
+/** 不在のアミュレット (プレ 2・サフィ 2): 固定した最大マナ + スペルスキルのレベル・キャストスピード。prep の BREACH でプレフィックスが満杯になる */
+const ABSENT: Force[] = [AM("IncreasedMana", "T1", { fractured: true }), AM("GlobalIncreaseSpellSkillGemLevel", "T1"), AM("IncreasedCastSpeed", "T2")];
 
 export const ADV_COURSES: TopicCourse[] = [
   {
@@ -41,18 +43,26 @@ export const ADV_COURSES: TopicCourse[] = [
     ],
   },
   {
-    id: "adv-essence-desecrate", level: 4, title: ["冒涜をエッセンスで消す", "Remove a Desecration with an essence"], base: "Vaal Greaves", itemLevel: 82,
-    learn: ["固定した MOD と結晶化のお告げで、冒涜の MOD だけをエッセンスで消す (アストリッドでエッセンス 2 つ目)", "Use a Fractured mod + crystallisation omen so an essence removes only the Desecrated mod (Astrid for a 2nd essence)"],
-    // 2026-10-18 オーナー「フラクチャー側に冒涜発現済み、サフィに 3 MOD 置いてエッセンスでリロール。アストリッドでエッセンス 2 個目させる状態に、サフィに 1 クラフト MOD」
+    id: "adv-essence-desecrate", level: 4, title: ["冒涜をエッセンスでやり直す", "Redo Desecrations with an essence"], base: "Absent Amulet", itemLevel: 82,
+    learn: ["不在のアミュレットで、骨 → 発現 → ブリーチのエッセンスを何度でも。光のお告げも結晶化のお告げもいらない", "On an Absent Amulet: bone → reveal → Breach essence, as many times as you like. No Omen of Light or crystallisation needed"],
+    // 不在のアミュレットの動画 (mjaMYCYl-PI 24:31)。2026-10-18 オーナー「付く方のエッセンスの枠が埋まってるから必ず邪魔な方の MOD を消してくれる、それに合ったエッセンスを使うと無限」「同じ動作 3 回」
     steps: [
-      { ...ALWAYS(H("ess:Hysteria:perfect", ["冒涜だけ消して、エッセンスを付ける", "Remove only the Desecration, add an essence"], [
-        ["プレフィックスは「固定した最大ライフ」と「冒涜で付いたアーマー」。冒涜の結果がいまいちだった、という状態", "Prefixes: a Fractured Life mod and a Desecrated Armour mod you didn't want"],
-        ["サフィックスは満杯で、そのうち 1 つはエッセンスで付けたレアリティ (作った MOD)", "Suffixes are full; one of them is Rarity from an essence (a crafted mod)"],
-        ["アストリッドの創造性をはめてあるので、作った MOD を 2 つまで持てる (2 つ目のエッセンスが打てる)", "Astrid's Creativity is socketed, so you can have 2 crafted mods (a 2nd essence works)"],
-        ["左側の結晶化のお告げを掛けたヒステリーのエッセンスは、プレフィックスから 1 つ消す。固定した MOD は消えないので、消えるのは必ず冒涜の MOD", "Hysteria with Omen of Sinistral Crystallisation removes a prefix. The Fractured one can't go, so it's always the Desecrated mod"],
-        ["冒涜が消えて移動スピード 30% が付く。光のお告げを使わずに、冒涜をやり直せる", "The Desecration is gone and 30% Movement Speed is added: a redo without Omen of Light"],
-      ], ["force:Boots_str/Essence_ItemFoundRarityIncrease|T1|e", "rune:Astrid's Creativity"])), omens: ["OmenofSinistralCrystallisation"],
-      startMods: [BT("IncreasedLife", "T2", { fractured: true }), BT("LocalArmourAndStunThreshold", "T2", { desecrated: true }), BT("LightningResistance", "T1"), BT("ColdResistance", "T2")] },
+      { ...ALWAYS(H("desecrate", ["骨 → 発現 → エッセンスで元に戻る", "Bone → reveal → essence puts it back"], [
+        ["不在のアミュレットはプレフィックスが 2 つまで。今は「固定した最大マナ」と「ブリーチのエッセンス」で満杯", "Absent Amulets hold only 2 prefixes. Now: a Fractured Mana mod + the Breach essence mod (full)"],
+        ["左のネクロマンシーの骨: 満杯なので、固定していない方 (ブリーチ) が冒涜に入れ替わる", "Bone with Sinistral Necromancy: prefixes are full, so the unfractured one (Breach) becomes the Desecration"],
+        ["発現して、狙い (スピリットなど) が無ければほかを選ぶ", "Reveal; if your target (Spirit etc.) isn't there, pick another"],
+        ["ブリーチのエッセンス: 付ける側 (プレフィックス) が満杯なので、プレフィックスから消す。固定した MOD は消えないので、消えるのは必ず冒涜。結晶化のお告げはいらない", "Breach essence: its side (prefix) is full, so it removes a prefix. The Fractured one stays, so it's always the Desecration. No crystallisation omen needed"],
+        ["これで最初と同じ形に戻る。光のお告げを使わずに、何回でも冒涜をやり直せる", "You're back to the start: redo the Desecration as often as you like, without Omen of Light"],
+      ], [BREACH])), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
+      chain: [S("reveal", ["発現", "Reveal"]), S("ess:the Breach:perfect", ["ブリーチで冒涜を消す", "Breach removes the Desecration"])] },
+      { ...H("desecrate", ["2 回目", "2nd time"], [
+        ["もう一度: 骨 → 発現 → ブリーチ。毎回、最初と同じ形に戻る", "Again: bone → reveal → Breach. It returns to the same shape every time"],
+      ], [BREACH]), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
+      chain: [S("reveal", ["発現", "Reveal"]), S("ess:the Breach:perfect", ["ブリーチで冒涜を消す", "Breach removes the Desecration"])] },
+      { ...H("desecrate", ["3 回目", "3rd time"], [
+        ["3 回目。実際は狙いが出るまで同じ動作を続けて、出たらそれを選んで終わり (ブリーチは打たない)", "3rd time. In practice, repeat until your target shows up, then pick it and stop (no Breach)"],
+      ], [BREACH]), omens: ["OmenofSinistralNecromancy"], startMods: ABSENT,
+      chain: [S("reveal", ["発現", "Reveal"]), S("ess:the Breach:perfect", ["ブリーチで冒涜を消す", "Breach removes the Desecration"])] },
     ],
   },
   {
