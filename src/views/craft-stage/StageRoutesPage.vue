@@ -225,7 +225,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           </ul>
           <!-- この道で運試し (道の中で一番安い等級。運試しの欄は一番安い欄の下に出す) -->
           <p v-if="!offRoute(r.route) && !busy && bestIn(r.route)" class="mt-auto pt-3 text-center">
-            <button type="button" :data-route-luck-card="r.route" class="g-btn sm" :class="luckRow === bestIn(r.route) ? 'on' : ''" :title="tr(`${tr(r.ja, r.en)}の一番安い等級 (${tr(...GRADE_JA[bestIn(r.route)!.grade])}) で運試し`, `Luck test with ${r.en} at its cheapest grade (${GRADE_JA[bestIn(r.route)!.grade][1]})`)" @click="openLuck(bestIn(r.route))">{{ tr(`運試し (${tr(...GRADE_JA[bestIn(r.route)!.grade])})`, `Luck test (${GRADE_JA[bestIn(r.route)!.grade][1]})`) }}</button>
+            <button type="button" :data-route-luck-card="r.route" class="g-btn sm" :class="luckRow === bestIn(r.route) ? 'on' : ''" :title="tr(`${tr(r.ja, r.en)}の一番安い等級 (${tr(...GRADE_JA[bestIn(r.route)!.grade])}) で運試し`, `Luck test with ${r.en} at its cheapest grade (${GRADE_JA[bestIn(r.route)!.grade][1]})`)" @click="openLuck(bestIn(r.route))">{{ tr("運試し", "Luck test") }}</button>
           </p>
         </article>
       </div>

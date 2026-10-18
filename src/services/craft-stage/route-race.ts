@@ -49,6 +49,8 @@ export interface RouteRun {
   n: number; cost: number; uses: Record<string, number>;
   /** 最後に打った物 (画面に出す) */
   last: { key: string; omens: string[] } | null;
+  /** 付いた瞬間の確率 (MOD の id → 確率。エミュレーターの札の % と神演出に使う、run-plan.ts の chances と同じ) */
+  chances: Map<string, number>;
   hit(): boolean;
   /** 決まりどおりに 1 手打つ。打てなかったら false */
   step(): boolean;
@@ -74,7 +76,7 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
     if (!allMods(it).length || routeHit(it, target)) return null;
   } else if (route === "exalt") it = { ...it, rarity: "rare" }; // MOD 0 のレア
   const run: RouteRun = {
-    item: it, n: 0, cost: 0, uses: {}, last: null,
+    item: it, n: 0, cost: 0, uses: {}, last: null, chances: new Map(),
     hit: () => routeHit(run.item, target),
     step: () => {
       const use = (key: string, omens: string[] = []): boolean => {
@@ -86,6 +88,7 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
         run.uses[key] = (run.uses[key] ?? 0) + 1;
         for (const o of omens) run.uses[o] = (run.uses[o] ?? 0) + 1;
         run.last = { key, omens };
+        for (const x of res.rolled ?? []) run.chances.set(x.modId, x.chance);
         return true;
       };
       const cur = run.item;

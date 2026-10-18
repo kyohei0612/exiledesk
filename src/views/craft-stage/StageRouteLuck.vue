@@ -15,6 +15,7 @@ import { baseArtFile } from "../../services/craft-stage/base-art";
 import { displayCurrency } from "../../state/display-currency";
 import { luck, packCard, rankWord, sendShare, shareOrigin, shortIdOf } from "./use-spam-share";
 import { playSfx, playUseSfx } from "../../utils/sfx";
+import { isRareChance } from "../../utils/format-pct";
 import { track } from "../../utils/track";
 import { logRecord } from "../../utils/log-record";
 import { isEn, tr } from "../../i18n/lang";
@@ -33,7 +34,6 @@ const GRADE_NAME: Record<RaceRow["grade"], [string, string]> = { base: ["無印"
 const cheapest = computed(() => (props.options.length ? props.options.reduce((a, b) => (b.avgCost < a.avgCost ? b : a)) : null));
 const ORDER_G = ["base", "greater", "perfect"] as const;
 const tabs = computed(() => [...props.options].sort((a, b) => ORDER_G.indexOf(a.grade) - ORDER_G.indexOf(b.grade)));
-const medianOfRow = (r: RaceRow): number | null => medianOf({ tries: r.tries, failed: r.people - r.tries.length, people: r.people });
 
 const stats = computed<SpamStats>(() => ({ tries: props.row.tries, failed: props.row.people - props.row.tries.length, people: props.row.people }));
 const median = computed(() => medianOf(stats.value));
@@ -59,6 +59,8 @@ function fresh(): void {
 }
 /** 直前の描き直しから付いた・消えた MOD (札の緑と取り消し線。エミュレーターの 1 手分と同じ見せ方) */
 const added = ref<StageMod[]>([]);
+/** 付いた瞬間の確率 (札の % と神演出。描き直すたびに写しを渡す) */
+const chanceMap = ref<ReadonlyMap<string, number>>(new Map());
 const removed = ref<StageMod[]>([]);
 const sameMod = (a: StageMod, b: StageMod): boolean => a.modId === b.modId && a.tierIndex === b.tierIndex && a.values.join() === b.values.join();
 function sync(): void {
@@ -66,6 +68,7 @@ function sync(): void {
   const was = before ? [...before.prefixes, ...before.suffixes] : [], is = now ? [...now.prefixes, ...now.suffixes] : [];
   added.value = before && now ? is.filter((m) => !was.some((x) => sameMod(x, m))) : [];
   removed.value = before && now ? was.filter((m) => !is.some((x) => sameMod(x, m))) : [];
+  chanceMap.value = new Map(run?.chances ?? []);
   item.value = now; n.value = run?.n ?? 0; cost.value = run?.cost ?? 0; last.value = run?.last ?? null;
 }
 watch(() => [props.row, props.target, props.ilvl], fresh, { immediate: true });
@@ -102,7 +105,9 @@ function finish(reason: string | null): void {
   const hit = run.hit();
   result.value = { hit, n: run.n, cost: run.cost, rank: hit ? rankOf(stats.value, run.n) : null, reason };
   // 付いた時の音 (押しっぱなしの間は鳴らさず、付いた 1 回だけ。2026-10-19 オーナー「付いた時の SE が無い」)。かなりの強運は下の watch が珍しい段の音を鳴らす
-  if (hit && !(result.value.rank != null && result.value.rank <= 10) && run.last) playUseSfx(run.last.key, false);
+  // 狙いが珍しい段 (エミュレーターの神演出と同じ確率の線) で付いた時は珍しい段の音
+  const tc = run.chances.get(props.target.modId);
+  if (hit && !(result.value.rank != null && result.value.rank <= 10) && run.last) playUseSfx(run.last.key, tc != null && isRareChance(tc));
   if (hit || reason) {
     track("spam:run", hit ? "hit" : "stop");
     logRecord("emu_spam", { base: s.base.value, key: mainKey.value, route: props.row.route, aims: [`${props.target.modId}#${props.target.minTierIndex}`], uses: run.n, hit });
@@ -170,7 +175,7 @@ function shareX(e: MouseEvent): void {
   <div data-route-luck class="route-rule mt-4 grid gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
     <!-- 左: この欄のアイテム (始めの状態から、打つたびに変わる)。札はエミュレーターと同じ (StageItemCard)、狙いの MOD を光らせる -->
     <div class="flex min-w-0 flex-col items-center gap-1">
-      <StageItemCard v-if="item" :item="item" :added="added" :removed="removed" :holding="false" :flash-key="n" :focus="target.modId" class="max-w-full" />
+      <StageItemCard v-if="item" :item="item" :added="added" :removed="removed" :holding="false" :flash-key="n" :focus="target.modId" :chances="chanceMap" class="max-w-full" />
       <p class="flex h-5 items-center justify-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">
         <template v-if="last">{{ tr("今打った", "Last") }}: <img :src="iconOf(last.key)" alt="" class="size-4 object-contain" />{{ nameOf(last.key) }}<img v-for="o in last.omens" :key="o" :src="iconOf(o)" alt="" class="size-4 object-contain" /></template>
         <template v-else>{{ tr("始めの状態", "Start state") }}</template>
@@ -220,17 +225,6 @@ function shareX(e: MouseEvent): void {
       </template>
       <!-- 100 人の結果 (カオススパム計算機と同じ並び) -->
       <p class="mt-4 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("100 人が同じ始めの状態からスパムしたら", "If 100 people spammed from the same start") }}</p>
-      <!-- 等級の比べ (半分の人の手数と費用。押すとその等級に) -->
-      <ul v-if="tabs.length > 1" class="mt-1 flex flex-col gap-0.5 text-[12px]">
-        <li v-for="o in tabs" :key="'c' + o.grade">
-          <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1 py-0.5 text-left tabular-nums hover:bg-white/5" :class="o === row ? 'bg-white/[0.07] text-[var(--exile-color-text-primary)]' : 'text-[var(--exile-color-text-secondary)]'" :disabled="spamming" @click="o !== row && emit('pick', o)">
-            <img :src="iconOf(routeKey(o.route, o.grade))" alt="" class="size-4 shrink-0 object-contain" />
-            <span class="w-9 shrink-0">{{ tr(...GRADE_NAME[o.grade]) }}</span>
-            <span class="min-w-0 flex-1 truncate">{{ tr("半分の人", "Half") }} {{ fmt(medianOfRow(o)) }} · {{ money(o.p50) }}</span>
-            <span v-if="cheapest === o" class="shrink-0 rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">{{ tr("おすすめ", "Best") }}</span>
-          </button>
-        </li>
-      </ul>
       <dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
         <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half of them") }}</dt>
         <dd class="tabular-nums"><b>{{ fmt(median) }}</b><span class="text-[var(--exile-color-text-secondary)]"> · {{ money(row.p50) }}</span></dd>

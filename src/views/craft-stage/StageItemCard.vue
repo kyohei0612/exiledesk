@@ -33,7 +33,7 @@ import RichText from "../../components/decor/RichText.vue";
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean}>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null}>();
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
 /** 行の左 (P / S) と右 (↓・確率・×) の枠は同じ幅。MOD の文がカードの真ん中に来る (2026-10-17 オーナー「全体的に左に寄ってる、MOD は真ん中、→ に %、← に P,S」) */
 const sideColW = computed(() => (props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
@@ -116,7 +116,7 @@ const chances = computed(() => {
   for (const e of craftStage.log.value) for (const [id, c] of Object.entries(e.chances ?? {})) m.set(id, c as number);
   return m;
 });
-const chanceOf = (m: { modId: string }): number | null => chances.value.get(m.modId) ?? null;
+const chanceOf = (m: { modId: string }): number | null => (props.chances ?? chances.value).get(m.modId) ?? null;
 // 暗黙の MOD: 振った値・中身のタグ・カタリストの品質で伸びた値 (stage-props の implicitRows、2026-10-12)
 const implicits = computed(() => implicitRows(props.item).map((r) => ({ ...r, tags: props.showTags ? shownTags(r.tags) : [] })));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId && !!a.fractured === !!m.fractured);
