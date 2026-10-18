@@ -9,6 +9,7 @@ import { craftStage, writeSimSession } from "../../state/craft-stage";
 import { type Pattern, ANY_TARGET, isRest } from "../../services/craft-stage/pattern";
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
+import { SIM_ILVL_MAX } from "./use-stage-base";
 
 /**
  * 工程を押すとそこからやり直す (後ろの工程は決め直し)。「1 つ戻す」は今の 1 つ前の工程へ
@@ -117,6 +118,9 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     ilvlNote.value = lowered ? `アイテムレベル ${lv} では届かない段を ${lowered} つ下げました (レベルを戻すと元の段に戻る)` : raised ? `元の段に ${raised} つ戻しました` : "";
   });
   watch(() => rows.value.length, (n) => { if (n === 0) { resetPatterns(); modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
+  // 2 狙う MOD に戻ったら、アイテムレベルは一番上に戻して全部の段を選べるように (3 に来るとまた狙いが全部付く一番低いレベルが入る、SimStartPick.vue)。
+  // エミュレーターの状態からは、そのアイテムのレベルのまま
+  watch(modsDone, (v) => { if (!v && !restoring.v && s.simStart.value !== "item") s.itemLevel.value = SIM_ILVL_MAX; });
   watch(keptKey, () => { if (restoring.v) return; resetPatterns(); modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
   // 下の MOD 一覧は ① で選んでいる間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
   // 足し直す時は ① の「直す」で開き直す
