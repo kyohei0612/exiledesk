@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.569",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルを上の「使い方・コツ」にまとめました (使い方の動画とコースの一覧)。コースはページごとに URL が変わり、戻るボタンで前に戻れます",
+    "en": "Tutorials now live under “Guide & Tips” at the top (how-to video and course list). Each course has its own URL, and the back button works"
+   }
+  ]
+ },
+ {
   "v": "0.1.568",
   "date": "2026-10-18",
   "items": [
@@ -606,18 +618,6 @@
     "area": "",
     "text": "MOD 一覧の冒涜の MOD に、勢力 (アマナム・クルガル・ウラマン) の札を最初から出すように",
     "en": "Desecrated mods in the mod list now show their faction (Amanamu / Kurgal / Ulaman) tag from the start"
-   }
-  ]
- },
- {
-  "v": "0.1.529",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "砥石・彫刻針・端材は 1 個で品質 +1% に揃えました (前は +1% か +2% のランダム)",
-    "en": "Whetstone, Etcher and Scrap now add +1% quality each (previously +1% or +2% at random)"
    }
   ]
  }
