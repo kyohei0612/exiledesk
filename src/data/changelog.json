@@ -1,5 +1,30 @@
 [
  {
+  "v": "0.1.561",
+  "date": "2026-10-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアルに中級を追加 (2 コース)",
+    "en": "Tutorial: two Medium courses added"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "「カタリストと品質を学ぶ」: 品質を 20% まで上げて変わる MOD を見比べる・13 種類のカタリスト・別の種類は 0 から・触媒の高貴のお告げ (偉大なると重ねる)",
+    "en": "“Learn catalysts and quality”: raise quality to 20% and compare the mods it changes, the 13 catalysts, a new type restarts from 0, Omen of Catalysing Exaltation (stacked with Greater)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "「液化した感情を学ぶ」: 黄 (レア) のジュエルに作った MOD を付ける (希釈された・普通・濃縮された)・枠を増やす強力な軽蔑 (高貴で 5 つ目)・反対側を上げる強力な獰猛",
+    "en": "“Learn liquid emotions”: add a crafted mod to a yellow (Rare) jewel (Diluted, plain, Concentrated), Potent Contempt adds a slot (5th mod with an Exalted Orb), Potent Ferocity boosts the other side"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.560",
   "date": "2026-10-18",
   "items": [
@@ -591,24 +616,6 @@
     "area": "",
     "text": "アプリの自動更新が v0.1.519 から止まっていたのを直しました (掲示板・カオススパム確率機の X シェア・音などもこの版で届きます)",
     "en": "Fixed the desktop app's auto-update having stopped since v0.1.519 (the message board, chaos spam X sharing and sounds arrive with this version)"
-   }
-  ]
- },
- {
-  "v": "0.1.521",
-  "date": "2026-10-16",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム確率機と「次の手で狙う」を別々に。開いた方だけ出て、閉じたりベースを変えたりした時は前の結果を残しません",
-    "en": "The chaos spam tool and \"Aim with the next move\" are now separate. Only the one you opened is shown, and closing it or changing the base clears the previous result"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホで電話の後などに、使った時の音が鳴らなくなるのを直しました",
-    "en": "Fixed sounds no longer playing on phones after a call etc."
    }
   ]
  }
