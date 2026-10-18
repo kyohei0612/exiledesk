@@ -25,8 +25,15 @@ import { startFrom } from "../../services/craft-stage/run-plan";
 import type { Force } from "../../services/craft-stage/stage-core";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 
-const props = defineProps<{ row: RaceRow; target: RaceTarget; ilvl: number; label: string; routeName: string }>();
-const emit = defineEmits<{ close: [] }>();
+/** options = 同じ道の等級 (着いた物。タブと比べに出す。2026-10-19 オーナー「等級も選べるように、カオススパム計算機の形で」) */
+const props = defineProps<{ row: RaceRow; options: RaceRow[]; target: RaceTarget; ilvl: number; label: string; routeName: string }>();
+const emit = defineEmits<{ close: []; pick: [row: RaceRow] }>();
+const GRADE_NAME: Record<RaceRow["grade"], [string, string]> = { base: ["無印", "Regular"], greater: ["上級", "Greater"], perfect: ["完全", "Perfect"] }; // 道のカードと同じ呼び方
+/** 道の中で一番安い等級 (おすすめ) */
+const cheapest = computed(() => (props.options.length ? props.options.reduce((a, b) => (b.avgCost < a.avgCost ? b : a)) : null));
+const ORDER_G = ["base", "greater", "perfect"] as const;
+const tabs = computed(() => [...props.options].sort((a, b) => ORDER_G.indexOf(a.grade) - ORDER_G.indexOf(b.grade)));
+const medianOfRow = (r: RaceRow): number | null => medianOf({ tries: r.tries, failed: r.people - r.tries.length, people: r.people });
 
 const stats = computed<SpamStats>(() => ({ tries: props.row.tries, failed: props.row.people - props.row.tries.length, people: props.row.people }));
 const median = computed(() => medianOf(stats.value));
@@ -176,6 +183,10 @@ function shareX(e: MouseEvent): void {
         <img :src="iconOf(mainKey)" alt="" class="size-6 object-contain" />{{ tr(`${routeName}の運試し (100 人と同じ始めの状態から)`, `${routeName} luck test (same start as the 100 people)`) }}
         <button type="button" class="g-btn sm ml-auto" :disabled="spamming" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
       </p>
+      <!-- 等級 (カオススパム計算機と同じタブ。押すとその等級で始めの状態から) -->
+      <span v-if="tabs.length > 1" data-route-grades class="mt-2 flex flex-wrap items-center gap-1">
+        <button v-for="o in tabs" :key="o.grade" type="button" :data-route-grade="o.grade" class="g-tab !min-h-[30px] !gap-1 !px-2 !text-[12px]" :class="o === row ? 'on' : ''" :disabled="spamming" :title="nameOf(routeKey(o.route, o.grade))" @click="o !== row && emit('pick', o)"><img :src="iconOf(routeKey(o.route, o.grade))" alt="" class="size-5 object-contain" />{{ tr(...GRADE_NAME[o.grade]) }}<span v-if="cheapest === o" class="rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">{{ tr("おすすめ", "Best") }}</span></button>
+      </span>
       <template v-if="result?.hit && !spamming">
         <div v-if="isLucky" :key="`lucky-${result.n}`" data-route-lucky class="spam-lucky">
           <span class="spam-lucky-line" aria-hidden="true" />
@@ -209,6 +220,17 @@ function shareX(e: MouseEvent): void {
       </template>
       <!-- 100 人の結果 (カオススパム計算機と同じ並び) -->
       <p class="mt-4 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("100 人が同じ始めの状態からスパムしたら", "If 100 people spammed from the same start") }}</p>
+      <!-- 等級の比べ (半分の人の手数と費用。押すとその等級に) -->
+      <ul v-if="tabs.length > 1" class="mt-1 flex flex-col gap-0.5 text-[12px]">
+        <li v-for="o in tabs" :key="'c' + o.grade">
+          <button type="button" class="g-plain flex w-full min-w-0 items-center gap-2 rounded px-1 py-0.5 text-left tabular-nums hover:bg-white/5" :class="o === row ? 'bg-white/[0.07] text-[var(--exile-color-text-primary)]' : 'text-[var(--exile-color-text-secondary)]'" :disabled="spamming" @click="o !== row && emit('pick', o)">
+            <img :src="iconOf(routeKey(o.route, o.grade))" alt="" class="size-4 shrink-0 object-contain" />
+            <span class="w-9 shrink-0">{{ tr(...GRADE_NAME[o.grade]) }}</span>
+            <span class="min-w-0 flex-1 truncate">{{ tr("半分の人", "Half") }} {{ fmt(medianOfRow(o)) }} · {{ money(o.p50) }}</span>
+            <span v-if="cheapest === o" class="shrink-0 rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">{{ tr("おすすめ", "Best") }}</span>
+          </button>
+        </li>
+      </ul>
       <dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
         <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half of them") }}</dt>
         <dd class="tabular-nums"><b>{{ fmt(median) }}</b><span class="text-[var(--exile-color-text-secondary)]"> · {{ money(row.p50) }}</span></dd>

@@ -171,7 +171,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
       </div>
 
       <!-- 運試し (一番安い道で。StageRouteLuck.vue) -->
-      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" @close="luckRow = null" />
+      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route)" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
       <!-- 下: 3 つの道 -->
       <div class="route-rule mt-4 grid gap-3 lg:grid-cols-3">
         <article v-for="r in ROUTES" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">
@@ -190,7 +190,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           </ol>
           <p v-if="offRoute(r.route)" class="mt-4 py-4 text-center text-[12px]">{{ offRoute(r.route) }}</p>
           <ul v-else class="mt-3 flex flex-col gap-2">
-            <li v-for="g in r.grades" :key="g" data-route-row class="rounded px-2 py-1.5" :class="rowOf(r.route, g) && best === rowOf(r.route, g) ? 'bg-emerald-500/10 ring-1 ring-emerald-400/30' : 'bg-black/25'">
+            <li v-for="g in r.grades" :key="g" data-route-row class="rounded px-2 py-1.5" :class="[rowOf(r.route, g) && best === rowOf(r.route, g) ? 'bg-emerald-500/10 ring-1 ring-emerald-400/30' : 'bg-black/25', rowOf(r.route, g) && !rowOf(r.route, g)!.off && !busy ? 'cursor-pointer hover:bg-white/[0.06]' : '', luckRow && luckRow === rowOf(r.route, g) ? 'outline outline-2 outline-amber-400/50' : '']" :title="rowOf(r.route, g) && !rowOf(r.route, g)!.off && !busy ? tr('押すとこの等級で運試し', 'Click for a luck test at this grade') : undefined" @click="rowOf(r.route, g) && !rowOf(r.route, g)!.off && !busy && openLuck(rowOf(r.route, g)!)">
               <template v-if="rowOf(r.route, g)">
                 <div class="flex items-center gap-2 text-[12px]">
                   <img :src="iconOf(`${r.main}${GRADE_KEY[g]}`)" alt="" class="size-6 object-contain" />
