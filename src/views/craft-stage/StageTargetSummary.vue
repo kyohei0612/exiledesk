@@ -253,8 +253,9 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
 <template>
   <div class="grid min-w-0 gap-x-6 gap-y-1 text-[12px] md:grid-cols-2 max-md:grid-cols-1">
     <div v-for="col in columns" :key="col.title" class="min-w-0">
-      <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold" :class="col.used > 3 ? 'text-rose-300' : 'opacity-70'">
-        {{ col.title }} ({{ col.used }}/3)<span v-if="col.used > 3" class="ml-1 font-normal">枠が足りない</span>
+      <!-- 狙う MOD は何個でもいい (枠より多くても、次の段で整理する時にまとめる。2026-10-18 オーナー) -->
+      <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold opacity-70">
+        {{ col.title }} ({{ col.used }})<span v-if="col.used > 3" class="ml-1 font-normal opacity-70">枠より多い分は次で整理</span>
       </p>
       <p v-if="!col.groups.length" class="py-0.5 opacity-40">{{ props.editable ? "下の一覧で MOD を押し、開いた段の表の「T○ 以上」で足す" : "なし" }}</p>
       <div v-for="g in col.groups" :key="g.key" class="flex flex-wrap items-start gap-1.5 py-0.5">
