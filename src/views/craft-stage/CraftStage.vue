@@ -97,7 +97,7 @@ function onKey(e: KeyboardEvent): void {
   const dialog = !!document.querySelector("[role=dialog], [aria-modal=true]");
   // MOD 一覧の窓: Tab でいつでも開け閉め (2026-10-11 オーナー)。Esc は ModalShell が窓だけ閉じる (持っている物は離さない)
   const otherDialog = document.querySelectorAll("[role=dialog], [aria-modal=true]").length > (s.modOverlay.value ? 1 : 0);
-  if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.metaKey && !typing && !otherDialog && s.item.value && (s.mode.value === "hand" || s.replay.value) && !phone.value) { e.preventDefault(); s.modOverlay.value = !s.modOverlay.value; return; }
+  if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.metaKey && !typing && !otherDialog && s.item.value && (s.mode.value === "hand" || s.replay.value || (s.mode.value === "sim" && !simNoBase.value)) && !phone.value) { e.preventDefault(); s.modOverlay.value = !s.modOverlay.value; return; } // シミュレーターでも (2026-10-18)
   // 1 手戻す: R (2026-10-11 オーナー「Ctrl+Z はデフォルトみたいな存在だから R でいい」)。Ctrl+Z も残す
   const undoKey = (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "r") || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z");
   if (undoKey && !e.repeat && !typing && !dialog && (s.mode.value === "hand" || s.replay.value)) { e.preventDefault(); if (!inLesson.value) s.undo(); } // コースの間は戻さない (もう一度で)
@@ -465,7 +465,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     </div>
     <StageBasePage v-if="subPage" :phone="phone" />
     <!-- 窓の動きは ModalShell (Esc・後ろを押す・× で閉じる、後ろのページは止める)。Tab でも開け閉め -->
-    <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
+    <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value || (s.mode.value === 'sim' && !simNoBase))" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
       <template #header><span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span></template>
       <StageModList overlay />
     </ModalShell>
