@@ -6,6 +6,7 @@ OK が出ていない物を外して出す時は `git revert --no-edit --no-comm
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| アイテムレベル (45・75・82 + 70〜86 のプルダウン、変えても白に戻さず付かない MOD だけ消す) | 5e6a9f5b | アイテムレベルを 70〜86 の 1 ずつ選べるように。打った後に変えても最初からやり直さず、そのレベルで付かない MOD だけ消えます | Item level can now be set to any value from 70 to 86. Changing it mid-craft no longer starts over; only mods that can't roll at that level are removed |
 | MOD 一覧の段の表のタグ (まとめた行だけ、段ごとにその MOD のタグ) | 57fb413d | MOD 一覧で 1 行にまとめた MOD (スキルのレベルなど) の段の表に、段ごとのタグを出すように | The tier table of grouped mods (e.g. skill levels) in the mod list now shows each tier's tags |
 | ページの作り (ベース選び・カオススパム計算機・要望・バグを送るを別のページに。広告の枠は開発版だけ) | 74b506a7 | ベースを選ぶ・カオススパム計算機・要望・バグを送るを別のページにしました (URL が変わり、ブラウザの戻るで前の画面へ) | Choosing a base, the Chaos spam calculator and Send feedback are now separate pages (the URL changes and the browser Back button returns to the previous screen) |
 
