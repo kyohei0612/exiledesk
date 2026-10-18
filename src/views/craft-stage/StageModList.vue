@@ -458,7 +458,8 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
   </section>
 </template>
 
-<style scoped>
+<!-- 段の行のボタン (tbtn) は子の ModAddPicker.vue でも使うので scoped にしない (scoped だと子の中のボタンに効かず「付ける」が素のボタンで折り返していた。2026-10-18) -->
+<style>
 /* 段の表のボタン: 細い行に合う小さく平たい物 (2026-10-10 オーナー「枠の細さに過剰」) */
 .tbtn {
   display: inline-flex; align-items: center; justify-content: center; height: 24px; padding: 0 9px; white-space: nowrap;
@@ -469,6 +470,9 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
 .tbtn:disabled { opacity: 0.35; cursor: not-allowed; }
 .tbtn.on { border-color: rgba(239, 90, 70, 0.75); background: rgba(160, 40, 30, 0.35); color: #ffd7cf; }
 @media (max-width: 767px) { .tbtn { height: 34px; padding: 0 12px; font-size: 12px; } }
+</style>
+
+<style scoped>
 /* カードから飛んで来た行: ふわっと金に (付いた瞬間の光り方と同じ色) */
 .row-jump { animation: row-jump 1.4s ease-out; border-radius: 6px; }
 @keyframes row-jump { 0% { background: rgba(250, 204, 21, 0); } 15% { background: rgba(250, 204, 21, 0.18); } 100% { background: rgba(250, 204, 21, 0); } }
