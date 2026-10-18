@@ -141,6 +141,16 @@ export function rigRare(key: string): void {
   if (!topic.value || !it || !d || s.usable(key)) return;
   const tag = s.omens.value.includes(CATALYSING) ? it.qualityTag ?? null : null;
   // 手に want がある時: その MOD (・段) が付く乱数を選ぶ (上級の「品質を上げてからカオス」でスペルスキルのレベル T1。2026-10-18)
+  // 手に target がある時のフラクチャー: 狙いの MOD が固定される乱数を選ぶ (2026-10-18 オーナー「フラクチャーでは当たりにあててあげて、成功体験的に」)
+  const target = topic.value.steps[topicAt.value]?.target;
+  if (target && key === "fracture") {
+    for (let i = 0; i < 3000; i++) {
+      const roll = Math.floor(Math.random() * 2_147_483_647);
+      const r = applyCurrency(d, it, key, mulberry32(seedOfRoll(roll, key)), omensFor(key, s.omens.value));
+      if (r.applied && [...r.item.prefixes, ...r.item.suffixes].some((m) => m.fractured && m.modId === target)) { s.rollSeed.value = roll; return; }
+    }
+    return;
+  }
   const want = topic.value.steps[topicAt.value]?.want;
   if (want) {
     const omens = omensFor(key, s.omens.value);

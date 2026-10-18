@@ -33,7 +33,7 @@ export const ADV_COURSES: TopicCourse[] = [
         ["フラクチャーは 4 つのうちどれか 1 つを固定する。このままだと本命が固定されるのは 1/4 (25%)", "Fracture locks 1 of the 4 mods. As is, Movement Speed has a 1/4 (25%) chance"],
         ["右側の結晶化のお告げを掛けたアビスのエッセンスで、サフィックスの 1 つを紋章に置き換える (本命のプレフィックスは消えない)", "Abyss essence with Omen of Dextral Crystallisation turns a suffix into the Mark (your prefix is safe)"],
         ["骨で紋章を冒涜の MOD にする (発現はしなくて良い)。冒涜の MOD は未発現でも固定されないので、フラクチャーの候補は 3 つになる", "A bone turns the Mark into a Desecrated mod (no need to reveal). Desecrated mods can't be Fractured even unrevealed, so Fracture picks from 3"],
-        ["本命が固定される確率は 1/3 (33%) に上がる。外れたら「もう一度」", "Now Movement Speed has a 1/3 (33%) chance. If it misses, Try again"],
+        ["本命が固定される確率は 1/3 (33%) に上がる。このコースでは当たった例 (移動スピードが固定) を見せる", "Movement Speed now has a 1/3 (33%) chance. This course shows a hit (Movement Speed gets Fractured)"],
       ], [])), omens: ["OmenofDextralCrystallisation"], startMods: [BT("MovementVelocity", "T2"), BT("IncreasedLife", "T4"), BT("FireResistance", "T3"), BT("ItemFoundRarityIncrease", "T2")],
       target: "Boots_str/MovementVelocity",
       // 発現はしないでフラクチャー (よくやるのは未発現のまま。2026-10-18 オーナー「発現は別にしなくてもいい、飛ばしてフラクチャー」)

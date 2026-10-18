@@ -261,8 +261,8 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
         <p class="text-[10px] text-emerald-200/70">{{ adds.head }}</p>
         <p v-for="(l, i) in adds.lines" :key="i" class="text-[13px] font-semibold text-emerald-200">・{{ l }}</p>
       </div>
-      <div v-if="targetRow?.m" data-topic-target class="mt-1.5 rounded-lg border px-2.5 py-1.5" :class="targetRow.state === 'hit' ? 'border-emerald-400/60 bg-emerald-500/15' : targetRow.state === 'miss' ? 'border-rose-400/60 bg-rose-500/15' : 'border-rose-300/40 bg-rose-500/10'">
-        <p class="text-[11px] font-bold" :class="targetRow.state === 'hit' ? 'text-emerald-200' : 'text-rose-200'">{{ targetRow.state === "hit" ? tr("当たり: 狙いの MOD が固定された", "Hit: your target got Fractured") : targetRow.state === "miss" ? tr("外れ: 別の MOD が固定された (もう一度)", "Miss: another mod got Fractured (Try again)") : tr("狙いの MOD", "Your target mod") }}</p>
+      <div v-if="targetRow?.m" data-topic-target class="mt-1.5 rounded-lg border px-2.5 py-1.5" :class="targetRow.state === 'hit' ? 'border-emerald-400/60 bg-emerald-500/15' : targetRow.state === 'miss' ? 'border-white/25 bg-white/[0.06]' : 'border-amber-300/50 bg-amber-400/10'">
+        <p class="text-[11px] font-bold" :class="targetRow.state === 'hit' ? 'text-emerald-200' : targetRow.state === 'miss' ? 'text-[var(--exile-color-text-secondary)]' : 'text-amber-200'">{{ targetRow.state === "hit" ? tr("当たり: 狙いの MOD が固定された", "Hit: your target got Fractured") : targetRow.state === "miss" ? tr("外れ: 別の MOD が固定された (もう一度)", "Miss: another mod got Fractured (Try again)") : tr("狙いの MOD", "Your target mod") }}</p>
         <p class="text-[14px] font-bold text-[var(--exile-color-text-primary)]">◎ {{ modText(targetRow.m) }} <span class="text-[11px] font-normal text-[var(--exile-color-text-tertiary)]">({{ targetRow.m.side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix") }})</span></p>
       </div>
       <div v-if="qualityRows" data-topic-quality class="mt-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5">
