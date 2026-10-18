@@ -128,6 +128,8 @@ async function cardImage(url, env, c) {
   const aw = size ? Math.round(size.w * k) : 300, ah = size ? Math.round(size.h * k) : 300;
   const ax = 930 - aw / 2, ay = 290 - ah / 2;
   const orb = await dataUrl(env, CHAOS_ICON);
+  // 左上のロゴはサイトの上の帯と同じ (アプリのアイコン + Cinzel の金の EXILEDESK)。前は Noto Sans の平たい字だった (2026-10-18 オーナー「旧エグザイルデスクじゃね？のっぺりしてる」)
+  const logo = await dataUrl(env, url, "/web/icon-192.png");
   const r = c.rank;
   const head = T(c, "カオススパム計算機", "Chaos spam calculator");
   const hit = c.uses != null ? fmt(c.uses) : "?";
@@ -149,6 +151,7 @@ async function cardImage(url, env, c) {
     // かなりの強運の字は計算機の中と同じ明朝寄りの字 (Zen Antique)
     top ? font(`${kicker}TOP0123456789%`, 0, "Zen+Antique") : Promise.resolve(null),
   ]);
+  const cinzel = await font("EXILEDESK", 600, "Cinzel").catch(() => null);
   const markLeft = r != null ? Math.max(0, Math.min(590, Math.round(620 * (r / 100)) - 15)) : 0;
   const html = `
 <div style="display:flex;width:1200px;height:630px;position:relative;background-image:radial-gradient(ellipse at 78% 45%, #4a3410 0%, #1c140a 38%, #050403 75%);font-family:'Noto Sans JP';color:#efe6d2">
@@ -159,7 +162,8 @@ async function cardImage(url, env, c) {
   ${r != null && r <= 10 ? `<div style="display:flex;position:absolute;left:18px;top:18px;width:1164px;height:594px;border:2px solid rgba(184,115,51,0.75)"></div><div style="display:flex;position:absolute;left:26px;top:26px;width:1148px;height:578px;border:1px solid rgba(184,115,51,0.35)"></div>` : ""}
   <div style="display:flex;flex-direction:column;position:absolute;left:70px;top:36px;width:650px">
     <div style="display:flex;align-items:flex-end">
-      <span style="font-size:46px;font-weight:800;color:#f2c96b">ExileDesk</span>
+      ${logo ? `<img src="${logo}" width="54" height="54" style="margin-right:12px;margin-bottom:2px" />` : ""}
+      <span style="font-family:${cinzel ? "Cinzel" : "Noto Sans JP"};font-size:44px;font-weight:${cinzel ? 600 : 800};letter-spacing:3px;background-image:linear-gradient(180deg, #fff3cf 0%, #f0cf86 38%, #b8873c 62%, #7a5320 100%);background-clip:text;color:transparent">EXILEDESK</span>
       <span style="font-size:28px;font-weight:500;color:#b9a98a;margin-left:16px;margin-bottom:6px">${esc(head)}</span>
     </div>
     <span style="font-size:30px;font-weight:800;color:#f3e3b5;margin-top:14px">${esc(c.baseName)}</span>
@@ -198,6 +202,7 @@ async function cardImage(url, env, c) {
       { name: "Noto Sans JP", data: bold, weight: 800, style: "normal" },
       { name: "Noto Sans JP", data: regular, weight: 500, style: "normal" },
       ...(antique ? [{ name: "Zen Antique", data: antique, weight: 400, style: "normal" }] : []),
+      ...(cinzel ? [{ name: "Cinzel", data: cinzel, weight: 600, style: "normal" }] : []),
     ],
   }).arrayBuffer();
 }
