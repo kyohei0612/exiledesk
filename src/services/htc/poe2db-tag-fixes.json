@@ -1,0 +1,304 @@
+{
+ "generated": "2026-10-18",
+ "tags": {
+  "Belts/BeltFlaskLifeRecoveryRate": [
+   "life"
+  ],
+  "Belts/BeltFlaskManaRecoveryRate": [
+   "mana"
+  ],
+  "Belts/BeltIncreasedFlaskChargesGained": [],
+  "Belts/BeltReducedFlaskChargesUsed": [],
+  "Belts/Desecrated_FlaskChargesUsed": [
+   "kurgal_mod"
+  ],
+  "Belts/Desecrated_FlaskChargesUsed_2": [
+   "ulaman_mod"
+  ],
+  "Belts/Desecrated_ReducedAilmentDuration": [
+   "ailment",
+   "physical",
+   "kurgal_mod"
+  ],
+  "Belts/Desecrated_SlowEffect": [
+   "charm",
+   "ulaman_mod"
+  ],
+  "Belts/Desecrated_Thorns_2": [
+   "critical",
+   "damage",
+   "amanamu_mod"
+  ],
+  "Body_Armours_dex_int/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Body_Armours_dex_int/PerfectEssence_ReducedCriticalStrikeDamageTaken": [],
+  "Body_Armours_dex/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Body_Armours_dex/PerfectEssence_ReducedCriticalStrikeDamageTaken": [],
+  "Body_Armours_int/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Body_Armours_int/PerfectEssence_ReducedCriticalStrikeDamageTaken": [],
+  "Body_Armours_str_dex_int/PerfectEssence_ReducedCriticalStrikeDamageTaken": [],
+  "Body_Armours_str_dex/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Body_Armours_str_dex/PerfectEssence_ReducedCriticalStrikeDamageTaken": [],
+  "Body_Armours_str_int/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Body_Armours_str_int/PerfectEssence_ReducedCriticalStrikeDamageTaken": [],
+  "Body_Armours_str/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Body_Armours_str/PerfectEssence_ReducedCriticalStrikeDamageTaken": [],
+  "Boots_dex_int/Desecrated_ReducedAilmentDuration": [
+   "ailment",
+   "physical",
+   "kurgal_mod"
+  ],
+  "Boots_dex/Desecrated_ReducedAilmentDuration": [
+   "ailment",
+   "physical",
+   "kurgal_mod"
+  ],
+  "Boots_int/Desecrated_ReducedAilmentDuration": [
+   "ailment",
+   "physical",
+   "kurgal_mod"
+  ],
+  "Boots_str_dex/Desecrated_ReducedAilmentDuration": [
+   "ailment",
+   "physical",
+   "kurgal_mod"
+  ],
+  "Boots_str_int/Desecrated_ReducedAilmentDuration": [
+   "ailment",
+   "physical",
+   "kurgal_mod"
+  ],
+  "Boots_str/Desecrated_ReducedAilmentDuration": [
+   "ailment",
+   "physical",
+   "kurgal_mod"
+  ],
+  "Bows/PerfectEssence_MartialWeaponGainedDamage": [
+   "damage",
+   "physical"
+  ],
+  "Bows/PerfectEssence_Strength": [],
+  "Bucklers/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Bucklers/Desecrated_GainManaOnBlock": [
+   "mana",
+   "kurgal_mod"
+  ],
+  "Bucklers/Desecrated_MaximumBlockChance": [
+   "ulaman_mod"
+  ],
+  "Bucklers/Essence_DefencesPercent": [
+   "evasion"
+  ],
+  "Bucklers/LocalIncreasedBlockPercentage": [],
+  "Bucklers/ParriedDebuff__parried_magnitude": [
+   "ulaman_mod"
+  ],
+  "Bucklers/ParriedDebuff__parry_skill_effect_duration": [
+   "ulaman_mod"
+  ],
+  "Bucklers/PerfectEssence_IncreasedShieldBlockPercentage": [],
+  "Crossbows/PerfectEssence_MartialWeaponGainedDamage": [
+   "damage",
+   "physical"
+  ],
+  "Crossbows/PerfectEssence_Strength": [],
+  "Foci/Essence_DefencesPercent": [
+   "energy_shield"
+  ],
+  "Foci/PerfectEssence_EnergyShieldRegeneration": [
+   "energy_shield"
+  ],
+  "OneHand_Maces/Desecrated_AftershockChance": [
+   "attack",
+   "amanamu_mod"
+  ],
+  "OneHand_Maces/Desecrated_ArmourPenetration": [
+   "damage",
+   "physical",
+   "amanamu_mod"
+  ],
+  "OneHand_Maces/Desecrated_DamagevsArmourBrokenEnemies": [
+   "damage",
+   "amanamu_mod"
+  ],
+  "OneHand_Maces/Desecrated_ExertedAttackDamage": [
+   "attack",
+   "damage",
+   "kurgal_mod"
+  ],
+  "OneHand_Maces/Desecrated_FissureChance": [
+   "attack",
+   "amanamu_mod"
+  ],
+  "OneHand_Maces/Desecrated_WarcryCooldownSpeed": [
+   "kurgal_mod"
+  ],
+  "OneHand_Maces/PerfectEssence_MartialWeaponGainedDamage": [
+   "damage",
+   "physical"
+  ],
+  "OneHand_Maces/PerfectEssence_Strength": [],
+  "Quarterstaves/PerfectEssence_MartialWeaponGainedDamage": [
+   "damage",
+   "physical"
+  ],
+  "Quarterstaves/PerfectEssence_Strength": [],
+  "Shields_str_dex/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Shields_str_dex/Desecrated_GainManaOnBlock": [
+   "mana",
+   "kurgal_mod"
+  ],
+  "Shields_str_dex/Desecrated_MaximumBlockChance": [
+   "ulaman_mod"
+  ],
+  "Shields_str_dex/Essence_DefencesPercent": [
+   "armour",
+   "evasion"
+  ],
+  "Shields_str_dex/HeavyStunDecayRate": [
+   "amanamu_mod"
+  ],
+  "Shields_str_dex/LocalIncreasedBlockPercentage": [],
+  "Shields_str_dex/ParriedDebuff__parried_magnitude": [
+   "ulaman_mod"
+  ],
+  "Shields_str_dex/ParriedDebuff__parry_skill_effect_duration": [
+   "ulaman_mod"
+  ],
+  "Shields_str_dex/PerfectEssence_IncreasedShieldBlockPercentage": [],
+  "Shields_str_dex/PhysicalDamageTakenAsLightningWhileActiveBlocking": [
+   "elemental",
+   "lightning",
+   "physical",
+   "ulaman_mod"
+  ],
+  "Shields_str_int/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Shields_str_int/Desecrated_GainManaOnBlock": [
+   "mana",
+   "kurgal_mod"
+  ],
+  "Shields_str_int/Desecrated_MaximumBlockChance": [
+   "ulaman_mod"
+  ],
+  "Shields_str_int/EnergyShieldRechargeRateIfBlockedRecently": [
+   "energy_shield",
+   "kurgal_mod"
+  ],
+  "Shields_str_int/Essence_DefencesPercent": [
+   "armour",
+   "energy_shield"
+  ],
+  "Shields_str_int/HeavyStunDecayRate": [
+   "amanamu_mod"
+  ],
+  "Shields_str_int/LocalIncreasedBlockPercentage": [],
+  "Shields_str_int/PerfectEssence_IncreasedShieldBlockPercentage": [],
+  "Shields_str_int/PhysicalDamageTakenAsLightningWhileActiveBlocking": [
+   "elemental",
+   "lightning",
+   "physical",
+   "ulaman_mod"
+  ],
+  "Shields_str/Desecrated_ChanceToTakeCriticalStrike": [
+   "critical",
+   "ulaman_mod"
+  ],
+  "Shields_str/Desecrated_GainManaOnBlock": [
+   "mana",
+   "kurgal_mod"
+  ],
+  "Shields_str/Desecrated_MaximumBlockChance": [
+   "ulaman_mod"
+  ],
+  "Shields_str/Essence_DefencesPercent": [
+   "armour"
+  ],
+  "Shields_str/HeavyStunDecayRate": [
+   "amanamu_mod"
+  ],
+  "Shields_str/LocalIncreasedBlockPercentage": [],
+  "Shields_str/PerfectEssence_IncreasedShieldBlockPercentage": [],
+  "Shields_str/PhysicalDamageTakenAsLightningWhileActiveBlocking": [
+   "elemental",
+   "lightning",
+   "physical",
+   "ulaman_mod"
+  ],
+  "Spears/PerfectEssence_MartialWeaponGainedDamage": [
+   "damage",
+   "physical"
+  ],
+  "Spears/PerfectEssence_Strength": [],
+  "Staves/Desecrated_AdditionalBlock": [
+   "amanamu_mod"
+  ],
+  "Talismans/PerfectEssence_LightningDamageCanIgnite": [
+   "ailment",
+   "elemental",
+   "fire"
+  ],
+  "Talismans/PerfectEssence_Strength": [],
+  "TwoHand_Maces/Desecrated_AftershockChance": [
+   "attack",
+   "amanamu_mod"
+  ],
+  "TwoHand_Maces/Desecrated_ArmourPenetration": [
+   "damage",
+   "physical",
+   "amanamu_mod"
+  ],
+  "TwoHand_Maces/Desecrated_DamagevsArmourBrokenEnemies": [
+   "damage",
+   "amanamu_mod"
+  ],
+  "TwoHand_Maces/Desecrated_ExertedAttackDamage": [
+   "attack",
+   "damage",
+   "kurgal_mod"
+  ],
+  "TwoHand_Maces/Desecrated_FissureChance": [
+   "attack",
+   "amanamu_mod"
+  ],
+  "TwoHand_Maces/Desecrated_WarcryCooldownSpeed": [
+   "kurgal_mod"
+  ],
+  "TwoHand_Maces/PerfectEssence_MartialWeaponGainedDamage": [
+   "damage",
+   "physical"
+  ],
+  "TwoHand_Maces/PerfectEssence_Strength": [],
+  "Wands/Desecrated_IncreasedCastSpeed": [
+   "caster",
+   "mana",
+   "speed",
+   "kurgal_mod"
+  ]
+ }
+}

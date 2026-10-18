@@ -1,4 +1,7 @@
 {
+  "0.1.572": [
+    "Mod tags and Desecrated factions (Amanamu / Ulaman / Kurgal) now match poe2db (93 mods). Some faction tags, such as Aftershock and Fissure on maces, were wrong and affected faction omens"
+  ],
   "0.1.571": [
     "Fixed “Add” in the mod list doing nothing on bases that can't hold mods as Magic (e.g. Absent Amulet). It now makes the item Rare and adds the mod"
   ],
