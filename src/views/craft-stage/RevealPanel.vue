@@ -19,6 +19,12 @@ import { planSpec } from "../../services/craft-stage/spec/run-spec";
 import { topicCur } from "../../state/craft-topic";
 
 const rerolled = ref(false);
+/**
+ * 候補の出し直しの番号 (候補が変わった時・引き直した時に 1 つ進めて、出方のアニメーションを最初からにする)。
+ * ゲームの魂の井戸と同じく、欄が一度暗くなってから候補が上から順に明るい黄緑で出て、普通の色に落ち着く。ゲームより速く (2026-10-18 オーナー「こんな遅くなくていい、もう少し早く順に」)
+ */
+const wave = ref(0);
+watch(() => craftStage.offers.value, () => { wave.value++; });
 /** 選んだ候補 (確認で発現する) */
 const chosen = ref<number | null>(null);
 // 打つたびに戻す。log の長さでは見ない (Web は 50 手で古い手を消すので長さが変わらず、一度引き直すと以後ずっと「引き直した候補」のまま
@@ -68,19 +74,22 @@ function confirm(): void {
   chosen.value = null;
   craftStage.use(`reveal:${i + 1}${rerolled.value ? ":reroll" : ""}`);
 }
-function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.value = ""; }
+function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.value = ""; wave.value++; }
 </script>
 
 <template>
   <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="g-abyss mt-5 w-[380px] max-md:w-full px-2 pb-2 pt-4">
     <!-- 題の上の緑の紋章 (アビスのお知らせの絵) -->
     <img src="/ui-art/abyss-emblem.webp" alt="" aria-hidden="true" class="pointer-events-none absolute -top-[38px] left-1/2 size-11 -translate-x-1/2 drop-shadow-[0_0_8px_rgba(120,190,60,0.5)]" />
+    <!-- 出すたびに下から上へ黄緑の光が走る (ゲームはアイテムの枠が光る。ここには枠が無いので窓ごと) -->
+    <span :key="`sweep-${wave}`" class="rv-sweep pointer-events-none absolute inset-0" aria-hidden="true" />
     <p class="mb-1.5 text-center font-display text-[12px] tracking-wider text-[#a9c97a] [text-shadow:0_0_6px_rgba(110,170,50,0.6)]">{{ tr("魂の井戸 — 発現する MOD を選ぶ", "Well of Souls — choose a mod to reveal") }}<span v-if="left() > 1" class="ml-1 opacity-70">{{ tr(`(未発現 残り ${left()})`, `(${left()} unrevealed left)`) }}</span></p>
     <!-- 候補は濃い黒の箱、地は少し明るく、間を空けて境目をはっきり (ゲームと同じ。2026-10-17 オーナー「境界線が分かりづらい」) -->
-    <div class="space-y-1">
+    <div :key="`wave-${wave}`" class="space-y-1">
       <button
         v-for="(m, i) in rerolled ? craftStage.offers.value.reroll : craftStage.offers.value.first"
         :key="`${rerolled}-${m.modId}`"
+        :style="{ '--i': i }"
         type="button"
         :data-rec="`reveal:${i + 1}`"
         data-reveal-option
@@ -91,7 +100,7 @@ function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.
       >
         <!-- 左に P / S とティア (カードの行と同じ札。2026-10-17 オーナー「ティアはいる」)。右も同じ幅を空けて文を真ん中に -->
         <span class="w-8 shrink-0 text-left text-[12px] font-bold tabular-nums" :class="m.side === 'prefix' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ m.side === "prefix" ? "P" : "S" }}{{ (m.tierName ?? "").replace(/^T/, "") }}</span>
-        <span class="min-w-0 flex-1">{{ modText(m) }}</span>
+        <span class="rv-text min-w-0 flex-1">{{ modText(m) }}</span>
         <span class="w-8 shrink-0" aria-hidden="true" />
       </button>
     </div>
@@ -100,14 +109,32 @@ function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.
       <button type="button" data-reveal-confirm class="g-btn sm min-w-[120px] justify-center" :disabled="chosen == null" @click="confirm">{{ tr("発現", "Reveal") }}</button>
       <!-- 引き直し (アビスの反響のお告げ)。ゲームと同じく右下の回る矢印 -->
       <button
-        v-if="canReroll()"
+        v-if="canReroll() && !rerolled"
         type="button"
         data-rec="reveal-reroll"
         class="g-btn sm absolute right-0 !px-1.5 disabled:opacity-40"
-        :disabled="rerolled"
         :title="rerolled ? tr('引き直した候補', 'Rerolled options') : tr(`${jaOfOmen('OmenofAbyssalEchoes') ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`, 'Omen of Abyssal Echoes: reroll the options once')"
         @click="reroll"
       ><Icon name="rotate" class="size-4" /></button>
     </div>
   </section>
 </template>
+
+<style scoped>
+/* 候補の出方 (ゲームの魂の井戸に寄せて速く): 0.1 秒暗いまま → 上から 0.08 秒おきに明るい黄緑で出て、0.35 秒で普通の色に */
+.rv-text { animation: rv-in 0.45s ease-out both; animation-delay: calc(0.1s + var(--i, 0) * 0.08s); }
+@keyframes rv-in {
+  0% { opacity: 0; color: #e4ff8a; text-shadow: 0 0 10px rgba(190, 255, 90, 0.9); }
+  20% { opacity: 1; color: #e4ff8a; text-shadow: 0 0 10px rgba(190, 255, 90, 0.9); }
+  100% { opacity: 1; color: inherit; text-shadow: none; }
+}
+/* 下から上へ走る黄緑の光 */
+.rv-sweep { overflow: hidden; border-radius: inherit; }
+.rv-sweep::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(0deg, rgba(160, 230, 70, 0) 0%, rgba(160, 230, 70, 0.28) 50%, rgba(160, 230, 70, 0) 100%);
+  transform: translateY(100%); animation: rv-sweep 0.4s ease-out both;
+}
+@keyframes rv-sweep { from { transform: translateY(100%); } to { transform: translateY(-100%); } }
+@media (prefers-reduced-motion: reduce) { .rv-text, .rv-sweep::after { animation: none; } }
+</style>
