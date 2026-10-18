@@ -11,7 +11,7 @@ import type { SimRunCtx } from "./use-sim-run";
 
 
 export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
-  const { boughtDivine, fourDivine, fracDone, itemDivine, loadKept, magicDivine, modsDone, num, orderDone, patternDone, recipeOut,
+  const { boughtDivine, fourDivine, fracDone, itemDivine, loadKept, magicDivine, modsDone, sortDone, num, orderDone, patternDone, recipeOut,
     restoring, results, sessionNow, startDone, whiteDivine, whiteOk } = d;
   const s = craftStage;
   // 工程の「決めた」を前回から戻すのはやめた (2026-10-08 オーナー「毎回リセットでおｋ」。途中の保存 (writeSimSession) は要望・バグの添付用にだけ残す)
@@ -110,7 +110,7 @@ export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
     const plays = ses.patterns.filter((p) => p.quiz);
     s.simPatterns.value = plays.length ? plays : [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
     s.reset();
-    whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
+    whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; sortDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
     startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;
     results.value = [];
     recipeOut.value = null;

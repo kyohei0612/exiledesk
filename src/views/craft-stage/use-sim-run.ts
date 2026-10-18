@@ -363,7 +363,10 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
    */
   // 枠より多い狙いは整理の欄 (SimTargetSort.vue) で「どれか N つ」にまとめてから 3 へ (2026-10-18 オーナー「決めたボタンを押してこの画面で付け方が同じ奴の設定」)
   const slotsFit = computed(() => { const u = sideUse(s.data.value, s.simTargets.value), l = sideLimits(s.data.value, s.base.value, s.itemLevel.value); return u.prefix <= l.prefix && u.suffix <= l.suffix; });
-  const step3 = computed(() => modsDone.value && rows.value.length > 0 && slotsFit.value);
+  /** 整理を決めた (SimTargetSort.vue の「決めた」。2 に戻ると外れる) */
+  const sortDone = ref(false);
+  watch(modsDone, (v) => { if (!v) sortDone.value = false; });
+  const step3 = computed(() => modsDone.value && sortDone.value && rows.value.length > 0 && slotsFit.value);
   /** 3 で入れる始めのベース代 (始め方ごと: 白 / 固定済み / 4 MOD のレア) */
   const startPrice = computed(() => (s.simStart.value === "magic" ? magicDivine.value : s.simStart.value === "fractured" ? boughtDivine.value : s.simStart.value === "four" ? fourDivine.value : s.simStart.value === "item" ? itemDivine.value : whiteDivine.value));
   const whiteDone = computed(() => step3.value && whiteOk.value && fracDone.value && num(startPrice.value) != null);
@@ -391,7 +394,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   return { calc, busy, phase, progress, progressBox, error, recipeOut, restCost, phone, onPhoneResize, restBases, startOnce,
     results, shown, resultOf, shownName, cheapestName, showResultByName, patternNote, togglePatternOff, showResult, ranFor, sig,
     hasSteps, quizBase, magicMods, quizToRecipe, patternChecks, runnable, blocked, ONE_RUNS, activePattern, STEP_ONLY_RUNS,
-    stepRun, run, stop, FOLD_KEY, open, toggle, help, whiteOk, modsDone, fracDone, orderDone, startDone, step3, startPrice,
+    stepRun, run, stop, FOLD_KEY, open, toggle, help, whiteOk, modsDone, sortDone, fracDone, orderDone, startDone, step3, startPrice,
     whiteDone, stepStart, stepOrder, patternDone, sessionNow, stale, modShort };
 }
 export type SimRunCtx = ReturnType<typeof useSimRun>;
