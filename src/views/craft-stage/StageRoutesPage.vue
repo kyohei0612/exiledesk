@@ -1,13 +1,15 @@
 <!--
   StageRoutesPage.vue — スパムシミュレーター (?page=routes、2026-10-18 オーナー「エミュレーターに簡易シミュレーターページ。1 MOD を対象にどのルートが一番早く着くか。
   要はスパム。冒涜スパムは無し。高貴・増強・カオスのスパム」)。カレンシーの見出しの「スパムシミュレーター」で開き、最初に MOD を 1 つ選ぶ (StageAimPicker の routes)。
-  オーナー「全てのスパムで計測、100 人で。カオスは今まで通り。カオススパム計算機じゃないから完全でのリロールは無し、カオスは無印と上級。スパム計算機はここで全部管理」
-  計算は services/craft-stage/route-race.ts (エミュレーターと同じ applyCurrency で 1 通り 100 人分)。8 通り (増強・高貴 × 完全 / 上級 / 無印、カオス × 上級 / 無印) を 1 つずつ間を空けて回し、出た順に表へ。
+  オーナー「全てのスパムで計測、100 人で。カオスは今まで通り。カオススパム計算機じゃないから完全でのリロールは無し、カオスは無印と上級」
+  計算は services/craft-stage/route-race.ts (エミュレーターと同じ applyCurrency で 1 通り 100 人分)。8 通り (増強・高貴 × 完全 / 上級 / 無印、カオス × 上級 / 無印) を 1 つずつ間を空けて回し、出た順に出す。
+  見た目 (2026-10-19 オーナー「UI ダサすぎる、シンプル過ぎる」「各工程で詳しいルールは書いた方が良い」): 上に狙いと一番安い道を大きく、
+  下に 3 つの道をカード (カレンシーの絵・打ち方の決まりを番号で・等級ごとの棒と使った物)。1 つの枠 (.g-panel) の中。決まりは route-race.ts と同じ文 (メモ feedback-show-sim-rules)
   値段は今の相場 (priceOf)、白のベース代はどの道でも同じなので入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { craftStage as s, nameOf, priceOf } from "../../state/craft-stage";
+import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { routesOpen, routesTarget } from "../../state/web-page";
 import { raceRoutes, type Grade, type RaceRow, type RouteKind } from "../../services/craft-stage/route-race";
 import { fillModText } from "../../services/htc/mod-text";
@@ -16,23 +18,42 @@ import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
 import HelpTip from "../../components/ui/HelpTip.vue";
 
-const ROUTE_JA: Record<RouteKind, [string, string, string, string]> = {
-  augment: ["増強スパム", "Augment spam", "変成でマジック → 狙いの側が空くまで消去、空いたら増強、を狙いが付くまで", "Transmute → annul until the target side is empty, then augment, until the target rolls"],
-  chaos: ["カオススパム", "Chaos spam", "錬金でレア → 狙いが付くまでカオス", "Alchemy → Chaos until the target rolls"],
-  exalt: ["高貴スパム", "Exalt spam", "錬金でレア → 消去で 1 MOD → 高貴 + 偉大な高貴のお告げ + 狙いの側の高貴のお告げ → 外れたら消去で 1 MOD に戻す", "Alchemy → annul to 1 mod → Exalt + Greater Exaltation + side omen → annul back to 1 mod on a miss"],
-};
+const GRADE_KEY: Record<Grade, string> = { base: "", greater: "_greater", perfect: "_perfect" };
 const GRADE_JA: Record<Grade, [string, string]> = { perfect: ["完全", "Perfect"], greater: ["上級", "Greater"], base: ["無印", "Regular"] };
-const ORDER: Array<{ route: RouteKind; grade: Grade }> = (["augment", "chaos", "exalt"] as const).flatMap((route) => (["perfect", "greater", "base"] as const).filter((g) => !(route === "chaos" && g === "perfect")).map((grade) => ({ route, grade })));
 const RUNS = 100;
+type Step = { k: string | null; ja: string; en: string };
+/** 道ごと: 名前・主のカレンシー・等級・打ち方の決まり (route-race.ts と同じ。絵と文) */
+const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; grades: Grade[]; steps: Step[] }> = [
+  { route: "augment", ja: "増強スパム", en: "Augment spam", main: "augment", grades: ["perfect", "greater", "base"], steps: [
+    { k: "transmute", ja: "白のベースに変成 (等級は増強と同じ) でマジックにする", en: "Transmute the white base (same grade as the augment) to magic" },
+    { k: "annul", ja: "狙いの側に MOD が付いていたら消去 (どれが消えるかは運。反対側が消えることもある。狙いの側が空くまで続ける)", en: "If the target side has a mod, annul (which mod goes is random, the other side may go instead; repeat until the target side is empty)" },
+    { k: "augment", ja: "狙いの側が空いたら増強 (両側とも空いている時はどちらに付くかは運。反対側に付いたら次は増強で狙いの側へ)", en: "When the target side is empty, augment (if both sides are empty the side is random; if it lands on the other side, the next augment goes to the target side)" },
+    { k: null, ja: "狙いが付くまで 2・3 を繰り返す。マジックで狙いの側に枠が無いベースは使えない", en: "Repeat 2–3 until the target rolls. Bases with no slot on that side while magic can't use this" },
+  ] },
+  { route: "chaos", ja: "カオススパム", en: "Chaos spam", main: "chaos", grades: ["greater", "base"], steps: [
+    { k: "alchemy", ja: "白のベースに錬金でレアにする", en: "Alchemy the white base to rare" },
+    { k: "chaos", ja: "狙いが付くまで同じカオスを打ち続ける (1 つ消えて 1 つ付く。外れてもその結果に続けて打つ)", en: "Keep using the same Chaos Orb until the target rolls (one mod out, one in; a miss keeps going from the result)" },
+    { k: null, ja: "完全のカオス (リロール) は入れない", en: "Perfect Chaos (reroll) is not included" },
+  ] },
+  { route: "exalt", ja: "高貴スパム", en: "Exalt spam", main: "exalt", grades: ["perfect", "greater", "base"], steps: [
+    { k: "alchemy", ja: "白のベースに錬金でレアにする", en: "Alchemy the white base to rare" },
+    { k: "annul", ja: "MOD が 1 つになるまで消去 (錬金は 4 つなので最初は 3 回、外れた後は 2 回)", en: "Annul down to 1 mod (alchemy gives 4, so 3 the first time, 2 after each miss)" },
+    { k: "OmenofGreaterExaltation", ja: "高貴 + 偉大な高貴のお告げ (2 つ付く) + 狙いの側の高貴のお告げ (左 = プレ、右 = サフィ) で、狙いの側に 2 つ付ける", en: "Exalt with Omen of Greater Exaltation (adds 2) + the side omen (Sinistral = prefix, Dextral = suffix) to add 2 mods on the target side" },
+    { k: null, ja: "外れたら 2 に戻る。狙いの側に 2 つの枠が無い時は側のお告げだけで 1 つ", en: "On a miss, back to 2. If the side has no room for 2, use the side omen only (adds 1)" },
+  ] },
+];
+const ORDER = ROUTES.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
 
 const t = computed(() => routesTarget.value);
 const mod = computed(() => (t.value ? s.data.value?.mods.get(t.value.modId) ?? null : null));
-const label = computed(() => {
+const modText = computed(() => {
   const m = mod.value, tt = t.value;
   if (!m || !tt) return "";
   const tier = m.tiers[tt.minTierIndex];
-  return `${fillModText(m, tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ")} (T${m.tiers.length - tt.minTierIndex} 以上)`;
+  return fillModText(m, tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ");
 });
+const rank = computed(() => (mod.value && t.value ? `T${mod.value.tiers.length - t.value.minTierIndex}` : ""));
+const sideJa = computed(() => (mod.value?.type === "suffix" ? tr("サフィックス", "Suffix") : tr("プレフィックス", "Prefix")));
 const ilvl = computed(() => s.item.value?.itemLevel ?? s.itemLevel.value);
 const rows = ref<RaceRow[]>([]);
 const busy = ref(false);
@@ -51,11 +72,18 @@ async function run(): Promise<void> {
   busy.value = false;
 }
 watch(t, () => void run());
+const rowOf = (route: RouteKind, grade: Grade): RaceRow | undefined => rows.value.find((r) => r.route === route && r.grade === grade);
+const ok = computed(() => rows.value.filter((r) => !r.off));
 /** 一番安い (着いた物の中で) */
-const best = computed(() => {
-  const ok = rows.value.filter((r) => !r.off);
-  return ok.length ? ok.reduce((a, b) => (b.avgCost < a.avgCost ? b : a)) : null;
-});
+const best = computed(() => (ok.value.length ? ok.value.reduce((a, b) => (b.avgCost < a.avgCost ? b : a)) : null));
+/** 棒の長さの基準 (一番高い「10 人に 1 人」の費用) */
+const maxCost = computed(() => Math.max(1e-9, ...ok.value.map((r) => r.p90)));
+/** 道がまるごと使えない (増強が使えないベース) */
+const offRoute = (route: RouteKind): string | null => { const xs = rows.value.filter((r) => r.route === route); return xs.length && xs.every((r) => r.off) ? xs[0]!.off : null; };
+const routeName = (r: RaceRow): string => { const x = ROUTES.find((y) => y.route === r.route)!; return `${tr(x.ja, x.en)} · ${tr(...GRADE_JA[r.grade])}`; };
+const mainKey = (r: RaceRow): string => `${ROUTES.find((y) => y.route === r.route)!.main}${GRADE_KEY[r.grade]}`;
+const usesOf = (r: RaceRow) => Object.entries(r.uses).sort((a, b) => b[1] - a[1]);
+const pct = (x: number): string => `${Math.max(2, Math.min(100, (x / maxCost.value) * 100))}%`;
 const money = (x: number): string => displayCurrency.money(x);
 const fmtN = (n: number): string => (n >= 10 ? Math.round(n).toLocaleString() : n.toFixed(1));
 function back(): void { s.aimPicker.value = null; routesOpen.value = false; routesTarget.value = null; }
@@ -69,61 +97,111 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
 <template>
   <section data-routes-page class="min-w-0 flex-1 p-4">
     <div class="mb-3 flex flex-wrap items-center gap-3">
-      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("スパムシミュレーター", "Spam simulator") }}</h1>
+      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[15px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("スパムシミュレーター", "Spam simulator") }}</h1>
       <span class="flex items-center gap-2">
         <button type="button" data-routes-back class="g-btn sm max-md:min-h-10" @click="back">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
         <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
       </span>
     </div>
-    <div v-if="!t" class="g-panel flex flex-col items-center gap-3 px-4 py-8 text-center text-[13px]">
-      <p>{{ tr("狙う MOD を 1 つ選ぶと、増強・カオス・高貴のスパムでどれが一番安く着くかを比べます", "Pick one mod to see which spam (augment / chaos / exalt) gets there cheapest") }}</p>
-      <button type="button" data-routes-pick class="g-btn-red min-w-40" @click="pickMod">{{ tr("MOD を選ぶ", "Pick a mod") }}</button>
+
+    <!-- まだ狙いが無い: MOD を選ぶ -->
+    <div v-if="!t" class="g-panel flex flex-col items-center gap-4 px-4 py-10 text-center">
+      <div class="flex items-center gap-3">
+        <img v-for="k in ['augment', 'chaos', 'exalt']" :key="k" :src="iconOf(k)" alt="" class="size-12 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" />
+      </div>
+      <p class="max-w-[30rem] text-[13px] text-[var(--exile-color-text-secondary)]">{{ tr(`狙う MOD を 1 つ選ぶと、増強・カオス・高貴のスパムをそれぞれ ${RUNS} 人が打って、どれが一番安く着くかを比べます`, `Pick one mod: ${RUNS} people try each of augment, chaos and exalt spam to see which gets there cheapest`) }}</p>
+      <button type="button" data-routes-pick class="g-btn-red min-w-48" @click="pickMod">{{ tr("狙う MOD を選ぶ", "Pick a mod") }}</button>
     </div>
-    <div v-else class="g-panel px-4 py-3 text-[12px]">
-      <p class="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span class="text-[var(--exile-color-text-secondary)]">{{ tr("狙い", "Target") }}</span>
-        <b class="text-[14px] text-[#c8c8ff]">{{ label }}</b>
-        <span class="opacity-70">{{ s.item.value?.baseJa ?? s.base.value }} · {{ tr(`アイテムレベル ${ilvl}`, `Item level ${ilvl}`) }}</span>
-        <button type="button" data-routes-pick class="g-btn sm" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button>
-        <HelpTip :title="tr('比べ方', 'How it compares')" :width="340">
-          <p>{{ tr("エミュレーターと同じ打ち方で、白のベースから 1 通り 100 人分打った平均。値段は今の相場、白のベース代はどの道でも同じなので入れていない", "Average of 100 runs per route from a white base, using the same rules as the Emulator. Current market prices; the white base cost is the same for every route, so it is left out") }}</p>
-          <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("半分 / 9 割 = その金額までに半分 / 9 割の人が着いた (運の幅)", "Half / 90% = by this cost, half / 90% of runs had hit (luck range)") }}</p>
+
+    <div v-else class="g-panel px-4 py-3">
+      <!-- 上: 狙い (アイテムの札の見た目) と一番安い道 -->
+      <div class="grid gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        <div class="flex min-w-0 flex-col justify-center rounded-md border border-[var(--exile-color-border-brass)]/40 bg-black/40 px-4 py-3 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.7)]">
+          <p class="text-[11px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">{{ tr("狙い", "TARGET") }} · {{ sideJa }}</p>
+          <p class="mt-1 text-[16px] font-bold leading-snug text-[var(--color-rarity-magic)] [text-shadow:0_1px_2px_#000]">{{ modText }}</p>
+          <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${rank} 以上で当たり`, `Hit at ${rank}+`) }}</span></p>
+          <p class="mt-2 text-[12px] text-[var(--exile-color-text-secondary)]">{{ s.item.value?.baseJa ?? s.base.value }} · {{ tr(`アイテムレベル ${ilvl}`, `Item level ${ilvl}`) }}</p>
+          <p class="mt-2"><button type="button" data-routes-pick class="g-btn sm" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button></p>
+        </div>
+        <div data-routes-best class="relative flex min-w-0 items-center gap-4 overflow-hidden rounded-md border border-emerald-400/30 bg-gradient-to-r from-emerald-500/[0.12] via-emerald-500/[0.04] to-transparent px-4 py-3">
+          <template v-if="best">
+            <img :src="iconOf(mainKey(best))" alt="" class="size-16 shrink-0 object-contain drop-shadow-[0_0_12px_rgba(110,231,183,0.35)] max-md:size-12" />
+            <div class="min-w-0 flex-1">
+              <p class="text-[11px] tracking-[0.2em] text-emerald-200/80">{{ busy ? tr("今のところ一番安い", "CHEAPEST SO FAR") : tr("一番安い", "CHEAPEST") }}</p>
+              <p class="g-brush truncate text-[20px] text-[var(--exile-color-text-title)] max-md:text-[16px]">{{ routeName(best) }}</p>
+              <p class="tabular-nums"><b class="text-[26px] text-emerald-300 max-md:text-[20px]">{{ money(best.avgCost) }}</b> <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr(`平均 · ${fmtN(best.avgSteps)} 手`, `avg · ${fmtN(best.avgSteps)} uses`) }}</span></p>
+              <p class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half") }} {{ money(best.p50) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ money(best.p90) }}</p>
+            </div>
+          </template>
+          <p v-else class="text-[13px] text-[var(--exile-color-text-secondary)]">{{ busy ? tr("計算中…", "Calculating…") : tr("どの道でも着かなかった", "No route reached it") }}</p>
+          <p v-if="busy" class="absolute right-3 top-2 text-[11px] tabular-nums text-amber-200">{{ tr("計算中", "Calculating") }} {{ rows.length }} / {{ ORDER.length }}</p>
+        </div>
+      </div>
+
+      <!-- 下: 3 つの道 -->
+      <div class="g-section mt-4 grid gap-3 lg:grid-cols-3">
+        <article v-for="r in ROUTES" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">
+          <header class="flex items-center gap-2">
+            <img :src="iconOf(r.main)" alt="" class="size-10 object-contain" />
+            <b class="g-sec-title !text-[18px]">{{ tr(r.ja, r.en) }}</b>
+          </header>
+          <!-- 打ち方の決まり (番号順。route-race.ts と同じ) -->
+          <ol data-route-rules class="mt-2 flex flex-col gap-1 rounded bg-black/30 px-2 py-1.5 text-[11px] leading-snug text-[var(--exile-color-text-secondary)]">
+            <li v-for="(st, i) in r.steps" :key="i" class="flex items-start gap-1.5">
+              <span class="mt-px w-3 shrink-0 text-right tabular-nums text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
+              <img v-if="st.k" :src="iconOf(st.k)" alt="" class="size-4 shrink-0 object-contain" />
+              <span v-else class="w-4 shrink-0 text-center opacity-60">↻</span>
+              <span class="min-w-0">{{ tr(st.ja, st.en) }}</span>
+            </li>
+          </ol>
+          <p v-if="offRoute(r.route)" class="mt-4 py-4 text-center text-[12px]">{{ offRoute(r.route) }}</p>
+          <ul v-else class="mt-3 flex flex-col gap-2">
+            <li v-for="g in r.grades" :key="g" data-route-row class="rounded px-2 py-1.5" :class="rowOf(r.route, g) && best === rowOf(r.route, g) ? 'bg-emerald-500/10 ring-1 ring-emerald-400/30' : 'bg-black/25'">
+              <template v-if="rowOf(r.route, g)">
+                <div class="flex items-center gap-2 text-[12px]">
+                  <img :src="iconOf(`${r.main}${GRADE_KEY[g]}`)" alt="" class="size-6 object-contain" />
+                  <span class="w-9 shrink-0">{{ tr(...GRADE_JA[g]) }}</span>
+                  <template v-if="!rowOf(r.route, g)!.off">
+                    <b class="tabular-nums" :class="best === rowOf(r.route, g) ? 'text-emerald-300' : 'text-[var(--exile-color-text-primary)]'">{{ money(rowOf(r.route, g)!.avgCost) }}</b>
+                    <span class="text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${fmtN(rowOf(r.route, g)!.avgSteps)} 手`, `${fmtN(rowOf(r.route, g)!.avgSteps)} uses`) }}</span>
+                    <span v-if="best === rowOf(r.route, g)" class="ml-auto rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">{{ tr("一番安い", "Cheapest") }}</span>
+                    <span v-else-if="best" class="ml-auto text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]" :title="tr('一番安い道の何倍か', 'Times the cheapest')">× {{ (rowOf(r.route, g)!.avgCost / best.avgCost).toFixed(1) }}</span>
+                  </template>
+                  <span v-else class="ml-auto text-[11px] opacity-60">{{ rowOf(r.route, g)!.off }}</span>
+                </div>
+                <template v-if="!rowOf(r.route, g)!.off">
+                  <!-- 運の幅: 濃い所 = 半分の人まで、薄い所 = 運が悪い 10 人に 1 人まで、白い線 = 平均 -->
+                  <div class="relative mt-1.5 h-2 rounded-full bg-white/[0.06]" :title="tr(`半分の人 ${money(rowOf(r.route, g)!.p50)} · 10 人に 1 人 ${money(rowOf(r.route, g)!.p90)}`, `Half ${money(rowOf(r.route, g)!.p50)} · 1 in 10 ${money(rowOf(r.route, g)!.p90)}`)">
+                    <span class="absolute inset-y-0 left-0 rounded-full bg-amber-400/25" :style="{ width: pct(rowOf(r.route, g)!.p90) }" />
+                    <span class="absolute inset-y-0 left-0 rounded-full" :class="best === rowOf(r.route, g) ? 'bg-emerald-400/80' : 'bg-amber-400/70'" :style="{ width: pct(rowOf(r.route, g)!.p50) }" />
+                    <span class="absolute -inset-y-0.5 w-0.5 bg-white/80" :style="{ left: pct(rowOf(r.route, g)!.avgCost) }" />
+                  </div>
+                  <!-- 1 人あたり平均で使った物 -->
+                  <p class="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]">
+                    <span v-for="[k, n] in usesOf(rowOf(r.route, g)!)" :key="k" class="inline-flex items-center gap-0.5" :title="nameOf(k)"><img :src="iconOf(k)" alt="" class="size-4 object-contain" />× {{ fmtN(n) }}</span>
+                  </p>
+                </template>
+              </template>
+              <div v-else class="flex items-center gap-2 text-[12px] opacity-50">
+                <img :src="iconOf(`${r.main}${GRADE_KEY[g]}`)" alt="" class="size-6 object-contain" />
+                <span>{{ tr(...GRADE_JA[g]) }}</span>
+                <span class="ml-auto animate-pulse text-[11px]">{{ tr("計算中…", "Calculating…") }}</span>
+              </div>
+            </li>
+          </ul>
+        </article>
+      </div>
+
+      <p class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--exile-color-text-tertiary)]">
+        <span class="inline-flex items-center gap-1"><span class="inline-block h-2 w-5 rounded-full bg-amber-400/70" />{{ tr("半分の人が着いた費用", "Half had hit by") }}</span>
+        <span class="inline-flex items-center gap-1"><span class="inline-block h-2 w-5 rounded-full bg-amber-400/25" />{{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }}</span>
+        <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-0.5 bg-white/80" />{{ tr("平均", "Average") }}</span>
+        <span>{{ tr(`· エミュレーターと同じ決まりで白のベースから ${RUNS} 人ずつ。値段は今の相場、白のベース代は入れない`, `· ${RUNS} runs each from a white base with the Emulator's rules. Current prices; white base cost not included`) }}</span>
+        <HelpTip :title="tr('比べ方', 'How it compares')" :width="340" class="ml-auto">
+          <p>{{ tr("手 = 打った回数 (お告げは数えない)。費用 = 打った物とお告げの値段の合計。白のベース代はどの道でも同じなので入れていない", "Uses = items used (omens not counted). Cost = currency plus omens. The white base cost is the same for every route, so it is left out") }}</p>
+          <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("冒涜スパムは入れていない", "Desecration spam is not included") }}</p>
         </HelpTip>
       </p>
-      <p v-if="busy" class="mb-2 text-amber-200">{{ tr(`計算中… ${rows.length} / ${ORDER.length}`, `Calculating… ${rows.length} / ${ORDER.length}`) }}</p>
-      <table class="w-full text-[12px] tabular-nums">
-        <thead>
-          <tr class="border-b border-white/10 text-[11px] text-[var(--exile-color-text-tertiary)]">
-            <th class="py-1 text-left font-normal">{{ tr("道", "Route") }}</th>
-            <th class="py-1 text-left font-normal">{{ tr("等級", "Grade") }}</th>
-            <th class="py-1 text-right font-normal">{{ tr("平均の費用", "Avg cost") }}</th>
-            <th class="py-1 text-right font-normal max-md:hidden">{{ tr("平均の手数", "Avg uses") }}</th>
-            <th class="py-1 text-right font-normal max-md:hidden">{{ tr("半分", "Half") }}</th>
-            <th class="py-1 text-right font-normal max-md:hidden">{{ tr("9 割", "90%") }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="r in rows" :key="`${r.route}:${r.grade}`" data-route-row class="border-b border-white/5" :class="best === r ? 'bg-emerald-500/10' : ''">
-            <td class="py-1.5 pr-2" :title="tr(ROUTE_JA[r.route][2], ROUTE_JA[r.route][3])">{{ tr(ROUTE_JA[r.route][0], ROUTE_JA[r.route][1]) }}</td>
-            <td class="py-1.5 pr-2">{{ tr(...GRADE_JA[r.grade]) }}</td>
-            <template v-if="r.off">
-              <td colspan="4" class="py-1.5 text-right text-[11px] opacity-50">{{ r.off }}</td>
-            </template>
-            <template v-else>
-              <td class="py-1.5 text-right" :class="best === r ? 'font-bold text-emerald-300' : ''">
-                {{ money(r.avgCost) }}<span v-if="best === r" class="ml-1 text-[10px]">{{ tr("一番安い", "Cheapest") }}</span>
-                <HelpTip :title="tr('1 人あたり平均で使った物', 'Average uses per run')" :width="300" class="ml-1">
-                  <p v-for="(n, k) in r.uses" :key="k">{{ nameOf(String(k)) }} × {{ fmtN(n) }}</p>
-                </HelpTip>
-              </td>
-              <td class="py-1.5 text-right opacity-80 max-md:hidden">{{ fmtN(r.avgSteps) }}</td>
-              <td class="py-1.5 text-right opacity-80 max-md:hidden">{{ money(r.p50) }}</td>
-              <td class="py-1.5 text-right opacity-80 max-md:hidden">{{ money(r.p90) }}</td>
-            </template>
-          </tr>
-        </tbody>
-      </table>
-      <p class="mt-2 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("道の名前に乗せると打ち方が出る。冒涜スパムは入れていない", "Hover a route name for how it is crafted. Desecration spam is not included") }}</p>
     </div>
   </section>
 </template>
