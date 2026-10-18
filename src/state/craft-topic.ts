@@ -5,6 +5,7 @@
  */
 import { computed, ref, watch } from "vue";
 import { craftStage as s } from "./craft-stage";
+import { logRecord } from "../utils/log-record";
 import { splitOmens } from "../services/craft-stage/run-plan";
 import { topicKey, type TopicCourse } from "../services/craft-stage/topic-courses";
 
@@ -24,7 +25,8 @@ export function topicNext(): void { if (topic.value && topicUsed.value) topicAt.
 
 export function startTopic(c: TopicCourse, onStart?: () => void): void {
   onStart?.();
-  s.stashEmu(); // エミュレーターの状態を取っておく (チュートリアルを抜けたら戻す)
+  s.play.value = "lesson"; // チュートリアルの置き場で遊ぶ (エミュレーターの中身はそのまま。白に戻すより先に切り替える)
+  logRecord("tutorial", { c: c.id, e: "start" });
   topic.value = null;
   s.base.value = c.base;
   s.itemLevel.value = c.itemLevel;

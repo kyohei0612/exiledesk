@@ -18,7 +18,7 @@ import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
 import type { Pattern } from "../services/craft-stage/pattern";
 import { recordHistory } from "../services/history";
-import { computed, ref, shallowRef, watch } from "vue";
+import { computed, ref, shallowRef, watch, type Ref, type WritableComputedRef } from "vue";
 import { htcBaseInfo, loadHtcPatch } from "../services/htc/patch";
 import { REC_START, recNext } from "../utils/rec-mode";
 import { extraFromUrl, videoFromUrl, type StageExtra } from "./stage-extra";
@@ -51,20 +51,30 @@ import { methodOfTarget, quizFromSim } from "../services/craft-stage/quiz-build"
 import { nextMove, type QuizRecipe } from "../services/craft-stage/quiz-recipe";
 
 const data = shallowRef<PatchData | null>(null);
-const item = shallowRef<StageItem | null>(null);
-const log = shallowRef<PlayedStep[]>([]);
-const held = ref<string | null>(null);
+/**
+ * 遊んでいる中身の置き場: emu = エミュレーター、lesson = チュートリアル (2026-10-18 オーナー「エンジンは同じでも完全に分離」)。
+ * アイテム・工程・ベース・持っている物・お告げ・乱数などは 2 組あり、外からは今の置き場の方を読み書きする (dual)。
+ * データ・モードのタブ・表示の設定・シミュレーターは 1 つ (共通)。チュートリアルの間は emu_use と履歴を記録しない
+ */
+const play = ref<"emu" | "lesson">("emu");
+function dual<T>(make: () => Ref<T>): WritableComputedRef<T> {
+  const emu = make(), lesson = make();
+  return computed({ get: () => (play.value === "lesson" ? lesson : emu).value, set: (v) => { (play.value === "lesson" ? lesson : emu).value = v; } });
+}
+const item = dual(() => shallowRef<StageItem | null>(null));
+const log = dual(() => shallowRef<PlayedStep[]>([]));
+const held = dual(() => ref<string | null>(null));
 /** 掛けてあるお告げ。omenKeep = 打っても外さない (使った分の費用は毎回。2026-10-17 要望 aef329b8「削減のお告げを ON にしたままカオス連打」) */
-const omens = ref<string[]>([]);
+const omens = dual(() => ref<string[]>([]));
 // 2026-10-18 オーナー「デフォで打ってもお告げは外さない、チェックはもういらない」で既定にした (切り替えの OmenKeepToggle は外した)。外すのはお告げをもう一度押す
 const omenKeep = ref(true);
-const seed = ref(0);
+const seed = dual(() => ref(0));
 /**
  * 次の手の乱数 (2026-10-09 オーナー「1 戻すと次も同じ。1 戻したら次の MOD はまた新しい変数で」「ヒネコラの予見が固定値」)。
  * 前は「最初の seed + 何手目か」で決まり、戻して打ち直すと同じ結果・予見はどのカレンシーでも同じ乱数だった。
  * 打った後と戻した後に引き直す。カレンシーごとに混ぜる (予見で高貴・上級・完全を持ち替えると別の結果)。発現は候補を出した時と同じ乱数 (stepSeedFor)
  */
-const rollSeed = ref(freshSeed());
+const rollSeed = dual(() => ref(freshSeed()));
 function freshSeed(): number {
   // 録画モードの種 (?rec=1&seed=) があれば種から決める (POE2Tube 要望 ㊷)
   const r = recNext();
@@ -82,14 +92,14 @@ export function seedOfRoll(roll: number, key: string): number {
   for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193) >>> 0;
   return h % 2_147_483_647;
 }
-const error = ref<string | null>(null);
+const error = dual(() => ref<string | null>(null));
 /** 再生モード (URL の手順)。手で打つ操作は止める */
 /** shared = 共有の URL (#share=) から開いた ([[share.ts]])。手を前後に送れて、「ここから打つ」で手で打つ方へ続けられる */
 const replay = ref<{ plan: CraftStagePlan; step: number; shared?: boolean } | null>(null);
 /** 録画モードで URL の最初の状態 (base / ilvl / hands) を入れた (画面はベース選びを開かずに始める。POE2Tube 要望 ㊷) */
 const recPreset = ref(false);
-const base = ref("Gold Ring");
-const itemLevel = ref(82);
+const base = dual(() => ref("Gold Ring"));
+const itemLevel = dual(() => ref(82));
 /** 動画モード (開始の手・自動再生・操作欄) */
 /**
  * 動画モード (開始の手・自動再生・操作欄・見た目)。layout "clip" は POE2Tube の撮影用 (要望 ⑤、2026-09-28):
@@ -113,7 +123,7 @@ const pob = shallowRef<PobBlock | null>(null);
  * 始めの状態に付けた MOD (要望 ⑱-2、オーナー「指定 MOD 選んでからそこからクラフトできるように、動画用として」)。
  * まだ 1 手も打っていない間だけ、MOD 一覧から足せる。手順 JSON の start.mods に書き出す
  */
-const startMods = ref<Force[]>([]);
+const startMods = dual(() => ref<Force[]>([]));
 /**
  * シミュレーションのタブ (2026-10-05、実験): 画面の切り替えと、狙いの MOD (MOD の一覧の段の表の「狙う」で足す)。
  * minTierIndex はエンジンの段の番号 (0 = 一番下、T1 = tiers.length - 1)。[[stage-sim.ts]]
@@ -136,9 +146,7 @@ export const LOG_KEEP = 50;
  * 50 手より前に消した手の、手順 JSON に書く分だけ (重い打つ前 / 後のアイテムは持たない)。
  * 消した手も手順に要る (無いと再生で始めの方の手が抜け、送った人のアイテムにならなかった。2026-10-16 要望 0ce15a82 の決闘のワンド)
  */
-const dropped = shallowRef<Array<{ step: PlanStep; index: number }>>([]);
-/** チュートリアルの間に取っておくエミュレーターの状態 (stashEmu / unstashEmu) */
-let emuStash: { base: string; itemLevel: number; seed: number; startMods: Force[]; item: StageItem | null; log: PlayedStep[]; dropped: Array<{ step: PlanStep; index: number }>; omens: string[] } | null = null;
+const dropped = dual(() => shallowRef<Array<{ step: PlanStep; index: number }>>([]));
 /** エミュレーターで再生するクイズのレシピ (開いているパターン、無ければ答えのある最初のパターン)。今のベースと狙う MOD で組む */
 const handQuiz = computed<QuizRecipe | null>(() => {
   const d = data.value;
@@ -150,7 +158,7 @@ const handQuiz = computed<QuizRecipe | null>(() => {
 });
 
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
-const miss = ref<{ n: number; reason: string } | null>(null);
+const miss = dual(() => ref<{ n: number; reason: string } | null>(null));
 
 export const priceOf = (key: string): number => priceOfKey(key, item.value);
 export const iconOf = (key: string): string => iconOfKey(key, item.value);
@@ -181,7 +189,7 @@ function usableWith(key: string, om: readonly string[]): string | null {
   return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
 }
 export const craftStage = {
-  data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
+  play, data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -329,10 +337,11 @@ export const craftStage = {
     // 分析用の記録 (2026-10-09): 打つ前の MOD・打った物・お告げ・付いた / 消えた MOD
     const ms = (l: readonly StageMod[]): string[] => l.map((m) => `${m.modId}#${m.tierIndex}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}`);
     // カオススパム (chaos-spam.ts) は 1 回ごとには送らない (何千回にもなる。スパムの終わりに 1 件だけ送る)
-    if (!opts.quiet) logRecord("emu_use", { base: base.value, ilvl: itemLevel.value, rarity: p.before.rarity, before: ms([...p.before.prefixes, ...p.before.suffixes]), use: key, omens: want, added: ms(p.added), removed: ms(p.removed), ok: p.out.applied, cost: p.out.cost?.subtotal ?? null, baseJa: p.before.baseJa, useJa: p.out.currency_ja });
+    // チュートリアルの手は記録しない (2026-10-18 オーナー「チュートリアルの手はいらない」。PV は visit・screen、コースは tutorial の記録で見る)
+    if (!opts.quiet && play.value === "emu") logRecord("emu_use", { base: base.value, ilvl: itemLevel.value, rarity: p.before.rarity, before: ms([...p.before.prefixes, ...p.before.suffixes]), use: key, omens: want, added: ms(p.added), removed: ms(p.removed), ok: p.out.applied, cost: p.out.cost?.subtotal ?? null, baseJa: p.before.baseJa, useJa: p.out.currency_ja });
     // 使った時の音 (ゲームと同じ。珍しい段なら神のオーブの音)。カオススパム (quiet) では鳴らさない
     if (!opts.quiet && p.out.applied) playUseSfx(key, Object.values(p.chances ?? {}).some(isRareChance));
-    if (!opts.quiet) recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
+    if (!opts.quiet && play.value === "emu") recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
     // 食ったお告げは外す
     const ate = p.out.omen ? p.out.omen.split("+") : [];
     if (ate.length && !omenKeep.value) omens.value = omens.value.filter((o) => !ate.includes(o));
@@ -396,29 +405,6 @@ export const craftStage = {
    * カオススパムの前の状態を控える / 戻す (2026-10-16 カオススパムモード)。スパムは何百手にもなり、工程は 50 手で古い方が消えるので、
    * 1 手戻すではなく「スパムの前に戻す」で丸ごと戻す (アイテム・工程・消えた工程・お告げ)
    */
-  /**
-   * エミュレーターの状態を取っておく / 戻す (チュートリアルの間)。コースを始めると白に戻すので、エミュレーターでやっていた物が消えていた
-   * (2026-10-18 オーナー「チュートリアルでやったやつエミュレーターに連動してる、分離して」)。取っておくのは最初の 1 回 (コースからコースへ移っても持ち続ける)
-   */
-  stashEmu(): void {
-    if (emuStash || replay.value) return;
-    emuStash = { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, item: item.value, log: log.value, dropped: dropped.value, omens: [...omens.value] };
-  },
-  unstashEmu(): void {
-    const x = emuStash;
-    emuStash = null;
-    if (!x) return;
-    held.value = null;
-    base.value = x.base;
-    itemLevel.value = x.itemLevel;
-    seed.value = x.seed;
-    startMods.value = x.startMods;
-    item.value = x.item;
-    log.value = x.log;
-    dropped.value = x.dropped;
-    omens.value = x.omens;
-    rollSeed.value = freshSeed();
-  },
   snapshot(): { item: StageItem | null; log: typeof log.value; dropped: typeof dropped.value; omens: string[] } {
     return { item: item.value, log: log.value, dropped: dropped.value, omens: omens.value };
   },

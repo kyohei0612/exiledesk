@@ -8,6 +8,7 @@
  *   2026-10-17 オーナー「クリアしたのに…みたいなかんじになるから A 型の細かい連中は」)
  */
 import { computed, ref, watch } from "vue";
+import { logRecord } from "../utils/log-record";
 import { craftStage as s, seedOfRoll } from "./craft-stage";
 import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, goTopic, keepGoing, loopRound, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
@@ -24,8 +25,8 @@ import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecr
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** チュートリアルの間はお告げを打つと消す (ゲームと同じ)。エミュレーターの既定は掛けっぱなし (2026-10-18 オーナー「デフォではかけっぱなし、チュートリアルでは分離して」) */
 watch(inLesson, (v) => { s.omenKeep.value = !v; }, { immediate: true });
-// チュートリアルを抜けたら、取っておいたエミュレーターの状態に戻す (2026-10-18 オーナー「エミュでやってた手がなくなる、分離して」)
-watch(inLesson, (v, was) => { if (was && !v) s.unstashEmu(); });
+// チュートリアルを抜けたら、エミュレーターの置き場に戻す (2026-10-18 オーナー「エンジンは同じでも完全に分離」)
+watch(inLesson, (v) => { if (!v) s.play.value = "emu"; });
 /** コースを終える (タブを押した時) */
 export function endLesson(): void { endTopic(); endCourse(); }
 /** コースをやめる: チュートリアルのタブ (コース一覧) に戻る (2026-10-17 オーナー「エミュレーターから開始になってる、タブはチュートリアルから」) */
@@ -45,6 +46,7 @@ function loadCleared(): string[] {
 }
 export const cleared = ref<Set<string>>(new Set(loadCleared()));
 function markCleared(id: string): void {
+  logRecord("tutorial", { c: id, e: "clear" });
   if (cleared.value.has(id)) return;
   cleared.value = new Set([...cleared.value, id]);
   try { localStorage.setItem(CLEAR_KEY, JSON.stringify([...cleared.value])); } catch { /* 残せない環境では今回だけ */ }
