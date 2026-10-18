@@ -4,11 +4,11 @@
   どれからでも始められる。押すとエミュレーターで始まり、横に案内が出る
 -->
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { startCourse } from "../../state/craft-course";
 import { cleared, startTopicAt } from "../../state/craft-lesson";
-import { nameOf } from "../../state/craft-stage";
+import { iconOf, nameOf } from "../../state/craft-stage";
 import { freshItem } from "../../services/craft-stage/run-plan";
 import { CRAFT_COURSES, courseSlots } from "../../services/craft-stage/craft-courses";
 import { TOPIC_COURSES, topicKey, type TopicCourse, type TopicStep } from "../../services/craft-stage/topic-courses";
@@ -28,12 +28,22 @@ const DEV_BUILD = import.meta.env.DEV; // 開発版 (deploy:web-dev) も本番�
 const REVIEW = new Set<string>([]);
 const DEV_PREVIEW = import.meta.env.VITE_DEV_PREVIEW === "1";
 const shown = (c: TopicCourse): boolean => (DEV_BUILD ? OPEN_LEVELS.includes(c.level) : RELEASED.has(c.id)) || (DEV_PREVIEW && REVIEW.has(c.id));
-const LEVELS: Array<{ n: 1 | 2 | 3; label: JaEn; note: JaEn; chip: string; ring: string }> = [
-  { n: 1, label: ["入門", "Intro"], note: ["はじめての人はここから", "Start here"], chip: "bg-emerald-500/25 text-emerald-100", ring: "border-emerald-400/50 hover:border-emerald-300" },
-  { n: 2, label: ["初級", "Easy"], note: ["冒涜とお告げ", "Desecration and omens"], chip: "bg-sky-500/25 text-sky-100", ring: "border-sky-400/50 hover:border-sky-300" },
-  { n: 3, label: ["中級", "Medium"], note: ["カタリストと液化した感情", "Catalysts and liquid emotions"], chip: "bg-amber-500/25 text-amber-100", ring: "border-amber-400/50 hover:border-amber-300" },
+const LEVELS: Array<{ n: 1 | 2 | 3; label: JaEn; note: JaEn; chip: string; bar: string; band: string; num: string; text: string }> = [
+  { n: 1, label: ["入門", "Intro"], note: ["はじめての人はここから", "Start here"], chip: "bg-emerald-500/25 text-emerald-100", bar: "bg-emerald-400/70", band: "bg-gradient-to-r from-emerald-500/25 via-emerald-500/10 to-transparent", num: "bg-emerald-400 text-black", text: "text-emerald-100" },
+  { n: 2, label: ["初級", "Easy"], note: ["冒涜とお告げ", "Desecration and omens"], chip: "bg-sky-500/25 text-sky-100", bar: "bg-sky-400/70", band: "bg-gradient-to-r from-sky-500/25 via-sky-500/10 to-transparent", num: "bg-sky-400 text-black", text: "text-sky-100" },
+  { n: 3, label: ["中級", "Medium"], note: ["カタリストと液化した感情", "Catalysts and liquid emotions"], chip: "bg-amber-500/25 text-amber-100", bar: "bg-amber-400/70", band: "bg-gradient-to-r from-amber-500/25 via-amber-500/10 to-transparent", num: "bg-amber-400 text-black", text: "text-amber-100" },
 ];
 const baseName = (b: string): string => baseNameOf({ base: b, baseJa: jaTypeName(b) });
+/** 出すコース (段の順のまま) と、そのうちクリアした数 (上の進み具合) */
+const shownCourses = computed(() => TOPIC_COURSES.filter(shown));
+const clearedCount = computed(() => shownCourses.value.filter((c) => cleared.value.has(`topic:${c.id}`)).length);
+/** カードのアイコン: 1 手目のカレンシー (エッセンスはそのベースの棚の物) */
+function courseIcon(c: TopicCourse): string {
+  const st = c.steps[0], d = s.data.value;
+  if (!st || !d) return "";
+  const key = st.use.startsWith("ess:") ? topicKey(st, d, freshItem(d, st.base ?? c.base, c.itemLevel)) : st.use;
+  return key ? iconOf(key) : "";
+}
 /** 手の一覧を開いているコース (既定は閉じる。押すと開く。2026-10-17 オーナー「全部出したらバカでしょ、コース一覧を見るで見れるように」) */
 /** 開けるのは 1 つだけ。そのカードの外を押したら閉じる (オーナー「他の動作したら閉じる、開きっぱなしは品が無い」) */
 const openSteps = ref<string | null>(null);
@@ -56,40 +66,66 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
 </script>
 
 <template>
-  <section data-courses class="flex flex-col gap-4">
-    <div class="rounded-xl border border-amber-300/30 bg-gradient-to-r from-amber-500/[0.10] to-transparent px-4 py-3">
-      <p class="text-[16px] font-bold text-amber-100">{{ tr("クラフトのコース", "Crafting courses") }}</p>
-      <p class="mt-1 text-[13px] text-[var(--exile-color-text-primary)]">{{ tr("カレンシーを 1 つずつ実際に使って、どう動くかを覚えます。", "Use each currency for real, one at a time, to learn what it does.") }}</p>
-    </div>
-    <template v-for="lv in LEVELS.filter((x) => TOPIC_COURSES.some((c) => c.level === x.n && shown(c)))" :key="lv.n">
-      <div v-if="TOPIC_COURSES.some((c) => c.level === lv.n)" class="flex flex-col gap-2">
-        <p class="flex items-center gap-2"><span class="rounded px-2 py-0.5 text-[12px] font-bold" :class="lv.chip">{{ t2(lv.label) }}</span><span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ t2(lv.note) }}</span></p>
-        <div class="grid grid-cols-2 items-start gap-3 max-md:grid-cols-1">
-          <!-- カード: 上を押すと 1 手目から、下の手の一覧を押すとその手から (2026-10-17 オーナー「入門でコレ知りたい時もある、コース一覧で手を表示」) -->
-          <div v-for="c in TOPIC_COURSES.filter((x) => x.level === lv.n && shown(x))" :key="c.id" data-topic-card-box :data-course="c.id" class="flex min-w-0 flex-col rounded-xl border-2 bg-white/[0.03]" :class="lv.ring">
-            <!-- 上は表示だけ。進めるのは「始める」と「コース一覧を見る」の 2 つ (2026-10-17 オーナー「それ以外はクリックできないように、基本その 2 ボタンで進行」) -->
-            <div data-topic-card class="flex min-w-0 flex-col items-start gap-1.5 px-4 py-3">
-              <span class="flex w-full items-center gap-2">
-                <b class="min-w-0 truncate text-[16px] text-[var(--exile-color-text-title)]">{{ t2(c.title) }}</b>
-                <span v-if="cleared.has(`topic:${c.id}`)" data-cleared class="shrink-0 rounded bg-amber-400 px-2 py-0.5 text-[11px] font-black text-black">{{ tr("クリア", "Cleared") }}</span>
-                <span class="ml-auto shrink-0 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${c.steps.length} 手`, `${c.steps.length} steps`) }}</span>
+  <section data-courses class="flex flex-col gap-5">
+    <!-- 上: 一言と進み具合 (前は説明だけの大きな箱だった。2026-10-18 オーナー「UI が全体的にブス、枠の大きさとか」) -->
+    <header class="flex flex-wrap items-end gap-x-6 gap-y-2 px-1">
+      <div class="min-w-0">
+        <p class="font-display text-[18px] tracking-wider text-[var(--exile-color-text-title)]">{{ tr("クラフトのコース", "Crafting courses") }}</p>
+        <p class="mt-0.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("どのコースからでも始められます。", "Start with any course.") }}<!-- 上の題の下の文と同じ事を書いていたので短く (2026-10-18) --></p>
+      </div>
+      <div class="ml-auto flex w-56 shrink-0 flex-col gap-1 max-md:ml-0 max-md:w-full" data-courses-progress>
+        <p class="flex items-baseline justify-between text-[11px] text-[var(--exile-color-text-tertiary)]"><span>{{ tr("クリア", "Cleared") }}</span><span class="tabular-nums text-[13px] font-bold text-amber-200">{{ clearedCount }} / {{ shownCourses.length }}</span></p>
+        <div class="h-1.5 overflow-hidden rounded-full bg-white/10"><div class="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-[width] duration-500" :style="{ width: `${shownCourses.length ? (clearedCount / shownCourses.length) * 100 : 0}%` }" /></div>
+      </div>
+    </header>
+    <!-- 段ごとに 1 行: 左に段の札、右にカード (同じ高さにそろえる) -->
+    <template v-for="lv in LEVELS.filter((x) => shownCourses.some((c) => c.level === x.n))" :key="lv.n">
+      <div class="flex flex-col gap-2.5">
+        <!-- 段の見出しは横いっぱいの帯 (左の小さな札だと、どれが入門か分からなかった。2026-10-18 オーナー「どれが入門かもわからん」) -->
+        <div class="flex items-center gap-3 rounded-md px-3 py-2" :class="lv.band">
+          <span class="grid size-7 shrink-0 place-items-center rounded-full font-display text-[15px] font-bold" :class="lv.num">{{ lv.n }}</span>
+          <span class="font-display text-[18px] font-bold tracking-wider" :class="lv.text">{{ t2(lv.label) }}</span>
+          <span class="min-w-0 truncate text-[12px] text-[var(--exile-color-text-secondary)]">{{ t2(lv.note) }}</span>
+        </div>
+        <div class="grid grid-cols-2 items-stretch gap-3 max-lg:grid-cols-1">
+          <!-- カード: 進めるのは「始める」と「手の一覧」の 2 つだけ (2026-10-17 オーナー「基本その 2 ボタンで進行」) -->
+          <div v-for="c in shownCourses.filter((x) => x.level === lv.n)" :key="c.id" data-topic-card-box :data-course="c.id"
+            class="relative flex min-w-0 flex-col overflow-hidden rounded-lg border bg-black/30 transition"
+            :class="cleared.has(`topic:${c.id}`) ? 'border-amber-400/45' : 'border-white/10 hover:border-white/20'">
+            <!-- 左端の細い帯が段の色 (縁全体を色にすると派手すぎた) -->
+            <span class="absolute inset-y-0 left-0 w-1" :class="lv.bar" aria-hidden="true" />
+            <div data-topic-card class="flex min-w-0 flex-1 gap-3 py-3 pl-5 pr-4">
+              <!-- コースのカレンシーのアイコン (1 手目の物) -->
+              <span class="grid size-14 shrink-0 place-items-center rounded-md border border-white/10 bg-black/40">
+                <img v-if="courseIcon(c)" :src="courseIcon(c)" alt="" class="size-11 object-contain" draggable="false" />
               </span>
-              <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ t2(c.learn) }}</span>
-              <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("使うベース", "Base") }}: {{ baseName(c.base) }}</span>
+              <div class="flex min-w-0 flex-1 flex-col gap-1">
+                <span class="flex min-w-0 items-center gap-2">
+                  <b class="min-w-0 truncate font-display text-[16px] tracking-wide text-[var(--exile-color-text-title)]">{{ t2(c.title) }}</b>
+                  <span class="shrink-0 rounded px-1.5 py-px text-[10px] font-bold" :class="lv.chip">{{ t2(lv.label) }}</span>
+                  <span v-if="cleared.has(`topic:${c.id}`)" data-cleared class="shrink-0 rounded bg-amber-400 px-1.5 py-px text-[10px] font-black text-black">{{ tr("クリア", "Cleared") }}</span>
+                </span>
+                <span class="line-clamp-2 text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]" :title="t2(c.learn)">{{ t2(c.learn) }}</span>
+              </div>
             </div>
-            <div class="flex flex-wrap items-center gap-2 border-t border-white/10 px-4 py-2">
-              <button type="button" data-topic-start class="g-btn-red sm" :disabled="!s.data.value" @click="startTopicAt(c, 0)">{{ tr("始める", "Start") }}</button>
-              <button type="button" data-topic-card-toggle class="g-btn sm inline-flex items-center gap-1" :aria-expanded="openSteps === c.id" @click="toggleSteps(c.id)"><Icon :name="openSteps === c.id ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ openSteps === c.id ? tr("コース一覧を閉じる", "Hide the steps") : tr("コース一覧を見る", "Show the steps") }}</button>
-              <span v-if="openSteps === c.id" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("押すとその手から始める", "Click a step to start there") }}</span>
+            <div class="mt-auto flex flex-wrap items-center gap-2 bg-black/25 py-2 pl-5 pr-3">
+              <span class="min-w-0 truncate max-md:w-full text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${c.steps.length} 手`, `${c.steps.length} steps`) }} · {{ baseName(c.base) }}</span>
+              <span class="ml-auto flex shrink-0 items-center gap-2">
+                <button type="button" data-topic-card-toggle class="g-btn sm inline-flex items-center gap-1" :aria-expanded="openSteps === c.id" @click="toggleSteps(c.id)"><Icon :name="openSteps === c.id ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ tr("手の一覧", "Steps") }}</button>
+                <button type="button" data-topic-start class="g-btn-red sm" :disabled="!s.data.value" @click="startTopicAt(c, 0)">{{ tr("始める", "Start") }}</button>
+              </span>
             </div>
-            <ol v-if="openSteps === c.id" data-topic-card-steps class="columns-2 gap-x-2 px-3 pb-2">
-              <li v-for="(st, i) in c.steps" :key="i" class="mb-0.5 break-inside-avoid">
-                <button type="button" class="g-plain flex w-full min-w-0 items-center gap-1.5 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :disabled="!s.data.value" :title="tr('この手から始める', 'Start from this step')" @click="startTopicAt(c, i)">
-                  <span class="w-5 shrink-0 text-right text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
-                  <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--exile-color-text-secondary)] max-md:whitespace-normal max-md:text-[11px] max-md:leading-tight">{{ stepLabel(c, st) }}</span>
-                </button>
-              </li>
-            </ol>
+            <div v-if="openSteps === c.id" class="bg-black/25 px-3 pb-2">
+              <p class="px-1.5 pb-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("押すとその手から始める", "Click a step to start there") }}</p>
+              <ol data-topic-card-steps class="columns-2 gap-x-2">
+                <li v-for="(st, i) in c.steps" :key="i" class="mb-0.5 break-inside-avoid">
+                  <button type="button" class="g-plain flex w-full min-w-0 items-center gap-1.5 rounded px-1.5 py-0.5 text-left hover:bg-white/5" :disabled="!s.data.value" :title="tr('この手から始める', 'Start from this step')" @click="startTopicAt(c, i)">
+                    <span class="w-5 shrink-0 text-right text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
+                    <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--exile-color-text-secondary)] max-md:whitespace-normal max-md:text-[11px] max-md:leading-tight">{{ stepLabel(c, st) }}</span>
+                  </button>
+                </li>
+              </ol>
+            </div>
           </div>
         </div>
       </div>
