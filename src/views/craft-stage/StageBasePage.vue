@@ -35,8 +35,15 @@ function pick(en: string): void {
  * (2026-10-18 オーナー「MOD の枠の下枠と例の隙間少し開けたところまで進んであげんと可哀そう」。ベースの一覧の reveal と同じ考え)。枠が画面より高ければ枠の上で止める
  */
 function revealSimMods(): void {
-  const el = document.querySelector<HTMLElement>("[data-sim-cur]");
-  if (el) revealBottom(el);
+  // シミュレーターの画面は後から読む (2026-10-19 スマホ強化) ので、初めて開いた時はまだ枠が無い。出るまで待つ (最大 3 秒)。
+  // 前は 0.12 秒後に 1 回だけ探していて、エミュレーターから切り替えた時に送られなかった (2026-10-19 オーナー「MOD 下までスクロールせんな」)
+  const t0 = Date.now();
+  const tryReveal = (): void => {
+    const el = [...document.querySelectorAll<HTMLElement>("[data-sim-cur]")].find((e) => e.getClientRects().length);
+    if (el) { requestAnimationFrame(() => revealBottom(el)); return; }
+    if (Date.now() - t0 < 3000) setTimeout(tryReveal, 60);
+  };
+  tryReveal();
 }
 // 開いたら一番上から、戻ったら前の位置へ (ページを移ったのと同じに。2026-10-12 広告のお試しと同じ)
 let before = 0;
