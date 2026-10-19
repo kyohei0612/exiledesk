@@ -1,4 +1,7 @@
 {
+  "0.1.583": [
+    "First visit now shows a one-line intro and a “Try now with a Gold Ring” button (start crafting without choosing a base)"
+  ],
   "0.1.582": [
     "Faster first load, especially on phones: the initial download is about half the size and a loading screen shows right away"
   ],

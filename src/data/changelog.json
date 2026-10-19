@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.583",
+  "date": "2026-10-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "初めて開いた時に、何ができるかの一言と「金の指輪ですぐ試す」ボタンを出しました (ベースを選ばずにすぐ打てます)",
+    "en": "First visit now shows a one-line intro and a “Try now with a Gold Ring” button (start crafting without choosing a base)"
+   }
+  ]
+ },
+ {
   "v": "0.1.582",
   "date": "2026-10-19",
   "items": [
@@ -612,18 +624,6 @@
     "area": "",
     "text": "光のお告げと左右の消去のお告げは一緒に掛けられないように (光を使う時は左右は使いません)",
     "en": "Omen of Light and Sinistral / Dextral Annulment can no longer be active together (only Light is used)"
-   }
-  ]
- },
- {
-  "v": "0.1.543",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "お告げに「打ってもお告げを外さない」の切り替えを付けました (持った時のお告げの欄とお告げのタブ)。ON の間は削減のお告げなどを掛けたままカオスを続けて打てます。使ったお告げの費用は毎回足します",
-    "en": "Added a \"Keep omens after use\" switch (in the omen box when holding currency, and on the Omens tab). While on, omens like Whittling stay active so you can keep using Chaos Orbs. The omen's cost is still added each time"
    }
   ]
  }
