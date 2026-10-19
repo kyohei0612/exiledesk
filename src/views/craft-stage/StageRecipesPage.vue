@@ -87,6 +87,8 @@ function duplicate(r: SimRecipe): void {
   if (x) { track("recipe:duplicate"); say(tr(`「${x.name}」を作りました`, `Created "${x.name}"`)); }
 }
 function remove(r: SimRecipe): void {
+  // リセットと同じ 2 回押し (2026-10-21 オーナー「消すも 2 回欲しいな、リセットと同じように」)
+  if (!arm.arm(`del:${r.id}`)) return;
   const wasCurrent = currentRecipeId.value === r.id;
   const x = removeRecipe(r.id);
   if (!x) return;
@@ -230,7 +232,7 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeo
               <button v-if="live && dirty && r.id === currentRecipeId" type="button" data-recipe-overwrite class="max-md:min-h-10" :class="arm.is(`over:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="tr('シミュレーターの今の状態でこのレシピを書き換える', 'Replace this recipe with the current simulator state')" @click="overwrite(r)">{{ arm.is(`over:${r.id}`) ? tr("もう一度押すと上書き", "Click again to overwrite") : tr("今の状態で上書き", "Overwrite with current") }}</button>
               <button type="button" data-recipe-duplicate class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" @click="duplicate(r)"><Icon name="copy" class="size-3.5" />{{ tr("複製", "Duplicate") }}</button>
               <button type="button" data-recipe-share-btn class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" :aria-expanded="sharing?.id === r.id" @click="openShare(r)"><Icon name="share" class="size-3.5" />{{ tr("共有", "Share") }}</button>
-              <button type="button" data-recipe-delete class="g-btn sm ml-auto inline-flex items-center gap-1 hover:!text-rose-300 max-md:min-h-10" :title="tr('このレシピを消す (すぐ下の「元に戻す」で戻せる)', 'Delete this recipe (Undo appears right after)')" @click="remove(r)"><Icon name="trash" class="size-3.5" />{{ tr("消す", "Delete") }}</button>
+              <button type="button" data-recipe-delete class="ml-auto inline-flex items-center gap-1 max-md:min-h-10" :class="arm.is(`del:${r.id}`) ? ARMED_CLASS : 'g-btn sm hover:!text-rose-300'" :title="tr('このレシピを消す (2 回押す。消した後も「元に戻す」で戻せる)', 'Delete this recipe (click twice; Undo appears right after)')" @click="remove(r)"><Icon name="trash" class="size-3.5" />{{ arm.is(`del:${r.id}`) ? tr("もう一度押すと消す", "Click again to delete") : tr("消す", "Delete") }}</button>
             </div>
             <!-- 共有の吹き出し -->
             <div v-if="sharing?.id === r.id" data-recipe-share-panel class="mt-2 rounded-md border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2.5">
