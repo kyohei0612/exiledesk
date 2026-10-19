@@ -126,8 +126,8 @@ const KEY = "exiledesk.craftStage.modListOpen";
 const open = ref(true);
 try { open.value = localStorage.getItem(KEY) !== "0"; } catch { /* 無くてよい */ }
 watch(open, (v) => { try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /* 無くてよい */ } });
-// シミュレーションで狙いがまだ 1 つも無い時は開いておく (畳んだのを覚えていて、ベースを選んでも何をすればいいか分からなかった。2026-10-07)
-watch(() => s.mode.value === "sim" && !s.simTargets.value.length && s.base.value, (v) => { if (v) open.value = true; }, { immediate: true });
+// シミュレーションで狙いがまだ 1 つも無い時・エミュレーターの「この状態から」で来た時 (simStartItem が替わった) は開いておく (畳んだのを覚えていて、ベースを選んでも何をすればいいか分からなかった。2026-10-07 / 2026-10-19 オーナー「エミュからは MOD も開いた状態で、画面が違うぞってなる」)
+watch(() => [s.mode.value === "sim" && !s.simTargets.value.length && s.base.value, s.mode.value === "sim" && s.simStartItem.value] as const, ([v, it], old) => { if (v || (it && it !== old?.[1])) open.value = true; }, { immediate: true });
 
 // エッセンスはマジック用とレア用 (パーフェクト・合金) を 1 つの節に (2026-10-10 オーナー「エッセンスね、パーフェクトとかやなくて意味わからん」)
 // 並び: 普通・ルーン → 異界 (変質) → 創生の樹など → 冒涜 → エッセンス (2026-10-09 オーナー)
