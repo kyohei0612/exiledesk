@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.586",
+  "date": "2026-10-20",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧のタブの呼び方を「一般」「冒涜専用」にそろえました (前は「普通」「冒涜」)",
+    "en": "Mod list tabs are now labeled “Regular” and “Desecrated-only” (were “Normal” and “Desecrated”)"
+   }
+  ]
+ },
+ {
   "v": "0.1.585",
   "date": "2026-10-19",
   "items": [
@@ -612,18 +624,6 @@
     "area": "",
     "text": "聖別のお告げ: 神のオーブと同じく数値を振り直してから 0.78〜1.22 倍に (前は今の数値に倍率を掛けるだけ)。段の上限を超えることもあります",
     "en": "Omen of Sanctification: values are now rerolled like a Divine Orb before being multiplied by 0.78–1.22 (previously the multiplier was applied to the current values). Values can exceed the tier's range"
-   }
-  ]
- },
- {
-  "v": "0.1.546",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "耐性のフラックス・アルダーのルーンで、エッセンスで付けた MOD やベース専用の MOD も普通の MOD と同じように変わるように (前は変わりませんでした)",
-    "en": "Resistance Flux and Aldur runes now also convert Essence-made mods and base-specific mods, the same way as regular mods (previously they stayed unchanged)"
    }
   ]
  }
