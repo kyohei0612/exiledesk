@@ -12,12 +12,15 @@ import { type RecipeResult, type RecipeSpec } from "../../services/craft-stage/r
 import { track } from "../../utils/track";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { freshItem } from "../../services/craft-stage/run-plan";
-import { limitOf } from "../../services/craft-stage/stage-core";
-import { patternSets, setByKey, type Pattern } from "../../services/craft-stage/pattern";
+import { effectiveCls, limitOf } from "../../services/craft-stage/stage-core";
+import { withRunes } from "../../vendor/poe2htc/engine/runes";
+import { modTierWeight } from "../../vendor/poe2htc/engine/pool";
+import { patternSets, runeEnForId, setByKey, type Pattern } from "../../services/craft-stage/pattern";
 import { runQuizOnce, summarizeQuiz, type QuizResult, type QuizRoute, type QuizRun } from "../../services/craft-stage/quiz-recipe";
 import { magicStartMods, quizFromSim, type QuizSimIn } from "../../services/craft-stage/quiz-build";
 import { tr } from "../../i18n/lang";
 import { sideLimits, sideUse } from "../../services/craft-stage/sim-methods";
+import { greaterRouteCost, type GreaterRoute } from "../../services/craft-stage/sim-greater";
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimSearchCtx } from "./use-sim-search";
 
@@ -26,6 +29,8 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   const { blocker, boughtDivine, fourDivine, rareDivine, fracMembers, fractureRow, fractureRows, itemDivine, magicDivine, makeRoute, makeSpec,
     market, maxSteps, methodOf, num, orderKeys, rows, runs, socketCount, targetsSig, whiteDivine } = d;
   const s = craftStage;
+  /** 狙いをクイズのレシピの入力の形に (付け方は決めた物) */
+  const simIn = () => s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}), ...(t.need ? { need: t.need } : {}) }));
   /**
    * 計算の費用 (2026-10-05 オーナー「3 個買って 1 個成功品と仮定して、最低完全変成 3、次の完全増強、消去はセットで使う、フラクチャー 3 つは
    * 絶対にいる。深淵エッセンスは 3 個、ネクロマンシー、結晶化、骨それぞれ 3 回、確率的に計算してくれ。平均コスト 1 個作るコスト分かれば 3 倍」
@@ -44,12 +49,19 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
      * 変成・増強の等級は完全 (オーナー「最低完全変成、次の完全増強」)。完全の段の下限で狙いの段が出ない時 (兜のライフ T2 以上など) は
      * 上級 → 無印に落とす (2026-10-05、前は 0% と「—」で止まって見えた)
      */
-    /** その MOD の、下限 floor 以上・アイテムレベル以下・minIdx の段以上の重み */
+    /**
+     * その MOD の、下限 floor 以上・アイテムレベル以下・minIdx の段以上の重み。エンジンと同じ modTierWeight (下限に届く段が無い MOD も一番上の段は残る。
+     * 前は丸ごと外していて、靴の増強で移動スピードが 30% と出た。エンジンは 18%。2026-10-20)
+     */
     const wAt = (id: string, minIdx: number, floor: number): number => {
       const x = d.mods.get(id);
-      return x ? x.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl >= floor && t.ilvl <= s.itemLevel.value ? t.weight : 0), 0) : 0;
+      return x ? modTierWeight(x, floor, s.itemLevel.value, minIdx) : 0;
     };
-    const totalAt = (k: "prefixes" | "suffixes", floor: number): number => it.cls.pools.normal[k].reduce((a, id) => a + wAt(id, 0, floor), 0);
+    // 置き場は狙いのルーンを差した物 (ウートレッドの時間術などルーンの MOD を狙う時、ルーンで増える MOD も割る方に入れる。前は差していない置き場で割り、
+    // 靴の移動スピードが増強 1 回で 75% と出ていた。2026-10-20 見本の靴。2 の付きやすさ shareOf と同じ)
+    const runeIds = [...new Set(s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]).map((t) => d.mods.get(t.modId)?.rune).filter((r): r is string => !!r))];
+    const pools = (runeIds.length ? withRunes(effectiveCls(it), runeIds) : it.cls).pools.normal;
+    const totalAt = (k: "prefixes" | "suffixes", floor: number): number => pools[k].reduce((a, id) => a + wAt(id, 0, floor), 0);
     const pAt = (floor: number) => {
       const w = (id: string, minIdx: number): number => wAt(id, minIdx, floor);
       // 候補ごとに自分の側の重みで割る (候補は両側でも良い)
@@ -66,6 +78,9 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
       { g: "base", floor: CURRENCY_FLOOR.augment.base, aug: "augment", tra: "transmute", ja: "無印" },
     ] as const;
     const gr = grades.find((x) => pAt(x.floor).pHit > 0) ?? grades[0];
+    // 狙いのルーン (ルーンの MOD をフラクチャーで狙う時は、作り直すたびに白へ差す。2026-10-20 見本の靴: ウートレッドの代金が入っていなかった)
+    const fracRunes = [...new Set(fracMembers.value.map((r) => d.mods.get(r.modId)?.rune).filter((r): r is string => !!r))].map((id) => runeEnForId(id)).filter((r): r is string => !!r);
+    const runeLines = fracRunes.map((en) => ({ name: nameOf(`rune:${en}`), n: 1, each: priceOf(`rune:${en}`) }));
     // 候補ごとの付きやすさと合計 (どれか 1 つで良い)
     const { each, pHit } = pAt(gr.floor);
     const wall: "prefix" | "suffix" = m.type === "suffix" ? "prefix" : "suffix";
@@ -78,6 +93,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     // (2026-10-05 オーナー「1 からの場合骨壁は単純で王者後は骨 1 個でいい、選ぶ必要ない」「増強リロールで 1 個だけ付いたら王者すると 1 個足りないから高貴打って 3 つに」)
     const lines: Array<{ name: string; n: number; each: number }> = [
       { name: "白のベース", n: 1, each: white },
+      ...runeLines,
       { name: nameOf(gr.tra), n: 1, each: priceOf(gr.tra) },
       { name: `${nameOf(gr.aug)} (リロール)`, n: rerolls, each: priceOf(gr.aug) },
       { name: `${nameOf("annul")} (リロールに 2 つ)`, n: rerolls * 2, each: priceOf("annul") },
@@ -137,8 +153,14 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     const rareN = num(rareDivine.value);
     const rareTotal = rareN != null && cg ? (rareN + rareRest) * 3 + after : null;
     const rareChaos = cg ? { grade: cg.ja, p: cg.p, n: 1 / cg.p } : null;
+    const g = greaterRouteCost({ data: d, targets: simIn(), fracSide: m.type === "suffix" ? "suffix" : "prefix", p: pHit, grade: gr, wAt, totalAt, white, runeLines, price: priceOf, name: nameOf });
+    if (g) {
+      // グレーターエッセンスを巻き込む道: 自前のフラクチャーだけ (買う始め方・適当なレアの道は無し)。固定の後に消さない (残す MOD を持ったまま進む)
+      return { pHit, each, rerolls: g.augment, lines: g.lines, buyLines, once: g.once, after: 0, total: g.once * 3, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null,
+        slots, rareLines: [], rareRest: Infinity, rareTotal: null, rareChaos: null, greater: g };
+    }
     return { pHit, each, rerolls, lines, buyLines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce,
-      slots, rareLines, rareRest, rareTotal, rareChaos };
+      slots, rareLines, rareRest, rareTotal, rareChaos, greater: null as GreaterRoute | null };
   });
   const busy = ref(false);
   const phase = ref("");
@@ -163,6 +185,8 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
    */
   const startOnce = computed((): number | null => {
     const c = calc.value;
+    // グレーターエッセンスを巻き込む道は自前のフラクチャーだけ (買う始め方は無い。2026-10-20 オーナー)
+    if (c?.greater) return Number.isFinite(c.total) ? c.total : null;
     // 始め方を 1 で決めた時はその 1 つ (固定済みを買う = 入れた値段 / 4 MOD を買う = (ベース + 壁 + フラクチャー) × 3 + 消去 × 2)
     if (s.simStart.value === "fractured") return num(boughtDivine.value);
     if (s.simStart.value === "item") return num(itemDivine.value);
@@ -233,7 +257,9 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, start: st, startPrice, sockets: socketCount.value, startItem: startItemAt(),
       // ⑤ の関門は ④ の順番 (先の狙いは「付いていない」と見る。2026-10-20)。固定済みから始める時のどれが固定されたかは 3 の付きやすさの重み
       order: orderKeys.value, fracWeights: Object.fromEntries((calc.value?.each ?? []).map((e) => [e.modId, e.p])),
-      targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}), ...(t.need ? { need: t.need } : {}) })),
+      targets: simIn(),
+      // グレーターエッセンスを巻き込む道: 固定済みのレアは、残す MOD + エッセンス + 壁が付いた物 (2026-10-20)
+      ...(fracStart && calc.value?.greater ? { greater: { essKey: calc.value.greater.essKey, keep: calc.value.greater.keep } } : {}),
     };
   });
   /** マジックを買う始め方で付いている MOD (2 の狙う MOD の最初のプレ 1 つ・サフィ 1 つ、quiz-build の magicStartMods と同じ) */

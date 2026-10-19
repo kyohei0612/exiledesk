@@ -11,7 +11,7 @@ import { tr } from "../../i18n/lang";
 type Line = { name: string; n: number; each: number };
 const props = defineProps<{
   kind: "white" | "four" | "fractured" | "rare";
-  calc: { lines: Line[]; buyLines: Line[]; rareLines?: Line[]; once: number; after: number; total: number; buyRest: number; rerolls: number; grade: string; rareChaos?: { grade: string; n: number } | null } | null;
+  calc: { lines: Line[]; buyLines: Line[]; rareLines?: Line[]; once: number; after: number; total: number; buyRest: number; rerolls: number; grade: string; rareChaos?: { grade: string; n: number } | null; greater?: { augment: number; annul: number } | null } | null;
   /** その行に入れたベースの値段 (高貴建て) */
   base: number | null;
 }>();
@@ -45,12 +45,14 @@ const title = computed(() => (props.kind === "white" ? tr("白から作る費用
           </tr>
           <tr class="font-bold"><td class="pt-1">{{ tr("1 回分", "One attempt") }}</td><td></td><td class="pt-1 text-right">{{ money(once) }}</td></tr>
           <tr><td>{{ tr("× 3 (フラクチャーが 1/3)", "× 3 (fracture hits 1 in 3)") }}</td><td></td><td class="text-right">{{ money(once * 3) }}</td></tr>
-          <tr><td>{{ tr("+ 固定できた後の消去 × 2", "+ 2 annuls after fracturing") }}</td><td></td><td class="text-right">{{ money(calc.after) }}</td></tr>
+          <!-- グレーターの道は固定の後に消さない (残す MOD を持ったまま進む。2026-10-20) -->
+          <tr v-if="calc.after"><td>{{ tr("+ 固定できた後の消去 × 2", "+ 2 annuls after fracturing") }}</td><td></td><td class="text-right">{{ money(calc.after) }}</td></tr>
           <tr class="font-bold text-emerald-300"><td class="pt-1">{{ tr("合計", "Total") }}</td><td></td><td class="pt-1 text-right">{{ money(once * 3 + calc.after) }}</td></tr>
         </tbody>
       </table>
       <p v-if="kind === 'rare' && calc.rareChaos" class="mt-1 text-[10px] opacity-60">{{ tr(`消去で 1 MOD に削り、カオスで残りの 1 つを入れ替えて狙いが付くまで (付く物は両側の重みから 1 つ、平均 ${fmtN(calc.rareChaos.n)} 回)。カオスは${calc.rareChaos.grade} (1 個あたりが一番安い等級)。レアは満杯と見る`, `Annul down to 1 mod, then Chaos swaps it until the target lands (one mod from both sides' weights, avg ${fmtN(calc.rareChaos.n)}). Chaos grade: ${calc.rareChaos.grade} (cheapest per hit). Assumes a full Rare`) }}</p>
-      <p v-if="kind === 'white'" class="mt-1 text-[10px] opacity-60">{{ tr(`リロール = 増強 1 回で狙いが付く確率の逆数 (平均 ${fmtN(calc.rerolls)} 回)。変成・増強は${calc.grade}`, `Rerolls = 1 ÷ chance per augment (avg ${fmtN(calc.rerolls)}). Transmute / augment grade: ${calc.grade}`) }}</p>
+      <p v-if="kind === 'white' && calc.greater" class="mt-1 text-[10px] opacity-60">{{ tr(`ループ = マジックで両方の側が当たるまで、外れがあれば消去 (どちらが消えるかは半々)、空いた側に増強 (平均 増強 ${fmtN(calc.greater.augment)}・消去 ${fmtN(calc.greater.annul)} 回)。変成・増強は${calc.grade}。固定できるのは 3 つ (候補・揃えた MOD・エッセンスの MOD) のうち 1 つ`, `Loop = until both sides hit on magic: Annul a miss (either mod, 50/50), Augment the open side (avg ${fmtN(calc.greater.augment)} Augment, ${fmtN(calc.greater.annul)} Annul). Transmute / augment grade: ${calc.grade}. Fracture locks 1 of 3 (candidate, kept mod, essence mod)`) }}</p>
+      <p v-else-if="kind === 'white'" class="mt-1 text-[10px] opacity-60">{{ tr(`リロール = 増強 1 回で狙いが付く確率の逆数 (平均 ${fmtN(calc.rerolls)} 回)。変成・増強は${calc.grade}`, `Rerolls = 1 ÷ chance per augment (avg ${fmtN(calc.rerolls)}). Transmute / augment grade: ${calc.grade}`) }}</p>
     </template>
   </HelpTip>
 </template>

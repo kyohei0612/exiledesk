@@ -31,6 +31,8 @@ export interface QuizSimIn {
   order?: readonly string[];
   /** フラクチャーの候補ごとの付きやすさ (固定済みから始める時、どれが固定されたかの重み) */
   fracWeights?: Record<string, number>;
+  /** グレーターエッセンスを巻き込む道 (sim-greater.ts): 固定済みのレアは、マジック (候補 + 残す MOD) → このエッセンス → 壁 → 候補を固定、で作る */
+  greater?: { essKey: string; keep: SimTargetIn | null };
 }
 
 /**
@@ -70,6 +72,9 @@ export function magicStartMods(data: PatchData, targets: readonly SimTargetIn[])
   }
   return out;
 }
+
+/** グレーターの道のエッセンスの狙い (キー essence:<段>:<modId> の modId) */
+const magicEss = (x: QuizSimIn): string | null => (x.greater ? x.greater.essKey.split(":").slice(2).join(":") : null);
 
 export interface QuizBuilt { recipe: QuizRecipe; error: string | null }
 
@@ -126,7 +131,10 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
     for (const s of slots) if (s.side === fracSide && s.kind !== "fractured" && s.mods.some((m) => frac.some((c) => c.modId === m.modId))) for (const m of s.mods) if (!mods.some((y) => y.modId === m.modId)) mods.push(m);
     for (let i = 0; i < Math.min(frac.length - 1, Math.max(0, room)); i++) { const id = LETTERS[n++] ?? `Z${n}`; slots.push({ id, side: fracSide, mods, kind: "normal" }); caps[id] = capOf(null); }
   }
-  const order = x.order?.flatMap((k) => slotIds.get(k.startsWith("mod:") ? k.slice(4) : k) ?? []);
+  // グレーターの道: 残す MOD とエッセンスの MOD は始めから付いている (フラクチャーの前に付けた) ので、関門の一番前に (後ろだと「先の狙い」で隠れた。2026-10-20 見本の靴)
+  const pre = x.greater ? [x.greater.keep?.modId, magicEss(x)].flatMap((id) => (id ? slotIds.get(id) ?? [] : [])) : [];
+  const order0 = x.order?.flatMap((k) => slotIds.get(k.startsWith("mod:") ? k.slice(4) : k) ?? []);
+  const order = order0 ? [...pre, ...order0.filter((id) => !pre.includes(id))] : undefined;
   const route = (id: string, goal: QuizSlot[], entry?: string[]): QuizRoute => ({ id, goal, ...(entry ? { entry } : {}), rules: q?.rules[id] ?? [], ...(order?.length ? { order, caps } : {}) });
   const routes: QuizRoute[] = split
     ? [route("prefix", [...slots, split.prefix], [split.prefix.id]), route("suffix", [...slots, split.suffix], [split.suffix.id])]
@@ -142,6 +150,17 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
       const len = x.data.mods.get(c.modId)?.tiers.length ?? 0;
       return { mod: c.modId, fractured: true, ...(c.minTierIndex > 0 && len ? { tier: `T${len - c.minTierIndex}` } : {}) };
     };
+    if (x.greater) {
+      // グレーターエッセンスを巻き込む道 (2026-10-20 オーナー): マジック (候補 + 残す MOD) → エッセンス → 壁 → 候補を固定。残す MOD が「どれか」なら候補ごとに同じ重み
+      const r0 = [...new Set(frac.flatMap((c) => runesOf(c.modId)))];
+      const keeps = x.greater.keep ? [{ modId: x.greater.keep.modId, minTierIndex: x.greater.keep.minTierIndex }, ...(x.greater.keep.alts ?? [])] : [null];
+      const forceOf = (c: { modId: string; minTierIndex: number }) => { const len = x.data.mods.get(c.modId)?.tiers.length ?? 0; return { mod: c.modId, ...(c.minTierIndex > 0 && len ? { tier: `T${len - c.minTierIndex}` } : {}) }; };
+      const pick = frac.flatMap((c) => keeps.map((k) => ({ mods: [forceOf(c), ...(k ? [forceOf(k)] : [])], runes: r0, w: (x.fracWeights?.[c.modId] ?? 1) / keeps.length, fracture: c.modId })));
+      const wallOmen = fracSide === "suffix" ? "OmenofDextralNecromancy" : "OmenofSinistralNecromancy";
+      start = { kind: "bought", rarity: "magic", mods: pick[0]!.mods, price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}), ...(r0.length ? { runes: r0 } : {}), pick, fracture: pick[0]!.fracture,
+        steps: [{ use: x.greater.essKey }, ...(x.greater.keep ? [] : [{ use: "exalt" }]), { use: "desecrate", omens: [wallOmen] }] };
+      return { recipe: { v: 3, base: x.base, itemLevel: x.itemLevel, start, routes }, error };
+    }
     // 候補が複数なら、買うたびにどれが固定されたかを付きやすさの重みで選ぶ (2026-10-20)。ルーンは候補のどれかに要る物を全部
     // (候補を作る時に差しているので、マナが固定されてもコルの狩りは差さっている。前は固定された MOD のルーンだけで、マナの時に差さっていなかった)
     const r0 = [...new Set(frac.flatMap((c) => runesOf(c.modId)))];

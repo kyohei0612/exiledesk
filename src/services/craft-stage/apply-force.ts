@@ -74,7 +74,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
     removed.push(m);
   };
   // 冒涜で付けられるのは冒涜の MOD と普通の MOD (骨の発現には普通の MOD も出る。2026-10-18 オーナー「一般 MOD も冒涜で付けれるでしょ」で 10-08 の「冒涜 MOD だけ」を変えた)。
-  // エッセンス・ルーンなどの MOD は冒涜では付かない
+  // エッセンスなどの MOD は冒涜では付かない。ルーンの MOD (出どころは normal) は差していれば付く (2026-10-20 オーナーがトレードで確認)
   if (p.flag === "d" && mod.source !== "desecrated" && mod.source !== "normal" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skip(item, tr("冒涜で付くのは冒涜の MOD だけ", "Only Desecrated mods can be added by Desecration"));
   // フラクチャー: 同じ MOD が付いていればそれを固定する (付け直さない)
   if (p.flag === "f") {

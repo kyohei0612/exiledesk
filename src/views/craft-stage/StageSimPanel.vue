@@ -23,7 +23,7 @@ import SimCostTip from "./SimCostTip.vue";
 import SimTargetSort from "./SimTargetSort.vue";
 import { SIM_STARTS, type SimStartKind } from "../../services/craft-stage/sim-methods";
 import { ARMED_CLASS } from "../../utils/use-armed";
-import { iconOf, priceOf } from "../../state/craft-stage";
+import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import StageFracturePicker from "./StageFracturePicker.vue";
@@ -64,7 +64,8 @@ const grantPending = computed(() => (htcBaseInfo()[s.base.value]?.grants?.length
 // 付与スキルを選んで始め方が出たら、3 の枠の下の線 + 24px まで送る (段が進んだ時と同じ。2026-10-18 オーナー)
 watch(grantPending, (p, was) => { if (!p && was) void nextTick(() => requestAnimationFrame(() => { const el = panelEl.value?.querySelector("[data-sim-cur]"); if (el) revealBottom(el); })); });
 /** 3 の始め方の行。フラクチャーの始め方は 2 にフラクチャー予定がある時だけ (無ければ出さない。2026-10-18 オーナー)。「エミュレーターの状態から」の行は出さない (2026-10-19 オーナー「意味わからんから消しておk」。「この状態からシミュレーター」で来た時はその状態のまま) */
-const startKinds = computed(() => SIM_STARTS.filter((k) => k.k !== "item" && (!k.needsFracture || fracMembers.value.length > 0)));
+// グレーターエッセンスを巻き込む道は自前のフラクチャーだけ (4 MOD を買う・フラクチャー済みを買うは出さない。2026-10-20 オーナー「グレーター系で付ける奴はフラクチャー済み買いはできない」)
+const startKinds = computed(() => SIM_STARTS.filter((k) => k.k !== "item" && (!k.needsFracture || (fracMembers.value.length > 0 && !calc.value?.greater))));
 // 選んでいた始め方が一覧から消えたら (マジック・フラクチャー予定を外した時) 白ベースからに戻す。エミュレーターの状態からは行が無くても戻さない
 watch(startKinds, (ks) => { if (s.simStart.value !== "item" && !ks.some((k) => k.k === s.simStart.value)) s.simStart.value = "white"; }, { immediate: true });
 /** 使えない始め方の理由 (今は出さない作りなので空。行の作りは残す) */
@@ -82,6 +83,8 @@ function startCost(k: SimStartKind): number | null {
   if (!c || c.cantRoll) return null;
   return k === "white" ? c.total : (base + c.buyRest) * 3 + c.after;
 }
+/** グレーターの道でマジックに揃える反対側の MOD の文 (どれかは「／」で) */
+const keepText = computed(() => { const k = calc.value?.greater?.keep; return k ? [k, ...(k.alts ?? [])].map((x) => rows.value.find((r) => r.modId === x.modId)?.text ?? rows.value.flatMap((r) => r.alts).find((a) => a.modId === x.modId)?.text ?? x.modId).join(" ／ ") : ""; });
 /** 右の値段が何か (フラクチャー予定がある時はフラクチャー済みまで) */
 const costNote = computed(() => (fracMembers.value.length ? "右の値段 = フラクチャー済みのベースになるまで (ベース代・壁・フラクチャー・消去込み、平均)" : "右の値段 = ベース 1 個の値段"));
 /** 工程の帯の札の 2 行目 (決めた中身の要約。2026-10-19 オーナー「欲しい情報だけ簡易的に」) */
@@ -229,7 +232,9 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
               </span>
             </div>
             <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (白の行の 2 段目。2026-10-18 オーナー) -->
-            <SimRareStrip v-if="k.k === 'white'" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
+            <!-- グレーターの道: 白の行の 2 段目に道を 1 行で (適当なレアの道は無い) -->
+            <p v-if="k.k === 'white' && calc?.greater" data-sim-greater class="mt-1.5 border-t border-white/5 pt-1.5 text-[11px] text-[var(--exile-color-text-secondary)] md:pl-[calc(1rem+0.75rem)]">{{ tr(`マジックで ${fracMembers.map((r) => r.text).join(" か ")}${calc.greater.keep ? ` と ${keepText}` : ""} を揃える (増強 ${calc.greater.augment.toFixed(1)}・消去 ${calc.greater.annul.toFixed(1)} 回) → ${nameOf(calc.greater.essKey)} → 壁 → フラクチャー (3 本に 1 本)。${nameOf(calc.greater.essKey)} はマジックにしか打てないので、フラクチャー済み・MOD 付きレアは買えない`, `On magic, land ${fracMembers.map((r) => r.text).join(" or ")}${calc.greater.keep ? ` and ${keepText}` : ""} (avg ${calc.greater.augment.toFixed(1)} Augment, ${calc.greater.annul.toFixed(1)} Annul) → ${nameOf(calc.greater.essKey)} → wall → Fracture (1 in 3). That essence only works on magic, so fractured or modded rares can't be bought`) }}</p>
+            <SimRareStrip v-else-if="k.k === 'white'" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
           </div>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ。無ければ出さない (2026-10-18) -->

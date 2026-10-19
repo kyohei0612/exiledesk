@@ -65,7 +65,9 @@ export type QuizStart =
   /** 付いた状態を買う。fill = 側ごとに MOD の数まで残りを乱数で埋める (相場で買うベースの代わり) */
   | { kind: "bought"; mods: Force[]; fill?: Partial<Record<StageSide, number>>; price: number; rarity?: "magic" | "rare"; sockets?: number; runes?: string[];
     /** 買うたびに 1 つを重みで選ぶ (フラクチャーの候補のどれが固定されたか。2026-10-20)。選んだ物の mods・runes を使う */
-    pick?: Array<{ mods: Force[]; runes?: string[]; w: number }> }
+    pick?: Array<{ mods: Force[]; runes?: string[]; w: number; fracture?: string }>;
+    /** 作った後に打つ物 (グレーターエッセンス → 壁など。2026-10-20) と、最後に固定する MOD (自前のフラクチャーで当たった物) */
+    steps?: Array<{ use: string; omens?: string[] }>; fracture?: string }
   /** エミュレーターの今のアイテムから */
   | { kind: "item"; item: StageItem; price: number };
 export interface QuizRecipe {
@@ -246,12 +248,12 @@ function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): Sta
   if (st.kind === "item") return st.item;
   if (st.kind === "white") return st.sockets != null || st.runes?.length ? startFrom(data, recipe.base, recipe.itemLevel, { ...(st.sockets != null ? { sockets: st.sockets } : {}), runes: st.runes ?? [] }, Math.floor(rng() * 2 ** 31)) : freshItem(data, recipe.base, recipe.itemLevel);
   // 候補から 1 つ (フラクチャーの候補のどれが固定されたか、重みは付きやすさ)
-  let mods = st.mods, runes = st.runes;
+  let mods = st.mods, runes = st.runes, fracture = st.fracture;
   if (st.pick?.length) {
     const total = st.pick.reduce((a, x) => a + Math.max(0, x.w), 0);
     let r = rng() * total;
     const hit = st.pick.find((x) => (r -= Math.max(0, x.w)) < 0) ?? st.pick[st.pick.length - 1]!;
-    mods = hit.mods; runes = hit.runes ?? runes;
+    mods = hit.mods; runes = hit.runes ?? runes; fracture = hit.fracture ?? fracture;
   }
   const seed = Math.floor(rng() * 2 ** 31);
   let it = startFrom(data, recipe.base, recipe.itemLevel, { mods, ...(st.rarity ? { rarity: st.rarity } : st.fill ? { rarity: "rare" as const } : {}), ...(st.sockets ? { sockets: st.sockets } : {}), ...(runes?.length ? { runes } : {}) }, seed);
@@ -260,6 +262,12 @@ function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): Sta
     const want = st.fill?.[side] ?? 0;
     const omen = side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation";
     for (let k = 0; listOf(it, side).length < want && k < 20; k++) it = applyCurrency(data, it, "exalt", rng, [omen]).item;
+  }
+  // 作った後に打つ物 (エッセンス → 壁) と、自前のフラクチャーで当たった MOD の固定
+  for (const x of st.steps ?? []) it = applyCurrency(data, it, x.use, rng, x.omens ?? []).item;
+  if (fracture) {
+    const fx = (ms: StageMod[]): StageMod[] => ms.map((m) => (m.modId === fracture ? { ...m, fractured: true } : m));
+    it = { ...it, prefixes: fx(it.prefixes), suffixes: fx(it.suffixes) };
   }
   return it;
 }
