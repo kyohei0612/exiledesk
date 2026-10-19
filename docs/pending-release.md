@@ -6,6 +6,7 @@ OK が出ていない物を外して出す時は `git revert --no-edit --no-comm
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| スパムシミュレーター (スマホ): 次に押す所へ送る・押すボタンを下の帯に (動かない)・長押しで選ばない・10 人の時は「11 人中 3 位」・一番安い欄のボタンを下の段に | (最新) | スマホのスパムシミュレーターを使いやすく (次に押す所へ自動で送る・押すボタンを画面の下に固定・長押しで文字が選ばれない・10 人で比べた時は「何位」で表示) | Spam simulator on phones: scrolls to the next thing to press, the hold button stays fixed at the bottom, long-press no longer selects text, and with 10 runs your result shows as a place (e.g. 3rd of 11) |
 | 開く / たたむを折り返さない・MOD 一覧の列の見出し (エミュレーターにも出る。ほかはシミュレーターだけ) | 1ee2ad43 | (見た目だけ。更新内容は書かない) | (layout only, no changelog entry) |
 | ベースの一覧: 名前で探すを外し、装備・エフェクトオフを一番下へ | 0c5d5be9 | ベースの一覧から名前で探す欄を外し、「装備・エフェクトオフ」を一番下に移しました | Removed the name search from the base list and moved “Plain art, no effects” to the bottom |
 
