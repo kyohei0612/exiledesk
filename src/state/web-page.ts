@@ -33,3 +33,12 @@ export function openRoutes(): void {
   routesTarget.value = null;
   routesOpen.value = true;
 }
+/**
+ * シミュレーターの工程のページ (2026-10-19 オーナー「各工程ページ別にしたい、欲しい情報だけ簡易的に」「初心者でもわかりやすく」)。
+ * ① ベースは ?page=base。② 狙う MOD → ③ 始め方 → ④ 付ける順番 → ⑤ 打ち方 → ⑥ 回す・結果 を ?page=sim-<工程> で 1 ページずつ ([[sim-step-pages]])
+ */
+export const SIM_STEPS = ["mods", "start", "order", "play", "result"] as const;
+export type SimStep = (typeof SIM_STEPS)[number];
+export const simStep = ref<SimStep>("mods");
+/** レシピを呼び出した時に増やす: まだ決めていない一番先の工程のページへ (use-sim-steps の toFirstOpen) */
+export const simJumpOpen = ref(0);

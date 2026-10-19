@@ -10,6 +10,7 @@ import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
 import { recipeShareUrl } from "./recipe-share";
 import { tr } from "../../i18n/lang";
+import { simJumpOpen } from "../../state/web-page";
 
 
 export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
@@ -141,6 +142,7 @@ export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
         if (pr.item != null) itemDivine.value = pr.item;
       }
       restoring.v = false; recipeOpen.value = false;
+      simJumpOpen.value++;
     });
   }
   // ベースを選ぶ前に選んだレシピを、開いたらそのまま読み込む (2 回押しの確認は要らない: まだ何も組んでいない)。

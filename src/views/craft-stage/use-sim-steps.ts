@@ -10,6 +10,7 @@ import { type Pattern, ANY_TARGET, isRest } from "../../services/craft-stage/pat
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
 import { SIM_ILVL_MAX } from "./use-stage-base";
+import { SIM_STEPS, simJumpOpen, simStep, type SimStep } from "../../state/web-page";
 import { sideLimits, sideUse, sortBuckets } from "../../services/craft-stage/sim-methods";
 
 /**
@@ -26,7 +27,7 @@ export type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracD
 
 export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   const { fracDone, sortDone, hasSteps, itemDivine, keptKey, modsDone, num, orderDone, patternDone, recipeOut, restBases, restCost,
-    restoring, results, rows, sockets, socketsOk, startDone, step3, stepOrder, stepStart, whiteDivine, whiteOk } = d;
+    restoring, results, rows, sockets, socketsOk, startDone, step3, stepOrder, stepStart, whiteDivine, whiteOk, whiteDone, busy } = d;
   const s = craftStage;
   const step4pre = computed(() => stepOrder.value && orderDone.value);
   /** 段の番号: 出ない段 (始め方を 1 で決めた時の 4 など) は詰める (2026-10-09 初見レビュー「4 はどこ?」) */
@@ -169,28 +170,51 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   });
   // エミュレーターの状態からも 3 (始め方・ベース代)・4 (付ける順番) を通る (前は自動で済ませて 2 → 5 に番号が飛んだ。2026-10-18 初めての 10 人の 10 人目)
   /**
-   * 「決めた →」で次の工程が開いたら、次に決める段 (金の枠) の下の線 + 24px まで送る (2026-10-08 オーナー「決めたで順に進むけど、スクロールは基本進むなら一番下に」、
-   * 2026-10-18「番号が進む時もスクロールで次工程表示は必ず」「下枠 + 24px」)。戻した時 (この段に戻る) は動かさない
+   * 工程のページ (2026-10-19 オーナー「各工程ページ別にしたい」「工程は終わったらたたむ、即開いてそこから修正できるように」、[[sim-step-pages]])。
+   * reach = 今行ける一番先の工程 (前が全部決まっている所まで)。上の帯の札で前の工程へ戻ると、その工程を直せる形に開く (先の工程の決めた物は残り、
+   * 決め直しが要る物だけ今の決まりで外れる)。「次へ →」で決めて次のページへ
    */
   const panelEl = ref<HTMLElement | null>(null);
-  watch([modsDone, sortDone, whiteOk, startDone, orderDone], (now, prev) => {
-    if (panelEl.value) panelEl.value.style.paddingBottom = "";
-    if (restoring.v || !now.some((v, i) => v && !prev[i])) return;
-    // 次に決める段 (金の枠) の頭を画面の上に (PC もスマホも。2026-10-19 オーナー「4、5 と工程進むんならスクロールさせないと、次工程全画面まで」。
-    // 前の PC は下の線 + 24px までで、次の段が画面の下の端に出ていた。スマホは 2026-10-09 から頭を上)
-    void nextTick(() => requestAnimationFrame(() => {
-      const cur = panelEl.value?.querySelector("[data-sim-cur]");
-      // ページの下が足りず頭を上まで送れない時は、足りない分だけ下に余白を足す (次に段が動いた時に外す)
-      const lack = cur ? cur.getBoundingClientRect().top + window.scrollY + window.innerHeight - document.documentElement.scrollHeight - 16 : 0;
-      if (lack > 0 && panelEl.value) panelEl.value.style.paddingBottom = `${Math.ceil(lack)}px`;
-      if (cur) scrollToTop(cur);
-      else panelEl.value?.scrollIntoView({ block: "end", behavior: "smooth" });
-    }));
+  const stepIdx = (x: SimStep): number => SIM_STEPS.indexOf(x);
+  const reach = computed((): number => {
+    if (!(modsDone.value && sortDone.value)) return 0;
+    if (!whiteDone.value || (stepStart.value && !startDone.value)) return 1;
+    if (!orderDone.value) return 2;
+    return results.value.length ? 4 : 3;
   });
-  /** 3 白ベース設定の「決めた」: 値段とフラクチャー予定 (無ければ「しない」) */
+  // 行けない工程にいたら (前を直して決め直しになった・URL で先を開いた)、行ける一番先へ
+  watch(reach, (r) => { if (stepIdx(simStep.value) > r) simStep.value = SIM_STEPS[r]!; }, { immediate: true });
+  /** 帯の札から工程へ (行ける所だけ)。前の工程は直せる形に開く */
+  function go(x: SimStep): void {
+    if (stepIdx(x) <= reach.value) simStep.value = x;
+  }
+  // ページに入ったら、その工程を直せる形に開く (札・ブラウザの戻る / 進む・URL のどれから来ても)
+  watch(simStep, (x) => {
+    if (restoring.v) return;
+    if (x === "mods" && modsDone.value) { modsDone.value = false; sortDone.value = false; }
+    if (x === "order") orderDone.value = false;
+  });
+  /** まだ決めていない一番先の工程へ (レシピを呼び出した時) */
+  function toFirstOpen(): void { simStep.value = SIM_STEPS[Math.min(reach.value, 3)]!; }
+  watch(simJumpOpen, () => void nextTick(toFirstOpen));
+  /** 2 の「次へ」: 決めて、整理が要らなければ 3 へ (要る時は同じページで整理 → sortDecided) */
+  function decideMods(): void {
+    modsDone.value = true;
+    void nextTick(() => { if (sortDone.value) simStep.value = "start"; });
+  }
+  function sortDecided(): void { sortDone.value = true; simStep.value = "start"; }
+  /** 4 の「次へ」 */
+  function decideOrder(): void { orderDone.value = true; simStep.value = "play"; }
+  // 回し終わったら 6 回す・結果へ
+  watch(busy, (b, was) => { if (was && !b && results.value.length) simStep.value = "result"; });
+  // ページを移ったら一番上から (次の工程を画面いっぱいに。2026-10-19 オーナー「次工程全画面まで」)
+  watch(simStep, () => { void nextTick(() => requestAnimationFrame(() => scrollToTop(panelEl.value, "auto"))); });
+  /** 3 の「次へ」: 値段とフラクチャー予定 (無ければ「しない」)。前の 4「フラクチャー済みまでの一番安い道」は 3 の行の値段に入れたので一緒に決める (2026-10-19) */
   function whiteDecide(): void {
     whiteOk.value = true;
     fracDone.value = true;
+    startDone.value = true;
+    simStep.value = "order";
   }
   const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value });
   const undoStack = ref<Snap[]>([]);
@@ -221,5 +245,5 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     void nextTick(() => { lastSnap = snapNow(); restoring.v = false; });
   }
   return { step4pre, stepNo, fold, step4, resetStalePatterns, resetPatterns, wantTier, ilvlNote, goTo, resetArm, resetAll, panelEl,
-    whiteDecide, snapNow, undoStack, onKey, undo };
+    whiteDecide, snapNow, undoStack, onKey, undo, reach, go, toFirstOpen, decideMods, sortDecided, decideOrder };
 }

@@ -10,6 +10,7 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { scrollToTop } from "../../utils/keep-place";
 import { course } from "../../state/craft-course";
 import { topic } from "../../state/craft-topic";
+import { simStep } from "../../state/web-page";
 
 function create() {
   const inApp = isTauriRuntime();
@@ -46,7 +47,7 @@ function create() {
     s.simStart.value = "white";
     s.simStartItem.value = null;
     // シミュレーターのベースはシミュレーターで選んだ時だけ決まる (エミュレーターから切り替えたら、ベース選びから。2026-10-18 初めての 10 人の 2 人目)
-    if (s.mode.value === "sim") s.simPicked.value = true;
+    if (s.mode.value === "sim") { s.simPicked.value = true; simStep.value = "mods"; } // 工程のページは ② 狙う MOD から
     s.simGrant.value = null; // 付与スキルは 3 で選び直す
     // シミュレーターのアイテムレベルは 3 (始め方) で決める。2 で全部の段を選べるように一番上にしておく (2026-10-18 オーナー「MOD を選んだ後なら、付く下限のアイテムレベルを既定で置ける」)
     if (s.mode.value === "sim") s.itemLevel.value = SIM_ILVL_MAX;

@@ -12,10 +12,12 @@
 <script setup lang="ts">
 import { computed, nextTick, watch } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
-import { jaSkill } from "../../i18n/skills-ja";
 import { revealBottom } from "../../utils/keep-place";
 import SimStartPick from "./SimStartPick.vue";
 import SimRareStrip from "./SimRareStrip.vue";
+import SimStepBar from "./SimStepBar.vue";
+import { simStep } from "../../state/web-page";
+import { openBasePage } from "../../web/page";
 import SimCostTip from "./SimCostTip.vue";
 import SimTargetSort from "./SimTargetSort.vue";
 import { SIM_STARTS, type SimStartKind } from "../../services/craft-stage/sim-methods";
@@ -32,7 +34,6 @@ import StagePatternEditor from "./StagePatternEditor.vue";
 import SimStepHead from "./SimStepHead.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Icon from "../../components/ui/Icon.vue";
-import Disclosure from "../../components/ui/Disclosure.vue";
 import SimProgress from "./SimProgress.vue";
 import { useSimTargets } from "./use-sim-targets";
 import { useSimSearch } from "./use-sim-search";
@@ -52,10 +53,10 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, order
   fourDivine, rareDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
-  help, modsDone, sortDone, orderDone, startDone, step3, startPrice, whiteDone, edit3, open3, stepStart, stepOrder, patternDone, stale, recipes, recipeOpen,
+  help, modsDone, sortDone, orderDone, step3, startPrice, whiteDone, stepOrder, patternDone, stale, recipes, recipeOpen,
   recipeName, recipeArm, recipeRenaming, fmtDate, openRecipes, saveRecipe, recipeBox, renameRecipe, recipeNote, recipeFile, exportRecipes, copyRecipeUrl,
-  importRecipes, removeRecipe, loadRecipe, step4pre, stepNo, fold, step4, ilvlNote, goTo, resetArm, resetAll, panelEl, whiteDecide,
-  undoStack, undo, routes, money, pct, compare, hitName, split, moneyT, fmtCount, hitShort, cardOk, cardNote, saveCard, copyCard, luck,
+  importRecipes, removeRecipe, loadRecipe, step4pre, step4, ilvlNote, goTo, resetArm, resetAll, reach, go, decideMods, sortDecided, decideOrder, panelEl, whiteDecide,
+  undoStack, undo, money, results, baseJa, pct, compare, hitName, split, moneyT, fmtCount, hitShort, cardOk, cardNote, saveCard, copyCard, luck,
   costGroups, summary, tooManySteps, nextMaxSteps } = { ...tg, ...sr, ...rn, ...rc, ...st, ...rs };
 /** 付与スキルが候補から 1 つのベースで、まだ選んでいない (選ぶまで始め方を出さない) */
 const grantPending = computed(() => (htcBaseInfo()[s.base.value]?.grants?.length ?? 0) > 1 && !s.simGrant.value);
@@ -82,6 +83,19 @@ function startCost(k: SimStartKind): number | null {
 }
 /** 右の値段が何か (フラクチャー予定がある時はフラクチャー済みまで) */
 const costNote = computed(() => (fracMembers.value.length ? "右の値段 = フラクチャー済みのベースになるまで (ベース代・壁・フラクチャー・消去込み、平均)" : "右の値段 = ベース 1 個の値段"));
+/** 工程の帯の札の 2 行目 (決めた中身の要約。2026-10-19 オーナー「欲しい情報だけ簡易的に」) */
+const stepNotes = computed(() => {
+  const st = startKinds.value.find((k) => k.k === s.simStart.value);
+  const sc = st ? startCost(st.k) : null;
+  const best = results.value.length ? results.value.reduce((a, b) => (b.out.r.perDone < a.out.r.perDone ? b : a)) : null;
+  return {
+    mods: s.simTargets.value.length ? tr(`狙い ${s.simTargets.value.length} つ`, `${s.simTargets.value.length} targets`) : "",
+    start: st && whiteDone.value ? `${tr(st.label, st.labelEn)}${sc != null ? ` ${money(sc)}` : ""}` : "",
+    order: orderDone.value || simStep.value === "play" || simStep.value === "result" ? (orderKeys.value.length ? tr(`${orderKeys.value.length} つ`, `${orderKeys.value.length} mods`) : tr("フラクチャーだけ", "Fracture only")) : "",
+    play: s.simPatterns.value.some(hasSteps) ? tr(`パターン ${s.simPatterns.value.filter(hasSteps).length}`, `${s.simPatterns.value.filter(hasSteps).length} patterns`) : "",
+    result: best && Number.isFinite(best.out.r.perDone) ? tr(`平均 ${money(best.out.r.perDone)}`, `Avg ${money(best.out.r.perDone)}`) : "",
+  };
+});
 /** 値段が入った始め方が 2 つ以上ある時の一番安い物 (rare = 白の行の 2 段目、適当なレアを消去で 1 MOD → カオス。フラクチャー予定がある時だけ比べに入れる) */
 const cheapStart = computed((): SimStartKind | "rare" | null => {
   const ok: Array<{ k: SimStartKind | "rare"; c: number }> = [...startKinds.value.filter((k) => !startOff(k) && startCost(k.k) != null).map((k) => ({ k: k.k, c: startCost(k.k)! })), ...(fracMembers.value.length && calc.value?.rareTotal != null ? [{ k: "rare" as const, c: calc.value.rareTotal }] : [])];
@@ -136,20 +150,13 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
     </Teleport>
     <p v-if="help" class="mb-3 rounded-md bg-white/[0.03] px-3 py-2 text-[13px] text-[var(--exile-color-text-secondary)]">狙いは「このベースに付く MOD」の表の「T○ 以上」で選ぶ。打ち方 (パターン) を組んで「回す」と、何百人分も作った平均の費用が出る。各所の <Icon name="help" class="inline size-3.5 align-[-2px]" /> にも説明がある</p>
 
-    <!--
-      2〜5 は決めた後 (6 パターンを作る間) は 1 行に畳む。押すと開く (2026-10-07 オーナー採用の 2 枠の作業場。最小の窓 1660×860 で 6 が収まるように)
-    -->
-    <div v-if="socketsOk && step4pre" class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-5 py-2.5 text-[13px]">
-      <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-[12px] font-bold text-emerald-200 ring-1 ring-emerald-400/40">✓</span>
-      <b class="shrink-0 whitespace-nowrap text-[var(--exile-color-text-primary)]">決めたこと</b>
-      <span class="min-w-0 truncate text-[var(--exile-color-text-secondary)] max-md:whitespace-normal">狙う MOD {{ s.simTargets.value.length }} 個<template v-if="s.simStart.value !== 'white'"> · 始め {{ s.simStart.value === "item" ? "エミュレーターの状態" : s.simStart.value === "fractured" ? "フラクチャー済みを買う" : s.simStart.value === "magic" ? `マジックを買う ${money(num(magicDivine) ?? 0)}` : "4 MOD のレアを買う" }}</template><template v-else-if="routes.best && fractureRow"> · 始め {{ routes.list.find((x) => x.key === routes.best)!.name.replace(/\s*\(.*$/, "") }} {{ money(routes.list.find((x) => x.key === routes.best)!.cost ?? 0) }}</template> · 付ける順 {{ orderKeys.length }} つ</span>
-      <Disclosure :open="!fold" kind="section" class="ml-auto h-7 shrink-0 rounded-md px-2 hover:bg-white/5" @update:open="fold = !$event" />
-    </div>
+    <!-- 工程の帯 (2026-10-19 工程ごとのページ。決めた所は要約、押すとそのページ) -->
+    <SimStepBar v-if="socketsOk" class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" @go="go" @base="openBasePage" />
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
-    <template v-if="socketsOk && !(step4pre && fold)">
+    <template v-if="socketsOk">
       <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->
-      <div :data-sim-cur="!modsDone || !sortDone || undefined" :class="!modsDone || !sortDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
-        <SimStepHead class="mb-3" :n="2" title="狙う MOD" :done="modsDone" :current="!modsDone" :redo="modsDone" help="下の「このベースに付く MOD」で MOD を押すと段の表が開く。そこの「T○ 以上」で付け方を選んで足す。欲しい物は何個でもいい。まとめる (どれか N つ) のは「決めた」の後" @redo="goTo('mods')">
+      <div v-if="simStep === 'mods'" :data-sim-cur="!modsDone || !sortDone || undefined" :class="!modsDone || !sortDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
+        <SimStepHead class="mb-3" :n="2" title="狙う MOD" :current="true" help="下の「このベースに付く MOD」で MOD を押すと段の表が開く。そこの「T○ 以上」で付け方を選んで足す。欲しい物は何個でもいい。まとめる (どれか N つ) のは「決めた」の後">
           <!-- MOD 一覧を重ねて開く (Tab でも。2026-10-18 オーナー「シミュレーターでも MOD 一覧見れるように、狙う MOD の横にボタン」) -->
           <template #side><button type="button" data-sim-mod-list class="g-btn sm max-md:hidden" :title="tr('このベースに付く MOD の一覧を重ねて開く (Tab でも開く)', 'Open the mod list for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button></template>
         </SimStepHead>
@@ -159,16 +166,16 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
         <div :class="phone && !modsDone && rows.length ? 'sticky top-0 z-[60] -mx-3 max-h-[40vh] overflow-y-auto border-b border-[var(--exile-color-border-brass)] bg-[#120f0c] px-3 pb-2 pt-1 shadow-[0_8px_18px_rgba(0,0,0,0.7)] [&_select]:max-w-full' : ''">
           <StageTargetSummary :editable="!modsDone" />
           <!-- 「決めた」の後: 付け方が同じ MOD の整理 (全部 / この中のどれか N つ)。枠に収まるまで 3 に進めない -->
-          <SimTargetSort v-if="modsDone && !sortDone" @back="goTo('mods')" @done="sortDone = true" />
+          <SimTargetSort v-if="modsDone && !sortDone" @back="goTo('mods')" @done="sortDecided" />
         </div>
         <div v-if="rows.length && !modsDone" class="mt-1 flex items-center gap-2">
           <button type="button" class="inline-flex h-8 items-center rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)]" @click="s.simTargets.value = []">全部外す</button>
-          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:hidden" title="狙う MOD を決めて、次のベースの値段へ (1 つでも進める)" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
+          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:hidden" title="狙う MOD を決めて、次のベースの値段へ (1 つでも進める)" @click="decideMods">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <!-- スマホ: 一覧の下で「T○ 以上」を押しても上の完成図は見えないので、狙いの数と「決めた →」を画面の下に固定 (2026-10-08 レビュー) -->
         <div v-if="phone && rows.length && !modsDone" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-[var(--exile-color-border-subtle)] bg-[#14110d]/95 px-3 backdrop-blur py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">狙い {{ rows.length }} 個</b><span class="opacity-60"> · 足したら決める</span></span>
-          <button type="button" class="min-h-11 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 px-4" @click="modsDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
+          <button type="button" class="min-h-11 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 px-4" @click="decideMods">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <div v-if="phone && rows.length && !modsDone" class="h-20"></div>
         <!-- このベースに付く MOD (同じ枠の中。2026-10-05 オーナー「枠は一緒の枠で表示するべき」)。長いので枠の中で送り、上の完成図は見えたまま -->
@@ -178,19 +185,18 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
       </div>
 
       <!-- 3 白ベース設定: 白ベースの値段 + 増強・消去スパムで狙う MOD (= フラクチャー予定、2 の中から) -->
-      <div v-if="step3" :data-sim-cur="!whiteDone || undefined" :class="!whiteDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
-        <SimStepHead class="mb-3" :n="3" title="始め方・アイテムレベル・ベースの値段" :done="whiteDone" :current="!whiteDone" :redo="whiteDone" :fold="whiteDone ? (open3 ? 'open' : 'closed') : undefined" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" @redo="goTo('white')" @toggle="open3 = !open3" />
+      <div v-if="step3 && simStep === 'start'" :data-sim-cur="!whiteDone || undefined" :class="!whiteDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
+        <SimStepHead class="mb-3" :n="3" title="始め方・アイテムレベル・ベースの値段" :current="true" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" />
         <!-- 始め方 (前は 1 ベースの欄。2026-10-18 オーナー「MOD へ進む、そのあとに始め方を決める工程」) -->
-        <SimStartPick v-if="edit3" class="mb-3" />
-        <p v-else class="mb-2 text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムレベル", "Item Level") }} {{ s.itemLevel.value }}<template v-if="s.simGrant.value"> · {{ tr("付与スキル", "Granted skill") }} {{ tr(jaSkill(s.simGrant.value), s.simGrant.value) }}</template><template v-for="k in startKinds.filter((x) => x.k === s.simStart.value)" :key="k.k"> · {{ tr(k.label, k.labelEn) }}<template v-if="startCost(k.k) != null"> {{ money(startCost(k.k)!) }}</template></template></p>
+        <SimStartPick class="mb-3" />
         <!-- 付与スキルがあるベースは、選ぶまで始め方を出さない (値段が付与スキルで変わるので。2026-10-18 オーナー「決めてから表示させないと漏れる」) -->
         <p v-if="grantPending" class="text-[12px] text-amber-200">{{ tr("付与スキルを選ぶと、始め方とベースの値段が出る", "Choose the granted skill to see the start options and base prices") }}</p>
-        <template v-else-if="edit3">
+        <template v-else>
         <!-- 始め方は縦に全部並べて、ベースの値段を比べる (2026-10-18 オーナー「タブで出さず全部計算させるから縦にそれぞれ表示」)。行を押すとその始め方で回す。一番安い行に印 -->
         <div data-sim-starts class="flex flex-col gap-1.5 text-[11px]">
           <p class="text-right text-[10px] opacity-60">{{ costNote }}</p>
           <!-- 列を揃えた表: ラジオ | 始め方 | 買う物 | 値段 | 取引所で探す・入れた時刻 | このベースの値段 (2026-10-18 オーナー「UI 最悪、もっと練らないと」)。スマホは折り返す -->
-          <div v-for="k in startKinds" :key="k.k" data-sim-start-row :data-start="k.k" class="rounded-lg border px-2.5 py-1.5" :class="s.simStart.value === k.k ? 'border-[var(--exile-color-border-brass)] bg-white/[0.04]' : 'cursor-pointer border-white/10 hover:bg-white/[0.03]'" :title="tr(k.hint, k.hintEn)" @click="edit3 && (s.simStart.value = k.k)">
+          <div v-for="k in startKinds" :key="k.k" data-sim-start-row :data-start="k.k" class="rounded-lg border px-2.5 py-1.5" :class="s.simStart.value === k.k ? 'border-[var(--exile-color-border-brass)] bg-white/[0.04]' : 'cursor-pointer border-white/10 hover:bg-white/[0.03]'" :title="tr(k.hint, k.hintEn)" @click="s.simStart.value = k.k">
             <div class="grid items-center gap-x-3 gap-y-1 md:grid-cols-[1rem_13rem_minmax(0,1fr)_auto_10rem_7rem] max-md:flex max-md:flex-wrap">
               <span class="grid size-4 shrink-0 place-items-center rounded-full border" :class="s.simStart.value === k.k ? 'border-amber-300' : 'border-white/30'"><span v-if="s.simStart.value === k.k" class="size-2 rounded-full bg-amber-300" /></span>
               <b class="whitespace-nowrap text-[12px]"><Icon v-if="k.k === 'fractured'" name="lock" class="mr-0.5 inline size-3.5 align-[-2px]" />{{ tr(k.label, k.labelEn) }}</b>
@@ -218,7 +224,7 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
               </span>
             </div>
             <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (白の行の 2 段目。2026-10-18 オーナー) -->
-            <SimRareStrip v-if="k.k === 'white' && edit3" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
+            <SimRareStrip v-if="k.k === 'white'" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
           </div>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ。無ければ出さない (2026-10-18) -->
@@ -231,61 +237,17 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
           <span v-if="calc?.each[i] && s.simStart.value !== 'fractured'" class="ml-auto text-[11px] tabular-nums opacity-80" title="増強 1 回でこの段以上が付く割合 (2 狙う MOD の出やすさは全段の重み、ここは打つ増強の下限で絞る)">増強で付く {{ pct(calc.each[i]!.p) }}<template v-if="calc.each[i]!.p === 0"> ({{ calc.grade }}では MOD レベルが低い)</template></span>
         </p>
         </template>
-        <div v-if="!whiteDone" class="mt-1 flex items-center gap-2">
+        <div class="mt-1 flex items-center gap-2">
           <span v-if="calc && fracMembers.length >= 2" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
           <span v-if="num(startPrice) == null" class="ml-auto text-[11px] text-amber-200/80">{{ s.simStart.value === "white" ? "白ベースの値段を入れる (分からなければ 0)" : "買うベースの値段を入れる" }}</span>
-          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :class="num(startPrice) == null ? '' : 'ml-auto'" :disabled="num(startPrice) == null" :title="num(startPrice) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">決めた<Icon name="arrow-right" class="size-4" /></button>
+          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :class="num(startPrice) == null ? '' : 'ml-auto'" :disabled="num(startPrice) == null" :title="num(startPrice) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
         </div>
         </template>
       </div>
 
-      <!-- 4 最安値スタート: フラクチャー済みのベースを手に入れるまでの 3 ルート (回さずに計算)。入れるのは買うベースの値段だけ -->
-      <div v-if="stepStart" :data-sim-cur="!startDone || undefined" :class="!startDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
-        <SimStepHead class="mb-3" :n="stepNo.start" title="フラクチャー済みまでの一番安い道" :done="startDone" :current="!startDone" :redo="startDone" help="フラクチャー済みのベースを手に入れるまでの費用を、作る・買うの道ごとに比べる。この先の打ち方はどれも同じ" @redo="goTo('start')" />
-        <table class="w-full table-fixed text-[12px] max-md:table-auto">
-          <colgroup><col /><col class="w-[22rem] max-md:w-auto" /><col class="w-36 max-md:w-auto" /></colgroup>
-          <tbody>
-            <tr v-for="x in routes.list" :key="x.key" class="border-t border-white/5" :class="routes.best === x.key ? 'bg-emerald-500/10' : ''">
-              <td class="py-1">{{ x.name }}<span v-if="routes.best === x.key" class="ml-1.5 rounded bg-emerald-500/25 px-1.5 text-[10px] text-emerald-200">一番安い</span></td>
-              <td class="py-1">
-                <span v-if="x.key === 'self'" class="text-[11px] opacity-70">1 回分 × 3 (当たり 1/3) + 消去 × 2<template v-if="calc && calc.grade !== '完全'"> · {{ calc.grade }}の増強で計算</template></span>
-                <span v-else class="flex items-center gap-1.5 text-[11px]">
-                  <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" /><PriceInput v-else-if="x.key === 'rare'" v-model="rareDivine" base="exalted" unit-key="sim.rare" placeholder="値段" />
-                  <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="値段" />
-                  <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline disabled:opacity-40 max-md:min-h-11" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : x.key === 'rare' ? 'このベースのレア (フラクチャー無し) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : x.key === 'rare' ? searchRare() : searchBought()">取引所で探す<Icon name="external" class="size-3.5" /></button>
-                </span>
-              </td>
-              <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50" :title="x.key === 'self' ? undefined : '値段が空 = 取引所に無い物として数えない (2026-10-06)'">{{ x.key === "self" ? "—" : "無し" }}</span></td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-if="calc?.cantRoll" class="mt-1 text-[11px] text-rose-300">増強ではこの段は出ません (アイテムレベルが足りない)</p>
-        <div class="mt-1.5 flex items-center gap-2">
-          <button type="button" class="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)]" :aria-expanded="open.calc" @click="toggle('calc')">内訳<Icon :name="open.calc ? 'chevron-up' : 'chevron-down'" class="size-3.5" /></button>
-          <button v-if="!startDone" type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40" @click="startDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
-        </div>
-        <!-- 内訳 (① 自作の 1 回分と、② の分かれ目) -->
-        <div v-if="open.calc && calc" class="mt-1.5 rounded bg-black/25 px-2 py-1.5 text-[11px]">
-          <p class="mb-1">① 自作: 1 個 = 1 回分 <b>{{ money(calc.once) }}</b> × 3 + 固定できた後の消去 × 2 {{ money(calc.after) }} = <b class="text-amber-100">{{ money(calc.total) }}</b>
-            <span class="opacity-60">(増強 1 回で候補のどれかが付く {{ calc.pHit > 0 ? pct(calc.pHit) : "0%" }} → リロール平均 {{ Number.isFinite(calc.rerolls) ? calc.rerolls.toFixed(1) : "—" }} 回)</span></p>
-          <table class="w-full">
-            <tbody>
-              <tr v-for="l in calc.lines" :key="l.name" class="border-t border-white/5">
-                <td class="py-0.5">{{ l.name }}</td>
-                <td class="w-20 py-0.5 text-right tabular-nums">× {{ Number.isFinite(l.n) ? l.n.toFixed(l.n < 10 && l.n % 1 ? 1 : 0) : "—" }}</td>
-                <td class="w-24 py-0.5 text-right tabular-nums opacity-70">{{ money(l.each) }}</td>
-                <td class="w-24 py-0.5 text-right tabular-nums">{{ money(l.n * l.each) }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <p class="mt-1">② は 1 回分 = ベースの値段 + {{ money(calc.buyRest) }} (深淵のエッセンス・結晶化・骨・ネクロマンシーで印を置き換える壁 + フラクチャー) × 3 + 消去 × 2。<b class="text-sky-100">{{ money(calc.breakEven) }}</b> より安いベースなら ① より安い</p>
-          <p v-if="calc.noAbyss" class="text-amber-300">このベースの深淵のエッセンスの値段が分かりません (0 で数えています)</p>
-        </div>
-      </div>
-
       <!-- ③ 付ける順番と付け方 (フラクチャー以外) -->
-      <div v-if="stepOrder" :data-sim-cur="!orderDone || undefined" :class="!orderDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
-        <SimStepHead class="mb-3" :n="stepNo.order" title="付ける順番" :done="orderDone" :current="!orderDone" :redo="orderDone" help="目安の順番。打ち方で付ける MOD を選ぶ時、この順に並ぶ" @redo="goTo('order')" />
+      <div v-if="stepOrder && simStep === 'order'" :data-sim-cur="!orderDone || undefined" :class="!orderDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
+        <SimStepHead class="mb-3" :n="4" title="付ける順番" :current="true" help="目安の順番。打ち方で付ける MOD を選ぶ時、この順に並ぶ" />
         <p v-if="!orderKeys.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
           <thead v-if="redoOf.size">
@@ -343,13 +305,13 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
           </div>
         </div>
         <div v-if="!orderDone" class="mt-1 flex">
-          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" @click="orderDone = true">決めた<Icon name="arrow-right" class="size-4" /></button>
+          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" @click="decideOrder">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
         </div>
       </div>
     </template>
       <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
-      <div v-if="step4pre" :data-sim-cur="!patternDone || undefined" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
-        <SimStepHead class="mb-3" :n="stepNo.play" title="打ち方" :done="patternDone" :current="!patternDone" :redo="patternDone" :note="tr(`${s.simStart.value === 'item' ? 'エミュレーターの状態' : s.simStart.value === 'magic' ? '買ったマジック' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`, `Step by step from ${s.simStart.value === 'item' ? 'the Emulator item' : s.simStart.value === 'magic' ? 'the bought magic' : fractureRow ? 'the fractured base' : 'a white base'}`)" :help="tr('状況ごとに「この時はこの手」を答えた物 = パターン。いくつか作って、回して費用を比べられる', 'Answers to “in this situation, do this” = a pattern. Make several and run them to compare costs')" @redo="patternDone = false" />
+      <div v-if="step4pre && simStep === 'play'" :data-sim-cur="!patternDone || undefined" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
+        <SimStepHead class="mb-3" :n="5" title="打ち方" :current="true" :note="tr(`${s.simStart.value === 'item' ? 'エミュレーターの状態' : s.simStart.value === 'magic' ? '買ったマジック' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`, `Step by step from ${s.simStart.value === 'item' ? 'the Emulator item' : s.simStart.value === 'magic' ? 'the bought magic' : fractureRow ? 'the fractured base' : 'a white base'}`)" :help="tr('状況ごとに「この時はこの手」を答えた物 = パターン。いくつか作って、回して費用を比べられる', 'Answers to “in this situation, do this” = a pattern. Make several and run them to compare costs')" />
         <StagePatternEditor :busy="busy" :start="patternStart" :locked="patternDone" :quiz-base="quizBase" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
@@ -384,7 +346,8 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
 
-    <template v-if="step4">
+    <template v-if="step4 && simStep === 'result'">
+    <SimStepHead class="mb-3" :n="6" :title="tr('回す・結果', 'Run & results')" :current="true"><template #side><button type="button" class="g-btn sm" @click="go('play')">{{ tr("打ち方を直す", "Edit the steps") }}</button></template></SimStepHead>
     <!--
       結果 (2026-10-07 作り直し。オーナー「UI カスすぎない、パッと見て数字が分かりづらい」「7 回すは機能してないからいらない」
       「ベースとそれ以降のクラフト金額も、何にお金がかかったかに分けて」)。上から いくらか → 運でどれくらい振れるか → 何にお金がかかったか (ベース / クラフト)

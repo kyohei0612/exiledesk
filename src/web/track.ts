@@ -79,6 +79,7 @@ export function track(name: string, extra?: string): void {
   if (name === "page:feedback") screen("feedback");
   if (name === "page:routes") screen("routes");
   if (name === "page:craft") screen("craft");
+  if (name === "page:sim") screen(`sim:${extra ?? ""}`); // シミュレーターの工程のページ (2026-10-19、sim:mods / start / order / play / result)
   buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
   if (trail.length > 40) trail.shift();

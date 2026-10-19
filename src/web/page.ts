@@ -7,6 +7,7 @@
  *   - ベース選び: ?page=base (「ベースを変える」・まだ選んでいない時。2026-10-18 2 回目)
  *   - スパムシミュレーター: ?page=routes (カレンシーの見出しから・X のシェアから。旧カオススパム計算機 ?page=spam は 2026-10-19 に消した)
  *   - 要望・バグを送る: ?page=feedback
+ *   - シミュレーターの工程: ?page=sim-mods / sim-start / sim-order / sim-play / sim-result (2026-10-19、1 工程 1 ページ)
  * 移るたびに履歴に積む (ブラウザの戻るで前のページへ)。URL から開いた時もそのページで始める (計算機は今のアイテムが要るので URL からは開かない)。
  * ページを移るたびに広告の枠を出し直す (utils/ads.ts の pageTick)。MOD 一覧は重ねる窓のまま、ページにしない (2026-10-12)
  */
@@ -15,7 +16,8 @@ import { craftStage as s } from "../state/craft-stage";
 import { topic } from "../state/craft-topic";
 import { course } from "../state/craft-course";
 import { endLesson, inLesson, startTopicAt } from "../state/craft-lesson";
-import { basePage, baseUnpicked, feedbackPage, routesOpen, routesTarget } from "../state/web-page";
+import { basePage, baseUnpicked, feedbackPage, routesOpen, routesTarget, SIM_STEPS, simStep, type SimStep } from "../state/web-page";
+import { SIM_LOCKED } from "../state/craft-stage";
 import { TOPIC_COURSES } from "../services/craft-stage/topic-courses";
 import { courseShown } from "../services/craft-stage/course-release";
 import { pageTick } from "../utils/ads";
@@ -62,8 +64,13 @@ export const page = computed((): string => {
   if (s.mode.value === "tutorial") return "page=guide";
   if (s.replay.value) return "";
   if (basePage.value || baseUnpicked.value) return "page=base";
+  if (s.mode.value === "sim" && s.simPicked.value) return `page=sim-${simStep.value}`;
   return "";
 });
+/** シミュレーターの工程の題 */
+const SIM_TITLE: Record<SimStep, [string, string]> = {
+  mods: ["狙う MOD", "Target mods"], start: ["始め方", "How to start"], order: ["付ける順番", "Order"], play: ["打ち方", "Crafting steps"], result: ["回す・結果", "Run & results"],
+};
 
 /** タブの題 */
 export const pageTitle = computed((): string => {
@@ -74,10 +81,11 @@ export const pageTitle = computed((): string => {
   if (t) return `${tr(t[0], t[1])} — ExileDesk`;
   if (p === "page=guide") return tr("使い方・コツ — ExileDesk", "Guide & Tips — ExileDesk");
   if (p === "page=base") return tr("ベースを選ぶ — ExileDesk", "Choose a base — ExileDesk");
+  if (p.startsWith("page=sim-")) { const t = SIM_TITLE[p.slice(9) as SimStep]; if (t) return tr(`${t[0]} — シミュレーター — ExileDesk`, `${t[1]} — Simulator — ExileDesk`); }
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "feedback", "routes"];
+const PAGE_KEYS = ["guide", "base", "feedback", "routes", ...SIM_STEPS.map((x) => `sim-${x}`)];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
@@ -115,6 +123,8 @@ function apply(p: string): void {
     if (s.mode.value === "tutorial" || inLesson.value) { s.hold(null); endLesson(); s.mode.value = "hand"; }
     if (p === "page=base") { openBasePage(); return; }
     leaveSubPages();
+    // シミュレーターの工程 (戻る / 進む・URL から)。まだ決めていない工程は StageSimPanel が最初の決めていない工程に合わせる。ベースが無ければベース選びから
+    if (p.startsWith("page=sim-") && !SIM_LOCKED) { s.mode.value = "sim"; if (s.simPicked.value) simStep.value = p.slice(9) as SimStep; return; }
   } finally {
     applying = false;
     syncUrl();
@@ -142,6 +152,7 @@ export function startPages(): void {
     else if (p === "page=base") track("page:base");
     else if (p === "page=feedback") track("page:feedback");
     else if (p === "page=routes") track("page:routes");
+    else if (p.startsWith("page=sim-")) track("page:sim", p.slice(9));
     else if (p === "") track("page:craft");
     if (applying || pageOfUrl() === p) return;
     // 自分で出たベース選び (初めて・白に戻した後) と、そこから選んで出た時は積まない (戻るで選ぶ前に戻っても選び直しになるだけ)

@@ -15,7 +15,7 @@ import { computed, ref, watch } from "vue";
 import { revealWhenReady } from "../../utils/keep-place";
 import { useStageBase } from "./use-stage-base";
 import StageBasePicker from "./StageBasePicker.vue";
-import { PAGES_ON, basePage } from "../../state/web-page";
+import { PAGES_ON, basePage, simStep } from "../../state/web-page";
 import { craftStage } from "../../state/craft-stage";
 import pkg from "../../../package.json";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
@@ -97,6 +97,8 @@ function quizStep(n: number): void {
   for (; k < n && !r.stop; k++) r = s.recipeStep();
   quizNote.value = n > 1 && !r.done ? `${r.text} (${tr(`${k} 手`, `${k} steps`)})` : r.text;
 }
+/** シミュレーターで ② 狙う MOD より先の工程のページにいる (ソケットは選び済み) */
+const simLaterPage = computed(() => s.mode.value === "sim" && s.simPicked.value && simStep.value !== "mods" && (simSocketCap.value === 0 || s.simSockets.value != null));
 function simFromHand(): void {
   const it = s.item.value;
   if (!it) return;
@@ -109,6 +111,7 @@ function simFromHand(): void {
   s.simSockets.value = it.sockets ?? 0;
   s.simStart.value = "item";
   s.simPicked.value = true;
+  simStep.value = "mods";
   s.mode.value = "sim";
   // 2 (狙う MOD) の頭から見せる: エミュレーターの MOD はもう入っているので、まず付け方を決める所 (2026-10-19 オーナー「2 の最初ね、MOD とか付け方決めれるところから開始」。
   // 前は枠の下の線まで送っていて、付け方の所が上に隠れた)
@@ -119,7 +122,8 @@ function simFromHand(): void {
 <template>
   <!-- 設定と操作 -->
   <!-- data-craft-top: クラフトの位置 (「クラフトへ」とベースを選んだ後はここの外枠の少し上。2026-10-10 オーナー「ベースの上枠の外枠から少し上空けた位置が心地いい」) -->
-  <section v-if="!s.replay.value && s.mode.value !== 'tutorial' && !inLesson" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
+  <!-- シミュレーターの工程のページ (③ 始め方から先) では出さない (ベースは工程の帯の 1 の札。ソケットを選ぶまでは出す。2026-10-19) -->
+  <section v-if="!s.replay.value && s.mode.value !== 'tutorial' && !inLesson && !simLaterPage" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
     <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
     <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
       <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>
