@@ -121,7 +121,7 @@ onBeforeUnmount(leave);
     <span v-if="omenWarn" class="block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
     <span v-else-if="omenBlocked" class="mt-px block w-full text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-rose-300">{{ tr("お告げで打てない", "Blocked by omen") }}</span>
     <span v-else-if="tag" class="mt-px w-full">
-      <span v-for="(t, i) in tag" :key="i" class="block truncate text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">{{ tr("・", "· ") }}{{ t }}</span>
+      <span v-for="(t, i) in tag" :key="i" class="block line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300" :title="t"><!-- 2 行まで (1 行で「・クリティカ…」と切れていた。2026-10-19 テスト走行) -->{{ tr("・", "· ") }}{{ t }}</span>
     </span>
     <span v-else-if="priceOf(k)" data-rec-part="shelf-price" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
   </button>
