@@ -10,6 +10,9 @@ import { basePage } from "../../state/web-page";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { logRecord } from "../../utils/log-record";
 import { useStageBase } from "./use-stage-base";
+import { reloadRecipes } from "../../state/sim-recipe-store";
+import { sendShare } from "./use-spam-share";
+import { tr } from "../../i18n/lang";
 
 /** URL の # の頭 */
 export const RECIPE_SHARE_PREFIX = "#recipe=";
@@ -57,9 +60,30 @@ export async function openRecipeCode(code: string): Promise<boolean> {
   const key = JSON.stringify(r.session);
   const same = list.find((x) => JSON.stringify(x.session) === key);
   if (!same) writeSimRecipes([r, ...list]);
+  reloadRecipes();
   basePage.value = false;
   s.mode.value = "sim";
   useStageBase().startFromRecipe(same ?? r);
   logRecord("sim_recipe_shared", { base: r.session.base, n: r.session.targets.length, saved: !!same });
   return true;
+}
+
+/** X に送る文 (レシピの名前・ベース・狙いの数) */
+export function recipeShareText(r: Pick<SimRecipe, "name" | "baseJa" | "session">): string {
+  const base = r.baseJa ?? r.session.base;
+  const n = r.session.targets.length;
+  return tr(`PoE2 のクラフトレシピ「${r.name}」(${base}・狙い ${n} つ)。開くとシミュレーターでそのまま回せます
+#PoE2 #ExileDesk`,
+    `PoE2 craft recipe "${r.name}" (${base}, ${n} target mods). Open it to run it in the simulator
+#PoE2 #ExileDesk`);
+}
+/**
+ * X へ送る (スパムシミュレーターと同じ送り方: アプリは外のブラウザ、スマホは X のアプリ)。レシピは URL の # に全部乗っているので短い URL は作らない
+ * (X が t.co に縮める)。<a :href="web" target="_blank" @click="shareRecipeX($event, …)"> で使う
+ */
+export function recipeXUrl(text: string, url: string): string {
+  return `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+}
+export function shareRecipeX(e: MouseEvent, text: string, url: string, base: string): void {
+  sendShare(e, { code: "", web: recipeXUrl(text, url), text, url, log: { kind: "recipe", base } });
 }

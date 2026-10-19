@@ -28,6 +28,7 @@ import { simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import StageFracturePicker from "./StageFracturePicker.vue";
 import StageTargetSummary from "./StageTargetSummary.vue";
+import SimRecipeBar from "./SimRecipeBar.vue";
 import StageModList from "./StageModList.vue";
 import PriceInput from "../../components/PriceInput.vue";
 import { tr } from "../../i18n/lang";
@@ -54,9 +55,7 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, start
   fourDivine, rareDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, whiteCosts, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
-  help, modsDone, sortDone, orderDone, step3, startPrice, whiteDone, stepOrder, patternDone, stale, recipes, recipeOpen,
-  recipeName, recipeArm, recipeRenaming, fmtDate, openRecipes, saveRecipe, recipeBox, renameRecipe, recipeNote, recipeFile, exportRecipes, copyRecipeUrl,
-  importRecipes, removeRecipe, loadRecipe, step4pre, step4, ilvlNote, resetArm, resetAll, reach, go, decideMods, sortDecided, decideOrder, edit2, panelEl, whiteDecide,
+  help, modsDone, sortDone, orderDone, step3, startPrice, whiteDone, stepOrder, patternDone, stale, step4pre, step4, ilvlNote, resetArm, resetAll, reach, go, decideMods, sortDecided, decideOrder, edit2, panelEl, whiteDecide,
   undoStack, undo, money, results, baseJa, pct, compare, hitName, split, moneyT, fmtCount, hitShort, cardOk, cardNote, saveCard, copyCard, luck,
   costGroups, summary, tooManySteps, nextMaxSteps } = { ...tg, ...sr, ...rn, ...rc, ...st, ...rs };
 /** 付与スキルが候補から 1 つのベースで、まだ選んでいない (選ぶまで始め方を出さない) */
@@ -101,37 +100,8 @@ const stepNotes = computed(() => {
          (2026-10-07 オーナー「また進まない」: 2 狙う MOD の「決めた →」を押しても画面が変わらなかった) -->
     <Teleport defer to="#sim-tools" :disabled="s.mode.value !== 'sim' || !!s.replay.value">
       <CurrencyPicker sim />
-      <!-- レシピ (名前を付けて残す・呼び出す) -->
-      <span ref="recipeBox" class="relative">
-        <button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" :aria-expanded="recipeOpen" title="今の途中 (ベース・狙い・順番・パターン) を名前を付けて残す / 呼び出す" @click="openRecipes">レシピ<Icon :name="recipeOpen ? 'chevron-up' : 'chevron-down'" class="size-4" /></button>
-        <div v-if="recipeOpen" class="fixed inset-0 z-30 bg-black/60 md:hidden" @click="recipeOpen = false"></div>
-        <div v-if="recipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl max-md:fixed max-md:inset-x-3 max-md:top-14 max-md:w-auto max-md:max-h-[80vh] max-md:overflow-y-auto">
-          <button type="button" class="mb-2 w-full rounded-lg border border-white/20 py-2 md:hidden" @click="recipeOpen = false">閉じる</button>
-          <div class="flex items-center gap-2">
-            <input v-model="recipeName" class="min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60" placeholder="レシピの名前" @keydown.enter="saveRecipe" />
-            <button type="button" class="shrink-0 rounded-lg border border-amber-400/60 bg-amber-500/20 px-3 py-1 font-bold text-amber-100 hover:bg-amber-500/30" @click="saveRecipe">今の状態を保存</button>
-          </div>
-          <!-- 書き出し・読み込み (別の PC・URL に持っていく用) -->
-          <div class="mt-2 flex items-center gap-2 text-[11px]">
-            <button type="button" class="shrink-0 whitespace-nowrap rounded border border-white/15 px-2 py-0.5 opacity-80 hover:bg-white/10 hover:opacity-100 disabled:opacity-40" :disabled="!recipes.length" title="全部のレシピをファイルに保存する (別の PC やブラウザで「読み込む」と戻せる)" @click="exportRecipes">書き出す</button><button type="button" data-recipe-url-now class="shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-2 py-0.5 text-amber-100 hover:bg-white/10" :title="tr('今の状態を URL にしてコピーする (開いた人はこのレシピで始まる。ファイル要らず)', 'Copy the current state as a URL (opening it starts this recipe, no file needed)')" @click="copyRecipeUrl()">{{ tr("今の状態の URL をコピー", "Copy URL of current state") }}</button>
-            <button type="button" class="shrink-0 whitespace-nowrap rounded border border-white/15 px-2 py-0.5 opacity-80 hover:bg-white/10 hover:opacity-100" title="書き出したファイルからレシピを足す (今のレシピは消えない)" @click="recipeFile?.click()">読み込む</button>
-            <input ref="recipeFile" type="file" accept=".json,application/json" class="hidden" @change="importRecipes" />
-            <span v-if="recipeNote" class="truncate opacity-60">{{ recipeNote }}</span>
-          </div>
-          <p v-if="!recipes.length" class="mt-3 text-center opacity-50">まだ保存したレシピはありません</p>
-          <div v-else class="mt-3 max-h-[50vh] space-y-1 overflow-y-auto">
-            <div v-for="r in recipes" :key="r.id" class="flex items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2 py-1.5">
-              <div class="min-w-0 flex-1">
-                <input v-if="recipeRenaming === r.id" :ref="(el) => { if (el) (el as HTMLInputElement).focus(); }" :value="r.name" class="w-full rounded border border-amber-400/60 bg-black/50 px-1 outline-none" @keydown.enter="($event.target as HTMLInputElement).blur()" @keydown.esc="recipeRenaming = null" @blur="renameRecipe(r.id, ($event.target as HTMLInputElement).value)" />
-                <p v-else class="flex cursor-text items-center gap-1 font-bold" title="ダブルクリックで名前を変える" @dblclick="recipeRenaming = r.id"><span class="truncate">{{ r.name }}</span><button type="button" class="shrink-0 rounded px-1 text-[12px] opacity-50 hover:opacity-100" title="名前を変える" @click.stop="recipeRenaming = r.id">✎</button></p>
-                <p class="truncate text-[10px] opacity-50">{{ r.baseJa ?? r.session.base }} · パターン {{ r.session.patterns.length }} つ · {{ fmtDate(r.savedAt) }}</p>
-              </div>
-              <button type="button" class="shrink-0" :class="recipeArm.is(`load:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="recipeArm.is(`load:${r.id}`) ? '今の状態は置き換わる。もう一度押すと呼び出す' : 'このレシピを呼び出す (今の状態は置き換わる)'" @click="loadRecipe(r)">{{ recipeArm.is(`load:${r.id}`) ? "もう一度押すと呼び出す" : "呼び出す" }}</button><button type="button" data-recipe-url class="g-plain shrink-0 rounded px-1.5 py-0.5 text-[11px] opacity-70 hover:bg-white/10 hover:opacity-100" :title="tr('このレシピを URL にしてコピーする (開いた人はこのレシピで始まる)', 'Copy this recipe as a URL (opening it starts this recipe)')" @click="copyRecipeUrl(r)">URL</button>
-              <button type="button" class="shrink-0" :class="recipeArm.is(`del:${r.id}`) ? ARMED_CLASS : 'g-plain rounded px-1.5 py-0.5 opacity-50 hover:bg-white/10 hover:opacity-100'" :title="recipeArm.is(`del:${r.id}`) ? 'もう一度押すと消す' : 'このレシピを消す'" @click="removeRecipe(r.id)"><template v-if="recipeArm.is(`del:${r.id}`)">もう一度押すと消す</template><Icon v-else name="x" class="size-3.5" /></button>
-            </div>
-          </div>
-        </div>
-      </span>
+      <!-- レシピ (今のレシピ・保存・別名で保存・共有。一覧はレシピのページ。2026-10-21) -->
+      <SimRecipeBar />
       <!-- 2026-10-10 動きの揃え 6: 帯のボタンはエミュレーターの「白に戻す」「1 手戻す」と同じ g-btn sm (2 回押しの間は g-btn-red) -->
       <button type="button" class="inline-flex items-center gap-1.5 max-md:min-h-10" :class="resetArm.is() ? ARMED_CLASS : 'g-btn sm'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll"><Icon name="rotate" class="size-4" /><span :class="resetArm.is() ? '' : 'max-md:hidden'">{{ resetArm.is() ? "もう一度押すと消える" : "リセット" }}</span></button>
       <button type="button" class="g-btn sm inline-flex items-center gap-1.5 max-md:min-h-10" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo"><Icon name="undo" class="size-4" /><span class="max-md:hidden">1 つ戻す</span></button>

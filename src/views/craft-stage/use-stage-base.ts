@@ -10,7 +10,8 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { scrollToTop } from "../../utils/keep-place";
 import { course } from "../../state/craft-course";
 import { topic } from "../../state/craft-topic";
-import { basePage, simStep } from "../../state/web-page";
+import { basePage, recipesPage, simStep } from "../../state/web-page";
+import { currentRecipeId } from "../../state/sim-recipe-store";
 
 function create() {
   const inApp = isTauriRuntime();
@@ -46,6 +47,8 @@ function create() {
     s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
     s.simStart.value = "white";
     s.simStartItem.value = null;
+    // レシピからでなく新しく選んだ時は、開いているレシピから外れる (保存は「新しいレシピ」になる)
+    if (!s.simPendingRecipe.value) currentRecipeId.value = null;
     // シミュレーターのベースはシミュレーターで選んだ時だけ決まる (エミュレーターから切り替えたら、ベース選びから。2026-10-18 初めての 10 人の 2 人目)
     if (s.mode.value === "sim") { s.simPicked.value = true; simStep.value = "mods"; } // 工程のページは ② 狙う MOD から
     s.simGrant.value = null; // 付与スキルは 3 で選び直す
@@ -61,6 +64,7 @@ function create() {
     preRecipeOpen.value = false;
     // ベースを選ぶページから札で始めた時もページを出る (URL・題が「ベースを選ぶ」のまま残っていた。2026-10-21)
     basePage.value = false;
+    recipesPage.value = false;
     s.simPendingRecipe.value = r.id;
     pickSimBase(r.session.base);
   }

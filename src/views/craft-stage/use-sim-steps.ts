@@ -2,6 +2,7 @@
  * use-sim-steps.ts — シミュレーションの画面 (StageSimPanel.vue) の工程の段・やり直し・状態が変わった時の戻し・1 つ戻す (Ctrl+Z)。
  * StageSimPanel.vue から分けた (2026-10-16、500 行の決まり)。画面の 1 つごとに呼ぶ (状態は画面ごと)
  */
+import { currentRecipeId } from "../../state/sim-recipe-store";
 import { useArmed } from "../../utils/use-armed";
 import { scrollToTop } from "../../utils/keep-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -139,6 +140,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   const resetArm = useArmed();
   function resetAll(): void {
     if (!resetArm.arm()) return;
+    currentRecipeId.value = null; // 開いていたレシピから外れる (次の保存は新しいレシピ)
     s.simTargets.value = [];
     s.simAltFor.value = null;
     modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false;

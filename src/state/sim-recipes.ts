@@ -42,7 +42,7 @@ const SIM_RECIPES_UNREAD = "exiledesk.craftStageSim.recipes.unread";
  * キー (SIM_RECIPES_KEY) は変えない
  */
 export const RECIPE_FORMAT = 1;
-export interface SimRecipe { id: string; name: string; savedAt: number; session: SimSession; /** 一覧に出すベースの日本語名 */ baseJa?: string; /** 形の版 */ v?: number }
+export interface SimRecipe { id: string; name: string; savedAt: number; session: SimSession; /** 一覧に出すベースの日本語名 */ baseJa?: string; /** 形の版 */ v?: number; /** 上書きした時刻 (無ければ savedAt。2026-10-21 上書き保存) */ updatedAt?: number }
 
 /** 古い形・欠けた所のあるレシピを今の形に。ベースが無い物は読めない (null) */
 export function normalizeRecipe(x: unknown): SimRecipe | null {

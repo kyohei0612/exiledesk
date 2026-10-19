@@ -7,16 +7,20 @@
   compact = ベースを選ぶページ・右上の「レシピ」の中 (どちらも同じ形。プルダウンの札は 1 列)
 -->
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref } from "vue";
-import { readSimRecipes, type SimRecipe } from "../../state/craft-stage";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
+import type { SimRecipe } from "../../state/craft-stage";
+import { recipeList, reloadRecipes, touchedAt } from "../../state/sim-recipe-store";
+import { openRecipesPage } from "../../web/page";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { openRecipeCode, recipeCodeOf } from "./recipe-share";
+import { jaTypeName } from "../../services/trade2/localize";
 import { tr } from "../../i18n/lang";
 
 defineProps<{ compact?: boolean }>();
 const emit = defineEmits<{ start: [r: SimRecipe] }>();
 
-const recipes = ref<SimRecipe[]>(readSimRecipes());
+/** 新しく触った順 (レシピのページの「更新順」と同じ) */
+const recipes = computed(() => [...recipeList.value].sort((a, b) => touchedAt(b) - touchedAt(a)));
 const open = ref(false);
 const box = ref<HTMLElement | null>(null);
 function outside(e: PointerEvent): void { if (!box.value?.contains(e.target as Node)) close(); }
@@ -28,7 +32,7 @@ function close(): void {
 }
 function toggle(): void {
   if (open.value) { close(); return; }
-  recipes.value = readSimRecipes();
+  reloadRecipes();
   open.value = true;
   void nextTick(() => { document.addEventListener("pointerdown", outside, true); document.addEventListener("keydown", onKey); });
 }
@@ -43,7 +47,7 @@ async function openUrl(): Promise<void> {
   if (!code) { note.value = url.value.trim() ? tr("レシピの URL ではありません (#recipe= の付いた URL を貼る)", "Not a recipe URL (paste one with #recipe=)") : ""; return; }
   const ok = await openRecipeCode(code);
   note.value = ok ? "" : tr("このレシピは読めませんでした", "Couldn't read this recipe");
-  if (ok) { url.value = ""; recipes.value = readSimRecipes(); }
+  if (ok) url.value = "";
 }
 function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }
 const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; };
@@ -65,9 +69,10 @@ const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getM
             <span v-else class="size-10 shrink-0" />
             <span class="min-w-0 flex-1">
               <b class="block truncate text-[13px] text-[var(--exile-color-text-primary)]">{{ r.name }}</b>
-              <span class="block truncate text-[11px] opacity-60">{{ r.baseJa ?? r.session.base }} · {{ tr(`パターン ${r.session.patterns.length} つ`, `${r.session.patterns.length} patterns`) }} · {{ fmtDate(r.savedAt) }}</span>
+              <span class="block truncate text-[11px] opacity-60">{{ r.baseJa && r.baseJa !== r.session.base ? r.baseJa : jaTypeName(r.session.base) }} · {{ tr(`パターン ${r.session.patterns.length} つ`, `${r.session.patterns.length} patterns`) }} · {{ fmtDate(r.savedAt) }}</span>
             </span>
           </button>
+          <button type="button" data-recipe-manage class="g-plain mt-1 flex w-full items-center justify-center gap-1 rounded-md py-1.5 text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-white/[0.06] hover:text-[var(--exile-color-text-primary)] max-md:min-h-11" @click="close(); openRecipesPage()">{{ tr("レシピの管理 (名前・複製・消す・共有) →", "Manage recipes (rename, duplicate, delete, share) →") }}</button>
         </div>
       </div>
       <!-- レシピの URL を貼る欄 (貼ると開く。Enter・開くでも) -->

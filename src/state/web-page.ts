@@ -14,6 +14,8 @@ export const basePage = ref(false);
 export const baseUnpicked = ref(false);
 /** 要望・バグを送るのページ */
 export const feedbackPage = ref(false);
+/** シミュレーターのレシピのページ (?page=recipes。2026-10-21 オーナー「レシピ周りしっかり作りこんでくれ」、StageRecipesPage.vue) */
+export const recipesPage = ref(false);
 /**
  * スパムシミュレーターのページ (?page=routes)。カレンシーの見出しの「スパムシミュレーター」で開く → MOD を 1 つ選ぶ → 増強・カオス・高貴のスパムを比べる
  * (2026-10-18 オーナー「1 MOD を対象にどのルートが一番早く着くか」「スパム計算機はここで全部管理」)
