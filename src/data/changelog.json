@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.584",
+  "date": "2026-10-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD の段の表を開いた時に、表の全体が見える所まで自動で送るように (MOD 一覧・狙う MOD を選ぶ窓)",
+    "en": "Opening a mod’s tier table now scrolls so the whole table is visible (mod list and target picker)"
+   }
+  ]
+ },
+ {
   "v": "0.1.583",
   "date": "2026-10-19",
   "items": [
@@ -612,18 +624,6 @@
     "area": "",
     "text": "耐性のフラックスのカードの説明を今の動き (ゲームの変換表のとおり、表に無い MOD は変わらない) に",
     "en": "Updated the Resistance Flux card to describe the current behaviour (converted by the game's conversion table)"
-   }
-  ]
- },
- {
-  "v": "0.1.544",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "光のお告げと左右の消去のお告げは一緒に掛けられないように (光を使う時は左右は使いません)",
-    "en": "Omen of Light and Sinistral / Dextral Annulment can no longer be active together (only Light is used)"
    }
   ]
  }

@@ -1,4 +1,7 @@
 {
+  "0.1.584": [
+    "Opening a mod’s tier table now scrolls so the whole table is visible (mod list and target picker)"
+  ],
   "0.1.583": [
     "First visit now shows a one-line intro and a “Try now with a Gold Ring” button (start crafting without choosing a base)"
   ],
