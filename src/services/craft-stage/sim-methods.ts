@@ -44,7 +44,7 @@ export function sortBuckets(d: PatchData | null, targets: readonly SimTargetLike
   const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
   const out: SortBucket[] = [];
   for (const t of targets) {
-    // 増強スパムは側ごとに 1 つ (augmentBlocked) なので「どれか N つ」にまとめない
+    // 増強スパムは側ごとに 1 つ (2 つ目は足す時に候補へ。augmentHostOf) なので「どれか N つ」にまとめない
     if (t.method === "fracture" || t.method === "essence" || t.method === "augment") continue;
     const method = t.method ?? "exalt";
     const all = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
@@ -119,8 +119,14 @@ export function augmentBlocked(d: PatchData | null, targets: readonly SimTargetL
   const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
   const me = side(modId);
   if (targets.some((t) => t.modId !== modId && t.method === "fracture" && [t, ...(t.alts ?? [])].some((x) => side(x.modId) === me))) return tr("フラクチャー予定と同じ側 (マジックの枠は側ごとに 1 つ)", "Same side as the fracture mod (magic has one slot per side)");
-  const other = targets.find((t) => t.modId !== modId && t.method === "augment" && side(t.modId) === me);
-  return other ? (me === "prefix" ? tr("増強スパムはプレフィックスに 1 つだけ (マジックはプレ 1・サフィ 1)", "Augmentation spam: one per side (magic has 1 prefix, 1 suffix)") : tr("増強スパムはサフィックスに 1 つだけ (マジックはプレ 1・サフィ 1)", "Augmentation spam: one per side (magic has 1 prefix, 1 suffix)")) : null;
+  // 同じ側の 2 つ目の増強スパムは止めない: 足す時にその側の増強スパムの「どれか 1 つ」の候補に入る (augmentHostOf。2026-10-21 モンキーチェック:
+  // 見本の靴の「雷・火・冷気耐性のどれか」が 0 から組めなかった)
+  return null;
+}
+/** その側に既にある増強スパムの狙い (2 つ目を選んだら、ここの候補 alts に足す)。無ければ null */
+export function augmentHostOf<T extends SimTargetLike>(d: PatchData | null, targets: readonly T[], modId: string): T | null {
+  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  return targets.find((t) => t.modId !== modId && t.method === "augment" && side(t.modId) === side(modId)) ?? null;
 }
 /** 付け方のポップアップで選べない付け方と理由 (カオススパムは片側だけ・増強スパムは側ごとに 1 つ) */
 export function methodsOff(d: PatchData | null, targets: readonly SimTargetLike[], modId: string): Partial<Record<SimMethod, string>> {

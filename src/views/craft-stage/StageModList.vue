@@ -17,7 +17,7 @@ import { baseNameOf, tr } from "../../i18n/lang";
 import { keepPlace, revealOpened, scrollToTop } from "../../utils/keep-place";
 import { OVERRIDDEN, weightOverrideNote } from "../../services/htc/weight-overrides";
 import { aimTierKey, heldAnyOf, heldOdds } from "../../services/craft-stage/held-odds";
-import { methodsFor, methodsOff } from "../../services/craft-stage/sim-methods";
+import { augmentHostOf, methodsFor, methodsOff } from "../../services/craft-stage/sim-methods";
 import type { SimMethod } from "../../services/craft-stage/quiz-build";
 import SimMethodPop from "./SimMethodPop.vue";
 import { AIM_MAX } from "../../state/craft-stage";
@@ -292,14 +292,14 @@ function toggleTarget(modId: string, t: { name: string; ilvl: number }, method?:
     return;
   }
   // 同じ段なら外す、別の段なら順番と付け方はそのまま段だけ差し替える、無ければ ② の最後に足す
-  // (① フラクチャーの候補はシミュレーションのポップアップ [[StageFracturePicker.vue]] で選ぶ)
   if (isTarget(modId, t)) s.simTargets.value = list.filter((x) => x.modId !== modId);
   else if (list.some((x) => x.modId === modId)) s.simTargets.value = list.map((x) => (x.modId === modId ? { ...x, minTierIndex: idx } : x));
   // 付け方が重なっても 2 ではまとめない (「どれか N つ」は次の段で整理する時。2026-10-18 オーナー)
+  // 増強スパムは側ごとに 1 つの枠: 2 つ目はその側の増強スパムの「どれか 1 つ」の候補に足す (2026-10-21)
+  else if (method === "augment" && augmentHostOf(s.data.value, list, modId)) { const host = augmentHostOf(s.data.value, list, modId); s.simTargets.value = list.map((x) => (x === host ? { ...x, alts: [...(x.alts ?? []), { modId, minTierIndex: idx }] } : x)); }
   else s.simTargets.value = [...list, { modId, minTierIndex: idx, ...(method ? { method } : {}) }];
 }
-/** 段の表の「T○ 以上」: 足したら段の表は閉じる (外した時は開いたまま)。閉じても MOD の行の位置は動かさない (2026-10-18 オーナー「MOD 選んだらティア一覧は閉じよう、開きっぱなしは美しくない」) */
-/** 初めて足す MOD は、付け方をポップアップで選んでから足す (選べる付け方が 1 つならそのまま。SimMethodPop.vue) */
+/** 段の表の「T○ 以上」: 足したら段の表は閉じる (2026-10-18 オーナー「開きっぱなしは美しくない」)。初めて足す MOD は付け方をポップアップで選んでから (SimMethodPop.vue) */
 const methodPop = ref<InstanceType<typeof SimMethodPop> | null>(null);
 function pickTier(ev: MouseEvent, modId: string, t: { name: string; ilvl: number }): void {
   const adding = !isTarget(modId, t), btn = ev.currentTarget as Element;

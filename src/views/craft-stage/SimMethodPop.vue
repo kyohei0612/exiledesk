@@ -12,23 +12,38 @@ import { swallowNextClick } from "../../utils/swallow-click";
 
 const open = ref<{ left: number; top: number; above: boolean; opts: SimMethod[]; off: Partial<Record<SimMethod, string>>; done: (m: SimMethod) => void } | null>(null);
 const W = 150;
+/** 開いたボタンと時刻 (開いた直後の自動の送りでは閉じずに付いていく) */
+let anchor: { btn: Element; at: number } | null = null;
 function close(): void {
   open.value = null;
+  anchor = null;
   document.removeEventListener("pointerdown", outside, true);
-  window.removeEventListener("scroll", close, true);
+  window.removeEventListener("scroll", onScroll, true);
   document.removeEventListener("keydown", onKey);
 }
 function outside(e: PointerEvent): void { if (!(e.target as HTMLElement | null)?.closest?.("[data-sim-method-pop]")) { close(); swallowNextClick(); } } // 外を押したら閉じるだけ (下の物は押さない)
+/**
+ * スクロールしたら閉じる。ただし開いて 1 秒以内 (段の表を開いた時の「全体が見える所まで送る」がまだ動いている) はボタンに付いていく
+ * (2026-10-21 モンキーチェック: 一覧の下の方の雷耐性で、表を開いてすぐ「T1 以上」を押すと吹き出しが出た瞬間に閉じ、押しても何も起きなかった)
+ */
+function onScroll(): void {
+  if (!anchor || Date.now() - anchor.at > 1000) { close(); return; }
+  if (open.value) open.value = { ...open.value, ...placeOf(anchor.btn, open.value.opts.length) };
+}
+function placeOf(btn: Element, n: number): { left: number; top: number; above: boolean } {
+  const r = btn.getBoundingClientRect();
+  const vw = toCss(window.innerWidth), vh = toCss(window.innerHeight);
+  const above = toCss(r.bottom) + 40 + n * 30 > vh;
+  return { left: Math.max(8, Math.min(toCss(r.right) - W, vw - W - 8)), top: above ? toCss(r.top) - 4 : toCss(r.bottom) + 4, above };
+}
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape") { e.stopPropagation(); close(); } }
 /** off: 選べない付け方とその理由 (灰色にして理由を出す) */
 function ask(btn: Element, opts: SimMethod[], done: (m: SimMethod) => void, off: Partial<Record<SimMethod, string>> = {}): void {
-  const r = btn.getBoundingClientRect();
-  const vw = toCss(window.innerWidth), vh = toCss(window.innerHeight);
-  const above = toCss(r.bottom) + 40 + opts.length * 30 > vh;
-  open.value = { left: Math.max(8, Math.min(toCss(r.right) - W, vw - W - 8)), top: above ? toCss(r.top) - 4 : toCss(r.bottom) + 4, above, opts, off, done };
+  open.value = { ...placeOf(btn, opts.length), opts, off, done };
+  anchor = { btn, at: Date.now() };
   void nextTick(() => {
     document.addEventListener("pointerdown", outside, true);
-    window.addEventListener("scroll", close, true);
+    window.addEventListener("scroll", onScroll, true);
     document.addEventListener("keydown", onKey);
   });
 }

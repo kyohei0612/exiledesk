@@ -119,7 +119,12 @@ export function useSimTargets() {
     // 増強スパムの狙いはマジックの間に付ける物なので一番上 (⑤ でも 1 つの関門で一番前。2026-10-21)
     const aug = new Set(restRows.value.filter((r) => r.method === "augment").map((r) => `mod:${r.modId}`));
     const pos = (k: string): number => { const i = s.simOrder.value.indexOf(k); return (aug.has(k) ? -2e6 : 0) + (i < 0 ? 1e6 + all.indexOf(k) : i); };
-    return all.sort((a, b) => pos(a) - pos(b));
+    // エッセンス 2 つで要るアストリッドの創造性は、自分で動かすまでは 2 つ目のエッセンスのすぐ前 (差してから 2 つ目を付ける。動画 S-7YHuq3-P4 も
+    // 「アストリッドを差してから神秘の合金」。前は一番下で、要るエッセンスより後に出ていた。2026-10-21 モンキーチェック)
+    const astrid = "rune:Astrid's Creativity";
+    const ess2 = restRows.value.filter((r) => r.method === "essence").map((r) => pos(`mod:${r.modId}`)).sort((a, b) => a - b)[1];
+    const posOf = (k: string): number => (k === astrid && ess2 != null && runeNeeded.value.has(k) && !s.simOrder.value.includes(k) ? ess2 - 0.5 : pos(k));
+    return all.sort((a, b) => posOf(a) - posOf(b));
   });
   function moveOrder(k: string, d: -1 | 1): void {
     const list = [...orderKeys.value];
