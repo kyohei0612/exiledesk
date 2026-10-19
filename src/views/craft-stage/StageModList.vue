@@ -17,7 +17,7 @@ import { baseNameOf, tr } from "../../i18n/lang";
 import { keepPlace, revealOpened, scrollToTop } from "../../utils/keep-place";
 import { OVERRIDDEN, weightOverrideNote } from "../../services/htc/weight-overrides";
 import { aimTierKey, heldAnyOf, heldOdds } from "../../services/craft-stage/held-odds";
-import { chaosBlocked, methodsFor } from "../../services/craft-stage/sim-methods";
+import { methodsFor, methodsOff } from "../../services/craft-stage/sim-methods";
 import type { SimMethod } from "../../services/craft-stage/quiz-build";
 import SimMethodPop from "./SimMethodPop.vue";
 import { AIM_MAX } from "../../state/craft-stage";
@@ -306,7 +306,7 @@ function pickTier(ev: MouseEvent, modId: string, t: { name: string; ilvl: number
   const row = btn.closest("table")?.previousElementSibling ?? btn;
   const done = (m?: SimMethod): void => keepPlace(row, () => { toggleTarget(modId, t, m); if (adding) expanded.value = null; });
   const opts = methodsFor(s.data.value, modId);
-  if (adding && !s.simTargets.value.some((x) => x.modId === modId) && opts.length > 1) { const c = chaosBlocked(s.data.value, s.simTargets.value, modId); methodPop.value?.ask(btn, opts, done, c ? { chaos: c } : {}); }
+  if (adding && !s.simTargets.value.some((x) => x.modId === modId) && opts.length > 1) methodPop.value?.ask(btn, opts, done, methodsOff(s.data.value, s.simTargets.value, modId));
   else done(adding ? opts[0] : undefined);
 }
 

@@ -15,7 +15,7 @@ import { runeEnForId } from "./pattern";
 import { sideLimits } from "./sim-methods";
 
 export interface QuizRules { v: 3; rules: Record<string, QuizRule[]> }
-export type SimMethod = "exalt" | "chaos" | "desecrate" | "essence" | "fracture";
+export type SimMethod = "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture";
 export interface SimTargetIn { modId: string; minTierIndex: number; method: SimMethod; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }
 export interface QuizSimIn {
   data: PatchData;
@@ -33,11 +33,14 @@ export interface QuizSimIn {
   fracWeights?: Record<string, number>;
   /** グレーターエッセンスを巻き込む道 (sim-greater.ts): 固定済みのレアは、マジック (候補 + 残す MOD) → このエッセンス → 壁 → 候補を固定、で作る */
   greater?: { essKey: string | null; keep: SimTargetIn | null };
+  /** ルーン 1 個の値段 (高貴建て、英語の名前)。白から全部 ⑤ で答える時に始めから差すルーンの代金をベース代に足す */
+  runePrice?: (en: string) => number;
 }
 
 /**
  * 関門の打ち止め (その関門で打てる回数、お告げは数えない)。どの関門にも付ける (2026-10-20 オーナー「どの手順にも打ち止めは必須」
- * 「カオススパムとか冒涜リロールの沼はガチでマックスまで沼れる」)。spam = カオススパム・冒涜 (と、付け方を ⑤ で決める残りの候補)、step = それ以外。数は仮 (打った回数の分かれ方を見て決める)
+ * 「カオススパムとか冒涜リロールの沼はガチでマックスまで沼れる」)。spam = カオススパム・冒涜 (と、付け方を ⑤ で決める残りの候補)、step = それ以外。
+ * 増強スパム (2026-10-21) もスパムなので spam
  */
 export const GATE_CAPS = { spam: 3000, step: 300 } as const;
 
@@ -47,12 +50,12 @@ export function methodsFor(data: PatchData, modId: string): SimMethod[] {
   if (!m) return ["exalt"];
   if (m.source === "desecrated") return ["desecrate"];
   if (CRAFTED_SOURCES.has(m.source)) return ["essence"];
-  return ["exalt", "chaos", "desecrate"];
+  return ["exalt", "chaos", "augment", "desecrate"];
 }
 export const methodOfTarget = (data: PatchData, t: { modId: string; method?: SimMethod }): SimMethod =>
   t.method === "fracture" ? "fracture" : t.method && methodsFor(data, t.modId).includes(t.method) ? t.method : methodsFor(data, t.modId)[0]!;
 
-const KIND: Record<SimMethod, SlotKind> = { exalt: "normal", chaos: "normal", desecrate: "desecrated", essence: "essence", fracture: "fractured" };
+const KIND: Record<SimMethod, SlotKind> = { exalt: "normal", chaos: "normal", augment: "normal", desecrate: "desecrated", essence: "essence", fracture: "fractured" };
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /**
@@ -99,7 +102,7 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
   const slotIds = new Map<string, string[]>();
   /** 札の id → 関門の打ち止め */
   const caps: Record<string, number> = {};
-  const capOf = (m: SimMethod | null): number => (m == null || m === "chaos" || m === "desecrate" ? GATE_CAPS.spam : GATE_CAPS.step);
+  const capOf = (m: SimMethod | null): number => (m == null || m === "chaos" || m === "augment" || m === "desecrate" ? GATE_CAPS.spam : GATE_CAPS.step);
   if (frac.length && fracSide) slots.push({ id: LETTERS[n++] ?? `Z${n}`, side: fracSide, mods: frac, kind: "fractured" });
   for (const t of x.targets) {
     if (t.method === "fracture") continue;
@@ -133,8 +136,17 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
   }
   // グレーターの道: 残す MOD とエッセンスの MOD は始めから付いている (フラクチャーの前に付けた) ので、関門の一番前に (後ろだと「先の狙い」で隠れた。2026-10-20 見本の靴)
   const pre = x.greater ? [x.greater.keep?.modId, magicEss(x)].flatMap((id) => (id ? slotIds.get(id) ?? [] : [])) : [];
+  /**
+   * 増強スパムの札はマジックの間に揃える物なので、1 つの関門にまとめて一番前に (2026-10-21。順番どおり 1 つずつだと、サフィが先に付いた時に
+   * 「先の狙い」で外れに数えて消していた)。白から全部 ⑤ で答える時は、フラクチャーの候補もマジックで一緒に揃える
+   */
+  const augIds = x.targets.filter((t) => t.method === "augment").flatMap((t) => slotIds.get(t.modId) ?? []);
+  const fracId = slots.find((s) => s.kind === "fractured")?.id;
+  const magicGate = [...augIds, ...(augIds.length && x.start === "white" && fracId ? [fracId] : [])];
   const order0 = x.order?.flatMap((k) => slotIds.get(k.startsWith("mod:") ? k.slice(4) : k) ?? []);
-  const order = order0 ? [...pre, ...order0.filter((id) => !pre.includes(id))] : undefined;
+  const order1 = order0 ? [...pre, ...order0.filter((id) => !pre.includes(id))] : undefined;
+  const order = magicGate.length ? [magicGate.join("|"), ...(order1 ?? []).filter((id) => !magicGate.includes(id))] : order1;
+  if (magicGate.length > 1) caps[magicGate.join("|")] = GATE_CAPS.spam;
   const route = (id: string, goal: QuizSlot[], entry?: string[]): QuizRoute => ({ id, goal, ...(entry ? { entry } : {}), rules: q?.rules[id] ?? [], ...(order?.length ? { order, caps } : {}) });
   const routes: QuizRoute[] = split
     ? [route("prefix", [...slots, split.prefix], [split.prefix.id]), route("suffix", [...slots, split.suffix], [split.suffix.id])]
@@ -170,7 +182,13 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
   }
   else if (x.start === "magic") start = { kind: "bought", mods: magicStartMods(x.data, x.targets), rarity: "magic", price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}) };
   else if (x.start === "four" && frac.length) start = { kind: "bought", mods: [{ mod: frac[0]!.modId }], fill: { prefix: 2, suffix: 2 }, price: x.startPrice };
-  else start = { kind: "white", price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}) };
+  else {
+    // 白から全部 ⑤ で答える時 (増強スパム): マジックで揃える狙い (増強スパム・フラクチャーの候補) にルーンの MOD があれば、そのルーンを差した白から
+    // (マジックの間は差せないと付かない。固定済みから始める時と同じ)
+    const r0 = magicGate.length ? [...new Set([...frac, ...x.targets.filter((t) => t.method === "augment").flatMap((t) => [t, ...(t.alts ?? [])])].flatMap((c) => runesOf(c.modId)))] : [];
+    const rp = r0.reduce((a, en) => a + (x.runePrice?.(en) ?? 0), 0);
+    start = { kind: "white", price: x.startPrice + rp, ...(x.sockets ? { sockets: x.sockets } : {}), ...(r0.length ? { runes: r0 } : {}) };
+  }
   return { recipe: { v: 3, base: x.base, itemLevel: x.itemLevel, start, routes }, error };
 }
 

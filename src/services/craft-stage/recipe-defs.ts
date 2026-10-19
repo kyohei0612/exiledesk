@@ -7,7 +7,7 @@ import type { MissRule, PatternKind } from "./pattern";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
 
-export type RecipeMethod = "exalt" | "chaos" | "desecrate" | "essence" | "fracture";
+export type RecipeMethod = "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture";
 /**
  * 狙いの 1 手順。alts があれば「どれか 1 つが付けば当たり」(2026-10-05 オーナー「マークスマンの MOD をプレで複数選んで狙いたい。
  * その 1 つの MOD の所は他の MOD でも当たりとする」)。alts は modId と同じ側・同じ付け方 (普通 / 冒涜) の物だけ

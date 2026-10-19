@@ -18,7 +18,7 @@ import type { SimRecipesCtx } from "./use-sim-recipes";
 
 
 export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRecipesCtx) {
-  const { MAX_STEPS_CHOICES, baseJa, boughtDivine, rareDivine, calc, doneDivine, fmtDate, fourDivine, fractureRow, itemDivine, maxSteps,
+  const { MAX_STEPS_CHOICES, baseJa, boughtDivine, rareDivine, calc, doneDivine, fmtDate, fourDivine, fractureRow, wholeRoute, itemDivine, maxSteps,
     modShort, num, quizBase, recipeOut, restBases, restCost, results, rows, shown, shownName, startOnce, whiteDivine } = d;
   const s = craftStage;
   /**
@@ -215,7 +215,8 @@ export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRe
     };
     const out: Array<{ name: string; note: string; total: number; bar: string; items: Array<{ name: string; n: number; cost: number; share: number }> }> = [];
     const c = calc.value;
-    if (fractureRow.value && s.simStart.value !== "item") {
+    // 白から全部 ⑤ で答えた時 (増強スパム。2026-10-21) はベースは白だけ (フラクチャーも ⑤ の答えの中)
+    if (fractureRow.value && !wholeRoute.value && s.simStart.value !== "item") {
       // 1 で始め方を決めた時はその始め方 (前は一番安い始め方の内訳が出て、足し算も合わなかった。2026-10-08 完成判定 4)
       const best = s.simStart.value === "fractured" ? "bought" : s.simStart.value === "four" ? "four" : routes.value.best;
       const name = s.simStart.value === "fractured" ? "1 で決めた: フラクチャー済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : routes.value.list.find((x) => x.key === best)?.name.replace(/\s*\(.*$/, "") ?? "";
@@ -231,7 +232,7 @@ export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRe
       out.push({ name: "ベース", note: s.simStart.value === "item" ? "エミュレーターの状態" : "白のベース", total: split.value.base, bar: "bg-stone-400/80", items: top([{ name: s.simStart.value === "item" ? "この状態の作り直し (累計 + 白ベース)" : "白のベース", n: s.simStart.value === "item" ? Math.max(0, r.bases - 1) : r.bases, cost: split.value.base }], split.value.base) });
     }
     const craft = r.usage.filter((u) => u.key !== "reveal").map((u) => ({ name: usageName(u.key), n: u.count, cost: u.cost }));
-    out.push({ name: "クラフト", note: fractureRow.value ? "フラクチャー済みから完成まで" : "", total: split.value.craft, bar: "bg-amber-400/80", items: top(craft, craft.reduce((a, x) => a + x.cost, 0)) });
+    out.push({ name: "クラフト", note: fractureRow.value && !wholeRoute.value ? "フラクチャー済みから完成まで" : wholeRoute.value ? "白から完成まで" : "", total: split.value.craft, bar: "bg-amber-400/80", items: top(craft, craft.reduce((a, x) => a + x.cost, 0)) });
     return out;
   });
   /** 上の 5 つの数 (どちらの回し方でも同じ形) */

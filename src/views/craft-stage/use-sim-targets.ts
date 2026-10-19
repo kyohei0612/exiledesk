@@ -42,7 +42,7 @@ export function useSimTargets() {
   watch(maxSteps, (v) => { try { localStorage.setItem(MAX_STEPS_KEY, String(v)); } catch { /* 無くてよい */ } });
 
   /** 付け方の名前 (2026-10-05 オーナー「カオスはカオススパム、高貴はガチャなので高貴ガチャ」) */
-  const METHOD_JA: Record<RecipeMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス", fracture: "フラクチャー" };
+  const METHOD_JA: Record<RecipeMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", augment: "増強スパム", desecrate: "冒涜", essence: "エッセンス", fracture: "フラクチャー" };
   /** その MOD に使える付け方 (最初が既定) */
   function methodsFor(modId: string): RecipeMethod[] {
     const d = s.data.value;
@@ -99,7 +99,9 @@ export function useSimTargets() {
   });
   const orderKeys = computed(() => {
     const all = [...new Set([...restRows.value.map((r) => `mod:${r.modId}`), ...runeNeeded.value, ...s.simOrder.value.filter((k) => k.startsWith("rune:"))])];
-    const pos = (k: string): number => { const i = s.simOrder.value.indexOf(k); return i < 0 ? 1e6 + all.indexOf(k) : i; };
+    // 増強スパムの狙いはマジックの間に付ける物なので一番上 (⑤ でも 1 つの関門で一番前。2026-10-21)
+    const aug = new Set(restRows.value.filter((r) => r.method === "augment").map((r) => `mod:${r.modId}`));
+    const pos = (k: string): number => { const i = s.simOrder.value.indexOf(k); return (aug.has(k) ? -2e6 : 0) + (i < 0 ? 1e6 + all.indexOf(k) : i); };
     return all.sort((a, b) => pos(a) - pos(b));
   });
   function moveOrder(k: string, d: -1 | 1): void {
@@ -189,9 +191,10 @@ export function useSimTargets() {
         mods: { prefix: it.prefixes.length, suffix: it.suffixes.length, placed: [...new Set(placed)], fractured: fixed?.modId ?? null, desecrated: all.filter((m) => m.desecrated).length, essences: all.filter((m) => m.crafted).length },
       };
     }
+    const fx = fractureRow.value && !wholeRoute.value;
     return {
-      rarity: fractureRow.value ? "rare" : "normal",
-      fracturedSide: fractureRow.value ? (fractureRow.value.side === "サフィックス" ? "suffix" : "prefix") : null,
+      rarity: fx ? "rare" : "normal",
+      fracturedSide: fx ? (fractureRow.value!.side === "サフィックス" ? "suffix" : "prefix") : null,
       sockets: socketCount.value,
     };
   });
@@ -209,6 +212,11 @@ export function useSimTargets() {
     ];
   }));
   const fractureRow = computed(() => fractureRows.value[0] ?? null);
+  /**
+   * 白から全部 ⑤ で答える (2026-10-21 オーナー OK): 増強スパムの狙いがあるとマジックを通るので、フラクチャー済み・MOD 付きレアは買えない。
+   * ③ は白のベースの値段だけ (フラクチャーまでの式は出さない)、⑤ は白からマジック → (フラクチャー) → … を全部答える
+   */
+  const wholeRoute = computed(() => rows.value.some((r) => r.method === "augment"));
   /**
    * 作り方は 変成・増強ガチャ → 王者 → 骨の壁 (4 つ目を骨の未発現の冒涜に、候補が 1 つ減る) だけ
    * (2026-10-05 オーナー「基本これする時骨壁するから他の選択肢いらない」。錬金 → カオス・壁なしは recipe-sim.ts には残す)
@@ -293,7 +301,7 @@ export function useSimTargets() {
   }
   return { s, runs, MAX_STEPS_KEY, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, methodsFor, methodOf, rows, targetsSig, restRows,
     runeNeeded, orderKeys, moveOrder, reorder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,
-    REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, makeRoute, blocker, boughtDivine, magicDivine,
+    REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, wholeRoute, makeRoute, blocker, boughtDivine, magicDivine,
     whiteDivine, fourDivine, rareDivine, itemDivine, exOf, toExalt, num, PRICE_KEY, keptAll, craftCap, socketCap, sockets, socketsOk,
     socketCount, socketQuery, keptKey, kept, loadKept, saveKept, restoring, ageOf };
 }

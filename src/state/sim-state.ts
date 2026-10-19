@@ -32,7 +32,7 @@ export const simStartItem = ref<StageItem | null>(null);
 /** ベースを選ぶ前に選んだレシピ (StageSimPanel が開いたら読み込む。2026-10-08 完成判定: レシピはベースを選ぶまで出なかった) */
 export const simPendingRecipe = ref<string | null>(null);
 export const simStartCost = ref(0);
-export const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }>>([]);
+export const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }>>([]);
 /** ② のこの手順 (本体の modId) の「あるいは」を選ぶポップアップを開いている ([[StageFracturePicker.vue]] の altFor) */
 export const simAltFor = ref<string | null>(null);
 /**

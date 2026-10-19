@@ -1,6 +1,6 @@
 /**
  * sim-methods.ts — シミュレーターの狙う MOD の付け方 (2026-10-18 オーナー「2 の狙う時に T1 とかで選択時に付け方をその場で選ばせる、ポップアップで」)。
- * 普通の MOD は 高貴ガチャ / カオススパム / 冒涜 / フラクチャー から選ぶ。冒涜の MOD は冒涜、エッセンス・合金の MOD はエッセンスに決まっている (選ばせない)
+ * 普通の MOD は 高貴ガチャ / カオススパム / 増強スパム / 冒涜 / フラクチャー から選ぶ。冒涜の MOD は冒涜、エッセンス・合金の MOD はエッセンスに決まっている (選ばせない)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { SimMethod } from "./quiz-build";
@@ -8,15 +8,15 @@ import { freshItem } from "./run-plan";
 import { limitOf } from "./stage-core";
 import { tr } from "../../i18n/lang";
 
-export const METHOD_JA: Record<SimMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", fracture: "フラクチャー", essence: "エッセンス" };
-export const METHOD_EN: Record<SimMethod, string> = { exalt: "Exalt gamble", chaos: "Chaos spam", desecrate: "Desecrate", fracture: "Fracture", essence: "Essence" };
+export const METHOD_JA: Record<SimMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", augment: "増強スパム", desecrate: "冒涜", fracture: "フラクチャー", essence: "エッセンス" };
+export const METHOD_EN: Record<SimMethod, string> = { exalt: "Exalt gamble", chaos: "Chaos spam", augment: "Augmentation spam", desecrate: "Desecrate", fracture: "Fracture", essence: "Essence" };
 
 /** その MOD で選べる付け方 (1 つなら選ばせずにそれで足す) */
 export function methodsFor(d: PatchData | null, modId: string): SimMethod[] {
   const src = d?.mods.get(modId)?.source;
   if (src === "desecrated") return ["desecrate"];
   if (src === "essence" || src === "perfect_essence") return ["essence"];
-  return ["exalt", "chaos", "desecrate", "fracture"];
+  return ["exalt", "chaos", "augment", "desecrate", "fracture"];
 }
 
 /** シミュレーターの狙い 1 つ (state/sim-state.ts の simTargets と同じ形) */
@@ -44,7 +44,8 @@ export function sortBuckets(d: PatchData | null, targets: readonly SimTargetLike
   const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
   const out: SortBucket[] = [];
   for (const t of targets) {
-    if (t.method === "fracture" || t.method === "essence") continue;
+    // 増強スパムは側ごとに 1 つ (augmentBlocked) なので「どれか N つ」にまとめない
+    if (t.method === "fracture" || t.method === "essence" || t.method === "augment") continue;
     const method = t.method ?? "exalt";
     const all = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
     // 側をまたぐ「どれか」は整理の外 (前の作りのカオススパムの両側。触らない)
@@ -108,4 +109,21 @@ export function chaosBlocked(d: PatchData | null, targets: readonly SimTargetLik
   const me = side(modId);
   const other = targets.find((t) => t.modId !== modId && t.method === "chaos" && side(t.modId) !== me);
   return other ? (me === "prefix" ? tr("カオススパムはサフィックスで選んでいる (片側だけ)", "Chaos spam is already on suffixes (one side only)") : tr("カオススパムはプレフィックスで選んでいる (片側だけ)", "Chaos spam is already on prefixes (one side only)")) : null;
+}
+
+/**
+ * 増強スパム (2026-10-21 オーナー OK): マジックで付ける。プレ 1 つ・サフィ 1 つ、側ごとに別に動き、各側は 1 つの狙い (「どれか」の候補は同じ側なら可) だけ。
+ * その側にもう増強スパムの狙い (かフラクチャーの候補。マジックで一緒に揃えるので同じ枠を取り合う) があれば、その理由 (無ければ null)
+ */
+export function augmentBlocked(d: PatchData | null, targets: readonly SimTargetLike[], modId: string): string | null {
+  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const me = side(modId);
+  if (targets.some((t) => t.modId !== modId && t.method === "fracture" && [t, ...(t.alts ?? [])].some((x) => side(x.modId) === me))) return tr("フラクチャー予定と同じ側 (マジックの枠は側ごとに 1 つ)", "Same side as the fracture mod (magic has one slot per side)");
+  const other = targets.find((t) => t.modId !== modId && t.method === "augment" && side(t.modId) === me);
+  return other ? (me === "prefix" ? tr("増強スパムはプレフィックスに 1 つだけ (マジックはプレ 1・サフィ 1)", "Augmentation spam: one per side (magic has 1 prefix, 1 suffix)") : tr("増強スパムはサフィックスに 1 つだけ (マジックはプレ 1・サフィ 1)", "Augmentation spam: one per side (magic has 1 prefix, 1 suffix)")) : null;
+}
+/** 付け方のポップアップで選べない付け方と理由 (カオススパムは片側だけ・増強スパムは側ごとに 1 つ) */
+export function methodsOff(d: PatchData | null, targets: readonly SimTargetLike[], modId: string): Partial<Record<SimMethod, string>> {
+  const c = chaosBlocked(d, targets, modId), a = augmentBlocked(d, targets, modId);
+  return { ...(c ? { chaos: c } : {}), ...(a ? { augment: a } : {}) };
 }

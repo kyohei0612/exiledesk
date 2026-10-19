@@ -137,14 +137,26 @@ export function routeOf(recipe: QuizRecipe, item: StageItem): QuizRoute {
   return recipe.routes[0]!;
 }
 
-/** 付ける順番で見ない札 (まだ付いていない一番前の札より後ろ、並びに無い札も)。順番が無ければ空 */
+/**
+ * 順番を関門の並びに (関門 = 札の id、"A|B" は 1 つの関門にまとめた札。2026-10-21 増強スパムのマジックの札)。並びに無い札は後ろに 1 つずつ。
+ * 関門の名前はまとめた形のまま (打ち止めの caps のキー)
+ */
+function gatesOf(order: readonly string[], goal: readonly QuizSlot[]): Array<{ key: string; ids: string[] }> {
+  const has = (id: string): boolean => goal.some((s) => s.id === id);
+  const out = order.map((k) => ({ key: k, ids: k.split("|").filter(has) })).filter((g) => g.ids.length);
+  const seen = new Set(out.flatMap((g) => g.ids));
+  for (const s of goal) if (!seen.has(s.id)) out.push({ key: s.id, ids: [s.id] });
+  return out;
+}
+
+/** 付ける順番で見ない札 (まだ付いていない札のある一番前の関門より後ろ、並びに無い札も)。順番が無ければ空 */
 function maskedBy(order: readonly string[] | undefined, goal: readonly QuizSlot[], state: Record<string, number>): Set<string> {
   const out = new Set<string>();
   if (!order?.length) return out;
-  const ids = [...order.filter((id) => goal.some((s) => s.id === id)), ...goal.filter((s) => !order.includes(s.id)).map((s) => s.id)];
-  const cut = ids.findIndex((id) => (state[id] ?? 0) < 2);
+  const gs = gatesOf(order, goal);
+  const cut = gs.findIndex((g) => g.ids.some((id) => (state[id] ?? 0) < 2));
   if (cut < 0) return out;
-  for (const id of ids.slice(cut + 1)) if ((state[id] ?? 0) < 3) out.add(id); // 固定済み (フラクチャー) は始めから付いているので見る
+  for (const g of gs.slice(cut + 1)) for (const id of g.ids) if ((state[id] ?? 0) < 3) out.add(id); // 固定済み (フラクチャー) は始めから付いているので見る
   return out;
 }
 
@@ -239,8 +251,7 @@ export interface QuizOpts { price: (key: string) => number; maxSteps?: number; l
 /** 今の関門: 付ける順番 (並びに無い札は後ろ) で、まだ付いていない一番前の札。順番の無い工程・完成は null */
 export function gateOf(route: QuizRoute, sit: Situation): string | null {
   if (!route.order?.length) return null;
-  const ids = [...route.order.filter((id) => route.goal.some((s) => s.id === id)), ...route.goal.filter((s) => !route.order!.includes(s.id)).map((s) => s.id)];
-  return ids.find((id) => Number(sit[id] ?? 0) < 2) ?? null;
+  return gatesOf(route.order, route.goal).find((g) => g.ids.some((id) => Number(sit[id] ?? 0) < 2))?.key ?? null;
 }
 
 function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): StageItem {

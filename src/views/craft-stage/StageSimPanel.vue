@@ -50,7 +50,7 @@ const rc = useSimRecipes({ ...tg, ...rn });
 const st = useSimSteps({ ...tg, ...rn });
 const rs = useSimResult({ ...tg, ...sr, ...rn, ...rc });
 const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, orderKeys, reorder, removeRune, runeChoices, toggleRune,
-  orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, boughtDivine, whiteDivine,
+  orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, wholeRoute, boughtDivine, whiteDivine,
   fourDivine, rareDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, whiteCosts, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
@@ -209,12 +209,12 @@ const stepNotes = computed(() => {
             <!-- 反対側の狙いの取り方 (白から自作: 安い方、2026-10-20) -->
             <p v-if="k.k === 'white' && calc?.keep" data-sim-keep class="mt-1 text-[11px] text-[var(--exile-color-text-secondary)] md:pl-[calc(1rem+0.75rem)]">{{ tr(`${keepName}: マジックで一緒に揃える ${money(calc.keep.together)} / 固定してから 2 MOD のレアにカオス ${money(calc.keep.chaos)} → ${calc.keep.use === "together" ? "一緒に揃える" : "カオス"}が安い`, `${keepName}: land it together on magic ${money(calc.keep.together)} / fracture first, then Chaos on a 2-mod rare ${money(calc.keep.chaos)} → ${calc.keep.use === "together" ? "together" : "Chaos"} is cheaper`) }}</p>
             <p v-if="k.k === 'white' && whiteBudget" data-sim-budget class="mt-1 text-[11px] md:pl-[calc(1rem+0.75rem)]">{{ tr(`一番高い買う値段 ${money(whiteBudget.budget)} までに作れる`, `Done within the priciest buy option (${money(whiteBudget.budget)})`) }} <b :class="whiteBudget.p >= 0.8 ? 'text-emerald-300' : whiteBudget.p >= 0.5 ? 'text-amber-200' : 'text-rose-300'">{{ pct(whiteBudget.p) }}</b> <span class="opacity-70">{{ tr(`(2 人に 1 人は ${money(whiteBudget.p50)} まで)`, `(half finish within ${money(whiteBudget.p50)})`) }}</span></p>
-            <SimRareStrip v-else-if="k.k === 'white'" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
+            <SimRareStrip v-else-if="k.k === 'white' && !wholeRoute" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
           </div>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ。無ければ出さない (2026-10-18) -->
         <template v-if="fracMembers.length">
-        <p class="mt-3 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]" :class="fractureRows.length ? '' : 'max-md:hidden'">{{ s.simStart.value === "fractured" ? "フラクチャーの MOD (買う物)" : s.simStart.value === "four" ? "自分でフラクチャーする MOD" : "増強・消去スパムで狙う MOD (フラクチャー予定)" }}</p>
+        <p class="mt-3 text-[12px] font-semibold text-[var(--exile-color-text-secondary)]" :class="fractureRows.length ? '' : 'max-md:hidden'">{{ s.simStart.value === "fractured" ? "フラクチャーの MOD (買う物)" : s.simStart.value === "four" ? "自分でフラクチャーする MOD" : wholeRoute ? "フラクチャー予定 (⑤ でマジックの間に増強スパムの狙いと一緒に揃える)" : "増強・消去スパムで狙う MOD (フラクチャー予定)" }}</p>
         <p v-if="mixedSides" class="text-[11px] text-amber-200">候補がプレフィックスとサフィックスに分かれています (推奨は同じ側。マジックの間はどちらの側に付いても当たり)</p>
         <p v-for="(r, i) in fracMembers" :key="r.modId" class="flex items-center gap-2 py-0.5">
           <span class="shrink-0 rounded-sm border border-white/15 px-1 text-[10px] opacity-70">{{ r.side.startsWith("プレ") ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }}</span>
@@ -299,7 +299,7 @@ const stepNotes = computed(() => {
     </template>
       <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
       <div v-if="step4pre && simStep === 'play'" :data-sim-cur="!patternDone || undefined" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
-        <SimStepHead class="mb-3" :n="5" title="打ち方" :current="true" :note="tr(`${s.simStart.value === 'item' ? 'エミュレーターの状態' : s.simStart.value === 'magic' ? '買ったマジック' : fractureRow ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`, `Step by step from ${s.simStart.value === 'item' ? 'the Emulator item' : s.simStart.value === 'magic' ? 'the bought magic' : fractureRow ? 'the fractured base' : 'a white base'}`)" :help="tr('状況ごとに「この時はこの手」を答えた物 = パターン。いくつか作って、回して費用を比べられる', 'Answers to “in this situation, do this” = a pattern. Make several and run them to compare costs')" />
+        <SimStepHead class="mb-3" :n="5" title="打ち方" :current="true" :note="tr(`${s.simStart.value === 'item' ? 'エミュレーターの状態' : s.simStart.value === 'magic' ? '買ったマジック' : fractureRow && !wholeRoute ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`, `Step by step from ${s.simStart.value === 'item' ? 'the Emulator item' : s.simStart.value === 'magic' ? 'the bought magic' : fractureRow && !wholeRoute ? 'the fractured base' : 'a white base'}`)" :help="tr('状況ごとに「この時はこの手」を答えた物 = パターン。いくつか作って、回して費用を比べられる', 'Answers to “in this situation, do this” = a pattern. Make several and run them to compare costs')" />
         <StagePatternEditor :busy="busy" :start="patternStart" :locked="patternDone" :quiz-base="quizBase" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。

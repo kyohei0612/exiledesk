@@ -12,10 +12,11 @@ import type { SimRunCtx } from "./use-sim-run";
 
 export function useSimStarts(c: SimTargetsCtx & Pick<SimRunCtx, "calc" | "whiteCosts"> & { whiteDecide: () => void }) {
   const s = craftStage;
-  const { calc, whiteCosts, fracMembers, rows, num, whiteDivine, boughtDivine, magicDivine, fourDivine, itemDivine, ageOf, whiteDecide } = c;
+  const { calc, whiteCosts, fracMembers, wholeRoute, rows, num, whiteDivine, boughtDivine, magicDivine, fourDivine, itemDivine, ageOf, whiteDecide } = c;
 /** 3 の始め方の行。フラクチャーの始め方は 2 にフラクチャー予定がある時だけ (無ければ出さない。2026-10-18 オーナー)。「エミュレーターの状態から」の行は出さない (2026-10-19 オーナー「意味わからんから消しておk」。「この状態からシミュレーター」で来た時はその状態のまま) */
 // グレーターエッセンスを巻き込む道は自前のフラクチャーだけ (4 MOD を買う・フラクチャー済みを買うは出さない。2026-10-20 オーナー「グレーター系で付ける奴はフラクチャー済み買いはできない」)
-const startKinds = computed(() => SIM_STARTS.filter((k) => k.k !== "item" && (!k.needsFracture || (fracMembers.value.length > 0 && !calc.value?.greater))));
+// 増強スパムの狙いがある時 (白から全部 ⑤ で答える。2026-10-21) も白だけ (マジックを通るので買う始め方は無い)
+const startKinds = computed(() => SIM_STARTS.filter((k) => k.k !== "item" && (!k.needsFracture || (fracMembers.value.length > 0 && !wholeRoute.value && !calc.value?.greater))));
 // 選んでいた始め方が一覧から消えたら (マジック・フラクチャー予定を外した時) 白ベースからに戻す。エミュレーターの状態からは行が無くても戻さない
 watch(startKinds, (ks) => { if (s.simStart.value !== "item" && !ks.some((k) => k.k === s.simStart.value)) s.simStart.value = "white"; }, { immediate: true });
 /** 使えない始め方の理由 (今は出さない作りなので空。行の作りは残す) */
@@ -28,7 +29,7 @@ const startAge = (k: SimStartKind): ReturnType<typeof ageOf> | null => (k === "i
  */
 function startCost(k: SimStartKind): number | null {
   const base = num(k === "white" ? whiteDivine.value : k === "fractured" ? boughtDivine.value : k === "magic" ? magicDivine.value : k === "four" ? fourDivine.value : itemDivine.value);
-  if (!fracMembers.value.length || k === "item" || base == null) return base;
+  if (!fracMembers.value.length || wholeRoute.value || k === "item" || base == null) return base;
   if (k === "fractured") return base + (calc.value?.keep?.chaos ?? 0);
   const c = calc.value;
   if (!c || c.cantRoll) return null;
@@ -39,12 +40,12 @@ function startCost(k: SimStartKind): number | null {
 /** グレーターの道でマジックに揃える反対側の MOD の文 (どれかは「／」で) */
 const keepText = computed(() => { const k = calc.value?.greater?.keep; return k ? [k, ...(k.alts ?? [])].map((x) => rows.value.find((r) => r.modId === x.modId)?.text ?? rows.value.flatMap((r) => r.alts).find((a) => a.modId === x.modId)?.text ?? x.modId).join(" ／ ") : ""; });
 /** 右の値段が何か (フラクチャー予定がある時はフラクチャー済みまで) */
-const costNote = computed(() => (fracMembers.value.length ? `右の値段 = フラクチャー済みのベースになるまで (ベース代・壁・フラクチャー・消去込み、平均)${calc.value?.keep ? ` + ${keepName.value} が付くまで` : ""}` : "右の値段 = ベース 1 個の値段"));
+const costNote = computed(() => (wholeRoute.value ? tr("右の値段 = 白のベース 1 個 (増強スパムの狙いがあるので、白から全部 ⑤ の打ち方で答える。費用は ⑤ の答えで決まる)", "Price = one white base (with an Augmentation-spam target, the whole craft is answered in step 5 from white; the cost comes from those answers)") : fracMembers.value.length ? `右の値段 = フラクチャー済みのベースになるまで (ベース代・壁・フラクチャー・消去込み、平均)${calc.value?.keep ? ` + ${keepName.value} が付くまで` : ""}` : "右の値段 = ベース 1 個の値段"));
 /** 反対側で取る狙いの短い名前 */
 const keepName = computed(() => { const r = rows.value.find((x) => x.modId === calc.value?.keep?.host); return r ? [r.text, ...r.alts.map((a) => a.text)].map((t) => t.replace(/\s*\([^()]*\d[^()]*\)/g, "").replace(/%$/, "")).join(" ／ ") + ` ${r.rank} 以上` : ""; });
 /** 一番安い始め方 (値段の入った物から。③ の「次へ」の上に出し、次へでその始め方にする。2026-10-20 オーナー「計算画面で一番安い始め方を表示して次へ」) */
 const bestStart = computed(() => {
-  if (!fracMembers.value.length) return null;
+  if (!fracMembers.value.length || wholeRoute.value) return null;
   const xs = [...startKinds.value.filter((k) => startCost(k.k) != null).map((k) => ({ k: k.k as SimStartKind | "rare", label: tr(k.label, k.labelEn), c: startCost(k.k)! })),
     ...(calc.value?.rareTotal != null ? [{ k: "rare" as const, label: tr("適当なレアを消去で 1 MOD に", "Annul a random rare to 1 mod"), c: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0) }] : [])];
   return xs.length ? xs.reduce((a, x) => (x.c < a.c ? x : a)) : null;

@@ -21,7 +21,7 @@ import { effectiveCls } from "../../services/craft-stage/stage-core";
 import { withRunes } from "../../vendor/poe2htc/engine/runes";
 import { runeJaOf, runeToneOf } from "../../services/craft-stage/mod-list";
 import SimMethodPop from "./SimMethodPop.vue";
-import { chaosBlocked } from "../../services/craft-stage/sim-methods";
+import { methodsOff } from "../../services/craft-stage/sim-methods";
 import { ref } from "vue";
 /**
  * 「どれか」の組は既定でたたむ: 頭の 1 行 (どれか n・候補の数・段・合計・▾) と、候補の名前を「／」で並べた 1 行
@@ -38,7 +38,7 @@ const props = defineProps<{ /** ① で選んでいる間 (段・×・付け方�
 const s = craftStage;
 const methodPop = ref<InstanceType<typeof SimMethodPop> | null>(null);
 /** カオススパムは片側だけ (反対側にあれば選べない) */
-const chaosOff = (host: string): { chaos?: string } => { const c = chaosBlocked(s.data.value, s.simTargets.value, host); return c ? { chaos: c } : {}; };
+const chaosOff = (host: string) => methodsOff(s.data.value, s.simTargets.value, host);
 
 type Kind = "fracture" | "normal" | "desecrated" | "essence" | "perfect_essence";
 
@@ -192,13 +192,14 @@ function srcOf(host: string): Src {
   if (m?.source === "desecrated") return "desecrated";
   return (m && essenceKindOf(m)) ?? "normal";
 }
-type Plan = "fracture" | "exalt" | "chaos" | "desecrate" | "essence";
-const PLAN_JA: Record<Plan, string> = { fracture: "フラクチャー予定", exalt: "高貴ガチャ", chaos: "カオススパム", desecrate: "冒涜", essence: "エッセンス" };
+type Plan = "fracture" | "exalt" | "chaos" | "augment" | "desecrate" | "essence";
+const PLAN_JA: Record<Plan, string> = { fracture: "フラクチャー予定", exalt: "高貴ガチャ", chaos: "カオススパム", augment: "増強スパム", desecrate: "冒涜", essence: "エッセンス" };
 /** 付け方の予定の色 (2026-10-05 オーナー「高貴ガチャは黄色、フラクチャーはオレンジ、冒涜は深緑」「カオスも黄色」) */
 const PLAN_CLS: Record<Plan, string> = {
   fracture: "border-orange-400/80 text-orange-200",
   exalt: "border-yellow-400/80 text-yellow-200",
   chaos: "border-yellow-400/80 text-yellow-200",
+  augment: "border-yellow-400/80 text-yellow-200",
   desecrate: "border-green-700 text-green-500",
   essence: "border-sky-400/60 text-sky-200",
 };
@@ -207,7 +208,7 @@ function plansOf(host: string): Plan[] {
   if (!m) return ["exalt"];
   if (m.source === "desecrated") return ["desecrate"];
   if (CRAFTED_SOURCES.has(m.source)) return ["essence"];
-  return ["fracture", "exalt", "chaos", "desecrate"];
+  return ["fracture", "exalt", "chaos", "augment", "desecrate"];
 }
 function planOf(g: { kind: Kind; host: string }): Plan {
   if (g.kind === "fracture") return "fracture";
@@ -287,7 +288,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
         <!-- 付け方は押して選ぶ札を MOD の行のすぐ下に (2026-10-18 オーナー「MOD 選んだら付け方選べるように、高貴ガチャかカオススパムか冒涜・フラクチャー等」。前は 10px のプルダウンで気付けなかった) -->
         <span v-else-if="props.plans && plansOf(g.host).length > 1" data-plan-pick class="flex basis-full flex-wrap items-center gap-1 pl-[1.375rem]" title="この MOD の付け方。打ち方の手で狙う時の目安 (後で変えられる)">
           <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">付け方</span>
-          <button v-for="p in plansOf(g.host)" :key="p" type="button" class="rounded border px-1.5 py-px text-[11px] transition max-md:min-h-9 max-md:px-2.5" :class="planOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="planOf(g) === p" :title="p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host) ? 'ほかのフラクチャー予定と違う側 (非推奨)' : undefined" @click="setPlan(g, p)">{{ PLAN_JA[p] }}<span v-if="p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host)" class="ml-0.5 opacity-70">*</span></button>
+          <button v-for="p in plansOf(g.host)" :key="p" type="button" class="rounded border px-1.5 py-px text-[11px] transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="planOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="planOf(g) === p" :disabled="planOf(g) !== p && !!chaosOff(g.host)[p]" :title="chaosOff(g.host)[p] ?? (p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host) ? 'ほかのフラクチャー予定と違う側 (非推奨)' : undefined)" @click="setPlan(g, p)">{{ PLAN_JA[p] }}<span v-if="p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host)" class="ml-0.5 opacity-70">*</span></button>
         </span>
         <!-- 選んでいる間は印を押すと付け方を変えられる (足した時と同じポップアップ。2026-10-18 オーナー「決めた奴でも途中で変えれるように」) -->
         <button v-else-if="props.editable && plansOf(g.host).length > 1" type="button" data-plan-change class="shrink-0 rounded border px-1 text-[10px] hover:bg-white/10 max-md:min-h-9 max-md:px-2" :class="PLAN_CLS[planOf(g)]" title="押すと付け方を変える" @click="methodPop?.ask($event.currentTarget as Element, plansOf(g.host), (p) => setPlan(g, p), chaosOff(g.host))">{{ PLAN_JA[planOf(g)] }} ▾</button>

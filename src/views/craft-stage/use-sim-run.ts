@@ -23,7 +23,7 @@ import type { SimSearchCtx } from "./use-sim-search";
 
 
 export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
-  const { blocker, boughtDivine, fourDivine, rareDivine, fractureRow, fractureRows, itemDivine, magicDivine, makeRoute, makeSpec,
+  const { blocker, boughtDivine, fourDivine, rareDivine, fractureRow, fractureRows, wholeRoute, itemDivine, magicDivine, makeRoute, makeSpec,
     market, maxSteps, methodOf, num, orderKeys, rows, runs, socketCount, targetsSig, whiteDivine } = d;
   const s = craftStage;
   /** 反対側で揃える狙い (calc.keep の手順) */
@@ -133,14 +133,15 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
      * ベース代は 3 の一番安い道の費用 (startOnce = フラクチャー済みになるまで、やり直しの買い直し込み)。前は白から始まり、3 の値段 (フラクチャー済みまで) と
      * 5 の見出し (フラクチャー済みのベースから) と食い違っていた (2026-10-19 オーナーと通した時。10-08 の決め [[sim-cost-model]])
      */
-    const fracStart = (s.simStart.value === "white" || s.simStart.value === "four" || s.simStart.value === "fractured") && s.simTargets.value.some((t) => methodOf(t) === "fracture");
+    // 白から全部 ⑤ で答える時 (増強スパムの狙いがある。2026-10-21) は白のまま
+    const fracStart = !wholeRoute.value && (s.simStart.value === "white" || s.simStart.value === "four" || s.simStart.value === "fractured") && s.simTargets.value.some((t) => methodOf(t) === "fracture");
     const st = fracStart ? "fractured" : s.simStart.value;
     const startPrice = st === "item" ? num(itemDivine.value) ?? 0 : st === "magic" ? num(magicDivine.value) ?? 0 : st === "fractured" ? startOnce.value ?? 0 : st === "four" ? num(fourDivine.value) ?? 0 : num(whiteDivine.value) ?? 0;
     return {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, start: st, startPrice, sockets: socketCount.value, startItem: startItemAt(),
       // ⑤ の関門は ④ の順番 (先の狙いは「付いていない」と見る。2026-10-20)。固定済みから始める時のどれが固定されたかは 3 の付きやすさの重み
       order: orderKeys.value, fracWeights: Object.fromEntries((calc.value?.each ?? []).map((e) => [e.modId, e.p])),
-      targets: simIn(),
+      targets: simIn(), runePrice: (en: string) => priceOf(`rune:${en}`),
       // グレーターエッセンスを巻き込む道: 固定済みのレアは、残す MOD + エッセンス + 壁が付いた物 (2026-10-20)
       ...(fracStart && calc.value?.greater ? { greater: { essKey: calc.value.greater.essKey, keep: calc.value.greater.keep } } : {}),
       // 白から自作で反対側の狙いを「マジックで一緒に揃える」のが安い時: 揃えたまま王者でレア → 壁 → 固定 (2026-10-20)

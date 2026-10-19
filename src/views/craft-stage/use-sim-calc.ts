@@ -19,7 +19,7 @@ import type { SimTargetsCtx } from "./use-sim-targets";
 export interface KeepPlan { host: string; together: number; chaos: number; chaosKey: string | null; chaosN: number | null; use: "together" | "chaos"; detail: { p: number; q: number; share: number; augKey: string } }
 
 export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
-  const { fracMembers, fractureRow, whiteDivine, fourDivine, rareDivine, num } = d0;
+  const { fracMembers, fractureRow, wholeRoute, whiteDivine, fourDivine, rareDivine, num } = d0;
   const s = craftStage;
   /**
    * 計算の費用 (2026-10-05 オーナー「3 個買って 1 個成功品と仮定して、最低完全変成 3、次の完全増強、消去はセットで使う、フラクチャー 3 つは
@@ -32,7 +32,8 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
    */
   const calc = computed(() => {
     const d = s.data.value, it = s.item.value, f = fractureRow.value;
-    if (!d || !it || !f) return null;
+    // 白から全部 ⑤ で答える時 (増強スパムの狙いがある) は式で出さない (費用は ⑤ の答えで決まる。2026-10-21)
+    if (!d || !it || !f || wholeRoute.value) return null;
     const m = d.mods.get(f.modId);
     if (!m) return null;
     /**

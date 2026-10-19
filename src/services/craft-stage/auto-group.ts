@@ -4,7 +4,7 @@
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
 /** シミュレーターの狙い (state/craft-stage.ts の simTargets の 1 つ) */
-export interface SimTarget { modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }
+export interface SimTarget { modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }
 
 /**
  * 足した MOD と同じ側・同じ付け方 (高貴ガチャ同士 / カオススパム同士) の普通の MOD は、1 つの「この中のどれか N つ」にまとめる
