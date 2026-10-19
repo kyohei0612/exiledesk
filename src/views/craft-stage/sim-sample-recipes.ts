@@ -1,0 +1,21 @@
+/**
+ * sim-sample-recipes.ts — 開発版の「レシピから始める」のプルダウンに最初から並べる見本 (2026-10-21 オーナー「その状態で 2 つ入れといて、靴と手袋」)。
+ * 中身はレシピの URL の #recipe= の後ろ (recipe-share.ts の縮めた形)。押すと保存したレシピに足して始める (openRecipeCode)。
+ * 保存したレシピはブラウザごとなので、見本はコードに持つ。本番 (SIM_LOCKED) では出さない
+ */
+import { SIM_LOCKED } from "../../state/craft-stage";
+
+export interface SampleRecipe { name: string; base: string; baseJa: string; code: string }
+
+export const SIM_SAMPLE_RECIPES: readonly SampleRecipe[] = SIM_LOCKED ? [] : [
+  {
+    // 見本の靴 (動画 S-7YHuq3-P4): 移動スピードをフラクチャー、耐性 T1 を増強スパム、ドッジロール (冒涜)・レアリティ・スピリット。⑤ の答え 18 個入り
+    name: "見本の靴 (耐性を増強スパム)", base: "Vaal Greaves", baseJa: "ヴァールのグリーヴ",
+    code: "pVVdaxNBFP0r4b6oMGgSBWXe0thKoH6QSl_KEqa7N5vR3Zk4M5s2lkCbPPpiffFFQX1QUCmCBREK_pilpf4Lmdm0SfOxpvRhYXaYc-7MuefM7EAHaImAAAqnn1-dvPue7h38fX9YuH66-_pk90vaf3P86e3x0a-0_zsd7KeDDzeAwDOgkA4O0_7HdHCUDr6lewdp_0c6-Op-D4GABroDm0wjUFhnLCo8UMg6qIEANxivYgcjoPfKBLT0n6PRQO3YMGWAwlaLGwQCbcV9dFTZDC31CDQjFtq5HgHDVOiwGzsQy6AWAIUlKY1uaKNu1ROBDb-lpJAxE3638VB2MEZh1jGSPjddIBBz8ZSjqokAt4EWCcRoWtLyNBXzTaIQemQh8vsyCLEuoyiXNUCNvmJmHu0qD1tGcBHWUXNtmPBxiu_uGB9LQnsiIMCiuUKscIV5fLO3UpVRkIvyZuOWtUbhY6NmMF6RiQjqTHHTrQlfoTXEJFF57DiYYeeI8wRVE31zVmCJaVxrc8VNruTnnB4BqQJUQDdAJQJpRRvFg2u6UFXIDO8MLSEDumDNCytzHOERaDNjUImsRYLF6CK0n_b_uMz8LJRsagy27QqPwIuEv7TG7wC9TUAlUZaDmHHhKLZaKOyEAgoCegQCaX8TlzijmNBxYrDRzrYPPavoOCYGF_riBHLop3xcxTWt6mTWN6_AUnQsZQLtK7I4fGkSL0QSzUaN7f0SqMpla1yOO9O0PIEZ2peG1qOo6OJBm6qjgEAzS4dwtmrfbPFgWvjRJUVAxuhMC49jFLK5xgXXRrHoEfoq8zl4_yl0Z4J-dLOO4-z6ktNho0hKpOydoxQO3wWjEryAqbhTsCSclnpuwOcRlM_lKBFYnhblrA9DNy54RcyTr6q62rAo4poZLsWEhtm2lkfRmDwdbrNoTjCmsKODuaBssmy0lNP3BhM-t89KDnMm1ViTOsgiO0K_Je1llXVrnGBYfHYqprRyT6EVxuu57x8",
+  },
+  {
+    // やふやふさんの手袋 (動画 SJdAUeUMNBU): スピードかマナ T1 をフラクチャー、投射物スキル +2 を増強スパム、ES かマナ T1・ヒステリー・戦慄。⑤ の答え 32 個入り
+    name: "やふやふ手袋 (投射物スキルを増強スパム)", base: "Intricate Gloves", baseJa: "手の込んだ手袋",
+    code: "vVbBbttGEP0VYy5pgIUrMkUR7E1VnMCA0wRRb4ZAbMiRtNZyyewuFbuGDpZycX1qi6LXILeiaFGgKIoCRvMxhN18RrEkJVOUZEmRnIMEcsn35u28mVmeQh-oQ0AChXT4Jj37K_-_Pr_48O5i57Pr7366-uPNf-e_pMN_0uFv6ejXdPjD1bufry7_tiuj79PR2_tA4AgoXJ9fpGe_f_j3Mh3-mJ69zSmAgAZ6Ci-ZRqCwL43iPjO480REfdRAgBsMD7CPAuhDl4CO_B4aDdReG6YMUHjd5QaBQKy4jxldvkKdAYG2YB27NiBgmOpk2MNTCKNgPwAKeRyPS_P5i0SiFzLV0yGT3nMVHaFvuMBmjBgAgZDLbziqfRngMdAagRBNN7IkbcV8kyiEAZnLvC99hUxj8JRJNsP0cA2mg8hnYk-i6pw0uxzFrK4vS2x4zIQBAkws3vUSbYPWAiXT2RqzNDN7MHhSmOZ58SSPnu5xIbwOhp7IDK0Gc0rSWdIJUZpFeXiOqo2-2dMapY9eQ3HDfSaaRvEePk2E4bHgqG51DXPwiiGaUSIakcLVKFsEIhWgAnpouem2E6cSibSujeLBPb3TUMgM73NzYtVNh1sjU7cCy_uffnG2JlsEYmYMKpmXnWSh7W47D4bv09FlOvpzx7GtbzC2b7QIvEr4t7Zz-0Af2O2JvJFDxmVG8bqL0i4ooCBhQCCI7G2SjQ2jmNRhYtCLc9EwsKaWMSFkU6xWQRZldjuunk2bRma13t2ApZaxuATiDVkyvFPFS5mI-aiS9jVQ9XVjrMed59StYBR22ByMLdB23m0yK5F4t8uDYlv5VYUoQI2-YtnJEIWYlSI8C1FG7SaXXBvFxNfoqyhk0j-B1pKQX1TobyZ1GdfOx1gd6GGNOMRtTVAKi-PKqASnMPXyfpwSoI9M2Cv0u5FthzYTGgdzsHoDbLz7kgWLrJvJ3AHvdE0lV2MNm_KMc57z5SVb5FNPzI6rZi_LK0s6s6oWjs9FBC6BR0WxtRXibLUVk58WzftxE7iSpEd4bIu0oU60YUJwzQyP5Nzszxd5aCvQ5uwokb3i9hPonrTX1pSPR97cHRQfOYtE7NnnK8V3CextyeTSabkVU2ekOduydbHSj7XxNq13aOQkskvgq3z-tpZFm5y1dxH1wWqjcBKpbp9nH70rBHIJPL5Jp0vscbflM3BZ3KVnTj6R16HczlE0l3_KmZuCXDHYJiY5hTl3s68xe20bVdcaZL__AQ",
+  },
+];
