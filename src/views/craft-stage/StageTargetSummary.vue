@@ -187,9 +187,10 @@ const SRC: Record<Src, { label: string; cls: string }> = {
   get perfect_essence() { return { label: tr("クラフト MOD", "Crafted mod"), cls: "border-cyan-400/60 text-cyan-200" }; },
 };
 /** 左の札: ルーンの MOD はルーンの名前 (コルの狩りなど) */
-function badgeOf(host: string): { label: string; cls: string } {
+/** 左の札。ルーンの MOD は「特殊 MOD」(どのルーンかはホバー。2026-10-21 オーナー「長くて特殊 MOD でおｋ、ホバーでなんのルーンか表示」) */
+function badgeOf(host: string): { label: string; cls: string; rune?: string } {
   const r = s.data.value?.mods.get(host)?.rune;
-  return r ? { label: runeJaOf(r), cls: runeToneOf(runeJaOf(r))?.badge ?? "border-amber-400/60 text-amber-200" } : SRC[srcOf(host)];
+  return r ? { label: tr("特殊 MOD", "Special mod"), cls: runeToneOf(runeJaOf(r))?.badge ?? "border-amber-400/60 text-amber-200", rune: runeJaOf(r) } : SRC[srcOf(host)];
 }
 function srcOf(host: string): Src {
   const m = s.data.value?.mods.get(host);
@@ -254,7 +255,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
       <div v-for="g in col.groups" :key="g.key" class="flex flex-wrap items-start gap-1.5 py-0.5">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
-        <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="s.data.value?.mods.get(g.host)?.rune ? '差すと付く MOD。回す時はこのルーンを差した白から始める' : 'MOD の種類 (出どころ)'">{{ badgeOf(g.host).label }}</span>
+        <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="badgeOf(g.host).rune ? tr(`${badgeOf(g.host).rune}を差すと付く MOD。回す時はこのルーンを差した白から始める`, `Comes from socketing ${badgeOf(g.host).rune}. Runs start from a white base with that rune socketed`) : tr('MOD の種類 (出どころ)', 'Mod type (source)')">{{ badgeOf(g.host).label }}</span>
         <!--
           2 つ以上 (どれか n つ): 候補はほかの MOD と同じ太さの行で縦に並べ、左の金の縦線と「どれか n」の札でくくる
           (2026-10-19 オーナー「ここ太くなるのがなー」→ 縦線でくくる案。前は箱 + 説明の文で、1 つの組だけ太かった)。説明は札に乗せると出る
