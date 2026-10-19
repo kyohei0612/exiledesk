@@ -26,7 +26,11 @@ const emit = defineEmits<{ hold: [key: string] }>();
 type ShelfTab = "usable" | "orb" | "essence" | "rune" | "omen";
 /** 最初に開くタブ。エミュレーターもシミュレーターも「使用可能」(2026-10-09 オーナー「エミュレーターではデフォルトで使用可能」「シミュレーターも使用可能からスタート」) */
 /** full: タブを全部出す (シミュレーターの編集など、お告げのタブが要る所)。手で打つ画面は「使用可能」だけ (2026-10-10 オーナー「ここはもはや使用可能だけでいい、機能してなかったらバグ」) */
-const props = withDefaults(defineProps<{ initialTab?: ShelfTab; full?: boolean }>(), { initialTab: "usable", full: false });
+/**
+ * inlineHeld: お告げの欄を持った札に重ねて浮かせず、タブの下に並べて出す (シミュレーターの打ち方。上に出ると「この手にする」の行に重なって押せなかった。
+ * 2026-10-19 テスト走行)。エミュレーターは今まで通り重ねる
+ */
+const props = withDefaults(defineProps<{ initialTab?: ShelfTab; full?: boolean; inlineHeld?: boolean }>(), { initialTab: "usable", full: false, inlineHeld: false });
 const craftStage = useShelf();
 const tab = ref<ShelfTab>(props.initialTab);
 /**
@@ -44,7 +48,7 @@ function onInnerScroll(): void { essOpen.value = null; placeAnchor(); }
 const anchor = ref<{ style: Record<string, string> } | null>(null);
 function placeAnchor(): void {
   const k = craftStage.held.value, r = root.value;
-  if (!k || !r) { anchor.value = null; return; }
+  if (!k || !r || props.inlineHeld) { anchor.value = null; return; }
   const btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"], [data-ess-keys~="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-box]") && !b.closest(".ess-anchor"));
   if (!btn) { anchor.value = null; return; }
   anchor.value = { style: popPlace(r, btn) };

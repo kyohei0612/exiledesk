@@ -205,7 +205,7 @@ const multi = computed(() => props.recipe.routes.length > 1);
             <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">{{ tr("または棚から打つ物を持つ", "or pick a currency below") }}</span>
           </template>
         </div>
-        <CurrencyShelf v-if="!locked" full @hold="(k: string) => (held = k)">
+        <CurrencyShelf v-if="!locked" full inline-held @hold="(k: string) => (held = k)">
           <template v-if="heldOmens.length" #held>
             <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
               <p class="mb-1 text-[11px] text-violet-200/80">{{ tr(`${nameOf(held ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(held ?? "")}`) }}</p>
