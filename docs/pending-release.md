@@ -7,6 +7,7 @@ OK が出ていない物を外して出す時は `git revert --no-edit --no-comm
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | 開く / たたむを折り返さない・MOD 一覧の列の見出し (エミュレーターにも出る。ほかはシミュレーターだけ) | 1ee2ad43 | (見た目だけ。更新内容は書かない) | (layout only, no changelog entry) |
+| MOD 一覧のタグを色付きの札に・折り返して全部見せる (エミュレーター・シミュレーター共通) | 9d6e5167 | MOD 一覧のタグを色付きの札にし、入らない時は折り返して全部見えるようにしました | Mod list tags are now colored badges and wrap so every tag is visible |
 | ベースの一覧: 名前で探すを外し、装備・エフェクトオフを一番下へ | 0c5d5be9 | ベースの一覧から名前で探す欄を外し、「装備・エフェクトオフ」を一番下に移しました | Removed the name search from the base list and moved “Plain art, no effects” to the bottom |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
