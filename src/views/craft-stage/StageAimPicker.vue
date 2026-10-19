@@ -12,7 +12,7 @@ import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { aimLabel, groupLabelOf, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
-import { scrollToTop } from "../../utils/keep-place";
+import { revealOpened, scrollToTop } from "../../utils/keep-place";
 import { routesTarget } from "../../state/web-page";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
@@ -68,7 +68,7 @@ function toggle(r: ListRow, e?: Event): void {
   if (whyNot(r)) return;
   // 同じ系統をまとめた行 (スペル / ミニオン / 近接 / 投射物のスキルのレベルなど) は、どれを狙うか段の表で選んでもらう
   // (2026-10-16 アミュレットのスペルスキル +3 の確かめ: 前は並びの最後の投射物 +1 が狙いになっていた)
-  if (new Set(r.tiers.map((t) => t.modId ?? r.id)).size > 1) { expanded.value = r.id; if (e?.target instanceof HTMLInputElement) e.target.checked = false; return; }
+  if (new Set(r.tiers.map((t) => t.modId ?? r.id)).size > 1) { expanded.value = r.id; if (e?.target instanceof HTMLInputElement) { e.target.checked = false; revealOpened(e.target.closest("[data-tier-row]")); } return; }
   const t = [...r.tiers].reverse().find((x) => x.ilvl <= s.itemLevel.value) ?? r.tiers[r.tiers.length - 1];
   const p = t ? pickOf(r, t) : null;
   if (p) draft.value = forRoutes ? [p] : [...draft.value, p];
@@ -120,10 +120,10 @@ function decide(): void {
       <div v-for="col in columns" :key="col.side">
         <p class="mb-1 font-bold text-[var(--exile-color-text-secondary)]">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }}</span></p>
         <p v-if="!col.items.length" class="text-[11px] opacity-50">{{ tr("無し", "None") }}</p>
-        <div v-for="r in col.items" :key="r.id" class="mb-1">
+        <div v-for="r in col.items" :key="r.id" data-tier-row class="mb-1">
           <div class="flex items-center gap-2 rounded px-2 py-1 max-md:py-1.5" :class="pickedOf(r) ? 'bg-[rgba(163,52,42,0.30)] ring-1 ring-[var(--exile-color-border-brass)]' : whyNot(r) ? 'opacity-40' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
             <input type="checkbox" :checked="!!pickedOf(r)" :disabled="!pickedOf(r) && !!whyNot(r)" class="size-5 shrink-0 accent-amber-500" :aria-label="r.text" @change="toggle(r, $event)" />
-            <button type="button" class="g-plain flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 text-left" @click="expanded = expanded === r.id ? null : r.id">
+            <button type="button" class="g-plain flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 text-left" @click="expanded = expanded === r.id ? null : r.id; if (expanded === r.id) revealOpened(($event.currentTarget as HTMLElement).closest('[data-tier-row]'))">
               <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
               <span v-if="pickedOf(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ tr(`${rankOf(pickedOf(r)!)} 以上`, `${rankOf(pickedOf(r)!)}+`) }}</span>
               <span v-else-if="whyNot(r)" class="text-[10px]">{{ whyNot(r) }}</span>

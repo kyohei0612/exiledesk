@@ -6,6 +6,7 @@ OK が出ていない物を外して出す時は `git revert --no-edit --no-comm
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| 段の表を開いたら、行と表の全体が見える所まで送る (MOD 一覧・狙う MOD を選ぶ窓・フラクチャーの選び。閉じる時・付けた後は今まで通り)。スマホは上に貼り付くアイテムの要約の下で止める | (最新) | MOD の段の表を開いた時に、表の全体が見える所まで自動で送るように | Opening a mod’s tier table now scrolls so the whole table is visible |
 | 開く / たたむを折り返さない・MOD 一覧の列の見出し (エミュレーターにも出る。ほかはシミュレーターだけ) | 1ee2ad43 | (見た目だけ。更新内容は書かない) | (layout only, no changelog entry) |
 | ベースの一覧: 名前で探すを外し、装備・エフェクトオフを一番下へ | 0c5d5be9 | ベースの一覧から名前で探す欄を外し、「装備・エフェクトオフ」を一番下に移しました | Removed the name search from the base list and moved “Plain art, no effects” to the bottom |
 

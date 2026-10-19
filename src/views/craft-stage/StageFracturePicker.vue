@@ -13,6 +13,7 @@
 <script setup lang="ts">
 import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
+import { revealOpened } from "../../utils/keep-place"; // 段の表を開いたら全体が見える所まで (2026-10-19)
 import { craftStage } from "../../state/craft-stage";
 import { modListFor, shownTags, TAG_STYLE, type ListRow, type ListTier } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
@@ -188,11 +189,11 @@ const pct = (x: number): string => fmtPct(x, { zero: "—" });
     <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
       <div v-for="col in columns" :key="col.side" :class="lockedSide && lockedSide !== col.side ? 'opacity-35' : ''">
         <p class="mb-1 font-bold">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }} {{ tr("系統", "groups") }}</span><span v-if="lockedSide && lockedSide !== col.side" class="ml-2 font-normal text-amber-300">{{ tr("候補と違う側は選べない", "Can't pick the other side") }}</span><span v-else-if="host && canChaos && host.method === 'desecrate' && col.side !== hostSide" class="ml-2 font-normal text-amber-300">{{ tr("選ぶとカオススパムになる (冒涜は片側だけ)", "Picking switches to Chaos spam (Desecration targets one side only)") }}</span></p>
-        <div v-for="r in col.items" :key="r.id" class="mb-1">
+        <div v-for="r in col.items" :key="r.id" data-tier-row class="mb-1">
           <!-- あるいはを選ぶ時は、元の MOD とほかの手順の MOD はグレー (2026-10-05 オーナー「＋を押したらその MOD はグレーアウトで、それ以外から探させる」) -->
           <div class="flex items-center gap-2 rounded px-2 py-1" :title="whyBlocked(r)" :class="isHost(r) || usedElsewhere(r) ? 'bg-white/[0.02] opacity-35' : pickedOf(r) ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.03] hover:bg-white/[0.06]'">
             <input type="checkbox" :checked="!!pickedOf(r) && !isHost(r)" :disabled="blocked(r) || isHost(r)" class="h-4 w-4 accent-emerald-400" @change="toggle(r)" />
-            <button type="button" class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 text-left" @click="expanded = expanded === r.id ? null : r.id">
+            <button type="button" class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 text-left" @click="expanded = expanded === r.id ? null : r.id; if (expanded === r.id) revealOpened(($event.currentTarget as HTMLElement).closest('[data-tier-row]'))">
               <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
               <span v-for="t in shownTags(r.tags)" :key="t" class="rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
               <span v-if="isHost(r)" class="text-[10px] opacity-80">{{ tr("(元の MOD)", "(original)") }}</span><span v-if="pickedOf(r) && !isHost(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">T{{ (s.data.value?.mods.get(pickedOf(r)!.modId)?.tiers.length ?? 0) - pickedOf(r)!.minTierIndex }}{{ tr(" 以上", "+") }}</span>

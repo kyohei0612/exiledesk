@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { fmtPct } from "../../utils/format-pct";
 import { baseNameOf, tr } from "../../i18n/lang";
-import { keepPlace, scrollToTop } from "../../utils/keep-place";
+import { keepPlace, revealOpened, scrollToTop } from "../../utils/keep-place";
 import { OVERRIDDEN, weightOverrideNote } from "../../services/htc/weight-overrides";
 import { aimTierKey, heldAnyOf, heldOdds } from "../../services/craft-stage/held-odds";
 import { chaosBlocked, methodsFor } from "../../services/craft-stage/sim-methods";
@@ -179,8 +179,8 @@ function toCraft(): void { scrollToTop(document.querySelector("[data-craft-top]"
  * スクロールによっては見えない、下に開こう」: 上で開いていた行が閉じた分だけ押した行が上へずれ、表が見えなくなっていた)
  */
 function toggleRow(key: string, ev: MouseEvent): void {
-  // 開いた表がはみ出しても送らない (2026-10-09 オーナー「MOD もなんか移動するときある、スクロールが勝手に。固定でおｋ」)
-  keepPlace(ev.currentTarget as HTMLElement, () => { expanded.value = expanded.value === key ? null : key; });
+  // 開いた時だけ、行と段の表が全部見える所まで送る (2026-10-19 オーナー「ティア開いたらティアも全体表示」。10-09 の「固定でおｋ」から変えた。閉じる時・付けた後は動かさない)
+  const row = (ev.currentTarget as HTMLElement).closest("[data-row-key]"); keepPlace(ev.currentTarget as HTMLElement, () => { expanded.value = expanded.value === key ? null : key; }); if (expanded.value === key) revealOpened(row);
 }
 /**
  * 種類ごとの節 (中身のある物だけ)。各節はプレフィックス / サフィックスの 2 列。

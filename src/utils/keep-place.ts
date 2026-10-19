@@ -132,10 +132,19 @@ function glideCss(box: HTMLElement | null, d: number, ms: number): Promise<void>
  * 段が進んだ時の送り: el (次に決める段の枠) の下の線 + pad が画面に入るまでぬるっと送る。枠が画面より高ければ枠の上で止める。見えていれば動かさない
  * (2026-10-18 オーナー「番号が進む時もスクロールで次工程表示は必ず」「下枠 + 24px が基準」。ベースの一覧の「もっと見る」と同じ 24px)
  */
+/**
+ * 画面の上に貼り付いている物の下端 (スマホのアイテムの要約 [data-item-mini]。窓の中を送る時は 0)。
+ * 送って上で止める時は、この下で止める (2026-10-19 段の表を開いた時、止めた行の頭が要約に隠れていた)
+ */
+function topInset(box: HTMLElement | null): number {
+  if (box) return 0;
+  const mini = [...document.querySelectorAll("[data-item-mini]")].find((e) => e.getClientRects().length);
+  return mini ? Math.max(0, mini.getBoundingClientRect().bottom) : 0;
+}
 export function revealBottom(el: Element, pad = 24): void {
   const box = scrollBoxOf(el as HTMLElement);
   const r = el.getBoundingClientRect();
-  const viewTop = box ? box.getBoundingClientRect().top : 0, viewH = box ? box.clientHeight : window.innerHeight;
+  const viewTop = (box ? box.getBoundingClientRect().top : 0) + topInset(box), viewH = (box ? box.clientHeight : window.innerHeight) - topInset(box);
   const d = Math.min(r.bottom + pad - (viewTop + viewH), r.top - viewTop - 8);
   if (d > 0) void glideRect(box, el, d, 320);
 }
@@ -143,11 +152,20 @@ export function revealBottom(el: Element, pad = 24): void {
  * 次に押す所へ送る (上にも戻る版の revealBottom)。el が画面より上にあれば上の線 - 8px まで戻し、下にあれば下の線 + pad まで送る。見えていれば動かさない
  * (2026-10-19 オーナー「スマホのスパムシミュレーター、次入力するとこまで自動スクロールじゃないためややこしい」)
  */
+/**
+ * 段の表を開いた時: 描き直しの後に、行と表の全体が見える所まで送る (revealNext。見えていれば動かさない)
+ * (2026-10-19 オーナー「全システム共通、ティア開いたらティアも全体表示させてくれ。付けた後のティア仕舞いは今と一緒」)。
+ * MOD 一覧・狙う MOD を選ぶ窓・フラクチャーの選びで同じ物を使う
+ */
+export function revealOpened(el: Element | null | undefined): void {
+  if (!el) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => revealNext(el)));
+}
 export function revealNext(el: Element | null | undefined, pad = 24): void {
   if (!el) return;
   const box = scrollBoxOf(el as HTMLElement);
   const r = el.getBoundingClientRect();
-  const viewTop = box ? box.getBoundingClientRect().top : 0;
+  const viewTop = (box ? box.getBoundingClientRect().top : 0) + topInset(box);
   if (r.top < viewTop + 8) { void glideRect(box, el, r.top - viewTop - 8, 320); return; }
   revealBottom(el, pad);
 }
