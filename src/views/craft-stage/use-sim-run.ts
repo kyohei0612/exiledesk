@@ -215,6 +215,8 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
    */
   /** 手があるか (打って作るパターンの手) */
   const hasSteps = (p: Pattern): boolean => !!p.quiz && Object.values(p.quiz.rules).some((r) => r.length > 0);
+  /** エミュレーターの状態の写しを、3 で選んだアイテムレベルで (エミュレーターのレベルは引き継がない。2026-10-19 オーナー) */
+  const startItemAt = () => (s.simStartItem.value ? { ...s.simStartItem.value, itemLevel: s.itemLevel.value } : null);
   /** クイズのレシピの入力 (狙う MOD・始め方・値段。答えはパターンに持つ。ADR-003) */
   const quizBase = computed<QuizSimIn | null>(() => {
     const d = s.data.value;
@@ -222,7 +224,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     const st = s.simStart.value;
     const startPrice = st === "item" ? num(itemDivine.value) ?? 0 : st === "magic" ? num(magicDivine.value) ?? 0 : st === "fractured" ? startOnce.value ?? 0 : st === "four" ? num(fourDivine.value) ?? 0 : num(whiteDivine.value) ?? 0;
     return {
-      data: d, base: s.base.value, itemLevel: s.itemLevel.value, start: st, startPrice, sockets: socketCount.value, startItem: s.simStartItem.value,
+      data: d, base: s.base.value, itemLevel: s.itemLevel.value, start: st, startPrice, sockets: socketCount.value, startItem: startItemAt(),
       targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}), ...(t.need ? { need: t.need } : {}) })),
     };
   });
@@ -293,7 +295,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
           ? [{ modId: t.modId, minTierIndex: t.minTierIndex, method: "fracture" as const }, ...(t.alts ?? []).map((a) => ({ ...a, method: "fracture" as const }))]
           : [{ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}) }])),
         whiteBasePrice: (num(whiteDivine.value) ?? 0) * divine, sockets: socketCount.value,
-        ...(s.simStart.value === "item" && s.simStartItem.value ? { startItem: s.simStartItem.value, startPrice: num(itemDivine.value) ?? 0 } : {}),
+        ...(s.simStart.value === "item" && s.simStartItem.value ? { startItem: startItemAt()!, startPrice: num(itemDivine.value) ?? 0 } : {}),
         ...(fractureRow.value ? { fractureStart: makeSpec.value } : {}),
       };
       // パターンごとに回す (2026-10-06 オーナー「パターンで回す」)。白から作る + (フラクチャーがあれば) 固定済みから残りを作る (ベース代 0) の 2 本。
