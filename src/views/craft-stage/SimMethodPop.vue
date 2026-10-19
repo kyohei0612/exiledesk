@@ -8,6 +8,7 @@ import { METHOD_EN, METHOD_JA } from "../../services/craft-stage/sim-methods";
 import type { SimMethod } from "../../services/craft-stage/quiz-build";
 import { toCss } from "../../utils/zoom";
 import { tr } from "../../i18n/lang";
+import { swallowNextClick } from "../../utils/swallow-click";
 
 const open = ref<{ left: number; top: number; above: boolean; opts: SimMethod[]; off: Partial<Record<SimMethod, string>>; done: (m: SimMethod) => void } | null>(null);
 const W = 150;
@@ -17,7 +18,7 @@ function close(): void {
   window.removeEventListener("scroll", close, true);
   document.removeEventListener("keydown", onKey);
 }
-function outside(e: PointerEvent): void { if (!(e.target as HTMLElement | null)?.closest?.("[data-sim-method-pop]")) close(); }
+function outside(e: PointerEvent): void { if (!(e.target as HTMLElement | null)?.closest?.("[data-sim-method-pop]")) { close(); swallowNextClick(); } } // 外を押したら閉じるだけ (下の物は押さない)
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape") { e.stopPropagation(); close(); } }
 /** off: 選べない付け方とその理由 (灰色にして理由を出す) */
 function ask(btn: Element, opts: SimMethod[], done: (m: SimMethod) => void, off: Partial<Record<SimMethod, string>> = {}): void {

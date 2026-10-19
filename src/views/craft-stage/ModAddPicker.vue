@@ -14,6 +14,7 @@ import type { ModGroup } from "../../services/craft-stage/mod-list";
 import { tr } from "../../i18n/lang";
 import { toCss } from "../../utils/zoom";
 import Icon from "../../components/ui/Icon.vue";
+import { swallowNextClick } from "../../utils/swallow-click";
 
 const props = defineProps<{ group: ModGroup; modId: string; rank: string }>();
 /** 始めの状態を組める (まだ打っていない・再生でない) */
@@ -71,6 +72,7 @@ function outside(e: PointerEvent): void {
   const t = e.target as HTMLElement | null;
   if (btn.value?.contains(t) || t?.closest?.("[data-mod-add-menu]")) return;
   close();
+  swallowNextClick(); // 外を押したら閉じるだけ (下の行・見出しは押さない。utils/swallow-click.ts)
 }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape") close(); }
 function toggle(): void {
