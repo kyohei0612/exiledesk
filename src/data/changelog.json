@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.581",
+  "date": "2026-10-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホのスパムシミュレーターを使いやすく (次に押す所へ自動で送る・押すボタンを画面の下に固定・長押しで文字が選ばれない・10 人で比べた時は「11 人中 3 位」のように何位で表示)",
+    "en": "Spam simulator on phones: scrolls to the next thing to press, the hold button stays fixed at the bottom, long-press no longer selects text, and with 10 runs your result shows as a place (e.g. 3rd of 11)"
+   }
+  ]
+ },
+ {
   "v": "0.1.580",
   "date": "2026-10-19",
   "items": [
@@ -612,24 +624,6 @@
     "area": "",
     "text": "ワンド・スタッフ・セプターにも、アイテムの上の品質の欄 (− / + / 最大) を出すように。カレンシーでも欄でも同じように品質を上げられます",
     "en": "Wands, staves and sceptres now have the quality field above the item (− / + / Max). Quality can be raised with currency or the field alike"
-   }
-  ]
- },
- {
-  "v": "0.1.541",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "鍛冶屋の砥石・秘術師の彫刻針・鎧鍛冶の端材をカレンシーの棚に戻しました (使える装備の時だけ出ます)",
-    "en": "Blacksmith's Whetstone, Arcanist's Etcher and Armourer's Scrap are back on the currency shelf (shown only for items they can be used on)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ワンド・スタッフは品質で武器のスキルが強くなるので、アイテムに「◯◯ の品質: 投射物スピードが 14% 増加する」のように今の品質で上がる物を出すように。秘術師の彫刻針のカードには品質 20% の時の値",
-    "en": "Quality on wands and staves strengthens the weapon's granted skill, so the item now shows what the current quality adds (e.g. \"Chaos Bolt quality: 14% increased Projectile Speed\"). The Arcanist's Etcher card shows the value at 20% quality"
    }
   ]
  }
