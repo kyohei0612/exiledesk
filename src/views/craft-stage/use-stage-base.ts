@@ -10,7 +10,7 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { scrollToTop } from "../../utils/keep-place";
 import { course } from "../../state/craft-course";
 import { topic } from "../../state/craft-topic";
-import { simStep } from "../../state/web-page";
+import { basePage, simStep } from "../../state/web-page";
 
 function create() {
   const inApp = isTauriRuntime();
@@ -59,6 +59,8 @@ function create() {
   const preRecipeOpen = ref(false);
   function startFromRecipe(r: SimRecipe): void {
     preRecipeOpen.value = false;
+    // ベースを選ぶページから札で始めた時もページを出る (URL・題が「ベースを選ぶ」のまま残っていた。2026-10-21)
+    basePage.value = false;
     s.simPendingRecipe.value = r.id;
     pickSimBase(r.session.base);
   }
