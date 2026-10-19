@@ -49,7 +49,7 @@ const rn = useSimRun({ ...tg, ...sr });
 const rc = useSimRecipes({ ...tg, ...rn });
 const st = useSimSteps({ ...tg, ...rn });
 const rs = useSimResult({ ...tg, ...sr, ...rn, ...rc });
-const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, orderKeys, reorder, removeRune, runeChoices, toggleRune,
+const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, startRunes, orderKeys, reorder, removeRune, runeChoices, toggleRune,
   orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fracMembers, fractureRow, wholeRoute, boughtDivine, whiteDivine,
   fourDivine, rareDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, whiteCosts, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
@@ -220,6 +220,7 @@ const stepNotes = computed(() => {
       <div v-if="stepOrder && simStep === 'order'" :data-sim-cur="!orderDone || undefined" :class="!orderDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
         <SimStepHead class="mb-3" :n="4" title="付ける順番" :current="true" help="目安の順番。打ち方で付ける MOD を選ぶ時、この順に並ぶ" />
         <SimBaseCalc v-if="s.simStart.value !== 'item'" :rows="baseRows" :chosen="s.simStart.value" :cheapest="cheapStart" :note="costNote" :calc="calc" :notes="baseNotes" :budget="whiteBudget" :frac="fracMembers" :frac-title="fracTitle" :money="money" :pct="pct" @choose="chooseStart" />
+        <p v-if="startRunes.size" class="mb-1 text-[11px] opacity-70">始めから差す: <span class="text-amber-100">{{ [...startRunes].map(runeJa).join("・") }}</span> <span class="opacity-60">(狙いの MOD に要る)</span></p>
         <p v-if="!orderKeys.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
           <thead v-if="redoOf.size">

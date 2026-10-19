@@ -97,8 +97,25 @@ export function useSimTargets() {
     if (s.simTargets.value.filter((t) => methodOf(t) === "essence").length >= 2) out.add("rune:Astrid's Creativity");
     return out;
   });
+  /**
+   * 始めから差しておくルーン: フラクチャー・増強スパムの狙いに要る物 (⑤ は差した白 / 固定済みのベースから始める。quiz-build の start.runes)。
+   * 付ける順番の行ではないので ④ の表には出さず、上に一言で (2026-10-21 見本の手袋: コルの狩りが白に差してあるのに順番に「ルーン」で出ていた)
+   */
+  const startRunes = computed(() => {
+    const out = new Set<string>();
+    for (const t of s.simTargets.value) {
+      const m = methodOf(t);
+      if (m !== "fracture" && m !== "augment") continue;
+      for (const x of [t, ...(t.alts ?? [])]) {
+        const r = s.data.value?.mods.get(x.modId)?.rune;
+        const en = r ? runeEnForId(r) : null;
+        if (en) out.add(`rune:${en}`);
+      }
+    }
+    return out;
+  });
   const orderKeys = computed(() => {
-    const all = [...new Set([...restRows.value.map((r) => `mod:${r.modId}`), ...runeNeeded.value, ...s.simOrder.value.filter((k) => k.startsWith("rune:"))])];
+    const all = [...new Set([...restRows.value.map((r) => `mod:${r.modId}`), ...runeNeeded.value, ...s.simOrder.value.filter((k) => k.startsWith("rune:"))])].filter((k) => !startRunes.value.has(k));
     // 増強スパムの狙いはマジックの間に付ける物なので一番上 (⑤ でも 1 つの関門で一番前。2026-10-21)
     const aug = new Set(restRows.value.filter((r) => r.method === "augment").map((r) => `mod:${r.modId}`));
     const pos = (k: string): number => { const i = s.simOrder.value.indexOf(k); return (aug.has(k) ? -2e6 : 0) + (i < 0 ? 1e6 + all.indexOf(k) : i); };
@@ -135,8 +152,8 @@ export function useSimTargets() {
       const eff = r ? runeEffectFor(r, it.cls.category) : null;
       if (!r || r.available === false || !eff) return [];
       const k = `rune:${en}`;
-      const inOrder = orderKeys.value.includes(k);
-      const used = orderKeys.value.filter((x) => x.startsWith("rune:")).length;
+      const inOrder = orderKeys.value.includes(k) || startRunes.value.has(k);
+      const used = orderKeys.value.filter((x) => x.startsWith("rune:")).length + startRunes.value.size;
       const why = runeNeeded.value.has(k) ? "狙いの MOD に要る (外せない)" : !inOrder && used >= socketCount.value ? `ソケットが足りない (${socketCount.value} つ)` : null;
       return [{ en, k, ja: r.ja, effect: eff.ja, inOrder, why }];
     });
@@ -300,7 +317,7 @@ export function useSimTargets() {
     return { text, old: min >= 1440 };
   }
   return { s, runs, MAX_STEPS_KEY, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, methodsFor, methodOf, rows, targetsSig, restRows,
-    runeNeeded, orderKeys, moveOrder, reorder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,
+    runeNeeded, startRunes, orderKeys, moveOrder, reorder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,
     REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, wholeRoute, makeRoute, blocker, boughtDivine, magicDivine,
     whiteDivine, fourDivine, rareDivine, itemDivine, exOf, toExalt, num, PRICE_KEY, keptAll, craftCap, socketCap, sockets, socketsOk,
     socketCount, socketQuery, keptKey, kept, loadKept, saveKept, restoring, ageOf };
