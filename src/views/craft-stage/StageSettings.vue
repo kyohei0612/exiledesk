@@ -20,7 +20,7 @@ import pkg from "../../../package.json";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import { ITEM_LEVEL_SET, itemLevelKey } from "../../services/craft-stage/apply-currency";
 import HelpTip from "../../components/ui/HelpTip.vue";
-import { searchModGroups, type ModGroup } from "../../services/craft-stage/trade-search";
+import type { ModGroup } from "../../services/craft-stage/trade-search";
 
 defineProps<{ phone: boolean }>();
 const s = craftStage;
@@ -76,6 +76,8 @@ async function searchStageMods(): Promise<void> {
   // MOD は各 MOD の段の下限まで、普通 / フラクチャー / 冒涜のどれでも (2026-10-08 オーナー「ティアだけは下限でおｋ」)。
   // ベース・アイテムレベル・ソケットはチェックを入れた時だけ (2026-10-08「ベースからベースレベルからなにから」→ 10-14 選べるように)
   if (!d || !it || !stageModGroups.value.length) return;
+  // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
+  const { searchModGroups } = await import("../../services/craft-stage/trade-search");
   await searchModGroups(d, { groups: stageModGroups.value, minValues: true, ...(tradeWithBase.value ? { exact: { baseType: it.base, ...(jewelBase.value ? {} : { ilvlMin: it.itemLevel }), socketsMin: it.sockets ?? 0 } } : {}) });
 }
 /** シミュレーションのソケットの上限 (熟練工の上限と、その + 1 = 規格外) */

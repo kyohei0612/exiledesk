@@ -1,4 +1,7 @@
 {
+  "0.1.582": [
+    "Faster first load, especially on phones: the initial download is about half the size and a loading screen shows right away"
+  ],
   "0.1.581": [
     "Spam simulator on phones: scrolls to the next thing to press, the hold button stays fixed at the bottom, long-press no longer selects text, and with 10 runs your result shows as a place (e.g. 3rd of 11)"
   ],

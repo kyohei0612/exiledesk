@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.582",
+  "date": "2026-10-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "開いた時の読み込みを速くしました (特にスマホ)。最初に読む量を半分にして、読み込み中もすぐ画面が出るように",
+    "en": "Faster first load, especially on phones: the initial download is about half the size and a loading screen shows right away"
+   }
+  ]
+ },
+ {
   "v": "0.1.581",
   "date": "2026-10-19",
   "items": [
@@ -612,18 +624,6 @@
     "area": "",
     "text": "お告げに「打ってもお告げを外さない」の切り替えを付けました (持った時のお告げの欄とお告げのタブ)。ON の間は削減のお告げなどを掛けたままカオスを続けて打てます。使ったお告げの費用は毎回足します",
     "en": "Added a \"Keep omens after use\" switch (in the omen box when holding currency, and on the Omens tab). While on, omens like Whittling stay active so you can keep using Chaos Orbs. The omen's cost is still added each time"
-   }
-  ]
- },
- {
-  "v": "0.1.542",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ワンド・スタッフ・セプターにも、アイテムの上の品質の欄 (− / + / 最大) を出すように。カレンシーでも欄でも同じように品質を上げられます",
-    "en": "Wands, staves and sceptres now have the quality field above the item (− / + / Max). Quality can be raised with currency or the field alike"
    }
   ]
  }

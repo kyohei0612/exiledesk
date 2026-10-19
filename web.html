@@ -79,7 +79,31 @@
 </head>
 
   <body>
-    <div id="app"></div>
+    <!--
+      最初の画面 (2026-10-19 スマホ強化: JS を読んで動かすまで 5 秒ほど真っ白で、来た人が帰っていた)。HTML だけでその場で出し、Vue が動くと #app の中身ごと差し替わる。
+      言語は src/i18n/lang.ts と同じ決め方 (?lang= → 覚えた物 exiledesk.lang → ブラウザの言語)。CSS は JS の後に来るので全部ここに書く
+    -->
+    <div id="app">
+      <div id="boot-splash" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:#0b0a08;color:#d8cdb5;font-family:'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic',sans-serif;text-align:center">
+        <img src="/web/icon-192.png" alt="" width="72" height="72" style="width:72px;height:72px" />
+        <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:0.18em;color:#f0cf86">EXILEDESK</div>
+        <div data-ja="Path of Exile 2 のクラフトを、タダで 1 手ずつ試せるエミュレーター" data-en="Try Path of Exile 2 crafting one step at a time, for free" style="font-size:14px;max-width:22rem;line-height:1.6"></div>
+        <div data-ja="カレンシー・お告げ・エッセンス・冒涜をゲームと同じ決まりで" data-en="Currency, omens, essences and desecration with the same rules as the game" style="font-size:12px;color:#8f856f;max-width:22rem;line-height:1.6"></div>
+        <div data-ja="読み込み中…" data-en="Loading…" style="margin-top:10px;font-size:12px;color:#a99d86;letter-spacing:0.1em"></div>
+      </div>
+      <script>
+        (function () {
+          var en = false;
+          try {
+            var q = new URLSearchParams(location.search).get("lang");
+            var v = q === "ja" || q === "en" ? q : localStorage.getItem("exiledesk.lang");
+            en = v ? v === "en" : !/^ja\b/i.test(navigator.language || "");
+          } catch (e) { /* 日本語のまま */ }
+          var els = document.querySelectorAll("#boot-splash [data-ja]");
+          for (var i = 0; i < els.length; i++) els[i].textContent = els[i].getAttribute(en ? "data-en" : "data-ja");
+        })();
+      </script>
+    </div>
     <!-- Web 版の入口 (2026-10-07)。アプリ版は index.html / src/main.ts -->
     <script type="module" src="/src/web/main.ts"></script>
     <!-- アクセス解析 (Cloudflare Web Analytics、cookie なし。見るのは dash.cloudflare.com → Observability → Web Analytics) -->

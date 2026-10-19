@@ -5,7 +5,7 @@
  * アプリ版の App.vue にある起動の処理 (更新・PoB・画像パック・ログイン・見回り) は Web では要らないので載せない。
  * 画面は 1660 幅で組んだ絵を窓に合わせて拡大縮小する (アプリと同じ。狭い時は縮める)
  */
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { marketStore } from "../state/market-store";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import { craftStage } from "../state/craft-stage";
@@ -30,7 +30,7 @@ import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
 import { AD_FRAMES, pageTick, sideAdW } from "../utils/ads";
 import { feedbackPage, routesOpen } from "../state/web-page";
-import StageRoutesPage from "../views/craft-stage/StageRoutesPage.vue";
+const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue")); // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import { inLesson } from "../state/craft-lesson";
 
 const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);

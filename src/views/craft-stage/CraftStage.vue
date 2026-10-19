@@ -37,13 +37,13 @@ import { previewUse } from "../../services/craft-stage/spec/preview";
 import { endLesson, inLesson, inTopic } from "../../state/craft-lesson"; // チュートリアルのコースの間 (2026-10-17)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
-import VideoStage from "./VideoStage.vue";
+const VideoStage = defineAsyncComponent(() => import("./VideoStage.vue")); // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import StageModList from "./StageModList.vue";
-import StageSimPanel from "./StageSimPanel.vue";
-import StageCourses from "./StageCourses.vue";
+const StageSimPanel = defineAsyncComponent(() => import("./StageSimPanel.vue"));
+const StageCourses = defineAsyncComponent(() => import("./StageCourses.vue"));
 import GuideVideoCard from "./GuideVideoCard.vue";
 import StageCourseGuide from "./StageCourseGuide.vue";
-import StageTopicGuide from "./StageTopicGuide.vue";
+const StageTopicGuide = defineAsyncComponent(() => import("./StageTopicGuide.vue"));
 import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";

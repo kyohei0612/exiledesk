@@ -3,13 +3,15 @@
   段の決まりは [[hover-stack.ts]]。上の段ほど前に出す。
 -->
 <script setup lang="ts">
+import { defineAsyncComponent } from "vue";
 import { hoverStack } from "../../state/hover-stack";
-import UniqueHoverCard from "../unique-trend/UniqueHoverCard.vue";
-import CurrencyHoverCard from "../currency/CurrencyHoverCard.vue";
 import KeywordHoverCard from "./KeywordHoverCard.vue";
-import GemHoverCard from "./GemHoverCard.vue";
-import BuildItemHoverCard from "../build-copy/BuildItemHoverCard.vue";
-import BaseItemHoverCard from "../items/BaseItemHoverCard.vue";
+// 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)。ユニークの訳 (2.7MB)・PoB・スキルの絵の表などが最初の塊に入っていた
+const UniqueHoverCard = defineAsyncComponent(() => import("../unique-trend/UniqueHoverCard.vue"));
+const CurrencyHoverCard = defineAsyncComponent(() => import("../currency/CurrencyHoverCard.vue"));
+const GemHoverCard = defineAsyncComponent(() => import("./GemHoverCard.vue"));
+const BuildItemHoverCard = defineAsyncComponent(() => import("../build-copy/BuildItemHoverCard.vue"));
+const BaseItemHoverCard = defineAsyncComponent(() => import("../items/BaseItemHoverCard.vue"));
 import StageCurrencyCard from "../../views/craft-stage/StageCurrencyCard.vue";
 </script>
 
