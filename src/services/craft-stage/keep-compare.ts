@@ -29,7 +29,7 @@ export interface KeepCompare {
   forced: boolean;
   best: "together" | "chaos";
   /** 中身 (確かめ用): 増強 1 回で候補・狙いが付く確率、両側が空の時に候補の側に付く割合、ループ 1 回分の費用 (候補だけ / 2 つ) */
-  detail: { p: number; q: number; share: number; one: number; two: number };
+  detail: { p: number; q: number; share: number; one: number; two: number; augKey: string };
 }
 
 export function keepCompare(o: { data: PatchData; item: StageItem; itemLevel: number; targets: readonly SimTargetIn[]; price: (k: string) => number }): KeepCompare[] {
@@ -81,7 +81,7 @@ export function keepCompare(o: { data: PatchData; item: StageItem; itemLevel: nu
       const cost = pr / px;
       if (chaos == null || cost < chaos) { chaos = cost; chaosKey = c.key; chaosN = 1 / px; }
     }
-    out.push({ host: t.modId, together, chaos, chaosKey, chaosN, forced, best: forced || chaos == null || together <= chaos ? "together" : "chaos", detail: { p, q, share, one: base, two: q > 0 ? loopCost(q) : Infinity } });
+    out.push({ host: t.modId, together, chaos, chaosKey, chaosN, forced, best: forced || chaos == null || together <= chaos ? "together" : "chaos", detail: { p, q, share, one: base, two: q > 0 ? loopCost(q) : Infinity, augKey: g.aug } });
   }
   return out;
 }

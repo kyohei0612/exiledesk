@@ -21,7 +21,7 @@ import { simStep } from "../../state/web-page";
 import { openBasePage } from "../../web/page";
 import SimCostTip from "./SimCostTip.vue";
 import SimTargetSort from "./SimTargetSort.vue";
-import { SIM_STARTS, type SimStartKind } from "../../services/craft-stage/sim-methods";
+import { useSimStarts } from "./use-sim-starts";
 import { ARMED_CLASS } from "../../utils/use-armed";
 import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { simCurrency } from "../../state/display-currency";
@@ -50,9 +50,9 @@ const rc = useSimRecipes({ ...tg, ...rn });
 const st = useSimSteps({ ...tg, ...rn });
 const rs = useSimResult({ ...tg, ...sr, ...rn, ...rc });
 const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, orderKeys, reorder, removeRune, runeChoices, toggleRune,
-  orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, boughtDivine, magicDivine, whiteDivine,
+  orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, boughtDivine, whiteDivine,
   fourDivine, rareDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
-  doneAge, searchDone, searchPattern, calc, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
+  doneAge, searchDone, searchPattern, calc, whiteCosts, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
   help, modsDone, sortDone, orderDone, step3, startPrice, whiteDone, stepOrder, patternDone, stale, recipes, recipeOpen,
   recipeName, recipeArm, recipeRenaming, fmtDate, openRecipes, saveRecipe, recipeBox, renameRecipe, recipeNote, recipeFile, exportRecipes, copyRecipeUrl,
@@ -63,35 +63,7 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, order
 const grantPending = computed(() => (htcBaseInfo()[s.base.value]?.grants?.length ?? 0) > 1 && !s.simGrant.value);
 // 付与スキルを選んで始め方が出たら、3 の枠の下の線 + 24px まで送る (段が進んだ時と同じ。2026-10-18 オーナー)
 watch(grantPending, (p, was) => { if (!p && was) void nextTick(() => requestAnimationFrame(() => { const el = panelEl.value?.querySelector("[data-sim-cur]"); if (el) revealBottom(el); })); });
-/** 3 の始め方の行。フラクチャーの始め方は 2 にフラクチャー予定がある時だけ (無ければ出さない。2026-10-18 オーナー)。「エミュレーターの状態から」の行は出さない (2026-10-19 オーナー「意味わからんから消しておk」。「この状態からシミュレーター」で来た時はその状態のまま) */
-// グレーターエッセンスを巻き込む道は自前のフラクチャーだけ (4 MOD を買う・フラクチャー済みを買うは出さない。2026-10-20 オーナー「グレーター系で付ける奴はフラクチャー済み買いはできない」)
-const startKinds = computed(() => SIM_STARTS.filter((k) => k.k !== "item" && (!k.needsFracture || (fracMembers.value.length > 0 && !calc.value?.greater))));
-// 選んでいた始め方が一覧から消えたら (マジック・フラクチャー予定を外した時) 白ベースからに戻す。エミュレーターの状態からは行が無くても戻さない
-watch(startKinds, (ks) => { if (s.simStart.value !== "item" && !ks.some((k) => k.k === s.simStart.value)) s.simStart.value = "white"; }, { immediate: true });
-/** 使えない始め方の理由 (今は出さない作りなので空。行の作りは残す) */
-const startOff = (_k: (typeof SIM_STARTS)[number]): string => "";
-/** 入れた時刻の札 (始め方 → 値段の欄。エミュレーターの状態からは無い) */
-const startAge = (k: SimStartKind): ReturnType<typeof ageOf> | null => (k === "item" ? null : ageOf(k === "fractured" ? "bought" : k));
-/**
- * その始め方の右の値段 (高貴建て。入れていなければ null)。フラクチャー予定がある時は「フラクチャー済みのベースになるまで」の費用で比べる
- * (ベースの値段だけだと、白が一番安いと出てしまう。2026-10-18 初めての 10 人の 6 人目)。4 の段の比べ (use-sim-result の routes) と同じ式
- */
-function startCost(k: SimStartKind): number | null {
-  const base = num(k === "white" ? whiteDivine.value : k === "fractured" ? boughtDivine.value : k === "magic" ? magicDivine.value : k === "four" ? fourDivine.value : itemDivine.value);
-  if (!fracMembers.value.length || k === "item" || base == null) return base;
-  if (k === "fractured") return base + (calc.value?.keep?.chaos ?? 0);
-  const c = calc.value;
-  if (!c || c.cantRoll) return null;
-  // 反対側の狙いが付くまで (白から自作は「一緒に揃える」と「固定してからカオス」の安い方、買う始め方はカオス。2026-10-20)
-  const kp = c.keep ? (k === "white" ? Math.min(c.keep.together, c.keep.chaos) : c.keep.chaos) : 0;
-  return (k === "white" ? c.total : (base + c.buyRest) * 3 + c.after) + kp;
-}
-/** グレーターの道でマジックに揃える反対側の MOD の文 (どれかは「／」で) */
-const keepText = computed(() => { const k = calc.value?.greater?.keep; return k ? [k, ...(k.alts ?? [])].map((x) => rows.value.find((r) => r.modId === x.modId)?.text ?? rows.value.flatMap((r) => r.alts).find((a) => a.modId === x.modId)?.text ?? x.modId).join(" ／ ") : ""; });
-/** 右の値段が何か (フラクチャー予定がある時はフラクチャー済みまで) */
-const costNote = computed(() => (fracMembers.value.length ? `右の値段 = フラクチャー済みのベースになるまで (ベース代・壁・フラクチャー・消去込み、平均)${calc.value?.keep ? ` + ${keepName.value} が付くまで` : ""}` : "右の値段 = ベース 1 個の値段"));
-/** 反対側で取る狙いの短い名前 */
-const keepName = computed(() => { const r = rows.value.find((x) => x.modId === calc.value?.keep?.host); return r ? [r.text, ...r.alts.map((a) => a.text)].map((t) => t.replace(/\s*\([^()]*\d[^()]*\)/g, "").replace(/%$/, "")).join(" ／ ") + ` ${r.rank} 以上` : ""; });
+const { startKinds, startAge, startCost, keepText, costNote, keepName, bestStart, whiteBudget, decideStart, cheapStart } = useSimStarts({ ...tg, calc, whiteCosts, whiteDecide });
 /** 工程の帯の札の 2 行目 (決めた中身の要約。2026-10-19 オーナー「欲しい情報だけ簡易的に」) */
 /** 付ける順番の行をつかんで入れ替える */
 const dragSort = useDragSort({ rows: () => [...(panelEl.value?.querySelectorAll<HTMLElement>("[data-order-row]") ?? [])], onMove: reorder, enabled: () => simStep.value === "order" });
@@ -108,19 +80,6 @@ const stepNotes = computed(() => {
     play: s.simPatterns.value.some(hasSteps) ? tr(`パターン ${s.simPatterns.value.filter(hasSteps).length}`, `${s.simPatterns.value.filter(hasSteps).length} patterns`) : "",
     result: best && Number.isFinite(best.out.r.perDone) ? tr(`平均 ${money(best.out.r.perDone)}`, `Avg ${money(best.out.r.perDone)}`) : "",
   };
-});
-/** 一番安い始め方 (値段の入った物から。③ の「次へ」の上に出し、次へでその始め方にする。2026-10-20 オーナー「計算画面で一番安い始め方を表示して次へ」) */
-const bestStart = computed(() => {
-  if (!fracMembers.value.length) return null;
-  const xs = [...startKinds.value.filter((k) => startCost(k.k) != null).map((k) => ({ k: k.k as SimStartKind | "rare", label: tr(k.label, k.labelEn), c: startCost(k.k)! })),
-    ...(calc.value?.rareTotal != null ? [{ k: "rare" as const, label: tr("適当なレアを消去で 1 MOD に", "Annul a random rare to 1 mod"), c: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0) }] : [])];
-  return xs.length ? xs.reduce((a, x) => (x.c < a.c ? x : a)) : null;
-});
-function decideStart(): void { const b = bestStart.value; if (b) s.simStart.value = b.k === "rare" ? "white" : b.k; whiteDecide(); }
-/** 値段が入った始め方が 2 つ以上ある時の一番安い物 (rare = 白の行の 2 段目、適当なレアを消去で 1 MOD → カオス。フラクチャー予定がある時だけ比べに入れる) */
-const cheapStart = computed((): SimStartKind | "rare" | null => {
-  const ok: Array<{ k: SimStartKind | "rare"; c: number }> = [...startKinds.value.filter((k) => !startOff(k) && startCost(k.k) != null).map((k) => ({ k: k.k, c: startCost(k.k)! })), ...(fracMembers.value.length && calc.value?.rareTotal != null ? [{ k: "rare" as const, c: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0) }] : [])];
-  return ok.length > 1 ? ok.reduce((a, b) => (b.c < a.c ? b : a)).k : null;
 });
 </script>
 
@@ -249,6 +208,7 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
             <p v-if="k.k === 'white' && calc?.greater" data-sim-greater class="mt-1.5 border-t border-white/5 pt-1.5 text-[11px] text-[var(--exile-color-text-secondary)] md:pl-[calc(1rem+0.75rem)]">{{ tr(`マジックで ${fracMembers.map((r) => r.text).join(" か ")}${calc.greater.keep ? ` と ${keepText}` : ""} を揃える (増強 ${calc.greater.augment.toFixed(1)}・消去 ${calc.greater.annul.toFixed(1)} 回) → ${nameOf(calc.greater.essKey)} → 壁 → フラクチャー (3 本に 1 本)。${nameOf(calc.greater.essKey)} はマジックにしか打てないので、フラクチャー済み・MOD 付きレアは買えない`, `On magic, land ${fracMembers.map((r) => r.text).join(" or ")}${calc.greater.keep ? ` and ${keepText}` : ""} (avg ${calc.greater.augment.toFixed(1)} Augment, ${calc.greater.annul.toFixed(1)} Annul) → ${nameOf(calc.greater.essKey)} → wall → Fracture (1 in 3). That essence only works on magic, so fractured or modded rares can't be bought`) }}</p>
             <!-- 反対側の狙いの取り方 (白から自作: 安い方、2026-10-20) -->
             <p v-if="k.k === 'white' && calc?.keep" data-sim-keep class="mt-1 text-[11px] text-[var(--exile-color-text-secondary)] md:pl-[calc(1rem+0.75rem)]">{{ tr(`${keepName}: マジックで一緒に揃える ${money(calc.keep.together)} / 固定してから 2 MOD のレアにカオス ${money(calc.keep.chaos)} → ${calc.keep.use === "together" ? "一緒に揃える" : "カオス"}が安い`, `${keepName}: land it together on magic ${money(calc.keep.together)} / fracture first, then Chaos on a 2-mod rare ${money(calc.keep.chaos)} → ${calc.keep.use === "together" ? "together" : "Chaos"} is cheaper`) }}</p>
+            <p v-if="k.k === 'white' && whiteBudget" data-sim-budget class="mt-1 text-[11px] md:pl-[calc(1rem+0.75rem)]">{{ tr(`一番高い買う値段 ${money(whiteBudget.budget)} までに作れる`, `Done within the priciest buy option (${money(whiteBudget.budget)})`) }} <b :class="whiteBudget.p >= 0.8 ? 'text-emerald-300' : whiteBudget.p >= 0.5 ? 'text-amber-200' : 'text-rose-300'">{{ pct(whiteBudget.p) }}</b> <span class="opacity-70">{{ tr(`(2 人に 1 人は ${money(whiteBudget.p50)} まで)`, `(half finish within ${money(whiteBudget.p50)})`) }}</span></p>
             <SimRareStrip v-else-if="k.k === 'white'" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
           </div>
         </div>

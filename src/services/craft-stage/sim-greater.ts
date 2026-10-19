@@ -88,6 +88,8 @@ export interface GreaterRoute {
   /** 反対側で当たる確率 (増強 1 回) */
   q: number | null;
   augment: number; annul: number;
+  /** ループの中身 (分かれ方を引く用): 候補の側で当たる確率、両側が空の時に候補の側に付く割合、増強の等級 */
+  p: number; share: number; augKey: string;
   lines: GreaterLine[];
   /** 1 回分 (フラクチャーまで)。フラクチャーで固定できるのは 3 つに 1 つ (候補・残す MOD・エッセンスの MOD。壁は未発現で固定されない) */
   once: number;
@@ -130,5 +132,5 @@ export function greaterRouteCost(o: {
     { name: o.name("fracture"), n: 1, each: o.price("fracture") },
   ];
   const once = lines.reduce((a, l) => a + l.n * l.each, 0);
-  return { essKey, ess, keep, q, augment, annul, lines, once, cantKeep: q === 0 };
+  return { essKey, ess, keep, q, augment, annul, p: o.p, share, augKey: o.grade.aug, lines, once, cantKeep: q === 0 };
 }
