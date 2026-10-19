@@ -72,6 +72,17 @@ onBeforeUnmount(() => {
       </div>
       <!-- シミュレーターは保存したレシピから始めるのも先に (前は設定の欄。2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
       <StageRecipeStart v-if="s.mode.value === 'sim' && baseUnpicked" compact class="mb-3" @start="startFromRecipe" />
+      <!--
+        初めて来た人へ: 一言と「すぐ試す」(2026-10-19 スマホ強化。来た人の半分がベースを選ばずに帰っていた。何のサイトか・何をすると何が起きるかが無かった)。
+        ベースを選んでいない時 (初めて・白に戻した後) のエミュレーターだけ。押すと金の指輪 (人気の一番上) ですぐ打てる画面へ
+      -->
+      <div v-if="baseUnpicked && s.mode.value === 'hand'" data-base-intro class="mb-3 flex items-center gap-4 rounded-lg border border-[var(--exile-color-border-brass)]/40 bg-black/40 px-4 py-3 max-md:flex-col max-md:gap-2 max-md:px-3 max-md:text-center">
+        <div class="min-w-0 flex-1">
+          <p class="g-antique text-[15px] leading-snug text-[var(--exile-color-text-title)] max-md:text-[14px]">{{ tr("PoE2 のクラフトを、ゲームと同じ決まりで 1 手ずつ試せます", "Try PoE2 crafting one step at a time, with the same rules as the game") }}</p>
+          <p class="mt-1 text-[12px] leading-snug text-[var(--exile-color-text-secondary)]">{{ tr("ベースを選んで、カレンシーを押して持ち、アイテムを押すと 1 回使います。タダで何回でも", "Pick a base, tap a currency to hold it, then tap the item to use it. Free, as many times as you like") }}</p>
+        </div>
+        <button type="button" data-base-quick class="g-btn-red min-h-11 shrink-0 px-2 text-[14px] max-md:w-full" @click="pick('Gold Ring')">{{ tr("金の指輪ですぐ試す", "Try now with a Gold Ring") }}</button>
+      </div>
       <!-- 未選択の時は前のベース・種類を選んだ状態にしない・人気のベースを上に (StageBasePicker.vue と同じ) -->
       <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog ref="catalog" :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" @pick="pick" /></div>
     </div>
