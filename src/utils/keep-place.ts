@@ -161,11 +161,12 @@ export function revealBottom(el: Element, pad = 24): void {
  * 後から出る枠 (後から読む画面の中など) を、出るまで待ってから下の線 + 24px まで送る (最大 3 秒)。見えている物だけを見る
  * (2026-10-19: シミュレーターを後から読む形にしたので、ベースを選んだ・「この状態からシミュレーター」の直後はまだ 2 の枠が無い)
  */
-export function revealWhenReady(selector: string, ms = 3000): void {
+export function revealWhenReady(selector: string, ms = 3000, at: "bottom" | "top" = "bottom"): void {
   const t0 = Date.now();
   const tryReveal = (): void => {
     const el = [...document.querySelectorAll<HTMLElement>(selector)].find((e) => e.getClientRects().length);
-    if (el) { requestAnimationFrame(() => revealBottom(el)); return; }
+    // top = 枠の頭を画面の上に (「この状態からシミュレーター」は 2 の頭 = MOD と付け方を決める所から見せる。2026-10-19 オーナー)
+    if (el) { requestAnimationFrame(() => (at === "top" ? scrollToTop(el) : revealBottom(el))); return; }
     if (Date.now() - t0 < ms) setTimeout(tryReveal, 60);
   };
   tryReveal();

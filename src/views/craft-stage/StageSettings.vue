@@ -110,8 +110,9 @@ function simFromHand(): void {
   s.simStart.value = "item";
   s.simPicked.value = true;
   s.mode.value = "sim";
-  // 2 (狙う MOD) の枠の下の線 + 24px まで送る (ベースを選んだ時と同じ。2026-10-19 オーナー「エミュのシミュレーターへボタンは 2 からだね表示は」)
-  revealWhenReady("[data-sim-cur]");
+  // 2 (狙う MOD) の頭から見せる: エミュレーターの MOD はもう入っているので、まず付け方を決める所 (2026-10-19 オーナー「2 の最初ね、MOD とか付け方決めれるところから開始」。
+  // 前は枠の下の線まで送っていて、付け方の所が上に隠れた)
+  revealWhenReady("[data-sim-cur]", 3000, "top");
 }
 </script>
 
