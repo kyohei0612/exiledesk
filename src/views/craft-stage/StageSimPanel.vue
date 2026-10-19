@@ -16,6 +16,7 @@ import { revealBottom } from "../../utils/keep-place";
 import SimStartPick from "./SimStartPick.vue";
 import SimRareStrip from "./SimRareStrip.vue";
 import SimStepBar from "./SimStepBar.vue";
+import { useDragSort } from "../../utils/use-drag-sort";
 import { simStep } from "../../state/web-page";
 import { openBasePage } from "../../web/page";
 import SimCostTip from "./SimCostTip.vue";
@@ -48,7 +49,7 @@ const rn = useSimRun({ ...tg, ...sr });
 const rc = useSimRecipes({ ...tg, ...rn });
 const st = useSimSteps({ ...tg, ...rn });
 const rs = useSimResult({ ...tg, ...sr, ...rn, ...rc });
-const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, orderKeys, moveOrder, removeRune, runeChoices, toggleRune,
+const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, orderKeys, reorder, removeRune, runeChoices, toggleRune,
   orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, boughtDivine, magicDivine, whiteDivine,
   fourDivine, rareDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
@@ -84,6 +85,8 @@ function startCost(k: SimStartKind): number | null {
 /** 右の値段が何か (フラクチャー予定がある時はフラクチャー済みまで) */
 const costNote = computed(() => (fracMembers.value.length ? "右の値段 = フラクチャー済みのベースになるまで (ベース代・壁・フラクチャー・消去込み、平均)" : "右の値段 = ベース 1 個の値段"));
 /** 工程の帯の札の 2 行目 (決めた中身の要約。2026-10-19 オーナー「欲しい情報だけ簡易的に」) */
+/** 付ける順番の行をつかんで入れ替える */
+const dragSort = useDragSort({ rows: () => [...(panelEl.value?.querySelectorAll<HTMLElement>("[data-order-row]") ?? [])], onMove: reorder, enabled: () => !orderDone.value });
 const stepNotes = computed(() => {
   const st = startKinds.value.find((k) => k.k === s.simStart.value);
   const sc = st ? startCost(st.k) : null;
@@ -257,16 +260,16 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(k, i) in orderKeys" :key="k" class="border-t border-white/5">
+            <!-- 行をつかんで持ち上げ、置いた所へ入れ替える (矢印はやめた。2026-10-19 オーナー「持ってよいしょって感じで」、utils/use-drag-sort.ts)。指は左のつまみから -->
+            <tr v-for="(k, i) in orderKeys" :key="k" data-order-row class="border-t border-white/5 select-none" :class="!orderDone ? 'cursor-grab hover:bg-white/[0.03]' : ''" :style="dragSort.styleOf(i)" @pointerdown="dragSort.start($event, i)">
               <td class="w-14 py-1">
-                <span class="mr-1 font-bold text-amber-200">{{ i + 1 }}</span>
-                <template v-if="!orderDone">
-                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" title="上へ" @click="moveOrder(k, -1)"><Icon name="chevron-up" class="size-4" /></button>
-                  <button type="button" class="px-0.5 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === orderKeys.length - 1" title="下へ" @click="moveOrder(k, 1)"><Icon name="chevron-down" class="size-4" /></button>
-                </template>
+                <span class="inline-flex items-center gap-1">
+                  <span v-if="!orderDone" data-drag-handle class="grid h-8 w-6 touch-none place-items-center rounded opacity-50 hover:opacity-100 max-md:h-11 max-md:w-8" :title="tr('つかんで上下に動かす', 'Drag to reorder')"><Icon name="grip" class="size-4" /></span>
+                  <span class="font-bold text-amber-200">{{ dragSort.posOf(i) + 1 }}</span>
+                </span>
               </td>
               <template v-if="orderRow(k)">
-                <td class="w-10 py-1 text-[10px] opacity-60">{{ orderRow(k)!.side }}</td>
+                <td class="w-10 whitespace-nowrap py-1 text-[10px] opacity-60">{{ phone ? (orderRow(k)!.side.startsWith("プレ") ? "プレ" : "サフィ") : orderRow(k)!.side }}</td>
                 <td class="py-1">
                   <span :class="orderRow(k)!.tone">{{ orderRow(k)!.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ orderRow(k)!.rank }} 以上</span>
                   <span v-if="orderRow(k)!.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ orderRow(k)!.alts.length }} つと合わせてどれか</span>
@@ -274,6 +277,7 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
                 </td>
                 <td class="w-48 py-1 text-right text-[11px] tabular-nums max-md:w-auto">
                   <span v-if="redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
+                  <span v-if="!orderDone" data-drag-handle class="ml-1 inline-grid h-11 w-8 touch-none place-items-center rounded align-middle opacity-50 md:hidden"><Icon name="grip" class="size-4" /></span><!-- スマホは右にもつまみ (縦送りとかぶるので、左右どちらの指でも持てるように。2026-10-19 オーナー) -->
                 </td>
               </template>
               <template v-else>
@@ -281,6 +285,7 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
                 <td class="py-1"><span class="text-amber-100">{{ runeJa(k) }}</span><span v-if="runeNeeded.has(k)" class="ml-1 text-[10px] opacity-60">(狙いの MOD に要る)</span></td>
                 <td class="w-6 py-1 text-right">
                   <button v-if="!orderDone && !runeNeeded.has(k)" type="button" class="opacity-50 hover:text-rose-300 hover:opacity-100" title="順番計画から外す" @click="removeRune(k)">×</button>
+                  <span v-if="!orderDone" data-drag-handle class="ml-1 inline-grid h-11 w-8 touch-none place-items-center rounded align-middle opacity-50 md:hidden"><Icon name="grip" class="size-4" /></span>
                 </td>
               </template>
             </tr>

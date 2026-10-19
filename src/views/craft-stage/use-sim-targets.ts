@@ -106,6 +106,14 @@ export function useSimTargets() {
     [list[i], list[j]] = [list[j]!, list[i]!];
     s.simOrder.value = list;
   }
+  /** つかんで置いた所へ (from 番目を to 番目に。use-drag-sort) */
+  function reorder(from: number, to: number): void {
+    const list = [...orderKeys.value];
+    const [k] = list.splice(from, 1);
+    if (k == null) return;
+    list.splice(to, 0, k);
+    s.simOrder.value = list;
+  }
   function addRune(en: string): void {
     if (en) s.simOrder.value = [...orderKeys.value, `rune:${en}`];
   }
@@ -281,7 +289,7 @@ export function useSimTargets() {
     return { text, old: min >= 1440 };
   }
   return { s, runs, MAX_STEPS_KEY, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, methodsFor, methodOf, rows, targetsSig, restRows,
-    runeNeeded, orderKeys, moveOrder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,
+    runeNeeded, orderKeys, moveOrder, reorder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,
     REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, makeRoute, blocker, boughtDivine, magicDivine,
     whiteDivine, fourDivine, rareDivine, itemDivine, exOf, toExalt, num, PRICE_KEY, keptAll, craftCap, socketCap, sockets, socketsOk,
     socketCount, socketQuery, keptKey, kept, loadKept, saveKept, restoring, ageOf };
