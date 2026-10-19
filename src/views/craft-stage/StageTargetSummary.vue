@@ -243,45 +243,45 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
 </script>
 
 <template>
-  <div class="grid min-w-0 gap-y-1 text-[12px]">
+  <div class="grid min-w-0 gap-y-1 text-[13px]">
     <!-- % が何の割合か (2 は一番上のアイテムレベル、3 で決めたレベルで変わる。2026-10-18 初めての 10 人: 同じ MOD で 1.4% → 1.9% と変わって分からない) -->
-    <p v-if="rows.length" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ `% = 1 回付く時に、その段以上が出る割合 (アイテムレベル ${s.itemLevel.value} の時${props.editable ? "。3 でレベルを決めると変わる" : ""})` }}</p>
+    <p v-if="rows.length" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ `% = 1 回付く時に、その段以上が出る割合 (アイテムレベル ${s.itemLevel.value} の時${props.editable ? "。3 でレベルを決めると変わる" : ""})` }}</p>
     <div v-for="col in columns" :key="col.title" class="min-w-0">
       <!-- 狙う MOD は何個でもいい (枠より多くても、次の段で整理する時にまとめる。2026-10-18 オーナー) -->
-      <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold opacity-70">
+      <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[12px] font-bold opacity-70">
         {{ col.title }} ({{ col.used }})<span v-if="col.used > 3" class="ml-1 font-normal opacity-70">枠より多い分は次で整理</span>
       </p>
       <p v-if="!col.groups.length" class="py-0.5 opacity-40">{{ props.editable ? "下の一覧で MOD を押し、開いた段の表の「T○ 以上」で足す" : "なし" }}</p>
       <div v-for="g in col.groups" :key="g.key" class="flex flex-wrap items-start gap-1.5 py-0.5">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
-        <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="badgeOf(g.host).rune ? tr(`${badgeOf(g.host).rune}を差すと付く MOD。回す時はこのルーンを差した白から始める`, `Comes from socketing ${badgeOf(g.host).rune}. Runs start from a white base with that rune socketed`) : tr('MOD の種類 (出どころ)', 'Mod type (source)')">{{ badgeOf(g.host).label }}</span>
+        <span class="shrink-0 rounded border px-1 text-[11px]" :class="badgeOf(g.host).cls" :title="badgeOf(g.host).rune ? tr(`${badgeOf(g.host).rune}を差すと付く MOD。回す時はこのルーンを差した白から始める`, `Comes from socketing ${badgeOf(g.host).rune}. Runs start from a white base with that rune socketed`) : tr('MOD の種類 (出どころ)', 'Mod type (source)')">{{ badgeOf(g.host).label }}</span>
         <!--
           2 つ以上 (どれか n つ): 候補はほかの MOD と同じ太さの行で縦に並べ、左の金の縦線と「どれか n」の札でくくる
           (2026-10-19 オーナー「ここ太くなるのがなー」→ 縦線でくくる案。前は箱 + 説明の文で、1 つの組だけ太かった)。説明は札に乗せると出る
         -->
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'border-l-2 border-amber-400/60 pl-2 max-md:order-last max-md:ml-[1.375rem] max-md:basis-full' : ''"><!-- スマホは組だけ次の行に回して幅いっぱい (番号・種類・付け方の札は 1 行目) -->
           <!-- 頭の 1 行。押すと開く / たたむ -->
-          <button v-if="g.members.length > 1" type="button" data-any-toggle class="g-plain flex w-full flex-wrap items-center gap-1.5 text-left text-[11px]" :aria-expanded="openGroups.has(g.key)" :title="openGroups.has(g.key) ? 'たたむ' : '押すと候補を全部開く (段・外すはここで)'" @click="toggleGroup(g.key)">
+          <button v-if="g.members.length > 1" type="button" data-any-toggle class="g-plain flex w-full flex-wrap items-center gap-1.5 text-left text-[12px]" :aria-expanded="openGroups.has(g.key)" :title="openGroups.has(g.key) ? 'たたむ' : '押すと候補を全部開く (段・外すはここで)'" @click="toggleGroup(g.key)">
             <span class="rounded-sm bg-amber-500/20 px-1 font-bold text-amber-200" :title="`この中のどれか ${g.need} つ (どの順番でもいい。${g.need} つ付けば完成)`">どれか {{ g.need }}</span>
             <span class="text-[var(--exile-color-text-tertiary)]">{{ g.members.length }} 候補</span>
             <!-- たたんだ時は候補の名前も同じ行に (… で切らず折り返して全部。2026-10-21 オーナー「MOD は全て折り返しで全体表示」「間空いてるから 2 段にしなくてもいい」) -->
-            <span v-if="!openGroups.has(g.key)" class="text-[12px]" :title="g.members.map((r) => `${r.text} ${r.rank}`).join('\n')">{{ g.members.map((r) => shortName(r.text)).join(" ／ ") }}</span>
-            <span v-if="!openGroups.has(g.key) && sameRank(g.members)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ sameRank(g.members) }}</span>
+            <span v-if="!openGroups.has(g.key)" class="text-[13px]" :title="g.members.map((r) => `${r.text} ${r.rank}`).join('\n')">{{ g.members.map((r) => shortName(r.text)).join(" ／ ") }}</span>
+            <span v-if="!openGroups.has(g.key) && sameRank(g.members)" class="rounded-sm bg-amber-500/25 px-1 text-[11px] font-bold text-amber-100">{{ sameRank(g.members) }}</span>
             <span v-if="g.share != null" class="tabular-nums text-amber-100/70" title="1 回で付く割合の合計 (候補のどれかが付く)">合計 {{ pct(g.share) }}</span>
-            <span class="text-[10px] opacity-60">{{ openGroups.has(g.key) ? "▴" : "▾" }}</span>
+            <span class="text-[11px] opacity-60">{{ openGroups.has(g.key) ? "▴" : "▾" }}</span>
           </button>
           <div v-if="g.members.length <= 1 || openGroups.has(g.key)" :class="g.members.length > 1 ? 'flex flex-col gap-0.5' : 'flex items-center gap-1.5 max-md:flex-wrap'">
             <!-- 組の中 (どれか) はスマホでも札を文の横に置く (文だけ折り返す)。1 つの時は今まで通り文の下に札 -->
             <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1" :class="g.members.length > 1 ? 'max-md:flex max-md:w-full' : 'max-md:flex-wrap'">
               <span class="min-w-0" :class="g.members.length > 1 ? 'max-md:flex-1' : 'max-md:w-full'" :title="r.text + essTitle(r.modId)">{{ r.text }}</span>
-              <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
+              <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[11px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
                 <option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option>
               </select>
-              <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
-              <span v-if="presentOnStart(r)" class="shrink-0 rounded-sm bg-emerald-500/25 px-1 text-[10px] font-bold text-emerald-100" title="エミュレーターの状態にもう付いている (この段以上)">✓ 付いている</span>
-              <span v-if="r.share != null" class="shrink-0 text-[10px] tabular-nums opacity-70" title="1 回の抽選でこの段以上が出る割合 (同じ側の重み)">{{ pct(r.share) }}</span>
-              <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100 max-md:min-h-9 max-md:min-w-9 max-md:text-[16px]" :title="r.alt || g.hosts.length > 1 ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r, g.hosts)">×</button>
+              <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[11px] font-bold text-amber-100">{{ r.rank }}</span>
+              <span v-if="presentOnStart(r)" class="shrink-0 rounded-sm bg-emerald-500/25 px-1 text-[11px] font-bold text-emerald-100" title="エミュレーターの状態にもう付いている (この段以上)">✓ 付いている</span>
+              <span v-if="r.share != null" class="shrink-0 text-[11px] tabular-nums opacity-70" title="1 回の抽選でこの段以上が出る割合 (同じ側の重み)">{{ pct(r.share) }}</span>
+              <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[12px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100 max-md:min-h-9 max-md:min-w-9 max-md:text-[16px]" :title="r.alt || g.hosts.length > 1 ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r, g.hosts)">×</button>
             </span>
             
           </div>
@@ -289,37 +289,37 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
         <!-- 付け方の予定は MOD の右側 (2026-10-05 オーナー「普通カオススパムとかの設定って MOD の右側よ」) -->
         <!-- 始め方が白以外の時、固定 MOD は 1 ベースで決めた物なので予定は変えない (2026-10-08)。
              エミュレーターの状態から来た時 (item) のフラクチャー済みは、鍵を付けずほかの狙いと同じ「フラクチャー予定」として出す (付け方を変えられる。2026-10-19 オーナー「フラクチャー済みも手打ちで変更できないから、フラクチャー予定でいい、どうせ後で設定で使う」) -->
-        <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white' && s.simStart.value !== 'item'" class="shrink-0 rounded border px-1 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めたフラクチャーの MOD">{{ s.simStart.value === "fractured" ? "🔒 フラクチャー (買った物)" : "🔒 フラクチャーする (買った 4 MOD から)" }}</span>
+        <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white' && s.simStart.value !== 'item'" class="shrink-0 rounded border px-1 text-[11px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めたフラクチャーの MOD">{{ s.simStart.value === "fractured" ? "🔒 フラクチャー (買った物)" : "🔒 フラクチャーする (買った 4 MOD から)" }}</span>
         <!-- 付け方は押して選ぶ札を MOD の行のすぐ下に (2026-10-18 オーナー「MOD 選んだら付け方選べるように、高貴ガチャかカオススパムか冒涜・フラクチャー等」。前は 10px のプルダウンで気付けなかった) -->
         <span v-else-if="props.plans && plansOf(g.host).length > 1" data-plan-pick class="flex basis-full flex-wrap items-center gap-1 pl-[1.375rem]" title="この MOD の付け方。打ち方の手で狙う時の目安 (後で変えられる)">
-          <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">付け方</span>
-          <button v-for="p in plansOf(g.host)" :key="p" type="button" class="rounded border px-1.5 py-px text-[11px] transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="planOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="planOf(g) === p" :disabled="planOf(g) !== p && !!chaosOff(g.host)[p]" :title="chaosOff(g.host)[p] ?? (p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host) ? 'ほかのフラクチャー予定と違う側 (非推奨)' : undefined)" @click="setPlan(g, p)">{{ PLAN_JA[p] }}<span v-if="p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host)" class="ml-0.5 opacity-70">*</span></button>
+          <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">付け方</span>
+          <button v-for="p in plansOf(g.host)" :key="p" type="button" class="rounded border px-1.5 py-px text-[12px] transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="planOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="planOf(g) === p" :disabled="planOf(g) !== p && !!chaosOff(g.host)[p]" :title="chaosOff(g.host)[p] ?? (p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host) ? 'ほかのフラクチャー予定と違う側 (非推奨)' : undefined)" @click="setPlan(g, p)">{{ PLAN_JA[p] }}<span v-if="p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host)" class="ml-0.5 opacity-70">*</span></button>
         </span>
         <!-- 選んでいる間は印を押すと付け方を変えられる (足した時と同じポップアップ。2026-10-18 オーナー「決めた奴でも途中で変えれるように」) -->
-        <button v-else-if="props.editable && plansOf(g.host).length > 1" type="button" data-plan-change class="shrink-0 rounded border px-1 text-[10px] hover:bg-white/10 max-md:min-h-9 max-md:px-2" :class="PLAN_CLS[planOf(g)]" title="押すと付け方を変える" @click="methodPop?.ask($event.currentTarget as Element, plansOf(g.host), (p) => setPlan(g, p), chaosOff(g.host))">{{ PLAN_JA[planOf(g)] }} ▾</button>
-        <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「この段に戻る」)'">{{ PLAN_JA[planOf(g)] }}</span>
+        <button v-else-if="props.editable && plansOf(g.host).length > 1" type="button" data-plan-change class="shrink-0 rounded border px-1 text-[11px] hover:bg-white/10 max-md:min-h-9 max-md:px-2" :class="PLAN_CLS[planOf(g)]" title="押すと付け方を変える" @click="methodPop?.ask($event.currentTarget as Element, plansOf(g.host), (p) => setPlan(g, p), chaosOff(g.host))">{{ PLAN_JA[planOf(g)] }} ▾</button>
+        <span v-else class="shrink-0 rounded border px-1 text-[11px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「この段に戻る」)'">{{ PLAN_JA[planOf(g)] }}</span>
       </div>
     </div>
     <!-- プレとサフィにまたがる「どれか」(カオススパム) -->
     <div v-for="g in mixed" :key="g.key" class="min-w-0">
-      <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold opacity-70">プレフィックスかサフィックスのどれか <span class="font-normal">(付いた側で打ち方のルートが分かれる)</span></p>
+      <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[12px] font-bold opacity-70">プレフィックスかサフィックスのどれか <span class="font-normal">(付いた側で打ち方のルートが分かれる)</span></p>
       <div class="flex items-start gap-1.5 py-0.5 max-md:flex-wrap">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <!-- プレとサフィにまたがる組も同じ形 (縦線でくくる) -->
         <div class="min-w-0 flex-1 border-l-2 border-amber-400/60 pl-2">
           <div class="flex flex-col gap-0.5">
             <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1">
-              <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ r.side === "P" ? "プレフィックス" : "サフィックス" }}</span>
+              <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ r.side === "P" ? "プレフィックス" : "サフィックス" }}</span>
               <span class="min-w-0" :title="r.text">{{ r.text }}</span>
-              <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
+              <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[11px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
                 <option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option>
               </select>
-              <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ r.rank }}</span>
-              <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[11px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button>
+              <span v-else class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[11px] font-bold text-amber-100">{{ r.rank }}</span>
+              <button v-if="props.editable" type="button" class="shrink-0 px-0.5 text-[12px] leading-none opacity-50 hover:text-rose-300 hover:opacity-100" :title="r.alt ? 'この候補を外す' : 'この MOD を外す (あるいはの候補ごと)'" @click="drop(r)">×</button>
             </span>
           </div>
         </div>
-        <span class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS.chaos">カオススパム</span>
+        <span class="shrink-0 rounded border px-1 text-[11px]" :class="PLAN_CLS.chaos">カオススパム</span>
       </div>
     </div>
     <SimMethodPop ref="methodPop" />

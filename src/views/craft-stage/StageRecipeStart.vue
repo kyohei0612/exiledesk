@@ -3,7 +3,7 @@
 
   オーナー「初起動でベースを選ぶとかあるけど、ここの時点でレシピとかの選択させるような UI じゃないと、わざわざ適当なベース選んでレシピ開くことになるぞ」。
   2026-10-21 オーナー「ここはレシピ URL 入力もしくは保存されてるレシピをプルダウンで表示」: 1 行に「保存したレシピ ▾」(押すと札 = ベースの絵・名前・日付が下に開く)と
-  「レシピの URL を貼る欄」。ファイルからの読み込みは右上の「レシピ」の中だけ (ここからは外した)。
+  「レシピの URL を貼る欄」。開発版の見本の靴・手袋は外した (10-21 オーナー「見本はいらん、保存だけでおｋ」)。ファイルからの読み込みは右上の「レシピ」の中だけ (ここからは外した)。
   compact = ベースを選ぶページ・右上の「レシピ」の中 (どちらも同じ形。プルダウンの札は 1 列)
 -->
 <script setup lang="ts">
@@ -11,7 +11,6 @@ import { nextTick, onBeforeUnmount, ref } from "vue";
 import { readSimRecipes, type SimRecipe } from "../../state/craft-stage";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { openRecipeCode, recipeCodeOf } from "./recipe-share";
-import { SIM_SAMPLE_RECIPES, type SampleRecipe } from "./sim-sample-recipes";
 import { tr } from "../../i18n/lang";
 
 defineProps<{ compact?: boolean }>();
@@ -35,9 +34,6 @@ function toggle(): void {
 }
 onBeforeUnmount(close);
 function pick(r: SimRecipe): void { close(); emit("start", r); }
-/** 見本 (開発版だけ): 保存したレシピに足して始める */
-async function pickSample(x: SampleRecipe): Promise<void> { close(); if (await openRecipeCode(x.code)) recipes.value = readSimRecipes(); }
-const samples = SIM_SAMPLE_RECIPES;
 
 /** レシピの URL を貼る欄: 貼ったら (か Enter・開く) 読み込んで、保存したレシピに足して始める */
 const url = ref("");
@@ -59,23 +55,11 @@ const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getM
       <b class="shrink-0 text-[13px] text-[var(--exile-color-text-primary)]">{{ tr("レシピから始める", "Start from a recipe") }}</b>
       <!-- 保存したレシピのプルダウン (札は下に開く) -->
       <div ref="box" class="relative shrink-0 max-md:basis-full">
-        <button type="button" data-recipe-pick class="g-plain flex h-8 min-w-[13rem] items-center gap-2 rounded border border-white/15 bg-black/50 px-2.5 text-left text-[12px] transition hover:bg-white/[0.06] disabled:opacity-45 max-md:h-11 max-md:w-full" :disabled="!recipes.length && !samples.length" :aria-expanded="open" :title="recipes.length ? tr('保存したレシピから選ぶ', 'Pick a saved recipe') : tr('まだありません (ベースを選んで作り、右上の「レシピ」で保存。URL を貼っても足せる)', 'None yet (build one and save it from Recipes at the top right, or paste a URL)')" @click="toggle">
-          <span class="min-w-0 flex-1 truncate">{{ recipes.length ? tr(`保存したレシピ (${recipes.length})`, `Saved recipes (${recipes.length})`) : samples.length ? tr(`見本のレシピ (${samples.length})`, `Sample recipes (${samples.length})`) : tr("保存したレシピはまだありません", "No saved recipes yet") }}</span>
+        <button type="button" data-recipe-pick class="g-plain flex h-8 min-w-[13rem] items-center gap-2 rounded border border-white/15 bg-black/50 px-2.5 text-left text-[12px] transition hover:bg-white/[0.06] disabled:opacity-45 max-md:h-11 max-md:w-full" :disabled="!recipes.length" :aria-expanded="open" :title="recipes.length ? tr('保存したレシピから選ぶ', 'Pick a saved recipe') : tr('まだありません (ベースを選んで作り、右上の「レシピ」で保存。URL を貼っても足せる)', 'None yet (build one and save it from Recipes at the top right, or paste a URL)')" @click="toggle">
+          <span class="min-w-0 flex-1 truncate">{{ recipes.length ? tr(`保存したレシピ (${recipes.length})`, `Saved recipes (${recipes.length})`) : tr("保存したレシピはまだありません", "No saved recipes yet") }}</span>
           <span class="shrink-0 opacity-60">▾</span>
         </button>
         <div v-if="open" data-recipe-list class="absolute left-0 top-full z-[60] mt-1 max-h-[60vh] w-[22rem] overflow-auto rounded-lg border border-[var(--exile-color-border-brass)] bg-[#14110d] p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.75)] max-md:w-full">
-          <!-- 見本 (開発版だけ。sim-sample-recipes.ts) -->
-          <template v-if="samples.length">
-            <p class="px-1 pb-1 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("見本", "Samples") }}</p>
-            <button v-for="x in samples" :key="x.name" type="button" data-recipe-sample class="g-plain g-item mb-1 flex w-full items-center gap-2 bg-black/50 px-1.5 py-1 text-left transition hover:bg-white/[0.06] max-md:min-h-12" @click="pickSample(x)">
-              <img v-if="baseArt(x.base)" :src="baseArt(x.base)!" alt="" class="size-10 shrink-0 object-contain" draggable="false" />
-              <span class="min-w-0 flex-1">
-                <b class="block truncate text-[13px] text-[var(--exile-color-text-primary)]">{{ x.name }}</b>
-                <span class="block truncate text-[11px] opacity-60">{{ x.baseJa }}</span>
-              </span>
-            </button>
-            <p v-if="recipes.length" class="px-1 pb-1 pt-1 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("保存したレシピ", "Saved") }}</p>
-          </template>
           <button v-for="r in recipes" :key="r.id" type="button" class="g-plain g-item flex w-full items-center gap-2 bg-black/50 px-1.5 py-1 text-left transition hover:bg-white/[0.06] max-md:min-h-12 [&+&]:mt-1" :title="`${r.baseJa ?? r.session.base} · パターン ${r.session.patterns.length} つ`" @click="pick(r)">
             <img v-if="baseArt(r.session.base)" :src="baseArt(r.session.base)!" alt="" class="size-10 shrink-0 object-contain" draggable="false" />
             <span v-else class="size-10 shrink-0" />
