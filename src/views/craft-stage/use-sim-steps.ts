@@ -27,7 +27,7 @@ export type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracD
 
 export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   const { fracDone, sortDone, hasSteps, itemDivine, keptKey, modsDone, num, orderDone, patternDone, recipeOut, restBases, restCost,
-    restoring, results, rows, sockets, socketsOk, startDone, step3, stepOrder, stepStart, whiteDivine, whiteOk, whiteDone, busy } = d;
+    restoring, results, rows, sockets, socketsOk, startDone, step3, stepOrder, stepStart, whiteDivine, whiteOk, busy, startPrice } = d;
   const s = craftStage;
   const step4pre = computed(() => stepOrder.value && orderDone.value);
   /** 段の番号: 出ない段 (始め方を 1 で決めた時の 4 など) は詰める (2026-10-09 初見レビュー「4 はどこ?」) */
@@ -65,7 +65,8 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     restBases.value = 1;
     patternDone.value = false;
   }
-  watch(() => s.simTargets.value.map((t) => t.modId).join(","), () => { if (!restoring.v) resetStalePatterns(); });
+  // 狙いを外したら、それを使うパターンを空に。② のページで直している間は待って、出る時に見る (外して付け直したら消さない。2026-10-19 オーナー「いじった後結局何も変わってない判定なら消さなくて」)
+  watch(() => s.simTargets.value.map((t) => t.modId).join(","), () => { if (!restoring.v && simStep.value !== "mods") resetStalePatterns(); });
   /** 始め方が白以外なら、狙いの最初の 1 つが固定 MOD (1 ベースで選んだ始め方。2026-10-08)。手打ちの状態からは、固定されている MOD を狙いに入れた時だけ */
   watch([() => s.simStart.value, () => s.simTargets.value.length], () => {
     if (restoring.v || s.simStart.value === "white") return;
@@ -78,11 +79,11 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     if (!list.length || list.some((t) => t.method === "fracture")) return;
     s.simTargets.value = list.map((t, i) => (i === 0 ? { ...t, method: "fracture" as const } : t));
   });
-  // 始め方を変えたら 4 から先はやり直し (ベース代の入れ方・4 の有無が変わる)。3 は決めたまま (4 の間も 3 を触れて、4 がその場で変わる。2026-10-19 オーナー)
+  // 始め方を変えたら打ち方のパターンはやり直し (始めのアイテムが変わる)。③ のページを出る時に、入った時と違っていたら (変えて戻したら消さない。2026-10-19 オーナー)
   watch(() => s.simStart.value, (k) => {
     if (restoring.v) return;
     if (k === "item") itemDivine.value = s.simStartCost.value + (num(whiteDivine.value) ?? 0);
-    if (startDone.value || orderDone.value) goTo("start");
+    if (simStep.value !== "start" && (startDone.value || orderDone.value)) resetPatterns();
   }, { immediate: true });
   watch(() => s.simStartItem.value, () => { if (!restoring.v && s.simStart.value === "item") itemDivine.value = s.simStartCost.value + (num(whiteDivine.value) ?? 0); });
   /**
@@ -124,9 +125,6 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   // エミュレーターの状態からは、そのアイテムのレベルのまま
   watch(modsDone, (v) => { if (!v && !restoring.v && s.simStart.value !== "item") s.itemLevel.value = SIM_ILVL_MAX; });
   watch(keptKey, () => { if (restoring.v) return; resetPatterns(); modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
-  // 下の MOD 一覧は ① で選んでいる間だけ。「決めた」で閉じる (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい、最初以外使わん」)。
-  // 足し直す時は ① の「直す」で開き直す
-  watch(() => socketsOk.value && !modsDone.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
   function goTo(st: Stage): void {
     resetPatterns();
     if (st === "mods") modsDone.value = false;
@@ -163,11 +161,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
    */
   watch(modsDone, (v) => { if (v) ilvlNote.value = ""; });
   // まとめる組が無く枠にも収まっていれば、整理の欄は飛ばして 3 へ (狙い 1 つでも決めたを 2 回押していた。2026-10-18 初めての 10 人)
-  watch(modsDone, (v) => {
-    if (!v || restoring.v) return;
-    const u = sideUse(s.data.value, s.simTargets.value), l = sideLimits(s.data.value, s.base.value, s.itemLevel.value);
-    if (!sortBuckets(s.data.value, s.simTargets.value).length && u.prefix <= l.prefix && u.suffix <= l.suffix) sortDone.value = true;
-  });
+  watch(modsDone, (v) => { if (v && !restoring.v && sortOk()) sortDone.value = true; });
   // エミュレーターの状態からも 3 (始め方・ベース代)・4 (付ける順番) を通る (前は自動で済ませて 2 → 5 に番号が飛んだ。2026-10-18 初めての 10 人の 10 人目)
   /**
    * 工程のページ (2026-10-19 オーナー「各工程ページ別にしたい」「工程は終わったらたたむ、即開いてそこから修正できるように」、[[sim-step-pages]])。
@@ -176,23 +170,54 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
    */
   const panelEl = ref<HTMLElement | null>(null);
   const stepIdx = (x: SimStep): number => SIM_STEPS.indexOf(x);
+  /** 整理 (どれか N つにまとめる) が要らない: まとめる組が無く、枠にも収まっている */
+  function sortOk(): boolean {
+    const u = sideUse(s.data.value, s.simTargets.value), l = sideLimits(s.data.value, s.base.value, s.itemLevel.value);
+    return !sortBuckets(s.data.value, s.simTargets.value).length && u.prefix <= l.prefix && u.suffix <= l.suffix;
+  }
+  /** ② で狙いを直せる形 (整理の間は整理だけ) */
+  const edit2 = computed(() => simStep.value === "mods" && !(modsDone.value && !sortDone.value));
+  // 下の MOD 一覧は ② で狙いを直せる間だけ (2026-10-05 オーナー「役目終えたらこのベースに付く MOD はしまっていい」。今は ② のページにいる間)
+  watch(() => socketsOk.value && edit2.value, (v) => { s.simShowMods.value = v; }, { immediate: true });
+  const priceOk = (): boolean => num(startPrice.value) != null;
+  /**
+   * 今行ける一番先の工程。決めた印に、今いるページを「決められるなら決めたもの」として足す
+   * (2026-10-19 オーナー「タブで 1 つ前に戻った後、即もう一回今いる所に戻りたい」「決めるボタン押さないで進む人もいるから、タブ違う奴押しても次へ押した判定でおｋ」)
+   */
   const reach = computed((): number => {
-    if (!(modsDone.value && sortDone.value)) return 0;
-    if (!whiteDone.value || (stepStart.value && !startDone.value)) return 1;
-    if (!orderDone.value) return 2;
+    const here = simStep.value;
+    if (!((modsDone.value && sortDone.value) || (here === "mods" && rows.value.length > 0 && sortOk()))) return 0;
+    if (!((whiteOk.value && fracDone.value && startDone.value && priceOk()) || (here === "start" && priceOk()))) return 1;
+    if (!(orderDone.value || here === "order")) return 2;
     return results.value.length ? 4 : 3;
   });
   // 行けない工程にいたら (前を直して決め直しになった・URL で先を開いた)、行ける一番先へ
   watch(reach, (r) => { if (stepIdx(simStep.value) > r) simStep.value = SIM_STEPS[r]!; }, { immediate: true });
-  /** 帯の札から工程へ (行ける所だけ)。前の工程は直せる形に開く */
-  function go(x: SimStep): void {
-    if (stepIdx(x) <= reach.value) simStep.value = x;
+  /** 今のページを決める (「次へ」と同じ。決められない時は何もしない) */
+  function decideHere(): void {
+    const here = simStep.value;
+    if (here === "mods" && rows.value.length) { modsDone.value = true; sortDone.value = sortOk(); }
+    if (here === "start" && priceOk()) { whiteOk.value = true; fracDone.value = true; startDone.value = true; }
+    if (here === "order") orderDone.value = true;
   }
-  // ページに入ったら、その工程を直せる形に開く (札・ブラウザの戻る / 進む・URL のどれから来ても)
-  watch(simStep, (x) => {
+  /** 帯の札から工程へ (行ける所だけ)。今のページは決めたことにして移る。前の工程は何も変えなければ先の工程はそのまま */
+  function go(x: SimStep): void {
+    if (stepIdx(x) > reach.value || x === simStep.value) return;
+    decideHere();
+    simStep.value = x;
+  }
+  /** ② に入る時はアイテムレベルを一番上に (全部の段を選べるように)、出る時に元のレベルへ (狙いが全部付く一番低いレベルより下なら、そこまで上げる) */
+  let ilvlBefore: number | null = null;
+  const needIlvl = (): number => Math.max(1, ...s.simTargets.value.map((t) => s.data.value?.mods.get(t.modId)?.tiers[t.minTierIndex]?.ilvl ?? 1));
+  let startAtEnter: string | null = null;
+  watch(simStep, (to, from) => {
     if (restoring.v) return;
-    if (x === "mods" && modsDone.value) { modsDone.value = false; sortDone.value = false; }
-    if (x === "order") orderDone.value = false;
+    // ページを出る時に、入った時と比べて本当に変わった物だけ先を消す
+    if (from === "mods") resetStalePatterns();
+    if (from === "start" && startAtEnter != null && startAtEnter !== s.simStart.value) resetPatterns();
+    startAtEnter = to === "start" ? s.simStart.value : null;
+    if (to === "mods" && from !== "mods" && s.itemLevel.value !== SIM_ILVL_MAX) { ilvlBefore = s.itemLevel.value; s.itemLevel.value = SIM_ILVL_MAX; }
+    else if (from === "mods" && to !== "mods" && ilvlBefore != null) { s.itemLevel.value = Math.max(ilvlBefore, needIlvl()); ilvlBefore = null; }
   });
   /** まだ決めていない一番先の工程へ (レシピを呼び出した時) */
   function toFirstOpen(): void { simStep.value = SIM_STEPS[Math.min(reach.value, 3)]!; }
@@ -200,7 +225,8 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   /** 2 の「次へ」: 決めて、整理が要らなければ 3 へ (要る時は同じページで整理 → sortDecided) */
   function decideMods(): void {
     modsDone.value = true;
-    void nextTick(() => { if (sortDone.value) simStep.value = "start"; });
+    sortDone.value = sortOk();
+    if (sortDone.value) simStep.value = "start";
   }
   function sortDecided(): void { sortDone.value = true; simStep.value = "start"; }
   /** 4 の「次へ」 */
@@ -245,5 +271,5 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     void nextTick(() => { lastSnap = snapNow(); restoring.v = false; });
   }
   return { step4pre, stepNo, fold, step4, resetStalePatterns, resetPatterns, wantTier, ilvlNote, goTo, resetArm, resetAll, panelEl,
-    whiteDecide, snapNow, undoStack, onKey, undo, reach, go, toFirstOpen, decideMods, sortDecided, decideOrder };
+    whiteDecide, snapNow, undoStack, onKey, undo, reach, go, toFirstOpen, decideMods, sortDecided, decideOrder, edit2 };
 }
