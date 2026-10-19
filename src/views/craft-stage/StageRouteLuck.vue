@@ -6,7 +6,7 @@
   かなりの強運 (上位 10%) は計算機と同じ銅色の演出と音 (styles/spam-lucky.css)。X のシェアは計算機と同じカード (/s/<id>) に、題と主のカレンシーの絵を足す
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { packRace, routeKey, routeRun, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/route-race";
 import { medianOf, rankOf, unluckyOf, type SpamStats } from "../../services/craft-stage/chaos-spam";
@@ -25,11 +25,18 @@ import { fullSockets } from "../../state/stage-steps";
 import { startFrom } from "../../services/craft-stage/run-plan";
 import type { Force } from "../../services/craft-stage/stage-core";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
+import { revealNext } from "../../utils/keep-place";
 
 /** options = 同じ道の等級 (着いた物。タブと比べに出す。2026-10-19 オーナー「等級も選べるように、カオススパム計算機の形で」) */
 const props = defineProps<{ row: RaceRow; options: RaceRow[]; target: RaceTarget; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[]; /** 全部の道の結果 (シェアに入れる) */ rows: RaceRow[] }>();
 /** 比べる人数 (スマホは 10 人) */
 const people = computed(() => props.row.people);
+/**
+ * 人数が少ない時 (スマホの 10 人) は % ではなく「何位」で出す (2026-10-19 オーナー「スマホだと 10 人だから何位だね、表示は % やなくて」)。
+ * 位 = 自分より早く付いた人の数 + 1、自分を入れて people + 1 人の中。付かなかった人は自分より遅い
+ */
+const byPlace = computed(() => people.value <= 20);
+const placeOf = (n: number): number => 1 + props.row.tries.filter((x) => x < n).length;
 const emit = defineEmits<{ close: []; pick: [row: RaceRow] }>();
 const GRADE_NAME: Record<RaceRow["grade"], [string, string]> = { base: ["無印", "Regular"], greater: ["上級", "Greater"], perfect: ["完全", "Perfect"] }; // 道のカードと同じ呼び方
 /** 道の中で一番安い等級 (おすすめ) */
@@ -82,6 +89,9 @@ function start(e: PointerEvent): void {
   try { (e.currentTarget as Element | null)?.setPointerCapture?.(e.pointerId); } catch { /* 無くてよい */ }
   result.value = null;
   spamming.value = true;
+  // 押しっぱなしで文字が選ばれないように (スマホの長押しの選択。2026-10-19 オーナー)。出ていた選択も消す
+  try { window.getSelection()?.removeAllRanges(); } catch { /* 無くてよい */ }
+  document.documentElement.classList.add("select-none");
   t0 = performance.now(); lastT = 0;
   const loop = (now: number): void => {
     if (!spamming.value || !run) return;
@@ -103,9 +113,12 @@ function stop(): void { if (spamming.value) finish(null); }
 function finish(reason: string | null): void {
   cancelAnimationFrame(raf);
   spamming.value = false;
+  document.documentElement.classList.remove("select-none");
   if (!run) return;
   const hit = run.hit();
   result.value = { hit, n: run.n, cost: run.cost, rank: hit ? rankOf(stats.value, run.n) : null, reason };
+  // 付いたら次は「X でシェア」(結果の下。2026-10-19 オーナー「次入力するとこまで自動スクロール」)
+  if (hit) void nextTick(() => requestAnimationFrame(() => revealNext(document.querySelector("[data-route-share]"))));
   // 付いた時の音 (押しっぱなしの間は鳴らさず、付いた 1 回だけ。2026-10-19 オーナー「付いた時の SE が無い」)。かなりの強運は下の watch が珍しい段の音を鳴らす
   // 狙いが珍しい段 (エミュレーターの神演出と同じ確率の線) で付いた時は珍しい段の音
   const tc = run.chances.get(props.target.modId);
@@ -115,14 +128,23 @@ function finish(reason: string | null): void {
     logRecord("emu_spam", { base: s.base.value, key: mainKey.value, route: props.row.route, aims: [`${props.target.modId}#${props.target.minTierIndex}`], uses: run.n, hit });
   }
 }
-onBeforeUnmount(() => cancelAnimationFrame(raf));
+onBeforeUnmount(() => { cancelAnimationFrame(raf); document.documentElement.classList.remove("select-none"); });
 
 // かなりの強運 (上位 10% 以内) は計算機と同じ音と銅色の演出
-const isLucky = computed(() => !!result.value?.hit && result.value.rank != null && result.value.rank <= 10);
+const isLucky = computed(() => !!result.value?.hit && result.value.rank != null && (byPlace.value ? placeOf(result.value.n) === 1 : result.value.rank <= 10));
 watch(isLucky, (v) => { if (v) playSfx("rare", 1.5); });
 
 const money = (x: number): string => displayCurrency.money(x);
 const fmt = (v: number | null): string => (v == null ? tr("付かない人が多い", "Most never hit") : tr(`${v.toLocaleString()} 手`, `${v.toLocaleString()} uses`));
+/**
+ * スマホは押すボタンを画面の下の帯に置く (旧カオススパム計算機と同じ)。札の下に置くと、打つたびに札の高さが変わってボタンが動いた
+ * (2026-10-19 オーナー「スパム中スマホがスパムボタン動いちゃうな、アイテムの縦枠動くから」)
+ */
+const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
+const onResize = (): void => { phone.value = window.innerWidth < 768; };
+window.addEventListener("resize", onResize);
+onBeforeUnmount(() => window.removeEventListener("resize", onResize));
+const barShown = computed(() => phone.value && !(result.value?.hit && !spamming.value));
 const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : result.value && !result.value.hit ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
 
 // ---- シェア (計算機と同じカード。setup に道と狙いを入れて、開いた人に同じ運試しを出す: state/spam-share-open.ts) ----
@@ -138,6 +160,7 @@ watch([result, isEn], async () => {
     tr(`スパムシミュレーター · ${props.routeName}`, `Spam simulator · ${props.routeName}`),
     iconOf(mainKey.value) || null,
     people.value,
+    byPlace.value ? placeOf(r.n) : null,
   ]);
   shareCode = code;
   shareUrl.value = `${shareOrigin()}/s/${await shortIdOf(code)}`;
@@ -145,7 +168,7 @@ watch([result, isEn], async () => {
 const shareText = computed(() => {
   const r = result.value;
   if (!r?.hit) return "";
-  const luckLine = r.rank != null ? tr(`${people.value} 人中 ${rankWord(r.rank)} の運 (${luck(r.rank)})`, `${rankWord(r.rank)} luck among ${people.value} people (${luck(r.rank)})`) : "";
+  const luckLine = r.rank == null ? "" : byPlace.value ? tr(`${people.value + 1} 人中 ${placeOf(r.n)} 位 (${luck(r.rank)})`, `#${placeOf(r.n)} of ${people.value + 1} (${luck(r.rank)})`) : tr(`${people.value} 人中 ${rankWord(r.rank)} の運 (${luck(r.rank)})`, `${rankWord(r.rank)} luck among ${people.value} people (${luck(r.rank)})`);
   return tr(
     `${props.routeName}で ${baseName.value} に ${props.label} を ${r.n.toLocaleString()} 手 (${money(r.cost)}) で付けた！ ${luckLine}\n#PoE2 #ExileDesk`,
     `${props.routeName}: ${props.label} on ${baseName.value} in ${r.n.toLocaleString()} uses (${money(r.cost)})! ${luckLine}\n#PoE2 #ExileDesk`,
@@ -201,13 +224,14 @@ function shareX(e: MouseEvent): void {
         <div v-if="isLucky" :key="`lucky-${result.n}`" data-route-lucky class="spam-lucky">
           <span class="spam-lucky-line" aria-hidden="true" />
           <p class="spam-lucky-kicker">{{ tr("かなりの強運", "Exceptional luck") }}</p>
-          <p class="spam-lucky-rank"><span class="spam-lucky-top">TOP</span><span class="spam-lucky-num">{{ result.rank }}</span><span class="spam-lucky-pct">%</span></p>
+          <p v-if="byPlace" class="spam-lucky-rank"><span class="spam-lucky-top">{{ tr(`${people + 1} 人中`, `of ${people + 1}`) }}</span><span class="spam-lucky-num">{{ placeOf(result.n) }}</span><span class="spam-lucky-pct">{{ tr("位", "st") }}</span></p>
+          <p v-else class="spam-lucky-rank"><span class="spam-lucky-top">TOP</span><span class="spam-lucky-num">{{ result.rank }}</span><span class="spam-lucky-pct">%</span></p>
           <p class="spam-lucky-sub">{{ tr(`${people} 人の中で ${result.n.toLocaleString()} 手目に付いた`, `Hit on use ${result.n.toLocaleString()} among ${people} people`) }}</p>
           <span class="spam-lucky-line" aria-hidden="true" />
         </div>
         <p v-else class="mt-2 text-[16px] font-bold text-emerald-300">{{ tr(`${result.n.toLocaleString()} 手目で付きました！`, `Hit on use ${result.n.toLocaleString()}!`) }}</p>
         <template v-if="result.rank != null">
-          <p v-if="!isLucky" class="mt-0.5 text-[13px]">{{ tr(`${people} 人中 ${rankWord(result.rank)} の運`, `${rankWord(result.rank)} luck among ${people} people`) }} <b :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">{{ luck(result.rank) }}</b></p>
+          <p v-if="!isLucky" class="mt-0.5 text-[13px]">{{ byPlace ? tr(`${people + 1} 人中 ${placeOf(result.n)} 位 (あなたを入れて)`, `#${placeOf(result.n)} of ${people + 1} (including you)`) : tr(`${people} 人中 ${rankWord(result.rank)} の運`, `${rankWord(result.rank)} luck among ${people} people`) }} <b :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">{{ luck(result.rank) }}</b></p>
           <div class="relative mt-1.5 h-2 max-w-[320px] rounded-full bg-gradient-to-r from-emerald-500/60 via-amber-400/50 to-rose-500/60">
             <span class="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#14110d]" :style="{ left: `${result.rank}%` }" />
           </div>
@@ -220,7 +244,7 @@ function shareX(e: MouseEvent): void {
         </div>
       </template>
       <template v-else>
-        <button type="button" data-route-hold class="g-btn-red mt-2 min-h-11 w-full max-w-[320px] select-none touch-none px-2 text-[14px]" @pointerdown.prevent="start" @pointerup="stop" @pointercancel="stop" @contextmenu.prevent>{{ holdLabel }}</button>
+        <button v-if="!barShown" type="button" data-route-hold class="g-btn-red mt-2 min-h-11 w-full max-w-[320px] select-none touch-none [-webkit-touch-callout:none] px-2 text-[14px]" @pointerdown.prevent="start" @pointerup="stop" @pointercancel="stop" @contextmenu.prevent>{{ holdLabel }}</button>
         <p class="mt-1.5 tabular-nums text-[14px]"><b>{{ tr(`${n.toLocaleString()} 手`, `${n.toLocaleString()} uses`) }}</b><span class="text-[var(--exile-color-text-secondary)]"> · {{ money(cost) }}</span></p>
         <p v-if="result && !spamming" class="mt-0.5 text-[var(--exile-color-text-secondary)]">{{ result.reason ?? tr("まだ付いていません。もう一度押すと続きから", "Not hit yet. Hold again to continue") }}</p>
         <span v-if="result && !spamming" class="mt-1 flex flex-wrap gap-2">
@@ -238,7 +262,20 @@ function shareX(e: MouseEvent): void {
         <dt class="text-[var(--exile-color-text-secondary)]">{{ tr("一番早い / 遅い", "Fastest / slowest") }}</dt>
         <dd class="tabular-nums">{{ row.tries.length ? `${fmt(row.tries[0]!)} / ${fmt(row.tries[row.tries.length - 1]!)}` : "—" }}<template v-if="stats.failed"> · {{ tr(`${stats.failed} 人は付かなかった`, `${stats.failed} never hit`) }}</template></dd>
       </dl>
+      <!-- スマホの帯の分だけ下を空ける (帯に隠れないように) -->
+      <div v-if="barShown" class="h-24" aria-hidden="true" />
     </div>
+    <!-- スマホ: 画面の下の帯に押すボタン (動かない)。旧カオススパム計算機の帯と同じ見た目 -->
+    <Teleport to="body">
+      <div v-if="barShown" data-route-bar data-bottom-bar class="select-none [-webkit-touch-callout:none] fixed inset-x-0 bottom-0 z-[150] border-t border-amber-400/40 bg-[#14110d]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
+        <p class="mb-1 truncate text-[12px] font-bold tabular-nums text-white/80">{{ tr(`${n.toLocaleString()} 手`, `${n.toLocaleString()} uses`) }} · {{ money(cost) }}<template v-if="!spamming && result?.reason"> · {{ result.reason }}</template></p>
+        <div class="flex items-center gap-2">
+          <img :src="iconOf(mainKey)" alt="" class="h-9 w-9 object-contain" />
+          <b class="min-w-0 flex-1 line-clamp-2 text-[12px] leading-tight text-amber-100">{{ routeName }}</b>
+          <button type="button" data-route-hold class="g-btn-red min-h-11 shrink-0 whitespace-nowrap select-none touch-none [-webkit-touch-callout:none] px-2 text-[13px]" @pointerdown.prevent="start" @pointerup="stop" @pointercancel="stop" @contextmenu.prevent>{{ spamming ? tr("スパム中…", "Spamming…") : result && !result.hit ? tr("押して続ける", "Hold to continue") : tr("押しっぱなしで使う", "Hold to use") }}</button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 

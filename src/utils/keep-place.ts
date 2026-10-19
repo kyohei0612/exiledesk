@@ -139,3 +139,15 @@ export function revealBottom(el: Element, pad = 24): void {
   const d = Math.min(r.bottom + pad - (viewTop + viewH), r.top - viewTop - 8);
   if (d > 0) void glideRect(box, el, d, 320);
 }
+/**
+ * 次に押す所へ送る (上にも戻る版の revealBottom)。el が画面より上にあれば上の線 - 8px まで戻し、下にあれば下の線 + pad まで送る。見えていれば動かさない
+ * (2026-10-19 オーナー「スマホのスパムシミュレーター、次入力するとこまで自動スクロールじゃないためややこしい」)
+ */
+export function revealNext(el: Element | null | undefined, pad = 24): void {
+  if (!el) return;
+  const box = scrollBoxOf(el as HTMLElement);
+  const r = el.getBoundingClientRect();
+  const viewTop = box ? box.getBoundingClientRect().top : 0;
+  if (r.top < viewTop + 8) { void glideRect(box, el, r.top - viewTop - 8, 320); return; }
+  revealBottom(el, pad);
+}

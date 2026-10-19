@@ -21,7 +21,8 @@ const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
  */
 // 12・13 番目 (h = 題、o = 主のカレンシーの絵の URL) はスパムシミュレーターの運試し (2026-10-19)。無ければカオススパム計算機
 // 14 番目 (p) は比べた人数 (スマホは 10 人。2026-10-19)。無ければ 100
-const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p"];
+// 15 番目 (q) は何位 (人数が少ない時。自分を入れて p + 1 人の中)。あれば % ではなく「何位」で出す (2026-10-19 オーナー「スマホは何位、% やなくて」)
+const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p", "q"];
 async function unpack(code) {
   const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
   const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
@@ -46,6 +47,7 @@ function readCard(get) {
     cost: cut(get("c"), 20),
     head: get("h") ? cut(get("h"), 40) : null,
     people: num(get("p"), 1000) || PEOPLE,
+    place: num(get("q"), 1001) || null,
     orb: /^https:\/\/web\.poecdn\.com\/[^"'<>\s]{1,400}$/.test(get("o") ?? "") ? get("o") : null,
   };
 }
@@ -62,7 +64,7 @@ function titleOf(c) {
 }
 function descOf(c) {
   const parts = [];
-  if (c.rank != null) parts.push(T(c, `${c.people} 人中 ${rankWord(c, c.rank)} の運 (${luck(c, c.rank)})`, `${rankWord(c, c.rank)} luck among ${c.people} people (${luck(c, c.rank)})`));
+  if (c.rank != null) parts.push(c.place ? T(c, `${c.people + 1} 人中 ${c.place} 位 (${luck(c, c.rank)})`, `#${c.place} of ${c.people + 1} (${luck(c, c.rank)})`) : T(c, `${c.people} 人中 ${rankWord(c, c.rank)} の運 (${luck(c, c.rank)})`, `${rankWord(c, c.rank)} luck among ${c.people} people (${luck(c, c.rank)})`));
   parts.push(c.head ? `ExileDesk ${c.head}` : T(c, "ExileDesk のカオススパム計算機 — PoE2 のクラフトを試せる", "ExileDesk Chaos spam calculator — try PoE2 crafting"));
   return parts.join(" · ");
 }
@@ -139,7 +141,7 @@ async function cardImage(url, env, c) {
   const head = c.head ?? T(c, "カオススパム計算機", "Chaos spam calculator");
   const hit = c.uses != null ? fmt(c.uses) : "?";
   const hitTail = T(c, " 回目で付いた！", " uses to hit!");
-  const luckLine = r != null ? T(c, `${c.people} 人中 ${rankWord(c, r)} の運`, `${rankWord(c, r)} luck of ${c.people}`) : "";
+  const luckLine = r == null ? "" : c.place ? T(c, `${c.people + 1} 人中 ${c.place} 位`, `#${c.place} of ${c.people + 1}`) : T(c, `${c.people} 人中 ${rankWord(c, r)} の運`, `${rankWord(c, r)} luck of ${c.people}`);
   const luckWord = r != null ? luck(c, r) : "";
   const stats = [
     c.median != null ? T(c, `半分の人 ${fmt(c.median)} 回`, `Half: ${fmt(c.median)}`) : "",
@@ -148,13 +150,15 @@ async function cardImage(url, env, c) {
   ].filter(Boolean).join(" · ");
   const lucky = r != null && r <= 50;
   const allText = ["ExileDesk", head, c.baseName, c.mods, hit, hitTail, luckLine, luckWord, stats, T(c, "強運", "Lucky"), T(c, "沼", "Unlucky"), "exiledesk.com", "0123456789%·,!?"].join("");
-  const top = r != null && r <= 10;
+  // かなりの強運: % の時は上位 10% 以内、何位の時は 1 位
+  const top = r != null && (c.place ? c.place === 1 : r <= 10);
+  const topLabel = c.place ? T(c, `${c.people + 1} 人中`, `of ${c.people + 1}`) : "TOP", topNum = c.place ?? r, topUnit = c.place ? T(c, "位", "st") : "%";
   const kicker = T(c, "かなりの強運", "EXCEPTIONAL LUCK");
   const [bold, regular, antique] = await Promise.all([
     font(allText, 800),
     font(allText, 500),
     // かなりの強運の字は計算機の中と同じ明朝寄りの字 (Zen Antique)
-    top ? font(`${kicker}TOP0123456789%`, 0, "Zen+Antique") : Promise.resolve(null),
+    top ? font(`${kicker}TOP0123456789%人中位of st`, 0, "Zen+Antique") : Promise.resolve(null),
   ]);
   const cinzel = await font("EXILEDESK", 600, "Cinzel").catch(() => null);
   const markLeft = r != null ? Math.max(0, Math.min(590, Math.round(620 * (r / 100)) - 15)) : 0;
@@ -182,9 +186,9 @@ async function cardImage(url, env, c) {
       <div style="display:flex;width:620px;height:2px;background-image:linear-gradient(90deg, rgba(184,115,51,0), rgba(184,115,51,0.95), rgba(184,115,51,0))"></div>
       <span style="font-family:'Zen Antique';font-size:22px;letter-spacing:12px;color:#b87333;margin-top:10px">${esc(kicker)}</span>
       <div style="display:flex;align-items:flex-end;margin-top:2px">
-        <span style="font-family:'Zen Antique';font-size:24px;letter-spacing:8px;color:#9c7a62;margin-right:10px;margin-bottom:16px">TOP</span>
-        <span style="font-family:'Zen Antique';font-size:96px;line-height:1;color:#e0a46e">${r}</span>
-        <span style="font-family:'Zen Antique';font-size:44px;color:#c4814a;margin-left:4px;margin-bottom:10px">%</span>
+        <span style="font-family:'Zen Antique';font-size:24px;letter-spacing:8px;color:#9c7a62;margin-right:10px;margin-bottom:16px">${esc(topLabel)}</span>
+        <span style="font-family:'Zen Antique';font-size:96px;line-height:1;color:#e0a46e">${topNum}</span>
+        <span style="font-family:'Zen Antique';font-size:44px;color:#c4814a;margin-left:4px;margin-bottom:10px">${esc(topUnit)}</span>
       </div>
       <div style="display:flex;width:620px;height:2px;margin-top:8px;background-image:linear-gradient(90deg, rgba(184,115,51,0), rgba(184,115,51,0.95), rgba(184,115,51,0))"></div>
     </div>` : r != null ? `

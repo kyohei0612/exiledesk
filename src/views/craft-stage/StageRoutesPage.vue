@@ -11,6 +11,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../../state/web-page";
+import { revealNext } from "../../utils/keep-place";
 import StageRoutesIntro from "./StageRoutesIntro.vue";
 import StageRouteRunes from "./StageRouteRunes.vue";
 import { routeRunesFor, runePrep } from "../../services/craft-stage/route-runes";
@@ -153,8 +154,10 @@ async function run(): Promise<void> {
   }
   busy.value = false;
   calcLog(true);
+  // 次に押すのは一番安い欄の「運試し」(2026-10-19 オーナー「次入力するとこまで自動スクロール」)
+  next("[data-routes-best]");
 }
-watch(t, resetRace);
+watch(t, (v) => { resetRace(); if (v) next("[data-routes-target]"); }); // 狙いを選んだら次は「計算開始」(狙いの札の中。札ごと見せる)
 // 嵌めるルーンを変えたら、別の 100 人で計算し直す
 watch(() => runeIds.value.join(), () => { if (t.value) resetRace(); });
 /** 運試しの欄 (一番安い道で。2026-10-19 オーナー「一番安い欄に運試しボタン」)。シェアから来た時は計算が済んだら開く */
@@ -166,8 +169,11 @@ function openLuck(r: RaceRow | null): void {
   if (!r || !canLuck(r)) return;
   if (luckRow.value !== r) track("routes:luck", `${r.route}:${r.grade}`);
   luckRow.value = r;
-  void nextTick(() => document.querySelector("[data-route-luck]")?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+  // 運試しの欄を見せる (押すボタンは PC は欄の中、スマホは画面の下の帯で動かない)
+  next("[data-route-luck]");
 }
+/** 次に押す所へ送る (描き直しの後。utils/keep-place.ts の revealNext = 下の線 + 24px、上にあれば戻る) */
+function next(sel: string): void { void nextTick(() => requestAnimationFrame(() => revealNext(document.querySelector(sel)))); }
 /**
  * 運試しができる道 = 着いた人の手数を持っている物。シェアから開いた時は運試しの道しか持っていない
  * (2026-10-19 点検: 手数の無い道で運試しを開けて、順位がいつも上位 1% になっていた)
@@ -196,7 +202,7 @@ function back(): void { routesLuck.value = false; routesRunes.value = null; s.ai
 function pickMod(): void { s.aimPicker.value = { seed: null, routes: true }; }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !s.aimPicker.value) back(); }
 let before = 0;
-onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEventListener("keydown", onKey); if (routesShared.value) void run(); });
+onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEventListener("keydown", onKey); if (routesShared.value) void run(); else if (!t.value) next("[data-routes-pick]"); }); // 開いたら次は「狙う MOD を選ぶ」 (スマホは 3 つのカードの下)
 onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
 </script>
 
@@ -216,7 +222,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
     <div v-else class="g-panel px-4 py-3">
       <!-- 上: 狙い (アイテムの札の見た目) と一番安い道 -->
       <div class="grid gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div class="flex min-w-0 flex-col justify-center rounded-md border border-[var(--exile-color-border-brass)]/40 bg-black/40 px-4 py-3 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.7)]">
+        <div data-routes-target class="flex min-w-0 flex-col justify-center rounded-md border border-[var(--exile-color-border-brass)]/40 bg-black/40 px-4 py-3 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.7)]">
           <p class="text-[11px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">{{ tr("狙い", "TARGET") }} · {{ sideJa }}</p>
           <p class="mt-1 text-[16px] font-bold leading-snug text-[var(--color-rarity-magic)] [text-shadow:0_1px_2px_#000]">{{ modText }}</p>
           <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${rank} 以上で当たり`, `Hit at ${rank}+`) }}</span></p>
@@ -226,7 +232,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <p class="mt-2"><button type="button" data-routes-start class="min-h-11 w-full max-w-[16rem]" :class="busy ? 'g-btn' : 'g-btn-red'" @click="busy ? stop() : start()">{{ busy ? tr(`中止 (${rows.length} / ${ORDER.length})`, `Stop (${rows.length} / ${ORDER.length})`) : started ? tr(`別の ${RUNS} 人でもう一度計算`, `Again with another ${RUNS}`) : tr("計算開始", "Start") }}</button></p>
           <StageRouteRunes class="mt-3 flex flex-col items-center" :picked="runeIds" :required="runeNeed" :disabled="busy" @change="setRunes" />
         </div>
-        <div data-routes-best class="relative flex min-w-0 items-center gap-4 overflow-hidden rounded-md border border-emerald-400/30 bg-gradient-to-r from-emerald-500/[0.12] via-emerald-500/[0.04] to-transparent px-4 py-3">
+        <div data-routes-best class="relative flex min-w-0 items-center gap-4 overflow-hidden rounded-md border border-emerald-400/30 bg-gradient-to-r from-emerald-500/[0.12] via-emerald-500/[0.04] to-transparent px-4 py-3 max-md:flex-wrap">
           <template v-if="best">
             <img :src="iconOf(mainKey(best))" alt="" class="size-16 shrink-0 object-contain drop-shadow-[0_0_12px_rgba(110,231,183,0.35)] max-md:size-12" />
             <div class="min-w-0 flex-1">
@@ -235,7 +241,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <p class="tabular-nums"><b class="text-[26px] text-emerald-300 max-md:text-[20px]">{{ money(best.avgCost) }}</b> <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr(`平均 · ${fmtN(best.avgSteps)} 手`, `avg · ${fmtN(best.avgSteps)} uses`) }}</span></p>
               <p class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half") }} {{ money(best.p50) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ money(best.p90) }}</p>
             </div>
-            <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:self-end">
+            <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:w-full max-md:flex-row max-md:items-center max-md:[&>button]:flex-1">
             <button v-if="!busy && !luckOpen && bestLuck" type="button" data-route-luck-open class="g-btn-red" :title="tr(`この道の決まりで、${RUNS} 人と同じ始めの状態から自分でスパムして運を比べる`, `Spam it yourself with this route from the same start and compare your luck with the ${RUNS} people`)" @click="openLuck(bestLuck)">{{ tr("運試し", "Luck test") }}</button>
             <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr(`別の ${RUNS} 人でもう一度全部の道を計算する (乱数を変える)`, `Run all routes again with a different ${RUNS} people (new random seed)`)" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
             <span v-if="!busy && round > 1" class="text-center text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${round} 回目の ${RUNS} 人`, `${RUNS} people, run ${round}`) }}</span>
