@@ -16,7 +16,8 @@ import { craftStage, nameOf } from "../../state/craft-stage";
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
-import { ESSENCE_KIND, essenceKindOf } from "../../services/mods/essence-kind";
+import { essenceKindOf } from "../../services/mods/essence-kind";
+import { tr } from "../../i18n/lang";
 import { effectiveCls } from "../../services/craft-stage/stage-core";
 import { withRunes } from "../../vendor/poe2htc/engine/runes";
 import { runeJaOf, runeToneOf } from "../../services/craft-stage/mod-list";
@@ -174,13 +175,16 @@ function essTitle(modId: string): string {
   return n && n !== key ? `
 付ける物: ${n}` : "";
 }
-/** MOD の種類 (出どころ。左の札) */
+/**
+ * MOD の種類 (出どころ。左の札)。2026-10-21 オーナー「エッセンスはクラフト MOD、普通の奴は一般 MOD で統一、冒涜 MOD は冒涜専用 MOD (冒涜で付く普通の奴は付け方が冒涜)」。
+ * 前は普通の MOD に「クラフト MOD」と出ていた (クラフト MOD = エッセンスで付く物、用語集)
+ */
 type Src = "normal" | "desecrated" | "essence" | "perfect_essence";
 const SRC: Record<Src, { label: string; cls: string }> = {
-  normal: { label: "クラフト MOD", cls: "border-rarity-magic/70 text-[#c8c8ff]" },
-  desecrated: { label: "冒涜 MOD", cls: "border-green-700/80 bg-gradient-to-r from-green-900/60 to-lime-900/40 text-lime-200/90" },
-  essence: { label: ESSENCE_KIND.essence.short, cls: "border-sky-400/60 text-sky-200" },
-  perfect_essence: { label: ESSENCE_KIND.perfect_essence.short, cls: "border-cyan-400/60 text-cyan-200" },
+  get normal() { return { label: tr("一般 MOD", "Regular mod"), cls: "border-rarity-magic/70 text-[#c8c8ff]" }; },
+  get desecrated() { return { label: tr("冒涜専用 MOD", "Desecrated-only mod"), cls: "border-green-700/80 bg-gradient-to-r from-green-900/60 to-lime-900/40 text-lime-200/90" }; },
+  get essence() { return { label: tr("クラフト MOD", "Crafted mod"), cls: "border-sky-400/60 text-sky-200" }; },
+  get perfect_essence() { return { label: tr("クラフト MOD", "Crafted mod"), cls: "border-cyan-400/60 text-cyan-200" }; },
 };
 /** 左の札: ルーンの MOD はルーンの名前 (コルの狩りなど) */
 function badgeOf(host: string): { label: string; cls: string } {

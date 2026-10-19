@@ -33,7 +33,7 @@ const ways = computed<Way[]>(() => {
   // 3 つの付け方と、この MOD・このアイテムで付けられない理由 (付けられるなら null で、次に打てるかを見る)
   const list: Array<{ flag: ForceFlag; label: string; block: string | null }> = [
     { flag: plain === "d" ? "n" : plain, label: tr("そのまま", "As is"), block: desecratedPool.value ? tr("冒涜の MOD は「冒涜」で付ける", "Desecrated mods are added as Desecrated") : null },
-    { flag: "d", label: tr("冒涜", "Desecrated"), block: !desecratedPool.value && props.group !== "normal" ? tr("冒涜で付けられるのは冒涜の MOD と普通の MOD だけ", "Only desecrated and normal mods can be added as Desecrated") : hasDe ? tr("既に冒涜の MOD が付いているため (1 つまで)", "A desecrated mod is already on the item (1 max)") : null },
+    { flag: "d", label: tr("冒涜", "Desecrated"), block: !desecratedPool.value && props.group !== "normal" ? tr("冒涜で付けられるのは冒涜専用の MOD と一般 MOD だけ", "Only desecrated-only and regular mods can be added as Desecrated") : hasDe ? tr("既に冒涜の MOD が付いているため (1 つまで)", "A desecrated mod is already on the item (1 max)") : null },
     { flag: "f", label: tr("フラクチャー", "Fracture"), block: desecratedPool.value ? tr("冒涜の MOD は固定できない", "Desecrated mods can't be fractured") : hasFr ? tr("既にフラクチャーの MOD が付いているため (1 つまで)", "A fractured mod is already on the item (1 max)") : null },
   ];
   return list.map(({ flag, label, block }) => {

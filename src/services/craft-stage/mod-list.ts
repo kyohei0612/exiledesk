@@ -28,11 +28,12 @@ export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "dese
  */
 export const GROUP_JA: Record<ModGroup, string> = {
   // 英語の画面に切り替えた時も変わるように getter (2026-10-10 英語版)
-  get normal() { return tr("普通", "Normal"); },
+  // 一般 / 冒涜専用 (2026-10-21 オーナー「普通の奴は一般 MOD で統一、冒涜 MOD は冒涜専用」。② の札と同じ言い方)
+  get normal() { return tr("一般", "Regular"); },
   get rune() { return tr("ルーンの特殊 MOD (重みは Craft of Exile の実測)", "Rune special mods (weights measured by Craft of Exile)"); },
   get essence() { return tr(ESSENCE_KIND.essence.label, "Essence"); },
   get perfect_essence() { return tr(ESSENCE_KIND.perfect_essence.label, "Essence"); },
-  get desecrated() { return tr("冒涜", "Desecrated"); },
+  get desecrated() { return tr("冒涜専用", "Desecrated-only"); },
   get otherworldly() { return tr("異界 (変質した鎖骨)", "Otherworldly (Altered Collarbone)"); },
   get special() { return tr("創生の樹など (カレンシーでは付かない)", "Genesis Tree etc. (not from currency)"); },
 };

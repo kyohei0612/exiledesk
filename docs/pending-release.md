@@ -9,6 +9,7 @@ OK が出ていない物を外して出す時は `git revert --no-edit --no-comm
 | 開く / たたむを折り返さない・MOD 一覧の列の見出し (エミュレーターにも出る。ほかはシミュレーターだけ) | 1ee2ad43 | (見た目だけ。更新内容は書かない) | (layout only, no changelog entry) |
 | 棚のエッセンスの札の説明 (付く MOD) を 1 行で切らずに 2 行まで (エミュレーターにも出る) | eba69e84 (ShelfButton.vue だけ) | (見た目だけ。更新内容は書かない) | (layout only, no changelog entry) |
 | ベースの一覧: 名前で探すを外し、装備・エフェクトオフを一番下へ | 0c5d5be9 | ベースの一覧から名前で探す欄を外し、「装備・エフェクトオフ」を一番下に移しました | Removed the name search from the base list and moved “Plain art, no effects” to the bottom |
+| MOD の種類の言い方を揃える: MOD 一覧のタブ「普通」→「一般」・「冒涜」→「冒涜専用」(シミュレーターの ② の札は 一般 MOD / 冒涜専用 MOD / クラフト MOD = エッセンス) | 次のコミット | MOD の種類の呼び方を「一般」「冒涜専用」にそろえました | Mod groups are now labeled "Regular" and "Desecrated-only" |
 | 値段の欄の横に適正の単位 (「19 カオス」→「≈ 1.93 神」。シミュレーターの ③ と計算機の値段の欄)。覚えた単位で 0 に丸まる値は 1 以上になる単位で出す (「0 カオス ≈ 1 高貴」を「1 高貴」に) | bbe0de61・次のコミット | 値段を入れる欄の横に、入れた値を見やすい単位でも出すようにしました | Price fields now also show the entered value in the most readable currency |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
