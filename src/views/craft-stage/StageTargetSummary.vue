@@ -159,6 +159,17 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
   const used = merged.reduce((a, g) => a + g.need, 0);
   return { title: side === "P" ? "プレフィックス" : "サフィックス", groups: merged, used };
 }));
+/**
+ * 行の番号: 上から並んでいる順に全部の行へ (プレ → サフィ → またがる組)。前は付ける順番の番号でフラクチャー予定の組だけ番号が無く、
+ * 見出しの個数とずれて「特殊 MOD が数に入っていない」ように見えた (2026-10-21 オーナー「特殊 MOD は個数に含まれてないのなーぜー」)
+ */
+const noOf = computed(() => {
+  const out = new Map<string, number>();
+  let n = 0;
+  for (const c of columns.value) for (const g of c.groups) out.set(`${c.title}:${g.key}`, ++n);
+  for (const g of mixed.value) out.set(`mixed:${g.key}`, ++n);
+  return out;
+});
 
 /**
  * 付け方の予定をここで決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか冒涜予定とかカオススパム予定とか、そこで全部決めたら
@@ -253,7 +264,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
       </p>
       <p v-if="!col.groups.length" class="py-0.5 opacity-40">{{ props.editable ? "下の一覧で MOD を押し、開いた段の表の「T○ 以上」で足す" : "なし" }}</p>
       <div v-for="g in col.groups" :key="g.key" class="flex flex-wrap items-start gap-1.5 py-0.5">
-        <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
+        <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ noOf.get(`${col.title}:${g.key}`) }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
         <span class="shrink-0 rounded border px-1 text-[11px]" :class="badgeOf(g.host).cls" :title="badgeOf(g.host).rune ? tr(`${badgeOf(g.host).rune}を差すと付く MOD。回す時はこのルーンを差した白から始める`, `Comes from socketing ${badgeOf(g.host).rune}. Runs start from a white base with that rune socketed`) : tr('MOD の種類 (出どころ)', 'Mod type (source)')">{{ badgeOf(g.host).label }}</span>
         <!--
@@ -304,7 +315,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
     <div v-for="g in mixed" :key="g.key" class="min-w-0">
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[12px] font-bold opacity-70">プレフィックスかサフィックスのどれか <span class="font-normal">(付いた側で打ち方のルートが分かれる)</span></p>
       <div class="flex items-start gap-1.5 py-0.5 max-md:flex-wrap">
-        <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
+        <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ noOf.get(`mixed:${g.key}`) }}</span>
         <!-- プレとサフィにまたがる組も同じ形 (縦線でくくる) -->
         <div class="min-w-0 flex-1 border-l-2 border-amber-400/60 pl-2">
           <div class="flex flex-col gap-0.5">
