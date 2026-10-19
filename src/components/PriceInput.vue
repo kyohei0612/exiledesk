@@ -30,30 +30,44 @@ const unit = ref<DisplayCurrency>(props.initialUnit);
 try { const u = KEY ? localStorage.getItem(KEY) : null; if (u === "exalted" || u === "chaos" || u === "divine") unit.value = u; } catch { /* 無くてよい */ }
 watch(unit, (u) => { try { if (KEY) localStorage.setItem(KEY, u); } catch { /* 無くてよい */ } });
 
-/** 欄に出す数字 (選んだ単位、整数) */
+/**
+ * 欄で使う単位: 覚えた単位で整数にすると 0 になる値 (1 高貴をカオスで、など) は、1 以上になる一番大きい単位で出す
+ * (2026-10-21 オーナーと見た ③: 「0 カオス ≈ 1.00 高貴」と食い違って見えた)。プルダウンで選び直したらその単位を覚える
+ */
+const view = computed<DisplayCurrency>({
+  get: () => {
+    const v = props.modelValue;
+    if (typeof v !== "number" || !Number.isFinite(v) || v <= 0) return unit.value;
+    const at = (u: DisplayCurrency): number => Math.round((v * rateOf(props.base)) / rateOf(u));
+    if (at(unit.value) >= 1) return unit.value;
+    return [...UNITS].sort((a, b) => rateOf(b.k) - rateOf(a.k)).find((x) => at(x.k) >= 1)?.k ?? unit.value;
+  },
+  set: (u) => { unit.value = u; },
+});
+/** 欄に出す数字 (使う単位、整数) */
 const shown = computed(() => {
   const v = props.modelValue;
-  return typeof v === "number" && Number.isFinite(v) ? Math.round((v * rateOf(props.base)) / rateOf(unit.value)) : "";
+  return typeof v === "number" && Number.isFinite(v) ? Math.round((v * rateOf(props.base)) / rateOf(view.value)) : "";
 });
 /** 適正の単位で書いた値 (選んだ単位と同じ単位になるなら出さない) */
 const fitText = computed(() => {
   const v = props.modelValue;
   if (typeof v !== "number" || !Number.isFinite(v) || v <= 0) return "";
   const t = simCurrency.money(v * rateOf(props.base));
-  const ja = UNITS.find((x) => x.k === unit.value)?.ja ?? "";
+  const ja = UNITS.find((x) => x.k === view.value)?.ja ?? "";
   return ja && t.endsWith(ja) ? "" : t;
 });
 function onInput(e: Event): void {
   const raw = (e.target as HTMLInputElement).value;
   const n = raw === "" ? null : Math.round(Number(raw));
-  emit("update:modelValue", n == null || !Number.isFinite(n) || n < 0 ? null : (n * rateOf(unit.value)) / rateOf(props.base));
+  emit("update:modelValue", n == null || !Number.isFinite(n) || n < 0 ? null : (n * rateOf(view.value)) / rateOf(props.base));
 }
 </script>
 
 <template>
   <span class="inline-flex items-center gap-1">
     <input type="number" min="0" step="1" inputmode="numeric" :placeholder="placeholder" :title="title || undefined" :value="shown" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" @input="onInput" />
-    <select v-model="unit" class="rounded border border-white/15 bg-black/30 px-1 py-0.5" title="単位 (高貴 / カオス / 神)">
+    <select v-model="view" class="rounded border border-white/15 bg-black/30 px-1 py-0.5" title="単位 (高貴 / カオス / 神)">
       <option v-for="x in UNITS" :key="x.k" :value="x.k">{{ x.ja }}</option>
     </select>
     <span v-if="fitText" data-price-fit class="whitespace-nowrap text-[11px] tabular-nums opacity-70" title="入れた値を適正の単位で">≈ {{ fitText }}</span>

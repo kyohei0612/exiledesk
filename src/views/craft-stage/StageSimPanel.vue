@@ -184,9 +184,10 @@ const stepNotes = computed(() => {
         <!-- 始め方は縦に全部並べて、ベースの値段を比べる (2026-10-18 オーナー「タブで出さず全部計算させるから縦にそれぞれ表示」)。行を押すとその始め方で回す。一番安い行に印 -->
         <div data-sim-starts class="flex flex-col gap-1.5 text-[11px]">
           <!-- 列を揃えた表: ラジオ | 始め方 | 買う物 | 値段 | 取引所で探す・入れた時刻 | このベースの値段 (2026-10-18 オーナー「UI 最悪、もっと練らないと」)。スマホは折り返す -->
+          <p v-if="wholeRoute" class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("増強スパムの狙いがあるので白からだけ (マジックを通るので、フラクチャー済み・MOD 付きレアは買えない)", "White base only: the Augmentation-spam target needs a magic item, so fractured or modded rares can't be bought") }}</p>
           <!-- ③ は値段を入れるだけ。費用・一番安い印・内訳は ④ の上の「ベースの計算」(SimBaseCalc.vue。2026-10-21 オーナー「③ はベース計算へで ④ にパス」) -->
           <div v-for="k in startKinds" :key="k.k" data-sim-start-row :data-start="k.k" class="rounded-lg border border-white/10 px-2.5 py-1.5" :title="tr(k.hint, k.hintEn)">
-            <div class="grid items-center gap-x-3 gap-y-1 md:grid-cols-[13rem_minmax(0,1fr)_auto_10rem] max-md:flex max-md:flex-wrap">
+            <div class="grid items-center gap-x-3 gap-y-1 md:grid-cols-[13rem_minmax(0,1fr)_auto_13rem] max-md:flex max-md:flex-wrap">
               <b class="whitespace-nowrap text-[12px]"><Icon v-if="k.k === 'fractured'" name="lock" class="mr-0.5 inline size-3.5 align-[-2px]" />{{ tr(k.label, k.labelEn) }}</b>
               <span class="min-w-0 truncate text-[var(--exile-color-text-secondary)] max-md:basis-full">
                 <template v-if="k.k === 'white'">{{ tr(`アイテムレベル ${s.itemLevel.value} の白のベース`, `White base, item level ${s.itemLevel.value}`) }}</template>
@@ -237,7 +238,7 @@ const stepNotes = computed(() => {
                 </span>
               </td>
               <template v-if="orderRow(k)">
-                <td class="w-10 whitespace-nowrap py-1 text-[10px] opacity-60">{{ phone ? (orderRow(k)!.side.startsWith("プレ") ? "プレ" : "サフィ") : orderRow(k)!.side }}</td>
+                <td class="w-20 whitespace-nowrap py-1 pr-2 text-[10px] opacity-60">{{ phone ? (orderRow(k)!.side.startsWith("プレ") ? "プレ" : "サフィ") : orderRow(k)!.side }}</td>
                 <td class="py-1">
                   <span :class="orderRow(k)!.tone">{{ orderRow(k)!.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ orderRow(k)!.rank }} 以上</span>
                   <span v-if="orderRow(k)!.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ orderRow(k)!.alts.length }} つと合わせてどれか</span>
@@ -249,7 +250,7 @@ const stepNotes = computed(() => {
                 </td>
               </template>
               <template v-else>
-                <td class="w-10 py-1 text-[10px] opacity-60">ルーン</td>
+                <td class="w-20 py-1 pr-2 text-[10px] opacity-60">ルーン</td>
                 <td class="py-1"><span class="text-amber-100">{{ runeJa(k) }}</span><span v-if="runeNeeded.has(k)" class="ml-1 text-[10px] opacity-60">(狙いの MOD に要る)</span></td>
                 <td class="w-6 py-1 text-right">
                   <button v-if="!runeNeeded.has(k)" type="button" class="opacity-50 hover:text-rose-300 hover:opacity-100" title="順番計画から外す" @click="removeRune(k)">×</button>

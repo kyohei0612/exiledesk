@@ -27,7 +27,7 @@ const TITLE: Record<SimStep, [string, string]> = {
 /** このページでやること (初めての人向けの 1 行) */
 const LEAD: Record<SimStep, [string, string]> = {
   mods: ["欲しい MOD を下の一覧から選び、付け方 (高貴・カオス・フラクチャーなど) を決める", "Pick the mods you want from the list below and how to add each one"],
-  start: ["何から作り始めるか (白・適当なレア・買う) と、ベースの値段を入れる。右の値段が一番安い物に印", "Choose what to start from and enter base prices. The cheapest is marked"],
+  start: ["ベースの値段を入れる (白・適当なレア・買う物)。始め方ごとの費用と一番安い物は次の ④ の上に出す", "Enter base prices (white, random rare, bought). Costs per start and the cheapest show at the top of step 4"],
   order: ["MOD を付ける順番を決める。打ち方はこの順で並ぶ", "Set the order to add mods. The crafting steps follow this order"],
   play: ["まず全部うまくいった時の打ち方、次に外れた時の手を決める", "First the steps when everything lands, then what to do when it misses"],
   result: ["大勢が同じ打ち方で作った時の、1 個あたりの費用と運の幅", "Cost per item and luck spread when many people craft with these steps"],
