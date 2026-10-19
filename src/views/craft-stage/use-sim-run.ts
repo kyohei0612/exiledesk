@@ -14,8 +14,8 @@ import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { freshItem } from "../../services/craft-stage/run-plan";
 import { limitOf } from "../../services/craft-stage/stage-core";
 import { patternSets, setByKey, type Pattern } from "../../services/craft-stage/pattern";
-import { runQuizOnce, summarizeQuiz, type QuizResult, type QuizRun } from "../../services/craft-stage/quiz-recipe";
-import { magicStartMods, MAX_BASES, quizFromSim, type QuizSimIn } from "../../services/craft-stage/quiz-build";
+import { runQuizOnce, summarizeQuiz, type QuizResult, type QuizRoute, type QuizRun } from "../../services/craft-stage/quiz-recipe";
+import { magicStartMods, quizFromSim, type QuizSimIn } from "../../services/craft-stage/quiz-build";
 import { tr } from "../../i18n/lang";
 import { sideLimits, sideUse } from "../../services/craft-stage/sim-methods";
 import type { SimTargetsCtx } from "./use-sim-targets";
@@ -242,10 +242,17 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     return d && qb ? magicStartMods(d, qb.targets).map((f) => modShort(f.mod, (d.mods.get(f.mod)?.tiers.length ?? 0) - Number(f.tier?.slice(1) ?? 0))) : [];
   });
   /** クイズの結果を今の結果の形に (結果の表示をそのまま使う) */
-  function quizToRecipe(q: QuizResult): RecipeResult {
+  /** 関門 (札) の短い名前 (打ち止めの理由に出す) */
+  const gateName = (route: QuizRoute | undefined, id: string): string => {
+    const g = route?.goal.find((x) => x.id === id);
+    const m = g?.mods[0];
+    return m ? `${modShort(m.modId, m.minTierIndex)}${g.mods.length > 1 ? tr(` ほか ${g.mods.length - 1}`, ` +${g.mods.length - 1}`) : ""}` : id;
+  };
+  function quizToRecipe(q: QuizResult, route?: QuizRoute): RecipeResult {
     const stops = [
       ...(q.capped ? [{ reason: "手が多すぎる", p: q.capped / (q.runs || 1) }] : []),
-      ...(q.gaveUp ? [{ reason: tr(`作り直しの上限 (${MAX_BASES} 個) で諦めた`, `Gave up at the rebuy limit (${MAX_BASES} bases)`), p: q.gaveUp / (q.runs || 1) }] : []),
+      // 関門の打ち止め (2026-10-20): どの関門で何回打って止めたか
+      ...q.gates.filter((g) => g.stopped).map((g) => ({ reason: tr(`「${gateName(route, g.id)}」の関門で打ち止め (${(route?.caps?.[g.id] ?? 0).toLocaleString()} 回)`, `Stopped at the "${gateName(route, g.id)}" step (${(route?.caps?.[g.id] ?? 0).toLocaleString()} uses)`), p: g.stopped / (q.runs || 1) })),
       ...q.blocked.map((o) => ({ reason: tr(`打てない手: ${o.reason}`, `Unusable answer: ${o.reason}`), p: o.n / (q.runs || 1) })),
     ];
     // 答えの無い状況に来た人 (イレギュラー) は stops に入れず別に持つ (計算から外している。2026-10-20 オーナー)
@@ -327,10 +334,10 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
           const { recipe } = quizFromSim(qb, JSON.parse(JSON.stringify(p.quiz)) as typeof p.quiz);
           const qruns: QuizRun[] = [];
           for (let i = 0; i < spec.runs; i++) {
-            qruns.push(runQuizOnce(d, recipe, runSeed + i * 7919, { price, maxSteps: maxSteps.value, maxBases: MAX_BASES }));
+            qruns.push(runQuizOnce(d, recipe, runSeed + i * 7919, { price, maxSteps: maxSteps.value }));
             if (i % 10 === 9) { progress.value = [k * spec.runs + i + 1, total]; await new Promise((r) => setTimeout(r)); if (my !== gen) return; }
           }
-          const r = quizToRecipe(summarizeQuiz(qruns, price));
+          const r = quizToRecipe(summarizeQuiz(qruns, price), recipe.routes[0]);
           out.push({ name: p.name, out: { r, spec }, rest: null, bases: r.bases, startPrice: recipe.start.price });
           continue;
         }

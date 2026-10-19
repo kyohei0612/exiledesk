@@ -56,6 +56,8 @@ export interface QuizRoute {
    * その MOD は外れ (junk) に数える (2026-10-20 オーナー「先の工程の狙いがたまたま付いても、ここでは付かない判定でいい」)。無ければ全部の札を見る
    */
   order?: string[];
+  /** 関門 (札の id) ごとの打ち止め: その札が今の関門の間に打てる回数 (お告げは数えない) */
+  caps?: Record<string, number>;
 }
 export type QuizStart =
   /** 白を買う (sockets・runes = 規格外のソケットと始めから差すルーン) */
@@ -223,13 +225,21 @@ export interface QuizRun {
   item: StageItem;
   /**
    * 止まった理由: unanswered = 答えの無い状況 (イレギュラー。費用・完成の割合のどれにも入れない。2026-10-20 オーナー)、
-   * blocked = 当たり所に関係なく打てない手、cap = 手の上限、bases = 作り直しの上限 (諦めた)
+   * blocked = 当たり所に関係なく打てない手、cap = 手の上限、gate = 関門の打ち止め (reason = 札の id。未完成で費用は入る)
    */
-  stop?: { kind: "unanswered" | "blocked" | "cap" | "bases"; route: string; situation: Situation; item: StageItem; reason?: string };
+  stop?: { kind: "unanswered" | "blocked" | "cap" | "gate"; route: string; situation: Situation; item: StageItem; reason?: string };
+  /** 関門 (札の id) ごとに打った回数 (付ける順番のある工程だけ) */
+  gates: Record<string, number>;
   log: string[];
 }
-/** maxBases = 1 人が使うベースの上限 (最初の 1 個込み)。超える作り直しで諦める (2026-10-20 オーナー「上限は作り直しの回数」) */
-export interface QuizOpts { price: (key: string) => number; maxSteps?: number; maxBases?: number; log?: boolean }
+export interface QuizOpts { price: (key: string) => number; maxSteps?: number; log?: boolean }
+
+/** 今の関門: 付ける順番 (並びに無い札は後ろ) で、まだ付いていない一番前の札。順番の無い工程・完成は null */
+export function gateOf(route: QuizRoute, sit: Situation): string | null {
+  if (!route.order?.length) return null;
+  const ids = [...route.order.filter((id) => route.goal.some((s) => s.id === id)), ...route.goal.filter((s) => !route.order!.includes(s.id)).map((s) => s.id)];
+  return ids.find((id) => Number(sit[id] ?? 0) < 2) ?? null;
+}
 
 function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): StageItem {
   const st = recipe.start;
@@ -299,7 +309,7 @@ export function applyQuizAction(data: PatchData, route: QuizRoute, it: StageItem
 export function runQuizOnce(data: PatchData, recipe: QuizRecipe, seed: number, o: QuizOpts): QuizRun {
   const g = mulberry32(seed);
   const cap = o.maxSteps ?? 20000;
-  const r: QuizRun = { done: false, cost: 0, uses: {}, bases: 0, steps: 0, route: recipe.routes[0]!.id, item: null as unknown as StageItem, log: [] };
+  const r: QuizRun = { done: false, cost: 0, uses: {}, bases: 0, steps: 0, route: recipe.routes[0]!.id, item: null as unknown as StageItem, gates: {}, log: [] };
   const count = (k: string): void => { r.uses[k] = (r.uses[k] ?? 0) + 1; r.cost += o.price(k); };
   const buy = (): StageItem => { r.bases++; r.cost += recipe.start.price; return buildStart(data, recipe, g); };
   let it = buy();
@@ -310,15 +320,16 @@ export function runQuizOnce(data: PatchData, recipe: QuizRecipe, seed: number, o
     if (routeDone(route, sit)) { r.done = true; break; }
     const rule = ruleFor(route.rules, sit);
     if (!rule) { r.stop = { kind: "unanswered", route: route.id, situation: sit, item: it }; break; }
+    // 関門の打ち止め (2026-10-20 オーナー「どの手順にも打ち止めは必須」): その関門で打った回数が上限に来たら未完成
+    const gate = gateOf(route, sit);
+    const gcap = gate ? route.caps?.[gate] : undefined;
+    if (gate && gcap != null && (r.gates[gate] ?? 0) >= gcap) { r.stop = { kind: "gate", route: route.id, situation: sit, item: it, reason: gate }; break; }
     const x = applyQuizAction(data, route, it, rule.do, g);
-    if (x.kind === "restart") {
-      if (o.log) r.log.push("restart");
-      if (o.maxBases != null && r.bases >= o.maxBases) { r.stop = { kind: "bases", route: route.id, situation: sit, item: it }; break; }
-      it = buy(); continue;
-    }
+    if (x.kind === "restart") { if (o.log) r.log.push("restart"); it = buy(); continue; }
     if (x.kind === "random") continue; // 当たり所で弾かれた: 減らずにもう一度
     if (x.kind === "blocked") { r.stop = { kind: "blocked", route: route.id, situation: sit, item: it, reason: x.reason }; break; }
     for (const k of x.spent) count(k);
+    if (gate) r.gates[gate] = (r.gates[gate] ?? 0) + 1;
     if (o.log) r.log.push(`${x.key}${x.omens.length ? ` [${x.omens.join(",")}]` : ""}: -${x.removed.map((m) => m.textEn).join(" / ")} +${x.added.map((m) => m.textEn).join(" / ")}`);
     it = x.item;
   }
@@ -348,8 +359,8 @@ export interface QuizResult {
   capped: number;
   /** イレギュラー (答えの無い状況で止めた人)。runs・pDone・費用には入れない */
   irregular: number;
-  /** 作り直しの上限で諦めた人 (計算に入る) */
-  gaveUp: number;
+  /** 関門ごと: 打ち止めで止まった人の数と、その関門で打った回数の分かれ方 (打った人だけ。打ち止めの数を決める目安) */
+  gates: Array<{ id: string; stopped: number; n: number; p50: number; p90: number; p99: number; max: number }>;
 }
 
 export function summarizeQuiz(all: readonly QuizRun[], price: (key: string) => number): QuizResult {
@@ -367,7 +378,7 @@ export function summarizeQuiz(all: readonly QuizRun[], price: (key: string) => n
   for (const r of all) {
     if (r.done) routes.set(r.route, (routes.get(r.route) ?? 0) + 1);
     const s = r.stop;
-    if (!s || s.kind === "cap" || s.kind === "bases") continue;
+    if (!s || s.kind === "cap" || s.kind === "gate") continue;
     const key = s.route + "|" + situationKey(s.situation);
     if (s.kind === "unanswered") { const c = open.get(key); if (c) c.n++; else open.set(key, { route: s.route, key, situation: s.situation, item: s.item, n: 1 }); }
     else { const c = blocked.get(key); if (c) c.n++; else blocked.set(key, { route: s.route, key, situation: s.situation, item: s.item, reason: s.reason ?? "", n: 1 }); }
@@ -384,7 +395,14 @@ export function summarizeQuiz(all: readonly QuizRun[], price: (key: string) => n
     blocked: [...blocked.values()].sort((a, b) => b.n - a.n),
     capped: runs.filter((r) => r.stop?.kind === "cap").length,
     irregular: all.length - runs.length,
-    gaveUp: runs.filter((r) => r.stop?.kind === "bases").length,
+    gates: (() => {
+      const ids = [...new Set(runs.flatMap((r) => Object.keys(r.gates)))].sort();
+      return ids.map((id) => {
+        const xs = runs.map((r) => r.gates[id] ?? 0).filter((v) => v > 0).sort((p, q) => p - q);
+        const at = (f: number): number => xs[Math.min(xs.length - 1, Math.floor(xs.length * f))] ?? 0;
+        return { id, stopped: runs.filter((r) => r.stop?.kind === "gate" && r.stop.reason === id).length, n: xs.length, p50: at(0.5), p90: at(0.9), p99: at(0.99), max: xs[xs.length - 1] ?? 0 };
+      });
+    })(),
   };
 }
 

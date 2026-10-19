@@ -34,9 +34,10 @@ export interface QuizSimIn {
 }
 
 /**
- * 1 人が使うベースの上限 (最初の 1 個込み)。超える作り直しで諦める (2026-10-20 オーナー「上限は作り直しの回数、現実的な回まで」)
+ * 関門の打ち止め (その関門で打てる回数、お告げは数えない)。どの関門にも付ける (2026-10-20 オーナー「どの手順にも打ち止めは必須」
+ * 「カオススパムとか冒涜リロールの沼はガチでマックスまで沼れる」)。spam = カオススパム・冒涜 (と、付け方を ⑤ で決める残りの候補)、step = それ以外。数は仮 (打った回数の分かれ方を見て決める)
  */
-export const MAX_BASES = 30;
+export const GATE_CAPS = { spam: 3000, step: 300 } as const;
 
 /** その MOD に使える付け方 (最初が既定)。シミュレーターの 2 狙う MOD と同じ */
 export function methodsFor(data: PatchData, modId: string): SimMethod[] {
@@ -91,6 +92,9 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
   const frac = fracC.filter((c) => sideOf(c.modId) === fracSide);
   /** 狙いの modId → 札の id (付ける順番に使う) */
   const slotIds = new Map<string, string[]>();
+  /** 札の id → 関門の打ち止め */
+  const caps: Record<string, number> = {};
+  const capOf = (m: SimMethod | null): number => (m == null || m === "chaos" || m === "desecrate" ? GATE_CAPS.spam : GATE_CAPS.step);
   if (frac.length && fracSide) slots.push({ id: LETTERS[n++] ?? `Z${n}`, side: fracSide, mods: frac, kind: "fractured" });
   for (const t of x.targets) {
     if (t.method === "fracture") continue;
@@ -103,11 +107,12 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
       const id = LETTERS[n++] ?? `Z${n}`;
       split = { prefix: { id, side: "prefix", mods: bySide.prefix, kind }, suffix: { id, side: "suffix", mods: bySide.suffix, kind } };
       slotIds.set(t.modId, [id]);
+      caps[id] = capOf(t.method);
       continue;
     }
     const side = bySide.prefix.length ? "prefix" : "suffix";
     const ids: string[] = [];
-    for (let i = 0; i < need; i++) { const id = LETTERS[n++] ?? `Z${n}`; ids.push(id); slots.push({ id, side, mods: members, kind }); }
+    for (let i = 0; i < need; i++) { const id = LETTERS[n++] ?? `Z${n}`; ids.push(id); slots.push({ id, side, mods: members, kind }); caps[id] = capOf(t.method); }
     slotIds.set(t.modId, ids);
   }
   /**
@@ -119,10 +124,10 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
     // 候補と重なる「どれか」の狙い (例: 高貴で ES かマナのどちらか) の候補も入れる。高貴でマナが付いたら、残りの札は ES で埋まる
     const mods = [...frac];
     for (const s of slots) if (s.side === fracSide && s.kind !== "fractured" && s.mods.some((m) => frac.some((c) => c.modId === m.modId))) for (const m of s.mods) if (!mods.some((y) => y.modId === m.modId)) mods.push(m);
-    for (let i = 0; i < Math.min(frac.length - 1, Math.max(0, room)); i++) slots.push({ id: LETTERS[n++] ?? `Z${n}`, side: fracSide, mods, kind: "normal" });
+    for (let i = 0; i < Math.min(frac.length - 1, Math.max(0, room)); i++) { const id = LETTERS[n++] ?? `Z${n}`; slots.push({ id, side: fracSide, mods, kind: "normal" }); caps[id] = capOf(null); }
   }
   const order = x.order?.flatMap((k) => slotIds.get(k.startsWith("mod:") ? k.slice(4) : k) ?? []);
-  const route = (id: string, goal: QuizSlot[], entry?: string[]): QuizRoute => ({ id, goal, ...(entry ? { entry } : {}), rules: q?.rules[id] ?? [], ...(order?.length ? { order } : {}) });
+  const route = (id: string, goal: QuizSlot[], entry?: string[]): QuizRoute => ({ id, goal, ...(entry ? { entry } : {}), rules: q?.rules[id] ?? [], ...(order?.length ? { order, caps } : {}) });
   const routes: QuizRoute[] = split
     ? [route("prefix", [...slots, split.prefix], [split.prefix.id]), route("suffix", [...slots, split.suffix], [split.suffix.id])]
     : [route("main", slots)];
