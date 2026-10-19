@@ -23,6 +23,16 @@ import { runeJaOf, runeToneOf } from "../../services/craft-stage/mod-list";
 import SimMethodPop from "./SimMethodPop.vue";
 import { chaosBlocked } from "../../services/craft-stage/sim-methods";
 import { ref } from "vue";
+/**
+ * 「どれか」の組は既定でたたむ: 頭の 1 行 (どれか n・候補の数・段・合計・▾) と、候補の名前を「／」で並べた 1 行
+ * (2026-10-19 オーナー「3 MOD 並べて 1 MOD だけ複数候補だとかなり縦長」→ 1 行に並べて押すと開く案)。押すと縦並びに開き、段・× はそこで
+ */
+const openGroups = ref(new Set<string>());
+const toggleGroup = (key: string): void => { const n = new Set(openGroups.value); if (n.has(key)) n.delete(key); else n.add(key); openGroups.value = n; };
+/** 組の候補の段が全部同じならその段 (札を 1 つだけ出す) */
+const sameRank = (ms: ReadonlyArray<{ rank: string }>): string | null => (ms.every((m) => m.rank === ms[0]?.rank) ? ms[0]?.rank ?? null : null);
+/** たたんだ時の名前 (数値の幅は外して短く) */
+const shortName = (t: string): string => t.replace(/\s*\([^()]*\d[^()]*\)/g, "").replace(/\s+/g, " ").trim();
 
 const props = defineProps<{ /** ① で選んでいる間 (段・×・付け方の印を出す) */ editable?: boolean; /** 付け方を選べる (2 の「決めた」の後、3 を決めるまで。2026-10-18 オーナー「決めたボタンの後ここで設定する感じで」) */ plans?: boolean }>();
 const s = craftStage;
@@ -245,11 +255,17 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
           (2026-10-19 オーナー「ここ太くなるのがなー」→ 縦線でくくる案。前は箱 + 説明の文で、1 つの組だけ太かった)。説明は札に乗せると出る
         -->
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'border-l-2 border-amber-400/60 pl-2 max-md:order-last max-md:ml-[1.375rem] max-md:basis-full' : ''"><!-- スマホは組だけ次の行に回して幅いっぱい (番号・種類・付け方の札は 1 行目) -->
-          <p v-if="g.members.length > 1" class="flex flex-wrap items-center gap-1.5 text-[11px]">
-            <span class="cursor-help rounded-sm bg-amber-500/20 px-1 font-bold text-amber-200" :title="`この中のどれか ${g.need} つ (どの順番でもいい。${g.need} つ付けば完成)`">どれか {{ g.need }}</span>
+          <!-- 頭の 1 行。押すと開く / たたむ -->
+          <button v-if="g.members.length > 1" type="button" data-any-toggle class="g-plain flex w-full flex-wrap items-center gap-1.5 text-left text-[11px]" :aria-expanded="openGroups.has(g.key)" :title="openGroups.has(g.key) ? 'たたむ' : '押すと候補を全部開く (段・外すはここで)'" @click="toggleGroup(g.key)">
+            <span class="rounded-sm bg-amber-500/20 px-1 font-bold text-amber-200" :title="`この中のどれか ${g.need} つ (どの順番でもいい。${g.need} つ付けば完成)`">どれか {{ g.need }}</span>
+            <span class="text-[var(--exile-color-text-tertiary)]">{{ g.members.length }} 候補</span>
+            <span v-if="!openGroups.has(g.key) && sameRank(g.members)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ sameRank(g.members) }}</span>
             <span v-if="g.share != null" class="tabular-nums text-amber-100/70" title="1 回で付く割合の合計 (候補のどれかが付く)">合計 {{ pct(g.share) }}</span>
-          </p>
-          <div :class="g.members.length > 1 ? 'flex flex-col gap-0.5' : 'flex items-center gap-1.5 max-md:flex-wrap'">
+            <span class="text-[10px] opacity-60">{{ openGroups.has(g.key) ? "▴" : "▾" }}</span>
+          </button>
+          <!-- たたんだ時: 候補の名前を 1 行に (はみ出しは …、乗せると全部) -->
+          <p v-if="g.members.length > 1 && !openGroups.has(g.key)" class="truncate text-[12px]" :title="g.members.map((r) => `${r.text} ${r.rank}`).join('\n')">{{ g.members.map((r) => shortName(r.text)).join(" ／ ") }}</p>
+          <div v-if="g.members.length <= 1 || openGroups.has(g.key)" :class="g.members.length > 1 ? 'flex flex-col gap-0.5' : 'flex items-center gap-1.5 max-md:flex-wrap'">
             <!-- 組の中 (どれか) はスマホでも札を文の横に置く (文だけ折り返す)。1 つの時は今まで通り文の下に札 -->
             <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1" :class="g.members.length > 1 ? 'max-md:flex max-md:w-full' : 'max-md:flex-wrap'">
               <span class="truncate max-md:whitespace-normal" :class="g.members.length > 1 ? 'min-w-0 max-md:flex-1' : 'max-md:w-full'" :title="r.text + essTitle(r.modId)">{{ r.text }}</span>
