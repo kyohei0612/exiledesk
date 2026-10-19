@@ -19,7 +19,8 @@ type Packed = { v: 1; n: string; j?: string; s: SimRecipe["session"] };
 /** レシピの URL (アプリからは Web 版のアドレスで) */
 export async function recipeShareUrl(r: Pick<SimRecipe, "name" | "baseJa" | "session">): Promise<string> {
   const code = await packJson({ v: 1, n: r.name, ...(r.baseJa ? { j: r.baseJa } : {}), s: r.session } satisfies Packed);
-  const base = isTauriRuntime() ? "https://exiledesk.com/web.html" : `${location.origin}${location.pathname}`;
+  // Web 版は / で開く (web.html は 404。2026-10-21 オーナー「URL でレシピ読み込まない」)
+  const base = isTauriRuntime() ? "https://exiledesk.com/" : `${location.origin}${location.pathname}`;
   return `${base}${RECIPE_SHARE_PREFIX}${code}`;
 }
 
