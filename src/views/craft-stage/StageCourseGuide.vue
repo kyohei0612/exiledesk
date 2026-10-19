@@ -5,6 +5,8 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
+// 一番外が 2 つ (トピックの案内・コースの案内) なので、呼ぶ側の class は受け取らない (今まで付いていなかった物。Vue の警告だけ消す。2026-10-19 モンキーテスト)
+defineOptions({ inheritAttrs: false });
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { course, courseBases, courseView, restartCourse } from "../../state/craft-course";
 import { aimLabel } from "../../services/craft-stage/mod-list";

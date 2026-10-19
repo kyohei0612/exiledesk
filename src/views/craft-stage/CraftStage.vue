@@ -69,7 +69,8 @@ function useAtSocket(n: number): void {
 }
 onMounted(() => void s.init());
 // シミュレーターのレシピの URL (#recipe=、recipe-share.ts) から来た時・同じタブに貼った時は、そのレシピで始める
-const openRecipeUrl = (): void => { if (location.hash.startsWith("#recipe=")) void import("./recipe-share").then((m) => m.openSharedRecipe()); };
+// ジェムコラプトの画面を開いていたら閉じる (開いたままだと上に残り、URL はシミュレーターなのにジェムコラプトが見えていた。2026-10-19 モンキーテスト)
+const openRecipeUrl = (): void => { if (location.hash.startsWith("#recipe=")) { setGemCorrupt(false); void import("./recipe-share").then((m) => m.openSharedRecipe()); } };
 onMounted(() => { openRecipeUrl(); window.addEventListener("hashchange", openRecipeUrl); });
 onBeforeUnmount(() => window.removeEventListener("hashchange", openRecipeUrl));
 // 使った時の音を先に読んでおく (初めて使うカレンシーで遅れないように)

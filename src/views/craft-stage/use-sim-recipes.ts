@@ -154,7 +154,9 @@ export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
     s.simPendingRecipe.value = null;
     recipes.value = readSimRecipes();
     const r = recipes.value.find((x) => x.id === id);
-    if (r) { recipeArm.arm(`load:${r.id}`); void loadRecipe(r); }
+    // ベースを替えた直後は「ベースが変わったらソケットを空に」の見張りがまだ動いていない。先に読むと入れたソケットが消えて ② に進めなかった
+    // (2026-10-19 モンキーテスト: 画面を開いたまま URL からソケット 0 のレシピを開くと「ソケットの数を選ぶ」で止まった)。見張りが済んでから読む
+    if (r) void nextTick(() => { recipeArm.arm(`load:${r.id}`); void loadRecipe(r); });
   }
   onMounted(() => { mounted = true; takePending(); });
   watch(() => s.simPendingRecipe.value, () => { if (mounted) takePending(); });

@@ -172,8 +172,12 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   const stepIdx = (x: SimStep): number => SIM_STEPS.indexOf(x);
   /** 整理 (どれか N つにまとめる) が要らない: まとめる組が無く、枠にも収まっている */
   function sortOk(): boolean {
+    return !sortBuckets(s.data.value, s.simTargets.value).length && fitsOk();
+  }
+  /** 狙いが枠に収まっている (まとめられる組があっても、まとめなくて良い) */
+  function fitsOk(): boolean {
     const u = sideUse(s.data.value, s.simTargets.value), l = sideLimits(s.data.value, s.base.value, s.itemLevel.value);
-    return !sortBuckets(s.data.value, s.simTargets.value).length && u.prefix <= l.prefix && u.suffix <= l.suffix;
+    return u.prefix <= l.prefix && u.suffix <= l.suffix;
   }
   /** ② で狙いを直せる形 (整理の間は整理だけ) */
   const edit2 = computed(() => simStep.value === "mods" && !(modsDone.value && !sortDone.value));
@@ -186,7 +190,8 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
    */
   const reach = computed((): number => {
     const here = simStep.value;
-    if (!((modsDone.value && sortDone.value) || (here === "mods" && rows.value.length > 0 && sortOk()))) return 0;
+    // 札で移る時は、枠に収まっていれば整理 (まとめる) は飛ばしてよい (「次へ」では今まで通り整理の欄を見せる。2026-10-19 モンキーテストで、冒涜が 2 つあると 3 の札が押せなかった)
+    if (!((modsDone.value && sortDone.value) || (here === "mods" && rows.value.length > 0 && fitsOk()))) return 0;
     if (!((whiteOk.value && fracDone.value && startDone.value && priceOk()) || (here === "start" && priceOk()))) return 1;
     if (!(orderDone.value || here === "order")) return 2;
     return results.value.length ? 4 : 3;
@@ -196,7 +201,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   /** 今のページを決める (「次へ」と同じ。決められない時は何もしない) */
   function decideHere(): void {
     const here = simStep.value;
-    if (here === "mods" && rows.value.length) { modsDone.value = true; sortDone.value = sortOk(); }
+    if (here === "mods" && rows.value.length) { modsDone.value = true; sortDone.value = fitsOk(); }
     if (here === "start" && priceOk()) { whiteOk.value = true; fracDone.value = true; startDone.value = true; }
     if (here === "order") orderDone.value = true;
   }
