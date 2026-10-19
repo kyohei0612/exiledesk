@@ -22,7 +22,7 @@ import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { applyCurrency, kindOf, omensFor } from "../../services/craft-stage/apply-currency";
 import { mulberry32 } from "../../services/htc/rng";
 import { ruleFor, runQuizOnce, summarizeQuiz, type QuizAction, type QuizRecipe, type QuizResult, type QuizRule, type QuizRun, type QuizSlot, type When } from "../../services/craft-stage/quiz-recipe";
-import { ROUTE_NAME } from "../../services/craft-stage/quiz-build";
+import { MAX_BASES, ROUTE_NAME } from "../../services/craft-stage/quiz-build";
 import { actionText, chipText as chipTextOf, whenText as whenTextOf } from "./quiz-text";
 import type { StageItem } from "../../services/craft-stage/types";
 
@@ -53,7 +53,7 @@ async function explore(): Promise<void> {
   const recipe = JSON.parse(JSON.stringify(props.recipe)) as QuizRecipe;
   try {
     for (let i = 0; i < EXPLORE_RUNS; i++) {
-      runs.push(runQuizOnce(d, recipe, 1 + i * 7919, { price: () => 0, maxSteps: 4000 }));
+      runs.push(runQuizOnce(d, recipe, 1 + i * 7919, { price: () => 0, maxSteps: 4000, maxBases: MAX_BASES }));
       if (i % 10 === 9) { await new Promise((r) => setTimeout(r)); if (my !== gen) return; }
     }
   } catch (e) {
@@ -66,7 +66,7 @@ async function explore(): Promise<void> {
   exploring.value = false;
 }
 const startError = ref("");
-watch(() => JSON.stringify([props.recipe.routes.map((r) => [r.goal, r.rules]), props.recipe.base, props.recipe.itemLevel, props.recipe.start.kind]), () => {
+watch(() => JSON.stringify([props.recipe.routes.map((r) => [r.goal, r.rules, r.order]), props.recipe.base, props.recipe.itemLevel, props.recipe.start.kind, "pick" in props.recipe.start ? props.recipe.start.pick : null]), () => {
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => void explore(), 120);
 }, { immediate: true });

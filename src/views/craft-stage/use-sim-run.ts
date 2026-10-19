@@ -15,7 +15,7 @@ import { freshItem } from "../../services/craft-stage/run-plan";
 import { limitOf } from "../../services/craft-stage/stage-core";
 import { patternSets, setByKey, type Pattern } from "../../services/craft-stage/pattern";
 import { runQuizOnce, summarizeQuiz, type QuizResult, type QuizRun } from "../../services/craft-stage/quiz-recipe";
-import { magicStartMods, quizFromSim, type QuizSimIn } from "../../services/craft-stage/quiz-build";
+import { magicStartMods, MAX_BASES, quizFromSim, type QuizSimIn } from "../../services/craft-stage/quiz-build";
 import { tr } from "../../i18n/lang";
 import { sideLimits, sideUse } from "../../services/craft-stage/sim-methods";
 import type { SimTargetsCtx } from "./use-sim-targets";
@@ -24,7 +24,7 @@ import type { SimSearchCtx } from "./use-sim-search";
 
 export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   const { blocker, boughtDivine, fourDivine, rareDivine, fracMembers, fractureRow, fractureRows, itemDivine, magicDivine, makeRoute, makeSpec,
-    market, maxSteps, methodOf, num, rows, runs, socketCount, targetsSig, whiteDivine } = d;
+    market, maxSteps, methodOf, num, orderKeys, rows, runs, socketCount, targetsSig, whiteDivine } = d;
   const s = craftStage;
   /**
    * 計算の費用 (2026-10-05 オーナー「3 個買って 1 個成功品と仮定して、最低完全変成 3、次の完全増強、消去はセットで使う、フラクチャー 3 つは
@@ -56,7 +56,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
       const totalOf = (k: "prefixes" | "suffixes"): number => totalAt(k, floor);
       const each = fracMembers.value.map((r) => {
         const total = totalOf(d.mods.get(r.modId)?.type === "suffix" ? "suffixes" : "prefixes");
-        return { name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 };
+        return { modId: r.modId, name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 };
       });
       return { each, pHit: Math.min(1, each.reduce((a, x) => a + x.p, 0)) };
     };
@@ -192,7 +192,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   /** 回していないパターンの一言 (未完成なら最初の打てない手) */
   function patternNote(p: Pattern): string {
     const left = s.simPlayLeft.value[p.name] ?? 0;
-    return !hasSteps(p) ? tr("答えが無い", "No answers") : left ? tr(`クイズ 残り ${left} · 回さない`, `${left} questions left · not run`) : tr("未実行", "Not run");
+    return !hasSteps(p) ? tr("答えが無い", "No answers") : left ? tr(`未実行 · 答えの無い場面 ${left} (来た人はイレギュラー)`, `Not run · ${left} unanswered (counted as irregular)`) : tr("未実行", "Not run");
   }
   function togglePatternOff(i: number): void {
     s.simPatterns.value = s.simPatterns.value.map((p, k) => (k === i ? { ...p, off: !p.off } : p));
@@ -231,6 +231,8 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     const startPrice = st === "item" ? num(itemDivine.value) ?? 0 : st === "magic" ? num(magicDivine.value) ?? 0 : st === "fractured" ? startOnce.value ?? 0 : st === "four" ? num(fourDivine.value) ?? 0 : num(whiteDivine.value) ?? 0;
     return {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, start: st, startPrice, sockets: socketCount.value, startItem: startItemAt(),
+      // ⑤ の関門は ④ の順番 (先の狙いは「付いていない」と見る。2026-10-20)。固定済みから始める時のどれが固定されたかは 3 の付きやすさの重み
+      order: orderKeys.value, fracWeights: Object.fromEntries((calc.value?.each ?? []).map((e) => [e.modId, e.p])),
       targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}), ...(t.need ? { need: t.need } : {}) })),
     };
   });
@@ -242,18 +244,20 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   /** クイズの結果を今の結果の形に (結果の表示をそのまま使う) */
   function quizToRecipe(q: QuizResult): RecipeResult {
     const stops = [
-      ...(q.capped ? [{ reason: "手が多すぎる", p: q.capped / q.runs }] : []),
-      ...q.open.map((o) => ({ reason: tr("答えの無い状況に来た", "Reached a situation with no answer"), p: o.n / q.runs })),
-      ...q.blocked.map((o) => ({ reason: tr(`打てない手: ${o.reason}`, `Unusable answer: ${o.reason}`), p: o.n / q.runs })),
+      ...(q.capped ? [{ reason: "手が多すぎる", p: q.capped / (q.runs || 1) }] : []),
+      ...(q.gaveUp ? [{ reason: tr(`作り直しの上限 (${MAX_BASES} 個) で諦めた`, `Gave up at the rebuy limit (${MAX_BASES} bases)`), p: q.gaveUp / (q.runs || 1) }] : []),
+      ...q.blocked.map((o) => ({ reason: tr(`打てない手: ${o.reason}`, `Unusable answer: ${o.reason}`), p: o.n / (q.runs || 1) })),
     ];
-    return { runs: q.runs, pDone: q.pDone, perDone: q.perDone, p50: q.p50, p80: q.p80, p90: q.p90, usage: q.usage, stops, sample: null, bases: q.bases, hitRates: [] };
+    // 答えの無い状況に来た人 (イレギュラー) は stops に入れず別に持つ (計算から外している。2026-10-20 オーナー)
+    return { runs: q.runs, pDone: q.pDone, perDone: q.perDone, p50: q.p50, p80: q.p80, p90: q.p90, usage: q.usage, stops, sample: null, bases: q.bases, hitRates: [],
+      ...(q.irregular ? { irregular: { n: q.irregular, of: q.runs + q.irregular } } : {}) };
   }
   const patternChecks = computed(() => s.simPatterns.value.filter(hasSteps).map((p) => ({ p, why: null as string | null })));
-  const runnable = computed(() => s.simPatterns.value.filter((p) => hasSteps(p) && !p.off && !(s.simPlayLeft.value[p.name] ?? 0)));
+  // 答えの無い状況が残っていても回せる (来た人はイレギュラーとして止め、計算から外す。2026-10-20 オーナー)
+  const runnable = computed(() => s.simPatterns.value.filter((p) => hasSteps(p) && !p.off));
   const blocked = computed((): string | null => {
     if (!rows.value.length) return "狙いがありません";
     if (!patternChecks.value.length) return "6 パターンに手がありません";
-    if (!runnable.value.length && s.simPatterns.value.some((p) => hasSteps(p) && !p.off && (s.simPlayLeft.value[p.name] ?? 0) > 0)) return "ハズレルート設定が残っています (全部決めると回せる)";
     if (!runnable.value.length) return "回すパターンにチェックが入っていません";
     return null;
   });
@@ -323,7 +327,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
           const { recipe } = quizFromSim(qb, JSON.parse(JSON.stringify(p.quiz)) as typeof p.quiz);
           const qruns: QuizRun[] = [];
           for (let i = 0; i < spec.runs; i++) {
-            qruns.push(runQuizOnce(d, recipe, runSeed + i * 7919, { price, maxSteps: maxSteps.value }));
+            qruns.push(runQuizOnce(d, recipe, runSeed + i * 7919, { price, maxSteps: maxSteps.value, maxBases: MAX_BASES }));
             if (i % 10 === 9) { progress.value = [k * spec.runs + i + 1, total]; await new Promise((r) => setTimeout(r)); if (my !== gen) return; }
           }
           const r = quizToRecipe(summarizeQuiz(qruns, price));

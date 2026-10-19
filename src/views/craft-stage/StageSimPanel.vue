@@ -429,6 +429,8 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
             <b class="ml-1 tabular-nums" :class="h.p >= 0.9 ? 'text-emerald-300' : h.p >= 0.5 ? 'text-amber-200' : 'text-rose-300'">{{ pct(h.p) }}</b>
           </span>
         </div>
+        <!-- 答えの無い形に来た人は止めて、費用・完成の割合のどれにも入れない (2026-10-20 オーナー)。⑤ で答えると減る -->
+        <p v-if="recipeOut.r.irregular" data-sim-irregular class="mt-1.5 flex items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">イレギュラー {{ recipeOut.r.irregular.n }} 人 / {{ recipeOut.r.irregular.of }} 人<HelpTip text="答えの無い形になった人。そこで止めて、費用・完成の割合・運の幅のどれにも入れていない。⑤ 打ち方でその形に答えると減る" /></p>
         <p v-for="x in recipeOut.r.stops.filter((y) => !/手が多すぎる/.test(y.reason))" :key="x.reason" class="mt-1.5 flex items-center gap-1.5 text-[12px] text-[var(--exile-color-signal-warn)]">{{ /手が多すぎる/.test(x.reason) ? "打ち切り" : "完成しなかった" }} {{ pct(x.p) }}<HelpTip :text="/手が多すぎる/.test(x.reason) ? `1 人の上限 (${(summary.maxSteps ?? maxSteps).toLocaleString()} 手) に届いた人。上限を上げるか、ハズレルート設定を見直す` : x.reason" /></p>
       <!-- 畳む物 -->
       <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-3 text-[13px]">

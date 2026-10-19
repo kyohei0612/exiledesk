@@ -138,6 +138,8 @@ export interface RecipeResult {
   hitRates: Array<{ modId: string; p: number }>;
   /** パターンの手ごとの平均 (全部の回で、打った数と費用)。「この手だけ回す」の結果 (2026-10-07) */
   stepAvg?: Array<{ presses: number; cost: number; p80Presses: number; p80Cost: number }>;
+  /** イレギュラー (答えの無い状況で止めた人) の数と回した全員の数。runs・pDone・費用には入っていない (2026-10-20) */
+  irregular?: { n: number; of: number };
 }
 
 export const ESS = ESSENCE_KEYS;

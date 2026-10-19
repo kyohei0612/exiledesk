@@ -40,7 +40,8 @@ const candidates = computed((): Array<{ modId: string; minTierIndex: number }> =
 /**
  * ほかの手順で使っている MOD (ここでは選べない)。コピーして並べた同じ候補のグループ (元の MOD を候補に持つ手順) は除く
  */
-const usedElsewhere = (r: ListRow): boolean => !!host.value && s.simTargets.value.some((t) => t !== host.value
+// フラクチャーの候補は「どれか」に入れられる (固定されなかった方を後から取る時、例: 高貴で ES かマナのどちらか。2026-10-20)
+const usedElsewhere = (r: ListRow): boolean => !!host.value && s.simTargets.value.some((t) => t !== host.value && t.method !== "fracture"
   && !(t.alts ?? []).some((a) => a.modId === host.value!.modId)
   && [t, ...(t.alts ?? [])].some((x) => r.tiers.some((y) => (y.modId ?? r.id) === x.modId)));
 const isHost = (r: ListRow): boolean => !!host.value && r.tiers.some((t) => (t.modId ?? r.id) === host.value!.modId);

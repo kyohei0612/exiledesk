@@ -51,12 +51,19 @@ export interface QuizRoute {
   /** この札のどれかが付いたらこの工程 (無ければ 1 つ目の工程の扱い) */
   entry?: string[];
   rules: QuizRule[];
+  /**
+   * 付ける順番 (札の id、シミュレーターの ④)。あれば、まだ付いていない一番前の札より後ろの札 (並びに無い札も) は「付いていない」と見て、
+   * その MOD は外れ (junk) に数える (2026-10-20 オーナー「先の工程の狙いがたまたま付いても、ここでは付かない判定でいい」)。無ければ全部の札を見る
+   */
+  order?: string[];
 }
 export type QuizStart =
   /** 白を買う (sockets・runes = 規格外のソケットと始めから差すルーン) */
   | { kind: "white"; price: number; sockets?: number; runes?: string[] }
   /** 付いた状態を買う。fill = 側ごとに MOD の数まで残りを乱数で埋める (相場で買うベースの代わり) */
-  | { kind: "bought"; mods: Force[]; fill?: Partial<Record<StageSide, number>>; price: number; rarity?: "magic" | "rare"; sockets?: number; runes?: string[] }
+  | { kind: "bought"; mods: Force[]; fill?: Partial<Record<StageSide, number>>; price: number; rarity?: "magic" | "rare"; sockets?: number; runes?: string[];
+    /** 買うたびに 1 つを重みで選ぶ (フラクチャーの候補のどれが固定されたか。2026-10-20)。選んだ物の mods・runes を使う */
+    pick?: Array<{ mods: Force[]; runes?: string[]; w: number }> }
   /** エミュレーターの今のアイテムから */
   | { kind: "item"; item: StageItem; price: number };
 export interface QuizRecipe {
@@ -82,7 +89,7 @@ const fits = (m: StageMod, s: QuizSlot): 0 | 1 | 2 | 3 => {
 const groupKey = (s: QuizSlot): string => `${s.side}|${s.kind}|${s.temp ? 1 : 0}|${s.mods.map((x) => `${x.modId}:${x.minTierIndex}`).sort().join(",")}`;
 
 /** 札に MOD を当てる (1 MOD は 1 札まで、合計の状態が一番高い当て方)。返り値は札ごとの状態と当てた MOD */
-export function assignSlots(item: StageItem, goal: readonly QuizSlot[]): { state: Record<string, number>; used: Set<StageMod> } {
+export function assignSlots(item: StageItem, goal: readonly QuizSlot[]): { state: Record<string, number>; used: Set<StageMod>; byId: Map<string, StageMod> } {
   const state: Record<string, number> = {};
   let best = -1, bestPick: Array<StageMod | null> = [];
   const pick: Array<StageMod | null> = [];
@@ -95,14 +102,16 @@ export function assignSlots(item: StageItem, goal: readonly QuizSlot[]): { state
       const f = fits(m, s);
       if (!f) continue;
       taken.add(m); pick.push(m);
-      go(i + 1, sum + f);
+      // 合計が同じなら、固定された MOD は固定の札へ (0.5 は引き分けを分けるだけ。固定の候補が「どれか」の札と重なる時に、
+      // 固定のマナを「ES かマナ」に、固定していないスピードを固定の札に当てて、固定の札が「付いている」と出ていた。2026-10-20)
+      go(i + 1, sum + f + (s.kind === "fractured" && m.fractured ? 0.5 : 0));
       taken.delete(m); pick.pop();
     }
     pick.push(null); go(i + 1, sum); pick.pop();
   };
   go(0, 0);
-  const used = new Set<StageMod>();
-  goal.forEach((s, i) => { const m = bestPick[i]; state[s.id] = m ? fits(m, s) : 0; if (m) used.add(m); });
+  const used = new Set<StageMod>(), byId = new Map<string, StageMod>();
+  goal.forEach((s, i) => { const m = bestPick[i]; state[s.id] = m ? fits(m, s) : 0; if (m) { used.add(m); byId.set(s.id, m); } });
   // 中身が同じ札は区別しない (A に付いて B に無い = B に付いて A に無い)。並びの早い札から高い状態に
   const groups = new Map<string, QuizSlot[]>();
   for (const s of goal) groups.set(groupKey(s), [...(groups.get(groupKey(s)) ?? []), s]);
@@ -111,7 +120,7 @@ export function assignSlots(item: StageItem, goal: readonly QuizSlot[]): { state
     const vals = g.map((s) => state[s.id]!).sort((a, b) => b - a);
     g.forEach((s, i) => { state[s.id] = vals[i]!; });
   }
-  return { state, used };
+  return { state, used, byId };
 }
 
 /** 今のアイテムで働いている工程 (入口の札が付いた工程。無ければ 1 つ目) */
@@ -124,8 +133,21 @@ export function routeOf(recipe: QuizRecipe, item: StageItem): QuizRoute {
   return recipe.routes[0]!;
 }
 
-export function situationOf(item: StageItem, goal: readonly QuizSlot[]): Situation {
-  const { state, used } = assignSlots(item, goal);
+/** 付ける順番で見ない札 (まだ付いていない一番前の札より後ろ、並びに無い札も)。順番が無ければ空 */
+function maskedBy(order: readonly string[] | undefined, goal: readonly QuizSlot[], state: Record<string, number>): Set<string> {
+  const out = new Set<string>();
+  if (!order?.length) return out;
+  const ids = [...order.filter((id) => goal.some((s) => s.id === id)), ...goal.filter((s) => !order.includes(s.id)).map((s) => s.id)];
+  const cut = ids.findIndex((id) => (state[id] ?? 0) < 2);
+  if (cut < 0) return out;
+  for (const id of ids.slice(cut + 1)) if ((state[id] ?? 0) < 3) out.add(id); // 固定済み (フラクチャー) は始めから付いているので見る
+  return out;
+}
+
+export function situationOf(item: StageItem, goal: readonly QuizSlot[], order?: readonly string[]): Situation {
+  const { state, used, byId } = assignSlots(item, goal);
+  // 見ない札は 0、当てていた MOD は外れに数える。当て直さない (見る札だけで当て直すと、固定のマナが「ES かマナ」の札に移り、固定の札が「付いている」になった)
+  for (const id of maskedBy(order, goal, state)) { state[id] = 0; const m = byId.get(id); if (m) used.delete(m); }
   const sit: Situation = { r: RARITY[item.rarity] };
   for (const s of goal) sit[s.id] = state[s.id]!;
   for (const side of SIDES) {
@@ -199,18 +221,30 @@ export interface QuizRun {
   /** 終わった工程の id */
   route: string;
   item: StageItem;
-  /** 止まった理由: unanswered = 答えの無い状況、blocked = 当たり所に関係なく打てない手、cap = 手の上限 */
-  stop?: { kind: "unanswered" | "blocked" | "cap"; route: string; situation: Situation; item: StageItem; reason?: string };
+  /**
+   * 止まった理由: unanswered = 答えの無い状況 (イレギュラー。費用・完成の割合のどれにも入れない。2026-10-20 オーナー)、
+   * blocked = 当たり所に関係なく打てない手、cap = 手の上限、bases = 作り直しの上限 (諦めた)
+   */
+  stop?: { kind: "unanswered" | "blocked" | "cap" | "bases"; route: string; situation: Situation; item: StageItem; reason?: string };
   log: string[];
 }
-export interface QuizOpts { price: (key: string) => number; maxSteps?: number; log?: boolean }
+/** maxBases = 1 人が使うベースの上限 (最初の 1 個込み)。超える作り直しで諦める (2026-10-20 オーナー「上限は作り直しの回数」) */
+export interface QuizOpts { price: (key: string) => number; maxSteps?: number; maxBases?: number; log?: boolean }
 
 function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): StageItem {
   const st = recipe.start;
   if (st.kind === "item") return st.item;
   if (st.kind === "white") return st.sockets != null || st.runes?.length ? startFrom(data, recipe.base, recipe.itemLevel, { ...(st.sockets != null ? { sockets: st.sockets } : {}), runes: st.runes ?? [] }, Math.floor(rng() * 2 ** 31)) : freshItem(data, recipe.base, recipe.itemLevel);
+  // 候補から 1 つ (フラクチャーの候補のどれが固定されたか、重みは付きやすさ)
+  let mods = st.mods, runes = st.runes;
+  if (st.pick?.length) {
+    const total = st.pick.reduce((a, x) => a + Math.max(0, x.w), 0);
+    let r = rng() * total;
+    const hit = st.pick.find((x) => (r -= Math.max(0, x.w)) < 0) ?? st.pick[st.pick.length - 1]!;
+    mods = hit.mods; runes = hit.runes ?? runes;
+  }
   const seed = Math.floor(rng() * 2 ** 31);
-  let it = startFrom(data, recipe.base, recipe.itemLevel, { mods: st.mods, ...(st.rarity ? { rarity: st.rarity } : st.fill ? { rarity: "rare" as const } : {}), ...(st.sockets ? { sockets: st.sockets } : {}), ...(st.runes?.length ? { runes: st.runes } : {}) }, seed);
+  let it = startFrom(data, recipe.base, recipe.itemLevel, { mods, ...(st.rarity ? { rarity: st.rarity } : st.fill ? { rarity: "rare" as const } : {}), ...(st.sockets ? { sockets: st.sockets } : {}), ...(runes?.length ? { runes } : {}) }, seed);
   // 残りを乱数で埋める (側のお告げ付きの高貴。相場で買えるベースの代わり)
   for (const side of SIDES) {
     const want = st.fill?.[side] ?? 0;
@@ -272,19 +306,23 @@ export function runQuizOnce(data: PatchData, recipe: QuizRecipe, seed: number, o
   for (; r.steps < cap; r.steps++) {
     const route = routeOf(recipe, it);
     r.route = route.id;
-    const sit = situationOf(it, route.goal);
+    const sit = situationOf(it, route.goal, route.order);
     if (routeDone(route, sit)) { r.done = true; break; }
     const rule = ruleFor(route.rules, sit);
     if (!rule) { r.stop = { kind: "unanswered", route: route.id, situation: sit, item: it }; break; }
     const x = applyQuizAction(data, route, it, rule.do, g);
-    if (x.kind === "restart") { if (o.log) r.log.push("restart"); it = buy(); continue; }
+    if (x.kind === "restart") {
+      if (o.log) r.log.push("restart");
+      if (o.maxBases != null && r.bases >= o.maxBases) { r.stop = { kind: "bases", route: route.id, situation: sit, item: it }; break; }
+      it = buy(); continue;
+    }
     if (x.kind === "random") continue; // 当たり所で弾かれた: 減らずにもう一度
     if (x.kind === "blocked") { r.stop = { kind: "blocked", route: route.id, situation: sit, item: it, reason: x.reason }; break; }
     for (const k of x.spent) count(k);
     if (o.log) r.log.push(`${x.key}${x.omens.length ? ` [${x.omens.join(",")}]` : ""}: -${x.removed.map((m) => m.textEn).join(" / ")} +${x.added.map((m) => m.textEn).join(" / ")}`);
     it = x.item;
   }
-  if (!r.done && !r.stop) r.stop = { kind: "cap", route: r.route, situation: situationOf(it, routeOf(recipe, it).goal), item: it };
+  if (!r.done && !r.stop) r.stop = { kind: "cap", route: r.route, situation: (() => { const rt = routeOf(recipe, it); return situationOf(it, rt.goal, rt.order); })(), item: it };
   r.item = it;
   return r;
 }
@@ -308,9 +346,16 @@ export interface QuizResult {
   /** 打てない手で止まった状況 */
   blocked: Array<{ route: string; key: string; situation: Situation; item: StageItem; reason: string; n: number }>;
   capped: number;
+  /** イレギュラー (答えの無い状況で止めた人)。runs・pDone・費用には入れない */
+  irregular: number;
+  /** 作り直しの上限で諦めた人 (計算に入る) */
+  gaveUp: number;
 }
 
-export function summarizeQuiz(runs: readonly QuizRun[], price: (key: string) => number): QuizResult {
+export function summarizeQuiz(all: readonly QuizRun[], price: (key: string) => number): QuizResult {
+  // イレギュラーは費用・完成の割合・運の幅のどれにも入れない (2026-10-20 オーナー「その人は経費から除外で何にも計算に入らないように」)。
+  // 答えの無い状況の一覧 (⑤ の問題) には出す
+  const runs = all.filter((r) => r.stop?.kind !== "unanswered");
   const done = runs.filter((r) => r.done);
   const costs = done.map((r) => r.cost).sort((a, b) => a - b);
   const q = (p: number): number => (costs.length ? costs[Math.min(costs.length - 1, Math.floor(costs.length * p))]! : 0);
@@ -319,10 +364,10 @@ export function summarizeQuiz(runs: readonly QuizRun[], price: (key: string) => 
   for (const r of runs) for (const [k, v] of Object.entries(r.uses)) use.set(k, (use.get(k) ?? 0) + v);
   const open = new Map<string, QuizResult["open"][number]>(), blocked = new Map<string, QuizResult["blocked"][number]>();
   const routes = new Map<string, number>();
-  for (const r of runs) {
+  for (const r of all) {
     if (r.done) routes.set(r.route, (routes.get(r.route) ?? 0) + 1);
     const s = r.stop;
-    if (!s || s.kind === "cap") continue;
+    if (!s || s.kind === "cap" || s.kind === "bases") continue;
     const key = s.route + "|" + situationKey(s.situation);
     if (s.kind === "unanswered") { const c = open.get(key); if (c) c.n++; else open.set(key, { route: s.route, key, situation: s.situation, item: s.item, n: 1 }); }
     else { const c = blocked.get(key); if (c) c.n++; else blocked.set(key, { route: s.route, key, situation: s.situation, item: s.item, reason: s.reason ?? "", n: 1 }); }
@@ -338,6 +383,8 @@ export function summarizeQuiz(runs: readonly QuizRun[], price: (key: string) => 
     open: [...open.values()].sort((a, b) => b.n - a.n),
     blocked: [...blocked.values()].sort((a, b) => b.n - a.n),
     capped: runs.filter((r) => r.stop?.kind === "cap").length,
+    irregular: all.length - runs.length,
+    gaveUp: runs.filter((r) => r.stop?.kind === "bases").length,
   };
 }
 
@@ -351,7 +398,7 @@ export function runQuiz(data: PatchData, recipe: QuizRecipe, n: number, o: QuizO
 /** エミュレーターの「レシピで 1 手」: 今のアイテムで次に打つ手 (完成・答えなしは null と理由) */
 export function nextMove(data: PatchData, recipe: QuizRecipe, item: StageItem, seed: number): { route: QuizRoute; rule: QuizRule | null; key: string | null; omens: string[]; done: boolean } {
   const route = routeOf(recipe, item);
-  const sit = situationOf(item, route.goal);
+  const sit = situationOf(item, route.goal, route.order);
   if (routeDone(route, sit)) return { route, rule: null, key: null, omens: [], done: true };
   const rule = ruleFor(route.rules, sit);
   if (!rule) return { route, rule: null, key: null, omens: [], done: false };
