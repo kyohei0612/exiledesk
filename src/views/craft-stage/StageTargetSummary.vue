@@ -22,7 +22,7 @@ import { effectiveCls } from "../../services/craft-stage/stage-core";
 import { withRunes } from "../../vendor/poe2htc/engine/runes";
 import { runeJaOf, runeToneOf } from "../../services/craft-stage/mod-list";
 import SimMethodPop from "./SimMethodPop.vue";
-import { methodsOff } from "../../services/craft-stage/sim-methods";
+import { methodsOff, toAugment } from "../../services/craft-stage/sim-methods";
 import { ref } from "vue";
 /**
  * 「どれか」の組は既定でたたむ: 頭の 1 行 (どれか n・候補の数・段・合計・▾) と、候補の名前を「／」で並べた 1 行
@@ -239,6 +239,8 @@ function canFracture(host: string): boolean {
 }
 function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): void {
   let list = s.simTargets.value;
+  // 増強スパムは側ごとに 1 つ: 替える物をまとめて 1 つの狙い (かその側の増強スパムの候補) に (sim-methods の toAugment)
+  if (p === "augment") { s.simTargets.value = toAugment(s.data.value, list, g.kind === "fracture" ? list.filter((t) => t.method === "fracture").map((t) => t.modId) : g.hosts ?? [g.host]); return; }
   if (g.kind === "fracture") {
     if (p === "fracture") return;
     // フラクチャー予定のまとまりを全部その付け方に

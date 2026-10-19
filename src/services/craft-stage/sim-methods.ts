@@ -130,6 +130,35 @@ export function augmentHostOf<T extends SimTargetLike>(d: PatchData | null, targ
 }
 /** 付け方のポップアップで選べない付け方と理由 (カオススパムは片側だけ・増強スパムは側ごとに 1 つ) */
 export function methodsOff(d: PatchData | null, targets: readonly SimTargetLike[], modId: string): Partial<Record<SimMethod, string>> {
-  const c = chaosBlocked(d, targets, modId), a = augmentBlocked(d, targets, modId);
-  return { ...(c ? { chaos: c } : {}), ...(a ? { augment: a } : {}) };
+  const c = chaosBlocked(d, targets, modId), a = augmentBlocked(d, targets, modId), f = fractureBlocked(d, targets, modId);
+  return { ...(c ? { chaos: c } : {}), ...(a ? { augment: a } : {}), ...(f ? { fracture: f } : {}) };
+}
+/**
+ * フラクチャー予定は増強スパムと別の側 (augmentBlocked の逆向き。マジックの枠は側ごとに 1 つ)。前は増強スパムを後から足す時だけ止めていて、
+ * 増強スパムが先にあるとフラクチャー予定を同じ側に足せた (2026-10-21 モンキーチェック 10 人中 5 人)
+ */
+export function fractureBlocked(d: PatchData | null, targets: readonly SimTargetLike[], modId: string): string | null {
+  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const me = side(modId);
+  return targets.some((t) => t.modId !== modId && t.method === "augment" && [t, ...(t.alts ?? [])].some((x) => side(x.modId) === me))
+    ? tr("増強スパムと同じ側 (マジックの枠は側ごとに 1 つ)", "Same side as the augmentation spam mod (magic has one slot per side)") : null;
+}
+/**
+ * 付け方を増強スパムに替える (② の表の ▾)。増強スパムは側ごとに 1 つの狙いなので、替える物 (フラクチャー候補の組なら全部) を
+ * その側の増強スパムの候補に入れる。まだ無ければ、替える物の 1 つ目を本体・残りを候補にする (2026-10-21 モンキーチェック: 組を替えると 2 つとも増強スパムになった)
+ */
+export function toAugment<T extends SimTargetLike>(d: PatchData | null, targets: readonly T[], ids: readonly string[]): T[] {
+  const moving = targets.filter((t) => ids.includes(t.modId));
+  if (!moving.length) return [...targets];
+  const ms = moving.flatMap((t) => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])]);
+  const rest = targets.filter((t) => !ids.includes(t.modId));
+  const host = augmentHostOf(d, rest, ms[0]!.modId);
+  if (host) return rest.map((t) => (t === host ? { ...t, alts: [...(t.alts ?? []), ...ms.filter((m) => m.modId !== t.modId)] } : t));
+  const at = targets.indexOf(moving[0]!);
+  const one = { ...moving[0]!, modId: ms[0]!.modId, minTierIndex: ms[0]!.minTierIndex, method: "augment" as const, alts: ms.slice(1) };
+  if (!one.alts.length) delete (one as Partial<T>).alts;
+  delete (one as Partial<T>).need;
+  const out = [...rest];
+  out.splice(Math.min(at, out.length), 0, one as T);
+  return out;
 }
