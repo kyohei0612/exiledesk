@@ -15,14 +15,18 @@ defineProps<{
   help?: string;
   note?: string;
   redo?: boolean;
+  /** 終わった段を開いている / たたんでいる (無し = 開け閉めしない段。真偽にすると省いた時に false になるので文字で)。見出しを押すと toggle */
+  fold?: "open" | "closed";
 }>();
-const emit = defineEmits<{ redo: [] }>();
+const emit = defineEmits<{ redo: []; toggle: [] }>();
 </script>
 
 <template>
   <header class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
     <span class="grid size-6 shrink-0 place-items-center rounded-full text-[12px] font-bold tabular-nums" :class="done ? 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40' : current ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-white/10 text-white/60'">{{ n }}</span>
-    <h3 class="g-brush text-[19px] tracking-[0.12em] [text-shadow:0_2px_0_#000]" :class="current || done ? 'text-[var(--exile-color-text-title)]' : 'text-white/60'">{{ title }}</h3>
+    <h3 v-if="!fold" class="g-brush text-[19px] tracking-[0.12em] [text-shadow:0_2px_0_#000]" :class="current || done ? 'text-[var(--exile-color-text-title)]' : 'text-white/60'">{{ title }}</h3>
+    <!-- 終わった段: 見出しを押すとすぐ開いて、そのまま直せる (先の段はその場で変わる。2026-10-19 オーナー「工程は終わったらたたむでおｋ、即開いてそこから修正できるように」) -->
+    <button v-else type="button" data-step-toggle class="g-plain inline-flex items-center gap-1.5 rounded px-1 hover:bg-white/5" :aria-expanded="fold === 'open'" :title="fold === 'open' ? 'たたむ' : '開いて直す (先の段はその場で変わる)'" @click="emit('toggle')"><h3 class="g-brush text-[19px] tracking-[0.12em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_0_#000]">{{ title }}</h3><span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ fold === "open" ? "▴ たたむ" : "▾ 開いて直す" }}</span></button>
     <HelpTip v-if="help" :text="help" :title="title" />
     <span v-if="note" class="min-w-0 truncate text-[12px] text-[var(--exile-color-text-secondary)]">{{ note }}</span>
     <span class="ml-auto flex items-center gap-2">

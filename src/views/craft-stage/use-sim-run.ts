@@ -411,6 +411,13 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   /** 4 最安値スタート (3 ルートの比べ) は白から + フラクチャー予定の時だけ。始め方を 1 で決めた時は飛ばす */
   const stepStart = computed(() => whiteDone.value && fractureRows.value.length > 0 && s.simStart.value === "white");
   const stepOrder = computed(() => whiteDone.value && (fractureRows.value.length === 0 || startDone.value || s.simStart.value !== "white"));
+  /**
+   * 3 を触れる間: 3 を決める間と、決めた後に見出しを押して開いた間 (open3)。開いて変えると先の段がその場で変わる
+   * (2026-10-19 オーナー「4 設定中に 3 番操作できるように都度都度画面変える感じで」「工程は終わったらたたむでおｋ、即開いてそこから修正できるように」)
+   */
+  const open3 = ref(false);
+  watch(whiteDone, (v) => { if (!v) open3.value = false; });
+  const edit3 = computed(() => !whiteDone.value || open3.value);
   /** 6 パターンを決めた */
   const patternDone = ref(false);
   /** 途中を覚える (変わるたびに)。開き直した時は CraftStage がベース・狙い・パターンを、ここが「決めた」を戻す */
@@ -433,6 +440,6 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     results, shown, resultOf, shownName, cheapestName, showResultByName, patternNote, togglePatternOff, showResult, ranFor, sig,
     hasSteps, quizBase, magicMods, quizToRecipe, patternChecks, runnable, blocked, ONE_RUNS, activePattern, STEP_ONLY_RUNS,
     stepRun, run, stop, FOLD_KEY, open, toggle, help, whiteOk, modsDone, sortDone, fracDone, orderDone, startDone, step3, startPrice,
-    whiteDone, stepStart, stepOrder, patternDone, sessionNow, stale, modShort };
+    whiteDone, edit3, open3, stepStart, stepOrder, patternDone, sessionNow, stale, modShort };
 }
 export type SimRunCtx = ReturnType<typeof useSimRun>;

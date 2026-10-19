@@ -68,6 +68,10 @@ function useAtSocket(n: number): void {
   else s.use();
 }
 onMounted(() => void s.init());
+// シミュレーターのレシピの URL (#recipe=、recipe-share.ts) から来た時・同じタブに貼った時は、そのレシピで始める
+const openRecipeUrl = (): void => { if (location.hash.startsWith("#recipe=")) void import("./recipe-share").then((m) => m.openSharedRecipe()); };
+onMounted(() => { openRecipeUrl(); window.addEventListener("hashchange", openRecipeUrl); });
+onBeforeUnmount(() => window.removeEventListener("hashchange", openRecipeUrl));
 // 使った時の音を先に読んでおく (初めて使うカレンシーで遅れないように)
 onMounted(preloadSfx);
 /** 読めなかった時の「もう一度」 */

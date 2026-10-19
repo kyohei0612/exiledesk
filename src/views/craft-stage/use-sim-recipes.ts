@@ -3,11 +3,13 @@
  * StageSimPanel.vue から分けた (2026-10-16、500 行の決まり)。画面の 1 つごとに呼ぶ (状態は画面ごと)
  */
 import { useArmed } from "../../utils/use-armed";
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, mergeRecipesFromFile, readSimRecipes, recipesToFile, writeSimRecipes, type SimRecipe, type SimSession } from "../../state/craft-stage";
 import { track } from "../../utils/track";
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
+import { recipeShareUrl } from "./recipe-share";
+import { tr } from "../../i18n/lang";
 
 
 export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
@@ -86,6 +88,17 @@ export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
     if (r.added) { recipes.value = r.list; writeSimRecipes(recipes.value); }
     recipeNote.value = r.bad && !r.added && !r.skipped ? "レシピのファイルではありません" : `${r.added} 件足しました${r.skipped ? ` (同じ物 ${r.skipped} 件は飛ばした)` : ""}${r.bad ? ` · 読めない物 ${r.bad} 件` : ""}`;
   }
+  /**
+   * URL をコピー (レシピ全部を URL の # に乗せる。開いた人はそのレシピで始まる。recipe-share.ts)。r が無ければ今の状態
+   * (2026-10-18 オーナー「ファイルじゃなくて URL から始めるようにする、シェア機能」)
+   */
+  async function copyRecipeUrl(r?: SimRecipe): Promise<void> {
+    const name = r?.name ?? (recipeName.value.trim() || `${baseJa.value} ${fmtDate(Date.now())}`);
+    const url = await recipeShareUrl({ name, baseJa: r?.baseJa ?? baseJa.value, session: r?.session ?? (JSON.parse(JSON.stringify(sessionNow())) as SimSession) });
+    const ok = await navigator.clipboard.writeText(url).then(() => true, () => false);
+    recipeNote.value = ok ? tr(`「${name}」の URL をコピーしました (開くとこのレシピで始まる)`, `Copied the URL for "${name}" (opening it starts this recipe)`) : tr("コピーできませんでした", "Couldn't copy");
+    track("recipe:url");
+  }
   function removeRecipe(id: string): void {
     if (!recipeArm.arm(`del:${id}`)) return;
     recipes.value = recipes.value.filter((x) => x.id !== id);
@@ -130,14 +143,20 @@ export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
       restoring.v = false; recipeOpen.value = false;
     });
   }
-  // ベースを選ぶ前に選んだレシピを、開いたらそのまま読み込む (2 回押しの確認は要らない: まだ何も組んでいない)
-  onMounted(() => {
+  // ベースを選ぶ前に選んだレシピを、開いたらそのまま読み込む (2 回押しの確認は要らない: まだ何も組んでいない)。
+  // URL から来たレシピ (recipe-share.ts) は開いている間にも来るので、来たら保存した一覧を読み直してから
+  let mounted = false;
+  function takePending(): void {
     const id = s.simPendingRecipe.value;
+    if (!id) return;
     s.simPendingRecipe.value = null;
-    const r = id ? recipes.value.find((x) => x.id === id) : undefined;
+    recipes.value = readSimRecipes();
+    const r = recipes.value.find((x) => x.id === id);
     if (r) { recipeArm.arm(`load:${r.id}`); void loadRecipe(r); }
-  });
+  }
+  onMounted(() => { mounted = true; takePending(); });
+  watch(() => s.simPendingRecipe.value, () => { if (mounted) takePending(); });
   return { recipes, recipeOpen, recipeName, recipeArm, recipeRenaming, baseJa, fmtDate, openRecipes, saveRecipe, recipeBox,
-    recipeOutside, renameRecipe, recipeNote, recipeFile, exportRecipes, importRecipes, removeRecipe, loadRecipe };
+    recipeOutside, renameRecipe, recipeNote, recipeFile, exportRecipes, importRecipes, removeRecipe, loadRecipe, copyRecipeUrl };
 }
 export type SimRecipesCtx = ReturnType<typeof useSimRecipes>;

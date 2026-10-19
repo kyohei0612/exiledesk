@@ -76,6 +76,14 @@ async function pipe(u8: Uint8Array, t: CompressionStream | DecompressionStream):
   return new Uint8Array(await new Response(new Blob([u8 as BlobPart]).stream().pipeThrough(t)).arrayBuffer());
 }
 
+/** JSON に出来る物 → 縮めた文字 (deflate + base64url)。シミュレーターのレシピの URL (views/craft-stage/recipe-share.ts) でも使う */
+export async function packJson(v: unknown): Promise<string> {
+  return toB64url(await pipe(new TextEncoder().encode(JSON.stringify(v)), new CompressionStream("deflate-raw")));
+}
+/** 縮めた文字 → JSON の中身 (読めなければ例外) */
+export async function unpackJson(code: string): Promise<unknown> {
+  return JSON.parse(new TextDecoder().decode(await pipe(fromB64url(code), new DecompressionStream("deflate-raw"))));
+}
 /** 手順 → URL の # の中身 (deflate + base64url) */
 export async function encodeShare(plan: CraftStagePlan): Promise<string> {
   return toB64url(await pipe(new TextEncoder().encode(JSON.stringify(pack(plan))), new CompressionStream("deflate-raw")));

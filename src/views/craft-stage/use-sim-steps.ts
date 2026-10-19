@@ -3,7 +3,7 @@
  * StageSimPanel.vue から分けた (2026-10-16、500 行の決まり)。画面の 1 つごとに呼ぶ (状態は画面ごと)
  */
 import { useArmed } from "../../utils/use-armed";
-import { revealBottom, scrollToTop } from "../../utils/keep-place";
+import { scrollToTop } from "../../utils/keep-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { craftStage, writeSimSession } from "../../state/craft-stage";
 import { type Pattern, ANY_TARGET, isRest } from "../../services/craft-stage/pattern";
@@ -25,7 +25,7 @@ export type Stage = "mods" | "white" | "start" | "order";
 export type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; startDone: boolean; orderDone: boolean; sockets: number | null; white: number | null; patterns?: string };
 
 export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
-  const { fracDone, sortDone, hasSteps, itemDivine, keptKey, modsDone, num, orderDone, patternDone, phone, recipeOut, restBases, restCost,
+  const { fracDone, sortDone, hasSteps, itemDivine, keptKey, modsDone, num, orderDone, patternDone, recipeOut, restBases, restCost,
     restoring, results, rows, sockets, socketsOk, startDone, step3, stepOrder, stepStart, whiteDivine, whiteOk } = d;
   const s = craftStage;
   const step4pre = computed(() => stepOrder.value && orderDone.value);
@@ -77,11 +77,11 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     if (!list.length || list.some((t) => t.method === "fracture")) return;
     s.simTargets.value = list.map((t, i) => (i === 0 ? { ...t, method: "fracture" as const } : t));
   });
-  // 始め方を変えたら 3 から先はやり直し (ベース代の入れ方・4 の有無が変わる)
+  // 始め方を変えたら 4 から先はやり直し (ベース代の入れ方・4 の有無が変わる)。3 は決めたまま (4 の間も 3 を触れて、4 がその場で変わる。2026-10-19 オーナー)
   watch(() => s.simStart.value, (k) => {
     if (restoring.v) return;
     if (k === "item") itemDivine.value = s.simStartCost.value + (num(whiteDivine.value) ?? 0);
-    if (whiteOk.value || startDone.value) goTo("white");
+    if (startDone.value || orderDone.value) goTo("start");
   }, { immediate: true });
   watch(() => s.simStartItem.value, () => { if (!restoring.v && s.simStart.value === "item") itemDivine.value = s.simStartCost.value + (num(whiteDivine.value) ?? 0); });
   /**
@@ -174,12 +174,16 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
    */
   const panelEl = ref<HTMLElement | null>(null);
   watch([modsDone, sortDone, whiteOk, startDone, orderDone], (now, prev) => {
+    if (panelEl.value) panelEl.value.style.paddingBottom = "";
     if (restoring.v || !now.some((v, i) => v && !prev[i])) return;
-    // スマホは画面が短いので、次に決める段 (金の枠) の頭を画面の上に (2026-10-09 スナップで確認: 一番下だと次の段が画面の下の端に出ていた)
+    // 次に決める段 (金の枠) の頭を画面の上に (PC もスマホも。2026-10-19 オーナー「4、5 と工程進むんならスクロールさせないと、次工程全画面まで」。
+    // 前の PC は下の線 + 24px までで、次の段が画面の下の端に出ていた。スマホは 2026-10-09 から頭を上)
     void nextTick(() => requestAnimationFrame(() => {
       const cur = panelEl.value?.querySelector("[data-sim-cur]");
-      if (cur && phone.value) scrollToTop(cur);
-      else if (cur) revealBottom(cur);
+      // ページの下が足りず頭を上まで送れない時は、足りない分だけ下に余白を足す (次に段が動いた時に外す)
+      const lack = cur ? cur.getBoundingClientRect().top + window.scrollY + window.innerHeight - document.documentElement.scrollHeight - 16 : 0;
+      if (lack > 0 && panelEl.value) panelEl.value.style.paddingBottom = `${Math.ceil(lack)}px`;
+      if (cur) scrollToTop(cur);
       else panelEl.value?.scrollIntoView({ block: "end", behavior: "smooth" });
     }));
   });

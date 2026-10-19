@@ -52,8 +52,8 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, order
   fourDivine, rareDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
-  help, modsDone, sortDone, orderDone, startDone, step3, startPrice, whiteDone, stepStart, stepOrder, patternDone, stale, recipes, recipeOpen,
-  recipeName, recipeArm, recipeRenaming, fmtDate, openRecipes, saveRecipe, recipeBox, renameRecipe, recipeNote, recipeFile, exportRecipes,
+  help, modsDone, sortDone, orderDone, startDone, step3, startPrice, whiteDone, edit3, open3, stepStart, stepOrder, patternDone, stale, recipes, recipeOpen,
+  recipeName, recipeArm, recipeRenaming, fmtDate, openRecipes, saveRecipe, recipeBox, renameRecipe, recipeNote, recipeFile, exportRecipes, copyRecipeUrl,
   importRecipes, removeRecipe, loadRecipe, step4pre, stepNo, fold, step4, ilvlNote, goTo, resetArm, resetAll, panelEl, whiteDecide,
   undoStack, undo, routes, money, pct, compare, hitName, split, moneyT, fmtCount, hitShort, cardOk, cardNote, saveCard, copyCard, luck,
   costGroups, summary, tooManySteps, nextMaxSteps } = { ...tg, ...sr, ...rn, ...rc, ...st, ...rs };
@@ -110,7 +110,7 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
           </div>
           <!-- 書き出し・読み込み (別の PC・URL に持っていく用) -->
           <div class="mt-2 flex items-center gap-2 text-[11px]">
-            <button type="button" class="shrink-0 whitespace-nowrap rounded border border-white/15 px-2 py-0.5 opacity-80 hover:bg-white/10 hover:opacity-100 disabled:opacity-40" :disabled="!recipes.length" title="全部のレシピをファイルに保存する (別の PC やブラウザで「読み込む」と戻せる)" @click="exportRecipes">書き出す</button>
+            <button type="button" class="shrink-0 whitespace-nowrap rounded border border-white/15 px-2 py-0.5 opacity-80 hover:bg-white/10 hover:opacity-100 disabled:opacity-40" :disabled="!recipes.length" title="全部のレシピをファイルに保存する (別の PC やブラウザで「読み込む」と戻せる)" @click="exportRecipes">書き出す</button><button type="button" data-recipe-url-now class="shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-2 py-0.5 text-amber-100 hover:bg-white/10" :title="tr('今の状態を URL にしてコピーする (開いた人はこのレシピで始まる。ファイル要らず)', 'Copy the current state as a URL (opening it starts this recipe, no file needed)')" @click="copyRecipeUrl()">{{ tr("今の状態の URL をコピー", "Copy URL of current state") }}</button>
             <button type="button" class="shrink-0 whitespace-nowrap rounded border border-white/15 px-2 py-0.5 opacity-80 hover:bg-white/10 hover:opacity-100" title="書き出したファイルからレシピを足す (今のレシピは消えない)" @click="recipeFile?.click()">読み込む</button>
             <input ref="recipeFile" type="file" accept=".json,application/json" class="hidden" @change="importRecipes" />
             <span v-if="recipeNote" class="truncate opacity-60">{{ recipeNote }}</span>
@@ -123,7 +123,7 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
                 <p v-else class="flex cursor-text items-center gap-1 font-bold" title="ダブルクリックで名前を変える" @dblclick="recipeRenaming = r.id"><span class="truncate">{{ r.name }}</span><button type="button" class="shrink-0 rounded px-1 text-[12px] opacity-50 hover:opacity-100" title="名前を変える" @click.stop="recipeRenaming = r.id">✎</button></p>
                 <p class="truncate text-[10px] opacity-50">{{ r.baseJa ?? r.session.base }} · パターン {{ r.session.patterns.length }} つ · {{ fmtDate(r.savedAt) }}</p>
               </div>
-              <button type="button" class="shrink-0" :class="recipeArm.is(`load:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="recipeArm.is(`load:${r.id}`) ? '今の状態は置き換わる。もう一度押すと呼び出す' : 'このレシピを呼び出す (今の状態は置き換わる)'" @click="loadRecipe(r)">{{ recipeArm.is(`load:${r.id}`) ? "もう一度押すと呼び出す" : "呼び出す" }}</button>
+              <button type="button" class="shrink-0" :class="recipeArm.is(`load:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="recipeArm.is(`load:${r.id}`) ? '今の状態は置き換わる。もう一度押すと呼び出す' : 'このレシピを呼び出す (今の状態は置き換わる)'" @click="loadRecipe(r)">{{ recipeArm.is(`load:${r.id}`) ? "もう一度押すと呼び出す" : "呼び出す" }}</button><button type="button" data-recipe-url class="g-plain shrink-0 rounded px-1.5 py-0.5 text-[11px] opacity-70 hover:bg-white/10 hover:opacity-100" :title="tr('このレシピを URL にしてコピーする (開いた人はこのレシピで始まる)', 'Copy this recipe as a URL (opening it starts this recipe)')" @click="copyRecipeUrl(r)">URL</button>
               <button type="button" class="shrink-0" :class="recipeArm.is(`del:${r.id}`) ? ARMED_CLASS : 'g-plain rounded px-1.5 py-0.5 opacity-50 hover:bg-white/10 hover:opacity-100'" :title="recipeArm.is(`del:${r.id}`) ? 'もう一度押すと消す' : 'このレシピを消す'" @click="removeRecipe(r.id)"><template v-if="recipeArm.is(`del:${r.id}`)">もう一度押すと消す</template><Icon v-else name="x" class="size-3.5" /></button>
             </div>
           </div>
@@ -179,18 +179,18 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
 
       <!-- 3 白ベース設定: 白ベースの値段 + 増強・消去スパムで狙う MOD (= フラクチャー予定、2 の中から) -->
       <div v-if="step3" :data-sim-cur="!whiteDone || undefined" :class="!whiteDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
-        <SimStepHead class="mb-3" :n="3" title="始め方・アイテムレベル・ベースの値段" :done="whiteDone" :current="!whiteDone" :redo="whiteDone" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" @redo="goTo('white')" />
+        <SimStepHead class="mb-3" :n="3" title="始め方・アイテムレベル・ベースの値段" :done="whiteDone" :current="!whiteDone" :redo="whiteDone" :fold="whiteDone ? (open3 ? 'open' : 'closed') : undefined" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" @redo="goTo('white')" @toggle="open3 = !open3" />
         <!-- 始め方 (前は 1 ベースの欄。2026-10-18 オーナー「MOD へ進む、そのあとに始め方を決める工程」) -->
-        <SimStartPick v-if="!whiteDone" class="mb-3" />
-        <p v-else class="mb-2 text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムレベル", "Item Level") }} {{ s.itemLevel.value }}<template v-if="s.simGrant.value"> · {{ tr("付与スキル", "Granted skill") }} {{ tr(jaSkill(s.simGrant.value), s.simGrant.value) }}</template></p>
+        <SimStartPick v-if="edit3" class="mb-3" />
+        <p v-else class="mb-2 text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムレベル", "Item Level") }} {{ s.itemLevel.value }}<template v-if="s.simGrant.value"> · {{ tr("付与スキル", "Granted skill") }} {{ tr(jaSkill(s.simGrant.value), s.simGrant.value) }}</template><template v-for="k in startKinds.filter((x) => x.k === s.simStart.value)" :key="k.k"> · {{ tr(k.label, k.labelEn) }}<template v-if="startCost(k.k) != null"> {{ money(startCost(k.k)!) }}</template></template></p>
         <!-- 付与スキルがあるベースは、選ぶまで始め方を出さない (値段が付与スキルで変わるので。2026-10-18 オーナー「決めてから表示させないと漏れる」) -->
         <p v-if="grantPending" class="text-[12px] text-amber-200">{{ tr("付与スキルを選ぶと、始め方とベースの値段が出る", "Choose the granted skill to see the start options and base prices") }}</p>
-        <template v-else>
+        <template v-else-if="edit3">
         <!-- 始め方は縦に全部並べて、ベースの値段を比べる (2026-10-18 オーナー「タブで出さず全部計算させるから縦にそれぞれ表示」)。行を押すとその始め方で回す。一番安い行に印 -->
         <div data-sim-starts class="flex flex-col gap-1.5 text-[11px]">
           <p class="text-right text-[10px] opacity-60">{{ costNote }}</p>
           <!-- 列を揃えた表: ラジオ | 始め方 | 買う物 | 値段 | 取引所で探す・入れた時刻 | このベースの値段 (2026-10-18 オーナー「UI 最悪、もっと練らないと」)。スマホは折り返す -->
-          <div v-for="k in startKinds" :key="k.k" data-sim-start-row :data-start="k.k" class="rounded-lg border px-2.5 py-1.5" :class="s.simStart.value === k.k ? 'border-[var(--exile-color-border-brass)] bg-white/[0.04]' : 'cursor-pointer border-white/10 hover:bg-white/[0.03]'" :title="tr(k.hint, k.hintEn)" @click="!whiteDone && (s.simStart.value = k.k)">
+          <div v-for="k in startKinds" :key="k.k" data-sim-start-row :data-start="k.k" class="rounded-lg border px-2.5 py-1.5" :class="s.simStart.value === k.k ? 'border-[var(--exile-color-border-brass)] bg-white/[0.04]' : 'cursor-pointer border-white/10 hover:bg-white/[0.03]'" :title="tr(k.hint, k.hintEn)" @click="edit3 && (s.simStart.value = k.k)">
             <div class="grid items-center gap-x-3 gap-y-1 md:grid-cols-[1rem_13rem_minmax(0,1fr)_auto_10rem_7rem] max-md:flex max-md:flex-wrap">
               <span class="grid size-4 shrink-0 place-items-center rounded-full border" :class="s.simStart.value === k.k ? 'border-amber-300' : 'border-white/30'"><span v-if="s.simStart.value === k.k" class="size-2 rounded-full bg-amber-300" /></span>
               <b class="whitespace-nowrap text-[12px]"><Icon v-if="k.k === 'fractured'" name="lock" class="mr-0.5 inline size-3.5 align-[-2px]" />{{ tr(k.label, k.labelEn) }}</b>
@@ -218,7 +218,7 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
               </span>
             </div>
             <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (白の行の 2 段目。2026-10-18 オーナー) -->
-            <SimRareStrip v-if="k.k === 'white' && !whiteDone" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
+            <SimRareStrip v-if="k.k === 'white' && edit3" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
           </div>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ。無ければ出さない (2026-10-18) -->
