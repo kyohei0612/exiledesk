@@ -319,7 +319,8 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
           // クイズのレシピ (ADR-003): 答えのとおりに 1 人ずつ最後まで。答えの無い状況・打てない手に来た人は未完成
           const qb = quizBase.value;
           if (!qb) continue;
-          const { recipe } = quizFromSim(qb, p.quiz);
+          // 答えは見張り (Vue の reactive) の無い写しで渡す。見張りのまま 1 手ごとに読んでいて、回す時間の 1 割ほどがそれだった (2026-10-19 性能の記録)
+          const { recipe } = quizFromSim(qb, JSON.parse(JSON.stringify(p.quiz)) as typeof p.quiz);
           const qruns: QuizRun[] = [];
           for (let i = 0; i < spec.runs; i++) {
             qruns.push(runQuizOnce(d, recipe, runSeed + i * 7919, { price, maxSteps: maxSteps.value }));

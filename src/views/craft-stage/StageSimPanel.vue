@@ -355,6 +355,8 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
 
     <template v-if="step4 && simStep === 'result'">
     <SimStepHead class="mb-3" :n="6" :title="tr('回す・結果', 'Run & results')" :current="true"><template #side><button type="button" class="g-btn sm" @click="go('play')">{{ tr("打ち方を直す", "Edit the steps") }}</button></template></SimStepHead>
+    <!-- パターンの比べ (2026-10-19 テスト走行: ⑥ には見ているパターンの結果しか無く、比べは ⑤ の「まとめて回す」の欄にしか無かった)。押すとそのパターンの結果を下に -->
+    <div v-if="results.length > 1" data-sim-compare class="mb-3 flex flex-wrap gap-2"><button v-for="x in results" :key="x.name" type="button" class="g-tab !h-auto !flex-col !items-start !gap-0.5 !px-4 !py-1.5 text-left" :class="x.name === shownName ? 'on' : ''" @click="showResultByName(x.name)"><span class="text-[13px]">{{ x.name }}<span v-if="cheapestName === x.name" class="ml-1.5 rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">{{ tr("一番安い", "Cheapest") }}</span></span><span class="text-[12px] tabular-nums">{{ tr("平均", "Avg") }} {{ money(x.out.r.perDone) }} · {{ tr("完成", "Done") }} {{ pct(x.out.r.pDone) }}</span></button></div>
     <!--
       結果 (2026-10-07 作り直し。オーナー「UI カスすぎない、パッと見て数字が分かりづらい」「7 回すは機能してないからいらない」
       「ベースとそれ以降のクラフト金額も、何にお金がかかったかに分けて」)。上から いくらか → 運でどれくらい振れるか → 何にお金がかかったか (ベース / クラフト)

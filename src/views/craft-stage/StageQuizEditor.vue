@@ -49,9 +49,11 @@ async function explore(): Promise<void> {
   const my = ++gen;
   exploring.value = true;
   const runs: QuizRun[] = [];
+  // 見張り (reactive) の無い写しで回す (1 手ごとに答えを読むので、見張りのままだと遅い。2026-10-19 性能の記録)
+  const recipe = JSON.parse(JSON.stringify(props.recipe)) as QuizRecipe;
   try {
     for (let i = 0; i < EXPLORE_RUNS; i++) {
-      runs.push(runQuizOnce(d, props.recipe, 1 + i * 7919, { price: () => 0, maxSteps: 4000 }));
+      runs.push(runQuizOnce(d, recipe, 1 + i * 7919, { price: () => 0, maxSteps: 4000 }));
       if (i % 10 === 9) { await new Promise((r) => setTimeout(r)); if (my !== gen) return; }
     }
   } catch (e) {

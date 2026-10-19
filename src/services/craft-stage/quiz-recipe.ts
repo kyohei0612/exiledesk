@@ -155,14 +155,31 @@ export function situationOf(item: StageItem, goal: readonly QuizSlot[]): Situati
 export const situationKey = (s: Situation): string => Object.keys(s).sort().map((k) => `${k}=${s[k]}`).join(";");
 
 /** 状況に当たる答え (書いた項目が全部同じ物のうち、項目が一番多い物。同じ数なら先に書いた物) */
+/**
+ * 答えの一覧ごとに 1 回だけ、細かい (条件の多い) 順に並べた写しを作って使い回す (同じ数なら並びの先の物)。
+ * 前は 1 手ごとに全部の答えの Object.keys を取り直していて、回す時間の 6 割がここだった (2026-10-19 性能の記録: 500 人で 22 秒中 15 秒)。
+ * 一覧が差し替わる (答えを足す・消す) と別の配列になるので作り直す。同じ配列のまま長さが変わった時も作り直す
+ */
+type CompiledRule = { r: QuizRule; ks: string[]; vs: Array<When[string]> };
+const compiledRules = new WeakMap<readonly QuizRule[], { n: number; list: CompiledRule[] }>();
+function compileRules(rules: readonly QuizRule[]): CompiledRule[] {
+  const hit = compiledRules.get(rules);
+  if (hit && hit.n === rules.length) return hit.list;
+  const list = rules.map((r) => { const ks = Object.keys(r.when); return { r, ks, vs: ks.map((k) => r.when[k]!) }; });
+  list.sort((a, b) => b.ks.length - a.ks.length); // 安定な並べ替え: 同じ数なら元の並び
+  compiledRules.set(rules, { n: rules.length, list });
+  return list;
+}
 export function ruleFor(rules: readonly QuizRule[], sit: Situation): QuizRule | null {
-  let best: QuizRule | null = null, n = -1;
-  for (const r of rules) {
-    const ks = Object.keys(r.when);
-    if (ks.length <= n) continue;
-    if (ks.every((k) => { const w = r.when[k]!; return Array.isArray(w) ? w.includes(sit[k]!) : sit[k] === w; })) { best = r; n = ks.length; }
+  for (const x of compileRules(rules)) {
+    let ok = true;
+    for (let i = 0; i < x.ks.length; i++) {
+      const w = x.vs[i]!, v = sit[x.ks[i]!]!;
+      if (Array.isArray(w) ? !w.includes(v) : v !== w) { ok = false; break; }
+    }
+    if (ok) return x.r;
   }
-  return best;
+  return null;
 }
 
 /** 完成: 工程の札 (途中だけの札以外) が全部付いた。固定の札は固定で */
