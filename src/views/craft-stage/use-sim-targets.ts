@@ -92,6 +92,9 @@ export function useSimTargets() {
       const en = r ? runeEnForId(r) : null;
       if (en) out.add(`rune:${en}`);
     }
+    // エッセンス (クラフト MOD) は 1 つまで、アストリッドの創造性 1 つで +1 (apply-essence の craftedLimitOf)。2 つ以上狙うなら要る
+    // (2026-10-19 動画 SJdAUeUMNBU の手袋: ヒステリー・戦慄の 2 つでアストリッドを差していたのに、4 で「要る」にならなかった)。3 つ以上は今は 1 つだけ入れる
+    if (s.simTargets.value.filter((t) => methodOf(t) === "essence").length >= 2) out.add("rune:Astrid's Creativity");
     return out;
   });
   const orderKeys = computed(() => {

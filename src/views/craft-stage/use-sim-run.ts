@@ -221,7 +221,13 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   const quizBase = computed<QuizSimIn | null>(() => {
     const d = s.data.value;
     if (!d || !s.base.value) return null;
-    const st = s.simStart.value;
+    /**
+     * フラクチャー予定があれば、白・適当なレア・MOD 付きレア・フラクチャー済みを買う のどれから始めても、打ち方は「フラクチャー済みのベース (固定 MOD 1 つのレア)」から。
+     * ベース代は 3 の一番安い道の費用 (startOnce = フラクチャー済みになるまで、やり直しの買い直し込み)。前は白から始まり、3 の値段 (フラクチャー済みまで) と
+     * 5 の見出し (フラクチャー済みのベースから) と食い違っていた (2026-10-19 オーナーと通した時。10-08 の決め [[sim-cost-model]])
+     */
+    const fracStart = (s.simStart.value === "white" || s.simStart.value === "four" || s.simStart.value === "fractured") && s.simTargets.value.some((t) => methodOf(t) === "fracture");
+    const st = fracStart ? "fractured" : s.simStart.value;
     const startPrice = st === "item" ? num(itemDivine.value) ?? 0 : st === "magic" ? num(magicDivine.value) ?? 0 : st === "fractured" ? startOnce.value ?? 0 : st === "four" ? num(fourDivine.value) ?? 0 : num(whiteDivine.value) ?? 0;
     return {
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, start: st, startPrice, sockets: socketCount.value, startItem: startItemAt(),

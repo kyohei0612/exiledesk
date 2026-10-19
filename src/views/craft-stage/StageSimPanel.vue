@@ -90,10 +90,12 @@ const dragSort = useDragSort({ rows: () => [...(panelEl.value?.querySelectorAll<
 const stepNotes = computed(() => {
   const st = startKinds.value.find((k) => k.k === s.simStart.value);
   const sc = st ? startCost(st.k) : null;
+  // エミュレーターの状態からは始め方の行が無いので、名前と値段 (エミュレーターの累計 + 白ベース) を別に (2026-10-19 モンキーテストで 3 の札が空だった)
+  const itemNote = s.simStart.value === "item" && whiteDone.value ? `${tr("エミュレーターの状態から", "From the Emulator")}${num(itemDivine.value) != null ? ` ${money(num(itemDivine.value)!)}` : ""}` : "";
   const best = results.value.length ? results.value.reduce((a, b) => (b.out.r.perDone < a.out.r.perDone ? b : a)) : null;
   return {
     mods: s.simTargets.value.length ? tr(`狙い ${s.simTargets.value.length} つ`, `${s.simTargets.value.length} targets`) : "",
-    start: st && whiteDone.value ? `${tr(st.label, st.labelEn)}${sc != null ? ` ${money(sc)}` : ""}` : "",
+    start: itemNote || (st && whiteDone.value ? `${tr(st.label, st.labelEn)}${sc != null ? ` ${money(sc)}` : ""}` : ""),
     order: orderDone.value || simStep.value === "play" || simStep.value === "result" ? (orderKeys.value.length ? tr(`${orderKeys.value.length} つ`, `${orderKeys.value.length} mods`) : tr("フラクチャーだけ", "Fracture only")) : "",
     play: s.simPatterns.value.some(hasSteps) ? tr(`パターン ${s.simPatterns.value.filter(hasSteps).length}`, `${s.simPatterns.value.filter(hasSteps).length} patterns`) : "",
     result: best && Number.isFinite(best.out.r.perDone) ? tr(`平均 ${money(best.out.r.perDone)}`, `Avg ${money(best.out.r.perDone)}`) : "",
@@ -154,7 +156,7 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
     <p v-if="help" class="mb-3 rounded-md bg-white/[0.03] px-3 py-2 text-[13px] text-[var(--exile-color-text-secondary)]">狙いは「このベースに付く MOD」の表の「T○ 以上」で選ぶ。打ち方 (パターン) を組んで「回す」と、何百人分も作った平均の費用が出る。各所の <Icon name="help" class="inline size-3.5 align-[-2px]" /> にも説明がある</p>
 
     <!-- 工程の帯 (2026-10-19 工程ごとのページ。決めた所は要約、押すとそのページ) -->
-    <SimStepBar v-if="socketsOk" class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" @go="go" @base="openBasePage" />
+    <SimStepBar class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" :lead="socketsOk ? undefined : tr('まず上でソケットの数を選ぶ (分からなければ 0)。選ぶと狙う MOD の一覧が出る', 'First choose the socket count above (0 if unsure). The mod list appears after that')" @go="go" @base="openBasePage" />
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
     <template v-if="socketsOk">
       <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->

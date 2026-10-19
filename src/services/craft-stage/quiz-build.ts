@@ -11,6 +11,7 @@ import type { StageItem, StageSide } from "./types";
 import type { Force } from "./stage-core";
 import type { QuizRecipe, QuizRoute, QuizRule, QuizSlot, QuizStart, SlotKind } from "./quiz-recipe";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
+import { runeEnForId } from "./pattern";
 
 export interface QuizRules { v: 3; rules: Record<string, QuizRule[]> }
 export type SimMethod = "exalt" | "chaos" | "desecrate" | "essence" | "fracture";
@@ -89,7 +90,13 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
   const frac = x.targets.find((t) => t.method === "fracture");
   let start: QuizStart;
   if (x.start === "item" && x.startItem) start = { kind: "item", item: x.startItem, price: x.startPrice };
-  else if (x.start === "fractured" && frac) start = { kind: "bought", mods: [{ mod: frac.modId, fractured: true }], price: x.startPrice };
+  else if (x.start === "fractured" && frac) {
+    // 固定する MOD がルーンの MOD (コルの狩りのマークスマンなど) なら、そのルーンを差した状態から (差していないと付けられず、5 が「この手では付かない」で止まった。
+    // 2026-10-19 動画 SJdAUeUMNBU の手袋)。ソケットも 1 で選んだ数 (規格外) のまま
+    const rid = x.data.mods.get(frac.modId)?.rune;
+    const rune = rid ? runeEnForId(rid) : null;
+    start = { kind: "bought", mods: [{ mod: frac.modId, fractured: true }], price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}), ...(rune ? { runes: [rune] } : {}) };
+  }
   else if (x.start === "magic") start = { kind: "bought", mods: magicStartMods(x.data, x.targets), rarity: "magic", price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}) };
   else if (x.start === "four" && frac) start = { kind: "bought", mods: [{ mod: frac.modId }], fill: { prefix: 2, suffix: 2 }, price: x.startPrice };
   else start = { kind: "white", price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}) };

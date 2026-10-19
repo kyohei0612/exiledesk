@@ -16,6 +16,8 @@ const props = defineProps<{
   /** 札の 2 行目 (決めた中身。空ならまだ) */
   base: string;
   notes: Partial<Record<SimStep, string>>;
+  /** 「このページでやること」を差し替える (ソケットを選ぶ前など) */
+  lead?: string;
 }>();
 const emit = defineEmits<{ go: [s: SimStep]; base: [] }>();
 
@@ -59,6 +61,6 @@ onBeforeUnmount(() => window.removeEventListener("resize", centerOn));
         <span class="max-w-[11rem] truncate text-[11px] leading-tight opacity-85">{{ notes[st] || (i > reach ? tr("まだ", "Not yet") : st === current ? tr("今ここ", "You are here") : "") }}</span>
       </button>
     </nav>
-    <p class="mt-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr(LEAD[current][0], LEAD[current][1]) }}</p>
+    <p class="mt-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ lead ?? tr(LEAD[current][0], LEAD[current][1]) }}</p>
   </div>
 </template>
