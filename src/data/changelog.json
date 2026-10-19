@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.580",
+  "date": "2026-10-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シェアから開いたスパムシミュレーターで、シェアされた道以外の運試しを押すと順位がいつも上位 1% になっていたのを直しました (運試しはシェアされた道で。自分で計算すると全部の道でできます)",
+    "en": "Fixed the Spam simulator opened from a share: luck tests on routes other than the shared one always ranked top 1% (luck tests now use the shared route; calculate yourself to test every route)"
+   }
+  ]
+ },
+ {
   "v": "0.1.579",
   "date": "2026-10-19",
   "items": [
@@ -618,18 +630,6 @@
     "area": "",
     "text": "ワンド・スタッフは品質で武器のスキルが強くなるので、アイテムに「◯◯ の品質: 投射物スピードが 14% 増加する」のように今の品質で上がる物を出すように。秘術師の彫刻針のカードには品質 20% の時の値",
     "en": "Quality on wands and staves strengthens the weapon's granted skill, so the item now shows what the current quality adds (e.g. \"Chaos Bolt quality: 14% increased Projectile Speed\"). The Arcanist's Etcher card shows the value at 20% quality"
-   }
-  ]
- },
- {
-  "v": "0.1.540",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カタリスト・鍛冶屋の砥石・秘術師の彫刻針・鎧鍛冶の端材は、1 個打つごとに品質 +1% か +2% (ランダム) に。カタリストは前は 1 回で上限まででしたが、1 個ずつ手で打つ形にしました (品質の欄で数字を直接決めることもできます)",
-    "en": "Catalysts, Blacksmith's Whetstone, Arcanist's Etcher and Armourer's Scrap now add +1% or +2% quality per use (random). Catalysts used to fill quality to the cap in one click; now you use them one at a time (you can still set the number directly in the quality field)"
    }
   ]
  }

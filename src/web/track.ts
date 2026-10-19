@@ -64,7 +64,7 @@ const once = new Set<string>();
 
 /**
  * 画面の切り替え (広告を入れ替えられる所の数を知る。2026-10-17 オーナー「この使い方なら PV なんぼ」)。D1 に残す (私が読める方)。
- * 数えるのは: タブ (エミュレーター・シミュレーター・ジェムコラプト・チュートリアル)、ベースを変えた、MOD 一覧の窓・カオススパム計算機を開いた
+ * 数えるのは: タブ (エミュレーター・シミュレーター・ジェムコラプト・チュートリアル)、ベースを変えた、MOD 一覧の窓、ページ (使い方・コース・ベース選び・要望・スパムシミュレーター・クラフトへ戻った)
  */
 function screen(to: string): void {
   if (!noLog()) logRecord("screen", { to, s: Math.round((Date.now() - t0) / 1000) });
@@ -78,6 +78,7 @@ export function track(name: string, extra?: string): void {
   if (name === "page:base") screen("picker");
   if (name === "page:feedback") screen("feedback");
   if (name === "page:routes") screen("routes");
+  if (name === "page:craft") screen("craft");
   buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
   if (trail.length > 40) trail.shift();

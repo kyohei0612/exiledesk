@@ -1,4 +1,7 @@
 {
+  "0.1.580": [
+    "Fixed the Spam simulator opened from a share: luck tests on routes other than the shared one always ranked top 1% (luck tests now use the shared route; calculate yourself to test every route)"
+  ],
   "0.1.579": [
     "The Spam simulator no longer calculates as soon as you pick a target; press “Start” to run it. The same button stops it while it runs",
     "The screen no longer freezes while calculating. On phones each route is compared with 10 runs",

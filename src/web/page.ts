@@ -136,12 +136,13 @@ export function startPages(): void {
     wasAuto = autoBase.value;
     if (p === old) return;
     pageTick.value++; // ページを移った = 広告の枠の出し直し (utils/ads.ts、60 秒に 1 回まで)
-    // ページを移った印 (D1 の screen。広告のページの数を見る)。計算機は track.ts が spamKey で数える
+    // ページを移った印 (D1 の screen。広告のページの数を見る)。クラフト画面へ戻ったのも 1 ページ (広告の枠を出し直すので。2026-10-19 PV の点検で抜けていた)
     if (p === "page=guide") track("page:guide");
     else if (p.startsWith("course=")) track("page:course", p.slice(7));
     else if (p === "page=base") track("page:base");
     else if (p === "page=feedback") track("page:feedback");
     else if (p === "page=routes") track("page:routes");
+    else if (p === "") track("page:craft");
     if (applying || pageOfUrl() === p) return;
     // 自分で出たベース選び (初めて・白に戻した後) と、そこから選んで出た時は積まない (戻るで選ぶ前に戻っても選び直しになるだけ)
     try {
