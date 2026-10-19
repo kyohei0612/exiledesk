@@ -63,5 +63,19 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
   const ok: Array<{ k: SimStartKind | "rare"; c: number }> = [...startKinds.value.filter((k) => !startOff(k) && startCost(k.k) != null).map((k) => ({ k: k.k, c: startCost(k.k)! })), ...(fracMembers.value.length && calc.value?.rareTotal != null ? [{ k: "rare" as const, c: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0) }] : [])];
   return ok.length > 1 ? ok.reduce((a, b) => (b.c < a.c ? b : a)).k : null;
 });
-  return { startKinds, startOff, startAge, startCost, keepText, costNote, keepName, bestStart, whiteBudget, decideStart, cheapStart };
+/**
+ * ④ の上の「ベースの計算」の行 (2026-10-21 オーナー「③ はベース計算へで ④ にパスして、付ける順番の所にベースを計算後表示、その上で MOD 順番の方が綺麗」)。
+ * ③ は値段を入れるだけ、費用・一番安い印・内訳はここ。base = 内訳の「?」に渡す入れた値段
+ */
+const baseRows = computed(() => {
+  const rows: Array<{ k: SimStartKind | "rare"; label: string; cost: number | null; base: number | null }> = startKinds.value.map((k) => ({
+    k: k.k, label: tr(k.label, k.labelEn), cost: startCost(k.k),
+    base: num(k.k === "four" ? fourDivine.value : k.k === "fractured" ? boughtDivine.value : k.k === "white" ? whiteDivine.value : itemDivine.value),
+  }));
+  if (fracMembers.value.length && !wholeRoute.value && calc.value?.rareTotal != null) rows.push({ k: "rare", label: tr("適当なレアを消去で 1 MOD に", "Annul a random Rare to 1 mod"), cost: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0), base: num(c.rareDivine.value) });
+  return rows;
+});
+/** ④ で始め方を選び直す (適当なレアは白からの 2 段目なので白)。変わったら打ち方のパターンはやり直し (use-sim-steps の始め方の見張り) */
+function chooseStart(k: SimStartKind | "rare"): void { s.simStart.value = k === "rare" ? "white" : k; }
+  return { startKinds, startOff, startAge, startCost, keepText, costNote, keepName, bestStart, whiteBudget, decideStart, cheapStart, baseRows, chooseStart };
 }
