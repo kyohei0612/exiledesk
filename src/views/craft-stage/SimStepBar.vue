@@ -1,6 +1,6 @@
 <!--
   SimStepBar.vue — シミュレーターの工程の帯 (2026-10-19 オーナー「各工程ページ別にしたい、欲しい情報だけ簡易的に表示」「初心者でもわかりやすく」、[[sim-step-pages]])。
-  ① ベース → ② 狙う MOD → ③ 始め方 → ④ 付ける順番 → ⑤ 打ち方 → ⑥ 回す・結果 を札 (.g-tab) で横に並べる。札の 2 行目は決めた中身の要約。
+  ① ベース → ② 狙う MOD → ③ ベースの値段 (2026-10-20 オーナー「始め方ではなくベース値段設定」) → ④ 付ける順番 → ⑤ 打ち方 → ⑥ 回す・結果 を札 (.g-tab) で横に並べる。札の 2 行目は決めた中身の要約。
   今のページは .on、行ける所は押すとそのページ (前の工程は直せる形に開く)、まだ行けない所は押せない。下に「このページでやること」を 1 行。
   スマホは横に送る (今の札が見える所へ)
 -->
@@ -22,7 +22,7 @@ const props = defineProps<{
 const emit = defineEmits<{ go: [s: SimStep]; base: [] }>();
 
 const TITLE: Record<SimStep, [string, string]> = {
-  mods: ["狙う MOD", "Target mods"], start: ["始め方", "How to start"], order: ["付ける順番", "Order"], play: ["打ち方", "Crafting steps"], result: ["回す・結果", "Run & results"],
+  mods: ["狙う MOD", "Target mods"], start: ["ベースの値段", "Base prices"], order: ["付ける順番", "Order"], play: ["打ち方", "Crafting steps"], result: ["回す・結果", "Run & results"],
 };
 /** このページでやること (初めての人向けの 1 行) */
 const LEAD: Record<SimStep, [string, string]> = {

@@ -21,6 +21,9 @@ import { magicStartMods, quizFromSim, type QuizSimIn } from "../../services/craf
 import { tr } from "../../i18n/lang";
 import { sideLimits, sideUse } from "../../services/craft-stage/sim-methods";
 import { greaterRouteCost, type GreaterRoute } from "../../services/craft-stage/sim-greater";
+import { keepCompare } from "../../services/craft-stage/keep-compare";
+/** フラクチャーの反対側の狙い 1 つの取り方 (白から自作は安い方、買う始め方はカオス) */
+export interface KeepPlan { host: string; together: number; chaos: number; chaosKey: string | null; chaosN: number | null; use: "together" | "chaos" }
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimSearchCtx } from "./use-sim-search";
 
@@ -29,6 +32,8 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   const { blocker, boughtDivine, fourDivine, rareDivine, fracMembers, fractureRow, fractureRows, itemDivine, magicDivine, makeRoute, makeSpec,
     market, maxSteps, methodOf, num, orderKeys, rows, runs, socketCount, targetsSig, whiteDivine } = d;
   const s = craftStage;
+  /** 反対側で揃える狙い (calc.keep の手順) */
+  const keepTarget = () => { const h = calc.value?.keep?.host; return h ? simIn().find((t) => t.modId === h) ?? null : null; };
   /** 狙いをクイズのレシピの入力の形に (付け方は決めた物) */
   const simIn = () => s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}), ...(t.need ? { need: t.need } : {}) }));
   /**
@@ -158,10 +163,18 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     if (g) {
       // グレーターエッセンスを巻き込む道: 自前のフラクチャーだけ (買う始め方・適当なレアの道は無し)。固定の後に消さない (残す MOD を持ったまま進む)
       return { pHit, each, rerolls: g.augment, lines: g.lines, buyLines, once: g.once, after: 0, total: g.once * 3, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null,
-        slots, rareLines: [], rareRest: Infinity, rareTotal: null, rareChaos: null, greater: g };
+        slots, rareLines: [], rareRest: Infinity, rareTotal: null, rareChaos: null, greater: g, keep: null as KeepPlan | null };
     }
+    /**
+     * フラクチャーの反対側の狙い (1 つ) をどう取るか (keep-compare.ts、2026-10-20 オーナー「白から自作の費用に入れて、買う始め方と並べて一番安い始め方」)。
+     * 白から自作 = 「マジックで一緒に揃える」と「固定してから 2 MOD のレアにカオス」の安い方、買う始め方 = 固定してからカオス。
+     * 反対側の狙いが複数ある時は、揃えると一番得になる 1 つ (マジックの枠は 1 つ)
+     */
+    const kc = keepCompare({ data: d, item: it, itemLevel: s.itemLevel.value, targets: simIn(), price: priceOf }).filter((x) => x.chaos != null && Number.isFinite(x.together));
+    const kBest = kc.length ? kc.reduce((a, x) => (x.chaos! - x.together > a.chaos! - a.together ? x : a)) : null;
+    const keep = kBest ? { host: kBest.host, together: kBest.together, chaos: kBest.chaos!, chaosKey: kBest.chaosKey, chaosN: kBest.chaosN, use: kBest.together < kBest.chaos! ? "together" as const : "chaos" as const } : null;
     return { pHit, each, rerolls, lines, buyLines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce,
-      slots, rareLines, rareRest, rareTotal, rareChaos, greater: null as GreaterRoute | null };
+      slots, rareLines, rareRest, rareTotal, rareChaos, greater: null as GreaterRoute | null, keep };
   });
   const busy = ref(false);
   const phase = ref("");
@@ -193,14 +206,26 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     if (s.simStart.value === "item") return num(itemDivine.value);
     if (s.simStart.value === "magic") return num(magicDivine.value);
     if (s.simStart.value === "four") return c && c.buyOnce != null && Number.isFinite(c.buyOnce) ? c.buyOnce * 3 + c.after : null;
-    const xs: number[] = [];
-    if (c) xs.push(c.total);
-    if (c && c.buyOnce != null) xs.push(c.buyOnce * 3 + c.after);
-    if (c && c.rareTotal != null) xs.push(c.rareTotal);
+    return startPick.value?.base ?? null;
+  });
+  /**
+   * 一番安い始め方 (白から自作の時): 比べは「フラクチャー済み + 反対側の狙いが付くまで」(keep)、⑤ に渡すベース代は ⑤ で打つカオスを除いた分。
+   * 白から自作で「一緒に揃える」が安ければ、その分をベース代に入れて ⑤ は揃えた狙いが付いたまま固定されたレアから (quizBase の keep)
+   */
+  const startPick = computed((): { kind: "white" | "four" | "rare" | "fractured"; cost: number; base: number; together: boolean } | null => {
+    const c = calc.value;
+    if (!c) return null;
+    const k = c.keep;
+    const chaos = k ? k.chaos : 0;
+    const xs: Array<{ kind: "white" | "four" | "rare" | "fractured"; cost: number; base: number; together: boolean }> = [];
+    const wt = !!k && k.use === "together";
+    xs.push({ kind: "white", cost: c.total + (k ? Math.min(k.together, k.chaos) : 0), base: c.total + (wt ? k!.together : 0), together: wt });
+    if (c.buyOnce != null) xs.push({ kind: "four", cost: c.buyOnce * 3 + c.after + chaos, base: c.buyOnce * 3 + c.after, together: false });
+    if (c.rareTotal != null) xs.push({ kind: "rare", cost: c.rareTotal + chaos, base: c.rareTotal, together: false });
     const bN = num(boughtDivine.value);
-    if (bN != null) xs.push(bN);
-    const ys = xs.filter((x) => Number.isFinite(x));
-    return ys.length ? Math.min(...ys) : null;
+    if (bN != null) xs.push({ kind: "fractured", cost: bN + chaos, base: bN, together: false });
+    const ys = xs.filter((x) => Number.isFinite(x.cost));
+    return ys.length ? ys.reduce((a, x) => (x.cost < a.cost ? x : a)) : null;
   });
   /** フラクチャー済みのベースを手に入れる一番安い始め方 (4 最安値スタート、値段の有る物だけ) */
   /** パターンごとの結果 (回した後)。見ている物を recipeOut / restCost に出す */
@@ -261,6 +286,8 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
       targets: simIn(),
       // グレーターエッセンスを巻き込む道: 固定済みのレアは、残す MOD + エッセンス + 壁が付いた物 (2026-10-20)
       ...(fracStart && calc.value?.greater ? { greater: { essKey: calc.value.greater.essKey, keep: calc.value.greater.keep } } : {}),
+      // 白から自作で反対側の狙いを「マジックで一緒に揃える」のが安い時: 揃えたまま王者でレア → 壁 → 固定 (2026-10-20)
+      ...(fracStart && !calc.value?.greater && s.simStart.value === "white" && startPick.value?.together && keepTarget() ? { greater: { essKey: null, keep: keepTarget()! } } : {}),
     };
   });
   /** マジックを買う始め方で付いている MOD (2 の狙う MOD の最初のプレ 1 つ・サフィ 1 つ、quiz-build の magicStartMods と同じ) */

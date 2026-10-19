@@ -78,15 +78,20 @@ const startAge = (k: SimStartKind): ReturnType<typeof ageOf> | null => (k === "i
  */
 function startCost(k: SimStartKind): number | null {
   const base = num(k === "white" ? whiteDivine.value : k === "fractured" ? boughtDivine.value : k === "magic" ? magicDivine.value : k === "four" ? fourDivine.value : itemDivine.value);
-  if (!fracMembers.value.length || k === "item" || k === "fractured" || base == null) return base;
+  if (!fracMembers.value.length || k === "item" || base == null) return base;
+  if (k === "fractured") return base + (calc.value?.keep?.chaos ?? 0);
   const c = calc.value;
   if (!c || c.cantRoll) return null;
-  return k === "white" ? c.total : (base + c.buyRest) * 3 + c.after;
+  // 反対側の狙いが付くまで (白から自作は「一緒に揃える」と「固定してからカオス」の安い方、買う始め方はカオス。2026-10-20)
+  const kp = c.keep ? (k === "white" ? Math.min(c.keep.together, c.keep.chaos) : c.keep.chaos) : 0;
+  return (k === "white" ? c.total : (base + c.buyRest) * 3 + c.after) + kp;
 }
 /** グレーターの道でマジックに揃える反対側の MOD の文 (どれかは「／」で) */
 const keepText = computed(() => { const k = calc.value?.greater?.keep; return k ? [k, ...(k.alts ?? [])].map((x) => rows.value.find((r) => r.modId === x.modId)?.text ?? rows.value.flatMap((r) => r.alts).find((a) => a.modId === x.modId)?.text ?? x.modId).join(" ／ ") : ""; });
 /** 右の値段が何か (フラクチャー予定がある時はフラクチャー済みまで) */
-const costNote = computed(() => (fracMembers.value.length ? "右の値段 = フラクチャー済みのベースになるまで (ベース代・壁・フラクチャー・消去込み、平均)" : "右の値段 = ベース 1 個の値段"));
+const costNote = computed(() => (fracMembers.value.length ? `右の値段 = フラクチャー済みのベースになるまで (ベース代・壁・フラクチャー・消去込み、平均)${calc.value?.keep ? ` + ${keepName.value} が付くまで` : ""}` : "右の値段 = ベース 1 個の値段"));
+/** 反対側で取る狙いの短い名前 */
+const keepName = computed(() => { const r = rows.value.find((x) => x.modId === calc.value?.keep?.host); return r ? [r.text, ...r.alts.map((a) => a.text)].map((t) => t.replace(/\s*\([^()]*\d[^()]*\)/g, "").replace(/%$/, "")).join(" ／ ") + ` ${r.rank} 以上` : ""; });
 /** 工程の帯の札の 2 行目 (決めた中身の要約。2026-10-19 オーナー「欲しい情報だけ簡易的に」) */
 /** 付ける順番の行をつかんで入れ替える */
 const dragSort = useDragSort({ rows: () => [...(panelEl.value?.querySelectorAll<HTMLElement>("[data-order-row]") ?? [])], onMove: reorder, enabled: () => simStep.value === "order" });
@@ -104,9 +109,17 @@ const stepNotes = computed(() => {
     result: best && Number.isFinite(best.out.r.perDone) ? tr(`平均 ${money(best.out.r.perDone)}`, `Avg ${money(best.out.r.perDone)}`) : "",
   };
 });
+/** 一番安い始め方 (値段の入った物から。③ の「次へ」の上に出し、次へでその始め方にする。2026-10-20 オーナー「計算画面で一番安い始め方を表示して次へ」) */
+const bestStart = computed(() => {
+  if (!fracMembers.value.length) return null;
+  const xs = [...startKinds.value.filter((k) => startCost(k.k) != null).map((k) => ({ k: k.k as SimStartKind | "rare", label: tr(k.label, k.labelEn), c: startCost(k.k)! })),
+    ...(calc.value?.rareTotal != null ? [{ k: "rare" as const, label: tr("適当なレアを消去で 1 MOD に", "Annul a random rare to 1 mod"), c: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0) }] : [])];
+  return xs.length ? xs.reduce((a, x) => (x.c < a.c ? x : a)) : null;
+});
+function decideStart(): void { const b = bestStart.value; if (b) s.simStart.value = b.k === "rare" ? "white" : b.k; whiteDecide(); }
 /** 値段が入った始め方が 2 つ以上ある時の一番安い物 (rare = 白の行の 2 段目、適当なレアを消去で 1 MOD → カオス。フラクチャー予定がある時だけ比べに入れる) */
 const cheapStart = computed((): SimStartKind | "rare" | null => {
-  const ok: Array<{ k: SimStartKind | "rare"; c: number }> = [...startKinds.value.filter((k) => !startOff(k) && startCost(k.k) != null).map((k) => ({ k: k.k, c: startCost(k.k)! })), ...(fracMembers.value.length && calc.value?.rareTotal != null ? [{ k: "rare" as const, c: calc.value.rareTotal }] : [])];
+  const ok: Array<{ k: SimStartKind | "rare"; c: number }> = [...startKinds.value.filter((k) => !startOff(k) && startCost(k.k) != null).map((k) => ({ k: k.k, c: startCost(k.k)! })), ...(fracMembers.value.length && calc.value?.rareTotal != null ? [{ k: "rare" as const, c: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0) }] : [])];
   return ok.length > 1 ? ok.reduce((a, b) => (b.c < a.c ? b : a)).k : null;
 });
 </script>
@@ -194,7 +207,7 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
 
       <!-- 3 白ベース設定: 白ベースの値段 + 増強・消去スパムで狙う MOD (= フラクチャー予定、2 の中から) -->
       <div v-if="step3 && simStep === 'start'" :data-sim-cur="!whiteDone || undefined" :class="!whiteDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
-        <SimStepHead class="mb-3" :n="3" title="始め方・アイテムレベル・ベースの値段" :current="true" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" />
+        <SimStepHead class="mb-3" :n="3" title="ベースの値段・アイテムレベル" :current="true" help="ベース 1 個の値段。分からなければ 0 のままでいい (費用の内訳でベース代として足すだけ)" />
         <!-- 始め方 (前は 1 ベースの欄。2026-10-18 オーナー「MOD へ進む、そのあとに始め方を決める工程」) -->
         <SimStartPick class="mb-3" />
         <!-- 付与スキルがあるベースは、選ぶまで始め方を出さない (値段が付与スキルで変わるので。2026-10-18 オーナー「決めてから表示させないと漏れる」) -->
@@ -234,6 +247,8 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
             <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (白の行の 2 段目。2026-10-18 オーナー) -->
             <!-- グレーターの道: 白の行の 2 段目に道を 1 行で (適当なレアの道は無い) -->
             <p v-if="k.k === 'white' && calc?.greater" data-sim-greater class="mt-1.5 border-t border-white/5 pt-1.5 text-[11px] text-[var(--exile-color-text-secondary)] md:pl-[calc(1rem+0.75rem)]">{{ tr(`マジックで ${fracMembers.map((r) => r.text).join(" か ")}${calc.greater.keep ? ` と ${keepText}` : ""} を揃える (増強 ${calc.greater.augment.toFixed(1)}・消去 ${calc.greater.annul.toFixed(1)} 回) → ${nameOf(calc.greater.essKey)} → 壁 → フラクチャー (3 本に 1 本)。${nameOf(calc.greater.essKey)} はマジックにしか打てないので、フラクチャー済み・MOD 付きレアは買えない`, `On magic, land ${fracMembers.map((r) => r.text).join(" or ")}${calc.greater.keep ? ` and ${keepText}` : ""} (avg ${calc.greater.augment.toFixed(1)} Augment, ${calc.greater.annul.toFixed(1)} Annul) → ${nameOf(calc.greater.essKey)} → wall → Fracture (1 in 3). That essence only works on magic, so fractured or modded rares can't be bought`) }}</p>
+            <!-- 反対側の狙いの取り方 (白から自作: 安い方、2026-10-20) -->
+            <p v-if="k.k === 'white' && calc?.keep" data-sim-keep class="mt-1 text-[11px] text-[var(--exile-color-text-secondary)] md:pl-[calc(1rem+0.75rem)]">{{ tr(`${keepName}: マジックで一緒に揃える ${money(calc.keep.together)} / 固定してから 2 MOD のレアにカオス ${money(calc.keep.chaos)} → ${calc.keep.use === "together" ? "一緒に揃える" : "カオス"}が安い`, `${keepName}: land it together on magic ${money(calc.keep.together)} / fracture first, then Chaos on a 2-mod rare ${money(calc.keep.chaos)} → ${calc.keep.use === "together" ? "together" : "Chaos"} is cheaper`) }}</p>
             <SimRareStrip v-else-if="k.k === 'white'" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
           </div>
         </div>
@@ -250,7 +265,8 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
         <div class="mt-1 flex items-center gap-2">
           <span v-if="calc && fracMembers.length >= 2" class="text-[11px] opacity-80">付きやすさ 合計 {{ pct(calc.pHit) }}</span>
           <span v-if="num(startPrice) == null" class="ml-auto text-[11px] text-amber-200/80">{{ s.simStart.value === "white" ? "白ベースの値段を入れる (分からなければ 0)" : "買うベースの値段を入れる" }}</span>
-          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :class="num(startPrice) == null ? '' : 'ml-auto'" :disabled="num(startPrice) == null" :title="num(startPrice) == null ? '白ベースの値段を入れると押せる' : undefined" @click="whiteDecide">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
+          <span v-if="bestStart" data-sim-best class="ml-auto text-[12px]">{{ tr("一番安い始め方", "Cheapest start") }} <b class="text-emerald-300">{{ bestStart.label }} {{ money(bestStart.c) }}</b></span>
+          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :class="num(startPrice) == null || bestStart ? '' : 'ml-auto'" :disabled="num(startPrice) == null" :title="num(startPrice) == null ? '白ベースの値段を入れると押せる' : bestStart ? '一番安い始め方で次へ' : undefined" @click="decideStart">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
         </div>
         </template>
       </div>

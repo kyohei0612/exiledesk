@@ -20,7 +20,7 @@ type Line = { name: string; n: number; each: number };
 const props = defineProps<{
   white: number | null;
   /** フラクチャー予定がある時の計算 (無ければ null = 値段の比べだけ) */
-  calc?: { lines: Line[]; buyLines: Line[]; rareLines: Line[]; once: number; after: number; total: number; buyRest: number; rerolls: number; grade: string; rareTotal: number | null; rareChaos: { grade: string; n: number } | null } | null;
+  calc?: { lines: Line[]; buyLines: Line[]; rareLines: Line[]; once: number; after: number; total: number; buyRest: number; rerolls: number; grade: string; rareTotal: number | null; rareChaos: { grade: string; n: number } | null; keep?: { together: number; chaos: number; use: "together" | "chaos" } | null } | null;
   /** 3 の始め方の中でこの道が一番安い */
   cheapest?: boolean;
 }>();
@@ -54,7 +54,7 @@ const cheaper = computed(() => (props.white == null || rare.value == null ? null
     <template v-if="calc">
       <span v-if="calc.rareChaos" class="tabular-nums opacity-80">+ {{ tr(`カオス (${calc.rareChaos.grade}) × ${calc.rareChaos.n.toFixed(1)} → 高貴 × 2 → 壁 → フラクチャー`, `Chaos (${calc.rareChaos.grade}) × ${calc.rareChaos.n.toFixed(1)} → Exalt × 2 → wall → Fracture`) }}</span>
       <span v-else class="text-rose-300">{{ tr("カオスではこの段は出ない (アイテムレベルが足りない)", "Chaos can't roll this tier (item level too low)") }}</span>
-      <span v-if="calc.rareTotal != null" class="ml-auto flex items-center gap-1.5 tabular-nums font-semibold" :class="cheapest ? 'text-emerald-300' : 'text-[var(--exile-color-text-primary)]'">= {{ simCurrency.money(calc.rareTotal) }}<SimCostTip kind="rare" :calc="calc" :base="rare" /></span>
+      <span v-if="calc.rareTotal != null" class="ml-auto flex items-center gap-1.5 tabular-nums font-semibold" :class="cheapest ? 'text-emerald-300' : 'text-[var(--exile-color-text-primary)]'">= {{ simCurrency.money(calc.rareTotal + (calc.keep?.chaos ?? 0)) }}<SimCostTip kind="rare" :calc="calc" :base="rare" /></span>
       <span v-else-if="calc.rareChaos" class="ml-auto opacity-45">{{ tr("値段を入れる", "Enter a price") }}</span>
       <span v-if="cheapest" class="text-[10px] text-emerald-200">{{ tr("一番安い", "Cheapest") }}</span>
     </template>

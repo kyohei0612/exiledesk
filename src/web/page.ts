@@ -69,7 +69,7 @@ export const page = computed((): string => {
 });
 /** シミュレーターの工程の題 */
 const SIM_TITLE: Record<SimStep, [string, string]> = {
-  mods: ["狙う MOD", "Target mods"], start: ["始め方", "How to start"], order: ["付ける順番", "Order"], play: ["打ち方", "Crafting steps"], result: ["回す・結果", "Run & results"],
+  mods: ["狙う MOD", "Target mods"], start: ["ベースの値段", "Base prices"], order: ["付ける順番", "Order"], play: ["打ち方", "Crafting steps"], result: ["回す・結果", "Run & results"],
 };
 
 /** タブの題 */

@@ -32,7 +32,7 @@ export interface QuizSimIn {
   /** フラクチャーの候補ごとの付きやすさ (固定済みから始める時、どれが固定されたかの重み) */
   fracWeights?: Record<string, number>;
   /** グレーターエッセンスを巻き込む道 (sim-greater.ts): 固定済みのレアは、マジック (候補 + 残す MOD) → このエッセンス → 壁 → 候補を固定、で作る */
-  greater?: { essKey: string; keep: SimTargetIn | null };
+  greater?: { essKey: string | null; keep: SimTargetIn | null };
 }
 
 /**
@@ -74,7 +74,7 @@ export function magicStartMods(data: PatchData, targets: readonly SimTargetIn[])
 }
 
 /** グレーターの道のエッセンスの狙い (キー essence:<段>:<modId> の modId) */
-const magicEss = (x: QuizSimIn): string | null => (x.greater ? x.greater.essKey.split(":").slice(2).join(":") : null);
+const magicEss = (x: QuizSimIn): string | null => (x.greater?.essKey ? x.greater.essKey.split(":").slice(2).join(":") : null);
 
 export interface QuizBuilt { recipe: QuizRecipe; error: string | null }
 
@@ -158,7 +158,8 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
       const pick = frac.flatMap((c) => keeps.map((k) => ({ mods: [forceOf(c), ...(k ? [forceOf(k)] : [])], runes: r0, w: (x.fracWeights?.[c.modId] ?? 1) / keeps.length, fracture: c.modId })));
       const wallOmen = fracSide === "suffix" ? "OmenofDextralNecromancy" : "OmenofSinistralNecromancy";
       start = { kind: "bought", rarity: "magic", mods: pick[0]!.mods, price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}), ...(r0.length ? { runes: r0 } : {}), pick, fracture: pick[0]!.fracture,
-        steps: [{ use: x.greater.essKey }, ...(x.greater.keep ? [] : [{ use: "exalt" }]), { use: "desecrate", omens: [wallOmen] }] };
+        // レアにするのはそのエッセンス、無ければ王者 (反対側の狙いを一緒に揃えた時。2026-10-20)
+        steps: [{ use: x.greater.essKey ?? "regal" }, ...(x.greater.keep ? [] : [{ use: "exalt" }]), { use: "desecrate", omens: [wallOmen] }] };
       return { recipe: { v: 3, base: x.base, itemLevel: x.itemLevel, start, routes }, error };
     }
     // 候補が複数なら、買うたびにどれが固定されたかを付きやすさの重みで選ぶ (2026-10-20)。ルーンは候補のどれかに要る物を全部
