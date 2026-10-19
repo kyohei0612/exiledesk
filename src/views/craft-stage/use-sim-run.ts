@@ -61,7 +61,8 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     // 靴の移動スピードが増強 1 回で 75% と出ていた。2026-10-20 見本の靴。2 の付きやすさ shareOf と同じ)
     const runeIds = [...new Set(s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]).map((t) => d.mods.get(t.modId)?.rune).filter((r): r is string => !!r))];
     const pools = (runeIds.length ? withRunes(effectiveCls(it), runeIds) : it.cls).pools.normal;
-    const totalAt = (k: "prefixes" | "suffixes", floor: number): number => pools[k].reduce((a, id) => a + wAt(id, 0, floor), 0);
+    // 同じ MOD は 1 回だけ (エミュレーターから来たルーン差し済みのアイテムに、もう一度ルーンの置き場を足すと 2 重になる)
+    const totalAt = (k: "prefixes" | "suffixes", floor: number): number => [...new Set(pools[k])].reduce((a, id) => a + wAt(id, 0, floor), 0);
     const pAt = (floor: number) => {
       const w = (id: string, minIdx: number): number => wAt(id, minIdx, floor);
       // 候補ごとに自分の側の重みで割る (候補は両側でも良い)
