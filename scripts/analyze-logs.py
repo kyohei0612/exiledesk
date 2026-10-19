@@ -114,8 +114,8 @@ if uses:
     print(f"お告げを使った手: {pct(sum(1 for u in uses if u['d'].get('omens')), len(uses))}")
     fail = [u for u in uses if not u["d"].get("ok")]
     print(f"打てなかった手: {len(fail)} ({pct(len(fail), len(uses))})", top(collections.Counter(u["d"].get("use") for u in fail), 8))
-    # 理由は 2026-10-19 の版 (0.1.582〜) から記録に入る。前の版は空
-    print("打てなかった理由 (0.1.582〜):", top(collections.Counter(str(u["d"].get("reason"))[:40] for u in fail if u["d"].get("reason")), 8) or "(まだ無い)")
+    # 理由は 2026-10-19 の朝の出し直し (v0.1.581、版は上げていない) から記録に入る。前は空
+    print("打てなかった理由 (10-19 の朝〜):", top(collections.Counter(str(u["d"].get("reason"))[:40] for u in fail if u["d"].get("reason")), 8) or "(まだ無い)")
     first = {}
     for u in sorted(uses, key=lambda u: u["t"]): first.setdefault(u["sid"], u["d"].get("use"))
     print("訪問の最初の 1 手:", top(collections.Counter(first.values()), 10))
