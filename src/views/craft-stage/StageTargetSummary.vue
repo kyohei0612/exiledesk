@@ -240,18 +240,19 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
         <span class="shrink-0 rounded border px-1 text-[10px]" :class="badgeOf(g.host).cls" :title="s.data.value?.mods.get(g.host)?.rune ? '差すと付く MOD。回す時はこのルーンを差した白から始める' : 'MOD の種類 (出どころ)'">{{ badgeOf(g.host).label }}</span>
-        <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'rounded-md bg-[var(--exile-color-bg-elevated)]/60 px-2 py-1 ring-1 ring-white/[0.06]' : ''">
-          <!-- 2 つ以上: 見出し (どれか 1 つ・合計の付きやすさ) と、横に並べて折り返す候補 -->
-          <p v-if="g.members.length > 1" class="mb-0.5 flex flex-wrap items-center gap-1 text-[11px] font-bold text-amber-200">
-            <span>この中のどれか</span>
-            <b class="text-[13px] tabular-nums text-amber-100">{{ g.need }}</b>
-            <span>つ</span>
-            <span class="font-normal text-amber-100/70">(どの順番でもいい。{{ g.need }} つ付けば完成)</span>
-            <span v-if="g.share != null" class="ml-1 font-normal tabular-nums text-amber-100/70">1 回で付く 合計 {{ pct(g.share) }}</span>
+        <!--
+          2 つ以上 (どれか n つ): 候補はほかの MOD と同じ太さの行で縦に並べ、左の金の縦線と「どれか n」の札でくくる
+          (2026-10-19 オーナー「ここ太くなるのがなー」→ 縦線でくくる案。前は箱 + 説明の文で、1 つの組だけ太かった)。説明は札に乗せると出る
+        -->
+        <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'border-l-2 border-amber-400/60 pl-2 max-md:order-last max-md:ml-[1.375rem] max-md:basis-full' : ''"><!-- スマホは組だけ次の行に回して幅いっぱい (番号・種類・付け方の札は 1 行目) -->
+          <p v-if="g.members.length > 1" class="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span class="cursor-help rounded-sm bg-amber-500/20 px-1 font-bold text-amber-200" :title="`この中のどれか ${g.need} つ (どの順番でもいい。${g.need} つ付けば完成)`">どれか {{ g.need }}</span>
+            <span v-if="g.share != null" class="tabular-nums text-amber-100/70" title="1 回で付く割合の合計 (候補のどれかが付く)">合計 {{ pct(g.share) }}</span>
           </p>
-          <div :class="g.members.length > 1 ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5' : 'flex items-center gap-1.5 max-md:flex-wrap'">
-            <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1 max-md:flex-wrap" :class="g.members.length > 1 ? 'rounded bg-black/30 px-1' : ''">
-              <span class="truncate max-md:w-full max-md:whitespace-normal" :title="r.text + essTitle(r.modId)">{{ r.text }}</span>
+          <div :class="g.members.length > 1 ? 'flex flex-col gap-0.5' : 'flex items-center gap-1.5 max-md:flex-wrap'">
+            <!-- 組の中 (どれか) はスマホでも札を文の横に置く (文だけ折り返す)。1 つの時は今まで通り文の下に札 -->
+            <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1" :class="g.members.length > 1 ? 'max-md:flex max-md:w-full' : 'max-md:flex-wrap'">
+              <span class="truncate max-md:whitespace-normal" :class="g.members.length > 1 ? 'min-w-0 max-md:flex-1' : 'max-md:w-full'" :title="r.text + essTitle(r.modId)">{{ r.text }}</span>
               <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
                 <option v-for="o in tierOptions(r.modId)" :key="o.i" :value="o.i" class="bg-[#14120e]">{{ o.label }}</option>
               </select>
@@ -281,9 +282,10 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[11px] font-bold opacity-70">プレフィックスかサフィックスのどれか <span class="font-normal">(付いた側で打ち方のルートが分かれる)</span></p>
       <div class="flex items-start gap-1.5 py-0.5 max-md:flex-wrap">
         <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ g.no ?? "" }}</span>
-        <div class="min-w-0 flex-1 rounded-md bg-[var(--exile-color-bg-elevated)]/60 px-2 py-1 ring-1 ring-white/[0.06]">
-          <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-            <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1 rounded bg-black/30 px-1">
+        <!-- プレとサフィにまたがる組も同じ形 (縦線でくくる) -->
+        <div class="min-w-0 flex-1 border-l-2 border-amber-400/60 pl-2">
+          <div class="flex flex-col gap-0.5">
+            <span v-for="r in g.members" :key="r.modId" class="inline-flex min-w-0 max-w-full items-center gap-1">
               <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ r.side === "P" ? "プレフィックス" : "サフィックス" }}</span>
               <span class="truncate" :title="r.text">{{ r.text }}</span>
               <select v-if="props.editable && tierOptions(r.modId).length > 1" class="shrink-0 rounded-sm bg-amber-500/25 px-0.5 text-[10px] font-bold text-amber-100" title="段を変える (その段以上が当たり)" :value="r.minTierIndex" @change="setTier(r, Number(($event.target as HTMLSelectElement).value))">
