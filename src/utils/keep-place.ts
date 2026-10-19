@@ -157,15 +157,45 @@ export function revealBottom(el: Element, pad = 24): void {
  * (2026-10-19 オーナー「全システム共通、ティア開いたらティアも全体表示させてくれ。付けた後のティア仕舞いは今と一緒」)。
  * MOD 一覧・狙う MOD を選ぶ窓・フラクチャーの選びで同じ物を使う
  */
+/**
+ * 後から出る枠 (後から読む画面の中など) を、出るまで待ってから下の線 + 24px まで送る (最大 3 秒)。見えている物だけを見る
+ * (2026-10-19: シミュレーターを後から読む形にしたので、ベースを選んだ・「この状態からシミュレーター」の直後はまだ 2 の枠が無い)
+ */
+export function revealWhenReady(selector: string, ms = 3000): void {
+  const t0 = Date.now();
+  const tryReveal = (): void => {
+    const el = [...document.querySelectorAll<HTMLElement>(selector)].find((e) => e.getClientRects().length);
+    if (el) { requestAnimationFrame(() => revealBottom(el)); return; }
+    if (Date.now() - t0 < ms) setTimeout(tryReveal, 60);
+  };
+  tryReveal();
+}
 export function revealOpened(el: Element | null | undefined): void {
   if (!el) return;
   requestAnimationFrame(() => requestAnimationFrame(() => revealNext(el)));
 }
 export function revealNext(el: Element | null | undefined, pad = 24): void {
   if (!el) return;
+  // 中だけ送る箱 (シミュレーターの 2 の MOD 一覧は高さ 62vh の箱) の中にある時は、箱の中を送ってから外側 (ページ) も送る
+  // (2026-10-19 PC で段の表を開いた時: 箱の中は送れていたが、箱の下の端が画面の外で表が見えなかった)
   const box = scrollBoxOf(el as HTMLElement);
+  const outer = box ? scrollBoxOf(box.parentElement as HTMLElement) : null;
+  const thenOuter = (): void => { const d = deltaIn(el, box ? outer : null, pad); if (d) void glideRect(box ? outer : null, el, d, 320); };
+  if (!box) { thenOuter(); return; }
+  const d = deltaIn(el, box, pad);
+  if (d) void glideRect(box, el, d, 320).then(thenOuter); else thenOuter();
+}
+/** その箱 (null = ページ) の中で el を見せる送りの量。上にはみ出していれば負 (上の線 - 8px まで戻す)、下なら正 (下の線 + pad)、見えていれば 0 */
+function deltaIn(el: Element, box: HTMLElement | null, pad: number): number {
   const r = el.getBoundingClientRect();
-  const viewTop = (box ? box.getBoundingClientRect().top : 0) + topInset(box);
-  if (r.top < viewTop + 8) { void glideRect(box, el, r.top - viewTop - 8, 320); return; }
-  revealBottom(el, pad);
+  const top = (box ? box.getBoundingClientRect().top + stickyHead(box) : 0) + topInset(box);
+  const bottom = box ? box.getBoundingClientRect().top + box.clientHeight : window.innerHeight;
+  if (r.top < top + 8) return r.top - top - 8;
+  const d = Math.min(r.bottom + pad - bottom, r.top - top - 8);
+  return d > 0 ? d : 0;
+}
+/** 箱のすぐ中で上に貼り付く見出しの高さ (その下で止める) */
+function stickyHead(box: HTMLElement): number {
+  const h = [...box.children].find((c) => getComputedStyle(c).position === "sticky" && c.getClientRects().length);
+  return h ? h.getBoundingClientRect().height : 0;
 }

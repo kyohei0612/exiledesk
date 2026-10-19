@@ -281,8 +281,9 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
           </div>
         </div>
         <!-- 付け方の予定は MOD の右側 (2026-10-05 オーナー「普通カオススパムとかの設定って MOD の右側よ」) -->
-        <!-- 始め方が白以外の時、固定 MOD は 1 ベースで決めた物なので予定は変えない (2026-10-08) -->
-        <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white'" class="shrink-0 rounded border px-1 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めたフラクチャーの MOD">{{ s.simStart.value === "item" ? "🔒 フラクチャー済み (手打ち)" : s.simStart.value === "fractured" ? "🔒 フラクチャー (買った物)" : "🔒 フラクチャーする (買った 4 MOD から)" }}</span>
+        <!-- 始め方が白以外の時、固定 MOD は 1 ベースで決めた物なので予定は変えない (2026-10-08)。
+             エミュレーターの状態から来た時 (item) のフラクチャー済みは、鍵を付けずほかの狙いと同じ「フラクチャー予定」として出す (付け方を変えられる。2026-10-19 オーナー「フラクチャー済みも手打ちで変更できないから、フラクチャー予定でいい、どうせ後で設定で使う」) -->
+        <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white' && s.simStart.value !== 'item'" class="shrink-0 rounded border px-1 text-[10px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めたフラクチャーの MOD">{{ s.simStart.value === "fractured" ? "🔒 フラクチャー (買った物)" : "🔒 フラクチャーする (買った 4 MOD から)" }}</span>
         <!-- 付け方は押して選ぶ札を MOD の行のすぐ下に (2026-10-18 オーナー「MOD 選んだら付け方選べるように、高貴ガチャかカオススパムか冒涜・フラクチャー等」。前は 10px のプルダウンで気付けなかった) -->
         <span v-else-if="props.plans && plansOf(g.host).length > 1" data-plan-pick class="flex basis-full flex-wrap items-center gap-1 pl-[1.375rem]" title="この MOD の付け方。打ち方の手で狙う時の目安 (後で変えられる)">
           <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">付け方</span>
@@ -290,7 +291,7 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
         </span>
         <!-- 選んでいる間は印を押すと付け方を変えられる (足した時と同じポップアップ。2026-10-18 オーナー「決めた奴でも途中で変えれるように」) -->
         <button v-else-if="props.editable && plansOf(g.host).length > 1" type="button" data-plan-change class="shrink-0 rounded border px-1 text-[10px] hover:bg-white/10 max-md:min-h-9 max-md:px-2" :class="PLAN_CLS[planOf(g)]" title="押すと付け方を変える" @click="methodPop?.ask($event.currentTarget as Element, plansOf(g.host), (p) => setPlan(g, p), chaosOff(g.host))">{{ PLAN_JA[planOf(g)] }} ▾</button>
-        <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「ここからやり直す」)'">{{ PLAN_JA[planOf(g)] }}</span>
+        <span v-else class="shrink-0 rounded border px-1 text-[10px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「この段に戻る」)'">{{ PLAN_JA[planOf(g)] }}</span>
       </div>
     </div>
     <!-- プレとサフィにまたがる「どれか」(カオススパム) -->

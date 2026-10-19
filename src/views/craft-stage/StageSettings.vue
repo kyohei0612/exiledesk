@@ -12,6 +12,7 @@ import { inLesson } from "../../state/craft-lesson";
 import StageRecipeStart from "./StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, ref, watch } from "vue";
+import { revealWhenReady } from "../../utils/keep-place";
 import { useStageBase } from "./use-stage-base";
 import StageBasePicker from "./StageBasePicker.vue";
 import { PAGES_ON, basePage } from "../../state/web-page";
@@ -109,6 +110,8 @@ function simFromHand(): void {
   s.simStart.value = "item";
   s.simPicked.value = true;
   s.mode.value = "sim";
+  // 2 (狙う MOD) の枠の下の線 + 24px まで送る (ベースを選んだ時と同じ。2026-10-19 オーナー「エミュのシミュレーターへボタンは 2 からだね表示は」)
+  revealWhenReady("[data-sim-cur]");
 }
 </script>
 

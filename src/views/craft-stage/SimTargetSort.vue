@@ -36,7 +36,7 @@ function set(b: SortBucket, n: number): void { s.simTargets.value = setAnyOf(s.s
       <span v-for="sd in SIDES" :key="sd[0]" class="tabular-nums" :class="use[sd[0]] > limits[sd[0]] ? 'font-bold text-rose-300' : 'text-[var(--exile-color-text-secondary)]'">{{ tr(sd[1], sd[2]) }} {{ use[sd[0]] }} / {{ tr(`枠 ${limits[sd[0]]}`, `${limits[sd[0]]} slots`) }}</span>
     </p>
     <p v-if="over" class="mb-1.5 text-rose-300">{{ tr("枠より多いので、下で「この中のどれか N つ」にまとめて枠に収める (収まるまで 3 に進めない)", "More targets than slots: group them below as “any N of these” until they fit (step 3 waits until then)") }}</p>
-    <p v-if="!buckets.length" class="opacity-60">{{ over ? tr("まとめられる組が無い。2 の「ここからやり直す」で狙いを減らす", "Nothing to group. Use “Redo from here” in step 2 to drop some targets") : tr("同じ側に同じ付け方の MOD が 2 つ以上ある時、ここでまとめられる", "When a side has 2+ mods with the same method, you can group them here") }}</p>
+    <p v-if="!buckets.length" class="opacity-60">{{ over ? tr("まとめられる組が無い。2 の「この段に戻る」で狙いを減らす", "Nothing to group. Use “Redo from here” in step 2 to drop some targets") : tr("同じ側に同じ付け方の MOD が 2 つ以上ある時、ここでまとめられる", "When a side has 2+ mods with the same method, you can group them here") }}</p>
     <div v-for="b in buckets" :key="`${b.side}:${b.method}`" data-sim-sort-bucket class="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/5 py-1.5">
       <span class="shrink-0 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ b.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }} · {{ tr(METHOD_JA[b.method], METHOD_EN[b.method]) }}</span>
       <span class="min-w-0 flex-1 truncate text-[#c8c8ff]" :title="b.members.map(nameOf).join('\n')">{{ b.members.map(nameOf).join(" / ") }}</span>
