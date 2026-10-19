@@ -424,11 +424,12 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 <span class="pointer-events-none absolute inset-y-0 left-0" :class="toneOf(sec).bar" :style="{ width: `${(shareOf(r) / colTop(col.items)) * 100}%` }" />
                 <!-- 2026-10-04 オーナー: タグは MOD 名の横に細く (行を太らせない)、右は poe2db と同じく 出やすさ % ・ ティア数 (緑) ・ 一番上の段のレベル (灰) を数字だけ -->
                 <span class="relative flex items-center gap-2">
-                  <!-- 名前は折り返してよい・タグは残りの幅で … で切る (乗せると全部)。タグで行が 2 行に折れていた (2026-10-18 オーナーの UI 点検) -->
-                  <span class="flex min-w-0 flex-1 items-center gap-x-1 leading-tight">
+                  <!-- タグはアイテムの札と同じ色の札 (poe2db と同じ)。入らなければ次の行へ折り返して全部見せる
+                       (2026-10-19 オーナー「タグが薄くて見づらい、db 仕様でおｋ」「タグ切れてること多いから折り返してフルで」。前は残りの幅に薄い字で … で切っていて、名前が折り返すとタグが丸ごと消えていた) -->
+                  <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
                     <!-- 勢力 (アマナム・クルガル・ウラマン) は文の頭に札で (2026-10-16 オーナー「開かんと分からん」)。文の中に置いて、長い文でも札だけの行にしない -->
                     <span class="mr-0.5 min-w-0 text-[13px] text-[#c8c8ff]"><span v-if="factionOf(r.tags)" class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[factionOf(r.tags)!]?.cls">{{ tagLabel(factionOf(r.tags)!) }}</span>{{ r.text }}</span>
-                    <span v-if="shownTags(r.tags).length" class="min-w-0 flex-1 truncate text-[11px] text-[var(--exile-color-text-tertiary)]" :title="shownTags(r.tags).map(tagLabel).join(' · ')">{{ shownTags(r.tags).map(tagLabel).join(" · ") }}</span>
+                    <span v-for="g in shownTags(r.tags)" :key="g" class="shrink-0 whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span>
                     <span v-if="essName(r)" class="shrink-0 whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r) }}</span>
                     <span v-if="r.on" class="shrink-0 whitespace-nowrap rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">{{ tr("付いている", "On item") }}</span>
                   </span>
@@ -450,7 +451,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                     <!-- 段のチェック: その段以上を狙いに (外す時はその段だけ) -->
                     <td v-if="heldCands" class="w-5 py-0.5 text-center"><input type="checkbox" class="accent-sky-400 align-middle" :checked="isAimTier(r, t)" :disabled="!heldTierShare(r, t)" :title="tr(`${t.rank} 以上を狙いに入れる`, `Target ${t.rank} or better`)" @click.stop @change="toggleAimTier(r, t)" /></td>
                     <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
-                    <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}<span v-if="tierTags(r, t).length" class="ml-2 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tierTags(r, t).map(tagLabel).join(" · ") }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span></td>
+                    <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span></td>
                     <!-- 段の名前 (Zaffre など) は英語しか無いので出さない。エッセンスの節はエッセンスの名前なので出す (2026-10-18 オーナーの UI 点検) -->
                     <td v-if="r.group === 'essence' || r.group === 'perfect_essence'" class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
