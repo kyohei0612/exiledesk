@@ -338,7 +338,7 @@ export const craftStage = {
     const ms = (l: readonly StageMod[]): string[] => l.map((m) => `${m.modId}#${m.tierIndex}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}`);
     // カオススパム (chaos-spam.ts) は 1 回ごとには送らない (何千回にもなる。スパムの終わりに 1 件だけ送る)
     // チュートリアルの手は記録しない (2026-10-18 オーナー「チュートリアルの手はいらない」。PV は visit・screen、コースは tutorial の記録で見る)
-    if (!opts.quiet && play.value === "emu") logRecord("emu_use", { base: base.value, ilvl: itemLevel.value, rarity: p.before.rarity, before: ms([...p.before.prefixes, ...p.before.suffixes]), use: key, omens: want, added: ms(p.added), removed: ms(p.removed), ok: p.out.applied, cost: p.out.cost?.subtotal ?? null, baseJa: p.before.baseJa, useJa: p.out.currency_ja });
+    if (!opts.quiet && play.value === "emu") logRecord("emu_use", { base: base.value, ilvl: itemLevel.value, rarity: p.before.rarity, before: ms([...p.before.prefixes, ...p.before.suffixes]), use: key, omens: want, added: ms(p.added), removed: ms(p.removed), ok: p.out.applied, ...(p.out.applied ? {} : { reason: String(p.out.reason ?? "").slice(0, 80) }), cost: p.out.cost?.subtotal ?? null, baseJa: p.before.baseJa, useJa: p.out.currency_ja }); // 打てなかった手は理由も (2026-10-19 分析で「打てなかった理由」がいつも空だった)
     // 使った時の音 (ゲームと同じ。珍しい段なら神のオーブの音)。カオススパム (quiet) では鳴らさない
     if (!opts.quiet && p.out.applied) playUseSfx(key, Object.values(p.chances ?? {}).some(isRareChance));
     if (!opts.quiet && play.value === "emu") recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
