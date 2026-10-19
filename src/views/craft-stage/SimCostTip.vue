@@ -10,8 +10,8 @@ import { tr } from "../../i18n/lang";
 
 type Line = { name: string; n: number; each: number };
 const props = defineProps<{
-  kind: "white" | "four" | "fractured";
-  calc: { lines: Line[]; buyLines: Line[]; once: number; after: number; total: number; buyRest: number; rerolls: number; grade: string } | null;
+  kind: "white" | "four" | "fractured" | "rare";
+  calc: { lines: Line[]; buyLines: Line[]; rareLines?: Line[]; once: number; after: number; total: number; buyRest: number; rerolls: number; grade: string; rareChaos?: { grade: string; n: number } | null } | null;
   /** その行に入れたベースの値段 (高貴建て) */
   base: number | null;
 }>();
@@ -21,11 +21,12 @@ const rows = computed((): Line[] => {
   const c = props.calc;
   if (!c) return [];
   if (props.kind === "white") return c.lines;
+  if (props.kind === "rare") return [{ name: tr("適当なレア", "A random Rare"), n: 1, each: props.base ?? 0 }, ...(c.rareLines ?? [])];
   if (props.kind === "four") return [{ name: tr("フラクチャーの MOD 付きレア", "Rare with the mod"), n: 1, each: props.base ?? 0 }, ...c.buyLines];
   return [];
 });
 const once = computed(() => rows.value.reduce((a, l) => a + l.n * l.each, 0));
-const title = computed(() => (props.kind === "white" ? tr("白から作る費用の内訳", "Cost from a white base") : props.kind === "four" ? tr("MOD 付きレアから作る費用の内訳", "Cost from a rare with the mod") : tr("フラクチャー済みを買う", "Buy fractured")));
+const title = computed(() => (props.kind === "white" ? tr("白から作る費用の内訳", "Cost from a white base") : props.kind === "four" ? tr("MOD 付きレアから作る費用の内訳", "Cost from a rare with the mod") : props.kind === "rare" ? tr("適当なレアから作る費用の内訳", "Cost from a random Rare") : tr("フラクチャー済みを買う", "Buy fractured")));
 </script>
 
 <template>
@@ -48,6 +49,7 @@ const title = computed(() => (props.kind === "white" ? tr("白から作る費用
           <tr class="font-bold text-emerald-300"><td class="pt-1">{{ tr("合計", "Total") }}</td><td></td><td class="pt-1 text-right">{{ money(once * 3 + calc.after) }}</td></tr>
         </tbody>
       </table>
+      <p v-if="kind === 'rare' && calc.rareChaos" class="mt-1 text-[10px] opacity-60">{{ tr(`消去で 1 MOD に削り、カオスで残りの 1 つを入れ替えて狙いが付くまで (付く物は両側の重みから 1 つ、平均 ${fmtN(calc.rareChaos.n)} 回)。カオスは${calc.rareChaos.grade} (1 個あたりが一番安い等級)。レアは満杯と見る`, `Annul down to 1 mod, then Chaos swaps it until the target lands (one mod from both sides' weights, avg ${fmtN(calc.rareChaos.n)}). Chaos grade: ${calc.rareChaos.grade} (cheapest per hit). Assumes a full Rare`) }}</p>
       <p v-if="kind === 'white'" class="mt-1 text-[10px] opacity-60">{{ tr(`リロール = 増強 1 回で狙いが付く確率の逆数 (平均 ${fmtN(calc.rerolls)} 回)。変成・増強は${calc.grade}`, `Rerolls = 1 ÷ chance per augment (avg ${fmtN(calc.rerolls)}). Transmute / augment grade: ${calc.grade}`) }}</p>
     </template>
   </HelpTip>

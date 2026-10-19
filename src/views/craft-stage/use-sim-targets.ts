@@ -214,6 +214,8 @@ export function useSimTargets() {
   const whiteDivine = ref<number | null>(null);
   /** 4 MOD・当たり 1 (フラクチャーの狙いが付いた、固定していないレア) のベースの値段 (神、手で入れる) */
   const fourDivine = ref<number | null>(null);
+  /** 適当なレア (このベースのレア、MOD は何でもいい) の値段 (高貴建て、手で入れる)。消去で 1 MOD に削って始める道に使う (2026-10-18 オーナー) */
+  const rareDivine = ref<number | null>(null);
   /** 手打ちの状態のベース代 (高貴。既定は 手打ちの累計 + 白ベース代、直せる。2026-10-08 オーナー「前者」) */
   const itemDivine = ref<number | null>(null);
   const exOf = (u: OldUnit): number => (u === "exalt" ? 1 : priceOf(u) || 1);
@@ -224,7 +226,7 @@ export function useSimTargets() {
   /** 入れた値段 (空欄・負は未入力) */
   const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : null);
   const PRICE_KEY = "exiledesk.craftStageSim.basePrices";
-  const keptAll = ref<Record<string, Partial<Record<"white" | "four" | "bought" | "magic", Kept>>>>({});
+  const keptAll = ref<Record<string, Partial<Record<"white" | "four" | "bought" | "magic" | "rare", Kept>>>>({});
   try { keptAll.value = JSON.parse(localStorage.getItem(PRICE_KEY) ?? "{}"); } catch { /* 無くてよい */ }
   /**
    * 白のベースのソケットの数 (2026-10-05 オーナー「ベース選択後ソケットの数を 0 / 1 / 2 で選ばせて、これだとただの通常品のベース」)。
@@ -250,9 +252,10 @@ export function useSimTargets() {
     fourDivine.value = toExalt(kept.value.four);
     boughtDivine.value = toExalt(kept.value.bought);
     magicDivine.value = toExalt(kept.value.magic);
+    rareDivine.value = toExalt(kept.value.rare);
     void Promise.resolve().then(() => { loadingKept = false; });
   }
-  function saveKept(which: "white" | "four" | "bought" | "magic", v: number | null): void {
+  function saveKept(which: "white" | "four" | "bought" | "magic" | "rare", v: number | null): void {
     if (loadingKept) return;
     const cur = { ...(keptAll.value[keptKey.value] ?? {}) };
     const n = num(v);
@@ -268,6 +271,7 @@ export function useSimTargets() {
   watch(fourDivine, (v) => saveKept("four", v));
   watch(boughtDivine, (v) => saveKept("bought", v));
   watch(magicDivine, (v) => saveKept("magic", v));
+  watch(rareDivine, (v) => saveKept("rare", v));
   /** いつ入れた値段か (「3 時間前」)。1 日以上前は old */
   function ageOf(which: "white" | "four" | "bought" | "magic"): { text: string; old: boolean } | null {
     const k = kept.value[which];
@@ -279,7 +283,7 @@ export function useSimTargets() {
   return { s, runs, MAX_STEPS_KEY, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, methodsFor, methodOf, rows, targetsSig, restRows,
     runeNeeded, orderKeys, moveOrder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,
     REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, makeRoute, blocker, boughtDivine, magicDivine,
-    whiteDivine, fourDivine, itemDivine, exOf, toExalt, num, PRICE_KEY, keptAll, craftCap, socketCap, sockets, socketsOk,
+    whiteDivine, fourDivine, rareDivine, itemDivine, exOf, toExalt, num, PRICE_KEY, keptAll, craftCap, socketCap, sockets, socketsOk,
     socketCount, socketQuery, keptKey, kept, loadKept, saveKept, restoring, ageOf };
 }
 export type SimTargetsCtx = ReturnType<typeof useSimTargets>;

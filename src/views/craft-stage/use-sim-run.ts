@@ -11,6 +11,8 @@ import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { type RecipeResult, type RecipeSpec } from "../../services/craft-stage/recipe-sim";
 import { track } from "../../utils/track";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
+import { freshItem } from "../../services/craft-stage/run-plan";
+import { limitOf } from "../../services/craft-stage/stage-core";
 import { patternSets, setByKey, type Pattern } from "../../services/craft-stage/pattern";
 import { runQuizOnce, summarizeQuiz, type QuizResult, type QuizRun } from "../../services/craft-stage/quiz-recipe";
 import { magicStartMods, quizFromSim, type QuizSimIn } from "../../services/craft-stage/quiz-build";
@@ -21,7 +23,7 @@ import type { SimSearchCtx } from "./use-sim-search";
 
 
 export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
-  const { blocker, boughtDivine, fourDivine, fracMembers, fractureRow, fractureRows, itemDivine, magicDivine, makeRoute, makeSpec,
+  const { blocker, boughtDivine, fourDivine, rareDivine, fracMembers, fractureRow, fractureRows, itemDivine, magicDivine, makeRoute, makeSpec,
     market, maxSteps, methodOf, num, rows, runs, socketCount, targetsSig, whiteDivine } = d;
   const s = craftStage;
   /**
@@ -42,13 +44,16 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
      * 変成・増強の等級は完全 (オーナー「最低完全変成、次の完全増強」)。完全の段の下限で狙いの段が出ない時 (兜のライフ T2 以上など) は
      * 上級 → 無印に落とす (2026-10-05、前は 0% と「—」で止まって見えた)
      */
+    /** その MOD の、下限 floor 以上・アイテムレベル以下・minIdx の段以上の重み */
+    const wAt = (id: string, minIdx: number, floor: number): number => {
+      const x = d.mods.get(id);
+      return x ? x.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl >= floor && t.ilvl <= s.itemLevel.value ? t.weight : 0), 0) : 0;
+    };
+    const totalAt = (k: "prefixes" | "suffixes", floor: number): number => it.cls.pools.normal[k].reduce((a, id) => a + wAt(id, 0, floor), 0);
     const pAt = (floor: number) => {
-      const w = (id: string, minIdx: number): number => {
-        const x = d.mods.get(id);
-        return x ? x.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl >= floor && t.ilvl <= s.itemLevel.value ? t.weight : 0), 0) : 0;
-      };
+      const w = (id: string, minIdx: number): number => wAt(id, minIdx, floor);
       // 候補ごとに自分の側の重みで割る (候補は両側でも良い)
-      const totalOf = (k: "prefixes" | "suffixes"): number => it.cls.pools.normal[k].reduce((a, id) => a + w(id, 0), 0);
+      const totalOf = (k: "prefixes" | "suffixes"): number => totalAt(k, floor);
       const each = fracMembers.value.map((r) => {
         const total = totalOf(d.mods.get(r.modId)?.type === "suffix" ? "suffixes" : "prefixes");
         return { name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 };
@@ -103,7 +108,37 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     const fourN = num(fourDivine.value);
     const fourB = fourN;
     const buyOnce = fourB != null ? fourB + buyRest : null;
-    return { pHit, each, rerolls, lines, buyLines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce };
+    /**
+     * 適当なレアから (2026-10-18 オーナー「白と適当なレア → 消去でカオススパムルート、その費用の計算」): 満杯と見たレアを消去で 1 MOD まで削り、
+     * 残った 1 つをカオスで入れ替えて狙いが付くまで (1 MOD なのでカオスは外して 1 つ付けるだけ、付く物は両側の重みから) → 高貴 × 2 で 3 MOD
+     * → 骨の壁 → フラクチャー。1 個 = (レア + これ) × 3 + 消去 × 2 (白からと同じ)。カオスの等級は 1 個あたりが一番安い物 (段の下限は高貴と同じ)
+     */
+    const slots = (() => {
+      try { const fi = { ...freshItem(d, s.base.value, s.itemLevel.value), rarity: "rare" as const }; return limitOf(fi, "prefix") + limitOf(fi, "suffix"); } catch { return 6; }
+    })();
+    const chaosGrades = [
+      { id: "chaos_perfect", floor: CURRENCY_FLOOR.exalt.perfect, ja: "完全" },
+      { id: "chaos_greater", floor: CURRENCY_FLOOR.exalt.greater, ja: "上級" },
+      { id: "chaos", floor: CURRENCY_FLOOR.exalt.base, ja: "無印" },
+    ].map((g) => {
+      const all = totalAt("prefixes", g.floor) + totalAt("suffixes", g.floor);
+      const p = all > 0 ? Math.min(1, fracMembers.value.reduce((a, r) => a + wAt(r.modId, r.minTierIndex, g.floor), 0) / all) : 0;
+      return { ...g, p };
+    }).filter((g) => g.p > 0);
+    const cg = chaosGrades.length ? chaosGrades.reduce((a, b) => (priceOf(b.id) / b.p < priceOf(a.id) / a.p ? b : a)) : null;
+    const rareLines: Array<{ name: string; n: number; each: number }> = cg ? [
+      { name: `${nameOf("annul")} (1 MOD まで)`, n: Math.max(0, slots - 1), each: priceOf("annul") },
+      { name: `${nameOf(cg.id)} (狙いが付くまで)`, n: 1 / cg.p, each: priceOf(cg.id) },
+      { name: `${nameOf("exalt")} (3 MOD に)`, n: 2, each: priceOf("exalt") },
+      { name: `${nameOf("desecrate")} (壁)`, n: 1, each: priceOf("desecrate") },
+      { name: nameOf("fracture"), n: 1, each: priceOf("fracture") },
+    ] : [];
+    const rareRest = cg ? rareLines.reduce((a, l) => a + l.n * l.each, 0) : Infinity;
+    const rareN = num(rareDivine.value);
+    const rareTotal = rareN != null && cg ? (rareN + rareRest) * 3 + after : null;
+    const rareChaos = cg ? { grade: cg.ja, p: cg.p, n: 1 / cg.p } : null;
+    return { pHit, each, rerolls, lines, buyLines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce,
+      slots, rareLines, rareRest, rareTotal, rareChaos };
   });
   const busy = ref(false);
   const phase = ref("");
@@ -136,6 +171,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     const xs: number[] = [];
     if (c) xs.push(c.total);
     if (c && c.buyOnce != null) xs.push(c.buyOnce * 3 + c.after);
+    if (c && c.rareTotal != null) xs.push(c.rareTotal);
     const bN = num(boughtDivine.value);
     if (bN != null) xs.push(bN);
     const ys = xs.filter((x) => Number.isFinite(x));
@@ -377,7 +413,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   const patternDone = ref(false);
   /** 途中を覚える (変わるたびに)。開き直した時は CraftStage がベース・狙い・パターンを、ここが「決めた」を戻す */
   const sessionNow = () => ({
-    base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, start: s.simStart.value, startItem: s.simStartItem.value, startCost: s.simStartCost.value, prices: { white: whiteDivine.value, four: fourDivine.value, bought: boughtDivine.value, item: itemDivine.value, magic: magicDivine.value }, order: s.simOrder.value, patterns: s.simPatterns.value,
+    base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, start: s.simStart.value, startItem: s.simStartItem.value, startCost: s.simStartCost.value, prices: { white: whiteDivine.value, four: fourDivine.value, bought: boughtDivine.value, item: itemDivine.value, magic: magicDivine.value, rare: rareDivine.value }, order: s.simOrder.value, patterns: s.simPatterns.value,
     flags: { whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, patternDone: patternDone.value },
   });
   watch(() => JSON.stringify(sessionNow()), () => { if (s.simPicked.value) writeSimSession(sessionNow()); });

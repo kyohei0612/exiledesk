@@ -49,7 +49,7 @@ const st = useSimSteps({ ...tg, ...rn });
 const rs = useSimResult({ ...tg, ...sr, ...rn, ...rc });
 const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, orderKeys, moveOrder, removeRune, runeChoices, toggleRune,
   orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, boughtDivine, magicDivine, whiteDivine,
-  fourDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
+  fourDivine, rareDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
   help, modsDone, sortDone, orderDone, startDone, step3, startPrice, whiteDone, stepStart, stepOrder, patternDone, stale, recipes, recipeOpen,
@@ -61,10 +61,10 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, order
 const grantPending = computed(() => (htcBaseInfo()[s.base.value]?.grants?.length ?? 0) > 1 && !s.simGrant.value);
 // 付与スキルを選んで始め方が出たら、3 の枠の下の線 + 24px まで送る (段が進んだ時と同じ。2026-10-18 オーナー)
 watch(grantPending, (p, was) => { if (!p && was) void nextTick(() => requestAnimationFrame(() => { const el = panelEl.value?.querySelector("[data-sim-cur]"); if (el) revealBottom(el); })); });
-/** 3 の始め方の行。エミュレーターの状態からは持ってきた時だけ、フラクチャーの始め方は 2 にフラクチャー予定がある時だけ (無ければ出さない。2026-10-18 オーナー) */
-const startKinds = computed(() => SIM_STARTS.filter((k) => (k.k !== "item" || !!s.simStartItem.value) && (!k.needsFracture || fracMembers.value.length > 0)));
-// 選んでいた始め方が一覧から消えたら (マジック・フラクチャー予定を外した時) 白ベースからに戻す
-watch(startKinds, (ks) => { if (!ks.some((k) => k.k === s.simStart.value)) s.simStart.value = "white"; }, { immediate: true });
+/** 3 の始め方の行。フラクチャーの始め方は 2 にフラクチャー予定がある時だけ (無ければ出さない。2026-10-18 オーナー)。「エミュレーターの状態から」の行は出さない (2026-10-19 オーナー「意味わからんから消しておk」。「この状態からシミュレーター」で来た時はその状態のまま) */
+const startKinds = computed(() => SIM_STARTS.filter((k) => k.k !== "item" && (!k.needsFracture || fracMembers.value.length > 0)));
+// 選んでいた始め方が一覧から消えたら (マジック・フラクチャー予定を外した時) 白ベースからに戻す。エミュレーターの状態からは行が無くても戻さない
+watch(startKinds, (ks) => { if (s.simStart.value !== "item" && !ks.some((k) => k.k === s.simStart.value)) s.simStart.value = "white"; }, { immediate: true });
 /** 使えない始め方の理由 (今は出さない作りなので空。行の作りは残す) */
 const startOff = (_k: (typeof SIM_STARTS)[number]): string => "";
 /** 入れた時刻の札 (始め方 → 値段の欄。エミュレーターの状態からは無い) */
@@ -82,10 +82,10 @@ function startCost(k: SimStartKind): number | null {
 }
 /** 右の値段が何か (フラクチャー予定がある時はフラクチャー済みまで) */
 const costNote = computed(() => (fracMembers.value.length ? "右の値段 = フラクチャー済みのベースになるまで (ベース代・壁・フラクチャー・消去込み、平均)" : "右の値段 = ベース 1 個の値段"));
-/** 値段が入った始め方が 2 つ以上ある時の一番安い物 */
-const cheapStart = computed((): SimStartKind | null => {
-  const ok = startKinds.value.filter((k) => !startOff(k) && startCost(k.k) != null);
-  return ok.length > 1 ? ok.reduce((a, b) => (startCost(b.k)! < startCost(a.k)! ? b : a)).k : null;
+/** 値段が入った始め方が 2 つ以上ある時の一番安い物 (rare = 白の行の 2 段目、適当なレアを消去で 1 MOD → カオス。フラクチャー予定がある時だけ比べに入れる) */
+const cheapStart = computed((): SimStartKind | "rare" | null => {
+  const ok: Array<{ k: SimStartKind | "rare"; c: number }> = [...startKinds.value.filter((k) => !startOff(k) && startCost(k.k) != null).map((k) => ({ k: k.k, c: startCost(k.k)! })), ...(fracMembers.value.length && calc.value?.rareTotal != null ? [{ k: "rare" as const, c: calc.value.rareTotal }] : [])];
+  return ok.length > 1 ? ok.reduce((a, b) => (b.c < a.c ? b : a)).k : null;
 });
 </script>
 
@@ -218,7 +218,7 @@ const cheapStart = computed((): SimStartKind | null => {
               </span>
             </div>
             <!-- 白ベースの比べ: 適当なレア + 消去で 1 MOD まで (白の行の 2 段目。2026-10-18 オーナー) -->
-            <SimRareStrip v-if="k.k === 'white' && !whiteDone" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" @click.stop @search="searchRare" />
+            <SimRareStrip v-if="k.k === 'white' && !whiteDone" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" :calc="fracMembers.length ? calc : null" :cheapest="cheapStart === 'rare'" @click.stop @search="searchRare" />
           </div>
         </div>
         <!-- フラクチャー予定は 2 狙う MOD で決める (2026-10-05 オーナー「狙う MOD の所でフラクチャー予定とか全部決めたら後が楽」)。ここは確認だけ。無ければ出さない (2026-10-18) -->
@@ -250,9 +250,9 @@ const cheapStart = computed((): SimStartKind | null => {
               <td class="py-1">
                 <span v-if="x.key === 'self'" class="text-[11px] opacity-70">1 回分 × 3 (当たり 1/3) + 消去 × 2<template v-if="calc && calc.grade !== '完全'"> · {{ calc.grade }}の増強で計算</template></span>
                 <span v-else class="flex items-center gap-1.5 text-[11px]">
-                  <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
+                  <PriceInput v-if="x.key === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" /><PriceInput v-else-if="x.key === 'rare'" v-model="rareDivine" base="exalted" unit-key="sim.rare" placeholder="値段" />
                   <PriceInput v-else v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="値段" />
-                  <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline disabled:opacity-40 max-md:min-h-11" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : searchBought()">取引所で探す<Icon name="external" class="size-3.5" /></button>
+                  <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline disabled:opacity-40 max-md:min-h-11" :title="(x.key === 'four' ? '狙いの MOD が付いたレア (固定済みは除く) を取引所で探す (開くだけ)' : x.key === 'rare' ? 'このベースのレア (フラクチャー無し) を取引所で探す (開くだけ)' : 'この MOD が固定済みのベースを取引所で探す (開くだけ)') + `。アイテムレベル ${searchIlvl} 以上`" @click="x.key === 'four' ? searchFour() : x.key === 'rare' ? searchRare() : searchBought()">取引所で探す<Icon name="external" class="size-3.5" /></button>
                 </span>
               </td>
               <td class="truncate py-1 text-right tabular-nums"><b v-if="x.cost != null">{{ money(x.cost) }}</b><span v-else class="text-[11px] opacity-50" :title="x.key === 'self' ? undefined : '値段が空 = 取引所に無い物として数えない (2026-10-06)'">{{ x.key === "self" ? "—" : "無し" }}</span></td>
@@ -478,7 +478,7 @@ const cheapStart = computed((): SimStartKind | null => {
                 <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline max-md:min-h-11" title="狙いの MOD が付いたレアを取引所で探す (固定済みは除く。開くだけ)" @click="searchFour">取引所で探す<Icon name="external" class="size-3.5" /></button>
                 <span class="inline-block w-24 shrink-0" :class="ageOf('four')?.old ? 'text-amber-300' : 'opacity-60'">{{ ageOf("four")?.text ?? "" }}</span>
               </span>
-              <span v-else-if="x.key === 'bought'" class="text-[12px] text-[var(--exile-color-text-tertiary)]">値段は上の 3〜4 で入れた物</span>
+              <span v-else-if="x.key === 'bought' || x.key === 'rare'" class="text-[12px] text-[var(--exile-color-text-tertiary)]">値段は上の 3〜4 で入れた物</span>
               <span v-else-if="x.key === 'done'" class="flex flex-wrap items-center gap-1.5 text-[11px]">
                 <PriceInput v-model="doneDivine" base="exalted" unit-key="sim.done" placeholder="値段" />
                 <button type="button" class="inline-flex items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline max-md:min-h-11" title="狙いの MOD が全部付いた物を取引所で探す (普通・固定済み・冒涜のどれでも。開くだけ)" @click="searchDone">取引所で探す<Icon name="external" class="size-3.5" /></button>
