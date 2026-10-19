@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.585",
+  "date": "2026-10-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧のタグを色付きの札にし、入らない時は折り返して全部見えるようにしました (長い MOD でタグが消えて見えていたのを直しました)",
+    "en": "Mod list tags are now colored badges and wrap so every tag is visible (long mods no longer hide their tags)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "「付ける」の小窓の外を押した時に、下の MOD 一覧まで押されてたたまれていたのを直しました (外を押すと小窓を閉じるだけに)",
+    "en": "Clicking outside the “Add” popup no longer also clicks the mod list underneath (it just closes the popup)"
+   }
+  ]
+ },
+ {
   "v": "0.1.584",
   "date": "2026-10-19",
   "items": [
@@ -606,24 +624,6 @@
     "area": "",
     "text": "耐性のフラックス・アルダーのルーンで、エッセンスで付けた MOD やベース専用の MOD も普通の MOD と同じように変わるように (前は変わりませんでした)",
     "en": "Resistance Flux and Aldur runes now also convert Essence-made mods and base-specific mods, the same way as regular mods (previously they stayed unchanged)"
-   }
-  ]
- },
- {
-  "v": "0.1.545",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "深淵の王の印がある時に骨を打つと印と入れ替わるので、左右のネクロマンシーのお告げは使わないように (減りません)",
-    "en": "With a Mark of the Abyssal Lord on the item, a bone always replaces the Mark, so Sinistral / Dextral Necromancy omens are no longer used (and not consumed)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "耐性のフラックスのカードの説明を今の動き (ゲームの変換表のとおり、表に無い MOD は変わらない) に",
-    "en": "Updated the Resistance Flux card to describe the current behaviour (converted by the game's conversion table)"
    }
   ]
  }

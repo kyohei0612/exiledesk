@@ -1,4 +1,8 @@
 {
+  "0.1.585": [
+    "Mod list tags are now colored badges and wrap so every tag is visible (long mods no longer hide their tags)",
+    "Clicking outside the “Add” popup no longer also clicks the mod list underneath (it just closes the popup)"
+  ],
   "0.1.584": [
     "Opening a mod’s tier table now scrolls so the whole table is visible (mod list and target picker)"
   ],
