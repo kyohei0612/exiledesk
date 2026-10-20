@@ -39,7 +39,19 @@ const props = defineProps<{ /** ① で選んでいる間 (段・×・付け方�
 const s = craftStage;
 const methodPop = ref<InstanceType<typeof SimMethodPop> | null>(null);
 /** カオススパムは片側だけ (反対側にあれば選べない) */
-const chaosOff = (host: string) => methodsOff(s.data.value, s.simTargets.value, host);
+/**
+ * ▾ で選べない付け方を組の全員分で (前は組の 1 つ目だけ見ていて、両側にまたがるフラクチャー候補の組をカオススパムに替えると両側にできた。
+ * 2026-10-21 モンキーチェック)。一緒に替わる組の仲間は「ほかの狙い」に数えない。両側にまたがる組はカオススパム・増強スパムにできない (片側だけの決まり)
+ */
+function planOff(g: { kind: string; host: string; hosts?: string[] }): ReturnType<typeof methodsOff> {
+  const list = s.simTargets.value;
+  const ids = g.kind === "fracture" ? list.filter((t) => t.method === "fracture").map((t) => t.modId) : g.hosts ?? [g.host];
+  const off: ReturnType<typeof methodsOff> = {};
+  for (const id of ids) for (const [k, v] of Object.entries(methodsOff(s.data.value, list.filter((t) => t.modId === id || !ids.includes(t.modId)), id))) off[k as keyof typeof off] ??= v;
+  const sides = new Set(list.filter((t) => ids.includes(t.modId)).flatMap((t) => [t, ...(t.alts ?? [])]).map((x) => s.data.value?.mods.get(x.modId)?.type === "suffix"));
+  if (sides.size > 1) { off.chaos ??= "両側にまたがる組はカオススパムにできない (片側だけ)"; off.augment ??= "両側にまたがる組は増強スパムにできない (側ごとに 1 つ)"; }
+  return off;
+}
 
 type Kind = "fracture" | "normal" | "desecrated" | "essence" | "perfect_essence";
 
@@ -306,10 +318,10 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
         <!-- 付け方は押して選ぶ札を MOD の行のすぐ下に (2026-10-18 オーナー「MOD 選んだら付け方選べるように、高貴ガチャかカオススパムか冒涜・フラクチャー等」。前は 10px のプルダウンで気付けなかった) -->
         <span v-else-if="props.plans && plansOf(g.host).length > 1" data-plan-pick class="flex basis-full flex-wrap items-center gap-1 pl-[1.375rem]" title="この MOD の付け方。打ち方の手で狙う時の目安 (後で変えられる)">
           <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">付け方</span>
-          <button v-for="p in plansOf(g.host)" :key="p" type="button" class="rounded border px-1.5 py-px text-[12px] transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="planOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="planOf(g) === p" :disabled="planOf(g) !== p && !!chaosOff(g.host)[p]" :title="chaosOff(g.host)[p] ?? (p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host) ? 'ほかのフラクチャー予定と違う側 (非推奨)' : undefined)" @click="setPlan(g, p)">{{ PLAN_JA[p] }}<span v-if="p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host)" class="ml-0.5 opacity-70">*</span></button>
+          <button v-for="p in plansOf(g.host)" :key="p" type="button" class="rounded border px-1.5 py-px text-[12px] transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="planOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="planOf(g) === p" :disabled="planOf(g) !== p && !!planOff(g)[p]" :title="planOff(g)[p] ?? (p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host) ? 'ほかのフラクチャー予定と違う側 (非推奨)' : undefined)" @click="setPlan(g, p)">{{ PLAN_JA[p] }}<span v-if="p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host)" class="ml-0.5 opacity-70">*</span></button>
         </span>
         <!-- 選んでいる間は印を押すと付け方を変えられる (足した時と同じポップアップ。2026-10-18 オーナー「決めた奴でも途中で変えれるように」) -->
-        <button v-else-if="props.editable && plansOf(g.host).length > 1" type="button" data-plan-change class="shrink-0 rounded border px-1 text-[11px] hover:bg-white/10 max-md:min-h-9 max-md:px-2" :class="PLAN_CLS[planOf(g)]" title="押すと付け方を変える" @click="methodPop?.ask($event.currentTarget as Element, plansOf(g.host), (p) => setPlan(g, p), chaosOff(g.host))">{{ PLAN_JA[planOf(g)] }} ▾</button>
+        <button v-else-if="props.editable && plansOf(g.host).length > 1" type="button" data-plan-change class="shrink-0 rounded border px-1 text-[11px] hover:bg-white/10 max-md:min-h-9 max-md:px-2" :class="PLAN_CLS[planOf(g)]" title="押すと付け方を変える" @click="methodPop?.ask($event.currentTarget as Element, plansOf(g.host), (p) => setPlan(g, p), planOff(g))">{{ PLAN_JA[planOf(g)] }} ▾</button>
         <span v-else class="shrink-0 rounded border px-1 text-[11px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「この段に戻る」)'">{{ PLAN_JA[planOf(g)] }}</span>
       </div>
     </div>

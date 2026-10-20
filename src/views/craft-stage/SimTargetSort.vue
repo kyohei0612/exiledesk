@@ -27,6 +27,14 @@ function nameOf(m: { modId: string; minTierIndex: number }): string {
 /** 全部付ける (= まとめない) か */
 const all = (b: SortBucket): boolean => b.need >= b.members.length;
 function set(b: SortBucket, n: number): void { s.simTargets.value = setAnyOf(s.simTargets.value, b, n); }
+/**
+ * 「この中のどれか」を押した時の初めの数: その側の空いている枠に収まる一番大きい数 (候補 − 1 まで、最低 1)。
+ * 前は候補 − 1 で、サフィの枠 3 に冒涜の候補 6 つだと「どれか 5 つ」になり、− を何回も押さないと進めなかった (2026-10-21 モンキーチェック)
+ */
+function anyOf(b: SortBucket): void {
+  const free = limits.value[b.side] - (use.value[b.side] - b.need);
+  set(b, Math.max(1, Math.min(b.members.length - 1, free)));
+}
 </script>
 
 <template>
@@ -42,7 +50,7 @@ function set(b: SortBucket, n: number): void { s.simTargets.value = setAnyOf(s.s
       <span class="min-w-0 flex-1 truncate text-[#c8c8ff]" :title="b.members.map(nameOf).join('\n')">{{ b.members.map(nameOf).join(" / ") }}</span>
       <span class="flex shrink-0 items-center gap-1">
         <button type="button" class="g-tab !min-h-[26px] !px-2 !text-[11px] max-md:!min-h-10" :class="all(b) ? 'on' : ''" @click="set(b, b.members.length)">{{ tr(`全部 (${b.members.length} つ)`, `All (${b.members.length})`) }}</button>
-        <button type="button" class="g-tab !min-h-[26px] !px-2 !text-[11px] max-md:!min-h-10" :class="all(b) ? '' : 'on'" @click="all(b) && set(b, b.members.length - 1)">{{ tr("この中のどれか", "Any of these:") }}</button>
+        <button type="button" class="g-tab !min-h-[26px] !px-2 !text-[11px] max-md:!min-h-10" :class="all(b) ? '' : 'on'" @click="all(b) && anyOf(b)">{{ tr("この中のどれか", "Any of these:") }}</button>
         <template v-if="!all(b)">
           <button type="button" class="g-plain grid size-6 place-items-center rounded border border-amber-400/50 bg-black/40 font-sans text-[15px] font-bold leading-none text-amber-100 hover:bg-amber-500/15 disabled:opacity-30 max-md:size-10" :disabled="b.need <= 1" :aria-label="tr('1 つ減らす', 'One fewer')" @click="set(b, b.need - 1)">−</button>
           <b class="w-4 text-center tabular-nums text-amber-100">{{ b.need }}</b>
