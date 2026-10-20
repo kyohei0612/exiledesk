@@ -2,14 +2,12 @@
  * use-sim-auto-order.ts — ④ の「おすすめの順番を出す」(SimAutoOrder.vue) の状態 (シミュ部長、2026-10-20)。
  * 押した時だけ計算 (オーナー 10-20)、出た順に表へ、止める、② や始め方を直したら表を消す (古い数字を出さない)、
  * 「この順にする」= s.simOrder を差し替え (1 つ戻す・Ctrl+Z で戻る。use-sim-steps の Snap に順番を入れた)。
- * 候補・ワーカーは services/simulator/auto/auto-order.ts、1 つの順番の値は解析君の solveOrder。
- * 解析君の build が「まだ作っている途中」の間だけ仮の解き手 (auto-solve-stub.ts) で動かし、画面に「仮の数字」と出す
+ * 候補・ワーカーは services/simulator/auto/auto-order.ts、1 つの順番の値は解析君の solveOrder
  */
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { runeEnForId } from "../../services/simulator/pattern";
 import { orderCandidates, runAutoOrder, type AutoRow, type OrderInput } from "../../services/simulator/auto/auto-order";
 import { buildAutoModel } from "../../services/simulator/auto/auto-solve";
-import { buildStub, NOT_READY_JA } from "../../services/simulator/auto/auto-solve-stub";
 import type { QuizSimIn } from "../../services/simulator/quiz-build";
 import { priceOf } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";
@@ -28,8 +26,6 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
   const error = ref<string | null>(null);
   /** 出せない時の理由 (押した後) */
   const unsupported = ref<string | null>(null);
-  /** 仮の解き手で出した数字 (解析君の計算がまだの間) */
-  const stub = ref(false);
   let job: { stop: () => void } | null = null;
 
   /** ④ の今の状態から候補を作る材料 */
@@ -61,7 +57,7 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
     busy.value = false;
     step.value = null;
   }
-  function clear(): void { stop(); rows.value = []; error.value = null; unsupported.value = null; stub.value = false; }
+  function clear(): void { stop(); rows.value = []; error.value = null; unsupported.value = null; }
 
   function start(): void {
     clear();
@@ -69,12 +65,9 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
     const sim = quizBase();
     if (!sim) return;
     const built = buildAutoModel({ sim, price: priceOf });
-    const notReady = !built.ok && built.reason.ja === NOT_READY_JA;
-    if (!built.ok && !notReady) { unsupported.value = tr(built.reason.ja, built.reason.en); return; }
-    stub.value = notReady;
-    const model = built.ok ? built.model : buildStub(inp.keys.filter((k) => k.startsWith("mod:") || k.startsWith("rest:")), sim.startPrice, inp.redo);
+    if (!built.ok) { unsupported.value = tr(built.reason.ja, built.reason.en); return; }
     busy.value = true;
-    job = runAutoOrder(model, orderCandidates(inp), inp.keys, {
+    job = runAutoOrder(built.model, orderCandidates(inp), inp.keys, {
       step: (done, total) => { step.value = { done, total }; },
       row: (r) => { rows.value = [...rows.value, r].sort((a, b) => a.perFinish - b.perFinish); },
       done: () => { busy.value = false; step.value = null; job = null; },
@@ -104,5 +97,5 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
   watch(() => [targetsSig(), s.simStart.value, s.base.value, quizBase()?.startPrice], clear);
   onBeforeUnmount(stop);
 
-  return { rows, shown, busy, step, error, unsupported, stub, start, stop, use };
+  return { rows, shown, busy, step, error, unsupported, start, stop, use };
 }

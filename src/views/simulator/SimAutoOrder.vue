@@ -25,7 +25,6 @@ const line = (order: string[]): string => order.map(props.label).join(" → ");
       <template v-if="ao.rows.value.length || ao.busy.value">
         <b class="text-[12px] text-[var(--exile-color-text-title)]">{{ tr("おすすめの順番", "Suggested orders") }}</b>
         <span class="opacity-60">{{ tr("(最善の打ち方で打った時の目安)", "(estimate if every step is played optimally)") }}</span>
-        <span v-if="ao.stub.value" class="rounded-sm bg-rose-500/25 px-1 text-[10px] font-bold text-rose-100" :title="tr('計算 (解析君の動的計画法) がまだなので、並びと見た目を確かめるための仮の数字', 'The real calculation is not ready yet; these numbers only check the layout')">{{ tr("仮の数字", "Placeholder numbers") }}</span>
       </template>
       <button v-else type="button" data-auto-order-start class="g-btn sm max-md:min-h-10" @click="ao.start">{{ tr("おすすめの順番を出す", "Suggest an order") }}</button>
       <HelpTip :width="320">

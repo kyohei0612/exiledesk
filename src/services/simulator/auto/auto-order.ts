@@ -6,10 +6,9 @@
  *   - 計算は「おすすめを出す」を押した時だけ
  * 自動で決めるのは mod: と rest: の行の並びだけ。増強スパムの狙いは一番上、要るルーンはその MOD のすぐ前
  * (アストリッドの創造性は 2 つ目のエッセンスのすぐ前)、自分で足したルーンはすぐ後ろの行に付いて動く。
- * 1 つの順番の値は解析君の solveOrder (auto-solve.ts。まだの間は仮の auto-solve-stub.ts)
+ * 1 つの順番の値は解析君の solveOrder (auto-solve.ts)
  */
 import type { AutoModel, OrderResult } from "./auto-solve";
-import type { StubModel } from "./auto-solve-stub";
 import type { AutoJob, AutoMsg } from "./auto-order.worker";
 
 export interface OrderInput {
@@ -107,7 +106,7 @@ export const MC_RUNS = 500;
  * ワーカーで計算する。値だけで全部 → 上位 MC_TOP と今の順番を mc で回し、出た順に onRow。止めるとワーカーごと捨てる。
  * onStep: 値だけの数 (done / total)
  */
-export function runAutoOrder(model: AutoModel | StubModel, cands: string[][], current: string[], on: { step: (done: number, total: number) => void; row: (r: AutoRow) => void; done: () => void; error: (m: string) => void }): { stop: () => void } {
+export function runAutoOrder(model: AutoModel, cands: string[][], current: string[], on: { step: (done: number, total: number) => void; row: (r: AutoRow) => void; done: () => void; error: (m: string) => void }): { stop: () => void } {
   let w: Worker | null = null;
   const stop = (): void => { w?.terminate(); w = null; };
   try {
