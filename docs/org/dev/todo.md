@@ -5,7 +5,7 @@
 |---|---|---|
 | ブラック | local_3b3c55ab-5df3-437a-855a-5e75e2c1fa64 | 司令塔 |
 | 開発部長 | (このセッション) | まとめ役 |
-| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J1b (貼り付けの読み 4 件) → J2 |
+| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J1b (コラプトの MOD 一覧) → J2 |
 | シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S1d |
 | 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K3 (範囲 A、auto-model.ts) |
 | 解析君 (一時) | local_d25d3065-72c5-43e4-a27b-6a97b6bbd9de | やふやふ手袋・見本の靴。終わったらブラックが閉じる |
@@ -17,7 +17,7 @@
 | 解析君 K3 | src/services/simulator/auto/auto-model.ts |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1d | src/views/craft-stage/CraftStage.vue (1 か所)・StageBasePage.vue |
-| ジン部長 J1b | src/services/craft-stage/item-text.ts (+ item-text-types.ts) |
+| ジン部長 J1b | src/services/craft-stage/item-text.ts (+ item-text-types.ts)・engine.ts・コラプトの表の新しい置き場 (始める時に 1 行もらう) |
 | ジン部長 J2 | tests/golden/ (探すのは別の worktree) |
 
 ## 順番 (2026-10-20 夜、オーナー OK 済みの物)
@@ -45,7 +45,7 @@
 ### ジン部長
 - J1 済み (70c53ff0・a94d7aaf): 点検 2 は今の読みで読めない行 0 (コード直し無し)、品質の最大値 +20% は poe2db でブリーチのエッセンスのプレ (正しい)、family の直の比べを mod-rules へ。残り: currency-spec-golden が 10-17 の控えからずれている元探し (emulator/todo.md)。元の中身: emulator/todo.md の family の直の比べ (golden を回す) + 点検 2 の読み (見本 3 の暗黙・「ダメージが56%増加する」「ゴールド 10%」) + 見本 3・8 の「品質の最大値 +20%」(エッセンスの MOD か読みか)。parseItemText の形を変える時は先に開発部長へ (S1 が読んでいる)。
 
-- J1b 貼り付けの読み 4 件 (本番の前に、snaps/notes.md の ②③④⑥、J2 より先): 見本 3 のダメージ 56%・ゴールド 10% が「暗黙?」、見本 3 の冷気 36〜55 が T1 の範囲外なのに T1、見本 5 のスピリット +30 が「暗黙?」、グレネードの行が読めない。
+- J1b コラプトの MOD 一覧をエンジン部が持つ (オーナー 10-20): ヴァールのコラプト (暗黙の付け替え・値の変化・二重コラプト) で付く MOD・値の幅を poe2db から、エンジンの行と同じ 1 か所に持ち入口から引ける形に。parseItemText はコラプトのアイテムの時に照らして、付いた / 変わった行に印 (poe2db に無い物は「不明」)。snaps/notes.md の ②③④ (と ⑥) をこれで直す。返す形が決まったらシミュ部長の S1e に知らせる。J2 より先。
 - J2 currency-spec-golden の控えのずれの元探し (tests/golden/)。
 - J3 (S1c の表の後) ③ が呼ぶスパムの計算をエンジンの入口に出す。
 
