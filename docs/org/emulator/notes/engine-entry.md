@@ -68,6 +68,13 @@ interface ItemTextResult {
 - 打って数える (既定 300 人)。確かめ (台本、scratchpad の使い捨て): 鉄の指輪 ilvl 82・ライフ上から 3 段で、増強・高貴 (無印・上級) は raceOne 300 人と使った物の数が同じ、カオスは始めの 1 MOD の違いの分だけ (55.4 / 54.1、25.7 / 27.0)。1 回 60〜190ms。
 - 解析君の頼み (K4) で `occupiedFamiliesOf`・`ANCIENT_BONE_FLOOR`・`REVEAL_SPEC` も並べた。
 
+## MOD の値の上乗せと素の値 (2026-10-20 J8、オーナー「MOD の数字は上乗せを全部抜いた素の値と段で出す」。boosts.ts)
+- `boostsOf(item)` → アイテムにある上乗せ `ItemBoost[]` (`{ kind: "quality" | "sideEffect" | "sanctify"; pct; tag?; side? }`)。
+- `modBoostsOf(item, mod, data?)` → その MOD に掛かる上乗せ `ModBoost[]`。`baseValueOf(item, mod, data?)` → `{ base (素の値), shown (画面に出ている盛った値), boosts }`。
+- `unboost(shown, pct)` → 盛った値から素の値 (切り捨ての表示なので、整数は同じ表示になる一番小さい整数)。
+- 表示 = floor(素 × 聖別の倍率 × (1 + (品質 + 反対側の効果) / 100))。画面・シミュは自前で割り戻さずここを呼ぶ。
+- parseItemText の `mods[].values` は素の値、`shownValues` は貼り付けのまま、`boosts` は割り戻した上乗せ (`ItemTextBoost`、品質で盛られた印を兼ねる)。
+
 ## ほかに並べた物 (グループ)
 - 形: StageItem・StageMod・StageSide・PlayedStep・CraftStagePlan・PatchData・ItemBase・Mod・Force・Candidate・PobBlock
 - 読む: parseItemText (上)

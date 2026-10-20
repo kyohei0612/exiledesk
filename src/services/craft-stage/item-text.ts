@@ -20,9 +20,10 @@ import { catalystBoosts } from "./stage-core";
 import { RUNES, runeCategoryOf, runeEffectFor } from "./stage-runes";
 import { matchCorruption } from "../mods/corruption";
 import { anointOfLine } from "../mods/anoint";
+import { unboost } from "./boosts";
 import type { StageItem } from "./types";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
-import type { ItemTextCorruption, ItemTextImplicit, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
+import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
 
 const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   noBase: { ja: "ベースが分からない (MOD の置き場が決まらない)", en: "Unknown base type (the mod pool cannot be chosen)" },
@@ -161,7 +162,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
   const explicit = splitImplicits(data, out, body);
   readMods(data, out, explicit);
   for (const u of unrevealed) {
-    out.mods.push({ text: u.line, modId: null, source: "desecrated", side: u.side, sideFrom: "paste", tier: null, values: [], fractured: false, desecrated: true, crafted: false, unrevealed: true });
+    out.mods.push({ text: u.line, modId: null, source: "desecrated", side: u.side, sideFrom: "paste", tier: null, values: [], shownValues: [], boosts: [], fractured: false, desecrated: true, crafted: false, unrevealed: true });
   }
   for (const m of out.mods) if (m.side) out.count[m.side]++;
   return out;
@@ -277,12 +278,19 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   const sideEffect = (side: string): number => picked
     .filter((p) => p.mod.type !== side && p.mod.id.endsWith(side === "prefix" ? "PrefixEffect" : "SuffixEffect"))
     .reduce((a, p) => a + (p.b.values[0] ?? 0), 0);
-  const tierWith = (m: Mod, b: Body): { index: number; fits: boolean } => {
+  /** その MOD に掛かっている上乗せ (品質の種類・反対側の効果、boosts.ts と同じ決まり) */
+  const boostsFor = (m: Mod, b: Body): ItemTextBoost[] => {
     const side = m.type === "prefix" || m.type === "suffix" ? m.type : (b.side ?? null);
-    const q = out.quality && out.quality.tag && catalystBoosts(stub, { modId: m.id, tags: m.tags }, out.quality.tag, data) ? out.quality.value : 0;
-    // エッセンスの段はエッセンスの強さで決まり、アイテムレベルの縛りは無い (パーフェクトのエッセンスの段も同じ)
-    return tierOf(m, b.values, q + (side ? sideEffect(side) : 0), /essence/.test(String(m.source)) ? Infinity : level);
+    const out2: ItemTextBoost[] = [];
+    if (out.quality && out.quality.tag && catalystBoosts(stub, { modId: m.id, tags: m.tags }, out.quality.tag, data)) out2.push({ kind: "quality", pct: out.quality.value });
+    const se = side ? sideEffect(side) : 0;
+    if (se > 0) out2.push({ kind: "sideEffect", pct: se });
+    return out2;
   };
+  const pctOf = (bs: readonly ItemTextBoost[]): number => bs.reduce((a, x) => a + x.pct, 0);
+  const tierWith = (m: Mod, b: Body): { index: number; fits: boolean } =>
+    // エッセンスの段はエッセンスの強さで決まり、アイテムレベルの縛りは無い (パーフェクトのエッセンスの段も同じ)
+    tierOf(m, b.values, pctOf(boostsFor(m, b)), /essence/.test(String(m.source)) ? Infinity : level);
   for (const pk of picked) {
     const { b, fixed } = pk;
     let mod = pk.mod;
@@ -297,10 +305,11 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     }
     const side = mod.type === "prefix" || mod.type === "suffix" ? mod.type : (b.side ?? null);
     const { index, fits } = t;
+    const boosts = fixed ? [] : boostsFor(mod, b);
     out.mods.push({
       text: b.text, modId: mod.id, source: String(mod.source ?? "normal"), side, sideFrom: b.side ? "paste" : "engine",
       tier: { index, of: mod.tiers.length, label: `T${mod.tiers.length - index}`, name: String(mod.tiers[index]?.name ?? ""), fits },
-      values: b.values,
+      values: unboost(b.values, pctOf(boosts)), shownValues: [...b.values], boosts,
       fractured: b.note === "fractured", desecrated: b.note === "desecrated" || mod.source === "desecrated", crafted: b.note === "crafted",
       unrevealed: false,
       ...(out.corrupted > 0 && !fits ? { corruption: { status: "unknown" as const } } : {}),

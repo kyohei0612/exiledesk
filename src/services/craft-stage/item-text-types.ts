@@ -30,6 +30,9 @@ export interface ItemTextCorruption {
   fits?: boolean;
 }
 
+/** MOD の値に掛かっていた上乗せ (boosts.ts の ModBoost のうち貼り付けで分かる物)。pct = 足されていた % */
+export interface ItemTextBoost { kind: "quality" | "sideEffect"; pct: number }
+
 /** 暗黙側の 1 行 (MOD の数に入れない) */
 export interface ItemTextImplicit {
   text: string;
@@ -64,8 +67,15 @@ export interface ItemTextMod {
    * 品質の種類 (アタックモッド等) で盛られた値は割り戻してから段を引く。
    */
   tier: { index: number; of: number; label: string; name: string; fits: boolean } | null;
-  /** 貼り付けの値 (盛られたまま) */
+  /**
+   * 素の値 (上乗せを全部抜いた値、2026-10-20 J8 オーナー「MOD の数字は素の値と段で出す」)。品質・反対側の効果を割り戻した物
+   * (切り捨ての表示なので、整数は同じ表示になる一番小さい整数)。上乗せが無ければ貼り付けの値と同じ
+   */
   values: number[];
+  /** 貼り付けのままの値 (盛られた値) */
+  shownValues: number[];
+  /** 割り戻した上乗せ (品質で盛られた印を兼ねる)。無ければ空 */
+  boosts: ItemTextBoost[];
   fractured: boolean;
   desecrated: boolean;
   crafted: boolean;

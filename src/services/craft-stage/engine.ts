@@ -71,8 +71,12 @@ export { isEmotion } from "./apply-emotion";
 export { isShard } from "./apply-act";
 export { isGem } from "./stage-bases";
 
+// MOD の値の上乗せ (品質・側の効果・聖別) の一覧と割り戻し (J8、MOD の数字は素の値で出す。画面はこれを呼ぶだけ)
+export type { BoostKind, ModBoost, ItemBoost } from "./boosts";
+export { boostsOf, modBoostsOf, baseValueOf, unboost } from "./boosts";
+
 // 貼り付けたアイテムの文を読む (トレード・poe.ninja・ゲームの Ctrl+C / Ctrl+Alt+C、日英。形は item-text-types.ts)
-export type { ItemTextResult, ItemTextMod, ItemTextImplicit, ItemTextSkip, ItemTextSkipCode, ItemTextSource, ItemTextWords, ItemTextCorruption } from "./item-text-types";
+export type { ItemTextResult, ItemTextMod, ItemTextImplicit, ItemTextSkip, ItemTextSkipCode, ItemTextSource, ItemTextWords, ItemTextCorruption, ItemTextBoost } from "./item-text-types";
 export { parseItemText } from "./item-text";
 // コラプト (ヴァールのオーブ) で付く MOD の表 (poe2db の部位のページ。enchant = エンチャント、upgrade = 強まったコラプトの行)
 export type { CorruptionRow } from "../mods/corruption";
