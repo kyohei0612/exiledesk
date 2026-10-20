@@ -24,7 +24,7 @@ export type Stage = "mods" | "white" | "start" | "order";
  * 狙い (MOD・段・あるいは・どれか N つ・フラクチャー・付け方・順番)・工程の決めた / 戻した・ソケット・白ベースの値段を、変わるたびに前の形を積む
  */
 /** patterns: やり直しで空にする前のパターン (空にした時だけ入れる。「1 つ戻す」でパターンも戻す) */
-export type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; startDone: boolean; orderDone: boolean; sockets: number | null; white: number | null; patterns?: string };
+export type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; startDone: boolean; orderDone: boolean; sockets: number | null; white: number | null; patterns?: string; order?: string };
 
 export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   const { fracDone, sortDone, hasSteps, itemDivine, keptKey, modsDone, num, orderDone, patternDone, recipeOut, restBases, restCost,
@@ -249,7 +249,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     startDone.value = true;
     simStep.value = "order";
   }
-  const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value });
+  const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value, order: JSON.stringify(s.simOrder.value) });
   const undoStack = ref<Snap[]>([]);
   let lastSnap = snapNow();
   watch(() => JSON.stringify(snapNow()), () => {
@@ -274,6 +274,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     s.simTargets.value = JSON.parse(prev.targets);
     whiteOk.value = prev.whiteOk; modsDone.value = prev.modsDone; fracDone.value = prev.fracDone; startDone.value = prev.startDone ?? false; orderDone.value = prev.orderDone;
     sockets.value = prev.sockets; whiteDivine.value = prev.white;
+    if (prev.order) s.simOrder.value = JSON.parse(prev.order) as string[];
     if (prev.patterns) s.simPatterns.value = JSON.parse(prev.patterns) as Pattern[];
     void nextTick(() => { lastSnap = snapNow(); restoring.v = false; });
   }

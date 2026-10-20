@@ -42,6 +42,8 @@ import { useSimRun } from "./use-sim-run";
 import { useSimRecipes } from "./use-sim-recipes";
 import { useSimSteps } from "./use-sim-steps";
 import { useSimResult } from "./use-sim-result";
+import SimAutoOrder from "./SimAutoOrder.vue";
+import { useSimAutoOrder } from "./use-sim-auto-order";
 
 const tg = useSimTargets();
 const sr = useSimSearch(tg);
@@ -62,6 +64,9 @@ const grantPending = computed(() => (htcBaseInfo()[s.base.value]?.grants?.length
 // 付与スキルを選んで始め方が出たら、3 の枠の下の線 + 24px まで送る (段が進んだ時と同じ。2026-10-18 オーナー)
 watch(grantPending, (p, was) => { if (!p && was) void nextTick(() => requestAnimationFrame(() => { const el = panelEl.value?.querySelector("[data-sim-cur]"); if (el) revealBottom(el); })); });
 const { startKinds, startAge, startCost, keepText, costNote, keepName, whiteBudget, decideStart, cheapStart, baseRows, chooseStart } = useSimStarts({ ...tg, calc, whiteCosts, whiteDecide });
+/** ④ のおすすめの順番 (押した時だけ計算。2026-10-20) */
+const ao = useSimAutoOrder(tg, () => quizBase.value);
+const orderLabel = (k: string): string => orderRow(k)?.text ?? restOfKey(k)?.text ?? runeJa(k);
 /** ④ のベースの計算の補足: グレーターの道・反対側の狙いの取り方 (白から自作) */
 const baseNotes = computed(() => {
   const c = calc.value, fr = fracMembers.value.map((r) => r.text);
@@ -188,6 +193,7 @@ const stepNotes = computed(() => {
       <div v-if="stepOrder && simStep === 'order'" :data-sim-cur="!orderDone || undefined" :class="!orderDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
         <SimStepHead class="mb-3" :n="4" title="付ける順番" :current="true" help="目安の順番。打ち方で付ける MOD を選ぶ時、この順に並ぶ" />
         <SimBaseCalc v-if="s.simStart.value !== 'item'" :rows="baseRows" :chosen="s.simStart.value" :cheapest="cheapStart" :note="costNote" :calc="calc" :notes="baseNotes" :budget="whiteBudget" :frac="fracMembers" :frac-title="fracTitle" :money="money" :pct="pct" @choose="chooseStart" />
+        <SimAutoOrder v-if="orderKeys.length > 1" :ao="ao" :label="orderLabel" :money="money" :pct="pct" />
         <p v-if="startRunes.size" class="mb-1 text-[11px] opacity-70">始めから差す: <span class="text-amber-100">{{ [...startRunes].map(runeJa).join("・") }}</span> <span class="opacity-60">(狙いの MOD に要る)</span></p>
         <p v-if="!orderKeys.length" class="text-[11px] opacity-50">フラクチャーだけ (付ける物はありません)</p>
         <table v-else class="w-full">
