@@ -1,7 +1,7 @@
 {
  "A src/services/simulator/auto-group.ts": 1,
  "A src/services/simulator/auto/auto-engine.ts": 1,
- "A src/services/simulator/auto/auto-model.ts": 7,
+ "A src/services/simulator/auto/auto-model.ts": 3,
  "A src/services/simulator/auto/auto-order.worker.ts": 1,
  "A src/services/simulator/paste-read.ts": 1,
  "A src/services/simulator/pattern.ts": 5,
