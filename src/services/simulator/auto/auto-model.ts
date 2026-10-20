@@ -23,14 +23,15 @@ const PRICE_KEYS = [
   "OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofSinistralCrystallisation", "OmenofDextralCrystallisation",
   "OmenofSinistralNecromancy", "OmenofDextralNecromancy", "OmenofAbyssalEchoes", "OmenofLight",
 ];
+const ASTRID = "Astrid's Creativity";
 const no = (ja: string, en: string): AutoBuilt => ({ ok: false, reason: { ja, en } });
 
 /** 形と重みを組み立てる。対応していなければ ok: false と理由 */
 export function buildAutoModel(input: AutoInput): AutoBuilt {
   const x = input.sim, d: PatchData = x.data;
   if (x.start !== "fractured") return no("自動の順番はフラクチャー済みから始める時だけ", "Auto order needs a fractured start");
-  // 白からマジックで反対側の狙いと一緒に揃える道 (greater の essKey が null) は始めの形が違うだけなので対応 (K3)。グレーターエッセンスを使う道はまだ
-  if (x.greater?.essKey) return no("グレーターエッセンスの道は自動の順番に未対応", "Greater Essence routes aren't supported yet");
+  // グレーターエッセンスを巻き込む道 (greater、K3・K8): 始めの形が違うだけ (startStates が ⑤ の buildStart と同じ手順でたどる)。
+  // そのエッセンスの MOD の札は始めに付いていて、消えたら付け直せない (マジックにしか打てない) = その形からは作り直し
   if (x.targets.some((t) => t.method === "augment")) return no("増強スパムの狙いは自動の順番に未対応", "Augmentation spam isn't supported yet");
   const { recipe, error } = quizFromSim({ ...x, order: undefined }, null);
   if (error) return no(error, "These targets can't be built");
@@ -48,6 +49,8 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   // ルーン: 狙い (と候補) の MOD に要るルーンは全部始めから差した扱い。始めに無い分は代金を 1 本ごとに足す
   const st = recipe.start;
   const runeAll = [...new Set(goal.flatMap((s) => s.mods).map((m) => d.mods.get(m.modId)?.rune).filter((r): r is string => !!r).map((r) => runeEnForId(r)).filter((r): r is string => !!r))];
+  // エッセンスの MOD はアイテムに 1 つまで、アストリッドの創造性 1 つごとに 1 つ増える (エンジンの craftedLimitOf)。エッセンスの札が 2 つ以上ならその分を差す (K8)
+  for (let i = goal.filter((s) => s.kind === "essence").length - 1; i > 0; i--) runeAll.push(ASTRID);
   const runes0 = new Set(st.runes ?? []);
   if (runeAll.length > (x.sockets ?? st.sockets ?? 0) && runeAll.length) return no("要るルーンがソケットより多い", "More runes needed than sockets");
   const runeCost = runeAll.filter((r) => !runes0.has(r)).reduce((a, r) => a + (x.runePrice?.(r) ?? 0), 0);
@@ -71,7 +74,8 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
       const ess = s.kind === "essence" && mod?.source === "perfect_essence" ? `essence:perfect:${m.modId}` : null;
       return { modId: m.modId, fams: occ(m.modId), ess };
     });
-    if (s.kind === "essence" && members.some((m) => !m.ess)) return no("完璧なエッセンス以外のエッセンスの狙いは未対応", "Only Perfect Essence targets are supported");
+    const fromStart = !!x.greater?.essKey && members.every((m) => x.greater!.essKey!.endsWith(`:${m.modId}`));
+    if (s.kind === "essence" && members.some((m) => !m.ess) && !fromStart) return no("完璧なエッセンス以外のエッセンスの狙いは未対応", "Only Perfect Essence targets are supported");
     if (s.kind === "crafted") return no("クラフト MOD の狙いは未対応", "Crafted targets aren't supported");
     const g = gk(s); if (!gids.has(g)) gids.set(g, gids.size);
     slots.push({ id: s.id, side: sideN(s.side), kind: s.kind, members, group: gids.get(g)!, cap: caps[s.id] ?? 3000 });

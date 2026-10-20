@@ -12,7 +12,7 @@
  *   - 発現 = ⑤ の選び方 (選択なので stepOutcomes の外)
  * 近似 (計算とエンジンのずれ 1 割くらい、メモ optimal-craft-dp):
  *   - 外れが何かは持たない。付いている外れ 1 つごとに、その側の外れの重みから平均 (Σw² ÷ Σw) を引く (系統を塞ぐ分の近似)。狙いと同じ系統の別の MOD は外れに数える (札の系統を塞がない)
- *   - 発現の候補 3 つは置き場から重みで戻しありに引く (同じ系統が 2 つ出ない決まりは見ない)。冒涜専用の数の割合はエンジンと同じ
+ *   - 発現の候補 3 つは置き場から重みで戻しなしに引く (エンジンの drawOffers)。札の候補は引いたら外し、外れは平均の重み (Σw² ÷ Σw) を外す。冒涜専用の数の割合はエンジンと同じ
  *   - 表の代表のアイテムでは外れを代表の MOD で置く (auto-engine.ts)
  */
 import type { AutoModel, Grade, MCand, State } from "./auto-types";
@@ -39,6 +39,27 @@ export class Shape {
   miss = 0;
   constructor(readonly m: AutoModel) { this.K = m.slots.length; this.M = m.slots.map((s) => s.members.length); }
   private jwc = new Map<string, number>();
+  private rbc = new Map<string, [number, number]>();
+  /**
+   * 付いている外れ 1 つが、発現の置き場 (bg = b0 / b4) の外れから塞ぐ重みの平均 [普通, 冒涜専用]。外れは高貴 (a0 の置き場) の付きやすさで付いたとして、
+   * その外れと系統が重なる発現の候補の重みを足す (冒涜専用の同じ系統も塞がれる。K8)
+   */
+  revealBlock(bg: Grade, sd: 0 | 1): [number, number] {
+    const k = bg + sd;
+    let v = this.rbc.get(k);
+    if (!v) {
+      const add = (this.m.pools.a0?.[sd] ?? []).filter((c) => !c.ex && !c.refs.length);
+      const rev = (this.m.pools[bg]?.[sd] ?? []).filter((c) => !c.refs.length);
+      const wa = add.reduce((x, c) => x + c.w, 0);
+      const acc: [number, number] = [0, 0];
+      for (const c of add) {
+        const fs = new Set(c.fams);
+        for (const d of rev) if (d.fams.some((f) => fs.has(f))) acc[d.ex ? 1 : 0] += (c.w / (wa || 1)) * d.w;
+      }
+      v = acc; this.rbc.set(k, v);
+    }
+    return v;
+  }
   /** 付いている外れ 1 つが塞ぐ重みの平均 (外れは付きやすさで付いたので Σw² ÷ Σw、等級・側ごと。狙いの候補でない普通の MOD だけで数える) */
   junkW(g: Grade, sd: 0 | 1): number {
     const k = g + sd;
@@ -206,33 +227,47 @@ function revealOuts(sh: Shape, s: State, echoes: boolean): { out: Outs; pEcho: n
   // 種類: 札の当たり (k, m) と外れ。冒涜専用と普通で分ける
   type Cat = { w: number; k: number; m: number };
   const cats: [Cat[], Cat[]] = [[], []]; // [普通, 冒涜専用]
-  const junk = [0, 0];
+  const junk = [0, 0], junk2 = [0, 0];
   for (const c of pools[side] as MCand[]) {
     if (c.fams.some((f) => bl.has(f))) continue;
     const x = c.ex ? 1 : 0;
     const ref = c.refs.find((r) => s[1 + r.k] === 0);
-    if (ref && ref.hit > 0) { cats[x].push({ w: ref.hit, k: ref.k, m: ref.m }); junk[x]! += ref.low; }
-    else junk[x]! += c.w;
+    if (ref && ref.hit > 0) { cats[x].push({ w: ref.hit, k: ref.k, m: ref.m }); junk[x]! += ref.low; junk2[x]! += ref.low * ref.low; }
+    else { junk[x]! += c.w; junk2[x]! += c.w * c.w; }
   }
+  // 付いている外れが塞ぐ分 (その側の外れの数 × 平均、K8)
+  const rb = sh.revealBlock(d === 2 || d === 4 ? "b4" : "b0", side), nj = s[sh.jx(side)]!;
+  for (const x of [0, 1] as const) { const cut = Math.min(junk[x]!, nj * rb[x]); if (junk[x]! > 0) junk2[x]! *= (junk[x]! - cut) / junk[x]!; junk[x]! -= cut; }
+  // 引いた外れ 1 つが置き場から外れる重みの平均 (付きやすさで引くので Σw² ÷ Σw)
+  const jAvg = [junk[0]! > 0 ? junk2[0]! / junk[0]! : 0, junk[1]! > 0 ? junk2[1]! / junk[1]! : 0];
   const totN = cats[0].reduce((a, c) => a + c.w, 0) + junk[0]!, totX = cats[1].reduce((a, c) => a + c.w, 0) + junk[1]!;
   // 1 組 3 つの中の当たりの分かれ方 (当たりが複数なら等しく 1 つ)
   const once = (): { hit: Map<string, number>; none: number } => {
     const hit = new Map<string, number>(); let none = 0;
     const plans: Array<[number, number]> = totX > 0 ? sh.m.exRates.map((r, i) => [r, i + 1] as [number, number]) : [[1, 0]];
     for (const [pr, nx] of plans) {
-      const walk = (left: number, prob: number, picks: Cat[]): void => {
+      // 戻しなしで引く (エンジンの drawOffers: 引いた物と同じ系統は外す)。札の候補は引いたら外し、外れは平均の重み jAvg を外す
+      const walk = (left: number, prob: number, picks: Cat[], used: ReadonlySet<Cat>, tot: [number, number], j: [number, number]): void => {
         if (!left) {
           if (!picks.length) { none += pr * prob; return; }
           for (const c of picks) { const k = `${c.k}:${c.m}`; hit.set(k, (hit.get(k) ?? 0) + (pr * prob) / picks.length); }
           return;
         }
-        const ex = sh.m.offers - left < nx || totN <= 0;
-        const cs = ex ? cats[1] : cats[0], tot = ex ? totX : totN, j = ex ? junk[1]! : junk[0]!;
-        if (!(tot > 0)) { walk(left - 1, prob, picks); return; }
-        for (const c of cs) walk(left - 1, (prob * c.w) / tot, [...picks, c]);
-        if (j > 0) walk(left - 1, (prob * j) / tot, picks);
+        const x = sh.m.offers - left < nx || tot[0] <= 1e-9 ? 1 : 0;
+        const t = tot[x]!;
+        if (!(t > 1e-9)) { walk(left - 1, prob, picks, used, tot, j); return; }
+        for (const c of cats[x]) {
+          if (used.has(c) || picks.some((q) => q.k === c.k)) continue;
+          const nt: [number, number] = [tot[0], tot[1]]; nt[x] -= c.w;
+          walk(left - 1, (prob * c.w) / t, [...picks, c], new Set([...used, c]), nt, j);
+        }
+        if (j[x]! > 1e-9) {
+          const dw = Math.min(j[x]!, jAvg[x]!), nt: [number, number] = [tot[0], tot[1]], nj: [number, number] = [j[0], j[1]];
+          nt[x] -= dw; nj[x] -= dw;
+          walk(left - 1, (prob * j[x]!) / t, picks, used, nt, nj);
+        }
       };
-      walk(sh.m.offers, 1, []);
+      walk(sh.m.offers, 1, [], new Set(), [totN, totX], [junk[0]!, junk[1]!]);
     }
     return { hit, none };
   };

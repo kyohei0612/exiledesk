@@ -7,3 +7,5 @@ export { situationOf, ruleFor, applyQuizAction, routeDone } from "../../src/serv
 export { startFrom, mulberry32 } from "../../src/services/craft-stage/engine";
 export { Shape, actionsOf } from "../../src/services/simulator/auto/auto-actions";
 export { stepOutcomes, candidates } from "../../src/services/craft-stage/engine";
+export { applyCurrency } from "../../src/services/craft-stage/engine";
+export { revealOffers } from "../../src/services/craft-stage/engine";

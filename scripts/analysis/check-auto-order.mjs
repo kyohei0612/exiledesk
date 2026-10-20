@@ -1,7 +1,7 @@
 /**
  * check-auto-order.mjs — ④ の「順番だけ自動」の計算 (src/services/simulator/auto/) を、⑤ の回し方 (エンジン) と並べる (解析君、2026-10-20)
  *
- *   node scripts/analysis/check-auto-order.mjs [gloves|boots|white|split|all] [N=1000] [TOP=3]
+ *   node scripts/analysis/check-auto-order.mjs [gloves|boots|white|split|greater|all] [N=1000] [TOP=3]
  *
  * 見本: やふやふ手袋 (マナ T1 固定、スピード・ES T3・投射物 +2・会心倍率 T3・攻撃速度 T3、前の試し plan5 の TIER=3 と同じ完成品)、
  *       靴 (移動速度を固定、耐性 T1 × 2・スピリット (完璧なエッセンス)・ドッジロール (冒涜))。
@@ -27,7 +27,7 @@ const PRICES = {
   OmenofWhittling: 9467.96, OmenofSinistralAnnulment: 15105.1, OmenofDextralAnnulment: 9748.28, OmenofSinistralCrystallisation: 282.44, OmenofDextralCrystallisation: 269.06,
   desecrate: 131.981, desecrate_ancient: 6757.19, OmenofAbyssalEchoes: 51.247, OmenofLight: 6667.94, OmenofSinistralNecromancy: 3.219, OmenofDextralNecromancy: 5.116,
   fracture: 8166.06, regal: 1.387, reveal: 0, divine: 718.434,
-  "rune:Kolr's Hunt": 838.48, "rune:Uhtred's Sidereus": 838.48,
+  "rune:Kolr's Hunt": 838.48, "rune:Uhtred's Sidereus": 838.48, "rune:Astrid's Creativity": 9.7 * 718.434,
   "essence:perfect:Gloves_int/PerfectEssence_CriticalStrikeMultiplier": 998.84, "essence:perfect:Gloves_int/PerfectEssence_SoulCore": 1219.68,
   "essence:perfect:Boots_str/PerfectEssence_BaseSpirit": 1219.68,
 };
@@ -82,6 +82,20 @@ function glovesSplit() {
   return { ...g, name: "手袋 (ES か攻撃速度のどれか)", sim: { ...g.sim, targets } };
 }
 
+/** グレーターエッセンスの道 (K8、範囲 C): 動画の靴 S-7YHuq3-P4 (quiz-samples の boots-chrono) の形。移動速度 T3 以上を固定・耐性 T1 を残す MOD・
+ * 絢爛 (グレーターのレアリティ) でレアに → 壁 → 固定、⑤ でドッジ (冒涜)・スピリット (完璧なエッセンス) */
+function bootsGreater() {
+  const B = (s) => `Boots_str/${s}`;
+  const MS = B("Rune_chronomancy_MovementVelocity"), DODGE = B("Rune_chronomancy_DodgeRoll"), SPIRIT = B("PerfectEssence_BaseSpirit"), RAR = B("Essence_ItemFoundRarityIncrease");
+  const RES = ["LightningResistance", "FireResistance", "ColdResistance"].map(B);
+  const rarTier = data.mods.get(RAR).tiers.findIndex((t) => /^Greater/.test(String(t.name ?? "")));
+  const res = { modId: RES[0], minTierIndex: top(RES[0]), method: "chaos", alts: RES.slice(1).map((id) => ({ modId: id, minTierIndex: top(id) })) };
+  const rar = { modId: RAR, minTierIndex: Math.max(0, rarTier), method: "essence" };
+  const targets = [{ modId: MS, minTierIndex: 2, method: "fracture" }, res, rar, { modId: SPIRIT, minTierIndex: 0, method: "essence" }, { modId: DODGE, minTierIndex: 0, method: "desecrate" }];
+  const label = { [`mod:${RES[0]}`]: "耐性T1", [`mod:${SPIRIT}`]: "スピリット", [`mod:${DODGE}`]: "ドッジロール", [`mod:${RAR}`]: "絢爛" };
+  return { name: "靴 (グレーターの道、絢爛)", sim: { data, base: "Vaal Greaves", itemLevel: 82, targets, start: "fractured", startPrice: Number(process.env.BOOTS_R ?? 30) * DIV, sockets: 2, runePrice, greater: { essKey: `essence:greater:${RAR}`, keep: res } }, label };
+}
+
 const perms = (xs) => (xs.length <= 1 ? [xs] : xs.flatMap((x, i) => perms([...xs.slice(0, i), ...xs.slice(i + 1)]).map((r) => [x, ...r])));
 const div = (v) => (v / DIV).toFixed(1);
 const pct = (a, b) => (b ? `${(((a - b) / b) * 100).toFixed(1)}%` : "-");
@@ -104,7 +118,7 @@ function engine(sim, order, quiz, n) {
   return { open: [...open.values()], cost: m ? cost / m : NaN, finish: m ? done / m : NaN, unans, gate, blocked, why: Object.entries(why).sort((a, b) => b[1] - a[1]).slice(0, 3), sec: (Date.now() - t0) / 1000 };
 }
 
-for (const S of (which === "all" ? [gloves(), boots(), glovesWhite(), glovesSplit()] : which === "boots" ? [boots()] : which === "white" ? [glovesWhite()] : which === "split" ? [glovesSplit()] : [gloves()])) {
+for (const S of (which === "all" ? [gloves(), boots(), glovesWhite(), glovesSplit(), bootsGreater()] : which === "boots" ? [boots()] : which === "white" ? [glovesWhite()] : which === "split" ? [glovesSplit()] : which === "greater" ? [bootsGreater()] : [gloves()])) {
   console.log(`\n== ${S.name}`);
   const b = M.buildAutoModel({ sim: S.sim, price });
   if (!b.ok) { console.log("  対応外:", b.reason.ja); continue; }

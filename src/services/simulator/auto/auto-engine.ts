@@ -21,6 +21,8 @@ export interface EngCtx {
   data: PatchData; base: string; itemLevel: number; sockets?: number; runes: string[];
   /** 側ごとの外れの代表 (狙い・固定の候補と系統が重ならない、互いにも重ならない MOD) */
   junk: [string[], string[]];
+  /** 始めに付くエッセンスの MOD (グレーターの道、札の番号 → 本物の MOD。startStates が埋める)。代表のアイテムにそのまま入れる (エッセンスの数の決まりが効くように) */
+  essMods?: Record<number, StageMod>;
 }
 
 const SIDE = ["prefix", "suffix"] as const;
@@ -109,6 +111,7 @@ function repItem(sh: Shape, s: State, ctx: EngCtx): { item: StageItem; roles: Ma
     const v = s[1 + k]!;
     if (!v) continue;
     const sl = m.slots[k]!;
+    if (ctx.essMods?.[k]) continue; // 本物のエッセンスの MOD は startFrom の後に入れる
     const modId = sl.kind === "essence" ? nextJunk(sl.side) : sl.members[sh.member(k, v)]!.modId;
     if (!modId) return null;
     want.push({ modId, side: sl.side, des: d === 7 + k, role: { r: "slot", k } });
@@ -128,6 +131,12 @@ function repItem(sh: Shape, s: State, ctx: EngCtx): { item: StageItem; roles: Ma
     const w = want.find((y) => y.modId === x.modId && SIDE[y.side] === x.side);
     if (!w) return null;
     roles.set(modKey(x), w.role);
+  }
+  for (let k = 0; k < sh.K; k++) {
+    const em = ctx.essMods?.[k];
+    if (!em || !s[1 + k]) continue;
+    item = em.side === "prefix" ? { ...item, prefixes: [...item.prefixes, em] } : { ...item, suffixes: [...item.suffixes, em] };
+    roles.set(modKey(em), { r: "slot", k });
   }
   // 未発現は骨を打って付ける (側はお告げで決める)
   if (d >= 1 && d <= 4) {
@@ -181,6 +190,11 @@ export function startStates(sh: Shape, ctx: EngCtx, st: Bought, minT: number[][]
       const it = fracture ? { ...b.item, prefixes: fx(b.item.prefixes), suffixes: fx(b.item.suffixes) } : b.item;
       const s = classify(sh, it, minT);
       if (!s) return "始めの状態が形に入らない";
+      // 始めに付いたエッセンスの MOD (付け直せない札) を覚える
+      for (const x of [...it.prefixes, ...it.suffixes]) {
+        const k = sh.m.slots.findIndex((sl) => sl.kind === "essence" && sl.members.some((mb) => mb.modId === x.modId && !mb.ess));
+        if (k >= 0) (ctx.essMods ??= {})[k] = x;
+      }
       const k = sh.key(s), e = out.get(k);
       if (e) e[0] += (pk.w / wSum) * b.p; else out.set(k, [(pk.w / wSum) * b.p, s]);
     }
