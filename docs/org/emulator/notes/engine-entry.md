@@ -60,6 +60,13 @@ interface ItemTextResult {
 - poe2db で確かめた (10-20): 3・8 の「品質の最大値 +20%」= エッセンス (of the Breach) の宝飾品の MOD で値は 20 固定 → 幅の無い段は文の数字と比べるようにして T1 (fits true)。5 の「グレネードのクールダウン使用回数 +1」はクロスボウの項に無い (MOD・ルーンとも) → notInPool のままで正しい。7 のサファイアの側はエンジンと poe2db で同じ (呪文ダメージ・サフィの効果 = プレ、呪文クリ率・クリダメ・呪文クリダメ・キャストスピード = サフィ)。サフィの効果 (獰猛) は枠を変えず、枠を足す感情 (侮蔑) も「+1 Suffix Modifier allowed」の 1 つだけなのでサフィ 4 つは poe2db の範囲では作れない形 (コラプトの結果の表 Jewel 11 件にも無い)。原因は推し量らず、count の P2/S4 (枠 2/2) をそのまま返す (画面で「枠を超えている」と出せる)。
 - 残り: 日本語の Ctrl+Alt+C の見出しと日本語の注記の形は見本が無く未対応。ジュエルの枠 2/2 はエンジンの値 (poe2db の項には枠の数が書いていない)。
 
+## スパムの道の平均 (2026-10-20 J3、シミュ部長の ③ の白から作る費用のため。spam-counts.ts)
+`spamCounts(data, item, route, grade, targets, { runs?, maxSteps?, seed? }): SpamCounts` — `{ off, hitRate, uses (鍵 → 1 人あたりの個数、お告げも), avgSteps, runs }`。
+- route = augment / chaos / exalt、grade = base / greater / perfect (`RouteKind`・`RouteGrade`)。item = 始めのアイテム (白・ルーンを差した白・固定 1 つ + 外れのレアなど)。targets = 側ごとに 1 つまで (両側なら両方付くまで)。
+- 打ち方は route-race の routeRun と同じ: 増強 = ノーマルなら変成 → 狙いの側に外れ (固定でない・当たっていない) があれば消去、無ければ増強。カオス = レアから狙いが全部付くまで。高貴 = 消せる MOD があれば消去、無ければ偉大な高貴のお告げで高貴 (空きが 2 つ無ければお告げ無し)。
+- 打って数える (既定 300 人)。確かめ (台本、scratchpad の使い捨て): 鉄の指輪 ilvl 82・ライフ上から 3 段で、増強・高貴 (無印・上級) は raceOne 300 人と使った物の数が同じ、カオスは始めの 1 MOD の違いの分だけ (55.4 / 54.1、25.7 / 27.0)。1 回 60〜190ms。
+- 解析君の頼み (K4) で `occupiedFamiliesOf`・`ANCIENT_BONE_FLOOR`・`REVEAL_SPEC` も並べた。
+
 ## ほかに並べた物 (グループ)
 - 形: StageItem・StageMod・StageSide・PlayedStep・CraftStagePlan・PatchData・ItemBase・Mod・Force・Candidate・PobBlock
 - 読む: parseItemText (上)
