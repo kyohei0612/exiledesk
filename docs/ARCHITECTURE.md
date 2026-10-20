@@ -35,7 +35,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 | チュートリアル (シミュレーター部) | `views/tutorial/` (Video*・コース) | `services/tutorial/` | `state/tutorial/` | `tests/tutorial/` |
 | 開発 (共通) | `web/`・`components/`・`utils/` | `i18n/`・`services/money.ts`・`services/telemetry/` ほか | `state/` の直下 (`craft-stage.ts`・`web-page.ts`・`display-currency.ts` ほか) | — |
 
-craft-stage/ に残した共通の土台: `run-plan.ts`・`contract.ts` (打つ処理、どの部も使う)・`share.ts`・`trade-search.ts`・`types.ts`。htc/ の `buy-or-craft.ts`・`prices.ts`・`paste*.ts` もアプリ・各部がまたがって使うので htc/ に残した。scripts/ は今のまま 1 つのフォルダー。
+エンジンの核 (エミュ部の持ち物): `craft-stage/` の `types.ts`・`run-plan.ts`・`contract.ts`、乱数 `htc/rng.ts`。外 (シミュ・チュートリアル・解析君) は入口 `craft-stage/engine.ts` から取る決まり (2026-10-20、案は org/emulator/notes/2026-10-20-engine-entry-plan.md)。`services/simulator/htc/` はアプリ専用・凍結で Web から import しない。craft-stage/ に残した共通の境目: `share.ts`・`trade-search.ts`。htc/ の `buy-or-craft.ts`・`prices.ts`・`paste*.ts` もアプリ・各部がまたがって使うので htc/ に残した。scripts/ は今のまま 1 つのフォルダー。
 
 ## 何を正とするか (同じ事を 2 か所でやらない)
 
