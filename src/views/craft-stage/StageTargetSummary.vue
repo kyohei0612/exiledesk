@@ -41,7 +41,7 @@ const methodPop = ref<InstanceType<typeof SimMethodPop> | null>(null);
 /** カオススパムは片側だけ (反対側にあれば選べない) */
 /**
  * ▾ で選べない付け方を組の全員分で (前は組の 1 つ目だけ見ていて、両側にまたがるフラクチャー候補の組をカオススパムに替えると両側にできた。
- * 2026-10-21 モンキーチェック)。一緒に替わる組の仲間は「ほかの狙い」に数えない。両側にまたがる組はカオススパム・増強スパムにできない (片側だけの決まり)
+ * 2026-10-21 モンキーチェック)。一緒に替わる組の仲間は「ほかの狙い」に数えない。両側にまたがる組はカオススパムにできない (片側だけの決まり)
  */
 function planOff(g: { kind: string; host: string; hosts?: string[] }): ReturnType<typeof methodsOff> {
   const list = s.simTargets.value;
@@ -49,7 +49,8 @@ function planOff(g: { kind: string; host: string; hosts?: string[] }): ReturnTyp
   const off: ReturnType<typeof methodsOff> = {};
   for (const id of ids) for (const [k, v] of Object.entries(methodsOff(s.data.value, list.filter((t) => t.modId === id || !ids.includes(t.modId)), id))) off[k as keyof typeof off] ??= v;
   const sides = new Set(list.filter((t) => ids.includes(t.modId)).flatMap((t) => [t, ...(t.alts ?? [])]).map((x) => s.data.value?.mods.get(x.modId)?.type === "suffix"));
-  if (sides.size > 1) { off.chaos ??= "両側にまたがる組はカオススパムにできない (片側だけ)"; off.augment ??= "両側にまたがる組は増強スパムにできない (側ごとに 1 つ)"; }
+  // カオススパムは片側だけ (両側は側ごとに別のパターンで作る。[[sim-split-by-side]])。増強スパムは側ごとに分けて入る (toAugment) ので止めない
+  if (sides.size > 1) off.chaos ??= "両側にまたがる組はカオススパムにできない (プレとサフィで別のパターンに分けて作る)";
   return off;
 }
 
