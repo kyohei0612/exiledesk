@@ -16,7 +16,7 @@
 | 解析君 K6 | src/services/simulator/auto/ の計算の側 (auto-model・auto-solve・auto-actions・auto-engine・auto-rules・auto-types)、scripts/analysis/check-auto-order.mjs、docs/org/math/ |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1e | SimPasteRead.vue・paste-read.ts・StageBasePage.vue・StageTargetSummary.vue・use-stage-base.ts |
-| ジン部長 J8 | 新 src/services/craft-stage/boosts.ts・engine.ts・item-text.ts・item-text-types.ts、docs/org/emulator/notes/2026-10-20-j8-boost-table.md |
+| ジン部長 R4 | src/views/craft-stage/CraftStage.vue、新 src/views/simulator/SimHost.vue・src/views/tutorial/CourseHost.vue・src/state/tutorial/course-host.ts (口だけ。中身はシミュ部長が S4 の後に) |
 | ジン部長 J2 | tests/golden/ (探すのは別の worktree) |
 
 ## 順番 (2026-10-20 夜、オーナー OK 済みの物)
