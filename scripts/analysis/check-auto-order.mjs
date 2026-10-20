@@ -1,7 +1,7 @@
 /**
  * check-auto-order.mjs — ④ の「順番だけ自動」の計算 (src/services/simulator/auto/) を、⑤ の回し方 (エンジン) と並べる (解析君、2026-10-20)
  *
- *   node scripts/analysis/check-auto-order.mjs [gloves|boots|white|split|greater|all] [N=1000] [TOP=3]
+ *   node scripts/analysis/check-auto-order.mjs [gloves|boots|white|split|greater|ring|all] [N=1000] [TOP=3]
  *
  * 見本: やふやふ手袋 (マナ T1 固定、スピード・ES T3・投射物 +2・会心倍率 T3・攻撃速度 T3、前の試し plan5 の TIER=3 と同じ完成品)、
  *       靴 (移動速度を固定、耐性 T1 × 2・スピリット (完璧なエッセンス)・ドッジロール (冒涜))。
@@ -96,6 +96,19 @@ function bootsGreater() {
   return { name: "靴 (グレーターの道、絢爛)", sim: { data, base: "Vaal Greaves", itemLevel: 82, targets, start: "fractured", startPrice: Number(process.env.BOOTS_R ?? 30) * DIV, sockets: 2, runePrice, greater: { essKey: `essence:greater:${RAR}`, keep: res } }, label };
 }
 
+/** 鉄の指輪 (オーナーの貼り付けの見本 6、docs/org/emulator/notes/paste-samples/6.txt): 貼り付けの読み取りで ② の狙いを作り、雷ダメージ (付加) をフラクチャーに (シミュ部長の S3 の見本と同じ形) */
+async function ring() {
+  const fs = await import("node:fs");
+  const text = fs.readFileSync("docs/org/emulator/notes/paste-samples/6.txt", "utf8");
+  const r = M.readPaste(data, text);
+  const it = r.item;
+  const targets = r.targets.map((t) => (/LightningDamage/i.test(t.modId) && data.mods.get(t.modId)?.type === "prefix" && !r.targets.some((u) => u !== t && u.method === "fracture") && /Local|Attack|Added|Physical|Lightning/.test(t.modId) ? { ...t, method: "fracture" } : t));
+  const frac = targets.find((t) => t.method === "fracture");
+  const withMethod = targets.map((t) => (t.method ? t : { ...t, method: M.methodsFor(data, t.modId)[0] }));
+  const label = Object.fromEntries(withMethod.map((t) => [`mod:${t.modId}`, t.modId.split("/").pop()]));
+  return { name: `鉄の指輪 (貼り付け 6、フラクチャー ${frac?.modId ?? "なし"})`, sim: { data, base: it.base?.en ?? "Iron Ring", itemLevel: it.itemLevel ?? 61, targets: withMethod, start: "fractured", startPrice: Number(process.env.RING_R ?? 20) * DIV, runePrice }, label };
+}
+
 const perms = (xs) => (xs.length <= 1 ? [xs] : xs.flatMap((x, i) => perms([...xs.slice(0, i), ...xs.slice(i + 1)]).map((r) => [x, ...r])));
 const div = (v) => (v / DIV).toFixed(1);
 const pct = (a, b) => (b ? `${(((a - b) / b) * 100).toFixed(1)}%` : "-");
@@ -104,21 +117,25 @@ function engine(sim, order, quiz, n) {
   const { recipe, error } = M.quizFromSim({ ...sim, order }, quiz);
   if (error) throw new Error(error);
   let cost = 0, done = 0, unans = 0, gate = 0, blocked = 0;
+  const rebuy = [];
   const why = {};
   const open = new Map();
   const t0 = Date.now();
   for (let i = 0; i < n; i++) {
     const r = M.runQuizOnce(data, recipe, 900000 + i * 7919, { price, maxSteps: 400000 });
     if (r.stop?.kind === "unanswered") { unans++; const sk = r.stop.route + JSON.stringify(r.stop.situation); if (!open.has(sk)) open.set(sk, { route: r.stop.route, sit: r.stop.situation }); const k = Object.entries(r.stop.situation).filter(([k]) => !["r", "cat", "n", "p.n", "s.n", "p.free", "s.free", "fx", "p.fx", "s.fx"].includes(k)).map(([k, v]) => `${k}=${v}`).join(","); why[k] = (why[k] ?? 0) + 1; continue; }
-    if (r.stop?.kind === "gate") gate++;
+    if (r.stop?.kind === "gate") { gate++; why["打ち止め " + r.stop.reason] = (why["打ち止め " + r.stop.reason] ?? 0) + 1; }
     if (r.stop?.kind === "blocked") { blocked++; why["打てない " + r.stop.reason] = (why["打てない " + r.stop.reason] ?? 0) + 1; }
     cost += r.cost - recipe.start.price; if (r.done) done++;
+    rebuy.push(r.bases - 1);
   }
   const m = n - unans;
-  return { open: [...open.values()], cost: m ? cost / m : NaN, finish: m ? done / m : NaN, unans, gate, blocked, why: Object.entries(why).sort((a, b) => b[1] - a[1]).slice(0, 3), sec: (Date.now() - t0) / 1000 };
+  rebuy.sort((a, b) => a - b);
+  const q = (p) => (rebuy.length ? rebuy[Math.min(rebuy.length - 1, Math.floor(rebuy.length * p))] : 0);
+  return { rebuy: { p50: q(0.5), p90: q(0.9), p99: q(0.99), max: rebuy[rebuy.length - 1] ?? 0 }, open: [...open.values()], cost: m ? cost / m : NaN, finish: m ? done / m : NaN, unans, gate, blocked, why: Object.entries(why).sort((a, b) => b[1] - a[1]).slice(0, 3), sec: (Date.now() - t0) / 1000 };
 }
 
-for (const S of (which === "all" ? [gloves(), boots(), glovesWhite(), glovesSplit(), bootsGreater()] : which === "boots" ? [boots()] : which === "white" ? [glovesWhite()] : which === "split" ? [glovesSplit()] : which === "greater" ? [bootsGreater()] : [gloves()])) {
+for (const S of (which === "ring" ? [await ring()] : which === "all" ? [gloves(), boots(), glovesWhite(), glovesSplit(), bootsGreater()] : which === "boots" ? [boots()] : which === "white" ? [glovesWhite()] : which === "split" ? [glovesSplit()] : which === "greater" ? [bootsGreater()] : [gloves()])) {
   console.log(`\n== ${S.name}`);
   const b = M.buildAutoModel({ sim: S.sim, price });
   if (!b.ok) { console.log("  対応外:", b.reason.ja); continue; }
@@ -166,6 +183,7 @@ for (const S of (which === "all" ? [gloves(), boots(), glovesWhite(), glovesSpli
     const m = mc.result;
     console.log(`  #${all.indexOf(x) + 1} ${name(x.o)}\n     値だけ ${div(x.r.cost)} 神・${(x.r.finish * 100).toFixed(1)}%・${div(x.r.perFinish)} | mc ${div(m.cost)}・${(m.finish * 100).toFixed(1)}%・${div(m.perFinish)} | エンジン ${div(e.cost)}・${(e.finish * 100).toFixed(1)}%・${div(ePer)} (${e.sec.toFixed(0)} 秒、答え無し ${e.unans}・打ち止め ${e.gate}・打てない ${e.blocked}) | ずれ ${pct(m.cost, e.cost)} / ${pct(m.finish, e.finish)} / ${pct(m.perFinish, ePer)}・値だけの 1 個あたり ${pct(x.r.perFinish, ePer)}`);
     console.log(`     自動の答え ${Object.entries(quiz.rules).map(([k, v]) => `${k} ${v.length}`).join("・")} (穴埋めで足した ${added}・答えられなかった状況 ${left})、付け方 ${meth}、1 割以内: ${Math.abs(m.perFinish - ePer) <= 0.1 * ePer ? "はい" : "いいえ"}`);
+    console.log(`     買い直しの回数 (1 人、答えのある人): 中央 ${e.rebuy.p50}・90% ${e.rebuy.p90}・99% ${e.rebuy.p99}・最大 ${e.rebuy.max}`);
     if (e.why.length) console.log(`     止まった所: ${e.why.map(([k, v]) => `${v}× ${k}`).join(" | ")}`);
   }
 }
