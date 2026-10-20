@@ -7,15 +7,15 @@
 | 開発部長 | (このセッション) | まとめ役 |
 | ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J1 |
 | シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S1 |
-| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K1 (手 5) |
+| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K1 (手 4 の突き合わせ) |
 | 解析君 (一時) | local_d25d3065-72c5-43e4-a27b-6a97b6bbd9de | やふやふ手袋・見本の靴。終わったらブラックが閉じる |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
 
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
 | 誰 | ファイル |
 |---|---|
-| 解析君 K1 | src/services/simulator/auto/ (auto-actions・auto-model・auto-solve・auto-engine)、scripts/analysis/ (_auto-order-entry・check-auto-nan)、docs/org/math/README.md の地図 |
-| 解析君 (一時) | scripts/analysis/_yafu-entry.ts・check-yafu-actual.mjs、scripts/_flux-probe.test.ts |
+| 解析君 K1 | scripts/analysis/_auto-order-entry.ts (手 5 の本体は 32e938d9 で commit 済み、手 4 の突き合わせ中) |
+| 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1 | src/views/simulator/SimPasteRead.vue・StageSimPanel.vue・StageTargetSummary.vue・SimAutoOrder.vue・use-sim-*.ts、src/services/simulator/paste-read.ts、src/state/simulator/sim-state.ts |
 | ジン部長 J1 | src/services/craft-stage/item-text.ts (+ item-text-types.ts)・apply-essence.ts・spec/essence-specs.ts |
 | 開発部長 D1 | scripts/deploy-web-dev.mjs |
@@ -33,7 +33,7 @@
 - S6 点検 6 (③ 値段の既定・単位)・7 のシミュの道具ボタン (開発部長のヘッダーの直しと一緒に)。
 
 ### 解析君
-- K1 (今) 手 5 = auto-actions を stepOutcomes へ・手 4 の突き合わせ。
+- K1 (今) 手 5 = auto-actions を stepOutcomes へ (32e938d9 済み)・手 4 の突き合わせ。
 - K2 自動 / 手動 手 1: 新 auto/auto-rules.ts (rulesFromDetail・methodsFromDetail・answerFor)、check-auto-order.mjs を src の物で。
 - K3 自動 / 手動 手 2: 範囲 A (白から・4 MOD から、auto-model.ts)。
 - K4 エンジンの付け替え 手 7 の auto/ 分。
