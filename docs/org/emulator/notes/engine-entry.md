@@ -15,6 +15,10 @@
 - 付け替えの目安: keep-compare・sim-greater・use-sim-calc の `wAt`/`totalAt` で割る所 → 狙いの状態のアイテムを作って (`freshItem` → `applyCurrency` で変成など) `addHitOdds(...).p`。「3 つに 1 つ」 → `fractureHit(...).p`。StageTargetSummary の shareOf → 白 (またはルーンを差した白) に `addHitOdds`。数字が変わったら解析君が並べる。
 - n が 2 以上の手 (大いなる高貴・錬金) の p は 1 つ目だけ。全部の当たりは `aimOdds` (打って数える) を使う。
 
+## 段の下限 (2026-10-20 解析君の頼み事で足した)
+- `orbFloor(kind, strength)`: kind = `transmute`・`augment`・`regal`・`exalt`・`chaos`、strength = `OrbStrength` (`base`・`greater`・`perfect`)。打つ処理 (spec/orb-specs) が使う下限そのもの。
+- `CHAOS_FLOOR`: カオスの段の下限の表 (0 / 35 / 50、poe2db の Minimum Modifier Level)。`CURRENCY_FLOOR` にカオスは無いので、カオスはこちらか orbFloor で取る。
+
 ## ほかに並べた物 (グループ)
 - 形: StageItem・StageMod・StageSide・PlayedStep・CraftStagePlan・PatchData・ItemBase・Mod・Force・Candidate・PobBlock
 - 作る・打つ: freshItem・startFrom・startItem・playStep・playPlan・runPlan・applyCurrency・kindOf (カレンシーの種類)・omensFor・revealOffers・unrevealedOf

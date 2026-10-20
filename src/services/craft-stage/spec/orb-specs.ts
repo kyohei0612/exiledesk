@@ -9,11 +9,12 @@
 import { CURRENCY_FLOOR } from "../../../vendor/poe2htc/engine/types";
 import type { CurrencySpec, Limit, OmenSpec, Source } from "./types";
 
-type Strength = "base" | "greater" | "perfect";
+export type Strength = "base" | "greater" | "perfect";
 const STRENGTHS: readonly Strength[] = ["base", "greater", "perfect"];
 /** カオスの段の下限 (poe2db の Minimum Modifier Level、2026-10-14 確認。エンジンの CURRENCY_FLOOR には無い) */
-const CHAOS_FLOOR: Record<Strength, number> = { base: 0, greater: 35, perfect: 50 };
-const floorOf = (kind: string, s: Strength): number =>
+export const CHAOS_FLOOR: Record<Strength, number> = { base: 0, greater: 35, perfect: 50 };
+/** 段の下限 (kind = transmute・augment・regal・exalt・chaos、s = 強さ)。入口 engine.ts から外に出す (解析君の auto-model、2026-10-20) */
+export const orbFloor = (kind: string, s: Strength): number =>
   kind === "chaos" ? CHAOS_FLOOR[s] : (CURRENCY_FLOOR as Record<string, Record<Strength, number>>)[kind]?.[s] ?? 0;
 
 /** 手順の鍵 (price-keys.json): transmute / transmute_greater / transmute_perfect */
@@ -122,7 +123,7 @@ const ORBS: readonly OrbDef[] = [
 ];
 
 export const ORB_SPECS: readonly CurrencySpec[] = ORBS.flatMap((o) => o.strengths.map((s): CurrencySpec => {
-  const floor = floorOf(o.kind, s);
+  const floor = orbFloor(o.kind, s);
   const b = o.build(floor);
   return {
     key: hoverOf(o.name, s),

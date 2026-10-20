@@ -31,6 +31,9 @@ export { classOfBase } from "../htc/bridge";
 export { candidates } from "./stage-core";
 export { modTierWeight, floorKeepIndex, CRAFTED_SOURCES, familiesOf } from "../../vendor/poe2htc/engine/pool";
 export { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
+// 段の下限 (カオスを含む。CURRENCY_FLOOR にカオスは無い)
+export type { Strength as OrbStrength } from "./spec/orb-specs";
+export { orbFloor, CHAOS_FLOOR } from "./spec/orb-specs";
 export { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
 export { modListFor } from "./mod-list";
 export { tierDisplayRanges } from "../mods/stat-scale";
