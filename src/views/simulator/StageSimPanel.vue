@@ -71,6 +71,8 @@ const { startKinds, startAge, startCost, keepText, costNote, keepName, whiteBudg
 /** ④ のおすすめの順番 (押した時だけ計算。2026-10-20) */
 /** 自動 / 手動 (2026-10-20 S2。use-sim-auto.ts) */
 const { t1Block, autoOn, ask: autoAsk, toggle: autoToggle, apply: autoApply } = useSimAuto({ modsDone, sortDone, orderDone, results, resetPatterns: st.resetPatterns });
+/** ③ の値段の単位は表示通貨 1 つ (2026-10-20 オーナー OK、棚卸しの 4)。適正の時はカオス (白のベースは数カオスが多い) */
+const baseUnit = computed(() => (simCurrency.choice.value === "fair" ? "chaos" : simCurrency.choice.value));
 const ao = useSimAutoOrder(tg, () => quizBase.value, () => autoOn.value);
 // 自動の時は ⑥ の答えの無い場面を自動の方策で埋めてから回し直す (S3)
 watch(autoOn, (v) => rn.setHoleFiller(v ? ao.autoAnswer : null), { immediate: true });
@@ -180,10 +182,10 @@ const stepNotes = computed(() => {
                 <template v-else>{{ tr(`エミュレーターの累計 ${money(s.simStartCost.value)} + 白ベース`, `Emulator total ${money(s.simStartCost.value)} + white base`) }}</template>
               </span>
               <span class="flex items-center" @click.stop>
-                <PriceInput v-if="k.k === 'white'" v-model="whiteDivine" base="exalted" unit-key="sim.white" placeholder="値段" />
-                <PriceInput v-else-if="k.k === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" placeholder="値段" />
-                <PriceInput v-else-if="k.k === 'fractured'" v-model="boughtDivine" base="exalted" unit-key="sim.bought" placeholder="値段" />
-                <PriceInput v-else v-model="itemDivine" base="exalted" unit-key="sim.item" initial-unit="exalted" placeholder="値段" />
+                <PriceInput v-if="k.k === 'white'" v-model="whiteDivine" base="exalted" unit-key="sim.white" :unit="baseUnit" placeholder="値段" />
+                <PriceInput v-else-if="k.k === 'four'" v-model="fourDivine" base="exalted" unit-key="sim.four" :unit="baseUnit" placeholder="値段" />
+                <PriceInput v-else-if="k.k === 'fractured'" v-model="boughtDivine" base="exalted" unit-key="sim.bought" :unit="baseUnit" placeholder="値段" />
+                <PriceInput v-else v-model="itemDivine" base="exalted" unit-key="sim.item" :unit="baseUnit" initial-unit="exalted" placeholder="値段" />
               </span>
               <span class="flex items-center gap-2">
                 <button v-if="k.k !== 'item'" type="button" class="inline-flex shrink-0 items-center gap-1 rounded px-1 text-[var(--exile-color-text-link)] hover:underline max-md:min-h-11" :title="k.k === 'white' ? `アイテムレベル ${searchIlvl} 以上の白のベースを取引所で探す (開くだけ)` : k.k === 'four' ? '狙いの MOD が付いたレア (固定済みは除く、MOD 4 つまで) を取引所で探す (開くだけ)' : 'フラクチャーの MOD が付いたベースを取引所で探す (開くだけ)'" @click.stop="k.k === 'white' ? searchWhite() : k.k === 'four' ? searchFour() : searchBought()">取引所で探す<Icon name="external" class="size-3.5" /></button>

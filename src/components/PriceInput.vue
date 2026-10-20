@@ -21,7 +21,9 @@ const props = withDefaults(defineProps<{
   title?: string;
   /** 覚えた単位が無い時の最初の単位 (既定はカオス。手打ちの累計のような高貴建ての小さい値は高貴で) */
   initialUnit?: DisplayCurrency;
-}>(), { base: "divine", unitKey: "", placeholder: "値段", title: "", initialUnit: "chaos" });
+  /** 単位を外から決める (欄ごとのプルダウンを出さない。シミュレーター ③ は表示通貨 1 つ、2026-10-20 オーナー OK) */
+  unit?: DisplayCurrency;
+}>(), { base: "divine", unitKey: "", placeholder: "値段", title: "", initialUnit: "chaos", unit: undefined });
 const emit = defineEmits<{ "update:modelValue": [v: number | null] }>();
 
 const UNITS: Array<{ k: DisplayCurrency; ja: string }> = [{ k: "exalted", ja: "高貴" }, { k: "chaos", ja: "カオス" }, { k: "divine", ja: "神" }];
@@ -36,6 +38,7 @@ watch(unit, (u) => { try { if (KEY) localStorage.setItem(KEY, u); } catch { /* �
  */
 const view = computed<DisplayCurrency>({
   get: () => {
+    if (props.unit) return props.unit;
     const v = props.modelValue;
     if (typeof v !== "number" || !Number.isFinite(v) || v <= 0) return unit.value;
     const at = (u: DisplayCurrency): number => Math.round((v * rateOf(props.base)) / rateOf(u));
@@ -67,7 +70,8 @@ function onInput(e: Event): void {
 <template>
   <span class="inline-flex items-center gap-1">
     <input type="number" min="0" step="1" inputmode="numeric" :placeholder="placeholder" :title="title || undefined" :value="shown" class="w-20 rounded border border-white/15 bg-black/30 px-1.5 py-0.5 text-right" @input="onInput" />
-    <select v-model="view" class="rounded border border-white/15 bg-black/30 px-1 py-0.5" title="単位 (高貴 / カオス / 神)">
+    <span v-if="props.unit" class="text-[12px] opacity-70">{{ UNITS.find((x) => x.k === props.unit)?.ja }}</span>
+    <select v-else v-model="view" class="rounded border border-white/15 bg-black/30 px-1 py-0.5" title="単位 (高貴 / カオス / 神)">
       <option v-for="x in UNITS" :key="x.k" :value="x.k">{{ x.ja }}</option>
     </select>
     <span v-if="fitText" data-price-fit class="whitespace-nowrap text-[11px] tabular-nums opacity-70" title="入れた値を適正の単位で">≈ {{ fitText }}</span>
