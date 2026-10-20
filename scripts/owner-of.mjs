@@ -10,7 +10,7 @@
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -54,7 +54,10 @@ function statusPaths() {
 const norm = (p) => relative(ROOT, resolve(process.cwd(), p)).replace(/\\/g, "/");
 
 const [, , ...args] = process.argv;
-if (!args.length) {
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+if (!isMain) {
+  // 部品として読まれた時 (check-engine-entry.mjs など) は何もしない
+} else if (!args.length) {
   console.log("使い方: node scripts/owner-of.mjs <パス…> | --status | --check <部> <パス…>");
 } else if (args[0] === "--status") {
   const rows = loadOwners();

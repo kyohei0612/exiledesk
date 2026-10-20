@@ -15,7 +15,7 @@
 10. 部長の中で作業を分けたい時 (トークン・待ちの都合) は部長の判断でサブエージェント (Agent) を使ってよい。同じ部長のセッションは 2 本立てない (別のセッションの一時の係が要る時は開発部長 → ブラックに 1 行、題は「<部>；<作業名>」で常駐は付けない)。同じファイルを 2 人で触らせず、サブエージェントの commit も部長が自分のパスで、作った物は報告に書く。プラグインも要ればリサーチして入れてよい (公式・組織カタログ優先)。
 
 ## 地図
-- 持ち主の表: docs/org/owners.txt (下の行ほど強い) と scripts/owner-of.mjs (`--status`・`--check <部> <パス…>`)。地図と食い違ったら owners.txt が正。
+- 持ち主の表: docs/org/owners.txt (下の行ほど強い) と scripts/owner-of.mjs (`--status`・`--check <部> <パス…>`)。地図と食い違ったら owners.txt が正。入口の見張り scripts/check-engine-entry.mjs (CI、控え check-engine-entry.baseline.json より増えたら落ちる。減ったら `--head --write`)。
 - 動かし方・版上げ: CLAUDE.md の「動かし方」。設定 vite.web.config.ts、開発版 scripts/deploy-web-dev.mjs (commit 済みの HEAD を隣の ../ExileDesk-devbuild (git worktree) でビルド、書きかけは入らない。`-- --wip` で作業中の物)、読み物のページ scripts/build-seo-pages.mjs。
 - 更新内容: src/data/changelog-notes.json・-en.json・changelog-popup.json → scripts/build-changelog.mjs。OK 待ち docs/pending-release.md。テスト tests/ (vitest)。
 - 境目 (どの部も使う): src/state/craft-stage.ts (`SIM_LOCKED`)・web-page.ts・display-currency.ts、src/services/craft-stage/share.ts・trade-search.ts、src/services/htc/patch-types.ts・src/services/money.ts、src/style.css・src/styles/game-ui.css、src/components/・src/utils/、src/web/ (WebApp.vue・main.ts・page.ts・boot.ts・config.ts)。

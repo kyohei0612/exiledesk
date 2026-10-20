@@ -54,6 +54,11 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      # エンジンの入口の見張り (手 8、2026-10-20): シミュ・チュートリアル・解析が入口 engine.ts を通さずエンジンの中を読む行・凍結の simulator/htc/ を読む行が、
+      # 控え (scripts/check-engine-entry.baseline.json) より増えたら落ちる。持ち主は docs/org/owners.txt
+      - name: エンジンの入口の見張り
+        run: node scripts/check-engine-entry.mjs
+
       - name: 画面側のテスト (vitest)
         run: pnpm test --exclude "tests/held-odds-all/**" --exclude "tests/currency-spec-*"
 
