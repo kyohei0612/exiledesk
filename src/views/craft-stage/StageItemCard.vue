@@ -20,6 +20,7 @@ import { implicitRows, propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
+import { BASE_VALUES_ON, modLineOf } from "./base-values";
 import { allMods, boostedMod, hasExtraCatalyst, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { classLabel } from "../../services/items/base-catalog";
@@ -159,7 +160,9 @@ const rows = computed(() => {
     // ゲームと同じ並び: プレ / サフィで分けず、説明文の表の順 (stat-order.json)。分からない物は後ろ (プレ → サフィのまま)
     const st = (r.m as { stats?: string[] }).stats?.[0] ?? (em?.tiers?.[0] as { stats?: string[] } | undefined)?.stats?.[0];
     const ord = st != null ? (STAT_ORDER as Record<string, number>)[st] ?? 1e9 : 1e9;
-    return { ...r, text: b ? modText(b) : modText(r.m), boosted: !!b, tags, ord };
+    // 開発版は素の値の文 + 盛った値を小さく (2026-10-21 J11、base-values.ts)
+    const line = BASE_VALUES_ON ? modLineOf(props.item, r.m) : null;
+    return { ...r, text: line ? line.text : b ? modText(b) : modText(r.m), shown: line?.shown ?? null, boosted: line ? !!line.shown : !!b, tags, ord };
   });
   // 表に無い MOD が 1 つでもあると、表にある物だけ上に来てプレ・サフィが混ざる (ジュエルは表に無い MOD が多い)。その時はプレ → サフィで分ける
   // (2026-10-18 オーナー「なんでジュエルだけサフィとプレの順番がぐちゃぐちゃ」)
@@ -265,6 +268,7 @@ const rows = computed(() => {
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
             <span v-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider text-[#a6e05c] [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
+            <span v-else-if="r.shown" :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : ''" :title="tr('素の値 (上乗せを抜いた値)。小さい数字は品質・効果・聖別で盛った値', 'Base value (without boosts). The small number is the boosted value')">{{ r.text }}<span data-boosted-value class="ml-1 text-[10px] tabular-nums text-[#7ee8ff]">({{ r.shown }})</span></span>
             <span v-else :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
             <span v-if="look(r.m).tag" class="ml-1.5 whitespace-nowrap align-middle text-[10px] opacity-80">{{ look(r.m).tag }}</span>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
