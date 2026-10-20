@@ -46,6 +46,11 @@ export interface AutoModel {
   starts: Array<[number, number[]]>;
   /** 消去・光・骨・完璧なエッセンスの行き先の表 (形の中身の鍵 → 手の名前 → [p, 差分…] の並び)。build の時に stepOutcomes で作る (auto-engine.ts) */
   eng: Record<string, Record<string, number[][]>>;
+  /**
+   * 両側の「どれか」がある時 (K6): ⑤ の route ごとの model (その札を側の候補だけにした狙いで組んだ物)。
+   * ⑤ は札が付くまで 1 つ目の route (prefix) で打つので、この model 自身は routes[0] の写し (solveOrder はそのまま 1 つ目を解く)
+   */
+  routes?: Array<{ id: string; model: AutoModel }>;
   /** 形の版 (中身を変えたら上げる。ワーカーの持つ写しの見分け) */
   version: 3;
 }

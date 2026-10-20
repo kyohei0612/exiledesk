@@ -10,7 +10,8 @@ import type { QuizRules } from "../quiz-build";
 import type { QuizAction, QuizRecipe, QuizRule, Situation, When } from "../quiz-recipe";
 import type { AutoModel } from "./auto-types";
 import { quizActionOf, Shape, type State } from "./auto-actions";
-import type { OrderDetail } from "./auto-types";
+import type { OrderDetail, SolveOpts } from "./auto-types";
+import { orderDetail } from "./auto-solve";
 
 /** 条件に書く項目 (札の id のほか) */
 const SIDE_KEYS = ["p.junk", "s.junk", "p.hid", "s.hid", "p.bad", "s.bad", "des"] as const;
@@ -27,8 +28,9 @@ const keyOf = (w: When): string => JSON.stringify(w);
 const doOf = (m: AutoModel, act: string): QuizAction => (act === "restart" ? { restart: true } : quizActionOf(m, act));
 
 interface Table { fracId: string; aug: number; best: Map<string, { when: When; act: string; visits: number }> }
-function tableOf(m: AutoModel, det: OrderDetail, recipe: QuizRecipe): Table {
-  const fracId = recipe.routes[0]!.goal.find((s) => s.kind === "fractured")!.id;
+const routeIn = (recipe: QuizRecipe, id: string) => recipe.routes.find((r) => r.id === id) ?? recipe.routes[0]!;
+function tableOf(m: AutoModel, det: OrderDetail, recipe: QuizRecipe, routeId = "main"): Table {
+  const fracId = routeIn(recipe, routeId).goal.find((s) => s.kind === "fractured")!.id;
   const aug = (startRunes(recipe).length) + missingRunes(m, recipe).length;
   const best = new Map<string, { when: When; act: string; visits: number }>();
   for (const v of det.view) {
@@ -59,16 +61,32 @@ function missingRunes(m: AutoModel, recipe: QuizRecipe): string[] {
   return m.runes.filter((en) => !have.has(en));
 }
 
-/** 方策 → ⑤ の答え (工程 main)。要るルーンを差す答えが先、完成の形は書かない */
-export function rulesFromDetail(m: AutoModel, det: OrderDetail, recipe: QuizRecipe): QuizRules {
+/** 方策 → ⑤ の答え (工程 routeId、既定 main)。要るルーンを差す答えが先、完成の形は書かない */
+export function rulesFromDetail(m: AutoModel, det: OrderDetail, recipe: QuizRecipe, routeId = "main"): QuizRules {
   const have = startRunes(recipe).length;
   const rules: QuizRule[] = missingRunes(m, recipe).map((en, i) => ({ when: { aug: have + i }, do: { use: `rune:${en}` } }));
-  const t = tableOf(m, det, recipe);
+  const t = tableOf(m, det, recipe, routeId);
   for (const { when, act } of t.best.values()) {
     if (m.slots.every((sl) => when[sl.id] === 2)) continue;
     rules.push({ when, do: doOf(m, act) });
   }
-  return { v: 3, rules: { main: rules } };
+  return { v: 3, rules: { [routeId]: rules } };
+}
+
+/**
+ * 順番 1 つの ⑤ の答えを全部の route について (両側の「どれか」があれば route ごとにその model を解いて、K6)。
+ * details は route の id → orderDetail (answerFor・methodsFromDetail に渡す)
+ */
+export function rulesForOrder(m: AutoModel, order: readonly string[], recipe: QuizRecipe, opts: SolveOpts = {}): { quiz: QuizRules; details: Record<string, { model: AutoModel; detail: OrderDetail }> } {
+  const rs = m.routes ?? [{ id: recipe.routes[0]!.id, model: m }];
+  const quiz: QuizRules = { v: 3, rules: {} };
+  const details: Record<string, { model: AutoModel; detail: OrderDetail }> = {};
+  for (const r of rs) {
+    const detail = orderDetail(r.model, order, opts);
+    details[r.id] = { model: r.model, detail };
+    quiz.rules[r.id] = rulesFromDetail(r.model, detail, recipe, r.id).rules[r.id]!;
+  }
+  return { quiz, details };
 }
 
 /**
@@ -97,8 +115,8 @@ export function methodsFromDetail(m: AutoModel, det: OrderDetail): Array<{ slot:
  * ⑥ で答えの無かった状況に答える: 条件の項目だけ見て、方策の表で引く。無ければ段の低い札 (1) を外れに数え直して引く
  * (今の決まり「段が低いまま付いたらここでは付いていない」)。冒涜で付いた段の低い札は外れの冒涜として。当たらなければ null (イレギュラーのまま)
  */
-export function answerFor(m: AutoModel, det: OrderDetail, recipe: QuizRecipe, sit: Situation): QuizRule | null {
-  const t = tableOf(m, det, recipe);
+export function answerFor(m: AutoModel, det: OrderDetail, recipe: QuizRecipe, sit: Situation, routeId = "main"): QuizRule | null {
+  const t = tableOf(m, det, recipe, routeId);
   const pick = (w: When): QuizAction | null => { const e = t.best.get(keyOf(w)); return e ? doOf(m, e.act) : null; };
   const base: When = { aug: t.aug, [t.fracId]: 3 };
   // 外れは数のまま、未発現・外れの冒涜・冒涜は有無 (冒涜はアイテムに 1 つまで)

@@ -1,7 +1,7 @@
 /**
  * check-auto-order.mjs — ④ の「順番だけ自動」の計算 (src/services/simulator/auto/) を、⑤ の回し方 (エンジン) と並べる (解析君、2026-10-20)
  *
- *   node scripts/analysis/check-auto-order.mjs [gloves|boots|white|all] [N=1000] [TOP=3]
+ *   node scripts/analysis/check-auto-order.mjs [gloves|boots|white|split|all] [N=1000] [TOP=3]
  *
  * 見本: やふやふ手袋 (マナ T1 固定、スピード・ES T3・投射物 +2・会心倍率 T3・攻撃速度 T3、前の試し plan5 の TIER=3 と同じ完成品)、
  *       靴 (移動速度を固定、耐性 T1 × 2・スピリット (完璧なエッセンス)・ドッジロール (冒涜))。
@@ -74,6 +74,14 @@ function glovesWhite() {
   return { ...g, name: "手袋 (白から・会心倍率をマジックで一緒に)", sim: { ...g.sim, greater: { essKey: null, keep } } };
 }
 
+/** 両側の「どれか」(K6): 手袋で ES (プレ) か攻撃速度 (サフィ) のどれか 1 つを高貴で。⑤ は route が prefix / suffix の 2 つ */
+function glovesSplit() {
+  const g = gloves();
+  const ES = g.sim.targets.find((t) => t.modId.endsWith("/LocalEnergyShield")), AS = g.sim.targets.find((t) => t.modId.endsWith("/IncreasedAttackSpeed"));
+  const targets = g.sim.targets.filter((t) => t !== AS).map((t) => (t === ES ? { ...ES, alts: [{ modId: AS.modId, minTierIndex: AS.minTierIndex }] } : t));
+  return { ...g, name: "手袋 (ES か攻撃速度のどれか)", sim: { ...g.sim, targets } };
+}
+
 const perms = (xs) => (xs.length <= 1 ? [xs] : xs.flatMap((x, i) => perms([...xs.slice(0, i), ...xs.slice(i + 1)]).map((r) => [x, ...r])));
 const div = (v) => (v / DIV).toFixed(1);
 const pct = (a, b) => (b ? `${(((a - b) / b) * 100).toFixed(1)}%` : "-");
@@ -87,7 +95,7 @@ function engine(sim, order, quiz, n) {
   const t0 = Date.now();
   for (let i = 0; i < n; i++) {
     const r = M.runQuizOnce(data, recipe, 900000 + i * 7919, { price, maxSteps: 400000 });
-    if (r.stop?.kind === "unanswered") { unans++; const sk = JSON.stringify(r.stop.situation); if (!open.has(sk)) open.set(sk, r.stop.situation); const k = Object.entries(r.stop.situation).filter(([k]) => !["r", "cat", "n", "p.n", "s.n", "p.free", "s.free", "fx", "p.fx", "s.fx"].includes(k)).map(([k, v]) => `${k}=${v}`).join(","); why[k] = (why[k] ?? 0) + 1; continue; }
+    if (r.stop?.kind === "unanswered") { unans++; const sk = r.stop.route + JSON.stringify(r.stop.situation); if (!open.has(sk)) open.set(sk, { route: r.stop.route, sit: r.stop.situation }); const k = Object.entries(r.stop.situation).filter(([k]) => !["r", "cat", "n", "p.n", "s.n", "p.free", "s.free", "fx", "p.fx", "s.fx"].includes(k)).map(([k, v]) => `${k}=${v}`).join(","); why[k] = (why[k] ?? 0) + 1; continue; }
     if (r.stop?.kind === "gate") gate++;
     if (r.stop?.kind === "blocked") { blocked++; why["打てない " + r.stop.reason] = (why["打てない " + r.stop.reason] ?? 0) + 1; }
     cost += r.cost - recipe.start.price; if (r.done) done++;
@@ -96,7 +104,7 @@ function engine(sim, order, quiz, n) {
   return { open: [...open.values()], cost: m ? cost / m : NaN, finish: m ? done / m : NaN, unans, gate, blocked, why: Object.entries(why).sort((a, b) => b[1] - a[1]).slice(0, 3), sec: (Date.now() - t0) / 1000 };
 }
 
-for (const S of (which === "all" ? [gloves(), boots(), glovesWhite()] : which === "boots" ? [boots()] : which === "white" ? [glovesWhite()] : [gloves()])) {
+for (const S of (which === "all" ? [gloves(), boots(), glovesWhite(), glovesSplit()] : which === "boots" ? [boots()] : which === "white" ? [glovesWhite()] : which === "split" ? [glovesSplit()] : [gloves()])) {
   console.log(`\n== ${S.name}`);
   const b = M.buildAutoModel({ sim: S.sim, price });
   if (!b.ok) { console.log("  対応外:", b.reason.ja); continue; }
@@ -128,13 +136,14 @@ for (const S of (which === "all" ? [gloves(), boots(), glovesWhite()] : which ==
     const mc = M.orderDetail(model, x.o, { mc: 2000, seed: 3 });
     // 自動の答え (auto-rules の rulesFromDetail)。300 人回して答えの無い状況に answerFor の答えを足す (最大 3 回、設計 3-1 の穴埋め)
     const recipe0 = M.quizFromSim({ ...S.sim, order: x.o }, null).recipe;
-    const quiz = M.rulesFromDetail(model, mc, recipe0);
+    // route ごとの答え (両側のどれかが無ければ main だけ。mc は上の mc と同じ種)
+    const { quiz, details } = M.rulesForOrder(model, x.o, recipe0, { mc: 2000, seed: 3 });
     let added = 0, left = 0;
     for (let round = 0; round < 3; round++) {
       const pre = engine(S.sim, x.o, quiz, 300);
       if (!pre.open.length) break;
       left = 0;
-      for (const sit of pre.open) { const r = M.answerFor(model, mc, recipe0, sit); if (r) { quiz.rules.main.push(r); added++; } else left++; }
+      for (const { route, sit } of pre.open) { const dd = details[route]; const r = dd && M.answerFor(dd.model, dd.detail, recipe0, sit, route); if (r) { quiz.rules[route].push(r); added++; } else left++; }
       if (!added) break;
     }
     const e = engine(S.sim, x.o, quiz, N);
@@ -142,7 +151,7 @@ for (const S of (which === "all" ? [gloves(), boots(), glovesWhite()] : which ==
     const ePer = e.finish > 0 ? (model.R + e.cost) / e.finish - model.R : Infinity;
     const m = mc.result;
     console.log(`  #${all.indexOf(x) + 1} ${name(x.o)}\n     値だけ ${div(x.r.cost)} 神・${(x.r.finish * 100).toFixed(1)}%・${div(x.r.perFinish)} | mc ${div(m.cost)}・${(m.finish * 100).toFixed(1)}%・${div(m.perFinish)} | エンジン ${div(e.cost)}・${(e.finish * 100).toFixed(1)}%・${div(ePer)} (${e.sec.toFixed(0)} 秒、答え無し ${e.unans}・打ち止め ${e.gate}・打てない ${e.blocked}) | ずれ ${pct(m.cost, e.cost)} / ${pct(m.finish, e.finish)} / ${pct(m.perFinish, ePer)}・値だけの 1 個あたり ${pct(x.r.perFinish, ePer)}`);
-    console.log(`     自動の答え ${quiz.rules.main.length} (穴埋めで足した ${added}・答えられなかった状況 ${left})、付け方 ${meth}、1 割以内: ${Math.abs(m.perFinish - ePer) <= 0.1 * ePer ? "はい" : "いいえ"}`);
+    console.log(`     自動の答え ${Object.entries(quiz.rules).map(([k, v]) => `${k} ${v.length}`).join("・")} (穴埋めで足した ${added}・答えられなかった状況 ${left})、付け方 ${meth}、1 割以内: ${Math.abs(m.perFinish - ePer) <= 0.1 * ePer ? "はい" : "いいえ"}`);
     if (e.why.length) console.log(`     止まった所: ${e.why.map(([k, v]) => `${v}× ${k}`).join(" | ")}`);
   }
 }

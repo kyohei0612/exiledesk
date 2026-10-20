@@ -10,3 +10,4 @@ export { runQuizOnce } from "../../src/services/simulator/quiz-recipe";
 export { orderCandidates } from "../../src/services/simulator/auto/auto-order";
 export { runeEnForId } from "../../src/services/simulator/pattern";
 export { rulesFromDetail, methodsFromDetail, answerFor } from "../../src/services/simulator/auto/auto-rules";
+export { rulesForOrder } from "../../src/services/simulator/auto/auto-rules";

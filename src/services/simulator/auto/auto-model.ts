@@ -34,7 +34,8 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   if (x.targets.some((t) => t.method === "augment")) return no("増強スパムの狙いは自動の順番に未対応", "Augmentation spam isn't supported yet");
   const { recipe, error } = quizFromSim({ ...x, order: undefined }, null);
   if (error) return no(error, "These targets can't be built");
-  if (recipe.routes.length !== 1 || recipe.start.kind !== "bought") return no("両側のどれかの狙いは自動の順番に未対応", "Either-side targets aren't supported yet");
+  if (recipe.routes.length === 2 && recipe.start.kind === "bought") return buildSplit(input, recipe.routes.map((r) => ({ id: r.id, ids: r.goal.map((g) => g.id).sort().join(",") })));
+  if (recipe.routes.length !== 1 || recipe.start.kind !== "bought") return no("この始め方は自動の順番に未対応", "This start isn't supported yet");
   const goal = recipe.routes[0]!.goal;
   const fracSlot = goal.find((s) => s.kind === "fractured");
   if (!fracSlot) return no("フラクチャーの狙いが無い", "No fracture target");
@@ -147,4 +148,34 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   const err = fillEngine(model, ectx);
   if (err) return no(err, "Too many shapes for auto order");
   return { ok: true, model };
+}
+
+/**
+ * 両側の「どれか」(K6、設計 auto-flow-design.md の 3-3 B・メモ sim-split-by-side): その札を側ごとの候補だけにした狙いで model を 2 つ組む。
+ * ⑤ は札が付くまで 1 つ目の route (prefix) の答えで打ち、反対の側の候補が付いたらその route に移る。
+ * 費用は 1 つ目の route の model の値 (反対の側にたまたま付いて移る得は見ない = 計算が少し高い向きの近似)。答えは route ごとにその model の方策から (auto-rules)
+ */
+function buildSplit(input: AutoInput, routes: Array<{ id: string; ids: string }>): AutoBuilt {
+  const x = input.sim, d = x.data;
+  const sideOf = (id: string): StageSide => (d.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const t = x.targets.find((y) => y.method !== "fracture" && new Set([y.modId, ...(y.alts ?? []).map((a) => a.modId)].map(sideOf)).size > 1);
+  if (!t) return no("両側のどれかの札が見つからない", "Either-side target not found");
+  const members = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
+  const out: Array<{ id: string; model: AutoModel }> = [];
+  for (const r of routes) {
+    const ms = members.filter((mm) => sideOf(mm.modId) === r.id);
+    if (!ms.length) return no("両側のどれかの札の側が合わない", "Either-side target sides don't match");
+    const t1 = { ...t, modId: ms[0]!.modId, minTierIndex: ms[0]!.minTierIndex, alts: ms.slice(1), need: 1 };
+    const b = buildAutoModel({ ...input, sim: { ...x, targets: x.targets.map((y) => (y === t ? t1 : y)) } });
+    if (!b.ok) return b;
+    const m = b.model;
+    // 札の id が ⑤ の route と同じか (答えの条件は札の id で書く)
+    const want = r.ids.split(","), ids = m.slots.map((sl) => sl.id);
+    if (want.length !== ids.length + 1 || !ids.every((id) => want.includes(id))) return no("両側のどれかの札の並びが ⑤ と合わない", "Either-side slots don't match the recipe");
+    // 並べる行のキーは元の狙いの modId のまま (④ の表の行)
+    const k0 = `mod:${t1.modId}`, k1 = `mod:${t.modId}`;
+    if (k0 !== k1 && m.keyIds[k0]) { m.keyIds[k1] = m.keyIds[k0]!; delete m.keyIds[k0]; m.keys = m.keys.map((k) => (k === k0 ? k1 : k)); }
+    out.push({ id: r.id, model: m });
+  }
+  return { ok: true, model: { ...out[0]!.model, routes: out } };
 }
