@@ -13,6 +13,8 @@ import { tr } from "../../i18n/lang";
 import { useStageBase } from "./use-stage-base";
 import { revealWhenReady } from "../../utils/keep-place";
 import StageRecipeStart from "../simulator/StageRecipeStart.vue";
+import SimPasteRead from "../simulator/SimPasteRead.vue";
+import type { PasteRead } from "../../services/simulator/paste-read";
 
 defineProps<{ phone: boolean }>();
 const { pickSimBase, startFromRecipe } = useStageBase();
@@ -29,6 +31,17 @@ function pick(en: string): void {
   basePage.value = false;
   if (first || en !== s.base.value) pickSimBase(en);
   if (s.mode.value === "sim") setTimeout(revealSimMods, 120);
+}
+/**
+ * シミュレーター: 貼り付けたアイテムで始める = ① のベースと ② の狙いを一度に埋めて ② へ (2026-10-20 オーナー。前の ② の「貼り付けで写す」はここに一本化)。
+ * ベースを選び直した時と同じに先 (始め方・順番・打ち方) は空から
+ */
+function startFromPaste(r: PasteRead): void {
+  if (!r.base) return;
+  basePage.value = false;
+  pickSimBase(r.base);
+  s.simTargets.value = r.targets;
+  setTimeout(revealSimMods, 120);
 }
 /**
  * シミュレーター: ベースを選んだら、すぐ狙う MOD を選べるように、2 の枠の下の線 + 少しの隙間が見える所まで送る
@@ -85,7 +98,10 @@ onBeforeUnmount(() => {
         <button type="button" data-base-quick class="g-btn-red min-h-11 shrink-0 px-2 text-[14px] max-md:w-full" @click="pick('Gold Ring')">{{ tr("金の指輪ですぐ試す", "Try now with a Gold Ring") }}</button>
       </div>
       <!-- 未選択の時は前のベース・種類を選んだ状態にしない・人気のベースを上に (StageBasePicker.vue と同じ) -->
-      <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog ref="catalog" :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" @pick="pick" /></div>
+      <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog ref="catalog" :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" :paste="!SIM_LOCKED && s.mode.value === 'sim'" @pick="pick">
+        <!-- シミュレーター: アイテムの貼り付けでベースと狙いを一度に (開発版だけ) -->
+        <template #paste><SimPasteRead @start="startFromPaste" /></template>
+      </BaseCatalog></div>
     </div>
   </section>
 </template>

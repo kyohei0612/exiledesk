@@ -21,7 +21,6 @@ import { tr } from "../../i18n/lang";
 import { targetShare } from "../../services/simulator/target-share";
 import { runeJaOf, runeToneOf } from "../../services/craft-stage/mod-list";
 import SimMethodPop from "./SimMethodPop.vue";
-import SimPasteTargets from "./SimPasteTargets.vue";
 import { methodsOff, toAugment } from "../../services/simulator/sim-methods";
 import { ref } from "vue";
 /**
@@ -284,8 +283,6 @@ function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
 
 <template>
   <div class="grid min-w-0 gap-y-1 text-[13px]">
-    <!-- 取引所のアイテムを貼って写す (2026-10-20 要望 91832821 の ②) -->
-    <SimPasteTargets v-if="props.editable" class="mb-1" />
     <!-- % が何の割合か (2 は一番上のアイテムレベル、3 で決めたレベルで変わる。2026-10-18 初めての 10 人: 同じ MOD で 1.4% → 1.9% と変わって分からない) -->
     <p v-if="rows.length" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ `% = 1 回付く時に、その段以上が出る割合 (アイテムレベル ${s.itemLevel.value} の時${props.editable ? "。3 でレベルを決めると変わる" : ""})` }}</p>
     <div v-for="col in columns" :key="col.title" class="min-w-0">

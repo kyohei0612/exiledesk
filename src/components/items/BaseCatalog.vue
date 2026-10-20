@@ -18,7 +18,8 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import popularData from "../../data/popular-bases.json";
 
 /** popular: 一番上に「人気のベース」の段を出す (初めての人のベース選び。2026-10-11 オーナー「解析で人気のベースをそのまま選択させる」) */
-const props = defineProps<{ data: PatchData | null; selected?: string | null; extras?: boolean; note?: (en: string) => string; height?: string; popular?: boolean }>();
+/** paste: 最後の段に「貼り付け」のタイルを足す。押すとほかの部位と同じく下に枠が開き、中身は #paste の slot (シミュレーター ①。2026-10-20 オーナー) */
+const props = defineProps<{ data: PatchData | null; selected?: string | null; extras?: boolean; note?: (en: string) => string; height?: string; popular?: boolean; paste?: boolean }>();
 const emit = defineEmits<{ pick: [en: string] }>();
 
 const all = computed(() => (props.data ? baseCatalog(props.data, !!props.extras) : []));
@@ -76,7 +77,7 @@ const ATTR_JA: Record<string, string> = { str: "筋力", dex: "器用", int: "�
  * (2026-10-10 動きの揃え: 英語はクライアントの ItemClasses / ClientStrings のまま。base-catalog.ts)
  */
 interface Family { name: string; en: string; variants: Array<{ cls: string; label: string; en: string }> }
-const famLabel = (f: Family): string => tr(f.name, f.en);
+const famLabel = (f: Family): string => (isPaste(f) ? tr("貼り付け", "Paste") : tr(f.name, f.en));
 const famLabelOf = (v: { label: string; en: string }): string => tr(v.label, v.en);
 const NO_ATTR_EN = "Plain";
 const families = computed((): Array<{ ja: string; en: string; fams: Family[] }> =>
@@ -103,7 +104,10 @@ const families = computed((): Array<{ ja: string; en: string; fams: Family[] }> 
   }, []).map((r) => {
     const armour = r.names.length > 1 && r.names.every((n) => ARMOUR.has(n));
     return { ja: r.names.length > 1 ? (armour ? "防具" : r.names.join("・")) : r.ja, en: r.names.length > 1 ? (armour ? CATALOG_ROW_EN["防具"]! : r.ens.join(" · ")) : r.en, fams: r.fams };
-  }));
+  }).map((r, i, rows) => (props.paste && i === rows.length - 1 ? { ...r, fams: [...r.fams, PASTE] } : r)));
+/** 「貼り付け」のタイル (中にベースは無い。押すと #paste の slot を開く) */
+const PASTE: Family = { name: "__paste", en: "Paste", variants: [] };
+const isPaste = (f: Family | null): boolean => f?.name === PASTE.name;
 const ARMOUR = new Set(["手袋", "靴", "鎧", "兜"]);
 /** ベースの絵 (スキルジェムはジェムの絵) */
 const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
@@ -254,7 +258,7 @@ function pickFamily(f: Family): void {
   family.value = f;
   // 属性の札は先頭 (筋力・無印) を選んだ状態で開いて、すぐベースを出す。札は上で切り替える
   // (2026-10-10 オーナー「押したら選ばせるんじゃなく最初から筋力のページ開いて上のタブで切り替え、アイコンと文字が挟まれると目が滑る」)
-  cls.value = f.variants.some((v) => v.cls === cls.value) ? cls.value : f.variants[0]!.cls;
+  if (f.variants.length) cls.value = f.variants.some((v) => v.cls === cls.value) ? cls.value : f.variants[0]!.cls;
   void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => revealPanel()))); });
 }
 /**
@@ -339,7 +343,11 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
             <div :class="phone ? 'grid grid-cols-3 gap-1.5' : 'flex flex-wrap gap-1'">
               <button v-for="f in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
                 <!-- ユニークの絵はゆっくり光る (脈打つ光 + 乗せると光が走る。2026-10-13 オーナー「光らせることできる？動きのある感じで」)。タイルごとに少しずらして一斉に光らない -->
-                <span class="grid size-16 place-items-center md:size-20" :class="[family?.name === f.name && !phone ? 'g-slot on' : 'g-slot', plainArt ? '' : 'fam-slot']">
+                <span v-if="isPaste(f)" data-base-paste class="grid size-16 place-items-center md:size-20" :class="family?.name === f.name && !phone ? 'g-slot on' : 'g-slot'">
+                  <!-- クリップボードの絵 (ゲームの絵に無いので線で描く) -->
+                  <svg viewBox="0 0 24 24" class="size-9 text-amber-200/90 md:size-11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2" /><rect x="9" y="2.5" width="6" height="3.5" rx="1" /><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4" /></svg>
+                </span>
+                <span v-else class="grid size-16 place-items-center md:size-20" :class="[family?.name === f.name && !phone ? 'g-slot on' : 'g-slot', plainArt ? '' : 'fam-slot']">
                   <template v-if="!plainArt">
                     <span class="fam-aura" aria-hidden="true" />
                     <span v-for="(m, k) in risers(f.name)" :key="k" class="fam-rise" :style="m" aria-hidden="true" />
@@ -353,12 +361,15 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           </div>
           <!-- PC: 押したタイルの行のすぐ下 (行いっぱい) -->
           <div v-if="!phone && family && insertAfter === r.ja" data-base-panel class="basis-full rounded-md bg-black/25 p-2 ring-1 ring-white/10">
+            <slot v-if="isPaste(family)" name="paste" />
+            <template v-else>
             <div v-if="family.variants.length > 1 && !joined" class="mb-2 flex flex-wrap gap-2">
               <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
             </div>
             <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
             <!-- 開き直す・部位を選び直すたびに畳んだ状態 (2 行 + もっと見る) から (2026-10-13 オーナー「もっと見るは一番下に来るでしょ」: 前に広げたまま開いていた) -->
             <BaseCardGrid v-else :key="openSeq" :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="(en) => emit('pick', en)" @expand="revealMore" @collapse="foldMore" />
+            </template>
           </div>
         </template>
       </div>
@@ -368,14 +379,15 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           <button type="button" class="min-h-11 rounded-lg border border-white/20 px-3" @click="backToFamilies">{{ tr("← 部位", "← Item class") }}</button>
           <b class="text-[15px] text-amber-100">{{ famLabel(family) }}</b>
         </div>
-        <div v-if="family.variants.length > 1 && !joined" class="mb-2 flex flex-wrap gap-2">
+        <slot v-if="isPaste(family)" name="paste" />
+        <div v-else-if="family.variants.length > 1 && !joined" class="mb-2 flex flex-wrap gap-2">
           <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
         </div>
-        <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
+        <p v-if="!cls && !isPaste(family)" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
       </div>
     </template>
     <!-- ② ベースのカード: スマホ (1 段ずつの最後) と名前で探す時はここ -->
-    <BaseCardGrid v-if="query.trim() || (phone && cls)" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" />
+    <BaseCardGrid v-if="query.trim() || (phone && cls && !isPaste(family))" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" />
     <!-- 名前で探す欄は外した (2026-10-18 オーナー「ここで探すことは無い」)。装備 (ユニークの絵)・エフェクトを切るチェックは一番下 (同)。
          タイルを元のベースの絵にして、光と粒も出さない。このブラウザに覚える (2026-10-13 オーナー) -->
     <label class="mt-3 flex w-fit cursor-pointer items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)] md:text-[13px]" :title="tr('部位のタイルを元のベースの絵にして、光と動きを止める', 'Show the plain base art on the category tiles, without glow or motion')">
