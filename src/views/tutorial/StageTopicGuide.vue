@@ -72,6 +72,11 @@ const revealTurn = (b: ChainButton): boolean => b.sub.use === "reveal" && !topic
 function toReveal(): void { document.querySelector("[data-reveal-panel]")?.scrollIntoView({ behavior: "smooth", block: "center" }); }
 /** 発現のお告げが掛かっているか */
 const omensOn = (sub: TopicStep): boolean => (sub.omens ?? []).every((o) => s.omens.value.includes(o));
+/** 次に押す物: 光らせる (段 5 で押す物が分からなかった。2026-10-20 UI 点検 11) */
+const nextBtn = (b: ChainButton): boolean => (b.kind === "omen" ? !topicUsed.value && b.j === topicSub.value && !omensOn(b.sub) : b.kind === "reveal" ? revealTurn(b) : stepReady(b));
+const GLOW = "ring-2 ring-amber-300/80 shadow-[0_0_12px_rgba(251,191,36,0.45)]";
+/** 段 5 は説明を 1 文 + 残りは ▼ */
+const isGuide = computed(() => topic.value?.level === 5);
 /** お告げのボタン: 今の手のお告げを掛ける (最初の手なら、ここで打てるアイテムを用意する) */
 function applyOmens(b: ChainButton): void {
   if (topicUsed.value) return;
@@ -225,7 +230,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <button type="button" class="g-btn sm max-md:w-full max-md:justify-center" @click="quitLesson">{{ tr("コースをやめる", "Quit course") }}</button>
     </div>
     <div v-if="topicStep" data-topic-now class="rounded-lg border-2 border-amber-300/50 bg-amber-500/[0.08] px-3 py-2">
-      <p class="text-[11px] font-bold text-amber-200">{{ tr(`${topicAt + 1} 手目: これを使ってみる`, `Step ${topicAt + 1}: try this`) }}</p>
+      <p class="flex items-baseline justify-between gap-2 text-[11px] font-bold text-amber-200"><span>{{ tr(`${topicAt + 1} 手目: これを使ってみる`, `Step ${topicAt + 1}: try this`) }}</span><span data-topic-progress class="tabular-nums text-[13px]">{{ Math.min(topicAt, topic.steps.length) }} / {{ topic.steps.length }}</span></p>
       <p v-if="prepared && !topicUsed" data-topic-prepared class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("この手が使えるアイテムを用意しました", "We set up an item this can be used on") }}</p>
       <div class="mt-1 flex flex-wrap items-center gap-2">
         <button v-if="topicStep.step.use === 'reset'" type="button" data-topic-reset class="g-btn sm" @click="topicReset">{{ tr("白に戻す", "Reset to white") }}</button>
@@ -233,12 +238,12 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
         <template v-else v-for="(b, n) in chainButtons" :key="n">
           <span v-if="n > 0" class="text-amber-300/60">→</span>
           <!-- お告げ: 押すと掛かる。掛けたら ✓。カレンシー・発現はその後 (2026-10-17 オーナー「お告げが分かりづらいから分けて」) -->
-          <button v-if="b.kind === 'omen'" type="button" data-topic-omen :data-topic-hold="b.j === topicSub && !omensOn(b.sub) ? '' : undefined" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :disabled="topicUsed || b.j !== topicSub || omensOn(b.sub)" :title="tr('押すとお告げを掛ける', 'Click to apply the omen')" @click="applyOmens(b)">
+          <button v-if="b.kind === 'omen'" type="button" data-topic-omen :data-topic-hold="b.j === topicSub && !omensOn(b.sub) ? '' : undefined" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :class="nextBtn(b) ? GLOW : ''" :disabled="topicUsed || b.j !== topicSub || omensOn(b.sub)" :title="tr('押すとお告げを掛ける', 'Click to apply the omen')" @click="applyOmens(b)">
             <span v-if="topicUsed || b.j < topicSub || (b.j === topicSub && omensOn(b.sub))" class="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[10px] font-bold text-black">✓</span>
             <img v-for="o in b.sub.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="size-7 shrink-0 object-contain" />
             <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ (b.sub.omens ?? []).map(nameOf).join(" + ") }}</span>
           </button>
-          <button v-else type="button" :data-topic-hold="b.kind === 'step' && stepReady(b) ? '' : undefined" :data-topic-chain="b.j" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :class="revealTurn(b) ? 'ring-2 ring-amber-300/80 shadow-[0_0_12px_rgba(251,191,36,0.45)]' : ''" :disabled="b.sub.use === 'reveal' ? !revealTurn(b) : !stepReady(b)" :title="b.sub.use === 'reveal' ? tr('アイテムの下の候補から選んで「発現」', 'Pick an option under the item, then Reveal') : b.need && !omensOn(b.need) ? tr('先にお告げを掛ける', 'Apply the omen first') : tr('押すと持つ', 'Click to hold')" @click="b.sub.use === 'reveal' ? toReveal() : holdIt()">
+          <button v-else type="button" :data-topic-hold="b.kind === 'step' && stepReady(b) ? '' : undefined" :data-topic-chain="b.j" class="g-plain flex items-center gap-1 rounded-md border border-amber-300/50 bg-black/30 px-2 py-1 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40" :class="nextBtn(b) ? GLOW : ''" :disabled="b.sub.use === 'reveal' ? !revealTurn(b) : !stepReady(b)" :title="b.sub.use === 'reveal' ? tr('アイテムの下の候補から選んで「発現」', 'Pick an option under the item, then Reveal') : b.need && !omensOn(b.need) ? tr('先にお告げを掛ける', 'Apply the omen first') : tr('押すと持つ', 'Click to hold')" @click="b.sub.use === 'reveal' ? toReveal() : holdIt()">
             <span v-if="topicUsed || b.j < topicSub" class="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[10px] font-bold text-black">✓</span>
             <img v-if="iconOfStep(b.sub)" :src="iconOfStep(b.sub)" alt="" class="size-7 shrink-0 object-contain" />
             <Icon v-else name="sparkles" class="size-6 shrink-0 text-violet-200" />
@@ -256,9 +261,19 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
         <p class="text-[13px] font-semibold" :class="targetRow.state === 'miss' ? 'text-white/60' : 'text-emerald-200'">・{{ targetRow.text }}</p>
       </div>
       <p data-topic-point class="mt-2 rounded-lg border border-amber-300/50 bg-amber-400/10 px-2.5 py-1.5 text-center text-[15px] font-bold text-amber-100">{{ t2(topicStep.step.note) }}</p>
-      <ul v-if="topicStep.step.how" data-topic-how class="mt-1.5 grid gap-1 rounded-lg bg-black/25 px-2.5 py-2">
+      <ul v-if="topicStep.step.how && !isGuide" data-topic-how class="mt-1.5 grid gap-1 rounded-lg bg-black/25 px-2.5 py-2">
         <li v-for="(l, i) in topicStep.step.how" :key="i" class="flex gap-1.5 text-[14px] text-[var(--exile-color-text-primary)]"><span class="text-amber-300/70">・</span><span>{{ t2(l) }}</span></li>
       </ul>
+      <!-- 段 5: 1 文だけ出し、残りの箇条は ▼ で開く -->
+      <div v-else-if="topicStep.step.how" data-topic-how class="mt-1.5 rounded-lg bg-black/25 px-2.5 py-2">
+        <p class="text-[14px] text-[var(--exile-color-text-primary)]">{{ t2(topicStep.step.how[0]!) }}</p>
+        <details v-if="topicStep.step.how.length > 1" :key="topicAt" data-topic-how-more class="mt-1">
+          <summary class="cursor-pointer text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("詳しく", "More") }}</summary>
+          <ul class="mt-1 grid gap-1">
+            <li v-for="(l, i) in topicStep.step.how.slice(1)" :key="i" class="flex gap-1.5 text-[13px] text-[var(--exile-color-text-primary)]"><span class="text-amber-300/70">・</span><span>{{ t2(l) }}</span></li>
+          </ul>
+        </details>
+      </div>
       <div v-if="faction" data-topic-faction class="mt-1.5 rounded-lg border border-violet-400/40 bg-violet-500/10 px-2.5 py-1.5">
         <p class="text-[11px] font-bold text-violet-200">{{ tr(`このアイテムに付く${faction.name}の MOD (${faction.mods.length} 種。発現の候補はこの中から)`, `${faction.name} mods this item can get (${faction.mods.length}; reveal options come from these)`) }}</p>
         <p v-for="(m, i) in faction.mods" :key="i" class="flex gap-1.5 text-[12px] text-violet-100"><span class="w-4 shrink-0 font-bold" :class="m.side === 'prefix' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ m.side === "prefix" ? "P" : "S" }}</span><span>{{ m.text }}</span></p>

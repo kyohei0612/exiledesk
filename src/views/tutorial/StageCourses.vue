@@ -43,6 +43,9 @@ function courseIcon(c: TopicCourse): string {
 /** 手の一覧を開いているコース (既定は閉じる。押すと開く。2026-10-17 オーナー「全部出したらバカでしょ、コース一覧を見るで見れるように」) */
 /** 開けるのは 1 つだけ。そのカードの外を押したら閉じる (オーナー「他の動作したら閉じる、開きっぱなしは品が無い」) */
 const openSteps = ref<string | null>(null);
+/** 説明 (learn) を開いているコース (既定は閉じる。題と手数だけ。2026-10-20 UI 点検 13) */
+const openLearn = ref<Set<string>>(new Set());
+function toggleLearn(id: string): void { const n = new Set(openLearn.value); if (!n.delete(id)) n.add(id); openLearn.value = n; }
 function toggleSteps(id: string): void { openSteps.value = openSteps.value === id ? null : id; }
 function closeOutside(e: PointerEvent): void {
   if (!openSteps.value) return;
@@ -101,11 +104,13 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
                   <span class="shrink-0 rounded px-1.5 py-px text-[10px] font-bold" :class="lv.chip">{{ t2(lv.label) }}</span>
                   <span v-if="cleared.has(`topic:${c.id}`)" data-cleared class="shrink-0 rounded bg-amber-400 px-1.5 py-px text-[10px] font-black text-black">{{ tr("クリア", "Cleared") }}</span>
                 </span>
-                <span class="line-clamp-2 text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]" :title="t2(c.learn)">{{ t2(c.learn) }}</span>
+                <span class="flex min-w-0 items-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${c.steps.length} 手`, `${c.steps.length} steps`) }}
+                  <button type="button" data-topic-learn-toggle class="g-plain inline-flex items-center gap-0.5 rounded px-1 hover:bg-white/5" :aria-expanded="openLearn.has(c.id)" @click="toggleLearn(c.id)"><Icon :name="openLearn.has(c.id) ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ tr("説明", "About") }}</button></span>
+                <span v-if="openLearn.has(c.id)" data-topic-learn class="text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">{{ t2(c.learn) }}</span>
               </div>
             </div>
             <div class="mt-auto flex flex-wrap items-center gap-2 bg-black/25 py-2 pl-5 pr-3">
-              <span class="min-w-0 truncate max-md:w-full text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${c.steps.length} 手`, `${c.steps.length} steps`) }} · {{ baseName(c.base) }}</span>
+              <span class="min-w-0 truncate max-md:w-full text-[11px] text-[var(--exile-color-text-tertiary)]">{{ baseName(c.base) }}</span>
               <span class="ml-auto flex shrink-0 items-center gap-2">
                 <button type="button" data-topic-card-toggle class="g-btn sm inline-flex items-center gap-1" :aria-expanded="openSteps === c.id" @click="toggleSteps(c.id)"><Icon :name="openSteps === c.id ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ tr("手の一覧", "Steps") }}</button>
                 <button type="button" data-topic-start class="g-btn-red sm" :disabled="!s.data.value" @click="startTopicAt(c, 0)">{{ tr("始める", "Start") }}</button>
