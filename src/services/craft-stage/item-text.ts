@@ -269,6 +269,12 @@ function tierOf(mod: Mod, shown: readonly number[], pct: number, level: number):
     const tier = mod.tiers[i]!;
     if (tier.ilvl > level) continue;
     const ranges = tierDisplayRanges(tier);
+    // 幅の無い段 (エッセンスの「+20% to Maximum Quality」のように値が文に入った物) は文の数字と比べる
+    if (ranges.length === 0) {
+      const nums = (mod.text ?? "").match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+      if (nums.length === shown.length && nums.every((n, k) => n === shown[k])) return { index: i, fits: true };
+      continue;
+    }
     if (ranges.length !== lo.length) continue;
     if (ranges.every((r, k) => hi[k]! >= Number(r[0]) && lo[k]! <= Number(r[1]))) return { index: i, fits: true };
   }
