@@ -6,7 +6,8 @@
  * 見本: やふやふ手袋 (マナ T1 固定、スピード・ES T3・投射物 +2・会心倍率 T3・攻撃速度 T3、前の試し plan5 の TIER=3 と同じ完成品)、
  *       靴 (移動速度を固定、耐性 T1 × 2・スピリット (完璧なエッセンス)・ドッジロール (冒涜))。
  * 1. 並べる行の順番を全部 solveOrder (値だけ) で数え、時間を測る
- * 2. 上位 TOP と、真ん中・一番下の順番について、計算の最善手を ⑤ の答えに書き、quizFromSim + runQuizOnce で N 人 (⑥ と同じ回し方)。
+ * 2. 上位 TOP と、真ん中・一番下の順番について、計算の最善手を ⑤ の答えに書き (src の auto-rules: rulesFromDetail、答えの無い状況は 300 人 × 最大 3 回 answerFor で足す)、
+ *    quizFromSim + runQuizOnce で N 人 (⑥ と同じ回し方)。付け方 (methodsFromDetail) も出す。
  *    計算 (値だけ・mc 2,000 人) とエンジンの 1 人の費用・完成の割合・完成 1 個あたりを並べ、ずれ % を出す
  * 3. シミュ部長の絞り方 (auto-order.ts の orderCandidates、n ≥ 6 で 24 通り) は見積もり (redo) が画面にしか無いので、
  *    ここでは「1 位が値だけの全部と mc 上位 5 の並べ直しで同じか」だけ見る
@@ -70,63 +71,22 @@ const perms = (xs) => (xs.length <= 1 ? [xs] : xs.flatMap((x, i) => perms([...xs
 const div = (v) => (v / DIV).toFixed(1);
 const pct = (a, b) => (b ? `${(((a - b) / b) * 100).toFixed(1)}%` : "-");
 
-/** 計算の最善手を ⑤ の答えに (見えている形 → 状況の項目)。同じ状況になる形は通った回数の多い物 */
-function rulesOf(model, det, sim, recipe0) {
-  const goal = recipe0.routes[0].goal;
-  const fracId = goal.find((s) => s.kind === "fractured").id;
-  const K = model.slots.length;
-  const st = recipe0.start;
-  const have = new Set(st.runes ?? []);
-  const runeAll = [...new Set(sim.targets.flatMap((t) => [t, ...(t.alts ?? [])]).map((t) => data.mods.get(t.modId)?.rune).filter(Boolean).map((r) => M.runeEnForId(r)).filter(Boolean))];
-  const extra = runeAll.filter((en) => !have.has(en));
-  const rules = extra.map((en, i) => ({ when: { aug: have.size + i }, do: { use: `rune:${en}` } }));
-  const aug = have.size + extra.length;
-  const best = new Map();
-  for (const v of det.view) {
-    const s = v.s, d = s[3 + K];
-    const when = { aug, [fracId]: 3, "p.junk": s[1 + K], "s.junk": s[2 + K], "p.hid": d === 1 || d === 2 ? 1 : 0, "s.hid": d === 3 || d === 4 ? 1 : 0, "p.bad": d === 5 ? 1 : 0, "s.bad": d === 6 ? 1 : 0, des: d ? 1 : 0 };
-    model.slots.forEach((sl, k) => { const x = s[1 + k], Mk = sl.members.length; when[sl.id] = x > Mk ? 2 : x > 0 ? 1 : 0; });
-    const key = JSON.stringify(when);
-    const e = best.get(key);
-    if (e && e.visits >= v.visits) continue;
-    best.set(key, { when, act: v.act, visits: v.visits });
-  }
-  // 発現で段の足りない狙いの MOD が出た時、計算は「外れの冒涜」(p.bad / s.bad) に数えるが、⑤ は「札が段の足りない状態 (1)・冒涜あり」に見える。
-  // 外れの冒涜の形の答えを、その側の空いた札が 1 の見え方にも書く (同じ状況が既にあればそちら)
-  for (const { when, act, visits } of [...best.values()]) {
-    for (const [bad, side, junk] of [["p.bad", 0, "p.junk"], ["s.bad", 1, "s.junk"]]) {
-      if (when[bad] !== 1) continue;
-      model.slots.forEach((sl) => {
-        if (sl.side !== side || when[sl.id] !== 0) return;
-        const w = { ...when, [bad]: 0, [junk]: when[junk] - 1, [sl.id]: 1 };
-        const key = JSON.stringify(w);
-        if (!best.has(key)) best.set(key, { when: w, act, visits: -1 });
-      });
-    }
-    void visits;
-  }
-  for (const { when, act } of best.values()) {
-    if (Object.keys(model.slots).every((k) => when[model.slots[k].id] === 2)) continue;
-    rules.push({ when, do: act === "restart" ? { restart: true } : M.quizActionOf(model, act) });
-  }
-  return { v: 3, rules: { main: rules } };
-}
-
 function engine(sim, order, quiz, n) {
   const { recipe, error } = M.quizFromSim({ ...sim, order }, quiz);
   if (error) throw new Error(error);
   let cost = 0, done = 0, unans = 0, gate = 0, blocked = 0;
   const why = {};
+  const open = new Map();
   const t0 = Date.now();
   for (let i = 0; i < n; i++) {
     const r = M.runQuizOnce(data, recipe, 900000 + i * 7919, { price, maxSteps: 400000 });
-    if (r.stop?.kind === "unanswered") { unans++; const k = Object.entries(r.stop.situation).filter(([k]) => !["r", "cat", "n", "p.n", "s.n", "p.free", "s.free", "fx", "p.fx", "s.fx"].includes(k)).map(([k, v]) => `${k}=${v}`).join(","); why[k] = (why[k] ?? 0) + 1; continue; }
+    if (r.stop?.kind === "unanswered") { unans++; const sk = JSON.stringify(r.stop.situation); if (!open.has(sk)) open.set(sk, r.stop.situation); const k = Object.entries(r.stop.situation).filter(([k]) => !["r", "cat", "n", "p.n", "s.n", "p.free", "s.free", "fx", "p.fx", "s.fx"].includes(k)).map(([k, v]) => `${k}=${v}`).join(","); why[k] = (why[k] ?? 0) + 1; continue; }
     if (r.stop?.kind === "gate") gate++;
     if (r.stop?.kind === "blocked") { blocked++; why["打てない " + r.stop.reason] = (why["打てない " + r.stop.reason] ?? 0) + 1; }
     cost += r.cost - recipe.start.price; if (r.done) done++;
   }
   const m = n - unans;
-  return { cost: m ? cost / m : NaN, finish: m ? done / m : NaN, unans, gate, blocked, why: Object.entries(why).sort((a, b) => b[1] - a[1]).slice(0, 3), sec: (Date.now() - t0) / 1000 };
+  return { open: [...open.values()], cost: m ? cost / m : NaN, finish: m ? done / m : NaN, unans, gate, blocked, why: Object.entries(why).sort((a, b) => b[1] - a[1]).slice(0, 3), sec: (Date.now() - t0) / 1000 };
 }
 
 for (const S of (which === "all" ? [gloves(), boots()] : which === "boots" ? [boots()] : [gloves()])) {
@@ -158,11 +118,23 @@ for (const S of (which === "all" ? [gloves(), boots()] : which === "boots" ? [bo
   console.log(`  順番 | 計算 値だけ (1 人・完成・1 個あたり) | 計算 mc 2,000 | エンジン ${N} 人 | ずれ (1 人の費用 / 完成 / 1 個あたり、mc とエンジン)`);
   for (const x of pick) {
     const mc = M.orderDetail(model, x.o, { mc: 2000, seed: 3 });
-    const quiz = rulesOf(model, mc, S.sim, M.quizFromSim({ ...S.sim, order: x.o }, null).recipe);
+    // 自動の答え (auto-rules の rulesFromDetail)。300 人回して答えの無い状況に answerFor の答えを足す (最大 3 回、設計 3-1 の穴埋め)
+    const recipe0 = M.quizFromSim({ ...S.sim, order: x.o }, null).recipe;
+    const quiz = M.rulesFromDetail(model, mc, recipe0);
+    let added = 0, left = 0;
+    for (let round = 0; round < 3; round++) {
+      const pre = engine(S.sim, x.o, quiz, 300);
+      if (!pre.open.length) break;
+      left = 0;
+      for (const sit of pre.open) { const r = M.answerFor(model, mc, recipe0, sit); if (r) { quiz.rules.main.push(r); added++; } else left++; }
+      if (!added) break;
+    }
     const e = engine(S.sim, x.o, quiz, N);
+    const meth = M.methodsFromDetail(model, mc).map((y) => `${y.slot} ${y.method ?? "-"}${y.method ? ` ${(y.share * 100).toFixed(0)}%` : ""}`).join("・");
     const ePer = e.finish > 0 ? (model.R + e.cost) / e.finish - model.R : Infinity;
     const m = mc.result;
     console.log(`  #${all.indexOf(x) + 1} ${name(x.o)}\n     値だけ ${div(x.r.cost)} 神・${(x.r.finish * 100).toFixed(1)}%・${div(x.r.perFinish)} | mc ${div(m.cost)}・${(m.finish * 100).toFixed(1)}%・${div(m.perFinish)} | エンジン ${div(e.cost)}・${(e.finish * 100).toFixed(1)}%・${div(ePer)} (${e.sec.toFixed(0)} 秒、答え無し ${e.unans}・打ち止め ${e.gate}・打てない ${e.blocked}) | ずれ ${pct(m.cost, e.cost)} / ${pct(m.finish, e.finish)} / ${pct(m.perFinish, ePer)}・値だけの 1 個あたり ${pct(x.r.perFinish, ePer)}`);
+    console.log(`     自動の答え ${quiz.rules.main.length} (穴埋めで足した ${added}・答えられなかった状況 ${left})、付け方 ${meth}、1 割以内: ${Math.abs(m.perFinish - ePer) <= 0.1 * ePer ? "はい" : "いいえ"}`);
     if (e.why.length) console.log(`     止まった所: ${e.why.map(([k, v]) => `${v}× ${k}`).join(" | ")}`);
   }
 }

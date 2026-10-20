@@ -36,6 +36,8 @@ export interface AutoModel {
   R: number;
   /** 始めに入っていないルーンの代金 (1 本ごと、⑤ の最初に差す) */
   runeCost: number;
+  /** 狙いに要るルーン (英語の名前)。始めに無い物は ⑤ の最初に差す (auto-rules) */
+  runes: string[];
   /** 側ごとの枠 [プレ, サフィ] */
   cap: [number, number];
   slots: MSlot[];
@@ -175,7 +177,7 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
     for (const c of junkCands[sd].sort((a, b) => b.w - a.w)) if (c.fams.every((f) => !taken.has(f))) { junk[sd].push(c.id); c.fams.forEach((f) => taken.add(f)); }
   }
   const model: AutoModel = {
-    keys, R: x.startPrice, runeCost, cap: [limitOf(rare, "prefix"), limitOf(rare, "suffix")], slots, keyIds, frac, pools, prices,
+    keys, R: x.startPrice, runeCost, runes: runeAll, cap: [limitOf(rare, "prefix"), limitOf(rare, "suffix")], slots, keyIds, frac, pools, prices,
     exRates: DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate), offers: REVEAL_SPEC.actions.flatMap((a) => ("reveal" in a ? [a.reveal.offers] : []))[0] ?? 3, eng: {}, version: 3,
   };
   const err = fillEngine(model, { data: d, base: x.base, itemLevel: x.itemLevel, ...(x.sockets ? { sockets: x.sockets } : {}), runes: runeAll, junk });
