@@ -24,6 +24,7 @@
 | ブラック | local_c909c5e8-9a42-4589-aa8b-0c9e44044cd7 (local_9b3dd68f の系列の新しいブラック) | 司令塔 |
 | サム開発部長 | (このセッション、10-21 夕に立った 1 本目) | まとめ役 |
 | 解析君 | local_5b608b79-ae73-4df0-941b-428ba3e9a932 | 金の指輪のサフィックス 3 MOD (レアリティ T1・キャストスピード T2+・全耐性 T2+) の期待値をオーナーの打ち方でエンジンを回して出す (math/notes/2026-10-21-gold-ring-suffix-ev.md)。エンジンに無い手が見つかったらブラック経由でサムへ |
+| ジン部長 | local_21a41678-0e18-4415-9936-ae8e59d19213 | クラフト台でお告げをオンにした時、名前の下に設定 (触媒の高貴のお告げ = カタリストの品質で上がる確率が先、聖別 = 既定は範囲でランダム・チェックで倍率を手で)。開発版まで |
 | リサーチ長 | local_5d0c0f13-6825-4cae-b903-af5d2aa51010 | 常駐 (ブラックの直) |
 | ほかの部長 | — | 仕事が来たらブラックが立てる |
 
@@ -36,10 +37,11 @@
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
 | 誰 | ファイル |
 |---|---|
-| 解析君 K8 | src/services/simulator/auto/auto-model.ts、scripts/analysis/check-auto-order.mjs、docs/org/math/ |
-| 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
-| シミュ部長 S1e | SimPasteRead.vue・paste-read.ts・StageBasePage.vue・StageTargetSummary.vue・use-stage-base.ts |
-| ジン部長 J2 | tests/golden/ (探すのは別の worktree) |
+| 解析君 金の指輪 | scripts/analysis/gold-ring-suffix-ev.mjs、docs/org/math/notes/2026-10-21-gold-ring-suffix-ev.md (エンジンは読むだけ) |
+| (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
+| ジン部長 お告げの設定 | (始める前にジン部長から 1 行で受けて書く) |
+
+順番 (10-21): ファイルはぶつからない。ジン部長がエンジンの打つ結果 (カタリスト・お告げの確率) を変える直しは、commit の前にサムへ 1 行 → 解析君の数字が変わるので、解析君の区切りの後に入れるか解析君に知らせる。解析君がエンジンに無い手を見つけたら、足すのはジン部長 (この仕事の後ろに並べる)。
 
 ## 順番 (2026-10-20 夜、オーナー OK 済みの物)
 設計: 自動 / 手動 = simulator/notes/2026-10-20-auto-flow-design.md、UI 点検 13 件 = simulator/notes/2026-10-20-sim-ui-check.md、エンジンの付け替え = emulator/notes/2026-10-20-engine-entry-plan.md。
