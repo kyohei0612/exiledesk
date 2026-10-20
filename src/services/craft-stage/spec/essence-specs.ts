@@ -10,7 +10,7 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../../vendor/poe2htc/optimizer/cost";
-import { essenceClash } from "../../mods/mod-rules";
+import { essenceClash, hasRawFamily } from "../../mods/mod-rules";
 import { ESSENCE_KEYS } from "../../htc/essence-key-table";
 import { ABYSS_FAMILY, essenceTarget, isInfiniteEssence, normalTierOf, pickInfinite } from "../apply-essence";
 import { makeStageMod, takenCraftedFamilies } from "../stage-core";
@@ -100,7 +100,7 @@ export function resolveEssence(data: PatchData, item: StageItem, key: string): E
   const t = essenceTarget(data, item, key);
   if (!t) return { spec, reason: tr("このベースには使えないエッセンス", "This Essence can't be used on this base") };
   if (tierIndexOf(t.level, t.mod) < 0) return { spec, reason: tr("このエッセンスのティアが無い", "No tier for this Essence") };
-  return { spec: t.mod.family === ABYSS_FAMILY ? ABYSS_ESSENCE_SPEC : spec };
+  return { spec: hasRawFamily(t.mod, ABYSS_FAMILY) ? ABYSS_ESSENCE_SPEC : spec };
 }
 /** 段: 普通のエッセンスは段の名前 (Lesser / Greater / 無印) で選ぶ。パーフェクトは 1 段 */
 const tierIndexOf = (level: string, mod: { tiers: ReadonlyArray<{ name?: unknown }> }): number =>
