@@ -2,7 +2,7 @@
  * mana-ring-ev.mjs — マナ系の金の指輪 (ilvl 82) を打ち方 C (外れはすぐ消去) でエンジンに打たせ、平均費用・完成率・個数を出す (解析君、2026-10-21)。
  * 結果は docs/org/math/notes/2026-10-21-mana-ring-ev.md。材料 docs/org/research/notes/2026-10-21-mana-ring-mods.md
  *
- *   [ROUTE=after|first] [ORB=exalt|exalt_greater|exalt_perfect] [BUDGET=2000] [PROBE=1] node scripts/analysis/mana-ring-ev.mjs [N=300] [SEED=1]
+ *   [ROUTE=after|first] [ORB=exalt|exalt_greater|exalt_perfect] [LOOSE=1] [BUDGET=2000] [PROBE=1] node scripts/analysis/mana-ring-ev.mjs [N=300] [SEED=1]
  *
  * 打つのは全部エンジンの入口 (applyCurrency)。台本は「次にどの手を打つか」(nextMove) だけ。
  * 始め: プレフィックスにスペルのマナコスト効率 T1 (計算高い、創生の樹、重み 0 → makeStageMod で置く) をフラクチャー + 高貴 1 個の乱数の MOD (費用 0)。
@@ -22,6 +22,8 @@ const ROUTE = process.env.ROUTE ?? "after";
 const BUDGET = Number(process.env.BUDGET ?? 2000);
 /** ORB=exalt|exalt_greater|exalt_perfect: カタリスト無し版 (オーナー 10-21)。触媒の高貴・カタリストを使わず、素の右側 / 左側の高貴 + その高貴で狙う */
 const ORB = process.env.ORB ?? null;
+/** LOOSE=1: 全耐性・マナ自動回復を T1 → T2 以上に緩める (オーナー 10-21「全耐性とマナ回復を T2 以上にしたら?」) */
+const LOOSE = !!process.env.LOOSE;
 const LIMIT = 20000;
 const data = M.loadPatch();
 
@@ -39,8 +41,8 @@ const T = {
   E: { id: "Rings/PerfectEssence_MaximumManaIncreasePercent", side: "prefix", down: 1 },
   MT: { id: "Rings/IncreasedMana", side: "prefix", down: 1, cat: "catalyst_mana" },
   C: { id: "Rings/IncreasedCastSpeed", side: "suffix", down: 2, cat: "catalyst_speed" },
-  A: { id: "Rings/AllResistances", side: "suffix", down: 1, cat: "catalyst_cold" },
-  N: { id: "Rings/ManaRegeneration", side: "suffix", down: 1, cat: "catalyst_mana" },
+  A: { id: "Rings/AllResistances", side: "suffix", down: LOOSE ? 2 : 1, cat: "catalyst_cold" },
+  N: { id: "Rings/ManaRegeneration", side: "suffix", down: LOOSE ? 2 : 1, cat: "catalyst_mana" },
 };
 const KEYS = Object.keys(T);
 const SUF = ["C", "A", "N"];
@@ -142,7 +144,7 @@ const done = rs.filter((r) => r.done);
 const costs = done.map((r) => costOf(r.n)).sort((a, b) => a - b);
 const spent = rs.reduce((a, r) => a + costOf(r.n), 0);
 const m = mean(costs), se = Math.sqrt(mean(costs.map((c) => (c - m) ** 2)) / (costs.length || 1));
-console.log(`=== ROUTE ${ROUTE} / ${ORB ? `カタリスト無し ${ORB}` : "カタリストあり 完全"} (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒, 打ち止め ${BUDGET} 神)`);
+console.log(`=== ROUTE ${ROUTE} / ${ORB ? `カタリスト無し ${ORB}` : "カタリストあり 完全"}${LOOSE ? " / 全耐性・マナ回復 T2+" : ""} (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒, 打ち止め ${BUDGET} 神)`);
 console.log(`完成 ${(100 * done.length / N).toFixed(1)}%  1 個あたり ${(spent / (done.length || NaN)).toFixed(2)} 神  完成した人の平均 ${m.toFixed(2)} (±${(1.96 * se).toFixed(2)})  中央 ${q(costs, 0.5).toFixed(1)}  90% ${q(costs, 0.9).toFixed(1)}`);
 const keys = ["chaos", "annul", "exalt", "exalt_perfect", "exalt_greater", "ESS", "OmenofDextralExaltation", "OmenofSinistralExaltation", "OmenofCatalysingExaltation", "OmenofSinistralCrystallisation", "catalyst_speed", "catalyst_cold", "catalyst_mana"];
 for (const k of keys) {
