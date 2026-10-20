@@ -1,0 +1,87 @@
+# ファイル → 持ち主の部 (2026-10-20、オーナー OK)。各部の README の地図・docs/ARCHITECTURE.md の「部ごとの持ち場」と食い違ったら、ここが正。
+# 形: <glob> <部>。下の行ほど強い (CODEOWNERS と同じ)。* = / を越えない、** = どこまでも。
+# 引く: node scripts/owner-of.mjs <パス…>  /  書きかけを部ごとに: node scripts/owner-of.mjs --status
+# 部: 開発 (境目・土台) / ジン (エンジン部) / シミュ / チュートリアル (シミュ部長の持ち物) / 解析 / 分析 / 動画 / 組織 (docs/org の各部の md は各部) / アプリ (凍結、当分触らない)
+
+# 土台・境目 (開発部長)
+**                                   開発
+src/views/**                         アプリ
+src/components/craft-v2/**           アプリ
+src/services/craft-v2/**             アプリ
+src/services/trade2/**               アプリ
+src/services/market/**               アプリ
+src-tauri/**                         アプリ
+
+# エンジン部 (ジン部長)
+src/views/craft-stage/**             ジン
+src/services/craft-stage/**          ジン
+src/services/htc/**                  ジン
+src/services/mods/**                 ジン
+src/services/items/**                ジン
+src/vendor/poe2htc/**                ジン
+src/state/emulator/**                ジン
+scripts/build-poe2db-*.mjs           ジン
+scripts/audit-poe2db*.mjs            ジン
+scripts/build-desecrated-weights*.mjs ジン
+scripts/build-rune-weights*.mjs      ジン
+scripts/build-corruption-mods.mjs    ジン
+scripts/_corruption-entry.ts         ジン
+scripts/craft-stage-run.mjs          ジン
+scripts/check-craft-stage*.mjs       ジン
+tests/*.test.ts                      ジン
+tests/golden/**                      ジン
+tests/live-worker*.test.ts           分析
+tests/log-sender*.test.ts           分析
+
+# エンジン部の中に残した境目 (開発部長)
+src/services/craft-stage/share.ts    開発
+src/services/craft-stage/trade-search.ts 開発
+src/services/htc/buy-or-craft.ts     開発
+src/services/htc/prices.ts           開発
+src/services/htc/price-keys.json     開発
+src/services/htc/paste*.ts           開発
+src/services/htc/patch-types.ts      開発
+src/services/money.ts                開発
+
+# シミュ部長
+src/views/simulator/**               シミュ
+src/services/simulator/**            シミュ
+src/state/simulator/**               シミュ
+tests/simulator/**                   シミュ
+scripts/_sim-*.ts                    シミュ
+scripts/sim-telemetry.mjs            シミュ
+server/live/src/sim.ts               シミュ
+src/services/simulator/htc/**        アプリ
+
+# チュートリアル (シミュ部長の持ち物)
+src/views/tutorial/**                チュートリアル
+src/services/tutorial/**             チュートリアル
+src/state/tutorial/**                チュートリアル
+tests/tutorial/**                    チュートリアル
+
+# 解析君 (順番だけ自動の計算。呼ぶ側 auto-order*.ts はシミュ)
+src/services/simulator/auto/**       解析
+src/services/simulator/auto/auto-order*.ts シミュ
+scripts/analysis/**                  解析
+
+# 分析君
+server/live/src/logs.ts              分析
+server/live/src/monitor.ts           分析
+server/live/src/events.ts            分析
+server/live/src/feedback*.ts         分析
+server/live/src/forget.ts            分析
+scripts/pull-logs.mjs                分析
+scripts/analyze-logs.py              分析
+
+# 動画部長
+video/**                             動画
+
+# 組織の md (各部の README・todo・notes は各部、全体の図と決まりは開発部長・ブラック)
+docs/org/**                          開発
+docs/org/black/**                    ブラック
+docs/org/emulator/**                 ジン
+docs/org/simulator/**                シミュ
+docs/org/math/**                     解析
+docs/org/analytics/**                分析
+docs/org/research/**                 リサーチ
+docs/org/video/**                    動画

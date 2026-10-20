@@ -4,7 +4,7 @@
 
 ## 決まり (全部の部)
 1. 部長は呼ばれたら常駐 (初めて仕事が来た時にブラックが立て、そのブラックの間は開きっぱなし)、一覧に部長 1 人 1 本。仕事はブラック → 開発部長 → 部長で来る。部長どうし・ブラックへ直に頼まない (要る時は開発部長へ)。新しいセッションが要る時も開発部長 → ブラック (合図で起きたターンでは立てられない)。
-2. 同じファイルは同じ部長が順に (階段式、並べない)。始める前に触るファイルを開発部長に 1 行、開発部長が dev/todo.md の「触っている」に書き、ぶつかる物は待たせる。
+2. 同じファイルは同じ部長が順に (階段式、並べない)。持ち主は docs/org/owners.txt (`node scripts/owner-of.mjs <パス>`、書きかけは `--status`)。始める前に触るファイルを開発部長に 1 行、開発部長が dev/todo.md の「触っている」に書き、ぶつかる物は待たせる。
 3. 始める前に完成の形を 3 行 (何が変わる・どのファイル・何で確かめる)。読む物は自分の部の README の地図から grep・台本で絞り、絞った物は全部読む。数字は台本で出し、台本の場所と一緒に。
 4. 直しは小さく 1 つずつ、そのたび型チェック。周りのコードに合わせる。リファクタと機能は別のコミット、整理は触った所の周りだけ、使わなくなった物はその場で消す。
 5. commit は自分が触ったパスだけ、`git commit -m "…" -- <パス>` の 1 回で (新しいファイルは同じ 1 行で `git add <パス> && git commit -m "…" -- <パス>`。index は皆で共有。先に add して置くと他人の commit に混ざる、10-20 に起きた)。`git add -A`・`git add .`・引数なしの `git commit`・stash・reset・ブランチ替えは禁止。同じファイルに他人の書きかけがあれば commit せず開発部長へ。push・デプロイは開発部長。
@@ -15,6 +15,7 @@
 10. 部長の中で作業を分けたい時 (トークン・待ちの都合) は部長の判断でサブエージェント (Agent) を使ってよい。同じ部長のセッションは 2 本立てない (別のセッションの一時の係が要る時は開発部長 → ブラックに 1 行、題は「<部>；<作業名>」で常駐は付けない)。同じファイルを 2 人で触らせず、サブエージェントの commit も部長が自分のパスで、作った物は報告に書く。プラグインも要ればリサーチして入れてよい (公式・組織カタログ優先)。
 
 ## 地図
+- 持ち主の表: docs/org/owners.txt (下の行ほど強い) と scripts/owner-of.mjs (`--status`・`--check <部> <パス…>`)。地図と食い違ったら owners.txt が正。
 - 動かし方・版上げ: CLAUDE.md の「動かし方」。設定 vite.web.config.ts、開発版 scripts/deploy-web-dev.mjs (commit 済みの HEAD を隣の ../ExileDesk-devbuild (git worktree) でビルド、書きかけは入らない。`-- --wip` で作業中の物)、読み物のページ scripts/build-seo-pages.mjs。
 - 更新内容: src/data/changelog-notes.json・-en.json・changelog-popup.json → scripts/build-changelog.mjs。OK 待ち docs/pending-release.md。テスト tests/ (vitest)。
 - 境目 (どの部も使う): src/state/craft-stage.ts (`SIM_LOCKED`)・web-page.ts・display-currency.ts、src/services/craft-stage/share.ts・trade-search.ts、src/services/htc/patch-types.ts・src/services/money.ts、src/style.css・src/styles/game-ui.css、src/components/・src/utils/、src/web/ (WebApp.vue・main.ts・page.ts・boot.ts・config.ts)。
