@@ -213,7 +213,7 @@ const stepNotes = computed(() => {
           <thead v-if="redoOf.size">
             <tr class="text-[11px] text-[var(--exile-color-text-tertiary)]">
               <th colspan="3"></th>
-              <th class="pb-1 text-right font-normal"><span class="inline-flex items-center gap-1">外した時の取り直し (目安)<HelpTip text="消去などで外れた時に、その MOD を付け直す費用の見込み。黄色はほかの MOD を巻き込む物" /></span></th>
+              <th class="pb-1 text-right font-normal"><span class="inline-flex items-center gap-1 max-md:hidden">外した時の取り直し (目安)<HelpTip text="消去などで外れた時に、その MOD を付け直す費用の見込み。黄色はほかの MOD を巻き込む物" /></span></th>
             </tr>
           </thead>
           <tbody>
@@ -231,11 +231,13 @@ const stepNotes = computed(() => {
                   <span :class="orderRow(k)!.tone">{{ orderRow(k)!.text }}</span> <span class="ml-1 rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ orderRow(k)!.rank }} 以上</span>
                   <span v-if="orderRow(k)!.alts.length" class="ml-1 text-[10px] text-amber-200">ほか {{ orderRow(k)!.alts.length }} つと合わせてどれか</span>
                   <span class="ml-1 text-[10px] opacity-60">{{ METHOD_JA[orderRow(k)!.method] }}</span>
+                  <!-- スマホは取り直しを列でなく文の下に (列が幅を食って文が 5〜6 行に折れていた。2026-10-20 点検 4) -->
+                  <span v-if="phone && redoOf.get(orderRow(k)!.modId)" class="mt-0.5 block text-[10px] tabular-nums opacity-60">{{ tr("外した時の取り直し", "Redo if lost") }} {{ tr("約", "≈") }} {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
                 </td>
-                <td class="w-48 py-1 text-right text-[11px] tabular-nums max-md:w-auto">
-                  <span v-if="redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
+                <td class="w-48 py-1 text-right text-[11px] tabular-nums max-md:w-10">
+                  <span v-if="!phone && redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
                   <!-- 見込みを出せない MOD は空欄でなく「無し」(2026-10-20 点検 3) -->
-                  <span v-else-if="redoOf.size" class="opacity-50" :title="tr('この MOD は取り直しの見込みを出せない (計算機の見積もりに無い)', 'No redo estimate for this mod (not covered by the calculator estimate)')">{{ tr("無し", "None") }}</span>
+                  <span v-else-if="!phone && redoOf.size" class="opacity-50" :title="tr('この MOD は取り直しの見込みを出せない (計算機の見積もりに無い)', 'No redo estimate for this mod (not covered by the calculator estimate)')">{{ tr("無し", "None") }}</span>
                   <span data-drag-handle class="ml-1 inline-grid h-11 w-8 touch-none place-items-center rounded align-middle opacity-50 md:hidden"><Icon name="grip" class="size-4" /></span><!-- スマホは右にもつまみ (縦送りとかぶるので、左右どちらの指でも持てるように。2026-10-19 オーナー) -->
                 </td>
               </template>
@@ -289,7 +291,8 @@ const stepNotes = computed(() => {
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
         -->
-        <div v-if="!patternDone" class="mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-3 text-[12px]" :class="stale && !busy ? '[&_.res]:opacity-50' : ''">
+        <!-- 「回す」の帯は画面の下に貼り付ける (2026-10-20 点検 9・10: PC は回すが画面の下で切れ、スマホは棚を持つ間に見失った) -->
+        <div v-if="!patternDone" data-sim-run-bar class="sticky bottom-0 z-20 -mx-5 mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.06] bg-[#15120e]/95 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-[12px] backdrop-blur max-md:-mx-3 max-md:px-3" :class="stale && !busy ? '[&_.res]:opacity-50' : ''">
           <span class="flex items-center gap-1 text-[11px] font-medium tracking-wide text-[var(--exile-color-text-tertiary)]">まとめて回す <HelpTip text="チェックしたパターンをまとめて回し、費用を比べる。1 つだけ試す時は上の「このパターンを回す」" /></span>
           <!-- 枠のどこを押してもチェックが切り替わる (2026-10-07 オーナー「チェックボックスだけじゃなくて枠クリックで」)。金額の所だけは結果を下に出す -->
           <span v-for="(p, i) in s.simPatterns.value" :key="i" role="checkbox" :aria-checked="hasSteps(p) && !p.off" :aria-disabled="!hasSteps(p)" tabindex="0" class="flex select-none items-center gap-1.5 rounded-md py-1 pl-2 pr-1 transition" :class="[!hasSteps(p) ? 'cursor-default opacity-40' : 'cursor-pointer hover:bg-white/5', shownName === p.name && resultOf(p.name) ? 'bg-[var(--exile-color-bg-elevated)]' : '', p.off && hasSteps(p) ? 'opacity-50' : '']" :title="!hasSteps(p) ? '手が無いので回さない' : p.off ? '押すとまとめて回す時に入れる' : '押すとまとめて回す時に入れない'" @click="hasSteps(p) && togglePatternOff(i)" @keydown.space.prevent="hasSteps(p) && togglePatternOff(i)">

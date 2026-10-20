@@ -118,6 +118,8 @@ const chips = computed(() => {
   return { main, sub };
 });
 const subOpen = ref(false);
+/** 「この答えを使う場面」の札は既定で畳む (2026-10-20 点検 9: 初めて開くと用語が多くて何を押すか分からない。畳んだままなら今の場面を全部見る) */
+const whenOpen = ref(false);
 /** 次の場面に変わったら、「この時は?」が画面の上より外なら戻す (答えた後に棚まで送られていて場面が見えなかった。2026-10-19 テスト走行) */
 const qEl = ref<HTMLElement | null>(null);
 watch(() => q.value?.key, (k, was) => { if (k && was) void nextTick(() => { const el = qEl.value; if (el && el.getBoundingClientRect().top < 0) scrollToTop(el, "auto"); }); });
@@ -230,20 +232,20 @@ const multi = computed(() => props.recipe.routes.length > 1);
              札の頭に「見る / 気にしない」を出す。狙いの MOD の行と、MOD の数などの行に分ける -->
         <div data-quiz-when class="flex flex-col gap-1.5 rounded-lg border border-white/10 bg-black/20 p-2">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="text-[12px] font-semibold text-[var(--exile-color-text-secondary)]">{{ tr("この答えを使う場面", "Use this answer when") }}</span>
+            <Disclosure v-model:open="whenOpen" kind="detail" data-when-toggle class="h-6 rounded-md px-1 text-[12px] font-semibold text-[var(--exile-color-text-secondary)] hover:bg-white/5">{{ tr("この答えを使う場面", "Use this answer when") }}</Disclosure>
             <HelpTip :text="tr('「見る」の項目が今と同じ時にこの答えを使う。「気にしない」の項目は何でも良い (同じ答えで済む場面をまとめる)。押すと切り替わる', 'This answer is used when every “match” item is the same as now. “Any” items can be anything. Click to switch')" />
-            <span class="ml-auto flex gap-1">
+            <span v-if="whenOpen" class="ml-auto flex gap-1">
               <button type="button" data-when-targets class="g-plain rounded px-2 py-0.5 text-[11px] text-[var(--exile-color-text-link)] hover:bg-white/5" :disabled="locked" @click="targetsOnly()">{{ tr("狙いの MOD だけ見る", "Targets only") }}</button>
               <button type="button" data-when-all class="g-plain rounded px-2 py-0.5 text-[11px] text-[var(--exile-color-text-link)] hover:bg-white/5" :disabled="locked" @click="seeAll()">{{ tr("全部見る", "Match all") }}</button>
             </span>
           </div>
-          <div v-for="row in [chips.main.filter((k) => !!slotOf(k)), [...chips.main.filter((k) => !slotOf(k)), ...(subOpen ? chips.sub : [])]]" :key="row.join()" class="flex flex-wrap items-center gap-1.5">
+          <div v-for="row in whenOpen ? [chips.main.filter((k) => !!slotOf(k)), [...chips.main.filter((k) => !slotOf(k)), ...(subOpen ? chips.sub : [])]] : []" :key="row.join()" class="flex flex-wrap items-center gap-1.5">
             <button v-for="k in row" :key="k" type="button" class="g-plain inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-left text-[12px] transition" :class="off.has(k) ? 'border-white/10 text-[var(--exile-color-text-tertiary)] opacity-70' : ['border-[var(--exile-color-border-brass)] bg-white/[0.05]', TONE[toneOf(k)]]" :title="off.has(k) ? tr('押すと「見る」に (今と同じ時だけ)', 'Click to match this') : tr('押すと「気にしない」に (何でも良い)', 'Click to accept any value')" :disabled="locked" @click="toggleChip(k)">
               <span class="shrink-0 rounded-sm px-1 text-[10px] leading-4" :class="off.has(k) ? 'bg-white/[0.06] text-[var(--exile-color-text-tertiary)]' : 'bg-[var(--exile-color-accent-focus)] text-black'">{{ off.has(k) ? tr("気にしない", "Any") : tr("見る", "Match") }}</span>
               {{ chipText(k, q.situation[k]!) }}
             </button>
           </div>
-          <Disclosure v-if="chips.sub.length" v-model:open="subOpen" kind="detail" class="h-6 self-start rounded-md px-2 text-[11px] hover:bg-white/5">{{ tr("細かい項目 (未発現・冒涜の外れ・固定・ルーン)", "More (unrevealed, desecrated, fractured, runes)") }}</Disclosure>
+          <Disclosure v-if="whenOpen && chips.sub.length" v-model:open="subOpen" kind="detail" class="h-6 self-start rounded-md px-2 text-[11px] hover:bg-white/5">{{ tr("細かい項目 (未発現・冒涜の外れ・固定・ルーン)", "More (unrevealed, desecrated, fractured, runes)") }}</Disclosure>
         </div>
         <!-- 答え -->
         <div v-if="!locked" class="flex flex-wrap items-center gap-2">
