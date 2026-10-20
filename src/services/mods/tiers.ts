@@ -14,7 +14,7 @@
  */
 
 import modsBundle from "../../i18n/mods-bundle.json";
-import type { ModTierRow } from "../craft-v2/types";
+import type { ModTierRow } from "./types";
 import { normalizeModTemplate, normalizeModTextKey, stripRichTextMarkers } from "./normalize";
 import { displayValue } from "./stat-scale";
 

@@ -22,7 +22,7 @@ import { jaOfModAlways } from "../htc/mod-text";
 import { familyKeysOf } from "./mod-rules";
 import { tierDisplayRanges } from "./stat-scale";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
-import type { ModTierRow, SlotKey } from "../craft-v2/types";
+import type { ModTierRow, SlotKey } from "./types";
 
 let data: PatchData | null = null;
 // 計算機などが読んだら、こちらも使う (prepareEngineMods を呼んでいなくても引ける)

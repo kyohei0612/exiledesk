@@ -16,7 +16,7 @@ import uniqueNamesJaRaw from "../../i18n/unique-names-ja.json";
 import modTextJaRaw from "../../i18n/mod-text-ja.json";
 import modTextJaManualRaw from "../../i18n/mod-text-ja-manual.json";
 import { jaCurrency } from "../../i18n/currencies-ja";
-import type { AffixKind } from "../craft-v2/types";
+import type { AffixKind } from "./types";
 import {
   normalizeModTemplate,
   normalizeModTextKey,
