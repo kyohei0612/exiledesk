@@ -8,7 +8,7 @@
  * (アストリッドの創造性は 2 つ目のエッセンスのすぐ前)、自分で足したルーンはすぐ後ろの行に付いて動く。
  * 1 つの順番の値は解析君の solveOrder (auto-solve.ts)
  */
-import type { OrderResult } from "./auto-solve";
+import type { OrderResult } from "./auto-types";
 import type { AutoJob, AutoMsg, AutoSimIn } from "./auto-order.worker";
 
 export interface OrderInput {

@@ -7,7 +7,9 @@
  *   - run: 値だけ (mc 無し) で候補を全部 → 安い順に上位 top と今の順番だけ 1 人ずつ mc 人回し、出た順に返す
  * 止めるのは画面の側でワーカーごと捨てる (auto-order.ts の autoOrderClient)。1 つの順番の値は解析君の solveOrder (auto-solve.ts)
  */
-import { buildAutoModel, solveOrder, type AutoModel, type OrderResult } from "./auto-solve";
+import { buildAutoModel } from "./auto-model";
+import { solveOrder } from "./auto-solve";
+import type { AutoModel, OrderResult } from "./auto-types";
 import { loadHtcPatch } from "../../craft-stage/engine";
 import type { QuizSimIn } from "../quiz-build";
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
