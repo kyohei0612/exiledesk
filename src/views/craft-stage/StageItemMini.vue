@@ -5,7 +5,8 @@
   名前 (レアリティの色) と MOD を小さく。直前の手で付いた MOD は緑、消えた MOD は取り消し線で 1 手分だけ出す。
 -->
 <script setup lang="ts">
-import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
+import { nameOf, baseNameOf, tr } from "../../i18n/lang";
+import { stageModText } from "./base-values";
 import { computed } from "vue";
 import { baseArt } from "../../services/craft-stage/base-art";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
@@ -26,9 +27,9 @@ const mods = computed(() => [...props.item.prefixes.map((m) => ({ m, side: tr("�
     </p>
     <p v-for="(r, i) in mods" :key="i + r.m.modId" class="flex items-baseline gap-1.5 leading-snug" :class="addedIds.has(r.m.modId) ? 'stage-row-in font-semibold text-emerald-300' : r.m.fractured ? 'text-[#c8b896]' : 'text-rarity-magic'">
       <span class="shrink-0 text-[9px] text-[var(--exile-color-text-tertiary)]">{{ r.side }}</span>
-      <span class="min-w-0">{{ r.m.unrevealed ? tr("未発現の MOD", "Unrevealed mod") : modText(r.m) }}</span>
+      <span class="min-w-0">{{ r.m.unrevealed ? tr("未発現の MOD", "Unrevealed mod") : stageModText(r.m) }}</span>
     </p>
-    <p v-for="(m, i) in removed" :key="'x' + i + m.modId" class="text-rose-300/80 line-through">{{ modText(m) }}</p>
+    <p v-for="(m, i) in removed" :key="'x' + i + m.modId" class="text-rose-300/80 line-through">{{ stageModText(m) }}</p>
     <p v-if="!mods.length && !removed.length" class="text-[var(--exile-color-text-tertiary)]">{{ tr("MOD なし", "No mods") }}</p>
   </div>
 </template>

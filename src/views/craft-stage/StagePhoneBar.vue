@@ -6,7 +6,8 @@
 import { computed, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { stageAdds, stageHelp } from "../../state/emulator/craft-stage-help";
-import { modText, tr } from "../../i18n/lang";
+import { tr } from "../../i18n/lang";
+import { stageModText } from "./base-values";
 import Disclosure from "../../components/ui/Disclosure.vue";
 
 const emit = defineEmits<{ scrollToReveal: [] }>();
@@ -37,8 +38,8 @@ function useFromBar(): void {
   const parts: string[] = [];
   if (last) {
     if (!last.out.applied) parts.push(tr(`打てない: ${last.out.reason ?? ""}`, `Can't use: ${last.out.reason ?? ""}`));
-    for (const m of last.added) parts.push(`${tr("＋", "+")} ${modText(m)}`);
-    for (const m of last.removed) parts.push(`${tr("－", "-")} ${modText(m)}`);
+    for (const m of last.added) parts.push(`${tr("＋", "+")} ${stageModText(m)}`);
+    for (const m of last.removed) parts.push(`${tr("－", "-")} ${stageModText(m)}`);
     if (last.out.note) parts.push(String(last.out.note));
     if (!parts.length) parts.push(tr("MOD は変わらない", "No mod change"));
   }
@@ -52,7 +53,7 @@ watch(() => s.held.value, () => { barMsg.value = null; });
 watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
   const last = s.last.value;
   if (n <= (o ?? 0) || !last || !String(last.out.currency).startsWith("reveal")) return;
-  barMsg.value = { text: last.added.map((m) => `${tr("＋", "+")} ${modText(m)}`).join("  ") || tr("発現した", "Revealed"), tone: "text-emerald-300" };
+  barMsg.value = { text: last.added.map((m) => `${tr("＋", "+")} ${stageModText(m)}`).join("  ") || tr("発現した", "Revealed"), tone: "text-emerald-300" };
   clearTimeout(barTimer);
   barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
 });

@@ -37,3 +37,6 @@ export function augmentLineOf(item: StageItem, a: StageAugment): { text: string;
   const base = modText(a), scaled = modText(scaledAugment(item, a));
   return { text: base, shown: scaled !== base ? scaled : null };
 }
+
+/** 工程の履歴・小さいカード・スマホの帯の MOD の文: 開発版は素の値 (聖別の前)、本番は今の文 (J11 ④) */
+export const stageModText = (m: StageMod): string => (BASE_VALUES_ON ? baseModText(m) : modText(m));
