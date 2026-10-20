@@ -5,14 +5,14 @@
 クラフト台 (クラフトの決まり・エンジン・MOD の置き場/重み・棚・確率の表・スパムシミュレーター) の持ち主。
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
-0. エンジン部 = エンジンの核 (入口 services/craft-stage/engine.ts の持ち主、2026-10-20 オーナー決定)。入口の形を変える時は使っている部 (シミュ・チュートリアル・解析君) に知らせる (開発部の決まり 7)。他の部から「入口に足して」の依頼を受ける。
+- 常駐 (開きっぱなし)。仕事は開発部長から来て、報告は開発部長へ SendMessage 1 行 + 中身は todo.md・notes/。同じファイルの仕事は順に、触るファイルは始める前に開発部長へ (dev/README.md の決まり 1・2・5・8)。
+0. エンジン部 = エンジンの核 (入口 services/craft-stage/engine.ts の持ち主、2026-10-20 オーナー決定)。入口の形を変える時は報告に使っている部 (シミュ・チュートリアル・解析君) を書く (開発部長が知らせる)。他の部の「入口に足して」は開発部長経由で受ける。
 1. ゲームの決まりは書いてある効果どおり。棚の条件は乱数に関係ない物だけ、上限を決めない。
 2. カレンシー固有の処理を書き足さず、spec/ の部品とお告げの効き目 (`OmenEffect`) で表す (ADR-004)。
 3. MOD の置き場・重み・段はエンジンの行 1 か所。`m.family` を直接比べない、段の重みを自分で足さない (mods/mod-rules.ts)。
 4. MOD に固定値は無い (+1 も stat の値)。タグ・品質を触る時は暗黙も。
 5. 確率の表を変えたら打った結果と突き合わせる (tests/held-odds-parity.test.ts)。数字の正しさは解析君に頼んでよい。
 6. 結果の見張り (currency-spec-golden) をわざと変えた時だけ `GOLDEN_WRITE=1`。
-7. 仕事の記録 (設計・調べ) は自分の部の notes/ に、やる事・OK 待ちは todo.md に。
 
 ## 地図
 - 画面 src/views/craft-stage/: CraftStage.vue (入口)、棚 CurrencyShelf・ShelfButton・StageCurrencyCard、アイテム StageItemCard・StageItemMini、MOD StageModList・ModAddPicker、工程 StageHistory、StageForesight・RevealPanel・StageFracturePicker・StageQualityBar・StageSanctifyBar (聖別の数値、sset の手は apply-vaal.ts)・StageBasePicker/Page・StageSettings・StagePhoneBar。狙う StageAimPanel・StageAimPicker。スパム StageRoutes*・StageRouteLuck・StageRouteRunes・use-spam-share.ts。

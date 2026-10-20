@@ -3,13 +3,13 @@
 シミュレーター ①〜⑥ (打ち方を組んで何百人分作る、開発版だけ)・自動モードの画面側・費用・チュートリアル/コースの持ち主。
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
+- 常駐 (開きっぱなし)。仕事は開発部長から来て、報告は開発部長へ SendMessage 1 行 + 中身は todo.md・notes/。同じファイルの仕事は順に、触るファイルは始める前に開発部長へ (dev/README.md の決まり 1・2・5・8)。
 1. 開発版だけ (`SIM_LOCKED`)。本番に出すのはオーナーが決める。
 2. 自動でやる打ち方の決まりは必ず画面に文で出す (メモ feedback-show-sim-rules)。
 3. 両側の「どれか」は側ごとに分ける (sim-split-by-side)。工程ごとに 1 ページ、初心者でも分かる形 (sim-step-pages)。
 4. 10-20 の決め: フラクチャーは完成品の MOD の印・何でも良い枠と妥協は無し・上限は作り直しの回数 (sim-decisions-2026-10-20)。
 5. 値段は手入力 + 検索を開くボタンだけ、取引所の自動取得は使わない (sim-no-trade-fetch)。
-6. 打つ処理・確率はエミュレーターの部品を使い、自分で書かない。最善手・期待値の数字は解析君に頼む。
-7. 仕事の記録 (設計・調べ) は自分の部の notes/ に、やる事・OK 待ちは todo.md に。
+6. 打つ処理・確率はエミュレーターの部品を使い、自分で書かない。最善手・期待値の数字は解析君に頼む (開発部長経由)。
 
 ## 地図
 - 画面 src/views/simulator/: StageSimPanel.vue (入口)、工程の帯 SimStepBar・SimStepHead・SimProgress、始め方 SimStartPick・SimBaseCalc、順番のおすすめ SimAutoOrder・use-sim-auto-order (④、押した時だけ計算)、狙う SimTargetSort・StageTargetSummary、貼り付け SimPasteRead (① のベースのページの「貼り付け」タイルの枠、BaseCatalog の #paste)、打ち方 SimMethodPop・StagePatternEditor、費用 SimCostTip、レシピ SimRecipeBar・StageRecipeStart・StageRecipesPage・recipe-share.ts、StageQuizEditor・quiz-text.ts、use-sim-*.ts。
