@@ -344,7 +344,8 @@ export function runQuizOnce(data: PatchData, recipe: QuizRecipe, seed: number, o
     const gcap = gate ? route.caps?.[gate] : undefined;
     if (gate && gcap != null && (r.gates[gate] ?? 0) >= gcap) { r.stop = { kind: "gate", route: route.id, situation: sit, item: it, reason: gate }; break; }
     const x = applyQuizAction(data, route, it, rule.do, g);
-    if (x.kind === "restart") { if (o.log) r.log.push("restart"); it = buy(); continue; }
+    // 買い直したら関門の回数は 0 から (打ち止めは 1 つのベースごと。2026-10-20 オーナー決定 A、simulator/README.md の 6)
+    if (x.kind === "restart") { if (o.log) r.log.push("restart"); r.gates = {}; it = buy(); continue; }
     if (x.kind === "random") continue; // 当たり所で弾かれた: 減らずにもう一度
     if (x.kind === "blocked") { r.stop = { kind: "blocked", route: route.id, situation: sit, item: it, reason: x.reason }; break; }
     for (const k of x.spent) count(k);
