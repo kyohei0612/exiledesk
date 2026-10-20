@@ -23,7 +23,7 @@
 |---|---|---|
 | ブラック | local_c909c5e8-9a42-4589-aa8b-0c9e44044cd7 (local_9b3dd68f の系列の新しいブラック) | 司令塔 |
 | サム開発部長 | (このセッション、10-21 夕に立った 1 本目) | まとめ役 |
-| 解析君 | local_5b608b79-ae73-4df0-941b-428ba3e9a932 | 金の指輪のサフィックス 3 MOD (レアリティ T1・キャストスピード T2+・全耐性 T2+) の期待値をオーナーの打ち方でエンジンを回して出す (math/notes/2026-10-21-gold-ring-suffix-ev.md)。エンジンに無い手が見つかったらブラック経由でサムへ |
+| 解析君 | local_5b608b79-ae73-4df0-941b-428ba3e9a932 | 手空き。金の指輪のサフィックス 3 MOD 済み (ac14590f、1 個 約 500〜570 神、1 位 528 神 = 触媒の高貴に完全 + 右側の高貴に上級、math/notes/2026-10-21-gold-ring-suffix-ev.md)。エンジンに無い手は無し。ジン部長が触媒の高貴の既定を変えたら `node scripts/analysis/gold-ring-suffix-ev.mjs 50 all` で回し直し (1 分) |
 | ジン部長 | local_21a41678-0e18-4415-9936-ae8e59d19213 | クラフト台でお告げをオンにした時、名前の下に設定 (触媒の高貴のお告げ = カタリストの品質で上がる確率が先、聖別 = 既定は範囲でランダム・チェックで倍率を手で)。開発版まで |
 | リサーチ長 | local_5d0c0f13-6825-4cae-b903-af5d2aa51010 | 常駐 (ブラックの直) |
 | ほかの部長 | — | 仕事が来たらブラックが立てる |
@@ -37,9 +37,10 @@
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
 | 誰 | ファイル |
 |---|---|
-| 解析君 金の指輪 | scripts/analysis/gold-ring-suffix-ev.mjs、docs/org/math/notes/2026-10-21-gold-ring-suffix-ev.md (エンジンは読むだけ) |
 | (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
 | ジン部長 お告げの設定 | 新 src/services/craft-stage/stage-tuning.ts・spec/parts.ts・spec/outcomes.ts・spec/odds.ts・apply-vaal.ts・engine.ts (足すだけ)、新 src/state/emulator/stage-tuning.ts・新 views/craft-stage/StageOmenTune.vue・CraftStage.vue・CurrencyShelf.vue (既定はエンジンのまま、触媒 = CoE の 1+0.2×品質 → 解析君の数字は変わらない) |
+
+入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
 
 順番 (10-21): ファイルはぶつからない。ジン部長がエンジンの打つ結果 (カタリスト・お告げの確率) を変える直しは、commit の前にサムへ 1 行 → 解析君の数字が変わるので、解析君の区切りの後に入れるか解析君に知らせる。解析君がエンジンに無い手を見つけたら、足すのはジン部長 (この仕事の後ろに並べる)。
 
