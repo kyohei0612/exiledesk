@@ -1,6 +1,6 @@
 /** tree-auto.ts から切り出し (2026-09-26): 自動で組む時の入力 (AutoTreeInput) と、抹消のカオスの側・ブリーチを使うかの判定 */
-import type { SimState } from "../../services/htc/sim-route";
-import type { Side } from "../../services/htc/step-odds";
+import type { SimState } from "../../services/simulator/htc/sim-route";
+import type { Side } from "../../services/simulator/htc/step-odds";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";

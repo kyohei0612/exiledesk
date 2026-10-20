@@ -9,7 +9,7 @@
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "../../services/htc/catalysing";
 import { catalystsFor } from "../../services/htc/quality";
-import { type Side } from "../../services/htc/step-odds";
+import { type Side } from "../../services/simulator/htc/step-odds";
 import { familyBlocked, occupiedKeysOf, tierWeight } from "../../services/mods/mod-rules";
 import type { ItemBase, Mod } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";

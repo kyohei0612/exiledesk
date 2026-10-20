@@ -13,11 +13,11 @@ import Icon from "../../components/ui/Icon.vue";
  *   - 頭に「何をする手か」を 1 行で出す。狙う MOD は押せる札。細かい条件はたたむ
  */
 import { computed, ref } from "vue";
-import { CERTAIN, hasSideOmen, type Goto, type SimAction, type SimNode } from "../../services/htc/sim-route";
+import { CERTAIN, hasSideOmen, type Goto, type SimAction, type SimNode } from "../../services/simulator/htc/sim-route";
 import { CATALYSTS } from "../../services/htc/quality";
 import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
 import { OMEN, FACTION_OMEN } from "../../services/htc/omens";
-import type { Side } from "../../services/htc/step-odds";
+import type { Side } from "../../services/simulator/htc/step-odds";
 import type { useCraftTree } from "./useCraftTree";
 import ActionPicker from "./ActionPicker.vue";
 import type { useHtcCraft } from "./useHtcCraft";

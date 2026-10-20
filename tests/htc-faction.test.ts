@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
 import { itemBaseFor } from "../src/services/htc/bridge";
-import { simulateTree, type SimNode, type SimState } from "../src/services/htc/sim-route";
+import { simulateTree, type SimNode, type SimState } from "../src/services/simulator/htc/sim-route";
 import { FACTION_TAG } from "../src/services/htc/omens";
 import { bossOmenAllowed, desecrationOmenForMod } from "../src/vendor/poe2htc/engine/probability";
 import type { Prices } from "../src/vendor/poe2htc/optimizer/cost";

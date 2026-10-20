@@ -9,7 +9,7 @@ import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
 import { CATALYSTS } from "../../services/htc/quality";
 import { OMEN, FACTION_OMEN } from "../../services/htc/omens";
 import { desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
-import type { Side } from "../../services/htc/step-odds";
+import type { Side } from "../../services/simulator/htc/step-odds";
 import type { useHtcCraft } from "./useHtcCraft";
 import type { useCraftTree } from "./useCraftTree";
 

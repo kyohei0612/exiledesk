@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
 import { itemBaseFor } from "../src/services/htc/bridge";
-import { simulateTree, type SimState } from "../src/services/htc/sim-route";
+import { simulateTree, type SimState } from "../src/services/simulator/htc/sim-route";
 import { autoTree } from "../src/views/htc-craft/tree-auto";
 import type { Prices } from "../src/vendor/poe2htc/optimizer/cost";
 

@@ -27,12 +27,12 @@ export { labelOfAction, labelOfStep, jaOfPriceKey, jaOfOmen } from "../src/servi
 export { craftedSurvey, isCraftedMod, ASTRID_RUNE } from "../src/services/htc/craft-slots";
 export { htcDropOnly, htcModSides } from "../src/services/htc/patch";
 export { parseJaItem, targetsFor } from "../src/services/htc/paste";
-export { baseChoices } from "../src/services/htc/base-choice";
+export { baseChoices } from "../src/services/simulator/htc/base-choice";
 export { jaOfMod, jaOfModLine } from "../src/services/htc/mod-text";
 export { isPlaceholderWeight, applyWeightOverrides, WEIGHT_OVERRIDE_NOTE } from "../src/services/htc/weight-overrides";
-export { treeBuys, treeBuyQuery, fracturedBuys, STRICT_PREFIX, STRICT_SUFFIX } from "../src/services/htc/tree-buy";
-export { decide, candidateOf, batchFor, BATCH_TARGET } from "../src/services/htc/tree-decide";
-export { selfFracture, expectedAnnuls, itemsFor, FRACTURE_NEEDS } from "../src/services/htc/self-fracture";
+export { treeBuys, treeBuyQuery, fracturedBuys, STRICT_PREFIX, STRICT_SUFFIX } from "../src/services/simulator/htc/tree-buy";
+export { decide, candidateOf, batchFor, BATCH_TARGET } from "../src/services/simulator/htc/tree-decide";
+export { selfFracture, expectedAnnuls, itemsFor, FRACTURE_NEEDS } from "../src/services/simulator/htc/self-fracture";
 export { catalysingOdds, catalysingMultiplier, catalysingBand, CATALYSING_SAMPLES, CATALYSING_CAVEAT, catalysingSetup, withCatalysing, catalystCountFor, catalystPriceKey, maxQualityForBase, QUALITY_PER_CATALYST } from "../src/services/htc/catalysing";
 export { exaltProbability } from "../src/vendor/poe2htc/engine/probability";
 export { CATALYSTS, catalystsFor, hasCatalysts, boostedBy, displayedValue, rawValue, rawValueOfMod, catalystTagFromLabel, BASE_MAX_QUALITY, RAISED_MAX_QUALITY, INFUSER_OVER_QUALITY, ABSOLUTE_MAX_QUALITY } from "../src/services/htc/quality";
@@ -50,9 +50,9 @@ export function loadPatchSync(): PatchData {
   );
   return applyExtras(data, extra as unknown as Parameters<typeof applyExtras>[1], jewels as unknown as Parameters<typeof applyExtras>[2]);
 }
-export { stepHelpers } from "../src/services/htc/step-odds";
+export { stepHelpers } from "../src/services/simulator/htc/step-odds";
 export { jaOfPastedLine } from "../src/services/htc/mod-text";
-export { simulateTree, simHelpers } from "../src/services/htc/sim-route";
+export { simulateTree, simHelpers } from "../src/services/simulator/htc/sim-route";
 export { socketCountFor, socketBlock, effectiveSocket, withSocketLimits, craftedLimitWith, socketCostOf, socketLabel, socketsMinFor, artificerCount, ARTIFICER_KEY, SERLE_RUNE } from "../src/services/htc/sockets";
 export { runeIdByName, runePriceKey } from "../src/vendor/poe2htc/engine/runes";
 export { mulberry32 } from "../src/services/htc/rng";

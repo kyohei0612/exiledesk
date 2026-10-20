@@ -1,5 +1,5 @@
 /** redo-cost.ts から切り出し (2026-09-26): 取り方の見積もりの型 (MethodEstimate / RedoPlan) と、画面にも出す決まり (RULES) */
-import type { Side } from "../../services/htc/step-odds";
+import type { Side } from "../../services/simulator/htc/step-odds";
 
 export type Method = "chaos" | "exalt" | "desecrate" | "essence";
 /** 冒涜の外れの回し方: 光 + 消去 / エッセンスで上書き (枠 2 つの側) / 深淵の印の輪 (防具・武器、アストリッドが要る。2026-10-03) */

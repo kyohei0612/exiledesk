@@ -14,7 +14,7 @@ import type { StageItem } from "../src/services/craft-stage/types";
 import type { CraftStagePlan } from "../src/services/craft-stage/contract";
 import { ESSENCE_KEYS } from "../src/services/htc/essence-key-table";
 import { essenceLevelOf } from "../src/vendor/poe2htc/optimizer/cost";
-import { runRecipeOnce, type RecipeSpec } from "../src/services/craft-stage/recipe-sim";
+import { runRecipeOnce, type RecipeSpec } from "../src/services/simulator/recipe-sim";
 
 const data = loadPatch();
 const A = (it: StageItem, key: string, seed: number, omens: string[] = [], hint: Parameters<typeof applyCurrency>[5] = {}): StageItem => {

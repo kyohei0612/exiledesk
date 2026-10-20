@@ -17,7 +17,7 @@ import StageTopicGuide from "./StageTopicGuide.vue";
 import { quitLesson } from "../../state/craft-lesson";
 import { topic } from "../../state/craft-topic";
 import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
-import type { QuizSlot } from "../../services/craft-stage/quiz-recipe";
+import type { QuizSlot } from "../../services/simulator/quiz-recipe";
 
 const t2 = (x: JaEn): string => tr(x[0], x[1]);
 const LEVEL: Record<number, { label: JaEn; chip: string }> = {

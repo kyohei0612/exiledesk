@@ -12,7 +12,7 @@
  */
 import type { JaEn } from "./quiz-tutorials";
 import { amuletCourse, bootsCourse, glovesCourse, spearCourse, wandCourse, type CourseRecipe } from "./course-recipes";
-import { assignSlots, routeOf, ruleFor, situationOf, type QuizAction, type QuizRecipe, type QuizSlot } from "./quiz-recipe";
+import { assignSlots, routeOf, ruleFor, situationOf, type QuizAction, type QuizRecipe, type QuizSlot } from "../simulator/quiz-recipe";
 import type { StageItem } from "./types";
 
 export interface CraftCourse {

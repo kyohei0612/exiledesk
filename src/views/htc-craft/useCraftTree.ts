@@ -9,10 +9,10 @@
  */
 import { socketOnOf } from "../../services/htc/sockets";
 import { computed, ref, shallowRef, watch } from "vue";
-import { CERTAIN, simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
+import { CERTAIN, simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/simulator/htc/sim-route";
 import { mulberry32 } from "../../services/htc/rng";
 import { simCtxOf, startStateOf } from "./sim-setup";
-import type { Side } from "../../services/htc/step-odds";
+import type { Side } from "../../services/simulator/htc/step-odds";
 import type { useHtcCraft } from "./useHtcCraft";
 
 let seq = 0;

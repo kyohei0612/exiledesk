@@ -7,7 +7,7 @@
  */
 import { computed } from "vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
-import { CERTAIN } from "../../services/htc/sim-route";
+import { CERTAIN } from "../../services/simulator/htc/sim-route";
 import type { useCraftTree } from "./useCraftTree";
 import type { useHtcCraft } from "./useHtcCraft";
 

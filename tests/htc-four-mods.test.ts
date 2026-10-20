@@ -3,7 +3,7 @@
  * 反対側に深淵のエッセンス → 冒涜 (印を置き換え) で 普通 3 + 冒涜 1 → 固定 1/3
  */
 import { describe, expect, it } from "vitest";
-import { candidateOf } from "../src/services/htc/tree-decide";
+import { candidateOf } from "../src/services/simulator/htc/tree-decide";
 
 const p = { orb: 10, annul: 3, bone: 0.5, necro: 1, exalt: 0.01, dextralExalt: 1, regal: 0.01, abyss: 2, crystal: 1 };
 describe("固定無し・4 MOD の物", () => {

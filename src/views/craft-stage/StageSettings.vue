@@ -9,7 +9,7 @@ import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
 import { SIM_LOCKED } from "../../state/craft-stage";
 import { inLesson } from "../../state/craft-lesson";
-import StageRecipeStart from "./StageRecipeStart.vue";
+import StageRecipeStart from "../simulator/StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, ref, watch } from "vue";
 import { revealWhenReady } from "../../utils/keep-place";

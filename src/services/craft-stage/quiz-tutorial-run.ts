@@ -7,7 +7,7 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageItem, StageMod } from "./types";
-import { applyQuizAction, buyStart, revealWanted, routeDone, routeOf, ruleFor, situationOf, type QuizAction, type Situation } from "./quiz-recipe";
+import { applyQuizAction, buyStart, revealWanted, routeDone, routeOf, ruleFor, situationOf, type QuizAction, type Situation } from "../simulator/quiz-recipe";
 import { applyCurrency } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
 import type { JaEn, QuizTutorial, TutorialRule } from "./quiz-tutorials";

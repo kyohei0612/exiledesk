@@ -11,7 +11,7 @@ import { scrollToTop } from "../../utils/keep-place";
 import { course } from "../../state/craft-course";
 import { topic } from "../../state/craft-topic";
 import { basePage, recipesPage, simStep } from "../../state/web-page";
-import { currentRecipeId } from "../../state/sim-recipe-store";
+import { currentRecipeId } from "../../state/simulator/sim-recipe-store";
 
 function create() {
   const inApp = isTauriRuntime();

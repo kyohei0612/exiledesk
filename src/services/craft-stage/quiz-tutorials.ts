@@ -13,7 +13,7 @@
  * 1 本 = クイズのレシピ (quiz-recipe.ts の型そのまま) + 答えごとの問い・理由・外れ。打ち方はシミュレーターと同じ applyQuizAction。
  * 資料で決まらない所は assumed (画面に「仮」) に書く。値段は使わない (費用は出さず、打った数だけ出す)。
  */
-import type { QuizAction, QuizRecipe, QuizRule, QuizSlot } from "./quiz-recipe";
+import type { QuizAction, QuizRecipe, QuizRule, QuizSlot } from "../simulator/quiz-recipe";
 
 /** 日本語と英語の組 (画面の言葉。ゲームの言葉はキーからクライアントの名前で出す) */
 export type JaEn = readonly [string, string];

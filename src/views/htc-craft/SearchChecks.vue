@@ -9,7 +9,7 @@
  */
 import { computed } from "vue";
 import { openExternal } from "../../services/trade2/open-external";
-import { STRICT_PREFIX, STRICT_SUFFIX } from "../../services/htc/tree-buy";
+import { STRICT_PREFIX, STRICT_SUFFIX } from "../../services/simulator/htc/tree-buy";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();

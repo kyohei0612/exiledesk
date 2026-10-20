@@ -16,7 +16,7 @@ import { baseNameOf, tr } from "../../i18n/lang";
 import { forceKey } from "../../services/craft-stage/apply-force";
 import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, TUTORIAL_LOCKED } from "../../state/craft-stage";
-import StageRecipeStart from "./StageRecipeStart.vue";
+import StageRecipeStart from "../simulator/StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
@@ -39,7 +39,7 @@ import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
 const VideoStage = defineAsyncComponent(() => import("./VideoStage.vue")); // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import StageModList from "./StageModList.vue";
-const StageSimPanel = defineAsyncComponent(() => import("./StageSimPanel.vue"));
+const StageSimPanel = defineAsyncComponent(() => import("../simulator/StageSimPanel.vue"));
 const StageCourses = defineAsyncComponent(() => import("./StageCourses.vue"));
 import GuideVideoCard from "./GuideVideoCard.vue";
 import StageCourseGuide from "./StageCourseGuide.vue";
@@ -70,7 +70,7 @@ function useAtSocket(n: number): void {
 onMounted(() => void s.init());
 // シミュレーターのレシピの URL (#recipe=、recipe-share.ts) から来た時・同じタブに貼った時は、そのレシピで始める
 // ジェムコラプトの画面を開いていたら閉じる (開いたままだと上に残り、URL はシミュレーターなのにジェムコラプトが見えていた。2026-10-19 モンキーテスト)
-const openRecipeUrl = (): void => { if (location.hash.startsWith("#recipe=")) { setGemCorrupt(false); void import("./recipe-share").then((m) => m.openSharedRecipe()); } };
+const openRecipeUrl = (): void => { if (location.hash.startsWith("#recipe=")) { setGemCorrupt(false); void import("../simulator/recipe-share").then((m) => m.openSharedRecipe()); } };
 onMounted(() => { openRecipeUrl(); window.addEventListener("hashchange", openRecipeUrl); });
 onBeforeUnmount(() => window.removeEventListener("hashchange", openRecipeUrl));
 // 使った時の音を先に読んでおく (初めて使うカレンシーで遅れないように)

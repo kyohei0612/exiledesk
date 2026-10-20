@@ -2,7 +2,7 @@
 // 名前はクライアントの表 (items-ja-client.json) と棚の名前 (nameOfKey) から引けること
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
-import { runQuiz } from "../src/services/craft-stage/quiz-recipe";
+import { runQuiz } from "../src/services/simulator/quiz-recipe";
 import { QUIZ_TUTORIALS, type TutorialRule } from "../src/services/craft-stage/quiz-tutorials";
 import { autoAdvance, playChoice, questionOf, startTutorial } from "../src/services/craft-stage/quiz-tutorial-run";
 import { nameOfKey } from "../src/state/craft-stage-shelf";

@@ -31,7 +31,7 @@ import WebFooter from "./WebFooter.vue";
 import { AD_FRAMES, pageTick, sideAdW } from "../utils/ads";
 import { feedbackPage, recipesPage, routesOpen } from "../state/web-page";
 const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue"));
-const StageRecipesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
+const StageRecipesPage = defineAsyncComponent(() => import("../views/simulator/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import { inLesson } from "../state/craft-lesson";
 
 const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);

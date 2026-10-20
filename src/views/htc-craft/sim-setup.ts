@@ -5,10 +5,10 @@
  */
 import { sideLimits } from "../../services/htc/bridge";
 import { catalystPriceKey, maxQualityForBase } from "../../services/htc/catalysing";
-import type { SimCtx, SimState } from "../../services/htc/sim-route";
+import type { SimCtx, SimState } from "../../services/simulator/htc/sim-route";
 import { craftedLimitWith, socketCostOf, socketOnOf, withSocketLimits } from "../../services/htc/sockets";
 import { limitsOf } from "../../vendor/poe2htc/engine/item";
-import type { Side } from "../../services/htc/step-odds";
+import type { Side } from "../../services/simulator/htc/step-odds";
 import { startKindOf } from "./start-kind";
 import { htcModSides } from "../../services/htc/patch";
 import { matchKey } from "../../services/htc/bridge-index";

@@ -12,7 +12,7 @@ import { basePage, baseUnpicked } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
 import { useStageBase } from "./use-stage-base";
 import { revealWhenReady } from "../../utils/keep-place";
-import StageRecipeStart from "./StageRecipeStart.vue";
+import StageRecipeStart from "../simulator/StageRecipeStart.vue";
 
 defineProps<{ phone: boolean }>();
 const { pickSimBase, startFromRecipe } = useStageBase();

@@ -6,7 +6,7 @@
 import { computed, ref, watch } from "vue";
 import { craftStage as s } from "./craft-stage";
 import { fullSockets } from "./stage-steps";
-import { buyStart } from "../services/craft-stage/quiz-recipe";
+import { buyStart } from "../services/simulator/quiz-recipe";
 import { startFrom } from "../services/craft-stage/run-plan";
 import { mulberry32 } from "../services/htc/rng";
 import { courseMove, courseSlots, courseState, type CraftCourse } from "../services/craft-stage/craft-courses";

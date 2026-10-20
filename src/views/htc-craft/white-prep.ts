@@ -8,7 +8,7 @@
  * 5 個とも ここまで進め、1 個だけ成功する前提なので、呼ぶ側が 5 倍する
  */
 import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
-import { simulateTree, type SimNode, type SimCtx } from "../../services/htc/sim-route";
+import { simulateTree, type SimNode, type SimCtx } from "../../services/simulator/htc/sim-route";
 
 /** 5 個買って 1 個固定できる前提 (オーナー 2026-10-04) */
 export const FRACTURE_BATCH = 5;

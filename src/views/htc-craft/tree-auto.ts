@@ -19,8 +19,8 @@ import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { bossOmenAllowed, desecrationBoneFor, desecrationOmenForMod, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { catalystsFor } from "../../services/htc/quality";
-import type { SimNode } from "../../services/htc/sim-route";
-import type { Side } from "../../services/htc/step-odds";
+import type { SimNode } from "../../services/simulator/htc/sim-route";
+import type { Side } from "../../services/simulator/htc/step-odds";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { BREACH_FAMILY } from "../../services/htc/omens";
 // 入力の型と判定 (chaosSideFor / breachPlanned) は 2026-09-26 に tree-auto-input.ts へ分けた

@@ -6,9 +6,9 @@
  * 付けた物が消える分は入らないので安めに出る。
  */
 import { socketOnOf, socketSig } from "../../services/htc/sockets";
-import { stepHelpers, tierWeight, type ItemState, type Side } from "../../services/htc/step-odds";
+import { stepHelpers, tierWeight, type ItemState, type Side } from "../../services/simulator/htc/step-odds";
 import { shallowRef } from "vue";
-import { simulateTreeChunked } from "../../services/htc/sim-route";
+import { simulateTreeChunked } from "../../services/simulator/htc/sim-route";
 import { zeroStart } from "./craft-settings";
 import { catalystOk, craftLimitsOf, simCtxOf, startStateOf } from "./sim-setup";
 import { startKindOf } from "./start-kind";

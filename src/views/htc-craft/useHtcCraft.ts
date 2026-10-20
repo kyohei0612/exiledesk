@@ -12,7 +12,7 @@ import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/pas
 import { baseForSolving } from "../../services/htc/bridge";
 import { useTreeSearch } from "./useTreeSearch";
 export type { TreeRoute } from "./useTreeSearch";
-import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
+import { baseChoices, type BaseChoice } from "../../services/simulator/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { NO_SOCKET, effectiveSocket, poolRuneIds, requiredRunes, socketCountFor, socketsMinFor, withRequired, type SocketPick } from "../../services/htc/sockets";
 import { withRunes } from "../../vendor/poe2htc/engine/runes";
@@ -27,7 +27,7 @@ import { marketStore } from "../../state/market-store";
 
 /** 押した時に取り直す相場の古さ (これより新しければそのまま使う) */
 const PRICE_MAX_AGE_MS = 5 * 60 * 1000;
-import { FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE } from "../../services/htc/tree-decide";
+import { FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE } from "../../services/simulator/htc/tree-decide";
 import type { DropOnlyRow } from "../../services/htc/paste";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";

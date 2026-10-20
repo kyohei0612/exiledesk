@@ -10,7 +10,7 @@ import { jaTypeName } from "../../services/trade2/localize";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { qualityLabelOf } from "../../services/htc/quality";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
-import type { SimState } from "../../services/htc/sim-route";
+import type { SimState } from "../../services/simulator/htc/sim-route";
 import { zeroStart } from "./craft-settings";
 import { socketEffects, socketLabel, socketOnOf } from "../../services/htc/sockets";
 import type { useHtcCraft } from "./useHtcCraft";

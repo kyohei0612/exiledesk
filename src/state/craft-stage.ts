@@ -16,19 +16,19 @@ import { playSfx, playUseSfx } from "../utils/sfx";
 import { isRareChance } from "../utils/format-pct";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
-import type { Pattern } from "../services/craft-stage/pattern";
+import type { Pattern } from "../services/simulator/pattern";
 import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef, watch, type Ref, type WritableComputedRef } from "vue";
 import { htcBaseInfo, loadHtcPatch } from "../services/htc/patch";
 import { REC_START, recNext } from "../utils/rec-mode";
 import { extraFromUrl, videoFromUrl, type StageExtra } from "./stage-extra";
 export type { ResistsBlock, StageExtra } from "./stage-extra";
-import { simGrant, simPicked, simShowMods, simSockets, simStart, simStartItem, simPendingRecipe, simStartCost, simTargets, simAltFor, simOrder, simPatterns, simPlayLeft, simQuizActive } from "./sim-state";
-export type { SimStart, SimTargets } from "./sim-state";
+import { simGrant, simPicked, simShowMods, simSockets, simStart, simStartItem, simPendingRecipe, simStartCost, simTargets, simAltFor, simOrder, simPatterns, simPlayLeft, simQuizActive } from "./simulator/sim-state";
+export type { SimStart, SimTargets } from "./simulator/sim-state";
 import { aims, aimPicker, modJump, modOverlay } from "./aim-state";
 export { AIM_MAX, type AimPick } from "./aim-state";
 import { fullSockets, planStepOf, type PlanStep } from "./stage-steps";
-export * from "./sim-recipes";
+export * from "./simulator/sim-recipes";
 /** ?base=<英語名> (ベースの読み物のページから来た時)。録画モードの base= とは別 */
 export const URL_BASE: string | null = (() => { try { return new URLSearchParams(location.search).get("base"); } catch { return null; } })();
 import { loadCurrencyHover } from "../services/currency/currency-hover";
@@ -47,8 +47,8 @@ import type { PobBlock } from "../services/craft-stage/stage-pob";
 import { tr, lang } from "../i18n/lang";
 import { decodeShare, SHARE_ENABLED, shareBlock, shareCodeOf } from "../services/craft-stage/share";
 import { trackOnce } from "../utils/track";
-import { methodOfTarget, quizFromSim } from "../services/craft-stage/quiz-build";
-import { nextMove, type QuizRecipe } from "../services/craft-stage/quiz-recipe";
+import { methodOfTarget, quizFromSim } from "../services/simulator/quiz-build";
+import { nextMove, type QuizRecipe } from "../services/simulator/quiz-recipe";
 
 const data = shallowRef<PatchData | null>(null);
 /**

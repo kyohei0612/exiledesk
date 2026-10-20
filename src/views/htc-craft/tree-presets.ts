@@ -21,7 +21,7 @@
  */
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { catalystsFor } from "../../services/htc/quality";
-import type { SimNode } from "../../services/htc/sim-route";
+import type { SimNode } from "../../services/simulator/htc/sim-route";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";

@@ -6,9 +6,9 @@
  */
 import { grantedSkillFor } from "./craft-settings";
 import { computed, ref, shallowRef, watch } from "vue";
-import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
-import { fracturedBuys, treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
-import { batchFor, BATCH_TARGET, decide, summarize, type Batch, type Decision, type RouteSummary, type TreeListing } from "../../services/htc/tree-decide";
+import { treeFracturePlan } from "../../services/simulator/htc/tree-fracture-plan";
+import { fracturedBuys, treeBuys, treeBuyQuery } from "../../services/simulator/htc/tree-buy";
+import { batchFor, BATCH_TARGET, decide, summarize, type Batch, type Decision, type RouteSummary, type TreeListing } from "../../services/simulator/htc/tree-decide";
 import { tradeAuto } from "../../services/trade2/auto-price";
 import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";

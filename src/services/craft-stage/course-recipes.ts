@@ -9,7 +9,7 @@
  * テスト (tests/craft-courses.test.ts) で、200 人とも同じ手数・ベース 1 個で完成する (運で外れる手が無い) ことを確かめる。
  * 元の動画の狙いのうち、必ずは付かない物 (普通の MOD のハイブリッドなど) は、必ず付く物に替えた (assumed に書く)
  */
-import type { QuizRecipe, QuizSlot } from "./quiz-recipe";
+import type { QuizRecipe, QuizSlot } from "../simulator/quiz-recipe";
 import type { JaEn } from "./quiz-tutorials";
 
 const slot = (id: string, side: QuizSlot["side"], mods: string[], kind: QuizSlot["kind"] = "normal"): QuizSlot =>

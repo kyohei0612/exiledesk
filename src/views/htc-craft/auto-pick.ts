@@ -6,7 +6,7 @@
  * なので両方組んで、完成 90% 以上の中で平均の安い方 (どれも届かなければ完成の多い方)。カオスを使う / 使わないも同じく比べる。
  */
 import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
-import { simulateTreeChunked, type SimNode, type SimState } from "../../services/htc/sim-route";
+import { simulateTreeChunked, type SimNode, type SimState } from "../../services/simulator/htc/sim-route";
 import { autoTree, chaosSideFor, magicEssenceFor, type AutoTreeInput } from "./tree-auto";
 import { spawnChance } from "./craft-estimate";
 import { planByRedoCost, type RedoPlan } from "./redo-cost";

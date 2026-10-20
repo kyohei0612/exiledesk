@@ -16,7 +16,7 @@ import {
   socketRunesFor, socketsNeeded, withRequired, type SocketPick,
 } from "../src/services/htc/sockets";
 import { tradeCategoryOf } from "../src/services/htc/buy-or-craft";
-import { simulateTree, type SimNode, type SimState } from "../src/services/htc/sim-route";
+import { simulateTree, type SimNode, type SimState } from "../src/services/simulator/htc/sim-route";
 import { tierWeight } from "../src/services/mods/mod-rules";
 import { parseJaItem, targetsFor } from "../src/services/htc/paste";
 import { fillHashes, jaOfMod } from "../src/services/htc/mod-text";
