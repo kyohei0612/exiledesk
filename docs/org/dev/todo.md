@@ -7,7 +7,7 @@
 | 開発部長 | (このセッション) | まとめ役 |
 | ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J1b (コラプトの表、書きかけ) → J2 (裏) → J3 spamCounts → J4 一覧の棚卸し |
 | シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S1e → R2 → R3 → S2 → S1c (直し)。S2 はもう書きかけあり (R3 は S2 の後でも可) |
-| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K3 → R1 → K2b → K2c |
+| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | R1 → K2b → K2c |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
 
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
@@ -40,14 +40,14 @@
 - K2 済み (80604eb3): 手袋・靴の 10 順番で答え無し 0・イレギュラー 0、費用 1 割以内は手袋の上位 3 など、靴は ±13〜24% が残る。model に runes を足した。中身: 手 1 新 auto/auto-rules.ts (rulesFromDetail・methodsFromDetail・answerFor)、check-auto-order.mjs を src の物で。
 - K2b 靴の 2 位の順番で答えの抜け (イレギュラー 422 人、一時の解析君 a1e582f2)。S3 の前に。
 - K2c 靴の計算とエンジンのずれ ±20% (エンジンだけ消去でドッジを 1 人 5.6 回失う、元はまだ)。
-- K3 自動 / 手動 手 2: 範囲 A (白から・4 MOD から、auto-model.ts)。
-- K4 エンジンの付け替え 手 7 の auto/ 分。
+- K3 済み (e62c4dc5): 白からマジックで一緒に揃える道に対応、手袋で答え無し 0・イレギュラー 0、上位は計算と −4.7%。元の中身: 自動 / 手動 手 2: 範囲 A (白から・4 MOD から、auto-model.ts)。
+- K4 済み (ffced9fc): auto/ の import を入口へ (見張り 139 → 135 行、控え 321143e2)。入口に無い 3 つは J3 で。
 
 ### ジン部長
 - J1 済み (70c53ff0・a94d7aaf): 点検 2 は今の読みで読めない行 0 (コード直し無し)、品質の最大値 +20% は poe2db でブリーチのエッセンスのプレ (正しい)、family の直の比べを mod-rules へ。残り: currency-spec-golden が 10-17 の控えからずれている元探し (emulator/todo.md)。元の中身: emulator/todo.md の family の直の比べ (golden を回す) + 点検 2 の読み (見本 3 の暗黙・「ダメージが56%増加する」「ゴールド 10%」) + 見本 3・8 の「品質の最大値 +20%」(エッセンスの MOD か読みか)。parseItemText の形を変える時は先に開発部長へ (S1 が読んでいる)。
 
 - J1b 済み (cf2bc7d6): ゴールド 10%・スピリット +30 はソウルコア (rune)、ダメージ 56% はコラプトのエンチャント (enchant)、冷気 36〜55 は品質で盛られた T1 (正しい)、グレネードの行は読めないで想定内。
-- J3 入口に spamCounts (道ごとの平均の使った物と着いた割合、start-routes.md の案)。S1c が待つ。
+- J3 入口に spamCounts + 解析君の 3 つ (occupiedFamiliesOf・ANCIENT_BONE_FLOOR・REVEAL_SPEC、K4 で【入口に無い】) (道ごとの平均の使った物と着いた割合、start-routes.md の案)。S1c が待つ。
 - J4 一覧の棚卸し (オーナー 10-20): 全ベースの暗黙・コラプト・ルーン/ソウルコア・冒涜専用・エッセンス専用・エンチャント/注油が、エンジンにあるか無いかの表 → 足す順の案 → poe2db の全部位と 1 つずつ照らし、結果を emulator/notes/ に。コラプトの表は入口から引け、parseItemText が印を付ける。
 - J2 currency-spec-golden の控えのずれの元探し (tests/golden/)。
 - J3 (S1c の表の後) ③ が呼ぶスパムの計算をエンジンの入口に出す。
