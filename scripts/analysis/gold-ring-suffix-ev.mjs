@@ -2,7 +2,7 @@
  * gold-ring-suffix-ev.mjs — 金の指輪 (動画 kQROcbbeR1M) のサフィックス 3 MOD を、オーナーの打ち方 (10-21) でエンジンに打たせて
  * 平均費用・完成率・回数の分布を出す (解析君、2026-10-21)。結果は docs/org/math/notes/2026-10-21-gold-ring-suffix-ev.md
  *
- *   [Q=40] [BUDGET=2000] [PROBE=1] node scripts/analysis/gold-ring-suffix-ev.mjs [N=50] [組み合わせ=all|<触媒の高貴の高貴>-<素の高貴>,...] [SEED=1]
+ *   [Q=40] [BUDGET=2000] [PROBE=1] [POLICY=A|B|C] [TARGET=res] node scripts/analysis/gold-ring-suffix-ev.mjs [N=50] [組み合わせ=all|<触媒の高貴の高貴>-<素の高貴>,...] [SEED=1]
  *   例: node scripts/analysis/gold-ring-suffix-ev.mjs 2000 greater-greater,perfect-greater
  *
  * 打つのは全部エンジンの入口 (applyCurrency)。台本が決めるのは「次にどの手を打つか」だけ (下の nextMove)。
@@ -33,7 +33,7 @@ const PRICES = {
   OmenofSinistralExaltation: 85.830, OmenofSinistralCrystallisation: 298.594, "essence:breach": 765.322,
 };
 const DIV = PRICES.divine;
-const CAT_FOR = { C: "catalyst_speed", A: "catalyst_cold" };
+const CAT_FOR = { R: "catalyst_cold", C: "catalyst_speed", A: "catalyst_cold" };
 const LIMIT = 20000; // 1 人の手の上限 (堂々巡りの見張り)
 /** 1 人の打ち止め (神)。超えたら未完成 (オーナー 10-21「2000 神上限、現実的か知りたい」)。BUDGET=0 で無し */
 const BUDGET = Number(process.env.BUDGET ?? 2000);
@@ -46,11 +46,19 @@ const MQ = "Rings/PerfectEssence_LocalMaximumQuality";
 const hasMQ = (it) => it.prefixes.some((m) => m.modId === MQ);
 
 const SD = data.mods.get("Rings/Special_genesis_tree_caster_SpellDamage");
-const ID = { R: "Rings/ItemFoundRarityIncrease", C: "Rings/IncreasedCastSpeed", A: "Rings/AllResistances" };
-const len = (k) => data.mods.get(ID[k]).tiers.length;
-const MIN = { R: len("R") - 1, C: len("C") - 2, A: len("A") - 2 }; // T1 / T2 以上 (tierIndex は低い段が 0)
-const has = (item, k) => item.suffixes.some((m) => m.modId === ID[k] && m.tierIndex >= MIN[k]);
-const blocked = (item, k) => item.suffixes.some((m) => m.modId === ID[k] && m.tierIndex < MIN[k]);
+/**
+ * TARGET=res (オーナー 10-21「耐性 T1 で回して、元素は何でも」): R の枠をレアリティ T1 から「火・冷気・雷のどれかの単体耐性 T1」に替える。
+ * R の狙いは素の右側の高貴でなく カタリスト (トゥル = 一番安い元素) + 触媒の高貴 + 右側の高貴 (触媒の所の高貴) で打つ
+ */
+const RES = process.env.TARGET === "res";
+const ID = { R: RES ? "Rings/ColdResistance" : "Rings/ItemFoundRarityIncrease", C: "Rings/IncreasedCastSpeed", A: "Rings/AllResistances" };
+const IDS = { ...Object.fromEntries(Object.entries(ID).map(([k, v]) => [k, [v]])), ...(RES ? { R: ["Rings/FireResistance", "Rings/ColdResistance", "Rings/LightningResistance"] } : {}) };
+const len = (id) => data.mods.get(id).tiers.length;
+// T1 / T2 以上 (tierIndex は低い段が 0)。R は T1、C・A は T2 以上
+const need = (k, m) => IDS[k].includes(m.modId) && m.tierIndex >= len(m.modId) - (k === "R" ? 1 : 2);
+const has = (item, k) => item.suffixes.some((m) => need(k, m));
+// 系統が低い段で埋まって狙えない (R が単体耐性の時は 3 つとも埋まった時だけ)
+const blocked = (item, k) => IDS[k].every((id) => item.suffixes.some((m) => m.modId === id && !need(k, m)));
 
 function start(rng) {
   let it = M.startFrom(data, "Gold Ring", 82, { rarity: "rare" }, Math.floor(rng() * 2 ** 31));
@@ -65,13 +73,13 @@ function start(rng) {
  * C = B と同じだが、狙いが 1 つでもある時に狙いでないサフィックス (狙いの系統の低い段も) があれば、3 つまで埋めずにすぐ消去
  */
 const POLICY = process.env.POLICY ?? "B";
-const junkSuffix = (it) => it.suffixes.some((m) => !["R", "C", "A"].some((k) => m.modId === ID[k] && m.tierIndex >= MIN[k]));
+const junkSuffix = (it) => it.suffixes.some((m) => !["R", "C", "A"].some((k) => need(k, m)));
 function nextMove(it) {
   const got = ["R", "C", "A"].filter((k) => has(it, k));
   if (got.length === 3) return null;
   if (!got.length || (POLICY === "A" && !has(it, "R"))) return { kind: "chaos" };
   if (it.suffixes.length >= 3 || (POLICY === "C" && junkSuffix(it))) return { kind: "annul" };
-  if (!has(it, "R") && !blocked(it, "R")) return { kind: "plain" };
+  if (!has(it, "R") && !blocked(it, "R")) return RES ? { kind: "cat", aim: "R" } : { kind: "plain" };
   const open = ["C", "A"].filter((k) => !has(it, k) && !blocked(it, k));
   if (!open.length) return { kind: "annul" };
   return { kind: "cat", aim: open[0] };
