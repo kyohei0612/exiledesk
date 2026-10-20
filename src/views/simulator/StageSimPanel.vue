@@ -60,7 +60,7 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, start
   fourDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, whiteCosts, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
-  modsDone, sortDone, orderDone, step3, startPrice, whiteDone, stepOrder, patternDone, stale, step4pre, step4, ilvlNote, resetArm, resetAll, reach, go, decideMods, sortDecided, decideOrder, edit2, panelEl, whiteDecide,
+  modsDone, sortDone, orderDone, step3, startPrice, whiteDone, stepOrder, patternDone, stale, step4pre, step4, ilvlNote, resetArm, resetAll, reach, go, decideMods, decideOrder, edit2, fitsNow, panelEl, whiteDecide,
   undoStack, undo, money, results, baseJa, pct, compare, hitName, split, moneyT, fmtCount, hitShort, cardOk, cardNote, saveCard, copyCard, luck,
   costGroups, summary, tooManySteps, nextMaxSteps } = { ...tg, ...sr, ...rn, ...rc, ...st, ...rs };
 /** 付与スキルが候補から 1 つのベースで、まだ選んでいない (選ぶまで始め方を出さない) */
@@ -120,7 +120,7 @@ const stepNotes = computed(() => {
     </Teleport>
 
     <!-- 工程の帯 (2026-10-19 工程ごとのページ。決めた所は要約、押すとそのページ) -->
-    <SimStepBar class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" :lead="!socketsOk ? tr('まず上でソケットの数を選ぶ (分からなければ 0)。選ぶと狙う MOD の一覧が出る', 'First choose the socket count above (0 if unsure). The mod list appears after that') : modsDone && !sortDone && simStep === 'mods' ? tr('2-b 付け方が同じ MOD をまとめる (全部 / この中のどれか)。枠に収まったら「次へ」', '2b: Group mods with the same method (all / any of these). When they fit the slots, press “Next”') : undefined" @go="go" @base="openBasePage" />
+    <SimStepBar class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" :lead="!socketsOk ? tr('まず上でソケットの数を選ぶ (分からなければ 0)。選ぶと狙う MOD の一覧が出る', 'First choose the socket count above (0 if unsure). The mod list appears after that') : undefined" @go="go" @base="openBasePage" />
     <SimAutoConfirm :ask="autoAsk" @ok="autoApply" @cancel="autoAsk = null" />
     <!-- 「自動で組む」は 1 ベースの枠の規格外ソケットの右 (StageSettings の #sim-auto-slot。2026-10-20 オーナー「見出しの右は分かりづらい」) -->
     <Teleport defer to="#sim-auto-slot" :disabled="s.mode.value !== 'sim' || !!s.replay.value"><SimAutoToggle :auto="autoOn" :disabled="false" @toggle="autoToggle" /></Teleport>
@@ -140,17 +140,17 @@ const stepNotes = computed(() => {
         <!-- スマホ: 狙う MOD を選んでいる間は完成図を画面の上に貼り付ける (2026-10-09 オーナー「上の方がいいな、絶えず表示してあげたらいい。どの MOD どういう設定か忘れがち」) -->
         <div :class="phone && edit2 && rows.length ? 'sticky top-0 z-[60] -mx-3 max-h-[40vh] overflow-y-auto border-b border-[var(--exile-color-border-brass)] bg-[#120f0c] px-3 pb-2 pt-1 shadow-[0_8px_18px_rgba(0,0,0,0.7)] [&_select]:max-w-full' : ''">
           <StageTargetSummary :editable="edit2" :auto="autoOn" />
-          <!-- 「決めた」の後: 付け方が同じ MOD の整理 (全部 / この中のどれか N つ)。枠に収まるまで 3 に進めない -->
-          <SimTargetSort v-if="modsDone && !sortDone" @back="modsDone = false" @done="sortDecided" />
+          <!-- 付け方が同じ MOD のまとめ (全部 / この中のどれか N つ)。② に直に出す (2026-10-20 オーナー OK、棚卸しの 5)。枠に収まるまで「次へ」は押せない -->
+          <SimTargetSort v-if="edit2" />
         </div>
         <div v-if="rows.length && edit2" class="mt-1 flex items-center gap-2">
           <button type="button" class="inline-flex h-8 items-center rounded-md px-2 text-[13px] text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)]" @click="s.simTargets.value = []">全部外す</button>
-          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:hidden" title="狙う MOD を決めて、次のベースの値段へ (1 つでも進める)" @click="decideMods">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
+          <button type="button" class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:hidden" :disabled="!fitsNow" :title="fitsNow ? '狙う MOD を決めて、次のベースの値段へ (1 つでも進める)' : '枠より多い。下のまとめで枠に収めると押せる'" @click="decideMods">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <!-- スマホ: 一覧の下で「T○ 以上」を押しても上の完成図は見えないので、狙いの数と「決めた →」を画面の下に固定 (2026-10-08 レビュー) -->
         <div v-if="phone && rows.length && edit2" class="fixed inset-x-0 bottom-0 z-[150] flex items-center gap-2 border-t border-[var(--exile-color-border-subtle)] bg-[#14110d]/95 px-3 backdrop-blur py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[13px] shadow-[0_-6px_20px_rgba(0,0,0,0.6)]">
           <span class="min-w-0 flex-1 truncate"><b class="text-amber-100">狙い {{ rows.length }} 個</b><span class="opacity-60"> · 足したら決める</span></span>
-          <button type="button" class="min-h-11 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 px-4" @click="decideMods">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
+          <button type="button" class="min-h-11 inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 px-4" :disabled="!fitsNow" @click="decideMods">{{ tr("次へ", "Next") }}<Icon name="arrow-right" class="size-4" /></button>
         </div>
         <div v-if="phone && rows.length && edit2" class="h-20"></div>
         <!-- このベースに付く MOD (同じ枠の中。2026-10-05 オーナー「枠は一緒の枠で表示するべき」)。長いので枠の中で送り、上の完成図は見えたまま -->

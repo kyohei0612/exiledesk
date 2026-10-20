@@ -232,13 +232,17 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   /** まだ決めていない一番先の工程へ (レシピを呼び出した時) */
   function toFirstOpen(): void { simStep.value = SIM_STEPS[Math.min(reach.value, 3)]!; }
   watch(simJumpOpen, () => void nextTick(toFirstOpen));
-  /** 2 の「次へ」: 決めて、整理が要らなければ 3 へ (要る時は同じページで整理 → sortDecided) */
+  /**
+   * 2 の「次へ」: 枠に収まっていれば 3 へ (2026-10-20 オーナー OK、棚卸しの 5: 付け方が同じ MOD のまとめは ② に直に出したので、別の段 2-b は無くした)。
+   * 収まっていなければ進まない (ボタンも押せない、fitsNow)
+   */
   function decideMods(): void {
+    if (!fitsOk()) return;
     modsDone.value = true;
-    sortDone.value = sortOk();
-    if (sortDone.value) simStep.value = "start";
+    sortDone.value = true;
+    simStep.value = "start";
   }
-  function sortDecided(): void { sortDone.value = true; simStep.value = "start"; }
+  const fitsNow = computed(() => fitsOk());
   /** 4 の「次へ」 */
   function decideOrder(): void { orderDone.value = true; simStep.value = "play"; }
   // 回し終わったら 6 回す・結果へ
@@ -283,5 +287,5 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     void nextTick(() => { lastSnap = snapNow(); restoring.v = false; });
   }
   return { step4pre, stepNo, fold, step4, resetStalePatterns, resetPatterns, wantTier, ilvlNote, goTo, resetArm, resetAll, panelEl,
-    whiteDecide, snapNow, undoStack, onKey, undo, reach, go, toFirstOpen, decideMods, sortDecided, decideOrder, edit2 };
+    whiteDecide, snapNow, undoStack, onKey, undo, reach, go, toFirstOpen, decideMods, decideOrder, edit2, fitsNow };
 }

@@ -10,9 +10,7 @@ import { METHOD_EN, METHOD_JA, setAnyOf, sideLimits, sideUse, sortBuckets, type 
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { tr } from "../../i18n/lang";
-import Icon from "../../components/ui/Icon.vue";
 
-const emit = defineEmits<{ back: []; done: [] }>();
 
 const buckets = computed(() => sortBuckets(s.data.value, s.simTargets.value));
 const use = computed(() => sideUse(s.data.value, s.simTargets.value));
@@ -38,14 +36,15 @@ function anyOf(b: SortBucket): void {
 </script>
 
 <template>
-  <div data-sim-sort class="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[12px]">
+  <!-- ② の狙いの下に直に出す (2026-10-20 オーナー OK、棚卸しの 5)。まとめられる組か枠より多い時だけ -->
+  <div v-if="buckets.length || over" data-sim-sort class="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[12px]">
     <p class="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
       <!-- 2-b (2026-10-20 点検 5: 「次へ」で同じページの中身が変わったのに、帯は 2 のままで何の段か分からなかった。帯の下の 1 行も 2-b に変わる) -->
-      <b class="text-[var(--exile-color-text-primary)]">{{ tr("2-b 付け方が同じ MOD の整理", "2b. Group mods with the same method") }}</b>
+      <b class="text-[var(--exile-color-text-primary)]">{{ tr("付け方が同じ MOD のまとめ", "Group mods with the same method") }}</b>
       <span v-for="sd in SIDES" :key="sd[0]" class="tabular-nums" :class="use[sd[0]] > limits[sd[0]] ? 'font-bold text-rose-300' : 'text-[var(--exile-color-text-secondary)]'">{{ tr(sd[1], sd[2]) }} {{ use[sd[0]] }} / {{ tr(`枠 ${limits[sd[0]]}`, `${limits[sd[0]]} slots`) }}</span>
     </p>
-    <p v-if="over" class="mb-1.5 text-rose-300">{{ tr("枠より多いので、下で「この中のどれか N つ」にまとめて枠に収める (収まるまで 3 に進めない)", "More targets than slots: group them below as “any N of these” until they fit (step 3 waits until then)") }}</p>
-    <p v-if="!buckets.length" class="opacity-60">{{ over ? tr("まとめられる組が無い。「← 狙う MOD に戻る」で狙いを減らす", "Nothing to group. Use “← Back to target mods” to drop some targets") : tr("同じ側に同じ付け方の MOD が 2 つ以上ある時、ここでまとめられる", "When a side has 2+ mods with the same method, you can group them here") }}</p>
+    <p v-if="over" class="mb-1.5 text-rose-300">{{ tr("枠より多いので、下で「この中のどれか N つ」にまとめて枠に収める (収まるまで「次へ」は押せない)", "More targets than slots: group them below as “any N of these” until they fit (“Next” waits until then)") }}</p>
+    <p v-if="!buckets.length" class="opacity-60">{{ over ? tr("まとめられる組が無い。上の × で狙いを減らす", "Nothing to group. Remove some targets with × above") : tr("同じ側に同じ付け方の MOD が 2 つ以上ある時、ここでまとめられる", "When a side has 2+ mods with the same method, you can group them here") }}</p>
     <div v-for="b in buckets" :key="`${b.side}:${b.method}`" data-sim-sort-bucket class="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/5 py-1.5">
       <span class="shrink-0 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ b.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }} · {{ tr(METHOD_JA[b.method], METHOD_EN[b.method]) }}</span>
       <span class="min-w-0 flex-1 truncate text-[#c8c8ff]" :title="b.members.map(nameOf).join('\n')">{{ b.members.map(nameOf).join(" / ") }}</span>
@@ -59,11 +58,6 @@ function anyOf(b: SortBucket): void {
           <span class="text-[11px] opacity-70">{{ tr("つ", "") }}</span>
         </template>
       </span>
-    </div>
-    <!-- 戻る / 決めた (2026-10-18 オーナー「決定とか戻るとかない」)。枠に収まるまで決められない -->
-    <div class="mt-2 flex items-center gap-2 border-t border-white/5 pt-2">
-      <button type="button" data-sim-sort-back class="g-btn sm max-md:min-h-10" @click="emit('back')">{{ tr("← 狙う MOD に戻る", "← Back to target mods") }}</button>
-      <button type="button" data-sim-sort-done class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :class="over ? '!bg-white/10 !text-white/45 cursor-not-allowed' : ''" :disabled="over" :title="over ? tr('枠に収めると押せる', 'Fit the slots first') : undefined" @click="emit('done')">{{ over ? tr("枠に収めると進める", "Fit the slots to continue") : tr("次へ", "Next") }}<Icon v-if="!over" name="arrow-right" class="size-4" /></button>
     </div>
   </div>
 </template>
