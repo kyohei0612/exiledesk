@@ -7,14 +7,14 @@
 | 開発部長 | (このセッション) | まとめ役 |
 | ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J2 (見張りのずれの元探し、別の worktree で) |
 | シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S1b |
-| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K2 (auto-rules.ts) |
+| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K3 (範囲 A、auto-model.ts) |
 | 解析君 (一時) | local_d25d3065-72c5-43e4-a27b-6a97b6bbd9de | やふやふ手袋・見本の靴。終わったらブラックが閉じる |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
 
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
 | 誰 | ファイル |
 |---|---|
-| 解析君 K2 | 新 src/services/simulator/auto/auto-rules.ts、scripts/analysis/check-auto-order.mjs・_auto-order-entry.ts、docs/org/math/README.md (地図 + 私の頭の 1 行も一緒に commit してもらう) |
+| 解析君 K3 | src/services/simulator/auto/auto-model.ts |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1b | src/services/simulator/auto/auto-order.worker.ts・auto-order.ts、src/views/simulator/use-sim-auto-order.ts・SimAutoOrder.vue |
 | ジン部長 J2 | tests/golden/ (探すのは別の worktree) |
@@ -29,14 +29,14 @@
 - S1d 「シミュレーター」を押した時はいつも ① ベース選びから (中身は消さず、工程の帯から先へ戻れる。オーナー 10-20、開発版まで)。① の「レシピから始める」欄をベースを選んだ後もいつも出す (今はまだ選んでいない時だけ。原因も報告に)。
 - S1c ③ の白から作る費用 (オーナー 10-20): スパムシミュレーターの道 (route-race・chaos-spam: 増強 = 白から / カオス = MOD 1 のレア / 高貴 = MOD 0 のレアから偉大な高貴で 2 つ、外れたら消去 2) と ② の増強スパムの決まり (sim-decisions-2026-10-20 の 10-21) に合わせ、エンジンの入口から呼ぶ。先に「始め方 = 道」の表 (simulator/notes/) → ジン部長が入口に足す (J3) → 直す → 解析君が数字を並べる。
 - S2 自動 / 手動 手 3・4 (simAuto・Snap・レシピの保存・リセット、② のチェック・帯の札・ポップアップ日英) + 点検 5 (② 次へ → 付け方の整理)。
-- S3 自動 / 手動 手 5 (④⑤ を自動で埋める、⑥ の 1 行) + 点検 9・10 (⑤ の文字を絞る・回すを下に固定)・4 (④ スマホの表)。**K2 の後**。
+- S3 自動 / 手動 手 5 (④⑤ を自動で埋める、⑥ の 1 行) + 点検 9・10 (⑤ の文字を絞る・回すを下に固定)・4 (④ スマホの表)。K2 は済み。
 - S4 自動 / 手動 手 6 (開発版でスナップ → OK 待ち)。デプロイは開発部長。
 - S5 エンジンの付け替え 手 7 のシミュ・チュートリアル分 (import を入口へ、mechanical)。**K1 (手 5) の後、S4 の後**。
 - S6 点検 6 (③ 値段の既定・単位)・7 のシミュの道具ボタン (開発部長のヘッダーの直しと一緒に)。
 
 ### 解析君
 - K1 済み: 手 5 (32e938d9)・手 4 の突き合わせ (11cbb873)。
-- K2 自動 / 手動 手 1: 新 auto/auto-rules.ts (rulesFromDetail・methodsFromDetail・answerFor)、check-auto-order.mjs を src の物で。
+- K2 済み (80604eb3): 手袋・靴の 10 順番で答え無し 0・イレギュラー 0、費用 1 割以内は手袋の上位 3 など、靴は ±13〜24% が残る。model に runes を足した。中身: 手 1 新 auto/auto-rules.ts (rulesFromDetail・methodsFromDetail・answerFor)、check-auto-order.mjs を src の物で。
 - K3 自動 / 手動 手 2: 範囲 A (白から・4 MOD から、auto-model.ts)。
 - K4 エンジンの付け替え 手 7 の auto/ 分。
 
