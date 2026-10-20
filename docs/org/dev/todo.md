@@ -6,14 +6,14 @@
 | ブラック | local_3b3c55ab-5df3-437a-855a-5e75e2c1fa64 | 司令塔 |
 | 開発部長 | (このセッション) | まとめ役 |
 | ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J6 (+ poe.ninja の見本、上限で止まった続き) → J8 素の値 → J5g 憤怒 45 段目を poe2db の 1 秒に → J9 → J5d・J5e (表だけ) |
-| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S2c (表を書く続き、スナップ 9 枚は撮った) → S2d → S3 → S4 |
+| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S3 (今) → S4。S2c の案はオーナーの返事待ち |
 | 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K6 自動の範囲 B (両側のどれか) |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
 
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
 | 誰 | ファイル |
 |---|---|
-| 解析君 K3 | src/services/simulator/auto/auto-model.ts |
+| 解析君 K6 | src/services/simulator/auto/ の計算の側 (auto-model・auto-solve・auto-actions・auto-engine・auto-rules・auto-types)、scripts/analysis/check-auto-order.mjs、docs/org/math/ |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1e | SimPasteRead.vue・paste-read.ts・StageBasePage.vue・StageTargetSummary.vue・use-stage-base.ts |
 | ジン部長 J6 | src/i18n/mod-text-ja.json・src/services/craft-stage/item-text.ts・docs/org/emulator/notes/paste-samples/・htc の poe2db の直しのファイル (憤怒 45 段目) |
@@ -30,7 +30,7 @@
 - S1e 済み (bc511b25、開発版 a3b4089c): 武器は貼った数 (無ければ 0) を入れる、貼った文を部品の外に、品質で盛られた値の断り、コラプトの印。元の中身: 貼り付けの画面 (+ 冷気 36〜55 は品質で盛られた T1 = 「品質で盛られた値」の出し方、cf2bc7d6 の from の変化に合わせる) 3 件 (本番の前に、スナップ係 10-20 の snaps/notes.md の ①⑤⑦): 武器はソケット数を選ぶまで ② の一覧が出ない・「レベル +4」の + が ② で消える・撮影の直後に貼った文が欄から消える。
 - S2b 済み (b4637023、開発版 2fa479bf): チェックはジン部長の StageSettings.vue の置き場 (#sim-auto-slot、1 行) に Teleport。元の中身: T1 の狙いがあっても自動のチェックを押せる形に (オーナー 10-20、② を見て): 押すと警告のポップアップ「T1 の狙いがあります。自動は T2 以上として組みます (T1 は完成しにくく計算も長い)。」[T2 以上にして自動にする] [手動のまま]、前者で T1 を T2 以上に下げる (Ctrl+Z、フラクチャー固定は下げない)、日英、開発版まで。
   - S2b に追加 (オーナー 10-20、画面を見て): 工程の帯の「自動 / 手動」の札を外す、「自動で組む」は「規格外ソケット」の右に。
-- S2c (案だけ): ①〜⑥ のボタン・チェック・札・? を全部並べ「外す / まとめる / 残す」の案 + 工程ごとのスナップ (simulator/notes/2026-10-20-sim-controls.md)。オーナーに見せてから直す。
+- S2c・S2d 済み (34bd0781、simulator/notes/2026-10-20-sim-controls.md、スナップは共有メモ sim-controls/): 道具の帯 7 → 3・③〜⑥ のベースの枠を外す・⑤ 約 40 → 約 20・③ の単位 ▾ は表示通貨 1 つ・2-b は ② に直に。盛った値は ① 貼り付けの結果だけ。直すのはオーナーの返事の後。
 - S2d (案だけ): シミュの画面で盛った値をそのまま出す所の洗い出し (S2c の notes に節を分けて)。直すのは J8 の後。
 - K5 済み (ec10984a): ③ の白から作る 1 個 vs 字のとおり 1,000 人で 手袋 +0.1%・靴 +5.4%。入口の 3 つの差し替え・再輸出の削除は 752b4bd7 (見張り 135 → 131)。
 - K6 自動の範囲 B: 両側のどれか (sim-split-by-side どおり側ごとに route を分けて解く、設計 3-3)。
