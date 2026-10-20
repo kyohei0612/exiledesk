@@ -119,7 +119,7 @@ const stepNotes = computed(() => {
     <p v-if="help" class="mb-3 rounded-md bg-white/[0.03] px-3 py-2 text-[13px] text-[var(--exile-color-text-secondary)]">狙いは「このベースに付く MOD」の表の「T○ 以上」で選ぶ。打ち方 (パターン) を組んで「回す」と、何百人分も作った平均の費用が出る。各所の <Icon name="help" class="inline size-3.5 align-[-2px]" /> にも説明がある</p>
 
     <!-- 工程の帯 (2026-10-19 工程ごとのページ。決めた所は要約、押すとそのページ) -->
-    <SimStepBar class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" :lead="socketsOk ? undefined : modsDone && !sortDone && simStep === 'mods' ? tr('2-b 付け方が同じ MOD をまとめる (全部 / この中のどれか)。枠に収まったら「次へ」', '2b: Group mods with the same method (all / any of these). When they fit the slots, press “Next”') : undefined" :auto="autoOn" @go="go" @base="openBasePage" @auto="autoToggle()" />
+    <SimStepBar class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" :lead="!socketsOk ? tr('まず上でソケットの数を選ぶ (分からなければ 0)。選ぶと狙う MOD の一覧が出る', 'First choose the socket count above (0 if unsure). The mod list appears after that') : modsDone && !sortDone && simStep === 'mods' ? tr('2-b 付け方が同じ MOD をまとめる (全部 / この中のどれか)。枠に収まったら「次へ」', '2b: Group mods with the same method (all / any of these). When they fit the slots, press “Next”') : undefined" :auto="autoOn" @go="go" @base="openBasePage" @auto="autoToggle()" />
     <SimAutoConfirm :ask="autoAsk" @ok="autoApply" @cancel="autoAsk = null" />
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
     <template v-if="socketsOk">

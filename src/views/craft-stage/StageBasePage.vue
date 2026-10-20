@@ -44,8 +44,13 @@ function startFromPaste(r: PasteRead): void {
   s.simTargets.value = r.targets;
   // アイテムレベルは ② の % と ③ に使う (点検 1)。品質・コラプト・未発現は ③ に「持ち越さない」と出すだけ
   const lv = r.item.itemLevel;
-  simPasted.value = { ilvl: lv != null ? Math.max(1, Math.min(SIM_ILVL_MAX, lv)) : null, quality: r.item.quality?.value ?? null, corrupted: r.item.corrupted, unrevealed: r.item.mods.filter((m) => m.unrevealed).length };
+  simPasted.value = { ilvl: lv != null ? Math.max(1, Math.min(SIM_ILVL_MAX, lv)) : null, quality: r.item.quality?.value ?? null, corrupted: r.item.corrupted, unrevealed: r.item.mods.filter((m) => m.unrevealed).length,
+    ...(r.item.quality?.tag ? { qualityLabel: r.item.quality.label } : {}) };
   if (simPasted.value.ilvl != null) s.itemLevel.value = simPasted.value.ilvl;
+  // ソケットの数: 貼った物にあればそれ、無ければ 0 (武器・防具は数を選ぶまで ② の一覧が出ない作り。2026-10-20 スナップ ①: 武器で止まって見えた)。
+  // ベースを変えるとソケットは空に戻る (use-sim-targets の見張り) ので、その後に入れる
+  const sk = r.item.sockets.count ?? 0;
+  void nextTick(() => { s.simSockets.value = sk; });
   setTimeout(revealSimMods, 120);
 }
 /**

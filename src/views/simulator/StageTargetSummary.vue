@@ -64,6 +64,11 @@ function shareOf(modId: string, minTierIndex: number): number | null {
 }
 /** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
 const pct = (x: number): string => fmtPct(x);
+/** 貼った物の品質で盛られた値の断り (品質の種類がある時だけ) */
+const pastedQuality = computed(() => {
+  const p = simPasted.value;
+  return p?.qualityLabel && p.quality ? tr(`貼った値は ${p.qualityLabel} +${p.quality}% で盛られている。ここの段の幅は素の値`, `Pasted values were boosted by ${p.qualityLabel} +${p.quality}%. The tier ranges here are unboosted`) : "";
+});
 /** % の注記: 何の割合か・どのアイテムレベルの数か */
 const shareNote = computed(() => {
   const lv = s.itemLevel.value;
@@ -326,6 +331,8 @@ function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
     <!-- % が何の割合か (2 は一番上のアイテムレベル、3 で決めたレベルで変わる。2026-10-18 初めての 10 人: 同じ MOD で 1.4% → 1.9% と変わって分からない) -->
     <!-- 貼り付けから始めた時は貼った物のアイテムレベルで (2026-10-20 点検 1・12: 貼り付け後も 86 の数だった)。注記は少し読みやすく -->
     <p v-if="rows.length" data-share-note class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ shareNote }}</p>
+    <!-- 貼ったアイテムに品質の種類がある時: 貼った値は盛られていて、ここの段の幅は素の値 (2026-10-20 見本 3: 冷気 36〜55 と T1 の幅が合わないように見えた) -->
+    <p v-if="rows.length && pastedQuality" data-paste-quality-note class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ pastedQuality }}</p>
     <div v-for="col in columns" :key="col.title" class="min-w-0">
       <!-- 狙う MOD は何個でもいい (枠より多くても、次の段で整理する時にまとめる。2026-10-18 オーナー) -->
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[12px] font-bold opacity-70">
