@@ -2,7 +2,7 @@
  * es-gloves-ev.mjs — ES の手袋 (知性、ilvl 82) のプレフィックス 3 つを、金の指輪の打ち方 C を左右逆にした形でエンジンに打たせる (解析君、2026-10-21)。
  * 結果は docs/org/math/notes/2026-10-21-es-gloves-ev.md
  *
- *   [ORB=exalt|exalt_greater|exalt_perfect] [BUDGET=2000] node scripts/analysis/es-gloves-ev.mjs [N=300] [SEED=1]
+ *   [ORB=exalt|exalt_greater|exalt_perfect] [RUNE="Serle's Triumph"] [BUDGET=2000] node scripts/analysis/es-gloves-ev.mjs [N=300] [SEED=1]
  *
  * 打つのは全部エンジンの入口 (applyCurrency)。台本は次の手を決めるだけ (nextMove)。
  * ベース: サイレーンスケイルの手袋 (Sirenscale Gloves、ES 54・レベル 80、知性の手袋で ilvl 82 の一番上の ES)。
@@ -19,6 +19,8 @@ const N = Number(process.argv[2] ?? 300);
 const SEED = Number(process.argv[3] ?? 1);
 const ORB = process.env.ORB ?? "exalt_greater";
 const BUDGET = Number(process.env.BUDGET ?? 2000);
+/** RUNE="Serle's Triumph" など: 始めにソケット 1 つ + そのルーンを差す (サム 10-21「ルーンを差した形にも回せるように」)。ルーン代は費用に入れない (値段を別に書く) */
+const RUNE = process.env.RUNE ?? null;
 const LIMIT = 20000;
 const data = M.loadPatch();
 
@@ -34,7 +36,7 @@ const isTarget = (m) => KEYS.some((k) => need(k, m));
 const has = (it, k) => it.prefixes.some((m) => need(k, m));
 
 function start(rng) {
-  let it = M.startFrom(data, BASE, 82, { rarity: "rare" }, Math.floor(rng() * 2 ** 31));
+  let it = M.startFrom(data, BASE, 82, { rarity: "rare", ...(RUNE ? { sockets: 1, runes: [RUNE] } : {}) }, Math.floor(rng() * 2 ** 31));
   it = M.withMod(it, { ...M.makeStageMod(PROJ, "suffix", 1, rng), fractured: true });
   return M.applyCurrency(data, it, "exalt_greater", rng).item;
 }
@@ -87,7 +89,7 @@ const done = rs.filter((r) => r.done);
 const costs = done.map((r) => costOf(r.n)).sort((a, b) => a - b);
 const spent = rs.reduce((a, r) => a + costOf(r.n), 0);
 const m = mean(costs), se = Math.sqrt(mean(costs.map((c) => (c - m) ** 2)) / (costs.length || 1));
-console.log(`=== ES の手袋 / 左側の高貴 + ${ORB} (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒, 打ち止め ${BUDGET} 神)`);
+console.log(`=== ES の手袋 / 左側の高貴 + ${ORB}${RUNE ? ` / ルーン ${RUNE}` : ""} (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒, 打ち止め ${BUDGET} 神)`);
 console.log(`完成 ${(100 * done.length / N).toFixed(1)}%  1 個あたり ${(spent / (done.length || NaN)).toFixed(2)} 神  完成した人の平均 ${m.toFixed(2)} (±${(1.96 * se).toFixed(2)})  中央 ${q(costs, 0.5).toFixed(1)}  90% ${q(costs, 0.9).toFixed(1)}`);
 for (const k of ["chaos", "annul", ORB, "OmenofSinistralExaltation"]) {
   const c = mean(done.map((r) => r.n[k] ?? 0));
