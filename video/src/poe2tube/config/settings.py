@@ -9,6 +9,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+EXILEDESK_REPO = REPO_ROOT.parent  # video/ を入れている ExileDesk 本体 (開発版、リリースの印を持つ)
 
 
 class Settings(BaseSettings):

@@ -61,7 +61,7 @@ base.COLUMNS = [
 ]
 
 
-EXILEDESK = Path(r"C:\Users\kyohei\ExileDesk")
+EXILEDESK = base.ROOT.parent  # video/ の親 = ExileDesk 本体
 ICON = EXILEDESK / "src-tauri" / "icons" / "icon.png"  # アプリのアイコン (後ろ透過)
 FONT = EXILEDESK / "public" / "fonts" / "cinzel-600.woff2"  # ロゴ「EXILEDESK」の字体
 # ロゴの金のグラデーション (ExileDesk の game-ui.css .g-brand-word と同じ色)

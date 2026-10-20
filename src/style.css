@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "./styles/game-ui.css";
+/* video/ (動画を作る Python、旧 POE2Tube) の文字を class の候補として拾わない */
+@source not "../video";
 
 /* ============================================================
  * ExileDesk Design Tokens (visual-concept.md §4 / §9.1 準拠)

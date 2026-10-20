@@ -42,7 +42,8 @@ export default defineConfig(async () => ({
       //    - src-tauri: Rust 側、Tauri 自身が監視
       //    - data-cache: スクレイプ HTML 等の中間ファイル (Phase λ で書き込み中に page reload を発火しないため)
       //    - scripts: ビルド時専用、ランタイム影響なし
-      ignored: ["**/src-tauri/**", "**/data-cache/**", "**/scripts/**"],
+      //    - video: 動画を作る Python (旧 POE2Tube)、Web とアプリには入らない
+      ignored: ["**/src-tauri/**", "**/data-cache/**", "**/scripts/**", "**/video/**"],
     },
     // 4. dev 時 CORS 回避用のプロキシ（本番 Tauri ビルド時は無関係）
     proxy: {

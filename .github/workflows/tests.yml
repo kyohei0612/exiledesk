@@ -7,6 +7,8 @@ name: Tests
 on:
   push:
     branches: [main]
+    # 動画 (video/、Python) だけの commit では回さない
+    paths-ignore: ["video/**"]
   workflow_dispatch: {}
 
 # 前の実行を取り消さない (取り消すと初回の Rust のキャッシュ作りが途中で止まり、毎回ゼロから作り直すことになる)

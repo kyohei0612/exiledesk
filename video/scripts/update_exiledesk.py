@@ -20,11 +20,11 @@ import structlog
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from poe2tube.config.settings import get_settings  # noqa: E402
+from poe2tube.config.settings import EXILEDESK_REPO, get_settings  # noqa: E402
 
 log = structlog.get_logger()
 NOWIN = 0x08000000 if os.name == "nt" else 0
-DEV = Path.home() / "ExileDesk"  # 印 (タグ) を持っている本体
+DEV = EXILEDESK_REPO  # 印 (タグ) を持っている本体 (video/ の親)
 
 
 def git(cwd: Path, *args: str) -> str:
