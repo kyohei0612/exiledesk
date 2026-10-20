@@ -59,11 +59,18 @@ function start(rng) {
 }
 
 /** 次の手: { kind, aim? } */
+/**
+ * POLICY (10-21 オーナー「3 つ回して」): B = 上の表のまま (既定)。
+ * A = レアリティ T1 が無い間はカオスだけ (キャストスピード・全耐性が付いていても使わず流す)。レアリティが付いた後は B と同じ。
+ * C = B と同じだが、狙いが 1 つでもある時に狙いでないサフィックス (狙いの系統の低い段も) があれば、3 つまで埋めずにすぐ消去
+ */
+const POLICY = process.env.POLICY ?? "B";
+const junkSuffix = (it) => it.suffixes.some((m) => !["R", "C", "A"].some((k) => m.modId === ID[k] && m.tierIndex >= MIN[k]));
 function nextMove(it) {
   const got = ["R", "C", "A"].filter((k) => has(it, k));
   if (got.length === 3) return null;
-  if (!got.length) return { kind: "chaos" };
-  if (it.suffixes.length >= 3) return { kind: "annul" };
+  if (!got.length || (POLICY === "A" && !has(it, "R"))) return { kind: "chaos" };
+  if (it.suffixes.length >= 3 || (POLICY === "C" && junkSuffix(it))) return { kind: "annul" };
   if (!has(it, "R") && !blocked(it, "R")) return { kind: "plain" };
   const open = ["C", "A"].filter((k) => !has(it, k) && !blocked(it, k));
   if (!open.length) return { kind: "annul" };
@@ -144,7 +151,7 @@ for (const combo of COMBOS) {
   const costs = done.map((r) => costOf(r.n)).sort((a, b) => a - b);
   const spentAll = rs.reduce((a, r) => a + costOf(r.n), 0);
   const m = mean(costs), se = Math.sqrt(mean(costs.map((c) => (c - m) ** 2)) / (costs.length || 1));
-  console.log(`\n=== 品質 ${Q40 ? "40% (ブリーチ)" : "20%"} / 触媒の高貴に ${catOrb} / 素の右側の高貴に ${plainOrb}  (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒)`);
+  console.log(`\n=== 打ち方 ${POLICY} / 品質${Q40 ? "40% (ブリーチ)" : "20%"} / 触媒の高貴に ${catOrb} / 素の右側の高貴に ${plainOrb}  (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒)`);
   console.log(`完成 ${(100 * done.length / N).toFixed(1)}%  平均 ${m.toFixed(2)} 神 (±${(1.96 * se).toFixed(2)}, ${(196 * se / m).toFixed(1)}%)  中央 ${q(costs, 0.5).toFixed(1)}  90% ${q(costs, 0.9).toFixed(1)}  99% ${q(costs, 0.99).toFixed(1)}`);
   console.log(`打ち止め ${BUDGET || "無し"} 神: 全員の平均 ${(spentAll / N).toFixed(2)} 神 (未完成は使った分)・完成 1 個あたり ${(spentAll / (done.length || NaN)).toFixed(2)} 神`);
   const avg = (k) => mean(done.map((r) => r.n[k] ?? 0));
