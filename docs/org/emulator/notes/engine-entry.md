@@ -31,8 +31,36 @@
 - `orbFloor(kind, strength)`: kind = `transmute`・`augment`・`regal`・`exalt`・`chaos`、strength = `OrbStrength` (`base`・`greater`・`perfect`)。打つ処理 (spec/orb-specs) が使う下限そのもの。
 - `CHAOS_FLOOR`: カオスの段の下限の表 (0 / 35 / 50、poe2db の Minimum Modifier Level)。`CURRENCY_FLOOR` にカオスは無いので、カオスはこちらか orbFloor で取る。
 
+## 貼り付けたアイテムを読む (2026-10-20、シミュレーター ① のために足した。item-text.ts・形は item-text-types.ts)
+`parseItemText(data, text): ItemTextResult` — トレード (trade2) / poe.ninja / ゲームの Ctrl+C・Ctrl+Alt+C、日英。投げない (読めなければ `base: null`)。
+
+```ts
+interface ItemTextResult {
+  source: "game" | "game-advanced" | "ninja" | "trade" | "unknown"; lang: "ja" | "en";
+  name: string | null; base: { en: string; ja: string } | null; cls: string | null;   // cls = エンジンのクラス (Rings …)
+  rarity: "normal" | "magic" | "rare" | "unique" | null; itemLevel: number | null;
+  quality: { value: number; tag: string | null; label: string } | null;            // tag = カタリストの種類 (attack・caster …)
+  implicits: { text; from: "base" | "rune" | "enchant" | "extra"; template; values }[]; // MOD に数えない
+  mods: { text; modId: string | null; source: string; side: "prefix" | "suffix" | null; sideFrom: "engine" | "paste";
+          tier: { index; of; label: "T1"…; name; fits: boolean } | null; values: number[];
+          fractured; desecrated; crafted; unrevealed: boolean; pasteTierName?: string }[];
+  count: { prefix; suffix; limit: { prefix; suffix } };   // 未発現を含む
+  corrupted: 0 | 1 | 2; flags: string[]; sockets: { count: number | null; runes: string[] };
+  grants: string[]; properties: string[]; price: string | null;
+  skipped: { line; code: "noBase" | "unknownText" | "notInPool" | "dropOnly" | "hybridPart"; reason: { ja; en } }[];
+}
+```
+- 暗黙: 注記 (`(implicit)` `(rune)` `(enchant)`)・Ctrl+Alt+C の見出しがあればそれ。無ければベースの暗黙 (`htcBaseInfo()[base].implicits` の en/ja) と数字を除いた文で照らし (暗黙 1 つにつき 1 行)、**最後に当たった暗黙より前の行は `extra`** (ルーン・エンチャント・コラプトの暗黙。文では見分けられない)。
+- コラプト / 二重コラプト (Corrupted / Twice Corrupted) は `corrupted` に読むだけ。MOD の数え方は変えない。
+- 「W」「P」の行・種類の名前の行 (「指輪」「Ring」) は読み飛ばす。`~b/o …` は `price`。`物理ダメージ: …` などの基本値は `properties`。`スキルを付与:` / `Grants Skill:` は `grants`。
+- MOD: 計算機と同じ繋ぎ方 (`targetsFor`) で modId。置き場の索引に無い物 (液化した感情の MOD など) は同じクラスの MOD を文で引く。**段は打つ処理の表示の式を割り戻して引く**: 表示 = floor(素 × (1 + (品質 + 反対側の「側の効果」) / 100))、品質が効くかは `catalystBoosts` (指輪・アミュレットは MOD のタグ、ジュエルは中身のタグ)。`fits: false` = どの段にも収まらず ilvl の一番上とした。
+- 未発現のプレ / サフィ (`未発現サフィックス` / `Unrevealed Suffix`) は `mods` に `unrevealed: true`・`modId: null`・`source: "desecrated"` で 1 つ。
+- 見本 = notes/paste-samples/ (オーナーの 8 個)。確かめ (台本、scratchpad の使い捨て、10-20): 1 指輪 6 (P3/S3)・2 スピア 3 + 未発現 1・3 グラスピング 2 + 未発現 1 (暗黙の前 2 行は extra)・4 グラスピング 1 (extra 3)・5 クロスボウ 5 + notInPool 1 (グレネードのクールダウン使用回数)・6 鉄の指輪 6 (P3/S3)・7 サファイア 6 (P2/S4、枠 2/2 を超える。品質 20% + サフィの効果 60% を割り戻して全部 T1 に収まる)・8 = 3 と値段の行以外同じ。ほかに作り物で Ctrl+C (イージスクォータースタッフ 6 つ全部 T1)・poe.ninja の注記・Ctrl+Alt+C の見出し・マジックの名前。
+- 残り: 3・8 の「品質の最大値 +20%」は完璧なエッセンスの MOD に繋がるが段の幅に収まらない (fits false)。7 のサフィ 4 つは枠を超える (コラプトの何かか、読み違いかは未確認)。日本語の Ctrl+Alt+C の見出しと日本語の注記の形は見本が無く未対応。
+
 ## ほかに並べた物 (グループ)
 - 形: StageItem・StageMod・StageSide・PlayedStep・CraftStagePlan・PatchData・ItemBase・Mod・Force・Candidate・PobBlock
+- 読む: parseItemText (上)
 - 作る・打つ: freshItem・startFrom・startItem・playStep・playPlan・runPlan・applyCurrency・kindOf (カレンシーの種類)・omensFor・revealOffers・unrevealedOf
 - 今を読む: allMods・listOf・room・limitOf・effectiveCls・maxQualityOf・catalystOf・SIDES・unfracturable・socketCapOf・dpsText・DEF
 - 置き場・重み・段: loadHtcPatch・htcBaseInfo・htcBaseLimits・classOfBase・candidates・modTierWeight・floorKeepIndex・CURRENCY_FLOOR・CRAFTED_SOURCES・familiesOf・familyBlocked・occupiedKeysOf・modListFor・tierDisplayRanges・inGroup・isRemovedBase・classLabel

@@ -183,3 +183,32 @@ export function parseJaItem(text: string): PastedItem {
   }
   return { baseType, baseText, itemLevel, quality, catalystTag, grantedSkill, annotated, corrupted, lines: matched, unmatched };
 }
+
+/** 1 行を MOD の文の型に当てる (parseJaItem と同じ型の表)。当たらなければ null (2026-10-20 エンジンの入口 parseItemText) */
+export function matchModLine(line: string): { template: string; values: number[] } | null {
+  const hit = patterns.find((p) => p.re.test(line));
+  if (!hit) return null;
+  return { template: hit.template, values: hit.re.exec(line)!.slice(1).map(Number) };
+}
+
+/** 1 行がベース名なら英語名と日本語名 (parseJaItem と同じ引き方) */
+export function baseOfLine(line: string): { en: string; ja: string } | null {
+  const en = baseEnByJa.get(line) ?? (baseEnSet.has(line) ? line : null);
+  if (!en) return null;
+  const ja = baseEnByJa.has(line) ? line : (itemsJa as Record<string, string>)[en] ?? (itemsJaClient as Record<string, string>)[en] ?? line;
+  return { en, ja };
+}
+
+/** 行末の注記 (`(fractured)` 等、poe.ninja の書き出し) を剥がす。種類でない注記 (`(augmented)`) は kind が null */
+export function noteOfLine(line: string): { text: string; kind: LineKind | null; noted: boolean } {
+  const m = /^(.*?)\s*\(([a-z]+)\)$/.exec(line);
+  if (!m) return { text: line, kind: null, noted: false };
+  return { text: m[1]!.trim(), kind: KIND_BY_NOTE[m[2]!] ?? null, noted: true };
+}
+
+/** マジックの名前 (「上質な弓 (風の)」のようにベースを接辞で挟んだ行) から、中に入っている一番長いベース名を探す */
+export function baseInText(line: string): { en: string; ja: string } | null {
+  let best: string | null = null;
+  for (const k of [...baseEnByJa.keys(), ...baseEnSet]) if (k.length > (best?.length ?? 2) && line.includes(k)) best = k;
+  return best ? baseOfLine(best) : null;
+}

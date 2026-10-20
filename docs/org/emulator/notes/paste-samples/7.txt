@@ -1,0 +1,15 @@
+Chimeric Sliver
+Sapphire
+W
+P
+Jewel
+Quality (Caster Modifiers): +20%
+Item Level: 80
+18% increased Spell Damage
+27% increased Critical Hit Chance for Spells
+30% increased Critical Damage Bonus
+36% increased Critical Spell Damage Bonus
+7% increased Cast Speed
+60% increased Effect of Suffixes
+Corrupted
+~b/o 99999 mirror

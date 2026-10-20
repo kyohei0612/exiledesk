@@ -63,6 +63,10 @@ export { isEmotion } from "./apply-emotion";
 export { isShard } from "./apply-act";
 export { isGem } from "./stage-bases";
 
+// 貼り付けたアイテムの文を読む (トレード・poe.ninja・ゲームの Ctrl+C / Ctrl+Alt+C、日英。形は item-text-types.ts)
+export type { ItemTextResult, ItemTextMod, ItemTextImplicit, ItemTextSkip, ItemTextSkipCode, ItemTextSource, ItemTextWords } from "./item-text-types";
+export { parseItemText } from "./item-text";
+
 // 文
 export { fillModText } from "../htc/mod-text";
 export { jaUniqueText } from "../mods/unique-mod-ja";

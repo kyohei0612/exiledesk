@@ -1,0 +1,15 @@
+Entropy Circle
+Iron Ring
+W
+P
+Ring
+Item Level: 61
+Requires: Level 48
+Adds 1 to 4 Physical Damage to Attacks
+Adds 2 to 45 Lightning damage to Attacks
+18% increased Lightning Damage
++73 to Evasion Rating
++9 to all Attributes
++18% to Lightning Resistance
+Gain 4 Mana per enemy killed
+~b/o 99999999 mirror
