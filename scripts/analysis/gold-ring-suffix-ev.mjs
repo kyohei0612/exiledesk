@@ -82,6 +82,7 @@ function runOne(rng, catOrb, plainOrb) {
   const n = { chaos: 0, annul: 0, [catOrb]: 0, [plainOrb]: 0, OmenofDextralExaltation: 0, OmenofCatalysingExaltation: 0, catalyst_speed: 0, catalyst_cold: 0 };
   const plainN = { n: 0 }, catN = { n: 0 };
   let branch = null, lostAll = 0, steps = 0;
+  let order = []; // 今付いている狙いを付いた順に (消えたら抜き、付き直したら後ろへ) = 完成した時の「最後に揃った順番」
   const use = (cur, omens = [], hint = {}) => {
     const r = M.applyCurrency(data, it, cur, rng, omens, hint);
     if (!r.applied) throw new Error(`${cur} が打てない: ${r.reason}`);
@@ -110,8 +111,9 @@ function runOne(rng, catOrb, plainOrb) {
     const got = ["R", "C", "A"].filter((k) => has(it, k));
     if (!branch && got.length) branch = got.length === 1 ? got[0] : "multi";
     if (before > 0 && got.length === 0) lostAll++;
+    order = [...order.filter((k) => got.includes(k)), ...got.filter((k) => !order.includes(k))];
   }
-  return { done: true, n, branch, lostAll, plainN: plainN.n, catN: catN.n };
+  return { done: true, n, branch, lostAll, plainN: plainN.n, catN: catN.n, order: order.join("") };
 }
 
 const costOf = (n) => Object.entries(n).reduce((a, [k, v]) => a + (PRICES[k] ?? 0) * v, 0) / DIV;
@@ -158,12 +160,19 @@ for (const combo of COMBOS) {
   console.log(`平均の個数: カオス ${avg("chaos").toFixed(1)}  消去 ${avg("annul").toFixed(2)}  ${catOrb === plainOrb ? `${catOrb} ${avg(catOrb).toFixed(2)}` : `${catOrb} ${avg(catOrb).toFixed(2)} / ${plainOrb} ${avg(plainOrb).toFixed(2)}`}  (触媒あり ${mean(done.map((r) => r.catN)).toFixed(2)} 回・素 ${mean(done.map((r) => r.plainN)).toFixed(2)} 回)  右側の高貴 ${avg("OmenofDextralExaltation").toFixed(2)}  触媒の高貴 ${avg("OmenofCatalysingExaltation").toFixed(2)}  軽快 ${avg("catalyst_speed").toFixed(1)}  トゥル ${avg("catalyst_cold").toFixed(1)}  全部消えてカオスに戻る ${mean(done.map((r) => r.lostAll)).toFixed(2)} 回`);
   const cOnly = done.map((r) => (PRICES.chaos * r.n.chaos) / DIV);
   console.log(`  うちカオスの代金 ${mean(cOnly).toFixed(2)} 神`);
+  // 最後に揃った順番 (R = レアリティ・C = キャストスピード・A = 全耐性) ごと (オーナー 10-21「完成率が高かったのはどういう順?」)
+  const NAME = { R: "レア", C: "キャスピ", A: "全耐性" };
+  for (const o of ["RCA", "RAC", "CRA", "CAR", "ARC", "ACR"]) {
+    const g = done.filter((r) => r.order === o);
+    const gc = g.map((r) => costOf(r.n)), gm = mean(gc), gse = Math.sqrt(mean(gc.map((c) => (c - gm) ** 2)) / (g.length || 1));
+    console.log(`  順 ${[...o].map((k) => NAME[k]).join(" → ")}: ${(100 * g.length / done.length).toFixed(1)}% (${g.length} 人)  平均 ${gm.toFixed(2)} 神 (±${(1.96 * gse).toFixed(2)})  カオスに戻る ${mean(g.map((r) => r.lostAll)).toFixed(1)} 回`);
+  }
   for (const b of ["R", "C", "A"]) {
     const g = done.filter((r) => r.branch === b);
     if (!g.length) continue;
     const gc = g.map((r) => costOf(r.n));
     const gm = mean(gc), gse = Math.sqrt(mean(gc.map((c) => (c - gm) ** 2)) / g.length);
     const after = mean(g.map((r) => costOf({ ...r.n, chaos: 0 })));
-    console.log(`  枝 ${BR[b]}: ${(100 * g.length / done.length).toFixed(1)}%  平均 ${gm.toFixed(2)} 神 (±${(1.96 * gse).toFixed(2)})  カオス以外 ${after.toFixed(2)} 神  カオス ${mean(g.map((r) => r.n.chaos)).toFixed(1)}  高貴 (触媒あり ${mean(g.map((r) => r.catN)).toFixed(2)}・素 ${mean(g.map((r) => r.plainN)).toFixed(2)})  消去 ${mean(g.map((r) => r.n.annul)).toFixed(2)}`);
+    console.log(`  枝 ${BR[b]}: ${(100 * g.length / done.length).toFixed(1)}%  平均 ${gm.toFixed(2)} 神 (±${(1.96 * gse).toFixed(2)})  カオスに戻る ${mean(g.map((r) => r.lostAll)).toFixed(1)} 回  カオス以外 ${after.toFixed(2)} 神  カオス ${mean(g.map((r) => r.n.chaos)).toFixed(1)}  高貴 (触媒あり ${mean(g.map((r) => r.catN)).toFixed(2)}・素 ${mean(g.map((r) => r.plainN)).toFixed(2)})  消去 ${mean(g.map((r) => r.n.annul)).toFixed(2)}`);
   }
 }
