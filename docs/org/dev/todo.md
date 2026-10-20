@@ -2,7 +2,8 @@
 
 ## 再開 (2026-10-21、オーナー: 指示済みで簡単な物だけ、並べるのは 2 人まで)
 - J11 ① 済み (dc3e219a エンジン・64e7c766 貼り付け、kind に magnitude)。③④ とクラフト台の表の直しは残り (emulator/todo.md)。ジン部長は止めた。
-- 今: 解析君 N の案 + シミュ部長 S2e (並べる)。前: ジン部長 J11 + 解析君 N の案 → シミュ部長 S2e (J11 の後)・上限 N (N の後) → S3 の残り → S4 → 解析君 K8 の残り → 開発部長 R6。S5・S6 は余裕があれば。全部済んだら pending-release.md をスナップ付きでブラックへ。
+- S2e 済み (83c2f76b、開発版 c3a02f97): ① の貼り付けの MOD を素の値で、盛った物だけ貼った値と上乗せを小さく (見本 3「24から37の冷気… (36〜55 · 品質 +50%)」)、S1e の断り 2 つは外した。打ち止め A の画面の確かめ: 鉄の指輪 + フラクチャーの自動で ⑥ の完成 48% → 94% (計算 96%)、平均 79.0 神 (目安 75.0)、残り 6.4% は 1 人の手の上限 4,000 手。シミュ部長は止めた。
+- 今: 解析君 N の案 (1 人)。前: ジン部長 J11 + 解析君 N の案 → シミュ部長 S2e (J11 の後)・上限 N (N の後) → S3 の残り → S4 → 解析君 K8 の残り → 開発部長 R6。S5・S6 は余裕があれば。全部済んだら pending-release.md をスナップ付きでブラックへ。
 - 置いておく: オーナーが決める物 (段の質問・POE2Tube の片付け・Discord)、新しい照らし・点検・組織の直し。
 
 ## 止めていた (2026-10-20 夜、オーナー: 使用量の都合)
@@ -106,7 +107,7 @@
 - R3 済み (930ca9e4): StageTargetSummary 127 行 + use-target-rows・use-target-plans・use-target-share。見張りは合計で落とす形に (移っただけで落ちたため)。
 - R4 済み (193ef469 案・8bf52223 手 1・dd06d834 手 2、開発版): SimHost (header / tools / main)・CourseHost (header / main / under-item / above-shelf / overlay) に中身もジン部長が移した (CraftStage 495 → 470 行)。コースの判定は state/tutorial/course-host.ts 1 か所。直す前と後の DOM を窓なし Chrome で比べて同じ (エミュ・シミュ・使い方・コース、PC とスマホ)。シミュ部長の中身の 2 手は要らなくなった (これからは口の中だけ触る)。
 - R5 済み: state/craft-stage.ts 516 → 434 行。手順 JSON・結果 JSON・共有・再生 (plan・result・prices・shareWhy・sharePlan・replayTo・replayLength・continueFromReplay・loadReplay・leaveReplay) を state/stage-replay.ts に出し、craftStage に広げる (呼ぶ側はそのまま)。型 0、直す前 (dist-web-dev) と後 (作業場所の dev) で同じ手順 JSON の再生と「エミュレーターへ」が同じ (窓なし Chrome)。
-- R6 ページの表 web/pages/<部>.ts (開発部長、R5 の後)。
+- R6 見送り (10-21): page.ts (182 行) はページの出す順がそのまま優先の順で、表に割ると広告の数え方 (pageTick)・履歴・D1 の記録 (track) を一度に触る。今は順番待ちの元でもない (誰も触っていない) → 次に新しいページを足す時に、その仕事と一緒に表の形へ寄せる。
 
 ## OK 待ち
 - 開発版 HEAD 4b4e0818 (10-20 夜): 手 5・チュートリアル 11・13・エッセンスの family。UI の物は pending-release.md
