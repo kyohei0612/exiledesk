@@ -5,7 +5,7 @@ PoE2 のクラフトのエミュレーター。**本番は Web** (https://exiled
 
 ```
 Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
-  └ 状態 (src/state)                … craft-stage.ts (アイテム・工程・持っている物・お告げ)、web-page (ページの印)・craft-course・craft-topic …
+  └ 状態 (src/state)                … craft-stage.ts (アイテム・工程・持っている物・お告げ)、web-page (ページの印) … 部ごとの物は emulator/・simulator/・tutorial/
       └ 仕組み (src/services/craft-stage)
           ├ カレンシーの動き (spec/)   … 説明文の分解 (対象・動作の部品・制約・お告げ)。ADR-004
           ├ 打つ入口 (apply-currency.ts) … spec で打てない物 (指名・鑑定など) だけ今の関数
@@ -21,10 +21,21 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 |---|---|---|
 | エミュレーター | `views/craft-stage/CraftStage.vue` | ベース選び → 棚 (`CurrencyShelf.vue`) から持って打つ。アイテム (`StageItemCard.vue`)・工程・MOD 一覧 (`StageModList.vue`)・次の手で狙う (`StageAimPanel.vue`)・スパムシミュレーター (別ページ `StageRoutesPage.vue`、運試し `StageRouteLuck.vue`、計算は `services/craft-stage/route-race.ts`。旧カオススパム計算機は 2026-10-19 に消した) |
 | ジェムコラプト | `views/gem-corrupt/GemCorruptWebPanel.vue` (計算は views/gem-corrupt/model.ts。Web では広告と一緒に出す予定) | 売値 3 つを入れて収支 |
-| チュートリアル (開発版だけ) | `StageCourses.vue`・`StageTopicGuide.vue`・`StageCourseGuide.vue` | 動作を学ぶコース (`services/craft-stage/topic-courses.ts`)・実践 (`course-recipes.ts`) |
-| シミュレーター (開発版だけ) | `StageSimPanel.vue` | 打ち方を組んで何百人分作る (ADR-002・003) |
+| チュートリアル (開発版だけ) | `views/tutorial/StageCourses.vue`・`StageTopicGuide.vue`・`StageCourseGuide.vue` | 動作を学ぶコース (`services/tutorial/topic-courses.ts`)・実践 (`course-recipes.ts`) |
+| シミュレーター (開発版だけ) | `views/simulator/StageSimPanel.vue` | 打ち方を組んで何百人分作る (ADR-002・003)。回し方は `services/simulator/` |
 
 開発版だけの物は `state/craft-stage.ts` の `SIM_LOCKED` で本番から隠す (非公開の開発版 `pnpm deploy:web-dev` では開く)。
+
+## 部ごとの持ち場 (2026-10-20 に分けた。部は docs/org/)
+
+| 部 | 画面 | 仕組み | 状態 | テスト |
+|---|---|---|---|---|
+| エミュレーター | `views/craft-stage/` | `services/craft-stage/` (spec/ も)・`services/htc/`・`services/mods/`・`vendor/poe2htc/` | `state/emulator/` | `tests/` の直下 |
+| シミュレーター | `views/simulator/` | `services/simulator/` (`htc/` = 自動モードの木 sim-route・tree-decide・step-odds) | `state/simulator/` | `tests/simulator/` |
+| チュートリアル (シミュレーター部) | `views/tutorial/` (Video*・コース) | `services/tutorial/` | `state/tutorial/` | `tests/tutorial/` |
+| 開発 (共通) | `web/`・`components/`・`utils/` | `i18n/`・`services/money.ts`・`services/telemetry/` ほか | `state/` の直下 (`craft-stage.ts`・`web-page.ts`・`display-currency.ts` ほか) | — |
+
+craft-stage/ に残した共通の土台: `run-plan.ts`・`contract.ts` (打つ処理、どの部も使う)・`share.ts`・`trade-search.ts`・`types.ts`。htc/ の `buy-or-craft.ts`・`prices.ts`・`paste*.ts` もアプリ・各部がまたがって使うので htc/ に残した。scripts/ は今のまま 1 つのフォルダー。
 
 ## 何を正とするか (同じ事を 2 か所でやらない)
 
