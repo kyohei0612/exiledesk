@@ -10,15 +10,11 @@ import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import { craftStage as s, SIM_LOCKED } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
-import { useStageBase, SIM_ILVL_MAX } from "./use-stage-base";
-import { simPasted } from "../../state/simulator/sim-state";
-import { revealWhenReady } from "../../utils/keep-place";
-import StageRecipeStart from "../simulator/StageRecipeStart.vue";
-import SimPasteRead from "../simulator/SimPasteRead.vue";
-import type { PasteRead } from "../../services/simulator/paste-read";
+import { useStageBase } from "./use-stage-base";
+import SimBaseExtras, { revealSimMods } from "../simulator/SimBaseExtras.vue";
 
 defineProps<{ phone: boolean }>();
-const { pickSimBase, startFromRecipe } = useStageBase();
+const { pickSimBase } = useStageBase();
 const catalog = ref<InstanceType<typeof BaseCatalog> | null>(null);
 
 function back(): void { basePage.value = false; }
@@ -32,35 +28,6 @@ function pick(en: string): void {
   basePage.value = false;
   if (first || en !== s.base.value) pickSimBase(en);
   if (s.mode.value === "sim") setTimeout(revealSimMods, 120);
-}
-/**
- * シミュレーター: 貼り付けたアイテムで始める = ① のベースと ② の狙いを一度に埋めて ② へ (2026-10-20 オーナー。前の ② の「貼り付けで写す」はここに一本化)。
- * ベースを選び直した時と同じに先 (始め方・順番・打ち方) は空から
- */
-function startFromPaste(r: PasteRead): void {
-  if (!r.item.base) return;
-  basePage.value = false;
-  pickSimBase(r.item.base.en);
-  s.simTargets.value = r.targets;
-  // アイテムレベルは ② の % と ③ に使う (点検 1)。品質・コラプト・未発現は ③ に「持ち越さない」と出すだけ
-  const lv = r.item.itemLevel;
-  simPasted.value = { ilvl: lv != null ? Math.max(1, Math.min(SIM_ILVL_MAX, lv)) : null, quality: r.item.quality?.value ?? null, corrupted: r.item.corrupted, unrevealed: r.item.mods.filter((m) => m.unrevealed).length,
-    ...(r.item.quality?.tag ? { qualityLabel: r.item.quality.label } : {}) };
-  if (simPasted.value.ilvl != null) s.itemLevel.value = simPasted.value.ilvl;
-  // ソケットの数: 貼った物にあればそれ、無ければ 0 (武器・防具は数を選ぶまで ② の一覧が出ない作り。2026-10-20 スナップ ①: 武器で止まって見えた)。
-  // ベースを変えるとソケットは空に戻る (use-sim-targets の見張り) ので、その後に入れる
-  const sk = r.item.sockets.count ?? 0;
-  void nextTick(() => { s.simSockets.value = sk; });
-  setTimeout(revealSimMods, 120);
-}
-/**
- * シミュレーター: ベースを選んだら、すぐ狙う MOD を選べるように、2 の枠の下の線 + 少しの隙間が見える所まで送る
- * (2026-10-18 オーナー「MOD の枠の下枠と例の隙間少し開けたところまで進んであげんと可哀そう」。ベースの一覧の reveal と同じ考え)。枠が画面より高ければ枠の上で止める
- */
-function revealSimMods(): void {
-  // シミュレーターの画面は後から読む (2026-10-19 スマホ強化) ので、初めて開いた時はまだ枠が無い。出るまで待つ (keep-place.ts の revealWhenReady)。
-  // 前は 0.12 秒後に 1 回だけ探していて、エミュレーターから切り替えた時に送られなかった (2026-10-19 オーナー「MOD 下までスクロールせんな」)
-  revealWhenReady("[data-sim-cur]");
 }
 // 開いたら一番上から、戻ったら前の位置へ (ページを移ったのと同じに。2026-10-12 広告のお試しと同じ)
 let before = 0;
@@ -94,9 +61,8 @@ onBeforeUnmount(() => {
         <button type="button" role="tab" :aria-selected="s.mode.value === 'hand'" class="g-tab min-w-[170px] max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'hand' ? 'on' : ''" @click="setMode('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
         <button type="button" role="tab" :aria-selected="s.mode.value === 'sim'" data-base-page-sim class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'sim' ? 'on' : ''" @click="setMode('sim')">{{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70">β</span></button>
       </div>
-      <!-- シミュレーターは保存したレシピから始めるのも先に (前は設定の欄。2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」)。
-           選び直しの時も出す (2026-10-20 オーナー。前は初めてだけで、選んだ後は右上の「レシピ」から、の作りだった) -->
-      <StageRecipeStart v-if="s.mode.value === 'sim'" compact class="mb-3" @start="startFromRecipe" />
+      <!-- シミュレーターの物 (レシピから始める・貼り付け) は SimBaseExtras.vue (シミュ部長) -->
+      <SimBaseExtras v-if="s.mode.value === 'sim'" part="recipe" class="mb-3" />
       <!--
         初めて来た人へ: 一言と「すぐ試す」(2026-10-19 スマホ強化。来た人の半分がベースを選ばずに帰っていた。何のサイトか・何をすると何が起きるかが無かった)。
         ベースを選んでいない時 (初めて・白に戻した後) のエミュレーターだけ。押すと金の指輪 (人気の一番上) ですぐ打てる画面へ
@@ -110,8 +76,7 @@ onBeforeUnmount(() => {
       </div>
       <!-- 未選択の時は前のベース・種類を選んだ状態にしない・人気のベースを上に (StageBasePicker.vue と同じ) -->
       <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog ref="catalog" :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" :paste="!SIM_LOCKED && s.mode.value === 'sim'" @pick="pick">
-        <!-- シミュレーター: アイテムの貼り付けでベースと狙いを一度に (開発版だけ) -->
-        <template #paste><SimPasteRead @start="startFromPaste" /></template>
+        <template #paste><SimBaseExtras part="paste" /></template>
       </BaseCatalog></div>
     </div>
   </section>
