@@ -2,14 +2,17 @@
  * use-sim-auto-order.ts — ④ の「おすすめの順番を出す」(SimAutoOrder.vue) の状態 (シミュ部長、2026-10-20)。
  * 押した時だけ計算 (オーナー 10-20)、出た順に表へ、止める、② や始め方を直したら表を消す (古い数字を出さない)、
  * 「この順にする」= s.simOrder を差し替え (1 つ戻す・Ctrl+Z で戻る。use-sim-steps の Snap に順番を入れた)。
- * 候補・ワーカーは services/simulator/auto/auto-order.ts、1 つの順番の値は解析君の solveOrder
+ * 候補・ワーカーは services/simulator/auto/auto-order.ts、1 つの順番の値は解析君の solveOrder。
+ * 形の組み立て (buildAutoModel) もワーカーで (S1b、10-20: 画面の側で 1.7 秒止まった)。④ に居る間、狙いが変わったら 0.25 秒後に組み、
+ * 出せない理由は押す前にボタンの横へ (点検 3)。押したら組んだ形でそのまま計算
  */
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { runeEnForId } from "../../services/simulator/pattern";
-import { byCost, orderCandidates, runAutoOrder, type AutoRow, type OrderInput } from "../../services/simulator/auto/auto-order";
-import { buildAutoModel } from "../../services/simulator/auto/auto-solve";
+import { autoOrderClient, byCost, orderCandidates, type AutoBuildResult, type AutoRow, type OrderInput } from "../../services/simulator/auto/auto-order";
 import type { QuizSimIn } from "../../services/simulator/quiz-build";
 import { priceOf } from "../../state/craft-stage";
+import { BONES, OMEN_GROUPS, ORBS } from "../../state/emulator/craft-stage-shelf";
+import { simStep } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
 import type { SimTargetsCtx } from "./use-sim-targets";
 
@@ -26,17 +29,30 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
   const error = ref<string | null>(null);
   /** 出せない時の理由 (押した後) */
   const unsupported = ref<string | null>(null);
-  /**
-   * 押す前に分かる出せない理由 (2026-10-20 点検 3: 押させてから断っていた)。形を組むだけ (計算はしない、0.1 秒かからない)。
-   * ④ でこの欄を出している間だけ計算される (computed)
-   */
-  const blocked = computed<string | null>(() => {
+  /** 押す前に分かる出せない理由 (2026-10-20 点検 3: 押させてから断っていた)。ワーカーで組んだ結果 */
+  const blocked = ref<string | null>(null);
+  const client = autoOrderClient();
+  /** 値段を引いた鍵 (次の build で先に渡す。足りない物はワーカーが聞き返す)。棚のカレンシー・骨・お告げは最初から */
+  const known = new Set<string>([...ORBS.flatMap((g) => g.keys), ...BONES, ...OMEN_GROUPS.flatMap((g) => g.keys)]);
+  const ask = (k: string): number => { known.add(k); return priceOf(k); };
+  /** 今の狙いで組んだ (組んでいる) 結果。狙いが変わる・止めると null */
+  let built: Promise<AutoBuildResult> | null = null;
+  function build(): Promise<AutoBuildResult> {
     const sim = quizBase();
-    if (!sim) return null;
-    const built = buildAutoModel({ sim, price: priceOf });
-    return built.ok ? null : tr(built.reason.ja, built.reason.en);
-  });
-  let job: { stop: () => void } | null = null;
+    if (!sim) return Promise.resolve({ ok: false, reason: { ja: "狙いが無い", en: "No targets" } });
+    const { data: _d, runePrice: _r, ...rest } = sim;
+    const p = client.build(rest, Object.fromEntries([...known].map((k) => [k, priceOf(k)])), ask);
+    built = p;
+    void p.then((r) => { if (built === p) blocked.value = r.ok ? null : tr(r.reason.ja, r.reason.en); });
+    return p;
+  }
+  const onOrder = (): boolean => simStep.value === "order" && orderKeys.value.length > 1;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  function schedule(): void {
+    built = null;
+    if (timer) clearTimeout(timer);
+    timer = onOrder() ? setTimeout(() => { timer = null; void build(); }, 250) : null;
+  }
 
   /** ④ の今の状態から候補を作る材料 */
   function input(): OrderInput {
@@ -61,27 +77,27 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
     return { keys, aug, runeAt, redo, side };
   }
 
+  /** 止める (ワーカーごと捨てるので組んだ形も消える。④ に居れば組み直す) */
   function stop(): void {
-    job?.stop();
-    job = null;
+    client.stop();
     busy.value = false;
     step.value = null;
+    schedule();
   }
-  function clear(): void { stop(); rows.value = []; error.value = null; unsupported.value = null; }
+  function clear(): void { if (busy.value) stop(); rows.value = []; error.value = null; unsupported.value = null; }
 
-  function start(): void {
+  async function start(): Promise<void> {
     clear();
     const inp = input();
-    const sim = quizBase();
-    if (!sim) return;
-    const built = buildAutoModel({ sim, price: priceOf });
-    if (!built.ok) { unsupported.value = tr(built.reason.ja, built.reason.en); return; }
     busy.value = true;
-    job = runAutoOrder(built.model, orderCandidates(inp), inp.keys, {
+    const r = await (built ?? build());
+    if (!busy.value) return;
+    if (!r.ok) { unsupported.value = tr(r.reason.ja, r.reason.en); busy.value = false; return; }
+    client.run(orderCandidates(inp), inp.keys, {
       step: (done, total) => { step.value = { done, total }; },
-      row: (r) => { rows.value = [...rows.value, r].sort((a, b) => byCost(a.perFinish, b.perFinish)); },
-      done: () => { busy.value = false; step.value = null; job = null; },
-      error: (m) => { error.value = m; busy.value = false; step.value = null; job = null; },
+      row: (x) => { rows.value = [...rows.value, x].sort((a, b) => byCost(a.perFinish, b.perFinish)); },
+      done: () => { busy.value = false; step.value = null; },
+      error: (m) => { error.value = m; busy.value = false; step.value = null; built = null; },
     });
   }
 
@@ -105,7 +121,9 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
 
   // ② の狙い・始め方・ベース・始めの値段を直したら表を消す
   watch(() => [targetsSig(), s.simStart.value, s.base.value, quizBase()?.startPrice], clear);
-  onBeforeUnmount(stop);
+  // ④ に入った時・狙いや始め方 (quizBase) が変わった時に組み直す
+  watch(() => [quizBase(), simStep.value, orderKeys.value.length], schedule, { immediate: true });
+  onBeforeUnmount(() => { if (timer) clearTimeout(timer); client.stop(); });
 
   return { rows, shown, busy, step, error, unsupported, blocked, start, stop, use };
 }

@@ -1,12 +1,27 @@
 /**
- * auto-order.worker.ts — 「順番だけ自動」の計算を画面とは別の場所 (Web Worker) で (シミュ部長、2026-10-20)。
- * 値だけ (mc 無し) で候補を全部 → 安い順に上位 top と今の順番だけ 1 人ずつ mc 人回し、出た順に返す。
- * 止めるのは画面の側でワーカーごと捨てる (auto-order.ts の runAutoOrder)。1 つの順番の値は解析君の solveOrder (auto-solve.ts)
+ * auto-order.worker.ts — 「順番だけ自動」の組み立てと計算を画面とは別の場所 (Web Worker) で (シミュ部長、2026-10-20)。
+ *
+ * 組み立て (buildAutoModel) もここ (S1b、10-20: 手 5 で行き先の表を build で打つようになり、画面の側で 1.7 秒止まった)。
+ *   - build: データ (PatchData) はワーカーが自分で読む (loadHtcPatch、画面の物と同じ JSON)。値段は画面から表で受け、表に無い鍵は
+ *     need で聞き返して組み直す (値段の鍵は解析君の auto-model が決めるので、ここでは並べない)。組んだ形はワーカーに残し、run で使う
+ *   - run: 値だけ (mc 無し) で候補を全部 → 安い順に上位 top と今の順番だけ 1 人ずつ mc 人回し、出た順に返す
+ * 止めるのは画面の側でワーカーごと捨てる (auto-order.ts の autoOrderClient)。1 つの順番の値は解析君の solveOrder (auto-solve.ts)
  */
-import { solveOrder, type AutoModel, type OrderResult } from "./auto-solve";
+import { buildAutoModel, solveOrder, type AutoModel, type OrderResult } from "./auto-solve";
+import { loadHtcPatch } from "../../craft-stage/engine";
+import type { QuizSimIn } from "../quiz-build";
+import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 
-export interface AutoJob { model: AutoModel; cands: string[][]; current: string[]; top: number; mc: number }
+/** 画面から送る狙いの入力 (データと関数は送れないので外す。ルーンの値段は表の `rune:<英語名>`) */
+export type AutoSimIn = Omit<QuizSimIn, "data" | "runePrice">;
+export type AutoJob =
+  | { kind: "build"; id: number; sim: AutoSimIn; prices: Record<string, number> }
+  | { kind: "prices"; id: number; prices: Record<string, number> }
+  | { kind: "run"; cands: string[][]; current: string[]; top: number; mc: number };
 export type AutoMsg =
+  | { kind: "need"; id: number; keys: string[] }
+  | { kind: "built"; id: number; ok: true }
+  | { kind: "built"; id: number; ok: false; reason: { ja: string; en: string } }
   | { kind: "step"; done: number; total: number }
   | { kind: "row"; row: OrderResult & { order: string[]; current: boolean } }
   | { kind: "done" }
@@ -17,25 +32,64 @@ const post = (m: AutoMsg): void => (self as unknown as Worker).postMessage(m);
 const byCost = (a: number, b: number): number => { const x = Number.isFinite(a) ? a : Infinity, y = Number.isFinite(b) ? b : Infinity; return x < y ? -1 : x > y ? 1 : 0; };
 const same = (a: string[], b: string[]): boolean => a.length === b.length && a.every((k, i) => k === b[i]);
 
+let data: Promise<PatchData> | null = null;
+/** 最後に組んだ形 (run はこれで回す) */
+let model: AutoModel | null = null;
+/** 一番新しい build の id (古い build が後から終わっても形を上書きしない) */
+let latest = 0;
+/** need で聞いた値段の返事待ち (build の id ごと) */
+const waiting = new Map<number, (p: Record<string, number>) => void>();
+
+async function build(job: Extract<AutoJob, { kind: "build" }>): Promise<void> {
+  model = null;
+  latest = job.id;
+  const d = await (data ??= loadHtcPatch());
+  const tab = { ...job.prices };
+  const once = (): { built: ReturnType<typeof buildAutoModel>; missing: string[] } => {
+    const missing = new Set<string>();
+    const price = (k: string): number => { if (k in tab) return tab[k]!; missing.add(k); return 0; };
+    const built = buildAutoModel({ sim: { ...job.sim, data: d, runePrice: (en) => price(`rune:${en}`) }, price });
+    return { built, missing: [...missing] };
+  };
+  let r = once();
+  if (r.missing.length) {
+    const got = await new Promise<Record<string, number>>((res) => { waiting.set(job.id, res); post({ kind: "need", id: job.id, keys: r.missing }); });
+    Object.assign(tab, got);
+    r = once();
+  }
+  if (job.id !== latest) return;
+  if (r.built.ok) { model = r.built.model; post({ kind: "built", id: job.id, ok: true }); }
+  else post({ kind: "built", id: job.id, ok: false, reason: r.built.reason });
+}
+
+function run(job: Extract<AutoJob, { kind: "run" }>): void {
+  const { cands, current, top, mc } = job;
+  const m = model;
+  if (!m) { post({ kind: "error", message: "model not built" }); return; }
+  const solve = (order: string[], opts?: { mc: number }): OrderResult => solveOrder(m, order, opts);
+  const vals: Array<{ order: string[]; v: number }> = [];
+  let last = 0;
+  cands.forEach((order, i) => {
+    vals.push({ order, v: solve(order).perFinish });
+    // 知らせるのは 0.1 秒に 1 回まで
+    if (Date.now() - last > 100 || i === cands.length - 1) { last = Date.now(); post({ kind: "step", done: i + 1, total: cands.length + Math.min(top, cands.length) }); }
+  });
+  vals.sort((a, b) => byCost(a.v, b.v));
+  const picks = vals.slice(0, top).map((x) => x.order);
+  if (!picks.some((o) => same(o, current))) picks.push(current);
+  picks.forEach((order, j) => {
+    post({ kind: "row", row: { ...solve(order, { mc }), order, current: same(order, current) } });
+    post({ kind: "step", done: cands.length + j + 1, total: cands.length + picks.length });
+  });
+  post({ kind: "done" });
+}
+
 self.addEventListener("message", (e: MessageEvent<AutoJob>) => {
-  const { model, cands, current, top, mc } = e.data;
-  const solve = (order: string[], opts?: { mc: number }): OrderResult => solveOrder(model, order, opts);
+  const job = e.data;
   try {
-    const vals: Array<{ order: string[]; v: number }> = [];
-    let last = 0;
-    cands.forEach((order, i) => {
-      vals.push({ order, v: solve(order).perFinish });
-      // 知らせるのは 0.1 秒に 1 回まで
-      if (Date.now() - last > 100 || i === cands.length - 1) { last = Date.now(); post({ kind: "step", done: i + 1, total: cands.length + Math.min(top, cands.length) }); }
-    });
-    vals.sort((a, b) => byCost(a.v, b.v));
-    const picks = vals.slice(0, top).map((x) => x.order);
-    if (!picks.some((o) => same(o, current))) picks.push(current);
-    picks.forEach((order, j) => {
-      post({ kind: "row", row: { ...solve(order, { mc }), order, current: same(order, current) } });
-      post({ kind: "step", done: cands.length + j + 1, total: cands.length + picks.length });
-    });
-    post({ kind: "done" });
+    if (job.kind === "prices") { waiting.get(job.id)?.(job.prices); waiting.delete(job.id); }
+    else if (job.kind === "build") build(job).catch((err) => post({ kind: "error", message: err instanceof Error ? err.message : String(err) }));
+    else run(job);
   } catch (err) {
     post({ kind: "error", message: err instanceof Error ? err.message : String(err) });
   }

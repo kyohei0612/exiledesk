@@ -8,8 +8,8 @@
  * (アストリッドの創造性は 2 つ目のエッセンスのすぐ前)、自分で足したルーンはすぐ後ろの行に付いて動く。
  * 1 つの順番の値は解析君の solveOrder (auto-solve.ts)
  */
-import type { AutoModel, OrderResult } from "./auto-solve";
-import type { AutoJob, AutoMsg } from "./auto-order.worker";
+import type { OrderResult } from "./auto-solve";
+import type { AutoJob, AutoMsg, AutoSimIn } from "./auto-order.worker";
 
 export interface OrderInput {
   /** 今の ④ の順番 (orderKeys) */
@@ -108,27 +108,65 @@ export type AutoRow = OrderResult & { order: string[]; current: boolean };
 export const MC_TOP = 5;
 export const MC_RUNS = 500;
 
+/** run の知らせ先 */
+export interface AutoRunHooks { step: (done: number, total: number) => void; row: (r: AutoRow) => void; done: () => void; error: (m: string) => void }
+export type AutoBuildResult = { ok: true } | { ok: false; reason: { ja: string; en: string } };
+
 /**
- * ワーカーで計算する。値だけで全部 → 上位 MC_TOP と今の順番を mc で回し、出た順に onRow。止めるとワーカーごと捨てる。
- * onStep: 値だけの数 (done / total)
+ * ワーカー 1 つの窓口 (S1b、10-20)。build = 狙いから形を組む (ワーカーの中、画面は止まらない)、run = 組んだ形で順番を計算する。
+ * stop はワーカーごと捨てる (組んだ形も消えるので、次の run の前にもう一度 build)。値段の表に無い鍵はワーカーが聞き返す (price で引いて返す)
  */
-export function runAutoOrder(model: AutoModel, cands: string[][], current: string[], on: { step: (done: number, total: number) => void; row: (r: AutoRow) => void; done: () => void; error: (m: string) => void }): { stop: () => void } {
+export function autoOrderClient() {
   let w: Worker | null = null;
-  const stop = (): void => { w?.terminate(); w = null; };
-  try {
-    w = new Worker(new URL("./auto-order.worker.ts", import.meta.url), { type: "module" });
-  } catch (e) {
-    on.error(e instanceof Error ? e.message : String(e));
-    return { stop };
+  let seq = 0;
+  let price: (k: string) => number = () => 0;
+  const builds = new Map<number, (r: AutoBuildResult) => void>();
+  let hooks: AutoRunHooks | null = null;
+  const fail = (m: string): void => {
+    for (const res of builds.values()) res({ ok: false, reason: { ja: m, en: m } });
+    builds.clear();
+    hooks?.error(m); hooks = null;
+    w?.terminate(); w = null;
+  };
+  function worker(): Worker {
+    if (w) return w;
+    const nw = new Worker(new URL("./auto-order.worker.ts", import.meta.url), { type: "module" });
+    nw.addEventListener("message", (e: MessageEvent<AutoMsg>) => {
+      const m = e.data;
+      if (m.kind === "need") nw.postMessage({ kind: "prices", id: m.id, prices: Object.fromEntries(m.keys.map((k) => [k, price(k)])) } satisfies AutoJob);
+      else if (m.kind === "built") { builds.get(m.id)?.(m.ok ? { ok: true } : { ok: false, reason: m.reason }); builds.delete(m.id); }
+      else if (m.kind === "step") hooks?.step(m.done, m.total);
+      else if (m.kind === "row") hooks?.row(m.row);
+      else if (m.kind === "done") { hooks?.done(); hooks = null; }
+      else fail(m.message);
+    });
+    nw.addEventListener("error", (e) => fail(e.message || "worker error"));
+    w = nw;
+    return nw;
   }
-  w.addEventListener("message", (e: MessageEvent<AutoMsg>) => {
-    const m = e.data;
-    if (m.kind === "step") on.step(m.done, m.total);
-    else if (m.kind === "row") on.row(m.row);
-    else if (m.kind === "done") { on.done(); stop(); }
-    else { on.error(m.message); stop(); }
-  });
-  w.addEventListener("error", (e) => { on.error(e.message || "worker error"); stop(); });
-  w.postMessage({ model, cands, current, top: MC_TOP, mc: MC_RUNS } satisfies AutoJob);
-  return { stop };
+  return {
+    /** 形を組む。prices = 先に分かっている値段 (足りない物は priceOf で聞き返しに答える) */
+    build(sim: AutoSimIn, prices: Record<string, number>, priceOf: (k: string) => number): Promise<AutoBuildResult> {
+      price = priceOf;
+      const id = ++seq;
+      // Vue の reactive は送れないので素の写し
+      const job: AutoJob = { kind: "build", id, sim: JSON.parse(JSON.stringify(sim)) as AutoSimIn, prices };
+      return new Promise((res) => {
+        builds.set(id, res);
+        try { worker().postMessage(job); } catch (e) { fail(e instanceof Error ? e.message : String(e)); }
+      });
+    },
+    /** 最後に組んだ形で計算する。値だけで全部 → 上位 MC_TOP と今の順番を mc で回し、出た順に row */
+    run(cands: string[][], current: string[], on: AutoRunHooks): void {
+      hooks = on;
+      try { worker().postMessage({ kind: "run", cands, current, top: MC_TOP, mc: MC_RUNS } satisfies AutoJob); } catch (e) { fail(e instanceof Error ? e.message : String(e)); }
+    },
+    /** 止める (ワーカーごと捨てる。待っている build は「止めた」で返る) */
+    stop(): void {
+      for (const res of builds.values()) res({ ok: false, reason: { ja: "止めた", en: "Stopped" } });
+      builds.clear(); hooks = null;
+      w?.terminate(); w = null;
+    },
+  };
 }
+export type AutoOrderClient = ReturnType<typeof autoOrderClient>;
