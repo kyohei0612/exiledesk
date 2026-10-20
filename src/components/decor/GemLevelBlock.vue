@@ -5,7 +5,7 @@
 -->
 <script setup lang="ts">
 import RichText from "./RichText.vue";
-import type { GemLevelStats } from "../../services/gem-hover";
+import type { GemLevelStats } from "../../i18n/gem-hover";
 import { tr } from "../../i18n/lang";
 
 defineProps<{ lv: GemLevelStats }>();

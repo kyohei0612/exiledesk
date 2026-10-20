@@ -5,7 +5,7 @@
  * セプターは「セプターのスキルには品質が乗らない (不具合らしい)」という話があり確かめられていないので出さない
  */
 import baseInfo from "../../data/base-info.json";
-import { gemHoverOf } from "../gem-hover";
+import { gemHoverOf } from "../../i18n/gem-hover";
 
 const CASTER = ["Wands", "Staves"];
 

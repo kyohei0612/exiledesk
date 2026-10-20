@@ -1,6 +1,6 @@
 // ワンド・スタッフの品質 = 付与スキルの品質 (skill-quality.ts、2026-10-17)。期待値は poe2db のスキルの「Additional Effects From Quality」
 import { beforeAll, expect, it } from "vitest";
-import { loadGemHover } from "../src/services/gem-hover";
+import { loadGemHover } from "../src/i18n/gem-hover";
 import { skillQualityOf } from "../src/services/craft-stage/skill-quality";
 
 beforeAll(async () => { await loadGemHover("ja"); });

@@ -18,7 +18,7 @@ import { htcBaseInfo } from "../../services/htc/patch";
 import { baseStatsOf } from "../../services/craft-stage/stage-bases";
 import { classEn, classJa } from "../../services/items/base-catalog";
 import { jaTypeName } from "../../services/trade2/localize";
-import { gemHoverOf, loadGemHover } from "../../services/gem-hover";
+import { gemHoverOf, loadGemHover } from "../../i18n/gem-hover";
 import { lang, tr } from "../../i18n/lang";
 
 const props = defineProps<{ en: string; x: number; y: number; layerKey: number; pinned: boolean; z: number }>();

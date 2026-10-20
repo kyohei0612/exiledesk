@@ -6,7 +6,7 @@
  * 使う時に読み込む。英語の画面では gem-hover-en.json (同じスクリプトの --en、ゲームの英語の原文)。
  */
 import { shallowRef } from "vue";
-import { lang, type Lang } from "../i18n/lang";
+import { lang, type Lang } from "./lang";
 
 /** 1 レベル分 (本体・付随するスキル・別の型で同じ形) */
 export interface GemLevelStats {
@@ -77,7 +77,7 @@ const loading: Partial<Record<Lang, Promise<void>>> = {};
 
 /** 今の言語の辞書を読み込む (英語の画面では gem-hover-en.json、2026-10-10 英語版。アプリは日本語だけ) */
 export function loadGemHover(l: Lang = lang.value): Promise<void> {
-  loading[l] ??= (l === "en" ? import("../i18n/gem-hover-en.json") : import("../i18n/gem-hover-ja.json")).then((m) => {
+  loading[l] ??= (l === "en" ? import("./gem-hover-en.json") : import("./gem-hover-ja.json")).then((m) => {
     const d = (m.default ?? m) as unknown as Record<string, GemHover>;
     dict[l].value = { d, lower: new Map(Object.entries(d).map(([k, v]) => [k.toLowerCase(), v])) };
   });

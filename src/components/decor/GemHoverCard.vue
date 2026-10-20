@@ -13,7 +13,7 @@ import GameItemCard from "./GameItemCard.vue";
 import RichText from "./RichText.vue";
 import GemLevelBlock from "./GemLevelBlock.vue";
 import GemIcon from "./GemIcon.vue";
-import { gemHoverOf, loadGemHover, type GemLevelInfo } from "../../services/gem-hover";
+import { gemHoverOf, loadGemHover, type GemLevelInfo } from "../../i18n/gem-hover";
 import grantedSkills from "../../data/granted-skills.json";
 import { lang, tr } from "../../i18n/lang";
 
