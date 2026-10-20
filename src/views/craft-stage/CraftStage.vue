@@ -16,7 +16,6 @@ import { baseNameOf, tr } from "../../i18n/lang";
 import { forceKey } from "../../services/craft-stage/apply-force";
 import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, TUTORIAL_LOCKED } from "../../state/craft-stage";
-import StageRecipeStart from "../simulator/StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { toCss } from "../../utils/zoom";
@@ -40,14 +39,10 @@ import { previewUse } from "../../services/craft-stage/spec/preview";
 import { endLesson, inLesson, inTopic } from "../../state/tutorial/craft-lesson"; // チュートリアルのコースの間 (2026-10-17)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
-const VideoStage = defineAsyncComponent(() => import("../tutorial/VideoStage.vue")); // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import StageModList from "./StageModList.vue";
-const StageSimPanel = defineAsyncComponent(() => import("../simulator/StageSimPanel.vue"));
-const StageCourses = defineAsyncComponent(() => import("../tutorial/StageCourses.vue"));
-import GuideVideoCard from "../tutorial/GuideVideoCard.vue";
-import StageCourseGuide from "../tutorial/StageCourseGuide.vue";
-const StageTopicGuide = defineAsyncComponent(() => import("../tutorial/StageTopicGuide.vue"));
-import VideoExtra from "../tutorial/VideoExtra.vue";
+// 部ごとの差し込み口 (2026-10-20 R4): シミュレーターと使い方・コースの中身は各部の部品が持つ
+import SimHost from "../simulator/SimHost.vue";
+import CourseHost from "../tutorial/CourseHost.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
@@ -55,7 +50,6 @@ import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stag
 import { catalystSetKey, IMPLICIT_SET, implicitSetKey, isCatalystSet, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey } from "../../services/craft-stage/apply-currency";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import ShelfButton from "./ShelfButton.vue";
-import HelpTip from "../../components/ui/HelpTip.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import Icon from "../../components/ui/Icon.vue";
 import { encodeShare, SHARE_ENABLED, shareUrl, xIntentUrl } from "../../services/craft-stage/share";
@@ -241,7 +235,7 @@ function scrollToReveal(): void { scrollToTop(document.querySelector("[data-reve
 const inApp = isTauriRuntime();
 const guidePage = computed(() => !inApp && s.mode.value === "tutorial" && !inLesson.value && !s.replay.value); // Web の使い方・コツのページ (コース一覧)
 // ベースを選んだか・選ぶ (設定の欄と共通、use-stage-base.ts)
-const { handNoBase, simNoBase, preRecipeOpen, startFromRecipe } = useStageBase();
+const { handNoBase, simNoBase } = useStageBase();
 // Web はベース選びを別のページに (?page=base、StageBasePage.vue)。まだ選んでいない時もそのページ (エミュレーターだけ。シミュレーターは今まで通り)
 watch(() => PAGES_ON && !s.replay.value && ((s.mode.value === "hand" && handNoBase.value) || simNoBase.value), (u) => { baseUnpicked.value = u; }, { immediate: true }); // シミュレーターも (2026-10-18 オーナー「開発版でもベースのとこは広告出す想定で」)
 const subPage = computed(() => PAGES_ON && !s.replay.value && (s.mode.value === "hand" || s.mode.value === "sim") && !inLesson.value && (basePage.value || baseUnpicked.value));
@@ -279,13 +273,8 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
         <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : tr("クラフトステージ", "Craft Stage") }}</h1>
         <p v-if="gemCorrupt" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ジェムをコラプトして レベル 21 · 品質 23% を狙う時の収支。売値 3 つを入れるだけ (素材はカレンシーの相場)", "Profit of corrupting a gem for level 21 / 23% quality. Just enter 3 sell prices (materials use currency market prices)") }}</p>
-        <p v-else-if="s.mode.value === 'sim' && !s.replay.value" class="mt-1 flex items-center gap-1.5 text-[13px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ベースと狙う MOD を決めて打ち方を組み、何百人分も作って 1 個あたりの費用を出す", "Pick a base and target mods, plan the steps, then craft hundreds of copies to get the cost per item") }}
-          <HelpTip :title="tr('シミュレーター', 'Simulator')" :width="320">
-            <p>{{ tr("1 ベース → 2 狙う MOD → 始め方と順番 → 打ち方 (パターン) の順に決めて「回す」。", "Set 1 Base → 2 Target mods → start and order → steps (pattern), then press “Run”.") }}</p>
-            <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("確率はクラフト計算機と同じ規則。値段は今の相場。", "Chances follow the craft calculator's rules. Prices are current market prices.") }}</p>
-          </HelpTip>
-        </p>
-        <p v-else-if="(s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ guidePage ? tr("使い方の動画と、カレンシーの動きを実際に使って覚えるコース", "A how-to video and courses where you learn each currency by using it") : tr("カレンシーを 1 つずつ実際に使って、どう動くかを覚えます", "Use each currency for real, one at a time, to learn what it does") }}</p>
+        <SimHost v-else-if="s.mode.value === 'sim' && !s.replay.value" part="header" />
+        <CourseHost v-else-if="(s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED" part="header" :guide-page="guidePage" />
         <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う。スマホは縦に積む (横に並べると題が 2 行に折れる) -->
@@ -311,19 +300,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       </div>
       <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
       <div v-show="!gemCorrupt" id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
-        <!-- ベースを選ぶ前も同じ帯を出す (2026-10-09 オーナー「ここはずっと出してていい」)。選んだ後は StageSimPanel の物に替わる -->
-        <template v-if="s.mode.value === 'sim' && simNoBase">
-          <CurrencyPicker sim />
-          <span class="relative">
-            <button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" :aria-expanded="preRecipeOpen" :title="tr('保存したレシピから始める', 'Start from a saved recipe')" @click="preRecipeOpen = !preRecipeOpen">{{ tr("レシピ", "Recipes") }}<Icon :name="preRecipeOpen ? 'chevron-up' : 'chevron-down'" class="size-4" /></button>
-            <div v-if="preRecipeOpen" class="fixed inset-0 z-30 bg-black/60 md:hidden" @click="preRecipeOpen = false"></div>
-            <div v-if="preRecipeOpen" class="absolute right-0 top-full z-40 mt-1 w-[26rem] rounded-xl border border-white/15 bg-[#14110d] p-3 text-[12px] shadow-2xl max-md:fixed max-md:inset-x-3 max-md:top-14 max-md:w-auto max-md:max-h-[80vh] max-md:overflow-y-auto">
-              <StageRecipeStart compact @start="startFromRecipe" />
-            </div>
-          </span>
-          <button type="button" disabled class="g-btn sm inline-flex items-center gap-1.5 max-md:min-h-10" :title="tr('ベースを選んでから', 'Choose a base first')"><Icon name="rotate" class="size-4" /><span class="max-md:hidden">{{ tr("リセット", "Reset") }}</span></button>
-          <button type="button" disabled class="g-btn sm inline-flex items-center gap-1.5 max-md:min-h-10" :title="tr('戻せる操作がまだ無い', 'Nothing to undo yet')"><Icon name="undo" class="size-4" /><span class="max-md:hidden">{{ tr("1 つ戻す", "Undo") }}</span></button>
-        </template>
+        <SimHost part="tools" />
       </div>
     </div>
 
@@ -360,10 +337,9 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     <p v-if="s.error.value" class="mb-3 flex items-center gap-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300"><span class="min-w-0 flex-1">{{ s.error.value }}</span><button v-if="!s.data.value" type="button" class="g-btn sm shrink-0" @click="retryInit">{{ tr("もう一度", "Retry") }}</button></p>
     <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center opacity-50">{{ tr("読み込み中…", "Loading…") }}</p>
 
-    <!-- 手で打つ画面と行き来しても入れた物が残るように、一度ベースを選んだら消さずに隠す (2026-10-05 オーナー「ステージと実験行き来できるように、行き来したらもっかい最初からになった」) -->
-    <StageSimPanel v-if="s.ready.value && s.simPicked.value" v-show="s.mode.value === 'sim' && !s.replay.value" class="mb-4" />
-    <GuideVideoCard v-if="guidePage" />
-    <StageCourses v-if="s.ready.value && s.mode.value === 'tutorial' && !s.replay.value && !TUTORIAL_LOCKED" class="mb-4" /><!-- 動画のクラフトのコース (2026-10-17、白から自分で作る) -->
+    <!-- シミュレーター・使い方とコースの本体 (各部の差し込み口、SimHost.vue・CourseHost.vue) -->
+    <SimHost part="main" />
+    <CourseHost part="main" :guide-page="guidePage" />
     <!-- ベースを選んだ後に出る中身はふわっと出す (2026-10-10 オーナー「切り替えがワープみたい」) -->
     <Transition name="stage-fade" appear>
     <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
@@ -399,7 +375,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <RevealPanel />
         <StageForesight /><!-- ヒネコラの髪束の予見 (StageForesight.vue) -->
         <!-- 工程 (累計と新しい手が上。2026-10-10 オーナー)。上の行との間はカードとの間と同じ mt-2、枠に近く p-1 (10-11)。コースの間は出さない (10-17) -->
-        <StageTopicGuide v-if="phone && !s.replay.value && s.mode.value === 'hand'" part="now" class="w-full" /><StageCourseGuide v-if="!s.replay.value && s.mode.value === 'hand'" class="mt-2 w-[480px] max-md:w-full" /><!-- コースの案内はアイテムの下。スマホは今の手もアイテムのすぐ下 (2026-10-17 オーナー) -->
+        <CourseHost part="under-item" :phone="phone" /><!-- コースの案内はアイテムの下。スマホは今の手もアイテムのすぐ下 (2026-10-17 オーナー) -->
         <div v-if="!inLesson" data-rec-part="history" class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
           <p class="g-sec-head"><b class="g-sec-title">{{ tr("工程", "Steps") }}</b><span class="g-sec-sub">{{ inApp || s.replay.value ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span>
             <!-- 手順の共有 (2026-10-12)。押せない時は理由を title に (打ち始めた後の手で足した MOD は下にも 1 行) -->
@@ -423,7 +399,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
            2026-10-11 オーナー「枠の高さが違うのが気に食わん、カレンシーの方が高く感じる」) -->
       <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
-        <StageTopicGuide v-if="!phone && !s.replay.value && s.mode.value === 'hand'" part="now" /><!-- コースの今の手 (棚のすぐ上) -->
+        <CourseHost part="above-shelf" :phone="phone" /><!-- コースの今の手 (棚のすぐ上) -->
         <StageAimPanel v-if="!s.replay.value && !inLesson" data-rec-part="aim-panel" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
         <section v-show="!inTopic" class="g-panel relative p-2">
@@ -479,9 +455,8 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       class="pointer-events-none fixed z-[200] h-10 w-10 object-contain drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]"
       :style="{ left: `${mouse.x + 8}px`, top: `${mouse.y + 8}px` }"
     />
-    <VideoStage v-if="s.video.value && s.ready.value" />
-    <!-- 動画用の別の画面 (URL の view=、要望 ⑪) -->
-    <VideoExtra v-if="s.extra.value && s.ready.value" />
+    <!-- 動画モードと動画用の別の画面 (CourseHost.vue) -->
+    <CourseHost part="overlay" />
     <!-- ページの一番下に置く物 (Web の決まり事の footer。2026-10-10 オーナー「固定バーは許されん、一番下に動かさず」) -->
     <slot name="footer" />
   </div>
