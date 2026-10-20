@@ -15,7 +15,7 @@
 | 付与スキル | ある | baseInfo.grants | 275 ベース | 済 (暗黙の照らしで数を比べた、食い違い 0) |
 | コラプト: ヴァールのエンチャント・強まったコラプトの行 | ある (10-20 J1b) | mods/corruption-mods.json | 53 部位・1,338 行 (ジュエル・グラスピングメイルを足した) | 写した物そのもの |
 | コラプト: MOD の値の変化・暗黙の付け替え・二重コラプトの決まり | **無い** | — | — | poe2db の部位のページに表が無い (Vaal Orb のページは「unpredictably」だけ) |
-| エンチャント・注油 (アミュレットの「Allocates …」) | **無い** | — | — | 未 |
+| エンチャント・注油 (アミュレットの「Allocates …」) | ある (10-20 J4 ③) | mods/anoint.ts (一覧は src/data/delirium-notables.json = poe2db の /jp/Notable のうち液化した感情のレシピがある物、10-17) | 864 | 一覧そのものが poe2db の写し |
 | ジュエル (8 クラス) | クラスの行はある | Jewels_* | — | 10-20 夜にベースのページを写しに足して照らした (置き場の食い違い 0、コラプトの表にも入った) |
 | 全能力値の 4 クラス (Body_Armours_ring_str_dex_int・Helmets/Gloves/Boots_str_dex_int) | クラスの行はある | — | — | グラスピングメイルは足して照らした。兜・手袋・靴 (Grand …) は poe2db に MOD の表が無い |
 | フラスコ・チャーム | **クラスの行が無い** | — | — | オーナー決定 (10-20): 足さない。貼り付けは読めない理由 flaskCharmUnsupported |

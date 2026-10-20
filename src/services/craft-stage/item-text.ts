@@ -19,6 +19,7 @@ import { tierDisplayRanges } from "../mods/stat-scale";
 import { catalystBoosts } from "./stage-core";
 import { RUNES, runeCategoryOf, runeEffectFor } from "./stage-runes";
 import { matchCorruption } from "../mods/corruption";
+import { anointOfLine } from "../mods/anoint";
 import type { StageItem } from "./types";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import type { ItemTextCorruption, ItemTextImplicit, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
@@ -159,6 +160,8 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Bod
     out.implicits.push({ text: b.text, from, template: b.template, values: b.values, ...(from === "corruption" ? { corruption: corruptionOf(out, b) } : {}) });
     if (from === "rune") out.sockets.runes.push(b.text);
   };
+  // 注油 (Allocates <ノータブル>) はどの形でもエンチャント (アミュレットの注油、mods/anoint.ts の一覧と同じ名前の時だけ)
+  body = body.filter((b) => { if (!anointOfLine(b.text)) return true; implicit(b, "enchant"); return false; });
   const rest: Body[] = [];
   const marked = body.some((b) => b.note || b.group || b.side);
   if (marked) {

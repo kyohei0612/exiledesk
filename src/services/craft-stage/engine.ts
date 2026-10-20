@@ -77,6 +77,8 @@ export { parseItemText } from "./item-text";
 // コラプト (ヴァールのオーブ) で付く MOD の表 (poe2db の部位のページ。enchant = エンチャント、upgrade = 強まったコラプトの行)
 export type { CorruptionRow } from "../mods/corruption";
 export { corruptionRowsFor, matchCorruption } from "../mods/corruption";
+// 注油 (アミュレットにノータブルを割り当てる) の一覧と、貼り付けの 1 行が注油か
+export { anointNotables, anointOfLine } from "../mods/anoint";
 
 // 文
 export { fillModText } from "../htc/mod-text";
