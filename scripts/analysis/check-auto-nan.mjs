@@ -39,15 +39,18 @@ const runes = ["rune:Kolr's Hunt", "rune:Uhtred's Sidereus"];
 const fin = (r) => Number.isFinite(r.cost) && Number.isFinite(r.finish) && Number.isFinite(r.perFinish);
 
 for (const withRune of [true, false]) {
+  const tb = Date.now();
   const b = M.buildAutoModel({ sim, price });
+  if (b.ok) console.log(`  build ${Date.now() - tb} ms、表の形 ${Object.keys(b.model.eng).length} (代表が組めず空 ${Object.values(b.model.eng).filter((e) => !Object.keys(e).length).length})`);
   if (!b.ok) throw new Error(b.reason.ja);
   const model = b.model;
-  let bad = 0, inf = 0, n = 0;
+  let bad = 0, inf = 0, n = 0, lastMiss = 0;
   const all = [], t0 = Date.now();
   for (const o of perms(model.keys)) {
     const order = withRune ? [...runes, ...o] : o;
     const d = M.orderDetail(model, order);
     const r = d.result;
+    lastMiss = d.size.miss;
     n++;
     all.push({ o, v: r.perFinish, f: r.finish });
     if (!fin(r)) {
@@ -58,6 +61,6 @@ for (const withRune of [true, false]) {
   all.sort((a, b) => a.v - b.v);
   const name = (o) => o.map((k) => k.split("/")[1].replace("Rune_marksman_", "").slice(0, 12)).join(" → ");
   for (const i of [0, 1, 2, 60, 117, 118, 119]) console.log(`  #${i + 1} ${name(all[i].o)}: ${(all[i].v / price("divine")).toFixed(1)} 神・完成 ${(all[i].f * 100).toFixed(2)}%`);
-  console.log(`  ${Date.now() - t0} ms`);
+  console.log(`  ${Date.now() - t0} ms、表に無い形 ${lastMiss}`);
   console.log(`${withRune ? "ルーン先頭" : "ルーン無し"}: ${n} 通り、NaN ${bad}・Infinity ${inf}`);
 }

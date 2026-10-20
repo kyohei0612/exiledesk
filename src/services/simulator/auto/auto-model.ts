@@ -17,6 +17,7 @@ import type { StageItem, StageSide } from "../../craft-stage/types";
 import { quizFromSim } from "../quiz-build";
 import type { QuizSlot } from "../quiz-recipe";
 import { runeEnForId } from "../pattern";
+import { fillEngine } from "./auto-engine";
 import type { AutoBuilt, AutoInput } from "./auto-solve";
 
 /** 重みの等級: 高貴・カオスの 普通 / 上級 / 完全 (a0〜a2)、骨の 保存 / 古代 (b0・b4) */
@@ -50,8 +51,10 @@ export interface AutoModel {
   exRates: number[];
   /** 発現の候補の数 (エンジンの REVEAL_SPEC) */
   offers: number;
+  /** 消去・光・骨・完璧なエッセンスの行き先の表 (形の中身の鍵 → 手の名前 → [p, 差分…] の並び)。build の時に stepOutcomes で作る (auto-engine.ts) */
+  eng: Record<string, Record<string, number[][]>>;
   /** 形の版 (中身を変えたら上げる。ワーカーの持つ写しの見分け) */
-  version: 2;
+  version: 3;
 }
 
 const PRICE_KEYS = [
@@ -132,6 +135,10 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   // 置き場の重み (エンジンの candidates をそのまま。骨は普通 + 冒涜専用、冒涜専用はアイテムレベルを見ない)
   const desPool = (side: StageSide) => { const k = side === "prefix" ? "prefixes" : "suffixes"; return [...new Set([...effectiveCls(item).pools.normal[k], ...item.cls.pools.desecrated[k]])]; };
   const pools: AutoModel["pools"] = {};
+  // 表の代表のアイテムの外れ: 狙い・固定の候補と系統が重ならない、互いにも重ならない MOD (重い順)
+  const taken = new Set<number>([...frac.picks.flatMap((p) => p.fams), ...slots.flatMap((s) => s.members.flatMap((mb) => mb.fams))]);
+  const junk: [string[], string[]] = [[], []];
+  const junkCands: [Array<{ id: string; fams: number[]; w: number }>, Array<{ id: string; fams: number[]; w: number }>] = [[], []];
   // 段の下限はエンジンの入口 (orbFloor)。高貴とカオスは同じ置き場の表 (a0〜a2) を使うので、下限が食い違ったら対応外
   const STR: Record<"a0" | "a1" | "a2", OrbStrength> = { a0: "base", a1: "greater", a2: "perfect" };
   for (const g of ["a0", "a1", "a2"] as const) {
@@ -154,7 +161,9 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
             refs.push({ k, m: mi, hit, low: c.w - hit });
           });
         });
-        return { fams: familiesOf(c.mod).map(fi), w: c.w, ex: c.mod.source === "desecrated", refs };
+        const fams = familiesOf(c.mod).map(fi);
+        if (g === "a0" && !refs.length && c.mod.source !== "desecrated" && !slots.some((s) => s.members.some((mb) => mb.modId === c.mod.id)) && fams.every((f) => !taken.has(f))) junkCands[sideN(side)].push({ id: c.mod.id, fams, w: c.w });
+        return { fams, w: c.w, ex: c.mod.source === "desecrated", refs };
       });
     }) as [MCand[], MCand[]];
     pools[g] = sides;
@@ -162,9 +171,14 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   const prices: Record<string, number> = {};
   for (const k of [...PRICE_KEYS, ...slots.flatMap((s) => s.members.map((m) => m.ess).filter((e): e is string => !!e))]) prices[k] = input.price(k);
   const rare = { ...item, rarity: "rare" as const };
+  for (const sd of [0, 1] as const) {
+    for (const c of junkCands[sd].sort((a, b) => b.w - a.w)) if (c.fams.every((f) => !taken.has(f))) { junk[sd].push(c.id); c.fams.forEach((f) => taken.add(f)); }
+  }
   const model: AutoModel = {
     keys, R: x.startPrice, runeCost, cap: [limitOf(rare, "prefix"), limitOf(rare, "suffix")], slots, keyIds, frac, pools, prices,
-    exRates: DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate), offers: REVEAL_SPEC.actions.flatMap((a) => ("reveal" in a ? [a.reveal.offers] : []))[0] ?? 3, version: 2,
+    exRates: DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate), offers: REVEAL_SPEC.actions.flatMap((a) => ("reveal" in a ? [a.reveal.offers] : []))[0] ?? 3, eng: {}, version: 3,
   };
+  const err = fillEngine(model, { data: d, base: x.base, itemLevel: x.itemLevel, ...(x.sockets ? { sockets: x.sockets } : {}), runes: runeAll, junk });
+  if (err) return no(err, "Too many shapes for auto order");
   return { ok: true, model };
 }

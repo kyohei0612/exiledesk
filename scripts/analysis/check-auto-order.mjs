@@ -91,6 +91,20 @@ function rulesOf(model, det, sim, recipe0) {
     if (e && e.visits >= v.visits) continue;
     best.set(key, { when, act: v.act, visits: v.visits });
   }
+  // 発現で段の足りない狙いの MOD が出た時、計算は「外れの冒涜」(p.bad / s.bad) に数えるが、⑤ は「札が段の足りない状態 (1)・冒涜あり」に見える。
+  // 外れの冒涜の形の答えを、その側の空いた札が 1 の見え方にも書く (同じ状況が既にあればそちら)
+  for (const { when, act, visits } of [...best.values()]) {
+    for (const [bad, side, junk] of [["p.bad", 0, "p.junk"], ["s.bad", 1, "s.junk"]]) {
+      if (when[bad] !== 1) continue;
+      model.slots.forEach((sl) => {
+        if (sl.side !== side || when[sl.id] !== 0) return;
+        const w = { ...when, [bad]: 0, [junk]: when[junk] - 1, [sl.id]: 1 };
+        const key = JSON.stringify(w);
+        if (!best.has(key)) best.set(key, { when: w, act, visits: -1 });
+      });
+    }
+    void visits;
+  }
   for (const { when, act } of best.values()) {
     if (Object.keys(model.slots).every((k) => when[model.slots[k].id] === 2)) continue;
     rules.push({ when, do: act === "restart" ? { restart: true } : M.quizActionOf(model, act) });

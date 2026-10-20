@@ -6,10 +6,14 @@
  *   冒涜の印 (冒涜はアイテムに 1 つまで): 0 無し / 1・2 プレの未発現 (保存・古代) / 3・4 サフィの未発現 / 5・6 外れの冒涜 (プレ・サフィ、外れの数に込み) / 7+k 札 k を冒涜で取った
  * 手 = 高貴 (普通・上級・完全 × なし・左・右・偉大・偉大 + 左右)、カオス (× なし・左右の抹消)、消去 (× なし・左右の消去)、
  *   完璧なエッセンス (× なし・左右の結晶化)、骨 (保存・古代 × なし・左右の死霊術)、発現 (± 深淵の反響)、消去 + 光。
+ * 行き先の出どころ:
+ *   - 消去・光・骨・完璧なエッセンス・カオスの消す部分 = エンジンの入口の stepOutcomes を build の時に形ごとに打った表 (model.eng、auto-engine.ts)
+ *   - 付ける (高貴・カオスの付ける部分) = 置き場の重み (auto-model がエンジンの candidates から作った物)。大いなる高貴は 1 つずつ 2 回 (打つ処理の addCount 2 と同じ)
+ *   - 発現 = ⑤ の選び方 (選択なので stepOutcomes の外)
  * 近似 (計算とエンジンのずれ 1 割くらい、メモ optimal-craft-dp):
  *   - 外れの系統は置き場を減らさない (外れが何かは持たない)。狙いと同じ系統の別の MOD は外れに数える (札の系統を塞がない)
  *   - 発現の候補 3 つは置き場から重みで戻しありに引く (同じ系統が 2 つ出ない決まりは見ない)。冒涜専用の数の割合はエンジンと同じ
- *   - 骨は空きのある側だけ (満杯で 1 つ消して付ける打ち方は使わない)。消去・カオスは固定以外 (未発現込み) から等しく 1 つ
+ *   - 表の代表のアイテムでは外れを代表の MOD で置く (auto-engine.ts)
  */
 import type { AutoModel, Grade, MCand } from "./auto-model";
 
@@ -31,6 +35,8 @@ const ADD_KEY = { a0: ["exalt", "chaos"], a1: ["exalt_greater", "chaos_greater"]
 export class Shape {
   readonly K: number;
   readonly M: number[];
+  /** 表 (model.eng) に無い形を引いた数 (0 が正しい) */
+  miss = 0;
   constructor(readonly m: AutoModel) { this.K = m.slots.length; this.M = m.slots.map((s) => s.members.length); }
   key = (s: State): string => String.fromCharCode(...s.map((v) => v + 48));
   jx = (side: 0 | 1): number => 1 + this.K + side;
@@ -115,21 +121,53 @@ function addOuts(sh: Shape, s: State, g: Grade, side: 0 | 1 | null): Outs | null
   if (!(tot > 0)) return null;
   return [...out.values()].map(([w, t]) => [w / tot, t]);
 }
-/** 1 つ消す (side = その側だけ)。固定以外を等しく。消せる物が無ければ空 */
-function removeOuts(sh: Shape, s: State, side: 0 | 1 | null): Outs {
-  const c: State[] = [];
-  const d = s[sh.dx()]!;
-  for (let k = 0; k < sh.K; k++) {
-    if (!s[1 + k] || (side != null && sh.m.slots[k]!.side !== side)) continue;
-    const t = [...s]; t[1 + k] = 0; if (d === D_T + k) t[sh.dx()] = D_NONE; c.push(t);
+/** 表の行き先の差分 (auto-engine.ts が作る): 0 k = 札 k を消す / 1 側 = 外れを消す / 2 側 = 外れの冒涜を消す / 3 = 未発現を消す / 4 印 = 未発現を付ける / 5 k m = 札 k に候補 m (エッセンス) */
+function applyOps(sh: Shape, s: State, row: readonly number[]): State {
+  const t = [...s], dx = sh.dx();
+  for (let i = 1; i < row.length;) {
+    const op = row[i]!;
+    if (op === 0) { const k = row[i + 1]!; t[1 + k] = 0; if (t[dx] === D_T + k) t[dx] = D_NONE; i += 2; }
+    else if (op === 1) { t[sh.jx(row[i + 1] as 0 | 1)]!--; i += 2; }
+    else if (op === 2) { t[sh.jx(row[i + 1] as 0 | 1)]!--; t[dx] = D_NONE; i += 2; }
+    else if (op === 3) { t[dx] = D_NONE; i += 1; }
+    else if (op === 4) { t[dx] = row[i + 1]!; i += 2; }
+    else { t[1 + row[i + 1]!] = 1 + sh.M[row[i + 1]!]! + row[i + 2]!; i += 3; }
   }
-  for (const sd of [0, 1] as const) {
-    if (side != null && sd !== side) continue;
-    const n = s[sh.jx(sd)]!;
-    for (let i = 0; i < n; i++) { const t = [...s]; t[sh.jx(sd)] = n - 1; if (i === 0 && d === (sd ? D_JS : D_JP)) t[sh.dx()] = D_NONE; c.push(t); }
-    if (isU(d) && uSide(d) === sd) { const t = [...s]; t[sh.dx()] = D_NONE; c.push(t); }
-  }
-  return c.map((t) => [1 / c.length, sh.canon(t)]);
+  return sh.canon(t);
+}
+/** 形の中身の鍵 (表の引き方): 固定の候補・札ごとの有無と候補・外れの数・冒涜の印。段の高い低いは見ない */
+export function engKey(sh: Shape, s: State): string {
+  const v: number[] = [s[0]!];
+  for (let k = 0; k < sh.K; k++) { const x = s[1 + k]!; v.push(x ? 1 + sh.member(k, x) : 0); }
+  v.push(s[sh.jx(0)]!, s[sh.jx(1)]!, s[sh.dx()]!);
+  return v.join(",");
+}
+/** 表に入れる手 (名前・カレンシーの鍵・お告げ) */
+export type EngAct = { name: string; kind: "an" | "li" | "bo"; key: string; omens: string[]; grade?: "b0" | "b4"; k: -1; m: -1 } | { name: string; kind: "es"; key: null; omens: string[]; k: number; m: number };
+export function engActs(m: AutoModel): EngAct[] {
+  const sd = (x: 0 | 1 | null) => (x == null ? "" : x ? "D" : "S");
+  const om = (x: 0 | 1 | null, t: readonly [string, string]) => (x == null ? [] : [t[x]]);
+  const out: EngAct[] = [];
+  for (const x of [null, 0, 1] as const) out.push({ name: `an|${sd(x)}`, kind: "an", key: "annul", omens: om(x, SIDE_OMEN.annul), k: -1, m: -1 });
+  out.push({ name: "li", kind: "li", key: "annul", omens: ["OmenofLight"], k: -1, m: -1 });
+  for (const [g, key] of [["b0", "desecrate"], ["b4", "desecrate_ancient"]] as const) for (const x of [null, 0, 1] as const) out.push({ name: `bo|${g}|${sd(x)}`, kind: "bo", key, omens: om(x, SIDE_OMEN.necro), grade: g, k: -1, m: -1 });
+  m.slots.forEach((sl, k) => { if (sl.kind === "essence") sl.members.forEach((mb, mi) => { if (mb.ess) for (const x of [null, 0, 1] as const) out.push({ name: `es|${k}|${mi}|${sd(x)}`, kind: "es", key: null, omens: om(x, SIDE_OMEN.crystal), k, m: mi }); }); });
+  return out;
+}
+/** ⑤ の見え方の 1 つ分: 札 k の MOD を外れに (冒涜で取った物は外れの冒涜に) */
+export function junkToView(sh: Shape, s: State, k: number): State {
+  const t = [...s], side = sh.m.slots[k]!.side;
+  t[1 + k] = 0; t[sh.jx(side)]!++;
+  if (t[sh.dx()] === D_T + k) t[sh.dx()] = side ? D_JS : D_JP;
+  return sh.canon(t);
+}
+/** 表の行き先 (無ければ null = その手は打てない、表に形が無ければ miss を数える) */
+function engOuts(sh: Shape, s: State, name: string): Outs | null {
+  const e = sh.m.eng[engKey(sh, s)];
+  if (!e) { sh.miss++; return null; }
+  const rows = e[name];
+  if (!rows || !rows.length) return null;
+  return merge(sh, rows.map((r) => [r[0]!, applyOps(sh, s, r)]));
 }
 const then = (sh: Shape, first: Outs, f: (t: State) => Outs | null, keepIfNull: boolean): Outs | null => {
   const out: Outs = [];
@@ -216,40 +254,21 @@ export function actionsOf(sh: Shape, s: State): Act[] {
       push(`ex|${g}|${sd ? "D" : "S"}`, [ex, SIDE_OMEN.exalt[sd]], o);
       if (o) push(`ex|${g}|G${sd ? "D" : "S"}`, [ex, "OmenofGreaterExaltation", SIDE_OMEN.exalt[sd]], then(sh, o, add1(sd), true));
     }
+    // カオス = 消去と同じ消し方 (表の an|…、打つ処理のスペックが同じ。auto-engine.ts の頭) の後に 1 つ付ける (付けられなければ消しただけ)
     for (const sd of [null, 0, 1] as const) {
-      const rem = removeOuts(sh, s, sd);
-      if (!rem.length) continue;
+      const rem = engOuts(sh, s, `an|${sd == null ? "" : sd ? "D" : "S"}`);
+      if (!rem) continue;
       push(`ch|${g}|${sd == null ? "" : sd ? "D" : "S"}`, [ch, ...(sd == null ? [] : [SIDE_OMEN.erasure[sd]])], then(sh, rem, add1(null), true));
     }
   }
-  for (const sd of [null, 0, 1] as const) {
-    const rem = removeOuts(sh, s, sd);
-    if (rem.length) push(`an|${sd == null ? "" : sd ? "D" : "S"}`, ["annul", ...(sd == null ? [] : [SIDE_OMEN.annul[sd]])], rem);
-  }
-  // 完璧なエッセンス: 外せる MOD を 1 つ外して付ける (外せる物が要る)。付ける側に空きが要る
-  sh.m.slots.forEach((sl, k) => {
-    if (sl.kind !== "essence" || s[1 + k] !== 0) return;
-    sl.members.forEach((mb, m) => {
-      if (!mb.ess) return;
-      for (const sd of [null, 0, 1] as const) {
-        const rem = removeOuts(sh, s, sd);
-        if (!rem.length) continue;
-        const out: Outs = [];
-        for (const [p, t] of rem) { if (!sh.room(t, sl.side)) continue; const u = [...t]; u[1 + k] = 1 + sh.M[k]! + m; out.push([p, sh.canon(u)]); }
-        const tot = out.reduce((a, [p]) => a + p, 0);
-        if (tot < 1 - 1e-9) continue; // 付けられない当たり所がある打ち方は使わない
-        push(`es|${k}|${m}|${sd == null ? "" : sd ? "D" : "S"}`, [mb.ess, ...(sd == null ? [] : [SIDE_OMEN.crystal[sd]])], merge(sh, out));
-      }
-    });
-  });
   const d = s[sh.dx()]!;
-  if (d === D_NONE) for (const [g, key, code] of [["b0", "desecrate", 1], ["b4", "desecrate_ancient", 2]] as const) {
-    if (!sh.m.pools[g]) continue;
-    for (const sd of [null, 0, 1] as const) {
-      const sides = (sd == null ? [0, 1] : [sd]).filter((x) => room[x]) as Array<0 | 1>;
-      if (!sides.length) continue;
-      push(`bo|${g}|${sd == null ? "" : sd ? "D" : "S"}`, [key, ...(sd == null ? [] : [SIDE_OMEN.necro[sd]])], sides.map((x) => { const t = [...s]; t[sh.dx()] = x ? code + 2 : code; return [1 / sides.length, t]; }));
-    }
+  // 消去・光・骨・完璧なエッセンスは表 (stepOutcomes) のまま
+  for (const a of engActs(sh.m)) {
+    if (a.kind === "bo" && (d !== D_NONE || !sh.m.pools[a.grade!])) continue;
+    if (a.kind === "li" && d === D_NONE) continue;
+    if (a.kind === "es" && s[1 + a.k] !== 0) continue;
+    const keys = [a.kind === "es" ? sh.m.slots[a.k]!.members[a.m]!.ess! : a.key, ...a.omens];
+    push(a.name, keys, engOuts(sh, s, a.name));
   }
   if (isU(d)) for (const echo of [false, true]) {
     const r = revealOuts(sh, s, echo);
@@ -257,13 +276,6 @@ export function actionsOf(sh: Shape, s: State): Act[] {
     const e = pr("OmenofAbyssalEchoes");
     if (echo && e == null) continue;
     A.push({ name: echo ? "rv|1" : "rv|0", cost: (P.reveal ?? 0) + r.pEcho * (e ?? 0), out: r.out });
-  }
-  // 光: 冒涜の MOD だけ外す (札を冒涜で取った形も。関門の後ろの札は ⑤ では外れの冒涜に見えるので、見え方の手がそのまま打てるように)
-  if (d !== D_NONE) {
-    const t = [...s];
-    if (d === D_JP) t[sh.jx(0)]!--; else if (d === D_JS) t[sh.jx(1)]!--; else if (d >= D_T) t[1 + d - D_T] = 0;
-    t[sh.dx()] = D_NONE;
-    push("li", ["annul", "OmenofLight"], [[1, sh.canon(t)]]);
   }
   return A;
 }

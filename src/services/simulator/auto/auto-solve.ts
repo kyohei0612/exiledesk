@@ -99,8 +99,8 @@ export interface OrderDetail {
   bad: number;
   /** 止まる (完成にも作り直しにも届かない) 本当の形の数 */
   stuck: number;
-  /** 見えている形・本当の形の数と、方策の繰り返しの回数 + 本当の形の評価 (2) */
-  size: { view: number; true: number; sweeps: number };
+  /** 見えている形・本当の形の数と、方策の繰り返しの回数 + 本当の形の評価 (2)、表 (model.eng) に無かった形を引いた数 (今までの累計、0 が正しい) */
+  size: { view: number; true: number; sweeps: number; miss: number };
 }
 
 /**
@@ -252,5 +252,5 @@ export function orderDetail(model: AutoModel, order: readonly string[], opts: So
   const perFinish = Number.isFinite(pf) ? pf : Infinity;
   const result: OrderResult = { cost, finish, R: model.R, perFinish, mc: nmc, ms: Date.now() - t0 };
   const view = vList.map((v, q) => ({ s: g.st[v]!, act: polName(v) ?? "restart", V: V[q]!, visits: visits.get(v) ?? 0 }));
-  return { result, gates, view, bad, stuck, size: { view: nv, true: nt, sweeps: sweeps + sweepsT } };
+  return { result, gates, view, bad, stuck, size: { view: nv, true: nt, sweeps: sweeps + sweepsT, miss: sh.miss } };
 }
