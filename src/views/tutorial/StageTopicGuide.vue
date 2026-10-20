@@ -31,6 +31,7 @@ const LEVEL: Record<number, { label: JaEn; chip: string }> = {
   2: { label: ["初級", "Easy"], chip: "bg-sky-500/25 text-sky-100" },
   3: { label: ["中級", "Medium"], chip: "bg-amber-500/25 text-amber-100" },
   4: { label: ["上級", "Advanced"], chip: "bg-rose-500/25 text-rose-100" },
+  5: { label: ["クラフト手順", "Crafting guide"], chip: "bg-violet-500/25 text-violet-100" },
 };
 /** エッセンスの手の実際のキー (今のアイテムの棚から。一覧の先の手も日本語の名前で出す) */
 /** エッセンスの名前は、その手のベース (手ごとの base) の棚から引く (別のベースの手が英語の名前のまま出ていた) */

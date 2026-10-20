@@ -58,7 +58,7 @@ watch(() => s.log.value.length, (n, old) => {
   if (!inLesson.value || n <= (old ?? 0)) return;
   // 上限まで連打する手 (カタリスト) は、まだ打てる間は持ったまま (2026-10-18 オーナー「連打で」)
   const st = topic.value?.steps[topicAt.value], h = s.held.value;
-  if (st && h && keepGoing(st, h)) return;
+  if (st && h && keepGoing(st, h)) { if (st.safe) rigRare(h); return; } // コラプトしない例は連打の 1 回ごとに選ぶ
   s.hold(null);
 });
 
@@ -182,6 +182,20 @@ export function rigRare(key: string): void {
       const roll = Math.floor(Math.random() * 2_147_483_647);
       const r = applyCurrency(d, it, key, mulberry32(seedOfRoll(roll, key)), omens);
       if (r.applied && r.removed.some((m) => m.modId === wr)) { s.rollSeed.value = roll; return; }
+    }
+    return;
+  }
+  // 手に wantValue / safe がある時: 打った後にその MOD の素の値が狙いの数になる・コラプトしない乱数を選ぶ (クラフト手順の聖別とインフューザー。2026-10-20 要望 93d00e7c)
+  const sv = topic.value.steps[topicAt.value];
+  if (sv?.wantValue || sv?.safe) {
+    const omens = omensFor(key, s.omens.value), wv = sv.wantValue;
+    for (let i = 0; i < 3000; i++) {
+      const roll = Math.floor(Math.random() * 2_147_483_647);
+      const r = applyCurrency(d, it, key, mulberry32(seedOfRoll(roll, key)), omens);
+      if (!r.applied || (sv.safe && r.item.corrupted)) continue;
+      if (wv && ![...r.item.prefixes, ...r.item.suffixes].some((m) => m.modId === wv.mod && m.values[0] === wv.value)) continue;
+      s.rollSeed.value = roll;
+      return;
     }
     return;
   }

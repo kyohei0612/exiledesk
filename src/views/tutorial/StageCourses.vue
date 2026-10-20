@@ -20,11 +20,13 @@ import { courseShown as shown } from "../../services/tutorial/course-release";
 const PRACTICE_OPEN = false;
 
 const t2 = (x: JaEn): string => tr(x[0], x[1]);
-const LEVELS: Array<{ n: 1 | 2 | 3 | 4; label: JaEn; note: JaEn; chip: string; bar: string; band: string; num: string; text: string }> = [
+const LEVELS: Array<{ n: 1 | 2 | 3 | 4 | 5; label: JaEn; note: JaEn; chip: string; bar: string; band: string; num: string; text: string }> = [
   { n: 1, label: ["入門", "Intro"], note: ["はじめての人はここから", "Start here"], chip: "bg-emerald-500/25 text-emerald-100", bar: "bg-emerald-400/70", band: "bg-gradient-to-r from-emerald-500/25 via-emerald-500/10 to-transparent", num: "bg-emerald-400 text-black", text: "text-emerald-100" },
   { n: 2, label: ["初級", "Easy"], note: ["冒涜とお告げ", "Desecration and omens"], chip: "bg-sky-500/25 text-sky-100", bar: "bg-sky-400/70", band: "bg-gradient-to-r from-sky-500/25 via-sky-500/10 to-transparent", num: "bg-sky-400 text-black", text: "text-sky-100" },
   { n: 3, label: ["中級", "Medium"], note: ["カタリストと液化した感情", "Catalysts and liquid emotions"], chip: "bg-amber-500/25 text-amber-100", bar: "bg-amber-400/70", band: "bg-gradient-to-r from-amber-500/25 via-amber-500/10 to-transparent", num: "bg-amber-400 text-black", text: "text-amber-100" },
   { n: 4, label: ["上級", "Advanced"], note: ["損をせずに確率を上げる小技", "Tricks to raise your odds without wasting currency"], chip: "bg-rose-500/25 text-rose-100", bar: "bg-rose-400/70", band: "bg-gradient-to-r from-rose-500/25 via-rose-500/10 to-transparent", num: "bg-rose-400 text-black", text: "text-rose-100" },
+  // クラフト手順: 完成品までを 1 手ずつ (2026-10-20 要望 93d00e7c。topic-courses-guide.ts)
+  { n: 5, label: ["クラフト手順", "Crafting guides"], note: ["完成品までの手順を 1 手ずつ", "Step by step to a finished item"], chip: "bg-violet-500/25 text-violet-100", bar: "bg-violet-400/70", band: "bg-gradient-to-r from-violet-500/25 via-violet-500/10 to-transparent", num: "bg-violet-400 text-black", text: "text-violet-100" },
 ];
 const baseName = (b: string): string => baseNameOf({ base: b, baseJa: jaTypeName(b) });
 /** 出すコース (段の順のまま) と、そのうちクリアした数 (上の進み具合) */

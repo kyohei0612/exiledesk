@@ -12,6 +12,7 @@ import type { StageItem } from "../craft-stage/types";
 import type { Force } from "../craft-stage/stage-core";
 import { essenceShelf } from "../../state/emulator/craft-stage-shelf";
 import { ADV_COURSES } from "./topic-courses-adv";
+import { GUIDE_COURSES } from "./topic-courses-guide";
 
 /** how = 案内に出すやさしい箇条書き (2026-10-17 オーナー「赤ちゃんに説明するくらい簡単に」)。無い手はカードの公式の説明と決まりの文を出す */
 /** prep = 今のアイテムにこの手が打てない時、白 (start があればそのレア度の MOD 0 個) から打ってこの手が打てる状態を作る手 ([] = 白。craft-lesson.ts) */
@@ -40,10 +41,15 @@ export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: Ja
   /** 次へで来た時は前の手のアイテムをそのまま引き継ぐ (作り直さない)。一覧から選んだ時だけ prep で用意する (続けて作るコース。2026-10-18 オーナー「次へで MOD 変わってんの意味わからん」) */
   cont?: boolean;
   /** この MOD が消える成功例にする (乱数を先に選ぶ。ジュエルの左の消去で「+1 個」を消す) */
-  wantRemoved?: string }
+  wantRemoved?: string;
+  /** 打った後にこの MOD の素の値がこの数になる成功例にする (クラフト手順の聖別で全スペル +3 → 素 4。2026-10-20 要望 93d00e7c) */
+  wantValue?: { mod: string; value: number };
+  /** コラプトしない成功例にする (連打の手は 1 回ごとに選ぶ。クラフト手順のヴァールのインフューザー) */
+  safe?: boolean }
 export interface TopicCourse {
   id: string;
-  level: 1 | 2 | 3 | 4;
+  /** 1 入門 / 2 初級 / 3 中級 / 4 上級 / 5 クラフト手順 (完成品までを 1 手ずつ。topic-courses-guide.ts) */
+  level: 1 | 2 | 3 | 4 | 5;
   title: JaEn;
   learn: JaEn;
   base: string;
@@ -425,6 +431,7 @@ export const TOPIC_COURSES: TopicCourse[] = [
     ],
   },
   ...ADV_COURSES, // 上級 (topic-courses-adv.ts)
+  ...GUIDE_COURSES, // クラフト手順 (topic-courses-guide.ts)
 ];
 
 /**
