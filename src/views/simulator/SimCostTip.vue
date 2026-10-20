@@ -11,7 +11,7 @@ import { tr } from "../../i18n/lang";
 type Line = { name: string; n: number; each: number };
 const props = defineProps<{
   kind: "white" | "four" | "fractured";
-  calc: { lines: Line[]; buyLines: Line[]; once: number; after: number; total: number; buyRest: number; rerolls: number; grade: string; greater?: { augment: number; annul: number } | null; keep?: { together: number; chaos: number; use: "together" | "chaos" } | null } | null;
+  calc: { lines: Line[]; buyLines: Line[]; once: number; after: number; total: number; buyRest: number; rerolls: number; grade: string; fracP: number; greater?: { augment: number; annul: number } | null; keep?: { together: number; chaos: number; use: "together" | "chaos" } | null } | null;
   /** その行に入れたベースの値段 (高貴建て) */
   base: number | null;
 }>();
@@ -25,6 +25,8 @@ const rows = computed((): Line[] => {
   return [];
 });
 const once = computed(() => rows.value.reduce((a, l) => a + l.n * l.each, 0));
+/** フラクチャーが当たるまでの本数 (エンジンの入口の当たり。壁つき 3 MOD で 3) */
+const tries = computed(() => { const p = props.calc?.fracP ?? 0; return p > 0 ? 1 / p : Infinity; });
 /** 反対側の狙いが付くまで (白から自作は安い方、買う始め方は固定してからカオス。2026-10-20) */
 const keepCost = computed(() => { const k = props.calc?.keep; return k ? (props.kind === "white" ? Math.min(k.together, k.chaos) : k.chaos) : 0; });
 const title = computed(() => (props.kind === "white" ? tr("白から作る費用の内訳", "Cost from a white base") : props.kind === "four" ? tr("MOD 付きレアから作る費用の内訳", "Cost from a rare with the mod") : tr("フラクチャー済みを買う", "Buy fractured")));
@@ -45,11 +47,11 @@ const title = computed(() => (props.kind === "white" ? tr("白から作る費用
             <td class="py-0.5 text-right">{{ money(l.n * l.each) }}</td>
           </tr>
           <tr class="font-bold"><td class="pt-1">{{ tr("1 回分", "One attempt") }}</td><td></td><td class="pt-1 text-right">{{ money(once) }}</td></tr>
-          <tr><td>{{ tr("× 3 (フラクチャーが 1/3)", "× 3 (fracture hits 1 in 3)") }}</td><td></td><td class="text-right">{{ money(once * 3) }}</td></tr>
+          <tr><td>{{ tr(`× ${fmtN(tries)} (フラクチャーが 1/${fmtN(tries)})`, `× ${fmtN(tries)} (fracture hits 1 in ${fmtN(tries)})`) }}</td><td></td><td class="text-right">{{ money(once * tries) }}</td></tr>
           <!-- グレーターの道は固定の後に消さない (残す MOD を持ったまま進む。2026-10-20) -->
           <tr v-if="calc.after && kind !== 'four'"><td>{{ tr("+ 固定できた後の消去 × 2", "+ 2 annuls after fracturing") }}</td><td></td><td class="text-right">{{ money(calc.after) }}</td></tr>
           <tr v-if="calc.keep"><td>{{ kind === "white" && calc.keep.use === "together" ? tr("+ 反対側の狙い (マジックで一緒に揃える)", "+ Opposite-side target (landed together on magic)") : tr("+ 反対側の狙い (固定してから 2 MOD でカオス)", "+ Opposite-side target (Chaos on a 2-mod rare after fracturing)") }}</td><td></td><td class="text-right">{{ money(keepCost) }}</td></tr>
-          <tr class="font-bold text-emerald-300"><td class="pt-1">{{ tr("合計", "Total") }}</td><td></td><td class="pt-1 text-right">{{ money(once * 3 + (kind === "four" ? 0 : calc.after) + keepCost) }}</td></tr>
+          <tr class="font-bold text-emerald-300"><td class="pt-1">{{ tr("合計", "Total") }}</td><td></td><td class="pt-1 text-right">{{ money(once * tries + (kind === "four" ? 0 : calc.after) + keepCost) }}</td></tr>
         </tbody>
       </table>
       <p v-if="kind === 'white' && calc.greater" class="mt-1 text-[10px] opacity-60">{{ tr(`ループ = マジックで両方の側が当たるまで、外れがあれば消去 (どちらが消えるかは半々)、空いた側に増強 (平均 増強 ${fmtN(calc.greater.augment)}・消去 ${fmtN(calc.greater.annul)} 回)。変成・増強は${calc.grade}。固定できるのは 3 つ (候補・揃えた MOD・エッセンスの MOD) のうち 1 つ`, `Loop = until both sides hit on magic: Annul a miss (either mod, 50/50), Augment the open side (avg ${fmtN(calc.greater.augment)} Augment, ${fmtN(calc.greater.annul)} Annul). Transmute / augment grade: ${calc.grade}. Fracture locks 1 of 3 (candidate, kept mod, essence mod)`) }}</p>

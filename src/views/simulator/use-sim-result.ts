@@ -217,8 +217,10 @@ export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRe
       const best = s.simStart.value === "fractured" ? "bought" : s.simStart.value === "four" ? "four" : routes.value.best;
       const name = s.simStart.value === "fractured" ? "1 で決めた: フラクチャー済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : routes.value.list.find((x) => x.key === best)?.name.replace(/\s*\(.*$/, "") ?? "";
       let items: Array<{ name: string; n: number; cost: number }> = [];
-      if (best === "self" && c) items = [...c.lines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
-      else if (best === "four" && c) items = [{ name: "レアのベース (3 MOD + 狙い 1)", n: 3, cost: (num(fourDivine.value) ?? 0) * 3 }, ...c.buyLines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 }))];
+      // フラクチャーが当たるまでの本数 (エンジンの入口の当たり、壁つき 3 MOD で 3)
+      const tries = c && c.fracP > 0 ? 1 / c.fracP : Infinity;
+      if (best === "self" && c) items = [...c.lines.map((l) => ({ name: l.name, n: l.n * tries, cost: l.n * l.each * tries })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
+      else if (best === "four" && c) items = [{ name: "レアのベース (3 MOD + 狙い 1)", n: tries, cost: (num(fourDivine.value) ?? 0) * tries }, ...c.buyLines.map((l) => ({ name: l.name, n: l.n * tries, cost: l.n * l.each * tries }))];
       else if (best === "bought") items = [{ name: "フラクチャー済みのベース", n: 1, cost: num(boughtDivine.value) ?? 0 }];
       // 内訳は 1 個分 × 使った数 (作り直し・買い直し込み)
       const nb = r.bases;

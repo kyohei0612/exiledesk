@@ -4,11 +4,8 @@
  */
 import { computed } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
-import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
-import { effectiveCls } from "../../services/craft-stage/stage-core";
-import { withRunes } from "../../vendor/poe2htc/engine/runes";
-import { modTierWeight } from "../../vendor/poe2htc/engine/pool";
 import { runeEnForId } from "../../services/simulator/pattern";
+import { blankWith, fractureOdds, magicAugOdds } from "../../services/simulator/sim-odds";
 import { greaterRouteCost, type GreaterRoute } from "../../services/simulator/sim-greater";
 import { keepCompare } from "../../services/simulator/keep-compare";
 import type { SimTargetIn } from "../../services/simulator/quiz-build";
@@ -26,7 +23,8 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
    * 「完全やね消去 2 つ使うのは」)。
    *   1 回分 = 白 + 完全の変成 + (完全の増強 + 消去 × 2) × リロールの回数 + 王者 (無印) + 高貴 × (1 − p) + 骨 (壁) + フラクチャー
    *   リロールの回数 = 1 ÷ (完全の増強 1 回で狙いが付く確率)。確率はその側の普通の置き場の重み (下限 = 完全の増強の段の下限)
-   *   1 個 = 1 回分 × 3 (骨の壁でフラクチャーが 1/3) + 固定できた後の消去 × 2 (2026-10-05 オーナー「消去 2 は必ずいるよ、完成後」)
+   *   1 個 = 1 回分 ÷ フラクチャーの当たり (骨の壁つき 3 MOD で 1/3) + 固定できた後の消去 × 2 (2026-10-05 オーナー「消去 2 は必ずいるよ、完成後」)
+   * 1 手の確率 (増強の当たり・側の割合・フラクチャーの当たり) はエンジンの入口から (sim-odds.ts、2026-10-20 手 4。前は modTierWeight・CURRENCY_FLOOR を自分で組んでいた)
    * お告げの側は、壁を置く側 = 狙いの反対側
    */
   const calc = computed(() => {
@@ -39,41 +37,27 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
      * 変成・増強の等級は完全 (オーナー「最低完全変成、次の完全増強」)。完全の段の下限で狙いの段が出ない時 (兜のライフ T2 以上など) は
      * 上級 → 無印に落とす (2026-10-05、前は 0% と「—」で止まって見えた)
      */
-    /**
-     * その MOD の、下限 floor 以上・アイテムレベル以下・minIdx の段以上の重み。エンジンと同じ modTierWeight (下限に届く段が無い MOD も一番上の段は残る。
-     * 前は丸ごと外していて、靴の増強で移動スピードが 30% と出た。エンジンは 18%。2026-10-20)
-     */
-    const wAt = (id: string, minIdx: number, floor: number): number => {
-      const x = d.mods.get(id);
-      return x ? modTierWeight(x, floor, s.itemLevel.value, minIdx) : 0;
-    };
-    // 置き場は狙いのルーンを差した物 (ウートレッドの時間術などルーンの MOD を狙う時、ルーンで増える MOD も割る方に入れる。前は差していない置き場で割り、
-    // 靴の移動スピードが増強 1 回で 75% と出ていた。2026-10-20 見本の靴。2 の付きやすさ shareOf と同じ)
-    const runeIds = [...new Set(s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]).map((t) => d.mods.get(t.modId)?.rune).filter((r): r is string => !!r))];
-    const pools = (runeIds.length ? withRunes(effectiveCls(it), runeIds) : it.cls).pools.normal;
-    // 同じ MOD は 1 回だけ (エミュレーターから来たルーン差し済みのアイテムに、もう一度ルーンの置き場を足すと 2 重になる)
-    const totalAt = (k: "prefixes" | "suffixes", floor: number): number => [...new Set(pools[k])].reduce((a, id) => a + wAt(id, 0, floor), 0);
-    const pAt = (floor: number) => {
-      const w = (id: string, minIdx: number): number => wAt(id, minIdx, floor);
-      // 候補ごとに自分の側の重みで割る (候補は両側でも良い)
-      const totalOf = (k: "prefixes" | "suffixes"): number => totalAt(k, floor);
-      const each = fracMembers.value.map((r) => {
-        const total = totalOf(d.mods.get(r.modId)?.type === "suffix" ? "suffixes" : "prefixes");
-        return { modId: r.modId, name: `${r.text} (${r.rank} 以上)`, p: total > 0 ? w(r.modId, r.minTierIndex) / total : 0 };
-      });
+    // 狙いのルーンを差した MOD の無いマジック (ウートレッドの時間術などルーンの MOD を狙う時、ルーンで増える MOD も割る方に入れる。前は差していない置き場で割り、
+    // 靴の移動スピードが増強 1 回で 75% と出ていた。2026-10-20 見本の靴。2 の付きやすさ shareOf と同じ)。アイテムレベルは ③ の入力
+    const blank = blankWith(d, it, s.itemLevel.value, "magic", s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]));
+    const pAt = (odds: ReturnType<typeof magicAugOdds>) => {
+      // 候補ごとに自分の側の候補の中で (候補は両側でも良い)
+      const each = fracMembers.value.map((r) => ({ modId: r.modId, name: `${r.text} (${r.rank} 以上)`, p: odds.hit(d.mods.get(r.modId)?.type === "suffix" ? "suffix" : "prefix", [r]) }));
       return { each, pHit: Math.min(1, each.reduce((a, x) => a + x.p, 0)) };
     };
-    const grades = [
-      { g: "perfect", floor: CURRENCY_FLOOR.augment.perfect, aug: "augment_perfect", tra: "transmute_perfect", ja: "完全" },
-      { g: "greater", floor: CURRENCY_FLOOR.augment.greater, aug: "augment_greater", tra: "transmute_greater", ja: "上級" },
-      { g: "base", floor: CURRENCY_FLOOR.augment.base, aug: "augment", tra: "transmute", ja: "無印" },
-    ] as const;
-    const gr = grades.find((x) => pAt(x.floor).pHit > 0) ?? grades[0];
+    const grades = ([
+      { g: "perfect", aug: "augment_perfect", tra: "transmute_perfect", ja: "完全" },
+      { g: "greater", aug: "augment_greater", tra: "transmute_greater", ja: "上級" },
+      { g: "base", aug: "augment", tra: "transmute", ja: "無印" },
+    ] as const).map((x) => ({ ...x, odds: magicAugOdds(d, blank, x.aug) }));
+    const gr = grades.find((x) => pAt(x.odds).pHit > 0) ?? grades[0]!;
+    // フラクチャーの当たり (狙い・反対側・王者 / 高貴の 3 MOD + 骨の壁。4 MOD を買う道も壁つき 4 MOD で同じ)
+    const fracP = fractureOdds(d, blank, fracMembers.value.map((r) => ({ modId: r.modId, minTierIndex: r.minTierIndex })));
     // 狙いのルーン (ルーンの MOD をフラクチャーで狙う時は、作り直すたびに白へ差す。2026-10-20 見本の靴: ウートレッドの代金が入っていなかった)
     const fracRunes = [...new Set(fracMembers.value.map((r) => d.mods.get(r.modId)?.rune).filter((r): r is string => !!r))].map((id) => runeEnForId(id)).filter((r): r is string => !!r);
     const runeLines = fracRunes.map((en) => ({ name: nameOf(`rune:${en}`), n: 1, each: priceOf(`rune:${en}`) }));
     // 候補ごとの付きやすさと合計 (どれか 1 つで良い)
-    const { each, pHit } = pAt(gr.floor);
+    const { each, pHit } = pAt(gr.odds);
     const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
     const rerolls = pHit > 0 ? 1 / pHit : Infinity;
     const white = num(whiteDivine.value) ?? 0;
@@ -108,13 +92,13 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const fourN = num(fourDivine.value);
     const fourB = fourN;
     const buyOnce = fourB != null ? fourB + buyRest : null;
-    /** 4 MOD を買う道の 1 個 (フラクチャー済みになるまで) = (ベース代 + フラクチャー) × 3 */
-    const fourTotal = buyOnce != null ? buyOnce * 3 : null;
+    /** 4 MOD を買う道の 1 個 (フラクチャー済みになるまで) = (ベース代 + フラクチャー) ÷ フラクチャーの当たり */
+    const fourTotal = buyOnce != null && fracP > 0 ? buyOnce / fracP : null;
     // 適当なレアを消去で 1 MOD → カオスの道は 2026-10-21 に外した (オーナー「誤差やろもはや消してくれ」。白からは増強スパムの道だけ)
-    const g = greaterRouteCost({ data: d, targets: simIn(), fracSide: m.type === "suffix" ? "suffix" : "prefix", p: pHit, grade: gr, wAt, totalAt, white, runeLines, price: priceOf, name: nameOf });
+    const g = greaterRouteCost({ data: d, targets: simIn(), fracSide: m.type === "suffix" ? "suffix" : "prefix", p: pHit, grade: gr, odds: gr.odds, white, runeLines, price: priceOf, name: nameOf });
     if (g) {
       // グレーターエッセンスを巻き込む道: 自前のフラクチャーだけ (買う始め方・適当なレアの道は無し)。固定の後に消さない (残す MOD を持ったまま進む)
-      return { pHit, each, rerolls: g.augment, lines: g.lines, buyLines, once: g.once, after: 0, total: g.once * 3, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null, fourTotal: null as number | null,
+      return { pHit, each, rerolls: g.augment, lines: g.lines, buyLines, once: g.once, after: 0, total: fracP > 0 ? g.once / fracP : Infinity, fracP, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null, fourTotal: null as number | null,
         greater: g, keep: null as KeepPlan | null, augKey: gr.aug };
     }
     /**
@@ -125,7 +109,7 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const kc = keepCompare({ data: d, item: it, itemLevel: s.itemLevel.value, targets: simIn(), price: priceOf }).filter((x) => x.chaos != null && Number.isFinite(x.together));
     const kBest = kc.length ? kc.reduce((a, x) => (x.chaos! - x.together > a.chaos! - a.together ? x : a)) : null;
     const keep = kBest ? { host: kBest.host, together: kBest.together, chaos: kBest.chaos!, chaosKey: kBest.chaosKey, chaosN: kBest.chaosN, use: kBest.together < kBest.chaos! ? "together" as const : "chaos" as const, detail: kBest.detail } : null;
-    return { pHit, each, rerolls, lines, buyLines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce, fourTotal,
+    return { pHit, each, rerolls, lines, buyLines, once, after, total: fracP > 0 ? once / fracP + after : Infinity, fracP, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce, fourTotal,
       greater: null as GreaterRoute | null, keep, augKey: gr.aug };
   });
   return { calc };

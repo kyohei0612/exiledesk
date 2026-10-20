@@ -36,7 +36,7 @@ function startCost(k: SimStartKind): number | null {
   // 反対側の狙いが付くまで (白から自作は「一緒に揃える」と「固定してからカオス」の安い方、買う始め方はカオス。2026-10-20)
   const kp = c.keep ? (k === "white" ? Math.min(c.keep.together, c.keep.chaos) : c.keep.chaos) : 0;
   if (k === "four") return c.fourTotal != null ? c.fourTotal + kp : null;
-  return (k === "white" ? c.total : (base + c.buyRest) * 3 + c.after) + kp;
+  return (k === "white" ? c.total : (c.fracP > 0 ? (base + c.buyRest) / c.fracP : Infinity) + c.after) + kp;
 }
 /**
  * 白から自作の上限 (2026-10-21 オーナー「フラクチャー済み、4MOD レアの高い方のベース値段を試算上限としたら、越したらもうその白ベースから

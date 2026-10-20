@@ -6,8 +6,9 @@
  * マジックのループでフラクチャーの候補と反対側の 1 つ (残す MOD) を揃える → そのエッセンスでレア → 冒涜の壁 → フラクチャー (固定できるのは 3 つに 1 つ)。
  * ⑤ は、残す MOD とエッセンスの MOD と壁が付いたまま固定されたレアから (見本の靴 S-7YHuq3-P4: 移動スピード + 耐性 T1 → 絢爛 → 壁 → フラクチャー)
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import type { PatchData, StageSide } from "../craft-stage/engine";
 import { methodOfTarget, type SimTargetIn } from "./quiz-build";
+import type { magicAugOdds } from "./sim-odds";
 
 /** マジックをレアにするエッセンスで付ける狙い (無ければ null) */
 export function magicEssenceTarget(data: PatchData, targets: readonly SimTargetIn[]): SimTargetIn | null {
@@ -91,7 +92,7 @@ export interface GreaterRoute {
   /** ループの中身 (分かれ方を引く用): 候補の側で当たる確率、両側が空の時に候補の側に付く割合、増強の等級 */
   p: number; share: number; augKey: string;
   lines: GreaterLine[];
-  /** 1 回分 (フラクチャーまで)。フラクチャーで固定できるのは 3 つに 1 つ (候補・残す MOD・エッセンスの MOD。壁は未発現で固定されない) */
+  /** 1 回分 (フラクチャーまで)。フラクチャーで固定できるのは候補・残す MOD・エッセンスの MOD のどれか (壁は未発現で固定されない。当たりは sim-odds の fractureOdds) */
   once: number;
   /** 残す MOD が増強で付かない (段の下限が届かない) */
   cantKeep: boolean;
@@ -99,23 +100,20 @@ export interface GreaterRoute {
 
 /**
  * 道の費用 (1 回分)。白 + 変成 + (増強 + 消去) × ループの平均 + エッセンス + (残す MOD が無ければ高貴) + 壁 (冒涜 + フラクチャーの側のネクロマンシー) + フラクチャー。
- * 1 個 = 1 回分 × 3。固定の後の消去は無い (残す MOD を持ったまま進む)
+ * 1 個 = 1 回分 ÷ フラクチャーの当たり。固定の後の消去は無い (残す MOD を持ったまま進む)。
+ * 反対側の当たり q・両側が空の時の側の割合は、その等級の増強の 1 手の確率 (odds = sim-odds の magicAugOdds、エンジンの入口) から
  */
 export function greaterRouteCost(o: {
-  data: PatchData; targets: readonly SimTargetIn[]; fracSide: "prefix" | "suffix"; p: number;
-  grade: { floor: number; tra: string; aug: string };
-  wAt: (id: string, minIdx: number, floor: number) => number;
-  totalAt: (k: "prefixes" | "suffixes", floor: number) => number;
+  data: PatchData; targets: readonly SimTargetIn[]; fracSide: StageSide; p: number;
+  grade: { tra: string; aug: string };
+  odds: ReturnType<typeof magicAugOdds>;
   white: number; runeLines?: GreaterLine[]; price: (k: string) => number; name: (k: string) => string;
 }): GreaterRoute | null {
   const ess = magicEssenceTarget(o.data, o.targets);
   if (!ess) return null;
   const keep = keepTargetFor(o.data, o.targets, o.fracSide);
-  const other = o.fracSide === "prefix" ? "suffixes" : "prefixes";
-  const own = o.fracSide === "prefix" ? "prefixes" : "suffixes";
-  const otherTotal = o.totalAt(other, o.grade.floor), ownTotal = o.totalAt(own, o.grade.floor);
-  const q = keep ? (otherTotal > 0 ? Math.min(1, [keep, ...(keep.alts ?? [])].reduce((a, x) => a + o.wAt(x.modId, x.minTierIndex, o.grade.floor), 0) / otherTotal) : 0) : null;
-  const share = ownTotal + otherTotal > 0 ? ownTotal / (ownTotal + otherTotal) : 0.5;
+  const q = keep ? o.odds.hit(o.fracSide === "prefix" ? "suffix" : "prefix", [keep, ...(keep.alts ?? [])]) : null;
+  const share = o.odds.share[o.fracSide];
   const { augment, annul } = magicLoopCounts(o.p, q, share);
   const essKey = essenceKeyFor(o.data, ess.modId, ess.minTierIndex);
   const necro = o.fracSide === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy";

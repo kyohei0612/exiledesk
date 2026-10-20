@@ -4,7 +4,7 @@
  *
  * 1 人分 = (1 本分の決まった費用 + マジックのループ) × フラクチャーが当たるまでの本数 + 固定の後の消去 + 反対側の狙いのカオス。
  *   - ループ: 「候補だけ」は増強 1 回 + 消去 2 回を当たるまで (③ の白からの式と同じ形)。「2 つ揃える」はマジックの状態 (側ごとに空・当たり・外れ) を 1 手ずつ
- *   - フラクチャー: 1 本ごとに 3 つに 1 つ (壁の分を除いた 3 つのうち 1 つ)
+ *   - フラクチャー: 1 本ごとに当たり fracP (③ の calc がエンジンの入口から出す物。壁つき 3 MOD で 1/3)
  *   - 反対側の狙いを固定の後にカオスで取る時は、当たるまでのカオスの回数
  * エンジンは回さない (式の部品だけで、2 万人分でも一瞬)
  */
@@ -75,19 +75,19 @@ export function withinBudget(costs: readonly number[], budget: number): { p: num
 
 /** ③ の計算 (use-sim-run の calc) から 1 人分の組み立てを作る */
 export function whiteCraftIn(c: {
-  once: number; rerolls: number; pHit: number; after: number; augKey: string;
+  once: number; rerolls: number; pHit: number; after: number; augKey: string; fracP: number;
   greater: { augment: number; annul: number; p: number; q: number | null; share: number; augKey: string; once: number } | null;
   keep: { use: "together" | "chaos"; chaosKey: string | null; chaosN: number | null; detail: { p: number; q: number; share: number; augKey: string } } | null;
 }, price: (k: string) => number): SelfCraftIn {
   const annul = price("annul");
   if (c.greater) {
     const g = c.greater, aug = price(g.augKey);
-    return { fixedPerAttempt: g.once - (g.augment * aug + g.annul * annul), loop: { kind: "markov", p: g.p, q: g.q, share: g.share, aug, annul }, hit: 1 / 3, after: 0 };
+    return { fixedPerAttempt: g.once - (g.augment * aug + g.annul * annul), loop: { kind: "markov", p: g.p, q: g.q, share: g.share, aug, annul }, hit: c.fracP, after: 0 };
   }
   const perReroll = price(c.augKey) + 2 * annul;
   const fixed = c.once - (Number.isFinite(c.rerolls) ? c.rerolls * perReroll : 0);
   const k = c.keep;
-  if (k?.use === "together") return { fixedPerAttempt: fixed, loop: { kind: "markov", p: k.detail.p, q: k.detail.q, share: k.detail.share, aug: price(k.detail.augKey), annul }, hit: 1 / 3, after: c.after };
-  return { fixedPerAttempt: fixed, loop: { kind: "reroll", p: c.pHit, perReroll }, hit: 1 / 3, after: c.after,
+  if (k?.use === "together") return { fixedPerAttempt: fixed, loop: { kind: "markov", p: k.detail.p, q: k.detail.q, share: k.detail.share, aug: price(k.detail.augKey), annul }, hit: c.fracP, after: c.after };
+  return { fixedPerAttempt: fixed, loop: { kind: "reroll", p: c.pHit, perReroll }, hit: c.fracP, after: c.after,
     ...(k && k.chaosN && k.chaosKey ? { chaosAfter: { p: 1 / k.chaosN, price: price(k.chaosKey) } } : {}) };
 }
