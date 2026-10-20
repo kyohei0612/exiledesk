@@ -94,7 +94,7 @@
 - R2 済み (44bd4c77): views/simulator/SimBaseExtras.vue、ベースのページは 2 か所に 1 行ずつ。
 - R3 済み (930ca9e4): StageTargetSummary 127 行 + use-target-rows・use-target-plans・use-target-share。見張りは合計で落とす形に (移っただけで落ちたため)。
 - R4 済み (193ef469 案・8bf52223 手 1・dd06d834 手 2、開発版): SimHost (header / tools / main)・CourseHost (header / main / under-item / above-shelf / overlay) に中身もジン部長が移した (CraftStage 495 → 470 行)。コースの判定は state/tutorial/course-host.ts 1 か所。直す前と後の DOM を窓なし Chrome で比べて同じ (エミュ・シミュ・使い方・コース、PC とスマホ)。シミュ部長の中身の 2 手は要らなくなった (これからは口の中だけ触る)。
-- R5 state/craft-stage.ts を 500 行の内に (開発部長、R4 の後)。
+- R5 済み: state/craft-stage.ts 516 → 434 行。手順 JSON・結果 JSON・共有・再生 (plan・result・prices・shareWhy・sharePlan・replayTo・replayLength・continueFromReplay・loadReplay・leaveReplay) を state/stage-replay.ts に出し、craftStage に広げる (呼ぶ側はそのまま)。型 0、直す前 (dist-web-dev) と後 (作業場所の dev) で同じ手順 JSON の再生と「エミュレーターへ」が同じ (窓なし Chrome)。
 - R6 ページの表 web/pages/<部>.ts (開発部長、R5 の後)。
 
 ## OK 待ち

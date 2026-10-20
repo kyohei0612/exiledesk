@@ -18,7 +18,7 @@
 - 持ち主の表: docs/org/owners.txt (下の行ほど強い) と scripts/owner-of.mjs (`--status`・`--check <部> <パス…>`)。地図と食い違ったら owners.txt が正。入口の見張り scripts/check-engine-entry.mjs (CI、控え check-engine-entry.baseline.json より増えたら落ちる。減ったら `--head --write`)。
 - 動かし方・版上げ: CLAUDE.md の「動かし方」。設定 vite.web.config.ts、開発版 scripts/deploy-web-dev.mjs (commit 済みの HEAD を隣の ../ExileDesk-devbuild (git worktree) でビルド、書きかけは入らない。`-- --wip` で作業中の物)、読み物のページ scripts/build-seo-pages.mjs。
 - 更新内容: src/data/changelog-notes.json・-en.json・changelog-popup.json → scripts/build-changelog.mjs。OK 待ち docs/pending-release.md。テスト tests/ (vitest)。
-- 境目 (どの部も使う): src/state/craft-stage.ts (`SIM_LOCKED`)・web-page.ts・display-currency.ts、src/services/craft-stage/share.ts・trade-search.ts、src/services/htc/patch-types.ts・src/services/money.ts、src/style.css・src/styles/game-ui.css、src/components/・src/utils/、src/web/ (WebApp.vue・main.ts・page.ts・boot.ts・config.ts)。
+- 境目 (どの部も使う): src/state/craft-stage.ts (`SIM_LOCKED`、手順 JSON・再生・共有は stage-replay.ts に分けた)・web-page.ts・display-currency.ts、src/services/craft-stage/share.ts・trade-search.ts、src/services/htc/patch-types.ts・src/services/money.ts、src/style.css・src/styles/game-ui.css、src/components/・src/utils/、src/web/ (WebApp.vue・main.ts・page.ts・boot.ts・config.ts)。
 - エンジンの核 (types.ts・run-plan.ts・contract.ts・乱数 htc/rng.ts) は境目ではなくエンジン部の持ち物 (emulator/README.md の地図)。
 - 動画 (video/、旧 POE2Tube) との受け渡し (動画部長と): 録画モード src/utils/rec-mode.ts (`?rec=1`・seed・`__rec`)、撮影 URL・`data-rec` の目印、JSON の形 (正は video/contracts/、ExileDesk 側 contract.ts・scripts/craft-stage-run.mjs)。変える時は両方を同じ commit で、メモ poe2tube-handoff。video/ は CI (tests.yml の paths-ignore)・vite の watch・tailwind (@source not) から外してある。
 - 英語: src/i18n/lang.ts (`tr`・`modText`・`nameOf`)・GLOSSARY.md・*-client.json。

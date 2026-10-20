@@ -34,7 +34,7 @@ export const URL_BASE: string | null = (() => { try { return new URLSearchParams
 import { loadCurrencyHover } from "../services/currency/currency-hover";
 import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
 import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
-import { freshItem, playPlan, playStep, resultOf, startFrom, type PlayedStep, type StartSpec } from "../services/craft-stage/run-plan";
+import { freshItem, playStep, startFrom, type PlayedStep } from "../services/craft-stage/run-plan";
 import type { Force } from "../services/craft-stage/stage-core";
 import { mulberry32 } from "../services/htc/rng";
 import { logRecord } from "../utils/log-record";
@@ -45,7 +45,8 @@ import type { StageItem, StageMod } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
 import type { PobBlock } from "../services/craft-stage/stage-pob";
 import { tr, lang } from "../i18n/lang";
-import { decodeShare, SHARE_ENABLED, shareBlock, shareCodeOf } from "../services/craft-stage/share";
+import { decodeShare, SHARE_ENABLED, shareCodeOf } from "../services/craft-stage/share";
+import { stageReplay } from "./stage-replay";
 import { trackOnce } from "../utils/track";
 import { methodOfTarget, quizFromSim } from "../services/simulator/quiz-build";
 import { nextMove, type QuizRecipe } from "../services/simulator/quiz-recipe";
@@ -188,6 +189,10 @@ function usableWith(key: string, om: readonly string[]): string | null {
   const r = applyCurrency(data.value, item.value, key, mulberry32(0), om);
   return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
 }
+const replayApi = stageReplay({
+  data, item, log, dropped, replay, base, itemLevel, seed, startMods, omens, held, rollSeed, error,
+  priceOf, priceKeysAll, freshSeed, reset: (): void => craftStage.reset(),
+});
 export const craftStage = {
   play, data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simGrant, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
@@ -424,93 +429,6 @@ export const craftStage = {
     // 掛けた時の音 (ゲームのお告げを使った時の Item_Omen_Use_01。2026-10-16)
     playSfx("omen");
   },
-  /** 今までの手を手順 JSON に (同じ seed なので CLI に流すと同じ結果) */
-  plan(): CraftStagePlan {
-    return {
-      schema: "craft-stage-plan/1",
-      title: null,
-      base: base.value,
-      item_level: itemLevel.value,
-      start_rarity: "normal",
-      start_paste: null,
-      // 始めの状態: MOD (要望 ⑱-2) と、手で打つ画面が始めに開けているソケット (規格外。書かないと再生でルーンが打てない、2026-10-10 点検)
-      ...(() => {
-        const sockets = data.value ? fullSockets(freshItem(data.value, base.value, itemLevel.value)).sockets ?? 0 : 0;
-        const start: StartSpec = { ...(startMods.value.length ? { mods: startMods.value } : {}), ...(sockets ? { sockets } : {}) };
-        return Object.keys(start).length ? ({ start } as object) : {};
-      })(),
-      seed: seed.value,
-      // 手ごとの乱数 (seed) も書く (2026-10-09 から手ごとに新しい乱数。再生はこれを使う。追加のキー = outcome / pick と同じ扱い)
-      // カタリストは手で打つと 1 個 +1〜2%、再生は 1 手 = 1 個 (+1%)。上げた分の回数で書く (2026-10-10 点検: 再生で品質が違った)
-      // Web で 50 手より前に消した手も頭に付ける (dropped)
-      steps: (log.value.length || dropped.value.length ? [...dropped.value.map((d) => d.step), ...log.value.map(planStepOf)] : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
-    };
-  },
-  /** 結果 JSON (今の相場の値段で) */
-  result(version: string): unknown {
-    if (!item.value) return null;
-    return resultOf(replay.value?.plan ?? craftStage.plan(), log.value, item.value, {
-      prices: {}, exiledeskVersion: version, patch: "0.5.0", league: marketStore.league.value?.Value ?? null,
-    }, data.value ?? undefined);
-  },
-  /** CLI (craft-stage-run.mjs --prices) に渡す相場 (高貴建て) */
-  prices(): Record<string, number> {
-    return Object.fromEntries(priceKeysAll().map((k) => [k, priceOf(k)]).filter(([, v]) => (v as number) > 0));
-  },
-  /**
-   * 共有できない理由 (できるなら null)。最初のカレンシーの後に手で MOD を足していたら共有できない ([[share.ts]])。
-   * 再生中 (共有の URL から開いた時も) はその手順をそのまま渡せる
-   */
-  shareWhy: computed((): string | null => (replay.value ? null : shareBlock([...dropped.value.map((d) => ({ currency: d.step.currency, index: d.index })), ...log.value.map((s) => ({ currency: s.out.currency, index: s.out.index }))]))),
-  /** 共有する手順 (再生中はその手順を全部) */
-  sharePlan(): CraftStagePlan {
-    return replay.value?.plan ?? craftStage.plan();
-  },
-  /** 再生の手を送る (0 = 始め、手順の手の数まで) */
-  replayTo(step: number): void {
-    const r = replay.value;
-    if (!r) return;
-    const all = r.plan.steps.reduce((n, s) => n + (s.times ?? 1), 0);
-    craftStage.loadReplay(r.plan, Math.max(0, Math.min(all, step)), r.shared);
-  },
-  /** 再生の手の数 (times 込み) */
-  replayLength: computed(() => replay.value?.plan.steps.reduce((n, s) => n + (s.times ?? 1), 0) ?? 0),
-  /**
-   * 再生している今の手から、手で打つ方へ続ける (共有の手順の続きを自分で打つ)。工程はそのまま残るので 1 手戻す・工程を押して戻るもそのまま使える
-   */
-  continueFromReplay(): void {
-    const r = replay.value;
-    if (!r) return;
-    startMods.value = (r.plan as { start?: StartSpec }).start?.mods ?? [];
-    omens.value = [];
-    held.value = null;
-    rollSeed.value = freshSeed();
-    replay.value = null;
-  },
-  /** 再生: 手順 JSON を step 手目まで打った状態 */
-  loadReplay(plan: CraftStagePlan, step: number, shared = false): void {
-    if (!data.value) return;
-    try {
-      base.value = plan.base;
-      itemLevel.value = plan.item_level ?? 80;
-      item.value = freshItem(data.value, plan.base, itemLevel.value);
-      const keys = [...new Set([...plan.steps.flatMap((s) => [s.currency, ...(s.omen ? s.omen.split("+") : [])]), ...priceKeysAll()])];
-      const prices = Object.fromEntries(keys.map((k) => [k, priceOf(k)]));
-      const { steps, final } = playPlan(data.value, plan, prices, step);
-      replay.value = { plan, step, ...(shared ? { shared } : {}) };
-      seed.value = plan.seed;
-      log.value = steps;
-      dropped.value = [];
-      item.value = final;
-      error.value = null;
-      recordHistory("craft-stage", "replay", { plan, step, final, steps: steps.map((s) => s.out) });
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-    }
-  },
-  /** 再生をやめて手で打つ */
-  leaveReplay(): void {
-    replay.value = null;
-    craftStage.reset();
-  },
+  /** 手順 JSON・結果 JSON・共有・再生 ([[stage-replay.ts]]、R5 で分けた) */
+  ...replayApi,
 };
