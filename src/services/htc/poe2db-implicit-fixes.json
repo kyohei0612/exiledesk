@@ -1,0 +1,744 @@
+{
+ "generated": "2026-10-20",
+ "source": "poe2db の部位・ベースのページのベースのカード (scripts/audit-poe2db-implicits.mjs --write)",
+ "bases": {
+  "Runemastered Veridical Chain": {
+   "variants": [
+    [
+     {
+      "en": "最大ルーンワード +(30-40)",
+      "ja": "最大ルーンワード +(30-40)"
+     },
+     {
+      "en": "+(2-3)% to Maximum Cold Resistance",
+      "ja": "冷気耐性の最大値 +(2-3)%"
+     }
+    ],
+    [
+     {
+      "en": "最大ルーンワード +(30-40)",
+      "ja": "最大ルーンワード +(30-40)"
+     },
+     {
+      "en": "+(1-2) to Level of all Cold Skills",
+      "ja": "全ての冷気スキルのレベル +(1-2)"
+     }
+    ],
+    [
+     {
+      "en": "(15-20)% increased maximum Runic Ward",
+      "ja": "最大ルーンワードが(15-20)%増加する"
+     }
+    ]
+   ]
+  },
+  "Golden Obi": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(20-30)% increased Rarity of Items found",
+     "ja": "見つかるアイテムのレアリティが(20-30)%増加する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Rawhide Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(20-30)% increased Life Recovery from Flasks",
+     "ja": "フラスコによるライフ回復量が(20-30)%増加する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Linen Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(20-30)% increased Mana Recovery from Flasks",
+     "ja": "フラスコによるマナ回復量が(20-30)%増加する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Wide Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(20-30)% increased Flask Charges gained",
+     "ja": "獲得フラスコチャージが(20-30)%増加する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Long Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(15-20)% increased Charm Effect Duration",
+     "ja": "チャームの効果持続時間が(15-20)%増加する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Plate Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "+(140-180) to Armour",
+     "ja": "アーマー +(140-180)"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Ornate Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(10-15)% reduced Charm Charges used",
+     "ja": "チャームの使用チャージが(10-15)%減少する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Mail Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(10-15)% reduced Flask Charges used",
+     "ja": "消費フラスコチャージが(10-15)%減少する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Double Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(20-30)% increased Charm Charges gained",
+     "ja": "チャームの獲得チャージが(20-30)%増加する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Heavy Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(20-30)% increased Stun Threshold",
+     "ja": "スタン閾値が(20-30)%増加する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Runemastered Heavy Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "(20-30)% increased Stun Threshold",
+     "ja": "スタン閾値が(20-30)%増加する"
+    },
+    {
+     "en": "フラスコによるライフ回復の(15-25)%はルーンワードにも適用される",
+     "ja": "フラスコによるライフ回復の(15-25)%はルーンワードにも適用される"
+    }
+   ],
+   "stats": [
+    null,
+    0,
+    null
+   ],
+   "variants": [
+    [
+     {
+      "en": "Has (1-3) Charm Slot",
+      "ja": "(1-3)個のチャームスロットを持つ"
+     },
+     {
+      "en": "(20-30)% increased Stun Threshold",
+      "ja": "スタン閾値が(20-30)%増加する"
+     },
+     {
+      "en": "フラスコによるライフ回復の(15-25)%はルーンワードにも適用される",
+      "ja": "フラスコによるライフ回復の(15-25)%はルーンワードにも適用される"
+     }
+    ],
+    [
+     {
+      "en": "Has (1-3) Charm Slot",
+      "ja": "(1-3)個のチャームスロットを持つ"
+     },
+     {
+      "en": "(20-30)% increased Stun Threshold",
+      "ja": "スタン閾値が(20-30)%増加する"
+     },
+     {
+      "en": "(20-40)% increased Runic Ward Regeneration Rate",
+      "ja": "ルーンワードの自動回復レートが(20-40)%増加する"
+     }
+    ],
+    [
+     {
+      "en": "Has (1-3) Charm Slot",
+      "ja": "(1-3)個のチャームスロットを持つ"
+     },
+     {
+      "en": "(20-30)% increased Stun Threshold",
+      "ja": "スタン閾値が(20-30)%増加する"
+     },
+     {
+      "en": "ルーンワード回復は最大ルーンワードをオーバーフローできる",
+      "ja": "ルーンワード回復は最大ルーンワードをオーバーフローできる"
+     }
+    ],
+    [
+     {
+      "en": "Has (1-3) Charm Slot",
+      "ja": "(1-3)個のチャームスロットを持つ"
+     },
+     {
+      "en": "(20-30)% increased Stun Threshold",
+      "ja": "スタン閾値が(20-30)%増加する"
+     },
+     {
+      "en": "Flasks gain (0.5-1) charges per Second",
+      "ja": "フラスコは毎秒(0.5-1)のチャージを獲得する"
+     }
+    ]
+   ]
+  },
+  "Utility Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "20% of Flask Recovery applied Instantly",
+     "ja": "フラスコによる回復の20%が即時に適用される"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Fine Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "Flasks gain 0.17 charges per Second",
+     "ja": "フラスコは毎秒0.17のチャージを獲得する"
+    }
+   ],
+   "stats": [
+    null,
+    0
+   ]
+  },
+  "Stalking Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "Has 1 Charm Slot",
+     "ja": "1個のチャームスロットを持つ"
+    },
+    {
+     "en": "This item gains bonuses from Socketed Items as though it was Boots",
+     "ja": "このアイテムはソケットされたアイテムからそれが靴にソケットされているかのように仮定してボーナスを獲得する"
+    }
+   ],
+   "stats": [
+    null,
+    0,
+    1
+   ]
+  },
+  "Invoking Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "Has 1 Charm Slot",
+     "ja": "1個のチャームスロットを持つ"
+    },
+    {
+     "en": "(8-12)% increased Cast Speed",
+     "ja": "キャストスピードが(8-12)%増加する"
+    }
+   ],
+   "stats": [
+    null,
+    0,
+    1
+   ]
+  },
+  "Sinew Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "Has 1 Charm Slot",
+     "ja": "1個のチャームスロットを持つ"
+    },
+    {
+     "en": "+(15-20) to Strength",
+     "ja": "筋力 +(15-20)"
+    }
+   ],
+   "stats": [
+    null,
+    0,
+    1
+   ]
+  },
+  "Forking Belt": {
+   "implicits": [
+    {
+     "en": "Has (1-3) Charm Slot",
+     "ja": "(1-3)個のチャームスロットを持つ"
+    },
+    {
+     "en": "Has 1 Charm Slot",
+     "ja": "1個のチャームスロットを持つ"
+    },
+    {
+     "en": "Adds 1 to (20-30) Lightning damage to Attacks",
+     "ja": "1から(20-30)の雷ダメージをアタックに追加する"
+    }
+   ],
+   "stats": [
+    null,
+    0,
+    1
+   ]
+  },
+  "Mail Coat": {
+   "implicits": [
+    {
+     "en": "(20-30)% reduced Slowing Potency of Debuffs on You",
+     "ja": "プレイヤーに対する減速のデバフのポテンシャルが(20-30)%減少する"
+    }
+   ],
+   "stats": [
+    0
+   ]
+  },
+  "Swiftstalker Coat": {
+   "implicits": [
+    {
+     "en": "(20-30)% reduced Slowing Potency of Debuffs on You",
+     "ja": "プレイヤーに対する減速のデバフのポテンシャルが(20-30)%減少する"
+    }
+   ],
+   "stats": [
+    0
+   ]
+  },
+  "Runeforged Swiftstalker Coat": {
+   "implicits": [
+    {
+     "en": "(20-30)% reduced Slowing Potency of Debuffs on You",
+     "ja": "プレイヤーに対する減速のデバフのポテンシャルが(20-30)%減少する"
+    }
+   ],
+   "stats": [
+    0
+   ]
+  },
+  "Runeforged Sacrificial Regalia": {
+   "variants": [
+    [
+     {
+      "en": "+1 to Level of all Corrupted Skill Gems",
+      "ja": "全てのコラプト状態のスキルジェムのレベル +1"
+     },
+     {
+      "en": "装備中のコラプト状態のアイテム1個ごとに全ての耐性 +1%",
+      "ja": "装備中のコラプト状態のアイテム1個ごとに全ての耐性 +1%"
+     }
+    ],
+    [
+     {
+      "en": "+1 to Level of all Corrupted Skill Gems",
+      "ja": "全てのコラプト状態のスキルジェムのレベル +1"
+     },
+     {
+      "en": "1% increased Maximum Life for each Corrupted Item Equipped",
+      "ja": "装備中のコラプト状態のアイテム1個ごとに最大ライフが1%増加する"
+     }
+    ],
+    [
+     {
+      "en": "+1 to Level of all Corrupted Skill Gems",
+      "ja": "全てのコラプト状態のスキルジェムのレベル +1"
+     }
+    ],
+    [
+     {
+      "en": "+1 to Level of all Corrupted Skill Gems",
+      "ja": "全てのコラプト状態のスキルジェムのレベル +1"
+     },
+     {
+      "en": "(2-4)% increased Chaos Damage for each Corrupted Item Equipped",
+      "ja": "装備中のコラプト状態のアイテム1個ごとに混沌ダメージが(2-4)%増加する"
+     }
+    ]
+   ]
+  },
+  "Tournament Mail": {
+   "variants": [
+    [
+     {
+      "en": "+(20-25)% to Fire Resistance",
+      "ja": "火耐性 +(20-25)%"
+     }
+    ],
+    [
+     {
+      "en": "+(20-25)% to Cold Resistance",
+      "ja": "冷気耐性 +(20-25)%"
+     }
+    ],
+    [
+     {
+      "en": "+(20-25)% to Lightning Resistance",
+      "ja": "雷耐性 +(20-25)%"
+     }
+    ]
+   ]
+  },
+  "Shrouded Mail": {
+   "variants": [
+    [
+     {
+      "en": "+(20-25)% to Fire Resistance",
+      "ja": "火耐性 +(20-25)%"
+     }
+    ],
+    [
+     {
+      "en": "+(20-25)% to Cold Resistance",
+      "ja": "冷気耐性 +(20-25)%"
+     }
+    ],
+    [
+     {
+      "en": "+(20-25)% to Lightning Resistance",
+      "ja": "雷耐性 +(20-25)%"
+     }
+    ]
+   ]
+  },
+  "Runeforged Shrouded Mail": {
+   "variants": [
+    [
+     {
+      "en": "+(20-25)% to Fire Resistance",
+      "ja": "火耐性 +(20-25)%"
+     }
+    ],
+    [
+     {
+      "en": "+(20-25)% to Cold Resistance",
+      "ja": "冷気耐性 +(20-25)%"
+     }
+    ],
+    [
+     {
+      "en": "+(20-25)% to Lightning Resistance",
+      "ja": "雷耐性 +(20-25)%"
+     }
+    ]
+   ]
+  },
+  "Runemastered Revered Vestments": {
+   "variants": [
+    [
+     {
+      "en": "+1% to all Maximum Elemental Resistances",
+      "ja": "全ての元素耐性の最大値 +1%"
+     },
+     {
+      "en": "(30-50)% increased effect of Arcane Surge on you",
+      "ja": "プレイヤーに対するアーケインサージの効果が(30-50)%増加する"
+     }
+    ],
+    [
+     {
+      "en": "+1% to all Maximum Elemental Resistances",
+      "ja": "全ての元素耐性の最大値 +1%"
+     },
+     {
+      "en": "(10-15)% increased Energy Shield Recharge Rate",
+      "ja": "エナジーシールドリチャージレートが(10-15)%増加する"
+     }
+    ],
+    [
+     {
+      "en": "+1% to all Maximum Elemental Resistances",
+      "ja": "全ての元素耐性の最大値 +1%"
+     }
+    ]
+   ]
+  },
+  "Runeforged Shortbow": {
+   "variants": [
+    [],
+    [
+     {
+      "en": "Projectiles have 50% chance for an additional Projectile when Forking",
+      "ja": "投射物は分岐する時に50%の確率で追加の投射物を放つ"
+     }
+    ]
+   ]
+  },
+  "Runeforged Lace Hood": {
+   "variants": [
+    [],
+    [
+     {
+      "en": "(30-50)% increased Ignite Magnitude",
+      "ja": "発火の強度が(30-50)%増加する"
+     }
+    ]
+   ]
+  },
+  "Runemastered Spiritbone Crown": {
+   "variants": [
+    [
+     {
+      "en": "ソケットを3個持つ",
+      "ja": "ソケットを3個持つ"
+     }
+    ],
+    [
+     {
+      "en": "(25-50)% increased Runic Ward Regeneration Rate",
+      "ja": "ルーンワードの自動回復レートが(25-50)%増加する"
+     },
+     {
+      "en": "+250 Intelligence Requirement",
+      "ja": "知性の装備条件 +250"
+     },
+     {
+      "en": "受ける呪いの持続時間が100%減少する",
+      "ja": "受ける呪いの持続時間が100%減少する"
+     }
+    ],
+    [
+     {
+      "en": "Every 5 seconds, gain a Verisium Infusion",
+      "ja": "5秒ごとにヴェリシウムインフュージョンを1スタック獲得する"
+     }
+    ]
+   ]
+  },
+  "Runemastered Torment Club": {
+   "variants": [
+    [
+     {
+      "en": "100% of Lightning Damage Converted to Cold Damage",
+      "ja": "雷ダメージの100%を冷気ダメージに変換する"
+     }
+    ],
+    [
+     {
+      "en": "スキルはルーンワードコスト50ごとにダメージの(4-6)%を追加雷ダメージとして獲得する",
+      "ja": "スキルはルーンワードコスト50ごとにダメージの(4-6)%を追加雷ダメージとして獲得する"
+     }
+    ],
+    [
+     {
+      "en": "+(1.5-2) metres to Melee Strike Range",
+      "ja": "近接ストライク距離 +(1.5-2)m"
+     }
+    ],
+    [
+     {
+      "en": "(40-60)% increased Lightning Damage",
+      "ja": "雷ダメージが(40-60)%増加する"
+     }
+    ],
+    [
+     {
+      "en": "(50-100)%の確率で雷スキルは追加で1回連鎖する",
+      "ja": "(50-100)%の確率で雷スキルは追加で1回連鎖する"
+     }
+    ],
+    []
+   ]
+  },
+  "Runeforged Kalguuran Forgehammer": {
+   "variants": [
+    [
+     {
+      "en": "Has 3 Sockets",
+      "ja": "ソケットを3個持つ"
+     }
+    ],
+    [
+     {
+      "en": "Has 3 Sockets",
+      "ja": "ソケットを3個持つ"
+     },
+     {
+      "en": "+(100-150) to maximum Runic Ward",
+      "ja": "最大ルーンワード +(100-150)"
+     }
+    ]
+   ]
+  },
+  "Two-Stone Ring": {
+   "variants": [
+    [
+     {
+      "en": "+(12-16)% to Fire and Cold Resistances",
+      "ja": "火および冷気耐性 +(12-16)%"
+     }
+    ],
+    [
+     {
+      "en": "+(12-16)% to Fire and Lightning Resistances",
+      "ja": "火および雷耐性 +(12-16)%"
+     }
+    ],
+    [
+     {
+      "en": "+(12-16)% to Cold and Lightning Resistances",
+      "ja": "冷気および雷耐性 +(12-16)%"
+     }
+    ]
+   ]
+  },
+  "Runemastered Crucible Tower Shield": {
+   "variants": [
+    [
+     {
+      "en": "Recover (15-25) Runic Ward when you Block",
+      "ja": "ブロック時に(15-25)のルーンワードを回復する"
+     }
+    ],
+    [
+     {
+      "en": "(15-25)% of Damage is taken from Mana before Life",
+      "ja": "ダメージの(15-25)%をライフより先にマナで受ける"
+     }
+    ]
+   ]
+  },
+  "Runemastered Aberrant Sledge": {
+   "variants": [
+    [],
+    [
+     {
+      "en": "Skills which create Fissures have a 50% chance to create an additional Fissure",
+      "ja": "亀裂を生成するスキルは50%の確率で亀裂を追加で1個生成する"
+     }
+    ],
+    [
+     {
+      "en": "(200-300)% increased Freeze Buildup",
+      "ja": "凍結蓄積が(200-300)%増加する"
+     }
+    ]
+   ]
+  },
+  "Runemastered Runic Fork": {
+   "variants": [
+    [
+     {
+      "en": "(30-50)%の確率でスペルスキルは投射物を追加で2個放つ",
+      "ja": "(30-50)%の確率でスペルスキルは投射物を追加で2個放つ"
+     }
+    ],
+    [
+     {
+      "en": "(30-50)% increased Mana Regeneration Rate",
+      "ja": "マナ自動回復レートが(30-50)%増加する"
+     }
+    ],
+    [
+     {
+      "en": "+300 to maximum Runic Ward",
+      "ja": "最大ルーンワード +300"
+     }
+    ]
+   ]
+  }
+ }
+}

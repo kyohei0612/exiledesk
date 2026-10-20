@@ -186,8 +186,13 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Bod
     return rest;
   }
   // 印が無い: ベースの暗黙 1 つにつき 1 行 (同じ文の明示の MOD を巻き込まない)。最後に当たった暗黙より前の行も暗黙側 (ルーン・エンチャント・コラプトの暗黙)
+  // 同じ名前の別物 (implicitVariants) は、貼り付けの行に一番多く当たる組を使う
+  const info = htcBaseInfo()[out.base!.en];
+  const sets = [info?.implicits ?? [], ...(info?.implicitVariants ?? [])];
+  const hits = (set: ReadonlyArray<{ en: string; ja: string }>): number => set.filter((im) => body.some((b) => bare(b.text) === bare(im.en) || bare(b.text) === bare(im.ja))).length;
+  const chosen = sets.reduce((best, set) => (hits(set) > hits(best) ? set : best), sets[0]!);
   const quota = new Map<string, number>();
-  for (const im of htcBaseInfo()[out.base!.en]?.implicits ?? []) {
+  for (const im of chosen) {
     for (const k of new Set([bare(im.en), bare(im.ja)])) quota.set(k, (quota.get(k) ?? 0) + 1);
   }
   const isBase: boolean[] = body.map((b) => {

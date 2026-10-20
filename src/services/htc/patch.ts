@@ -17,6 +17,7 @@ import { indexPatch } from "../../vendor/poe2htc/engine/indexPatch";
 import { applyWeightOverrides } from "./weight-overrides";
 import poolFixes from "./poe2db-pool-fixes.json";
 import { applyPoe2dbTagFixes } from "./poe2db-tag-fixes";
+import { applyPoe2dbImplicitFixes, implicitStatOrder } from "./poe2db-implicit-fixes";
 import runeWeights from "./rune-weights.json";
 import modStats from "./mod-stats.json";
 import implicitStats from "./implicit-stats.json";
@@ -163,7 +164,12 @@ export function filledStatsOf(modId: string, tierIndex: number): { stats: string
  * カタリストの品質で伸びる相手と、上の数値に足す stat を決める
  */
 export type ImplicitStat = { stats: Array<[string, number, number]>; tags: string[] };
-export const implicitStatsOf = (base: string): ImplicitStat[] => (implicitStats as unknown as Record<string, ImplicitStat[]>)[base] ?? [];
+export const implicitStatsOf = (base: string): ImplicitStat[] => {
+  const raw = (implicitStats as unknown as Record<string, ImplicitStat[]>)[base] ?? [];
+  // poe2db に合わせて暗黙の並びを変えたベースは、元の並びから引き直す (引き継げない行は stat 無し。poe2db-implicit-fixes.ts)
+  const order = implicitStatOrder(base);
+  return order ? order.map((k) => (k == null ? { stats: [], tags: [] } : raw[k] ?? { stats: [], tags: [] })) : raw;
+};
 
 export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBases): PatchData {
   const mods = new Map(data.mods);
@@ -225,7 +231,8 @@ export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBa
   dropOnly = (extra as { dropOnly?: typeof dropOnly }).dropOnly ?? {};
   familyStats = extra.familyStats ?? {};
   baseLimits = extra.baseLimits ?? {};
-  baseInfo = { ...(extra.baseInfo ?? {}), ...(jewels?.baseInfo ?? {}) };
+  // 暗黙は poe2db に合わせる (ベルトのチャームスロット・同じ名前の別物など、poe2db-implicit-fixes.ts、2026-10-20 J5a)
+  baseInfo = applyPoe2dbImplicitFixes({ ...(extra.baseInfo ?? {}), ...(jewels?.baseInfo ?? {}) });
   jewelEmotions = jewels?.emotions ?? {};
   jewelEmotionNames = jewels?.emotionNames ?? {};
   extras = {
