@@ -23,7 +23,7 @@ import { limitOf, listOf } from "../stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action, ModPool } from "./types";
 import { markFloorOf } from "./desecrate-specs";
-import { jaOfOmen } from "../../htc/labels";
+import { jaOfOmen } from "../../htc/game-names";
 import { tr } from "../../../i18n/lang";
 
 /** お告げで変わった分 (掛かっていなければ null / 0 / false) */

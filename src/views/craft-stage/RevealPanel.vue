@@ -11,7 +11,7 @@
 import { modText, tr } from "../../i18n/lang";
 import { ref, watch } from "vue";
 import { craftStage } from "../../state/craft-stage";
-import { jaOfOmen } from "../../services/htc/labels";
+import { jaOfOmen } from "../../services/htc/game-names";
 import { reqOfItem } from "../../services/craft-stage/stage-bases";
 import type { StageMod } from "../../services/craft-stage/types";
 import Icon from "../../components/ui/Icon.vue";

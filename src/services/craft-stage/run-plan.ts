@@ -14,7 +14,7 @@ import { emotionNameOf, isEmotion } from "./apply-emotion";
 import { jewelEmotionJa } from "../htc/patch";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { itemBaseFor } from "../htc/bridge";
-import { jaOfOmen, jaOfPriceKey } from "../htc/labels";
+import { jaOfOmen, jaOfPriceKey } from "../htc/game-names";
 import { mulberry32 } from "../htc/rng";
 import { jaTypeName } from "../../i18n/item-names-ja";
 import { applyCurrency, type ApplyHint } from "./apply-currency";

@@ -14,7 +14,7 @@ import priceKeys from "../../services/htc/price-keys.json";
 import { ESSENCE_KEYS } from "../../services/htc/essence-key-table";
 import essences from "../../vendor/poe2htc/data/essences.json";
 import { desecrationBoneFor } from "../../vendor/poe2htc/engine/probability";
-import { jaOfOmen } from "../../services/htc/labels";
+import { jaOfOmen } from "../../services/htc/game-names";
 import { stepEn, stepJa } from "../../services/craft-stage/run-plan";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { isFlask, isGem } from "../../services/craft-stage/stage-bases";
