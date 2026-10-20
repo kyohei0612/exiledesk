@@ -1,4 +1,4 @@
-# CH運営長 (YouTube チャンネルの運営、10-21 に動画部長から改名。部の名前・フォルダーは「動画」・video/ のまま)
+# 動画編集長 (YouTube チャンネル「チョコバナナ」、10-21 に動画部長から改名。部の名前・フォルダーは「動画」・video/ のまま)
 
 YouTube「チョコバナナ」の解説動画を半自動で作る `video/` (旧 POE2Tube、Python。10-20 に統合) の持ち主。手順・場所の表は notes/guide.md、続きは video/docs/handoff.md、メモ video-*。
 
