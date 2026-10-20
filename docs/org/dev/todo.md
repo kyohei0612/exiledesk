@@ -17,7 +17,7 @@
 | 解析君 K2 | 新 src/services/simulator/auto/auto-rules.ts、scripts/analysis/check-auto-order.mjs・_auto-order-entry.ts、docs/org/math/README.md (地図 + 私の頭の 1 行も一緒に commit してもらう) |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1 | src/views/simulator/SimPasteRead.vue・StageSimPanel.vue・StageTargetSummary.vue・SimAutoOrder.vue・SimStartPick.vue・use-sim-auto-order.ts・use-sim-steps.ts、src/state/simulator/sim-state.ts、src/views/craft-stage/StageBasePage.vue・use-stage-base.ts (各 1〜3 行) |
-| ジン部長 J1 | src/services/craft-stage/item-text.ts (+ item-text-types.ts)・apply-essence.ts・spec/essence-specs.ts |
+| ジン部長 J1 | src/services/craft-stage/apply-essence.ts・spec/essence-specs.ts、docs/org/emulator/notes/ ((a)(b) はコードの直し無し、記録だけ) |
 
 ## 順番 (2026-10-20 夜、オーナー OK 済みの物)
 設計: 自動 / 手動 = simulator/notes/2026-10-20-auto-flow-design.md、UI 点検 13 件 = simulator/notes/2026-10-20-sim-ui-check.md、エンジンの付け替え = emulator/notes/2026-10-20-engine-entry-plan.md。
