@@ -15,9 +15,9 @@
  *   - 発現の候補 3 つは置き場から重みで戻しありに引く (同じ系統が 2 つ出ない決まりは見ない)。冒涜専用の数の割合はエンジンと同じ
  *   - 表の代表のアイテムでは外れを代表の MOD で置く (auto-engine.ts)
  */
-import type { AutoModel, Grade, MCand } from "./auto-model";
+import type { AutoModel, Grade, MCand, State } from "./auto-types";
 
-export type State = number[];
+export type { State } from "./auto-types";
 export type Outs = Array<[number, State]>;
 export interface Act { name: string; cost: number; out: Outs }
 

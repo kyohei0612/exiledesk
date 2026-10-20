@@ -16,48 +16,10 @@ import type { QuizSlot } from "../quiz-recipe";
 import { runeEnForId } from "../pattern";
 import { fillEngine, startStates } from "./auto-engine";
 import { Shape } from "./auto-actions";
-import type { AutoBuilt, AutoInput } from "./auto-solve";
+import type { AutoBuilt, AutoInput, AutoModel, Grade, MCand, MSlot } from "./auto-types";
 
-/** 重みの等級: 高貴・カオスの 普通 / 上級 / 完全 (a0〜a2)、骨の 保存 / 古代 (b0・b4) */
-export type Grade = "a0" | "a1" | "a2" | "b0" | "b4";
+export type { Grade, MCand, MSlot, AutoModel } from "./auto-types";
 export const GRADES: readonly Grade[] = ["a0", "a1", "a2", "b0", "b4"];
-/** 置き場の 1 つの MOD: 系統 (番号)、全部の重み、札の候補なら札ごとの当たり・段が低い重み、冒涜専用か */
-export interface MCand { fams: number[]; w: number; ex: boolean; refs: Array<{ k: number; m: number; hit: number; low: number }> }
-/** 札 (フラクチャー以外)。members の m 番目が付いたら fams[m] を塞ぐ。ess = 完璧なエッセンスの鍵 (エッセンスの札だけ) */
-export interface MSlot { id: string; side: 0 | 1; kind: QuizSlot["kind"]; members: Array<{ modId: string; fams: number[]; ess: string | null }>; group: number; cap: number }
-
-/** 計算の材料 (組み立て済み、構造化複製できる素の物)。中身は auto-model・auto-actions・auto-solve だけが見る */
-export interface AutoModel {
-  /** 並べる行のキー (④ の simOrder のうち自動で並べる物: "mod:<id>"・"rest:frac"・"rest:<id>") */
-  keys: string[];
-  /** 始め 1 個の代金 (高貴建て) */
-  R: number;
-  /** 始めに入っていないルーンの代金 (1 本ごと、⑤ の最初に差す) */
-  runeCost: number;
-  /** 狙いに要るルーン (英語の名前)。始めに無い物は ⑤ の最初に差す (auto-rules) */
-  runes: string[];
-  /** 側ごとの枠 [プレ, サフィ] */
-  cap: [number, number];
-  slots: MSlot[];
-  /** キー → 札の番号 */
-  keyIds: Record<string, number[]>;
-  /** フラクチャーの側と、固定された候補ごとの割合・塞ぐ系統 */
-  frac: { side: 0 | 1; picks: Array<{ p: number; fams: number[]; modId: string }> };
-  /** 等級 → [プレの置き場, サフィの置き場]。使えない等級 (アイテムレベルが足りない) は無い */
-  pools: Partial<Record<Grade, [MCand[], MCand[]]>>;
-  /** 値段 (高貴建て)。0 以下・無い物はその手を使わない (発現は 0 でよい) */
-  prices: Record<string, number>;
-  /** 発現の冒涜専用 MOD の個数 1 / 2 / 3 の割合 (エンジンの DESECRATION_EXCLUSIVE_COUNT) */
-  exRates: number[];
-  /** 発現の候補の数 (エンジンの REVEAL_SPEC) */
-  offers: number;
-  /** 始めの形の分かれ方 [割合, 形] (⑤ の始めのアイテムの作り方を stepOutcomes でたどった物、auto-engine の startStates) */
-  starts: Array<[number, number[]]>;
-  /** 消去・光・骨・完璧なエッセンスの行き先の表 (形の中身の鍵 → 手の名前 → [p, 差分…] の並び)。build の時に stepOutcomes で作る (auto-engine.ts) */
-  eng: Record<string, Record<string, number[][]>>;
-  /** 形の版 (中身を変えたら上げる。ワーカーの持つ写しの見分け) */
-  version: 3;
-}
 
 const PRICE_KEYS = [
   "exalt", "exalt_greater", "exalt_perfect", "chaos", "chaos_greater", "chaos_perfect", "annul", "desecrate", "desecrate_ancient", "reveal",

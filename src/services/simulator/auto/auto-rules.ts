@@ -8,9 +8,9 @@
  */
 import type { QuizRules } from "../quiz-build";
 import type { QuizAction, QuizRecipe, QuizRule, Situation, When } from "../quiz-recipe";
-import type { AutoModel } from "./auto-model";
+import type { AutoModel } from "./auto-types";
 import { quizActionOf, Shape, type State } from "./auto-actions";
-import type { OrderDetail } from "./auto-solve";
+import type { OrderDetail } from "./auto-types";
 
 /** 条件に書く項目 (札の id のほか) */
 const SIDE_KEYS = ["p.junk", "s.junk", "p.hid", "s.hid", "p.bad", "s.bad", "des"] as const;

@@ -15,7 +15,7 @@ import { startFrom, stepOutcomes, type PatchData, type StageItem, type StageMod 
 // 【入口に無い】ANCIENT_BONE_FLOOR (K4、math/todo.md)
 import { ANCIENT_BONE_FLOOR } from "../../../vendor/poe2htc/engine/probability";
 import type { QuizStart } from "../quiz-recipe";
-import type { AutoModel } from "./auto-model";
+import type { AutoModel } from "./auto-types";
 import { actionsOf, engActs, engKey, junkToView, Shape, type EngAct, type State } from "./auto-actions";
 
 /** 代表を組む材料 */

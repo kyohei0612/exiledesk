@@ -10,45 +10,13 @@
  *
  * この型はシミュ部長の auto-order.ts・ワーカーが使う。変える時は共有メモ auto-order-api.md に書いて知らせる。
  */
-import type { QuizSimIn } from "../quiz-build";
-import type { AutoModel } from "./auto-model";
-import { actionsOf, Shape, type Act, type State } from "./auto-actions";
+import type { AutoModel, OrderDetail, OrderResult, SolveOpts } from "./auto-types";
+import { actionsOf, Shape, type Act } from "./auto-actions";
+import type { State } from "./auto-types";
 import { solveLinear, type LinRow } from "./auto-linear";
 
-/** 計算の入力。sim は ⑤ に渡す物と同じ (order は見ない、順番は solveOrder に渡す)。値段は runQuiz と同じ (キー → 高貴建て) */
-export interface AutoInput {
-  sim: QuizSimIn;
-  price: (key: string) => number;
-}
-
-/** buildAutoModel の結果。対応外 (範囲外の組み合わせ) は reason を画面にそのまま出す (日本語・英語 1 行) */
-export type AutoBuilt = { ok: true; model: AutoModel } | { ok: false; reason: { ja: string; en: string } };
-
-/** 順番 1 つの計算結果。費用はどれも高貴建て */
-export interface OrderResult {
-  /** 始め 1 個を買った後、完成か打ち止めまでの 1 人あたりの平均費用 (作り直しの始めの代金込み、最初の 1 個の代金 R は除く) */
-  cost: number;
-  /** 完成の割合 (0〜1)。止まる = 堂々巡りで二度と届かない形、mc ありなら関門の累計の打ち止めも */
-  finish: number;
-  /** 始め 1 個の代金 (= 作り直しの費用) */
-  R: number;
-  /** 並べ方の点数: 完成 1 個あたり = (R + cost) ÷ finish − R (finish = 0 なら Infinity)。安い順に並べる */
-  perFinish: number;
-  /** mc 人数 (0 = 値だけ) */
-  mc: number;
-  /** 計算にかかった時間 (ミリ秒) */
-  ms: number;
-}
-
-export interface SolveOpts {
-  /** 計算の中で 1 人ずつたどる人数 (関門の累計の打ち止めつき)。0 か省略 = 値だけ (速い) */
-  mc?: number;
-  /** mc の乱数の種 (mulberry32) */
-  seed?: number;
-}
-
-export type { AutoModel } from "./auto-model";
-/** 画面の側 (s.data がある所) で 1 回。エンジンを読むので、ワーカーでは使わない (ワーカーは solveOrder だけ) */
+export type { AutoModel, AutoInput, AutoBuilt, OrderResult, SolveOpts, OrderDetail } from "./auto-types";
+/** 【古い・R1】呼ぶ側は auto-model.ts の buildAutoModel を直に読む。シミュ側の import を直したら消す */
 export { buildAutoModel } from "./auto-model";
 
 // ── 行き先の表 (順番に関係ない本当の形の手と行き先。model ごとに 1 回作って順番の間で使い回す) ──
@@ -88,21 +56,6 @@ function gatesOf(m: AutoModel, order: readonly string[]): number[] {
 }
 
 type Row = { c: number; oi: Int32Array; op: Float64Array };
-/** 計算の中身 (確かめの台本用): 見えている形ごとの最善手と、本当の形の評価 */
-export interface OrderDetail {
-  result: OrderResult;
-  /** 関門 (札の番号) */
-  gates: number[];
-  /** 見えている形ごと: 形・最善手の名前 (restart = 作り直し)・値・mc で通った回数 */
-  view: Array<{ s: State; act: string; V: number; visits: number }>;
-  /** 本当の形で、方策の手がその形で打てなかった数 (0 が正しい) */
-  bad: number;
-  /** 止まる (完成にも作り直しにも届かない) 本当の形の数 */
-  stuck: number;
-  /** 見えている形・本当の形の数と、方策の繰り返しの回数 + 本当の形の評価 (2)、表 (model.eng) に無かった形を引いた数 (今までの累計、0 が正しい) */
-  size: { view: number; true: number; sweeps: number; miss: number };
-}
-
 /**
  * 順番 1 つの費用 (ワーカーの中で何回も。model だけで閉じる、エンジンのデータは読まない)。order = ④ の simOrder のキー ("mod:<id>"・"rest:frac"・"rest:<id>"・"rune:<名前>")。
  * 並べない行 (ルーン・増強スパム・フラクチャー済み) は入っていても無視する。model に無いキーも無視
