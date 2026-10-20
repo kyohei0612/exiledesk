@@ -9,7 +9,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 - 開発版に出す物は広告ありきで作る (クラフト画面以外は別のページ・両脇に縦長の枠。メモ ads-page-model)。
 - スクリーンショットは見終わったらすぐ消す (ゴミ箱を通さない)。置き場は ~/.claude/projects/C--Users-kyohei-ExileDesk/<セッション>/tool-results と %TEMP%/claude/…/scratchpad・images。送った物も送った後に消す。
 - 1 ファイル 500 行まで (超えるなら分ける)。全体の地図は docs/ARCHITECTURE.md、計画は docs/roadmap-2026-10.md。
-- AI の組織 (司令塔ブラック・部長・係) = docs/org/。部長・係のセッションは自分の部の md を先に読む。
+- AI の組織 (司令塔ブラック・部長・係) = docs/org/。部長・係のセッションは自分の部の docs/org/<部>/README.md を先に読む (記録は notes/、やる事は todo.md)。
 
 ## 作業 → 先に読む物
 | 作業 | 読む物 |

@@ -26,7 +26,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 開発版だけの物は `state/craft-stage.ts` の `SIM_LOCKED` で本番から隠す (非公開の開発版 `pnpm deploy:web-dev` では開く)。
 
-## 部ごとの持ち場 (2026-10-20 に分けた。部は docs/org/)
+## 部ごとの持ち場 (2026-10-20 に分けた。部の決まりは docs/org/<部>/README.md)
 
 | 部 | 画面 | 仕組み | 状態 | テスト |
 |---|---|---|---|---|

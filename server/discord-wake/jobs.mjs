@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { jstNow } from "./state.mjs";
 
 const HEAD = [
-  "あなたは ExileDesk の分析君です。先に docs/org/analytics.md を読み、その決まりどおりに動いてください。",
+  "あなたは ExileDesk の分析君です。先に docs/org/analytics/README.md を読み、その決まりどおりに動いてください。",
   "これは Discord の常駐台本 (server/discord-wake) が起こした無人の 1 回です。オーナーとは話せません。",
   "コード・KV・D1・Discord には書かない、返事 (fbr:) は置かない、commit しない、版上げ・deploy しない。読むだけです。",
   "返事は日本語で、最後の文は 15 行以内 (この文がそのままオーナーへの知らせになります)。",
@@ -26,7 +26,7 @@ export function feedbackPrompt({ id, content, attachPath }) {
     "```",
     attachPath ? `添付 (送った人の画面の状態、IP は入っていない): ${attachPath}` : "添付はありません。KV の fb:<時刻>:" + id + " を `npx wrangler kv key list --prefix fb: --remote` (server/live の設定) で探し、`kv key get` で読んでください。",
     "",
-    "やること: 要点を 1 行、種類 (要望 / バグ / 質問)、振り先の部 (docs/org/black.md の振り先の表)、大きさ (小 / 中 / 大)、",
+    "やること: 要点を 1 行、種類 (要望 / バグ / 質問)、振り先の部 (docs/org/black/README.md の振り先の表)、大きさ (小 / 中 / 大)、",
     "メモ (MEMORY.md の引き継ぎ・機能の今) で既に扱い中か。バグなら再現手順 (開発版の URL と押す順) も。直さないでください。",
   ].join("\n");
 }

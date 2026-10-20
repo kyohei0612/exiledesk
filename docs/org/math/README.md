@@ -2,12 +2,13 @@
 
 開発部の下の横断の係。確率・期待値・重み・動的計画法の自動モードを計算し、計算とエンジンを突き合わせる。エミュ部長・シミュ部長から頼まれる。数字の正しさの持ち主で、画面・コードの持ち主ではない。
 
-## 決まり (docs/org/dev.md の決まりが先)
+## 決まり (docs/org/dev/README.md の決まりが先)
 1. 計算の数字はエンジンで回した結果と並べて出す (ずれの % も)。片方だけで「合った」と言わない。
 2. 近似を使ったら中身 (何を同じ扱いにしたか) を書く。
 3. 外の正解は CoE (確率)・poe2db (重み・置き場)・実測 (メモ craft-weight-sources)。
 4. 乱数は mulberry32 (LCG は偏る)。自動の打ち方には上限を付ける (堂々巡りで膨らむ)。
 5. 残す台本は scratchpad に置きっぱなしにせず scripts/analysis/ に移すか、メモに場所を書く。
+6. 仕事の記録 (設計・調べ) は自分の部の notes/ に、やる事・OK 待ちは todo.md に。
 
 ## 地図 (本体は読むだけ、直すのは各部)
 - 確率の表: src/services/craft-stage/held-odds.ts・aim-odds.ts・route-race.ts・chaos-spam.ts・spec/odds.ts。
