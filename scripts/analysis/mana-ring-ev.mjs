@@ -2,7 +2,7 @@
  * mana-ring-ev.mjs — マナ系の金の指輪 (ilvl 82) を打ち方 C (外れはすぐ消去) でエンジンに打たせ、平均費用・完成率・個数を出す (解析君、2026-10-21)。
  * 結果は docs/org/math/notes/2026-10-21-mana-ring-ev.md。材料 docs/org/research/notes/2026-10-21-mana-ring-mods.md
  *
- *   [ROUTE=after|first] [BUDGET=2000] node scripts/analysis/mana-ring-ev.mjs [N=300] [SEED=1]
+ *   [ROUTE=after|first] [ORB=exalt|exalt_greater|exalt_perfect] [BUDGET=2000] [PROBE=1] node scripts/analysis/mana-ring-ev.mjs [N=300] [SEED=1]
  *
  * 打つのは全部エンジンの入口 (applyCurrency)。台本は「次にどの手を打つか」(nextMove) だけ。
  * 始め: プレフィックスにスペルのマナコスト効率 T1 (計算高い、創生の樹、重み 0 → makeStageMod で置く) をフラクチャー + 高貴 1 個の乱数の MOD (費用 0)。
@@ -20,12 +20,14 @@ const N = Number(process.argv[2] ?? 300);
 const SEED = Number(process.argv[3] ?? 1);
 const ROUTE = process.env.ROUTE ?? "after";
 const BUDGET = Number(process.env.BUDGET ?? 2000);
+/** ORB=exalt|exalt_greater|exalt_perfect: カタリスト無し版 (オーナー 10-21)。触媒の高貴・カタリストを使わず、素の右側 / 左側の高貴 + その高貴で狙う */
+const ORB = process.env.ORB ?? null;
 const LIMIT = 20000;
 const data = M.loadPatch();
 
 // 自分のサーバーの /boot.json (2026-10-20 16:00Z、Forbidden Rites、高貴建て。神 = 696.93)
 const PRICES = {
-  chaos: 71.892, annul: 313.204, exalt_greater: 13.383, exalt_perfect: 2045.741, divine: 696.929,
+  chaos: 71.892, annul: 313.204, exalt: 1, exalt_greater: 13.383, exalt_perfect: 2045.741, divine: 696.929,
   OmenofDextralExaltation: 35.576, OmenofSinistralExaltation: 85.830, OmenofCatalysingExaltation: 33.189, OmenofSinistralCrystallisation: 298.594,
   catalyst_speed: 152.338, catalyst_cold: 13.655, catalyst_mana: 12.102, ESS: 26.500,
 };
@@ -95,8 +97,12 @@ function runOne(rng) {
       }
     } else {
       const t = T[mv.aim];
-      while (!(it.qualityTag === t.cat.slice(9) && it.quality >= 20)) use(t.cat, [], { oneCatalyst: true });
-      use("exalt_perfect", ["OmenofCatalysingExaltation", t.side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation"]);
+      const sideOmen = t.side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation";
+      if (ORB) use(ORB, [sideOmen]);
+      else {
+        while (!(it.qualityTag === t.cat.slice(9) && it.quality >= 20)) use(t.cat, [], { oneCatalyst: true });
+        use("exalt_perfect", ["OmenofCatalysingExaltation", sideOmen]);
+      }
     }
     const after = KEYS.filter((k) => has(it, k)).length;
     if (before > 0 && after === 0) lostAll++;
@@ -136,9 +142,9 @@ const done = rs.filter((r) => r.done);
 const costs = done.map((r) => costOf(r.n)).sort((a, b) => a - b);
 const spent = rs.reduce((a, r) => a + costOf(r.n), 0);
 const m = mean(costs), se = Math.sqrt(mean(costs.map((c) => (c - m) ** 2)) / (costs.length || 1));
-console.log(`=== ROUTE ${ROUTE} (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒, 打ち止め ${BUDGET} 神)`);
+console.log(`=== ROUTE ${ROUTE} / ${ORB ? `カタリスト無し ${ORB}` : "カタリストあり 完全"} (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒, 打ち止め ${BUDGET} 神)`);
 console.log(`完成 ${(100 * done.length / N).toFixed(1)}%  1 個あたり ${(spent / (done.length || NaN)).toFixed(2)} 神  完成した人の平均 ${m.toFixed(2)} (±${(1.96 * se).toFixed(2)})  中央 ${q(costs, 0.5).toFixed(1)}  90% ${q(costs, 0.9).toFixed(1)}`);
-const keys = ["chaos", "annul", "exalt_perfect", "exalt_greater", "ESS", "OmenofDextralExaltation", "OmenofSinistralExaltation", "OmenofCatalysingExaltation", "OmenofSinistralCrystallisation", "catalyst_speed", "catalyst_cold", "catalyst_mana"];
+const keys = ["chaos", "annul", "exalt", "exalt_perfect", "exalt_greater", "ESS", "OmenofDextralExaltation", "OmenofSinistralExaltation", "OmenofCatalysingExaltation", "OmenofSinistralCrystallisation", "catalyst_speed", "catalyst_cold", "catalyst_mana"];
 for (const k of keys) {
   const c = mean(done.map((r) => r.n[k] ?? 0));
   console.log(`  ${k.padEnd(32)} ${c.toFixed(2).padStart(9)} 個  ${(c * (PRICES[k] ?? 0) / DIV).toFixed(2).padStart(8)} 神`);
